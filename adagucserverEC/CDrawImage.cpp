@@ -41,7 +41,6 @@ CDrawImage::CDrawImage() {
   _bEnableTrueColor = false;
   _bEnableTransparency = false;
   _bEnableTrueColor = false;
-  dNumImages = 0;
   Geo = new CGeoParams();
 
   cairo = NULL;
@@ -737,7 +736,7 @@ void CDrawImage::getPixelTrueColor(int x, int y, unsigned char &r, unsigned char
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
     cairo->getPixel(x, y, r, g, b, a);
   } else {
-    int dTranspColor;
+    int dTranspColor = -1;
     if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
       dTranspColor = gdImageGetTransparent(image);
     }

@@ -138,8 +138,8 @@ private:
   CustomForecastReader *forecastReader;
   CustomVolScanReader *volScanReader;
 
-  CDF::Variable *getWhatVar(CDFObject *cdfObject, int datasetCounter, int dataCounter);
-  CDF::Attribute *getNestedAttribute(CDFObject *cdfObject, int datasetCounter, int dataCounter, const char *varName, const char *attrName);
+  static CDF::Variable *getWhatVar(CDFObject *cdfObject, size_t datasetCounter, int dataCounter);
+  static CDF::Attribute *getNestedAttribute(CDFObject *cdfObject, size_t datasetCounter, int dataCounter, const char *varName, const char *attrName);
 };
 
 #endif

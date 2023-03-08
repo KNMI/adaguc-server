@@ -101,6 +101,7 @@ public:
     this->fontSize = fontSize;
     this->continuousInterval = continuousInterval;
     this->dashing = dashing;
+    this->continuousInterval = 0;
 
     if (_definedIntervals != NULL) {
       CT::string defIntervalString = _definedIntervals;

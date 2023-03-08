@@ -870,7 +870,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
         if (discRadiusX < 0.1) discRadiusX = 0.1;
       }
 
-      if (projectionError == false) {
+      if (projectionError == false && cellSizeX != 0 && cellSizeY != 0) {
         int dlon = int((projectedX - offsetX) / cellSizeX);
         int dlat = int((projectedY - offsetY) / cellSizeY);
         //      if(dlon>=0&&dlat>=0&&dlon<dataSource->dWidth&&dlat<dataSource->dHeight){ remove

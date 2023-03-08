@@ -5,32 +5,32 @@ USER root
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
-LABEL version="2.8.3"
+LABEL version="2.8.4"
 
 ######### First stage (build) ############
 
 # Try to update image packages
 RUN apt-get -q -y update \
     && DEBIAN_FRONTEND=noninteractive apt-get -q -y upgrade \
-    && apt-get -q -y install \ 
-    cmake \ 
-    postgresql \ 
-    libcurl4-openssl-dev \ 
-    libcairo2-dev \ 
-    libxml2-dev \ 
-    libgd-dev \ 
-    postgresql-server-dev-all \ 
-    postgresql-client \ 
-    libudunits2-dev \ 
-    udunits-bin \ 
-    g++ \ 
-    m4 \ 
-    netcdf-bin \ 
-    libnetcdf-dev \ 
-    libhdf5-dev \ 
-    libproj-dev \ 
-    libgdal-dev \ 
-    libsqlite3-dev \ 
+    && apt-get -q -y install \
+    cmake \
+    postgresql \
+    libcurl4-openssl-dev \
+    libcairo2-dev \
+    libxml2-dev \
+    libgd-dev \
+    postgresql-server-dev-all \
+    postgresql-client \
+    libudunits2-dev \
+    udunits-bin \
+    g++ \
+    m4 \
+    netcdf-bin \
+    libnetcdf-dev \
+    libhdf5-dev \
+    libproj-dev \
+    libgdal-dev \
+    libsqlite3-dev \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -52,13 +52,13 @@ USER root
 # Try to update image packages
 RUN apt-get -q -y update \
     && DEBIAN_FRONTEND=noninteractive apt-get -q -y upgrade \
-    && apt-get -q -y install \ 
-    postgresql-client \ 
-    udunits-bin \ 
-    netcdf-bin \ 
+    && apt-get -q -y install \
+    postgresql-client \
+    udunits-bin \
+    netcdf-bin \
     libcairo2 \
-    libgdal-dev \ 
-    libcurl4-openssl-dev \ 
+    libgdal-dev \
+    libcurl4-openssl-dev \
     libgd-dev \
     libproj-dev \
     time \
@@ -68,17 +68,17 @@ RUN apt-get -q -y update \
 
 WORKDIR /adaguc/adaguc-server-master
 
+# Upgrade pip and install python requirements.txt
+COPY --from=0 /adaguc/adaguc-server-master/requirements.txt /adaguc/adaguc-server-master/requirements.txt
+RUN pip3 install --no-cache-dir --upgrade pip \
+   && pip3 install --no-cache-dir -r requirements.txt
+
 # Install compiled adaguc binaries from stage one
 COPY --from=0 /adaguc/adaguc-server-master/bin /adaguc/adaguc-server-master/bin
 COPY --from=0 /adaguc/adaguc-server-master/data /adaguc/adaguc-server-master/data
 COPY --from=0 /adaguc/adaguc-server-master/python /adaguc/adaguc-server-master/python
 COPY --from=0 /adaguc/adaguc-server-master/tests /adaguc/adaguc-server-master/tests
 COPY --from=0 /adaguc/adaguc-server-master/runtests.sh /adaguc/adaguc-server-master/runtests.sh
-COPY --from=0 /adaguc/adaguc-server-master/requirements.txt /adaguc/adaguc-server-master/requirements.txt
-
-# Upgrade pip and install python requirements.txt
-RUN pip3 install --no-cache-dir --upgrade pip \
-   && pip3 install --no-cache-dir -r requirements.txt
 
 
 # Run adaguc-server functional and regression tests

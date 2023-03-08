@@ -41,7 +41,7 @@
 #include "CServerError.h"
 #include "CServerConfig_CPPXSD.h"
 #include <math.h>
-//#include <png.h>
+// #include <png.h>
 #include <gd.h>
 #include "gdfontl.h"
 #include "gdfonts.h"
@@ -98,9 +98,6 @@ private:
   int _createStandard();
 
   int dPaletteCreated;
-  bool paletteCopied;
-  unsigned char *rbuf;
-  int dNumImages;
 
   unsigned char BGColorR, BGColorG, BGColorB;
   bool _bEnableTransparency;
