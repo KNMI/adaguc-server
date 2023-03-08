@@ -41,7 +41,7 @@
 #include "CServerError.h"
 #include "CServerConfig_CPPXSD.h"
 #include <math.h>
-//#include <png.h>
+// #include <png.h>
 #include <gd.h>
 #include "gdfontl.h"
 #include "gdfonts.h"
@@ -84,19 +84,23 @@ public:
    * color can have format #RRGGBB or #RRGGBBAA
    */
   void parse(const char *color) {
-    if (color[0] == '#') {
-      if (strlen(color) == 7) {
-        r = CSERVER_HEXDIGIT_TO_DEC(color[1]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[2]);
-        g = CSERVER_HEXDIGIT_TO_DEC(color[3]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[4]);
-        b = CSERVER_HEXDIGIT_TO_DEC(color[5]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[6]);
-        a = 255;
-      }
-      if (strlen(color) == 9) {
-        r = CSERVER_HEXDIGIT_TO_DEC(color[1]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[2]);
-        g = CSERVER_HEXDIGIT_TO_DEC(color[3]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[4]);
-        b = CSERVER_HEXDIGIT_TO_DEC(color[5]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[6]);
-        a = CSERVER_HEXDIGIT_TO_DEC(color[7]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[8]);
-      }
+    size_t l = strlen(color);
+
+    if (color[0] == '#' && l == 7) {
+      r = CSERVER_HEXDIGIT_TO_DEC(color[1]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[2]);
+      g = CSERVER_HEXDIGIT_TO_DEC(color[3]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[4]);
+      b = CSERVER_HEXDIGIT_TO_DEC(color[5]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[6]);
+      a = 255;
+    } else if (color[0] == '#' && l == 9) {
+      r = CSERVER_HEXDIGIT_TO_DEC(color[1]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[2]);
+      g = CSERVER_HEXDIGIT_TO_DEC(color[3]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[4]);
+      b = CSERVER_HEXDIGIT_TO_DEC(color[5]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[6]);
+      a = CSERVER_HEXDIGIT_TO_DEC(color[7]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[8]);
+    } else {
+      r = 0;
+      g = 0;
+      b = 0;
+      a = 255;
     }
   }
 };
@@ -135,9 +139,6 @@ private:
   int _createStandard();
 
   int dPaletteCreated;
-  bool paletteCopied;
-  unsigned char *rbuf;
-  int dNumImages;
 
   unsigned char BGColorR, BGColorG, BGColorB;
   bool _bEnableTransparency;

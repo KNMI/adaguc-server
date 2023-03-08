@@ -155,11 +155,12 @@ private:
   template <class T> void _plot(CImageWarper *, CDataSource *dataSource, CDrawImage *drawImage) {
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
     double dfNodataValue = dataSource->getDataObject(0)->dfNodataValue;
+
     double legendValueRange = styleConfiguration->hasLegendValueRange;
     double legendLowerRange = styleConfiguration->legendLowerRange;
     double legendUpperRange = styleConfiguration->legendUpperRange;
     bool hasNodataValue = dataSource->getDataObject(0)->hasNodataValue;
-    float nodataValue = (float)dfNodataValue;
+    T nodataValue = (T)dfNodataValue;
     float legendLog = styleConfiguration->legendLog;
     float legendLogAsLog;
     if (legendLog > 0) {
@@ -182,6 +183,7 @@ private:
     }
 
     if (shade) {
+      /* TODO: make use of drawfunction as well, less code duplication */
       int numShadeDefs = (int)styleConfiguration->shadeIntervals->size();
       T shadeDefMin[numShadeDefs];
       T shadeDefMax[numShadeDefs];
@@ -199,6 +201,9 @@ private:
             bgColor = CColor(featureInterval->attr.bgcolor.c_str());
           }
         }
+        // double min = ((double)shadeDefMin[j]);
+        // double max = ((double)shadeDefMax[j]);
+        // CDBDebug("%d %f %f %d-%d-%d-%d", j, min, max, fillColors[j].r, fillColors[j].g, fillColors[j].b, fillColors[j].a);
       }
 
       for (int y = 0; y < drawImage->Geo->dHeight; y++) {
@@ -214,7 +219,7 @@ private:
             if (legendValueRange)
               if (val < legendLowerRange || val > legendUpperRange) isNodata = true;
           if (!isNodata) {
-            for (int snr = numShadeDefs; snr >= 0; snr--) {
+            for (int snr = numShadeDefs - 1; snr >= 0; snr--) {
               if (val >= shadeDefMin[snr] && val < shadeDefMax[snr]) {
                 if (fillColors[snr].a == 0) { // When a fully transparent color is deliberately set, force this color in the image
                   drawImage->setPixelTrueColorOverWrite(x, (drawImage->Geo->dHeight - 1) - y, fillColors[snr].r, fillColors[snr].g, fillColors[snr].b, fillColors[snr].a);

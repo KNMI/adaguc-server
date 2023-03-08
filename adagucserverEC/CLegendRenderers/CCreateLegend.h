@@ -14,7 +14,7 @@ private:
   static int renderContinuousLegend(CDataSource *dataSource, CDrawImage *legendImage, CStyleConfiguration *styleConfiguration, bool rotate, bool estimateMinMax);
   static double nextTick(double prev);
   static double classCount(double min, double max);
-  static char *formatTickLabel(CT::string textformatting, char *szTemp, double tick, double min, double max, int tickRound);
+  static char *formatTickLabel(CT::string textformatting, char *szTemp, size_t szTempLength, double tick, double min, double max, int tickRound);
 
 public:
   static int createLegend(CDataSource *dataSource, CDrawImage *legendImage);

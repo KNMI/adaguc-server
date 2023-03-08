@@ -105,7 +105,7 @@ void *operator new(std::size_t mem) {
   if (Tracer::Ready) NewTrace.Add(p, "?", 0);
   return p;
 }
-void operator delete(void *p) {
+void operator delete(void *p) noexcept {
   if (Tracer::Ready) NewTrace.Remove(p);
   free(p);
 }

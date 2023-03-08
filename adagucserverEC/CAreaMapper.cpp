@@ -130,7 +130,6 @@ template <class T> int CAreaMapper::myDrawRawTile(const T *data, double *x_corne
     }
   }
 
-  bool isNodata = false;
   T val;
   size_t imgpointer;
   double destBoxTL[2] = {x_corners[3], y_corners[3]};
