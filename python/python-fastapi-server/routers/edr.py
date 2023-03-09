@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 from fastapi import APIRouter, Request, Response, FastAPI, Query
 import json
 import itertools
@@ -46,6 +46,7 @@ from edr_pydantic_classes.instances import (
 )
 
 from geomet import wkt
+from .geojsonresponse import GeoJSONResponse
 
 from .ogcapi_tools import callADAGUC
 
@@ -53,6 +54,7 @@ logger = logging.getLogger(__name__)
 logger.debug("Starting EDR")
 
 edrApiApp = FastAPI(debug=True)
+
 
 def get_datasets(adagucDataSetDir):
     """
@@ -112,9 +114,12 @@ def getPointValue(
 ):
     urlrequest = (
         f"SERVICE=WMS&VERSION=1.3.0&REQUEST=GetPointValue&CRS=EPSG:4326"
-        f"&DATASET={dataset}&TIME={t}&QUERY_LAYERS={parameters}"
+        f"&DATASET={dataset}&QUERY_LAYERS={parameters}"
         f"&X={coords[0]}&Y={coords[1]}&INFO_FORMAT=application/json"
     )
+    if t:
+        urlrequest += f"&TIME={t}"
+
     if instance:
         urlrequest += f"&DIM_reference_time={instance}"
     logger.info("URL: %s", urlrequest)
@@ -134,18 +139,20 @@ async def get_collection_position(
     #    instance: str,
     request: Request,
     coords: str,
-    datetime: str,
-    parameter_names: str = Query(alias="parameter-names"),
+    datetime: Optional[str] = None,
+    parameter_name: str = Query(alias="parameter-name"),
 ):
     latlons = wkt.loads(coords)
     logger.info("latlons:%s", latlons)
     coord = {"lat": latlons["coordinates"][0], "lon": latlons["coordinates"][1]}
     instance = None
     resp = getPointValue(
-        dataset, instance, [coord["lon"], coord["lat"]], parameter_names, datetime
+        dataset, None, [coord["lon"], coord["lat"]], parameter_name, datetime
     )
-    dat = json.loads(resp)
-    return covjson_from_resp(dat)
+    if resp:
+        dat = json.loads(resp)
+        return GeoJSONResponse(covjson_from_resp(dat))
+    return None
 
 
 @edrApiApp.get(
@@ -158,35 +165,50 @@ async def get_collection_instance_position(
     instance: str,
     request: Request,
     coords: str,
-    datetime: str,
-    parameter_names: str = Query(alias="parameter-names"),
+    datetime: Optional[str] = None,
+    parameter_name: str = Query(alias="parameter-name"),
 ):
     latlons = wkt.loads(coords)
     coord = {"lat": latlons["coordinates"][0], "lon": latlons["coordinates"][1]}
     resp = getPointValue(
-        dataset, instance, [coord["lon"], coord["lat"]], parameter_names, datetime
+        dataset, instance, [coord["lon"], coord["lat"]], parameter_name, datetime
     )
     dat = json.loads(resp)
-    return covjson_from_resp(dat)
+    return GeoJSONResponse(covjson_from_resp(dat))
 
 
 def get_collectioninfo_for_id(dataset: str, base_url: str) -> Collection:
     links: list[Link] = []
-    links.append(Link(href=f"{base_url}", rel="self"))
+    links.append(Link(href=f"{base_url}", rel="self", type="application/json"))
     bbox = get_extent(dataset)
     print("bbox:", bbox)
     crs = CRSOptions.wgs84
     spatial = Spatial(bbox=bbox, crs=crs)
     extent = Extent(spatial=spatial)
-    position_query_link = DataQueryLink(
-        link=Link(href=f"{base_url}/position", rel="data")
+    position_link = Link(
+        href=f"{base_url}/position", rel="data", type="application/geo+json"
     )
-    data_queries = DataQueries(position=position_query_link)
+    links.append(position_link)
+    position_query_link = DataQueryLink(link=position_link)
+    ref_times = get_reference_times_for_dataset(dataset, None, None)
+    instance_query_link = None
+    if ref_times and len(ref_times) > 0:
+        instance_link = Link(
+            href=f"{base_url}/instances", rel="instance", type="application/json"
+        )
+        links.append(instance_link)
+        instance_query_link = DataQueryLink(link=instance_link)
+    data_queries = DataQueries(
+        position=position_query_link, instances=instance_query_link
+    )
     parameter_names: dict(str, Parameter) = {
         "air_temperature": Parameter(
             id="air_temperature",
-            observedProperty=ObservedProperty(label={"en": "temperature"}),
-        )
+            observedProperty=ObservedProperty(id="temp", label={"en": "temperature"}),
+            type="Parameter",
+            unit=Unit(symbol="C"),
+            title="air_temperature",
+        ),
     }
 
     crs = ["EPSG:4326"]
@@ -210,7 +232,7 @@ def get_collectioninfo_for_id(dataset: str, base_url: str) -> Collection:
 async def get_collections(request: Request):
     links: list[Link] = []
     base_url = request.url_for("get_collections")
-    self_link = Link(href=request.url_for("get_collections"), rel="self")
+    self_link = Link(href=request.url_for("get_collections"), rel="self", type="application/json")
     links.append(self_link)
     collections: list[Collection] = []
     for ds in datasets.keys():
@@ -268,7 +290,9 @@ def get_reference_times_for_dataset(
 ) -> list[str]:
     url = f"{wms_url}?DATASET={dataset}&SERVICE=WMS&VERSION=1.3.0&request=getreferencetimes&LAYER={layer}"
     logger.info("getreftime_url: %s", wms_url)
-    return ["2022-06-30T06:00:00Z", "2022-06-30T09:00:00Z"]
+    if dataset == "HARM_N25":
+        return ["2022-06-30T06:00:00Z", "2022-06-30T09:00:00Z"]
+    return []
 
 
 def get_extent(coll):
@@ -286,17 +310,19 @@ def get_extent(coll):
 @edrApiApp.get("/collections/{dataset}/instances", response_model=InstancesModel)
 async def get_collection_instances_by_id(dataset: str, request: Request):
     base_url = request.url_for("get_collection_instances_by_id", dataset=dataset)
-    instances: list(Instance) = []
+    instances: list(Collection) = []
     wms_url = request.url_for("get_landing_page").replace("/edr", "/wms")
     ref_times = get_reference_times_for_dataset(dataset, wms_url, "precipitation")
     links: list(Link) = []
     links.append(Link(href=base_url, rel="self"))
     extent = Extent()
     for ref_time in ref_times:
-        instance_links: list(Instance) = []
+        instance_links: list(Link) = []
         instance_link = Link(href=f"{base_url}/{ref_time}", rel="self")
         instance_links.append(instance_link)
-        instance = Instance(id=ref_time, links=instance_links, extent=extent)
+        instance = Collection(
+            id=ref_time, links=instance_links, extent=extent, crs=CRSOptions.wgs84
+        )
         instances.append(instance)
     instances_data = InstancesModel(instances=instances, links=links)
     return instances_data
@@ -313,7 +339,7 @@ async def get_collection_instance_by_id_and_dataset(
     return coll
 
 
-@edrApiApp.get("/", response_model=LandingPageModel, response_model_exclude_none=False)
+@edrApiApp.get("/", response_model=LandingPageModel, response_model_exclude_none=True)
 async def get_landing_page(request: Request):
     cfg = set_edr_config()
     contact = Contact(**cfg["contact"])
@@ -326,10 +352,18 @@ async def get_landing_page(request: Request):
     conformance_url = request.url_for("get_conformance")
     collections_url = request.url_for("get_collections")
     links: list[Link] = []
-    l = Link(href=base_url, rel="self")
+    l = Link(href=base_url, rel="self", type="application/json")
     links.append(l)
-    links.append(Link(href=conformance_url, rel="conformance"))
-    links.append(Link(href=collections_url, rel="collections"))
+    links.append(Link(href=conformance_url, rel="conformance", type="application/json"))
+    links.append(Link(href=collections_url, rel="data", type="application/json"))
+    openapi_url = f"{base_url}api"
+    links.append(
+        Link(
+            href=openapi_url,
+            rel="service-desc",
+            type="application/vnd.oai.openapi+json;version=3.0",
+        )
+    )
 
     landing_page = LandingPageModel(
         links=links,
@@ -344,12 +378,36 @@ async def get_landing_page(request: Request):
 
 conformance = ConformanceModel(
     conformsTo=[
-        "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core",
-        "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30",
-        "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/html",
-        "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson",
+        "http://www.opengis.net/spec/ogcapi-edr-1/1.0/conf/core",
+        "http://www.opengis.net/spec/ogcapi-common-1/1.0.conf/core",
+        "http://www.opengis.net/spec/ogcapi-common-2/1.0/conf/collections",
+        "http://www.opengis.net/spec/ogcapi-edr-1/1.0/conf/oas30",
+        "http://www.opengis.net/spec/ogcapi-edr-1/1.0/conf/geojson",
+        "http://www.opengis.net/spec/ogcapi-edr-1/1.0/conf/queries",
     ]
 )
+
+
+@edrApiApp.get(
+    "/api",
+)
+def getFixedApi():
+    api = edrApiApp.openapi()
+    for pth in api["paths"].values():
+        if "parameters" in pth["get"]:
+            for param in pth["get"]["parameters"]:
+                if param["in"] == "query" and param["name"] == "datetime":
+                    param["style"] = "form"
+                    param["explode"] = False
+                    param["schema"] = {
+                        "type": "string",
+                    }
+    if "CompactAxis" in api["components"]["schemas"]:
+        comp = api["components"]["schemas"]["CompactAxis"]
+        if "exclusiveMinimum" in comp["properties"]["num"]:
+            comp["properties"]["num"]["exclusiveMinimum"] = False
+
+    return api
 
 
 @edrApiApp.get("/conformance", response_model=ConformanceModel)
@@ -415,6 +473,7 @@ def makedims(dims, data):
 
 
 def covjson_from_resp(dat):
+    print("DAT:", dat)
     (lon, lat) = dat[0]["point"]["coords"].split(",")
     lat = float(lat)
     lon = float(lon)
@@ -428,17 +487,24 @@ def covjson_from_resp(dat):
         values.append(float(dat[0]["data"][reference_time][t]))
     print("VAL:", values)
 
-    parameters: Dict[str, Parameter] = {
-        "air_temperature__at_2m": Parameter(
-            id="air_temperature__at_2m",
-            observedProperty=ObservedProperty(label={"en": "temperature"}),
+    parameters: Dict(str, Parameter) = dict()
+    ranges = dict()
+    for dt in dat:
+        values = []
+        for t in timeSteps:
+            values.append(float(dt["data"][reference_time][t]))
+        param = Parameter(
+            id=dt["name"], observedProperty=ObservedProperty(label={"en": dt["name"]})
         )
-    }
-    _range = dict(
-        axisNames=["x", "y", "t"],
-        shape=[1, 1, len(timeSteps)],
-        values=values,
-    )
+        parameters[dt["name"]] = param
+        _range = dict(
+            axisNames=["x", "y", "t"],
+            shape=[1, 1, len(timeSteps)],
+            values=values,
+        )
+        print("_range: ", _range)
+        ranges[dt["name"]] = _range
+
     axes: dict[str, ValuesAxis] = {
         "x": ValuesAxis(values=[lon]),
         "y": ValuesAxis(values=[lat]),
@@ -460,7 +526,7 @@ def covjson_from_resp(dat):
     covjson = Coverage(
         id="test",
         domain=domain,
-        ranges={"air_temperature__at_2m": _range},
+        ranges=ranges,
         parameters=parameters,
     )
     return covjson

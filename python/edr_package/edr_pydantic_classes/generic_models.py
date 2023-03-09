@@ -18,7 +18,7 @@ class Link(MyBaseModel):
     title: Optional[str] = Field(None, example="Monitoring site name")
     length: Optional[int] = None
     templated: Optional[bool] = Field(
-        None,
+        False,
         description="defines if the link href value is a template with values requiring replacement",
     )
 

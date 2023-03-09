@@ -58,6 +58,7 @@ class DataQueries(MyBaseModel):
     corridor: Optional[DataQueryLink] = None
     locations: Optional[DataQueryLink] = None
     items: Optional[DataQueryLink] = None
+    instances: Optional[DataQueryLink] = None
 
 
 class Instance(MyBaseModel):
@@ -99,13 +100,6 @@ class Instance(MyBaseModel):
                 "type": "position",
                 "title": "Position",
             },
-            {
-                "href": "http://www.example.org/edr/collections/the_collection_id/area",
-                "hreflang": "en",
-                "rel": "data",
-                "type": "area",
-                "title": "Area",
-            },
         ],
     )
     id: str
@@ -114,7 +108,7 @@ class Instance(MyBaseModel):
     keywords: Optional[List[str]]
     extent: Extent
     data_queries: Optional[DataQueries]
-    crs: Optional[List[str]]
+    crs: Optional[str | List[str]]
     output_formats: Optional[List[str]]
     parameter_names: Optional[Dict[str, Parameter]]
 
