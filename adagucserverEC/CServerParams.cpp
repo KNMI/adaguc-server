@@ -483,8 +483,11 @@ bool CServerParams::checkBBOXXYOrder(const char *projName) {
  */
 CT::PointerList<CT::string *> *CServerParams::getLegendNames(std::vector<CServerConfig::XMLE_Legend *> Legend) {
   if (Legend.size() == 0) {
-    CDBError("No legends defined");
-    return NULL;
+    CDBDebug("No legends defined");
+    CT::string *autoLegendName = new CT::string("rainbow");
+    CT::PointerList<CT::string *> *legendList = new CT::PointerList<CT::string *>();
+    legendList->push_back(autoLegendName);
+    return legendList;
   }
   CT::PointerList<CT::string *> *stringList = new CT::PointerList<CT::string *>();
 

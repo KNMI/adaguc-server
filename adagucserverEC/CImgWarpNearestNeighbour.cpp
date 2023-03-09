@@ -29,8 +29,6 @@
 #include <limits>
 #include "CFillTriangle.h"
 const char *CImgWarpNearestNeighbour::className = "CImgWarpNearestNeighbour";
-// const char *CDrawTileObjByteCache::className="CDrawTileObjByteCache";
-//  const char *CDrawTileObj::className="CDrawTileObj";
 
 void CImgWarpNearestNeighbour::drawTriangleBil(CDrawImage *drawImage, float *destField, int *xP, int *yP, float *values) {
 
