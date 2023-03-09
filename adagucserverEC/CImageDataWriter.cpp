@@ -51,7 +51,7 @@
 
 CT::string months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 // #define CIMAGEDATAWRITER_DEBUG
-//  #define MEASURETIME
+// #define MEASURETIME
 
 void doJacoIntoLatLon(double &u, double &v, double lo, double la, float deltaX, float deltaY, CImageWarper *warper);
 void rotateUvNorth(double &u, double &v, double rlo, double rla, float deltaX, float deltaY, CImageWarper *warper);
@@ -1476,10 +1476,6 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
                 shadeInterval->attr.bgcolor = featureInterval->attr.bgcolor;
                 shadeInterval->attr.label = featureInterval->attr.label;
               }
-              // for (size_t i = 0; i < styleConfiguration->shadeIntervals->size(); i += 1) {
-              //   CServerConfig::XMLE_ShadeInterval *p = (*styleConfiguration->shadeIntervals)[i];
-              //   CDBDebug("%d %s %s %s %s %s", i, p->attr.min.c_str(), p->attr.max.c_str(), p->attr.fillcolor.c_str(), p->attr.bgcolor.c_str(), p->attr.label.c_str());
-              // }
             }
           }
         }
@@ -3685,18 +3681,18 @@ void rotateUvNorth(double &u, double &v, double rlo, double rla, float deltaX, f
   dLonNorth = radians(lon_pntNorth);
   dLatNorth = radians(lat_pntNorth);
   xpntNorthSph = cos(dLatNorth) * cos(dLonNorth);
-  ypntNorthSph = cos(dLatNorth) * sin(dLonNorth); // # Get [dLonNorth,dLatNorth] on the unit sphere.
-  zpntNorthSph = sin(dLatNorth);                  // # Only XY plane is needed.
+  ypntNorthSph = cos(dLatNorth) * sin(dLonNorth); // Get [dLonNorth,dLatNorth] on the unit sphere.
+  zpntNorthSph = sin(dLatNorth);                  // Only XY plane is needed.
   dLonEast = radians(lon_pntEast);
   dLatEast = radians(lat_pntEast);
   xpntEastSph = cos(dLatEast) * cos(dLonEast);
-  ypntEastSph = cos(dLatEast) * sin(dLonEast); // # Get [dLonEast,dLatEast] on the unit sphere.
-  zpntEastSph = sin(dLatEast);                 // # Only XY plane is needed.
+  ypntEastSph = cos(dLatEast) * sin(dLonEast); // Get [dLonEast,dLatEast] on the unit sphere.
+  zpntEastSph = sin(dLatEast);                 // Only XY plane is needed.
   lon_pnt0 = radians(lon_pnt0);
   lat_pnt0 = radians(lat_pnt0);
   xpnt0Sph = cos(lat_pnt0) * cos(lon_pnt0);
-  ypnt0Sph = cos(lat_pnt0) * sin(lon_pnt0); // # Get [lon_pnt0,lat_pnt0] on the unit sphere.
-  zpnt0Sph = sin(lat_pnt0);                 // # Only XY plane is needed.
+  ypnt0Sph = cos(lat_pnt0) * sin(lon_pnt0); // Get [lon_pnt0,lat_pnt0] on the unit sphere.
+  zpnt0Sph = sin(lat_pnt0);                 // Only XY plane is needed.
 
   xpntEastSph -= xpnt0Sph;
   ypntEastSph -= ypnt0Sph;
@@ -3707,18 +3703,10 @@ void rotateUvNorth(double &u, double &v, double rlo, double rla, float deltaX, f
   NormVector(xpntEastSph, ypntEastSph, zpntEastSph);    // vecx
   NormVector(xpntNorthSph, ypntNorthSph, zpntNorthSph); // vecy
 
-  // vecz = CrossProd(vecx,vecy)
   CrossProd(xpntEastSph, ypntEastSph, zpntEastSph, xpntNorthSph, ypntNorthSph, zpntNorthSph, xnormSph, ynormSph, znormSph); // vec z
-  // # vecn = (0.0,0.0,1.0)                   // up-vector in a global coordinate system
-  // # Project vecn onto plane XY, where plane-normal is vecz
-  // # vecnProjXY = vecn - D*vecz;   D= a*x1+b*y1+c*z1;  vecz=(a,b,c); vecn=(x1,y1,z1)=(0,0,1)
-  // #                               D= vecz[2]*1;
-  // # vecyRot = NormVector( (0.0 - vecz[2]*vecz[0],0.0  - vecz[2]*vecz[1], 1.0  - vecz[2]*vecz[2]) )
-
-  // double Dist =  xnormSph * 0.0 +  ynormSph * 0.0 + znormSph * 1.0; // Left out for optimization
-  xpntNorthSphRot = -znormSph * xnormSph;      // xpntNorthSphRot = 0.0 - Dist*xnormSph;
-  ypntNorthSphRot = -znormSph * ynormSph;      // ypntNorthSphRot = 0.0 - Dist*ynormSph;
-  zpntNorthSphRot = 1.0 - znormSph * znormSph; // zpntNorthSphRot = 1.0 - Dist*znormSph;
+  xpntNorthSphRot = -znormSph * xnormSph;                                                                                   // xpntNorthSphRot = 0.0 - Dist*xnormSph;
+  ypntNorthSphRot = -znormSph * ynormSph;                                                                                   // ypntNorthSphRot = 0.0 - Dist*ynormSph;
+  zpntNorthSphRot = 1.0 - znormSph * znormSph;                                                                              // zpntNorthSphRot = 1.0 - Dist*znormSph;
   NormVector(xpntNorthSphRot, ypntNorthSphRot, zpntNorthSphRot);
 
   // This would create in 3D the rotated Easting vector; but we don't need it in this routine.
