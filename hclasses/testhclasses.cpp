@@ -46,6 +46,11 @@ TEST(string, isFloat) {
   CHECK(CT::string("-15.0").isFloat());
 }
 
+TEST(string, initNULL) {
+  CT::string a((const char *)NULL);
+  CHECK(a.empty());
+}
+
 TEST(string, concatenation) {
   CT::string a = "teststring_a";
   CHECK(a.equals("teststring_a"));
