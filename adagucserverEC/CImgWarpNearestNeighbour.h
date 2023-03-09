@@ -201,9 +201,6 @@ private:
             bgColor = CColor(featureInterval->attr.bgcolor.c_str());
           }
         }
-        // double min = ((double)shadeDefMin[j]);
-        // double max = ((double)shadeDefMax[j]);
-        // CDBDebug("%d %f %f %d-%d-%d-%d", j, min, max, fillColors[j].r, fillColors[j].g, fillColors[j].b, fillColors[j].a);
       }
 
       for (int y = 0; y < drawImage->Geo->dHeight; y++) {
@@ -520,10 +517,6 @@ private:
 
     internalGeo.dfBBOX[2] = ((drawImage->Geo->dfBBOX[2] - drawImage->Geo->dfBBOX[0]) / double(drawImage->Geo->dWidth)) * double(internalWidth) + drawImage->Geo->dfBBOX[0];
     internalGeo.dfBBOX[1] = ((drawImage->Geo->dfBBOX[1] - drawImage->Geo->dfBBOX[3]) / double(drawImage->Geo->dHeight)) * double(internalHeight) + drawImage->Geo->dfBBOX[3];
-    // internalGeo->dfBBOX[3]
-
-    // int tile_width=int((double(drawImage->Geo->dWidth)/double(x_div))+0.5);
-    // int tile_height=int((double(drawImage->Geo->dHeight)/double(y_div))+0.5);
 
     // Setup the renderer to draw the tiles with.We do not keep the calculated results for CDF_CHAR (faster)
     CAreaMapper *drawTileClass = new CAreaMapper();
