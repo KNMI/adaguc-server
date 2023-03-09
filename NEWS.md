@@ -1,4 +1,11 @@
 
+**Version 2.8.4 2023-03-08**
+- Nearest neighbour rendering can now be done with discrete classes using ShadeInterval and renderhint="discreteclasses"
+- Hex colors now work with both uppercase and lowercase hex digits
+- Legend is now not mandatory in a Style definition
+- Drawfunction is refactored and de-duplicated, less double code.
+- A buffer overflow issue with shadeintervals rendering has been solved (adagucserverEC/CImgWarpNearestNeighbour.h, 222)
+
 **Version 2.8.3 2023-02-15**
 - Build docker image for arm64 architecture (e.g. Mac M1)
 

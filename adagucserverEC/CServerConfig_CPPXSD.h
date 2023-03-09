@@ -754,7 +754,7 @@ public:
   public:
     class Cattr {
     public:
-      CT::string settings, striding, renderer, scalewidth, scalecontours;
+      CT::string settings, striding, renderer, scalewidth, scalecontours, renderhint;
     } attr;
     void addAttribute(const char *name, const char *value) {
       if (equals("settings", 8, name)) {
@@ -765,6 +765,9 @@ public:
         return;
       } else if (equals("striding", 8, name)) {
         attr.striding.copy(value);
+        return;
+      } else if (equals("renderhint", 10, name)) {
+        attr.renderhint.copy(value);
         return;
       } else if (equals("scalewidth", 10, name)) {
         attr.scalewidth.copy(value);
