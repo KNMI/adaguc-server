@@ -104,7 +104,7 @@ Configuration
         with custom image
     -   [Stippling](Stippling.md) (distancex, distancey, discradius)
         Configuration of stippling renderer.
-    -   [RenderSettings](RenderSettings.md) (settings, striding) Configuration of
+    -   [RenderSettings](RenderSettings.md) (settings, striding, renderer, scalewidth, scalecontours, renderhint) Configuration of
         renderers
 
 <!-- -->

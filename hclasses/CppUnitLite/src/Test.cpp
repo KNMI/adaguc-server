@@ -24,7 +24,7 @@ void Test::setNext(Test *test)
 	next_ = test;
 }
 
-bool Test::check(long expected, long actual, TestResult& result, const SimpleString& fileName, long lineNumber)
+bool Test::check(long expected, long actual, TestResult& result, const SimpleString& /*fileName*/, long /*lineNumber*/)
 {
 	if (expected == actual)
 		return true;
@@ -41,7 +41,7 @@ bool Test::check(long expected, long actual, TestResult& result, const SimpleStr
 }
 
 
-bool Test::check(const SimpleString& expected, const SimpleString& actual, TestResult& result, const SimpleString& fileName, long lineNumber)
+bool Test::check(const SimpleString& expected, const SimpleString& actual, TestResult& result, const SimpleString& /*fileName*/, long /*lineNumber*/)
 {
 	if (expected == actual)
 		return true;

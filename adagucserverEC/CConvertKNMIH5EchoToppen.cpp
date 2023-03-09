@@ -260,8 +260,8 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
       imageWarperEchoToppen.reprojpoint_inv(h5X, h5Y);
 
       /* The request coordinate space needs to be transformed to pixel screenview space */
-      int dlon = int((h5X - offsetETX) / cellSizeETX);
-      int dlat = int((h5Y - offsetETY) / cellSizeETY);
+      int dlon = int((h5X - offsetETX) / (cellSizeETX == 0 ? 1 : cellSizeETX));
+      int dlat = int((h5Y - offsetETY) / (cellSizeETY == 0 ? 1 : cellSizeETY));
 
       /* Convert from requested coordinate system (in the WMS request) to latlon */
       double lat = h5Y;

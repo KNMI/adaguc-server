@@ -41,7 +41,6 @@ CDrawImage::CDrawImage() {
   _bEnableTrueColor = false;
   _bEnableTransparency = false;
   _bEnableTrueColor = false;
-  dNumImages = 0;
   Geo = new CGeoParams();
 
   cairo = NULL;
@@ -729,7 +728,7 @@ void CDrawImage::getPixelTrueColor(int x, int y, unsigned char &r, unsigned char
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
     cairo->getPixel(x, y, r, g, b, a);
   } else {
-    int dTranspColor;
+    int dTranspColor = -1;
     if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
       dTranspColor = gdImageGetTransparent(image);
     }
@@ -1144,7 +1143,6 @@ void CDrawImage::drawText(int x, int y, const char *fontfile, float size, float 
     freeType->setColor(color.r, color.g, color.b, color.a);
     freeType->drawText(x, y, angle, text);
     cairo->isAlphaUsed |= freeType->isAlphaUsed; // remember freetype's isAlphaUsed flag
-    CDBDebug("drawText(%s) finished with font", text);
   } else {
     char *_text = new char[strlen(text) + 1];
     memcpy(_text, text, strlen(text) + 1);

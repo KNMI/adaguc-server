@@ -376,7 +376,7 @@ bool CServerParams::checkResolvePath(const char *path, CT::string *resolvedPath)
         continue;
       }
 
-      if (baseDir != NULL && dirPrefix != NULL) {
+      if (strlen(baseDir) > 0 && strlen(dirPrefix) > 0) {
         // Prepend the prefix to make the absolute path
         CT::string pathToCheck;
         pathToCheck.print("%s/%s", dirPrefix, path);
@@ -397,7 +397,7 @@ bool CServerParams::checkResolvePath(const char *path, CT::string *resolvedPath)
           }
         }
       } else {
-        if (baseDir == NULL) {
+        if (strlen(baseDir)) {
           CDBDebug("basedir not defined");
         }
         if (dirPrefix == NULL) {
@@ -483,8 +483,11 @@ bool CServerParams::checkBBOXXYOrder(const char *projName) {
  */
 CT::PointerList<CT::string *> *CServerParams::getLegendNames(std::vector<CServerConfig::XMLE_Legend *> Legend) {
   if (Legend.size() == 0) {
-    CDBError("No legends defined");
-    return NULL;
+    CDBDebug("No legends defined");
+    CT::string *autoLegendName = new CT::string("rainbow");
+    CT::PointerList<CT::string *> *legendList = new CT::PointerList<CT::string *>();
+    legendList->push_back(autoLegendName);
+    return legendList;
   }
   CT::PointerList<CT::string *> *stringList = new CT::PointerList<CT::string *>();
 

@@ -47,7 +47,7 @@ fi
 
 
 rm .env
-echo "ADAGUC_HOME=$HOME" >> .env
+echo "ADAGUCHOME=${ADAGUC_DATA_DIR}" >> .env
 echo "ADAGUC_DATA_DIR=${ADAGUC_DATA_DIR}" >> .env
 echo "ADAGUC_AUTOWMS_DIR=${ADAGUC_AUTOWMS_DIR=}" >> .env
 echo "ADAGUC_DATASET_DIR=${ADAGUC_DATASET_DIR}" >> .env
