@@ -25,7 +25,7 @@
 
 #include "CCairoPlotter.h"
 #ifdef ADAGUC_USE_CAIRO
-//#define MEASURETIME
+// #define MEASURETIME
 
 #include "CStopWatch.h"
 const char *CCairoPlotter::className = "CCairoPlotter";
@@ -650,7 +650,7 @@ void CCairoPlotter::drawText(int x, int y, double angle, const char *text) {
   _drawFreeTypeText(x, y, w, h, angle, text, true);
 }
 
-void CCairoPlotter::drawStrokedText(int x, int y, double angle, const char *text, const char *fontFile, float fontSize, CColor bgcolor, CColor fgcolor) {
+void CCairoPlotter::drawStrokedText(int x, int y, double angle, const char *text, const char *fontFile, float fontSize, float strokeWidth, CColor bgcolor, CColor fgcolor) {
   if (fontFile) {
   }
   /* https://www.cairographics.org/samples/text/ */
@@ -663,10 +663,11 @@ void CCairoPlotter::drawStrokedText(int x, int y, double angle, const char *text
   cairo_move_to(cr, x, y);
   cairo_rotate(cr, angle);
   cairo_text_path(cr, text);
-  cairo_set_source_rgb(cr, fgcolor.r, fgcolor.g, fgcolor.b);
+  CDBDebug("Front color: %f %f %f", fgcolor.r / 256., fgcolor.g / 256., fgcolor.b / 256.);
+  cairo_set_source_rgb(cr, fgcolor.r / 256., fgcolor.g / 256., fgcolor.b / 256.);
   cairo_fill_preserve(cr);
-  cairo_set_source_rgb(cr, bgcolor.r, bgcolor.g, bgcolor.b);
-  cairo_set_line_width(cr, 0.75);
+  cairo_set_source_rgb(cr, bgcolor.r / 256., bgcolor.g / 256., bgcolor.b / 256.);
+  cairo_set_line_width(cr, strokeWidth);
   cairo_set_dash(cr, 0, 0, 0);
   cairo_stroke(cr);
 

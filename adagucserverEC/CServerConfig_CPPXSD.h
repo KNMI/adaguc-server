@@ -342,7 +342,7 @@ public:
   public:
     class Cattr {
     public:
-      CT::string width, dashing, linecolor, textcolor, textstrokecolor, classes, interval, textformatting, textsize;
+      CT::string width, dashing, linecolor, textcolor, textstrokecolor, classes, interval, textformatting, textsize, textstrokewidth;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
       if (equals("width", 5, attrname)) {
@@ -371,6 +371,9 @@ public:
         return;
       } else if (equals("textformatting", 14, attrname)) {
         attr.textformatting.copy(attrvalue);
+        return;
+      } else if (equals("textstrokewidth", 15, attrname)) {
+        attr.textstrokewidth.copy(attrvalue);
         return;
       }
     }
