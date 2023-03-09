@@ -1306,7 +1306,7 @@ int CImageDataWriter::createAnimation() {
   return 0;
 }
 
-void CImageDataWriter::setDate(const char *szTemp) { drawImage.setTextStroke(drawImage.Geo->dWidth - 170, 5, 0, szTemp, NULL, 12.0, CColor(0, 0, 0, 255), CColor(255, 255, 255, 255)); }
+void CImageDataWriter::setDate(const char *szTemp) { drawImage.setTextStroke(drawImage.Geo->dWidth - 170, 5, 0, szTemp, NULL, 12.0, 0.75, CColor(0, 0, 0, 255), CColor(255, 255, 255, 255)); }
 
 CImageDataWriter::IndexRange::IndexRange() {
   min = 0;
@@ -1606,6 +1606,10 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
               if (contourLine->attr.textsize.empty() == false) {
                 bilinearSettings.printconcat("textsize(%s)$", contourLine->attr.textsize.c_str());
               }
+              if (contourLine->attr.textstrokewidth.empty() == false) {
+                bilinearSettings.printconcat("textstrokewidth(%s)$", contourLine->attr.textstrokewidth.c_str());
+              }
+
               if (contourLine->attr.textstrokecolor.empty() == false) {
                 bilinearSettings.printconcat("textstrokecolor(%s)$", contourLine->attr.textstrokecolor.c_str());
               }
@@ -1637,6 +1641,9 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
               }
               if (contourLine->attr.textsize.empty() == false) {
                 bilinearSettings.printconcat("textsize(%s)$", contourLine->attr.textsize.c_str());
+              }
+              if (contourLine->attr.textstrokewidth.empty() == false) {
+                bilinearSettings.printconcat("textstrokewidth(%s)$", contourLine->attr.textstrokewidth.c_str());
               }
               if (contourLine->attr.textstrokecolor.empty() == false) {
                 bilinearSettings.printconcat("textstrokecolor(%s)$", contourLine->attr.textstrokecolor.c_str());
@@ -1963,7 +1970,7 @@ int CImageDataWriter::calculateData(std::vector<CDataSource *> &dataSources) {
 
       if (dataSource->cfgLayer->ImageText.size() > 0) {
         if (dataSource->cfgLayer->ImageText[0]->value.empty() == false) {
-          drawImage.setTextStroke(drawImage.Geo->dWidth - 170, 5, 0, dataSource->cfgLayer->ImageText[0]->value.c_str(), NULL, 12.0, CColor(0, 0, 0, 255), CColor(255, 255, 255, 255));
+          drawImage.setTextStroke(drawImage.Geo->dWidth - 170, 5, 0, dataSource->cfgLayer->ImageText[0]->value.c_str(), NULL, 12.0, 0.75, CColor(0, 0, 0, 255), CColor(255, 255, 255, 255));
         }
       }
     }

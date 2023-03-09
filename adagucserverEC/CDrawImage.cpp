@@ -874,12 +874,12 @@ void CDrawImage::setText(const char *text, size_t length, int x, int y, CColor c
   }
 }
 
-void CDrawImage::setTextStroke(int x, int y, float angle, const char *text, const char *fontFile, float fontSize, CColor bgcolor, CColor fgcolor) {
+void CDrawImage::setTextStroke(int x, int y, float angle, const char *text, const char *fontFile, float fontSize, float strokeWidth, CColor bgcolor, CColor fgcolor) {
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
     if (bgcolor.a == 0) {
       drawText(x, y, fontFile, fontSize, angle, text, fgcolor);
     } else {
-      cairo->drawStrokedText(x, y, -angle, text, fontFile, fontSize * 1.4, bgcolor, fgcolor);
+      cairo->drawStrokedText(x, y, -angle, text, fontFile, fontSize * 1.4, strokeWidth, bgcolor, fgcolor);
     }
   } else {
     int fgColorIndex = getClosestGDColor(fgcolor.r, fgcolor.g, fgcolor.b);

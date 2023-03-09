@@ -80,25 +80,29 @@ public:
     textstrokecolor.a = 0;
     continuousInterval = 0;
     textFormat = "%f";
-    fontSize = 0; // Zero means take default.
+    fontSize = 0;        // Zero means take default.
+    textStrokeWidth = 0; // Zero means take default.
   }
 
   std::vector<float> definedIntervals;
   float continuousInterval;
   float lineWidth;
   float fontSize;
+  float textStrokeWidth;
   CT::string textFormat;
   CColor linecolor;
   CColor textcolor;
   CColor textstrokecolor;
   CT::string dashing;
 
-  ContourDefinition(float lineWidth, CColor linecolor, CColor textcolor, CColor textstrokecolor, const char *_definedIntervals, const char *_textFormat, float fontSize, CT::string dashing) {
+  ContourDefinition(float lineWidth, CColor linecolor, CColor textcolor, CColor textstrokecolor, const char *_definedIntervals, const char *_textFormat, float fontSize, float textStrokeWidth,
+                    CT::string dashing) {
     this->lineWidth = lineWidth;
     this->linecolor = linecolor;
     this->textcolor = textcolor;
     this->textstrokecolor = textstrokecolor;
     this->fontSize = fontSize;
+    this->textStrokeWidth = textStrokeWidth;
     this->continuousInterval = continuousInterval;
     this->dashing = dashing;
     this->continuousInterval = 0;
@@ -120,13 +124,15 @@ public:
     }
   }
 
-  ContourDefinition(float lineWidth, CColor linecolor, CColor textcolor, CColor textstrokecolor, float continuousInterval, const char *_textFormat, float fontSize, CT::string dashing) {
+  ContourDefinition(float lineWidth, CColor linecolor, CColor textcolor, CColor textstrokecolor, float continuousInterval, const char *_textFormat, float fontSize, float textStrokeWidth,
+                    CT::string dashing) {
 
     this->lineWidth = lineWidth;
     this->linecolor = linecolor;
     this->textcolor = textcolor;
     this->textstrokecolor = textstrokecolor;
     this->fontSize = fontSize;
+    this->textStrokeWidth = textStrokeWidth;
     this->continuousInterval = continuousInterval;
     this->dashing = dashing;
 
@@ -173,10 +179,10 @@ private:
   std::vector<PointD *> maximaPoints;
   DEF_ERRORFUNCTION();
   void drawTextForContourLines(CDrawImage *drawImage, ContourDefinition *contourDefinition, int lineX, int lineY, int endX, int endY, std::vector<Point> *textLocations, float value, CColor textColor,
-                               CColor textStrokeColor, const char *fontLocation, float fontSize);
+                               CColor textStrokeColor, const char *fontLocation, float fontSize, float textStrokeWidth);
   void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *valueField, int lineX, int lineY, int dImageWidth, int dImageHeight, float lineWidth, CColor lineColor, CColor textColor,
                     CColor textStrokeColor, ContourDefinition *contourDefinition, DISTANCEFIELDTYPE lineMask, bool drawText, std::vector<Point> *textLocations, double scaling,
-                    const char *fontLocation, float fontSize, double *dashes, int numDashes);
+                    const char *fontLocation, float fontSize, float textStrokeWidth, double *dashes, int numDashes);
 
 public:
   CImgWarpBilinear() {

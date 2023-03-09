@@ -203,7 +203,7 @@ public:
   void setDisc(int x, int y, float discRadius, CColor fillColor, CColor lineColor);
   void setEllipse(int x, int y, float discRadiusX, float discRadiusY, float rotation, CColor fillColor, CColor lineColor);
   void setTextDisc(int x, int y, int discRadius, const char *text, const char *fontfile, float fontsize, CColor textcolor, CColor fillcolor, CColor lineColor);
-  void setTextStroke(int x, int y, float angle, const char *text, const char *fontFile, float fontsize, CColor bgcolor, CColor fgcolor);
+  void setTextStroke(int x, int y, float angle, const char *text, const char *fontFile, float fontsize, float strokeWidth, CColor bgcolor, CColor fgcolor);
   void rectangle(int x1, int y1, int x2, int y2, int innercolor, int outercolor);
   void rectangle(int x1, int y1, int x2, int y2, int outercolor);
   void rectangle(int x1, int y1, int x2, int y2, CColor innercolor, CColor outercolor);
