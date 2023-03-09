@@ -130,3 +130,5 @@ hclasses/testhclasses
 *CTestTestfile.cmake*
 *Makefile*
 *cmake_install.cmake*
+customlibs*
+core-adagucserver*

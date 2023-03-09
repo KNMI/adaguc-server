@@ -51,7 +51,7 @@
 
 CT::string months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 // #define CIMAGEDATAWRITER_DEBUG
-//  #define MEASURETIME
+// #define MEASURETIME
 
 void doJacoIntoLatLon(double &u, double &v, double lo, double la, float deltaX, float deltaY, CImageWarper *warper);
 void rotateUvNorth(double &u, double &v, double rlo, double rla, float deltaX, float deltaY, CImageWarper *warper);
@@ -1460,6 +1460,12 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
               }
             }
             if (featureInterval->attr.fillcolor.empty() == false) {
+              /*
+                Make a shade interval configuration based on the match and matchid properties in the GeoJSON.
+                The datafield is already populated with the feature indices of the geojson polygon.
+                The shadeinterval configuration can style these indices of the polygons with colors.
+                Actual rendering of this is done in CImageNearestNeighbour with the _plot function
+              */
               std::vector<CImageDataWriter::IndexRange> ranges = getIndexRangesForRegex(featureInterval->attr.match, attributeValues, numFeatures);
               for (size_t i = 0; i < ranges.size(); i++) {
                 CServerConfig::XMLE_ShadeInterval *shadeInterval = new CServerConfig::XMLE_ShadeInterval();
@@ -1535,6 +1541,18 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
       if (renderMethod & RM_SHADED) drawShaded = true;
       if (renderMethod & RM_BARB) drawBarb = true;
       if (renderMethod & RM_THIN) drawGridVectors = true;
+
+      /*
+        Check the if we want to use discrete type with the bilinear rendermethod.
+        The bilinear Rendermethod can shade using ShadeInterval if renderhint in RenderSettings is set to RENDERHINT_DISCRETECLASSES
+      */
+      if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL && styleConfiguration->styleConfig->RenderSettings.size() == 1) {
+        CT::string renderHint = styleConfiguration->styleConfig->RenderSettings[0]->attr.renderhint;
+        if (renderHint.equals(RENDERHINT_DISCRETECLASSES)) {
+          drawMap = false;   // Don't use continous legends with the bilinear renderer
+          drawShaded = true; // Use discrete legends defined by ShadeInterval with the bilinear renderer
+        }
+      }
 
       if (drawMap == true) bilinearSettings.printconcat("drawMap=true;");
       if (drawVector == true) bilinearSettings.printconcat("drawVector=true;");
@@ -3639,18 +3657,18 @@ void rotateUvNorth(double &u, double &v, double rlo, double rla, float deltaX, f
   dLonNorth = radians(lon_pntNorth);
   dLatNorth = radians(lat_pntNorth);
   xpntNorthSph = cos(dLatNorth) * cos(dLonNorth);
-  ypntNorthSph = cos(dLatNorth) * sin(dLonNorth); // # Get [dLonNorth,dLatNorth] on the unit sphere.
-  zpntNorthSph = sin(dLatNorth);                  //# Only XY plane is needed.
+  ypntNorthSph = cos(dLatNorth) * sin(dLonNorth); // Get [dLonNorth,dLatNorth] on the unit sphere.
+  zpntNorthSph = sin(dLatNorth);                  // Only XY plane is needed.
   dLonEast = radians(lon_pntEast);
   dLatEast = radians(lat_pntEast);
   xpntEastSph = cos(dLatEast) * cos(dLonEast);
-  ypntEastSph = cos(dLatEast) * sin(dLonEast); // # Get [dLonEast,dLatEast] on the unit sphere.
-  zpntEastSph = sin(dLatEast);                 // # Only XY plane is needed.
+  ypntEastSph = cos(dLatEast) * sin(dLonEast); // Get [dLonEast,dLatEast] on the unit sphere.
+  zpntEastSph = sin(dLatEast);                 // Only XY plane is needed.
   lon_pnt0 = radians(lon_pnt0);
   lat_pnt0 = radians(lat_pnt0);
   xpnt0Sph = cos(lat_pnt0) * cos(lon_pnt0);
-  ypnt0Sph = cos(lat_pnt0) * sin(lon_pnt0); // # Get [lon_pnt0,lat_pnt0] on the unit sphere.
-  zpnt0Sph = sin(lat_pnt0);                 // # Only XY plane is needed.
+  ypnt0Sph = cos(lat_pnt0) * sin(lon_pnt0); // Get [lon_pnt0,lat_pnt0] on the unit sphere.
+  zpnt0Sph = sin(lat_pnt0);                 // Only XY plane is needed.
 
   xpntEastSph -= xpnt0Sph;
   ypntEastSph -= ypnt0Sph;
@@ -3661,18 +3679,10 @@ void rotateUvNorth(double &u, double &v, double rlo, double rla, float deltaX, f
   NormVector(xpntEastSph, ypntEastSph, zpntEastSph);    // vecx
   NormVector(xpntNorthSph, ypntNorthSph, zpntNorthSph); // vecy
 
-  // vecz = CrossProd(vecx,vecy)
   CrossProd(xpntEastSph, ypntEastSph, zpntEastSph, xpntNorthSph, ypntNorthSph, zpntNorthSph, xnormSph, ynormSph, znormSph); // vec z
-  //# vecn = (0.0,0.0,1.0)                   // up-vector in a global coordinate system
-  //# Project vecn onto plane XY, where plane-normal is vecz
-  //# vecnProjXY = vecn - D*vecz;   D= a*x1+b*y1+c*z1;  vecz=(a,b,c); vecn=(x1,y1,z1)=(0,0,1)
-  //#                               D= vecz[2]*1;
-  //# vecyRot = NormVector( (0.0 - vecz[2]*vecz[0],0.0  - vecz[2]*vecz[1], 1.0  - vecz[2]*vecz[2]) )
-
-  // double Dist =  xnormSph * 0.0 +  ynormSph * 0.0 + znormSph * 1.0; // Left out for optimization
-  xpntNorthSphRot = -znormSph * xnormSph;      // xpntNorthSphRot = 0.0 - Dist*xnormSph;
-  ypntNorthSphRot = -znormSph * ynormSph;      // ypntNorthSphRot = 0.0 - Dist*ynormSph;
-  zpntNorthSphRot = 1.0 - znormSph * znormSph; // zpntNorthSphRot = 1.0 - Dist*znormSph;
+  xpntNorthSphRot = -znormSph * xnormSph;                                                                                   // xpntNorthSphRot = 0.0 - Dist*xnormSph;
+  ypntNorthSphRot = -znormSph * ynormSph;                                                                                   // ypntNorthSphRot = 0.0 - Dist*ynormSph;
+  zpntNorthSphRot = 1.0 - znormSph * znormSph;                                                                              // zpntNorthSphRot = 1.0 - Dist*znormSph;
   NormVector(xpntNorthSphRot, ypntNorthSphRot, zpntNorthSphRot);
 
   // This would create in 3D the rotated Easting vector; but we don't need it in this routine.

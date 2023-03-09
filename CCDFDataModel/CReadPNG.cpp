@@ -165,8 +165,8 @@ CReadPNG::CPNGRaster *CReadPNG::read_png_file(const char *file_name, bool pngRea
         unsigned char i = line[x * 1 + 0];
         if (bit_depth == 1) { // 1 byte is 8 pixels (colormap of 2 colors)
           int d = 128;
-          for (int j = 0; j < 8; j++) {
-            int nx = x * 32 + j * 4;
+          for (size_t j = 0; j < 8; j++) {
+            size_t nx = x * 32 + j * 4;
             if (nx + 3 < pngRaster->width * 4) {
               size_t b = nx + 0 + (y * pngRaster->width * 4);
               pngRaster->data[b + 0] = palette[(i & d) / d].red;

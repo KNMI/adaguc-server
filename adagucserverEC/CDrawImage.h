@@ -100,9 +100,6 @@ private:
   int _createStandard();
 
   int dPaletteCreated;
-  bool paletteCopied;
-  unsigned char *rbuf;
-  int dNumImages;
 
   unsigned char BGColorR, BGColorG, BGColorB;
   bool _bEnableTransparency;

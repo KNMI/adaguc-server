@@ -26,6 +26,7 @@
 #ifndef CCDFVARIABLE_H
 #define CCDFVARIABLE_H
 
+#include <algorithm>
 #include "CCDFTypes.h"
 #include "CCDFAttribute.h"
 #include "CCDFDimension.h"
@@ -111,17 +112,16 @@ namespace CDF {
         return getParentCDFObject();
       }
       // Return the correct cdfReader According the given dims.
-      size_t iterativeDimIndex;
-      for (size_t j = 0; j < dimensionlinks.size(); j++) {
-        // CDBDebug("%d-> %d - %d - isIterative: %d", j, start[j],count[j],dimensionlinks[j]->isIterative);
-        if (dimensionlinks[j]->isIterative) {
-          iterativeDimIndex = start[j];
-          if (count[j] != 1) {
-            CDBError("Count %d instead of  1 is requested for iterative dimension %s", count[j], dimensionlinks[j]->name.c_str());
-            throw(CDF_E_ERROR);
-          }
-          break;
-        }
+      auto iterator = std::find_if(dimensionlinks.begin(), dimensionlinks.end(), [](Dimension *d){ return d->isIterative; });
+      if (iterator == dimensionlinks.end()) {
+        CDBError("Did not find iterative dimension");
+        throw(CDF_E_ERROR);
+      }
+      size_t j = iterator - dimensionlinks.begin();
+      size_t iterativeDimIndex = start[j];
+      if (count[j] != 1) {
+        CDBError("Count %d instead of  1 is requested for iterative dimension %s", count[j], dimensionlinks[j]->name.c_str());
+        throw(CDF_E_ERROR);
       }
 #ifdef CCDFDATAMODEL_DEBUG
       CDBDebug("Aggregating %d == %d", cdfObjectList[iterativeDimIndex]->dimIndex, iterativeDimIndex);

@@ -2376,13 +2376,14 @@ int CRequest::process_querystring() {
     }
   }
 
-  if (pszQueryString == NULL) {
-    pszQueryString = strdup("SERVICE=WMS&request=getcapabilities");
-    CGI = 0;
-  } else
-    CGI = 1;
-
   CT::string queryString(pszQueryString);
+  if (queryString.empty()) {
+    queryString = "SERVICE=WMS&request=getcapabilities";
+    CGI = 0;
+  } else {
+    CGI = 1;
+  }
+
   queryString.decodeURLSelf();
   // CDBDebug("QueryString: \"%s\"",queryString.c_str());
   CT::string *parameters = queryString.splitToArray("&");
