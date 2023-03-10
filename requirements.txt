@@ -2,16 +2,12 @@ chardet
 lxml
 werkzeug
 netCDF4
+cftime
 Pillow
-gunicorn
 uvicorn
 pytest
-marshmallow
 owslib
 pyproj
-apispec
-apispec-webframeworks
-marshmallow-oneofschema
 defusedxml
 fastapi
 httpx
@@ -20,3 +16,5 @@ geojson-pydantic
 cachetools>=5.2.1
 pytz
 brotli-asgi
+Brotli
+
