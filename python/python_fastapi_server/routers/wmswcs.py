@@ -1,12 +1,10 @@
 """wmsWcsRouter"""
-from .setup_adaguc import setup_adaguc
+import os
+import logging
+
 from fastapi import Request, APIRouter, Response
 
 from .setup_adaguc import setup_adaguc
-import sys
-import os
-import logging
-import time
 
 wmsWcsRouter = APIRouter(responses={404: {"description": "Not found"}})
 
@@ -17,25 +15,22 @@ logger = logging.getLogger(__name__)
 @wmsWcsRouter.get("/wcs")
 @wmsWcsRouter.get("/adagucserver")
 @wmsWcsRouter.get("/adaguc-server")
-async def handleWMS(
+async def handle_wms(
     req: Request,
     response: Response,
 ):
-    start = time.perf_counter()
-    adagucInstance = setup_adaguc()
-    logger.info("instance:" + str(adagucInstance))
+    adaguc_instance = setup_adaguc()
+    logger.info("instance: %s", str(adaguc_instance))
     url = req.url
 
     logger.info(req.url)
-    stage1 = time.perf_counter()
 
     adagucenv = {}
 
-    """ Set required environment variables """
-    ## baseUrl = req.base_url.replace(req.path, "")
-    baseUrl = f"{url.scheme}://{url.hostname}:{url.port}"
+    # Set required environment variables
+    base_url = f"{url.scheme}://{url.hostname}:{url.port}"
     adagucenv["ADAGUC_ONLINERESOURCE"] = (
-        os.getenv("EXTERNALADDRESS", baseUrl) + "/adaguc-server?"
+        os.getenv("EXTERNALADDRESS", base_url) + "/adaguc-server?"
     )
     adagucenv["ADAGUC_DB"] = os.getenv(
         "ADAGUC_DB", "user=adaguc password=adaguc host=localhost dbname=adaguc"
@@ -50,28 +45,23 @@ async def handleWMS(
         else:
             query_string += f"&{k}={req.query_params[k]}"
 
-    """ Run adaguc-server """
-    status, data, headers = adagucInstance.runADAGUCServer(
+    # Run adaguc-server
+    status, data, headers = adaguc_instance.runADAGUCServer(
         query_string, env=adagucenv, showLog=False
     )
 
-    """ Obtain logfile """
-    logfile = adagucInstance.getLogFile()
-    adagucInstance.removeLogFile()
-
-    stage2 = time.perf_counter()
-    logger.info("[PERF] Adaguc executation took: %f" % (stage2 - stage1))
+    # Obtain logfile
+    logfile = adaguc_instance.getLogFile()
+    adaguc_instance.removeLogFile()
 
     if len(logfile) > 0:
         logger.info(logfile)
 
-    responseCode = 200
+    response_code = 200
     if status != 0:
-        logger.info("Adaguc status code was %d" % status)
-        responseCode = 500
-    response = Response(content=data.getvalue(), status_code=responseCode)
-
-    stage3 = time.perf_counter()
+        logger.info("Adaguc status code was %d", status)
+        response_code = 500
+    response = Response(content=data.getvalue(), status_code=response_code)
 
     # Append the headers from adaguc-server to the headers from flask.
     for header in headers:
@@ -100,7 +90,7 @@ def testadaguc():
 
     # Run adaguc-server
     # pylint: disable=unused-variable
-    status, data, headers = adaguc_instance.runADAGUCServer(
+    status, _data, headers = adaguc_instance.runADAGUCServer(
         url, env=adagucenv, showLogOnError=False
     )
     assert status == 0

@@ -18,14 +18,6 @@ class ItemsForCollectionQueryModel(BaseModel):
     bbox: BBox = Query(default=None)
     time: Union[str, None] = Query(default=None)
 
-    # @validator("bbox", pre=True)
-    # def change_list_to_bbox_model(cls, value):
-    #     print("validator(", value, ")")
-    #     if isinstance(value, str):
-    #         return tuple(float(x) for x in value.split(","))
-    #     else:
-    #         return value
-
     @classmethod
     def depends(
         cls,

@@ -1,14 +1,12 @@
-import pytest
-from main import app
 import json
-import sys
-import tempfile
 import os
-import shutil
 import logging
+
+import pytest
+
+from .main import app
 from adaguc.AdagucTestTools import AdagucTestTools
 from fastapi.testclient import TestClient
-import unittest
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +21,7 @@ def setup_test_data():
     print("About to ingest data")
     AdagucTestTools().cleanTempDir()
     for service in ["netcdf_5d.xml", "dataset_a.xml"]:
-        status, data, headers = AdagucTestTools().runADAGUCServer(
+        _status, _data, _headers = AdagucTestTools().runADAGUCServer(
             args=[
                 "--updatedb",
                 "--config",
@@ -34,21 +32,13 @@ def setup_test_data():
             showLog=True,
         )
 
-    return None
 
-
-@pytest.fixture
-def client():
+@pytest.fixture(name="client")
+def fixture_client() -> TestClient:
     # Initialize adaguc-server
     set_environ()
     setup_test_data()
     yield TestClient(app)
-
-
-# @pytest.fixture
-# def client(app):
-#     with app.test_client() as client_instance:
-#         yield client_instance
 
 
 def test_root(client: TestClient):
