@@ -57,7 +57,8 @@ You have to do once:
 python3 -m venv env
 source env/bin/activate
 pip3 install --upgrade pip
-pip3 install flask flask-cors flask-caching gunicorn pytest marshmallow owslib pyproj==2.6.1 apispec apispec-webframeworks marshmallow-oneofschema defusedxml werkzeug netCDF4 pillow lxml chardet
+pip3 install -r requirements.txt
+pip3 install -r requirements-dev.txt
 cd ./python/lib/ && python3 setup.py develop && cd ../../
 
 ```
