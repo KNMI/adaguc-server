@@ -5,7 +5,6 @@ netCDF4
 cftime
 Pillow
 uvicorn
-pytest
 owslib
 pyproj
 defusedxml
