@@ -1,20 +1,19 @@
+import logging
 import os
 import time
-import logging
 
+import uvicorn
+from brotli_asgi import BrotliMiddleware
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
 
-from routers.healthcheck import healthCheckRouter
-from routers.wmswcs import wmsWcsRouter, testadaguc
-from routers.autowms import autowms_router
-from routers.opendap import opendapRouter
-from routers.ogcapi import ogcApiApp
-from routers.middleware import FixSchemeMiddleware
 from configure_logging import configure_logging
-
-from brotli_asgi import BrotliMiddleware
+from routers.autowms import autowms_router
+from routers.healthcheck import health_check_router
+from routers.middleware import FixSchemeMiddleware
+from routers.ogcapi import ogcApiApp
+from routers.opendap import opendapRouter
+from routers.wmswcs import testadaguc, wmsWcsRouter
 
 configure_logging(logging)
 logger = logging.getLogger(__name__)
@@ -52,7 +51,7 @@ async def root():
 
 app.mount("/ogcapi", ogcApiApp)
 
-app.include_router(healthCheckRouter)
+app.include_router(health_check_router)
 app.include_router(wmsWcsRouter)
 app.include_router(autowms_router)
 app.include_router(opendapRouter)

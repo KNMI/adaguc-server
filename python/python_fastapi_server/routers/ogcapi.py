@@ -1,53 +1,44 @@
 """ogcApiApp"""
-import traceback
+import json
+import logging
 import os
 import os.path
-import json
-from typing import Dict, List, Union, Type
+import traceback
 from collections import OrderedDict
-import logging
+from typing import Dict, List, Type, Union
+
 import yaml
-
-from defusedxml.ElementTree import fromstring
-
 from cachetools import TTLCache
-
-from fastapi import (
-    Depends,
-    HTTPException,
-    Query,
-    Request,
-    Response,
-    FastAPI,
-    status as fastapi_status,
-)
+from defusedxml.ElementTree import fromstring
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
+from fastapi import status as fastapi_status
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from fastapi.encoders import jsonable_encoder
-from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
 from .models.ogcapifeatures_1_model import (
-    LandingPage,
-    Link,
-    Collections,
     Collection,
+    Collections,
     ConfClasses,
+    Extent,
     FeatureCollectionGeoJSON,
     FeatureGeoJSON,
-    Type,
-    Extent,
+    LandingPage,
+    Link,
     Spatial,
+    Type,
 )
 from .ogcapi_tools import (
-    generate_collections,
-    get_extent,
-    make_bbox,
     calculate_coords,
-    get_parameters,
     call_adaguc,
     feature_from_dat,
+    generate_collections,
+    get_extent,
     get_items_links,
+    get_parameters,
+    make_bbox,
 )
 
 logger = logging.getLogger(__name__)
@@ -551,13 +542,11 @@ async def get_items_for_collection(
     start: Union[int, None] = Query(default=0),
     bbox: Union[str, None] = Depends(check_bbox),
     point: Union[str, None] = Depends(check_point),
-    crs: Union[str, None] = Depends(check_crs),  # Query(default=None),
     result_time: Union[str, None] = Query(default=None),
     datetime_: Union[str, None] = Query(default=None, alias="datetime"),
     observed_property_name: Union[str, None] = Depends(check_observed_property_name),
     dims: Union[str, None] = Depends(check_dims),
     npoints: Union[int, None] = Query(default=4),
-    bbox_crs: Union[str, None] = Depends(check_bbox_crs),
 ):
     allowed_params = [
         "f",
@@ -655,7 +644,6 @@ async def get_item_for_collection(
     req: Request,
     response: Response,
     wanted_format: str = "json",
-    crs: Union[str, None] = Depends(check_crs),
 ):
     url = req.url
     feature_to_return = get_single_item(item_id, str(url))

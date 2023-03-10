@@ -1,9 +1,10 @@
 """autoWmsRouter"""
-import os
-import logging
 import json
+import logging
+import os
 import urllib.parse
-from fastapi import Request, APIRouter, Response
+
+from fastapi import APIRouter, Request, Response
 
 from .setup_adaguc import setup_adaguc
 

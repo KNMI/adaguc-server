@@ -1,12 +1,12 @@
 import json
-import os
 import logging
+import os
 
 import pytest
-
-from main import app
 from adaguc.AdagucTestTools import AdagucTestTools
 from fastapi.testclient import TestClient
+
+from main import app
 
 logger = logging.getLogger(__name__)
 
