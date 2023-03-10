@@ -107,7 +107,7 @@ RUN  chmod +x /adaguc/adaguc-server-*.sh && \
 
 ENV ADAGUC_PATH=/adaguc/adaguc-server-master
 
-ENV PYTHONPATH=${ADAGUC_PATH}/python/python-fastapi-server
+ENV PYTHONPATH=${ADAGUC_PATH}/python/python_fastapi_server
 
 # Build and test adaguc python support
 WORKDIR /adaguc/adaguc-server-master/python/lib/

@@ -1,39 +1,25 @@
 """ogcApiApp"""
-import itertools
 import traceback
-import types
-from typing import Any, Dict, List, Union, Sequence, Type
-from enum import Enum
-import yaml
-from defusedxml.ElementTree import fromstring, parse, ParseError
 import os
 import os.path
-import pydantic
-
-import logging
-import datetime
-
-logger = logging.getLogger(__name__)
-
+import json
+from typing import Dict, List, Union, Type
 from collections import OrderedDict
+import logging
+import yaml
 
-from cachetools import cached, TTLCache
+from defusedxml.ElementTree import fromstring
 
-cache = TTLCache(maxsize=1000, ttl=30)
-
-from .setup_adaguc import setup_adaguc
+from cachetools import TTLCache
 
 from fastapi import (
-    Body,
     Depends,
     HTTPException,
     Query,
     Request,
-    APIRouter,
     Response,
-    Request,
     FastAPI,
-    status,
+    status as fastapi_status,
 )
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -41,11 +27,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
-from pydantic import ValidationError, BaseModel, validator
-
-
 from .models.ogcapifeatures_1_model import (
-    GeometryGeoJSON,
     LandingPage,
     Link,
     Collections,
@@ -53,38 +35,27 @@ from .models.ogcapifeatures_1_model import (
     ConfClasses,
     FeatureCollectionGeoJSON,
     FeatureGeoJSON,
-    PointGeoJSON,
     Type,
-    Type1,
-    Type2,
-    Type3,
-    Type7,
-    NumberMatched,
-    NumberReturned,
     Extent,
     Spatial,
-    Temporal,
 )
 from .ogcapi_tools import (
     generate_collections,
-    get_capabilities,
     get_extent,
     make_bbox,
     calculate_coords,
     get_parameters,
-    callADAGUC,
+    call_adaguc,
     feature_from_dat,
-    getItemsLinks,
-    getSingleItemLinks,
+    get_items_links,
 )
+
+logger = logging.getLogger(__name__)
+
+cache = TTLCache(maxsize=1000, ttl=30)
 
 DEFAULT_CRS = "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
 SUPPORTED_CRS_LIST = [DEFAULT_CRS]
-
-import sys
-import os
-import json
-import urllib.parse
 
 ogcApiApp = FastAPI(debug=True)
 
@@ -96,20 +67,20 @@ templates = Jinja2Templates(directory=templates_abs_file_path)
 
 
 @ogcApiApp.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
+async def validation_exception_handler(exc: RequestValidationError):
     return JSONResponse(
-        status_code=status.HTTP_400_BAD_REQUEST,
+        status_code=fastapi_status.HTTP_400_BAD_REQUEST,
         content=jsonable_encoder({"detail": exc.errors(), "body": exc.body}),
     )
 
 
 @ogcApiApp.get("/", response_model=LandingPage, response_model_exclude_none=True)
 @ogcApiApp.get("", response_model=LandingPage, response_model_exclude_none=True)
-async def handleOgcApiRoot(req: Request, f: str = "json"):
+async def handle_ogc_api_root(req: Request, wanted_format: str = "json"):
     links: List[Link] = []
     links.append(
         Link(
-            href=req.url_for("handleOgcApiRoot"),
+            href=req.url_for("handle_ogc_api_root"),
             rel="self",
             title="This document in JSON",
             type="application/json",
@@ -117,7 +88,7 @@ async def handleOgcApiRoot(req: Request, f: str = "json"):
     )
     links.append(
         Link(
-            href=req.url_for("handleOgcApiRoot") + "?f=html",
+            href=req.url_for("handle_ogc_api_root") + "?f=html",
             rel="alternate",
             title="This document in HTML",
             type="text/html",
@@ -125,7 +96,7 @@ async def handleOgcApiRoot(req: Request, f: str = "json"):
     )
     links.append(
         Link(
-            href=req.url_for("getConformance"),
+            href=req.url_for("get_conformance"),
             rel="conformance",
             title="This document in HTML",
             type="application/json",
@@ -133,7 +104,7 @@ async def handleOgcApiRoot(req: Request, f: str = "json"):
     )
     links.append(
         Link(
-            href=req.url_for("getCollections"),
+            href=req.url_for("get_collections"),
             rel="data",
             title="Collections",
             type="application/json",
@@ -141,7 +112,7 @@ async def handleOgcApiRoot(req: Request, f: str = "json"):
     )
     links.append(
         Link(
-            href=req.url_for("getOpenApi"),
+            href=req.url_for("get_open_api"),
             rel="service-desc",
             title="The OpenAPI definition as JSON",
             type="application/vnd.oai.openapi+json;version=3.0",
@@ -149,23 +120,23 @@ async def handleOgcApiRoot(req: Request, f: str = "json"):
     )
     links.append(
         Link(
-            href=req.url_for("getOpenApiYaml"),
+            href=req.url_for("get_open_api_yaml"),
             rel="service-desc",
             title="The OpenAPI definition as YAML",
             type="application/vnd.oai.openapi;version=3.0",
         )
     )
-    landingPage = LandingPage(
+    landing_page = LandingPage(
         title="ogcapi", description="ADAGUC OGCAPI-Features server", links=links
     )
-    if request_type(f) == "HTML":
+    if request_type(wanted_format) == "HTML":
         return templates.TemplateResponse(
-            "landingpage.html", {"request": req, "landingpage": landingPage.dict()}
+            "landingpage.html", {"request": req, "landingpage": landing_page.dict()}
         )
-    return landingPage
+    return landing_page
 
 
-def getCollectionLinks(url, collection=None):
+def get_collection_links(url):
     links: List[Link] = []
     links.append(
         Link(
@@ -202,7 +173,7 @@ def getCollectionLinks(url, collection=None):
     return links
 
 
-def getCollectionsLinks(url):
+def get_collections_links(url):
     links: List[Link] = []
     links.append(
         Link(
@@ -223,12 +194,12 @@ def getCollectionsLinks(url):
     return links
 
 
-def request_type(f: str) -> str:
-    JSON_TYPES = ["application/json", "json"]
-    HTML_TYPES = ["html", "text/html"]
-    if f in JSON_TYPES:
+def request_type(wanted_format: str) -> str:
+    json_types = ["application/json", "json"]
+    html_types = ["html", "text/html"]
+    if wanted_format in json_types:
         return "JSON"
-    if f in HTML_TYPES:
+    if wanted_format in html_types:
         return "HTML"
     return json
 
@@ -239,29 +210,24 @@ def request_type(f: str) -> str:
 @ogcApiApp.get(
     "/collections", response_model=Collections, response_model_exclude_none=True
 )
-async def getCollections(req: Request, f: str = "json"):
+async def get_collections(req: Request, wanted_format: str = "json"):
     collections: List[Collection] = []
     parsed_collections = generate_collections()
-    for parsed_collection in parsed_collections:
-        parsed_extent = get_extent(parsed_collections[parsed_collection]["dataset"])
+    for parsed_collection in parsed_collections.values():
+        parsed_extent = get_extent(parsed_collection["dataset"])
         if parsed_extent:
-            spatial = Spatial(
-                bbox=[
-                    list(get_extent(parsed_collections[parsed_collection]["dataset"]))
-                ]
-            )
+            spatial = Spatial(bbox=[list(get_extent(parsed_collection["dataset"]))])
             extent = Extent(spatial=spatial)
             collections.append(
                 Collection(
-                    id=parsed_collections[parsed_collection]["dataset"],
+                    id=parsed_collection["dataset"],
                     title="title1",
                     description="descr1",
-                    links=getCollectionLinks(
+                    links=get_collection_links(
                         req.url_for(
-                            "getCollection",
-                            id=parsed_collections[parsed_collection]["dataset"],
-                        ),
-                        parsed_collections[parsed_collection]["dataset"],
+                            "get_collection",
+                            id=parsed_collection["dataset"],
+                        )
                     ),
                     extent=extent,
                     itemType="feature",
@@ -270,8 +236,8 @@ async def getCollections(req: Request, f: str = "json"):
                 )
             )
 
-    links = getCollectionsLinks(req.url_for("getCollections"))
-    if request_type(f) == "HTML":
+    links = get_collections_links(req.url_for("get_collections"))
+    if request_type(wanted_format) == "HTML":
         collections_list = [c.dict() for c in collections]
         return templates.TemplateResponse(
             "collections.html", {"request": req, "collections": collections_list}
@@ -286,16 +252,16 @@ async def getCollections(req: Request, f: str = "json"):
 @ogcApiApp.get(
     "/collections/{id}", response_model=Collection, response_model_exclude_none=True
 )
-async def getCollection(id: str, req: Request, f: str = "json"):
-    extent = Extent(spatial=Spatial(bbox=[get_extent(id)]))
+async def get_collection(collection_id: str, req: Request, wanted_format: str = "json"):
+    extent = Extent(spatial=Spatial(bbox=[get_extent(collection_id)]))
     coll = Collection(
-        id=id,
+        id=collection_id,
         title="title1",
         description="descr1",
         extent=extent,
-        links=getCollectionLinks(req.url_for("getCollection", id=id)),
+        links=get_collection_links(req.url_for("get_collection", id=collection_id)),
     )
-    if request_type(f) == "HTML":
+    if request_type(wanted_format) == "HTML":
         return templates.TemplateResponse(
             "collection.html", {"request": req, "collection": coll.dict()}
         )
@@ -316,26 +282,26 @@ conformanceClasses = [
 @ogcApiApp.get(
     "/conformance", response_model=ConfClasses, response_model_exclude_none=True
 )
-async def getConformance(req: Request, f: str = "json"):
-    confClasses = ConfClasses(conformsTo=conformanceClasses)
-    if request_type(f) == "HTML":
+async def get_conformance(req: Request, wanted_format: str = "json"):
+    conf_classes = ConfClasses(conformsTo=conformanceClasses)
+    if request_type(wanted_format) == "HTML":
         return templates.TemplateResponse(
             "conformance.html",
             {
                 "request": req,
                 "title": "conformance",
                 "description": "D",
-                "conformance": jsonable_encoder(confClasses),
+                "conformance": jsonable_encoder(conf_classes),
             },
         )
-    return confClasses
+    return conf_classes
 
 
-def makeOpenApi():
+def make_open_api():
     openapi = ogcApiApp.openapi()
     paths = openapi.get("paths", {})
-    for p in paths.keys():
-        params = (paths.get(p).get("get", {}).get("parameters"), [])
+    for pth in paths.keys():
+        params = (paths.get(pth).get("get", {}).get("parameters"), [])
         for param in params[0]:
             if param["in"] == "query" and param["name"] == "bbox":
                 param["style"] = "form"
@@ -369,13 +335,16 @@ def makeOpenApi():
 
 
 @ogcApiApp.get("/api")
-async def getOpenApi(req: Request, f: str = "json"):
-    return makeOpenApi()
+async def get_open_api():
+    return Response(
+        content=make_open_api(),
+        media_type="application/vnd.oai.openapi+json;version=3.0",
+    )
 
 
 @ogcApiApp.get("/api.yaml")
-async def getOpenApiYaml(req: Request, f: str = "yaml"):
-    openapi = makeOpenApi()
+async def get_open_api_yaml():
+    openapi = make_open_api()
     openapi_yaml = yaml.dump(openapi, sort_keys=False)
     return Response(
         content=openapi_yaml,
@@ -383,7 +352,7 @@ async def getOpenApiYaml(req: Request, f: str = "yaml"):
     )
 
 
-def getSingleItem(item_id: str, url: str) -> FeatureGeoJSON:
+def get_single_item(item_id: str, url: str) -> FeatureGeoJSON:
     collection, observed_property_name, point, dims, datetime_ = item_id.split(";")
     coord = list(map(float, point.split(",")))
     dimspec = ""
@@ -395,13 +364,14 @@ def getSingleItem(item_id: str, url: str) -> FeatureGeoJSON:
     datetime_ = datetime_.replace("$", "/")
     request_url = (
         f"http://localhost:8000/wms?dataset={collection}&query_layers={observed_property_name}"
-        + "&service=WMS&version=1.3.0&request=getPointValue&FORMAT=application/json&INFO_FORMAT=application/json"
+        + "&service=WMS&version=1.3.0&request=getPointValue"
+        + "&FORMAT=application/json&INFO_FORMAT=application/json"
         + f"&X={coord[0]}&Y={coord[1]}&CRS=EPSG:4326"
     )
     if datetime_:
         request_url += f"&TIME={datetime_}"
     request_url += dimspec
-    status, data = callADAGUC(request_url.encode("UTF-8"))
+    status, data = call_adaguc(request_url.encode("UTF-8"))
     if status == 0:
         try:
             response_data = json.loads(data.getvalue(), object_pairs_hook=OrderedDict)
@@ -411,30 +381,26 @@ def getSingleItem(item_id: str, url: str) -> FeatureGeoJSON:
             retval = json.dumps(
                 {"Error": {"code": root[0].attrib["code"], "message": root[0].text}}
             )
-            return 400, root[0].text.strip()  # TODO
+            return 400, retval
         features = []
         for data in response_data:
-            data_features = feature_from_dat(data, collection, url, url, True)
+            data_features = feature_from_dat(data, collection, url, True)
             features.extend(data_features)
         return features[0]
 
     return None
 
 
-def getFeaturesForItems(
+def get_features_for_items(
     coll: str,
     base_url: str,
-    limit: int = 10,
-    start: int = 0,
     point=None,
     bbox=None,
     datetime_=None,
-    resultTime=None,
-    observedPropertyName=None,
+    result_time=None,
+    observed_property_name=None,
     dims=None,
     npoints=None,
-    crs=None,
-    bbox_crs=None,
 ) -> List[FeatureGeoJSON]:
     features: List[FeatureGeoJSON] = []
     if not point:
@@ -446,35 +412,36 @@ def getFeaturesForItems(
         coords = calculate_coords(bbox, npoints, npoints)
     else:
         coords = [point]
-    if not observedPropertyName:
+    if not observed_property_name:
         collinfo = get_parameters(coll)
-        observedPropertyName = [collinfo["layers"][0]["name"]]
+        observed_property_name = [collinfo["layers"][0]["name"]]
         # Default observedPropertyName = first layername
-    paramList = ",".join(observedPropertyName)
+    param_list = ",".join(observed_property_name)
 
-    if resultTime:
+    if result_time:
         collinfo = get_parameters(coll)
 
-    paramList = ",".join(observedPropertyName)
+    param_list = ",".join(observed_property_name)
 
     dimspec = ""
     if dims:
         for dimname, dimval in dims.items():
-            dimspec += "&%s=%s" % (dimname, dimval)
+            dimspec += f"&{dimname}={dimval}" % (dimname, dimval)
 
     features = []
     for coord in coords:
         request_url = (
-            f"http://localhost:8000/wms?dataset={coll}&query_layers={paramList}"
-            + "&service=WMS&version=1.3.0&request=getPointValue&FORMAT=application/json&INFO_FORMAT=application/json"
+            f"http://localhost:8000/wms?dataset={coll}&query_layers={param_list}"
+            + "&service=WMS&version=1.3.0&request=getPointValue&"
+            + "FORMAT=application/json&INFO_FORMAT=application/json"
             + f"&X={coord[0]}&Y={coord[1]}&CRS=EPSG:4326"
         )
         if datetime_:
             request_url += f"&TIME={datetime_}"
-        if resultTime:
-            request_url += f"&DIM_REFERENCE_TIME={resultTime}"
+        if result_time:
+            request_url += f"&DIM_REFERENCE_TIME={result_time}"
         request_url += dimspec
-        status, data = callADAGUC(request_url.encode("UTF-8"))
+        status, data = call_adaguc(request_url.encode("UTF-8"))
         if status == 0:
             try:
                 response_data = json.loads(
@@ -486,32 +453,12 @@ def getFeaturesForItems(
                 retval = json.dumps(
                     {"Error": {"code": root[0].attrib["code"], "message": root[0].text}}
                 )
-                return 400, root[0].text.strip()  # TODO
+                return 400, retval  # TODO
             for data in response_data:
-                data_features = feature_from_dat(data, coll, base_url, base_url, False)
+                data_features = feature_from_dat(data, coll, base_url, False)
                 features.extend(data_features)
 
     return features
-
-
-# def getFeaturesForItems2(
-#     id: str, limit: int = 10, start: int = 0, bbox=None, datetime_=None
-# ) -> List[FeatureGeoJSON]:
-#     features: List[FeatureGeoJSON] = []
-#     for n in range(120):
-#         point = PointGeoJSON(
-#             type=Type7.Point, coordinates=[5.2 + (n - 25) / 10, 52.0 + (n - 25) / 10]
-#         )
-#         features.append(
-#             FeatureGeoJSON(
-#                 type=Type1.Feature,
-#                 geometry=point,
-#                 properties={},
-#                 id=str(n + 1234),
-#                 links=None,
-#             )
-#         )
-#     return features
 
 
 def check_point(point: Union[str, None] = Query(default=None)) -> List[float]:
@@ -535,11 +482,11 @@ def check_bbox(bbox: Union[str, None] = Query(default=None)) -> List[float]:
 
 
 def check_observed_property_name(
-    observedPropertyName: Union[str, None] = Query(default=None)
+    observed_property_name: Union[str, None] = Query(default=None)
 ) -> List[str]:
-    if observedPropertyName is None:
+    if observed_property_name is None:
         return None
-    names = observedPropertyName.split(",")
+    names = observed_property_name.split(",")
     if len(names) < 1:
         # Error
         raise HTTPException(
@@ -555,7 +502,7 @@ def check_dims(dims: Union[str, None] = Query(default=None)) -> Dict[str, str]:
     if len(dim_terms) < 1:
         # Error
         raise HTTPException(status_code=404, detail="dims should contain > 0 names")
-    dimensions = dict()
+    dimensions = {}
     for dim in dim_terms:
         dimname, dimval = dim.split(":")
         if dimname.upper() == "ELEVATION":
@@ -595,19 +542,19 @@ def check_crs(crs: Union[str, None] = Query(default=None)) -> str:
     response_model=FeatureCollectionGeoJSON,
     response_model_exclude_none=True,
 )
-async def getItemsForCollection(
+async def get_items_for_collection(
     coll: str,
     req: Request,
     response: Response,
-    f: str = "json",
+    wanted_format: str = "json",
     limit: Union[int, None] = Query(default=10),
     start: Union[int, None] = Query(default=0),
     bbox: Union[str, None] = Depends(check_bbox),
     point: Union[str, None] = Depends(check_point),
     crs: Union[str, None] = Depends(check_crs),  # Query(default=None),
-    resultTime: Union[str, None] = Query(default=None),
+    result_time: Union[str, None] = Query(default=None),
     datetime_: Union[str, None] = Query(default=None, alias="datetime"),
-    observedPropertyName: Union[str, None] = Depends(check_observed_property_name),
+    observed_property_name: Union[str, None] = Depends(check_observed_property_name),
     dims: Union[str, None] = Depends(check_dims),
     npoints: Union[int, None] = Query(default=4),
     bbox_crs: Union[str, None] = Depends(check_bbox_crs),
@@ -630,7 +577,7 @@ async def getItemsForCollection(
 
     if len(extra_params):
         return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=fastapi_status.HTTP_400_BAD_REQUEST,
             content=jsonable_encoder(
                 {
                     "detail": "extra parameters",
@@ -638,19 +585,16 @@ async def getItemsForCollection(
                 }
             ),
         )
-    base_url = req.url_for("getItemsForCollection", coll=coll)
+    base_url = req.url_for("get_items_for_collection", coll=coll)
     try:
-        features = getFeaturesForItems(
+        features = get_features_for_items(
             coll=coll,
             base_url=base_url,
-            limit=limit,
-            start=start,
             point=point,
             bbox=bbox,
             datetime_=datetime_,
-            resultTime=resultTime,
-            crs=crs,
-            observedPropertyName=observedPropertyName,
+            result_time=result_time,
+            observed_property_name=observed_property_name,
             npoints=npoints,
             dims=dims,
         )
@@ -663,16 +607,14 @@ async def getItemsForCollection(
         next_start = None
         if (start + limit) < number_matched:
             next_start = start + limit
-        links = getItemsLinks(
-            coll,
-            req.url_for("getItemsForCollection", coll=coll),
-            str(req.url),
+        links = get_items_links(
+            req.url_for("get_items_for_collection", coll=coll),
             prev_start=prev_start,
             next_start=next_start,
             limit=limit,
         )
 
-        featureCollection = FeatureCollectionGeoJSON(
+        feature_collection = FeatureCollectionGeoJSON(
             type=Type.FeatureCollection,
             timeStamp="2023-01-09T12:00:00Z",
             links=links,
@@ -681,21 +623,23 @@ async def getItemsForCollection(
             numberReturned=number_returned,
         )
         response.headers["Content-Crs"] = f"<{DEFAULT_CRS}>"
-        if request_type(f) == "HTML":
-            features = [f.dict() for f in featureCollection.features]
+        if request_type(wanted_format) == "HTML":
+            features = [f.dict() for f in feature_collection.features]
             return templates.TemplateResponse(
                 "items.html",
                 {
                     "request": req,
-                    "items": jsonable_encoder(featureCollection),
+                    "items": jsonable_encoder(feature_collection),
                     "description": "Description",
                     "collection": coll,
                     "bbox": bbox,
                 },
             )
-        return featureCollection
-    except Exception as e:
-        logger.error("ERR: %s", traceback.format_exception(None, e, e.__traceback__))
+        return feature_collection
+    except Exception as exc:
+        logger.error(
+            "ERR: %s", traceback.format_exception(None, exc, exc.__traceback__)
+        )
 
     return None
 
@@ -705,20 +649,20 @@ async def getItemsForCollection(
     response_model=FeatureGeoJSON,
     response_model_exclude_none=True,
 )
-async def getItemForCollection(
+async def get_item_for_collection(
     coll: str,
     item_id: str,
     req: Request,
     response: Response,
-    f: str = "json",
+    wanted_format: str = "json",
     crs: Union[str, None] = Depends(check_crs),
 ):
     url = req.url
-    feature_to_return = getSingleItem(item_id, str(url))
+    feature_to_return = get_single_item(item_id, str(url))
 
     if feature_to_return:
         response.headers["Content-Crs"] = f"<{DEFAULT_CRS}>"
-        if request_type(f) == "HTML":
+        if request_type(wanted_format) == "HTML":
             return templates.TemplateResponse(
                 "item.html",
                 {
@@ -729,11 +673,10 @@ async def getItemForCollection(
                 },
             )
         return feature_to_return
-    else:
-        return JSONResponse(
-        status_code=status.HTTP_400_BAD_REQUEST,
+    return JSONResponse(
+        status_code=fastapi_status.HTTP_400_BAD_REQUEST,
         content={
-                    "detail": "Unknown item_id",
-                    "body": item_id,
-                }
-        )
+            "detail": "Unknown item_id",
+            "body": item_id,
+        },
+    )

@@ -23,5 +23,5 @@ ulimit -c unlimited
 
 
 python3 ${ADAGUC_PATH}/tests/functional_test.py $1 && \
-cd ../python/python-fastapi-server && \
+cd ../python/python_fastapi_server && \
 bash ./test_server.sh

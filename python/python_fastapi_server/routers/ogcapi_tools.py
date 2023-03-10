@@ -1,47 +1,31 @@
-from .setup_adaguc import setup_adaguc
 import logging
 import time
 import os
 
-import json
 
 import itertools
-from typing import Any, Dict, List, Union, Sequence, Type
+from typing import List
 
 from owslib.wms import WebMapService
+from defusedxml.ElementTree import parse, ParseError
 from .setup_adaguc import setup_adaguc
-from defusedxml.ElementTree import fromstring, parse, ParseError
 
 from .models.ogcapifeatures_1_model import (
-    GeometryGeoJSON,
-    LandingPage,
     Link,
-    Collections,
-    Collection,
-    ConfClasses,
-    FeatureCollectionGeoJSON,
     FeatureGeoJSON,
     PointGeoJSON,
-    Type,
     Type1,
-    Type2,
-    Type3,
     Type7,
-    NumberMatched,
-    NumberReturned,
-    Extent,
-    Spatial,
-    Temporal,
 )
 
 logger = logging.getLogger(__name__)
 
 
 def make_bbox(extent):
-    s = []
+    s_extent = []
     for i in extent:
-        s.append(i)
-    return s
+        s_extent.append(i)
+    return s_extent
 
 
 def get_extent(coll):
@@ -54,28 +38,29 @@ def get_extent(coll):
     return None
 
 
-def get_datasets(adagucDataSetDir):
+def get_datasets(adaguc_data_set_dir):
     """
     Return all possible OGCAPI feature datasets, based on the dataset directory
     """
-    datasetFiles = [
+    dataset_files = [
         f
-        for f in os.listdir(adagucDataSetDir)
-        if os.path.isfile(os.path.join(adagucDataSetDir, f)) and f.endswith(".xml")
+        for f in os.listdir(adaguc_data_set_dir)
+        if os.path.isfile(os.path.join(adaguc_data_set_dir, f)) and f.endswith(".xml")
     ]
     datasets = {}
-    for datasetFile in datasetFiles:
+    for dataset_file in dataset_files:
         try:
-            tree = parse(os.path.join(adagucDataSetDir, datasetFile))
+            tree = parse(os.path.join(adaguc_data_set_dir, dataset_file))
             root = tree.getroot()
             for ogcapi in root.iter("OgcApiFeatures"):
-                """Note, service is just a placeholder because it is needed by OWSLib. Adaguc is still ran as executable, not as service"""
+                # Note, service is just a placeholder because it is needed by OWSLib.
+                # Adaguc is still run as executable, not as service"""
                 dataset = {
-                    "dataset": datasetFile.replace(".xml", ""),
-                    "name": datasetFile.replace(".xml", ""),
-                    "title": datasetFile.replace(".xml", "").lower().capitalize(),
+                    "dataset": dataset_file.replace(".xml", ""),
+                    "name": dataset_file.replace(".xml", ""),
+                    "title": dataset_file.replace(".xml", "").lower().capitalize(),
                     "service": "http://localhost:8080/wms?DATASET="
-                    + datasetFile.replace(".xml", ""),
+                    + dataset_file.replace(".xml", ""),
                 }
                 datasets[dataset["name"]] = dataset
         except ParseError:
@@ -88,17 +73,17 @@ def calculate_coords(bbox, nlon, nlat):
     dlon = (bbox[2] - bbox[0]) / (nlon + 1)
     dlat = (bbox[3] - bbox[1]) / (nlat + 1)
     coords = []
-    for lo in range(nlon):
-        lon = bbox[0] + lo * dlon + dlon / 2.0
-        for la in range(nlat):
-            lat = bbox[1] + la * dlat + dlat / 2
+    for lonval in range(nlon):
+        lon = bbox[0] + lonval * dlon + dlon / 2.0
+        for latval in range(nlat):
+            lat = bbox[1] + latval * dlat + dlat / 2
             coords.append([lon, lat])
     return coords
 
 
-def callADAGUC(url):
+def call_adaguc(url):
     """Call adaguc-server"""
-    adagucInstance = setup_adaguc()
+    adaguc_instance = setup_adaguc()
 
     url = url.decode()
     if "?" in url:
@@ -118,13 +103,13 @@ def callADAGUC(url):
 
     # Run adaguc-server
     # pylint: disable=unused-variable
-    status, data, headers = adagucInstance.runADAGUCServer(
+    status, data, headers = adaguc_instance.runADAGUCServer(
         url, env=adagucenv, showLogOnError=True
     )
 
     # Obtain logfile
-    logfile = adagucInstance.getLogFile()
-    adagucInstance.removeLogFile()
+    logfile = adaguc_instance.getLogFile()
+    adaguc_instance.removeLogFile()
 
     stage2 = time.perf_counter()
     logger.info("[PERF] Adaguc execution took: %f", (stage2 - stage1))
@@ -147,7 +132,7 @@ def get_capabilities(collname):
         urlrequest = (
             f"dataset={dataset}&service=wms&version=1.3.0&request=getcapabilities"
         )
-        status, response = callADAGUC(url=urlrequest.encode("UTF-8"))
+        status, response = call_adaguc(url=urlrequest.encode("UTF-8"))
         if status == 0:
             xml = response.getvalue()
             wms = WebMapService(coll["service"], xml=xml, version="1.3.0")
@@ -201,7 +186,7 @@ def get_parameters(collname):
     return {"layers": layers}
 
 
-def makedims(dims, data):
+def make_dims(dims, data):
     """
     Makedims
     """
@@ -258,10 +243,8 @@ def multi_get(dict_obj, attrs, default=None):
     return result
 
 
-def getItemsLinks(
-    coll: str,
+def get_items_links(
     url: str,
-    self_url: str,
     prev_start: int = None,
     next_start: int = None,
     limit: int = None,
@@ -314,8 +297,7 @@ def getItemsLinks(
     return links
 
 
-def getSingleItemLinks(
-    coll: str,
+def get_single_item_links(
     item_id: str,
     url: str,
     prev_start: int = None,
@@ -374,13 +356,13 @@ def getSingleItemLinks(
     return links
 
 
-def feature_from_dat(dat, coll, url, self_url, add_links: bool = False):
+def feature_from_dat(dat, coll, url, add_links: bool = False):
     """
     feature_from_dat
     """
-    dims = makedims(dat["dims"], dat["data"])
-    timeSteps = getdimvals(dims, "time")
-    if not timeSteps or len(timeSteps) == 0:
+    dims = make_dims(dat["dims"], dat["data"])
+    time_steps = getdimvals(dims, "time")
+    if not time_steps or len(time_steps) == 0:
         return []
 
     valstack = []
@@ -397,7 +379,7 @@ def feature_from_dat(dat, coll, url, self_url, add_links: bool = False):
 
     for t in tuples:
         result = []
-        for ts in timeSteps:
+        for ts in time_steps:
             v = multi_get(dat["data"], t + (ts,))
             if v:
                 try:
@@ -411,11 +393,11 @@ def feature_from_dat(dat, coll, url, self_url, add_links: bool = False):
         datpointcoords = dat["point"]["coords"]
         feature_id = f"{coll};{datname};{datpointcoords};"
         i = 0
-        resultTime = None
+        result_time = None
         for dim_value in t:
             dim_name = list(dims_without_time[i].keys())[0]
             if dim_name.lower() == "reference_time":
-                resultTime = dim_value
+                result_time = dim_value
             feature_dims[dim_name] = dim_value
             if i > 0:
                 feature_id += "|"
@@ -426,30 +408,30 @@ def feature_from_dat(dat, coll, url, self_url, add_links: bool = False):
             )
             i = i + 1
 
-        feature_id = feature_id + f";{timeSteps[0]}${timeSteps[-1]}"
+        feature_id = feature_id + f";{time_steps[0]}${time_steps[-1]}"
         if len(feature_dims) == 0:
             properties = {
-                "timestep": timeSteps,
+                "timestep": time_steps,
                 "observationType": "MeasureTimeseriesObservation",
                 "observedPropertyName": datname,
                 "result": result,
-                "resultTime": resultTime,
+                "resultTime": result_time,
             }
         else:
             properties = {
-                "timestep": timeSteps,
+                "timestep": time_steps,
                 "dims": feature_dims,
                 "observationType": "MeasureTimeseriesObservation",
                 "observedPropertyName": datname,
                 "result": result,
-                "resultTime": resultTime,
+                "resultTime": result_time,
             }
 
         coords = dat["point"]["coords"].split(",")
         coords[0] = float(coords[0])
         coords[1] = float(coords[1])
         if add_links:
-            links = getSingleItemLinks(coll, feature_id, str(url))
+            links = get_single_item_links(feature_id, str(url))
         else:
             links = None
 

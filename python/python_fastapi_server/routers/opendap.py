@@ -1,13 +1,9 @@
 """opendapRouter"""
-from .setup_adaguc import setup_adaguc
-from fastapi import Request, APIRouter, Response
-
-from .setup_adaguc import setup_adaguc
-import sys
 import os
 import logging
-import json
-import urllib.parse
+
+from fastapi import Request, APIRouter, Response
+from .setup_adaguc import setup_adaguc
 
 opendapRouter = APIRouter(responses={404: {"description": "Not found"}})
 
@@ -15,9 +11,9 @@ logger = logging.getLogger(__name__)
 
 
 @opendapRouter.get("/adagucopendap/{opendappath:path}")
-def handleOpendap(req: Request, opendappath: str):
+def handle_opendap(req: Request, opendappath: str):
     logger.info(opendappath)
-    adagucInstance = setup_adaguc()
+    adaguc_instance = setup_adaguc()
     url = req.url
     adagucenv = {}
 
@@ -25,34 +21,34 @@ def handleOpendap(req: Request, opendappath: str):
     for k in req.query_params:
         query_string += f"&{k}={req.query_params[k]}"
 
-    """ Set required environment variables """
-    baseUrl = f"{url.scheme}://{url.hostname}:{url.port}"
+    # Set required environment variables
+    base_url = f"{url.scheme}://{url.hostname}:{url.port}"
     adagucenv["ADAGUC_ONLINERESOURCE"] = (
-        os.getenv("EXTERNALADDRESS", baseUrl) + "/adagucopendap?"
+        os.getenv("EXTERNALADDRESS", base_url) + "/adagucopendap?"
     )
     adagucenv["ADAGUC_DB"] = os.getenv(
         "ADAGUC_DB", "user=adaguc password=adaguc host=localhost dbname=adaguc"
     )
 
-    logger.info("Setting request_uri to %s" % baseUrl)
+    logger.info("Setting request_uri to %s", base_url)
     adagucenv["REQUEST_URI"] = url.path
     adagucenv["SCRIPT_NAME"] = ""
 
-    status, data, headers = adagucInstance.runADAGUCServer(
+    status, data, headers = adaguc_instance.runADAGUCServer(
         query_string, env=adagucenv, showLogOnError=False
     )
 
-    """ Obtain logfile """
-    logfile = adagucInstance.getLogFile()
-    adagucInstance.removeLogFile()
+    # Obtain logfile
+    logfile = adaguc_instance.getLogFile()
+    adaguc_instance.removeLogFile()
 
     logger.info(logfile)
 
-    responseCode = 200
+    response_code = 200
     if status != 0:
-        logger.info("Adaguc status code was %d" % status)
-        responseCode = 500
-    response = Response(content=data.getvalue(), status_code=responseCode)
+        logger.info("Adaguc status code was %d", status)
+        response_code = 500
+    response = Response(content=data.getvalue(), status_code=response_code)
 
     # Append the headers from adaguc-server to the headers from flask.
     for header in headers:
