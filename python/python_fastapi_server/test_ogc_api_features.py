@@ -4,7 +4,7 @@ import logging
 
 import pytest
 
-from .main import app
+from main import app
 from adaguc.AdagucTestTools import AdagucTestTools
 from fastapi.testclient import TestClient
 
