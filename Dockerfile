@@ -75,10 +75,11 @@ COPY --from=0 /adaguc/adaguc-server-master/python /adaguc/adaguc-server-master/p
 COPY --from=0 /adaguc/adaguc-server-master/tests /adaguc/adaguc-server-master/tests
 COPY --from=0 /adaguc/adaguc-server-master/runtests.sh /adaguc/adaguc-server-master/runtests.sh
 COPY --from=0 /adaguc/adaguc-server-master/requirements.txt /adaguc/adaguc-server-master/requirements.txt
+COPY --from=0 /adaguc/adaguc-server-master/requirements-dev.txt /adaguc/adaguc-server-master/requirements-dev.txt
 
 # Upgrade pip and install python requirements.txt
 RUN pip3 install --no-cache-dir --upgrade pip \
-   && pip3 install --no-cache-dir -r requirements.txt
+   && pip3 install --no-cache-dir -r requirements.txt -r requirements-dev.txt
 
 
 # Run adaguc-server functional and regression tests
