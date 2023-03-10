@@ -4,7 +4,8 @@ Sets the request scheme to a value derived from the EXTERNALADDRESS env setting
 For use behind proxies
 """
 import os
-from starlette.types import ASGIApp, Receive, Send, Scope
+
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 
 class FixSchemeMiddleware:

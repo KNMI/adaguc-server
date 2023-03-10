@@ -1,22 +1,20 @@
-import logging
-import time
-import os
-
-
 import itertools
+import logging
+import os
+import time
 from typing import List
 
+from defusedxml.ElementTree import ParseError, parse
 from owslib.wms import WebMapService
-from defusedxml.ElementTree import parse, ParseError
-from .setup_adaguc import setup_adaguc
 
 from .models.ogcapifeatures_1_model import (
-    Link,
     FeatureGeoJSON,
+    Link,
     PointGeoJSON,
     Type1,
     Type7,
 )
+from .setup_adaguc import setup_adaguc
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +50,7 @@ def get_datasets(adaguc_data_set_dir):
         try:
             tree = parse(os.path.join(adaguc_data_set_dir, dataset_file))
             root = tree.getroot()
-            for ogcapi in root.iter("OgcApiFeatures"):
+            for _ogcapi in root.iter("OgcApiFeatures"):
                 # Note, service is just a placeholder because it is needed by OWSLib.
                 # Adaguc is still run as executable, not as service"""
                 dataset = {
@@ -154,15 +152,18 @@ def generate_collections():
     return collections
 
 
-def get_dimensions(l, skip_dims=None):
+def get_dimensions(layer, skip_dims=None):
     """
     get_dimensions
     """
     dims = []
-    for s in l.dimensions:
-        if not s in skip_dims:
-            dim = {"name": s, "values": l.dimensions[s]["values"]}
-            dims.append(dim)
+    for dim_name in layer.dimensions:
+        if not dim_name in skip_dims:
+            dim_name = {
+                "name": dim_name,
+                "values": layer.dimensions[dim_name]["values"],
+            }
+            dims.append(dim_name)
     return dims
 
 
@@ -173,13 +174,12 @@ def get_parameters(collname):
     """
     contents = get_capabilities(collname)
     layers = []
-    for l in contents:
-        ls = l
-        dims = get_dimensions(contents[l], ["time"])
+    for layer in contents:
+        dims = get_dimensions(contents[layer], ["time"])
         if len(dims) > 0:
-            layer = {"name": ls, "dims": dims}
+            layer = {"name": layer, "dims": dims}
         else:
-            layer = {"name": ls}
+            layer = {"name": layer}
         layers.append(layer)
 
     layers.sort(key=lambda l: l["name"])
@@ -196,27 +196,26 @@ def make_dims(dims, data):
         dimlist.append({"time": times})
         return dimlist
 
-    dt = data
-    d1 = list(dt.keys())
-    if len(d1) == 0:
+    dim1 = list(data.keys())
+    if len(dim1) == 0:
         return []
-    dimlist.append({dims[0]: d1})
+    dimlist.append({dims[0]: dim1})
 
     if len(dims) >= 2:
-        d2 = list(dt[d1[0]].keys())
-        dimlist.append({dims[1]: d2})
+        dim2 = list(data[dim1[0]].keys())
+        dimlist.append({dims[1]: dim2})
 
     if len(dims) >= 3:
-        d3 = list(dt[d1[0]][d2[0]].keys())
-        dimlist.append({dims[2]: d3})
+        dim3 = list(data[dim1[0]][dim2[0]].keys())
+        dimlist.append({dims[2]: dim3})
 
     if len(dims) >= 4:
-        d4 = list(dt[d1[0]][d2[0]][d3[0]].keys())
-        dimlist.append({dims[2]: d4})
+        dim4 = list(data[dim1[0]][dim2[0]][dim3[0]].keys())
+        dimlist.append({dims[3]: dim4})
 
     if len(dims) >= 5:
-        d5 = list(dt[d1[0]][d2[0]][d3[0]][d4[0]].keys())
-        dimlist.append({dims[2]: d5})
+        dim5 = list(data[dim1[0]][dim2[0]][dim3[0]][dim4[0]].keys())
+        dimlist.append({dims[4]: dim5})
 
     return dimlist
 
@@ -225,9 +224,9 @@ def getdimvals(dims, name):
     """
     getdimvals
     """
-    for n in dims:
-        if list(n.keys())[0] == name:
-            return list(n.values())[0]
+    for nlist in dims:
+        if list(nlist.keys())[0] == name:
+            return list(nlist.values())[0]
     return None
 
 
@@ -367,46 +366,46 @@ def feature_from_dat(dat, coll, url, add_links: bool = False):
 
     valstack = []
     dims_without_time = []
-    for d in dims:
-        dim_name = list(d.keys())[0]
+    for dim in dims:
+        dim_name = list(dim.keys())[0]
         if dim_name != "time":
-            dims_without_time.append(d)
+            dims_without_time.append(dim)
             vals = getdimvals(dims, dim_name)
             valstack.append(vals)
     tuples = list(itertools.product(*valstack))
 
     features = []
 
-    for t in tuples:
+    for tupl in tuples:
         result = []
-        for ts in time_steps:
-            v = multi_get(dat["data"], t + (ts,))
-            if v:
+        for time_step in time_steps:
+            val = multi_get(dat["data"], tupl + (time_step,))
+            if val:
                 try:
-                    value = float(v)
+                    value = float(val)
                     result.append(value)
                 except ValueError:
-                    result.append(v)
+                    result.append(val)
 
         feature_dims = {}
         datname = dat["name"]
         datpointcoords = dat["point"]["coords"]
         feature_id = f"{coll};{datname};{datpointcoords};"
-        i = 0
+        cnt = 0
         result_time = None
-        for dim_value in t:
-            dim_name = list(dims_without_time[i].keys())[0]
+        for dim_value in tupl:
+            dim_name = list(dims_without_time[cnt].keys())[0]
             if dim_name.lower() == "reference_time":
                 result_time = dim_value
             feature_dims[dim_name] = dim_value
-            if i > 0:
+            if cnt > 0:
                 feature_id += "|"
             # pylint: disable=consider-using-f-string
             feature_id = feature_id + "%s=%s" % (
                 dim_name,
                 dim_value,
             )
-            i = i + 1
+            cnt = cnt + 1
 
         feature_id = feature_id + f";{time_steps[0]}${time_steps[-1]}"
         if len(feature_dims) == 0:

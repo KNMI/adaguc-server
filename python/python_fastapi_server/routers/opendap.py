@@ -1,8 +1,9 @@
 """opendapRouter"""
-import os
 import logging
+import os
 
-from fastapi import Request, APIRouter, Response
+from fastapi import APIRouter, Request, Response
+
 from .setup_adaguc import setup_adaguc
 
 opendapRouter = APIRouter(responses={404: {"description": "Not found"}})
