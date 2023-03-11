@@ -71,7 +71,7 @@ async def handle_ogc_api_root(req: Request, wanted_format: str = "json"):
     links: List[Link] = []
     links.append(
         Link(
-            href=req.url_for("handle_ogc_api_root"),
+            href=str(req.url_for("handle_ogc_api_root")),
             rel="self",
             title="This document in JSON",
             type="application/json",
@@ -79,7 +79,7 @@ async def handle_ogc_api_root(req: Request, wanted_format: str = "json"):
     )
     links.append(
         Link(
-            href=req.url_for("handle_ogc_api_root") + "?f=html",
+            href=str(req.url_for("handle_ogc_api_root")) + "?f=html",
             rel="alternate",
             title="This document in HTML",
             type="text/html",
@@ -87,7 +87,7 @@ async def handle_ogc_api_root(req: Request, wanted_format: str = "json"):
     )
     links.append(
         Link(
-            href=req.url_for("get_conformance"),
+            href=str(req.url_for("get_conformance")),
             rel="conformance",
             title="This document in HTML",
             type="application/json",
@@ -95,7 +95,7 @@ async def handle_ogc_api_root(req: Request, wanted_format: str = "json"):
     )
     links.append(
         Link(
-            href=req.url_for("get_collections"),
+            href=str(req.url_for("get_collections")),
             rel="data",
             title="Collections",
             type="application/json",
@@ -103,7 +103,7 @@ async def handle_ogc_api_root(req: Request, wanted_format: str = "json"):
     )
     links.append(
         Link(
-            href=req.url_for("get_open_api"),
+            href=str(req.url_for("get_open_api")),
             rel="service-desc",
             title="The OpenAPI definition as JSON",
             type="application/vnd.oai.openapi+json;version=3.0",
@@ -111,7 +111,7 @@ async def handle_ogc_api_root(req: Request, wanted_format: str = "json"):
     )
     links.append(
         Link(
-            href=req.url_for("get_open_api_yaml"),
+            href=str(req.url_for("get_open_api_yaml")),
             rel="service-desc",
             title="The OpenAPI definition as YAML",
             type="application/vnd.oai.openapi;version=3.0",
@@ -129,6 +129,7 @@ async def handle_ogc_api_root(req: Request, wanted_format: str = "json"):
 
 def get_collection_links(url):
     links: List[Link] = []
+    url = str(url)
     links.append(
         Link(
             href=url + "?f=json",
@@ -166,6 +167,7 @@ def get_collection_links(url):
 
 def get_collections_links(url):
     links: List[Link] = []
+    url = str(url)
     links.append(
         Link(
             href=url + "?f=json",
@@ -215,9 +217,11 @@ async def get_collections(req: Request, wanted_format: str = "json"):
                     title="title1",
                     description="descr1",
                     links=get_collection_links(
-                        req.url_for(
-                            "get_collection",
-                            id=parsed_collection["dataset"],
+                        str(
+                            req.url_for(
+                                "get_collection",
+                                id=parsed_collection["dataset"],
+                            )
                         )
                     ),
                     extent=extent,
@@ -250,7 +254,9 @@ async def get_collection(collection_id: str, req: Request, wanted_format: str = 
         title="title1",
         description="descr1",
         extent=extent,
-        links=get_collection_links(req.url_for("get_collection", id=collection_id)),
+        links=get_collection_links(
+            str(req.url_for("get_collection", id=collection_id))
+        ),
     )
     if request_type(wanted_format) == "HTML":
         return templates.TemplateResponse(
@@ -574,7 +580,7 @@ async def get_items_for_collection(
                 }
             ),
         )
-    base_url = req.url_for("get_items_for_collection", coll=coll)
+    base_url = str(req.url_for("get_items_for_collection", coll=coll))
     try:
         features = get_features_for_items(
             coll=coll,
@@ -597,7 +603,7 @@ async def get_items_for_collection(
         if (start + limit) < number_matched:
             next_start = start + limit
         links = get_items_links(
-            req.url_for("get_items_for_collection", coll=coll),
+            str(req.url_for("get_items_for_collection", coll=coll)),
             prev_start=prev_start,
             next_start=next_start,
             limit=limit,
