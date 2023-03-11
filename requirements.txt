@@ -12,7 +12,7 @@ fastapi
 httpx
 Jinja2
 geojson-pydantic
-cachetools>=5.2.1
+cachetools
 pytz
 brotli-asgi
 Brotli
