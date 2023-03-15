@@ -40,7 +40,7 @@ class TestWCS(unittest.TestCase):
     self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(
         self.testresultspath + filename, self.expectedoutputsspath + filename))
 
-  def test_WCSDescribeCoverage_testdatanc(self):
+  def test_WCSDescribeCoverage_Actuele10mindata(self):
     """
     Check if WCS DescribeCoverage for testdata.nc file is OK
     """
