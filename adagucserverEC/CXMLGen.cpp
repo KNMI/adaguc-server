@@ -1507,11 +1507,14 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc, std::vector<WMSLa
               XMLDoc->printconcat("  <CoverageOffering>\n"
                                   "  <description>%s</description>\n"
                                   "  <name>%s</name>\n"
-                                  "  <label>%s</label>\n"
-                                  "  <lonLatEnvelope srsName=\"urn:ogc:def:crs:OGC:1.3:CRS84\">\n"
+                                  "  <label>%s</label>\n",
+                                  layer->name.c_str(), layer->name.c_str(), layerTitle.c_str());
+              if (layer->dataSource->dataObjects.size() > 0)
+                XMLDoc->printconcat("  <uom>%s</uom>\n", layer->dataSource->dataObjects[0]->getUnits().c_str());
+              XMLDoc->printconcat("  <lonLatEnvelope srsName=\"urn:ogc:def:crs:OGC:1.3:CRS84\">\n"
                                   "    <gml:pos>%f %f</gml:pos>\n"
                                   "    <gml:pos>%f %f</gml:pos>\n",
-                                  layer->name.c_str(), layer->name.c_str(), layerTitle.c_str(), layer->dfLatLonBBOX[0], layer->dfLatLonBBOX[1], layer->dfLatLonBBOX[2], layer->dfLatLonBBOX[3]);
+                                  layer->dfLatLonBBOX[0], layer->dfLatLonBBOX[1], layer->dfLatLonBBOX[2], layer->dfLatLonBBOX[3]);
 
               if (timeDimIndex >= 0) {
                 // For information about this, visit http://www.galdosinc.com/archives/151
