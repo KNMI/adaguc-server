@@ -25,6 +25,8 @@
 
 #include "CCDFHDF5IO.h"
 
+#include <cmath>
+
 const char *CDFHDF5Reader::className = "CDFHDF5Reader";
 
 int CDFHDF5Reader::CustomForecastReader::readData(CDF::Variable *thisVar, size_t *start, size_t *count, ptrdiff_t *stride) {
@@ -1538,12 +1540,24 @@ int CDFHDF5Reader::CustomVolScanReader::readData(CDF::Variable *thisVar, size_t 
   /*Setting geographical projection parameters of input Cartesian grid.*/
   CT::string scanProj4;
   scanProj4.print("+proj=aeqd +a=6378.137 +b=6356.752 +R_A +lat_0=%.3f +lon_0=%.3f +x_0=0 +y_0=0", radarLat, radarLon);
-  projPJ projAeqd = pj_init_plus(scanProj4.c_str());
-  if (projAeqd == NULL) {
-  }
 
   CT::string compositeProj4 = KNMI_VOLSCAN_PROJ4;
-  projPJ projComposite = pj_init_plus(compositeProj4.c_str());
+
+//  projPJ projAeqd = pj_init_plus(scanProj4.c_str());
+//  projPJ projComposite = pj_init_plus(compositeProj4.c_str());
+
+  PJ *P;
+  PJ_COORD c, c_out;
+
+  P = proj_create_crs_to_crs(PJ_DEFAULT_CTX,
+                             compositeProj4.c_str(),
+                             scanProj4.c_str(),
+                             nullptr);
+  // TODO: Check if we need proj_normalize_for_visualization
+
+  // TODO: Better safe then sorry?
+  c.xyzt.z = 0.0;
+  c.xyzt.t = HUGE_VAL;
 
   double x, y;
   float rang, azim;
@@ -1554,9 +1568,12 @@ int CDFHDF5Reader::CustomVolScanReader::readData(CDF::Variable *thisVar, size_t 
   CDBDebug("Filling %d * %d cells", count[2] * stride[2], count[3] * stride[3]);
   for (size_t row = start[2]; row < count[2]; row += stride[2]) {
     for (size_t col = start[3]; col < count[3]; col += stride[3]) {
-      x = xMin + (col + 0.5) * xStep;
-      y = yMin + (row + 0.5) * yStep;
-      pj_transform(projComposite, projAeqd, 1, 1, &x, &y, NULL);
+      c.xyzt.x = xMin + (col + 0.5) * xStep;
+      c.xyzt.y = yMin + (row + 0.5) * yStep;
+//      pj_transform(projComposite, projAeqd, 1, 1, &x, &y, NULL);
+      c_out = proj_trans(P, PJ_FWD, c);
+      x = c_out.xy.x;
+      y = c_out.xy.y;
       rang = sqrt(x * x + y * y);
       azim = atan2(x, y) * 180.0 / M_PI;
       ir = (int)(rang / scan_rscale);
@@ -1570,6 +1587,7 @@ int CDFHDF5Reader::CustomVolScanReader::readData(CDF::Variable *thisVar, size_t 
   }
 
   free(scanData);
+  proj_destroy(P);
 
   return 0;
 }

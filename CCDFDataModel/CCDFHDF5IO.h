@@ -35,8 +35,7 @@
 #include "CDebugger.h"
 #include "CTime.h"
 #include "CProj4ToCF.h"
-#define ACCEPT_USE_OF_DEPRECATED_PROJ_API_H 1
-#include "proj_api.h"
+#include <proj.h>
 // #define CCDFHDF5IO_DEBUG
 
 #define CCDFHDF5IO_GROUPSEPARATOR "."
