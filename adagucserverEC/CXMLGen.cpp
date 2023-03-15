@@ -1509,8 +1509,9 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc, std::vector<WMSLa
                                   "  <name>%s</name>\n"
                                   "  <label>%s</label>\n",
                                   layer->name.c_str(), layer->name.c_str(), layerTitle.c_str());
-              if (layer->dataSource->dataObjects.size() > 0)
+              if (layer->dataSource->dataObjects.size() > 0) {
                 XMLDoc->printconcat("  <uom>%s</uom>\n", layer->dataSource->dataObjects[0]->getUnits().c_str());
+              }
               XMLDoc->printconcat("  <lonLatEnvelope srsName=\"urn:ogc:def:crs:OGC:1.3:CRS84\">\n"
                                   "    <gml:pos>%f %f</gml:pos>\n"
                                   "    <gml:pos>%f %f</gml:pos>\n",
