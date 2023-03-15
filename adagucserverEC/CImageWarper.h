@@ -25,11 +25,10 @@
 
 #ifndef CImageWarper_H
 #define CImageWarper_H
-#define ACCEPT_USE_OF_DEPRECATED_PROJ_API_H 1
 #include "CServerParams.h"
 #include "CDataReader.h"
 #include "CDrawImage.h"
-#include <proj_api.h>
+#include <proj.h>
 #include <math.h>
 #include "CDebugger.h"
 #include "CStopWatch.h"
@@ -77,28 +76,36 @@ private:
   int _initreprojSynchronized(const char *projString, CGeoParams *GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj);
 
 public:
+  // TODO: DegreeRadian conversions variable might not be used anymore??
   bool destNeedsDegreeRadianConversion, sourceNeedsDegreeRadianConversion, requireReprojection;
   CImageWarper() {
     prj = NULL;
-    sourcepj = NULL;
-    destpj = NULL;
-    latlonpj = NULL;
+//    sourcepj = NULL;
+//    destpj = NULL;
+//    latlonpj = NULL;
+    projSourceToDest = nullptr;
+    projSourceToLatlon = nullptr;
+    projLatlonToDest = nullptr;
     initialized = false;
-    proj4Context = NULL;
+    projContext = nullptr;
   }
   ~CImageWarper() {
     if (initialized == true) {
       closereproj();
       prj = NULL;
-      sourcepj = NULL;
-      destpj = NULL;
-      latlonpj = NULL;
+//      sourcepj = NULL;
+//      destpj = NULL;
+//      latlonpj = NULL;
+      projSourceToDest = nullptr;
+      projSourceToLatlon = nullptr;
+      projLatlonToDest = nullptr;
       initialized = false;
-      proj4Context = NULL;
+      projContext = nullptr;
     }
   }
-  projPJ sourcepj, destpj, latlonpj;
-  projCtx proj4Context;
+//  projPJ sourcepj, destpj, latlonpj;
+  PJ_CONTEXT *projContext;
+  PJ *projSourceToDest, *projSourceToLatlon, *projLatlonToDest;
   CT::string getDestProjString() { return destinationCRS; }
   int initreproj(CDataSource *dataSource, CGeoParams *GeoDest, std::vector<CServerConfig::XMLE_Projection *> *prj);
   int initreproj(const char *projString, CGeoParams *GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj);

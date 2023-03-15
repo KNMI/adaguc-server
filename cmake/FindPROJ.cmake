@@ -32,8 +32,10 @@ IF (PROJ_FOUND)
 		MESSAGE(STATUS "Found Proj ${PROJ_VERSION_MAJOR}.${PROJ_VERSION_MINOR}")
 		MESSAGE(STATUS "Include dir ${PROJ_INCLUDE_DIR} ${PROJ_LIBRARY}")
 
-		IF (PROJ_VERSION_MAJOR GREATER 7)
-			MESSAGE (FATAL_ERROR "Adaguc still uses the old PROJ API, so PROJ versions 8 and higher are not supported.")
+#		IF (PROJ_VERSION_MAJOR GREATER 7)
+#			MESSAGE (FATAL_ERROR "Adaguc still uses the old PROJ API, so PROJ versions 8 and higher are not supported.")
+		IF (PROJ_VERSION_MAJOR LESS 6)
+			MESSAGE (FATAL_ERROR "Adaguc requires PROJ API 6 or later.")
 		ENDIF()
 
 		ADD_DEFINITIONS(-DPROJ_VERSION_MAJOR=${PROJ_VERSION_MAJOR})
