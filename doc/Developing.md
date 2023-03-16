@@ -40,6 +40,17 @@ We provide several scripts to setup postgresql on your machine:
 - [Postgres for Ubuntu18](./developing/scripts/ubuntu_18_setup_postgres.md)
 - [Postgres for Ubuntu20](./developing/scripts/ubuntu_20_setup_postgres.md)
 
+Or alternatively, run a postgresql database using docker:
+```shell
+docker run --rm -d \
+    --name adaguc_db \
+    -e POSTGRES_USER=adaguc \
+    -e POSTGRES_PASSWORD=adaguc \
+    -e POSTGRES_DB=adaguc \
+    -p 5432:5432 \
+    postgres:13.4
+```
+
 When started, the database is available via username adaguc, databasename adaguc, password adageuc, and localhost. You can use the following to inspect the database:
 
 `psql "dbname=adaguc user=adaguc password=adaguc host=localhost"`
@@ -57,9 +68,8 @@ You have to do once:
 python3 -m venv env
 source env/bin/activate
 pip3 install --upgrade pip
-pip3 install flask flask-cors flask-caching gunicorn pytest marshmallow owslib pyproj==2.6.1 apispec apispec-webframeworks marshmallow-oneofschema defusedxml werkzeug netCDF4 pillow lxml chardet
+pip3 install -r requirements.txt
 cd ./python/lib/ && python3 setup.py develop && cd ../../
-
 ```
 
 And after each restart you only have to do
