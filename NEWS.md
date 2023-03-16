@@ -1,3 +1,5 @@
+**Version 2.8.5 2023-03-15**
+- Add parameter Unit of Measurement to DescribeCoverage output 
 
 **Version 2.8.4 2023-03-08**
 - Nearest neighbour rendering can now be done with discrete classes using ShadeInterval and renderhint="discreteclasses"
