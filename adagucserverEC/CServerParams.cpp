@@ -36,6 +36,7 @@ CServerParams::CServerParams() {
 
   Transparent = false;
   enableDocumentCache = false;
+  cfg = NULL;
   configObj = new CServerConfig();
   Geo = new CGeoParams;
   imageFormat = IMAGEFORMAT_IMAGEPNG8;
@@ -558,7 +559,7 @@ bool CServerParams::checkTimeFormat(CT::string &timeToCheck) {
   return isValidTime;*/
 }
 
-int CServerParams::parseConfigFile(CT::string &pszConfigFile) {
+int CServerParams::parseConfigFile(CT::string &pszConfigFile, std::vector<CServerConfig::XMLE_Environment *> *extraEnvironment) {
   CT::string configFileData;
 
   configFileData = "";
@@ -597,6 +598,30 @@ int CServerParams::parseConfigFile(CT::string &pszConfigFile) {
     /* Substitute ADAGUC_AUTOWMS_DIR */
     const char *pszADAGUC_AUTOWMS_DIR = getenv("ADAGUC_AUTOWMS_DIR");
     if (pszADAGUC_AUTOWMS_DIR != NULL) configFileData.replaceSelf("{ADAGUC_AUTOWMS_DIR}", pszADAGUC_AUTOWMS_DIR);
+
+    if (extraEnvironment != nullptr) {
+      /* Substitute any others as specified in env */
+      if (extraEnvironment->size() > 0) {
+        for (size_t j = 0; j < extraEnvironment->size(); j++) {
+          CServerConfig::XMLE_Environment *env = (*extraEnvironment)[j];
+          if (env != nullptr) {
+            const char *environmentVarName = env->attr.name.c_str();
+            const char *environmentVarDefault = env->attr.defaultVal.c_str();
+            CT::string substituteName;
+            substituteName.print("{%s}", environmentVarName);
+
+            const char *pszADAGUC_ENV = getenv(environmentVarName);
+            if (pszADAGUC_ENV != NULL) {
+              CDBDebug("Replacing %s with environment value %s", substituteName.c_str(), pszADAGUC_ENV);
+              configFileData.replaceSelf(substituteName.c_str(), pszADAGUC_ENV);
+            } else {
+              CDBDebug("Replacing %s with default value %s", substituteName.c_str(), environmentVarDefault);
+              configFileData.replaceSelf(substituteName.c_str(), environmentVarDefault);
+            }
+          }
+        }
+      }
+    }
   } catch (int e) {
     CDBError("Exception %d in substituting", e);
   }
