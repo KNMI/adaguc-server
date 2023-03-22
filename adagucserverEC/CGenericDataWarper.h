@@ -407,22 +407,36 @@ public:
         }
       }
       if (warper->isProjectionRequired()) {
-        if (warper->sourceNeedsDegreeRadianConversion) {
-          for (size_t j = 0; j < dataSize; j++) {
-            px[j] *= DEG_TO_RAD;
-            py[j] *= DEG_TO_RAD;
-          }
-        }
+//        if (warper->sourceNeedsDegreeRadianConversion) {
+//          for (size_t j = 0; j < dataSize; j++) {
+//            px[j] *= DEG_TO_RAD;
+//            py[j] *= DEG_TO_RAD;
+//          }
+//        }
 
-        if (pj_transform(warper->sourcepj, warper->destpj, dataSize, 0, px, py, NULL)) {
-          CDBDebug("Unable to do pj_transform");
+        PJ_COORD c, c_out;
+        c.xyzt.z = 0.0;
+        c.xyzt.t = HUGE_VAL;
+
+
+        for (size_t j = 0; j < dataSize; j++) {
+          c.xyzt.x = px[j];
+          c.xyzt.y = py[j];
+          // TODO: Replace with proj_trans_generic()/proj_trans_array() everywhere!
+          // TODO: Handle error case?
+          c_out = proj_trans(warper->projSourceToDest, PJ_FWD, c);
+          px[j] = c_out.xy.x;
+          py[j] = c_out.xy.y;
         }
-        if (warper->destNeedsDegreeRadianConversion) {
-          for (size_t j = 0; j < dataSize; j++) {
-            px[j] /= DEG_TO_RAD;
-            py[j] /= DEG_TO_RAD;
-          }
-        }
+//        if (pj_transform(warper->sourcepj, warper->destpj, dataSize, 0, px, py, NULL)) {
+//          CDBDebug("Unable to do pj_transform");
+//        }
+//        if (warper->destNeedsDegreeRadianConversion) {
+//          for (size_t j = 0; j < dataSize; j++) {
+//            px[j] /= DEG_TO_RAD;
+//            py[j] /= DEG_TO_RAD;
+//          }
+//        }
       }
 
     } else {
@@ -455,22 +469,35 @@ public:
       }
 
       if (warper->isProjectionRequired()) {
-        if (warper->sourceNeedsDegreeRadianConversion) {
-          for (size_t j = 0; j < dataSizeStrided; j++) {
-            pxStrided[j] *= DEG_TO_RAD;
-            pyStrided[j] *= DEG_TO_RAD;
-          }
-        }
+//        if (warper->sourceNeedsDegreeRadianConversion) {
+//          for (size_t j = 0; j < dataSizeStrided; j++) {
+//            pxStrided[j] *= DEG_TO_RAD;
+//            pyStrided[j] *= DEG_TO_RAD;
+//          }
+//        }
 
-        if (pj_transform(warper->sourcepj, warper->destpj, dataSizeStrided, 0, pxStrided, pyStrided, NULL)) {
-          CDBDebug("Unable to do pj_transform");
+        PJ_COORD c, c_out;
+        c.xyzt.z = 0.0;
+        c.xyzt.t = HUGE_VAL;
+
+        for (size_t j = 0; j < dataSizeStrided; j++) {
+          c.xyzt.x = pxStrided[j];
+          c.xyzt.y = pyStrided[j];
+          // TODO: Replace with proj_trans_generic()/proj_trans_array() everywhere!
+          // TODO: Handle error case?
+          c_out = proj_trans(warper->projSourceToDest, PJ_FWD, c);
+          pxStrided[j] = c_out.xy.x;
+          pyStrided[j] = c_out.xy.y;
         }
-        if (warper->destNeedsDegreeRadianConversion) {
-          for (size_t j = 0; j < dataSizeStrided; j++) {
-            pxStrided[j] /= DEG_TO_RAD;
-            pyStrided[j] /= DEG_TO_RAD;
-          }
-        }
+//        if (pj_transform(warper->sourcepj, warper->destpj, dataSizeStrided, 0, pxStrided, pyStrided, NULL)) {
+//          CDBDebug("Unable to do pj_transform");
+//        }
+//        if (warper->destNeedsDegreeRadianConversion) {
+//          for (size_t j = 0; j < dataSizeStrided; j++) {
+//            pxStrided[j] /= DEG_TO_RAD;
+//            pyStrided[j] /= DEG_TO_RAD;
+//          }
+//        }
       }
       for (int y = 0; y < dataHeight + 1; y++) {
         for (int x = 0; x < dataWidth + 1; x++) {
