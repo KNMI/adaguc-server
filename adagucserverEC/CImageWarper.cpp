@@ -483,12 +483,14 @@ int CImageWarper::_initreprojSynchronized(const char *projString, CGeoParams *Ge
 //    return 1;
 //  }
 
+  sourceProjection.trimSelf();
+  destinationCRS.trimSelf();
   projSourceToDest = proj_create_crs_to_crs(projContext,
                                             sourceProjection.c_str(),
                                             destinationCRS.c_str(),
                                             nullptr);
   if (projSourceToDest==nullptr) {
-    CDBError("Invalid projection: from %s to %s", destinationCRS.c_str(), destinationCRS.c_str());
+    CDBError("Invalid projection: from %s to %s", sourceProjection.c_str(), destinationCRS.c_str());
     return 1;
   }
 
