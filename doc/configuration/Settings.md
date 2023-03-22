@@ -3,9 +3,17 @@ Settings (enablecleanupsystem)
 
 Back to [Configuration](./Configuration.md)
 
-Available since: 2.7.12
+Available since: 2.8.6
 
-- enablecleanupsystem: Enables the auto cleanup system. See [FilePath](./FilePath.md) and retentionperiod for details
+- enablecleanupsystem (false | true | inform): Enables the auto cleanup system. See [FilePath](./FilePath.md) and retentionperiod for details
+- cleanupsystemlimit (number): Configures how many files will be deleted at once, defaults to 10 (CDBFILESCANNER_CLEANUP_DEFAULT_LIMIT).
+
+Allowed values for enablecleanupsystem are:
+- false (or nothing)
+- true - Enables the cleanup, deletes files from the filesystem and from the database
+- inform - Informs which files would be removed, like a dry run.
+
+
 
 ```xml
 <Settings enablecleanupsystem="true"/>

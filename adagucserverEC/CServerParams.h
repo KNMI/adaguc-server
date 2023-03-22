@@ -38,7 +38,7 @@
 #include <map>
 #include <string>
 
-//#define MAX_DIMS 10
+// #define MAX_DIMS 10
 
 /**
  * See http://www.resc.rdg.ac.uk/trac/ncWMS/wiki/WmsExtensions
@@ -307,7 +307,7 @@ public:
    * @param pszConfigFile The config file to parse
    * returns zero on success       *
    */
-  int parseConfigFile(CT::string &pszConfigFile);
+  int parseConfigFile(CT::string &pszConfigFile, std::vector<CServerConfig::XMLE_Environment *> *extraEnvironment);
 };
 
 #endif
