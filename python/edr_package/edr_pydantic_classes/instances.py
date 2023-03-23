@@ -3,62 +3,54 @@
 #   timestamp: 2022-06-29T09:43:11+00:00
 from __future__ import annotations
 
-from datetime import datetime
-from enum import Enum
+
 from typing import Dict
 from typing import List
 from typing import Optional
 
-from covjson_pydantic.parameter import Parameter
 from pydantic import Field
 
-from .generic_models import Link
+from .generic_models import Link, CrsObject, Variables, ParameterName, Extent
 from .my_base_model import MyBaseModel
 
 
-class CRSOptions(str, Enum):
-    wgs84 = "WGS84"
+class InstancesVariables(Variables):
+    query_type: str = "instances"
+    title: str = "Instances query"
 
 
-class Spatial(MyBaseModel):
-    bbox: List[List[float]]
-    crs: CRSOptions
-    name: Optional[str]
+class InstancesLink(Link):
+    variables: InstancesVariables
 
 
-class Temporal(MyBaseModel):
-    interval: List[List[datetime]]
-    values: List[str]
-    trs: str
-    name: Optional[str]
+class InstancesDataQueryLink(MyBaseModel):
+    link: InstancesLink
 
 
-class Vertical(MyBaseModel):
-    interval: List[List[float]]
-    vrs: str
-    name: Optional[str]
+class PositionVariables(Variables):
+    query_type: str = "position"
+    title: str = "Position query"
+    coords: str = "Well Known Text POINT value i.e. POINT(24.9384 60.1699)"
 
 
-class Extent(MyBaseModel):
-    spatial: Optional[Spatial]
-    temporal: Optional[Temporal]
-    vertical: Optional[Vertical]
+class PositionLink(Link):
+    variables: PositionVariables
 
 
-class DataQueryLink(MyBaseModel):
-    link: Optional[Link] = None
+class PositionDataQueryLink(MyBaseModel):
+    link: PositionLink
 
 
 class DataQueries(MyBaseModel):
-    position: Optional[DataQueryLink] = None
-    radius: Optional[DataQueryLink] = None
-    area: Optional[DataQueryLink] = None
-    cube: Optional[DataQueryLink] = None
-    trajectory: Optional[DataQueryLink] = None
-    corridor: Optional[DataQueryLink] = None
-    locations: Optional[DataQueryLink] = None
-    items: Optional[DataQueryLink] = None
-    instances: Optional[DataQueryLink] = None
+    position: Optional[PositionDataQueryLink] = None
+    # radius: Optional[DataQueryLink] = None
+    # area: Optional[DataQueryLink] = None
+    # cube: Optional[DataQueryLink] = None
+    # trajectory: Optional[DataQueryLink] = None
+    # corridor: Optional[DataQueryLink] = None
+    # locations: Optional[DataQueryLink] = None
+    # items: Optional[DataQueryLink] = None
+    instances: Optional[InstancesDataQueryLink] = None
 
 
 class Instance(MyBaseModel):
@@ -110,7 +102,7 @@ class Instance(MyBaseModel):
     data_queries: Optional[DataQueries]
     crs: Optional[str | List[str]]
     output_formats: Optional[List[str]]
-    parameter_names: Optional[Dict[str, Parameter]]
+    parameter_names: Optional[Dict[str, ParameterName]]
 
 
 class InstancesModel(MyBaseModel):

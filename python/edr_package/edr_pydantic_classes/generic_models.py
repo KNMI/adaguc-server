@@ -1,10 +1,87 @@
 from typing import List
 from typing import Optional
+from enum import Enum
+
+from datetime import datetime
 
 from covjson_pydantic.domain import DomainType
 from pydantic import Field
 
 from .my_base_model import MyBaseModel
+
+
+class CRSOptions(str, Enum):
+    wgs84 = "WGS84"
+
+
+class Spatial(MyBaseModel):
+    bbox: list[list[float]]
+    crs: CRSOptions
+    name: Optional[str]
+
+
+class Temporal(MyBaseModel):
+    interval: list[list[datetime]]
+    values: list[str]
+    trs: str
+    name: Optional[str]
+
+
+class Vertical(MyBaseModel):
+    interval: List[List[float]]
+    vrs: str
+    name: Optional[str]
+
+
+class Custom(MyBaseModel):
+    interval: List[str]
+    id: str
+    values: List[str]
+    reference: Optional[str] = None
+
+
+class Extent(MyBaseModel):
+    spatial: Optional[Spatial]
+    temporal: Optional[Temporal]
+    vertical: Optional[Vertical]
+    custom: Optional[List[Custom]]
+
+
+class CrsObject(MyBaseModel):
+    crs: str
+    wkt: str
+
+
+class ObservedPropertyCollection(MyBaseModel):
+    id: Optional[str] = None
+    label: str
+    description: Optional[str] = None
+    # categories
+
+
+class Units(MyBaseModel):
+    label: Optional[str]
+    symbol: Optional[str]
+    id: Optional[str] = None
+
+
+class ParameterName(MyBaseModel):
+    id: Optional[str] = None
+    type: str = "Parameter"
+    label: Optional[str] = None
+    description: Optional[str] = None
+    data_type: Optional[str] = None
+    observedProperty: ObservedPropertyCollection
+    extent: Optional[Extent] = None
+    unit: Optional[Units] = None
+
+
+class Variables(MyBaseModel):
+    crs_details: list[CrsObject]
+    default_output_format: Optional[str] = None
+    output_formats: list[str] = []
+    query_type: str = ""
+    title: str = ""
 
 
 class Link(MyBaseModel):
@@ -21,6 +98,7 @@ class Link(MyBaseModel):
         False,
         description="defines if the link href value is a template with values requiring replacement",
     )
+    variables: Optional[Variables]
 
 
 class SupportedQueries(MyBaseModel):
