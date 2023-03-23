@@ -605,18 +605,28 @@ int CServerParams::parseConfigFile(CT::string &pszConfigFile, std::vector<CServe
         for (size_t j = 0; j < extraEnvironment->size(); j++) {
           CServerConfig::XMLE_Environment *env = (*extraEnvironment)[j];
           if (env != nullptr) {
-            const char *environmentVarName = env->attr.name.c_str();
-            const char *environmentVarDefault = env->attr.defaultVal.c_str();
-            CT::string substituteName;
-            substituteName.print("{%s}", environmentVarName);
+            if (!env->attr.name.empty() && !env->attr.defaultVal.empty()) {
 
-            const char *pszADAGUC_ENV = getenv(environmentVarName);
-            if (pszADAGUC_ENV != NULL) {
-              CDBDebug("Replacing %s with environment value %s", substituteName.c_str(), pszADAGUC_ENV);
-              configFileData.replaceSelf(substituteName.c_str(), pszADAGUC_ENV);
+              if (env->attr.name.startsWith(CSERVERPARAMS_ADAGUCENV_PREFIX)) {
+                const char *environmentVarName = env->attr.name.c_str();
+                const char *environmentVarDefault = env->attr.defaultVal.c_str();
+                const char *environmentValue = getenv(environmentVarName);
+                CT::string substituteName;
+                substituteName.print("{%s}", environmentVarName);
+                const char *environmentSubstituteName = substituteName.c_str();
+
+                if (environmentValue != NULL) {
+                  CDBDebug("Replacing %s with environment value %s", environmentSubstituteName, environmentValue);
+                  configFileData.replaceSelf(environmentSubstituteName, environmentValue);
+                } else {
+                  CDBDebug("Replacing %s with default value %s", environmentSubstituteName, environmentVarDefault);
+                  configFileData.replaceSelf(environmentSubstituteName, environmentVarDefault);
+                }
+              } else {
+                CDBWarning("Environment element found, but it is not prefixed with [%s]", CSERVERPARAMS_ADAGUCENV_PREFIX);
+              }
             } else {
-              CDBDebug("Replacing %s with default value %s", substituteName.c_str(), environmentVarDefault);
-              configFileData.replaceSelf(substituteName.c_str(), environmentVarDefault);
+              CDBWarning("Environment element found, but either name or default are not set");
             }
           }
         }
