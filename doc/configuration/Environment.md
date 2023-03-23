@@ -18,7 +18,7 @@ It can for example be used in the following dataset configuration snippet:
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration>
   <Environment name="ADAGUCENV_RETENTIONPERIOD" default="PT10M" />
-  <Environment name="ADAGUCENV_ENABLECLEANUP" default="inform" />
+  <Environment name="ADAGUCENV_ENABLECLEANUP" default="dryrun" />
   <Settings enablecleanupsystem="{ADAGUCENV_ENABLECLEANUP}" cleanupsystemlimit="5" />
   <Layer type="database">
     <FilePath filter=".*\.nc$" retentionperiod="{ADAGUCENV_RETENTIONPERIOD}"
@@ -33,7 +33,7 @@ It can for example be used in the following dataset configuration snippet:
 </Configuration>
 ```
 
-By default it will not enable the cleanup, but only inform. But by setting the following environment:
+By default it will not enable the cleanup, but only inform what would be deleted. But by setting the following environment:
 
 ```
 export ADAGUCENV_RETENTIONPERIOD="P7D"

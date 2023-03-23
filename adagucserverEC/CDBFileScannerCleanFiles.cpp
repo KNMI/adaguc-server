@@ -34,7 +34,7 @@ int CDBFileScanner::cleanFiles(CDataSource *dataSource, int) {
   }
   CT::string enableCleanupSystem = dataSource->cfg->Settings.size() == 1 ? dataSource->cfg->Settings[0]->attr.enablecleanupsystem : "false";
   bool enableCleanupIsTrue = enableCleanupSystem.equals("true");
-  bool enableCleanupIsInform = enableCleanupSystem.equals("inform");
+  bool enableCleanupIsInform = enableCleanupSystem.equals("dryrun");
   int cleanupSystemLimit = dataSource->cfg->Settings.size() == 1 && !dataSource->cfg->Settings[0]->attr.cleanupsystemlimit.empty() ? dataSource->cfg->Settings[0]->attr.cleanupsystemlimit.toInt()
                                                                                                                                    : CDBFILESCANNER_CLEANUP_DEFAULT_LIMIT;
   if (!enableCleanupIsTrue && !enableCleanupIsInform) {
@@ -47,7 +47,7 @@ int CDBFileScanner::cleanFiles(CDataSource *dataSource, int) {
   CDBDebug("Start Cleanfiles with retentiontype [%s] and retentionperiod [%s], limit %d", retentiontype.c_str(), retentionperiod.c_str(), cleanupSystemLimit);
 
   if (enableCleanupIsInform) {
-    CDBDebug("Note that mode is set to inform only, no actual deleting");
+    CDBDebug("Note that mode is set to dryrun only, no actual deleting");
   }
   CDBAdapter *dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
   if (dataSource->cfgLayer->Dimension.size() == 0) {
