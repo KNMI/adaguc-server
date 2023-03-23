@@ -40,6 +40,8 @@
 
 // #define MAX_DIMS 10
 
+#define CSERVERPARAMS_ADAGUCENV_PREFIX "ADAGUCENV_"
+
 /**
  * See http://www.resc.rdg.ac.uk/trac/ncWMS/wiki/WmsExtensions
  */

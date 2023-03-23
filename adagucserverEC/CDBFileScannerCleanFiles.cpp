@@ -38,7 +38,7 @@ int CDBFileScanner::cleanFiles(CDataSource *dataSource, int) {
   int cleanupSystemLimit = dataSource->cfg->Settings.size() == 1 && !dataSource->cfg->Settings[0]->attr.cleanupsystemlimit.empty() ? dataSource->cfg->Settings[0]->attr.cleanupsystemlimit.toInt()
                                                                                                                                    : CDBFILESCANNER_CLEANUP_DEFAULT_LIMIT;
   if (!enableCleanupIsTrue && !enableCleanupIsInform) {
-    CDBWarning("Layer wants to autocleanup, but attribute enablecleanupsystem in Settings is not set to true");
+    CDBWarning("Layer wants to autocleanup, but attribute enablecleanupsystem in Settings is not set to true or dryrun but to %s", enableCleanupSystem.c_str());
     return 1;
   }
 
