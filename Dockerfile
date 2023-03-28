@@ -5,7 +5,7 @@ USER root
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
-LABEL version="2.8.5"
+LABEL version="2.8.6"
 
 ######### First stage (build) ############
 
@@ -71,7 +71,7 @@ WORKDIR /adaguc/adaguc-server-master
 # Upgrade pip and install python requirements.txt
 COPY --from=0 /adaguc/adaguc-server-master/requirements.txt /adaguc/adaguc-server-master/requirements.txt
 RUN pip3 install --no-cache-dir --upgrade pip \
-   && pip3 install --no-cache-dir -r requirements.txt
+    && pip3 install --no-cache-dir -r requirements.txt
 
 # Install compiled adaguc binaries from stage one
 COPY --from=0 /adaguc/adaguc-server-master/bin /adaguc/adaguc-server-master/bin
@@ -85,7 +85,7 @@ COPY --from=0 /adaguc/adaguc-server-master/runtests.sh /adaguc/adaguc-server-mas
 
 RUN bash runtests.sh
 
-    # Set same uid as vivid
+# Set same uid as vivid
 RUN useradd -m adaguc -u 1000 && \
     # Setup directories
     mkdir -p /data/adaguc-autowms && \
