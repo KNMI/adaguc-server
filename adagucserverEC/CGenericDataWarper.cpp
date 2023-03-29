@@ -176,34 +176,10 @@ int GenericDataWarper::findPixelExtent(int *PXExtentBasedOnSource, CGeoParams *s
               double px = destCoordX, py = destCoordY;
               if (needsProjection) {
                 if (warper->isProjectionRequired()) {
-//                  if (warper->destNeedsDegreeRadianConversion) {
-//                    px *= DEG_TO_RAD;
-//                    py *= DEG_TO_RAD;
-//                  }
-
-                  PJ_COORD c, c_out;
-                  c.xyzt.z = 0.0;
-                  c.xyzt.t = HUGE_VAL;
-
-
-                  c.xyzt.x = px;
-                  c.xyzt.y = py;
-                  // TODO: Replace with proj_trans_generic()/proj_trans_array() everywhere!
-                  // TODO: Handle error case?
-                  c_out = proj_trans(warper->projSourceToDest, PJ_INV, c);
-                  px = c_out.xy.x;
-                  py = c_out.xy.y;
-
-//                  if (pj_transform(warper->destpj, warper->sourcepj, 1, 0, &px, &py, NULL)) {
-//                    skip = true;
-                    //                   px/=DEG_TO_RAD;
-                    //                   py/=DEG_TO_RAD;
-                    //                   CDBDebug("skip %f %f",px,py);
-//                  }
-//                  if (warper->sourceNeedsDegreeRadianConversion) {
-//                    px /= DEG_TO_RAD;
-//                    py /= DEG_TO_RAD;
-//                  }
+                  if (proj_trans_generic(warper->projSourceToDest, PJ_INV, &px, sizeof(double), 1, &py, sizeof(double), 1, nullptr, 0, 0, nullptr, 0, 0) != 1) {
+                    skip = true;
+                    CDBDebug("skip %f %f",px,py);
+                  }
                 }
               }
               /*f(x==0){

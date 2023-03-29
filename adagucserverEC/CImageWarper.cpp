@@ -109,18 +109,6 @@ void floatToString(char *string, size_t maxlen, float min, float max, float numb
 
 int CImageWarper::closereproj() {
   if (initialized) {
-//    if (sourcepj != NULL) {
-//      pj_free(sourcepj);
-//      sourcepj = NULL;
-//    }
-//    if (destpj != NULL) {
-//      pj_free(destpj);
-//      destpj = NULL;
-//    }
-//    if (latlonpj != NULL) {
-//      pj_free(latlonpj);
-//      latlonpj = NULL;
-//    }
     if(projSourceToDest != nullptr) {
       proj_destroy(projLatlonToDest);
       projLatlonToDest = nullptr;
@@ -143,26 +131,12 @@ int CImageWarper::closereproj() {
 }
 
 int CImageWarper::reprojpoint(double &dfx, double &dfy) {
-  PJ_COORD c, c_out;
-  c.xyzt.x = dfx;
-  c.xyzt.y = dfy;
-  c.xyzt.z = 0.0;
-  c.xyzt.t = HUGE_VAL;
-
-//  if (destNeedsDegreeRadianConversion) {
-//    dfx *= DEG_TO_RAD;
-//    dfy *= DEG_TO_RAD;
-//  }
-  // TODO: Handle error case?
-  c_out = proj_trans(projSourceToDest, PJ_INV, c);
-  dfx = c_out.xy.x;
-  dfy = c_out.xy.y;
-
-//  if (pj_transform(destpj, sourcepj, 1, 0, &dfx, &dfy, NULL) != 0) {
-//    // throw("reprojpoint error");
-//    return 1;
-//    // CDBError("ReprojException");
-//  }
+  // TODO: Should t all point to HUGE_VAL instead of 0.0?
+  if (proj_trans_generic(projSourceToDest, PJ_INV, &dfx, sizeof(double), 1, &dfy, sizeof(double), 1, nullptr, 0, 0, nullptr, 0, 0) != 1) {
+    // throw("reprojpoint error");
+    return 1;
+    // CDBError("ReprojException");
+  }
   if (isnan(dfx) || isnan(dfy)) {
     dfx = 0;
     dfy = 0;
@@ -173,45 +147,18 @@ int CImageWarper::reprojpoint(double &dfx, double &dfy) {
     dfy = 0;
     return 1;
   }
-//  if (sourceNeedsDegreeRadianConversion) {
-//    dfx /= DEG_TO_RAD;
-//    dfy /= DEG_TO_RAD;
-//  }
   return 0;
 }
 int CImageWarper::reprojpoint(CPoint &p) { return reprojpoint(p.x, p.y); }
 int CImageWarper::reprojpoint_inv(CPoint &p) { return reprojpoint_inv(p.x, p.y); }
 
 int CImageWarper::reprojToLatLon(double &dfx, double &dfy) {
-//  if (destNeedsDegreeRadianConversion) {
-//    dfx *= DEG_TO_RAD;
-//    dfy *= DEG_TO_RAD;
-//  }
-  PJ_COORD c, c_out;
-  c.xyzt.x = dfx;
-  c.xyzt.y = dfy;
-  c.xyzt.z = 0.0;
-  c.xyzt.t = HUGE_VAL;
-
-  // TODO: Handle error case?
-  c_out = proj_trans(projLatlonToDest, PJ_INV, c);
-  dfx = c_out.xy.x;
-  dfy = c_out.xy.y;
-  if (isnan(dfx) || isnan(dfy)) {
+  if (proj_trans_generic(projLatlonToDest, PJ_INV, &dfx, sizeof(double), 1, &dfy, sizeof(double), 1, nullptr, 0, 0, nullptr, 0, 0) != 1) {
+    // throw("reprojfromLatLon error");
     dfx = 0;
     dfy = 0;
     return 1;
   }
-
-
-//  if (pj_transform(destpj, latlonpj, 1, 0, &dfx, &dfy, NULL) != 0) {
-//    // throw("reprojfromLatLon error");
-//    dfx = 0;
-//    dfy = 0;
-//    return 1;
-//  }
-//  dfx /= DEG_TO_RAD;
-//  dfy /= DEG_TO_RAD;
   return 0;
 }
 
@@ -221,26 +168,13 @@ int CImageWarper::reprojfromLatLon(double &dfx, double &dfy) {
     dfy = 0;
     return 1;
   }
-//  dfx *= DEG_TO_RAD;
-//  dfy *= DEG_TO_RAD;
 
-  PJ_COORD c, c_out;
-  c.xyzt.x = dfx;
-  c.xyzt.y = dfy;
-  c.xyzt.z = 0.0;
-  c.xyzt.t = HUGE_VAL;
-  // TODO: Handle error case?
-  c_out = proj_trans(projLatlonToDest, PJ_FWD, c);
-  dfx = c_out.xy.x;
-  dfy = c_out.xy.y;
-
-
-//  if (pj_transform(latlonpj, destpj, 1, 0, &dfx, &dfy, NULL) != 0) {
-//    // CDBError("Projection error");
-//    dfx = 0;
-//    dfy = 0;
-//    return 1;
-//  }
+  if (proj_trans_generic(projLatlonToDest, PJ_FWD, &dfx, sizeof(double), 1, &dfy, sizeof(double), 1, nullptr, 0, 0, nullptr, 0, 0) != 1) {
+    // CDBError("Projection error");
+    dfx = 0;
+    dfy = 0;
+    return 1;
+  }
   if (isnan(dfx) || isnan(dfy)) {
     dfx = 0;
     dfy = 0;
@@ -252,58 +186,22 @@ int CImageWarper::reprojfromLatLon(double &dfx, double &dfy) {
     return 1;
   }
   // if(status!=0)CDBDebug("DestPJ: %s",GeoDest->CRS.c_str());
-//  if (destNeedsDegreeRadianConversion) {
-//    dfx /= DEG_TO_RAD;
-//    dfy /= DEG_TO_RAD;
-//  }
   return 0;
 }
 
 int CImageWarper::reprojModelToLatLon(double &dfx, double &dfy) {
-//  if (sourceNeedsDegreeRadianConversion) {
-//    dfx *= DEG_TO_RAD;
-//    dfy *= DEG_TO_RAD;
-//  }
-  PJ_COORD c, c_out;
-  c.xyzt.x = dfx;
-  c.xyzt.y = dfy;
-  c.xyzt.z = 0.0;
-  c.xyzt.t = HUGE_VAL;
-  // TODO: Handle error case?
-  c_out = proj_trans(projSourceToLatlon, PJ_FWD, c);
-  dfx = c_out.xy.x;
-  dfy = c_out.xy.y;
-
-//  if (pj_transform(sourcepj, latlonpj, 1, 0, &dfx, &dfy, NULL) != 0) {
-//
-//    return 1;
-//  }
-//  dfx /= DEG_TO_RAD;
-//  dfy /= DEG_TO_RAD;
+  if (proj_trans_generic(projSourceToLatlon, PJ_FWD, &dfx, sizeof(double), 1, &dfy, sizeof(double), 1, nullptr, 0, 0, nullptr, 0, 0) != 1) {
+    return 1;
+  }
   return 0;
 }
 
 int CImageWarper::reprojModelFromLatLon(double &dfx, double &dfy) {
-//  dfx *= DEG_TO_RAD;
-//  dfy *= DEG_TO_RAD;
 
-  PJ_COORD c, c_out;
-  c.xyzt.x = dfx;
-  c.xyzt.y = dfy;
-  c.xyzt.z = 0.0;
-  c.xyzt.t = HUGE_VAL;
-  // TODO: Handle error case?
-  c_out = proj_trans(projSourceToLatlon, PJ_INV, c);
-  dfx = c_out.xy.x;
-  dfy = c_out.xy.y;
-//  if (pj_transform(latlonpj, sourcepj, 1, 0, &dfx, &dfy, NULL) != 0) {
-//    return 1;
-//  }
+  if (proj_trans_generic(projSourceToLatlon, PJ_INV, &dfx, sizeof(double), 1, &dfy, sizeof(double), 1, nullptr, 0, 0, nullptr, 0, 0) != 1) {
+    return 1;
+  }
   // if(status!=0)CDBDebug("DestPJ: %s",GeoDest->CRS.c_str());
-//  if (sourceNeedsDegreeRadianConversion) {
-//    dfx /= DEG_TO_RAD;
-//    dfy /= DEG_TO_RAD;
-//  }
   return 0;
 }
 
@@ -316,30 +214,12 @@ int CImageWarper::reprojpoint_inv_topx(double &dfx, double &dfy) {
 
 int CImageWarper::reprojpoint_inv(double &dfx, double &dfy) {
 
-//  if (sourceNeedsDegreeRadianConversion) {
-//    dfx *= DEG_TO_RAD;
-//    dfy *= DEG_TO_RAD;
-//  }
-  PJ_COORD c, c_out;
-  c.xyzt.x = dfx;
-  c.xyzt.y = dfy;
-  c.xyzt.z = 0.0;
-  c.xyzt.t = HUGE_VAL;
-  // TODO: Handle error case?
-  c_out = proj_trans(projSourceToDest, PJ_FWD, c);
-  dfx = c_out.xy.x;
-  dfy = c_out.xy.y;
-
-//  if (pj_transform(sourcepj, destpj, 1, 0, &dfx, &dfy, NULL) != 0) {
-//    // CDBError("ReprojException: %f %f",dfx,dfy);
-//    dfx = 0;
-//    dfy = 0;
-//    return 1;
-//  }
-//  if (destNeedsDegreeRadianConversion) {
-//    dfx /= DEG_TO_RAD;
-//    dfy /= DEG_TO_RAD;
-//  }
+  if (proj_trans_generic(projSourceToDest, PJ_FWD, &dfx, sizeof(double), 1, &dfy, sizeof(double), 1, nullptr, 0, 0, nullptr, 0, 0) != 1) {
+//  // CDBError("ReprojException: %f %f",dfx,dfy);
+    dfx = 0;
+    dfy = 0;
+    return 1;
+  }
   return 0;
 }
 //   int CImageWarper::decodeCRS(CT::string *outputCRS, CT::string *inputCRS){
@@ -460,28 +340,11 @@ int CImageWarper::_initreprojSynchronized(const char *projString, CGeoParams *Ge
 
   //    CDBDebug("sourceProjectionUndec %s, sourceProjection %s",sourceProjection.c_str(),sourceProjectionUndec.c_str());
 
-//  if (!(sourcepj = pj_init_plus_ctx(proj4Context, sourceProjection.c_str()))) {
-//    CDBError("SetSourceProjection: Invalid projection: %s", sourceProjection.c_str());
-//    return 1;
-//  }
-//  if (sourcepj == NULL) {
-//    CDBError("SetSourceProjection: Invalid projection: %s", sourceProjection.c_str());
-//    return 1;
-//  }
-//  if (!(latlonpj = pj_init_plus_ctx(proj4Context, LATLONPROJECTION))) {
-//    CDBError("SetLatLonProjection: Invalid projection: %s", LATLONPROJECTION);
-//    return 1;
-//  }
   dMaxExtentDefined = 0;
   if (decodeCRS(&destinationCRS, &GeoDest->CRS, _prj) != 0) {
     CDBError("decodeCRS failed");
     return 1;
   }
-
-//  if (!(destpj = pj_init_plus_ctx(proj4Context, destinationCRS.c_str()))) {
-//    CDBError("SetDestProjection: Invalid projection: %s", destinationCRS.c_str());
-//    return 1;
-//  }
 
   sourceProjection.trimSelf();
   destinationCRS.trimSelf();
@@ -521,33 +384,12 @@ int CImageWarper::_initreprojSynchronized(const char *projString, CGeoParams *Ge
   requireReprojection = false;
   double y = 52;
   double x = 5;
-//  x *= DEG_TO_RAD;
-//  y *= DEG_TO_RAD;
-//  if (pj_transform(destpj, sourcepj, 1, 0, &x, &y, NULL) != 0) requireReprojection = true;
-//  x /= DEG_TO_RAD;
-//  y /= DEG_TO_RAD;
-  PJ_COORD c, c_out;
-  c.xyzt.x = x;
-  c.xyzt.y = y;
-  c.xyzt.z = 0.0;
-  c.xyzt.t = HUGE_VAL;
-  c_out = proj_trans(projSourceToDest, PJ_INV, c);
-  x = c_out.xy.x;
-  y = c_out.xy.y;
+
+  if (proj_trans_generic(projSourceToDest, PJ_INV, &x, sizeof(double), 1, &y, sizeof(double), 1, nullptr, 0, 0, nullptr, 0, 0) != 1) {
+    requireReprojection = true;
+  }
 
   if (y + 0.001 < 52 || y - 0.001 > 52 || x + 0.001 < 5 || x - 0.001 > 5) requireReprojection = true;
-  // Check wether we should convert between radians and degrees for the dest and source projections
-
-  if (destinationCRS.indexOf("longlat") >= 0) {
-    destNeedsDegreeRadianConversion = true;
-  } else
-    destNeedsDegreeRadianConversion = false;
-
-  sourceCRSString = sourceProjection.c_str();
-  if (sourceCRSString.indexOf("longlat") >= 0) {
-    sourceNeedsDegreeRadianConversion = true;
-  } else
-    sourceNeedsDegreeRadianConversion = false;
 
   return 0;
 }
