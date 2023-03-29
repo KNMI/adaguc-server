@@ -266,7 +266,7 @@ int CImgWarpNearestRGBA::reproj(CImageWarper *warper, CDataSource *, CGeoParams 
     //     CT::string destinationCRS;
     //     warper->decodeCRS(&destinationCRS,&GeoDest->CRS);
     if (proj_trans_generic(warper->projSourceToDest, PJ_INV, psx, sizeof(double), 4, psy, sizeof(double), 4, nullptr, 0, 0, nullptr, 0, 0) != 4) {
-      // TODO: No error handling in proj4 code
+      // TODO: No error handling in original code
     }
   }
   x_corners[0] = psx[1];

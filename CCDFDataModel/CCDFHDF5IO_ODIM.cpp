@@ -155,39 +155,18 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
     cornerX[3] = getAttrValueDouble(whereVar, "UR_lon", -1);
     cornerY[3] = getAttrValueDouble(whereVar, "UR_lat", -1);
 
-//    projCtx proj4Context = pj_ctx_alloc();
-//    projPJ sourcepj = pj_init_plus_ctx(proj4Context, projectionString.c_str());
-//    projPJ latlonpj = pj_init_plus_ctx(proj4Context, "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
     PJ_CONTEXT *projContext = proj_context_create();
     PJ *P;
-    PJ_COORD c, c_out;
-
     P = proj_create_crs_to_crs(projContext,
                                "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs",
                                projectionString.c_str(),
                                nullptr);
     // TODO: Check if we need proj_normalize_for_visualization
 
-    // TODO: Better safe then sorry?
-    c.xyzt.z = 0.0;
-    c.xyzt.t = HUGE_VAL;
-
-//    for (size_t j = 0; j < 4; j += 1) {
-//      cornerX[j] *= DEG_TO_RAD;
-//      cornerY[j] *= DEG_TO_RAD;
-//    }
-//    pj_transform(latlonpj, sourcepj, 4, 0, cornerX, cornerY, nullptr);
-    for (size_t j = 0; j < 4; j++) {
-      c.xyzt.x = cornerX[j];
-      c.xyzt.y = cornerY[j];
-      c_out = proj_trans(P, PJ_FWD, c);
-      cornerX[j] = c_out.xy.x;
-      cornerY[j] = c_out.xy.y;
+    if (proj_trans_generic(P, PJ_FWD, cornerX, sizeof(double), 4, cornerY, sizeof(double), 4, nullptr, 0, 0, nullptr, 0, 0) != 4) {
+      // TODO: No error handling in original code
     }
 
-//    pj_free(sourcepj);
-//    pj_free(latlonpj);
-//    pj_ctx_free(proj4Context);
     proj_destroy(P);
     proj_context_destroy(projContext);
 
