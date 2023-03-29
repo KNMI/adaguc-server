@@ -265,33 +265,9 @@ int CImgWarpNearestRGBA::reproj(CImageWarper *warper, CDataSource *, CGeoParams 
   if (warper->isProjectionRequired()) {
     //     CT::string destinationCRS;
     //     warper->decodeCRS(&destinationCRS,&GeoDest->CRS);
-    if (warper->destNeedsDegreeRadianConversion) {
-//      for (int j = 0; j < 4; j++) {
-//        psx[j] *= DEG_TO_RAD;
-//        psy[j] *= DEG_TO_RAD;
-//      }
+    if (proj_trans_generic(warper->projSourceToDest, PJ_INV, psx, sizeof(double), 4, psy, sizeof(double), 4, nullptr, 0, 0, nullptr, 0, 0) != 4) {
+      // TODO: No error handling in proj4 code
     }
-    PJ_COORD c, c_out;
-    c.xyzt.z = 0.0;
-    c.xyzt.t = HUGE_VAL;
-
-    for (size_t j = 0; j < 4; j++) {
-      c.xyzt.x = psx[j];
-      c.xyzt.y = psy[j];
-      // TODO: Replace with proj_trans_generic()/proj_trans_array() everywhere!
-      // TODO: Handle error case?
-      c_out = proj_trans(warper->projSourceToDest, PJ_INV, c);
-      psx[j] = c_out.xy.x;
-      psy[j] = c_out.xy.y;
-    }
-
-//    pj_transform(warper->destpj, warper->sourcepj, 4, 0, psx, psy, NULL);
-//    if (warper->sourceNeedsDegreeRadianConversion) {
-//      for (int j = 0; j < 4; j++) {
-//        psx[j] /= DEG_TO_RAD;
-//        psy[j] /= DEG_TO_RAD;
-//      }
-//    }
   }
   x_corners[0] = psx[1];
   y_corners[0] = psy[1];

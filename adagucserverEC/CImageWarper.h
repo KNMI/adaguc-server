@@ -74,15 +74,12 @@ private:
   bool initialized;
   int _findExtentSynchronized(CDataSource *dataSource, double *dfBBOX);
   int _initreprojSynchronized(const char *projString, CGeoParams *GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj);
+  PJ_CONTEXT *projContext;
 
 public:
-  // TODO: DegreeRadian conversions variable might not be used anymore??
-  bool destNeedsDegreeRadianConversion, sourceNeedsDegreeRadianConversion, requireReprojection;
+  bool requireReprojection;
   CImageWarper() {
     prj = NULL;
-//    sourcepj = NULL;
-//    destpj = NULL;
-//    latlonpj = NULL;
     projSourceToDest = nullptr;
     projSourceToLatlon = nullptr;
     projLatlonToDest = nullptr;
@@ -93,9 +90,6 @@ public:
     if (initialized == true) {
       closereproj();
       prj = NULL;
-//      sourcepj = NULL;
-//      destpj = NULL;
-//      latlonpj = NULL;
       projSourceToDest = nullptr;
       projSourceToLatlon = nullptr;
       projLatlonToDest = nullptr;
@@ -103,8 +97,6 @@ public:
       projContext = nullptr;
     }
   }
-//  projPJ sourcepj, destpj, latlonpj;
-  PJ_CONTEXT *projContext;
   PJ *projSourceToDest, *projSourceToLatlon, *projLatlonToDest;
   CT::string getDestProjString() { return destinationCRS; }
   int initreproj(CDataSource *dataSource, CGeoParams *GeoDest, std::vector<CServerConfig::XMLE_Projection *> *prj);
