@@ -74,7 +74,6 @@ private:
   bool initialized;
   int _findExtentSynchronized(CDataSource *dataSource, double *dfBBOX);
   int _initreprojSynchronized(const char *projString, CGeoParams *GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj);
-  PJ_CONTEXT *projContext;
 
 public:
   bool requireReprojection;
@@ -84,7 +83,6 @@ public:
     projSourceToLatlon = nullptr;
     projLatlonToDest = nullptr;
     initialized = false;
-    projContext = nullptr;
   }
   ~CImageWarper() {
     if (initialized == true) {
@@ -94,7 +92,6 @@ public:
       projSourceToLatlon = nullptr;
       projLatlonToDest = nullptr;
       initialized = false;
-      projContext = nullptr;
     }
   }
   PJ *projSourceToDest, *projSourceToLatlon, *projLatlonToDest;

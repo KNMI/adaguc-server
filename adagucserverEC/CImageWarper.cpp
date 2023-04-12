@@ -24,6 +24,7 @@
  ******************************************************************************/
 
 #include "CImageWarper.h"
+#include "ProjCache.h"
 #include <iostream>
 #include <vector>
 #include <cmath>
@@ -109,22 +110,7 @@ void floatToString(char *string, size_t maxlen, float min, float max, float numb
 
 int CImageWarper::closereproj() {
   if (initialized) {
-    //    if(projSourceToDest != nullptr) {
-    //      proj_destroy(projLatlonToDest);
-    //      projLatlonToDest = nullptr;
-    //    }
-    //    if(projSourceToLatlon != nullptr) {
-    //      proj_destroy(projSourceToLatlon);
-    //      projSourceToLatlon = nullptr;
-    //    }
-    //    if(projLatlonToDest != nullptr) {
-    //      proj_destroy(projLatlonToDest);
-    //      projLatlonToDest = nullptr;
-    //    }
-    //    if (projContext != nullptr) {
-    //      proj_context_destroy(projContext);
-    //      projContext = nullptr;
-    //    }
+    // Nothing to do since we switched to caching the projections for performance
   }
   initialized = false;
   return 0;
@@ -326,11 +312,6 @@ int CImageWarper::_initreprojSynchronized(const char *projString, CGeoParams *Ge
 
   this->_geoDest = GeoDest;
 
-  if (projContext != nullptr) {
-    proj_context_destroy(projContext);
-  }
-  projContext = proj_context_create();
-
   CT::string sourceProjectionUndec = projString;
 
   // TODO: Make a generic function to find out if a and b are in KM.
@@ -352,41 +333,19 @@ int CImageWarper::_initreprojSynchronized(const char *projString, CGeoParams *Ge
     return 1;
   }
 
-  sourceProjection.trimSelf();
-  destinationCRS.trimSelf();
-
-  static std::map<std::string, PJ *> projections;
-  std::string key = (sourceProjection + destinationCRS).c_str();
-  if (projections.count(key)) {
-    projSourceToDest = projections[key];
-  } else {
-    projSourceToDest = proj_create_crs_to_crs(projContext, sourceProjection.c_str(), destinationCRS.c_str(), nullptr);
-    projections[key] = projSourceToDest;
-  }
+  projSourceToDest = proj_create_crs_to_crs_with_cache(sourceProjection, destinationCRS, nullptr);
   if (projSourceToDest == nullptr) {
     CDBError("Invalid projection: from %s to %s", sourceProjection.c_str(), destinationCRS.c_str());
     return 1;
   }
 
-  key = (sourceProjection + CT::string(LATLONPROJECTION)).c_str();
-  if (projections.count(key)) {
-    projSourceToLatlon = projections[key];
-  } else {
-    projSourceToLatlon = proj_create_crs_to_crs(projContext, sourceProjection.c_str(), LATLONPROJECTION, nullptr);
-    projections[key] = projSourceToLatlon;
-  }
+  projSourceToLatlon = proj_create_crs_to_crs_with_cache(sourceProjection, CT::string(LATLONPROJECTION), nullptr);
   if (projSourceToLatlon == nullptr) {
     CDBError("Invalid projection: from %s to %s", destinationCRS.c_str(), LATLONPROJECTION);
     return 1;
   }
 
-  key = (CT::string(LATLONPROJECTION) + destinationCRS).c_str();
-  if (projections.count(key)) {
-    projLatlonToDest = projections[key];
-  } else {
-    projLatlonToDest = proj_create_crs_to_crs(projContext, LATLONPROJECTION, destinationCRS.c_str(), nullptr);
-    projections[key] = projLatlonToDest;
-  }
+  projLatlonToDest = proj_create_crs_to_crs_with_cache(CT::string(LATLONPROJECTION), destinationCRS, nullptr);
   if (projLatlonToDest == nullptr) {
     CDBError("Invalid projection: from %s to %s", LATLONPROJECTION, destinationCRS.c_str());
     return 1;
