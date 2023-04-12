@@ -240,7 +240,9 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
     /* Time to instantiate the imagewarper. This is needed to project from HDF5 projection space (polar sterographic) to screenspace and latlon coordinate space*/
     CImageWarper imageWarperEchoToppen;
     CT::string projectionString = cdfObject0->getVariable("projection")->getAttribute("proj4_params")->toString();
+
     imageWarperEchoToppen.initreproj(projectionString.c_str(), dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
+    double axisScaling = imageWarperEchoToppen.getAxisScaling(projectionString);
 
     /* Now loop through all found rows and cols */
     for (size_t k = 0; k < (size_t)stat_cell_number; k++) {
@@ -255,6 +257,9 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
       /* Echotoppen coordinate in HDF5 projection space (Polar Stereographic) */
       double h5X = col / cellSizeIMX + fBBOXIM[0];
       double h5Y = row / cellsizeIMY + fBBOXIM[1];
+
+      h5X *= axisScaling;
+      h5Y *= axisScaling;
 
       /* Convert from HDF5 projection to requested coordinate system (in the WMS request)  */
       imageWarperEchoToppen.reprojpoint_inv(h5X, h5Y);

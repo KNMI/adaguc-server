@@ -131,6 +131,11 @@ public:
    * @return CT::string Will return proj4 parameters for given projection id
    */
   static CT::string getProj4FromId(CDataSource *dataSource, CT::string projectionId);
+
+  /**
+   * Returns the factor with witch the x and y axis of the data need to be scaled. Needed for a conversion for KM to Meter for example
+   */
+  static double getAxisScaling(CT::string projectionString);
 };
 
 #endif
