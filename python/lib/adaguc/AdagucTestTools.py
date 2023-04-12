@@ -43,7 +43,6 @@ class AdagucTestTools:
             env = []
 
         adagucenv = os.environ.copy()
-        adagucenv['PROJ_IGNORE_CELESTIAL_BODY'] = 'YES'  # Needed because KNMI proj strings have +a and +b in km, not meters
         adagucenv.update(env)
 
         ADAGUC_LOGFILE = os.environ['ADAGUC_LOGFILE']
