@@ -109,22 +109,22 @@ void floatToString(char *string, size_t maxlen, float min, float max, float numb
 
 int CImageWarper::closereproj() {
   if (initialized) {
-    if(projSourceToDest != nullptr) {
-      proj_destroy(projLatlonToDest);
-      projLatlonToDest = nullptr;
-    }
-    if(projSourceToLatlon != nullptr) {
-      proj_destroy(projSourceToLatlon);
-      projSourceToLatlon = nullptr;
-    }
-    if(projLatlonToDest != nullptr) {
-      proj_destroy(projLatlonToDest);
-      projLatlonToDest = nullptr;
-    }
-    if (projContext != nullptr) {
-      proj_context_destroy(projContext);
-      projContext = nullptr;
-    }
+//    if(projSourceToDest != nullptr) {
+//      proj_destroy(projLatlonToDest);
+//      projLatlonToDest = nullptr;
+//    }
+//    if(projSourceToLatlon != nullptr) {
+//      proj_destroy(projSourceToLatlon);
+//      projSourceToLatlon = nullptr;
+//    }
+//    if(projLatlonToDest != nullptr) {
+//      proj_destroy(projLatlonToDest);
+//      projLatlonToDest = nullptr;
+//    }
+//    if (projContext != nullptr) {
+//      proj_context_destroy(projContext);
+//      projContext = nullptr;
+//    }
   }
   initialized = false;
   return 0;
@@ -348,28 +348,39 @@ int CImageWarper::_initreprojSynchronized(const char *projString, CGeoParams *Ge
 
   sourceProjection.trimSelf();
   destinationCRS.trimSelf();
-  projSourceToDest = proj_create_crs_to_crs(projContext,
-                                            sourceProjection.c_str(),
-                                            destinationCRS.c_str(),
-                                            nullptr);
+
+  static std::map<std::string, PJ *> projections;
+  std::string key = (sourceProjection + destinationCRS).c_str();
+  if (projections.count(key)) {
+    projSourceToDest = projections[key];
+  } else {
+    projSourceToDest = proj_create_crs_to_crs(projContext, sourceProjection.c_str(), destinationCRS.c_str(), nullptr);
+    projections[key] = projSourceToDest;
+  }
   if (projSourceToDest==nullptr) {
     CDBError("Invalid projection: from %s to %s", sourceProjection.c_str(), destinationCRS.c_str());
     return 1;
   }
 
-  projSourceToLatlon = proj_create_crs_to_crs(projContext,
-                                              sourceProjection.c_str(),
-                                              LATLONPROJECTION,
-                                              nullptr);
+  key = (sourceProjection + CT::string(LATLONPROJECTION)).c_str();
+  if (projections.count(key)) {
+    projSourceToLatlon = projections[key];
+  } else {
+    projSourceToLatlon = proj_create_crs_to_crs(projContext, sourceProjection.c_str(), LATLONPROJECTION, nullptr);
+    projections[key] = projSourceToLatlon;
+  }
   if (projSourceToLatlon==nullptr) {
     CDBError("Invalid projection: from %s to %s", destinationCRS.c_str(), LATLONPROJECTION);
     return 1;
   }
 
-  projLatlonToDest = proj_create_crs_to_crs(projContext,
-                                            LATLONPROJECTION,
-                                            destinationCRS.c_str(),
-                                            nullptr);
+  key = (CT::string(LATLONPROJECTION) + destinationCRS).c_str();
+  if (projections.count(key)) {
+    projLatlonToDest = projections[key];
+  } else {
+    projLatlonToDest = proj_create_crs_to_crs(projContext, LATLONPROJECTION, destinationCRS.c_str(), nullptr);
+    projections[key] = projLatlonToDest;
+  }
   if (projLatlonToDest==nullptr) {
     CDBError("Invalid projection: from %s to %s", LATLONPROJECTION, destinationCRS.c_str());
     return 1;
