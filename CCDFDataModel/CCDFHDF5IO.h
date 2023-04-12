@@ -69,14 +69,6 @@ private:
   bool b_KNMIHDF5UseEndTime;
 
 public:
-  class CustomVolScanReader : public CDF::Variable::CustomReader {
-  public:
-    ~CustomVolScanReader() {}
-    int getCalibrationParameters(CT::string formula, float &factor, float &offset);
-
-    int readData(CDF::Variable *thisVar, size_t *start, size_t *count, ptrdiff_t *stride);
-  };
-
   class CustomForecastReader : public CDF::Variable::CustomReader {
   public:
     ~CustomForecastReader() {}
@@ -98,7 +90,6 @@ public:
     b_EnableKNMIHDF5toCFConversion = false;
     b_KNMIHDF5UseEndTime = false;
     forecastReader = NULL;
-    volScanReader = NULL;
     fileIsOpen = false;
   }
   ~CDFHDF5Reader();
@@ -135,7 +126,6 @@ public:
 
 private:
   CustomForecastReader *forecastReader;
-  CustomVolScanReader *volScanReader;
 
   static CDF::Variable *getWhatVar(CDFObject *cdfObject, size_t datasetCounter, int dataCounter);
   static CDF::Attribute *getNestedAttribute(CDFObject *cdfObject, size_t datasetCounter, int dataCounter, const char *varName, const char *attrName);

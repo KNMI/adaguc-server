@@ -109,22 +109,22 @@ void floatToString(char *string, size_t maxlen, float min, float max, float numb
 
 int CImageWarper::closereproj() {
   if (initialized) {
-//    if(projSourceToDest != nullptr) {
-//      proj_destroy(projLatlonToDest);
-//      projLatlonToDest = nullptr;
-//    }
-//    if(projSourceToLatlon != nullptr) {
-//      proj_destroy(projSourceToLatlon);
-//      projSourceToLatlon = nullptr;
-//    }
-//    if(projLatlonToDest != nullptr) {
-//      proj_destroy(projLatlonToDest);
-//      projLatlonToDest = nullptr;
-//    }
-//    if (projContext != nullptr) {
-//      proj_context_destroy(projContext);
-//      projContext = nullptr;
-//    }
+    //    if(projSourceToDest != nullptr) {
+    //      proj_destroy(projLatlonToDest);
+    //      projLatlonToDest = nullptr;
+    //    }
+    //    if(projSourceToLatlon != nullptr) {
+    //      proj_destroy(projSourceToLatlon);
+    //      projSourceToLatlon = nullptr;
+    //    }
+    //    if(projLatlonToDest != nullptr) {
+    //      proj_destroy(projLatlonToDest);
+    //      projLatlonToDest = nullptr;
+    //    }
+    //    if (projContext != nullptr) {
+    //      proj_context_destroy(projContext);
+    //      projContext = nullptr;
+    //    }
   }
   initialized = false;
   return 0;
@@ -215,7 +215,7 @@ int CImageWarper::reprojpoint_inv_topx(double &dfx, double &dfy) {
 int CImageWarper::reprojpoint_inv(double &dfx, double &dfy) {
 
   if (proj_trans_generic(projSourceToDest, PJ_FWD, &dfx, sizeof(double), 1, &dfy, sizeof(double), 1, nullptr, 0, 0, nullptr, 0, 0) != 1) {
-//  // CDBError("ReprojException: %f %f",dfx,dfy);
+    //  // CDBError("ReprojException: %f %f",dfx,dfy);
     dfx = 0;
     dfy = 0;
     return 1;
@@ -332,7 +332,13 @@ int CImageWarper::_initreprojSynchronized(const char *projString, CGeoParams *Ge
   projContext = proj_context_create();
 
   CT::string sourceProjectionUndec = projString;
-  CT::string sourceProjection = projString;
+
+  // TODO: Make a generic function to find out if a and b are in KM.
+
+  if (sourceProjectionUndec.equals("+proj=stere +lat_0=90 +lon_0=0 +lat_ts=60 +a=6378.14 +b=6356.75 +x_0=0 y_0=0")) {
+    sourceProjectionUndec = "+proj=stere +lat_0=90 +lon_0=0 +lat_ts=60 +a=6378140 +b=6356750 +x_0=0 +y_0=0";
+  }
+  CT::string sourceProjection = sourceProjectionUndec;
   if (decodeCRS(&sourceProjection, &sourceProjectionUndec, _prj) != 0) {
     CDBError("decodeCRS failed");
     return 1;
@@ -357,7 +363,7 @@ int CImageWarper::_initreprojSynchronized(const char *projString, CGeoParams *Ge
     projSourceToDest = proj_create_crs_to_crs(projContext, sourceProjection.c_str(), destinationCRS.c_str(), nullptr);
     projections[key] = projSourceToDest;
   }
-  if (projSourceToDest==nullptr) {
+  if (projSourceToDest == nullptr) {
     CDBError("Invalid projection: from %s to %s", sourceProjection.c_str(), destinationCRS.c_str());
     return 1;
   }
@@ -369,7 +375,7 @@ int CImageWarper::_initreprojSynchronized(const char *projString, CGeoParams *Ge
     projSourceToLatlon = proj_create_crs_to_crs(projContext, sourceProjection.c_str(), LATLONPROJECTION, nullptr);
     projections[key] = projSourceToLatlon;
   }
-  if (projSourceToLatlon==nullptr) {
+  if (projSourceToLatlon == nullptr) {
     CDBError("Invalid projection: from %s to %s", destinationCRS.c_str(), LATLONPROJECTION);
     return 1;
   }
@@ -381,7 +387,7 @@ int CImageWarper::_initreprojSynchronized(const char *projString, CGeoParams *Ge
     projLatlonToDest = proj_create_crs_to_crs(projContext, LATLONPROJECTION, destinationCRS.c_str(), nullptr);
     projections[key] = projLatlonToDest;
   }
-  if (projLatlonToDest==nullptr) {
+  if (projLatlonToDest == nullptr) {
     CDBError("Invalid projection: from %s to %s", LATLONPROJECTION, destinationCRS.c_str());
     return 1;
   }
@@ -639,4 +645,11 @@ CT::string CImageWarper::getProj4FromId(CDataSource *dataSource, CT::string proj
     }
   }
   return projectionId;
+}
+
+double CImageWarper::getAxisScaling(CT::string projectionString) {
+  if (projectionString.equals("+proj=stere +lat_0=90 +lon_0=0 +lat_ts=60 +a=6378.14 +b=6356.75 +x_0=0 y_0=0")) {
+    return 1000.0;
+  }
+  return 1.0;
 }
