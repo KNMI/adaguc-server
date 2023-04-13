@@ -47,7 +47,7 @@ if "EXTERNALADDRESS" in os.environ:
 async def root():
     return {
         "message":
-        "ADAGUC server base URL, use /wms, /wcs, /autowms or /ogcapi"
+        "ADAGUC server base URL, use /wms, /wcs, /autowms, /adagucopendap or /ogcapi"
     }
 
 
