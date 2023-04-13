@@ -25,19 +25,17 @@ def handle_opendap(req: Request, opendappath: str):
     # Set required environment variables
     base_url = f"{url.scheme}://{url.hostname}:{url.port}"
     adagucenv["ADAGUC_ONLINERESOURCE"] = (
-        os.getenv("EXTERNALADDRESS", base_url) + "/adagucopendap?"
-    )
+        os.getenv("EXTERNALADDRESS", base_url) + "/adagucopendap?")
     adagucenv["ADAGUC_DB"] = os.getenv(
-        "ADAGUC_DB", "user=adaguc password=adaguc host=localhost dbname=adaguc"
-    )
+        "ADAGUC_DB",
+        "user=adaguc password=adaguc host=localhost dbname=adaguc")
 
     logger.info("Setting request_uri to %s", base_url)
     adagucenv["REQUEST_URI"] = url.path
     adagucenv["SCRIPT_NAME"] = ""
 
     status, data, headers = adaguc_instance.runADAGUCServer(
-        query_string, env=adagucenv, showLogOnError=False
-    )
+        query_string, env=adagucenv, showLogOnError=False)
 
     # Obtain logfile
     logfile = adaguc_instance.getLogFile()
@@ -51,7 +49,7 @@ def handle_opendap(req: Request, opendappath: str):
         response_code = 500
     response = Response(content=data.getvalue(), status_code=response_code)
 
-    # Append the headers from adaguc-server to the headers from flask.
+    # Append the headers from adaguc-server to the headers from fastapi.
     for header in headers:
         key = header.split(":")[0]
         value = header.split(":")[1].strip()
