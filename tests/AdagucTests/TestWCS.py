@@ -40,6 +40,20 @@ class TestWCS(unittest.TestCase):
     self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(
         self.testresultspath + filename, self.expectedoutputsspath + filename))
 
+  def test_WCSDescribeCoverage_Actuele10mindata(self):
+    """
+    Check if WCS DescribeCoverage for Actuele10mindataKNMIstations_20201220123000.nc file is OK
+    """
+    AdagucTestTools().cleanTempDir()
+    filename = "test_WCSDescribeCoverage_testdatanc.xml"
+    status, data, headers = AdagucTestTools().runADAGUCServer(
+      "source=test/netcdfpointtimeseries/Actuele10mindataKNMIstations_20201220123000.nc&SERVICE=WCS&request=describecoverage&coverage=ff,dd,ta",
+      env=self.env, maxLogFileSize=16384)  # Silence log flood warning, datafile has lots of variables, each giving log output
+    AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+    self.assertEqual(status, 0)
+    self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(
+      self.testresultspath + filename, self.expectedoutputsspath + filename))
+
   def test_WCSGetCoverageAAIGRID_testdatanc(self):
     """
     Check if WCS GetCoverage for testdata.nc as AAIGRID file is OK

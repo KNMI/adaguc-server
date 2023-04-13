@@ -134,8 +134,8 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
             double tprojectedY = polyY[j];
             int status = 0;
             if (projectionRequired) status = imageWarper->reprojfromLatLon(tprojectedX, tprojectedY);
-            int dlon, dlat;
-            if (!status) {
+            int dlon = 0, dlat = 0;
+            if (!status && cellSizeX != 0 && cellSizeY != 0) {
               dlon = int((tprojectedX - offsetX) / cellSizeX) + 1;
               dlat = int((tprojectedY - offsetY) / cellSizeY);
               projectedX[cnt] = dlon;
@@ -171,7 +171,7 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
                 int holeStatus = 0;
                 if (projectionRequired) holeStatus = imageWarper->reprojfromLatLon(tprojectedX, tprojectedY);
                 int dlon, dlat;
-                if (!holeStatus) {
+                if (!holeStatus && cellSizeX != 0 && cellSizeY != 0) {
                   dlon = int((tprojectedX - offsetX) / cellSizeX) + 1;
                   dlat = int((tprojectedY - offsetY) / cellSizeY);
                 } else {
@@ -207,7 +207,7 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
             int status = 0;
             if (projectionRequired) status = imageWarper->reprojfromLatLon(tprojectedX, tprojectedY);
             int dlon, dlat;
-            if (!status) {
+            if (!status && cellSizeX > 0 && cellSizeY > 0) {
               dlon = int((tprojectedX - offsetX) / cellSizeX) + 1;
               dlat = int((tprojectedY - offsetY) / cellSizeY);
               projectedX[cnt] = dlon;

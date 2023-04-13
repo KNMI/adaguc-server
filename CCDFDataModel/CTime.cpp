@@ -601,31 +601,25 @@ CTime::Date CTime::getDate(double offset) {
 }
 
 double CTime::dateToOffset(Date date) {
-  double offset;
-
-  if (mode == CTIME_MODE_360day) {
-    if (timeUnits.unitType == CTIME_UNITTYPE_DAYS) {
-      offset = date.year * 360;
-      offset += CTIME_CALENDARTYPE_360day_MonthsCumul[(date.month - 1)];
-      offset += (date.day - 1);
-      offset += (((float)date.hour) / 24.);
-      offset += (((float)date.minute) / (24 * 60.));
-      offset += (((float)date.second) / (24 * 60 * 60.));
-      offset -= timeUnits.dateSinceOffset;
-    }
+  if (mode == CTIME_MODE_360day && timeUnits.unitType == CTIME_UNITTYPE_DAYS) {
+    double offset = date.year * 360;
+    offset += CTIME_CALENDARTYPE_360day_MonthsCumul[(date.month - 1)];
+    offset += (date.day - 1);
+    offset += (((float)date.hour) / 24.);
+    offset += (((float)date.minute) / (24 * 60.));
+    offset += (((float)date.second) / (24 * 60 * 60.));
+    offset -= timeUnits.dateSinceOffset;
     return offset;
   }
 
-  if (mode == CTIME_MODE_365day) {
-    if (timeUnits.unitType == CTIME_UNITTYPE_DAYS) {
-      offset = date.year * 365;
-      offset += CTIME_CALENDARTYPE_365day_MonthsCumul[(date.month - 1)];
-      offset += (date.day - 1);
-      offset += (((float)date.hour) / 24.);
-      offset += (((float)date.minute) / (24 * 60.));
-      offset += (((float)date.second) / (24 * 60 * 60.));
-      offset -= timeUnits.dateSinceOffset;
-    }
+  if (mode == CTIME_MODE_365day && timeUnits.unitType == CTIME_UNITTYPE_DAYS) {
+    double offset = date.year * 365;
+    offset += CTIME_CALENDARTYPE_365day_MonthsCumul[(date.month - 1)];
+    offset += (date.day - 1);
+    offset += (((float)date.hour) / 24.);
+    offset += (((float)date.minute) / (24 * 60.));
+    offset += (((float)date.second) / (24 * 60 * 60.));
+    offset -= timeUnits.dateSinceOffset;
     return offset;
   }
 
@@ -638,12 +632,15 @@ double CTime::dateToOffset(Date date) {
   }
 
   if (mode == CTIME_MODE_UTCALENDAR) {
+    double offset;
     if (utInvCalendar(date.year, date.month, date.day, date.hour, date.minute, (int)date.second, &dataunits, &offset) != 0) {
       CDBError("dateToOffset: Internal error: utInvCalendar with args %s", dateToString(date).c_str());
       throw CTIME_CONVERSION_ERROR;
     }
+    return offset;
   }
-  return offset;
+  CDBError("dateToOffset: Internal error: unknown mode %d with unitType %d", mode, timeUnits.unitType);
+  throw CTIME_CONVERSION_ERROR;
 }
 
 CTime::Date CTime::stringToDate(const char *szTime) {

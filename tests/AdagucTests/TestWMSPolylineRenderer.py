@@ -40,8 +40,7 @@ class TestWMSPolylineRenderer(unittest.TestCase):
                                                                         stylename+"%2Fpolyline&FORMAT=image/png&TRANSPARENT=TRUE&", env=self.env)
             AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
             self.assertEqual(status, 0)
-            self.assertEqual(data.getvalue(), AdagucTestTools(
-            ).readfromfile(self.expectedoutputsspath + filename))
+            self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename))
 
     def test_WMSPointRenderer_usgs_earthquakes_geojson_auto_nearest_GetMap(self):
         env = {'ADAGUC_CONFIG': ADAGUC_PATH +

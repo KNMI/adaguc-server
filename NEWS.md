@@ -1,3 +1,26 @@
+**Version 2.9.0 2023-04-13**
+
+- Using fastapi as server
+
+**Version 2.8.6 2023-03-23**
+- Added a configuration option to limit the number of deletions done at once, configurable with `cleanupsystemlimit="5"`  in [Settings](doc/configuration/Settings.md).
+- Added a configuration option to start a dryrun of cleanup, explaining which files would be deleted (but not actually deleting them), configurable with `enablecleanupsystem="dryrun"` in [Settings](doc/configuration/Settings.md)
+- Added the option to replace custom variables in the dataset configuration using the [Environment](doc/configuration/Environment.md) keyword. These will get the value from the environment. This has been added to make it possible to let dev branches have a shorter retentionperiod and the main branch a longer retentionperiod. 
+- See complete dataset example in [data/config/datasets/adaguc.tests.cleandb-step2.xml](data/config/datasets/adaguc.tests.cleandb-step2.xml)
+
+
+**Version 2.8.5 2023-03-15**
+- Add parameter Unit of Measurement to DescribeCoverage output 
+
+**Version 2.8.4 2023-03-08**
+- Nearest neighbour rendering can now be done with discrete classes using ShadeInterval and renderhint="discreteclasses"
+- Hex colors now work with both uppercase and lowercase hex digits
+- Legend is now not mandatory in a Style definition
+- Drawfunction is refactored and de-duplicated, less double code.
+- A buffer overflow issue with shadeintervals rendering has been solved (adagucserverEC/CImgWarpNearestNeighbour.h, 222)
+
+**Version 2.8.3 2023-02-15**
+- Build docker image for arm64 architecture (e.g. Mac M1)
 
 **Version 2.8.2 2023-01-10**
 - WebP quality is now configurable via WMSFormat and WMS Format (use format=image/webp;90) 
