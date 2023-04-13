@@ -22,55 +22,58 @@ class Exception(BaseModel):
 
 class Crs(Enum):
     http___www_opengis_net_def_crs_OGC_1_3_CRS84 = (
-        "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
-    )
+        "http://www.opengis.net/def/crs/OGC/1.3/CRS84")
 
 
 class Spatial(BaseModel):
     bbox: Optional[List[List[float]]] = Field(
         None,
-        description="One or more bounding boxes that describe the spatial extent of the dataset.\nIn the Core only a single bounding box is supported. Extensions may support\nadditional areas. If multiple areas are provided, the union of the bounding\nboxes describes the spatial extent.",
+        description=
+        "One or more bounding boxes that describe the spatial extent of the dataset.\nIn the Core only a single bounding box is supported. Extensions may support\nadditional areas. If multiple areas are provided, the union of the bounding\nboxes describes the spatial extent.",
         min_items=1,
     )
     crs: Optional[Crs] = Field(
         "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
-        description="Coordinate reference system of the coordinates in the spatial extent\n(property `bbox`). The default reference system is WGS 84 longitude/latitude.\nIn the Core this is the only supported coordinate reference system.\nExtensions may support additional coordinate reference systems and add\nadditional enum values.",
+        description=
+        "Coordinate reference system of the coordinates in the spatial extent\n(property `bbox`). The default reference system is WGS 84 longitude/latitude.\nIn the Core this is the only supported coordinate reference system.\nExtensions may support additional coordinate reference systems and add\nadditional enum values.",
     )
 
 
 class IntervalItem(BaseModel):
     __root__: List[Any] = Field(
         ...,
-        description="Begin and end times of the time interval. The timestamps are in the\ntemporal coordinate reference system specified in `trs`. By default\nthis is the Gregorian calendar.",
+        description=
+        "Begin and end times of the time interval. The timestamps are in the\ntemporal coordinate reference system specified in `trs`. By default\nthis is the Gregorian calendar.",
         example=["2011-11-11T12:22:11Z", None],
     )
 
 
 class Trs(Enum):
     http___www_opengis_net_def_uom_ISO_8601_0_Gregorian = (
-        "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian"
-    )
+        "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian")
 
 
 class Temporal(BaseModel):
     interval: Optional[List[IntervalItem]] = Field(
         None,
-        description="One or more time intervals that describe the temporal extent of the dataset.\nThe value `null` is supported and indicates an unbounded interval end.\nIn the Core only a single time interval is supported. Extensions may support\nmultiple intervals. If multiple intervals are provided, the union of the\nintervals describes the temporal extent.",
+        description=
+        "One or more time intervals that describe the temporal extent of the dataset.\nThe value `null` is supported and indicates an unbounded interval end.\nIn the Core only a single time interval is supported. Extensions may support\nmultiple intervals. If multiple intervals are provided, the union of the\nintervals describes the temporal extent.",
         min_items=1,
     )
     trs: Optional[Trs] = Field(
         "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian",
-        description="Coordinate reference system of the coordinates in the temporal extent\n(property `interval`). The default reference system is the Gregorian calendar.\nIn the Core this is the only supported temporal coordinate reference system.\nExtensions may support additional temporal coordinate reference systems and add\nadditional enum values.",
+        description=
+        "Coordinate reference system of the coordinates in the temporal extent\n(property `interval`). The default reference system is the Gregorian calendar.\nIn the Core this is the only supported temporal coordinate reference system.\nExtensions may support additional temporal coordinate reference systems and add\nadditional enum values.",
     )
 
 
 class Extent(BaseModel):
     spatial: Optional[Spatial] = Field(
-        None, description="The spatial extent of the features in the collection."
-    )
+        None,
+        description="The spatial extent of the features in the collection.")
     temporal: Optional[Temporal] = Field(
-        None, description="The temporal extent of the features in the collection."
-    )
+        None,
+        description="The temporal extent of the features in the collection.")
 
 
 class Type(Enum):
@@ -99,11 +102,11 @@ class LinestringGeoJSON(BaseModel):
 
 
 class Link(BaseModel):
-    href: str = Field(..., example="http://data.example.com/buildings/123")
+    href: str = Field(...)
     rel: Optional[str] = Field(None, example="alternate")
     type: Optional[str] = Field(None, example="application/geo+json")
     hreflang: Optional[str] = Field(None, example="en")
-    title: Optional[str] = Field(None, example="Trierer Strasse 70, 53115 Bonn")
+    title: Optional[str] = Field(None)
     length: Optional[int] = None
 
 
@@ -145,7 +148,8 @@ class MultipolygonGeoJSON(BaseModel):
 class NumberMatched(BaseModel):
     __root__: conint(ge=0) = Field(
         ...,
-        description="The number of features of the feature type that match the selection\nparameters like `bbox`.",
+        description=
+        "The number of features of the feature type that match the selection\nparameters like `bbox`.",
         example=127,
     )
 
@@ -153,7 +157,8 @@ class NumberMatched(BaseModel):
 class NumberReturned(BaseModel):
     __root__: conint(ge=0) = Field(
         ...,
-        description='The number of features in the feature collection.\n\nA server may omit this information in a response, if the information\nabout the number of features is not known or difficult to compute.\n\nIf the value is provided, the value shall be identical to the number\nof items in the "features" array.',
+        description=
+        'The number of features in the feature collection.\n\nA server may omit this information in a response, if the information\nabout the number of features is not known or difficult to compute.\n\nIf the value is provided, the value shall be identical to the number\nof items in the "features" array.',
         example=10,
     )
 
@@ -183,7 +188,8 @@ class PolygonGeoJSON(BaseModel):
 class TimeStamp(BaseModel):
     __root__: datetime = Field(
         ...,
-        description="This property indicates the time and date when the response was generated.",
+        description=
+        "This property indicates the time and date when the response was generated.",
         example="2017-08-17T08:05:32Z",
     )
 
@@ -195,8 +201,9 @@ class Collection(BaseModel):
         example="address",
     )
     title: Optional[str] = Field(
-        None, description="human readable title of the collection", example="address"
-    )
+        None,
+        description="human readable title of the collection",
+        example="address")
     description: Optional[str] = Field(
         None,
         description="a description of the features in the collection",
@@ -205,7 +212,10 @@ class Collection(BaseModel):
     links: List[Link] = Field(
         ...,
         example=[
-            {"href": "http://data.example.com/buildings", "rel": "item"},
+            {
+                "href": "http://data.example.com/buildings",
+                "rel": "item"
+            },
             {
                 "href": "http://example.com/concepts/buildings.html",
                 "rel": "describedby",
@@ -216,11 +226,13 @@ class Collection(BaseModel):
     extent: Optional[Extent] = None
     itemType: Optional[str] = Field(
         "feature",
-        description="indicator about the type of the items in the collection (the default value is 'feature').",
+        description=
+        "indicator about the type of the items in the collection (the default value is 'feature').",
     )
     crs: Optional[List[str]] = Field(
         ["http://www.opengis.net/def/crs/OGC/1.3/CRS84"],
-        description="the list of coordinate reference systems supported by the service",
+        description=
+        "the list of coordinate reference systems supported by the service",
         example=[
             "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
             "http://www.opengis.net/def/crs/EPSG/0/4326",
@@ -239,11 +251,8 @@ class Collections(BaseModel):
 
 
 class LandingPage(BaseModel):
-    title: Optional[str] = Field(None, example="Buildings in Bonn")
-    description: Optional[str] = Field(
-        None,
-        example="Access to data about buildings in the city of Bonn via a Web API that conforms to the OGC API Features specification.",
-    )
+    title: Optional[str] = Field(None)
+    description: Optional[str] = Field(None, )
     links: List[Link]
 
 
@@ -265,15 +274,9 @@ class FeatureGeoJSON(BaseModel):
 
 
 class GeometryGeoJSON(BaseModel):
-    __root__: Union[
-        PointGeoJSON,
-        MultipointGeoJSON,
-        LinestringGeoJSON,
-        MultilinestringGeoJSON,
-        PolygonGeoJSON,
-        MultipolygonGeoJSON,
-        GeometrycollectionGeoJSON,
-    ]
+    __root__: Union[PointGeoJSON, MultipointGeoJSON, LinestringGeoJSON,
+                    MultilinestringGeoJSON, PolygonGeoJSON,
+                    MultipolygonGeoJSON, GeometrycollectionGeoJSON, ]
 
 
 class GeometrycollectionGeoJSON(BaseModel):
