@@ -96,7 +96,7 @@ async def handle_ogc_api_root(req: Request, wanted_format: str = "json"):
         Link(
             href=str(req.url_for("get_conformance")),
             rel="conformance",
-            title="This document in HTML",
+            title="Conformance document",
             type="application/json",
         ))
     links.append(
