@@ -46,7 +46,10 @@ if "EXTERNALADDRESS" in os.environ:
 
 @app.get("/")
 async def root():
-    return {"message": "ADAGUC server base URL, use /wms, /wcs, /autowms or /ogcapi"}
+    return {
+        "message":
+        "ADAGUC server base URL, use /wms, /wcs, /autowms or /ogcapi"
+    }
 
 
 app.mount("/ogcapi", ogcApiApp)
@@ -58,4 +61,4 @@ app.include_router(opendapRouter)
 
 if __name__ == "__main__":
     testadaguc()
-    uvicorn.run(app="main:app", host="0.0.0.0", reload=True)
+    uvicorn.run(app="main:app", host="0.0.0.0", port=8080, reload=True)
