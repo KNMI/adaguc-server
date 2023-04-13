@@ -52,6 +52,7 @@ add_library(
     CConvertCurvilinear.h
     CConvertHexagon.h
     CConvertKNMIH5VolScan.h
+    CDrawFunction.h
     CInspire.h
     CGetFileInfo.h
     CStyleConfiguration.h
@@ -85,6 +86,7 @@ add_library(
     CGeoParams.cpp
     CCairoPlotter.cpp
     CDrawImage.cpp
+    CDrawFunction.cpp
     CServerError.cpp
     CRequest.cpp
     CXMLGen.cpp

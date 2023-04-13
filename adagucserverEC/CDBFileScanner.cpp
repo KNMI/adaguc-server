@@ -33,7 +33,7 @@
 #include <set>
 const char *CDBFileScanner::className = "CDBFileScanner";
 std::vector<CT::string> CDBFileScanner::tableNamesDone;
-//#define CDBFILESCANNER_DEBUG
+// #define CDBFILESCANNER_DEBUG
 #define ISO8601TIME_LEN 32
 
 #define CDBFILESCANNER_TILECREATIONFAILED -100
@@ -610,10 +610,10 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
                       status = dimVar->readData(CDF_STRING);
                     }
                   }
-                  //#ifdef CDBFILESCANNER_DEBUG
-                  //                   CDBDebug("Reading dimension %s of length
-                  //                   %d",dimVar->name.c_str(),dimDim->getSize());
-                  //#endif
+                  // #ifdef CDBFILESCANNER_DEBUG
+                  //                    CDBDebug("Reading dimension %s of length
+                  //                    %d",dimVar->name.c_str(),dimDim->getSize());
+                  // #endif
                   if (status != 0) {
                     CREPORT_ERROR_NODOC(CT::string("Unable to read variable data for ") + dimVar->name, CReportMessage::Categories::GENERAL);
                     throw(__LINE__);
@@ -1007,7 +1007,7 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
     if (dataSource->cfgLayer->TileSettings.size() == 1) {
       if (dataSource->cfgLayer->TileSettings[0]->attr.autotile.equals("true")) {
         for (size_t j = 0; j < fileList.size(); j++) {
-          if (!fileList[j].rfind(dataSource->cfgLayer->TileSettings[0]->attr.tilepath.c_str(), 0) == 0) {
+          if (!(fileList[j].rfind(dataSource->cfgLayer->TileSettings[0]->attr.tilepath.c_str(), 0) == 0)) {
             CCreateTiles::createTilesForFile(dataSource, CDBFILESCANNER_CREATETILES + CDBFILESCANNER_UPDATEDB, fileList[j].c_str());
           }
         }

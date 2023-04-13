@@ -29,27 +29,22 @@
 #include "CDebugger.h"
 #include "CDataSource.h"
 #include "CDrawImage.h"
+#include "CDrawFunction.h"
 #include <stdio.h>
 
 class CAreaMapper {
 private:
   DEF_ERRORFUNCTION();
+
+  CDrawFunctionSettings settings;
+
   double dfTileWidth, dfTileHeight;
   double dfSourceBBOX[4];
   double dfImageBBOX[4];
-  double dfNodataValue;
-  double legendLowerRange;
-  double legendUpperRange;
-  double legendValueRange;
-  double hasNodataValue;
   int width, height;
-  int internalWidth, internalHeight;
-  float legendLog, legendScale, legendOffset;
-  float legendLogAsLog;
   CDataSource *dataSource;
-  CDrawImage *drawImage;
   bool debug;
-  ;
+
   template <typename T> int myDrawRawTile(const T *data, double *x_corners, double *y_corners, int &dDestX, int &dDestY);
 
 public:
