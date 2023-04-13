@@ -294,6 +294,7 @@ async def get_conformance(req: Request, wanted_format: str = "json"):
 
 
 def make_open_api():
+    """ Adjusts openapi object """
     openapi = ogcApiApp.openapi()
     paths = openapi.get("paths", {})
     for pth in paths.keys():
@@ -304,10 +305,6 @@ def make_open_api():
                 param["explode"] = False
                 param["schema"] = {
                     "type": "array",
-                    # "oneOf": [
-                    #     {"minItems": 4, "maxItems": 4},
-                    #     {"minItems": 6, "maxItems": 6},
-                    # ],
                     "minItems": 4,
                     "maxItems": 6,
                     "items": {
