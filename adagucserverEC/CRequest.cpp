@@ -84,7 +84,7 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
   CT::StackList<CT::string> configFileList = configFile.splitToStack(",");
 
   // Parse the main configuration file
-  int status = srvParam->parseConfigFile(configFileList[0]);
+  int status = srvParam->parseConfigFile(configFileList[0], nullptr);
 
   if (status == 0 && srvParam->configObj->Configuration.size() == 1) {
 
@@ -95,7 +95,7 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
     if (configFileList.size() > 1) {
       for (size_t j = 1; j < configFileList.size() - 1; j++) {
         // CDBDebug("Include '%s'",configFileList[j].c_str());
-        status = srvParam->parseConfigFile(configFileList[j]);
+        status = srvParam->parseConfigFile(configFileList[j], nullptr);
         if (status != 0) {
           CDBError("There is an error with include '%s'", configFileList[j].c_str());
           return 1;
@@ -175,7 +175,7 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
 #ifdef CREQUEST_DEBUG
         CDBDebug("Include '%s'", srvParam->cfg->Include[index]->attr.location.c_str());
 #endif
-        status = srvParam->parseConfigFile(srvParam->cfg->Include[index]->attr.location);
+        status = srvParam->parseConfigFile(srvParam->cfg->Include[index]->attr.location, nullptr);
         if (status != 0) {
           CDBError("There is an error with include '%s'", srvParam->cfg->Include[index]->attr.location.c_str());
           return 1;
