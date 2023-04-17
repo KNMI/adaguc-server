@@ -30,6 +30,7 @@ class Temporal(MyBaseModel):
 class Vertical(MyBaseModel):
     interval: List[List[float]]
     vrs: str
+    values: list[str]
     name: Optional[str]
 
 

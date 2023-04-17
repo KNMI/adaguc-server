@@ -2,16 +2,22 @@ from typing import Any, Dict, Optional, Tuple
 from fastapi import APIRouter, Request, Response, FastAPI, Query
 import json
 import itertools
+import sys
 
 from owslib.wms import WebMapService
 from .setup_adaguc import setup_adaguc
 from defusedxml.ElementTree import fromstring, parse, ParseError
 
+import re
+
 from pyproj import CRS, Transformer
 import logging
 import os
 import time
-from datetime import datetime
+import datetime as datetime_class
+from datetime import datetime, timedelta, timezone
+
+from cachetools import cached, TTLCache
 
 from covjson_pydantic.coverage import Coverage
 from covjson_pydantic.parameter import Parameter as CovJsonParameter
@@ -114,6 +120,7 @@ def get_subdatasets_for_dataset(
             subdatasets[edr_instance.attrib.get("name")] = {
                 "dataset": dataset,
                 "name": edr_instance.attrib.get("name"),
+                "url": "http://localhost:8000/wms",
                 "time_interval": edr_instance.attrib.get("time_interval"),
                 "z_interval": edr_instance.attrib.get("z_interval"),
                 "parameters": [
@@ -141,9 +148,10 @@ def getPointValue(
     dataset: str,
     instance: str,
     coords: list[float],
-    parameters: list[str],
+    parameters: str,
     t: list[str],
     z: str = None,
+    extra_dims="",
 ):
     urlrequest = (
         f"SERVICE=WMS&VERSION=1.3.0&REQUEST=GetPointValue&CRS=EPSG:4326"
@@ -157,6 +165,8 @@ def getPointValue(
         urlrequest += f"&DIM_reference_time={instance}"
     if z:
         urlrequest += f"&ELEVATION={z}"
+    if extra_dims:
+        urlrequest += extra_dims
 
     logger.info("URL: %s", urlrequest)
     status, response = callADAGUC(url=urlrequest.encode("UTF-8"))
@@ -178,12 +188,23 @@ async def get_collection_position(
     datetime: Optional[str] = None,
     parameter_name: str = Query(alias="parameter-name"),
 ):
+    allowed_params = ["coords", "datatime", "parameter-name"]
+    extra_params = [k for k in request.query_params if k not in allowed_params]
+    extra_dims = ""
+    if len(extra_params):
+        for extra_param in extra_params:
+            extra_dims += f"&DIM_{extra_param}={request.query_params[extra_param]}"
     dataset = collection_name.split("-")[0]
     latlons = wkt.loads(coords)
     logger.info("latlons:%s", latlons)
     coord = {"lat": latlons["coordinates"][1], "lon": latlons["coordinates"][0]}
     resp = getPointValue(
-        dataset, None, [coord["lon"], coord["lat"]], parameter_name, datetime
+        dataset,
+        None,
+        [coord["lon"], coord["lat"]],
+        parameter_name,
+        datetime,
+        extra_dims,
     )
     if resp:
         dat = json.loads(resp)
@@ -210,7 +231,12 @@ async def get_collection_instance_position(
     latlons = wkt.loads(coords)
     coord = {"lat": latlons["coordinates"][1], "lon": latlons["coordinates"][0]}
     resp = getPointValue(
-        dataset, instance, [coord["lon"], coord["lat"]], parameter_name, datetime, z
+        dataset,
+        instance,
+        [coord["lon"], coord["lat"]],
+        parameter_name,
+        datetime,
+        z,
     )
     dat = json.loads(resp)
     return GeoJSONResponse(covjson_from_resp(dat))
@@ -231,9 +257,14 @@ def get_collectioninfo_for_id(
 ) -> Collection:
     links: list[Link] = []
     links.append(Link(href=f"{base_url}", rel="self", type="application/json"))
+
+    subdatasetinfo = get_subdatasets_for_dataset(dataset)[subdataset]
+
     ref_times = None
     if not instance:
-        ref_times = get_reference_times_for_dataset(dataset, None, None)
+        ref_times = get_reference_times_for_dataset(
+            dataset, subdatasetinfo["url"], subdatasetinfo["parameters"][0]
+        )
         if ref_times and len(ref_times) > 0:
             instance_link = Link(
                 href=f"{base_url}/instances", rel="collection", type="application/json"
@@ -244,16 +275,26 @@ def get_collectioninfo_for_id(
     print("bbox:", bbox)
     crs = CRSOptions.wgs84
     spatial = Spatial(bbox=bbox, crs=crs)
-    (interval, time_values) = get_times_for_dataset(dataset)
+    (interval, time_values) = get_times_for_dataset(
+        dataset, subdatasetinfo["parameters"][0]
+    )
 
     print("T:", interval, time_values)
-    customlist = get_custom_dims_for_dataset(dataset)
+    customlist = get_custom_dims_for_dataset(dataset, subdatasetinfo["parameters"][0])
     print("CUSTOM1:", customlist)
     custom = []
     if customlist:
         for c in customlist:
             custom.append(Custom(**c))
-    print("CUSTOM2:", customlist)
+    print("CUSTOM2:", custom)
+
+    vertical = None
+    vertical_dim = get_vertical_dim_for_dataset(
+        dataset, subdatasetinfo["parameters"][0]
+    )
+    if vertical_dim:
+        vertical = Vertical(**vertical_dim)
+
     temporal = Temporal(
         interval=interval,  # [["2022-06-30T09:00:00Z", "2022-07-02T06:00:00Z"]],
         trs='TIMECRS["DateTime",TDATUM["Gregorian Calendar"],CS[TemporalDateTime,1],AXIS["Time (T)",future]',
@@ -261,9 +302,7 @@ def get_collectioninfo_for_id(
     )
 
     extent = Extent(
-        spatial=spatial,
-        temporal=temporal,
-        custom=custom,
+        spatial=spatial, temporal=temporal, custom=custom, vertical=vertical
     )
 
     crs_object = CrsObject(
@@ -365,6 +404,37 @@ def get_parameters_for_dataset(dataset: str) -> dict[str, ParameterName]:
     return parameter_names
 
 
+def parseIso(dts: str) -> datetime:
+    dt = None
+    try:
+        dt = datetime.strptime(dts, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+    except ValueError as e:
+        print("err:", dts, e)
+    return dt
+
+
+def get_time_values_for_range(rng) -> list[str]:
+    els = rng.split("/")
+    st = parseIso(els[0])
+    end = parseIso(els[1])
+    step = els[2]
+    timediff = (end - st).total_seconds()
+    tstep = None
+    m = re.match("PT(\d+)M", step)
+    if m:
+        tstep = int(m.group(1)) * 60
+    m = re.match("PT(\d+)H", step)
+    if m:
+        tstep = int(m.group(1)) * 3600
+    m = re.match("P(\d+)D", step)
+    if m:
+        tstep = int(m.group(1)) * 3600 * 24
+    if not tstep:
+        tstep = 3600
+    nsteps = int(timediff / tstep) + 1
+    return [f"R{nsteps}/{st}/{step}"]
+
+
 def get_times_for_dataset(
     dataset: str, parameter: str = None
 ) -> Tuple[list[list[str]], list[str]]:
@@ -377,14 +447,23 @@ def get_times_for_dataset(
     if "time" in layer.dimensions:
         time_dim = layer.dimensions["time"]
         print("timedim:", time_dim, time_dim["values"])
-        terms = time_dim["values"][0].split("/")
-        interval = [
-            [
-                datetime.strptime(terms[0], "%Y-%m-%dT%H:%M:%SZ"),
-                datetime.strptime(terms[1], "%Y-%m-%dT%H:%M:%SZ"),
+        if "/" in time_dim["values"][0]:
+            terms = time_dim["values"][0].split("/")
+            interval = [
+                [
+                    datetime.strptime(terms[0], "%Y-%m-%dT%H:%M:%SZ"),
+                    datetime.strptime(terms[1], "%Y-%m-%dT%H:%M:%SZ"),
+                ]
             ]
-        ]
-        return (interval, [f"R49/{terms[0]}/PT60M"])
+            return (interval, get_time_values_for_range(time_dim["values"][0]))
+        else:
+            interval = [
+                [
+                    datetime.strptime(time_dim["values"][0], "%Y-%m-%dT%H:%M:%SZ"),
+                    datetime.strptime(time_dim["values"][-1], "%Y-%m-%dT%H:%M:%SZ"),
+                ]
+            ]
+            return interval, time_dim["values"]
     return (None, None)
 
 
@@ -397,7 +476,7 @@ def get_custom_dims_for_dataset(dataset: str, parameter: str = None):
         layer = wms[list(wms)[0]]
         print("LAYER:", parameter, layer)
     for dim_name in layer.dimensions:
-        if dim_name not in ["reference_time", "time"]:
+        if dim_name not in ["reference_time", "time", "elevation"]:
             print("CDIM for ", layer.name, layer.dimensions[dim_name])
             custom_dim = {
                 "id": dim_name,
@@ -407,6 +486,24 @@ def get_custom_dims_for_dataset(dataset: str, parameter: str = None):
             }
             custom.append(custom_dim)
     return custom if len(custom) > 0 else None
+
+
+def get_vertical_dim_for_dataset(dataset: str, parameter: str = None):
+    wms = get_capabilities(dataset)
+    if parameter and parameter in list(wms):
+        layer = wms[parameter]
+    else:
+        layer = wms[list(wms)[0]]
+    for dim_name in layer.dimensions:
+        if dim_name in ["elevation"]:
+            print("VDIM for ", layer.name, layer.dimensions[dim_name])
+            vertical_dim = {
+                "interval": [],
+                "values": layer.dimensions[dim_name]["values"],
+                "vrs": "customvrs",
+            }
+            return vertical_dim
+    return None
 
 
 def get_parameters_for_dataset_fixed(dataset: str) -> dict[str, ParameterName]:
@@ -482,6 +579,7 @@ async def get_collection_by_id(collection_name: str, request: Request):
     return collection
 
 
+@cached(cache=TTLCache(maxsize=1024, ttl=60))
 def get_capabilities(collname):
     """
     Get the collectioninfo from the WMS GetCapabilities
@@ -512,8 +610,9 @@ def get_reference_times_for_dataset(
 ) -> list[str]:
     url = f"{wms_url}?DATASET={dataset}&SERVICE=WMS&VERSION=1.3.0&request=getreferencetimes&LAYER={layer}"
     logger.info("getreftime_url(%s,%s): %s", dataset, layer, wms_url)
-    if dataset.startswith("HARM_N25"):
-        return ["2022-06-30T06:00:00Z", "2022-06-30T09:00:00Z"]
+    status, response = callADAGUC(url=url.encode("UTF-8"))
+    if status == 0:
+        return json.loads(response.getvalue())
     return []
 
 
@@ -779,48 +878,85 @@ def makedimsORG(dims, data):
 
 
 def covjson_from_resp(dats):
+    first = True
+    fullcovjson = None
     print("DAT:", dats)
-    dat = dats[0]
-    (lon, lat) = dat["point"]["coords"].split(",")
-    lat = float(lat)
-    lon = float(lon)
-    dims = makedims(dat["dims"], dat["data"])
-    print("dims: ", dims, "reference_time" in dims)
-    time_steps = getdimvals(dims, "time")
-    print("TSTEPS:", time_steps)
-    vertical_steps = getdimvals(dims, "elevation")
-    reference_time = getdimvals(dims, "reference_time")
-    if reference_time:
-        single_reference_time = reference_time[0]
-    else:
-        single_reference_time = None
-    print("REF:", single_reference_time, vertical_steps)
-
-    values = []
-    if reference_time:
-        for t in time_steps:
-            if vertical_steps:
-                for v in vertical_steps:
-                    values.append(float(dat["data"][single_reference_time][v][t]))
-            else:
-                values.append(float(dat["data"][single_reference_time][t]))
-    else:
-        if vertical_steps:
-            for v in vertical_steps:
-                values.append(float(dat["data"][v][t]))
+    for dat in dats:
+        (lon, lat) = dat["point"]["coords"].split(",")
+        lat = float(lat)
+        lon = float(lon)
+        dims = makedims(dat["dims"], dat["data"])
+        print("dims: ", dims, "reference_time" in dims)
+        time_steps = getdimvals(dims, "time")
+        print("TSTEPS:", time_steps)
+        vertical_steps = getdimvals(dims, "elevation")
+        reference_time = getdimvals(dims, "reference_time")
+        if reference_time:
+            single_reference_time = reference_time[0]
         else:
-            for t in time_steps:
-                values.append(float(dat["data"][t]))
-    print("VAL:", values)
+            single_reference_time = None
+        print("REF:", single_reference_time, "VERT:", vertical_steps)
+        custom_dims = {
+            dim: dims[dim]
+            for dim in dims
+            if dim not in ["reference_time", "time", "x", "y", "z", "elevation"]
+        }
+        print("custom: ", custom_dims)
 
-    parameters: Dict(str, CovJsonParameter) = dict()
-    ranges = dict()
-    for dt in [dat]:
+        valstack = []
+        # dims_without_time = []
+        for dim_name in dims:
+            print("d:", dim_name)
+            # dim_name = list(d.keys())[0]
+            # if dim_name != "time":
+            # dims_without_time.append(dim_name)
+            vals = getdimvals(dims, dim_name)
+            valstack.append(vals)
+        # print("D:", dims, dims_without_time)
+        print("valstack:", valstack)
+        tuples = list(itertools.product(*valstack))
+        print("tuples:", tuples, time_steps)
+        values = []
+        for t in tuples:
+            # for ts in time_steps:
+            # v = multi_get(dat["data"], t + (ts,))
+            # print(t + (ts,), ":", v)
+            v = multi_get(dat["data"], t)
+            print(t, v)
+            if v:
+                try:
+                    values.append(float(v))
+                except ValueError:
+                    if v == "nodata":
+                        values.append(None)
+                    else:
+                        values.append(v)
+        print("values: ", values)
+        # sys.exit(0)
+        # values = []
+        # if reference_time:
+        #     for t in time_steps:
+        #         if vertical_steps:
+        #             for v in vertical_steps:
+        #                 values.append(float(dat["data"][single_reference_time][v][t]))
+        #         else:
+        #             values.append(float(dat["data"][single_reference_time][t]))
+        # else:
+        #     if vertical_steps:
+        #         for v in vertical_steps:
+        #             values.append(float(dat["data"][v][t]))
+        #     else:
+        #         for t in time_steps:
+        #             values.append(float(dat["data"][t]))
+
+        parameters: Dict(str, CovJsonParameter) = dict()
+        ranges = dict()
+
         param = CovJsonParameter(
-            id=dt["name"],
-            observedProperty=ObservedProperty(label={"en": dt["name"]}),
+            id=dat["name"],
+            observedProperty=ObservedProperty(label={"en": dat["name"]}),
         )
-        parameters[dt["name"]] = param
+        parameters[dat["name"]] = param
         axisNames = ["x", "y", "t"]
         shape = [1, 1, len(time_steps)]
         if vertical_steps:
@@ -832,40 +968,53 @@ def covjson_from_resp(dats):
             values=values,
         )
         print("_range: ", _range)
-        ranges[dt["name"]] = _range
+        ranges[dat["name"]] = _range
 
-    axes: dict[str, ValuesAxis] = {
-        "x": ValuesAxis(values=[lon]),
-        "y": ValuesAxis(values=[lat]),
-        "t": ValuesAxis(values=time_steps),
-    }
+        axes: dict[str, ValuesAxis] = {
+            "x": ValuesAxis(values=[lon]),
+            "y": ValuesAxis(values=[lat]),
+            "t": ValuesAxis(values=time_steps),
+        }
 
-    domainType = "PointSeries"
-    if vertical_steps:
-        axes["z"] = ValuesAxis(values=vertical_steps)
-        if len(vertical_steps) > 1:
-            domainType = "VerticalProfile"
+        domainType = "PointSeries"
+        if vertical_steps:
+            axes["z"] = ValuesAxis(values=vertical_steps)
+            if len(vertical_steps) > 1:
+                domainType = "VerticalProfile"
+        if time_steps:
+            axes["t"] = ValuesAxis(values=time_steps)
+            if len(time_steps) > 1 and vertical_steps and len(vertical_steps) > 1:
+                domainType = "Grid"
 
-    referencing = [
-        ReferenceSystemConnectionObject(
-            system=ReferenceSystem(
-                type="GeographicCRS", id="http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+        referencing = [
+            ReferenceSystemConnectionObject(
+                system=ReferenceSystem(
+                    type="GeographicCRS",
+                    id="http://www.opengis.net/def/crs/OGC/1.3/CRS84",
+                ),
+                coordinates=["x", "y"],
             ),
-            coordinates=["x", "y"],
-        ),
-        ReferenceSystemConnectionObject(
-            system=ReferenceSystem(type="TemporalRS", calendar="Gregorian"),
-            coordinates=["t"],
-        ),
-    ]
-    domain = Domain(domainType=domainType, axes=axes, referencing=referencing)
-    covjson = Coverage(
-        id="test",
-        domain=domain,
-        ranges=ranges,
-        parameters=parameters,
-    )
-    return covjson
+            ReferenceSystemConnectionObject(
+                system=ReferenceSystem(type="TemporalRS", calendar="Gregorian"),
+                coordinates=["t"],
+            ),
+        ]
+        domain = Domain(domainType=domainType, axes=axes, referencing=referencing)
+        covjson = Coverage(
+            id="test",
+            domain=domain,
+            ranges=ranges,
+            parameters=parameters,
+        )
+        if not fullcovjson:
+            fullcovjson = covjson
+        else:
+            for k, v in covjson.parameters.items():
+                fullcovjson.parameters[k] = v
+            for k, v in covjson.ranges.items():
+                fullcovjson.ranges[k] = v
+
+    return fullcovjson
 
 
 def feature_from_dat(dats, observedPropertyName, name):
