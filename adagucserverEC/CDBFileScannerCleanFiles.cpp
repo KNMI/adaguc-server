@@ -24,17 +24,31 @@ void CDBFileScanner::_removeFileFromTables(CT::string fileNamestr, CDataSource *
 }
 
 int CDBFileScanner::cleanFiles(CDataSource *dataSource, int) {
-  if (!dataSource->cfgLayer->FilePath[0]->attr.retentiontype.equals(CDBFILESCANNER_RETENTIONTYPE_DATATIME) || dataSource->cfgLayer->FilePath[0]->attr.retentionperiod.empty()) {
+  if (dataSource->cfgLayer->FilePath[0]->attr.retentiontype.empty() || dataSource->cfgLayer->FilePath[0]->attr.retentionperiod.empty()) {
     return 0;
   }
-  if (!(dataSource->cfg->Settings.size() == 1 && dataSource->cfg->Settings[0]->attr.enablecleanupsystem.equals("true"))) {
-    CDBWarning("Layer wants to autocleanup, but attribute enablecleanupsystem in Settings is not set to true");
+
+  if (!dataSource->cfgLayer->FilePath[0]->attr.retentiontype.equals(CDBFILESCANNER_RETENTIONTYPE_DATATIME)) {
+    CDBDebug("retentiontype is not set to \"%s\" but  to \"%s\", ignoring", CDBFILESCANNER_RETENTIONTYPE_DATATIME, dataSource->cfgLayer->FilePath[0]->attr.retentiontype.c_str());
+    return 0;
+  }
+  CT::string enableCleanupSystem = dataSource->cfg->Settings.size() == 1 ? dataSource->cfg->Settings[0]->attr.enablecleanupsystem : "false";
+  bool enableCleanupIsTrue = enableCleanupSystem.equals("true");
+  bool enableCleanupIsInform = enableCleanupSystem.equals("dryrun");
+  int cleanupSystemLimit = dataSource->cfg->Settings.size() == 1 && !dataSource->cfg->Settings[0]->attr.cleanupsystemlimit.empty() ? dataSource->cfg->Settings[0]->attr.cleanupsystemlimit.toInt()
+                                                                                                                                   : CDBFILESCANNER_CLEANUP_DEFAULT_LIMIT;
+  if (!enableCleanupIsTrue && !enableCleanupIsInform) {
+    CDBWarning("Layer wants to autocleanup, but attribute enablecleanupsystem in Settings is not set to true or dryrun but to %s", enableCleanupSystem.c_str());
     return 1;
   }
+
   CT::string retentiontype = dataSource->cfgLayer->FilePath[0]->attr.retentiontype;
   CT::string retentionperiod = dataSource->cfgLayer->FilePath[0]->attr.retentionperiod;
-  CDBDebug("Start Cleanfiles with retentiontype [%s] and retentionperiod [%s]", retentiontype.c_str(), retentionperiod.c_str());
+  CDBDebug("Start Cleanfiles with retentiontype [%s] and retentionperiod [%s], limit %d", retentiontype.c_str(), retentionperiod.c_str(), cleanupSystemLimit);
 
+  if (enableCleanupIsInform) {
+    CDBDebug("Note that mode is set to dryrun only, no actual deleting");
+  }
   CDBAdapter *dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
   if (dataSource->cfgLayer->Dimension.size() == 0) {
     if (CAutoConfigure::autoConfigureDimensions(dataSource) != 0) {
@@ -66,28 +80,36 @@ int CDBFileScanner::cleanFiles(CDataSource *dataSource, int) {
   CT::string currentTime = CTime::currentDateTime();
   CTime::Date date = ctime.freeDateStringToDate(currentTime.c_str());
 
-  CDBDebug("currentDate\t\t\t%s", ctime.dateToISOString(date).c_str());
+  // CDBDebug("currentDate\t\t\t%s", ctime.dateToISOString(date).c_str());
 
   CT::string dateMinusRetentionPeriod = ctime.dateToISOString(ctime.subtractPeriodFromDate(date, retentionperiod.c_str()));
 
-  CDBDebug("dateMinusRetentionPeriod\t%s", dateMinusRetentionPeriod.c_str());
+  // CDBDebug("dateMinusRetentionPeriod\t%s", dateMinusRetentionPeriod.c_str());
 
-  CDBStore::Store *store = dbAdapter->getBetween("0000-01-01T00:00:00Z", dateMinusRetentionPeriod.c_str(), colName.c_str(), tableNameForTimeDimension.c_str(), 10000);
+  CDBStore::Store *store = dbAdapter->getBetween("0000-01-01T00:00:00Z", dateMinusRetentionPeriod.c_str(), colName.c_str(), tableNameForTimeDimension.c_str(), cleanupSystemLimit);
 
   if (store != NULL && store->getSize() > 0) {
+    CDBDebug("Found (at least) %d files which are too old.", store->getSize());
     for (size_t j = 0; j < store->getSize(); j++) {
       std::string fileNamestr = store->getRecord(j)->get(0)->c_str();
-      _removeFileFromTables(fileNamestr.c_str(), dataSource);
-      /* Don't delete files which where already deleted */
-      if (filesDeletedFromFS.find(fileNamestr) == filesDeletedFromFS.end()) {
-        int status = remove(fileNamestr.c_str());
-        if (status != 0) {
-          CDBError("Unable to remove file from FS: [%s]", fileNamestr.c_str());
-        } else {
-          filesDeletedFromFS.insert(fileNamestr);
+      if (enableCleanupIsInform) {
+        CDBDebug("[INFO] Would clean: [%s]", fileNamestr.c_str());
+      }
+      if (enableCleanupIsTrue) {
+        _removeFileFromTables(fileNamestr.c_str(), dataSource);
+        /* Don't delete files which where already deleted */
+        if (filesDeletedFromFS.find(fileNamestr) == filesDeletedFromFS.end()) {
+          int status = remove(fileNamestr.c_str());
+          if (status != 0) {
+            CDBError("Unable to remove file from FS: [%s]", fileNamestr.c_str());
+          } else {
+            filesDeletedFromFS.insert(fileNamestr);
+          }
         }
       }
     }
+  } else {
+    CDBDebug("Nothing to clean.");
   }
   delete store;
   return 0;

@@ -28,6 +28,7 @@ Configuration
     files to the service
 -   [Logging](Logging.md) - (debug) - Configure the type of logging
 -   [Settings](Settings.md) - (enablecleanupsystem) - Configure global settings of the server / Dataset
+-   [Environment](Environment.md) - (name, default) - For within dataset configuration, specify which values should be substituted
 
 <!-- -->
 

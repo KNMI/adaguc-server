@@ -1,4 +1,4 @@
-
+from ast import Dict
 import subprocess
 import os
 from os.path import expanduser
@@ -15,23 +15,27 @@ from adaguc.CGIRunner import CGIRunner
 
 class runAdaguc:
     def __init__(self):
-        """ ADAGUC_LOGFILE is the location where logfiles are stored. 
-          In current config file adaguc.autoresource.xml, the DB is written to this temporary directory. 
-          Please note regenerating the DB each time for each request can cause performance problems. 
-          You can safely configure a permanent location for the database which is permanent in adaguc.autoresource.xml (or your own config)"""
-        self.ADAGUC_LOGFILE = "/tmp/adaguc-server-" + \
-            self.get_random_string(10) + ".log"
-        self.ADAGUC_PATH = os.getenv('ADAGUC_PATH', "./")
-        self.ADAGUC_CONFIG = self.ADAGUC_PATH+"/data/config/adaguc.autoresource.xml"
-        self.ADAGUC_DATA_DIR = os.getenv(
-            'ADAGUC_DATA_DIR', "/data/adaguc-data")
+        """ADAGUC_LOGFILE is the location where logfiles are stored.
+        In current config file adaguc.autoresource.xml, the DB is written to this temporary directory.
+        Please note regenerating the DB each time for each request can cause performance problems.
+        You can safely configure a permanent location for the database which is permanent in adaguc.autoresource.xml (or your own config)
+        """
+        self.ADAGUC_LOGFILE = (
+            "/tmp/adaguc-server-" + self.get_random_string(10) + ".log"
+        )
+        self.ADAGUC_PATH = os.getenv("ADAGUC_PATH", "./")
+        self.ADAGUC_CONFIG = self.ADAGUC_PATH + "/data/config/adaguc.autoresource.xml"
+        self.ADAGUC_DATA_DIR = os.getenv("ADAGUC_DATA_DIR", "/data/adaguc-data")
         self.ADAGUC_AUTOWMS_DIR = os.getenv(
-            'ADAGUC_AUTOWMS_DIR', "/data/adaguc-autowms")
+            "ADAGUC_AUTOWMS_DIR", "/data/adaguc-autowms"
+        )
         self.ADAGUC_DATASET_DIR = os.getenv(
-            'ADAGUC_DATASET_DIR', "/data/adaguc-datasets")
-        self.ADAGUC_TMP = os.getenv('ADAGUC_TMP', "/tmp")
+            "ADAGUC_DATASET_DIR", "/data/adaguc-datasets"
+        )
+        self.ADAGUC_TMP = os.getenv("ADAGUC_TMP", "/tmp")
         self.ADAGUC_FONT = os.getenv(
-            'ADAGUC_FONT', self.ADAGUC_PATH + "./data/fonts/Roboto-Medium.ttf")
+            "ADAGUC_FONT", self.ADAGUC_PATH + "./data/fonts/Roboto-Medium.ttf"
+        )
 
     def setAdagucPath(self, newAdagucPath):
         self.ADAGUC_PATH = newAdagucPath
@@ -53,7 +57,7 @@ class runAdaguc:
 
     def get_random_string(self, length):
         letters = string.ascii_lowercase
-        return ''.join(random.choice(letters) for i in range(length))
+        return "".join(random.choice(letters) for i in range(length))
 
     def setConfiguration(self, configFile):
         self.ADAGUC_CONFIG = configFile
@@ -62,36 +66,36 @@ class runAdaguc:
         config = self.ADAGUC_CONFIG + "," + datasetName
         """ Setup a new environment """
         adagucenv = {}
-
         """ Set required environment variables """
-        adagucenv['ADAGUC_CONFIG'] = self.ADAGUC_CONFIG
-        adagucenv['ADAGUC_LOGFILE'] = self.ADAGUC_LOGFILE
-        adagucenv['ADAGUC_PATH'] = self.ADAGUC_PATH
-        adagucenv['ADAGUC_DATA_DIR'] = self.ADAGUC_DATA_DIR
-        adagucenv['ADAGUC_AUTOWMS_DIR'] = self.ADAGUC_AUTOWMS_DIR
-        adagucenv['ADAGUC_DATASET_DIR'] = self.ADAGUC_DATASET_DIR
-        adagucenv['ADAGUC_TMP'] = self.ADAGUC_TMP
-        adagucenv['ADAGUC_FONT'] = self.ADAGUC_FONT
+        adagucenv["ADAGUC_CONFIG"] = self.ADAGUC_CONFIG
+        adagucenv["ADAGUC_LOGFILE"] = self.ADAGUC_LOGFILE
+        adagucenv["ADAGUC_PATH"] = self.ADAGUC_PATH
+        adagucenv["ADAGUC_DATA_DIR"] = self.ADAGUC_DATA_DIR
+        adagucenv["ADAGUC_AUTOWMS_DIR"] = self.ADAGUC_AUTOWMS_DIR
+        adagucenv["ADAGUC_DATASET_DIR"] = self.ADAGUC_DATASET_DIR
+        adagucenv["ADAGUC_TMP"] = self.ADAGUC_TMP
+        adagucenv["ADAGUC_FONT"] = self.ADAGUC_FONT
 
         status, data, headers = self.runADAGUCServer(
-            args=['--updatedb', '--config', config], env=adagucenv, isCGI=False)
+            args=["--updatedb", "--config", config], env=adagucenv, isCGI=False
+        )
 
-        return (data.getvalue().decode())
+        return data.getvalue().decode()
 
     def runGetMapUrl(self, url):
         adagucenv = {}
-
         """ Set required environment variables """
-        adagucenv['ADAGUC_CONFIG'] = self.ADAGUC_CONFIG
-        adagucenv['ADAGUC_LOGFILE'] = self.ADAGUC_LOGFILE
-        adagucenv['ADAGUC_PATH'] = self.ADAGUC_PATH
-        adagucenv['ADAGUC_DATA_DIR'] = self.ADAGUC_DATA_DIR
-        adagucenv['ADAGUC_AUTOWMS_DIR'] = self.ADAGUC_AUTOWMS_DIR
-        adagucenv['ADAGUC_DATASET_DIR'] = self.ADAGUC_DATASET_DIR
-        adagucenv['ADAGUC_TMP'] = self.ADAGUC_TMP
-        adagucenv['ADAGUC_FONT'] = self.ADAGUC_FONT
+        adagucenv["ADAGUC_CONFIG"] = self.ADAGUC_CONFIG
+        adagucenv["ADAGUC_LOGFILE"] = self.ADAGUC_LOGFILE
+        adagucenv["ADAGUC_PATH"] = self.ADAGUC_PATH
+        adagucenv["ADAGUC_DATA_DIR"] = self.ADAGUC_DATA_DIR
+        adagucenv["ADAGUC_AUTOWMS_DIR"] = self.ADAGUC_AUTOWMS_DIR
+        adagucenv["ADAGUC_DATASET_DIR"] = self.ADAGUC_DATASET_DIR
+        adagucenv["ADAGUC_TMP"] = self.ADAGUC_TMP
+        adagucenv["ADAGUC_FONT"] = self.ADAGUC_FONT
         status, data, headers = self.runADAGUCServer(
-            url, env=adagucenv,  showLogOnError=False)
+            url, env=adagucenv, showLogOnError=False
+        )
         logfile = self.getLogFile()
         self.removeLogFile()
         if data is not None:
@@ -112,7 +116,7 @@ class runAdaguc:
 
     def getLogFile(self):
         try:
-            f = open(self.ADAGUC_LOGFILE,  encoding="utf8", errors='ignore')
+            f = open(self.ADAGUC_LOGFILE, encoding="utf8", errors="ignore")
             data = f.read()
             f.close()
             return data
@@ -126,35 +130,52 @@ class runAdaguc:
         print(self.getLogFile())
         print("=== END ADAGUC LOGS ===")
 
-    def runADAGUCServer(self, url=None, env=[], path=None, args=None, isCGI=True, showLogOnError=True, showLog=False):
-
+    def runADAGUCServer(
+        self,
+        url=None,
+        env=[],
+        path=None,
+        args=None,
+        isCGI=True,
+        showLogOnError=True,
+        showLog=False,
+    ):
         # adagucenv=os.environ.copy()
         # adagucenv.update(env)
 
         adagucenv = env
 
-        adagucenv['ADAGUC_ENABLELOGBUFFER'] = os.getenv(
-            'ADAGUC_ENABLELOGBUFFER', 'TRUE')
-        adagucenv['ADAGUC_CONFIG'] = self.ADAGUC_CONFIG
-        adagucenv['ADAGUC_LOGFILE'] = self.ADAGUC_LOGFILE
-        adagucenv['ADAGUC_PATH'] = self.ADAGUC_PATH
-        adagucenv['ADAGUC_DATARESTRICTION'] = "FALSE"
-        adagucenv['ADAGUC_DATA_DIR'] = self.ADAGUC_DATA_DIR
-        adagucenv['ADAGUC_AUTOWMS_DIR'] = self.ADAGUC_AUTOWMS_DIR
-        adagucenv['ADAGUC_DATASET_DIR'] = self.ADAGUC_DATASET_DIR
-        adagucenv['ADAGUC_TMP'] = self.ADAGUC_TMP
-        adagucenv['ADAGUC_FONT'] = self.ADAGUC_FONT
-        adagucenv['LD_LIBRARY_PATH'] = os.getenv('LD_LIBRARY_PATH', "")
+        adagucenv["ADAGUC_ENABLELOGBUFFER"] = os.getenv(
+            "ADAGUC_ENABLELOGBUFFER", "TRUE"
+        )
+        adagucenv["ADAGUC_CONFIG"] = self.ADAGUC_CONFIG
+        adagucenv["ADAGUC_LOGFILE"] = self.ADAGUC_LOGFILE
+        adagucenv["ADAGUC_PATH"] = self.ADAGUC_PATH
+        adagucenv["ADAGUC_DATARESTRICTION"] = "FALSE"
+        adagucenv["ADAGUC_DATA_DIR"] = self.ADAGUC_DATA_DIR
+        adagucenv["ADAGUC_AUTOWMS_DIR"] = self.ADAGUC_AUTOWMS_DIR
+        adagucenv["ADAGUC_DATASET_DIR"] = self.ADAGUC_DATASET_DIR
+        adagucenv["ADAGUC_TMP"] = self.ADAGUC_TMP
+        adagucenv["ADAGUC_FONT"] = self.ADAGUC_FONT
+        ld_library_path = os.getenv("LD_LIBRARY_PATH")
+        if ld_library_path:
+            adagucenv["LD_LIBRARY_PATH"] = ld_library_path
 
-        ADAGUC_PATH = adagucenv['ADAGUC_PATH']
-        ADAGUC_LOGFILE = adagucenv['ADAGUC_LOGFILE']
+        # Forward all environment variables starting with ADAGUCENV_
+        prefix: str = "ADAGUCENV_"
+        for key, value in os.environ.items():
+            if key[: len(prefix)] == prefix:
+                adagucenv[key] = value
+
+        ADAGUC_PATH = adagucenv["ADAGUC_PATH"]
+        ADAGUC_LOGFILE = adagucenv["ADAGUC_LOGFILE"]
 
         try:
             os.remove(ADAGUC_LOGFILE)
         except:
             pass
 
-        adagucexecutable = ADAGUC_PATH+"/bin/adagucserver"
+        adagucexecutable = ADAGUC_PATH + "/bin/adagucserver"
 
         adagucargs = [adagucexecutable]
 
@@ -162,8 +183,14 @@ class runAdaguc:
             adagucargs = adagucargs + args
 
         filetogenerate = BytesIO()
-        status, headers, processErr = CGIRunner().run(adagucargs, url=url, output=filetogenerate,
-                                          env=adagucenv, path=path, isCGI=isCGI)
+        status, headers, processErr = CGIRunner().run(
+            adagucargs,
+            url=url,
+            output=filetogenerate,
+            env=adagucenv,
+            path=path,
+            isCGI=isCGI,
+        )
 
         if (status != 0 and showLogOnError == True) or showLog == True:
             print("\n\n--- START ADAGUC DEBUG INFO ---")
@@ -191,21 +218,21 @@ class runAdaguc:
             return [status, filetogenerate, headers]
 
     def writetofile(self, filename, data):
-        with open(filename, 'wb') as f:
+        with open(filename, "wb") as f:
             f.write(data)
 
     def readfromfile(self, filename):
-        ADAGUC_PATH = os.environ['ADAGUC_PATH']
-        with open(ADAGUC_PATH + "/tests/" + filename, 'rb') as f:
+        ADAGUC_PATH = os.environ["ADAGUC_PATH"]
+        with open(ADAGUC_PATH + "/tests/" + filename, "rb") as f:
             return f.read()
 
     def cleanTempDir(self):
-        ADAGUC_TMP = os.environ['ADAGUC_TMP']
+        ADAGUC_TMP = os.environ["ADAGUC_TMP"]
         try:
             shutil.rmtree(ADAGUC_TMP)
         except:
             pass
-        self.mkdir_p(os.environ['ADAGUC_TMP'])
+        self.mkdir_p(os.environ["ADAGUC_TMP"])
         return
 
     def mkdir_p(self, directory):
