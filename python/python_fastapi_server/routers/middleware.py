@@ -5,6 +5,8 @@ For use behind proxies
 """
 import os
 
+from urllib.parse import urlsplit
+
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 
@@ -16,9 +18,11 @@ class FixSchemeMiddleware:
         self.scheme = None
         external_address = os.environ["EXTERNALADDRESS"]
         if external_address:
-            self.scheme = external_address[: external_address.index(":")]
+            external_url = urlsplit(external_address)
+            self.scheme = external_url.scheme
 
-    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+    async def __call__(self, scope: Scope, receive: Receive,
+                       send: Send) -> None:
         if scope["type"] == "http":
             if self.scheme:
                 scope["scheme"] = self.scheme
