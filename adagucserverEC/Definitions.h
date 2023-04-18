@@ -28,7 +28,7 @@
 #ifndef Definitions_H
 #define Definitions_H
 
-#define ADAGUCSERVER_VERSION "2.8.4" // Please also update in the Dockerfile to the same version
+#define ADAGUCSERVER_VERSION "2.8.6" // Please also update in the Dockerfile to the same version
 
 // CConfigReaderLayerType
 #define CConfigReaderLayerTypeUnknown 0
@@ -124,12 +124,12 @@
 #define ADAGUC_USE_CAIRO
 
 // #define CImgWarpBilinear_DEBUG
-//#define CImgWarpBilinear_TIME
+// #define CImgWarpBilinear_TIME
 // #define MEASURETIME
 
-//#define CDATAREADER_DEBUG
-//#define CCDFNETCDFIO_DEBUG
-// Debug settings:
+// #define CDATAREADER_DEBUG
+// #define CCDFNETCDFIO_DEBUG
+//  Debug settings:
 /*
 #define CIMAGEDATAWRITER_DEBUG
 #define CDATAREADER_DEBUG
@@ -153,9 +153,9 @@
 #define MEASURETIME
 */
 
-//#define MEASURETIME
-//#define ADAGUC_TILESTITCHER_DEBUG
-//#define DEBUGON
+// #define MEASURETIME
+// #define ADAGUC_TILESTITCHER_DEBUG
+// #define DEBUGON
 #ifdef DEBUGON
 #define CDATASOURCE_DEBUG
 #define CREQUEST_DEBUG
@@ -169,21 +169,21 @@
 #define CDFOBJECTSTORE_DEBUG
 #define ADAGUC_TILESTITCHER_DEBUG
 #endif
-//#define MEASURETIME
-//#define CCDFNETCDFIO_DEBUG
-//#define CXMLGEN_DEBUG
-//#define CDATAREADER_DEBUG
-//#define CCDFNETCDFIO_DEBUG
-//#define CCDFNETCDFIO_DEBUG_OPEN
-//#define CDATAREADER_DEBUG
+// #define MEASURETIME
+// #define CCDFNETCDFIO_DEBUG
+// #define CXMLGEN_DEBUG
+// #define CDATAREADER_DEBUG
+// #define CCDFNETCDFIO_DEBUG
+// #define CCDFNETCDFIO_DEBUG_OPEN
+// #define CDATAREADER_DEBUG
 
-//#define MEASURETIME
-//#define CDATAREADER_DEBUG
-//#define CIMAGEDATAWRITER_DEBUG
-//#define CDATASOURCE_DEBUG
+// #define MEASURETIME
+// #define CDATAREADER_DEBUG
+// #define CIMAGEDATAWRITER_DEBUG
+// #define CDATASOURCE_DEBUG
 #define CSLD_DEBUG
 
-//#define ENABLE_CURL in Makefile
+// #define ENABLE_CURL in Makefile
 
-//#define ADAGUC_USE_GDAL
+// #define ADAGUC_USE_GDAL
 #endif
