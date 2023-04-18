@@ -417,9 +417,6 @@ def get_features_for_items(
         # Default observedPropertyName = first layername
     param_list = ",".join(observed_property_name)
 
-    if result_time:
-        collinfo = get_parameters(coll)
-
     param_list = ",".join(observed_property_name)
 
     dimspec = ""
@@ -427,7 +424,6 @@ def get_features_for_items(
         for dimname, dimval in dims.items():
             dimspec += f"&{dimname}={dimval}" % (dimname, dimval)
 
-    features = []
     for coord in coords:
         request_url = (
             f"http://localhost:8080/wms?dataset={coll}&query_layers={param_list}"

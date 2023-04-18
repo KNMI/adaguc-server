@@ -15,10 +15,7 @@ logger = logging.getLogger(__name__)
 @wmsWcsRouter.get("/wcs")
 @wmsWcsRouter.get("/adagucserver")
 @wmsWcsRouter.get("/adaguc-server")
-async def handle_wms(
-    req: Request,
-    response: Response,
-):
+async def handle_wms(req: Request, ):
     adaguc_instance = setup_adaguc()
     logger.info("instance: %s", str(adaguc_instance))
     url = req.url
