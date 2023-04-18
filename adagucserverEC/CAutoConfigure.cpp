@@ -6,7 +6,7 @@
 #include "CRequest.h"
 const char *CAutoConfigure::className = "CAutoConfigure";
 
-//#define CAUTOCONFIGURE_DEBUG
+// #define CAUTOCONFIGURE_DEBUG
 
 int CAutoConfigure::checkCascadedDimensions(const CDataSource *dataSource) {
   if (dataSource != NULL && dataSource->dLayerType == CConfigReaderLayerTypeCascaded) {
