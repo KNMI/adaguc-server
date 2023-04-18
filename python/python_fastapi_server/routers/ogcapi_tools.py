@@ -157,7 +157,8 @@ def generate_collections():
 
 def get_dimensions(layer, skip_dims=[]):
     """
-    Gets the dimensions from a layer definition, skipping the dimensions in skip_dims
+    Gets the dimensions from a layer definition, skipping the dimensions
+    in skip_dims
     """
     dims = []
     for dim_name in layer.dimensions:
