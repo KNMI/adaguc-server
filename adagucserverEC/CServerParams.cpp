@@ -36,6 +36,7 @@ CServerParams::CServerParams() {
 
   Transparent = false;
   enableDocumentCache = false;
+  cfg = NULL;
   configObj = new CServerConfig();
   Geo = new CGeoParams;
   imageFormat = IMAGEFORMAT_IMAGEPNG8;
@@ -483,8 +484,11 @@ bool CServerParams::checkBBOXXYOrder(const char *projName) {
  */
 CT::PointerList<CT::string *> *CServerParams::getLegendNames(std::vector<CServerConfig::XMLE_Legend *> Legend) {
   if (Legend.size() == 0) {
-    CDBError("No legends defined");
-    return NULL;
+    CDBDebug("No legends defined");
+    CT::string *autoLegendName = new CT::string("rainbow");
+    CT::PointerList<CT::string *> *legendList = new CT::PointerList<CT::string *>();
+    legendList->push_back(autoLegendName);
+    return legendList;
   }
   CT::PointerList<CT::string *> *stringList = new CT::PointerList<CT::string *>();
 
@@ -555,7 +559,7 @@ bool CServerParams::checkTimeFormat(CT::string &timeToCheck) {
   return isValidTime;*/
 }
 
-int CServerParams::parseConfigFile(CT::string &pszConfigFile) {
+int CServerParams::parseConfigFile(CT::string &pszConfigFile, std::vector<CServerConfig::XMLE_Environment *> *extraEnvironment) {
   CT::string configFileData;
 
   configFileData = "";
@@ -594,6 +598,40 @@ int CServerParams::parseConfigFile(CT::string &pszConfigFile) {
     /* Substitute ADAGUC_AUTOWMS_DIR */
     const char *pszADAGUC_AUTOWMS_DIR = getenv("ADAGUC_AUTOWMS_DIR");
     if (pszADAGUC_AUTOWMS_DIR != NULL) configFileData.replaceSelf("{ADAGUC_AUTOWMS_DIR}", pszADAGUC_AUTOWMS_DIR);
+
+    if (extraEnvironment != nullptr) {
+      /* Substitute any others as specified in env */
+      if (extraEnvironment->size() > 0) {
+        for (size_t j = 0; j < extraEnvironment->size(); j++) {
+          CServerConfig::XMLE_Environment *env = (*extraEnvironment)[j];
+          if (env != nullptr) {
+            if (!env->attr.name.empty() && !env->attr.defaultVal.empty()) {
+
+              if (env->attr.name.startsWith(CSERVERPARAMS_ADAGUCENV_PREFIX)) {
+                const char *environmentVarName = env->attr.name.c_str();
+                const char *environmentVarDefault = env->attr.defaultVal.c_str();
+                const char *environmentValue = getenv(environmentVarName);
+                CT::string substituteName;
+                substituteName.print("{%s}", environmentVarName);
+                const char *environmentSubstituteName = substituteName.c_str();
+
+                if (environmentValue != NULL) {
+                  CDBDebug("Replacing %s with environment value %s", environmentSubstituteName, environmentValue);
+                  configFileData.replaceSelf(environmentSubstituteName, environmentValue);
+                } else {
+                  CDBDebug("Replacing %s with default value %s", environmentSubstituteName, environmentVarDefault);
+                  configFileData.replaceSelf(environmentSubstituteName, environmentVarDefault);
+                }
+              } else {
+                CDBWarning("Environment element found, but it is not prefixed with [%s]", CSERVERPARAMS_ADAGUCENV_PREFIX);
+              }
+            } else {
+              CDBWarning("Environment element found, but either name or default are not set");
+            }
+          }
+        }
+      }
+    }
   } catch (int e) {
     CDBError("Exception %d in substituting", e);
   }

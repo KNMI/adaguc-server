@@ -868,21 +868,6 @@ CT::PointerList<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(C
 
     renderMethods = getRenderMethodListForDataSource(dataSource, NULL);
     if (renderMethods->size() > 0) {
-      // For cascaded and rgba layers, no styles need to be defined
-      //       if((CStyleConfiguration::getRenderMethodFromString(renderMethods->get(0))&(RM_RGBA)){
-      //         CDBDebug("Using rendermethod %s",renderMethods->get(0)->c_str());
-      //         delete renderMethods ;
-      //
-      //         CStyleConfiguration * styleConfig = new CStyleConfiguration();
-      //         //CDBDebug("Setting rendermethod RM_RGBA");
-      //         styleConfig->styleTitle.copy("rgba");
-      //         styleConfig->styleAbstract.copy("rgba");
-      //         styleConfig->renderMethod = RM_RGBA;
-      //         styleConfig->styleCompositionName = "rgba";
-      //         styleConfigurationList->push_back(styleConfig);
-      //         return styleConfigurationList;
-      //
-      //       }
       CAutoConfigure::autoConfigureStyles(dataSource);
     }
   }
@@ -904,28 +889,6 @@ CT::PointerList<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(C
       // Lookup the style index in the servers configuration
       int dStyleIndex = getServerStyleIndexByName(styleNames->get(i)->c_str(), serverCFG->Style);
 
-      if (dStyleIndex == -1) {
-
-        //         if(returnStringList){
-        //
-        //           if(styleNames->get(i)->equals("default")==false){
-        //             CDBError("Style %s not found for layer %s",styleNames->get(i)->c_str(),dataSource->layerName.c_str());
-        //             delete styleNames;styleNames = NULL;
-        //
-        //             return styleConfigurationList;
-        //           }else{
-        //            CDBDebug("Warning: Style [%s] not found (%d)",styleNames->get(i)->c_str(),styleNames->get(i)->equals("default"));
-        //             CT::string * styleName = new CT::string();
-        //             styleName->copy("default");
-        //
-        //             styleConfigurationList->push_back(styleName);
-        //             delete styleNames;styleNames = NULL;
-        //             return styleConfigurationList;
-        //            continue;
-        //           }
-        //         }
-      }
-
 #ifdef CDATASOURCE_DEBUG
       CDBDebug("dStyleIndex = %d", dStyleIndex);
 #endif
@@ -939,31 +902,11 @@ CT::PointerList<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(C
         legendList = getLegendListForDataSource(dataSource, style);
 
         if (legendList == NULL) {
-          CDBError("No legends defined for layer %s", dataSource->layerName.c_str());
-          delete styleNames;
-          styleNames = NULL;
-
-          delete renderMethods;
-          renderMethods = NULL;
-          ////if(styleConfig!=NULL){styleConfig->hasError=true;}
-          return NULL;
+          CDBDebug("No legends defined for layer %s, adding legend auto", dataSource->layerName.c_str());
+          CT::string *autoLegendName = new CT::string("rainbow");
+          legendList = new CT::PointerList<CT::string *>();
+          legendList->push_back(autoLegendName);
         }
-
-        //       if(legendList->size()==0){
-        //         CDBError("Zero legends defined for layer %s",dataSource->layerName.c_str());
-        //         delete styleNames;styleNames = NULL;
-        //         delete styleConfigurationList;styleConfigurationList = NULL;
-        //         delete renderMethods;renderMethods= NULL;
-        //         if(styleConfig!=NULL){styleConfig->hasError=true;}
-        //         return NULL;
-        //       }if(renderMethods->size()==0){
-        //         CDBError("Zero renderMethods defined for layer %s",dataSource->layerName.c_str());
-        //         delete styleNames;styleNames = NULL;
-        //         delete styleConfigurationList;styleConfigurationList = NULL;
-        //         delete renderMethods;renderMethods= NULL;
-        //         if(styleConfig!=NULL){styleConfig->hasError=true;}
-        //         return NULL;
-        //       }
 
         CT::string styleName;
         for (size_t l = 0; l < legendList->size(); l++) {
@@ -1404,8 +1347,10 @@ double CDataSource::getScaling() {
 double CDataSource::getContourScaling() {
   if (this->getStyle() != NULL && this->getStyle()->styleConfig != NULL) {
     if (this->getStyle()->styleConfig->RenderSettings.size() > 0) {
-      double scalecontours = this->getStyle()->styleConfig->RenderSettings[0]->attr.scalecontours.toDouble();
-      return scalecontours;
+      if (!this->getStyle()->styleConfig->RenderSettings[0]->attr.scalecontours.empty()) {
+        double scalecontours = this->getStyle()->styleConfig->RenderSettings[0]->attr.scalecontours.toDouble();
+        return scalecontours;
+      }
     }
   }
   return 1;
