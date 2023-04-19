@@ -152,4 +152,4 @@ target_link_libraries(adagucserverEC CCDFDataModel hclasses ${NetCDF_LIBRARIES} 
 
 # Build unit test executable
 add_executable(testadagucserver testadagucserver.cpp)
-target_link_libraries(testadagucserver PRIVATE adagucserverEC CCDFDataModel hclasses)
+target_link_libraries(testadagucserver PRIVATE adagucserverEC CCDFDataModel hclasses CppUnitLite)

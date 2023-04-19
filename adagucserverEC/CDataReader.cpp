@@ -613,7 +613,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
   }
 
   // TODO: Convert ellipsis a en b in KM to meter
-  convertKMtoM(dataSource);
+  applyAxisScalingConversion(dataSource);
 
   // Calculate cellsize and BBOX based on read X,Y dims.
   if (!calculateCellSizeAndBBox(dataSource, dataSourceVar)) {
@@ -1506,8 +1506,9 @@ CDF::Variable *CDataReader::getDimensionVariableByType(CDF::Variable *var, CData
   return cdfObject->getVariableNE(dim->name.c_str());
 }
 
-void CDataReader::convertKMtoM(CDataSource *dataSource) {
-  double axisScaling = CImageWarper::getAxisScaling(dataSource->nativeProj4);
+void CDataReader::applyAxisScalingConversion(CDataSource *dataSource) {
+  double axisScaling;
+  std::tie(std::ignore, axisScaling) = CImageWarper::fixProjection(dataSource->nativeProj4);
   if (axisScaling != 1.0f) {
     if (dataSource->didAxisScalingConversion == false) {
       if (dataSource->varX->getType() == CDF_DOUBLE) {

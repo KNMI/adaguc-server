@@ -1,6 +1,8 @@
 #include "CDebugger.h"
 #include "CGenericDataWarperTools.h"
-#include <assert.h>
+#include "CppUnitLite/TestHarness.h"
+#include "CTString.h"
+#include "CImageWarper.h"
 
 DEF_ERRORMAIN()
 
@@ -51,5 +53,39 @@ int main() {
   }
 
   // CDBDebug("OK %f", linearTransform(5.0, dfSourceW, dfSourceExtW, dfSourceOrigX, dfDestOrigX, dfDestExtW, dfDestW));
+
+  TestResult tr;
+  TestRegistry::runAllTests(tr);
+  if (tr.failureCount != 0) {
+    return 1;
+  }
   return 0;
+}
+
+TEST(alreadyMeter, CImageWarper) {
+  CT::string projStringIn("+proj=stere +lat_0=90 +lon_0=0 +lat_ts=60 +a=6378140 +b=6356750 +x_0=0 y_0=0");
+  CT::string projStringOut;
+  double scaling;
+  std::tie(projStringOut, scaling) = CImageWarper::fixProjection(projStringIn);
+  CHECK(scaling == 1.0);
+  CHECK(projStringOut == projStringIn);
+}
+
+TEST(kilometerToMeter, CImageWarper) {
+  CT::string projStringIn("+proj=stere +lat_0=90 +lon_0=0 +lat_ts=60 +a=6378.14 +b=6356.75 +x_0=0 y_0=0");
+  CT::string projStringOutExpected("+proj=stere +lat_0=90.000000 +lon_0=0.000000 +lat_ts=60.000000 +a=6378140.000000 +b=6356750.000000 +x_0=0.000000 +y_0=0.000000 +units=m +ellps=WGS84 +datum=WGS84");
+  CT::string projStringOut;
+  double scaling;
+  std::tie(projStringOut, scaling) = CImageWarper::fixProjection(projStringIn);
+  CHECK(scaling == 1000.0);
+  CHECK(projStringOut == projStringOutExpected);
+}
+
+TEST(radians, CImageWarper) {
+  CT::string projStringIn("+proj=geos +lon_0=0.000000 +lat_0=0.000000 +h=1.000000 +a=0.178231 +b=0.177633 +sweep=y");
+  CT::string projStringOut;
+  double scaling;
+  std::tie(projStringOut, scaling) = CImageWarper::fixProjection(projStringIn);
+  CHECK(scaling == 1.0);
+  CHECK(projStringOut == projStringIn);
 }

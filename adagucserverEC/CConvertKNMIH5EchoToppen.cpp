@@ -242,7 +242,8 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
     CT::string projectionString = cdfObject0->getVariable("projection")->getAttribute("proj4_params")->toString();
 
     imageWarperEchoToppen.initreproj(projectionString.c_str(), dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
-    double axisScaling = imageWarperEchoToppen.getAxisScaling(projectionString);
+    double axisScaling;
+    std::tie(std::ignore, axisScaling) = imageWarperEchoToppen.fixProjection(projectionString);
 
     /* Now loop through all found rows and cols */
     for (size_t k = 0; k < (size_t)stat_cell_number; k++) {

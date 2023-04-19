@@ -314,11 +314,7 @@ int CImageWarper::_initreprojSynchronized(const char *projString, CGeoParams *Ge
 
   CT::string sourceProjectionUndec = projString;
 
-  // TODO: Make a generic function to find out if a and b are in KM.
-
-  if (sourceProjectionUndec.equals("+proj=stere +lat_0=90 +lon_0=0 +lat_ts=60 +a=6378.14 +b=6356.75 +x_0=0 y_0=0")) {
-    sourceProjectionUndec = "+proj=stere +lat_0=90 +lon_0=0 +lat_ts=60 +a=6378140 +b=6356750 +x_0=0 +y_0=0";
-  }
+  std::tie(sourceProjectionUndec, std::ignore) = fixProjection(sourceProjectionUndec);
   CT::string sourceProjection = sourceProjectionUndec;
   if (decodeCRS(&sourceProjection, &sourceProjectionUndec, _prj) != 0) {
     CDBError("decodeCRS failed");
@@ -606,9 +602,31 @@ CT::string CImageWarper::getProj4FromId(CDataSource *dataSource, CT::string proj
   return projectionId;
 }
 
-double CImageWarper::getAxisScaling(CT::string projectionString) {
-  if (projectionString.equals("+proj=stere +lat_0=90 +lon_0=0 +lat_ts=60 +a=6378.14 +b=6356.75 +x_0=0 y_0=0")) {
-    return 1000.0;
+std::tuple<CT::string, double> CImageWarper::fixProjection(CT::string projectionString) {
+  CProj4ToCF trans;
+  CDF::Variable var;
+  int status = trans.convertProjToCF(&var, projectionString);
+  if (status == 0) {
+    CDF::Attribute *majorAttribute = var.getAttributeNE("semi_major_axis");
+    CDF::Attribute *minorAttribute = var.getAttributeNE("semi_minor_axis");
+    if (majorAttribute != nullptr && minorAttribute != nullptr && majorAttribute->getType() == CDF_FLOAT && minorAttribute->getType() == CDF_FLOAT) {
+      float semi_major_axis, semi_minor_axis;
+      majorAttribute->getData<float>(&semi_major_axis, 1);
+      minorAttribute->getData<float>(&semi_minor_axis, 1);
+      if (semi_major_axis > 6000.0 && semi_major_axis < 7000.0) {  // This is given in km's, and should be converted to meters
+        double scaling = 1000.0;
+        majorAttribute->setData<float>(CDF_FLOAT, semi_major_axis*scaling);
+        minorAttribute->setData<float>(CDF_FLOAT, semi_minor_axis*scaling);
+
+        CT::string newProjectionString;
+        int status2 = trans.convertCFToProj(&var, &newProjectionString);
+//        printf("%s\n", projectionString.c_str());
+//        printf("%s\n\n", newProjectionString.c_str());
+        if (status2 == 0)
+          return std::make_tuple(newProjectionString, scaling);
+      }
+    }
   }
-  return 1.0;
+
+  return std::make_tuple(projectionString, 1.0);
 }

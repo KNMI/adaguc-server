@@ -133,8 +133,8 @@ public:
   int parseDimensions(CDataSource *dataSource, int mode, int x, int y, int *gridExtent);
   int getCRS(CDataSource *dataSource);
   void enableReporting(bool enableReporting) { _enableReporting = enableReporting; }
-  /* Certain projections are given in KM, we need those in meter */
-  void convertKMtoM(CDataSource *dataSource);
+  /* Certain projections are given in km, we need those in meter */
+  void applyAxisScalingConversion(CDataSource *dataSource);
 
   int close() { return 0; };
 
