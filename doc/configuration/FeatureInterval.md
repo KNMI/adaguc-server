@@ -27,8 +27,7 @@ The drawing of overlapping labels can be enabled or disabled with a [RenderSetti
 -   featuresoverlap - Optional, values true or false, default false. Enable or disable overlapping labels, for readability
 -   randomizefeatures - Optional, values true or false, default false. Start drawing of list of labels at a random start point, so that not always the same overlapping labels are being skipped.
 
-===========================================================
-Example of feature drawing:
+## Example of feature drawing:
 
 ```xml
 <Style name="countries_nlmask">
@@ -60,8 +59,9 @@ Example of feature drawing:
 
 In this image, the Netherlands is transparent and can be used as a
 visual mask overlay.
-===========================================================
-Example of feature drawing with overlapping text labels in lightblue color:
+
+
+## Example of feature drawing with overlapping text labels in lightblue color:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
@@ -91,6 +91,7 @@ Example of feature drawing with overlapping text labels in lightblue color:
   </Layer>
 </Configuration>
 ```
+### 
 - An example configuration is available here: [data/config/datasets/adaguc.testwmspolylinelabels.xml](../../data/config/datasets/adaguc.testwmspolylinelabels.xml)
 - Can be used with the following GeoJSON: [data/datasets/polylinelabels/areas.geojson](../../data/datasets/polylinelabels/areas.geojson)
 
