@@ -491,7 +491,8 @@ void CDrawImage::drawBarb(int x, int y, double direction, double strength, CColo
     _drawBarbGd(x, y, direction, strength, color, lineWidth, toKnots, flip);
   }
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    cairo->drawBarb(x, y, direction, strength, color, lineWidth, toKnots, flip);
+    CColor outLineColor = CColor(255, 255, 255, 255);
+    cairo->drawBarb(x, y, direction, strength, color, outLineColor, true, lineWidth, toKnots, flip);
   }
 }
 

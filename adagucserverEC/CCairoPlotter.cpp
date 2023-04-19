@@ -1067,13 +1067,12 @@ void CCairoPlotter::writeToWebP32Stream(FILE *fp, unsigned char, int quality) {
 
 #endif
 
-void CCairoPlotter::drawBarb(int x, int y, double direction, double strength, CColor barbColor, float lineWidth, bool toKnots, bool flip) {
+void CCairoPlotter::drawBarb(int x, int y, double direction, double strength, CColor barbColor, CColor outlineColor, bool drawOutline, float lineWidth, bool toKnots, bool flip) {
 
   // Preserve path
   cairo_save(cr);
   cairo_path_t *cp = cairo_copy_path(cr);
   cairo_new_path(cr);
-  CColor backgroundColor(255, 255, 255, 255);
 
   // Draw
   double wx1, wy1, wx2, wy2, dx1, dy1;
@@ -1175,10 +1174,12 @@ void CCairoPlotter::drawBarb(int x, int y, double direction, double strength, CC
   // No dash
   cairo_set_dash(cr, 0, 0, 0);
 
-  // Stroke thick version
-  cairo_set_source_rgba(cr, backgroundColor.r / 255., backgroundColor.g / 255., backgroundColor.b / 255., 1);
-  cairo_set_line_width(cr, 4);
-  cairo_stroke_preserve(cr);
+  if (drawOutline) {
+    // Stroke thick version
+    cairo_set_source_rgba(cr, outlineColor.r / 255., outlineColor.g / 255., outlineColor.b / 255., 1);
+    cairo_set_line_width(cr, 4);
+    cairo_stroke_preserve(cr);
+  }
 
   // Stroke thin version
   cairo_set_source_rgba(cr, barbColor.r / 255., barbColor.g / 255., barbColor.b / 255., 1);

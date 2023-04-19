@@ -126,7 +126,7 @@ public:
   void writeToWebP32Stream(FILE *fp, unsigned char alpha, int quality);
   void setToSurface(cairo_surface_t *png);
   void drawStrokedText(int x, int y, double angle, const char *text, const char *fontFile, float fontSize, float strokeWidth, CColor bgcolor, CColor fgcolor);
-  void drawBarb(int x, int y, double direction, double strength, CColor color, float lineWidth, bool toKnots, bool flip);
+  void drawBarb(int x, int y, double direction, double strength, CColor color, CColor outlineColor, bool drawOutline, float lineWidth, bool toKnots, bool flip);
 };
 
 #endif /* CCAIROPLOTTER_H_ */
