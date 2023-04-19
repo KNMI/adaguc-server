@@ -16,9 +16,9 @@ from adaguc.CGIRunner import CGIRunner
 class runAdaguc:
 
     def __init__(self):
-        """ ADAGUC_LOGFILE is the location where logfiles are stored. 
-          In current config file adaguc.autoresource.xml, the DB is written to this temporary directory. 
-          Please note regenerating the DB each time for each request can cause performance problems. 
+        """ ADAGUC_LOGFILE is the location where logfiles are stored.
+          In current config file adaguc.autoresource.xml, the DB is written to this temporary directory.
+          Please note regenerating the DB each time for each request can cause performance problems.
           You can safely configure a permanent location for the database which is permanent in adaguc.autoresource.xml (or your own config)"""
         self.ADAGUC_LOGFILE = "/tmp/adaguc-server-" + \
             self.get_random_string(10) + ".log"
@@ -32,7 +32,7 @@ class runAdaguc:
                                             "/data/adaguc-datasets")
         self.ADAGUC_TMP = os.getenv('ADAGUC_TMP', "/tmp")
         self.ADAGUC_FONT = os.getenv(
-            'ADAGUC_FONT', self.ADAGUC_PATH + "./data/fonts/Roboto-Medium.ttf")
+            "ADAGUC_FONT", self.ADAGUC_PATH + "/data/fonts/Roboto-Medium.ttf")
 
     def setAdagucPath(self, newAdagucPath):
         self.ADAGUC_PATH = newAdagucPath
@@ -54,7 +54,7 @@ class runAdaguc:
 
     def get_random_string(self, length):
         letters = string.ascii_lowercase
-        return ''.join(random.choice(letters) for i in range(length))
+        return "".join(random.choice(letters) for i in range(length))
 
     def setConfiguration(self, configFile):
         self.ADAGUC_CONFIG = configFile
@@ -64,21 +64,21 @@ class runAdaguc:
         """ Setup a new environment """
         adagucenv = {}
         """ Set required environment variables """
-        adagucenv['ADAGUC_CONFIG'] = self.ADAGUC_CONFIG
-        adagucenv['ADAGUC_LOGFILE'] = self.ADAGUC_LOGFILE
-        adagucenv['ADAGUC_PATH'] = self.ADAGUC_PATH
-        adagucenv['ADAGUC_DATA_DIR'] = self.ADAGUC_DATA_DIR
-        adagucenv['ADAGUC_AUTOWMS_DIR'] = self.ADAGUC_AUTOWMS_DIR
-        adagucenv['ADAGUC_DATASET_DIR'] = self.ADAGUC_DATASET_DIR
-        adagucenv['ADAGUC_TMP'] = self.ADAGUC_TMP
-        adagucenv['ADAGUC_FONT'] = self.ADAGUC_FONT
+        adagucenv["ADAGUC_CONFIG"] = self.ADAGUC_CONFIG
+        adagucenv["ADAGUC_LOGFILE"] = self.ADAGUC_LOGFILE
+        adagucenv["ADAGUC_PATH"] = self.ADAGUC_PATH
+        adagucenv["ADAGUC_DATA_DIR"] = self.ADAGUC_DATA_DIR
+        adagucenv["ADAGUC_AUTOWMS_DIR"] = self.ADAGUC_AUTOWMS_DIR
+        adagucenv["ADAGUC_DATASET_DIR"] = self.ADAGUC_DATASET_DIR
+        adagucenv["ADAGUC_TMP"] = self.ADAGUC_TMP
+        adagucenv["ADAGUC_FONT"] = self.ADAGUC_FONT
 
         status, data, headers = self.runADAGUCServer(
             args=['--updatedb', '--config', config],
             env=adagucenv,
             isCGI=False)
 
-        return (data.getvalue().decode())
+        return data.getvalue().decode()
 
     def runGetMapUrl(self, url):
         adagucenv = {}
@@ -212,21 +212,21 @@ class runAdaguc:
             return [status, filetogenerate, headers]
 
     def writetofile(self, filename, data):
-        with open(filename, 'wb') as f:
+        with open(filename, "wb") as f:
             f.write(data)
 
     def readfromfile(self, filename):
-        ADAGUC_PATH = os.environ['ADAGUC_PATH']
-        with open(ADAGUC_PATH + "/tests/" + filename, 'rb') as f:
+        ADAGUC_PATH = os.environ["ADAGUC_PATH"]
+        with open(ADAGUC_PATH + "/tests/" + filename, "rb") as f:
             return f.read()
 
     def cleanTempDir(self):
-        ADAGUC_TMP = os.environ['ADAGUC_TMP']
+        ADAGUC_TMP = os.environ["ADAGUC_TMP"]
         try:
             shutil.rmtree(ADAGUC_TMP)
         except:
             pass
-        self.mkdir_p(os.environ['ADAGUC_TMP'])
+        self.mkdir_p(os.environ["ADAGUC_TMP"])
         return
 
     def mkdir_p(self, directory):
