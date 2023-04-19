@@ -49,7 +49,7 @@ def handleWMS():
 
     if len(logfile) > 0:
         logger.info(logfile)
-  
+
     responseCode = 200
     if status != 0:
         logger.info("Adaguc status code was %d" % status)
