@@ -1,3 +1,9 @@
+**Version 2.8.7 2023-04-19**
+
+- Contourlines can have dashes
+- Contour text can have an outline
+- Windbarbs have a white outline
+
 **Version 2.8.6 2023-03-23**
 - Added a configuration option to limit the number of deletions done at once, configurable with `cleanupsystemlimit="5"`  in [Settings](doc/configuration/Settings.md).
 - Added a configuration option to start a dryrun of cleanup, explaining which files would be deleted (but not actually deleting them), configurable with `enablecleanupsystem="dryrun"` in [Settings](doc/configuration/Settings.md)
