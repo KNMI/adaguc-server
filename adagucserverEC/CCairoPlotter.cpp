@@ -1085,93 +1085,93 @@ void CCairoPlotter::drawBarb(int x, int y, double direction, double strength, CC
   if (strengthInKnots <= 2) {
     // Low wind, only draw a circle
     cairo_arc(cr, x, y, 6, 0, 2 * M_PI);
-    return;
-  }
 
-  int shaftLength = 30;
-
-  int nPennants = strengthInKnots / 50;
-  int nBarbs = (strengthInKnots % 50) / 10;
-  int rest = (strengthInKnots % 50) % 10;
-  int nhalfBarbs;
-  if (rest <= 2) {
-    nhalfBarbs = 0;
-  } else if (rest <= 7) {
-    nhalfBarbs = 1;
   } else {
-    nhalfBarbs = 0;
-    nBarbs++;
-  }
 
-  float flipFactor = flip ? -1 : 1;
-  int barbLength = int(-10 * flipFactor);
+    int shaftLength = 30;
 
-  dx1 = cos(direction) * (shaftLength);
-  dy1 = sin(direction) * (shaftLength);
+    int nPennants = strengthInKnots / 50;
+    int nBarbs = (strengthInKnots % 50) / 10;
+    int rest = (strengthInKnots % 50) % 10;
+    int nhalfBarbs;
+    if (rest <= 2) {
+      nhalfBarbs = 0;
+    } else if (rest <= 7) {
+      nhalfBarbs = 1;
+    } else {
+      nhalfBarbs = 0;
+      nBarbs++;
+    }
 
-  wx1 = double(x) - dx1;
-  wy1 = double(y) + dy1; // wind barb top (flag side)
-  wx2 = double(x);
-  wy2 = double(y); // wind barb root
+    float flipFactor = flip ? -1 : 1;
+    int barbLength = int(-10 * flipFactor);
 
-  // Draw small center circle
-  cairo_arc(cr, int(wx2), int(wy2), 2, 0, 2 * M_PI);
-  int nrPos = 10;
+    dx1 = cos(direction) * (shaftLength);
+    dy1 = sin(direction) * (shaftLength);
 
-  int pos = 0;
-  cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
-  cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
+    wx1 = double(x) - dx1;
+    wy1 = double(y) + dy1; // wind barb top (flag side)
+    wx2 = double(x);
+    wy2 = double(y); // wind barb root
 
-  // Draw main shaft from center to end
-  cairo_move_to(cr, wx1, wy1);
-  cairo_line_to(cr, wx2, wy2);
+    // Draw small center circle
+    cairo_arc(cr, int(wx2), int(wy2), 2, 0, 2 * M_PI);
+    int nrPos = 10;
 
-  // Draw triangle?
-  for (int i = 0; i < nPennants; i++) {
-    double wx3 = wx1 + pos * dx1 / nrPos;
-    double wy3 = wy1 - pos * dy1 / nrPos;
-    pos++;
-    double hx3 = wx1 + pos * dx1 / nrPos + cos(M_PI + direction + M_PI / 2) * barbLength;
-    double hy3 = wy1 - pos * dy1 / nrPos - sin(M_PI + direction + M_PI / 2) * barbLength;
-    pos++;
-    double wx4 = wx1 + pos * dx1 / nrPos;
-    double wy4 = wy1 - pos * dy1 / nrPos;
+    int pos = 0;
+    cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+    cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
 
-    double ptx[3] = {wx3, hx3, wx4};
-    double pty[3] = {wy3, hy3, wy4};
+    // Draw main shaft from center to end
+    cairo_move_to(cr, wx1, wy1);
+    cairo_line_to(cr, wx2, wy2);
 
-    cairo_move_to(cr, ptx[0], pty[0]);
-    for (int i = 1; i < 3; i++) {
-      cairo_line_to(cr, ptx[i], pty[i]);
+    // Draw triangle?
+    for (int i = 0; i < nPennants; i++) {
+      double wx3 = wx1 + pos * dx1 / nrPos;
+      double wy3 = wy1 - pos * dy1 / nrPos;
+      pos++;
+      double hx3 = wx1 + pos * dx1 / nrPos + cos(M_PI + direction + M_PI / 2) * barbLength;
+      double hy3 = wy1 - pos * dy1 / nrPos - sin(M_PI + direction + M_PI / 2) * barbLength;
+      pos++;
+      double wx4 = wx1 + pos * dx1 / nrPos;
+      double wy4 = wy1 - pos * dy1 / nrPos;
+
+      double ptx[3] = {wx3, hx3, wx4};
+      double pty[3] = {wy3, hy3, wy4};
+
+      cairo_move_to(cr, ptx[0], pty[0]);
+      for (int i = 1; i < 3; i++) {
+        cairo_line_to(cr, ptx[i], pty[i]);
+      }
+    }
+
+    // Draw full Barb
+    if (nPennants > 0) pos++;
+    for (int i = 0; i < nBarbs; i++) {
+      double wx3 = wx1 + pos * dx1 / nrPos;
+      double wy3 = wy1 - pos * dy1 / nrPos;
+      double hx3 = wx3 - cos(M_PI / 2 - direction + (2 - float(flipFactor) * 0.1) * M_PI / 2) * barbLength; // was: +cos
+      double hy3 = wy3 - sin(M_PI / 2 - direction + (2 - float(flipFactor) * 0.1) * M_PI / 2) * barbLength; // was: -sin
+      cairo_move_to(cr, wx3, wy3);
+      cairo_line_to(cr, hx3, hy3);
+      pos++;
+    }
+
+    if ((nPennants + nBarbs) == 0) pos++;
+
+    // Draw half Barb
+    if (nhalfBarbs > 0) {
+      double wx3 = wx1 + pos * dx1 / nrPos;
+      double wy3 = wy1 - pos * dy1 / nrPos;
+      double hx3 = wx3 - cos(M_PI / 2 - direction + (2 - float(flipFactor) * 0.1) * M_PI / 2) * barbLength / 2;
+      double hy3 = wy3 - sin(M_PI / 2 - direction + (2 - float(flipFactor) * 0.1) * M_PI / 2) * barbLength / 2;
+
+      cairo_move_to(cr, wx3, wy3);
+      cairo_line_to(cr, hx3, hy3);
+      pos++;
     }
   }
-
-  // Draw full Barb
-  if (nPennants > 0) pos++;
-  for (int i = 0; i < nBarbs; i++) {
-    double wx3 = wx1 + pos * dx1 / nrPos;
-    double wy3 = wy1 - pos * dy1 / nrPos;
-    double hx3 = wx3 - cos(M_PI / 2 - direction + (2 - float(flipFactor) * 0.1) * M_PI / 2) * barbLength; // was: +cos
-    double hy3 = wy3 - sin(M_PI / 2 - direction + (2 - float(flipFactor) * 0.1) * M_PI / 2) * barbLength; // was: -sin
-    cairo_move_to(cr, wx3, wy3);
-    cairo_line_to(cr, hx3, hy3);
-    pos++;
-  }
-
-  if ((nPennants + nBarbs) == 0) pos++;
-
-  // Draw half Barb
-  if (nhalfBarbs > 0) {
-    double wx3 = wx1 + pos * dx1 / nrPos;
-    double wy3 = wy1 - pos * dy1 / nrPos;
-    double hx3 = wx3 - cos(M_PI / 2 - direction + (2 - float(flipFactor) * 0.1) * M_PI / 2) * barbLength / 2;
-    double hy3 = wy3 - sin(M_PI / 2 - direction + (2 - float(flipFactor) * 0.1) * M_PI / 2) * barbLength / 2;
-
-    cairo_move_to(cr, wx3, wy3);
-    cairo_line_to(cr, hx3, hy3);
-    pos++;
-  }
-
   // No dash
   cairo_set_dash(cr, 0, 0, 0);
 
