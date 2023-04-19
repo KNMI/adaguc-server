@@ -402,7 +402,7 @@ void CDrawImage::drawBarb(int x, int y, double direction, double strength, int c
   drawBarb(x, y, direction, strength, col, lineWidth, toKnots, flip);
 }
 
-void CDrawImage::drawBarb(int x, int y, double direction, double strength, CColor color, float lineWidth, bool toKnots, bool flip) {
+void CDrawImage::_drawBarbGd(int x, int y, double direction, double strength, CColor color, float lineWidth, bool toKnots, bool flip) {
   double wx1, wy1, wx2, wy2, dx1, dy1;
   int strengthInKnots = round(strength);
   if (toKnots) {
@@ -484,6 +484,15 @@ void CDrawImage::drawBarb(int x, int y, double direction, double strength, CColo
   }
 
   line(wx1, wy1, wx2, wy2, lineWidth, color);
+}
+
+void CDrawImage::drawBarb(int x, int y, double direction, double strength, CColor color, float lineWidth, bool toKnots, bool flip) {
+  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
+    _drawBarbGd(x, y, direction, strength, color, lineWidth, toKnots, flip);
+  }
+  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
+    cairo->drawBarb(x, y, direction, strength, color, lineWidth, toKnots, flip);
+  }
 }
 
 void CDrawImage::circle(int x, int y, int r, int color, float lineWidth) {

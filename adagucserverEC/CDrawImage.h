@@ -119,6 +119,8 @@ private:
   int numImagesAdded;
   int currentGraphicsRenderer;
 
+  void _drawBarbGd(int x, int y, double direction, double strength, CColor color, float lineWidth, bool toKnots, bool flip);
+
 public:
   float *rField, *gField, *bField;
   int *numField;

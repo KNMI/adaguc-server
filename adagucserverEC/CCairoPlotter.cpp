@@ -526,8 +526,6 @@ void CCairoPlotter::lineTo(float x1, float y1, float width) {
 
 void CCairoPlotter::endLine() {
   cairo_set_line_join(cr, CAIRO_LINE_JOIN_MITER);
-  double dashes[2] = {2, 2};
-  cairo_set_dash(cr, 0, 0, 0);
   cairo_stroke(cr);
 }
 
@@ -663,7 +661,6 @@ void CCairoPlotter::drawStrokedText(int x, int y, double angle, const char *text
   cairo_move_to(cr, x, y);
   cairo_rotate(cr, angle);
   cairo_text_path(cr, text);
-  CDBDebug("Front color: %f %f %f", fgcolor.r / 256., fgcolor.g / 256., fgcolor.b / 256.);
   cairo_set_source_rgb(cr, fgcolor.r / 256., fgcolor.g / 256., fgcolor.b / 256.);
   cairo_fill_preserve(cr);
   cairo_set_source_rgb(cr, bgcolor.r / 256., bgcolor.g / 256., bgcolor.b / 256.);
@@ -1069,3 +1066,128 @@ void CCairoPlotter::writeToWebP32Stream(FILE *fp, unsigned char, int quality) {
 }
 
 #endif
+
+void CCairoPlotter::drawBarb(int x, int y, double direction, double strength, CColor barbColor, float lineWidth, bool toKnots, bool flip) {
+
+  // Preserve path
+  cairo_save(cr);
+  cairo_path_t *cp = cairo_copy_path(cr);
+  cairo_new_path(cr);
+  CColor backgroundColor(255, 255, 255, 255);
+
+  // Draw
+  double wx1, wy1, wx2, wy2, dx1, dy1;
+  int strengthInKnots = round(strength);
+  if (toKnots) {
+    strengthInKnots = round(strength * 3600 / 1852.);
+  }
+
+  if (strengthInKnots <= 2) {
+    // Low wind, only draw a circle
+    cairo_arc(cr, x, y, 6, 0, 2 * M_PI);
+    return;
+  }
+
+  int shaftLength = 30;
+
+  int nPennants = strengthInKnots / 50;
+  int nBarbs = (strengthInKnots % 50) / 10;
+  int rest = (strengthInKnots % 50) % 10;
+  int nhalfBarbs;
+  if (rest <= 2) {
+    nhalfBarbs = 0;
+  } else if (rest <= 7) {
+    nhalfBarbs = 1;
+  } else {
+    nhalfBarbs = 0;
+    nBarbs++;
+  }
+
+  float flipFactor = flip ? -1 : 1;
+  int barbLength = int(-10 * flipFactor);
+
+  dx1 = cos(direction) * (shaftLength);
+  dy1 = sin(direction) * (shaftLength);
+
+  wx1 = double(x) - dx1;
+  wy1 = double(y) + dy1; // wind barb top (flag side)
+  wx2 = double(x);
+  wy2 = double(y); // wind barb root
+
+  // Draw small center circle
+  cairo_arc(cr, int(wx2), int(wy2), 2, 0, 2 * M_PI);
+  int nrPos = 10;
+
+  int pos = 0;
+  cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+  cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
+
+  // Draw main shaft from center to end
+  cairo_move_to(cr, wx1, wy1);
+  cairo_line_to(cr, wx2, wy2);
+
+  // Draw triangle?
+  for (int i = 0; i < nPennants; i++) {
+    double wx3 = wx1 + pos * dx1 / nrPos;
+    double wy3 = wy1 - pos * dy1 / nrPos;
+    pos++;
+    double hx3 = wx1 + pos * dx1 / nrPos + cos(M_PI + direction + M_PI / 2) * barbLength;
+    double hy3 = wy1 - pos * dy1 / nrPos - sin(M_PI + direction + M_PI / 2) * barbLength;
+    pos++;
+    double wx4 = wx1 + pos * dx1 / nrPos;
+    double wy4 = wy1 - pos * dy1 / nrPos;
+
+    double ptx[3] = {wx3, hx3, wx4};
+    double pty[3] = {wy3, hy3, wy4};
+
+    cairo_move_to(cr, ptx[0], pty[0]);
+    for (int i = 1; i < 3; i++) {
+      cairo_line_to(cr, ptx[i], pty[i]);
+    }
+  }
+
+  // Draw full Barb
+  if (nPennants > 0) pos++;
+  for (int i = 0; i < nBarbs; i++) {
+    double wx3 = wx1 + pos * dx1 / nrPos;
+    double wy3 = wy1 - pos * dy1 / nrPos;
+    double hx3 = wx3 - cos(M_PI / 2 - direction + (2 - float(flipFactor) * 0.1) * M_PI / 2) * barbLength; // was: +cos
+    double hy3 = wy3 - sin(M_PI / 2 - direction + (2 - float(flipFactor) * 0.1) * M_PI / 2) * barbLength; // was: -sin
+    cairo_move_to(cr, wx3, wy3);
+    cairo_line_to(cr, hx3, hy3);
+    pos++;
+  }
+
+  if ((nPennants + nBarbs) == 0) pos++;
+
+  // Draw half Barb
+  if (nhalfBarbs > 0) {
+    double wx3 = wx1 + pos * dx1 / nrPos;
+    double wy3 = wy1 - pos * dy1 / nrPos;
+    double hx3 = wx3 - cos(M_PI / 2 - direction + (2 - float(flipFactor) * 0.1) * M_PI / 2) * barbLength / 2;
+    double hy3 = wy3 - sin(M_PI / 2 - direction + (2 - float(flipFactor) * 0.1) * M_PI / 2) * barbLength / 2;
+
+    cairo_move_to(cr, wx3, wy3);
+    cairo_line_to(cr, hx3, hy3);
+    pos++;
+  }
+
+  // No dash
+  cairo_set_dash(cr, 0, 0, 0);
+
+  // Stroke thick version
+  cairo_set_source_rgba(cr, backgroundColor.r / 255., backgroundColor.g / 255., backgroundColor.b / 255., 1);
+  cairo_set_line_width(cr, 4);
+  cairo_stroke_preserve(cr);
+
+  // Stroke thin version
+  cairo_set_source_rgba(cr, barbColor.r / 255., barbColor.g / 255., barbColor.b / 255., 1);
+  cairo_set_line_width(cr, 1.5);
+  cairo_stroke(cr);
+
+  // End aend restore
+  cairo_close_path(cr);
+  cairo_restore(cr);
+  cairo_append_path(cr, cp);
+  cairo_path_destroy(cp);
+}
