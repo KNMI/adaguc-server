@@ -27,6 +27,9 @@ The drawing of overlapping labels can be enabled or disabled with a [RenderSetti
 -   featuresoverlap - Optional, values true or false, default false. Enable or disable overlapping labels, for readability
 -   randomizefeatures - Optional, values true or false, default false. Start drawing of list of labels at a random start point, so that not always the same overlapping labels are being skipped.
 
+===========================================================
+Example of feature drawing:
+
 ```xml
 <Style name="countries_nlmask">
     <Legend fixed="true">bluewhitered</Legend>
@@ -57,3 +60,39 @@ The drawing of overlapping labels can be enabled or disabled with a [RenderSetti
 
 In this image, the Netherlands is transparent and can be used as a
 visual mask overlay.
+===========================================================
+Example of feature drawing with overlapping text labels in lightblue color:
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <!--
+  See https://dev.knmi.nl/projects/adagucserver/wiki/Dataset, for details
+  This file can be included by using the adaguc.dataset.cgi?service=wms&DATASET=testdata& key value pair in the URL
+  -->
+
+ <Style name="polyline_with_label_color">
+    <RenderMethod>polyline</RenderMethod>
+    <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
+    <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF" bordercolor="#FF0000FF" label="area" borderwidth="0.5" labelpropertyname="name" labelfontsize="18" labelangle="0" labelfontfile="{ADAGUC_PATH}/data/fonts/Roboto-MediumItalic.ttf" labelcolor="#00A000FF"/>
+    <NameMapping name="polyline+label+color"   title="border 0.5px blue" abstract="border 0.5px blue"/>
+    <RenderSettings featuresoverlap="true"/>
+ </Style>
+
+  <Layer type="database">
+    <Name>areas</Name>
+    <Title>Areas</Title>
+    <FilePath filter="areas.geojson">{ADAGUC_PATH}data/datasets/polylinelabels</FilePath>
+    <DataSource>GEOJSON</DataSource>
+    <Variable>features</Variable>
+    <Styles>
+        polyline_with_label_color
+    </Styles>
+  </Layer>
+</Configuration>
+```
+- An example configuration is available here: [data/config/datasets/adaguc.testwmspolylinelabels.xml](../../data/config/datasets/adaguc.testwmspolylinelabels.xml)
+- Can be used with the following GeoJSON: [data/datasets/polylinelabels/areas.geojson](../../data/datasets/polylinelabels/areas.geojson)
+
+
+<img src="tests/testresults/TestWMSPolylineLabel/test_WMSPolylineLabel_polyline_with_label_color.png" alt="test_WMSPolylineLabel_polyline_with_label_color.png" width="500"/>
