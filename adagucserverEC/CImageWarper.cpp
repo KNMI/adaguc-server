@@ -350,7 +350,6 @@ int CImageWarper::_initreprojSynchronized(const char *projString, CGeoParams *Ge
   initialized = true;
   // CDBDebug("sourceProjection = %s destinationCRS = %s",projString,destinationCRS.c_str());
 
-  // TODO: We might not need to do this anymore. Test by hardcoding the require these flags to false, and see what happens (once all tests are working...)
   // Check if we have a projected coordinate system
   //  projUV p,pout;;
   requireReprojection = false;
