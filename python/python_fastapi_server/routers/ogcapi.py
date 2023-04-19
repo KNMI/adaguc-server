@@ -17,6 +17,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.openapi.utils import get_openapi
 
 from .models.ogcapifeatures_1_model import (
     Collection,
@@ -48,7 +49,19 @@ cache = TTLCache(maxsize=1000, ttl=30)
 DEFAULT_CRS = "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
 SUPPORTED_CRS_LIST = [DEFAULT_CRS]
 
-ogcApiApp = FastAPI(debug=True)
+ogcApiApp = FastAPI(debug=True, openapi_url="/api")
+
+
+def custom_openapi():
+    '''Returns fixed openapi schema'''
+    if ogcApiApp.openapi_schema:
+        return ogcApiApp.openapi_schema
+    openapi_schema = make_open_api()
+    ogcApiApp.openapi_schema = openapi_schema
+    return ogcApiApp.openapi_schema
+
+
+ogcApiApp.openapi = custom_openapi
 
 script_dir = os.path.dirname(__file__)
 static_abs_file_path = os.path.join(script_dir, "static")
@@ -76,7 +89,7 @@ async def validation_exception_handler(exc: RequestValidationError):
 @ogcApiApp.get("",
                response_model=LandingPage,
                response_model_exclude_none=True)
-async def handle_ogc_api_root(req: Request, wanted_format: str = "json"):
+async def handle_ogc_api_root(req: Request, f: str = "json"):
     links: List[Link] = []
     links.append(
         Link(
@@ -123,7 +136,7 @@ async def handle_ogc_api_root(req: Request, wanted_format: str = "json"):
     landing_page = LandingPage(title="ogcapi",
                                description="ADAGUC OGCAPI-Features server",
                                links=links)
-    if request_type(wanted_format) == "HTML":
+    if request_type(f) == "HTML":
         return templates.TemplateResponse("landingpage.html", {
             "request": req,
             "landingpage": landing_page.dict()
@@ -201,7 +214,7 @@ def request_type(wanted_format: str) -> str:
 @ogcApiApp.get("/collections",
                response_model=Collections,
                response_model_exclude_none=True)
-async def get_collections(req: Request, wanted_format: str = "json"):
+async def get_collections(req: Request, f: str = "json"):
     collections: List[Collection] = []
     parsed_collections = generate_collections()
     for parsed_collection in parsed_collections.values():
@@ -228,7 +241,7 @@ async def get_collections(req: Request, wanted_format: str = "json"):
                 ))
 
     links = get_collections_links(req.url_for("get_collections"))
-    if request_type(wanted_format) == "HTML":
+    if request_type(f) == "HTML":
         collections_list = [c.dict() for c in collections]
         return templates.TemplateResponse("collections.html", {
             "request": req,
@@ -244,9 +257,7 @@ async def get_collections(req: Request, wanted_format: str = "json"):
 @ogcApiApp.get("/collections/{id}",
                response_model=Collection,
                response_model_exclude_none=True)
-async def get_collection(collection_id: str,
-                         req: Request,
-                         wanted_format: str = "json"):
+async def get_collection(collection_id: str, req: Request, f: str = "json"):
     extent = Extent(spatial=Spatial(bbox=[get_extent(collection_id)]))
     coll = Collection(
         id=collection_id,
@@ -256,7 +267,7 @@ async def get_collection(collection_id: str,
         links=get_collection_links(
             str(req.url_for("get_collection", id=collection_id))),
     )
-    if request_type(wanted_format) == "HTML":
+    if request_type(f) == "HTML":
         return templates.TemplateResponse("collection.html", {
             "request": req,
             "collection": coll.dict()
@@ -278,9 +289,9 @@ conformanceClasses = [
 @ogcApiApp.get("/conformance",
                response_model=ConfClasses,
                response_model_exclude_none=True)
-async def get_conformance(req: Request, wanted_format: str = "json"):
+async def get_conformance(req: Request, f: str = "json"):
     conf_classes = ConfClasses(conformsTo=conformanceClasses)
-    if request_type(wanted_format) == "HTML":
+    if request_type(f) == "HTML":
         return templates.TemplateResponse(
             "conformance.html",
             {
@@ -295,11 +306,14 @@ async def get_conformance(req: Request, wanted_format: str = "json"):
 
 def make_open_api():
     """ Adjusts openapi object """
-    openapi = ogcApiApp.openapi()
+    openapi = get_openapi(title=ogcApiApp.title,
+                          version=ogcApiApp.version,
+                          routes=ogcApiApp.routes,
+                          servers=ogcApiApp.servers)
     paths = openapi.get("paths", {})
     for pth in paths.keys():
-        params = (paths.get(pth).get("get", {}).get("parameters"), [])
-        for param in params[0]:
+        params = (paths.get(pth).get("get", {}).get("parameters", []))
+        for param in params:
             if param["in"] == "query" and param["name"] == "bbox":
                 param["style"] = "form"
                 param["explode"] = False
@@ -329,17 +343,9 @@ def make_open_api():
     return openapi
 
 
-@ogcApiApp.get("/api")
-async def get_open_api():
-    return Response(
-        content=make_open_api(),
-        media_type="application/vnd.oai.openapi+json;version=3.0",
-    )
-
-
 @ogcApiApp.get("/api.yaml")
 async def get_open_api_yaml():
-    openapi = make_open_api()
+    openapi = custom_openapi()
     openapi_yaml = yaml.dump(openapi, sort_keys=False)
     return Response(
         content=openapi_yaml,
@@ -545,7 +551,7 @@ async def get_items_for_collection(
         coll: str,
         req: Request,
         response: Response,
-        wanted_format: str = "json",
+        f: str = "json",
         limit: Union[int, None] = Query(default=10),
         start: Union[int, None] = Query(default=0),
         bbox: Union[str, None] = Depends(check_bbox),
@@ -565,7 +571,7 @@ async def get_items_for_collection(
         "bbox",
         "datetime",
         "resultTime",
-        "observedPropertyName",
+        "observed_property_name",
         "dims",
         "npoints",
         "crs",
@@ -619,7 +625,7 @@ async def get_items_for_collection(
             numberReturned=number_returned,
         )
         response.headers["Content-Crs"] = f"<{DEFAULT_CRS}>"
-        if request_type(wanted_format) == "HTML":
+        if request_type(f) == "HTML":
             features = [f.dict() for f in feature_collection.features]
             return templates.TemplateResponse(
                 "items.html",
@@ -649,14 +655,14 @@ async def get_item_for_collection(
     item_id: str,
     req: Request,
     response: Response,
-    wanted_format: str = "json",
+    f: str = "json",
 ):
     url = req.url
     feature_to_return = get_single_item(item_id, str(url))
 
     if feature_to_return:
         response.headers["Content-Crs"] = f"<{DEFAULT_CRS}>"
-        if request_type(wanted_format) == "HTML":
+        if request_type(f) == "HTML":
             return templates.TemplateResponse(
                 "item.html",
                 {
