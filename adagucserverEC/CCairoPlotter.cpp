@@ -25,7 +25,7 @@
 
 #include "CCairoPlotter.h"
 #ifdef ADAGUC_USE_CAIRO
-//#define MEASURETIME
+// #define MEASURETIME
 
 #include "CStopWatch.h"
 const char *CCairoPlotter::className = "CCairoPlotter";
@@ -239,7 +239,7 @@ int CCairoPlotter::renderFont(FT_Bitmap *bitmap, int left, int top) {
   return 0;
 }
 int CCairoPlotter::initializeFreeType() {
-  // CDBDebug("initializeFreeType(%d)\n", library==NULL);
+  // CDBDebug("initializeFreeType(%d)\n", library == NULL);
   if (library != NULL) {
     CDBError("Freetype is already intialized");
     return 1;
@@ -303,6 +303,7 @@ int CCairoPlotter::_drawFreeTypeText(int x, int y, int &w, int &h, float angle, 
     }
   };
   int error;
+  // CDBDebug("font: %s", this->fontLocation);
 
   FT_GlyphSlot slot;
   FT_Matrix matrix; /* transformation matrix */
@@ -320,13 +321,24 @@ int CCairoPlotter::_drawFreeTypeText(int x, int y, int &w, int &h, float angle, 
   /* start at (300,200) */
   pen.x = x * 64;
   pen.y = (my_target_height - y) * 64;
+  bool c3seen = false;
   /* Using the 8859-15 standard */
   for (n = 0; n < num_chars; n++) { /* set transformation */
 
     FT_Set_Transform(face, &matrix, &pen); /* load glyph image into the slot (erase previous one) */
 
     unsigned char characterToPrint = (unsigned char)text[n];
+    // Some tricks to handle UTF-8
     if (characterToPrint == 194) continue;
+    if (c3seen) {
+      c3seen = false;
+      characterToPrint = characterToPrint + 0x40;
+    }
+    if (characterToPrint == 195) {
+      c3seen = true;
+      continue;
+    }
+
     int glyphIndex = FT_Get_Char_Index(face, (characterToPrint));
     error = FT_Load_Glyph(face, glyphIndex, FT_LOAD_RENDER);
 

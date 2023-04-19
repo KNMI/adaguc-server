@@ -22,32 +22,11 @@
  * limitations under the License.
  *
  ******************************************************************************/
+#include "CRectangleText.h"
+const char *CRectangleText::className = "CRectangleText";
 
-#ifndef CIMGRENDERPOLYLINES_H
-#define CIMGRENDERPOLYLINES_H
-#include "CImageWarperRenderInterface.h"
-
-typedef struct _FeatureStyle {
-  float width;
-  CT::string color;
-  CT::string fontFile;
-  float fontSize;
-  CT::string fontColor;
-  CT::string propertyName;
-  CT::string propertyFormat;
-  float angle;
-  int padding;
-} FeatureStyle;
-
-class CImgRenderPolylines : public CImageWarperRenderInterface {
-private:
-  DEF_ERRORFUNCTION();
-  CT::string settings;
-  FeatureStyle getAttributesForFeature(CFeature *feature, CT::string id, CStyleConfiguration *styleConfig);
-
-public:
-  void render(CImageWarper *, CDataSource *, CDrawImage *);
-  int set(const char *);
-};
-
-#endif
+bool CRectangleText::overlaps(CRectangleText &r2) {
+  if ((this->ury + padding < r2.lly) || (this->lly - padding > r2.ury)) return false;
+  if ((this->urx + padding < r2.llx) || (this->llx - padding > r2.urx)) return false;
+  return true;
+}
