@@ -612,7 +612,6 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
     }
   }
 
-  // TODO: Convert ellipsis a en b in KM to meter
   applyAxisScalingConversion(dataSource);
 
   // Calculate cellsize and BBOX based on read X,Y dims.
