@@ -95,4 +95,4 @@ Example of feature drawing with overlapping text labels in lightblue color:
 - Can be used with the following GeoJSON: [data/datasets/polylinelabels/areas.geojson](../../data/datasets/polylinelabels/areas.geojson)
 
 
-<img src="tests/expectedoutputs/TestWMSPolylineLabel/test_WMSPolylineLabel_polyline_with_label_color.png" alt="test_WMSPolylineLabel_polyline_with_label_color.png" width="500"/>
+<img src="../../tests/expectedoutputs/TestWMSPolylineLabel/test_WMSPolylineLabel_polyline_with_label_color.png" alt="test_WMSPolylineLabel_polyline_with_label_color.png" width="500"/>
