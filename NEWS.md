@@ -1,6 +1,8 @@
-**Version 2.9.0 2023-04-13**
-
+**Version 2.9.0 2023-04-20**
 - Using fastapi as server
+
+**Version 2.8.7 2023-04-19**
+- GeoJSON with labels can now be displayed. See [FeatureInterval](doc/configuration/FeatureInterval.md) for details
 
 **Version 2.8.6 2023-03-23**
 - Added a configuration option to limit the number of deletions done at once, configurable with `cleanupsystemlimit="5"`  in [Settings](doc/configuration/Settings.md).

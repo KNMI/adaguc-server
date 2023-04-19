@@ -22,32 +22,42 @@
  * limitations under the License.
  *
  ******************************************************************************/
+#ifndef CRectangleText_H
+#define CRectangleText_H
+#include "CDebugger.h"
+#include "CTypes.h"
 
-#ifndef CIMGRENDERPOLYLINES_H
-#define CIMGRENDERPOLYLINES_H
-#include "CImageWarperRenderInterface.h"
+#include "Definitions.h"
+#include "CColor.h"
 
-typedef struct _FeatureStyle {
-  float width;
-  CT::string color;
-  CT::string fontFile;
-  float fontSize;
-  CT::string fontColor;
-  CT::string propertyName;
-  CT::string propertyFormat;
+class CRectangleText {
+public:
+  int llx;
+  int lly;
+  int urx;
+  int ury;
   float angle;
   int padding;
-} FeatureStyle;
+  CT::string text;
+  CT::string fontFile;
+  float fontSize;
+  CColor color;
 
-class CImgRenderPolylines : public CImageWarperRenderInterface {
-private:
   DEF_ERRORFUNCTION();
-  CT::string settings;
-  FeatureStyle getAttributesForFeature(CFeature *feature, CT::string id, CStyleConfiguration *styleConfig);
+  CRectangleText() {}
 
-public:
-  void render(CImageWarper *, CDataSource *, CDrawImage *);
-  int set(const char *);
+  void init(int llx, int lly, int urx, int ury, float angle, int padding, const char *text, const char *fontFile, float fontSize, CColor color) {
+    this->llx = llx;
+    this->lly = lly;
+    this->urx = urx;
+    this->ury = ury;
+    this->angle = angle;
+    this->padding = padding;
+    this->text = CT::string(text);
+    this->fontFile = CT::string(fontFile);
+    this->fontSize = fontSize;
+    this->color = color;
+  }
+  bool overlaps(CRectangleText &r1);
 };
-
 #endif
