@@ -85,7 +85,7 @@ COPY --from=0 /adaguc/adaguc-server-master/runtests.sh /adaguc/adaguc-server-mas
 # Run adaguc-server functional and regression tests
 
 RUN bash runtests.sh
-RUN pip3 uninstall -r requirements-dev.txt -y 
+RUN pip3 uninstall -r requirements-dev.txt -y
 
 
 # Set same uid as vivid

@@ -689,6 +689,8 @@ public:
     class Cattr {
     public:
       CT::string match, matchid, bgcolor, label, fillcolor, linecolor, linewidth, bordercolor, borderwidth;
+      CT::string labelfontfile, labelfontsize, labelcolor, labelpropertyname, labelpropertyformat, labelangle;
+      CT::string labelpadding;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
       if (equals("match", 5, attrname)) {
@@ -706,17 +708,32 @@ public:
       } else if (equals("bgcolor", 7, attrname)) {
         attr.bgcolor.copy(attrvalue);
         return;
-      } else if (equals("linecolor", 9, attrname)) {
-        attr.linecolor.copy(attrvalue);
-        return;
-      } else if (equals("linewidth", 9, attrname)) {
-        attr.linewidth.copy(attrvalue);
-        return;
       } else if (equals("borderwidth", 11, attrname)) {
         attr.borderwidth.copy(attrvalue);
         return;
       } else if (equals("bordercolor", 11, attrname)) {
         attr.bordercolor.copy(attrvalue);
+        return;
+      } else if (equals("labelfontsize", 13, attrname)) {
+        attr.labelfontsize.copy(attrvalue);
+        return;
+      } else if (equals("labelfontfile", 13, attrname)) {
+        attr.labelfontfile.copy(attrvalue);
+        return;
+      } else if (equals("labelcolor", 10, attrname)) {
+        attr.labelcolor.copy(attrvalue);
+        return;
+      } else if (equals("labelpropertyname", 17, attrname)) {
+        attr.labelpropertyname.copy(attrvalue);
+        return;
+      } else if (equals("labelpropertyformat", 19, attrname)) {
+        attr.labelpropertyformat.copy(attrvalue);
+        return;
+      } else if (equals("labelangle", 10, attrname)) {
+        attr.labelangle.copy(attrvalue);
+        return;
+      } else if (equals("labelpadding", 12, attrname)) {
+        attr.labelpadding.copy(attrvalue);
         return;
       }
     }
@@ -754,7 +771,7 @@ public:
   public:
     class Cattr {
     public:
-      CT::string settings, striding, renderer, scalewidth, scalecontours, renderhint;
+      CT::string settings, striding, renderer, scalewidth, scalecontours, renderhint, randomizefeatures, featuresoverlap;
     } attr;
     void addAttribute(const char *name, const char *value) {
       if (equals("settings", 8, name)) {
@@ -774,6 +791,12 @@ public:
         return;
       } else if (equals("scalecontours", 13, name)) {
         attr.scalecontours.copy(value);
+        return;
+      } else if (equals("randomizefeatures", 17, name)) {
+        attr.randomizefeatures.copy(value);
+        return;
+      } else if (equals("featuresoverlap", 15, name)) {
+        attr.featuresoverlap.copy(value);
         return;
       }
     }

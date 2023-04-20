@@ -41,11 +41,14 @@
 #include "CServerError.h"
 #include "CServerConfig_CPPXSD.h"
 #include <math.h>
+// #include <png.h>
 #include <gd.h>
 #include "gdfontl.h"
 #include "gdfonts.h"
 #include "gdfontmb.h"
 #include "CCairoPlotter.h"
+#include "CColor.h"
+#include "CRectangleText.h"
 
 float convertValueToClass(float val, float interval);
 
@@ -61,47 +64,6 @@ public:
   unsigned char CDIred[256], CDIgreen[256], CDIblue[256];
   short CDIalpha[256]; // Currently alpha of 0 and 255 is supported, but nothin in between.
   CT::string legendName;
-};
-
-class CColor {
-public:
-  unsigned char r, g, b, a;
-  CColor() {
-    r = 0;
-    g = 0;
-    b = 0;
-    a = 255;
-  }
-  CColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
-    this->r = r;
-    this->g = g;
-    this->b = b;
-    this->a = a;
-  }
-  CColor(const char *color) { parse(color); }
-  /**
-   * color can have format #RRGGBB or #RRGGBBAA
-   */
-  void parse(const char *color) {
-    size_t l = strlen(color);
-
-    if (l == 7 && color[0] == '#') {
-      r = CSERVER_HEXDIGIT_TO_DEC(color[1]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[2]);
-      g = CSERVER_HEXDIGIT_TO_DEC(color[3]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[4]);
-      b = CSERVER_HEXDIGIT_TO_DEC(color[5]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[6]);
-      a = 255;
-    } else if (l == 9 && color[0] == '#') {
-      r = CSERVER_HEXDIGIT_TO_DEC(color[1]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[2]);
-      g = CSERVER_HEXDIGIT_TO_DEC(color[3]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[4]);
-      b = CSERVER_HEXDIGIT_TO_DEC(color[5]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[6]);
-      a = CSERVER_HEXDIGIT_TO_DEC(color[7]) * 16 + CSERVER_HEXDIGIT_TO_DEC(color[8]);
-    } else {
-      r = 0;
-      g = 0;
-      b = 0;
-      a = 255;
-    }
-  }
 };
 
 class CDrawImage {
@@ -172,6 +134,8 @@ public:
   CGeoParams *Geo;
   CDrawImage();
   ~CDrawImage();
+
+public:
   int createImage(int _dW, int _dH);
   int createImage(CGeoParams *_Geo);
   int createImage(const char *fn);
@@ -195,6 +159,7 @@ public:
   void drawText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor fgcolor, CColor bgcolor);
   void drawAnchoredText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color, int anchor);
   void drawCenteredText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color);
+  void drawCenteredTextNoOverlap(int x, int y, const char *fontfile, float size, float angle, int padding, const char *text, CColor color, bool noOverlap, std::vector<CRectangleText> &rects);
   int drawTextArea(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor fgcolor, CColor bgcolor);
 
   // void drawTextAngle(const char * text, size_t length,double angle,int x,int y,int color,int fontSize);
