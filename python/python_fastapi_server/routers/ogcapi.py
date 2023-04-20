@@ -121,7 +121,7 @@ async def handle_ogc_api_root(req: Request, f: str = "json"):
         ))
     links.append(
         Link(
-            href=str(req.url_for("get_open_api")),
+            href=str(req.url_for("openapi")),
             rel="service-desc",
             title="The OpenAPI definition as JSON",
             type="application/vnd.oai.openapi+json;version=3.0",
