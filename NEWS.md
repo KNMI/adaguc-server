@@ -1,6 +1,6 @@
-**Version 2.9.0 2023-04-13**
-
+**Version 2.9.0 2023-04-20**
 - Using fastapi as server
+
 **Version 2.8.7 2023-04-19**
 - GeoJSON with labels can now be displayed. See [FeatureInterval](doc/configuration/FeatureInterval.md) for details
 
