@@ -1,11 +1,11 @@
 #!/bin/bash
-echo "Starting adaguc-server functional tests"
+echo "Starting adaguc-server python server functional tests"
 pushd `dirname $0` > /dev/null
 SCRIPTPATH=`pwd`
 popd > /dev/null
 unset ADAGUC_CONFIG
 unset QUERY_STRING
-export ADAGUC_PATH=${SCRIPTPATH}/../
+export ADAGUC_PATH=${SCRIPTPATH}/../..
 export ADAGUC_PATH=`readlink -f ${ADAGUC_PATH}`/
 export PYTHONPATH=${ADAGUC_PATH}/python/lib/
 echo "ADAGUC-Server path is [$ADAGUC_PATH]"
@@ -21,7 +21,4 @@ export ADAGUC_DATA_DIR=${ADAGUC_PATH}/data/datasets/
 export ADAGUC_AUTOWMS_DIR=${ADAGUC_PATH}/data/datasets/
 ulimit -c unlimited
 
-
-python3 ${ADAGUC_PATH}/tests/functional_test.py $1 && \
-cd ../python/python_fastapi_server && \
-bash ./test_server.sh
+pytest -s test_ogc_api_features.py
