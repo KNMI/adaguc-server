@@ -1,3 +1,6 @@
+**Version 2.9.1 2023-04-26**
+- Fix: Empty CRS was advertised in case of point data
+
 **Version 2.9.0 2023-04-20**
 - Using fastapi as server
 
