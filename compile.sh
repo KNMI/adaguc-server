@@ -41,7 +41,6 @@ function build {
 
   clean
   cd $CURRENTDIR/bin
-  
   cmake .. &&  cmake  --build . --parallel 4
 
   if [ -f adagucserver ]
@@ -51,7 +50,7 @@ function build {
       echo "[FAILED] ADAGUC compilation failed"
       quit;
   fi
- 
+
   echo "[OK] Everything is installed in the ./bin directory"
 
   echo "Testing..."

@@ -248,6 +248,17 @@ class AdagucTestTools:
         except Exception:
             pass
 
+        # Remove ContactInformation if it is empty element
+        try:
+            for child in obj1.findall("Service/ContactInformation")[0]:
+                if child.text.strip() == "":
+                    child.getparent().remove(child)
+            for child in obj2.findall("Service/ContactInformation")[0]:
+                if child.text.strip() == "":
+                    child.getparent().remove(child)
+        except Exception:
+            pass
+
         # Boundingbox extent values are too varying by different Proj libraries
         def removeBBOX(root):
             if root.tag.title() == "Boundingbox":

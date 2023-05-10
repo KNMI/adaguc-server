@@ -1,10 +1,10 @@
 <?xml version='1.0' encoding="ISO-8859-1" standalone="no" ?>
 <WCS_Capabilities
-   version="1.0.0" 
-   updateSequence="0" 
-   xmlns="http://www.opengis.net/wcs" 
-   xmlns:xlink="http://www.w3.org/1999/xlink" 
-   xmlns:gml="http://www.opengis.net/gml" 
+   version="1.0.0"
+   updateSequence="0"
+   xmlns="http://www.opengis.net/wcs"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:gml="http://www.opengis.net/gml"
    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.opengis.net/wcs http://schemas.opengis.net/wcs/1.0.0/wcsCapabilities.xsd">
 <Service>
@@ -22,36 +22,36 @@
     <GetCapabilities>
       <DCPType>
         <HTTP>
-          <Get><OnlineResource xlink:type="simple" xlink:href="%26source%3Dtestdata%2Enc&amp;SERVICE=WCS&amp;" /></Get>
+          <Get><OnlineResource xlink:type="simple" xlink:href="source=testdata%2Enc&amp;SERVICE=WCS&amp;" /></Get>
         </HTTP>
       </DCPType>
       <DCPType>
         <HTTP>
-          <Post><OnlineResource xlink:type="simple" xlink:href="%26source%3Dtestdata%2Enc&amp;SERVICE=WCS&amp;" /></Post>
+          <Post><OnlineResource xlink:type="simple" xlink:href="source=testdata%2Enc&amp;SERVICE=WCS&amp;" /></Post>
         </HTTP>
       </DCPType>
     </GetCapabilities>
     <DescribeCoverage>
       <DCPType>
         <HTTP>
-          <Get><OnlineResource xlink:type="simple" xlink:href="%26source%3Dtestdata%2Enc&amp;SERVICE=WCS&amp;" /></Get>
+          <Get><OnlineResource xlink:type="simple" xlink:href="source=testdata%2Enc&amp;SERVICE=WCS&amp;" /></Get>
         </HTTP>
       </DCPType>
       <DCPType>
         <HTTP>
-          <Post><OnlineResource xlink:type="simple" xlink:href="%26source%3Dtestdata%2Enc&amp;SERVICE=WCS&amp;" /></Post>
+          <Post><OnlineResource xlink:type="simple" xlink:href="source=testdata%2Enc&amp;SERVICE=WCS&amp;" /></Post>
         </HTTP>
       </DCPType>
     </DescribeCoverage>
     <GetCoverage>
       <DCPType>
         <HTTP>
-          <Get><OnlineResource xlink:type="simple" xlink:href="%26source%3Dtestdata%2Enc&amp;SERVICE=WCS&amp;" /></Get>
+          <Get><OnlineResource xlink:type="simple" xlink:href="source=testdata%2Enc&amp;SERVICE=WCS&amp;" /></Get>
         </HTTP>
       </DCPType>
       <DCPType>
         <HTTP>
-          <Post><OnlineResource xlink:type="simple" xlink:href="%26source%3Dtestdata%2Enc&amp;SERVICE=WCS&amp;" /></Post>
+          <Post><OnlineResource xlink:type="simple" xlink:href="source=testdata%2Enc&amp;SERVICE=WCS&amp;" /></Post>
         </HTTP>
       </DCPType>
     </GetCoverage>
