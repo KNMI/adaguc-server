@@ -41,11 +41,14 @@
 #include "CServerError.h"
 #include "CServerConfig_CPPXSD.h"
 #include <math.h>
+// #include <png.h>
 #include <gd.h>
 #include "gdfontl.h"
 #include "gdfonts.h"
 #include "gdfontmb.h"
 #include "CCairoPlotter.h"
+#include "CColor.h"
+#include "CRectangleText.h"
 
 float convertValueToClass(float val, float interval);
 
@@ -133,6 +136,8 @@ public:
   CGeoParams *Geo;
   CDrawImage();
   ~CDrawImage();
+
+public:
   int createImage(int _dW, int _dH);
   int createImage(CGeoParams *_Geo);
   int createImage(const char *fn);
@@ -156,6 +161,7 @@ public:
   void drawText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor fgcolor, CColor bgcolor);
   void drawAnchoredText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color, int anchor);
   void drawCenteredText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color);
+  void drawCenteredTextNoOverlap(int x, int y, const char *fontfile, float size, float angle, int padding, const char *text, CColor color, bool noOverlap, std::vector<CRectangleText> &rects);
   int drawTextArea(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor fgcolor, CColor bgcolor);
 
   // void drawTextAngle(const char * text, size_t length,double angle,int x,int y,int color,int fontSize);

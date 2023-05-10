@@ -5,7 +5,7 @@
 For developing the code locally, you need:
 * Compile the C++ adaguc-server
 * A postgresql server
-* Start the application with the python wrapper. 
+* Start the application with the python wrapper.
 * Test the server with geographical referenced testdata
 
 After the python wrapper is started, the adaguc-server is accessible on your workstation via http. The easiest way to explore datasets is via de autowms feature, which will give you an overview of available data on your machine via de browser.
@@ -58,6 +58,7 @@ python3 -m venv env
 source env/bin/activate
 pip3 install --upgrade pip
 pip3 install -r requirements.txt
+pip3 install -r requirements-dev.txt
 cd ./python/lib/ && python3 setup.py develop && cd ../../
 ```
 Make sure the data directories are available:
@@ -110,11 +111,10 @@ export ADAGUC_ENABLELOGBUFFER=FALSE
 
 # To enable core dump generation, additionally do:
 #ulimit -c unlimited
-#sudo sysctl -w kernel.core_pattern=core-adagucserver # 
+#sudo sysctl -w kernel.core_pattern=core-adagucserver #
 # Then you can use gdb ./bin/adagucserver core-adagucserver
 
-
-python3 ./python/python-adaguc-server/main.py
+python3 ./python/python_fastapi_server/main.py
 ```
 
 The adaguc-server WMS server will then be accessible at http://127.0.0.1:8080/wms. The autowms can be explored at the adaguc-viewer via the following link: https://adaguc.knmi.nl/adaguc-viewer/index.html?autowms=http://localhost:8080/autowms. Keep in mind that you have to disable security, as the server is not running on https.
