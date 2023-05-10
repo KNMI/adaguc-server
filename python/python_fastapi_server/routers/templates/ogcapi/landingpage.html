@@ -2,8 +2,8 @@
 
 {% block content %}
   <div class="container">
-      <h1>{{root.title}}</h1>
-      <p>{{root.description}}</p>
+      <h1>{{landingpage.title}}</h1>
+      <p>{{landingpage.description}}</p>
   </div>
 
 {% endblock %}
@@ -11,7 +11,7 @@
 {% block links %}
   <div class="links">
      <nav>
-        {% for link in root.links %}
+        {% for link in landingpage.links %}
            {{link.rel}} = <a href={{link.href}}>{{link.title}}</a>
            ({{link.type}})
            <br/>
@@ -24,7 +24,7 @@
       <script>
          renderjson.set_show_to_level(3);
          renderjson.set_icons("+", "-");
-         document.getElementById("jsonContainer").appendChild(renderjson({{root|tojson}}));
+         document.getElementById("jsonContainer").appendChild(renderjson({{landingpage|tojson}}));
       </script>
   </div>
 {% endblock %}
