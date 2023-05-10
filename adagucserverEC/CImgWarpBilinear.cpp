@@ -625,7 +625,7 @@ void CImgWarpBilinear::smoothData(float *valueData, float fNodataValue, int smoo
 int CImgWarpBilinear::set(const char *pszSettings) {
   // fprintf(stderr, "CImgWarpBilinear.set(%s)\n", pszSettings);
   //"drawMap=false;drawContour=true;contourSmallInterval=1.0;contourBigInterval=10.0;"
-  CDBDebug(pszSettings);
+
   if (pszSettings == NULL) return 0;
   if (strlen(pszSettings) == 0) return 0;
   contourDefinitions.clear();
@@ -812,27 +812,6 @@ void CImgWarpBilinear::drawTextForContourLines(CDrawImage *drawImage, ContourDef
   float centerX = (lineX + endX) / 2;
   float centerY = (endY + lineY) / 2;
 
-  // for (int c = 0; c < 10; c++) {
-  //   float tx = ca * c * 10 + cx;
-  //   float ty = sa * c * 10 + cy;
-
-  //   // onst char *text, size_t length, int x, int y, int fgcolor, int bgcolor, int fontSize
-  //   // drawImage->drawText(x, y, fontLocation, fontSize, angle, text.c_str(), textColor);
-  //   CColor black = CColor(0, 0, 255, 255);
-  //   CColor black2 = CColor(128, 128, 0, 255);
-  //   for (int j = -1; j < 2; j++) {
-  //     drawImage->setPixel(lineX + j, lineY + j, black);
-  //     drawImage->setPixel(endX + j, endY + j, black2);
-  //     drawImage->setPixel(lineX + j, lineY - j, black);
-  //     drawImage->setPixel(endX + j, endY - j, black2);
-
-  //     drawImage->setPixel(cx - j, cy - j, black);
-  //     drawImage->setPixel(cx + j, cy - j, black);
-
-  //     drawImage->setPixel(tx - j, ty - j, black);
-  //     drawImage->setPixel(tx + j, ty - j, black);
-  //   }
-  // }
   if (angle < -3.1415 / 2 || angle > 3.1415 / 2) {
     int x = lineX + cos(angleP) * (fontSize / 2);
     int y = lineY + sin(angleP) * (fontSize / 2);
