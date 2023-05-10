@@ -1,3 +1,8 @@
+**Version 2.10.0 2023-05-10**
+- Use the new API of the PROJ library, because the old one is deprecated and removed from PROJ version 8 and up. 
+Adaguc now requires at least version 6 of the PROJ library.
+This should simplify installing on recent version of Ubuntu.
+
 **Version 2.9.0 2023-04-20**
 - Using fastapi as server
 
