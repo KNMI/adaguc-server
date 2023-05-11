@@ -176,20 +176,9 @@ int GenericDataWarper::findPixelExtent(int *PXExtentBasedOnSource, CGeoParams *s
               double px = destCoordX, py = destCoordY;
               if (needsProjection) {
                 if (warper->isProjectionRequired()) {
-                  if (warper->destNeedsDegreeRadianConversion) {
-                    px *= DEG_TO_RAD;
-                    py *= DEG_TO_RAD;
-                  }
-
-                  if (pj_transform(warper->destpj, warper->sourcepj, 1, 0, &px, &py, NULL)) {
+                  if (proj_trans_generic(warper->projSourceToDest, PJ_INV, &px, sizeof(double), 1, &py, sizeof(double), 1, nullptr, 0, 0, nullptr, 0, 0) != 1) {
                     skip = true;
-                    //                   px/=DEG_TO_RAD;
-                    //                   py/=DEG_TO_RAD;
-                    //                   CDBDebug("skip %f %f",px,py);
-                  }
-                  if (warper->sourceNeedsDegreeRadianConversion) {
-                    px /= DEG_TO_RAD;
-                    py /= DEG_TO_RAD;
+                    CDBDebug("skip %f %f",px,py);
                   }
                 }
               }
