@@ -39,6 +39,8 @@ async def add_hsts_header(request: Request, call_next):
         scheme = urlsplit(external_address).scheme
         if scheme == "https":
             response.headers["Strict-Transport-Security"] = "max-age=31536000"
+            response.headers["X-content-type"] = "nosniff"
+            response.headers["Cache-Control"] = "604800"
     return response
 
 
