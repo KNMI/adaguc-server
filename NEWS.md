@@ -1,5 +1,10 @@
-**Version 2.9.1 2023-04-26**
+**Version 2.10.1 2023-05-11**
 - Fix: Empty CRS was advertised in case of point data
+
+**Version 2.10.0 2023-05-10**
+- Use the new API of the PROJ library, because the old one is deprecated and removed from PROJ version 8 and up. 
+Adaguc now requires at least version 6 of the PROJ library.
+This should simplify installing on recent version of Ubuntu.
 
 **Version 2.9.0 2023-04-20**
 - Using fastapi as server
