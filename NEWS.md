@@ -1,3 +1,23 @@
+**Version 2.10.0 2023-05-10**
+- Use the new API of the PROJ library, because the old one is deprecated and removed from PROJ version 8 and up. 
+Adaguc now requires at least version 6 of the PROJ library.
+This should simplify installing on recent version of Ubuntu.
+
+**Version 2.9.0 2023-04-20**
+- Using fastapi as server
+
+**Version 2.8.7 2023-04-19**
+- GeoJSON with labels can now be displayed. See [FeatureInterval](doc/configuration/FeatureInterval.md) for details
+
+**Version 2.8.6 2023-03-23**
+- Added a configuration option to limit the number of deletions done at once, configurable with `cleanupsystemlimit="5"`  in [Settings](doc/configuration/Settings.md).
+- Added a configuration option to start a dryrun of cleanup, explaining which files would be deleted (but not actually deleting them), configurable with `enablecleanupsystem="dryrun"` in [Settings](doc/configuration/Settings.md)
+- Added the option to replace custom variables in the dataset configuration using the [Environment](doc/configuration/Environment.md) keyword. These will get the value from the environment. This has been added to make it possible to let dev branches have a shorter retentionperiod and the main branch a longer retentionperiod.
+- See complete dataset example in [data/config/datasets/adaguc.tests.cleandb-step2.xml](data/config/datasets/adaguc.tests.cleandb-step2.xml)
+
+
+**Version 2.8.5 2023-03-15**
+- Add parameter Unit of Measurement to DescribeCoverage output
 
 **Version 2.8.4 2023-03-08**
 - Nearest neighbour rendering can now be done with discrete classes using ShadeInterval and renderhint="discreteclasses"
@@ -10,14 +30,14 @@
 - Build docker image for arm64 architecture (e.g. Mac M1)
 
 **Version 2.8.2 2023-01-10**
-- WebP quality is now configurable via WMSFormat and WMS Format (use format=image/webp;90) 
+- WebP quality is now configurable via WMSFormat and WMS Format (use format=image/webp;90)
 - PNG can now read more image types (PNG color_type=6)
 
 **Version 2.8.1 2022-12-24**
 - Using debian as base docker image
 
 **Version 2.8.0 2022-12-23**
-- Support for building Adaguc on Mac M1 architecture (arm64) 
+- Support for building Adaguc on Mac M1 architecture (arm64)
 
 **Version 2.7.13 2022-12-20**
 - Support for HDF5 ODIM files containing one dataset with lat/lon and time.

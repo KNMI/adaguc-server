@@ -130,6 +130,8 @@ CT::string CDirReader::makeCleanPath(const char *_path) {
   if (_path == NULL) return path;
   path = _path;
   if (path.length() == 0) return path;
+  path.replaceSelf("\n", "");
+  path.trimSelf();
   CT::StackList<CT::string> parts = path.splitToStack("/");
 
   int startAtIndex = 0;

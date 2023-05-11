@@ -23,6 +23,7 @@ add_library(CCDFDataModel
     CCDFStore.h
     CCDFGeoJSONIO.h
     CCDFCSVReader.h
+    ProjCache.h
     CCDFDataModel.cpp
     CCDFNetCDFIO.cpp
     CTime.cpp
@@ -37,6 +38,7 @@ add_library(CCDFDataModel
     CCDFStore.cpp
     CCDFGeoJSONIO.cpp
     CCDFCSVReader.cpp
+    ProjCache.cpp
     utils.cpp
 )
 

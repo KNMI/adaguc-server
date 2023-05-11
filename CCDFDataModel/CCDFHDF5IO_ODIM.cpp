@@ -22,8 +22,10 @@
  * limitations under the License.
  *
  ******************************************************************************/
+#include <cmath>
 
 #include "CCDFHDF5IO.h"
+#include "ProjCache.h"
 
 // #define CCDFHDF5IO_DEBUG_H
 
@@ -154,18 +156,13 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
     cornerX[3] = getAttrValueDouble(whereVar, "UR_lon", -1);
     cornerY[3] = getAttrValueDouble(whereVar, "UR_lat", -1);
 
-    projCtx proj4Context = pj_ctx_alloc();
-    projPJ sourcepj = pj_init_plus_ctx(proj4Context, projectionString.c_str());
-    projPJ latlonpj = pj_init_plus_ctx(proj4Context, "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
-    for (size_t j = 0; j < 4; j += 1) {
-      cornerX[j] *= DEG_TO_RAD;
-      cornerY[j] *= DEG_TO_RAD;
-    }
-    pj_transform(latlonpj, sourcepj, 4, 0, cornerX, cornerY, nullptr);
+    PJ *P = proj_create_crs_to_crs_with_cache(CT::string("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"),
+                                              projectionString,
+                                              nullptr);
 
-    pj_free(sourcepj);
-    pj_free(latlonpj);
-    pj_ctx_free(proj4Context);
+    if (proj_trans_generic(P, PJ_FWD, cornerX, sizeof(double), 4, cornerY, sizeof(double), 4, nullptr, 0, 0, nullptr, 0, 0) != 4) {
+      // TODO: No error handling in original code
+    }
 
     /* Set scale and offset */
     CDF::Attribute *offsetAttr = getNestedAttribute(cdfObject, datasetCounter, dataCounter, "what", "offset");
