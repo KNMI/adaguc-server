@@ -11,6 +11,7 @@ ADAGUC_PATH = os.getenv("ADAGUC_PATH", " ")
 
 
 class AdagucTestTools:
+
     def getLogFile(self):
         ADAGUC_LOGFILE = os.environ["ADAGUC_LOGFILE"]
         try:
@@ -116,8 +117,7 @@ class AdagucTestTools:
                 self.printLogFile()
                 print(
                     "[WARNING]: Adaguc-server writes too many lines to the logfile, size = %d kilobytes"
-                    % (logfileSize / 1024)
-                )
+                    % (logfileSize / 1024))
             return [status, filetogenerate, headers]
 
     def writetofile(self, filename, data):
@@ -184,11 +184,10 @@ class AdagucTestTools:
                 returned_color = returned_image.getpixel(c)
 
                 if n_bands == 1:
-                    expected_color = (expected_color,)
-                    returned_color = (returned_color,)
+                    expected_color = (expected_color, )
+                    returned_color = (returned_color, )
                 diff_color = tuple(
-                    map(lambda e, g: e - g, expected_color, returned_color)
-                )
+                    map(lambda e, g: e - g, expected_color, returned_color))
 
                 if expected_color != returned_color:
                     print(
@@ -219,10 +218,8 @@ class AdagucTestTools:
             )
             return False
 
-        if (
-            count_pixels_with_color_difference * 100.0 / (width * height)
-            > maxAllowedColorPercentage
-        ):
+        if (count_pixels_with_color_difference * 100.0 /
+            (width * height) > maxAllowedColorPercentage):
             print(
                 f"Error, percentage of pixels with color difference is too large "
                 f"({count_pixels_with_color_difference*100.0/(width*height)} % > {maxAllowedColorPercentage} %)",
@@ -232,16 +229,15 @@ class AdagucTestTools:
 
         return True
 
-    def compareGetCapabilitiesXML(
-        self, testresultFileLocation, expectedOutputFileLocation
-    ):
+    def compareGetCapabilitiesXML(self, testresultFileLocation,
+                                  expectedOutputFileLocation):
         expectedxml = self.readfromfile(expectedOutputFileLocation)
         testxml = self.readfromfile(testresultFileLocation)
 
         obj1 = objectify.fromstring(
-            re.sub(b' xmlns="[^"]+"', b"", expectedxml, count=1)
-        )
-        obj2 = objectify.fromstring(re.sub(b' xmlns="[^"]+"', b"", testxml, count=1))
+            re.sub(b' xmlns="[^"]+"', b"", expectedxml, count=1))
+        obj2 = objectify.fromstring(
+            re.sub(b' xmlns="[^"]+"', b"", testxml, count=1))
 
         # Remove ADAGUC build date and version from keywordlists
         try:
@@ -293,7 +289,6 @@ class AdagucTestTools:
         if (result == expect) is False:
             print(
                 '\nExpected XML is different, file \n"%s"\n should be equal to \n"%s"'
-                % (testresultFileLocation, expectedOutputFileLocation)
-            )
+                % (testresultFileLocation, expectedOutputFileLocation))
 
         return result == expect
