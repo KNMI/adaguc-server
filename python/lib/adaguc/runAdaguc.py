@@ -14,28 +14,26 @@ from adaguc.CGIRunner import CGIRunner
 
 
 class runAdaguc:
+
     def __init__(self):
         """ADAGUC_LOGFILE is the location where logfiles are stored.
         In current config file adaguc.autoresource.xml, the DB is written to this temporary directory.
         Please note regenerating the DB each time for each request can cause performance problems.
         You can safely configure a permanent location for the database which is permanent in adaguc.autoresource.xml (or your own config)
         """
-        self.ADAGUC_LOGFILE = (
-            "/tmp/adaguc-server-" + self.get_random_string(10) + ".log"
-        )
+        self.ADAGUC_LOGFILE = ("/tmp/adaguc-server-" +
+                               self.get_random_string(10) + ".log")
         self.ADAGUC_PATH = os.getenv("ADAGUC_PATH", "./")
         self.ADAGUC_CONFIG = self.ADAGUC_PATH + "/data/config/adaguc.autoresource.xml"
-        self.ADAGUC_DATA_DIR = os.getenv("ADAGUC_DATA_DIR", "/data/adaguc-data")
-        self.ADAGUC_AUTOWMS_DIR = os.getenv(
-            "ADAGUC_AUTOWMS_DIR", "/data/adaguc-autowms"
-        )
-        self.ADAGUC_DATASET_DIR = os.getenv(
-            "ADAGUC_DATASET_DIR", "/data/adaguc-datasets"
-        )
+        self.ADAGUC_DATA_DIR = os.getenv("ADAGUC_DATA_DIR",
+                                         "/data/adaguc-data")
+        self.ADAGUC_AUTOWMS_DIR = os.getenv("ADAGUC_AUTOWMS_DIR",
+                                            "/data/adaguc-autowms")
+        self.ADAGUC_DATASET_DIR = os.getenv("ADAGUC_DATASET_DIR",
+                                            "/data/adaguc-datasets")
         self.ADAGUC_TMP = os.getenv("ADAGUC_TMP", "/tmp")
         self.ADAGUC_FONT = os.getenv(
-            "ADAGUC_FONT", self.ADAGUC_PATH + "/data/fonts/Roboto-Medium.ttf"
-        )
+            "ADAGUC_FONT", self.ADAGUC_PATH + "/data/fonts/Roboto-Medium.ttf")
 
     def setAdagucPath(self, newAdagucPath):
         self.ADAGUC_PATH = newAdagucPath
@@ -77,8 +75,9 @@ class runAdaguc:
         adagucenv["ADAGUC_FONT"] = self.ADAGUC_FONT
 
         status, data, headers = self.runADAGUCServer(
-            args=["--updatedb", "--config", config], env=adagucenv, isCGI=False
-        )
+            args=["--updatedb", "--config", config],
+            env=adagucenv,
+            isCGI=False)
 
         return data.getvalue().decode()
 
@@ -93,9 +92,9 @@ class runAdaguc:
         adagucenv["ADAGUC_DATASET_DIR"] = self.ADAGUC_DATASET_DIR
         adagucenv["ADAGUC_TMP"] = self.ADAGUC_TMP
         adagucenv["ADAGUC_FONT"] = self.ADAGUC_FONT
-        status, data, headers = self.runADAGUCServer(
-            url, env=adagucenv, showLogOnError=False
-        )
+        status, data, headers = self.runADAGUCServer(url,
+                                                     env=adagucenv,
+                                                     showLogOnError=False)
         logfile = self.getLogFile()
         self.removeLogFile()
         if data is not None:
@@ -146,8 +145,7 @@ class runAdaguc:
         adagucenv = env
 
         adagucenv["ADAGUC_ENABLELOGBUFFER"] = os.getenv(
-            "ADAGUC_ENABLELOGBUFFER", "TRUE"
-        )
+            "ADAGUC_ENABLELOGBUFFER", "TRUE")
         adagucenv["ADAGUC_CONFIG"] = self.ADAGUC_CONFIG
         adagucenv["ADAGUC_LOGFILE"] = self.ADAGUC_LOGFILE
         adagucenv["ADAGUC_PATH"] = self.ADAGUC_PATH
@@ -164,7 +162,7 @@ class runAdaguc:
         # Forward all environment variables starting with ADAGUCENV_
         prefix: str = "ADAGUCENV_"
         for key, value in os.environ.items():
-            if key[: len(prefix)] == prefix:
+            if key[:len(prefix)] == prefix:
                 adagucenv[key] = value
 
         ADAGUC_PATH = adagucenv["ADAGUC_PATH"]
