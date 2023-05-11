@@ -1,3 +1,7 @@
+**Version 2.10.1 2023-05-10**
+- Adding Strict-Transport-Security header when running over https
+
+
 **Version 2.10.0 2023-05-10**
 - Use the new API of the PROJ library, because the old one is deprecated and removed from PROJ version 8 and up. 
 Adaguc now requires at least version 6 of the PROJ library.
