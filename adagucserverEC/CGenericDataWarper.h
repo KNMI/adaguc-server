@@ -1,9 +1,8 @@
 #ifndef GenericDataWarper_H
 #define GenericDataWarper_H
-#define ACCEPT_USE_OF_DEPRECATED_PROJ_API_H 1
 #include <math.h>
 #include <stdlib.h>
-#include <proj_api.h>
+#include <proj.h>
 #include <math.h>
 #include <cfloat>
 #include "CGeoParams.h"
@@ -408,21 +407,8 @@ public:
         }
       }
       if (warper->isProjectionRequired()) {
-        if (warper->sourceNeedsDegreeRadianConversion) {
-          for (size_t j = 0; j < dataSize; j++) {
-            px[j] *= DEG_TO_RAD;
-            py[j] *= DEG_TO_RAD;
-          }
-        }
-
-        if (pj_transform(warper->sourcepj, warper->destpj, dataSize, 0, px, py, NULL)) {
+        if (proj_trans_generic(warper->projSourceToDest, PJ_FWD, px, sizeof(double), dataSize, py, sizeof(double), dataSize, nullptr, 0, 0, nullptr, 0, 0) != dataSize) {
           CDBDebug("Unable to do pj_transform");
-        }
-        if (warper->destNeedsDegreeRadianConversion) {
-          for (size_t j = 0; j < dataSize; j++) {
-            px[j] /= DEG_TO_RAD;
-            py[j] /= DEG_TO_RAD;
-          }
         }
       }
 
@@ -456,21 +442,9 @@ public:
       }
 
       if (warper->isProjectionRequired()) {
-        if (warper->sourceNeedsDegreeRadianConversion) {
-          for (size_t j = 0; j < dataSizeStrided; j++) {
-            pxStrided[j] *= DEG_TO_RAD;
-            pyStrided[j] *= DEG_TO_RAD;
-          }
-        }
-
-        if (pj_transform(warper->sourcepj, warper->destpj, dataSizeStrided, 0, pxStrided, pyStrided, NULL)) {
+        if (proj_trans_generic(warper->projSourceToDest, PJ_FWD, pxStrided, sizeof(double), dataSizeStrided, pyStrided, sizeof(double),
+                               dataSizeStrided, nullptr, 0, 0, nullptr, 0, 0) != dataSizeStrided) {
           CDBDebug("Unable to do pj_transform");
-        }
-        if (warper->destNeedsDegreeRadianConversion) {
-          for (size_t j = 0; j < dataSizeStrided; j++) {
-            pxStrided[j] /= DEG_TO_RAD;
-            pyStrided[j] /= DEG_TO_RAD;
-          }
         }
       }
       for (int y = 0; y < dataHeight + 1; y++) {
