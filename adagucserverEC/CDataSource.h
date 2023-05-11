@@ -250,6 +250,9 @@ public:
   // Used for vectors and points
   bool formatConverterActive;
 
+  // Some projections require the scaling of the axis with a certain number, like converting km to meter
+  bool didAxisScalingConversion = false;
+
   // The index of the X and Y dimension in the variable dimensionlist (not the id's from the netcdf file)
   int dimXIndex;
   int dimYIndex;

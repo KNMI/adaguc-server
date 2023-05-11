@@ -1,11 +1,14 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8"?>
 <Configuration>
-  
-  <Settings enablecleanupsystem="true"/>
-  
+  <Environment name="ADAGUCENV_RETENTIONPERIOD" default="P7D" />
+  <Environment name="ADAGUCENV_ENABLECLEANUP" default="true" />
+  <Settings enablecleanupsystem="{ADAGUCENV_ENABLECLEANUP}" />
+
   <!-- Layers -->
   <Layer type="database">
-    <FilePath filter="^.*\.csv$" retentionperiod="P7D" retentiontype="datatime">{ADAGUC_TMP}/cleandb/</FilePath>
+    <FilePath filter="^.*\.csv$" retentionperiod="{ADAGUCENV_RETENTIONPERIOD}"
+      retentiontype="datatime">
+      {ADAGUC_TMP}/cleandb/</FilePath>
     <Name>test</Name>
     <Title>test</Title>
     <Variable>test</Variable>

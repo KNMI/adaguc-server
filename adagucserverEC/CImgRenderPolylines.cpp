@@ -27,6 +27,8 @@
 #include <set>
 #include "CConvertGeoJSON.h"
 #include <string>
+#include <algorithm>
+#include "CRectangleText.h"
 
 //   #define MEASURETIME
 
@@ -35,6 +37,54 @@
 #define CCONVERTUGRIDMESH_NODATA -32000
 
 const char *CImgRenderPolylines::className = "CImgRenderPolylines";
+
+struct Point2D {
+  double x;
+  double y;
+};
+
+Point2D compute2DPolygonCentroid(const Point2D *vertices, int vertexCount) {
+  Point2D centroid = {0, 0};
+  double signedArea = 0.0;
+  double x0 = 0.0; // Current vertex X
+  double y0 = 0.0; // Current vertex Y
+  double x1 = 0.0; // Next vertex X
+  double y1 = 0.0; // Next vertex Y
+  double a = 0.0;  // Partial signed area
+
+  int lastdex = vertexCount - 1;
+  const Point2D *prev = &(vertices[lastdex]);
+  const Point2D *next;
+
+  // For all vertices in a loop
+  for (int i = 0; i < vertexCount; ++i) {
+    next = &(vertices[i]);
+    x0 = prev->x;
+    y0 = prev->y;
+    x1 = next->x;
+    y1 = next->y;
+    a = x0 * y1 - x1 * y0;
+    signedArea += a;
+    centroid.x += (x0 + x1) * a;
+    centroid.y += (y0 + y1) * a;
+    prev = next;
+  }
+
+  signedArea *= 0.5;
+  centroid.x /= (6.0 * signedArea);
+  centroid.y /= (6.0 * signedArea);
+
+  return centroid;
+}
+
+Point2D getCentroid(const float *polyX, const float *polyY, const int numPoints) {
+  Point2D vertices[numPoints];
+  for (int i = 0; i < numPoints; i++) {
+    vertices[i].x = polyX[i];
+    vertices[i].y = polyY[i];
+  }
+  return compute2DPolygonCentroid(vertices, numPoints);
+}
 
 void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSource, CDrawImage *drawImage) {
   CColor drawPointTextColor(0, 0, 0, 255);
@@ -47,7 +97,6 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
   if (styleConfiguration != NULL) {
     if (styleConfiguration->styleConfig != NULL) {
       CServerConfig::XMLE_Style *s = styleConfiguration->styleConfig;
-      CDBDebug("style: %d %d", s->FeatureInterval.size(), styleConfiguration->shadeIntervals->size());
       int numFeatures = s->FeatureInterval.size();
       CT::string attributeValues[numFeatures];
       /* Loop through all configured FeatureInterval elements */
@@ -63,26 +112,8 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
               std::map<std::string, std::string>::iterator attributeValueItr = feature->second.paramMap.find(attributeName.c_str());
               if (attributeValueItr != feature->second.paramMap.end()) {
                 attributeValues[featureNr] = attributeValueItr->second.c_str();
-                // CDBDebug("attributeValues[%d]=%s", featureNr, attributeValues[featureNr].c_str());
               }
             }
-          }
-          if (featureInterval->attr.fillcolor.empty() == false) {
-            // CDBDebug("feature[%d] %s %s %s", j, featureInterval->attr.fillcolor.c_str(),
-            //  featureInterval->attr.bgcolor.c_str(), featureInterval->attr.label.c_str());;
-            //                     std::vector<CImageDataWriter::IndexRange*> ranges=getIndexRangesForRegex(featureInterval->attr.match, attributeValues, numFeatures);
-            //                     for (size_t i=0; i<ranges.size(); i++) {
-            //                       CDBDebug("feature[%d] %d-%d %s %s %s",ranges[i]->min,ranges[i]->max, featureInterval->attr.fillcolor,
-            //                       featureInterval->attr.bgcolor?featureInterval->attr.bgcolor:"null", featureInterval->attr.label?featureInterval->attr.label:"null");
-            //                       CServerConfig::XMLE_ShadeInterval *shadeInterval = new CServerConfig::XMLE_ShadeInterval ();
-            //                       styleConfiguration->shadeIntervals->push_back(shadeInterval);
-            //                       shadeInterval->attr.min.print("%d",ranges[i]->min);
-            //                       shadeInterval->attr.max.print("%d",ranges[i]->max);
-            //                       shadeInterval->attr.fillcolor=featureInterval->attr.fillcolor;
-            //                       shadeInterval->attr.bgcolor=featureInterval->attr.bgcolor;
-            //                       shadeInterval->attr.label=featureInterval->attr.label;
-            //                       delete ranges[i];
-            //                     }
           }
         }
       }
@@ -105,29 +136,43 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
 
   std::map<std::string, std::vector<Feature *>> featureStore = CConvertGeoJSON::featureStore;
 
-  int featureIndex = 0;
+  bool noOverlap = true;
+  if (styleConfiguration->styleConfig->RenderSettings.size() == 1) {
+    noOverlap = !styleConfiguration->styleConfig->RenderSettings[0]->attr.featuresoverlap.equals("true");
+  }
+  bool randomStart = false;
+  if (styleConfiguration->styleConfig->RenderSettings.size() == 1) {
+    randomStart = styleConfiguration->styleConfig->RenderSettings[0]->attr.randomizefeatures.equals("false");
+  }
+  srand(time(NULL));
   for (std::map<std::string, std::vector<Feature *>>::iterator itf = featureStore.begin(); itf != featureStore.end(); ++itf) {
     std::string fileName = itf->first.c_str();
     if (fileName == name.c_str()) {
-      // CDBDebug("Plotting %d features ONLY for %s", featureStore[fileName].size(), fileName.c_str());
-      for (std::vector<Feature *>::iterator feature = featureStore[fileName].begin(); feature != featureStore[fileName].end(); ++feature) {
+      std::vector<CRectangleText> rects;
+      size_t featureStoreSize = featureStore[fileName].size();
+      int featureRandomStart = 0; // For specifying a random polygon index to draw first
+      if (randomStart) {
+        featureRandomStart = rand() % featureStoreSize; // Random start for first feature to draw
+      }
+
+      for (size_t featureStepper = 0; featureStepper < featureStoreSize; featureStepper++) {
+        size_t featureIndex = (featureStepper + featureRandomStart) % featureStoreSize;
+        Feature *feature = featureStore[fileName][featureIndex];
         // FindAttributes for this feature
-        BorderStyle borderStyle = getAttributesForFeature(&(dataSource->getDataObject(0)->features[featureIndex]), (*feature)->getId(), styleConfiguration);
-        // CDBDebug("bs: %s %s", borderStyle.width.c_str(), borderStyle.color.c_str());
-        CColor drawPointLineColor2(borderStyle.color.c_str());
-        float drawPointLineWidth = borderStyle.width.toFloat();
+        FeatureStyle featureStyle = getAttributesForFeature(&(dataSource->getDataObject(0)->features[featureIndex]), feature->getId(), styleConfiguration);
+        CColor drawPointLineColor2(featureStyle.color.c_str());
+        float drawPointLineWidth = featureStyle.width;
         // if(featureIndex!=0)break;
-        std::vector<Polygon> *polygons = (*feature)->getPolygons();
-        CT::string id = (*feature)->getId();
-        //                  CDBDebug("feature[%s] %d of %d with %d polygons", id.c_str(), featureIndex,           featureStore[fileName].size(), polygons.size());
+        std::vector<Polygon> *polygons = feature->getPolygons();
+        CT::string id = feature->getId();
         for (std::vector<Polygon>::iterator itpoly = polygons->begin(); itpoly != polygons->end(); ++itpoly) {
           float *polyX = itpoly->getLons();
           float *polyY = itpoly->getLats();
           int numPoints = itpoly->getSize();
           float projectedX[numPoints];
           float projectedY[numPoints];
+          bool firstPolygon = true;
 
-          // CDBDebug("Plotting a polygon of %d points with %d holes [? of %d]", numPoints, itpoly->getHoles().size(), featureIndex);
           int cnt = 0;
           for (int j = 0; j < numPoints; j++) {
             double tprojectedX = polyX[j];
@@ -141,23 +186,43 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
               projectedX[cnt] = dlon;
               projectedY[cnt] = height - dlat;
               cnt++;
-            } else {
-              CDBDebug("status: %d %d [%f,%f]", status, j, tprojectedX, tprojectedY);
-              //                         dlat=CCONVERTUGRIDMESH_NODATA;
-              //                         dlon=CCONVERTUGRIDMESH_NODATA;
             }
-            //                       projectedX[j]=dlon;
-            //                       projectedY[j]=height-dlat;
           }
 
-          //                    CDBDebug("Draw polygon: %d points (%d)", cnt, numPoints);
           drawImage->poly(projectedX, projectedY, cnt, drawPointLineWidth, drawPointLineColor2, drawPointLineColor2, true, false);
-          //                    break;
+          // Determine centroid for first polygon.
+          if (firstPolygon) {
+            Point2D centroid = getCentroid(polyX, polyY, numPoints);
+            double centroidX = centroid.x;
+            double centroidY = centroid.y;
+            int status = 0;
+            if (projectionRequired) status = imageWarper->reprojfromLatLon(centroidX, centroidY);
+            if (!status) {
+              int dlon, dlat;
+              dlon = int((centroidX - offsetX) / cellSizeX) + 1;
+              dlat = int((centroidY - offsetY) / cellSizeY);
+              std::map<std::string, FeatureProperty *>::iterator it;
+              CT::string featureId;
+              Feature *f2 = feature;
+              std::map<std::string, FeatureProperty *> *fp = f2->getFp();
+              std::map<std::string, FeatureProperty *> *featurePropertyMap = feature->getFp();
+              it = feature->getFp()->find(std::string(featureStyle.propertyName.c_str()));
+              if (it != feature->getFp()->end()) {
+                featureId.print(it->second->toString(featureStyle.propertyFormat));
+              } else {
+                featureId = feature->getId();
+              }
+              CColor labelColor(featureStyle.fontColor);
+              drawImage->drawCenteredTextNoOverlap(dlon, height - dlat, featureStyle.fontFile.c_str(), featureStyle.fontSize, featureStyle.angle, featureStyle.padding, featureId, labelColor,
+                                                   noOverlap, rects);
+            }
+            firstPolygon = false;
+          }
+          // Draw the polygon holes
           if (true) {
             std::vector<PointArray> holes = itpoly->getHoles();
             int h = 0;
             for (std::vector<PointArray>::iterator itholes = holes.begin(); itholes != holes.end(); ++itholes) {
-              //                   CDBDebug("holes[%d]: %d found in %d", 0, itholes->getSize(), featureIndex);
               float *holeX = itholes->getLons();
               float *holeY = itholes->getLats();
               int holeSize = itholes->getSize();
@@ -165,7 +230,6 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
               float projectedHoleY[holeSize];
 
               for (int j = 0; j < holeSize; j++) {
-                //                      CDBDebug("J: %d", j);
                 double tprojectedX = holeX[j];
                 double tprojectedY = holeY[j];
                 int holeStatus = 0;
@@ -180,18 +244,15 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
                 }
                 projectedHoleX[j] = dlon;
                 projectedHoleY[j] = height - dlat;
-                //                      CDBDebug("J: %d", j);
               }
-              //                         CDBDebug("Draw hole[%d]: %d points", h, holeSize);
               drawImage->poly(projectedHoleX, projectedHoleY, holeSize, drawPointLineWidth, drawPointLineColor2, drawPointLineColor2, true, false);
               h++;
             }
           }
         }
 
-        std::vector<Polyline> *polylines = (*feature)->getPolylines();
-        CT::string idl = (*feature)->getId();
-        //  CDBDebug("feature[%s] %d of %d with %d polylines", idl.c_str(), featureIndex, featureStore[fileName].size(), polylines.size());
+        std::vector<Polyline> *polylines = feature->getPolylines();
+        CT::string idl = feature->getId();
         for (std::vector<Polyline>::iterator itpoly = polylines->begin(); itpoly != polylines->end(); ++itpoly) {
           float *polyX = itpoly->getLons();
           float *polyY = itpoly->getLats();
@@ -199,7 +260,6 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
           float projectedX[numPoints];
           float projectedY[numPoints];
 
-          // CDBDebug("Plotting a polyline of %d points [? of %d] %f", numPoints, featureIndex);
           int cnt = 0;
           for (int j = 0; j < numPoints; j++) {
             double tprojectedX = polyX[j];
@@ -213,23 +273,19 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
               projectedX[cnt] = dlon;
               projectedY[cnt] = height - dlat;
               cnt++;
-            } else {
-              // CDBDebug("status: %d %d [%f,%f]", status, j, tprojectedX, tprojectedY);
-              //                         dlat=CCONVERTUGRIDMESH_NODATA;
-              //                         dlon=CCONVERTUGRIDMESH_NODATA;
             }
-            //                       projectedX[j]=dlon;
-            //                       projectedY[j]=height-dlat;
           }
 
-          //                                        CDBDebug("Draw polygon: %d points (%d)", cnt, numPoints);
           drawImage->poly(projectedX, projectedY, cnt, drawPointLineWidth, drawPointLineColor2, drawPointLineColor2, false, false);
-          //                    break;
         }
 #ifdef MEASURETIME
         StopWatch_Stop("Feature drawn %d", featureIndex);
 #endif
-        featureIndex++;
+      }
+      // Draw polygon labels here, so they end up on top
+      for (CRectangleText rect : rects) {
+        // drawImage->setDisc(rect.llx, rect.lly, 2, rect.color, rect.color); // dot
+        drawImage->drawText(rect.llx, rect.lly, rect.fontFile.c_str(), rect.fontSize, rect.angle, rect.text.c_str(), rect.color);
       }
     }
   }
@@ -241,22 +297,31 @@ int CImgRenderPolylines::set(const char *values) {
   return 0;
 }
 
-BorderStyle CImgRenderPolylines::getAttributesForFeature(CFeature *feature, CT::string id, CStyleConfiguration *styleConfig) {
-  CT::string borderWidth = "3";
-  CT::string borderColor = "#008000FF";
+FeatureStyle CImgRenderPolylines::getAttributesForFeature(CFeature *feature, CT::string id, CStyleConfiguration *styleConfig) {
+  FeatureStyle fs;
+  fs.color = "#008000FF";
+  fs.width = 3;
+  fs.fontSize = 0;
+  fs.propertyFormat = "%s";
+  fs.padding = 3;
+  fs.angle = 0;
+  fs.fontColor = "#000000FF";
+  const char *fontLoc = getenv("ADAGUC_FONT");
+  if (fontLoc != NULL) {
+    fs.fontFile = fontLoc;
+  }
+
   for (size_t j = 0; j < styleConfig->featureIntervals->size(); j++) {
     // Draw border if borderWidth>0
     if ((*styleConfig->featureIntervals)[j]->attr.match.empty() == false) {
       CT::string match = (*styleConfig->featureIntervals)[j]->attr.match;
-      CT::string matchString = id;
+      CT::string matchString;
       if ((*styleConfig->featureIntervals)[j]->attr.matchid.empty() == false) {
         // match on matchid
         CT::string matchId;
         matchId = ((*styleConfig->featureIntervals)[j]->attr.matchid);
         std::map<std::string, std::string>::iterator attributeValueItr = feature->paramMap.find(matchId.c_str());
         if (attributeValueItr != feature->paramMap.end()) {
-          //                  attributeValues[featureNr] = attributeValueItr->c_str();
-          //                  CDBDebug("Match on %s", attributeValueItr->second.c_str());
           matchString = attributeValueItr->second.c_str();
         }
 
@@ -264,29 +329,50 @@ BorderStyle CImgRenderPolylines::getAttributesForFeature(CFeature *feature, CT::
         // match on id
         matchString = id;
       }
-      // CDBDebug("matchString: %s", matchString.c_str());
       regex_t regex;
       int ret = regcomp(&regex, match.c_str(), 0);
       if (!ret) {
         if (regexec(&regex, matchString.c_str(), 0, NULL, 0) == 0) {
+          CServerConfig::XMLE_FeatureInterval *fi = (*styleConfig->featureIntervals)[j];
           // Matched
-          // CDBDebug("Matched %s on %s!!", matchString.c_str(), match.c_str());
-          if (((*styleConfig->featureIntervals)[j]->attr.borderwidth.empty() == false) && (((*styleConfig->featureIntervals)[j]->attr.borderwidth.toFloat()) > 0)) {
-            borderWidth = (*styleConfig->featureIntervals)[j]->attr.borderwidth;
+          if ((fi->attr.borderwidth.empty() == false) && ((fi->attr.borderwidth.toFloat()) > 0)) {
+            fs.width = fi->attr.borderwidth.toFloat();
             // A border should be drawn
-            if ((*styleConfig->featureIntervals)[j]->attr.bordercolor.empty() == false) {
-              borderColor = (*styleConfig->featureIntervals)[j]->attr.bordercolor;
+            if (fi->attr.bordercolor.empty() == false) {
+              fs.color = fi->attr.bordercolor;
             } else {
               // Use default color
+              fs.color = CT::string("#00AA22FF");
             }
           } else {
             // Draw no border
+            fs.width = 0;
           }
+          if ((fi->attr.labelfontsize.empty() == false) && (fi->attr.labelfontsize.toFloat() > 0)) {
+            fs.fontSize = fi->attr.labelfontsize.toFloat();
+          }
+          if (fi->attr.labelfontfile.empty() == false) {
+            fs.fontFile = fi->attr.labelfontfile;
+          }
+          if (fi->attr.labelcolor.empty() == false) {
+            fs.fontColor = fi->attr.labelcolor;
+          }
+          if (fi->attr.labelpropertyname.empty() == false) {
+            fs.propertyName = fi->attr.labelpropertyname;
+          }
+          if (fi->attr.labelpropertyformat.empty() == false) {
+            fs.propertyFormat = fi->attr.labelpropertyformat;
+          }
+          if ((fi->attr.labelangle.empty() == false) && (fi->attr.labelangle.isNumeric())) {
+            fs.angle = fi->attr.labelangle.toFloat() * M_PI / 180;
+          }
+          if ((fi->attr.labelpadding.empty() == false) && (fi->attr.labelpadding.isInt())) {
+            fs.padding = fi->attr.labelpadding.toInt();
+          }
+          return fs;
         }
       }
     }
   }
-  // CDBDebug("found: %s %s", borderWidth.c_str(), borderColor.c_str());
-  BorderStyle bs = {borderWidth, borderColor};
-  return bs;
+  return fs;
 }

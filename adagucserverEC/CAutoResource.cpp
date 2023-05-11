@@ -81,8 +81,16 @@ int CAutoResource::configureDataset(CServerParams *srvParam, bool) {
 
     CDBDebug("Found dataset %s", datasetConfigFile.c_str());
 
+    // Find variables to substitute
+    CServerParams tempServerParam;
+    tempServerParam.parseConfigFile(datasetConfigFile, nullptr);
+    std::vector<CServerConfig::XMLE_Environment *> *extraEnvironment = nullptr;
+    if (tempServerParam.configObj != nullptr && tempServerParam.configObj->Configuration.size() > 0 && tempServerParam.configObj->Configuration[0]->Environment.size() > 0) {
+      extraEnvironment = &tempServerParam.configObj->Configuration[0]->Environment;
+    }
+
     // Add the dataset file to the current configuration
-    int status = srvParam->parseConfigFile(datasetConfigFile);
+    int status = srvParam->parseConfigFile(datasetConfigFile, extraEnvironment);
     if (status != 0) {
       CDBError("Invalid dataset configuration file.");
       return 1;
@@ -464,11 +472,12 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
     // Adjust online resource in order to pass on variable and source parameters
     CT::string onlineResource = srvParam->getOnlineResource();
     CT::string stringToAdd;
-    stringToAdd.concat("&source=");
-    stringToAdd.concat(srvParam->autoResourceLocation.c_str());
+    stringToAdd.concat("source=");
+    CT::string autoResourceLocation(srvParam->autoResourceLocation);
+    autoResourceLocation.encodeURLSelf(); // urlencode only the filename
+    stringToAdd.concat(autoResourceLocation);
     // stringToAdd.concat("&variable=");stringToAdd.concat(srvParam->autoResourceVariable.c_str());
 
-    stringToAdd.encodeURLSelf();
     stringToAdd.concat("&amp;");
     onlineResource.concat(stringToAdd.c_str());
     srvParam->setOnlineResource(onlineResource.c_str());
