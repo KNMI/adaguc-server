@@ -1,4 +1,4 @@
-# Instructions on how to setup postgres server for adaguc on Ubuntu 20
+# Instructions on how to setup postgres server for adaguc on Ubuntu 22
 
 [Back to Developing](../../Developing.md)
 
@@ -6,6 +6,7 @@
 #/bin/bash
 
 ### Setup postgres database for user adaguc and password adaguc, databasename adaguc ###
+sudo service postgresql start
 sudo -u postgres createuser --superuser adaguc
 sudo -u postgres psql postgres -c "ALTER USER adaguc PASSWORD 'adaguc';"
 sudo -u postgres psql postgres -c "CREATE DATABASE adaguc;"
