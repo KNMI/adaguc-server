@@ -10,27 +10,15 @@ For developing the code locally, you need:
 
 After the python wrapper is started, the adaguc-server is accessible on your workstation via http. The easiest way to explore datasets is via de autowms feature, which will give you an overview of available data on your machine via de browser.
 
-## 1. Compile adaguc-server
+## 1. Install packages need by adaguc-server
 
 To be able to compile adaguc-server you need to have the required dependencies installed. These can be installed via the package manager of your system. Scripts are available:
 
 - [Dependencies for redhat](./developing/scripts/redhat_install_dependencies.md)
 - [Dependencies for Ubuntu18](./developing/scripts/ubuntu_18_install_dependencies.md)
 - [Dependencies for Ubuntu20](./developing/scripts/ubuntu_20_install_dependencies.md)
+- [Dependencies for Ubuntu22](./developing/scripts/ubuntu_22_install_dependencies.md)
 - [Dependencies for Mac](./developing/scripts/mac_install_dependencies.md)
-
-After the dependencies have been installed you need to execute a script to start the compilation of the adaguc-server binaries.
-
-```
-bash compile.sh
-```
-
-Optionally you can check the correct functioning of the adaguc-server by starting the functional tests by doing
-
-```
-bash runtests.sh
-```
-
 
 ## 2. Setting up the postgresql server
 
@@ -39,6 +27,7 @@ We provide several scripts to setup postgresql on your machine:
 - [Postgres for redhat](./developing/scripts/redhat_setup_postgres.md)
 - [Postgres for Ubuntu18](./developing/scripts/ubuntu_18_setup_postgres.md)
 - [Postgres for Ubuntu20](./developing/scripts/ubuntu_20_setup_postgres.md)
+- [Postgres for Ubuntu22](./developing/scripts/ubuntu_22_setup_postgres.md)
 
 Or alternatively, run a postgresql database using docker:
 ```shell
@@ -72,6 +61,14 @@ pip3 install -r requirements.txt
 pip3 install -r requirements-dev.txt
 cd ./python/lib/ && python3 setup.py develop && cd ../../
 ```
+Make sure the data directories are available:
+
+``` 
+sudo mkdir -p /data/adaguc-data     # For data files connected to dataset configurations
+sudo mkdir -p /data/adaguc-autowms  # For Exploring your own data
+sudo mkdir -p /data/adaguc-datasets # For XML dataset config files
+sudo chown $USER: /data -R 
+```
 
 And after each restart you only have to do
 
@@ -84,6 +81,34 @@ export ADAGUC_AUTOWMS_DIR=/data/adaguc-autowms
 export ADAGUC_CONFIG=${ADAGUC_PATH}/python/lib/adaguc/adaguc-server-config-python-postgres.xml
 export ADAGUC_DB="user=adaguc password=adaguc host=localhost dbname=adaguc"
 export ADAGUC_ENABLELOGBUFFER=FALSE
+```
+
+# 4. compile adaguc server binaries
+
+After the dependencies have been installed you need to execute a script to start the compilation of the adaguc-server binaries.
+
+```
+bash compile.sh
+```
+
+Optionally you can check the correct functioning of the adaguc-server by starting the functional tests by doing
+
+```
+bash runtests.sh
+```
+
+# 5. Start adaguc-server
+
+```
+source env/bin/activate
+export ADAGUC_PATH=`pwd`
+export ADAGUC_DATASET_DIR=/data/adaguc-datasets
+export ADAGUC_DATA_DIR=/data/adaguc-data
+export ADAGUC_AUTOWMS_DIR=/data/adaguc-autowms
+export ADAGUC_CONFIG=${ADAGUC_PATH}/python/lib/adaguc/adaguc-server-config-python-postgres.xml
+export ADAGUC_DB="user=adaguc password=adaguc host=localhost dbname=adaguc"
+export ADAGUC_ENABLELOGBUFFER=FALSE
+
 # To enable core dump generation, additionally do:
 #ulimit -c unlimited
 #sudo sysctl -w kernel.core_pattern=core-adagucserver #
@@ -98,9 +123,10 @@ Note: the data directories cannot point to a symbolic link, for security purpose
 
 Note: For production purposes the server should be started with gunicorn: [Start adaguc-server with gunicorn](./developing/scripts/start-adaguc-server-production-with-gunicorn.md)
 
-# 4. Test the server with geographical referenced testdata
+# 6. Test the server with geographical referenced testdata
 
 Copy a test netcdf file and display:
+
 `cp ./data/datasets/testdata.nc /data/adaguc-autowms/`
 
 - You can browse your local instance via autowms using https://adaguc.knmi.nl/adaguc-viewer/index.html?autowms=http://localhost:8080/autowms
