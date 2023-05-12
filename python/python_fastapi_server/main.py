@@ -38,9 +38,10 @@ async def add_hsts_header(request: Request, call_next):
         external_address = os.environ["EXTERNALADDRESS"]
         scheme = urlsplit(external_address).scheme
         if scheme == "https":
-            response.headers["Strict-Transport-Security"] = "max-age=31536000"
-            response.headers["X-content-type"] = "nosniff"
-            response.headers["Content-Security-Policy"] = "script-src self"
+            response.headers[
+                "Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+            response.headers["X-Content-Type-Options"] = "nosniff"
+            response.headers["Content-Security-Policy"] = "default-src 'self'"
 
     return response
 
