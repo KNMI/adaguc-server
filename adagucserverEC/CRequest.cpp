@@ -787,7 +787,7 @@ int CRequest::process_wms_getcap_request() {
   if (pszADAGUCWriteToFile != NULL) {
     CReadFile::write(pszADAGUCWriteToFile, XMLdocument.c_str(), XMLdocument.length());
   } else {
-    printf("%s%c%c\n", "Content-Type:text/xml", 13, 10);
+    printf("%s%s%c%c\n", "Content-Type:text/xml", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
     printf("%s", XMLdocument.c_str());
   }
 
@@ -846,6 +846,7 @@ int CRequest::setDimValuesForDataSource(CDataSource *dataSource, CServerParams *
 };
 
 int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams *srvParam) {
+  bool allDimensionOptionsFound = true;
 #ifdef CREQUEST_DEBUG
   StopWatch_Stop("### [fillDimValuesForDataSource]");
 #endif
@@ -907,6 +908,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
       CDBDebug("alreadyAdded = %d", alreadyAdded);
 #endif
       if (alreadyAdded == false) {
+
         for (size_t k = 0; k < srvParam->requestDims.size(); k++) {
           if (srvParam->requestDims[k]->name.equals(&dimName)) {
 #ifdef CREQUEST_DEBUG
@@ -1046,6 +1048,8 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
         if (netCDFDimName.equals("none")) {
           continue;
         }
+        allDimensionOptionsFound = false;
+        CDBDebug("NOT ADDED: %s", dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
 
         /* A dimension where the default value is set to filetimedate should not be queried from the db */
         if (dataSource->cfgLayer->Dimension[i]->attr.defaultV.equals("filetimedate")) {
@@ -1168,6 +1172,13 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
   }
   CDBDebug("### [</fillDimValuesForDataSource>]");
 #endif
+  CDBDebug("allDimensionOptionsFound %d", allDimensionOptionsFound);
+  if (allDimensionOptionsFound && srvParam->getCacheControlOption() != CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE) {
+    srvParam->setCacheControlOption(CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE);
+  } else {
+    srvParam->setCacheControlOption(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE);
+  }
+
   return 0;
 }
 
@@ -3224,7 +3235,8 @@ int CRequest::process_querystring() {
         return 1;
       }
       drawImage.crop(1);
-      printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
+      const char *cacheControl = srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE).c_str();
+      printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl, 13, 10);
       drawImage.printImagePng8(true);
       return 0;
     }

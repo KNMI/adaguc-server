@@ -27,7 +27,7 @@ Configuration
 -   [Include](Include.md) - (location) - Include additional configuration
     files to the service
 -   [Logging](Logging.md) - (debug) - Configure the type of logging
--   [Settings](Settings.md) - (enablecleanupsystem) - Configure global settings of the server / Dataset
+-   [Settings](Settings.md) - (enablecleanupsystem, cleanupsystemlimit, cache_age_cacheableresources, cache_age_volatileresources) - Configure global settings of the server / Dataset
 -   [Environment](Environment.md) - (name, default) - For within dataset configuration, specify which values should be substituted
 
 <!-- -->
