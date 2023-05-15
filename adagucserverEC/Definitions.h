@@ -36,6 +36,7 @@
 #define CConfigReaderLayerTypeStyled 2
 #define CConfigReaderLayerTypeCascaded 3
 #define CConfigReaderLayerTypeBaseLayer 4
+#define CConfigReaderLayerTypeLiveUpdate 6
 
 // CRequest
 // Service options
@@ -161,7 +162,7 @@
 #define CREQUEST_DEBUG
 #define CIMAGEDATAWRITER_DEBUG
 #define CDATAREADER_DEBUG
-#define CXMLGEN_DEBUG
+define CXMLGEN_DEBUG
 #define CCDFNETCDFIO_DEBUG
 #define CCONVERTASCAT_DEBUG
 #define MEASURETIME
