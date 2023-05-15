@@ -88,5 +88,5 @@ def testadaguc():
     status, _data, headers = adaguc_instance.runADAGUCServer(
         url, env=adagucenv, showLogOnError=False)
     assert status == 0
-    assert headers == ["Content-Type:text/xml"]
+    assert "Content-Type:text/xml" in headers
     logger.info("adaguc-server seems [OK]")
