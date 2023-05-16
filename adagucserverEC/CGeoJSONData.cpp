@@ -30,6 +30,34 @@
 
 const char *Feature::className = "Feature";
 
+CT::string FeatureProperty::toString() {
+  CT::string s;
+  if (type == typeInt) {
+    s.print("%ld", intVal);
+  } else if (type == typeStr) {
+    s.print("%s", pstr.c_str());
+  } else if (type == typeDouble) {
+    s.print("%f", dblVal);
+  } else {
+    s.print("NONE");
+  }
+  return s;
+};
+
+CT::string FeatureProperty::toString(const char *fmt) {
+  CT::string s;
+  if (type == typeInt) {
+    s.print(fmt, intVal);
+  } else if (type == typeStr) {
+    s.print(fmt, pstr.c_str());
+  } else if (type == typeDouble) {
+    s.print(fmt, dblVal);
+  } else {
+    s.print("NONE");
+  }
+  return s;
+};
+
 GeoPoint::GeoPoint(float lon, float lat) {
   this->lat = lat;
   this->lon = lon;
@@ -182,7 +210,7 @@ std::map<std::string, FeatureProperty *> *Feature::getFp() { return &fp; }
 
 void Feature::addPoint(float lon, float lat) { points.push_back(GeoPoint(lon, lat)); }
 
-//#define TESTIT
+// #define TESTIT
 #ifdef TESTIT
 int main(int argc, char *argv[]) {
   Feature poly("0001");

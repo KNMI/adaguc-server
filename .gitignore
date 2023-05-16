@@ -114,6 +114,7 @@ Testing
 build
 adaguc.egg-info
 env
+venv
 dist
 
 tests/checker_report.txt
@@ -130,5 +131,4 @@ hclasses/testhclasses
 *CTestTestfile.cmake*
 *Makefile*
 *cmake_install.cmake*
-
-venv
+core-adagucserver*

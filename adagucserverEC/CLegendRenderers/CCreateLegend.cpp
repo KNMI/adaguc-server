@@ -140,6 +140,14 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
     }
   }
 
+  if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL && styleConfiguration->styleConfig->RenderSettings.size() == 1) {
+    CT::string renderHint = styleConfiguration->styleConfig->RenderSettings[0]->attr.renderhint;
+    /* When using the nearest or bilinear rendermethod, discrete classes defined by ShadeInterval can be used if the renderhint is set to RENDERHINT_DISCRETECLASSES */
+    if (renderHint.equals(RENDERHINT_DISCRETECLASSES)) {
+      legendType = discrete;
+    }
+  }
+
   /*
    * if(legendType==continous){
    *   if(legendHeight>280)legendHeight=280;

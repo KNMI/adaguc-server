@@ -52,6 +52,7 @@ add_library(
     CConvertCurvilinear.h
     CConvertHexagon.h
     CConvertKNMIH5VolScan.h
+    CDrawFunction.h
     CInspire.h
     CGetFileInfo.h
     CStyleConfiguration.h
@@ -79,12 +80,15 @@ add_library(
     CAreaMapper.h
     CSLD.h
     CHandleMetadata.h
+    CColor.h
+    CRectangleText.h
     CDataReader.cpp
     COGCDims.cpp
     CImageWarper.cpp
     CGeoParams.cpp
     CCairoPlotter.cpp
     CDrawImage.cpp
+    CDrawFunction.cpp
     CServerError.cpp
     CRequest.cpp
     CXMLGen.cpp
@@ -145,6 +149,7 @@ add_library(
     CCreateTiles.cpp
     CUniqueRequests/CUniqueRequests.cpp
     testadagucserver.cpp
+    CRectangleText.cpp
 )
 
 target_include_directories(adagucserverEC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${Cairo_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIRS} ${PostgreSQL_INCLUDE_DIRS} ${GDAL_INCLUDE_DIRS} ${PROJ_INCLUDE_DIR})
@@ -152,4 +157,4 @@ target_link_libraries(adagucserverEC CCDFDataModel hclasses ${NetCDF_LIBRARIES} 
 
 # Build unit test executable
 add_executable(testadagucserver testadagucserver.cpp)
-target_link_libraries(testadagucserver PRIVATE adagucserverEC CCDFDataModel hclasses)
+target_link_libraries(testadagucserver PRIVATE adagucserverEC CCDFDataModel hclasses CppUnitLite)

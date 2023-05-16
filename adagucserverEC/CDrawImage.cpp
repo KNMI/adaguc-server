@@ -41,7 +41,6 @@ CDrawImage::CDrawImage() {
   _bEnableTrueColor = false;
   _bEnableTransparency = false;
   _bEnableTrueColor = false;
-  dNumImages = 0;
   Geo = new CGeoParams();
 
   cairo = NULL;
@@ -729,7 +728,7 @@ void CDrawImage::getPixelTrueColor(int x, int y, unsigned char &r, unsigned char
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
     cairo->getPixel(x, y, r, g, b, a);
   } else {
-    int dTranspColor;
+    int dTranspColor = -1;
     if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
       dTranspColor = gdImageGetTransparent(image);
     }
@@ -1099,6 +1098,42 @@ void CDrawImage::drawCenteredText(int x, int y, const char *fontfile, float size
     gdImageStringFT(image, &brect[0], tcolor, (char *)fontfile, size, angle, x - sw / 2, y - sh / 2, (char *)_text);
     delete[] _text;
   }
+}
+
+void CDrawImage::drawCenteredTextNoOverlap(int x, int y, const char *fontFile, float size, float angle, int padding, const char *text, CColor color, bool noOverlap,
+                                           std::vector<CRectangleText> &rects) {
+  if (size <= 0) { // size 0 means do not draw label
+    return;
+  }
+
+  int w, h;
+  float radAngle = angle * M_PI / 180;
+  CRectangleText rect;
+  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
+    CCairoPlotter *freeType = this->getCairoPlotter(fontFile, size, Geo->dWidth, Geo->dHeight, cairo->getByteBuffer());
+    freeType->setColor(color.r, color.g, color.b, color.a);
+    freeType->getTextSize(w, h, radAngle, text);
+    rect.init(x, y, (x + w), (y + h), angle, padding, text, fontFile, size, color);
+
+  } else {
+    // TODO GD renderer does not center text yet
+    char *_text = new char[strlen(text) + 1];
+    memcpy(_text, text, strlen(text) + 1);
+    int tcolor = getClosestGDColor(color.r, color.g, color.b);
+    if (_bEnableTrueColor) tcolor = -tcolor;
+    // Use the text size for angle 0 for detecting overlaps
+    gdImageStringFT(NULL, &brect[0], tcolor, (char *)fontFile, size, radAngle, x, y, (char *)_text);
+    rect.init(brect[0], brect[5], brect[4], brect[1], angle, padding, text, fontFile, size, color);
+    delete[] _text;
+  }
+  if (noOverlap) {
+    for (size_t j = 0; j < rects.size(); j++) {
+      if (rects[j].overlaps(rect)) {
+        return;
+      }
+    }
+  }
+  rects.push_back(rect);
 }
 
 void CDrawImage::drawText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color) {

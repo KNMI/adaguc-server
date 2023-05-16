@@ -25,11 +25,10 @@
 
 #ifndef CImageWarper_H
 #define CImageWarper_H
-#define ACCEPT_USE_OF_DEPRECATED_PROJ_API_H 1
 #include "CServerParams.h"
 #include "CDataReader.h"
 #include "CDrawImage.h"
-#include <proj_api.h>
+#include <proj.h>
 #include <math.h>
 #include "CDebugger.h"
 #include "CStopWatch.h"
@@ -67,7 +66,6 @@ private:
   int dMaxExtentDefined;
 
   DEF_ERRORFUNCTION();
-  unsigned char pixel;
   CGeoParams *_geoDest;
   CT::string sourceCRSString;
   CT::string destinationCRS;
@@ -78,28 +76,25 @@ private:
   int _initreprojSynchronized(const char *projString, CGeoParams *GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj);
 
 public:
-  bool destNeedsDegreeRadianConversion, sourceNeedsDegreeRadianConversion, requireReprojection;
+  bool requireReprojection;
   CImageWarper() {
     prj = NULL;
-    sourcepj = NULL;
-    destpj = NULL;
-    latlonpj = NULL;
+    projSourceToDest = nullptr;
+    projSourceToLatlon = nullptr;
+    projLatlonToDest = nullptr;
     initialized = false;
-    proj4Context = NULL;
   }
   ~CImageWarper() {
     if (initialized == true) {
       closereproj();
       prj = NULL;
-      sourcepj = NULL;
-      destpj = NULL;
-      latlonpj = NULL;
+      projSourceToDest = nullptr;
+      projSourceToLatlon = nullptr;
+      projLatlonToDest = nullptr;
       initialized = false;
-      proj4Context = NULL;
     }
   }
-  projPJ sourcepj, destpj, latlonpj;
-  projCtx proj4Context;
+  PJ *projSourceToDest, *projSourceToLatlon, *projLatlonToDest;
   CT::string getDestProjString() { return destinationCRS; }
   int initreproj(CDataSource *dataSource, CGeoParams *GeoDest, std::vector<CServerConfig::XMLE_Projection *> *prj);
   int initreproj(const char *projString, CGeoParams *GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj);
@@ -133,6 +128,12 @@ public:
    * @return CT::string Will return proj4 parameters for given projection id
    */
   static CT::string getProj4FromId(CDataSource *dataSource, CT::string projectionId);
+
+  /**
+   * Returns the corrected projection string and a factor with witch the x and y axis of the data need to be scaled.
+   * Needed for a conversion for KM to Meter for example
+   */
+  static std::tuple<CT::string, double> fixProjection(CT::string projectionString);
 };
 
 #endif

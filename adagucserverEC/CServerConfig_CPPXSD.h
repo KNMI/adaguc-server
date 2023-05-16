@@ -689,6 +689,8 @@ public:
     class Cattr {
     public:
       CT::string match, matchid, bgcolor, label, fillcolor, linecolor, linewidth, bordercolor, borderwidth;
+      CT::string labelfontfile, labelfontsize, labelcolor, labelpropertyname, labelpropertyformat, labelangle;
+      CT::string labelpadding;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
       if (equals("match", 5, attrname)) {
@@ -706,17 +708,32 @@ public:
       } else if (equals("bgcolor", 7, attrname)) {
         attr.bgcolor.copy(attrvalue);
         return;
-      } else if (equals("linecolor", 9, attrname)) {
-        attr.linecolor.copy(attrvalue);
-        return;
-      } else if (equals("linewidth", 9, attrname)) {
-        attr.linewidth.copy(attrvalue);
-        return;
       } else if (equals("borderwidth", 11, attrname)) {
         attr.borderwidth.copy(attrvalue);
         return;
       } else if (equals("bordercolor", 11, attrname)) {
         attr.bordercolor.copy(attrvalue);
+        return;
+      } else if (equals("labelfontsize", 13, attrname)) {
+        attr.labelfontsize.copy(attrvalue);
+        return;
+      } else if (equals("labelfontfile", 13, attrname)) {
+        attr.labelfontfile.copy(attrvalue);
+        return;
+      } else if (equals("labelcolor", 10, attrname)) {
+        attr.labelcolor.copy(attrvalue);
+        return;
+      } else if (equals("labelpropertyname", 17, attrname)) {
+        attr.labelpropertyname.copy(attrvalue);
+        return;
+      } else if (equals("labelpropertyformat", 19, attrname)) {
+        attr.labelpropertyformat.copy(attrvalue);
+        return;
+      } else if (equals("labelangle", 10, attrname)) {
+        attr.labelangle.copy(attrvalue);
+        return;
+      } else if (equals("labelpadding", 12, attrname)) {
+        attr.labelpadding.copy(attrvalue);
         return;
       }
     }
@@ -754,7 +771,7 @@ public:
   public:
     class Cattr {
     public:
-      CT::string settings, striding, renderer, scalewidth, scalecontours;
+      CT::string settings, striding, renderer, scalewidth, scalecontours, renderhint, randomizefeatures, featuresoverlap;
     } attr;
     void addAttribute(const char *name, const char *value) {
       if (equals("settings", 8, name)) {
@@ -766,11 +783,20 @@ public:
       } else if (equals("striding", 8, name)) {
         attr.striding.copy(value);
         return;
+      } else if (equals("renderhint", 10, name)) {
+        attr.renderhint.copy(value);
+        return;
       } else if (equals("scalewidth", 10, name)) {
         attr.scalewidth.copy(value);
         return;
       } else if (equals("scalecontours", 13, name)) {
         attr.scalecontours.copy(value);
+        return;
+      } else if (equals("randomizefeatures", 17, name)) {
+        attr.randomizefeatures.copy(value);
+        return;
+      } else if (equals("featuresoverlap", 15, name)) {
+        attr.featuresoverlap.copy(value);
         return;
       }
     }
@@ -983,7 +1009,9 @@ public:
       CXMLSerializerInterface *base = (CXMLSerializerInterface *)baseClass;
       base->currentNode = (CXMLObjectInterface *)this;
       if (rc == 0)
-        if (value != NULL) this->value.copy(CDirReader::makeCleanPath(value));
+        if (value != NULL) {
+          this->value.copy(CDirReader::makeCleanPath(value));
+        }
       if (pt2Class != NULL) pt2Class->addElement(baseClass, rc - pt2Class->level, name, value);
     }
 
@@ -1194,15 +1222,34 @@ public:
     }
   };
 
+  class XMLE_Environment : public CXMLObjectInterface {
+  public:
+    class Cattr {
+    public:
+      CT::string name, defaultVal;
+    } attr;
+    void addAttribute(const char *name, const char *value) {
+      if (equals("name", 4, name)) {
+        attr.name.copy(value);
+        return;
+      } else if (equals("default", 7, name)) {
+        attr.defaultVal.copy(value);
+        return;
+      }
+    }
+  };
   class XMLE_Settings : public CXMLObjectInterface {
   public:
     class Cattr {
     public:
-      CT::string enablecleanupsystem;
+      CT::string enablecleanupsystem, cleanupsystemlimit;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
       if (equals("enablecleanupsystem", 19, attrname)) {
         attr.enablecleanupsystem.copy(attrvalue);
+        return;
+      } else if (equals("cleanupsystemlimit", 18, attrname)) {
+        attr.cleanupsystemlimit.copy(attrvalue);
         return;
       }
     }
@@ -1838,6 +1885,7 @@ public:
     std::vector<XMLE_Logging *> Logging;
     std::vector<XMLE_Symbol *> Symbol;
     std::vector<XMLE_Settings *> Settings;
+    std::vector<XMLE_Environment *> Environment;
 
     ~XMLE_Configuration() {
       XMLE_DELOBJ(Legend);
@@ -1858,6 +1906,7 @@ public:
       XMLE_DELOBJ(Logging);
       XMLE_DELOBJ(Symbol);
       XMLE_DELOBJ(Settings);
+      XMLE_DELOBJ(Environment);
     }
     void addElement(CXMLObjectInterface *baseClass, int rc, const char *name, const char *value) {
       CXMLSerializerInterface *base = (CXMLSerializerInterface *)baseClass;
@@ -1902,6 +1951,8 @@ public:
           XMLE_ADDOBJ(Symbol);
         } else if (equals("Settings", 8, name)) {
           XMLE_ADDOBJ(Settings);
+        } else if (equals("Environment", 11, name)) {
+          XMLE_ADDOBJ(Environment);
         }
       }
       if (pt2Class != NULL) pt2Class->addElement(baseClass, rc - pt2Class->level, name, value);

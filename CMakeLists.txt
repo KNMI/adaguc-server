@@ -3,18 +3,22 @@ project(adaguc-server VERSION 3.0.0)
 enable_testing()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
 set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
 MESSAGE(STATUS "Processor: ${CMAKE_HOST_SYSTEM_PROCESSOR}")
-IF (CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "arm64")
+IF (CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "arm64" OR CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "aarch64")
   set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -Wall -Wextra")
-  set(CMAKE_CXX_FLAGS_RELEASE "-O3 -mcpu=native")
+  set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffp-contract=off")
 ELSE()
-  set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -Wall -Wextra")
+  set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -Wall -Wextra -g3")
+  #set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -Wall -Wextra -g3 -fsanitize=address") # <= Use to find memory issues.
   set(CMAKE_CXX_FLAGS_RELEASE "-O3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse")
 ENDIF()
 MESSAGE(STATUS "CMAKE_CXX_FLAGS_DEBUG: ${CMAKE_CXX_FLAGS_DEBUG}")

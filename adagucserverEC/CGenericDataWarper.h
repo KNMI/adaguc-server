@@ -1,9 +1,8 @@
 #ifndef GenericDataWarper_H
 #define GenericDataWarper_H
-#define ACCEPT_USE_OF_DEPRECATED_PROJ_API_H 1
 #include <math.h>
 #include <stdlib.h>
-#include <proj_api.h>
+#include <proj.h>
 #include <math.h>
 #include <cfloat>
 #include "CGeoParams.h"
@@ -400,29 +399,16 @@ public:
       for (int y = 0; y < dataHeight + 1; y++) {
         for (int x = 0; x < dataWidth + 1; x++) {
           size_t p = x + y * (dataWidth + 1);
-          double valX = dfSourcedExtW * double(double(x + halfCell) + PXExtentBasedOnSource[0]) + dfSourceOrigX;
-          double valY = dfSourcedExtH * double(double(y - halfCell) + PXExtentBasedOnSource[1]) + dfSourceOrigY;
+          double valX = dfSourcedExtW * (x + halfCell + PXExtentBasedOnSource[0]) + dfSourceOrigX;
+          double valY = dfSourcedExtH * (y - halfCell + PXExtentBasedOnSource[1]) + dfSourceOrigY;
           px[p] = valX;
           py[p] = valY;
           skip[p] = false;
         }
       }
       if (warper->isProjectionRequired()) {
-        if (warper->sourceNeedsDegreeRadianConversion) {
-          for (size_t j = 0; j < dataSize; j++) {
-            px[j] *= DEG_TO_RAD;
-            py[j] *= DEG_TO_RAD;
-          }
-        }
-
-        if (pj_transform(warper->sourcepj, warper->destpj, dataSize, 0, px, py, NULL)) {
+        if (proj_trans_generic(warper->projSourceToDest, PJ_FWD, px, sizeof(double), dataSize, py, sizeof(double), dataSize, nullptr, 0, 0, nullptr, 0, 0) != dataSize) {
           CDBDebug("Unable to do pj_transform");
-        }
-        if (warper->destNeedsDegreeRadianConversion) {
-          for (size_t j = 0; j < dataSize; j++) {
-            px[j] /= DEG_TO_RAD;
-            py[j] /= DEG_TO_RAD;
-          }
         }
       }
 
@@ -447,29 +433,18 @@ public:
       for (size_t y = 0; y < dataHeightStrided; y++) {
         for (size_t x = 0; x < dataWidthStrided; x++) {
           size_t pS = x + y * dataWidthStrided;
-          double valX = dfSourcedExtW * double(double(x * projStrideFactor + halfCell) + PXExtentBasedOnSource[0]) + dfSourceOrigX;
-          double valY = dfSourcedExtH * double(double(y * projStrideFactor - halfCell) + PXExtentBasedOnSource[1]) + dfSourceOrigY;
+
+          double valX = dfSourcedExtW * (x * projStrideFactor + halfCell + PXExtentBasedOnSource[0]) + dfSourceOrigX;
+          double valY = dfSourcedExtH * (y * projStrideFactor - halfCell + PXExtentBasedOnSource[1]) + dfSourceOrigY;
           pxStrided[pS] = valX;
           pyStrided[pS] = valY;
         }
       }
 
       if (warper->isProjectionRequired()) {
-        if (warper->sourceNeedsDegreeRadianConversion) {
-          for (size_t j = 0; j < dataSizeStrided; j++) {
-            pxStrided[j] *= DEG_TO_RAD;
-            pyStrided[j] *= DEG_TO_RAD;
-          }
-        }
-
-        if (pj_transform(warper->sourcepj, warper->destpj, dataSizeStrided, 0, pxStrided, pyStrided, NULL)) {
+        if (proj_trans_generic(warper->projSourceToDest, PJ_FWD, pxStrided, sizeof(double), dataSizeStrided, pyStrided, sizeof(double),
+                               dataSizeStrided, nullptr, 0, 0, nullptr, 0, 0) != dataSizeStrided) {
           CDBDebug("Unable to do pj_transform");
-        }
-        if (warper->destNeedsDegreeRadianConversion) {
-          for (size_t j = 0; j < dataSizeStrided; j++) {
-            pxStrided[j] /= DEG_TO_RAD;
-            pyStrided[j] /= DEG_TO_RAD;
-          }
         }
       }
       for (int y = 0; y < dataHeight + 1; y++) {
@@ -523,6 +498,11 @@ public:
           double px3 = px[p + dataWidth + 2];
           double px4 = px[p + dataWidth + 1];
 
+          double py1 = py[p];
+          double py2 = py[p + 1];
+          double py3 = py[p + dataWidth + 2];
+          double py4 = py[p + dataWidth + 1];
+
           // CDBDebug("destGeoParams = %s",destGeoParams->CRS.c_str());
           if (CGeoParams::isLonLatProjection(&destGeoParams->CRS) == true || CGeoParams::isMercatorProjection(&destGeoParams->CRS) == true) {
             double lons[4];
@@ -568,36 +548,15 @@ public:
             px4 = lons[3];
           }
 
-          px1 -= dfDestOrigX;
-          px1 *= multiDestX;
-          px1 += 0.5;
-          px2 -= dfDestOrigX;
-          px2 *= multiDestX;
-          px2 += 0.5;
-          px3 -= dfDestOrigX;
-          px3 *= multiDestX;
-          px3 += 0.5;
-          px4 -= dfDestOrigX;
-          px4 *= multiDestX;
-          px4 += 0.5;
+          px1 = (px1 - dfDestOrigX) * multiDestX + 0.5;
+          px2 = (px2 - dfDestOrigX) * multiDestX + 0.5;
+          px3 = (px3 - dfDestOrigX) * multiDestX + 0.5;
+          px4 = (px4 - dfDestOrigX) * multiDestX + 0.5;
 
-          double py1 = py[p];
-          double py2 = py[p + 1];
-          double py3 = py[p + dataWidth + 2];
-          double py4 = py[p + dataWidth + 1];
-
-          py1 -= dfDestOrigY;
-          py1 *= multiDestY;
-          py1 += 0.5;
-          py2 -= dfDestOrigY;
-          py2 *= multiDestY;
-          py2 += 0.5;
-          py3 -= dfDestOrigY;
-          py3 *= multiDestY;
-          py3 += 0.5;
-          py4 -= dfDestOrigY;
-          py4 *= multiDestY;
-          py4 += 0.5;
+          py1 = (py1 - dfDestOrigY) * multiDestY + 0.5;
+          py2 = (py2 - dfDestOrigY) * multiDestY + 0.5;
+          py3 = (py3 - dfDestOrigY) * multiDestY + 0.5;
+          py4 = (py4 - dfDestOrigY) * multiDestY + 0.5;
 
           if (x == 0) avgDX = px2;
           if (y == 0) avgDY = py4;

@@ -1,4 +1,4 @@
-# Instructions on how to setup postgres server for adaguc on Ubuntu 18
+# Instructions on how to setup postgres server for adaguc on Ubuntu 20
 
 [Back to Developing](../../Developing.md)
 
