@@ -391,7 +391,7 @@ void CProj4ToCF::initGeosPerspective(CDF::Variable *projectionVariable, std::vec
   float v = 0;
   CT::string s;
   projectionVariable->addAttribute(new CDF::Attribute("grid_mapping_name", "geostationary"));
-  v = getProj4ValueF("h", projKVPList, 4.263970098E7, CProj4ToCF::convertToM);
+  v = getProj4ValueF("h", projKVPList, 4.2163970098E7, CProj4ToCF::convertToM);
   projectionVariable->addAttribute(new CDF::Attribute("perspective_point_height", CDF_FLOAT, &v, 1));
   v = getProj4ValueF("a", projKVPList, 6378137.0, CProj4ToCF::convertToM);
   projectionVariable->addAttribute(new CDF::Attribute("semi_major_axis", CDF_FLOAT, &v, 1));
