@@ -323,7 +323,7 @@ int CCairoPlotter::_drawFreeTypeText(int x, int y, int &w, int &h, float angle, 
   pen.y = (my_target_height - y) * 64;
   bool c3seen = false;
   /* Using the 8859-15 standard */
-  for (n = 0; n < num_chars; n++) { /* set transformation */
+  for (n = 0; n < num_chars; n++) {        /* set transformation */
 
     FT_Set_Transform(face, &matrix, &pen); /* load glyph image into the slot (erase previous one) */
 
@@ -567,7 +567,7 @@ void CCairoPlotter::circle(int x, int y, int r) {
   */
 }
 
-void CCairoPlotter::filledcircle(int x, int y, int r) {
+void CCairoPlotter::filledcircle(int x, int y, int r, float outLineWidth) {
   cairo_save(cr);
   // cairo_set_line_width(cr, 1.0);
   // cairo_set_source_rgba(cr, 1, 0.2, 0.2, 0.6);
@@ -576,7 +576,7 @@ void CCairoPlotter::filledcircle(int x, int y, int r) {
   cairo_fill(cr);
 
   cairo_arc(cr, x, y, r, 0, 2 * M_PI);
-  cairo_set_line_width(cr, 0.8);
+  cairo_set_line_width(cr, outLineWidth);
   cairo_set_source_rgba(cr, rr, rg, rb, ra);
   cairo_stroke(cr);
   cairo_restore(cr);

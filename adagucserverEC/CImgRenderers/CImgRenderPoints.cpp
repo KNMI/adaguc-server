@@ -30,6 +30,7 @@ const char *CImgRenderPoints::className = "CImgRenderPoints";
 
 void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, CServerConfig::XMLE_Point *pointConfig) {
   SimpleSymbol *currentSymbol = NULL;
+  double dataSourceScaling = dataSource->getScaling();
   if (pointConfig->attr.symbol.empty() == false) {
     CT::string symbolName = pointConfig->attr.symbol.c_str();
     /* Lets see if the symbol is already in the map */
@@ -360,14 +361,14 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
                     }
                     drawImage->poly(xPoly, yPoly, currentSymbol->coordinates.size(), 1, drawPointLineColor, drawPointFillColor, true, true);
                   } else {
-                    drawImage->setDisc(x, y, perPointDrawPointDiscRadius, drawPointFillColor, drawPointLineColor);
+                    drawImage->setDisc(x, y, perPointDrawPointDiscRadius, drawPointFillColor, drawPointLineColor, 0.8 * dataSourceScaling);
                   }
                 }
               } else {
                 if (drawZoomablePoints) {
                   drawImage->setEllipse(x, y, (*pts)[j].radiusX, (*pts)[j].radiusY, (*pts)[j].rotation, drawPointFillColor, drawPointLineColor);
                 } else {
-                  if (dataObjectIndex == 0) drawImage->setDisc(x, y, drawPointDiscRadius, drawPointFillColor, drawPointLineColor);
+                  if (dataObjectIndex == 0) drawImage->setDisc(x, y, drawPointDiscRadius, drawPointFillColor, drawPointLineColor, 0.8 * dataSourceScaling);
                 }
               }
 
@@ -431,14 +432,14 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
             if (!useDrawPointFillColor) { //(dataSource->getNumDataObjects()==1) {
               if ((dataSource->getStyle() != NULL) && (dataSource->getStyle()->shadeIntervals != NULL)) {
                 CColor col = getPixelColorForValue(dataSource, v);
-                drawImage->setTextDisc(x, y, drawPointDiscRadius, t.c_str(), drawPointFontFile, drawPointFontSize, drawPointTextColor, col, drawPointLineColor);
+                drawImage->setTextDisc(x, y, drawPointDiscRadius, t.c_str(), drawPointFontFile, drawPointFontSize, drawPointTextColor, col, drawPointLineColor, 0.8 * dataSourceScaling);
               } else {
                 int pointColorIndex = getPixelIndexForValue(dataSource, v); // Use value of dataObject[0] for colour
                 CColor col = drawImage->getColorForIndex(pointColorIndex);
-                drawImage->setTextDisc(x, y, drawPointDiscRadius, t.c_str(), drawPointFontFile, drawPointFontSize, drawPointTextColor, col, drawPointLineColor);
+                drawImage->setTextDisc(x, y, drawPointDiscRadius, t.c_str(), drawPointFontFile, drawPointFontSize, drawPointTextColor, col, drawPointLineColor, 0.8 * dataSourceScaling);
               }
             } else {
-              drawImage->setTextDisc(x, y, drawPointDiscRadius, t.c_str(), drawPointFontFile, drawPointFontSize, drawPointTextColor, drawPointFillColor, drawPointLineColor);
+              drawImage->setTextDisc(x, y, drawPointDiscRadius, t.c_str(), drawPointFontFile, drawPointFontSize, drawPointTextColor, drawPointFillColor, drawPointLineColor, 0.8 * dataSourceScaling);
             }
             if (drawPointDot) drawImage->circle(x, y, 1, drawPointLineColor, 0.65);
           }
@@ -565,7 +566,7 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
 
     float strength = (*p1)[j].v;
     float direction = (*p2)[j].v;
-    if (direction == direction) direction += rotation; // Nan stays Nan
+    if (direction == direction) direction += rotation;        // Nan stays Nan
 
     if ((direction == direction) && (strength == strength)) { // Check for Nan
       //        CDBDebug("Drawing wind %f,%f for [%d,%d]", strength, direction, x, y);
@@ -619,7 +620,7 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
         int x = (*p1)[j].x;
         int y = dataSource->dHeight - (*p1)[j].y;
         t.print(drawPointTextFormat.c_str(), strength);
-        drawImage->setTextDisc(x, y, drawPointDiscRadius, t.c_str(), drawPointFontFile, drawPointFontSize, drawPointTextColor, drawPointFillColor, drawPointLineColor);
+        drawImage->setTextDisc(x, y, drawPointDiscRadius, t.c_str(), drawPointFontFile, drawPointFontSize, drawPointTextColor, drawPointFillColor, drawPointLineColor, 0.8 * dataSource->getScaling());
         drawImage->drawVector2(x, y, ((90 + direction) / 360.) * 3.141592654 * 2, 10, drawPointDiscRadius, drawPointFillColor, drawVectorLineWidth);
       }
     }
@@ -725,6 +726,11 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
     if (pointConfig->attr.plotstationid.empty() == false) {
       drawPointPlotStationId = pointConfig->attr.plotstationid.equalsIgnoreCase("true");
     }
+
+    double dataSourceScaling = dataSource->getScaling();
+    drawPointDiscRadius *= dataSourceScaling;
+    drawPointTextRadius *= dataSourceScaling;
+    drawPointFontSize *= dataSourceScaling;
 
     if (drawPointPointStyle.equalsIgnoreCase("disc")) {
       drawDiscs = true;

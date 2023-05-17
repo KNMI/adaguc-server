@@ -445,7 +445,7 @@ void CDrawImage::drawBarb(int x, int y, double direction, double strength, CColo
   wx1 = double(x) - dx1;
   wy1 = double(y) + dy1; // wind barb top (flag side)
   wx2 = double(x);
-  wy2 = double(y); // wind barb root
+  wy2 = double(y);       // wind barb root
 
   circle(int(wx2), int(wy2), 2, color, lineWidth);
   int nrPos = 10;
@@ -976,12 +976,12 @@ void CDrawImage::drawText(int x, int y, const char *fontfile, float size, float 
     delete[] _text;
   }
 }
-void CDrawImage::setDisc(int x, int y, int discRadius, int fillCol, int lineCol) {
+void CDrawImage::setDisc(int x, int y, int discRadius, int fillCol, int lineCol, float outLineWidth) {
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
     if (currentLegend == NULL) return;
     cairo->setFillColor(currentLegend->CDIred[fillCol], currentLegend->CDIgreen[fillCol], currentLegend->CDIblue[fillCol], currentLegend->CDIalpha[fillCol]);
     cairo->setColor(currentLegend->CDIred[lineCol], currentLegend->CDIgreen[lineCol], currentLegend->CDIblue[lineCol], currentLegend->CDIalpha[fillCol]);
-    cairo->filledcircle(x, y, discRadius);
+    cairo->filledcircle(x, y, discRadius, outLineWidth);
     // cairo->setColor(textcolor.r,textcolor.g,textcolor.b,textcolor.a);
     cairo->circle(x, y, discRadius, 1);
     //    circle( x,  y,  discRadius,lineCol,1);
@@ -991,12 +991,12 @@ void CDrawImage::setDisc(int x, int y, int discRadius, int fillCol, int lineCol)
   }
 }
 
-void CDrawImage::setDisc(int x, int y, int discRadius, CColor fillColor, CColor lineColor) {
+void CDrawImage::setDisc(int x, int y, int discRadius, CColor fillColor, CColor lineColor, float outLineWidth) {
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
     if (currentLegend == NULL) return;
     cairo->setFillColor(fillColor.r, fillColor.g, fillColor.b, fillColor.a);
     cairo->setColor(lineColor.r, lineColor.g, lineColor.b, lineColor.a);
-    cairo->filledcircle(x, y, discRadius);
+    cairo->filledcircle(x, y, discRadius, outLineWidth);
     //    circle( x,  y,  discRadius,lineColor,1);
   } else {
     int fillCol = getClosestGDColor(fillColor.r, fillColor.g, fillColor.b);
@@ -1015,12 +1015,12 @@ void CDrawImage::setEllipse(int x, int y, float discRadiusX, float discRadiusY, 
   }
 }
 
-void CDrawImage::setDisc(int x, int y, float discRadius, CColor fillColor, CColor lineColor) {
+void CDrawImage::setDisc(int x, int y, float discRadius, CColor fillColor, CColor lineColor, float outLineWidth) {
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
     if (currentLegend == NULL) return;
     cairo->setFillColor(fillColor.r, fillColor.g, fillColor.b, fillColor.a);
     cairo->setColor(lineColor.r, lineColor.g, lineColor.b, lineColor.a);
-    cairo->filledcircle(x, y, discRadius);
+    cairo->filledcircle(x, y, discRadius, outLineWidth);
     //    circle( x,  y,  discRadius,lineColor,1);
   } else {
     int fillCol = getClosestGDColor(fillColor.r, fillColor.g, fillColor.b);
@@ -1029,12 +1029,12 @@ void CDrawImage::setDisc(int x, int y, float discRadius, CColor fillColor, CColo
   }
 }
 
-void CDrawImage::setTextDisc(int x, int y, int discRadius, const char *text, const char *fontfile, float fontsize, CColor textcolor, CColor fillcolor, CColor lineColor) {
+void CDrawImage::setTextDisc(int x, int y, int discRadius, const char *text, const char *fontfile, float fontsize, CColor textcolor, CColor fillcolor, CColor lineColor, float outLineWidth) {
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
     if (currentLegend == NULL) return;
     cairo->setFillColor(fillcolor.r, fillcolor.g, fillcolor.b, fillcolor.a);
     cairo->setColor(lineColor.r, lineColor.g, lineColor.b, lineColor.a);
-    cairo->filledcircle(x, y, discRadius);
+    cairo->filledcircle(x, y, discRadius, outLineWidth);
     // cairo->setColor(textcolor.r,textcolor.g,textcolor.b,textcolor.a);
 
     //    circle( x,  y,  discRadius,lineColor,1);

@@ -51,10 +51,10 @@ void CImgRenderStippling::_setStippling(int screenX, int screenY, float val) {
       c.parse(color.c_str());
     }
     if (mode == CImgRenderStipplingModeDefault) {
-      drawImage->setDisc(screenX, screenY, discSize, c, c);
+      drawImage->setDisc(screenX, screenY, discSize, c, c, 0.8);
     } else if (mode == CImgRenderStipplingModeThreshold) {
       if (pcolorindOrg >= 0 && pcolorindOrg < 239) {
-        drawImage->setDisc(screenX, screenY, discSize, c, c);
+        drawImage->setDisc(screenX, screenY, discSize, c, c, 0.8);
       }
     }
   }

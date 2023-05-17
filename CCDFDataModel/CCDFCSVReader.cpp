@@ -329,7 +329,7 @@ int CDFCSVReader::open(const char *fileName) {
 }
 
 int CDFCSVReader::close() {
-  CDBDebug("Closing CSV reader");
+  // CDBDebug("Closing CSV reader");
   return 0;
 }
 
