@@ -391,7 +391,7 @@ void CProj4ToCF::initGeosPerspective(CDF::Variable *projectionVariable, std::vec
   float v = 0;
   CT::string s;
   projectionVariable->addAttribute(new CDF::Attribute("grid_mapping_name", "geostationary"));
-  v = getProj4ValueF("h", projKVPList, 4.2163970098E7, CProj4ToCF::convertToM);
+  v = getProj4ValueF("h", projKVPList, 4.263970098E7, CProj4ToCF::convertToM);
   projectionVariable->addAttribute(new CDF::Attribute("perspective_point_height", CDF_FLOAT, &v, 1));
   v = getProj4ValueF("a", projKVPList, 6378137.0, CProj4ToCF::convertToM);
   projectionVariable->addAttribute(new CDF::Attribute("semi_major_axis", CDF_FLOAT, &v, 1));
@@ -401,8 +401,11 @@ void CProj4ToCF::initGeosPerspective(CDF::Variable *projectionVariable, std::vec
   projectionVariable->addAttribute(new CDF::Attribute("latitude_of_projection_origin", CDF_FLOAT, &v, 1));
   v = getProj4ValueF("lon_0", projKVPList, 0);
   projectionVariable->addAttribute(new CDF::Attribute("longitude_of_projection_origin", CDF_FLOAT, &v, 1));
-  s = getProj4Value("sweep", projKVPList);
-  projectionVariable->addAttribute(new CDF::Attribute("sweep_angle_axis", s.c_str()));
+  try {
+    s = getProj4Value("sweep", projKVPList);
+    projectionVariable->addAttribute(new CDF::Attribute("sweep_angle_axis", s.c_str()));
+  } catch (int e) {
+  }
 }
 
 int CProj4ToCF::convertBackAndFort(const char *projString, CDF::Variable *projectionVariable) {
@@ -504,7 +507,6 @@ int CProj4ToCF::convertProjToCF(CDF::Variable *projectionVariable, const char *p
       }
     }
     if (projectionVariable->name.empty()) projectionVariable->name = "projection";
-
     projectionVariable->setAttributeText("proj4_params", proj4String);
     CT::string kvpProjString = "";
     for (size_t j = 0; j < projKVPList.size(); j++) {
@@ -518,7 +520,6 @@ int CProj4ToCF::convertProjToCF(CDF::Variable *projectionVariable, const char *p
         kvpProjString.trimSelf();
       }
     }
-
     projectionVariable->setAttributeText("proj4_origin", kvpProjString.c_str());
   } catch (int e) {
     CDBError("Exception %d occured", e);
