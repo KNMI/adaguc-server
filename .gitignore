@@ -131,5 +131,8 @@ hclasses/testhclasses
 *CTestTestfile.cmake*
 *Makefile*
 *cmake_install.cmake*
+<<<<<<< HEAD
 customlibs/*
+=======
+>>>>>>> 973c5670328105b9be37bf640e301dfafcd10b5e
 core-adagucserver*

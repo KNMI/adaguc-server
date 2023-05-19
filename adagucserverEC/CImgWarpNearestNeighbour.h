@@ -121,20 +121,8 @@ private:
     psy[2] = dfTiledBBOX[3];
     psy[3] = dfTiledBBOX[1];
     if (warper->isProjectionRequired()) {
-      if (warper->destNeedsDegreeRadianConversion) {
-        for (int j = 0; j < 4; j++) {
-          psx[j] *= DEG_TO_RAD;
-          psy[j] *= DEG_TO_RAD;
-        }
-      }
-      if (pj_transform(warper->destpj, warper->sourcepj, 4, 0, psx, psy, NULL)) {
-        CDBDebug("Unable to do pj_transform");
-      }
-      if (warper->sourceNeedsDegreeRadianConversion) {
-        for (int j = 0; j < 4; j++) {
-          psx[j] /= DEG_TO_RAD;
-          psy[j] /= DEG_TO_RAD;
-        }
+      if (proj_trans_generic(warper->projSourceToDest, PJ_INV, psx, sizeof(double), 4, psy, sizeof(double), 4, nullptr, 0, 0, nullptr, 0, 0) != 4) {
+        CDBDebug("Unable to do proj_trans_generic");
       }
     }
     x_corners[0] = psx[1];
