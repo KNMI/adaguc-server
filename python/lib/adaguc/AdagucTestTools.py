@@ -49,7 +49,6 @@ class AdagucTestTools:
         showLog=False,
         maxLogFileSize=8192,
     ):
-
         if env is None:
             env = []
 
@@ -145,11 +144,13 @@ class AdagucTestTools:
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-    def compareImage(self,
-                     expectedImagePath,
-                     returnedImagePath,
-                     maxAllowedColorDifference=1,
-                     maxAllowedColorPercentage=0.01):
+    def compareImage(
+        self,
+        expectedImagePath,
+        returnedImagePath,
+        maxAllowedColorDifference=1,
+        maxAllowedColorPercentage=0.01,
+    ):
         """Compare the pictures referred to by the arguments.
 
         Args:
@@ -192,7 +193,8 @@ class AdagucTestTools:
                     print(
                         f"Warning: pixel {c} has different color, (expected, actual, diff) = "
                         f"{expected_color} \t{returned_color} \t{diff_color}",
-                        flush=True)
+                        flush=True,
+                    )
                     count_pixels_with_color_difference += 1
                     abs_color_diff = tuple(abs(d) for d in diff_color)
                     if max(abs_color_diff) > max_color_difference_value:
@@ -206,20 +208,23 @@ class AdagucTestTools:
                 f"Sum of absolute color difference: {sum_color_difference}. "
                 f"Number of pixels with color difference: {count_pixels_with_color_difference}. "
                 f"Percentage of pixel with color difference: {count_pixels_with_color_difference*100.0/(width*height):.6f} %",
-                flush=True)
+                flush=True,
+            )
 
         if max_color_difference_value > maxAllowedColorDifference:
             print(
                 f"Error, difference for pixel {c} is too large ({max_color_difference_value} > {maxAllowedColorDifference})",
-                flush=True)
+                flush=True,
+            )
             return False
 
-        if count_pixels_with_color_difference * 100.0 / (
-                width * height) > maxAllowedColorPercentage:
+        if (count_pixels_with_color_difference * 100.0 /
+            (width * height) > maxAllowedColorPercentage):
             print(
                 f"Error, percentage of pixels with color difference is too large "
                 f"({count_pixels_with_color_difference*100.0/(width*height)} % > {maxAllowedColorPercentage} %)",
-                flush=True)
+                flush=True,
+            )
             return False
 
         return True

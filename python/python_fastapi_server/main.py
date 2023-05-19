@@ -1,6 +1,7 @@
 import logging
 import os
 import time
+from urllib.parse import urlsplit
 
 import uvicorn
 from brotli_asgi import BrotliMiddleware
@@ -27,6 +28,21 @@ async def add_process_time_header(request: Request, call_next):
     response = await call_next(request)
     process_time = time.time() - start_time
     response.headers["X-Process-Time"] = str(process_time)
+    return response
+
+
+@app.middleware("http")
+async def add_hsts_header(request: Request, call_next):
+    response = await call_next(request)
+    if "EXTERNALADDRESS" in os.environ:
+        external_address = os.environ["EXTERNALADDRESS"]
+        scheme = urlsplit(external_address).scheme
+        if scheme == "https":
+            response.headers[
+                "Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+            response.headers["X-Content-Type-Options"] = "nosniff"
+            response.headers["Content-Security-Policy"] = "default-src 'self'"
+
     return response
 
 

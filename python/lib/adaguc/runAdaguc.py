@@ -16,13 +16,14 @@ from adaguc.CGIRunner import CGIRunner
 class runAdaguc:
 
     def __init__(self):
-        """ ADAGUC_LOGFILE is the location where logfiles are stored.
-          In current config file adaguc.autoresource.xml, the DB is written to this temporary directory.
-          Please note regenerating the DB each time for each request can cause performance problems.
-          You can safely configure a permanent location for the database which is permanent in adaguc.autoresource.xml (or your own config)"""
-        self.ADAGUC_LOGFILE = "/tmp/adaguc-server-" + \
-            self.get_random_string(10) + ".log"
-        self.ADAGUC_PATH = os.getenv('ADAGUC_PATH', "./")
+        """ADAGUC_LOGFILE is the location where logfiles are stored.
+        In current config file adaguc.autoresource.xml, the DB is written to this temporary directory.
+        Please note regenerating the DB each time for each request can cause performance problems.
+        You can safely configure a permanent location for the database which is permanent in adaguc.autoresource.xml (or your own config)
+        """
+        self.ADAGUC_LOGFILE = ("/tmp/adaguc-server-" +
+                               self.get_random_string(10) + ".log")
+        self.ADAGUC_PATH = os.getenv("ADAGUC_PATH", "./")
         self.ADAGUC_CONFIG = self.ADAGUC_PATH + "/data/config/adaguc.autoresource.xml"
         self.ADAGUC_DATA_DIR = os.getenv("ADAGUC_DATA_DIR",
                                          "/data/adaguc-data")

@@ -1,7 +1,18 @@
-**Version 2.9.1 2023-05-10**
+**Version 2.10.3 2023-05-19**
 - Contourlines can have dashes
 - Contour text can have an outline
 - Windbarbs have a white outline
+
+**Version 2.10.2 2023-05-17**
+- Hotfix for geos projections without sweep parameter
+
+**Version 2.10.1 2023-05-12**
+- Added Strict-Transport-Security, X-Content-Type-Options and Content-Security-Policy headers when running over https
+
+**Version 2.10.0 2023-05-10**
+- Use the new API of the PROJ library, because the old one is deprecated and removed from PROJ version 8 and up. 
+Adaguc now requires at least version 6 of the PROJ library.
+This should simplify installing on recent version of Ubuntu.
 
 **Version 2.9.0 2023-04-20**
 - Using fastapi as server
