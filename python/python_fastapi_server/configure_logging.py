@@ -1,5 +1,4 @@
 # pylint: disable=invalid-name
-
 """Configures logging for the adaguc-server python wrapper"""
 import sys
 
@@ -11,7 +10,8 @@ def configure_logging(logging):
     handler = logging.StreamHandler(sys.stdout)
     handler.setLevel(logging.DEBUG)
     formatter = logging.Formatter(
-        "applicationlog %(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
+        f"applicationlog" +
+        " %(asctime)s - %(name)s - %(levelname)s - %(message)s")
     handler.setFormatter(formatter)
-    root.addHandler(handler)
+    if not root.hasHandlers():
+        root.addHandler(handler)
