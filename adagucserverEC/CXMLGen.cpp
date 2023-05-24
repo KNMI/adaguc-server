@@ -294,13 +294,15 @@ int CXMLGen::getProjectionInformationForLayer(WMSLayer *myWMSLayer) {
   }
 
   // Add the layers native projection as well
-  WMSLayer::Projection *myProjection = new WMSLayer::Projection();
-  myWMSLayer->projectionList.push_back(myProjection);
-  myProjection->name.copy(myWMSLayer->dataSource->nativeEPSG.c_str());
-  myProjection->dfBBOX[0] = myWMSLayer->dataSource->dfBBOX[0];
-  myProjection->dfBBOX[3] = myWMSLayer->dataSource->dfBBOX[1];
-  myProjection->dfBBOX[2] = myWMSLayer->dataSource->dfBBOX[2];
-  myProjection->dfBBOX[1] = myWMSLayer->dataSource->dfBBOX[3];
+  if (!myWMSLayer->dataSource->nativeEPSG.empty()) {
+    WMSLayer::Projection *myProjection = new WMSLayer::Projection();
+    myWMSLayer->projectionList.push_back(myProjection);
+    myProjection->name.copy(myWMSLayer->dataSource->nativeEPSG.c_str());
+    myProjection->dfBBOX[0] = myWMSLayer->dataSource->dfBBOX[0];
+    myProjection->dfBBOX[3] = myWMSLayer->dataSource->dfBBOX[1];
+    myProjection->dfBBOX[2] = myWMSLayer->dataSource->dfBBOX[2];
+    myProjection->dfBBOX[1] = myWMSLayer->dataSource->dfBBOX[3];
+  }
 
   return 0;
 }
