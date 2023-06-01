@@ -437,13 +437,13 @@ def get_time_values_for_range(rng) -> list[str]:
     step = els[2]
     timediff = (end - st).total_seconds()
     tstep = None
-    m = re.match("PT(\d+)M", step)
+    m = re.match("PT(\\d+)M", step)
     if m:
         tstep = int(m.group(1)) * 60
-    m = re.match("PT(\d+)H", step)
+    m = re.match("PT(\\d+)H", step)
     if m:
         tstep = int(m.group(1)) * 3600
-    m = re.match("P(\d+)D", step)
+    m = re.match("P(\\d+)D", step)
     if m:
         tstep = int(m.group(1)) * 3600 * 24
     if not tstep:
