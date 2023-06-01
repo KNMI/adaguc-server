@@ -1,3 +1,6 @@
+**Version 2.10.4 2023-06-01**
+- Fix: Racmo datasets with rotated_pole projection does work again
+
 **Version 2.10.3 2023-05-17**
 - Fix: Empty CRS was advertised in case of point data
 
