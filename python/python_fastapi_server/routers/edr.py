@@ -577,7 +577,9 @@ async def edr_get_collections(request: Request):
     return collections_data
 
 
-@edrApiApp.get("/collections/{collection_name}", response_model=Collection)
+@edrApiApp.get("/collections/{collection_name}",
+               response_model=Collection,
+               response_model_exclude_none=True)
 async def edr_get_collection_by_id(collection_name: str, request: Request):
     base_url = request.url_for("edr_get_collection_by_id",
                                collection_name=collection_name)
