@@ -1,10 +1,13 @@
-**Version 2.10.3 2023-05-19**
+**Version 2.10.5 2023-05-19**
 - Contourlines can have dashes
 - Contour text can have an outline
 - Windbarbs have a white outline
 
+**Version 2.10.3 2023-05-17**
+- Fix: Empty CRS was advertised in case of point data
+
 **Version 2.10.2 2023-05-17**
-- Hotfix for geos projections without sweep parameter
+- Fix: Geos projection without sweep working again
 
 **Version 2.10.1 2023-05-12**
 - Added Strict-Transport-Security, X-Content-Type-Options and Content-Security-Policy headers when running over https
