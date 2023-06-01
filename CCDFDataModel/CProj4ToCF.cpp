@@ -167,13 +167,9 @@ void CProj4ToCF::initStereoGraphic(CDF::Variable *projectionVariable, std::vecto
   v = getProj4ValueF("y", projKVPList, 0);
   projectionVariable->addAttribute(new CDF::Attribute("false_northing", CDF_FLOAT, &v, 1));
 
-  int projectionUnits = getProjectionUnits(projectionVariable);
   double dfsemi_major_axis = 6378140.0;
   double dfsemi_minor_axis = 6356755.0;
-  if (projectionUnits == CPROJ4TOCF_UNITS_KILOMETER) {
-    dfsemi_major_axis = dfsemi_major_axis / 1000;
-    dfsemi_minor_axis = dfsemi_minor_axis / 1000;
-  }
+
   v = getProj4ValueF("a", projKVPList, dfsemi_major_axis);
   projectionVariable->addAttribute(new CDF::Attribute("semi_major_axis", CDF_FLOAT, &v, 1));
   v = getProj4ValueF("b", projKVPList, dfsemi_minor_axis);
@@ -577,8 +573,8 @@ int CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable, CT::string *p
       } catch (int e) {
       };
 
-      proj4String->print("+proj=geos +lon_0=%f +lat_0=%f +h=%f +a=%f +b=%f", longitude_of_projection_origin.toDouble(), latitude_of_projection_origin.toDouble(), 35807.414063,
-                         semi_major_axis.toDouble() / 1000, semi_minor_axis.toDouble() / 1000);
+      proj4String->print("+proj=geos +lon_0=%f +lat_0=%f +h=%f +a=%f +b=%f +units=km", longitude_of_projection_origin.toDouble(), latitude_of_projection_origin.toDouble(), 35807.414063,
+                         semi_major_axis.toDouble(), semi_minor_axis.toDouble());
     } else if (grid_mapping_name.equals("geostationary")) {
       // Meteosat Second Generation projection
       CT::string longitude_of_projection_origin = "0.000000f";
@@ -814,9 +810,10 @@ int CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable, CT::string *p
         projectionVariable->getAttribute("false_northing")->getDataAsString(&false_northing);
       } catch (int e) {
       };
-      proj4String->print("+proj=ob_tran +o_proj=longlat +lon_0=%f +o_lat_p=%f +o_lon_p=%f +a=%f +b=%f +x_0=%f +y_0=%f +no_defs", grid_north_pole_longitude.toDouble() + 180.0f,
-                         grid_north_pole_latitude.toDouble(), north_pole_grid_longitude.toDouble(), semi_major_axis.toDouble() / 1000.0f, semi_minor_axis.toDouble() / 1000.0f,
-                         false_easting.toDouble(), false_northing.toDouble());
+      proj4String->print("+proj=ob_tran +o_proj=longlat +lon_0=%f +o_lat_p=%f +o_lon_p=%f +a=%f +b=%f +x_0=%f +y_0=%f +units=km +no_defs", grid_north_pole_longitude.toDouble() + 180.0f,
+                         grid_north_pole_latitude.toDouble(), north_pole_grid_longitude.toDouble(), semi_major_axis.toDouble(), semi_minor_axis.toDouble(), false_easting.toDouble(),
+                         false_northing.toDouble());
+      // proj4String->print("+proj=ob_tran +o_proj=longlat +lon_0=5.449997 +o_lat_p=37.250000 +o_lon_p=0.000000 +a=6378140.000000 +b=6356750.000000 +x_0=0.000000 +y_0=0.000000 +units=km +no_defs");
     } else if (grid_mapping_name.equals("oblique_stereographic")) {
       //+proj=sterea +lat_0=52.15616055555555 +lon_0=5.38763888888889 +k=0.9999079 +x_0=155000 +y_0=463000 +ellps=bessel +units=m +no_defs
       // TODO atm we cannot detect +ellps=bessel with cf conventions
