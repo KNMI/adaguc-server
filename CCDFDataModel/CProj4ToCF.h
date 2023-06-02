@@ -38,10 +38,6 @@
 
 #define CPROJ4TOCF_UNSUPPORTED_PROJECTION 1 /*Projection is not supported*/
 
-#define CPROJ4TOCF_UNITS_METER 0
-#define CPROJ4TOCF_UNITS_KILOMETER 1
-#define CPROJ4TOCF_UNITS_RADIANS 2
-
 class CProj4ToCF {
 private:
   DEF_ERRORFUNCTION();
@@ -52,14 +48,6 @@ private:
   };
 
   static float convertToM(float fValue);
-
-  /**
-   * Try to determine the projection units, based on the projection_x_coordinate axis
-   * @input CDF::Variable *: The projection variable.
-   * return integer: Equals to of CPROJ4TOCF_UNITS_METER or CPROJ4TOCF_UNITS_KILOMETER
-   */
-  int getProjectionUnits(const CDF::Variable *const projectionVariable) const;
-  CT::string setProjectionUnits(const CDF::Variable *const projectionVariable) const;
 
   CT::string *getProj4Value(const char *proj4Key, std::vector<KVP *> projKVPList);
 
