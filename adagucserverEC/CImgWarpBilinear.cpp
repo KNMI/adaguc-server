@@ -807,13 +807,13 @@ void CImgWarpBilinear::drawTextForContourLines(CDrawImage *drawImage, ContourDef
   CT::string text;
   text.print(contourDefinition->textFormat.c_str(), value);
 
-  double angle = atan2(lineX - endX, lineY - endY) - 3.1415 / 2;
-  double angleP = atan2(endY - lineY, endX - lineX) + 3.1415 / 2;
+  double angle = atan2(lineX - endX, lineY - endY) - M_PI / 2;
+  double angleP = atan2(endY - lineY, endX - lineX) + M_PI / 2;
 
-  if (angle < -3.1415 / 2 || angle > 3.1415 / 2) {
+  if (angle < -M_PI / 2 || angle > M_PI / 2) {
     int x = lineX + cos(angleP) * (fontSize / 2);
     int y = lineY + sin(angleP) * (fontSize / 2);
-    drawImage->setTextStroke(x, y, -angleP + 3.1415 / 2, text.c_str(), fontLocation, fontSize, textStrokeWidth, textStrokeColor, textColor);
+    drawImage->setTextStroke(x, y, -angleP + M_PI / 2, text.c_str(), fontLocation, fontSize, textStrokeWidth, textStrokeColor, textColor);
   } else {
     int x = endX - cos(angleP) * (fontSize / 2);
     int y = endY - sin(angleP) * (fontSize / 2);
