@@ -46,7 +46,7 @@ Draw Contourline at defined values:
 
     <Layer type="database">
         <Name>dashed_contour_lines</Name>
-        <FilePath filter="">/data/adaguc-data/testdata.nc</FilePath>
+        <FilePath filter="">{ADAGUC_PATH}data/datasets/testdata.nc</FilePath>
         <Title>Dashed contourlines</Title>
         <Variable>testdata</Variable>
         <Styles>testdata_style_manycontours</Styles>
