@@ -42,7 +42,7 @@ add_library(CCDFDataModel
     utils.cpp
 )
 
-target_include_directories(CCDFDataModel PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${LIBXML2_INCLUDE_DIR} ${HDF5_INCLUDE_DIR} ${PROJ_INCLUDE_DIR})
+target_include_directories(CCDFDataModel PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${LIBXML2_INCLUDE_DIR} ${HDF5_INCLUDE_DIR} ${PROJ_INCLUDE_DIR} ${PNG_INCLUDE_DIRS})
 target_link_libraries(CCDFDataModel hclasses ${NetCDF_LIBRARIES} ${HDF5_LIBRARIES} ${UDUNITS2_LIBRARIES} ${NetCDF_LIBRARIES} ${HDF5_LIBRARIES} ${LIBXML2_LIBRARY} ${PNG_LIBRARY} ${PROJ_LIBRARY})
 
 # Build unit test executable

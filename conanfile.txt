@@ -1,0 +1,9 @@
+[requires]
+libxml2/2.11.4
+libpng/1.6.39
+proj/8.2.1
+
+[generators]
+CMakeDeps
+CMakeToolchain
+
