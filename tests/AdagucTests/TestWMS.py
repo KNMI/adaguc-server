@@ -1809,7 +1809,17 @@ class TestWMS(unittest.TestCase):
         filename = "test_WMSGetMap_rotated_pole_RACMO.png"
         # pylint: disable=unused-variable
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "source=test_rotated_pole_RACMO.nc&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=pr_adjust&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=333149.64940493606,6414453.750108542,881082.573419756,7153112.588677192&STYLES=auto%2Frgba&FORMAT=image/png&TRANSPARENT=TRUE&",
+            args=[
+                '--updatedb', '--config',
+                ADAGUC_PATH + '/data/config/adaguc.autoresource.xml'
+            ],
+            isCGI=False,
+            showLogOnError=False)
+        self.assertEqual(status, 0)
+
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "source=test_rotated_pole_RACMO.nc&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=pr_adjust,overlay&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=333149.64940493606,6414453.750108542,881082.573419756,7153112.588677192&STYLES=auto%2Frgba&FORMAT=image/png&TRANSPARENT=TRUE&",
             env=self.env,
             args=["--report"])
         AdagucTestTools().writetofile(self.testresultspath + filename,
