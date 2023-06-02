@@ -545,6 +545,7 @@ void CCairoPlotter::endLine(const double *dashes, int num_dashes) {
   cairo_set_line_join(cr, CAIRO_LINE_JOIN_MITER);
   cairo_set_dash(cr, dashes, num_dashes, 0);
   cairo_stroke(cr);
+  cairo_set_dash(cr, 0, 0, 0);
 }
 
 void CCairoPlotter::line(float x1, float y1, float x2, float y2) {
@@ -669,6 +670,7 @@ void CCairoPlotter::drawStrokedText(int x, int y, double angle, const char *text
   cairo_path_t *cp = cairo_copy_path(cr);
 
   cairo_new_path(cr);
+  cairo_set_dash(cr, 0, 0, 0);
 
   cairo_set_font_size(cr, fontSize);
   cairo_move_to(cr, x, y);
