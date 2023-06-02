@@ -1123,7 +1123,7 @@ static int drawBarbTriangle(cairo_t *cr, int x, int y, int nPennants, double dir
 void CCairoPlotter::drawBarb(int x, int y, double direction, double strength, CColor barbColor, CColor outlineColor, bool drawOutline, float lineWidth, bool toKnots, bool flip, bool drawText) {
   // Barb settings
   float centerDiscRadius = 3;
-  int shaftLength = 40;
+  int shaftLength = 37;
   int barbLength = 12;
   int halfBarbLength = 6;
 
@@ -1139,22 +1139,23 @@ void CCairoPlotter::drawBarb(int x, int y, double direction, double strength, CC
   if (toKnots) {
     strengthInKnots = round(strength * 3600 / 1852.);
   }
-  int nPennants = strengthInKnots / 50;
-  int nBarbs = (strengthInKnots % 50) / 10 + 0.5;
-  bool hasHalfBarb = strengthInKnots % 10 >= 5;
+
+  // Rounded to the nearest 5 kts
+  int strengthInKnotsRoundedToFive = round((strengthInKnots + 2) / 5) * 5;
+
+  int nPennants = strengthInKnotsRoundedToFive / 50;
+  int nBarbs = (strengthInKnotsRoundedToFive % 50) / 10 + 0.5;
+  bool hasHalfBarb = strengthInKnotsRoundedToFive % 10 >= 5;
   float flipFactor = flip ? -1 : 1;
   int barbLengthWithFlip = int(-barbLength * flipFactor);
   int halfBarbLengthWithFlip = int(-halfBarbLength * flipFactor);
 
-  if (strengthInKnots <= 2) {
-    // https://www.mesonet.org/images/site/Wind%20Barb%20Feb%202012.pdf
+  if (strengthInKnotsRoundedToFive <= 2) {
+    // https://www.weather.gov/hfo/windbarbinfo
     // When wind speeds are 2 kts or less, a small open circle is used.
     cairo_arc(cr, x, y, 6, 0, 2 * M_PI);
   } else {
-    if (strengthInKnots < 5) {
-      // Wind 2-5 kts
-      hasHalfBarb = true;
-    }
+
     double dx1 = cos(direction) * (shaftLength);
     double dy1 = sin(direction) * (shaftLength);
 
@@ -1222,7 +1223,7 @@ void CCairoPlotter::drawBarb(int x, int y, double direction, double strength, CC
   cairo_set_line_width(cr, lineWidth);
   cairo_stroke(cr);
 
-  if (strengthInKnots > 2) {
+  if (strengthInKnotsRoundedToFive > 2) {
     drawBarbTriangle(cr, x, y, nPennants, direction, shaftLength, barbLengthWithFlip, 10);
     cairo_close_path(cr);
     cairo_set_source_rgba(cr, barbColor.r / 255., barbColor.g / 255., barbColor.b / 255., 1);
@@ -1239,6 +1240,6 @@ void CCairoPlotter::drawBarb(int x, int y, double direction, double strength, CC
   CT::string text;
   text.print("%d", strengthInKnots);
   if (drawText) {
-    this->drawStrokedText(x - cos(direction + M_PI) * 20 - 10, y + sin(direction + M_PI) * 20 + 10, 0, text.c_str(), this->fontLocation, 15, 1 * drawOutline, outlineColor, barbColor);
+    this->drawStrokedText(x - cos(direction + M_PI) * 15 - 5, y + sin(direction + M_PI) * 12 + 5, 0, text.c_str(), this->fontLocation, 12, 1 * drawOutline, outlineColor, barbColor);
   }
 }

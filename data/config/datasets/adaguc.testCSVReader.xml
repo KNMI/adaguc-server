@@ -7,7 +7,8 @@
     <Min>0.0</Min>
     <Max>10</Max>
     <Point pointstyle="point" textcolor="#111111"/>
-    <Vector vectorstyle="barb" linecolor="#0000FF" />
+    <Vector vectorstyle="barb" linecolor="#0000FF"  plotvalue="true" />
+
     <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#000000" borderwidth="2"/> <!-- Used in CImgRenderPolylines -->
     <RenderMethod>point</RenderMethod>
   </Style>
