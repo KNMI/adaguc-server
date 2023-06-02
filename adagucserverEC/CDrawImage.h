@@ -151,9 +151,7 @@ public:
   int create685Palette();
   int clonePalette(CDrawImage *drawImage);
 
-  void drawBarb(int x, int y, double direction, double strength, int color, bool toKnots, bool flip);
-  void drawBarb(int x, int y, double direction, double strength, int color, float linewidth, bool toKnots, bool flip);
-  void drawBarb(int x, int y, double direction, double strength, CColor color, float linewidth, bool toKnots, bool flip);
+  void drawBarb(int x, int y, double direction, double strength, CColor color, float linewidth, bool toKnots, bool flip, bool drawText);
   void drawText(int x, int y, float angle, const char *text, unsigned char colorIndex);
   void drawText(int x, int y, float angle, const char *text, CColor fgcolor);
   void drawText(int x, int y, const char *fontfile, float size, float angle, const char *text, unsigned char colorIndex);

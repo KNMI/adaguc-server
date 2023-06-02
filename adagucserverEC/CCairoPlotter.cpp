@@ -323,7 +323,7 @@ int CCairoPlotter::_drawFreeTypeText(int x, int y, int &w, int &h, float angle, 
   pen.y = (my_target_height - y) * 64;
   bool c3seen = false;
   /* Using the 8859-15 standard */
-  for (n = 0; n < num_chars; n++) { /* set transformation */
+  for (n = 0; n < num_chars; n++) {        /* set transformation */
 
     FT_Set_Transform(face, &matrix, &pen); /* load glyph image into the slot (erase previous one) */
 
@@ -665,6 +665,7 @@ void CCairoPlotter::drawStrokedText(int x, int y, double angle, const char *text
   }
   /* https://www.cairographics.org/samples/text/ */
   cairo_save(cr);
+
   cairo_path_t *cp = cairo_copy_path(cr);
 
   cairo_new_path(cr);
@@ -673,12 +674,24 @@ void CCairoPlotter::drawStrokedText(int x, int y, double angle, const char *text
   cairo_move_to(cr, x, y);
   cairo_rotate(cr, angle);
   cairo_text_path(cr, text);
-  cairo_set_source_rgb(cr, fgcolor.r / 256., fgcolor.g / 256., fgcolor.b / 256.);
-  cairo_fill_preserve(cr);
-  cairo_set_source_rgb(cr, bgcolor.r / 256., bgcolor.g / 256., bgcolor.b / 256.);
-  cairo_set_line_width(cr, strokeWidth);
-  cairo_set_dash(cr, 0, 0, 0);
-  cairo_stroke(cr);
+  if (strokeWidth > 0) {
+    cairo_set_antialias(cr, CAIRO_ANTIALIAS_DEFAULT);
+    cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
+    cairo_set_source_rgba(cr, bgcolor.r / 255., bgcolor.g / 255., bgcolor.b / 255., .2);
+    cairo_set_line_width(cr, 2.5 + strokeWidth);
+    cairo_stroke_preserve(cr);
+
+    cairo_set_antialias(cr, CAIRO_ANTIALIAS_DEFAULT);
+    cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
+    cairo_set_source_rgba(cr, bgcolor.r / 255., bgcolor.g / 255., bgcolor.b / 255., 1);
+    cairo_set_line_width(cr, 1.5 + strokeWidth);
+    cairo_stroke_preserve(cr);
+  }
+
+  cairo_set_antialias(cr, CAIRO_ANTIALIAS_BEST);
+  cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
+  cairo_set_source_rgba(cr, fgcolor.r / 255., fgcolor.g / 255., fgcolor.b / 255., 1);
+  cairo_fill(cr);
 
   cairo_close_path(cr);
 
@@ -1079,91 +1092,93 @@ void CCairoPlotter::writeToWebP32Stream(FILE *fp, unsigned char, int quality) {
 
 #endif
 
-void CCairoPlotter::drawBarb(int x, int y, double direction, double strength, CColor barbColor, CColor outlineColor, bool drawOutline, float lineWidth, bool toKnots, bool flip) {
+static int drawBarbTriangle(cairo_t *cr, int x, int y, int nPennants, double direction, double shaftLength, double barbLengthWithFlip, int nrPos) {
+  int pos = 0;
+  double dx1 = cos(direction) * (shaftLength);
+  double dy1 = sin(direction) * (shaftLength);
+  double wx1 = double(x) - dx1;
+  double wy1 = double(y) + dy1; // wind barb top (flag side)
+
+  for (int i = 0; i < nPennants; i++) {
+    double wx3 = wx1 + pos * dx1 / nrPos;
+    double wy3 = wy1 - pos * dy1 / nrPos;
+    pos++;
+    double hx3 = wx1 + pos * dx1 / nrPos + cos(M_PI + direction + M_PI / 2) * barbLengthWithFlip;
+    double hy3 = wy1 - pos * dy1 / nrPos - sin(M_PI + direction + M_PI / 2) * barbLengthWithFlip;
+    pos++;
+    double wx4 = wx1 + pos * dx1 / nrPos;
+    double wy4 = wy1 - pos * dy1 / nrPos;
+
+    double ptx[3] = {wx3, hx3, wx4};
+    double pty[3] = {wy3, hy3, wy4};
+
+    cairo_move_to(cr, ptx[0], pty[0]);
+    for (int j = 1; j < 3; j++) {
+      cairo_line_to(cr, ptx[j], pty[j]);
+    }
+  }
+  return pos;
+}
+
+void CCairoPlotter::drawBarb(int x, int y, double direction, double strength, CColor barbColor, CColor outlineColor, bool drawOutline, float lineWidth, bool toKnots, bool flip, bool drawText) {
+  // Barb settings
+  float centerDiscRadius = 3;
+  int shaftLength = 40;
+  int barbLength = 12;
+  int halfBarbLength = 6;
 
   // Preserve path
   cairo_save(cr);
   cairo_path_t *cp = cairo_copy_path(cr);
   cairo_new_path(cr);
+  cairo_set_line_width(cr, lineWidth);
+  cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+  cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
 
-  // Draw
-  double wx1, wy1, wx2, wy2, dx1, dy1;
   int strengthInKnots = round(strength);
   if (toKnots) {
     strengthInKnots = round(strength * 3600 / 1852.);
   }
+  int nPennants = strengthInKnots / 50;
+  int nBarbs = (strengthInKnots % 50) / 10 + 0.5;
+  bool hasHalfBarb = strengthInKnots % 10 >= 5;
+  float flipFactor = flip ? -1 : 1;
+  int barbLengthWithFlip = int(-barbLength * flipFactor);
+  int halfBarbLengthWithFlip = int(-halfBarbLength * flipFactor);
 
   if (strengthInKnots <= 2) {
-    // Low wind, only draw a circle
+    // https://www.mesonet.org/images/site/Wind%20Barb%20Feb%202012.pdf
+    // When wind speeds are 2 kts or less, a small open circle is used.
     cairo_arc(cr, x, y, 6, 0, 2 * M_PI);
-
   } else {
-
-    int shaftLength = 30;
-
-    int nPennants = strengthInKnots / 50;
-    int nBarbs = (strengthInKnots % 50) / 10;
-    int rest = (strengthInKnots % 50) % 10;
-    int nhalfBarbs;
-    if (rest <= 2) {
-      nhalfBarbs = 0;
-    } else if (rest <= 7) {
-      nhalfBarbs = 1;
-    } else {
-      nhalfBarbs = 0;
-      nBarbs++;
+    if (strengthInKnots < 5) {
+      // Wind 2-5 kts
+      hasHalfBarb = true;
     }
+    double dx1 = cos(direction) * (shaftLength);
+    double dy1 = sin(direction) * (shaftLength);
 
-    float flipFactor = flip ? -1 : 1;
-    int barbLength = int(-10 * flipFactor);
-
-    dx1 = cos(direction) * (shaftLength);
-    dy1 = sin(direction) * (shaftLength);
-
-    wx1 = double(x) - dx1;
-    wy1 = double(y) + dy1; // wind barb top (flag side)
-    wx2 = double(x);
-    wy2 = double(y); // wind barb root
+    double wx1 = double(x) - dx1;
+    double wy1 = double(y) + dy1; // wind barb top (flag side)
 
     // Draw small center circle
-    cairo_arc(cr, int(wx2), int(wy2), 2, 0, 2 * M_PI);
-    int nrPos = 10;
-
-    int pos = 0;
-    cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
-    cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
+    cairo_arc(cr, x, y, centerDiscRadius, 0, 2 * M_PI);
 
     // Draw main shaft from center to end
     cairo_move_to(cr, wx1, wy1);
-    cairo_line_to(cr, wx2, wy2);
+    cairo_line_to(cr, x - cos(direction) * (centerDiscRadius), y + sin(direction) * (centerDiscRadius));
 
-    // Draw triangle?
-    for (int i = 0; i < nPennants; i++) {
-      double wx3 = wx1 + pos * dx1 / nrPos;
-      double wy3 = wy1 - pos * dy1 / nrPos;
-      pos++;
-      double hx3 = wx1 + pos * dx1 / nrPos + cos(M_PI + direction + M_PI / 2) * barbLength;
-      double hy3 = wy1 - pos * dy1 / nrPos - sin(M_PI + direction + M_PI / 2) * barbLength;
-      pos++;
-      double wx4 = wx1 + pos * dx1 / nrPos;
-      double wy4 = wy1 - pos * dy1 / nrPos;
-
-      double ptx[3] = {wx3, hx3, wx4};
-      double pty[3] = {wy3, hy3, wy4};
-
-      cairo_move_to(cr, ptx[0], pty[0]);
-      for (int i = 1; i < 3; i++) {
-        cairo_line_to(cr, ptx[i], pty[i]);
-      }
-    }
+    // Draw flags
+    int nrPos = 10;
+    int pos = drawBarbTriangle(cr, x, y, nPennants, direction, shaftLength, barbLengthWithFlip, nrPos);
 
     // Draw full Barb
     if (nPennants > 0) pos++;
     for (int i = 0; i < nBarbs; i++) {
       double wx3 = wx1 + pos * dx1 / nrPos;
       double wy3 = wy1 - pos * dy1 / nrPos;
-      double hx3 = wx3 - cos(M_PI / 2 - direction + (2 - float(flipFactor) * 0.1) * M_PI / 2) * barbLength; // was: +cos
-      double hy3 = wy3 - sin(M_PI / 2 - direction + (2 - float(flipFactor) * 0.1) * M_PI / 2) * barbLength; // was: -sin
+      double hx3 = wx3 - cos(M_PI / 2 - direction + (2 - float(flipFactor) * 0.1) * M_PI / 2) * barbLengthWithFlip; // was: +cos
+      double hy3 = wy3 - sin(M_PI / 2 - direction + (2 - float(flipFactor) * 0.1) * M_PI / 2) * barbLengthWithFlip; // was: -sin
       cairo_move_to(cr, wx3, wy3);
       cairo_line_to(cr, hx3, hy3);
       pos++;
@@ -1172,11 +1187,11 @@ void CCairoPlotter::drawBarb(int x, int y, double direction, double strength, CC
     if ((nPennants + nBarbs) == 0) pos++;
 
     // Draw half Barb
-    if (nhalfBarbs > 0) {
+    if (hasHalfBarb) {
       double wx3 = wx1 + pos * dx1 / nrPos;
       double wy3 = wy1 - pos * dy1 / nrPos;
-      double hx3 = wx3 - cos(M_PI / 2 - direction + (2 - float(flipFactor) * 0.1) * M_PI / 2) * barbLength / 2;
-      double hy3 = wy3 - sin(M_PI / 2 - direction + (2 - float(flipFactor) * 0.1) * M_PI / 2) * barbLength / 2;
+      double hx3 = wx3 - cos(M_PI / 2 - direction + (2 - float(flipFactor) * 0.1) * M_PI / 2) * halfBarbLengthWithFlip;
+      double hy3 = wy3 - sin(M_PI / 2 - direction + (2 - float(flipFactor) * 0.1) * M_PI / 2) * halfBarbLengthWithFlip;
 
       cairo_move_to(cr, wx3, wy3);
       cairo_line_to(cr, hx3, hy3);
@@ -1187,20 +1202,43 @@ void CCairoPlotter::drawBarb(int x, int y, double direction, double strength, CC
   cairo_set_dash(cr, 0, 0, 0);
 
   if (drawOutline) {
-    // Stroke thick version
+    cairo_set_antialias(cr, CAIRO_ANTIALIAS_DEFAULT);
+    cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
+    cairo_set_source_rgba(cr, outlineColor.r / 255., outlineColor.g / 255., outlineColor.b / 255., .2);
+    cairo_set_line_width(cr, 5.5);
+    cairo_stroke_preserve(cr);
+
+    cairo_set_antialias(cr, CAIRO_ANTIALIAS_DEFAULT);
+    cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
     cairo_set_source_rgba(cr, outlineColor.r / 255., outlineColor.g / 255., outlineColor.b / 255., 1);
-    cairo_set_line_width(cr, 4);
+    cairo_set_line_width(cr, 4.5);
     cairo_stroke_preserve(cr);
   }
 
   // Stroke thin version
+  cairo_set_antialias(cr, CAIRO_ANTIALIAS_DEFAULT);
+  cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
   cairo_set_source_rgba(cr, barbColor.r / 255., barbColor.g / 255., barbColor.b / 255., 1);
-  cairo_set_line_width(cr, 1.5);
+  cairo_set_line_width(cr, lineWidth);
   cairo_stroke(cr);
 
-  // End aend restore
+  if (strengthInKnots > 2) {
+    drawBarbTriangle(cr, x, y, nPennants, direction, shaftLength, barbLengthWithFlip, 10);
+    cairo_close_path(cr);
+    cairo_set_source_rgba(cr, barbColor.r / 255., barbColor.g / 255., barbColor.b / 255., 1);
+    cairo_fill_preserve(cr);
+  }
+
+  // End end restore
   cairo_close_path(cr);
   cairo_restore(cr);
   cairo_append_path(cr, cp);
   cairo_path_destroy(cp);
+  cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
+
+  CT::string text;
+  text.print("%d", strengthInKnots);
+  if (drawText) {
+    this->drawStrokedText(x - cos(direction + M_PI) * 20 - 10, y + sin(direction + M_PI) * 20 + 10, 0, text.c_str(), this->fontLocation, 15, 1 * drawOutline, outlineColor, barbColor);
+  }
 }

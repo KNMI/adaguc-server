@@ -459,7 +459,7 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
     CalculatedWindVector wv;
     for (size_t sz = 0; sz < windVectors.size(); sz++) {
       wv = windVectors[sz];
-      drawImage->drawBarb(wv.x, wv.y, wv.dir, wv.strength, 240, wv.convertToKnots, wv.flip);
+      drawImage->drawBarb(wv.x, wv.y, wv.dir, wv.strength, CColor(0, 0, 255, 255), 0.8, wv.convertToKnots, wv.flip, false);
     }
   }
 
@@ -809,8 +809,6 @@ void CImgWarpBilinear::drawTextForContourLines(CDrawImage *drawImage, ContourDef
 
   double angle = atan2(lineX - endX, lineY - endY) - 3.1415 / 2;
   double angleP = atan2(endY - lineY, endX - lineX) + 3.1415 / 2;
-  float centerX = (lineX + endX) / 2;
-  float centerY = (endY + lineY) / 2;
 
   if (angle < -3.1415 / 2 || angle > 3.1415 / 2) {
     int x = lineX + cos(angleP) * (fontSize / 2);
@@ -1283,7 +1281,7 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
       auto stringDashes = contourDefinitions[j].dashing.splitToStack(",");
       numDashes = stringDashes.size();
       dashes = new double[numDashes];
-      for (size_t j = 0; j < numDashes; j++) {
+      for (int j = 0; j < numDashes; j++) {
         dashes[j] = stringDashes[j].toDouble();
       }
     }
