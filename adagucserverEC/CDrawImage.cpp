@@ -392,16 +392,6 @@ void CDrawImage::drawVector2(int x, int y, double direction, double strength, in
 
 #define round(x) (int(x + 0.5)) // Only for positive values!!!
 
-void CDrawImage::drawBarb(int x, int y, double direction, double strength, int color, bool toKnots, bool flip) {
-  CColor col = getColorForIndex(color);
-  drawBarb(x, y, direction, strength, col, 0.5, toKnots, flip);
-}
-
-void CDrawImage::drawBarb(int x, int y, double direction, double strength, int color, float lineWidth, bool toKnots, bool flip) {
-  CColor col = getColorForIndex(color);
-  drawBarb(x, y, direction, strength, col, lineWidth, toKnots, flip);
-}
-
 void CDrawImage::_drawBarbGd(int x, int y, double direction, double strength, CColor color, float lineWidth, bool toKnots, bool flip) {
   double wx1, wy1, wx2, wy2, dx1, dy1;
   int strengthInKnots = round(strength);
@@ -445,7 +435,7 @@ void CDrawImage::_drawBarbGd(int x, int y, double direction, double strength, CC
   wx1 = double(x) - dx1;
   wy1 = double(y) + dy1; // wind barb top (flag side)
   wx2 = double(x);
-  wy2 = double(y); // wind barb root
+  wy2 = double(y);       // wind barb root
 
   circle(int(wx2), int(wy2), 2, color, lineWidth);
   int nrPos = 10;
@@ -486,13 +476,16 @@ void CDrawImage::_drawBarbGd(int x, int y, double direction, double strength, CC
   line(wx1, wy1, wx2, wy2, lineWidth, color);
 }
 
-void CDrawImage::drawBarb(int x, int y, double direction, double strength, CColor color, float lineWidth, bool toKnots, bool flip) {
+void CDrawImage::drawBarb(int x, int y, double direction, double strength, CColor color, float lineWidth, bool toKnots, bool flip, bool drawText) {
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
     _drawBarbGd(x, y, direction, strength, color, lineWidth, toKnots, flip);
+    if (drawText) {
+      // TODO: DRAW TEXT
+    }
   }
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
     CColor outLineColor = CColor(255, 255, 255, 255);
-    cairo->drawBarb(x, y, direction, strength, color, outLineColor, true, lineWidth, toKnots, flip);
+    cairo->drawBarb(x, y, direction, strength, color, outLineColor, true, lineWidth, toKnots, flip, drawText);
   }
 }
 

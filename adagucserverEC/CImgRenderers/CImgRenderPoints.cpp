@@ -565,7 +565,7 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
 
     float strength = (*p1)[j].v;
     float direction = (*p2)[j].v;
-    if (direction == direction) direction += rotation; // Nan stays Nan
+    if (direction == direction) direction += rotation;        // Nan stays Nan
 
     if ((direction == direction) && (strength == strength)) { // Check for Nan
       //        CDBDebug("Drawing wind %f,%f for [%d,%d]", strength, direction, x, y);
@@ -576,9 +576,9 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
           toKnots = true;
         }
         if (lat > 0) {
-          drawImage->drawBarb(x, y, ((270 - direction) / 360) * 3.141592654 * 2, strength, drawVectorLineColor, drawVectorLineWidth, toKnots, false);
+          drawImage->drawBarb(x, y, ((270 - direction) / 360) * 3.141592654 * 2, strength, drawVectorLineColor, drawVectorLineWidth, toKnots, false, drawVectorPlotValue);
         } else {
-          drawImage->drawBarb(x, y, ((270 - direction) / 360) * 3.141592654 * 2, strength, drawVectorLineColor, drawVectorLineWidth, toKnots, true);
+          drawImage->drawBarb(x, y, ((270 - direction) / 360) * 3.141592654 * 2, strength, drawVectorLineColor, drawVectorLineWidth, toKnots, true, drawVectorPlotValue);
         }
       }
       if (drawVector) {
@@ -603,7 +603,7 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
           }
         }
       }
-      if (drawVectorPlotValue) {
+      if (drawVectorPlotValue && !drawBarb) {
         if (!drawDiscs) {
           t.print(drawVectorTextFormat.c_str(), strength);
           if ((direction >= 90) && (direction <= 270)) {
