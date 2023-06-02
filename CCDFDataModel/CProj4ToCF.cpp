@@ -240,9 +240,9 @@ void CProj4ToCF::initRPPerspective(CDF::Variable *projectionVariable, std::vecto
   projectionVariable->addAttribute(new CDF::Attribute("false_easting", CDF_FLOAT, &v, 1));
   v = getProj4ValueF("y_0", projKVPList, 0);
   projectionVariable->addAttribute(new CDF::Attribute("false_northing", CDF_FLOAT, &v, 1));
-  v = getProj4ValueF("a", projKVPList, 6378140.0, CProj4ToCF::convertToM);
+  v = getProj4ValueF("a", projKVPList, 6378140.0, 0);
   projectionVariable->addAttribute(new CDF::Attribute("semi_major_axis", CDF_FLOAT, &v, 1));
-  v = getProj4ValueF("b", projKVPList, 6356755.5, CProj4ToCF::convertToM);
+  v = getProj4ValueF("b", projKVPList, 6356755.5, 0);
   projectionVariable->addAttribute(new CDF::Attribute("semi_minor_axis", CDF_FLOAT, &v, 1));
 
   // Standard parallels can have one or two values.
