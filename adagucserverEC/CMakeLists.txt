@@ -42,6 +42,7 @@ add_library(
     CDFObjectStore.h
     CFillTriangle.h
     CConvertASCAT.h
+    CConvertLatLonGrid.h
     CConvertUGRIDMesh.h
     CConvertADAGUCVector.h
     CConvertEProfile.h
@@ -110,6 +111,7 @@ add_library(
     CDFObjectStore.cpp
     CFillTriangle.cpp
     CConvertASCAT.cpp
+    CConvertLatLonGrid.cpp
     CConvertUGRIDMesh.cpp
     CConvertADAGUCVector.cpp
     CConvertEProfile.cpp
