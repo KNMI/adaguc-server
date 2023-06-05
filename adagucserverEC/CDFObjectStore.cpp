@@ -36,9 +36,10 @@ const char *CDFObjectStore::className = "CDFObjectStore";
 #include "CConvertGeoJSON.h"
 #include "CConvertEProfile.h"
 #include "CConvertTROPOMI.h"
+#include "CConvertLatLonGrid.h"
 #include "CDataReader.h"
 #include "CCDFCSVReader.h"
-//#define CDFOBJECTSTORE_DEBUG
+// #define CDFOBJECTSTORE_DEBUG
 #define MAX_OPEN_FILES 500
 extern CDFObjectStore cdfObjectStore;
 CDFObjectStore cdfObjectStore;
@@ -385,6 +386,10 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
 
     if (!formatConverterActive)
       if (CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(cdfObject, srvParams) == 0) {
+        formatConverterActive = true;
+      };
+    if (!formatConverterActive)
+      if (CConvertLatLonGrid::convertLatLonGridHeader(cdfObject, srvParams) == 0) {
         formatConverterActive = true;
       };
   }
