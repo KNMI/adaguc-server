@@ -287,7 +287,7 @@ def get_collectioninfo_for_id(
             links.append(instance_link)
 
     bbox = get_extent(dataset)  # TODO from subdataset?
-    print("bbox:", bbox)
+    print("bbox for ", dataset, ":", bbox)
     crs = CRSOptions.wgs84
     spatial = Spatial(bbox=bbox, crs=crs)
     (interval,
@@ -518,35 +518,6 @@ def get_vertical_dim_for_dataset(dataset: str, parameter: str = None):
             }
             return vertical_dim
     return None
-
-
-def get_parameters_for_dataset_fixed(dataset: str) -> dict[str, ParameterName]:
-    if dataset == "RADAR":
-        parameter_names = {
-            "precipitation":
-            ParameterName(
-                id="precipitation",
-                observedProperty=ObservedPropertyCollection(
-                    id="precip", label="precipitation"),
-                type="Parameter",
-                unit=Units(symbol="mm"),
-                label="precipitation",
-            )
-        }
-        return parameter_names
-    elif dataset == "HARM_N25":
-        parameter_names = {
-            "air_temperature__at_2m":
-            ParameterName(
-                id="air_temperature__at_2m",
-                observedProperty=ObservedPropertyCollection(
-                    id="temp", label="temperature"),
-                type="Parameter",
-                unit=Units(symbol="C"),
-                label="air_temperature__at_2m",
-            ),
-        }
-        return parameter_names
 
 
 @edrApiApp.get("/collections",
