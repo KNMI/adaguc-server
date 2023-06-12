@@ -9,6 +9,18 @@ Scan with the adaguc-server container:
 docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh <optional datasetname>
 ```
 
+Similar command, but in this case we go inside the container and call the script directly:
+
+```
+docker exec -it my-adaguc-server bash
+cd /adaguc
+. ./adaguc-server-chkconfig.sh
+${ADAGUC_PATH}/bin/adagucserver --updatedb --config ${ADAGUC_CONFIG},<optional datasetname>
+```
+
+Now you can use all options as documented in [doc/info/Commandline.md](../../doc/info/Commandline.md)
+
+
 ## Endpoints
 
 * https://&lt;your hostname&gt;:&lt;port&gt;/adagucserver? Will be forwarded automaticall to /wms or /wcs depending on the service type
