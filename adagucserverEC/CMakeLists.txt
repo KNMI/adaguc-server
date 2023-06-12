@@ -59,7 +59,6 @@ add_library(
     CStyleConfiguration.h
     CMakeJSONTimeSeries.h
     COpenDAPHandler.h
-    CDataPostProcessor.h
     CDBFactory.h
     CDBAdapterPostgreSQL.h
     CAutoResource.h
@@ -131,7 +130,10 @@ add_library(
     CDataPostProcessors/CDataPostProcessor_Operator.cpp
     CDataPostProcessors/CDataPostProcessor_WFP.h
     CDataPostProcessors/CDataPostProcessor_WFP.cpp
-    CDataPostProcessor.cpp
+    CDataPostProcessors/CDataPostProcessor_IncludeLayer.h
+    CDataPostProcessors/CDataPostProcessor_IncludeLayer.cpp
+    CDataPostProcessors/CDataPostProcessor.h
+    CDataPostProcessors/CDataPostProcessor.cpp
     CDBFactory.cpp
     CDBAdapterPostgreSQL.cpp
     CAutoResource.cpp
