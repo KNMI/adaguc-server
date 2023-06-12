@@ -137,3 +137,9 @@ Copy a test netcdf file and display:
 ## To scan datasets
 
 `bash ./Docker/adaguc-server-updatedatasets.sh <dataset name>`
+
+
+
+
+
+

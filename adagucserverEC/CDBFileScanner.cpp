@@ -425,7 +425,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
       }
       for (size_t d = 0; d < dataSource->cfgLayer->Dimension.size(); d++) {
         if (skipDim[d] == true) {
-          CDBDebug("Assuming [%s] done", dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+          // CDBDebug("Assuming %d/%d [%s] done", j, d, dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
           continue;
         }
         {
