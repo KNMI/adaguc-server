@@ -1786,11 +1786,40 @@ class TestWMS(unittest.TestCase):
                                            filename))
 
     def test_WMSGetMap_GOES16_bes_geos_500m_airmass(self):
+        ### This tests the geos projection ###
         AdagucTestTools().cleanTempDir()
         filename = "test_WMSGetMap_GOES16_bes_geos_500m_airmass.png"
         # pylint: disable=unused-variable
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "source=GOES16_bes-geos-500m_airmass_202305160100-100x100.png&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=pngdata&WIDTH=100&HEIGHT=100&CRS=EPSG%3A3857&BBOX=-8130499.94291223,258165.08437911526,-4701559.135087881,3327755.582274761&STYLES=auto%2Frgba&FORMAT=image/png&TRANSPARENT=TRUE&",
+            env=self.env,
+            args=["--report"])
+        AdagucTestTools().writetofile(self.testresultspath + filename,
+                                      data.getvalue())
+
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath +
+                                           filename))
+
+    def test_WMSGetMap_rotated_pole_RACMO(self):
+        ### This tests the rotated_pole projection ###
+        AdagucTestTools().cleanTempDir()
+        filename = "test_WMSGetMap_rotated_pole_RACMO.png"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=[
+                '--updatedb', '--config',
+                ADAGUC_PATH + '/data/config/adaguc.autoresource.xml'
+            ],
+            isCGI=False,
+            showLogOnError=False)
+        self.assertEqual(status, 0)
+
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "source=test_rotated_pole_RACMO.nc&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=pr_adjust,overlay&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=333149.64940493606,6414453.750108542,881082.573419756,7153112.588677192&STYLES=auto%2Frgba&FORMAT=image/png&TRANSPARENT=TRUE&",
             env=self.env,
             args=["--report"])
         AdagucTestTools().writetofile(self.testresultspath + filename,
