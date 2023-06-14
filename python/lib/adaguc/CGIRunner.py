@@ -4,7 +4,7 @@
 """
 
 import sys
-from subprocess import PIPE, Popen, STDOUT
+from subprocess import PIPE, Popen, STDOUT, TimeoutExpired
 from threading import Thread
 import os
 import io
@@ -17,12 +17,18 @@ import re
 
 
 class CGIRunner:
-
     """
       Run the CGI script with specified URL and environment. Stdout is captured and put in a BytesIO object provided in output
     """
 
-    def run(self, cmds, url, output, env=[],  path=None, isCGI=True):
+    def run(self,
+            cmds,
+            url,
+            output,
+            env=[],
+            path=None,
+            isCGI=True,
+            timeout=60):
         localenv = {}
         if url != None:
             localenv['QUERY_STRING'] = url
@@ -36,9 +42,20 @@ class CGIRunner:
 
         # Execute adaguc-server binary
         ON_POSIX = 'posix' in sys.builtin_module_names
-        process = Popen(cmds, stdout=PIPE, stderr=PIPE, env=localenv, close_fds=ON_POSIX)
-        (processOutput, processError) = process.communicate()
- 
+        process = Popen(cmds,
+                        stdout=PIPE,
+                        stderr=PIPE,
+                        env=localenv,
+                        close_fds=ON_POSIX)
+
+        try:
+            (processOutput,
+             processError) = process.communicate(timeout=timeout)
+        except TimeoutExpired:
+            process.kill()
+            output.write(b'TimeOut')
+            return 1, [], None
+
         status = process.wait()
 
         # Split headers from body using a regex
@@ -49,13 +66,15 @@ class CGIRunner:
             search = pattern.search(processOutput)
             if search:
                 headersEndAt = search.start()
-                headers = (processOutput[0:headersEndAt-1]).decode()
+                headers = (processOutput[0:headersEndAt - 1]).decode()
             else:
                 output.write(
-                    b'Error: No headers found in response from adaguc-server application, status was %d' % status)
+                    b'Error: No headers found in response from adaguc-server application, status was %d'
+                    % status)
                 return 1, [], None
 
-        body = processOutput[headersEndAt+2:]
+        body = processOutput[headersEndAt + 2:]
         output.write(body)
         headersList = headers.split("\r\n")
-        return status, [s for s in headersList if s != "\n" and ":" in s], processError
+        return status, [s for s in headersList
+                        if s != "\n" and ":" in s], processError
