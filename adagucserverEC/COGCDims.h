@@ -59,6 +59,8 @@ public:
 class CCDFDims {
 private:
   DEF_ERRORFUNCTION();
+
+public:
   class NetCDFDim {
   public:
     CT::string name;
@@ -67,7 +69,6 @@ private:
   };
   std::vector<NetCDFDim *> dimensions;
 
-public:
   ~CCDFDims();
   void addDimension(const char *name, const char *value, size_t index);
   size_t getDimensionIndex(const char *name);

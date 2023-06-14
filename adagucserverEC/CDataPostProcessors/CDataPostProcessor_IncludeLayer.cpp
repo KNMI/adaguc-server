@@ -7,7 +7,7 @@
 const char *CDPPIncludeLayer::className = "CDPPIncludeLayer";
 
 const char *CDPPIncludeLayer::getId() { return "include_layer"; }
-int CDPPIncludeLayer::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *) {
+int CDPPIncludeLayer::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int) {
   if (proc->attr.algorithm.equals("include_layer")) {
     return CDATAPOSTPROCESSOR_RUNAFTERREADING | CDATAPOSTPROCESSOR_RUNBEFOREREADING;
   }
@@ -48,7 +48,7 @@ int CDPPIncludeLayer::setDimsForNewDataSource(CServerConfig::XMLE_DataPostProc *
 }
 
 int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
-  if ((isApplicable(proc, dataSource) & mode) == false) {
+  if ((isApplicable(proc, dataSource, mode) & mode) == false) {
     return -1;
   }
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
@@ -71,20 +71,7 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
       CDBDebug("dataSourceToInclude has no data");
       return 0;
     }
-    /*
-      CDirReader dirReader;
-      if(CDBFileScanner::searchFileNames(&dirReader,dataSourceToInclude->cfgLayer->FilePath[0]->value.c_str(),dataSourceToInclude->cfgLayer->FilePath[0]->attr.filter,NULL)!=0){
-        CDBError("Could not find any filename");
-        return 1;
-      }
 
-      if(dirReader.fileList.size()==0){
-        CDBError("dirReader.fileList.size()==0");return 1;
-      }
-
-
-      dataSourceToInclude->addStep(dirReader.fileList[0]->fullName.c_str(),NULL);
-    */
     int status = setDimsForNewDataSource(proc, dataSource, dataSourceToInclude);
     if (status != 0) {
       CDBError("Trying to include datasource, but it has no values for given dimensions");
@@ -95,7 +82,7 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
 
     CDBDebug("TEMPORAL METADATA READER");
     CDataReader reader;
-    // reader.enablePostProcessors = false;
+    reader.enablePostProcessors = false;
     status = reader.open(dataSourceToInclude, CNETCDFREADER_MODE_OPEN_HEADER); // Only read metadata
     if (status != 0) {
       CDBDebug("Can't open file %s for layer %s", dataSourceToInclude->getFileName(), proc->attr.name.c_str());
@@ -153,23 +140,6 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
         newDataObject->cdfVariable->dimensionlinks.push_back(currentDataObject->cdfVariable->dimensionlinks[j]);
       }
 
-      // for (size_t j = 0; j < varToClone->dimensionlinks.size() - 2; j++) {
-      //   bool alreadyHasThisDim = false;
-      //   for (size_t i = 0; i < newDataObject->cdfVariable->dimensionlinks.size(); i++) {
-      //     if (newDataObject->cdfVariable->dimensionlinks[i]->name.equals(varToClone->dimensionlinks[j]->name.c_str())) {
-      //       alreadyHasThisDim = true;
-      //       break;
-      //     }
-      //   }
-      //   if (!alreadyHasThisDim) {
-
-      //     CDBDebug("Adding %d %s (%d)", j, varToClone->dimensionlinks[j]->name.c_str(), varToClone->dimensionlinks[j]->getSize());
-      //     newDataObject->cdfVariable->dimensionlinks.push_back(varToClone->dimensionlinks[j]);
-      //   } else {
-      //     CDBDebug("Skipping %d %s (%d)", j, varToClone->dimensionlinks[j]->name.c_str(), varToClone->dimensionlinks[j]->getSize());
-      //   }
-      // }
-
       for (size_t j = 0; j < newDataObject->cdfVariable->dimensionlinks.size(); j++) {
         CDBDebug("NowHas dimensions %d %s (%d)", j, newDataObject->cdfVariable->dimensionlinks[j]->name.c_str(), newDataObject->cdfVariable->dimensionlinks[j]->getSize());
       }
@@ -207,12 +177,15 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
       return 1;
     }
 
-    dataSourceToInclude->setTimeStep(dataSource->getCurrentTimeStep());
+    if (dataSourceToInclude->getNumTimeSteps() == dataSource->getNumTimeSteps()) {
+
+      dataSourceToInclude->setTimeStep(dataSource->getCurrentTimeStep());
+    }
 
     // dataSourceToInclude->getDataObject(0)->cdfVariable->data=NULL;
     CDBDebug("TEMPORAL FULL READER");
     CDataReader reader;
-    // reader.enablePostProcessors = false;
+    reader.enablePostProcessors = false;
     //    CDBDebug("Opening %s",dataSourceToInclude->getFileName());
     status = reader.open(dataSourceToInclude, CNETCDFREADER_MODE_OPEN_ALL); // Now open the data as well.
     if (status != 0) {
@@ -220,16 +193,11 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
       return 1;
     }
 
-    /*  size_t l=(size_t)dataSource->dHeight*(size_t)dataSource->dWidth;
-      CDF::allocateData( dataSourceToInclude->getDataObject(0)->cdfVariable->getType(),&dataSourceToInclude->getDataObject(0)->cdfVariable->data,l);
-      CDF::fill(dataSourceToInclude->getDataObject(0)->cdfVariable->data, dataSourceToInclude->getDataObject(0)->cdfVariable->getType(),100,(size_t)dataSource->dHeight*(size_t)dataSource->dWidth);
-     */
     for (size_t dataObjectNr = 0; dataObjectNr < dataSourceToInclude->getNumDataObjects(); dataObjectNr++) {
       // This is the variable to read from
       CDF::Variable *varToClone = dataSourceToInclude->getDataObject(dataObjectNr)->cdfVariable;
 
       // This is the variable to write To
-      //      CDBDebug("Filling %s",varToClone->name.c_str());
       CDF::Variable *varToWriteTo = dataSource->getDataObject(varToClone->name.c_str())->cdfVariable;
       CDF::fill(varToWriteTo->data, varToWriteTo->getType(), 0, (size_t)dataSource->dHeight * (size_t)dataSource->dWidth);
 
