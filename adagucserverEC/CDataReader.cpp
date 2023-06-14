@@ -816,6 +816,7 @@ pthread_mutex_t CDataReader_open_lock;
 
 int CDataReader::open(CDataSource *dataSource, int mode, int x, int y) { return open(dataSource, mode, x, y, NULL); }
 int CDataReader::openExtent(CDataSource *dataSource, int mode, int *gridExtent) { return open(dataSource, mode, -1, -1, gridExtent); }
+
 int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *gridExtent) {
 
   // Perform some checks on pointers
@@ -829,7 +830,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
   }
 
 #ifdef CDATAREADER_DEBUG
-  CDBDebug("Open mode:%d x:%d y:%d", mode, x, y);
+  CDBDebug("Open mode:%d x:%d y:%d, numdataObjects %d", mode, x, y, dataSource->getNumDataObjects());
 #endif
 
   bool singleCellMode = false;
@@ -860,30 +861,20 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 
 #ifdef CDATAREADER_DEBUG
   CDBDebug("Working on [%s] with mode %d and (%d,%d)", dataSourceFilename.c_str(), mode, x, y);
-#endif
 
+#else
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
     CDBDebug("Working on [%s]", dataSourceFilename.c_str());
   }
-  if (mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS || mode == CNETCDFREADER_MODE_OPEN_HEADER) {
-    // pthread_mutex_lock(&CDataReader_open_lock);
-    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams, dataSourceFilename.c_str());
-    // pthread_mutex_unlock(&CDataReader_open_lock);
+#endif
 
-    //     enableDataCache = false;
+  if (mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS || mode == CNETCDFREADER_MODE_OPEN_HEADER) {
+    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams, dataSourceFilename.c_str());
   }
 
   if (mode == CNETCDFREADER_MODE_OPEN_ALL || mode == CNETCDFREADER_MODE_GET_METADATA || mode == CNETCDFREADER_MODE_OPEN_EXTENT) {
-    // CDBDebug("Working on [%s] with mode %d",dataSourceFilename.c_str(),mode);
-    // CDBDebug("Getting datasource %s",dataSourceFilename.c_str());
-    // pthread_mutex_lock(&CDataReader_open_lock);
     cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource, dataSourceFilename.c_str());
-    // pthread_mutex_unlock(&CDataReader_open_lock);
   }
-  // pthread_mutex_lock(&CDataReader_open_lock);
-  // //pthread_mutex_lock(&CDataReader_open_lock);
-  // return 0;//CHECK
-  // Check whether we really have a cdfObject
   if (cdfObject == NULL) {
     CDBError("Unable to get CDFObject from store");
     return 1;
@@ -893,6 +884,23 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     CDBError("Unable to attach CDFObject");
     return 1;
   }
+
+  // dataSource->getDataObject(0)->cdfObject = cdfObject;
+  // dataSource->getDataObject(0)->cdfVariable = cdfObject->getVariableNE(dataSource->getDataObject(0)->variableName.c_str());
+  // for (size_t varNr = 0; varNr < dataSource->getNumDataObjects(); varNr++) {
+  //   dataSource->getDataObject(varNr)->cdfObject == NULL
+  // }
+  // for (size_t varNr = 0; varNr < dataSource->getNumDataObjects(); varNr++) {
+
+  //   if (dataSource->getDataObject(varNr)->cdfObject == NULL || varNr == 0) {
+  //     dataSource->getDataObject(varNr)->cdfObject = cdfObject;
+  //     dataSource->getDataObject(varNr)->cdfVariable = cdfObject->getVariableNE(dataSource->getDataObject(varNr)->variableName.c_str());
+  //     if (dataSource->getDataObject(varNr)->cdfVariable == NULL) {
+  //       CDBError("attachCDFObject: variable nr %d \"%s\" does not exist", varNr, dataSource->getDataObject(varNr)->variableName.c_str());
+  //       return 1;
+  //     }
+  //   }
+  // }
 
   for (size_t varNr = 0; varNr < dataSource->getNumDataObjects(); varNr++) {
     // Check if our variable has a statusflag
@@ -1021,12 +1029,15 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 #endif
   }
 
-  /*
-   * DataPostProc: Here our datapostprocessor comes into action! It needs scale and offset from datasource.
-   * This is stage1, only AX+B will be applied to scale and offset parameters
-   */
-  CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
-
+  if (enablePostProcessors) {
+    /*
+     * DataPostProc: Here our datapostprocessor comes into action! It needs scale and offset from datasource.
+     * This is stage1, only AX+B will be applied to scale and offset parameters
+     */
+    CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
+  } else {
+    CDBDebug("Skipping POSTPROC!@!!!!!");
+  }
   if (mode == CNETCDFREADER_MODE_GET_METADATA) {
 #ifdef CDATAREADER_DEBUG
     CDBDebug("Get metadata");
@@ -1357,16 +1368,18 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     StopWatch_Stop("all read");
 #endif
 
-    /*
-     * DataPostProc: Here our datapostprocessor comes into action!
-     * This is stage2, running on data, not metadata
-     */
-
-    CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
+    if (enablePostProcessors) {
+      /*
+       * DataPostProc: Here our datapostprocessor comes into action!
+       * This is stage2, running on data, not metadata
+       */
+      CDBDebug("Running postproc on data");
+      CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
+    }
   }
-  // pthread_mutex_unlock(&CDataReader_open_lock);
+// pthread_mutex_unlock(&CDataReader_open_lock);
 #ifdef CDATAREADER_DEBUG
-  CDBDebug("/Finished datareader");
+  CDBDebug("/Finished datareader now has %d dataobjects", dataSource->getNumDataObjects());
 #endif
   return 0;
 }
