@@ -124,6 +124,7 @@ private:
 public:
   CDataReader() { _enableReporting = true; }
   ~CDataReader() {}
+  bool enablePostProcessors = true;
   int open(CDataSource *dataSource, int mode, int x, int y);
   int openExtent(CDataSource *dataSource, int mode, int *gridExtent);
   int open(CDataSource *dataSource, int mode, int x, int y, int *gridExtent);

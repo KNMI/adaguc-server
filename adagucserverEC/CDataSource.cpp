@@ -1355,3 +1355,60 @@ double CDataSource::getContourScaling() {
   }
   return 1;
 }
+
+CDataSource::DataObject *CDataSource::getDataObject(const char *name) {
+  // Find out to which dataobject we need to write to
+  for (size_t dataObjectNr = 0; dataObjectNr < dataObjects.size(); dataObjectNr++) {
+    if (dataObjects[dataObjectNr]->cdfVariable->name.equals(name)) {
+      return dataObjects[dataObjectNr];
+    }
+  }
+  CDBError("Unable to find dataobject: variable %s not found", name);
+  throw(CEXCEPTION_NULLPOINTER);
+};
+CDataSource::DataObject *CDataSource::getDataObject(int j) {
+
+  if (int(dataObjects.size()) <= j) {
+    CDBError("No Data object witn nr %d (total %d) for animation step %d (total steps %d)", j, currentAnimationStep, dataObjects.size(), timeSteps.size());
+    throw(CEXCEPTION_NULLPOINTER);
+  }
+
+  DataObject *d = dataObjects[j];
+  // CDBDebug("getDataObject %d %d",currentAnimationStep,j);
+  return d;
+}
+
+int CDataSource::attachCDFObject(CDFObject *cdfObject) {
+  if (cdfObject == NULL) {
+    CDBError("cdfObject==NULL");
+    return 1;
+  }
+  if (isConfigured == false) {
+    CDBError("Datasource %s is not configured", cfgLayer->Name[0]->value.c_str());
+    return 1;
+  }
+  if (getNumDataObjects() <= 0) {
+    CDBError("No variables found for datasource %s", cfgLayer->Name[0]->value.c_str());
+    return 1;
+  }
+  for (size_t varNr = 0; varNr < getNumDataObjects(); varNr++) {
+    if (getDataObject(varNr)->cdfVariable != NULL && getDataObject(varNr)->cdfVariable->hasCustomReader()) {
+      CDBDebug("%d Has custom reader", varNr);
+      continue;
+    }
+
+    getDataObject(varNr)->cdfObject = cdfObject;
+    getDataObject(varNr)->cdfVariable = cdfObject->getVariableNE(getDataObject(varNr)->variableName.c_str());
+    if (getDataObject(varNr)->cdfVariable == NULL) {
+      CDBError("attachCDFObject: variable nr %d \"%s\" does not exist", varNr, getDataObject(varNr)->variableName.c_str());
+      return 1;
+    }
+  }
+  return 0;
+}
+void CDataSource::detachCDFObject() {
+  for (size_t j = 0; j < getNumDataObjects(); j++) {
+    getDataObject(j)->cdfVariable = NULL;
+    getDataObject(j)->cdfObject = NULL;
+  }
+}

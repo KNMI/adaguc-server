@@ -699,6 +699,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
     bool openAll = false;
 
     bool everythingIsInBBOX = true;
+    CDBDebug(">-----------------------------------------------------------------------------------------------------------");
     CDataReader reader;
     reader.open(dataSources[d], CNETCDFREADER_MODE_OPEN_HEADER);
     if (dataSources[d]->getNumDataObjects() > 0) {
@@ -735,7 +736,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
         }
       }
     }
-
+    CDBDebug("<-----------------------------------------------------------------------------------------------------------");
     // CDBDebug("gfi_openall: %d %d",dataSources[d]->cfgLayer->FilePath.size(),openAll);
 
     if (dataSources[d]->cfgLayer->TileSettings.size() == 1) {
@@ -776,6 +777,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
       std::map<std::string, bool> dimensionKeyValueMap; // A map for every dimensionvalue linked to a value
 
       for (int step = 0; step < dataSources[d]->getNumTimeSteps(); step++) {
+        CDBDebug("TIMESTEP %d ----------------------------->", step);
         dataSources[d]->setTimeStep(step);
 
         CCDFDims *cdfDims = dataSources[d]->getCDFDims();
@@ -799,6 +801,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
 #ifdef CIMAGEDATAWRITER_DEBUG
             CDBDebug("OPEN ALL");
 #endif
+            // CDFObjectStore::getCDFObjectStore()->clear();
             status = reader.open(dataSources[d], CNETCDFREADER_MODE_OPEN_ALL);
           } else {
 // CDBDebug("OPEN HEADER");
@@ -1079,7 +1082,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
                     if (feature->paramMap.empty() == false) {
                       std::map<std::string, std::string>::iterator paramItemIt;
                       for (paramItemIt = feature->paramMap.begin(); paramItemIt != feature->paramMap.end(); ++paramItemIt) {
-                        CDBDebug("Clicked %s %s", paramItemIt->first.c_str(), paramItemIt->second.c_str());
+                        // CDBDebug("Clicked %s %s", paramItemIt->first.c_str(), paramItemIt->second.c_str());
                         GetFeatureInfoResult::Element *featureParam = new GetFeatureInfoResult::Element();
                         featureParam->dataSource = dataSource;
                         for (size_t j = 0; j < dataSources[d]->requiredDims.size(); j++) {
@@ -1276,6 +1279,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
             }
           }
         }
+        CDBDebug("fINISHED TIMESTEP %d ----------------------------->", step);
       }
     }
   }
@@ -3676,8 +3680,8 @@ void rotateUvNorth(double &u, double &v, double rlo, double rla, float deltaX, f
   xpntNorthSph -= xpnt0Sph, ypntNorthSph -= ypnt0Sph;
   zpntNorthSph -= zpnt0Sph;
 
-  NormVector(xpntEastSph, ypntEastSph, zpntEastSph);    // vecx
-  NormVector(xpntNorthSph, ypntNorthSph, zpntNorthSph); // vecy
+  NormVector(xpntEastSph, ypntEastSph, zpntEastSph);                                                                        // vecx
+  NormVector(xpntNorthSph, ypntNorthSph, zpntNorthSph);                                                                     // vecy
 
   CrossProd(xpntEastSph, ypntEastSph, zpntEastSph, xpntNorthSph, ypntNorthSph, zpntNorthSph, xnormSph, ynormSph, znormSph); // vec z
   xpntNorthSphRot = -znormSph * xnormSph;                                                                                   // xpntNorthSphRot = 0.0 - Dist*xnormSph;
@@ -3698,7 +3702,7 @@ void rotateUvNorth(double &u, double &v, double rlo, double rla, float deltaX, f
 
   xpntNorthSph = sin(vecAngle); // Rotate the point/vector (0,1) around Z-axis with vecAngle
   ypntNorthSph = cos(vecAngle);
-  xpntEastSph = ypntNorthSph; // Rotate the same point/vector around Z-axis with 90 degrees
+  xpntEastSph = ypntNorthSph;   // Rotate the same point/vector around Z-axis with 90 degrees
   ypntEastSph = -xpntNorthSph;
 
   // zpntNorthSph = 0; zpntEastSph = 0;  // not needed in 2D
