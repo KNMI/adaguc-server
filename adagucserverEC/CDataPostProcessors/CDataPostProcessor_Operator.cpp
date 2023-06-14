@@ -6,9 +6,9 @@
 const char *CDPPOperator::className = "CDPPOperator";
 
 const char *CDPPOperator::getId() { return "operator"; }
-int CDPPOperator::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource) {
+int CDPPOperator::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
   if (proc->attr.algorithm.equals("operator")) {
-    if (dataSource->getNumDataObjects() != 2 && dataSource->getNumDataObjects() != 3) {
+    if (dataSource->getNumDataObjects() != 2 && mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
       CDBError("2 variables are needed for operator, found %d", dataSource->getNumDataObjects());
       return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
     }
@@ -18,7 +18,7 @@ int CDPPOperator::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSour
 }
 
 int CDPPOperator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
-  if ((isApplicable(proc, dataSource) & mode) == false) {
+  if ((isApplicable(proc, dataSource, mode) & mode) == false) {
     return -1;
   }
   CDBDebug("Applying Operator");
@@ -64,12 +64,12 @@ int CDPPOperator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
     size_t l = (size_t)dataSource->dHeight * (size_t)dataSource->dWidth;
     CDF::allocateData(dataSource->getDataObject(0)->cdfVariable->getType(), &dataSource->getDataObject(0)->cdfVariable->data, l);
 
-    float *hiwc = (float *)dataSource->getDataObject(0)->cdfVariable->data;
+    float *result = (float *)dataSource->getDataObject(0)->cdfVariable->data;
     float *a = (float *)dataSource->getDataObject(1)->cdfVariable->data;
     float *b = (float *)dataSource->getDataObject(2)->cdfVariable->data;
 
     for (size_t j = 0; j < l; j++) {
-      hiwc[j] = b[j] - a[j];
+      result[j] = b[j] - a[j];
     }
   }
   // dataSource->eraseDataObject(1);

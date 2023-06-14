@@ -94,6 +94,7 @@ namespace CDF {
       _hasCustomReader = true;
       this->customReader = customReader;
     };
+    CustomReader *getCustomReader() { return this->customReader; }
 
     bool hasCustomReader() { return _hasCustomReader; }
 
