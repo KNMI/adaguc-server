@@ -287,22 +287,18 @@ def get_collectioninfo_for_id(
             links.append(instance_link)
 
     bbox = get_extent(dataset)  # TODO from subdataset?
-    print("bbox for ", dataset, ":", bbox)
     crs = CRSOptions.wgs84
     spatial = Spatial(bbox=bbox, crs=crs)
     (interval,
      time_values) = get_times_for_dataset(dataset,
                                           subdatasetinfo["parameters"][0])
 
-    print("T:", interval, time_values)
     customlist = get_custom_dims_for_dataset(dataset,
                                              subdatasetinfo["parameters"][0])
-    print("CUSTOM1:", customlist)
     custom = []
     if customlist:
         for c in customlist:
             custom.append(Custom(**c))
-    print("CUSTOM2:", custom)
 
     vertical = None
     vertical_dim = get_vertical_dim_for_dataset(
@@ -449,6 +445,7 @@ def get_time_values_for_range(rng) -> list[str]:
     if not tstep:
         tstep = 3600
     nsteps = int(timediff / tstep) + 1
+    print("RETURNING", f"R{nsteps}/{st}/{step}")
     return [f"R{nsteps}/{st}/{step}"]
 
 
@@ -463,7 +460,6 @@ def get_times_for_dataset(
 
     if "time" in layer.dimensions:
         time_dim = layer.dimensions["time"]
-        print("timedim:", time_dim, time_dim["values"])
         if "/" in time_dim["values"][0]:
             terms = time_dim["values"][0].split("/")
             interval = [[
@@ -487,11 +483,10 @@ def get_custom_dims_for_dataset(dataset: str, parameter: str = None):
     if parameter and parameter in list(wms):
         layer = wms[parameter]
     else:
+        # default to first layer
         layer = wms[list(wms)[0]]
-        print("LAYER:", parameter, layer)
     for dim_name in layer.dimensions:
         if dim_name not in ["reference_time", "time", "elevation"]:
-            print("CDIM for ", layer.name, layer.dimensions[dim_name])
             custom_dim = {
                 "id": dim_name,
                 "interval": [],
@@ -510,7 +505,6 @@ def get_vertical_dim_for_dataset(dataset: str, parameter: str = None):
         layer = wms[list(wms)[0]]
     for dim_name in layer.dimensions:
         if dim_name in ["elevation"]:
-            print("VDIM for ", layer.name, layer.dimensions[dim_name])
             vertical_dim = {
                 "interval": [],
                 "values": layer.dimensions[dim_name]["values"],
@@ -534,10 +528,8 @@ async def edr_get_collections(request: Request):
     collections: list[Collection] = []
     for ds in datasets.keys():
         subdatasets = get_subdatasets_for_dataset(ds)
-        print("DS:", ds, "SDS:", subdatasets)
         if len(subdatasets) > 0:
             for sds in subdatasets:
-                print("ds:", ds, "sds:", sds)
                 coll = get_collectioninfo_for_id(sds, f"{base_url}/{sds}", ds,
                                                  sds)
                 collections.append(coll)
@@ -605,7 +597,6 @@ def get_extent(coll):
     """
     Get the boundingbox extent from the WMS GetCapabilities
     """
-    print(f"get_extent({coll})")
     contents = get_capabilities(coll)
     if len(contents):
         bbox = contents[next(iter(contents))].boundingBoxWGS84
@@ -621,7 +612,6 @@ def get_extent(coll):
 )
 async def edr_get_collection_instances_for_dataset(collection_name: str,
                                                    request: Request):
-    print(f"edr_get_collection_instances_for_dataset({collection_name})")
     dataset = collection_name.split("-")[0]
     base_url = str(
         request.url_for("edr_get_collection_instances_for_dataset",
@@ -633,19 +623,13 @@ async def edr_get_collection_instances_for_dataset(collection_name: str,
 
     ref_times = get_reference_times_for_dataset(
         dataset, wms_url, subdatasets[collection_name]["parameters"][0])
-    print("REF:", ref_times, dataset,
-          subdatasets[collection_name]["parameters"][0])
     links: list(Link) = []
     links.append(Link(href=base_url, rel="self"))
     extent = Extent()
     for instance in list(ref_times):
-        print("INSTANCE:", instance)
         instance_links: list(Link) = []
         instance_link = Link(href=f"{base_url}/{instance}", rel="self")
         instance_links.append(instance_link)
-        # instance = Collection(
-        #     id=instance, links=instance_links, extent=extent, crs=CRSOptions.wgs84, data_queries=
-        # )
         instance_info = get_collectioninfo_for_id(
             collection_name,
             f"{base_url}/{instance}",
@@ -655,13 +639,6 @@ async def edr_get_collection_instances_for_dataset(collection_name: str,
         )
 
         instances.append(instance_info)
-        # base_url = request.url_for(
-        #     "get_collection_instance_by_dataset_and_instance",
-        #     dataset=dataset,
-        #     instance=instance,
-        # )
-        # coll = get_collectioninfo_for_id(dataset, base_url, True)
-        # colls.append(coll)
 
     instances_data = InstancesModel(instances=instances, links=links)
     return instances_data
@@ -865,49 +842,33 @@ def makedimsORG(dims, data):
 def covjson_from_resp(dats):
     first = True
     fullcovjson = None
-    print("DAT:", dats)
     for dat in dats:
         (lon, lat) = dat["point"]["coords"].split(",")
         lat = float(lat)
         lon = float(lon)
         dims = makedims(dat["dims"], dat["data"])
-        print("dims: ", dims, "reference_time" in dims)
         time_steps = getdimvals(dims, "time")
-        print("TSTEPS:", time_steps)
         vertical_steps = getdimvals(dims, "elevation")
         reference_time = getdimvals(dims, "reference_time")
         if reference_time:
             single_reference_time = reference_time[0]
         else:
             single_reference_time = None
-        print("REF:", single_reference_time, "VERT:", vertical_steps)
         custom_dims = {
             dim: dims[dim]
             for dim in dims if dim not in
             ["reference_time", "time", "x", "y", "z", "elevation"]
         }
-        print("custom: ", custom_dims)
 
         valstack = []
         # dims_without_time = []
         for dim_name in dims:
-            print("d:", dim_name)
-            # dim_name = list(d.keys())[0]
-            # if dim_name != "time":
-            # dims_without_time.append(dim_name)
             vals = getdimvals(dims, dim_name)
             valstack.append(vals)
-        # print("D:", dims, dims_without_time)
-        print("valstack:", valstack)
         tuples = list(itertools.product(*valstack))
-        print("tuples:", tuples, time_steps)
         values = []
         for t in tuples:
-            # for ts in time_steps:
-            # v = multi_get(dat["data"], t + (ts,))
-            # print(t + (ts,), ":", v)
             v = multi_get(dat["data"], t)
-            print(t, v)
             if v:
                 try:
                     values.append(float(v))
@@ -916,23 +877,6 @@ def covjson_from_resp(dats):
                         values.append(None)
                     else:
                         values.append(v)
-        print("values: ", values)
-        # sys.exit(0)
-        # values = []
-        # if reference_time:
-        #     for t in time_steps:
-        #         if vertical_steps:
-        #             for v in vertical_steps:
-        #                 values.append(float(dat["data"][single_reference_time][v][t]))
-        #         else:
-        #             values.append(float(dat["data"][single_reference_time][t]))
-        # else:
-        #     if vertical_steps:
-        #         for v in vertical_steps:
-        #             values.append(float(dat["data"][v][t]))
-        #     else:
-        #         for t in time_steps:
-        #             values.append(float(dat["data"][t]))
 
         parameters: Dict(str, CovJsonParameter) = dict()
         ranges = dict()
@@ -952,7 +896,6 @@ def covjson_from_resp(dats):
             shape=shape,
             values=values,
         )
-        print("_range: ", _range)
         ranges[dat["name"]] = _range
 
         axes: dict[str, ValuesAxis] = {
@@ -1010,13 +953,10 @@ def feature_from_dat(dats, observedPropertyName, name):
     """
     feature_from_dat
     """
-    print("DAT:", dats)
     features = []
     for dat in dats:
-        print("dims:", dat["dims"])
         dims = makedimsORG(dat["dims"], dat["data"])
         timeSteps = getdimvalsORG(dims, "time")
-        print("timeSteps:", timeSteps)
         if not timeSteps or len(timeSteps) == 0:
             return []
 
@@ -1028,7 +968,6 @@ def feature_from_dat(dats, observedPropertyName, name):
                 dims_without_time.append(d)
                 vals = getdimvals(dims, dim_name)
                 valstack.append(vals)
-        print("D:", dims, dims_without_time)
         tuples = list(itertools.product(*valstack))
 
         # features = []
