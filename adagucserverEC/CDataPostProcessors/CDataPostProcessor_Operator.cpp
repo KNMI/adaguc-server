@@ -6,9 +6,10 @@
 const char *CDPPOperator::className = "CDPPOperator";
 
 const char *CDPPOperator::getId() { return "operator"; }
+
 int CDPPOperator::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
   if (proc->attr.algorithm.equals("operator")) {
-    if (dataSource->getNumDataObjects() != 2 && mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
+    if (dataSource->getNumDataObjects() < 2 && mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
       CDBError("2 variables are needed for operator, found %d", dataSource->getNumDataObjects());
       return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
     }
@@ -23,19 +24,23 @@ int CDPPOperator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
   }
   CDBDebug("Applying Operator");
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
-    if (dataSource->getDataObject(0)->cdfVariable->name.equals("result")) return 0;
+    CT::string newDataObjectName = proc->attr.name;
+    if (newDataObjectName.empty()) {
+      newDataObjectName = "result";
+    }
+    if (dataSource->getDataObject(0)->cdfVariable->name.equals(newDataObjectName.c_str())) return 0;
     CDF::Variable *varToClone = dataSource->getDataObject(0)->cdfVariable;
 
     CDataSource::DataObject *newDataObject = new CDataSource::DataObject();
 
-    newDataObject->variableName.copy("result");
+    newDataObject->variableName.copy(newDataObjectName.c_str());
 
     dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), newDataObject);
 
     newDataObject->cdfVariable = new CDF::Variable();
     newDataObject->cdfObject = (CDFObject *)varToClone->getParentCDFObject();
     newDataObject->cdfObject->addVariable(newDataObject->cdfVariable);
-    newDataObject->cdfVariable->setName("result");
+    newDataObject->cdfVariable->setName(newDataObjectName.c_str());
     newDataObject->cdfVariable->setType(CDF_FLOAT);
     newDataObject->cdfVariable->setSize(dataSource->dWidth * dataSource->dHeight);
 
@@ -49,8 +54,8 @@ int CDPPOperator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
 
     newDataObject->cdfVariable->removeAttribute("scale_factor");
     newDataObject->cdfVariable->removeAttribute("add_offset");
-    newDataObject->cdfVariable->setAttributeText("standard_name", "result");
-    newDataObject->cdfVariable->setAttributeText("long_name", "result");
+    newDataObject->cdfVariable->setAttributeText("standard_name", newDataObjectName.c_str());
+    newDataObject->cdfVariable->setAttributeText("long_name", newDataObjectName.c_str());
     newDataObject->cdfVariable->setAttributeText("units", "1");
 
     short attrData[3];
@@ -65,11 +70,47 @@ int CDPPOperator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
     CDF::allocateData(dataSource->getDataObject(0)->cdfVariable->getType(), &dataSource->getDataObject(0)->cdfVariable->data, l);
 
     float *result = (float *)dataSource->getDataObject(0)->cdfVariable->data;
-    float *a = (float *)dataSource->getDataObject(1)->cdfVariable->data;
-    float *b = (float *)dataSource->getDataObject(2)->cdfVariable->data;
 
-    for (size_t j = 0; j < l; j++) {
-      result[j] = b[j] - a[j];
+    CDataSource::DataObject *dataObjectA, *dataObjectB;
+    try {
+      dataObjectA = dataSource->getDataObject(proc->attr.a);
+      dataObjectB = dataSource->getDataObject(proc->attr.b);
+    } catch (int e) {
+      return 1;
+    }
+
+    float *a = (float *)dataObjectA->cdfVariable->data;
+    float *b = (float *)dataObjectB->cdfVariable->data;
+
+    if (proc->attr.mode.equals("substract")) {
+      for (size_t j = 0; j < l; j++) {
+        result[j] = a[j] - b[j];
+      }
+    }
+
+    if (proc->attr.mode.equals("-")) {
+      for (size_t j = 0; j < l; j++) {
+        result[j] = a[j] - b[j];
+      }
+    }
+    if (proc->attr.mode.equals("+")) {
+      for (size_t j = 0; j < l; j++) {
+        result[j] = a[j] + b[j];
+      }
+    }
+    if (proc->attr.mode.equals("*")) {
+      for (size_t j = 0; j < l; j++) {
+        result[j] = b[j] * a[j];
+      }
+    }
+    if (proc->attr.mode.equals("/")) {
+      for (size_t j = 0; j < l; j++) {
+        if (a[j] == 0) {
+          result[j] = NAN;
+        } else {
+          result[j] = a[j] / b[j];
+        }
+      }
     }
   }
   // dataSource->eraseDataObject(1);

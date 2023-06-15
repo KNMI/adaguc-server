@@ -1357,15 +1357,24 @@ double CDataSource::getContourScaling() {
 }
 
 CDataSource::DataObject *CDataSource::getDataObject(const char *name) {
-  // Find out to which dataobject we need to write to
-  for (size_t dataObjectNr = 0; dataObjectNr < dataObjects.size(); dataObjectNr++) {
-    if (dataObjects[dataObjectNr]->cdfVariable->name.equals(name)) {
-      return dataObjects[dataObjectNr];
+  for (auto it = dataObjects.begin(); it != dataObjects.end(); ++it) {
+    CDataSource::DataObject *dataObject = *it;
+    if (dataObject->cdfVariable->name.equals(name)) {
+      return dataObject;
+    }
+    if (dataObject->variableName.equals(name)) {
+      return dataObject;
     }
   }
-  CDBError("Unable to find dataobject: variable %s not found", name);
+  CT::string candidates;
+  for (auto it = dataObjects.begin(); it != dataObjects.end(); ++it) {
+    CDataSource::DataObject *dataObject = *it;
+    candidates.printconcat("%s,", dataObject->cdfVariable->name.c_str());
+  }
+  CDBError("DataObject %s not found. Canditates are %s", name, candidates.c_str());
   throw(CEXCEPTION_NULLPOINTER);
-};
+}
+
 CDataSource::DataObject *CDataSource::getDataObject(int j) {
 
   if (int(dataObjects.size()) <= j) {
