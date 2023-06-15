@@ -73,11 +73,31 @@ TEST(alreadyMeter, CImageWarper) {
 
 TEST(kilometerToMeter, CImageWarper) {
   CT::string projStringIn("+proj=stere +lat_0=90 +lon_0=0 +lat_ts=60 +a=6378.14 +b=6356.75 +x_0=0 y_0=0");
-  CT::string projStringOutExpected("+proj=stere +lat_0=90.000000 +lon_0=0.000000 +lat_ts=60.000000 +a=6378140.000000 +b=6356750.000000 +x_0=0.000000 +y_0=0.000000 +units=m +ellps=WGS84 +datum=WGS84");
+  CT::string projStringOutExpected("+proj=stere +lat_0=90.000000 +lon_0=0.000000 +lat_ts=60.000000 +a=6378140.000000 +b=6356750.000000 +x_0=0.000000 +y_0=0.000000 +ellps=WGS84 +datum=WGS84");
   CT::string projStringOut;
   double scaling;
   std::tie(projStringOut, scaling) = CImageWarper::fixProjection(projStringIn);
   CHECK(scaling == 1000.0);
+  CHECK(projStringOut == projStringOutExpected);
+}
+
+TEST(kilometerToMeterObTran, CImageWarper) {
+  CT::string projStringIn("+proj=ob_tran +o_proj=longlat +lon_0=5.449997 +o_lat_p=37.250000 +o_lon_p=0.000000 +a=6378.14 +b=6356.75 +x_0=0.000000 +y_0=0.000000 +no_defs");
+  CT::string projStringOutExpected("+proj=ob_tran +o_proj=longlat +lon_0=5.449997 +o_lat_p=37.250000 +o_lon_p=0.000000 +a=6378140.000000 +b=6356750.000000 +x_0=0.000000 +y_0=0.000000 +no_defs");
+  CT::string projStringOut;
+  double scaling;
+  std::tie(projStringOut, scaling) = CImageWarper::fixProjection(projStringIn);
+  CHECK(scaling == 1000.0);
+  CHECK(projStringOut == projStringOutExpected);
+}
+
+TEST(meterToMeterObTran, CImageWarper) {
+  CT::string projStringIn("+proj=ob_tran +o_proj=longlat +lon_0=5.449997 +o_lat_p=37.250000 +o_lon_p=0.000000 +a=6378140.000000 +b=6356750.000000 +x_0=0.000000 +y_0=0.000000 +no_defs");
+  CT::string projStringOutExpected("+proj=ob_tran +o_proj=longlat +lon_0=5.449997 +o_lat_p=37.250000 +o_lon_p=0.000000 +a=6378140.000000 +b=6356750.000000 +x_0=0.000000 +y_0=0.000000 +no_defs");
+  CT::string projStringOut;
+  double scaling;
+  std::tie(projStringOut, scaling) = CImageWarper::fixProjection(projStringIn);
+  CHECK(scaling == 1);
   CHECK(projStringOut == projStringOutExpected);
 }
 
