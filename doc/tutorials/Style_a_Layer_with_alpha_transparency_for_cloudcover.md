@@ -25,12 +25,12 @@ This is the style for cloudcover
   <Legend fixedclasses="true" tickround=".1">cloudcover</Legend>
   <Min>0.0</Min>
   <Max>8</Max>
-  <ContourLine width="1" linecolor="\#444444" textcolor="\#444444" textformatting="%2.1f" classes="3"/>
-  <ContourLine width="3" linecolor="\#0000FF" textcolor="\#444444" textformatting="%2.1f" classes="4"/>
-  <ShadeInterval min="-1" max="2" label="<2" fillcolor="\#E6E6FF"/>
-  <ShadeInterval min="2" max="4" label="2-4" fillcolor="\#B3B3FF"/>
-  <ShadeInterval min="4" max="6" label="4-6" fillcolor="\#8080FF"/>
-  <ShadeInterval min="6" max="8" label=">6" fillcolor="\#4C4CFF"/>
+  <ContourLine width="1" linecolor="#444444" textcolor="#444444" textformatting="%2.1f" classes="3"/>
+  <ContourLine width="3" linecolor="#0000FF" textcolor="#444444" textformatting="%2.1f" classes="4"/>
+  <ShadeInterval min="-1" max="2" label="<2" fillcolor="#E6E6FF"/>
+  <ShadeInterval min="2" max="4" label="2-4" fillcolor="#B3B3FF"/>
+  <ShadeInterval min="4" max="6" label="4-6" fillcolor="#8080FF"/>
+  <ShadeInterval min="6" max="8" label=">6" fillcolor="#4C4CFF"/>
   <RenderMethod>nearest,bilinear,contour,contourbilinear,shaded</RenderMethod>
   <NameMapping name="nearest" title="Alpha transparency" abstract="Visualize radar images with alpha transparency on a log scale"/> 
   <NameMapping name="bilinear" title="Alpha transparency smooth" abstract="Visualize radar images with alpha transparency on a log scale"/>
