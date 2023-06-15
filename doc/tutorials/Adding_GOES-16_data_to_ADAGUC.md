@@ -26,8 +26,7 @@ Listing the primary folders in the noaa-goes16 bucket:
 aws s3 ls noaa-goes16/
 ```
 
-This generates a list of GOES-16 products (the PRE string indicates a
-S\# bucket (pseudo)folder name):
+This generates a list of GOES-16 products (the PRE string indicates a bucket (pseudo) folder name):
 ```
 PRE ABI-L1b-RadC/
 PRE ABI-L1b-RadF/

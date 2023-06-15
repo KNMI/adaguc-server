@@ -57,8 +57,9 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
     return -1;
   }
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
-    if (dataSource->getDataObject(0)->cdfVariable->name.equals("correctedWindField")) return 0;
+    if (dataSource->getDataObject(0)->cdfVariable->name.equals("WindSpeedWindparksOff")) return 0;
     CDF::Variable *varToClone = dataSource->getDataObject(0)->cdfVariable;
+    dataSource->getDataObject(1)->cdfVariable->setAttributeText("long_name", "WindSpeedWindparksOn");
 
     /* Prepend foundWindSectors data object */
     CDataSource::DataObject *founrWindSectorsDataObject = new CDataSource::DataObject();
@@ -77,19 +78,19 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
     windSpeedDifferenceDataObject->cdfObject = (CDFObject *)varToClone->getParentCDFObject();
     windSpeedDifferenceDataObject->cdfObject->addVariable(windSpeedDifferenceDataObject->cdfVariable);
 
-    /* Prepend correctedWindFieldMin data object */
+    /* Prepend WindSpeedWindparksOnImproved data object */
     CDataSource::DataObject *correctedWindFieldMinDataObject = new CDataSource::DataObject();
     dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), correctedWindFieldMinDataObject);
-    correctedWindFieldMinDataObject->cdfVariable = cloneVariable(varToClone, "correctedWindFieldMin", dataSource->dWidth * dataSource->dHeight);
-    correctedWindFieldMinDataObject->variableName.copy("correctedWindFieldMin");
+    correctedWindFieldMinDataObject->cdfVariable = cloneVariable(varToClone, "WindSpeedWindparksOnImproved", dataSource->dWidth * dataSource->dHeight);
+    correctedWindFieldMinDataObject->variableName.copy("WindSpeedWindparksOnImproved");
     correctedWindFieldMinDataObject->cdfVariable->setAttributeText("units", "kts");
     correctedWindFieldMinDataObject->cdfObject = (CDFObject *)varToClone->getParentCDFObject();
     correctedWindFieldMinDataObject->cdfObject->addVariable(correctedWindFieldMinDataObject->cdfVariable);
-    /* Prepend correctedWindField data object */
+    /* Prepend WindSpeedWindparksOff data object */
     CDataSource::DataObject *correctedWindFieldDataObject = new CDataSource::DataObject();
     dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), correctedWindFieldDataObject);
-    correctedWindFieldDataObject->cdfVariable = cloneVariable(varToClone, "correctedWindField", dataSource->dWidth * dataSource->dHeight);
-    correctedWindFieldDataObject->variableName.copy("correctedWindField");
+    correctedWindFieldDataObject->cdfVariable = cloneVariable(varToClone, "WindSpeedWindparksOff", dataSource->dWidth * dataSource->dHeight);
+    correctedWindFieldDataObject->variableName.copy("WindSpeedWindparksOff");
     correctedWindFieldDataObject->cdfVariable->setAttributeText("units", "kts");
     correctedWindFieldDataObject->cdfObject = (CDFObject *)varToClone->getParentCDFObject();
     correctedWindFieldDataObject->cdfObject->addVariable(correctedWindFieldDataObject->cdfVariable);
@@ -121,21 +122,21 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
     float *windSpeedDifferenceVariableData = (float *)windSpeedDifferenceVariable->data;
 
     // This is the variable to write To
-    CDF::Variable *correctedWindField = dataSource->getDataObject("correctedWindField")->cdfVariable;
+    CDF::Variable *WindSpeedWindparksOff = dataSource->getDataObject("WindSpeedWindparksOff")->cdfVariable;
     windSpeedDifferenceVariable->readData(CDF_FLOAT);
-    CDF::fill(correctedWindField->data, correctedWindField->getType(), -1, (size_t)dataSource->dHeight * (size_t)dataSource->dWidth);
+    CDF::fill(WindSpeedWindparksOff->data, WindSpeedWindparksOff->getType(), -1, (size_t)dataSource->dHeight * (size_t)dataSource->dWidth);
 
     Settings settings;
     settings.width = dataSource->dWidth;
     settings.height = dataSource->dHeight;
-    settings.correctedWindField = (float *)dataSource->getDataObject(0)->cdfVariable->data;    // Array / grid to write TO
-    settings.correctedWindFieldMin = (float *)dataSource->getDataObject(1)->cdfVariable->data; // Array / grid to write TO
-    settings.windSpeedDifference = (float *)dataSource->getDataObject(2)->cdfVariable->data;   // Array / grid to write TO
-    settings.windSectors = (float *)dataSource->getDataObject(3)->cdfVariable->data;           // Array / grid to write TO
-    settings.destGridWindDirection = (float *)dataSource->getDataObject(4)->cdfVariable->data; // Original wind direction from the model
-    settings.destGridWindSpeed = (float *)dataSource->getDataObject(5)->cdfVariable->data;     // Original windspeed from the model
-    settings.windSpeedDifferenceVariable = windSpeedDifferenceVariable;                        // CDF Variable to read FROM
-    settings.windSectorVariable = windSectors;                                                 // CDF Variable with the wind sector lookup table
+    settings.WindSpeedWindparksOff = (float *)dataSource->getDataObject(0)->cdfVariable->data;        // Array / grid to write TO
+    settings.WindSpeedWindparksOnImproved = (float *)dataSource->getDataObject(1)->cdfVariable->data; // Array / grid to write TO
+    settings.windSpeedDifference = (float *)dataSource->getDataObject(2)->cdfVariable->data;          // Array / grid to write TO
+    settings.windSectors = (float *)dataSource->getDataObject(3)->cdfVariable->data;                  // Array / grid to write TO
+    settings.destGridWindDirection = (float *)dataSource->getDataObject(4)->cdfVariable->data;        // Original wind direction from the model
+    settings.destGridWindSpeed = (float *)dataSource->getDataObject(5)->cdfVariable->data;            // Original windspeed from the model
+    settings.windSpeedDifferenceVariable = windSpeedDifferenceVariable;                               // CDF Variable to read FROM
+    settings.windSectorVariable = windSectors;                                                        // CDF Variable with the wind sector lookup table
 
     auto wpdimlinks = windSpeedDifferenceVariable->dimensionlinks;
     settings.dimWindSectorQuantile = wpdimlinks[1]->getSize();
@@ -202,7 +203,7 @@ void CDPPWFP::drawFunction(int x, int y, float __val, void *_settings, void *war
     }
     // If the sector was not found, set a NAN
     if (selectedS == -1) {
-      ((float *)settings->correctedWindField)[x + y * settings->width] = NAN;
+      ((float *)settings->WindSpeedWindparksOff)[x + y * settings->width] = NAN;
       return;
     }
 
@@ -225,13 +226,16 @@ void CDPPWFP::drawFunction(int x, int y, float __val, void *_settings, void *war
 
     float windSpeedDifference = ((float *)windSpeedDifferenceVariable->data)[gridLocationPointer + windHeightPointer + windQuantilePointer + windSectorPointer];
     float MSTOKTS = 2;
-    float correctioNFactor = 0.7;
+    float correctionFactor = 1.15;
+
+    if (windSpeedDifference < 1) windSpeedDifference = 0;
+
     float windSpeedDifferenceKTS = windSpeedDifference * MSTOKTS;
-    float windSpeedDifferenceMinKTS = windSpeedDifference * MSTOKTS * correctioNFactor;
+    float windSpeedDifferenceMinKTS = windSpeedDifference * MSTOKTS * correctionFactor;
     ((float *)settings->windSectors)[x + y * settings->width] = selectedS;
     ((float *)settings->windSpeedDifference)[x + y * settings->width] = windSpeedDifferenceKTS;
 
-    ((float *)settings->correctedWindField)[x + y * settings->width] = windSpeed + windSpeedDifferenceKTS;
-    ((float *)settings->correctedWindFieldMin)[x + y * settings->width] = windSpeed - windSpeedDifferenceMinKTS;
+    ((float *)settings->WindSpeedWindparksOff)[x + y * settings->width] = windSpeed + windSpeedDifferenceKTS;
+    ((float *)settings->WindSpeedWindparksOnImproved)[x + y * settings->width] = windSpeed - windSpeedDifferenceMinKTS;
   }
 };
