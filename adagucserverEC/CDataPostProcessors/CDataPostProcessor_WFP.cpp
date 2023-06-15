@@ -72,15 +72,25 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
     CDataSource::DataObject *windSpeedDifferenceDataObject = new CDataSource::DataObject();
     dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), windSpeedDifferenceDataObject);
     windSpeedDifferenceDataObject->cdfVariable = cloneVariable(varToClone, "windSpeedDifference", dataSource->dWidth * dataSource->dHeight);
+    windSpeedDifferenceDataObject->cdfVariable->setAttributeText("units", "kts");
     windSpeedDifferenceDataObject->variableName.copy("windSpeedDifference");
     windSpeedDifferenceDataObject->cdfObject = (CDFObject *)varToClone->getParentCDFObject();
     windSpeedDifferenceDataObject->cdfObject->addVariable(windSpeedDifferenceDataObject->cdfVariable);
 
+    /* Prepend correctedWindFieldMin data object */
+    CDataSource::DataObject *correctedWindFieldMinDataObject = new CDataSource::DataObject();
+    dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), correctedWindFieldMinDataObject);
+    correctedWindFieldMinDataObject->cdfVariable = cloneVariable(varToClone, "correctedWindFieldMin", dataSource->dWidth * dataSource->dHeight);
+    correctedWindFieldMinDataObject->variableName.copy("correctedWindFieldMin");
+    correctedWindFieldMinDataObject->cdfVariable->setAttributeText("units", "kts");
+    correctedWindFieldMinDataObject->cdfObject = (CDFObject *)varToClone->getParentCDFObject();
+    correctedWindFieldMinDataObject->cdfObject->addVariable(correctedWindFieldMinDataObject->cdfVariable);
     /* Prepend correctedWindField data object */
     CDataSource::DataObject *correctedWindFieldDataObject = new CDataSource::DataObject();
     dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), correctedWindFieldDataObject);
     correctedWindFieldDataObject->cdfVariable = cloneVariable(varToClone, "correctedWindField", dataSource->dWidth * dataSource->dHeight);
     correctedWindFieldDataObject->variableName.copy("correctedWindField");
+    correctedWindFieldDataObject->cdfVariable->setAttributeText("units", "kts");
     correctedWindFieldDataObject->cdfObject = (CDFObject *)varToClone->getParentCDFObject();
     correctedWindFieldDataObject->cdfObject->addVariable(correctedWindFieldDataObject->cdfVariable);
   }
@@ -88,8 +98,8 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
     size_t l = (size_t)dataSource->dHeight * (size_t)dataSource->dWidth;
     CDF::allocateData(dataSource->getDataObject(0)->cdfVariable->getType(), &dataSource->getDataObject(0)->cdfVariable->data, l);
 
-    float *windDirection = (float *)dataSource->getDataObject(2)->cdfVariable->data;
-    float *windSpeed = (float *)dataSource->getDataObject(3)->cdfVariable->data;
+    // float *windDirection = (float *)dataSource->getDataObject(2)->cdfVariable->data;
+    // float *windSpeed = (float *)dataSource->getDataObject(3)->cdfVariable->data;
 
     CDataSource *tempDataSource = getDataSource(dataSource, proc->attr.name);
     CRequest::setDimValuesForDataSource(tempDataSource, dataSource->srvParams);
@@ -119,10 +129,11 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
     settings.width = dataSource->dWidth;
     settings.height = dataSource->dHeight;
     settings.correctedWindField = (float *)dataSource->getDataObject(0)->cdfVariable->data;    // Array / grid to write TO
-    settings.windSpeedDifference = (float *)dataSource->getDataObject(1)->cdfVariable->data;   // Array / grid to write TO
-    settings.windSectors = (float *)dataSource->getDataObject(2)->cdfVariable->data;           // Array / grid to write TO
-    settings.destGridWindSpeed = (float *)dataSource->getDataObject(3)->cdfVariable->data;     // Original windspeed from the model
+    settings.correctedWindFieldMin = (float *)dataSource->getDataObject(1)->cdfVariable->data; // Array / grid to write TO
+    settings.windSpeedDifference = (float *)dataSource->getDataObject(2)->cdfVariable->data;   // Array / grid to write TO
+    settings.windSectors = (float *)dataSource->getDataObject(3)->cdfVariable->data;           // Array / grid to write TO
     settings.destGridWindDirection = (float *)dataSource->getDataObject(4)->cdfVariable->data; // Original wind direction from the model
+    settings.destGridWindSpeed = (float *)dataSource->getDataObject(5)->cdfVariable->data;     // Original windspeed from the model
     settings.windSpeedDifferenceVariable = windSpeedDifferenceVariable;                        // CDF Variable to read FROM
     settings.windSectorVariable = windSectors;                                                 // CDF Variable with the wind sector lookup table
 
@@ -176,8 +187,8 @@ void CDPPWFP::drawFunction(int x, int y, float __val, void *_settings, void *war
   Settings *settings = (Settings *)_settings;
   GenericDataWarper *warper = (GenericDataWarper *)warperInstance;
   if (x >= 0 && y >= 0 && x < (int)settings->width && y < (int)settings->height) {
-    float windDir = settings->destGridWindSpeed[x + y * settings->width];
-    float windSpeed = settings->destGridWindDirection[x + y * settings->width];
+    float windSpeed = settings->destGridWindSpeed[x + y * settings->width];
+    float windDir = settings->destGridWindDirection[x + y * settings->width];
 
     // Determine the windsector dimension value based on the WINS50 winddirection grid value
     int selectedS = -1;
@@ -213,9 +224,14 @@ void CDPPWFP::drawFunction(int x, int y, float __val, void *_settings, void *war
     CDF::Variable *windSpeedDifferenceVariable = settings->windSpeedDifferenceVariable;
 
     float windSpeedDifference = ((float *)windSpeedDifferenceVariable->data)[gridLocationPointer + windHeightPointer + windQuantilePointer + windSectorPointer];
-
+    float MSTOKTS = 2;
+    float correctioNFactor = 0.7;
+    float windSpeedDifferenceKTS = windSpeedDifference * MSTOKTS;
+    float windSpeedDifferenceMinKTS = windSpeedDifference * MSTOKTS * correctioNFactor;
     ((float *)settings->windSectors)[x + y * settings->width] = selectedS;
-    ((float *)settings->windSpeedDifference)[x + y * settings->width] = windSpeedDifference;
-    ((float *)settings->correctedWindField)[x + y * settings->width] = windSpeed + windSpeedDifference;
+    ((float *)settings->windSpeedDifference)[x + y * settings->width] = windSpeedDifferenceKTS;
+
+    ((float *)settings->correctedWindField)[x + y * settings->width] = windSpeed + windSpeedDifferenceKTS;
+    ((float *)settings->correctedWindFieldMin)[x + y * settings->width] = windSpeed - windSpeedDifferenceMinKTS;
   }
 };

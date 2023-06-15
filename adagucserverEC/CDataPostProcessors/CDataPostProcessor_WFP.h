@@ -13,9 +13,10 @@ private:
   public:
     size_t width;
     size_t height;
-    float *correctedWindField;  // Grid to write TO, same grid as dest grid
-    float *windSpeedDifference; // Grid to write TO, same grid as dest grid
-    float *windSectors;         // Grid with found windSectors
+    float *correctedWindField;    // Grid to write TO, same grid as dest grid
+    float *correctedWindFieldMin; // Grid to write TO, same grid as dest grid
+    float *windSpeedDifference;   // Grid to write TO, same grid as dest grid
+    float *windSectors;           // Grid with found windSectors
     float *destGridWindSpeed;
     float *destGridWindDirection;
     CDF::Variable *windSpeedDifferenceVariable; // Lookup table / source grid with the pre-calculated wind secors
