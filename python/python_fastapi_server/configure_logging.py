@@ -13,5 +13,4 @@ def configure_logging(logging):
         f"applicationlog" +
         " %(asctime)s - %(name)s - %(levelname)s - %(message)s")
     handler.setFormatter(formatter)
-    if not root.hasHandlers():
-        root.addHandler(handler)
+    root.addHandler(handler)
