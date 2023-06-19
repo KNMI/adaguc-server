@@ -128,6 +128,8 @@ add_library(
     CDataPostProcessors/CDataPostProcessor_ClipMinMax.cpp
     CDataPostProcessors/CDataPostProcessor_Operator.h
     CDataPostProcessors/CDataPostProcessor_Operator.cpp
+    CDataPostProcessors/CDataPostProcessor_SolarTerminator.h
+    CDataPostProcessors/CDataPostProcessor_SolarTerminator.cpp
     CDataPostProcessors/CDataPostProcessor_WFP.h
     CDataPostProcessors/CDataPostProcessor_WFP.cpp
     CDataPostProcessors/CDataPostProcessor_IncludeLayer.h
