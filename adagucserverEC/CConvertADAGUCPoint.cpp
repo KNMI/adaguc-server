@@ -55,7 +55,7 @@ void CConvertADAGUCPoint::lineInterpolated(float *grid, int W, int H, int startX
     stopVal = 100;
   }
   float valD = stopVal - startVal;
-  float angle = atan2(dY, dX) + (3.141592654 / 2);
+  float angle = atan2(dY, dX) + (M_PI / 2);
   float dist = 10;
   if (abs(dX) < abs(dY)) {
     rc = float(dX) / float(dY);
@@ -830,7 +830,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
       double projectedYOffsetY = lat + 0.1;
       double latCorrection = 1;
       if (hasZoomableDiscRadius) {
-        latCorrection = cos((lat / 90) * (3.141592654 / 2));
+        latCorrection = cos((lat / 90) * (M_PI / 2));
         ;
         if (latCorrection < 0.01) latCorrection = 0.01;
       }
@@ -851,7 +851,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
           }
           float dX = projectedXOffsetY - projectedX;
           float dY = projectedYOffsetY - projectedY;
-          rotation = -atan2(dY, dX) + (3.141592654 / 2);
+          rotation = -atan2(dY, dX) + (M_PI / 2);
         }
       }
 

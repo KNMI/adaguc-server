@@ -557,7 +557,7 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
       if (projectionRequired) {
         double dy = latForRot - latOffSetForRot;
         double dx = lonForRot - lonOffSetForRot;
-        rotation = -(atan2(dy, dx) / (3.141592654)) * 180 + 90;
+        rotation = -(atan2(dy, dx) / (M_PI)) * 180 + 90;
       }
     }
 
@@ -576,13 +576,13 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
           toKnots = true;
         }
         if (lat > 0) {
-          drawImage->drawBarb(x, y, ((270 - direction) / 360) * 3.141592654 * 2, strength, drawVectorLineColor, drawVectorLineWidth, toKnots, false, drawVectorPlotValue);
+          drawImage->drawBarb(x, y, ((270 - direction) / 360) * M_PI * 2, strength, drawVectorLineColor, drawVectorLineWidth, toKnots, false, drawVectorPlotValue);
         } else {
-          drawImage->drawBarb(x, y, ((270 - direction) / 360) * 3.141592654 * 2, strength, drawVectorLineColor, drawVectorLineWidth, toKnots, true, drawVectorPlotValue);
+          drawImage->drawBarb(x, y, ((270 - direction) / 360) * M_PI * 2, strength, drawVectorLineColor, drawVectorLineWidth, toKnots, true, drawVectorPlotValue);
         }
       }
       if (drawVector) {
-        drawImage->drawVector(x, y, ((270 - direction) / 360) * 3.141592654 * 2, strength * drawVectorVectorScale, drawVectorLineColor, drawVectorLineWidth);
+        drawImage->drawVector(x, y, ((270 - direction) / 360) * M_PI * 2, strength * drawVectorVectorScale, drawVectorLineColor, drawVectorLineWidth);
       }
       // void drawBarb(int x,int y,double direction, double strength,int color,bool toKnots,bool flip);
       if (drawVectorPlotStationId) {
@@ -620,7 +620,7 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
         int y = dataSource->dHeight - (*p1)[j].y;
         t.print(drawPointTextFormat.c_str(), strength);
         drawImage->setTextDisc(x, y, drawPointDiscRadius, t.c_str(), drawPointFontFile, drawPointFontSize, drawPointTextColor, drawPointFillColor, drawPointLineColor);
-        drawImage->drawVector2(x, y, ((90 + direction) / 360.) * 3.141592654 * 2, 10, drawPointDiscRadius, drawPointFillColor, drawVectorLineWidth);
+        drawImage->drawVector2(x, y, ((90 + direction) / 360.) * M_PI * 2, 10, drawPointDiscRadius, drawPointFillColor, drawVectorLineWidth);
       }
     }
   }

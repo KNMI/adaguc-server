@@ -28,9 +28,6 @@
 
 #include <gd.h>
 #include <set>
-#ifndef M_PI
-#define M_PI 3.14159265358979323846 // pi
-#endif
 
 #ifndef rad2deg
 #define rad2deg (180. / M_PI) // conversion for rad to deg

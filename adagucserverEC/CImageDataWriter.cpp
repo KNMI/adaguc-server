@@ -37,9 +37,6 @@
 #include "CReporter.h"
 #include "CImgWarpHillShaded.h"
 #include "CImgWarpGeneric.h"
-#ifndef M_PI
-#define M_PI 3.14159265358979323846 // pi
-#endif
 
 #ifndef rad2deg
 #define rad2deg (180. / M_PI) // conversion for rad to deg
@@ -1133,7 +1130,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
               ptr = projCacheInfo.imx + projCacheInfo.imy * projCacheInfo.dWidth;
             }
 
-            double pi = 3.141592;
             double pixel1 = convertValue(dataSource->getDataObject(0)->cdfVariable->getType(), dataSource->getDataObject(0)->cdfVariable->data, ptr);
             double pixel2 = convertValue(dataSource->getDataObject(1)->cdfVariable->getType(), dataSource->getDataObject(1)->cdfVariable->data, ptr);
 
@@ -1192,7 +1188,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
               element2->units = "degrees";
 
               if (windDataValid) {
-                double angle = 270 - atan2(pixel2, pixel1) * 180 / pi;
+                double angle = 270 - atan2(pixel2, pixel1) * 180 / M_PI;
                 if (angle > 360) angle -= 360;
                 if (angle < 0) angle = angle + 360;
                 element2->value.print("%3.0f", angle);
@@ -3700,8 +3696,8 @@ void rotateUvNorth(double &u, double &v, double rlo, double rla, float deltaX, f
   xpntNorthSph -= xpnt0Sph, ypntNorthSph -= ypnt0Sph;
   zpntNorthSph -= zpnt0Sph;
 
-  NormVector(xpntEastSph, ypntEastSph, zpntEastSph);    // vecx
-  NormVector(xpntNorthSph, ypntNorthSph, zpntNorthSph); // vecy
+  NormVector(xpntEastSph, ypntEastSph, zpntEastSph);                                                                        // vecx
+  NormVector(xpntNorthSph, ypntNorthSph, zpntNorthSph);                                                                     // vecy
 
   CrossProd(xpntEastSph, ypntEastSph, zpntEastSph, xpntNorthSph, ypntNorthSph, zpntNorthSph, xnormSph, ynormSph, znormSph); // vec z
   xpntNorthSphRot = -znormSph * xnormSph;                                                                                   // xpntNorthSphRot = 0.0 - Dist*xnormSph;
@@ -3722,7 +3718,7 @@ void rotateUvNorth(double &u, double &v, double rlo, double rla, float deltaX, f
 
   xpntNorthSph = sin(vecAngle); // Rotate the point/vector (0,1) around Z-axis with vecAngle
   ypntNorthSph = cos(vecAngle);
-  xpntEastSph = ypntNorthSph; // Rotate the same point/vector around Z-axis with 90 degrees
+  xpntEastSph = ypntNorthSph;   // Rotate the same point/vector around Z-axis with 90 degrees
   ypntEastSph = -xpntNorthSph;
 
   // zpntNorthSph = 0; zpntEastSph = 0;  // not needed in 2D
