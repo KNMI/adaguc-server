@@ -666,7 +666,7 @@ void CCairoPlotter::drawStrokedText(int x, int y, double angle, const char *text
   }
   /* https://www.cairographics.org/samples/text/ */
   cairo_save(cr);
-
+  // Save the current path, because we might be drawing something like contour lines, which should not be stroked.
   cairo_path_t *cp = cairo_copy_path(cr);
 
   cairo_new_path(cr);
@@ -698,6 +698,7 @@ void CCairoPlotter::drawStrokedText(int x, int y, double angle, const char *text
   cairo_close_path(cr);
 
   cairo_restore(cr);
+  // Put the orginal path back
   cairo_append_path(cr, cp);
   cairo_path_destroy(cp);
 }

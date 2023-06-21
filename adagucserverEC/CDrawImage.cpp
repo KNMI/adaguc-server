@@ -405,11 +405,7 @@ void CDrawImage::_drawBarbGd(int x, int y, double direction, double strength, CC
     return;
   }
 
-  float pi = 3.141592;
-
-  // direction=direction+pi;
-
-  int shaftLength = 30;
+    int shaftLength = 30;
 
   int nPennants = strengthInKnots / 50;
   int nBarbs = (strengthInKnots % 50) / 10;
@@ -445,8 +441,8 @@ void CDrawImage::_drawBarbGd(int x, int y, double direction, double strength, CC
     double wx3 = wx1 + pos * dx1 / nrPos;
     double wy3 = wy1 - pos * dy1 / nrPos;
     pos++;
-    double hx3 = wx1 + pos * dx1 / nrPos + cos(pi + direction + pi / 2) * barbLength;
-    double hy3 = wy1 - pos * dy1 / nrPos - sin(pi + direction + pi / 2) * barbLength;
+    double hx3 = wx1 + pos * dx1 / nrPos + cos(M_PI + direction + M_PI / 2) * barbLength;
+    double hy3 = wy1 - pos * dy1 / nrPos - sin(M_PI + direction + M_PI / 2) * barbLength;
     pos++;
     double wx4 = wx1 + pos * dx1 / nrPos;
     double wy4 = wy1 - pos * dy1 / nrPos;
@@ -456,8 +452,8 @@ void CDrawImage::_drawBarbGd(int x, int y, double direction, double strength, CC
   for (int i = 0; i < nBarbs; i++) {
     double wx3 = wx1 + pos * dx1 / nrPos;
     double wy3 = wy1 - pos * dy1 / nrPos;
-    double hx3 = wx3 - cos(pi / 2 - direction + (2 - float(flipFactor) * 0.1) * pi / 2) * barbLength; // was: +cos
-    double hy3 = wy3 - sin(pi / 2 - direction + (2 - float(flipFactor) * 0.1) * pi / 2) * barbLength; // was: -sin
+    double hx3 = wx3 - cos(M_PI / 2 - direction + (2 - float(flipFactor) * 0.1) * M_PI / 2) * barbLength; // was: +cos
+    double hy3 = wy3 - sin(M_PI / 2 - direction + (2 - float(flipFactor) * 0.1) * M_PI / 2) * barbLength; // was: -sin
 
     line(wx3, wy3, hx3, hy3, lineWidth, color);
     pos++;
@@ -467,8 +463,8 @@ void CDrawImage::_drawBarbGd(int x, int y, double direction, double strength, CC
   if (nhalfBarbs > 0) {
     double wx3 = wx1 + pos * dx1 / nrPos;
     double wy3 = wy1 - pos * dy1 / nrPos;
-    double hx3 = wx3 - cos(pi / 2 - direction + (2 - float(flipFactor) * 0.1) * pi / 2) * barbLength / 2;
-    double hy3 = wy3 - sin(pi / 2 - direction + (2 - float(flipFactor) * 0.1) * pi / 2) * barbLength / 2;
+    double hx3 = wx3 - cos(M_PI / 2 - direction + (2 - float(flipFactor) * 0.1) * M_PI / 2) * barbLength / 2;
+    double hy3 = wy3 - sin(M_PI / 2 - direction + (2 - float(flipFactor) * 0.1) * M_PI / 2) * barbLength / 2;
     line(wx3, wy3, hx3, hy3, lineWidth, color);
     pos++;
   }
