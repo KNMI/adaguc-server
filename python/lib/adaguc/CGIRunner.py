@@ -28,7 +28,7 @@ class CGIRunner:
             env=[],
             path=None,
             isCGI=True,
-            timeout=60):
+            timeout=180):
         localenv = {}
         if url != None:
             localenv['QUERY_STRING'] = url
