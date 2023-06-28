@@ -985,7 +985,19 @@ public:
   };
   class XMLE_Abstract : public CXMLObjectInterface {};
   class XMLE_DataBaseTable : public CXMLObjectInterface {};
-  class XMLE_Variable : public CXMLObjectInterface {};
+  class XMLE_Variable : public CXMLObjectInterface {
+  public:
+    class Cattr {
+    public:
+      CT::string orgname;
+    } attr;
+    void addAttribute(const char *name, const char *value) {
+      if (equals("orgname", 7, name)) {
+        attr.orgname.copy(value);
+        return;
+      }
+    }
+  };
   class XMLE_DataReader : public CXMLObjectInterface {
   public:
     class Cattr {
@@ -1165,30 +1177,38 @@ public:
   public:
     class Cattr {
     public:
-      CT::string name, interval, defaultV, units, quantizeperiod, quantizemethod;
+      CT::string name, interval, defaultV, units, quantizeperiod, quantizemethod, forcevalue;
+      bool hidden = false;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
       if (equals("name", 4, attrname)) {
         attr.name.copy(attrvalue);
         return;
-      }
-      if (equals("units", 5, attrname)) {
+      } else if (equals("units", 5, attrname)) {
         attr.units.copy(attrvalue);
         return;
-      }
-      if (equals("default", 7, attrname)) {
+      } else if (equals("default", 7, attrname)) {
         attr.defaultV.copy(attrvalue);
         return;
-      }
-      if (equals("interval", 8, attrname)) {
+      } else if (equals("interval", 8, attrname)) {
         attr.interval.copy(attrvalue);
         return;
-      }
-      if (equals("quantizeperiod", 14, attrname)) {
+      } else if (equals("quantizeperiod", 14, attrname)) {
         attr.quantizeperiod.copy(attrvalue);
         return;
-      }
-      if (equals("quantizemethod", 14, attrname)) {
+      } else if (equals("forcevalue", 10, attrname)) {
+        attr.forcevalue.copy(attrvalue);
+        return;
+      } else if (equals("hidden", 6, attrname)) {
+        if (equals("false", 5, attrvalue)) {
+          attr.hidden = false;
+        }
+        if (equals("true", 4, attrvalue)) {
+          attr.hidden = true;
+        }
+
+        return;
+      } else if (equals("quantizemethod", 14, attrname)) {
         attr.quantizemethod.copy(attrvalue);
         return;
       }

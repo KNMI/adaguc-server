@@ -51,6 +51,7 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
   if ((isApplicable(proc, dataSource, mode) & mode) == false) {
     return -1;
   }
+
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
 
     CDBDebug("CDATAPOSTPROCESSOR_RUNBEFOREREADING::Applying include_layer");
