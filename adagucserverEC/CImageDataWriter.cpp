@@ -1279,7 +1279,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
             }
           }
         }
-        CDBDebug("fINISHED TIMESTEP %d ----------------------------->", step);
       }
     }
   }

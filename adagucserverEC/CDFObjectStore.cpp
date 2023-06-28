@@ -306,7 +306,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
 
   if (dataSource) {
     if (dataSource->cfgLayer) {
-      /* Apply NCML file to the datamodel */
+      // Apply NCML file to the datamodel */
       if (dataSource->cfgLayer->FilePath.size() == 1) {
         CT::string ncmlFileName = dataSource->cfgLayer->FilePath[0]->attr.ncml;
         if (!ncmlFileName.empty()) {
@@ -314,6 +314,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
           cdfObject->applyNCMLFile(ncmlFileName.c_str());
         }
       }
+      // Rename variable, if requested
       if (!dataSource->cfgLayer->Variable[0]->attr.orgname.empty()) {
         CDF::Variable *var = cdfObject->getVariable(dataSource->cfgLayer->Variable[0]->attr.orgname);
         var->name.copy(dataSource->cfgLayer->Variable[0]->value);
