@@ -798,7 +798,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
 #ifdef CIMAGEDATAWRITER_DEBUG
             CDBDebug("OPEN ALL");
 #endif
-            // CDFObjectStore::getCDFObjectStore()->clear();
             status = reader.open(dataSources[d], CNETCDFREADER_MODE_OPEN_ALL);
           } else {
 // CDBDebug("OPEN HEADER");
@@ -1079,7 +1078,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
                     if (feature->paramMap.empty() == false) {
                       std::map<std::string, std::string>::iterator paramItemIt;
                       for (paramItemIt = feature->paramMap.begin(); paramItemIt != feature->paramMap.end(); ++paramItemIt) {
-                        // CDBDebug("Clicked %s %s", paramItemIt->first.c_str(), paramItemIt->second.c_str());
                         GetFeatureInfoResult::Element *featureParam = new GetFeatureInfoResult::Element();
                         featureParam->dataSource = dataSource;
                         for (size_t j = 0; j < dataSources[d]->requiredDims.size(); j++) {

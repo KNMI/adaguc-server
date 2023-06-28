@@ -42,7 +42,6 @@ add_library(
     CDFObjectStore.h
     CFillTriangle.h
     CConvertASCAT.h
-    CConvertLatLonGrid.h
     CConvertUGRIDMesh.h
     CConvertADAGUCVector.h
     CConvertEProfile.h
@@ -110,7 +109,6 @@ add_library(
     CDFObjectStore.cpp
     CFillTriangle.cpp
     CConvertASCAT.cpp
-    CConvertLatLonGrid.cpp
     CConvertUGRIDMesh.cpp
     CConvertADAGUCVector.cpp
     CConvertEProfile.cpp
@@ -128,8 +126,6 @@ add_library(
     CDataPostProcessors/CDataPostProcessor_ClipMinMax.cpp
     CDataPostProcessors/CDataPostProcessor_Operator.h
     CDataPostProcessors/CDataPostProcessor_Operator.cpp
-    CDataPostProcessors/CDataPostProcessor_WFP.h
-    CDataPostProcessors/CDataPostProcessor_WFP.cpp
     CDataPostProcessors/CDataPostProcessor_IncludeLayer.h
     CDataPostProcessors/CDataPostProcessor_IncludeLayer.cpp
     CDataPostProcessors/CDataPostProcessor.h

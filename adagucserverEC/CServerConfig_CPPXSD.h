@@ -989,11 +989,20 @@ public:
   public:
     class Cattr {
     public:
-      CT::string orgname;
+      CT::string orgname, long_name, standard_name, units;
     } attr;
     void addAttribute(const char *name, const char *value) {
       if (equals("orgname", 7, name)) {
         attr.orgname.copy(value);
+        return;
+      } else if (equals("long_name", 9, name)) {
+        attr.long_name.copy(value);
+        return;
+      } else if (equals("standard_name", 13, name)) {
+        attr.standard_name.copy(value);
+        return;
+      } else if (equals("units", 5, name)) {
+        attr.units.copy(value);
         return;
       }
     }
@@ -1177,7 +1186,7 @@ public:
   public:
     class Cattr {
     public:
-      CT::string name, interval, defaultV, units, quantizeperiod, quantizemethod, forcevalue;
+      CT::string name, interval, defaultV, units, quantizeperiod, quantizemethod, fixvalue;
       bool hidden = false;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
@@ -1196,8 +1205,8 @@ public:
       } else if (equals("quantizeperiod", 14, attrname)) {
         attr.quantizeperiod.copy(attrvalue);
         return;
-      } else if (equals("forcevalue", 10, attrname)) {
-        attr.forcevalue.copy(attrvalue);
+      } else if (equals("fixvalue", 8, attrname)) {
+        attr.fixvalue.copy(attrvalue);
         return;
       } else if (equals("hidden", 6, attrname)) {
         if (equals("false", 5, attrvalue)) {

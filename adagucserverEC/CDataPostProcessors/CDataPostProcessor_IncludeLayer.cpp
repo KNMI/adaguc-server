@@ -89,7 +89,7 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
       CDBDebug("Can't open file %s for layer %s", dataSourceToInclude->getFileName(), proc->attr.name.c_str());
       return 1;
     }
-    bool needsToAdd = false;
+
     for (size_t dataObjectNr = 0; dataObjectNr < dataSource->getNumDataObjects(); dataObjectNr++) {
       if (dataSource->getDataObject(dataObjectNr)->cdfVariable->name.equals(dataSourceToInclude->getDataObject(0)->cdfVariable->name)) {
         CDBDebug("Probably already done");
@@ -183,7 +183,6 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
       dataSourceToInclude->setTimeStep(dataSource->getCurrentTimeStep());
     }
 
-    // dataSourceToInclude->getDataObject(0)->cdfVariable->data=NULL;
     // CDBDebug("TEMPORAL FULL READER");
     CDataReader reader;
     reader.enablePostProcessors = false;
