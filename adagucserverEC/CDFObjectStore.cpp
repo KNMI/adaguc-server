@@ -226,6 +226,9 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, const char *fil
 
 CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *srvParams, const char *fileName, bool plain) {
   CT::string uniqueIDForFile = fileName;
+  if (dataSource != NULL && dataSource->layerName.empty() == false) {
+    uniqueIDForFile.concat(dataSource->layerName);
+  }
   if (srvParams == NULL && dataSource != NULL) {
     srvParams = dataSource->srvParams;
   }
@@ -282,7 +285,6 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
   CDFCache *cdfCache = NULL;
 
   if (srvParams != NULL) {
-
     CT::string cacheDir = srvParams->cfg->TempDir[0]->attr.value.c_str();
     // srvParams->getCacheDirectory(&cacheDir);
     if (cacheDir.length() > 0) {
@@ -302,15 +304,19 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
     CDBError("Exception thrown during opening of %s", fileLocationToOpen);
   }
 
-  /* Apply NCML file to the datamodel */
   if (dataSource) {
     if (dataSource->cfgLayer) {
+      /* Apply NCML file to the datamodel */
       if (dataSource->cfgLayer->FilePath.size() == 1) {
         CT::string ncmlFileName = dataSource->cfgLayer->FilePath[0]->attr.ncml;
         if (!ncmlFileName.empty()) {
           CDBDebug("NCML: Applying NCML file %s", ncmlFileName.c_str());
           cdfObject->applyNCMLFile(ncmlFileName.c_str());
         }
+      }
+      if (!dataSource->cfgLayer->Variable[0]->attr.orgname.empty()) {
+        CDF::Variable *var = cdfObject->getVariable(dataSource->cfgLayer->Variable[0]->attr.orgname);
+        var->name.copy(dataSource->cfgLayer->Variable[0]->value);
       }
     }
   }
