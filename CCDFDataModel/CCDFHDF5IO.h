@@ -73,7 +73,6 @@ public:
   public:
     ~CustomForecastReader() {}
     int readData(CDF::Variable *thisVar, size_t *start, size_t *count, ptrdiff_t *stride);
-    CT::string getName() { return "CustomForecastReader"; }
   };
 
   CDFHDF5Reader() : CDFReader() {

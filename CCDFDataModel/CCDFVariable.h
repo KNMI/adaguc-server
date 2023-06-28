@@ -66,7 +66,6 @@ namespace CDF {
     public:
       virtual ~CustomReader() {}
       virtual int readData(CDF::Variable *thisVar, size_t *start, size_t *count, ptrdiff_t *stride) = 0;
-      virtual CT::string getName() = 0;
     };
     class CustomMemoryReader : public CDF::Variable::CustomReader {
     public:
@@ -81,7 +80,6 @@ namespace CDF {
         // CDF::fill(thisVar->data, thisVar->getType(),12345,size);//Should be done by followup code.
         return 0;
       }
-      CT::string getName() { return "CustomMemoryReader"; }
     };
     static CustomMemoryReader *CustomMemoryReaderInstance;
 
