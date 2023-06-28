@@ -1,3 +1,8 @@
+**Version 2.11.0 2023-06-28**
+- Support for DataPostProcessor Operator, to add, substract, multiply or divide layers
+- Dimensions can now be fixated and hidden, to make layers representing a single elevation based on a variable with multiple elevations
+- Support to substract two elevations from the same variable
+
 **Version 2.10.4 2023-06-01**
 - Fix: Racmo datasets with rotated_pole projection does work again
 

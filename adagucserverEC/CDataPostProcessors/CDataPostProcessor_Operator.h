@@ -9,6 +9,7 @@
 class CDPPOperator : public CDPPInterface {
 private:
   DEF_ERRORFUNCTION();
+  float getElement(void *data, CDFType dataType, size_t index);
 
 public:
   virtual const char *getId();
