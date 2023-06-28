@@ -37,7 +37,6 @@
 #include "CConvertEProfile.h"
 #include "CConvertTROPOMI.h"
 #include "CConvertKNMIH5VolScan.h"
-#include "CConvertLatLonGrid.h"
 #include "CDBFactory.h"
 #include "CReporter.h"
 #include "CCDFHDF5IO.h"
@@ -374,8 +373,6 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
     if (CConvertKNMIH5VolScan::convertKNMIH5VolScanData(dataSource, mode) == 0) dataSource->formatConverterActive = true;
   if (!dataSource->formatConverterActive)
     if (CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(dataSource, mode) == 0) dataSource->formatConverterActive = true;
-  if (!dataSource->formatConverterActive)
-    if (CConvertLatLonGrid::convertLatLonGridData(dataSource, mode) == 0) dataSource->formatConverterActive = true;
 
   CDF::Variable *dataSourceVar = dataSource->getDataObject(0)->cdfVariable;
   CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
@@ -1356,7 +1353,6 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
        * DataPostProc: Here our datapostprocessor comes into action!
        * This is stage2, running on data, not metadata
        */
-      CDBDebug("Running postproc on data");
       CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
     }
   }

@@ -1402,7 +1402,6 @@ int CDataSource::attachCDFObject(CDFObject *cdfObject) {
   }
   for (size_t varNr = 0; varNr < getNumDataObjects(); varNr++) {
     if (getDataObject(varNr)->cdfVariable != NULL && getDataObject(varNr)->cdfVariable->hasCustomReader()) {
-      CDF::Variable::CustomReader *p = getDataObject(varNr)->cdfVariable->getCustomReader();
       continue;
     }
 

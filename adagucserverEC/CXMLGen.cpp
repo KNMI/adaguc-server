@@ -695,9 +695,9 @@ int CXMLGen::getDimsForLayer(WMSLayer *myWMSLayer) {
       }
 
       // Check for forced values
-      if (!myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.forcevalue.empty()) {
-        dim->values = myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.forcevalue;
-        dim->defaultValue = myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.forcevalue;
+      if (!myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.fixvalue.empty()) {
+        dim->values = myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.fixvalue;
+        dim->defaultValue = myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.fixvalue;
         dim->hasMultipleValues = false;
       }
 

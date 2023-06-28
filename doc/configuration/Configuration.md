@@ -128,7 +128,7 @@ Configuration
         Mandatory, The directory to scan files with additional filter,
         or the file to use, or the OpenDAP url to use.
     -   [Dimension](Dimension.md)
-        (name,interval,default,units,quantizeperiod,quantizemethod)
+        (name,interval,default,units,quantizeperiod,quantizemethod,hidden,fixvalue)
         `<value>` - Optional, Configure the dimensions (time,
         elevation, member) used. If none given the server tries to
         autodetect the dimensions.

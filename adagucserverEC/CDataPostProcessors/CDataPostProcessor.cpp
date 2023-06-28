@@ -3,7 +3,6 @@
 #include "CDataPostProcessor_IncludeLayer.h"
 #include "CDataPostProcessor_ClipMinMax.h"
 #include "CDataPostProcessor_Operator.h"
-#include "CDataPostProcessor_WFP.h"
 
 void writeLogFileLocal(const char *msg) {
   char *logfile = getenv("ADAGUC_LOGFILE");
@@ -37,7 +36,7 @@ CDPPExecutor *CDataPostProcessor::getCDPPExecutor() { return &cdppExecutorInstan
 const char *CDPPAXplusB::className = "CDPPAXplusB";
 
 const char *CDPPAXplusB::getId() { return "AX+B"; }
-int CDPPAXplusB::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int mode) {
+int CDPPAXplusB::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int) {
   if (proc->attr.algorithm.equals("ax+b")) {
     return CDATAPOSTPROCESSOR_RUNBEFOREREADING;
   }
@@ -92,7 +91,7 @@ int CDPPAXplusB::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *da
 const char *CDPPDATAMASK::className = "CDPPDATAMASK";
 
 const char *CDPPDATAMASK::getId() { return "datamask"; }
-int CDPPDATAMASK::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
+int CDPPDATAMASK::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int) {
   if (proc->attr.algorithm.equals("datamask")) {
     if (dataSource->getNumDataObjects() != 2 && dataSource->getNumDataObjects() != 3) {
       CDBError("2 variables are needed for datamask, found %d", dataSource->getNumDataObjects());
@@ -328,7 +327,7 @@ int CDPPDATAMASK::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
 const char *CDPPMSGCPPVisibleMask::className = "CDPPMSGCPPVisibleMask";
 
 const char *CDPPMSGCPPVisibleMask::getId() { return "MSGCPP_VISIBLEMASK"; }
-int CDPPMSGCPPVisibleMask::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
+int CDPPMSGCPPVisibleMask::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int) {
   if (proc->attr.algorithm.equals("msgcppvisiblemask")) {
     if (dataSource->getNumDataObjects() != 2 && dataSource->getNumDataObjects() != 3) {
       CDBError("2 variables are needed for msgcppvisiblemask, found %d", dataSource->getNumDataObjects());
@@ -427,7 +426,7 @@ const char *CDPPMSGCPPHIWCMask::className = "CDPPMSGCPPHIWCMask";
 
 const char *CDPPMSGCPPHIWCMask::getId() { return "MSGCPP_HIWCMASK"; }
 
-int CDPPMSGCPPHIWCMask::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
+int CDPPMSGCPPHIWCMask::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int) {
   if (proc->attr.algorithm.equals("msgcpphiwcmask")) {
     if (dataSource->getNumDataObjects() != 4 && dataSource->getNumDataObjects() != 5) {
       CDBError("4 variables are needed for msgcpphiwcmask, found %d", dataSource->getNumDataObjects());
@@ -539,7 +538,6 @@ CDPPExecutor::CDPPExecutor() {
   dataPostProcessorList->push_back(new CDPPGoes16Metadata());
   dataPostProcessorList->push_back(new CDPPClipMinMax());
   dataPostProcessorList->push_back(new CDPPOperator());
-  dataPostProcessorList->push_back(new CDPPWFP());
 }
 
 CDPPExecutor::~CDPPExecutor() {
@@ -640,7 +638,7 @@ int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode, double *d
 const char *CDPPBeaufort::className = "CDPPBeaufort";
 
 const char *CDPPBeaufort::getId() { return "beaufort"; }
-int CDPPBeaufort::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
+int CDPPBeaufort::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int) {
   if (proc->attr.algorithm.equals("beaufort")) {
     if (dataSource->getNumDataObjects() != 1 && dataSource->getNumDataObjects() != 2) {
       CDBError("1 or 2 variables are needed for beaufort, found %d", dataSource->getNumDataObjects());
@@ -807,7 +805,7 @@ int CDPPBeaufort::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
 const char *CDPPToKnots::className = "CDPPToToKnots";
 
 const char *CDPPToKnots::getId() { return "toknots"; }
-int CDPPToKnots::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
+int CDPPToKnots::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int) {
   if (proc->attr.algorithm.equals("toknots")) {
     if (dataSource->getNumDataObjects() != 1 && dataSource->getNumDataObjects() != 2) {
       CDBError("1 or 2 variables are needed for toknots, found %d", dataSource->getNumDataObjects());
@@ -942,7 +940,7 @@ int CDPPToKnots::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *da
 const char *CDPDBZtoRR::className = "CDPDBZtoRR";
 
 const char *CDPDBZtoRR::getId() { return "dbztorr"; }
-int CDPDBZtoRR::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int mode) {
+int CDPDBZtoRR::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int) {
   if (proc->attr.algorithm.equals("dbztorr")) {
     return CDATAPOSTPROCESSOR_RUNAFTERREADING | CDATAPOSTPROCESSOR_RUNBEFOREREADING;
   }
@@ -1005,7 +1003,7 @@ int CDPDBZtoRR::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dat
 const char *CDPPAddFeatures::className = "CDPPAddFeatures";
 
 const char *CDPPAddFeatures::getId() { return "addfeatures"; }
-int CDPPAddFeatures::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int mode) {
+int CDPPAddFeatures::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int) {
   if (proc->attr.algorithm.equals("addfeatures")) {
     return CDATAPOSTPROCESSOR_RUNAFTERREADING | CDATAPOSTPROCESSOR_RUNBEFOREREADING;
   }

@@ -36,7 +36,6 @@ const char *CDFObjectStore::className = "CDFObjectStore";
 #include "CConvertGeoJSON.h"
 #include "CConvertEProfile.h"
 #include "CConvertTROPOMI.h"
-#include "CConvertLatLonGrid.h"
 #include "CDataReader.h"
 #include "CCDFCSVReader.h"
 // #define CDFOBJECTSTORE_DEBUG
@@ -226,6 +225,8 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, const char *fil
 
 CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *srvParams, const char *fileName, bool plain) {
   CT::string uniqueIDForFile = fileName;
+  // The cdfObject should be unique between files and layers,
+  // otherwise the CDPPOperator datapostproc will not work correctly when using the same file and variable.
   if (dataSource != NULL && dataSource->layerName.empty() == false) {
     uniqueIDForFile.concat(dataSource->layerName);
   }
@@ -319,6 +320,24 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
         CDF::Variable *var = cdfObject->getVariable(dataSource->cfgLayer->Variable[0]->attr.orgname);
         var->name.copy(dataSource->cfgLayer->Variable[0]->value);
       }
+
+      // Set long_name
+      if (!dataSource->cfgLayer->Variable[0]->attr.long_name.empty()) {
+        CDF::Variable *var = cdfObject->getVariable(dataSource->cfgLayer->Variable[0]->value);
+        var->setAttributeText("long_name", dataSource->cfgLayer->Variable[0]->attr.long_name);
+      }
+
+      // Set units
+      if (!dataSource->cfgLayer->Variable[0]->attr.units.empty()) {
+        CDF::Variable *var = cdfObject->getVariable(dataSource->cfgLayer->Variable[0]->value);
+        var->setAttributeText("units", dataSource->cfgLayer->Variable[0]->attr.units);
+      }
+
+      // Set standard_name
+      if (!dataSource->cfgLayer->Variable[0]->attr.standard_name.empty()) {
+        CDF::Variable *var = cdfObject->getVariable(dataSource->cfgLayer->Variable[0]->value);
+        var->setAttributeText("standard_name", dataSource->cfgLayer->Variable[0]->attr.standard_name);
+      }
     }
   }
 
@@ -393,10 +412,6 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
 
     if (!formatConverterActive)
       if (CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(cdfObject, srvParams) == 0) {
-        formatConverterActive = true;
-      };
-    if (!formatConverterActive)
-      if (CConvertLatLonGrid::convertLatLonGridHeader(cdfObject, srvParams) == 0) {
         formatConverterActive = true;
       };
   }
