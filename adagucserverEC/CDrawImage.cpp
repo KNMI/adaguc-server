@@ -878,7 +878,7 @@ void CDrawImage::setTextStroke(int x, int y, float angle, const char *text, cons
     if (bgcolor.a == 0) {
       drawText(x, y, fontFile, fontSize, angle, text, fgcolor);
     } else {
-      cairo->drawStrokedText(x, y, -angle, text, fontFile, fontSize * 1.4, strokeWidth, bgcolor, fgcolor);
+      cairo->drawStrokedText(x, y, -angle, text, fontSize * 1.4, strokeWidth, bgcolor, fgcolor);
     }
   } else {
     int fgColorIndex = getClosestGDColor(fgcolor.r, fgcolor.g, fgcolor.b);
