@@ -34,7 +34,6 @@
 class CDFReader {
 public:
   CT::string fileName;
-  CT::string name;
   CDFReader() {
     cdfObject = NULL;
     cdfCache = NULL;
