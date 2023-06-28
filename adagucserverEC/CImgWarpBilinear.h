@@ -103,7 +103,6 @@ public:
     this->textstrokecolor = textstrokecolor;
     this->fontSize = fontSize;
     this->textStrokeWidth = textStrokeWidth;
-    this->continuousInterval = continuousInterval;
     this->dashing = dashing;
     this->continuousInterval = 0;
 

@@ -27,6 +27,7 @@
 #ifdef ADAGUC_USE_CAIRO
 // #define MEASURETIME
 
+#include <cairo-ft.h>
 #include "CStopWatch.h"
 const char *CCairoPlotter::className = "CCairoPlotter";
 
@@ -661,18 +662,26 @@ void CCairoPlotter::drawText(int x, int y, double angle, const char *text) {
   _drawFreeTypeText(x, y, w, h, angle, text, true);
 }
 
-void CCairoPlotter::drawStrokedText(int x, int y, double angle, const char *text, const char *fontFile, float fontSize, float strokeWidth, CColor bgcolor, CColor fgcolor) {
-  if (fontFile) {
+void CCairoPlotter::drawStrokedText(int x, int y, double angle, const char *text, float fontSize, float strokeWidth, CColor bgcolor, CColor fgcolor) {
+  if (library == NULL) {
+    int status = initializeFreeType();
+    if (status != 0) {
+      // TODO
+    }
   }
-  /* https://www.cairographics.org/samples/text/ */
+
   cairo_save(cr);
+
+  cairo_font_face_t *ct = cairo_ft_font_face_create_for_ft_face(face, 0);
+  cairo_set_font_face (cr, ct);
+  cairo_set_font_size(cr, fontSize);
+
   // Save the current path, because we might be drawing something like contour lines, which should not be stroked.
   cairo_path_t *cp = cairo_copy_path(cr);
 
   cairo_new_path(cr);
   cairo_set_dash(cr, 0, 0, 0);
 
-  cairo_set_font_size(cr, fontSize);
   cairo_move_to(cr, x, y);
   cairo_rotate(cr, angle);
   cairo_text_path(cr, text);
@@ -1243,6 +1252,6 @@ void CCairoPlotter::drawBarb(int x, int y, double direction, double strength, CC
   CT::string text;
   text.print("%d", strengthInKnots);
   if (drawText) {
-    this->drawStrokedText(x - cos(direction + M_PI) * 15 - 5, y + sin(direction + M_PI) * 12 + 5, 0, text.c_str(), this->fontLocation, 12, 1 * drawOutline, outlineColor, barbColor);
+    this->drawStrokedText(x - cos(direction + M_PI) * 15 - 5, y + sin(direction + M_PI) * 12 + 5, 0, text.c_str(), 12, 1 * drawOutline, outlineColor, barbColor);
   }
 }
