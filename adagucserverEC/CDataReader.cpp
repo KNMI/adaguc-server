@@ -885,23 +885,6 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     return 1;
   }
 
-  // dataSource->getDataObject(0)->cdfObject = cdfObject;
-  // dataSource->getDataObject(0)->cdfVariable = cdfObject->getVariableNE(dataSource->getDataObject(0)->variableName.c_str());
-  // for (size_t varNr = 0; varNr < dataSource->getNumDataObjects(); varNr++) {
-  //   dataSource->getDataObject(varNr)->cdfObject == NULL
-  // }
-  // for (size_t varNr = 0; varNr < dataSource->getNumDataObjects(); varNr++) {
-
-  //   if (dataSource->getDataObject(varNr)->cdfObject == NULL || varNr == 0) {
-  //     dataSource->getDataObject(varNr)->cdfObject = cdfObject;
-  //     dataSource->getDataObject(varNr)->cdfVariable = cdfObject->getVariableNE(dataSource->getDataObject(varNr)->variableName.c_str());
-  //     if (dataSource->getDataObject(varNr)->cdfVariable == NULL) {
-  //       CDBError("attachCDFObject: variable nr %d \"%s\" does not exist", varNr, dataSource->getDataObject(varNr)->variableName.c_str());
-  //       return 1;
-  //     }
-  //   }
-  // }
-
   for (size_t varNr = 0; varNr < dataSource->getNumDataObjects(); varNr++) {
     // Check if our variable has a statusflag
     std::vector<CDataSource::StatusFlag *> *statusFlagList = &dataSource->getDataObject(varNr)->statusFlagList;

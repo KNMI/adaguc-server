@@ -699,7 +699,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
     bool openAll = false;
 
     bool everythingIsInBBOX = true;
-    CDBDebug(">-----------------------------------------------------------------------------------------------------------");
     CDataReader reader;
     reader.open(dataSources[d], CNETCDFREADER_MODE_OPEN_HEADER);
     if (dataSources[d]->getNumDataObjects() > 0) {
@@ -736,7 +735,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
         }
       }
     }
-    CDBDebug("<-----------------------------------------------------------------------------------------------------------");
     // CDBDebug("gfi_openall: %d %d",dataSources[d]->cfgLayer->FilePath.size(),openAll);
 
     if (dataSources[d]->cfgLayer->TileSettings.size() == 1) {
@@ -777,7 +775,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
       std::map<std::string, bool> dimensionKeyValueMap; // A map for every dimensionvalue linked to a value
 
       for (int step = 0; step < dataSources[d]->getNumTimeSteps(); step++) {
-        CDBDebug("TIMESTEP %d ----------------------------->", step);
         dataSources[d]->setTimeStep(step);
 
         CCDFDims *cdfDims = dataSources[d]->getCDFDims();
