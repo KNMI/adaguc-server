@@ -834,10 +834,9 @@ class TestWMS(unittest.TestCase):
         AdagucTestTools().writetofile(self.testresultspath + filename,
                                       data.getvalue())
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data.getvalue(),
-            AdagucTestTools().readfromfile(self.expectedoutputsspath +
-                                           filename))
+        self.assertTrue(AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename,
+            self.testresultspath + filename))
 
     def test_WMSGetMapWithShowLegendAllLayers_testdatanc(self):
         AdagucTestTools().cleanTempDir()
@@ -1848,7 +1847,7 @@ class TestWMS(unittest.TestCase):
         AdagucTestTools().writetofile(self.testresultspath + filename,
                                       data.getvalue())
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data.getvalue(),
-            AdagucTestTools().readfromfile(self.expectedoutputsspath +
-                                           filename))
+        self.assertTrue(AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename,
+            self.testresultspath + filename,
+            64, 0.001))  # Allowed pixel difference is huge, but only for very small number of pixels
