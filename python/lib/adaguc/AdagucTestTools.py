@@ -150,6 +150,7 @@ class AdagucTestTools:
         returnedImagePath,
         maxAllowedColorDifference=1,
         maxAllowedColorPercentage=0.01,
+        maxAllowedPaletteDifference=1
     ):
         """Compare the pictures referred to by the arguments.
 
@@ -158,6 +159,7 @@ class AdagucTestTools:
             returnedImagePath (str): path of the image that we got as output from the test
             maxAllowedColorDifference(int): max allowed difference in a single color band
             maxAllowedColorPercentage(float): max allowed percentage of pixels that have different colors
+            maxAllowedPaletteDifference(int): max allowed difference in the color palette
 
         Returns:
             bool: True if the difference is "small enough"
@@ -169,6 +171,28 @@ class AdagucTestTools:
                 f"\nError, size of expected and actual image do not match: {expected_image.size} vs {returned_image.size}"
             )
             return False
+
+        if expected_image.mode != returned_image.mode:
+            print(
+                f"\nError, mode of expected and actual image do not match: {expected_image.mode} vs {returned_image.mode}"
+            )
+            return False
+        if returned_image.mode == "P":
+            expected_palette = expected_image.getpalette()
+            returned_palette = returned_image.getpalette()
+            if expected_palette != returned_palette:
+                if len(expected_palette) != len(returned_palette):
+                    print("Error, palette length don't match!!")
+                    return False
+                max_pallete_difference_exceeded = False
+                for i in range(0, len(expected_palette)):
+                    if expected_palette[i] != returned_palette[i]:
+                        if abs(expected_palette[i] - returned_palette[i]) > maxAllowedPaletteDifference:
+                            max_pallete_difference_exceeded = True
+                        print(f"Palette difference: {i}: {expected_palette[i]}, {returned_palette[i]}")
+                if max_pallete_difference_exceeded:
+                    print(f"Error, max palette difference ({maxAllowedPaletteDifference}) exceeded.")
+                    return False
 
         width, height = expected_image.size
         n_bands = len(expected_image.getbands())
@@ -213,7 +237,7 @@ class AdagucTestTools:
 
         if max_color_difference_value > maxAllowedColorDifference:
             print(
-                f"Error, difference for pixel {c} is too large ({max_color_difference_value} > {maxAllowedColorDifference})",
+                f"Error, difference for pixel {max_color_difference_pixel} is too large ({max_color_difference_value} > {maxAllowedColorDifference})",
                 flush=True,
             )
             return False
