@@ -405,20 +405,14 @@ void CDrawImage::_drawBarbGd(int x, int y, double direction, double strength, CC
     return;
   }
 
-    int shaftLength = 30;
+  int shaftLength = 30;
 
-  int nPennants = strengthInKnots / 50;
-  int nBarbs = (strengthInKnots % 50) / 10;
-  int rest = (strengthInKnots % 50) % 10;
-  int nhalfBarbs;
-  if (rest <= 2) {
-    nhalfBarbs = 0;
-  } else if (rest <= 7) {
-    nhalfBarbs = 1;
-  } else {
-    nhalfBarbs = 0;
-    nBarbs++;
-  }
+  // Rounded to the nearest 5 kts
+  int strengthInKnotsRoundedToFive = round((strengthInKnots + 2) / 5) * 5;
+
+  int nPennants = strengthInKnotsRoundedToFive / 50;
+  int nBarbs = (strengthInKnotsRoundedToFive % 50) / 10 + 0.5;
+  bool hasHalfBarb = strengthInKnotsRoundedToFive % 10 >= 5;
 
   float flipFactor = flip ? -1 : 1;
   int barbLength = int(-10 * flipFactor);
@@ -460,7 +454,7 @@ void CDrawImage::_drawBarbGd(int x, int y, double direction, double strength, CC
   }
 
   if ((nPennants + nBarbs) == 0) pos++;
-  if (nhalfBarbs > 0) {
+  if (hasHalfBarb) {
     double wx3 = wx1 + pos * dx1 / nrPos;
     double wy3 = wy1 - pos * dy1 / nrPos;
     double hx3 = wx3 - cos(M_PI / 2 - direction + (2 - float(flipFactor) * 0.1) * M_PI / 2) * barbLength / 2;
