@@ -1067,7 +1067,7 @@ int CDPPBeaufort::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
 /************************/
 const char *CDPPToKnots::className = "CDPPToToKnots";
 
-const char *CDPPToKnots::getId() { return ""; }
+const char *CDPPToKnots::getId() { return "toknots"; }
 int CDPPToKnots::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource) {
   if (proc->attr.algorithm.equals("toknots")) {
     if (dataSource->getNumDataObjects() != 1 && dataSource->getNumDataObjects() != 2) {
