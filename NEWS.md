@@ -1,3 +1,8 @@
+**Version 2.10.5 2023-06-02**
+- Contourlines can have dashes
+- Contour text can have an outline
+- Windbarbs have a white outline
+
 **Version 2.10.4 2023-06-01**
 - Fix: Racmo datasets with rotated_pole projection does work again
 

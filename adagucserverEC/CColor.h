@@ -3,11 +3,11 @@
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
  * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Date:     2022-06-30
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2022, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,13 @@
  * limitations under the License.
  *
  ******************************************************************************/
-#ifndef CColor_H
-#define CColor_H
-#include <stdlib.h>
-#include <CServerConfig_CPPXSD.h>
+#include <stdio.h>
+#include <string.h>
+
+#define CSERVER_HEXDIGIT_TO_DEC(DIGIT) (DIGIT > 96 ? DIGIT - 87 : DIGIT > 64 ? DIGIT - 55 : DIGIT - 48) // Converts "9" to 9, "A" to 10 and "a" to 10
+
+#ifndef CCOLOR_H
+#define CCOLOR_H
 class CColor {
 public:
   unsigned char r, g, b, a;
@@ -42,10 +45,10 @@ public:
     this->a = a;
   }
   CColor(const char *color) { parse(color); }
-  /**
-   * color can have format #RRGGBB or #RRGGBBAA
-   */
   void parse(const char *color) {
+    /**
+     * color can have format #RRGGBB or #RRGGBBAA
+     */
     size_t l = strlen(color);
 
     if (l == 7 && color[0] == '#') {
