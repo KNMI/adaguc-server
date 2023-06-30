@@ -203,9 +203,6 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
               dlat = int((centroidY - offsetY) / cellSizeY);
               std::map<std::string, FeatureProperty *>::iterator it;
               CT::string featureId;
-              Feature *f2 = feature;
-              std::map<std::string, FeatureProperty *> *fp = f2->getFp();
-              std::map<std::string, FeatureProperty *> *featurePropertyMap = feature->getFp();
               it = feature->getFp()->find(std::string(featureStyle.propertyName.c_str()));
               if (it != feature->getFp()->end()) {
                 featureId.print(it->second->toString(featureStyle.propertyFormat));

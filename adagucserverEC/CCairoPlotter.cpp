@@ -707,7 +707,7 @@ void CCairoPlotter::drawStrokedText(int x, int y, double angle, const char *text
   cairo_close_path(cr);
 
   cairo_restore(cr);
-  // Put the orginal path back
+  // Put the original path back
   cairo_append_path(cr, cp);
   cairo_path_destroy(cp);
 }
