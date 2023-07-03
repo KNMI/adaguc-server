@@ -1,3 +1,20 @@
+**Version 2.10.7 2023-06-03**
+- Cache-Control header can be configured via the Settings item 
+
+**Version 2.10.5 2023-06-02**
+- Contourlines can have dashes
+- Contour text can have an outline
+- Windbarbs have a white outline
+
+**Version 2.10.4 2023-06-01**
+- Fix: Racmo datasets with rotated_pole projection does work again
+
+**Version 2.10.3 2023-05-17**
+- Fix: Empty CRS was advertised in case of point data
+
+**Version 2.10.2 2023-05-17**
+- Fix: Geos projection without sweep working again
+
 **Version 2.10.1 2023-05-12**
 - Added Strict-Transport-Security, X-Content-Type-Options and Content-Security-Policy headers when running over https
 

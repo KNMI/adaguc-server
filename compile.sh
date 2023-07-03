@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Fail script if any step fails
+set -euo pipefail
+
 CURRENTDIR=`pwd`
 
 function quit {

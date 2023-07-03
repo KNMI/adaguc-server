@@ -30,7 +30,7 @@
 #include <iostream>
 #include "CDebugger.h"
 #include "CTypes.h"
-
+#include "CColor.h"
 #include "Definitions.h"
 #include "CStopWatch.h"
 #include <stdio.h>
@@ -122,6 +122,8 @@ private:
   int numImagesAdded;
   int currentGraphicsRenderer;
 
+  void _drawBarbGd(int x, int y, double direction, double strength, CColor color, float lineWidth, bool toKnots, bool flip);
+
 public:
   float *rField, *gField, *bField;
   int *numField;
@@ -149,9 +151,7 @@ public:
   int create685Palette();
   int clonePalette(CDrawImage *drawImage);
 
-  void drawBarb(int x, int y, double direction, double strength, int color, bool toKnots, bool flip);
-  void drawBarb(int x, int y, double direction, double strength, int color, float linewidth, bool toKnots, bool flip);
-  void drawBarb(int x, int y, double direction, double strength, CColor color, float linewidth, bool toKnots, bool flip);
+  void drawBarb(int x, int y, double direction, double strength, CColor color, float linewidth, bool toKnots, bool flip, bool drawText);
   void drawText(int x, int y, float angle, const char *text, unsigned char colorIndex);
   void drawText(int x, int y, float angle, const char *text, CColor fgcolor);
   void drawText(int x, int y, const char *fontfile, float size, float angle, const char *text, unsigned char colorIndex);
@@ -175,6 +175,7 @@ public:
   void moveTo(float x1, float y1);
   void lineTo(float x1, float y1, float w, CColor color);
   void endLine();
+  void endLine(const double *dashes, int num_dashes);
 
   void poly(float x1, float y1, float x2, float y2, float x3, float y3, int c, bool fill);
   void poly(float x1, float y1, float x2, float y2, float x3, float y3, CColor color, bool fill);
@@ -207,7 +208,7 @@ public:
   void setDisc(int x, int y, float discRadius, CColor fillColor, CColor lineColor);
   void setEllipse(int x, int y, float discRadiusX, float discRadiusY, float rotation, CColor fillColor, CColor lineColor);
   void setTextDisc(int x, int y, int discRadius, const char *text, const char *fontfile, float fontsize, CColor textcolor, CColor fillcolor, CColor lineColor);
-  void setTextStroke(const char *text, size_t length, int x, int y, int fgcolor, int bgcolor, int fontSize);
+  void setTextStroke(int x, int y, float angle, const char *text, const char *fontFile, float fontsize, float strokeWidth, CColor bgcolor, CColor fgcolor);
   void rectangle(int x1, int y1, int x2, int y2, int innercolor, int outercolor);
   void rectangle(int x1, int y1, int x2, int y2, int outercolor);
   void rectangle(int x1, int y1, int x2, int y2, CColor innercolor, CColor outercolor);

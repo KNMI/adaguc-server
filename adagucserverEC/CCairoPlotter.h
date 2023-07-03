@@ -46,6 +46,7 @@
 #include FT_FREETYPE_H
 #include <stdio.h>
 #include <math.h>
+#include "CColor.h"
 
 #include "COctTreeColorQuantizer.h"
 
@@ -108,6 +109,7 @@ public:
   void lineTo(float x1, float y1);
   void lineTo(float x1, float y1, float width);
   void endLine();
+  void endLine(const double *dashes, int num_dashes);
   void line(float x1, float y1, float x2, float y2);
   void line(float x1, float y1, float x2, float y2, float width);
   void circle(int x, int y, int r);
@@ -117,12 +119,14 @@ public:
   void poly(float x[], float y[], int n, bool closePath, bool fill);
   void poly(float x[], float y[], int n, float lineWidth, bool closePath, bool fill);
   void drawText(int x, int y, double angle, const char *text);
+  void drawStrokedText(int x, int y, double angle, const char *text, float fontSize, float strokeWidth, CColor bgcolor, CColor fgcolor);
 
   void writeToPng8Stream(FILE *fp, unsigned char alpha, bool use8bitpalAlpha);
   void writeToPng24Stream(FILE *fp, unsigned char alpha);
   void writeToPng32Stream(FILE *fp, unsigned char alpha);
   void writeToWebP32Stream(FILE *fp, unsigned char alpha, int quality);
   void setToSurface(cairo_surface_t *png);
+  void drawBarb(int x, int y, double direction, double strength, CColor color, CColor outlineColor, bool drawOutline, float lineWidth, bool toKnots, bool flip, bool drawText);
 };
 
 #endif /* CCAIROPLOTTER_H_ */
