@@ -315,28 +315,32 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
           cdfObject->applyNCMLFile(ncmlFileName.c_str());
         }
       }
-      // Rename variable, if requested
-      if (!dataSource->cfgLayer->Variable[0]->attr.orgname.empty()) {
-        CDF::Variable *var = cdfObject->getVariable(dataSource->cfgLayer->Variable[0]->attr.orgname);
-        var->name.copy(dataSource->cfgLayer->Variable[0]->value);
-      }
+      if (dataSource->cfgLayer->Variable.size() > 0) {
+        // Shorthand to variable configuration in the layer.
+        auto *cfgVar = dataSource->cfgLayer->Variable[0];
+        // Rename variable, if requested
+        if (!cfgVar->attr.orgname.empty()) {
+          CDF::Variable *var = cdfObject->getVariable(cfgVar->attr.orgname);
+          var->name.copy(cfgVar->value);
+        }
 
-      // Set long_name
-      if (!dataSource->cfgLayer->Variable[0]->attr.long_name.empty()) {
-        CDF::Variable *var = cdfObject->getVariable(dataSource->cfgLayer->Variable[0]->value);
-        var->setAttributeText("long_name", dataSource->cfgLayer->Variable[0]->attr.long_name);
-      }
+        // Set long_name
+        if (!cfgVar->attr.long_name.empty()) {
+          CDF::Variable *var = cdfObject->getVariable(cfgVar->value);
+          var->setAttributeText("long_name", cfgVar->attr.long_name);
+        }
 
-      // Set units
-      if (!dataSource->cfgLayer->Variable[0]->attr.units.empty()) {
-        CDF::Variable *var = cdfObject->getVariable(dataSource->cfgLayer->Variable[0]->value);
-        var->setAttributeText("units", dataSource->cfgLayer->Variable[0]->attr.units);
-      }
+        // Set units
+        if (!cfgVar->attr.units.empty()) {
+          CDF::Variable *var = cdfObject->getVariable(cfgVar->value);
+          var->setAttributeText("units", cfgVar->attr.units);
+        }
 
-      // Set standard_name
-      if (!dataSource->cfgLayer->Variable[0]->attr.standard_name.empty()) {
-        CDF::Variable *var = cdfObject->getVariable(dataSource->cfgLayer->Variable[0]->value);
-        var->setAttributeText("standard_name", dataSource->cfgLayer->Variable[0]->attr.standard_name);
+        // Set standard_name
+        if (!cfgVar->attr.standard_name.empty()) {
+          CDF::Variable *var = cdfObject->getVariable(cfgVar->value);
+          var->setAttributeText("standard_name", cfgVar->attr.standard_name);
+        }
       }
     }
   }

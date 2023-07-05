@@ -120,7 +120,7 @@ int CDPPOperator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
       for (size_t j = 0; j < l; j++) {
         float a = getElement(dataA, typeA, j);
         float b = getElement(dataB, typeB, j);
-        if (a == 0) {
+        if (b == 0) {
           result[j] = NAN;
         } else {
           result[j] = a / b;
