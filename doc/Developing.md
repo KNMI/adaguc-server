@@ -10,7 +10,7 @@ For developing the code locally, you need:
 
 After the python wrapper is started, the adaguc-server is accessible on your workstation via http. The easiest way to explore datasets is via de autowms feature, which will give you an overview of available data on your machine via de browser.
 
-## 1. Install packages need by adaguc-server
+## 1. Install packages needed by adaguc-server
 
 To be able to compile adaguc-server you need to have the required dependencies installed. These can be installed via the package manager of your system. Scripts are available:
 
@@ -45,7 +45,7 @@ When started, the database is available via username adaguc, databasename adaguc
 `psql "dbname=adaguc user=adaguc password=adaguc host=localhost"`
 
 
-## 3. Start the application with the python wrapper.
+## 3. Install python dependencies
 
 To make the application accesible via the web, a python wrapper is available. This requires at least python 3.8 and the ability to create a virtualenv with python.
 

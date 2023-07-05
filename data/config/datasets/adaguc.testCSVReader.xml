@@ -7,7 +7,8 @@
     <Min>0.0</Min>
     <Max>10</Max>
     <Point pointstyle="point" textcolor="#111111"/>
-    <Vector vectorstyle="barb" linecolor="#0000FF" />
+    <Vector vectorstyle="barb" linecolor="#0000FF"  plotvalue="true" />
+
     <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#000000" borderwidth="2"/> <!-- Used in CImgRenderPolylines -->
     <RenderMethod>point</RenderMethod>
   </Style>
@@ -66,6 +67,16 @@
     <Variable>tn</Variable>
     <Styles>name</Styles>
   </Layer>
+
+  <Layer type="database">
+    <FilePath filter="^.*\.csv$">{ADAGUC_PATH}/data/datasets/csv_wind/csvexample_windbarbs.csv</FilePath>
+    <Name>windallspeeds</Name>
+    <Title>windallspeeds</Title>
+    <Variable>ff</Variable>
+    <Variable>dd</Variable>
+    <Styles>windbarb,windvector</Styles>
+  </Layer>
+  
   
   <!-- End of configuration /-->
 </Configuration>
