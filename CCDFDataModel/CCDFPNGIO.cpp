@@ -236,7 +236,7 @@ public:
   double east;
   double west;
 };
-#define pi 3.141592654
+#define pi M_PI
 
 class P {
 public:

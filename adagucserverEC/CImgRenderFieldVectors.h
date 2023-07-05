@@ -209,7 +209,7 @@ int applyUVConversion(CImageWarper *warper, CDataSource *sourceImage, bool enabl
             dLatNorth = radians(lat_pntNorth);
             xpntNorthSph = cos(dLatNorth) * cos(dLonNorth);
             ypntNorthSph = cos(dLatNorth) * sin(dLonNorth); // # Get [dLonNorth,dLatNorth] on the unit sphere.
-            zpntNorthSph = sin(dLatNorth);                  //# Only XY plane is needed.
+            zpntNorthSph = sin(dLatNorth);                  // # Only XY plane is needed.
 
             lon_pnt0 = radians(lon_pnt0);
             lat_pnt0 = radians(lat_pnt0);
@@ -226,11 +226,11 @@ int applyUVConversion(CImageWarper *warper, CDataSource *sourceImage, bool enabl
             ynormSph = ypnt0Sph;
             znormSph = zpnt0Sph;
             NormVector(xnormSph, ynormSph, znormSph); // normal vector to the sphere at the point pnt0Sph
-            //# vecn = (0.0,0.0,1.0)                   // up-vector in a global coordinate system
-            //# Project vecn onto plane XY, where plane-normal is vecz
-            //# vecnProjXY = vecn - D*vecz;   D= a*x1+b*y1+c*z1;  vecz=(a,b,c); vecn=(x1,y1,z1)=(0,0,1)
-            //#                               D= vecz[2]*1;
-            //# vecyRot = NormVector( (0.0 - vecz[2]*vecz[0],0.0  - vecz[2]*vecz[1], 1.0  - vecz[2]*vecz[2]) )
+            // # vecn = (0.0,0.0,1.0)                   // up-vector in a global coordinate system
+            // # Project vecn onto plane XY, where plane-normal is vecz
+            // # vecnProjXY = vecn - D*vecz;   D= a*x1+b*y1+c*z1;  vecz=(a,b,c); vecn=(x1,y1,z1)=(0,0,1)
+            // #                               D= vecz[2]*1;
+            // # vecyRot = NormVector( (0.0 - vecz[2]*vecz[0],0.0  - vecz[2]*vecz[1], 1.0  - vecz[2]*vecz[2]) )
 
             // double Dist =  xnormSph * 0.0 +  ynormSph * 0.0 + znormSph * 1.0; // Left out for optimization
             xpntNorthSphRot = -znormSph * xnormSph;      // xpntNorthSphRot = 0.0 - Dist*xnormSph;
@@ -251,7 +251,7 @@ int applyUVConversion(CImageWarper *warper, CDataSource *sourceImage, bool enabl
 
             xpntNorthSph = sin(vecAngle); // Rotate the point/vector (0,1) around Z-axis with vecAngle
             ypntNorthSph = cos(vecAngle);
-            xpntEastSph = ypntNorthSph; // Rotate the same point/vector around Z-axis with 90 degrees
+            xpntEastSph = ypntNorthSph;   // Rotate the same point/vector around Z-axis with 90 degrees
             ypntEastSph = -xpntNorthSph;
 
             // zpntNorthSph = 0; zpntEastSph = 0;  // not needed in 2D
@@ -283,7 +283,7 @@ int applyUVConversion(CImageWarper *warper, CDataSource *sourceImage, bool enabl
 //              }
 #endif
           } // else {
-          //#ifdef ORIGINAL_JACO
+          // #ifdef ORIGINAL_JACO
           warper->reprojModelToLatLon(modelX, modelY); // model to latlon proj.
           modelXLon = modelX + deltaLon;               // latlons
           modelYLon = modelY;
@@ -325,7 +325,7 @@ int applyUVConversion(CImageWarper *warper, CDataSource *sourceImage, bool enabl
           //           if (y==0) {CDBDebug("==> (%f,%f)",uValues[p], vValues[p]);}
           //              uValues[p]=6;
           //              vValues[p]=0;
-          //#endif
+          // #endif
           //      }
         }
       }
@@ -388,7 +388,6 @@ std::vector<CalculatedWindVector> renderBarbsAndVectors(CImageWarper *warper, CD
 
       double direction;
       double strength;
-      // double pi=3.141592654;
       int stepx = vectorDensityPx; // Raster stride at barb distances
       int stepy = vectorDensityPy;
       // If contouring, drawMap or shading is wanted, step through all destination raster points
@@ -470,7 +469,6 @@ std::vector<CalculatedWindVector> renderBarbsAndVectors(CImageWarper *warper, CD
           // Skip rest if x,y outside drawArea
           if ((dpDestX[p] >= 0) && (dpDestX[p] < dImageWidth) && (dpDestY[p] >= 0) && (dpDestY[p] < dImageHeight)) {
             double direction;
-            // double pi=3.141592654;
             double strength;
             double u = uValueData[p];
             double v = vValueData[p];

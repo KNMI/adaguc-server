@@ -28,9 +28,6 @@
 
 #include <gd.h>
 #include <set>
-#ifndef M_PI
-#define M_PI 3.14159265358979323846 // pi
-#endif
 
 #ifndef rad2deg
 #define rad2deg (180. / M_PI) // conversion for rad to deg
@@ -459,7 +456,7 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
     CalculatedWindVector wv;
     for (size_t sz = 0; sz < windVectors.size(); sz++) {
       wv = windVectors[sz];
-      drawImage->drawBarb(wv.x, wv.y, wv.dir, wv.strength, 240, wv.convertToKnots, wv.flip);
+      drawImage->drawBarb(wv.x, wv.y, wv.dir, wv.strength, CColor(0, 0, 255, 255), 0.8, wv.convertToKnots, wv.flip, false);
     }
   }
 
@@ -625,6 +622,7 @@ void CImgWarpBilinear::smoothData(float *valueData, float fNodataValue, int smoo
 int CImgWarpBilinear::set(const char *pszSettings) {
   // fprintf(stderr, "CImgWarpBilinear.set(%s)\n", pszSettings);
   //"drawMap=false;drawContour=true;contourSmallInterval=1.0;contourBigInterval=10.0;"
+
   if (pszSettings == NULL) return 0;
   if (strlen(pszSettings) == 0) return 0;
   contourDefinitions.clear();
@@ -668,14 +666,14 @@ int CImgWarpBilinear::set(const char *pszSettings) {
       if (values[0].equals("contourBigInterval")) {
         float f = values[1].toFloat();
         if (f > 0) {
-          contourDefinitions.push_back(ContourDefinition(1.4, CColor(0, 0, 0, 255), CColor(0, 0, 0, 255), f, NULL));
+          contourDefinitions.push_back(ContourDefinition(1.4, CColor(0, 0, 0, 255), CColor(0, 0, 0, 255), CColor(0, 0, 0, 255), f, NULL, 0, 0, ""));
         }
       }
 
       if (values[0].equals("contourSmallInterval")) {
         float f = values[1].toFloat();
         if (f > 0) {
-          contourDefinitions.push_back(ContourDefinition(0.35, CColor(0, 0, 0, 255), CColor(0, 0, 0, 255), f, NULL));
+          contourDefinitions.push_back(ContourDefinition(0.35, CColor(0, 0, 0, 255), CColor(0, 0, 0, 255), CColor(0, 0, 0, 255), f, NULL, 0, 0, ""));
         }
       }
 
@@ -714,10 +712,15 @@ int CImgWarpBilinear::set(const char *pszSettings) {
         float lineWidth = 1;
         CColor linecolor = CColor(0, 0, 0, 255);
         CColor textcolor = CColor(0, 0, 0, 255);
+        CColor textstrokecolor = CColor(0, 0, 0, 0);
+
         float interval = 0;
+        float fontSize = 0;
+        float textStrokeWidth = 0;
         CT::string textformat = "";
         CT::string classes = "";
         CT::string *lineSettings = values[1].splitToArray("$");
+        CT::string dashing = "";
         for (size_t l = 0; l < lineSettings->count; l++) {
           CT::string *kvp = lineSettings[l].splitToArray("(");
           if (kvp->count == 2) {
@@ -741,18 +744,31 @@ int CImgWarpBilinear::set(const char *pszSettings) {
               kvp[1].setSize(7);
               textcolor = CColor(kvp[1].c_str());
             }
+            if (kvp[0].equals("textstrokecolor")) {
+              kvp[1].setSize(7);
+              textstrokecolor = CColor(kvp[1].c_str());
+            }
             if (kvp[0].equals("textformatting")) {
               textformat.copy(kvp[1].c_str(), kvp[1].length());
+            }
+            if (kvp[0].equals("dashing")) {
+              dashing.copy(kvp[1].c_str(), kvp[1].length());
+            }
+            if (kvp[0].equals("textsize")) {
+              fontSize = kvp[1].toFloat();
+            }
+            if (kvp[0].equals("textstrokewidth")) {
+              textStrokeWidth = kvp[1].toFloat();
             }
           }
           delete[] kvp;
         }
 
         if (classes.length() > 0) {
-          contourDefinitions.push_back(ContourDefinition(lineWidth, linecolor, textcolor, classes.c_str(), textformat.c_str()));
+          contourDefinitions.push_back(ContourDefinition(lineWidth, linecolor, textcolor, textstrokecolor, classes.c_str(), textformat.c_str(), fontSize, textStrokeWidth, dashing));
         } else {
           if (interval > 0) {
-            contourDefinitions.push_back(ContourDefinition(lineWidth, linecolor, textcolor, interval, textformat.c_str()));
+            contourDefinitions.push_back(ContourDefinition(lineWidth, linecolor, textcolor, textstrokecolor, interval, textformat.c_str(), fontSize, textStrokeWidth, dashing));
           }
         }
 
@@ -782,32 +798,24 @@ bool IsTextTooClose(std::vector<Point> *textLocations, int x, int y) {
 }
 
 void CImgWarpBilinear::drawTextForContourLines(CDrawImage *drawImage, ContourDefinition *contourDefinition, int lineX, int lineY, int endX, int endY, std::vector<Point> *, float value,
-                                               CColor textColor, const char *fontLocation, float fontSize) {
+                                               CColor textColor, CColor textStrokeColor, const char *fontLocation, float fontSize, float textStrokeWidth) {
 
   /* Draw text */
   CT::string text;
   text.print(contourDefinition->textFormat.c_str(), value);
 
-  double angle;
-  if (lineY - endY != 0) {
-    angle = atan((-double(lineY - endY)) / (double(lineX - endX)));
-  } else {
-    angle = 0;
-  }
-  float cx = (lineX + endX) / 2;
-  float cy = (endY + lineY) / 2;
-  float tx = cx;
-  float ty = cy;
-  float ca = cos(angle);
-  float sa = sin(angle);
-  float offX = ((ca * text.length() * 2.3) + (sa * -2.3));
-  float offY = (-(sa * text.length() * 3.0) + (ca * -2.3));
-  tx -= offX;
-  ty -= offY;
-  int x = int(tx) + 1;
-  int y = int(ty) + 1;
+  double angle = atan2(lineX - endX, lineY - endY) - M_PI / 2;
+  double angleP = atan2(endY - lineY, endX - lineX) + M_PI / 2;
 
-  drawImage->drawText(x, y, fontLocation, fontSize, angle, text.c_str(), textColor);
+  if (angle < -M_PI / 2 || angle > M_PI / 2) {
+    int x = lineX + cos(angleP) * (fontSize / 2);
+    int y = lineY + sin(angleP) * (fontSize / 2);
+    drawImage->setTextStroke(x, y, -angleP + M_PI / 2, text.c_str(), fontLocation, fontSize, textStrokeWidth, textStrokeColor, textColor);
+  } else {
+    int x = endX - cos(angleP) * (fontSize / 2);
+    int y = endY - sin(angleP) * (fontSize / 2);
+    drawImage->setTextStroke(x, y, angle, text.c_str(), fontLocation, fontSize, textStrokeWidth, textStrokeColor, textColor);
+  }
 }
 
 /*
@@ -827,8 +835,8 @@ int ydirOuter[] = {2, 2, 2, 2, 2, 1, 0, -1, -2, -2, -2, -2, -2, -1, 0, 1};
 #define MAX_LINE_SEGMENTS 1000
 
 void CImgWarpBilinear::traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *valueField, int lineX, int lineY, int dImageWidth, int dImageHeight, float lineWidth, CColor lineColor,
-                                    CColor textColor, ContourDefinition *contourDefinition, DISTANCEFIELDTYPE lineMask, bool, std::vector<Point> *textLocations, double scaling,
-                                    const char *fontLocation, float fontSize) {
+                                    CColor textColor, CColor textStrokeColor, ContourDefinition *contourDefinition, DISTANCEFIELDTYPE lineMask, bool, std::vector<Point> *textLocations, double scaling,
+                                    const char *fontLocation, float fontSize, float textStrokeWidth, double *dashes, int numDashes) {
   size_t p = lineX + lineY * dImageWidth; /* Starting pointer */
   bool foundLine = true;                  /* This function starts at the beginning of a line segment */
   int maxLineDistance = 5;                /* Maximum length of each line segment */
@@ -938,8 +946,7 @@ void CImgWarpBilinear::traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *di
 
   int drawTextAtEveryNPixels = 50 * int(scaling);
   int drawTextAngleNSteps = 0;
-  int drawTextAngleNSteps5 = 5 * int(scaling);
-  int drawTextAngleNSteps3 = 3 * int(scaling);
+  int drawTextAngleNSteps5 = 5 * int(scaling) * (fontSize / 8);
 
   float scaledLineWidth = lineWidth * scaling;
 
@@ -950,15 +957,19 @@ void CImgWarpBilinear::traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *di
         if (IsTextTooClose(textLocations, lineSegmentsX[j], lineSegmentsY[j]) == false) {
           textSkip = false;
           textLocations->push_back(Point(lineSegmentsX[j], lineSegmentsY[j]));
-          this->drawTextForContourLines(drawImage, contourDefinition, lineSegmentsX[j + drawTextAngleNSteps3], lineSegmentsY[j + drawTextAngleNSteps3], lineSegmentsX[j + drawTextAngleNSteps3 + 1],
-                                        lineSegmentsY[j + drawTextAngleNSteps3 + 1], textLocations, binnedLineSegmentsValue, textColor, fontLocation, fontSize * scaling);
+          float startX = lineSegmentsX[j];
+          float startY = lineSegmentsY[j];
+          float endX = lineSegmentsX[j + drawTextAngleNSteps5];
+          float endY = lineSegmentsY[j + drawTextAngleNSteps5];
+          this->drawTextForContourLines(drawImage, contourDefinition, startX, startY, endX, endY, textLocations, binnedLineSegmentsValue, textColor, textStrokeColor, fontLocation, fontSize * scaling,
+                                        textStrokeWidth * scaling);
           textOn = true;
         } else {
           textSkip = true;
         }
       }
       if (j % drawTextAtEveryNPixels == drawTextAngleNSteps && textOn && !textSkip) {
-        drawImage->endLine();
+        drawImage->endLine(dashes, numDashes);
       }
       if (j % drawTextAtEveryNPixels > drawTextAngleNSteps5 || textSkip) {
         drawImage->lineTo(lineSegmentsX[j], lineSegmentsY[j], scaledLineWidth, lineColor);
@@ -968,7 +979,7 @@ void CImgWarpBilinear::traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *di
     }
   }
 
-  drawImage->endLine();
+  drawImage->endLine(dashes, numDashes);
 }
 
 void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float interval, CDataSource *dataSource, CDrawImage *drawImage, bool drawLine, bool drawShade, bool drawText) {
@@ -990,7 +1001,6 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
   }
 
   double scaling = dataSource->getContourScaling();
-  float fontSize = dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.size.toDouble();
   const char *fontLocation = dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.location.c_str();
 
   // float ival = interval;
@@ -1251,15 +1261,35 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
   for (size_t j = 0; j < contourDefinitions.size(); j++) {
     lineColor = contourDefinitions[j].linecolor;
     textColor = contourDefinitions[j].textcolor;
+    CColor textstrokecolor = contourDefinitions[j].textstrokecolor;
     lineWidth = contourDefinitions[j].lineWidth;
+    float fontSize = dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.size.toDouble();
+    float textStrokeWidth = 0.75;
+    if (contourDefinitions[j].fontSize > 0) {
+      fontSize = contourDefinitions[j].fontSize;
+    }
+    if (contourDefinitions[j].textStrokeWidth > 0) {
+      textStrokeWidth = contourDefinitions[j].textStrokeWidth;
+    }
+
+    double *dashes = NULL;
+    int numDashes = 0;
+    if (contourDefinitions[j].dashing) {
+      auto stringDashes = contourDefinitions[j].dashing.splitToStack(",");
+      numDashes = stringDashes.size();
+      dashes = new double[numDashes];
+      for (int j = 0; j < numDashes; j++) {
+        dashes[j] = stringDashes[j].toDouble();
+      }
+    }
 
     /* Everywhere */
     for (int y = 0; y < dImageHeight; y++) {
       for (int x = 0; x < dImageWidth; x++) {
         size_t p = x + y * dImageWidth;
         if (distance[p] & lineMask) {
-          traverseLine(drawImage, distance, valueData, x, y, dImageWidth, dImageHeight, lineWidth, lineColor, textColor, &contourDefinitions[j], lineMask, drawText, &textLocations, scaling,
-                       fontLocation, fontSize);
+          traverseLine(drawImage, distance, valueData, x, y, dImageWidth, dImageHeight, lineWidth, lineColor, textColor, textstrokecolor, &contourDefinitions[j], lineMask, drawText, &textLocations,
+                       scaling, fontLocation, fontSize, textStrokeWidth, dashes, numDashes);
         }
       }
     }

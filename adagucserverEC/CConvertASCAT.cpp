@@ -27,7 +27,7 @@
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
 
-//#define CCONVERTASCAT_DEBUG
+// #define CCONVERTASCAT_DEBUG
 
 const char *CConvertASCAT::className = "CConvertASCAT";
 
@@ -543,7 +543,7 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource, int mode) {
                 if (projectionRequired) {
                   double dy = lats[0] - latOffSetForRot;
                   double dx = lons[0] - lonOffSetForRot;
-                  rotation = -(atan2(dy, dx) / (3.141592654)) * 180 - 90;
+                  rotation = -(atan2(dy, dx) / (M_PI)) * 180 - 90;
                 }
               }
               if (tileHasNoData == false) {

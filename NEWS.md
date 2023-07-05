@@ -3,6 +3,11 @@
 - Dimensions can now be fixated and hidden, to make layers representing a single elevation based on a variable with multiple elevations
 - Support to substract two elevations from the same variable
 
+**Version 2.10.5 2023-06-02**
+- Contourlines can have dashes
+- Contour text can have an outline
+- Windbarbs have a white outline
+
 **Version 2.10.4 2023-06-01**
 - Fix: Racmo datasets with rotated_pole projection does work again
 
