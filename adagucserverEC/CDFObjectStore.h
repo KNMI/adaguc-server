@@ -42,6 +42,7 @@
 //  When a CDFObject is already opened
 class CDFObjectStore {
 private:
+  // These vectors are related, same index represents a set. TODO: Use a single vector with a object containing these 3.
   std::vector<CT::string *> fileNames;
   std::vector<CDFObject *> cdfObjects;
   std::vector<CDFReader *> cdfReaders;
