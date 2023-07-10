@@ -322,7 +322,7 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
             if (!useDrawPointTextColor) {
               if (dataObjectIndex == 0) { // Only calculate color for 1st dataObject, rest gets defaultColor
                 if ((dataSource->getStyle() != NULL) && (dataSource->getStyle()->shadeIntervals != NULL) && (dataSource->getStyle()->shadeIntervals->size() > 0)) {
-                  drawPointTextColor = getPixelColorForValue(dataSource, v);
+                  drawPointTextColor = getPixelColorForValue(dataSource, drawImage, v);
                 } else {
                   int pointColorIndex = getPixelIndexForValue(dataSource, v); // Use value of dataObject[0] for colour
                   drawPointTextColor = drawImage->getColorForIndex(pointColorIndex);
@@ -340,7 +340,7 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
             } else {                        // Text and disc
               if (!useDrawPointFillColor) { //(dataSource->getNumDataObjects()==1) {
                 if ((dataSource->getStyle() != NULL) && (dataSource->getStyle()->shadeIntervals != NULL) && (dataSource->getStyle()->shadeIntervals->size() > 0)) {
-                  drawPointFillColor = getPixelColorForValue(dataSource, v);
+                  drawPointFillColor = getPixelColorForValue(dataSource, drawImage, v);
                 } else {
                   int pointColorIndex = getPixelIndexForValue(dataSource, v); // Use value of dataObject[0] for colour
                   drawPointFillColor = drawImage->getColorForIndex(pointColorIndex);
@@ -414,7 +414,7 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
 
           if (!useDrawPointTextColor) {
             if ((dataSource->getStyle() != NULL) && (dataSource->getStyle()->shadeIntervals != NULL)) {
-              drawPointTextColor = getPixelColorForValue(dataSource, v);
+              drawPointTextColor = getPixelColorForValue(dataSource, drawImage, v);
             } else {
               int pointColorIndex = getPixelIndexForValue(dataSource, v); // Use value of dataObject[0] for colour
               drawPointTextColor = drawImage->getColorForIndex(pointColorIndex);
@@ -430,7 +430,7 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
             }
             if (!useDrawPointFillColor) { //(dataSource->getNumDataObjects()==1) {
               if ((dataSource->getStyle() != NULL) && (dataSource->getStyle()->shadeIntervals != NULL)) {
-                CColor col = getPixelColorForValue(dataSource, v);
+                CColor col = getPixelColorForValue(dataSource, drawImage, v);
                 drawImage->setTextDisc(x, y, drawPointDiscRadius, t.c_str(), drawPointFontFile, drawPointFontSize, drawPointTextColor, col, drawPointLineColor);
               } else {
                 int pointColorIndex = getPixelIndexForValue(dataSource, v); // Use value of dataObject[0] for colour
@@ -860,7 +860,7 @@ int CImgRenderPoints::getPixelIndexForValue(CDataSource *dataSource, float val) 
   return 0;
 }
 
-CColor CImgRenderPoints::getPixelColorForValue(CDataSource *dataSource, float val) {
+CColor CImgRenderPoints::getPixelColorForValue(CDataSource *dataSource, CDrawImage *drawImage, float val) {
   bool isNodata = false;
 
   CColor color;
@@ -870,6 +870,21 @@ CColor CImgRenderPoints::getPixelColorForValue(CDataSource *dataSource, float va
   }
   if (!isNodata) {
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
+    // Based on ShadeInterval configuration with value setting:
+    // Find the colour matching the given legend, rounded down to the shadeinterval value.
+    if (styleConfiguration->shadeIntervals->size() == 1) {
+      CServerConfig::XMLE_ShadeInterval *shadeInterval = ((*styleConfiguration->shadeIntervals)[0]);
+      if (!shadeInterval->value.empty()) {
+        double interval = shadeInterval->value.toDouble();
+        double discreteValue = floor(val / interval) * interval;
+        int pointColorIndex = getPixelIndexForValue(dataSource, discreteValue);
+        CColor drawPointFillColor = drawImage->getColorForIndex(pointColorIndex);
+        return drawPointFillColor;
+      }
+    }
+
+    // Based on ShadeInterval configuration with min and max attributes:
+    // determine between which min and max the value falls, and return the color.
     for (size_t j = 0; j < styleConfiguration->shadeIntervals->size(); j++) {
       CServerConfig::XMLE_ShadeInterval *shadeInterval = ((*styleConfiguration->shadeIntervals)[j]);
       if (shadeInterval->attr.min.empty() == false && shadeInterval->attr.max.empty() == false) {
