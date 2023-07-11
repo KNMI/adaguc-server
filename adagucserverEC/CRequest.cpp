@@ -1452,7 +1452,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
           maxQueryResultLimit = dataSource->cfgLayer->FilePath[0]->attr.maxquerylimit.toInt();
         }
       }
-      CDBDebug("Using maxquerylimit %d", maxQueryResultLimit);
+      // CDBDebug("Using maxquerylimit %d", maxQueryResultLimit);
       store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource, maxQueryResultLimit);
     }
 
@@ -1572,15 +1572,17 @@ int CRequest::process_all_layers() {
 
             CT::string additionalLayerName = additionalLayer->value.c_str();
             size_t additionalLayerNo = 0;
+            bool additionalLayerWasFound = false;
             for (additionalLayerNo = 0; additionalLayerNo < srvParam->cfg->Layer.size(); additionalLayerNo++) {
               CT::string additional;
               srvParam->makeUniqueLayerName(&additional, srvParam->cfg->Layer[additionalLayerNo]);
-              CDBDebug("comparing for additionallayer %s==%s", additionalLayerName.c_str(), additional.c_str());
+              // CDBDebug("comparing for additionallayer %s==%s", additionalLayerName.c_str(), additional.c_str());
               if (additionalLayerName.equals(additional)) {
-                CDBDebug("Found additionalLayer [%s]", additional.c_str());
+                additionalLayerWasFound = true;
+                // CDBDebug("Found additionalLayer [%s]", additional.c_str());
                 CDataSource *additionalDataSource = new CDataSource();
 
-                CDBDebug("setCFGLayer for additionallayer %s", additionalLayerName.c_str());
+                // CDBDebug("setCFGLayer for additionallayer %s", additionalLayerName.c_str());
                 if (additionalDataSource->setCFGLayer(srvParam, srvParam->configObj->Configuration[0], srvParam->cfg->Layer[additionalLayerNo], additionalLayerName.c_str(), j) != 0) {
                   delete additionalDataSource;
                   return 1;
@@ -1588,14 +1590,15 @@ int CRequest::process_all_layers() {
 
                 /* Configure the Dimensions object if not set. */
                 if (additionalDataSource->cfgLayer->Dimension.size() == 0) {
-                  CDBDebug("additionalDataSource: Dimensions not configured, trying to do now");
+                  // CDBDebug("additionalDataSource: Dimensions not configured, trying to do now");
                   if (CAutoConfigure::autoConfigureDimensions(additionalDataSource) != 0) {
                     CDBError("additionalDataSource: : setCFGLayer::Unable to configure dimensions automatically");
-                  } else {
-                    for (size_t j = 0; j < additionalDataSource->cfgLayer->Dimension.size(); j++) {
-                      CDBDebug("additionalDataSource: : Configured dim %d %s", j, additionalDataSource->cfgLayer->Dimension[j]->value.c_str());
-                    }
                   }
+                  // } else {
+                  //   for (size_t j = 0; j < additionalDataSource->cfgLayer->Dimension.size(); j++) {
+                  //     CDBDebug("additionalDataSource: : Configured dim %d %s", j, additionalDataSource->cfgLayer->Dimension[j]->value.c_str());
+                  //   }
+                  // }
                 }
 
                 /* Set the dims based on server parameters */
@@ -1620,7 +1623,7 @@ int CRequest::process_all_layers() {
                 }
                 delete checkForData;
 
-                CDBDebug("add = %d replaceAllDataSource = %d replacePreviousDataSource = %d", add, replaceAllDataSource, replacePreviousDataSource);
+                // CDBDebug("add = %d replaceAllDataSource = %d replacePreviousDataSource = %d", add, replaceAllDataSource, replacePreviousDataSource);
                 if (add) {
                   if (replaceAllDataSource) {
                     for (size_t j = 0; j < dataSources.size(); j++) {
@@ -1648,6 +1651,10 @@ int CRequest::process_all_layers() {
                 break;
               }
             } /* End of looping additionallayers */
+            if (!additionalLayerWasFound) {
+              CDBError("Additional layer %s not found", additionalLayerName.c_str());
+              return 1;
+            }
           }
           break;
         }
@@ -2020,7 +2027,7 @@ int CRequest::process_all_layers() {
 
               if (!drawAllLegends) {
                 for (size_t li = 0; li < legendLayerList.size(); li++) {
-                  if (dataSources[d]->layerName.equals(legendLayerList[li])) {
+                  if (dataSources[d]->layerName.toLowerCase().equals(legendLayerList[li])) {
                     drawThisLegend = true;
                   }
                 }

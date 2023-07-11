@@ -1010,7 +1010,7 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
 #ifdef CCONVERTGEOJSON_DEBUG
     CDBDebug("convertGeoJSONData OPEN ALL");
 #endif
-    CDBDebug("convertGeoJSONData OPEN ALL (*)");
+    // CDBDebug("convertGeoJSONData OPEN ALL (*)");
 
     CDataSource::DataObject *dataObject;
     for (size_t d = 0; d < nrDataObjects; d++) {
