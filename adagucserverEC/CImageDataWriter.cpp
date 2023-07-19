@@ -30,6 +30,11 @@
 #include <algorithm>
 #include "CCreateScaleBar.h"
 #include "CLegendRenderers/CCreateLegend.h"
+#include <iostream>
+#include <sstream>
+#include <iomanip>
+#include <ctime>
+#include <chrono>
 
 #include "CImageDataWriter.h"
 #include "CMakeJSONTimeSeries.h"
@@ -794,6 +799,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
 #endif
 
         CDataReader reader;
+        reader.setRequestDate(requestDate);
         // if(!headerIsAvailable)
         {
           if (openAll) {
@@ -1312,6 +1318,23 @@ int CImageDataWriter::createAnimation() {
 
 void CImageDataWriter::setDate(const char *szTemp) { drawImage.setTextStroke(szTemp, strlen(szTemp), drawImage.Geo->dWidth - 170, 5, 240, 254, 0); }
 
+void CImageDataWriter::setRequestDate(const char *timestamp) {
+  std::tm t{};
+  std::istringstream ss(timestamp);
+
+  // The timestamp format should be: "YYYY-mm-ddTHH:MM:SSZ"
+  ss >> std::get_time(&t, "%Y-%m-%dT%H:%M:%SZ");
+
+  // Convert to time_t type
+  std::time_t tt = std::mktime(&t);
+
+  // If the timestamp is in UTC, adjust for time zone difference
+  tt += t.tm_gmtoff;
+
+  // Cast to double and return
+  requestDate = static_cast<double>(tt);
+}
+
 CImageDataWriter::IndexRange::IndexRange() {
   min = 0;
   max = 0;
@@ -1367,6 +1390,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
 #endif
 
   CDataReader reader;
+  reader.setRequestDate(requestDate);
   pthread_mutex_lock(&CImageDataWriter_addData_lock);
 #ifdef MEASURETIME
   StopWatch_Stop("Thread[%d]: start Opening grid", dataSource->threadNr);
@@ -1400,6 +1424,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
 
     status = reader.openExtent(dataSource, CNETCDFREADER_MODE_OPEN_EXTENT, PXExtentBasedOnSource);
   } else {
+    reader.setRequestDate(requestDate);
     status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_ALL);
   }
 #ifdef MEASURETIME
@@ -1777,6 +1802,7 @@ int CImageDataWriter::calculateData(std::vector<CDataSource *> &dataSources) {
 #endif
       status = imageWarper.initreproj(dataSource, drawImage.Geo, &srvParam->cfg->Projection);
       if (status != 0) {
+        // CDBError("initreproj failed");
         CDBError("initreproj failed");
         hasFailed = true;
       }
@@ -3680,8 +3706,8 @@ void rotateUvNorth(double &u, double &v, double rlo, double rla, float deltaX, f
   xpntNorthSph -= xpnt0Sph, ypntNorthSph -= ypnt0Sph;
   zpntNorthSph -= zpnt0Sph;
 
-  NormVector(xpntEastSph, ypntEastSph, zpntEastSph);                                                                        // vecx
-  NormVector(xpntNorthSph, ypntNorthSph, zpntNorthSph);                                                                     // vecy
+  NormVector(xpntEastSph, ypntEastSph, zpntEastSph);    // vecx
+  NormVector(xpntNorthSph, ypntNorthSph, zpntNorthSph); // vecy
 
   CrossProd(xpntEastSph, ypntEastSph, zpntEastSph, xpntNorthSph, ypntNorthSph, zpntNorthSph, xnormSph, ynormSph, znormSph); // vec z
   xpntNorthSphRot = -znormSph * xnormSph;                                                                                   // xpntNorthSphRot = 0.0 - Dist*xnormSph;
@@ -3702,7 +3728,7 @@ void rotateUvNorth(double &u, double &v, double rlo, double rla, float deltaX, f
 
   xpntNorthSph = sin(vecAngle); // Rotate the point/vector (0,1) around Z-axis with vecAngle
   ypntNorthSph = cos(vecAngle);
-  xpntEastSph = ypntNorthSph;   // Rotate the same point/vector around Z-axis with 90 degrees
+  xpntEastSph = ypntNorthSph; // Rotate the same point/vector around Z-axis with 90 degrees
   ypntEastSph = -xpntNorthSph;
 
   // zpntNorthSph = 0; zpntEastSph = 0;  // not needed in 2D

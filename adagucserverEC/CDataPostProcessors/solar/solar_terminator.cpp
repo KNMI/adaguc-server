@@ -124,7 +124,6 @@ double getSolarZenithAngle(double lat, double lon, double timestamp) {
   // δ is the solar declination
   // φ is the observer's latitude,
   // H is the hour angle of the Sun.
-  timestamp = timestamp + 3600 * 3;
   // Get current Julian Day
   double jd = get_julian_day(timestamp);
 

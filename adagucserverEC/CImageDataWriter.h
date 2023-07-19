@@ -42,6 +42,7 @@
 #include "CMyCURL.h"
 #include "CXMLParser.h"
 #include "CDebugger.h"
+#include "CTime.h"
 
 class CImageDataWriter : public CBaseDataWriterInterface {
 public:
@@ -134,10 +135,12 @@ public:
   static int getColorIndexForValue(CDataSource *dataSource, float value);
   static float getValueForColorIndex(CDataSource *dataSource, int index);
   static CColor getPixelColorForValue(CDataSource *dataSource, float val);
+  void setRequestDate(const char *timestamp);
 
 private:
   void setValue(CDFType type, void *data, size_t ptr, double pixel);
   int _setTransparencyAndBGColor(CServerParams *srvParam, CDrawImage *drawImage);
+  double requestDate; // Used for time-dependent function-based layers (such as solar terminator)
 
   int drawCascadedWMS(CDataSource *dataSource, const char *service, const char *layers, const char *styles, bool transparent, const char *bgcolor);
 

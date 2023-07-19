@@ -4,12 +4,65 @@
 #include <ctime>
 #include "CTime.h"
 
+#include <execinfo.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <cxxabi.h>
+#include <dlfcn.h>
+
 /************************/
 /*      CDPPSolarTerminator  */
 /************************/
 const char *CDPPSolarTerminator::className = "CDPPSolarTerminator";
 
 const char *CDPPSolarTerminator::getId() { return "solarterminator"; }
+
+// dataSource->eraseDataObject(1);
+/* void CDPPSolarTerminator::print_trace() {
+  void *buffer[255];
+  int nptrs = backtrace(buffer, 255);
+  char **strings = backtrace_symbols(buffer, nptrs);
+  if (strings == NULL) {
+    perror("backtrace_symbols");
+    exit(EXIT_FAILURE);
+  }
+
+  CDBDebug("***************BACKTRACE SYMBOLS\n");
+  int j = 0;
+  for (j = 0; j < nptrs; j++) {
+    Dl_info info;
+    if (dladdr(buffer[j], &info) && info.dli_sname) {
+      char *demangled = NULL;
+      int status = -1;
+      if (info.dli_sname[0] == '_') demangled = abi::__cxa_demangle(info.dli_sname, NULL, 0, &status);
+      CDBDebug("%-3d %*p %s + %zd\n", j, 2 + sizeof(void *) * 2, buffer[j], status == 0 ? demangled : info.dli_sname == 0 ? strings[j] : info.dli_sname, (char *)buffer[j] - (char *)info.dli_saddr);
+      free(demangled);
+    } else {
+      CDBDebug("%-3d %*p %s\n", j, 2 + sizeof(void *) * 2, buffer[j], strings[j]);
+    }
+  }
+
+  free(strings);
+
+  return;
+}
+ */
+#define SIZE 255
+void CDPPSolarTerminator::print_trace() {
+  void *buffer[SIZE];
+  char cmd[256];
+  int nptrs;
+
+  nptrs = backtrace(buffer, SIZE);
+  backtrace_symbols_fd(buffer, nptrs, STDOUT_FILENO); // prints out raw stack trace
+
+  for (int j = 0; j < nptrs; j++) {
+    sprintf(cmd, "addr2line -e myprogram -f -C -i %p", buffer[j]); // replace 'myprogram' with your binary name
+    system(cmd);
+  }
+
+  return;
+}
 
 int CDPPSolarTerminator::terminator(double geox, double geoy, double epochtime) {}
 
@@ -25,10 +78,16 @@ int CDPPSolarTerminator::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CD
 }
 
 int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
+  CDBDebug("Calling CDPPSolarTerminator::execute without a timestamp");
+  return CDPPSolarTerminator::execute(proc, dataSource, mode, 0);
+}
+
+int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode, double timestamp) {
   if ((isApplicable(proc, dataSource, mode) & mode) == false) {
     return -1;
   }
   CDBDebug("Applying SolarTerminator");
+  CDBDebug("TIMESTAMP PASSED IS %f", timestamp);
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
     CT::string newVariableName = proc->attr.name;
     if (newVariableName.empty()) {
@@ -54,15 +113,7 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
     dataSource->dfBBOX[2] = geo->dfBBOX[2];
     dataSource->dfBBOX[3] = geo->dfBBOX[3];
 
-    // Add time dimension
-    /*
-    COGCDims *ogcDim = new COGCDims();
-    dataSource->requiredDims.push_back(ogcDim);
-    ogcDim->name.copy("time");
-    ogcDim->value.copy("0");
-    ogcDim->netCDFDimName.copy("time");
-*/
-    /* Add geo variables, only if they are not there already */
+    // Add geo variables, only if they are not there already
     CDF::Dimension *dimX = newDataObject->cdfObject->getDimensionNE("xet");
     CDF::Dimension *dimY = newDataObject->cdfObject->getDimensionNE("yet");
     CDF::Dimension *dimTime = newDataObject->cdfObject->getDimensionNE("time");
@@ -70,17 +121,17 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
     CDF::Variable *varY = newDataObject->cdfObject->getVariableNE("yet");
     CDF::Variable *varTime = newDataObject->cdfObject->getVariableNE("time");
 
-    /* If not available, create new dimensions and variables (X,Y,T)*/
+    // If not available, create new dimensions and variables (X,Y,T)
     if (dimX == NULL || dimY == NULL || varX == NULL || varY == NULL) {
 
-      /* Define X dimension, with length 2, indicating the initial 2Dd Grid of 2x2 pixels */
+      // Define X dimension, with length 2, indicating the initial 2Dd Grid of 2x2 pixels
 
       dimX = new CDF::Dimension();
       dimX->name = "xet";
       dimX->setSize(width);
       newDataObject->cdfObject->addDimension(dimX);
 
-      /* Define the X variable using the X dimension */
+      // Define the X variable using the X dimension
       varX = new CDF::Variable();
       varX->setType(CDF_DOUBLE);
       varX->name.copy("xet");
@@ -89,17 +140,17 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
       newDataObject->cdfObject->addVariable(varX);
       CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
 
-      /* Set the bbox in the data, since the virtual grid is 2x2 pixels we can directly apply the bbox */
+      // Set the bbox in the data, since the virtual grid is 2x2 pixels we can directly apply the bbox
       ((double *)varX->data)[0] = dfBBOX[0];
       ((double *)varX->data)[1] = dfBBOX[2];
 
-      /* For y dimension */
+      // For y dimension
       dimY = new CDF::Dimension();
       dimY->name = "yet";
       dimY->setSize(height);
       newDataObject->cdfObject->addDimension(dimY);
 
-      /* Define the Y variable using the X dimension */
+      // Define the Y variable using the X dimension
       varY = new CDF::Variable();
       varY->setType(CDF_DOUBLE);
       varY->name.copy("yet");
@@ -111,13 +162,13 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
       ((double *)varY->data)[0] = dfBBOX[1];
       ((double *)varY->data)[1] = dfBBOX[3];
 
-      /* For time dimension */
+      // For time dimension
       dimTime = new CDF::Dimension();
       dimTime->name = "time";
       dimTime->setSize(1); // 24 * 6); // Last day every 10 minutes
       newDataObject->cdfObject->addDimension(dimTime);
 
-      /* Define the Y variable using the X dimension */
+      // Define the Y variable using the X dimension
       varTime = new CDF::Variable();
       varTime->setType(CDF_DOUBLE);
       varTime->name.copy("time");
@@ -137,7 +188,7 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
       }
 
       dataSource->getDataObject(0)->cdfVariable->dimensionlinks.push_back(dimTime);
-      /* Define the echotoppen variable using the defined dimensions, and set the right attributes */
+      // Define the echotoppen variable using the defined dimensions, and set the right attributes
       CDF::Variable *solTVar = new CDF::Variable();
       newDataObject->cdfObject->addVariable(solTVar);
       solTVar->setType(CDF_FLOAT);
@@ -156,45 +207,45 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
 
       newDataObject->cdfVariable->setSize(dataSource->dWidth * dataSource->dHeight);
 
-      /* Make the width and height of the new 2D adaguc field the same as the viewing window */
+      // Make the width and height of the new 2D adaguc field the same as the viewing window
       dataSource->dWidth = dataSource->srvParams->Geo->dWidth;
       dataSource->dHeight = dataSource->srvParams->Geo->dHeight;
 
-      /* Width and height of the dataSource need to be at least 2 in this case. */
+      // Width and height of the dataSource need to be at least 2 in this case.
       if (dataSource->dWidth < 2) dataSource->dWidth = 2;
       if (dataSource->dHeight < 2) dataSource->dHeight = 2;
 
-      /* Get the X and Y dimensions previousely defined and adjust them to the new settings and new grid (Grid in screenview space) */
+      // Get the X and Y dimensions previousely defined and adjust them to the new settings and new grid (Grid in screenview space)
       CDF::Dimension *dimX = newDataObject->cdfObject->getDimension("xet");
       dimX->setSize(dataSource->dWidth);
 
       CDF::Dimension *dimY = newDataObject->cdfObject->getDimension("yet");
       dimY->setSize(dataSource->dHeight);
 
-      /* Get the X and Y variables from the cdfobject (previousely defined in the header function) */
+      // Get the X and Y variables from the cdfobject (previousely defined in the header function)
       CDF::Variable *varX = newDataObject->cdfObject->getVariable("xet");
       CDF::Variable *varY = newDataObject->cdfObject->getVariable("yet");
 
-      /* Re-allocate data for these coordinate variables with the new grid size */
+      // Re-allocate data for these coordinate variables with the new grid size
       CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
       CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
 
-      /* Get the echotoppen variable from the datasource */
+      // Get the echotoppen variable from the datasource
       CDF::Variable *echoToppenVar = dataSource->getDataObject(0)->cdfVariable;
 
-      /* Calculate the gridsize, allocate data and fill the data with a fillvalue */
+      // Calculate the gridsize, allocate data and fill the data with a fillvalue
       size_t fieldSize = dimX->length * dimY->length;
       echoToppenVar->setSize(fieldSize);
       CDF::allocateData(echoToppenVar->getType(), &(echoToppenVar->data), fieldSize);
       CDF::fill(echoToppenVar->data, echoToppenVar->getType(), fillValue[0], fieldSize);
 
-      /* Calculate cellsize and offset of the echo toppen (ET) 2D virtual grid, using the same grid as the screenspace*/
+      // Calculate cellsize and offset of the echo toppen (ET) 2D virtual grid, using the same grid as the screenspace
       double cellSizeETX = (dataSource->srvParams->Geo->dfBBOX[2] - dataSource->srvParams->Geo->dfBBOX[0]) / double(dataSource->dWidth);
       double cellSizeETY = (dataSource->srvParams->Geo->dfBBOX[3] - dataSource->srvParams->Geo->dfBBOX[1]) / double(dataSource->dHeight);
       double offsetETX = dataSource->srvParams->Geo->dfBBOX[0];
       double offsetETY = dataSource->srvParams->Geo->dfBBOX[1];
 
-      /* Fill in the X and Y dimensions with the array of coordinates */
+      // Fill in the X and Y dimensions with the array of coordinates
       for (size_t j = 0; j < dimX->length; j++) {
         double x = offsetETX + double(j) * cellSizeETX + cellSizeETX / 2;
         ((double *)varX->data)[j] = x;
@@ -239,7 +290,7 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
     // return the number of seconds
     // return seconds.count();
 
-    double current_time = 1689270178; // static_cast<double>(seconds.count());
+    double current_time = timestamp; // 1689270178; // static_cast<double>(seconds.count());
 
     CDBDebug("Current epoch UTC timestamp: %f", current_time);
 

@@ -819,6 +819,8 @@ int CDataReader::openExtent(CDataSource *dataSource, int mode, int *gridExtent) 
 
 int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *gridExtent) {
 
+#define CDATAREADER_DEBUG 1
+  CDBDebug("Open data source");
   // Perform some checks on pointers
   if (dataSource == NULL) {
     CDBError("Invalid dataSource");
@@ -1034,7 +1036,9 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
      * DataPostProc: Here our datapostprocessor comes into action! It needs scale and offset from datasource.
      * This is stage1, only AX+B will be applied to scale and offset parameters
      */
-    CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
+    CDBDebug("2. Mode is  %d", mode);
+    CDBDebug("Request date is   %f", requestDate);
+    CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING, requestDate);
   } else {
     CDBDebug("Skipping POSTPROC!@!!!!!");
   }
@@ -1374,7 +1378,8 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
        * This is stage2, running on data, not metadata
        */
       CDBDebug("Running postproc on data");
-      CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
+      CDBDebug("1. Mode is  %d", mode);
+      CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING, requestDate);
     }
   }
 // pthread_mutex_unlock(&CDataReader_open_lock);
@@ -1542,3 +1547,5 @@ void CDataReader::applyAxisScalingConversion(CDataSource *dataSource) {
     }
   }
 }
+
+void CDataReader::setRequestDate(double timestamp) { requestDate = timestamp; }

@@ -130,6 +130,8 @@ add_library(
     CDataPostProcessors/CDataPostProcessor_Operator.cpp
     CDataPostProcessors/CDataPostProcessor_SolarTerminator.h
     CDataPostProcessors/CDataPostProcessor_SolarTerminator.cpp
+    CDataPostProcessors/solar/solar_terminator.h
+    CDataPostProcessors/solar/solar_terminator.cpp
     CDataPostProcessors/CDataPostProcessor_WFP.h
     CDataPostProcessors/CDataPostProcessor_WFP.cpp
     CDataPostProcessors/CDataPostProcessor_IncludeLayer.h

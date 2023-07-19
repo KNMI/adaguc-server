@@ -383,6 +383,8 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Conf
   CDBDebug("LayerName=\"%s\"", layerName.c_str());
 #endif
   // Defaults to database
+  // At this point, type does not always have a value
+  // CDBError("!!!!LAYERRRRRRRRRRRRRRRRRRRRRRRRRR TYPE IS  %s", cfgLayer->attr.type.c_str());
   dLayerType = CConfigReaderLayerTypeDataBase;
   if (cfgLayer->attr.type.equals("database")) {
     dLayerType = CConfigReaderLayerTypeDataBase;
@@ -398,6 +400,8 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Conf
     dLayerType = CConfigReaderLayerTypeUnknown;
   } else if (cfgLayer->attr.type.equals("baselayer")) {
     dLayerType = CConfigReaderLayerTypeBaseLayer;
+  } else if (cfgLayer->attr.type.equals("liveupdate")) {
+    dLayerType = CConfigReaderLayerTypeLiveUpdate;
   } else if (cfgLayer->attr.type.empty() == false) {
     if (strlen(cfgLayer->attr.type.c_str()) > 0) {
       dLayerType = CConfigReaderLayerTypeUnknown;

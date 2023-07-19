@@ -276,7 +276,7 @@ bool CServerParams::isAutoResourceCacheEnabled() const {
   return false;
 }
 
-char CServerParams::debugLoggingIsEnabled = -1; // Not configured yet, 1 means enabled, 0 means disabled
+char CServerParams::debugLoggingIsEnabled = 1; // -1; // Not configured yet, 1 means enabled, 0 means disabled
 
 bool CServerParams::isDebugLoggingEnabled() const {
   if (debugLoggingIsEnabled == 0)

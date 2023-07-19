@@ -47,7 +47,7 @@ class CDataReader {
 private:
   DEF_ERRORFUNCTION();
   bool _enableReporting;
-
+  double requestDate;
   /**
    * Copies CRS info from the config when the "Projection" tag is present in the ADAGUC config.
    * If either of the id or the proj4 string is not defined, default values are copied.
@@ -136,7 +136,7 @@ public:
   void enableReporting(bool enableReporting) { _enableReporting = enableReporting; }
   /* Certain projections are given in km, we need those in meter */
   void applyAxisScalingConversion(CDataSource *dataSource);
-
+  void setRequestDate(double timestamp);
   int close() { return 0; };
 
   /**
