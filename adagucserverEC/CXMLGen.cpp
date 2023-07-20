@@ -1763,7 +1763,7 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam, CT::string *XMLDocumen
             if (status != 0) myWMSLayer->hasError = 1;
           }
 
-          if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded) {
+          if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded || myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
             myWMSLayer->isQuerable = 0;
             if (srvParam->serviceType == SERVICE_WCS) {
               myWMSLayer->hasError = true;
@@ -1784,7 +1784,7 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam, CT::string *XMLDocumen
           // Auto configure styles
           if (myWMSLayer->hasError == false) {
             if (myWMSLayer->dataSource->cfgLayer->Styles.size() == 0) {
-              if (myWMSLayer->dataSource->dLayerType != CConfigReaderLayerTypeCascaded) {
+              if (myWMSLayer->dataSource->dLayerType != CConfigReaderLayerTypeCascaded && myWMSLayer->dataSource->dLayerType != CConfigReaderLayerTypeLiveUpdate) {
 #ifdef CXMLGEN_DEBUG
                 CDBDebug("cfgLayer->attr.type  %d", myWMSLayer->dataSource->dLayerType);
 #endif

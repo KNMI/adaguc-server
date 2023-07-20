@@ -1844,7 +1844,7 @@ int CRequest::process_all_layers() {
   /* Handle WMS Getmap database request */
   /**************************************/
   if (dataSources[j]->dLayerType == CConfigReaderLayerTypeDataBase || dataSources[j]->dLayerType == CConfigReaderLayerTypeStyled || dataSources[j]->dLayerType == CConfigReaderLayerTypeCascaded ||
-      dataSources[j]->dLayerType == CConfigReaderLayerTypeBaseLayer) {
+      dataSources[j]->dLayerType == CConfigReaderLayerTypeBaseLayer || (dataSources[j]->dLayerType == CConfigReaderLayerTypeLiveUpdate && srvParam->requestType != REQUEST_WMS_GETMAP)) {
     try {
       for (size_t d = 0; d < dataSources.size(); d++) {
         dataSources[d]->setTimeStep(0);
@@ -2301,14 +2301,16 @@ int CRequest::process_all_layers() {
     imageDataWriterIsInitialized = true;
     // When we have multiple timesteps, we will create an animation.
     if (dataSources[j]->getNumTimeSteps() > 1) imageDataWriter.createAnimation();
-    CDBDebug("***** The TIME value is: %s", srvParam->requestDims[0]->value.c_str());
+    // CDBDebug("***** The TIME value is: %s", srvParam->requestDims[0]->value.c_str());
     CTime myTime;
     // CTime::Date date = myTime.freeDateStringToDate(srvParam->requestDims[0]->value.c_str());
-    std::string dateStr = srvParam->requestDims[0]->value.c_str();
-    dateStr = dateStr.substr(0, dateStr.size() - 1); // removing last character 'Z'
-    CDBDebug("***** The CONVERTED TIME value is: %s", dateStr.c_str());
-    imageDataWriter.setRequestDate(dateStr.c_str());
 
+    if (!srvParam->requestDims.empty()) { // not needed in get legend
+      std::string dateStr = srvParam->requestDims[0]->value.c_str();
+      dateStr = dateStr.substr(0, dateStr.size() - 1); // removing last character 'Z'
+      // CDBDebug("***** The CONVERTED TIME value is: %s", dateStr.c_str());
+      imageDataWriter.setRequestDate(dateStr.c_str());
+    }
     imageDataWriter.addData(dataSources);
     // Note: add legend etc
     status = imageDataWriter.end();
