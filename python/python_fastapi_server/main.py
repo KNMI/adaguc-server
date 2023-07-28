@@ -74,7 +74,7 @@ async def root():
 app.mount("/ogcapi", ogcApiApp)
 app.mount("/edr", edrApiApp)
 #app.mount("/maps", mapsApiApp)
-create_maps_routes(app, ["RADAR", "HARM_N25"])
+create_maps_routes(app, ["RADAR", "HARM_N25", "eobs_v27.0e"])
 
 app.include_router(health_check_router)
 app.include_router(wmsWcsRouter)
