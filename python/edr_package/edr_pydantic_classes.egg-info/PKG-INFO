@@ -6,4 +6,8 @@ Home-page: https://gitlab.com/KNMI/data-platform/observation-api/internal-data-a
 Author: KNMI Data Platform
 Author-email: dataplatform@knmi.nl
 License: MIT
+Platform: UNKNOWN
 Requires-Python: >=3.8.0
+
+UNKNOWN
+
