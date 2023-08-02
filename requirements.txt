@@ -9,6 +9,7 @@ gunicorn
 owslib
 pyproj
 defusedxml
+pydantic==1.10.12
 fastapi
 httpx
 Jinja2
