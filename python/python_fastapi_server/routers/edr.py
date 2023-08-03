@@ -284,7 +284,7 @@ def get_collectioninfo_for_id(
 ) -> Collection:
     logger.info(f"get_collection_info_for_id({edr_collection},{base_url},{instance})")
     links: list[Link] = []
-    links.append(Link(href=f"{base_url}", rel="self", type="application/json"))
+    links.append(Link(href=f"{base_url}", rel="collection", type="application/json"))
 
     edr_collectioninfo = get_edr_collections()[edr_collection]
     dataset = edr_collectioninfo["dataset"]
@@ -402,7 +402,7 @@ def get_parameters_for_edr_collection(edr_collection: str) -> dict[str, Paramete
                                                         label="title: " +
                                                         param_name),
             type="Parameter",
-            unit=Units(symbol="mm"),
+            unit=Units(symbol="mm"), #TODO Find real untis
             label="title: " + param_name,
         )
         parameter_names[param_name] = p
@@ -626,11 +626,11 @@ async def edr_get_instances_for_collection(collection_name: str,
     ref_times = get_reference_times_for_dataset(
         edr_collections[collection_name]["dataset"], edr_collections[collection_name]["parameters"][0])
     links: list(Link) = []
-    links.append(Link(href=base_url, rel="self"))
+    links.append(Link(href=base_url, rel="collection"))
     extent = Extent()
     for instance in list(ref_times):
         instance_links: list(Link) = []
-        instance_link = Link(href=f"{base_url}/{instance}", rel="self")
+        instance_link = Link(href=f"{base_url}/{instance}", rel="collection")
         instance_links.append(instance_link)
         instance_info = get_collectioninfo_for_id(
             collection_name,
@@ -850,6 +850,7 @@ def covjson_from_resp(dats):
             id=dat["name"],
             observedProperty=ObservedProperty(label={"en": dat["name"]}),
         )
+        #TODO: add units to CovJsonParameter
         parameters[dat["name"]] = param
         axisNames = ["x", "y", "t"]
         shape = [1, 1, len(time_steps)]
