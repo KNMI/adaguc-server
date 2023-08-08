@@ -48,7 +48,7 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
   if (checkIfIsKNMIH5VolScan(cdfObject, srvParams) != 0) return 1;
   CDBDebug("convertKNMIH5VolScanHeader()");
 
-  int scans[] = {16, 15, 6, 14, 5, 13, 4, 12, 3};
+  int scans[] = {15, 16, 6, 14, 5, 13, 4, 12, 3};
   int nrscans = sizeof(scans) / sizeof(int);
   CT::string elevation_names[] = {"0.3", "0.3l", "0.8", "1.2", "2", "2.8", "4", "6", "8"};
   CT::string scan_params[] = {"KDP", "PhiDP", "RhoHV", "V", "W", "Z", "Zv", "ZDR"};
