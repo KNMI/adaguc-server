@@ -91,7 +91,6 @@ def get_edr_collections(
     """
     Return all possible OGCAPI EDR datasets, based on the dataset directory
     """
-    logger.info(f">>get_edr_collections()")
     datasetFiles = [
         f for f in os.listdir(adagucDataSetDir)
         if os.path.isfile(os.path.join(adagucDataSetDir, f))
@@ -124,17 +123,16 @@ def get_edr_collections(
                     }
         except ParseError:
             pass
-    print("EDRCOLL:", str(edr_collections.keys()))
     return edr_collections
 
 
 def get_edr_collections_for_datasetOLD(
         dataset: str, dataset_dir: str = os.environ["ADAGUC_DATASET_DIR"]):
-    logger.info(f">>get_edr_collections_for_dataset({dataset})")
-    fn = f"{dataset_dir}/{dataset}.xml"
+    logger.info(">>get_edr_collections_for_dataset %s", dataset)
+    filename = f"{dataset_dir}/{dataset}.xml"
 
     edr_collections = {}
-    tree = parse(fn)
+    tree = parse(filename)
     root = tree.getroot()
     for ogcapi_edr in root.iter("OgcApiEdr"):
         for edr_collection in ogcapi_edr.iter("EdrCollection"):
@@ -162,7 +160,7 @@ def get_point_value(
     instance: str,
     coords: list[float],
     parameters: str,
-    t: list[str],
+    t: str,
     z: str = None,
     extra_dims="",
 ):
@@ -174,7 +172,7 @@ def get_point_value(
         urlrequest += f"&TIME={t}"
 
     if instance:
-        urlrequest += f"&DIM_reference_time={instance}"
+        urlrequest += f"&DIM_reference_time={instance_to_iso(instance)}"
     if z:
         urlrequest += f"&ELEVATION={z}"
     if extra_dims:
@@ -196,7 +194,6 @@ def get_point_value(
 async def get_collection_position(
         collection_name: str,
         request: Request,
-        response: Response,
         coords: str,
         datetime: Optional[str] = None,
         parameter_name: str = Query(alias="parameter-name"),
@@ -246,7 +243,6 @@ async def edr_get_collection_instance_position(
 ):
 
     collections_info = get_edr_collections()
-    print("pos:"+collection_name+ " "+str(collections_info.keys()))
     collection_info = collections_info[collection_name]
     dataset = collection_info["dataset"]
 
@@ -282,23 +278,23 @@ def get_collectioninfo_for_id(
     base_url: str,
     instance: str = None,
 ) -> Collection:
-    logger.info(f"get_collection_info_for_id({edr_collection},{base_url},{instance})")
+    logger.info("get_collection_info_for_id(%s, %s, %s)", edr_collection , base_url, instance)
     links: list[Link] = []
     links.append(Link(href=f"{base_url}", rel="collection", type="application/json"))
 
     edr_collectioninfo = get_edr_collections()[edr_collection]
     dataset = edr_collectioninfo["dataset"]
-    logger.info(f"{edr_collection}=>{dataset}")
+    logger.info("%s=>%s", edr_collection, dataset)
 
     ref_times = None
     if not instance:
         ref_times = get_reference_times_for_dataset(
             dataset, edr_collectioninfo["parameters"][0])
         if ref_times and len(ref_times) > 0:
-            instance_link = Link(href=f"{base_url}/instances",
+            instances_link = Link(href=f"{base_url}/instances",
                                  rel="collection",
                                  type="application/json")
-            links.append(instance_link)
+            links.append(instances_link)
 
     bbox = get_extent(edr_collection)
     crs = CRSOptions.wgs84
@@ -374,10 +370,6 @@ def get_collectioninfo_for_id(
 
     crs = ["EPSG:4326"]
 
-    dataset_name = dataset
-    if edr_collection:
-        dataset_name = edr_collection
-
     output_formats = ["CoverageJSON", "GeoJSON"]
     collection = Collection(
         links=links,
@@ -392,7 +384,6 @@ def get_collectioninfo_for_id(
 
 
 def get_parameters_for_edr_collection(edr_collection: str) -> dict[str, ParameterName]:
-    logger.info(f">>> {edr_collection}")
     parameter_names = dict()
     edr_collections = get_edr_collections()
     for param_name in edr_collections[edr_collection]["parameters"]:
@@ -409,32 +400,36 @@ def get_parameters_for_edr_collection(edr_collection: str) -> dict[str, Paramete
     return parameter_names
 
 
-# def get_parameters_for_dataset(dataset: str) -> dict[str, ParameterName]:
-#     wms = get_capabilities(dataset)
-#     parameter_names = dict()
-#     for l in list(wms):
-#         layer = wms[l]
-#         p = ParameterName(
-#             id=layer.name,
-#             observedProperty=ObservedPropertyCollection(id=layer.name,
-#                                                         label=layer.title),
-#             type="Parameter",
-#             unit=Units(symbol="mm"),
-#             label=layer.title,
-#         )
-#         parameter_names[layer.name] = p
-#     return parameter_names
-
-
 def parse_iso(dts: str) -> datetime:
-    dt = None
+    parsed_dt = None
     try:
-        dt = datetime.strptime(
+        parsed_dt = datetime.strptime(
             dts, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
-    except ValueError as e:
-        print("err:", dts, e)
-    return dt
+    except ValueError as exc:
+        logger.error("err: %s %s", dts, exc)
+    return parsed_dt
 
+
+def parse_instance_time(dts: str) -> datetime:
+    parsed_dt = None
+    try:
+        parsed_dt = datetime.strptime(
+            dts, "%Y%m%d%H%M").replace(tzinfo=timezone.utc)
+    except ValueError as exc:
+        logger.error("err: %s %s", dts, exc)
+    return parsed_dt
+
+def instance_to_iso(instance_dt: str):
+    parsed_dt=parse_instance_time(instance_dt)
+    if parsed_dt:
+        return parsed_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+    return None
+
+def timepar_to_iso(instance_dt: str):
+    parsed_dt=parse_instance_time(instance_dt)
+    if parsed_dt:
+        return parsed_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+    return None
 
 def get_time_values_for_range(rng) -> list[str]:
     els = rng.split("/")
@@ -455,7 +450,6 @@ def get_time_values_for_range(rng) -> list[str]:
     if not tstep:
         tstep = 3600
     nsteps = int(timediff / tstep) + 1
-    print("RETURNING", f"R{nsteps}/{st}/{step}")
     return [f"R{nsteps}/{st}/{step}"]
 
 
@@ -567,7 +561,6 @@ def get_capabilities(collname):
     Get the collectioninfo from the WMS GetCapabilities
     """
     collection_info = get_edr_collections().get(collname)
-    print(f"COLLINFO[{collname}]=", collection_info)
     if "dataset" in collection_info:
         logger.info("callADAGUC by dataset")
         dataset = collection_info["dataset"]
@@ -594,7 +587,9 @@ def get_reference_times_for_dataset(dataset: str,
     logger.info("getreftime_url(%s,%s): %s", dataset, layer, url)
     status, response = call_adaguc(url=url.encode("UTF-8"))
     if status == 0:
-        return json.loads(response.getvalue())
+        ref_times = json.loads(response.getvalue())
+        instance_ids=[parse_iso(reft).strftime("%Y%m%d%H%M") for reft in ref_times]
+        return instance_ids
     return []
 
 
@@ -627,7 +622,6 @@ async def edr_get_instances_for_collection(collection_name: str,
         edr_collections[collection_name]["dataset"], edr_collections[collection_name]["parameters"][0])
     links: list(Link) = []
     links.append(Link(href=base_url, rel="collection"))
-    extent = Extent()
     for instance in list(ref_times):
         instance_links: list(Link) = []
         instance_link = Link(href=f"{base_url}/{instance}", rel="collection")
@@ -656,7 +650,6 @@ async def edr_get_collection_instance_by_name_and_instance(
         collection_name=collection_name,
         instance=instance,
     )
-    dataset = collection_name.split("-")[0]
     coll = get_collectioninfo_for_id(collection_name, base_url,
                                      instance)
     return coll
