@@ -4,6 +4,7 @@ werkzeug
 netCDF4
 cftime
 Pillow
+Pydantic<2
 uvicorn
 gunicorn
 owslib
