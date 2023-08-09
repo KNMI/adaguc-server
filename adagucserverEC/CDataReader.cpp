@@ -1016,7 +1016,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
      */
     CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
   } else {
-    CDBDebug("Skipping POSTPROC!@!!!!!");
+    CDBDebug("Skipping POSTPROC!!!!!!!");
   }
   if (mode == CNETCDFREADER_MODE_GET_METADATA) {
 #ifdef CDATAREADER_DEBUG
