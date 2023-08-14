@@ -3,7 +3,7 @@
 
   <OgcApiFeatures/>
   <OgcApiEdr>
-    <EdrCollection name="data" time_interval="R9/2017-01-01T00:25:00Z/PT5M" z_interval="1000/9000/1000">
+    <EdrCollection name="data_5d" time_interval="R9/2017-01-01T00:25:00Z/PT5M" z_interval="1000/9000/1000">
       data
     </EdrCollection>
   </OgcApiEdr>

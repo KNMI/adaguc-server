@@ -204,7 +204,9 @@ async def get_collection_position(
     if len(extra_params):
         for extra_param in extra_params:
             extra_dims += f"&DIM_{extra_param}={request.query_params[extra_param]}"
-    dataset = collection_name.split("-")[0]
+    edr_collections = get_edr_collections()
+    dataset = edr_collections[collection_name]["dataset"]
+
     latlons = wkt.loads(coords)
     logger.info("latlons:%s", latlons)
     coord = {

@@ -56,10 +56,13 @@ def test_collections(client: TestClient):
     assert len(colls["collections"]) == 1
     print(json.dumps(colls["collections"][0], indent=2))
     coll_5d = colls["collections"][0]
-    assert coll_5d.get("id")=="data"
+    assert coll_5d.get("id")=="data_5d"
     assert all(ext_name in coll_5d["extent"] for ext_name in ('spatial', 'temporal', 'vertical', 'custom'))
     assert [ext_name for ext_name in coll_5d['extent']]==['spatial', 'temporal', 'vertical', 'custom']
     assert coll_5d['extent']['temporal']['values'][0]=="R6/2017-01-01 00:00:00+00:00/PT5M"
 
     assert "position" in coll_5d["data_queries"]
 
+def test_coll_5d_position(client: TestClient):
+    resp = client.get("/edr/collections/data_5d/position?coords=POINT(5.2 50.0)&parameter-name=data")
+    print(resp.json())
