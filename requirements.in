@@ -1,0 +1,25 @@
+# Generate requirements.txt using:
+# pip-compile --upgrade --no-emit-index-url
+# Install using:
+# pip-sync
+
+Brotli~=1.0
+Jinja2~=3.1
+OWSLib~=0.29.2
+Pillow~=10.0
+Werkzeug~=2.3
+brotli-asgi~=1.4
+cachetools~=5.3
+cftime~=1.6
+chardet~=5.2
+defusedxml~=0.7.1
+fastapi~=0.101.0
+geojson-pydantic~=0.6.3
+gunicorn~=21.2
+httpx~=0.24
+lxml~=4.9
+netCDF4~=1.6
+pydantic~=1.10
+pyproj~=3.6
+pytz~=2023.3
+uvicorn~=0.23.2
