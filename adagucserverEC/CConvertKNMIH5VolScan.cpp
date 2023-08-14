@@ -400,20 +400,16 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
 
     float factor = 1, offset = 0;
     float zv_factor, zv_offset;
+
+    CT::string scanCalibrationVarName;
+    scanCalibrationVarName.print("scan%1d.calibration", scan);
+    CDF::Variable *scanCalibrationVar = cdfObject->getVariable(scanCalibrationVarName);
+    CT::string componentCalibrationStringName;
     if (!doZdr) {
-      CT::string scanCalibrationVarName;
-      scanCalibrationVarName.print("scan%1d.calibration", scan);
-      CDF::Variable *scanCalibrationVar = cdfObject->getVariable(scanCalibrationVarName);
-      CT::string componentCalibrationStringName;
       componentCalibrationStringName.print("calibration_%s_formulas", new2DVar->name.c_str());
       CT::string calibrationFormula = scanCalibrationVar->getAttribute(componentCalibrationStringName.c_str())->getDataAsString();
-
       getCalibrationParameters(calibrationFormula, factor, offset);
     } else {
-      CT::string scanCalibrationVarName;
-      scanCalibrationVarName.print("scan%1d.calibration", scan);
-      CDF::Variable *scanCalibrationVar = cdfObject->getVariable(scanCalibrationVarName);
-      CT::string componentCalibrationStringName;
       componentCalibrationStringName.print("calibration_%s_formulas", "Z");
       CT::string calibrationFormula = scanCalibrationVar->getAttribute(componentCalibrationStringName.c_str())->getDataAsString();
       getCalibrationParameters(calibrationFormula, factor, offset);
@@ -450,6 +446,7 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
     radarProj.initreproj(scanProj4.c_str(), dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
 
     if (!doZdr) {
+      // Same code as below, using 1 variable.
       double x, y;
       float rang, azim;
       int ir, ia;
@@ -480,6 +477,7 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
       }
     } else {
       CDBDebug("ZDR variable as Z-Zv");
+      // Same code as above, but using 2 variables to calculate ZDR as Z-Zv.
       double x, y;
       float rang, azim;
       int ir, ia;
@@ -511,8 +509,6 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
         }
       }
     }
-
-    CT::string dumpString = CDF::dump(new2DVar);
   }
   return 0;
 }
