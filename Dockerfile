@@ -1,4 +1,4 @@
-FROM python:3.10-slim-bullseye as base
+FROM python:3.10-slim-bookworm as base
 
 USER root
 
@@ -44,7 +44,7 @@ RUN bash compile.sh
 
 
 # ######### Second stage (production) ############
-FROM python:3.10-slim-bullseye
+FROM python:3.10-slim-bookworm
 
 USER root
 
