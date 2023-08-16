@@ -1,3 +1,6 @@
+**Version 2.11.0 2023-08-17**
+- Update Docker base image to Python 3.10 based on Debian 12 ("bookworm")
+
 **Version 2.10.5 2023-06-02**
 - Contourlines can have dashes
 - Contour text can have an outline
