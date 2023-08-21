@@ -2,14 +2,19 @@
 
 """Configures logging for the adaguc-server python wrapper"""
 import sys
+from functools import wraps
 
 def run_once(f):
+    """Runs a function (successfully) only once.
+    The running can be reset by setting the `has_run` attribute to False
+    """
+    @wraps(f)
     def wrapper(*args, **kwargs):
-        if not wrapper.has_run:
-            wrapper.has_run = True
+        if not f.has_run:
+            f.has_run = True
             return f(*args, **kwargs)
 
-    wrapper.has_run = False
+    f.has_run = False
     return wrapper
 
 

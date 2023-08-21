@@ -42,6 +42,7 @@ class CGIRunner:
             (processOutput, processError) = process.communicate(timeout=timeout)
         except TimeoutExpired:
             process.kill()
+            process.communicate()
             output.write(b'TimeOut')
             return 1, [], None
 
