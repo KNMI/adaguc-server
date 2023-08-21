@@ -1,3 +1,7 @@
+**Version 2.11.2 2023-08-21**
+
+- Hot fix: Accidently removed necessary python dependencies in Docker build
+
 **Version 2.11.1 2023-08-21**
 
 - Avoid double logging
