@@ -297,6 +297,10 @@ bool CDataReader::copyCRSFromADAGUCProjectionVariable(CDataSource *dataSource, c
   // }
   dataSource->nativeProj4.copy(proj4Attr->toString().c_str());
 
+  // Fixes issue https://github.com/KNMI/adaguc-server/issues/279
+  dataSource->nativeProj4.replaceSelf("\"", "");
+  dataSource->nativeProj4.trimSelf();
+
   // Copy the EPSG code.
   copyEPSGCodeFromProjectionVariable(dataSource, projVar);
 
