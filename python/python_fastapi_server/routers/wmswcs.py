@@ -46,6 +46,7 @@ async def handle_wms(req: Request, ):
     # Run adaguc-server
     status, data, headers = adaguc_instance.runADAGUCServer(query_string,
                                                             env=adagucenv,
+                                                            showLogOnError=False,
                                                             showLog=False)
 
     # Obtain logfile
