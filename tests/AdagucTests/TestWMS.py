@@ -1867,3 +1867,22 @@ class TestWMS(unittest.TestCase):
             self.expectedoutputsspath + filename,
             self.testresultspath + filename,
             3, 0.02))  # Allowed pixel difference is huge, but only for very small number of pixels
+
+
+    def test_WMSGetMap_allow_encoded_proj4_params_attribute(self):
+        ### This tests the rotated_pole projection ###
+        AdagucTestTools().cleanTempDir()
+        filename = "test_WMSGetMap_allow_encoded_proj4_params_attribute.png"
+     
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "source=issue-279/279-allow_encoded_proj4_params_attribute.nc&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=prediction&WIDTH=150&HEIGHT=175&CRS=EPSG%3A3857&BBOX=333250.30526052,6493136.144375306,849393.56753148,7176591.901449695&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&&time=2023-08-18T08%3A00%3A00Z",
+            env=self.env)
+        AdagucTestTools().writetofile(self.testresultspath + filename,
+                                      data.getvalue())
+
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath +
+                                           filename))
