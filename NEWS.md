@@ -2,6 +2,7 @@
 
 - Avoid double logging
 - Timeout to prevent endless running of processes
+- Fix encoded proj4_params issue https://github.com/KNMI/adaguc-server/issues/279
 
 **Version 2.11.0 2023-08-17**
 - Update Docker base image to Python 3.10 based on Debian 12 ("bookworm")
