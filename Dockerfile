@@ -1,11 +1,11 @@
-FROM python:3.9-slim-bullseye as base
+FROM python:3.10-slim-bookworm as base
 
 USER root
 
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
-LABEL version="2.10.5"
+LABEL version="2.11.0"
 
 ######### First stage (build) ############
 
@@ -44,7 +44,7 @@ RUN bash compile.sh
 
 
 # ######### Second stage (production) ############
-FROM python:3.9-slim-bullseye
+FROM python:3.10-slim-bookworm
 
 USER root
 
