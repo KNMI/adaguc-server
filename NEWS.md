@@ -1,3 +1,8 @@
+**Version 2.11.1 2023-08-21**
+
+- Avoid double logging
+- Timeout to prevent endless running of processes
+
 **Version 2.11.0 2023-08-17**
 - Update Docker base image to Python 3.10 based on Debian 12 ("bookworm")
 
