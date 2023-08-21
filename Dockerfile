@@ -85,6 +85,7 @@ COPY --from=0 /adaguc/adaguc-server-master/runtests.sh /adaguc/adaguc-server-mas
 # Run adaguc-server functional and regression tests
 
 RUN bash runtests.sh
+# Uninstall dev requirements (pip-sync removes packages not required)
 RUN pip-sync requirements.txt
 
 
