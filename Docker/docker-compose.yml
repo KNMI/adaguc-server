@@ -71,7 +71,7 @@ services:
                 max-size: "200k"
                 max-file: "10"
     adaguc-db:
-        image: postgres:13.4
+        image: postgres:13.12
         container_name: adaguc-db
         hostname: adaguc-db
         # Ensures containers running in the adaguc-network docker network can connect to the database, provided they use the
