@@ -42,17 +42,13 @@ class CGIRunner:
 
         # Execute adaguc-server binary
         ON_POSIX = 'posix' in sys.builtin_module_names
-        process = Popen(cmds,
-                        stdout=PIPE,
-                        stderr=PIPE,
-                        env=localenv,
-                        close_fds=ON_POSIX)
-
+        process = Popen(cmds, stdout=PIPE, stderr=PIPE, env=localenv, close_fds=ON_POSIX)
+        
         try:
-            (processOutput,
-             processError) = process.communicate(timeout=timeout)
+            (processOutput, processError) = process.communicate(timeout=timeout)
         except TimeoutExpired:
             process.kill()
+            process.communicate()
             output.write(b'TimeOut')
             return 1, [], None
 
