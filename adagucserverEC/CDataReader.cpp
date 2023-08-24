@@ -1024,9 +1024,8 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
      * This is stage1, only AX+B will be applied to scale and offset parameters
      */
     CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
-  } else {
-    CDBDebug("Skipping POSTPROC!@!!!!!");
   }
+
   if (mode == CNETCDFREADER_MODE_GET_METADATA) {
 #ifdef CDATAREADER_DEBUG
     CDBDebug("Get metadata");
