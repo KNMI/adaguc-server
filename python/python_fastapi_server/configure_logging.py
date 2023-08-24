@@ -2,21 +2,9 @@
 """Configures logging for the adaguc-server python wrapper"""
 import sys
 
-
-def run_once(f):
-
-    def wrapper(*args, **kwargs):
-        if not wrapper.has_run:
-            wrapper.has_run = True
-            return f(*args, **kwargs)
-
-    wrapper.has_run = False
-    return wrapper
-
-
-@run_once
 def configure_logging(logging):
     """Configures logging for the adaguc-server python wrapper"""
+    logging.getLogger().handlers.clear()
     root = logging.getLogger()
     root.setLevel(logging.DEBUG)
     handler = logging.StreamHandler(sys.stdout)
