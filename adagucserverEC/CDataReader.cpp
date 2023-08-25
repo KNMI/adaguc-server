@@ -875,11 +875,11 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 #endif
 
   if (mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS || mode == CNETCDFREADER_MODE_OPEN_HEADER) {
-    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams, dataSourceFilename.c_str());
+    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams, dataSourceFilename.c_str(), enableObjectCache);
   }
 
   if (mode == CNETCDFREADER_MODE_OPEN_ALL || mode == CNETCDFREADER_MODE_GET_METADATA || mode == CNETCDFREADER_MODE_OPEN_EXTENT) {
-    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource, dataSourceFilename.c_str());
+    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource, dataSourceFilename.c_str(), enableObjectCache);
   }
   if (cdfObject == NULL) {
     CDBError("Unable to get CDFObject from store");

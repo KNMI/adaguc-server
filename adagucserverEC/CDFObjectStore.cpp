@@ -198,22 +198,22 @@ CDFReader *CDFObjectStore::getCDFReader(const char *fileName) {
   return cdfReader;
 }
 
-CDFObject *CDFObjectStore::getCDFObjectHeader(CDataSource *dataSource, CServerParams *srvParams, const char *fileName) {
+CDFObject *CDFObjectStore::getCDFObjectHeader(CDataSource *dataSource, CServerParams *srvParams, const char *fileName, bool cached) {
   if (srvParams == NULL) {
     CDBError("srvParams == NULL");
     return NULL;
   }
 
-  return getCDFObject(dataSource, srvParams, fileName, false);
+  return getCDFObject(dataSource, srvParams, fileName, false, cached);
 }
 
-CDFObject *CDFObjectStore::getCDFObjectHeaderPlain(CDataSource *dataSource, CServerParams *srvParams, const char *fileName) {
+CDFObject *CDFObjectStore::getCDFObjectHeaderPlain(CDataSource *dataSource, CServerParams *srvParams, const char *fileName, bool cached) {
   if (srvParams == NULL) {
     CDBError("srvParams == NULL");
     return NULL;
   }
 
-  return getCDFObject(dataSource, srvParams, fileName, true);
+  return getCDFObject(dataSource, srvParams, fileName, true, cached);
 }
 
 /**
@@ -221,15 +221,11 @@ CDFObject *CDFObjectStore::getCDFObjectHeaderPlain(CDataSource *dataSource, CSer
  * @param dataSource The configured datasource or NULL pointer. NULL pointer defaults to a NetCDF/OPeNDAP reader
  * @param fileName The filename to read.
  */
-CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, const char *fileName) { return getCDFObject(dataSource, NULL, fileName, false); }
+CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, const char *fileName, bool cached) { return getCDFObject(dataSource, NULL, fileName, false, cached); }
 
-CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *srvParams, const char *fileName, bool plain) {
+CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *srvParams, const char *fileName, bool plain, bool cached) {
   CT::string uniqueIDForFile = fileName;
-  // The cdfObject should be unique between files and layers,
-  // otherwise the CDPPOperator datapostproc will not work correctly when using the same file and variable.
-  if (dataSource != NULL && dataSource->layerName.empty() == false) {
-    uniqueIDForFile.concat(dataSource->layerName);
-  }
+
   if (srvParams == NULL && dataSource != NULL) {
     srvParams = dataSource->srvParams;
   }
@@ -237,12 +233,14 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
     CDBError("getCDFObject:: srvParams is not set");
     throw(__LINE__);
   }
-  for (size_t j = 0; j < fileNames.size(); j++) {
-    if (fileNames[j]->equals(uniqueIDForFile.c_str())) {
+  if (cached) {
+    for (size_t j = 0; j < fileNames.size(); j++) {
+      if (fileNames[j]->equals(uniqueIDForFile.c_str())) {
 #ifdef CDFOBJECTSTORE_DEBUG
-      CDBDebug("Found CDFObject with filename %s", uniqueIDForFile.c_str());
+        CDBDebug("Found CDFObject with filename %s", uniqueIDForFile.c_str());
 #endif
-      return cdfObjects[j];
+        return cdfObjects[j];
+      }
     }
   }
   if (cdfObjects.size() > MAX_OPEN_FILES) {
@@ -357,9 +355,11 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
 
   // CDBDebug("PUSHING %s",uniqueIDForFile.c_str());
   // Push everything into the store
-  fileNames.push_back(new CT::string(uniqueIDForFile.c_str()));
-  cdfObjects.push_back(cdfObject);
-  cdfReaders.push_back(cdfReader);
+  if (cached) {
+    fileNames.push_back(new CT::string(uniqueIDForFile.c_str()));
+    cdfObjects.push_back(cdfObject);
+    cdfReaders.push_back(cdfReader);
+  }
 
   if (plain == false) {
     bool formatConverterActive = false;

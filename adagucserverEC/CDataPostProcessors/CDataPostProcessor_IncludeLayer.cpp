@@ -84,6 +84,7 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
     // CDBDebug("TEMPORAL METADATA READER");
     CDataReader reader;
     reader.enablePostProcessors = false;
+    reader.enableObjectCache = false;
     status = reader.open(dataSourceToInclude, CNETCDFREADER_MODE_OPEN_HEADER); // Only read metadata
     if (status != 0) {
       CDBDebug("Can't open file %s for layer %s", dataSourceToInclude->getFileName(), proc->attr.name.c_str());
@@ -186,6 +187,7 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
     // CDBDebug("TEMPORAL FULL READER");
     CDataReader reader;
     reader.enablePostProcessors = false;
+    reader.enableObjectCache = false;
     //    CDBDebug("Opening %s",dataSourceToInclude->getFileName());
     status = reader.open(dataSourceToInclude, CNETCDFREADER_MODE_OPEN_ALL); // Now open the data as well.
     if (status != 0) {
