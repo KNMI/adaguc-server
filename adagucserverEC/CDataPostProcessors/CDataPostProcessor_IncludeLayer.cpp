@@ -48,7 +48,7 @@ int CDPPIncludeLayer::setDimsForNewDataSource(CServerConfig::XMLE_DataPostProc *
 }
 
 int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
-  if ((isApplicable(proc, dataSource, mode) & mode) == false) {
+  if (isApplicable(proc, dataSource, mode) == false) {
     return -1;
   }
 

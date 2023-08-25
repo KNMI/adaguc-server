@@ -9,17 +9,20 @@ const char *CDPPOperator::getId() { return "operator"; }
 
 int CDPPOperator::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
   if (proc->attr.algorithm.equals("operator")) {
-    if (dataSource->getNumDataObjects() < 2 && mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
-      CDBError("2 variables are needed for operator, found %d", dataSource->getNumDataObjects());
-      return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
+    if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
+      if (dataSource->getNumDataObjects() < 2 && mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
+        CDBError("2 variables are needed for operator, found %d", dataSource->getNumDataObjects());
+        return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
+      }
+      return CDATAPOSTPROCESSOR_RUNBEFOREREADING;
     }
-    return CDATAPOSTPROCESSOR_RUNAFTERREADING | CDATAPOSTPROCESSOR_RUNBEFOREREADING;
+    return CDATAPOSTPROCESSOR_RUNAFTERREADING;
   }
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
 }
 
 int CDPPOperator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
-  if ((isApplicable(proc, dataSource, mode) & mode) == false) {
+  if (isApplicable(proc, dataSource, mode) == false) {
     return -1;
   }
   CDBDebug("Applying Operator");

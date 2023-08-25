@@ -91,13 +91,16 @@ int CDPPAXplusB::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *da
 const char *CDPPDATAMASK::className = "CDPPDATAMASK";
 
 const char *CDPPDATAMASK::getId() { return "datamask"; }
-int CDPPDATAMASK::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int) {
+int CDPPDATAMASK::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
   if (proc->attr.algorithm.equals("datamask")) {
-    if (dataSource->getNumDataObjects() != 2 && dataSource->getNumDataObjects() != 3) {
-      CDBError("2 variables are needed for datamask, found %d", dataSource->getNumDataObjects());
-      return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
+    if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
+      if (dataSource->getNumDataObjects() != 2 && dataSource->getNumDataObjects() != 3) {
+        CDBError("2 variables are needed for datamask, found %d", dataSource->getNumDataObjects());
+        return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
+      }
+      return CDATAPOSTPROCESSOR_RUNBEFOREREADING;
     }
-    return CDATAPOSTPROCESSOR_RUNAFTERREADING | CDATAPOSTPROCESSOR_RUNBEFOREREADING;
+    return CDATAPOSTPROCESSOR_RUNAFTERREADING;
   }
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
 }
@@ -199,7 +202,7 @@ void CDPPDATAMASK::DOIT<TT, SS>::reallyDoIt(void *newData, void *orginalData, vo
 }
 
 int CDPPDATAMASK::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
-  if ((isApplicable(proc, dataSource, mode) & mode) == false) {
+  if (isApplicable(proc, dataSource, mode) == false) {
     return -1;
   }
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
@@ -327,19 +330,22 @@ int CDPPDATAMASK::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
 const char *CDPPMSGCPPVisibleMask::className = "CDPPMSGCPPVisibleMask";
 
 const char *CDPPMSGCPPVisibleMask::getId() { return "MSGCPP_VISIBLEMASK"; }
-int CDPPMSGCPPVisibleMask::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int) {
+int CDPPMSGCPPVisibleMask::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
   if (proc->attr.algorithm.equals("msgcppvisiblemask")) {
-    if (dataSource->getNumDataObjects() != 2 && dataSource->getNumDataObjects() != 3) {
-      CDBError("2 variables are needed for msgcppvisiblemask, found %d", dataSource->getNumDataObjects());
-      return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
+    if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
+      if (dataSource->getNumDataObjects() != 2 && dataSource->getNumDataObjects() != 3) {
+        CDBError("2 variables are needed for msgcppvisiblemask, found %d", dataSource->getNumDataObjects());
+        return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
+      }
+      return CDATAPOSTPROCESSOR_RUNBEFOREREADING;
     }
-    return CDATAPOSTPROCESSOR_RUNAFTERREADING | CDATAPOSTPROCESSOR_RUNBEFOREREADING;
+    return CDATAPOSTPROCESSOR_RUNAFTERREADING;
   }
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
 }
 
 int CDPPMSGCPPVisibleMask::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
-  if ((isApplicable(proc, dataSource, mode) & mode) == false) {
+  if (isApplicable(proc, dataSource, mode) == false) {
     return -1;
   }
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
@@ -426,23 +432,25 @@ const char *CDPPMSGCPPHIWCMask::className = "CDPPMSGCPPHIWCMask";
 
 const char *CDPPMSGCPPHIWCMask::getId() { return "MSGCPP_HIWCMASK"; }
 
-int CDPPMSGCPPHIWCMask::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int) {
+int CDPPMSGCPPHIWCMask::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
   if (proc->attr.algorithm.equals("msgcpphiwcmask")) {
-    if (dataSource->getNumDataObjects() != 4 && dataSource->getNumDataObjects() != 5) {
-      CDBError("4 variables are needed for msgcpphiwcmask, found %d", dataSource->getNumDataObjects());
-      return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
+    if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
+      if (dataSource->getNumDataObjects() != 4 && dataSource->getNumDataObjects() != 5) {
+        CDBError("4 variables are needed for msgcpphiwcmask, found %d", dataSource->getNumDataObjects());
+        return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
+      }
+      return CDATAPOSTPROCESSOR_RUNBEFOREREADING;
     }
-    return CDATAPOSTPROCESSOR_RUNAFTERREADING | CDATAPOSTPROCESSOR_RUNBEFOREREADING;
+    return CDATAPOSTPROCESSOR_RUNAFTERREADING;
   }
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
 }
 
 int CDPPMSGCPPHIWCMask::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
-  if ((isApplicable(proc, dataSource, mode) & mode) == false) {
+  if (isApplicable(proc, dataSource, mode) == false) {
     return -1;
   }
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
-
     if (dataSource->getDataObject(0)->cdfVariable->name.equals("hiwc")) return 0;
     CDBDebug("CDATAPOSTPROCESSOR_RUNBEFOREREADING::Applying msgcpp HIWC mask");
     CDF::Variable *varToClone = dataSource->getDataObject(0)->cdfVariable;
@@ -638,13 +646,15 @@ int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode, double *d
 const char *CDPPBeaufort::className = "CDPPBeaufort";
 
 const char *CDPPBeaufort::getId() { return "beaufort"; }
-int CDPPBeaufort::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int) {
+int CDPPBeaufort::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
   if (proc->attr.algorithm.equals("beaufort")) {
-    if (dataSource->getNumDataObjects() != 1 && dataSource->getNumDataObjects() != 2) {
-      CDBError("1 or 2 variables are needed for beaufort, found %d", dataSource->getNumDataObjects());
-      return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
+    if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
+      if (dataSource->getNumDataObjects() != 1 && dataSource->getNumDataObjects() != 2) {
+        CDBError("1 or 2 variables are needed for beaufort, found %d", dataSource->getNumDataObjects());
+        return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
+      }
+      return CDATAPOSTPROCESSOR_RUNAFTERREADING;
     }
-    return CDATAPOSTPROCESSOR_RUNAFTERREADING;
   }
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
 }
@@ -682,7 +692,7 @@ float CDPPBeaufort::getBeaufort(float speed) {
   return bft;
 }
 int CDPPBeaufort::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
-  if ((isApplicable(proc, dataSource, mode) & mode) == false) {
+  if (isApplicable(proc, dataSource, mode) == false) {
     return -1;
   }
   CDBDebug("Applying beaufort %d", mode == CDATAPOSTPROCESSOR_RUNAFTERREADING);
@@ -805,19 +815,21 @@ int CDPPBeaufort::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
 const char *CDPPToKnots::className = "CDPPToToKnots";
 
 const char *CDPPToKnots::getId() { return "toknots"; }
-int CDPPToKnots::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int) {
+int CDPPToKnots::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
   if (proc->attr.algorithm.equals("toknots")) {
-    if (dataSource->getNumDataObjects() != 1 && dataSource->getNumDataObjects() != 2) {
-      CDBError("1 or 2 variables are needed for toknots, found %d", dataSource->getNumDataObjects());
-      return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
+    if (CDATAPOSTPROCESSOR_RUNAFTERREADING) {
+      if (dataSource->getNumDataObjects() != 1 && dataSource->getNumDataObjects() != 2) {
+        CDBError("1 or 2 variables are needed for toknots, found %d", dataSource->getNumDataObjects());
+        return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
+      }
+      return CDATAPOSTPROCESSOR_RUNAFTERREADING;
     }
-    return CDATAPOSTPROCESSOR_RUNAFTERREADING;
   }
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
 }
 
 int CDPPToKnots::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
-  if ((isApplicable(proc, dataSource, mode) & mode) == false) {
+  if (isApplicable(proc, dataSource, mode) == false) {
     return -1;
   }
   CDBDebug("Applying toknots %d", mode == CDATAPOSTPROCESSOR_RUNAFTERREADING);
@@ -940,7 +952,7 @@ int CDPPToKnots::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *da
 const char *CDPDBZtoRR::className = "CDPDBZtoRR";
 
 const char *CDPDBZtoRR::getId() { return "dbztorr"; }
-int CDPDBZtoRR::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int) {
+int CDPDBZtoRR::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int mode) {
   if (proc->attr.algorithm.equals("dbztorr")) {
     return CDATAPOSTPROCESSOR_RUNAFTERREADING | CDATAPOSTPROCESSOR_RUNBEFOREREADING;
   }
@@ -954,7 +966,7 @@ float CDPDBZtoRR::getRR(float dbZ) {
 
 int CDPDBZtoRR::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode, double *data, size_t numItems) {
   CDBDebug("CDPDBZtoRR");
-  if ((isApplicable(proc, dataSource, mode) & mode) == false) {
+  if (isApplicable(proc, dataSource, mode) == false) {
     return -1;
   }
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
@@ -974,7 +986,7 @@ int CDPDBZtoRR::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dat
 }
 
 int CDPDBZtoRR::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
-  if ((isApplicable(proc, dataSource, mode) & mode) == false) {
+  if (isApplicable(proc, dataSource, mode) == false) {
     return -1;
   }
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
@@ -1011,7 +1023,7 @@ int CDPPAddFeatures::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataS
 }
 
 int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
-  if ((isApplicable(proc, dataSource, mode) & mode) == false) {
+  if (isApplicable(proc, dataSource, mode) == false) {
     return -1;
   }
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
