@@ -60,7 +60,7 @@ private:
    */
   static CDFReader *getCDFReader(const char *fileName);
 
-  CDFObject *getCDFObject(CDataSource *dataSource, CServerParams *srvParams, const char *fileName, bool plain);
+  CDFObject *getCDFObject(CDataSource *dataSource, CServerParams *srvParams, const char *fileName, bool plain, bool cached = true);
 
   DEF_ERRORFUNCTION();
 
@@ -78,10 +78,10 @@ public:
    * @param dataSource The configured datasource or NULL pointer. NULL pointer defaults to a NetCDF/OPeNDAP reader
    * @param fileName The filename to read.
    */
-  CDFObject *getCDFObject(CDataSource *dataSource, const char *fileName);
+  CDFObject *getCDFObject(CDataSource *dataSource, const char *fileName, bool cached = true);
 
-  CDFObject *getCDFObjectHeader(CDataSource *dataSource, CServerParams *srvParams, const char *fileName);
-  CDFObject *getCDFObjectHeaderPlain(CDataSource *dataSource, CServerParams *srvParams, const char *fileName);
+  CDFObject *getCDFObjectHeader(CDataSource *dataSource, CServerParams *srvParams, const char *fileName, bool cached = true);
+  CDFObject *getCDFObjectHeaderPlain(CDataSource *dataSource, CServerParams *srvParams, const char *fileName, bool cached = true);
   static CT::StackList<CT::string> getListOfVisualizableVariables(CDFObject *cdfObject);
 
   /**
