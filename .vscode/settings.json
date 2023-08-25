@@ -65,7 +65,6 @@
     "variant": "cpp",
     "shared_mutex": "cpp",
     "regex": "cpp",
-    "ranges": "cpp",
     "numbers": "cpp"
   },
   "cmake.buildDirectory": "${workspaceFolder}/bin",
