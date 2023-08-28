@@ -66,6 +66,9 @@ public:
      */
     CDBStore::Store *queryToStore(const char *pszQuery);
 
+    // Similar to queryToStore, but returns a string
+    std::string queryToString(const char *pszQuery, bool throwException);
+
     const char *getError() { return errorMessage.c_str(); }
   };
 
@@ -119,5 +122,9 @@ public:
   int setFileString(const char *tablename, const char *file, const char *dimvalue, int dimindex, const char *filedate, GeoOptions *geoOptions);
   int setFileTimeStamp(const char *tablename, const char *file, const char *dimvalue, int dimindex, const char *filedate, GeoOptions *geoOptions);
   int addFilesToDataBase();
+
+  int createVPTSTable(const char *tablename);
+  int addVPTSFiles(const char *tablename, std::vector<std::string> &fileList);
+  std::string retrieveVPTS(const char *tablename, const char *radarStation, const char *fromTimestamp, const char *toTimestamp);
 };
 #endif

@@ -31,6 +31,7 @@
 #include "CNetCDFDataWriter.h"
 #include "CCreateTiles.h"
 #include <set>
+#include <cstring>
 const char *CDBFileScanner::className = "CDBFileScanner";
 std::vector<CT::string> CDBFileScanner::tableNamesDone;
 // #define CDBFILESCANNER_DEBUG
@@ -75,6 +76,20 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
   dataSource->headerFileName = (*fileList)[0].c_str();
 
   CDBAdapter *dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
+
+  if (dataSource->cfgLayer->Title.empty()) {
+    CDBDebug("NULL Title");
+  }
+
+  if (dataSource && dataSource->cfgLayer && !dataSource->cfgLayer->Title.empty() && dataSource->cfgLayer->Title[0]->value && dataSource->cfgLayer->Title[0]->value.c_str() &&
+      std::strcmp(dataSource->cfgLayer->Title[0]->value.c_str(), "bioradvpts") == 0) {
+    CDBDebug("bioRad input data");
+    // Create table if needed, and insert every new tuple into the database
+    dbAdapter->createVPTSTable(dataSource->cfgLayer->Title[0]->value.c_str());
+    dbAdapter->addVPTSFiles(dataSource->cfgLayer->Title[0]->value.c_str(), *fileList);
+
+    return 0;
+  }
 
   CDFObject *cdfObject = NULL;
   try {

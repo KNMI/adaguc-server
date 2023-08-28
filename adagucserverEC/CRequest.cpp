@@ -36,7 +36,9 @@
 #include "CCreateScaleBar.h"
 #include "CSLD.h"
 #include "CHandleMetadata.h"
+#include "CHandleTimeseries.h"
 #include "CCreateTiles.h"
+#include <sstream>
 const char *CRequest::className = "CRequest";
 int CRequest::CGI = 0;
 
@@ -50,6 +52,27 @@ int CRequest::runRequest() {
   ProjectionStore::getProjectionStore()->clear();
   CDBFactory::clear();
   return status;
+}
+
+std::map<std::string, std::string> parseQueryString(const char *queryString) {
+  std::map<std::string, std::string> params;
+  std::string key, value;
+  std::string queryStr(queryString);
+
+  if (queryStr[0] == '?') {
+    queryStr = queryStr.substr(1);
+  }
+
+  std::stringstream ss(queryStr);
+  while (std::getline(ss, key, '=')) {
+    if (std::getline(ss, value, '&')) {
+      params[key] = value;
+    } else {
+      params[key] = value;
+      break;
+    }
+  }
+  return params;
 }
 
 void writeLogFile3(const char *msg) {
@@ -402,6 +425,11 @@ int CRequest::generateGetReferenceTimesDoc(CT::string *result, CDataSource *data
     result->concat("]");
   }
   return 0;
+}
+
+int CRequest::process_timeseries_gettimeseries_request(std::string tablename, std::string radarStation, std::string fromTimestamp, std::string toTimestamp) {
+  CDBDebug("process_timeseries_gettimeseries_request");
+  return CHandleTimeseries().process(srvParam, tablename, radarStation, fromTimestamp, toTimestamp);
 }
 
 int CRequest::process_wms_getstyles_request() {
@@ -2926,6 +2954,14 @@ int CRequest::process_querystring() {
   if (SERVICE.equals("WMS")) srvParam->serviceType = SERVICE_WMS;
   if (SERVICE.equals("WCS")) srvParam->serviceType = SERVICE_WCS;
   if (SERVICE.equals("METADATA")) srvParam->serviceType = SERVICE_METADATA;
+  if (SERVICE.equals("TIMESERIES")) {
+    CDBDebug("Timeseries service found");
+    srvParam->serviceType = SERVICE_TIMESERIES;
+    if (REQUEST.equals("GETTIMESERIES")) {
+      CDBDebug("request: srvParam->requestType = REQUEST_TIMESERIES_GETTIMESERIES");
+      srvParam->requestType = REQUEST_TIMESERIES_GETTIMESERIES;
+    }
+  }
 
   if (dErrorOccured == 0 && srvParam->serviceType == SERVICE_WMS) {
 #ifdef CREQUEST_DEBUG
@@ -3062,6 +3098,28 @@ int CRequest::process_querystring() {
       CDBError("AutoResource failed");
       return 1;
     }
+  }
+
+  // TIMESERIES Service
+  if (srvParam->serviceType == SERVICE_TIMESERIES) {
+    CDBDebug("Entering TIMESERIES service");
+
+    if (srvParam->requestType == REQUEST_TIMESERIES_GETTIMESERIES) {
+      CDBDebug("TIMESERIES service - entered srvParam->requestType == REQUEST_TIMESERIES_GETTIMESERIES");
+      // Retrieve all the necessary params.
+      std::map<std::string, std::string> params = parseQueryString(getenv("QUERY_STRING"));
+      std::string tablename = params["vptsset"];
+      std::string radarStation = params["station"];        // "nldhl";
+      std::string fromTimestamp = params["fromtimestamp"]; // "2022-03-09 15:00:00";
+      std::string toTimestamp = params["totimestamp"];     // "2022-03-10 15:01:00";
+      CDBDebug("Tablename: %s, station: %s, from: %s, to: %s", tablename.c_str(), radarStation.c_str(), fromTimestamp.c_str(), toTimestamp.c_str());
+      if (process_timeseries_gettimeseries_request(tablename, radarStation, fromTimestamp, toTimestamp) != 0) {
+        CDBDebug("ABNORMAL RETURN");
+        return 1;
+      };
+    }
+    CDBDebug("Going to return 0 because srvParam->requestType != REQUEST_TIMESERIES_GETTIMESERIES");
+    return 0;
   }
 
   // WMS Service

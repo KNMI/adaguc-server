@@ -64,7 +64,11 @@
     "valarray": "cpp",
     "variant": "cpp",
     "shared_mutex": "cpp",
-    "regex": "cpp"
+    "regex": "cpp",
+    "compare": "cpp",
+    "concepts": "cpp",
+    "numbers": "cpp",
+    "ranges": "cpp"
   },
   "cmake.buildDirectory": "${workspaceFolder}/bin",
   "cmake.configureOnOpen": true,

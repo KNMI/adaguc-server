@@ -26,6 +26,7 @@
 
 #ifdef ADAGUC_USE_POSTGRESQL
 #include <set>
+#include <sstream>
 #include "CDebugger.h"
 
 const char *CDBAdapterPostgreSQL::className = "CDBAdapterPostgreSQL";
@@ -1135,6 +1136,46 @@ int CDBAdapterPostgreSQL::addFilesToDataBase() {
   StopWatch_Stop("<CDBAdapterPostgreSQL::addFilesToDataBase");
 #endif
   return 0;
+}
+
+int CDBAdapterPostgreSQL::createVPTSTable(const char *tablename) {
+  CDBDebug("CDBAdapterPostgreSQL::createVPTSTable");
+  return 0;
+}
+int CDBAdapterPostgreSQL::addVPTSFiles(const char *tablename, std::vector<std::string> &fileList) {
+  CDBDebug("CDBAdapterPostgreSQL::addVPTSFiles");
+  CPGSQLDB *DB = getDataBaseConnection();
+  for (size_t i = 0; i < fileList.size(); ++i) {
+    CDBDebug("Filename %zu: %s\n", i, fileList[i].c_str());
+    DB->createTableWithCSVData(tablename, fileList[i].c_str());
+  }
+  return 0;
+}
+
+// tablename represents the dataset name
+std::string CDBAdapterPostgreSQL::retrieveVPTS(const char *tablename, const char *radarStation, const char *fromTimestamp, const char *toTimestamp) {
+  CDBDebug("CDBAdapterPostgreSQL::addVPTSFiles");
+  CDBDebug("SELECT * FROM %s WHERE radar='%s' AND datetime<'%s' AND datetime>'%s'", tablename, radarStation, fromTimestamp, toTimestamp);
+
+  CPGSQLDB *DB = getDataBaseConnection();
+  if (dataBaseConnection == NULL) {
+    return NULL;
+  }
+  std::ostringstream oss;
+  oss << R"(WITH ranked_data AS (
+             SELECT csv_data, height, 
+                    ROW_NUMBER() OVER (PARTITION BY DATE_TRUNC('hour', TO_TIMESTAMP(datetime, 'YYYY-MM-DD HH24:MI:SS') AT TIME ZONE 'UTC'), height ORDER BY TO_TIMESTAMP(datetime, 'YYYY-MM-DD HH24:MI:SS') ASC) AS rank
+             FROM )"
+      << tablename << R"( WHERE radar=')" << radarStation << R"(' AND TO_TIMESTAMP(datetime, 'YYYY-MM-DD HH24:MI:SS')<')" << toTimestamp << R"(' AND TO_TIMESTAMP(datetime, 'YYYY-MM-DD HH24:MI:SS')>')"
+      << fromTimestamp <<
+      R"(')
+           SELECT csv_data, height FROM ranked_data WHERE rank = 1)";
+  std::string str_query = oss.str();
+  CDBDebug("Query is ", str_query.c_str());
+
+  std::string res = DB->queryToString(str_query.c_str(), false);
+
+  return res;
 }
 
 #endif

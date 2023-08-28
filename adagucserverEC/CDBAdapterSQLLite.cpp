@@ -1322,4 +1322,8 @@ CDBStore::Store *CDBAdapterSQLLite::getFilesForIndices(CDataSource *dataSource, 
   return store;
 }
 
+int CDBAdapterSQLLite::createVPTSTable(const char *tablename) { return 0; }
+int CDBAdapterSQLLite::addVPTSFiles(const char *tablename, std::vector<std::string> &fileList) { return 0; }
+std::string CDBAdapterSQLLite::retrieveVPTS(const char *tablename, const char *radarStation, const char *fromTimestamp, const char *toTimestamp) { return NULL; }
+
 #endif

@@ -96,6 +96,11 @@ public:
 
   /** First use setFile<type> as many times as you whish, second use addFilesToDataBase to make it final*/
   virtual int addFilesToDataBase() = 0;
+
+  // support vpts timeseries
+  virtual int createVPTSTable(const char *tablename) = 0;
+  virtual int addVPTSFiles(const char *tablename, std::vector<std::string> &fileList) = 0;
+  virtual std::string retrieveVPTS(const char *tablename, const char *radarStation, const char *fromTimestamp, const char *toTimestamp) = 0;
 };
 
 #endif

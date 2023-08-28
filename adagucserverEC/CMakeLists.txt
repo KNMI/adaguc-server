@@ -80,6 +80,7 @@ add_library(
     CAreaMapper.h
     CSLD.h
     CHandleMetadata.h
+    CHandleTimeseries.h
     CColor.h
     CRectangleText.h
     CDataReader.cpp
@@ -157,6 +158,7 @@ add_library(
     CAreaMapper.cpp
     CSLD.cpp
     CHandleMetadata.cpp
+    CHandleTimeseries.cpp
     CDPPGoes16Metadata.cpp
     CCreateTiles.h
     CCreateTiles.cpp

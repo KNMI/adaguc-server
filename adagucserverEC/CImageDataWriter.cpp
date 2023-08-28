@@ -54,6 +54,8 @@
 #define deg2rad (M_PI / 180.) // conversion for deg to rad
 #endif
 
+#define CIMAGEDATAWRITER_DEBUG 1
+
 CT::string months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 // #define CIMAGEDATAWRITER_DEBUG
 // #define MEASURETIME
@@ -599,6 +601,7 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
     } else {
       status = drawImage.createImage(w, h);
       CDBDebug("Init legend %dx%d", h, w);
+      CDBDebug("Legend status %d", status);
     }
 
     if (status != 0) return 1;
@@ -1516,7 +1519,9 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
   CDBDebug("Thread[%d]: initreproj %s", dataSource->threadNr, dataSource->nativeProj4.c_str());
 #endif
   CImageWarper imageWarper;
+  CDBDebug("Projection from srvParam %s", srvParam->cfg->Projection[0]->attr.id.c_str());
   status = imageWarper.initreproj(dataSource, drawImage->Geo, &srvParam->cfg->Projection);
+
   if (status != 0) {
     CDBError("initreproj failed");
     reader.close();

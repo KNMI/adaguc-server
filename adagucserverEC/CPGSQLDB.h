@@ -69,6 +69,11 @@ public:
    * @return CDB::Store containing the results. Returns NULL when fails.
    */
   CDBStore::Store *queryToStore(const char *pszQuery) { return queryToStore(pszQuery, false); }
+
+  // Similar to queryToStore, but returns a string
+  std::string queryToString(const char *pszQuery, bool throwException);
+
+  int createTableWithCSVData(const char *pszTableName, const char *pszFileName);
 };
 #endif
 

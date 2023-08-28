@@ -946,7 +946,7 @@ CT::PointerList<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(C
               styleConfig->legendIndex = dLegendIndex;
 
               if (dLegendIndex == -1) {
-                CDBError("Legend %s not found", legendList->get(l)->c_str());
+                CDBDebug("Legend %s not found", legendList->get(l)->c_str());
               }
 
               if (style != NULL) {

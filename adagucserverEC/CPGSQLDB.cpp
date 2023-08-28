@@ -24,6 +24,10 @@
  ******************************************************************************/
 #ifdef ADAGUC_USE_POSTGRESQL
 #include "CPGSQLDB.h"
+#include <fstream>
+#include <sstream>
+#include <algorithm>
+
 const char *CPGSQLDB::className = "CPGSQLDB";
 void CPGSQLDB::clearResult() {
   if (result != NULL) PQclear(result);
@@ -224,5 +228,143 @@ CDBStore::Store *CPGSQLDB::queryToStore(const char *pszQuery, bool throwExceptio
   clearResult();
   return store;
   ;
+}
+
+std::string CPGSQLDB::queryToString(const char *pszQuery, bool throwException) {
+  LastErrorMsg[0] = '\0';
+
+  if (dConnected == 0) {
+    if (throwException) {
+      throw CDB_CONNECTION_ERROR;
+    }
+    CDBError("queryToStore: Not connected to DB");
+    return "";
+  }
+  CDBDebug("query was: %s", pszQuery);
+  result = PQexec(connection, pszQuery);
+
+  if (PQresultStatus(result) != PGRES_TUPLES_OK) // did the query fail?
+  {
+    clearResult();
+    if (throwException) {
+      throw CDB_QUERYFAILED;
+    }
+    return "wrong1";
+  }
+
+  size_t numCols = PQnfields(result);
+  size_t numRows = PQntuples(result);
+  CDBDebug("Number of columns: %zu\n", numCols);
+  CDBDebug("Number of rows: %zu\n", numRows);
+
+  if (numCols == 0) {
+    clearResult();
+    if (throwException) {
+      throw CDB_NODATA;
+    }
+    return "wrong2";
+  }
+
+  std::string queryResults;
+
+  for (size_t rowNumber = 0; rowNumber < numRows; rowNumber++) {
+    for (size_t colNumber = 0; colNumber < numCols; colNumber++) {
+      queryResults.append(PQgetvalue(result, rowNumber, colNumber));
+
+      if (colNumber < numCols - 1) { // Append comma if not last column
+        queryResults.append(",");
+      }
+    }
+
+    if (rowNumber < numRows - 1) { // Append carriage return if not last row
+      queryResults.append("\r\n");
+    }
+  }
+
+  clearResult();
+  CDBDebug("QueryResults %s", queryResults);
+  return queryResults;
+}
+
+int CPGSQLDB::createTableWithCSVData(const char *pszTableName, const char *pszFileName) {
+  // returncodes:
+  // 0 = no change
+  // 1 = error
+  // 2 = table created
+
+  CDBDebug("Table name: %s\n", pszTableName);
+  CDBDebug("File name: %s\n", pszFileName);
+
+  if (dConnected == 0) {
+    CDBError("createTableWithCSVData: Not connected to DB");
+    return 1;
+  }
+
+  std::ifstream infile(pszFileName);
+  if (!infile) {
+    CDBError("createTableWithCSVData: Could not open file");
+    return 1;
+  }
+
+  char query_string[2048];
+  snprintf(query_string, 2047, "CREATE TABLE IF NOT EXISTS %s (radar TEXT, datetime TEXT, height TEXT, csv_data TEXT, PRIMARY KEY (radar, datetime, height));", pszTableName);
+
+  result = PQexec(connection, query_string);
+  if (PQresultStatus(result) != PGRES_COMMAND_OK) {
+    CDBError("createTableWithCSVData: CREATE TABLE failed");
+    clearResult();
+    return 1;
+  }
+
+  std::string line;
+  while (std::getline(infile, line)) {
+    std::stringstream ss(line);
+    std::string discard, station, timestamp, height;
+
+    // Get fields from the CSV line
+    std::getline(ss, discard, ',');   // Discard the first field
+    std::getline(ss, station, ',');   // Second field
+    std::getline(ss, timestamp, ','); // Third field
+    std::getline(ss, height, ',');    // Fourth field
+
+    // Remove double quotes from station
+    station.erase(std::remove_if(station.begin(), station.end(), [](char c) { return c == '\"'; }), station.end());
+
+    std::string restOfLine;
+    std::getline(ss, restOfLine, '\n'); // Get the rest of the line, if there is any
+
+    // The whole line, minus the first field
+    std::string newLine = station + "," + timestamp + "," + height + "," + restOfLine;
+
+    CDBDebug("CSV DATA: %s", newLine.c_str());
+    snprintf(query_string, 2047, "INSERT INTO %s (radar, datetime, height, csv_data) VALUES ('%s', '%s', '%s', '%s') ON CONFLICT DO NOTHING;", pszTableName, station.c_str(), timestamp.c_str(),
+             height.c_str(), newLine.c_str());
+    CDBDebug("query_string: %s", query_string);
+    result = PQexec(connection, query_string);
+    if (PQresultStatus(result) != PGRES_COMMAND_OK) {
+      CDBError("createTableWithCSVData: INSERT INTO TABLE failed");
+      clearResult();
+      return 1;
+    }
+  }
+  infile.close();
+
+  // Prepare and execute count query
+  snprintf(query_string, 2047, "SELECT COUNT(*) FROM %s;", pszTableName);
+  result = PQexec(connection, query_string);
+  if (PQresultStatus(result) != PGRES_TUPLES_OK) {
+    CDBError("createTableWithCSVData: COUNT query failed");
+    clearResult();
+    return 1;
+  }
+
+  // Fetch and print the count
+  if (PQntuples(result) > 0) {
+    int count = atoi(PQgetvalue(result, 0, 0));
+    CDBDebug("Total tuples in %s: %d", pszTableName, count);
+  }
+
+  clearResult();
+  return 2;
 }
 #endif

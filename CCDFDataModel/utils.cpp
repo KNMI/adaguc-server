@@ -10,6 +10,10 @@ CDFReader *findReaderByFileName(CT::string fileName) {
   if (fileName.endsWith(".geojson")) {
     return new CDFGeoJSONReader();
   }
+  // Special CSV format for biological signals
+  if (fileName.endsWith("vpts.csv")) {
+    return new CDFCSVReader();
+  }
   if (fileName.endsWith(".csv")) {
     return new CDFCSVReader();
   }
