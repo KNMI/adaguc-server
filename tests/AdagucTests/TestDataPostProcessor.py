@@ -73,3 +73,112 @@ class TestDataPostProcessor(unittest.TestCase):
             data.getvalue(),
             AdagucTestTools().readfromfile(self.expectedoutputsspath +
                                            filename))
+        
+
+    def test_datapostprocessor_windshear_getmap(self):
+        """
+        Test for the windshear post processor
+        """
+        AdagucTestTools().cleanTempDir()
+        config = ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml,' + \
+            ADAGUC_PATH + '/data/config/datasets/adaguc.tests.datapostproc-windshear.xml'
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=['--updatedb', '--config', config], env=self.env, isCGI=False)
+        self.assertEqual(status, 0)
+
+        filename = "test_DataPostProcessor_WindShear_GetMap.png"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.tests.datapostproc-windshear&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=output&WIDTH=256&CRS=EPSG:4326&HEIGHT=256&STYLES=default&FORMAT=image/png&TRANSPARENT=FALSE&showlegend=false",
+            {
+                'ADAGUC_CONFIG':
+                ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml'
+            })
+
+        AdagucTestTools().writetofile(self.testresultspath + filename,
+                                      data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath +
+                                           filename))
+
+    def test_datapostprocessor_windshear_getmetadata(self):
+        """
+        Test for the windshear post processor
+        """
+        AdagucTestTools().cleanTempDir()
+        config = ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml,' + \
+            ADAGUC_PATH + '/data/config/datasets/adaguc.tests.datapostproc-windshear.xml'
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=['--updatedb', '--config', config], env=self.env, isCGI=False)
+        self.assertEqual(status, 0)
+        filename = "test_DataPostProcessor_WindShear_GetMetaData.txt"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.tests.datapostproc-windshear&service=wms&request=getmetadata&format=image/png&srs=EPSG:4326&layer=output",
+            {
+                'ADAGUC_CONFIG':
+                ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml'
+            })
+
+        AdagucTestTools().writetofile(self.testresultspath + filename,
+                                      data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath +
+                                           filename))
+
+    def test_datapostprocessor_windshear_getfeatureinfo(self):
+        """
+        Test for the windshear post processor
+        """
+        AdagucTestTools().cleanTempDir()
+        config = ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml,' + \
+            ADAGUC_PATH + '/data/config/datasets/adaguc.tests.datapostproc-windshear.xml'
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=['--updatedb', '--config', config], env=self.env, isCGI=False)
+        self.assertEqual(status, 0)
+        filename = "test_DataPostProcessor_WindShear_GetFeatureInfo.json"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.tests.datapostproc-windshear&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=output&QUERY_LAYERS=output&CRS=EPSG%3A3857&BBOX=-1084594.00339733,5299085.702520586,2054668.3733940602,8244166.9013661165&WIDTH=1358&HEIGHT=1274&I=626&J=578&FORMAT=image/gif&INFO_FORMAT=application/json&STYLES=&&time=2019-01-01T22%3A00%3A00Z",
+            {
+                'ADAGUC_CONFIG':
+                ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml'
+            })
+
+        AdagucTestTools().writetofile(self.testresultspath + filename,
+                                      data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath +
+                                           filename))
+
+
+    def test_datapostprocessor_windshear_gettimeseries(self):
+        """
+        Test for the windshear post processor
+        """
+        AdagucTestTools().cleanTempDir()
+        config = ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml,' + \
+            ADAGUC_PATH + '/data/config/datasets/adaguc.tests.datapostproc-windshear.xml'
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=['--updatedb', '--config', config], env=self.env, isCGI=False)
+        self.assertEqual(status, 0)
+        filename = "test_DataPostProcessor_WindShear_GetTimeSeries.json"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.tests.datapostproc-windshear&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=output&QUERY_LAYERS=output&CRS=EPSG%3A3857&BBOX=-1084594.00339733,5299085.702520586,2054668.3733940602,8244166.9013661165&WIDTH=1358&HEIGHT=1274&I=626&J=578&FORMAT=image/gif&INFO_FORMAT=application/json&STYLES=&&time=*",
+            {
+                'ADAGUC_CONFIG':
+                ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml'
+            })
+
+        AdagucTestTools().writetofile(self.testresultspath + filename,
+                                      data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath +
+                                           filename))
+
+
