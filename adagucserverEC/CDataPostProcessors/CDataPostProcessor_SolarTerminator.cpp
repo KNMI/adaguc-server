@@ -289,6 +289,5 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
       result[j] = getDayTimeCategory(getSolarZenithAngle(geoy, geox, current_time));
     }
   }
-  // dataSource->eraseDataObject(1);
   return 0;
 }
