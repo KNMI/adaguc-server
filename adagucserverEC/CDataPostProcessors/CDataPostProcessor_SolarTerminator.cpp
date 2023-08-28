@@ -3,6 +3,7 @@
 #include <chrono>
 #include <ctime>
 #include "CTime.h"
+#include "CImageWarper.h"
 
 #include <execinfo.h>
 #include <stdio.h>
@@ -17,36 +18,6 @@ const char *CDPPSolarTerminator::className = "CDPPSolarTerminator";
 
 const char *CDPPSolarTerminator::getId() { return "solarterminator"; }
 
-// dataSource->eraseDataObject(1);
-/* void CDPPSolarTerminator::print_trace() {
-  void *buffer[255];
-  int nptrs = backtrace(buffer, 255);
-  char **strings = backtrace_symbols(buffer, nptrs);
-  if (strings == NULL) {
-    perror("backtrace_symbols");
-    exit(EXIT_FAILURE);
-  }
-
-  CDBDebug("***************BACKTRACE SYMBOLS\n");
-  int j = 0;
-  for (j = 0; j < nptrs; j++) {
-    Dl_info info;
-    if (dladdr(buffer[j], &info) && info.dli_sname) {
-      char *demangled = NULL;
-      int status = -1;
-      if (info.dli_sname[0] == '_') demangled = abi::__cxa_demangle(info.dli_sname, NULL, 0, &status);
-      CDBDebug("%-3d %*p %s + %zd\n", j, 2 + sizeof(void *) * 2, buffer[j], status == 0 ? demangled : info.dli_sname == 0 ? strings[j] : info.dli_sname, (char *)buffer[j] - (char *)info.dli_saddr);
-      free(demangled);
-    } else {
-      CDBDebug("%-3d %*p %s\n", j, 2 + sizeof(void *) * 2, buffer[j], strings[j]);
-    }
-  }
-
-  free(strings);
-
-  return;
-}
- */
 #define SIZE 255
 void CDPPSolarTerminator::print_trace() {
   void *buffer[SIZE];
@@ -86,8 +57,6 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
   if ((isApplicable(proc, dataSource, mode) & mode) == false) {
     return -1;
   }
-  CDBDebug("Applying SolarTerminator");
-  CDBDebug("TIMESTAMP PASSED IS %f", timestamp);
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
     CT::string newVariableName = proc->attr.name;
     if (newVariableName.empty()) {
@@ -103,8 +72,7 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
     double dfBBOX[] = {geo->dfBBOX[0], geo->dfBBOX[1], geo->dfBBOX[2], geo->dfBBOX[3]};
     size_t width = geo->dWidth;
     size_t height = geo->dHeight;
-    // PROJECTION!!!! Taken from server params (use ImageWarper for a reprojection)
-    // reprojPoint passing an array of latlons
+
     dataSource->nativeProj4 = geo->CRS;
     dataSource->dWidth = geo->dWidth;
     dataSource->dHeight = geo->dHeight;
@@ -165,7 +133,7 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
       // For time dimension
       dimTime = new CDF::Dimension();
       dimTime->name = "time";
-      dimTime->setSize(1); // 24 * 6); // Last day every 10 minutes
+      dimTime->setSize(10); // 24 * 6); // Last day every 10 minutes
       newDataObject->cdfObject->addDimension(dimTime);
 
       // Define the Y variable using the X dimension
@@ -179,12 +147,12 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
       CTime epochCTime;
       epochCTime.init("seconds since 1970-01-01 0:0:0", NULL);
       CDF::allocateData(CDF_DOUBLE, &varTime->data, dimTime->length);
-      double currentOffset = epochCTime.dateToOffset(epochCTime.freeDateStringToDate(epochCTime.currentDateTime()));
 
-      for (int off = 0; off < 1; off++) {
+      double currentOffset = timestamp;
+      for (int off = 0; off < 10; off++) {
         // Every 10 minutes for a day
-        double timestep = epochCTime.quantizeTimeToISO8601(currentOffset - off * 60 * 10, "PT10M", "low");
-        ((double *)varTime->data)[off] = timestep;
+        double timestep = epochCTime.quantizeTimeToISO8601(currentOffset - off * 60 * 10, "PT30M", "low");
+        ((double *)varTime->data)[off] = timestep; // timestep;
       }
 
       dataSource->getDataObject(0)->cdfVariable->dimensionlinks.push_back(dimTime);
@@ -292,10 +260,12 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
 
     double current_time = timestamp; // 1689270178; // static_cast<double>(seconds.count());
 
-    CDBDebug("Current epoch UTC timestamp: %f", current_time);
-
-    // double timestamp = static_cast<double>(time);
-    // CDBDebug("Current epoch UTC timestamp: %d", time);
+    CImageWarper imageWarper;
+    int status = imageWarper.initreproj(dataSource, dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
+    if (status != 0) {
+      CDBError("Unable to init projection");
+      return 1;
+    }
 
     for (size_t j = 0; j < l; j++) {
       int px = j % dataSource->dWidth;
@@ -311,12 +281,12 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
       // Transform EPG:3857 coordinates into latlon (can be done with library)
       // NOTE: Use proj library to use Amersfoort
       // Inspiration: https://github.com/KNMI/adaguc-server/blob/master/adagucserverEC/CConvertADAGUCPoint.cpp#L841
-      double lat = (std::atan(std::sinh(geoy / 20037508.34 * M_PI)) * 180.0) / M_PI;
-      double lon = (geox / 20037508.34) * 180.0;
+      // double lat = (std::atan(std::sinh(geoy / 20037508.34 * M_PI)) * 180.0) / M_PI;
+      // double lon = (geox / 20037508.34) * 180.0;
+      imageWarper.reprojToLatLon(geox, geoy);
 
       // if not using lat/lon, reproject
-      // getDayTimeCategory(calculateSolarZenithAngle(geoy, geox, current_time));
-      result[j] = getDayTimeCategory(getSolarZenithAngle(lat, lon, current_time));
+      result[j] = getDayTimeCategory(getSolarZenithAngle(geoy, geox, current_time));
     }
   }
   // dataSource->eraseDataObject(1);

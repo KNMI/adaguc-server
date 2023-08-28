@@ -45,7 +45,7 @@ double getSolarZenithAngle(double lat, double lon, double timestamp) {
   double latRad = lat * M_PI / 180.0;
   double lonRad = lon * M_PI / 180.0;
   // Calculate Julian day
-  double jd = 2451545.0 + timestamp / 86400.0;
+  double jd = 2440587.5 + timestamp / 86400.0;
 
   // Calculate Julian centuries since J2000.0
   double T = (jd - 2451545.0) / 36525.0;
@@ -99,19 +99,12 @@ double getSolarZenithAngle(double lat, double lon, double timestamp) {
   // Calculate the solar hour angle
   double H = (T - 12) * 15 + a - lonRad;
 
-  // Calculate the sine of the solar zenith angle
+  // Calculate the sine of the solar elevation angle
   double sin_theta = sin(d * DEG_TO_RAD) * sin(latRad) + cos(d * DEG_TO_RAD) * cos(latRad) * cos(H);
 
-  // Calculate the solar zenith angle in degrees
+  // Calculate the solar zenith angle in degrees based on the elevation angle
   double theta = 90 - asin(sin_theta) * RAD_TO_DEG;
   return theta;
-  // Solar elevation angle
-  // double sinDec = std::sin(23.44 * M_PI / 180.0) * std::sin(L * M_PI / 180.0);
-  // double cosDec = std::sqrt(1 - sinDec * sinDec);
-  // double sinAlt = std::sin(latRad) * sinDec + std::cos(latRad) * cosDec * std::cos(omega * M_PI / 180.0);
-  // double elevationAngle = std::asin(sinAlt) * 180.0 / M_PI;
-
-  // return 90 - elevationAngle;
 }
 
 // Based on Jean Meeus's Astronomical Algorithms
