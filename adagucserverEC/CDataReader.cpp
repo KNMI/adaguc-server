@@ -1019,10 +1019,6 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
   }
 
   if (enablePostProcessors) {
-    /*
-     * DataPostProc: Here our datapostprocessor comes into action! It needs scale and offset from datasource.
-     * This is stage1, only AX+B will be applied to scale and offset parameters
-     */
     CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
   }
 
