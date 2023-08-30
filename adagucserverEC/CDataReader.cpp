@@ -1353,10 +1353,6 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 #endif
 
     if (enablePostProcessors) {
-      /*
-       * DataPostProc: Here our datapostprocessor comes into action!
-       * This is stage2, running on data, not metadata
-       */
       CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
     }
   }
