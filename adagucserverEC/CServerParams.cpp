@@ -283,7 +283,7 @@ bool CServerParams::isDebugLoggingEnabled() const {
     return false;
   else if (debugLoggingIsEnabled == 1)
     return true;
-  else if (cfg->Logging.size() > 0) {
+  else if (cfg && cfg->Logging.size() > 0) {
     if (cfg->Logging[cfg->Logging.size() - 1]->attr.debug.equals("false")) {
       debugLoggingIsEnabled = 0;
       return false;
