@@ -1,11 +1,11 @@
-FROM python:3.9-slim-bullseye as base
+FROM python:3.10-slim-bookworm as base
 
 USER root
 
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
-LABEL version="2.10.5"
+LABEL version="2.11.2"
 
 ######### First stage (build) ############
 
@@ -44,7 +44,7 @@ RUN bash compile.sh
 
 
 # ######### Second stage (production) ############
-FROM python:3.9-slim-bullseye
+FROM python:3.10-slim-bookworm
 
 USER root
 
@@ -71,8 +71,8 @@ WORKDIR /adaguc/adaguc-server-master
 # Upgrade pip and install python requirements.txt
 COPY --from=0 /adaguc/adaguc-server-master/requirements.txt /adaguc/adaguc-server-master/requirements.txt
 COPY --from=0 /adaguc/adaguc-server-master/requirements-dev.txt /adaguc/adaguc-server-master/requirements-dev.txt
-RUN pip3 install --no-cache-dir --upgrade pip \
-    && pip3 install --no-cache-dir -r requirements.txt -r requirements-dev.txt
+RUN pip3 install --no-cache-dir --upgrade pip pip-tools \
+    && pip-sync requirements.txt requirements-dev.txt
 
 # Install compiled adaguc binaries from stage one
 COPY --from=0 /adaguc/adaguc-server-master/bin /adaguc/adaguc-server-master/bin
@@ -85,7 +85,8 @@ COPY --from=0 /adaguc/adaguc-server-master/runtests.sh /adaguc/adaguc-server-mas
 # Run adaguc-server functional and regression tests
 
 RUN bash runtests.sh
-RUN pip3 uninstall -r requirements-dev.txt -y
+# Uninstall dev requirements (pip-sync removes packages not required)
+RUN pip-sync requirements.txt
 
 
 # Set same uid as vivid

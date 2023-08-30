@@ -297,6 +297,15 @@ bool CDataReader::copyCRSFromADAGUCProjectionVariable(CDataSource *dataSource, c
   // }
   dataSource->nativeProj4.copy(proj4Attr->toString().c_str());
 
+  // Fixes issue https://github.com/KNMI/adaguc-server/issues/279
+  dataSource->nativeProj4.replaceSelf("\n", " ");
+  dataSource->nativeProj4.trimSelf();
+  if (dataSource->nativeProj4.startsWith("\"") && dataSource->nativeProj4.endsWith("\"")) {
+    dataSource->nativeProj4.substringSelf(1, dataSource->nativeProj4.length() - 1);
+    dataSource->nativeProj4.trimSelf();
+    CDBDebug("Note: Removed start and ending double quotes for projstring [%s]", dataSource->nativeProj4.c_str());
+  }
+
   // Copy the EPSG code.
   copyEPSGCodeFromProjectionVariable(dataSource, projVar);
 

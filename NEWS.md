@@ -1,3 +1,16 @@
+**Version 2.11.2 2023-08-21**
+
+- Hot fix: Accidently removed necessary python dependencies in Docker build
+
+**Version 2.11.1 2023-08-21**
+
+- Avoid double logging
+- Timeout to prevent endless running of processes
+- Fix encoded proj4_params issue https://github.com/KNMI/adaguc-server/issues/279
+
+**Version 2.11.0 2023-08-17**
+- Update Docker base image to Python 3.10 based on Debian 12 ("bookworm")
+
 **Version 2.10.5 2023-06-02**
 - Contourlines can have dashes
 - Contour text can have an outline
