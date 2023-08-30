@@ -56,7 +56,7 @@ You have to do once:
 ```
 python3 -m venv env
 source env/bin/activate
-pip3 install --upgrade pip
+pip3 install --upgrade pip pip-tools
 pip3 install -r requirements.txt
 pip3 install -r requirements-dev.txt
 cd ./python/lib/ && python3 setup.py develop && cd ../../
