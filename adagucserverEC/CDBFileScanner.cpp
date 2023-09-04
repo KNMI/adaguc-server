@@ -85,6 +85,13 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
     return 1;
   }
 
+  // Check if variable is in this file:
+
+  if (cdfObject->getVariableNE(dataSource->getDataObject(0)->variableName.c_str()) == NULL) {
+    CDBError("Variable %s does not exist in %s ", dataSource->getDataObject(0)->variableName.c_str(), dataSource->headerFileName.c_str());
+    return 1;
+  }
+
   if (dataSource->cfgLayer->Dimension.size() == 0) {
 
     if (CAutoConfigure::autoConfigureDimensions(dataSource) != 0) {
@@ -425,7 +432,9 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
       }
       for (size_t d = 0; d < dataSource->cfgLayer->Dimension.size(); d++) {
         if (skipDim[d] == true) {
-          CDBDebug("Assuming [%s] done", dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+#ifdef CDBFILESCANNER_DEBUG
+          CDBDebug("Assuming %d/%d [%s] done", j, d, dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+#endif
           continue;
         }
         {
@@ -539,7 +548,9 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
               if (dimVar != NULL && dimDim == NULL) {
                 // Check for scalar variable
                 if (dimVar->dimensionlinks.size() == 0) {
+#ifdef CDBFILESCANNER_DEBUG
                   CDBDebug("Found scalar variable %s with no dimension. Creating dim", dimVar->name.c_str());
+#endif
                   dimDim = new CDF::Dimension();
                   dimDim->name = dimVar->name;
                   dimDim->setSize(1);
@@ -549,7 +560,9 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
                 // Check if this variable has another dim attached
                 if (dimVar->dimensionlinks.size() == 1) {
                   dimDim = dimVar->dimensionlinks[0];
+#ifdef CDBFILESCANNER_DEBUG
                   CDBDebug("Using dimension %s for dimension variable %s", dimVar->dimensionlinks[0]->name.c_str(), dimVar->name.c_str());
+#endif
                 }
               }
 
@@ -975,7 +988,7 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
     // First check and create all tables... returns zero on success, positive on error, negative on already done.
     status = createDBUpdateTables(dataSource, removeNonExistingFiles, &fileList, scanFlags & CDBFILESCANNER_RECREATETABLES);
     if (status > 0) {
-
+      CDBError("createDBUpdateTables failed");
       throw(__LINE__);
     }
 
@@ -983,7 +996,10 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
 
       // Loop Through all files
       status = DBLoopFiles(dataSource, removeNonExistingFiles, &fileList, scanFlags);
-      if (status != 0) throw(__LINE__);
+      if (status != 0) {
+        CDBError("DBLoopFiles failed");
+        throw(__LINE__);
+      }
 
       // Clean up if needed
       cleanFiles(dataSource, scanFlags);
@@ -993,6 +1009,7 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
 #ifdef USEQUERYTRANSACTIONS
     if (removeNonExistingFiles == 1) status = DB->query("COMMIT");
 #endif
+
     return 1;
   }
 
