@@ -1,9 +1,13 @@
+**Version 2.11.4 2023-09-04**
+
+- Also cleanup FS and DB when the file to scan was not found (When an error occured)
+
 **Version 2.11.3 2023-09-04**
 
 - Reduced logging during dataset scanning for better traceability
 - Stop scanning at early stage when a variable does not exist in a NetCDF file.
 
-**Version 2.11.3 2023-08-21**
+**Version 2.11.2 2023-08-21**
 
 - Hot fix: Accidently removed necessary python dependencies in Docker build
 
