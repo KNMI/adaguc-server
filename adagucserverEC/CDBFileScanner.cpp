@@ -1010,6 +1010,9 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
     if (removeNonExistingFiles == 1) status = DB->query("COMMIT");
 #endif
 
+    // Clean up if needed
+    cleanFiles(dataSource, scanFlags);
+
     return 1;
   }
 
