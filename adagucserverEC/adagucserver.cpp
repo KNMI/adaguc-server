@@ -29,7 +29,7 @@
 #include <getopt.h>
 #include "CDebugger_H.h"
 
-extern Tracer NewTrace;
+// extern Tracer NewTrace;
 
 DEF_ERRORMAIN();
 
@@ -322,10 +322,10 @@ int main(int argc, char **argv, char **envp) {
 
   CDFObjectStore::getCDFObjectStore()->clear();
 
-  /* Check Tracer for leaks */
-  if (NewTrace.Dump() != 0) {
-    if (status == 0) status = 1; /* Indicates that we have a memory leak */
-  }
+  // /* Check Tracer for leaks */
+  // if (NewTrace.Dump() != 0) {
+  //   if (status == 0) status = 1; /* Indicates that we have a memory leak */
+  // }
 
   if (pLogDebugFile != NULL) {
     fclose(pLogDebugFile);

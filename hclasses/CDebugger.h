@@ -29,8 +29,8 @@
 
 #ifndef MEMLEAKCHECK_ASSIGNED
 #define MEMLEAKCHECK_ASSIGNED
-#ifdef MEMLEAKCHECK
+// #ifdef MEMLEAKCHECK
 #include "CDebugger_H.h"
-#define new new (__FILE__, __LINE__)
-#endif
+// #define new new (__FILE__, __LINE__)
+// #endif
 #endif

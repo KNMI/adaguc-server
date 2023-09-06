@@ -4,7 +4,7 @@
   <TempDir value="{ADAGUC_TMP}"/>
   <Path value="{ADAGUC_PATH}/data"/>
   <DataBase dbtype="sqlite" parameters="{ADAGUC_TMP}/adaguc.autoresource.db"/>
-  
+
   <!-- WMS settings -->
   <WMS>
     <Title>ADAGUC WMS Service</Title>
@@ -14,8 +14,8 @@
       <Abstract>Root Layer Abstract</Abstract>
     </RootLayer>
   </WMS>
-  
-  
+
+
   <!-- WMS -->
   <Include location="{ADAGUC_PATH}/data/config/includes/WMS.include.xml"/>
 
@@ -30,15 +30,15 @@
 
   <!-- Projections -->
   <Include location="{ADAGUC_PATH}/data/config/includes/Projection.include.xml"/>
-           
+
   <!--Legends -->
   <Include location="{ADAGUC_PATH}/data/config/includes/DefaultStyles.include.xml"/>
-  
+
   <!-- DefaultLayers -->
-  <Include location="{ADAGUC_PATH}/data/config/includes/DefaultLayers.include.xml"/>
-  
+  <!-- <Include location="{ADAGUC_PATH}/data/config/includes/DefaultLayers.include.xml"/> -->
+
   <OpenDAP enabled="true" path="opendap"/>
-  
+
   <Dataset enabled="true" location="{ADAGUC_PATH}/data/config/datasets/"/>
   <!-- End of configuration /-->
 </Configuration>
