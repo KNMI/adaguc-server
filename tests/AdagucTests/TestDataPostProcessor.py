@@ -184,7 +184,7 @@ class TestDataPostProcessor(unittest.TestCase):
 
     def test_datapostprocessor_dbztorr_getmap(self):
         """
-        Test for the windshear post processor
+        Test for the dbztorr post processor
         """
         AdagucTestTools().cleanTempDir()
         config = ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml,' + \
@@ -207,3 +207,34 @@ class TestDataPostProcessor(unittest.TestCase):
             data.getvalue(),
             AdagucTestTools().readfromfile(self.expectedoutputsspath +
                                            filename))
+
+
+    def test_datapostprocessor_axplusb_getmap(self):
+        """
+        Test for the axplusb post processor
+        """
+        AdagucTestTools().cleanTempDir()
+        config = ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml,' + \
+            ADAGUC_PATH + '/data/config/datasets/adaguc.tests.datapostproc.xml'
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=['--updatedb', '--config', config], env=self.env, isCGI=False)
+        self.assertEqual(status, 0)
+        filename = "test_DataPostProcessor_axplusb_GetMap.png"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.datapostproc&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=-1841640.561188397,4434884.178327009,2446462.937192397,9899900.45389999&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&",
+            {
+                'ADAGUC_CONFIG':
+                ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml'
+            })
+
+        AdagucTestTools().writetofile(self.testresultspath + filename,
+                                      data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath +
+                                           filename))
+        
+
+
+        

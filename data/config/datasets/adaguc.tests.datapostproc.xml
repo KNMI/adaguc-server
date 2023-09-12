@@ -58,6 +58,16 @@
         <Styles>radar</Styles>
         <DataPostProc algorithm="dbztorr" units="mm/hr"/>
     </Layer>
+
+    <Layer type="database">
+        <FilePath filter="">{ADAGUC_PATH}data/datasets/testdata.nc</FilePath>
+        <Variable>testdata</Variable>
+        <Styles>auto</Styles>
+        <Min>-10</Min>
+        <Max>200</Max>
+        <DataPostProc algorithm="ax+b" a="600" b="-20" units="meter" />
+    </Layer>
+
 </Configuration>
 
 
