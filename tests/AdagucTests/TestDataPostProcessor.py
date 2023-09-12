@@ -182,3 +182,28 @@ class TestDataPostProcessor(unittest.TestCase):
                                            filename))
 
 
+    def test_datapostprocessor_dbztorr_getmap(self):
+        """
+        Test for the windshear post processor
+        """
+        AdagucTestTools().cleanTempDir()
+        config = ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml,' + \
+            ADAGUC_PATH + '/data/config/datasets/adaguc.tests.datapostproc.xml'
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=['--updatedb', '--config', config], env=self.env, isCGI=False)
+        self.assertEqual(status, 0)
+        filename = "test_DataPostProcessor_DBZ_GetMap.png"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.datapostproc&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=RAD_NL25_PCP_CM&WIDTH=256IGHT=256&CRS=EPSG%3A3857&BBOX=562267.2546644434,6568919.974681269,797831.9309681491,6869137.726056894&STYLES=radar%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&&time=2021-06-22T20%3A00%3A00Z",
+            {
+                'ADAGUC_CONFIG':
+                ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml'
+            })
+
+        AdagucTestTools().writetofile(self.testresultspath + filename,
+                                      data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath +
+                                           filename))
