@@ -30,7 +30,34 @@
 
     </Layer>
 
+    <!-- DataPostProc DBZ -->
+    <Legend name="KNMIRadarPalette_mmh" type="interval">
+        <palette min="0" max="38" red="255" green="255" blue="255"/>
+        <palette min="38" max="80" red="170" green="170" blue="170"/>
+        <palette min="80" max="118" red="85" green="85" blue="85"/>
+        <palette min="118" max="160" red="255" green="128" blue="128"/>
+        <palette min="160" max="198" red="255" green="0" blue="0"/>
+        <palette min="198" max="255" red="0" green="0" blue="0"/>
+    </Legend>
 
+    <Style name="radar">
+        <Legend>KNMIRadarPalette_mmh</Legend>
+        <ValueRange min=".09" max="1000000"/>
+        <RenderMethod>nearest</RenderMethod>
+        <Min>0.1</Min>
+        <Max>100</Max>
+        <Log>10</Log>
+    </Style>
+    <Layer type="database" hidden="false">
+        <Name>RAD_NL25_PCP_CM</Name>
+        <Title>Precipitation Radar NL</Title>
+        <Variable>image1.image_data</Variable>
+        <!--               RAD_NL25_PCP_CM_202102170000.h5 -->
+        <FilePath filter="^RAD_NL25_PCP_CM_.*\.h5$">{ADAGUC_PATH}/data/datasets/test/</FilePath>
+        <Dimension name="time" units="ISO8601" interval="PT5M" default="max">time</Dimension>
+        <Styles>radar</Styles>
+        <DataPostProc algorithm="dbztorr" units="mm/hr"/>
+    </Layer>
 </Configuration>
 
 
