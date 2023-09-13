@@ -13,7 +13,7 @@ Back to [Configuration](./Configuration.md)
 -   quantizeperiod - Optional, see below
 -   quantizemethod - Optional, see below
 -   hidden - Optional, hide this dimension from the GetCapabilities document
--   fixvalue - Optional, Fixate the value of the dimension. When elevation has a range from 0,10,20,30, you can fixate the value to 20 with fixvalue="20"
+-   fixvalue - Optional, fix the value of the dimension. When elevation has a range from 0,10,20,30, you can fixate the value to 20 with fixvalue="20"
 -   <value> - The name of the dimension in the WMS service
 
 ```xml
