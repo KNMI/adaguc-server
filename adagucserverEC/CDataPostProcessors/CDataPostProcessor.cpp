@@ -95,7 +95,7 @@ int CDPPDATAMASK::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSour
   if (proc->attr.algorithm.equals("datamask")) {
     if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
       if (dataSource->getNumDataObjects() != 2 && dataSource->getNumDataObjects() != 3) {
-        CDBError("2 variables are needed for datamask, found %d", dataSource->getNumDataObjects());
+        CDBError("2 or 3 variables are needed for datamask, found %d", dataSource->getNumDataObjects());
         return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
       }
       return CDATAPOSTPROCESSOR_RUNBEFOREREADING;
