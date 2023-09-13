@@ -436,7 +436,7 @@ int CDPPMSGCPPHIWCMask::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDa
   if (proc->attr.algorithm.equals("msgcpphiwcmask")) {
     if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
       if (dataSource->getNumDataObjects() != 4 && dataSource->getNumDataObjects() != 5) {
-        CDBError("4 variables are needed for msgcpphiwcmask, found %d", dataSource->getNumDataObjects());
+        CDBError("4 or 5 variables are needed for msgcpphiwcmask, found %d", dataSource->getNumDataObjects());
         return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
       }
       return CDATAPOSTPROCESSOR_RUNBEFOREREADING;
