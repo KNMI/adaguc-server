@@ -96,7 +96,7 @@
 <BoundingBox CRS="EPSG:4326" minx="89.511108" miny="-180.494446" maxx="-90.488892" maxy="179.505554" />
 <Layer queryable="1" opaque="1" cascaded="0">
 <Name>output</Name>
-<Title>Wind speed at 2000 minus wind speed at 8000</Title>
+<Title>Data at height 2000 minus data at height 8000</Title>
 <EX_GeographicBoundingBox>
   <westBoundLongitude>-180.494446</westBoundLongitude>
   <eastBoundLongitude>179.505554</eastBoundLongitude>

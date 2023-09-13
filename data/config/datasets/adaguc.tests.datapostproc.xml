@@ -2,10 +2,10 @@
 <Configuration>
 
     <Layer type="database" hidden="true">
-        <Name>layer_windspeed_at_2000</Name>
-        <Title>Wind speed at 2000 meter</Title>
+        <Name>layer_data_at_height_2000</Name>
+        <Title>Data at height at 2000 meter</Title>
         <FilePath filter=".*\.nc$" gfi_openall="true">{ADAGUC_PATH}/data/datasets/netcdf_5dims/netcdf_5dims_seq1/nc_5D_20170101000000-20170101001000.nc</FilePath>
-        <Variable orgname="data" long_name="Wind speed at 2000 meter">var_wind_speed_at_2000</Variable>
+        <Variable orgname="data" long_name="Data at height at 2000 meter">var_data_at_height_2000</Variable>
         <Styles>auto</Styles>
         <Dimension name="time">time</Dimension>
         <Dimension name="member">member</Dimension>
@@ -15,15 +15,15 @@
 
     <Layer type="database">
         <Name>output</Name>
-        <Title>Wind speed at 2000 minus wind speed at 8000</Title>
+        <Title>Data at height 2000 minus data at height 8000</Title>
         <FilePath filter=".*\.nc$" gfi_openall="true">{ADAGUC_PATH}/data/datasets/netcdf_5dims/netcdf_5dims_seq1/nc_5D_20170101000000-20170101001000.nc</FilePath>
-        <Variable orgname="data" long_name="Wind speed at 8000 meter">var_wind_speed_at_8000</Variable>
+        <Variable orgname="data" long_name="Data at height at 8000 meter">var_data_at_height_8000</Variable>
         <Dimension name="time">time</Dimension>
         <Dimension name="member">member</Dimension>
         <Dimension name="height" fixvalue="8000" hidden="true">elevation</Dimension>
 
-        <DataPostProc algorithm="include_layer" name="layer_windspeed_at_2000" mode="append"/>
-        <DataPostProc algorithm="operator" mode="-" a="var_wind_speed_at_2000" b="var_wind_speed_at_8000" name="output" units="m/s"/>
+        <DataPostProc algorithm="include_layer" name="layer_data_at_height_2000" mode="append"/>
+        <DataPostProc algorithm="operator" mode="-" a="var_data_at_height_2000" b="var_data_at_height_8000" name="output" units="m/s"/>
         <Min>-1</Min>
         <Max>1</Max>
         <Styles>auto</Styles>
