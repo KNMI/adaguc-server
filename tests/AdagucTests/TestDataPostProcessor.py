@@ -50,6 +50,11 @@ class TestDataPostProcessor(unittest.TestCase):
 
 
     def test_DataPostProcessor_SubstractLevels_GetMap(self):
+        """
+        The input data for this set is a NetCDF file where textmessages are printed in the grid. 
+        This test checks if the correct dimensions are chosen and verifies if the result is as expected. 
+        The result does not look pretty, it is purely functional.
+        """
         AdagucTestTools().cleanTempDir()
         config = ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml,' + \
             ADAGUC_PATH + '/data/config/datasets/adaguc.tests.datapostproc.xml'
