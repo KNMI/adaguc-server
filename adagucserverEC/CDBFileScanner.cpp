@@ -85,6 +85,11 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
     return 1;
   }
 
+  if (cdfObject->getVariableNE(dataSource->getDataObject(0)->variableName.c_str()) == NULL) {
+    CDBWarning("Note: Variable %s does not exist in %s ", dataSource->getDataObject(0)->variableName.c_str(), dataSource->headerFileName.c_str());
+    return 0;
+  }
+
   if (dataSource->cfgLayer->Dimension.size() == 0) {
 
     if (CAutoConfigure::autoConfigureDimensions(dataSource) != 0) {
