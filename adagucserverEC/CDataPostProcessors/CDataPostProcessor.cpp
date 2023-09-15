@@ -815,7 +815,7 @@ int CDPPBeaufort::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
 const char *CDPPToKnots::className = "CDPPToToKnots";
 
 const char *CDPPToKnots::getId() { return "toknots"; }
-int CDPPToKnots::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
+int CDPPToKnots::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int) {
   if (proc->attr.algorithm.equals("toknots")) {
     if (CDATAPOSTPROCESSOR_RUNAFTERREADING) {
       if (dataSource->getNumDataObjects() != 1 && dataSource->getNumDataObjects() != 2) {
@@ -952,7 +952,7 @@ int CDPPToKnots::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *da
 const char *CDPDBZtoRR::className = "CDPDBZtoRR";
 
 const char *CDPDBZtoRR::getId() { return "dbztorr"; }
-int CDPDBZtoRR::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int mode) {
+int CDPDBZtoRR::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int) {
   if (proc->attr.algorithm.equals("dbztorr")) {
     return CDATAPOSTPROCESSOR_RUNAFTERREADING | CDATAPOSTPROCESSOR_RUNBEFOREREADING;
   }

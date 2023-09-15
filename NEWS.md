@@ -1,3 +1,6 @@
+**Version 2.13.0 -2023-09-15**
+- The script adaguc-server-addfile.sh is now able to find for a given file the corresponding dataset via the commandline option autofinddataset
+
 **Version 2.12.0 2023-08-24**
 - Support for DataPostProcessor Operator, to add, substract, multiply or divide layers
 - Dimensions can now be fixed and hidden, to make layers representing a single elevation based on a variable with multiple elevations
