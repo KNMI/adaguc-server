@@ -320,6 +320,9 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
         if (!cfgVar->attr.orgname.empty()) {
           CDF::Variable *var = cdfObject->getVariable(cfgVar->attr.orgname);
           var->name.copy(cfgVar->value);
+          // This cdfobject should not be cached, as the variable
+          // can no longer be found by other layers using the same cdfobject.
+          cached = false;
         }
 
         // Set long_name
