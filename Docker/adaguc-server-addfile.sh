@@ -9,8 +9,10 @@
 #
 # With -f you can optionally specify the file to add
 # With -d you can optionally specify the dataset to add.
+# If only a file is specified without a dataset, adaguc-server will try to find the matching dataset that belongs to the file.
 #
 # Usage: ./adaguc-server-addfile.sh -d <datasetname (optional)> -f <file to add>
+# Usage: ./adaguc-server-addfile.sh -f <file to add> 
 # Usage: ./adaguc-server-addfile.sh -d <datasetname> 
 
 
