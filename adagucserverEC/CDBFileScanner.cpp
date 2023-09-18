@@ -410,6 +410,10 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
     }
 
     for (size_t j = 0; j < fileList->size(); j++) {
+      if (!CDirReader::isFile((*fileList)[j].c_str())) {
+        CDBWarning("File [%s] does not exist anymore, skipping", (*fileList)[j].c_str());
+        continue;
+      }
 // Loop through all configured dimensions.
 #ifdef CDBFILESCANNER_DEBUG
       CDBDebug("Loop through all configured dimensions.");
