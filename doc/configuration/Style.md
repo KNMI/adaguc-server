@@ -29,11 +29,11 @@ data with automatically detected min/max values.
 <Style name="examplestyle1">
 <Legend fixedclasses="true" tickinterval="2"
 tickround="2">color</Legend>
-<ContourLine width="0.8" linecolor="\#000000" textcolor="\#404040"
+<ContourLine width="0.8" linecolor="#000000" textcolor="#404040"
 textformatting="%2.0f" interval="2"/>
 
 <ShadeInterval min="-10000" max="0" label="<0"
-fillcolor="\#FFFFFF">0</ShadeInterval>
+fillcolor="#FFFFFF">0</ShadeInterval>
 <ShadeInterval min="0" max="1" label="0 - 1" />
 <ShadeInterval min="1" max="2" label="1 - 2" />
 <ShadeInterval min="2" max="3" label="2 - 3" />
@@ -45,7 +45,7 @@ fillcolor="\#FFFFFF">0</ShadeInterval>
 <ShadeInterval min="8" max="9" label="8 - 9" />
 <ShadeInterval min="9" max="10" label="9 - 10" />
 <ShadeInterval min="10" max="10000" label=">10"
-fillcolor="\#FF00AF"/>
+fillcolor="#FF00AF"/>
 <RenderMethod>nearest,nearestcontour,bilinearcontour,shadedcontour,bilinear</RenderMethod>
 <SmoothingFilter>0</SmoothingFilter>
 <NameMapping name="nearest" title="Temperature 0-10"
@@ -77,13 +77,13 @@ An example style for cloudcover:
 <Min>0</Min>
 <Max>1</Max>
 <ShadeInterval min="0.05" max="0.25" label="0.05-0.25"
-fillcolor="\#E6E6FF"/>
+fillcolor="#E6E6FF"/>
 <ShadeInterval min="0.25" max="0.50" label="0.25-0.5"
-fillcolor="\#B3B3FF"/>
+fillcolor="#B3B3FF"/>
 <ShadeInterval min="0.50" max="0.75" label="0.50-0.75"
-fillcolor="\#8080FF"/>
+fillcolor="#8080FF"/>
 <ShadeInterval min="0.75" max="1.00" label="0.75-1.00"
-fillcolor="\#4C4CFF"/>
+fillcolor="#4C4CFF"/>
 <RenderMethod>bilinear,nearest,shaded</RenderMethod>
 <NameMapping name="nearest" title="High cloud cover"
 abstract="Rendered with nearest neighbour interpolation"/>

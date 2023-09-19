@@ -124,6 +124,8 @@ private:
 public:
   CDataReader() { _enableReporting = true; }
   ~CDataReader() {}
+  bool enablePostProcessors = true; // Allows disabling of other postprocessors. For example when a datasource is output of another postprocessor.
+  bool enableObjectCache = true;
   int open(CDataSource *dataSource, int mode, int x, int y);
   int openExtent(CDataSource *dataSource, int mode, int *gridExtent);
   int open(CDataSource *dataSource, int mode, int x, int y, int *gridExtent);

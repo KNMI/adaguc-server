@@ -1,11 +1,7 @@
-**Version 2.11.4 2023-09-04**
-
-- Also cleanup FS and DB when the file to scan was not found (When an error occured)
-
-**Version 2.11.3 2023-09-04**
-
-- Reduced logging during dataset scanning for better traceability
-- Stop scanning at early stage when a variable does not exist in a NetCDF file.
+**Version 2.12.0 2023-08-24**
+- Support for DataPostProcessor Operator, to add, substract, multiply or divide layers
+- Dimensions can now be fixed and hidden, to make layers representing a single elevation based on a variable with multiple elevations
+- Support to substract two elevations from the same variable
 
 **Version 2.11.2 2023-08-21**
 
