@@ -1146,6 +1146,21 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
         }
       }
     }
+    // Check and set value when the value is forced in the layer dimension configuration
+    for (size_t i = 0; i < dataSource->cfgLayer->Dimension.size(); i++) {
+      if (!dataSource->cfgLayer->Dimension[i]->attr.fixvalue.empty()) {
+        CT::string dimName(dataSource->cfgLayer->Dimension[i]->value.c_str());
+        CT::string forceValue = dataSource->cfgLayer->Dimension[i]->attr.fixvalue;
+        dimName.toLowerCaseSelf();
+        for (size_t l = 0; l < dataSource->requiredDims.size(); l++) {
+          if (dataSource->requiredDims[l]->name.equals(&dimName)) {
+            CDBDebug("Forcing dimension %s from %s to %s", dimName.c_str(), dataSource->requiredDims[i]->value.c_str(), forceValue.c_str());
+            dataSource->requiredDims[i]->value = forceValue;
+            break;
+          }
+        }
+      }
+    }
 
     // STOP NOW
   } catch (int i) {

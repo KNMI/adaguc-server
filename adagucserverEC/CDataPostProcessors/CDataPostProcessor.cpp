@@ -1,6 +1,8 @@
 #include "CDataPostProcessor.h"
 #include "CRequest.h"
+#include "CDataPostProcessor_IncludeLayer.h"
 #include "CDataPostProcessor_ClipMinMax.h"
+#include "CDataPostProcessor_Operator.h"
 
 void writeLogFileLocal(const char *msg) {
   char *logfile = getenv("ADAGUC_LOGFILE");
@@ -34,14 +36,14 @@ CDPPExecutor *CDataPostProcessor::getCDPPExecutor() { return &cdppExecutorInstan
 const char *CDPPAXplusB::className = "CDPPAXplusB";
 
 const char *CDPPAXplusB::getId() { return "AX+B"; }
-int CDPPAXplusB::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *) {
+int CDPPAXplusB::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int) {
   if (proc->attr.algorithm.equals("ax+b")) {
     return CDATAPOSTPROCESSOR_RUNBEFOREREADING;
   }
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
 }
-int CDPPAXplusB::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int) {
-  if (isApplicable(proc, dataSource) != CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
+int CDPPAXplusB::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
+  if (isApplicable(proc, dataSource, mode) != CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
     return -1;
   }
   if (dataSource->formatConverterActive) {
@@ -84,284 +86,21 @@ int CDPPAXplusB::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *da
 }
 
 /************************/
-/*CDPPIncludeLayer */
-/************************/
-const char *CDPPIncludeLayer::className = "CDPPIncludeLayer";
-
-const char *CDPPIncludeLayer::getId() { return "include_layer"; }
-int CDPPIncludeLayer::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *) {
-  if (proc->attr.algorithm.equals("include_layer")) {
-    return CDATAPOSTPROCESSOR_RUNAFTERREADING | CDATAPOSTPROCESSOR_RUNBEFOREREADING;
-  }
-  return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
-}
-
-CDataSource *CDPPIncludeLayer::getDataSource(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource) {
-  CDataSource *dataSourceToInclude = new CDataSource();
-  CT::string additionalLayerName = proc->attr.name.c_str();
-  size_t additionalLayerNo = 0;
-  for (size_t j = 0; j < dataSource->srvParams->cfg->Layer.size(); j++) {
-    CT::string layerName;
-    dataSource->srvParams->makeUniqueLayerName(&layerName, dataSource->srvParams->cfg->Layer[j]);
-    // CDBDebug("comparing for additionallayer %s==%s", additionalLayerName.c_str(), layerName.c_str());
-    if (additionalLayerName.equals(layerName)) {
-      additionalLayerNo = j;
-      break;
-    }
-  }
-  dataSourceToInclude->setCFGLayer(dataSource->srvParams, dataSource->srvParams->configObj->Configuration[0], dataSource->srvParams->cfg->Layer[additionalLayerNo], additionalLayerName.c_str(), 0);
-  return dataSourceToInclude;
-}
-
-int CDPPIncludeLayer::setDimsForNewDataSource(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, CDataSource *dataSourceToInclude) {
-  CT::string additionalLayerName = proc->attr.name.c_str();
-  bool dataIsFound = false;
-  try {
-    if (CRequest::setDimValuesForDataSource(dataSourceToInclude, dataSource->srvParams) == 0) {
-      dataIsFound = true;
-    }
-  } catch (ServiceExceptionCode e) {
-  }
-  if (dataIsFound == false) {
-    CDBDebug("No data available for layer %s", additionalLayerName.c_str());
-    return 1;
-  }
-  return 0;
-}
-
-int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
-  if ((isApplicable(proc, dataSource) & mode) == false) {
-    return -1;
-  }
-  if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
-
-    CDBDebug("CDATAPOSTPROCESSOR_RUNBEFOREREADING::Applying include_layer");
-
-    // Load the other datasource.
-    CDataSource *dataSourceToInclude = getDataSource(proc, dataSource);
-    if (dataSourceToInclude == NULL) {
-      CDBDebug("dataSourceToInclude has no data");
-      return 0;
-    }
-    /*
-      CDirReader dirReader;
-      if(CDBFileScanner::searchFileNames(&dirReader,dataSourceToInclude->cfgLayer->FilePath[0]->value.c_str(),dataSourceToInclude->cfgLayer->FilePath[0]->attr.filter,NULL)!=0){
-        CDBError("Could not find any filename");
-        return 1;
-      }
-
-      if(dirReader.fileList.size()==0){
-        CDBError("dirReader.fileList.size()==0");return 1;
-      }
-
-
-      dataSourceToInclude->addStep(dirReader.fileList[0]->fullName.c_str(),NULL);
-    */
-    int status = setDimsForNewDataSource(proc, dataSource, dataSourceToInclude);
-    if (status != 0) {
-      CDBError("Trying to include datasource, but it has no values for given dimensions");
-      delete dataSourceToInclude;
-      ;
-      return 1;
-    }
-
-    CDataReader reader;
-    status = reader.open(dataSourceToInclude, CNETCDFREADER_MODE_OPEN_HEADER); // Only read metadata
-    if (status != 0) {
-      CDBDebug("Can't open file %s for layer %s", dataSourceToInclude->getFileName(), proc->attr.name.c_str());
-      return 1;
-    }
-
-    for (size_t dataObjectNr = 0; dataObjectNr < dataSource->getNumDataObjects(); dataObjectNr++) {
-      if (dataSource->getDataObject(dataObjectNr)->cdfVariable->name.equals(dataSourceToInclude->getDataObject(0)->cdfVariable->name)) {
-        //        CDBDebug("Probably already done");
-        delete dataSourceToInclude;
-        return 0;
-      }
-    }
-    for (size_t dataObjectNr = 0; dataObjectNr < dataSourceToInclude->getNumDataObjects(); dataObjectNr++) {
-      CDataSource::DataObject *currentDataObject = dataSource->getDataObject(0);
-      CDF::Variable *varToClone = NULL;
-      try {
-        varToClone = dataSourceToInclude->getDataObject(dataObjectNr)->cdfVariable;
-      } catch (int e) {
-      }
-      if (varToClone == NULL) {
-        CDBError("Variable not found");
-        return 1;
-      }
-
-      int mode = 0; // 0:append, 1:prepend
-      if (proc->attr.mode.empty() == false) {
-        if (proc->attr.mode.equals("append")) mode = 0;
-        if (proc->attr.mode.equals("prepend")) mode = 1;
-      }
-
-      CDataSource::DataObject *newDataObject = new CDataSource::DataObject();
-      if (mode == 0) dataSource->getDataObjectsVector()->push_back(newDataObject);
-
-      if (mode == 1) dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), newDataObject);
-
-      CDBDebug("--------> newDataObject %d ", dataSource->getDataObjectsVector()->size());
-
-      newDataObject->variableName.copy(varToClone->name.c_str());
-
-      newDataObject->cdfVariable = new CDF::Variable();
-      CT::string text;
-      text.print("{\"variable\":\"%s\",\"datapostproc\":\"%s\"}", varToClone->name.c_str(), this->getId());
-      newDataObject->cdfObject = currentDataObject->cdfObject; //(CDFObject*)varToClone->getParentCDFObject();
-      CDBDebug("--------> Adding variable %s ", varToClone->name.c_str());
-      newDataObject->cdfObject->addVariable(newDataObject->cdfVariable);
-      newDataObject->cdfVariable->setName(varToClone->name.c_str());
-      newDataObject->cdfVariable->setType(varToClone->getType());
-      newDataObject->cdfVariable->setSize(dataSource->dWidth * dataSource->dHeight);
-
-      for (size_t j = 0; j < currentDataObject->cdfVariable->dimensionlinks.size(); j++) {
-        newDataObject->cdfVariable->dimensionlinks.push_back(currentDataObject->cdfVariable->dimensionlinks[j]);
-      }
-
-      for (size_t j = 0; j < varToClone->attributes.size(); j++) {
-        newDataObject->cdfVariable->attributes.push_back(new CDF::Attribute(varToClone->attributes[j]));
-      }
-      newDataObject->cdfVariable->removeAttribute("ADAGUC_DATAOBJECTID");
-      newDataObject->cdfVariable->setAttributeText("ADAGUC_DATAOBJECTID", text.c_str());
-
-      newDataObject->cdfVariable->removeAttribute("scale_factor");
-      newDataObject->cdfVariable->removeAttribute("add_offset");
-
-      newDataObject->cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
-    }
-    reader.close();
-    delete dataSourceToInclude;
-    return 0;
-  }
-
-  if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
-    CDBDebug("CDATAPOSTPROCESSOR_RUNAFTERREADING::Applying include_layer");
-
-    // Load the other datasource.
-    CDataSource *dataSourceToInclude = getDataSource(proc, dataSource);
-    if (dataSourceToInclude == NULL) {
-      CDBDebug("dataSourceToInclude has no data");
-      return 0;
-    }
-    int status = setDimsForNewDataSource(proc, dataSource, dataSourceToInclude);
-    if (status != 0) {
-      CDBError("Trying to include datasource, but it has no values for given dimensions");
-      delete dataSourceToInclude;
-      ;
-      return 1;
-    }
-
-    dataSourceToInclude->setTimeStep(dataSource->getCurrentTimeStep());
-
-    // dataSourceToInclude->getDataObject(0)->cdfVariable->data=NULL;
-    CDataReader reader;
-    //    CDBDebug("Opening %s",dataSourceToInclude->getFileName());
-    status = reader.open(dataSourceToInclude, CNETCDFREADER_MODE_OPEN_ALL); // Now open the data as well.
-    if (status != 0) {
-      CDBDebug("Can't open file %s for layer %s", dataSourceToInclude->getFileName(), proc->attr.name.c_str());
-      return 1;
-    }
-
-    /*  size_t l=(size_t)dataSource->dHeight*(size_t)dataSource->dWidth;
-      CDF::allocateData( dataSourceToInclude->getDataObject(0)->cdfVariable->getType(),&dataSourceToInclude->getDataObject(0)->cdfVariable->data,l);
-      CDF::fill(dataSourceToInclude->getDataObject(0)->cdfVariable->data, dataSourceToInclude->getDataObject(0)->cdfVariable->getType(),100,(size_t)dataSource->dHeight*(size_t)dataSource->dWidth);
-     */
-    for (size_t dataObjectNr = 0; dataObjectNr < dataSourceToInclude->getNumDataObjects(); dataObjectNr++) {
-      // This is the variable to read from
-      CDF::Variable *varToClone = dataSourceToInclude->getDataObject(dataObjectNr)->cdfVariable;
-
-      // This is the variable to write To
-      //      CDBDebug("Filling %s",varToClone->name.c_str());
-      CDF::Variable *varToWriteTo = dataSource->getDataObject(varToClone->name.c_str())->cdfVariable;
-      CDF::fill(varToWriteTo->data, varToWriteTo->getType(), 0, (size_t)dataSource->dHeight * (size_t)dataSource->dWidth);
-
-      Settings settings;
-      settings.width = dataSource->dWidth;
-      settings.height = dataSource->dHeight;
-      settings.data = (void *)varToWriteTo->data;  // To write TO
-      void *sourceData = (void *)varToClone->data; // To read FROM
-
-      CGeoParams sourceGeo;
-      sourceGeo.dWidth = dataSourceToInclude->dWidth;
-      sourceGeo.dHeight = dataSourceToInclude->dHeight;
-      sourceGeo.dfBBOX[0] = dataSourceToInclude->dfBBOX[0];
-      sourceGeo.dfBBOX[1] = dataSourceToInclude->dfBBOX[1];
-      sourceGeo.dfBBOX[2] = dataSourceToInclude->dfBBOX[2];
-      sourceGeo.dfBBOX[3] = dataSourceToInclude->dfBBOX[3];
-      sourceGeo.dfCellSizeX = dataSourceToInclude->dfCellSizeX;
-      sourceGeo.dfCellSizeY = dataSourceToInclude->dfCellSizeY;
-      sourceGeo.CRS = dataSourceToInclude->nativeProj4;
-
-      CGeoParams destGeo;
-      destGeo.dWidth = dataSource->dWidth;
-      destGeo.dHeight = dataSource->dHeight;
-      destGeo.dfBBOX[0] = dataSource->dfBBOX[0];
-      destGeo.dfBBOX[1] = dataSource->dfBBOX[1];
-      destGeo.dfBBOX[2] = dataSource->dfBBOX[2];
-      destGeo.dfBBOX[3] = dataSource->dfBBOX[3];
-      destGeo.dfCellSizeX = dataSource->dfCellSizeX;
-      destGeo.dfCellSizeY = dataSource->dfCellSizeY;
-      destGeo.CRS = dataSource->nativeProj4;
-
-      CImageWarper warper;
-
-      status = warper.initreproj(dataSourceToInclude, &destGeo, &dataSource->srvParams->cfg->Projection);
-      if (status != 0) {
-        CDBError("Unable to initialize projection");
-        return 1;
-      }
-      GenericDataWarper genericDataWarper;
-      switch (varToWriteTo->getType()) {
-      case CDF_CHAR:
-        genericDataWarper.render<char>(&warper, sourceData, &sourceGeo, &destGeo, &settings, &drawFunction);
-        break;
-      case CDF_BYTE:
-        genericDataWarper.render<char>(&warper, sourceData, &sourceGeo, &destGeo, &settings, &drawFunction);
-        break;
-      case CDF_UBYTE:
-        genericDataWarper.render<unsigned char>(&warper, sourceData, &sourceGeo, &destGeo, &settings, &drawFunction);
-        break;
-      case CDF_SHORT:
-        genericDataWarper.render<short>(&warper, sourceData, &sourceGeo, &destGeo, &settings, &drawFunction);
-        break;
-      case CDF_USHORT:
-        genericDataWarper.render<ushort>(&warper, sourceData, &sourceGeo, &destGeo, &settings, &drawFunction);
-        break;
-      case CDF_INT:
-        genericDataWarper.render<int>(&warper, sourceData, &sourceGeo, &destGeo, &settings, &drawFunction);
-        break;
-      case CDF_UINT:
-        genericDataWarper.render<uint>(&warper, sourceData, &sourceGeo, &destGeo, &settings, &drawFunction);
-        break;
-      case CDF_FLOAT:
-        genericDataWarper.render<float>(&warper, sourceData, &sourceGeo, &destGeo, &settings, &drawFunction);
-        break;
-      case CDF_DOUBLE:
-        genericDataWarper.render<double>(&warper, sourceData, &sourceGeo, &destGeo, &settings, &drawFunction);
-        break;
-      }
-    }
-    reader.close();
-    delete dataSourceToInclude;
-  }
-  return 0;
-}
-
-/************************/
 /*CDPPDATAMASK */
 /************************/
 const char *CDPPDATAMASK::className = "CDPPDATAMASK";
 
 const char *CDPPDATAMASK::getId() { return "datamask"; }
-int CDPPDATAMASK::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource) {
+int CDPPDATAMASK::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
   if (proc->attr.algorithm.equals("datamask")) {
-    if (dataSource->getNumDataObjects() != 2 && dataSource->getNumDataObjects() != 3) {
-      CDBError("2 variables are needed for datamask, found %d", dataSource->getNumDataObjects());
-      return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
+    if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
+      if (dataSource->getNumDataObjects() != 2 && dataSource->getNumDataObjects() != 3) {
+        CDBError("2 or 3 variables are needed for datamask, found %d", dataSource->getNumDataObjects());
+        return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
+      }
+      return CDATAPOSTPROCESSOR_RUNBEFOREREADING;
     }
-    return CDATAPOSTPROCESSOR_RUNAFTERREADING | CDATAPOSTPROCESSOR_RUNBEFOREREADING;
+    return CDATAPOSTPROCESSOR_RUNAFTERREADING;
   }
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
 }
@@ -463,7 +202,7 @@ void CDPPDATAMASK::DOIT<TT, SS>::reallyDoIt(void *newData, void *orginalData, vo
 }
 
 int CDPPDATAMASK::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
-  if ((isApplicable(proc, dataSource) & mode) == false) {
+  if (isApplicable(proc, dataSource, mode) == false) {
     return -1;
   }
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
@@ -591,19 +330,22 @@ int CDPPDATAMASK::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
 const char *CDPPMSGCPPVisibleMask::className = "CDPPMSGCPPVisibleMask";
 
 const char *CDPPMSGCPPVisibleMask::getId() { return "MSGCPP_VISIBLEMASK"; }
-int CDPPMSGCPPVisibleMask::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource) {
+int CDPPMSGCPPVisibleMask::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
   if (proc->attr.algorithm.equals("msgcppvisiblemask")) {
-    if (dataSource->getNumDataObjects() != 2 && dataSource->getNumDataObjects() != 3) {
-      CDBError("2 variables are needed for msgcppvisiblemask, found %d", dataSource->getNumDataObjects());
-      return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
+    if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
+      if (dataSource->getNumDataObjects() != 2 && dataSource->getNumDataObjects() != 3) {
+        CDBError("2 or 3 variables are needed for msgcppvisiblemask, found %d", dataSource->getNumDataObjects());
+        return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
+      }
+      return CDATAPOSTPROCESSOR_RUNBEFOREREADING;
     }
-    return CDATAPOSTPROCESSOR_RUNAFTERREADING | CDATAPOSTPROCESSOR_RUNBEFOREREADING;
+    return CDATAPOSTPROCESSOR_RUNAFTERREADING;
   }
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
 }
 
 int CDPPMSGCPPVisibleMask::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
-  if ((isApplicable(proc, dataSource) & mode) == false) {
+  if (isApplicable(proc, dataSource, mode) == false) {
     return -1;
   }
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
@@ -690,23 +432,25 @@ const char *CDPPMSGCPPHIWCMask::className = "CDPPMSGCPPHIWCMask";
 
 const char *CDPPMSGCPPHIWCMask::getId() { return "MSGCPP_HIWCMASK"; }
 
-int CDPPMSGCPPHIWCMask::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource) {
+int CDPPMSGCPPHIWCMask::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
   if (proc->attr.algorithm.equals("msgcpphiwcmask")) {
-    if (dataSource->getNumDataObjects() != 4 && dataSource->getNumDataObjects() != 5) {
-      CDBError("4 variables are needed for msgcpphiwcmask, found %d", dataSource->getNumDataObjects());
-      return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
+    if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
+      if (dataSource->getNumDataObjects() != 4 && dataSource->getNumDataObjects() != 5) {
+        CDBError("4 or 5 variables are needed for msgcpphiwcmask, found %d", dataSource->getNumDataObjects());
+        return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
+      }
+      return CDATAPOSTPROCESSOR_RUNBEFOREREADING;
     }
-    return CDATAPOSTPROCESSOR_RUNAFTERREADING | CDATAPOSTPROCESSOR_RUNBEFOREREADING;
+    return CDATAPOSTPROCESSOR_RUNAFTERREADING;
   }
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
 }
 
 int CDPPMSGCPPHIWCMask::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
-  if ((isApplicable(proc, dataSource) & mode) == false) {
+  if (isApplicable(proc, dataSource, mode) == false) {
     return -1;
   }
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
-
     if (dataSource->getDataObject(0)->cdfVariable->name.equals("hiwc")) return 0;
     CDBDebug("CDATAPOSTPROCESSOR_RUNBEFOREREADING::Applying msgcpp HIWC mask");
     CDF::Variable *varToClone = dataSource->getDataObject(0)->cdfVariable;
@@ -801,6 +545,7 @@ CDPPExecutor::CDPPExecutor() {
   dataPostProcessorList->push_back(new CDPPAddFeatures());
   dataPostProcessorList->push_back(new CDPPGoes16Metadata());
   dataPostProcessorList->push_back(new CDPPClipMinMax());
+  dataPostProcessorList->push_back(new CDPPOperator());
 }
 
 CDPPExecutor::~CDPPExecutor() {
@@ -814,7 +559,7 @@ int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode) {
   for (size_t dpi = 0; dpi < dataSource->cfgLayer->DataPostProc.size(); dpi++) {
     CServerConfig::XMLE_DataPostProc *proc = dataSource->cfgLayer->DataPostProc[dpi];
     for (size_t procId = 0; procId < dataPostProcessorList->size(); procId++) {
-      int code = dataPostProcessorList->get(procId)->isApplicable(proc, dataSource);
+      int code = dataPostProcessorList->get(procId)->isApplicable(proc, dataSource, mode);
 
       if (code == CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET) {
         CDBError("Constraints for DPP %s are not met", dataPostProcessorList->get(procId)->getId());
@@ -857,7 +602,7 @@ int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode, double *d
   for (size_t dpi = 0; dpi < dataSource->cfgLayer->DataPostProc.size(); dpi++) {
     CServerConfig::XMLE_DataPostProc *proc = dataSource->cfgLayer->DataPostProc[dpi];
     for (size_t procId = 0; procId < dataPostProcessorList->size(); procId++) {
-      int code = dataPostProcessorList->get(procId)->isApplicable(proc, dataSource);
+      int code = dataPostProcessorList->get(procId)->isApplicable(proc, dataSource, mode);
 
       if (code == CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET) {
         CDBError("Constraints for DPP %s are not met", dataPostProcessorList->get(procId)->getId());
@@ -901,13 +646,15 @@ int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode, double *d
 const char *CDPPBeaufort::className = "CDPPBeaufort";
 
 const char *CDPPBeaufort::getId() { return "beaufort"; }
-int CDPPBeaufort::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource) {
+int CDPPBeaufort::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
   if (proc->attr.algorithm.equals("beaufort")) {
-    if (dataSource->getNumDataObjects() != 1 && dataSource->getNumDataObjects() != 2) {
-      CDBError("1 or 2 variables are needed for beaufort, found %d", dataSource->getNumDataObjects());
-      return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
+    if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
+      if (dataSource->getNumDataObjects() != 1 && dataSource->getNumDataObjects() != 2) {
+        CDBError("1 or 2 variables are needed for beaufort, found %d", dataSource->getNumDataObjects());
+        return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
+      }
+      return CDATAPOSTPROCESSOR_RUNAFTERREADING;
     }
-    return CDATAPOSTPROCESSOR_RUNAFTERREADING;
   }
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
 }
@@ -945,7 +692,7 @@ float CDPPBeaufort::getBeaufort(float speed) {
   return bft;
 }
 int CDPPBeaufort::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
-  if ((isApplicable(proc, dataSource) & mode) == false) {
+  if (isApplicable(proc, dataSource, mode) == false) {
     return -1;
   }
   CDBDebug("Applying beaufort %d", mode == CDATAPOSTPROCESSOR_RUNAFTERREADING);
@@ -1068,19 +815,21 @@ int CDPPBeaufort::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
 const char *CDPPToKnots::className = "CDPPToToKnots";
 
 const char *CDPPToKnots::getId() { return "toknots"; }
-int CDPPToKnots::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource) {
+int CDPPToKnots::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
   if (proc->attr.algorithm.equals("toknots")) {
-    if (dataSource->getNumDataObjects() != 1 && dataSource->getNumDataObjects() != 2) {
-      CDBError("1 or 2 variables are needed for toknots, found %d", dataSource->getNumDataObjects());
-      return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
+    if (CDATAPOSTPROCESSOR_RUNAFTERREADING) {
+      if (dataSource->getNumDataObjects() != 1 && dataSource->getNumDataObjects() != 2) {
+        CDBError("1 or 2 variables are needed for toknots, found %d", dataSource->getNumDataObjects());
+        return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
+      }
+      return CDATAPOSTPROCESSOR_RUNAFTERREADING;
     }
-    return CDATAPOSTPROCESSOR_RUNAFTERREADING;
   }
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
 }
 
 int CDPPToKnots::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
-  if ((isApplicable(proc, dataSource) & mode) == false) {
+  if (isApplicable(proc, dataSource, mode) == false) {
     return -1;
   }
   CDBDebug("Applying toknots %d", mode == CDATAPOSTPROCESSOR_RUNAFTERREADING);
@@ -1203,7 +952,7 @@ int CDPPToKnots::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *da
 const char *CDPDBZtoRR::className = "CDPDBZtoRR";
 
 const char *CDPDBZtoRR::getId() { return "dbztorr"; }
-int CDPDBZtoRR::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *) {
+int CDPDBZtoRR::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int mode) {
   if (proc->attr.algorithm.equals("dbztorr")) {
     return CDATAPOSTPROCESSOR_RUNAFTERREADING | CDATAPOSTPROCESSOR_RUNBEFOREREADING;
   }
@@ -1217,7 +966,7 @@ float CDPDBZtoRR::getRR(float dbZ) {
 
 int CDPDBZtoRR::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode, double *data, size_t numItems) {
   CDBDebug("CDPDBZtoRR");
-  if ((isApplicable(proc, dataSource) & mode) == false) {
+  if (isApplicable(proc, dataSource, mode) == false) {
     return -1;
   }
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
@@ -1237,7 +986,7 @@ int CDPDBZtoRR::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dat
 }
 
 int CDPDBZtoRR::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
-  if ((isApplicable(proc, dataSource) & mode) == false) {
+  if (isApplicable(proc, dataSource, mode) == false) {
     return -1;
   }
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
@@ -1266,7 +1015,7 @@ int CDPDBZtoRR::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dat
 const char *CDPPAddFeatures::className = "CDPPAddFeatures";
 
 const char *CDPPAddFeatures::getId() { return "addfeatures"; }
-int CDPPAddFeatures::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *) {
+int CDPPAddFeatures::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int) {
   if (proc->attr.algorithm.equals("addfeatures")) {
     return CDATAPOSTPROCESSOR_RUNAFTERREADING | CDATAPOSTPROCESSOR_RUNBEFOREREADING;
   }
@@ -1274,7 +1023,7 @@ int CDPPAddFeatures::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataS
 }
 
 int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
-  if ((isApplicable(proc, dataSource) & mode) == false) {
+  if (isApplicable(proc, dataSource, mode) == false) {
     return -1;
   }
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {

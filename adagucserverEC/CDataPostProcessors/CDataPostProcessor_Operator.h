@@ -1,13 +1,15 @@
-#include "CDPPInterface.h"
+#include "CDataPostProcessor.h"
 
-#ifndef CDDPGOES16METADATA_H
-#define CDDPGOES16METADATA_H
+#ifndef CDATAPOSTPROCESSOR_OPERATOR_H
+#define CDATAPOSTPROCESSOR_OPERATOR_H
 /**
- * Fix goes16 metadata
+ * Operator algorithm
  */
-class CDPPGoes16Metadata : public CDPPInterface {
+
+class CDPPOperator : public CDPPInterface {
 private:
   DEF_ERRORFUNCTION();
+  float getElement(void *data, CDFType dataType, size_t index);
 
 public:
   virtual const char *getId();
@@ -15,4 +17,5 @@ public:
   virtual int execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode);
   virtual int execute(CServerConfig::XMLE_DataPostProc *, CDataSource *, int, double *, size_t) { return 1; } // TODO: Still need to implement
 };
+
 #endif

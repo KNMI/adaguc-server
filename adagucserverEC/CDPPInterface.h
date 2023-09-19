@@ -21,7 +21,7 @@ public:
    * @returns CDATAPOSTPROCESSOR_NOTAPPLICABLE if not applicable, e.g. the configuration does not match the processor
    * @returns CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET if applicable but constraints are not met, e.g. datasource properties do not match
    */
-  virtual int isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource) = 0;
+  virtual int isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) = 0;
 
   /**
    * Executes the data postprocessor on a datasource, on the full grid
