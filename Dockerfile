@@ -1,4 +1,5 @@
-FROM python:3.10-slim-bookworm as base
+######### First stage (build) ############
+FROM python:3.10-slim-bookworm as build
 
 USER root
 
@@ -6,8 +7,6 @@ LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
 LABEL version="2.12.0"
-
-######### First stage (build) ############
 
 # Try to update image packages
 RUN apt-get -q -y update \
@@ -43,8 +42,8 @@ WORKDIR /adaguc/adaguc-server-master
 RUN bash compile.sh
 
 
-# ######### Second stage (production) ############
-FROM python:3.10-slim-bookworm
+######### Second stage, base image for test and prod ############
+FROM python:3.10-slim-bookworm as base
 
 USER root
 
@@ -69,25 +68,31 @@ RUN apt-get -q -y update \
 WORKDIR /adaguc/adaguc-server-master
 
 # Upgrade pip and install python requirements.txt
-COPY --from=0 /adaguc/adaguc-server-master/requirements.txt /adaguc/adaguc-server-master/requirements.txt
-COPY --from=0 /adaguc/adaguc-server-master/requirements-dev.txt /adaguc/adaguc-server-master/requirements-dev.txt
+COPY --from=build /adaguc/adaguc-server-master/requirements.txt /adaguc/adaguc-server-master/requirements.txt
 RUN pip3 install --no-cache-dir --upgrade pip pip-tools \
-    && pip-sync requirements.txt requirements-dev.txt
+    && pip install --no-cache-dir -r requirements.txt
 
 # Install compiled adaguc binaries from stage one
-COPY --from=0 /adaguc/adaguc-server-master/bin /adaguc/adaguc-server-master/bin
-COPY --from=0 /adaguc/adaguc-server-master/data /adaguc/adaguc-server-master/data
-COPY --from=0 /adaguc/adaguc-server-master/python /adaguc/adaguc-server-master/python
-COPY --from=0 /adaguc/adaguc-server-master/tests /adaguc/adaguc-server-master/tests
-COPY --from=0 /adaguc/adaguc-server-master/runtests.sh /adaguc/adaguc-server-master/runtests.sh
+COPY --from=build /adaguc/adaguc-server-master/bin /adaguc/adaguc-server-master/bin
+COPY --from=build /adaguc/adaguc-server-master/data /adaguc/adaguc-server-master/data
+COPY --from=build /adaguc/adaguc-server-master/python /adaguc/adaguc-server-master/python
 
+
+######### Third stage, test ############
+FROM base as test
+
+COPY --from=build /adaguc/adaguc-server-master/requirements-dev.txt /adaguc/adaguc-server-master/requirements-dev.txt
+RUN pip install --no-cache-dir -r requirements-dev.txt
+
+COPY --from=build /adaguc/adaguc-server-master/tests /adaguc/adaguc-server-master/tests
+COPY --from=build /adaguc/adaguc-server-master/runtests.sh /adaguc/adaguc-server-master/runtests.sh
 
 # Run adaguc-server functional and regression tests
-
 RUN bash runtests.sh
-# Uninstall dev requirements (pip-sync removes packages not required)
-RUN pip-sync requirements.txt
 
+
+######### Fourth stage, test ############
+FROM base as prod
 
 # Set same uid as vivid
 RUN useradd -m adaguc -u 1000 && \
@@ -116,7 +121,9 @@ ENV PYTHONPATH=${ADAGUC_PATH}/python/python_fastapi_server
 # Build and test adaguc python support
 WORKDIR /adaguc/adaguc-server-master/python/lib/
 RUN python3 setup.py install
+# TODO?: Move this to test?
 RUN bash -c "python3 /adaguc/adaguc-server-master/python/examples/runautowms/run.py && ls result.png"
+
 WORKDIR /adaguc/adaguc-server-master
 
 USER adaguc
