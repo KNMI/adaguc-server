@@ -106,7 +106,9 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
       if (configFileList.size() > 1) {
         srvParam->datasetLocation.copy(configFileList[configFileList.size() - 1].basename().c_str());
         srvParam->datasetLocation.substringSelf(0, srvParam->datasetLocation.lastIndexOf("."));
-        CDBDebug("Dataset name based on passed configfile is [%s]", srvParam->datasetLocation.c_str());
+        if (srvParam->verbose) {
+          CDBDebug("Dataset name based on passed configfile is [%s]", srvParam->datasetLocation.c_str());
+        }
         status = CAutoResource::configureDataset(srvParam, false);
         if (status != 0) {
           CDBError("ConfigureDataset failed for %s", configFileList[1].c_str());
@@ -3421,22 +3423,28 @@ int CRequest::updatedb(CT::string *tailPath, CT::string *layerPathToScan, int sc
   }
 
   srvParam->requestType = REQUEST_UPDATEDB;
+  bool file_was_added = false;
 
   for (size_t j = 0; j < dataSources.size(); j++) {
     if (dataSources[j]->dLayerType == CConfigReaderLayerTypeDataBase || dataSources[j]->dLayerType == CConfigReaderLayerTypeBaseLayer) {
       if (scanFlags & CDBFILESCANNER_UPDATEDB) {
         status = CDBFileScanner::updatedb(dataSources[j], tailPath, layerPathToScan, scanFlags);
+        if (status == 0) {
+          file_was_added = true;
+        }
       }
       if (scanFlags & CDBFILESCANNER_CREATETILES) {
         status = CCreateTiles::createTiles(dataSources[j], scanFlags);
       }
-      if (status != 0) {
+      if (status != CDBFILESCANNER_RETURN_FILEDOESNOTMATCH && status != 0) {
         CDBError("Could not update db for: %s", dataSources[j]->cfgLayer->Name[0]->value.c_str());
         errorHasOccured++;
       }
     }
   }
-
+  if (file_was_added == false && layerPathToScan->length() > 0) {
+    CDBWarning("The specified file %s did not match to any of the layers", layerPathToScan->c_str());
+  }
   if (srvParam->enableDocumentCache) {
     // invalidate cache
     CT::string cacheFileName;
