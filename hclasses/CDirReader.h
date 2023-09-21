@@ -32,6 +32,9 @@
 #include <map>
 static std::map<std::string, std::string> lookupTableFileModificationDateMap;
 
+#define CDIRREADER_INCLUDE_FILES 1
+#define CDIRREADER_INCLUDE_DIRECTORIES 2
+#define CDIRREADER_INCLUDE_ALL 3
 class CDirReader {
 private:
   int _ReadDir(const char *directory, const char *ext_filter, int recursive);
@@ -43,7 +46,25 @@ public:
   std::vector<std::string> fileList;
   CDirReader();
   ~CDirReader();
+  /**
+   * Lists a directory recursive for given filter. Results are placed in fileList.
+   *
+   * @param directory The directory to read
+   * @param ext_filter POSIX regexp indicating the filter to use for inluding files in the response
+   * returns: Zero on success, non-zero on error.
+   */
   int listDirRecursive(const char *directory, const char *ext_filter);
+  /** Static function to list a dir recursive. Results are returned in a vector
+   *
+   * @param directory The directory to read
+   * @param recursive Whether it should recurse into directories
+   * @param ext_filter POSIX regexp indicating the filter to use for inluding files in the response
+   * @param filesAndOrDirs Can be CDIRREADER_INCLUDE_FILES, CDIRREADER_INCLUDE_DIRECTORIES or both
+   * @param exceptionOnError Whether it should raise an exception if something goes wrong
+   * @returns: A vector with strings, listing the fullpath of the directory(ies)
+   */
+  static std::vector<std::string> listDir(const char *directory, bool recursive = false, const char *ext_filter = nullptr, int filesAndOrDirs = CDIRREADER_INCLUDE_FILES,
+                                          bool exceptionOnError = false);
   static CT::string makeCleanPath(const char *_path);
   static int getFileDate(CT::string *date, const char *file);
   static int testRegEx(const char *string, const char *pattern);
@@ -52,6 +73,7 @@ public:
 
   static bool isDir(const char *fileName);
 
+  static bool isFile(const char *fileName);
   /**
    * Create a public directory writable for everybody
    * A directory chain can also be given (like mkdir -p)
