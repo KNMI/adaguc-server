@@ -1,3 +1,6 @@
+**Version 2.13.2 2023-09-25**
+- Fixed a bug in autofinddataset option
+
 **Version 2.13.0 2023-09-20**
 - The script adaguc-server-addfile.sh is now able to find for a given file the corresponding dataset via the commandline option autofinddataset
 - Cleaning of model data is now done based on the forecast_reference_time dimension
