@@ -85,7 +85,7 @@ int setCRequestConfigFromEnvironment(CRequest *request, const char *additionalDa
   char *configfile = getenv("ADAGUC_CONFIG");
   if (configfile != NULL) {
     CT::string configWithAdditionalDataset = configfile;
-    if (additionalDataset != nullptr) {
+    if (additionalDataset != nullptr && strlen(additionalDataset) > 0) {
       configWithAdditionalDataset.concat(",");
       configWithAdditionalDataset.concat(additionalDataset);
     }
@@ -104,6 +104,9 @@ int setCRequestConfigFromEnvironment(CRequest *request, const char *additionalDa
   return 0;
 }
 
+/**
+ * @param layerPathToScan: the provided file to scan
+ */
 std::set<std::string> findDataSetsToScan(CT::string layerPathToScan, bool verbose) {
   std::set<std::string> datasetsToScan;
   // loop all datasets
@@ -113,6 +116,14 @@ std::set<std::string> findDataSetsToScan(CT::string layerPathToScan, bool verbos
     return datasetsToScan;
   }
   auto srvParam = baseRequest.getServerParams();
+
+  // Get the directory of the file to scan:
+  CT::string directoryOfFileToScan = layerPathToScan = CDirReader::makeCleanPath(layerPathToScan);
+  directoryOfFileToScan.substringSelf(0, directoryOfFileToScan.length() - directoryOfFileToScan.basename().length());
+  directoryOfFileToScan = CDirReader::makeCleanPath(directoryOfFileToScan) + "/";
+  if (verbose) {
+    CDBDebug("directoryOfFileToScan = [%s]", directoryOfFileToScan.c_str());
+  }
   srvParam->verbose = false;
   std::vector<CT::string> listOfDatasets;
   for (size_t j = 0; j < srvParam->cfg->Dataset.size(); j++) {
@@ -129,24 +140,32 @@ std::set<std::string> findDataSetsToScan(CT::string layerPathToScan, bool verbos
         auto configSrvParam = configParser.getServerParams();
         configSrvParam->verbose = false;
         setCRequestConfigFromEnvironment(&configParser, dataset.c_str());
+
         if (configSrvParam && configSrvParam->cfg) {
           auto layers = configSrvParam->cfg->Layer;
           for (size_t j = 0; j < layers.size(); j++) {
             if (layers[j]->attr.type.equals("database")) {
               if (layers[j]->FilePath.size() > 0) {
-                CT::string filePath = layers[j]->FilePath[0]->value;
+                CT::string filePath = CDirReader::makeCleanPath(layers[j]->FilePath[0]->value);
+                // Directories need to end with a /
+                CT::string filePathWithTrailingSlash = filePath + "/";
                 CT::string filter = layers[j]->FilePath[0]->attr.filter;
+                // CDBDebug(" %s %s", directoryOfFileToScan.c_str(), directoryOfFileToScan.c_str());
+                // When the FilePath in the Layer configuration is exactly the same as the file to scan, give a Match
                 if (layerPathToScan.equals(filePath)) {
                   if (verbose) {
-                    CDBDebug("Matching: %s", layers[j]->FilePath[0]->value.c_str());
+                    CDBDebug("Exactly matching: %s", filePath.c_str());
                   }
                   datasetsToScan.insert(dataset.c_str());
-                } else if (layerPathToScan.startsWith(filePath)) {
+                  break;
+                  // When the directory of the file to scan matches the FilePath and the filter matches, give a Match
+                } else if (directoryOfFileToScan.startsWith(filePathWithTrailingSlash)) {
                   if (CDirReader::testRegEx(layerPathToScan.basename(), filter.c_str()) == 1) {
                     if (verbose) {
-                      CDBDebug("Matching: %s / %s", layers[j]->FilePath[0]->value.c_str(), layers[j]->FilePath[0]->attr.filter.c_str());
+                      CDBDebug("Directories Matching: %s / %s", filePath.c_str(), filter.c_str());
                     }
                     datasetsToScan.insert(dataset.c_str());
+                    break;
                   }
                 }
               }

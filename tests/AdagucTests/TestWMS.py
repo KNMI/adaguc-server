@@ -1886,3 +1886,70 @@ class TestWMS(unittest.TestCase):
             data.getvalue(),
             AdagucTestTools().readfromfile(self.expectedoutputsspath +
                                            filename))
+    
+    def test_WMSCMDUpdateDBPathFileInSubfolders(self):
+        """
+        This tests if the autofinddataset option correctly finds the file if it is in a subfolder
+        """
+        AdagucTestTools().cleanTempDir()
+        # pylint: disable=unused-variable
+
+        config = ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml'
+        args=[
+            '--updatedb', '--autofinddataset', '--verboseoff', '--config', config, '--path', ADAGUC_PATH+"/data/datasets/test/RAD_NL25_PCP_CM_202106222000.h5"
+        ]
+        print(args)
+        env = {'ADAGUC_CONFIG': config}
+        status, data, headers = AdagucTestTools(
+        ).runADAGUCServer(args=args,
+                          env=env,
+                          isCGI=False,
+                          showLogOnError=True,
+                          showLog=False)
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSCMDUpdateDBPathFileInSubfoldersGetCapabilities.xml"
+        env = {'ADAGUC_CONFIG': config}
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.testScanPathSubfolder&SERVICE=WMS&request=getcapabilities",
+            env=env)
+        AdagucTestTools().writetofile(self.testresultspath + filename,
+                                      data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(
+            self.testresultspath + filename,
+            self.expectedoutputsspath + filename))
+        
+
+    def test_WMSCMDUpdateDBPathFileWithNonMatchingPath(self):
+        """
+        This tests if the autofinddataset option correctly finds the file if it is in a subfolder
+        """
+        AdagucTestTools().cleanTempDir()
+        # pylint: disable=unused-variable
+
+        config = ADAGUC_PATH + 'data/config/adaguc.tests.dataset.xml'
+        args=[
+            '--updatedb', '--autofinddataset', '--verboseoff', '--config', config, '--path', ADAGUC_PATH+"data/datasets/test_suffix/RAD_NL25_PCP_CM_202106222000_suffix.h5"
+        ]
+        print(args)
+        env = {'ADAGUC_CONFIG': config}
+        status, data, headers = AdagucTestTools(
+        ).runADAGUCServer(args=args,
+                          env=env,
+                          isCGI=False,
+                          showLogOnError=True,
+                          showLog=False)
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSCMDUpdateDBPathFileWithNonMatchingPathGetCapabilities.xml"
+        env = {'ADAGUC_CONFIG': config}
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.testScanPathSubfolderSuffix&SERVICE=WMS&request=getcapabilities",
+            env=env)
+        AdagucTestTools().writetofile(self.testresultspath + filename,
+                                      data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(
+            self.testresultspath + filename,
+            self.expectedoutputsspath + filename))        
