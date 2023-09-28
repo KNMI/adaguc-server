@@ -134,6 +134,14 @@ Copy a test netcdf file and display:
 - Or directly via: https://adaguc.knmi.nl/adaguc-viewer/index.html?#addlayer('http://localhost:8080//wms?source=testdata.nc&','testdata')
 
 
+# 7. Run tests
+
+Run the tests by doing:
+
+```
+bash runtests.sh
+```
+
 ## To scan datasets
 
 `bash ./Docker/adaguc-server-updatedatasets.sh <dataset name>`
