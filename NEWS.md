@@ -1,3 +1,6 @@
+**Version 2.13.3 2023-09-28**
+- Reverted outline barbs, added outline option for point barbs
+
 **Version 2.13.2 2023-09-25**
 - Fixed a bug in autofinddataset option
 

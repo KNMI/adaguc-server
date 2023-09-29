@@ -401,50 +401,6 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
     drawContour(valueData, fNodataValue, shadeInterval, sourceImage, drawImage, enableContour, enableShade, enableContour);
   }
 
-  /*
-   *    for(int y=dPixelExtent[1];y<dPixelExtent[3];y++){
-   *    for(int x=dPixelExtent[0];x<dPixelExtent[2];x++){
-   *    size_t p = size_t((x-(dPixelExtent[0]))+((y-(dPixelExtent[1]))*dPixelDestW));
-   *    for(int y1=-2;y1<4;y1++){
-   *    for(int x1=-2;x1<4;x1++){
-   *    drawImage->setPixel(dpDestX[p]+x1,dpDestY[p]+y1,248);
-   * }
-   * }
-   *
-   * for(int y1=-1;y1<3;y1++){
-   *  for(int x1=-1;x1<3;x1++){
-   *  setValuePixel(sourceImage,drawImage,dpDestX[p]+x1,dpDestY[p]+y1,fpValues[p]);
-   }
-   }
-   }
-   }*/
-  /*if(drawMap==true)
-   *    {
-   *      for(int y=0;y<dImageHeight;y++){
-   *        for(int x=0;x<dImageWidth;x++){
-   *          setValuePixel(sourceImage,drawImage,x,y,valObj[0].valueData[x+y*dImageWidth]);
-   * }
-   * }
-   * }*/
-
-  //                  if (enableVector) drawImage->drawVector(x,y,direction,strength,240);
-  //                  if (enableBarb) drawImage->drawBarb(x,y,direction,strength,240,convertToKnots,flip);
-  //
-  // if (enableVector) {
-  //   CalculatedWindVector wv;
-  //   for (size_t sz=0; sz<windVectors.size();sz++) {
-  //     wv=windVectors[sz];
-  //     drawImage->drawVector(wv.x, wv.y, wv.dir, wv.strength, 240);
-  //   }
-  // }
-  // if (enableBarb) {
-  //   CalculatedWindVector wv;
-  //   for (size_t sz=0; sz<windVectors.size();sz++) {
-  //     wv=windVectors[sz];
-  //     drawImage->drawBarb(wv.x, wv.y, wv.dir, wv.strength, 240,wv.convertToKnots,wv.flip);
-  //   }
-  // }
-
   if (enableVector) {
     CalculatedWindVector wv;
     for (size_t sz = 0; sz < windVectors.size(); sz++) {
@@ -456,7 +412,8 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
     CalculatedWindVector wv;
     for (size_t sz = 0; sz < windVectors.size(); sz++) {
       wv = windVectors[sz];
-      drawImage->drawBarb(wv.x, wv.y, wv.dir, wv.strength, CColor(0, 0, 255, 255), 0.8, wv.convertToKnots, wv.flip, false);
+      float outlineWidth = 0;
+      drawImage->drawBarb(wv.x, wv.y, wv.dir, wv.strength, CColor(0, 0, 255, 255), outlineWidth, wv.convertToKnots, wv.flip, false);
     }
   }
 
