@@ -91,7 +91,7 @@ COPY --from=build /adaguc/adaguc-server-master/runtests.sh /adaguc/adaguc-server
 RUN bash runtests.sh
 
 
-######### Fourth stage, test ############
+######### Fourth stage, prod ############
 FROM base as prod
 
 # Set same uid as vivid
@@ -121,7 +121,6 @@ ENV PYTHONPATH=${ADAGUC_PATH}/python/python_fastapi_server
 # Build and test adaguc python support
 WORKDIR /adaguc/adaguc-server-master/python/lib/
 RUN python3 setup.py install
-# TODO?: Move this to test?
 RUN bash -c "python3 /adaguc/adaguc-server-master/python/examples/runautowms/run.py && ls result.png"
 
 WORKDIR /adaguc/adaguc-server-master
