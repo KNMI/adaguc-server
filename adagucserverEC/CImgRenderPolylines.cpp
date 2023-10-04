@@ -150,7 +150,7 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
     if (fileName == name.c_str()) {
       std::vector<CRectangleText> rects;
       size_t featureStoreSize = featureStore[fileName].size();
-      int featureRandomStart = 0; // For specifying a random polygon index to draw first
+      int featureRandomStart = 0;                       // For specifying a random polygon index to draw first
       if (randomStart) {
         featureRandomStart = rand() % featureStoreSize; // Random start for first feature to draw
       }
