@@ -45,10 +45,12 @@ void CDFObject::clear() {
     delete dimensions[j];
     dimensions[j] = NULL;
   }
+  dimensions.clear();
   for (size_t j = 0; j < variables.size(); j++) {
     delete variables[j];
     variables[j] = NULL;
   }
+  variables.clear();
 }
 
 int CDFObject::open(const char *fileName) {

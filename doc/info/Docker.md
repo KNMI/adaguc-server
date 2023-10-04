@@ -70,10 +70,10 @@ On your own environment you can do:
 1.  Clone adaguc-server
     git clone https://github.com/KNMI/adaguc-server
 
-\#Go to Docker directory
+#Go to Docker directory
 cd adaguc-server/Docker/
 
-\#Setup directories
+#Setup directories
 mkdir \$HOME/adaguc-autowms
 mkdir \$HOME/adaguc-datasets
 

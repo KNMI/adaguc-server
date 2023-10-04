@@ -1246,6 +1246,20 @@ class TestWMS(unittest.TestCase):
             AdagucTestTools().readfromfile(self.expectedoutputsspath +
                                            filename))
 
+        # Test no outline
+        filename = "test_WMSGetMap_KMDS_PointNetCDF_ffdd_windspeed_barb_barb_no_outline.png"
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.testKMDS_PointNetCDF.xml&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=ff_dd&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=294179.7001580532,6411290.650918596,901204.9572071509,7199735.637765654&STYLES=windspeed_barb_no_outline%2Fbarb&FORMAT=image/png&TRANSPARENT=FALSE&BGCOLOR=0xFFFFFF&",
+            env=env)
+        AdagucTestTools().writetofile(self.testresultspath + filename,
+                                      data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath +
+                                           filename))
+
         filename = "test_WMSGetMap_KMDS_PointNetCDF_ta_volume.png"
 
         status, data, headers = AdagucTestTools().runADAGUCServer(
@@ -1886,3 +1900,95 @@ class TestWMS(unittest.TestCase):
             data.getvalue(),
             AdagucTestTools().readfromfile(self.expectedoutputsspath +
                                            filename))
+    
+    def test_WMSCMDUpdateDBPathFileInSubfolders(self):
+        """
+        This tests if the autofinddataset option correctly finds the file if it is in a subfolder
+        """
+        AdagucTestTools().cleanTempDir()
+        # pylint: disable=unused-variable
+
+        config = ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml'
+        args=[
+            '--updatedb', '--autofinddataset', '--verboseoff', '--config', config, '--path', ADAGUC_PATH+"/data/datasets/test/RAD_NL25_PCP_CM_202106222000.h5"
+        ]
+        print(args)
+        env = {'ADAGUC_CONFIG': config}
+        status, data, headers = AdagucTestTools(
+        ).runADAGUCServer(args=args,
+                          env=env,
+                          isCGI=False,
+                          showLogOnError=True,
+                          showLog=False)
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSCMDUpdateDBPathFileInSubfoldersGetCapabilities.xml"
+        env = {'ADAGUC_CONFIG': config}
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.testScanPathSubfolder&SERVICE=WMS&request=getcapabilities",
+            env=env)
+        AdagucTestTools().writetofile(self.testresultspath + filename,
+                                      data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(
+            self.testresultspath + filename,
+            self.expectedoutputsspath + filename))
+        
+
+    def test_WMSCMDUpdateDBPathFileWithNonMatchingPath(self):
+        """
+        This tests if the autofinddataset option correctly finds the file if it is in a subfolder
+        """
+        AdagucTestTools().cleanTempDir()
+        # pylint: disable=unused-variable
+
+        config = ADAGUC_PATH + 'data/config/adaguc.tests.dataset.xml'
+        args=[
+            '--updatedb', '--autofinddataset', '--verboseoff', '--config', config, '--path', ADAGUC_PATH+"data/datasets/test_suffix/RAD_NL25_PCP_CM_202106222000_suffix.h5"
+        ]
+        print(args)
+        env = {'ADAGUC_CONFIG': config}
+        status, data, headers = AdagucTestTools(
+        ).runADAGUCServer(args=args,
+                          env=env,
+                          isCGI=False,
+                          showLogOnError=True,
+                          showLog=False)
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSCMDUpdateDBPathFileWithNonMatchingPathGetCapabilities.xml"
+        env = {'ADAGUC_CONFIG': config}
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.testScanPathSubfolderSuffix&SERVICE=WMS&request=getcapabilities",
+            env=env)
+        AdagucTestTools().writetofile(self.testresultspath + filename,
+                                      data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(
+            self.testresultspath + filename,
+            self.expectedoutputsspath + filename))        
+
+    def test_WMSGetMapWithHarmWindBarbs(self):
+        AdagucTestTools().cleanTempDir()
+        filename = "test_WMSGetMapWithHarmWindBarbs_without_outline.png"
+        config = ADAGUC_PATH + 'data/config/adaguc.tests.dataset.xml'
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(args=[
+            '--updatedb', '--config', config + ',adaguc.tests.harm_windbarbs.xml'
+        ],
+                                                                  env=self.env,
+                                                                  isCGI=False)
+        self.assertEqual(status, 0)
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.harm_windbarbs&SERVICE=WMS&SERVICE=WMS&=&=&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind__at_10m&WIDTH=914&HEIGHT=966&CRS=EPSG:3857&BBOX=10144.960912989336,6256275.017522922,1229386.3384520854,7544882.425294002&STYLES=Windbarbs/barb&FORMAT=image/png&TRANSPARENT=FALSE&time=2023-09-30T06:00:00Z&DIM_reference_time=2023-09-28T06:00:00Z&BGCOLOR=0x000000&",
+            {
+                'ADAGUC_CONFIG':
+                ADAGUC_PATH + 'data/config/adaguc.tests.dataset.xml'
+            })
+        AdagucTestTools().writetofile(self.testresultspath + filename,
+                                      data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertTrue(AdagucTestTools().compareImage(
+            self.expectedoutputsspath + filename,
+            self.testresultspath + filename))

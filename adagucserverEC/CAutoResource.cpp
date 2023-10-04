@@ -79,7 +79,9 @@ int CAutoResource::configureDataset(CServerParams *srvParam, bool) {
       return 1;
     }
 
-    CDBDebug("Found dataset %s", datasetConfigFile.c_str());
+    if (srvParam->verbose) {
+      CDBDebug("Found dataset %s", datasetConfigFile.c_str());
+    }
 
     // Find variables to substitute
     CServerParams tempServerParam;

@@ -53,6 +53,7 @@ public:
     CT::string values;
     CT::string defaultValue;
     int hasMultipleValues;
+    bool hidden = false;
   };
   class Projection {
   public:

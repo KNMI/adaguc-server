@@ -17,5 +17,5 @@ palette is used in either a colorRange or interval based [Legend](Legend.md)
 -   alpha - The alpha channel, works only when requesting image/png32
     images. 0 is transparent, 255 is opaque (visible).
 -   color - Shorthand for red,green,blue or red,green,blue alpha. E.g.
-    \#A41D23 or \#A41D23FF
+    #A41D23 or #A41D23FF
 
