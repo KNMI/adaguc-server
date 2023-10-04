@@ -445,67 +445,41 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
     CImageWarper radarProj;
     radarProj.initreproj(scanProj4.c_str(), dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
 
-    if (!doZdr) {
-      // Same code as below, using 1 variable.
-      double x, y;
-      float rang, azim;
-      int ir, ia;
-      float *p = (float *)new2DVar->data;                          // ptr to store data
-      unsigned short *pScan = (unsigned short *)scanDataVar->data; // ptr to get ray data
+    double x, y;
+    float rang, azim;
+    int ir, ia;
+    float *p = (float *)new2DVar->data; // ptr to store data
+    std::vector<unsigned short *> pScans = {(unsigned short *)scanDataVar->data};
+    std::vector<float> factors = {factor};
+    std::vector<float> offsets = {offset};
+    if (doZdr) {
+      pScans.push_back((unsigned short *)scanDataVar_Zv->data);
+      factors.push_back(zv_factor);
+      offsets.push_back(zv_offset);
+    }
 
-      for (int row = 0; row < height; row++) {
-        for (int col = 0; col < width; col++) {
-          x = ((double *)varX->data)[col];
-          y = ((double *)varY->data)[row];
-          radarProj.reprojpoint(x, y);
-          rang = sqrt(x * x + y * y);
-          azim = atan2(x, y) * 180.0 / M_PI;
-          ir = (int)(rang / scan_rscale);
-          if (ir < scan_nrang) {
-            ia = (int)(azim / scan_ascale);
-            ia = (ia + scan_nazim) % scan_nazim;
-            unsigned short v = pScan[ir + ia * scan_nrang];
-            if (v != NAN) { // is Nan
-              *p++ = v * factor + offset;
-            } else {
-              *p++ = FLT_MAX;
-            }
-          } else {
-            *p++ = FLT_MAX;
+    for (int row = 0; row < height; row++) {
+      for (int col = 0; col < width; col++) {
+        x = ((double *)varX->data)[col];
+        y = ((double *)varY->data)[row];
+        radarProj.reprojpoint(x, y);
+        rang = sqrt(x * x + y * y);
+        azim = atan2(x, y) * 180.0 / M_PI;
+        ir = (int)(rang / scan_rscale);
+        if (ir < scan_nrang) {
+          ia = (int)(azim / scan_ascale);
+          ia = (ia + scan_nazim) % scan_nazim;
+          std::vector<unsigned short> vs;
+          for (auto pScan : pScans) {
+            vs.push_back(pScan[ir + ia * scan_nrang]);
           }
-        }
-      }
-    } else {
-      CDBDebug("ZDR variable as Z-Zv");
-      // Same code as above, but using 2 variables to calculate ZDR as Z-Zv.
-      double x, y;
-      float rang, azim;
-      int ir, ia;
-      float *p = (float *)new2DVar->data;                           // ptr to store data
-      unsigned short *pZScan = (unsigned short *)scanDataVar->data; // ptr to get ray data
-      unsigned short *pZvScan = (unsigned short *)scanDataVar_Zv->data;
-
-      for (int row = 0; row < height; row++) {
-        for (int col = 0; col < width; col++) {
-          x = ((double *)varX->data)[col];
-          y = ((double *)varY->data)[row];
-          radarProj.reprojpoint(x, y);
-          rang = sqrt(x * x + y * y);
-          azim = atan2(x, y) * 180.0 / M_PI;
-          ir = (int)(rang / scan_rscale);
-          if (ir < scan_nrang) {
-            ia = (int)(azim / scan_ascale);
-            ia = (ia + scan_nazim) % scan_nazim;
-            unsigned short vZ = pZScan[ir + ia * scan_nrang];
-            unsigned short vZv = pZvScan[ir + ia * scan_nrang];
-            if ((vZ != NAN) && (vZv != NAN)) {
-              *p++ = vZ * factor + offset - (vZv * zv_factor + zv_offset);
-            } else {
-              *p++ = FLT_MAX;
-            }
+          if (doZdr) {
+            *p++ = vs[0] * factors[0] + offsets[0] - (vs[1] * factors[1] + offsets[1]);
           } else {
-            *p++ = FLT_MAX;
+            *p++ = vs[0] * factors[0] + offsets[0];
           }
+        } else {
+          *p++ = FLT_MAX;
         }
       }
     }
