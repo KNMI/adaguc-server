@@ -427,7 +427,7 @@ CT::string CServerParams::getOnlineResource() {
     // No Online resource is given.
     const char *pszADAGUCOnlineResource = getenv("ADAGUC_ONLINERESOURCE");
     if (pszADAGUCOnlineResource == NULL) {
-      CDBDebug("Warning: No OnlineResources configured. Unable to get from config OnlineResource or from environment ADAGUC_ONLINERESOURCE");
+      // CDBDebug("Warning: No OnlineResources configured. Unable to get from config OnlineResource or from environment ADAGUC_ONLINERESOURCE");
       _onlineResource = "";
       return "";
     }
@@ -484,7 +484,6 @@ bool CServerParams::checkBBOXXYOrder(const char *projName) {
  */
 CT::PointerList<CT::string *> *CServerParams::getLegendNames(std::vector<CServerConfig::XMLE_Legend *> Legend) {
   if (Legend.size() == 0) {
-    CDBDebug("No legends defined");
     CT::string *autoLegendName = new CT::string("rainbow");
     CT::PointerList<CT::string *> *legendList = new CT::PointerList<CT::string *>();
     legendList->push_back(autoLegendName);
@@ -616,10 +615,14 @@ int CServerParams::parseConfigFile(CT::string &pszConfigFile, std::vector<CServe
                 const char *environmentSubstituteName = substituteName.c_str();
 
                 if (environmentValue != NULL) {
-                  CDBDebug("Replacing %s with environment value %s", environmentSubstituteName, environmentValue);
+                  if (verbose) {
+                    CDBDebug("Replacing %s with environment value %s", environmentSubstituteName, environmentValue);
+                  }
                   configFileData.replaceSelf(environmentSubstituteName, environmentValue);
                 } else {
-                  CDBDebug("Replacing %s with default value %s", environmentSubstituteName, environmentVarDefault);
+                  if (verbose) {
+                    CDBDebug("Replacing %s with default value %s", environmentSubstituteName, environmentVarDefault);
+                  }
                   configFileData.replaceSelf(environmentSubstituteName, environmentVarDefault);
                 }
               } else {

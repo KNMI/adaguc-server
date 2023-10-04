@@ -240,6 +240,16 @@
       <Vector vectorstyle="vector" linewidth="1.0" linecolor="#000000FF"/>
     </Style>
 
+    <Style name="windspeed_barb_no_outline">
+      <Legend fixed="true" tickinterval="5">standard</Legend>
+      <Min>0</Min>
+      <Max>75</Max>
+      <NameMapping name="barb"        title="Wind direction barb no outline" abstract="As barb"/>
+      <Point plotstationid="false" pointstyle="point" discradius="12" textradius="16" dot="true" fontsize="8"  textcolor="#FFFFFF"/>
+      <RenderMethod>barb</RenderMethod>
+      <Vector vectorstyle="barb" linewidth="0.0" linecolor="#0000FFFF"/>
+    </Style>
+
     <Style name="windspeed_barb">
       <Legend fixed="true" tickinterval="5">standard</Legend>
       <Min>0</Min>
@@ -293,7 +303,7 @@
       <Variable>ff</Variable>
       <Variable>dd</Variable>
       <Abstract>windsnelheid [m/s] en windrichting [graden] 10 min. gemiddelden</Abstract>
-      <Styles>windspeed_arrow,windspeed_vector,windspeed_barb</Styles>
+      <Styles>windspeed_arrow,windspeed_vector,windspeed_barb,windspeed_barb_no_outline</Styles>
     </Layer>
 
     <Layer type="database">

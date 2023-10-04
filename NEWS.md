@@ -1,7 +1,24 @@
+**Version 2.13.3 2023-09-28**
+- Reverted outline barbs, added outline option for point barbs
+
+**Version 2.13.2 2023-09-25**
+- Fixed a bug in autofinddataset option
+
+**Version 2.13.0 2023-09-20**
+- The script adaguc-server-addfile.sh is now able to find for a given file the corresponding dataset via the commandline option autofinddataset
+- Cleaning of model data is now done based on the forecast_reference_time dimension
+
+
 **Version 2.12.0 2023-08-24**
 - Support for DataPostProcessor Operator, to add, substract, multiply or divide layers
 - Dimensions can now be fixed and hidden, to make layers representing a single elevation based on a variable with multiple elevations
 - Support to substract two elevations from the same variable
+
+**Version 2.11.4 2023-09-06** 
+- Cleanup is now always triggered when a file is scanned.
+
+**Version 2.11.3 2023-09-05** 
+- Less logging and robuster scanner
 
 **Version 2.11.2 2023-08-21**
 
