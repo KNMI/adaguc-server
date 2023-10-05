@@ -352,3 +352,42 @@ The really interesting thing is that an actual data grid is generated
 from the point data. This grid can be used to draw a map with a WMS
 call, but can also be downloaded through a WCS call, to be used in
 further processing.
+
+
+7. Calculate windshear.
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+
+    <Layer type="database" hidden="true">
+        <Name>layer_windspeed_at_120</Name>
+        <Title>Wind speed at 120 meter</Title>
+        <FilePath filter=".*\.nc$" gfi_openall="true">/data/adaguc-autowms/WINS50_43h21_fERA5_WFP_ptA_NETHERLANDS.NL_20190101.nc</FilePath>
+        <Variable orgname="wspeed" long_name="Wind speed at 120 meter">var_wind_speed_at_120</Variable>
+        <Styles>auto</Styles>
+        <Dimension name="time">time</Dimension>
+        <Dimension name="height" fixvalue="120" hidden="true">elevation</Dimension>
+    </Layer>
+
+
+    <Layer type="database">
+        <Name>output</Name>
+        <Title>Wind speed at 120 minus wind speed at 200</Title>
+        <FilePath filter=".*\.nc$" gfi_openall="true">/data/adaguc-autowms/WINS50_43h21_fERA5_WFP_ptA_NETHERLANDS.NL_20190101.nc</FilePath>
+        <Variable orgname="wspeed" long_name="Wind speed at 200 meter">var_wind_speed_at_200</Variable>
+        <Dimension name="time">time</Dimension>
+        <Dimension name="height" fixvalue="200" hidden="true">elevation</Dimension>
+
+        <DataPostProc algorithm="include_layer" name="layer_windspeed_at_120" mode="append"/>
+        <DataPostProc algorithm="operator" mode="-" a="var_wind_speed_at_120" b="var_wind_speed_at_200" name="output" units="m/s"/>
+        <Min>-1</Min>
+        <Max>1</Max>
+        <Styles>auto</Styles>
+
+    </Layer>
+
+
+</Configuration>
+```
+

@@ -425,7 +425,7 @@ void CDrawImage::_drawBarbGd(int x, int y, double direction, double strength, CC
   wx1 = double(x) - dx1;
   wy1 = double(y) + dy1; // wind barb top (flag side)
   wx2 = double(x);
-  wy2 = double(y);       // wind barb root
+  wy2 = double(y); // wind barb root
 
   circle(int(wx2), int(wy2), 2, color, lineWidth);
   int nrPos = 10;
@@ -475,7 +475,10 @@ void CDrawImage::drawBarb(int x, int y, double direction, double strength, CColo
   }
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
     CColor outLineColor = CColor(255, 255, 255, 255);
-    cairo->drawBarb(x, y, direction, strength, color, outLineColor, true, lineWidth, toKnots, flip, drawText);
+    // If no linewidth, no outline should be drawn, set inner barblineWidth to 0.8 to ensure we draw a barb
+    bool drawOutline = lineWidth == 0 ? false : true;
+    float barblineWidth = lineWidth == 0 ? 0.8 : lineWidth;
+    cairo->drawBarb(x, y, direction, strength, color, outLineColor, drawOutline, barblineWidth, toKnots, flip, drawText);
   }
 }
 

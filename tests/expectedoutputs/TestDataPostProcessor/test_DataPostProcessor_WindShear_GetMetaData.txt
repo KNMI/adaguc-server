@@ -1,0 +1,71 @@
+CCDFDataModel {
+dimensions:
+	x = 23 ;
+	y = 21 ;
+	time = 4 ;
+	height = 5 ;
+variables:
+	double x(x) ;
+		x:standard_name = "projection_x_coordinate" ;
+	double y(y) ;
+		y:standard_name = "projection_y_coordinate" ;
+	double time(time) ;
+		time:_CoordinateAxisType = "Time" ;
+		time:calendar = "standard" ;
+		time:long_name = "Time" ;
+		time:standard_name = "time" ;
+		time:units = "days since 2018-12-01 00:00:00" ;
+	float height(height) ;
+		height:axis = "Z" ;
+		height:standard_name = "height" ;
+		height:long_name = "Height" ;
+		height:units = "m" ;
+		height:_CoordinateAxisType = "Height" ;
+		height:positive = "up" ;
+	float var_wind_speed_at_600(time, height, y, x) ;
+		var_wind_speed_at_600:standard_name = "wind_speed" ;
+		var_wind_speed_at_600:long_name = "Wind speed at 600 meter" ;
+		var_wind_speed_at_600:units = "m s-1" ;
+		var_wind_speed_at_600:coordinates = "lon lat height" ;
+		var_wind_speed_at_600:grid_mapping = "crs" ;
+		var_wind_speed_at_600:cell_methods = "time: point" ;
+	char crs ;
+		crs:proj4_params = "+proj=lcc +lat_1=52.500000 +lat_2=52.500000 +lat_0=52.500000 +lon_0=.000000 +k_0=1.0 +x_0=-92962.569890 +y_0=230385.198586 +a=6371229.000000 +b=6371229.000000" ;
+		crs:id = "unknown" ;
+	float var_wind_speed_at_200(time, height, y, x) ;
+		var_wind_speed_at_200:standard_name = "wind_speed" ;
+		var_wind_speed_at_200:long_name = "Wind speed at 200 meter" ;
+		var_wind_speed_at_200:units = "m s-1" ;
+		var_wind_speed_at_200:coordinates = "lon lat height" ;
+		var_wind_speed_at_200:grid_mapping = "crs" ;
+		var_wind_speed_at_200:cell_methods = "time: point" ;
+		var_wind_speed_at_200:ADAGUC_DATAOBJECTID = "{"variable":"var_wind_speed_at_200","datapostproc":"include_layer"}" ;
+	float output(time, height, y, x) ;
+		output:standard_name = "output" ;
+		output:long_name = "output" ;
+		output:units = "m/s" ;
+		output:coordinates = "lon lat height" ;
+		output:grid_mapping = "crs" ;
+		output:cell_methods = "time: point" ;
+		output:_FillValue = 0.000000f ;
+
+// global attributes:
+		:project_id = "WINS50" ;
+		:project_url = "www.wins50.nl" ;
+		:model_id = "harmonie-43h2.1" ;
+		:driving_model_id = "ECMWF-ERA5" ;
+		:experiment_id = "WINS50_43h21_fERA5_CTL_ptA" ;
+		:experiment = "control run with reanalysis forcing from ECMWF-ERA5" ;
+		:institute_id = "KNMI" ;
+		:institution = "Royal Netherlands Meteorological Institute, De Bilt, The Netherlands" ;
+		:data_contact = "Bert van Ulft, R&D Weather & Climate Models, KNMI (ulft@knmi.nl)" ;
+		:comment = "concatenated output from 3-hourly runs with 3-hourly cycling; created with gl/xtool, processed with process_for_KDP.py(6e976899)" ;
+		:creation_date = "Wed Mar 31 14:24:49 2021" ;
+		:invar_tracking_id = "92380b98-e8d2-4239-bc65-166116eecc49" ;
+		:Conventions = "CF-1.6" ;
+		:conventionsURL = "www.cfconventions.org" ;
+		:title = "Winds of the North Sea in 2050 (WINS50) - hourly wind, temperature, pressure, relative humidity at 10-600m height for the Netherlands" ;
+		:history = "Created by ADAGUC WCS Server version 2.12.0, destination grid settings: width=23&height=21&resx=23586.956522&resy=27857.142857&bbox=-1250.000000,-1250.000000,541250.000000,583750.000000&crs=PROJ4:+proj=lcc +lat_1=52.500000 +lat_2=52.500000 +lat_0=52.500000 +lon_0=.000000 +k_0=1.0 +x_0=-92962.569890 +y_0=230385.198586 +a=6371229.000000 +b=6371229.000000. " ;
+		:adaguc_wcs_destgridspec = "width=23&height=21&resx=23586.956522&resy=27857.142857&bbox=-1250.000000,-1250.000000,541250.000000,583750.000000&crs=PROJ4:+proj=lcc +lat_1=52.500000 +lat_2=52.500000 +lat_0=52.500000 +lon_0=.000000 +k_0=1.0 +x_0=-92962.569890 +y_0=230385.198586 +a=6371229.000000 +b=6371229.000000" ;
+		:software = "ADAGUC WCS Server version 2.12.0" ;
+}

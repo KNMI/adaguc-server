@@ -81,6 +81,7 @@ public:
   double dfResX, dfResY;
   int dFound_BBOX;
   double dX, dY;
+  bool verbose = true;
   CT::string *WMSLayers;
   CT::string Format;
   CT::string InfoFormat;

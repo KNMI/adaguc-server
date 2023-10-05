@@ -4,7 +4,7 @@
 """
 
 import sys
-from subprocess import PIPE, Popen, STDOUT
+from subprocess import PIPE, Popen, STDOUT, TimeoutExpired
 from threading import Thread
 import os
 import io
@@ -22,7 +22,7 @@ class CGIRunner:
       Run the CGI script with specified URL and environment. Stdout is captured and put in a BytesIO object provided in output
     """
 
-    def run(self, cmds, url, output, env=[],  path=None, isCGI=True):
+    def run(self, cmds, url, output, env=[],  path=None, isCGI=True, timeout=300):
         localenv = {}
         if url != None:
             localenv['QUERY_STRING'] = url
@@ -37,8 +37,15 @@ class CGIRunner:
         # Execute adaguc-server binary
         ON_POSIX = 'posix' in sys.builtin_module_names
         process = Popen(cmds, stdout=PIPE, stderr=PIPE, env=localenv, close_fds=ON_POSIX)
-        (processOutput, processError) = process.communicate()
- 
+        
+        try:
+            (processOutput, processError) = process.communicate(timeout=timeout)
+        except TimeoutExpired:
+            process.kill()
+            process.communicate()
+            output.write(b'TimeOut')
+            return 1, [], None
+
         status = process.wait()
 
         # Split headers from body using a regex

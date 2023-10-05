@@ -56,7 +56,7 @@ You have to do once:
 ```
 python3 -m venv env
 source env/bin/activate
-pip3 install --upgrade pip
+pip3 install --upgrade pip pip-tools
 pip3 install -r requirements.txt
 pip3 install -r requirements-dev.txt
 cd ./python/lib/ && python3 setup.py develop && cd ../../
@@ -133,6 +133,14 @@ Copy a test netcdf file and display:
 - You can now load the test dataset via https://localhost:8080//wms?source=testdata.nc& in https://adaguc.knmi.nl/adaguc-viewer/index.html
 - Or directly via: https://adaguc.knmi.nl/adaguc-viewer/index.html?#addlayer('http://localhost:8080//wms?source=testdata.nc&','testdata')
 
+
+# 7. Run tests
+
+Run the tests by doing:
+
+```
+bash runtests.sh
+```
 
 ## To scan datasets
 

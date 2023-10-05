@@ -506,7 +506,8 @@ int CCreateTiles::createTilesForFile(CDataSource *dataSource, int, CT::string fi
                           }
                           /* Remove the datasource from the cache we just wrote
                            */
-                          CDFObjectStore::getCDFObjectStore()->deleteCDFObject(fileNameToWrite.c_str());
+                          // TODO: Removing this cdfobject causes memory violations. Checkout in issue https://github.com/KNMI/adaguc-server/issues/289
+                          // CDFObjectStore::getCDFObjectStore()->deleteCDFObject(fileNameToWrite.c_str());
 
 #ifdef CDBFILESCANNER_DEBUG
                           CDBDebug("DONE: Open CDFObjects: [%d]", CDFObjectStore::getCDFObjectStore()->getNumberOfOpenObjects());

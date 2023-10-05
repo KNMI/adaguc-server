@@ -732,7 +732,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
         }
       }
     }
-
     // CDBDebug("gfi_openall: %d %d",dataSources[d]->cfgLayer->FilePath.size(),openAll);
 
     if (dataSources[d]->cfgLayer->TileSettings.size() == 1) {
@@ -1076,7 +1075,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
                     if (feature->paramMap.empty() == false) {
                       std::map<std::string, std::string>::iterator paramItemIt;
                       for (paramItemIt = feature->paramMap.begin(); paramItemIt != feature->paramMap.end(); ++paramItemIt) {
-                        CDBDebug("Clicked %s %s", paramItemIt->first.c_str(), paramItemIt->second.c_str());
                         GetFeatureInfoResult::Element *featureParam = new GetFeatureInfoResult::Element();
                         featureParam->dataSource = dataSource;
                         for (size_t j = 0; j < dataSources[d]->requiredDims.size(); j++) {

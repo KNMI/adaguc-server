@@ -115,6 +115,7 @@ public:
     std::vector<PointDVWithLatLon> points;
     std::map<int, CFeature> features;
     DataObject *clone();
+    CT::string dataObjectName;
   };
 
   class Statistics {
@@ -308,28 +309,8 @@ public:
   void addStep(const char *fileName, CCDFDims *dims);
   const char *getFileName();
 
-  DataObject *getDataObject(const char *name) {
-    // Find out to which dataobject we need to write to
-    for (size_t dataObjectNr = 0; dataObjectNr < dataObjects.size(); dataObjectNr++) {
-      if (dataObjects[dataObjectNr]->cdfVariable->name.equals(name)) {
-        return dataObjects[dataObjectNr];
-      }
-    }
-    CDBError("Unable to find dataobject: variable %s not found", name);
-    throw(CEXCEPTION_NULLPOINTER);
-  };
-
-  DataObject *getDataObject(int j) {
-
-    if (int(dataObjects.size()) <= j) {
-      CDBError("No Data object witn nr %d (total %d) for animation step %d (total steps %d)", j, currentAnimationStep, dataObjects.size(), timeSteps.size());
-      throw(CEXCEPTION_NULLPOINTER);
-    }
-
-    DataObject *d = dataObjects[j];
-    // CDBDebug("getDataObject %d %d",currentAnimationStep,j);
-    return d;
-  }
+  DataObject *getDataObject(const char *name);
+  DataObject *getDataObject(int j);
 
   std::vector<DataObject *> *getDataObjectsVector() { return &(dataObjects); }
 
@@ -347,37 +328,8 @@ public:
   int getNumTimeSteps();
   const char *getLayerName();
 
-  int attachCDFObject(CDFObject *cdfObject) {
-    if (cdfObject == NULL) {
-      CDBError("cdfObject==NULL");
-      return 1;
-    }
-    if (isConfigured == false) {
-      CDBError("Datasource %s is not configured", cfgLayer->Name[0]->value.c_str());
-      return 1;
-    }
-    if (getNumDataObjects() <= 0) {
-      CDBError("No variables found for datasource %s", cfgLayer->Name[0]->value.c_str());
-      return 1;
-    }
-
-    for (size_t varNr = 0; varNr < getNumDataObjects(); varNr++) {
-      getDataObject(varNr)->cdfObject = cdfObject;
-      getDataObject(varNr)->cdfVariable = cdfObject->getVariableNE(getDataObject(varNr)->variableName.c_str());
-      if (getDataObject(varNr)->cdfVariable == NULL) {
-        CDBError("attachCDFObject: variable \"%s\" does not exist", getDataObject(varNr)->variableName.c_str());
-        return 1;
-      }
-    }
-    return 0;
-  }
-  void detachCDFObject() {
-    for (size_t j = 0; j < getNumDataObjects(); j++) {
-      getDataObject(j)->cdfVariable = NULL;
-      getDataObject(j)->cdfObject = NULL;
-    }
-  }
-
+  int attachCDFObject(CDFObject *cdfObject);
+  void detachCDFObject();
   CDataSource *clone();
 
   /**

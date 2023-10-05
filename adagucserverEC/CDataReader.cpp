@@ -297,6 +297,15 @@ bool CDataReader::copyCRSFromADAGUCProjectionVariable(CDataSource *dataSource, c
   // }
   dataSource->nativeProj4.copy(proj4Attr->toString().c_str());
 
+  // Fixes issue https://github.com/KNMI/adaguc-server/issues/279
+  dataSource->nativeProj4.replaceSelf("\n", " ");
+  dataSource->nativeProj4.trimSelf();
+  if (dataSource->nativeProj4.startsWith("\"") && dataSource->nativeProj4.endsWith("\"")) {
+    dataSource->nativeProj4.substringSelf(1, dataSource->nativeProj4.length() - 1);
+    dataSource->nativeProj4.trimSelf();
+    CDBDebug("Note: Removed start and ending double quotes for projstring [%s]", dataSource->nativeProj4.c_str());
+  }
+
   // Copy the EPSG code.
   copyEPSGCodeFromProjectionVariable(dataSource, projVar);
 
@@ -813,6 +822,7 @@ pthread_mutex_t CDataReader_open_lock;
 
 int CDataReader::open(CDataSource *dataSource, int mode, int x, int y) { return open(dataSource, mode, x, y, NULL); }
 int CDataReader::openExtent(CDataSource *dataSource, int mode, int *gridExtent) { return open(dataSource, mode, -1, -1, gridExtent); }
+
 int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *gridExtent) {
 
   // Perform some checks on pointers
@@ -826,7 +836,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
   }
 
 #ifdef CDATAREADER_DEBUG
-  CDBDebug("Open mode:%d x:%d y:%d", mode, x, y);
+  CDBDebug("Open mode:%d x:%d y:%d, numdataObjects %d", mode, x, y, dataSource->getNumDataObjects());
 #endif
 
   bool singleCellMode = false;
@@ -857,30 +867,20 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 
 #ifdef CDATAREADER_DEBUG
   CDBDebug("Working on [%s] with mode %d and (%d,%d)", dataSourceFilename.c_str(), mode, x, y);
-#endif
 
+#else
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
     CDBDebug("Working on [%s]", dataSourceFilename.c_str());
   }
-  if (mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS || mode == CNETCDFREADER_MODE_OPEN_HEADER) {
-    // pthread_mutex_lock(&CDataReader_open_lock);
-    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams, dataSourceFilename.c_str());
-    // pthread_mutex_unlock(&CDataReader_open_lock);
+#endif
 
-    //     enableDataCache = false;
+  if (mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS || mode == CNETCDFREADER_MODE_OPEN_HEADER) {
+    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams, dataSourceFilename.c_str(), enableObjectCache);
   }
 
   if (mode == CNETCDFREADER_MODE_OPEN_ALL || mode == CNETCDFREADER_MODE_GET_METADATA || mode == CNETCDFREADER_MODE_OPEN_EXTENT) {
-    // CDBDebug("Working on [%s] with mode %d",dataSourceFilename.c_str(),mode);
-    // CDBDebug("Getting datasource %s",dataSourceFilename.c_str());
-    // pthread_mutex_lock(&CDataReader_open_lock);
-    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource, dataSourceFilename.c_str());
-    // pthread_mutex_unlock(&CDataReader_open_lock);
+    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource, dataSourceFilename.c_str(), enableObjectCache);
   }
-  // pthread_mutex_lock(&CDataReader_open_lock);
-  // //pthread_mutex_lock(&CDataReader_open_lock);
-  // return 0;//CHECK
-  // Check whether we really have a cdfObject
   if (cdfObject == NULL) {
     CDBError("Unable to get CDFObject from store");
     return 1;
@@ -1018,11 +1018,9 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 #endif
   }
 
-  /*
-   * DataPostProc: Here our datapostprocessor comes into action! It needs scale and offset from datasource.
-   * This is stage1, only AX+B will be applied to scale and offset parameters
-   */
-  CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
+  if (enablePostProcessors) {
+    CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
+  }
 
   if (mode == CNETCDFREADER_MODE_GET_METADATA) {
 #ifdef CDATAREADER_DEBUG
@@ -1354,16 +1352,13 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     StopWatch_Stop("all read");
 #endif
 
-    /*
-     * DataPostProc: Here our datapostprocessor comes into action!
-     * This is stage2, running on data, not metadata
-     */
-
-    CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
+    if (enablePostProcessors) {
+      CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
+    }
   }
-  // pthread_mutex_unlock(&CDataReader_open_lock);
+// pthread_mutex_unlock(&CDataReader_open_lock);
 #ifdef CDATAREADER_DEBUG
-  CDBDebug("/Finished datareader");
+  CDBDebug("/Finished datareader now has %d dataobjects", dataSource->getNumDataObjects());
 #endif
   return 0;
 }
