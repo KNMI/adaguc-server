@@ -20,10 +20,11 @@ from routers.wmswcs import testadaguc, wmsWcsRouter
 configure_logging(logging)
 logger = logging.getLogger(__name__)
 
+app = FastAPI()
+
 # Set uvicorn access log format using middleware
 access_log_format = 'accesslog %(h)s ; %(t)s ; %(H)s ; %(m)s ; %(U)s ; %(q)s ; %(s)s ; %(M)s ; "%(a)s"'
 logging.getLogger("uvicorn.access").handlers.clear()
-app = FastAPI()
 app.add_middleware(AccessLoggerMiddleware, format=access_log_format)
 logging.getLogger("access").propagate = False
 
