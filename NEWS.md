@@ -3,6 +3,10 @@
 14, 5, 13, 4, 12, 3
 - KNMI HDF5 dual-pol now derives ZDR as Z-Zv
 
+**Version 2.13.4 2023-10-04**
+- Improved Dockerfile multistage build leading to smaller images
+- Updated Python package versions
+
 **Version 2.13.3 2023-09-28**
 - Reverted outline barbs, added outline option for point barbs
 
