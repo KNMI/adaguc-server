@@ -8,6 +8,10 @@ anyio==4.0.0
     # via
     #   httpcore
     #   starlette
+asgi-logger==0.1.0
+    # via -r requirements.in
+asgiref==3.7.2
+    # via asgi-logger
 brotli==1.1.0
     # via
     #   -r requirements.in
@@ -108,6 +112,7 @@ starlette==0.27.0
     #   fastapi
 typing-extensions==4.8.0
     # via
+    #   asgiref
     #   fastapi
     #   pydantic
     #   uvicorn
