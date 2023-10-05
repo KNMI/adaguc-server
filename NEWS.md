@@ -1,4 +1,4 @@
-**Version 2.13.4 2023-10-05**
+**Version 2.13.5 2023-10-05**
 - KNMI HDF5 dual-pol data now picks scans 15, 16, 6,
 14, 5, 13, 4, 12, 3
 - KNMI HDF5 dual-pol now derives ZDR as Z-Zv
