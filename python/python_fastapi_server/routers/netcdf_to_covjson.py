@@ -2,23 +2,17 @@
 Convert a netcdf dataset to coverage json
 """
 import logging
-from typing import Dict
-from typing import List
+from typing import Dict, List
 
 import netCDF4
 import numpy.ma as ma
-from covjson_pydantic.coverage import Coverage
-from covjson_pydantic.coverage import Union
-from covjson_pydantic.domain import Domain
-from covjson_pydantic.domain import DomainType
-from covjson_pydantic.domain import ValuesAxis
-from covjson_pydantic.ndarray import AnyUrl
-from covjson_pydantic.ndarray import NdArray
-from covjson_pydantic.ndarray import TiledNdArray
+from covjson_pydantic.coverage import Coverage, Union
+from covjson_pydantic.domain import Domain, DomainType, ValuesAxis
+from covjson_pydantic.ndarray import AnyUrl, NdArray, TiledNdArray
 from covjson_pydantic.observed_property import ObservedProperty
 from covjson_pydantic.parameter import Parameter
-from covjson_pydantic.reference_system import ReferenceSystem
-from covjson_pydantic.reference_system import ReferenceSystemConnectionObject
+from covjson_pydantic.reference_system import (ReferenceSystem,
+                                               ReferenceSystemConnectionObject)
 from covjson_pydantic.unit import Unit
 from pydantic import BaseModel
 

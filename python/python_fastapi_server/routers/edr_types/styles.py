@@ -1,9 +1,10 @@
-from pydantic import BaseModel
 from typing import Optional
 
+from pydantic import BaseModel
+
 from .extent import Extent
-from .style import Style
 from .link import Link
+from .style import Style
 
 
 class Styles(BaseModel):

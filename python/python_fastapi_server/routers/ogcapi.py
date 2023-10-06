@@ -14,33 +14,19 @@ from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
 from fastapi import status as fastapi_status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
+from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.openapi.utils import get_openapi
 
-from .models.ogcapifeatures_1_model import (
-    Collection,
-    Collections,
-    ConfClasses,
-    Extent,
-    FeatureCollectionGeoJSON,
-    FeatureGeoJSON,
-    LandingPage,
-    Link,
-    Spatial,
-    Type,
-)
-from .ogcapi_tools import (
-    calculate_coords,
-    call_adaguc,
-    feature_from_dat,
-    generate_collections,
-    get_extent,
-    get_items_links,
-    get_parameters,
-    make_bbox,
-)
+from .models.ogcapifeatures_1_model import (Collection, Collections,
+                                            ConfClasses, Extent,
+                                            FeatureCollectionGeoJSON,
+                                            FeatureGeoJSON, LandingPage, Link,
+                                            Spatial, Type)
+from .ogcapi_tools import (calculate_coords, call_adaguc, feature_from_dat,
+                           generate_collections, get_extent, get_items_links,
+                           get_parameters, make_bbox)
 
 logger = logging.getLogger(__name__)
 

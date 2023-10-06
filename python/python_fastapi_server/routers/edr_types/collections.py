@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+
 from .collection import collection
 from .link import Link
 

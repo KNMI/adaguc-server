@@ -4,7 +4,6 @@ Sets the request scheme to a value derived from the EXTERNALADDRESS env setting
 For use behind proxies
 """
 import os
-
 from urllib.parse import urlsplit
 
 from starlette.types import ASGIApp, Receive, Scope, Send

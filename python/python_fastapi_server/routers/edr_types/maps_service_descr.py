@@ -1,6 +1,7 @@
+from pydantic import BaseModel
+
 from .landing_page import landing_page
 from .link import Link
-from pydantic import BaseModel
 
 
 class maps_service_descr(BaseModel):
