@@ -23,3 +23,5 @@ pydantic~=1.10
 pyproj~=3.6
 pytz~=2023.3
 uvicorn~=0.23.2
+covjson-pydantic~=0.1.0
+geomet~=1.0.0
