@@ -1,3 +1,8 @@
+**Version 2.13.5 2023-10-05**
+- KNMI HDF5 dual-pol data now picks scans 15, 16, 6,
+14, 5, 13, 4, 12, 3
+- KNMI HDF5 dual-pol now derives ZDR as Z-Zv
+
 **Version 2.13.4 2023-10-04**
 - Improved Dockerfile multistage build leading to smaller images
 - Updated Python package versions
@@ -18,10 +23,10 @@
 - Dimensions can now be fixed and hidden, to make layers representing a single elevation based on a variable with multiple elevations
 - Support to substract two elevations from the same variable
 
-**Version 2.11.4 2023-09-06** 
+**Version 2.11.4 2023-09-06**
 - Cleanup is now always triggered when a file is scanned.
 
-**Version 2.11.3 2023-09-05** 
+**Version 2.11.3 2023-09-05**
 - Less logging and robuster scanner
 
 **Version 2.11.2 2023-08-21**
@@ -55,7 +60,7 @@
 - Added Strict-Transport-Security, X-Content-Type-Options and Content-Security-Policy headers when running over https
 
 **Version 2.10.0 2023-05-10**
-- Use the new API of the PROJ library, because the old one is deprecated and removed from PROJ version 8 and up. 
+- Use the new API of the PROJ library, because the old one is deprecated and removed from PROJ version 8 and up.
 Adaguc now requires at least version 6 of the PROJ library.
 This should simplify installing on recent version of Ubuntu.
 

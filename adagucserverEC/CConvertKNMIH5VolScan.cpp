@@ -28,7 +28,7 @@
 #include "COGCDims.h"
 #include "CCDFHDF5IO.h"
 
-//#define CCONVERTKNMIH5VOLSCAN_DEBUG
+// #define CCONVERTKNMIH5VOLSCAN_DEBUG
 const char *CConvertKNMIH5VolScan::className = "CConvertKNMIH5VolScan";
 
 int CConvertKNMIH5VolScan::checkIfIsKNMIH5VolScan(CDFObject *cdfObject, CServerParams *) {
@@ -48,9 +48,11 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
   if (checkIfIsKNMIH5VolScan(cdfObject, srvParams) != 0) return 1;
   CDBDebug("convertKNMIH5VolScanHeader()");
 
-  int scans[] = {8, 9, 10, 2, 11, 3, 12, 4, 13, 5, 14, 6, 7};
-  int nrscans = 13; // length(scans)
-  CT::string scan_params[] = {"KDP", "PhiDP", "RhoHV", "V", "W", "Z"};
+  int scans[] = {15, 16, 6, 14, 5, 13, 4, 12, 3};
+  int nrscans = sizeof(scans) / sizeof(int);
+  CT::string elevation_names[] = {"0.3", "0.3l", "0.8", "1.2", "2", "2.8", "4", "6", "8"};
+  CT::string scan_params[] = {"KDP", "PhiDP", "RhoHV", "V", "W", "Z", "Zv", "ZDR"};
+  CT::string units[] = {"deg/km", "deg", "-", "-", "-", "dbZ", "dbZ", "dbZ"};
 
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
@@ -186,14 +188,14 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
     dimElevation->name = "scan_elevation";
     dimElevation->setSize(nrscans);
     cdfObject->addDimension(dimElevation);
-    varElevation->setType(CDF_DOUBLE);
+    varElevation->setType(CDF_STRING);
     varElevation->name.copy("scan_elevation");
     CDF::Attribute *unit = new CDF::Attribute("units", "degrees");
     varElevation->addAttribute(unit);
     varElevation->isDimension = true;
     varElevation->dimensionlinks.push_back(dimElevation);
     cdfObject->addVariable(varElevation);
-    CDF::allocateData(CDF_DOUBLE, &varElevation->data, dimElevation->length);
+    CDF::allocateData(CDF_STRING, &varElevation->data, dimElevation->length);
 
     CDF::Variable *varScan = new CDF::Variable();
     varScan->setType(CDF_UINT);
@@ -209,16 +211,16 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
       CDF::Variable *scanVar = cdfObject->getVariable(scanVarName.c_str());
       float scanElevation;
       scanVar->getAttribute("scan_elevation")->getData(&scanElevation, 1);
-      ((double *)varElevation->data)[i] = scanElevation;
+      ((char **)varElevation->data)[i] = strdup(elevation_names[i].c_str());
       ((unsigned int *)varScan->data)[i] = scans[i];
     }
   }
   // CDFHDF5Reader::CustomVolScanReader *volScanReader = new CDFHDF5Reader::CustomVolScanReader();
   // CDF::Variable::CustomMemoryReader *memoryReader = CDF::Variable::CustomMemoryReaderInstance;
+  int cnt = 0;
   for (CT::string s : scan_params) {
     CDF::Variable *var = new CDF::Variable();
     var->setType(CDF_FLOAT);
-    ;
     var->name.copy(s);
     cdfObject->addVariable(var);
     var->setAttributeText("standard_name", s.c_str());
@@ -226,7 +228,7 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
     var->setAttributeText("grid_mapping", "projection");
     var->setAttributeText("ADAGUC_VOL_SCAN", "TRUE");
     var->setAttributeText("ADAGUC_VECTOR", "true"); /* Set this to true to tell adagucserverEC/CImageDataWriter.cpp, 708 to use full screenspace to retrieve GetFeatureInfo value */
-    var->setAttributeText("units", "fixedUnits");
+    var->setAttributeText("units", units[cnt].c_str());
     float fillValue = FLT_MAX;
     var->setAttribute("_FillValue", CDF_FLOAT, &fillValue, 1);
     // var->setCustomReader(memoryReader);
@@ -235,6 +237,8 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
     var->dimensionlinks.push_back(dimElevation);
     var->dimensionlinks.push_back(dimY);
     var->dimensionlinks.push_back(dimX);
+
+    cnt++;
   }
 
   return 0;
@@ -266,6 +270,8 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
     }
     CDF::Variable *new2DVar;
     new2DVar = dataObjects[0]->cdfVariable;
+
+    bool doZdr = (new2DVar->name.equals("ZDR"));
 
     // Make the width and height of the new 2D adaguc field the same as the viewing window
     dataSource->dWidth = dataSource->srvParams->Geo->dWidth;
@@ -319,13 +325,6 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
     int height = dimY->length;
 
     CDF::Variable *scanVar;
-    CT::string origScanName = new2DVar->name.c_str();
-    origScanName.concat("_backup");
-    scanVar = cdfObject->getVariableNE(origScanName.c_str());
-    if (scanVar == NULL) {
-      // CDBError("Unable to find orignal swath variable with name %s", origScanName.c_str());
-      // return 1;
-    }
 
     CImageWarper imageWarper;
     bool projectionRequired = false;
@@ -399,19 +398,42 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
     float scan_ascale;
     scanVar->getAttribute("scan_azim_bin")->getData<float>(&scan_ascale, 1);
 
+    float factor = 1, offset = 0;
+    float zv_factor, zv_offset;
+
     CT::string scanCalibrationVarName;
     scanCalibrationVarName.print("scan%1d.calibration", scan);
     CDF::Variable *scanCalibrationVar = cdfObject->getVariable(scanCalibrationVarName);
     CT::string componentCalibrationStringName;
-    componentCalibrationStringName.print("calibration_%s_formulas", new2DVar->name.c_str());
-    CT::string calibrationFormula = scanCalibrationVar->getAttribute(componentCalibrationStringName.c_str())->getDataAsString();
-    float factor, offset;
-    getCalibrationParameters(calibrationFormula, factor, offset);
+    if (!doZdr) {
+      componentCalibrationStringName.print("calibration_%s_formulas", new2DVar->name.c_str());
+      CT::string calibrationFormula = scanCalibrationVar->getAttribute(componentCalibrationStringName.c_str())->getDataAsString();
+      getCalibrationParameters(calibrationFormula, factor, offset);
+    } else {
+      componentCalibrationStringName.print("calibration_%s_formulas", "Z");
+      CT::string calibrationFormula = scanCalibrationVar->getAttribute(componentCalibrationStringName.c_str())->getDataAsString();
+      getCalibrationParameters(calibrationFormula, factor, offset);
+
+      componentCalibrationStringName.print("calibration_%s_formulas", "Zv");
+      calibrationFormula = scanCalibrationVar->getAttribute(componentCalibrationStringName.c_str())->getDataAsString();
+      getCalibrationParameters(calibrationFormula, zv_factor, zv_offset);
+    }
 
     CT::string scanDataVarName;
-    scanDataVarName.print("scan%d.scan_%s_data", scan, new2DVar->name.c_str());
-    CDF::Variable *scanDataVar = cdfObject->getVariable(scanDataVarName);
-    scanDataVar->readData(scanDataVar->getType());
+    CDF::Variable *scanDataVar;
+    CDF::Variable *scanDataVar_Zv;
+    if (doZdr) {
+      scanDataVarName.print("scan%d.scan_%s_data", scan, "Z");
+      scanDataVar = cdfObject->getVariable(scanDataVarName);
+      scanDataVar->readData(scanDataVar->getType());
+      scanDataVarName.print("scan%d.scan_%s_data", scan, "Zv");
+      scanDataVar_Zv = cdfObject->getVariable(scanDataVarName);
+      scanDataVar_Zv->readData(scanDataVar_Zv->getType());
+    } else {
+      scanDataVarName.print("scan%d.scan_%s_data", scan, new2DVar->name.c_str());
+      scanDataVar = cdfObject->getVariable(scanDataVarName);
+      scanDataVar->readData(scanDataVar->getType());
+    }
 
     /*Setting geographical projection parameters of input Cartesian grid.*/
     CT::string scanProj4;
@@ -426,8 +448,15 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
     double x, y;
     float rang, azim;
     int ir, ia;
-    float *p = (float *)new2DVar->data;                          // ptr to store data
-    unsigned short *pScan = (unsigned short *)scanDataVar->data; // ptr to get ray data
+    float *p = (float *)new2DVar->data; // ptr to store data
+    std::vector<unsigned short *> pScans = {(unsigned short *)scanDataVar->data};
+    std::vector<float> factors = {factor};
+    std::vector<float> offsets = {offset};
+    if (doZdr) {
+      pScans.push_back((unsigned short *)scanDataVar_Zv->data);
+      factors.push_back(zv_factor);
+      offsets.push_back(zv_offset);
+    }
 
     for (int row = 0; row < height; row++) {
       for (int col = 0; col < width; col++) {
@@ -440,15 +469,20 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
         if (ir < scan_nrang) {
           ia = (int)(azim / scan_ascale);
           ia = (ia + scan_nazim) % scan_nazim;
-          unsigned short v = pScan[ir + ia * scan_nrang];
-          *p++ = v * factor + offset;
+          std::vector<unsigned short> vs;
+          for (auto pScan : pScans) {
+            vs.push_back(pScan[ir + ia * scan_nrang]);
+          }
+          if (doZdr) {
+            *p++ = vs[0] * factors[0] + offsets[0] - (vs[1] * factors[1] + offsets[1]);
+          } else {
+            *p++ = vs[0] * factors[0] + offsets[0];
+          }
         } else {
           *p++ = FLT_MAX;
         }
       }
     }
-
-    CT::string dumpString = CDF::dump(new2DVar);
   }
   return 0;
 }
