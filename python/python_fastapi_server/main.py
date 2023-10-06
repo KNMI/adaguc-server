@@ -18,7 +18,6 @@ from routers.middleware import FixSchemeMiddleware
 from routers.ogcapi import ogcApiApp
 from routers.opendap import opendapRouter
 from routers.wmswcs import testadaguc, wmsWcsRouter
-from routers.edr import edrApiApp
 from routers.maps import create_maps_routes
 
 logger = logging.getLogger(__name__)
@@ -72,8 +71,6 @@ async def root():
 
 
 app.mount("/ogcapi", ogcApiApp)
-app.mount("/edr", edrApiApp)
-#app.mount("/maps", mapsApiApp)
 create_maps_routes(app, ["RADAR", "HARM_N25", "eobs_v27.0e"])
 
 app.include_router(health_check_router)
