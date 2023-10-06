@@ -1,3 +1,6 @@
+**Version 2.13.5 2023-10-06**
+- Restored access log to original format (was broken since move to FastAPI) 
+
 **Version 2.13.4 2023-10-04**
 - Improved Dockerfile multistage build leading to smaller images
 - Updated Python package versions
