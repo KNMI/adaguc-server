@@ -33,6 +33,7 @@ from geomet import wkt
 from owslib.wms import WebMapService
 
 from .geojsonresponse import GeoJSONResponse
+from .covjsonresponse import CovJSONResponse
 from .ogcapi_tools import call_adaguc
 from .setup_adaguc import setup_adaguc
 
@@ -94,24 +95,24 @@ def get_point_value(
     dataset: str,
     instance: str,
     coords: list[float],
-    parameters: str,
-    t: str,
-    z: str = None,
-    extra_dims="",
+    parameters: list[str],
+    datetime_par: str,
+    z_par: str = None,
+    extra_par: str=None,
 ):
     urlrequest = (
         f"SERVICE=WMS&VERSION=1.3.0&REQUEST=GetPointValue&CRS=EPSG:4326"
-        f"&DATASET={dataset}&QUERY_LAYERS={parameters}"
+        f"&DATASET={dataset}&QUERY_LAYERS={','.join(parameters)}"
         f"&X={coords[0]}&Y={coords[1]}&INFO_FORMAT=application/json")
-    if t:
-        urlrequest += f"&TIME={t}"
+    if datetime_par:
+        urlrequest += f"&TIME={datetime_par}"
 
     if instance:
         urlrequest += f"&DIM_reference_time={instance_to_iso(instance)}"
-    if z:
-        urlrequest += f"&ELEVATION={z}"
-    if extra_dims:
-        urlrequest += extra_dims
+    if z_par:
+        urlrequest += f"&ELEVATION={z_par}"
+    if extra_par:
+        urlrequest += extra_par
 
     logger.info("URL: %s", urlrequest)
     status, response = call_adaguc(url=urlrequest.encode("UTF-8"))
@@ -126,14 +127,23 @@ def get_point_value(
     response_model=Coverage,
     response_model_exclude_none=True,
 )
+@edrApiApp.get(
+    "/collections/{collection_name}/instances/{instance}/position",
+    response_model=Coverage,
+    response_model_exclude_none=True,
+)
 async def get_collection_position(
         collection_name: str,
         request: Request,
         coords: str,
-        datetime_par: Optional[str] = None,
+        instance:  Optional[str] = None,
+        datetime_par: str = Query(default=None, alias="datetime"),
         parameter_name: str = Query(alias="parameter-name"),
+        z_par: str=Query(alias="z"),
+        crs: str=Query(default=None),
+        format: str=Query(default=None, alias="f")
 ):
-    allowed_params = ["coords", "datatime", "parameter-name"]
+    allowed_params = ["coords", "datetime", "parameter-name", "z", "f", "crs"]
     extra_params = [k for k in request.query_params if k not in allowed_params]
     extra_dims = ""
     if len(extra_params):
@@ -142,6 +152,7 @@ async def get_collection_position(
     edr_collections = get_edr_collections()
     dataset = edr_collections[collection_name]["dataset"]
 
+    parameter_names = parameter_name.split(",")
     latlons = wkt.loads(coords)
     logger.info("latlons:%s", latlons)
     coord = {
@@ -150,57 +161,20 @@ async def get_collection_position(
     }
     resp = get_point_value(
         dataset,
-        None,
+        instance,
         [coord["lon"], coord["lat"]],
-        parameter_name,
+        parameter_names,
         datetime_par,
+        z_par,
         extra_dims,
     )
     if resp:
         dat = json.loads(resp)
-        return GeoJSONResponse(covjson_from_resp(dat))
+        return CovJSONResponse(covjson_from_resp(dat))
 
     raise EdrException(code=400, description="No data")
 
 
-@edrApiApp.get(
-    "/collections/{collection_name}/instances/{instance}/position",
-    response_model=Coverage,
-    response_model_exclude_none=True,
-)
-async def edr_get_collection_instance_position(
-    collection_name: str,
-    instance: str,
-    request: Request,
-    response: Response,
-    coords: str,
-    datetime_par: Optional[str] = None,
-    parameter_name: str = Query(alias="parameter-name"),
-    z_par: Optional[str] = None,
-):
-
-    collections_info = get_edr_collections()
-    collection_info = collections_info[collection_name]
-    dataset = collection_info["dataset"]
-
-    latlons = wkt.loads(coords)
-    coord = {
-        "lat": latlons["coordinates"][1],
-        "lon": latlons["coordinates"][0]
-    }
-    resp = get_point_value(
-        dataset,
-        instance,
-        [coord["lon"], coord["lat"]],
-        parameter_name,
-        datetime_par,
-        z_par,
-    )
-    if resp:
-        dat = json.loads(resp)
-        return GeoJSONResponse(covjson_from_resp(dat))
-
-    raise EdrException(code=400, description="No data")
 
 DEFAULT_CRS_OBJECT = {
     "crs":
@@ -327,11 +301,10 @@ def get_parameters_for_edr_collection(edr_collection: str) -> dict[str, Paramete
         param = ParameterName(
             id=param_name,
             observedProperty=ObservedPropertyCollection(id=param_name,
-                                                        label="title: " +
-                                                        param_name),
+                                                        label=param_name),
             type="Parameter",
             unit=Units(symbol="mm"), #TODO Find real untis
-            label="title: " + param_name,
+            label=param_name,
         )
         parameter_names[param_name] = param
     return parameter_names

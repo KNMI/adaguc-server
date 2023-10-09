@@ -150,12 +150,14 @@ def generate_collections():
     return collections
 
 
-def get_dimensions(layer, skip_dims=[]):
+def get_dimensions(layer, skip_dims=None):
     """
     Gets the dimensions from a layer definition, skipping the dimensions
     in skip_dims
     """
     dims = []
+    if skip_dims is None:
+        skip_dims=[]
     for dim_name in layer.dimensions:
         if not dim_name in skip_dims:
             new_dim = {
