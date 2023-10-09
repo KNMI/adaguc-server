@@ -1,3 +1,0 @@
-covjson-pydantic
-orjson
-pydantic

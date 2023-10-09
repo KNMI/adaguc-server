@@ -98,7 +98,7 @@ def get_point_value(
     parameters: list[str],
     datetime_par: str,
     z_par: str = None,
-    extra_par: str=None,
+    custom_dims: str=None,
 ):
     urlrequest = (
         f"SERVICE=WMS&VERSION=1.3.0&REQUEST=GetPointValue&CRS=EPSG:4326"
@@ -111,8 +111,8 @@ def get_point_value(
         urlrequest += f"&DIM_reference_time={instance_to_iso(instance)}"
     if z_par:
         urlrequest += f"&ELEVATION={z_par}"
-    if extra_par:
-        urlrequest += extra_par
+    if custom_dims:
+        urlrequest += custom_dims
 
     logger.info("URL: %s", urlrequest)
     status, response = call_adaguc(url=urlrequest.encode("UTF-8"))
@@ -144,11 +144,11 @@ async def get_collection_position(
         format: str=Query(default=None, alias="f")
 ):
     allowed_params = ["coords", "datetime", "parameter-name", "z", "f", "crs"]
-    extra_params = [k for k in request.query_params if k not in allowed_params]
-    extra_dims = ""
-    if len(extra_params):
-        for extra_param in extra_params:
-            extra_dims += f"&DIM_{extra_param}={request.query_params[extra_param]}"
+    custom_dims = [k for k in request.query_params if k not in allowed_params]
+    custom_dims = ""
+    if len(custom_dims):
+        for custom_dim in custom_dims:
+            custom_dims += f"&DIM_{custom_dim}={request.query_params[custom_dim]}"
     edr_collections = get_edr_collections()
     dataset = edr_collections[collection_name]["dataset"]
 
@@ -166,7 +166,7 @@ async def get_collection_position(
         parameter_names,
         datetime_par,
         z_par,
-        extra_dims,
+        custom_dims,
     )
     if resp:
         dat = json.loads(resp)

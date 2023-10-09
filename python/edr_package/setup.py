@@ -21,9 +21,6 @@ logger.debug(f"Package name: {NAME}")
 setuptools.setup(
     name=NAME,
     version="0.0.9",
-    author="KNMI Data Platform",
-    author_email="dataplatform@knmi.nl",
-    url="https://gitlab.com/KNMI/data-platform/observation-api/internal-data-api",
     description="The Pydantic models for EDR datatypes",
     package_data={"edr_pydantic_classes": ["py.typed"]},
     packages=["edr_pydantic_classes"],
