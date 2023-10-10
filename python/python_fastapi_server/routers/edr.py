@@ -19,7 +19,7 @@ from edr_pydantic_classes.capabilities import (ConformanceModel, Contact,
 from edr_pydantic_classes.generic_models import (CRSOptions, Custom, Link,
                                                  ObservedPropertyCollection,
                                                  ParameterName, Spatial,
-                                                 Temporal, Units, Vertical)
+                                                 Temporal, Unit, Vertical)
 from edr_pydantic_classes.instances import (Collection, CollectionsModel,
                                             CrsObject, DataQueries, Extent,
                                             Instance, InstancesDataQueryLink,
@@ -68,9 +68,6 @@ def init_edr_collections(
             root = tree.getroot()
             for ogcapi_edr in root.iter("OgcApiEdr"):
                 for edr_collection in ogcapi_edr.iter("EdrCollection"):
-                    skip_dims = edr_collection.attrib.get("skip_dims")
-                    if skip_dims is not None:
-                        skip_dims = edr_collection.attrib.get("skip_dims").split(",")
                     edr_collections[edr_collection.attrib.get("name")] = {
                         "dataset":
                         dataset,
@@ -84,8 +81,7 @@ def init_edr_collections(
                             inst.strip()
                             for inst in edr_collection.text.strip().split(",")
                         ],
-                        "vertical_name": edr_collection.attrib.get("z"),
-                        "skip_dims": skip_dims,
+                        "vertical_name": edr_collection.attrib.get("vertical_name"),
                         "base_url": f"http://localhost:8080/edr/collections/{edr_collection.attrib.get('name')}"
                     }
         except ParseError:
@@ -317,7 +313,7 @@ def get_parameters_for_edr_collection(edr_collection: str) -> dict[str, Paramete
             observedProperty=ObservedPropertyCollection(id=param_name,
                                                         label=param_name),
             type="Parameter",
-            unit=Units(symbol="mm"), #TODO Find real untis
+            unit=Unit(symbol="mm"), #TODO Find real untis
             label=param_name,
         )
         parameter_names[param_name] = param
@@ -749,9 +745,11 @@ def covjson_from_resp(dats, vertical_name):
         parameters: Dict(str, CovJsonParameter) = dict()
         ranges = dict()
 
+        unit = Unit(symbol="m3")
         param = CovJsonParameter(
             id=dat["name"],
             observedProperty=ObservedProperty(label={"en": dat["name"]}),
+            unit=unit
         )
         #TODO: add units to CovJsonParameter
         parameters[dat["name"]] = param
