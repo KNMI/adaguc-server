@@ -59,7 +59,7 @@ templates = Jinja2Templates(directory=templates_abs_file_path)
 
 
 @ogcApiApp.exception_handler(RequestValidationError)
-async def validation_exception_handler(exc: RequestValidationError):
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
     return JSONResponse(
         status_code=fastapi_status.HTTP_400_BAD_REQUEST,
         content=jsonable_encoder({
@@ -218,7 +218,7 @@ async def get_collections(req: Request, f: str = "json"):
                         str(
                             req.url_for(
                                 "get_collection",
-                                id=parsed_collection["dataset"],
+                                coll=parsed_collection["dataset"],
                             ))),
                     extent=extent,
                     itemType="feature",
@@ -240,18 +240,18 @@ async def get_collections(req: Request, f: str = "json"):
     )
 
 
-@ogcApiApp.get("/collections/{id}",
+@ogcApiApp.get("/collections/{coll}",
                response_model=Collection,
                response_model_exclude_none=True)
-async def get_collection(collection_id: str, req: Request, f: str = "json"):
-    extent = Extent(spatial=Spatial(bbox=[get_extent(collection_id)]))
+async def get_collection(coll: str, req: Request, f: str = "json"):
+    extent = Extent(spatial=Spatial(bbox=[get_extent(coll)]))
     coll = Collection(
-        id=collection_id,
+        id=coll,
         title="title1",
         description="descr1",
         extent=extent,
         links=get_collection_links(
-            str(req.url_for("get_collection", id=collection_id))),
+            str(req.url_for("get_collection", coll=coll))),
     )
     if request_type(f) == "HTML":
         return templates.TemplateResponse("collection.html", {
