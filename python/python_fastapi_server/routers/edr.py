@@ -27,15 +27,13 @@ from edr_pydantic_classes.instances import (Collection, CollectionsModel,
                                             InstancesVariables,
                                             PositionDataQueryLink,
                                             PositionLink, PositionVariables)
-from fastapi import FastAPI, Query, Request, Response
+from fastapi import FastAPI, Query, Request
 from fastapi.responses import JSONResponse
 from geomet import wkt
 from owslib.wms import WebMapService
 
-from .geojsonresponse import GeoJSONResponse
 from .covjsonresponse import CovJSONResponse
 from .ogcapi_tools import call_adaguc
-from .setup_adaguc import setup_adaguc
 
 logger = logging.getLogger(__name__)
 logger.debug("Starting EDR")
@@ -51,8 +49,8 @@ class EdrException(Exception):
 async def edr_exception_handler(request: Request, exc: EdrException):
     return JSONResponse(status_code = exc.code, content={"code": str(exc.code), "description": exc.description})
 
-def get_edr_collections(
-        adagucDataSetDir: str = os.environ["ADAGUC_DATASET_DIR"]):
+def init_edr_collections(
+    adagucDataSetDir: str = os.environ["ADAGUC_DATASET_DIR"]):
     """
     Return all possible OGCAPI EDR datasets, based on the dataset directory
     """
@@ -70,6 +68,9 @@ def get_edr_collections(
             root = tree.getroot()
             for ogcapi_edr in root.iter("OgcApiEdr"):
                 for edr_collection in ogcapi_edr.iter("EdrCollection"):
+                    skip_dims = edr_collection.attrib.get("skip_dims")
+                    if skip_dims is not None:
+                        skip_dims = edr_collection.attrib.get("skip_dims").split(",")
                     edr_collections[edr_collection.attrib.get("name")] = {
                         "dataset":
                         dataset,
@@ -79,20 +80,25 @@ def get_edr_collections(
                         "http://localhost:8000/wms",
                         "time_interval":
                         edr_collection.attrib.get("time_interval"),
-                        "z_interval":
-                        edr_collection.attrib.get("z_interval"),
                         "parameters": [
                             inst.strip()
                             for inst in edr_collection.text.strip().split(",")
                         ],
+                        "vertical_name": edr_collection.attrib.get("z"),
+                        "skip_dims": skip_dims,
+                        "base_url": f"http://localhost:8080/edr/collections/{edr_collection.attrib.get('name')}"
                     }
         except ParseError:
             pass
     return edr_collections
 
+global_edr_collections=init_edr_collections()
+
+def get_edr_collections():
+    return global_edr_collections
 
 def get_point_value(
-    dataset: str,
+    edr_collectioninfo: dict,
     instance: str,
     coords: list[float],
     parameters: list[str],
@@ -100,6 +106,7 @@ def get_point_value(
     z_par: str = None,
     custom_dims: str=None,
 ):
+    dataset=edr_collectioninfo['dataset']
     urlrequest = (
         f"SERVICE=WMS&VERSION=1.3.0&REQUEST=GetPointValue&CRS=EPSG:4326"
         f"&DATASET={dataset}&QUERY_LAYERS={','.join(parameters)}"
@@ -110,7 +117,10 @@ def get_point_value(
     if instance:
         urlrequest += f"&DIM_reference_time={instance_to_iso(instance)}"
     if z_par:
-        urlrequest += f"&ELEVATION={z_par}"
+        if "vertical_name" in edr_collectioninfo and edr_collectioninfo["vertical_name"]!="ELEVATION":
+          urlrequest += f"&DIM_{edr_collectioninfo['vertical_name']}={z_par}"
+        else:
+          urlrequest += f"&ELEVATION={z_par}"
     if custom_dims:
         urlrequest += custom_dims
 
@@ -139,7 +149,7 @@ async def get_collection_position(
         instance:  Optional[str] = None,
         datetime_par: str = Query(default=None, alias="datetime"),
         parameter_name: str = Query(alias="parameter-name"),
-        z_par: str=Query(alias="z"),
+        z_par: str=Query(alias="z", default=None),
         crs: str=Query(default=None),
         format: str=Query(default=None, alias="f")
 ):
@@ -150,7 +160,6 @@ async def get_collection_position(
         for custom_dim in custom_dims:
             custom_dims += f"&DIM_{custom_dim}={request.query_params[custom_dim]}"
     edr_collections = get_edr_collections()
-    dataset = edr_collections[collection_name]["dataset"]
 
     parameter_names = parameter_name.split(",")
     latlons = wkt.loads(coords)
@@ -160,7 +169,7 @@ async def get_collection_position(
         "lon": latlons["coordinates"][0]
     }
     resp = get_point_value(
-        dataset,
+        edr_collections[collection_name],
         instance,
         [coord["lon"], coord["lat"]],
         parameter_names,
@@ -170,7 +179,7 @@ async def get_collection_position(
     )
     if resp:
         dat = json.loads(resp)
-        return CovJSONResponse(covjson_from_resp(dat))
+        return CovJSONResponse(covjson_from_resp(dat, edr_collections[collection_name]['vertical_name']))
 
     raise EdrException(code=400, description="No data")
 
@@ -184,37 +193,42 @@ DEFAULT_CRS_OBJECT = {
 }
 
 
+@cached(cache=TTLCache(maxsize=1024, ttl=60))
 def get_collectioninfo_for_id(
     edr_collection: str,
-    base_url: str,
     instance: str = None,
 ) -> Collection:
-    logger.info("get_collection_info_for_id(%s, %s, %s)", edr_collection , base_url, instance)
-    links: list[Link] = []
-    links.append(Link(href=f"{base_url}", rel="collection", type="application/json"))
+    logger.info("get_collection_info_for_id(%s, %s)", edr_collection, instance)
 
     edr_collectioninfo = get_edr_collections()[edr_collection]
     dataset = edr_collectioninfo["dataset"]
     logger.info("%s=>%s", edr_collection, dataset)
 
+    base_url = edr_collectioninfo["base_url"]
+    if instance is not None:
+        base_url += f"/instances/{instance}"
+
+    links: list[Link] = []
+    links.append(Link(href=f"{base_url}", rel="collection", type="application/json"))
+
     ref_times = None
     if not instance:
-        ref_times = get_reference_times_for_dataset(
-            dataset, edr_collectioninfo["parameters"][0])
+        ref_times = get_reference_times_for_collection(
+            edr_collectioninfo, edr_collectioninfo["parameters"][0])
         if ref_times and len(ref_times) > 0:
             instances_link = Link(href=f"{base_url}/instances",
                                  rel="collection",
                                  type="application/json")
             links.append(instances_link)
 
-    bbox = get_extent(edr_collection)
+    bbox = get_extent(edr_collectioninfo)
     crs = CRSOptions.wgs84
     spatial = Spatial(bbox=bbox, crs=crs)
     (interval,
-     time_values) = get_times_for_collection(edr_collection,
+     time_values) = get_times_for_collection(edr_collectioninfo,
                                           edr_collectioninfo["parameters"][0])
 
-    customlist:list = get_custom_dims_for_dataset(edr_collection,
+    customlist:list = get_custom_dims_for_collection(edr_collectioninfo,
                                              edr_collectioninfo["parameters"][0])
     custom = []
     if customlist is not None:
@@ -222,8 +236,8 @@ def get_collectioninfo_for_id(
             custom.append(Custom(**custom_el))
 
     vertical = None
-    vertical_dim = get_vertical_dim_for_dataset(
-        edr_collection, edr_collectioninfo["parameters"][0])
+    vertical_dim = get_vertical_dim_for_collection(
+        edr_collectioninfo, edr_collectioninfo["parameters"][0])
     if vertical_dim:
         vertical = Vertical(**vertical_dim)
 
@@ -364,10 +378,10 @@ def get_time_values_for_range(rng) -> list[str]:
 
 
 def get_times_for_collection(
-        collection_name: str,
+        edr_collectioninfo: Dict,
         parameter: str = None) -> Tuple[list[list[str]], list[str]]:
-    logger.info("get_times_for_dataset(%s,%s)", collection_name, parameter)
-    wms = get_capabilities(collection_name)
+    logger.info("get_times_for_dataset(%s,%s)", edr_collectioninfo['name'], parameter)
+    wms = get_capabilities(edr_collectioninfo['name'])
     if parameter and parameter in wms:
         layer = wms[parameter]
     else:
@@ -391,8 +405,8 @@ def get_times_for_collection(
     return (None, None)
 
 
-def get_custom_dims_for_dataset(dataset: str, parameter: str = None):
-    wms = get_capabilities(dataset)
+def get_custom_dims_for_collection(edr_collectioninfo: dict, parameter: str = None):
+    wms = get_capabilities(edr_collectioninfo['name'])
     custom = []
     if parameter and parameter in list(wms):
         layer = wms[parameter]
@@ -400,25 +414,26 @@ def get_custom_dims_for_dataset(dataset: str, parameter: str = None):
         # default to first layer
         layer = wms[list(wms)[0]]
     for dim_name in layer.dimensions:
-        if dim_name not in ["reference_time", "time", "elevation"]:
+        if dim_name not in ["reference_time", "time", "elevation", edr_collectioninfo.get("vertical_name")]:
             custom_dim = {
                 "id": dim_name,
                 "interval": [],
                 "values": layer.dimensions[dim_name]["values"],
-                "reference": "custom",
+                "reference": f"custom_{dim_name}",
             }
             custom.append(custom_dim)
     return custom if len(custom) > 0 else None
 
 
-def get_vertical_dim_for_dataset(dataset: str, parameter: str = None):
-    wms = get_capabilities(dataset)
+def get_vertical_dim_for_collection(edr_collectioninfo: dict, parameter: str = None):
+    wms = get_capabilities(edr_collectioninfo['name'])
     if parameter and parameter in list(wms):
         layer = wms[parameter]
     else:
         layer = wms[list(wms)[0]]
+
     for dim_name in layer.dimensions:
-        if dim_name in ["elevation"]:
+        if dim_name in ["elevation"] or ( "vertical_name" in edr_collectioninfo and dim_name==edr_collectioninfo["vertical_name"]):
             vertical_dim = {
                 "interval": [],
                 "values": layer.dimensions[dim_name]["values"],
@@ -440,7 +455,7 @@ async def edr_get_collections(request: Request):
     collections: list[Collection] = []
     edr_collections = get_edr_collections()
     for edr_coll in edr_collections:
-        coll = get_collectioninfo_for_id(edr_coll, f"{base_url}/{edr_coll}")
+        coll = get_collectioninfo_for_id(edr_coll)
         collections.append(coll)
     collections_data = CollectionsModel(links=links, collections=collections)
     return collections_data
@@ -450,10 +465,10 @@ async def edr_get_collections(request: Request):
                response_model=Collection,
                response_model_exclude_none=True)
 async def edr_get_collection_by_id(collection_name: str, request: Request):
-    base_url = request.url_for("edr_get_collection_by_id",
-                               collection_name=collection_name)
+    base_url = str(request.url_for("edr_get_collection_by_id",
+                               collection_name=collection_name))
 
-    collection = get_collectioninfo_for_id(collection_name, base_url)
+    collection = get_collectioninfo_for_id(collection_name)
 
     return collection
 
@@ -484,8 +499,9 @@ def get_capabilities(collname):
     return wms.contents
 
 
-def get_reference_times_for_dataset(dataset: str,
+def get_reference_times_for_collection(edr_collectioninfo: dict,
                                     layer: str) -> list[str]:
+    dataset=edr_collectioninfo["dataset"]
     url = f"?DATASET={dataset}&SERVICE=WMS&VERSION=1.3.0&request=getreferencetimes&LAYER={layer}"
     logger.info("getreftime_url(%s,%s): %s", dataset, layer, url)
     status, response = call_adaguc(url=url.encode("UTF-8"))
@@ -496,11 +512,11 @@ def get_reference_times_for_dataset(dataset: str,
     return []
 
 
-def get_extent(coll):
+def get_extent(edr_collectioninfo: dict):
     """
     Get the boundingbox extent from the WMS GetCapabilities
     """
-    contents = get_capabilities(coll)
+    contents = get_capabilities(edr_collectioninfo['name'])
     if len(contents):
         bbox = contents[next(iter(contents))].boundingBoxWGS84
 
@@ -521,8 +537,8 @@ async def edr_get_instances_for_collection(collection_name: str,
     instances: list(Instance) = []
     edr_collections = get_edr_collections()
 
-    ref_times = get_reference_times_for_dataset(
-        edr_collections[collection_name]["dataset"], edr_collections[collection_name]["parameters"][0])
+    ref_times = get_reference_times_for_collection(
+        edr_collections[collection_name], edr_collections[collection_name]["parameters"][0])
     links: list(Link) = []
     links.append(Link(href=base_url, rel="collection"))
     for instance in list(ref_times):
@@ -531,8 +547,7 @@ async def edr_get_instances_for_collection(collection_name: str,
         instance_links.append(instance_link)
         instance_info = get_collectioninfo_for_id(
             collection_name,
-            f"{base_url}/{instance}",
-            instance,
+            instance
         )
 
         instances.append(instance_info)
@@ -548,12 +563,7 @@ async def edr_get_instances_for_collection(collection_name: str,
 )
 async def edr_get_collection_instance_by_name_and_instance(
         collection_name: str, instance, request: Request):
-    base_url = request.url_for(
-        "edr_get_collection_instance_by_name_and_instance",
-        collection_name=collection_name,
-        instance=instance,
-    )
-    coll = get_collectioninfo_for_id(collection_name, base_url,
+    coll = get_collectioninfo_for_id(collection_name,
                                      instance)
     return coll
 
@@ -700,8 +710,7 @@ def makedims(dims, data):
     return dimlist
 
 
-def covjson_from_resp(dats):
-    first = True
+def covjson_from_resp(dats, vertical_name):
     fullcovjson = None
     for dat in dats:
         (lon, lat) = dat["point"]["coords"].split(",")
@@ -709,16 +718,14 @@ def covjson_from_resp(dats):
         lon = float(lon)
         dims = makedims(dat["dims"], dat["data"])
         time_steps = getdimvals(dims, "time")
-        vertical_steps = getdimvals(dims, "elevation")
-        reference_time = getdimvals(dims, "reference_time")
-        if reference_time:
-            single_reference_time = reference_time[0]
+        if vertical_name is not None:
+            vertical_steps = getdimvals(dims, vertical_name)
         else:
-            single_reference_time = None
+            vertical_steps = getdimvals(dims, "elevation")
         custom_dims = {
             dim: dims[dim]
             for dim in dims if dim not in
-            ["reference_time", "time", "x", "y", "z", "elevation"]
+            ["reference_time", "time", "x", "y", "z", "elevation", vertical_name]
         }
 
         valstack = []
