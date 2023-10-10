@@ -1,5 +1,5 @@
 from typing import List
-from typing import Optional
+from typing import Optional, Union
 from enum import Enum
 
 from datetime import datetime
@@ -60,10 +60,15 @@ class ObservedPropertyCollection(MyBaseModel):
     # categories
 
 
-class Units(MyBaseModel):
+
+class Symbol(MyBaseModel, extra="allow"):
+    value: str
+    type: str
+
+class Unit(MyBaseModel):
     label: Optional[str]
     symbol: Optional[str]
-    id: Optional[str] = None
+    id: Optional[Union[str, Symbol]] = None
 
 
 class ParameterName(MyBaseModel):
@@ -74,7 +79,7 @@ class ParameterName(MyBaseModel):
     data_type: Optional[str] = None
     observedProperty: ObservedPropertyCollection
     extent: Optional[Extent] = None
-    unit: Optional[Units] = None
+    unit: Optional[Unit] = None
 
 
 class Variables(MyBaseModel):
