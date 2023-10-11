@@ -4,7 +4,9 @@ import os
 import time
 from typing import List
 
+from cachetools import TTLCache, cached
 from defusedxml.ElementTree import ParseError, parse
+
 from owslib.wms import WebMapService
 
 from .models.ogcapifeatures_1_model import (FeatureGeoJSON, Link, PointGeoJSON,
@@ -13,6 +15,7 @@ from .setup_adaguc import setup_adaguc
 
 logger = logging.getLogger(__name__)
 
+cache = TTLCache(maxsize=1000, ttl=60)
 
 def make_bbox(extent):
     s_extent = []
@@ -116,7 +119,7 @@ def call_adaguc(url):
     return status, data
 
 
-# @cacher.memoize(timeout=30)
+@cached(cache=cache)
 def get_capabilities(collname):
     """
     Get the collectioninfo from the WMS GetCapabilities
@@ -141,7 +144,7 @@ def get_capabilities(collname):
     return wms.contents
 
 
-# @cacher.cached(timeout=30, key_prefix="collections")
+@cached(cache=cache)
 def generate_collections():
     """
     Generate OGC API Feature collections
@@ -168,7 +171,7 @@ def get_dimensions(layer, skip_dims=None):
     return dims
 
 
-# @cacher.memoize(timeout=30)
+@cached(cache=cache)
 def get_parameters(collname):
     """
     get_parameters
