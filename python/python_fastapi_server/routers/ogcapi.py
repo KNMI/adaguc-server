@@ -405,7 +405,9 @@ def get_features_for_items(
         coords = [point]
     if not observed_property_name:
         collinfo = get_parameters(coll)
-        observed_property_name = [collinfo["layers"][0]["name"]]
+        first_param=next(iter(collinfo))
+        print(first_param, flush=True)
+        observed_property_name =[first_param]
         # Default observedPropertyName = first layername
     param_list = ",".join(observed_property_name)
 
