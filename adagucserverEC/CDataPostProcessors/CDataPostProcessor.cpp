@@ -3,6 +3,7 @@
 #include "CDataPostProcessor_IncludeLayer.h"
 #include "CDataPostProcessor_ClipMinMax.h"
 #include "CDataPostProcessor_Operator.h"
+#include "CDataPostProcessor_WFP.h"
 
 void writeLogFileLocal(const char *msg) {
   char *logfile = getenv("ADAGUC_LOGFILE");
@@ -546,6 +547,7 @@ CDPPExecutor::CDPPExecutor() {
   dataPostProcessorList->push_back(new CDPPGoes16Metadata());
   dataPostProcessorList->push_back(new CDPPClipMinMax());
   dataPostProcessorList->push_back(new CDPPOperator());
+  dataPostProcessorList->push_back(new CDPPWFP());
 }
 
 CDPPExecutor::~CDPPExecutor() {
