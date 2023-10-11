@@ -29,4 +29,4 @@ Now you can use all options as documented in [doc/info/Commandline.md](../../doc
 * https://&lt;your hostname&gt;:&lt;port&gt;/adagucopendap/ For serving OpenDAP services
 * https://&lt;your hostname&gt;:&lt;port&gt;/autowms? For getting the list of visualizable resources
 
-Print your ./Docker/.env file for current docker-compose settinhs with `cat ./Docker/.env`
+Print your ./Docker/.env file for current docker-compose settings with `cat ./Docker/.env`

@@ -7,6 +7,7 @@ import uvicorn
 from brotli_asgi import BrotliMiddleware
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from asgi_logger import AccessLoggerMiddleware
 
 from configure_logging import configure_logging
 from routers.autowms import autowms_router
@@ -21,6 +22,11 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
+# Set uvicorn access log format using middleware
+access_log_format = 'accesslog %(h)s ; %(t)s ; %(H)s ; %(m)s ; %(U)s ; %(q)s ; %(s)s ; %(M)s ; "%(a)s"'
+logging.getLogger("uvicorn.access").handlers.clear()
+app.add_middleware(AccessLoggerMiddleware, format=access_log_format)
+logging.getLogger("access").propagate = False
 
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
@@ -76,7 +82,4 @@ app.include_router(opendapRouter)
 
 if __name__ == "__main__":
     testadaguc()
-    print(
-        '------------------------DEVELOPMENT MODE ----------------------------'
-    )
     uvicorn.run(app="main:app", host="0.0.0.0", port=8080, reload=True)

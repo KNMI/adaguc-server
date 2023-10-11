@@ -48,12 +48,13 @@ int CDPPIncludeLayer::setDimsForNewDataSource(CServerConfig::XMLE_DataPostProc *
 }
 
 int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
-  if ((isApplicable(proc, dataSource, mode) & mode) == false) {
+  if (isApplicable(proc, dataSource, mode) == false) {
     return -1;
   }
+
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
 
-    CDBDebug("CDATAPOSTPROCESSOR_RUNBEFOREREADING::Applying include_layer");
+    // CDBDebug("CDATAPOSTPROCESSOR_RUNBEFOREREADING::Applying include_layer");
 
     /* First check if this was already added */
     auto dataObjectsVector = *dataSource->getDataObjectsVector();
@@ -80,15 +81,16 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
       return 1;
     }
 
-    CDBDebug("TEMPORAL METADATA READER");
+    // CDBDebug("TEMPORAL METADATA READER");
     CDataReader reader;
     reader.enablePostProcessors = false;
+    reader.enableObjectCache = false;
     status = reader.open(dataSourceToInclude, CNETCDFREADER_MODE_OPEN_HEADER); // Only read metadata
     if (status != 0) {
       CDBDebug("Can't open file %s for layer %s", dataSourceToInclude->getFileName(), proc->attr.name.c_str());
       return 1;
     }
-    bool needsToAdd = false;
+
     for (size_t dataObjectNr = 0; dataObjectNr < dataSource->getNumDataObjects(); dataObjectNr++) {
       if (dataSource->getDataObject(dataObjectNr)->cdfVariable->name.equals(dataSourceToInclude->getDataObject(0)->cdfVariable->name)) {
         CDBDebug("Probably already done");
@@ -120,7 +122,7 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
 
       if (mode == 1) dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), newDataObject);
 
-      CDBDebug("--------> newDataObject %d ", dataSource->getDataObjectsVector()->size());
+      // CDBDebug("--------> newDataObject %d ", dataSource->getDataObjectsVector()->size());
 
       newDataObject->variableName.copy(varToClone->name.c_str());
       newDataObject->dataObjectName = proc->attr.name;
@@ -129,20 +131,20 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
       CT::string text;
       text.print("{\"variable\":\"%s\",\"datapostproc\":\"%s\"}", varToClone->name.c_str(), this->getId());
       newDataObject->cdfObject = currentDataObject->cdfObject; //(CDFObject*)varToClone->getParentCDFObject();
-      CDBDebug("--------> Adding variable %s ", varToClone->name.c_str());
+      // CDBDebug("--------> Adding variable %s ", varToClone->name.c_str());
       newDataObject->cdfObject->addVariable(newDataObject->cdfVariable);
       newDataObject->cdfVariable->setName(varToClone->name.c_str());
       newDataObject->cdfVariable->setType(varToClone->getType());
       newDataObject->cdfVariable->setSize(dataSource->dWidth * dataSource->dHeight);
 
       for (size_t j = 0; j < currentDataObject->cdfVariable->dimensionlinks.size(); j++) {
-        CDBDebug("Copying %d %s (%d)", j, currentDataObject->cdfVariable->dimensionlinks[j]->name.c_str(), currentDataObject->cdfVariable->dimensionlinks[j]->getSize());
+        // CDBDebug("Copying %d %s (%d)", j, currentDataObject->cdfVariable->dimensionlinks[j]->name.c_str(), currentDataObject->cdfVariable->dimensionlinks[j]->getSize());
         newDataObject->cdfVariable->dimensionlinks.push_back(currentDataObject->cdfVariable->dimensionlinks[j]);
       }
 
-      for (size_t j = 0; j < newDataObject->cdfVariable->dimensionlinks.size(); j++) {
-        CDBDebug("NowHas dimensions %d %s (%d)", j, newDataObject->cdfVariable->dimensionlinks[j]->name.c_str(), newDataObject->cdfVariable->dimensionlinks[j]->getSize());
-      }
+      // for (size_t j = 0; j < newDataObject->cdfVariable->dimensionlinks.size(); j++) {
+      //   CDBDebug("NowHas dimensions %d %s (%d)", j, newDataObject->cdfVariable->dimensionlinks[j]->name.c_str(), newDataObject->cdfVariable->dimensionlinks[j]->getSize());
+      // }
 
       for (size_t j = 0; j < varToClone->attributes.size(); j++) {
         newDataObject->cdfVariable->attributes.push_back(new CDF::Attribute(varToClone->attributes[j]));
@@ -155,13 +157,13 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
       newDataObject->cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
     }
     reader.close();
-    CDBDebug("CLOSING TEMPORAL METADATA READER");
+    // CDBDebug("CLOSING TEMPORAL METADATA READER");
     delete dataSourceToInclude;
     return 0;
   }
 
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
-    CDBDebug("CDATAPOSTPROCESSOR_RUNAFTERREADING::Applying include_layer");
+    // CDBDebug("CDATAPOSTPROCESSOR_RUNAFTERREADING::Applying include_layer");
 
     // Load the other datasource.
     CDataSource *dataSourceToInclude = getDataSource(proc, dataSource);
@@ -182,10 +184,10 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
       dataSourceToInclude->setTimeStep(dataSource->getCurrentTimeStep());
     }
 
-    // dataSourceToInclude->getDataObject(0)->cdfVariable->data=NULL;
-    CDBDebug("TEMPORAL FULL READER");
+    // CDBDebug("TEMPORAL FULL READER");
     CDataReader reader;
     reader.enablePostProcessors = false;
+    reader.enableObjectCache = false;
     //    CDBDebug("Opening %s",dataSourceToInclude->getFileName());
     status = reader.open(dataSourceToInclude, CNETCDFREADER_MODE_OPEN_ALL); // Now open the data as well.
     if (status != 0) {
@@ -268,7 +270,7 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
       }
     }
     reader.close();
-    CDBDebug("CLOSING TEMPORAL FULL READER");
+    // CDBDebug("CLOSING TEMPORAL FULL READER");
     delete dataSourceToInclude;
   }
   return 0;

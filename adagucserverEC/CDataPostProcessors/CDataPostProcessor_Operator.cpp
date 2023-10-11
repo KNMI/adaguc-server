@@ -9,17 +9,20 @@ const char *CDPPOperator::getId() { return "operator"; }
 
 int CDPPOperator::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
   if (proc->attr.algorithm.equals("operator")) {
-    if (dataSource->getNumDataObjects() < 2 && mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
-      CDBError("2 variables are needed for operator, found %d", dataSource->getNumDataObjects());
-      return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
+    if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
+      if (dataSource->getNumDataObjects() < 2 && mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
+        CDBError("2 variables are needed for operator, found %d", dataSource->getNumDataObjects());
+        return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
+      }
+      return CDATAPOSTPROCESSOR_RUNBEFOREREADING;
     }
-    return CDATAPOSTPROCESSOR_RUNAFTERREADING | CDATAPOSTPROCESSOR_RUNBEFOREREADING;
+    return CDATAPOSTPROCESSOR_RUNAFTERREADING;
   }
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
 }
 
 int CDPPOperator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
-  if ((isApplicable(proc, dataSource, mode) & mode) == false) {
+  if (isApplicable(proc, dataSource, mode) == false) {
     return -1;
   }
   CDBDebug("Applying Operator");
@@ -57,6 +60,9 @@ int CDPPOperator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
     newDataObject->cdfVariable->setAttributeText("standard_name", newDataObjectName.c_str());
     newDataObject->cdfVariable->setAttributeText("long_name", newDataObjectName.c_str());
     newDataObject->cdfVariable->setAttributeText("units", "1");
+    if (!proc->attr.units.empty()) {
+      newDataObject->cdfVariable->setAttributeText("units", proc->attr.units);
+    }
 
     short attrData[3];
     attrData[0] = -1;
@@ -67,52 +73,103 @@ int CDPPOperator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
     CDBDebug("CDATAPOSTPROCESSOR_RUNAFTERREADING::Applying OPERATOR");
     size_t l = (size_t)dataSource->dHeight * (size_t)dataSource->dWidth;
-    CDF::allocateData(dataSource->getDataObject(0)->cdfVariable->getType(), &dataSource->getDataObject(0)->cdfVariable->data, l);
+    dataSource->getDataObject(0)->cdfVariable->data = NULL;
+    CDF::allocateData(CDF_FLOAT, &dataSource->getDataObject(0)->cdfVariable->data, l);
 
     float *result = (float *)dataSource->getDataObject(0)->cdfVariable->data;
 
     CDataSource::DataObject *dataObjectA, *dataObjectB;
     try {
       dataObjectA = dataSource->getDataObject(proc->attr.a);
-      dataObjectB = dataSource->getDataObject(proc->attr.b);
     } catch (int e) {
+      CDBError("Variable %s not found", proc->attr.a.c_str());
       return 1;
     }
 
-    float *a = (float *)dataObjectA->cdfVariable->data;
-    float *b = (float *)dataObjectB->cdfVariable->data;
-
-    if (proc->attr.mode.equals("substract")) {
-      for (size_t j = 0; j < l; j++) {
-        result[j] = a[j] - b[j];
-      }
+    try {
+      dataObjectB = dataSource->getDataObject(proc->attr.b);
+    } catch (int e) {
+      CDBError("Variable %s not found", proc->attr.b.c_str());
+      return 1;
     }
+
+    void *dataA = dataObjectA->cdfVariable->data;
+    void *dataB = dataObjectB->cdfVariable->data;
+    CDFType typeA = dataObjectA->cdfVariable->getType();
+    CDFType typeB = dataObjectB->cdfVariable->getType();
 
     if (proc->attr.mode.equals("-")) {
       for (size_t j = 0; j < l; j++) {
-        result[j] = a[j] - b[j];
+        float a = getElement(dataA, typeA, j);
+        float b = getElement(dataB, typeB, j);
+        result[j] = a - b;
       }
     }
     if (proc->attr.mode.equals("+")) {
       for (size_t j = 0; j < l; j++) {
-        result[j] = a[j] + b[j];
+        float a = getElement(dataA, typeA, j);
+        float b = getElement(dataB, typeB, j);
+        result[j] = a + b;
       }
     }
     if (proc->attr.mode.equals("*")) {
       for (size_t j = 0; j < l; j++) {
-        result[j] = b[j] * a[j];
+        float a = getElement(dataA, typeA, j);
+        float b = getElement(dataB, typeB, j);
+        result[j] = b * a;
       }
     }
     if (proc->attr.mode.equals("/")) {
       for (size_t j = 0; j < l; j++) {
-        if (a[j] == 0) {
+        float a = getElement(dataA, typeA, j);
+        float b = getElement(dataB, typeB, j);
+        if (b == 0) {
           result[j] = NAN;
         } else {
-          result[j] = a[j] / b[j];
+          result[j] = a / b;
         }
       }
     }
   }
-  // dataSource->eraseDataObject(1);
+
+  return 0;
+}
+
+float CDPPOperator::getElement(void *data, CDFType dataType, size_t index) {
+  switch (dataType) {
+  case CDF_CHAR:
+    return ((const char *)data)[index];
+    break;
+  case CDF_BYTE:
+    return ((const char *)data)[index];
+    break;
+  case CDF_UBYTE:
+    return ((const unsigned char *)data)[index];
+    break;
+  case CDF_SHORT:
+    return ((const short *)data)[index];
+    break;
+  case CDF_USHORT:
+    return ((const ushort *)data)[index];
+    break;
+  case CDF_INT:
+    return ((const int *)data)[index];
+    break;
+  case CDF_UINT:
+    return ((const uint *)data)[index];
+    break;
+  case CDF_INT64:
+    return ((const int64_t *)data)[index];
+    break;
+  case CDF_UINT64:
+    return ((const uint64_t *)data)[index];
+    break;
+  case CDF_FLOAT:
+    return ((const float *)data)[index];
+    break;
+  case CDF_DOUBLE:
+    return ((const double *)data)[index];
+    break;
+  }
   return 0;
 }

@@ -37,7 +37,6 @@
 #include "CConvertEProfile.h"
 #include "CConvertTROPOMI.h"
 #include "CConvertKNMIH5VolScan.h"
-#include "CConvertLatLonGrid.h"
 #include "CDBFactory.h"
 #include "CReporter.h"
 #include "CCDFHDF5IO.h"
@@ -298,6 +297,15 @@ bool CDataReader::copyCRSFromADAGUCProjectionVariable(CDataSource *dataSource, c
   // }
   dataSource->nativeProj4.copy(proj4Attr->toString().c_str());
 
+  // Fixes issue https://github.com/KNMI/adaguc-server/issues/279
+  dataSource->nativeProj4.replaceSelf("\n", " ");
+  dataSource->nativeProj4.trimSelf();
+  if (dataSource->nativeProj4.startsWith("\"") && dataSource->nativeProj4.endsWith("\"")) {
+    dataSource->nativeProj4.substringSelf(1, dataSource->nativeProj4.length() - 1);
+    dataSource->nativeProj4.trimSelf();
+    CDBDebug("Note: Removed start and ending double quotes for projstring [%s]", dataSource->nativeProj4.c_str());
+  }
+
   // Copy the EPSG code.
   copyEPSGCodeFromProjectionVariable(dataSource, projVar);
 
@@ -374,8 +382,6 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
     if (CConvertKNMIH5VolScan::convertKNMIH5VolScanData(dataSource, mode) == 0) dataSource->formatConverterActive = true;
   if (!dataSource->formatConverterActive)
     if (CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(dataSource, mode) == 0) dataSource->formatConverterActive = true;
-  if (!dataSource->formatConverterActive)
-    if (CConvertLatLonGrid::convertLatLonGridData(dataSource, mode) == 0) dataSource->formatConverterActive = true;
 
   CDF::Variable *dataSourceVar = dataSource->getDataObject(0)->cdfVariable;
   CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
@@ -871,11 +877,11 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 #endif
 
   if (mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS || mode == CNETCDFREADER_MODE_OPEN_HEADER) {
-    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams, dataSourceFilename.c_str());
+    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams, dataSourceFilename.c_str(), enableObjectCache);
   }
 
   if (mode == CNETCDFREADER_MODE_OPEN_ALL || mode == CNETCDFREADER_MODE_GET_METADATA || mode == CNETCDFREADER_MODE_OPEN_EXTENT) {
-    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource, dataSourceFilename.c_str());
+    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource, dataSourceFilename.c_str(), enableObjectCache);
   }
   if (cdfObject == NULL) {
     CDBError("Unable to get CDFObject from store");
@@ -886,23 +892,6 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     CDBError("Unable to attach CDFObject");
     return 1;
   }
-
-  // dataSource->getDataObject(0)->cdfObject = cdfObject;
-  // dataSource->getDataObject(0)->cdfVariable = cdfObject->getVariableNE(dataSource->getDataObject(0)->variableName.c_str());
-  // for (size_t varNr = 0; varNr < dataSource->getNumDataObjects(); varNr++) {
-  //   dataSource->getDataObject(varNr)->cdfObject == NULL
-  // }
-  // for (size_t varNr = 0; varNr < dataSource->getNumDataObjects(); varNr++) {
-
-  //   if (dataSource->getDataObject(varNr)->cdfObject == NULL || varNr == 0) {
-  //     dataSource->getDataObject(varNr)->cdfObject = cdfObject;
-  //     dataSource->getDataObject(varNr)->cdfVariable = cdfObject->getVariableNE(dataSource->getDataObject(varNr)->variableName.c_str());
-  //     if (dataSource->getDataObject(varNr)->cdfVariable == NULL) {
-  //       CDBError("attachCDFObject: variable nr %d \"%s\" does not exist", varNr, dataSource->getDataObject(varNr)->variableName.c_str());
-  //       return 1;
-  //     }
-  //   }
-  // }
 
   for (size_t varNr = 0; varNr < dataSource->getNumDataObjects(); varNr++) {
     // Check if our variable has a statusflag
@@ -1036,12 +1025,12 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
      * DataPostProc: Here our datapostprocessor comes into action! It needs scale and offset from datasource.
      * This is stage1, only AX+B will be applied to scale and offset parameters
      */
-    CDBDebug("2. Mode is  %d", mode);
     CDBDebug("Request date is   %f", requestDate);
     CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING, requestDate);
   } else {
     CDBDebug("Skipping POSTPROC!@!!!!!");
   }
+
   if (mode == CNETCDFREADER_MODE_GET_METADATA) {
 #ifdef CDATAREADER_DEBUG
     CDBDebug("Get metadata");
@@ -1378,7 +1367,6 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
        * This is stage2, running on data, not metadata
        */
       CDBDebug("Running postproc on data");
-      CDBDebug("1. Mode is  %d", mode);
       CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING, requestDate);
     }
   }

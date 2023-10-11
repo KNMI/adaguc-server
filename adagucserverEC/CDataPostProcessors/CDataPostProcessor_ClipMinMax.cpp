@@ -21,7 +21,7 @@ template <class T> void clipData(T *data, size_t size, double min, double max) {
 }
 
 int CDPPClipMinMax::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
-  if (isApplicable(proc, dataSource, mode) != CDATAPOSTPROCESSOR_RUNAFTERREADING, mode) {
+  if (isApplicable(proc, dataSource, mode) != CDATAPOSTPROCESSOR_RUNAFTERREADING) {
     return -1;
   }
   CDBDebug("Applying clipminmax");

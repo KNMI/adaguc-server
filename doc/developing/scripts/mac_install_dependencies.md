@@ -38,16 +38,17 @@ We then install the required packages, and run the tests.
 brew install pyenv pyenv-virtualenv
 
 # Install specific python version using pyenv
-pyenv install 3.9.13
+pyenv install 3.10.12
 
 # Set up a virtualenv using the installed Python version, calling it adaguc.
-pyenv virtualenv 3.9.13 adaguc
+pyenv virtualenv 3.10.12 adaguc
 
 # Activate the crated virtualenv
 pyenv activate adaguc
 
 # Install the required Python packages
 pip install -r requirements.txt
+pip install -r requirements-dev.txt
 
 # Run the tests
 ./runtest.sh
