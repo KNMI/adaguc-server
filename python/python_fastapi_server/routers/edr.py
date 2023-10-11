@@ -279,6 +279,7 @@ def get_collectioninfo_for_id(
     instances_link=None
     if ref_times and len(ref_times) > 0:
         instances_variables = Variables(
+            query_type="instances",
           #  crs_details=[crs_object],
             default_output_format="CoverageJSON",
             output_formats=["CoverageJSON", "GeoJSON"],
