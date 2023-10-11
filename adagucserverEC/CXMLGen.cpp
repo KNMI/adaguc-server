@@ -184,6 +184,36 @@ int CXMLGen::getDataSourceForLayer(WMSLayer *myWMSLayer) {
     }
     return 0;
   }
+  // This a liveupdate layer
+  if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
+#ifdef CXMLGEN_DEBUG
+    CDBDebug("Live update layer");
+#endif
+    if (myWMSLayer->dataSource->cfgLayer->Title.size() != 0) {
+      myWMSLayer->title.copy(myWMSLayer->dataSource->cfgLayer->Title[0]->value.c_str());
+    } else {
+      myWMSLayer->title.copy(myWMSLayer->dataSource->cfgLayer->Name[0]->value.c_str());
+    }
+
+    CTime timeInstance;
+    timeInstance.init("seconds since 1970", "standard");
+    double epochTime = timeInstance.getEpochTimeFromDateString(CTime::currentDateTime());
+    // CTime::Date cdate = timeInstance.getDate(epochTime);
+    // TODO: Make configurable
+    double startTimeOffset = timeInstance.quantizeTimeToISO8601(epochTime - 3600 * 24 * 365, "PT10M", "low");
+    double stopTimeOffset = timeInstance.quantizeTimeToISO8601(epochTime, "PT10M", "low");
+    CT::string startTime = timeInstance.dateToISOString(timeInstance.offsetToDate(startTimeOffset));
+    CT::string stopTime = timeInstance.dateToISOString(timeInstance.offsetToDate(stopTimeOffset));
+    CT::string resTime = "PT10M";
+    WMSLayer::Dim *dim = new WMSLayer::Dim();
+    myWMSLayer->dimList.push_back(dim);
+    dim->name.copy("time");
+    dim->units.copy("ISO8601");
+    dim->values.copy(startTime + "/" + stopTime + "/" + resTime);
+    dim->defaultValue.copy(stopTime.c_str());
+    dim->hasMultipleValues = true;
+    return 0;
+  }
   if (myWMSLayer->fileName.empty()) {
     CDBError("No file name specified for layer %s", myWMSLayer->dataSource->layerName.c_str());
     return 1;
@@ -238,7 +268,16 @@ int CXMLGen::getDataSourceForLayer(WMSLayer *myWMSLayer) {
 
     return 0;
   }
-  CDBWarning("Unknown layer type");
+  // Is this a WMS returning current time
+  if (myWMSLayer->dataSource->dLayerType != CConfigReaderLayerTypeLiveUpdate) {
+#ifdef CXMLGEN_DEBUG
+    CDBDebug("Current time layer");
+#endif
+
+    myWMSLayer->title.copy(myWMSLayer->dataSource->cfgLayer->Title[0]->value.c_str());
+    return 0;
+  }
+  CDBWarning("Unknown layer type 33333333");
   return 0;
 }
 
@@ -247,6 +286,12 @@ int CXMLGen::getProjectionInformationForLayer(WMSLayer *myWMSLayer) {
   CDBDebug("getProjectionInformationForLayer");
 #endif
   if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded) {
+    if (myWMSLayer->dataSource->cfgLayer->LatLonBox.size() == 0) {
+      return 0;
+    }
+  }
+
+  if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
     if (myWMSLayer->dataSource->cfgLayer->LatLonBox.size() == 0) {
       return 0;
     }
@@ -917,7 +962,8 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer 
         if (layer->group.equals(groupKeys[groupIndex].c_str())) {
           // CDBError("layer %d %s",groupDepth,layer->name.c_str());
           if (layer->hasError == 0) {
-            XMLDoc->printconcat("<Layer queryable=\"%d\" opaque=\"1\" cascaded=\"%d\">\n", layer->isQuerable, layer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded ? 1 : 0);
+            XMLDoc->printconcat("<Layer queryable=\"%d\" opaque=\"1\" cascaded=\"%d\">\n", layer->isQuerable,
+                                layer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded && layer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate ? 1 : 0);
             XMLDoc->concat("<Name>");
             XMLDoc->concat(&layer->name);
             XMLDoc->concat("</Name>\n");
@@ -1293,7 +1339,8 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer 
 #endif
 
           if (layer->hasError == 0) {
-            XMLDoc->printconcat("<Layer queryable=\"%d\" opaque=\"1\" cascaded=\"%d\">\n", layer->isQuerable, layer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded ? 1 : 0);
+            XMLDoc->printconcat("<Layer queryable=\"%d\" opaque=\"1\" cascaded=\"%d\">\n", layer->isQuerable,
+                                layer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded && layer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate ? 1 : 0);
             XMLDoc->concat("<Name>");
             XMLDoc->concat(&layer->name);
             XMLDoc->concat("</Name>\n");
@@ -1732,7 +1779,7 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam, CT::string *XMLDocumen
             if (status != 0) myWMSLayer->hasError = 1;
           }
 
-          if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded) {
+          if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded || myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
             myWMSLayer->isQuerable = 0;
             if (srvParam->serviceType == SERVICE_WCS) {
               myWMSLayer->hasError = true;
@@ -1753,7 +1800,7 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam, CT::string *XMLDocumen
           // Auto configure styles
           if (myWMSLayer->hasError == false) {
             if (myWMSLayer->dataSource->cfgLayer->Styles.size() == 0) {
-              if (myWMSLayer->dataSource->dLayerType != CConfigReaderLayerTypeCascaded) {
+              if (myWMSLayer->dataSource->dLayerType != CConfigReaderLayerTypeCascaded && myWMSLayer->dataSource->dLayerType != CConfigReaderLayerTypeLiveUpdate) {
 #ifdef CXMLGEN_DEBUG
                 CDBDebug("cfgLayer->attr.type  %d", myWMSLayer->dataSource->dLayerType);
 #endif

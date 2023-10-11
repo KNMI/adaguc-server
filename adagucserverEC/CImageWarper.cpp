@@ -50,6 +50,9 @@ ProjectionKey::ProjectionKey(double *_box, double *_dfMaxExtent, CT::string sour
   }
   sourceCRS = source;
   destinationCRS = dest;
+  if (destinationCRS.empty()) {
+    destinationCRS = sourceCRS;
+  }
   isSet = false;
   pthread_mutex_unlock(&ProjectionKey_ProjectionKey);
 }
@@ -612,17 +615,16 @@ std::tuple<CT::string, double> CImageWarper::fixProjection(CT::string projection
       float semi_major_axis, semi_minor_axis;
       majorAttribute->getData<float>(&semi_major_axis, 1);
       minorAttribute->getData<float>(&semi_minor_axis, 1);
-      if (semi_major_axis > 6000.0 && semi_major_axis < 7000.0) {  // This is given in km's, and should be converted to meters
+      if (semi_major_axis > 6000.0 && semi_major_axis < 7000.0) { // This is given in km's, and should be converted to meters
         double scaling = 1000.0;
-        majorAttribute->setData<float>(CDF_FLOAT, semi_major_axis*scaling);
-        minorAttribute->setData<float>(CDF_FLOAT, semi_minor_axis*scaling);
+        majorAttribute->setData<float>(CDF_FLOAT, semi_major_axis * scaling);
+        minorAttribute->setData<float>(CDF_FLOAT, semi_minor_axis * scaling);
 
         CT::string newProjectionString;
         int status2 = trans.convertCFToProj(&var, &newProjectionString);
-//        printf("%s\n", projectionString.c_str());
-//        printf("%s\n\n", newProjectionString.c_str());
-        if (status2 == 0)
-          return std::make_tuple(newProjectionString, scaling);
+        //        printf("%s\n", projectionString.c_str());
+        //        printf("%s\n\n", newProjectionString.c_str());
+        if (status2 == 0) return std::make_tuple(newProjectionString, scaling);
       }
     }
   }

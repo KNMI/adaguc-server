@@ -501,6 +501,8 @@ int CAutoConfigure::justLoadAFileHeader(CDataSource *dataSource) {
       if (dataSource->cfgLayer->Dimension.size() > 0) {
         CRequest::fillDimValuesForDataSource(dataSource, dataSource->srvParams);
       } else {
+        CDBDebug(dataSource->cfgLayer->Name[0]->value.c_str());
+        CDBDebug(dataSource->cfgLayer->FilePath[0]->value.c_str());
         CDBDebug("Required dims is still zero, add none now");
         COGCDims *ogcDim = new COGCDims();
         dataSource->requiredDims.push_back(ogcDim);

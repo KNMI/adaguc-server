@@ -3,6 +3,7 @@
 #include "CDataPostProcessor_IncludeLayer.h"
 #include "CDataPostProcessor_ClipMinMax.h"
 #include "CDataPostProcessor_Operator.h"
+#include "CDataPostProcessor_SolarTerminator.h"
 
 void writeLogFileLocal(const char *msg) {
   char *logfile = getenv("ADAGUC_LOGFILE");
@@ -546,6 +547,7 @@ CDPPExecutor::CDPPExecutor() {
   dataPostProcessorList->push_back(new CDPPGoes16Metadata());
   dataPostProcessorList->push_back(new CDPPClipMinMax());
   dataPostProcessorList->push_back(new CDPPOperator());
+  dataPostProcessorList->push_back(new CDPPSolarTerminator());
 }
 
 CDPPExecutor::~CDPPExecutor() {
@@ -555,7 +557,8 @@ CDPPExecutor::~CDPPExecutor() {
 
 const CT::PointerList<CDPPInterface *> *CDPPExecutor::getPossibleProcessors() { return dataPostProcessorList; }
 
-int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode) {
+int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode) { return executeProcessors(dataSource, mode, 0); }
+int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode, double timestamp) {
   for (size_t dpi = 0; dpi < dataSource->cfgLayer->DataPostProc.size(); dpi++) {
     CServerConfig::XMLE_DataPostProc *proc = dataSource->cfgLayer->DataPostProc[dpi];
     for (size_t procId = 0; procId < dataPostProcessorList->size(); procId++) {
@@ -569,7 +572,20 @@ int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode) {
       if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
         if (code & CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
           try {
-            int status = dataPostProcessorList->get(procId)->execute(proc, dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
+            int status = 0;
+            // Check if the postProcessor is of type SolarTerminator
+            if (CDPPSolarTerminator *solarTerminator = dynamic_cast<CDPPSolarTerminator *>(dataPostProcessorList->get(procId))) {
+              // Call a different method specific to SolarTerminator
+              CDBDebug("SPECIAL CALL FOR SOLAR TERMINATOR");
+              CDBDebug("Timestamp here is %f", timestamp);
+              status = solarTerminator->execute(proc, dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING, timestamp);
+            } else {
+              // Call the regular execute method for other types
+              CDBDebug("NORMAL POSTPROCESSOR");
+              status = dataPostProcessorList->get(procId)->execute(proc, dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
+            }
+
+            // int status = dataPostProcessorList->get(procId)->execute(proc, dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING, timestamp);
             if (status != 0) {
               CDBError("Processor %s failed RUNBEFOREREADING, statuscode %d", dataPostProcessorList->get(procId)->getId(), status);
             }
@@ -582,7 +598,18 @@ int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode) {
       if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
         if (code & CDATAPOSTPROCESSOR_RUNAFTERREADING) {
           try {
-            int status = dataPostProcessorList->get(procId)->execute(proc, dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
+            int status = 0;
+            // Check if the postProcessor is of type SolarTerminator
+            if (CDPPSolarTerminator *solarTerminator = dynamic_cast<CDPPSolarTerminator *>(dataPostProcessorList->get(procId))) {
+              // Call a different method specific to SolarTerminator
+              CDBDebug("SPECIAL CALL FOR SOLAR TERMINATOR RUNAFTERREADING");
+              CDBDebug("Timestamp here is %f", timestamp);
+              status = solarTerminator->execute(proc, dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING, timestamp);
+            } else {
+              // Call the regular execute method for other types
+              CDBDebug("NORMAL POSTPROCESSOR");
+              status = dataPostProcessorList->get(procId)->execute(proc, dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
+            }
             if (status != 0) {
               CDBError("Processor %s failed RUNAFTERREADING, statuscode %d", dataPostProcessorList->get(procId)->getId(), status);
             }
@@ -596,7 +623,8 @@ int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode) {
   return 0;
 }
 
-int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode, double *data, size_t numItems) {
+int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode, double *data, size_t numItems) { return executeProcessors(dataSource, mode, data, numItems, 0); }
+int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode, double *data, size_t numItems, double timestamp) {
   // const CT::PointerList<CDPPInterface*> *availableProcs = getPossibleProcessors();
   // CDBDebug("executeProcessors, found %d",dataSource->cfgLayer->DataPostProc.size());
   for (size_t dpi = 0; dpi < dataSource->cfgLayer->DataPostProc.size(); dpi++) {
@@ -612,6 +640,7 @@ int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode, double *d
       if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
         if (code & CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
           try {
+            CDBDebug("!!!!!!!!!!!!!!!!!Executing all processors with timestamp %f", timestamp);
             int status = dataPostProcessorList->get(procId)->execute(proc, dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING, NULL, 0);
             if (status != 0) {
               CDBError("Processor %s failed RUNBEFOREREADING, statuscode %d", dataPostProcessorList->get(procId)->getId(), status);

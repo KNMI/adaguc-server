@@ -63,7 +63,52 @@ add_library(
     CDBFileScanner.h
     CDBFileScannerCleanFiles.cpp
     CDFObjectStore.cpp
-    CDFObjectStore.h
+    CFillTriangle.cpp
+    CConvertASCAT.cpp
+    CConvertUGRIDMesh.cpp
+    CConvertADAGUCVector.cpp
+    CConvertEProfile.cpp
+    CConvertADAGUCPoint.cpp
+    CImgRenderers/CImgRenderPoints.cpp
+    CConvertCurvilinear.cpp
+    CConvertHexagon.cpp
+    CConvertKNMIH5VolScan.cpp
+    CInspire.cpp
+    CGetFileInfo.cpp
+    CStyleConfiguration.cpp
+    CMakeJSONTimeSeries.cpp
+    COpenDAPHandler.cpp
+    CDataPostProcessors/CDataPostProcessor_ClipMinMax.h
+    CDataPostProcessors/CDataPostProcessor_ClipMinMax.cpp
+    CDataPostProcessors/CDataPostProcessor_Operator.h
+    CDataPostProcessors/CDataPostProcessor_Operator.cpp
+    CDataPostProcessors/CDataPostProcessor_SolarTerminator.h
+    CDataPostProcessors/CDataPostProcessor_SolarTerminator.cpp
+    CDataPostProcessors/solar/solar_terminator.h
+    CDataPostProcessors/solar/solar_terminator.cpp
+    CDataPostProcessors/CDataPostProcessor_IncludeLayer.h
+    CDataPostProcessors/CDataPostProcessor_IncludeLayer.cpp
+    CDataPostProcessors/CDataPostProcessor.h
+    CDataPostProcessors/CDataPostProcessor.cpp
+    CDBFactory.cpp
+    CDBAdapterPostgreSQL.cpp
+    CAutoResource.cpp
+    CDBAdapterSQLLite.cpp
+    COctTreeColorQuantizer.cpp
+    CLegendRenderers/CCreateLegend.cpp
+    CCreateHistogram.cpp
+    CNetCDFDataWriter.cpp
+    CAutoConfigure.cpp
+    CMakeEProfile.cpp
+    CImgRenderStippling.cpp
+    CConvertGeoJSON.cpp
+    CGeoJSONData.cpp
+    CCreateScaleBar.cpp
+    CConvertTROPOMI.cpp
+    CImgRenderPolylines.cpp
+    CAreaMapper.cpp
+    CSLD.cpp
+    CHandleMetadata.cpp
     CDPPGoes16Metadata.cpp
     CDataPostProcessors/CDataPostProcessor.cpp
     CDataPostProcessors/CDataPostProcessor.h
