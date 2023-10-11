@@ -286,7 +286,7 @@ if __name__ == "__main__":
     coveragejson = netcdf_to_covjson(ds)
 
     print(
-        coveragejson.json(
+        coveragejson.model_dump_json(
             exclude_none=True,
         )
     )

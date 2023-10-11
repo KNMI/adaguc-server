@@ -4,29 +4,38 @@ import logging
 import os
 import re
 from datetime import datetime, timezone
-from typing import Dict, Optional, Tuple
+from typing import Tuple, Union
 
 from cachetools import TTLCache, cached
 from covjson_pydantic.coverage import Coverage
 from covjson_pydantic.domain import Domain, ValuesAxis
-from covjson_pydantic.observed_property import ObservedProperty
+from covjson_pydantic.observed_property import ObservedProperty as CovJsonObservedProperty
 from covjson_pydantic.parameter import Parameter as CovJsonParameter
 from covjson_pydantic.reference_system import (ReferenceSystem,
                                                ReferenceSystemConnectionObject)
 from defusedxml.ElementTree import ParseError, parse
-from edr_pydantic_classes.capabilities import (ConformanceModel, Contact,
-                                               LandingPageModel, Provider)
-from edr_pydantic_classes.generic_models import (CRSOptions, Custom, Link,
-                                                 ObservedPropertyCollection,
-                                                 ParameterName, Spatial,
-                                                 Temporal, Unit, Vertical)
-from edr_pydantic_classes.instances import (Collection, CollectionsModel,
-                                            CrsObject, DataQueries, Extent,
-                                            Instance, InstancesDataQueryLink,
-                                            InstancesLink, InstancesModel,
-                                            InstancesVariables,
-                                            PositionDataQueryLink,
-                                            PositionLink, PositionVariables)
+
+from edr_pydantic.capabilities import (ConformanceModel, Contact, LandingPageModel, Provider)
+from edr_pydantic.collections import (Collection, Collections, Instance, Instances)
+from edr_pydantic.data_queries import (DataQueries, EDRQuery)
+from edr_pydantic.extent import (Extent, Spatial, Temporal, Vertical)
+from edr_pydantic.link import (EDRQueryLink, Link)
+from edr_pydantic.observed_property import (Category, ObservedProperty)
+from edr_pydantic.parameter import (Parameter, ParameterGroup)
+from edr_pydantic.reference_system import (CRS)
+from edr_pydantic.unit import (Symbol, Unit)
+from edr_pydantic.variables import (Variables)
+
+
+# from edr_pydantic_classes.generic_models import (CRSOptions, Custom,
+#                                                  ParameterName)
+# from edr_pydantic_classes.instances import (CollectionsModel,
+#                                             CrsObject,
+#                                             InstancesDataQueryLink,
+#                                             InstancesLink, InstancesModel,
+#                                             InstancesVariables,
+#                                             PositionDataQueryLink,
+#                                             PositionLink, PositionVariables)
 from fastapi import FastAPI, Query, Request
 from fastapi.responses import JSONResponse
 from geomet import wkt
@@ -61,10 +70,10 @@ def init_edr_collections(
     ]
 
     edr_collections = {}
-    for datasetFile in datasetFiles:
-        dataset=datasetFile.replace(".xml", "")
+    for dataset_file in datasetFiles:
+        dataset=dataset_file.replace(".xml", "")
         try:
-            tree = parse(os.path.join(adagucDataSetDir, datasetFile))
+            tree = parse(os.path.join(adagucDataSetDir, dataset_file))
             root = tree.getroot()
             for ogcapi_edr in root.iter("OgcApiEdr"):
                 for edr_collection in ogcapi_edr.iter("EdrCollection"):
@@ -114,9 +123,9 @@ def get_point_value(
         urlrequest += f"&DIM_reference_time={instance_to_iso(instance)}"
     if z_par:
         if "vertical_name" in edr_collectioninfo and edr_collectioninfo["vertical_name"]!="ELEVATION":
-          urlrequest += f"&DIM_{edr_collectioninfo['vertical_name']}={z_par}"
+            urlrequest += f"&DIM_{edr_collectioninfo['vertical_name']}={z_par}"
         else:
-          urlrequest += f"&ELEVATION={z_par}"
+            urlrequest += f"&ELEVATION={z_par}"
     if custom_dims:
         urlrequest += custom_dims
 
@@ -142,17 +151,17 @@ async def get_collection_position(
         collection_name: str,
         request: Request,
         coords: str,
-        instance:  Optional[str] = None,
+        instance:  Union[str, None],
         datetime_par: str = Query(default=None, alias="datetime"),
         parameter_name: str = Query(alias="parameter-name"),
         z_par: str=Query(alias="z", default=None),
         crs: str=Query(default=None),
-        format: str=Query(default=None, alias="f")
+        requested_format: str=Query(default=None, alias="f")
 ):
     allowed_params = ["coords", "datetime", "parameter-name", "z", "f", "crs"]
     custom_dims = [k for k in request.query_params if k not in allowed_params]
     custom_dims = ""
-    if len(custom_dims):
+    if len(custom_dims)>0:
         for custom_dim in custom_dims:
             custom_dims += f"&DIM_{custom_dim}={request.query_params[custom_dim]}"
     edr_collections = get_edr_collections()
@@ -218,7 +227,7 @@ def get_collectioninfo_for_id(
             links.append(instances_link)
 
     bbox = get_extent(edr_collectioninfo)
-    crs = CRSOptions.wgs84
+    crs = 'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]'
     spatial = Spatial(bbox=bbox, crs=crs)
     (interval,
      time_values) = get_times_for_collection(edr_collectioninfo,
@@ -226,10 +235,10 @@ def get_collectioninfo_for_id(
 
     customlist:list = get_custom_dims_for_collection(edr_collectioninfo,
                                              edr_collectioninfo["parameters"][0])
-    custom = []
-    if customlist is not None:
-        for custom_el in customlist:
-            custom.append(Custom(**custom_el))
+    custom = [] #TODO Custom
+    # if customlist is not None:
+    #     for custom_el in customlist:
+    #         custom.append(Custom(**custom_el))
 
     vertical = None
     vertical_dim = get_vertical_dim_for_collection(
@@ -246,47 +255,46 @@ def get_collectioninfo_for_id(
 
     extent = Extent(spatial=spatial,
                     temporal=temporal,
-                    custom=custom,
+ # TODO                   custom=custom,
                     vertical=vertical)
 
-    crs_object = CrsObject(
-        crs="EPSG:4326",
+    crs_object = CRS(
+        name="EPSG:4326",
         wkt=
         'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]',
     )
-    position_variables = PositionVariables(
-        crs_details=[crs_object],
+     #   crs_details=[crs_object],
+    position_variables = Variables(
+        query_type='position',
         default_output_format="CoverageJSON",
         output_formats=["CoverageJSON", "GeoJSON"],
     )
-    position_link = PositionLink(
+    position_link = EDRQueryLink(
         href=f"{base_url}/position",
         rel="data",
         hreflang="en",
         title="Position query",
         variables=position_variables,
     )
+    instances_link=None
     if ref_times and len(ref_times) > 0:
-        instances_variables = InstancesVariables(
-            crs_details=[crs_object],
+        instances_variables = Variables(
+          #  crs_details=[crs_object],
             default_output_format="CoverageJSON",
             output_formats=["CoverageJSON", "GeoJSON"],
         )
-        instances_link = InstancesLink(
+        instances_link = EDRQueryLink(
             href=f"{base_url}/instances",
             rel="collection",
             hreflang="en",
             title="Instances query",
             variables=instances_variables,
         )
-        instances_data_query_link = InstancesDataQueryLink(link=instances_link)
+        data_queries = DataQueries(position=EDRQuery(link=position_link),
+                               instances=EDRQuery(link=instances_link))
     else:
-        instances_data_query_link = None
+        data_queries = DataQueries(position=EDRQuery(link=position_link))
 
-    position_data_query_link = PositionDataQueryLink(link=position_link)
-
-    data_queries = DataQueries(position=position_data_query_link,
-                               instances=instances_data_query_link)
     parameter_names = get_parameters_for_edr_collection(edr_collection=edr_collection)
 
     crs = ["EPSG:4326"]
@@ -304,13 +312,13 @@ def get_collectioninfo_for_id(
     return collection
 
 
-def get_parameters_for_edr_collection(edr_collection: str) -> dict[str, ParameterName]:
-    parameter_names = dict()
+def get_parameters_for_edr_collection(edr_collection: str) -> dict[str, Parameter]:
+    parameter_names = {}
     edr_collections = get_edr_collections()
     for param_name in edr_collections[edr_collection]["parameters"]:
-        param = ParameterName(
+        param = Parameter(
             id=param_name,
-            observedProperty=ObservedPropertyCollection(id=param_name,
+            observedProperty=ObservedProperty(id=param_name,
                                                         label=param_name),
             type="Parameter",
             unit=Unit(symbol="mm"), #TODO Find real untis
@@ -374,8 +382,8 @@ def get_time_values_for_range(rng) -> list[str]:
 
 
 def get_times_for_collection(
-        edr_collectioninfo: Dict,
-        parameter: str = None) -> Tuple[list[list[str]], list[str]]:
+        edr_collectioninfo: dict,
+        parameter: str = None) -> tuple[list[list[str]], list[str]]:
     logger.info("get_times_for_dataset(%s,%s)", edr_collectioninfo['name'], parameter)
     wms = get_capabilities(edr_collectioninfo['name'])
     if parameter and parameter in wms:
@@ -388,14 +396,14 @@ def get_times_for_collection(
         if "/" in time_dim["values"][0]:
             terms = time_dim["values"][0].split("/")
             interval = [[
-                datetime.strptime(terms[0], "%Y-%m-%dT%H:%M:%SZ"),
-                datetime.strptime(terms[1], "%Y-%m-%dT%H:%M:%SZ"),
+                datetime.strptime(terms[0], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc),
+                datetime.strptime(terms[1], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc),
             ]]
             return (interval, get_time_values_for_range(time_dim["values"][0]))
         interval = [[
-            datetime.strptime(time_dim["values"][0], "%Y-%m-%dT%H:%M:%SZ"),
+            datetime.strptime(time_dim["values"][0], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc),
             datetime.strptime(time_dim["values"][-1],
-                                "%Y-%m-%dT%H:%M:%SZ"),
+                                "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc),
         ]]
         return interval, time_dim["values"]
     return (None, None)
@@ -440,7 +448,7 @@ def get_vertical_dim_for_collection(edr_collectioninfo: dict, parameter: str = N
 
 
 @edrApiApp.get("/collections",
-               response_model=CollectionsModel,
+               response_model=Collections,
                response_model_exclude_none=True)
 async def edr_get_collections(request: Request):
     links: list[Link] = []
@@ -453,7 +461,7 @@ async def edr_get_collections(request: Request):
     for edr_coll in edr_collections:
         coll = get_collectioninfo_for_id(edr_coll)
         collections.append(coll)
-    collections_data = CollectionsModel(links=links, collections=collections)
+    collections_data = Collections(links=links, collections=collections)
     return collections_data
 
 
@@ -522,7 +530,7 @@ def get_extent(edr_collectioninfo: dict):
 
 @edrApiApp.get(
     "/collections/{collection_name}/instances",
-    response_model=InstancesModel,
+    response_model=Instances,
     response_model_exclude_none=True,
 )
 async def edr_get_instances_for_collection(collection_name: str,
@@ -548,7 +556,7 @@ async def edr_get_instances_for_collection(collection_name: str,
 
         instances.append(instance_info)
 
-    instances_data = InstancesModel(instances=instances, links=links)
+    instances_data = Instances(instances=instances, links=links)
     return instances_data
 
 
@@ -742,13 +750,13 @@ def covjson_from_resp(dats, vertical_name):
                     else:
                         values.append(v)
 
-        parameters: Dict(str, CovJsonParameter) = dict()
-        ranges = dict()
+        parameters: dict(str, CovJsonParameter) = {}
+        ranges = {}
 
         unit = Unit(symbol="m3")
         param = CovJsonParameter(
             id=dat["name"],
-            observedProperty=ObservedProperty(label={"en": dat["name"]}),
+            observedProperty=CovJsonObservedProperty(label={"en": dat["name"]}),
             unit=unit
         )
         #TODO: add units to CovJsonParameter
