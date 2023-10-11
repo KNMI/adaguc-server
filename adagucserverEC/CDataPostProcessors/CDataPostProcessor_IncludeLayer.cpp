@@ -48,7 +48,7 @@ int CDPPIncludeLayer::setDimsForNewDataSource(CServerConfig::XMLE_DataPostProc *
 }
 
 int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
-  if ((isApplicable(proc, dataSource, mode) & mode) == false) {
+  if (isApplicable(proc, dataSource, mode) == false) {
     return -1;
   }
 
@@ -84,12 +84,13 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
     // CDBDebug("TEMPORAL METADATA READER");
     CDataReader reader;
     reader.enablePostProcessors = false;
+    reader.enableObjectCache = false;
     status = reader.open(dataSourceToInclude, CNETCDFREADER_MODE_OPEN_HEADER); // Only read metadata
     if (status != 0) {
       CDBDebug("Can't open file %s for layer %s", dataSourceToInclude->getFileName(), proc->attr.name.c_str());
       return 1;
     }
-    bool needsToAdd = false;
+
     for (size_t dataObjectNr = 0; dataObjectNr < dataSource->getNumDataObjects(); dataObjectNr++) {
       if (dataSource->getDataObject(dataObjectNr)->cdfVariable->name.equals(dataSourceToInclude->getDataObject(0)->cdfVariable->name)) {
         CDBDebug("Probably already done");
@@ -183,10 +184,10 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
       dataSourceToInclude->setTimeStep(dataSource->getCurrentTimeStep());
     }
 
-    // dataSourceToInclude->getDataObject(0)->cdfVariable->data=NULL;
     // CDBDebug("TEMPORAL FULL READER");
     CDataReader reader;
     reader.enablePostProcessors = false;
+    reader.enableObjectCache = false;
     //    CDBDebug("Opening %s",dataSourceToInclude->getFileName());
     status = reader.open(dataSourceToInclude, CNETCDFREADER_MODE_OPEN_ALL); // Now open the data as well.
     if (status != 0) {

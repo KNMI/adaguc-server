@@ -37,9 +37,6 @@
 #include "CReporter.h"
 #include "CImgWarpHillShaded.h"
 #include "CImgWarpGeneric.h"
-#ifndef M_PI
-#define M_PI 3.14159265358979323846 // pi
-#endif
 
 #ifndef rad2deg
 #define rad2deg (180. / M_PI) // conversion for rad to deg
@@ -798,7 +795,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
 #ifdef CIMAGEDATAWRITER_DEBUG
             CDBDebug("OPEN ALL");
 #endif
-            // CDFObjectStore::getCDFObjectStore()->clear();
             status = reader.open(dataSources[d], CNETCDFREADER_MODE_OPEN_ALL);
           } else {
 // CDBDebug("OPEN HEADER");
@@ -1079,7 +1075,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
                     if (feature->paramMap.empty() == false) {
                       std::map<std::string, std::string>::iterator paramItemIt;
                       for (paramItemIt = feature->paramMap.begin(); paramItemIt != feature->paramMap.end(); ++paramItemIt) {
-                        // CDBDebug("Clicked %s %s", paramItemIt->first.c_str(), paramItemIt->second.c_str());
                         GetFeatureInfoResult::Element *featureParam = new GetFeatureInfoResult::Element();
                         featureParam->dataSource = dataSource;
                         for (size_t j = 0; j < dataSources[d]->requiredDims.size(); j++) {
@@ -1133,7 +1128,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
               ptr = projCacheInfo.imx + projCacheInfo.imy * projCacheInfo.dWidth;
             }
 
-            double pi = 3.141592;
             double pixel1 = convertValue(dataSource->getDataObject(0)->cdfVariable->getType(), dataSource->getDataObject(0)->cdfVariable->data, ptr);
             double pixel2 = convertValue(dataSource->getDataObject(1)->cdfVariable->getType(), dataSource->getDataObject(1)->cdfVariable->data, ptr);
 
@@ -1192,7 +1186,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
               element2->units = "degrees";
 
               if (windDataValid) {
-                double angle = 270 - atan2(pixel2, pixel1) * 180 / pi;
+                double angle = 270 - atan2(pixel2, pixel1) * 180 / M_PI;
                 if (angle > 360) angle -= 360;
                 if (angle < 0) angle = angle + 360;
                 element2->value.print("%3.0f", angle);
@@ -1306,7 +1300,7 @@ int CImageDataWriter::createAnimation() {
   return 0;
 }
 
-void CImageDataWriter::setDate(const char *szTemp) { drawImage.setTextStroke(szTemp, strlen(szTemp), drawImage.Geo->dWidth - 170, 5, 240, 254, 0); }
+void CImageDataWriter::setDate(const char *szTemp) { drawImage.setTextStroke(drawImage.Geo->dWidth - 170, 5, 0, szTemp, NULL, 12.0, 0.75, CColor(0, 0, 0, 255), CColor(255, 255, 255, 255)); }
 
 CImageDataWriter::IndexRange::IndexRange() {
   min = 0;
@@ -1599,11 +1593,24 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
               if (contourLine->attr.textcolor.empty() == false) {
                 bilinearSettings.printconcat("textcolor(%s)$", contourLine->attr.textcolor.c_str());
               }
+              if (contourLine->attr.textsize.empty() == false) {
+                bilinearSettings.printconcat("textsize(%s)$", contourLine->attr.textsize.c_str());
+              }
+              if (contourLine->attr.textstrokewidth.empty() == false) {
+                bilinearSettings.printconcat("textstrokewidth(%s)$", contourLine->attr.textstrokewidth.c_str());
+              }
+
+              if (contourLine->attr.textstrokecolor.empty() == false) {
+                bilinearSettings.printconcat("textstrokecolor(%s)$", contourLine->attr.textstrokecolor.c_str());
+              }
               if (contourLine->attr.interval.empty() == false) {
                 bilinearSettings.printconcat("interval(%s)$", contourLine->attr.interval.c_str());
               }
               if (contourLine->attr.textformatting.empty() == false) {
                 bilinearSettings.printconcat("textformatting(%s)$", contourLine->attr.textformatting.c_str());
+              }
+              if (contourLine->attr.dashing.empty() == false) {
+                bilinearSettings.printconcat("dashing(%s)$", contourLine->attr.dashing.c_str());
               }
               bilinearSettings.printconcat(";");
             }
@@ -1622,8 +1629,20 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
               if (contourLine->attr.classes.empty() == false) {
                 bilinearSettings.printconcat("classes(%s)$", contourLine->attr.classes.c_str());
               }
+              if (contourLine->attr.textsize.empty() == false) {
+                bilinearSettings.printconcat("textsize(%s)$", contourLine->attr.textsize.c_str());
+              }
+              if (contourLine->attr.textstrokewidth.empty() == false) {
+                bilinearSettings.printconcat("textstrokewidth(%s)$", contourLine->attr.textstrokewidth.c_str());
+              }
+              if (contourLine->attr.textstrokecolor.empty() == false) {
+                bilinearSettings.printconcat("textstrokecolor(%s)$", contourLine->attr.textstrokecolor.c_str());
+              }
               if (contourLine->attr.textformatting.empty() == false) {
                 bilinearSettings.printconcat("textformatting(%s)$", contourLine->attr.textformatting.c_str());
+              }
+              if (contourLine->attr.dashing.empty() == false) {
+                bilinearSettings.printconcat("dashing(%s)$", contourLine->attr.dashing.c_str());
               }
               bilinearSettings.printconcat(";");
             }
@@ -1941,8 +1960,7 @@ int CImageDataWriter::calculateData(std::vector<CDataSource *> &dataSources) {
 
       if (dataSource->cfgLayer->ImageText.size() > 0) {
         if (dataSource->cfgLayer->ImageText[0]->value.empty() == false) {
-          size_t len = strlen(dataSource->cfgLayer->ImageText[0]->value.c_str());
-          drawImage.setTextStroke(dataSource->cfgLayer->ImageText[0]->value.c_str(), len, int(drawImage.Geo->dWidth / 2 - len * 3), drawImage.Geo->dHeight - 16, 240, 254, -1);
+          drawImage.setTextStroke(drawImage.Geo->dWidth - 170, 5, 0, dataSource->cfgLayer->ImageText[0]->value.c_str(), NULL, 12.0, 0.75, CColor(0, 0, 0, 255), CColor(255, 255, 255, 255));
         }
       }
     }

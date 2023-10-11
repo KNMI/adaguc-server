@@ -363,6 +363,10 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Conf
   for (size_t j = 0; j < cfgLayer->Variable.size(); j++) {
     DataObject *newDataObject = new DataObject();
     newDataObject->variableName.copy(cfgLayer->Variable[j]->value.c_str());
+    if (!cfgLayer->Variable[j]->attr.orgname.empty()) {
+      newDataObject->variableName = cfgLayer->Variable[j]->value.c_str();
+    }
+
     getDataObjectsVector()->push_back(newDataObject);
   }
   // Set the layername
@@ -1402,7 +1406,6 @@ int CDataSource::attachCDFObject(CDFObject *cdfObject) {
   }
   for (size_t varNr = 0; varNr < getNumDataObjects(); varNr++) {
     if (getDataObject(varNr)->cdfVariable != NULL && getDataObject(varNr)->cdfVariable->hasCustomReader()) {
-      CDF::Variable::CustomReader *p = getDataObject(varNr)->cdfVariable->getCustomReader();
       continue;
     }
 
