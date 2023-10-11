@@ -1,13 +1,3 @@
-// C++ program calculating the solar position for
-// the current date and a set location (latitude, longitude)
-// Jarmo Lammi 1999
-//
-// Code refreshed to work in the newer versions of C++
-// Compiled and tested with
-// Apple LLVM version 6.0 (clang-600.0.56) (based on LLVM 3.5svn)
-// Target: x86_64-apple-darwin14.0.0
-// Jarmo Lammi 4-Jan-2015
-
 #include <iostream>
 #include <math.h>
 #include <cmath>
