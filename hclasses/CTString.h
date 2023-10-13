@@ -29,7 +29,7 @@
 #include "CTypes.h"
 #include "CTStringRef.h"
 
-#define CT_MAX_NUM_CHARACTERS_FOR_FLOAT 12
+#define CT_MAX_NUM_CHARACTERS_FOR_FLOAT 18
 #define CT_MAX_NUM_CHARACTERS_FOR_INT 12
 #define CT_MAX_NUM_CHARACTERS_FOR_NUMERIC 39
 namespace CT {
