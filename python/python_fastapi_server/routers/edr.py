@@ -13,12 +13,13 @@ from covjson_pydantic.observed_property import ObservedProperty as CovJsonObserv
 from covjson_pydantic.parameter import Parameter as CovJsonParameter
 from covjson_pydantic.reference_system import (ReferenceSystem,
                                                ReferenceSystemConnectionObject)
+from covjson_pydantic.unit import Unit as CovJsonUnit
 from defusedxml.ElementTree import ParseError, parse
 
 from edr_pydantic.capabilities import (ConformanceModel, Contact, LandingPageModel, Provider)
 from edr_pydantic.collections import (Collection, Collections, Instance, Instances)
 from edr_pydantic.data_queries import (DataQueries, EDRQuery)
-from edr_pydantic.extent import (Extent, Spatial, Temporal, Vertical)
+from edr_pydantic.extent import (Extent, Spatial, Temporal, Vertical, Custom)
 from edr_pydantic.link import (EDRQueryLink, Link)
 from edr_pydantic.observed_property import (Category, ObservedProperty)
 from edr_pydantic.parameter import (Parameter, ParameterGroup)
@@ -38,8 +39,10 @@ from edr_pydantic.variables import (Variables)
 #                                             PositionLink, PositionVariables)
 from fastapi import FastAPI, Query, Request
 from fastapi.responses import JSONResponse
+from fastapi.openapi.utils import get_openapi
 from geomet import wkt
 from owslib.wms import WebMapService
+from pydantic import AwareDatetime
 
 from .covjsonresponse import CovJSONResponse
 from .ogcapi_tools import call_adaguc
@@ -236,9 +239,9 @@ def get_collectioninfo_for_id(
     customlist:list = get_custom_dims_for_collection(edr_collectioninfo,
                                              edr_collectioninfo["parameters"][0])
     custom = [] #TODO Custom
-    # if customlist is not None:
-    #     for custom_el in customlist:
-    #         custom.append(Custom(**custom_el))
+    if customlist is not None:
+        for custom_el in customlist:
+            custom.append(Custom(**custom_el))
 
     vertical = None
     vertical_dim = get_vertical_dim_for_collection(
@@ -255,7 +258,7 @@ def get_collectioninfo_for_id(
 
     extent = Extent(spatial=spatial,
                     temporal=temporal,
- # TODO                   custom=custom,
+                    custom=custom,
                     vertical=vertical)
 
     crs_object = CRS(
@@ -301,15 +304,26 @@ def get_collectioninfo_for_id(
     crs = ["EPSG:4326"]
 
     output_formats = ["CoverageJSON", "GeoJSON"]
-    collection = Collection(
-        links=links,
-        id=instance if instance else edr_collection,
-        extent=extent,
-        data_queries=data_queries,
-        parameter_names=parameter_names,
-        crs=crs,
-        output_formats=output_formats,
-    )
+    if instance is None:
+        collection = Collection(
+            links=links,
+            id=instance if instance else edr_collection,
+            extent=extent,
+            data_queries=data_queries,
+            parameter_names=parameter_names,
+            crs=crs,
+            output_formats=output_formats,
+        )
+    else:
+        collection = Instance(
+            links=links,
+            id=instance if instance else edr_collection,
+            extent=extent,
+            data_queries=data_queries,
+            parameter_names=parameter_names,
+            crs=crs,
+            output_formats=output_formats,
+        )
     return collection
 
 
@@ -623,10 +637,37 @@ conformance = ConformanceModel(conformsTo=[
 ])
 
 
+@edrApiApp.get("/collections/{coll}/locations")
+def get_locations(coll: str):
+    return {	"features" :
+	[
+		{
+			"id" : "100683",
+			"type" : "Feature",
+			"geometry" :
+			{
+				"coordinates" :
+				[
+					5.2,
+					52.0
+				],
+				"type" : "Point"
+			},
+			"properties" :
+			{
+				"datetime" : "2023-10-12T03:00:00Z/2023-10-22T00:00:00Z",
+				"detail" : "Id is fmisid from synop_fi",
+				"name" : "De Bilt"
+			}
+		}
+    ]
+    }
+
+
 @edrApiApp.get(
     "/api", )
 def get_fixed_api():
-    api = edrApiApp.openapi()
+    api = get_openapi(title=edrApiApp.title, version=edrApiApp.openapi_version, routes=edrApiApp.routes)
     for pth in api["paths"].values():
         if "parameters" in pth["get"]:
             for param in pth["get"]["parameters"]:
@@ -636,6 +677,13 @@ def get_fixed_api():
                     param["schema"] = {
                         "type": "string",
                     }
+                if "schema" in param:
+                    if "anyOf" in param["schema"]:
+                        for it in param["schema"]["anyOf"]:
+                            if it.get("type")=="null":
+                                print("NULL found p")
+
+
     if "CompactAxis" in api["components"]["schemas"]:
         comp = api["components"]["schemas"]["CompactAxis"]
         if "exclusiveMinimum" in comp["properties"]["num"]:
@@ -754,7 +802,7 @@ def covjson_from_resp(dats, vertical_name):
         parameters: dict(str, CovJsonParameter) = {}
         ranges = {}
 
-        unit = Unit(symbol="m3")
+        unit = CovJsonUnit(symbol="m3")
         param = CovJsonParameter(
             id=dat["name"],
             observedProperty=CovJsonObservedProperty(label={"en": dat["name"]}),
@@ -775,18 +823,17 @@ def covjson_from_resp(dats, vertical_name):
         ranges[dat["name"]] = _range
 
         axes: dict[str, ValuesAxis] = {
-            "x": ValuesAxis(values=[lon]),
-            "y": ValuesAxis(values=[lat]),
-            "t": ValuesAxis(values=time_steps),
+            "x": ValuesAxis[float](values=[lon]),
+            "y": ValuesAxis[float](values=[lat]),
+            "t": ValuesAxis[AwareDatetime](values=[datetime.strptime(t, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc) for t in time_steps]),
         }
-
         domain_type = "PointSeries"
         if vertical_steps:
-            axes["z"] = ValuesAxis(values=vertical_steps)
+            axes["z"] = ValuesAxis[float](values=vertical_steps)
             if len(vertical_steps) > 1:
                 domain_type = "VerticalProfile"
         if time_steps:
-            axes["t"] = ValuesAxis(values=time_steps)
+            axes["t"] = ValuesAxis[AwareDatetime](values=[datetime.strptime(t, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc) for t in time_steps])
             if len(time_steps) > 1 and vertical_steps and len(
                     vertical_steps) > 1:
                 domain_type = "Grid"
