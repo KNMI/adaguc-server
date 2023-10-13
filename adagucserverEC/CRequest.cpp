@@ -2023,7 +2023,7 @@ int CRequest::process_all_layers() {
 
         if (!srvParam->showLegendInImage.equals("false") && !srvParam->showLegendInImage.empty()) {
           // Draw legend
-
+          CDBDebug("!!!!!!!!!!!!!!!!!!!!!! ");
           bool drawAllLegends = srvParam->showLegendInImage.equals("true");
 
           /* List of specified legends */
@@ -2037,7 +2037,8 @@ int CRequest::process_all_layers() {
 
               if (!drawAllLegends) {
                 for (size_t li = 0; li < legendLayerList.size(); li++) {
-                  if (dataSources[d]->layerName.equals(legendLayerList[li])) {
+                  CDBDebug("Comparing [%s] == [%s]", dataSources[d]->layerName.c_str(), legendLayerList[li].c_str());
+                  if (dataSources[d]->layerName.toLowerCase().equals(legendLayerList[li])) {
                     drawThisLegend = true;
                   }
                 }
@@ -2058,6 +2059,8 @@ int CRequest::process_all_layers() {
                 if (styleConfiguration != NULL && styleConfiguration->legendIndex != -1) {
                   legendImage.createGDPalette(srvParam->cfg->Legend[styleConfiguration->legendIndex]);
                 }
+
+                CDBDebug("!!!!!!!!!!!!!!!!!!!!!! reating legend for %s", dataSources[d]->layerName.c_str());
                 status = imageDataWriter.createLegend(dataSources[d], &legendImage);
                 if (status != 0) throw(__LINE__);
                 // legendImage.rectangle(0,0,10000,10000,240);
