@@ -23,7 +23,6 @@ from edr_pydantic.extent import (Extent, Spatial, Temporal, Vertical, Custom)
 from edr_pydantic.link import (EDRQueryLink, Link)
 from edr_pydantic.observed_property import (Category, ObservedProperty)
 from edr_pydantic.parameter import (Parameter, ParameterGroup)
-from edr_pydantic.reference_system import (CRS)
 from edr_pydantic.unit import (Symbol, Unit)
 from edr_pydantic.variables import (Variables)
 
@@ -261,11 +260,6 @@ def get_collectioninfo_for_id(
                     custom=custom,
                     vertical=vertical)
 
-    crs_object = CRS(
-        name="EPSG:4326",
-        wkt=
-        'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]',
-    )
      #   crs_details=[crs_object],
     position_variables = Variables(
         query_type='position',

@@ -42,7 +42,7 @@ covjson-pydantic==0.2.0
     # via -r requirements.in
 defusedxml==0.7.1
     # via -r requirements.in
-edr-pydantic @ git+https://github.com/KNMI/edr-pydantic.git@KDP-1528
+edr-pydantic==0.2.0
     # via -r requirements.in
 exceptiongroup==1.1.3
     # via anyio
@@ -79,7 +79,7 @@ markupsafe==2.1.3
     #   werkzeug
 netcdf4==1.6.4
     # via -r requirements.in
-numpy==1.26.0
+numpy==1.26.1
     # via
     #   cftime
     #   netcdf4
@@ -87,7 +87,7 @@ owslib==0.29.2
     # via -r requirements.in
 packaging==23.2
     # via gunicorn
-pillow==10.0.1
+pillow==10.1.0
     # via -r requirements.in
 pydantic==2.4.2
     # via
@@ -129,7 +129,7 @@ typing-extensions==4.8.0
     #   pydantic
     #   pydantic-core
     #   uvicorn
-urllib3==2.0.6
+urllib3==2.0.7
     # via requests
 uvicorn==0.23.2
     # via -r requirements.in
