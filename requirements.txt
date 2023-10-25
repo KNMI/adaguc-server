@@ -18,7 +18,7 @@ brotli==1.1.0
     #   brotli-asgi
 brotli-asgi==1.4.0
     # via -r requirements.in
-cachetools==5.3.1
+cachetools==5.3.2
     # via -r requirements.in
 certifi==2023.7.22
     # via
@@ -27,18 +27,20 @@ certifi==2023.7.22
     #   netcdf4
     #   pyproj
     #   requests
-cftime==1.6.2
+cftime==1.6.3
     # via
     #   -r requirements.in
     #   netcdf4
 chardet==5.2.0
     # via -r requirements.in
-charset-normalizer==3.3.0
+charset-normalizer==3.3.1
     # via requests
 click==8.1.7
     # via uvicorn
 defusedxml==0.7.1
     # via -r requirements.in
+exceptiongroup==1.1.3
+    # via anyio
 fastapi==0.101.1
     # via -r requirements.in
 geojson-pydantic==0.6.3
@@ -70,7 +72,7 @@ markupsafe==2.1.3
     #   werkzeug
 netcdf4==1.6.4
     # via -r requirements.in
-numpy==1.26.0
+numpy==1.26.1
     # via
     #   cftime
     #   netcdf4
@@ -78,7 +80,7 @@ owslib==0.29.2
     # via -r requirements.in
 packaging==23.2
     # via gunicorn
-pillow==10.0.1
+pillow==10.1.0
     # via -r requirements.in
 pydantic==1.10.13
     # via
@@ -110,8 +112,10 @@ starlette==0.27.0
     #   fastapi
 typing-extensions==4.8.0
     # via
+    #   asgiref
     #   fastapi
     #   pydantic
+    #   uvicorn
 urllib3==2.0.7
     # via requests
 uvicorn==0.23.2
