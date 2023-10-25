@@ -30,6 +30,11 @@
 #include <getopt.h>
 #include "CDebugger_H.h"
 
+#include <stdio.h>
+#include <time.h>
+#include <stdlib.h>
+
+
 extern Tracer NewTrace;
 
 DEF_ERRORMAIN();
@@ -390,6 +395,8 @@ int _main(int argc, char **argv, char **) {
 }
 
 int main(int argc, char **argv, char **envp) {
+  clock_t start = clock();
+
   /* Check if ADAGUC_LOGFILE is set */
   const char *ADAGUC_LOGFILE = getenv("ADAGUC_LOGFILE");
   if (ADAGUC_LOGFILE != NULL) {
@@ -456,6 +463,10 @@ int main(int argc, char **argv, char **envp) {
     fclose(pLogDebugFile);
     pLogDebugFile = NULL;
   }
+
+  clock_t stop = clock();
+  double elapsed = (double) (stop - start) / CLOCKS_PER_SEC;
+  printf("\nTime elapsed: %.5f\n", elapsed);
 
   return status;
 }

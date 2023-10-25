@@ -85,30 +85,30 @@ int Tracer::Dump() {
 
 Tracer::Tracer() : _lockCount(0) { Ready = true; }
 
-void *operator new(size_t size, char const *file, int line) {
-  void *p = malloc(size);
-  if (Tracer::Ready) NewTrace.Add(p, file, line);
-  return p;
-}
-void *operator new[](size_t size, char const *file, int line) {
-  void *p = malloc(size);
-  if (Tracer::Ready) NewTrace.Add(p, file, line);
-  return p;
-}
-
-void operator delete(void *p, char const *, int) {
-  if (Tracer::Ready) NewTrace.Remove(p);
-  free(p);
-}
-void *operator new(std::size_t mem) {
-  void *p = malloc(mem);
-  if (Tracer::Ready) NewTrace.Add(p, "?", 0);
-  return p;
-}
-void operator delete(void *p) noexcept {
-  if (Tracer::Ready) NewTrace.Remove(p);
-  free(p);
-}
+//void *operator new(size_t size, char const *file, int line) {
+//  void *p = malloc(size);
+//  if (Tracer::Ready) NewTrace.Add(p, file, line);
+//  return p;
+//}
+//void *operator new[](size_t size, char const *file, int line) {
+//  void *p = malloc(size);
+//  if (Tracer::Ready) NewTrace.Add(p, file, line);
+//  return p;
+//}
+//
+//void operator delete(void *p, char const *, int) {
+//  if (Tracer::Ready) NewTrace.Remove(p);
+//  free(p);
+//}
+//void *operator new(std::size_t mem) {
+//  void *p = malloc(mem);
+//  if (Tracer::Ready) NewTrace.Add(p, "?", 0);
+//  return p;
+//}
+//void operator delete(void *p) noexcept {
+//  if (Tracer::Ready) NewTrace.Remove(p);
+//  free(p);
+//}
 
 #include "CTypes.h"
 /*

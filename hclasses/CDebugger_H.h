@@ -33,11 +33,11 @@
 #include <new>
 #include <stdarg.h>
 
-void *operator new(size_t size, char const *file, int line);
-void *operator new[](size_t size, char const *file, int line);
-void operator delete(void *p, char const *file, int line);
-void *operator new(std::size_t mem);
-void operator delete(void *p) noexcept;
+//void *operator new(size_t size, char const *file, int line);
+//void *operator new[](size_t size, char const *file, int line);
+//void operator delete(void *p, char const *file, int line);
+//void *operator new(std::size_t mem);
+//void operator delete(void *p) noexcept;
 
 class Tracer {
 private:
