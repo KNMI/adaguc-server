@@ -61,7 +61,6 @@ RUN apt-get -q -y update \
     libgd-dev \
     libproj-dev \
     time \
-    git \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -78,13 +77,6 @@ COPY --from=build /adaguc/adaguc-server-master/bin /adaguc/adaguc-server-master/
 COPY --from=build /adaguc/adaguc-server-master/data /adaguc/adaguc-server-master/data
 COPY --from=build /adaguc/adaguc-server-master/python /adaguc/adaguc-server-master/python
 
-# Build and test adaguc python support
-ENV ADAGUC_PATH=/adaguc/adaguc-server-master
-WORKDIR /adaguc/adaguc-server-master/python/lib/
-RUN python3 setup.py install
-RUN bash -c "python3 /adaguc/adaguc-server-master/python/examples/runautowms/run.py && ls result.png"
-
-WORKDIR /adaguc/adaguc-server-master
 
 ######### Third stage, test ############
 FROM base as test
@@ -122,7 +114,7 @@ RUN  chmod +x /adaguc/adaguc-server-*.sh && \
     chmod +x /adaguc/start.sh && \
     chown -R adaguc:adaguc /data/adaguc* /adaguc /adaguc/*
 
-
+ENV ADAGUC_PATH=/adaguc/adaguc-server-master
 
 ENV PYTHONPATH=${ADAGUC_PATH}/python/python_fastapi_server
 

@@ -141,12 +141,12 @@ def get_point_value(
 
 @edrApiApp.get(
     "/collections/{collection_name}/position",
-    response_model=Coverage,
+    response_model=CovJSONResponse,
     response_model_exclude_none=True,
 )
 @edrApiApp.get(
     "/collections/{collection_name}/instances/{instance}/position",
-    response_model=Coverage,
+    response_model=CovJSONResponse,
     response_model_exclude_none=True,
 )
 async def get_collection_position(
@@ -186,7 +186,7 @@ async def get_collection_position(
     )
     if resp:
         dat = json.loads(resp)
-        return CovJSONResponse(covjson_from_resp(dat, edr_collections[collection_name]['vertical_name']))
+        return covjson_from_resp(dat, edr_collections[collection_name]['vertical_name'])
 
     raise EdrException(code=400, description="No data")
 
@@ -868,9 +868,9 @@ def covjson_from_resp(dats, vertical_name):
 
 def set_edr_config():
     config = {}
-    config["contact"] = {"email": "info@knmi.nl"}
+    config["contact"] = {"email": "gst@knmi.nl"}
     config["provider"] = {"name": "KNMI", "url": "https://www.knmi.nl"}
-    config["keywords"] = ["HARM_N25", "precipitation"]
+    config["keywords"] = ["OGCAPI EDR"]
     config["description"] = "EDR service for ADAGUC datasets"
     config["title"] = "ADAGUC OGCAPI EDR"
     return config
