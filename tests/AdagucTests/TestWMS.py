@@ -1992,3 +1992,22 @@ class TestWMS(unittest.TestCase):
         self.assertTrue(AdagucTestTools().compareImage(
             self.expectedoutputsspath + filename,
             self.testresultspath + filename, 3, 0.1))
+        
+    def test_WMSGetMap_EPSG3067(self):
+        AdagucTestTools().cleanTempDir()
+        config = ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml'
+        env = {'ADAGUC_CONFIG': config}
+
+        filename = "test_WMSGetMap_EPSG3067.png"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "source=testdata.nc&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=910&HEIGHT=616&CRS=EPSG%3A3067&BBOX=-2516792.8416,5070666.2762,1222957.3650,8248146.2901&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&",
+            env=self.env,
+            args=["--report"])
+        AdagucTestTools().writetofile(self.testresultspath + filename,
+                                      data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath +
+                                           filename))
