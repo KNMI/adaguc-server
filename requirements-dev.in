@@ -1,7 +1,7 @@
 # Generate dev_requirements.txt using:
 # pip-compile --upgrade --no-emit-index-url requirements-dev.in
 # Install normal+dev dependencies using:
-# pip-sync requirements-dev.txt
+# pip-sync requirements.txt requirements-dev.txt
 
 -c requirements.txt
 black~=23.7

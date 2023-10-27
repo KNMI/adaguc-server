@@ -1814,6 +1814,46 @@ class TestWMS(unittest.TestCase):
             AdagucTestTools().readfromfile(self.expectedoutputsspath +
                                            filename))
 
+    def test_WMSGetMap_PNG_with_time(self):
+        ### This tests a PNG file with a time dim set ###
+        AdagucTestTools().cleanTempDir()
+
+        # Read getcapabilities and check the dimensions
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            f'SOURCE=pngfile_with_time_dim.png&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities',
+            env=self.env)
+        xslt_root = etree.XML(
+            re.sub(' xmlns="[^"]+"',
+                   '',
+                   data.getvalue().decode('UTF-8'),
+                   count=1).encode('ascii'))
+        dimvalues = xslt_root.findall(
+            'Capability/Layer/Layer/Dimension')[0].text
+        self.assertEqual("2023-10-27T06:00:00Z", dimvalues)
+
+    def test_WMSGetMap_PNG_with_time_and_reftime(self):
+        ### This tests a PNG file with time and reference_time set ###
+        AdagucTestTools().cleanTempDir()
+        filename = "test_WMSGetMap_PNG_with_time_and_reftime.png"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            f'SOURCE=pngfile_with_time_and_reftime_dim.png&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities',
+            env=self.env)
+        xslt_root = etree.XML(
+            re.sub(' xmlns="[^"]+"',
+                   '',
+                   data.getvalue().decode('UTF-8'),
+                   count=1).encode('ascii'))
+        dimvalues = xslt_root.findall(
+            'Capability/Layer/Layer/Dimension')[0].text
+        reftime_dimvalues= xslt_root.findall(
+            'Capability/Layer/Layer/Dimension')[1].text
+
+        self.assertEqual("2023-10-28T00:00:00Z", dimvalues)
+        self.assertEqual("2023-10-27T12:00:00Z", reftime_dimvalues)
+
+
     def test_WMSGetMap_GOES16_bes_geos_500m_airmass(self):
         ### This tests the geos projection ###
         AdagucTestTools().cleanTempDir()
@@ -1887,7 +1927,7 @@ class TestWMS(unittest.TestCase):
         ### This tests the rotated_pole projection ###
         AdagucTestTools().cleanTempDir()
         filename = "test_WMSGetMap_allow_encoded_proj4_params_attribute.png"
-     
+
         # pylint: disable=unused-variable
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "source=issue-279/279-allow_encoded_proj4_params_attribute.nc&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=prediction&WIDTH=150&HEIGHT=175&CRS=EPSG%3A3857&BBOX=333250.30526052,6493136.144375306,849393.56753148,7176591.901449695&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&&time=2023-08-18T08%3A00%3A00Z",
@@ -1900,7 +1940,7 @@ class TestWMS(unittest.TestCase):
             data.getvalue(),
             AdagucTestTools().readfromfile(self.expectedoutputsspath +
                                            filename))
-    
+
     def test_WMSCMDUpdateDBPathFileInSubfolders(self):
         """
         This tests if the autofinddataset option correctly finds the file if it is in a subfolder
@@ -1933,7 +1973,7 @@ class TestWMS(unittest.TestCase):
         self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(
             self.testresultspath + filename,
             self.expectedoutputsspath + filename))
-        
+
 
     def test_WMSCMDUpdateDBPathFileWithNonMatchingPath(self):
         """
@@ -1966,7 +2006,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
         self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(
             self.testresultspath + filename,
-            self.expectedoutputsspath + filename))        
+            self.expectedoutputsspath + filename))
 
     def test_WMSGetMapWithHarmWindBarbs(self):
         AdagucTestTools().cleanTempDir()
