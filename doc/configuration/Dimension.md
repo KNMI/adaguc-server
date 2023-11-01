@@ -1,4 +1,4 @@
-Dimension (name,interval,default,units) <value>
+Dimension (name,interval,default,units,quantizeperiod,quantizemethod,hidden,fixvalue) <value>
 =====================================================
 
 Back to [Configuration](./Configuration.md)
@@ -12,6 +12,8 @@ Back to [Configuration](./Configuration.md)
 -   units - Override the units of the dimension
 -   quantizeperiod - Optional, see below
 -   quantizemethod - Optional, see below
+-   hidden - Optional, hide this dimension from the GetCapabilities document
+-   fixvalue - Optional, fix the value of the dimension. When elevation has a range from 0,10,20,30, you can fixate the value to 20 with fixvalue="20"
 -   <value> - The name of the dimension in the WMS service
 
 ```xml

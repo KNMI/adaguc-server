@@ -106,7 +106,9 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
       if (configFileList.size() > 1) {
         srvParam->datasetLocation.copy(configFileList[configFileList.size() - 1].basename().c_str());
         srvParam->datasetLocation.substringSelf(0, srvParam->datasetLocation.lastIndexOf("."));
-        CDBDebug("Dataset name based on passed configfile is [%s]", srvParam->datasetLocation.c_str());
+        if (srvParam->verbose) {
+          CDBDebug("Dataset name based on passed configfile is [%s]", srvParam->datasetLocation.c_str());
+        }
         status = CAutoResource::configureDataset(srvParam, false);
         if (status != 0) {
           CDBError("ConfigureDataset failed for %s", configFileList[1].c_str());
@@ -1146,6 +1148,21 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
             if (dataSource->requiredDims[i]->value.length() == 19) {
               dataSource->requiredDims[i]->value.concat("Z");
             }
+          }
+        }
+      }
+    }
+    // Check and set value when the value is forced in the layer dimension configuration
+    for (size_t i = 0; i < dataSource->cfgLayer->Dimension.size(); i++) {
+      if (!dataSource->cfgLayer->Dimension[i]->attr.fixvalue.empty()) {
+        CT::string dimName(dataSource->cfgLayer->Dimension[i]->value.c_str());
+        CT::string forceValue = dataSource->cfgLayer->Dimension[i]->attr.fixvalue;
+        dimName.toLowerCaseSelf();
+        for (size_t l = 0; l < dataSource->requiredDims.size(); l++) {
+          if (dataSource->requiredDims[l]->name.equals(&dimName)) {
+            CDBDebug("Forcing dimension %s from %s to %s", dimName.c_str(), dataSource->requiredDims[i]->value.c_str(), forceValue.c_str());
+            dataSource->requiredDims[i]->value = forceValue;
+            break;
           }
         }
       }
@@ -3418,22 +3435,28 @@ int CRequest::updatedb(CT::string *tailPath, CT::string *layerPathToScan, int sc
   }
 
   srvParam->requestType = REQUEST_UPDATEDB;
+  bool file_was_added = false;
 
   for (size_t j = 0; j < dataSources.size(); j++) {
     if (dataSources[j]->dLayerType == CConfigReaderLayerTypeDataBase || dataSources[j]->dLayerType == CConfigReaderLayerTypeBaseLayer) {
       if (scanFlags & CDBFILESCANNER_UPDATEDB) {
         status = CDBFileScanner::updatedb(dataSources[j], tailPath, layerPathToScan, scanFlags);
+        if (status == 0) {
+          file_was_added = true;
+        }
       }
       if (scanFlags & CDBFILESCANNER_CREATETILES) {
         status = CCreateTiles::createTiles(dataSources[j], scanFlags);
       }
-      if (status != 0) {
+      if (status != CDBFILESCANNER_RETURN_FILEDOESNOTMATCH && status != 0) {
         CDBError("Could not update db for: %s", dataSources[j]->cfgLayer->Name[0]->value.c_str());
         errorHasOccured++;
       }
     }
   }
-
+  if (file_was_added == false && layerPathToScan->length() > 0) {
+    CDBWarning("The specified file %s did not match to any of the layers", layerPathToScan->c_str());
+  }
   if (srvParam->enableDocumentCache) {
     // invalidate cache
     CT::string cacheFileName;

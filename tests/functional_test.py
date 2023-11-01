@@ -18,6 +18,7 @@ from AdagucTests.TestGeoJSON import TestGeoJSON
 from AdagucTests.TestMetadataService import TestMetadataService
 from AdagucTests.TestWMSVolScan import TestWMSVolScan
 from AdagucTests.TestWMSPolylineLabel import TestWMSPolylineLabel
+from AdagucTests.TestDataPostProcessor import TestDataPostProcessor
 
 suites = []
 TestLoader = unittest.TestLoader
@@ -34,6 +35,7 @@ suites.append(TestLoader().loadTestsFromTestCase(TestGeoJSON))
 suites.append(TestLoader().loadTestsFromTestCase(TestMetadataService))
 suites.append(TestLoader().loadTestsFromTestCase(TestWMSVolScan))
 suites.append(TestLoader().loadTestsFromTestCase(TestWMSPolylineLabel))
+suites.append(TestLoader().loadTestsFromTestCase(TestDataPostProcessor))
 result = unittest.TextTestRunner(verbosity=2).run(unittest.TestSuite(suites))
 
 

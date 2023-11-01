@@ -68,7 +68,7 @@ The ADAGUC configuration for the Layer object looks like this:
 		<Max>100</Max>
 		<NameMapping name="point" title="Points" abstract="Points"/>
 		<Point plotstationid="false" pointstyle="point" discradius="8"
-  textradius="0" dot="true" fontsize="14" textcolor="\#FFFFFF"
+  textradius="0" dot="true" fontsize="14" textcolor="#FFFFFF"
   textformat=" "/>
 	</Style>
 	<Layer type="database">
@@ -149,34 +149,34 @@ netcdf KIS___OPER_P___OBS_____L2 {
 The ADAGUC configuration looks like this:
 ```xml
 <Legend name="temperature" type="interval">
-  <palette index="0" color="\#2E2E73"/> <!-- -14 -->
-  <palette index="9" color="\#282898"/> <!-- -12 -->
-  <palette index="18" color="\#201FBB"/> <!-- -10 -->
-  <palette index="27" color="\#1A1ADC"/> <!-- -8 -->
-  <palette index="36" color="\#3654DE"/> <!-- -6 -->
-  <palette index="45" color="\#548EDC"/> <!-- -4 -->
-  <palette index="54" color="\#72CADE"/> <!-- -2 -->
-  <palette index="63" color="\#6DD8DF"/> <!-- 0-->
-  <palette index="72" color="\#55CDE2"/> <!-- 2-->
-  <palette index="81" color="\#38BBDC"/> <!-- 4 -->
-  <palette index="90" color="\#20B0DC"/> <!-- 6 -->
-  <palette index="99" color="\#19BAA6"/> <!-- 8 -->
-  <palette index="108" color="\#1CCE6A"/> <!-- 10 -->
-  <palette index="117" color="\#1BDF22"/> <!-- 12 -->
-  <palette index="126" color="\#82C319"/> <!-- 14 -->
-  <palette index="135" color="\#DCA819"/> <!-- 16 -->
-  <palette index="144" color="\#DD921A"/> <!-- 18 -->
-  <palette index="153" color="\#DE7C1A"/> <!-- 20 -->
-  <palette index="162" color="\#DF671A"/> <!-- 22 -->
-  <palette index="171" color="\#DE501A"/> <!-- 24 -->
-  <palette index="180" color="\#DD3819"/> <!-- 26 -->
-  <palette index="189" color="\#DD2319"/> <!-- 28 -->
-  <palette index="198" color="\#D21A1E"/> <!-- 30 -->
-  <palette index="207" color="\#C31927"/> <!-- 32 -->
-  <palette index="216" color="\#AD1A30"/> <!-- 34 -->
-  <palette index="225" color="\#9A1A3B"/> <!-- 36 -->
-  <palette index="234" color="\#871A44"/> <!-- 38 -->
-  <palette index="240" color="\#871A44"/> <!-- 39,33 -->
+  <palette index="0" color="#2E2E73"/> <!-- -14 -->
+  <palette index="9" color="#282898"/> <!-- -12 -->
+  <palette index="18" color="#201FBB"/> <!-- -10 -->
+  <palette index="27" color="#1A1ADC"/> <!-- -8 -->
+  <palette index="36" color="#3654DE"/> <!-- -6 -->
+  <palette index="45" color="#548EDC"/> <!-- -4 -->
+  <palette index="54" color="#72CADE"/> <!-- -2 -->
+  <palette index="63" color="#6DD8DF"/> <!-- 0-->
+  <palette index="72" color="#55CDE2"/> <!-- 2-->
+  <palette index="81" color="#38BBDC"/> <!-- 4 -->
+  <palette index="90" color="#20B0DC"/> <!-- 6 -->
+  <palette index="99" color="#19BAA6"/> <!-- 8 -->
+  <palette index="108" color="#1CCE6A"/> <!-- 10 -->
+  <palette index="117" color="#1BDF22"/> <!-- 12 -->
+  <palette index="126" color="#82C319"/> <!-- 14 -->
+  <palette index="135" color="#DCA819"/> <!-- 16 -->
+  <palette index="144" color="#DD921A"/> <!-- 18 -->
+  <palette index="153" color="#DE7C1A"/> <!-- 20 -->
+  <palette index="162" color="#DF671A"/> <!-- 22 -->
+  <palette index="171" color="#DE501A"/> <!-- 24 -->
+  <palette index="180" color="#DD3819"/> <!-- 26 -->
+  <palette index="189" color="#DD2319"/> <!-- 28 -->
+  <palette index="198" color="#D21A1E"/> <!-- 30 -->
+  <palette index="207" color="#C31927"/> <!-- 32 -->
+  <palette index="216" color="#AD1A30"/> <!-- 34 -->
+  <palette index="225" color="#9A1A3B"/> <!-- 36 -->
+  <palette index="234" color="#871A44"/> <!-- 38 -->
+  <palette index="240" color="#871A44"/> <!-- 39,33 -->
 </Legend>
 
 <Style name="temperature">
@@ -186,7 +186,7 @@ The ADAGUC configuration looks like this:
   <Max>39,33333333</Max> <!-- 39,33333333 = (240 / (234/(38 - -14)))- 14 -->
   <NameMapping name="point" title="Temperature"
   abstract="Temperature"/>
-  <Point plotstationid="false" pointstyle="point" discradius="15" textradius="0" dot="false" fontsize="8" textcolor="\#000000" />
+  <Point plotstationid="false" pointstyle="point" discradius="15" textradius="0" dot="false" fontsize="8" textcolor="#000000" />
 </Style>
 
 <Layer type="database">

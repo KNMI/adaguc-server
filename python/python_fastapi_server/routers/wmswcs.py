@@ -39,11 +39,14 @@ async def handle_wms(req: Request, ):
         if len(param_parts) == 2 and param_parts[0].upper() == "DATASET":
             query_string += f"&{param_parts[0]}={param_parts[1]}"
         else:
-            query_string += f"&{k}={req.query_params[k]}"
+            query_param=req.query_params[k]
+            query_param = query_param.replace('+', '%2B')
+            query_string += f"&{k}={query_param}"
 
     # Run adaguc-server
     status, data, headers = adaguc_instance.runADAGUCServer(query_string,
                                                             env=adagucenv,
+                                                            showLogOnError=False,
                                                             showLog=False)
 
     # Obtain logfile

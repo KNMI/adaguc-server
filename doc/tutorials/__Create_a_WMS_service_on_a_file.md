@@ -53,7 +53,7 @@ viewer to view the service.
 
 CGI Template to use for new files:
 ```
-\#!/bin/bash
+#!/bin/bash
 
 export LD_LIBRARY_PATH=/data/build/lib/:\$LD_LIBRARY_PATH
 export PROJ_LIB=/data/build/share/proj/

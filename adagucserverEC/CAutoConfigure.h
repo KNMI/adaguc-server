@@ -31,7 +31,7 @@
 #include "CServerError.h"
 #include "CDirReader.h"
 
-//#include "CADAGUC_time.h"
+// #include "CADAGUC_time.h"
 #include "CCDFDataModel.h"
 #include "CCDFNetCDFIO.h"
 #include "CCDFHDF5IO.h"
@@ -41,7 +41,7 @@
 #include "CDBFileScanner.h"
 #include "CDFObjectStore.h"
 #include "CCache.h"
-#include "CDataPostProcessor.h"
+#include "CDataPostProcessors/CDataPostProcessor.h"
 
 class CAutoConfigure {
 private:
