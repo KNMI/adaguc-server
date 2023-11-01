@@ -848,7 +848,7 @@ int CRequest::setDimValuesForDataSource(CDataSource *dataSource, CServerParams *
 };
 
 int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams *srvParam) {
-  bool allDimensionOptionsFound = true;
+
 #ifdef CREQUEST_DEBUG
   StopWatch_Stop("### [fillDimValuesForDataSource]");
 #endif
@@ -910,7 +910,6 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
       CDBDebug("alreadyAdded = %d", alreadyAdded);
 #endif
       if (alreadyAdded == false) {
-
         for (size_t k = 0; k < srvParam->requestDims.size(); k++) {
           if (srvParam->requestDims[k]->name.equals(&dimName)) {
 #ifdef CREQUEST_DEBUG
@@ -922,6 +921,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
             dataSource->requiredDims.push_back(ogcDim);
             ogcDim->name.copy(&dimName);
             ogcDim->value.copy(&srvParam->requestDims[k]->value);
+            ogcDim->queryValue.copy(&srvParam->requestDims[k]->value);
             ogcDim->netCDFDimName.copy(dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
 
             if (ogcDim->name.equals("time") || ogcDim->name.equals("reference_time")) {
@@ -1050,9 +1050,6 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
         if (netCDFDimName.equals("none")) {
           continue;
         }
-        allDimensionOptionsFound = false;
-        CDBDebug("NOT ADDED: %s", dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
-
         /* A dimension where the default value is set to filetimedate should not be queried from the db */
         if (dataSource->cfgLayer->Dimension[i]->attr.defaultV.equals("filetimedate")) {
           continue;
@@ -1184,11 +1181,21 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
 
 #ifdef CREQUEST_DEBUG
   for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
-    CDBDebug("dataSource->requiredDims[%d][%s] = [%s] (%s)", j, dataSource->requiredDims[j]->name.c_str(), dataSource->requiredDims[j]->value.c_str(),
-             dataSource->requiredDims[j]->netCDFDimName.c_str());
+    auto *requiredDim = dataSource->requiredDims[j];
+    CDBDebug("dataSource->requiredDims[%d][%s] = [%s] (%s)", j, requiredDim->name.c_str(), requiredDim->value.c_str(), requiredDim->netCDFDimName.c_str());
+    CDBDebug("%s: %s === %s", requiredDim->name.c_str(), requiredDim->value.c_str(), requiredDim->queryValue.c_str());
   }
   CDBDebug("### [</fillDimValuesForDataSource>]");
 #endif
+  bool allDimensionOptionsFound = true;
+  for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
+    auto *requiredDim = dataSource->requiredDims[j];
+    CDBDebug("%s: [%s] === [%s]", requiredDim->name.c_str(), requiredDim->value.c_str(), requiredDim->queryValue.c_str());
+    if (!requiredDim->value.equals(requiredDim->queryValue.c_str())) {
+      allDimensionOptionsFound = false;
+    }
+  }
+
   CDBDebug("allDimensionOptionsFound %d", allDimensionOptionsFound);
   if (allDimensionOptionsFound && srvParam->getCacheControlOption() != CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE) {
     srvParam->setCacheControlOption(CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE);

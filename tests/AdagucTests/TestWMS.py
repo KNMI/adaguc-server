@@ -2111,6 +2111,21 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(
             headers, ['Content-Type:image/png', 'Cache-Control:max-age=60'])
 
+        # If some dims are specfied with current, we expect a shorter caching interval.
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=data&WIDTH=360&HEIGHT=180&CRS=EPSG%3A4326&BBOX=-90,-180,90,180&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&COLORSCALERANGE=0,1&time=current&DIM_member=member3&elevation=5000",
+            {'ADAGUC_CONFIG': config})
+        self.assertEqual(
+            headers, ['Content-Type:image/png', 'Cache-Control:max-age=60'])
+
+        # If some dims are specfied incorrectly, we expect a shorter caching interval.
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=data&WIDTH=360&HEIGHT=180&CRS=EPSG%3A4326&BBOX=-90,-180,90,180&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&COLORSCALERANGE=0,1&time=2017-01-01T00:05:00.000Z&DIM_member=member3&elevation=5000",
+            {'ADAGUC_CONFIG': config})
+        self.assertEqual(
+            headers, ['Content-Type:image/png', 'Cache-Control:max-age=60'])
+
+
         # If all dims are specfied, we expect a longer caching interval.
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=data&WIDTH=360&HEIGHT=180&CRS=EPSG%3A4326&BBOX=-90,-180,90,180&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&COLORSCALERANGE=0,1&time=2017-01-01T00:05:00Z&DIM_member=member3&elevation=5000",
