@@ -2051,3 +2051,31 @@ class TestWMS(unittest.TestCase):
             data.getvalue(),
             AdagucTestTools().readfromfile(self.expectedoutputsspath +
                                            filename))
+    def test_Issue311_WMSGetCapabilities_DimensionUnits(self):
+        """
+        Tests if the right units are propagated from the layer configuration to the GetCapabilities file
+        See https://github.com/KNMI/adaguc-server/issues/311
+        """
+        AdagucTestTools().cleanTempDir()
+ 
+        config = ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml,' + \
+            ADAGUC_PATH + '/data/config/datasets/adaguc.tests.311-getcapabilities-dimension-units.xml'
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=['--updatedb', '--config', config], env=self.env, isCGI=False)
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSGetCapabilities_DimensionUnits.xml"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.tests.311-getcapabilities-dimension-units&service=WMS&request=GetCapabilities",
+            {
+                'ADAGUC_CONFIG':
+                ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml'
+            })
+        AdagucTestTools().writetofile(self.testresultspath + filename,
+                                      data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(
+            self.testresultspath + filename,
+            self.expectedoutputsspath + filename))

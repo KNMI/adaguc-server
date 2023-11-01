@@ -1,3 +1,6 @@
+**Version 2.13.8 2023-11-01**
+- Fixed issue #311, dimension units are now propagated from the Layer configuration to the GetCapabilities
+
 **Version 2.13.7 2023-10-27**
 - PNG files can now also contain a reference_time text tag
 - Finnish national projection (EPSG:3067)
