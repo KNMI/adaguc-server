@@ -1,5 +1,9 @@
+**Version 2.13.7 2023-10-27**
+- PNG files can now also contain a reference_time text tag
+- Finnish national projection (EPSG:3067)
+
 **Version 2.13.6 2023-10-06**
-- Restored access log to original format (was broken since move to FastAPI) 
+- Restored access log to original format (was broken since move to FastAPI)
 
 **Version 2.13.5 2023-10-05**
 - KNMI HDF5 dual-pol data now picks scans 15, 16, 6,
