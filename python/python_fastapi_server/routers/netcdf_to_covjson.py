@@ -2,18 +2,27 @@
 Convert a netcdf dataset to coverage json
 """
 import logging
-from typing import Dict, List
+from datetime import timezone
+from typing import Dict
+from typing import List
 
 import netCDF4
 import numpy.ma as ma
-from covjson_pydantic.coverage import Coverage, Union
-from covjson_pydantic.domain import Domain, DomainType, ValuesAxis
-from covjson_pydantic.ndarray import AnyUrl, NdArray, TiledNdArray
+from covjson_pydantic.coverage import Coverage
+from covjson_pydantic.coverage import Union
+from covjson_pydantic.domain import Domain
+from covjson_pydantic.domain import DomainType
+from covjson_pydantic.domain import ValuesAxis
+from covjson_pydantic.ndarray import NdArray
+from covjson_pydantic.ndarray import TiledNdArray
 from covjson_pydantic.observed_property import ObservedProperty
 from covjson_pydantic.parameter import Parameter
-from covjson_pydantic.reference_system import (ReferenceSystem,
-                                               ReferenceSystemConnectionObject)
+from covjson_pydantic.reference_system import ReferenceSystem
+from covjson_pydantic.reference_system import ReferenceSystemConnectionObject
+from covjson_pydantic.unit import Symbol
 from covjson_pydantic.unit import Unit
+from pydantic import AnyUrl
+from pydantic import AwareDatetime
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
@@ -113,9 +122,6 @@ def netcdf_to_covjson(netcdfdataset) -> Coverage:
                 # Fill in the dimension values for the NdArray
                 if dimname == "time":
                     # Convert the date values to datetime objects.
-                    # Casting returned cftime.real_datetime to numpy.datetime64,
-                    #   as orjson can't work with real_datetime() type
-                    # https://numpy.org/doc/stable/reference/arrays.datetime.html
                     # Optional arguments are not handled by netCDF4.num2date therefore we remove them and pass a dict
                     # as parameters.
                     not_none_parameters = {
@@ -130,45 +136,38 @@ def netcdf_to_covjson(netcdfdataset) -> Coverage:
                         if value is not None
                     }
                     # pylint: disable=no-member
-                    values = netCDF4.num2date(**not_none_parameters).astype(
-                        "datetime64[s]"
-                    )
-                    axes[coverage_axis_name] = ValuesAxis(values=values.tolist())
+                    values = netCDF4.num2date(**not_none_parameters)
+                    # netcdf4-python has made the choice to always return timezone naive datetimes, but guarantees
+                    # that the time is in UTC. So we now have to manually set UTC timezone. Quite inefficient! See
+                    # https://github.com/Unidata/netcdf4-python/issues/357
+                    values_tz = [v.replace(tzinfo=timezone.utc) for v in values.tolist()]
+                    axes[coverage_axis_name] = ValuesAxis[AwareDatetime](values=values_tz)
                 else:
                     # Assign float values
-                    axes[coverage_axis_name] = ValuesAxis(values=ncvar[:].data.tolist())
+                    axes[coverage_axis_name] = ValuesAxis[float](values=ncvar[:].data.tolist())
 
             # Create the ndarray for the ranges object
             ndarray = NdArray(
-                axisNames=axesnames,
-                shape=shape,
-                values=ma.masked_invalid(variable[:].flatten(order="C")).tolist(),
+                axisNames=axesnames, shape=shape, values=ma.masked_invalid(variable[:].flatten(order="C")).tolist()
             )
 
             # Make the ranges object
             ranges[variablename] = ndarray
 
-            # TODO: No symbol value for variance (Rd1) is set. I filled it with sigma^2 for the moment.
-            #  See hardcoded list as well.
-            if variablename == "variance":
-                unit = Unit(
-                    symbol={
-                        "value": "unknown",
-                        "type": "http://www.opengis.net/def/uom/UCUM/",
-                    }
-                )
-            else:
-                unit = Unit(
-                    symbol={
-                        "value": variable.units,
-                        "type": "http://www.opengis.net/def/uom/UCUM/",
-                    }
-                )
+            unit_of_measurement = variable.units if variable.units else "unknown"
+
             # Add the parameter
             parameters[variablename] = Parameter(
-                observedProperty=ObservedProperty(label={"en": variable.standard_name}),
+                # TODO: KDP-1622 Fix the difference in the ObservedProperty between DescribeCoverage from the
+                #  Adaguc Config and the NetCDF values
+                observedProperty=ObservedProperty(label={"en": variable.long_name}),
                 description={"en": variable.long_name},
-                unit=unit,
+                unit=Unit(
+                    symbol=Symbol(
+                        value=unit_of_measurement,
+                        type="http://www.opengis.net/def/uom/UCUM/",
+                    )
+                ),
             )
 
     # Define the referencing system, defaulting to latlon
@@ -177,41 +176,30 @@ def netcdf_to_covjson(netcdfdataset) -> Coverage:
     # Try to detect the georeferencesysteminfo based on the proj string in the crs variable of the netcdf file.
     if "crs" in netcdfdataset.variables:
         crsvar = netcdfdataset.variables["crs"]
-        georeferencesysteminfo = get_projection_info_from_proj_string(
-            crsvar.proj4_params
-        )
+        georeferencesysteminfo = get_projection_info_from_proj_string(crsvar.proj4_params)
 
-    georeferencesystem = ReferenceSystem(
-        type=georeferencesysteminfo.crstype, id=georeferencesysteminfo.crsid
-    )
+    georeferencesystem = ReferenceSystem(type=georeferencesysteminfo.crstype, id=georeferencesysteminfo.crsid)
 
-    georeferencing = ReferenceSystemConnectionObject(
-        system=georeferencesystem, coordinates=georeferencesysteminfo.axes
-    )
+    georeferencing = ReferenceSystemConnectionObject(system=georeferencesystem, coordinates=georeferencesysteminfo.axes)
 
     temporalreferencesystem = ReferenceSystem(type="TemporalRS", calendar="Gregorian")
 
-    temporalreferencing = ReferenceSystemConnectionObject(
-        system=temporalreferencesystem, coordinates=["t"]
-    )
+    temporalreferencing = ReferenceSystemConnectionObject(system=temporalreferencesystem, coordinates=["t"])
 
     # Create the domain based on the axes object
-    domain = Domain(
-        domainType=DomainType.grid,
-        axes=axes,
-        referencing=[georeferencing, temporalreferencing],
-    )
+    domain = Domain(domainType=DomainType.grid, axes=axes, referencing=[georeferencing, temporalreferencing])
 
     # Assemble and return the coveragejson based on the domain and the ranges
     return Coverage(domain=domain, ranges=ranges, parameters=parameters)
 
 
 if __name__ == "__main__":
-    # Run with python3.9 api/application/app/netcdf_to_covjson.py
+    # Run with python3.10 api/application/app/netcdf_to_covjson.py
     import requests
 
     SERVICE = "https://geoservices.knmi.nl/adagucserver?"
-    SERVICE = "http://localhost:8000/wcs?"
+    SERVICE= "http://localhost:8080/adagucserver?"
+
     # Rijksdriehoek stelsel
     # QUERYSTRING = (
     #     "dataset=Tg_1_oper&"
@@ -243,23 +231,11 @@ if __name__ == "__main__":
         "REQUEST=GetCoverage&"
         "COVERAGE=daily_temperature/INTER_OPER_R___TAVGD___L3__0005_prediction&"
         "CRS=EPSG%3A4326&"
-        "FORMAT=NetCDF4&"
-        "BBOX=3.039095,50.580161,7.584775,53.746892&"
-        # "RESX=0.25&"
-        # "RESY=0.25&"
-        "TIME=2022-10-05T00:00:00Z"
-    )
-    QUERYSTRING = (
-        "dataset=HARM_N25&"
-        "SERVICE=WCS&"
-        "REQUEST=GetCoverage&"
-        "COVERAGE=air_temperature__at_2m&"
-        "CRS=EPSG%3A4326&"
         "FORMAT=NetCDF3&"
         "BBOX=3.039095,50.580161,7.584775,53.746892&"
-        # "RESX=0.25&"
-        # "RESY=0.25&"
-        "TIME=2022-06-30T09:00:00Z"
+        "RESX=0.25&"
+        "RESY=0.25&"
+        "TIME=2022-10-05T00:00:00Z"
     )
 
     # QUERYSTRING = (
@@ -275,11 +251,25 @@ if __name__ == "__main__":
     #     "TIME=2019-01-01T23:00:00Z&"
     #     "ELEVATION=600"
     # )
+    QUERYSTRING = (
+        "dataset=HARM_N25&"
+        "SERVICE=WCS&"
+        "REQUEST=GetCoverage&"
+        "COVERAGE=air_temperature__at_2m&"
+        "CRS=EPSG%3A4326&"
+        "FORMAT=NetCDF3&"
+        "BBOX=3.039095,50.580161,7.584775,53.746892&"
+        # "RESX=0.25&"
+        # "RESY=0.25&"
+        "TIME=2023-03-23T09:00:00Z"
+    )
 
     WCSGETCOVERAGEURL = SERVICE + QUERYSTRING
 
     # Get a NetCDF file as dataset
     response = requests.get(WCSGETCOVERAGEURL, timeout=60)
+
+    print(response.status_code)
 
     ds = netCDF4.Dataset("filename.nc", memory=response.content)
 

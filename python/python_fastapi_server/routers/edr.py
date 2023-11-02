@@ -141,12 +141,12 @@ def get_point_value(
 
 @edrApiApp.get(
     "/collections/{collection_name}/position",
-    response_model=CovJSONResponse,
+ #   response_model=CovJSONResponse,
     response_model_exclude_none=True,
 )
 @edrApiApp.get(
     "/collections/{collection_name}/instances/{instance}/position",
-    response_model=CovJSONResponse,
+#    response_model=CovJSONResponse,
     response_model_exclude_none=True,
 )
 async def get_collection_position(
@@ -159,7 +159,7 @@ async def get_collection_position(
         z_par: str=Query(alias="z", default=None),
         crs: str=Query(default=None),
         requested_format: str=Query(default=None, alias="f")
-):
+)->CovJSONResponse:
     allowed_params = ["coords", "datetime", "parameter-name", "z", "f", "crs"]
     custom_dims = [k for k in request.query_params if k not in allowed_params]
     custom_dims = ""

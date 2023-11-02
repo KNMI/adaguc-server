@@ -57,8 +57,8 @@ def test_collections(client: TestClient):
     print(json.dumps(colls["collections"][0], indent=2))
     coll_5d = colls["collections"][0]
     assert coll_5d.get("id")=="data_5d"
-    assert all(ext_name in coll_5d["extent"] for ext_name in ('spatial', 'temporal', 'vertical')) #TODO 'custom'
-    assert [ext_name for ext_name in coll_5d['extent']]==['spatial', 'temporal', 'vertical']  #TODO 'custom'
+    assert all(ext_name in coll_5d["extent"] for ext_name in ('spatial', 'temporal', 'vertical', 'custom')) #TODO 'custom'
+    assert [ext_name for ext_name in coll_5d['extent']]==['spatial', 'temporal', 'vertical', 'custom']  #TODO 'custom'
     assert coll_5d['extent']['temporal']['values'][0]=="R6/2017-01-01 00:00:00+00:00/PT5M"
 
     assert "position" in coll_5d["data_queries"]
