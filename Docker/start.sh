@@ -36,6 +36,6 @@ then
 fi
 
 echo "Start serving on ${EXTERNALADDRESS}"
-gunicorn --bind 0.0.0.0:8080 --workers=4 -k uvicorn.workers.UvicornWorker --disable-redirect-access-to-syslog --access-logfile - --access-logformat 'accesslog %(h)s ; %(t)s ; %(H)s ; %(m)s ; %(u)s ; %(q)s ; %(s)s ; %(M)s ; "%(a)s"' main:app
+gunicorn --bind 0.0.0.0:8080 --workers=4 -k uvicorn.workers.UvicornWorker --disable-redirect-access-to-syslog --access-logfile - main:app
 
 
