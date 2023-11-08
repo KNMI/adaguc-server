@@ -36,6 +36,12 @@ public:
    */
 
   CT::string name;
+
+  /**
+   * Value, as given in the query_string
+   */
+  CT::string queryValue;
+
   /**
    * Value, are all values as given in the KVP request string, can contain / and , tokens
    */

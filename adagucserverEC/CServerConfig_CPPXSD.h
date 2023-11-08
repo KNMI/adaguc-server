@@ -1283,7 +1283,7 @@ public:
   public:
     class Cattr {
     public:
-      CT::string enablecleanupsystem, cleanupsystemlimit;
+      CT::string enablecleanupsystem, cleanupsystemlimit, cache_age_cacheableresources, cache_age_volatileresources;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
       if (equals("enablecleanupsystem", 19, attrname)) {
@@ -1291,6 +1291,12 @@ public:
         return;
       } else if (equals("cleanupsystemlimit", 18, attrname)) {
         attr.cleanupsystemlimit.copy(attrvalue);
+        return;
+      } else if (equals("cache_age_cacheableresources", 28, attrname)) {
+        attr.cache_age_cacheableresources.copy(attrvalue);
+        return;
+      } else if (equals("cache_age_volatileresources", 27, attrname)) {
+        attr.cache_age_volatileresources.copy(attrvalue);
         return;
       }
     }

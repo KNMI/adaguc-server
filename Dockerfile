@@ -6,7 +6,7 @@ USER root
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
-LABEL version="2.13.8"
+LABEL version="2.13.9"
 
 # Try to update image packages
 RUN apt-get -q -y update \
@@ -93,14 +93,14 @@ COPY tests /adaguc/adaguc-server-master/tests
 COPY runtests.sh /adaguc/adaguc-server-master/runtests.sh
 
 # Run adaguc-server functional and regression tests
-RUN bash runtests.sh && echo "TESTSDONE" >  /adaguc/adaguc-server-master/testsdone.txt
+RUN bash runtests.sh
+
+# Create a file indicating that the test succeeded. This file is used in the final stage
+RUN echo "TESTSDONE" >  /adaguc/adaguc-server-master/testsdone.txt
 
 
 ######### Fourth stage, prod ############
 FROM base as prod
-
-# This ensures that the test stage is ran without issues.
-COPY --from=test /adaguc/adaguc-server-master/testsdone.txt /adaguc/adaguc-server-master/testsdone.txt 
 
 # Set same uid as vivid
 RUN useradd -m adaguc -u 1000 && \
@@ -132,6 +132,9 @@ RUN python3 setup.py install
 RUN bash -c "python3 /adaguc/adaguc-server-master/python/examples/runautowms/run.py && ls result.png"
 
 WORKDIR /adaguc/adaguc-server-master
+
+# This checks if the test stage has ran without issues.
+COPY --from=test /adaguc/adaguc-server-master/testsdone.txt /adaguc/adaguc-server-master/testsdone.txt 
 
 USER adaguc
 

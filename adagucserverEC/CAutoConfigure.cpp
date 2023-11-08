@@ -510,6 +510,7 @@ int CAutoConfigure::justLoadAFileHeader(CDataSource *dataSource) {
         dataSource->requiredDims.push_back(ogcDim);
         ogcDim->name.copy("none");
         ogcDim->value.copy("0");
+        ogcDim->queryValue.copy("0");
         ogcDim->netCDFDimName.copy("none");
       }
     }
