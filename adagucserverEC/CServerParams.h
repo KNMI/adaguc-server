@@ -80,7 +80,7 @@ private:
   CT::string _onlineResource;
   static int dataRestriction;
   static char debugLoggingIsEnabled;
-  int cacheControlOption = 0;
+  int cacheControlOption = CSERVERPARAMS_CACHE_CONTROL_OPTION_NOCACHE;
 
 public:
   double dfResX, dfResY;
@@ -319,9 +319,9 @@ public:
 
   /**
    * Returns cache control header
-   * mode 0 returns empty string ("")
-   * mode 1 is for urls which response might change often (shorter max-age)
-   * mode 2 is fully specified urls
+   * mode CSERVERPARAMS_CACHE_CONTROL_OPTION_NOCACHE returns empty string ("")
+   * mode CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE is for urls which response might change often (shorter max-age)
+   * mode CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE is fully specified urls
    */
   CT::string getCacheControlHeader(int mode);
 

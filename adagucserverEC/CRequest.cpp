@@ -1187,17 +1187,17 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
   }
   CDBDebug("### [</fillDimValuesForDataSource>]");
 #endif
-  bool allDimensionOptionsFound = true;
+  bool allDimensionsAreAsRequestedInQueryString = true;
   for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
     auto *requiredDim = dataSource->requiredDims[j];
     CDBDebug("%s: [%s] === [%s]", requiredDim->name.c_str(), requiredDim->value.c_str(), requiredDim->queryValue.c_str());
-    if (!requiredDim->value.equals(requiredDim->queryValue.c_str())) {
-      allDimensionOptionsFound = false;
+    if (!requiredDim->value.equals(requiredDim->queryValue)) {
+      allDimensionsAreAsRequestedInQueryString = false;
     }
   }
 
-  CDBDebug("allDimensionOptionsFound %d", allDimensionOptionsFound);
-  if (allDimensionOptionsFound && srvParam->getCacheControlOption() != CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE) {
+  CDBDebug("allDimensionsAreAsRequestedInQueryString %d", allDimensionsAreAsRequestedInQueryString);
+  if (allDimensionsAreAsRequestedInQueryString) {
     srvParam->setCacheControlOption(CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE);
   } else {
     srvParam->setCacheControlOption(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE);
