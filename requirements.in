@@ -20,6 +20,5 @@ httpx~=0.24
 lxml~=4.9
 netCDF4~=1.6
 pydantic~=1.10
-pyproj~=3.6
 pytz~=2023.3
 uvicorn~=0.23.2
