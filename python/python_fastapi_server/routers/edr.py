@@ -141,12 +141,14 @@ def get_point_value(
 
 @edrApiApp.get(
     "/collections/{collection_name}/position",
- #   response_model=CovJSONResponse,
+    response_model = Coverage,
+    response_class=CovJSONResponse,
     response_model_exclude_none=True,
 )
 @edrApiApp.get(
     "/collections/{collection_name}/instances/{instance}/position",
-#    response_model=CovJSONResponse,
+    response_model = Coverage,
+    response_class=CovJSONResponse,
     response_model_exclude_none=True,
 )
 async def get_collection_position(
@@ -159,7 +161,7 @@ async def get_collection_position(
         z_par: str=Query(alias="z", default=None),
         crs: str=Query(default=None),
         requested_format: str=Query(default=None, alias="f")
-)->CovJSONResponse:
+)->Coverage:
     allowed_params = ["coords", "datetime", "parameter-name", "z", "f", "crs"]
     custom_dims = [k for k in request.query_params if k not in allowed_params]
     custom_dims = ""
@@ -229,6 +231,7 @@ def get_collectioninfo_for_id(
             links.append(instances_link)
 
     bbox = get_extent(edr_collectioninfo)
+    print("bbox:", bbox, type(bbox))
     crs = 'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]'
     spatial = Spatial(bbox=bbox, crs=crs)
     (interval,
