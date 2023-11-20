@@ -4,7 +4,7 @@
   <OgcApiFeatures/>
   <OgcApiEdr>
     <EdrCollection name="data_5d" time_interval="R9/2017-01-01T00:25:00Z/PT5M" vertical_name="height">
-      data
+      <EdrParameter name="data" unit="unit"/>
     </EdrCollection>
   </OgcApiEdr>
 

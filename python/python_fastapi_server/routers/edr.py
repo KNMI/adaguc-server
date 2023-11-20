@@ -68,7 +68,7 @@ def init_edr_collections(
     datasetFiles = [
         f for f in os.listdir(adagucDataSetDir)
         if os.path.isfile(os.path.join(adagucDataSetDir, f))
-        and f.endswith(".xml")
+           and f.endswith(".xml")
     ]
 
     edr_collections = {}
@@ -79,6 +79,12 @@ def init_edr_collections(
             root = tree.getroot()
             for ogcapi_edr in root.iter("OgcApiEdr"):
                 for edr_collection in ogcapi_edr.iter("EdrCollection"):
+                    edr_params=[]
+                    for edr_parameter in edr_collection.iter("EdrParameter"):
+                        edr_params.append({
+                            "name": edr_parameter.attrib.get("name"),
+                            "unit": edr_parameter.attrib.get("unit")
+                        })
                     edr_collections[edr_collection.attrib.get("name")] = {
                         "dataset":
                         dataset,
@@ -88,10 +94,7 @@ def init_edr_collections(
                         "http://localhost:8000/wms",
                         "time_interval":
                         edr_collection.attrib.get("time_interval"),
-                        "parameters": [
-                            inst.strip()
-                            for inst in edr_collection.text.strip().split(",")
-                        ],
+                        "parameters": edr_params,
                         "vertical_name": edr_collection.attrib.get("vertical_name"),
                         "base_url": f"http://localhost:8080/edr/collections/{edr_collection.attrib.get('name')}"
                     }
@@ -223,7 +226,7 @@ def get_collectioninfo_for_id(
     ref_times = None
     if not instance:
         ref_times = get_reference_times_for_collection(
-            edr_collectioninfo, edr_collectioninfo["parameters"][0])
+            edr_collectioninfo, edr_collectioninfo["parameters"][0]["name"])
         if ref_times and len(ref_times) > 0:
             instances_link = Link(href=f"{base_url}/instances",
                                  rel="collection",
@@ -236,10 +239,10 @@ def get_collectioninfo_for_id(
     spatial = Spatial(bbox=bbox, crs=crs)
     (interval,
      time_values) = get_times_for_collection(edr_collectioninfo,
-                                          edr_collectioninfo["parameters"][0])
+                                          edr_collectioninfo["parameters"][0]["name"])
 
     customlist:list = get_custom_dims_for_collection(edr_collectioninfo,
-                                             edr_collectioninfo["parameters"][0])
+                                             edr_collectioninfo["parameters"][0]["name"])
     custom = [] #TODO Custom
     if customlist is not None:
         for custom_el in customlist:
@@ -247,7 +250,7 @@ def get_collectioninfo_for_id(
 
     vertical = None
     vertical_dim = get_vertical_dim_for_collection(
-        edr_collectioninfo, edr_collectioninfo["parameters"][0])
+        edr_collectioninfo, edr_collectioninfo["parameters"][0]["name"])
     if vertical_dim:
         vertical = Vertical(**vertical_dim)
 
@@ -327,16 +330,21 @@ def get_collectioninfo_for_id(
 def get_parameters_for_edr_collection(edr_collection: str) -> dict[str, Parameter]:
     parameter_names = {}
     edr_collections = get_edr_collections()
-    for param_name in edr_collections[edr_collection]["parameters"]:
+    for param_el in edr_collections[edr_collection]["parameters"]:
+        #Use name as default for label
+        if "label" in param_el:
+            label=param_el["label"]
+        else:
+            label = param_el["name"]
+
         param = Parameter(
-            id=param_name,
-            observedProperty=ObservedProperty(id=param_name,
-                                                        label=param_name),
+            id=param_el["name"],
+            observedProperty=ObservedProperty(id=param_el["name"], label=label),
             type="Parameter",
-            unit=Unit(symbol="mm"), #TODO Find real untis
-            label=param_name,
+            unit=Unit(symbol=param_el["unit"]),
+            label=label,
         )
-        parameter_names[param_name] = param
+        parameter_names[param_el["name"]] = param
     return parameter_names
 
 
@@ -554,7 +562,7 @@ async def edr_get_instances_for_collection(collection_name: str,
     edr_collections = get_edr_collections()
 
     ref_times = get_reference_times_for_collection(
-        edr_collections[collection_name], edr_collections[collection_name]["parameters"][0])
+        edr_collections[collection_name], edr_collections[collection_name]["parameters"][0]["name"])
     links: list(Link) = []
     links.append(Link(href=base_url, rel="collection"))
     for instance in list(ref_times):
