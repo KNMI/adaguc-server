@@ -124,5 +124,5 @@ A tip to list the actual contents in the docker container is to do:
 
 ```
 docker exec -i -t my-adaguc-server bash -c "ls -lrt /data/adaguc-data"
-docker exec -i -t my-adaguc
+docker exec -i -t my-adaguc-server bash -c "ls -lrt /data/adaguc-datasets"
 ```
