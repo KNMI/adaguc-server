@@ -327,13 +327,14 @@ def get_collectioninfo_for_id(
     return collection
 
 
+
 def get_parameters_for_edr_collection(edr_collection: str) -> dict[str, Parameter]:
     parameter_names = {}
     edr_collections = get_edr_collections()
     for param_el in edr_collections[edr_collection]["parameters"]:
         #Use name as default for label
         if "label" in param_el:
-            label=param_el["label"]
+            label = param_el["label"]
         else:
             label = param_el["name"]
 
