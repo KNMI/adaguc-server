@@ -2,10 +2,9 @@
 
 
 ADAGUC_PORT=443
-ADAGUC_PORT_HTTP=80
-ADAGUC_DATA_DIR=/data/adaguc-data
-ADAGUC_AUTOWMS_DIR=/data/adaguc-autowms
-ADAGUC_DATASET_DIR=/data/adaguc-datasets
+ADAGUC_DATA_DIR=${HOME}/adaguc-docker/adaguc-data
+ADAGUC_AUTOWMS_DIR=${HOME}/adaguc-docker/adaguc-autowms
+ADAGUC_DATASET_DIR=${HOME}/adaguc-docker/adaguc-datasets
 
 usage() { echo "Usage: $0 -p <port number> -e <external adress> -a <autowmsdir> -d <dataset dir> -f <datadir>" 1>&2; exit 1; }
 
@@ -45,14 +44,16 @@ if [ -z "${EXTERNALADDRESS}" ]; then
   fi
 fi
 
+mkdir -p ${ADAGUC_DATA_DIR}
+mkdir -p ${ADAGUC_AUTOWMS_DIR}
+mkdir -p ${ADAGUC_DATASET_DIR}
+
 
 rm .env
-echo "ADAGUCHOME=${ADAGUC_DATA_DIR}" >> .env
 echo "ADAGUC_DATA_DIR=${ADAGUC_DATA_DIR}" >> .env
 echo "ADAGUC_AUTOWMS_DIR=${ADAGUC_AUTOWMS_DIR=}" >> .env
 echo "ADAGUC_DATASET_DIR=${ADAGUC_DATASET_DIR}" >> .env
 echo "ADAGUC_PORT=${ADAGUC_PORT}" >> .env
-echo "ADAGUC_PORT_HTTP=${ADAGUC_PORT_HTTP}" >> .env
 echo "EXTERNALADDRESS=${EXTERNALADDRESS}" >> .env
 echo "############### env file ###############"
 cat .env
