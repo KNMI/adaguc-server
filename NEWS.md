@@ -1,3 +1,6 @@
+**Version 2.14.0 2023-11-23**
+- EDR support
+
 **Version 2.13.9 2023-11-01**
 - Cache-Control header can be configured via the Settings item 
 

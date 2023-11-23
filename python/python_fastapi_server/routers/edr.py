@@ -295,6 +295,8 @@ def get_collectioninfo_for_id(
             links.append(instances_link)
 
     bbox = get_extent(edr_collectioninfo)
+    if bbox is None:
+        return None
     print("bbox:", bbox, type(bbox))
     crs = 'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]'
     spatial = Spatial(bbox=bbox, crs=crs)
@@ -593,7 +595,10 @@ async def rest_get_edr_collections(request: Request):
     edr_collections = get_edr_collections()
     for edr_coll in edr_collections:
         coll = get_collectioninfo_for_id(edr_coll)
-        collections.append(coll)
+        if coll:
+            collections.append(coll)
+        else:
+            logger.warning("Unable to fetch WMS GetCapabilties for %s", edr_coll)
     collections_data = Collections(links=links, collections=collections)
     return collections_data
 
