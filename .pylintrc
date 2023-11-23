@@ -563,3 +563,8 @@ check-str-concat-over-line-jumps=no
 #max-line-length-suggestions=
 
 extension-pkg-whitelist=lxml
+
+
+; disable=logging-fstring-interpolation
+
+; disable=logging-not-lazy

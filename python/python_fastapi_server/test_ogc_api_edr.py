@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 def set_environ():
     os.environ["ADAGUC_CONFIG"] = os.path.join(
-        os.environ["ADAGUC_PATH"], "data", "config", "adaguc.ogcapi_edr.xml"
+        os.environ["ADAGUC_PATH"], "data", "config", "adaguc.dataset.xml"
     )
 
 
@@ -43,11 +43,11 @@ def fixture_client() -> TestClient:
 
 def test_root(client: TestClient):
     resp = client.get("/edr/")
-    root_info=resp.json()
+    root_info = resp.json()
     print("resp:", resp, json.dumps(root_info, indent=2))
     print()
     assert root_info["description"] == "EDR service for ADAGUC datasets"
-    assert len(root_info["links"])>=4
+    assert len(root_info["links"]) >= 4
 
 
 def test_collections(client: TestClient):
@@ -56,13 +56,27 @@ def test_collections(client: TestClient):
     assert len(colls["collections"]) == 1
     print(json.dumps(colls["collections"][0], indent=2))
     coll_5d = colls["collections"][0]
-    assert coll_5d.get("id")=="data_5d"
-    assert all(ext_name in coll_5d["extent"] for ext_name in ('spatial', 'temporal', 'vertical', 'custom')) #TODO 'custom'
-    assert [ext_name for ext_name in coll_5d['extent']]==['spatial', 'temporal', 'vertical', 'custom']  #TODO 'custom'
-    assert coll_5d['extent']['temporal']['values'][0]=="R6/2017-01-01 00:00:00+00:00/PT5M"
+    assert coll_5d.get("id") == "data_5d"
+    assert all(
+        ext_name in coll_5d["extent"]
+        for ext_name in ("spatial", "temporal", "vertical", "custom")
+    )  # TODO 'custom'
+    assert [ext_name for ext_name in coll_5d["extent"]] == [
+        "spatial",
+        "temporal",
+        "vertical",
+        "custom",
+    ]  # TODO 'custom'
+    assert (
+        coll_5d["extent"]["temporal"]["values"][0]
+        == "R6/2017-01-01 00:00:00+00:00/PT5M"
+    )
 
     assert "position" in coll_5d["data_queries"]
 
+
 def test_coll_5d_position(client: TestClient):
-    resp = client.get("/edr/collections/data_5d/position?coords=POINT(5.2 50.0)&parameter-name=data")
+    resp = client.get(
+        "/edr/collections/data_5d/position?coords=POINT(5.2 50.0)&parameter-name=data"
+    )
     print(resp.json())
