@@ -924,7 +924,7 @@ def covjson_from_resp(dats, vertical_name):
         parameters: dict(str, CovJsonParameter) = {}
         ranges = {}
 
-        unit = CovJsonUnit(symbol="m3")
+        unit = CovJsonUnit(symbol=dat["units"])
         param = CovJsonParameter(
             id=dat["name"],
             observedProperty=CovJsonObservedProperty(label={"en": dat["name"]}),
