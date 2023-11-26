@@ -1492,6 +1492,43 @@ int CXMLGen::getWCS_1_0_0_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer 
   return 0;
 }
 
+void CXMLGen::generateRangeSet(CT::string *XMLDoc, WMSLayer *layer) {
+  /*
+  From the documentation:
+  The optional and repeatable axisDescription/AxisDescription element is for compound observations.
+  It describes an additional parameter (that is, an independent variable besides space and time),
+  and the valid values of this parameter, which GetCoverage requests can use to select subsets of a
+  coverage offering.
+  */
+  XMLDoc->concat("    <rangeSet>\n"
+                 "      <RangeSet>\n"
+                 "        <name>dimensions</name>\n"
+                 "        <label>dimensions</label>\n");
+  // Dims
+  for (size_t d = 0; d < layer->dimList.size(); d++) {
+    WMSLayer::Dim *dim = layer->dimList[d];
+    if (dim->name.indexOf("time") != -1) {
+      continue;
+    }
+
+    XMLDoc->printconcat("        <axisDescription>\n"
+                        "          <AxisDescription>\n"
+                        "            <name>\"%s\"</name>\n"
+                        "            <label>\"%s\"</label>\n"
+                        "            <values>\n"
+                        "              <singleValue>1</singleValue>\n"
+                        "            </values>\n"
+                        "          </AxisDescription>\n"
+                        "        </axisDescription>\n",
+                        dim->name.c_str(), dim->name.c_str());
+
+    // dim->units.c_str(), dim->defaultValue.c_str()
+  }
+
+  XMLDoc->concat("      </RangeSet>\n"
+                 "    </rangeSet>\n");
+}
+
 int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc, std::vector<WMSLayer *> *myWMSLayerList) {
 
   XMLDoc->copy("<?xml version='1.0' encoding=\"ISO-8859-1\" ?>\n"
@@ -1614,22 +1651,9 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc, std::vector<WMSLa
                 }
                 XMLDoc->concat("      </temporalDomain>\n");
               }
-              XMLDoc->concat("    </domainSet>\n"
-                             "    <rangeSet>\n"
-                             "      <RangeSet>\n"
-                             "        <name>bands</name>\n"
-                             "        <label>bands</label>\n"
-                             "        <axisDescription>\n"
-                             "          <AxisDescription>\n"
-                             "            <name>bands</name>\n"
-                             "            <label>Bands/Channels/Samples</label>\n"
-                             "            <values>\n"
-                             "              <singleValue>1</singleValue>\n"
-                             "            </values>\n"
-                             "          </AxisDescription>\n"
-                             "        </axisDescription>\n"
-                             "      </RangeSet>\n"
-                             "    </rangeSet>\n");
+              XMLDoc->concat("    </domainSet>\n");
+              // Generate the XML code for RangeSet, including dimensions (AxisDescriptions)
+              generateRangeSet(XMLDoc, layer);
               // Supported CRSs
               XMLDoc->concat("    <supportedCRSs>\n");
 
