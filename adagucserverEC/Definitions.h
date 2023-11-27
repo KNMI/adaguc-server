@@ -62,7 +62,7 @@
 
 // Legend
 #define LEGEND_WIDTH 300
-#define LEGEND_HEIGHT 400
+#define LEGEND_HEIGHT 800
 
 // WMS versions
 #define WMS_VERSION_1_0_0 1

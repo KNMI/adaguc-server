@@ -1190,7 +1190,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
   bool allDimensionsAreAsRequestedInQueryString = true;
   for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
     auto *requiredDim = dataSource->requiredDims[j];
-    CDBDebug("%s: [%s] === [%s]", requiredDim->name.c_str(), requiredDim->value.c_str(), requiredDim->queryValue.c_str());
+    // CDBDebug("%s: [%s] === [%s]", requiredDim->name.c_str(), requiredDim->value.c_str(), requiredDim->queryValue.c_str());
     if (!requiredDim->value.equals(requiredDim->queryValue)) {
       allDimensionsAreAsRequestedInQueryString = false;
     }
@@ -1623,14 +1623,15 @@ int CRequest::process_all_layers() {
 
                 /* Configure the Dimensions object if not set. */
                 if (additionalDataSource->cfgLayer->Dimension.size() == 0) {
-                  CDBDebug("additionalDataSource: Dimensions not configured, trying to do now");
+                  // CDBDebug("additionalDataSource: Dimensions not configured, trying to do now");
                   if (CAutoConfigure::autoConfigureDimensions(additionalDataSource) != 0) {
                     CDBError("additionalDataSource: : setCFGLayer::Unable to configure dimensions automatically");
-                  } else {
-                    for (size_t j = 0; j < additionalDataSource->cfgLayer->Dimension.size(); j++) {
-                      CDBDebug("additionalDataSource: : Configured dim %d %s", j, additionalDataSource->cfgLayer->Dimension[j]->value.c_str());
-                    }
                   }
+                  // else {
+                  //   for (size_t j = 0; j < additionalDataSource->cfgLayer->Dimension.size(); j++) {
+                  //     CDBDebug("additionalDataSource: : Configured dim %d %s", j, additionalDataSource->cfgLayer->Dimension[j]->value.c_str());
+                  //   }
+                  // }
                 }
 
                 /* Set the dims based on server parameters */

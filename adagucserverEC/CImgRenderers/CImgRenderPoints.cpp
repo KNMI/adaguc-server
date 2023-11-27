@@ -868,8 +868,8 @@ CColor CImgRenderPoints::getPixelColorForValue(CDrawImage *drawImage, CDataSourc
     if (val == float(dataSource->getDataObject(0)->dfNodataValue)) isNodata = true;
     if (!(val == val)) isNodata = true;
   }
+  CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   if (!isNodata) {
-    CStyleConfiguration *styleConfiguration = dataSource->getStyle();
     for (size_t j = 0; j < styleConfiguration->shadeIntervals->size(); j++) {
       CServerConfig::XMLE_ShadeInterval *shadeInterval = ((*styleConfiguration->shadeIntervals)[j]);
       if (shadeInterval->attr.min.empty() == false && shadeInterval->attr.max.empty() == false) {
@@ -879,6 +879,8 @@ CColor CImgRenderPoints::getPixelColorForValue(CDrawImage *drawImage, CDataSourc
       }
     }
   }
-  int pointColorIndex = getPixelIndexForValue(dataSource, val); // Use value of dataObject[0] for colour
+  // If shade interval is set, we have to round the color value down to the lower value of the legend class
+  float newValue = styleConfiguration->shadeInterval > 0 ? val = floor(val / styleConfiguration->shadeInterval) * styleConfiguration->shadeInterval : val;
+  int pointColorIndex = getPixelIndexForValue(dataSource, newValue); // Use value of dataObject[0] for colour
   return drawImage->getColorForIndex(pointColorIndex);
 }
