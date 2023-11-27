@@ -1,8 +1,8 @@
 **Version 2.14.0 2023-11-23**
-- EDR support
+- EDR support (position endpoint only), see [EDRConfiguration](doc/configuration/EDRConfiguration/EDR.md)
 
 **Version 2.13.9 2023-11-01**
-- Cache-Control header can be configured via the Settings item 
+- Cache-Control header can be configured via the Settings item
 
 **Version 2.13.8 2023-11-01**
 - Fixed issue #311, dimension units are now propagated from the Layer configuration to the GetCapabilities
