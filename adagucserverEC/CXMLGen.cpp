@@ -567,9 +567,6 @@ int CXMLGen::getDimsForLayer(WMSLayer *myWMSLayer) {
                 dim->units.copy(&units);
               } catch (int e) {
               }
-            } else {
-              // Units are configured in the configuration file.
-              dim->units.copy(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.units.c_str());
             }
 
             dim->hasMultipleValues = 1;
@@ -585,6 +582,12 @@ int CXMLGen::getDimsForLayer(WMSLayer *myWMSLayer) {
               }
               dim->units.copy("ISO8601");
             }
+
+            if (!myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.units.empty()) {
+              // Units are configured in the configuration file.
+              dim->units.copy(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.units.c_str());
+            }
+
             const char *pszDefaultV = myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.defaultV.c_str();
             CT::string defaultV;
             if (pszDefaultV != NULL) defaultV = pszDefaultV;

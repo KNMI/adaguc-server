@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+
+  <WMS>
+    <Title>RAD_NL25_PCP_CM_WMS</Title>
+    <Abstract>Radar precipitation measurements above the Netherlands, on a 1.0x1.0 km grid, measurements are available in a five minute time interval. The intensity is in kg/m2/hour (mm/hour). The dataset is created from KNMI RAD_NL25_PCP_NA files. For interoperability, the original unit reflectivity in DBZ is converted to precipitation flux in kg/m2/h. The conversion from dbZ to kg/m2/h is applied with the formula R = 10^((PixelValue -109)/32).</Abstract>
+  </WMS>
+
+  <!-- Styles -->
+  <Style name="reflectivity">
+    <ShadeInterval min="-10000" max="00" fillcolor="#00000020" label="-"/>
+    <ShadeInterval min="0" max="5" fillcolor="#00FFFF" />
+    <ShadeInterval min="5" max="10" fillcolor="#6698ff" />
+    <ShadeInterval min="10" max="15" fillcolor="#0000ff" />
+    <ShadeInterval min="15" max="20" fillcolor="#00ff00" />
+    <ShadeInterval min="20" max="25" fillcolor="#4cc417" />
+    <ShadeInterval min="25" max="30" fillcolor="#348017" />
+    <ShadeInterval min="30" max="35" fillcolor="#ffff00" />
+    <ShadeInterval min="35" max="40" fillcolor="#fdd017" />
+    <ShadeInterval min="40" max="45" fillcolor="#ff8040" />
+    <ShadeInterval min="45" max="50" fillcolor="#ff0000" />
+    <ShadeInterval min="50" max="55" fillcolor="#e41b17" />
+    <ShadeInterval min="55" max="60" fillcolor="#800000" />
+    <ShadeInterval min="60" max="65" fillcolor="#ff00ff" />
+    <ShadeInterval min="65" max="10000" fillcolor="#800080" label="> 65" />
+    <RenderMethod>nearest,bilinear</RenderMethod>
+    <RenderSettings renderhint="discreteclasses" settings="fast" />
+    <SmoothingFilter>8</SmoothingFilter>
+  </Style>
+
+  <!-- Layers -->
+  <Layer type="database" hidden="false">
+    <Name>REFLECTIVITY</Name>
+    <Title>Reflectivity</Title>
+    <Variable units="dBZ">image1.image_data</Variable>
+    <FilePath filter="^RAD_NL25_PCP_NA.*\.h5$">/data/adaguc-data/</FilePath>
+    <Dimension name="time" units="ISO8601" interval="PT5M" default="max">time</Dimension>
+    <Styles>reflectivity</Styles>
+  </Layer>
+
+</Configuration>
