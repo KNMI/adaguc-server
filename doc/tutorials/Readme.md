@@ -4,6 +4,8 @@ Tutorials
 [Back to readme](../../Readme.md)
 
 -   [Create a WMS service on a series of KNMI HDF5 files obtained from the KNMI data platform](Create_WMS_on_series_KNMI_HDF5_radar_files.md)
+-   [Configure EDR timeseries service](Configure_EDR_service.md)
+
 
 <!-- -   [Create a WMS service on a series of files with a time dimension](Create_a_WMS_service_on_a_series_of_files_with_a_time_dimension.md)
 -   [Styling of Layers with shading and contourlines](Styling_of_Layers_with_shading_and_contourlines.md)

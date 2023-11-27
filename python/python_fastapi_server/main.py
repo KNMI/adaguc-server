@@ -1,4 +1,9 @@
 import logging
+
+from configure_logging import configure_logging
+
+configure_logging(logging)
+
 import os
 import time
 from urllib.parse import urlsplit
@@ -9,15 +14,14 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from asgi_logger import AccessLoggerMiddleware
 
-from configure_logging import configure_logging
 from routers.autowms import autowms_router
+from routers.edr import edrApiApp
 from routers.healthcheck import health_check_router
 from routers.middleware import FixSchemeMiddleware
 from routers.ogcapi import ogcApiApp
 from routers.opendap import opendapRouter
 from routers.wmswcs import testadaguc, wmsWcsRouter
 
-configure_logging(logging)
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
@@ -74,6 +78,7 @@ async def root():
 
 
 app.mount("/ogcapi", ogcApiApp)
+app.mount("/edr", edrApiApp)
 
 app.include_router(health_check_router)
 app.include_router(wmsWcsRouter)
