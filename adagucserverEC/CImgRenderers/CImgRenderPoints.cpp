@@ -430,8 +430,7 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
             }
             if (!useDrawPointFillColor) { //(dataSource->getNumDataObjects()==1) {
               if ((dataSource->getStyle() != NULL) && (dataSource->getStyle()->shadeIntervals != NULL)) {
-                // CColor col = getPixelColorForValue(drawImage, dataSource, v);
-                CColor col = CColor(0, 0, 0, 0); // getPixelColorForValue(dataSource, v);
+                CColor col = getPixelColorForValue(drawImage, dataSource, v);
                 drawImage->setTextDisc(x, y, drawPointDiscRadius, t.c_str(), drawPointFontFile, drawPointFontSize, drawPointTextColor, col, drawPointLineColor);
               } else {
                 int pointColorIndex = getPixelIndexForValue(dataSource, v); // Use value of dataObject[0] for colour
