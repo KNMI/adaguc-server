@@ -652,7 +652,6 @@ int CServerParams::parseConfigFile(CT::string &pszConfigFile, std::vector<CServe
 
 CT::string CServerParams::getCacheControlHeader(int mode) {
   if (cfg != nullptr && cfg->Settings.size() == 1) {
-    int cacheAge = 0;
     CT::string cacheString = "\r\nCache-Control:max-age=";
     if (mode == CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE) {
       if (!cfg->Settings[0]->attr.cache_age_volatileresources.empty()) {
@@ -671,4 +670,40 @@ CT::string CServerParams::getCacheControlHeader(int mode) {
     }
   }
   return "";
+}
+
+std::tuple<float, std::string> CServerParams::getContourFont() {
+  float contourFontSize = 8;
+  std::string legendfontLocation;
+  for (size_t wmsNr = 0; wmsNr < this->cfg->WMS.size(); wmsNr += 1) {
+    for (size_t fontNr = 0; fontNr < this->cfg->WMS[wmsNr]->ContourFont.size(); fontNr += 1) {
+      if (!this->cfg->WMS[wmsNr]->ContourFont[fontNr]->attr.size.empty()) {
+        contourFontSize = this->cfg->WMS[wmsNr]->ContourFont[fontNr]->attr.size.toDouble();
+      }
+      if (!this->cfg->WMS[wmsNr]->ContourFont[fontNr]->attr.location.empty()) {
+        legendfontLocation = this->cfg->WMS[wmsNr]->ContourFont[fontNr]->attr.location;
+      }
+    }
+  }
+
+  return std::make_tuple(contourFontSize, legendfontLocation);
+}
+
+std::tuple<float, std::string> CServerParams::getLegendFont() {
+  float legendFontSize;
+  std::string legendfontLocation;
+  std::tie(legendFontSize, legendfontLocation) = this->getContourFont();
+
+  for (size_t wmsNr = 0; wmsNr < this->cfg->WMS.size(); wmsNr += 1) {
+    for (size_t fontNr = 0; fontNr < this->cfg->WMS[wmsNr]->LegendFont.size(); fontNr += 1) {
+      if (!this->cfg->WMS[wmsNr]->LegendFont[fontNr]->attr.size.empty()) {
+        legendFontSize = this->cfg->WMS[wmsNr]->LegendFont[fontNr]->attr.size.toDouble();
+      }
+      if (!this->cfg->WMS[wmsNr]->LegendFont[fontNr]->attr.location.empty()) {
+        legendfontLocation = this->cfg->WMS[wmsNr]->LegendFont[fontNr]->attr.location;
+      }
+    }
+  }
+
+  return std::make_tuple(legendFontSize, legendfontLocation);
 }

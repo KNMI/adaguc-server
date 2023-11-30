@@ -524,6 +524,11 @@ namespace CT {
      * Converts to hex24
      */
     CT::string toHex24();
+
+    /**
+     * Converts to hex8
+     */
+    static CT::string getHex(unsigned int number);
   };
 }; /* namespace CT */
 

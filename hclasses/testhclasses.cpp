@@ -10,9 +10,6 @@ int main() {
     return 1;
   }
   return 0;
-  // printf("START\n");
-
-  // printf("%d\n", CT::string("  -15.0  ").isFloat());
 }
 
 TEST(string, equal) {

@@ -1610,7 +1610,7 @@ int CRequest::process_all_layers() {
             for (additionalLayerNo = 0; additionalLayerNo < srvParam->cfg->Layer.size(); additionalLayerNo++) {
               CT::string additional;
               srvParam->makeUniqueLayerName(&additional, srvParam->cfg->Layer[additionalLayerNo]);
-              CDBDebug("comparing for additionallayer %s==%s", additionalLayerName.c_str(), additional.c_str());
+              // CDBDebug("comparing for additionallayer %s==%s", additionalLayerName.c_str(), additional.c_str());
               if (additionalLayerName.equals(additional)) {
                 CDBDebug("Found additionalLayer [%s]", additional.c_str());
                 CDataSource *additionalDataSource = new CDataSource();
@@ -2042,7 +2042,6 @@ int CRequest::process_all_layers() {
 
         if (!srvParam->showLegendInImage.equals("false") && !srvParam->showLegendInImage.empty()) {
           // Draw legend
-          CDBDebug("!!!!!!!!!!!!!!!!!!!!!! ");
           bool drawAllLegends = srvParam->showLegendInImage.equals("true");
 
           /* List of specified legends */
@@ -2079,7 +2078,6 @@ int CRequest::process_all_layers() {
                   legendImage.createGDPalette(srvParam->cfg->Legend[styleConfiguration->legendIndex]);
                 }
 
-                CDBDebug("!!!!!!!!!!!!!!!!!!!!!! reating legend for %s", dataSources[d]->layerName.c_str());
                 status = imageDataWriter.createLegend(dataSources[d], &legendImage);
                 if (status != 0) throw(__LINE__);
                 // legendImage.rectangle(0,0,10000,10000,240);

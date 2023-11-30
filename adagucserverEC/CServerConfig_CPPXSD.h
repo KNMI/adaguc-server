@@ -571,6 +571,23 @@ public:
     }
   };
 
+  class XMLE_LegendFont : public XMLE_GridFont {
+  public:
+    class Cattr {
+    public:
+      CT::string location, size;
+    } attr;
+    void addAttribute(const char *attrname, const char *attrvalue) {
+      if (equals("size", 4, attrname)) {
+        attr.size.copy(attrvalue);
+        return;
+      } else if (equals("location", 8, attrname)) {
+        attr.location.copy(attrvalue);
+        return;
+      }
+    }
+  };
+
   class XMLE_Dir : public CXMLObjectInterface {
   public:
     class Cattr {
@@ -1480,6 +1497,7 @@ public:
     std::vector<XMLE_RootLayer *> RootLayer;
     std::vector<XMLE_TitleFont *> TitleFont;
     std::vector<XMLE_ContourFont *> ContourFont;
+    std::vector<XMLE_LegendFont *> LegendFont;
     std::vector<XMLE_SubTitleFont *> SubTitleFont;
     std::vector<XMLE_DimensionFont *> DimensionFont;
     std::vector<XMLE_GridFont *> GridFont;
@@ -1493,6 +1511,7 @@ public:
       XMLE_DELOBJ(RootLayer);
       XMLE_DELOBJ(TitleFont);
       XMLE_DELOBJ(ContourFont);
+      XMLE_DELOBJ(LegendFont);
       XMLE_DELOBJ(SubTitleFont);
       XMLE_DELOBJ(DimensionFont);
       XMLE_DELOBJ(GridFont);
@@ -1525,6 +1544,8 @@ public:
           XMLE_ADDOBJ(TitleFont);
         } else if (equals("ContourFont", 11, name)) {
           XMLE_ADDOBJ(ContourFont);
+        } else if (equals("LegendFont", 10, name)) {
+          XMLE_ADDOBJ(LegendFont);
         } else if (equals("SubTitleFont", 12, name)) {
           XMLE_ADDOBJ(SubTitleFont);
         } else if (equals("DimensionFont", 13, name)) {

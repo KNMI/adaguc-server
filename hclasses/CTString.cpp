@@ -773,7 +773,7 @@ namespace CT {
     return false;
   }
 
-  string getHex(unsigned int number) {
+  string string::getHex(unsigned int number) {
     int hex = number % 256;
     unsigned char a = hex / 16;
     unsigned char b = hex % 16;
