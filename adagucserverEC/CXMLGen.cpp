@@ -1510,19 +1510,26 @@ void CXMLGen::generateRangeSet(CT::string *XMLDoc, WMSLayer *layer) {
     if (dim->name.indexOf("time") != -1) {
       continue;
     }
-
     XMLDoc->printconcat("        <axisDescription>\n"
                         "          <AxisDescription>\n"
                         "            <name>\"%s\"</name>\n"
-                        "            <label>\"%s\"</label>\n"
-                        "            <values>\n"
-                        "              <singleValue>1</singleValue>\n"
-                        "            </values>\n"
-                        "          </AxisDescription>\n"
-                        "        </axisDescription>\n",
+                        "            <label>\"%s\"</label>\n",
                         dim->name.c_str(), dim->name.c_str());
-
-    // dim->units.c_str(), dim->defaultValue.c_str()
+    CT::string *valueSplit = dim->values.splitToArray("/");
+    if (valueSplit->count == 3) {
+      XMLDoc->printconcat("            <values>\n"
+                          "              <interval>\n"
+                          "                <min>\"%s\"</min>\n"
+                          "                <max>\"%s\"</max>\n"
+                          "              </interval>\n"
+                          "            </values>\n"
+                          "          </AxisDescription>\n"
+                          "        </axisDescription>\n",
+                          valueSplit[0].c_str(), valueSplit[1].c_str());
+    }
+    delete[] valueSplit;
+    XMLDoc->printconcat("          </AxisDescription>\n"
+                        "        </axisDescription>\n");
   }
 
   XMLDoc->concat("      </RangeSet>\n"
