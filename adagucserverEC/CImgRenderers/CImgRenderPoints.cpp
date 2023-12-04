@@ -24,6 +24,7 @@
  ******************************************************************************/
 
 #include "CImgRenderPoints.h"
+#include "CConvertGeoJSON.h"
 
 const char *CImgRenderPoints::className = "CImgRenderPoints";
 
@@ -556,7 +557,7 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
       if (projectionRequired) {
         double dy = latForRot - latOffSetForRot;
         double dx = lonForRot - lonOffSetForRot;
-        rotation = -(atan2(dy, dx) / (3.141592654)) * 180 + 90;
+        rotation = -(atan2(dy, dx) / (M_PI)) * 180 + 90;
       }
     }
 
@@ -564,7 +565,7 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
 
     float strength = (*p1)[j].v;
     float direction = (*p2)[j].v;
-    if (direction == direction) direction += rotation; // Nan stays Nan
+    if (direction == direction) direction += rotation;        // Nan stays Nan
 
     if ((direction == direction) && (strength == strength)) { // Check for Nan
       //        CDBDebug("Drawing wind %f,%f for [%d,%d]", strength, direction, x, y);
@@ -575,13 +576,13 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
           toKnots = true;
         }
         if (lat > 0) {
-          drawImage->drawBarb(x, y, ((270 - direction) / 360) * 3.141592654 * 2, strength, drawVectorLineColor, drawVectorLineWidth, toKnots, false);
+          drawImage->drawBarb(x, y, ((270 - direction) / 360) * M_PI * 2, strength, drawVectorLineColor, drawVectorLineWidth, toKnots, false, drawVectorPlotValue);
         } else {
-          drawImage->drawBarb(x, y, ((270 - direction) / 360) * 3.141592654 * 2, strength, drawVectorLineColor, drawVectorLineWidth, toKnots, true);
+          drawImage->drawBarb(x, y, ((270 - direction) / 360) * M_PI * 2, strength, drawVectorLineColor, drawVectorLineWidth, toKnots, true, drawVectorPlotValue);
         }
       }
       if (drawVector) {
-        drawImage->drawVector(x, y, ((270 - direction) / 360) * 3.141592654 * 2, strength * drawVectorVectorScale, drawVectorLineColor, drawVectorLineWidth);
+        drawImage->drawVector(x, y, ((270 - direction) / 360) * M_PI * 2, strength * drawVectorVectorScale, drawVectorLineColor, drawVectorLineWidth);
       }
       // void drawBarb(int x,int y,double direction, double strength,int color,bool toKnots,bool flip);
       if (drawVectorPlotStationId) {
@@ -602,7 +603,7 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
           }
         }
       }
-      if (drawVectorPlotValue) {
+      if (drawVectorPlotValue && !drawBarb) {
         if (!drawDiscs) {
           t.print(drawVectorTextFormat.c_str(), strength);
           if ((direction >= 90) && (direction <= 270)) {
@@ -619,7 +620,7 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
         int y = dataSource->dHeight - (*p1)[j].y;
         t.print(drawPointTextFormat.c_str(), strength);
         drawImage->setTextDisc(x, y, drawPointDiscRadius, t.c_str(), drawPointFontFile, drawPointFontSize, drawPointTextColor, drawPointFillColor, drawPointLineColor);
-        drawImage->drawVector2(x, y, ((90 + direction) / 360.) * 3.141592654 * 2, 10, drawPointDiscRadius, drawPointFillColor, drawVectorLineWidth);
+        drawImage->drawVector2(x, y, ((90 + direction) / 360.) * M_PI * 2, 10, drawPointDiscRadius, drawPointFillColor, drawVectorLineWidth);
       }
     }
   }
@@ -666,6 +667,10 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
   isRadiusAndValue = false;
 
   symbolIntervals = NULL;
+
+  std::map<std::string, std::vector<Feature *>> featureStore = CConvertGeoJSON::featureStore;
+  std::vector<Feature *> features;
+  features = featureStore[dataSource->featureSet.c_str()];
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   if (styleConfiguration == NULL || styleConfiguration->styleConfig == NULL) {

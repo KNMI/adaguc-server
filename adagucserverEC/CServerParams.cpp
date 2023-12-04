@@ -36,6 +36,7 @@ CServerParams::CServerParams() {
 
   Transparent = false;
   enableDocumentCache = false;
+  cfg = NULL;
   configObj = new CServerConfig();
   Geo = new CGeoParams;
   imageFormat = IMAGEFORMAT_IMAGEPNG8;
@@ -47,7 +48,9 @@ CServerParams::CServerParams() {
   showScaleBarInImage = false;
   figWidth = -1;
   figHeight = -1;
-  imageQuality = 75;
+  imageQuality = 85;
+  dfResX = 0;
+  dfResY = 0;
 }
 
 CServerParams::~CServerParams() {
@@ -280,7 +283,7 @@ bool CServerParams::isDebugLoggingEnabled() const {
     return false;
   else if (debugLoggingIsEnabled == 1)
     return true;
-  else if (cfg->Logging.size() > 0) {
+  else if (cfg && cfg->Logging.size() > 0) {
     if (cfg->Logging[cfg->Logging.size() - 1]->attr.debug.equals("false")) {
       debugLoggingIsEnabled = 0;
       return false;
@@ -374,7 +377,7 @@ bool CServerParams::checkResolvePath(const char *path, CT::string *resolvedPath)
         continue;
       }
 
-      if (baseDir != NULL && dirPrefix != NULL) {
+      if (strlen(baseDir) > 0 && strlen(dirPrefix) > 0) {
         // Prepend the prefix to make the absolute path
         CT::string pathToCheck;
         pathToCheck.print("%s/%s", dirPrefix, path);
@@ -395,7 +398,7 @@ bool CServerParams::checkResolvePath(const char *path, CT::string *resolvedPath)
           }
         }
       } else {
-        if (baseDir == NULL) {
+        if (strlen(baseDir)) {
           CDBDebug("basedir not defined");
         }
         if (dirPrefix == NULL) {
@@ -424,7 +427,7 @@ CT::string CServerParams::getOnlineResource() {
     // No Online resource is given.
     const char *pszADAGUCOnlineResource = getenv("ADAGUC_ONLINERESOURCE");
     if (pszADAGUCOnlineResource == NULL) {
-      CDBDebug("Warning: No OnlineResources configured. Unable to get from config OnlineResource or from environment ADAGUC_ONLINERESOURCE");
+      // CDBDebug("Warning: No OnlineResources configured. Unable to get from config OnlineResource or from environment ADAGUC_ONLINERESOURCE");
       _onlineResource = "";
       return "";
     }
@@ -481,8 +484,10 @@ bool CServerParams::checkBBOXXYOrder(const char *projName) {
  */
 CT::PointerList<CT::string *> *CServerParams::getLegendNames(std::vector<CServerConfig::XMLE_Legend *> Legend) {
   if (Legend.size() == 0) {
-    CDBError("No legends defined");
-    return NULL;
+    CT::string *autoLegendName = new CT::string("rainbow");
+    CT::PointerList<CT::string *> *legendList = new CT::PointerList<CT::string *>();
+    legendList->push_back(autoLegendName);
+    return legendList;
   }
   CT::PointerList<CT::string *> *stringList = new CT::PointerList<CT::string *>();
 
@@ -553,7 +558,7 @@ bool CServerParams::checkTimeFormat(CT::string &timeToCheck) {
   return isValidTime;*/
 }
 
-int CServerParams::parseConfigFile(CT::string &pszConfigFile) {
+int CServerParams::parseConfigFile(CT::string &pszConfigFile, std::vector<CServerConfig::XMLE_Environment *> *extraEnvironment) {
   CT::string configFileData;
 
   configFileData = "";
@@ -592,6 +597,44 @@ int CServerParams::parseConfigFile(CT::string &pszConfigFile) {
     /* Substitute ADAGUC_AUTOWMS_DIR */
     const char *pszADAGUC_AUTOWMS_DIR = getenv("ADAGUC_AUTOWMS_DIR");
     if (pszADAGUC_AUTOWMS_DIR != NULL) configFileData.replaceSelf("{ADAGUC_AUTOWMS_DIR}", pszADAGUC_AUTOWMS_DIR);
+
+    if (extraEnvironment != nullptr) {
+      /* Substitute any others as specified in env */
+      if (extraEnvironment->size() > 0) {
+        for (size_t j = 0; j < extraEnvironment->size(); j++) {
+          CServerConfig::XMLE_Environment *env = (*extraEnvironment)[j];
+          if (env != nullptr) {
+            if (!env->attr.name.empty() && !env->attr.defaultVal.empty()) {
+
+              if (env->attr.name.startsWith(CSERVERPARAMS_ADAGUCENV_PREFIX)) {
+                const char *environmentVarName = env->attr.name.c_str();
+                const char *environmentVarDefault = env->attr.defaultVal.c_str();
+                const char *environmentValue = getenv(environmentVarName);
+                CT::string substituteName;
+                substituteName.print("{%s}", environmentVarName);
+                const char *environmentSubstituteName = substituteName.c_str();
+
+                if (environmentValue != NULL) {
+                  if (verbose) {
+                    CDBDebug("Replacing %s with environment value %s", environmentSubstituteName, environmentValue);
+                  }
+                  configFileData.replaceSelf(environmentSubstituteName, environmentValue);
+                } else {
+                  if (verbose) {
+                    CDBDebug("Replacing %s with default value %s", environmentSubstituteName, environmentVarDefault);
+                  }
+                  configFileData.replaceSelf(environmentSubstituteName, environmentVarDefault);
+                }
+              } else {
+                CDBWarning("Environment element found, but it is not prefixed with [%s]", CSERVERPARAMS_ADAGUCENV_PREFIX);
+              }
+            } else {
+              CDBWarning("Environment element found, but either name or default are not set");
+            }
+          }
+        }
+      }
+    }
   } catch (int e) {
     CDBError("Exception %d in substituting", e);
   }
@@ -605,4 +648,27 @@ int CServerParams::parseConfigFile(CT::string &pszConfigFile) {
     CDBError("Invalid XML file %s", pszConfigFile.c_str());
     return 1;
   }
+}
+
+CT::string CServerParams::getCacheControlHeader(int mode) {
+  if (cfg != nullptr && cfg->Settings.size() == 1) {
+    int cacheAge = 0;
+    CT::string cacheString = "\r\nCache-Control:max-age=";
+    if (mode == CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE) {
+      if (!cfg->Settings[0]->attr.cache_age_volatileresources.empty()) {
+        if (cfg->Settings[0]->attr.cache_age_volatileresources.toInt() != 0) {
+          cacheString.printconcat("%d", cfg->Settings[0]->attr.cache_age_volatileresources.toInt());
+          return cacheString;
+        }
+      }
+    } else if (mode == CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE) {
+      if (!cfg->Settings[0]->attr.cache_age_cacheableresources.empty()) {
+        if (cfg->Settings[0]->attr.cache_age_cacheableresources.toInt() != 0) {
+          cacheString.printconcat("%d", cfg->Settings[0]->attr.cache_age_cacheableresources.toInt());
+          return cacheString;
+        }
+      }
+    }
+  }
+  return "";
 }

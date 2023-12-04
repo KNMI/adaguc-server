@@ -72,7 +72,14 @@ int Tracer::Dump() {
       }
     }
   }
-  _map.clear();
+  // Use this instead of _map.clear() has that can give a race condition:
+  // _map is being destroyed, leading to calls to the overloaded new, which call Tracer::Remove(),
+  // which does _map.find().
+  // TODO: Fix this workaround
+  for (auto it = _map.cbegin(); it != _map.cend(); /* no increment */) {
+    _map.erase(it++);
+  }
+
   return status;
 }
 
@@ -98,7 +105,7 @@ void *operator new(std::size_t mem) {
   if (Tracer::Ready) NewTrace.Add(p, "?", 0);
   return p;
 }
-void operator delete(void *p) {
+void operator delete(void *p) noexcept {
   if (Tracer::Ready) NewTrace.Remove(p);
   free(p);
 }

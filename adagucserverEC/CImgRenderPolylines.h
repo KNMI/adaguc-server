@@ -27,16 +27,23 @@
 #define CIMGRENDERPOLYLINES_H
 #include "CImageWarperRenderInterface.h"
 
-typedef struct _BorderStyle {
-  CT::string width;
+typedef struct _FeatureStyle {
+  float width;
   CT::string color;
-} BorderStyle;
+  CT::string fontFile;
+  float fontSize;
+  CT::string fontColor;
+  CT::string propertyName;
+  CT::string propertyFormat;
+  float angle;
+  int padding;
+} FeatureStyle;
 
 class CImgRenderPolylines : public CImageWarperRenderInterface {
 private:
   DEF_ERRORFUNCTION();
   CT::string settings;
-  BorderStyle getAttributesForFeature(CFeature *feature, CT::string id, CStyleConfiguration *styleConfig);
+  FeatureStyle getAttributesForFeature(CFeature *feature, CT::string id, CStyleConfiguration *styleConfig);
 
 public:
   void render(CImageWarper *, CDataSource *, CDrawImage *);

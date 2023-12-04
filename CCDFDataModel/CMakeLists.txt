@@ -3,6 +3,7 @@ find_package(NetCDF REQUIRED)
 find_package(HDF5 REQUIRED)
 find_package(UDUNITS2 REQUIRED)
 find_package(PNG REQUIRED)
+find_package(PROJ REQUIRED)
 
 add_library(CCDFDataModel
     CCDFDataModel.h
@@ -22,10 +23,12 @@ add_library(CCDFDataModel
     CCDFStore.h
     CCDFGeoJSONIO.h
     CCDFCSVReader.h
+    ProjCache.h
     CCDFDataModel.cpp
     CCDFNetCDFIO.cpp
     CTime.cpp
     CCDFHDF5IO.cpp
+    CCDFHDF5IO_ODIM.cpp
     CProj4ToCF.cpp
     CCDFVariable.cpp
     CCDFObject.cpp
@@ -35,11 +38,12 @@ add_library(CCDFDataModel
     CCDFStore.cpp
     CCDFGeoJSONIO.cpp
     CCDFCSVReader.cpp
+    ProjCache.cpp
     utils.cpp
 )
 
-target_include_directories(CCDFDataModel PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${LIBXML2_INCLUDE_DIR} ${HDF5_INCLUDE_DIR})
-target_link_libraries(CCDFDataModel hclasses ${NetCDF_LIBRARIES} ${HDF5_LIBRARIES} ${UDUNITS2_LIBRARIES} ${NetCDF_LIBRARIES} ${HDF5_LIBRARIES} ${LIBXML2_LIBRARY} ${PNG_LIBRARY} )
+target_include_directories(CCDFDataModel PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${LIBXML2_INCLUDE_DIR} ${HDF5_INCLUDE_DIR} ${PROJ_INCLUDE_DIR})
+target_link_libraries(CCDFDataModel hclasses ${NetCDF_LIBRARIES} ${HDF5_LIBRARIES} ${UDUNITS2_LIBRARIES} ${NetCDF_LIBRARIES} ${HDF5_LIBRARIES} ${LIBXML2_LIBRARY} ${PNG_LIBRARY} ${PROJ_LIBRARY})
 
 # Build unit test executable
 add_executable(testccdfdatamodel testccdfdatamodel.cpp)

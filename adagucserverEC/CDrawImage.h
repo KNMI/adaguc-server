@@ -30,7 +30,7 @@
 #include <iostream>
 #include "CDebugger.h"
 #include "CTypes.h"
-
+#include "CColor.h"
 #include "Definitions.h"
 #include "CStopWatch.h"
 #include <stdio.h>
@@ -41,12 +41,14 @@
 #include "CServerError.h"
 #include "CServerConfig_CPPXSD.h"
 #include <math.h>
-//#include <png.h>
+// #include <png.h>
 #include <gd.h>
 #include "gdfontl.h"
 #include "gdfonts.h"
 #include "gdfontmb.h"
 #include "CCairoPlotter.h"
+#include "CColor.h"
+#include "CRectangleText.h"
 
 float convertValueToClass(float val, float interval);
 
@@ -62,43 +64,6 @@ public:
   unsigned char CDIred[256], CDIgreen[256], CDIblue[256];
   short CDIalpha[256]; // Currently alpha of 0 and 255 is supported, but nothin in between.
   CT::string legendName;
-};
-
-class CColor {
-public:
-  unsigned char r, g, b, a;
-  CColor() {
-    r = 0;
-    g = 0;
-    b = 0;
-    a = 255;
-  }
-  CColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
-    this->r = r;
-    this->g = g;
-    this->b = b;
-    this->a = a;
-  }
-  CColor(const char *color) { parse(color); }
-  /**
-   * color can have format #RRGGBB or #RRGGBBAA
-   */
-  void parse(const char *color) {
-    if (color[0] == '#') {
-      if (strlen(color) == 7) {
-        r = ((color[1] > 64) ? color[1] - 55 : color[1] - 48) * 16 + ((color[2] > 64) ? color[2] - 55 : color[2] - 48);
-        g = ((color[3] > 64) ? color[3] - 55 : color[3] - 48) * 16 + ((color[4] > 64) ? color[4] - 55 : color[4] - 48);
-        b = ((color[5] > 64) ? color[5] - 55 : color[5] - 48) * 16 + ((color[6] > 64) ? color[6] - 55 : color[6] - 48);
-        a = 255;
-      }
-      if (strlen(color) == 9) {
-        r = ((color[1] > 64) ? color[1] - 55 : color[1] - 48) * 16 + ((color[2] > 64) ? color[2] - 55 : color[2] - 48);
-        g = ((color[3] > 64) ? color[3] - 55 : color[3] - 48) * 16 + ((color[4] > 64) ? color[4] - 55 : color[4] - 48);
-        b = ((color[5] > 64) ? color[5] - 55 : color[5] - 48) * 16 + ((color[6] > 64) ? color[6] - 55 : color[6] - 48);
-        a = ((color[7] > 64) ? color[7] - 55 : color[7] - 48) * 16 + ((color[8] > 64) ? color[8] - 55 : color[8] - 48);
-      }
-    }
-  }
 };
 
 class CDrawImage {
@@ -135,9 +100,6 @@ private:
   int _createStandard();
 
   int dPaletteCreated;
-  bool paletteCopied;
-  unsigned char *rbuf;
-  int dNumImages;
 
   unsigned char BGColorR, BGColorG, BGColorB;
   bool _bEnableTransparency;
@@ -160,6 +122,8 @@ private:
   int numImagesAdded;
   int currentGraphicsRenderer;
 
+  void _drawBarbGd(int x, int y, double direction, double strength, CColor color, float lineWidth, bool toKnots, bool flip);
+
 public:
   float *rField, *gField, *bField;
   int *numField;
@@ -172,6 +136,8 @@ public:
   CGeoParams *Geo;
   CDrawImage();
   ~CDrawImage();
+
+public:
   int createImage(int _dW, int _dH);
   int createImage(CGeoParams *_Geo);
   int createImage(const char *fn);
@@ -185,9 +151,7 @@ public:
   int create685Palette();
   int clonePalette(CDrawImage *drawImage);
 
-  void drawBarb(int x, int y, double direction, double strength, int color, bool toKnots, bool flip);
-  void drawBarb(int x, int y, double direction, double strength, int color, float linewidth, bool toKnots, bool flip);
-  void drawBarb(int x, int y, double direction, double strength, CColor color, float linewidth, bool toKnots, bool flip);
+  void drawBarb(int x, int y, double direction, double strength, CColor color, float linewidth, bool toKnots, bool flip, bool drawText);
   void drawText(int x, int y, float angle, const char *text, unsigned char colorIndex);
   void drawText(int x, int y, float angle, const char *text, CColor fgcolor);
   void drawText(int x, int y, const char *fontfile, float size, float angle, const char *text, unsigned char colorIndex);
@@ -195,6 +159,7 @@ public:
   void drawText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor fgcolor, CColor bgcolor);
   void drawAnchoredText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color, int anchor);
   void drawCenteredText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color);
+  void drawCenteredTextNoOverlap(int x, int y, const char *fontfile, float size, float angle, int padding, const char *text, CColor color, bool noOverlap, std::vector<CRectangleText> &rects);
   int drawTextArea(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor fgcolor, CColor bgcolor);
 
   // void drawTextAngle(const char * text, size_t length,double angle,int x,int y,int color,int fontSize);
@@ -210,6 +175,7 @@ public:
   void moveTo(float x1, float y1);
   void lineTo(float x1, float y1, float w, CColor color);
   void endLine();
+  void endLine(const double *dashes, int num_dashes);
 
   void poly(float x1, float y1, float x2, float y2, float x3, float y3, int c, bool fill);
   void poly(float x1, float y1, float x2, float y2, float x3, float y3, CColor color, bool fill);
@@ -242,7 +208,7 @@ public:
   void setDisc(int x, int y, float discRadius, CColor fillColor, CColor lineColor);
   void setEllipse(int x, int y, float discRadiusX, float discRadiusY, float rotation, CColor fillColor, CColor lineColor);
   void setTextDisc(int x, int y, int discRadius, const char *text, const char *fontfile, float fontsize, CColor textcolor, CColor fillcolor, CColor lineColor);
-  void setTextStroke(const char *text, size_t length, int x, int y, int fgcolor, int bgcolor, int fontSize);
+  void setTextStroke(int x, int y, float angle, const char *text, const char *fontFile, float fontsize, float strokeWidth, CColor bgcolor, CColor fgcolor);
   void rectangle(int x1, int y1, int x2, int y2, int innercolor, int outercolor);
   void rectangle(int x1, int y1, int x2, int y2, int outercolor);
   void rectangle(int x1, int y1, int x2, int y2, CColor innercolor, CColor outercolor);

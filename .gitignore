@@ -55,9 +55,12 @@ adagucserverEC/aggregate_time
 adagucserverEC/geojsondump
 adagucserverEC/h5ncdump
 bin/*
+cmake-build-debug/*
+cmake-build-release/*
 
 #Python pyc files
 *.pyc
+.python-version
 
 #Sqlite files
 *db
@@ -103,7 +106,7 @@ python/lib/dist
 *.pytest_cache*
 *__pycache__*
 Testing
-        
+
 .cmake
 */.cmake
 *CMakeFiles*
@@ -111,12 +114,16 @@ Testing
 build
 adaguc.egg-info
 env
+venv
 dist
 
 tests/checker_report.txt
 
 .vscode
 .log.txt.kate-swp
+
+core-adagucserver
+
 hclasses/CMakeLists.txt
 hclasses/testhclasses
 
@@ -124,3 +131,4 @@ hclasses/testhclasses
 *CTestTestfile.cmake*
 *Makefile*
 *cmake_install.cmake*
+core-adagucserver*

@@ -30,12 +30,12 @@
  */
 
 #include "CAreaMapper.h"
+#include "CDrawFunction.h"
 
 const char *CAreaMapper::className = "CAreaMapper";
 
 void CAreaMapper::init(CDataSource *dataSource, CDrawImage *drawImage, int tileWidth, int tileHeight) {
   this->dataSource = dataSource;
-  this->drawImage = drawImage;
   dfTileWidth = double(tileWidth);
   dfTileHeight = double(tileHeight);
   for (int k = 0; k < 4; k++) {
@@ -63,25 +63,9 @@ void CAreaMapper::init(CDataSource *dataSource, CDrawImage *drawImage, int tileW
   }
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-
-  dfNodataValue = dataSource->getDataObject(0)->dfNodataValue;
-  legendValueRange = styleConfiguration->hasLegendValueRange;
-  legendLowerRange = styleConfiguration->legendLowerRange;
-  legendUpperRange = styleConfiguration->legendUpperRange;
-  hasNodataValue = dataSource->getDataObject(0)->hasNodataValue;
   width = dataSource->dWidth;
   height = dataSource->dHeight;
-  legendLog = styleConfiguration->legendLog;
-  if (legendLog > 0) {
-    legendLogAsLog = log10(legendLog);
-  } else {
-    legendLogAsLog = 0;
-  }
-  legendScale = styleConfiguration->legendScale;
-  legendOffset = styleConfiguration->legendOffset;
-
-  internalWidth = width;
-  internalHeight = height;
+  settings = getDrawFunctionSettings(dataSource, drawImage, styleConfiguration);
 }
 
 int CAreaMapper::drawTile(double *x_corners, double *y_corners, int &dDestX, int &dDestY) {
@@ -120,8 +104,8 @@ int CAreaMapper::drawTile(double *x_corners, double *y_corners, int &dDestX, int
 }
 
 template <class T> int CAreaMapper::myDrawRawTile(const T *data, double *x_corners, double *y_corners, int &dDestX, int &dDestY) {
-  int imageWidth = drawImage->getWidth();
-  int imageHeight = drawImage->getHeight();
+  int imageWidth = settings.drawImage->getWidth();
+  int imageHeight = settings.drawImage->getHeight();
   int k;
   for (k = 0; k < 4; k++) {
     if (fabs(x_corners[k] - x_corners[0]) >= fabs(dfSourceBBOX[2] - dfSourceBBOX[0])) break;
@@ -146,9 +130,7 @@ template <class T> int CAreaMapper::myDrawRawTile(const T *data, double *x_corne
     }
   }
 
-  bool isNodata = false;
   T val;
-  T nodataValue = (T)dfNodataValue;
   size_t imgpointer;
   double destBoxTL[2] = {x_corners[3], y_corners[3]};
   double destBoxTR[2] = {x_corners[0], y_corners[0]};
@@ -188,31 +170,12 @@ template <class T> int CAreaMapper::myDrawRawTile(const T *data, double *x_corne
       int sourceSampleY = floor(dfSourceSampleY);
       int destPixelX = dstpixel_x + dDestX;
       int destPixelY = dstpixel_y + dDestY;
+
       if (sourceSampleX >= 0 && sourceSampleX < width && sourceSampleY >= 0 && sourceSampleY < height && destPixelX >= 0 && destPixelY >= 0 && destPixelX < imageWidth && destPixelY < imageHeight) {
         imgpointer = sourceSampleX + (sourceSampleY)*width;
         val = data[imgpointer];
-        isNodata = false;
-        if (hasNodataValue) {
-          if (val == nodataValue) isNodata = true;
-        }
-        if (!(val == val)) isNodata = true;
-        if (!isNodata)
-          if (legendValueRange)
-            if (val < legendLowerRange || val > legendUpperRange) isNodata = true;
-        if (!isNodata) {
-          if (legendLog != 0) {
-            if (val > 0) {
-              val = (T)(log10(val) / legendLogAsLog);
-            } else
-              val = (T)(-legendOffset);
-          }
-          int pcolorind = (int)(val * legendScale + legendOffset);
-          if (pcolorind >= 239)
-            pcolorind = 239;
-          else if (pcolorind <= 0)
-            pcolorind = 0;
-          drawImage->setPixelIndexed(destPixelX, dstpixel_y + dDestY, pcolorind);
-        }
+        setPixelInDrawImage(destPixelX, destPixelY, val, &settings);
+
         if (debug) {
           bool draw = false;
           bool draw2 = false;
@@ -226,10 +189,10 @@ template <class T> int CAreaMapper::myDrawRawTile(const T *data, double *x_corne
             draw2 = true;
           }
           if (draw) {
-            drawImage->setPixelIndexed(destPixelX, destPixelY, 249);
+            settings.drawImage->setPixelIndexed(destPixelX, destPixelY, 249);
           }
           if (draw2) {
-            drawImage->setPixelIndexed(destPixelX, destPixelY, 244);
+            settings.drawImage->setPixelIndexed(destPixelX, destPixelY, 244);
           }
         }
       }

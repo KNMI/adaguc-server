@@ -26,10 +26,11 @@
 #ifndef CCDFVARIABLE_H
 #define CCDFVARIABLE_H
 
+#include <algorithm>
 #include "CCDFTypes.h"
 #include "CCDFAttribute.h"
 #include "CCDFDimension.h"
-//#define CCDFDATAMODEL_DEBUG
+// #define CCDFDATAMODEL_DEBUG
 #include "CDebugger_H2.h"
 namespace CDF {
   class Variable {
@@ -58,7 +59,7 @@ namespace CDF {
     std::vector<CDFObjectClass *> cdfObjectList;
     void *cdfReaderPointer;
     void *parentCDFObject;
-    bool hasCustomReader;
+    bool _hasCustomReader;
 
   public:
     class CustomReader {
@@ -88,9 +89,12 @@ namespace CDF {
 
   public:
     void setCustomReader(CustomReader *customReader) {
-      hasCustomReader = true;
+      _hasCustomReader = true;
       this->customReader = customReader;
     };
+    CustomReader *getCustomReader() { return this->customReader; }
+
+    bool hasCustomReader() { return _hasCustomReader; }
 
     void setCDFReaderPointer(void *cdfReaderPointer) { this->cdfReaderPointer = cdfReaderPointer; }
     void setParentCDFObject(void *parentCDFObject) { this->parentCDFObject = parentCDFObject; }
@@ -111,17 +115,16 @@ namespace CDF {
         return getParentCDFObject();
       }
       // Return the correct cdfReader According the given dims.
-      size_t iterativeDimIndex;
-      for (size_t j = 0; j < dimensionlinks.size(); j++) {
-        // CDBDebug("%d-> %d - %d - isIterative: %d", j, start[j],count[j],dimensionlinks[j]->isIterative);
-        if (dimensionlinks[j]->isIterative) {
-          iterativeDimIndex = start[j];
-          if (count[j] != 1) {
-            CDBError("Count %d instead of  1 is requested for iterative dimension %s", count[j], dimensionlinks[j]->name.c_str());
-            throw(CDF_E_ERROR);
-          }
-          break;
-        }
+      auto iterator = std::find_if(dimensionlinks.begin(), dimensionlinks.end(), [](Dimension *d) { return d->isIterative; });
+      if (iterator == dimensionlinks.end()) {
+        CDBError("Did not find iterative dimension");
+        throw(CDF_E_ERROR);
+      }
+      size_t j = iterator - dimensionlinks.begin();
+      size_t iterativeDimIndex = start[j];
+      if (count[j] != 1) {
+        CDBError("Count %d instead of  1 is requested for iterative dimension %s", count[j], dimensionlinks[j]->name.c_str());
+        throw(CDF_E_ERROR);
       }
 #ifdef CCDFDATAMODEL_DEBUG
       CDBDebug("Aggregating %d == %d", cdfObjectList[iterativeDimIndex]->dimIndex, iterativeDimIndex);
@@ -214,7 +217,7 @@ namespace CDF {
       nativeType = CDF_NONE;
       cdfReaderPointer = NULL;
       parentCDFObject = NULL;
-      hasCustomReader = false;
+      _hasCustomReader = false;
       _isString = false;
       // CDBDebug("Variable");
       setName(name);
@@ -235,7 +238,7 @@ namespace CDF {
       nativeType = CDF_NONE;
       cdfReaderPointer = NULL;
       parentCDFObject = NULL;
-      hasCustomReader = false;
+      _hasCustomReader = false;
       _isString = false;
     }
     ~Variable() {
@@ -444,43 +447,6 @@ namespace CDF {
       }
       return 0;
     }
-
-    // Returns a new copy of this variable
-    /*Variable *clone(){
-      Variable *newVar = new Variable ();
-
-
-
-
-
-
-
-
-    newVar->nativeType = nativeType;
-    newVar->currentType;
-    newVar->name;
-    newVar->orgName;
-    std::vector<Attribute *> attributes;
-    std::vector<Dimension *> dimensionlinks;
-    int id;
-    size_t currentSize;
-    void *data;
-    bool isDimension;
-
-  private:
-    //Currently, aggregation along just 1 dimension is supported.
-    class CDFObjectClass{
-    public:
-      void *cdfObjectPointer;
-      int dimIndex;
-      double dimValue;
-    };
-  std::vector<CDFObjectClass *> cdfObjectList;
-  void *cdfReaderPointer;
-  void *parentCDFObject;
-  bool hasCustomReader;
-      return newVar;
-    }*/
   };
 } // namespace CDF
 #endif

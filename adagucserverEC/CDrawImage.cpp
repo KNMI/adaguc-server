@@ -41,7 +41,6 @@ CDrawImage::CDrawImage() {
   _bEnableTrueColor = false;
   _bEnableTransparency = false;
   _bEnableTrueColor = false;
-  dNumImages = 0;
   Geo = new CGeoParams();
 
   cairo = NULL;
@@ -393,17 +392,7 @@ void CDrawImage::drawVector2(int x, int y, double direction, double strength, in
 
 #define round(x) (int(x + 0.5)) // Only for positive values!!!
 
-void CDrawImage::drawBarb(int x, int y, double direction, double strength, int color, bool toKnots, bool flip) {
-  CColor col = getColorForIndex(color);
-  drawBarb(x, y, direction, strength, col, 0.5, toKnots, flip);
-}
-
-void CDrawImage::drawBarb(int x, int y, double direction, double strength, int color, float lineWidth, bool toKnots, bool flip) {
-  CColor col = getColorForIndex(color);
-  drawBarb(x, y, direction, strength, col, lineWidth, toKnots, flip);
-}
-
-void CDrawImage::drawBarb(int x, int y, double direction, double strength, CColor color, float lineWidth, bool toKnots, bool flip) {
+void CDrawImage::_drawBarbGd(int x, int y, double direction, double strength, CColor color, float lineWidth, bool toKnots, bool flip) {
   double wx1, wy1, wx2, wy2, dx1, dy1;
   int strengthInKnots = round(strength);
   if (toKnots) {
@@ -416,24 +405,14 @@ void CDrawImage::drawBarb(int x, int y, double direction, double strength, CColo
     return;
   }
 
-  float pi = 3.141592;
-
-  // direction=direction+pi;
-
   int shaftLength = 30;
 
-  int nPennants = strengthInKnots / 50;
-  int nBarbs = (strengthInKnots % 50) / 10;
-  int rest = (strengthInKnots % 50) % 10;
-  int nhalfBarbs;
-  if (rest <= 2) {
-    nhalfBarbs = 0;
-  } else if (rest <= 7) {
-    nhalfBarbs = 1;
-  } else {
-    nhalfBarbs = 0;
-    nBarbs++;
-  }
+  // Rounded to the nearest 5 kts
+  int strengthInKnotsRoundedToFive = round((strengthInKnots + 2) / 5) * 5;
+
+  int nPennants = strengthInKnotsRoundedToFive / 50;
+  int nBarbs = (strengthInKnotsRoundedToFive % 50) / 10 + 0.5;
+  bool hasHalfBarb = strengthInKnotsRoundedToFive % 10 >= 5;
 
   float flipFactor = flip ? -1 : 1;
   int barbLength = int(-10 * flipFactor);
@@ -456,8 +435,8 @@ void CDrawImage::drawBarb(int x, int y, double direction, double strength, CColo
     double wx3 = wx1 + pos * dx1 / nrPos;
     double wy3 = wy1 - pos * dy1 / nrPos;
     pos++;
-    double hx3 = wx1 + pos * dx1 / nrPos + cos(pi + direction + pi / 2) * barbLength;
-    double hy3 = wy1 - pos * dy1 / nrPos - sin(pi + direction + pi / 2) * barbLength;
+    double hx3 = wx1 + pos * dx1 / nrPos + cos(M_PI + direction + M_PI / 2) * barbLength;
+    double hy3 = wy1 - pos * dy1 / nrPos - sin(M_PI + direction + M_PI / 2) * barbLength;
     pos++;
     double wx4 = wx1 + pos * dx1 / nrPos;
     double wy4 = wy1 - pos * dy1 / nrPos;
@@ -467,24 +446,40 @@ void CDrawImage::drawBarb(int x, int y, double direction, double strength, CColo
   for (int i = 0; i < nBarbs; i++) {
     double wx3 = wx1 + pos * dx1 / nrPos;
     double wy3 = wy1 - pos * dy1 / nrPos;
-    double hx3 = wx3 - cos(pi / 2 - direction + (2 - float(flipFactor) * 0.1) * pi / 2) * barbLength; // was: +cos
-    double hy3 = wy3 - sin(pi / 2 - direction + (2 - float(flipFactor) * 0.1) * pi / 2) * barbLength; // was: -sin
+    double hx3 = wx3 - cos(M_PI / 2 - direction + (2 - float(flipFactor) * 0.1) * M_PI / 2) * barbLength; // was: +cos
+    double hy3 = wy3 - sin(M_PI / 2 - direction + (2 - float(flipFactor) * 0.1) * M_PI / 2) * barbLength; // was: -sin
 
     line(wx3, wy3, hx3, hy3, lineWidth, color);
     pos++;
   }
 
   if ((nPennants + nBarbs) == 0) pos++;
-  if (nhalfBarbs > 0) {
+  if (hasHalfBarb) {
     double wx3 = wx1 + pos * dx1 / nrPos;
     double wy3 = wy1 - pos * dy1 / nrPos;
-    double hx3 = wx3 - cos(pi / 2 - direction + (2 - float(flipFactor) * 0.1) * pi / 2) * barbLength / 2;
-    double hy3 = wy3 - sin(pi / 2 - direction + (2 - float(flipFactor) * 0.1) * pi / 2) * barbLength / 2;
+    double hx3 = wx3 - cos(M_PI / 2 - direction + (2 - float(flipFactor) * 0.1) * M_PI / 2) * barbLength / 2;
+    double hy3 = wy3 - sin(M_PI / 2 - direction + (2 - float(flipFactor) * 0.1) * M_PI / 2) * barbLength / 2;
     line(wx3, wy3, hx3, hy3, lineWidth, color);
     pos++;
   }
 
   line(wx1, wy1, wx2, wy2, lineWidth, color);
+}
+
+void CDrawImage::drawBarb(int x, int y, double direction, double strength, CColor color, float lineWidth, bool toKnots, bool flip, bool drawText) {
+  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
+    _drawBarbGd(x, y, direction, strength, color, lineWidth, toKnots, flip);
+    if (drawText) {
+      // TODO: DRAW TEXT
+    }
+  }
+  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
+    CColor outLineColor = CColor(255, 255, 255, 255);
+    // If no linewidth, no outline should be drawn, set inner barblineWidth to 0.8 to ensure we draw a barb
+    bool drawOutline = lineWidth == 0 ? false : true;
+    float barblineWidth = lineWidth == 0 ? 0.8 : lineWidth;
+    cairo->drawBarb(x, y, direction, strength, color, outLineColor, drawOutline, barblineWidth, toKnots, flip, drawText);
+  }
 }
 
 void CDrawImage::circle(int x, int y, int r, int color, float lineWidth) {
@@ -670,6 +665,14 @@ void CDrawImage::endLine() {
   }
 }
 
+void CDrawImage::endLine(const double *dashes, int num_dashes) {
+  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
+    if (currentLegend == NULL) return;
+    cairo->endLine(dashes, num_dashes);
+  } else {
+  }
+}
+
 CColor CDrawImage::getColorForIndex(int colorIndex) {
   CColor color;
   if (currentLegend == NULL) return color;
@@ -729,7 +732,7 @@ void CDrawImage::getPixelTrueColor(int x, int y, unsigned char &r, unsigned char
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
     cairo->getPixel(x, y, r, g, b, a);
   } else {
-    int dTranspColor;
+    int dTranspColor = -1;
     if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
       dTranspColor = gdImageGetTransparent(image);
     }
@@ -867,28 +870,29 @@ void CDrawImage::setText(const char *text, size_t length, int x, int y, CColor c
   }
 }
 
-void CDrawImage::setTextStroke(const char *text, size_t length, int x, int y, int fgcolor, int bgcolor, int fontSize) {
+void CDrawImage::setTextStroke(int x, int y, float angle, const char *text, const char *fontFile, float fontSize, float strokeWidth, CColor bgcolor, CColor fgcolor) {
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    // Not yet supported...
-    setText(text, length, x, y, fgcolor, fontSize);
+    if (bgcolor.a == 0) {
+      drawText(x, y, fontFile, fontSize, angle, text, fgcolor);
+    } else {
+      cairo->drawStrokedText(x, y, -angle, text, fontSize * 1.4, strokeWidth, bgcolor, fgcolor);
+    }
   } else {
-    fgcolor = colors[fgcolor];
-    bgcolor = colors[bgcolor];
+    int fgColorIndex = getClosestGDColor(fgcolor.r, fgcolor.g, fgcolor.b);
+    int bgColorIndex = getClosestGDColor(bgcolor.r, bgcolor.g, bgcolor.b);
+    size_t length = strlen(text);
     char *pszText = new char[length + 1];
     strncpy(pszText, text, length);
     pszText[length] = '\0';
 
-    for (int dy = -1; dy < 2; dy = dy + 1)
-      for (int dx = -1; dx < 2; dx = dx + 1)
+    for (int dy = -1; dy < 2; dy = dy + 1) {
+      for (int dx = -1; dx < 2; dx = dx + 1) {
         if (!(dx == 0 && dy == 0)) {
-          if (fontSize == -1) gdImageString(image, gdFontSmall, x + dx, y + dy, (unsigned char *)pszText, bgcolor);
-          if (fontSize == 0) gdImageString(image, gdFontMediumBold, x + dx, y + dy, (unsigned char *)pszText, bgcolor);
-          if (fontSize == 1) gdImageString(image, gdFontLarge, x + dx, y + dy, (unsigned char *)pszText, bgcolor);
+          gdImageStringFT(image, &brect[0], bgColorIndex, (char *)TTFFontLocation, fontSize, angle, x + dx, y + dy, (char *)pszText);
         }
-    if (fontSize == -1) gdImageString(image, gdFontSmall, x, y, (unsigned char *)pszText, fgcolor);
-    if (fontSize == 0) gdImageString(image, gdFontMediumBold, x, y, (unsigned char *)pszText, fgcolor);
-    if (fontSize == 1) gdImageString(image, gdFontLarge, x, y, (unsigned char *)pszText, fgcolor);
-
+      }
+    }
+    gdImageStringFT(image, &brect[0], fgColorIndex, (char *)TTFFontLocation, fontSize, angle, x, y, (char *)pszText);
     delete[] pszText;
   }
 }
@@ -1012,6 +1016,7 @@ void CDrawImage::setEllipse(int x, int y, float discRadiusX, float discRadiusY, 
     cairo->setFillColor(fillColor.r, fillColor.g, fillColor.b, fillColor.a);
     cairo->setColor(lineColor.r, lineColor.g, lineColor.b, lineColor.a);
     cairo->filledEllipse(x, y, discRadiusX, discRadiusY, rotation);
+
     //    circle( x,  y,  discRadius,lineColor,1);
   }
 }
@@ -1099,6 +1104,42 @@ void CDrawImage::drawCenteredText(int x, int y, const char *fontfile, float size
     gdImageStringFT(image, &brect[0], tcolor, (char *)fontfile, size, angle, x - sw / 2, y - sh / 2, (char *)_text);
     delete[] _text;
   }
+}
+
+void CDrawImage::drawCenteredTextNoOverlap(int x, int y, const char *fontFile, float size, float angle, int padding, const char *text, CColor color, bool noOverlap,
+                                           std::vector<CRectangleText> &rects) {
+  if (size <= 0) { // size 0 means do not draw label
+    return;
+  }
+
+  int w, h;
+  float radAngle = angle * M_PI / 180;
+  CRectangleText rect;
+  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
+    CCairoPlotter *freeType = this->getCairoPlotter(fontFile, size, Geo->dWidth, Geo->dHeight, cairo->getByteBuffer());
+    freeType->setColor(color.r, color.g, color.b, color.a);
+    freeType->getTextSize(w, h, radAngle, text);
+    rect.init(x, y, (x + w), (y + h), angle, padding, text, fontFile, size, color);
+
+  } else {
+    // TODO GD renderer does not center text yet
+    char *_text = new char[strlen(text) + 1];
+    memcpy(_text, text, strlen(text) + 1);
+    int tcolor = getClosestGDColor(color.r, color.g, color.b);
+    if (_bEnableTrueColor) tcolor = -tcolor;
+    // Use the text size for angle 0 for detecting overlaps
+    gdImageStringFT(NULL, &brect[0], tcolor, (char *)fontFile, size, radAngle, x, y, (char *)_text);
+    rect.init(brect[0], brect[5], brect[4], brect[1], angle, padding, text, fontFile, size, color);
+    delete[] _text;
+  }
+  if (noOverlap) {
+    for (size_t j = 0; j < rects.size(); j++) {
+      if (rects[j].overlaps(rect)) {
+        return;
+      }
+    }
+  }
+  rects.push_back(rect);
 }
 
 void CDrawImage::drawText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color) {

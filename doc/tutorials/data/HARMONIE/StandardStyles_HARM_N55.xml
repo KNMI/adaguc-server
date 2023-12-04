@@ -1,0 +1,1175 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <!-- Legends -->
+  <Legend name="not_used" type="colorRange">
+    <palette index="0"   red="0"   green="0"   blue="0"/>
+    <palette index="240" red="255" green="255"   blue="255"/>
+  </Legend>
+  
+  <Legend name="cloudcover" type="colorRange">
+    <palette index="0"   red="128"   green="128"   blue="200"/>
+    <palette index="230" red="240" green="240"   blue="240"/>
+    <palette index="240" red="255" green="255"   blue="255"/>
+  </Legend>
+  
+  <Legend name="cloudcover_trans" type="colorRange">
+    <palette index="0" red="255" green="255" blue="255" alpha="0"/>
+    <palette index="240" red="255" green="255" blue="255" alpha="255"/>
+  </Legend>
+  
+  <Legend name="highcloudcover" type="interval">
+    <!--<palette min="0" max="11" color="#FFFFFF"/> -->
+    <palette min="12" max="59" color="#E6E6FF"/>
+    <palette min="60" max="119" color="#B3B3FF"/>
+    <palette min="120" max="179" color="#8080FF"/>
+    <palette min="180" max="240" color="#4C4CFF"/>
+  </Legend>
+  
+  <Legend name="midcloudcover" type="interval">
+    <!--<palette min="0" max="11" color="#FFFFFF"/> -->
+    <palette min="12" max="59" color="#B3E6B3"/>
+    <palette min="60" max="119" color="#99FF99"/>
+    <palette min="120" max="179" color="#4CE64C"/>
+    <palette min="180" max="240" color="#00FF00"/>
+  </Legend>
+  
+  <Legend name="lowcloudcover" type="interval">
+    <!--<palette min="0" max="11" color="#FFFFFF"/> -->
+    <palette min="12" max="59" color="#FFE6E6"/>
+    <palette min="60" max="119" color="#FFB3B3"/>
+    <palette min="120" max="179" color="#FF8080"/>
+    <palette min="180" max="240" color="#FF4C4C"/>
+  </Legend>
+  
+  <Legend name="totalcloudcover" type="interval">
+    <!--<palette min="0" max="11" color="#FFFFFF"/> -->
+    <palette min="12" max="59" color="#D9D9D9"/>
+    <palette min="60" max="119" color="#A6A6A6"/>
+    <palette min="120" max="179" color="#737373"/>
+    <palette min="180" max="240" color="#4C4C4C"/>
+  </Legend>
+  
+  <Legend name="temperature2" type="colorRange">
+    <palette index="0"   red="255" green="255" blue="255"/>
+    <palette index="1"   red="255" green="255" blue="255"/>
+    <palette index="15"   red="64"   green="64"   blue="128"/>
+    <palette index="40"   red="0"   green="0"   blue="255"/>
+    <palette index="80"   red="0"   green="255"   blue="255"/>
+    <palette index="120" red="64"   green="255" blue="64"/>
+    <palette index="160" red="255"   green="255" blue="0"/>
+    <palette index="220" red="255"   green="0" blue="0"/>
+    <palette index="240" red="64"   green="0" blue="0"/>
+  </Legend>
+  
+  <Legend name="temperature-hi" type="interval">
+    <palette min="0" max="5" color="#FFFFFF"/>
+    <palette min="6" max="11" color="#C8C8C8"/>
+    <palette min="12" max="17" color="#969696"/>
+    <palette min="18" max="23" color="#646464"/>
+    <palette min="24" max="29" color="#323232"/>
+    <palette min="30" max="35" color="#320032"/>
+    <palette min="36" max="41" color="#640064"/>
+    <palette min="42" max="47" color="#960096"/>
+    <palette min="48" max="53" color="#C800C8"/>
+    <palette min="54" max="59" color="#FF00FF"/>
+    <palette min="60" max="65" color="#C800FF"/>
+    <palette min="66" max="71" color="#9600FF"/>
+    <palette min="72" max="77" color="#6400FF"/>
+    <palette min="78" max="83" color="#3200FF"/>
+    <palette min="84" max="89" color="#0032FF"/>
+    <palette min="90" max="95" color="#0064FF"/>
+    <palette min="96" max="101" color="#0096FF"/>
+    <palette min="102" max="107" color="#00C8FF"/>
+    <palette min="108" max="113" color="#00FFFF"/>
+    <palette min="114" max="119" color="#00FFC8"/>
+    <palette min="120" max="125" color="#00FF96"/>
+    <palette min="126" max="131" color="#00FF64"/>
+    <palette min="132" max="137" color="#00FF32"/>
+    <palette min="138" max="143" color="#00FF00"/>
+    <palette min="144" max="149" color="#FFFF00"/>
+    <palette min="150" max="155" color="#FFE100"/>
+    <palette min="156" max="161" color="#FFC800"/>
+    <palette min="162" max="167" color="#FFAF00"/>
+    <palette min="168" max="173" color="#FF9600"/>
+    <palette min="174" max="179" color="#FF7D00"/>
+    <palette min="180" max="185" color="#FF6400"/>
+    <palette min="186" max="191" color="#FF4B00"/>
+    <palette min="192" max="197" color="#FF3200"/>
+    <palette min="198" max="203" color="#FF1900"/>
+    <palette min="204" max="209" color="#FF0000"/>
+    <palette min="210" max="215" color="#FF0032"/>
+    <palette min="216" max="221" color="#FF0064"/>
+    <palette min="222" max="227" color="#FF0096"/>
+    <palette min="228" max="233" color="#FF00C8"/>
+    <palette min="234" max="240" color="#FF00E1"/>
+  </Legend>
+  
+  <Legend name="temperature-lo" type="interval">
+    <palette min="0" max="5" color="#FFFFFF"/>
+    <palette min="6" max="11" color="#C8C8C8"/>
+    <palette min="12" max="17" color="#969696"/>
+    <palette min="18" max="23" color="#646464"/>
+    <palette min="24" max="29" color="#323232"/>
+    <palette min="30" max="35" color="#320032"/>
+    <palette min="36" max="41" color="#640064"/>
+    <palette min="42" max="47" color="#960096"/>
+    <palette min="48" max="53" color="#C800C8"/>
+    <palette min="54" max="59" color="#FF00FF"/>
+    <palette min="60" max="65" color="#C800FF"/>
+    <palette min="66" max="71" color="#9600FF"/>
+    <palette min="72" max="77" color="#6400FF"/>
+    <palette min="78" max="83" color="#3200FF"/>
+    <palette min="84" max="89" color="#0032FF"/>
+    <palette min="90" max="95" color="#0064FF"/>
+    <palette min="96" max="101" color="#0096FF"/>
+    <palette min="102" max="107" color="#00C8FF"/>
+    <palette min="108" max="113" color="#00FFFF"/>
+    <palette min="114" max="119" color="#00FFC8"/>
+    <palette min="120" max="125" color="#00FF96"/>
+    <palette min="126" max="131" color="#00FF64"/>
+    <palette min="132" max="137" color="#00FF32"/>
+    <palette min="138" max="143" color="#00FF00"/>
+    <palette min="144" max="149" color="#FFFF00"/>
+    <palette min="150" max="155" color="#FFE100"/>
+    <palette min="156" max="161" color="#FFC800"/>
+    <palette min="162" max="167" color="#FFAF00"/>
+    <palette min="168" max="173" color="#FF9600"/>
+    <palette min="174" max="179" color="#FF7D00"/>
+    <palette min="180" max="185" color="#FF6400"/>
+    <palette min="186" max="191" color="#FF4B00"/>
+    <palette min="192" max="197" color="#FF3200"/>
+    <palette min="198" max="203" color="#FF1900"/>
+    <palette min="204" max="209" color="#FF0000"/>
+    <palette min="210" max="215" color="#FF0032"/>
+    <palette min="216" max="221" color="#FF0064"/>
+    <palette min="222" max="227" color="#FF0096"/>
+    <palette min="228" max="233" color="#FF00C8"/>
+    <palette min="234" max="240" color="#FF00E1"/>
+  </Legend>
+  
+  <Legend name="isoluminant" type="colorRange">
+    <palette index="0"   red="216"  green="15" blue="15"/>
+    <palette index="48"  red="134"  green="134"   blue="0"/>
+    <palette index="96"  red="0"    green="151"   blue="0"/>
+    <palette index="144"  red="0"    green="143"   blue="143"/>
+    <palette index="192" red="81"   green="253" blue="247"/>
+    <palette index="240" red="183"   green="0" blue="183"/>
+  </Legend>
+  
+  <Legend name="temperature" type="colorRange">
+    <palette index="0"   red="0"  green="60" blue="123"/>
+    <palette index="30"  red="0"  green="100"   blue="140"/>
+    <palette index="60"  red="8"    green="130"   blue="206"/>
+    <palette index="85"  red="132"    green="211"   blue="255"/>
+    <palette index="120" red="247"   green="247" blue="247"/>
+    <palette index="155" red="255"   green="195" blue="57"/>
+    <palette index="180" red="232"  green="28" blue="0"/>
+    <palette index="210" red="165"  green="0" blue="0"/>
+    <palette index="240" red="90"   green="0" blue="0"/>
+  </Legend>
+  
+  <Legend name="windspeed_cwk" type="interval">
+    <palette min="0" max="6" color="#FFFFB3"/>
+    <palette min="7" max="10" color="#FFFF00"/>
+    <palette min="11" max="15" color="#80FF00"/>
+    <palette min="16" max="20" color="#008C40"/>
+    <palette min="21" max="26" color="#00FFFF"/>
+    <palette min="27" max="33" color="#73A3FF"/>
+    <palette min="34" max="40" color="#0000FF"/>
+    <palette min="41" max="47" color="#FF51FF"/>
+    <palette min="48" max="55" color="#FF8000"/>
+    <palette min="56" max="63" color="#FF0000"/>
+    <palette min="64" max="240" color="#FFFF00"/>
+  </Legend>
+  
+  <Legend name="windspeed_hi" type="interval">
+    <palette min="40" max="50" color="#FFFFE6"/>
+    <palette min="50" max="60" color="#FFFF66"/>
+    <palette min="60" max="70" color="#FFFF00"/>
+    <palette min="70" max="80" color="#FFE6FF"/>
+    <palette min="80" max="90" color="#FFCC7F"/>
+    <palette min="90" max="100" color="#FF9C00"/>
+    <palette min="100" max="110" color="#FFE6E6"/>
+    <palette min="110" max="125" color="#FFB3B3"/>
+    <palette min="125" max="240" color="#FF7F7F"/>
+  </Legend>
+  
+  <Legend name="temperature_cwk" type="interval">
+    <palette min="0" max="2" color="#BFB1FF"/>
+    <palette min="3" max="5" color="#8E7EE4"/>
+    <palette min="6" max="8" color="#6450CC"/>
+    <palette min="9" max="11" color="#422BB1"/>
+    <palette min="12" max="14" color="#260E99"/>
+    <palette min="15" max="17" color="#B1E4FF"/>
+    <palette min="18" max="20" color="#7EC3E4"/>
+    <palette min="21" max="23" color="#50A3CC"/>
+    <palette min="24" max="26" color="#2B85B1"/>
+    <palette min="27" max="29" color="#0E6B99"/>
+    <palette min="30" max="32" color="#E4FFB1"/>
+    <palette min="33" max="35" color="#C3E47E"/>
+    <palette min="36" max="38" color="#A3CC50"/>
+    <palette min="39" max="41" color="#85B12B"/>
+    <palette min="42" max="44" color="#6B990E"/>
+    <palette min="45" max="47" color="#FFD8B1"/>
+    <palette min="48" max="50" color="#E4B17E"/>
+    <palette min="51" max="53" color="#CC8E50"/>
+    <palette min="54" max="56" color="#B16E2B"/>
+    <palette min="57" max="59" color="#99540E"/>
+    <palette min="60" max="62" color="#FFB1B1"/>
+    <palette min="63" max="65" color="#E47E7E"/>
+    <palette min="66" max="68" color="#CC5050"/>
+    <palette min="69" max="71" color="#B12B2B"/>
+    <palette min="72" max="74" color="#990E0E"/>
+    <palette min="75" max="77" color="#BFB1FF"/>
+    <palette min="78" max="80" color="#8E7EE4"/>
+    <palette min="81" max="83" color="#6450CC"/>
+    <palette min="84" max="86" color="#422BB1"/>
+    <palette min="87" max="89" color="#260E99"/>
+    <palette min="90" max="92" color="#B1E4FF"/>
+    <palette min="93" max="95" color="#7EC3E4"/>
+    <palette min="96" max="98" color="#50A3CC"/>
+    <palette min="99" max="101" color="#2B85B1"/>
+    <palette min="102" max="104" color="#0E6B99"/>
+    <palette min="105" max="107" color="#E4FFB1"/>
+    <palette min="108" max="110" color="#C3E47E"/>
+    <palette min="111" max="113" color="#A3CC50"/>
+    <palette min="114" max="116" color="#85B12B"/>
+    <palette min="117" max="119" color="#6B990E"/>
+    <palette min="120" max="122" color="#FFD8B1"/>
+    <palette min="123" max="125" color="#E4B17E"/>
+    <palette min="126" max="128" color="#CC8E50"/>
+    <palette min="129" max="131" color="#B16E2B"/>
+    <palette min="132" max="134" color="#99540E"/>
+    <palette min="135" max="137" color="#FFB1B1"/>
+    <palette min="138" max="140" color="#E47E7E"/>
+    <palette min="141" max="143" color="#CC5050"/>
+    <palette min="144" max="146" color="#B12B2B"/>
+    <palette min="147" max="149" color="#990E0E"/>
+    <palette min="150" max="152" color="#BFB1FF"/>
+    <palette min="153" max="155" color="#8E7EE4"/>
+    <palette min="156" max="158" color="#6450CC"/>
+    <palette min="159" max="161" color="#422BB1"/>
+    <palette min="162" max="164" color="#260E99"/>
+    <palette min="165" max="167" color="#B1E4FF"/>
+    <palette min="168" max="170" color="#7EC3E4"/>
+    <palette min="171" max="173" color="#50A3CC"/>
+    <palette min="174" max="176" color="#2B85B1"/>
+    <palette min="177" max="179" color="#0E6B99"/>
+    <palette min="180" max="182" color="#E4FFB1"/>
+    <palette min="183" max="185" color="#C3E47E"/>
+    <palette min="186" max="188" color="#A3CC50"/>
+    <palette min="189" max="191" color="#85B12B"/>
+    <palette min="192" max="194" color="#6B990E"/>
+    <palette min="195" max="197" color="#FFD8B1"/>
+    <palette min="198" max="200" color="#E4B17E"/>
+    <palette min="201" max="203" color="#CC8E50"/>
+    <palette min="204" max="206" color="#B16E2B"/>
+    <palette min="207" max="209" color="#99540E"/>
+    <palette min="210" max="212" color="#FFB1B1"/>
+    <palette min="213" max="215" color="#E47E7E"/>
+    <palette min="216" max="218" color="#CC5050"/>
+    <palette min="219" max="221" color="#B12B2B"/>
+    <palette min="222" max="240" color="#990E0E"/>
+  </Legend>
+  
+  <Legend name="cape" type="colorRange">
+    <palette index="0"   color="#9CFF9C"/>
+    <palette index="20"  color="#00FF00"/>
+    <palette index="40"  color="#9CFF00"/>
+    <palette index="60"  color="#CEFF00"/>
+    <palette index="80"  color="#FFFF00"/>
+    <palette index="100" color="#FFCF00"/>
+    <palette index="120" color="#FF9A00"/>
+    <palette index="140" color="#FF6500"/>
+    <palette index="160" color="#FF0000"/>
+    <palette index="180" color="#FF0063"/>
+    <palette index="200" color="#FF009C"/>
+    <palette index="220" color="#FF00CE"/>
+    <palette index="240" color="#0000FF"/>
+  </Legend>
+  
+  <Legend name="snow" type="interval">
+    <palette min="1"    max="37"   color="#80FF00"/>
+    <palette min="38"    max="55"  color="#00FF00"/>
+    <palette min="56"   max="79"  color="#008C40"/>
+    <palette min="80"   max="117"  color="#00FFFF"/>
+    <palette min="118"   max="135"  color="#0000FF"/>
+    <palette min="136"   max="159"  color="#FF00FF"/>
+    <palette min="160"   max="179" color="#FF0000"/>
+    <palette min="180"  max="207" color="#FFFF00"/>
+    <palette min="208"  max="240" color="#FF8000"/>
+  </Legend>
+  
+  <Legend name="precip_cwk" type="interval">
+    <palette min="1"    max="37"   color="#80FF00"/>
+    <palette min="38"    max="55"  color="#00FF00"/>
+    <palette min="56"   max="79"  color="#008C40"/>
+    <palette min="80"   max="117"  color="#00FFFF"/>
+    <palette min="118"   max="135"  color="#0000FF"/>
+    <palette min="136"   max="159"  color="#FF00FF"/>
+    <palette min="160"   max="179" color="#FF0000"/>
+    <palette min="180"  max="207" color="#FFFF00"/>
+    <palette min="208"  max="240" color="#FF8000"/>
+  </Legend>
+  
+  <Legend name="precip_cwk_6" type="interval">
+    <palette min="1"   max="79"  color="#008C40"/>
+    <palette min="80"   max="117"  color="#00FFFF"/>
+    <palette min="118"   max="135"  color="#0000FF"/>
+    <palette min="136"   max="159"  color="#FF00FF"/>
+    <palette min="160"   max="179" color="#FF0000"/>
+    <palette min="180"  max="207" color="#FFFF00"/>
+    <palette min="208"  max="240" color="#FF8000"/>
+  </Legend>
+  
+  <Legend name="precip_cwk_24" type="interval">
+    <palette min="1"    max="41"   color="#008C40"/>
+    <palette min="42"    max="59"  color="#00FFFF"/>
+    <palette min="60"   max="88"  color="#0000FF"/>
+    <palette min="89"   max="101"  color="#FF00FF"/>
+    <palette min="102"   max="119"  color="#FF0000"/>
+    <palette min="120"   max="137"  color="#FFFF00"/>
+    <palette min="138"   max="155" color="#FF8000"/>
+    <palette min="156"  max="179" color="#FFFF00"/>
+    <palette min="180"  max="197" color="#80FF00"/>
+    <palette min="198"    max="240"   color="#00FF00"/>
+  </Legend>
+  
+  <Legend name="fraction" type="interval">
+    <palette min="12"   max="24"  red="255" green="255" blue="255"/> -->
+    <palette min="25"   max="48"  red="128" green="255" blue="255"/>
+    <palette min="49"   max="72"  red="0" green="255" blue="255"/>
+    <palette min="73"   max="96"  red="0" green="0" blue="255"/>
+    <palette min="97"  max="120" red="64"   green="192" blue="128"/>
+    <palette min="121"  max="144" red="0"   green="255" blue="128"/>
+    <palette min="145"  max="168" red="0"   green="255" blue="0"/>
+    <palette min="169" max="192" red="255"   green="255" blue="0"/>
+    <palette min="193" max="216" red="255"   green="128" blue="0"/>
+    <palette min="217" max="240" red="255"   green="0"   blue="0"/>
+  </Legend>
+  
+  <Legend name="relhum" type="interval">
+    <palette min="0"   max="119"  red="255" green="255" blue="178"/> -->
+    <palette min="120"   max="167"  red="255" green="255" blue="0"/>
+    <palette min="168"   max="215"  red="127" green="255" blue="0"/>
+    <palette min="216"   max="227"  red="255" green="127" blue="0"/>
+    <palette min="228"  max="237" red="255"   green="0" blue="0"/>
+    <palette min="238"  max="240" red="0"   green="0" blue="0"/>
+  </Legend>
+
+  <Legend name="wow.temperature" type="interval">
+    <palette index="0" color="#2E2E73"/>  <!-- -14 0 -->
+    <palette index="9" color="#282898"/>  <!-- -12 1 -->
+    <palette index="18" color="#201FBB"/> <!-- -10 2 -->
+    <palette index="27" color="#1A1ADC"/> <!-- -8  3 -->
+    <palette index="36" color="#3654DE"/> <!-- -6  4 -->
+    <palette index="45" color="#548EDC"/> <!-- -4  5 -->
+    <palette index="54" color="#72CADE"/> <!-- -2  6 -->
+    <palette index="63" color="#6DD8DF"/> <!-- 0   7 -->
+    <palette index="72" color="#55CDE2"/> <!-- 2   8 -->
+    <palette index="81" color="#38BBDC"/> <!-- 4   9 -->
+    <palette index="90" color="#20B0DC"/> <!-- 6   10 -->
+    <palette index="99" color="#19BAA6"/> <!-- 8   11 -->
+    <palette index="108" color="#1CCE6A"/> <!-- 10 12 -->
+    <palette index="117" color="#1BDF22"/> <!-- 12 13 -->
+    <palette index="126" color="#82C319"/> <!-- 14 14 -->
+    <palette index="135" color="#DCA819"/> <!-- 16 15 -->
+    <palette index="144" color="#DD921A"/> <!-- 18 16 -->
+    <palette index="153" color="#DE7C1A"/> <!-- 20 17 -->
+    <palette index="162" color="#DF671A"/> <!-- 22 18 -->
+    <palette index="171" color="#DE501A"/> <!-- 24 19 -->
+    <palette index="180" color="#DD3819"/> <!-- 26 20 -->
+    <palette index="189" color="#DD2319"/> <!-- 28 21 -->
+    <palette index="198" color="#D21A1E"/> <!-- 30 22 -->
+    <palette index="207" color="#C31927"/> <!-- 32 23 -->
+    <palette index="216" color="#AD1A30"/> <!-- 34 24 -->
+    <palette index="225" color="#9A1A3B"/> <!-- 36 25 -->
+    <palette index="234" color="#871A44"/> <!-- 38 26 -->
+    <palette index="240" color="#871A44"/> <!--  39,33 -->
+  </Legend>
+
+    
+  <Legend name="wow.pressure" type="interval">
+    <palette index="0" color="#5C5797"/>  <!-- 960 -->
+    <palette index="12" color="#1D5791"/>  <!-- 964 -->
+    <palette index="24" color="#1E8BC5"/>  <!-- 968 -->
+    <palette index="36" color="#1EA6B9"/>  <!-- 972 -->
+    <palette index="48" color="#1A99A0"/>  <!-- 976 -->
+    <palette index="60" color="#1C7976"/>  <!-- 980 -->
+    <palette index="72" color="#1C7244"/>  <!-- 984 -->
+    <palette index="84" color="#72B060"/>  <!-- 988 -->
+    <palette index="96" color="#AFC560"/>  <!-- 992 -->
+    <palette index="108" color="#C9CF3C"/>  <!-- 996 -->
+    <palette index="120" color="#E3DA36"/>  <!-- 1000 -->
+    <palette index="132" color="#EFE686"/>  <!-- 1004 -->
+    <palette index="144" color="#EFE3BB"/>  <!-- 1008 -->
+    <palette index="156" color="#ECCB90"/>  <!-- 1012 -->
+    <palette index="168" color="#E7A34A"/>  <!-- 1016 -->
+    <palette index="180" color="#DE7222"/>  <!-- 1020 -->
+    <palette index="192" color="#D93531"/>  <!-- 1024 -->
+    <palette index="204" color="#C41F32"/>  <!-- 1028 -->
+    <palette index="216" color="#843537"/>  <!-- 1032 -->
+    <palette index="228" color="#5E3F3A"/>  <!-- 1036 -->
+    <palette index="239" color="#2E3F2A"/>  <!-- 1040 -->
+  </Legend>
+
+  <Legend name="wow.precipitation" type="interval">
+    <palette index="0" color="#BACDCB"/>  <!-- 0 -->
+    <palette index="24" color="#A3C3C9"/>  <!-- 0.1 -->
+    <palette index="48" color="#8BBCC8"/> <!-- 0.3 -->
+    <palette index="72" color="#6AAEC1"/> <!-- 0.5 -->
+    <palette index="96" color="#42A1C0"/> <!-- 1 -->
+    <palette index="110" color="#377EAF"/> <!-- 3 -->
+    <palette index="134" color="#46669C"/> <!-- 5 -->
+    <palette index="168" color="#56528D"/> <!-- 10-->
+    <palette index="192" color="#86008D"/> <!-- 20-->
+    <palette index="216" color="#610066"/> <!-- 40--> 
+  </Legend> 
+
+
+
+  
+  <!--Styles -->
+  <!-- Important: auto style is used internally and is required when mapping styles with standard_names-->
+  <Style name="auto">
+    <Legend>isoluminant</Legend>
+    <Scale>0</Scale>
+    <RenderMethod>nearest,bilinear</RenderMethod>
+    <NameMapping name="nearest" title="Automatic minimum and maximum" abstract="Automatic min/max rendered with nearest neighbour interpolation"/>
+    <NameMapping name="bilinear" title="Automatic minimum and maximum bilinear" abstract="Automatic min/max rendered with bilinear interpolation"/>
+  </Style>
+  
+  <Style name="temperature-wow">
+    <Legend fixed="true" tickinterval="5">wow.temperature</Legend>
+    <Min>-14</Min>
+    <Max>39,33333333</Max> <!-- 39,33333333 = (240 / (234/(38 - -14))) - 14 -->
+    <ShadeInterval>2</ShadeInterval>
+    <ContourLine width="0.8" linecolor="#1a1a1a" textcolor="#1a1a1a" textformatting="%2.0f" interval="10"/>
+    <ContourLine width="0.3" linecolor="#444444" textcolor="#444444" textformatting="%2.0f" interval="2"/>
+    <RenderMethod>shadedcontour</RenderMethod>
+    <NameMapping name="shadedcontour"   title="Temperature (wow) shaded + contours" abstract="Contours with shaded background"/>
+    <SmoothingFilter>0</SmoothingFilter>
+    <StandardNames standard_name="dew_point_temperature,dewpoint_temperature,air_temperature,temperature,Temperature_2m"/>
+  </Style>
+
+  <Style name="temperature">
+    <Legend fixed="true" tickinterval="5">temperature_cwk</Legend>
+    <Min>-35</Min>
+    <Max>45</Max>
+    <ShadeInterval min="-35" max="-34" label="-35--34" fillcolor="#BFB1FF"/>
+    <ShadeInterval min="-34" max="-33" label="-34--33" fillcolor="#8E7EE4"/>
+    <ShadeInterval min="-33" max="-32" label="-33--32" fillcolor="#6450CC"/>
+    <ShadeInterval min="-32" max="-31" label="-32--31" fillcolor="#422BB1"/>
+    <ShadeInterval min="-31" max="-30" label="-31--30" fillcolor="#260E99"/>
+    <ShadeInterval min="-30" max="-29" label="-30--29" fillcolor="#B1E4FF"/>
+    <ShadeInterval min="-29" max="-28" label="-29--28" fillcolor="#7EC3E4"/>
+    <ShadeInterval min="-28" max="-27" label="-28--27" fillcolor="#50A3CC"/>
+    <ShadeInterval min="-27" max="-26" label="-27--26" fillcolor="#2B85B1"/>
+    <ShadeInterval min="-26" max="-25" label="-26--25" fillcolor="#0E6B99"/>
+    <ShadeInterval min="-25" max="-24" label="-25--24" fillcolor="#E4FFB1"/>
+    <ShadeInterval min="-24" max="-23" label="-24--23" fillcolor="#C3E47E"/>
+    <ShadeInterval min="-23" max="-22" label="-23--22" fillcolor="#A3CC50"/>
+    <ShadeInterval min="-22" max="-21" label="-22--21" fillcolor="#85B12B"/>
+    <ShadeInterval min="-21" max="-20" label="-21--20" fillcolor="#6B990E"/>
+    <ShadeInterval min="-20" max="-19" label="-20--19" fillcolor="#FFD8B1"/>
+    <ShadeInterval min="-19" max="-18" label="-19--18" fillcolor="#E4B17E"/>
+    <ShadeInterval min="-18" max="-17" label="-18--17" fillcolor="#CC8E50"/>
+    <ShadeInterval min="-17" max="-16" label="-17--16" fillcolor="#B16E2B"/>
+    <ShadeInterval min="-16" max="-15" label="-16--15" fillcolor="#99540E"/>
+    <ShadeInterval min="-15" max="-14" label="-15--14" fillcolor="#FFB1B1"/>
+    <ShadeInterval min="-14" max="-13" label="-14--13" fillcolor="#E47E7E"/>
+    <ShadeInterval min="-13" max="-12" label="-13--12" fillcolor="#CC5050"/>
+    <ShadeInterval min="-12" max="-11" label="-12--11" fillcolor="#B12B2B"/>
+    <ShadeInterval min="-11" max="-10" label="-11--10" fillcolor="#990E0E"/>
+    <ShadeInterval min="-10" max="-9" label="-10--9" fillcolor="#BFB1FF"/>
+    <ShadeInterval min="-9" max="-8" label="-9--8" fillcolor="#8E7EE4"/>
+    <ShadeInterval min="-8" max="-7" label="-8--7" fillcolor="#6450CC"/>
+    <ShadeInterval min="-7" max="-6" label="-7--6" fillcolor="#422BB1"/>
+    <ShadeInterval min="-6" max="-5" label="-6--5" fillcolor="#260E99"/>
+    <ShadeInterval min="-5" max="-4" label="-5--4" fillcolor="#B1E4FF"/>
+    <ShadeInterval min="-4" max="-3" label="-4--3" fillcolor="#7EC3E4"/>
+    <ShadeInterval min="-3" max="-2" label="-3--2" fillcolor="#50A3CC"/>
+    <ShadeInterval min="-2" max="-1" label="-2--1" fillcolor="#2B85B1"/>
+    <ShadeInterval min="-1" max="0" label="-1-0" fillcolor="#0E6B99"/>
+    <ShadeInterval min="0" max="1" label="0-1" fillcolor="#E4FFB1"/>
+    <ShadeInterval min="1" max="2" label="1-2" fillcolor="#C3E47E"/>
+    <ShadeInterval min="2" max="3" label="2-3" fillcolor="#A3CC50"/>
+    <ShadeInterval min="3" max="4" label="3-4" fillcolor="#85B12B"/>
+    <ShadeInterval min="4" max="5" label="4-5" fillcolor="#6B990E"/>
+    <ShadeInterval min="5" max="6" label="5-6" fillcolor="#FFD8B1"/>
+    <ShadeInterval min="6" max="7" label="6-7" fillcolor="#E4B17E"/>
+    <ShadeInterval min="7" max="8" label="7-8" fillcolor="#CC8E50"/>
+    <ShadeInterval min="8" max="9" label="8-9" fillcolor="#B16E2B"/>
+    <ShadeInterval min="9" max="10" label="9-10" fillcolor="#99540E"/>
+    <ShadeInterval min="10" max="11" label="10-11" fillcolor="#FFB1B1"/>
+    <ShadeInterval min="11" max="12" label="11-12" fillcolor="#E47E7E"/>
+    <ShadeInterval min="12" max="13" label="12-13" fillcolor="#CC5050"/>
+    <ShadeInterval min="13" max="14" label="13-14" fillcolor="#B12B2B"/>
+    <ShadeInterval min="14" max="15" label="14-15" fillcolor="#990E0E"/>
+    <ShadeInterval min="15" max="16" label="15-16" fillcolor="#BFB1FF"/>
+    <ShadeInterval min="16" max="17" label="16-17" fillcolor="#8E7EE4"/>
+    <ShadeInterval min="17" max="18" label="17-18" fillcolor="#6450CC"/>
+    <ShadeInterval min="18" max="19" label="18-19" fillcolor="#422BB1"/>
+    <ShadeInterval min="19" max="20" label="19-20" fillcolor="#260E99"/>
+    <ShadeInterval min="20" max="21" label="20-21" fillcolor="#B1E4FF"/>
+    <ShadeInterval min="21" max="22" label="21-22" fillcolor="#7EC3E4"/>
+    <ShadeInterval min="22" max="23" label="22-23" fillcolor="#50A3CC"/>
+    <ShadeInterval min="23" max="24" label="23-24" fillcolor="#2B85B1"/>
+    <ShadeInterval min="24" max="25" label="24-25" fillcolor="#0E6B99"/>
+    <ShadeInterval min="25" max="26" label="25-26" fillcolor="#E4FFB1"/>
+    <ShadeInterval min="26" max="27" label="26-27" fillcolor="#C3E47E"/>
+    <ShadeInterval min="27" max="28" label="27-28" fillcolor="#A3CC50"/>
+    <ShadeInterval min="28" max="29" label="28-29" fillcolor="#85B12B"/>
+    <ShadeInterval min="29" max="30" label="29-30" fillcolor="#6B990E"/>
+    <ShadeInterval min="30" max="31" label="30-31" fillcolor="#FFD8B1"/>
+    <ShadeInterval min="31" max="32" label="31-32" fillcolor="#E4B17E"/>
+    <ShadeInterval min="32" max="33" label="32-33" fillcolor="#CC8E50"/>
+    <ShadeInterval min="33" max="34" label="33-34" fillcolor="#B16E2B"/>
+    <ShadeInterval min="34" max="35" label="34-35" fillcolor="#99540E"/>
+    <ShadeInterval min="35" max="36" label="35-36" fillcolor="#FFB1B1"/>
+    <ShadeInterval min="36" max="37" label="36-37" fillcolor="#E47E7E"/>
+    <ShadeInterval min="37" max="38" label="37-38" fillcolor="#CC5050"/>
+    <ShadeInterval min="38" max="39" label="38-39" fillcolor="#B12B2B"/>
+    <ShadeInterval min="39" max="40" label="39-40" fillcolor="#990E0E"/>
+    <ContourLine width="0.3" linecolor="#444444" textcolor="#444444" textformatting="%2.0f" interval="1"/>
+    <RenderMethod>shadedcontour</RenderMethod>
+    <NameMapping name="nearest"         title="Temperature" abstract="Rendered with nearest neighbour interpolation"/>
+    <NameMapping name="contour"         title="Temperature contour" abstract="Contourlines on a transparent background"/>
+    <NameMapping name="shaded"          title="Temperature shaded" abstract="Shaded"/>
+    <NameMapping name="nearestcontour"  title="Temperature nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
+    <NameMapping name="bilinearcontour" title="Temperature bilinear + contours" abstract="Contours with bilinear interpolated background"/>
+    <NameMapping name="shadedcontour"   title="Temperature shaded + contours" abstract="Contours with shaded background"/>
+    <SmoothingFilter>0</SmoothingFilter>
+    <StandardNames standard_name="dew_point_temperature,dewpoint_temperature,air_temperature,temperature,Temperature_2m"/>
+  </Style>
+  
+  <!--
+  <Style name="temperature2">
+  <Legend>temperature2</Legend>
+  <Min>-35</Min>
+  <Max>40</Max>
+  <ShadeInterval>2</ShadeInterval>
+  <ContourLine width="0.3" linecolor="#444444" textcolor="#444444" textformatting="%2.0f" interval="2"/>
+  <RenderMethod>shadedcontour,nearestcontour,bilinearcontour,contour</RenderMethod>
+  <NameMapping name="nearest"         title="Temperature2" abstract="Rendered with nearest neighbour interpolation"/>
+  <NameMapping name="contour"         title="Temperature2 contour" abstract="Contourlines on a transparent background"/>
+  <NameMapping name="shaded"          title="Temperature2 shaded" abstract="Shaded"/>
+  <NameMapping name="nearestcontour"  title="Temperature2 nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
+  <NameMapping name="bilinearcontour" title="Temperature2 bilinear + contours" abstract="Contours with bilinear interpolated background"/>
+  <NameMapping name="shadedcontour"   title="Temperature2 shaded + contours" abstract="Contours with shaded background"/>
+  <StandardNames standard_name="dew_point_temperature,dewpoint_temperature,air_temperature,temperature,Temperature_2m"/>
+  </Style>
+  -->
+  
+  <Style name="temperature-hi">
+    <Legend>temperature-hi</Legend>
+    <Min>-36</Min>
+    <Max>44</Max>
+    <ShadeInterval>2</ShadeInterval>
+    <ContourLine width="0.3" linecolor="#444444" textcolor="#444444" textformatting="%2.0f" interval="2"/>
+    <RenderMethod>shadedcontour</RenderMethod>
+    <NameMapping name="nearest"         title="Temperature (Hi)" abstract="Rendered with nearest neighbour interpolation"/>
+    <NameMapping name="contour"         title="Temperature (Hi) contour" abstract="Contourlines on a transparent background"/>
+    <NameMapping name="shaded"          title="Temperature (Hi) shaded" abstract="Shaded"/>
+    <NameMapping name="nearestcontour"  title="Temperature (Hi) nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
+    <NameMapping name="bilinearcontour" title="Temperature (Hi) bilinear + contours" abstract="Contours with bilinear interpolated background"/>
+    <NameMapping name="shadedcontour"   title="Temperature (Hi) shaded + contours" abstract="Contours with shaded background"/>
+    <StandardNames standard_name="dew_point_temperature,dewpoint_temperature,air_temperature,temperature,Temperature_2m"/>
+  </Style>
+  
+  <!--  <Style name="temperature-lo">
+  <Legend>temperature-lo</Legend>
+  <Min>-48</Min>
+  <Max>32</Max>
+  <ShadeInterval>2</ShadeInterval>
+  <ContourLine width="0.3" linecolor="#444444" textcolor="#444444" textformatting="%2.0f" interval="2"/>
+  <RenderMethod>shadedcontour,nearestcontour,bilinearcontour,contour</RenderMethod>
+  <NameMapping name="nearest"         title="Temperature (Lo)" abstract="Rendered with nearest neighbour interpolation"/>
+  <NameMapping name="contour"         title="Temperature (Lo) contour" abstract="Contourlines on a transparent background"/>
+  <NameMapping name="shaded"          title="Temperature (Lo) shaded" abstract="Shaded"/>
+  <NameMapping name="nearestcontour"  title="Temperature (Lo) nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
+  <NameMapping name="bilinearcontour" title="Temperature (Lo) bilinear + contours" abstract="Contours with bilinear interpolated background"/>
+  <NameMapping name="shadedcontour"   title="Temperature (Lo) shaded + contours" abstract="Contours with shaded background"/>
+  <StandardNames standard_name="dew_point_temperature,dewpoint_temperature,air_temperature,temperature,Temperature_2m"/>
+  </Style>
+  -->
+  
+  <Style name="cape">
+    <Legend fixed="true" tickinterval="10">cape</Legend>
+    <Min>0</Min>
+    <Max>100</Max>
+    <ShadeInterval>5</ShadeInterval>
+    <ContourLine width="0.3" linecolor="#444444" textcolor="#444444" textformatting="%2.0f" classes="10,25,50,100,150"/>
+    <RenderMethod>shadedcontour,nearestcontour,bilinearcontour,contour</RenderMethod>
+    <NameMapping name="nearest"         title="Cape" abstract="Rendered with nearest neighbour interpolation"/>
+    <NameMapping name="contour"         title="Cape contour" abstract="Contourlines on a transparent background"/>
+    <NameMapping name="shaded"          title="Cape shaded" abstract="Shaded"/>
+    <NameMapping name="nearestcontour"  title="Cape nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
+    <NameMapping name="bilinearcontour" title="Cape bilinear + contours" abstract="Contours with bilinear interpolated background"/>
+    <NameMapping name="shadedcontour"   title="Cape shaded + contours" abstract="Contours with shaded background"/>
+    <StandardNames standard_name="cape"/>
+    <ValueRange min="10" max="1000000"/>
+  </Style>
+  
+  <Style name="cloudcover">
+    <Legend fixed="true" tickinterval=".1">cloudcover</Legend>
+    <Min>0</Min>
+    <Max>1</Max>
+    <ShadeInterval>5</ShadeInterval>
+    <ContourLine width="0.3" linecolor="#444444" textcolor="#444444" textformatting="%2.1f" classes=".5"/>
+    <RenderMethod>bilinear</RenderMethod>
+    <NameMapping name="nearest"         title="Cloud cover" abstract="Rendered with nearest neighbour interpolation"/>
+    <NameMapping name="bilinear"         title="Cloud cover bilinear" abstract="Rendered with bilinear interpolation"/>
+    <NameMapping name="contour"         title="Cloud cover contour" abstract="Contourlines on a transparent background"/>
+    <NameMapping name="shaded"          title="Cloud cover shaded" abstract="Shaded"/>
+    <NameMapping name="nearestcontour"  title="Cloud cover nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
+    <NameMapping name="bilinearcontour" title="Cloud cover bilinear + contours" abstract="Contours with bilinear interpolated background"/>
+    <NameMapping name="shadedcontour"   title="Cloud cover shaded + contours" abstract="Contours with shaded background"/>
+    <StandardNames standard_name="cloud_area_fraction,low_type_cloud_area_fraction,medium_type_cloud_area_fraction,high_type_cloud_area_fraction,total_cloud_cover,low_cloud_cover,medium_cloud_cover,high_cloud_cover"/>
+  </Style>
+  
+  <!--
+  <Style name="cloudcover_trans">
+  <Legend fixed="true" tickinterval=".1">cloudcover_trans</Legend>
+  <Min>0</Min>
+  <Max>1</Max>
+  <ShadeInterval>5</ShadeInterval>
+  <ContourLine width="0.3" linecolor="#444444" textcolor="#444444" textformatting="%2.1f" classes=".5"/>
+  <RenderMethod>bilinear,nearest</RenderMethod>
+  <NameMapping name="nearest"         title="Cloud cover" abstract="Rendered with nearest neighbour interpolation"/>
+  <NameMapping name="bilinear"         title="Cloud cover bilinear" abstract="Rendered with bilinear interpolation"/>
+  <NameMapping name="contour"         title="Cloud cover contour" abstract="Contourlines on a transparent background"/>
+  <NameMapping name="shaded"          title="Cloud cover shaded" abstract="Shaded"/>
+  <NameMapping name="nearestcontour"  title="Cloud cover nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
+  <NameMapping name="bilinearcontour" title="Cloud cover bilinear + contours" abstract="Contours with bilinear interpolated background"/>
+  <NameMapping name="shadedcontour"   title="Cloud cover shaded + contours" abstract="Contours with shaded background"/>
+  <StandardNames standard_name="cloud_area_fraction,low_type_cloud_area_fraction,medium_type_cloud_area_fraction,high_type_cloud_area_fraction,total_cloud_cover,low_cloud_cover,medium_cloud_cover,high_cloud_cover"/>
+  </Style>
+  -->
+  <Style name="highcloudcover">
+    <Legend fixedclasses="true" tickround="0.1" tickinterval=".1" >highcloudcover</Legend>
+    <Min>0</Min>
+    <Max>1</Max>
+    <ShadeInterval min="0.05" max="0.25"    label="0.05-0.25"    fillcolor="#E6E6FF"/>
+    <ShadeInterval min="0.25" max="0.50"    label="0.25-0.5"    fillcolor="#B3B3FF"/>
+    <ShadeInterval min="0.50" max="0.75"    label="0.50-0.75"    fillcolor="#8080FF"/>
+    <ShadeInterval min="0.75" max="1.00"    label="0.75-1.00"    fillcolor="#4C4CFF"/>
+    <RenderMethod>bilinear</RenderMethod>
+    <NameMapping name="nearest"         title="High cloud cover" abstract="Rendered with nearest neighbour interpolation"/>
+    <NameMapping name="bilinear"         title="High cloud cover bilinear" abstract="Rendered with bilinear interpolation"/>
+    <NameMapping name="contour"         title="High cloud cover contour" abstract="Contourlines on a transparent background"/>
+    <NameMapping name="shaded"          title="High cloud cover shaded" abstract="Shaded"/>
+    <NameMapping name="nearestcontour"  title="High cloud cover nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
+    <NameMapping name="bilinearcontour" title="High cloud cover bilinear + contours" abstract="Contours with bilinear interpolated background"/>
+    <NameMapping name="shadedcontour"   title="High cloud cover shaded + contours" abstract="Contours with shaded background"/>
+    <StandardNames standard_name="high_cloud_cover,high_type_cloud_area_fraction"/>
+  </Style>
+  
+  <Style name="midcloudcover">
+    <Legend fixedclasses="true" tickround="0.1" tickinterval=".1">midcloudcover</Legend>
+    <Min>0</Min>
+    <Max>1</Max>
+    <ShadeInterval min="0.05" max="0.25"    label="0.05-0.25"    fillcolor="#B3F6B3"/>
+    <ShadeInterval min="0.25" max="0.50"    label="0.25-0.5"    fillcolor="#99FF99"/>
+    <ShadeInterval min="0.50" max="0.75"    label="0.50-0.75"    fillcolor="#4CE64C"/>
+    <ShadeInterval min="0.75" max="1.00"    label="0.75-1.00"    fillcolor="#00FF00"/>
+    <RenderMethod>bilinear</RenderMethod>
+    <NameMapping name="nearest"         title="Medium cloud cover" abstract="Rendered with nearest neighbour interpolation"/>
+    <NameMapping name="bilinear"         title="Medium cloud cover bilinear" abstract="Rendered with bilinear interpolation"/>
+    <NameMapping name="contour"         title="Medium cloud cover contour" abstract="Contourlines on a transparent background"/>
+    <NameMapping name="shaded"          title="Medium cloud cover shaded" abstract="Shaded"/>
+    <NameMapping name="nearestcontour"  title="Medium cloud cover nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
+    <NameMapping name="bilinearcontour" title="Medium cloud cover bilinear + contours" abstract="Contours with bilinear interpolated background"/>
+    <NameMapping name="shadedcontour"   title="Medium cloud cover shaded + contours" abstract="Contours with shaded background"/>
+    <StandardNames standard_name="medium_cloud_cover,medium_type_cloud_area_fraction"/>
+  </Style>
+  
+  <Style name="lowcloudcover">
+    <Legend fixedclasses="true" tickround="0.1" tickinterval=".1">lowcloudcover</Legend>
+    <Min>0</Min>
+    <Max>1</Max>
+    <ShadeInterval min="0.05" max="0.25"    label="0.05-0.25"    fillcolor="#FFE6E6"/>
+    <ShadeInterval min="0.25" max="0.50"    label="0.25-0.5"    fillcolor="#FFB3B3"/>
+    <ShadeInterval min="0.50" max="0.75"    label="0.50-0.75"    fillcolor="#FF8080"/>
+    <ShadeInterval min="0.75" max="1.00"    label="0.75-1.00"    fillcolor="#FF4C4C"/>
+    <RenderMethod>bilinear</RenderMethod>
+    <NameMapping name="nearest"         title="Low cloud cover" abstract="Rendered with nearest neighbour interpolation"/>
+    <NameMapping name="bilinear"         title="Low cloud cover bilinear" abstract="Rendered with bilinear interpolation"/>
+    <NameMapping name="contour"         title="Low cloud cover contour" abstract="Contourlines on a transparent background"/>
+    <NameMapping name="shaded"          title="Low cloud cover shaded" abstract="Shaded"/>
+    <NameMapping name="nearestcontour"  title="Low cloud cover nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
+    <NameMapping name="bilinearcontour" title="Low cloud cover bilinear + contours" abstract="Contours with bilinear interpolated background"/>
+    <NameMapping name="shadedcontour"   title="Low cloud cover shaded + contours" abstract="Contours with shaded background"/>
+    <StandardNames standard_name="low_cloud_cover,low_type_cloud_area_fraction"/>
+  </Style>
+  
+  <Style name="totalcloudcover">
+    <Legend fixedclasses="true" tickround="0.1" tickinterval=".1">totalcloudcover</Legend>
+    <Min>0</Min>
+    <Max>1</Max>
+    <ShadeInterval min="0.05" max="0.25"    label="0.05-0.25"    fillcolor="#D9D9D9"/>
+    <ShadeInterval min="0.25" max="0.50"    label="0.25-0.5"    fillcolor="#A6A6A6"/>
+    <ShadeInterval min="0.50" max="0.75"    label="0.50-0.75"    fillcolor="#737373"/>
+    <ShadeInterval min="0.75" max="1.00"    label="0.75-1.00"    fillcolor="#4C4C4C"/>
+    <RenderMethod>bilinear</RenderMethod>
+    <NameMapping name="nearest"         title="Total cloud cover" abstract="Rendered with nearest neighbour interpolation"/>
+    <NameMapping name="bilinear"         title="Total cloud cover bilinear" abstract="Rendered with bilinear interpolation"/>
+    <NameMapping name="contour"         title="Total cloud cover contour" abstract="Contourlines on a transparent background"/>
+    <NameMapping name="shaded"          title="Total cloud cover shaded" abstract="Shaded"/>
+    <NameMapping name="nearestcontour"  title="Total cloud cover nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
+    <NameMapping name="bilinearcontour" title="Total cloud cover bilinear + contours" abstract="Contours with bilinear interpolated background"/>
+    <NameMapping name="shadedcontour"   title="Total cloud cover shaded + contours" abstract="Contours with shaded background"/>
+    <StandardNames standard_name="total_cloud_cover,totalcloudcover,cloud_area_fraction,convective_type_cloud_area_fraction"/>
+  </Style>
+  
+  <Style name="snow">
+    <Legend fixed="true" tickround="0.1" tickinterval="5">snow</Legend>
+    <Scale>80</Scale>
+    <Offset>80</Offset>
+    <Log>10</Log>
+    <ShadeInterval min="0.1" max="0.3"    label="0.1-0.3"    fillcolor="#80FF00"/>
+    <ShadeInterval min="0.3" max="0.5"    label="0.3-0.5"    fillcolor="#00FF00"/>
+    <ShadeInterval min="0.5" max="1"    label="0.5-1"    fillcolor="#008C30"/>
+    <ShadeInterval min="1" max="3"    label="1-3"    fillcolor="#00FFFF"/>
+    <ShadeInterval min="3" max="5"    label="3-5"    fillcolor="#0000FF"/>
+    <ShadeInterval min="5" max="10"    label="5-10"    fillcolor="#FE00FE"/>
+    <ShadeInterval min="10" max="20"    label="10-20"    fillcolor="#FF0000"/>
+    <ShadeInterval min="20" max="40"    label="20-40"    fillcolor="#FFFF00"/>
+    <ShadeInterval min="40" max="100"    label="40-100"    fillcolor="#FF8000"/>
+    <!--    <RenderMethod>bilinear,nearest,shaded</RenderMethod>-->
+    <RenderMethod>shadedcontour,nearestcontour,bilinearcontour,contour</RenderMethod>
+    <NameMapping name="nearest"         title="Snow" abstract="Rendered with nearest neighbour interpolation"/>
+    <NameMapping name="bilinear"         title="Snow bilinear" abstract="Rendered with bilinear interpolation"/>
+    <NameMapping name="contour"         title="Snow contour" abstract="Contourlines on a transparent background"/>
+    <NameMapping name="shaded"          title="Snow shaded" abstract="Shaded"/>
+    <NameMapping name="nearestcontour"  title="Snow nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
+    <NameMapping name="bilinearcontour" title="Snow bilinear + contours" abstract="Contours with bilinear interpolated background"/>
+    <NameMapping name="shadedcontour"   title="Snow shaded + contours" abstract="Contours with shaded background"/>
+    <StandardNames standard_name="snowfall,cumsnowfall,snowfall_03h,snowfall_06h,snowfall_24h"/>
+  </Style>
+  
+  <Style name="precip-wow">
+    <Legend fixed="true" >wow.precipitation</Legend>
+    <Scale>80</Scale>
+    <Offset>80</Offset>
+    <Log>10</Log>
+    <ShadeInterval min="0.1" max="0.3"    label="0.1-0.3"    fillcolor="#BACDCB"/>
+    <ShadeInterval min="0.3" max="0.5"   label="0.3-0.5"   fillcolor="#A3C3C9"/> 
+    <ShadeInterval min="0.5" max="1"   label="0.5-1"   fillcolor="#8BBCC8"/> 
+    <ShadeInterval min="1" max="3"  label="1-3"  fillcolor="#6AAEC1"/> 
+    <ShadeInterval min="3" max="5" label="3-5" fillcolor="#42A1C0"/>
+    <ShadeInterval min="5" max="10" label="5-10" fillcolor="#377EAF"/> 
+    <ShadeInterval min="10" max="20" label="10-20" fillcolor="#46669C"/> 
+    <ShadeInterval min="20" max="40" label="20-40" fillcolor="#56528D"/>
+    <ShadeInterval min="40" max="60" label="40-60" fillcolor="#86008D"/>
+    <ShadeInterval min="60" max="100" label="60-100" fillcolor="#610066"/>
+    <ContourLine width="1.2" linecolor="#000000" textcolor="#000000" textformatting="%2.1f" classes="0.1,0.3,0.5,1,3,5,10,20,40,60,100"/>
+    <RenderMethod>shadedcontour</RenderMethod>
+    <NameMapping name="shadedcontour"   title="Precipitation (wow) shaded + contours" abstract="Contours with shaded background"/>
+    <SmoothingFilter>0</SmoothingFilter>
+    <StandardNames standard_name="total_precipitation,large_scale_precipitation,convective_precipitation,cumprecip,precipitation_03h,cumsnowfall,snowfall_03h,precipitation_flux,graupel_flux,snowfall_flux"/>
+  </Style>
+
+  <Style name="precip_cwk">
+    <Legend fixed="true">precip_cwk</Legend>
+    <Scale>80</Scale>
+    <Offset>80</Offset>
+    <Log>10</Log>
+    <ShadeInterval min="0.1" max="0.3"    label="0.1-0.3"    fillcolor="#80FF00"/>
+    <ShadeInterval min="0.3" max="0.5"   label="0.3-0.5"   fillcolor="#00FF00"/> 
+    <ShadeInterval min="0.5" max="1"   label="0.5-1"   fillcolor="#008C40"/> 
+    <ShadeInterval min="1" max="3"  label="1-3"  fillcolor="#00FFFF"/> 
+    <ShadeInterval min="3" max="5" label="3-5" fillcolor="#0000FF"/>
+    <ShadeInterval min="5" max="10" label="5-10" fillcolor="#FF00FF"/> 
+    <ShadeInterval min="10" max="20" label="10-20" fillcolor="#FF0000"/> 
+    <ShadeInterval min="20" max="40" label="20-40" fillcolor="#FFFF00"/>
+    <ShadeInterval min="40" max="100" label="40-100" fillcolor="#FF8000"/>
+    <ContourLine width="1.2" linecolor="#000000" textcolor="#000000" textformatting="%2.1f" classes="0.1,0.3,0.5,1,3,5,10,20,40,100"/>
+    
+    <RenderMethod>shadedcontour,contour</RenderMethod>
+    <NameMapping name="nearest"         title="Precipitation CWKnet" abstract="Rendered with nearest neighbour interpolation"/>
+    <NameMapping name="contour"         title="Precipitation CWKnet contour" abstract="Contourlines on a transparent background"/>
+    <NameMapping name="shaded"          title="Precipitation CWKnet shaded" abstract="Shaded"/>
+    <NameMapping name="nearestcontour"  title="Precipitation CWKnet nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
+    <NameMapping name="bilinearcontour" title="Precipitation CWKnet bilinear + contours" abstract="Contours with bilinear interpolated background"/>
+    <NameMapping name="shadedcontour"   title="Precipitation CWKnet shaded + contours" abstract="Contours with shaded background"/>
+    
+    <SmoothingFilter>0</SmoothingFilter>
+    <StandardNames standard_name="total_precipitation,large_scale_precipitation,convective_precipitation,cumprecip,precipitation_03h,cumsnowfall,snowfall_03h,precipitation_flux,graupel_flux,snowfall_flux"/>
+  </Style>
+  
+  <Style name="precip_cwk_6">
+    <Legend fixed="true">precip_cwk_6</Legend>
+    <Scale>80</Scale>
+    <Offset>80</Offset>
+    <Log>10</Log>
+    <ShadeInterval min="0.5" max="1"    label="0.5-1"    fillcolor="#008C40"/>
+    <ShadeInterval min="1" max="3"   label="1-3"   fillcolor="#00FFFF"/> 
+    <ShadeInterval min="3" max="5"   label="3-5"   fillcolor="#0000FF"/> 
+    <ShadeInterval min="5" max="10"  label="5-10"  fillcolor="#FF00FF"/> 
+    <ShadeInterval min="10" max="20" label="10-20" fillcolor="#FF0000"/>
+    <ShadeInterval min="20" max="40" label="20-40" fillcolor="#FF00FF"/> 
+    <ShadeInterval min="40" max="100" label="40-100" fillcolor="#FF8000"/> 
+    <ContourLine width="1.2" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" classes="0.5,1,3,5,10,20,40,100"/>
+    
+    <RenderMethod>shadedcontour,nearestcontour,bilinearcontour,contour</RenderMethod>
+    <NameMapping name="nearest"         title="Precipitation6 CWKnet" abstract="Rendered with nearest neighbour interpolation"/>
+    <NameMapping name="contour"         title="Precipitation6 CWKnet contour" abstract="Contourlines on a transparent background"/>
+    <NameMapping name="shaded"          title="Precipitation6 CWKnet shaded" abstract="Shaded"/>
+    <NameMapping name="nearestcontour"  title="Precipitation6 CWKnet nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
+    <NameMapping name="bilinearcontour" title="Precipitation6 CWKnet bilinear + contours" abstract="Contours with bilinear interpolated background"/>
+    <NameMapping name="shadedcontour"   title="Precipitation6 CWKnet shaded + contours" abstract="Contours with shaded background"/>
+    
+    <SmoothingFilter>0</SmoothingFilter>
+    <StandardNames standard_name="precipitation_06h,snowfall_06h"/>
+  </Style>
+  
+  <Style name="precip_cwk_24">
+    <Legend fixed="true">precip_cwk_24</Legend>
+    <Scale>60</Scale>
+    <Offset>60</Offset>
+    <Log>10</Log>
+    <ShadeInterval min="0.5" max="1"    label="0.5-1"    fillcolor="#008C40"/>
+    <ShadeInterval min="1" max="3"   label="1-3"   fillcolor="#00FFFF"/> 
+    <ShadeInterval min="3" max="5"   label="3-5"   fillcolor="#0000FF"/> 
+    <ShadeInterval min="5" max="10"  label="5-10"  fillcolor="#FF00FF"/> 
+    <ShadeInterval min="10" max="20" label="10-20" fillcolor="#FF0000"/>
+    <ShadeInterval min="20" max="40" label="20-40" fillcolor="#FF00FF"/> 
+    <ShadeInterval min="40" max="100" label="40-100" fillcolor="#FF8000"/> 
+    <ShadeInterval min="100" max="200" label="100-200" fillcolor="#80FF00"/> 
+    <ShadeInterval min="200" max="400" label="200-400" fillcolor="#00FF00"/> 
+    <ContourLine width="1.2" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" classes="0.5,1,3,5,10,20,40,100,200,400,1000"/>
+    <RenderMethod>shadedcontour,nearestcontour,bilinearcontour,contour</RenderMethod>
+    <NameMapping name="nearest"         title="Precipitation24 CWKnet" abstract="Rendered with nearest neighbour interpolation"/>
+    <NameMapping name="contour"         title="Precipitation24 CWKnet contour" abstract="Contourlines on a transparent background"/>
+    <NameMapping name="shaded"          title="Precipitation24 CWKnet shaded" abstract="Shaded"/>
+    <NameMapping name="nearestcontour"  title="Precipitation24 CWKnet nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
+    <NameMapping name="bilinearcontour" title="Precipitation24 CWKnet bilinear + contours" abstract="Contours with bilinear interpolated background"/>
+    <NameMapping name="shadedcontour"   title="Precipitation24 CWKnet shaded + contours" abstract="Contours with shaded background"/>
+    
+    <SmoothingFilter>0</SmoothingFilter>
+    <StandardNames standard_name="precipitation_24h,snowfall_24h"/>
+  </Style>
+  
+  <Style name="pressure_cwk">
+    <Legend fixed="true">not_used</Legend>
+    <Min>950</Min>
+    <Max>1050</Max>
+    <ShadeInterval>2.5</ShadeInterval>
+    <ContourLine width="1.2" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" interval="5"/>
+    <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="" interval="1.0"/>
+    <RenderMethod>contour</RenderMethod>
+    <NameMapping name="nearest"         title="Pressure" abstract="Rendered with nearest neighbour interpolation"/>
+    <NameMapping name="contour"         title="Pressure contour (1/5)" abstract="Contourlines on a transparent background"/>
+    <NameMapping name="shaded"          title="Pressure shaded" abstract="Shaded"/>
+    <NameMapping name="bilinear"        title="Pressure bilinear" abstract="Shaded"/>
+    <NameMapping name="nearestcontour"  title="Pressure nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
+    <NameMapping name="bilinearcontour" title="Pressure bilinear + contours" abstract="Contours with bilinear interpolated background"/>
+    <NameMapping name="shadedcontour"   title="Pressure shaded + contours" abstract="Contours with shaded background"/>
+    <StandardNames standard_name="air_pressure,air_pressure_at_sea_level,pressure,pressure_level"/>
+  </Style>
+  
+  <Style name="pressure_cwk_2.5">
+    <Legend fixed="true">not_used</Legend>
+    <Min>950</Min>
+    <Max>1050</Max>
+    <ShadeInterval>2.5</ShadeInterval>
+    <ContourLine width="1.2" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" interval="10"/>
+    <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="" interval="2.5"/>
+    <RenderMethod>contour</RenderMethod>
+    <NameMapping name="contour"         title="Pressure contour (2.5/10)" abstract="Contourlines on a transparent background"/>
+    <!--
+    <NameMapping name="nearest"         title="Pressure" abstract="Rendered with nearest neighbour interpolation"/>
+    <NameMapping name="shaded"          title="Pressure shaded" abstract="Shaded"/>
+    <NameMapping name="bilinear"        title="Pressure bilinear" abstract="Shaded"/>
+    <NameMapping name="nearestcontour"  title="Pressure nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
+    <NameMapping name="bilinearcontour" title="Pressure bilinear + contours" abstract="Contours with bilinear interpolated background"/>
+    <NameMapping name="shadedcontour"   title="Pressure shaded + contours" abstract="Contours with shaded background"/>
+    -->
+    <StandardNames standard_name="air_pressure,air_pressure_at_sea_level,pressure,pressure_level"/>
+  </Style>
+  
+  <Style name="pressure_cwk_5">
+    <Legend fixed="true">not_used</Legend>
+    <Min>950</Min>
+    <Max>1050</Max>
+    <ShadeInterval>5</ShadeInterval>
+    <ContourLine width="1.2" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" interval="10"/>
+    <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="" interval="5"/>
+    <RenderMethod>contour</RenderMethod>
+    <NameMapping name="contour"         title="Pressure contour (5/10)" abstract="Contourlines on a transparent background"/>
+    <!--
+    <NameMapping name="nearest"         title="Pressure" abstract="Rendered with nearest neighbour interpolation"/>
+    <NameMapping name="shaded"          title="Pressure shaded" abstract="Shaded"/>
+    <NameMapping name="bilinear"        title="Pressure bilinear" abstract="Shaded"/>
+    <NameMapping name="nearestcontour"  title="Pressure nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
+    <NameMapping name="bilinearcontour" title="Pressure bilinear + contours" abstract="Contours with bilinear interpolated background"/>
+    <NameMapping name="shadedcontour"   title="Pressure shaded + contours" abstract="Contours with shaded background"/>
+    -->
+    <StandardNames standard_name="air_pressure,air_pressure_at_sea_level,pressure,pressure_level"/>
+  </Style>
+  
+  <!--
+  <Style name="pressure">
+  <Legend fixed="true">not_used</Legend>
+  <Min>950</Min>
+  <Max>1050</Max>
+  <ShadeInterval>2.5</ShadeInterval>
+  <ContourLine width="1.2" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" interval="5"/>
+  <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="" interval="2.5"/>
+  <RenderMethod>shadedcontour,nearestcontour,bilinear,contour</RenderMethod>
+  <NameMapping name="contour"         title="Pressure contour" abstract="Contourlines on a transparent background"/>
+  <NameMapping name="nearest"         title="Pressure" abstract="Rendered with nearest neighbour interpolation"/>
+  <NameMapping name="contour"         title="Pressure contour" abstract="Contourlines on a transparent background"/>
+  <NameMapping name="shaded"          title="Pressure shaded" abstract="Shaded"/>
+  <NameMapping name="bilinear"        title="Pressure bilinear" abstract="Shaded"/>
+  <NameMapping name="nearestcontour"  title="Pressure nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
+  <NameMapping name="bilinearcontour" title="Pressure bilinear + contours" abstract="Contours with bilinear interpolated background"/>
+  <NameMapping name="shadedcontour"   title="Pressure shaded + contours" abstract="Contours with shaded background"/>
+  <StandardNames standard_name="air_pressure,air_pressure_at_sea_level,pressure,pressure_level"/>
+  </Style>
+  -->
+
+    
+  <Style name="pressure-wow">
+    <Legend fixed="true" tickinterval="5">wow.pressure</Legend>
+    <Min>950</Min>
+    <Max>1050</Max>
+    <ShadeInterval>2.5</ShadeInterval>
+    <ContourLine width="1.2" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" interval="5"/>
+    <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="" interval="2.5"/>
+    <RenderMethod>shadedcontour</RenderMethod>
+   <NameMapping name="shadedcontour"   title="Pressure (wow) shaded + contours" abstract="Contours swith shaded background"/>
+    <SmoothingFilter>0</SmoothingFilter>
+    <StandardNames standard_name="air_pressure,air_pressure_at_sea_level,pressure,pressure_level"/>
+  </Style>
+  
+  <Style name="Windbarbs">
+    <Legend fixed="true">windspeed_cwk</Legend>
+    <Scale>1</Scale>
+    <Offset>0</Offset>
+    <RenderMethod>barb</RenderMethod>
+    <NameMapping name="barb"         title="Wind barbs" abstract="Rendered with barbs"/>
+    <NameMapping name="thinbarb"         title="Wind barbs (thinned)" abstract="Rendered with thinned barbs"/>
+    <StandardNames standard_name="x_wind,y_wind,eastward_wind,northward_wind"/>
+  </Style>
+  
+  <Style name="Windbarbs_kts">
+    <Legend fixed="true">windspeed_cwk</Legend>
+    <Min>0</Min>
+    <Max>240</Max>
+    <ShadeInterval min="0" max="7"    label="0-7 (<3)"    fillcolor="#FFFFB3"/>
+    <ShadeInterval min="7" max="11"    label="7-11 (3)"    fillcolor="#FFFF00"/>
+    <ShadeInterval min="11" max="16"    label="11-16 (4)"    fillcolor="#80FF00"/>
+    <ShadeInterval min="16" max="21"    label="16-21 (5)"    fillcolor="#008C40"/>
+    <ShadeInterval min="21" max="27"    label="21-27 (6)"    fillcolor="#00FFFF"/>
+    <ShadeInterval min="27" max="34"    label="27-34 (7)"    fillcolor="#73A3FF"/>
+    <ShadeInterval min="34" max="41"    label="34-41 (8)"    fillcolor="#0000FF"/>
+    <ShadeInterval min="41" max="48"    label="41-48 (9)"    fillcolor="#FF51FF"/>
+    <ShadeInterval min="48" max="56"    label="48-56 (10)"    fillcolor="#FF8000"/>
+    <ShadeInterval min="56" max="64"    label="56-64 (11)"    fillcolor="#FF0000"/>
+    <ShadeInterval min="64" max="200"    label="64-200 (12)"    fillcolor="#FFFF00"/>
+    <!--    <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" classes="7,11,16,21,27,34,41,48,56,64,200"/> -->
+    <ContourLine width=".5" linecolor="#800000" textcolor="#800000" textformatting="%2.0f" interval="5"/>
+    <RenderMethod>barbshaded</RenderMethod>
+    <NameMapping name="barbcontour"         title="Wind barbs+cont" abstract="Rendered with barbs"/>
+    <NameMapping name="barbshaded"         title="Wind barbs+sh" abstract="Rendered with barbs"/>
+    <NameMapping name="barbshadedcontour"         title="Wind barbs+sh/cont" abstract="Rendered with barbs"/>
+    <NameMapping name="thinbarbcontour"         title="Wind barbs (thinned)+cont" abstract="Rendered with thinned barbs"/>
+    <NameMapping name="thinbarbshaded"         title="Wind barbs (thinned)+sh" abstract="Rendered with thinned barbs"/>
+    <NameMappin name="thinbarbshadedcontour"         title="Wind barbs (thinned)+sh/cont" abstract="Rendered with thinned barbs"/>
+    <StandardNames standard_name="x_wind,y_wind,eastward_wind,northward_wind" units="xyz"/>
+  </Style>
+  
+  <Style name="Windbarbs_mps">
+    <Legend fixed="true">windspeed_cwk</Legend>
+    <Min>0</Min>
+    <Max>240</Max>
+    <ShadeInterval min="0" max="3.4"    label="0-3.4 (<3)"    fillcolor="#FFFFB3"/>
+    <ShadeInterval min="3.4" max="5.5"    label="3.4-5.5 (3)"    fillcolor="#FFFF00"/>
+    <ShadeInterval min="5.5" max="8"    label="5.5-8 (4)"    fillcolor="#80FF00"/>
+    <ShadeInterval min="8" max="10.8"    label="8-10.8 (5)"    fillcolor="#008C40"/>
+    <ShadeInterval min="10.8" max="13.9"    label="10.8-13.9 (6)"    fillcolor="#00FFFF"/>
+    <ShadeInterval min="13.9" max="17.2"    label="13.9-17.2 (7)"    fillcolor="#73A3FF"/>
+    <ShadeInterval min="17.2" max="20.8"    label="17.2-20.8 (8)"    fillcolor="#0000FF"/>
+    <ShadeInterval min="20.8" max="24.4"    label="20.8-24.4 (9)"    fillcolor="#FF51FF"/>
+    <ShadeInterval min="24.4" max="28.4"    label="24.4-28.4 (10)"    fillcolor="#FF8000"/>
+    <ShadeInterval min="28.4" max="32.6"    label="28.4-32.6 (11)"    fillcolor="#FF0000"/>
+    <ShadeInterval min="32.6" max="200"    label=">32.6 (12)"    fillcolor="#FFFF00"/>
+    <!--    <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" classes="7,11,16,21,27,34,41,48,56,64,200"/> -->
+    <ContourLine width=".5" linecolor="#800000" textcolor="#800000" textformatting="%2.0f" interval="5"/>
+    <RenderMethod>barbshaded</RenderMethod>
+    <NameMapping name="barbcontour"         title="Wind barbs+cont" abstract="Rendered with barbs"/>
+    <NameMapping name="barbshaded"         title="Wind barbs+sh" abstract="Rendered with barbs"/>
+    <NameMapping name="barbshadedcontour"         title="Wind barbs+sh/cont" abstract="Rendered with barbs"/>
+    <NameMapping name="thinbarbcontour"         title="Wind barbs (thinned)+cont" abstract="Rendered with thinned barbs"/>
+    <NameMapping name="thinbarbshaded"         title="Wind barbs (thinned)+sh" abstract="Rendered with thinned barbs"/>
+    <NameMapping name="thinbarbshadedcontour"         title="Wind barbs (thinned)+sh/cont" abstract="Rendered with thinned barbs"/>
+    <StandardNames standard_name="x_wind,y_wind,eastward_wind,northward_wind" units="m/s"/>
+  </Style>
+  
+  <Style name="Windspeed">
+    <Legend fixed="true">windspeed_cwk</Legend>
+    <Min>0</Min>
+    <Max>240</Max>
+    <ShadeInterval min="0" max="7"    label="0-7 (<3)"    fillcolor="#FFFFB3"/>
+    <ShadeInterval min="7" max="11"    label="7-11 (3)"    fillcolor="#FFFF00"/>
+    <ShadeInterval min="11" max="16"    label="11-16 (4)"    fillcolor="#80FF00"/>
+    <ShadeInterval min="16" max="21"    label="16-21 (5)"    fillcolor="#008C40"/>
+    <ShadeInterval min="21" max="27"    label="21-27 (6)"    fillcolor="#00FFFF"/>
+    <ShadeInterval min="27" max="34"    label="27-34 (7)"    fillcolor="#73A3FF"/>
+    <ShadeInterval min="34" max="41"    label="34-41 (8)"    fillcolor="#0000FF"/>
+    <ShadeInterval min="41" max="48"    label="41-48 (9)"    fillcolor="#FF51FF"/>
+    <ShadeInterval min="48" max="56"    label="48-56 (10)"    fillcolor="#FF8000"/>
+    <ShadeInterval min="56" max="64"    label="56-64 (11)"    fillcolor="#FF0000"/>
+    <ShadeInterval min="64" max="200"    label="64-200 (12)"    fillcolor="#FFFF00"/>
+    <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" classes="7,11,16,21,27,34,41,48,56,64,200"/>
+    <ContourLine width=".5" linecolor="#800000" textcolor="#800000" textformatting="%2.0f" interval="5"/>
+    <RenderMethod>contour,nearest,shaded,bilinear,nearestcontour,shadedcontour,bilinearcontour</RenderMethod>
+    <NameMapping name="nearest"         title="Windspeed" abstract="Rendered with nearest neighbour interpolation"/>
+    <NameMapping name="contour"         title="Windspeed contour" abstract="Contourlines on a transparent background"/>
+    <NameMapping name="shaded"          title="Windspeed shaded" abstract="Shaded"/>
+    <NameMapping name="bilinear"        title="Windspeed bilinear" abstract="Shaded"/>
+    <NameMapping name="nearestcontour"  title="Windspeed nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
+    <NameMapping name="bilinearcontour" title="Windspeed bilinear + contours" abstract="Contours with bilinear interpolated background"/>
+    <NameMapping name="shadedcontour"   title="Windspeed shaded + contours" abstract="Contours with shaded background"/>
+    <StandardNames standard_name="windspeed,x_wind,y_wind,Windgusts,x_gust,y_gust,wind_speed_of_gust" units="kts"/>
+  </Style>
+  
+  <!--
+  <Style name="WindspeedHi">
+  <Legend fixed="true">windspeed_hi</Legend>
+  <Min>0</Min>
+  <Max>240</Max>
+  <ShadeInterval min="40" max="50"    label="40-50"    fillcolor="#FFFFE6"/>
+  <ShadeInterval min="50" max="60"    label="50-60"    fillcolor="#FFFF66"/>
+  <ShadeInterval min="60" max="70"    label="60-70"    fillcolor="#FFFF00"/>
+  <ShadeInterval min="70" max="80"    label="70-80"    fillcolor="#FFE6BF"/>
+  <ShadeInterval min="80" max="90"    label="80-90"    fillcolor="#FFCC7F"/>
+  <ShadeInterval min="90" max="100"    label="90-100"    fillcolor="#FF9C00"/>
+  <ShadeInterval min="100" max="110"    label="100-110"    fillcolor="#FFE6E6"/>
+  <ShadeInterval min="110" max="125"    label="110-125"    fillcolor="#FFB3B3"/>
+  <ShadeInterval min="125" max="300"    label="125-300"    fillcolor="#FF7F7F"/>
+  <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" classes="30,40,50,60,70,80,90,100,110,125,300"/>
+  <NameMapping name="bilinearcontour" title="Windspeed(hi) bilinear + contours" abstract="Contours with bilinear interpolated background"/>
+  <NameMapping name="shadedcontour"   title="Windspeed(hi) shaded + contours" abstract="Contours with shaded background"/>
+  <RenderMethod>shadedcontour,bilinearcontour</RenderMethod>
+  <StandardNames standard_name="x_wind,y_wind,eastward_wind,northward_wind" units="m/s"/>
+  </Style>
+  -->
+  
+  <Style name="geopotential">
+    <Legend fixed="true" tickinterval="50">not_used</Legend>
+    <Min>0.1</Min>
+    <Max>2000</Max>
+    <ShadeInterval>10</ShadeInterval>
+    <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%3.0f" interval="10"/>
+    <ContourLine width="1.3" linecolor="#FF0000" textcolor="#FF0000" textformatting="%3.0f" interval="100"/>
+    <RenderMethod>contour</RenderMethod>
+    <NameMapping name="nearest"         title="Geopotential" abstract="Rendered with nearest neighbour interpolation"/>
+    <NameMapping name="contour"         title="Geopotential contour" abstract="Contourlines on a transparent background"/>
+    <StandardNames standard_name="geopotential"/>
+  </Style>
+  
+  <!--
+  <Style name="geopotentialLow">
+  <Legend fixed="true" tickinterval="50">not_used</Legend>
+  <Min>4800</Min>
+  <Max>6000</Max>
+  <ShadeInterval>40</ShadeInterval>
+  <ContourLine width="1.3" linecolor="#800000" textcolor="#800000" textformatting="%4.0f" interval="200"/>
+  <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%4.0f" interval="40"/>
+  <RenderMethod>contour</RenderMethod>
+  <NameMapping name="nearest"         title="Geopotential(low)" abstract="Rendered with nearest neighbour interpolation"/>
+  <NameMapping name="contour"         title="Geopotential(low) contour" abstract="Contourlines on a transparent background"/>
+  <StandardNames standard_name="geopotential,z850,height"/>
+  </Style>
+  
+  <Style name="geopotentialMed">
+  <Legend fixed="true" tickinterval="50">not_used</Legend>
+  <Min>4800</Min>
+  <Max>6000</Max>
+  <ShadeInterval>40</ShadeInterval>
+  <ContourLine width="1.3" linecolor="#800000" textcolor="#800000" textformatting="%4.0f" interval="200"/>
+  <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%4.0f" interval="40"/>
+  <RenderMethod>contour</RenderMethod>
+  <NameMapping name="nearest"         title="Geopotential(mid)" abstract="Rendered with nearest neighbour interpolation"/>
+  <NameMapping name="contour"         title="Geopotential(mid) contour" abstract="Contourlines on a transparent background"/>
+  <StandardNames standard_name="geopotential,z500,height"/>
+  </Style>
+  
+  <Style name="geopotentialHi">
+  <Legend fixedclasses="true" tickinterval="50">not_used</Legend>
+  <Min>6000</Min>
+  <Max>10000</Max>
+  <ShadeInterval>40</ShadeInterval>
+  <ContourLine width="1.3" linecolor="#800000" textcolor="#800000" textformatting="%4.0f" interval="200"/>
+  <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%4.0f" interval="40"/>
+  <RenderMethod>contour</RenderMethod>
+  <NameMapping name="nearest"         title="Geopotential(hi)" abstract="Rendered with nearest neighbour interpolation"/>
+  <NameMapping name="contour"         title="Geopotential(hi) contour" abstract="Contourlines on a transparent background"/>
+  <StandardNames standard_name="geopotential,z300,height"/>
+  </Style>
+  -->
+  <Style name="fraction">
+    <Legend fixed="true" tickinterval="10">fraction</Legend>
+    <Min>0</Min>
+    <Max>100</Max>
+    <ShadeInterval>10</ShadeInterval>
+    <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" interval="10"/>
+    <RenderMethod>bilinear,contour</RenderMethod>
+    <NameMapping name="nearest"         title="Fraction" abstract="Rendered with nearest neighbour interpolation"/>
+    <NameMapping name="contour"         title="Fraction contour" abstract="Contourlines on a transparent background"/>
+    <NameMapping name="shaded"          title="Fraction shaded" abstract="Shaded"/>
+    <NameMapping name="bilinear"        title="Fraction bilinear" abstract="Shaded"/>
+    <NameMapping name="nearestcontour"  title="Fraction nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
+    <NameMapping name="bilinearcontour" title="Fraction bilinear + contours" abstract="Contours with bilinear interpolated background"/>
+    <NameMapping name="shadedcontour"   title="Fraction shaded + contours" abstract="Contours with shaded background"/>
+    <StandardNames standard_name="WindspeedCumul,BeaufortWindCumul,TemperatureCumul,TemperatureUnderCumul,Temperature_2mCumul,Temperature_2mUnderCumul,WindgustCumul,PrecipCumul,Precip03hCumul,Precip06hCumul,Precip12hCumul,Precip24hCumul,CumSnowFallCumul,SnowFall03hCumul,SnowFall06hCumul,SnowFall12hCumul,SnowFall24hCumul,RelHumCumul,RelHumUnderCumul,TCCCumul,TCCUnderCumul"/>
+  </Style>
+  
+  <Style name="relhum">
+    <Legend fixed="true" tickinterval="10">relhum</Legend>
+    <Min>0</Min>
+    <Max>100</Max>
+    <ShadeInterval min="0" max="50"    label="0-50"    fillcolor="#FFFFB2"/>
+    <ShadeInterval min="50" max="70"    label="50-70"    fillcolor="#FFFF00"/>
+    <ShadeInterval min="70" max="90"    label="70-90"    fillcolor="#7FFF00"/>
+    <ShadeInterval min="90" max="95"    label="90-95"    fillcolor="#FF7F00"/>
+    <ShadeInterval min="95" max="99"    label="95-99"    fillcolor="#FF0000"/>
+    <ShadeInterval min="99" max="110"    label=">99"    fillcolor="#000000"/>
+    <ShadeInterval>10</ShadeInterval>
+    <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" interval="10"/>
+    <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" classes="50,70,90,95,99,100"/>
+    <RenderMethod>bilinear,contour</RenderMethod>
+    <NameMapping name="nearest"         title="Fraction" abstract="Rendered with nearest neighbour interpolation"/>
+    <NameMapping name="contour"         title="Fraction contour" abstract="Contourlines on a transparent background"/>
+    <NameMapping name="shaded"          title="Fraction shaded" abstract="Shaded"/>
+    <NameMapping name="bilinear"        title="Fraction bilinear" abstract="Shaded"/>
+    <NameMapping name="nearestcontour"  title="Fraction nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
+    <NameMapping name="bilinearcontour" title="Fraction bilinear + contours" abstract="Contours with bilinear interpolated background"/>
+    <NameMapping name="shadedcontour"   title="Fraction shaded + contours" abstract="Contours with shaded background"/>
+    <StandardNames standard_name="relative_humidity"/>
+  </Style>
+  
+  <Legend name="TCWVPalette" type="colorRange">
+    <palette index="0"   red="140"   green="0"   blue="120"/>
+    <palette index="15"   red="0"   green="0"   blue="255"/>
+    <palette index="100"   red="0"   green="255"   blue="255"/>
+    <palette index="130"   red="0"   green="255"   blue="0"/>
+    <palette index="160"   red="255"   green="255"   blue="0"/>
+    <palette index="200"   red="255"   green="0"   blue="0"/>
+    <palette index="240"   red="170"   green="0"   blue="0"/>
+  </Legend>
+  
+  <!--
+  <Style name="precip-continous">
+  <Legend fixed="true">TCWVPalette</Legend>
+  <Min>0</Min>
+  <Max>20</Max>
+  <RenderMethod>nearest</RenderMethod>
+  <StandardNames standard_name="total_precipitation,large_scale_precipitation,convective_precipitation,precipitation_03h,precipitation_06h,precipitation_24h,precipitation_flux,graupel_flux,snowfall_flux"/>
+  <NameMapping name="nearest" title="Precipitation continous" abstract="Rendered with nearest neighbour interpolation"/>
+  </Style>
+  -->
+</Configuration>

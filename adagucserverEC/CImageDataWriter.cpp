@@ -37,9 +37,6 @@
 #include "CReporter.h"
 #include "CImgWarpHillShaded.h"
 #include "CImgWarpGeneric.h"
-#ifndef M_PI
-#define M_PI 3.14159265358979323846 // pi
-#endif
 
 #ifndef rad2deg
 #define rad2deg (180. / M_PI) // conversion for rad to deg
@@ -51,7 +48,7 @@
 
 CT::string months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 // #define CIMAGEDATAWRITER_DEBUG
-//  #define MEASURETIME
+// #define MEASURETIME
 
 void doJacoIntoLatLon(double &u, double &v, double lo, double la, float deltaX, float deltaY, CImageWarper *warper);
 void rotateUvNorth(double &u, double &v, double rlo, double rla, float deltaX, float deltaY, CImageWarper *warper);
@@ -540,6 +537,9 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
         drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
         srvParam->imageFormat = IMAGEFORMAT_IMAGEWEBP;
       }
+      if (dataSource->cfgLayer->WMSFormat[0]->attr.quality.empty() == false) {
+        srvParam->imageQuality = dataSource->cfgLayer->WMSFormat[0]->attr.quality.toInt();
+      }
     }
   }
   // Set font location
@@ -732,7 +732,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
         }
       }
     }
-
     // CDBDebug("gfi_openall: %d %d",dataSources[d]->cfgLayer->FilePath.size(),openAll);
 
     if (dataSources[d]->cfgLayer->TileSettings.size() == 1) {
@@ -1076,7 +1075,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
                     if (feature->paramMap.empty() == false) {
                       std::map<std::string, std::string>::iterator paramItemIt;
                       for (paramItemIt = feature->paramMap.begin(); paramItemIt != feature->paramMap.end(); ++paramItemIt) {
-                        CDBDebug("Clicked %s %s", paramItemIt->first.c_str(), paramItemIt->second.c_str());
                         GetFeatureInfoResult::Element *featureParam = new GetFeatureInfoResult::Element();
                         featureParam->dataSource = dataSource;
                         for (size_t j = 0; j < dataSources[d]->requiredDims.size(); j++) {
@@ -1130,7 +1128,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
               ptr = projCacheInfo.imx + projCacheInfo.imy * projCacheInfo.dWidth;
             }
 
-            double pi = 3.141592;
             double pixel1 = convertValue(dataSource->getDataObject(0)->cdfVariable->getType(), dataSource->getDataObject(0)->cdfVariable->data, ptr);
             double pixel2 = convertValue(dataSource->getDataObject(1)->cdfVariable->getType(), dataSource->getDataObject(1)->cdfVariable->data, ptr);
 
@@ -1189,7 +1186,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
               element2->units = "degrees";
 
               if (windDataValid) {
-                double angle = 270 - atan2(pixel2, pixel1) * 180 / pi;
+                double angle = 270 - atan2(pixel2, pixel1) * 180 / M_PI;
                 if (angle > 360) angle -= 360;
                 if (angle < 0) angle = angle + 360;
                 element2->value.print("%3.0f", angle);
@@ -1303,7 +1300,7 @@ int CImageDataWriter::createAnimation() {
   return 0;
 }
 
-void CImageDataWriter::setDate(const char *szTemp) { drawImage.setTextStroke(szTemp, strlen(szTemp), drawImage.Geo->dWidth - 170, 5, 240, 254, 0); }
+void CImageDataWriter::setDate(const char *szTemp) { drawImage.setTextStroke(drawImage.Geo->dWidth - 170, 5, 0, szTemp, NULL, 12.0, 0.75, CColor(0, 0, 0, 255), CColor(255, 255, 255, 255)); }
 
 CImageDataWriter::IndexRange::IndexRange() {
   min = 0;
@@ -1457,6 +1454,12 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
               }
             }
             if (featureInterval->attr.fillcolor.empty() == false) {
+              /*
+                Make a shade interval configuration based on the match and matchid properties in the GeoJSON.
+                The datafield is already populated with the feature indices of the geojson polygon.
+                The shadeinterval configuration can style these indices of the polygons with colors.
+                Actual rendering of this is done in CImageNearestNeighbour with the _plot function
+              */
               std::vector<CImageDataWriter::IndexRange> ranges = getIndexRangesForRegex(featureInterval->attr.match, attributeValues, numFeatures);
               for (size_t i = 0; i < ranges.size(); i++) {
                 CServerConfig::XMLE_ShadeInterval *shadeInterval = new CServerConfig::XMLE_ShadeInterval();
@@ -1533,6 +1536,18 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
       if (renderMethod & RM_BARB) drawBarb = true;
       if (renderMethod & RM_THIN) drawGridVectors = true;
 
+      /*
+        Check the if we want to use discrete type with the bilinear rendermethod.
+        The bilinear Rendermethod can shade using ShadeInterval if renderhint in RenderSettings is set to RENDERHINT_DISCRETECLASSES
+      */
+      if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL && styleConfiguration->styleConfig->RenderSettings.size() == 1) {
+        CT::string renderHint = styleConfiguration->styleConfig->RenderSettings[0]->attr.renderhint;
+        if (renderHint.equals(RENDERHINT_DISCRETECLASSES)) {
+          drawMap = false;   // Don't use continous legends with the bilinear renderer
+          drawShaded = true; // Use discrete legends defined by ShadeInterval with the bilinear renderer
+        }
+      }
+
       if (drawMap == true) bilinearSettings.printconcat("drawMap=true;");
       if (drawVector == true) bilinearSettings.printconcat("drawVector=true;");
       if (drawBarb == true) bilinearSettings.printconcat("drawBarb=true;");
@@ -1578,11 +1593,24 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
               if (contourLine->attr.textcolor.empty() == false) {
                 bilinearSettings.printconcat("textcolor(%s)$", contourLine->attr.textcolor.c_str());
               }
+              if (contourLine->attr.textsize.empty() == false) {
+                bilinearSettings.printconcat("textsize(%s)$", contourLine->attr.textsize.c_str());
+              }
+              if (contourLine->attr.textstrokewidth.empty() == false) {
+                bilinearSettings.printconcat("textstrokewidth(%s)$", contourLine->attr.textstrokewidth.c_str());
+              }
+
+              if (contourLine->attr.textstrokecolor.empty() == false) {
+                bilinearSettings.printconcat("textstrokecolor(%s)$", contourLine->attr.textstrokecolor.c_str());
+              }
               if (contourLine->attr.interval.empty() == false) {
                 bilinearSettings.printconcat("interval(%s)$", contourLine->attr.interval.c_str());
               }
               if (contourLine->attr.textformatting.empty() == false) {
                 bilinearSettings.printconcat("textformatting(%s)$", contourLine->attr.textformatting.c_str());
+              }
+              if (contourLine->attr.dashing.empty() == false) {
+                bilinearSettings.printconcat("dashing(%s)$", contourLine->attr.dashing.c_str());
               }
               bilinearSettings.printconcat(";");
             }
@@ -1601,8 +1629,20 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
               if (contourLine->attr.classes.empty() == false) {
                 bilinearSettings.printconcat("classes(%s)$", contourLine->attr.classes.c_str());
               }
+              if (contourLine->attr.textsize.empty() == false) {
+                bilinearSettings.printconcat("textsize(%s)$", contourLine->attr.textsize.c_str());
+              }
+              if (contourLine->attr.textstrokewidth.empty() == false) {
+                bilinearSettings.printconcat("textstrokewidth(%s)$", contourLine->attr.textstrokewidth.c_str());
+              }
+              if (contourLine->attr.textstrokecolor.empty() == false) {
+                bilinearSettings.printconcat("textstrokecolor(%s)$", contourLine->attr.textstrokecolor.c_str());
+              }
               if (contourLine->attr.textformatting.empty() == false) {
                 bilinearSettings.printconcat("textformatting(%s)$", contourLine->attr.textformatting.c_str());
+              }
+              if (contourLine->attr.dashing.empty() == false) {
+                bilinearSettings.printconcat("dashing(%s)$", contourLine->attr.dashing.c_str());
               }
               bilinearSettings.printconcat(";");
             }
@@ -1920,8 +1960,7 @@ int CImageDataWriter::calculateData(std::vector<CDataSource *> &dataSources) {
 
       if (dataSource->cfgLayer->ImageText.size() > 0) {
         if (dataSource->cfgLayer->ImageText[0]->value.empty() == false) {
-          size_t len = strlen(dataSource->cfgLayer->ImageText[0]->value.c_str());
-          drawImage.setTextStroke(dataSource->cfgLayer->ImageText[0]->value.c_str(), len, int(drawImage.Geo->dWidth / 2 - len * 3), drawImage.Geo->dHeight - 16, 240, 254, -1);
+          drawImage.setTextStroke(drawImage.Geo->dWidth - 170, 5, 0, dataSource->cfgLayer->ImageText[0]->value.c_str(), NULL, 12.0, 0.75, CColor(0, 0, 0, 255), CColor(255, 255, 255, 255));
         }
       }
     }
@@ -3396,35 +3435,50 @@ int CImageDataWriter::end() {
   // Static image
   // CDBDebug("srvParam->imageFormat = %d",srvParam->imageFormat);
   int status = 1;
+
+  CT::string cacheControl = srvParam->getCacheControlHeader(srvParam->getCacheControlOption());
+
   if (srvParam->imageFormat == IMAGEFORMAT_IMAGEPNG8) {
     CDBDebug("Creating 8 bit png with alpha");
-    printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
+    printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl.c_str(), 13, 10);
     status = drawImage.printImagePng8(true);
   } else if (srvParam->imageFormat == IMAGEFORMAT_IMAGEPNG8_NOALPHA) {
     CDBDebug("Creating 8 bit png without alpha");
-    printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
+    printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl.c_str(), 13, 10);
     status = drawImage.printImagePng8(false);
   } else if (srvParam->imageFormat == IMAGEFORMAT_IMAGEPNG24) {
     CDBDebug("Creating 24 bit png");
-    printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
+    printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl.c_str(), 13, 10);
     status = drawImage.printImagePng24();
   } else if (srvParam->imageFormat == IMAGEFORMAT_IMAGEPNG32) {
     CDBDebug("Creating 32 bit png");
-    printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
+    printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl.c_str(), 13, 10);
     status = drawImage.printImagePng32();
   } else if (srvParam->imageFormat == IMAGEFORMAT_IMAGEWEBP) {
     CDBDebug("Creating 32 bit webp");
-    printf("%s%c%c\n", "Content-Type:image/webp", 13, 10);
-    status = drawImage.printImageWebP32(srvParam->imageQuality);
+    printf("%s%s%c%c\n", "Content-Type:image/webp", cacheControl.c_str(), 13, 10);
+    int webPQuality = srvParam->imageQuality;
+    if (!srvParam->Format.empty()) {
+      /* Support setting quality via wms format parameter, e.g. format=image/webp;90& */
+      auto s = srvParam->Format.splitToStack(";");
+      if (s.size() > 1) {
+        int q = s[1].toInt();
+        if (q >= 0 && q <= 100) {
+          webPQuality = q;
+        }
+      }
+    }
+    CDBDebug("webPQuality = %d", webPQuality);
+    status = drawImage.printImageWebP32(webPQuality);
   } else if (srvParam->imageFormat == IMAGEFORMAT_IMAGEGIF) {
     // CDBDebug("LegendGraphic GIF");
     if (animation == 0) {
-      printf("%s%c%c\n", "Content-Type:image/gif", 13, 10);
+      printf("%s%s%c%c\n", "Content-Type:image/gif", cacheControl.c_str(), 13, 10);
     }
     status = drawImage.printImageGif();
   } else {
     // CDBDebug("LegendGraphic PNG");
-    printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
+    printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl.c_str(), 13, 10);
     status = drawImage.printImagePng8(true);
   }
 
@@ -3628,18 +3682,18 @@ void rotateUvNorth(double &u, double &v, double rlo, double rla, float deltaX, f
   dLonNorth = radians(lon_pntNorth);
   dLatNorth = radians(lat_pntNorth);
   xpntNorthSph = cos(dLatNorth) * cos(dLonNorth);
-  ypntNorthSph = cos(dLatNorth) * sin(dLonNorth); // # Get [dLonNorth,dLatNorth] on the unit sphere.
-  zpntNorthSph = sin(dLatNorth);                  //# Only XY plane is needed.
+  ypntNorthSph = cos(dLatNorth) * sin(dLonNorth); // Get [dLonNorth,dLatNorth] on the unit sphere.
+  zpntNorthSph = sin(dLatNorth);                  // Only XY plane is needed.
   dLonEast = radians(lon_pntEast);
   dLatEast = radians(lat_pntEast);
   xpntEastSph = cos(dLatEast) * cos(dLonEast);
-  ypntEastSph = cos(dLatEast) * sin(dLonEast); // # Get [dLonEast,dLatEast] on the unit sphere.
-  zpntEastSph = sin(dLatEast);                 // # Only XY plane is needed.
+  ypntEastSph = cos(dLatEast) * sin(dLonEast); // Get [dLonEast,dLatEast] on the unit sphere.
+  zpntEastSph = sin(dLatEast);                 // Only XY plane is needed.
   lon_pnt0 = radians(lon_pnt0);
   lat_pnt0 = radians(lat_pnt0);
   xpnt0Sph = cos(lat_pnt0) * cos(lon_pnt0);
-  ypnt0Sph = cos(lat_pnt0) * sin(lon_pnt0); // # Get [lon_pnt0,lat_pnt0] on the unit sphere.
-  zpnt0Sph = sin(lat_pnt0);                 // # Only XY plane is needed.
+  ypnt0Sph = cos(lat_pnt0) * sin(lon_pnt0); // Get [lon_pnt0,lat_pnt0] on the unit sphere.
+  zpnt0Sph = sin(lat_pnt0);                 // Only XY plane is needed.
 
   xpntEastSph -= xpnt0Sph;
   ypntEastSph -= ypnt0Sph;
@@ -3647,21 +3701,13 @@ void rotateUvNorth(double &u, double &v, double rlo, double rla, float deltaX, f
   xpntNorthSph -= xpnt0Sph, ypntNorthSph -= ypnt0Sph;
   zpntNorthSph -= zpnt0Sph;
 
-  NormVector(xpntEastSph, ypntEastSph, zpntEastSph);    // vecx
-  NormVector(xpntNorthSph, ypntNorthSph, zpntNorthSph); // vecy
+  NormVector(xpntEastSph, ypntEastSph, zpntEastSph);                                                                        // vecx
+  NormVector(xpntNorthSph, ypntNorthSph, zpntNorthSph);                                                                     // vecy
 
-  // vecz = CrossProd(vecx,vecy)
   CrossProd(xpntEastSph, ypntEastSph, zpntEastSph, xpntNorthSph, ypntNorthSph, zpntNorthSph, xnormSph, ynormSph, znormSph); // vec z
-  //# vecn = (0.0,0.0,1.0)                   // up-vector in a global coordinate system
-  //# Project vecn onto plane XY, where plane-normal is vecz
-  //# vecnProjXY = vecn - D*vecz;   D= a*x1+b*y1+c*z1;  vecz=(a,b,c); vecn=(x1,y1,z1)=(0,0,1)
-  //#                               D= vecz[2]*1;
-  //# vecyRot = NormVector( (0.0 - vecz[2]*vecz[0],0.0  - vecz[2]*vecz[1], 1.0  - vecz[2]*vecz[2]) )
-
-  // double Dist =  xnormSph * 0.0 +  ynormSph * 0.0 + znormSph * 1.0; // Left out for optimization
-  xpntNorthSphRot = -znormSph * xnormSph;      // xpntNorthSphRot = 0.0 - Dist*xnormSph;
-  ypntNorthSphRot = -znormSph * ynormSph;      // ypntNorthSphRot = 0.0 - Dist*ynormSph;
-  zpntNorthSphRot = 1.0 - znormSph * znormSph; // zpntNorthSphRot = 1.0 - Dist*znormSph;
+  xpntNorthSphRot = -znormSph * xnormSph;                                                                                   // xpntNorthSphRot = 0.0 - Dist*xnormSph;
+  ypntNorthSphRot = -znormSph * ynormSph;                                                                                   // ypntNorthSphRot = 0.0 - Dist*ynormSph;
+  zpntNorthSphRot = 1.0 - znormSph * znormSph;                                                                              // zpntNorthSphRot = 1.0 - Dist*znormSph;
   NormVector(xpntNorthSphRot, ypntNorthSphRot, zpntNorthSphRot);
 
   // This would create in 3D the rotated Easting vector; but we don't need it in this routine.
@@ -3677,7 +3723,7 @@ void rotateUvNorth(double &u, double &v, double rlo, double rla, float deltaX, f
 
   xpntNorthSph = sin(vecAngle); // Rotate the point/vector (0,1) around Z-axis with vecAngle
   ypntNorthSph = cos(vecAngle);
-  xpntEastSph = ypntNorthSph; // Rotate the same point/vector around Z-axis with 90 degrees
+  xpntEastSph = ypntNorthSph;   // Rotate the same point/vector around Z-axis with 90 degrees
   ypntEastSph = -xpntNorthSph;
 
   // zpntNorthSph = 0; zpntEastSph = 0;  // not needed in 2D

@@ -24,6 +24,7 @@
  ******************************************************************************/
 
 #include "adagucserver.h"
+
 #include "CReporter.h"
 #include "CReportWriter.h"
 #include <getopt.h>
@@ -75,13 +76,20 @@ void serverWarningFunction(const char *msg) {
 
 void serverLogFunctionCMDLine(const char *msg) { printf("%s", msg); }
 
+#include "adagucserver.h"
+
 void serverLogFunctionNothing(const char *) {}
 
 /* Set config file from environment variable ADAGUC_CONFIG */
-int setCRequestConfigFromEnvironment(CRequest *request) {
+int setCRequestConfigFromEnvironment(CRequest *request, const char *additionalDataset = nullptr) {
   char *configfile = getenv("ADAGUC_CONFIG");
   if (configfile != NULL) {
-    int status = request->setConfigFile(configfile);
+    CT::string configWithAdditionalDataset = configfile;
+    if (additionalDataset != nullptr && strlen(additionalDataset) > 0) {
+      configWithAdditionalDataset.concat(",");
+      configWithAdditionalDataset.concat(additionalDataset);
+    }
+    int status = request->setConfigFile(configWithAdditionalDataset.c_str());
 
     /* Check logging level */
     if (request->getServerParams()->isDebugLoggingEnabled() == false) {
@@ -94,6 +102,80 @@ int setCRequestConfigFromEnvironment(CRequest *request) {
     return 1;
   }
   return 0;
+}
+
+/**
+ * @param layerPathToScan: the provided file to scan
+ */
+std::set<std::string> findDataSetsToScan(CT::string layerPathToScan, bool verbose) {
+  std::set<std::string> datasetsToScan;
+  // loop all datasets
+  CRequest baseRequest;
+  int status = setCRequestConfigFromEnvironment(&baseRequest);
+  if (status != 0) {
+    return datasetsToScan;
+  }
+  auto srvParam = baseRequest.getServerParams();
+
+  // Get the directory of the file to scan:
+  CT::string directoryOfFileToScan = layerPathToScan = CDirReader::makeCleanPath(layerPathToScan);
+  directoryOfFileToScan.substringSelf(0, directoryOfFileToScan.length() - directoryOfFileToScan.basename().length());
+  directoryOfFileToScan = CDirReader::makeCleanPath(directoryOfFileToScan) + "/";
+  if (verbose) {
+    CDBDebug("directoryOfFileToScan = [%s]", directoryOfFileToScan.c_str());
+  }
+  srvParam->verbose = false;
+  std::vector<CT::string> listOfDatasets;
+  for (size_t j = 0; j < srvParam->cfg->Dataset.size(); j++) {
+    if (srvParam->cfg->Dataset[j]->attr.enabled.equals("true") && srvParam->cfg->Dataset[j]->attr.location.empty() == false) {
+      if (verbose) {
+        CDBDebug("Dataset locations %s", srvParam->cfg->Dataset[j]->attr.location.c_str());
+      }
+      auto files = CDirReader::listDir(srvParam->cfg->Dataset[j]->attr.location.c_str(), false, "^.*\\.xml$");
+      for (auto &dataset : files) {
+        if (verbose) {
+          CDBDebug("Testing dataset %s", dataset.c_str());
+        }
+        CRequest configParser;
+        auto configSrvParam = configParser.getServerParams();
+        configSrvParam->verbose = false;
+        setCRequestConfigFromEnvironment(&configParser, dataset.c_str());
+
+        if (configSrvParam && configSrvParam->cfg) {
+          auto layers = configSrvParam->cfg->Layer;
+          for (size_t j = 0; j < layers.size(); j++) {
+            if (layers[j]->attr.type.equals("database")) {
+              if (layers[j]->FilePath.size() > 0) {
+                CT::string filePath = CDirReader::makeCleanPath(layers[j]->FilePath[0]->value);
+                // Directories need to end with a /
+                CT::string filePathWithTrailingSlash = filePath + "/";
+                CT::string filter = layers[j]->FilePath[0]->attr.filter;
+                // CDBDebug(" %s %s", directoryOfFileToScan.c_str(), directoryOfFileToScan.c_str());
+                // When the FilePath in the Layer configuration is exactly the same as the file to scan, give a Match
+                if (layerPathToScan.equals(filePath)) {
+                  if (verbose) {
+                    CDBDebug("Exactly matching: %s", filePath.c_str());
+                  }
+                  datasetsToScan.insert(dataset.c_str());
+                  break;
+                  // When the directory of the file to scan matches the FilePath and the filter matches, give a Match
+                } else if (directoryOfFileToScan.startsWith(filePathWithTrailingSlash)) {
+                  if (CDirReader::testRegEx(layerPathToScan.basename(), filter.c_str()) == 1) {
+                    if (verbose) {
+                      CDBDebug("Directories Matching: %s / %s", filePath.c_str(), filter.c_str());
+                    }
+                    datasetsToScan.insert(dataset.c_str());
+                    break;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return datasetsToScan;
 }
 
 /* Start handling the OGC request */
@@ -119,6 +201,8 @@ int _main(int argc, char **argv, char **) {
   int scanFlags = 0;
   int configSet = 0;
   bool getlayers = false;
+  bool automaticallyFindMatchingDataset = false;
+  bool verbose = true;
   CT::string tailPath, layerPathToScan;
   CT::string file;
   CT::string inspireDatasetCSW;
@@ -127,16 +211,37 @@ int _main(int argc, char **argv, char **) {
 
   while (true) {
     int opt_idx = 0;
-    static struct option long_options[] = {
-        {"updatedb", no_argument, 0, 0},          {"config", required_argument, 0, 0}, {"createtiles", no_argument, 0, 0},  {"tailpath", required_argument, 0, 0},
-        {"path", required_argument, 0, 0},        {"rescan", no_argument, 0, 0},       {"nocleanup", no_argument, 0, 0},    {"cleanfiles", optional_argument, 0, 0},
-        {"recreate", no_argument, 0, 0},          {"getlayers", no_argument, 0, 0},    {"file", required_argument, 0, 0},   {"inspiredatasetcsw", required_argument, 0, 0},
-        {"datasetpath", required_argument, 0, 0}, {"test", no_argument, 0, 0},         {"report", optional_argument, 0, 0}, {"layername", required_argument, 0, 0}};
+    static struct option long_options[] = {{"updatedb", no_argument, 0, 0},
+                                           {"config", required_argument, 0, 0},
+                                           {"createtiles", no_argument, 0, 0},
+                                           {"tailpath", required_argument, 0, 0},
+                                           {"path", required_argument, 0, 0},
+                                           {"rescan", no_argument, 0, 0},
+                                           {"nocleanup", no_argument, 0, 0},
+                                           {"cleanfiles", optional_argument, 0, 0},
+                                           {"recreate", no_argument, 0, 0},
+                                           {"getlayers", no_argument, 0, 0},
+                                           {"file", required_argument, 0, 0},
+                                           {"inspiredatasetcsw", required_argument, 0, 0},
+                                           {"datasetpath", required_argument, 0, 0},
+                                           {"test", no_argument, 0, 0},
+                                           {"report", optional_argument, 0, 0},
+                                           {"layername", required_argument, 0, 0},
+                                           {"verboseoff", no_argument, 0, 0},
+                                           {"autofinddataset", no_argument, 0, 0},
+                                           {NULL, 0, NULL, 0}};
 
     opt = getopt_long(argc, argv, "", long_options, &opt_idx);
     if (opt == -1) {
       break;
     } else if (opt == 0) {
+      if (strncmp(long_options[opt_idx].name, "verboseoff", 10) == 0) {
+        verbose = false;
+      }
+      if (strncmp(long_options[opt_idx].name, "autofinddataset", 15) == 0) {
+        automaticallyFindMatchingDataset = true;
+      }
+
       if (strncmp(long_options[opt_idx].name, "test", 4) == 0) {
         CDBDebug("Test");
         CProj4ToCF proj4ToCF;
@@ -173,7 +278,7 @@ int _main(int argc, char **argv, char **) {
       }
       if (strncmp(long_options[opt_idx].name, "cleanfiles", 10) == 0) {
         CDBDebug("CLEAN: Delete old files according to Layer configuration");
-        scanFlags |= CDBFILESCANNER_CLEANFILES;
+        scanFlags |= CDBFILESCANNER_CLEANFILES + CDBFILESCANNER_UPDATEDB;
       }
       if (strncmp(long_options[opt_idx].name, "recreate", 8) == 0) {
         CDBDebug("RECREATE: Drop tables and recreate them");
@@ -204,15 +309,35 @@ int _main(int argc, char **argv, char **) {
     CDBError("And --tailpath for scanning specific sub directory, specify --path for a absolute path to update");
     return 1;
   } else if (((scanFlags & CDBFILESCANNER_UPDATEDB) == CDBFILESCANNER_UPDATEDB) && (configSet == 1)) { /* Update database */
-    CRequest request;
-    status = setCRequestConfigFromEnvironment(&request);
-    if (status != 0) {
-      CDBError("Unable to read configuration file");
+
+    if (!layerPathToScan.empty() && !CDirReader::isFile(layerPathToScan.c_str())) {
+      CDBError("Provided file does not exist [%s].", layerPathToScan.c_str());
       return 1;
     }
-    status = request.updatedb(&tailPath, &layerPathToScan, scanFlags, layerName);
-    if (status != 0) {
-      CDBError("Error occured in updating the database");
+    std::set<std::string> datasetsToScan;
+
+    if (automaticallyFindMatchingDataset) {
+      datasetsToScan = findDataSetsToScan(layerPathToScan, verbose);
+      CDBDebug("Datasets to scan: %d", datasetsToScan.size());
+    } else {
+      // Empty string to make for loop work.
+      datasetsToScan.insert("");
+    }
+    for (auto &dataset : datasetsToScan) {
+      if (dataset.length() > 0) {
+        CDBDebug("***** Scanning dataset [%s]", dataset.c_str());
+      }
+      CRequest request;
+      request.getServerParams()->verbose = verbose;
+      status = setCRequestConfigFromEnvironment(&request, dataset.c_str());
+      if (status != 0) {
+        CDBError("Unable to read configuration file");
+        return 1;
+      }
+      status = request.updatedb(&tailPath, &layerPathToScan, scanFlags, layerName);
+      if (status != 0) {
+        CDBError("Error occured in updating the database");
+      }
     }
     readyerror();
     return status;

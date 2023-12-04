@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+
+  <Style name="Windbarbs">
+    <Scale>1</Scale>
+    <Offset>0</Offset>
+    <RenderMethod>barb</RenderMethod>
+    <NameMapping name="barb"         title="Wind barbs" abstract="Rendered with barbs"/>
+    <NameMapping name="thinbarb"     title="Wind barbs (thinned)" abstract="Rendered with thinned barbs"/>
+  </Style>
+
+  <Layer type="database">
+    <Name>wind__at_10m</Name>
+    <Title>Wind 10m flags</Title>
+    <Variable>x_wind__at_10m</Variable>
+    <Variable>y_wind__at_10m</Variable>
+    <FilePath filter="">{ADAGUC_PATH}data/datasets/harmonie_wind_grid_30x30.nc</FilePath>
+    <DataPostProc algorithm="ax+b" a="1" b="0" units="m/s"/>
+    <Dimension name="time" units="ISO8601" default="min">time</Dimension>
+    <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension>
+    <Styles>Windbarbs</Styles>
+  </Layer>
+
+  <!-- End of configuration /-->
+</Configuration>

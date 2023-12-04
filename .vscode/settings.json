@@ -64,11 +64,12 @@
     "valarray": "cpp",
     "variant": "cpp",
     "shared_mutex": "cpp",
-    "regex": "cpp"
+    "regex": "cpp",
+    "numbers": "cpp"
   },
   "cmake.buildDirectory": "${workspaceFolder}/bin",
   "cmake.configureOnOpen": true,
-  "clang-format.executable": "/usr/bin/clang-format-13",
+  "clang-format.executable": "/usr/bin/clang-format",
   "[C++]": {
     "editor.formatOnSave": true
   },
@@ -80,5 +81,7 @@
     "editor.tabSize": 4,
     "editor.insertSpaces": true,
     "editor.detectIndentation": false
-  }
+  },
+  "python.linting.pylintPath": "env/bin/pylint",
+  "python.formatting.provider": "yapf"
 }

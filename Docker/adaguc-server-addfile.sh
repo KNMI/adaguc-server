@@ -9,16 +9,18 @@
 #
 # With -f you can optionally specify the file to add
 # With -d you can optionally specify the dataset to add.
+# If only a file is specified without a dataset, adaguc-server will try to find the matching dataset that belongs to the file.
 #
 # Usage: ./adaguc-server-addfile.sh -d <datasetname (optional)> -f <file to add>
+# Usage: ./adaguc-server-addfile.sh -f <file to add> 
 # Usage: ./adaguc-server-addfile.sh -d <datasetname> 
-# Usage: ./adaguc-server-addfile.sh  
+
 
 THISSCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 . ${THISSCRIPTDIR}/adaguc-server-chkconfig.sh
 
-ADAGUC_DATASET='*.xml'
+ADAGUC_DATASET=''
 
 while getopts "d:f:" o; do
     case "${o}" in
@@ -37,40 +39,52 @@ while getopts "d:f:" o; do
     esac
 done
 
-# if [ -n "${ADAGUC_DATAFILE}" ]; then
-#   echo "Adding ${ADAGUC_DATAFILE} to the available datasets."
-# else
-#   echo "You did not supply a file to add!"
-#   exit 1
-# fi
 
-# Update all datasets
-for configfile in /data/adaguc-datasets/${ADAGUC_DATASET} ;do
-  filename=/data/adaguc-datasets/"${configfile##*/}" 
-  filebasename=${filename##*/}
-  if [[ "${ADAGUC_DATASET_MASK}" && `echo ${filebasename} | grep -E ${ADAGUC_DATASET_MASK}` != ${filebasename} ]] ; then
-      if [[ "${ADAGUC_DATASET_MASK}" ]] ; then
-          echo "${filebasename} doesn't match ${ADAGUC_DATASET_MASK}"
-      fi
-      continue
+### Scan a file for a specified dataset ###
+
+
+if [[ -n "${ADAGUC_DATASET}" &&  -n "${ADAGUC_DATAFILE}" ]]; then
+  STATUSCODE=0
+  echo "Adding file [${ADAGUC_DATAFILE}] to dataset [${ADAGUC_DATASET}]:"
+  command="${ADAGUC_PATH}/bin/adagucserver --updatedb --config ${ADAGUC_CONFIG},${ADAGUC_DATASET} --path ${ADAGUC_DATAFILE}"
+  echo $command
+  $command
+  OUT=$?
+  if [ ${OUT} -ne 0 ]; then
+    STATUSCODE=1
   fi
+  exit ${STATUSCODE} 
+fi
+
+
+### Scan a file ###
+if [[ -n "${ADAGUC_DATAFILE}" ]]; then
+
+  basediroffile=${ADAGUC_DATAFILE%/*}
+  basenameoffile="${ADAGUC_DATAFILE##*/}"
   
-  if [ -n "${ADAGUC_DATAFILE}" ]; then
-    echo ""
-    echo "Starting update for dataset ${filename} and datafile ${ADAGUC_DATAFILE}" 
-    ${ADAGUC_PATH}/bin/adagucserver --updatedb --config ${ADAGUC_CONFIG},${filename} --path ${ADAGUC_DATAFILE}
-    OUT=$?
-    if [ -d /servicehealth ]; then
-      echo "$OUT" > /servicehealth/${filebasename%.*}
-    fi
-  else
-    echo ""
-    echo "Starting update for dataset ${filename}" 
-    ${ADAGUC_PATH}/bin/adagucserver --updatedb --config ${ADAGUC_CONFIG},${filename}
-    OUT=$?
-    if [ -d /servicehealth ]; then
-      echo "$OUT" > /servicehealth/${filebasename%.*}
-    fi
+  STATUSCODE=0
+  echo "Adding file [${ADAGUC_DATAFILE}] to dataset [${alldatasets}]:"
+  command="${ADAGUC_PATH}/bin/adagucserver --updatedb --autofinddataset --verboseoff --config ${ADAGUC_CONFIG} --path ${ADAGUC_DATAFILE}"
+  echo $command
+  $command
+  OUT=$?
+  if [ ${OUT} -ne 0 ]; then
+    STATUSCODE=1
   fi
-done
+  exit ${STATUSCODE} 
+fi
 
+# Scan a dataset
+if [[ -n "${ADAGUC_DATASET}" ]]; then
+  STATUSCODE=0
+  echo "Scanning full dataset [${ADAGUC_DATASET}]:"
+  command="${ADAGUC_PATH}/bin/adagucserver --updatedb --verboseoff --config ${ADAGUC_CONFIG},${ADAGUC_DATASET}"
+  echo $command
+  $command
+  OUT=$?
+  if [ ${OUT} -ne 0 ]; then
+    STATUSCODE=1
+  fi
+  exit ${STATUSCODE} 
+fi

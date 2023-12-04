@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 echo "Starting adaguc-server functional tests"
 pushd `dirname $0` > /dev/null
 SCRIPTPATH=`pwd`
@@ -17,10 +17,11 @@ export ADAGUC_FONT="${ADAGUC_PATH}/data/fonts/FreeSans.ttf"
 export ADAGUC_ONLINERESOURCE=""
 export ADAGUC_ENABLELOGBUFFER=FALSE
 export ADAGUC_DATASET_DIR=${ADAGUC_PATH}/data/config/datasets/
+export ADAGUC_DATA_DIR=${ADAGUC_PATH}/data/datasets/
+export ADAGUC_AUTOWMS_DIR=${ADAGUC_PATH}/data/datasets/
 ulimit -c unlimited
 
-python3 ${ADAGUC_PATH}/tests/functional_test.py $1
 
-
-# To run a specific test:
-# bash starttests.sh TestStringMethods.test_WMSCMDUpdateDBTailPath
+python3 ${ADAGUC_PATH}/tests/functional_test.py $1 && \
+cd ../python/python_fastapi_server && \
+bash ./test_server.sh

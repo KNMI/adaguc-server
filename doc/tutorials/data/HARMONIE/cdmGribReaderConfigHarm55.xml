@@ -1,0 +1,423 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cdmGribReaderConfig xmlns="http://www.met.no/schema/fimex/cdmGribReaderConfig"
+                     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<!--                     xsi:schemaLocation="http://www.met.no/schema/fimex/cdmGribReaderConfig cdmGribReaderConfig.xsd" -->
+<processOptions>
+    <!-- parameters to select: all, definedOnly -->
+    <option name="selectParameters" value="definedOnly" />
+</processOptions>
+<overrule>
+    <!-- use these values instead of the values in the grib-messages -->
+    <!-- <earthFigure proj4="+ellps=WGS84 +towgs84=0,0,0" /> -->
+</overrule>
+<global_attributes>
+    <attribute name="Conventions" value="CF-1.0" type="string" />
+    <attribute name="institution" value="Royal Dutch Meteorological Institute, KNMI" type="string" />
+    <attribute name="source" value="HARMONIE" type="string" />
+    <attribute name="title" value="HARM_N25" type="string" />
+    <attribute name="min_time" value="%MIN_DATETIME(%Y-%m-%d %H:%M:%SZ)%" type="string" />
+    <attribute name="max_time" value="%MAX_DATETIME(%Y-%m-%d %H:%M:%SZ)%" type="string" />
+    <attribute name="Expires" value="%MAX_DATETIME(%Y-%m-%d,2419200)%" type="string" />
+    <attribute name="references" value="unknown" type="string" />
+    <!-- <attribute name="history" value="unknown" type="string" /> -->
+    <attribute name="comment" value="none" type="string" />
+</global_attributes>
+<axes>
+<time id="time" name="time" type="double">
+    <attribute name="long_name" value="time" type="string" />
+    <attribute name="standard_name" value="time" type="string" />
+    <attribute name="units" value="seconds since 1970-01-01 00:00:00 +00:00" type="string" />
+</time>
+<spatial_axis typeOfGrid="lambert" id="x" name="x" type="float">
+    <attribute name="long_name" value="x-coordinate in Cartesian system" type="string" />
+    <attribute name="standard_name" value="projection_x_coordinate" type="string" />
+    <attribute name="units" value="m" type="string" />
+</spatial_axis>
+<spatial_axis typeOfGrid="lambert" id="y" name="y" type="float">
+    <attribute name="long_name" value="y-coordinate in Cartesian system" type="string" />
+    <attribute name="standard_name" value="projection_y_coordinate" type="string" />
+    <attribute name="units" value="m" type="string" />
+</spatial_axis>
+<spatial_axis typeOfGrid="mercator" id="x" name="x" type="float">
+    <attribute name="long_name" value="x-coordinate in Cartesian system" type="string" />
+    <attribute name="standard_name" value="projection_x_coordinate" type="string" />
+    <attribute name="units" value="m" type="string" />
+</spatial_axis>
+<spatial_axis typeOfGrid="mercator" id="y" name="y" type="float">
+    <attribute name="long_name" value="y-coordinate in Cartesian system" type="string" />
+    <attribute name="standard_name" value="projection_y_coordinate" type="string" />
+    <attribute name="units" value="m" type="string" />
+</spatial_axis>
+<spatial_axis typeOfGrid="polar_stereographic" id="x" name="x" type="float">
+    <attribute name="long_name" value="x-coordinate in Cartesian system" type="string" />
+    <attribute name="standard_name" value="projection_x_coordinate" type="string" />
+    <attribute name="units" value="m" type="string" />
+</spatial_axis>
+<spatial_axis typeOfGrid="polar_stereographic" id="y" name="y" type="float">
+    <attribute name="long_name" value="y-coordinate in Cartesian system" type="string" />
+    <attribute name="standard_name" value="projection_y_coordinate" type="string" />
+    <attribute name="units" value="m" type="string" />
+</spatial_axis>
+<spatial_axis typeOfGrid="regular_ll" id="x" name="longitude" type="float">
+    <attribute name="long_name" value="longitude" type="string" />
+    <attribute name="units" value="degrees_east" type="string" />
+</spatial_axis>
+<spatial_axis typeOfGrid="regular_ll" id="y" name="latitude" type="float">
+    <attribute name="long_name" value="latitude" type="string" />
+    <attribute name="units" value="degrees_north" type="string" />
+</spatial_axis>
+<spatial_axis typeOfGrid="rotated_ll" id="x" name="rlon" type="float">
+    <attribute name="long_name" value="rotated longitude" type="string" />
+    <attribute name="standard_name" value="grid_longitude" type="string" />
+    <attribute name="units" value="degrees" type="string" />
+</spatial_axis>
+<spatial_axis typeOfGrid="rotated_ll" id="y" name="rlat" type="float">
+    <attribute name="long_name" value="rotated latitude" type="string" />
+    <attribute name="standard_name" value="grid_latitude" type="string" />
+    <attribute name="units" value="degrees" type="string" />
+</spatial_axis>
+<spatial_axis id="longitude" name="longitude">
+    <attribute name="valid_max" value="180." type="float" />
+    <attribute name="valid_min" value="-180." type="float" />
+    <attribute name="long_name" value="longitude" type="string" />
+    <attribute name="standard_name" value="longitude" type="string" />
+    <attribute name="units" value="degree_east" type="string" />
+</spatial_axis>
+<spatial_axis id="latitude" name="latitude">
+    <attribute name="valid_max" value="90." type="float" />
+    <attribute name="valid_min" value="-90." type="float" />
+    <attribute name="long_name" value="latitude" type="string" />
+    <attribute name="standard_name" value="latitude" type="string" />
+    <attribute name="units" value="degree_north" type="string" />
+</spatial_axis>
+<!-- grib2 code table 4.5; grib1 code table 3 / 3a -->
+<vertical_axis id="surface" name="surface" grib2_id="1" grib1_id="1" type="short">
+    <attribute name="_FillValue" value="-32767" type="short" />
+    <attribute name="description" value="ground or water surface" type="string" />
+    <attribute name="long_name" value="surface" type="string" />
+    <attribute name="positive" value="up" type="string" />
+    <attribute name="units" value="m" type="string" />
+</vertical_axis>
+<vertical_axis id="isotherm_0C_level" name="isotherm_0C_level" grib1_id="4" grib2_id="4" type="short">
+    <attribute name="_FillValue" value="-32767" type="short" />
+    <attribute name="description" value="level of 0degreeC isotherm" type="string" />
+    <attribute name="long_name" value="isotherm 0C" type="string" />
+    <attribute name="positive" value="up" type="string" />
+</vertical_axis>
+<vertical_axis id="maximum_wind_level" name="maximum_wind_level" grib1_id="6" grib2_id="6" type="short">
+    <attribute name="_FillValue" value="-32767" type="short" />
+    <attribute name="long_name" value="max wind level" type="string" />
+    <attribute name="positive" value="up" type="string" />
+</vertical_axis>
+<vertical_axis id="tropopause" name="tropopause" grib1_id="7" grib2_id="7" type="short">
+    <attribute name="_FillValue" value="-32767" type="short" />
+    <attribute name="long_name" value="Tropopause" type="string" />
+    <attribute name="positive" value="up" type="string" />
+</vertical_axis>
+<vertical_axis id="top_of_atmosphere" name="top_of_atmosphere" grib2_id="8" grib1_id="8" type="short">
+    <attribute name="_FillValue" value="-32767" type="short" />
+    <attribute name="long_name" value="nominal top of atmosphere" type="string" />
+    <attribute name="positive" value="up" type="string" />
+</vertical_axis>
+<vertical_axis id="isotherm_percK_level" name="isotherm_percK_level" grib1_id="20" type="short">
+    <attribute name="_FillValue" value="-32767" type="short" />
+    <attribute name="description" value="level of 1/100K isotherm" type="string" />
+    <attribute name="long_name" value="isotherm %K" type="string" />
+    <attribute name="units" value="1/100 K" type="string" />
+    <attribute name="positive" value="up" type="string" />
+</vertical_axis>
+<vertical_axis id="mean_sea_level" name="mean_sea_level" grib2_id="101" grib1_id="102" type="short">
+    <attribute name="_FillValue" value="-32767" type="short" />
+    <attribute name="description" value="mean sea level" type="string" />
+    <attribute name="long_name" value="mean_sea_level" type="string" />
+    <attribute name="positive" value="up" type="string" />
+    <attribute name="units" value="m" type="string" />
+</vertical_axis>
+<vertical_axis id="pressure" name="pressure" grib2_id="100" grib1_id="100" type="float">
+    <!-- Isobaric level -->
+    <attribute name="description" value="pressure" type="string" />
+    <attribute name="long_name" value="pressure" type="string" />
+    <attribute name="standard_name" value="air_pressure" type="string" />
+    <attribute name="positive" value="down" type="string" />
+    <grib1>
+        <attribute name="units" value="hPa" type="string" />
+    </grib1>
+    <grib2>
+        <attribute name="units" value="Pa" type="string" />
+    </grib2>
+</vertical_axis>
+<vertical_axis id="altitude" name="altitude" grib2_id="102" grib1_id="103" type="float">
+    <attribute name="description" value="height above MSL" type="string" />
+    <attribute name="long_name" value="height" type="string" />
+    <attribute name="positive" value="up" type="string" />
+    <attribute name="units" value="m" type="string" />
+</vertical_axis>
+<vertical_axis id="layer_between_altitudes" name="layer_between_altitudes" grib1_id="104" type="float">
+    <attribute name="description" value="layer between two altitudes" type="string" />
+    <attribute name="long_name" value="layer between two altitudes" type="string" />
+    <attribute name="positive" value="up" type="string" />
+    <attribute name="units" value="100m" type="string" />
+</vertical_axis>
+<vertical_axis id="height" name="height" grib2_id="103" grib1_id="105" type="float">
+    <attribute name="description" value="height above ground" type="string" />
+    <attribute name="long_name" value="height" type="string" />
+    <attribute name="positive" value="up" type="string" />
+    <attribute name="units" value="m" type="string" />
+</vertical_axis>
+<vertical_axis id="sigma" name="sigma" grib2_id="104" grib1_id="107" type="float">
+    <attribute name="description" value="atmosphere sigma coordinate" type="string" />
+    <attribute name="long_name" value="atmosphere_sigma_coordinate" type="string" />
+    <attribute name="standard_name" value="atmosphere_sigma_coordinate" type="string" />
+    <attribute name="positive" value="down" type="string" />
+</vertical_axis>
+<vertical_axis id="depth" name="depth" grib2_id="106" type="short">
+    <attribute name="description" value="depth below land surface" type="string" />
+    <attribute name="long_name" value="depth" type="string" />
+    <attribute name="positive" value="down" type="string" />
+    <attribute name="standard_name" value="depth" type="string" />
+    <grib1>
+        <attribute name="units" value="cm" type="string" />
+    </grib1>
+    <grib2>
+        <attribute name="units" value="m" type="string" />
+    </grib2>
+</vertical_axis>
+<vertical_axis id="specified_pressure_difference" name="specified_pressure_difference" grib2_id="108" type="float">
+    <attribute name="description" value="Level at specified pressure difference from ground to level" type="string" />
+    <attribute name="long_name" value="specified pressure difference from ground" type="string" />
+    <attribute name="standard_name" value="air_pressure" type="string" />
+    <attribute name="positive" value="up" type="string" />
+    <grib2>
+        <attribute name="units" value="Pa" type="string" />
+    </grib2>
+</vertical_axis>
+<vertical_axis id="potential_vorticity_surface" name="potential_vorticity_surface" grib2_id="109" type="float">
+    <attribute name="description" value="Potential vorticity surface" type="string" />
+    <attribute name="long_name" value="potential vorticity surface" type="string" />
+    <attribute name="standard_name" value="ertel_potential_vorticity" type="string" />
+    <attribute name="positive" value="up" type="string" />
+    <grib2>
+        <attribute name="units" value="K m^2 kg^-1 s^-1" type="string" />
+    </grib2>
+</vertical_axis>
+<vertical_axis id="depth_between_layers" name="depth_between_layers" grib1_id="112" type="short">
+<!-- TODO, the 2 layers are not read correctly yet. I need a special function to extract the 2 levels from one grib-field
+           like in  hybridSigma -->
+    <attribute name="description" value="depth between layers below land surface" type="string" />
+    <attribute name="long_name" value="depth between layes" type="string" />
+    <attribute name="positive" value="down" type="string" />
+    <attribute name="standard_name" value="depth" type="string" />
+    <attribute name="units" value="cm" type="string" />
+</vertical_axis>
+<vertical_axis id="theta" name="theta" grib2_id="107" grib1_id="113" type="float">
+    <attribute name="description" value="isentropic layer" type="string" />
+    <attribute name="units" value="K" type="string" />
+</vertical_axis>
+<vertical_axis id="depth_below_sea" name="depth_below_sea" grib2_id="160" grib1_id="160" type="short">
+    <attribute name="description" value="depth below sea surface" type="string" />
+    <attribute name="long_name" value="depth_below_sea" type="string" />
+    <attribute name="positive" value="down" type="string" />
+    <attribute name="standard_name" value="depth" type="string" />
+    <attribute name="units" value="m" type="string" />
+</vertical_axis>
+
+<vertical_axis id="harmoniUnknown117" name="harmoniUnknown117" grib1_id="117" type="short">
+    <attribute name="_FillValue" value="-32767" type="short" />
+    <attribute name="positive" value="up" type="string" />
+</vertical_axis>
+
+<vertical_axis id="adiabatic_condensation_level" name="adiabatic_condensation_level" grib1_id="5" type="short">
+    <attribute name="_FillValue" value="-32767" type="short" />
+    <attribute name="long_name" value="adiabatic condensation level (parcel lifted from surface)" type="string" />
+    <attribute name="positive" value="up" type="string" />
+</vertical_axis>
+
+<vertical_axis id="harmoniUnknown10" name="harmoniUnknown10" grib1_id="10" type="short">
+    <attribute name="_FillValue" value="-32767" type="short" />
+    <attribute name="positive" value="up" type="string" />
+</vertical_axis>
+
+
+<vertical_axis id="total_atmosphere" name="total_atmosphere" grib1_id="200" type="short">
+    <attribute name="_FillValue" value="-32767" type="short" />
+    <attribute name="long_name" value="total atmosphere as single layer" type="string" />
+    <attribute name="positive" value="up" type="string" />
+</vertical_axis>
+<vertical_axis id="local_vertical_level_200" name="local_vertical_level_200" grib2_id="200" type="float">
+    <attribute name="description" value="vertical level 200, defined locally, ask center" type="string" />
+    <attribute name="long_name" value="unknown vertical level 200" type="string" />
+    <attribute name="positive" value="up" type="string" />
+</vertical_axis>
+<vertical_axis id="entire_ocean" name="entire_ocean" grib2_id="201" grib1_id="201" type="float">
+    <attribute name="long_name" value="entire ocean as single layer" type="string" />
+    <attribute name="positive" value="up" type="string" />
+</vertical_axis>
+<vertical_axis id="local_vertical_level_204" name="local_vertical_level_204" grib2_id="204" type="float">
+    <attribute name="description" value="vertical level 204, defined locally, ask center" type="string" />
+    <attribute name="long_name" value="unknown vertical level 204" type="string" />
+    <attribute name="positive" value="up" type="string" />
+</vertical_axis>
+<vertical_axis id="local_vertical_level_211" name="local_vertical_level_211" grib2_id="211" type="float">
+    <attribute name="description" value="vertical level 211, defined locally, ask center" type="string" />
+    <attribute name="long_name" value="unknown vertical level 211" type="string" />
+    <attribute name="positive" value="up" type="string" />
+</vertical_axis>
+<vertical_axis id="local_vertical_level_212" name="local_vertical_level_212" grib2_id="212" type="float">
+    <attribute name="description" value="vertical level 212, defined locally, ask center" type="string" />
+    <attribute name="long_name" value="unknown vertical level 212" type="string" />
+    <attribute name="positive" value="up" type="string" />
+</vertical_axis>
+<vertical_axis id="local_vertical_level_213" name="local_vertical_level_213" grib2_id="213" type="float">
+    <attribute name="description" value="vertical level 213, defined locally, ask center" type="string" />
+    <attribute name="long_name" value="unknown vertical level 213" type="string" />
+    <attribute name="positive" value="up" type="string" />
+</vertical_axis>
+<vertical_axis id="local_vertical_level_214" name="local_vertical_level_214" grib2_id="214" type="float">
+    <attribute name="description" value="vertical level 214, defined locally, ask center" type="string" />
+    <attribute name="long_name" value="unknown vertical level 214" type="string" />
+    <attribute name="positive" value="up" type="string" />
+</vertical_axis>
+<vertical_axis id="local_vertical_level_222" name="local_vertical_level_222" grib2_id="222" type="float">
+    <attribute name="description" value="vertical level 222, defined locally, ask center" type="string" />
+    <attribute name="long_name" value="unknown vertical level 222" type="string" />
+    <attribute name="positive" value="up" type="string" />
+</vertical_axis>
+<vertical_axis id="local_vertical_level_223" name="local_vertical_level_223" grib2_id="223" type="float">
+    <attribute name="description" value="vertical level 223, defined locally, ask center" type="string" />
+    <attribute name="long_name" value="unknown vertical level 223" type="string" />
+    <attribute name="positive" value="up" type="string" />
+</vertical_axis>
+<vertical_axis id="local_vertical_level_224" name="local_vertical_level_224" grib2_id="224" type="float">
+    <attribute name="description" value="vertical level 224, defined locally, ask center" type="string" />
+    <attribute name="long_name" value="unknown vertical level 224" type="string" />
+    <attribute name="positive" value="up" type="string" />
+</vertical_axis>
+<vertical_axis id="local_vertical_level_232" name="local_vertical_level_232" grib2_id="232" type="float">
+    <attribute name="description" value="vertical level 232, defined locally, ask center" type="string" />
+    <attribute name="long_name" value="unknown vertical level 232" type="string" />
+    <attribute name="positive" value="up" type="string" />
+</vertical_axis>
+<vertical_axis id="local_vertical_level_233" name="local_vertical_level_233" grib2_id="233" type="float">
+    <attribute name="description" value="vertical level 233, defined locally, ask center" type="string" />
+    <attribute name="long_name" value="unknown vertical level 233" type="string" />
+    <attribute name="positive" value="up" type="string" />
+</vertical_axis>
+<vertical_axis id="local_vertical_level_234" name="local_vertical_level_234" grib2_id="234" type="float">
+    <attribute name="description" value="vertical level 234, defined locally, ask center" type="string" />
+    <attribute name="long_name" value="unknown vertical level 234" type="string" />
+    <attribute name="positive" value="up" type="string" />
+</vertical_axis>
+<vertical_axis id="local_vertical_level_242" name="local_vertical_level_242" grib2_id="242" type="float">
+    <attribute name="description" value="vertical level 242, defined locally, ask center" type="string" />
+    <attribute name="long_name" value="unknown vertical level 242" type="string" />
+    <attribute name="positive" value="up" type="string" />
+</vertical_axis>
+<vertical_axis id="local_vertical_level_243" name="local_vertical_level_243" grib2_id="243" type="float">
+    <attribute name="description" value="vertical level 243, defined locally, ask center" type="string" />
+    <attribute name="long_name" value="unknown vertical level 243" type="string" />
+    <attribute name="positive" value="up" type="string" />
+</vertical_axis>
+<vertical_axis id="local_vertical_level_244" name="local_vertical_level_244" grib2_id="244" type="float">
+    <attribute name="description" value="vertical level 244, defined locally, ask center" type="string" />
+    <attribute name="long_name" value="unknown vertical level 244" type="string" />
+    <attribute name="positive" value="up" type="string" />
+</vertical_axis>
+
+</axes>
+
+<variables>
+    <parameter name="air_temperature__at_2m" type="float">
+        <grib1 indicatorOfParameter="11" gribTablesVersionNo="1" typeOfLevel="105" levelNo="2"/>
+        <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
+        <attribute name="long_name" value="air_temperature__at_2m" type="string" />
+        <attribute name="standard_name" value="air_temperature" type="string" />
+        <attribute name="units" value="K" type="string" />
+    </parameter>
+    <parameter name="air_temperature__at_pl" type="float">
+        <grib1 indicatorOfParameter="11" gribTablesVersionNo="253" typeOfLevel="100"/>
+        <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
+        <attribute name="long_name" value="air_temperature__at_pl" type="string" />
+        <attribute name="standard_name" value="air_temperature" type="string" />
+        <attribute name="units" value="K" type="string" />
+    </parameter>
+    <parameter name="relative_humidity__at_2m" type="float">
+        <grib1 indicatorOfParameter="52" gribTablesVersionNo="1" typeOfLevel="105"/>
+        <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
+        <attribute name="long_name" value="relative_humidity__at_2m" type="string" />
+        <attribute name="standard_name" value="relative_humidity" type="string" />
+        <attribute name="units" value="%" type="string" />
+    </parameter>
+    <parameter name="relative_humidity__at_pl" type="float">
+        <grib1 indicatorOfParameter="52" gribTablesVersionNo="1" typeOfLevel="100"/>
+        <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
+        <attribute name="long_name" value="relative_humidity__at_pl" type="string" />
+        <attribute name="standard_name" value="relative_humidity" type="string" />
+        <attribute name="units" value="%" type="string" />
+    </parameter>
+    <parameter name="x_wind__at_pl" type="float">
+        <grib1 indicatorOfParameter="33" gribTablesVersionNo="1" typeOfLevel="100"/>
+        <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
+        <attribute name="long_name" value="x_wind__at_pl" type="string" />
+        <attribute name="standard_name" value="x_wind" type="string" />
+        <attribute name="units" value="m/s" type="string" />
+    </parameter>
+    <parameter name="y_wind__at_pl" type="float">
+        <grib1 indicatorOfParameter="34" gribTablesVersionNo="1" typeOfLevel="100"/>
+        <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
+        <attribute name="long_name" value="y_wind__at_pl" type="string" />
+        <attribute name="standard_name" value="y_wind" type="string" />
+        <attribute name="units" value="m/s" type="string" />
+    </parameter>
+    <parameter name="x_wind__at_10m" type="float">
+        <grib1 indicatorOfParameter="33" gribTablesVersionNo="1" typeOfLevel="105"/>
+        <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
+        <attribute name="long_name" value="x_wind__at_10m" type="string" />
+        <attribute name="standard_name" value="x_wind" type="string" />
+        <attribute name="units" value="m/s" type="string" />
+    </parameter>
+    <parameter name="y_wind__at_10m" type="float">
+        <grib1 indicatorOfParameter="34" gribTablesVersionNo="1" typeOfLevel="105"/>
+        <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
+        <attribute name="long_name" value="y_wind__at_10m" type="string" />
+        <attribute name="standard_name" value="y_wind" type="string" />
+        <attribute name="units" value="m/s" type="string" />
+    </parameter>
+    <parameter name="geopotential__at_sfc" type="float">
+        <grib1 indicatorOfParameter="6" gribTablesVersionNo="1" typeOfLevel="109"/>
+        <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
+        <attribute name="long_name" value="geopotential__at_sfc" type="string" />
+        <attribute name="standard_name" value="geopotential" type="string" />
+        <attribute name="units" value="m2 s-2" type="string" />
+    </parameter>
+    <parameter name="geopotential__at_pl" type="float">
+        <grib1 indicatorOfParameter="6" gribTablesVersionNo="1" typeOfLevel="100"/>
+        <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
+        <attribute name="long_name" value="geopotential__at_pl" type="string" />
+        <attribute name="standard_name" value="geopotential" type="string" />
+        <attribute name="units" value="m2 s-2" type="string" />
+    </parameter>
+    <parameter name="air_pressure_at_sea_level" type="float">
+        <grib1 indicatorOfParameter="1" gribTablesVersionNo="1" typeOfLevel="103"/>
+        <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
+        <attribute name="long_name" value="air_pressure_at_sea_level" type="string" />
+        <attribute name="standard_name" value="air_pressure_at_sea_level" type="string" />
+        <attribute name="units" value="Pa" type="string" />
+    </parameter>
+    <parameter name="icing_index" type="float">
+        <grib1 indicatorOfParameter="135" gribTablesVersionNo="253" typeOfLevel="105"/>
+        <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
+        <attribute name="long_name" value="icing_index" type="string" />
+        <attribute name="standard_name" value="icing_index" type="string" />
+        <attribute name="units" value="-" type="string" />
+    </parameter>
+    <parameter name="vertical_integral_of_cloud_liquid" type="float">
+        <grib1 indicatorOfParameter="76" gribTablesVersionNo="253" typeOfLevel="200"/>
+        <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
+        <attribute name="long_name" value="vertical_integral_of_cloud_liquid" type="string" />
+        <attribute name="standard_name" value="vertical_integral_of_cloud_liquid" type="string" />
+        <attribute name="units" value="kg m-2" type="string" />
+    </parameter>
+</variables>
+
+</cdmGribReaderConfig>
+

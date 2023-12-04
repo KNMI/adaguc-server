@@ -36,8 +36,8 @@
 void *operator new(size_t size, char const *file, int line);
 void *operator new[](size_t size, char const *file, int line);
 void operator delete(void *p, char const *file, int line);
-void *operator new(std::size_t mem, const std::nothrow_t &);
-void operator delete(void *p, const std::nothrow_t &);
+void *operator new(std::size_t mem);
+void operator delete(void *p) noexcept;
 
 class Tracer {
 private:

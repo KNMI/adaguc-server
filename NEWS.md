@@ -1,3 +1,161 @@
+**Version 2.14.0 2023-11-23**
+- EDR support (position endpoint only), see [EDRConfiguration](doc/configuration/EDRConfiguration/EDR.md)
+
+**Version 2.13.9 2023-11-01**
+- Cache-Control header can be configured via the Settings item
+
+**Version 2.13.8 2023-11-01**
+- Fixed issue #311, dimension units are now propagated from the Layer configuration to the GetCapabilities
+
+**Version 2.13.7 2023-10-27**
+- PNG files can now also contain a reference_time text tag
+- Finnish national projection (EPSG:3067)
+
+**Version 2.13.6 2023-10-06**
+- Restored access log to original format (was broken since move to FastAPI)
+
+**Version 2.13.5 2023-10-05**
+- KNMI HDF5 dual-pol data now picks scans 15, 16, 6,
+14, 5, 13, 4, 12, 3
+- KNMI HDF5 dual-pol now derives ZDR as Z-Zv
+
+**Version 2.13.4 2023-10-04**
+- Improved Dockerfile multistage build leading to smaller images
+- Updated Python package versions
+
+**Version 2.13.3 2023-09-28**
+- Reverted outline barbs, added outline option for point barbs
+
+**Version 2.13.2 2023-09-25**
+- Fixed a bug in autofinddataset option
+
+**Version 2.13.0 2023-09-20**
+- The script adaguc-server-addfile.sh is now able to find for a given file the corresponding dataset via the commandline option autofinddataset
+- Cleaning of model data is now done based on the forecast_reference_time dimension
+
+
+**Version 2.12.0 2023-08-24**
+- Support for DataPostProcessor Operator, to add, substract, multiply or divide layers
+- Dimensions can now be fixed and hidden, to make layers representing a single elevation based on a variable with multiple elevations
+- Support to substract two elevations from the same variable
+
+**Version 2.11.4 2023-09-06**
+- Cleanup is now always triggered when a file is scanned.
+
+**Version 2.11.3 2023-09-05**
+- Less logging and robuster scanner
+
+**Version 2.11.2 2023-08-21**
+
+- Hot fix: Accidently removed necessary python dependencies in Docker build
+
+**Version 2.11.1 2023-08-21**
+
+- Avoid double logging
+- Timeout to prevent endless running of processes
+- Fix encoded proj4_params issue https://github.com/KNMI/adaguc-server/issues/279
+
+**Version 2.11.0 2023-08-17**
+- Update Docker base image to Python 3.10 based on Debian 12 ("bookworm")
+
+**Version 2.10.5 2023-06-02**
+- Contourlines can have dashes
+- Contour text can have an outline
+- Windbarbs have a white outline
+
+**Version 2.10.4 2023-06-01**
+- Fix: Racmo datasets with rotated_pole projection does work again
+
+**Version 2.10.3 2023-05-17**
+- Fix: Empty CRS was advertised in case of point data
+
+**Version 2.10.2 2023-05-17**
+- Fix: Geos projection without sweep working again
+
+**Version 2.10.1 2023-05-12**
+- Added Strict-Transport-Security, X-Content-Type-Options and Content-Security-Policy headers when running over https
+
+**Version 2.10.0 2023-05-10**
+- Use the new API of the PROJ library, because the old one is deprecated and removed from PROJ version 8 and up.
+Adaguc now requires at least version 6 of the PROJ library.
+This should simplify installing on recent version of Ubuntu.
+
+**Version 2.9.0 2023-04-20**
+- Using fastapi as server
+
+**Version 2.8.7 2023-04-19**
+- GeoJSON with labels can now be displayed. See [FeatureInterval](doc/configuration/FeatureInterval.md) for details
+
+**Version 2.8.6 2023-03-23**
+- Added a configuration option to limit the number of deletions done at once, configurable with `cleanupsystemlimit="5"`  in [Settings](doc/configuration/Settings.md).
+- Added a configuration option to start a dryrun of cleanup, explaining which files would be deleted (but not actually deleting them), configurable with `enablecleanupsystem="dryrun"` in [Settings](doc/configuration/Settings.md)
+- Added the option to replace custom variables in the dataset configuration using the [Environment](doc/configuration/Environment.md) keyword. These will get the value from the environment. This has been added to make it possible to let dev branches have a shorter retentionperiod and the main branch a longer retentionperiod.
+- See complete dataset example in [data/config/datasets/adaguc.tests.cleandb-step2.xml](data/config/datasets/adaguc.tests.cleandb-step2.xml)
+
+
+**Version 2.8.5 2023-03-15**
+- Add parameter Unit of Measurement to DescribeCoverage output
+
+**Version 2.8.4 2023-03-08**
+- Nearest neighbour rendering can now be done with discrete classes using ShadeInterval and renderhint="discreteclasses"
+- Hex colors now work with both uppercase and lowercase hex digits
+- Legend is now not mandatory in a Style definition
+- Drawfunction is refactored and de-duplicated, less double code.
+- A buffer overflow issue with shadeintervals rendering has been solved (adagucserverEC/CImgWarpNearestNeighbour.h, 222)
+
+**Version 2.8.3 2023-02-15**
+- Build docker image for arm64 architecture (e.g. Mac M1)
+
+**Version 2.8.2 2023-01-10**
+- WebP quality is now configurable via WMSFormat and WMS Format (use format=image/webp;90)
+- PNG can now read more image types (PNG color_type=6)
+
+**Version 2.8.1 2022-12-24**
+- Using debian as base docker image
+
+**Version 2.8.0 2022-12-23**
+- Support for building Adaguc on Mac M1 architecture (arm64)
+
+**Version 2.7.13 2022-12-20**
+- Support for HDF5 ODIM files containing one dataset with lat/lon and time.
+
+**Version 2.7.12 2022-12-19**
+- Rolling archives are now possible by setting the retentionperiod in the FilePath setting of the layer configuration
+
+**Version 2.7.11 2022-12-15**
+
+- The Docker/adaguc-server-addfile.sh script does now exit with statuscode 1 if the adding of a file failed.
+
+**Version 2.7.10 2022-11-11**
+
+- Web Coverage Service can determine width and height or resx or resy parameters on its own
+
+**Version 2.7.9 2022-09-22**
+
+- GeoJSON reader now supports multiple dataobjects, useful for styling earthquake files with age and magnitude variables.
+
+**Version 2.7.8 2022-09-21**
+
+- Updated documentation
+
+**Version 2.7.7 2022-09-19**
+
+- Added OGCAPI support
+- Added RADAR volume scan support
+- GeoJSON reader now supports featuretype Point.
+
+**Version 2.7.6 2022-07-12**
+
+- Fix: Legend with a logaritmic scale do work again.
+
+**Version 2.7.5 2022-07-11**
+
+- Implemented quantize for time on ingest too (for rounding product times up/down to values spaced with fixed intervals)
+
+**Version 2.7.4 2022-07-06**
+
+- Continuous Legend graphic supports inverted min and max
+
 **Version 2.7.3 2022-04-13**
 
 - Legend graphic code splitted and refactored
@@ -107,7 +265,7 @@ Version 2.6.1 2021-11-09
 **Version 2.2.0 2019-06-27**
 - adaguc-server docker compose uses decoupled postgres, started as separate container
 - logfiles are embedded in adaguc-services, single stream of logging
-- Improved support for curvilinear grids 
+- Improved support for curvilinear grids
 - Support for NC_INT64 and NC_UINT64 data types
 
 **Version 2.1.0 2019-04-04**
@@ -124,16 +282,16 @@ Version 2.6.1 2021-11-09
 
 **Version 2.0.36 2018-08-29**
 - OpenDAP server is now compatible with jsdap JavaScript client
-    
+
 **Version 2.0.35 2018-08-24**
 - CTime has now a singleton keeper for reducing CTime intialization times
-   
+
 **Version 2.0.34 2018-07-24**
 - Adaguc has ability to generate a report about the files to indicate what choices are made for visualisation and projection
-    
+
 **Version 2.0.33 2018-06-06**
 - Dockerfile is now using a multistage build resulting in smaller docker images
-   
+
 **Version 2.0.32 2018-01-22**
 - Polylines smaller then 1 px can now be rendered.
 - OpenDAPServer is now compatible with Java NetCDF library
@@ -151,7 +309,7 @@ Version 2.6.1 2021-11-09
 - Added 8 functional tests
 - Added postgres index on dimension column
 - Query limit can now be configured: <DataBase maxquerylimit="1000"/>
-    
+
 **Version 2.0.27 2017-08-16**
 - Dimensions without a dimension variable now get an automatically assigned dimension variable, values start with 1 and are increased onwards.
 - Initial PNG support with initial slippy map support added
@@ -162,7 +320,7 @@ Version 2.6.1 2021-11-09
 **Version 2.0.25 2017-07-28**
 - Tilecreation speed is optimized. When optimizeextent is set to true in TileSettings, only the partial area from the big netcdf file is read into memory and used for warping and tilecreation
 - The bottom, left, right and top parameters in TileSettings are now optional, when left out they will be automatically detected based on the input file. This simplifies TileSettings if only one input file is needed as input.
-    
+
 
 **Version 2.0.24 2017-07-28**
 - Updatedb has a new flag called --recreate. This drops the filetables and will recreate the them
@@ -174,9 +332,9 @@ Version 2.6.1 2021-11-09
 - Nearest neighbour renderer mode can be set to precise or fast with RenderSettings element in Styles
 
 **Version 2.0.22 2017-03-27**
-- Worked on dockerizing and modularizing 
+- Worked on dockerizing and modularizing
 - Added extra configuration examples for adaguc workshop 2017
-    
+
 **Version 2.0.20 2016-11-28**
 - CCDFDataModel supports NC_STRING types for attributes
 
@@ -186,13 +344,13 @@ Version 2.6.1 2021-11-09
 
 **Version 2.0.18 2016-11-06**
 - Added linear transformation in Nearest neighbour renderer when geographic mappings are equal.
-    
+
 **Version 2.0.17 2016-10-13**
 - Support for POI markers
-    
+
 **Version 2.0.18 2016-10-12**
-- Support for 365_day calendars    
-    
+- Support for 365_day calendars
+
 **Version 2.0.13, 2016-08-15:**
 - OpenDAP strings are encoded with two dimensions data(numstrings,maxStrlen64) by the NetCDF library. Internally this is now translated to CDF_STRING
 - Anydump is able to list strings
@@ -205,7 +363,7 @@ Version 2.6.1 2021-11-09
 - Added 360_day calendar support for CLIPC
 - Bugfix: GetFeatureInfo now works on Byte data
 - Bugfix: Layers with groups can now be served over ADAGUC OpenDAP, group separator is replaced by "_"
-    
+
 **Version 2.0.9, 2016-07-22:**
 - AdditionalLayer functionality now works with NetCDF files with two dimensions per variable (only y,x data).
 - Added datamask datapostprocessor
@@ -231,8 +389,8 @@ Version 1.2 (10 June 2013)
 Version 1.0.0 (22 August 2011):
 
    New features:
-     * 
+     *
 
    Fixed bugs:
-     * 
- 
+     *
+

@@ -38,7 +38,9 @@
 #include <map>
 #include <string>
 
-//#define MAX_DIMS 10
+// #define MAX_DIMS 10
+
+#define CSERVERPARAMS_ADAGUCENV_PREFIX "ADAGUCENV_"
 
 /**
  * See http://www.resc.rdg.ac.uk/trac/ncWMS/wiki/WmsExtensions
@@ -62,6 +64,10 @@ public:
   bool logScale;
 };
 
+#define CSERVERPARAMS_CACHE_CONTROL_OPTION_NOCACHE 0
+#define CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE 1
+#define CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE 2
+
 /**
  * Global server settings, initialized at the start, accesible from almost everywhere
  */
@@ -74,12 +80,13 @@ private:
   CT::string _onlineResource;
   static int dataRestriction;
   static char debugLoggingIsEnabled;
+  int cacheControlOption = CSERVERPARAMS_CACHE_CONTROL_OPTION_NOCACHE;
 
 public:
   double dfResX, dfResY;
   int dFound_BBOX;
-  int dWCS_RES_OR_WH;
   double dX, dY;
+  bool verbose = true;
   CT::string *WMSLayers;
   CT::string Format;
   CT::string InfoFormat;
@@ -308,7 +315,18 @@ public:
    * @param pszConfigFile The config file to parse
    * returns zero on success       *
    */
-  int parseConfigFile(CT::string &pszConfigFile);
+  int parseConfigFile(CT::string &pszConfigFile, std::vector<CServerConfig::XMLE_Environment *> *extraEnvironment);
+
+  /**
+   * Returns cache control header
+   * mode CSERVERPARAMS_CACHE_CONTROL_OPTION_NOCACHE returns empty string ("")
+   * mode CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE is for urls which response might change often (shorter max-age)
+   * mode CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE is fully specified urls
+   */
+  CT::string getCacheControlHeader(int mode);
+
+  void setCacheControlOption(int mode) { cacheControlOption = mode; }
+  int getCacheControlOption() { return cacheControlOption; }
 };
 
 #endif

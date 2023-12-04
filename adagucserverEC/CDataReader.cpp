@@ -36,6 +36,7 @@
 #include "CConvertGeoJSON.h"
 #include "CConvertEProfile.h"
 #include "CConvertTROPOMI.h"
+#include "CConvertKNMIH5VolScan.h"
 #include "CDBFactory.h"
 #include "CReporter.h"
 #include "CCDFHDF5IO.h"
@@ -194,7 +195,7 @@ int CDataReader::getCRS(CDataSource *dataSource) {
   }
 
   // If undefined, set standard lat lon projection
-  CREPORT_WARN_NODOC(CT::string("No correct projection found, using by default the geographic coordinate system (latitude and longitude)."), CReportMessage::Categories::GENERAL);
+  // CREPORT_WARN_NODOC(CT::string("No correct projection found, using by default the geographic coordinate system (latitude and longitude)."), CReportMessage::Categories::GENERAL);
   copyLatLonCRS(dataSource);
   return 0;
 }
@@ -230,7 +231,7 @@ bool CDataReader::copyCRSFromConfigToDataSource(CDataSource *dataSource) const {
 }
 
 void CDataReader::copyLatLonCRS(CDataSource *dataSource) const {
-  CREPORT_INFO_NODOC(CT::string("Using the geographic coordinate system (latitude and longitude)"), CReportMessage::Categories::GENERAL);
+  // CREPORT_INFO_NODOC(CT::string("Using the geographic coordinate system (latitude and longitude)"), CReportMessage::Categories::GENERAL);
   dataSource->nativeProj4.copy("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
   dataSource->nativeEPSG.copy("EPSG:4326");
 }
@@ -295,6 +296,15 @@ bool CDataReader::copyCRSFromADAGUCProjectionVariable(CDataSource *dataSource, c
   //   CReportMessage::Categories::GENERAL);
   // }
   dataSource->nativeProj4.copy(proj4Attr->toString().c_str());
+
+  // Fixes issue https://github.com/KNMI/adaguc-server/issues/279
+  dataSource->nativeProj4.replaceSelf("\n", " ");
+  dataSource->nativeProj4.trimSelf();
+  if (dataSource->nativeProj4.startsWith("\"") && dataSource->nativeProj4.endsWith("\"")) {
+    dataSource->nativeProj4.substringSelf(1, dataSource->nativeProj4.length() - 1);
+    dataSource->nativeProj4.trimSelf();
+    CDBDebug("Note: Removed start and ending double quotes for projstring [%s]", dataSource->nativeProj4.c_str());
+  }
 
   // Copy the EPSG code.
   copyEPSGCodeFromProjectionVariable(dataSource, projVar);
@@ -368,6 +378,8 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
     if (CConvertGeoJSON::convertGeoJSONData(dataSource, mode) == 0) dataSource->formatConverterActive = true;
   if (!dataSource->formatConverterActive)
     if (CConvertTROPOMI::convertTROPOMIData(dataSource, mode) == 0) dataSource->formatConverterActive = true;
+  if (!dataSource->formatConverterActive)
+    if (CConvertKNMIH5VolScan::convertKNMIH5VolScanData(dataSource, mode) == 0) dataSource->formatConverterActive = true;
   if (!dataSource->formatConverterActive)
     if (CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(dataSource, mode) == 0) dataSource->formatConverterActive = true;
 
@@ -454,6 +466,10 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
     CDBDebug("[%d %d %d] for %s/%s", sta[0], str[0], sto[0], dataSourceVar->name.c_str(), dataSource->varX->name.c_str());
 #endif
 
+    if (dataSource->varX->data == nullptr) {
+      dataSource->didAxisScalingConversion = false;
+    }
+
     int statusX = dataSource->varX->readData(CDF_DOUBLE, sta, sto, str, true);
     if (statusX != 0) {
       CREPORT_ERROR_NODOC(CT::string("Not possible to read data for dimension ") + dataSource->varX->name, CReportMessage::Categories::GENERAL);
@@ -496,9 +512,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
       const CT::string unitString = units->toString();
       if (unitString.equals("rad") || unitString.equals("radian")) {
         CDBDebug("units: %s", units->toString().c_str());
-        CDBDebug("Correct varX and varY");
-        double *xdata = (double *)dataSource->varX->data;
-        double *ydata = (double *)dataSource->varY->data;
+
         CDF::Attribute *projvarnameAttr = dataSourceVar->getAttributeNE("grid_mapping");
         if (projvarnameAttr != NULL) {
           CDF::Variable *projVar = cdfObject->getVariableNE(projvarnameAttr->toString().c_str());
@@ -507,7 +521,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
           } else {
             CDF::Attribute *grid_mapping_name = projVar->getAttributeNE("grid_mapping_name");
             if ((grid_mapping_name != NULL) && grid_mapping_name->toString().equals("geostationary")) {
-              // Get perspective_height
+              // Get geostationary projection attributes or providing WGS84
               CDF::Attribute *perspectiveHeightAttr = projVar->getAttributeNE("perspective_point_height");
               double perspectiveHeight = 35786000.;
               if (perspectiveHeightAttr != NULL) {
@@ -517,36 +531,97 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
                   CDBDebug("Falling back to default perspective_point_height: 35786000");
                 }
               }
-              // TODO: Dit moet voor alle data gebeuren toch, niet een subset van de data?
-              sta[0] = start[dataSource->dimXIndex];
-              str[0] = dataSource->stride2DMap;
-              sto[0] = dataSource->dWidth;
-              if (singleCellMode) {
-                sta[0] = 0;
-                str[0] = 1;
-                sto[0] = 2;
-              }
-              for (size_t j = sta[0]; j < sto[0]; j += str[0]) {
-                xdata[j] = xdata[j] * perspectiveHeight;
+
+              CDF::Attribute *lon_0Attr = projVar->getAttributeNE("longitude_of_projection_origin");
+              double lon_0 = 0.0;
+              if (lon_0Attr != NULL) {
+                try {
+                  lon_0 = lon_0Attr->toString().toDouble();
+                } catch (int e) {
+                  CDBDebug("Falling back to default lon_0: 0.0");
+                }
               }
 
-              sta[0] = start[dataSource->dimYIndex];
-              str[0] = dataSource->stride2DMap;
-              sto[0] = dataSource->dHeight;
-              if (singleCellMode) {
-                sta[0] = 0;
-                str[0] = 1;
-                sto[0] = 2;
+              CDF::Attribute *lat_0Attr = projVar->getAttributeNE("latitude_of_projection_origin");
+              double lat_0 = 0.0;
+              if (lat_0Attr != NULL) {
+                try {
+                  lat_0 = lat_0Attr->toString().toDouble();
+                } catch (int e) {
+                  CDBDebug("Falling back to default lat_0: 0.0");
+                }
               }
-              for (size_t j = sta[0]; j < sto[0]; j += str[0]) {
-                ydata[j] = ydata[j] * perspectiveHeight;
+
+              CDF::Attribute *aAttr = projVar->getAttributeNE("semi_major_axis");
+              double a = 6378137.0;
+              if (aAttr != NULL) {
+                try {
+                  a = aAttr->toString().toDouble();
+                } catch (int e) {
+                  CDBDebug("Falling back to default semimajor axis: 6378137.0");
+                }
               }
+
+              CDF::Attribute *bAttr = projVar->getAttributeNE("semi_minor_axis");
+              double b = 6356752.30;
+              if (bAttr != NULL) {
+                try {
+                  b = bAttr->toString().toDouble();
+                } catch (int e) {
+                  CDBDebug("Falling back to default semiminor axis: 6356752.30");
+                }
+              }
+
+              CDF::Attribute *sweepAttr = projVar->getAttributeNE("sweep_angle_axis");
+              CT::string sweep = "y";
+              // sweep angle y corresponds to Meteosat
+              if (sweepAttr != NULL) {
+                try {
+                  sweep = sweepAttr->toString();
+                } catch (int e) {
+                  CDBDebug("Falling back to sweep angle y");
+                }
+              }
+
+              CDF::Attribute *fixedAttr = projVar->getAttributeNE("fixed_angle_axis");
+              CT::string fixed = "x";
+              if (fixedAttr != NULL) {
+                try {
+                  fixed = fixedAttr->toString();
+                  if ((fixed.equals("y")) || (fixed.equals("Y"))) {
+                    // fixed angle y, corresponds to sweep x. i.e: GOES satellite
+                    sweep = "x";
+                  }
+                } catch (int e) {
+                  CDBDebug("Falling back to sweep angle y");
+                }
+              }
+
+              // End of the capture of the grid_mapping
+              CT::string str_std_x_name = "undefined";
+              CDF::Attribute *X_standard_name = dataSource->varX->getAttributeNE("standard_name");
+              if (X_standard_name != NULL) {
+                str_std_x_name = X_standard_name->toString();
+                CDBDebug("Standard Name of the nx variable: %s", str_std_x_name.c_str());
+              }
+              CDBDebug("-----------------");
+
+              CDBDebug("Assuming  CF 1.9 or posterior geostationary projection, keeping radians as units");
+              CT::string UpdatedProjString = "+proj=geos +lon_0=";
+              UpdatedProjString.print("+proj=geos +lon_0=%f +lat_0=%f +h=%f +a=%f +b=%f +sweep=%s", lon_0, lat_0, 1.0, a / perspectiveHeight, b / perspectiveHeight, sweep.c_str());
+              CDBDebug("Overwriting the projection string with: %s", UpdatedProjString.c_str());
+
+              dataSource->nativeProj4.copy(UpdatedProjString.c_str());
+
+              projVar->setAttributeText("autogen_proj", UpdatedProjString.c_str());
             }
           }
         }
       }
     }
   }
+
+  applyAxisScalingConversion(dataSource);
 
   // Calculate cellsize and BBOX based on read X,Y dims.
   if (!calculateCellSizeAndBBox(dataSource, dataSourceVar)) {
@@ -747,6 +822,7 @@ pthread_mutex_t CDataReader_open_lock;
 
 int CDataReader::open(CDataSource *dataSource, int mode, int x, int y) { return open(dataSource, mode, x, y, NULL); }
 int CDataReader::openExtent(CDataSource *dataSource, int mode, int *gridExtent) { return open(dataSource, mode, -1, -1, gridExtent); }
+
 int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *gridExtent) {
 
   // Perform some checks on pointers
@@ -760,7 +836,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
   }
 
 #ifdef CDATAREADER_DEBUG
-  CDBDebug("Open mode:%d x:%d y:%d", mode, x, y);
+  CDBDebug("Open mode:%d x:%d y:%d, numdataObjects %d", mode, x, y, dataSource->getNumDataObjects());
 #endif
 
   bool singleCellMode = false;
@@ -791,30 +867,20 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 
 #ifdef CDATAREADER_DEBUG
   CDBDebug("Working on [%s] with mode %d and (%d,%d)", dataSourceFilename.c_str(), mode, x, y);
-#endif
 
+#else
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
     CDBDebug("Working on [%s]", dataSourceFilename.c_str());
   }
-  if (mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS || mode == CNETCDFREADER_MODE_OPEN_HEADER) {
-    // pthread_mutex_lock(&CDataReader_open_lock);
-    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams, dataSourceFilename.c_str());
-    // pthread_mutex_unlock(&CDataReader_open_lock);
+#endif
 
-    //     enableDataCache = false;
+  if (mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS || mode == CNETCDFREADER_MODE_OPEN_HEADER) {
+    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams, dataSourceFilename.c_str(), enableObjectCache);
   }
 
   if (mode == CNETCDFREADER_MODE_OPEN_ALL || mode == CNETCDFREADER_MODE_GET_METADATA || mode == CNETCDFREADER_MODE_OPEN_EXTENT) {
-    // CDBDebug("Working on [%s] with mode %d",dataSourceFilename.c_str(),mode);
-    // CDBDebug("Getting datasource %s",dataSourceFilename.c_str());
-    // pthread_mutex_lock(&CDataReader_open_lock);
-    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource, dataSourceFilename.c_str());
-    // pthread_mutex_unlock(&CDataReader_open_lock);
+    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource, dataSourceFilename.c_str(), enableObjectCache);
   }
-  // pthread_mutex_lock(&CDataReader_open_lock);
-  // //pthread_mutex_lock(&CDataReader_open_lock);
-  // return 0;//CHECK
-  // Check whether we really have a cdfObject
   if (cdfObject == NULL) {
     CDBError("Unable to get CDFObject from store");
     return 1;
@@ -952,11 +1018,9 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 #endif
   }
 
-  /*
-   * DataPostProc: Here our datapostprocessor comes into action! It needs scale and offset from datasource.
-   * This is stage1, only AX+B will be applied to scale and offset parameters
-   */
-  CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
+  if (enablePostProcessors) {
+    CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
+  }
 
   if (mode == CNETCDFREADER_MODE_GET_METADATA) {
 #ifdef CDATAREADER_DEBUG
@@ -1014,9 +1078,9 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 
       // if( dataSource->getDataObject(varNr)->cdfVariable->data==NULL){
       if (dataSource->formatConverterActive == false) {
-        //#ifdef MEASURETIME
-        // StopWatch_Stop("Freeing data");
-        //#endif
+        // #ifdef MEASURETIME
+        //  StopWatch_Stop("Freeing data");
+        // #endif
 
         // Read variable data
         dataSource->getDataObject(varNr)->cdfVariable->freeData();
@@ -1288,16 +1352,13 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     StopWatch_Stop("all read");
 #endif
 
-    /*
-     * DataPostProc: Here our datapostprocessor comes into action!
-     * This is stage2, running on data, not metadata
-     */
-
-    CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
+    if (enablePostProcessors) {
+      CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
+    }
   }
-  // pthread_mutex_unlock(&CDataReader_open_lock);
+// pthread_mutex_unlock(&CDataReader_open_lock);
 #ifdef CDATAREADER_DEBUG
-  CDBDebug("/Finished datareader");
+  CDBDebug("/Finished datareader now has %d dataobjects", dataSource->getNumDataObjects());
 #endif
   return 0;
 }
@@ -1375,7 +1436,7 @@ CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *, CDF::Varia
   }
 
   if (standardName.length() == 0) {
-    CDBDebug("Warning no standard name given for dimension %s, using variable name instead.", variable->name.c_str());
+    // CDBDebug("Warning no standard name given for dimension %s, using variable name instead.", variable->name.c_str());
     standardName = variable->name;
     ;
   }
@@ -1409,7 +1470,7 @@ CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *, CDF::Varia
     return dtype_elevation;
   } catch (int e) {
   }
-  CDBDebug("Dimension %s with standard_name [%s] is a normal dimension", variable->name.c_str(), standardName.c_str());
+  // CDBDebug("Dimension %s with standard_name [%s] is a normal dimension", variable->name.c_str(), standardName.c_str());
 
   return dtype_normal;
 }
@@ -1437,4 +1498,26 @@ CDF::Variable *CDataReader::getDimensionVariableByType(CDF::Variable *var, CData
   if (dim == NULL) return NULL;
   CDFObject *cdfObject = (CDFObject *)var->getParentCDFObject();
   return cdfObject->getVariableNE(dim->name.c_str());
+}
+
+void CDataReader::applyAxisScalingConversion(CDataSource *dataSource) {
+  double axisScaling;
+  std::tie(std::ignore, axisScaling) = CImageWarper::fixProjection(dataSource->nativeProj4);
+  if (axisScaling != 1.0f) {
+    if (dataSource->didAxisScalingConversion == false) {
+      if (dataSource->varX->getType() == CDF_DOUBLE) {
+        size_t lenX = dataSource->varX->getSize();
+        for (size_t j = 0; j < lenX; j++) {
+          ((double *)dataSource->varX->data)[j] *= axisScaling;
+        }
+      }
+      if (dataSource->varY->getType() == CDF_DOUBLE) {
+        size_t lenY = dataSource->varY->getSize();
+        for (size_t j = 0; j < lenY; j++) {
+          ((double *)dataSource->varY->data)[j] *= axisScaling;
+        }
+      }
+      dataSource->didAxisScalingConversion = true;
+    }
+  }
 }

@@ -30,6 +30,34 @@
 
 const char *Feature::className = "Feature";
 
+CT::string FeatureProperty::toString() {
+  CT::string s;
+  if (type == typeInt) {
+    s.print("%ld", intVal);
+  } else if (type == typeStr) {
+    s.print("%s", pstr.c_str());
+  } else if (type == typeDouble) {
+    s.print("%f", dblVal);
+  } else {
+    s.print("NONE");
+  }
+  return s;
+};
+
+CT::string FeatureProperty::toString(const char *fmt) {
+  CT::string s;
+  if (type == typeInt) {
+    s.print(fmt, intVal);
+  } else if (type == typeStr) {
+    s.print(fmt, pstr.c_str());
+  } else if (type == typeDouble) {
+    s.print(fmt, dblVal);
+  } else {
+    s.print("NONE");
+  }
+  return s;
+};
+
 GeoPoint::GeoPoint(float lon, float lat) {
   this->lat = lat;
   this->lon = lon;
@@ -120,9 +148,11 @@ bool Feature::hasHoles() {
   return false;
 }
 
-std::vector<Polygon> Feature::getPolygons() { return polygons; }
+std::vector<Polygon> *Feature::getPolygons() { return &polygons; }
 
-std::vector<Polyline> Feature::getPolylines() { return polylines; }
+std::vector<Polyline> *Feature::getPolylines() { return &polylines; }
+
+std::vector<GeoPoint> *Feature::getPoints() { return &points; }
 
 CT::string Feature::toString() {
   CT::string s;
@@ -137,6 +167,13 @@ CT::string Feature::toString() {
   s.printconcat("points: %d\n", points.size());
   for (unsigned int i = 0; i < points.size(); i++) {
     s += points[i].toString();
+  }
+  s.printconcat("\n");
+
+  for (std::map<std::string, FeatureProperty *>::iterator it = fp.begin(); it != fp.end(); ++it) {
+    s += it->first.c_str();
+    s += ":";
+    s += it->second->toString();
   }
   return s;
 }
@@ -154,7 +191,7 @@ Feature::Feature(CT::string _id) { id = _id; }
 
 Feature::Feature(const char *_id) { id = _id; }
 
-void Feature::addProp(CT::string name, int v) {
+void Feature::addPropInt64(CT::string name, int64_t v) {
   FeatureProperty *f = new FeatureProperty(v);
   fp[name.c_str()] = f;
 }
@@ -169,9 +206,11 @@ void Feature::addProp(CT::string name, double v) {
   fp[name.c_str()] = f;
 }
 
-std::map<std::string, FeatureProperty *> &Feature::getFp() { return fp; }
+std::map<std::string, FeatureProperty *> *Feature::getFp() { return &fp; }
 
-//#define TESTIT
+void Feature::addPoint(float lon, float lat) { points.push_back(GeoPoint(lon, lat)); }
+
+// #define TESTIT
 #ifdef TESTIT
 int main(int argc, char *argv[]) {
   Feature poly("0001");

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  
+  <WMS>
+    <Title>ODIM</Title>
+    <Abstract>Radar precipitation measurements</Abstract>
+    <RootLayer>
+      <Title>ODIM</Title>
+      <Abstract></Abstract>
+    </RootLayer>
+  </WMS>
+
+  <WCS>
+    <Title>ODIM</Title>
+    <Label>wcsLabel</Label>
+    <WCSFormat name="netcdf" driver="ADAGUCNetCDF" mimetype="Content-Type:application/netcdf" options=""/>
+    <WCSFormat name="NetCDF3" title="GDAL NetCDF3" driver="ADAGUC"   mimetype="Content-Type:text/plain" options="FORCENC3=TRUE"/>
+    <WCSFormat name="NetCDF4" driver="ADAGUC"   mimetype="Content-Type:text/plain"/>
+  </WCS>
+
+
+  <Legend name="KNMIRadarPalette_mmh" type="interval">
+    <palette min="0"  max="38"  red="255" green="255" blue="255"/>
+    <palette min="38"  max="80" red="170" green="170" blue="170"/>
+    <palette min="80" max="118" red="85"  green="85"  blue="85"/>
+    <palette min="118" max="160" red="255" green="128" blue="128"/>
+    <palette min="160" max="198" red="255" green="0" blue="0"/>
+    <palette min="198" max="255" red="0"   green="0"   blue="0"/>
+  </Legend>
+
+ <Style name="radar">
+    <Legend>KNMIRadarPalette_mmh</Legend>
+    <ValueRange min=".09" max="1000000"/>
+    <RenderMethod>nearest</RenderMethod>
+    <Min>0.1</Min>
+    <Max>100</Max>
+    <Log>10</Log>
+  </Style>
+
+  <!-- Precipitation radar layer CM -->
+  <Layer type="database" hidden="false">
+    <Name>CAPPI</Name>
+    <Title>Precipitation Radar Curacau</Title>
+    <Variable>dataset1.data1.data</Variable>
+    <FilePath filter="^RAD_CU21_PPZ_E05_.*\.h5$">{ADAGUC_PATH}/data/datasets/test/odim/</FilePath>
+    <Dimension name="time" units="ISO8601" interval="PT10M" default="max">time</Dimension>
+    <Styles>radar</Styles>
+    <DataPostProc algorithm="dbztorr" units="mm/hr"/>
+  </Layer>
+</Configuration>

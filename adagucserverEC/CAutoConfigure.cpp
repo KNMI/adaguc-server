@@ -6,7 +6,7 @@
 #include "CRequest.h"
 const char *CAutoConfigure::className = "CAutoConfigure";
 
-//#define CAUTOCONFIGURE_DEBUG
+// #define CAUTOCONFIGURE_DEBUG
 
 int CAutoConfigure::checkCascadedDimensions(const CDataSource *dataSource) {
   if (dataSource != NULL && dataSource->dLayerType == CConfigReaderLayerTypeCascaded) {
@@ -207,11 +207,15 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
             dataSource->cfgLayer->Dimension.push_back(xmleDim);
             xmleDim->value.copy(OGCDimName.c_str());
             xmleDim->attr.name.copy(netcdfdimname.c_str());
-            xmleDim->attr.units.copy(units.c_str());
+            if (dtype == CDataReader::dtype_time || dtype == CDataReader::dtype_reference_time) {
+              xmleDim->attr.units.copy("ISO8601");
+            } else {
+              xmleDim->attr.units.copy(units.c_str());
+            }
 
             /* Store the data in the db for quick access. */
             CDBFactory::getDBAdapter(dataSource->srvParams->cfg)
-                ->storeDimensionInfoForLayerTableAndLayerName(layerTableId.c_str(), dataSource->getLayerName(), netcdfdimname.c_str(), OGCDimName.c_str(), units.c_str());
+                ->storeDimensionInfoForLayerTableAndLayerName(layerTableId.c_str(), dataSource->getLayerName(), xmleDim->attr.name.c_str(), OGCDimName.c_str(), xmleDim->attr.units.c_str());
 #ifdef CAUTOCONFIGURE_DEBUG
             CDBDebug("[OK] From DB: Stored dim %s-%s for layer %s", xmleDim->value.c_str(), xmleDim->attr.name.c_str(), layerTableId.c_str());
 #endif
@@ -252,7 +256,7 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
                 xmleDim->attr.units.copy(units.c_str());
                 /* Store the data in the db for quick access. */
                 CDBFactory::getDBAdapter(dataSource->srvParams->cfg)
-                    ->storeDimensionInfoForLayerTableAndLayerName(layerTableId.c_str(), layerIdentifier.c_str(), cdfObject->variables[j]->name.c_str(), "reference_time", units.c_str());
+                    ->storeDimensionInfoForLayerTableAndLayerName(layerTableId.c_str(), layerIdentifier.c_str(), xmleDim->attr.name.c_str(), "reference_time", xmleDim->attr.units.c_str());
 #ifdef CAUTOCONFIGURE_DEBUG
                 CDBDebug("[OK] From DB: Stored dim %s-%s for layer %s", xmleDim->value.c_str(), xmleDim->attr.name.c_str(), layerTableId.c_str());
 #endif
@@ -492,7 +496,7 @@ int CAutoConfigure::justLoadAFileHeader(CDataSource *dataSource) {
   if (foundFileName.empty()) {
 
     /* Try to get a file from DB */
-    CDBDebug("Looking up first file");
+    // CDBDebug("Looking up first file");
 
     /* ADAGUC-Server database queries don't work if there are no dimensions */
     bool removeRequiredDims = false;
@@ -506,13 +510,14 @@ int CAutoConfigure::justLoadAFileHeader(CDataSource *dataSource) {
         dataSource->requiredDims.push_back(ogcDim);
         ogcDim->name.copy("none");
         ogcDim->value.copy("0");
+        ogcDim->queryValue.copy("0");
         ogcDim->netCDFDimName.copy("none");
       }
     }
     CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getFilesAndIndicesForDimensions(dataSource, 1000);
     if (store != NULL && store->getSize() > 0) {
       CT::string fileNamestr = store->getRecord(0)->get(0)->c_str();
-      CDBDebug("fileName from DB: %s", fileNamestr.c_str());
+      // CDBDebug("fileName from DB: %s", fileNamestr.c_str());
       foundFileName = fileNamestr;
     }
     delete store;
@@ -534,7 +539,7 @@ int CAutoConfigure::justLoadAFileHeader(CDataSource *dataSource) {
 
   /* Open a file */
   try {
-    CDBDebug("Loading header [%s]", foundFileName.c_str());
+    // CDBDebug("Loading header [%s]", foundFileName.c_str());
     CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams, foundFileName.c_str());
     if (cdfObject == NULL) throw(__LINE__);
     dataSource->attachCDFObject(cdfObject);

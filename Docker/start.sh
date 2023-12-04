@@ -16,9 +16,9 @@ fi
 
 ### Wait till DB is up ###
 RETRIES=60
-until psql "${ADAGUC_DB}" -c "select 1" 2>&1 || [ $RETRIES -eq 0 ]; do 
-  echo "Waiting for postgres server to start, $((RETRIES)) remaining attempts..." RETRIES=$((RETRIES-=1)) 
-  sleep 1 
+until psql "${ADAGUC_DB}" -c "select 1" 2>&1 || [ $RETRIES -eq 0 ]; do
+  echo "Waiting for postgres server to start, $((RETRIES)) remaining attempts..." RETRIES=$((RETRIES-=1))
+  sleep 1
 done
 
 
@@ -33,8 +33,9 @@ if [ $? -ne 0 ]
 then
   echo "Unable to update baselayers with adaguc-server --updatedb"
   exit 1
-fi  
+fi
 
 echo "Start serving on ${EXTERNALADDRESS}"
-gunicorn --bind 0.0.0.0:8080 --workers=4 wsgi:app --disable-redirect-access-to-syslog --access-logfile - --access-logformat 'accesslog %(h)s ; %(t)s ; %(H)s ; %(m)s ; %(u)s ; %(q)s ; %(s)s ; %(M)s ; "%(a)s"'
-    
+gunicorn --bind 0.0.0.0:8080 --workers=4 -k uvicorn.workers.UvicornWorker --disable-redirect-access-to-syslog --access-logfile - main:app
+
+

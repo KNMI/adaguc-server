@@ -13,7 +13,8 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
 
   int pLeft = 4;
   int pTop = (int)(legendImage->Geo->dHeight - legendHeight);
-  char szTemp[256];
+  size_t szTempLength = 256;
+  char szTemp[szTempLength];
 
   float fontSize = dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.size.toDouble();
   const char *fontLocation = dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.location.c_str();
@@ -129,12 +130,16 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
    */
 
   if (definedLegendOnShadeClasses) {
+    float blockHeight = float(legendImage->Geo->dHeight - 30) / float(styleConfiguration->shadeIntervals->size());
+    /* Legend classes displayed as blocks in the legend can have a maximum and a minimum height depending on the amount of classes and legendheight */
+    if (blockHeight > 12) blockHeight = 12;
+    if (blockHeight < 3) blockHeight = 3;
     char szTemp[1024];
     for (size_t j = 0; j < styleConfiguration->shadeIntervals->size(); j++) {
       CServerConfig::XMLE_ShadeInterval *s = (*styleConfiguration->shadeIntervals)[j];
       if (s->attr.min.empty() == false && s->attr.max.empty() == false) {
-        int cY1 = int(cbH - (j * 12) * scaling);
-        int cY2 = int(cbH - ((((j + 1) * 12) - 2)) * scaling);
+        int cY1 = int(cbH - ((j)*blockHeight) * scaling);
+        int cY2 = int(cbH - ((((j + 1) * blockHeight) - 2)) * scaling);
         CColor color;
         if (s->attr.fillcolor.empty() == false) {
           color = CColor(s->attr.fillcolor.c_str());
@@ -244,16 +249,16 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
         if (textformatting.empty() == false) {
           CT::string textFormat;
           textFormat.print("%s - %s", textformatting.c_str(), textformatting.c_str());
-          sprintf(szTemp, textFormat.c_str(), v, v + legendInterval);
+          snprintf(szTemp, szTempLength, textFormat.c_str(), v, v + legendInterval);
         } else {
-          if (textRounding <= 0) sprintf(szTemp, "%2.0f - %2.0f", v, v + legendInterval);
-          if (textRounding == 1) sprintf(szTemp, "%2.1f - %2.1f", v, v + legendInterval);
-          if (textRounding == 2) sprintf(szTemp, "%2.2f - %2.2f", v, v + legendInterval);
-          if (textRounding == 3) sprintf(szTemp, "%2.3f - %2.3f", v, v + legendInterval);
-          if (textRounding == 4) sprintf(szTemp, "%2.4f - %2.4f", v, v + legendInterval);
-          if (textRounding == 5) sprintf(szTemp, "%2.5f - %2.5f", v, v + legendInterval);
-          if (textRounding == 5) sprintf(szTemp, "%2.6f - %2.6f", v, v + legendInterval);
-          if (textRounding > 6) sprintf(szTemp, "%f - %f", v, v + legendInterval);
+          if (textRounding <= 0) snprintf(szTemp, szTempLength, "%2.0f - %2.0f", v, v + legendInterval);
+          if (textRounding == 1) snprintf(szTemp, szTempLength, "%2.1f - %2.1f", v, v + legendInterval);
+          if (textRounding == 2) snprintf(szTemp, szTempLength, "%2.2f - %2.2f", v, v + legendInterval);
+          if (textRounding == 3) snprintf(szTemp, szTempLength, "%2.3f - %2.3f", v, v + legendInterval);
+          if (textRounding == 4) snprintf(szTemp, szTempLength, "%2.4f - %2.4f", v, v + legendInterval);
+          if (textRounding == 5) snprintf(szTemp, szTempLength, "%2.5f - %2.5f", v, v + legendInterval);
+          if (textRounding == 5) snprintf(szTemp, szTempLength, "%2.6f - %2.6f", v, v + legendInterval);
+          if (textRounding > 6) snprintf(szTemp, szTempLength, "%f - %f", v, v + legendInterval);
         }
         legendImage->drawText(((int)cbW + 10 + pLeft) * scaling, (((boxLowerY)) + pTop) - fontSize * scaling / 4, fontLocation, fontSize * scaling, 0, szTemp, 248);
       }

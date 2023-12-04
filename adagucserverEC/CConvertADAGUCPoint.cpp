@@ -55,7 +55,7 @@ void CConvertADAGUCPoint::lineInterpolated(float *grid, int W, int H, int startX
     stopVal = 100;
   }
   float valD = stopVal - startVal;
-  float angle = atan2(dY, dX) + (3.141592654 / 2);
+  float angle = atan2(dY, dX) + (M_PI / 2);
   float dist = 10;
   if (abs(dX) < abs(dY)) {
     rc = float(dX) / float(dY);
@@ -120,7 +120,7 @@ int CConvertADAGUCPoint::checkIfADAGUCPointFormat(CDFObject *cdfObject) {
 int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
   // Check whether this is really an adaguc file
   if (CConvertADAGUCPoint::checkIfADAGUCPointFormat(cdfObject) == 1) return 1;
-  CDBDebug("Using CConvertADAGUCPoint.h");
+  // CDBDebug("Using CConvertADAGUCPoint.h");
 
   // Standard bounding box of adaguc data is worldwide
   CDF::Variable *pointLon;
@@ -618,7 +618,6 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
     dataSource->srvParams->Geo->dfBBOX[2] = dataSource->srvParams->Geo->dfBBOX[2];
     dataSource->srvParams->Geo->dfBBOX[3] = dataSource->srvParams->Geo->dfBBOX[3];
   }
-
   // Width needs to be at least 2 in this case.
   if (dataSource->dWidth == 1) dataSource->dWidth = 2;
   if (dataSource->dHeight == 1) dataSource->dHeight = 2;
@@ -831,7 +830,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
       double projectedYOffsetY = lat + 0.1;
       double latCorrection = 1;
       if (hasZoomableDiscRadius) {
-        latCorrection = cos((lat / 90) * (3.141592654 / 2));
+        latCorrection = cos((lat / 90) * (M_PI / 2));
         ;
         if (latCorrection < 0.01) latCorrection = 0.01;
       }
@@ -852,7 +851,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
           }
           float dX = projectedXOffsetY - projectedX;
           float dY = projectedYOffsetY - projectedY;
-          rotation = -atan2(dY, dX) + (3.141592654 / 2);
+          rotation = -atan2(dY, dX) + (M_PI / 2);
         }
       }
 
@@ -870,7 +869,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
         if (discRadiusX < 0.1) discRadiusX = 0.1;
       }
 
-      if (projectionError == false) {
+      if (projectionError == false && cellSizeX != 0 && cellSizeY != 0) {
         int dlon = int((projectedX - offsetX) / cellSizeX);
         int dlat = int((projectedY - offsetY) / cellSizeY);
         //      if(dlon>=0&&dlat>=0&&dlon<dataSource->dWidth&&dlat<dataSource->dHeight){ remove

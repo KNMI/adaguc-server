@@ -363,6 +363,10 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Conf
   for (size_t j = 0; j < cfgLayer->Variable.size(); j++) {
     DataObject *newDataObject = new DataObject();
     newDataObject->variableName.copy(cfgLayer->Variable[j]->value.c_str());
+    if (!cfgLayer->Variable[j]->attr.orgname.empty()) {
+      newDataObject->variableName = cfgLayer->Variable[j]->value.c_str();
+    }
+
     getDataObjectsVector()->push_back(newDataObject);
   }
   // Set the layername
@@ -871,21 +875,6 @@ CT::PointerList<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(C
 
     renderMethods = getRenderMethodListForDataSource(dataSource, NULL);
     if (renderMethods->size() > 0) {
-      // For cascaded and rgba layers, no styles need to be defined
-      //       if((CStyleConfiguration::getRenderMethodFromString(renderMethods->get(0))&(RM_RGBA)){
-      //         CDBDebug("Using rendermethod %s",renderMethods->get(0)->c_str());
-      //         delete renderMethods ;
-      //
-      //         CStyleConfiguration * styleConfig = new CStyleConfiguration();
-      //         //CDBDebug("Setting rendermethod RM_RGBA");
-      //         styleConfig->styleTitle.copy("rgba");
-      //         styleConfig->styleAbstract.copy("rgba");
-      //         styleConfig->renderMethod = RM_RGBA;
-      //         styleConfig->styleCompositionName = "rgba";
-      //         styleConfigurationList->push_back(styleConfig);
-      //         return styleConfigurationList;
-      //
-      //       }
       CAutoConfigure::autoConfigureStyles(dataSource);
     }
   }
@@ -907,28 +896,6 @@ CT::PointerList<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(C
       // Lookup the style index in the servers configuration
       int dStyleIndex = getServerStyleIndexByName(styleNames->get(i)->c_str(), serverCFG->Style);
 
-      if (dStyleIndex == -1) {
-
-        //         if(returnStringList){
-        //
-        //           if(styleNames->get(i)->equals("default")==false){
-        //             CDBError("Style %s not found for layer %s",styleNames->get(i)->c_str(),dataSource->layerName.c_str());
-        //             delete styleNames;styleNames = NULL;
-        //
-        //             return styleConfigurationList;
-        //           }else{
-        //            CDBDebug("Warning: Style [%s] not found (%d)",styleNames->get(i)->c_str(),styleNames->get(i)->equals("default"));
-        //             CT::string * styleName = new CT::string();
-        //             styleName->copy("default");
-        //
-        //             styleConfigurationList->push_back(styleName);
-        //             delete styleNames;styleNames = NULL;
-        //             return styleConfigurationList;
-        //            continue;
-        //           }
-        //         }
-      }
-
 #ifdef CDATASOURCE_DEBUG
       CDBDebug("dStyleIndex = %d", dStyleIndex);
 #endif
@@ -942,31 +909,11 @@ CT::PointerList<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(C
         legendList = getLegendListForDataSource(dataSource, style);
 
         if (legendList == NULL) {
-          CDBError("No legends defined for layer %s", dataSource->layerName.c_str());
-          delete styleNames;
-          styleNames = NULL;
-
-          delete renderMethods;
-          renderMethods = NULL;
-          ////if(styleConfig!=NULL){styleConfig->hasError=true;}
-          return NULL;
+          CDBDebug("No legends defined for layer %s, adding legend auto", dataSource->layerName.c_str());
+          CT::string *autoLegendName = new CT::string("rainbow");
+          legendList = new CT::PointerList<CT::string *>();
+          legendList->push_back(autoLegendName);
         }
-
-        //       if(legendList->size()==0){
-        //         CDBError("Zero legends defined for layer %s",dataSource->layerName.c_str());
-        //         delete styleNames;styleNames = NULL;
-        //         delete styleConfigurationList;styleConfigurationList = NULL;
-        //         delete renderMethods;renderMethods= NULL;
-        //         if(styleConfig!=NULL){styleConfig->hasError=true;}
-        //         return NULL;
-        //       }if(renderMethods->size()==0){
-        //         CDBError("Zero renderMethods defined for layer %s",dataSource->layerName.c_str());
-        //         delete styleNames;styleNames = NULL;
-        //         delete styleConfigurationList;styleConfigurationList = NULL;
-        //         delete renderMethods;renderMethods= NULL;
-        //         if(styleConfig!=NULL){styleConfig->hasError=true;}
-        //         return NULL;
-        //       }
 
         CT::string styleName;
         for (size_t l = 0; l < legendList->size(); l++) {
@@ -1347,6 +1294,7 @@ CDataSource *CDataSource::clone() {
     d->requiredDims.push_back(ogcDim);
     ogcDim->name = requiredDims[j]->name;
     ogcDim->value = requiredDims[j]->value;
+    ogcDim->queryValue = requiredDims[j]->queryValue;
     ogcDim->netCDFDimName = requiredDims[j]->netCDFDimName;
     for (size_t i = 0; i < requiredDims[j]->uniqueValues.size(); i++) {
       ogcDim->uniqueValues.push_back(requiredDims[j]->uniqueValues[i].c_str());
@@ -1394,9 +1342,11 @@ CDataSource *CDataSource::clone() {
 double CDataSource::getScaling() {
   if (this->getStyle() != NULL && this->getStyle()->styleConfig != NULL) {
     if (this->getStyle()->styleConfig->RenderSettings.size() > 0) {
-      double scaleWidth = this->getStyle()->styleConfig->RenderSettings[0]->attr.scalewidth.toDouble();
-      double imageWidth = (double)this->srvParams->Geo->dWidth;
-      return imageWidth / scaleWidth;
+      if (!this->getStyle()->styleConfig->RenderSettings[0]->attr.scalewidth.empty()) {
+        double scaleWidth = this->getStyle()->styleConfig->RenderSettings[0]->attr.scalewidth.toDouble();
+        double imageWidth = (double)this->srvParams->Geo->dWidth;
+        return imageWidth / scaleWidth;
+      }
     }
   }
   return 1;
@@ -1405,9 +1355,76 @@ double CDataSource::getScaling() {
 double CDataSource::getContourScaling() {
   if (this->getStyle() != NULL && this->getStyle()->styleConfig != NULL) {
     if (this->getStyle()->styleConfig->RenderSettings.size() > 0) {
-      double scalecontours = this->getStyle()->styleConfig->RenderSettings[0]->attr.scalecontours.toDouble();
-      return scalecontours;
+      if (!this->getStyle()->styleConfig->RenderSettings[0]->attr.scalecontours.empty()) {
+        double scalecontours = this->getStyle()->styleConfig->RenderSettings[0]->attr.scalecontours.toDouble();
+        return scalecontours;
+      }
     }
   }
   return 1;
+}
+
+CDataSource::DataObject *CDataSource::getDataObject(const char *name) {
+  for (auto it = dataObjects.begin(); it != dataObjects.end(); ++it) {
+    CDataSource::DataObject *dataObject = *it;
+    if (dataObject->cdfVariable->name.equals(name)) {
+      return dataObject;
+    }
+    if (dataObject->variableName.equals(name)) {
+      return dataObject;
+    }
+  }
+  CT::string candidates;
+  for (auto it = dataObjects.begin(); it != dataObjects.end(); ++it) {
+    CDataSource::DataObject *dataObject = *it;
+    candidates.printconcat("%s,", dataObject->cdfVariable->name.c_str());
+  }
+  CDBError("DataObject %s not found. Canditates are %s", name, candidates.c_str());
+  throw(CEXCEPTION_NULLPOINTER);
+}
+
+CDataSource::DataObject *CDataSource::getDataObject(int j) {
+
+  if (int(dataObjects.size()) <= j) {
+    CDBError("No Data object witn nr %d (total %d) for animation step %d (total steps %d)", j, currentAnimationStep, dataObjects.size(), timeSteps.size());
+    throw(CEXCEPTION_NULLPOINTER);
+  }
+
+  DataObject *d = dataObjects[j];
+  // CDBDebug("getDataObject %d %d",currentAnimationStep,j);
+  return d;
+}
+
+int CDataSource::attachCDFObject(CDFObject *cdfObject) {
+  if (cdfObject == NULL) {
+    CDBError("cdfObject==NULL");
+    return 1;
+  }
+  if (isConfigured == false) {
+    CDBError("Datasource %s is not configured", cfgLayer->Name[0]->value.c_str());
+    return 1;
+  }
+  if (getNumDataObjects() <= 0) {
+    CDBError("No variables found for datasource %s", cfgLayer->Name[0]->value.c_str());
+    return 1;
+  }
+  for (size_t varNr = 0; varNr < getNumDataObjects(); varNr++) {
+    if (getDataObject(varNr)->cdfVariable != NULL && getDataObject(varNr)->cdfVariable->hasCustomReader()) {
+      continue;
+    }
+
+    getDataObject(varNr)->cdfObject = cdfObject;
+    getDataObject(varNr)->cdfVariable = cdfObject->getVariableNE(getDataObject(varNr)->variableName.c_str());
+    if (getDataObject(varNr)->cdfVariable == NULL) {
+      CDBError("attachCDFObject: variable nr %d \"%s\" does not exist", varNr, getDataObject(varNr)->variableName.c_str());
+      return 1;
+    }
+  }
+  return 0;
+}
+void CDataSource::detachCDFObject() {
+  for (size_t j = 0; j < getNumDataObjects(); j++) {
+    getDataObject(j)->cdfVariable = NULL;
+    getDataObject(j)->cdfObject = NULL;
+  }
 }

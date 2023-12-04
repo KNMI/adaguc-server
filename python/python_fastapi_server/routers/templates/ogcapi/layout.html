@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+
+  <head>
+    <title>{{title}}</title>
+    <meta charset="utf-8">
+    <meta name="description" content={{description}}>
+    <link rel="shortcut icon" href="/favicon.ico">
+    <script src="/ogcapi/static/renderjson/renderjson.js"></script>
+    <link rel="stylesheet" href="/ogcapi/static/style.css"/>
+  </head>
+
+  <body>
+    <p>
+        {% block content %}{% endblock %}
+    </p>
+    <p>
+        {% block collections %}{% endblock %}
+    </p>
+    <p>
+        {% block itemlist %}{% endblock %}
+    </p>
+    <p>
+        {% block links %}{% endblock %}
+    </p>
+    In JSON:
+    <p>
+        {% block json %}{%endblock %}
+    </p>
+  </body>
+
+</html>

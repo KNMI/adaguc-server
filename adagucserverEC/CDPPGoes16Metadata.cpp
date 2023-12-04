@@ -10,9 +10,9 @@ const char *CDPPGoes16Metadata::getId() {
   CDBDebug("getId");
   return "goes16metadata";
 }
-int CDPPGoes16Metadata::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *) {
-  CDBDebug("isApplicable");
-  if (proc->attr.algorithm.equals("goes16metadata")) {
+int CDPPGoes16Metadata::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int mode) {
+  // CDBDebug("isApplicable");
+  if (proc->attr.algorithm.equals("goes16metadata") && mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
     return CDATAPOSTPROCESSOR_RUNBEFOREREADING;
   }
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
@@ -20,7 +20,7 @@ int CDPPGoes16Metadata::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDa
 
 int CDPPGoes16Metadata::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
   CDBDebug("execute");
-  if ((isApplicable(proc, dataSource) & mode) == false) {
+  if (isApplicable(proc, dataSource, mode) == false) {
     return -1;
   }
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {

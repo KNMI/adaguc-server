@@ -79,10 +79,20 @@ int CAutoResource::configureDataset(CServerParams *srvParam, bool) {
       return 1;
     }
 
-    CDBDebug("Found dataset %s", datasetConfigFile.c_str());
+    if (srvParam->verbose) {
+      CDBDebug("Found dataset %s", datasetConfigFile.c_str());
+    }
+
+    // Find variables to substitute
+    CServerParams tempServerParam;
+    tempServerParam.parseConfigFile(datasetConfigFile, nullptr);
+    std::vector<CServerConfig::XMLE_Environment *> *extraEnvironment = nullptr;
+    if (tempServerParam.configObj != nullptr && tempServerParam.configObj->Configuration.size() > 0 && tempServerParam.configObj->Configuration[0]->Environment.size() > 0) {
+      extraEnvironment = &tempServerParam.configObj->Configuration[0]->Environment;
+    }
 
     // Add the dataset file to the current configuration
-    int status = srvParam->parseConfigFile(datasetConfigFile);
+    int status = srvParam->parseConfigFile(datasetConfigFile, extraEnvironment);
     if (status != 0) {
       CDBError("Invalid dataset configuration file.");
       return 1;
@@ -464,11 +474,12 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
     // Adjust online resource in order to pass on variable and source parameters
     CT::string onlineResource = srvParam->getOnlineResource();
     CT::string stringToAdd;
-    stringToAdd.concat("&source=");
-    stringToAdd.concat(srvParam->autoResourceLocation.c_str());
+    stringToAdd.concat("source=");
+    CT::string autoResourceLocation(srvParam->autoResourceLocation);
+    autoResourceLocation.encodeURLSelf(); // urlencode only the filename
+    stringToAdd.concat(autoResourceLocation);
     // stringToAdd.concat("&variable=");stringToAdd.concat(srvParam->autoResourceVariable.c_str());
 
-    stringToAdd.encodeURLSelf();
     stringToAdd.concat("&amp;");
     onlineResource.concat(stringToAdd.c_str());
     srvParam->setOnlineResource(onlineResource.c_str());
@@ -516,10 +527,25 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *const srvParam, CDFObject
       }
       CDF::Attribute *adaguc_data_type = variable->getAttributeNE("adaguc_data_type");
       if (adaguc_data_type != NULL) {
+
         if (adaguc_data_type->toString().equals("CConvertGeoJSON")) {
           CServerConfig::XMLE_RenderMethod *xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
           CREPORT_INFO_NODOC("adaguc_data_type set to CConvertGeoJSON. Assuming polyline render method for now.", CReportMessage::Categories::GENERAL);
           xmleRenderMethod->value.copy("polyline");
+          xmleLayer->RenderMethod.insert(xmleLayer->RenderMethod.begin(), xmleRenderMethod);
+        }
+
+        if (adaguc_data_type->toString().equals("CConvertGeoJSONPOLYGON")) {
+          CServerConfig::XMLE_RenderMethod *xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
+          CREPORT_INFO_NODOC("adaguc_data_type set to CConvertGeoJSONPOLYGON. Assuming polyline render method for now.", CReportMessage::Categories::GENERAL);
+          xmleRenderMethod->value.copy("polyline");
+          xmleLayer->RenderMethod.insert(xmleLayer->RenderMethod.begin(), xmleRenderMethod);
+        }
+
+        if (adaguc_data_type->toString().equals("CConvertGeoJSONPOINT")) {
+          CServerConfig::XMLE_RenderMethod *xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
+          CREPORT_INFO_NODOC("adaguc_data_type set to CConvertGeoJSONPOINT. Assuming point render method for now.", CReportMessage::Categories::GENERAL);
+          xmleRenderMethod->value.copy("point");
           xmleLayer->RenderMethod.insert(xmleLayer->RenderMethod.begin(), xmleRenderMethod);
         }
       }

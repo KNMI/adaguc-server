@@ -33,13 +33,60 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <algorithm> /* For std::sort */
-
+#include <regex>
 #include "CDirReader.h"
 
 const char *CDirReader::className = "CDirReader";
 CDirReader::CDirReader() {}
 
 CDirReader::~CDirReader() { fileList.clear(); }
+
+std::vector<std::string> CDirReader::listDir(const char *directory, bool recursive, const char *ext_filter, int filesAndOrDirs, bool exceptionOnError) {
+  std::vector<std::string> result;
+  std::regex self_regex;
+  if (ext_filter != nullptr) {
+    self_regex = std::regex(ext_filter);
+  }
+
+  DIR *dir;
+  struct dirent *ent;
+  if ((dir = opendir(directory)) != NULL) {
+    /* print all the files and directories within directory */
+    while ((ent = readdir(dir)) != NULL) {
+      if (ent->d_type == DT_REG || ent->d_type == DT_DIR) {
+        if (ent->d_name[0] != '.') { // Omit dirs starting with a .
+          CT::string fullName = directory;
+          fullName.concat("/");
+          fullName.concat(ent->d_name);
+
+          if (((filesAndOrDirs & CDIRREADER_INCLUDE_FILES) && ent->d_type == DT_REG) || ((filesAndOrDirs & CDIRREADER_INCLUDE_DIRECTORIES) && ent->d_type == DT_DIR)) {
+            if (ext_filter == nullptr || std::regex_match(ent->d_name, self_regex)) {
+              result.push_back(makeCleanPath(fullName.c_str()).c_str());
+            }
+          }
+          if (recursive && ent->d_type == DT_DIR) {
+            auto dirFiles = listDir(fullName.c_str(), recursive, ext_filter, filesAndOrDirs, exceptionOnError);
+            // Move elements from dirFiles to result.
+            // dirFiles is left in undefined but safe-to-destruct state.
+            result.insert(result.end(), std::make_move_iterator(dirFiles.begin()), std::make_move_iterator(dirFiles.end()));
+            dirFiles.clear();
+          }
+        }
+      }
+    }
+    closedir(dir);
+  } else {
+    if (exceptionOnError) {
+      /* could not open directory */
+      throw "Error";
+    }
+  }
+
+  // if (re != nullptr && ext_filter != nullptr) {
+  //   regfree(re);
+  // }
+  return result;
+}
 
 int CDirReader::listDirRecursive(const char *directory, const char *ext_filter) {
   if (fileList.size() != 0) {
@@ -57,13 +104,13 @@ int CDirReader::listDirRecursive(const char *directory, const char *ext_filter) 
 }
 
 int CDirReader::_listDirRecursive(const char *directory, const char *ext_filter) {
-  CDBDebug("Doing recursive directory scan for [%s]", directory);
+  // CDBDebug("Doing recursive directory scan for [%s]", directory);
   try {
     return _ReadDir(directory, ext_filter, 1);
   } catch (int a) {
     /* Maybe the user provided a file instead of a directory? */
-    struct stat64 fileattr;
-    if (stat64(directory, &fileattr) == -1) {
+    struct stat fileattr;
+    if (stat(directory, &fileattr) == -1) {
       CDBWarning("Unable to stat %s", directory);
       return 1;
     }
@@ -130,6 +177,8 @@ CT::string CDirReader::makeCleanPath(const char *_path) {
   if (_path == NULL) return path;
   path = _path;
   if (path.length() == 0) return path;
+  path.replaceSelf("\n", "");
+  path.trimSelf();
   CT::StackList<CT::string> parts = path.splitToStack("/");
 
   int startAtIndex = 0;
@@ -163,13 +212,23 @@ CT::string CDirReader::makeCleanPath(const char *_path) {
 }
 
 bool CDirReader::isDir(const char *directory) {
-  struct stat64 fileattr;
-  if (stat64(directory, &fileattr) == -1) {
+  struct stat fileattr;
+  if (stat(directory, &fileattr) == -1) {
     return false;
   }
   return S_ISDIR(fileattr.st_mode);
 }
+
+bool CDirReader::isFile(const char *filename) {
+  struct stat fileattr;
+  if (stat(filename, &fileattr) == -1) {
+    return false;
+  }
+  return S_ISREG(fileattr.st_mode);
+}
+
 int CDirReader::testRegEx(const char *string, const char *pattern) {
+  if (string == nullptr || pattern == nullptr) return 1;
   int status;
   regex_t re;
 

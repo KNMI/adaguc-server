@@ -1,9 +1,8 @@
-FROM python:3.8.0-alpine3.10
+FROM alpine:3.18
 
 RUN apk update && apk add --no-cache nginx certbot runit gettext openssl
 
 RUN mkdir /etc/service/nginx
-RUN mkdir /run/nginx
 RUN mkdir /acme
 
 COPY nginx.conf /nginx.conf
