@@ -940,7 +940,7 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
             if (variable->name.equals("windbarb_backup")) {
               double spd = int(val) / 1000;
               double dir = 1000 * (val - int(val));
-              drawImage->drawBarb(x1, y1, dir / 180 * M_PI, spd, 240, true, true);
+              drawImage->drawBarb(x1, y1, dir / 180 * M_PI, spd, CColor(0, 0, 0, 255), 1, true, true, true);
             } else {
               int pcolorind = (int)(val * legendScale + legendOffset);
               // val+=legendOffset;
