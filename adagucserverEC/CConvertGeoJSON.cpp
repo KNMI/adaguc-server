@@ -93,14 +93,14 @@ void CConvertGeoJSON::drawpolyWithHoles_index(int xMin, int yMin, int xMax, int 
   int IMAGE_RIGHT = xMax;
   int scanLineWidth = IMAGE_RIGHT - IMAGE_LEFT;
 
-  int cntLines = 0;
-  int cntHoleLists = 0;
+//  int cntLines = 0;
+//  int cntHoleLists = 0;
   // Allocate  scanline
   unsigned short scanline[scanLineWidth];
   // Loop through the rows of the image.
   for (pixelY = IMAGE_TOP; pixelY < IMAGE_BOT; pixelY++) {
 
-    cntLines++;
+//    cntLines++;
     for (i = 0; i < scanLineWidth; i++) scanline[i] = CCONVERTGEOJSON_FILL;
     buildNodeList(pixelY, nodes, nodeX, polyCorners, polyXY);
     bubbleSort(nodes, nodeX);
@@ -116,7 +116,7 @@ void CConvertGeoJSON::drawpolyWithHoles_index(int xMin, int yMin, int xMax, int 
 
     for (int h = 0; h < holes; h++) {
       buildNodeList(pixelY, nodes, nodeX, holeCorners[h], holeXY[h]);
-      cntHoleLists++;
+//      cntHoleLists++;
       bubbleSort(nodes, nodeX);
       for (i = 0; i < nodes; i += 2) {
         int x1 = nodeX[i] - IMAGE_LEFT;
