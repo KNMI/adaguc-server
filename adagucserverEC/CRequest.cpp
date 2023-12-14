@@ -84,7 +84,7 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
   CT::StackList<CT::string> configFileList = configFile.splitToStack(",");
 
   // Parse the main configuration file
-  int status = srvParam->parseConfigFile(configFileList[0], nullptr);
+  int status = srvParam->parseConfigFile(configFileList[0]);
 
   if (status == 0 && srvParam->configObj->Configuration.size() == 1) {
 
@@ -95,7 +95,7 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
     if (configFileList.size() > 1) {
       for (size_t j = 1; j < configFileList.size() - 1; j++) {
         // CDBDebug("Include '%s'",configFileList[j].c_str());
-        status = srvParam->parseConfigFile(configFileList[j], nullptr);
+        status = srvParam->parseConfigFile(configFileList[j]);
         if (status != 0) {
           CDBError("There is an error with include '%s'", configFileList[j].c_str());
           return 1;
@@ -177,7 +177,7 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
 #ifdef CREQUEST_DEBUG
         CDBDebug("Include '%s'", srvParam->cfg->Include[index]->attr.location.c_str());
 #endif
-        status = srvParam->parseConfigFile(srvParam->cfg->Include[index]->attr.location, nullptr);
+        status = srvParam->parseConfigFile(srvParam->cfg->Include[index]->attr.location);
         if (status != 0) {
           CDBError("There is an error with include '%s'", srvParam->cfg->Include[index]->attr.location.c_str());
           return 1;
@@ -2047,7 +2047,7 @@ int CRequest::process_all_layers() {
           /* List of specified legends */
           CT::StackList<CT::string> legendLayerList = srvParam->showLegendInImage.splitToStack(",");
 
-//          int numberOfLegendsDrawn = 0;
+          //          int numberOfLegendsDrawn = 0;
           int legendOffsetX = 0;
           for (size_t d = 0; d < dataSources.size(); d++) {
             if (dataSources[d]->dLayerType != CConfigReaderLayerTypeCascaded) {
@@ -2086,7 +2086,7 @@ int CRequest::process_all_layers() {
                 // int posX=padding*scaling;//imageDataWriter.drawImage.Geo->dWidth-(scaleBarImage.Geo->dWidth+padding);
                 int posY = imageDataWriter.drawImage.Geo->dHeight - (legendImage.Geo->dHeight + padding * scaling);
                 imageDataWriter.drawImage.draw(posX, posY, 0, 0, &legendImage);
-//                numberOfLegendsDrawn++;
+                //                numberOfLegendsDrawn++;
                 legendOffsetX += legendImage.Geo->dWidth + padding;
               }
             }
