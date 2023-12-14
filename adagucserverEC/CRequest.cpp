@@ -2047,7 +2047,7 @@ int CRequest::process_all_layers() {
           /* List of specified legends */
           CT::StackList<CT::string> legendLayerList = srvParam->showLegendInImage.splitToStack(",");
 
-          int numberOflegendsDrawn = 0;
+//          int numberOfLegendsDrawn = 0;
           int legendOffsetX = 0;
           for (size_t d = 0; d < dataSources.size(); d++) {
             if (dataSources[d]->dLayerType != CConfigReaderLayerTypeCascaded) {
@@ -2086,7 +2086,7 @@ int CRequest::process_all_layers() {
                 // int posX=padding*scaling;//imageDataWriter.drawImage.Geo->dWidth-(scaleBarImage.Geo->dWidth+padding);
                 int posY = imageDataWriter.drawImage.Geo->dHeight - (legendImage.Geo->dHeight + padding * scaling);
                 imageDataWriter.drawImage.draw(posX, posY, 0, 0, &legendImage);
-                numberOflegendsDrawn++;
+//                numberOfLegendsDrawn++;
                 legendOffsetX += legendImage.Geo->dWidth + padding;
               }
             }
