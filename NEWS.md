@@ -1,3 +1,6 @@
+**Version 2.14.1 2023-12-08**
+- Set keep-alive (to support running behind proxy/load balancer)
+
 **Version 2.14.0 2023-11-23**
 - EDR support (position endpoint only), see [EDRConfiguration](doc/configuration/EDRConfiguration/EDR.md)
 
