@@ -655,8 +655,6 @@ int EProfileUniqueRequests::plotHeightRetrieval(CDrawImage *drawImage, CDFObject
         }
       }
     }
-  } else {
-    //    CDBDebug("plotHeightRetrievalVariable == NULL");
   }
   return 0;
 }
@@ -757,7 +755,7 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
     eProfileJson->concat("{");
     CT::string units = dataSource->getDataObject(0)->getUnits();
     if (!units.empty()) {
-      eProfileJson->printconcat("\"units\":\"%s\",", units.c_str());
+      eProfileJson->printconcat("\"units\":\"%s\",", units.encodeJSON().c_str());
     } else {
       eProfileJson->printconcat("\"units\":null,");
     }
@@ -773,7 +771,7 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
     layerName.empty() == false ? eProfileJson->printconcat("\"layer_name\":\"%s\",", layerName.encodeJSON().c_str()) : eProfileJson->printconcat("\"layer_name\":null,");
     layerTitle.empty() == false ? eProfileJson->printconcat("\"layer_title\":\"%s\",", layerTitle.encodeJSON().c_str()) : eProfileJson->printconcat("\"layer_title\":null,");
     eProfileJson->printconcat("\"numValues\":%d,", varRange->getSize());
-    eProfileJson->printconcat("\"name\":\"%s\",", variable->name.replace("_backup", "").c_str());
+    eProfileJson->printconcat("\"name\":\"%s\",", variable->name.replace("_backup", "").encodeJSON().c_str());
 
     CDBDebug("%d", variable->getSize());
 

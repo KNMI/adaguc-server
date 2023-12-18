@@ -2393,11 +2393,12 @@ int CImageDataWriter::end() {
 
     if (isProfileData) {
       resultFormat = imagepng_eprofile;
+
       if (srvParam->InfoFormat.equals("image/png")) {
-        printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
+        printf("%s%s%c%c\n", "Content-Type:image/png", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
         drawImage.printImagePng8(true);
       } else {
-        printf("%s%c%c\n", "Content-Type:application/json", 13, 10);
+        printf("%s%s%c%c\n", "Content-Type:application/json", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
         printf("%s", eProfileJson.c_str());
       }
 
