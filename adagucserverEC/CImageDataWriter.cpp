@@ -696,7 +696,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
     bool openAll = false;
 
     bool everythingIsInBBOX = true;
-    
 
     CDataReader reader;
     reader.open(dataSources[d], CNETCDFREADER_MODE_OPEN_HEADER);
@@ -745,20 +744,13 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
     }
 
     CDBDebug("isProfileData:[%d] openAll:[%d] sameHeaderForAll:[%d] infoFormat:[%s]", isProfileData, openAll, sameHeaderForAll, srvParam->InfoFormat.c_str());
-    
+
     if (isProfileData) {
-    //   if (srvParam->InfoFormat.equals("image/png")) {
-        int status = CMakeEProfile::MakeEProfile(&drawImage, &imageWarper, dataSources, d, dX, dY, &eProfileJson);
-        if (status != 0) {
-          CDBError("CMakeEProfile::MakeEProfile failed");
-          return status;
-        }
-        CDBDebug("CMakeEProfile::MakeEProfile done");
-    //   } else {
-    //     printf("%s%c%c\n", "Content-Type:text/plain", 13, 10);
-    //     printf("Not supported yet");
-    //     return 0;
-    //   }
+      int status = CMakeEProfile::MakeEProfile(&drawImage, &imageWarper, dataSources, d, dX, dY, &eProfileJson);
+      if (status != 0) {
+        CDBError("CMakeEProfile::MakeEProfile failed");
+        return status;
+      }
     } else if (sameHeaderForAll == false && openAll == false && srvParam->InfoFormat.equals("application/json")) {
       int status = CMakeJSONTimeSeries::MakeJSONTimeSeries(&drawImage, &imageWarper, dataSources, d, dX, dY, &gfiStructure);
       if (status != 0) {
@@ -2405,8 +2397,8 @@ int CImageDataWriter::end() {
         printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
         drawImage.printImagePng8(true);
       } else {
-          printf("%s%c%c\n", "Content-Type:application/json", 13, 10);
-          printf("%s", eProfileJson.c_str());
+        printf("%s%c%c\n", "Content-Type:application/json", 13, 10);
+        printf("%s", eProfileJson.c_str());
       }
 
       return 0;
@@ -3701,8 +3693,8 @@ void rotateUvNorth(double &u, double &v, double rlo, double rla, float deltaX, f
   xpntNorthSph -= xpnt0Sph, ypntNorthSph -= ypnt0Sph;
   zpntNorthSph -= zpnt0Sph;
 
-  NormVector(xpntEastSph, ypntEastSph, zpntEastSph);                                                                        // vecx
-  NormVector(xpntNorthSph, ypntNorthSph, zpntNorthSph);                                                                     // vecy
+  NormVector(xpntEastSph, ypntEastSph, zpntEastSph);    // vecx
+  NormVector(xpntNorthSph, ypntNorthSph, zpntNorthSph); // vecy
 
   CrossProd(xpntEastSph, ypntEastSph, zpntEastSph, xpntNorthSph, ypntNorthSph, zpntNorthSph, xnormSph, ynormSph, znormSph); // vec z
   xpntNorthSphRot = -znormSph * xnormSph;                                                                                   // xpntNorthSphRot = 0.0 - Dist*xnormSph;
@@ -3723,7 +3715,7 @@ void rotateUvNorth(double &u, double &v, double rlo, double rla, float deltaX, f
 
   xpntNorthSph = sin(vecAngle); // Rotate the point/vector (0,1) around Z-axis with vecAngle
   ypntNorthSph = cos(vecAngle);
-  xpntEastSph = ypntNorthSph;   // Rotate the same point/vector around Z-axis with 90 degrees
+  xpntEastSph = ypntNorthSph; // Rotate the same point/vector around Z-axis with 90 degrees
   ypntEastSph = -xpntNorthSph;
 
   // zpntNorthSph = 0; zpntEastSph = 0;  // not needed in 2D
