@@ -64,8 +64,14 @@ class TestWCS(unittest.TestCase):
                                                               env=self.env, args=["--report"])
     AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
     self.assertEqual(status, 0)
-    self.assertEqual(data.getvalue(), AdagucTestTools(
-    ).readfromfile(self.expectedoutputsspath + filename))
+    # Different gdal versions give different spaces in the output.
+    # Compare in a way where any sequence of whitespace characters is equivalent
+    # This means that newlines (which are important?) are not compared
+    test_output = data.getvalue()
+    expected_output = AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
+    test_output = ' '.join(test_output.decode("utf-8").split())
+    expected_output = ' '.join(expected_output.decode("utf-8").split())
+    self.assertEqual(test_output, expected_output)
 
   def test_WCSGetCoverageNetCDF3_testdatanc(self):
     """
