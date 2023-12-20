@@ -1094,7 +1094,7 @@ int CNetCDFDataWriter::end() {
     printf("Content-Description: File Transfer\r\n");
     printf("Content-Transfer-Encoding: binary\r\n");
     printf("Content-Length: %zu\r\n", endPos);
-    printf("%s\r\n\n", "Content-Type:application/netcdf");
+    printf("%s%s\r\n\n", "Content-Type:application/netcdf", srvParam->getCacheControlHeader(srvParam->getCacheControlOption()).c_str());
     for (size_t j = 0; j < endPos; j++) putchar(getc(fp));
     fclose(fp);
     fclose(stdout);

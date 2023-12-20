@@ -1715,7 +1715,7 @@ int CRequest::process_all_layers() {
       if (pszADAGUCWriteToFile != NULL) {
         CReadFile::write(pszADAGUCWriteToFile, XMLDocument.c_str(), XMLDocument.length());
       } else {
-        printf("%s%c%c\n", "Content-Type:text/xml", 13, 10);
+        printf("%s%s%c%c\n", "Content-Type:text/xml", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
         printf("%s", XMLDocument.c_str());
       }
       return 0;

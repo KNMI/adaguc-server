@@ -652,7 +652,6 @@ int CServerParams::parseConfigFile(CT::string &pszConfigFile, std::vector<CServe
 
 CT::string CServerParams::getCacheControlHeader(int mode) {
   if (cfg != nullptr && cfg->Settings.size() == 1) {
-    int cacheAge = 0;
     CT::string cacheString = "\r\nCache-Control:max-age=";
     if (mode == CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE) {
       if (!cfg->Settings[0]->attr.cache_age_volatileresources.empty()) {
