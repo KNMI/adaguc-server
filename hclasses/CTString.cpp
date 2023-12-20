@@ -447,15 +447,6 @@ namespace CT {
     return str;
   }
 
-
-  CT::string string::encodeJSON() {
-    CT::string str = this->c_str();
-    str.replaceSelf("\"", "\\");
-    str.replaceSelf("\n", "");
-    str.replaceSelf("\"", "\\\"");
-    return str;
-  }
-
   void string::encodeXMLSelf() {
     replaceSelf("&amp;", "&");
     replaceSelf("&", "&amp;");

@@ -159,12 +159,3 @@ TEST(string, splitToStackReferencesLinesAndCommaDoubleSplit) {
   LONGS_EQUAL(5, splittedRefs6.size());
   CHECK_EQUAL("TEST", std::string(splittedRefs6[4].c_str()));
 }
-
-TEST(string, encodeJSON) {
-
-  CHECK_EQUAL(CT::string("shouldstaythesame").encodeJSON().c_str(), std::string("shouldstaythesame"));
-
-  CHECK_EQUAL(CT::string("shouldreplace\"safely").encodeJSON().c_str(), std::string("shouldreplace\\safely"));
-
-  CHECK_EQUAL(CT::string("shouldreplace\nsafely").encodeJSON().c_str(), std::string("shouldreplacesafely"));
-}

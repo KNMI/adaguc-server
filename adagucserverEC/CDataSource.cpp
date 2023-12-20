@@ -383,7 +383,7 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Conf
     layerName = "";
   layerName.concat(_layerName);
 
-  layerTitle = cfgLayer->Title.size() > 0 && cfgLayer->Title[0]->value.empty() == false ? cfgLayer->Title[0]->value.c_str() : layerName.c_str();
+  layerTitle = cfgLayer->Title.size() > 0 && !cfgLayer->Title[0]->value.empty() ? cfgLayer->Title[0]->value.c_str() : layerName.c_str();
 
 #ifdef CDATASOURCE_DEBUG
   CDBDebug("LayerName=\"%s\"", layerName.c_str());

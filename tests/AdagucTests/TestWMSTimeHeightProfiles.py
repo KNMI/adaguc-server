@@ -23,41 +23,6 @@ class TestWMSTimeHeightProfiles(unittest.TestCase):
 
     AdagucTestTools().mkdir_p(testresultspath)
 
-    def compare_xml(self, xml, expectedxml):
-        """
-        Compare two xml files, omitting bbox and version
-        """
-        obj1 = objectify.fromstring(re.sub(' xmlns="[^"]+"', "", expectedxml, count=1))
-        obj2 = objectify.fromstring(re.sub(' xmlns="[^"]+"', "", xml, count=1))
-
-        # Remove ADAGUC build date and version from keywordlists
-        for child in obj1.findall("Service/KeywordList")[0]:
-            child.getparent().remove(child)
-        for child in obj2.findall("Service/KeywordList")[0]:
-            child.getparent().remove(child)
-
-        # Boundingbox extent values are too varying by different Proj libraries
-        def remove_bbox(root):
-            if root.tag.title() == "Boundingbox":
-                # root.getparent().remove(root)
-                try:
-                    del root.attrib["minx"]
-                    del root.attrib["miny"]
-                    del root.attrib["maxx"]
-                    del root.attrib["maxy"]
-                except:  # pylint: disable=bare-except
-                    pass
-            for elem in root.getchildren():
-                remove_bbox(elem)
-
-        remove_bbox(obj1)
-        remove_bbox(obj2)
-
-        result = etree.tostring(obj1)
-        expect = etree.tostring(obj2)
-
-        self.assertEqual(expect, result)
-
     def test_wms_getcapabilities_timeheightprofiles(self):
         """
         Check if WMS GetCapabilities on time height profiles is as expected
