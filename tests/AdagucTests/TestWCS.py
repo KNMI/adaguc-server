@@ -228,3 +228,77 @@ class TestWCS(unittest.TestCase):
     self.assertEqual(foundgridspec, expectedgridspec)
     projectionid = ds.variables["crs"].getncattr("id")
     self.assertEqual("EPSG:28992", projectionid)
+
+
+  def test_WCS_WithCaching(self):
+    AdagucTestTools().cleanTempDir()
+    config = (
+            ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,"
+            + ADAGUC_PATH
+            + "/data/config/datasets/adaguc.tests.cacheheader.xml"
+    )
+
+    status, data, headers = AdagucTestTools().runADAGUCServer(
+      args=["--updatedb", "--config", config], env=self.env, isCGI=False
+    )
+    self.assertEqual(status, 0)
+
+    status, data, headers = AdagucTestTools().runADAGUCServer(
+      "SERVICE=WCS&request=GetCapabilities", {"ADAGUC_CONFIG": config}
+    )
+    self.assertEqual(status, 0)
+    self.assertEqual(headers, ["Content-Type:text/xml", "Cache-Control:max-age=60"])
+
+    status, data, headers = AdagucTestTools().runADAGUCServer(
+      "SERVICE=WCS&request=DescribeCoverage", {"ADAGUC_CONFIG": config}
+    )
+    self.assertEqual(status, 0)
+    self.assertEqual(headers, ["Content-Type:text/xml", "Cache-Control:max-age=60"])
+
+    status, data, headers = AdagucTestTools().runADAGUCServer(
+      "SERVICE=WCS&request=DescribeCoverage&coverage=data", {"ADAGUC_CONFIG": config}
+    )
+    # print(data.getvalue())
+    self.assertEqual(status, 0)
+    self.assertEqual(headers, ["Content-Type:text/xml", "Cache-Control:max-age=60"])
+
+    status, data, headers = AdagucTestTools().runADAGUCServer(
+      "SERVICE=WCS&request=GetCoverage&coverage=data&crs=EPSG%3A4326&format=NetCDF4&bbox=0,50,10,60&width=100&height=100",
+      {"ADAGUC_CONFIG": config}
+    )
+    self.assertEqual(status, 0)
+    self.assertTrue("Content-Type:application/netcdf" in headers)
+    self.assertTrue("Cache-Control:max-age=60" in headers)
+
+    status, data, headers = AdagucTestTools().runADAGUCServer(
+      "SERVICE=WCS&request=GetCoverage&coverage=data&crs=EPSG%3A4326&format=NetCDF4&bbox=0,50,10,60&width=100&height=100&time=2017-01-01T00:05:00Z&DIM_member=member3&elevation=5000",
+      {"ADAGUC_CONFIG": config},
+    )
+    self.assertEqual(status, 0)
+    self.assertTrue("Content-Type:application/netcdf" in headers)
+    self.assertTrue("Cache-Control:max-age=7200" in headers)
+
+    status, data, headers = AdagucTestTools().runADAGUCServer(
+      "SERVICE=WCS&request=GetCoverage&coverage=data&crs=EPSG%3A4326&format=NetCDF4&bbox=0,50,10,60&width=100&height=100&time=2017-01-01T00:05:00Z&DIM_member=member3",
+      {"ADAGUC_CONFIG": config},
+    )
+    self.assertEqual(status, 0)
+    self.assertTrue("Content-Type:application/netcdf" in headers)
+    self.assertTrue("Cache-Control:max-age=60" in headers)
+
+    status, data, headers = AdagucTestTools().runADAGUCServer(
+      "SERVICE=WCS&request=GetCoverage&coverage=data&crs=EPSG%3A4326&format=NetCDF4&bbox=0,50,10,60&width=100&height=100&time=2017-01-01T00:05:00Z&elevation=5000",
+      {"ADAGUC_CONFIG": config},
+    )
+    self.assertEqual(status, 0)
+    self.assertTrue("Content-Type:application/netcdf" in headers)
+    self.assertTrue("Cache-Control:max-age=60" in headers)
+
+    status, data, headers = AdagucTestTools().runADAGUCServer(
+      "SERVICE=WCS&request=GetCoverage&coverage=data&crs=EPSG%3A4326&format=NetCDF4&bbox=0,50,10,60&width=100&height=100&elevation=5000",
+      {"ADAGUC_CONFIG": config},
+    )
+    self.assertEqual(status, 0)
+    self.assertTrue("Content-Type:application/netcdf" in headers)
+    self.assertTrue("Cache-Control:max-age=60" in headers)
