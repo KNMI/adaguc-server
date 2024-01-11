@@ -302,3 +302,21 @@ class TestWCS(unittest.TestCase):
     self.assertEqual(status, 0)
     self.assertTrue("Content-Type:application/netcdf" in headers)
     self.assertTrue("Cache-Control:max-age=60" in headers)
+
+    # Test AAIgrid response format
+    status, data, headers = AdagucTestTools().runADAGUCServer(
+      "SERVICE=WCS&request=GetCoverage&coverage=data&crs=EPSG%3A4326&format=aaigrid&bbox=0,50,10,60&width=100&height=100",
+      {"ADAGUC_CONFIG": config}
+    )
+    self.assertEqual(status, 0)
+    self.assertTrue("Content-Type:text/plain" in headers)
+    self.assertTrue("Cache-Control:max-age=60" in headers)
+
+    # Test AAIgrid response format
+    status, data, headers = AdagucTestTools().runADAGUCServer(
+      "SERVICE=WCS&request=GetCoverage&coverage=data&crs=EPSG%3A4326&format=aaigrid&bbox=0,50,10,60&width=100&height=100&time=2017-01-01T00:05:00Z&DIM_member=member3&elevation=5000",
+      {"ADAGUC_CONFIG": config}
+    )
+    self.assertEqual(status, 0)
+    self.assertTrue("Content-Type:text/plain" in headers)
+    self.assertTrue("Cache-Control:max-age=7200" in headers)
