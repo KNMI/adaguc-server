@@ -1155,10 +1155,11 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
         CT::string dimName(dataSource->cfgLayer->Dimension[i]->value.c_str());
         CT::string forceValue = dataSource->cfgLayer->Dimension[i]->attr.fixvalue;
         dimName.toLowerCaseSelf();
-        for (size_t l = 0; l < dataSource->requiredDims.size(); l++) {
-          if (dataSource->requiredDims[l]->name.equals(&dimName)) {
-            CDBDebug("Forcing dimension %s from %s to %s", dimName.c_str(), dataSource->requiredDims[i]->value.c_str(), forceValue.c_str());
-            dataSource->requiredDims[i]->value = forceValue;
+        for (auto & requiredDim : dataSource->requiredDims) {
+          if (requiredDim->name.equals(&dimName)) {
+            CDBDebug("Forcing dimension %s from %s to %s", dimName.c_str(), requiredDim->value.c_str(), forceValue.c_str());
+            requiredDim->value = forceValue;
+            requiredDim->hasFixedValue = true;
             break;
           }
         }
@@ -1187,17 +1188,16 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
   }
   CDBDebug("### [</fillDimValuesForDataSource>]");
 #endif
-  bool allDimensionsAreAsRequestedInQueryString = true;
-  for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
-    auto *requiredDim = dataSource->requiredDims[j];
-    CDBDebug("%s: [%s] === [%s]", requiredDim->name.c_str(), requiredDim->value.c_str(), requiredDim->queryValue.c_str());
-    if (!requiredDim->value.equals(requiredDim->queryValue)) {
-      allDimensionsAreAsRequestedInQueryString = false;
+  bool allNonFixedDimensionsAreAsRequestedInQueryString = true;
+  for (auto requiredDim : dataSource->requiredDims) {
+    CDBDebug("%s: [%s] === [%s], fixed:%d", requiredDim->name.c_str(), requiredDim->value.c_str(), requiredDim->queryValue.c_str(), requiredDim->hasFixedValue);
+    if (!requiredDim->hasFixedValue && !requiredDim->value.equals(requiredDim->queryValue)) {
+      allNonFixedDimensionsAreAsRequestedInQueryString = false;
     }
   }
 
-  CDBDebug("allDimensionsAreAsRequestedInQueryString %d", allDimensionsAreAsRequestedInQueryString);
-  if (allDimensionsAreAsRequestedInQueryString) {
+  CDBDebug("allNonFixedDimensionsAreAsRequestedInQueryString %d", allNonFixedDimensionsAreAsRequestedInQueryString);
+  if (allNonFixedDimensionsAreAsRequestedInQueryString) {
     srvParam->setCacheControlOption(CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE);
   } else {
     srvParam->setCacheControlOption(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE);

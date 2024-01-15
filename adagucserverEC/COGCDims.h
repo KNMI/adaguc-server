@@ -30,7 +30,7 @@
 #include "CDebugger.h"
 class COGCDims {
 public:
-  COGCDims() { isATimeDimension = false; }
+  COGCDims() { isATimeDimension = false; hasFixedValue = false; }
   /**
    * OGC name
    */
@@ -60,6 +60,8 @@ public:
   void addValue(const char *value);
 
   bool isATimeDimension;
+
+  bool hasFixedValue;
 };
 
 class CCDFDims {
