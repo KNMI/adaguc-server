@@ -27,6 +27,7 @@
   </Style>
   
   <Layer type="database">
+    <Name>data</Name>
     <FilePath filter="^nc_5D_.*\.nc$">{ADAGUC_PATH}/data/datasets/netcdf_5dims/</FilePath>
     <Variable>data</Variable>
     <Styles>testdata</Styles>

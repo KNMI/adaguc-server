@@ -11,6 +11,8 @@ import os
 import os.path
 import unittest
 import netCDF4
+from netCDF4 import Dataset
+import tempfile
 from adaguc.AdagucTestTools import AdagucTestTools
 
 ADAGUC_PATH = os.environ['ADAGUC_PATH']
@@ -302,6 +304,29 @@ class TestWCS(unittest.TestCase):
     self.assertEqual(status, 0)
     self.assertTrue("Content-Type:application/netcdf" in headers)
     self.assertTrue("Cache-Control:max-age=60" in headers)
+
+    with tempfile.NamedTemporaryFile() as tmp:
+      tmp.write(data.getvalue())
+      dataset = Dataset(tmp.name, mode='r')
+      self.assertEqual(dataset.variables["member"][0], "member6")  # Largest value (default)
+      self.assertEqual(dataset.variables["height"][0], 5000)
+
+
+    # Make sure the correct value ends up in the NetCDF when a dimension is fixed
+    status, data, headers = AdagucTestTools().runADAGUCServer(
+      "SERVICE=WCS&request=GetCoverage&coverage=data_with_fixed&crs=EPSG%3A4326&format=NetCDF4&bbox=0,50,10,60&width=100&height=100&time=2017-01-01T00:05:00Z&elevation=2000",
+      {"ADAGUC_CONFIG": config},
+    )
+    self.assertEqual(status, 0)
+    self.assertTrue("Content-Type:application/netcdf" in headers)
+    self.assertTrue("Cache-Control:max-age=7200" in headers)  # Fully specified with the fixed dimension and the query
+
+    with tempfile.NamedTemporaryFile() as tmp:
+      tmp.write(data.getvalue())
+      dataset = Dataset(tmp.name, mode='r')
+      self.assertEqual(dataset.variables["member"][0], "member4")  # Fixed dimension
+      self.assertEqual(dataset.variables["height"][0], 2000)
+
 
     # Test AAIgrid response format
     status, data, headers = AdagucTestTools().runADAGUCServer(
