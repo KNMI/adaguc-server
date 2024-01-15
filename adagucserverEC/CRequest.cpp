@@ -1153,12 +1153,12 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
     for (size_t i = 0; i < dataSource->cfgLayer->Dimension.size(); i++) {
       if (!dataSource->cfgLayer->Dimension[i]->attr.fixvalue.empty()) {
         CT::string dimName(dataSource->cfgLayer->Dimension[i]->value.c_str());
-        CT::string forceValue = dataSource->cfgLayer->Dimension[i]->attr.fixvalue;
+        CT::string fixedValue = dataSource->cfgLayer->Dimension[i]->attr.fixvalue;
         dimName.toLowerCaseSelf();
         for (auto & requiredDim : dataSource->requiredDims) {
           if (requiredDim->name.equals(&dimName)) {
-            CDBDebug("Forcing dimension %s from %s to %s", dimName.c_str(), requiredDim->value.c_str(), forceValue.c_str());
-            requiredDim->value = forceValue;
+            CDBDebug("Forcing dimension %s from %s to %s", dimName.c_str(), requiredDim->value.c_str(), fixedValue.c_str());
+            requiredDim->value = fixedValue;
             requiredDim->hasFixedValue = true;
             break;
           }
