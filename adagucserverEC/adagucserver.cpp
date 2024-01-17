@@ -33,9 +33,8 @@
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
+#include "ProjCache.h"
 
-
-extern Tracer NewTrace;
 
 DEF_ERRORMAIN();
 
@@ -397,6 +396,33 @@ int _main(int argc, char **argv, char **) {
 int main(int argc, char **argv, char **envp) {
   clock_t start = clock();
 
+  // TODO: Clean this up!!
+//  // HACK: Use after free
+//  auto ml = new int;
+//  *ml = 5;
+//  delete ml;
+//  int ml2 = *ml;
+//  printf("%d", ml2);
+
+  // HACK: Buffer overflow
+//  auto *ml3 = new int[3];
+//  ml3[5] = 3;
+//  printf("%d", ml3[0]);
+
+//  // HACK: Double free
+//  auto *ml4 = new int;
+//  *ml4 = 1;
+//  int ml5 = *ml4;
+//  printf("%d", ml4);
+//  delete ml4;
+//  delete ml4;
+
+//  // HACK: Memory leak
+//  auto leak = new int[1000];
+//  leak[0] = 1;
+//  printf("%d", leak[1]);
+
+
   /* Check if ADAGUC_LOGFILE is set */
   const char *ADAGUC_LOGFILE = getenv("ADAGUC_LOGFILE");
   if (ADAGUC_LOGFILE != NULL) {
@@ -454,19 +480,17 @@ int main(int argc, char **argv, char **envp) {
 
   CDFObjectStore::getCDFObjectStore()->clear();
 
-  /* Check Tracer for leaks */
-  if (NewTrace.Dump() != 0) {
-    if (status == 0) status = 1; /* Indicates that we have a memory leak */
-  }
+  proj_clear_cache();
 
   if (pLogDebugFile != NULL) {
     fclose(pLogDebugFile);
     pLogDebugFile = NULL;
   }
 
+  // TODO: Clean up!!
   clock_t stop = clock();
   double elapsed = (double) (stop - start) / CLOCKS_PER_SEC;
-  printf("\nTime elapsed: %.5f\n", elapsed);
+//  printf("\nTime elapsed: %.5f\n", elapsed);
 
   return status;
 }
