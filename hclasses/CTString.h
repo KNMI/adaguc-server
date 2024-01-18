@@ -347,11 +347,6 @@ namespace CT {
      */
     CT::string encode();
 
-
-    /**
-     * Encodes string using JSON encoding
-     */
-    CT::string encodeJSON();
     static CT::string encodeXML(CT::string stringToEncode);
     CT::string encodeXML();
 

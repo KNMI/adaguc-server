@@ -1,5 +1,12 @@
-**Version 2.14.2 2023-12-18**
+**Version 2.14.3 2024-01-18**
 - Support time/height profile data from https://dataplatform.knmi.nl/dataset/ceilonet-chm15k-backsct-la1-t12s-v1-0
+
+**Version 2.14.2 2024-01-15**
+- Fix issue where the wrong dimension was forced to a value
+- Add Cache-Control header to WCS requests (DescribeCoverage and GetCoverage)
+- Fix Cache-control when dimensions are forced to a value
+- Make AAIGRID comparison looser (ignore whitespace)
+- Add unit test for Cache-Control headers for WCS AAIGRID format
 
 **Version 2.14.1 2023-12-08**
 - Set keep-alive (to support running behind proxy/load balancer)
