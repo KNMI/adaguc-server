@@ -28,7 +28,6 @@
 #include "CReporter.h"
 #include "CReportWriter.h"
 #include <getopt.h>
-#include "CDebugger_H.h"
 
 #include <stdio.h>
 #include <time.h>

@@ -21,7 +21,6 @@ services:
         max-file: "10"
   adaguc-server:
     image: openearth/adaguc-server
-#    build: ..
     container_name: my-adaguc-server
     hostname: my-adaguc-server
     volumes:
@@ -74,8 +73,6 @@ services:
     image: postgres:13.12
     container_name: adaguc-db
     hostname: adaguc-db
-#    ports:
-#      - "5432:5432"
     # Ensures containers running in the adaguc-network docker network can connect to the database, provided they use the
     # right credentials
     networks:

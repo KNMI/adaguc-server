@@ -27,7 +27,7 @@
 #define CCDFOBJECT_H
 
 #include "CCDFVariable.h"
-#include "CDebugger_H2.h"
+#include "CDebugger.h"
 
 class CDFObject : public CDF::Variable {
 public:

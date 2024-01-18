@@ -23,12 +23,9 @@
  *
  ******************************************************************************/
 
-#include "CDebugger_H.h"
-#include "CDebugger_H2.h"
+#include "CDebugger.h"
 #include <iostream>
 #include <unistd.h>
-#include <stdlib.h>
-#include <new>
 
 
 extern unsigned int logMessageNumber;

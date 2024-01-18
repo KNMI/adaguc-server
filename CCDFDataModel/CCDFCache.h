@@ -36,7 +36,7 @@
 #include "CCache.h"
 //#define CCDFCACHE_DEBUG
 
-#include "CDebugger_H2.h"
+#include "CDebugger.h"
 
 class CDFCache {
 private:

@@ -25,12 +25,6 @@
 
 #include "CCDFTypes.h"
 
-//#include "CDebugger.h"
-//#ifdef MEMLEAKCHECK
-// extern Tracer NewTrace;
-//#define MEMLEAKCHECK
-//#endif
-
 // DEF_ERRORMAIN()
 
 int CDF::getTypeSize(CDFType type) {
