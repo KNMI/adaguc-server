@@ -27,13 +27,70 @@
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
 
-// #define CConvertLatLonGrid_DEBUG
+#define CConvertLatLonGrid_DEBUG
 
 const char *CConvertLatLonGrid::className = "CConvertLatLonGrid";
 
 bool CConvertLatLonGrid::isLatLonGrid(CDFObject *cdfObject) {
+
   bool hasXYDimensions = cdfObject->getDimensionNE("x") != NULL && cdfObject->getDimensionNE("y") != NULL;
   bool hasXYVariables = cdfObject->getVariableNE("x") != NULL && cdfObject->getVariableNE("y") != NULL;
+
+  // Convert
+  hasXYDimensions = true;
+  hasXYVariables = false;
+
+  CDF::Variable *_lonVar = cdfObject->getVariableNE("longitude");
+  CDF::Attribute *adagucConverterAttribute = NULL;
+  if (_lonVar != NULL) {
+    adagucConverterAttribute = _lonVar->getAttributeNE("ADAGUCConvertLatLonGridConverter");
+  }
+  if (adagucConverterAttribute == NULL) {
+    CDBDebug("Fixing latlon data");
+    CDF::Dimension *lon1DDim = cdfObject->getDimensionNE("lon");
+    CDF::Dimension *lat1DDim = cdfObject->getDimensionNE("lat");
+    CDF::Variable *lon1DVar = cdfObject->getVariableNE("lon");
+    CDF::Variable *lat1DVar = cdfObject->getVariableNE("lat");
+    lon1DDim->setName("x");
+    lat1DDim->setName("y");
+    lon1DVar->setName("x");
+    lon1DVar->setName("y");
+    lon1DVar->readData(CDF_DOUBLE);
+    lat1DVar->readData(CDF_DOUBLE);
+
+    CDF::Variable *longitude = new CDF::Variable();
+    longitude->setType(CDF_DOUBLE);
+    longitude->name.copy("longitude");
+    longitude->dimensionlinks.push_back(lat1DDim);
+    longitude->dimensionlinks.push_back(lon1DDim);
+    longitude->setAttributeText("ADAGUCConvertLatLonGridConverter", "DONE");
+    // longitude->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
+    cdfObject->addVariable(longitude);
+    CDF::allocateData(CDF_DOUBLE, &longitude->data, lon1DDim->length * lat1DDim->length);
+
+    CDF::Variable *latitude = new CDF::Variable();
+    latitude->setType(CDF_DOUBLE);
+    latitude->name.copy("latitude");
+    latitude->dimensionlinks.push_back(lat1DDim);
+    latitude->dimensionlinks.push_back(lon1DDim);
+    latitude->setAttributeText("ADAGUCConvertLatLonGridConverter", "DONE");
+    // latitude->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
+
+    cdfObject->addVariable(latitude);
+    CDF::allocateData(CDF_DOUBLE, &latitude->data, lon1DDim->length * lat1DDim->length);
+    CDBDebug("Making latitude and longitude grids");
+    for (size_t latIndex = 0; latIndex < lat1DDim->length; latIndex += 1) {
+      for (size_t lonIndex = 0; lonIndex < lon1DDim->length; lonIndex += 1) {
+        size_t p = lonIndex + latIndex * lon1DDim->length;
+        ((double *)longitude->data)[p] = ((double *)lon1DVar->data)[lonIndex];
+        ((double *)latitude->data)[p] = ((double *)lat1DVar->data)[latIndex];
+
+        // CDBDebug("%d %d %f", lonIndex, latIndex, ((double *)latitude->data)[p]);
+      }
+    }
+  }
+
+  // Keep
   CDF::Variable *latVar = cdfObject->getVariableNE("latitude");
   CDF::Variable *lonVar = cdfObject->getVariableNE("longitude");
   bool hasLatLonVariables = (latVar != NULL && lonVar != NULL);
@@ -305,8 +362,8 @@ int CConvertLatLonGrid::convertLatLonGridData(CDataSource *dataSource, int mode)
       dataObjects[d]->hasNodataValue = false;
   }
 
-  swathLon->readData(CDF_FLOAT, true);
-  swathLat->readData(CDF_FLOAT, true);
+  swathLon->readData(CDF_DOUBLE, true);
+  swathLat->readData(CDF_DOUBLE, true);
 
   float fill = (float)dataObjects[0]->dfNodataValue;
   float min = fill;
@@ -411,8 +468,8 @@ int CConvertLatLonGrid::convertLatLonGridData(CDataSource *dataSource, int mode)
       }
     }
 
-    float *lonData = (float *)swathLon->data;
-    float *latData = (float *)swathLat->data;
+    double *lonData = (double *)swathLon->data;
+    double *latData = (double *)swathLat->data;
 
     int numRows = swathLon->dimensionlinks[0]->getSize();
     int numCells = swathLon->dimensionlinks[1]->getSize();
@@ -454,47 +511,66 @@ int CConvertLatLonGrid::convertLatLonGridData(CDataSource *dataSource, int mode)
     if (styleConfiguration->styleCompositionName.indexOf("bilinear") >= 0) {
       drawBilinear = true;
     }
+
+#ifdef CConvertLatLonGrid_DEBUG
+    CDBDebug("Start projecting numRows %d numCells %d", numRows, numCells);
+#endif
+    size_t num = numRows * numCells;
+
+    proj_trans_generic(imageWarper.projLatlonToDest, PJ_FWD, lonData, sizeof(double), num, latData, sizeof(double), num, nullptr, 0, 0, nullptr, 0, 0);
+#ifdef CConvertLatLonGrid_DEBUG
+    CDBDebug("Done projecting numRows %d numCells %d, now start drawing", numRows, numCells);
+#endif
+
     for (int rowNr = 0; rowNr < numRows; rowNr++) {
       for (int cellNr = 0; cellNr < numCells; cellNr++) {
         int pSwath = cellNr + rowNr * numCells;
         int bo = (rowNr == 0 ? numCells : -numCells);
         double lons[4], lats[4];
-        lons[0] = (float)lonData[pSwath];
-        lons[1] = (float)lonData[pSwath + (cellNr == 0 ? 1 : -1)];
-        lons[2] = (float)lonData[pSwath + bo];
-        lons[3] = (float)lonData[pSwath + bo + (cellNr == 0 ? 1 : -1)];
-        lats[0] = (float)latData[pSwath];
-        lats[1] = (float)latData[pSwath + (cellNr == 0 ? 1 : -1)];
-        lats[2] = (float)latData[pSwath + bo];
-        lats[3] = (float)latData[pSwath + bo + (cellNr == 0 ? 1 : -1)];
+        lons[0] = lonData[pSwath];
+        lons[1] = lonData[pSwath + (cellNr == 0 ? 1 : -1)];
+        lons[2] = lonData[pSwath + bo];
+        lons[3] = lonData[pSwath + bo + (cellNr == 0 ? 1 : -1)];
+        lats[0] = latData[pSwath];
+        lats[1] = latData[pSwath + (cellNr == 0 ? 1 : -1)];
+        lats[2] = latData[pSwath + bo];
+        lats[3] = latData[pSwath + bo + (cellNr == 0 ? 1 : -1)];
 
+        // if (projectionRequired) {
+        //   for (int j = 0; j < 4; j++) {
+        //     if (imageWarper.reprojfromLatLon(lons[j], lats[j]) != 0) {
+        //       // tileHasNoData = true;
+        //       // break;
+        //     }
+        //   }
+        // }
         bool tileHasNoData = false;
 
         bool tileIsTooLarge = false;
-        bool moveTile = false;
+        // bool moveTile = false;
 
-        for (int j = 0; j < 4; j++) {
-          if (lons[j] == fill) {
-            tileIsTooLarge = true;
-            break;
-          }
-          if (lons[j] > 185) moveTile = true;
-        }
+        // for (int j = 0; j < 4; j++) {
+        //   if (lons[j] == fill) {
+        //     tileIsTooLarge = true;
+        //     break;
+        //   }
+        //   // if (lons[j] > 185) moveTile = true;
+        // }
         if (tileIsTooLarge == false) {
-          float lon0;
-          float lat0;
-          for (int j = 0; j < 4; j++) {
-            if (moveTile == true) lons[j] -= 360;
-            if (lons[j] < -280) lons[j] += 360;
-            if (j == 0) {
-              lon0 = lons[0];
-              lat0 = lats[0];
-            }
-            if (fabs(lon0 - lons[j]) > 5) tileIsTooLarge = true;
-            if (fabs(lat0 - lats[j]) > 5) tileIsTooLarge = true;
-          }
+          // float lon0;
+          // float lat0;
+          // for (int j = 0; j < 4; j++) {
+          //   if (moveTile == true) lons[j] -= 360;
+          //   if (lons[j] < -280) lons[j] += 360;
+          //   if (j == 0) {
+          //     lon0 = lons[0];
+          //     lat0 = lats[0];
+          //   }
+          //   if (fabs(lon0 - lons[j]) > 5) tileIsTooLarge = true;
+          //   if (fabs(lat0 - lats[j]) > 5) tileIsTooLarge = true;
+          // }
           int dlons[4], dlats[4];
-          double rotation;
+          // double rotation;
           for (size_t d = 0; d < nrDataObjects; d++) {
             float *sdata = ((float *)dataObjects[d]->cdfVariable->data);
             float *swathData = (float *)swathVar[d]->data;
@@ -518,46 +594,46 @@ int CConvertLatLonGrid::convertLatLonGridData(CDataSource *dataSource, int mode)
               if (vals[3] == fill) tileHasNoData = true;
             }
 
-            rotation = 0;
+            // rotation = 0;
             if (tileHasNoData == false) {
-              double origLon = lons[0], origLat = lats[0];
+              // double origLon = lons[0], origLat = lats[0];
               if (d == 0) {
-                double latOffSetForRot = lats[0] - 0.01;
-                double lonOffSetForRot = lons[0];
-                if (projectionRequired) {
-                  imageWarper.reprojfromLatLon(lonOffSetForRot, latOffSetForRot);
-                }
+                // double latOffSetForRot = lats[0] - 0.01;
+                // double lonOffSetForRot = lons[0];
+                // if (projectionRequired) {
+                //   imageWarper.reprojfromLatLon(lonOffSetForRot, latOffSetForRot);
+                // }
                 for (int j = 0; j < 4; j++) {
-                  if (projectionRequired) {
-                    if (imageWarper.reprojfromLatLon(lons[j], lats[j]) != 0) {
-                      tileHasNoData = true;
-                      break;
-                    }
-                  }
+                  // if (projectionRequired) {
+                  //   if (imageWarper.reprojfromLatLon(lons[j], lats[j]) != 0) {
+                  //     tileHasNoData = true;
+                  //     break;
+                  //   }
+                  // }
                   dlons[j] = int((lons[j] - offsetX) / cellSizeX);
                   dlats[j] = int((lats[j] - offsetY) / cellSizeY);
                 }
-                if (projectionRequired) {
-                  double dy = lats[0] - latOffSetForRot;
-                  double dx = lons[0] - lonOffSetForRot;
-                  rotation = -(atan2(dy, dx) / (3.141592654)) * 180 - 90;
-                }
+                // if (projectionRequired) {
+                //   double dy = lats[0] - latOffSetForRot;
+                //   double dx = lons[0] - lonOffSetForRot;
+                //   rotation = -(atan2(dy, dx) / (3.141592654)) * 180 - 90;
+                // }
               }
               if (tileHasNoData == false) {
-                if (nrDataObjects == 2) {
-                  if (dlons[0] >= 0 && dlons[0] < dataSource->dWidth && dlats[0] > 0 && dlats[0] < dataSource->dHeight) {
-                    if (tileIsTooLarge == false) {
-                      //  if(d==1)vals[0]=0;
-                      if (d == 0) {
-                        // Wind direction in ascat has an oceanographic convention, for meteorological symbols it should be shifted 180 degrees.
-                        rotation += 180;
-                      }
+                // if (nrDataObjects == 2) {
+                //   if (dlons[0] >= 0 && dlons[0] < dataSource->dWidth && dlats[0] > 0 && dlats[0] < dataSource->dHeight) {
+                //     if (tileIsTooLarge == false) {
+                //       //  if(d==1)vals[0]=0;
+                //       if (d == 0) {
+                //         // Wind direction in ascat has an oceanographic convention, for meteorological symbols it should be shifted 180 degrees.
+                //         rotation += 180;
+                //       }
 
-                      float rad = 10;
-                      dataObjects[d]->points.push_back(PointDVWithLatLon(dlons[0], dlats[0], origLon, origLat, vals[0], rotation, rad, rad));
-                    }
-                  }
-                }
+                //       float rad = 10;
+                //       dataObjects[d]->points.push_back(PointDVWithLatLon(dlons[0], dlats[0], origLon, origLat, vals[0], rotation, rad, rad));
+                //     }
+                //   }
+                // }
 
                 if (tileHasNoData == false) {
                   if (tileIsTooLarge == false) {

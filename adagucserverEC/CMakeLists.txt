@@ -43,6 +43,8 @@ add_library(
     CConvertKNMIH5EchoToppen.h
     CConvertKNMIH5VolScan.cpp
     CConvertKNMIH5VolScan.h
+    CConvertLatLonGrid.h
+    CConvertLatLonGrid.cpp
     CConvertTROPOMI.cpp
     CConvertTROPOMI.h
     CConvertUGRIDMesh.cpp
