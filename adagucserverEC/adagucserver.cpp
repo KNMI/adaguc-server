@@ -28,9 +28,9 @@
 #include "CReporter.h"
 #include "CReportWriter.h"
 #include <getopt.h>
-#include "CDebugger_H.h"
 
-extern Tracer NewTrace;
+#include "ProjCache.h"
+
 
 DEF_ERRORMAIN();
 
@@ -447,10 +447,7 @@ int main(int argc, char **argv, char **envp) {
 
   CDFObjectStore::getCDFObjectStore()->clear();
 
-  /* Check Tracer for leaks */
-  if (NewTrace.Dump() != 0) {
-    if (status == 0) status = 1; /* Indicates that we have a memory leak */
-  }
+  proj_clear_cache();
 
   if (pLogDebugFile != NULL) {
     fclose(pLogDebugFile);
