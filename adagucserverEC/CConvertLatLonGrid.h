@@ -31,6 +31,11 @@ private:
   DEF_ERRORFUNCTION();
 
   static bool isLatLonGrid(CDFObject *cdfObject);
+  static bool checkIfIrregularLatLon(CDFObject *cdfObject);
+  static CDF::Variable *getLat1D(CDFObject *cdfObject);
+  static CDF::Variable *getLat2D(CDFObject *cdfObject);
+  static CDF::Variable *getLon1D(CDFObject *cdfObject);
+  static CDF::Variable *getLon2D(CDFObject *cdfObject);
 
 public:
   static int convertLatLonGridHeader(CDFObject *cdfObject, CServerParams *srvParams);

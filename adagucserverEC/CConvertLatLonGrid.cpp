@@ -31,74 +31,160 @@
 
 const char *CConvertLatLonGrid::className = "CConvertLatLonGrid";
 
+static const char *const lonNamesToCheck[] = {"lon", "longitude"};
+static const char *const latNamesToCheck[] = {"lat", "latitude"};
+
+CDF::Variable *CConvertLatLonGrid::getLon1D(CDFObject *cdfObject) {
+  for (auto lonName : lonNamesToCheck) {
+    CDF::Variable *lon1DVar = cdfObject->getVariableNE(lonName);
+    if (lon1DVar != nullptr && lon1DVar->dimensionlinks.size() == 1) {
+      return lon1DVar;
+    }
+  }
+  return nullptr;
+}
+
+CDF::Variable *CConvertLatLonGrid::getLat1D(CDFObject *cdfObject) {
+  for (auto latName : latNamesToCheck) {
+    CDF::Variable *lon1DVar = cdfObject->getVariableNE(latName);
+    if (lon1DVar != nullptr && lon1DVar->dimensionlinks.size() == 1) {
+      return lon1DVar;
+    }
+  }
+  return nullptr;
+}
+CDF::Variable *CConvertLatLonGrid::getLon2D(CDFObject *cdfObject) {
+  for (auto lonName : lonNamesToCheck) {
+    CDF::Variable *lon1DVar = cdfObject->getVariableNE(lonName);
+    if (lon1DVar != nullptr && lon1DVar->dimensionlinks.size() == 2) {
+      return lon1DVar;
+    }
+  }
+  return nullptr;
+}
+CDF::Variable *CConvertLatLonGrid::getLat2D(CDFObject *cdfObject) {
+  for (auto latName : latNamesToCheck) {
+    CDF::Variable *lon1DVar = cdfObject->getVariableNE(latName);
+    if (lon1DVar != nullptr && lon1DVar->dimensionlinks.size() == 2) {
+      return lon1DVar;
+    }
+  }
+  return nullptr;
+}
+
+bool CConvertLatLonGrid::checkIfIrregularLatLon(CDFObject *cdfObject) {
+  CDF::Variable *lon1DVar = getLon1D(cdfObject);
+  CDF::Variable *lat1DVar = getLat1D(cdfObject);
+
+  if (lon1DVar != nullptr && lat1DVar != nullptr) {
+    if (lat1DVar->dimensionlinks.size() == 1 && lon1DVar->dimensionlinks.size() == 1) {
+      lon1DVar->readData(CDF_DOUBLE);
+      lat1DVar->readData(CDF_DOUBLE);
+      size_t width = lon1DVar->dimensionlinks[0]->getSize();
+      size_t height = lat1DVar->dimensionlinks[0]->getSize();
+
+      double *dfdim_X = (double *)lon1DVar->data;
+      double *dfdim_Y = (double *)lat1DVar->data;
+
+      double cellSizeXBorder = fabs(dfdim_X[0] - dfdim_X[0 + 1]);
+      double cellSizeXCenter = fabs(dfdim_X[width / 2] - dfdim_X[width / 2 + 1]);
+      double deviationX = ((cellSizeXBorder - cellSizeXCenter) / cellSizeXBorder);
+
+      double cellSizeYBorder = fabs(dfdim_Y[0] - dfdim_Y[0 + 1]);
+      double cellSizeYCenter = fabs(dfdim_Y[height / 2] - dfdim_Y[height / 2 + 1]);
+      double deviationY = ((cellSizeYBorder - cellSizeYCenter) / cellSizeYBorder);
+
+      CDBDebug("CellsizesY %f %f %f", cellSizeYBorder, cellSizeYCenter, deviationY);
+      // When the cellsize deviates more than 1% in the center than in the border, we call this grid irregular lat/lon
+      if (deviationY > 0.01 || deviationX > 0.01) {
+        CDBDebug("IT is IRRREGULAR!");
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 bool CConvertLatLonGrid::isLatLonGrid(CDFObject *cdfObject) {
+
+  if (cdfObject->getAttributeNE("ConvertLatLonGridActive") != nullptr) {
+    return true;
+  }
 
   bool hasXYDimensions = cdfObject->getDimensionNE("x") != NULL && cdfObject->getDimensionNE("y") != NULL;
   bool hasXYVariables = cdfObject->getVariableNE("x") != NULL && cdfObject->getVariableNE("y") != NULL;
 
-  // Convert
-  hasXYDimensions = true;
-  hasXYVariables = false;
+  bool fixIrregular = false;
 
-  CDF::Variable *_lonVar = cdfObject->getVariableNE("longitude");
-  CDF::Attribute *adagucConverterAttribute = NULL;
-  if (_lonVar != NULL) {
-    adagucConverterAttribute = _lonVar->getAttributeNE("ADAGUCConvertLatLonGridConverter");
+  if (checkIfIrregularLatLon(cdfObject)) {
+    CDBDebug("Found ADAGUCIRREGULARGRID attribute in cdfObject");
+    fixIrregular = true;
   }
-  if (adagucConverterAttribute == NULL) {
-    CDBDebug("Fixing latlon data");
-    CDF::Dimension *lon1DDim = cdfObject->getDimensionNE("lon");
-    CDF::Dimension *lat1DDim = cdfObject->getDimensionNE("lat");
-    CDF::Variable *lon1DVar = cdfObject->getVariableNE("lon");
-    CDF::Variable *lat1DVar = cdfObject->getVariableNE("lat");
-    lon1DDim->setName("x");
-    lat1DDim->setName("y");
-    lon1DVar->setName("x");
-    lon1DVar->setName("y");
-    lon1DVar->readData(CDF_DOUBLE);
-    lat1DVar->readData(CDF_DOUBLE);
+  if (fixIrregular == true) {
+    // Convert
+    hasXYDimensions = true;
+    hasXYVariables = false;
 
-    CDF::Variable *longitude = new CDF::Variable();
-    longitude->setType(CDF_DOUBLE);
-    longitude->name.copy("longitude");
-    longitude->dimensionlinks.push_back(lat1DDim);
-    longitude->dimensionlinks.push_back(lon1DDim);
-    longitude->setAttributeText("ADAGUCConvertLatLonGridConverter", "DONE");
-    // longitude->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
-    cdfObject->addVariable(longitude);
-    CDF::allocateData(CDF_DOUBLE, &longitude->data, lon1DDim->length * lat1DDim->length);
+    // When the latitude or longitude grids are not present in the cdfObject, add them to the cdfObject
+    CDF::Variable *lonGridVar = getLon2D(cdfObject);
+    if (lonGridVar == nullptr) {
+      CDBDebug("Adding 2D latlon grids");
 
-    CDF::Variable *latitude = new CDF::Variable();
-    latitude->setType(CDF_DOUBLE);
-    latitude->name.copy("latitude");
-    latitude->dimensionlinks.push_back(lat1DDim);
-    latitude->dimensionlinks.push_back(lon1DDim);
-    latitude->setAttributeText("ADAGUCConvertLatLonGridConverter", "DONE");
-    // latitude->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
+      // Rename 1D lat/lon variables to x and y
+      CDF::Variable *lon1DVar = getLon1D(cdfObject);
+      CDF::Variable *lat1DVar = getLat1D(cdfObject);
+      CDF::Dimension *lon1DDim = lon1DVar->dimensionlinks[0];
+      CDF::Dimension *lat1DDim = lat1DVar->dimensionlinks[0];
+      lon1DDim->setName("x");
+      lat1DDim->setName("y");
 
-    cdfObject->addVariable(latitude);
-    CDF::allocateData(CDF_DOUBLE, &latitude->data, lon1DDim->length * lat1DDim->length);
-    CDBDebug("Making latitude and longitude grids");
-    for (size_t latIndex = 0; latIndex < lat1DDim->length; latIndex += 1) {
-      for (size_t lonIndex = 0; lonIndex < lon1DDim->length; lonIndex += 1) {
-        size_t p = lonIndex + latIndex * lon1DDim->length;
-        ((double *)longitude->data)[p] = ((double *)lon1DVar->data)[lonIndex];
-        ((double *)latitude->data)[p] = ((double *)lat1DVar->data)[latIndex];
+      lon1DVar->setName("unusedlon");
+      lat1DVar->setName("unusedlat");
+      lon1DVar->readData(CDF_DOUBLE);
+      lat1DVar->readData(CDF_DOUBLE);
 
-        // CDBDebug("%d %d %f", lonIndex, latIndex, ((double *)latitude->data)[p]);
+      //  Define the 2D latitude longitude grids
+      CDF::Variable *longitude = new CDF::Variable();
+      longitude->setType(CDF_DOUBLE);
+      longitude->name.copy("longitude");
+      longitude->dimensionlinks.push_back(lat1DDim);
+      longitude->dimensionlinks.push_back(lon1DDim);
+      longitude->setAttributeText("ADAGUCConvertLatLonGridConverter", "DONE");
+      // longitude->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
+      cdfObject->addVariable(longitude);
+      CDF::allocateData(CDF_DOUBLE, &longitude->data, lon1DDim->length * lat1DDim->length);
+
+      CDF::Variable *latitude = new CDF::Variable();
+      latitude->setType(CDF_DOUBLE);
+      latitude->name.copy("latitude");
+      latitude->dimensionlinks.push_back(lat1DDim);
+      latitude->dimensionlinks.push_back(lon1DDim);
+      latitude->setAttributeText("ADAGUCConvertLatLonGridConverter", "DONE");
+      // latitude->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
+
+      cdfObject->addVariable(latitude);
+      CDF::allocateData(CDF_DOUBLE, &latitude->data, lon1DDim->length * lat1DDim->length);
+      CDBDebug("Making latitude and longitude grids");
+      for (size_t latIndex = 0; latIndex < lat1DDim->length; latIndex += 1) {
+        for (size_t lonIndex = 0; lonIndex < lon1DDim->length; lonIndex += 1) {
+          size_t p = lonIndex + latIndex * lon1DDim->length;
+          ((double *)longitude->data)[p] = ((double *)lon1DVar->data)[lonIndex];
+          ((double *)latitude->data)[p] = ((double *)lat1DVar->data)[latIndex];
+        }
       }
     }
   }
 
-  // Keep
-  CDF::Variable *latVar = cdfObject->getVariableNE("latitude");
-  CDF::Variable *lonVar = cdfObject->getVariableNE("longitude");
+  CDF::Variable *latVar = getLat2D(cdfObject);
+  CDF::Variable *lonVar = getLon2D(cdfObject);
   bool hasLatLonVariables = (latVar != NULL && lonVar != NULL);
 
   if (hasXYDimensions && !hasXYVariables && hasLatLonVariables) {
     if (latVar->dimensionlinks.size() == 2 && lonVar->dimensionlinks.size() == 2) {
-      if (latVar->dimensionlinks[0]->name.equals("y") && lonVar->dimensionlinks[0]->name.equals("y") && latVar->dimensionlinks[1]->name.equals("x") && lonVar->dimensionlinks[1]->name.equals("x"))
+      if (latVar->dimensionlinks[0]->name.equals("y") && lonVar->dimensionlinks[0]->name.equals("y") && latVar->dimensionlinks[1]->name.equals("x") && lonVar->dimensionlinks[1]->name.equals("x")) {
+        cdfObject->setAttributeText("ConvertLatLonGridActive", "TRUE");
         return true;
+      }
     }
   }
   return false;
@@ -255,45 +341,45 @@ int CConvertLatLonGrid::convertLatLonGridHeader(CDFObject *cdfObject, CServerPar
     }
   }
 
-  // Create the new 2D field variiables based on the swath variables
+  // Create the new regular grid field variiables based on the irregular grid variables
   for (size_t v = 0; v < varsToConvert.size(); v++) {
-    CDF::Variable *swathVar = cdfObject->getVariable(varsToConvert[v].c_str());
-    if (swathVar->dimensionlinks.size() >= 2) {
+    CDF::Variable *irregularGridVar = cdfObject->getVariable(varsToConvert[v].c_str());
+    if (irregularGridVar->dimensionlinks.size() >= 2) {
 #ifdef CConvertLatLonGrid_DEBUG
-      CDBDebug("Converting %s", swathVar->name.c_str());
+      CDBDebug("Converting %s", irregularGridVar->name.c_str());
 #endif
 
-      CDF::Variable *new2DVar = new CDF::Variable();
-      cdfObject->addVariable(new2DVar);
+      CDF::Variable *destRegularGrid = new CDF::Variable();
+      cdfObject->addVariable(destRegularGrid);
 
       // Assign X,Y,T dims
       if (hasTimeData) {
         CDF::Variable *newTimeVar = cdfObject->getVariableNE("time2D");
         if (newTimeVar != NULL) {
-          new2DVar->dimensionlinks.push_back(newTimeVar->dimensionlinks[0]);
+          destRegularGrid->dimensionlinks.push_back(newTimeVar->dimensionlinks[0]);
         }
       }
-      new2DVar->dimensionlinks.push_back(dimY);
-      new2DVar->dimensionlinks.push_back(dimX);
+      destRegularGrid->dimensionlinks.push_back(dimY);
+      destRegularGrid->dimensionlinks.push_back(dimX);
 
-      new2DVar->setType(swathVar->getType());
-      new2DVar->name = swathVar->name.c_str();
-      swathVar->name.concat("_backup");
+      destRegularGrid->setType(irregularGridVar->getType());
+      destRegularGrid->name = irregularGridVar->name.c_str();
+      irregularGridVar->name.concat("_backup");
 
       // Copy variable attributes
-      for (size_t j = 0; j < swathVar->attributes.size(); j++) {
-        CDF::Attribute *a = swathVar->attributes[j];
-        new2DVar->setAttribute(a->name.c_str(), a->getType(), a->data, a->length);
-        new2DVar->setAttributeText("ADAGUC_VECTOR", "true");
+      for (size_t j = 0; j < irregularGridVar->attributes.size(); j++) {
+        CDF::Attribute *a = irregularGridVar->attributes[j];
+        destRegularGrid->setAttribute(a->name.c_str(), a->getType(), a->data, a->length);
+        destRegularGrid->setAttributeText("ADAGUC_VECTOR", "true");
       }
 
-      // The swath variable is not directly plotable, so skip it
-      swathVar->setAttributeText("ADAGUC_SKIP", "true");
+      // The irregularGridVar variable is not directly plotable, so skip it
+      irregularGridVar->setAttributeText("ADAGUC_SKIP", "true");
 
       // Scale and offset are already applied
-      new2DVar->removeAttribute("scale_factor");
-      new2DVar->removeAttribute("add_offset");
-      new2DVar->setType(CDF_FLOAT);
+      destRegularGrid->removeAttribute("scale_factor");
+      destRegularGrid->removeAttribute("add_offset");
+      destRegularGrid->setType(CDF_FLOAT);
     }
   }
   return 0;
@@ -317,39 +403,28 @@ int CConvertLatLonGrid::convertLatLonGridData(CDataSource *dataSource, int mode)
 
   CDBDebug("convertLatLonGridData %s", dataObjects[0]->cdfVariable->name.c_str());
 #endif
-  CDF::Variable *new2DVar[nrDataObjects];
-  CDF::Variable *swathVar[nrDataObjects];
+  CDF::Variable *destRegularGrid[nrDataObjects];
+  CDF::Variable *irregularGridVar[nrDataObjects];
 
+  // Make references destRegularGrid and irregularGridVar
   for (size_t d = 0; d < nrDataObjects; d++) {
-    new2DVar[d] = dataObjects[d]->cdfVariable;
-    CT::string origSwathName = new2DVar[d]->name.c_str();
-    origSwathName.concat("_backup");
-    swathVar[d] = cdfObject->getVariableNE(origSwathName.c_str());
-    if (swathVar[d] == NULL) {
-      CDBError("Unable to find orignal swath variable with name %s", origSwathName.c_str());
+    destRegularGrid[d] = dataObjects[d]->cdfVariable;
+    CT::string orgName = destRegularGrid[d]->name.c_str();
+    orgName.concat("_backup");
+    irregularGridVar[d] = cdfObject->getVariableNE(orgName.c_str());
+    if (irregularGridVar[d] == NULL) {
+      CDBError("Unable to find orignal variable with name %s", orgName.c_str());
       return 1;
     }
   }
 
-  CDF::Variable *swathLon;
-  CDF::Variable *swathLat;
-
-  try {
-    swathLon = cdfObject->getVariable("lon");
-    swathLat = cdfObject->getVariable("lat");
-  } catch (int e) {
-    try {
-      swathLon = cdfObject->getVariable("longitude");
-      swathLat = cdfObject->getVariable("latitude");
-    } catch (int e) {
-      CDBError("lat or lon variables not found");
-    }
-  }
+  CDF::Variable *longitudeGrid = getLon2D(cdfObject);
+  CDF::Variable *latitudeGrid = getLat2D(cdfObject);
 
   // Read original data first
   for (size_t d = 0; d < nrDataObjects; d++) {
-    swathVar[d]->readData(CDF_FLOAT, true);
-    CDF::Attribute *fillValue = swathVar[d]->getAttributeNE("_FillValue");
+    irregularGridVar[d]->readData(CDF_FLOAT, true);
+    CDF::Attribute *fillValue = irregularGridVar[d]->getAttributeNE("_FillValue");
     if (fillValue != NULL) {
       dataObjects[d]->hasNodataValue = true;
       fillValue->getData(&dataObjects[d]->dfNodataValue, 1);
@@ -357,22 +432,27 @@ int CConvertLatLonGrid::convertLatLonGridData(CDataSource *dataSource, int mode)
       CDBDebug("_FillValue = %f", dataObjects[d]->dfNodataValue);
 #endif
       float f = dataObjects[d]->dfNodataValue;
-      new2DVar[d]->getAttribute("_FillValue")->setData(CDF_FLOAT, &f, 1);
+      destRegularGrid[d]->getAttribute("_FillValue")->setData(CDF_FLOAT, &f, 1);
     } else
       dataObjects[d]->hasNodataValue = false;
   }
 
-  swathLon->readData(CDF_DOUBLE, true);
-  swathLat->readData(CDF_DOUBLE, true);
+  // If the data was not populated in the code above, try to read it from the file
+  if (longitudeGrid->data == nullptr) {
+    longitudeGrid->readData(CDF_DOUBLE, true);
+  }
+  if (latitudeGrid->data == nullptr) {
+    latitudeGrid->readData(CDF_DOUBLE, true);
+  }
 
   float fill = (float)dataObjects[0]->dfNodataValue;
   float min = fill;
   float max = fill;
-  // Detect minimum and maximum values
 
-  size_t l = swathVar[0]->getSize();
+  // Detect minimum and maximum values
+  size_t l = irregularGridVar[0]->getSize();
   for (size_t j = 0; j < l; j++) {
-    float v = ((float *)swathVar[0]->data)[j];
+    float v = ((float *)irregularGridVar[0]->data)[j];
     if (v != fill) {
       if (min == fill) min = v;
       if (max == fill) max = v;
@@ -399,7 +479,7 @@ int CConvertLatLonGrid::convertLatLonGridData(CDataSource *dataSource, int mode)
     }
   }
 
-  // Make the width and height of the new 2D ascat field the same as the viewing window
+  // Make the width and height of the new regular grid field the same as the viewing window
   dataSource->dWidth = dataSource->srvParams->Geo->dWidth;
   dataSource->dHeight = dataSource->srvParams->Geo->dHeight;
 
@@ -426,7 +506,7 @@ int CConvertLatLonGrid::convertLatLonGridData(CDataSource *dataSource, int mode)
 
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
 #ifdef CConvertLatLonGrid_DEBUG
-    CDBDebug("Drawing %s", new2DVar[0]->name.c_str());
+    CDBDebug("Drawing %s", destRegularGrid[0]->name.c_str());
 #endif
 
     CDF::Dimension *dimX;
@@ -461,20 +541,20 @@ int CConvertLatLonGrid::convertLatLonGridData(CDataSource *dataSource, int mode)
 
     // Allocate and clear data
     for (size_t d = 0; d < nrDataObjects; d++) {
-      new2DVar[d]->setSize(fieldSize);
-      CDF::allocateData(new2DVar[d]->getType(), &(new2DVar[d]->data), fieldSize);
+      destRegularGrid[d]->setSize(fieldSize);
+      CDF::allocateData(destRegularGrid[d]->getType(), &(destRegularGrid[d]->data), fieldSize);
       for (size_t j = 0; j < fieldSize; j++) {
         ((float *)dataObjects[d]->cdfVariable->data)[j] = NAN;
       }
     }
 
-    double *lonData = (double *)swathLon->data;
-    double *latData = (double *)swathLat->data;
+    double *lonData = (double *)longitudeGrid->data;
+    double *latData = (double *)latitudeGrid->data;
 
-    int numRows = swathLon->dimensionlinks[0]->getSize();
-    int numCells = swathLon->dimensionlinks[1]->getSize();
+    int numY = longitudeGrid->dimensionlinks[0]->getSize();
+    int numX = longitudeGrid->dimensionlinks[1]->getSize();
 #ifdef CConvertLatLonGrid_DEBUG
-    CDBDebug("numRows %d numCells %d", numRows, numCells);
+    CDBDebug("numRows %d numCells %d", numY, numX);
 #endif
 
     CImageWarper imageWarper;
@@ -482,7 +562,7 @@ int CConvertLatLonGrid::convertLatLonGridData(CDataSource *dataSource, int mode)
     if (dataSource->srvParams->Geo->CRS.length() > 0) {
       projectionRequired = true;
       for (size_t d = 0; d < nrDataObjects; d++) {
-        new2DVar[d]->setAttributeText("grid_mapping", "customgridprojection");
+        destRegularGrid[d]->setAttributeText("grid_mapping", "customgridprojection");
       }
       if (cdfObject->getVariableNE("customgridprojection") == NULL) {
         CDF::Variable *projectionVar = new CDF::Variable();
@@ -513,135 +593,61 @@ int CConvertLatLonGrid::convertLatLonGridData(CDataSource *dataSource, int mode)
     }
 
 #ifdef CConvertLatLonGrid_DEBUG
-    CDBDebug("Start projecting numRows %d numCells %d", numRows, numCells);
+    CDBDebug("Start projecting numRows %d numCells %d", numY, numX);
 #endif
-    size_t num = numRows * numCells;
+    size_t num = numY * numX;
 
     proj_trans_generic(imageWarper.projLatlonToDest, PJ_FWD, lonData, sizeof(double), num, latData, sizeof(double), num, nullptr, 0, 0, nullptr, 0, 0);
 #ifdef CConvertLatLonGrid_DEBUG
-    CDBDebug("Done projecting numRows %d numCells %d, now start drawing", numRows, numCells);
+    CDBDebug("Done projecting numRows %d numCells %d, now start drawing", numY, numX);
 #endif
 
-    for (int rowNr = 0; rowNr < numRows; rowNr++) {
-      for (int cellNr = 0; cellNr < numCells; cellNr++) {
-        int pSwath = cellNr + rowNr * numCells;
-        int bo = (rowNr == 0 ? numCells : -numCells);
+    for (int indexY = 0; indexY < numY - 1; indexY++) {
+      for (int indexX = 0; indexX < numX - 1; indexX++) {
+        int gridPointer = indexX + indexY * numX;
+        int bottom = 1 * numX; //(indexY != 0 ? -numX : numX);
+        int right = 1;         //(indexX != 0 ? -1 : 1);
         double lons[4], lats[4];
-        lons[0] = lonData[pSwath];
-        lons[1] = lonData[pSwath + (cellNr == 0 ? 1 : -1)];
-        lons[2] = lonData[pSwath + bo];
-        lons[3] = lonData[pSwath + bo + (cellNr == 0 ? 1 : -1)];
-        lats[0] = latData[pSwath];
-        lats[1] = latData[pSwath + (cellNr == 0 ? 1 : -1)];
-        lats[2] = latData[pSwath + bo];
-        lats[3] = latData[pSwath + bo + (cellNr == 0 ? 1 : -1)];
+        lons[0] = lonData[gridPointer];                  // topleft
+        lons[1] = lonData[gridPointer + right];          // topright
+        lons[2] = lonData[gridPointer + bottom];         // bottomleft
+        lons[3] = lonData[gridPointer + bottom + right]; // bottomright
+        lats[0] = latData[gridPointer];
+        lats[1] = latData[gridPointer + right];
+        lats[2] = latData[gridPointer + bottom];
+        lats[3] = latData[gridPointer + bottom + right];
 
-        // if (projectionRequired) {
-        //   for (int j = 0; j < 4; j++) {
-        //     if (imageWarper.reprojfromLatLon(lons[j], lats[j]) != 0) {
-        //       // tileHasNoData = true;
-        //       // break;
-        //     }
-        //   }
-        // }
-        bool tileHasNoData = false;
+        int dlons[4], dlats[4];
+        for (size_t dataObjectIndex = 0; dataObjectIndex < nrDataObjects; dataObjectIndex++) {
+          float *destinationGrid = ((float *)dataObjects[dataObjectIndex]->cdfVariable->data);
+          float *sourceIrregularGrid = (float *)irregularGridVar[dataObjectIndex]->data;
+          float irregularGridValues[4];
+          irregularGridValues[0] = sourceIrregularGrid[gridPointer];
 
-        bool tileIsTooLarge = false;
-        // bool moveTile = false;
+          if (drawBilinear) {
+            // Bilinear mode will use the four corner values to draw a quad with those values interpolated
+            irregularGridValues[1] = sourceIrregularGrid[gridPointer + right];
+            irregularGridValues[2] = sourceIrregularGrid[gridPointer + bottom];
+            irregularGridValues[3] = sourceIrregularGrid[gridPointer + bottom + right];
+          } else {
+            // Nearest mode will use the topleft value for all values in the quad
+            irregularGridValues[1] = irregularGridValues[0];
+            irregularGridValues[2] = irregularGridValues[0];
+            irregularGridValues[3] = irregularGridValues[0];
+          }
+          bool irregularGridCellHasNoData = false;
+          // Check if this is no data (irregularGridCellHasNoData)
+          if (irregularGridValues[0] == fill || irregularGridValues[1] == fill || irregularGridValues[2] == fill || irregularGridValues[3] == fill) irregularGridCellHasNoData = true;
 
-        // for (int j = 0; j < 4; j++) {
-        //   if (lons[j] == fill) {
-        //     tileIsTooLarge = true;
-        //     break;
-        //   }
-        //   // if (lons[j] > 185) moveTile = true;
-        // }
-        if (tileIsTooLarge == false) {
-          // float lon0;
-          // float lat0;
-          // for (int j = 0; j < 4; j++) {
-          //   if (moveTile == true) lons[j] -= 360;
-          //   if (lons[j] < -280) lons[j] += 360;
-          //   if (j == 0) {
-          //     lon0 = lons[0];
-          //     lat0 = lats[0];
-          //   }
-          //   if (fabs(lon0 - lons[j]) > 5) tileIsTooLarge = true;
-          //   if (fabs(lat0 - lats[j]) > 5) tileIsTooLarge = true;
-          // }
-          int dlons[4], dlats[4];
-          // double rotation;
-          for (size_t d = 0; d < nrDataObjects; d++) {
-            float *sdata = ((float *)dataObjects[d]->cdfVariable->data);
-            float *swathData = (float *)swathVar[d]->data;
-            float vals[4];
-            vals[0] = swathData[pSwath];
-
-            if (drawBilinear) {
-              vals[1] = swathData[pSwath + (cellNr == 0 ? 1 : -1)];
-              vals[2] = swathData[pSwath + bo];
-              vals[3] = swathData[pSwath + bo + (cellNr == 0 ? 1 : -1)];
-            } else {
-              vals[1] = vals[0];
-              vals[2] = vals[0];
-              vals[3] = vals[0];
-            }
-
-            if (d == 0) {
-              if (vals[0] == fill) tileHasNoData = true;
-              if (vals[1] == fill) tileHasNoData = true;
-              if (vals[2] == fill) tileHasNoData = true;
-              if (vals[3] == fill) tileHasNoData = true;
-            }
-
-            // rotation = 0;
-            if (tileHasNoData == false) {
-              // double origLon = lons[0], origLat = lats[0];
-              if (d == 0) {
-                // double latOffSetForRot = lats[0] - 0.01;
-                // double lonOffSetForRot = lons[0];
-                // if (projectionRequired) {
-                //   imageWarper.reprojfromLatLon(lonOffSetForRot, latOffSetForRot);
-                // }
-                for (int j = 0; j < 4; j++) {
-                  // if (projectionRequired) {
-                  //   if (imageWarper.reprojfromLatLon(lons[j], lats[j]) != 0) {
-                  //     tileHasNoData = true;
-                  //     break;
-                  //   }
-                  // }
-                  dlons[j] = int((lons[j] - offsetX) / cellSizeX);
-                  dlats[j] = int((lats[j] - offsetY) / cellSizeY);
-                }
-                // if (projectionRequired) {
-                //   double dy = lats[0] - latOffSetForRot;
-                //   double dx = lons[0] - lonOffSetForRot;
-                //   rotation = -(atan2(dy, dx) / (3.141592654)) * 180 - 90;
-                // }
-              }
-              if (tileHasNoData == false) {
-                // if (nrDataObjects == 2) {
-                //   if (dlons[0] >= 0 && dlons[0] < dataSource->dWidth && dlats[0] > 0 && dlats[0] < dataSource->dHeight) {
-                //     if (tileIsTooLarge == false) {
-                //       //  if(d==1)vals[0]=0;
-                //       if (d == 0) {
-                //         // Wind direction in ascat has an oceanographic convention, for meteorological symbols it should be shifted 180 degrees.
-                //         rotation += 180;
-                //       }
-
-                //       float rad = 10;
-                //       dataObjects[d]->points.push_back(PointDVWithLatLon(dlons[0], dlats[0], origLon, origLat, vals[0], rotation, rad, rad));
-                //     }
-                //   }
-                // }
-
-                if (tileHasNoData == false) {
-                  if (tileIsTooLarge == false) {
-                    fillQuadGouraud(sdata, vals, dataSource->dWidth, dataSource->dHeight, dlons, dlats);
-                  }
-                }
+          if (irregularGridCellHasNoData == false) {
+            if (dataObjectIndex == 0) {
+              for (int j = 0; j < 4; j++) {
+                dlons[j] = int((lons[j] - offsetX) / cellSizeX);
+                dlats[j] = int((lats[j] - offsetY) / cellSizeY);
               }
             }
+            // Draw the data into the new regular grid variable
+            fillQuadGouraud(destinationGrid, irregularGridValues, dataSource->dWidth, dataSource->dHeight, dlons, dlats);
           }
         }
       }
