@@ -649,3 +649,25 @@ int CServerParams::parseConfigFile(CT::string &pszConfigFile, std::vector<CServe
     return 1;
   }
 }
+
+CT::string CServerParams::getCacheControlHeader(int mode) {
+  if (cfg != nullptr && cfg->Settings.size() == 1) {
+    CT::string cacheString = "\r\nCache-Control:max-age=";
+    if (mode == CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE) {
+      if (!cfg->Settings[0]->attr.cache_age_volatileresources.empty()) {
+        if (cfg->Settings[0]->attr.cache_age_volatileresources.toInt() != 0) {
+          cacheString.printconcat("%d", cfg->Settings[0]->attr.cache_age_volatileresources.toInt());
+          return cacheString;
+        }
+      }
+    } else if (mode == CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE) {
+      if (!cfg->Settings[0]->attr.cache_age_cacheableresources.empty()) {
+        if (cfg->Settings[0]->attr.cache_age_cacheableresources.toInt() != 0) {
+          cacheString.printconcat("%d", cfg->Settings[0]->attr.cache_age_cacheableresources.toInt());
+          return cacheString;
+        }
+      }
+    }
+  }
+  return "";
+}

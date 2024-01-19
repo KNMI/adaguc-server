@@ -64,6 +64,10 @@ public:
   bool logScale;
 };
 
+#define CSERVERPARAMS_CACHE_CONTROL_OPTION_NOCACHE 0
+#define CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE 1
+#define CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE 2
+
 /**
  * Global server settings, initialized at the start, accesible from almost everywhere
  */
@@ -76,6 +80,7 @@ private:
   CT::string _onlineResource;
   static int dataRestriction;
   static char debugLoggingIsEnabled;
+  int cacheControlOption = CSERVERPARAMS_CACHE_CONTROL_OPTION_NOCACHE;
 
 public:
   double dfResX, dfResY;
@@ -311,6 +316,17 @@ public:
    * returns zero on success       *
    */
   int parseConfigFile(CT::string &pszConfigFile, std::vector<CServerConfig::XMLE_Environment *> *extraEnvironment);
+
+  /**
+   * Returns cache control header
+   * mode CSERVERPARAMS_CACHE_CONTROL_OPTION_NOCACHE returns empty string ("")
+   * mode CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE is for urls which response might change often (shorter max-age)
+   * mode CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE is fully specified urls
+   */
+  CT::string getCacheControlHeader(int mode);
+
+  void setCacheControlOption(int mode) { cacheControlOption = mode; }
+  int getCacheControlOption() { return cacheControlOption; }
 };
 
 #endif

@@ -167,6 +167,7 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
           }
         }
       }
+      delete[] parameters;
     }
 
     // Include additional config files given in the include statement of the config file
@@ -789,7 +790,7 @@ int CRequest::process_wms_getcap_request() {
   if (pszADAGUCWriteToFile != NULL) {
     CReadFile::write(pszADAGUCWriteToFile, XMLdocument.c_str(), XMLdocument.length());
   } else {
-    printf("%s%c%c\n", "Content-Type:text/xml", 13, 10);
+    printf("%s%s%c%c\n", "Content-Type:text/xml", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
     printf("%s", XMLdocument.c_str());
   }
 
@@ -848,6 +849,7 @@ int CRequest::setDimValuesForDataSource(CDataSource *dataSource, CServerParams *
 };
 
 int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams *srvParam) {
+
 #ifdef CREQUEST_DEBUG
   StopWatch_Stop("### [fillDimValuesForDataSource]");
 #endif
@@ -920,6 +922,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
             dataSource->requiredDims.push_back(ogcDim);
             ogcDim->name.copy(&dimName);
             ogcDim->value.copy(&srvParam->requestDims[k]->value);
+            ogcDim->queryValue.copy(&srvParam->requestDims[k]->value);
             ogcDim->netCDFDimName.copy(dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
 
             if (ogcDim->name.equals("time") || ogcDim->name.equals("reference_time")) {
@@ -1048,7 +1051,6 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
         if (netCDFDimName.equals("none")) {
           continue;
         }
-
         /* A dimension where the default value is set to filetimedate should not be queried from the db */
         if (dataSource->cfgLayer->Dimension[i]->attr.defaultV.equals("filetimedate")) {
           continue;
@@ -1152,12 +1154,13 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
     for (size_t i = 0; i < dataSource->cfgLayer->Dimension.size(); i++) {
       if (!dataSource->cfgLayer->Dimension[i]->attr.fixvalue.empty()) {
         CT::string dimName(dataSource->cfgLayer->Dimension[i]->value.c_str());
-        CT::string forceValue = dataSource->cfgLayer->Dimension[i]->attr.fixvalue;
+        CT::string fixedValue = dataSource->cfgLayer->Dimension[i]->attr.fixvalue;
         dimName.toLowerCaseSelf();
-        for (size_t l = 0; l < dataSource->requiredDims.size(); l++) {
-          if (dataSource->requiredDims[l]->name.equals(&dimName)) {
-            CDBDebug("Forcing dimension %s from %s to %s", dimName.c_str(), dataSource->requiredDims[i]->value.c_str(), forceValue.c_str());
-            dataSource->requiredDims[i]->value = forceValue;
+        for (auto & requiredDim : dataSource->requiredDims) {
+          if (requiredDim->name.equals(&dimName)) {
+            CDBDebug("Forcing dimension %s from %s to %s", dimName.c_str(), requiredDim->value.c_str(), fixedValue.c_str());
+            requiredDim->value = fixedValue;
+            requiredDim->hasFixedValue = true;
             break;
           }
         }
@@ -1180,11 +1183,27 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
 
 #ifdef CREQUEST_DEBUG
   for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
-    CDBDebug("dataSource->requiredDims[%d][%s] = [%s] (%s)", j, dataSource->requiredDims[j]->name.c_str(), dataSource->requiredDims[j]->value.c_str(),
-             dataSource->requiredDims[j]->netCDFDimName.c_str());
+    auto *requiredDim = dataSource->requiredDims[j];
+    CDBDebug("dataSource->requiredDims[%d][%s] = [%s] (%s)", j, requiredDim->name.c_str(), requiredDim->value.c_str(), requiredDim->netCDFDimName.c_str());
+    CDBDebug("%s: %s === %s", requiredDim->name.c_str(), requiredDim->value.c_str(), requiredDim->queryValue.c_str());
   }
   CDBDebug("### [</fillDimValuesForDataSource>]");
 #endif
+  bool allNonFixedDimensionsAreAsRequestedInQueryString = true;
+  for (auto requiredDim : dataSource->requiredDims) {
+    CDBDebug("%s: [%s] === [%s], fixed:%d", requiredDim->name.c_str(), requiredDim->value.c_str(), requiredDim->queryValue.c_str(), requiredDim->hasFixedValue);
+    if (!requiredDim->hasFixedValue && !requiredDim->value.equals(requiredDim->queryValue)) {
+      allNonFixedDimensionsAreAsRequestedInQueryString = false;
+    }
+  }
+
+  CDBDebug("allNonFixedDimensionsAreAsRequestedInQueryString %d", allNonFixedDimensionsAreAsRequestedInQueryString);
+  if (allNonFixedDimensionsAreAsRequestedInQueryString) {
+    srvParam->setCacheControlOption(CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE);
+  } else {
+    srvParam->setCacheControlOption(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE);
+  }
+
   return 0;
 }
 
@@ -1697,7 +1716,7 @@ int CRequest::process_all_layers() {
       if (pszADAGUCWriteToFile != NULL) {
         CReadFile::write(pszADAGUCWriteToFile, XMLDocument.c_str(), XMLDocument.length());
       } else {
-        printf("%s%c%c\n", "Content-Type:text/xml", 13, 10);
+        printf("%s%s%c%c\n", "Content-Type:text/xml", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
         printf("%s", XMLDocument.c_str());
       }
       return 0;
@@ -3241,7 +3260,8 @@ int CRequest::process_querystring() {
         return 1;
       }
       drawImage.crop(1);
-      printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
+      const char *cacheControl = srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE).c_str();
+      printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl, 13, 10);
       drawImage.printImagePng8(true);
       return 0;
     }

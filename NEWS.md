@@ -1,5 +1,31 @@
+**Version 2.14.3 2024-01-19**
+- Opendap services are accessible again in the Layer configuration: https://github.com/KNMI/adaguc-server/issues/315
+
+**Version 2.14.2 2024-01-15**
+- Fix issue where the wrong dimension was forced to a value
+- Add Cache-Control header to WCS requests (DescribeCoverage and GetCoverage)
+- Fix Cache-control when dimensions are forced to a value
+- Make AAIGRID comparison looser (ignore whitespace)
+- Add unit test for Cache-Control headers for WCS AAIGRID format
+
+**Version 2.14.1 2023-12-08**
+- Set keep-alive (to support running behind proxy/load balancer)
+
+**Version 2.14.0 2023-11-23**
+- EDR support (position endpoint only), see [EDRConfiguration](doc/configuration/EDRConfiguration/EDR.md)
+
+**Version 2.13.9 2023-11-01**
+- Cache-Control header can be configured via the Settings item
+
+**Version 2.13.8 2023-11-01**
+- Fixed issue #311, dimension units are now propagated from the Layer configuration to the GetCapabilities
+
+**Version 2.13.7 2023-10-27**
+- PNG files can now also contain a reference_time text tag
+- Finnish national projection (EPSG:3067)
+
 **Version 2.13.6 2023-10-06**
-- Restored access log to original format (was broken since move to FastAPI) 
+- Restored access log to original format (was broken since move to FastAPI)
 
 **Version 2.13.5 2023-10-05**
 - KNMI HDF5 dual-pol data now picks scans 15, 16, 6,

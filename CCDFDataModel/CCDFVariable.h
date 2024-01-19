@@ -31,7 +31,7 @@
 #include "CCDFAttribute.h"
 #include "CCDFDimension.h"
 // #define CCDFDATAMODEL_DEBUG
-#include "CDebugger_H2.h"
+#include "CDebugger.h"
 namespace CDF {
   class Variable {
 

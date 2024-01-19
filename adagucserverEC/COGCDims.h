@@ -30,12 +30,18 @@
 #include "CDebugger.h"
 class COGCDims {
 public:
-  COGCDims() { isATimeDimension = false; }
+  COGCDims() { isATimeDimension = false; hasFixedValue = false; }
   /**
    * OGC name
    */
 
   CT::string name;
+
+  /**
+   * Value, as given in the query_string
+   */
+  CT::string queryValue;
+
   /**
    * Value, are all values as given in the KVP request string, can contain / and , tokens
    */
@@ -54,6 +60,8 @@ public:
   void addValue(const char *value);
 
   bool isATimeDimension;
+
+  bool hasFixedValue;
 };
 
 class CCDFDims {

@@ -3431,25 +3431,28 @@ int CImageDataWriter::end() {
   // Static image
   // CDBDebug("srvParam->imageFormat = %d",srvParam->imageFormat);
   int status = 1;
+
+  CT::string cacheControl = srvParam->getCacheControlHeader(srvParam->getCacheControlOption());
+
   if (srvParam->imageFormat == IMAGEFORMAT_IMAGEPNG8) {
     CDBDebug("Creating 8 bit png with alpha");
-    printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
+    printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl.c_str(), 13, 10);
     status = drawImage.printImagePng8(true);
   } else if (srvParam->imageFormat == IMAGEFORMAT_IMAGEPNG8_NOALPHA) {
     CDBDebug("Creating 8 bit png without alpha");
-    printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
+    printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl.c_str(), 13, 10);
     status = drawImage.printImagePng8(false);
   } else if (srvParam->imageFormat == IMAGEFORMAT_IMAGEPNG24) {
     CDBDebug("Creating 24 bit png");
-    printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
+    printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl.c_str(), 13, 10);
     status = drawImage.printImagePng24();
   } else if (srvParam->imageFormat == IMAGEFORMAT_IMAGEPNG32) {
     CDBDebug("Creating 32 bit png");
-    printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
+    printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl.c_str(), 13, 10);
     status = drawImage.printImagePng32();
   } else if (srvParam->imageFormat == IMAGEFORMAT_IMAGEWEBP) {
     CDBDebug("Creating 32 bit webp");
-    printf("%s%c%c\n", "Content-Type:image/webp", 13, 10);
+    printf("%s%s%c%c\n", "Content-Type:image/webp", cacheControl.c_str(), 13, 10);
     int webPQuality = srvParam->imageQuality;
     if (!srvParam->Format.empty()) {
       /* Support setting quality via wms format parameter, e.g. format=image/webp;90& */
@@ -3466,12 +3469,12 @@ int CImageDataWriter::end() {
   } else if (srvParam->imageFormat == IMAGEFORMAT_IMAGEGIF) {
     // CDBDebug("LegendGraphic GIF");
     if (animation == 0) {
-      printf("%s%c%c\n", "Content-Type:image/gif", 13, 10);
+      printf("%s%s%c%c\n", "Content-Type:image/gif", cacheControl.c_str(), 13, 10);
     }
     status = drawImage.printImageGif();
   } else {
     // CDBDebug("LegendGraphic PNG");
-    printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
+    printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl.c_str(), 13, 10);
     status = drawImage.printImagePng8(true);
   }
 
