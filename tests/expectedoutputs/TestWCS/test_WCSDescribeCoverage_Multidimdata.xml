@@ -120,12 +120,24 @@
           <AxisDescription>
             <name>"member"</name>
             <label>"member"</label>
+            <values>
+              <interval>
+                <min>"member1"</min>
+                <max>"member6"</max>
+              </interval>
+            </values>
           </AxisDescription>
         </axisDescription>
         <axisDescription>
           <AxisDescription>
             <name>"elevation"</name>
             <label>"elevation"</label>
+            <values>
+              <interval>
+                <min>"1000.0"</min>
+                <max>"9000.0"</max>
+              </interval>
+            </values>
           </AxisDescription>
         </axisDescription>
       </RangeSet>
