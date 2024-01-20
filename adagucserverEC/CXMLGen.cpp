@@ -26,6 +26,7 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
+#include <sstream>
 #include <string>
 #include "CXMLGen.h"
 #include "CDBFactory.h"
@@ -37,6 +38,35 @@ const char *CXMLGen::className = "CXMLGen";
 int CXMLGen::WCSDescribeCoverage(CServerParams *srvParam, CT::string *XMLDocument) { return OGCGetCapabilities(srvParam, XMLDocument); }
 
 bool compareStringCase(const std::string &s1, const std::string &s2) { return strcmp(s1.c_str(), s2.c_str()) <= 0; }
+
+// Function to parse a string to double if numeric
+double parseNumeric(std::string const &str, bool &isNumeric) {
+  auto result = double();
+  auto i = std::istringstream(str);
+  i >> result;
+  isNumeric = !i.fail() && i.eof();
+  return result;
+}
+
+// Sort values that can either be numeric of a string
+bool multitypeSort(const CT::string &a, const CT::string &b) {
+  // Try to convert strings to numbers
+  float aNum, bNum;
+  bool isANum, isBNum;
+
+  isANum = false;
+  aNum = parseNumeric(a.c_str(), isANum);
+
+  isBNum = false;
+  bNum = parseNumeric(b.c_str(), isBNum);
+
+  // Do numerical comparison or alphabetical comparison according to type
+  if (isANum && isBNum) {
+    return aNum < bNum;
+  } else {
+    return a < b;
+  }
+}
 
 int CXMLGen::getFileNameForLayer(WMSLayer *myWMSLayer) {
 #ifdef CXMLGEN_DEBUG
@@ -1510,26 +1540,29 @@ void CXMLGen::generateRangeSet(CT::string *XMLDoc, WMSLayer *layer) {
     if (dim->name.indexOf("time") != -1) {
       continue;
     }
+    // Sort the values to make sure they are in the right order
+    CT::string *valueSplit = dim->values.splitToArray(",");
+    std::vector<CT::string> valuesVector(valueSplit, valueSplit + valueSplit->count);
+    std::sort(valuesVector.begin(), valuesVector.end(), multitypeSort);
+
     XMLDoc->printconcat("        <axisDescription>\n"
                         "          <AxisDescription>\n"
                         "            <name>\"%s\"</name>\n"
                         "            <label>\"%s\"</label>\n",
                         dim->name.c_str(), dim->name.c_str());
-    CT::string *valueSplit = dim->values.splitToArray("/");
-    if (valueSplit->count == 3) {
+    // At least two values (to have a min and a max)
+    if (valueSplit->count >= 2) {
       XMLDoc->printconcat("            <values>\n"
                           "              <interval>\n"
                           "                <min>\"%s\"</min>\n"
                           "                <max>\"%s\"</max>\n"
                           "              </interval>\n"
-                          "            </values>\n"
-                          "          </AxisDescription>\n"
-                          "        </axisDescription>\n",
-                          valueSplit[0].c_str(), valueSplit[1].c_str());
+                          "            </values>\n",
+                          valuesVector[0].c_str(), valuesVector.back().c_str());
     }
-    delete[] valueSplit;
     XMLDoc->printconcat("          </AxisDescription>\n"
                         "        </axisDescription>\n");
+    delete[] valueSplit;
   }
 
   XMLDoc->concat("      </RangeSet>\n"
