@@ -88,7 +88,7 @@ owslib==0.29.3
     # via -r requirements.in
 packaging==23.2
     # via gunicorn
-pillow==10.1.0
+pillow==10.2.0
     # via -r requirements.in
 pydantic==2.5.1
     # via
