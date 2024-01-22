@@ -113,6 +113,8 @@ int CDBFileScanner::cleanFiles(CDataSource *dataSource, int) {
             CDBError("Unable to remove file from FS: [%s]", fileNamestr.c_str());
           } else {
             filesDeletedFromFS.insert(fileNamestr);
+            // File is not present anymore, also remove it from the dirreaders
+            CCachedDirReader::removeFileFromCachedList(fileNamestr);
           }
         }
       }

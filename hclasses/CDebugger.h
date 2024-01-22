@@ -23,14 +23,59 @@
  *
  ******************************************************************************/
 
-#include <cstddef>
-#include <new>
-#include "CDebugger_H2.h"
+#ifndef CDEBUGGER_H
+#define CDEBUGGER_H
 
-#ifndef MEMLEAKCHECK_ASSIGNED
-#define MEMLEAKCHECK_ASSIGNED
-#ifdef MEMLEAKCHECK
-#include "CDebugger_H.h"
-#define new new (__FILE__, __LINE__)
+#ifndef SOURCE_PATH_SIZE
+#define SOURCE_PATH_SIZE 80
 #endif
+
+#define __FILENAME__ (&__FILE__[SOURCE_PATH_SIZE])
+
+#include <stdio.h>
+#include <iostream>
+#include <vector>
+
+// Used to silence -Wunused-parameter warnings
+template<class T> void ignoreParameter( const T& ) { }
+
+extern unsigned int logMessageNumber;
+extern unsigned long logProcessIdentifier;
+
+void _printDebugStream(const char *message);
+void _printWarningStream(const char *message);
+void _printErrorStream(const char *message);
+
+void printDebugStream(const char *message);
+void printWarningStream(const char *message);
+void printErrorStream(const char *message);
+
+void setDebugFunction(void (*function)(const char *));
+void setWarningFunction(void (*function)(const char *));
+void setErrorFunction(void (*function)(const char *));
+
+void _printDebugLine(const char *pszMessage, ...);
+void _printWarningLine(const char *pszMessage, ...);
+void _printErrorLine(const char *pszMessage, ...);
+
+void _printDebug(const char *pszMessage, ...);
+void _printWarning(const char *pszMessage, ...);
+void _printError(const char *pszMessage, ...);
+
+#define CDBWarning                                                                                                                                                                                     \
+  _printWarning("[W:%03d:pid%lu: %s:%d %s] ", logMessageNumber, logProcessIdentifier, __FILENAME__, __LINE__, className);                                                                              \
+  _printWarningLine
+#define CDBError                                                                                                                                                                                       \
+  _printError("[E:%03d:pid%lu: %s:%d %s] ", logMessageNumber, logProcessIdentifier, __FILENAME__, __LINE__, className);                                                                                \
+  _printErrorLine
+#define CDBErrormessage _printErrorLine
+#define CDBDebug                                                                                                                                                                                       \
+  _printDebug("[D:%03d:pid%lu: %s:%d %s] ", logMessageNumber, logProcessIdentifier, __FILENAME__, __LINE__, className);                                                                                \
+  _printDebugLine
+#define CDBEnterFunction(name)                                                                                                                                                                         \
+  const char *functionName = name;                                                                                                                                                                     \
+  _printDebugLine("D %s, %d class %s: Entering function '%s'", __FILENAME__, __LINE__, className, functionName);
+#define DEF_ERRORFUNCTION() static const char *className;
+#define DEF_ERRORMAIN() static const char *className = "main";
+
 #endif

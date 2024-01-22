@@ -402,6 +402,18 @@ CDirReader *CCachedDirReader::getDirReader(const char *directory, const char *ex
   return 0;
 }
 
+void CCachedDirReader::removeFileFromCachedList(std::string fileToRemove) {
+  for (auto i : dirReaderMap) {
+    CDirReader *dirReader = i.second;
+    // Find the file in the vector
+    auto itr = std::find(dirReader->fileList.begin(), dirReader->fileList.end(), fileToRemove);
+    // If found, remove it from the vector
+    if (itr != dirReader->fileList.end()) {
+      dirReader->fileList.erase(itr);
+    }
+  }
+}
+
 void CCachedDirReader::free() {
   for (std::map<std::string, CDirReader *>::iterator it = dirReaderMap.begin(); it != dirReaderMap.end(); ++it) {
     delete it->second;

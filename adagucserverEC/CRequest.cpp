@@ -167,6 +167,7 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
           }
         }
       }
+      delete[] parameters;
     }
 
     // Include additional config files given in the include statement of the config file

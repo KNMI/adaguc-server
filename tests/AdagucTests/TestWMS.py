@@ -2403,4 +2403,3 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(
             headers, ["Content-Type:image/png", "Cache-Control:max-age=60"]
         )
-        AdagucTestTools().writetofile("test1.png", data.getvalue())

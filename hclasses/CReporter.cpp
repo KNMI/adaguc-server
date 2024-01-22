@@ -1,5 +1,5 @@
 #include "CReporter.h"
-#include "CDebugger_H2.h"
+#include "CDebugger.h"
 
 #include <fstream>
 #include <sstream>
