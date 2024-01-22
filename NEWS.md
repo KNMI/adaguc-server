@@ -1,3 +1,6 @@
+**Version 2.14.3 2024-01-19**
+- Opendap services are accessible again in the Layer configuration: https://github.com/KNMI/adaguc-server/issues/315
+
 **Version 2.14.2 2024-01-15**
 - Fix issue where the wrong dimension was forced to a value
 - Add Cache-Control header to WCS requests (DescribeCoverage and GetCoverage)
