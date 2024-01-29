@@ -51,6 +51,13 @@ public:
   ~CPGSQLDB();
   int close2();
   int connect(const char *pszOptions);
+  /**
+   * Checks if a table exists, if not it will be created with the specified columns.
+   * @param pszTableName The tablename to check for existence
+   * @param pszColumns The columns needed to create the table
+   * @returns  0: no change, table exists. 1: error,  2: table was created
+
+  */
   int checkTable(const char *pszTableName, const char *pszColumns);
   int query(const char *pszQuery);
   //     CT::string* query_select_deprecated(const char *pszQuery);

@@ -16,6 +16,11 @@ THISSCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )
 # Unbufferd logging for realtime output
 export ADAGUC_ENABLELOGBUFFER=FALSE
 
+
+# Do export ADAGUC_VERBOSE="--verboseon" to enable verbose logging
+
+ADAGUC_VERBOSE="${ADAGUC_VERBOSE:=--verboseoff}" 
+
 if [[ $1 ]]; then
   # Update a specific dataset
   for configfile in /data/adaguc-datasets/$1 ;do
@@ -28,7 +33,7 @@ if [[ $1 ]]; then
       OUT=$?
     else
       echo "*** Starting update for ${filename}" 
-      ${ADAGUC_PATH}/bin/adagucserver --updatedb --config ${ADAGUC_CONFIG},${filename}
+      ${ADAGUC_PATH}/bin/adagucserver --updatedb --config ${ADAGUC_CONFIG},${filename} ${ADAGUC_VERBOSE}
       OUT=$?
     fi
   
@@ -49,7 +54,7 @@ else
     fi
     echo ""
     echo "Starting update for ${filename}" 
-    ${ADAGUC_PATH}/bin/adagucserver --updatedb --config ${ADAGUC_CONFIG},${filename}
+    ${ADAGUC_PATH}/bin/adagucserver --updatedb --config ${ADAGUC_CONFIG},${filename} ${ADAGUC_VERBOSE}
     OUT=$?
      done
 

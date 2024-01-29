@@ -34,7 +34,7 @@ CDBAdapter *CDBFactory::getDBAdapter(CServerConfig::XMLE_Configuration *cfg) {
   if (staticCDBAdapter == NULL) {
     if (cfg->DataBase.size() != 1) {
       CDBError("DataBase not properly configured");
-      return NULL;
+      exit(1);
     }
     if (cfg->DataBase[0]->attr.dbtype.equals("sqlite")) {
       CDBDebug("Using sqlite");
