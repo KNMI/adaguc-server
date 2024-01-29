@@ -22,7 +22,7 @@
  * limitations under the License.
  *
  ******************************************************************************/
-#ifdef ADAGUC_USE_POSTGRESQL
+
 #include "CPGSQLDB.h"
 const char *CPGSQLDB::className = "CPGSQLDB";
 void CPGSQLDB::clearResult() {
@@ -225,4 +225,3 @@ CDBStore::Store *CPGSQLDB::queryToStore(const char *pszQuery, bool throwExceptio
   return store;
   ;
 }
-#endif

@@ -22,7 +22,7 @@
  * limitations under the License.
  *
  ******************************************************************************/
-#ifdef ADAGUC_USE_POSTGRESQL
+
 #ifndef CPGSQLDB_H
 #define CPGSQLDB_H
 #include <stdio.h>
@@ -70,6 +70,4 @@ public:
    */
   CDBStore::Store *queryToStore(const char *pszQuery) { return queryToStore(pszQuery, false); }
 };
-#endif
-
 #endif
