@@ -45,6 +45,8 @@ add_library(
     CConvertKNMIH5VolScan.h
     CConvertLatLonGrid.h
     CConvertLatLonGrid.cpp
+    CConvertLatLonGridHeader.cpp
+    CConvertLatLonGridData.cpp
     CConvertTROPOMI.cpp
     CConvertTROPOMI.h
     CConvertUGRIDMesh.cpp
@@ -77,7 +79,6 @@ add_library(
     CDataPostProcessors/CDataPostProcessor_Operator.h
     CDataPostProcessors/CDataPostProcessor_WFP.h
     CDataPostProcessors/CDataPostProcessor_WFP.cpp
-    CConvertLatLonGrid.h
     CDataReader.cpp
     CDataReader.h
     CDataSource.cpp
