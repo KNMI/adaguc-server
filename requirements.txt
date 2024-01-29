@@ -6,7 +6,7 @@
 #
 anyio==4.0.0
     # via
-    #   httpcore
+    #   httpx
     #   starlette
 asgi-logger==0.1.0
     # via -r requirements.in
@@ -18,22 +18,21 @@ brotli==1.1.0
     #   brotli-asgi
 brotli-asgi==1.4.0
     # via -r requirements.in
-cachetools==5.3.1
+cachetools==5.3.2
     # via -r requirements.in
 certifi==2023.7.22
     # via
     #   httpcore
     #   httpx
     #   netcdf4
-    #   pyproj
     #   requests
-cftime==1.6.2
+cftime==1.6.3
     # via
     #   -r requirements.in
     #   netcdf4
 chardet==5.2.0
     # via -r requirements.in
-charset-normalizer==3.3.0
+charset-normalizer==3.3.2
     # via requests
 click==8.1.7
     # via uvicorn
@@ -51,9 +50,9 @@ h11==0.14.0
     # via
     #   httpcore
     #   uvicorn
-httpcore==0.18.0
+httpcore==1.0.1
     # via httpx
-httpx==0.25.0
+httpx==0.25.1
     # via -r requirements.in
 idna==3.4
     # via
@@ -67,28 +66,24 @@ lxml==4.9.3
     #   -r requirements.in
     #   owslib
 markupsafe==2.1.3
-    # via
-    #   jinja2
-    #   werkzeug
-netcdf4==1.6.4
+    # via jinja2
+netcdf4==1.6.5
     # via -r requirements.in
-numpy==1.26.0
+numpy==1.26.1
     # via
     #   cftime
     #   netcdf4
-owslib==0.29.2
+owslib==0.29.3
     # via -r requirements.in
 packaging==23.2
     # via gunicorn
-pillow==10.0.1
+pillow==10.1.0
     # via -r requirements.in
 pydantic==1.10.13
     # via
     #   -r requirements.in
     #   fastapi
     #   geojson-pydantic
-pyproj==3.6.1
-    # via -r requirements.in
 python-dateutil==2.8.2
     # via owslib
 pytz==2023.3.post1
@@ -104,7 +99,6 @@ six==1.16.0
 sniffio==1.3.0
     # via
     #   anyio
-    #   httpcore
     #   httpx
 starlette==0.27.0
     # via
@@ -116,9 +110,7 @@ typing-extensions==4.8.0
     #   fastapi
     #   pydantic
     #   uvicorn
-urllib3==2.0.6
+urllib3==2.0.7
     # via requests
 uvicorn==0.23.2
-    # via -r requirements.in
-werkzeug==2.3.7
     # via -r requirements.in

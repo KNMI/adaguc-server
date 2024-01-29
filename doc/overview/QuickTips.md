@@ -20,6 +20,22 @@ ${ADAGUC_PATH}/bin/adagucserver --updatedb --config ${ADAGUC_CONFIG},<optional d
 
 Now you can use all options as documented in [doc/info/Commandline.md](../../doc/info/Commandline.md)
 
+## Listing files in your docker container
+
+A tip to list the actual contents in the docker container is to do:
+
+
+
+```
+# List data files in your container
+docker exec -i -t my-adaguc-server bash -c "ls -lrt /data/adaguc-data"
+```
+
+```
+# List dataset configurations in your container
+docker exec -i -t my-adaguc-server bash -c "ls -lrt /data/adaguc-datasets"
+```
+
 
 ## Endpoints
 

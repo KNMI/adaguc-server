@@ -1,103 +1,101 @@
-version: '3.1'
+version: "3.1"
 
 services:
-    adaguc-viewer:
-        image: openearth/adaguc-viewer
-        container_name: adaguc-viewer
-        hostname: adaguc-viewer
-        networks:
-            - adaguc-network
-        environment:
-            - "LOCAL_ADAGUCSERVER_ADDR=${EXTERNALADDRESS}" # Should be same as adaguc-server's EXTERNALADDRESS
-            - "REMOTE_ADAGUCSERVER_ADDR=http://adaguc-server:8080/" # Do not change this within the docker-compose environment
-            - "ADAGUCSERVICES_AUTOWMS=${EXTERNALADDRESS}/autowms?"
-        env_file:
-            - .env
-        restart: unless-stopped
-        logging:
-              driver: "json-file"
-              options:
-                max-size: "200k"
-                max-file: "10"
-    adaguc-server:
-        image: openearth/adaguc-server
-        container_name: my-adaguc-server
-        hostname: my-adaguc-server
-        volumes:
-            - ${ADAGUC_DATASET_DIR}/:/data/adaguc-datasets
-            - ${ADAGUC_AUTOWMS_DIR}/:/data/adaguc-autowms
-            - ${ADAGUC_DATA_DIR}/:/data/adaguc-data
-        networks:
-            - adaguc-network
-        environment:
-            - "EXTERNALADDRESS=${EXTERNALADDRESS}"
-            - 'ADAGUC_DB=host=adaguc-db port=5432 user=adaguc password=adaguc dbname=adaguc'
-            - 'ADAGUC_ENABLELOGBUFFER=TRUE'
-            - 'ADAGUC_AUTOWMS_DIR=/data/adaguc-autowms'
-            - 'ADAGUC_DATA_DIR=/data/adaguc-data'
-            - 'ADAGUC_DATASET_DIR=/data/adaguc-datasets'
-        env_file:
-            - .env
-        restart: unless-stopped
-        links: 
-            - adaguc-db
-        depends_on: 
-            - adaguc-db
-        logging:
-              driver: "json-file"
-              options:
-                max-size: "200k"
-                max-file: "10"
-    nginx:
-        build: nginx-adaguc
-        container_name: nginx-adaguc
-        hostname: nginx-adaguc
-        ports:
-            - "${ADAGUC_PORT}:443"
-            - "${ADAGUC_PORT_HTTP}:80"
-        networks:
-            - adaguc-network
-        environment: 
-            - "SSL_ADMIN_EMAIL=adaguc@knmi.nl"
-            - "SSL_DOMAINS=${EXTERNALADDRESS}"
-            - "EXTERNAL_HOSTNAME=${EXTERNALADDRESS}"
-        volumes:
-            - /etc/letsencrypt
-            - /cert
-        restart: unless-stopped
-        logging:
-              driver: "json-file"
-              options:
-                max-size: "200k"
-                max-file: "10"
-    adaguc-db:
-        image: postgres:13.12
-        container_name: adaguc-db
-        hostname: adaguc-db
-        # Ensures containers running in the adaguc-network docker network can connect to the database, provided they use the
-        # right credentials
-        networks:
-            - adaguc-network
-        volumes:
-            - adaguc-server-compose-adagucdb:/adaguc/adagucdb
-        expose:
-            - "5432"
-        environment:
-            - "POSTGRES_USER=adaguc"
-            - "POSTGRES_PASSWORD=adaguc"
-            - "POSTGRES_DB=adaguc"
-        restart: unless-stopped
-        logging:
-              driver: "json-file"
-              options:
-                max-size: "200k"
-                max-file: "10"
+  adaguc-viewer:
+    image: openearth/adaguc-viewer
+    container_name: adaguc-viewer
+    hostname: adaguc-viewer
+    networks:
+      - adaguc-network
+    environment:
+      - "LOCAL_ADAGUCSERVER_ADDR=${EXTERNALADDRESS}" # Should be same as adaguc-server's EXTERNALADDRESS
+      - "REMOTE_ADAGUCSERVER_ADDR=http://adaguc-server:8080/" # Do not change this within the docker-compose environment
+      - "ADAGUCSERVICES_AUTOWMS=${EXTERNALADDRESS}/autowms?"
+    env_file:
+      - .env
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
+  adaguc-server:
+    image: openearth/adaguc-server
+    container_name: my-adaguc-server
+    hostname: my-adaguc-server
+    volumes:
+      - ${ADAGUC_DATASET_DIR}/:/data/adaguc-datasets
+      - ${ADAGUC_AUTOWMS_DIR}/:/data/adaguc-autowms
+      - ${ADAGUC_DATA_DIR}/:/data/adaguc-data
+    networks:
+      - adaguc-network
+    environment:
+      - "EXTERNALADDRESS=${EXTERNALADDRESS}"
+      - "ADAGUC_DB=host=adaguc-db port=5432 user=adaguc password=adaguc dbname=adaguc"
+      - "ADAGUC_ENABLELOGBUFFER=TRUE"
+      - "ADAGUC_AUTOWMS_DIR=/data/adaguc-autowms"
+      - "ADAGUC_DATA_DIR=/data/adaguc-data"
+      - "ADAGUC_DATASET_DIR=/data/adaguc-datasets"
+    env_file:
+      - .env
+    restart: unless-stopped
+    links:
+      - adaguc-db
+    depends_on:
+      - adaguc-db
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
+  nginx:
+    build: nginx-adaguc
+    container_name: nginx-adaguc
+    hostname: nginx-adaguc
+    ports:
+      - "${ADAGUC_PORT}:443"
+    networks:
+      - adaguc-network
+    environment:
+      - "SSL_ADMIN_EMAIL=adaguc@knmi.nl"
+      - "SSL_DOMAINS=${EXTERNALADDRESS}"
+      - "EXTERNAL_HOSTNAME=${EXTERNALADDRESS}"
+    volumes:
+      - /etc/letsencrypt
+      - /cert
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
+  adaguc-db:
+    image: postgres:13.12
+    container_name: adaguc-db
+    hostname: adaguc-db
+    # Ensures containers running in the adaguc-network docker network can connect to the database, provided they use the
+    # right credentials
+    networks:
+      - adaguc-network
+    volumes:
+      - adaguc-server-compose-adagucdb:/adaguc/adagucdb
+    expose:
+      - "5432"
+    environment:
+      - "POSTGRES_USER=adaguc"
+      - "POSTGRES_PASSWORD=adaguc"
+      - "POSTGRES_DB=adaguc"
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
 volumes:
-    adaguc-server-compose-adagucdb:
+  adaguc-server-compose-adagucdb:
 networks:
-    adaguc-network:
-
-#Run 
+  adaguc-network:
+#Run
 # bash docker-compose-generate-env.sh -a ~/adaguc-server-docker/adaguc-autowms/ -d ~/adaguc-server-docker/adaguc-datasets/ -f ~/adaguc-server-docker/adaguc-data -p 443
 # docker-compose pull
 # docker-compose build
