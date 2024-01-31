@@ -41,17 +41,17 @@ click==8.1.7
     # via
     #   geomet
     #   uvicorn
-covjson-pydantic==0.2.0
+covjson-pydantic==0.2.1
     # via -r requirements.in
 defusedxml==0.7.1
     # via -r requirements.in
 edr-pydantic==0.2.1
     # via -r requirements.in
-exceptiongroup==1.1.3
+exceptiongroup==1.2.0
     # via anyio
 fastapi==0.103.2
     # via -r requirements.in
-geojson-pydantic==1.0.1
+geojson-pydantic==1.0.2
     # via -r requirements.in
 geomet==1.1.0
     # via -r requirements.in
@@ -63,24 +63,24 @@ h11==0.14.0
     #   uvicorn
 httpcore==1.0.2
     # via httpx
-httpx==0.25.1
+httpx==0.26.0
     # via -r requirements.in
-idna==3.4
+idna==3.6
     # via
     #   anyio
     #   httpx
     #   requests
-jinja2==3.1.2
+jinja2==3.1.3
     # via -r requirements.in
-lxml==4.9.3
+lxml==4.9.4
     # via
     #   -r requirements.in
     #   owslib
-markupsafe==2.1.3
+markupsafe==2.1.4
     # via jinja2
 netcdf4==1.6.5
     # via -r requirements.in
-numpy==1.26.2
+numpy==1.26.3
     # via
     #   cftime
     #   netcdf4
@@ -88,20 +88,20 @@ owslib==0.29.3
     # via -r requirements.in
 packaging==23.2
     # via gunicorn
-pillow==10.1.0
+pillow==10.2.0
     # via -r requirements.in
-pydantic==2.5.1
+pydantic==2.6.0
     # via
     #   -r requirements.in
     #   covjson-pydantic
     #   edr-pydantic
     #   fastapi
     #   geojson-pydantic
-pydantic-core==2.14.3
+pydantic-core==2.16.1
     # via pydantic
 python-dateutil==2.8.2
     # via owslib
-pytz==2023.3.post1
+pytz==2023.4
     # via
     #   -r requirements.in
     #   owslib
@@ -119,14 +119,14 @@ starlette==0.27.0
     # via
     #   brotli-asgi
     #   fastapi
-typing-extensions==4.8.0
+typing-extensions==4.9.0
     # via
     #   asgiref
     #   fastapi
     #   pydantic
     #   pydantic-core
     #   uvicorn
-urllib3==2.1.0
+urllib3==2.2.0
     # via requests
 uvicorn==0.23.2
     # via -r requirements.in
