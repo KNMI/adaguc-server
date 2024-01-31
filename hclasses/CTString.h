@@ -342,11 +342,6 @@ namespace CT {
      */
     void encodeXMLSelf();
 
-    /**
-     * Encodes string using URL encoding
-     */
-    CT::string encode();
-
     static CT::string encodeXML(CT::string stringToEncode);
     CT::string encodeXML();
 

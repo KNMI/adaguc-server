@@ -357,18 +357,15 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Conf
   srvParams = _srvParams;
   cfg = _cfg;
   cfgLayer = _cfgLayer;
-  //    numVariables = cfgLayer->Variable.size();
-  // CDBDebug("Configure layer ");
   datasourceIndex = layerIndex;
+
+  // Make DataObjects for each Variable defined in the Layer.
   for (size_t j = 0; j < cfgLayer->Variable.size(); j++) {
     DataObject *newDataObject = new DataObject();
     newDataObject->variableName.copy(cfgLayer->Variable[j]->value.c_str());
-    if (!cfgLayer->Variable[j]->attr.orgname.empty()) {
-      newDataObject->variableName = cfgLayer->Variable[j]->value.c_str();
-    }
-
     getDataObjectsVector()->push_back(newDataObject);
   }
+
   // Set the layername
   CT::string layerUniqueName;
   if (_layerName == NULL) {

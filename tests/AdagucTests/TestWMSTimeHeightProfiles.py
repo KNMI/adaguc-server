@@ -59,7 +59,7 @@ class TestWMSTimeHeightProfiles(unittest.TestCase):
 
     def test_wmsgetfeatureinfo_timeheightprofiles(self):
         """
-        Check if WMS GetFeatureInfo on time height profiles is as expected
+        Check if WMS GetFeatureInfo on time height profiles is as expected using autowms with source=<file>
         """
         AdagucTestTools().cleanTempDir()
         filename = "test_WMSGetFeatureInfoAsPng_TimeHeightProfiles.png"
@@ -80,7 +80,7 @@ class TestWMSTimeHeightProfiles(unittest.TestCase):
 
     def test_wmsgetfeatureinfo_png_timeheightprofiles_as_dataset(self):
         """
-        Check if WMS GetFeatureInfo on time height profiles is as expected using dataset
+        Check if WMS GetFeatureInfo on time height profiles is as expected using a dataset configuration with name adaguc.tests.timeheightprofiles
         """
         AdagucTestTools().cleanTempDir()
 
