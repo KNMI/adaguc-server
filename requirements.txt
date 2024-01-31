@@ -126,7 +126,7 @@ typing-extensions==4.9.0
     #   pydantic
     #   pydantic-core
     #   uvicorn
-urllib3==2.1.0
+urllib3==2.2.0
     # via requests
 uvicorn==0.23.2
     # via -r requirements.in
