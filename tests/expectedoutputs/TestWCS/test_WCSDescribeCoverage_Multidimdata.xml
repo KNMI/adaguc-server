@@ -1,20 +1,23 @@
 <?xml version='1.0' encoding="ISO-8859-1" ?>
-<CoverageDescription version="1.0.0" updateSequence="0"
-  xmlns="http://www.opengis.net/wcs"
-  xmlns:xlink="http://www.w3.org/1999/xlink"
-  xmlns:gml="http://www.opengis.net/gml"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/wcs http://schemas.opengis.net/wcs/1.0.0/describeCoverage.xsd">
+<CoverageDescription
+   version="1.0.0" 
+   updateSequence="0" 
+   xmlns="http://www.opengis.net/wcs" 
+   xmlns:xlink="http://www.w3.org/1999/xlink" 
+   xmlns:gml="http://www.opengis.net/gml" 
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.opengis.net/wcs http://schemas.opengis.net/wcs/1.0.0/describeCoverage.xsd">
   <CoverageOffering>
-    <description>data</description>
-    <name>data</name>
-    <label>data</label>
-    <uom>km</uom>
-    <lonLatEnvelope srsName="urn:ogc:def:crs:OGC:1.3:CRS84">
-      <gml:pos>-180.494446 -90.488892</gml:pos>
-      <gml:pos>179.505554 89.511108</gml:pos>
-    </lonLatEnvelope>
-    <domainSet>
-      <spatialDomain>
+  <description>data</description>
+  <name>data</name>
+  <label>data</label>
+  <uom>km</uom>
+  <lonLatEnvelope srsName="urn:ogc:def:crs:OGC:1.3:CRS84">
+    <gml:pos>-180.494446 -90.488892</gml:pos>
+    <gml:pos>179.505554 89.511108</gml:pos>
+  </lonLatEnvelope>
+  <domainSet>
+    <spatialDomain>
         <gml:Envelope srsName="EPSG:3411">
           <gml:pos>-399240949.703125 -399607437.540235</gml:pos>
           <gml:pos>399487065.269510 398879979.546019</gml:pos>
@@ -57,7 +60,7 @@
         </gml:Envelope>
         <gml:Envelope srsName="EPSG:7399">
           <gml:pos>-17284159.484400 -8898366.230070</gml:pos>
-          <gml:pos>17986681.325950 9011275.281223</gml:pos>
+          <gml:pos>17986681.325950 9020047.848074</gml:pos>
         </gml:Envelope>
         <gml:Envelope srsName="EPSG:50001">
           <gml:pos>-2000000.000000 -2000000.000000</gml:pos>
@@ -122,6 +125,12 @@
                 <min>"member1"</min>
                 <max>"member6"</max>
               </interval>
+              <singleValue>"member1"</singleValue>
+              <singleValue>"member2"</singleValue>
+              <singleValue>"member3"</singleValue>
+              <singleValue>"member4"</singleValue>
+              <singleValue>"member5"</singleValue>
+              <singleValue>"member6"</singleValue>
             </values>
           </AxisDescription>
         </axisDescription>
@@ -134,6 +143,15 @@
                 <min>"1000.0"</min>
                 <max>"9000.0"</max>
               </interval>
+              <singleValue>"1000.0"</singleValue>
+              <singleValue>"2000.0"</singleValue>
+              <singleValue>"3000.0"</singleValue>
+              <singleValue>"4000.0"</singleValue>
+              <singleValue>"5000.0"</singleValue>
+              <singleValue>"6000.0"</singleValue>
+              <singleValue>"7000.0"</singleValue>
+              <singleValue>"8000.0"</singleValue>
+              <singleValue>"9000.0"</singleValue>
             </values>
           </AxisDescription>
         </axisDescription>
@@ -172,5 +190,5 @@
     <supportedInterpolations default="nearest neighbor">
       <interpolationMethod>nearest neighbor</interpolationMethod>
     </supportedInterpolations>
-  </CoverageOffering>
+</CoverageOffering>
 </CoverageDescription>

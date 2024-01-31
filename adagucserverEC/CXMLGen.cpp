@@ -1556,9 +1556,15 @@ void CXMLGen::generateRangeSet(CT::string *XMLDoc, WMSLayer *layer) {
                           "              <interval>\n"
                           "                <min>\"%s\"</min>\n"
                           "                <max>\"%s\"</max>\n"
-                          "              </interval>\n"
-                          "            </values>\n",
+                          "              </interval>\n",
                           valuesVector[0].c_str(), valuesVector.back().c_str());
+      // Print all possible values if there is a relatively small number
+      if (valueSplit->count <= 100) {
+        for (size_t i = 0; i < valueSplit->count; i++) {
+          XMLDoc->printconcat("              <singleValue>\"%s\"</singleValue>\n", valuesVector[i].c_str());
+        }
+      }
+      XMLDoc->printconcat("            </values>\n");
     }
     XMLDoc->printconcat("          </AxisDescription>\n"
                         "        </axisDescription>\n");
