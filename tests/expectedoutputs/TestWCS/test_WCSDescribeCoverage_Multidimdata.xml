@@ -1,23 +1,20 @@
 <?xml version='1.0' encoding="ISO-8859-1" ?>
-<CoverageDescription
-   version="1.0.0" 
-   updateSequence="0" 
-   xmlns="http://www.opengis.net/wcs" 
-   xmlns:xlink="http://www.w3.org/1999/xlink" 
-   xmlns:gml="http://www.opengis.net/gml" 
-   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-   xsi:schemaLocation="http://www.opengis.net/wcs http://schemas.opengis.net/wcs/1.0.0/describeCoverage.xsd">
+<CoverageDescription version="1.0.0" updateSequence="0"
+  xmlns="http://www.opengis.net/wcs"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  xmlns:gml="http://www.opengis.net/gml"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/wcs http://schemas.opengis.net/wcs/1.0.0/describeCoverage.xsd">
   <CoverageOffering>
-  <description>data</description>
-  <name>data</name>
-  <label>data</label>
-  <uom>km</uom>
-  <lonLatEnvelope srsName="urn:ogc:def:crs:OGC:1.3:CRS84">
-    <gml:pos>-180.494446 -90.488892</gml:pos>
-    <gml:pos>179.505554 89.511108</gml:pos>
-  </lonLatEnvelope>
-  <domainSet>
-    <spatialDomain>
+    <description>data</description>
+    <name>data</name>
+    <label>data</label>
+    <uom>km</uom>
+    <lonLatEnvelope srsName="urn:ogc:def:crs:OGC:1.3:CRS84">
+      <gml:pos>-180.494446 -90.488892</gml:pos>
+      <gml:pos>179.505554 89.511108</gml:pos>
+    </lonLatEnvelope>
+    <domainSet>
+      <spatialDomain>
         <gml:Envelope srsName="EPSG:3411">
           <gml:pos>-399240949.703125 -399607437.540235</gml:pos>
           <gml:pos>399487065.269510 398879979.546019</gml:pos>
@@ -60,7 +57,7 @@
         </gml:Envelope>
         <gml:Envelope srsName="EPSG:7399">
           <gml:pos>-17284159.484400 -8898366.230070</gml:pos>
-          <gml:pos>17986681.325950 9020047.848074</gml:pos>
+          <gml:pos>17986681.325950 9011275.281223</gml:pos>
         </gml:Envelope>
         <gml:Envelope srsName="EPSG:50001">
           <gml:pos>-2000000.000000 -2000000.000000</gml:pos>
@@ -175,5 +172,5 @@
     <supportedInterpolations default="nearest neighbor">
       <interpolationMethod>nearest neighbor</interpolationMethod>
     </supportedInterpolations>
-</CoverageOffering>
+  </CoverageOffering>
 </CoverageDescription>

@@ -303,7 +303,9 @@ class AdagucTestTools:
                     pass
             for elem in root.getchildren():
                 removeBBOX(elem)
-
+            # To compare the Describe Coverage documents
+            if root.tag.title() == "{Http://Www.Opengis.Net/Gml}Pos":
+                root.getparent().remove(root)
         removeBBOX(obj1)
         removeBBOX(obj2)
 
