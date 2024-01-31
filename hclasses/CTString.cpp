@@ -139,7 +139,6 @@ namespace CT {
       strings[j].count = n;
       delete token;
     }
-    CTlink(strings, n);
     return strings;
   };
 
