@@ -1156,7 +1156,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
         CT::string dimName(dataSource->cfgLayer->Dimension[i]->value.c_str());
         CT::string fixedValue = dataSource->cfgLayer->Dimension[i]->attr.fixvalue;
         dimName.toLowerCaseSelf();
-        for (auto & requiredDim : dataSource->requiredDims) {
+        for (auto &requiredDim : dataSource->requiredDims) {
           if (requiredDim->name.equals(&dimName)) {
             CDBDebug("Forcing dimension %s from %s to %s", dimName.c_str(), requiredDim->value.c_str(), fixedValue.c_str());
             requiredDim->value = fixedValue;
@@ -1191,13 +1191,13 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
 #endif
   bool allNonFixedDimensionsAreAsRequestedInQueryString = true;
   for (auto requiredDim : dataSource->requiredDims) {
-    CDBDebug("%s: [%s] === [%s], fixed:%d", requiredDim->name.c_str(), requiredDim->value.c_str(), requiredDim->queryValue.c_str(), requiredDim->hasFixedValue);
+    // CDBDebug("%s: [%s] === [%s], fixed:%d", requiredDim->name.c_str(), requiredDim->value.c_str(), requiredDim->queryValue.c_str(), requiredDim->hasFixedValue);
     if (!requiredDim->hasFixedValue && !requiredDim->value.equals(requiredDim->queryValue)) {
       allNonFixedDimensionsAreAsRequestedInQueryString = false;
     }
   }
 
-  CDBDebug("allNonFixedDimensionsAreAsRequestedInQueryString %d", allNonFixedDimensionsAreAsRequestedInQueryString);
+  // CDBDebug("allNonFixedDimensionsAreAsRequestedInQueryString %d", allNonFixedDimensionsAreAsRequestedInQueryString);
   if (allNonFixedDimensionsAreAsRequestedInQueryString) {
     srvParam->setCacheControlOption(CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE);
   } else {
@@ -1611,12 +1611,12 @@ int CRequest::process_all_layers() {
             for (additionalLayerNo = 0; additionalLayerNo < srvParam->cfg->Layer.size(); additionalLayerNo++) {
               CT::string additional;
               srvParam->makeUniqueLayerName(&additional, srvParam->cfg->Layer[additionalLayerNo]);
-              CDBDebug("comparing for additionallayer %s==%s", additionalLayerName.c_str(), additional.c_str());
+              // CDBDebug("comparing for additionallayer %s==%s", additionalLayerName.c_str(), additional.c_str());
               if (additionalLayerName.equals(additional)) {
-                CDBDebug("Found additionalLayer [%s]", additional.c_str());
+                // CDBDebug("Found additionalLayer [%s]", additional.c_str());
                 CDataSource *additionalDataSource = new CDataSource();
 
-                CDBDebug("setCFGLayer for additionallayer %s", additionalLayerName.c_str());
+                // CDBDebug("setCFGLayer for additionallayer %s", additionalLayerName.c_str());
                 if (additionalDataSource->setCFGLayer(srvParam, srvParam->configObj->Configuration[0], srvParam->cfg->Layer[additionalLayerNo], additionalLayerName.c_str(), j) != 0) {
                   delete additionalDataSource;
                   return 1;

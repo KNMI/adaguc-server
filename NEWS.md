@@ -1,3 +1,6 @@
+**Version 2.15.0 2024-01-29**
+- PostgreSQL queries have been optimized
+
 **Version 2.14.3 2024-01-19**
 - Opendap services are accessible again in the Layer configuration: https://github.com/KNMI/adaguc-server/issues/315
 
