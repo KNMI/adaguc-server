@@ -343,6 +343,7 @@ namespace CT {
      * Encodes string using XML encoding
      */
     void encodeXMLSelf();
+
     static CT::string encodeXML(CT::string stringToEncode);
     CT::string encodeXML();
 

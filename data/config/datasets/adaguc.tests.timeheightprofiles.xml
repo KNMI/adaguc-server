@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+
+    <!-- Data in https://dataplatform.knmi.nl/dataset/ceilonet-chm15k-backsct-la1-t12s-v1-0 -->
+    <Projection id="GFI:TIME_ELEVATION" proj4="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"/>
+
+    <Style name="beta_raw">
+        <Legend fixedclasses="true" tickround="100" tickinterval="50000" textformatting="%3.0f">multicolor</Legend>
+        <Min>10000</Min>
+        <Log>10</Log>
+        <Max>1500000000</Max>
+        <RenderMethod>nearest,bilinear</RenderMethod>
+    </Style>
+
+    <Layer type="database" hidden="false">
+        <Name>beta_raw</Name>
+        <Title>ceilonet 06310 eprofile</Title>
+        <Variable>beta_raw</Variable>
+        <FilePath>{ADAGUC_PATH}data/datasets/test/ceilonet/ceilonet_chm15k_backsct_la1_t12s_v1.0_06310_A20231202_extracted_small.nc</FilePath>
+        <Styles>beta_raw</Styles>
+    </Layer>
+
+</Configuration>
+
+

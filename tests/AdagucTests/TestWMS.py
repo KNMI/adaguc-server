@@ -25,40 +25,6 @@ class TestWMS(unittest.TestCase):
 
     AdagucTestTools().mkdir_p(testresultspath)
 
-    def comparexml(self, xml, expectedxml):
-        """
-        Compare two WMS GetCapability xml files
-        """
-        obj1 = objectify.fromstring(re.sub(' xmlns="[^"]+"', "", expectedxml, count=1))
-        obj2 = objectify.fromstring(re.sub(' xmlns="[^"]+"', "", xml, count=1))
-
-        # Remove ADAGUC build date and version from keywordlists
-        for child in obj1.findall("Service/KeywordList")[0]:
-            child.getparent().remove(child)
-        for child in obj2.findall("Service/KeywordList")[0]:
-            child.getparent().remove(child)
-
-        # Boundingbox extent values are too varying by different Proj libraries
-        def removebbox(root):
-            if root.tag.title() == "Boundingbox":
-                try:
-                    del root.attrib["minx"]
-                    del root.attrib["miny"]
-                    del root.attrib["maxx"]
-                    del root.attrib["maxy"]
-                except:  # pylint: disable=bare-except
-                    pass
-            for elem in root.getchildren():
-                removebbox(elem)
-
-        removebbox(obj1)
-        removebbox(obj2)
-
-        result = etree.tostring(obj1)
-        expect = etree.tostring(obj2)
-
-        self.assertEqual(expect, result)
-
     def checkreport(self, report_filename="", expected_report_filename=""):
         """
         Tests file check reporting functionality
