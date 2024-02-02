@@ -1,3 +1,6 @@
+**Version 2.15.1 2024-01-22**
+- Support time/height profile data from https://dataplatform.knmi.nl/dataset/ceilonet-chm15k-backsct-la1-t12s-v1-0
+
 **Version 2.15.0 2024-01-29**
 - PostgreSQL queries have been optimized
 
