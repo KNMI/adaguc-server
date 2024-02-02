@@ -131,13 +131,33 @@ int CConvertLatLonGrid::convertLatLonGridHeader(CDFObject *cdfObject, CServerPar
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
     if (var->isDimension == false) {
-      if (!var->name.equals("time2D") && !var->name.equals("time") && !var->name.equals("lon") && !var->name.equals("lat") && !var->name.equals("longitude") && !var->name.equals("latitude")) {
+      if (var->dimensionlinks.size() >= 2 && !var->name.equals("acquisition_time") && !var->name.equals("time") && !var->name.equals("lon") && !var->name.equals("lat") &&
+          !var->name.equals("longitude") && !var->name.equals("latitude")) {
         varsToConvert.add(CT::string(var->name.c_str()));
       }
     }
   }
 
-  // Create the new regular grid field variiables based on the irregular grid variables
+  // Add time dimension
+  bool addCustomTimeDimension = false;
+  try {
+    CDF::Dimension *timeDim = cdfObject->getDimensionNE("time");
+    if (timeDim == nullptr) {
+
+      CDF::Variable *timeVar = cdfObject->getVariableNE("acquisition_time");
+      if (timeVar != nullptr) {
+        timeVar->name = "time";
+        timeDim = new CDF::Dimension("time", 1);
+        cdfObject->addDimension(timeDim);
+        timeVar->dimensionlinks.push_back(timeDim);
+        addCustomTimeDimension = true;
+      }
+    }
+
+  } catch (int e) {
+  }
+
+  // Create the new regular grid field variables based on the irregular grid variables
   for (size_t v = 0; v < varsToConvert.size(); v++) {
     CDF::Variable *irregularGridVar = cdfObject->getVariable(varsToConvert[v].c_str());
     if (irregularGridVar->dimensionlinks.size() >= 2) {
@@ -152,6 +172,13 @@ int CConvertLatLonGrid::convertLatLonGridHeader(CDFObject *cdfObject, CServerPar
       for (size_t dimlinkNr = 0; dimlinkNr < irregularGridVar->dimensionlinks.size() - 2; dimlinkNr += 1) {
         auto dimlink = irregularGridVar->dimensionlinks[dimlinkNr];
         destRegularGrid->dimensionlinks.push_back(dimlink);
+      }
+
+      if (addCustomTimeDimension) {
+        CDF::Dimension *timeDim = cdfObject->getDimensionNE("time");
+        if (timeDim) {
+          destRegularGrid->dimensionlinks.push_back(timeDim);
+        }
       }
 
       // Assign X,Y
