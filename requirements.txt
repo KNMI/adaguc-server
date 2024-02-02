@@ -4,6 +4,7 @@
 #
 #    pip-compile --no-emit-index-url
 #
+aioredis==2.0.1
 annotated-types==0.6.0
     # via pydantic
 anyio==3.7.1
@@ -15,6 +16,7 @@ asgi-logger==0.1.0
     # via -r requirements.in
 asgiref==3.7.2
     # via asgi-logger
+async-timeout==4.0.3
 brotli==1.1.0
     # via
     #   -r requirements.in
@@ -107,6 +109,7 @@ pytz==2023.4
     #   owslib
 pyyaml==6.0.1
     # via owslib
+redis==5.0.1
 requests==2.31.0
     # via owslib
 six==1.16.0

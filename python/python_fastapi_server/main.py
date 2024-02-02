@@ -21,6 +21,7 @@ from routers.middleware import FixSchemeMiddleware
 from routers.ogcapi import ogcApiApp
 from routers.opendap import opendapRouter
 from routers.wmswcs import testadaguc, wmsWcsRouter
+from routers.cachingmiddleware import CachingMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +32,15 @@ access_log_format = 'accesslog %(h)s ; %(t)s ; %(H)s ; %(m)s ; %(U)s ; %(q)s ; %
 logging.getLogger("uvicorn.access").handlers.clear()
 app.add_middleware(AccessLoggerMiddleware, format=access_log_format)
 logging.getLogger("access").propagate = False
+
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = time.time() - start_time
+    print("Adding X-Process-Time")
+    response.headers["X-Process-Time"] = str(process_time)
+    return response
 
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
@@ -64,6 +74,8 @@ app.add_middleware(
 )
 
 app.add_middleware(BrotliMiddleware, gzip_fallback=True)
+
+app.add_middleware(CachingMiddleware)
 
 if "EXTERNALADDRESS" in os.environ:
     app.add_middleware(FixSchemeMiddleware)
