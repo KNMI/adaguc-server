@@ -116,7 +116,7 @@ def call_adaguc(url):
     if len(logfile) > 0:
         logger.info(logfile)
 
-    return status, data
+    return status, data, headers
 
 
 @cached(cache=cache)
@@ -131,7 +131,10 @@ def get_capabilities(collname):
         urlrequest = (
             f"dataset={dataset}&service=wms&version=1.3.0&request=getcapabilities"
         )
-        status, response = call_adaguc(url=urlrequest.encode("UTF-8"))
+        status, response, headers = call_adaguc(url=urlrequest.encode("UTF-8"))
+        for hdr in headers.keys():
+            if hdr.lower()=="cache-control":
+                logger.info("%s: %s", hdr, headers[hdr])
         if status == 0:
             xml = response.getvalue()
             wms = WebMapService(coll["service"], xml=xml, version="1.3.0")

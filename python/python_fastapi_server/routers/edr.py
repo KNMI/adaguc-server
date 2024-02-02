@@ -195,7 +195,7 @@ def get_point_value(
     if custom_dims:
         urlrequest += custom_dims
 
-    status, response = call_adaguc(url=urlrequest.encode("UTF-8"))
+    status, response, headers = call_adaguc(url=urlrequest.encode("UTF-8"))
     if status == 0:
         return response.getvalue()
     return None
@@ -217,10 +217,12 @@ async def get_collection_position(
     collection_name: str,
     request: Request,
     coords: str,
+    response: CovJSONResponse,
     instance: Union[str, None] = None,
     datetime_par: str = Query(default=None, alias="datetime"),
     parameter_name: str = Query(alias="parameter-name"),
     z_par: str = Query(alias="z", default=None),
+
 ) -> Coverage:
     """
     returns data for the EDR /position endpoint
@@ -237,7 +239,7 @@ async def get_collection_position(
     latlons = wkt.loads(coords)
     logger.info("latlons:%s", latlons)
     coord = {"lat": latlons["coordinates"][1], "lon": latlons["coordinates"][0]}
-    resp = get_point_value(
+    resp, headers = get_point_value(
         edr_collections[collection_name],
         instance,
         [coord["lon"], coord["lat"]],
@@ -247,6 +249,7 @@ async def get_collection_position(
         custom_dims,
     )
     if resp:
+        response.headers['X-Special']='OK'
         dat = json.loads(resp)
         return covjson_from_resp(dat, edr_collections[collection_name]["vertical_name"])
 
@@ -628,7 +631,7 @@ def get_capabilities(collname):
         urlrequest = (
             f"dataset={dataset}&service=wms&version=1.3.0&request=getcapabilities"
         )
-        status, response = call_adaguc(url=urlrequest.encode("UTF-8"))
+        status, response, headers = call_adaguc(url=urlrequest.encode("UTF-8"))
         logger.info("status: %d", status)
         if status == 0:
             xml = response.getvalue()
@@ -649,7 +652,7 @@ def get_ref_times_for_coll(edr_collectioninfo: dict, layer: str) -> list[str]:
     dataset = edr_collectioninfo["dataset"]
     url = f"?DATASET={dataset}&SERVICE=WMS&VERSION=1.3.0&request=getreferencetimes&LAYER={layer}"
     logger.info("getreftime_url(%s,%s): %s", dataset, layer, url)
-    status, response = call_adaguc(url=url.encode("UTF-8"))
+    status, response, headers = call_adaguc(url=url.encode("UTF-8"))
     if status == 0:
         ref_times = json.loads(response.getvalue())
         instance_ids = [parse_iso(reft).strftime("%Y%m%d%H%M") for reft in ref_times]
