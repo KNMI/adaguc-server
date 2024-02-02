@@ -80,12 +80,16 @@ class CachingMiddleware(BaseHTTPMiddleware):
                     return
                 age=int(age_terms[1])
                 response_body = b""
-                async for chunk in response.body_iterator:
-                    response_body+=chunk
+                # async for chunk in response.body_iterator:
+                #     response_body+=chunk
+                async def response_chunks():
+                    async for chunk in response.body_iterator:
+                        yield chunk
                 task = BackgroundTask(cache_response, request=request, headers=response.headers, data=response_body, ex=age)
     #            await cache_response(request, response.headers, response_body, age)
                 response.headers['age']="0"
     #            print("HDRS:",response.headers)
-                return Response(content=response_body, status_code=200, headers=response.headers, media_type=response.media_type, background=task)
+                # return Response(content=response_body, status_code=200, headers=response.headers, media_type=response.media_type, background=task)
+                return StreamingResponse(content=response_chunks(), status_code=200, headers=response.headers, media_type=response.media_type, background=task)
             print("NOT CACHING ", generate_key(request))
         return response
