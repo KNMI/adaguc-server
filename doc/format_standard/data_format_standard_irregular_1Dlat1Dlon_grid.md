@@ -4,7 +4,7 @@
 
 This script will create a file where lon and lat variables have irregular spacing. These variables are still 1 dimensional.
 
-[Script to generate NetCDF file](../../python/format_standard/format_standard/generate_example_file_irregular_1Dlat1Dlon_grid)
+[Script to generate NetCDF file](../../python/format_standard/generate_example_file_irregular_1Dlat1Dlon_grid.py)
 
 ## NetCDF file
 ``` 
