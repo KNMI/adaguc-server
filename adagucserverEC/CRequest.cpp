@@ -2699,16 +2699,6 @@ int CRequest::process_querystring() {
         }
       }
 
-      /* //Opendap variable parameter
-        if(dFound_OpenDAPVariable==0){
-         if(uriKeyUpperCase.equals("VARIABLE")){
-           if(srvParam->autoResourceVariable.empty()){
-             srvParam->autoResourceVariable.copy(values[1].c_str());
-           }
-           dFound_OpenDAPVariable=1;
-         }
-       }*/
-
       // WMS Layers parameter
       if (uriKeyUpperCase.equals("LAYERS")) {
         if (srvParam->WMSLayers != NULL) {

@@ -36,91 +36,19 @@ int CConvertLatLonGrid::convertLatLonGridHeader(CDFObject *cdfObject, CServerPar
 #endif
   if (!isLatLonGrid(cdfObject)) return 1;
 
-  try {
-    CDF::Dimension *timeDim = cdfObject->getDimensionNE("time");
-    if (timeDim == NULL) {
-
-      CDF::Variable *timeVar = cdfObject->getVariable("acquisition_time");
-      timeVar->name = "time";
-      timeDim = new CDF::Dimension("time", 1);
-      cdfObject->addDimension(timeDim);
-      timeVar->dimensionlinks.push_back(timeDim);
-    }
-
-  } catch (int e) {
-  }
-#ifdef CConvertLatLonGrid_DEBUG
-  CDBDebug("Using CConvertLatLonGrid.h");
-#endif
-  bool hasTimeData = false;
-
-  // Is there a time variable
-  CDF::Variable *origT = cdfObject->getVariableNE("time");
-  if (origT != NULL) {
-    hasTimeData = true;
-
-    // Create a new time dimension for the new 2D fields.
-    CDF::Dimension *dimT = new CDF::Dimension();
-    dimT->name = "time2D";
-    dimT->setSize(1);
-    cdfObject->addDimension(dimT);
-
-    // Create a new time variable for the new 2D fields.
-    CDF::Variable *varT = new CDF::Variable();
-    varT->setType(CDF_DOUBLE);
-    varT->name.copy(dimT->name.c_str());
-    varT->setAttributeText("standard_name", "time");
-    varT->setAttributeText("long_name", "time");
-    varT->dimensionlinks.push_back(dimT);
-    CDF::allocateData(CDF_DOUBLE, &varT->data, dimT->length);
-    cdfObject->addVariable(varT);
-
-    // Detect time from the netcdf data and copy the same units from the original time variable
-    if (origT != NULL) {
-      try {
-        varT->setAttributeText("units", origT->getAttribute("units")->toString().c_str());
-        if (origT->readData(CDF_DOUBLE) != 0) {
-          CDBError("Unable to read time variable");
-        } else {
-          // Loop through the time variable and detect the earliest time
-          double tfill;
-          bool hastfill = false;
-          try {
-            origT->getAttribute("_FillValue")->getData(&tfill, 1);
-            hastfill = true;
-          } catch (int e) {
-          }
-          double *tdata = ((double *)origT->data);
-          double firstTimeValue = tdata[0];
-          size_t tsize = origT->getSize();
-          if (hastfill == true) {
-            for (size_t j = 0; j < tsize; j++) {
-              if (tdata[j] != tfill) {
-                firstTimeValue = tdata[j];
-              }
-            }
-          }
-#ifdef CConvertLatLonGrid_DEBUG
-          CDBDebug("firstTimeValue  = %f", firstTimeValue);
-#endif
-          // Set the time data
-          varT->setData(CDF_DOUBLE, &firstTimeValue, 1);
-        }
-      } catch (int e) {
-      }
-    }
-  }
-
   // Determine bbox based on 2D lat/lon
   double dfBBOX[] = {-180, -90, 180, 90};
   CDF::Variable *longitudeGrid = getLon2D(cdfObject);
   CDF::Variable *latitudeGrid = getLat2D(cdfObject);
-  // if (!longitudeGrid) {
-  //   longitudeGrid = getLon2D(cdfObject);
-  // }
-  // if (!latitudeGrid) {
-  //   latitudeGrid = getLat2D(cdfObject);
-  // }
+
+  if (longitudeGrid == nullptr) {
+    CDBDebug("longitudeGrid = longitudeGrid");
+    longitudeGrid = getLon1D(cdfObject);
+    CDBDebug("longitudeGrid = longitudeGrid");
+  }
+  if (latitudeGrid == nullptr) {
+    latitudeGrid = getLat1D(cdfObject);
+  }
 
   if (longitudeGrid != nullptr && latitudeGrid != nullptr) {
     // If the data was not populated in the code above, try to read it from the file
@@ -139,10 +67,13 @@ int CConvertLatLonGrid::convertLatLonGridHeader(CDFObject *cdfObject, CServerPar
         dfBBOX[2] = lonMinMax.max;
         dfBBOX[3] = latMinMax.max;
       } catch (int e) {
+        CDBDebug("CALC BOX ERROR %d", e);
       }
     }
+  } else {
+    CDBWarning("Unable to determine BBOX from lat/lon variables");
   }
-  // Default size of ascat 2dField is 2x2
+  // Default size of new virtual 2dField is 2x2
   int width = 2;
   int height = 2;
 
@@ -169,7 +100,7 @@ int CConvertLatLonGrid::convertLatLonGridHeader(CDFObject *cdfObject, CServerPar
     varX->isDimension = true;
     varX->dimensionlinks.push_back(dimX);
     cdfObject->addVariable(varX);
-    CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
+    varX->allocateData(dimX->length);
 
     // For y
     dimY = new CDF::Dimension();
@@ -182,7 +113,7 @@ int CConvertLatLonGrid::convertLatLonGridHeader(CDFObject *cdfObject, CServerPar
     varY->isDimension = true;
     varY->dimensionlinks.push_back(dimY);
     cdfObject->addVariable(varY);
-    CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
+    varY->allocateData(dimY->length);
 
     // Fill in the X and Y dimensions with the array of coordinates
     for (size_t j = 0; j < dimX->length; j++) {
@@ -217,13 +148,13 @@ int CConvertLatLonGrid::convertLatLonGridHeader(CDFObject *cdfObject, CServerPar
       CDF::Variable *destRegularGrid = new CDF::Variable();
       cdfObject->addVariable(destRegularGrid);
 
-      // Assign X,Y,T dims
-      if (hasTimeData) {
-        CDF::Variable *newTimeVar = cdfObject->getVariableNE("time2D");
-        if (newTimeVar != NULL) {
-          destRegularGrid->dimensionlinks.push_back(newTimeVar->dimensionlinks[0]);
-        }
+      // Assign all other dims except Y and X
+      for (size_t dimlinkNr = 0; dimlinkNr < irregularGridVar->dimensionlinks.size() - 2; dimlinkNr += 1) {
+        auto dimlink = irregularGridVar->dimensionlinks[dimlinkNr];
+        destRegularGrid->dimensionlinks.push_back(dimlink);
       }
+
+      // Assign X,Y
       destRegularGrid->dimensionlinks.push_back(dimY);
       destRegularGrid->dimensionlinks.push_back(dimX);
 

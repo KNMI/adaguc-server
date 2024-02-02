@@ -94,10 +94,9 @@ bool CConvertLatLonGrid::checkIfIrregularLatLon(CDFObject *cdfObject) {
       double cellSizeYCenter = fabs(dfdim_Y[height / 2] - dfdim_Y[height / 2 + 1]);
       double deviationY = ((cellSizeYBorder - cellSizeYCenter) / cellSizeYBorder);
 
-      CDBDebug("CellsizesY %f %f %f", cellSizeYBorder, cellSizeYCenter, deviationY);
       // When the cellsize deviates more than 1% in the center than in the border, we call this grid irregular lat/lon
       if (deviationY > 0.01 || deviationX > 0.01) {
-        CDBDebug("IT is IRRREGULAR!");
+        CDBDebug("Note: Irregular grid encountered");
         return true;
       }
     }
@@ -114,13 +113,9 @@ bool CConvertLatLonGrid::isLatLonGrid(CDFObject *cdfObject) {
   bool hasXYDimensions = cdfObject->getDimensionNE("x") != NULL && cdfObject->getDimensionNE("y") != NULL;
   bool hasXYVariables = cdfObject->getVariableNE("x") != NULL && cdfObject->getVariableNE("y") != NULL;
 
-  bool fixIrregular = false;
+  bool fixIrregular = checkIfIrregularLatLon(cdfObject);
 
-  if (checkIfIrregularLatLon(cdfObject)) {
-    CDBDebug("Found ADAGUCIRREGULARGRID attribute in cdfObject");
-    fixIrregular = true;
-  }
-  if (fixIrregular == true) {
+  if (fixIrregular) {
     // Convert
     hasXYDimensions = true;
     hasXYVariables = false;
@@ -151,9 +146,11 @@ bool CConvertLatLonGrid::isLatLonGrid(CDFObject *cdfObject) {
       longitude->dimensionlinks.push_back(lat1DDim);
       longitude->dimensionlinks.push_back(lon1DDim);
       longitude->setAttributeText("ADAGUCConvertLatLonGridConverter", "DONE");
+      longitude->setAttributeText("ADAGUC_SKIP", "TRUE");
+
       // longitude->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
       cdfObject->addVariable(longitude);
-      CDF::allocateData(CDF_DOUBLE, &longitude->data, lon1DDim->length * lat1DDim->length);
+      longitude->allocateData(lon1DDim->length * lat1DDim->length);
 
       CDF::Variable *latitude = new CDF::Variable();
       latitude->setType(CDF_DOUBLE);
@@ -161,10 +158,12 @@ bool CConvertLatLonGrid::isLatLonGrid(CDFObject *cdfObject) {
       latitude->dimensionlinks.push_back(lat1DDim);
       latitude->dimensionlinks.push_back(lon1DDim);
       latitude->setAttributeText("ADAGUCConvertLatLonGridConverter", "DONE");
+      latitude->setAttributeText("ADAGUC_SKIP", "TRUE");
       // latitude->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
 
       cdfObject->addVariable(latitude);
-      CDF::allocateData(CDF_DOUBLE, &latitude->data, lon1DDim->length * lat1DDim->length);
+      latitude->allocateData(lon1DDim->length * lat1DDim->length);
+
       CDBDebug("Making latitude and longitude grids");
       for (size_t latIndex = 0; latIndex < lat1DDim->length; latIndex += 1) {
         for (size_t lonIndex = 0; lonIndex < lon1DDim->length; lonIndex += 1) {

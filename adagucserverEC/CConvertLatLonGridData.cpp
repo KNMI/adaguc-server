@@ -64,7 +64,8 @@ int CConvertLatLonGrid::convertLatLonGridData(CDataSource *dataSource, int mode)
 
   // Read original data first
   for (size_t d = 0; d < nrDataObjects; d++) {
-    irregularGridVar[d]->readData(CDF_FLOAT, true);
+    dataSource->readVariableDataForCDFDims(irregularGridVar[d], CDF_FLOAT);
+
     CDF::Attribute *fillValue = irregularGridVar[d]->getAttributeNE("_FillValue");
     if (fillValue != NULL) {
       dataObjects[d]->hasNodataValue = true;
@@ -165,8 +166,8 @@ int CConvertLatLonGrid::convertLatLonGridData(CDataSource *dataSource, int mode)
     varX = cdfObject->getVariable("adx");
     varY = cdfObject->getVariable("ady");
 
-    CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
-    CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
+    varX->allocateData(dimX->length);
+    varY->allocateData(dimY->length);
 
     // Fill in the X and Y dimensions with the array of coordinates
     for (size_t j = 0; j < dimX->length; j++) {
