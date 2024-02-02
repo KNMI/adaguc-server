@@ -28,8 +28,6 @@ async def get_cached_response(request):
     age=currenttime-entrytime
 
     headers_len=int(cached[10:16])
-    print("HL:", headers_len)
-    print("C",type(cached), cached[16:16+headers_len])
     headers=json.loads(cached[16:16+headers_len])
 
     data = cached[16+headers_len:]
@@ -70,7 +68,7 @@ class CachingMiddleware(BaseHTTPMiddleware):
         if data:
             #Fix Age header
             headers["Age"]="%1d"%(expire)
-            return Response(content=data, status_code=200, headers=headers, media_type="text/xml")
+            return Response(content=data, status_code=200, headers=headers, media_type=headers['content-type'])
 
         response: Response = await call_next(request)
 
@@ -87,7 +85,7 @@ class CachingMiddleware(BaseHTTPMiddleware):
                 task = BackgroundTask(cache_response, request=request, headers=response.headers, data=response_body, ex=age)
     #            await cache_response(request, response.headers, response_body, age)
                 response.headers['age']="0"
-                print("HDRS:",response.headers)
+    #            print("HDRS:",response.headers)
                 return Response(content=response_body, status_code=200, headers=response.headers, media_type=response.media_type, background=task)
             print("NOT CACHING ", generate_key(request))
         return response
