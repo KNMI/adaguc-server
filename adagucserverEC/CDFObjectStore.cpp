@@ -36,6 +36,7 @@ const char *CDFObjectStore::className = "CDFObjectStore";
 #include "CConvertGeoJSON.h"
 #include "CConvertEProfile.h"
 #include "CConvertTROPOMI.h"
+#include "CConvertLatLonBnds.h"
 #include "CDataReader.h"
 #include "CCDFCSVReader.h"
 // #define CDFOBJECTSTORE_DEBUG
@@ -414,6 +415,11 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
 
     if (!formatConverterActive)
       if (CConvertTROPOMI::convertTROPOMIHeader(cdfObject, srvParams) == 0) {
+        formatConverterActive = true;
+      };
+
+    if (!formatConverterActive)
+      if (CConvertLatLonBnds::convertLatLonBndsHeader(cdfObject, srvParams) == 0) {
         formatConverterActive = true;
       };
 

@@ -724,6 +724,11 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
         if (dataSources[d]->getDataObject(0)->cdfObject->getAttributeNE("ADAGUC_GEOJSON") != NULL) {
           openAll = true;
         }
+
+        if (dataSources[d]->getDataObject(0)->cdfObject->getAttributeNE("USE_ADAGUCCONVERTER") != NULL) {
+          openAll = true;
+        }
+
         if (dataSources[d]->cfgLayer->FilePath.size() == 1 && dataSources[d]->cfgLayer->FilePath[0]->attr.gfi_openall.equals("true")) {
           openAll = true;
         }
@@ -3697,8 +3702,8 @@ void rotateUvNorth(double &u, double &v, double rlo, double rla, float deltaX, f
   xpntNorthSph -= xpnt0Sph, ypntNorthSph -= ypnt0Sph;
   zpntNorthSph -= zpnt0Sph;
 
-  NormVector(xpntEastSph, ypntEastSph, zpntEastSph);                                                                        // vecx
-  NormVector(xpntNorthSph, ypntNorthSph, zpntNorthSph);                                                                     // vecy
+  NormVector(xpntEastSph, ypntEastSph, zpntEastSph);    // vecx
+  NormVector(xpntNorthSph, ypntNorthSph, zpntNorthSph); // vecy
 
   CrossProd(xpntEastSph, ypntEastSph, zpntEastSph, xpntNorthSph, ypntNorthSph, zpntNorthSph, xnormSph, ynormSph, znormSph); // vec z
   xpntNorthSphRot = -znormSph * xnormSph;                                                                                   // xpntNorthSphRot = 0.0 - Dist*xnormSph;
@@ -3719,7 +3724,7 @@ void rotateUvNorth(double &u, double &v, double rlo, double rla, float deltaX, f
 
   xpntNorthSph = sin(vecAngle); // Rotate the point/vector (0,1) around Z-axis with vecAngle
   ypntNorthSph = cos(vecAngle);
-  xpntEastSph = ypntNorthSph;   // Rotate the same point/vector around Z-axis with 90 degrees
+  xpntEastSph = ypntNorthSph; // Rotate the same point/vector around Z-axis with 90 degrees
   ypntEastSph = -xpntNorthSph;
 
   // zpntNorthSph = 0; zpntEastSph = 0;  // not needed in 2D

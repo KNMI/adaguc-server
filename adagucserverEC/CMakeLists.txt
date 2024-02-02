@@ -47,6 +47,8 @@ add_library(
     CConvertTROPOMI.h
     CConvertUGRIDMesh.cpp
     CConvertUGRIDMesh.h
+    CConvertLatLonBnds.cpp
+    CConvertLatLonBnds.h
     CCreateHistogram.cpp
     CCreateHistogram.h
     CCreateScaleBar.cpp
