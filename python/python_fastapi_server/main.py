@@ -72,12 +72,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.add_middleware(BrotliMiddleware, gzip_fallback=True)
-
 app.add_middleware(CachingMiddleware)
 
 if "EXTERNALADDRESS" in os.environ:
     app.add_middleware(FixSchemeMiddleware)
+
+app.add_middleware(BrotliMiddleware, gzip_fallback=True)
 
 
 @app.get("/")

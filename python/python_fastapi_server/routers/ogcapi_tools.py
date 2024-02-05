@@ -120,11 +120,10 @@ def call_adaguc(url):
 
 
 @cached(cache=cache)
-def get_capabilities(collname):
+def get_capabilities(coll):
     """
     Get the collectioninfo from the WMS GetCapabilities
     """
-    coll = generate_collections().get(collname)
     if "dataset" in coll:
         logger.info("callADAGUC by dataset")
         dataset = coll["dataset"]
@@ -175,11 +174,11 @@ def get_dimensions(layer, skip_dims=None):
 
 
 @cached(cache=cache)
-def get_parameters(collname):
+def get_parameters(coll):
     """
     get_parameters
     """
-    contents = get_capabilities(collname)
+    contents = get_capabilities(coll)
     layers = []
     for layer in contents:
         dims = get_dimensions(contents[layer], ["time"])

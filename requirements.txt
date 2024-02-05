@@ -25,6 +25,8 @@ brotli-asgi==1.4.0
     # via -r requirements.in
 cachetools==5.3.2
     # via -r requirements.in
+CacheToolsUtils==8.5
+    # via -r requirements.in
 certifi==2023.11.17
     # via
     #   httpcore

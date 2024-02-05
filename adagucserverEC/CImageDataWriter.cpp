@@ -2414,10 +2414,10 @@ int CImageDataWriter::end() {
           CT::string resultJSON;
           if (srvParam->JSONP.length() == 0) {
             CDBDebug("CREATING JSON");
-            printf("%s%c%c\n", "Content-Type: application/json", 13, 10);
+            printf("%s%s%c%c\n", "Content-Type: application/json", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
           } else {
             CDBDebug("CREATING JSONP %s", srvParam->JSONP.c_str());
-            printf("%s%c%c\n%s(", "Content-Type: application/javascript", 13, 10, srvParam->JSONP.c_str());
+            printf("%s%s%c%c\n", "Content-Type: application/javascript", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
           }
 
           puts(data.c_str());
@@ -2438,9 +2438,9 @@ int CImageDataWriter::end() {
     if (resultFormat == textplain || resultFormat == texthtml) {
       CT::string resultHTML;
       if (resultFormat == textplain) {
-        resultHTML.print("%s%c%c\n", "Content-Type:text/plain", 13, 10);
+        resultHTML.print("%s%s%c%c\n", "Content-Type: text/plain", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
       } else {
-        resultHTML.print("%s%c%c\n", "Content-Type:text/html", 13, 10);
+        resultHTML.print("%s%s%c%c\n", "Content-Type: text/html", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
       }
 
       if (resultFormat == texthtml) resultHTML.printconcat("<html>\n");
@@ -2568,7 +2568,8 @@ int CImageDataWriter::end() {
     if (resultFormat == applicationvndogcgml) {
       CDBDebug("CREATING GML");
       CT::string resultXML;
-      resultXML.print("%s%c%c\n", "Content-Type:text/xml", 13, 10);
+      resultXML.print("%s%s%c%c\n", "Content-Type: text/xml", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+
       resultXML.printconcat("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n");
       resultXML.printconcat("  <FeatureCollection\n");
       resultXML.printconcat("          xmlns:gml=\"http://www.opengis.net/gml\"\n");

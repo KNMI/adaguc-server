@@ -19,9 +19,9 @@ async def get_cached_response(request):
     key = generate_key(request)
     cached = await redis.get(key)
     if not cached:
-        print("Cache miss")
+        # print("Cache miss")
         return None, None, None
-    print("Cache hit")
+    # print("Cache hit", len(cached))
 
     entrytime=int(cached[:10])
     currenttime=calendar.timegm(datetime.utcnow().utctimetuple())
@@ -33,7 +33,7 @@ async def get_cached_response(request):
     data = cached[16+headers_len:]
     return age, headers, data
 
-skip_headers=["x-process-time"]
+skip_headers=["x-process-time", "age"]
 
 async def cache_response(request, headers, data, ex: int=60):
     key=generate_key(request)
@@ -42,28 +42,28 @@ async def cache_response(request, headers, data, ex: int=60):
     for k in headers.keys():
         if k not in skip_headers:
             allheaders[k]=headers[k]
-        else:
-            print("skipping header", k)
     allheaders_json=json.dumps(allheaders)
 
     entrytime="%10d"%calendar.timegm(datetime.utcnow().utctimetuple())
-    print("ENTRY:", entrytime)
-
-    print("Caching ", key, allheaders_json, "<><><>", type(data), data[:80])
     await redis.set(key, bytes(entrytime, 'utf-8')+bytes("%06d"%len(allheaders_json), 'utf-8')+bytes(allheaders_json, 'utf-8')+data, ex=ex)
 
 def generate_key(request):
-    key = request['query_string']
+    key = f"{request.url}?{request['query_string']}"
     return key
 
 class CachingMiddleware(BaseHTTPMiddleware):
+    shortcut = True
     def __init__(self, app):
         super().__init__(app)
+        if "ADAGUC_REDIS" in os.environ:
+            self.shortcut=False
 
     async def dispatch(self, request, call_next):
+        if self.shortcut:
+            return await call_next(request)
+
         #Check if request is in cache, if so return that
         expire, headers, data = await get_cached_response(request)
-        print("AGE:", expire, data[:20] if data else None)
 
         if data:
             #Fix Age header
@@ -74,22 +74,14 @@ class CachingMiddleware(BaseHTTPMiddleware):
 
         if response.status_code == 200:
             if "cache-control" in response.headers and response.headers['cache-control']!="no-store":
-                print("CachingMiddleware:", response.headers['cache-control'])
                 age_terms = response.headers['cache-control'].split("=")
                 if age_terms[0].lower()!="max-age":
                     return
                 age=int(age_terms[1])
                 response_body = b""
-                # async for chunk in response.body_iterator:
-                #     response_body+=chunk
-                async def response_chunks():
-                    async for chunk in response.body_iterator:
-                        yield chunk
-                task = BackgroundTask(cache_response, request=request, headers=response.headers, data=response_body, ex=age)
-    #            await cache_response(request, response.headers, response_body, age)
+                async for chunk in response.body_iterator:
+                    response_body+=chunk
+                task = BackgroundTask(cache_response, request=request, headers=response.headers, data=response_body, ex=age)    #            await cache_response(request, response.headers, response_body, age)
                 response.headers['age']="0"
-    #            print("HDRS:",response.headers)
-                # return Response(content=response_body, status_code=200, headers=response.headers, media_type=response.media_type, background=task)
-                return StreamingResponse(content=response_chunks(), status_code=200, headers=response.headers, media_type=response.media_type, background=task)
-            print("NOT CACHING ", generate_key(request))
+                return Response(content=response_body, status_code=200, headers=response.headers, media_type=response.media_type, background=task)
         return response
