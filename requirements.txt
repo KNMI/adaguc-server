@@ -6,7 +6,7 @@
 #
 annotated-types==0.6.0
     # via pydantic
-anyio==3.7.1
+anyio==4.2.0
     # via
     #   httpx
     #   starlette
@@ -22,7 +22,7 @@ brotli-asgi==1.4.0
     # via -r requirements.in
 cachetools==5.3.2
     # via -r requirements.in
-certifi==2023.11.17
+certifi==2024.2.2
     # via
     #   httpcore
     #   httpx
@@ -48,7 +48,7 @@ edr-pydantic==0.2.1
     # via -r requirements.in
 exceptiongroup==1.2.0
     # via anyio
-fastapi==0.109.1
+fastapi==0.109.2
     # via -r requirements.in
 geojson-pydantic==1.0.2
     # via -r requirements.in
@@ -75,11 +75,11 @@ lxml==4.9.4
     # via
     #   -r requirements.in
     #   owslib
-markupsafe==2.1.4
+markupsafe==2.1.5
     # via jinja2
 netcdf4==1.6.5
     # via -r requirements.in
-numpy==1.26.3
+numpy==1.26.4
     # via
     #   cftime
     #   netcdf4
@@ -89,14 +89,14 @@ packaging==23.2
     # via gunicorn
 pillow==10.2.0
     # via -r requirements.in
-pydantic==2.6.0
+pydantic==2.6.1
     # via
     #   -r requirements.in
     #   covjson-pydantic
     #   edr-pydantic
     #   fastapi
     #   geojson-pydantic
-pydantic-core==2.16.1
+pydantic-core==2.16.2
     # via pydantic
 python-dateutil==2.8.2
     # via owslib
@@ -114,12 +114,13 @@ sniffio==1.3.0
     # via
     #   anyio
     #   httpx
-starlette==0.35.1
+starlette==0.36.3
     # via
     #   brotli-asgi
     #   fastapi
 typing-extensions==4.9.0
     # via
+    #   anyio
     #   asgiref
     #   fastapi
     #   pydantic
