@@ -35,73 +35,55 @@
 namespace CT {
 
   class string {
+  private:
+    std::string stdString;
   public:
     size_t count;
   private:
-    char stackValue[CTSTRINGSTACKLENGTH + 1];
-    int allocated;
-    size_t privatelength; // Length of string
-    size_t bufferlength;  // Length of buffer
-    void _Free();
-    void _Allocate(int _length);
     const char *strrstr(const char *x, const char *y);
     char _tohex(char in);
     char _fromhex(char in);
 
-    bool useStack;
-    char *heapValue;
     inline void init() {
-      useStack = CTYPES_USESTACK;
-      heapValue = NULL;
-      stackValue[0] = 0;
       count = 0;
-      allocated = 0;
-      privatelength = 0;
-      bufferlength = CTSTRINGSTACKLENGTH;
     }
-    inline char *getValuePointer() { return useStack ? stackValue : heapValue; }
 
   public:
     /**
      * Default constructor
      */
-    string();
+    string() : count(0) {};
+    string(std::string s) : stdString(std::move(s)), count(0) {}  // This also supports char* ??
 
     /**
      *Copy constructor
      */
-    string(string const &);
+    string(string const &) = default;
 
-    /**
-     * Copy constructor which initialize the string with a character array
-     * @param _value The character array to copy
-     * @param _length the length of the character array
-     */
-    string(const char *_value, size_t _length);
+//    /**
+//     * Copy constructor which initialize the string with a character array
+//     * @param _value The character array to copy
+//     * @param _length the length of the character array
+//     */
+//    string(const char *_value, size_t _length);
 
-    /**
-     * Copy constructor which initialize the string with a character array
-     * @param _value The character array to copy
-     */
-    string(const char *_value);
-
-    /**
-     * Copy constructor which initialize the string with the contents of a string pointer
-     * @param _string Pointer to the string to copy
-     */
-    string(CT::string *_string);
+//    /**
+//     * Copy constructor which initialize the string with the contents of a string pointer
+//     * @param _string Pointer to the string to copy
+//     */
+//    string(CT::string *_string);
 
     /**
      * assign operator
      * @param f The input string
      */
-    string &operator=(string const &f);
+    string &operator=(string const &f) = default;
 
-    /**
-     * assign operator
-     * @param f The input character array
-     */
-    string &operator=(const char *const &f);
+//    /**
+//     * assign operator
+//     * @param f The input character array
+//     */
+//    string &operator=(const char *const &f);
 
     /**
      * addition assignment operator
@@ -109,11 +91,11 @@ namespace CT {
      */
     string &operator+=(string const &f);
 
-    /**
-     * addition assignment operator
-     * @param f The input character array
-     */
-    string &operator+=(const char *const &f);
+//    /**
+//     * addition assignment operator
+//     * @param f The input character array
+//     */
+//    string &operator+=(const char *const &f);
 
     /**
      * addition operator
@@ -121,11 +103,11 @@ namespace CT {
      */
     string operator+(string const &f);
 
-    /**
-     * addition operator
-     * @param f The input character array
-     */
-    string operator+(const char *const &f);
+//    /**
+//     * addition operator
+//     * @param f The input character array
+//     */
+//    string operator+(const char *const &f);
 
     /**
      * const char* conversion operator
@@ -145,113 +127,107 @@ namespace CT {
     /**
      * Destructor
      */
-    virtual ~string() { _Free(); }
+    virtual ~string() = default;
 
     /**
      * returns length of the string
      * @return length
      */
-    inline size_t length() { return privatelength; }
-
-    /**
-     * returns the internal bufferlength of the string
-     * @return internal bufferlength
-     */
-    inline size_t getbufferlength() { return bufferlength; }
+    inline size_t length() { return stdString.length(); }
 
     /**
      * Copy a character array into the string
      * @param _value The character array to copy
      * @param _length the length of the character array
      */
-    void copy(const char *_value, size_t _length);
+    void copy(const char *_value, size_t _length) { stdString.assign(_value, _length); }
 
     /**
      * Copy a string pointer into the array
      * @param _string Pointer to the string to copy
      */
-    void copy(const CT::string *_string);
+    void copy(const CT::string *_string) { stdString = *_string;}
 
     /**
      * Copy a string pointer into the array
      * @param _string Pointer to the string to copy
      */
-    void copy(const CT::string _string);
+    void copy(const CT::string _string) { stdString = _string; }
 
-    /**
-     * Copy a character array into the string
-     * @param _value The character array to copy
-     */
-    void copy(const char *_value);
+//    /**
+//     * Copy a character array into the string
+//     * @param _value The character array to copy
+//     */
+//    void copy(const char *_value);
 
     /**
      * Appends a pointer to a string object to this string object
      * @param string* The string pointer to append
      */
-    void concat(const CT::string *_string);
+    void concat(const CT::string *_string) { stdString.append(*_string); }
 
     /**
      * Appends a string object to this string object
      * @param string The string to append
      */
-    void concat(const CT::string _string);
+    void concat(const CT::string _string) { stdString.append(_string); }
 
     /**
      * Appends an array of characters with specified length to this string object
      * @param value The character array to append
      * @param len The length of the character array
      */
-    void concat(const char *_value, size_t len);
+    void concat(const char *_value, size_t len)  { stdString.append(_value, len); }
 
-    /**
-     * Appends an array of characters terminated with a '\0' character.
-     * @param value The 0-terminated character array to append
-     */
-    void concat(const char *_value);
+//    /**
+//     * Appends an array of characters terminated with a '\0' character.
+//     * @param value The 0-terminated character array to append
+//     */
+//    void concat(const char *_value);
 
     /**
      * Returns the char value at the specified index.
      * @param index The index of the character to get.
      */
-    char charAt(size_t index);
+    char charAt(size_t index) { return stdString[index]; }
 
     /**
      * Sets a character in the string object at specified location
      * @param location The location to set
      * @param character The character to set
      */
-    void setChar(size_t location, const char character);
+    void setChar(size_t location, const char character) {stdString[location] = character; }
 
     /**
      * Compares this string to the specified object. The result is true if the given argument is not null and representing the same sequence of characters as this object.
      * @param value The character array to compare
      * @param length The length of the character array to compare
      */
-    bool equals(const char *value, size_t length) const;
+    bool equals(const char *value, size_t length) { return memcmp(stdString.data(), value, length) == 0; }
 
     /**
      * Compares this string to the specified object. The result is true if the given argument is not null and representing the same sequence of characters as this object.
      * @param value  The 0-terminated character array to compare
      */
-    bool equals(const char *value) const;
+    bool equals(const char *value) const  { return strcmp(stdString.data(), value) == 0; }
 
     /**
      * Compares this string to the specified object. The result is true if the given argument is not null and representing the same sequence of characters as this object.
      * @param string*  Pointer to the string object to compare
      */
-    bool equals(CT::string *string) const;
+    bool equals(CT::string *string) const { return stdString == string->stdString; }
 
     /**
      * Compares this string to the specified object. The result is true if the given argument is not null and representing the same sequence of characters as this object.
      * @param string Copy of the string object to compare
      */
-    bool equals(CT::string string) const;
+    bool equals(CT::string string) const { return stdString==string.stdString; }
 
-    bool equalsIgnoreCase(const char *_value, size_t _length);
+//    bool equalsIgnoreCase(const char *_value, size_t _length);
 
-    bool equalsIgnoreCase(const char *_value);
+//    bool equalsIgnoreCase(const char *_value);
 
-    bool equalsIgnoreCase(CT::string *_string);
+//    bool equalsIgnoreCase(CT::string *_string);
 
     bool equalsIgnoreCase(CT::string string);
 
@@ -303,11 +279,6 @@ namespace CT {
      * The startsWith() method determines whether a string begins with the characters of another string, returning true or false as appropriate.
      */
     int startsWith(const char *search);
-
-    /**
-     * String to unicode
-     */
-    void toUnicodeSelf();
 
     /**
      * String to uppercase

@@ -41,84 +41,49 @@ namespace CT {
     return stringList;
   }
 
-  string::string() {
-#ifdef CTYPES_DEBUG
-    printf("string();\n");
-#endif
-    init();
-  }
 
-  string::string(const char *_value) {
-#ifdef CTYPES_DEBUG
-    printf("string(const char * _value == %s)\n", _value);
-#endif
-    init();
-    if (_value != NULL) copy(_value, strlen(_value));
-  }
+//  string::string(CT::string *_string) {
+//    init();
+//    copy(_string);
+//  }
 
-  string::string(string const &f) {
-#ifdef CTYPES_DEBUG
-    printf("string(string const &f);\n");
-#endif
+//  string::string(const char *_value, size_t _length) {
+//    init();
+//    copy(_value, _length);
+//  }
 
-    init();
-    copy(f.useStack ? f.stackValue : f.heapValue, f.privatelength);
-  }
 
-  string::string(CT::string *_string) {
-    init();
-    copy(_string);
-  }
-
-  string::string(const char *_value, size_t _length) {
-    init();
-    copy(_value, _length);
-  }
-
-  string &string::operator=(string const &f) {
-#ifdef CTYPES_DEBUG
-    printf("string::operator= (string const& f);\n");
-#endif
-    if (this == &f) return *this;
-    _Free();
-    init();
-    copy(f.useStack ? f.stackValue : f.heapValue, f.privatelength);
-    return *this;
-  }
-
-  string &string::operator=(const char *const &f) {
-#ifdef CTYPES_DEBUG
-    printf("string::operator= (const char*const &f)\n");
-#endif
-    _Free();
-    init();
-    this->copy(f);
-    return *this;
-  }
+//  string &string::operator=(const char *const &f) {
+//#ifdef CTYPES_DEBUG
+//    printf("string::operator= (const char*const &f)\n");
+//#endif
+//    _Free();
+//    init();
+//    this->copy(f);
+//    return *this;
+//  }
 
   string &string::operator+=(string const &f) {
-    if (this == &f) return *this;
-    concat(f.useStack ? f.stackValue : f.heapValue, f.privatelength);
-    return *this;
+    stdString+=f;
   }
-  string &string::operator+=(const char *const &f) {
-    this->concat(f);
-    return *this;
-  }
+
+//  string &string::operator+=(const char *const &f) {
+//    stdString+=f;
+//    this->concat(f);
+//    return *this;
+//  }
 
   string string::operator+(string const &f) {
-    CT::string n(*this);
-    n.concat(f);
-    return n;
+    stdString+=f;
   }
 
-  string string::operator+(const char *const &f) {
-    CT::string n(*this);
-    n.concat(f);
-    return n;
-  }
+//  string string::operator+(const char *const &f) {
+//    CT::string n(*this);
+//    n.concat(f);
+//    return n;
+//  }
 
-  string::operator const char *() const { return this->c_str(); }
+  string::operator const char *() const { return stdString.c_str(); }
 
   string *string::splitToArray(const char *_value) {
     string str(useStack ? stackValue : heapValue, privatelength);
@@ -178,16 +143,10 @@ namespace CT {
     return prev;
   }
 
-  char string::charAt(size_t n) {
-    if (n > privatelength) return 0;
-    return (useStack ? stackValue : heapValue)[n];
-  }
-
   int string::indexOf(const char *search, size_t _length) {
     if (_length == 0) return -1;
-    if (privatelength == 0) return -1;
-    if (allocated == 0) return -1;
-    const char *value = useStack ? stackValue : heapValue;
+    if (stdString.length()==0) return -1;
+    const char *value = stdString.c_str();
     const char *pi = strstr(value, search);
     if (pi == NULL) return -1;
     int c = pi - value;
@@ -197,63 +156,13 @@ namespace CT {
 
   int string::lastIndexOf(const char *search, size_t _length) {
     if (_length == 0) return -1;
-    if (privatelength == 0) return -1;
-    if (allocated == 0) return -1;
-    const char *value = useStack ? stackValue : heapValue;
+    if (stdString.length()==0) return -1;
+    const char *value = stdString.c_str();
     const char *pi = strrstr(value, search);
     if (pi == NULL) return -1;
     int c = pi - value;
     if (c < 0) c = -1;
     return c;
-  }
-
-  void string::copy(const char *_value, size_t _length) {
-    if (_value == NULL) {
-      _Free();
-      return;
-    }
-    _Allocate(_length);
-    privatelength = _length;
-    char *value = useStack ? stackValue : heapValue;
-    strncpy(value, _value, privatelength);
-    value[privatelength] = '\0';
-  }
-
-  void string::concat(const char *_value, size_t len) {
-    if (_value == NULL) return;
-
-    if (len == 0) return;
-    /* Destination is still clean, this is just a copy. */
-    if (allocated == 0) {
-      copy(_value, len);
-      return;
-    }
-
-    /* Check if the source fits in the destination buffer. */
-    size_t total_len = privatelength + len;
-    if (total_len < bufferlength) {
-      char *value = useStack ? stackValue : heapValue;
-      memcpy(value + privatelength, _value, len);
-      value[total_len] = '\0';
-      privatelength = total_len;
-      return;
-    }
-
-    /* Source buffer is too small, reallocate and copy to bigger buffer. */
-    bufferlength = total_len + privatelength * 2; /* 8192*4-1; */
-
-    char *temp = new char[bufferlength + 1];
-
-    strncpy(temp, useStack ? stackValue : heapValue, privatelength);
-    temp[privatelength] = '\0';
-    strncpy(temp + privatelength, _value, len);
-    temp[total_len] = '\0';
-    privatelength = total_len;
-    if (useStack == false) {
-      delete[] heapValue;
-    }
-    heapValue = temp;
-    useStack = false;
   }
 
   char string::_tohex(char in) {
@@ -272,20 +181,16 @@ namespace CT {
   }
 
   void string::toLowerCaseSelf() {
-    char szChar;
-    char *value = useStack ? stackValue : heapValue;
-    for (unsigned int j = 0; j < privatelength; j++) {
-      szChar = value[j];
-      if (szChar >= 'A' && szChar <= 'Z') value[j] += 32;
+    for (auto j = 0; j < stdString.length(); j++) {
+      auto szChar = stdString[j];
+      if (szChar >= 'A' && szChar <= 'Z') stdString[j] += 32;
     }
   }
 
   void string::toUpperCaseSelf() {
-    char szChar;
-    char *value = useStack ? stackValue : heapValue;
-    for (unsigned int j = 0; j < privatelength; j++) {
-      szChar = value[j];
-      if (szChar >= 'a' && szChar <= 'z') value[j] -= 32;
+    for (auto j = 0; j < stdString.length(); j++) {
+      auto szChar = stdString[j];
+      if (szChar >= 'a' && szChar <= 'z') stdString[j] -= 32;
     }
   }
   void string::encodeURLSelf() {
@@ -326,28 +231,6 @@ namespace CT {
     copy(pszDecode, p);
 
     delete[] pszDecode;
-  }
-  void string::toUnicodeSelf() {
-    char *pszUnicode = new char[privatelength * 6 + 1];
-
-    int p = 0;
-    unsigned char szChar;
-    char *value = useStack ? stackValue : heapValue;
-    for (unsigned int j = 0; j < privatelength; j++) {
-      szChar = value[j];
-      if (szChar > 127) {
-        pszUnicode[p++] = '\\';
-        pszUnicode[p++] = 'u';
-        pszUnicode[p++] = '0';
-        pszUnicode[p++] = '0';
-        pszUnicode[p++] = _tohex(szChar / 16);
-        pszUnicode[p++] = _tohex(szChar % 16);
-      } else {
-        pszUnicode[p++] = szChar;
-      }
-    }
-    copy(pszUnicode, p);
-    delete[] pszUnicode;
   }
   void string::print(const char *a, ...) {
     va_list ap;
@@ -487,7 +370,7 @@ namespace CT {
     if (regcomp(&re, pattern, REG_EXTENDED | REG_NOSUB) != 0) {
       return false;
     }
-    status = regexec(&re, useStack ? stackValue : heapValue, (size_t)0, NULL, 0);
+    status = regexec(&re, stdString.c_str(), (size_t)0, NULL, 0);
     regfree(&re);
     if (status != 0) {
       return false;
@@ -495,99 +378,48 @@ namespace CT {
     return true;
   }
 
-  void string::setChar(size_t location, const char character) {
-    if (location < privatelength) {
-      (useStack ? stackValue : heapValue)[location] = character;
-      if (character == '\0') privatelength = location;
-    }
-  }
+//  bool string::equalsIgnoreCase(const char *_value, size_t _length) {
+//    if (_value == NULL) return false;
+//    if (allocated == 0) return false;
+//    if (privatelength != _length) return false;
+//    if (privatelength == 0) return true;
+//    CT::string selfLowerCase = useStack ? stackValue : heapValue;
+//    CT::string testValueLowerCase = _value;
+//    selfLowerCase.toLowerCaseSelf();
+//    testValueLowerCase.toLowerCaseSelf();
+//    if (strncmp(selfLowerCase.c_str(), testValueLowerCase.c_str(), testValueLowerCase.length()) == 0) return true;
+//    return false;
+//  }
 
-  bool string::equals(const char *_value, size_t _length) const {
-    if (_value == NULL) return false;
-    if (allocated == 0) return false;
-    if (privatelength != _length) return false;
-    if (privatelength == 0) return true;
-    if (strncmp(useStack ? stackValue : heapValue, _value, _length) == 0) return true;
-    return false;
-  }
+//  bool string::equalsIgnoreCase(const char *_value) {
+//    if (_value == NULL) return false;
+//    return equalsIgnoreCase(_value, strlen(_value));
+//  }
 
-  bool string::equals(const char *_value) const {
-    if (_value == NULL) return false;
-    return equals(_value, strlen(_value));
-  }
-
-  bool string::equals(CT::string *_string) const {
-    if (_string == NULL) return false;
-    return equals(_string->useStack ? _string->stackValue : _string->heapValue, _string->privatelength);
-  }
-
-  bool string::equals(CT::string _string) const {
-    if (allocated == 0) return false;
-    return equals(_string.useStack ? _string.stackValue : _string.heapValue, _string.privatelength);
-  }
-
-  bool string::equalsIgnoreCase(const char *_value, size_t _length) {
-    if (_value == NULL) return false;
-    if (allocated == 0) return false;
-    if (privatelength != _length) return false;
-    if (privatelength == 0) return true;
-    CT::string selfLowerCase = useStack ? stackValue : heapValue;
-    CT::string testValueLowerCase = _value;
-    selfLowerCase.toLowerCaseSelf();
-    testValueLowerCase.toLowerCaseSelf();
-    if (strncmp(selfLowerCase.c_str(), testValueLowerCase.c_str(), testValueLowerCase.length()) == 0) return true;
-    return false;
-  }
-
-  bool string::equalsIgnoreCase(const char *_value) {
-    if (_value == NULL) return false;
-    return equalsIgnoreCase(_value, strlen(_value));
-  }
-
-  bool string::equalsIgnoreCase(CT::string *_string) {
-    if (_string == NULL) return false;
-    return equalsIgnoreCase(_string->useStack ? _string->stackValue : _string->heapValue, _string->privatelength);
-  }
+//  bool string::equalsIgnoreCase(CT::string *_string) {
+//    if (_string == NULL) return false;
+//    return equalsIgnoreCase(_string->useStack ? _string->stackValue : _string->heapValue, _string->privatelength);
+//  }
 
   bool string::equalsIgnoreCase(CT::string _string) {
-    if (allocated == 0) return false;
-    return equalsIgnoreCase(_string.useStack ? _string.stackValue : _string.heapValue, _string.privatelength);
+    if (stdString.length() != _string.length()) return false;
+
+    CT::string selfLowerCase = stdString;
+    CT::string testValueLowerCase = _string;
+    selfLowerCase.toLowerCaseSelf();
+    testValueLowerCase.toLowerCaseSelf();
+    return selfLowerCase.equals(testValueLowerCase);
   }
 
-  void string::copy(const CT::string *_string) {
-    if (_string == NULL) {
-      _Free();
-      return;
-    }
-    copy(_string->useStack ? _string->stackValue : _string->heapValue, _string->privatelength);
-  };
-
-  void string::copy(const CT::string _string) {
-    if (_string.privatelength == 0) {
-      _Free();
-      return;
-    }
-    copy(_string.useStack ? _string.stackValue : _string.heapValue, _string.privatelength);
-  };
-
-  void string::copy(const char *_value) {
-    if (_value == NULL) {
-      _Free();
-      return;
-    }
-    copy(_value, strlen(_value));
-  };
 
   CT::string string::toLowerCase() {
-    CT::string t;
-    t.copy(c_str(), privatelength);
+    CT::string t = stdString;
     t.toLowerCaseSelf();
     return t;
   }
 
   CT::string string::toUpperCase() {
-    CT::string t;
-    t.copy(c_str(), privatelength);
+    CT::string t = stdString;
     t.toUpperCaseSelf();
     return t;
   }
@@ -613,23 +445,14 @@ namespace CT {
     }
   }
 
-  void string::concat(const CT::string *_string) { concat(_string->useStack ? _string->stackValue : _string->heapValue, _string->privatelength); }
 
-  void string::concat(const CT::string _string) { concat(_string.useStack ? _string.stackValue : _string.heapValue, _string.privatelength); }
+  int string::indexOf(const char *search) { return indexOf(search, strlen(search)); }
 
-  void string::concat(const char *_value) {
-    if (_value == NULL) return;
-    const size_t length = strlen(_value);
-    concat(_value, length);
-  };
+  int string::lastIndexOf(const char *search) { return lastIndexOf(search, strlen(search)); }
 
-  int string::indexOf(const char *search) { return indexOf(search, strlen(search)); };
+  int string::endsWith(const char *search) { return (lastIndexOf(search) == int(stdString.length() - strlen(search))); }
 
-  int string::lastIndexOf(const char *search) { return lastIndexOf(search, strlen(search)); };
-
-  int string::endsWith(const char *search) { return (lastIndexOf(search) == int(privatelength - strlen(search))); };
-
-  int string::startsWith(const char *search) { return (indexOf(search) == 0); };
+  int string::startsWith(const char *search) { return (indexOf(search) == 0); }
 
   string string::trim() {
     CT::string r;

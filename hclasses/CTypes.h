@@ -23,7 +23,7 @@
  *
  ******************************************************************************/
 #define CTYPES_USESTACK true
-#define CTSTRINGSTACKLENGTH 126
+//#define CTSTRINGSTACKLENGTH 126
 //#define CTSTRINGSTACKLENGTH 0
 
 #ifndef CTypes_H
