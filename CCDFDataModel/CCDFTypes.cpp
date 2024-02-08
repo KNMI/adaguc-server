@@ -25,12 +25,6 @@
 
 #include "CCDFTypes.h"
 
-//#include "CDebugger.h"
-//#ifdef MEMLEAKCHECK
-// extern Tracer NewTrace;
-//#define MEMLEAKCHECK
-//#endif
-
 // DEF_ERRORMAIN()
 
 int CDF::getTypeSize(CDFType type) {
@@ -46,9 +40,6 @@ int CDF::getTypeSize(CDFType type) {
 }
 
 int CDF::freeData(void **p) {
-#ifdef CCDFTYPES_MEMLEAKCHECK
-  if (Tracer::Ready) NewTrace.Remove(*p);
-#endif
   free(*p);
   *p = NULL;
   return 0;
@@ -73,10 +64,6 @@ int CDF::allocateData(CDFType type, void **p, size_t length) {
     // CDBError("In CDF::allocateData: Unable to allocate %d elements",length);
     return 1;
   }
-
-#ifdef CCDFTYPES_MEMLEAKCHECK
-  if (Tracer::Ready) NewTrace.Add(*p, __FILENAME__, __LINE__);
-#endif
 
   if (type == CDF_STRING) {
     for (size_t j = 0; j < length; j++) {

@@ -95,6 +95,7 @@ private:
 public:
   static void free();
   static CDirReader *getDirReader(const char *directory, const char *ext_filter);
+  static void removeFileFromCachedList(std::string fileToRemove);
 };
 
 #endif

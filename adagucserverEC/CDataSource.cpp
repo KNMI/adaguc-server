@@ -357,18 +357,15 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Conf
   srvParams = _srvParams;
   cfg = _cfg;
   cfgLayer = _cfgLayer;
-  //    numVariables = cfgLayer->Variable.size();
-  // CDBDebug("Configure layer ");
   datasourceIndex = layerIndex;
+
+  // Make DataObjects for each Variable defined in the Layer.
   for (size_t j = 0; j < cfgLayer->Variable.size(); j++) {
     DataObject *newDataObject = new DataObject();
     newDataObject->variableName.copy(cfgLayer->Variable[j]->value.c_str());
-    if (!cfgLayer->Variable[j]->attr.orgname.empty()) {
-      newDataObject->variableName = cfgLayer->Variable[j]->value.c_str();
-    }
-
     getDataObjectsVector()->push_back(newDataObject);
   }
+
   // Set the layername
   CT::string layerUniqueName;
   if (_layerName == NULL) {
@@ -382,6 +379,8 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Conf
   else
     layerName = "";
   layerName.concat(_layerName);
+
+  layerTitle = cfgLayer->Title.size() > 0 && !cfgLayer->Title[0]->value.empty() ? cfgLayer->Title[0]->value.c_str() : layerName.c_str();
 
 #ifdef CDATASOURCE_DEBUG
   CDBDebug("LayerName=\"%s\"", layerName.c_str());
@@ -466,6 +465,7 @@ CT::string CDataSource::getDimensionValue(int i) { return timeSteps[currentAnima
 int CDataSource::getNumTimeSteps() { return (int)timeSteps.size(); }
 
 const char *CDataSource::getLayerName() { return layerName.c_str(); }
+const char *CDataSource::getLayerTitle() { return layerTitle.c_str(); }
 
 CCDFDims *CDataSource::getCDFDims() {
   if (currentAnimationStep >= int(timeSteps.size())) {
