@@ -104,7 +104,7 @@ def call_adaguc(url):
     # Run adaguc-server
     # pylint: disable=unused-variable
     status, data, headers = adaguc_instance.runADAGUCServer(
-        url, env=adagucenv, showLogOnError=True)
+        url, env=adagucenv, showLogOnError=False)
 
     # Obtain logfile
     logfile = adaguc_instance.getLogFile()
@@ -120,10 +120,11 @@ def call_adaguc(url):
 
 
 @cached(cache=cache)
-def get_capabilities(coll):
+def get_capabilities(collname):
     """
     Get the collectioninfo from the WMS GetCapabilities
     """
+    coll = generate_collections().get(collname)
     if "dataset" in coll:
         logger.info("callADAGUC by dataset")
         dataset = coll["dataset"]
@@ -131,9 +132,9 @@ def get_capabilities(coll):
             f"dataset={dataset}&service=wms&version=1.3.0&request=getcapabilities"
         )
         status, response, headers = call_adaguc(url=urlrequest.encode("UTF-8"))
-        for hdr in headers.keys():
-            if hdr.lower()=="cache-control":
-                logger.info("%s: %s", hdr, headers[hdr])
+        for hdr in headers:
+            if hdr.lower().startswith("cache-control"):
+                logger.info("%s", hdr)
         if status == 0:
             xml = response.getvalue()
             wms = WebMapService(coll["service"], xml=xml, version="1.3.0")
@@ -174,11 +175,11 @@ def get_dimensions(layer, skip_dims=None):
 
 
 @cached(cache=cache)
-def get_parameters(coll):
+def get_parameters(collname):
     """
     get_parameters
     """
-    contents = get_capabilities(coll)
+    contents = get_capabilities(collname)
     layers = []
     for layer in contents:
         dims = get_dimensions(contents[layer], ["time"])

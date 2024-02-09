@@ -75,7 +75,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 @ogcApiApp.get("",
                response_model=LandingPage,
                response_model_exclude_none=True)
-async def handle_ogc_api_root(req: Request, f: str = "json"):
+async def handle_ogc_api_root(req: Request, response: Response, f: str = "json"):
     links: List[Link] = []
     links.append(
         Link(
@@ -122,6 +122,9 @@ async def handle_ogc_api_root(req: Request, f: str = "json"):
     landing_page = LandingPage(title="ogcapi",
                                description="ADAGUC OGCAPI-Features server",
                                links=links)
+
+    response.headers['cache-control']="max-age=18"
+
     if request_type(f) == "HTML":
         return templates.TemplateResponse("landingpage.html", {
             "request": req,
@@ -200,7 +203,7 @@ def request_type(wanted_format: str) -> str:
 @ogcApiApp.get("/collections",
                response_model=Collections,
                response_model_exclude_none=True)
-async def get_collections(req: Request, f: str = "json"):
+async def get_collections(req: Request, response: Response, f: str = "json"):
     collections: List[Collection] = []
     parsed_collections = generate_collections()
     for parsed_collection in parsed_collections.values():
@@ -227,6 +230,9 @@ async def get_collections(req: Request, f: str = "json"):
                 ))
 
     links = get_collections_links(req.url_for("get_collections"))
+
+    response.headers["cache-control"]="max-age=18"
+
     if request_type(f) == "HTML":
         collections_list = [c.dict() for c in collections]
         return templates.TemplateResponse("collections.html", {
