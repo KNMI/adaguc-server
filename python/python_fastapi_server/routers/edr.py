@@ -317,7 +317,7 @@ def get_collectioninfo_for_id(
 
     bbox = get_extent(edr_collectioninfo)
     if bbox is None:
-        return None
+        return None, None
     crs = 'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]'
     spatial = Spatial(bbox=bbox, crs=crs)
     (interval, time_values) = get_times_for_collection(
@@ -718,6 +718,7 @@ def get_extent(edr_collectioninfo: dict):
         if first_layer in contents:
             bbox = contents[first_layer]["boundingBoxWGS84"]
         else:
+            #Fallback to first layer in getcapabilities
             bbox = contents[next(iter(contents))]["boundingBoxWGS84"]
 
         return [[bbox[0], bbox[1]], [bbox[2], bbox[3]]]
