@@ -620,7 +620,8 @@ async def rest_get_edr_collections(request: Request, response: Response):
         coll, expires = get_collectioninfo_for_id(edr_coll)
         if coll:
             collections.append(coll)
-            min_expires=expires if min_expires is None else min(min_expires, expires)
+            if expires is not None:
+                min_expires=expires if min_expires is None else min(min_expires, expires)
         else:
             logger.warning("Unable to fetch WMS GetCapabilities for %s", edr_coll)
     collections_data = Collections(links=links, collections=collections)
@@ -755,7 +756,8 @@ async def rest_get_edr_inst_for_coll(collection_name: str, request: Request, res
         instance_link = Link(href=f"{instances_url}/{instance}", rel="collection")
         instance_links.append(instance_link)
         instance_info, expires = get_collectioninfo_for_id(collection_name, instance)
-        min_expires=expires if min_expires is None else min(min_expires, expires)
+        if expires is not None:
+            min_expires=expires if min_expires is None else min(min_expires, expires)
         instances.append(instance_info)
 
     instances_data = Instances(instances=instances, links=links)
