@@ -614,16 +614,18 @@ async def rest_get_edr_collections(request: Request, response: Response):
 
     links.append(self_link)
     collections: list[Collection] = []
+    min_expires=None
     edr_collections = get_edr_collections()
     for edr_coll in edr_collections:
         coll, expires = get_collectioninfo_for_id(edr_coll)
         if coll:
             collections.append(coll)
+            min_expires=expires if min_expires is None else min(min_expires, expires)
         else:
-            logger.warning("Unable to fetch WMS GetCapabilties for %s", edr_coll)
+            logger.warning("Unable to fetch WMS GetCapabilities for %s", edr_coll)
     collections_data = Collections(links=links, collections=collections)
-    if expires is not None:
-        response.headers["cache-control"] = generate_max_age(expires)
+    if min_expires is not None:
+        response.headers["cache-control"] = generate_max_age(min_expires)
     return collections_data
 
 
@@ -738,26 +740,27 @@ async def rest_get_edr_inst_for_coll(collection_name: str, request: Request, res
         get_base_url(request) + f"/edr/collections/{collection_name}/instances"
     )
 
-    instances: list(Instance) = []
+    instances: list[Instance] = []
     edr_collections = get_edr_collections()
 
     ref_times = get_ref_times_for_coll(
         edr_collections[collection_name],
         edr_collections[collection_name]["parameters"][0]["name"],
     )
-    links: list(Link) = []
+    links: list[Link] = []
     links.append(Link(href=instances_url, rel="collection"))
-    min_expires=(datetime.utcnow()+timedelta(days=1)).timestamp() # 24 hours
+    min_expires=None
     for instance in list(ref_times):
-        instance_links: list(Link) = []
+        instance_links: list[Link] = []
         instance_link = Link(href=f"{instances_url}/{instance}", rel="collection")
         instance_links.append(instance_link)
         instance_info, expires = get_collectioninfo_for_id(collection_name, instance)
-        min_expires=min(min_expires, expires)
+        min_expires=expires if min_expires is None else min(min_expires, expires)
         instances.append(instance_info)
 
     instances_data = Instances(instances=instances, links=links)
-    response.headers['cache-control'] = generate_max_age(min_expires)
+    if min_expires is not None:
+        response.headers['cache-control'] = generate_max_age(min_expires)
     return instances_data
 
 
@@ -986,7 +989,7 @@ def covjson_from_resp(dats, vertical_name):
                     else:
                         values.append(value)
 
-        parameters: dict(str, CovJsonParameter) = {}
+        parameters: dict[str, CovJsonParameter] = {}
         ranges = {}
 
         unit = CovJsonUnit(symbol=dat["units"])
