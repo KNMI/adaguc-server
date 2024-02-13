@@ -68,7 +68,7 @@ class CachingMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         #Check if request is in cache, if so return that
-        expire, headers, data = None, None, None #await get_cached_response(self.redis, request)
+        expire, headers, data = await get_cached_response(self.redis, request)
 
         if data:
             #Fix Age header
