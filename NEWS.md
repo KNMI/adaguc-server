@@ -1,3 +1,6 @@
+**Version 2.18.0 2024-02-14**
+- Support live update layer, displays a GetMap image with the current time per second for the last hour.
+
 **Version 2.17.0 2024-02-14**
 - Colors in GetMap images now matches exactly the colors configured in the legend and style in png32 mode
 - CSV reader is more flexible
