@@ -66,9 +66,9 @@ void CCairoPlotter::_cairoPlotterInit(int width, int height, float fontSize, con
   g = 0;
   b = 0;
   a = 255;
-  rr = r / 256.l;
-  rg = g / 256.;
-  rb = b / 256.;
+  rr = r * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
+  rg = g * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
+  rb = b * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
   ra = 1;
   fr = 0;
   fg = 0;
@@ -119,15 +119,15 @@ void CCairoPlotter::pixel_blend(int x, int y, unsigned char r, unsigned char g, 
       float origGreen = ARGBByteBuffer[p + 1];
       float origRed = ARGBByteBuffer[p + 2];
 
-      destBlue = destBlue / 255;
-      destGreen = destGreen / 255;
-      destRed = destRed / 255;
-      destAlpha = destAlpha / 255;
+      destBlue = destBlue * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
+      destGreen = destGreen * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
+      destRed = destRed * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
+      destAlpha = destAlpha * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
 
-      origBlue = origBlue / 255;
-      origGreen = origGreen / 255;
-      origRed = origRed / 255;
-      origAlpha = origAlpha / 255;
+      origBlue = origBlue * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
+      origGreen = origGreen * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
+      origRed = origRed * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
+      origAlpha = origAlpha * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
 
       float A1 = origAlpha * (1 - destAlpha);
       float A2 = (destAlpha + A1);
@@ -151,13 +151,13 @@ void CCairoPlotter::pixel_blend(int x, int y, unsigned char r, unsigned char g, 
       float origBlue = ARGBByteBuffer[p];
       float origGreen = ARGBByteBuffer[p + 1];
       float origRed = ARGBByteBuffer[p + 2];
-      destBlue = destBlue / 255;
-      destGreen = destGreen / 255;
-      destRed = destRed / 255;
-      destAlpha = destAlpha / 255;
-      origBlue = origBlue / 255;
-      origGreen = origGreen / 255;
-      origRed = origRed / 255;
+      destBlue = destBlue * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
+      destGreen = destGreen * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
+      destRed = destRed * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
+      destAlpha = destAlpha * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
+      origBlue = origBlue * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
+      origGreen = origGreen * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
+      origRed = origRed * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
       float A1 = 1 - destAlpha;
       float newBlue = (destBlue * destAlpha + origBlue * A1);
       float newGreen = (destGreen * destAlpha + origGreen * A1);
@@ -324,7 +324,7 @@ int CCairoPlotter::_drawFreeTypeText(int x, int y, int &w, int &h, float angle, 
   pen.y = (my_target_height - y) * 64;
   bool c3seen = false;
   /* Using the 8859-15 standard */
-  for (n = 0; n < num_chars; n++) {        /* set transformation */
+  for (n = 0; n < num_chars; n++) { /* set transformation */
 
     FT_Set_Transform(face, &matrix, &pen); /* load glyph image into the slot (erase previous one) */
 
@@ -453,24 +453,24 @@ void CCairoPlotter::initFont() {}
 
 void CCairoPlotter::setColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
   this->r = r;
-  rr = r / 256.;
+  rr = r * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
   this->g = g;
-  rg = g / 256.;
+  rg = g * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
   this->b = b;
-  rb = b / 256.;
+  rb = b * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
   this->a = (float)a;
-  ra = a / 256.;
+  ra = a * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
 }
 
 void CCairoPlotter::setFillColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
   fr = r;
-  rfr = r / 256.;
+  rfr = r * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
   fg = g;
-  rfg = g / 256.;
+  rfg = g * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
   fb = b;
-  rfb = b / 256.;
+  rfb = b * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
   fa = float(a);
-  rfa = a / 256.;
+  rfa = a * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL;
 }
 
 void CCairoPlotter::getPixel(int x, int y, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a) {
@@ -673,7 +673,7 @@ void CCairoPlotter::drawStrokedText(int x, int y, double angle, const char *text
   cairo_save(cr);
 
   cairo_font_face_t *ct = cairo_ft_font_face_create_for_ft_face(face, 0);
-  cairo_set_font_face (cr, ct);
+  cairo_set_font_face(cr, ct);
   cairo_set_font_size(cr, fontSize);
 
   // Save the current path, because we might be drawing something like contour lines, which should not be stroked.
@@ -688,20 +688,20 @@ void CCairoPlotter::drawStrokedText(int x, int y, double angle, const char *text
   if (strokeWidth > 0) {
     cairo_set_antialias(cr, CAIRO_ANTIALIAS_DEFAULT);
     cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
-    cairo_set_source_rgba(cr, bgcolor.r / 255., bgcolor.g / 255., bgcolor.b / 255., .2);
+    cairo_set_source_rgba(cr, bgcolor.r * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, bgcolor.g * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, bgcolor.b * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, .2);
     cairo_set_line_width(cr, 2.5 + strokeWidth);
     cairo_stroke_preserve(cr);
 
     cairo_set_antialias(cr, CAIRO_ANTIALIAS_DEFAULT);
     cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
-    cairo_set_source_rgba(cr, bgcolor.r / 255., bgcolor.g / 255., bgcolor.b / 255., 1);
+    cairo_set_source_rgba(cr, bgcolor.r * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, bgcolor.g * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, bgcolor.b * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, 1);
     cairo_set_line_width(cr, 1.5 + strokeWidth);
     cairo_stroke_preserve(cr);
   }
 
   cairo_set_antialias(cr, CAIRO_ANTIALIAS_BEST);
   cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
-  cairo_set_source_rgba(cr, fgcolor.r / 255., fgcolor.g / 255., fgcolor.b / 255., 1);
+  cairo_set_source_rgba(cr, fgcolor.r * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, fgcolor.g * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, fgcolor.b * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, 1);
   cairo_fill(cr);
 
   cairo_close_path(cr);
@@ -724,16 +724,16 @@ void CCairoPlotter::writeToPng32Stream(FILE *fp, unsigned char alpha) {
         size_t p = x * 4 + y * stride;
         if (ARGBByteBuffer[p + 3] != 255) {
           float a = ARGBByteBuffer[p + 3];
-          ARGBByteBuffer[p] = (unsigned char)((float(ARGBByteBuffer[p]) / 256.0) * float(a));
-          ARGBByteBuffer[p + 1] = (unsigned char)((float(ARGBByteBuffer[p + 1]) / 256.0) * float(a));
-          ARGBByteBuffer[p + 2] = (unsigned char)((float(ARGBByteBuffer[p + 2]) / 256.0) * float(a));
+          ARGBByteBuffer[p] = (unsigned char)((float(ARGBByteBuffer[p]) * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL) * float(a));
+          ARGBByteBuffer[p + 1] = (unsigned char)((float(ARGBByteBuffer[p + 1]) * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL) * float(a));
+          ARGBByteBuffer[p + 2] = (unsigned char)((float(ARGBByteBuffer[p + 2]) * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL) * float(a));
         }
       }
     }
   }
   cairo_set_operator(cr, CAIRO_OPERATOR_DEST_IN);
   if (alpha != 255) {
-    cairo_paint_with_alpha(cr, float(alpha) / 255.);
+    cairo_paint_with_alpha(cr, float(alpha) * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL);
   }
   cairo_surface_flush(surface);
   this->fp = fp;
@@ -1217,13 +1217,13 @@ void CCairoPlotter::drawBarb(int x, int y, double direction, double strength, CC
   if (drawOutline) {
     cairo_set_antialias(cr, CAIRO_ANTIALIAS_DEFAULT);
     cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
-    cairo_set_source_rgba(cr, outlineColor.r / 255., outlineColor.g / 255., outlineColor.b / 255., .2);
+    cairo_set_source_rgba(cr, outlineColor.r * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, outlineColor.g * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, outlineColor.b * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, .2);
     cairo_set_line_width(cr, 5.5);
     cairo_stroke_preserve(cr);
 
     cairo_set_antialias(cr, CAIRO_ANTIALIAS_DEFAULT);
     cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
-    cairo_set_source_rgba(cr, outlineColor.r / 255., outlineColor.g / 255., outlineColor.b / 255., 1);
+    cairo_set_source_rgba(cr, outlineColor.r * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, outlineColor.g * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, outlineColor.b * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, 1);
     cairo_set_line_width(cr, 4.5);
     cairo_stroke_preserve(cr);
   }
@@ -1231,14 +1231,14 @@ void CCairoPlotter::drawBarb(int x, int y, double direction, double strength, CC
   // Stroke thin version
   cairo_set_antialias(cr, CAIRO_ANTIALIAS_DEFAULT);
   cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
-  cairo_set_source_rgba(cr, barbColor.r / 255., barbColor.g / 255., barbColor.b / 255., 1);
+  cairo_set_source_rgba(cr, barbColor.r * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, barbColor.g * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, barbColor.b * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, 1);
   cairo_set_line_width(cr, lineWidth);
   cairo_stroke(cr);
 
   if (strengthInKnotsRoundedToFive > 2) {
     drawBarbTriangle(cr, x, y, nPennants, direction, shaftLength, barbLengthWithFlip, 10);
     cairo_close_path(cr);
-    cairo_set_source_rgba(cr, barbColor.r / 255., barbColor.g / 255., barbColor.b / 255., 1);
+    cairo_set_source_rgba(cr, barbColor.r * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, barbColor.g * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, barbColor.b * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, 1);
     cairo_fill_preserve(cr);
   }
 

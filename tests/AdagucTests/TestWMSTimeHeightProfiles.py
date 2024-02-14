@@ -1,6 +1,7 @@
 """
 Test TimeHeight profiles for displaying CHM lidar data
 """
+
 import os
 import os.path
 import unittest
@@ -119,10 +120,13 @@ class TestWMSTimeHeightProfiles(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data.getvalue(),
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-            self.expectedoutputsspath + filename,
+        self.assertTrue(
+            AdagucTestTools().compareImage(
+                self.expectedoutputsspath + filename,
+                self.testresultspath + filename,
+                0,
+                0,
+            )
         )
 
     def test_wmsgetfeatureinfo_json_timeheightprofiles_as_dataset(self):
@@ -166,6 +170,7 @@ class TestWMSTimeHeightProfiles(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
+
         self.assertEqual(
             data.getvalue(),
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
