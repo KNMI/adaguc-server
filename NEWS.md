@@ -1,5 +1,35 @@
+**Version 2.18.0 2024-02-14**
+- Support live update layer, displays a GetMap image with the current time per second for the last hour.
+
+**Version 2.17.0 2024-02-14**
+- Colors in GetMap images now matches exactly the colors configured in the legend and style in png32 mode
+- CSV reader is more flexible
+- Sub configuration files (via include) can now substitute variables as well
+
+**Version 2.15.1 2024-01-22**
+- Support time/height profile data from https://dataplatform.knmi.nl/dataset/ceilonet-chm15k-backsct-la1-t12s-v1-0
+
+**Version 2.15.0 2024-01-29**
+- PostgreSQL queries have been optimized
+
+**Version 2.14.3 2024-01-19**
+- Opendap services are accessible again in the Layer configuration: https://github.com/KNMI/adaguc-server/issues/315
+
+**Version 2.14.2 2024-01-15**
+- Fix issue where the wrong dimension was forced to a value
+- Add Cache-Control header to WCS requests (DescribeCoverage and GetCoverage)
+- Fix Cache-control when dimensions are forced to a value
+- Make AAIGRID comparison looser (ignore whitespace)
+- Add unit test for Cache-Control headers for WCS AAIGRID format
+
+**Version 2.14.1 2023-12-08**
+- Set keep-alive (to support running behind proxy/load balancer)
+
+**Version 2.14.0 2023-11-23**
+- EDR support (position endpoint only), see [EDRConfiguration](doc/configuration/EDRConfiguration/EDR.md)
+
 **Version 2.13.9 2023-11-01**
-- Cache-Control header can be configured via the Settings item 
+- Cache-Control header can be configured via the Settings item
 
 **Version 2.13.8 2023-11-01**
 - Fixed issue #311, dimension units are now propagated from the Layer configuration to the GetCapabilities

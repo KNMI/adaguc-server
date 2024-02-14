@@ -18,24 +18,7 @@ const char *CDPPSolarTerminator::className = "CDPPSolarTerminator";
 
 const char *CDPPSolarTerminator::getId() { return "solarterminator"; }
 
-#define SIZE 255
-void CDPPSolarTerminator::print_trace() {
-  void *buffer[SIZE];
-  char cmd[256];
-  int nptrs;
-
-  nptrs = backtrace(buffer, SIZE);
-  backtrace_symbols_fd(buffer, nptrs, STDOUT_FILENO); // prints out raw stack trace
-
-  for (int j = 0; j < nptrs; j++) {
-    sprintf(cmd, "addr2line -e myprogram -f -C -i %p", buffer[j]); // replace 'myprogram' with your binary name
-    system(cmd);
-  }
-
-  return;
-}
-
-int CDPPSolarTerminator::terminator(double geox, double geoy, double epochtime) {}
+int CDPPSolarTerminator::terminator(double geox, double geoy, double epochtime) { return 0; }
 
 int CDPPSolarTerminator::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
   if (proc->attr.algorithm.equals("solarterminator")) {

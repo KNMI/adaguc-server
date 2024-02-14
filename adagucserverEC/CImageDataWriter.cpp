@@ -30,11 +30,11 @@
 #include <algorithm>
 #include "CCreateScaleBar.h"
 #include "CLegendRenderers/CCreateLegend.h"
-#include <iostream>
-#include <sstream>
-#include <iomanip>
-#include <ctime>
-#include <chrono>
+// #include <iostream>
+// #include <sstream>
+// #include <iomanip>
+// #include <ctime>
+// #include <chrono>
 
 #include "CImageDataWriter.h"
 #include "CMakeJSONTimeSeries.h"
@@ -46,10 +46,12 @@
 #ifndef rad2deg
 #define rad2deg (180. / M_PI) // conversion for rad to deg
 #endif
+#include <ctime>
 
 #ifndef deg2rad
 #define deg2rad (M_PI / 180.) // conversion for deg to rad
 #endif
+#include <iomanip>
 
 CT::string months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 // #define CIMAGEDATAWRITER_DEBUG
@@ -701,6 +703,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
     bool openAll = false;
 
     bool everythingIsInBBOX = true;
+
     CDataReader reader;
     reader.open(dataSources[d], CNETCDFREADER_MODE_OPEN_HEADER);
     if (dataSources[d]->getNumDataObjects() > 0) {
@@ -722,9 +725,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
           openAll = true;
         }
         if (dataSources[d]->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_PROFILE") != NULL) {
-          if (!srvParam->InfoFormat.equals("application/json")) {
-            isProfileData = true;
-          }
+          isProfileData = true;
         }
         if (dataSources[d]->getDataObject(0)->cdfObject->getAttributeNE("ADAGUC_GEOJSON") != NULL) {
           openAll = true;
@@ -752,17 +753,10 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
     CDBDebug("isProfileData:[%d] openAll:[%d] sameHeaderForAll:[%d] infoFormat:[%s]", isProfileData, openAll, sameHeaderForAll, srvParam->InfoFormat.c_str());
 
     if (isProfileData) {
-      if (srvParam->InfoFormat.equals("image/png")) {
-        int status = CMakeEProfile::MakeEProfile(&drawImage, &imageWarper, dataSources, d, dX, dY);
-        if (status != 0) {
-          CDBError("CMakeEProfile::MakeEProfile failed");
-          return status;
-        }
-        CDBDebug("CMakeEProfile::MakeEProfile done");
-      } else {
-        printf("%s%c%c\n", "Content-Type:text/plain", 13, 10);
-        printf("Not supported yet");
-        return 0;
+      int status = CMakeEProfile::MakeEProfile(&drawImage, &imageWarper, dataSources, d, dX, dY, &eProfileJson);
+      if (status != 0) {
+        CDBError("CMakeEProfile::MakeEProfile failed");
+        return status;
       }
     } else if (sameHeaderForAll == false && openAll == false && srvParam->InfoFormat.equals("application/json")) {
       int status = CMakeJSONTimeSeries::MakeJSONTimeSeries(&drawImage, &imageWarper, dataSources, d, dX, dY, &gfiStructure);
@@ -2428,8 +2422,13 @@ int CImageDataWriter::end() {
     if (isProfileData) {
       resultFormat = imagepng_eprofile;
 
-      printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
-      drawImage.printImagePng8(true);
+      if (srvParam->InfoFormat.equals("image/png")) {
+        printf("%s%s%c%c\n", "Content-Type:image/png", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+        drawImage.printImagePng8(true);
+      } else {
+        printf("%s%s%c%c\n", "Content-Type:application/json", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+        printf("%s", eProfileJson.c_str());
+      }
 
       return 0;
     }

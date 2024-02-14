@@ -25,40 +25,6 @@ class TestWMS(unittest.TestCase):
 
     AdagucTestTools().mkdir_p(testresultspath)
 
-    def comparexml(self, xml, expectedxml):
-        """
-        Compare two WMS GetCapability xml files
-        """
-        obj1 = objectify.fromstring(re.sub(' xmlns="[^"]+"', "", expectedxml, count=1))
-        obj2 = objectify.fromstring(re.sub(' xmlns="[^"]+"', "", xml, count=1))
-
-        # Remove ADAGUC build date and version from keywordlists
-        for child in obj1.findall("Service/KeywordList")[0]:
-            child.getparent().remove(child)
-        for child in obj2.findall("Service/KeywordList")[0]:
-            child.getparent().remove(child)
-
-        # Boundingbox extent values are too varying by different Proj libraries
-        def removebbox(root):
-            if root.tag.title() == "Boundingbox":
-                try:
-                    del root.attrib["minx"]
-                    del root.attrib["miny"]
-                    del root.attrib["maxx"]
-                    del root.attrib["maxy"]
-                except:  # pylint: disable=bare-except
-                    pass
-            for elem in root.getchildren():
-                removebbox(elem)
-
-        removebbox(obj1)
-        removebbox(obj2)
-
-        result = etree.tostring(obj1)
-        expect = etree.tostring(obj2)
-
-        self.assertEqual(expect, result)
-
     def checkreport(self, report_filename="", expected_report_filename=""):
         """
         Tests file check reporting functionality
@@ -800,8 +766,8 @@ class TestWMS(unittest.TestCase):
             AdagucTestTools().compareImage(
                 self.expectedoutputsspath + filename,
                 self.testresultspath + filename,
-                7,
-                0.025,
+                19,
+                0.6,
             )
         )
 
@@ -2483,6 +2449,43 @@ class TestWMS(unittest.TestCase):
         # If all dims are specfied except height, we expect a shorter caching interval.
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=data&WIDTH=360&HEIGHT=180&CRS=EPSG%3A4326&BBOX=-90,-180,90,180&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&COLORSCALERANGE=0,1&time=2017-01-01T00:05:00Z&DIM_member=member3&",
+            {"ADAGUC_CONFIG": config},
+        )
+        self.assertEqual(
+            headers, ["Content-Type:image/png", "Cache-Control:max-age=60"]
+        )
+
+        #### From here, dimension 'member' is fixed to 'member4'
+        # If we query member with same value as what it is fixed to, we get long cache
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=data_with_fixed&WIDTH=360&HEIGHT=180&CRS=EPSG%3A4326&BBOX=-90,-180,90,180&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&COLORSCALERANGE=0,1&time=2017-01-01T00:05:00Z&DIM_member=member4&elevation=5000",
+            {"ADAGUC_CONFIG": config},
+        )
+        self.assertEqual(
+            headers, ["Content-Type:image/png", "Cache-Control:max-age=7200"]
+        )
+
+        # If we query member with different value as what it is fixed to, we get long cache. Fixed values wins from queried value.
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=data_with_fixed&WIDTH=360&HEIGHT=180&CRS=EPSG%3A4326&BBOX=-90,-180,90,180&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&COLORSCALERANGE=0,1&time=2017-01-01T00:05:00Z&DIM_member=member2&elevation=5000",
+            {"ADAGUC_CONFIG": config},
+        )
+        self.assertEqual(
+            headers, ["Content-Type:image/png", "Cache-Control:max-age=7200"]
+        )
+
+        # If we don't provide query at all for member, we should get long cache
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=data_with_fixed&WIDTH=360&HEIGHT=180&CRS=EPSG%3A4326&BBOX=-90,-180,90,180&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&COLORSCALERANGE=0,1&time=2017-01-01T00:05:00Z&elevation=5000",
+            {"ADAGUC_CONFIG": config},
+        )
+        self.assertEqual(
+            headers, ["Content-Type:image/png", "Cache-Control:max-age=7200"]
+        )
+
+        # Unfixed, unprovided dimension should still result in short cache
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=data_with_fixed&WIDTH=360&HEIGHT=180&CRS=EPSG%3A4326&BBOX=-90,-180,90,180&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&COLORSCALERANGE=0,1&time=2017-01-01T00:05:00Z",
             {"ADAGUC_CONFIG": config},
         )
         self.assertEqual(

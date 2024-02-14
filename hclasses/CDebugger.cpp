@@ -23,16 +23,10 @@
  *
  ******************************************************************************/
 
-#include "CDebugger_H.h"
-#include "CDebugger_H2.h"
+#include "CDebugger.h"
 #include <iostream>
 #include <unistd.h>
-#include <stdlib.h>
-#include <new>
 
-bool Tracer::Ready = false;
-extern Tracer NewTrace;
-Tracer NewTrace;
 
 extern unsigned int logMessageNumber;
 unsigned int logMessageNumber = 0;
@@ -40,75 +34,6 @@ unsigned int logMessageNumber = 0;
 extern unsigned long logProcessIdentifier;
 unsigned long logProcessIdentifier = getpid();
 
-void Tracer::Add(void *p, char const *file, int line) {
-  if (_lockCount > 0) return;
-  Tracer::Lock lock(*this);
-  _map[p] = Entry(file, line);
-}
-void Tracer::Remove(void *p) {
-  if (_lockCount > 0) return;
-
-  Tracer::Lock lock(*this);
-
-  iterator it = _map.find(p);
-  if (it != _map.end()) {
-    _map.erase(it);
-  }
-}
-Tracer::~Tracer() {
-  Ready = false;
-  Dump();
-}
-
-int Tracer::Dump() {
-  int status = 0;
-  if (_map.size() != 0) {
-    for (iterator it = _map.begin(); it != _map.end(); ++it) {
-      char const *file = it->second.File();
-      int line = it->second.Line();
-      if (line != 0) {
-        status++;
-        _printErrorLine("*** Memory leak in %s, line %d", file, line);
-      }
-    }
-  }
-  // Use this instead of _map.clear() has that can give a race condition:
-  // _map is being destroyed, leading to calls to the overloaded new, which call Tracer::Remove(),
-  // which does _map.find().
-  // TODO: Fix this workaround
-  for (auto it = _map.cbegin(); it != _map.cend(); /* no increment */) {
-    _map.erase(it++);
-  }
-
-  return status;
-}
-
-Tracer::Tracer() : _lockCount(0) { Ready = true; }
-
-void *operator new(size_t size, char const *file, int line) {
-  void *p = malloc(size);
-  if (Tracer::Ready) NewTrace.Add(p, file, line);
-  return p;
-}
-void *operator new[](size_t size, char const *file, int line) {
-  void *p = malloc(size);
-  if (Tracer::Ready) NewTrace.Add(p, file, line);
-  return p;
-}
-
-void operator delete(void *p, char const *, int) {
-  if (Tracer::Ready) NewTrace.Remove(p);
-  free(p);
-}
-void *operator new(std::size_t mem) {
-  void *p = malloc(mem);
-  if (Tracer::Ready) NewTrace.Add(p, "?", 0);
-  return p;
-}
-void operator delete(void *p) noexcept {
-  if (Tracer::Ready) NewTrace.Remove(p);
-  free(p);
-}
 
 #include "CTypes.h"
 /*

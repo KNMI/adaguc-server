@@ -37,10 +37,10 @@
 #include "CSLD.h"
 #include "CHandleMetadata.h"
 #include "CCreateTiles.h"
+#include "LayerTypeLiveUpdate/LayerTypeLiveUpdate.h"
 const char *CRequest::className = "CRequest";
 int CRequest::CGI = 0;
 
-#define CREQUEST_DEBUG
 // Entry point for all runs
 int CRequest::runRequest() {
   int status = process_querystring();
@@ -85,7 +85,7 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
   CT::StackList<CT::string> configFileList = configFile.splitToStack(",");
 
   // Parse the main configuration file
-  int status = srvParam->parseConfigFile(configFileList[0], nullptr);
+  int status = srvParam->parseConfigFile(configFileList[0]);
 
   if (status == 0 && srvParam->configObj->Configuration.size() == 1) {
 
@@ -96,7 +96,7 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
     if (configFileList.size() > 1) {
       for (size_t j = 1; j < configFileList.size() - 1; j++) {
         // CDBDebug("Include '%s'",configFileList[j].c_str());
-        status = srvParam->parseConfigFile(configFileList[j], nullptr);
+        status = srvParam->parseConfigFile(configFileList[j]);
         if (status != 0) {
           CDBError("There is an error with include '%s'", configFileList[j].c_str());
           return 1;
@@ -119,8 +119,6 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
     }
 
     const char *pszQueryString = getenv("QUERY_STRING");
-    // Line below does not always work
-    // CDBError("ConfigureDataset failed for %s", configFileList[1].c_str());
     if (pszQueryString != NULL) {
       CT::string queryString(pszQueryString);
       queryString.decodeURLSelf();
@@ -170,6 +168,7 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
           }
         }
       }
+      delete[] parameters;
     }
 
     // Include additional config files given in the include statement of the config file
@@ -180,7 +179,7 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
 #ifdef CREQUEST_DEBUG
         CDBDebug("Include '%s'", srvParam->cfg->Include[index]->attr.location.c_str());
 #endif
-        status = srvParam->parseConfigFile(srvParam->cfg->Include[index]->attr.location, nullptr);
+        status = srvParam->parseConfigFile(srvParam->cfg->Include[index]->attr.location);
         if (status != 0) {
           CDBError("There is an error with include '%s'", srvParam->cfg->Include[index]->attr.location.c_str());
           return 1;
@@ -851,7 +850,6 @@ int CRequest::setDimValuesForDataSource(CDataSource *dataSource, CServerParams *
 };
 
 int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams *srvParam) {
-  bool allDimensionOptionsFound = true;
 
 #ifdef CREQUEST_DEBUG
   StopWatch_Stop("### [fillDimValuesForDataSource]");
@@ -1054,8 +1052,6 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
         if (netCDFDimName.equals("none")) {
           continue;
         }
-        allDimensionOptionsFound = false;
-        CDBDebug("NOT ADDED: %s", dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
         /* A dimension where the default value is set to filetimedate should not be queried from the db */
         if (dataSource->cfgLayer->Dimension[i]->attr.defaultV.equals("filetimedate")) {
           continue;
@@ -1159,12 +1155,13 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
     for (size_t i = 0; i < dataSource->cfgLayer->Dimension.size(); i++) {
       if (!dataSource->cfgLayer->Dimension[i]->attr.fixvalue.empty()) {
         CT::string dimName(dataSource->cfgLayer->Dimension[i]->value.c_str());
-        CT::string forceValue = dataSource->cfgLayer->Dimension[i]->attr.fixvalue;
+        CT::string fixedValue = dataSource->cfgLayer->Dimension[i]->attr.fixvalue;
         dimName.toLowerCaseSelf();
-        for (size_t l = 0; l < dataSource->requiredDims.size(); l++) {
-          if (dataSource->requiredDims[l]->name.equals(&dimName)) {
-            CDBDebug("Forcing dimension %s from %s to %s", dimName.c_str(), dataSource->requiredDims[i]->value.c_str(), forceValue.c_str());
-            dataSource->requiredDims[i]->value = forceValue;
+        for (auto &requiredDim : dataSource->requiredDims) {
+          if (requiredDim->name.equals(&dimName)) {
+            CDBDebug("Forcing dimension %s from %s to %s", dimName.c_str(), requiredDim->value.c_str(), fixedValue.c_str());
+            requiredDim->value = fixedValue;
+            requiredDim->hasFixedValue = true;
             break;
           }
         }
@@ -1193,25 +1190,21 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
   }
   CDBDebug("### [</fillDimValuesForDataSource>]");
 #endif
-  < < < < < < < HEAD CDBDebug("allDimensionOptionsFound %d", allDimensionOptionsFound);
-=======
-  bool allDimensionsAreAsRequestedInQueryString = true;
-  for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
-    auto *requiredDim = dataSource->requiredDims[j];
-    CDBDebug("%s: [%s] === [%s]", requiredDim->name.c_str(), requiredDim->value.c_str(), requiredDim->queryValue.c_str());
-    if (!requiredDim->value.equals(requiredDim->queryValue)) {
-      allDimensionsAreAsRequestedInQueryString = false;
+  bool allNonFixedDimensionsAreAsRequestedInQueryString = true;
+  for (auto requiredDim : dataSource->requiredDims) {
+    // CDBDebug("%s: [%s] === [%s], fixed:%d", requiredDim->name.c_str(), requiredDim->value.c_str(), requiredDim->queryValue.c_str(), requiredDim->hasFixedValue);
+    if (!requiredDim->hasFixedValue && !requiredDim->value.equals(requiredDim->queryValue)) {
+      allNonFixedDimensionsAreAsRequestedInQueryString = false;
     }
   }
 
-  CDBDebug("allDimensionsAreAsRequestedInQueryString %d", allDimensionsAreAsRequestedInQueryString);
-  if (allDimensionsAreAsRequestedInQueryString) {
+  // CDBDebug("allNonFixedDimensionsAreAsRequestedInQueryString %d", allNonFixedDimensionsAreAsRequestedInQueryString);
+  if (allNonFixedDimensionsAreAsRequestedInQueryString) {
     srvParam->setCacheControlOption(CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE);
   } else {
     srvParam->setCacheControlOption(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE);
   }
 
->>>>>>> master
   return 0;
 }
 
@@ -1559,7 +1552,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
 
 int CRequest::process_all_layers() {
   CT::string pathFileName;
-  CDBDebug("+ + + + + Process all layers");
+
   // No layers defined, so maybe the DescribeCoverage request did not define any coverages...
   if (srvParam->WMSLayers == NULL) {
     if (srvParam->requestType == REQUEST_WCS_DESCRIBECOVERAGE) {
@@ -1619,12 +1612,12 @@ int CRequest::process_all_layers() {
             for (additionalLayerNo = 0; additionalLayerNo < srvParam->cfg->Layer.size(); additionalLayerNo++) {
               CT::string additional;
               srvParam->makeUniqueLayerName(&additional, srvParam->cfg->Layer[additionalLayerNo]);
-              CDBDebug("comparing for additionallayer %s==%s", additionalLayerName.c_str(), additional.c_str());
+              // CDBDebug("comparing for additionallayer %s==%s", additionalLayerName.c_str(), additional.c_str());
               if (additionalLayerName.equals(additional)) {
-                CDBDebug("Found additionalLayer [%s]", additional.c_str());
+                // CDBDebug("Found additionalLayer [%s]", additional.c_str());
                 CDataSource *additionalDataSource = new CDataSource();
 
-                CDBDebug("setCFGLayer for additionallayer %s", additionalLayerName.c_str());
+                // CDBDebug("setCFGLayer for additionallayer %s", additionalLayerName.c_str());
                 if (additionalDataSource->setCFGLayer(srvParam, srvParam->configObj->Configuration[0], srvParam->cfg->Layer[additionalLayerNo], additionalLayerName.c_str(), j) != 0) {
                   delete additionalDataSource;
                   return 1;
@@ -1632,14 +1625,15 @@ int CRequest::process_all_layers() {
 
                 /* Configure the Dimensions object if not set. */
                 if (additionalDataSource->cfgLayer->Dimension.size() == 0) {
-                  CDBDebug("additionalDataSource: Dimensions not configured, trying to do now");
+                  // CDBDebug("additionalDataSource: Dimensions not configured, trying to do now");
                   if (CAutoConfigure::autoConfigureDimensions(additionalDataSource) != 0) {
                     CDBError("additionalDataSource: : setCFGLayer::Unable to configure dimensions automatically");
-                  } else {
-                    for (size_t j = 0; j < additionalDataSource->cfgLayer->Dimension.size(); j++) {
-                      CDBDebug("additionalDataSource: : Configured dim %d %s", j, additionalDataSource->cfgLayer->Dimension[j]->value.c_str());
-                    }
                   }
+                  // else {
+                  //   for (size_t j = 0; j < additionalDataSource->cfgLayer->Dimension.size(); j++) {
+                  //     CDBDebug("additionalDataSource: : Configured dim %d %s", j, additionalDataSource->cfgLayer->Dimension[j]->value.c_str());
+                  //   }
+                  // }
                 }
 
                 /* Set the dims based on server parameters */
@@ -1724,7 +1718,7 @@ int CRequest::process_all_layers() {
       if (pszADAGUCWriteToFile != NULL) {
         CReadFile::write(pszADAGUCWriteToFile, XMLDocument.c_str(), XMLDocument.length());
       } else {
-        printf("%s%c%c\n", "Content-Type:text/xml", 13, 10);
+        printf("%s%s%c%c\n", "Content-Type:text/xml", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
         printf("%s", XMLDocument.c_str());
       }
       return 0;
@@ -1794,56 +1788,7 @@ int CRequest::process_all_layers() {
       // dataSources[j]->getCDFDims()->addDimension("none","0",0);
     }
     if (dataSources[j]->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
-      // This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.
-
-      if (dataSources[j]->requiredDims.size() < 1) {
-        COGCDims *requiredDim = new COGCDims();
-        requiredDim->isATimeDimension = true;
-        requiredDim->name = "time";
-        requiredDim->netCDFDimName = "time";
-        requiredDim->uniqueValues.push_back("2020-01-01T00:00:00Z");
-        requiredDim->uniqueValues.push_back("2020-01-02T00:00:00Z");
-        requiredDim->value = "2020-01-02T00:00:00Z";
-        dataSources[j]->requiredDims.push_back(requiredDim);
-      }
-
-      if (dataSources[j]->cfgLayer->Dimension.size() != 0) {
-        try {
-          if (setDimValuesForDataSource(dataSources[j], srvParam) != 0) {
-            CDBError("Error in setDimValuesForDataSource: Unable to find data for layer %s", dataSources[j]->layerName.c_str());
-            return 1;
-          }
-        } catch (ServiceExceptionCode e) {
-          CDBError("Invalid dimensions values: No data available for layer %s", dataSources[j]->layerName.c_str());
-          setExceptionType(e);
-          return 1;
-        }
-        /*delete[] values_path;
-        delete[] values_dim;
-        delete[] date_time;*/
-      } else {
-        CDBDebug("Layer has no dims");
-        // This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.
-
-        std::vector<std::string> fileList;
-        try {
-          fileList = CDBFileScanner::searchFileNames(dataSources[j]->cfgLayer->FilePath[0]->value.c_str(), dataSources[j]->cfgLayer->FilePath[0]->attr.filter, NULL);
-        } catch (int linenr) {
-          CDBError("Could not find any filename");
-          return 1;
-        }
-
-        if (fileList.size() == 0) {
-          CDBError("fileList.size()==0");
-          return 1;
-        }
-
-        CDBDebug("Addstep");
-        dataSources[j]->addStep(fileList[0].c_str(), NULL);
-      }
-
-      // dataSources[j]->addStep("", NULL);
-      // dataSources[j]->getCDFDims()->addDimension("none", "0", 0);
+      layerTypeLiveUpdateConfigureDimensionsInDataSource(dataSources[j]);
     }
   }
 
@@ -1882,7 +1827,7 @@ int CRequest::process_all_layers() {
   /* Handle WMS Getmap database request */
   /**************************************/
   if (dataSources[j]->dLayerType == CConfigReaderLayerTypeDataBase || dataSources[j]->dLayerType == CConfigReaderLayerTypeStyled || dataSources[j]->dLayerType == CConfigReaderLayerTypeCascaded ||
-      dataSources[j]->dLayerType == CConfigReaderLayerTypeBaseLayer || (dataSources[j]->dLayerType == CConfigReaderLayerTypeLiveUpdate && srvParam->requestType != REQUEST_WMS_GETMAP)) {
+      dataSources[j]->dLayerType == CConfigReaderLayerTypeBaseLayer) {
     try {
       for (size_t d = 0; d < dataSources.size(); d++) {
         dataSources[d]->setTimeStep(0);
@@ -2024,9 +1969,7 @@ int CRequest::process_all_layers() {
             if (dataSources[j]->dLayerType == CConfigReaderLayerTypeDataBase || dataSources[j]->dLayerType == CConfigReaderLayerTypeCascaded ||
                 dataSources[j]->dLayerType == CConfigReaderLayerTypeBaseLayer) {
 
-              CDBDebug("Before addData()");
               status = imageDataWriter.addData(dataSources);
-              CDBDebug("After addData()");
               if (status != 0) {
                 /**
                  * Adding data failed:
@@ -2105,13 +2048,12 @@ int CRequest::process_all_layers() {
 
         if (!srvParam->showLegendInImage.equals("false") && !srvParam->showLegendInImage.empty()) {
           // Draw legend
-
           bool drawAllLegends = srvParam->showLegendInImage.equals("true");
 
           /* List of specified legends */
           CT::StackList<CT::string> legendLayerList = srvParam->showLegendInImage.splitToStack(",");
 
-          int numberOflegendsDrawn = 0;
+          //          int numberOfLegendsDrawn = 0;
           int legendOffsetX = 0;
           for (size_t d = 0; d < dataSources.size(); d++) {
             if (dataSources[d]->dLayerType != CConfigReaderLayerTypeCascaded) {
@@ -2119,7 +2061,8 @@ int CRequest::process_all_layers() {
 
               if (!drawAllLegends) {
                 for (size_t li = 0; li < legendLayerList.size(); li++) {
-                  if (dataSources[d]->layerName.equals(legendLayerList[li])) {
+                  CDBDebug("Comparing [%s] == [%s]", dataSources[d]->layerName.c_str(), legendLayerList[li].c_str());
+                  if (dataSources[d]->layerName.toLowerCase().equals(legendLayerList[li])) {
                     drawThisLegend = true;
                   }
                 }
@@ -2140,6 +2083,7 @@ int CRequest::process_all_layers() {
                 if (styleConfiguration != NULL && styleConfiguration->legendIndex != -1) {
                   legendImage.createGDPalette(srvParam->cfg->Legend[styleConfiguration->legendIndex]);
                 }
+
                 status = imageDataWriter.createLegend(dataSources[d], &legendImage);
                 if (status != 0) throw(__LINE__);
                 // legendImage.rectangle(0,0,10000,10000,240);
@@ -2148,7 +2092,7 @@ int CRequest::process_all_layers() {
                 // int posX=padding*scaling;//imageDataWriter.drawImage.Geo->dWidth-(scaleBarImage.Geo->dWidth+padding);
                 int posY = imageDataWriter.drawImage.Geo->dHeight - (legendImage.Geo->dHeight + padding * scaling);
                 imageDataWriter.drawImage.draw(posX, posY, 0, 0, &legendImage);
-                numberOflegendsDrawn++;
+                //                numberOfLegendsDrawn++;
                 legendOffsetX += legendImage.Geo->dWidth + padding;
               }
             }
@@ -2328,6 +2272,11 @@ int CRequest::process_all_layers() {
       return 1;
     }
   } else if (dataSources[j]->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
+    // // Render the current time in an image for testing purpose / frontend development
+    // CDrawImage image;
+    // layerTypeLiveUpdateRenderIntoDrawImage(&image, srvParam);
+    // printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
+    // image.printImagePng8(true);
     CDrawImage image;
     CDataReader reader;
     CImageDataWriter imageDataWriter;
@@ -2368,7 +2317,7 @@ int CRequest::process_all_layers() {
         printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
         image.printImagePng8(true); */
   } else {
-    CDBError("Unknown layer type 22222222");
+    CDBError("Unknown layer type");
   }
   //}
 

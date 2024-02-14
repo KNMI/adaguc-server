@@ -410,10 +410,6 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
     }
 
     for (size_t j = 0; j < fileList->size(); j++) {
-      if (!CDirReader::isFile((*fileList)[j].c_str())) {
-        CDBWarning("File [%s] does not exist anymore, skipping", (*fileList)[j].c_str());
-        continue;
-      }
 // Loop through all configured dimensions.
 #ifdef CDBFILESCANNER_DEBUG
       CDBDebug("Loop through all configured dimensions.");
@@ -445,6 +441,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
           break;
         }
       }
+      size_t numberOfFilesAddedToDbStore = 0;
       for (size_t d = 0; d < dataSource->cfgLayer->Dimension.size(); d++) {
         if (skipDim[d] == true) {
 #ifdef CDBFILESCANNER_DEBUG
@@ -453,7 +450,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
           continue;
         }
         {
-
+          numberOfFilesAddedToDbStore += 1;
           numberOfFilesAddedFromDB = 0;
           int fileExistsInDB = 0;
 
@@ -835,7 +832,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
         }
       }
       // End of dimloop, start inserting our collected records in one statement
-      if (j % 50 == 0) dbAdapter->addFilesToDataBase();
+      if (numberOfFilesAddedToDbStore % 50 == 0) dbAdapter->addFilesToDataBase();
     }
 
     // End of dimloop, start inserting our collected records in one statement

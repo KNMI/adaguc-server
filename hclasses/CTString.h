@@ -29,12 +29,14 @@
 #include "CTypes.h"
 #include "CTStringRef.h"
 
-#define CT_MAX_NUM_CHARACTERS_FOR_FLOAT 12
+#define CT_MAX_NUM_CHARACTERS_FOR_FLOAT 18
 #define CT_MAX_NUM_CHARACTERS_FOR_INT 12
 #define CT_MAX_NUM_CHARACTERS_FOR_NUMERIC 39
 namespace CT {
 
-  class string : public basetype {
+  class string {
+  public:
+    size_t count;
   private:
     char stackValue[CTSTRINGSTACKLENGTH + 1];
     int allocated;
@@ -341,6 +343,7 @@ namespace CT {
      * Encodes string using XML encoding
      */
     void encodeXMLSelf();
+
     static CT::string encodeXML(CT::string stringToEncode);
     CT::string encodeXML();
 
@@ -524,6 +527,11 @@ namespace CT {
      * Converts to hex24
      */
     CT::string toHex24();
+
+    /**
+     * Converts to hex8
+     */
+    static CT::string getHex(unsigned int number);
   };
 }; /* namespace CT */
 

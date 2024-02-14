@@ -51,6 +51,11 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
     return 1;
   }
 
+  if (dataSource->cfgLayer->FilePath.size() != 1 && dataSource->cfgLayer->FilePath[0] != nullptr) {
+    CDBDebug("(dataSource->cfgLayer->FilePath.size() != 1");
+    return 1;
+  }
+
   /**
    * Load dimension information about the layer from the autoconfigure_dimensions table
    * This table stores only layerid, netcdf dimname, adaguc dimname and units
@@ -61,9 +66,12 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
 
   CT::string layerTableId;
   try {
-
-    layerTableId = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)
-                       ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), NULL, dataSource);
+    auto dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
+    if (dbAdapter == nullptr) {
+      CDBError("Unable to get a getDBAdapter");
+      return 1;
+    }
+    layerTableId = dbAdapter->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), NULL, dataSource);
 
   } catch (int e) {
     CDBError("Unable to get layerTableId for autoconfigure_dimensions");
@@ -84,7 +92,6 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
   CT::string layerIdentifier = dataSource->getLayerName();
   CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getDimensionInfoForLayerTableAndLayerName(layerTableId.c_str(), layerIdentifier.c_str());
   if (store != NULL) {
-
     try {
 
       for (size_t j = 0; j < store->size(); j++) {
@@ -505,8 +512,6 @@ int CAutoConfigure::justLoadAFileHeader(CDataSource *dataSource) {
       if (dataSource->cfgLayer->Dimension.size() > 0) {
         CRequest::fillDimValuesForDataSource(dataSource, dataSource->srvParams);
       } else {
-        CDBDebug(dataSource->cfgLayer->Name[0]->value.c_str());
-        CDBDebug(dataSource->cfgLayer->FilePath[0]->value.c_str());
         CDBDebug("Required dims is still zero, add none now");
         COGCDims *ogcDim = new COGCDims();
         dataSource->requiredDims.push_back(ogcDim);

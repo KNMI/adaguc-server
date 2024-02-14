@@ -3,7 +3,7 @@ Layer (type,hidden)
 
 Back to [Configuration](./Configuration.md)
 
--   type - The type of layer, can be either database,grid or cascaded
+-   type - The type of layer, can be either database,grid, liveupdate or cascaded
 -   hidden - When set to true, the Layer is not advertised in the
     GetCapabilities document, but is accessible with GetMap requests.
 
@@ -51,3 +51,23 @@ compose nice maps.
   <LatLonBox minx="-180" miny="-90" maxx="180" maxy="90"/>
 </Layer>
 ```
+
+Liveupdate layer
+---------------
+
+This layer type displays a GetMap image with the current time per second for the last hour.
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <!--
+  See https://dev.knmi.nl/projects/adagucserver/wiki/Dataset, for details
+  This file can be included by using the adaguc.dataset.cgi?service=wms&DATASET=testdata& key value pair in the URL
+  -->
+  <Layer type="liveupdate">
+    <Name>liveupdate</Name>
+  </Layer>
+</Configuration>
+```
+
+<img src='2024-02-14-liveupdate-layer.png' />

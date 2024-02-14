@@ -29,6 +29,7 @@
 #include <string>
 #include "CXMLGen.h"
 #include "CDBFactory.h"
+#include "LayerTypeLiveUpdate/LayerTypeLiveUpdate.h"
 // #define CXMLGEN_DEBUG
 
 const char *CFile::className = "CFile";
@@ -761,6 +762,9 @@ int CXMLGen::getDimsForLayer(WMSLayer *myWMSLayer) {
 
 int CXMLGen::getStylesForLayer(WMSLayer *myWMSLayer) {
   if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded) {
+    return 0;
+  }
+  if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
     return 0;
   }
 

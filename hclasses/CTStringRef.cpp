@@ -19,7 +19,7 @@ namespace CT {
     assign(data, length);
   }
 
-  CT::stringref::stringref(CT::stringref const &f) : basetype(f) {
+  CT::stringref::stringref(CT::stringref const &f) {
     init();
     _length = f._length;
     constdata = f.constdata;

@@ -36,6 +36,7 @@
 #include "CGeoParams.h"
 #include "CCache.h"
 #include <map>
+#include <tuple>
 #include <string>
 
 // #define MAX_DIMS 10
@@ -81,12 +82,13 @@ private:
   static int dataRestriction;
   static char debugLoggingIsEnabled;
   int cacheControlOption = CSERVERPARAMS_CACHE_CONTROL_OPTION_NOCACHE;
+  int _parseConfigFile(CT::string &pszConfigFile, std::vector<CServerConfig::XMLE_Environment> *extraEnvironment);
 
 public:
   double dfResX, dfResY;
   int dFound_BBOX;
   double dX, dY;
-  bool verbose = true;
+  bool verbose = false;
   CT::string *WMSLayers;
   CT::string Format;
   CT::string InfoFormat;
@@ -315,7 +317,7 @@ public:
    * @param pszConfigFile The config file to parse
    * returns zero on success       *
    */
-  int parseConfigFile(CT::string &pszConfigFile, std::vector<CServerConfig::XMLE_Environment *> *extraEnvironment);
+  int parseConfigFile(CT::string &pszConfigFile);
 
   /**
    * Returns cache control header
@@ -327,6 +329,16 @@ public:
 
   void setCacheControlOption(int mode) { cacheControlOption = mode; }
   int getCacheControlOption() { return cacheControlOption; }
+
+  /**
+   * Returns the fontsize in px for contour lines and classes in the legend
+   */
+  std::tuple<float, std::string> getContourFont();
+
+  /**
+   * Returns the fontsize in px for legend
+   */
+  std::tuple<float, std::string> getLegendFont();
 };
 
 #endif

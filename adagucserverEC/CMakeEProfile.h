@@ -25,7 +25,7 @@ public:
     double offset;
     int x;
   };
-  static int MakeEProfile(CDrawImage *drawImage, CImageWarper *imageWarper, std::vector<CDataSource *> dataSources, int dataSourceIndex, int dX, int dY);
+  static int MakeEProfile(CDrawImage *drawImage, CImageWarper *imageWarper, std::vector<CDataSource *> dataSources, int dataSourceIndex, int dX, int dY, CT::string *json);
 };
 
 #endif

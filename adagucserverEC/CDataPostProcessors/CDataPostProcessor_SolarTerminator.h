@@ -10,7 +10,6 @@ class CDPPSolarTerminator : public CDPPInterface {
 private:
   DEF_ERRORFUNCTION();
   int terminator(double geox, double geoy, double epochtime);
-  void print_trace();
 
 public:
   virtual const char *getId();
