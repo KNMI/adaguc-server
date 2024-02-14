@@ -29,6 +29,7 @@
 #include <string>
 #include "CXMLGen.h"
 #include "CDBFactory.h"
+#include "LayerTypeLiveUpdate/LayerTypeLiveUpdate.h"
 // #define CXMLGEN_DEBUG
 
 const char *CFile::className = "CFile";
@@ -189,7 +190,7 @@ int CXMLGen::getDataSourceForLayer(WMSLayer *myWMSLayer) {
 #ifdef CXMLGEN_DEBUG
     CDBDebug("Live update layer");
 #endif
-    return generateLayerCapabilitiesLayerTypeLiveUpdate(myWMSLayer);
+    return layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(myWMSLayer);
   }
   if (myWMSLayer->fileName.empty()) {
     CDBError("No file name specified for layer %s", myWMSLayer->dataSource->layerName.c_str());

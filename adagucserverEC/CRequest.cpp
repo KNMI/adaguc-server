@@ -37,6 +37,7 @@
 #include "CSLD.h"
 #include "CHandleMetadata.h"
 #include "CCreateTiles.h"
+#include "LayerTypeLiveUpdate/LayerTypeLiveUpdate.h"
 const char *CRequest::className = "CRequest";
 int CRequest::CGI = 0;
 
@@ -1787,7 +1788,7 @@ int CRequest::process_all_layers() {
       // dataSources[j]->getCDFDims()->addDimension("none","0",0);
     }
     if (dataSources[j]->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
-      configureDimensionsForLiveUpdateLayer(dataSources[j]);
+      layerTypeLiveUpdateConfigureDimensionsInDataSource(dataSources[j]);
     }
   }
 
@@ -2273,7 +2274,7 @@ int CRequest::process_all_layers() {
   } else if (dataSources[j]->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
     // Render the current time in an image for testing purpose / frontend development
     CDrawImage image;
-    renderLayerTypeLiveUpdate(&image);
+    layerTypeLiveUpdateRenderIntoDrawImage(&image, srvParam);
     printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
     image.printImagePng8(true);
   } else {

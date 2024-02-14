@@ -1,9 +1,7 @@
-#include "CXMLGen.h"
-#include "CRequest.h"
+#include "LayerTypeLiveUpdate.h"
 
-int CRequest::configureDimensionsForLiveUpdateLayer(CDataSource *dataSource) {
+int layerTypeLiveUpdateConfigureDimensionsInDataSource(CDataSource *dataSource) {
   // This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.
-  CDBDebug("Addstep");
   if (dataSource->requiredDims.size() < 1) {
 
     COGCDims *requiredDim = new COGCDims();
@@ -21,7 +19,7 @@ int CRequest::configureDimensionsForLiveUpdateLayer(CDataSource *dataSource) {
   return 0;
 }
 
-int CRequest::renderLayerTypeLiveUpdate(CDrawImage *image) {
+int layerTypeLiveUpdateRenderIntoDrawImage(CDrawImage *image, CServerParams *srvParam) {
   image->enableTransparency(true);
   image->setTrueColor(true);
   image->createImage(srvParam->Geo);
@@ -41,7 +39,7 @@ int CRequest::renderLayerTypeLiveUpdate(CDrawImage *image) {
   return 0;
 }
 
-int CXMLGen::generateLayerCapabilitiesLayerTypeLiveUpdate(WMSLayer *myWMSLayer) {
+int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(WMSLayer *myWMSLayer) {
   if (myWMSLayer->dataSource->cfgLayer->Title.size() != 0) {
     myWMSLayer->title.copy(myWMSLayer->dataSource->cfgLayer->Title[0]->value.c_str());
   } else {
