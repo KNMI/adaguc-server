@@ -1,4 +1,9 @@
 import logging
+
+from configure_logging import configure_logging
+
+configure_logging(logging)
+
 import os
 import time
 from urllib.parse import urlsplit
@@ -7,20 +12,25 @@ import uvicorn
 from brotli_asgi import BrotliMiddleware
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from asgi_logger import AccessLoggerMiddleware
 
-from configure_logging import configure_logging
 from routers.autowms import autowms_router
+from routers.edr import edrApiApp
 from routers.healthcheck import health_check_router
 from routers.middleware import FixSchemeMiddleware
 from routers.ogcapi import ogcApiApp
 from routers.opendap import opendapRouter
 from routers.wmswcs import testadaguc, wmsWcsRouter
 
-configure_logging(logging)
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
+# Set uvicorn access log format using middleware
+access_log_format = 'accesslog %(h)s ; %(t)s ; %(H)s ; %(m)s ; %(U)s ; %(q)s ; %(s)s ; %(M)s ; "%(a)s"'
+logging.getLogger("uvicorn.access").handlers.clear()
+app.add_middleware(AccessLoggerMiddleware, format=access_log_format)
+logging.getLogger("access").propagate = False
 
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
@@ -68,6 +78,7 @@ async def root():
 
 
 app.mount("/ogcapi", ogcApiApp)
+app.mount("/edr", edrApiApp)
 
 app.include_router(health_check_router)
 app.include_router(wmsWcsRouter)

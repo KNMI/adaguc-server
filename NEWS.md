@@ -1,8 +1,101 @@
+**Version 2.15.1 2024-01-22**
+- Support time/height profile data from https://dataplatform.knmi.nl/dataset/ceilonet-chm15k-backsct-la1-t12s-v1-0
+
+**Version 2.15.0 2024-01-29**
+- PostgreSQL queries have been optimized
+
+**Version 2.14.3 2024-01-19**
+- Opendap services are accessible again in the Layer configuration: https://github.com/KNMI/adaguc-server/issues/315
+
+**Version 2.14.2 2024-01-15**
+- Fix issue where the wrong dimension was forced to a value
+- Add Cache-Control header to WCS requests (DescribeCoverage and GetCoverage)
+- Fix Cache-control when dimensions are forced to a value
+- Make AAIGRID comparison looser (ignore whitespace)
+- Add unit test for Cache-Control headers for WCS AAIGRID format
+
+**Version 2.14.1 2023-12-08**
+- Set keep-alive (to support running behind proxy/load balancer)
+
+**Version 2.14.0 2023-11-23**
+- EDR support (position endpoint only), see [EDRConfiguration](doc/configuration/EDRConfiguration/EDR.md)
+
+**Version 2.13.9 2023-11-01**
+- Cache-Control header can be configured via the Settings item
+
+**Version 2.13.8 2023-11-01**
+- Fixed issue #311, dimension units are now propagated from the Layer configuration to the GetCapabilities
+
+**Version 2.13.7 2023-10-27**
+- PNG files can now also contain a reference_time text tag
+- Finnish national projection (EPSG:3067)
+
+**Version 2.13.6 2023-10-06**
+- Restored access log to original format (was broken since move to FastAPI)
+
+**Version 2.13.5 2023-10-05**
+- KNMI HDF5 dual-pol data now picks scans 15, 16, 6,
+14, 5, 13, 4, 12, 3
+- KNMI HDF5 dual-pol now derives ZDR as Z-Zv
+
+**Version 2.13.4 2023-10-04**
+- Improved Dockerfile multistage build leading to smaller images
+- Updated Python package versions
+
+**Version 2.13.3 2023-09-28**
+- Reverted outline barbs, added outline option for point barbs
+
+**Version 2.13.2 2023-09-25**
+- Fixed a bug in autofinddataset option
+
+**Version 2.13.0 2023-09-20**
+- The script adaguc-server-addfile.sh is now able to find for a given file the corresponding dataset via the commandline option autofinddataset
+- Cleaning of model data is now done based on the forecast_reference_time dimension
+
+
+**Version 2.12.0 2023-08-24**
+- Support for DataPostProcessor Operator, to add, substract, multiply or divide layers
+- Dimensions can now be fixed and hidden, to make layers representing a single elevation based on a variable with multiple elevations
+- Support to substract two elevations from the same variable
+
+**Version 2.11.4 2023-09-06**
+- Cleanup is now always triggered when a file is scanned.
+
+**Version 2.11.3 2023-09-05**
+- Less logging and robuster scanner
+
+**Version 2.11.2 2023-08-21**
+
+- Hot fix: Accidently removed necessary python dependencies in Docker build
+
+**Version 2.11.1 2023-08-21**
+
+- Avoid double logging
+- Timeout to prevent endless running of processes
+- Fix encoded proj4_params issue https://github.com/KNMI/adaguc-server/issues/279
+
+**Version 2.11.0 2023-08-17**
+- Update Docker base image to Python 3.10 based on Debian 12 ("bookworm")
+
+**Version 2.10.5 2023-06-02**
+- Contourlines can have dashes
+- Contour text can have an outline
+- Windbarbs have a white outline
+
+**Version 2.10.4 2023-06-01**
+- Fix: Racmo datasets with rotated_pole projection does work again
+
+**Version 2.10.3 2023-05-17**
+- Fix: Empty CRS was advertised in case of point data
+
+**Version 2.10.2 2023-05-17**
+- Fix: Geos projection without sweep working again
+
 **Version 2.10.1 2023-05-12**
 - Added Strict-Transport-Security, X-Content-Type-Options and Content-Security-Policy headers when running over https
 
 **Version 2.10.0 2023-05-10**
-- Use the new API of the PROJ library, because the old one is deprecated and removed from PROJ version 8 and up. 
+- Use the new API of the PROJ library, because the old one is deprecated and removed from PROJ version 8 and up.
 Adaguc now requires at least version 6 of the PROJ library.
 This should simplify installing on recent version of Ubuntu.
 

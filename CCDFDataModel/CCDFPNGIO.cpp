@@ -128,7 +128,6 @@ int CDFPNGReader::open(const char *fileName) {
 #ifdef CCDFPNGIO_DEBUG
       CDBDebug("HEADERS [%s]=[%s]", pngRaster->headers[j].name.c_str(), pngRaster->headers[j].value.c_str());
 #endif
-
       /* Proj4 params */
       if (pngRaster->headers[j].name.equals("proj4_params")) {
         CRS->setAttributeText("proj4", pngRaster->headers[j].value.c_str());
@@ -164,7 +163,25 @@ int CDFPNGReader::open(const char *fileName) {
         ctime.init(timeVariable);
         ((double *)timeVariable->data)[0] = ctime.dateToOffset(ctime.freeDateStringToDate(pngRaster->headers[j].value));
       }
+      /* Reference time dimension */
+      if (pngRaster->headers[j].name.equals("reference_time")) {
+        CDF::Dimension *referenceTimeDimension = cdfObject->getDimensionNE("forecast_reference_time");
+        if (!referenceTimeDimension) {
+          referenceTimeDimension = cdfObject->addDimension(new CDF::Dimension("forecast_reference_time", 1));
+        }
+        CDF::Variable *referenceTimeVariable = cdfObject->getVariableNE("forecast_reference_time");
+        if (referenceTimeVariable == NULL) {
+          referenceTimeVariable = cdfObject->addVariable(new CDF::Variable("forecast_reference_time", CDF_DOUBLE, &referenceTimeDimension, 1, true));
+        }
+        referenceTimeVariable->setAttributeText("units", "seconds since 1970-01-01 0:0:0");
+        referenceTimeVariable->setAttributeText("standard_name", "forecast_reference_time");
+        referenceTimeVariable->allocateData(1);
+        CTime ctime;
+        ctime.init(referenceTimeVariable);
+        ((double *)referenceTimeVariable->data)[0] = ctime.dateToOffset(ctime.freeDateStringToDate(pngRaster->headers[j].value));
+      }
     }
+
     /* Temporarily checking invalid metadata */
     if (bbox[0] < -5570000) {
       if (CRS->getAttribute("proj4")->getDataAsString().equals("+proj=geos +a=6378.169 +b=6356.584 +h=35785.831 +lat_0=0 +lon_0=0.0")) {
@@ -236,7 +253,7 @@ public:
   double east;
   double west;
 };
-#define pi 3.141592654
+#define pi M_PI
 
 class P {
 public:
@@ -254,8 +271,8 @@ P tileXYZtoMerc(int tile_x, int tile_y, int zoom) {
 }
 
 BoundingBox getBounds(int tile_x, int tile_y, int zoom) {
-  P p1 = tileXYZtoMerc((tile_x - 1) * 256, (tile_y)*256, zoom);
-  P p2 = tileXYZtoMerc((tile_x)*256, (tile_y + 1) * 256, zoom);
+  P p1 = tileXYZtoMerc((tile_x - 1) * 256, (tile_y) * 256, zoom);
+  P p2 = tileXYZtoMerc((tile_x) * 256, (tile_y + 1) * 256, zoom);
   BoundingBox b;
   b.west = p2.x;
   b.east = p1.x;

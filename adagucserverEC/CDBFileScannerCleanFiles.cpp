@@ -64,7 +64,17 @@ int CDBFileScanner::cleanFiles(CDataSource *dataSource, int) {
   }
 
   CT::string tableNameForTimeDimension;
-  CT::string colName = dataSource->requiredDims[0]->netCDFDimName;
+
+  CT::string colName = "time";
+
+  // If this datasource has a reference_time, give preference to that.
+  for (size_t j = 0; j < dataSource->requiredDims.size(); j += 1) {
+    if (dataSource->requiredDims[j]->netCDFDimName.equals("forecast_reference_time")) {
+      colName = "forecast_reference_time";
+    }
+  }
+
+  CDBDebug("Checking dimension %s", colName.c_str());
 
   try {
     tableNameForTimeDimension =
@@ -87,7 +97,6 @@ int CDBFileScanner::cleanFiles(CDataSource *dataSource, int) {
   // CDBDebug("dateMinusRetentionPeriod\t%s", dateMinusRetentionPeriod.c_str());
 
   CDBStore::Store *store = dbAdapter->getBetween("0000-01-01T00:00:00Z", dateMinusRetentionPeriod.c_str(), colName.c_str(), tableNameForTimeDimension.c_str(), cleanupSystemLimit);
-
   if (store != NULL && store->getSize() > 0) {
     CDBDebug("Found (at least) %d files which are too old.", store->getSize());
     for (size_t j = 0; j < store->getSize(); j++) {
@@ -104,12 +113,14 @@ int CDBFileScanner::cleanFiles(CDataSource *dataSource, int) {
             CDBError("Unable to remove file from FS: [%s]", fileNamestr.c_str());
           } else {
             filesDeletedFromFS.insert(fileNamestr);
+            // File is not present anymore, also remove it from the dirreaders
+            CCachedDirReader::removeFileFromCachedList(fileNamestr);
           }
         }
       }
     }
   } else {
-    CDBDebug("Nothing to clean.");
+    CDBDebug("Nothing to clean");
   }
   delete store;
   return 0;

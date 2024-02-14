@@ -1,13 +1,12 @@
-FROM python:3.9-slim-bullseye as base
+######### First stage (build) ############
+FROM python:3.10-slim-bookworm as build
 
 USER root
 
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
-LABEL version="2.10.1"
-
-######### First stage (build) ############
+LABEL version="2.15.1"
 
 # Try to update image packages
 RUN apt-get -q -y update \
@@ -35,16 +34,21 @@ RUN apt-get -q -y update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install adaguc-server from context
-COPY . /adaguc/adaguc-server-master
+# Install adaguc-server files need for compilation from context
+COPY adagucserverEC /adaguc/adaguc-server-master/adagucserverEC
+COPY CCDFDataModel /adaguc/adaguc-server-master/CCDFDataModel
+COPY hclasses /adaguc/adaguc-server-master/hclasses
+COPY cmake /adaguc/adaguc-server-master/cmake
+COPY CMakeLists.txt /adaguc/adaguc-server-master/
+COPY compile.sh /adaguc/adaguc-server-master/
 
 WORKDIR /adaguc/adaguc-server-master
 
 RUN bash compile.sh
 
 
-# ######### Second stage (production) ############
-FROM python:3.9-slim-bullseye
+######### Second stage, base image for test and prod ############
+FROM python:3.10-slim-bookworm as base
 
 USER root
 
@@ -69,24 +73,34 @@ RUN apt-get -q -y update \
 WORKDIR /adaguc/adaguc-server-master
 
 # Upgrade pip and install python requirements.txt
-COPY --from=0 /adaguc/adaguc-server-master/requirements.txt /adaguc/adaguc-server-master/requirements.txt
-COPY --from=0 /adaguc/adaguc-server-master/requirements-dev.txt /adaguc/adaguc-server-master/requirements-dev.txt
-RUN pip3 install --no-cache-dir --upgrade pip \
-    && pip3 install --no-cache-dir -r requirements.txt -r requirements-dev.txt
+COPY requirements.txt /adaguc/adaguc-server-master/requirements.txt
+RUN pip3 install --no-cache-dir --upgrade pip pip-tools \
+    && pip install --no-cache-dir -r requirements.txt
 
 # Install compiled adaguc binaries from stage one
-COPY --from=0 /adaguc/adaguc-server-master/bin /adaguc/adaguc-server-master/bin
-COPY --from=0 /adaguc/adaguc-server-master/data /adaguc/adaguc-server-master/data
-COPY --from=0 /adaguc/adaguc-server-master/python /adaguc/adaguc-server-master/python
-COPY --from=0 /adaguc/adaguc-server-master/tests /adaguc/adaguc-server-master/tests
-COPY --from=0 /adaguc/adaguc-server-master/runtests.sh /adaguc/adaguc-server-master/runtests.sh
+COPY --from=build /adaguc/adaguc-server-master/bin /adaguc/adaguc-server-master/bin
+COPY data /adaguc/adaguc-server-master/data
+COPY python /adaguc/adaguc-server-master/python
 
+
+######### Third stage, test ############
+FROM base as test
+
+COPY requirements-dev.txt /adaguc/adaguc-server-master/requirements-dev.txt
+RUN pip install --no-cache-dir -r requirements-dev.txt
+
+COPY tests /adaguc/adaguc-server-master/tests
+COPY runtests.sh /adaguc/adaguc-server-master/runtests.sh
 
 # Run adaguc-server functional and regression tests
-
 RUN bash runtests.sh
-RUN pip3 uninstall -r requirements-dev.txt -y
 
+# Create a file indicating that the test succeeded. This file is used in the final stage
+RUN echo "TESTSDONE" >  /adaguc/adaguc-server-master/testsdone.txt
+
+
+######### Fourth stage, prod ############
+FROM base as prod
 
 # Set same uid as vivid
 RUN useradd -m adaguc -u 1000 && \
@@ -116,7 +130,11 @@ ENV PYTHONPATH=${ADAGUC_PATH}/python/python_fastapi_server
 WORKDIR /adaguc/adaguc-server-master/python/lib/
 RUN python3 setup.py install
 RUN bash -c "python3 /adaguc/adaguc-server-master/python/examples/runautowms/run.py && ls result.png"
+
 WORKDIR /adaguc/adaguc-server-master
+
+# This checks if the test stage has ran without issues.
+COPY --from=test /adaguc/adaguc-server-master/testsdone.txt /adaguc/adaguc-server-master/testsdone.txt 
 
 USER adaguc
 

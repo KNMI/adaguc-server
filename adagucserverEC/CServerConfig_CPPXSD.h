@@ -27,11 +27,11 @@
 #define CServerConfig_H
 #include "CXMLSerializerInterface.h"
 #include "CDirReader.h"
+#include "CColor.h"
 
 // f 102 >15
 // F 70 > 15
 // 0 48 > 0
-#define CSERVER_HEXDIGIT_TO_DEC(DIGIT) (DIGIT > 96 ? DIGIT - 87 : DIGIT > 64 ? DIGIT - 55 : DIGIT - 48) // Converts "9" to 9, "A" to 10 and "a" to 10
 
 class CServerConfig : public CXMLSerializerInterface {
 public:
@@ -342,17 +342,26 @@ public:
   public:
     class Cattr {
     public:
-      CT::string width, linecolor, textcolor, classes, interval, textformatting;
+      CT::string width, dashing, linecolor, textcolor, textstrokecolor, classes, interval, textformatting, textsize, textstrokewidth;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
       if (equals("width", 5, attrname)) {
         attr.width.copy(attrvalue);
         return;
+      } else if (equals("dashing", 7, attrname)) {
+        attr.dashing.copy(attrvalue);
+        return;
       } else if (equals("linecolor", 9, attrname)) {
         attr.linecolor.copy(attrvalue);
         return;
+      } else if (equals("textsize", 8, attrname)) {
+        attr.textsize.copy(attrvalue);
+        return;
       } else if (equals("textcolor", 9, attrname)) {
         attr.textcolor.copy(attrvalue);
+        return;
+      } else if (equals("textstrokecolor", 15, attrname)) {
+        attr.textstrokecolor.copy(attrvalue);
         return;
       } else if (equals("classes", 7, attrname)) {
         attr.classes.copy(attrvalue);
@@ -362,6 +371,9 @@ public:
         return;
       } else if (equals("textformatting", 14, attrname)) {
         attr.textformatting.copy(attrvalue);
+        return;
+      } else if (equals("textstrokewidth", 15, attrname)) {
+        attr.textstrokewidth.copy(attrvalue);
         return;
       }
     }
@@ -985,7 +997,28 @@ public:
   };
   class XMLE_Abstract : public CXMLObjectInterface {};
   class XMLE_DataBaseTable : public CXMLObjectInterface {};
-  class XMLE_Variable : public CXMLObjectInterface {};
+  class XMLE_Variable : public CXMLObjectInterface {
+  public:
+    class Cattr {
+    public:
+      CT::string orgname, long_name, standard_name, units;
+    } attr;
+    void addAttribute(const char *name, const char *value) {
+      if (equals("orgname", 7, name)) {
+        attr.orgname.copy(value);
+        return;
+      } else if (equals("long_name", 9, name)) {
+        attr.long_name.copy(value);
+        return;
+      } else if (equals("standard_name", 13, name)) {
+        attr.standard_name.copy(value);
+        return;
+      } else if (equals("units", 5, name)) {
+        attr.units.copy(value);
+        return;
+      }
+    }
+  };
   class XMLE_DataReader : public CXMLObjectInterface {
   public:
     class Cattr {
@@ -1165,30 +1198,38 @@ public:
   public:
     class Cattr {
     public:
-      CT::string name, interval, defaultV, units, quantizeperiod, quantizemethod;
+      CT::string name, interval, defaultV, units, quantizeperiod, quantizemethod, fixvalue;
+      bool hidden = false;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
       if (equals("name", 4, attrname)) {
         attr.name.copy(attrvalue);
         return;
-      }
-      if (equals("units", 5, attrname)) {
+      } else if (equals("units", 5, attrname)) {
         attr.units.copy(attrvalue);
         return;
-      }
-      if (equals("default", 7, attrname)) {
+      } else if (equals("default", 7, attrname)) {
         attr.defaultV.copy(attrvalue);
         return;
-      }
-      if (equals("interval", 8, attrname)) {
+      } else if (equals("interval", 8, attrname)) {
         attr.interval.copy(attrvalue);
         return;
-      }
-      if (equals("quantizeperiod", 14, attrname)) {
+      } else if (equals("quantizeperiod", 14, attrname)) {
         attr.quantizeperiod.copy(attrvalue);
         return;
-      }
-      if (equals("quantizemethod", 14, attrname)) {
+      } else if (equals("fixvalue", 8, attrname)) {
+        attr.fixvalue.copy(attrvalue);
+        return;
+      } else if (equals("hidden", 6, attrname)) {
+        if (equals("false", 5, attrvalue)) {
+          attr.hidden = false;
+        }
+        if (equals("true", 4, attrvalue)) {
+          attr.hidden = true;
+        }
+
+        return;
+      } else if (equals("quantizemethod", 14, attrname)) {
         attr.quantizemethod.copy(attrvalue);
         return;
       }

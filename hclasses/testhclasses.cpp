@@ -1,6 +1,9 @@
 #include "CDirReader.h"
 #include "CppUnitLite/TestHarness.h"
 
+// To test this file do in the ./bin folder of adaguc-server:
+// cmake --build . --config Debug --target testhclasses -j 10 -- && ctest --verbose
+
 static inline SimpleString StringFrom(const std::string &value) { return SimpleString(value.c_str()); }
 
 int main() {

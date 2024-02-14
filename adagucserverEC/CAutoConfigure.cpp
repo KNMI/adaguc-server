@@ -51,6 +51,11 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
     return 1;
   }
 
+  if (dataSource->cfgLayer->FilePath.size() != 1 && dataSource->cfgLayer->FilePath[0] != nullptr) {
+    CDBDebug("(dataSource->cfgLayer->FilePath.size() != 1");
+    return 1;
+  }
+
   /**
    * Load dimension information about the layer from the autoconfigure_dimensions table
    * This table stores only layerid, netcdf dimname, adaguc dimname and units
@@ -61,9 +66,12 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
 
   CT::string layerTableId;
   try {
-
-    layerTableId = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)
-                       ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), NULL, dataSource);
+    auto dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
+    if (dbAdapter == nullptr) {
+      CDBError("Unable to get a getDBAdapter");
+      return 1;
+    }
+    layerTableId = dbAdapter->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), NULL, dataSource);
 
   } catch (int e) {
     CDBError("Unable to get layerTableId for autoconfigure_dimensions");
@@ -84,7 +92,6 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
   CT::string layerIdentifier = dataSource->getLayerName();
   CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getDimensionInfoForLayerTableAndLayerName(layerTableId.c_str(), layerIdentifier.c_str());
   if (store != NULL) {
-
     try {
 
       for (size_t j = 0; j < store->size(); j++) {
@@ -207,11 +214,15 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
             dataSource->cfgLayer->Dimension.push_back(xmleDim);
             xmleDim->value.copy(OGCDimName.c_str());
             xmleDim->attr.name.copy(netcdfdimname.c_str());
-            xmleDim->attr.units.copy(units.c_str());
+            if (dtype == CDataReader::dtype_time || dtype == CDataReader::dtype_reference_time) {
+              xmleDim->attr.units.copy("ISO8601");
+            } else {
+              xmleDim->attr.units.copy(units.c_str());
+            }
 
             /* Store the data in the db for quick access. */
             CDBFactory::getDBAdapter(dataSource->srvParams->cfg)
-                ->storeDimensionInfoForLayerTableAndLayerName(layerTableId.c_str(), dataSource->getLayerName(), netcdfdimname.c_str(), OGCDimName.c_str(), units.c_str());
+                ->storeDimensionInfoForLayerTableAndLayerName(layerTableId.c_str(), dataSource->getLayerName(), xmleDim->attr.name.c_str(), OGCDimName.c_str(), xmleDim->attr.units.c_str());
 #ifdef CAUTOCONFIGURE_DEBUG
             CDBDebug("[OK] From DB: Stored dim %s-%s for layer %s", xmleDim->value.c_str(), xmleDim->attr.name.c_str(), layerTableId.c_str());
 #endif
@@ -252,7 +263,7 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
                 xmleDim->attr.units.copy(units.c_str());
                 /* Store the data in the db for quick access. */
                 CDBFactory::getDBAdapter(dataSource->srvParams->cfg)
-                    ->storeDimensionInfoForLayerTableAndLayerName(layerTableId.c_str(), layerIdentifier.c_str(), cdfObject->variables[j]->name.c_str(), "reference_time", units.c_str());
+                    ->storeDimensionInfoForLayerTableAndLayerName(layerTableId.c_str(), layerIdentifier.c_str(), xmleDim->attr.name.c_str(), "reference_time", xmleDim->attr.units.c_str());
 #ifdef CAUTOCONFIGURE_DEBUG
                 CDBDebug("[OK] From DB: Stored dim %s-%s for layer %s", xmleDim->value.c_str(), xmleDim->attr.name.c_str(), layerTableId.c_str());
 #endif
@@ -506,6 +517,7 @@ int CAutoConfigure::justLoadAFileHeader(CDataSource *dataSource) {
         dataSource->requiredDims.push_back(ogcDim);
         ogcDim->name.copy("none");
         ogcDim->value.copy("0");
+        ogcDim->queryValue.copy("0");
         ogcDim->netCDFDimName.copy("none");
       }
     }

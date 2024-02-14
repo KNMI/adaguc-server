@@ -6,7 +6,7 @@
 const char *CDPPClipMinMax::className = "CDPPClipMinMax";
 
 const char *CDPPClipMinMax::getId() { return "clipminmax"; }
-int CDPPClipMinMax::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *) {
+int CDPPClipMinMax::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int) {
   if (proc->attr.algorithm.equals("clipminmax")) {
     return CDATAPOSTPROCESSOR_RUNAFTERREADING;
   }
@@ -20,8 +20,8 @@ template <class T> void clipData(T *data, size_t size, double min, double max) {
   }
 }
 
-int CDPPClipMinMax::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int) {
-  if (isApplicable(proc, dataSource) != CDATAPOSTPROCESSOR_RUNAFTERREADING) {
+int CDPPClipMinMax::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
+  if (isApplicable(proc, dataSource, mode) != CDATAPOSTPROCESSOR_RUNAFTERREADING) {
     return -1;
   }
   CDBDebug("Applying clipminmax");

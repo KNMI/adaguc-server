@@ -283,7 +283,7 @@ bool CServerParams::isDebugLoggingEnabled() const {
     return false;
   else if (debugLoggingIsEnabled == 1)
     return true;
-  else if (cfg->Logging.size() > 0) {
+  else if (cfg && cfg->Logging.size() > 0) {
     if (cfg->Logging[cfg->Logging.size() - 1]->attr.debug.equals("false")) {
       debugLoggingIsEnabled = 0;
       return false;
@@ -427,7 +427,7 @@ CT::string CServerParams::getOnlineResource() {
     // No Online resource is given.
     const char *pszADAGUCOnlineResource = getenv("ADAGUC_ONLINERESOURCE");
     if (pszADAGUCOnlineResource == NULL) {
-      CDBDebug("Warning: No OnlineResources configured. Unable to get from config OnlineResource or from environment ADAGUC_ONLINERESOURCE");
+      // CDBDebug("Warning: No OnlineResources configured. Unable to get from config OnlineResource or from environment ADAGUC_ONLINERESOURCE");
       _onlineResource = "";
       return "";
     }
@@ -615,10 +615,14 @@ int CServerParams::parseConfigFile(CT::string &pszConfigFile, std::vector<CServe
                 const char *environmentSubstituteName = substituteName.c_str();
 
                 if (environmentValue != NULL) {
-                  CDBDebug("Replacing %s with environment value %s", environmentSubstituteName, environmentValue);
+                  if (verbose) {
+                    CDBDebug("Replacing %s with environment value %s", environmentSubstituteName, environmentValue);
+                  }
                   configFileData.replaceSelf(environmentSubstituteName, environmentValue);
                 } else {
-                  CDBDebug("Replacing %s with default value %s", environmentSubstituteName, environmentVarDefault);
+                  if (verbose) {
+                    CDBDebug("Replacing %s with default value %s", environmentSubstituteName, environmentVarDefault);
+                  }
                   configFileData.replaceSelf(environmentSubstituteName, environmentVarDefault);
                 }
               } else {
@@ -648,7 +652,6 @@ int CServerParams::parseConfigFile(CT::string &pszConfigFile, std::vector<CServe
 
 CT::string CServerParams::getCacheControlHeader(int mode) {
   if (cfg != nullptr && cfg->Settings.size() == 1) {
-    int cacheAge = 0;
     CT::string cacheString = "\r\nCache-Control:max-age=";
     if (mode == CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE) {
       if (!cfg->Settings[0]->attr.cache_age_volatileresources.empty()) {

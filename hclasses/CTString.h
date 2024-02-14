@@ -34,7 +34,9 @@
 #define CT_MAX_NUM_CHARACTERS_FOR_NUMERIC 39
 namespace CT {
 
-  class string : public basetype {
+  class string {
+  public:
+    size_t count;
   private:
     char stackValue[CTSTRINGSTACKLENGTH + 1];
     int allocated;
@@ -341,6 +343,7 @@ namespace CT {
      * Encodes string using XML encoding
      */
     void encodeXMLSelf();
+
     static CT::string encodeXML(CT::string stringToEncode);
     CT::string encodeXML();
 

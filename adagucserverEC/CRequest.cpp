@@ -106,7 +106,9 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
       if (configFileList.size() > 1) {
         srvParam->datasetLocation.copy(configFileList[configFileList.size() - 1].basename().c_str());
         srvParam->datasetLocation.substringSelf(0, srvParam->datasetLocation.lastIndexOf("."));
-        CDBDebug("Dataset name based on passed configfile is [%s]", srvParam->datasetLocation.c_str());
+        if (srvParam->verbose) {
+          CDBDebug("Dataset name based on passed configfile is [%s]", srvParam->datasetLocation.c_str());
+        }
         status = CAutoResource::configureDataset(srvParam, false);
         if (status != 0) {
           CDBError("ConfigureDataset failed for %s", configFileList[1].c_str());
@@ -165,6 +167,7 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
           }
         }
       }
+      delete[] parameters;
     }
 
     // Include additional config files given in the include statement of the config file
@@ -846,7 +849,7 @@ int CRequest::setDimValuesForDataSource(CDataSource *dataSource, CServerParams *
 };
 
 int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams *srvParam) {
-  bool allDimensionOptionsFound = true;
+
 #ifdef CREQUEST_DEBUG
   StopWatch_Stop("### [fillDimValuesForDataSource]");
 #endif
@@ -908,7 +911,6 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
       CDBDebug("alreadyAdded = %d", alreadyAdded);
 #endif
       if (alreadyAdded == false) {
-
         for (size_t k = 0; k < srvParam->requestDims.size(); k++) {
           if (srvParam->requestDims[k]->name.equals(&dimName)) {
 #ifdef CREQUEST_DEBUG
@@ -920,6 +922,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
             dataSource->requiredDims.push_back(ogcDim);
             ogcDim->name.copy(&dimName);
             ogcDim->value.copy(&srvParam->requestDims[k]->value);
+            ogcDim->queryValue.copy(&srvParam->requestDims[k]->value);
             ogcDim->netCDFDimName.copy(dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
 
             if (ogcDim->name.equals("time") || ogcDim->name.equals("reference_time")) {
@@ -1048,9 +1051,6 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
         if (netCDFDimName.equals("none")) {
           continue;
         }
-        allDimensionOptionsFound = false;
-        CDBDebug("NOT ADDED: %s", dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
-
         /* A dimension where the default value is set to filetimedate should not be queried from the db */
         if (dataSource->cfgLayer->Dimension[i]->attr.defaultV.equals("filetimedate")) {
           continue;
@@ -1150,6 +1150,22 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
         }
       }
     }
+    // Check and set value when the value is forced in the layer dimension configuration
+    for (size_t i = 0; i < dataSource->cfgLayer->Dimension.size(); i++) {
+      if (!dataSource->cfgLayer->Dimension[i]->attr.fixvalue.empty()) {
+        CT::string dimName(dataSource->cfgLayer->Dimension[i]->value.c_str());
+        CT::string fixedValue = dataSource->cfgLayer->Dimension[i]->attr.fixvalue;
+        dimName.toLowerCaseSelf();
+        for (auto &requiredDim : dataSource->requiredDims) {
+          if (requiredDim->name.equals(&dimName)) {
+            CDBDebug("Forcing dimension %s from %s to %s", dimName.c_str(), requiredDim->value.c_str(), fixedValue.c_str());
+            requiredDim->value = fixedValue;
+            requiredDim->hasFixedValue = true;
+            break;
+          }
+        }
+      }
+    }
 
     // STOP NOW
   } catch (int i) {
@@ -1167,13 +1183,22 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
 
 #ifdef CREQUEST_DEBUG
   for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
-    CDBDebug("dataSource->requiredDims[%d][%s] = [%s] (%s)", j, dataSource->requiredDims[j]->name.c_str(), dataSource->requiredDims[j]->value.c_str(),
-             dataSource->requiredDims[j]->netCDFDimName.c_str());
+    auto *requiredDim = dataSource->requiredDims[j];
+    CDBDebug("dataSource->requiredDims[%d][%s] = [%s] (%s)", j, requiredDim->name.c_str(), requiredDim->value.c_str(), requiredDim->netCDFDimName.c_str());
+    CDBDebug("%s: %s === %s", requiredDim->name.c_str(), requiredDim->value.c_str(), requiredDim->queryValue.c_str());
   }
   CDBDebug("### [</fillDimValuesForDataSource>]");
 #endif
-  CDBDebug("allDimensionOptionsFound %d", allDimensionOptionsFound);
-  if (allDimensionOptionsFound && srvParam->getCacheControlOption() != CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE) {
+  bool allNonFixedDimensionsAreAsRequestedInQueryString = true;
+  for (auto requiredDim : dataSource->requiredDims) {
+    // CDBDebug("%s: [%s] === [%s], fixed:%d", requiredDim->name.c_str(), requiredDim->value.c_str(), requiredDim->queryValue.c_str(), requiredDim->hasFixedValue);
+    if (!requiredDim->hasFixedValue && !requiredDim->value.equals(requiredDim->queryValue)) {
+      allNonFixedDimensionsAreAsRequestedInQueryString = false;
+    }
+  }
+
+  // CDBDebug("allNonFixedDimensionsAreAsRequestedInQueryString %d", allNonFixedDimensionsAreAsRequestedInQueryString);
+  if (allNonFixedDimensionsAreAsRequestedInQueryString) {
     srvParam->setCacheControlOption(CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE);
   } else {
     srvParam->setCacheControlOption(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE);
@@ -1586,12 +1611,12 @@ int CRequest::process_all_layers() {
             for (additionalLayerNo = 0; additionalLayerNo < srvParam->cfg->Layer.size(); additionalLayerNo++) {
               CT::string additional;
               srvParam->makeUniqueLayerName(&additional, srvParam->cfg->Layer[additionalLayerNo]);
-              CDBDebug("comparing for additionallayer %s==%s", additionalLayerName.c_str(), additional.c_str());
+              // CDBDebug("comparing for additionallayer %s==%s", additionalLayerName.c_str(), additional.c_str());
               if (additionalLayerName.equals(additional)) {
-                CDBDebug("Found additionalLayer [%s]", additional.c_str());
+                // CDBDebug("Found additionalLayer [%s]", additional.c_str());
                 CDataSource *additionalDataSource = new CDataSource();
 
-                CDBDebug("setCFGLayer for additionallayer %s", additionalLayerName.c_str());
+                // CDBDebug("setCFGLayer for additionallayer %s", additionalLayerName.c_str());
                 if (additionalDataSource->setCFGLayer(srvParam, srvParam->configObj->Configuration[0], srvParam->cfg->Layer[additionalLayerNo], additionalLayerName.c_str(), j) != 0) {
                   delete additionalDataSource;
                   return 1;
@@ -1691,7 +1716,7 @@ int CRequest::process_all_layers() {
       if (pszADAGUCWriteToFile != NULL) {
         CReadFile::write(pszADAGUCWriteToFile, XMLDocument.c_str(), XMLDocument.length());
       } else {
-        printf("%s%c%c\n", "Content-Type:text/xml", 13, 10);
+        printf("%s%s%c%c\n", "Content-Type:text/xml", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
         printf("%s", XMLDocument.c_str());
       }
       return 0;
@@ -3453,22 +3478,28 @@ int CRequest::updatedb(CT::string *tailPath, CT::string *layerPathToScan, int sc
   }
 
   srvParam->requestType = REQUEST_UPDATEDB;
+  bool file_was_added = false;
 
   for (size_t j = 0; j < dataSources.size(); j++) {
     if (dataSources[j]->dLayerType == CConfigReaderLayerTypeDataBase || dataSources[j]->dLayerType == CConfigReaderLayerTypeBaseLayer) {
       if (scanFlags & CDBFILESCANNER_UPDATEDB) {
         status = CDBFileScanner::updatedb(dataSources[j], tailPath, layerPathToScan, scanFlags);
+        if (status == 0) {
+          file_was_added = true;
+        }
       }
       if (scanFlags & CDBFILESCANNER_CREATETILES) {
         status = CCreateTiles::createTiles(dataSources[j], scanFlags);
       }
-      if (status != 0) {
+      if (status != CDBFILESCANNER_RETURN_FILEDOESNOTMATCH && status != 0) {
         CDBError("Could not update db for: %s", dataSources[j]->cfgLayer->Name[0]->value.c_str());
         errorHasOccured++;
       }
     }
   }
-
+  if (file_was_added == false && layerPathToScan->length() > 0) {
+    CDBWarning("The specified file %s did not match to any of the layers", layerPathToScan->c_str());
+  }
   if (srvParam->enableDocumentCache) {
     // invalidate cache
     CT::string cacheFileName;

@@ -33,7 +33,7 @@ extern CDF::Variable::CustomMemoryReader customMemoryReaderInstance;
 CDF::Variable::CustomMemoryReader customMemoryReaderInstance;
 CDF::Variable::CustomMemoryReader *CDF::Variable::CustomMemoryReaderInstance = &customMemoryReaderInstance;
 
-//#define CCDFDATAMODEL_DEBUG
+// #define CCDFDATAMODEL_DEBUG
 int CDF::Variable::readData(CDFType type) { return readData(type, NULL, NULL, NULL); }
 
 int CDF::Variable::readData(bool applyScaleOffset) { return readData(-1, applyScaleOffset); }
@@ -250,7 +250,7 @@ int CDF::Variable::readData(CDFType type, size_t *_start, size_t *_count, ptrdif
         count[iterativeDimIndex] = 1;
         // Read the data!
 
-        if (!hasCustomReader) {
+        if (!_hasCustomReader) {
           // TODO NEEDS BETTER CHECKS
           if (cdfReaderPointer == NULL) {
             CDBError("No CDFReader defined for variable %s", name.c_str());
@@ -275,7 +275,7 @@ int CDF::Variable::readData(CDFType type, size_t *_start, size_t *_count, ptrdif
           tCDFObject->close();
         }
 
-        if (hasCustomReader) {
+        if (_hasCustomReader) {
           status = customReader->readData(this, _start, count, stride);
         }
 
@@ -304,7 +304,7 @@ int CDF::Variable::readData(CDFType type, size_t *_start, size_t *_count, ptrdif
 #endif
     // TODO NEEDS BETTER CHECKS
     if (cdfReaderPointer == NULL) {
-      if (hasCustomReader) {
+      if (_hasCustomReader) {
         if (this->customReader != NULL) {
           this->setType(type);
           this->customReader->readData(this, _start, _count, _stride);

@@ -29,6 +29,7 @@ Configuration
 -   [Logging](Logging.md) - (debug) - Configure the type of logging
 -   [Settings](Settings.md) - (enablecleanupsystem, cleanupsystemlimit, cache_age_cacheableresources, cache_age_volatileresources) - Configure global settings of the server / Dataset
 -   [Environment](Environment.md) - (name, default) - For within dataset configuration, specify which values should be substituted
+-   [OgcApiEdr](EDRConfiguration/EDR.md) - Configuration options to enable EDR collections
 
 <!-- -->
 
@@ -128,7 +129,7 @@ Configuration
         Mandatory, The directory to scan files with additional filter,
         or the file to use, or the OpenDAP url to use.
     -   [Dimension](Dimension.md)
-        (name,interval,default,units,quantizeperiod,quantizemethod)
+        (name,interval,default,units,quantizeperiod,quantizemethod,hidden,fixvalue)
         `<value>` - Optional, Configure the dimensions (time,
         elevation, member) used. If none given the server tries to
         autodetect the dimensions.

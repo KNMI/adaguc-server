@@ -82,9 +82,9 @@
           <gml:pos>-7600430.977505 1360506.839359</gml:pos>
           <gml:pos>795858.888223 7439724.721958</gml:pos>
         </gml:Envelope>
-        <gml:Envelope srsName="">
-          <gml:pos>-68.275833 12.130000</gml:pos>
-          <gml:pos>7.149322 55.399166</gml:pos>
+        <gml:Envelope srsName="EPSG:3067">
+          <gml:pos>-13588402.263697 1423498.626368</gml:pos>
+          <gml:pos>-747816.881762 12453122.100930</gml:pos>
         </gml:Envelope>
         <gml:RectifiedGrid dimension="2">
           <gml:limits>
@@ -138,7 +138,7 @@
       <requestResponseCRSs>EPSG:32661</requestResponseCRSs>
       <requestResponseCRSs>EPSG:40000</requestResponseCRSs>
       <requestResponseCRSs>EPSG:900913</requestResponseCRSs>
-      <requestResponseCRSs></requestResponseCRSs>
+      <requestResponseCRSs>EPSG:3067</requestResponseCRSs>
       <nativeCRSs></nativeCRSs>
     </supportedCRSs>
     <supportedFormats nativeFormat="NetCDF4">
@@ -229,9 +229,9 @@
           <gml:pos>-7600430.977505 1360506.839359</gml:pos>
           <gml:pos>795858.888223 7439724.721958</gml:pos>
         </gml:Envelope>
-        <gml:Envelope srsName="">
-          <gml:pos>-68.275833 12.130000</gml:pos>
-          <gml:pos>7.149322 55.399166</gml:pos>
+        <gml:Envelope srsName="EPSG:3067">
+          <gml:pos>-13588402.263697 1423498.626368</gml:pos>
+          <gml:pos>-747816.881762 12453122.100930</gml:pos>
         </gml:Envelope>
         <gml:RectifiedGrid dimension="2">
           <gml:limits>
@@ -285,7 +285,7 @@
       <requestResponseCRSs>EPSG:32661</requestResponseCRSs>
       <requestResponseCRSs>EPSG:40000</requestResponseCRSs>
       <requestResponseCRSs>EPSG:900913</requestResponseCRSs>
-      <requestResponseCRSs></requestResponseCRSs>
+      <requestResponseCRSs>EPSG:3067</requestResponseCRSs>
       <nativeCRSs></nativeCRSs>
     </supportedCRSs>
     <supportedFormats nativeFormat="NetCDF4">
@@ -376,9 +376,9 @@
           <gml:pos>-7600430.977505 1360506.839359</gml:pos>
           <gml:pos>795858.888223 7439724.721958</gml:pos>
         </gml:Envelope>
-        <gml:Envelope srsName="">
-          <gml:pos>-68.275833 12.130000</gml:pos>
-          <gml:pos>7.149322 55.399166</gml:pos>
+        <gml:Envelope srsName="EPSG:3067">
+          <gml:pos>-13588402.263697 1423498.626368</gml:pos>
+          <gml:pos>-747816.881762 12453122.100930</gml:pos>
         </gml:Envelope>
         <gml:RectifiedGrid dimension="2">
           <gml:limits>
@@ -432,7 +432,7 @@
       <requestResponseCRSs>EPSG:32661</requestResponseCRSs>
       <requestResponseCRSs>EPSG:40000</requestResponseCRSs>
       <requestResponseCRSs>EPSG:900913</requestResponseCRSs>
-      <requestResponseCRSs></requestResponseCRSs>
+      <requestResponseCRSs>EPSG:3067</requestResponseCRSs>
       <nativeCRSs></nativeCRSs>
     </supportedCRSs>
     <supportedFormats nativeFormat="NetCDF4">
