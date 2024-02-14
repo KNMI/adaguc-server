@@ -10,7 +10,7 @@ int CRequest::configureDimensionsForLiveUpdateLayer(CDataSource *dataSource) {
     requiredDim->isATimeDimension = true;
     requiredDim->name = "time";
     requiredDim->netCDFDimName = "time";
-    // Tbe following values need to be filled in and are updated during XML GetCapabilities generation
+    // The following values need to be filled in and are updated during XML GetCapabilities generation
     requiredDim->uniqueValues.push_back("2020-01-01T00:00:00Z");
     requiredDim->uniqueValues.push_back("2020-01-02T00:00:00Z");
     requiredDim->value = "2020-01-02T00:00:00Z";
