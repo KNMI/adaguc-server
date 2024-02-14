@@ -723,8 +723,7 @@ int CDataSource::makeStyleConfig(CStyleConfiguration *styleConfig, CDataSource *
       s->renderMethod=nearest;
       }
   }*/
-  CT::string styleDump;
-  styleConfig->printStyleConfig(&styleDump);
+  CT::string styleDump = styleConfig->c_str();
   //   #ifdef CDATASOURCE_DEBUG
   //
   //   CDBDebug("styleDump:\n%s",styleDump.c_str());
