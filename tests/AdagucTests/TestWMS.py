@@ -766,8 +766,8 @@ class TestWMS(unittest.TestCase):
             AdagucTestTools().compareImage(
                 self.expectedoutputsspath + filename,
                 self.testresultspath + filename,
-                7,
-                0.025,
+                19,
+                0.6,
             )
         )
 

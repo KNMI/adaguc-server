@@ -47,6 +47,8 @@ TEST(string, isFloat) {
   CHECK(CT::string("NaN").isFloat());
   CHECK(!CT::string("2019-07-28").isFloat());
   CHECK(CT::string("-15.0").isFloat());
+  CHECK(CT::string("  -15.0  ").isFloat());
+  CHECK(CT::string("  -15.0  ").toFloat() == -15.0);
 }
 
 TEST(string, initNULL) {
