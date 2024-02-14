@@ -1,0 +1,47 @@
+#include "CXMLGen.h"
+#include "CRequest.h"
+
+int CRequest::renderLayerTypeLiveUpdate(CDrawImage *image) {
+  image->enableTransparency(true);
+  image->setTrueColor(true);
+  image->createImage(srvParam->Geo);
+  image->create685Palette();
+  image->rectangle(0, 0, srvParam->Geo->dWidth, srvParam->Geo->dHeight, CColor(255, 255, 255, 0), CColor(255, 255, 255, 255));
+  const char *fontFile = image->getFontLocation();
+  CT::string timeValue = "No time dimension specified";
+  if (srvParam->requestDims.size() == 1) {
+    timeValue = srvParam->requestDims[0]->value.c_str();
+  }
+  int stepY = 100;
+  for (int y = 0; y < image->getHeight(); y = y + stepY) {
+    for (int x = 0; x < image->getWidth(); x = x + 300) {
+      image->drawText(x + (((y % (stepY * 2)) / stepY) * 150), y, fontFile, 15, 0.1, timeValue.c_str(), CColor(0, 0, 0, 255));
+    }
+  }
+  return 0;
+}
+
+int CXMLGen::generateLayerCapabilitiesLayerTypeLiveUpdate(WMSLayer *myWMSLayer) {
+  if (myWMSLayer->dataSource->cfgLayer->Title.size() != 0) {
+    myWMSLayer->title.copy(myWMSLayer->dataSource->cfgLayer->Title[0]->value.c_str());
+  } else {
+    myWMSLayer->title.copy(myWMSLayer->dataSource->cfgLayer->Name[0]->value.c_str());
+  }
+  CTime timeInstance;
+  timeInstance.init("seconds since 1970", "standard");
+  double epochTime = timeInstance.getEpochTimeFromDateString(CTime::currentDateTime());
+  // CTime::Date cdate = timeInstance.getDate(epochTime);
+  double startTimeOffset = timeInstance.quantizeTimeToISO8601(epochTime - 3600, "PT1S", "low");
+  double stopTimeOffset = timeInstance.quantizeTimeToISO8601(epochTime, "PT1S", "low");
+  CT::string startTime = timeInstance.dateToISOString(timeInstance.offsetToDate(startTimeOffset));
+  CT::string stopTime = timeInstance.dateToISOString(timeInstance.offsetToDate(stopTimeOffset));
+  CT::string resTime = "PT1S";
+  WMSLayer::Dim *dim = new WMSLayer::Dim();
+  myWMSLayer->dimList.push_back(dim);
+  dim->name.copy("time");
+  dim->units.copy("ISO8601");
+  dim->values.copy(startTime + "/" + stopTime + "/" + resTime);
+  dim->defaultValue.copy(stopTime.c_str());
+  dim->hasMultipleValues = true;
+  return 0;
+}

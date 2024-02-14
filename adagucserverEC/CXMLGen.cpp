@@ -189,29 +189,7 @@ int CXMLGen::getDataSourceForLayer(WMSLayer *myWMSLayer) {
 #ifdef CXMLGEN_DEBUG
     CDBDebug("Live update layer");
 #endif
-    if (myWMSLayer->dataSource->cfgLayer->Title.size() != 0) {
-      myWMSLayer->title.copy(myWMSLayer->dataSource->cfgLayer->Title[0]->value.c_str());
-    } else {
-      myWMSLayer->title.copy(myWMSLayer->dataSource->cfgLayer->Name[0]->value.c_str());
-    }
-
-    CTime timeInstance;
-    timeInstance.init("seconds since 1970", "standard");
-    double epochTime = timeInstance.getEpochTimeFromDateString(CTime::currentDateTime());
-    // CTime::Date cdate = timeInstance.getDate(epochTime);
-    double startTimeOffset = timeInstance.quantizeTimeToISO8601(epochTime - 3600, "PT1S", "low");
-    double stopTimeOffset = timeInstance.quantizeTimeToISO8601(epochTime, "PT1S", "low");
-    CT::string startTime = timeInstance.dateToISOString(timeInstance.offsetToDate(startTimeOffset));
-    CT::string stopTime = timeInstance.dateToISOString(timeInstance.offsetToDate(stopTimeOffset));
-    CT::string resTime = "PT1S";
-    WMSLayer::Dim *dim = new WMSLayer::Dim();
-    myWMSLayer->dimList.push_back(dim);
-    dim->name.copy("time");
-    dim->units.copy("ISO8601");
-    dim->values.copy(startTime + "/" + stopTime + "/" + resTime);
-    dim->defaultValue.copy(stopTime.c_str());
-    dim->hasMultipleValues = true;
-    return 0;
+    return generateLayerCapabilitiesLayerTypeLiveUpdate(myWMSLayer);
   }
   if (myWMSLayer->fileName.empty()) {
     CDBError("No file name specified for layer %s", myWMSLayer->dataSource->layerName.c_str());
@@ -265,15 +243,6 @@ int CXMLGen::getDataSourceForLayer(WMSLayer *myWMSLayer) {
       myWMSLayer->title.copy(myWMSLayer->dataSource->cfgLayer->Title[0]->value.c_str());
     }
 
-    return 0;
-  }
-  // Is this a WMS returning current time
-  if (myWMSLayer->dataSource->dLayerType != CConfigReaderLayerTypeLiveUpdate) {
-#ifdef CXMLGEN_DEBUG
-    CDBDebug("Current time layer");
-#endif
-
-    myWMSLayer->title.copy(myWMSLayer->dataSource->cfgLayer->Title[0]->value.c_str());
     return 0;
   }
   CDBWarning("Unknown layer type");

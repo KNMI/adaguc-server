@@ -2283,22 +2283,11 @@ int CRequest::process_all_layers() {
       return 1;
     }
   } else if (dataSources[j]->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
+    // Render the current time in an image for testing purpose / frontend development
     CDrawImage image;
-
-    image.enableTransparency(true);
-    image.setTrueColor(true);
-    image.createImage(srvParam->Geo);
-    image.create685Palette();
-    image.rectangle(0, 0, srvParam->Geo->dWidth, srvParam->Geo->dHeight, CColor(255, 255, 255, 0), CColor(255, 255, 255, 255));
-    const char *fontFile = image.getFontLocation();
-    CT::string timeValue = "No time dimension specified";
-    if (srvParam->requestDims.size() == 1) {
-      timeValue = srvParam->requestDims[0]->value.c_str();
-    }
-    image.drawText(50, srvParam->Geo->dHeight / 2 - 20, fontFile, 30, 0, timeValue.c_str(), CColor(0, 0, 0, 255));
+    renderLayerTypeLiveUpdate(&image);
     printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
     image.printImagePng8(true);
-
   } else {
     CDBError("Unknown layer type");
   }
