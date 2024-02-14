@@ -88,20 +88,10 @@ int CConvertLatLonGrid::convertLatLonGridData(CDataSource *dataSource, int mode)
   }
 
   float fill = (float)dataObjects[0]->dfNodataValue;
-  float min = fill;
-  float max = fill;
 
   // Detect minimum and maximum values
-  size_t l = irregularGridVar[0]->getSize();
-  for (size_t j = 0; j < l; j++) {
-    float v = ((float *)irregularGridVar[0]->data)[j];
-    if (v == v && v != fill) {
-      if (min == fill) min = v;
-      if (max == fill) max = v;
-      if (v < min) min = v;
-      if (v > max) max = v;
-    }
-  }
+  MinMax minMax = getMinMax(((float *)irregularGridVar[0]->data), dataObjects[0]->hasNodataValue, fill, irregularGridVar[0]->getSize());
+
 #ifdef CConvertLatLonGrid_DEBUG
   CDBDebug("Calculated min/max : %f %f", min, max);
 #endif
@@ -113,11 +103,11 @@ int CConvertLatLonGrid::convertLatLonGridData(CDataSource *dataSource, int mode)
 #endif
     if (dataSource->statistics == NULL) {
 #ifdef CConvertLatLonGrid_DEBUG
-      CDBDebug("Setting statistics: min/max : %f %f", min, max);
+      CDBDebug("Setting statistics: min/max : %f %f", minMax.min, minMax.max);
 #endif
       dataSource->statistics = new CDataSource::Statistics();
-      dataSource->statistics->setMaximum(max);
-      dataSource->statistics->setMinimum(min);
+      dataSource->statistics->setMaximum(minMax.max);
+      dataSource->statistics->setMinimum(minMax.min);
     }
   }
 

@@ -1,7 +1,6 @@
-**Version 2.19.0 2024-02-02**
+**Version 2.19.0 2024-02-14**
 - Support Irregular grids based on 1D lat/lon variables
 - Support Irregular grids based on 2D lat/lon variables
-- Data postprocessor to calculate WFP is added
 
 **Version 2.17.0 2024-02-14**
 - Colors in GetMap images now matches exactly the colors configured in the legend and style in png32 mode
