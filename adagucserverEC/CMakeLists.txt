@@ -158,6 +158,8 @@ add_library(
     CXMLSerializerInterface.h
     json.c
     json.h
+    LayerTypeLiveUpdate/LayerTypeLiveUpdate.cpp
+    LayerTypeLiveUpdate/LayerTypeLiveUpdate.h   
     testadagucserver.cpp
 )
 

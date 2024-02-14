@@ -36,6 +36,7 @@
 #define CConfigReaderLayerTypeStyled 2
 #define CConfigReaderLayerTypeCascaded 3
 #define CConfigReaderLayerTypeBaseLayer 4
+#define CConfigReaderLayerTypeLiveUpdate 6
 
 // CRequest
 // Service options
