@@ -1,6 +1,26 @@
 #include "CXMLGen.h"
 #include "CRequest.h"
 
+int CRequest::configureDimensionsForLiveUpdateLayer(CDataSource *dataSource) {
+  // This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.
+  CDBDebug("Addstep");
+  if (dataSource->requiredDims.size() < 1) {
+
+    COGCDims *requiredDim = new COGCDims();
+    requiredDim->isATimeDimension = true;
+    requiredDim->name = "time";
+    requiredDim->netCDFDimName = "time";
+    // Tbe following values need to be filled in and are updated during XML GetCapabilities generation
+    requiredDim->uniqueValues.push_back("2020-01-01T00:00:00Z");
+    requiredDim->uniqueValues.push_back("2020-01-02T00:00:00Z");
+    requiredDim->value = "2020-01-02T00:00:00Z";
+    dataSource->requiredDims.push_back(requiredDim);
+  }
+  dataSource->addStep("", NULL);
+  dataSource->getCDFDims()->addDimension("none", "0", 0);
+  return 0;
+}
+
 int CRequest::renderLayerTypeLiveUpdate(CDrawImage *image) {
   image->enableTransparency(true);
   image->setTrueColor(true);

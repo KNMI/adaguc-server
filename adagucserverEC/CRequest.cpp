@@ -1786,21 +1786,7 @@ int CRequest::process_all_layers() {
       // dataSources[j]->getCDFDims()->addDimension("none","0",0);
     }
     if (dataSources[j]->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
-      // This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.
-      CDBDebug("Addstep");
-      if (dataSources[j]->requiredDims.size() < 1) {
-
-        COGCDims *requiredDim = new COGCDims();
-        requiredDim->isATimeDimension = true;
-        requiredDim->name = "time";
-        requiredDim->netCDFDimName = "time";
-        requiredDim->uniqueValues.push_back("2020-01-01T00:00:00Z");
-        requiredDim->uniqueValues.push_back("2020-01-02T00:00:00Z");
-        requiredDim->value = "2020-01-02T00:00:00Z";
-        dataSources[j]->requiredDims.push_back(requiredDim);
-      }
-      dataSources[j]->addStep("", NULL);
-      dataSources[j]->getCDFDims()->addDimension("none", "0", 0);
+      configureDimensionsForLiveUpdateLayer(dataSources[j]);
     }
   }
 

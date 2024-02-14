@@ -173,6 +173,7 @@ private:
   int generateGetReferenceTimes(CDataSource *dataSource);
   int generateGetReferenceTimesDoc(CT::string *result, CDataSource *dataSource);
   int generateOGCDescribeCoverage(CT::string *XMLdocument);
+  int configureDimensionsForLiveUpdateLayer(CDataSource *dataSource);
   int renderLayerTypeLiveUpdate(CDrawImage *image);
 
 public:
