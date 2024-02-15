@@ -4,7 +4,8 @@
   <TempDir value="{ADAGUC_TMP}"/>
   <Path value="{ADAGUC_PATH}/data"/>
   <DataBase dbtype="sqlite" parameters="{ADAGUC_TMP}/adaguc.autoresource.db"/>
-  
+
+
   <!-- WMS settings -->
   <WMS>
     <Title>ADAGUC WMS Service</Title>
@@ -14,10 +15,10 @@
       <Abstract>Root Layer Abstract</Abstract>
     </RootLayer>
     <!-- PNG 8 bit requests are forced to 32 bit: better for antialiasing and combining layers with many colors -->
-    <WMSFormat name="image/png" format="image/png32"/> 
+    <WMSFormat name="image/png" format="image/png32"/>
   </WMS>
-  
-  
+
+
   <!-- WMS -->
   <Include location="{ADAGUC_PATH}/data/config/includes/WMS.include.xml"/>
 
@@ -32,7 +33,7 @@
 
   <!-- Projections -->
   <Include location="{ADAGUC_PATH}/data/config/includes/Projection.include.xml"/>
-           
+
   <!--Legends -->
   <Include location="{ADAGUC_PATH}/data/config/includes/DefaultStyles.include.xml"/>
 

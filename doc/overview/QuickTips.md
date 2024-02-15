@@ -18,6 +18,7 @@ cd /adaguc
 ${ADAGUC_PATH}/bin/adagucserver --updatedb --config ${ADAGUC_CONFIG},<optional datasetname>
 ```
 
+
 Now you can use all options as documented in [doc/info/Commandline.md](../../doc/info/Commandline.md)
 
 ## Listing files in your docker container
