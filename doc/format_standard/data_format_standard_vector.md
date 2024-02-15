@@ -2,7 +2,7 @@
 
 [Back](./README.md)
 
-[Script to generate NetCDF file](../../python/format_standard/format_standard/generate_example_file_vector_format.py)
+[Script to generate NetCDF file](../../python/format_standard/generate_example_file_vector_format.py)
 
 ## NetCDF file
 ``` 

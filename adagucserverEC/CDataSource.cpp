@@ -113,7 +113,7 @@ MinMax getMinMax(double *data, bool hasFillValue, double fillValue, size_t numEl
     }
   }
   if (minMax.isSet == false) {
-    throw __LINE__ + 100;
+    throw __LINE__;
   }
   return minMax;
 }
@@ -212,8 +212,7 @@ MinMax getMinMax(CDF::Variable *var) {
     }
 
   } else {
-    // CDBError("getMinMax: Variable has not been set");
-    throw __LINE__ + 100;
+    throw __LINE__;
   }
   return minMax;
 }
@@ -1425,4 +1424,32 @@ void CDataSource::detachCDFObject() {
     getDataObject(j)->cdfVariable = NULL;
     getDataObject(j)->cdfObject = NULL;
   }
+}
+
+int CDataSource::readVariableDataForCDFDims(CDF::Variable *variableToRead, CDFType dataTypeToReturnData) {
+  if (variableToRead == nullptr) {
+    CDBError("Variable is not defined");
+    return 1;
+  }
+  size_t numDimensionsForVariableToRead = variableToRead->dimensionlinks.size();
+  size_t start[numDimensionsForVariableToRead];
+  size_t count[numDimensionsForVariableToRead];
+  ptrdiff_t stride[numDimensionsForVariableToRead];
+  auto *cdfDims = this->getCDFDims();
+  for (size_t dimNr = 0; dimNr < numDimensionsForVariableToRead; dimNr += 1) {
+    auto *dimensionLink = variableToRead->dimensionlinks[dimNr];
+    size_t startCountIndex = dimNr;
+    start[startCountIndex] = 0;
+    stride[startCountIndex] = 1;
+    count[startCountIndex] = dimensionLink->getSize();
+    int cdfDimIndex = cdfDims->getArrayIndexForName(dimensionLink->name.c_str());
+    if (cdfDimIndex >= 0) {
+#ifdef CDATASOURCE_DEBUG
+      CDBDebug("Start %d/%d:%s %d:%s ==> %d", startCountIndex, dimNr, dimensionLink->name.c_str(), cdfDimIndex, cdfDims->getDimensionName(cdfDimIndex), cdfDims->getDimensionIndex(cdfDimIndex));
+#endif
+      start[startCountIndex] = cdfDims->getDimensionIndex(cdfDimIndex);
+      count[startCountIndex] = 1;
+    }
+  }
+  return variableToRead->readData(dataTypeToReturnData, start, count, stride, true);
 }

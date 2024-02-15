@@ -1,3 +1,7 @@
+**Version 2.19.0 2024-02-14**
+- Support Irregular grids based on 1D lat/lon variables
+- Support Irregular grids based on 2D lat/lon variables
+
 **Version 2.18.0 2024-02-14**
 - Support live update layer, displays a GetMap image with the current time per second for the last hour.
 
