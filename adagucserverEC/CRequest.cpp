@@ -37,6 +37,7 @@
 #include "CSLD.h"
 #include "CHandleMetadata.h"
 #include "CCreateTiles.h"
+#include "LayerTypeLiveUpdate/LayerTypeLiveUpdate.h"
 const char *CRequest::className = "CRequest";
 int CRequest::CGI = 0;
 
@@ -1786,13 +1787,17 @@ int CRequest::process_all_layers() {
       dataSources[j]->addStep("", NULL);
       // dataSources[j]->getCDFDims()->addDimension("none","0",0);
     }
+    if (dataSources[j]->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
+      layerTypeLiveUpdateConfigureDimensionsInDataSource(dataSources[j]);
+    }
   }
 
   // Try to find BBOX automatically, when not provided.
   if (srvParam->requestType == REQUEST_WMS_GETMAP) {
     if (srvParam->dFound_BBOX == 0) {
       for (size_t d = 0; d < dataSources.size(); d++) {
-        if (dataSources[d]->dLayerType != CConfigReaderLayerTypeCascaded && dataSources[d]->dLayerType != CConfigReaderLayerTypeBaseLayer) {
+        if (dataSources[d]->dLayerType != CConfigReaderLayerTypeCascaded && dataSources[d]->dLayerType != CConfigReaderLayerTypeBaseLayer &&
+            dataSources[d]->dLayerType != CConfigReaderLayerTypeLiveUpdate) {
           CImageWarper warper;
           CDataReader reader;
           status = reader.open(dataSources[d], CNETCDFREADER_MODE_OPEN_HEADER);
@@ -2266,6 +2271,12 @@ int CRequest::process_all_layers() {
       CDBError("Returning from line %d", i);
       return 1;
     }
+  } else if (dataSources[j]->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
+    // Render the current time in an image for testing purpose / frontend development
+    CDrawImage image;
+    layerTypeLiveUpdateRenderIntoDrawImage(&image, srvParam);
+    printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
+    image.printImagePng8(true);
   } else {
     CDBError("Unknown layer type");
   }
