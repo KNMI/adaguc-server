@@ -31,7 +31,6 @@
 
 #include "ProjCache.h"
 
-
 DEF_ERRORMAIN();
 
 FILE *pLogDebugFile = NULL;
@@ -46,11 +45,13 @@ void writeLogFile(const char *msg) {
     }
     fputs(msg, pLogDebugFile);
     if (strncmp(msg, "[D:", 3) == 0 || strncmp(msg, "[W:", 3) == 0 || strncmp(msg, "[E:", 3) == 0) {
-      time_t myTime = time(NULL);
-      tm *myUsableTime = localtime(&myTime);
       char szTemp[128];
-      snprintf(szTemp, 127, "%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ ", myUsableTime->tm_year + 1900, myUsableTime->tm_mon + 1, myUsableTime->tm_mday, myUsableTime->tm_hour, myUsableTime->tm_min,
-               myUsableTime->tm_sec);
+      struct timeval tv;
+      gettimeofday(&tv, NULL);
+      time_t curtime = tv.tv_sec;
+      tm *myUsableTime = localtime(&curtime);
+      snprintf(szTemp, 127, "%.4d-%.2d-%.2dT%.2d:%.2d:%.2d.%.3dZ ", myUsableTime->tm_year + 1900, myUsableTime->tm_mon + 1, myUsableTime->tm_mday, myUsableTime->tm_hour, myUsableTime->tm_min,
+               myUsableTime->tm_sec, int(tv.tv_usec / 1000));
       fputs(szTemp, pLogDebugFile);
     }
   }

@@ -35,7 +35,8 @@
             },
             "cStandard": "${default}",
             "cppStandard": "${default}",
-            "compilerPath": "${default}"
+            "compilerPath": "${default}",
+            "configurationProvider": "ms-vscode.cmake-tools"
         }
     ],
     "version": 4

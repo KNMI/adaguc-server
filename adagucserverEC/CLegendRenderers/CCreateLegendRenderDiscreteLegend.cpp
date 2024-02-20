@@ -16,8 +16,9 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
   size_t szTempLength = 256;
   char szTemp[szTempLength];
 
-  float fontSize = dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.size.toDouble();
-  const char *fontLocation = dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.location.c_str();
+  float fontSize;
+  std::string fontLocation;
+  std::tie(fontSize, fontLocation) = dataSource->srvParams->getLegendFont();
 
   CT::string textformatting;
 
@@ -161,7 +162,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
         }
 
         // legendImage->setText(szTemp,strlen(szTemp),int(cbW)+12+pLeft,cY2+pTop,248,-1);
-        legendImage->drawText(((int)cbW + 12 + pLeft) * scaling, (cY1 + pTop) - ((fontSize * scaling) / 4) + 3, fontLocation, fontSize * scaling, 0, szTemp, 248);
+        legendImage->drawText(((int)cbW + 12 + pLeft) * scaling, (cY1 + pTop) - ((fontSize * scaling) / 4) + 3, fontLocation.c_str(), fontSize * scaling, 0, szTemp, 248);
       }
     }
   }
@@ -260,7 +261,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
           if (textRounding == 5) snprintf(szTemp, szTempLength, "%2.6f - %2.6f", v, v + legendInterval);
           if (textRounding > 6) snprintf(szTemp, szTempLength, "%f - %f", v, v + legendInterval);
         }
-        legendImage->drawText(((int)cbW + 10 + pLeft) * scaling, (((boxLowerY)) + pTop) - fontSize * scaling / 4, fontLocation, fontSize * scaling, 0, szTemp, 248);
+        legendImage->drawText(((int)cbW + 10 + pLeft) * scaling, (((boxLowerY)) + pTop) - fontSize * scaling / 4 + 1, fontLocation.c_str(), fontSize * scaling, 0, szTemp, 248);
       }
     }
   }
@@ -274,7 +275,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
   if (dataSource->getDataObject(0)->getUnits().length() > 0) {
     units.concat(dataSource->getDataObject(0)->getUnits().c_str());
   }
-  if (units.length() > 0) legendImage->drawText((2 + pLeft) * scaling, int(legendHeight) - pTop - scaling * 2, fontLocation, fontSize * scaling, 0, units.c_str(), 248);
+  if (units.length() > 0) legendImage->drawText((2 + pLeft) * scaling, int(legendHeight) - pTop - scaling * 2, fontLocation.c_str(), fontSize * scaling, 0, units.c_str(), 248);
   // legendImage->crop(4,4);
   return 0;
 }
