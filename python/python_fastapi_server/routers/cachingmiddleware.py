@@ -60,6 +60,7 @@ class CachingMiddleware(BaseHTTPMiddleware):
         if "ADAGUC_REDIS" in os.environ:
             self.shortcut=False
             self.redis = None
+        self.shortcut = True #TODO
 
     async def dispatch(self, request, call_next):
         if self.redis is None:

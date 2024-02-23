@@ -9,6 +9,12 @@ import tempfile
 import shutil
 import random
 import string
+from redis import from_url
+
+import re
+import calendar
+import json
+from datetime import datetime, timedelta
 
 from adaguc.CGIRunner import CGIRunner
 
@@ -34,6 +40,13 @@ class runAdaguc:
         self.ADAGUC_TMP = os.getenv("ADAGUC_TMP", "/tmp")
         self.ADAGUC_FONT = os.getenv(
             "ADAGUC_FONT", self.ADAGUC_PATH + "/data/fonts/Roboto-Medium.ttf")
+        self.ADAGUC_REDIS = os.getenv("ADAGUC_REDIS", "")
+        if self.ADAGUC_REDIS.startswith("redis://") or self.ADAGUC_REDIS.startswith("rediss://"):
+            self.redis_url = self.ADAGUC_REDIS
+            self.use_cache = True
+            print("USE CACHE")
+        else:
+            self.use_cache = False
 
     def setAdagucPath(self, newAdagucPath):
         self.ADAGUC_PATH = newAdagucPath
@@ -142,6 +155,7 @@ class runAdaguc:
         # adagucenv=os.environ.copy()
         # adagucenv.update(env)
 
+        url = re.sub(r"^(.*)(&[0-9\.]*)$", r"\g<1>&1", url)
         adagucenv = env
 
         adagucenv["ADAGUC_ENABLELOGBUFFER"] = os.getenv(
@@ -180,6 +194,16 @@ class runAdaguc:
         if args is not None:
             adagucargs = adagucargs + args
 
+        # Check cache for entry with keys of (url,adagucargs) if configured
+        if self.use_cache:
+            cache_key = str((url, adagucargs))
+            print(f"Checking cache for {cache_key}")
+            redis = from_url(self.ADAGUC_REDIS)
+            age, headers, data = get_cached_response(redis, cache_key)
+            if age is not None:
+               return [0, data, headers]
+
+        print(f"Generating {cache_key}")
         filetogenerate = BytesIO()
         status, headers, processErr = CGIRunner().run(
             adagucargs,
@@ -213,6 +237,10 @@ class runAdaguc:
             return [status, filetogenerate, headers]
 
         else:
+            if self.use_cache:
+                print(f"CACHING {cache_key}")
+                cache_response(redis, cache_key, headers, filetogenerate, 60)
+            print("HEADERS:", headers)
             return [status, filetogenerate, headers]
 
     def writetofile(self, filename, data):
@@ -236,3 +264,47 @@ class runAdaguc:
     def mkdir_p(self, directory):
         if not os.path.exists(directory):
             os.makedirs(directory)
+
+skip_headers = ["x-process-time", "age"]
+def cache_response(redis_client, key, headers:str, data, ex: int=60):
+    allheaders=[]
+    expire = ex
+    for header in headers:
+        k,v = header.split(":")
+        if k not in skip_headers:
+            allheaders.append(header)
+        if k.lower().startswith("cache-control"):
+            for term in v.split(";"):
+                if term.startswith("max-age"):
+                    try:
+                        expire = int(term.split('=')[1])
+                        if expire==0:
+                            expire=ex
+                    except:
+                        expire=ex
+
+    allheaders_json=json.dumps(allheaders)
+
+    entrytime="%10d"%calendar.timegm(datetime.utcnow().utctimetuple())
+    redis_client.set(key, bytes(entrytime, 'utf-8')+bytes("%06d"%len(allheaders_json), 'utf-8')+bytes(allheaders_json, 'utf-8')+data.getvalue(), ex=expire)
+    redis_client.close()
+
+def get_cached_response(redis_client, key):
+    cached = redis_client.get(key)
+    redis_client.close()
+    if not cached:
+        print("Cache miss")
+        return None, None, None
+    print("Cache hit", len(cached))
+
+    entrytime=int(cached[:10])
+    currenttime=calendar.timegm(datetime.utcnow().utctimetuple())
+    age=currenttime-entrytime
+
+    headers_len=int(cached[10:16])
+    headers=json.loads(cached[16:16+headers_len])
+    headers.append(f"Age: {age}")
+
+    data = cached[16+headers_len:]
+    print("HIT: ", type(data))
+    return age, headers, BytesIO(data)
