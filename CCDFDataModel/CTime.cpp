@@ -913,9 +913,10 @@ double CTime::quantizeTimeToISO8601(double offsetOrig, CT::string period, CT::st
       date.hour = origH - restH;
       offsetLow = thisTime->dateToOffset(date);
       if (restH > 0) {
-        date.hour = date.hour + restH;
+        offsetHigh = offsetLow + H * 3600;
+      } else {
+        offsetHigh = offsetLow;
       }
-      offsetHigh = thisTime->dateToOffset(date);
     } else if (hmsPart.indexOf("M") != -1) { // 5M
       hmsPart.replaceSelf("M", "");
       int M = hmsPart.toInt();
@@ -925,9 +926,12 @@ double CTime::quantizeTimeToISO8601(double offsetOrig, CT::string period, CT::st
       date.minute = origM - restM;
       offsetLow = thisTime->dateToOffset(date);
       if (restM > 0) {
-        date.minute = date.minute + M;
+        // date.minute = date.minute + M;
+        offsetHigh = offsetLow + 60 * M;
+      } else {
+        offsetHigh = offsetLow;
       }
-      offsetHigh = thisTime->dateToOffset(date);
+      // offsetHigh = thisTime->dateToOffset(date);
     } else if (hmsPart.indexOf("S") != -1) { // 30S
       hmsPart.replaceSelf("S", "");
       int S = hmsPart.toInt();
@@ -937,8 +941,10 @@ double CTime::quantizeTimeToISO8601(double offsetOrig, CT::string period, CT::st
       offsetLow = thisTime->dateToOffset(date);
       if (restS > 0) {
         date.second = origS + restS;
+        offsetHigh = offsetLow + S;
+      } else {
+        offsetHigh = offsetLow;
       }
-      offsetHigh = thisTime->dateToOffset(date);
     }
 
   } else { // Contains YMD
