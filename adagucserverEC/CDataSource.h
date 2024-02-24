@@ -279,6 +279,7 @@ public:
   int dNetCDFNumDims;
   int dLayerType;
   CT::string layerName;
+  CT::string layerTitle;
 
   //
   bool queryBBOX; // True: query on viewport
@@ -327,6 +328,7 @@ public:
   CCDFDims *getCDFDims();
   int getNumTimeSteps();
   const char *getLayerName();
+  const char *getLayerTitle();
 
   int attachCDFObject(CDFObject *cdfObject);
   void detachCDFObject();
@@ -363,6 +365,14 @@ public:
    * Returns the amount of need image map scaling for elements lice contours. This can be the case if the scalecontours property in the RenderSettings is set
    */
   double getContourScaling();
+
+  /**
+   * Reads a variable with requested type according dimensions indices set in the DataSource CDFDims object
+   * @param CDF::Variable *variableToRead: The variable to read. Can be the one from the datasource itself
+   * @param CDFType dataTypeToReturnData Type to read
+   * @return 0 on succes, 1 on failure
+   */
+  int readVariableDataForCDFDims(CDF::Variable *variableToRead, CDFType dataTypeToReturnData);
 };
 
 #endif

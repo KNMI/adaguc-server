@@ -34,7 +34,7 @@ CDBAdapter *CDBFactory::getDBAdapter(CServerConfig::XMLE_Configuration *cfg) {
   if (staticCDBAdapter == NULL) {
     if (cfg->DataBase.size() != 1) {
       CDBError("DataBase not properly configured");
-      return NULL;
+      exit(1);
     }
     if (cfg->DataBase[0]->attr.dbtype.equals("sqlite")) {
       CDBDebug("Using sqlite");
@@ -44,12 +44,8 @@ CDBAdapter *CDBFactory::getDBAdapter(CServerConfig::XMLE_Configuration *cfg) {
       CDBError("SQLITE is not compiled for ADAGUC, not available!");
 #endif
     } else {
-// CDBDebug("Using postgresql");
-#ifdef ADAGUC_USE_POSTGRESQL
+      // CDBDebug("Using postgresql");
       staticCDBAdapter = new CDBAdapterPostgreSQL();
-#else
-      CDBError("POSTGRESQL is not compiled for ADAGUC, not available!");
-#endif
     }
 
     staticCDBAdapter->setConfig(cfg);

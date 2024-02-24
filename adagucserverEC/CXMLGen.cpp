@@ -29,6 +29,7 @@
 #include <string>
 #include "CXMLGen.h"
 #include "CDBFactory.h"
+#include "LayerTypeLiveUpdate/LayerTypeLiveUpdate.h"
 // #define CXMLGEN_DEBUG
 
 const char *CFile::className = "CFile";
@@ -184,6 +185,13 @@ int CXMLGen::getDataSourceForLayer(WMSLayer *myWMSLayer) {
     }
     return 0;
   }
+  // This a liveupdate layer
+  if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
+#ifdef CXMLGEN_DEBUG
+    CDBDebug("Live update layer");
+#endif
+    return layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(myWMSLayer);
+  }
   if (myWMSLayer->fileName.empty()) {
     CDBError("No file name specified for layer %s", myWMSLayer->dataSource->layerName.c_str());
     return 1;
@@ -247,6 +255,12 @@ int CXMLGen::getProjectionInformationForLayer(WMSLayer *myWMSLayer) {
   CDBDebug("getProjectionInformationForLayer");
 #endif
   if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded) {
+    if (myWMSLayer->dataSource->cfgLayer->LatLonBox.size() == 0) {
+      return 0;
+    }
+  }
+
+  if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
     if (myWMSLayer->dataSource->cfgLayer->LatLonBox.size() == 0) {
       return 0;
     }
@@ -716,6 +730,9 @@ int CXMLGen::getDimsForLayer(WMSLayer *myWMSLayer) {
 
 int CXMLGen::getStylesForLayer(WMSLayer *myWMSLayer) {
   if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded) {
+    return 0;
+  }
+  if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
     return 0;
   }
 
@@ -1735,7 +1752,7 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam, CT::string *XMLDocumen
             if (status != 0) myWMSLayer->hasError = 1;
           }
 
-          if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded) {
+          if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded || myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
             myWMSLayer->isQuerable = 0;
             if (srvParam->serviceType == SERVICE_WCS) {
               myWMSLayer->hasError = true;
@@ -1756,7 +1773,7 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam, CT::string *XMLDocumen
           // Auto configure styles
           if (myWMSLayer->hasError == false) {
             if (myWMSLayer->dataSource->cfgLayer->Styles.size() == 0) {
-              if (myWMSLayer->dataSource->dLayerType != CConfigReaderLayerTypeCascaded) {
+              if (myWMSLayer->dataSource->dLayerType != CConfigReaderLayerTypeCascaded && myWMSLayer->dataSource->dLayerType != CConfigReaderLayerTypeLiveUpdate) {
 #ifdef CXMLGEN_DEBUG
                 CDBDebug("cfgLayer->attr.type  %d", myWMSLayer->dataSource->dLayerType);
 #endif

@@ -24,7 +24,6 @@
  ******************************************************************************/
 #include "CDBAdapterPostgreSQL.h"
 
-#ifdef ADAGUC_USE_POSTGRESQL
 #include <set>
 #include "CDebugger.h"
 
@@ -257,9 +256,6 @@ CDBStore::Store *CDBAdapterPostgreSQL::getClosestDataTimeToSystemTime(const char
 };
 
 CDBStore::Store *CDBAdapterPostgreSQL::getFilesForIndices(CDataSource *dataSource, size_t *start, size_t *count, ptrdiff_t *, int) {
-#ifdef MEASURETIME
-  StopWatch_Stop(">CDBAdapterPostgreSQL::getFilesForIndices");
-#endif
 #ifdef CDBAdapterPostgreSQL_DEBUG
   CDBDebug("getFilesForIndices");
 #endif
@@ -1135,5 +1131,3 @@ int CDBAdapterPostgreSQL::addFilesToDataBase() {
 #endif
   return 0;
 }
-
-#endif

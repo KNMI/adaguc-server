@@ -36,6 +36,7 @@ const char *CDFObjectStore::className = "CDFObjectStore";
 #include "CConvertGeoJSON.h"
 #include "CConvertEProfile.h"
 #include "CConvertTROPOMI.h"
+#include "CConvertLatLonGrid.h"
 #include "CConvertLatLonBnds.h"
 #include "CDataReader.h"
 #include "CCDFCSVReader.h"
@@ -425,6 +426,11 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
 
     if (!formatConverterActive)
       if (CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(cdfObject, srvParams) == 0) {
+        formatConverterActive = true;
+      };
+
+    if (!formatConverterActive)
+      if (CConvertLatLonGrid::convertLatLonGridHeader(cdfObject, srvParams) == 0) {
         formatConverterActive = true;
       };
   }

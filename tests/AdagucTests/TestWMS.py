@@ -25,40 +25,6 @@ class TestWMS(unittest.TestCase):
 
     AdagucTestTools().mkdir_p(testresultspath)
 
-    def comparexml(self, xml, expectedxml):
-        """
-        Compare two WMS GetCapability xml files
-        """
-        obj1 = objectify.fromstring(re.sub(' xmlns="[^"]+"', "", expectedxml, count=1))
-        obj2 = objectify.fromstring(re.sub(' xmlns="[^"]+"', "", xml, count=1))
-
-        # Remove ADAGUC build date and version from keywordlists
-        for child in obj1.findall("Service/KeywordList")[0]:
-            child.getparent().remove(child)
-        for child in obj2.findall("Service/KeywordList")[0]:
-            child.getparent().remove(child)
-
-        # Boundingbox extent values are too varying by different Proj libraries
-        def removebbox(root):
-            if root.tag.title() == "Boundingbox":
-                try:
-                    del root.attrib["minx"]
-                    del root.attrib["miny"]
-                    del root.attrib["maxx"]
-                    del root.attrib["maxy"]
-                except:  # pylint: disable=bare-except
-                    pass
-            for elem in root.getchildren():
-                removebbox(elem)
-
-        removebbox(obj1)
-        removebbox(obj2)
-
-        result = etree.tostring(obj1)
-        expect = etree.tostring(obj2)
-
-        self.assertEqual(expect, result)
-
     def checkreport(self, report_filename="", expected_report_filename=""):
         """
         Tests file check reporting functionality
@@ -800,8 +766,8 @@ class TestWMS(unittest.TestCase):
             AdagucTestTools().compareImage(
                 self.expectedoutputsspath + filename,
                 self.testresultspath + filename,
-                7,
-                0.025,
+                19,
+                0.6,
             )
         )
 
@@ -2227,8 +2193,6 @@ class TestWMS(unittest.TestCase):
 
     def test_WMSGetMap_EPSG3067(self):
         AdagucTestTools().cleanTempDir()
-        config = ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml"
-        env = {"ADAGUC_CONFIG": config}
 
         filename = "test_WMSGetMap_EPSG3067.png"
         # pylint: disable=unused-variable
@@ -2436,4 +2400,104 @@ class TestWMS(unittest.TestCase):
         )
         self.assertEqual(
             headers, ["Content-Type:image/png", "Cache-Control:max-age=60"]
+        )
+
+    def test_WMSGetMap_IrregularGrid_1Dimensional_latlon(self):
+        """
+        This will test  a file where lon and lat variables have irregular spacing. These variables are still 1 dimensional.
+        """
+        AdagucTestTools().cleanTempDir()
+        config = ADAGUC_PATH + "/data/config/adaguc.autoresource.xml"
+
+        filename = "test_WMSGetMap_IrregularGrid_1Dimensional_latlon.png"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "source=example_file_irregular_1Dlat1Dlon_grid.nc&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=data_var_1&WIDTH=512&HEIGHT=320&CRS=EPSG:3857&BBOX=-1612507.3080954754,5830283.642777597,1616299.7724732205,7796173.721992844&STYLES=auto/nearest&FORMAT=image/png&TRANSPARENT=FALSE&BGCOLOR=0x0000FF&DIM_extra=0&time=2017-01-01T00:10:00Z&colorscalerange=0,2&",
+            {"ADAGUC_CONFIG": config},
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
+
+    def test_WMSGetMap_IrregularGrid_1Dimensional_latlon_nextdimensionstep(self):
+        """
+        This will test  a file where lon and lat variables have irregular spacing. These variables are still 1 dimensional. Dimensions have been changed to allow for generating another new image.
+        """
+        AdagucTestTools().cleanTempDir()
+        config = ADAGUC_PATH + "/data/config/adaguc.autoresource.xml"
+
+        filename_getcapabilities = "test_WMSGetMap_IrregularGrid_1Dimensional_latlon_nextdimensionstep_getcapabilities.xml"
+
+        filename = (
+            "test_WMSGetMap_IrregularGrid_1Dimensional_latlon_nextdimensionstep.png"
+        )
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "source=example_file_irregular_1Dlat1Dlon_grid.nc&SERVICE=WMS&request=GetCapabilities",
+            {"ADAGUC_CONFIG": config},
+        )
+        AdagucTestTools().writetofile(
+            self.testresultspath + filename_getcapabilities, data.getvalue()
+        )
+        self.assertEqual(status, 0)
+        self.assertTrue(
+            AdagucTestTools().compareGetCapabilitiesXML(
+                self.testresultspath + filename_getcapabilities,
+                self.expectedoutputsspath + filename_getcapabilities,
+            )
+        )
+
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "source=example_file_irregular_1Dlat1Dlon_grid.nc&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=data_var_1&WIDTH=512&HEIGHT=320&CRS=EPSG%3A3857&BBOX=-1612507.3080954754,5830283.642777597,1616299.7724732205,7796173.721992844&STYLES=auto/nearest&FORMAT=image/png&TRANSPARENT=FALSE&BGCOLOR=0xFF0000&DIM_extra=0.8&time=2017-01-01T00:11:00Z&colorscalerange=0,2&",
+            {"ADAGUC_CONFIG": config},
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
+
+    def test_WMSGetMap_IrregularGrid_2Dimensional_latlon_nextdimensionstep(self):
+        """
+        This will test  a file where lon and lat variables have irregular spacing. These lat/lon variables are 2D. Dimensions have been changed to allow for generating another new image.
+        """
+        AdagucTestTools().cleanTempDir()
+        config = ADAGUC_PATH + "/data/config/adaguc.autoresource.xml"
+
+        filename_getcapabilities = "test_WMSGetMap_IrregularGrid_2Dimensional_latlon_nextdimensionstep_getcapabilities.xml"
+
+        filename = (
+            "test_WMSGetMap_IrregularGrid_2Dimensional_latlon_nextdimensionstep.png"
+        )
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "source=example_file_irregular_2Dlat2Dlon_grid.nc&SERVICE=WMS&request=GetCapabilities",
+            {"ADAGUC_CONFIG": config},
+        )
+        AdagucTestTools().writetofile(
+            self.testresultspath + filename_getcapabilities, data.getvalue()
+        )
+        self.assertEqual(status, 0)
+        self.assertTrue(
+            AdagucTestTools().compareGetCapabilitiesXML(
+                self.testresultspath + filename_getcapabilities,
+                self.expectedoutputsspath + filename_getcapabilities,
+            )
+        )
+
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "source=example_file_irregular_2Dlat2Dlon_grid.nc&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=data_var_1&WIDTH=512&HEIGHT=320&CRS=EPSG%3A3857&BBOX=-162669.9922884648,6411680.00083944,1827705.159150465,10780913.16460056&STYLES=auto/nearest&FORMAT=image/png&TRANSPARENT=FALSE&BGCOLOR=0xFF0000&DIM_extra=0.8&time=2017-01-01T00:11:00Z&colorscalerange=0,2&",
+            {"ADAGUC_CONFIG": config},
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )

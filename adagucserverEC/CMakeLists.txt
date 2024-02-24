@@ -43,6 +43,10 @@ add_library(
     CConvertKNMIH5EchoToppen.h
     CConvertKNMIH5VolScan.cpp
     CConvertKNMIH5VolScan.h
+    CConvertLatLonGrid.h
+    CConvertLatLonGrid.cpp
+    CConvertLatLonGridHeader.cpp
+    CConvertLatLonGridData.cpp
     CConvertTROPOMI.cpp
     CConvertTROPOMI.h
     CConvertUGRIDMesh.cpp
@@ -75,6 +79,8 @@ add_library(
     CDataPostProcessors/CDataPostProcessor_IncludeLayer.h
     CDataPostProcessors/CDataPostProcessor_Operator.cpp
     CDataPostProcessors/CDataPostProcessor_Operator.h
+    CDataPostProcessors/CDataPostProcessor_WFP.h
+    CDataPostProcessors/CDataPostProcessor_WFP.cpp
     CDataReader.cpp
     CDataReader.h
     CDataSource.cpp
@@ -156,6 +162,8 @@ add_library(
     CXMLSerializerInterface.h
     json.c
     json.h
+    LayerTypeLiveUpdate/LayerTypeLiveUpdate.cpp
+    LayerTypeLiveUpdate/LayerTypeLiveUpdate.h   
     testadagucserver.cpp
 )
 

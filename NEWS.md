@@ -1,3 +1,24 @@
+**Version 2.20.0 2024-02-15**
+- Data postprocessor to calculate WFP is added
+
+**Version 2.19.0 2024-02-14**
+- Support Irregular grids based on 1D lat/lon variables
+- Support Irregular grids based on 2D lat/lon variables
+
+**Version 2.18.0 2024-02-14**
+- Support live update layer, displays a GetMap image with the current time per second for the last hour.
+
+**Version 2.17.0 2024-02-14**
+- Colors in GetMap images now matches exactly the colors configured in the legend and style in png32 mode
+- CSV reader is more flexible
+- Sub configuration files (via include) can now substitute variables as well
+
+**Version 2.15.1 2024-01-22**
+- Support time/height profile data from https://dataplatform.knmi.nl/dataset/ceilonet-chm15k-backsct-la1-t12s-v1-0
+
+**Version 2.15.0 2024-01-29**
+- PostgreSQL queries have been optimized
+
 **Version 2.14.3 2024-01-19**
 - Opendap services are accessible again in the Layer configuration: https://github.com/KNMI/adaguc-server/issues/315
 

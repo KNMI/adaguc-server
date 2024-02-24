@@ -20,6 +20,7 @@ This file is available in the adaguc-server repository with location `data/datas
 
 ## Step 2: Configure a dataset for this datafile, including EDR support
 
+Create the following file at the filepath `$ADAGUC_DATASET_DIR/edr.xml`. You can also consider changing `<FilePath>` to `/data/adaguc-data/*.nc`.
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>

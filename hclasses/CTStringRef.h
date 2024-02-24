@@ -33,7 +33,7 @@ namespace CT {
   /**
    * Read only class of string
    */
-  class stringref : public basetype {
+  class stringref {
   private:
     void init();
 

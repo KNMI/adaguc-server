@@ -23,7 +23,6 @@
  *
  ******************************************************************************/
 
-#ifdef ADAGUC_USE_POSTGRESQL
 #include "CDBAdapter.h"
 #include "CDebugger.h"
 #include "CPGSQLDB.h"
@@ -76,4 +75,3 @@ public:
   int setFileTimeStamp(const char *tablename, const char *file, const char *dimvalue, int dimindex, const char *filedate, GeoOptions *geoOptions);
   int addFilesToDataBase();
 };
-#endif
