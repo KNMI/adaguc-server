@@ -47,6 +47,10 @@ add_library(
     CConvertLatLonGrid.cpp
     CConvertLatLonGridHeader.cpp
     CConvertLatLonGridData.cpp
+    CConvertLatLonBnds.h
+    CConvertLatLonBnds.cpp
+    CConvertLatLonBndsHeader.cpp
+    CConvertLatLonBndsData.cpp
     CConvertTROPOMI.cpp
     CConvertTROPOMI.h
     CConvertUGRIDMesh.cpp
@@ -163,7 +167,7 @@ add_library(
     json.c
     json.h
     LayerTypeLiveUpdate/LayerTypeLiveUpdate.cpp
-    LayerTypeLiveUpdate/LayerTypeLiveUpdate.h   
+    LayerTypeLiveUpdate/LayerTypeLiveUpdate.h
     testadagucserver.cpp
 )
 

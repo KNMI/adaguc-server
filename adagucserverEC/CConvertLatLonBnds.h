@@ -32,7 +32,7 @@ private:
   /**
    * returns 0 on success.
    */
-  static int isThisLatLonBndsData(CDFObject *cdfObject);
+  static bool isThisLatLonBndsData(CDFObject *cdfObject);
 
 public:
   static int convertLatLonBndsHeader(CDFObject *cdfObject, CServerParams *srvParams);

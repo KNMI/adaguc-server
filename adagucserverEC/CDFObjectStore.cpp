@@ -422,6 +422,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
     if (!formatConverterActive)
       if (CConvertLatLonBnds::convertLatLonBndsHeader(cdfObject, srvParams) == 0) {
         formatConverterActive = true;
+        CDBDebug("LatLonBnds found!");
       };
 
     if (!formatConverterActive)

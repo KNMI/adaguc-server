@@ -45,7 +45,7 @@
 #include "CDBFileScanner.h"
 const char *CDataReader::className = "CDataReader";
 
-// #define CDATAREADER_DEBUG
+#define CDATAREADER_DEBUG
 // #define MEASURETIME
 
 #define uchar unsigned char
@@ -385,9 +385,9 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
   if (!dataSource->formatConverterActive)
     if (CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(dataSource, mode) == 0) dataSource->formatConverterActive = true;
   if (!dataSource->formatConverterActive)
-    if (CConvertLatLonGrid::convertLatLonGridData(dataSource, mode) == 0) dataSource->formatConverterActive = true;
-  if (!dataSource->formatConverterActive)
     if (CConvertLatLonBnds::convertLatLonBndsData(dataSource, mode) == 0) dataSource->formatConverterActive = true;
+  if (!dataSource->formatConverterActive)
+    if (CConvertLatLonGrid::convertLatLonGridData(dataSource, mode) == 0) dataSource->formatConverterActive = true;
 
   CDF::Variable *dataSourceVar = dataSource->getDataObject(0)->cdfVariable;
   CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
