@@ -6,7 +6,7 @@ USER root
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
-LABEL version="2.20.0"
+LABEL version="2.20.1"
 
 # Try to update image packages
 RUN apt-get -q -y update \
@@ -134,7 +134,7 @@ RUN bash -c "python3 /adaguc/adaguc-server-master/python/examples/runautowms/run
 WORKDIR /adaguc/adaguc-server-master
 
 # This checks if the test stage has ran without issues.
-COPY --from=test /adaguc/adaguc-server-master/testsdone.txt /adaguc/adaguc-server-master/testsdone.txt 
+COPY --from=test /adaguc/adaguc-server-master/testsdone.txt /adaguc/adaguc-server-master/testsdone.txt
 
 USER adaguc
 
