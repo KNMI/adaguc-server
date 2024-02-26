@@ -926,12 +926,10 @@ double CTime::quantizeTimeToISO8601(double offsetOrig, CT::string period, CT::st
       date.minute = origM - restM;
       offsetLow = thisTime->dateToOffset(date);
       if (restM > 0) {
-        // date.minute = date.minute + M;
         offsetHigh = offsetLow + 60 * M;
       } else {
         offsetHigh = offsetLow;
       }
-      // offsetHigh = thisTime->dateToOffset(date);
     } else if (hmsPart.indexOf("S") != -1) { // 30S
       hmsPart.replaceSelf("S", "");
       int S = hmsPart.toInt();
