@@ -211,11 +211,11 @@ class AdagucTestTools:
                     map(lambda e, g: e - g, expected_color, returned_color))
 
                 if expected_color != returned_color:
-                    print(
-                        f"Warning: pixel {c} has different color, (expected, actual, diff) = "
-                        f"{expected_color} \t{returned_color} \t{diff_color}",
-                        flush=True,
-                    )
+                    # print(
+                    #     f"Warning: pixel {c} has different color, (expected, actual, diff) = "
+                    #     f"{expected_color} \t{returned_color} \t{diff_color}",
+                    #     flush=True,
+                    # )
                     count_pixels_with_color_difference += 1
                     abs_color_diff = tuple(abs(d) for d in diff_color)
                     if max(abs_color_diff) > max_color_difference_value:

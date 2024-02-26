@@ -5,6 +5,7 @@
 
 import sys
 from subprocess import PIPE, Popen, STDOUT, TimeoutExpired
+import resource
 from threading import Thread
 import os
 import io
@@ -22,6 +23,10 @@ class CGIRunner:
       Run the CGI script with specified URL and environment. Stdout is captured and put in a BytesIO object provided in output
     """
 
+    real_time_total = 0.0
+    user_time_total = 0.0
+    system_time_total = 0.0
+
     def run(self, cmds, url, output, env=[],  path=None, isCGI=True, timeout=300):
         localenv = {}
         if url != None:
@@ -36,6 +41,8 @@ class CGIRunner:
 
         # Execute adaguc-server binary
         ON_POSIX = 'posix' in sys.builtin_module_names
+        usage_start = resource.getrusage(resource.RUSAGE_CHILDREN)
+        perf_timer_start = time.perf_counter()
         process = Popen(cmds, stdout=PIPE, stderr=PIPE, env=localenv, close_fds=ON_POSIX)
         
         try:
@@ -47,6 +54,16 @@ class CGIRunner:
             return 1, [], None
 
         status = process.wait()
+
+        usage_end = resource.getrusage(resource.RUSAGE_CHILDREN)
+        perf_timer_end = time.perf_counter()
+
+        real_time = perf_timer_end - perf_timer_start
+        user_time = usage_end.ru_utime - usage_start.ru_utime
+        system_time = usage_end.ru_stime - usage_start.ru_stime
+        CGIRunner.real_time_total += real_time
+        CGIRunner.user_time_total += user_time
+        CGIRunner.system_time_total += system_time
 
         # Split headers from body using a regex
         headersEndAt = -2

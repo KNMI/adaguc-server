@@ -20,6 +20,7 @@ from AdagucTests.TestWMSVolScan import TestWMSVolScan
 from AdagucTests.TestWMSPolylineLabel import TestWMSPolylineLabel
 from AdagucTests.TestDataPostProcessor import TestDataPostProcessor
 from AdagucTests.TestWMSTimeHeightProfiles import TestWMSTimeHeightProfiles
+from adaguc.CGIRunner import CGIRunner
 
 suites = []
 TestLoader = unittest.TestLoader
@@ -40,5 +41,7 @@ suites.append(TestLoader().loadTestsFromTestCase(TestDataPostProcessor))
 suites.append(TestLoader().loadTestsFromTestCase(TestWMSTimeHeightProfiles))
 result = unittest.TextTestRunner(verbosity=2).run(unittest.TestSuite(suites))
 
+print("Adaguc backend total runtime:")
+print(f"real: {CGIRunner.real_time_total}, user: {CGIRunner.user_time_total}, system: {CGIRunner.system_time_total}")
 
 sys.exit(not result.wasSuccessful())
