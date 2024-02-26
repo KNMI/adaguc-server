@@ -657,7 +657,7 @@ def get_ttl_from_adaguc_call(headers):
             break
     return ttl
 
-@cached(cache=edr_cache, key=partial(hashkey, "get_capabilities"))
+# @cached(cache=edr_cache, key=partial(hashkey, "get_capabilities"))
 def get_capabilities(collname):
     """
     Get the collectioninfo from the WMS GetCapabilities

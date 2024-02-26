@@ -22,7 +22,6 @@ from routers.ogcapi import ogcApiApp
 from routers.opendap import opendapRouter
 from routers.wmswcs import testadaguc, wmsWcsRouter
 from routers.cachingmiddleware import CachingMiddleware
-# from routers.cachingmiddleware2 import CachingMiddleware2
 
 logger = logging.getLogger(__name__)
 

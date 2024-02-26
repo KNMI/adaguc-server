@@ -142,6 +142,13 @@ class runAdaguc:
         print(self.getLogFile())
         print("=== END ADAGUC LOGS ===")
 
+    def cache_wanted(self, url: str):
+        if not self.use_cache:
+            return False
+        if "getcapabilities" in url.lower():
+            return True
+        return False
+
     def runADAGUCServer(
         self,
         url=None,
@@ -195,7 +202,7 @@ class runAdaguc:
             adagucargs = adagucargs + args
 
         # Check cache for entry with keys of (url,adagucargs) if configured
-        if self.use_cache:
+        if self.cache_wanted(url):
             cache_key = str((url, adagucargs))
             print(f"Checking cache for {cache_key}")
             redis = from_url(self.ADAGUC_REDIS)
@@ -203,7 +210,8 @@ class runAdaguc:
             if age is not None:
                return [0, data, headers]
 
-        print(f"Generating {cache_key}")
+            print(f"Generating {cache_key}")
+
         filetogenerate = BytesIO()
         status, headers, processErr = CGIRunner().run(
             adagucargs,
@@ -237,7 +245,7 @@ class runAdaguc:
             return [status, filetogenerate, headers]
 
         else:
-            if self.use_cache:
+            if self.cache_wanted(url):
                 print(f"CACHING {cache_key}")
                 cache_response(redis, cache_key, headers, filetogenerate, 60)
             print("HEADERS:", headers)
