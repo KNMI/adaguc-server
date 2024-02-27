@@ -1569,7 +1569,7 @@ class TestWMS(unittest.TestCase):
 
         filename = "testWMSGetCapabilities_quantizehigh.xml"
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "DATASET=adaguc.tests.quantizelow&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities",
+            "DATASET=adaguc.tests.quantizehigh&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities",
             env=env,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
