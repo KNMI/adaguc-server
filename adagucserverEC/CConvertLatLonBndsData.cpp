@@ -203,9 +203,9 @@ int CConvertLatLonBnds::convertLatLonBndsData(CDataSource *dataSource, int mode)
     bool projectionRequired = false;
     if (dataSource->srvParams->Geo->CRS.length() > 0) {
       projectionRequired = true;
-      //   for (size_t d = 0; d < nrDataObjects; d++) {
-      //     destRegularGrid[d]->setAttributeText("grid_mapping", "customgridprojection");
-      //   }
+      for (size_t d = 0; d < nrDataObjects; d++) {
+        destRegularGrid[d]->setAttributeText("grid_mapping", "customgridprojection");
+      }
       if (cdfObject->getVariableNE("customgridprojection") == NULL) {
         CDF::Variable *projectionVar = new CDF::Variable();
         projectionVar->name.copy("customgridprojection");
@@ -218,6 +218,7 @@ int CConvertLatLonBnds::convertLatLonBndsData(CDataSource *dataSource, int mode)
           projectionRequired = false;
         }
         projectionVar->setAttributeText("proj4_params", dataSource->nativeProj4.c_str());
+        CDBDebug("projection created");
       }
     }
     if (projectionRequired) {
@@ -242,7 +243,7 @@ int CConvertLatLonBnds::convertLatLonBndsData(CDataSource *dataSource, int mode)
 #ifdef CConvertLatLonBnds_DEBUG
     CDBDebug("Start projecting numRows %d numCells %d", numY, numX);
 #endif
-    size_t num = numY * numX;
+    size_t num = numY * 4;
 
     proj_trans_generic(imageWarper.projLatlonToDest, PJ_FWD, lonData, sizeof(double), num, latData, sizeof(double), num, nullptr, 0, 0, nullptr, 0, 0);
 #ifdef CConvertLatLonBnds_DEBUG
