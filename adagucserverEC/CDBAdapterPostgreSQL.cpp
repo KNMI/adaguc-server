@@ -29,7 +29,7 @@
 
 const char *CDBAdapterPostgreSQL::className = "CDBAdapterPostgreSQL";
 #define CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP "pathfiltertablelookup_v2_0_23"
-// #define CDBAdapterPostgreSQL_DEBUG
+#define CDBAdapterPostgreSQL_DEBUG
 //
 // #define MEASURETIME
 
