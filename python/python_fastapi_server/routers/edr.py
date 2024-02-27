@@ -28,6 +28,8 @@ from covjson_pydantic.reference_system import (
 )
 from covjson_pydantic.unit import Unit as CovJsonUnit
 from defusedxml.ElementTree import ParseError, parse
+from .netcdf_to_covjson import netcdf_to_covjson
+from netCDF4 import Dataset
 
 from edr_pydantic.capabilities import (
     ConformanceModel,
@@ -258,6 +260,80 @@ DEFAULT_CRS_OBJECT = {
     "wkt": 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]',
 }
 
+@edrApiApp.get(
+    "/collections/{collection_name}/cube",
+    response_model=Coverage,
+    response_class=CovJSONResponse,
+    response_model_exclude_none=True,
+)
+@edrApiApp.get(
+    "/collections/{collection_name}/instances/{instance}/cube",
+    response_model=Coverage,
+    response_class=CovJSONResponse,
+    response_model_exclude_none=True,
+)
+async def get_collection_cube(
+    collection_name: str,
+    request: Request,
+    bbox: str,
+    instance: Union[str, None] = None,
+    datetime_par: str = Query(default=None, alias="datetime"),
+    parameter_name: str = Query(alias="parameter-name"),
+    z_par: str = Query(alias="z", default=None),
+    res_x: Union[float, None] = None,
+    res_y: Union[float, None] = None
+) -> Coverage:
+
+    allowed_params = ["bbox", "datetime", "parameter-name", "z", "f", "crs", "res_x", "res_y"]
+    custom_dims = [k for k in request.query_params if k not in allowed_params]
+    custom_dims = ""
+    if len(custom_dims) > 0:
+        for custom_dim in custom_dims:
+            custom_dims += f"&DIM_{custom_dim}={request.query_params[custom_dim]}"
+
+    edr_collectioninfo = get_edr_collections()[collection_name]
+    dataset = edr_collectioninfo["dataset"]
+    ref_times = get_ref_times_for_coll(
+        edr_collectioninfo, edr_collectioninfo["parameters"][0]["name"]
+    )
+    if not instance and len(ref_times)>0:
+        instance=iso_to_instance(ref_times[-1])
+
+    parameter_names = parameter_name.split(",")
+    bbox_terms=bbox.split(",")
+
+    if res_x is not None and res_y is not None:
+        res_queryterm=f"&resx={res_x}&resy={res_y}"
+    else:
+        res_queryterm=""
+
+    collection_info = get_edr_collections().get(collection_name)
+    if "dataset" in collection_info:
+        logger.info("callADAGUC by dataset")
+        dataset = collection_info["dataset"]
+        coveragejsons=[]
+        for parameter_name in parameter_names:
+            if instance is None:
+                urlrequest = (
+                    f"dataset={dataset}&service=wcs&version=1.1.1&request=getcoverage&format=NetCDF4&crs=EPSG:4326&coverage={parameter_names[0]}"
+                    + f"&bbox={bbox}&time={datetime_par}"+res_queryterm
+                )
+            else:
+                urlrequest = (
+                    f"dataset={dataset}&service=wcs&request=getcoverage&format=NetCDF4&crs=EPSG:4326&coverage={parameter_names[0]}"
+                    + f"&bbox={bbox}&time={datetime_par}&dim_reference_time={instance_to_iso(instance)}"+res_queryterm
+                )
+
+            status, response = call_adaguc(url=urlrequest.encode("UTF-8"))
+            logger.info("status: %d", status)
+            ds = Dataset(f"{parameter_name}.nc", memory=response.getbuffer())
+
+            coveragejson = netcdf_to_covjson(ds)
+            if coveragejson is not None:
+                coveragejsons.append(coveragejson)
+
+    return coveragejsons[0]
+
 
 @cached(cache=TTLCache(maxsize=1024, ttl=60))
 def get_collectioninfo_for_id(
@@ -344,6 +420,13 @@ def get_collectioninfo_for_id(
         title="Position query",
         variables=position_variables,
     )
+    cube_link = EDRQueryLink(
+        href=f"{base_url}/cube",
+        rel="data",
+        hreflang="en",
+        title="Cube query",
+        variables=position_variables,
+    )
     instances_link = None
     if ref_times and len(ref_times) > 0:
         instances_variables = Variables(
@@ -361,10 +444,11 @@ def get_collectioninfo_for_id(
         )
         data_queries = DataQueries(
             position=EDRQuery(link=position_link),
+            cube=EDRQuery(link=cube_link),
             instances=EDRQuery(link=instances_link),
         )
     else:
-        data_queries = DataQueries(position=EDRQuery(link=position_link))
+        data_queries = DataQueries(position=EDRQuery(link=position_link), cube=EDRQuery(link=cube_link))
 
     parameter_names = get_params_for_collection(edr_collection=edr_collection)
 
@@ -453,6 +537,8 @@ def instance_to_iso(instance_dt: str):
         return parsed_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
     return None
 
+def iso_to_instance(iso_dt: str) -> str:
+    return parse_iso(iso_dt).strftime("%Y%m%d%H%M")
 
 def get_time_values_for_range(rng: str) -> list[str]:
     """
@@ -652,7 +738,7 @@ def get_ref_times_for_coll(edr_collectioninfo: dict, layer: str) -> list[str]:
     status, response = call_adaguc(url=url.encode("UTF-8"))
     if status == 0:
         ref_times = json.loads(response.getvalue())
-        instance_ids = [parse_iso(reft).strftime("%Y%m%d%H%M") for reft in ref_times]
+        instance_ids = [iso_to_instance(reft) for reft in ref_times]
         return instance_ids
     return []
 
@@ -682,17 +768,17 @@ async def rest_get_edr_inst_for_coll(collection_name: str, request: Request):
         get_base_url(request) + f"/edr/collections/{collection_name}/instances"
     )
 
-    instances: list(Instance) = []
+    instances: list[Instance] = []
     edr_collections = get_edr_collections()
 
     ref_times = get_ref_times_for_coll(
         edr_collections[collection_name],
         edr_collections[collection_name]["parameters"][0]["name"],
     )
-    links: list(Link) = []
+    links: list[Link] = []
     links.append(Link(href=instances_url, rel="collection"))
     for instance in list(ref_times):
-        instance_links: list(Link) = []
+        instance_links: list[Link] = []
         instance_link = Link(href=f"{instances_url}/{instance}", rel="collection")
         instance_links.append(instance_link)
         instance_info = get_collectioninfo_for_id(collection_name, instance)
@@ -921,7 +1007,7 @@ def covjson_from_resp(dats, vertical_name):
                     else:
                         values.append(value)
 
-        parameters: dict(str, CovJsonParameter) = {}
+        parameters: dict[str, CovJsonParameter] = {}
         ranges = {}
 
         unit = CovJsonUnit(symbol=dat["units"])
