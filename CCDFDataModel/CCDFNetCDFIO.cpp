@@ -84,7 +84,7 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
       return 1;
     }
 #ifdef MEASURETIME
-    StopWatch_Stop(">CDFNetCDFReader::_readVariableData nc_open");
+    StopWatch_Stop("CDFNetCDFReader::_readVariableData nc_open");
 #endif
 
     status = nc_inq(root_id, &nDims, &nVars, &nRootAttributes, &unlimDimIdP);
@@ -93,7 +93,7 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
       return 1;
     }
 #ifdef MEASURETIME
-    StopWatch_Stop(">CDFNetCDFReader::_readVariableData nc_inq");
+    StopWatch_Stop("CDFNetCDFReader::_readVariableData nc_inq");
 #endif
 
 #ifdef CCDFNETCDFIO_DEBUG_OPEN
@@ -124,7 +124,7 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
       }
     }
 #ifdef MEASURETIME
-    StopWatch_Stop(">CDFNetCDFReader::_readVariableData nc_inq_var");
+    StopWatch_Stop("CDFNetCDFReader::_readVariableData nc_inq_var");
 #endif
   }
 #ifdef CCDFNETCDFIO_DEBUG
@@ -185,7 +185,7 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
   CDF::allocateData(type, &var->data, var->getSize());
 
 #ifdef MEASURETIME
-  StopWatch_Stop(">CDFNetCDFReader::_readVariableData CDF allocateData");
+  StopWatch_Stop("CDFNetCDFReader::_readVariableData CDF allocateData");
 #endif
 
   if (type == CDF_STRING) {
@@ -254,7 +254,7 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
     }
     return 0;
 #ifdef MEASURETIME
-    StopWatch_Stop(">CDFNetCDFReader::_readVariableData after CDF_STRING");
+    StopWatch_Stop("CDFNetCDFReader::_readVariableData after CDF_STRING");
 #endif
   }
 
@@ -322,7 +322,7 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
 
     // End of reading data and performing type conversion
 #ifdef MEASURETIME
-    StopWatch_Stop(">CDFNetCDFReader::_readVariableData type conversion");
+    StopWatch_Stop("CDFNetCDFReader::_readVariableData type conversion");
 #endif
   }
 
@@ -373,7 +373,7 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
     }
     // End of reading data natively.
 #ifdef MEASURETIME
-    StopWatch_Stop(">CDFNetCDFReader::_readVariableData read data natively");
+    StopWatch_Stop("CDFNetCDFReader::_readVariableData read data natively");
 #endif
   }
 
