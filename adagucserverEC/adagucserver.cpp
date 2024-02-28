@@ -77,8 +77,6 @@ void serverWarningFunction(const char *msg) {
 
 void serverLogFunctionCMDLine(const char *msg) { printf("%s", msg); }
 
-#include "adagucserver.h"
-
 void serverLogFunctionNothing(const char *) {}
 
 /* Set config file from environment variable ADAGUC_CONFIG */

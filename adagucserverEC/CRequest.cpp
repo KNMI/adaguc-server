@@ -849,6 +849,7 @@ int CRequest::setDimValuesForDataSource(CDataSource *dataSource, CServerParams *
   return 0;
 };
 
+// TODO: 2024-02-06 Move to another file
 int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams *srvParam) {
 
 #ifdef CREQUEST_DEBUG
@@ -920,6 +921,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
 
             // This dimension has been specified in the request, so the dimension has been found:
             COGCDims *ogcDim = new COGCDims();
+            // TODO: 2024-02-26: Requireddims could be returned instead of being set inside the datasource
             dataSource->requiredDims.push_back(ogcDim);
             ogcDim->name.copy(&dimName);
             ogcDim->value.copy(&srvParam->requestDims[k]->value);
@@ -1513,6 +1515,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
       throw InvalidDimensionValue;
     }
 
+    // TODO: 2024-02-26 Following code should be refactored
     for (size_t k = 0; k < store->getSize(); k++) {
       CDBStore::Record *record = store->getRecord(k);
       // CDBDebug("Addstep");
@@ -1528,6 +1531,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
         CDBDebug("queryDimValuesForDataSource dataSource->queryBBOX %s for step %d/%d", dataSource->layerName.c_str(), dataSource->getCurrentTimeStep(), dataSource->getNumTimeSteps());
         CDBDebug("  [%s][%d] = [%s]", dataSource->requiredDims[i]->netCDFDimName.c_str(), atoi(record->get(2 + i * 2)->c_str()), value.c_str());
 #endif
+        // TODO: 2024-02-26 addValue should not be done on requiredDIms, requiredDIms should be left untouched
         dataSource->requiredDims[i]->addValue(value.c_str());
         // dataSource->requiredDims[i]->allValues.push_back(sDims[l].c_str());
       }
@@ -1558,7 +1562,7 @@ int CRequest::process_all_layers() {
     if (srvParam->requestType == REQUEST_WCS_DESCRIBECOVERAGE) {
       // Therefore we read all the coverages, we do this by defining WMSLayers, as if the user entered in the coverages
       // section all layers.
-      srvParam->requestType = REQUEST_WCS_DESCRIBECOVERAGE;
+      srvParam->requestType = REQUEST_WCS_DESCRIBECOVERAGE; // TODO !!!!!
       srvParam->WMSLayers = new CT::string[srvParam->cfg->Layer.size()];
       for (size_t j = 0; j < srvParam->cfg->Layer.size(); j++) {
         srvParam->makeUniqueLayerName(&srvParam->WMSLayers[j], srvParam->cfg->Layer[j]);
@@ -1643,6 +1647,8 @@ int CRequest::process_all_layers() {
                   CDBError("additionalDataSource: Exception in setDimValuesForDataSource");
                   return 1;
                 }
+
+                // 2024-02-26 Understand why the following is needed
                 bool add = true;
 
                 CDataSource *checkForData = additionalDataSource->clone();
@@ -2287,66 +2293,11 @@ int CRequest::process_all_layers() {
 
 int CRequest::process_querystring() {
 
-  /**
-   * START Implementation of POST request.
-   */
-  //  char * method = getenv("REQUEST_METHOD");
-  //
-  //  //strcmp returns 0, means they are equal.
-  //  if (!strcmp(method, "POST")) {
-  //
-  //    CT::string * post_body;
-  //    long body_length = atoi(getenv("CONTENT_LENGTH"));
-  //
-  //    //Buffer size in memory
-  //    char *buffer = (char*) malloc (sizeof(char)*body_length);
-  //
-  //    //Copy the content_body into the buffer:
-  //    fread(buffer, body_length, 1, stdin);
-  //    buffer[body_length] = 0;
-  //
-  //    //Copy Buffer to CT::string
-  //    post_body->copy(buffer);
-  //
-  //    //Clear buffer
-  //    free(buffer);
-  //
-  //    int status = CSLDPostRequest::startProcessing(post_body);
-  //
-  //    if(status != 0){
-  //      CDBError("Something went wrong processing Post request");
-  //    } else {
-  //      #ifdef CSLD_POST_REQUEST_DEBUG
-  //        CDBDebug("POST request is succesfully processed!");
-  //      #endif
-  //    }
-  //  }
-  /**
-   * END Implementation of POST request.
-   */
-
 #ifdef MEASURETIME
   StopWatch_Stop("Start processing query string");
 #endif
   //  StopWatch_Time("render()");
-  // First try to find all possible dimensions
-  // std::vector
-  /* for(size_t j=0;j<srvParam->cfg->Layer.size();j++){
-     for(size_t d=0;d<srvParam->cfg->Layer[j]->Dimension.size();d++){
-       CT::string *dim = new CT::string(srvParam->cfg->Layer[j]->Dimension[d]->value.c_str());
 
-       dim->toUpperCaseSelf();
-
-       bool foundDim=false;
-       for(size_t i=0;i<queryDims.size();i++){
-         if(dim->equals(queryDims[i])){foundDim=true;break;}
-       }
-       if(foundDim==false){
-         queryDims.push_back(dim);
-       }else delete dim;
-     }
-   }
-   */
   if (srvParam->cfg->WMS.size() != 1) {
     CDBError("WMS element has not been configured");
     return 1;
@@ -2467,6 +2418,8 @@ int CRequest::process_querystring() {
         dErrorOccured = 1;
       }
     }
+
+    // TODO: 2024-02-26 Can be removed?:
     // Style parameter
     if (uriKeyUpperCase.equals("STYLE")) {
       if (dFound_Style == 0) {

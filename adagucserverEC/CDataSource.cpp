@@ -1153,7 +1153,6 @@ CStyleConfiguration *CDataSource::getStyle() {
     CT::string styleName = "default";
     CT::string styles(srvParams->Styles.c_str());
 
-    // TODO CHECK CDBDebug("Server Styles=%s",srvParam->Styles.c_str());
     CT::StackList<CT::string> layerstyles = styles.splitToStack(",");
     int layerIndex = datasourceIndex;
     if (layerstyles.size() != 0) {

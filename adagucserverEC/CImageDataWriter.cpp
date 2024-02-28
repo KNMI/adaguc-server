@@ -501,7 +501,7 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
     drawImage.setRenderer(CDRAWIMAGERENDERER_GD);
   }
 
-  if (srvParam->imageMode == SERVERIMAGEMODE_RGBA || srvParam->Styles.indexOf("HQ") > 0) {
+  if (srvParam->imageMode == SERVERIMAGEMODE_RGBA || s.indexOf("HQ") > 0) {
     drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
     drawImage.setRenderer(CDRAWIMAGERENDERER_CAIRO);
   }
