@@ -111,8 +111,8 @@ def netcdf_to_covjson(netcdfdataset) -> Coverage:
         # Find a variable with a grid_mapping attribute, this is a grid
         if "grid_mapping" in variable.ncattrs():
             # Get the names of the variable
-            axesnames: List = []
-            shape = []
+            axesnames: List[str] = []
+            shape: List[int] = []
             for _index, dimname in enumerate(variable.dimensions):
                 ncvar = netcdfdataset.variables[dimname]
                 if ncvar.size>1 or dimname in netcdfdimname_to_covdimname:

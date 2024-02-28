@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 from typing import Union
 
 from cachetools import TTLCache, cached
-from covjson_pydantic.coverage import Coverage
+from covjson_pydantic.coverage import Coverage, CoverageCollection
 from covjson_pydantic.domain import Domain, ValuesAxis
 from covjson_pydantic.observed_property import (
     ObservedProperty as CovJsonObservedProperty,
@@ -262,13 +262,13 @@ DEFAULT_CRS_OBJECT = {
 
 @edrApiApp.get(
     "/collections/{collection_name}/cube",
-    response_model=Coverage,
+    response_model=CoverageCollection,
     response_class=CovJSONResponse,
     response_model_exclude_none=True,
 )
 @edrApiApp.get(
     "/collections/{collection_name}/instances/{instance}/cube",
-    response_model=Coverage,
+    response_model=CoverageCollection,
     response_class=CovJSONResponse,
     response_model_exclude_none=True,
 )
@@ -312,15 +312,16 @@ async def get_collection_cube(
         logger.info("callADAGUC by dataset")
         dataset = collection_info["dataset"]
         coveragejsons=[]
+        parameters={}
         for parameter_name in parameter_names:
             if instance is None:
                 urlrequest = (
-                    f"dataset={dataset}&service=wcs&version=1.1.1&request=getcoverage&format=NetCDF4&crs=EPSG:4326&coverage={parameter_names[0]}"
+                    f"dataset={dataset}&service=wcs&version=1.1.1&request=getcoverage&format=NetCDF4&crs=EPSG:4326&coverage={parameter_name}"
                     + f"&bbox={bbox}&time={datetime_par}"+res_queryterm
                 )
             else:
                 urlrequest = (
-                    f"dataset={dataset}&service=wcs&request=getcoverage&format=NetCDF4&crs=EPSG:4326&coverage={parameter_names[0]}"
+                    f"dataset={dataset}&service=wcs&request=getcoverage&format=NetCDF4&crs=EPSG:4326&coverage={parameter_name}"
                     + f"&bbox={bbox}&time={datetime_par}&dim_reference_time={instance_to_iso(instance)}"+res_queryterm
                 )
 
@@ -331,8 +332,10 @@ async def get_collection_cube(
             coveragejson = netcdf_to_covjson(ds)
             if coveragejson is not None:
                 coveragejsons.append(coveragejson)
+                parameters=parameters | coveragejson.parameters
 
-    return coveragejsons[0]
+
+    return CoverageCollection(coverages=coveragejsons, parameters=parameters)
 
 
 @cached(cache=TTLCache(maxsize=1024, ttl=60))
