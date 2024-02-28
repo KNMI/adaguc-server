@@ -391,6 +391,8 @@ int _main(int argc, char **argv, char **) {
 }
 
 int main(int argc, char **argv, char **envp) {
+  clock_t start = clock();
+
   /* Check if ADAGUC_LOGFILE is set */
   const char *ADAGUC_LOGFILE = getenv("ADAGUC_LOGFILE");
   if (ADAGUC_LOGFILE != NULL) {
@@ -449,6 +451,12 @@ int main(int argc, char **argv, char **envp) {
   CDFObjectStore::getCDFObjectStore()->clear();
 
   proj_clear_cache();
+
+  clock_t stop = clock();
+  double elapsed = (double) (stop - start) / CLOCKS_PER_SEC;
+  CT::string msg;
+  msg.print("\nTime elapsed: %.5f\n", elapsed);
+  writeLogFile(msg.c_str());
 
   if (pLogDebugFile != NULL) {
     fclose(pLogDebugFile);

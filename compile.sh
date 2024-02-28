@@ -44,7 +44,7 @@ function build {
 
   clean
   cd $CURRENTDIR/bin
-  cmake .. &&  cmake  --build . --parallel 4
+  cmake -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON .. &&  cmake  --build . --parallel 4
 
   if [ -f adagucserver ]
     then

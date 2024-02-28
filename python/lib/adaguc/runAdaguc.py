@@ -175,6 +175,7 @@ class runAdaguc:
 
         adagucexecutable = ADAGUC_PATH + "/bin/adagucserver"
 
+        # adagucargs = ["perf", "record", "-q", "-F", "997", adagucexecutable]
         adagucargs = [adagucexecutable]
 
         if args is not None:
