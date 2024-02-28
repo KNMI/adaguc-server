@@ -28,6 +28,8 @@
 const char *CDFNetCDFReader::className = "NetCDFReader";
 const char *CDFNetCDFWriter::className = "NetCDFWriter";
 
+#define MEASURETIME
+
 #define CDFNetCDFGroupSeparator "/"
 // const char *CCDFWarper::className="CCDFWarper";
 
@@ -57,6 +59,10 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type) { retur
 int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t *start, size_t *count, ptrdiff_t *stride) {
   int nDims, nVars, nRootAttributes, unlimDimIdP;
 
+#ifdef MEASURETIME
+  StopWatch_Stop(">CDFNetCDFReader::_readVariableData start");
+#endif
+
   if (cdfCache != NULL) {
 #ifdef CCDFNETCDFIO_DEBUG_OPEN
     CDBDebug("Looking into cache %s of type %s", var->name.c_str(), CDF::getCDFDataTypeName(type).c_str());
@@ -77,11 +83,19 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
       ncError(__LINE__, className, "nc_open: ", status);
       return 1;
     }
+#ifdef MEASURETIME
+    StopWatch_Stop(">CDFNetCDFReader::_readVariableData nc_open");
+#endif
+
     status = nc_inq(root_id, &nDims, &nVars, &nRootAttributes, &unlimDimIdP);
     if (status != NC_NOERR) {
       ncError(__LINE__, className, "nc_inq: ", status);
       return 1;
     }
+#ifdef MEASURETIME
+    StopWatch_Stop(">CDFNetCDFReader::_readVariableData nc_inq");
+#endif
+
 #ifdef CCDFNETCDFIO_DEBUG_OPEN
     CDBDebug("root_id %d", root_id);
     var->id = -1;
@@ -109,6 +123,9 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
         break;
       }
     }
+#ifdef MEASURETIME
+    StopWatch_Stop(">CDFNetCDFReader::_readVariableData nc_inq_var");
+#endif
   }
 #ifdef CCDFNETCDFIO_DEBUG
   CDBDebug("reading %s with id %d from file %s", var->name.c_str(), var->id, fileName.c_str());
@@ -166,6 +183,10 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
   CDBDebug("Allocating data for variable %s, type: %s, size: %d", var->name.c_str(), CDF::getCDFDataTypeName(var->currentType).c_str(), var->getSize());
 #endif
   CDF::allocateData(type, &var->data, var->getSize());
+
+#ifdef MEASURETIME
+  StopWatch_Stop(">CDFNetCDFReader::_readVariableData CDF allocateData");
+#endif
 
   if (type == CDF_STRING) {
     if (var->isString()) {
@@ -232,6 +253,9 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
       if (cacheStatus == 0) return 0;
     }
     return 0;
+#ifdef MEASURETIME
+    StopWatch_Stop(">CDFNetCDFReader::_readVariableData after CDF_STRING");
+#endif
   }
 
   // Data is requested with another type than requested. We will perform type conversion in the following piece of code.
@@ -297,6 +321,9 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
     CDF::freeData(&voidData);
 
     // End of reading data and performing type conversion
+#ifdef MEASURETIME
+    StopWatch_Stop(">CDFNetCDFReader::_readVariableData type conversion");
+#endif
   }
 
   if (type == var->nativeType) {
@@ -345,6 +372,9 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
       return 1;
     }
     // End of reading data natively.
+#ifdef MEASURETIME
+    StopWatch_Stop(">CDFNetCDFReader::_readVariableData read data natively");
+#endif
   }
 
   //   if(var->currentType == CDF_FLOAT){
@@ -373,6 +403,9 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
 
 #ifdef CCDFNETCDFIO_DEBUG
   CDBDebug("Ready.");
+#endif
+#ifdef MEASURETIME
+  StopWatch_Stop("<CDFNetCDFReader::_readVariableData end");
 #endif
   return 0;
 }
