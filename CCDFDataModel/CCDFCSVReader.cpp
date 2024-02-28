@@ -32,6 +32,7 @@
  */
 #include "CCDFCSVReader.h"
 #include "CTime.h"
+#include <CReadFile.h>
 
 const char *CDFCSVReader::className = "CSVReader";
 
@@ -65,15 +66,6 @@ int CDFCSVReader::open(const char *fileName) {
   if (fileBaseName.endsWith(".csv") == false) {
     CDBError("Filename does not end with \".csv\"");
     return 1;
-  }
-
-  /* Caching options, TODO: not tested with CSV*/
-  if (cdfCache != NULL) {
-    int cacheStatus = cdfCache->open(fileName, cdfObject, false);
-    if (cacheStatus == 0) {
-      CDBDebug("Succesfully opened from cache for file %s", fileName);
-      return 0;
-    }
   }
 
   /*This is opendap, there the CSV has already been converted to CDM by an IOServiceProvider.*/

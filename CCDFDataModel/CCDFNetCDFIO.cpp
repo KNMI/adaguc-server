@@ -63,16 +63,6 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
   StopWatch_Stop(">CDFNetCDFReader::_readVariableData start");
 #endif
 
-  if (cdfCache != NULL) {
-#ifdef CCDFNETCDFIO_DEBUG_OPEN
-    CDBDebug("Looking into cache %s of type %s", var->name.c_str(), CDF::getCDFDataTypeName(type).c_str());
-#endif
-    int cacheStatus = cdfCache->readVariableData(var, type, start, count, stride, false);
-    if (cacheStatus == 0) {
-      return 0;
-    }
-  }
-
   if (root_id == -1) {
 #ifdef CCDFNETCDFIO_DEBUG_OPEN
     CDBDebug("NC_OPEN re-opening %s for %s", fileName.c_str(), var->name.c_str());
@@ -247,11 +237,6 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
       return 1;
     }
 
-    if (cdfCache != NULL) {
-      CDBDebug("Putting into cache %s", var->name.c_str());
-      int cacheStatus = cdfCache->readVariableData(var, type, start, count, stride, true);
-      if (cacheStatus == 0) return 0;
-    }
     return 0;
 #ifdef MEASURETIME
     StopWatch_Stop("CDFNetCDFReader::_readVariableData after CDF_STRING");
@@ -392,14 +377,6 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
   //   }
 
   // warper.warpLonData(var);
-
-  if (cdfCache != NULL) {
-#ifdef CCDFNETCDFIO_DEBUG
-    CDBDebug("Putting into cache %s", var->name.c_str());
-#endif
-    int cacheStatus = cdfCache->readVariableData(var, type, start, count, stride, true);
-    if (cacheStatus == 0) return 0;
-  }
 
 #ifdef CCDFNETCDFIO_DEBUG
   CDBDebug("Ready.");
@@ -772,14 +749,6 @@ int CDFNetCDFReader::open(const char *fileName) {
   }
   this->fileName = fileName;
 
-  if (cdfCache != NULL) {
-    int cacheStatus = cdfCache->open(fileName, cdfObject, false);
-    if (cacheStatus == 0) {
-      // CDBDebug("Succesfully opened from cache for file %s",fileName);
-      return 0;
-    }
-  }
-
   // Check type sizes
   if (sizeof(char) != 1) {
     CDBError("The size of char is unequeal to 8 Bits");
@@ -849,10 +818,6 @@ int CDFNetCDFReader::open(const char *fileName) {
 #ifdef MEASURETIME
   StopWatch_Stop("readAttr");
 #endif
-  if (cdfCache != NULL) {
-    int cacheStatus = cdfCache->open(fileName, cdfObject, true);
-    if (cacheStatus == 0) return 0;
-  }
   return 0;
 }
 
