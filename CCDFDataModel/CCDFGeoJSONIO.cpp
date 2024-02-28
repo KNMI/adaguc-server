@@ -24,7 +24,8 @@
  ******************************************************************************/
 
 #include "CCDFGeoJSONIO.h"
-//#define CCDFGEOJSONIO_DEBUG
+#include <CReadFile.h>
+// #define CCDFGEOJSONIO_DEBUG
 
 const char *CDFGeoJSONReader::className = "GeoJSONReader";
 
@@ -43,14 +44,6 @@ int CDFGeoJSONReader::open(const char *fileName) {
     return 1;
   }
   this->fileName = fileName;
-
-  if (cdfCache != NULL) {
-    int cacheStatus = cdfCache->open(fileName, cdfObject, false);
-    if (cacheStatus == 0) {
-      CDBDebug("Succesfully opened from cache for file %s", fileName);
-      return 0;
-    }
-  }
 
   // This is opendap, there the geojson has already been converted to CDM by an IOServiceProvider.
   if (this->fileName.indexOf("http") == 0) {

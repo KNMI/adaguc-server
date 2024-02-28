@@ -898,18 +898,19 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
     return cleanFiles(dataSource, scanFlags);
   }
 
-  CCache::Lock lock;
+  // TODO: 2024-02
+  // CCache::Lock lock;
 
-  CT::string identifier = "updatedb";
-  identifier.concat(dataSource->cfgLayer->FilePath[0]->value.c_str());
-  identifier.concat("/");
-  identifier.concat(dataSource->cfgLayer->FilePath[0]->attr.filter.c_str());
-  // CT::string cacheDirectory = "";
-  CT::string cacheDirectory = dataSource->srvParams->cfg->TempDir[0]->attr.value.c_str();
-  // dataSource->srvParams->getCacheDirectory(&cacheDirectory);
-  if (cacheDirectory.length() > 0) {
-    lock.claim(cacheDirectory.c_str(), identifier.c_str(), "updatedb", dataSource->srvParams->isAutoResourceEnabled());
-  }
+  // CT::string identifier = "updatedb";
+  // identifier.concat(dataSource->cfgLayer->FilePath[0]->value.c_str());
+  // identifier.concat("/");
+  // identifier.concat(dataSource->cfgLayer->FilePath[0]->attr.filter.c_str());
+  // // CT::string cacheDirectory = "";
+  // CT::string cacheDirectory = dataSource->srvParams->cfg->TempDir[0]->attr.value.c_str();
+  // // dataSource->srvParams->getCacheDirectory(&cacheDirectory);
+  // if (cacheDirectory.length() > 0) {
+  //   lock.claim(cacheDirectory.c_str(), identifier.c_str(), "updatedb", dataSource->srvParams->isAutoResourceEnabled());
+  // }
 
   /* We only need to update the provided path in layerPathToScan. We will simply ignore the other directories */
   CT::string fileToUpdate;
@@ -1067,7 +1068,7 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
   }
 
   CDBDebug("  ==> *** Finished update layer [%s] ***", dataSource->cfgLayer->Name[0]->value.c_str());
-  lock.release();
+  // lock.release(); // TODO: 2024-02
   return 0;
 }
 
