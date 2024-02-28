@@ -553,19 +553,6 @@ int CDBAdapterPostgreSQL::autoUpdateAndScanDimensionTables(CDataSource *dataSour
     return -1;
   }
 
-  // CCache::Lock lock;
-  // CT::string identifier = "checkDimTables";
-  // identifier.concat(cfgLayer->FilePath[0]->value.c_str());
-  // identifier.concat("/");
-  // identifier.concat(cfgLayer->FilePath[0]->attr.filter.c_str());
-
-  // TODO: 2024-02
-  // CT::string cacheDirectory = srvParams->cfg->TempDir[0]->attr.value.c_str();
-  // // srvParams->getCacheDirectory(&cacheDirectory);
-  // if (cacheDirectory.length() > 0) {
-  //   lock.claim(cacheDirectory.c_str(), identifier.c_str(), "checkDimTables", srvParams->isAutoResourceEnabled());
-  // }
-
 #ifdef CDBAdapterPostgreSQL_DEBUG
   CDBDebug("[checkDimTables]");
 #endif
@@ -659,7 +646,6 @@ int CDBAdapterPostgreSQL::autoUpdateAndScanDimensionTables(CDataSource *dataSour
 #ifdef CDBAdapterPostgreSQL_DEBUG
   CDBDebug("[/checkDimTables]");
 #endif
-  // lock.release(); // TODO: 2024-02
 #ifdef MEASURETIME
   StopWatch_Stop("<CDBAdapterPostgreSQL::autoUpdateAndScanDimensionTables");
 #endif
@@ -705,14 +691,6 @@ CT::string CDBAdapterPostgreSQL::getTableNameForPathFilterAndDimension(const cha
 #endif
     return tableName;
   }
-
-  // TODO: 2024-02
-  // CCache::Lock lock;
-  // CT::string cacheDirectory = dataSource->cfg->TempDir[0]->attr.value.c_str();
-  // // getCacheDirectory(&cacheDirectory);
-  // if (cacheDirectory.length() > 0) {
-  //   lock.claim(cacheDirectory.c_str(), identifier.c_str(), "lookupTableName", dataSource->srvParams->isAutoResourceEnabled());
-  // }
 
   // This makes use of a lookup table to find the tablename belonging to the filter and path combinations.
   // Database collumns: path filter tablename
@@ -800,8 +778,6 @@ CT::string CDBAdapterPostgreSQL::getTableNameForPathFilterAndDimension(const cha
     }
     // Close the database
   } catch (int e) {
-
-    // lock.release(); // TODO: 2024-02
     throw(e);
   }
 
@@ -810,7 +786,6 @@ CT::string CDBAdapterPostgreSQL::getTableNameForPathFilterAndDimension(const cha
     lookupTableNameCacheMap.insert(std::pair<std::string, std::string>(identifier.c_str(), tableName.c_str()));
   }
 
-  // lock.release(); // TODO: 2024-02
   if (tableName.length() <= 0) {
     CDBError("Unable to generate lookup table name for %s", identifier.c_str());
     throw(1);

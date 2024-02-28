@@ -78,19 +78,6 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
     return 1;
   }
 
-  // CCache::Lock lock; // TODO: 2024-02
-  // CT::string identifier = "autodimension";
-  // identifier.concat(dataSource->cfgLayer->FilePath[0]->value.c_str());
-  // identifier.concat("/");
-  // identifier.concat(dataSource->cfgLayer->FilePath[0]->attr.filter.c_str());
-
-  // TODO: 2024-02
-  // CT::string cacheDirectory = dataSource->srvParams->cfg->TempDir[0]->attr.value.c_str();
-
-  // if (cacheDirectory.length() > 0) {
-  //   lock.claim(cacheDirectory.c_str(), identifier.c_str(), "autoconfigure_dimensions", dataSource->srvParams->isAutoResourceEnabled());
-  // }
-
   CT::string layerIdentifier = dataSource->getLayerName();
   CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getDimensionInfoForLayerTableAndLayerName(layerTableId.c_str(), layerIdentifier.c_str());
   if (store != NULL) {
@@ -110,7 +97,6 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
       size_t storeSize = store->size();
       delete store;
       if (storeSize > 0) {
-        // lock.release(); // TODO: 2024-02
         dataSource->dimsAreAutoConfigured = true;
         return 0;
       }
