@@ -65,6 +65,7 @@ RUN apt-get -q -y update \
     libcurl4-openssl-dev \
     libgd-dev \
     libproj-dev \
+    linux-perf \
     time \
     && apt-get autoremove -y \
     && apt-get clean \
