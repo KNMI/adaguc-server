@@ -88,11 +88,11 @@ bool CConvertLatLonGrid::checkIfIrregularLatLon(CDFObject *cdfObject) {
 
       double cellSizeXBorder = fabs(dfdim_X[0] - dfdim_X[0 + 1]);
       double cellSizeXCenter = fabs(dfdim_X[width / 2] - dfdim_X[width / 2 + 1]);
-      double deviationX = ((cellSizeXBorder - cellSizeXCenter) / cellSizeXBorder);
+      double deviationX = fabs((cellSizeXBorder - cellSizeXCenter) / cellSizeXBorder);
 
       double cellSizeYBorder = fabs(dfdim_Y[0] - dfdim_Y[0 + 1]);
       double cellSizeYCenter = fabs(dfdim_Y[height / 2] - dfdim_Y[height / 2 + 1]);
-      double deviationY = ((cellSizeYBorder - cellSizeYCenter) / cellSizeYBorder);
+      double deviationY = fabs((cellSizeYBorder - cellSizeYCenter) / cellSizeYBorder);
 
       // When the cellsize deviates more than 1% in the center than in the border, we call this grid irregular lat/lon
       if (deviationY > 0.01 || deviationX > 0.01) {

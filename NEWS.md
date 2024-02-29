@@ -1,3 +1,6 @@
+**Version 2.20.1 2024-02-20**
+- Fixed sometimes failing detection of irregular grids
+
 **Version 2.20.0 2024-02-15**
 - Data postprocessor to calculate WFP is added
 
