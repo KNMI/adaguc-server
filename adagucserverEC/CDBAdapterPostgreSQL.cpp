@@ -29,20 +29,20 @@
 
 const char *CDBAdapterPostgreSQL::className = "CDBAdapterPostgreSQL";
 #define CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP "pathfiltertablelookup_v2_0_23"
-// #define CDBAdapterPostgreSQL_DEBUG
+#define CDBAdapterPostgreSQL_DEBUG
 
 // #define MEASURETIME
 
 CDBAdapterPostgreSQL::CDBAdapterPostgreSQL() {
 #ifdef CDBAdapterPostgreSQL_DEBUG
-  CDBDebug("CDBAdapterPostgreSQL()");
+  CDBDebug("[SQL] CDBAdapterPostgreSQL()");
 #endif
   dataBaseConnection = NULL;
 }
 
 CDBAdapterPostgreSQL::~CDBAdapterPostgreSQL() {
 #ifdef CDBAdapterPostgreSQL_DEBUG
-  CDBDebug("~CDBAdapterPostgreSQL()");
+  CDBDebug("[SQL] ~CDBAdapterPostgreSQL()");
 #endif
   if (dataBaseConnection != NULL) {
     dataBaseConnection->close2();
@@ -257,7 +257,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getClosestDataTimeToSystemTime(const char
 
 CDBStore::Store *CDBAdapterPostgreSQL::getFilesForIndices(CDataSource *dataSource, size_t *start, size_t *count, ptrdiff_t *, int) {
 #ifdef CDBAdapterPostgreSQL_DEBUG
-  CDBDebug("getFilesForIndices");
+  CDBDebug("[SQL] getFilesForIndices");
 #endif
   CPGSQLDB *DB = getDataBaseConnection();
   if (DB == NULL) {
@@ -274,7 +274,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesForIndices(CDataSource *dataSourc
   queryOrderedDESC.concat(" from ");
 
 #ifdef CDBAdapterPostgreSQL_DEBUG
-  CDBDebug("%s", queryOrderedDESC.c_str());
+  CDBDebug("[SQL] %s", queryOrderedDESC.c_str());
 #endif
 
   // Compose the query
@@ -299,7 +299,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesForIndices(CDataSource *dataSourc
   }
 
 #ifdef CDBAdapterPostgreSQL_DEBUG
-  CDBDebug("%s", queryOrderedDESC.c_str());
+  CDBDebug("[SQL] %s", queryOrderedDESC.c_str());
 #endif
   // Join by path
   if (dataSource->requiredDims.size() > 1) {
@@ -309,7 +309,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesForIndices(CDataSource *dataSourc
     }
   }
 #ifdef CDBAdapterPostgreSQL_DEBUG
-  CDBDebug("%s", queryOrderedDESC.c_str());
+  CDBDebug("[SQL] %s", queryOrderedDESC.c_str());
 #endif
 
   query.print("select distinct * from (%s)T order by ", queryOrderedDESC.c_str());
@@ -324,7 +324,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesForIndices(CDataSource *dataSourc
   // writeLogFile3("\n");
 // values_path = DB.query_select(query.c_str(),0);
 #ifdef CDBAdapterPostgreSQL_DEBUG
-  CDBDebug("%s", query.c_str());
+  CDBDebug("[SQL] %s", query.c_str());
 #endif
 
   CDBStore::Store *store = NULL;
@@ -370,7 +370,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
   bool timeValidationError = false;
 
 #ifdef CDBAdapterPostgreSQL_DEBUG
-  CDBDebug("%s", queryOrderedDESC.c_str());
+  CDBDebug("[SQL] %s", queryOrderedDESC.c_str());
 #endif
 
   // Compose the query
@@ -492,7 +492,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
   }
   //  CDBDebug("%s",queryOrderedDESC.c_str());
 #ifdef CDBAdapterPostgreSQL_DEBUG
-  CDBDebug("%s", queryOrderedDESC.c_str());
+  CDBDebug("[SQL] %s", queryOrderedDESC.c_str());
 #endif
   // Join by path
   if (dataSource->requiredDims.size() > 1) {
@@ -502,7 +502,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     }
   }
 #ifdef CDBAdapterPostgreSQL_DEBUG
-  CDBDebug("%s", queryOrderedDESC.c_str());
+  CDBDebug("[SQL] %s", queryOrderedDESC.c_str());
 #endif
 
   if (timeValidationError == true) {
@@ -523,7 +523,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
   // writeLogFile3("\n");
 // values_path = DB.query_select(query.c_str(),0);
 #ifdef CDBAdapterPostgreSQL_DEBUG
-  CDBDebug("%s", query.c_str());
+  CDBDebug("[SQL] %s", query.c_str());
 #endif
 
   CDBStore::Store *store = NULL;
@@ -554,7 +554,7 @@ int CDBAdapterPostgreSQL::autoUpdateAndScanDimensionTables(CDataSource *dataSour
   }
 
 #ifdef CDBAdapterPostgreSQL_DEBUG
-  CDBDebug("[checkDimTables]");
+  CDBDebug("[SQL] [checkDimTables]");
 #endif
   bool tableNotFound = false;
   bool fileNeedsUpdate = false;
@@ -644,7 +644,7 @@ int CDBAdapterPostgreSQL::autoUpdateAndScanDimensionTables(CDataSource *dataSour
     }
   }
 #ifdef CDBAdapterPostgreSQL_DEBUG
-  CDBDebug("[/checkDimTables]");
+  CDBDebug("[SQL] [/checkDimTables]");
 #endif
 #ifdef MEASURETIME
   StopWatch_Stop("<CDBAdapterPostgreSQL::autoUpdateAndScanDimensionTables");
@@ -1028,7 +1028,7 @@ int CDBAdapterPostgreSQL::setFileInt(const char *tablename, const char *file, in
   values.print("('%s',%d,'%d','%s','%d','%f','%f','%f','%f','%d','%d','%d','%d')", file, dimvalue, dimindex, filedate, geoOptions->level, geoOptions->bbox[0], geoOptions->bbox[1], geoOptions->bbox[2],
                geoOptions->bbox[3], geoOptions->indices[0], geoOptions->indices[1], geoOptions->indices[2], geoOptions->indices[3]);
 #ifdef CDBAdapterPostgreSQL_DEBUG
-  CDBDebug("Adding INT %s", values.c_str());
+  CDBDebug("[SQL] Adding INT %s", values.c_str());
 #endif
   fileListPerTable[tablename].push_back(values.c_str());
   return 0;
@@ -1038,7 +1038,7 @@ int CDBAdapterPostgreSQL::setFileReal(const char *tablename, const char *file, d
   values.print("('%s',%f,'%d','%s','%d','%f','%f','%f','%f','%d','%d','%d','%d')", file, dimvalue, dimindex, filedate, geoOptions->level, geoOptions->bbox[0], geoOptions->bbox[1], geoOptions->bbox[2],
                geoOptions->bbox[3], geoOptions->indices[0], geoOptions->indices[1], geoOptions->indices[2], geoOptions->indices[3]);
 #ifdef CDBAdapterPostgreSQL_DEBUG
-  CDBDebug("Adding REAL %s", values.c_str());
+  CDBDebug("[SQL] Adding REAL %s", values.c_str());
 #endif
   fileListPerTable[tablename].push_back(values.c_str());
   return 0;
@@ -1048,7 +1048,7 @@ int CDBAdapterPostgreSQL::setFileString(const char *tablename, const char *file,
   values.print("('%s','%s','%d','%s','%d','%f','%f','%f','%f','%d','%d','%d','%d')", file, dimvalue, dimindex, filedate, geoOptions->level, geoOptions->bbox[0], geoOptions->bbox[1],
                geoOptions->bbox[2], geoOptions->bbox[3], geoOptions->indices[0], geoOptions->indices[1], geoOptions->indices[2], geoOptions->indices[3]);
 #ifdef CDBAdapterPostgreSQL_DEBUG
-  CDBDebug("Adding STRING %s", values.c_str());
+  CDBDebug("[SQL] Adding STRING %s", values.c_str());
 #endif
   fileListPerTable[tablename].push_back(values.c_str());
   return 0;
@@ -1058,7 +1058,7 @@ int CDBAdapterPostgreSQL::setFileTimeStamp(const char *tablename, const char *fi
   values.print("('%s','%s','%d','%s','%d','%f','%f','%f','%f','%d','%d','%d','%d')", file, dimvalue, dimindex, filedate, geoOptions->level, geoOptions->bbox[0], geoOptions->bbox[1],
                geoOptions->bbox[2], geoOptions->bbox[3], geoOptions->indices[0], geoOptions->indices[1], geoOptions->indices[2], geoOptions->indices[3]);
 #ifdef CDBAdapterPostgreSQL_DEBUG
-  CDBDebug("Adding TIMESTAMP %s", values.c_str());
+  CDBDebug("[SQL] Adding TIMESTAMP %s", values.c_str());
 #endif
   fileListPerTable[tablename].push_back(values.c_str());
   return 0;
@@ -1068,7 +1068,7 @@ int CDBAdapterPostgreSQL::addFilesToDataBase() {
   StopWatch_Stop(">CDBAdapterPostgreSQL::addFilesToDataBase");
 #endif
 #ifdef CDBAdapterPostgreSQL_DEBUG
-  CDBDebug("Adding files to database");
+  CDBDebug("[SQL] Adding files to database");
 #endif
   CPGSQLDB *dataBaseConnection = getDataBaseConnection();
   if (dataBaseConnection == NULL) {
@@ -1102,7 +1102,7 @@ int CDBAdapterPostgreSQL::addFilesToDataBase() {
     it->second.clear();
   }
 #ifdef CDBAdapterPostgreSQL_DEBUG
-  CDBDebug("clearing arrays");
+  CDBDebug("[SQL] clearing arrays");
 #endif
   fileListPerTable.clear();
 #ifdef MEASURETIME
