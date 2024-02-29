@@ -33,7 +33,7 @@ async def get_cached_response(redis_client, request):
 
 skip_headers = ["x-process-time", "age"]
 
-async def cache_response(redis_client, request, headers, data, ex: int=60):
+async def response_to_cache(redis_client, request, headers, data, ex: int=60):
     key=generate_key(request)
 
     headers_to_keep={}
@@ -46,8 +46,7 @@ async def cache_response(redis_client, request, headers, data, ex: int=60):
     await redis_client.set(key, bytes(entrytime, 'utf-8')+bytes("%06d"%len(headers_to_keep_json), 'utf-8')+bytes(headers_to_keep_json, 'utf-8')+data, ex=ex)
 
 def generate_key(request):
-    key = f"{request.url.path}?{request['query_string']}"
-    # print(f"generate_key({key})")
+    key = f"{request.url.path}?bytes({request['query_string']}, 'utf-8')"
     return key
 
 class CachingMiddleware(BaseHTTPMiddleware):
@@ -87,7 +86,7 @@ class CachingMiddleware(BaseHTTPMiddleware):
                 async for chunk in response.body_iterator:
                     response_body += chunk
                 tasks = BackgroundTasks()
-                tasks.add_task(cache_response, redis_client=self.redis, request=request, headers=response.headers, data=response_body, ex=ttl)
+                tasks.add_task(response_to_cache, redis_client=self.redis, request=request, headers=response.headers, data=response_body, ex=ttl)
                 response.headers['age'] = "0"
                 return Response(content=response_body, status_code=200, headers=response.headers, media_type=response.media_type, background=tasks)
         return response

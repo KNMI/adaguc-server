@@ -44,6 +44,7 @@ class runAdaguc:
         if self.ADAGUC_REDIS.startswith("redis://") or self.ADAGUC_REDIS.startswith("rediss://"):
             self.redis_url = self.ADAGUC_REDIS
             self.use_cache = True
+            self.redis_client = from_url(self.redis_url)
             print("USE CACHE")
         else:
             self.use_cache = False
@@ -145,7 +146,7 @@ class runAdaguc:
     def cache_wanted(self, url: str):
         if not self.use_cache:
             return False
-        if "getcapabilities" in url.lower():
+        if "request=getcapabilities" in url.lower():
             return True
         return False
 
@@ -205,8 +206,8 @@ class runAdaguc:
         if self.cache_wanted(url):
             cache_key = str((url, adagucargs))
             print(f"Checking cache for {cache_key}")
-            redis = from_url(self.ADAGUC_REDIS)
-            age, headers, data = get_cached_response(redis, cache_key)
+
+            age, headers, data = get_cached_response(self.redis_client, cache_key)
             if age is not None:
                return [0, data, headers]
 
@@ -247,7 +248,7 @@ class runAdaguc:
         else:
             if self.cache_wanted(url):
                 print(f"CACHING {cache_key}")
-                cache_response(redis, cache_key, headers, filetogenerate, 60)
+                cache_response(self.redis_client, cache_key, headers, filetogenerate)
             print("HEADERS:", headers)
             return [status, filetogenerate, headers]
 
@@ -274,28 +275,26 @@ class runAdaguc:
             os.makedirs(directory)
 
 skip_headers = ["x-process-time", "age"]
-def cache_response(redis_client, key, headers:str, data, ex: int=60):
-    allheaders=[]
-    expire = ex
+def cache_response(redis_client, key, headers:str, data):
+    useable_headers=[]
+    ttl = 0
     for header in headers:
         k,v = header.split(":")
         if k not in skip_headers:
-            allheaders.append(header)
+            useable_headers.append(header)
         if k.lower().startswith("cache-control"):
             for term in v.split(";"):
                 if term.startswith("max-age"):
                     try:
-                        expire = int(term.split('=')[1])
-                        if expire==0:
-                            expire=ex
+                        ttl = int(term.split('=')[1])
                     except:
-                        expire=ex
+                        pass
 
-    allheaders_json=json.dumps(allheaders)
+    if ttl>0:
+        useable_headers_json=json.dumps(useable_headers)
 
-    entrytime="%10d"%calendar.timegm(datetime.utcnow().utctimetuple())
-    redis_client.set(key, bytes(entrytime, 'utf-8')+bytes("%06d"%len(allheaders_json), 'utf-8')+bytes(allheaders_json, 'utf-8')+data.getvalue(), ex=expire)
-    redis_client.close()
+        entrytime="%10d"%calendar.timegm(datetime.utcnow().utctimetuple())
+        redis_client.set(key, bytes(entrytime, 'utf-8')+bytes("%06d"%len(useable_headers_json), 'utf-8')+bytes(useable_headers_json, 'utf-8')+data.getvalue(), ex=ttl)
 
 def get_cached_response(redis_client, key):
     cached = redis_client.get(key)

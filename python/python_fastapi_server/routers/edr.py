@@ -15,9 +15,6 @@ import re
 from datetime import datetime, timezone, timedelta
 from typing import Union
 
-from cachetools import TTLCache, cached
-from cachetools.keys import hashkey
-from CacheToolsUtils import PrefixedRedisCache
 from covjson_pydantic.coverage import Coverage
 from covjson_pydantic.domain import Domain, ValuesAxis
 from covjson_pydantic.observed_property import (
@@ -65,12 +62,6 @@ SHORT_CACHE_TIME=60
 
 logger = logging.getLogger(__name__)
 logger.debug("Starting EDR")
-
-redis_url = os.environ.get("ADAGUC_REDIS", None)
-if redis_url:
-    edr_cache = PrefixedRedisCache(from_url(os.environ.get("ADAGUC_REDIS")), "edr", SHORT_CACHE_TIME)
-else:
-    edr_cache = TTLCache(maxsize=1024, ttl=SHORT_CACHE_TIME)
 
 edrApiApp = FastAPI(debug=True)
 
