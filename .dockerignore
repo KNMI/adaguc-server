@@ -19,3 +19,7 @@
 !tests/inspiretests/
 !tests/functional_test.py
 !tests/starttests.sh
+!pgbouncer.ini
+!userlist.txt
+!supervisord.conf
+!run_supervisord.sh

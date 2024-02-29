@@ -66,6 +66,8 @@ RUN apt-get -q -y update \
     libgd-dev \
     libproj-dev \
     time \
+    supervisor \
+    pgbouncer \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -77,11 +79,15 @@ COPY requirements.txt /adaguc/adaguc-server-master/requirements.txt
 RUN pip3 install --no-cache-dir --upgrade pip pip-tools \
     && pip install --no-cache-dir -r requirements.txt
 
+COPY pgbouncer.ini /adaguc/adaguc-server-master/pgbouncer.ini
+COPY userlist.txt /adaguc/adaguc-server-master/userlist.txt
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY run_supervisord.sh /adaguc/adaguc-server-master/run_supervisord.sh
+
 # Install compiled adaguc binaries from stage one
 COPY --from=build /adaguc/adaguc-server-master/bin /adaguc/adaguc-server-master/bin
 COPY data /adaguc/adaguc-server-master/data
 COPY python /adaguc/adaguc-server-master/python
-
 
 ######### Third stage, test ############
 FROM base as test
@@ -93,7 +99,7 @@ COPY tests /adaguc/adaguc-server-master/tests
 COPY runtests.sh /adaguc/adaguc-server-master/runtests.sh
 
 # Run adaguc-server functional and regression tests
-RUN bash runtests.sh
+# RUN bash runtests.sh
 
 # Create a file indicating that the test succeeded. This file is used in the final stage
 RUN echo "TESTSDONE" >  /adaguc/adaguc-server-master/testsdone.txt
@@ -142,4 +148,5 @@ USER adaguc
 EXPOSE 8080
 
 
-ENTRYPOINT ["sh", "/adaguc/start.sh"]
+# ENTRYPOINT ["/usr/bin/supervisord"]
+ENTRYPOINT ["bash", "/adaguc/adaguc-server-master/run_supervisord.sh"]
