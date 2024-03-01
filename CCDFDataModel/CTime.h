@@ -70,6 +70,13 @@ private:
 
   DEF_ERRORFUNCTION();
 
+  /**
+   * Initializes CTime
+   * @param CDF::Variable time variable
+   * @return 0 on success 1 on failure.
+   */
+  int init(CDF::Variable *timeVariable);
+
 private:
   utUnit dataunits;
   bool isInitialized;
@@ -126,13 +133,6 @@ public:
    * @return 0 on success 1 on failure.
    */
   int init(const char *units, const char *calendar);
-
-  /**
-   * Initializes CTime
-   * @param CDF::Variable time variable
-   * @return 0 on success 1 on failure.
-   */
-  int init(CDF::Variable *timeVariable);
 
   /**
    * Turns double value into a date object

@@ -442,9 +442,8 @@ int CXMLGen::getDimsForLayer(WMSLayer *myWMSLayer) {
                     isConst = false;
                   }
                   try {
-                    CTime time;
-                    time.init(myWMSLayer->dataSource->getDataObject(0)->cdfObject->getVariable("time"));
-                    if (time.getMode() != 0) {
+                    CTime *time = CTime::GetCTimeInstance(myWMSLayer->dataSource->getDataObject(0)->cdfObject->getVariable("time"));
+                    if (time->getMode() != 0) {
                       isConst = false;
                     }
                   } catch (int e) {

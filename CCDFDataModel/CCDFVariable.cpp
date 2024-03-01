@@ -437,7 +437,7 @@ void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimNam
     }
   }
 
-  CTime ccdftimesrc, ccdftimedst;
+  CTime *ccdftimesrc, *ccdftimedst;
 
   bool isTimeDim = false;
 
@@ -449,7 +449,8 @@ void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimNam
   }
 
   if (isTimeDim) {
-    if (ccdftimesrc.init(srcDimVar) != 0) {
+    ccdftimesrc = CTime::GetCTimeInstance(srcDimVar);
+    if (ccdftimesrc == nullptr) {
       CDBError("Unable to initialize time library");
       throw(1);
     }
@@ -459,7 +460,7 @@ void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimNam
     CT::string srcDimValue;
 
     if (isTimeDim) {
-      srcDimValue = ccdftimesrc.dateToString(ccdftimesrc.getDate(srcDimVar->getDataAt<double>(indimsize)));
+      srcDimValue = ccdftimesrc->dateToString(ccdftimesrc->getDate(srcDimVar->getDataAt<double>(indimsize)));
     } else {
       if (srcDimVar->getType() == CDF_STRING) {
         srcDimValue.print("%s", ((const char **)srcDimVar->data)[indimsize]);
@@ -481,14 +482,15 @@ void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimNam
       size_t j = _j; //(dimSize-1)-_j;
 
       if (isTimeDim) {
-        if (ccdftimedst.init(iterativeVar) != 0) {
+        ccdftimedst = CTime::GetCTimeInstance(iterativeVar);
+        if (ccdftimedst == nullptr) {
           CDBError("Unable to initialize time library");
           throw(1);
         }
       }
       CT::string dstDimValue;
       if (isTimeDim) {
-        dstDimValue = ccdftimedst.dateToString(ccdftimedst.getDate(iterativeVar->getDataAt<double>(j)));
+        dstDimValue = ccdftimedst->dateToString(ccdftimedst->getDate(iterativeVar->getDataAt<double>(j)));
       } else {
         if (iterativeVar->getType() == CDF_STRING) {
           dstDimValue.print("%s", ((const char **)iterativeVar->data)[j]);
@@ -563,7 +565,7 @@ void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimNam
         double destValue = 0;
         try {
           if (isTimeDim) {
-            destValue = ccdftimedst.dateToOffset(ccdftimedst.stringToDate(srcDimValue.c_str()));
+            destValue = ccdftimedst->dateToOffset(ccdftimedst->stringToDate(srcDimValue.c_str()));
           } else {
             destValue = srcDimValue.toDouble();
           }
