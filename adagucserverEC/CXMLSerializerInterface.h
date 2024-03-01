@@ -86,7 +86,7 @@ private:
 
 public:
   // Functions specfically for CXMLSerializer
-  static bool equals(const char *val1, size_t lenval1, const char *val2);
+  static bool equals(const char *val1, const char *val2);
   CXMLObjectInterface *currentNode;
   CXMLSerializerInterface *baseClass;
   virtual void addElementEntry(int rc, const char *name, const char *value) = 0;
