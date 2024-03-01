@@ -1,3 +1,6 @@
+**Version 2.20.2 2024-02-28**
+- Removed locking mechanism
+
 **Version 2.20.1 2024-02-20**
 - Fixed sometimes failing detection of irregular grids
 

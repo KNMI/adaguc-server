@@ -35,8 +35,6 @@
 #include "CCDFGeoJSONIO.h"
 #include "CCDFPNGIO.h"
 
-#include "CCache.h"
-
 // Datasource can share multiple cdfObjects
 // A cdfObject is allways opened using a dataSource path/filter combo
 //  When a CDFObject is already opened
