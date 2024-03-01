@@ -40,7 +40,6 @@
 #include <sys/stat.h>
 
 #include "CDFObjectStore.h"
-#include "CCache.h"
 
 #include "CAutoConfigure.h"
 class CDataReader {
