@@ -37,7 +37,7 @@
 #include <vector>
 
 // Used to silence -Wunused-parameter warnings
-template<class T> void ignoreParameter( const T& ) { }
+template <class T> void ignoreParameter(const T &) {}
 
 extern unsigned int logMessageNumber;
 extern unsigned long logProcessIdentifier;
@@ -63,14 +63,14 @@ void _printWarning(const char *pszMessage, ...);
 void _printError(const char *pszMessage, ...);
 
 #define CDBWarning                                                                                                                                                                                     \
-  _printWarning("[W:%03d:pid%lu: %s:%d %s] ", logMessageNumber, logProcessIdentifier, __FILENAME__, __LINE__, className);                                                                              \
+  _printWarning("[W:%03d:pid%lu: %s:%d] ", logMessageNumber, logProcessIdentifier, __FILENAME__, __LINE__);                                                                                            \
   _printWarningLine
 #define CDBError                                                                                                                                                                                       \
-  _printError("[E:%03d:pid%lu: %s:%d %s] ", logMessageNumber, logProcessIdentifier, __FILENAME__, __LINE__, className);                                                                                \
+  _printError("[E:%03d:pid%lu: %s:%d] ", logMessageNumber, logProcessIdentifier, __FILENAME__, __LINE__);                                                                                              \
   _printErrorLine
 #define CDBErrormessage _printErrorLine
 #define CDBDebug                                                                                                                                                                                       \
-  _printDebug("[D:%03d:pid%lu: %s:%d %s] ", logMessageNumber, logProcessIdentifier, __FILENAME__, __LINE__, className);                                                                                \
+  _printDebug("[D:%03d:pid%lu: %s:%d] ", logMessageNumber, logProcessIdentifier, __FILENAME__, __LINE__);                                                                                              \
   _printDebugLine
 #define CDBEnterFunction(name)                                                                                                                                                                         \
   const char *functionName = name;                                                                                                                                                                     \
