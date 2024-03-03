@@ -243,7 +243,7 @@ class runAdaguc:
                 print("Process: No HTTP Headers written")
 
             print("--- END ADAGUC DEBUG INFO ---\n")
-            return [status, filetogenerate, headers]
+            return status, filetogenerate, headers
 
         else:
             if self.cache_wanted(url):

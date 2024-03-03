@@ -119,7 +119,6 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
     windSectors->readData(CDF_INT);
     float *windSectorXData = (float *)windSectorX->data;
     float *windSectorYData = (float *)windSectorY->data;
-    float *windSpeedDifferenceVariableData = (float *)windSpeedDifferenceVariable->data;
 
     // This is the variable to write To
     CDF::Variable *WindSpeedWindparksOff = dataSource->getDataObject("WindSpeedWindparksOff")->cdfVariable;
@@ -184,7 +183,7 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
   return 0;
 }
 
-void CDPPWFP::drawFunction(int x, int y, float __val, void *_settings, void *warperInstance) {
+void CDPPWFP::drawFunction(int x, int y, float, void *_settings, void *warperInstance) {
   Settings *settings = (Settings *)_settings;
   GenericDataWarper *warper = (GenericDataWarper *)warperInstance;
   if (x >= 0 && y >= 0 && x < (int)settings->width && y < (int)settings->height) {

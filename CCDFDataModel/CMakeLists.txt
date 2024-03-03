@@ -18,8 +18,6 @@ add_library(CCDFDataModel
     CCDFVariable.h
     CCDFObject.h
     CCDFTypes.h
-    CCDFCache.h
-    CCache.h
     CCDFStore.h
     CCDFGeoJSONIO.h
     CCDFCSVReader.h
@@ -33,8 +31,6 @@ add_library(CCDFDataModel
     CCDFVariable.cpp
     CCDFObject.cpp
     CCDFTypes.cpp
-    CCDFCache.cpp
-    CCache.cpp
     CCDFStore.cpp
     CCDFGeoJSONIO.cpp
     CCDFCSVReader.cpp
