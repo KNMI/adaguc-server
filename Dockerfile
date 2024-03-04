@@ -109,7 +109,6 @@ COPY runtests.sh /adaguc/adaguc-server-master/runtests.sh
 # Create a file indicating that the test succeeded. This file is used in the final stage
 RUN echo "TESTSDONE" >  /adaguc/adaguc-server-master/testsdone.txt
 
-
 ######### Fourth stage, prod ############
 FROM base as prod
 
@@ -152,5 +151,4 @@ USER adaguc
 # For HTTP
 EXPOSE 8080
 
-# ENTRYPOINT ["/usr/bin/supervisord"]
-ENTRYPOINT ["sleep", "infinity"]
+ENTRYPOINT ["bash", "/adaguc/adaguc-server-master/run_supervisord.sh"]
