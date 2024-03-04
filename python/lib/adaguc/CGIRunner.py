@@ -3,6 +3,7 @@
  Created by Maarten Plieger, KNMI -  2021-09-01
 """
 
+import asyncio
 import sys
 from subprocess import PIPE, Popen, STDOUT, TimeoutExpired
 from threading import Thread
@@ -15,6 +16,10 @@ from queue import Queue, Empty  # python 3.x
 import re
 #from numba import jit
 
+# TODO: This limits the number of adaguc process calls per fastapi worker.
+#   Do we want this?
+#   Make configurable
+sem = asyncio.Semaphore(4)
 
 class CGIRunner:
 
@@ -22,7 +27,7 @@ class CGIRunner:
       Run the CGI script with specified URL and environment. Stdout is captured and put in a BytesIO object provided in output
     """
 
-    def run(self, cmds, url, output, env=[],  path=None, isCGI=True, timeout=300):
+    async def run(self, cmds, url, output, env=[],  path=None, isCGI=True, timeout=300):
         localenv = {}
         if url != None:
             localenv['QUERY_STRING'] = url
@@ -36,17 +41,20 @@ class CGIRunner:
 
         # Execute adaguc-server binary
         ON_POSIX = 'posix' in sys.builtin_module_names
-        process = Popen(cmds, stdout=PIPE, stderr=PIPE, env=localenv, close_fds=ON_POSIX)
-        
-        try:
-            (processOutput, processError) = process.communicate(timeout=timeout)
-        except TimeoutExpired:
-            process.kill()
-            process.communicate()
-            output.write(b'TimeOut')
-            return 1, [], None
+        async with sem:
+            process = await asyncio.create_subprocess_exec(*cmds,
+                                                           stdout=PIPE, stderr=PIPE, env=localenv, close_fds=ON_POSIX)
 
-        status = process.wait()
+            try:
+                asyncio.wait_for(process, timeout=timeout)
+                (processOutput, processError) = await process.communicate()
+            except TimeoutExpired:
+                process.kill()
+                await process.communicate()
+                output.write(b'TimeOut')
+                return 1, [], None
+
+            status = await process.wait()
 
         # Split headers from body using a regex
         headersEndAt = -2

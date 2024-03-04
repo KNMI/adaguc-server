@@ -44,10 +44,10 @@ async def handle_wms(req: Request, ):
             query_string += f"&{k}={query_param}"
 
     # Run adaguc-server
-    status, data, headers = adaguc_instance.runADAGUCServer(query_string,
-                                                            env=adagucenv,
-                                                            showLogOnError=False,
-                                                            showLog=False)
+    status, data, headers = await adaguc_instance.runADAGUCServer(query_string,
+                                                                  env=adagucenv,
+                                                                  showLogOnError=False,
+                                                                  showLog=False)
 
     # Obtain logfile
     logfile = adaguc_instance.getLogFile()

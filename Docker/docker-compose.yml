@@ -20,7 +20,8 @@ services:
         max-size: "200k"
         max-file: "10"
   adaguc-server:
-    image: openearth/adaguc-server
+#    image: openearth/adaguc-server
+    build: ..
     container_name: my-adaguc-server
     hostname: my-adaguc-server
     volumes:
@@ -78,7 +79,7 @@ services:
     networks:
       - adaguc-network
     volumes:
-      - adaguc-server-compose-adagucdb:/adaguc/adagucdb
+      - adaguc-server-compose-adagucdb:/var/lib/postgresql/data
     environment:
       - "POSTGRES_USER=adaguc"
       - "POSTGRES_PASSWORD=adaguc"
