@@ -50,11 +50,10 @@ int CDPPGoes16Metadata::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSou
     varT->setAttributeText("standard_name", "time");
     try {
       varT->setAttributeText("units", productT->getAttribute("time_coverage_start")->toString().c_str());
-      CTime myTime;
-      myTime.init(productT);
+      CTime *myTime = CTime::GetCTimeInstance(productT);
       // CTime::cleanInstances();
-      CTime::Date date = myTime.freeDateStringToDate(cdfObject->getAttribute("time_coverage_start")->toString().c_str());
-      ((double *)varT->data)[0] = myTime.dateToOffset(date);
+      CTime::Date date = myTime->freeDateStringToDate(cdfObject->getAttribute("time_coverage_start")->toString().c_str());
+      ((double *)varT->data)[0] = myTime->dateToOffset(date);
     } catch (int) {
       CDBError("Could not get units for time_coverage_start");
       return 1;
