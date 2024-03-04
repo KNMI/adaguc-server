@@ -36,5 +36,5 @@ jobs:
           # ensure latest base image is used
           pull: true
           push: ${{ github.repository == 'KNMI/adaguc-server' }}
-          tags: ${{ steps.meta.outputs.tags }}-02291600
+          tags: ${{ steps.meta.outputs.tags }}-03041013
           labels: ${{ steps.meta.outputs.labels }}
