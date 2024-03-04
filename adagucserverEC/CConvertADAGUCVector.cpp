@@ -344,8 +344,8 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
     CDF::Variable *origTimeVar = cdfObject->getVariableNE("time");
 
     /* Read time units and create ctime object */
-    CTime obsTime;
-    if (obsTime.init(origTimeVar) != 0) {
+    CTime *obsTime = CTime::GetCTimeInstance(origTimeVar);
+    if (obsTime == nullptr) {
       CDBError("Unable to initialize time");
     } else {
       /* Read time data */
@@ -371,8 +371,8 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
         CDBDebug("timeStringFromURL = %s", timeStringFromURL.c_str());
         std::vector<CT::string> timeStrings = timeStringFromURL.splitToStack("/");
         if (timeStrings.size() == 2) {
-          timeNotLowerThan = obsTime.dateToOffset(obsTime.freeDateStringToDate(timeStrings[0].c_str()));
-          timeNotMoreThan = obsTime.dateToOffset(obsTime.freeDateStringToDate(timeStrings[1].c_str()));
+          timeNotLowerThan = obsTime->dateToOffset(obsTime->freeDateStringToDate(timeStrings[0].c_str()));
+          timeNotMoreThan = obsTime->dateToOffset(obsTime->freeDateStringToDate(timeStrings[1].c_str()));
         }
       }
     }

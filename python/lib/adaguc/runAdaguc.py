@@ -210,10 +210,10 @@ class runAdaguc:
                 print("Process: No HTTP Headers written")
 
             print("--- END ADAGUC DEBUG INFO ---\n")
-            return [status, filetogenerate, headers]
+            return status, filetogenerate, headers
 
         else:
-            return [status, filetogenerate, headers]
+            return status, filetogenerate, headers
 
     def writetofile(self, filename, data):
         with open(filename, "wb") as f:
