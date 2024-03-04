@@ -38,6 +38,7 @@
 #include "CHandleMetadata.h"
 #include "CCreateTiles.h"
 #include "LayerTypeLiveUpdate/LayerTypeLiveUpdate.h"
+#include <CReadFile.h>
 const char *CRequest::className = "CRequest";
 int CRequest::CGI = 0;
 

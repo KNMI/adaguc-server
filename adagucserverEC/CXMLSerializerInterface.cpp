@@ -131,10 +131,6 @@ int CXMLSerializerInterface::parseFile(const char *xmlFile) {
   return 0;
 }
 
-bool CXMLSerializerInterface::equals(const char *val1, size_t lenval1, const char *val2) {
-  size_t lenval2 = strlen(val2);
-  if (lenval1 != lenval2) return false;
-  for (size_t j = 0; j < lenval1; j++)
-    if (val1[j] != val2[j]) return false;
-  return true;
+bool CXMLSerializerInterface::equals(const char *val1, const char *val2) {
+  return strcmp(val1, val2) == 0;
 }

@@ -33,11 +33,6 @@ class AdagucTestTools:
         print(self.getLogFile())
         print("=== END ADAGUC LOGS ===")
 
-    def runRemoteADAGUCServer(self, url=None):
-        req = urllib.request.Request(url)
-        content = urllib.request.urlopen(req)
-        return [content.getcode(), content.read(), content.getheaders()]
-
     def runADAGUCServer(
         self,
         url=None,
@@ -104,7 +99,7 @@ class AdagucTestTools:
                 print("Process: No HTTP Headers written")
 
             print("--- END ADAGUC DEBUG INFO ---\n")
-            return [status, filetogenerate, headers]
+            return status, filetogenerate, headers
 
         else:
             # The executable wrote to stderr, which is unwanted behaviour. Stderr should be empty when running adaguc-server.
@@ -118,7 +113,7 @@ class AdagucTestTools:
                 print(
                     "[WARNING]: Adaguc-server writes too many lines to the logfile, size = %d kilobytes"
                     % (logfileSize / 1024))
-            return [status, filetogenerate, headers]
+            return status, filetogenerate, headers
 
     def writetofile(self, filename, data):
         with open(filename, "wb") as f:
