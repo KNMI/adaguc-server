@@ -163,7 +163,8 @@ class runAdaguc:
         # adagucenv=os.environ.copy()
         # adagucenv.update(env)
 
-        url = re.sub(r"^(.*)(&[0-9\.]*)$", r"\g<1>&1", url)
+        # url = re.sub(r"^(.*)(&[0-9\.]*)$", r"\g<1>&1", url) # This removes adaguc-viewer's unique-URL feature
+
         adagucenv = env
 
         adagucenv["ADAGUC_ENABLELOGBUFFER"] = os.getenv(
@@ -248,7 +249,7 @@ class runAdaguc:
         else:
             if self.cache_wanted(url):
                 print(f"CACHING {cache_key}")
-                cache_response(self.redis_client, cache_key, headers, filetogenerate)
+                response_to_cache(self.redis_client, cache_key, headers, filetogenerate)
             print("HEADERS:", headers)
             return [status, filetogenerate, headers]
 
@@ -275,13 +276,13 @@ class runAdaguc:
             os.makedirs(directory)
 
 skip_headers = ["x-process-time", "age"]
-def cache_response(redis_client, key, headers:str, data):
-    useable_headers=[]
+def response_to_cache(redis_client, key, headers:str, data):
+    cacheable_headers=[]
     ttl = 0
     for header in headers:
         k,v = header.split(":")
         if k not in skip_headers:
-            useable_headers.append(header)
+            cacheable_headers.append(header)
         if k.lower().startswith("cache-control"):
             for term in v.split(";"):
                 if term.startswith("max-age"):
@@ -291,10 +292,10 @@ def cache_response(redis_client, key, headers:str, data):
                         pass
 
     if ttl>0:
-        useable_headers_json=json.dumps(useable_headers)
+        cacheable_headers_json=json.dumps(cacheable_headers, ensure_ascii=True).encode('utf-8')
 
-        entrytime="%10d"%calendar.timegm(datetime.utcnow().utctimetuple())
-        redis_client.set(key, bytes(entrytime, 'utf-8')+bytes("%06d"%len(useable_headers_json), 'utf-8')+bytes(useable_headers_json, 'utf-8')+data.getvalue(), ex=ttl)
+        entrytime=f"{calendar.timegm(datetime.utcnow().utctimetuple()):10d}".encode('utf-8')
+        redis_client.set(key, entrytime+f"{len(cacheable_headers_json):06d}".encode('utf-8')+cacheable_headers_json+data.getvalue(), ex=ttl)
 
 def get_cached_response(redis_client, key):
     cached = redis_client.get(key)
@@ -304,14 +305,14 @@ def get_cached_response(redis_client, key):
         return None, None, None
     print("Cache hit", len(cached))
 
-    entrytime=int(cached[:10])
+    entrytime=int(cached[:10].decode('utf-8'))
     currenttime=calendar.timegm(datetime.utcnow().utctimetuple())
     age=currenttime-entrytime
 
-    headers_len=int(cached[10:16])
+    headers_len=int(cached[10:16].decode('utf-8'))
     headers=json.loads(cached[16:16+headers_len])
-    headers.append(f"Age: {age}")
+    headers.append(f"age: {age}")
 
     data = cached[16+headers_len:]
-    print("HIT: ", type(data))
+    print(f"HIT: {len(data)} bytes cached")
     return age, headers, BytesIO(data)

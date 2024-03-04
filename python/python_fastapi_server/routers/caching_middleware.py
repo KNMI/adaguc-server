@@ -1,3 +1,4 @@
+from io import BytesIO
 import os
 from urllib.parse import urlsplit
 
@@ -9,6 +10,7 @@ import calendar
 from datetime import datetime
 import redis.asyncio as redis
 import json
+import brotli
 
 ADAGUC_REDIS=os.environ.get('ADAGUC_REDIS')
 
@@ -21,32 +23,35 @@ async def get_cached_response(redis_client, request):
         return None, None, None
     # print("Cache hit", len(cached))
 
-    entrytime = int(cached[:10])
+    entrytime = int(cached[:10].decode('utf-8'))
     currenttime = calendar.timegm(datetime.utcnow().utctimetuple())
     age = currenttime-entrytime
 
-    headers_len = int(cached[10:16])
-    headers = json.loads(cached[16:16+headers_len])
+    headers_len = int(cached[10:16].decode('utf-8'))
+    headers = json.loads(cached[16:16+headers_len].decode('utf-8'))
 
-    data = cached[16+headers_len:]
+    data = brotli.decompress(cached[16+headers_len:])
     return age, headers, data
 
 skip_headers = ["x-process-time", "age"]
 
-async def response_to_cache(redis_client, request, headers, data, ex: int=60):
+async def response_to_cache(redis_client, request, headers, data, ex: int):
     key=generate_key(request)
 
-    headers_to_keep={}
-    for k in headers.keys():
-        if k not in skip_headers:
-            headers_to_keep[k] = headers[k]
-    headers_to_keep_json = json.dumps(headers_to_keep)
+    fixed_headers={}
+    for k in headers:
+      if not k in skip_headers:
+        fixed_headers[k] = headers[k]
+    headers_json = json.dumps(fixed_headers, ensure_ascii=False).encode('utf-8')
 
-    entrytime="%10d"%calendar.timegm(datetime.utcnow().utctimetuple())
-    await redis_client.set(key, bytes(entrytime, 'utf-8')+bytes("%06d"%len(headers_to_keep_json), 'utf-8')+bytes(headers_to_keep_json, 'utf-8')+data, ex=ex)
+    entrytime=f"{calendar.timegm(datetime.utcnow().utctimetuple()):10d}".encode('utf-8')
+    await redis_client.set(key, entrytime+f"{len(headers_json):06d}".encode('utf-8')+headers_json+brotli.compress(data), ex=ex)
 
 def generate_key(request):
-    key = f"{request.url.path}?bytes({request['query_string']}, 'utf-8')"
+    if len(request['query_string'])==0:
+        key = f"{request.url.path}"
+    else:
+        key = f"{request.url.path}?bytes({request['query_string']}, 'utf-8')"
     return key
 
 class CachingMiddleware(BaseHTTPMiddleware):
@@ -67,6 +72,7 @@ class CachingMiddleware(BaseHTTPMiddleware):
         if data:
             #Fix Age header
             headers["Age"] = "%1d"%(age)
+            headers["adaguc-cache"] = "hit"
             return Response(content=data, status_code=200, headers=headers, media_type=headers['content-type'])
 
         response: Response = await call_next(request)
@@ -82,11 +88,14 @@ class CachingMiddleware(BaseHTTPMiddleware):
                         break
                 if ttl is None:
                     return response
-                response_body = b""
+                response_body_file = BytesIO()
                 async for chunk in response.body_iterator:
-                    response_body += chunk
+                    response_body_file.write(chunk)
                 tasks = BackgroundTasks()
-                tasks.add_task(response_to_cache, redis_client=self.redis, request=request, headers=response.headers, data=response_body, ex=ttl)
+                tasks.add_task(response_to_cache, redis_client=self.redis, request=request, headers=response.headers, data=response_body_file.getvalue(), ex=ttl)
                 response.headers['age'] = "0"
-                return Response(content=response_body, status_code=200, headers=response.headers, media_type=response.media_type, background=tasks)
+                response.headers['adaguc-cache'] = "miss"
+                return Response(content=response_body_file.getvalue(), status_code=200, headers=response.headers, media_type=response.media_type, background=tasks)
+
+        response.headers["adaguc-cache"] = "err"
         return response
