@@ -49,7 +49,7 @@ void CDFNetCDFReader::enableLonWarp(bool) {
 }
 void CDFNetCDFReader::ncError(int, const char *className, const char *msg, int e) {
   if (e == NC_NOERR) return;
-  CDBError("%s %s", msg, nc_strerror(e));
+  CDBError("%s %s %s", className, msg, nc_strerror(e));
 }
 
 int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type) { return _readVariableData(var, type, NULL, NULL, NULL); }
