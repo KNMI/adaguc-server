@@ -848,14 +848,10 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     singleCellMode = true;
   }
 
-  CT::string dataSourceFilename;
-  dataSourceFilename.copy(dataSource->getFileName());
+  CT::string dataSourceFilename = dataSource->getFileName();
 
-  // CCache cache;
-  // CT::string cacheFilename;
-  // pthread_mutex_lock(&CDataReader_open_lock);
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-  // pthread_mutex_unlock(&CDataReader_open_lock);
+
   // Use autoscale of legendcolors when the legendscale factor has been set to zero.
   if (styleConfiguration != NULL) {
     if (dataSource->stretchMinMaxDone == false) {
@@ -866,8 +862,6 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     }
   }
 
-  CDFObject *cdfObject = NULL;
-
 #ifdef CDATAREADER_DEBUG
   CDBDebug("Working on [%s] with mode %d and (%d,%d)", dataSourceFilename.c_str(), mode, x, y);
 
@@ -876,6 +870,8 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     CDBDebug("Working on [%s]", dataSourceFilename.c_str());
   }
 #endif
+
+  CDFObject *cdfObject = NULL;
 
   if (mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS || mode == CNETCDFREADER_MODE_OPEN_HEADER) {
     cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams, dataSourceFilename.c_str(), enableObjectCache);

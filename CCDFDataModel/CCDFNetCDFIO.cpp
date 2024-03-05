@@ -538,10 +538,7 @@ int CDFNetCDFReader::readVariables(int groupId, CT::string *groupName, int mode)
   if (mode == 0) {
     status = readDimensions(groupId, groupName);
     if (status != 0) return 1;
-    if (status != 0) {
-      CDBError("readDimensions failed for group [%s]", groupName);
-      return 1;
-    }
+
 #ifdef MEASURETIME
     StopWatch_Stop("readDim");
 #endif
