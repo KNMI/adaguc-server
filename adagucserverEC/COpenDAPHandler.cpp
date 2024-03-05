@@ -949,6 +949,11 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
                                 if (dimUnits.length() > 2) {
                                   readFromDB = true;
                                   time = CTime::GetCTimeInstance(v);
+                                  if (time == nullptr) {
+                                    CDBDebug(CTIME_GETINSTANCE_ERROR_MESSAGE);
+                                    return 1;
+                                  }
+
                                 } else {
                                   CDBDebug("%s name units are [%s]", v->name.c_str(), dimUnits.c_str());
                                 }

@@ -181,7 +181,11 @@ int CConvertTROPOMI::convertTROPOMIHeader(CDFObject *cdfObject, CServerParams *)
   try {
     varT->setAttributeText("units", productT->getAttribute("units")->toString().c_str());
     CTime *myTime = CTime::GetCTimeInstance(productT);
-    // CTime::cleanInstances();
+    if (myTime == nullptr) {
+      CDBError(CTIME_GETINSTANCE_ERROR_MESSAGE);
+      return 1;
+    }
+
     CTime::Date date = myTime->freeDateStringToDate(cdfObject->getAttribute("time_coverage_start")->toString().c_str());
     ((double *)varT->data)[0] = myTime->dateToOffset(date);
   } catch (int) {

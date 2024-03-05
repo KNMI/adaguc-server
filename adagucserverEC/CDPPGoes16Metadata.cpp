@@ -51,7 +51,12 @@ int CDPPGoes16Metadata::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSou
     try {
       varT->setAttributeText("units", productT->getAttribute("time_coverage_start")->toString().c_str());
       CTime *myTime = CTime::GetCTimeInstance(productT);
-      // CTime::cleanInstances();
+
+      if (myTime == nullptr) {
+        CDBDebug(CTIME_GETINSTANCE_ERROR_MESSAGE);
+        return 1;
+      }
+
       CTime::Date date = myTime->freeDateStringToDate(cdfObject->getAttribute("time_coverage_start")->toString().c_str());
       ((double *)varT->data)[0] = myTime->dateToOffset(date);
     } catch (int) {

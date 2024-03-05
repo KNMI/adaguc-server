@@ -675,6 +675,10 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
   // CTime adagucTime;
   // adagucTime->init(((CDFObject*)variable->getParentCDFObject())->getVariableNE("time_obs"));
   CTime *adagucTime = CTime::GetCTimeInstance(((CDFObject *)variable->getParentCDFObject())->getVariableNE("time_obs"));
+  if (adagucTime == nullptr) {
+    CDBDebug(CTIME_GETINSTANCE_ERROR_MESSAGE);
+    return 1;
+  }
 
   COGCDims *ogcDim = dataSource->requiredDims[0];
 

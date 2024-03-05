@@ -433,7 +433,10 @@ void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool
               CDF::Variable timeVarHelper;
               timeVarHelper.setAttributeText("units", "seconds since 1970-1-1");
               CTime *timeHelper = CTime::GetCTimeInstance(&timeVarHelper);
-
+              if (timeHelper == nullptr) {
+                CDBError(CTIME_GETINSTANCE_ERROR_MESSAGE);
+                throw __LINE__;
+              }
               double timeOffset;
               if (timeVal.length() > 0) {
                 timeOffset = timeHelper->dateToOffset(timeHelper->freeDateStringToDate(timeVal.c_str()));

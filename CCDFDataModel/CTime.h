@@ -48,7 +48,9 @@
 #define CTIME_UNITTYPE_MONTHS 5
 #define CTIME_UNITTYPE_YEARS 6
 
-//#define CTIME_CALENDARTYPE_365day  1
+#define CTIME_GETINSTANCE_ERROR_MESSAGE "Unable to obtain ctime instance from variable"
+
+// #define CTIME_CALENDARTYPE_365day  1
 
 #include "CDebugger.h"
 class CTime {

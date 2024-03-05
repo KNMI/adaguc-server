@@ -614,10 +614,9 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
 
                   // Create adaguctime structure, when this is a time dimension.
                   if (isTimeDim[d]) {
-                    try {
-                      adagucTime = CTime::GetCTimeInstance(dimVar);
-                    } catch (int e) {
-                      CDBDebug("Exception occurred during time initialization: %d", e);
+                    adagucTime = CTime::GetCTimeInstance(dimVar);
+                    if (adagucTime == nullptr) {
+                      CDBDebug(CTIME_GETINSTANCE_ERROR_MESSAGE);
                       throw(__LINE__);
                     }
                   }
