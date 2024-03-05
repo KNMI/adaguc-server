@@ -84,11 +84,6 @@ COPY requirements.txt /adaguc/adaguc-server-master/requirements.txt
 RUN pip3 install --no-cache-dir --upgrade pip pip-tools \
     && pip install --no-cache-dir -r requirements.txt
 
-COPY pgbouncer.ini /adaguc/adaguc-server-master/pgbouncer.ini
-COPY userlist.txt /adaguc/adaguc-server-master/userlist.txt
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-COPY run_supervisord.sh /adaguc/adaguc-server-master/run_supervisord.sh
-
 # Install compiled adaguc binaries from stage one
 COPY --from=build /adaguc/adaguc-server-master/bin /adaguc/adaguc-server-master/bin
 COPY data /adaguc/adaguc-server-master/data
@@ -128,6 +123,11 @@ COPY ./Docker/adaguc-server-config-python-postgres.xml /adaguc/adaguc-server-con
 COPY ./Docker/start.sh /adaguc/
 COPY ./Docker/adaguc-server-*.sh /adaguc/
 COPY ./Docker/baselayers.xml /adaguc/adaguc-datasets-internal/baselayers.xml
+# Copy pgbouncer and supervisord config files
+COPY ./Docker/pgbouncer/ /adaguc/pgbouncer/
+COPY ./Docker/supervisord/ /etc/supervisor/conf.d/
+COPY ./Docker/run_supervisord.sh /adaguc/run_supervisord.sh
+# Set permissions
 RUN  chmod +x /adaguc/adaguc-server-*.sh && \
     chmod +x /adaguc/start.sh && \
     chown -R adaguc:adaguc /data/adaguc* /adaguc /adaguc/*
@@ -151,4 +151,4 @@ USER adaguc
 # For HTTP
 EXPOSE 8080
 
-ENTRYPOINT ["bash", "/adaguc/adaguc-server-master/run_supervisord.sh"]
+ENTRYPOINT ["bash", "/adaguc/run_supervisord.sh"]

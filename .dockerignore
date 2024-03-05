@@ -6,6 +6,9 @@
 !Docker/start.sh
 !Docker/adaguc-server-*.sh
 !Docker/baselayers.xml
+!Docker/run_supervisord.sh
+!Docker/pgbouncer/
+!Docker/supervisord/
 !requirements.txt
 !requirements-dev.txt
 !adagucserverEC/
@@ -19,7 +22,3 @@
 !tests/inspiretests/
 !tests/functional_test.py
 !tests/starttests.sh
-!pgbouncer.ini
-!userlist.txt
-!supervisord.conf
-!run_supervisord.sh
