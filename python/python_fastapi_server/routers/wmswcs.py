@@ -61,8 +61,10 @@ async def handle_wms(req: Request, ):
     # desired response codes. Otherwise, a 500 status will be returned on exiting with errors.
     if status != 0:
         logger.info("Adaguc status code was %d", status)
-        if 400 <= status < 600:
-            response_code = status  # Map 4xx  and 5xxstatus codes directly
+        if status == 32:
+            response_code = 404 # Not Found
+        elif status == 33:
+            response_code = 422 # Unprocessable Entity
         else:
             response_code = 500
     response = Response(content=data.getvalue(), status_code=response_code)

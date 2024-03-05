@@ -345,3 +345,16 @@ class TestWCS(unittest.TestCase):
     self.assertEqual(status, 0)
     self.assertTrue("Content-Type:text/plain" in headers)
     self.assertTrue("Cache-Control:max-age=7200" in headers)
+
+
+  def test_WCSGetCoverage_error_on_wrong_coverage(self):
+    """
+    Check if WCS GetCoverage for specified settings returns correct grid spec
+    """
+    AdagucTestTools().cleanTempDir()
+    status, data, headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=nonexisting&CRS=EPSG%3A4326&FORMAT=NetCDF4&BBOX=-10,40,20,60",
+                                                              env=self.env, args=["--report"])
+    
+    # Should return 404 Not Found
+    self.assertEqual(status, 404)
+

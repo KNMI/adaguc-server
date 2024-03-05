@@ -39,6 +39,8 @@
 #include "CCreateTiles.h"
 #include "LayerTypeLiveUpdate/LayerTypeLiveUpdate.h"
 #include <CReadFile.h>
+#include "Definitions.h"
+
 const char *CRequest::className = "CRequest";
 int CRequest::CGI = 0;
 
@@ -1693,6 +1695,7 @@ int CRequest::process_all_layers() {
       }
       if (layerNo == srvParam->cfg->Layer.size()) {
         CDBError("Layer [%s] not found", srvParam->WMSLayers[j].c_str());
+        setStatusCode(ERROR_404_NOT_FOUND);
         return 1;
       }
     }
