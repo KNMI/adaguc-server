@@ -9,7 +9,7 @@ import tempfile
 import shutil
 import random
 import string
-from redis import Redis  # This can also be used to connect to a Redis cluster
+import redis  # This can also be used to connect to a Redis cluster
 # from redis.cluster import RedisCluster as Redis  # Cluster client, for testing
 
 import re
@@ -45,7 +45,7 @@ class runAdaguc:
         if self.ADAGUC_REDIS.startswith("redis://") or self.ADAGUC_REDIS.startswith("rediss://"):
             self.redis_url = self.ADAGUC_REDIS
             self.use_cache = True
-            self.redis_client = Redis.from_url(self.redis_url)
+            self.redis_pool = redis.ConnectionPool.from_url(self.ADAGUC_REDIS)
             print("USE CACHE")
         else:
             self.use_cache = False
@@ -209,7 +209,7 @@ class runAdaguc:
             cache_key = str((url, adagucargs)).encode('utf-8')
             print(f"Checking cache for {cache_key}")
 
-            age, headers, data = get_cached_response(self.redis_client, cache_key)
+            age, headers, data = get_cached_response(self.redis_pool, cache_key)
             if age is not None:
                return [0, data, headers]
 
@@ -250,7 +250,7 @@ class runAdaguc:
         else:
             if self.cache_wanted(url):
                 print(f"CACHING {cache_key}")
-                response_to_cache(self.redis_client, cache_key, headers, filetogenerate)
+                response_to_cache(self.redis_pool, cache_key, headers, filetogenerate)
             print("HEADERS:", headers)
             return [status, filetogenerate, headers]
 
@@ -277,7 +277,7 @@ class runAdaguc:
             os.makedirs(directory)
 
 skip_headers = ["x-process-time", "age"]
-def response_to_cache(redis_client, key, headers:str, data):
+def response_to_cache(redis_pool, key, headers:str, data):
     cacheable_headers=[]
     ttl = 0
     for header in headers:
@@ -296,10 +296,14 @@ def response_to_cache(redis_client, key, headers:str, data):
         cacheable_headers_json=json.dumps(cacheable_headers, ensure_ascii=True).encode('utf-8')
 
         entrytime=f"{calendar.timegm(datetime.utcnow().utctimetuple()):10d}".encode('utf-8')
+        redis_client = redis.Redis(connection_pool=redis_pool)
         redis_client.set(key, entrytime+f"{len(cacheable_headers_json):06d}".encode('utf-8')+cacheable_headers_json+data.getvalue(), ex=ttl)
+        redis_client.close()
 
-def get_cached_response(redis_client, key):
+def get_cached_response(redis_pool, key):
+    redis_client = redis.Redis(connection_pool=redis_pool)
     cached = redis_client.get(key)
+    redis_client.close()
     if not cached:
         print("Cache miss")
         return None, None, None

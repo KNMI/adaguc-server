@@ -8,7 +8,7 @@ from fastapi import BackgroundTasks
 
 import calendar
 from datetime import datetime
-from redis.asyncio import Redis  # This can also be used to connect to a Redis cluster
+import redis.asyncio as redis  # This can also be used to connect to a Redis cluster
 # from redis.asyncio.cluster import RedisCluster as Redis  # Cluster client, for testing
 
 import json
@@ -16,9 +16,11 @@ import brotli
 
 ADAGUC_REDIS=os.environ.get('ADAGUC_REDIS')
 
-async def get_cached_response(redis_client, request):
+async def get_cached_response(redis_pool, request):
     key = generate_key(request)
+    redis_client = redis.Redis(connection_pool=redis_pool)
     cached = await redis_client.get(key)
+    await redis_client.aclose()
     if not cached:
         # print("Cache miss")
         return None, None, None
@@ -36,7 +38,7 @@ async def get_cached_response(redis_client, request):
 
 skip_headers = ["x-process-time", "age"]
 
-async def response_to_cache(redis_client, request, headers, data, ex: int):
+async def response_to_cache(redis_pool, request, headers, data, ex: int):
     key=generate_key(request)
 
     fixed_headers={}
@@ -46,7 +48,10 @@ async def response_to_cache(redis_client, request, headers, data, ex: int):
     headers_json = json.dumps(fixed_headers, ensure_ascii=False).encode('utf-8')
 
     entrytime=f"{calendar.timegm(datetime.utcnow().utctimetuple()):10d}".encode('utf-8')
+    redis_client = redis.Redis(connection_pool=redis_pool)
     await redis_client.set(key, entrytime+f"{len(headers_json):06d}".encode('utf-8')+headers_json+brotli.compress(data), ex=ex)
+    await redis_client.aclose()
+
 
 def generate_key(request):
     key = request.url.path.encode('utf-8')
@@ -59,15 +64,15 @@ class CachingMiddleware(BaseHTTPMiddleware):
     def __init__(self, app):
         super().__init__(app)
         if "ADAGUC_REDIS" in os.environ:
-            self.shortcut=False
-            self.redis = Redis.from_url(ADAGUC_REDIS)
+            self.shortcut = False
+            self.redis_pool = redis.ConnectionPool.from_url(ADAGUC_REDIS)
 
     async def dispatch(self, request, call_next):
         if self.shortcut:
             return await call_next(request)
 
         #Check if request is in cache, if so return that
-        age, headers, data = await get_cached_response(self.redis, request)
+        age, headers, data = await get_cached_response(self.redis_pool, request)
 
         if data:
             #Fix Age header
@@ -92,7 +97,7 @@ class CachingMiddleware(BaseHTTPMiddleware):
                 async for chunk in response.body_iterator:
                     response_body_file.write(chunk)
                 tasks = BackgroundTasks()
-                tasks.add_task(response_to_cache, redis_client=self.redis, request=request, headers=response.headers, data=response_body_file.getvalue(), ex=ttl)
+                tasks.add_task(response_to_cache, redis_pool=self.redis_pool, request=request, headers=response.headers, data=response_body_file.getvalue(), ex=ttl)
                 response.headers['age'] = "0"
                 response.headers['adaguc-cache'] = "miss"
                 return Response(content=response_body_file.getvalue(), status_code=200, headers=response.headers, media_type=response.media_type, background=tasks)
