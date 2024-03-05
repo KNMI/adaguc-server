@@ -222,7 +222,7 @@ int CConvertEProfile::convertEProfileHeader(CDFObject *cdfObject, CServerParams 
   CTime *obsTime = CTime::GetCTimeInstance(timev);
 
   if (obsTime == NULL) {
-    CDBError("Unable to get CTime instance");
+    CDBError(CTIME_GETINSTANCE_ERROR_MESSAGE);
     return 1;
   }
 

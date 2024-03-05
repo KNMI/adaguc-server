@@ -27,8 +27,10 @@
 #define CDEBUGGER_H
 
 #ifndef SOURCE_PATH_SIZE
-#define SOURCE_PATH_SIZE 80
+#define SOURCE_PATH_SIZE 70
 #endif
+
+#define CDEBUGGER_FILE_LINENUMBER_WIDTH 70
 
 #define __FILENAME__ (&__FILE__[SOURCE_PATH_SIZE])
 
@@ -76,6 +78,6 @@ void _printError(const char *pszMessage, ...);
   const char *functionName = name;                                                                                                                                                                     \
   _printDebugLine("D %s, %d class %s: Entering function '%s'", __FILENAME__, __LINE__, className, functionName);
 #define DEF_ERRORFUNCTION() static const char *className;
-#define DEF_ERRORMAIN() static const char *className = "main";
+#define DEF_ERRORMAIN()
 
 #endif

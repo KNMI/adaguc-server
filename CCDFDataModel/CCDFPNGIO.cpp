@@ -153,6 +153,10 @@ int CDFPNGReader::open(const char *fileName) {
         timeVariable->setAttributeText("standard_name", "time");
         timeVariable->allocateData(1);
         CTime *ctime = CTime::GetCTimeInstance(timeVariable);
+        if (ctime == nullptr) {
+          CDBDebug(CTIME_GETINSTANCE_ERROR_MESSAGE);
+          return 1;
+        }
         ((double *)timeVariable->data)[0] = ctime->dateToOffset(ctime->freeDateStringToDate(pngRaster->headers[j].value));
       }
       /* Reference time dimension */
@@ -169,6 +173,10 @@ int CDFPNGReader::open(const char *fileName) {
         referenceTimeVariable->setAttributeText("standard_name", "forecast_reference_time");
         referenceTimeVariable->allocateData(1);
         CTime *ctime = CTime::GetCTimeInstance(referenceTimeVariable);
+        if (ctime == nullptr) {
+          CDBDebug(CTIME_GETINSTANCE_ERROR_MESSAGE);
+          return 1;
+        }
         ((double *)referenceTimeVariable->data)[0] = ctime->dateToOffset(ctime->freeDateStringToDate(pngRaster->headers[j].value));
       }
     }
