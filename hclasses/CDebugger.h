@@ -27,8 +27,10 @@
 #define CDEBUGGER_H
 
 #ifndef SOURCE_PATH_SIZE
-#define SOURCE_PATH_SIZE 80
+#define SOURCE_PATH_SIZE 70
 #endif
+
+#define CDEBUGGER_FILE_LINENUMBER_WIDTH 70
 
 #define __FILENAME__ (&__FILE__[SOURCE_PATH_SIZE])
 
@@ -37,7 +39,7 @@
 #include <vector>
 
 // Used to silence -Wunused-parameter warnings
-template<class T> void ignoreParameter( const T& ) { }
+template <class T> void ignoreParameter(const T &) {}
 
 extern unsigned int logMessageNumber;
 extern unsigned long logProcessIdentifier;
@@ -63,19 +65,19 @@ void _printWarning(const char *pszMessage, ...);
 void _printError(const char *pszMessage, ...);
 
 #define CDBWarning                                                                                                                                                                                     \
-  _printWarning("[W:%03d:pid%lu: %s:%d %s] ", logMessageNumber, logProcessIdentifier, __FILENAME__, __LINE__, className);                                                                              \
+  _printWarning("[W:%03d:pid%lu: %s:%d] ", logMessageNumber, logProcessIdentifier, __FILENAME__, __LINE__);                                                                                            \
   _printWarningLine
 #define CDBError                                                                                                                                                                                       \
-  _printError("[E:%03d:pid%lu: %s:%d %s] ", logMessageNumber, logProcessIdentifier, __FILENAME__, __LINE__, className);                                                                                \
+  _printError("[E:%03d:pid%lu: %s:%d] ", logMessageNumber, logProcessIdentifier, __FILENAME__, __LINE__);                                                                                              \
   _printErrorLine
 #define CDBErrormessage _printErrorLine
 #define CDBDebug                                                                                                                                                                                       \
-  _printDebug("[D:%03d:pid%lu: %s:%d %s] ", logMessageNumber, logProcessIdentifier, __FILENAME__, __LINE__, className);                                                                                \
+  _printDebug("[D:%03d:pid%lu: %s:%d] ", logMessageNumber, logProcessIdentifier, __FILENAME__, __LINE__);                                                                                              \
   _printDebugLine
 #define CDBEnterFunction(name)                                                                                                                                                                         \
   const char *functionName = name;                                                                                                                                                                     \
   _printDebugLine("D %s, %d class %s: Entering function '%s'", __FILENAME__, __LINE__, className, functionName);
 #define DEF_ERRORFUNCTION() static const char *className;
-#define DEF_ERRORMAIN() static const char *className = "main";
+#define DEF_ERRORMAIN()
 
 #endif

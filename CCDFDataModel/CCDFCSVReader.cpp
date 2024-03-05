@@ -243,6 +243,11 @@ int CDFCSVReader::open(const char *fileName) {
     //    if (timeString.length() > 5){
     CDBDebug("timeString = [%s]", timeString.c_str());
     CTime *ctime = CTime::GetCTimeInstance(timeVar);
+    if (ctime == nullptr) {
+      CDBDebug(CTIME_GETINSTANCE_ERROR_MESSAGE);
+      return 1;
+    }
+
     ((double *)timeVar->data)[0] = ctime->dateToOffset(ctime->freeDateStringToDate(timeString.c_str()));
     //    } else {
     //      ((double*)timeVar->data)[0] = 0;
@@ -274,6 +279,11 @@ int CDFCSVReader::open(const char *fileName) {
     //    if (timeString.length() > 5){
     CDBDebug("referenceTimeString = [%s]", referenceTimeString.c_str());
     CTime *ctime = CTime::GetCTimeInstance(referenceTimeVar);
+    if (ctime == nullptr) {
+      CDBDebug(CTIME_GETINSTANCE_ERROR_MESSAGE);
+      return 1;
+    }
+
     ((double *)referenceTimeVar->data)[0] = ctime->dateToOffset(ctime->freeDateStringToDate(referenceTimeString.c_str()));
     //    } else {
     //      ((double*)timeVar->data)[0] = 0;

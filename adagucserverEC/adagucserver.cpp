@@ -44,6 +44,7 @@ void writeLogFile(const char *msg) {
       setvbuf(pLogDebugFile, NULL, _IONBF, 0);
     }
     fputs(msg, pLogDebugFile);
+    // If message line contains data like [D:008:pid250461: adagucserverEC/CCairoPlotter.cpp:878], also append the time.
     if (strncmp(msg, "[D:", 3) == 0 || strncmp(msg, "[W:", 3) == 0 || strncmp(msg, "[E:", 3) == 0) {
       char szTemp[128];
       struct timeval tv;

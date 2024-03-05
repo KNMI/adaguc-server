@@ -27,13 +27,11 @@
 #include <iostream>
 #include <unistd.h>
 
-
 extern unsigned int logMessageNumber;
 unsigned int logMessageNumber = 0;
 
 extern unsigned long logProcessIdentifier;
 unsigned long logProcessIdentifier = getpid();
-
 
 #include "CTypes.h"
 /*
@@ -51,9 +49,7 @@ void printErrorStream(const char *message) { _printErrorStreamPointer(message); 
 
 void _printErrorStream(const char *pszMessage) { fprintf(stderr, "%s", pszMessage); }
 void _printWarningStream(const char *pszMessage) { fprintf(stderr, "%s", pszMessage); }
-void _printDebugStream(const char *pszMessage) {
-  printf("%s", pszMessage);
-}
+void _printDebugStream(const char *pszMessage) { printf("%s", pszMessage); }
 
 void _printDebugLine(const char *pszMessage, ...) {
   logMessageNumber++;
@@ -90,7 +86,7 @@ void _printErrorLine(const char *pszMessage, ...) {
 
 void makeEqualWidth(CT::string *t1) {
   size_t i = t1->length();
-  for (int j = i; j < 80; j++) {
+  for (int j = i; j < CDEBUGGER_FILE_LINENUMBER_WIDTH; j++) {
     t1->concat(" ");
   }
 }
