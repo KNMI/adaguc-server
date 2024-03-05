@@ -341,7 +341,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
     CT::string queryString;
     // CT::string VALUES;
     // CADAGUC_time *ADTime  = NULL;
-    CTime adagucTime;
+    CTime *adagucTime;
 
     CDFObject *cdfObjectOfFirstFile = NULL;
     try {
@@ -614,11 +614,9 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
 
                   // Create adaguctime structure, when this is a time dimension.
                   if (isTimeDim[d]) {
-                    try {
-                      adagucTime.reset();
-                      adagucTime.init(dimVar);
-                    } catch (int e) {
-                      CDBDebug("Exception occurred during time initialization: %d", e);
+                    adagucTime = CTime::GetCTimeInstance(dimVar);
+                    if (adagucTime == nullptr) {
+                      CDBDebug(CTIME_GETINSTANCE_ERROR_MESSAGE);
                       throw(__LINE__);
                     }
                   }
@@ -762,7 +760,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
                             // PrintISOTime return a 0 if succeeded
 
                             try {
-                              uniqueKey = adagucTime.dateToISOString(adagucTime.getDate(dimValues[i]));
+                              uniqueKey = adagucTime->dateToISOString(adagucTime->getDate(dimValues[i]));
                               if (!dataSource->cfgLayer->Dimension[d]->attr.quantizeperiod.empty()) {
                                 CT::string quantizemethod = "round";
                                 CT::string quantizeperiod = dataSource->cfgLayer->Dimension[d]->attr.quantizeperiod;

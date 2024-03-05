@@ -432,12 +432,14 @@ void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool
               // CDBDebug("time: %s %s %f %d", timeVal.c_str(), timeUnits.c_str(), dTimeVal, iTimeVal);
               CDF::Variable timeVarHelper;
               timeVarHelper.setAttributeText("units", "seconds since 1970-1-1");
-              CTime timeHelper;
-              timeHelper.init(&timeVarHelper);
-
+              CTime *timeHelper = CTime::GetCTimeInstance(&timeVarHelper);
+              if (timeHelper == nullptr) {
+                CDBError(CTIME_GETINSTANCE_ERROR_MESSAGE);
+                throw __LINE__;
+              }
               double timeOffset;
               if (timeVal.length() > 0) {
-                timeOffset = timeHelper.dateToOffset(timeHelper.freeDateStringToDate(timeVal.c_str()));
+                timeOffset = timeHelper->dateToOffset(timeHelper->freeDateStringToDate(timeVal.c_str()));
               } else if (dTimeVal > 0) {
                 timeOffset = dTimeVal;
               } else if (iTimeVal > 0) {
@@ -513,12 +515,11 @@ void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool
 #ifdef USETHIS
               CDF::Variable timeVarHelper;
               timeVarHelper.setAttributeText("units", "seconds since 1970-1-1");
-              CTime timeHelper;
-              timeHelper.init(&timeVarHelper);
+              CTime *timeHelper = CTime::GetCTimeInstance(&timeVarHelper);
 
               double timeOffset;
               if (timeVal.length() > 0) {
-                timeOffset = timeHelper.dateToOffset(timeHelper.freeDateStringToDate(timeVal.c_str()));
+                timeOffset = timeHelper->dateToOffset(timeHelper->freeDateStringToDate(timeVal.c_str()));
               } else if (dTimeVal > 0) {
                 timeOffset = dTimeVal;
               } else if (iTimeVal > 0) {
