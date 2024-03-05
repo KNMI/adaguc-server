@@ -9,7 +9,8 @@ import tempfile
 import shutil
 import random
 import string
-from redis import from_url
+from redis import Redis  # This can also be used to connect to a Redis cluster
+# from redis.cluster import RedisCluster as Redis  # Cluster client, for testing
 
 import re
 import calendar
@@ -44,7 +45,7 @@ class runAdaguc:
         if self.ADAGUC_REDIS.startswith("redis://") or self.ADAGUC_REDIS.startswith("rediss://"):
             self.redis_url = self.ADAGUC_REDIS
             self.use_cache = True
-            self.redis_client = from_url(self.redis_url)
+            self.redis_client = Redis.from_url(self.redis_url)
             print("USE CACHE")
         else:
             self.use_cache = False
@@ -205,7 +206,7 @@ class runAdaguc:
 
         # Check cache for entry with keys of (url,adagucargs) if configured
         if self.cache_wanted(url):
-            cache_key = str((url, adagucargs))
+            cache_key = str((url, adagucargs)).encode('utf-8')
             print(f"Checking cache for {cache_key}")
 
             age, headers, data = get_cached_response(self.redis_client, cache_key)
@@ -299,7 +300,6 @@ def response_to_cache(redis_client, key, headers:str, data):
 
 def get_cached_response(redis_client, key):
     cached = redis_client.get(key)
-    redis_client.close()
     if not cached:
         print("Cache miss")
         return None, None, None

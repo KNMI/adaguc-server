@@ -8,7 +8,9 @@ from fastapi import BackgroundTasks
 
 import calendar
 from datetime import datetime
-import redis.asyncio as redis
+from redis.asyncio import Redis  # This can also be used to connect to a Redis cluster
+# from redis.asyncio.cluster import RedisCluster as Redis  # Cluster client, for testing
+
 import json
 import brotli
 
@@ -17,7 +19,6 @@ ADAGUC_REDIS=os.environ.get('ADAGUC_REDIS')
 async def get_cached_response(redis_client, request):
     key = generate_key(request)
     cached = await redis_client.get(key)
-    # await redis_client.close()
     if not cached:
         # print("Cache miss")
         return None, None, None
@@ -48,10 +49,9 @@ async def response_to_cache(redis_client, request, headers, data, ex: int):
     await redis_client.set(key, entrytime+f"{len(headers_json):06d}".encode('utf-8')+headers_json+brotli.compress(data), ex=ex)
 
 def generate_key(request):
-    if len(request['query_string'])==0:
-        key = f"{request.url.path}"
-    else:
-        key = f"{request.url.path}?bytes({request['query_string']}, 'utf-8')"
+    key = request.url.path.encode('utf-8')
+    if len(request['query_string']) > 0:
+        key += b"?" + request['query_string']
     return key
 
 class CachingMiddleware(BaseHTTPMiddleware):
@@ -60,7 +60,7 @@ class CachingMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         if "ADAGUC_REDIS" in os.environ:
             self.shortcut=False
-            self.redis = redis.from_url(ADAGUC_REDIS)
+            self.redis = Redis.from_url(ADAGUC_REDIS)
 
     async def dispatch(self, request, call_next):
         if self.shortcut:
