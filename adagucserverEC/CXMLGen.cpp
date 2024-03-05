@@ -463,6 +463,10 @@ int CXMLGen::getDimsForLayer(WMSLayer *myWMSLayer) {
                   }
                   try {
                     CTime *time = CTime::GetCTimeInstance(myWMSLayer->dataSource->getDataObject(0)->cdfObject->getVariable("time"));
+                    if (time == nullptr) {
+                      CDBDebug(CTIME_GETINSTANCE_ERROR_MESSAGE);
+                      return 1;
+                    }
                     if (time->getMode() != 0) {
                       isConst = false;
                     }

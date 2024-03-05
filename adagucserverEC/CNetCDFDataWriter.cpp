@@ -345,7 +345,10 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
       if (var->getType() != CDF_STRING) {
         if (isTimeDim) {
           CTime *ctime = CTime::GetCTimeInstance(CDataReader::getTimeDimension(dataSource));
-          // CDBDebug("dimValue.c_str() = %s",dimValue.c_str());
+          if (ctime == nullptr) {
+            CDBDebug(CTIME_GETINSTANCE_ERROR_MESSAGE);
+            return 1;
+          }
           double offset = ctime->dateToOffset(ctime->freeDateStringToDate(dimValue.c_str()));
 #ifdef CNetCDFDataWriter_DEBUG
           CDBDebug("Dimension [%s]: writing value %s with offset %f to index %d", dimName.c_str(), dimValue.c_str(), offset, j);
@@ -678,6 +681,11 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
           if (isTimeDim) {
             // CDBDebug("isTimeDim");
             CTime *ctime = CTime::GetCTimeInstance(CDataReader::getTimeDimension(dataSource));
+            if (ctime == nullptr) {
+              CDBDebug(CTIME_GETINSTANCE_ERROR_MESSAGE);
+              return 1;
+            }
+
             // CDBDebug("Trying to convert string %s",dimValue.c_str());
             double offset = ctime->dateToOffset(ctime->freeDateStringToDate(dimValue.c_str()));
             // CDBDebug("offset = %f",offset);
