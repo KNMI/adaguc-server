@@ -1,26 +1,32 @@
 #!/bin/bash
 
-if [[ "$PGBOUNCER_ENABLE" == "true" || "$PGBOUNCER_ENABLE" == "TRUE" ]]; then
+if [[ "${PGBOUNCER_ENABLE,,}" == "true" ]]; then
     echo "PGBOUNCER_ENABLE env is true, using /etc/supervisor/conf.d/adaguc-pgbouncer.conf"
 
-    # Look up db host/port/user/password/name from ADAGUC_DB string
-    read -r db_host db_port db_user db_password db_name <<< $(echo $ADAGUC_DB | awk -F'[= ]' '{ print $2" "$4" "$6" "$8" "$10 }')
+    # Look up host/port/user/password/name fields from ADAGUC_DB string
+    # Order does not matter. Keys get prefixed with "db_" in this script.
+    set $ADAGUC_DB
+    for word in "$@"; do
+        IFS='=' read -r key val <<< "$word"
+        test -n "$val" && printf -v "adaguc_db_${key}" "${val}"
+    done
 
-    # Disable ssl for pgbouncer when running through docker-compose
-    # if host=adaguc-db, then we're using docker-compose.
-    if [[ "$db_host" == "adaguc-db" ]]; then
+    # The postgres instance in docker-compose does not have SSL support enabled.
+    # This is configurable through the PGBOUNCER_DISABLE_SSL environment variable.
+    # By default, SSL is used
+    if [[ "${PGBOUNCER_DISABLE_SSL,,}" == "true" ]]; then
         sed -i "s/^server_tls_sslmode = .*/server_tls_sslmode = disable/g" /adaguc/pgbouncer/pgbouncer.ini
     fi
 
     # Set username/password, pgbouncer uses this to authenticate to RDS
-    echo '"'$db_user'"' '"'$db_password'"' > /adaguc/pgbouncer/userlist.txt
+    echo '"'$adaguc_db_user'"' '"'$adaguc_db_password'"' > /adaguc/pgbouncer/userlist.txt
 
     # Rewrite pgbouncer config. $db_host could be an RDS hostname or adaguc-db when running through docker-compose.
-    pgbouncer_cfg="adaguc = host=$db_host port=$db_port dbname=$db_name"
+    pgbouncer_cfg="adaguc = host=$adaguc_db_host port=$adaguc_db_port dbname=$adaguc_db_dbname"
     sed -i "s/^adaguc = .*/${pgbouncer_cfg}/g" /adaguc/pgbouncer/pgbouncer.ini
 
     # Rewrite $ADAGUC_DB
-    export ADAGUC_DB="host=localhost port=${db_port} user=${db_user} password=${db_password} dbname=${db_name}"
+    export ADAGUC_DB="host=localhost port=${adaguc_db_port} user=${adaguc_db_user} password=${adaguc_db_password} dbname=${adaguc_db_dbname}"
 
     # supervisord starts both pgbouncer and adaguc
     /usr/bin/supervisord -c /etc/supervisor/conf.d/adaguc-pgbouncer.conf
