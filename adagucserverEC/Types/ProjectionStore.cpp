@@ -23,12 +23,24 @@
  *
  ******************************************************************************/
 
-#include "ProjectionStore.h"
-#include <bits/pthreadtypes.h>
-#include <pthread.h>
 #include <map>
+#include "ProjectionStore.h"
 
-ProjectionMap projectionMap;
-extern ProjectionMap projectionMap;
+bool operator< (const ProjectionMapKey& a, const ProjectionMapKey& b) { return std::make_tuple(a.sourceCRS, a.destCRS, a.extent) < std::make_tuple(b.sourceCRS, b.destCRS, b.extent); }
+static std::map<ProjectionMapKey, BBOX> projectionMap;
 
-ProjectionMap *getProjectionMap() { return &projectionMap; }
+std::tuple<bool, BBOX> getBBOXProjection(ProjectionMapKey key) {
+  auto it = projectionMap.find(key);
+  if (it == projectionMap.end()) {
+    return std::make_tuple(false, BBOX{});
+  }
+  return std::make_tuple(true, it->second);
+}
+
+void addBBOXProjection(ProjectionMapKey key, BBOX bbox) {
+  projectionMap[key] = bbox;
+}
+
+void BBOXProjectionClearCache() {
+  projectionMap.clear();
+}

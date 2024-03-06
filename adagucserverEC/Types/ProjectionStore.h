@@ -25,12 +25,9 @@
 
 #ifndef PROJECTIONSTORE_H
 #define PROJECTIONSTORE_H
+#include <tuple>
 #include "CTString.h"
 #include "BBOX.h"
-#include "CDebugger.h"
-#include <iostream>
-#include <vector>
-#include <map>
 
 struct ProjectionMapKey {
   CT::string sourceCRS;
@@ -38,12 +35,10 @@ struct ProjectionMapKey {
   BBOX extent;
 };
 
-struct our_cmp {
-  bool operator()(ProjectionMapKey a, ProjectionMapKey b) const { return std::make_tuple(a.sourceCRS, a.destCRS, a.extent) > std::make_tuple(b.sourceCRS, b.destCRS, a.extent); }
-};
+std::tuple<bool, BBOX> getBBOXProjection(ProjectionMapKey key);
 
-typedef std::map<ProjectionMapKey, BBOX, our_cmp> ProjectionMap;
+void addBBOXProjection(ProjectionMapKey key, BBOX bbox);
 
-ProjectionMap *getProjectionMap();
+void BBOXProjectionClearCache();
 
 #endif // !PROJECTIONSTORE_H

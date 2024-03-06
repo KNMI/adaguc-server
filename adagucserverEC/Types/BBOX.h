@@ -1,10 +1,4 @@
-#include <iostream>
-#include <stdexcept>
-#include <string>
-#include <tuple>
-
 #ifndef BBOX_H
-
 #define BBOX_H
 
 struct BBOX {

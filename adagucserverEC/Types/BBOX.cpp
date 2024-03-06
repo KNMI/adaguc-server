@@ -1,3 +1,4 @@
+#include <tuple>
 #include "BBOX.h"
 
 bool operator<(BBOX a, BBOX b) { return std::make_tuple(a.bbox[0], a.bbox[1], a.bbox[2], a.bbox[3]) < std::make_tuple(b.bbox[0], b.bbox[1], b.bbox[2], b.bbox[3]); }
