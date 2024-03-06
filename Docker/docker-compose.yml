@@ -20,10 +20,7 @@ services:
         max-size: "200k"
         max-file: "10"
   adaguc-server:
-    build:
-      context: ..
-      dockerfile: ./Dockerfile
-    # image: openearth/adaguc-server
+    image: openearth/adaguc-server
     container_name: my-adaguc-server
     hostname: my-adaguc-server
     volumes:

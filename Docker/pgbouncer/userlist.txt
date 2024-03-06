@@ -1,1 +1,4 @@
- "adaguc" "adaguc"
+# Format is: "username" "password"
+# The " (quotes) characters are required.
+# This part gets rewritten in production by `run_supervisord.sh` to include the (AWS SSM) production password
+"adaguc" "adaguc"

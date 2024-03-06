@@ -94,7 +94,7 @@ COPY tests /adaguc/adaguc-server-master/tests
 COPY runtests.sh /adaguc/adaguc-server-master/runtests.sh
 
 # Run adaguc-server functional and regression tests
-# RUN bash runtests.sh
+RUN bash runtests.sh
 
 # Create a file indicating that the test succeeded. This file is used in the final stage
 RUN echo "TESTSDONE" >  /adaguc/adaguc-server-master/testsdone.txt
