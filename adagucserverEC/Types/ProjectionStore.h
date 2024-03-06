@@ -23,20 +23,22 @@
  *
  ******************************************************************************/
 
-#include "ProjectionKey.h"
-#include "CDebugger.h"
-#include <iostream>
-#include <vector>
+#ifndef PROJECTIONSTORE_H
+#define PROJECTIONSTORE_H
+#include <tuple>
+#include "CTString.h"
+#include "BBOX.h"
 
-class ProjectionStore {
-private:
-  DEF_ERRORFUNCTION();
-
-public:
-  std::vector<ProjectionKey> keys;
-  ProjectionStore();
-  ~ProjectionStore();
-  static ProjectionStore *getProjectionStore();
-  void clear();
-  int findExtentForKey(ProjectionKey key, BBOX *bbox);
+struct ProjectionMapKey {
+  CT::string sourceCRS;
+  CT::string destCRS;
+  BBOX extent;
 };
+
+std::tuple<bool, BBOX> getBBOXProjection(ProjectionMapKey key);
+
+void addBBOXProjection(ProjectionMapKey key, BBOX bbox);
+
+void BBOXProjectionClearCache();
+
+#endif // !PROJECTIONSTORE_H

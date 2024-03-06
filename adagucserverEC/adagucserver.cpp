@@ -79,6 +79,7 @@ void serverWarningFunction(const char *msg) {
 void serverLogFunctionCMDLine(const char *msg) { printf("%s", msg); }
 
 #include "adagucserver.h"
+#include "Types/ProjectionStore.h"
 
 void serverLogFunctionNothing(const char *) {}
 
@@ -450,6 +451,7 @@ int main(int argc, char **argv, char **envp) {
   CDFObjectStore::getCDFObjectStore()->clear();
 
   proj_clear_cache();
+  BBOXProjectionClearCache();
 
   if (pLogDebugFile != NULL) {
     fclose(pLogDebugFile);

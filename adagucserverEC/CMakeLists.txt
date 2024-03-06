@@ -163,8 +163,7 @@ add_library(
     LayerTypeLiveUpdate/LayerTypeLiveUpdate.cpp
     LayerTypeLiveUpdate/LayerTypeLiveUpdate.h  
     Types/BBOX.h
-    Types/ProjectionKey.h
-    Types/ProjectionKey.cpp 
+    Types/BBOX.cpp
     Types/ProjectionStore.h
     Types/ProjectionStore.cpp 
     testadagucserver.cpp

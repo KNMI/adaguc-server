@@ -53,9 +53,9 @@ private:
   bool initialized;
 
   int _initreprojSynchronized(const char *projString, CGeoParams *GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj);
+  int findExtentUnSynchronized(CDataSource *dataSource, double *dfBBOX);
 
 public:
-  int findExtentUnSynchronized(CDataSource *dataSource, double *dfBBOX);
   bool requireReprojection;
   CImageWarper() {
     prj = NULL;
