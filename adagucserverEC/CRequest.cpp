@@ -164,7 +164,7 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
 
           // Process the SLD URL
           if (values[1].empty()) {
-            setStatusCode(ERROR_404_NOT_FOUND);
+            setStatusCode(HTTP_STATUSCODE_404_NOT_FOUND);
             return 1;
           }
           status = csld.processSLDUrl(values[1]);
@@ -1699,7 +1699,7 @@ int CRequest::process_all_layers() {
       }
       if (layerNo == srvParam->cfg->Layer.size()) {
         CDBError("Layer [%s] not found", srvParam->WMSLayers[j].c_str());
-        setStatusCode(ERROR_404_NOT_FOUND);
+        setStatusCode(HTTP_STATUSCODE_404_NOT_FOUND);
         return 1;
       }
     }
@@ -2865,7 +2865,7 @@ int CRequest::process_querystring() {
   if (dFound_Service == 0) {
     CDBError("ADAGUC Server: Parameter SERVICE missing");
     dErrorOccured = 1;
-    setStatusCode(ERROR_422_UNPROCESSABLE_ENTITY);
+    setStatusCode(HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY);
   }
   if (dFound_Styles == 0) {
     srvParam->Styles.copy("");
@@ -2879,7 +2879,7 @@ int CRequest::process_querystring() {
   else { // Service not recognised
     CDBError("ADAGUC Server: Parameter SERVICE invalid");
     dErrorOccured = 1;
-    setStatusCode(ERROR_422_UNPROCESSABLE_ENTITY);
+    setStatusCode(HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY);
   }
 
   if (dErrorOccured == 0 && srvParam->serviceType == SERVICE_WMS) {
@@ -2894,7 +2894,7 @@ int CRequest::process_querystring() {
     if (dFound_Request == 0) {
       CDBError("ADAGUC Server: Parameter REQUEST missing");
       dErrorOccured = 1;
-      setStatusCode(ERROR_422_UNPROCESSABLE_ENTITY);
+      setStatusCode(HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY);
     } else {
       if (REQUEST.equals("GETCAPABILITIES"))
         srvParam->requestType = REQUEST_WMS_GETCAPABILITIES;
@@ -2918,7 +2918,7 @@ int CRequest::process_querystring() {
         srvParam->requestType = REQUEST_WMS_GETREFERENCETIMES;
       else {
         dErrorOccured = 1;
-        setStatusCode(ERROR_422_UNPROCESSABLE_ENTITY);
+        setStatusCode(HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY);
         CDBError("ADAGUC Server: Parameter REQUEST invalid");
       }
     }
@@ -3358,7 +3358,7 @@ int CRequest::process_querystring() {
     }
     if (dFound_Request == 0) {
       dErrorOccured = 1;
-      setStatusCode(ERROR_422_UNPROCESSABLE_ENTITY);
+      setStatusCode(HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY);
       CDBError("ADAGUC Server: Parameter REQUEST missing");
       return 1;
     } else {
@@ -3370,7 +3370,7 @@ int CRequest::process_querystring() {
         srvParam->requestType = REQUEST_WCS_GETCOVERAGE;
       else {
         dErrorOccured = 1;
-        setStatusCode(ERROR_422_UNPROCESSABLE_ENTITY);
+        setStatusCode(HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY);
         CDBError("ADAGUC Server: Parameter REQUEST invalid");
         return 1;
       }
@@ -3452,16 +3452,16 @@ int CRequest::process_querystring() {
   if (srvParam->serviceType == SERVICE_WCS) {
     CDBError("ADAGUC Server: Invalid value for request. Supported requests are: getcapabilities, describecoverage and "
              "getcoverage");
-    setStatusCode(ERROR_422_UNPROCESSABLE_ENTITY);
+    setStatusCode(HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY);
     return 1;
   } else if (srvParam->serviceType == SERVICE_WMS) {
     CDBError("ADAGUC Server: Invalid value for request. Supported requests are: getcapabilities, getmap, gethistogram, "
              "getfeatureinfo, getpointvalue, getmetadata, getReferencetimes, getstyles and getlegendgraphic");
-    setStatusCode(ERROR_422_UNPROCESSABLE_ENTITY);
+    setStatusCode(HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY);
     return 1;
   } else {
     CDBError("ADAGUC Server: Unknown service");
-    setStatusCode(ERROR_422_UNPROCESSABLE_ENTITY);
+    setStatusCode(HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY);
     return 1;
   }
 #ifdef MEASURETIME

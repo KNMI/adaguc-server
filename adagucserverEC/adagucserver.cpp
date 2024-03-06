@@ -194,7 +194,7 @@ int _main(int argc, char **argv, char **) {
 
   /* Initialize error functions */
   seterrormode(EXCEPTIONS_PLAINTEXT);
-  setStatusCode(SUCCESS_200_OK);
+  setStatusCode(HTTP_STATUSCODE_200_OK);
   setErrorFunction(serverLogFunctionCMDLine);
   setWarningFunction(serverLogFunctionCMDLine);
   setDebugFunction(serverLogFunctionCMDLine);
