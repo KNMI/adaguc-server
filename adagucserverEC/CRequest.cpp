@@ -56,22 +56,26 @@ int CRequest::runRequest() {
 
 void writeLogFile3(const char *msg) {
   char *logfile = getenv("ADAGUC_LOGFILE");
-  if (logfile != NULL) {
-    FILE *pFile = NULL;
-    pFile = fopen(logfile, "a");
-    if (pFile != NULL) {
-      fputs(msg, pFile);
-      if (strncmp(msg, "[D:", 3) == 0 || strncmp(msg, "[W:", 3) == 0 || strncmp(msg, "[E:", 3) == 0) {
-        time_t myTime = time(NULL);
-        tm *myUsableTime = localtime(&myTime);
-        char szTemp[128];
-        snprintf(szTemp, 127, "%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ ", myUsableTime->tm_year + 1900, myUsableTime->tm_mon + 1, myUsableTime->tm_mday, myUsableTime->tm_hour, myUsableTime->tm_min,
-                 myUsableTime->tm_sec);
-        fputs(szTemp, pFile);
-      }
-      fclose(pFile);
-    } // else CDBError("Unable to write logfile %s",logfile);
+  if (logfile == NULL) {
+    return;
   }
+
+  FILE *pFile = fopen(logfile, "a");
+  if (pFile == NULL) {
+    return;
+  }
+
+  fputs(msg, pFile);
+  if (strncmp(msg, "[D:", 3) == 0 || strncmp(msg, "[W:", 3) == 0 || strncmp(msg, "[E:", 3) == 0) {
+    time_t myTime = time(NULL);
+    tm *myUsableTime = localtime(&myTime);
+    char szTemp[128];
+    snprintf(szTemp, 127, "%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ ", myUsableTime->tm_year + 1900, myUsableTime->tm_mon + 1, myUsableTime->tm_mday, myUsableTime->tm_hour, myUsableTime->tm_min,
+             myUsableTime->tm_sec);
+    fputs(szTemp, pFile);
+  }
+  fclose(pFile);
+  // else CDBError("Unable to write logfile %s",logfile);
 }
 
 int CRequest::setConfigFile(const char *pszConfigFile) {
