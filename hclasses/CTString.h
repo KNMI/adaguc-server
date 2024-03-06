@@ -248,8 +248,7 @@ namespace CT {
      */
     bool equals(CT::string string) const;
 
-    bool equals(std::string string) const;
-    bool equals(std::string *string) const;
+    bool equals(std::string const &string) const;
 
     bool equalsIgnoreCase(const char *_value, size_t _length);
 

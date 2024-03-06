@@ -69,7 +69,8 @@
     "compare": "cpp",
     "concepts": "cpp",
     "semaphore": "cpp",
-    "stop_token": "cpp"
+    "stop_token": "cpp",
+    "ranges": "cpp"
   },
   "cmake.buildDirectory": "${workspaceFolder}/bin",
   "cmake.configureOnOpen": true,

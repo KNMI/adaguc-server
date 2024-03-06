@@ -23,8 +23,7 @@
  *
  ******************************************************************************/
 
-#include "./Types/ProjectionKey.h"
-#include "./Types/ProjectionStore.h"
+#include "Types/ProjectionStore.h"
 #include "CImageWarper.h"
 #include "ProjCache.h"
 #include <iostream>
@@ -357,12 +356,16 @@ int CImageWarper::findExtentUnSynchronized(CDataSource *dataSource, double *dfBB
   }
 
   // CDBDebug("findExtent for %s and %f %f %f %f", destinationCRS.c_str(), dfBBOX[0], dfBBOX[1], dfBBOX[2], dfBBOX[3]);
+  ProjectionMapKey key = {sourceCRSString, destinationCRS, makeBBOX(dfBBOX)};
+  bool found;
+  BBOX bbox{};
+  std::tie(found, bbox) = getBBOXProjection(key);
 
-  ProjectionKey pKey = MakeProjectionKey(dfBBOX, dfMaxExtent, sourceCRSString, destinationCRS);
-  auto projectionStore = ProjectionStore::getProjectionStore();
-
-  BBOX bbox;
-  if (projectionStore->findExtentForKey(pKey, &bbox) == 0) {
+    if (found) {
+#ifdef CIMAGEWARPER_DEBUG
+    CDBDebug("FOUND AND REUSING!!! %s %s (%0.3f, %0.3f, %0.3f, %0.3f) to  (%0.3f, %0.3f, %0.3f, %0.3f)", key.sourceCRS.c_str(), key.destCRS.c_str(), key.extent.bbox[0], key.extent.bbox[1],
+             key.extent.bbox[2], key.extent.bbox[3], bbox.bbox[0], bbox.bbox[1], bbox.bbox[2], bbox.bbox[3]);
+#endif
     for (size_t j = 0; j < 4; j++) {
       dfBBOX[j] = bbox.bbox[j];
     }
@@ -394,6 +397,7 @@ int CImageWarper::findExtentUnSynchronized(CDataSource *dataSource, double *dfBB
         double inY = testPosY;
         double inX = testPosX;
 
+        // Make sure testPosX and testPosY are not NaN values
         if (testPosX == testPosX && testPosY == testPosY) {
 
           try {
@@ -474,11 +478,12 @@ int CImageWarper::findExtentUnSynchronized(CDataSource *dataSource, double *dfBB
     dfBBOX[1] -= 1;
     dfBBOX[3] += 1;
   }
+#ifdef CIMAGEWARPER_DEBUG
 
-  pKey.setFoundExtent(dfBBOX);
-  projectionStore->keys.push_back(pKey);
-
-  // CDBDebug("out: %f %f %f %f",dfBBOX[0],dfBBOX[1],dfBBOX[2],dfBBOX[3]);
+  CDBDebug("INSERTING!!! %s %s (%0.3f, %0.3f, %0.3f, %0.3f) to  (%0.3f, %0.3f, %0.3f, %0.3f)", key.sourceCRS.c_str(), key.destCRS.c_str(), key.extent.bbox[0], key.extent.bbox[1], key.extent.bbox[2],
+           key.extent.bbox[3], dfBBOX[0], dfBBOX[1], dfBBOX[2], dfBBOX[3]);
+#endif
+  addBBOXProjection(key, makeBBOX(dfBBOX));
   return 0;
 };
 

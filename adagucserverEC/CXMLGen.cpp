@@ -113,7 +113,6 @@ int CXMLGen::getFileNameForLayer(WMSLayer *myWMSLayer) {
 
     bool databaseError = false;
 
-    CDBDebug("%s tableName", tableName.c_str());
     CDBStore::Store *values = CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByValue("path", 1, false, tableName.c_str());
 
     if (values == NULL) {
@@ -957,7 +956,7 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer 
 
       for (size_t lnr = 0; lnr < myWMSLayerList->size(); lnr++) {
         WMSLayer *layer = (*myWMSLayerList)[lnr];
-        if (layer->group.equals(&groupKeys[groupIndex])) {
+        if (layer->group.equals(groupKeys[groupIndex])) {
           // CDBError("layer %d %s",groupDepth,layer->name.c_str());
           if (layer->hasError == 0) {
             XMLDoc->printconcat("<Layer queryable=\"%d\" opaque=\"1\" cascaded=\"%d\">\n", layer->isQuerable, layer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded ? 1 : 0);
@@ -1330,7 +1329,7 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer 
         CDBDebug("Comparing %s == %s", layer->group.c_str(), groupKeys[groupIndex].c_str());
 #endif
 
-        if (layer->group.equals(&groupKeys[groupIndex])) {
+        if (layer->group.equals(groupKeys[groupIndex])) {
 #ifdef CXMLGEN_DEBUG
           CDBDebug("layer %d %s", groupDepth, layer->name.c_str());
 #endif

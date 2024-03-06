@@ -89,7 +89,7 @@ CTime *CTime::GetCTimeInstance(CDF::Variable *timeVariable) {
       return NULL;
     }
     CTimeInstances.insert(std::pair<CT::string, CTime *>(key, ctime));
-    CDBDebug("Inserting new CTime with key %s and pointer %d", key.c_str(), ctime);
+    // CDBDebug("Inserting new CTime with key %s and pointer %d", key.c_str(), ctime);
   }
   return ctime;
 }
