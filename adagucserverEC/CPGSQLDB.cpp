@@ -82,7 +82,7 @@ int CPGSQLDB::checkTable(const char *pszTableName, const char *pszColumns) {
   CT::string queryString;
   queryString.print("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = '%s') AS table_existence;", pszTableName);
 #ifdef CPGSQLDB_DEBUG_H
-  CDBDebug("[SQL] checkTable PQexec SELECT EXISTS  %s", pszTableName);
+  CDBDebug("checkTable PQexec SELECT EXISTS  %s", pszTableName);
 #endif
   result = PQexec(connection, queryString.c_str()); /* send the query */
   if (PQresultStatus(result) != PGRES_TUPLES_OK)    /* did the query fail? */
@@ -100,7 +100,7 @@ int CPGSQLDB::checkTable(const char *pszTableName, const char *pszColumns) {
   // No table exists yet
   queryString.print("CREATE TABLE %s (%s)", pszTableName, pszColumns);
 #ifdef CPGSQLDB_DEBUG_H
-  CDBDebug("[SQL] checkTable PQexec CREATE TABLE %s", pszTableName);
+  CDBDebug("checkTable PQexec CREATE TABLE %s", pszTableName);
 #endif
   result = PQexec(connection, queryString.c_str()); /* send the query */
   if (PQresultStatus(result) != PGRES_COMMAND_OK)   /* did the query fail? */
@@ -125,7 +125,7 @@ int CPGSQLDB::query(const char *pszQuery) {
     return 1;
   }
 #ifdef CPGSQLDB_DEBUG_H
-  CDBDebug("[SQL] query PQexec %s", pszQuery);
+  CDBDebug("query PQexec %s", pszQuery);
 #endif
   result = PQexec(connection, pszQuery);
   if (PQresultStatus(result) != PGRES_COMMAND_OK) /* did the query fail? */
@@ -152,7 +152,7 @@ CDBStore::Store *CPGSQLDB::queryToStore(const char *pszQuery, bool throwExceptio
     return NULL;
   }
 #ifdef CPGSQLDB_DEBUG_H
-  CDBDebug("[SQL] queryToStore PQexec %s", pszQuery);
+  CDBDebug("queryToStore PQexec %s", pszQuery);
 #endif
   result = PQexec(connection, pszQuery);
 

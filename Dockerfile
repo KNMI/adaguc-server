@@ -68,11 +68,6 @@ RUN apt-get -q -y update \
     time \
     supervisor \
     pgbouncer \
-    vim \
-    procps \
-    curl \
-    net-tools \
-    iproute2 \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
