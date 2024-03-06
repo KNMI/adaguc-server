@@ -26,48 +26,9 @@
 #include "ProjectionStore.h"
 #include <bits/pthreadtypes.h>
 #include <pthread.h>
+#include <map>
 
-const char *ProjectionStore::className = "ProjectionStore";
+ProjectionMap projectionMap;
+extern ProjectionMap projectionMap;
 
-ProjectionStore projectionStore;
-extern ProjectionStore projectionStore;
-
-ProjectionStore *ProjectionStore::getProjectionStore() { return &projectionStore; }
-
-ProjectionStore::ProjectionStore() {}
-ProjectionStore::~ProjectionStore() { clear(); }
-
-pthread_mutex_t ProjectionKey_clear;
-void ProjectionStore::clear() { keys.clear(); }
-
-int ProjectionStore::findExtentForKey(ProjectionKey pKey, BBOX *bbox) {
-  for (size_t j = 0; j < this->keys.size(); j++) {
-    if (this->keys[j].isSet == true) {
-      bool match = true;
-      // First find matching destination CRS
-      if (!this->keys[j].destinationCRS.equals(pKey.destinationCRS)) match = false;
-      // Next match on bbox
-      if (match) {
-        for (int i = 0; i < 4; i++) {
-          if (this->keys[j].bbox[i] != pKey.bbox[i]) {
-            // CDBDebug("%f != %f", this->keys[j].bbox[i], pKey.bbox[i]);
-            match = false;
-            break;
-          }
-        }
-        // Destination CRS and BBOX do match
-        if (match) {
-          if (!this->keys[j].sourceCRS.equals(pKey.sourceCRS)) match = false;
-          if (match) {
-            // Source CRS, Destination CRS and BBOX do Match
-            for (int i = 0; i < 4; i++) {
-              bbox->bbox[i] = this->keys[j].foundExtent[i];
-            }
-            return 0;
-          }
-        }
-      }
-    }
-  }
-  return -1;
-}
+ProjectionMap *getProjectionMap() { return &projectionMap; }

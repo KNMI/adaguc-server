@@ -49,7 +49,7 @@ int CRequest::runRequest() {
   CDFObjectStore::getCDFObjectStore()->clear();
   CConvertGeoJSON::clearFeatureStore();
   CDFStore::clear();
-  ProjectionStore::getProjectionStore()->clear();
+  getProjectionMap()->clear();
   CDBFactory::clear();
   return status;
 }

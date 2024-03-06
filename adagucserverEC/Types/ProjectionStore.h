@@ -23,20 +23,27 @@
  *
  ******************************************************************************/
 
-#include "ProjectionKey.h"
+#ifndef PROJECTIONSTORE_H
+#define PROJECTIONSTORE_H
+#include "CTString.h"
+#include "BBOX.h"
 #include "CDebugger.h"
 #include <iostream>
 #include <vector>
+#include <map>
 
-class ProjectionStore {
-private:
-  DEF_ERRORFUNCTION();
-
-public:
-  std::vector<ProjectionKey> keys;
-  ProjectionStore();
-  ~ProjectionStore();
-  static ProjectionStore *getProjectionStore();
-  void clear();
-  int findExtentForKey(ProjectionKey key, BBOX *bbox);
+struct ProjectionMapKey {
+  CT::string sourceCRS;
+  CT::string destCRS;
+  BBOX extent;
 };
+
+struct our_cmp {
+  bool operator()(ProjectionMapKey a, ProjectionMapKey b) const { return std::make_tuple(a.sourceCRS, a.destCRS, a.extent) > std::make_tuple(b.sourceCRS, b.destCRS, a.extent); }
+};
+
+typedef std::map<ProjectionMapKey, BBOX, our_cmp> ProjectionMap;
+
+ProjectionMap *getProjectionMap();
+
+#endif // !PROJECTIONSTORE_H
