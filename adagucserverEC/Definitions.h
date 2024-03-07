@@ -188,3 +188,10 @@
 
 // #define ADAGUC_USE_GDAL
 #endif
+
+// HTTP status codes
+// Success
+#define HTTP_STATUSCODE_200_OK 0
+// Client errors
+#define HTTP_STATUSCODE_404_NOT_FOUND 32
+#define HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY 33

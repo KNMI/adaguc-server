@@ -345,3 +345,58 @@ class TestWCS(unittest.TestCase):
     self.assertEqual(status, 0)
     self.assertTrue("Content-Type:text/plain" in headers)
     self.assertTrue("Cache-Control:max-age=7200" in headers)
+
+
+  def test_WCSGetCoverage_error_on_wrong_coverage(self):
+    """
+    Check if WCS GetCoverage for specified settings returns corresponding error when wrong coverage is provided
+    """
+    AdagucTestTools().cleanTempDir()
+    status, data, headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=nonexisting&CRS=EPSG%3A4326&FORMAT=NetCDF4&BBOX=-10,40,20,60",
+                                                              env=self.env, args=["--report"])
+    
+    # Should return 404 Not Found
+    self.assertEqual(status, 404)
+
+
+
+  def test_WCSGetCoverage_error_on_wrong_time(self):
+    AdagucTestTools().cleanTempDir()
+    config = (
+            ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,"
+            + ADAGUC_PATH
+            + "/data/config/datasets/adaguc.tests.cacheheader.xml"
+    )
+
+    status, data, headers = AdagucTestTools().runADAGUCServer(
+      args=["--updatedb", "--config", config], env=self.env, isCGI=False
+    )
+    self.assertEqual(status, 0)
+
+    status, data, headers = AdagucTestTools().runADAGUCServer(
+      "SERVICE=WCS&request=GetCoverage&coverage=data_with_fixed&crs=EPSG%3A4326&format=NetCDF4&bbox=0,50,10,60&width=100&height=100&time=2022-sdfsd-22T00:00:00Z/2022-07-23T00:00:00Z&elevation=2000",
+      {"ADAGUC_CONFIG": config},
+    )
+    self.assertEqual(status, 0)
+
+
+  def test_WCSGetCoverage_error_on_wrong_service(self):
+    """
+    Check if WCS GetCoverage returns an error status code when Service is wrong
+    """
+    AdagucTestTools().cleanTempDir()
+    status, data, headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WCCS&REQUEST=GetCoverage&COVERAGE=testdata&CRS=EPSG%3A4326&FORMAT=geotiff&BBOX=-180,-90,180,90&RESX=1&RESY=1",
+                                                              env=self.env, args=["--report"])
+    self.assertEqual(status, 422)
+    
+
+  def test_WCSGetCoverage_error_on_wrong_request(self):
+    """
+        Check if WCS GetCoverage returns an error status code when Request is wrong
+    """
+    AdagucTestTools().cleanTempDir()
+    status, data, headers = AdagucTestTools().runADAGUCServer("source=test/netcdfpointtimeseries/Actuele10mindataKNMIstations_20201220123000.nc&SERVICE=WCS&request=nonexisting&coverage=ff,dd,ta",
+                                                              env=self.env, args=["--report"])
+    self.assertEqual(status, 422)
+    

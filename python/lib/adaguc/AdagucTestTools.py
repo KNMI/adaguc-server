@@ -78,6 +78,12 @@ class AdagucTestTools:
             isCGI=isCGI,
         )
 
+        # Convert HTTP status codes
+        if status == 32:
+            status = 404
+        elif status == 33:
+            status = 422
+
         if (status != 0 and showLogOnError == True) or showLog == True:
             print("LOG:", ADAGUC_LOGFILE)
             print("\n\n--- START ADAGUC DEBUG INFO ---")

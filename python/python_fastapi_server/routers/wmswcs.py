@@ -57,9 +57,16 @@ async def handle_wms(req: Request, ):
         logger.info(logfile)
 
     response_code = 200
+    # Note: The Adaguc implementation requires non-zero status codes to correspond to the
+    # desired response codes. Otherwise, a 500 status will be returned on exiting with errors.
     if status != 0:
         logger.info("Adaguc status code was %d", status)
-        response_code = 500
+        if status == 32:
+            response_code = 404 # Not Found
+        elif status == 33:
+            response_code = 422 # Unprocessable Entity
+        else:
+            response_code = 500
     response = Response(content=data.getvalue(), status_code=response_code)
 
     # Append the headers from adaguc-server to the headers from fastapi.
