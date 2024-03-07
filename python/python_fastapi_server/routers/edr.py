@@ -64,7 +64,7 @@ from .ogcapi_tools import call_adaguc
 logger = logging.getLogger(__name__)
 logger.debug("Starting EDR")
 
-edrApiApp = FastAPI(debug=True)
+edrApiApp = FastAPI(debug=False)
 
 OWSLIB_DUMMY_URL = "http://localhost:8000"
 
