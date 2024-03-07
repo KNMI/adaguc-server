@@ -21,7 +21,12 @@ services:
         max-file: "10"
   adaguc-server:
     image: openearth/adaguc-server
-#    build: ..
+    # build: ..
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: "2"
+    #       memory: 2048M
     container_name: my-adaguc-server
     hostname: my-adaguc-server
     volumes:

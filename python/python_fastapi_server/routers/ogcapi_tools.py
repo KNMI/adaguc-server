@@ -21,11 +21,11 @@ def make_bbox(extent):
     return s_extent
 
 
-def get_extent(coll):
+async def get_extent(coll):
     """
     Get the boundingbox extent from the WMS GetCapabilities
     """
-    contents = get_capabilities(coll)
+    contents = await get_capabilities(coll)
     if contents and len(contents):
         return contents[next(iter(contents))].boundingBoxWGS84
     return None
@@ -78,7 +78,7 @@ def calculate_coords(bbox, nlon, nlat):
     return coords
 
 
-def call_adaguc(url):
+async def call_adaguc(url):
     """Call adaguc-server"""
     adaguc_instance = setup_adaguc()
 
@@ -100,8 +100,8 @@ def call_adaguc(url):
 
     # Run adaguc-server
     # pylint: disable=unused-variable
-    status, data, headers = adaguc_instance.runADAGUCServer(
-        url, env=adagucenv, showLogOnError=False)
+    status, data, headers = await adaguc_instance.runADAGUCServer(
+        url, env=adagucenv, showLogOnError=True)
 
     # Obtain logfile
     logfile = adaguc_instance.getLogFile()
@@ -116,7 +116,8 @@ def call_adaguc(url):
     return status, data, headers
 
 
-def get_capabilities(collname):
+# @cached(cache=cache)
+async def get_capabilities(collname):
     """
     Get the collectioninfo from the WMS GetCapabilities
     """
@@ -126,10 +127,7 @@ def get_capabilities(collname):
     urlrequest = (
         f"dataset={dataset}&service=wms&version=1.3.0&request=getcapabilities"
     )
-    status, response, headers = call_adaguc(url=urlrequest.encode("UTF-8"))
-    for hdr in headers:
-        if hdr.lower().startswith("cache-control"):
-            logger.info("%s", hdr)
+    status, response = await call_adaguc(url=urlrequest.encode("UTF-8"))
     if status == 0:
         xml = response.getvalue()
         wms = WebMapService(coll["service"], xml=xml, version="1.3.0")
@@ -165,11 +163,11 @@ def get_dimensions(layer, skip_dims=None):
     return dims
 
 
-def get_parameters(collname):
+async def get_parameters(collname):
     """
     get_parameters
     """
-    contents = get_capabilities(collname)
+    contents = await get_capabilities(collname)
     layers = []
     for layer in contents:
         dims = get_dimensions(contents[layer], ["time"])

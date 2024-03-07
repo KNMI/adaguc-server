@@ -1,3 +1,4 @@
+import asyncio
 from ast import Dict
 import subprocess
 import os
@@ -89,10 +90,10 @@ class runAdaguc:
         adagucenv["ADAGUC_TMP"] = self.ADAGUC_TMP
         adagucenv["ADAGUC_FONT"] = self.ADAGUC_FONT
 
-        status, data, headers = self.runADAGUCServer(
+        status, data, headers = asyncio.run(self.runADAGUCServer(
             args=["--updatedb", "--config", config],
             env=adagucenv,
-            isCGI=False)
+            isCGI=False))
 
         return data.getvalue().decode()
 
@@ -107,9 +108,9 @@ class runAdaguc:
         adagucenv["ADAGUC_DATASET_DIR"] = self.ADAGUC_DATASET_DIR
         adagucenv["ADAGUC_TMP"] = self.ADAGUC_TMP
         adagucenv["ADAGUC_FONT"] = self.ADAGUC_FONT
-        status, data, headers = self.runADAGUCServer(url,
-                                                     env=adagucenv,
-                                                     showLogOnError=False)
+        status, data, headers = asyncio.run(self.runADAGUCServer(url,
+                                                                 env=adagucenv,
+                                                                 showLogOnError=False))
         logfile = self.getLogFile()
         self.removeLogFile()
         if data is not None:
@@ -151,7 +152,7 @@ class runAdaguc:
             return True
         return False
 
-    def runADAGUCServer(
+    async def runADAGUCServer(
         self,
         url=None,
         env=[],
@@ -216,7 +217,7 @@ class runAdaguc:
             print(f"Generating {cache_key}")
 
         filetogenerate = BytesIO()
-        status, headers, processErr = CGIRunner().run(
+        status, headers, processErr = await CGIRunner().run(
             adagucargs,
             url=url,
             output=filetogenerate,

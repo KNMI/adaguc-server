@@ -1,3 +1,4 @@
+import asyncio
 import urllib
 from io import BytesIO
 import isodate 
@@ -95,7 +96,7 @@ def callADAGUC(adagucexecutable,tmpdir,LOGFILE,url,filetogenerate, env = {}):
   #  status, headers = CGIRunner().run(adagucargs,url=url,output = filetogenerate, env=adagucenv, path=path, isCGI= isCGI)
 
   
-  status, headers, processErr = CGIRunner().run([adagucexecutable],url,output = filetogenerate,env=env)
+  status, headers, processErr = asyncio.run(CGIRunner().run([adagucexecutable],url,output = filetogenerate,env=env))
   return status
 
 
