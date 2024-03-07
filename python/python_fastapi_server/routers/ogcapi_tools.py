@@ -128,7 +128,7 @@ async def get_capabilities(collname):
     urlrequest = (
         f"dataset={dataset}&service=wms&version=1.3.0&request=getcapabilities"
     )
-    status, response = await call_adaguc(url=urlrequest.encode("UTF-8"))
+    status, response, _headers = await call_adaguc(url=urlrequest.encode("UTF-8"))
     if status == 0:
         xml = response.getvalue()
         wms = WebMapService(coll["service"], xml=xml, version="1.3.0")

@@ -3,11 +3,8 @@ import logging
 import os
 
 import pytest
-import pytest_asyncio
 from adaguc.AdagucTestTools import AdagucTestTools
 from fastapi.testclient import TestClient
-from httpx import AsyncClient
-import asyncio
 
 from main import app
 
@@ -21,6 +18,7 @@ def set_environ():
 
 
 def setup_test_data():
+    print("About to ingest data")
     AdagucTestTools().cleanTempDir()
     for service in ["netcdf_5d.xml", "dataset_a.xml"]:
         _status, _data, _headers = AdagucTestTools().runADAGUCServer(
@@ -34,23 +32,25 @@ def setup_test_data():
             showLog=True,
         )
 
+
 @pytest.fixture(name="client")
-def fixture_client() -> TestClient:
+def fixture_client():
     # Initialize adaguc-server
     set_environ()
     setup_test_data()
     yield TestClient(app)
 
-@pytest.mark.asyncio
-async def test_root(client):
+
+def test_root(client: TestClient):
     resp = client.get("/edr/")
     root_info = resp.json()
     print("resp:", resp, json.dumps(root_info, indent=2))
+    print()
     assert root_info["description"] == "EDR service for ADAGUC datasets"
     assert len(root_info["links"]) >= 4
 
-@pytest.mark.asyncio
-async def test_collections(client):
+
+def test_collections(client: TestClient):
     resp = client.get("/edr/collections")
     colls = resp.json()
     assert len(colls["collections"]) == 1
@@ -74,7 +74,9 @@ async def test_collections(client):
 
     assert "position" in coll_5d["data_queries"]
 
-@pytest.mark.asyncio
-async def test_coll_5d_position(client):
-    resp = client.get("/edr/collections/data_5d/position?coords=POINT(5.2 50.0)&parameter-name=data")
+
+def test_coll_5d_position(client: TestClient):
+    resp = client.get(
+        "/edr/collections/data_5d/position?coords=POINT(5.2 50.0)&parameter-name=data"
+    )
     print(resp.json())
