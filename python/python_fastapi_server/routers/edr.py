@@ -403,7 +403,7 @@ async def get_collectioninfo_for_id(
             output_formats=output_formats,
         )
 
-    get_cap = get_capabilities(edr_collection)
+    get_cap = await get_capabilities(edr_collection)
     return collection, get_cap["expires"]
 
 
@@ -504,7 +504,8 @@ async def get_times_for_collection(
     It does this for given parameter. When the parameter is not given it will do it for the first Layer in the GetCapabilities document.
     """
     logger.info("get_times_for_dataset(%s,%s)", edr_collectioninfo["name"], parameter)
-    wms = await get_capabilities(edr_collectioninfo["name"])["layers"]
+    getcap = await get_capabilities(edr_collectioninfo["name"])
+    wms = getcap["layers"]
     if parameter and parameter in wms:
         layer = wms[parameter]
     else:
@@ -543,7 +544,8 @@ async def get_custom_dims_for_collection(edr_collectioninfo: dict, parameter: st
     """
     Return the dimensions other then elevation or time from the WMS GetCapabilities document.
     """
-    wms = await get_capabilities(edr_collectioninfo["name"])["layers"]
+    getcap = await get_capabilities(edr_collectioninfo["name"])
+    wms = getcap["layers"]
     custom = []
     if parameter and parameter in list(wms):
         layer = wms[parameter]
@@ -572,7 +574,8 @@ async def get_vertical_dim_for_collection(edr_collectioninfo: dict, parameter: s
     """
     Return the verticel dimension the WMS GetCapabilities document.
     """
-    wms = await get_capabilities(edr_collectioninfo["name"])["layers"]
+    getcap = await get_capabilities(edr_collectioninfo["name"])
+    wms = getcap["layers"]
     if parameter and parameter in list(wms):
         layer = wms[parameter]
     else:
@@ -705,7 +708,8 @@ async def get_extent(edr_collectioninfo: dict):
     """
     Get the boundingbox extent from the WMS GetCapabilities
     """
-    contents = await get_capabilities(edr_collectioninfo["name"])["layers"]
+    getcap = await get_capabilities(edr_collectioninfo["name"])
+    contents = getcap["layers"]
     first_layer = edr_collectioninfo["parameters"][0]["name"]
     if len(contents):
         if first_layer in contents:
