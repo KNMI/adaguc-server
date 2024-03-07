@@ -21,6 +21,12 @@ services:
         max-file: "10"
   adaguc-server:
     image: openearth/adaguc-server
+    # build: ..
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: "2"
+    #       memory: 2048M
     container_name: my-adaguc-server
     hostname: my-adaguc-server
     volumes:
@@ -80,7 +86,7 @@ services:
     networks:
       - adaguc-network
     volumes:
-      - adaguc-server-compose-adagucdb:/adaguc/adagucdb
+      - adaguc-server-compose-adagucdb:/var/lib/postgresql/data
     environment:
       - "POSTGRES_USER=adaguc"
       - "POSTGRES_PASSWORD=adaguc"

@@ -86,6 +86,7 @@ Example bash script:
 export LD_LIBRARY_PATH=/build/lib/:\$LD_LIBRARY_PATH
 export PROJ_LIB=/build/share/proj/
 export ADAGUC_CONFIG=/data/services/config/config.xml
+export ADAGUC_NUMPARALLELPROCESSES=4
 export ADAGUC_LOGFILE=data/log/server.log
 export ADAGUC_ERRORFILE=/data/log/server.errlog
 export ADAGUC_FONT=/data/fonts/FreeSans.ttf

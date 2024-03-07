@@ -1,3 +1,4 @@
+import asyncio
 import os
 from io import BytesIO
 import shutil
@@ -69,14 +70,14 @@ class AdagucTestTools:
         os.chdir(ADAGUC_PATH + "/tests")
 
         filetogenerate = BytesIO()
-        status, headers, processErr = CGIRunner().run(
+        status, headers, processErr = asyncio.run(CGIRunner().run(
             adagucargs,
             url=url,
             output=filetogenerate,
             env=adagucenv,
             path=path,
             isCGI=isCGI,
-        )
+        ))
 
         # Convert HTTP status codes
         if status == 32:

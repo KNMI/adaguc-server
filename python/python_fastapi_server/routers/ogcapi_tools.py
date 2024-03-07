@@ -1,3 +1,5 @@
+import aiocache
+from aiocache.serializers import PickleSerializer
 import itertools
 import logging
 import os
@@ -9,13 +11,19 @@ from defusedxml.ElementTree import ParseError, parse
 
 from owslib.wms import WebMapService
 
-from .models.ogcapifeatures_1_model import (FeatureGeoJSON, Link, PointGeoJSON,
-                                            Type1, Type7)
+from .models.ogcapifeatures_1_model import (
+    FeatureGeoJSON,
+    Link,
+    PointGeoJSON,
+    Type1,
+    Type7,
+)
 from .setup_adaguc import setup_adaguc
 
 logger = logging.getLogger(__name__)
 
 cache = TTLCache(maxsize=1000, ttl=60)
+
 
 def make_bbox(extent):
     s_extent = []
@@ -24,11 +32,11 @@ def make_bbox(extent):
     return s_extent
 
 
-def get_extent(coll):
+async def get_extent(coll):
     """
     Get the boundingbox extent from the WMS GetCapabilities
     """
-    contents = get_capabilities(coll)
+    contents = await get_capabilities(coll)
     if contents and len(contents):
         return contents[next(iter(contents))].boundingBoxWGS84
     return None
@@ -39,9 +47,9 @@ def get_datasets(adaguc_data_set_dir):
     Return all possible OGCAPI feature datasets, based on the dataset directory
     """
     dataset_files = [
-        f for f in os.listdir(adaguc_data_set_dir)
-        if os.path.isfile(os.path.join(adaguc_data_set_dir, f))
-        and f.endswith(".xml")
+        f
+        for f in os.listdir(adaguc_data_set_dir)
+        if os.path.isfile(os.path.join(adaguc_data_set_dir, f)) and f.endswith(".xml")
     ]
     datasets = {}
     for dataset_file in dataset_files:
@@ -52,15 +60,11 @@ def get_datasets(adaguc_data_set_dir):
                 # Note, service is just a placeholder because it is needed by OWSLib.
                 # Adaguc is still run as executable, not as service"""
                 dataset = {
-                    "dataset":
-                    dataset_file.replace(".xml", ""),
-                    "name":
-                    dataset_file.replace(".xml", ""),
-                    "title":
-                    dataset_file.replace(".xml", "").lower().capitalize(),
-                    "service":
-                    "http://localhost:8080/wms?DATASET=" +
-                    dataset_file.replace(".xml", ""),
+                    "dataset": dataset_file.replace(".xml", ""),
+                    "name": dataset_file.replace(".xml", ""),
+                    "title": dataset_file.replace(".xml", "").lower().capitalize(),
+                    "service": "http://localhost:8080/wms?DATASET="
+                    + dataset_file.replace(".xml", ""),
                 }
                 datasets[dataset["name"]] = dataset
         except ParseError:
@@ -81,13 +85,13 @@ def calculate_coords(bbox, nlon, nlat):
     return coords
 
 
-def call_adaguc(url):
+async def call_adaguc(url):
     """Call adaguc-server"""
     adaguc_instance = setup_adaguc()
 
     url = url.decode()
     if "?" in url:
-        url = url[url.index("?") + 1:]
+        url = url[url.index("?") + 1 :]
     logger.info(url)
     stage1 = time.perf_counter()
 
@@ -95,16 +99,17 @@ def call_adaguc(url):
 
     # Set required environment variables
     adagucenv["ADAGUC_ONLINERESOURCE"] = (
-        os.getenv("EXTERNALADDRESS", "http://192.168.178.113:8080") +
-        "/adaguc-server?")
+        os.getenv("EXTERNALADDRESS", "http://192.168.178.113:8080") + "/adaguc-server?"
+    )
     adagucenv["ADAGUC_DB"] = os.getenv(
-        "ADAGUC_DB",
-        "user=adaguc password=adaguc host=localhost dbname=adaguc")
+        "ADAGUC_DB", "user=adaguc password=adaguc host=localhost dbname=adaguc"
+    )
 
     # Run adaguc-server
     # pylint: disable=unused-variable
-    status, data, headers = adaguc_instance.runADAGUCServer(
-        url, env=adagucenv, showLogOnError=True)
+    status, data, headers = await adaguc_instance.runADAGUCServer(
+        url, env=adagucenv, showLogOnError=True
+    )
 
     # Obtain logfile
     logfile = adaguc_instance.getLogFile()
@@ -119,8 +124,8 @@ def call_adaguc(url):
     return status, data
 
 
-@cached(cache=cache)
-def get_capabilities(collname):
+@aiocache.cached(ttl=60, serializer=PickleSerializer())
+async def get_capabilities(collname):
     """
     Get the collectioninfo from the WMS GetCapabilities
     """
@@ -131,7 +136,7 @@ def get_capabilities(collname):
         urlrequest = (
             f"dataset={dataset}&service=wms&version=1.3.0&request=getcapabilities"
         )
-        status, response = call_adaguc(url=urlrequest.encode("UTF-8"))
+        status, response = await call_adaguc(url=urlrequest.encode("UTF-8"))
         if status == 0:
             xml = response.getvalue()
             wms = WebMapService(coll["service"], xml=xml, version="1.3.0")
@@ -160,7 +165,7 @@ def get_dimensions(layer, skip_dims=None):
     """
     dims = []
     if skip_dims is None:
-        skip_dims=[]
+        skip_dims = []
     for dim_name in layer.dimensions:
         if not dim_name in skip_dims:
             new_dim = {
@@ -171,12 +176,12 @@ def get_dimensions(layer, skip_dims=None):
     return dims
 
 
-@cached(cache=cache)
-def get_parameters(collname):
+@aiocache.cached(ttl=60, serializer=PickleSerializer())
+async def get_parameters(collname):
     """
     get_parameters
     """
-    contents = get_capabilities(collname)
+    contents = await get_capabilities(collname)
     layers = []
     for layer in contents:
         dims = get_dimensions(contents[layer], ["time"])
@@ -259,14 +264,16 @@ def get_items_links(
             rel="self",
             title="Item in JSON",
             type="application/geo+json",
-        ))
+        )
+    )
     links.append(
         Link(
             href=f"{url}?f=html",
             rel="alternate",
             title="Item in HTML",
             type="text/html",
-        ))
+        )
+    )
     if prev_start is not None:
         links.append(
             Link(
@@ -274,7 +281,8 @@ def get_items_links(
                 rel="prev",
                 title="Item in JSON",
                 type="application/geo+json",
-            ))
+            )
+        )
     if next_start is not None:
         links.append(
             Link(
@@ -282,7 +290,8 @@ def get_items_links(
                 rel="next",
                 title="Item in JSON",
                 type="application/geo+json",
-            ))
+            )
+        )
     collection_url = "/".join(url.split("/")[:-1])
     links.append(
         Link(
@@ -290,7 +299,8 @@ def get_items_links(
             rel="collection",
             title="Collection",
             type="application/geo+json",
-        ))
+        )
+    )
 
     return links
 
@@ -309,14 +319,16 @@ def get_single_item_links(
             rel="self",
             title="Item in JSON",
             type="application/geo+json",
-        ))
+        )
+    )
     links.append(
         Link(
             href=f"{url}?f=html",
             rel="alternate",
             title="Item in HTML",
             type="text/html",
-        ))
+        )
+    )
     if prev_start is not None:
         links.append(
             Link(
@@ -324,7 +336,8 @@ def get_single_item_links(
                 rel="prev",
                 title="Item in JSON",
                 type="application/geo+json",
-            ))
+            )
+        )
     if next_start is not None:
         links.append(
             Link(
@@ -332,7 +345,8 @@ def get_single_item_links(
                 rel="next",
                 title="Item in JSON",
                 type="application/geo+json",
-            ))
+            )
+        )
 
     if item_id:
         collection_url = "/".join(url.split("/")[:-2])
@@ -344,7 +358,8 @@ def get_single_item_links(
             rel="collection",
             title="Collection",
             type="application/geo+json",
-        ))
+        )
+    )
 
     return links
 
@@ -373,7 +388,7 @@ def feature_from_dat(dat, coll, url, add_links: bool = False):
     for tupl in tuples:
         result = []
         for time_step in time_steps:
-            val = multi_get(dat["data"], tupl + (time_step, ))
+            val = multi_get(dat["data"], tupl + (time_step,))
             if val:
                 try:
                     value = float(val)

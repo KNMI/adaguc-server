@@ -27,10 +27,13 @@ logger = logging.getLogger(__name__)
 app = FastAPI()
 
 # Set uvicorn access log format using middleware
-access_log_format = 'accesslog %(h)s ; %(t)s ; %(H)s ; %(m)s ; %(U)s ; %(q)s ; %(s)s ; %(M)s ; "%(a)s"'
+access_log_format = (
+    'accesslog %(h)s ; %(t)s ; %(H)s ; %(m)s ; %(U)s ; %(q)s ; %(s)s ; %(M)s ; "%(a)s"'
+)
 logging.getLogger("uvicorn.access").handlers.clear()
 app.add_middleware(AccessLoggerMiddleware, format=access_log_format)
 logging.getLogger("access").propagate = False
+
 
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
@@ -48,8 +51,9 @@ async def add_hsts_header(request: Request, call_next):
         external_address = os.environ["EXTERNALADDRESS"]
         scheme = urlsplit(external_address).scheme
         if scheme == "https":
-            response.headers[
-                "Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+            response.headers["Strict-Transport-Security"] = (
+                "max-age=31536000; includeSubDomains"
+            )
             response.headers["X-Content-Type-Options"] = "nosniff"
             response.headers["Content-Security-Policy"] = "default-src 'self'"
 
@@ -72,8 +76,7 @@ if "EXTERNALADDRESS" in os.environ:
 @app.get("/")
 async def root():
     return {
-        "message":
-        "ADAGUC server base URL, use /wms, /wcs, /autowms, /adagucopendap or /ogcapi"
+        "message": "ADAGUC server base URL, use /wms, /wcs, /autowms, /adagucopendap or /ogcapi"
     }
 
 
