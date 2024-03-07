@@ -3,6 +3,7 @@
 import asyncio
 import logging
 import os
+from adaguc.CGIRunner import HTTP_STATUSCODE_408_TIMEOUT
 
 from fastapi import APIRouter, Request, Response
 
@@ -66,9 +67,11 @@ async def handle_wms(
     if status != 0:
         logger.info("Adaguc status code was %d", status)
         if status == 32:
-            response_code = 404 # Not Found
+            response_code = 404  # Not Found
         elif status == 33:
-            response_code = 422 # Unprocessable Entity
+            response_code = 422  # Unprocessable Entity
+        elif status == HTTP_STATUSCODE_408_TIMEOUT:
+            response_code = 408  # Timeout
         else:
             response_code = 500
     response = Response(content=data.getvalue(), status_code=response_code)
