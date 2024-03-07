@@ -196,6 +196,7 @@ int _main(int argc, char **argv, char **) {
 
   /* Initialize error functions */
   seterrormode(EXCEPTIONS_PLAINTEXT);
+  setStatusCode(HTTP_STATUSCODE_200_OK);
   setErrorFunction(serverLogFunctionCMDLine);
   setWarningFunction(serverLogFunctionCMDLine);
   setDebugFunction(serverLogFunctionCMDLine);
@@ -389,7 +390,7 @@ int _main(int argc, char **argv, char **) {
   StopWatch_Stop("Ready!!!");
 #endif
 
-  return status;
+  return getStatusCode();
 }
 
 int main(int argc, char **argv, char **envp) {
