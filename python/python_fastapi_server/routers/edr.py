@@ -7,6 +7,7 @@ Author: Ernst de Vreede, 2023-11-23
 
 KNMI
 """
+
 import itertools
 import json
 import logging
@@ -58,8 +59,6 @@ from functools import partial
 from .covjsonresponse import CovJSONResponse
 from .ogcapi_tools import call_adaguc
 
-SHORT_CACHE_TIME=60
-
 logger = logging.getLogger(__name__)
 logger.debug("Starting EDR")
 
@@ -100,6 +99,7 @@ async def edr_exception_handler(_, exc: EdrException):
         status_code=exc.code,
         content={"code": str(exc.code), "description": exc.description},
     )
+
 
 def init_edr_collections(adaguc_dataset_dir: str = os.environ["ADAGUC_DATASET_DIR"]):
     """
@@ -160,7 +160,10 @@ def init_edr_collections(adaguc_dataset_dir: str = os.environ["ADAGUC_DATASET_DI
             pass
     return edr_collections
 
+
 edr_collections = None
+
+
 def get_edr_collections():
     """Returns all EDR collections"""
     global edr_collections
@@ -229,7 +232,6 @@ async def get_collection_position(
     datetime_par: str = Query(default=None, alias="datetime"),
     parameter_name: str = Query(alias="parameter-name"),
     z_par: str = Query(alias="z", default=None),
-
 ) -> Coverage:
     """
     returns data for the EDR /position endpoint
@@ -259,8 +261,8 @@ async def get_collection_position(
         dat = json.loads(resp)
         ttl = get_ttl_from_adaguc_call(headers)
         if ttl is not None:
-            expires = (datetime.utcnow()+timedelta(seconds=ttl)).timestamp()
-            response.headers["cache-control"]=generate_max_age(expires)
+            expires = (datetime.utcnow() + timedelta(seconds=ttl)).timestamp()
+            response.headers["cache-control"] = generate_max_age(expires)
         return covjson_from_resp(dat, edr_collections[collection_name]["vertical_name"])
 
     raise EdrException(code=400, description="No data")
@@ -306,17 +308,20 @@ async def get_collectioninfo_for_id(
             )
             links.append(instances_link)
 
-    bbox = await get_extent(edr_collectioninfo)
+    wmslayers, expires = await get_capabilities(edr_collectioninfo["name"])
+
+    bbox = await get_extent(edr_collectioninfo, wmslayers)
     if bbox is None:
         return None, None
     crs = 'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]'
     spatial = Spatial(bbox=bbox, crs=crs)
+
     (interval, time_values) = await get_times_for_collection(
-        edr_collectioninfo, edr_collectioninfo["parameters"][0]["name"]
+        edr_collectioninfo, wmslayers, edr_collectioninfo["parameters"][0]["name"]
     )
 
     customlist: list = await get_custom_dims_for_collection(
-        edr_collectioninfo, edr_collectioninfo["parameters"][0]["name"]
+        edr_collectioninfo, wmslayers, edr_collectioninfo["parameters"][0]["name"]
     )
 
     # Custom can be a list of custom dimensions, like ensembles, thresholds
@@ -327,7 +332,7 @@ async def get_collectioninfo_for_id(
 
     vertical = None
     vertical_dim = await get_vertical_dim_for_collection(
-        edr_collectioninfo, edr_collectioninfo["parameters"][0]["name"]
+        edr_collectioninfo, wmslayers, edr_collectioninfo["parameters"][0]["name"]
     )
     if vertical_dim:
         vertical = Vertical(**vertical_dim)
@@ -403,8 +408,7 @@ async def get_collectioninfo_for_id(
             output_formats=output_formats,
         )
 
-    get_cap = await get_capabilities(edr_collection)
-    return collection, get_cap["expires"]
+    return collection, expires
 
 
 def get_params_for_collection(edr_collection: str) -> dict[str, Parameter]:
@@ -496,7 +500,7 @@ def get_time_values_for_range(rng: str) -> list[str]:
 
 
 async def get_times_for_collection(
-    edr_collectioninfo: dict, parameter: str = None
+    edr_collectioninfo: dict, wmslayers, parameter: str = None
 ) -> tuple[list[list[str]], list[str]]:
     """
     Returns a list of times based on the time dimensions, it does a WMS GetCapabilities to the given dataset (cached)
@@ -504,12 +508,10 @@ async def get_times_for_collection(
     It does this for given parameter. When the parameter is not given it will do it for the first Layer in the GetCapabilities document.
     """
     logger.info("get_times_for_dataset(%s,%s)", edr_collectioninfo["name"], parameter)
-    getcap = await get_capabilities(edr_collectioninfo["name"])
-    wms = getcap["layers"]
-    if parameter and parameter in wms:
-        layer = wms[parameter]
+    if parameter and parameter in wmslayers:
+        layer = wmslayers[parameter]
     else:
-        layer = wms[list(wms)[0]]
+        layer = wmslayers[list(wmslayers)[0]]
 
     if "time" in layer["dimensions"]:
         time_dim = layer["dimensions"]["time"]
@@ -540,18 +542,18 @@ async def get_times_for_collection(
     return (None, None)
 
 
-async def get_custom_dims_for_collection(edr_collectioninfo: dict, parameter: str = None):
+async def get_custom_dims_for_collection(
+    edr_collectioninfo: dict, wmslayers, parameter: str = None
+):
     """
     Return the dimensions other then elevation or time from the WMS GetCapabilities document.
     """
-    getcap = await get_capabilities(edr_collectioninfo["name"])
-    wms = getcap["layers"]
     custom = []
-    if parameter and parameter in list(wms):
-        layer = wms[parameter]
+    if parameter and parameter in list(wmslayers):
+        layer = wmslayers[parameter]
     else:
         # default to first layer
-        layer = wms[list(wms)[0]]
+        layer = wmslayers[list(wmslayers)[0]]
     for dim_name in layer["dimensions"]:
         # Not needed for non custom dims:
         if dim_name not in [
@@ -570,16 +572,16 @@ async def get_custom_dims_for_collection(edr_collectioninfo: dict, parameter: st
     return custom if len(custom) > 0 else None
 
 
-async def get_vertical_dim_for_collection(edr_collectioninfo: dict, parameter: str = None):
+async def get_vertical_dim_for_collection(
+    edr_collectioninfo: dict, wmslayers, parameter: str = None
+):
     """
     Return the verticel dimension the WMS GetCapabilities document.
     """
-    getcap = await get_capabilities(edr_collectioninfo["name"])
-    wms = getcap["layers"]
-    if parameter and parameter in list(wms):
-        layer = wms[parameter]
+    if parameter and parameter in list(wmslayers):
+        layer = wmslayers[parameter]
     else:
-        layer = wms[list(wms)[0]]
+        layer = wmslayers[list(wmslayers)[0]]
 
     for dim_name in layer["dimensions"]:
         if dim_name in ["elevation"] or (
@@ -608,14 +610,16 @@ async def rest_get_edr_collections(request: Request, response: Response):
 
     links.append(self_link)
     collections: list[Collection] = []
-    min_expires=None
+    min_expires = None
     edr_collections = get_edr_collections()
     for edr_coll in edr_collections:
         coll, expires = await get_collectioninfo_for_id(edr_coll)
         if coll:
             collections.append(coll)
             if expires is not None:
-                min_expires=expires if min_expires is None else min(min_expires, expires)
+                min_expires = (
+                    expires if min_expires is None else min(min_expires, expires)
+                )
         else:
             logger.warning("Unable to fetch WMS GetCapabilities for %s", edr_coll)
     collections_data = Collections(links=links, collections=collections)
@@ -633,23 +637,26 @@ async def rest_get_edr_collection_by_id(collection_name: str, response: Response
     """
     GET Returns collection information for given collection id
     """
-    collection,expires = await get_collectioninfo_for_id(collection_name)
-    response.headers['cache-control']=generate_max_age(expires)
+    collection, expires = await get_collectioninfo_for_id(collection_name)
+    response.headers["cache-control"] = generate_max_age(expires)
     return collection
 
+
 def get_ttl_from_adaguc_call(headers):
-    ttl = None
-    for hdr in headers:
-        hdr_terms=hdr.split(":")
-        if hdr_terms[0].lower() == "cache-control":
-            for cache_control_terms in hdr_terms[1].split(","):
-                terms = cache_control_terms.split("=")
-                if terms[0]=='max-age':
-                    ttl = int(terms[1])
-                    break
-        if ttl is not None:
-            break
-    return ttl
+    try:
+        for hdr in headers:
+            hdr_terms = hdr.split(":")
+            if hdr_terms[0].lower() == "cache-control":
+                for cache_control_terms in hdr_terms[1].split(","):
+                    terms = cache_control_terms.split("=")
+                    if terms[0].lower() == "max-age":
+                        ttl = int(terms[1])
+                        return ttl
+        return None
+    except:
+        pass
+    return None
+
 
 async def get_capabilities(collname):
     """
@@ -664,7 +671,7 @@ async def get_capabilities(collname):
         )
         status, response, headers = await call_adaguc(url=urlrequest.encode("UTF-8"))
         ttl = get_ttl_from_adaguc_call(headers)
-        now=datetime.utcnow()
+        now = datetime.utcnow()
         logger.info("status: %d", status)
         if status == 0:
             xml = response.getvalue()
@@ -675,18 +682,22 @@ async def get_capabilities(collname):
     else:
         logger.info("callADAGUC by service %s", dataset)
         wms = WebMapService(dataset["service"], version="1.3.0")
-        now=datetime.utcnow()
-        ttl=None
+        now = datetime.utcnow()
+        ttl = None
 
-    layers={}
-    for layername,layerinfo in wms.contents.items():
-        layers[layername]={ "name": layername, "dimensions":{**layerinfo.dimensions}, "boundingBoxWGS84": layerinfo.boundingBoxWGS84}
+    layers = {}
+    for layername, layerinfo in wms.contents.items():
+        layers[layername] = {
+            "name": layername,
+            "dimensions": {**layerinfo.dimensions},
+            "boundingBoxWGS84": layerinfo.boundingBoxWGS84,
+        }
     if ttl is not None:
         expires = (now + timedelta(seconds=ttl)).timestamp()
     else:
-        expires=None
+        expires = None
 
-    return {"layers": layers, "expires": expires}
+    return (layers, expires)
 
 
 async def get_ref_times_for_coll(edr_collectioninfo: dict, layer: str) -> list[str]:
@@ -704,19 +715,17 @@ async def get_ref_times_for_coll(edr_collectioninfo: dict, layer: str) -> list[s
     return []
 
 
-async def get_extent(edr_collectioninfo: dict):
+async def get_extent(edr_collectioninfo: dict, wmslayers):
     """
     Get the boundingbox extent from the WMS GetCapabilities
     """
-    getcap = await get_capabilities(edr_collectioninfo["name"])
-    contents = getcap["layers"]
     first_layer = edr_collectioninfo["parameters"][0]["name"]
-    if len(contents):
-        if first_layer in contents:
-            bbox = contents[first_layer]["boundingBoxWGS84"]
+    if len(wmslayers):
+        if first_layer in wmslayers:
+            bbox = wmslayers[first_layer]["boundingBoxWGS84"]
         else:
-            #Fallback to first layer in getcapabilities
-            bbox = contents[next(iter(contents))]["boundingBoxWGS84"]
+            # Fallback to first layer in getcapabilities
+            bbox = wmslayers[next(iter(wmslayers))]["boundingBoxWGS84"]
 
         return [[bbox[0], bbox[1]], [bbox[2], bbox[3]]]
     return None
@@ -727,7 +736,9 @@ async def get_extent(edr_collectioninfo: dict):
     response_model=Instances,
     response_model_exclude_none=True,
 )
-async def rest_get_edr_inst_for_coll(collection_name: str, request: Request, response: Response):
+async def rest_get_edr_inst_for_coll(
+    collection_name: str, request: Request, response: Response
+):
     """
     GET: Returns all available instances for the collection
     """
@@ -744,19 +755,21 @@ async def rest_get_edr_inst_for_coll(collection_name: str, request: Request, res
     )
     links: list[Link] = []
     links.append(Link(href=instances_url, rel="collection"))
-    min_expires=None
+    min_expires = None
     for instance in list(ref_times):
         instance_links: list[Link] = []
         instance_link = Link(href=f"{instances_url}/{instance}", rel="collection")
         instance_links.append(instance_link)
-        instance_info, expires = await get_collectioninfo_for_id(collection_name, instance)
+        instance_info, expires = await get_collectioninfo_for_id(
+            collection_name, instance
+        )
         if expires is not None:
-            min_expires=expires if min_expires is None else min(min_expires, expires)
+            min_expires = expires if min_expires is None else min(min_expires, expires)
         instances.append(instance_info)
 
     instances_data = Instances(instances=instances, links=links)
     if min_expires is not None:
-        response.headers['cache-control'] = generate_max_age(min_expires)
+        response.headers["cache-control"] = generate_max_age(min_expires)
     return instances_data
 
 
@@ -770,12 +783,15 @@ async def rest_get_collection_info(collection_name: str, instance, response: Res
     GET  "/collections/{collection_name}/instances/{instance}"
     """
     coll, expires = await get_collectioninfo_for_id(collection_name, instance)
-    response.headers['cache-control'] = generate_max_age(expires)
+    response.headers["cache-control"] = generate_max_age(expires)
     return coll
 
+
 def generate_max_age(expires):
-    rest_age = int((datetime.fromtimestamp(expires)-datetime.utcnow()).total_seconds())
-    if rest_age>0:
+    rest_age = int(
+        (datetime.fromtimestamp(expires) - datetime.utcnow()).total_seconds()
+    )
+    if rest_age > 0:
         return f"max-age={rest_age}"
     return f"max-age=0"
 
