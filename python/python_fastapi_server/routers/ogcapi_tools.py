@@ -4,7 +4,6 @@ import os
 import time
 from typing import List
 
-from cachetools import TTLCache, cached
 from defusedxml.ElementTree import ParseError, parse
 
 from owslib.wms import WebMapService
@@ -14,8 +13,6 @@ from .models.ogcapifeatures_1_model import (FeatureGeoJSON, Link, PointGeoJSON,
 from .setup_adaguc import setup_adaguc
 
 logger = logging.getLogger(__name__)
-
-cache = TTLCache(maxsize=1000, ttl=60)
 
 def make_bbox(extent):
     s_extent = []
@@ -119,35 +116,29 @@ def call_adaguc(url):
     return status, data, headers
 
 
-@cached(cache=cache)
 def get_capabilities(collname):
     """
     Get the collectioninfo from the WMS GetCapabilities
     """
     coll = generate_collections().get(collname)
-    if "dataset" in coll:
-        logger.info("callADAGUC by dataset")
-        dataset = coll["dataset"]
-        urlrequest = (
-            f"dataset={dataset}&service=wms&version=1.3.0&request=getcapabilities"
-        )
-        status, response, headers = call_adaguc(url=urlrequest.encode("UTF-8"))
-        for hdr in headers:
-            if hdr.lower().startswith("cache-control"):
-                logger.info("%s", hdr)
-        if status == 0:
-            xml = response.getvalue()
-            wms = WebMapService(coll["service"], xml=xml, version="1.3.0")
-        else:
-            logger.error("status: %d", status)
-            return {}
+    logger.info("callADAGUC by dataset")
+    dataset = coll["dataset"]
+    urlrequest = (
+        f"dataset={dataset}&service=wms&version=1.3.0&request=getcapabilities"
+    )
+    status, response, headers = call_adaguc(url=urlrequest.encode("UTF-8"))
+    for hdr in headers:
+        if hdr.lower().startswith("cache-control"):
+            logger.info("%s", hdr)
+    if status == 0:
+        xml = response.getvalue()
+        wms = WebMapService(coll["service"], xml=xml, version="1.3.0")
     else:
-        logger.info("callADAGUC by service %s", coll)
-        wms = WebMapService(coll["service"], version="1.3.0")
+        logger.error("status: %d", status)
+        return {}
     return wms.contents
 
 
-@cached(cache=cache)
 def generate_collections():
     """
     Generate OGC API Feature collections
@@ -174,7 +165,6 @@ def get_dimensions(layer, skip_dims=None):
     return dims
 
 
-@cached(cache=cache)
 def get_parameters(collname):
     """
     get_parameters

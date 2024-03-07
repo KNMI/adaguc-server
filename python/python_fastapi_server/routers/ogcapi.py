@@ -8,7 +8,6 @@ from collections import OrderedDict
 from typing import Dict, List, Type, Union
 
 import yaml
-from cachetools import TTLCache
 from defusedxml.ElementTree import fromstring
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
 from fastapi import status as fastapi_status
@@ -30,7 +29,6 @@ from .ogcapi_tools import (calculate_coords, call_adaguc, feature_from_dat,
 
 logger = logging.getLogger(__name__)
 
-cache = TTLCache(maxsize=1000, ttl=30)
 
 DEFAULT_CRS = "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
 SUPPORTED_CRS_LIST = [DEFAULT_CRS]
