@@ -66,6 +66,8 @@ RUN apt-get -q -y update \
     libgd-dev \
     libproj-dev \
     time \
+    supervisor \
+    pgbouncer \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -82,7 +84,6 @@ COPY --from=build /adaguc/adaguc-server-master/bin /adaguc/adaguc-server-master/
 COPY data /adaguc/adaguc-server-master/data
 COPY python /adaguc/adaguc-server-master/python
 
-
 ######### Third stage, test ############
 FROM base as test
 
@@ -97,7 +98,6 @@ RUN bash runtests.sh
 
 # Create a file indicating that the test succeeded. This file is used in the final stage
 RUN echo "TESTSDONE" >  /adaguc/adaguc-server-master/testsdone.txt
-
 
 ######### Fourth stage, prod ############
 FROM base as prod
@@ -118,6 +118,11 @@ COPY ./Docker/adaguc-server-config-python-postgres.xml /adaguc/adaguc-server-con
 COPY ./Docker/start.sh /adaguc/
 COPY ./Docker/adaguc-server-*.sh /adaguc/
 COPY ./Docker/baselayers.xml /adaguc/adaguc-datasets-internal/baselayers.xml
+# Copy pgbouncer and supervisord config files
+COPY ./Docker/pgbouncer/ /adaguc/pgbouncer/
+COPY ./Docker/supervisord/ /etc/supervisor/conf.d/
+COPY ./Docker/run_supervisord.sh /adaguc/run_supervisord.sh
+# Set permissions
 RUN  chmod +x /adaguc/adaguc-server-*.sh && \
     chmod +x /adaguc/start.sh && \
     chown -R adaguc:adaguc /data/adaguc* /adaguc /adaguc/*
@@ -141,5 +146,4 @@ USER adaguc
 # For HTTP
 EXPOSE 8080
 
-
-ENTRYPOINT ["sh", "/adaguc/start.sh"]
+ENTRYPOINT ["bash", "/adaguc/run_supervisord.sh"]
