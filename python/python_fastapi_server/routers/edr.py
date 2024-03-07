@@ -7,6 +7,9 @@ Author: Ernst de Vreede, 2023-11-23
 
 KNMI
 """
+
+import aiocache
+from aiocache.serializers import PickleSerializer
 import itertools
 import json
 import logging
@@ -259,6 +262,7 @@ DEFAULT_CRS_OBJECT = {
 }
 
 
+@aiocache.cached(ttl=60, serializer=PickleSerializer())
 async def get_collectioninfo_for_id(
     edr_collection: str,
     instance: str = None,
@@ -525,7 +529,9 @@ async def get_times_for_collection(
     return (None, None)
 
 
-async def get_custom_dims_for_collection(edr_collectioninfo: dict, parameter: str = None):
+async def get_custom_dims_for_collection(
+    edr_collectioninfo: dict, parameter: str = None
+):
     """
     Return the dimensions other then elevation or time from the WMS GetCapabilities document.
     """
@@ -554,7 +560,9 @@ async def get_custom_dims_for_collection(edr_collectioninfo: dict, parameter: st
     return custom if len(custom) > 0 else None
 
 
-async def get_vertical_dim_for_collection(edr_collectioninfo: dict, parameter: str = None):
+async def get_vertical_dim_for_collection(
+    edr_collectioninfo: dict, parameter: str = None
+):
     """
     Return the verticel dimension the WMS GetCapabilities document.
     """
@@ -615,6 +623,7 @@ async def rest_get_edr_collection_by_id(collection_name: str):
     return collection
 
 
+@aiocache.cached(ttl=60, serializer=PickleSerializer())
 async def get_capabilities(collname):
     """
     Get the collectioninfo from the WMS GetCapabilities
