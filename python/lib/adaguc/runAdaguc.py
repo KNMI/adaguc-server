@@ -214,7 +214,7 @@ class runAdaguc:
         if self.cache_wanted(url):
             cache_key = str((url, adagucargs)).encode("utf-8")
 
-            age, headers, data = get_cached_response(self.redis_pool, cache_key)
+            age, headers, data = get_cached_response(runAdaguc.redis_pool, cache_key)
             if age is not None:
                 return [0, data, headers]
 
@@ -252,7 +252,9 @@ class runAdaguc:
 
         else:
             if self.cache_wanted(url):
-                response_to_cache(self.redis_pool, cache_key, headers, filetogenerate)
+                response_to_cache(
+                    runAdaguc.redis_pool, cache_key, headers, filetogenerate
+                )
             return [status, filetogenerate, headers]
 
     def writetofile(self, filename, data):
