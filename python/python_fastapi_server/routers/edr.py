@@ -259,7 +259,6 @@ DEFAULT_CRS_OBJECT = {
 }
 
 
-# @cached(cache=TTLCache(maxsize=1024, ttl=60))
 async def get_collectioninfo_for_id(
     edr_collection: str,
     instance: str = None,
@@ -616,7 +615,6 @@ async def rest_get_edr_collection_by_id(collection_name: str):
     return collection
 
 
-# @cached(cache=TTLCache(maxsize=1024, ttl=60))
 async def get_capabilities(collname):
     """
     Get the collectioninfo from the WMS GetCapabilities

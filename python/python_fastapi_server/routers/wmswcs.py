@@ -75,7 +75,7 @@ async def handle_wms(
     return response
 
 
-def testadaguc():
+async def testadaguc():
     """Test adaguc is setup correctly"""
     logger.info("Checking adaguc-server.")
     adaguc_instance = setup_adaguc()
@@ -93,7 +93,7 @@ def testadaguc():
 
     # Run adaguc-server
     # pylint: disable=unused-variable
-    status, _data, headers = asyncio.run(
+    status, _data, headers = await asyncio.run(
         adaguc_instance.runADAGUCServer(url, env=adagucenv, showLogOnError=False)
     )
     assert status == 0

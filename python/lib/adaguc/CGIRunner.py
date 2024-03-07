@@ -15,10 +15,7 @@ import chardet
 from queue import Queue, Empty  # python 3.x
 import re
 
-# from numba import jit
-
 ADAGUC_NUMPARALLELPROCESSES = os.getenv("ADAGUC_NUMPARALLELPROCESSES", "4")
-# print("ADAGUC_NUMPARALLELPROCESSES", ADAGUC_NUMPARALLELPROCESSES)
 sem = asyncio.Semaphore(int(ADAGUC_NUMPARALLELPROCESSES))
 
 
@@ -43,18 +40,21 @@ class CGIRunner:
         ON_POSIX = "posix" in sys.builtin_module_names
         async with sem:
             process = await asyncio.create_subprocess_exec(
-                *cmds, stdout=PIPE, stderr=PIPE, env=localenv, close_fds=ON_POSIX
+                *cmds,
+                stdout=PIPE,
+                stderr=PIPE,
+                env=localenv,
+                close_fds=ON_POSIX,
             )
-
             try:
-                asyncio.wait_for(process, timeout=timeout)
-                (processOutput, processError) = await process.communicate()
-            except TimeoutExpired:
+                (process_output, process_error) = await asyncio.wait_for(
+                    process.communicate(), timeout=timeout
+                )
+            except asyncio.exceptions.TimeoutError:
                 process.kill()
                 await process.communicate()
                 output.write(b"TimeOut")
                 return 1, [], None
-
             status = await process.wait()
 
         # Split headers from body using a regex
@@ -62,10 +62,10 @@ class CGIRunner:
         headers = ""
         if isCGI == True:
             pattern = re.compile(b"\x0A\x0A")
-            search = pattern.search(processOutput)
+            search = pattern.search(process_output)
             if search:
                 headersEndAt = search.start()
-                headers = (processOutput[0 : headersEndAt - 1]).decode()
+                headers = (process_output[0 : headersEndAt - 1]).decode()
             else:
                 output.write(
                     b"Error: No headers found in response from adaguc-server application, status was %d"
@@ -73,7 +73,7 @@ class CGIRunner:
                 )
                 return 1, [], None
 
-        body = processOutput[headersEndAt + 2 :]
+        body = process_output[headersEndAt + 2 :]
         output.write(body)
         headersList = headers.split("\r\n")
-        return status, [s for s in headersList if s != "\n" and ":" in s], processError
+        return status, [s for s in headersList if s != "\n" and ":" in s], process_error
