@@ -37,6 +37,7 @@ static int cerror_mode = 0; // 0 = text 1 = image 2 = XML
 static int errImageWidth = 640;
 static int errImageHeight = 480;
 static int errImageFormat = IMAGEFORMAT_IMAGEPNG8;
+static int statusCode = 200; // Default returned HTTP status code
 static ServiceExceptionCode errExceptionCode = OperationNotSupported;
 static bool enableTransparency;
 void printerror(const char *text) {
@@ -58,6 +59,11 @@ void resetErrors() {
   errormsgs.clear();
   error_raised = 0;
 }
+
+// Param to propagate what kind of value will be returned as HTTP status code.
+// Indicating success or the type of error that took place.
+void setStatusCode(int newStatusCode) { statusCode = newStatusCode; }
+int getStatusCode() { return statusCode; }
 
 void printerrorImage(void *_drawImage) {
   if (error_raised == 0) return;

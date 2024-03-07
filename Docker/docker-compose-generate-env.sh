@@ -6,7 +6,7 @@ ADAGUC_REDIS_PORT=6379
 ADAGUC_DATA_DIR=${HOME}/adaguc-docker/adaguc-data
 ADAGUC_AUTOWMS_DIR=${HOME}/adaguc-docker/adaguc-autowms
 ADAGUC_DATASET_DIR=${HOME}/adaguc-docker/adaguc-datasets
-ADAGUC_NUMPARALLELPROCESSES=8
+ADAGUC_NUMPARALLELPROCESSES=4
 
 usage() { echo "Usage: $0 -p <port number> -e <external adress> -a <autowmsdir> -d <dataset dir> -f <datadir> -t <num parallel processes> -r <redis_portnumber>" 1>&2; exit 1; }
 

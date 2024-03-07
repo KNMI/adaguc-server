@@ -40,4 +40,7 @@ bool errorsOccured();
 void setErrorImageSize(int w, int h, int format, bool _enableTransparency);
 void setExceptionType(ServiceExceptionCode code);
 const char *getExceptionCodeText(ServiceExceptionCode code);
+void setStatusCode(int newStatusCode);
+int getStatusCode();
+
 #endif
