@@ -3,11 +3,11 @@
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
  * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Date:     2024-02-29
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2024, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,20 +23,24 @@
  *
  ******************************************************************************/
 
-#ifndef CSTOPWATCH_H
-#define CSTOPWATCH_H
-#include <stdlib.h>
-#include <time.h>
-#include <sys/time.h>
-#include "CDebugger.h"
-#include <stdio.h>
-#include <stdarg.h>
+#include <map>
+#include "ProjectionStore.h"
 
-void StopWatch_Start();
-void _StopWatch_Stop(const char *a, ...);
-extern unsigned int logMessageNumber;
-extern unsigned long logProcessIdentifier;
-#define StopWatch_Stop                                                                                                                                                                                 \
-  _printDebug("[D:%03d:pid%lu: %s:%d] ", logMessageNumber, logProcessIdentifier, __FILENAME__, __LINE__);                                                                                              \
-  _StopWatch_Stop
-#endif
+bool operator< (const ProjectionMapKey& a, const ProjectionMapKey& b) { return std::make_tuple(a.sourceCRS, a.destCRS, a.extent) < std::make_tuple(b.sourceCRS, b.destCRS, b.extent); }
+static std::map<ProjectionMapKey, BBOX> projectionMap;
+
+std::tuple<bool, BBOX> getBBOXProjection(ProjectionMapKey key) {
+  auto it = projectionMap.find(key);
+  if (it == projectionMap.end()) {
+    return std::make_tuple(false, BBOX{});
+  }
+  return std::make_tuple(true, it->second);
+}
+
+void addBBOXProjection(ProjectionMapKey key, BBOX bbox) {
+  projectionMap[key] = bbox;
+}
+
+void BBOXProjectionClearCache() {
+  projectionMap.clear();
+}

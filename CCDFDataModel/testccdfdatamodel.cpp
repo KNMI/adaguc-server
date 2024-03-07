@@ -67,18 +67,17 @@ int testCTimeInit(CDF::Variable *testVar, const char *testDate) {
 }
 
 int testCTime2Init(CDF::Variable *testVar, double valueToCheck) {
-  CTime adagucTime;
-  adagucTime.init(testVar);
+  CTime *adagucTime = CTime::GetCTimeInstance(testVar);
 
   try {
-    double startGraphTime = adagucTime.dateToOffset(adagucTime.freeDateStringToDate("2014-08-08T11:22:33Z"));
+    double startGraphTime = adagucTime->dateToOffset(adagucTime->freeDateStringToDate("2014-08-08T11:22:33Z"));
     if (startGraphTime != valueToCheck) {
       CDBError("[FAILED] startGraphTime != %f, %f", valueToCheck, startGraphTime);
       return 1;
     } else {
       CDBDebug("[OK] startGraphTime == %f", valueToCheck);
     }
-    adagucTime.getDate(0);
+    adagucTime->getDate(0);
     CDBDebug("[OK] adagucTime->getDate(0) %f", startGraphTime);
   } catch (int e) {
     CDBError("[FAILED] testTime->getDate(0)");

@@ -6,6 +6,9 @@
 !Docker/start.sh
 !Docker/adaguc-server-*.sh
 !Docker/baselayers.xml
+!Docker/run_supervisord.sh
+!Docker/pgbouncer/
+!Docker/supervisord/
 !requirements.txt
 !requirements-dev.txt
 !adagucserverEC/

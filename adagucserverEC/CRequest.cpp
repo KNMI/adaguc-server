@@ -27,6 +27,7 @@
 // #define CREQUEST_DEBUG
 // #define MEASURETIME
 
+#include "Types/ProjectionStore.h"
 #include "CRequest.h"
 #include "COpenDAPHandler.h"
 #include "CDBFactory.h"
@@ -48,7 +49,6 @@ int CRequest::runRequest() {
   CDFObjectStore::getCDFObjectStore()->clear();
   CConvertGeoJSON::clearFeatureStore();
   CDFStore::clear();
-  ProjectionStore::getProjectionStore()->clear();
   CDBFactory::clear();
   return status;
 }

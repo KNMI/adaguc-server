@@ -23,7 +23,6 @@
  *
  ******************************************************************************/
 
-#include <iostream>
 #include <algorithm>
 #include <vector>
 #include <string>
@@ -31,7 +30,7 @@
 #include "CDBFactory.h"
 #include "LayerTypeLiveUpdate/LayerTypeLiveUpdate.h"
 // #define CXMLGEN_DEBUG
-
+// #define MEASURE_TIME
 const char *CFile::className = "CFile";
 
 const char *CXMLGen::className = "CXMLGen";
@@ -267,12 +266,20 @@ int CXMLGen::getProjectionInformationForLayer(WMSLayer *myWMSLayer) {
   }
 
   CGeoParams geo;
-  CImageWarper warper;
+
   int status;
   for (size_t p = 0; p < srvParam->cfg->Projection.size(); p++) {
     geo.CRS.copy(srvParam->cfg->Projection[p]->attr.id.c_str());
 
+#ifdef MEASURETIME
+    StopWatch_Stop("start initreproj %s", geo.CRS.c_str());
+#endif
+    CImageWarper warper;
     status = warper.initreproj(myWMSLayer->dataSource, &geo, &srvParam->cfg->Projection);
+
+#ifdef MEASURETIME
+    StopWatch_Stop("finished initreproj");
+#endif
 
 #ifdef CXMLGEN_DEBUG
     if (status != 0) {
@@ -294,7 +301,15 @@ int CXMLGen::getProjectionInformationForLayer(WMSLayer *myWMSLayer) {
 
     // Calculate the extent for this projection
 
+#ifdef MEASURETIME
+    StopWatch_Stop("start findExtent");
+#endif
+
     warper.findExtent(myWMSLayer->dataSource, myProjection->dfBBOX);
+
+#ifdef MEASURETIME
+    StopWatch_Stop("finished findExtent");
+#endif
 
 #ifdef CXMLGEN_DEBUG
     CDBDebug("PROJ=%s\tBBOX=(%f,%f,%f,%f)", myProjection->name.c_str(), myProjection->dfBBOX[0], myProjection->dfBBOX[1], myProjection->dfBBOX[2], myProjection->dfBBOX[3]);
@@ -406,6 +421,10 @@ int CXMLGen::getDimsForLayer(WMSLayer *myWMSLayer) {
             CDBDebug("Time dimension units = %s", units.c_str());
 #endif
 
+#ifdef MEASURETIME
+            StopWatch_Stop("Get the first 100 values from the database, and determine whether the time resolution is continous or multivalue.");
+#endif
+
             // Get the first 100 values from the database, and determine whether the time resolution is continous or multivalue.
             CDBStore::Store *store = CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByValue(pszDimName, 100, true, tableName.c_str());
             bool dataHasBeenFoundInStore = false;
@@ -442,9 +461,12 @@ int CXMLGen::getDimsForLayer(WMSLayer *myWMSLayer) {
                     isConst = false;
                   }
                   try {
-                    CTime time;
-                    time.init(myWMSLayer->dataSource->getDataObject(0)->cdfObject->getVariable("time"));
-                    if (time.getMode() != 0) {
+                    CTime *time = CTime::GetCTimeInstance(myWMSLayer->dataSource->getDataObject(0)->cdfObject->getVariable("time"));
+                    if (time == nullptr) {
+                      CDBDebug(CTIME_GETINSTANCE_ERROR_MESSAGE);
+                      return 1;
+                    }
+                    if (time->getMode() != 0) {
                       isConst = false;
                     }
                   } catch (int e) {
@@ -934,7 +956,7 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer 
 
       for (size_t lnr = 0; lnr < myWMSLayerList->size(); lnr++) {
         WMSLayer *layer = (*myWMSLayerList)[lnr];
-        if (layer->group.equals(groupKeys[groupIndex].c_str())) {
+        if (layer->group.equals(groupKeys[groupIndex])) {
           // CDBError("layer %d %s",groupDepth,layer->name.c_str());
           if (layer->hasError == 0) {
             XMLDoc->printconcat("<Layer queryable=\"%d\" opaque=\"1\" cascaded=\"%d\">\n", layer->isQuerable, layer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded ? 1 : 0);
@@ -1307,7 +1329,7 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer 
         CDBDebug("Comparing %s == %s", layer->group.c_str(), groupKeys[groupIndex].c_str());
 #endif
 
-        if (layer->group.equals(groupKeys[groupIndex].c_str())) {
+        if (layer->group.equals(groupKeys[groupIndex])) {
 #ifdef CXMLGEN_DEBUG
           CDBDebug("layer %d %s", groupDepth, layer->name.c_str());
 #endif
@@ -1524,7 +1546,7 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc, std::vector<WMSLa
     for (size_t layerIndex = 0; layerIndex < (unsigned)srvParam->WMSLayers->count; layerIndex++) {
       for (size_t lnr = 0; lnr < myWMSLayerList->size(); lnr++) {
         WMSLayer *layer = (*myWMSLayerList)[lnr];
-        if (layer->name.equals(srvParam->WMSLayers[layerIndex].c_str())) {
+        if (layer->name.equals(&srvParam->WMSLayers[layerIndex])) {
           if (layer->hasError == 0) {
 
             // Look wether and which dimension is a time dimension
@@ -1760,14 +1782,29 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam, CT::string *XMLDocumen
           }
           // Generate a common projection list information
           if (myWMSLayer->hasError == false) {
+#ifdef MEASURETIME
+            StopWatch_Stop("start getProjectionInformationForLayer");
+#endif
+
             status = getProjectionInformationForLayer(myWMSLayer);
+#ifdef MEASURETIME
+            StopWatch_Stop("finished getProjectionInformationForLayer");
+#endif
+
             if (status != 0) myWMSLayer->hasError = 1;
           }
 
           // Get the dimensions and its extents for this layer
           if (myWMSLayer->hasError == false) {
+#ifdef MEASURETIME
+            StopWatch_Stop("Start getDimsForLayer");
+#endif
+
             status = getDimsForLayer(myWMSLayer);
             if (status != 0) myWMSLayer->hasError = 1;
+#ifdef MEASURETIME
+            StopWatch_Stop("Finished getDimsForLayer");
+#endif
           }
 
           // Auto configure styles

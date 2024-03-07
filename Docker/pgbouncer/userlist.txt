@@ -1,0 +1,4 @@
+# Format is: "username" "password"
+# The " (quotes) characters are required.
+# This part gets rewritten by supervisord through `run_supervisord.sh` based on contents of ADAGUC_DB environment variable
+"adaguc" "adaguc"

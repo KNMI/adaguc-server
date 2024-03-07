@@ -23,56 +23,13 @@
  *
  ******************************************************************************/
 
+#include "Types/ProjectionStore.h"
 #include "CImageWarper.h"
 #include "ProjCache.h"
 #include <iostream>
 #include <vector>
 #include <cmath>
 const char *CImageWarper::className = "CImageWarper";
-
-extern ProjectionStore projectionStore;
-ProjectionStore projectionStore;
-ProjectionStore *ProjectionStore::getProjectionStore() { return &projectionStore; }
-
-// extern CImageWarper imageWarper;
-// CImageWarper imageWarper;
-// CImageWarper *CImageWarper::getCImageWarper(){
-//   return &imageWarper;
-// }
-
-ProjectionKey::ProjectionKey() {}
-pthread_mutex_t ProjectionKey_ProjectionKey;
-ProjectionKey::ProjectionKey(double *_box, double *_dfMaxExtent, CT::string source, CT::string dest) {
-  pthread_mutex_lock(&ProjectionKey_ProjectionKey);
-  for (int j = 0; j < 4; j++) {
-    bbox[j] = _box[j];
-    dfMaxExtent[j] = _dfMaxExtent[j];
-  }
-  sourceCRS = source;
-  destinationCRS = dest;
-  isSet = false;
-  pthread_mutex_unlock(&ProjectionKey_ProjectionKey);
-}
-
-pthread_mutex_t ProjectionKey_setFoundExtent;
-void ProjectionKey::setFoundExtent(double *_foundExtent) {
-  pthread_mutex_lock(&ProjectionKey_setFoundExtent);
-  for (int j = 0; j < 4; j++) {
-    foundExtent[j] = _foundExtent[j];
-  }
-  isSet = true;
-  pthread_mutex_unlock(&ProjectionKey_setFoundExtent);
-}
-
-ProjectionStore::ProjectionStore() {}
-ProjectionStore::~ProjectionStore() { clear(); }
-
-pthread_mutex_t ProjectionKey_clear;
-void ProjectionStore::clear() {
-  pthread_mutex_lock(&ProjectionKey_clear);
-  keys.clear();
-  pthread_mutex_unlock(&ProjectionKey_clear);
-}
 
 void floatToString(char *string, size_t maxlen, int numdigits, float number) {
   // snprintf(string,maxlen,"%0.2f",number);
@@ -368,15 +325,14 @@ int CImageWarper::_initreprojSynchronized(const char *projString, CGeoParams *Ge
 pthread_mutex_t CImageWarper_findExtent;
 int CImageWarper::findExtent(CDataSource *dataSource, double *dfBBOX) {
   pthread_mutex_lock(&CImageWarper_findExtent);
-  int status = _findExtentSynchronized(dataSource, dfBBOX);
+  int status = findExtentUnSynchronized(dataSource, dfBBOX);
   pthread_mutex_unlock(&CImageWarper_findExtent);
   return status;
 }
 
-int CImageWarper::_findExtentSynchronized(CDataSource *dataSource, double *dfBBOX) {
+int CImageWarper::findExtentUnSynchronized(CDataSource *dataSource, double *dfBBOX) {
   // Find the outermost corners of the image
 
-  // CDBDebug("findExtent for %s",destinationCRS.c_str());
   bool useLatLonSourceProj = false;
   // Maybe it is defined in the configuration file:
   if (dataSource->cfgLayer->LatLonBox.size() > 0) {
@@ -399,35 +355,21 @@ int CImageWarper::_findExtentSynchronized(CDataSource *dataSource, double *dfBBO
     }
   }
 
-  ProjectionKey pKey(dfBBOX, dfMaxExtent, sourceCRSString, destinationCRS);
+  // CDBDebug("findExtent for %s and %f %f %f %f", destinationCRS.c_str(), dfBBOX[0], dfBBOX[1], dfBBOX[2], dfBBOX[3]);
+  ProjectionMapKey key = {sourceCRSString, destinationCRS, makeBBOX(dfBBOX)};
+  bool found;
+  BBOX bbox{};
+  std::tie(found, bbox) = getBBOXProjection(key);
 
-  for (size_t j = 0; j < projectionStore.keys.size(); j++) {
-    if (projectionStore.keys[j].isSet == true) {
-      bool match = true;
-      if (!projectionStore.keys[j].destinationCRS.equals(pKey.destinationCRS.c_str())) match = false;
-      // if(!match){CDBDebug("DESTCRS DO NOT MATCH %s",pKey.destinationCRS.c_str());}
-      if (match) {
-        for (int i = 0; i < 4; i++) {
-          if (projectionStore.keys[j].bbox[i] != pKey.bbox[i]) {
-            // CDBDebug("%f != %f",projectionStore.keys[j].bbox[i],pKey.bbox[i]);
-            match = false;
-            break;
-          }
-        }
-        // if(!match){CDBDebug("BBOX DO NOT MATCH");}
-        if (match) {
-          if (!projectionStore.keys[j].sourceCRS.equals(pKey.sourceCRS.c_str())) match = false;
-          // if(!match){CDBDebug("SOURCECRS DO NOT MATCH");}
-          if (match) {
-            for (int i = 0; i < 4; i++) {
-              dfBBOX[i] = projectionStore.keys[j].foundExtent[i];
-            }
-            // CDBDebug("FOUND PROJECTION KEY");
-            return 0;
-          }
-        }
-      }
+    if (found) {
+#ifdef CIMAGEWARPER_DEBUG
+    CDBDebug("FOUND AND REUSING!!! %s %s (%0.3f, %0.3f, %0.3f, %0.3f) to  (%0.3f, %0.3f, %0.3f, %0.3f)", key.sourceCRS.c_str(), key.destCRS.c_str(), key.extent.bbox[0], key.extent.bbox[1],
+             key.extent.bbox[2], key.extent.bbox[3], bbox.bbox[0], bbox.bbox[1], bbox.bbox[2], bbox.bbox[3]);
+#endif
+    for (size_t j = 0; j < 4; j++) {
+      dfBBOX[j] = bbox.bbox[j];
     }
+    return 0;
   }
 
   // double tempy;
@@ -438,6 +380,7 @@ int CImageWarper::_findExtentSynchronized(CDataSource *dataSource, double *dfBBO
   double maxx1 = dfBBOX[2];
   // double maxx2=dfBBOX[2];
   // CDBDebug("BBOX=(%f,%f,%f,%f)",dfBBOX[0],dfBBOX[1],dfBBOX[2],dfBBOX[3]);
+
   try {
     double nrTestX = 45;
     double nrTestY = 45;
@@ -450,11 +393,13 @@ int CImageWarper::_findExtentSynchronized(CDataSource *dataSource, double *dfBBO
 
         double testPosX = dfBBOX[0] * (1 - stepX) + dfBBOX[2] * stepX;
         double testPosY = dfBBOX[1] * (1 - stepY) + dfBBOX[3] * stepY;
+        bool projError = false;
         double inY = testPosY;
         double inX = testPosX;
-        bool projError = false;
 
+        // Make sure testPosX and testPosY are not NaN values
         if (testPosX == testPosX && testPosY == testPosY) {
+
           try {
             if (useLatLonSourceProj) {
               // Boundingbox is given in the projection definition, it is always given in latlon so we need to project it to the current projection
@@ -465,29 +410,27 @@ int CImageWarper::_findExtentSynchronized(CDataSource *dataSource, double *dfBBO
           } catch (int e) {
             projError = true;
           }
-        } else {
-          projError = true;
-        }
 
-        if (projError == false) {
-          double latX = inX, lonY = inY;
-          if (reprojToLatLon(latX, lonY) != 0) projError = true;
-          ;
-          // CDBDebug("LatX,LatY == %f,%f  %3.3d,%3.3d -- %e,%e -- %f,%f %d",stepX,stepY,x,y,testPosX,testPosY,latX,lonY,projError);
           if (projError == false) {
-            if (latX > -200 && latX < 400 && lonY > -180 && lonY < 180) {
-              if (foundFirst == false) {
-                foundFirst = true;
-                minx1 = inX;
-                maxx1 = inX;
-                miny1 = inY;
-                maxy1 = inY;
+            double latX = inX, lonY = inY;
+            if (reprojToLatLon(latX, lonY) != 0) projError = true;
+            ;
+            // CDBDebug("LatX,LatY == %f,%f  %3.3d,%3.3d -- %e,%e -- %f,%f %d",stepX,stepY,x,y,testPosX,testPosY,latX,lonY,projError);
+            if (projError == false) {
+              if (latX > -200 && latX < 400 && lonY > -180 && lonY < 180) {
+                if (foundFirst == false) {
+                  foundFirst = true;
+                  minx1 = inX;
+                  maxx1 = inX;
+                  miny1 = inY;
+                  maxy1 = inY;
+                }
+                // CDBDebug("testPos (%f;%f)\t proj (%f;%f)",testPosX,testPosY,latX,lonY);
+                if (inX < minx1) minx1 = inX;
+                if (inY < miny1) miny1 = inY;
+                if (inX > maxx1) maxx1 = inX;
+                if (inY > maxy1) maxy1 = inY;
               }
-              // CDBDebug("testPos (%f;%f)\t proj (%f;%f)",testPosX,testPosY,latX,lonY);
-              if (inX < minx1) minx1 = inX;
-              if (inY < miny1) miny1 = inY;
-              if (inX > maxx1) maxx1 = inX;
-              if (inY > maxy1) maxy1 = inY;
             }
           }
         }
@@ -535,11 +478,12 @@ int CImageWarper::_findExtentSynchronized(CDataSource *dataSource, double *dfBBO
     dfBBOX[1] -= 1;
     dfBBOX[3] += 1;
   }
+#ifdef CIMAGEWARPER_DEBUG
 
-  pKey.setFoundExtent(dfBBOX);
-  projectionStore.keys.push_back(pKey);
-
-  // CDBDebug("out: %f %f %f %f",dfBBOX[0],dfBBOX[1],dfBBOX[2],dfBBOX[3]);
+  CDBDebug("INSERTING!!! %s %s (%0.3f, %0.3f, %0.3f, %0.3f) to  (%0.3f, %0.3f, %0.3f, %0.3f)", key.sourceCRS.c_str(), key.destCRS.c_str(), key.extent.bbox[0], key.extent.bbox[1], key.extent.bbox[2],
+           key.extent.bbox[3], dfBBOX[0], dfBBOX[1], dfBBOX[2], dfBBOX[3]);
+#endif
+  addBBOXProjection(key, makeBBOX(dfBBOX));
   return 0;
 };
 
@@ -612,17 +556,16 @@ std::tuple<CT::string, double> CImageWarper::fixProjection(CT::string projection
       float semi_major_axis, semi_minor_axis;
       majorAttribute->getData<float>(&semi_major_axis, 1);
       minorAttribute->getData<float>(&semi_minor_axis, 1);
-      if (semi_major_axis > 6000.0 && semi_major_axis < 7000.0) {  // This is given in km's, and should be converted to meters
+      if (semi_major_axis > 6000.0 && semi_major_axis < 7000.0) { // This is given in km's, and should be converted to meters
         double scaling = 1000.0;
-        majorAttribute->setData<float>(CDF_FLOAT, semi_major_axis*scaling);
-        minorAttribute->setData<float>(CDF_FLOAT, semi_minor_axis*scaling);
+        majorAttribute->setData<float>(CDF_FLOAT, semi_major_axis * scaling);
+        minorAttribute->setData<float>(CDF_FLOAT, semi_minor_axis * scaling);
 
         CT::string newProjectionString;
         int status2 = trans.convertCFToProj(&var, &newProjectionString);
-//        printf("%s\n", projectionString.c_str());
-//        printf("%s\n\n", newProjectionString.c_str());
-        if (status2 == 0)
-          return std::make_tuple(newProjectionString, scaling);
+        //        printf("%s\n", projectionString.c_str());
+        //        printf("%s\n\n", newProjectionString.c_str());
+        if (status2 == 0) return std::make_tuple(newProjectionString, scaling);
       }
     }
   }

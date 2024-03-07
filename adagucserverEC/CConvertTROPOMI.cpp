@@ -180,11 +180,14 @@ int CConvertTROPOMI::convertTROPOMIHeader(CDFObject *cdfObject, CServerParams *)
   varT->setAttributeText("standard_name", "time");
   try {
     varT->setAttributeText("units", productT->getAttribute("units")->toString().c_str());
-    CTime myTime;
-    myTime.init(productT);
-    // CTime::cleanInstances();
-    CTime::Date date = myTime.freeDateStringToDate(cdfObject->getAttribute("time_coverage_start")->toString().c_str());
-    ((double *)varT->data)[0] = myTime.dateToOffset(date);
+    CTime *myTime = CTime::GetCTimeInstance(productT);
+    if (myTime == nullptr) {
+      CDBError(CTIME_GETINSTANCE_ERROR_MESSAGE);
+      return 1;
+    }
+
+    CTime::Date date = myTime->freeDateStringToDate(cdfObject->getAttribute("time_coverage_start")->toString().c_str());
+    ((double *)varT->data)[0] = myTime->dateToOffset(date);
   } catch (int) {
     CDBError("Could not get units for time_coverage_start");
     return 1;

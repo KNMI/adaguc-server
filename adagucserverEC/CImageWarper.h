@@ -37,27 +37,6 @@
 void floatToString(char *string, size_t maxlen, float number);
 void floatToString(char *string, size_t maxlen, int numdigits, float number);
 void floatToString(char *string, size_t maxlen, float min, float max, float number);
-class ProjectionKey {
-public:
-  double bbox[4]; // Original boundingbox to look for
-  double foundExtent[4];
-  double dfMaxExtent[4];
-  bool isSet;
-  CT::string destinationCRS; // Projection to convert to
-  CT::string sourceCRS;      // Projection to convert from
-  ProjectionKey(double *_box, double *_dfMaxExtent, CT::string source, CT::string dest);
-  ProjectionKey();
-  void setFoundExtent(double *_foundExtent);
-};
-
-class ProjectionStore {
-public:
-  std::vector<ProjectionKey> keys;
-  ProjectionStore();
-  ~ProjectionStore();
-  static ProjectionStore *getProjectionStore();
-  void clear();
-};
 
 class CImageWarper {
   //  CNetCDFReader reader;
@@ -72,8 +51,9 @@ private:
   //     int _decodeCRS(CT::string *CRS);
   std::vector<CServerConfig::XMLE_Projection *> *prj;
   bool initialized;
-  int _findExtentSynchronized(CDataSource *dataSource, double *dfBBOX);
+
   int _initreprojSynchronized(const char *projString, CGeoParams *GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj);
+  int findExtentUnSynchronized(CDataSource *dataSource, double *dfBBOX);
 
 public:
   bool requireReprojection;

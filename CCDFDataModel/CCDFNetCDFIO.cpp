@@ -28,6 +28,8 @@
 const char *CDFNetCDFReader::className = "NetCDFReader";
 const char *CDFNetCDFWriter::className = "NetCDFWriter";
 
+// #define MEASURETIME
+
 #define CDFNetCDFGroupSeparator "/"
 // const char *CCDFWarper::className="CCDFWarper";
 
@@ -49,13 +51,17 @@ void CDFNetCDFReader::enableLonWarp(bool) {
 }
 void CDFNetCDFReader::ncError(int, const char *className, const char *msg, int e) {
   if (e == NC_NOERR) return;
-  CDBError("%s %s", msg, nc_strerror(e));
+  CDBError("%s %s %s", className, msg, nc_strerror(e));
 }
 
 int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type) { return _readVariableData(var, type, NULL, NULL, NULL); }
 
 int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t *start, size_t *count, ptrdiff_t *stride) {
   int nDims, nVars, nRootAttributes, unlimDimIdP;
+
+#ifdef MEASURETIME
+  StopWatch_Stop(">CDFNetCDFReader::_readVariableData");
+#endif
 
   if (root_id == -1) {
 #ifdef CCDFNETCDFIO_DEBUG_OPEN
@@ -67,11 +73,13 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
       ncError(__LINE__, className, "nc_open: ", status);
       return 1;
     }
+
     status = nc_inq(root_id, &nDims, &nVars, &nRootAttributes, &unlimDimIdP);
     if (status != NC_NOERR) {
       ncError(__LINE__, className, "nc_inq: ", status);
       return 1;
     }
+
 #ifdef CCDFNETCDFIO_DEBUG_OPEN
     CDBDebug("root_id %d", root_id);
     var->id = -1;
@@ -216,6 +224,9 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
       return 1;
     }
 
+#ifdef MEASURETIME
+    StopWatch_Stop("<CDFNetCDFReader::_readVariableData");
+#endif
     return 0;
   }
 
@@ -350,6 +361,9 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
 
 #ifdef CCDFNETCDFIO_DEBUG
   CDBDebug("Ready.");
+#endif
+#ifdef MEASURETIME
+  StopWatch_Stop("<CDFNetCDFReader::_readVariableData");
 #endif
   return 0;
 }
