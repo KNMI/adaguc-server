@@ -8,6 +8,8 @@ Author: Ernst de Vreede, 2023-11-23
 KNMI
 """
 
+import aiocache
+from aiocache.serializers import PickleSerializer
 import itertools
 import json
 import logging
@@ -274,6 +276,7 @@ DEFAULT_CRS_OBJECT = {
 }
 
 
+@aiocache.cached(ttl=60, serializer=PickleSerializer())
 async def get_collectioninfo_for_id(
     edr_collection: str,
     instance: str = None,
@@ -658,6 +661,7 @@ def get_ttl_from_adaguc_call(headers):
     return None
 
 
+@aiocache.cached(ttl=60, serializer=PickleSerializer())
 async def get_capabilities(collname):
     """
     Get the collectioninfo from the WMS GetCapabilities

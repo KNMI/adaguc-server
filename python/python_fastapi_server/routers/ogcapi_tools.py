@@ -1,3 +1,5 @@
+import aiocache
+from aiocache.serializers import PickleSerializer
 import itertools
 import logging
 import os
@@ -118,6 +120,7 @@ async def call_adaguc(url):
     return status, data, headers
 
 
+@aiocache.cached(ttl=60, serializer=PickleSerializer())
 async def get_capabilities(collname):
     """
     Get the collectioninfo from the WMS GetCapabilities
@@ -164,6 +167,7 @@ def get_dimensions(layer, skip_dims=None):
     return dims
 
 
+@aiocache.cached(ttl=60, serializer=PickleSerializer())
 async def get_parameters(collname):
     """
     get_parameters

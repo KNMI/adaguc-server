@@ -3,6 +3,7 @@
 # Install using:
 # pip-sync
 
+aiocache~=0.12.2
 Brotli~=1.0
 Jinja2~=3.1
 OWSLib~=0.29.2
