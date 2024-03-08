@@ -52,16 +52,18 @@ async def response_to_cache(redis_pool, request, headers, data, ex: int):
     entrytime = f"{calendar.timegm(datetime.utcnow().utctimetuple()):10d}".encode(
         "utf-8"
     )
-    redis_client = redis.Redis(connection_pool=redis_pool)
-    await redis_client.set(
-        key,
-        entrytime
-        + f"{len(headers_json):06d}".encode("utf-8")
-        + headers_json
-        + brotli.compress(data),
-        ex=ex,
-    )
-    await redis_client.aclose()
+    compressed_data = brotli.compress(data)
+    if len(compressed_data) < 10000000:
+        redis_client = redis.Redis(connection_pool=redis_pool)
+        await redis_client.set(
+            key,
+            entrytime
+            + f"{len(headers_json):06d}".encode("utf-8")
+            + headers_json
+            + brotli.compress(data),
+            ex=ex,
+        )
+        await redis_client.aclose()
 
 
 def generate_key(request):

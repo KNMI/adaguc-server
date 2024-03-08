@@ -625,7 +625,6 @@ async def get_items_for_collection(
             numberMatched=number_matched,
             numberReturned=number_returned,
         )
-        print("FC:", feature_collection)
         response.headers["Content-Crs"] = f"<{DEFAULT_CRS}>"
         if request_type(f) == "HTML":
             features = [f.model_dump() for f in feature_collection.features]

@@ -1,12 +1,10 @@
 import asyncio
 from ast import Dict
-import subprocess
 import os
 from os.path import expanduser
 from PIL import Image
 from io import BytesIO
-import io
-import tempfile
+import brotli
 import shutil
 import random
 import string
@@ -312,7 +310,7 @@ def response_to_cache(redis_pool, key, headers: str, data):
             entrytime
             + f"{len(cacheable_headers_json):06d}".encode("utf-8")
             + cacheable_headers_json
-            + data.getvalue(),
+            + brotli.compress(data.getvalue()),
             ex=ttl,
         )
         redis_client.close()
@@ -333,5 +331,5 @@ def get_cached_response(redis_pool, key):
     headers = json.loads(cached[16 : 16 + headers_len])
     headers.append(f"age: {age}")
 
-    data = cached[16 + headers_len :]
+    data = brotli.decompress(cached[16 + headers_len :])
     return age, headers, BytesIO(data)
