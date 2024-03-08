@@ -379,7 +379,7 @@ async def get_single_item(item_id: str, url: str) -> FeatureGeoJSON:
     if datetime_:
         request_url += f"&TIME={datetime_}"
     request_url += dimspec
-    status, data = await call_adaguc(request_url.encode("UTF-8"))
+    status, data, _ = await call_adaguc(request_url.encode("UTF-8"))
     if status == 0:
         try:
             response_data = json.loads(data.getvalue(), object_pairs_hook=OrderedDict)
@@ -423,10 +423,9 @@ async def get_features_for_items(
     if not observed_property_name:
         collinfo = await get_parameters(coll)
         first_param = next(iter(collinfo))
-        print(first_param, flush=True)
-        observed_property_name = [first_param]
+        print("FIRST", first_param, flush=True)
+        observed_property_name = [first_param["name"]]
         # Default observedPropertyName = first layername
-    param_list = ",".join(observed_property_name)
 
     param_list = ",".join(observed_property_name)
 
@@ -447,7 +446,7 @@ async def get_features_for_items(
         if result_time:
             request_url += f"&DIM_REFERENCE_TIME={result_time}"
         request_url += dimspec
-        status, data = await call_adaguc(request_url.encode("UTF-8"))
+        status, data, _ = await call_adaguc(request_url.encode("UTF-8"))
         if status == 0:
             try:
                 response_data = json.loads(
@@ -626,6 +625,7 @@ async def get_items_for_collection(
             numberMatched=number_matched,
             numberReturned=number_returned,
         )
+        print("FC:", feature_collection)
         response.headers["Content-Crs"] = f"<{DEFAULT_CRS}>"
         if request_type(f) == "HTML":
             features = [f.model_dump() for f in feature_collection.features]

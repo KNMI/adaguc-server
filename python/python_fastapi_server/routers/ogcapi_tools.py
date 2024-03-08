@@ -127,7 +127,7 @@ async def get_capabilities(collname):
     logger.info("callADAGUC by dataset")
     dataset = coll["dataset"]
     urlrequest = f"dataset={dataset}&service=wms&version=1.3.0&request=getcapabilities"
-    status, response, _headers = await call_adaguc(url=urlrequest.encode("UTF-8"))
+    status, response, _ = await call_adaguc(url=urlrequest.encode("UTF-8"))
     if status == 0:
         xml = response.getvalue()
         wms = WebMapService(coll["service"], xml=xml, version="1.3.0")
@@ -178,7 +178,7 @@ async def get_parameters(collname):
         layers.append(layer)
 
     layers.sort(key=lambda l: l["name"])
-    return {"layers": layers}
+    return layers
 
 
 def make_dims(dims, data):
