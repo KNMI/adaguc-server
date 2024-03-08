@@ -15,7 +15,9 @@ import chardet
 from queue import Queue, Empty  # python 3.x
 import re
 
-HTTP_STATUSCODE_408_TIMEOUT = 34
+HTTP_STATUSCODE_404_NOT_FOUND = 32  # Must be the same as in Definitions.h
+HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY = 33  # Must be the same as in Definitions.h
+HTTP_STATUSCODE_500_TIMEOUT = 34  # Not defined in C++, is generated from this file
 
 ADAGUC_NUMPARALLELPROCESSES = os.getenv("ADAGUC_NUMPARALLELPROCESSES", "4")
 sem = asyncio.Semaphore(int(ADAGUC_NUMPARALLELPROCESSES))
@@ -56,7 +58,7 @@ class CGIRunner:
                 process.kill()
                 await process.communicate()
                 output.write(b"Adaguc server processs timed out")
-                return HTTP_STATUSCODE_408_TIMEOUT, [], None
+                return HTTP_STATUSCODE_500_TIMEOUT, [], None
             status = await process.wait()
 
         # Split headers from body using a regex
