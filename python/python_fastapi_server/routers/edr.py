@@ -8,8 +8,6 @@ Author: Ernst de Vreede, 2023-11-23
 KNMI
 """
 
-import aiocache
-from aiocache.serializers import PickleSerializer
 import itertools
 import json
 import logging
@@ -261,10 +259,9 @@ async def get_collection_position(
     )
     if resp:
         dat = json.loads(resp)
-        ttl = get_ttl_from_adaguc_call(headers)
+        ttl = get_ttl_from_adaguc_headers(headers)
         if ttl is not None:
-            expires = (datetime.utcnow() + timedelta(seconds=ttl)).timestamp()
-            response.headers["cache-control"] = generate_max_age(expires)
+            response.headers["cache-control"] = generate_max_age(ttl)
         return covjson_from_resp(dat, edr_collections[collection_name]["vertical_name"])
 
     raise EdrException(code=400, description="No data")
@@ -276,7 +273,6 @@ DEFAULT_CRS_OBJECT = {
 }
 
 
-@aiocache.cached(ttl=60, serializer=PickleSerializer())
 async def get_collectioninfo_for_id(
     edr_collection: str,
     instance: str = None,
@@ -311,7 +307,7 @@ async def get_collectioninfo_for_id(
             )
             links.append(instances_link)
 
-    wmslayers, expires = await get_capabilities(edr_collectioninfo["name"])
+    wmslayers, ttl = await get_capabilities(edr_collectioninfo["name"])
 
     bbox = await get_extent(edr_collectioninfo, wmslayers)
     if bbox is None:
@@ -411,7 +407,7 @@ async def get_collectioninfo_for_id(
             output_formats=output_formats,
         )
 
-    return collection, expires
+    return collection, ttl
 
 
 def get_params_for_collection(edr_collection: str) -> dict[str, Parameter]:
@@ -613,21 +609,19 @@ async def rest_get_edr_collections(request: Request, response: Response):
 
     links.append(self_link)
     collections: list[Collection] = []
-    min_expires = None
+    min_ttl = None
     edr_collections = get_edr_collections()
     for edr_coll in edr_collections:
-        coll, expires = await get_collectioninfo_for_id(edr_coll)
+        coll, ttl = await get_collectioninfo_for_id(edr_coll)
         if coll:
             collections.append(coll)
-            if expires is not None:
-                min_expires = (
-                    expires if min_expires is None else min(min_expires, expires)
-                )
+            if ttl is not None:
+                min_ttl = ttl if min_ttl is None else min(min_ttl, ttl)
         else:
             logger.warning("Unable to fetch WMS GetCapabilities for %s", edr_coll)
     collections_data = Collections(links=links, collections=collections)
-    if min_expires is not None:
-        response.headers["cache-control"] = generate_max_age(min_expires)
+    if min_ttl is not None:
+        response.headers["cache-control"] = generate_max_age(min_ttl)
     return collections_data
 
 
@@ -640,28 +634,34 @@ async def rest_get_edr_collection_by_id(collection_name: str, response: Response
     """
     GET Returns collection information for given collection id
     """
-    collection, expires = await get_collectioninfo_for_id(collection_name)
-    response.headers["cache-control"] = generate_max_age(expires)
+    collection, ttl = await get_collectioninfo_for_id(collection_name)
+    response.headers["cache-control"] = generate_max_age(ttl)
     return collection
 
 
-def get_ttl_from_adaguc_call(headers):
+def get_ttl_from_adaguc_headers(headers):
     try:
+        max_age = None
+        age = None
         for hdr in headers:
             hdr_terms = hdr.split(":")
             if hdr_terms[0].lower() == "cache-control":
                 for cache_control_terms in hdr_terms[1].split(","):
                     terms = cache_control_terms.split("=")
                     if terms[0].lower() == "max-age":
-                        ttl = int(terms[1])
-                        return ttl
+                        max_age = int(terms[1])
+            elif hdr_terms[0].lower() == "age":
+                age = int(hdr_terms[1])
+        if max_age and age:
+            return max_age - age
+        elif max_age:
+            return max_age
         return None
     except:
         pass
     return None
 
 
-@aiocache.cached(ttl=60, serializer=PickleSerializer())
 async def get_capabilities(collname):
     """
     Get the collectioninfo from the WMS GetCapabilities
@@ -674,7 +674,7 @@ async def get_capabilities(collname):
             f"dataset={dataset}&service=wms&version=1.3.0&request=getcapabilities"
         )
         status, response, headers = await call_adaguc(url=urlrequest.encode("UTF-8"))
-        ttl = get_ttl_from_adaguc_call(headers)
+        ttl = get_ttl_from_adaguc_headers(headers)
         now = datetime.utcnow()
         logger.info("status: %d", status)
         if status == 0:
@@ -696,12 +696,8 @@ async def get_capabilities(collname):
             "dimensions": {**layerinfo.dimensions},
             "boundingBoxWGS84": layerinfo.boundingBoxWGS84,
         }
-    if ttl is not None:
-        expires = (now + timedelta(seconds=ttl)).timestamp()
-    else:
-        expires = None
 
-    return (layers, expires)
+    return layers, ttl
 
 
 async def get_ref_times_for_coll(edr_collectioninfo: dict, layer: str) -> list[str]:
@@ -759,21 +755,19 @@ async def rest_get_edr_inst_for_coll(
     )
     links: list[Link] = []
     links.append(Link(href=instances_url, rel="collection"))
-    min_expires = None
+    min_ttl = None
     for instance in list(ref_times):
         instance_links: list[Link] = []
         instance_link = Link(href=f"{instances_url}/{instance}", rel="collection")
         instance_links.append(instance_link)
-        instance_info, expires = await get_collectioninfo_for_id(
-            collection_name, instance
-        )
-        if expires is not None:
-            min_expires = expires if min_expires is None else min(min_expires, expires)
+        instance_info, ttl = await get_collectioninfo_for_id(collection_name, instance)
+        if ttl is not None:
+            min_ttl = ttl if min_ttl is None else min(min_ttl, ttl)
         instances.append(instance_info)
 
     instances_data = Instances(instances=instances, links=links)
-    if min_expires is not None:
-        response.headers["cache-control"] = generate_max_age(min_expires)
+    if min_ttl is not None:
+        response.headers["cache-control"] = generate_max_age(min_ttl)
     return instances_data
 
 
@@ -786,17 +780,14 @@ async def rest_get_collection_info(collection_name: str, instance, response: Res
     """
     GET  "/collections/{collection_name}/instances/{instance}"
     """
-    coll, expires = await get_collectioninfo_for_id(collection_name, instance)
-    response.headers["cache-control"] = generate_max_age(expires)
+    coll, ttl = await get_collectioninfo_for_id(collection_name, instance)
+    response.headers["cache-control"] = generate_max_age(ttl)
     return coll
 
 
-def generate_max_age(expires):
-    rest_age = int(
-        (datetime.fromtimestamp(expires) - datetime.utcnow()).total_seconds()
-    )
-    if rest_age > 0:
-        return f"max-age={rest_age}"
+def generate_max_age(ttl):
+    if ttl >= 0:
+        return f"max-age={ttl}"
     return f"max-age=0"
 
 
