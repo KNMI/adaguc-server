@@ -1,5 +1,3 @@
-import aiocache
-from aiocache.serializers import PickleSerializer
 import itertools
 import logging
 import os
@@ -20,6 +18,7 @@ from .models.ogcapifeatures_1_model import (
 from .setup_adaguc import setup_adaguc
 
 logger = logging.getLogger(__name__)
+
 
 def make_bbox(extent):
     s_extent = []
@@ -120,7 +119,6 @@ async def call_adaguc(url):
     return status, data, headers
 
 
-@aiocache.cached(ttl=60, serializer=PickleSerializer())
 async def get_capabilities(collname):
     """
     Get the collectioninfo from the WMS GetCapabilities
@@ -128,9 +126,7 @@ async def get_capabilities(collname):
     coll = generate_collections().get(collname)
     logger.info("callADAGUC by dataset")
     dataset = coll["dataset"]
-    urlrequest = (
-        f"dataset={dataset}&service=wms&version=1.3.0&request=getcapabilities"
-    )
+    urlrequest = f"dataset={dataset}&service=wms&version=1.3.0&request=getcapabilities"
     status, response, _headers = await call_adaguc(url=urlrequest.encode("UTF-8"))
     if status == 0:
         xml = response.getvalue()
@@ -167,7 +163,6 @@ def get_dimensions(layer, skip_dims=None):
     return dims
 
 
-@aiocache.cached(ttl=60, serializer=PickleSerializer())
 async def get_parameters(collname):
     """
     get_parameters
