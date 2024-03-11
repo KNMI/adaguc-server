@@ -37,7 +37,7 @@ async def get_cached_response(redis_pool, request):
     return age, headers, data
 
 
-skip_headers = ["x-process-time", "age"]
+headers_to_skip = ["x-process-time", "age"]
 
 
 async def response_to_cache(redis_pool, request, headers, data, ex: int):
@@ -45,7 +45,7 @@ async def response_to_cache(redis_pool, request, headers, data, ex: int):
 
     fixed_headers = {}
     for k in headers:
-        if not k in skip_headers:
+        if not k in headers_to_skip:
             fixed_headers[k] = headers[k]
     headers_json = json.dumps(fixed_headers, ensure_ascii=False).encode("utf-8")
 

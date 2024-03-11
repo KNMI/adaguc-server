@@ -259,7 +259,7 @@ async def get_collection_position(
     )
     if resp:
         dat = json.loads(resp)
-        ttl = get_ttl_from_adaguc_headers(headers)
+        ttl = get_age_from_adaguc_headers(headers)
         if ttl is not None:
             response.headers["cache-control"] = generate_max_age(ttl)
         return covjson_from_resp(dat, edr_collections[collection_name]["vertical_name"])
@@ -639,7 +639,8 @@ async def rest_get_edr_collection_by_id(collection_name: str, response: Response
     return collection
 
 
-def get_ttl_from_adaguc_headers(headers):
+def get_age_from_adaguc_headers(headers):
+    """Derives an age value from the max-age/age cache headers that ADAGUC executable returns"""
     try:
         max_age = None
         age = None
@@ -674,8 +675,7 @@ async def get_capabilities(collname):
             f"dataset={dataset}&service=wms&version=1.3.0&request=getcapabilities"
         )
         status, response, headers = await call_adaguc(url=urlrequest.encode("UTF-8"))
-        ttl = get_ttl_from_adaguc_headers(headers)
-        now = datetime.utcnow()
+        ttl = get_age_from_adaguc_headers(headers)
         logger.info("status: %d", status)
         if status == 0:
             xml = response.getvalue()
@@ -686,7 +686,6 @@ async def get_capabilities(collname):
     else:
         logger.info("callADAGUC by service %s", dataset)
         wms = WebMapService(dataset["service"], version="1.3.0")
-        now = datetime.utcnow()
         ttl = None
 
     layers = {}
@@ -707,7 +706,7 @@ async def get_ref_times_for_coll(edr_collectioninfo: dict, layer: str) -> list[s
     dataset = edr_collectioninfo["dataset"]
     url = f"?DATASET={dataset}&SERVICE=WMS&VERSION=1.3.0&request=getreferencetimes&LAYER={layer}"
     logger.info("getreftime_url(%s,%s): %s", dataset, layer, url)
-    status, response, headers = await call_adaguc(url=url.encode("UTF-8"))
+    status, response, _ = await call_adaguc(url=url.encode("UTF-8"))
     if status == 0:
         ref_times = json.loads(response.getvalue())
         instance_ids = [parse_iso(reft).strftime("%Y%m%d%H%M") for reft in ref_times]

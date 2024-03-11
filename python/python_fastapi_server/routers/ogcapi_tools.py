@@ -124,7 +124,6 @@ async def get_capabilities(collname):
     Get the collectioninfo from the WMS GetCapabilities
     """
     coll = generate_collections().get(collname)
-    logger.info("callADAGUC by dataset")
     dataset = coll["dataset"]
     urlrequest = f"dataset={dataset}&service=wms&version=1.3.0&request=getcapabilities"
     status, response, _ = await call_adaguc(url=urlrequest.encode("UTF-8"))

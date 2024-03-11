@@ -148,6 +148,11 @@ class runAdaguc:
         print("=== END ADAGUC LOGS ===")
 
     def cache_wanted(self, url: str):
+        """determine if the results of this url request should be stored in
+        the Redis cache
+
+        Returns: boolean
+        """
         if not runAdaguc.use_cache:
             return False
         if "request=getcapabilities" in url.lower():
@@ -166,8 +171,6 @@ class runAdaguc:
     ):
         # adagucenv=os.environ.copy()
         # adagucenv.update(env)
-
-        # url = re.sub(r"^(.*)(&[0-9\.]*)$", r"\g<1>&1", url) # This removes adaguc-viewer's unique-URL feature
 
         adagucenv = env
 
@@ -278,7 +281,7 @@ class runAdaguc:
             os.makedirs(directory)
 
 
-skip_headers = ["x-process-time", "age"]
+headers_to_skip = ["x-process-time", "age"]
 
 
 def response_to_cache(redis_pool, key, headers: str, data):
@@ -286,7 +289,7 @@ def response_to_cache(redis_pool, key, headers: str, data):
     ttl = 0
     for header in headers:
         k, v = header.split(":")
-        if k not in skip_headers:
+        if k not in headers_to_skip:
             cacheable_headers.append(header)
         if k.lower().startswith("cache-control"):
             for term in v.split(";"):

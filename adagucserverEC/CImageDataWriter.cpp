@@ -2417,7 +2417,8 @@ int CImageDataWriter::end() {
             printf("%s%s%c%c\n", "Content-Type: application/json", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
           } else {
             CDBDebug("CREATING JSONP %s", srvParam->JSONP.c_str());
-            printf("%s%s%c%c\n", "Content-Type: application/javascript", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+            printf("%s%s%c%c", "Content-Type: application/javascript", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+            printf("\n%s(", srvParam->JSONP.c_str());
           }
 
           puts(data.c_str());
@@ -2734,10 +2735,11 @@ int CImageDataWriter::end() {
       CT::string resultJSON;
       if (srvParam->JSONP.length() == 0) {
         CDBDebug("CREATING JSON");
-        resultJSON.print("%s%c%c\n", "Content-Type: application/json", 13, 10);
+        resultJSON.print("%s%s%c%c\n", "Content-Type: application/json", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
       } else {
         CDBDebug("CREATING JSONP %s", srvParam->JSONP.c_str());
-        resultJSON.print("%s%c%c\n", "Content-Type: application/javascript", 13, 10);
+        resultJSON.print("%s%s%c%c", "Content-Type: application/javascript", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+        resultJSON.print("\n%s(", srvParam->JSONP.c_str());
       }
 
       CXMLParser::XMLElement rootElement;
