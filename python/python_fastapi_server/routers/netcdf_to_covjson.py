@@ -1,6 +1,7 @@
 """
 Convert a netcdf dataset to coverage json
 """
+
 import logging
 from datetime import timezone
 from typing import Dict
@@ -110,45 +111,54 @@ def netcdf_to_covjson(netcdfdataset) -> Coverage:
         # Find a variable with a grid_mapping attribute, this is a grid
         if "grid_mapping" in variable.ncattrs():
             # Get the names of the variable
-            axesnames: List = [None] * len(variable.dimensions)
-            shape = [None] * len(variable.dimensions)
-            for index, dimname in enumerate(variable.dimensions):
-                coverage_axis_name = netcdfdimname_to_covdimname[dimname]
-                axesnames[index] = coverage_axis_name
+            axesnames: List[str] = []
+            shape: List[int] = []
+            for _index, dimname in enumerate(variable.dimensions):
                 ncvar = netcdfdataset.variables[dimname]
-                # Fill in the shape object for the NdArray
-                shape[index] = ncvar.size
+                if ncvar.size > 1 or dimname in netcdfdimname_to_covdimname:
+                    coverage_axis_name = netcdfdimname_to_covdimname[dimname]
+                    axesnames.append(coverage_axis_name)
 
-                # Fill in the dimension values for the NdArray
-                if dimname == "time":
-                    # Convert the date values to datetime objects.
-                    # Optional arguments are not handled by netCDF4.num2date therefore we remove them and pass a dict
-                    # as parameters.
-                    not_none_parameters = {
-                        keyword: value
-                        for keyword, value in {
-                            "times": ncvar[:],
-                            "units": ncvar.units,
-                            "only_use_cftime_datetimes": False,
-                            "only_use_python_datetimes": True,
-                            "calendar": getattr(ncvar, "calendar", None),
-                        }.items()
-                        if value is not None
-                    }
-                    # pylint: disable=no-member
-                    values = netCDF4.num2date(**not_none_parameters)
-                    # netcdf4-python has made the choice to always return timezone naive datetimes, but guarantees
-                    # that the time is in UTC. So we now have to manually set UTC timezone. Quite inefficient! See
-                    # https://github.com/Unidata/netcdf4-python/issues/357
-                    values_tz = [v.replace(tzinfo=timezone.utc) for v in values.tolist()]
-                    axes[coverage_axis_name] = ValuesAxis[AwareDatetime](values=values_tz)
-                else:
-                    # Assign float values
-                    axes[coverage_axis_name] = ValuesAxis[float](values=ncvar[:].data.tolist())
+                    # Fill in the shape object for the NdArray
+                    shape.append(ncvar.size)
 
+                    # Fill in the dimension values for the NdArray
+                    if dimname == "time":
+                        # Convert the date values to datetime objects.
+                        # Optional arguments are not handled by netCDF4.num2date therefore we remove them and pass a dict
+                        # as parameters.
+                        not_none_parameters = {
+                            keyword: value
+                            for keyword, value in {
+                                "times": ncvar[:],
+                                "units": ncvar.units,
+                                "only_use_cftime_datetimes": False,
+                                "only_use_python_datetimes": True,
+                                "calendar": getattr(ncvar, "calendar", None),
+                            }.items()
+                            if value is not None
+                        }
+                        # pylint: disable=no-member
+                        values = netCDF4.num2date(**not_none_parameters)
+                        # netcdf4-python has made the choice to always return timezone naive datetimes, but guarantees
+                        # that the time is in UTC. So we now have to manually set UTC timezone. Quite inefficient! See
+                        # https://github.com/Unidata/netcdf4-python/issues/357
+                        values_tz = [
+                            v.replace(tzinfo=timezone.utc) for v in values.tolist()
+                        ]
+                        axes[coverage_axis_name] = ValuesAxis[AwareDatetime](
+                            values=values_tz
+                        )
+                    else:
+                        # Assign float values
+                        axes[coverage_axis_name] = ValuesAxis[float](
+                            values=ncvar[:].data.tolist()
+                        )
             # Create the ndarray for the ranges object
             ndarray = NdArray(
-                axisNames=axesnames, shape=shape, values=ma.masked_invalid(variable[:].flatten(order="C")).tolist()
+                axisNames=axesnames,
+                shape=shape,
+                values=ma.masked_invalid(variable[:].flatten(order="C")).tolist(),
             )
 
             # Make the ranges object
@@ -176,18 +186,30 @@ def netcdf_to_covjson(netcdfdataset) -> Coverage:
     # Try to detect the georeferencesysteminfo based on the proj string in the crs variable of the netcdf file.
     if "crs" in netcdfdataset.variables:
         crsvar = netcdfdataset.variables["crs"]
-        georeferencesysteminfo = get_projection_info_from_proj_string(crsvar.proj4_params)
+        georeferencesysteminfo = get_projection_info_from_proj_string(
+            crsvar.proj4_params
+        )
 
-    georeferencesystem = ReferenceSystem(type=georeferencesysteminfo.crstype, id=georeferencesysteminfo.crsid)
+    georeferencesystem = ReferenceSystem(
+        type=georeferencesysteminfo.crstype, id=georeferencesysteminfo.crsid
+    )
 
-    georeferencing = ReferenceSystemConnectionObject(system=georeferencesystem, coordinates=georeferencesysteminfo.axes)
+    georeferencing = ReferenceSystemConnectionObject(
+        system=georeferencesystem, coordinates=georeferencesysteminfo.axes
+    )
 
     temporalreferencesystem = ReferenceSystem(type="TemporalRS", calendar="Gregorian")
 
-    temporalreferencing = ReferenceSystemConnectionObject(system=temporalreferencesystem, coordinates=["t"])
+    temporalreferencing = ReferenceSystemConnectionObject(
+        system=temporalreferencesystem, coordinates=["t"]
+    )
 
     # Create the domain based on the axes object
-    domain = Domain(domainType=DomainType.grid, axes=axes, referencing=[georeferencing, temporalreferencing])
+    domain = Domain(
+        domainType=DomainType.grid,
+        axes=axes,
+        referencing=[georeferencing, temporalreferencing],
+    )
 
     # Assemble and return the coveragejson based on the domain and the ranges
     return Coverage(domain=domain, ranges=ranges, parameters=parameters)
@@ -198,7 +220,7 @@ if __name__ == "__main__":
     import requests
 
     SERVICE = "https://geoservices.knmi.nl/adagucserver?"
-    SERVICE= "http://localhost:8080/adagucserver?"
+    SERVICE = "http://localhost:8080/adagucserver?"
 
     # Rijksdriehoek stelsel
     # QUERYSTRING = (
@@ -251,25 +273,11 @@ if __name__ == "__main__":
     #     "TIME=2019-01-01T23:00:00Z&"
     #     "ELEVATION=600"
     # )
-    QUERYSTRING = (
-        "dataset=HARM_N25&"
-        "SERVICE=WCS&"
-        "REQUEST=GetCoverage&"
-        "COVERAGE=air_temperature__at_2m&"
-        "CRS=EPSG%3A4326&"
-        "FORMAT=NetCDF3&"
-        "BBOX=3.039095,50.580161,7.584775,53.746892&"
-        # "RESX=0.25&"
-        # "RESY=0.25&"
-        "TIME=2023-03-23T09:00:00Z"
-    )
 
     WCSGETCOVERAGEURL = SERVICE + QUERYSTRING
 
     # Get a NetCDF file as dataset
     response = requests.get(WCSGETCOVERAGEURL, timeout=60)
-
-    print(response.status_code)
 
     ds = netCDF4.Dataset("filename.nc", memory=response.content)
 
