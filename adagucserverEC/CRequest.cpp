@@ -27,6 +27,7 @@
 // #define CREQUEST_DEBUG
 // #define MEASURETIME
 
+#include "Types/ProjectionStore.h"
 #include "CRequest.h"
 #include "COpenDAPHandler.h"
 #include "CDBFactory.h"
@@ -38,6 +39,9 @@
 #include "CHandleMetadata.h"
 #include "CCreateTiles.h"
 #include "LayerTypeLiveUpdate/LayerTypeLiveUpdate.h"
+#include <CReadFile.h>
+#include "Definitions.h"
+
 const char *CRequest::className = "CRequest";
 int CRequest::CGI = 0;
 
@@ -47,7 +51,6 @@ int CRequest::runRequest() {
   CDFObjectStore::getCDFObjectStore()->clear();
   CConvertGeoJSON::clearFeatureStore();
   CDFStore::clear();
-  ProjectionStore::getProjectionStore()->clear();
   CDBFactory::clear();
   return status;
 }
@@ -160,6 +163,10 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
           csld.setServerParams(srvParam);
 
           // Process the SLD URL
+          if (values[1].empty()) {
+            setStatusCode(HTTP_STATUSCODE_404_NOT_FOUND);
+            return 1;
+          }
           status = csld.processSLDUrl(values[1]);
 
           if (status != 0) {
@@ -1692,6 +1699,7 @@ int CRequest::process_all_layers() {
       }
       if (layerNo == srvParam->cfg->Layer.size()) {
         CDBError("Layer [%s] not found", srvParam->WMSLayers[j].c_str());
+        setStatusCode(HTTP_STATUSCODE_404_NOT_FOUND);
         return 1;
       }
     }
@@ -2857,13 +2865,22 @@ int CRequest::process_querystring() {
   if (dFound_Service == 0) {
     CDBError("ADAGUC Server: Parameter SERVICE missing");
     dErrorOccured = 1;
+    setStatusCode(HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY);
   }
   if (dFound_Styles == 0) {
     srvParam->Styles.copy("");
   }
-  if (SERVICE.equals("WMS")) srvParam->serviceType = SERVICE_WMS;
-  if (SERVICE.equals("WCS")) srvParam->serviceType = SERVICE_WCS;
-  if (SERVICE.equals("METADATA")) srvParam->serviceType = SERVICE_METADATA;
+  if (SERVICE.equals("WMS"))
+    srvParam->serviceType = SERVICE_WMS;
+  else if (SERVICE.equals("WCS"))
+    srvParam->serviceType = SERVICE_WCS;
+  else if (SERVICE.equals("METADATA"))
+    srvParam->serviceType = SERVICE_METADATA;
+  else { // Service not recognised
+    CDBError("ADAGUC Server: Parameter SERVICE invalid");
+    dErrorOccured = 1;
+    setStatusCode(HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY);
+  }
 
   if (dErrorOccured == 0 && srvParam->serviceType == SERVICE_WMS) {
 #ifdef CREQUEST_DEBUG
@@ -2877,17 +2894,33 @@ int CRequest::process_querystring() {
     if (dFound_Request == 0) {
       CDBError("ADAGUC Server: Parameter REQUEST missing");
       dErrorOccured = 1;
+      setStatusCode(HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY);
     } else {
-      if (REQUEST.equals("GETCAPABILITIES")) srvParam->requestType = REQUEST_WMS_GETCAPABILITIES;
-      if (REQUEST.equals("GETMAP")) srvParam->requestType = REQUEST_WMS_GETMAP;
-      if (REQUEST.equals("GETHISTOGRAM")) srvParam->requestType = REQUEST_WMS_GETHISTOGRAM;
-      if (REQUEST.equals("GETSCALEBAR")) srvParam->requestType = REQUEST_WMS_GETSCALEBAR;
-      if (REQUEST.equals("GETFEATUREINFO")) srvParam->requestType = REQUEST_WMS_GETFEATUREINFO;
-      if (REQUEST.equals("GETPOINTVALUE")) srvParam->requestType = REQUEST_WMS_GETPOINTVALUE;
-      if (REQUEST.equals("GETLEGENDGRAPHIC")) srvParam->requestType = REQUEST_WMS_GETLEGENDGRAPHIC;
-      if (REQUEST.equals("GETMETADATA")) srvParam->requestType = REQUEST_WMS_GETMETADATA;
-      if (REQUEST.equals("GETSTYLES")) srvParam->requestType = REQUEST_WMS_GETSTYLES;
-      if (REQUEST.equals("GETREFERENCETIMES")) srvParam->requestType = REQUEST_WMS_GETREFERENCETIMES;
+      if (REQUEST.equals("GETCAPABILITIES"))
+        srvParam->requestType = REQUEST_WMS_GETCAPABILITIES;
+      else if (REQUEST.equals("GETMAP"))
+        srvParam->requestType = REQUEST_WMS_GETMAP;
+      else if (REQUEST.equals("GETHISTOGRAM"))
+        srvParam->requestType = REQUEST_WMS_GETHISTOGRAM;
+      else if (REQUEST.equals("GETSCALEBAR"))
+        srvParam->requestType = REQUEST_WMS_GETSCALEBAR;
+      else if (REQUEST.equals("GETFEATUREINFO"))
+        srvParam->requestType = REQUEST_WMS_GETFEATUREINFO;
+      else if (REQUEST.equals("GETPOINTVALUE"))
+        srvParam->requestType = REQUEST_WMS_GETPOINTVALUE;
+      else if (REQUEST.equals("GETLEGENDGRAPHIC"))
+        srvParam->requestType = REQUEST_WMS_GETLEGENDGRAPHIC;
+      else if (REQUEST.equals("GETMETADATA"))
+        srvParam->requestType = REQUEST_WMS_GETMETADATA;
+      else if (REQUEST.equals("GETSTYLES"))
+        srvParam->requestType = REQUEST_WMS_GETSTYLES;
+      else if (REQUEST.equals("GETREFERENCETIMES"))
+        srvParam->requestType = REQUEST_WMS_GETREFERENCETIMES;
+      else {
+        dErrorOccured = 1;
+        setStatusCode(HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY);
+        CDBError("ADAGUC Server: Parameter REQUEST invalid");
+      }
     }
 
     // For getlegend graphic the parameter is style, not styles
@@ -3324,12 +3357,23 @@ int CRequest::process_querystring() {
       return 1;
     }
     if (dFound_Request == 0) {
-      CDBError("ADAGUC Server: Parameter REQUEST missing");
       dErrorOccured = 1;
+      setStatusCode(HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY);
+      CDBError("ADAGUC Server: Parameter REQUEST missing");
+      return 1;
     } else {
-      if (REQUEST.equals("GETCAPABILITIES")) srvParam->requestType = REQUEST_WCS_GETCAPABILITIES;
-      if (REQUEST.equals("DESCRIBECOVERAGE")) srvParam->requestType = REQUEST_WCS_DESCRIBECOVERAGE;
-      if (REQUEST.equals("GETCOVERAGE")) srvParam->requestType = REQUEST_WCS_GETCOVERAGE;
+      if (REQUEST.equals("GETCAPABILITIES"))
+        srvParam->requestType = REQUEST_WCS_GETCAPABILITIES;
+      else if (REQUEST.equals("DESCRIBECOVERAGE"))
+        srvParam->requestType = REQUEST_WCS_DESCRIBECOVERAGE;
+      else if (REQUEST.equals("GETCOVERAGE"))
+        srvParam->requestType = REQUEST_WCS_GETCOVERAGE;
+      else {
+        dErrorOccured = 1;
+        setStatusCode(HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY);
+        CDBError("ADAGUC Server: Parameter REQUEST invalid");
+        return 1;
+      }
     }
 
     if (dErrorOccured == 0 && srvParam->requestType == REQUEST_WCS_DESCRIBECOVERAGE) {
@@ -3403,16 +3447,22 @@ int CRequest::process_querystring() {
   }
   // An error occured, stopping..
   if (dErrorOccured == 1) {
-    return 0;
+    return 1;
   }
   if (srvParam->serviceType == SERVICE_WCS) {
     CDBError("ADAGUC Server: Invalid value for request. Supported requests are: getcapabilities, describecoverage and "
              "getcoverage");
+    setStatusCode(HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY);
+    return 1;
   } else if (srvParam->serviceType == SERVICE_WMS) {
     CDBError("ADAGUC Server: Invalid value for request. Supported requests are: getcapabilities, getmap, gethistogram, "
              "getfeatureinfo, getpointvalue, getmetadata, getReferencetimes, getstyles and getlegendgraphic");
+    setStatusCode(HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY);
+    return 1;
   } else {
     CDBError("ADAGUC Server: Unknown service");
+    setStatusCode(HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY);
+    return 1;
   }
 #ifdef MEASURETIME
   StopWatch_Stop("End of query string");

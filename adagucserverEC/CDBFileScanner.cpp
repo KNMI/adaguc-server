@@ -341,7 +341,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
     CT::string queryString;
     // CT::string VALUES;
     // CADAGUC_time *ADTime  = NULL;
-    CTime adagucTime;
+    CTime *adagucTime;
 
     CDFObject *cdfObjectOfFirstFile = NULL;
     try {
@@ -605,6 +605,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
                   CDF::Attribute *dimUnits = dimVar->getAttributeNE("units");
                   if (dimUnits == NULL) {
                     if (isTimeDim[d]) {
+                      setStatusCode(HTTP_STATUSCODE_404_NOT_FOUND);
                       CREPORT_ERROR_NODOC(CT::string("No time units found for variable ") + dimVar->name, CReportMessage::Categories::GENERAL);
                       throw(__LINE__);
                     }
@@ -614,11 +615,9 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
 
                   // Create adaguctime structure, when this is a time dimension.
                   if (isTimeDim[d]) {
-                    try {
-                      adagucTime.reset();
-                      adagucTime.init(dimVar);
-                    } catch (int e) {
-                      CDBDebug("Exception occurred during time initialization: %d", e);
+                    adagucTime = CTime::GetCTimeInstance(dimVar);
+                    if (adagucTime == nullptr) {
+                      CDBDebug(CTIME_GETINSTANCE_ERROR_MESSAGE);
                       throw(__LINE__);
                     }
                   }
@@ -762,7 +761,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
                             // PrintISOTime return a 0 if succeeded
 
                             try {
-                              uniqueKey = adagucTime.dateToISOString(adagucTime.getDate(dimValues[i]));
+                              uniqueKey = adagucTime->dateToISOString(adagucTime->getDate(dimValues[i]));
                               if (!dataSource->cfgLayer->Dimension[d]->attr.quantizeperiod.empty()) {
                                 CT::string quantizemethod = "round";
                                 CT::string quantizeperiod = dataSource->cfgLayer->Dimension[d]->attr.quantizeperiod;
@@ -896,19 +895,6 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
 
   if (scanFlags & CDBFILESCANNER_CLEANFILES) {
     return cleanFiles(dataSource, scanFlags);
-  }
-
-  CCache::Lock lock;
-
-  CT::string identifier = "updatedb";
-  identifier.concat(dataSource->cfgLayer->FilePath[0]->value.c_str());
-  identifier.concat("/");
-  identifier.concat(dataSource->cfgLayer->FilePath[0]->attr.filter.c_str());
-  // CT::string cacheDirectory = "";
-  CT::string cacheDirectory = dataSource->srvParams->cfg->TempDir[0]->attr.value.c_str();
-  // dataSource->srvParams->getCacheDirectory(&cacheDirectory);
-  if (cacheDirectory.length() > 0) {
-    lock.claim(cacheDirectory.c_str(), identifier.c_str(), "updatedb", dataSource->srvParams->isAutoResourceEnabled());
   }
 
   /* We only need to update the provided path in layerPathToScan. We will simply ignore the other directories */
@@ -1067,7 +1053,6 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
   }
 
   CDBDebug("  ==> *** Finished update layer [%s] ***", dataSource->cfgLayer->Name[0]->value.c_str());
-  lock.release();
   return 0;
 }
 

@@ -1,3 +1,4 @@
+import asyncio
 from ast import Dict
 import subprocess
 import os
@@ -74,10 +75,10 @@ class runAdaguc:
         adagucenv["ADAGUC_TMP"] = self.ADAGUC_TMP
         adagucenv["ADAGUC_FONT"] = self.ADAGUC_FONT
 
-        status, data, headers = self.runADAGUCServer(
+        status, data, headers = asyncio.run(self.runADAGUCServer(
             args=["--updatedb", "--config", config],
             env=adagucenv,
-            isCGI=False)
+            isCGI=False))
 
         return data.getvalue().decode()
 
@@ -92,9 +93,9 @@ class runAdaguc:
         adagucenv["ADAGUC_DATASET_DIR"] = self.ADAGUC_DATASET_DIR
         adagucenv["ADAGUC_TMP"] = self.ADAGUC_TMP
         adagucenv["ADAGUC_FONT"] = self.ADAGUC_FONT
-        status, data, headers = self.runADAGUCServer(url,
-                                                     env=adagucenv,
-                                                     showLogOnError=False)
+        status, data, headers = asyncio.run(self.runADAGUCServer(url,
+                                                                 env=adagucenv,
+                                                                 showLogOnError=False))
         logfile = self.getLogFile()
         self.removeLogFile()
         if data is not None:
@@ -129,7 +130,7 @@ class runAdaguc:
         print(self.getLogFile())
         print("=== END ADAGUC LOGS ===")
 
-    def runADAGUCServer(
+    async def runADAGUCServer(
         self,
         url=None,
         env=[],
@@ -181,7 +182,7 @@ class runAdaguc:
             adagucargs = adagucargs + args
 
         filetogenerate = BytesIO()
-        status, headers, processErr = CGIRunner().run(
+        status, headers, processErr = await CGIRunner().run(
             adagucargs,
             url=url,
             output=filetogenerate,
@@ -210,10 +211,10 @@ class runAdaguc:
                 print("Process: No HTTP Headers written")
 
             print("--- END ADAGUC DEBUG INFO ---\n")
-            return [status, filetogenerate, headers]
+            return status, filetogenerate, headers
 
         else:
-            return [status, filetogenerate, headers]
+            return status, filetogenerate, headers
 
     def writetofile(self, filename, data):
         with open(filename, "wb") as f:

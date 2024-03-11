@@ -765,7 +765,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
 
     // Read dates for obs
     bool hasTimeValuePerObs = false;
-    CTime obsTime;
+    CTime *obsTime;
     double *obsTimeData = NULL;
     CDF::Variable *timeVarPerObs = cdfObject0->getVariableNE("time");
     if (timeVarPerObs != NULL) {
@@ -774,7 +774,8 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
           CDF::Attribute *timeStringAttr = timeVarPerObs->getAttributeNE("units");
           if (timeStringAttr != NULL) {
             if (timeStringAttr->data != NULL) {
-              if (obsTime.init(timeVarPerObs) == 0) {
+              obsTime = CTime::GetCTimeInstance(timeVarPerObs);
+              if (obsTime != nullptr) {
                 hasTimeValuePerObs = true;
                 timeVarPerObs->readData(CDF_DOUBLE, start, count, stride, true);
                 obsTimeData = (double *)timeVarPerObs->data;
@@ -970,7 +971,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
               }
               // obsTimeData
 
-              lastPoint->paramList.push_back(CKeyValue(key, description, obsTime.dateToISOString(obsTime.getDate(obsTimeData[pPoint])).c_str()));
+              lastPoint->paramList.push_back(CKeyValue(key, description, obsTime->dateToISOString(obsTime->getDate(obsTimeData[pPoint])).c_str()));
             }
           }
         }

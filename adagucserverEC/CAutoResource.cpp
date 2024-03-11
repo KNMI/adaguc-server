@@ -75,6 +75,7 @@ int CAutoResource::configureDataset(CServerParams *srvParam, bool) {
     }
 
     if (datasetConfigFile.length() == 0) {
+      setStatusCode(HTTP_STATUSCODE_404_NOT_FOUND);
       CDBError("No such dataset");
       return 1;
     }

@@ -44,6 +44,7 @@ void writeLogFile(const char *msg) {
       setvbuf(pLogDebugFile, NULL, _IONBF, 0);
     }
     fputs(msg, pLogDebugFile);
+    // If message line contains data like [D:008:pid250461: adagucserverEC/CCairoPlotter.cpp:878], also append the time.
     if (strncmp(msg, "[D:", 3) == 0 || strncmp(msg, "[W:", 3) == 0 || strncmp(msg, "[E:", 3) == 0) {
       char szTemp[128];
       struct timeval tv;
@@ -78,6 +79,7 @@ void serverWarningFunction(const char *msg) {
 void serverLogFunctionCMDLine(const char *msg) { printf("%s", msg); }
 
 #include "adagucserver.h"
+#include "Types/ProjectionStore.h"
 
 void serverLogFunctionNothing(const char *) {}
 
@@ -194,6 +196,7 @@ int _main(int argc, char **argv, char **) {
 
   /* Initialize error functions */
   seterrormode(EXCEPTIONS_PLAINTEXT);
+  setStatusCode(HTTP_STATUSCODE_200_OK);
   setErrorFunction(serverLogFunctionCMDLine);
   setWarningFunction(serverLogFunctionCMDLine);
   setDebugFunction(serverLogFunctionCMDLine);
@@ -387,7 +390,7 @@ int _main(int argc, char **argv, char **) {
   StopWatch_Stop("Ready!!!");
 #endif
 
-  return status;
+  return getStatusCode();
 }
 
 int main(int argc, char **argv, char **envp) {
@@ -449,6 +452,7 @@ int main(int argc, char **argv, char **envp) {
   CDFObjectStore::getCDFObjectStore()->clear();
 
   proj_clear_cache();
+  BBOXProjectionClearCache();
 
   if (pLogDebugFile != NULL) {
     fclose(pLogDebugFile);

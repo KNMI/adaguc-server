@@ -939,7 +939,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
                       }
                       bool readFromDB = false;
                       // If variable name equals dimension name, values are stored in the database.
-                      CTime time;
+                      CTime *time;
                       if (v->isDimension) {
                         if (type == CDF_DOUBLE) {
                           if (v->dimensionlinks.size() == 1) {
@@ -948,7 +948,12 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
                               if (dimStandardName.equals("time")) {
                                 if (dimUnits.length() > 2) {
                                   readFromDB = true;
-                                  time.init(v);
+                                  time = CTime::GetCTimeInstance(v);
+                                  if (time == nullptr) {
+                                    CDBDebug(CTIME_GETINSTANCE_ERROR_MESSAGE);
+                                    return 1;
+                                  }
+
                                 } else {
                                   CDBDebug("%s name units are [%s]", v->name.c_str(), dimUnits.c_str());
                                 }
@@ -982,7 +987,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
                           CDBDebug("Dimension value from DB = [%s] units = [%s] standard_name = [%s]", dimValue.c_str(), dimUnits.c_str(), dimStandardName.c_str());
 // CDBDebug("Convert value %f",value);
 #endif
-                          double value = time.dateToOffset(time.freeDateStringToDate(dimValue.c_str()));
+                          double value = time->dateToOffset(time->freeDateStringToDate(dimValue.c_str()));
                           writeDouble(value);
                         }
 

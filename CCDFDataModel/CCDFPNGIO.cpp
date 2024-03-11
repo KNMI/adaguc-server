@@ -32,6 +32,7 @@ const char *CDFPNGReader::className = "PNGReader";
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#include <CReadFile.h>
 
 // #define CCDFPNGIO_DEBUG
 
@@ -49,14 +50,6 @@ int CDFPNGReader::open(const char *fileName) {
   if (pngRaster != NULL) {
     CDBError("pngRaster already defined!");
     return 1;
-  }
-
-  if (cdfCache != NULL) {
-    int cacheStatus = cdfCache->open(fileName, cdfObject, false);
-    if (cacheStatus == 0) {
-      CDBDebug("Succesfully opened from cache for file %s", fileName);
-      return 0;
-    }
   }
 
   cdfObject->addAttribute(new CDF::Attribute("Conventions", "CF-1.6"));
@@ -159,9 +152,12 @@ int CDFPNGReader::open(const char *fileName) {
         timeVariable->setAttributeText("units", "seconds since 1970-01-01 0:0:0");
         timeVariable->setAttributeText("standard_name", "time");
         timeVariable->allocateData(1);
-        CTime ctime;
-        ctime.init(timeVariable);
-        ((double *)timeVariable->data)[0] = ctime.dateToOffset(ctime.freeDateStringToDate(pngRaster->headers[j].value));
+        CTime *ctime = CTime::GetCTimeInstance(timeVariable);
+        if (ctime == nullptr) {
+          CDBDebug(CTIME_GETINSTANCE_ERROR_MESSAGE);
+          return 1;
+        }
+        ((double *)timeVariable->data)[0] = ctime->dateToOffset(ctime->freeDateStringToDate(pngRaster->headers[j].value));
       }
       /* Reference time dimension */
       if (pngRaster->headers[j].name.equals("reference_time")) {
@@ -176,9 +172,12 @@ int CDFPNGReader::open(const char *fileName) {
         referenceTimeVariable->setAttributeText("units", "seconds since 1970-01-01 0:0:0");
         referenceTimeVariable->setAttributeText("standard_name", "forecast_reference_time");
         referenceTimeVariable->allocateData(1);
-        CTime ctime;
-        ctime.init(referenceTimeVariable);
-        ((double *)referenceTimeVariable->data)[0] = ctime.dateToOffset(ctime.freeDateStringToDate(pngRaster->headers[j].value));
+        CTime *ctime = CTime::GetCTimeInstance(referenceTimeVariable);
+        if (ctime == nullptr) {
+          CDBDebug(CTIME_GETINSTANCE_ERROR_MESSAGE);
+          return 1;
+        }
+        ((double *)referenceTimeVariable->data)[0] = ctime->dateToOffset(ctime->freeDateStringToDate(pngRaster->headers[j].value));
       }
     }
 

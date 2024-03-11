@@ -432,12 +432,14 @@ void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool
               // CDBDebug("time: %s %s %f %d", timeVal.c_str(), timeUnits.c_str(), dTimeVal, iTimeVal);
               CDF::Variable timeVarHelper;
               timeVarHelper.setAttributeText("units", "seconds since 1970-1-1");
-              CTime timeHelper;
-              timeHelper.init(&timeVarHelper);
-
+              CTime *timeHelper = CTime::GetCTimeInstance(&timeVarHelper);
+              if (timeHelper == nullptr) {
+                CDBError(CTIME_GETINSTANCE_ERROR_MESSAGE);
+                throw __LINE__;
+              }
               double timeOffset;
               if (timeVal.length() > 0) {
-                timeOffset = timeHelper.dateToOffset(timeHelper.freeDateStringToDate(timeVal.c_str()));
+                timeOffset = timeHelper->dateToOffset(timeHelper->freeDateStringToDate(timeVal.c_str()));
               } else if (dTimeVal > 0) {
                 timeOffset = dTimeVal;
               } else if (iTimeVal > 0) {
@@ -513,12 +515,11 @@ void CConvertGeoJSON::getDimensions(CDFObject *cdfObject, json_value &json, bool
 #ifdef USETHIS
               CDF::Variable timeVarHelper;
               timeVarHelper.setAttributeText("units", "seconds since 1970-1-1");
-              CTime timeHelper;
-              timeHelper.init(&timeVarHelper);
+              CTime *timeHelper = CTime::GetCTimeInstance(&timeVarHelper);
 
               double timeOffset;
               if (timeVal.length() > 0) {
-                timeOffset = timeHelper.dateToOffset(timeHelper.freeDateStringToDate(timeVal.c_str()));
+                timeOffset = timeHelper->dateToOffset(timeHelper->freeDateStringToDate(timeVal.c_str()));
               } else if (dTimeVal > 0) {
                 timeOffset = dTimeVal;
               } else if (iTimeVal > 0) {
@@ -986,7 +987,7 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
 
   if (dataSource->srvParams->requestType == REQUEST_WMS_GETLEGENDGRAPHIC || (dataSource->dWidth == 1 && dataSource->dHeight == 1)) {
     if (dataSource->stretchMinMax == false || (nrDataObjects > 0 && dataSource->getDataObject(0)->variableName.equals("features") == true)) {
-      CDBDebug("Returning because of REQUEST_WMS_GETLEGENDGRAPHIC and  dataSource->stretchMinMax is set to false or variable name is features");
+      // CDBDebug("Returning because of REQUEST_WMS_GETLEGENDGRAPHIC and  dataSource->stretchMinMax is set to false or variable name is features");
       dataSource->dfBBOX[0] = dataSource->srvParams->Geo->dfBBOX[0];
       dataSource->dfBBOX[1] = dataSource->srvParams->Geo->dfBBOX[1];
       dataSource->dfBBOX[2] = dataSource->srvParams->Geo->dfBBOX[2];

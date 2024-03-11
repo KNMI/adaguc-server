@@ -161,7 +161,11 @@ add_library(
     json.c
     json.h
     LayerTypeLiveUpdate/LayerTypeLiveUpdate.cpp
-    LayerTypeLiveUpdate/LayerTypeLiveUpdate.h   
+    LayerTypeLiveUpdate/LayerTypeLiveUpdate.h  
+    Types/BBOX.h
+    Types/BBOX.cpp
+    Types/ProjectionStore.h
+    Types/ProjectionStore.cpp 
     testadagucserver.cpp
 )
 
