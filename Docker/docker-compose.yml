@@ -36,7 +36,6 @@ services:
     networks:
       - adaguc-network
     environment:
-      - "EXTERNALADDRESS=${EXTERNALADDRESS}"
       - "PGBOUNCER_DISABLE_SSL=true"
       - "PGBOUNCER_ENABLE=true"
       - "ADAGUC_DB=host=adaguc-db port=5432 user=adaguc password=adaguc dbname=adaguc"
