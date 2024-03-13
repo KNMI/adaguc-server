@@ -52,13 +52,6 @@ async def add_hsts_header(request: Request, call_next):
     return response
 
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 if "ADAGUC_REDIS" in os.environ:
     app.add_middleware(CachingMiddleware)
 
@@ -76,6 +69,13 @@ async def add_process_time_header(request: Request, call_next):
 
 
 app.add_middleware(BrotliMiddleware, gzip_fallback=True)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/")
