@@ -15,7 +15,7 @@ int CCreateHistogram::createHistogram(CDataSource *dataSource, CDrawImage *) {
   } else {
     CDBDebug("CREATING JSONP %s", dataSource->srvParams->JSONP.c_str());
     printf("%s%s%c%c", "Content-Type: application/javascript", dataSource->srvParams->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
-    printf("\n%s()", dataSource->srvParams->JSONP.c_str());
+    printf("\n%s(", dataSource->srvParams->JSONP.c_str());
   }
 
   // puts("{\"a\": 1}");
@@ -262,7 +262,7 @@ int CCreateHistogram::end() {
   } else {
     CDBDebug("CREATING JSONP %s", baseDataSource->srvParams->JSONP.c_str());
     printf("%s%s%c%c", "Content-Type: application/javascript", baseDataSource->srvParams->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
-    printf("\n%s", baseDataSource->srvParams->JSONP.c_str());
+    printf("\n%s(", baseDataSource->srvParams->JSONP.c_str());
   }
 
   puts(JSONdata.c_str());
