@@ -17,6 +17,8 @@ import brotli
 
 ADAGUC_REDIS = os.environ.get("ADAGUC_REDIS")
 
+MAX_SIZE_FOR_CACHING = 10000000
+
 
 async def get_cached_response(redis_pool, request):
     key = generate_key(request)
@@ -53,7 +55,7 @@ async def response_to_cache(redis_pool, request, headers, data, ex: int):
         "utf-8"
     )
     compressed_data = brotli.compress(data)
-    if len(compressed_data) < 10000000:
+    if len(compressed_data) < MAX_SIZE_FOR_CACHING:
         redis_client = redis.Redis(connection_pool=redis_pool)
         await redis_client.set(
             key,

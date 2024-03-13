@@ -8,7 +8,7 @@ import brotli
 import shutil
 import random
 import string
-import redis  # This can also be used to connect to a Redis cluster
+import redis.asyncio as redis  # This can also be used to connect to a Redis cluster
 
 # from redis.cluster import RedisCluster as Redis  # Cluster client, for testing
 
@@ -215,7 +215,9 @@ class runAdaguc:
         if self.cache_wanted(url):
             cache_key = str((url, adagucargs)).encode("utf-8")
 
-            age, headers, data = get_cached_response(runAdaguc.redis_pool, cache_key)
+            age, headers, data = await get_cached_response(
+                runAdaguc.redis_pool, cache_key
+            )
             if age is not None:
                 return [0, data, headers]
 
@@ -319,10 +321,10 @@ def response_to_cache(redis_pool, key, headers: str, data):
         redis_client.close()
 
 
-def get_cached_response(redis_pool, key):
+async def get_cached_response(redis_pool, key):
     redis_client = redis.Redis(connection_pool=redis_pool)
-    cached = redis_client.get(key)
-    redis_client.close()
+    cached = await redis_client.get(key)
+    redis_client.aclose()
     if not cached:
         return None, None, None
 
@@ -331,7 +333,7 @@ def get_cached_response(redis_pool, key):
     age = currenttime - entrytime
 
     headers_len = int(cached[10:16].decode("utf-8"))
-    headers = json.loads(cached[16 : 16 + headers_len])
+    headers = json.loads(cached[16 : 16 + headers_len].decode["utf-8"])
     headers.append(f"age: {age}")
 
     data = brotli.decompress(cached[16 + headers_len :])
