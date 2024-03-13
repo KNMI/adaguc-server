@@ -1,7 +1,5 @@
 import asyncio
-from ast import Dict
 import os
-from os.path import expanduser
 from PIL import Image
 from io import BytesIO
 import brotli
@@ -10,12 +8,9 @@ import random
 import string
 import redis.asyncio as redis  # This can also be used to connect to a Redis cluster
 
-# from redis.cluster import RedisCluster as Redis  # Cluster client, for testing
-
-import re
 import calendar
 import json
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from adaguc.CGIRunner import CGIRunner
 
@@ -219,7 +214,7 @@ class runAdaguc:
                 runAdaguc.redis_pool, cache_key
             )
             if age is not None:
-                return [0, data, headers]
+                return 0, data, headers
 
         filetogenerate = BytesIO()
         status, headers, processErr = await CGIRunner().run(
@@ -251,14 +246,13 @@ class runAdaguc:
                 print("Process: No HTTP Headers written")
 
             print("--- END ADAGUC DEBUG INFO ---\n")
-            return status, filetogenerate, headers
 
-        else:
-            if self.cache_wanted(url):
-                response_to_cache(
-                    runAdaguc.redis_pool, cache_key, headers, filetogenerate
-                )
-            return [status, filetogenerate, headers]
+        # Only cache if status==0
+        if self.cache_wanted(url) and status == 0:
+            await response_to_cache(
+                runAdaguc.redis_pool, cache_key, headers, filetogenerate
+            )
+        return status, filetogenerate, headers
 
     def writetofile(self, filename, data):
         with open(filename, "wb") as f:
@@ -286,7 +280,7 @@ class runAdaguc:
 headers_to_skip = ["x-process-time", "age"]
 
 
-def response_to_cache(redis_pool, key, headers: str, data):
+async def response_to_cache(redis_pool, key, headers: str, data):
     cacheable_headers = []
     ttl = 0
     for header in headers:
@@ -302,15 +296,13 @@ def response_to_cache(redis_pool, key, headers: str, data):
                         pass
 
     if ttl > 0:
-        cacheable_headers_json = json.dumps(
-            cacheable_headers, ensure_ascii=True
-        ).encode("utf-8")
+        cacheable_headers_json = json.dumps(cacheable_headers).encode("utf-8")
 
         entrytime = f"{calendar.timegm(datetime.utcnow().utctimetuple()):10d}".encode(
             "utf-8"
         )
         redis_client = redis.Redis(connection_pool=redis_pool)
-        redis_client.set(
+        await redis_client.set(
             key,
             entrytime
             + f"{len(cacheable_headers_json):06d}".encode("utf-8")
@@ -318,13 +310,13 @@ def response_to_cache(redis_pool, key, headers: str, data):
             + brotli.compress(data.getvalue()),
             ex=ttl,
         )
-        redis_client.close()
+        await redis_client.aclose()
 
 
 async def get_cached_response(redis_pool, key):
     redis_client = redis.Redis(connection_pool=redis_pool)
     cached = await redis_client.get(key)
-    redis_client.aclose()
+    await redis_client.aclose()
     if not cached:
         return None, None, None
 

@@ -1,6 +1,5 @@
 from io import BytesIO
 import os
-from urllib.parse import urlsplit
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
@@ -10,14 +9,12 @@ import calendar
 from datetime import datetime
 import redis.asyncio as redis  # This can also be used to connect to a Redis cluster
 
-# from redis.asyncio.cluster import RedisCluster as Redis  # Cluster client, for testing
-
 import json
 import brotli
 
 ADAGUC_REDIS = os.environ.get("ADAGUC_REDIS")
 
-MAX_SIZE_FOR_CACHING = 10000000
+MAX_SIZE_FOR_CACHING = 10_000_000
 
 
 async def get_cached_response(redis_pool, request):
@@ -93,7 +90,7 @@ class CachingMiddleware(BaseHTTPMiddleware):
 
         if data:
             # Fix Age header
-            headers["Age"] = "%1d" % (age)
+            headers["Age"] = f"{age:1d}"
             headers["adaguc-cache"] = "hit"
             return Response(
                 content=data,
