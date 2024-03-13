@@ -1496,7 +1496,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
           maxQueryResultLimit = dataSource->cfgLayer->FilePath[0]->attr.maxquerylimit.toInt();
         }
       }
-      CDBDebug("Using maxquerylimit %d", maxQueryResultLimit);
+      // CDBDebug("Using maxquerylimit %d", maxQueryResultLimit);
       store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource, maxQueryResultLimit);
     }
 

@@ -258,10 +258,10 @@ int CCreateHistogram::end() {
   CT::string resultJSON;
   if (baseDataSource->srvParams->JSONP.length() == 0) {
     CDBDebug("CREATING JSON");
-    printf("%s%s%c%c\n", "Content-Type: application/json", 13, 10);
+    printf("%s%s%c%c\n", "Content-Type: application/json", baseDataSource->srvParams->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
   } else {
     CDBDebug("CREATING JSONP %s", baseDataSource->srvParams->JSONP.c_str());
-    printf("%s%s%c%c", "Content-Type: application/javascript", 13, 10);
+    printf("%s%s%c%c", "Content-Type: application/javascript", baseDataSource->srvParams->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
     printf("\n%s", baseDataSource->srvParams->JSONP.c_str());
   }
 
