@@ -325,7 +325,7 @@ async def get_cached_response(redis_pool, key):
     age = currenttime - entrytime
 
     headers_len = int(cached[10:16].decode("utf-8"))
-    headers = json.loads(cached[16 : 16 + headers_len].decode["utf-8"])
+    headers = json.loads(cached[16 : 16 + headers_len].decode("utf-8"))
     headers.append(f"age: {age}")
 
     data = brotli.decompress(cached[16 + headers_len :])
