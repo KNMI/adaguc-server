@@ -319,10 +319,9 @@ async def get_collection_cube(
         edr_collectioninfo, edr_collectioninfo["parameters"][0]["name"]
     )
     if not instance and len(ref_times) > 0:
-        instance = iso_to_instance(ref_times[-1])
+        instance = ref_times[-1]
 
     parameter_names = parameter_name.split(",")
-    bbox_terms = bbox.split(",")
 
     if res_x is not None and res_y is not None:
         res_queryterm = f"&resx={res_x}&resy={res_y}"
