@@ -2,7 +2,6 @@
 
 
 ADAGUC_PORT=443
-ADAGUC_REDIS_PORT=6379
 ADAGUC_DATA_DIR=${HOME}/adaguc-docker/adaguc-data
 ADAGUC_AUTOWMS_DIR=${HOME}/adaguc-docker/adaguc-autowms
 ADAGUC_DATASET_DIR=${HOME}/adaguc-docker/adaguc-datasets
