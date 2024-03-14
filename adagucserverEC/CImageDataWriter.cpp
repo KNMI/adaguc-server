@@ -3451,7 +3451,6 @@ int CImageDataWriter::end() {
     printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl.c_str(), 13, 10);
     status = drawImage.printImagePng32();
   } else if (srvParam->imageFormat == IMAGEFORMAT_IMAGEWEBP) {
-    CDBDebug("Creating 32 bit webp");
     printf("%s%s%c%c\n", "Content-Type:image/webp", cacheControl.c_str(), 13, 10);
     int webPQuality = srvParam->imageQuality;
     if (!srvParam->Format.empty()) {
@@ -3464,7 +3463,7 @@ int CImageDataWriter::end() {
         }
       }
     }
-    CDBDebug("webPQuality = %d", webPQuality);
+    CDBDebug("Creating 32 bit webp quality = %d", webPQuality);
     status = drawImage.printImageWebP32(webPQuality);
   } else if (srvParam->imageFormat == IMAGEFORMAT_IMAGEGIF) {
     // CDBDebug("LegendGraphic GIF");
