@@ -1537,9 +1537,7 @@ void CXMLGen::generateRangeSet(CT::string *XMLDoc, WMSLayer *layer) {
   // Dims
   for (size_t d = 0; d < layer->dimList.size(); d++) {
     WMSLayer::Dim *dim = layer->dimList[d];
-    if (dim->name.indexOf("time") != -1) {
-      continue;
-    }
+    // myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.c_str();
     // Sort the values to make sure they are in the right order
     CT::string *valueSplit = dim->values.splitToArray(",");
     std::vector<CT::string> valuesVector(valueSplit, valueSplit + valueSplit->count);
@@ -1547,21 +1545,26 @@ void CXMLGen::generateRangeSet(CT::string *XMLDoc, WMSLayer *layer) {
 
     XMLDoc->printconcat("        <axisDescription>\n"
                         "          <AxisDescription>\n"
-                        "            <name>\"%s\"</name>\n"
-                        "            <label>\"%s\"</label>\n",
+                        "            <name>%s</name>\n"
+                        "            <label>%s</label>\n",
                         dim->name.c_str(), dim->name.c_str());
     // At least two values (to have a min and a max)
     if (valueSplit->count >= 2) {
       XMLDoc->printconcat("            <values>\n"
                           "              <interval>\n"
-                          "                <min>\"%s\"</min>\n"
-                          "                <max>\"%s\"</max>\n"
-                          "              </interval>\n",
+                          "                <min>%s</min>\n"
+                          "                <max>%s</max>\n",
                           valuesVector[0].c_str(), valuesVector.back().c_str());
+      // Print resolution for a time dimension
+      const char *interval = layer->dataSource->cfgLayer->Dimension[d]->attr.interval.c_str();
+      if ((dim->name.indexOf("time") != -1) && interval) {
+        XMLDoc->printconcat("                <res>%s</res>\n", interval);
+      }
+      XMLDoc->printconcat("              </interval>\n");
       // Print all possible values if there is a relatively small number
-      if (valueSplit->count <= 100) {
+      if ((valueSplit->count <= 100) && (dim->name.indexOf("time") == -1)) {
         for (size_t i = 0; i < valueSplit->count; i++) {
-          XMLDoc->printconcat("              <singleValue>\"%s\"</singleValue>\n", valuesVector[i].c_str());
+          XMLDoc->printconcat("              <singleValue>%s</singleValue>\n", valuesVector[i].c_str());
         }
       }
       XMLDoc->printconcat("            </values>\n");
