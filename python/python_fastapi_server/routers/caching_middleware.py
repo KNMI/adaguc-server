@@ -90,7 +90,7 @@ class CachingMiddleware(BaseHTTPMiddleware):
 
         if data:
             # Fix Age header
-            headers["Age"] = f"{age:1d}"
+            headers["Age"] = f"{age}"
             headers["adaguc-cache"] = "hit"
             return Response(
                 content=data,

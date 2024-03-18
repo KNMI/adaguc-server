@@ -249,7 +249,7 @@ Version 2.6.1 2021-11-09
 - Moving to a python wrapper to run adaguc-server. For development with flask, for production with gunicorn.
 
 **Version 2.5.15 2021-09-22**
-- The /data folder can now completely2.20.2 be mounted from another filesystem, all adaguc internal folders have moved to /adaguc.
+- The /data folder can now completely be mounted from another filesystem, all adaguc internal folders have moved to /adaguc.
 
 **Version 2.5.14 2021-09-17**
 - WCS GetCoverage with Native parameters now returns data

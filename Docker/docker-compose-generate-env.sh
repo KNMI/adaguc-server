@@ -7,7 +7,7 @@ ADAGUC_AUTOWMS_DIR=${HOME}/adaguc-docker/adaguc-autowms
 ADAGUC_DATASET_DIR=${HOME}/adaguc-docker/adaguc-datasets
 ADAGUC_NUMPARALLELPROCESSES=4
 
-usage() { echo "Usage: $0 -p <port number> -e <external adress> -a <autowmsdir> -d <dataset dir> -f <datadir> -t <num parallel processes> -r <redis_portnumber>" 1>&2; exit 1; }
+usage() { echo "Usage: $0 -p <port number> -e <external adress> -a <autowmsdir> -d <dataset dir> -f <datadir> -t <num parallel processes>" 1>&2; exit 1; }
 
 
 while getopts ":e:p:h:a:d:f:t:" o; do
@@ -26,9 +26,6 @@ while getopts ":e:p:h:a:d:f:t:" o; do
             ;;
         f)
             ADAGUC_DATA_DIR=${OPTARG}
-            ;;
-        r)
-            REDIS_PORT=${OPTARG}
             ;;
         t)
             ADAGUC_NUMPARALLELPROCESSES=${OPTARG}
@@ -62,7 +59,6 @@ echo "ADAGUC_DATASET_DIR=${ADAGUC_DATASET_DIR}" >> .env
 echo "ADAGUC_NUMPARALLELPROCESSES=${ADAGUC_NUMPARALLELPROCESSES}" >> .env
 echo "ADAGUC_PORT=${ADAGUC_PORT}" >> .env
 echo "EXTERNALADDRESS=${EXTERNALADDRESS}" >> .env
-echo "REDIS_PORT=${REDIS_PORT} >>.env
 echo "############### env file ###############"
 cat .env
 echo "############### env file ###############"
