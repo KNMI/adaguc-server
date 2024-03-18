@@ -204,10 +204,10 @@ async def get_collections(req: Request, f: str = "json"):
     collections: List[Collection] = []
     parsed_collections = generate_collections()
     for parsed_collection in parsed_collections.values():
-        parsed_extent = get_extent(parsed_collection["dataset"])
+        parsed_extent = await get_extent(parsed_collection["dataset"])
         if parsed_extent:
             spatial = Spatial(
-                bbox=[list(get_extent(parsed_collection["dataset"]))])
+                bbox=[list(parsed_extent)])
             extent = Extent(spatial=spatial)
             collections.append(
                 Collection(
@@ -244,7 +244,7 @@ async def get_collections(req: Request, f: str = "json"):
                response_model=Collection,
                response_model_exclude_none=True)
 async def get_collection(coll: str, req: Request, f: str = "json"):
-    extent = Extent(spatial=Spatial(bbox=[get_extent(coll)]))
+    extent = Extent(spatial=Spatial(bbox=[await get_extent(coll)]))
     coll = Collection(
         id=coll,
         title="title1",
@@ -339,7 +339,7 @@ async def get_open_api_yaml():
     )
 
 
-def get_single_item(item_id: str, url: str) -> FeatureGeoJSON:
+async def get_single_item(item_id: str, url: str) -> FeatureGeoJSON:
     collection, observed_property_name, point, dims, datetime_ = item_id.split(
         ";")
     coord = list(map(float, point.split(",")))
@@ -358,7 +358,7 @@ def get_single_item(item_id: str, url: str) -> FeatureGeoJSON:
     if datetime_:
         request_url += f"&TIME={datetime_}"
     request_url += dimspec
-    status, data = call_adaguc(request_url.encode("UTF-8"))
+    status, data = await call_adaguc(request_url.encode("UTF-8"))
     if status == 0:
         try:
             response_data = json.loads(data.getvalue(),
@@ -382,7 +382,7 @@ def get_single_item(item_id: str, url: str) -> FeatureGeoJSON:
     return None
 
 
-def get_features_for_items(
+async def get_features_for_items(
     coll: str,
     base_url: str,
     point=None,
@@ -396,7 +396,7 @@ def get_features_for_items(
     features: List[FeatureGeoJSON] = []
     if not point:
         if not bbox:
-            bbox = make_bbox(get_extent(coll))
+            bbox = make_bbox(await get_extent(coll))
 
         if not npoints:
             npoints = 4
@@ -404,7 +404,7 @@ def get_features_for_items(
     else:
         coords = [point]
     if not observed_property_name:
-        collinfo = get_parameters(coll)
+        collinfo = await get_parameters(coll)
         first_param=next(iter(collinfo))
         print(first_param, flush=True)
         observed_property_name =[first_param]
@@ -429,7 +429,7 @@ def get_features_for_items(
         if result_time:
             request_url += f"&DIM_REFERENCE_TIME={result_time}"
         request_url += dimspec
-        status, data = call_adaguc(request_url.encode("UTF-8"))
+        status, data = await call_adaguc(request_url.encode("UTF-8"))
         if status == 0:
             try:
                 response_data = json.loads(data.getvalue(),
@@ -577,7 +577,7 @@ async def get_items_for_collection(
         )
     base_url = str(req.url_for("get_items_for_collection", coll=coll))
     try:
-        features = get_features_for_items(
+        features = await get_features_for_items(
             coll=coll,
             base_url=base_url,
             point=point,

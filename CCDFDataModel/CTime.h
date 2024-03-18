@@ -48,7 +48,9 @@
 #define CTIME_UNITTYPE_MONTHS 5
 #define CTIME_UNITTYPE_YEARS 6
 
-//#define CTIME_CALENDARTYPE_365day  1
+#define CTIME_GETINSTANCE_ERROR_MESSAGE "Unable to obtain ctime instance from variable"
+
+// #define CTIME_CALENDARTYPE_365day  1
 
 #include "CDebugger.h"
 class CTime {
@@ -69,6 +71,13 @@ private:
   int getMonthByDayInYear(int day, int *monthsCumul);
 
   DEF_ERRORFUNCTION();
+
+  /**
+   * Initializes CTime
+   * @param CDF::Variable time variable
+   * @return 0 on success 1 on failure.
+   */
+  int init(CDF::Variable *timeVariable);
 
 private:
   utUnit dataunits;
@@ -126,13 +135,6 @@ public:
    * @return 0 on success 1 on failure.
    */
   int init(const char *units, const char *calendar);
-
-  /**
-   * Initializes CTime
-   * @param CDF::Variable time variable
-   * @return 0 on success 1 on failure.
-   */
-  int init(CDF::Variable *timeVariable);
 
   /**
    * Turns double value into a date object

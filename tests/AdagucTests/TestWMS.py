@@ -554,7 +554,7 @@ class TestWMS(unittest.TestCase):
             showLogOnError=False,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
-        self.assertEqual(status, 1)
+        self.assertEqual(status, 404)
         self.assertTrue(os.path.exists(reportfilename))
         self.assertTrue(os.path.exists(os.environ["ADAGUC_LOGFILE"]))
 
@@ -602,7 +602,7 @@ class TestWMS(unittest.TestCase):
             showLogOnError=False,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
-        self.assertEqual(status, 1)
+        self.assertEqual(status, 404)
         self.assertTrue(os.path.exists(os.environ["ADAGUC_LOGFILE"]))
         expectedErrors = [
             "No time units found for variable time",
@@ -1569,7 +1569,7 @@ class TestWMS(unittest.TestCase):
 
         filename = "testWMSGetCapabilities_quantizehigh.xml"
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "DATASET=adaguc.tests.quantizelow&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities",
+            "DATASET=adaguc.tests.quantizehigh&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities",
             env=env,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
@@ -2501,3 +2501,26 @@ class TestWMS(unittest.TestCase):
             data.getvalue(),
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
+    
+    def test_WMSGetMap_error_on_wrong_dataset(self):
+        AdagucTestTools().cleanTempDir()
+        config = (
+            ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,"
+            + ADAGUC_PATH
+            + "/data/config/datasets/adaguc.KNMIHDF5.test.xml"
+        )
+        env = {"ADAGUC_CONFIG": config}
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=["--updatedb", "--config", config], env=self.env, isCGI=False
+        )
+        self.assertEqual(status, 0)
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "?DATASET=nonexisting&&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=countryborders&WIDTH=910&HEIGHT=562&SRS=EPSG%3A3857&BBOX=-30765124.555160142,-19000000,30765124.555160142,19000000&STYLES=&FORMAT=image/png&TRANSPARENT=TRUE&&",
+            env=env,
+        )
+        # Should return 404 Not Found
+        self.assertEqual(status, 404)
+        

@@ -21,6 +21,12 @@ services:
         max-file: "10"
   adaguc-server:
     image: openearth/adaguc-server
+    # build: ..
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: "2"
+    #       memory: 2048M
     container_name: my-adaguc-server
     hostname: my-adaguc-server
     volumes:
@@ -30,7 +36,8 @@ services:
     networks:
       - adaguc-network
     environment:
-      - "EXTERNALADDRESS=${EXTERNALADDRESS}"
+      - "PGBOUNCER_DISABLE_SSL=true"
+      - "PGBOUNCER_ENABLE=true"
       - "ADAGUC_DB=host=adaguc-db port=5432 user=adaguc password=adaguc dbname=adaguc"
       - "ADAGUC_ENABLELOGBUFFER=TRUE"
       - "ADAGUC_AUTOWMS_DIR=/data/adaguc-autowms"
@@ -70,7 +77,7 @@ services:
         max-size: "200k"
         max-file: "10"
   adaguc-db:
-    image: postgres:13.12
+    image: postgres:13
     container_name: adaguc-db
     hostname: adaguc-db
     # Ensures containers running in the adaguc-network docker network can connect to the database, provided they use the
@@ -78,9 +85,7 @@ services:
     networks:
       - adaguc-network
     volumes:
-      - adaguc-server-compose-adagucdb:/adaguc/adagucdb
-    expose:
-      - "5432"
+      - adaguc-server-compose-adagucdb:/var/lib/postgresql/data
     environment:
       - "POSTGRES_USER=adaguc"
       - "POSTGRES_PASSWORD=adaguc"

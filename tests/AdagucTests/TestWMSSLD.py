@@ -69,7 +69,7 @@ class TestWMSSLD(unittest.TestCase):
             DEFAULT_REQUEST_PARAMS + "&SLD=", env=self.env, showLogOnError=False
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
-        self.assertEqual(status, 1)
+        self.assertEqual(status, 404)
 
     # def test_WMSGetMap_WITHSLD_testdatanc(self):
     #     AdagucTestTools().cleanTempDir()

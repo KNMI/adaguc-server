@@ -914,6 +914,10 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     return 1;
   }
 
+#ifdef MEASURETIME
+  StopWatch_Stop("parseDimensions done");
+#endif
+
   if (dataSource->useLonTransformation != -1 && gridExtent == NULL) {
     for (size_t varNr = 0; varNr < dataSource->getNumDataObjects(); varNr++) {
       Proc::swapPixelsAtLocation(dataSource, dataSource->getDataObject(varNr)->cdfVariable, 0);
@@ -984,6 +988,11 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 #ifdef CDATAREADER_DEBUG
     CDBDebug("Working on variable %s, %d/%d", dataSource->getDataObject(varNr)->cdfVariable->name.c_str(), varNr, dataSource->getNumDataObjects());
 #endif
+
+#ifdef MEASURETIME
+    StopWatch_Stop("Working on variable %s, %d/%d", dataSource->getDataObject(varNr)->cdfVariable->name.c_str(), varNr, dataSource->getNumDataObjects());
+#endif
+
     // Get Unit
     CDF::Attribute *varUnits = dataSource->getDataObject(varNr)->cdfVariable->getAttributeNE("units");
     if (varUnits != NULL) {
@@ -1021,6 +1030,10 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 
 #ifdef CDATAREADER_DEBUG
     CDBDebug("/Finished Working on variable %s", dataSource->getDataObject(varNr)->cdfVariable->name.c_str());
+#endif
+
+#ifdef MEASURETIME
+    StopWatch_Stop("/Finished Working on variable %s", dataSource->getDataObject(varNr)->cdfVariable->name.c_str());
 #endif
   }
 

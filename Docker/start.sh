@@ -38,4 +38,4 @@ fi
 echo "Start serving on ${EXTERNALADDRESS}"
 # keep-alive should be greater than the idle timout of the proxy/load balancer sitting in front of adaguc
 # See: https://iximiuz.com/en/posts/reverse-proxy-http-keep-alive-and-502s/
-gunicorn --bind 0.0.0.0:8080 --workers=4 -k uvicorn.workers.UvicornWorker --disable-redirect-access-to-syslog --keep-alive 200 --access-logfile - main:app
+gunicorn --bind 0.0.0.0:8080 --workers=1 -k uvicorn.workers.UvicornWorker --disable-redirect-access-to-syslog --keep-alive 200 --access-logfile - main:app

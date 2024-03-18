@@ -40,7 +40,6 @@
 #include <sys/stat.h>
 #include "CDBFileScanner.h"
 #include "CDFObjectStore.h"
-#include "CCache.h"
 #include "CDataPostProcessors/CDataPostProcessor.h"
 
 class CAutoConfigure {

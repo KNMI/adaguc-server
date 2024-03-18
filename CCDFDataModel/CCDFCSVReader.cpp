@@ -32,6 +32,7 @@
  */
 #include "CCDFCSVReader.h"
 #include "CTime.h"
+#include <CReadFile.h>
 
 const char *CDFCSVReader::className = "CSVReader";
 
@@ -65,15 +66,6 @@ int CDFCSVReader::open(const char *fileName) {
   if (fileBaseName.endsWith(".csv") == false) {
     CDBError("Filename does not end with \".csv\"");
     return 1;
-  }
-
-  /* Caching options, TODO: not tested with CSV*/
-  if (cdfCache != NULL) {
-    int cacheStatus = cdfCache->open(fileName, cdfObject, false);
-    if (cacheStatus == 0) {
-      CDBDebug("Succesfully opened from cache for file %s", fileName);
-      return 0;
-    }
   }
 
   /*This is opendap, there the CSV has already been converted to CDM by an IOServiceProvider.*/
@@ -251,6 +243,11 @@ int CDFCSVReader::open(const char *fileName) {
     //    if (timeString.length() > 5){
     CDBDebug("timeString = [%s]", timeString.c_str());
     CTime *ctime = CTime::GetCTimeInstance(timeVar);
+    if (ctime == nullptr) {
+      CDBDebug(CTIME_GETINSTANCE_ERROR_MESSAGE);
+      return 1;
+    }
+
     ((double *)timeVar->data)[0] = ctime->dateToOffset(ctime->freeDateStringToDate(timeString.c_str()));
     //    } else {
     //      ((double*)timeVar->data)[0] = 0;
@@ -282,6 +279,11 @@ int CDFCSVReader::open(const char *fileName) {
     //    if (timeString.length() > 5){
     CDBDebug("referenceTimeString = [%s]", referenceTimeString.c_str());
     CTime *ctime = CTime::GetCTimeInstance(referenceTimeVar);
+    if (ctime == nullptr) {
+      CDBDebug(CTIME_GETINSTANCE_ERROR_MESSAGE);
+      return 1;
+    }
+
     ((double *)referenceTimeVar->data)[0] = ctime->dateToOffset(ctime->freeDateStringToDate(referenceTimeString.c_str()));
     //    } else {
     //      ((double*)timeVar->data)[0] = 0;

@@ -526,6 +526,11 @@ namespace CT {
     return equals(_string.useStack ? _string.stackValue : _string.heapValue, _string.privatelength);
   }
 
+  bool string::equals(std::string const &_string) const {
+    if (allocated == 0) return false;
+    return equals(_string.c_str(), _string.length());
+  }
+
   bool string::equalsIgnoreCase(const char *_value, size_t _length) {
     if (_value == NULL) return false;
     if (allocated == 0) return false;

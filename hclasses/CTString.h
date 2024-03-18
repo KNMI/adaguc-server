@@ -37,6 +37,7 @@ namespace CT {
   class string {
   public:
     size_t count;
+
   private:
     char stackValue[CTSTRINGSTACKLENGTH + 1];
     int allocated;
@@ -246,6 +247,8 @@ namespace CT {
      * @param string Copy of the string object to compare
      */
     bool equals(CT::string string) const;
+
+    bool equals(std::string const &string) const;
 
     bool equalsIgnoreCase(const char *_value, size_t _length);
 

@@ -38,7 +38,26 @@ bool CConvertLatLonBnds::isThisLatLonBndsData(CDFObject *cdfObject) {
       return true;
     }
   } catch (int e) {
+    // Go on
+  }
+  try {
+    CDF::Variable *pointLon = cdfObject->getVariable("lon_bnds");
+    CDF::Variable *pointLat = cdfObject->getVariable("lat_bnds");
+  } catch (int e) {
+    CDBError("lat or lon variables not found");
     return false;
+  }
+  try {
+    CDF::Dimension *gridpointDim = cdfObject->getDimension("gridpoint");
+    CDF::Variable *pointLon = cdfObject->getVariable("lon");
+    CDF::Variable *pointLat = cdfObject->getVariable("lat");
+    pointLon->getDimension("gridpoint");
+    pointLat->getDimension("gridpoint");
+    if ((pointLon->dimensionlinks.size() == 1) && (pointLon->dimensionlinks.size() == 1)) {
+      return true;
+    }
+
+  } catch (int e) {
   }
   return false;
 };

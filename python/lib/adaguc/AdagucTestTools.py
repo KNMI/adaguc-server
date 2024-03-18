@@ -1,3 +1,4 @@
+import asyncio
 import os
 from io import BytesIO
 import shutil
@@ -32,11 +33,6 @@ class AdagucTestTools:
         print("\n=== START ADAGUC LOGS ===")
         print(self.getLogFile())
         print("=== END ADAGUC LOGS ===")
-
-    def runRemoteADAGUCServer(self, url=None):
-        req = urllib.request.Request(url)
-        content = urllib.request.urlopen(req)
-        return [content.getcode(), content.read(), content.getheaders()]
 
     def runADAGUCServer(
         self,
@@ -74,14 +70,20 @@ class AdagucTestTools:
         os.chdir(ADAGUC_PATH + "/tests")
 
         filetogenerate = BytesIO()
-        status, headers, processErr = CGIRunner().run(
+        status, headers, processErr = asyncio.run(CGIRunner().run(
             adagucargs,
             url=url,
             output=filetogenerate,
             env=adagucenv,
             path=path,
             isCGI=isCGI,
-        )
+        ))
+
+        # Convert HTTP status codes
+        if status == 32:
+            status = 404
+        elif status == 33:
+            status = 422
 
         if (status != 0 and showLogOnError == True) or showLog == True:
             print("LOG:", ADAGUC_LOGFILE)
@@ -104,7 +106,7 @@ class AdagucTestTools:
                 print("Process: No HTTP Headers written")
 
             print("--- END ADAGUC DEBUG INFO ---\n")
-            return [status, filetogenerate, headers]
+            return status, filetogenerate, headers
 
         else:
             # The executable wrote to stderr, which is unwanted behaviour. Stderr should be empty when running adaguc-server.
@@ -118,7 +120,7 @@ class AdagucTestTools:
                 print(
                     "[WARNING]: Adaguc-server writes too many lines to the logfile, size = %d kilobytes"
                     % (logfileSize / 1024))
-            return [status, filetogenerate, headers]
+            return status, filetogenerate, headers
 
     def writetofile(self, filename, data):
         with open(filename, "wb") as f:

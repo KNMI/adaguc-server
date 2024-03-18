@@ -11,15 +11,12 @@ We will use Homebrew to install Unix tools and packages, see: https://brew.sh/
 
 ```shell
 brew update
-brew install netcdf postgresql@14 udunits proj@7 gdal cmake
+brew install netcdf postgresql@14 udunits proj gdal cmake
 ```
 
-Note that Adaguc requires an older version of the PROJ library. When we install this with Homebrew,
-it gets installed at a non-standard location.
-CMake will only find this if you use the following export before running CMake:
+Compile Adaguc using the provided script:
 
 ```shell
-export PROJ_ROOT=/opt/homebrew/opt/proj@7
 ./compile.sh
 ```
 

@@ -46,28 +46,28 @@ public:
       int min, max, index, red, green, blue, alpha;
     } attr;
     void addAttribute(const char *name, const char *value) {
-      if (equals("min", 3, name)) {
+      if (equals("min", name)) {
         attr.min = parseInt(value);
         return;
-      } else if (equals("max", 3, name)) {
+      } else if (equals("max", name)) {
         attr.max = parseInt(value);
         return;
-      } else if (equals("red", 3, name)) {
+      } else if (equals("red", name)) {
         attr.red = parseInt(value);
         return;
-      } else if (equals("blue", 4, name)) {
+      } else if (equals("blue", name)) {
         attr.blue = parseInt(value);
         return;
-      } else if (equals("green", 5, name)) {
+      } else if (equals("green", name)) {
         attr.green = parseInt(value);
         return;
-      } else if (equals("alpha", 5, name)) {
+      } else if (equals("alpha", name)) {
         attr.alpha = parseInt(value);
         return;
-      } else if (equals("index", 5, name)) {
+      } else if (equals("index", name)) {
         attr.index = parseInt(value);
         return;
-      } else if (equals("color", 5, name)) { // Hex color like: #A41D23
+      } else if (equals("color", name)) { // Hex color like: #A41D23
         if (value[0] == '#')
           if (strlen(value) == 7 || strlen(value) == 9) {
 
@@ -90,13 +90,13 @@ public:
       CT::string name, format, quality;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("name", 4, attrname)) {
+      if (equals("name", attrname)) {
         attr.name.copy(attrvalue);
         return;
-      } else if (equals("quality", 7, attrname)) {
+      } else if (equals("quality", attrname)) {
         attr.quality.copy(attrvalue);
         return;
-      } else if (equals("format", 6, attrname)) {
+      } else if (equals("format", attrname)) {
         attr.format.copy(attrvalue);
         return;
       }
@@ -110,10 +110,10 @@ public:
       CT::string defaultValue, force;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("defaultvalue", 12, attrname)) {
+      if (equals("defaultvalue", attrname)) {
         attr.defaultValue.copy(attrvalue);
         return;
-      } else if (equals("force", 5, attrname)) {
+      } else if (equals("force", attrname)) {
         attr.force.copy(attrvalue);
         return;
       }
@@ -127,7 +127,7 @@ public:
       CT::string debug;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("debug", 5, attrname)) {
+      if (equals("debug", attrname)) {
         attr.debug.copy(attrvalue);
         return;
       }
@@ -141,7 +141,7 @@ public:
       CT::string radius;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("radius", 6, attrname)) {
+      if (equals("radius", attrname)) {
         attr.radius.copy(attrvalue);
         return;
       }
@@ -155,10 +155,10 @@ public:
       CT::string skip, use;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("skip", 4, attrname)) {
+      if (equals("skip", attrname)) {
         attr.skip.copy(attrvalue);
         return;
-      } else if (equals("use", 3, attrname)) {
+      } else if (equals("use", attrname)) {
         attr.use.copy(attrvalue);
         return;
       }
@@ -172,10 +172,10 @@ public:
       CT::string name, coordinates;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("name", 4, attrname)) {
+      if (equals("name", attrname)) {
         attr.name.copy(attrvalue);
         return;
-      } else if (equals("coordinates", 11, attrname)) {
+      } else if (equals("coordinates", attrname)) {
         attr.coordinates.copy(attrvalue);
         return;
       }
@@ -191,25 +191,25 @@ public:
       float scale;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("linecolor", 9, attrname)) {
+      if (equals("linecolor", attrname)) {
         attr.linecolor.copy(attrvalue);
         return;
-      } else if (equals("linewidth", 9, attrname)) {
+      } else if (equals("linewidth", attrname)) {
         attr.linewidth.copy(attrvalue);
         return;
-      } else if (equals("scale", 5, attrname)) {
+      } else if (equals("scale", attrname)) {
         attr.scale = parseFloat(attrvalue);
         return;
-      } else if (equals("vectorstyle", 11, attrname)) {
+      } else if (equals("vectorstyle", attrname)) {
         attr.vectorstyle.copy(attrvalue);
         return;
-      } else if (equals("plotstationid", 13, attrname)) {
+      } else if (equals("plotstationid", attrname)) {
         attr.plotstationid.copy(attrvalue);
         return;
-      } else if (equals("textformat", 10, attrname)) {
+      } else if (equals("textformat", attrname)) {
         attr.textformat.copy(attrvalue);
         return;
-      } else if (equals("plotvalue", 9, attrname)) {
+      } else if (equals("plotvalue", attrname)) {
         attr.plotvalue.copy(attrvalue);
         return;
       }
@@ -224,58 +224,58 @@ public:
           maxpointcellsize;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("fillcolor", 9, attrname)) {
+      if (equals("fillcolor", attrname)) {
         attr.fillcolor.copy(attrvalue);
         return;
-      } else if (equals("linecolor", 9, attrname)) {
+      } else if (equals("linecolor", attrname)) {
         attr.linecolor.copy(attrvalue);
         return;
-      } else if (equals("textcolor", 9, attrname)) {
+      } else if (equals("textcolor", attrname)) {
         attr.textcolor.copy(attrvalue);
         return;
-      } else if (equals("fontfile", 8, attrname)) {
+      } else if (equals("fontfile", attrname)) {
         attr.fontfile.copy(attrvalue);
         return;
-      } else if (equals("fontsize", 8, attrname)) {
+      } else if (equals("fontsize", attrname)) {
         attr.fontsize.copy(attrvalue);
         return;
-      } else if (equals("discradius", 10, attrname)) {
+      } else if (equals("discradius", attrname)) {
         attr.discradius.copy(attrvalue);
         return;
-      } else if (equals("textradius", 10, attrname)) {
+      } else if (equals("textradius", attrname)) {
         attr.textradius.copy(attrvalue);
         return;
-      } else if (equals("dot", 3, attrname)) {
+      } else if (equals("dot", attrname)) {
         attr.dot.copy(attrvalue);
         return;
-      } else if (equals("anglestart", 10, attrname)) {
+      } else if (equals("anglestart", attrname)) {
         attr.anglestart.copy(attrvalue);
         return;
-      } else if (equals("anglestep", 9, attrname)) {
+      } else if (equals("anglestep", attrname)) {
         attr.anglestep.copy(attrvalue);
         return;
-      } else if (equals("textformat", 10, attrname)) {
+      } else if (equals("textformat", attrname)) {
         attr.textformat.copy(attrvalue);
         return;
-      } else if (equals("plotstationid", 13, attrname)) {
+      } else if (equals("plotstationid", attrname)) {
         attr.plotstationid.copy(attrvalue);
         return;
-      } else if (equals("pointstyle", 10, attrname)) {
+      } else if (equals("pointstyle", attrname)) {
         attr.pointstyle.copy(attrvalue);
         return;
-      } else if (equals("min", 3, attrname)) {
+      } else if (equals("min", attrname)) {
         attr.min.copy(attrvalue);
         return;
-      } else if (equals("max", 3, attrname)) {
+      } else if (equals("max", attrname)) {
         attr.max.copy(attrvalue);
         return;
-      } else if (equals("symbol", 6, attrname)) {
+      } else if (equals("symbol", attrname)) {
         attr.symbol.copy(attrvalue);
         return;
-      } else if (equals("maxpointspercell", 16, attrname)) {
+      } else if (equals("maxpointspercell", attrname)) {
         attr.maxpointspercell.copy(attrvalue);
         return;
-      } else if (equals("maxpointcellsize", 16, attrname)) {
+      } else if (equals("maxpointcellsize", attrname)) {
         attr.maxpointcellsize.copy(attrvalue);
         return;
       }
@@ -297,32 +297,32 @@ public:
         if (value != NULL) this->value.copy(value);
       if (rc == 1) {
         pt2Class = NULL;
-        if (equals("palette", 7, name)) {
+        if (equals("palette", name)) {
           XMLE_ADDOBJ(palette);
         }
       }
       if (pt2Class != NULL) pt2Class->addElement(baseClass, rc - pt2Class->level, name, value);
     }
     void addAttribute(const char *name, const char *value) {
-      if (equals("name", 4, name)) {
+      if (equals("name", name)) {
         attr.name.copy(value);
         return;
-      } else if (equals("type", 4, name)) {
+      } else if (equals("type", name)) {
         attr.type.copy(value);
         return;
-      } else if (equals("file", 4, name)) {
+      } else if (equals("file", name)) {
         attr.file.copy(value);
         return;
-      } else if (equals("tickround", 9, name)) {
+      } else if (equals("tickround", name)) {
         attr.tickround.copy(value);
         return;
-      } else if (equals("tickinterval", 12, name)) {
+      } else if (equals("tickinterval", name)) {
         attr.tickinterval.copy(value);
         return;
-      } else if (equals("fixedclasses", 12, name)) {
+      } else if (equals("fixedclasses", name)) {
         attr.fixedclasses.copy(value);
         return;
-      } else if (equals("textformatting", 14, name)) {
+      } else if (equals("textformatting", name)) {
         attr.textformatting.copy(value);
         return;
       }
@@ -345,34 +345,34 @@ public:
       CT::string width, dashing, linecolor, textcolor, textstrokecolor, classes, interval, textformatting, textsize, textstrokewidth;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("width", 5, attrname)) {
+      if (equals("width", attrname)) {
         attr.width.copy(attrvalue);
         return;
-      } else if (equals("dashing", 7, attrname)) {
+      } else if (equals("dashing", attrname)) {
         attr.dashing.copy(attrvalue);
         return;
-      } else if (equals("linecolor", 9, attrname)) {
+      } else if (equals("linecolor", attrname)) {
         attr.linecolor.copy(attrvalue);
         return;
-      } else if (equals("textsize", 8, attrname)) {
+      } else if (equals("textsize", attrname)) {
         attr.textsize.copy(attrvalue);
         return;
-      } else if (equals("textcolor", 9, attrname)) {
+      } else if (equals("textcolor", attrname)) {
         attr.textcolor.copy(attrvalue);
         return;
-      } else if (equals("textstrokecolor", 15, attrname)) {
+      } else if (equals("textstrokecolor", attrname)) {
         attr.textstrokecolor.copy(attrvalue);
         return;
-      } else if (equals("classes", 7, attrname)) {
+      } else if (equals("classes", attrname)) {
         attr.classes.copy(attrvalue);
         return;
-      } else if (equals("interval", 8, attrname)) {
+      } else if (equals("interval", attrname)) {
         attr.interval.copy(attrvalue);
         return;
-      } else if (equals("textformatting", 14, attrname)) {
+      } else if (equals("textformatting", attrname)) {
         attr.textformatting.copy(attrvalue);
         return;
-      } else if (equals("textstrokewidth", 15, attrname)) {
+      } else if (equals("textstrokewidth", attrname)) {
         attr.textstrokewidth.copy(attrvalue);
         return;
       }
@@ -386,19 +386,19 @@ public:
       CT::string min, max, label, fillcolor, bgcolor;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("min", 3, attrname)) {
+      if (equals("min", attrname)) {
         attr.min.copy(attrvalue);
         return;
-      } else if (equals("max", 3, attrname)) {
+      } else if (equals("max", attrname)) {
         attr.max.copy(attrvalue);
         return;
-      } else if (equals("label", 5, attrname)) {
+      } else if (equals("label", attrname)) {
         attr.label.copy(attrvalue);
         return;
-      } else if (equals("fillcolor", 9, attrname)) {
+      } else if (equals("fillcolor", attrname)) {
         attr.fillcolor.copy(attrvalue);
         return;
-      } else if (equals("bgcolor", 7, attrname)) {
+      } else if (equals("bgcolor", attrname)) {
         attr.bgcolor.copy(attrvalue);
         return;
       }
@@ -414,22 +414,22 @@ public:
       CT::string offsetX, offsetY;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("min", 3, attrname)) {
+      if (equals("min", attrname)) {
         attr.min.copy(attrvalue);
         return;
-      } else if (equals("max", 3, attrname)) {
+      } else if (equals("max", attrname)) {
         attr.max.copy(attrvalue);
         return;
-      } else if (equals("file", 4, attrname)) {
+      } else if (equals("file", attrname)) {
         attr.file.copy(attrvalue);
         return;
-      } else if (equals("binary_and", 10, attrname)) {
+      } else if (equals("binary_and", attrname)) {
         attr.binary_and.copy(attrvalue);
         return;
-      } else if (equals("offset_x", 8, attrname)) {
+      } else if (equals("offset_x", attrname)) {
         attr.offsetX.copy(attrvalue);
         return;
-      } else if (equals("offset_y", 8, attrname)) {
+      } else if (equals("offset_y", attrname)) {
         attr.offsetY.copy(attrvalue);
         return;
       }
@@ -444,13 +444,13 @@ public:
       CT::string units, standard_name, variable_name;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("units", 5, attrname)) {
+      if (equals("units", attrname)) {
         attr.units.copy(attrvalue);
         return;
-      } else if (equals("standard_name", 13, attrname)) {
+      } else if (equals("standard_name", attrname)) {
         attr.standard_name.copy(attrvalue);
         return;
-      } else if (equals("variable_name", 13, attrname)) {
+      } else if (equals("variable_name", attrname)) {
         attr.variable_name.copy(attrvalue);
         return;
       }
@@ -464,7 +464,7 @@ public:
       CT::string value;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("value", 5, attrname)) {
+      if (equals("value", attrname)) {
         attr.value.copy(attrvalue);
         return;
       }
@@ -479,10 +479,10 @@ public:
       CT::string min, max;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("min", 3, attrname)) {
+      if (equals("min", attrname)) {
         attr.min.copy(attrvalue);
         return;
-      } else if (equals("max", 3, attrname)) {
+      } else if (equals("max", attrname)) {
         attr.max.copy(attrvalue);
         return;
       }
@@ -496,10 +496,10 @@ public:
       CT::string location, size;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("size", 4, attrname)) {
+      if (equals("size", attrname)) {
         attr.size.copy(attrvalue);
         return;
-      } else if (equals("location", 8, attrname)) {
+      } else if (equals("location", attrname)) {
         attr.location.copy(attrvalue);
         return;
       }
@@ -512,10 +512,10 @@ public:
       CT::string location, size;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("size", 4, attrname)) {
+      if (equals("size", attrname)) {
         attr.size.copy(attrvalue);
         return;
-      } else if (equals("location", 8, attrname)) {
+      } else if (equals("location", attrname)) {
         attr.location.copy(attrvalue);
         return;
       }
@@ -528,10 +528,10 @@ public:
       CT::string location, size;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("size", 4, attrname)) {
+      if (equals("size", attrname)) {
         attr.size.copy(attrvalue);
         return;
-      } else if (equals("location", 8, attrname)) {
+      } else if (equals("location", attrname)) {
         attr.location.copy(attrvalue);
         return;
       }
@@ -545,10 +545,10 @@ public:
       CT::string location, size;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("size", 4, attrname)) {
+      if (equals("size", attrname)) {
         attr.size.copy(attrvalue);
         return;
-      } else if (equals("location", 8, attrname)) {
+      } else if (equals("location", attrname)) {
         attr.location.copy(attrvalue);
         return;
       }
@@ -561,10 +561,10 @@ public:
       CT::string location, size;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("size", 4, attrname)) {
+      if (equals("size", attrname)) {
         attr.size.copy(attrvalue);
         return;
-      } else if (equals("location", 8, attrname)) {
+      } else if (equals("location", attrname)) {
         attr.location.copy(attrvalue);
         return;
       }
@@ -578,10 +578,10 @@ public:
       CT::string location, size;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("size", 4, attrname)) {
+      if (equals("size", attrname)) {
         attr.size.copy(attrvalue);
         return;
-      } else if (equals("location", 8, attrname)) {
+      } else if (equals("location", attrname)) {
         attr.location.copy(attrvalue);
         return;
       }
@@ -595,10 +595,10 @@ public:
       CT::string basedir, prefix;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("prefix", 6, attrname)) {
+      if (equals("prefix", attrname)) {
         attr.prefix.copy(attrvalue);
         return;
-      } else if (equals("basedir", 7, attrname)) {
+      } else if (equals("basedir", attrname)) {
         attr.basedir.copy(attrvalue);
         return;
       }
@@ -612,7 +612,7 @@ public:
       CT::string attribute;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("attribute", 9, attrname)) {
+      if (equals("attribute", attrname)) {
         attr.attribute.copy(attrvalue);
         return;
       }
@@ -639,9 +639,9 @@ public:
         if (value != NULL) this->value.copy(value);
       if (rc == 1) {
         pt2Class = NULL;
-        if (equals("Dir", 3, name)) {
+        if (equals("Dir", name)) {
           XMLE_ADDOBJ(Dir);
-        } else if (equals("ImageText", 9, name)) {
+        } else if (equals("ImageText", name)) {
           XMLE_ADDOBJ(ImageText);
         }
       }
@@ -649,13 +649,13 @@ public:
     }
 
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("enableautoopendap", 17, attrname)) {
+      if (equals("enableautoopendap", attrname)) {
         attr.enableautoopendap.copy(attrvalue);
         return;
-      } else if (equals("enablecache", 11, attrname)) {
+      } else if (equals("enablecache", attrname)) {
         attr.enablecache.copy(attrvalue);
         return;
-      } else if (equals("enablelocalfile", 15, attrname)) {
+      } else if (equals("enablelocalfile", attrname)) {
         attr.enablelocalfile.copy(attrvalue);
         return;
       }
@@ -669,10 +669,10 @@ public:
       CT::string enabled, location;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("enabled", 7, attrname)) {
+      if (equals("enabled", attrname)) {
         attr.enabled.copy(attrvalue);
         return;
-      } else if (equals("location", 8, attrname)) {
+      } else if (equals("location", attrname)) {
         attr.location.copy(attrvalue);
         return;
       }
@@ -686,7 +686,7 @@ public:
       CT::string location;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("location", 8, attrname)) {
+      if (equals("location", attrname)) {
         attr.location.copy(attrvalue);
         return;
       }
@@ -700,13 +700,13 @@ public:
       CT::string name, title, abstract;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("name", 4, attrname)) {
+      if (equals("name", attrname)) {
         attr.name.copy(attrvalue);
         return;
-      } else if (equals("title", 5, attrname)) {
+      } else if (equals("title", attrname)) {
         attr.title.copy(attrvalue);
         return;
-      } else if (equals("abstract", 8, attrname)) {
+      } else if (equals("abstract", attrname)) {
         attr.abstract.copy(attrvalue);
         return;
       }
@@ -722,46 +722,46 @@ public:
       CT::string labelpadding;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("match", 5, attrname)) {
+      if (equals("match", attrname)) {
         attr.match.copy(attrvalue);
         return;
-      } else if (equals("label", 5, attrname)) {
+      } else if (equals("label", attrname)) {
         attr.label.copy(attrvalue);
         return;
-      } else if (equals("matchid", 7, attrname)) {
+      } else if (equals("matchid", attrname)) {
         attr.matchid.copy(attrvalue);
         return;
-      } else if (equals("fillcolor", 9, attrname)) {
+      } else if (equals("fillcolor", attrname)) {
         attr.fillcolor.copy(attrvalue);
         return;
-      } else if (equals("bgcolor", 7, attrname)) {
+      } else if (equals("bgcolor", attrname)) {
         attr.bgcolor.copy(attrvalue);
         return;
-      } else if (equals("borderwidth", 11, attrname)) {
+      } else if (equals("borderwidth", attrname)) {
         attr.borderwidth.copy(attrvalue);
         return;
-      } else if (equals("bordercolor", 11, attrname)) {
+      } else if (equals("bordercolor", attrname)) {
         attr.bordercolor.copy(attrvalue);
         return;
-      } else if (equals("labelfontsize", 13, attrname)) {
+      } else if (equals("labelfontsize", attrname)) {
         attr.labelfontsize.copy(attrvalue);
         return;
-      } else if (equals("labelfontfile", 13, attrname)) {
+      } else if (equals("labelfontfile", attrname)) {
         attr.labelfontfile.copy(attrvalue);
         return;
-      } else if (equals("labelcolor", 10, attrname)) {
+      } else if (equals("labelcolor", attrname)) {
         attr.labelcolor.copy(attrvalue);
         return;
-      } else if (equals("labelpropertyname", 17, attrname)) {
+      } else if (equals("labelpropertyname", attrname)) {
         attr.labelpropertyname.copy(attrvalue);
         return;
-      } else if (equals("labelpropertyformat", 19, attrname)) {
+      } else if (equals("labelpropertyformat", attrname)) {
         attr.labelpropertyformat.copy(attrvalue);
         return;
-      } else if (equals("labelangle", 10, attrname)) {
+      } else if (equals("labelangle", attrname)) {
         attr.labelangle.copy(attrvalue);
         return;
-      } else if (equals("labelpadding", 12, attrname)) {
+      } else if (equals("labelpadding", attrname)) {
         attr.labelpadding.copy(attrvalue);
         return;
       }
@@ -775,19 +775,19 @@ public:
       CT::string distancex, distancey, discradius, mode, color;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("distancex", 9, attrname)) {
+      if (equals("distancex", attrname)) {
         attr.distancex.copy(attrvalue);
         return;
-      } else if (equals("distancey", 9, attrname)) {
+      } else if (equals("distancey", attrname)) {
         attr.distancey.copy(attrvalue);
         return;
-      } else if (equals("discradius", 10, attrname)) {
+      } else if (equals("discradius", attrname)) {
         attr.discradius.copy(attrvalue);
         return;
-      } else if (equals("mode", 4, attrname)) {
+      } else if (equals("mode", attrname)) {
         attr.mode.copy(attrvalue);
         return;
-      } else if (equals("color", 5, attrname)) {
+      } else if (equals("color", attrname)) {
         attr.color.copy(attrvalue);
         return;
       }
@@ -803,28 +803,28 @@ public:
       CT::string settings, striding, renderer, scalewidth, scalecontours, renderhint, randomizefeatures, featuresoverlap;
     } attr;
     void addAttribute(const char *name, const char *value) {
-      if (equals("settings", 8, name)) {
+      if (equals("settings", name)) {
         attr.settings.copy(value);
         return;
-      } else if (equals("renderer", 8, name)) {
+      } else if (equals("renderer", name)) {
         attr.renderer.copy(value);
         return;
-      } else if (equals("striding", 8, name)) {
+      } else if (equals("striding", name)) {
         attr.striding.copy(value);
         return;
-      } else if (equals("renderhint", 10, name)) {
+      } else if (equals("renderhint", name)) {
         attr.renderhint.copy(value);
         return;
-      } else if (equals("scalewidth", 10, name)) {
+      } else if (equals("scalewidth", name)) {
         attr.scalewidth.copy(value);
         return;
-      } else if (equals("scalecontours", 13, name)) {
+      } else if (equals("scalecontours", name)) {
         attr.scalecontours.copy(value);
         return;
-      } else if (equals("randomizefeatures", 17, name)) {
+      } else if (equals("randomizefeatures", name)) {
         attr.randomizefeatures.copy(value);
         return;
-      } else if (equals("featuresoverlap", 15, name)) {
+      } else if (equals("featuresoverlap", name)) {
         attr.featuresoverlap.copy(value);
         return;
       }
@@ -896,53 +896,53 @@ public:
         if (value != NULL) this->value.copy(value);
       if (rc == 1) {
 
-        if (equals("Thinning", 8, name)) {
+        if (equals("Thinning", name)) {
           XMLE_ADDOBJ(Thinning);
-        } else if (equals("Point", 5, name)) {
+        } else if (equals("Point", name)) {
           XMLE_ADDOBJ(Point);
-        } else if (equals("Vector", 6, name)) {
+        } else if (equals("Vector", name)) {
           XMLE_ADDOBJ(Vector);
-        } else if (equals("FilterPoints", 12, name)) {
+        } else if (equals("FilterPoints", name)) {
           XMLE_ADDOBJ(FilterPoints);
-        } else if (equals("Legend", 6, name)) {
+        } else if (equals("Legend", name)) {
           XMLE_ADDOBJ(Legend);
-        } else if (equals("Scale", 5, name)) {
+        } else if (equals("Scale", name)) {
           XMLE_ADDOBJ(Scale);
-        } else if (equals("Offset", 6, name)) {
+        } else if (equals("Offset", name)) {
           XMLE_ADDOBJ(Offset);
-        } else if (equals("Min", 3, name)) {
+        } else if (equals("Min", name)) {
           XMLE_ADDOBJ(Min);
-        } else if (equals("Max", 3, name)) {
+        } else if (equals("Max", name)) {
           XMLE_ADDOBJ(Max);
-        } else if (equals("Log", 3, name)) {
+        } else if (equals("Log", name)) {
           XMLE_ADDOBJ(Log);
-        } else if (equals("ValueRange", 10, name)) {
+        } else if (equals("ValueRange", name)) {
           XMLE_ADDOBJ(ValueRange);
-        } else if (equals("ContourIntervalL", 16, name)) {
+        } else if (equals("ContourIntervalL", name)) {
           XMLE_ADDOBJ(ContourIntervalL);
-        } else if (equals("ContourIntervalH", 16, name)) {
+        } else if (equals("ContourIntervalH", name)) {
           XMLE_ADDOBJ(ContourIntervalH);
-        } else if (equals("RenderMethod", 12, name)) {
+        } else if (equals("RenderMethod", name)) {
           XMLE_ADDOBJ(RenderMethod);
-        } else if (equals("ShadeInterval", 13, name)) {
+        } else if (equals("ShadeInterval", name)) {
           XMLE_ADDOBJ(ShadeInterval);
-        } else if (equals("SymbolInterval", 14, name)) {
+        } else if (equals("SymbolInterval", name)) {
           XMLE_ADDOBJ(SymbolInterval);
-        } else if (equals("ContourLine", 11, name)) {
+        } else if (equals("ContourLine", name)) {
           XMLE_ADDOBJ(ContourLine);
-        } else if (equals("NameMapping", 11, name)) {
+        } else if (equals("NameMapping", name)) {
           XMLE_ADDOBJ(NameMapping);
-        } else if (equals("SmoothingFilter", 15, name)) {
+        } else if (equals("SmoothingFilter", name)) {
           XMLE_ADDOBJ(SmoothingFilter);
-        } else if (equals("StandardNames", 13, name)) {
+        } else if (equals("StandardNames", name)) {
           XMLE_ADDOBJ(StandardNames);
-        } else if (equals("LegendGraphic", 13, name)) {
+        } else if (equals("LegendGraphic", name)) {
           XMLE_ADDOBJ(LegendGraphic);
-        } else if (equals("FeatureInterval", 15, name)) {
+        } else if (equals("FeatureInterval", name)) {
           XMLE_ADDOBJ(FeatureInterval);
-        } else if (equals("Stippling", 9, name)) {
+        } else if (equals("Stippling", name)) {
           XMLE_ADDOBJ(Stippling);
-        } else if (equals("RenderSettings", 14, name)) {
+        } else if (equals("RenderSettings", name)) {
           XMLE_ADDOBJ(RenderSettings);
         }
       }
@@ -953,7 +953,7 @@ public:
     }
 
     void addAttribute(const char *name, const char *value) {
-      if (equals("name", 4, name)) {
+      if (equals("name", name)) {
         attr.name.copy(value);
         return;
       }
@@ -972,10 +972,10 @@ public:
       CT::string name, onlineresource;
     } attr;
     void addAttribute(const char *name, const char *value) {
-      if (equals("name", 4, name)) {
+      if (equals("name", name)) {
         attr.name.copy(value);
         return;
-      } else if (equals("onlineresource", 14, name)) {
+      } else if (equals("onlineresource", name)) {
         attr.onlineresource.copy(value);
         return;
       }
@@ -989,10 +989,10 @@ public:
       CT::string authority, id;
     } attr;
     void addAttribute(const char *name, const char *value) {
-      if (equals("id", 2, name)) {
+      if (equals("id", name)) {
         attr.id.copy(value);
         return;
-      } else if (equals("authority", 9, name)) {
+      } else if (equals("authority", name)) {
         attr.authority.copy(value);
         return;
       }
@@ -1006,7 +1006,7 @@ public:
       CT::string force;
     } attr;
     void addAttribute(const char *name, const char *value) {
-      if (equals("force", 5, name)) {
+      if (equals("force", name)) {
         attr.force.copy(value);
         return;
       }
@@ -1021,16 +1021,16 @@ public:
       CT::string orgname, long_name, standard_name, units;
     } attr;
     void addAttribute(const char *name, const char *value) {
-      if (equals("orgname", 7, name)) {
+      if (equals("orgname", name)) {
         attr.orgname.copy(value);
         return;
-      } else if (equals("long_name", 9, name)) {
+      } else if (equals("long_name", name)) {
         attr.long_name.copy(value);
         return;
-      } else if (equals("standard_name", 13, name)) {
+      } else if (equals("standard_name", name)) {
         attr.standard_name.copy(value);
         return;
-      } else if (equals("units", 5, name)) {
+      } else if (equals("units", name)) {
         attr.units.copy(value);
         return;
       }
@@ -1043,7 +1043,7 @@ public:
       CT::string useendtime;
     } attr;
     void addAttribute(const char *name, const char *value) {
-      if (equals("useendtime", 10, name)) {
+      if (equals("useendtime", name)) {
         attr.useendtime.copy(value);
         return;
       }
@@ -1066,22 +1066,22 @@ public:
     }
 
     void addAttribute(const char *name, const char *value) {
-      if (equals("filter", 6, name)) {
+      if (equals("filter", name)) {
         attr.filter.copy(value);
         return;
-      } else if (equals("gfi_openall", 11, name)) {
+      } else if (equals("gfi_openall", name)) {
         attr.gfi_openall.copy(value);
         return;
-      } else if (equals("maxquerylimit", 13, name)) {
+      } else if (equals("maxquerylimit", name)) {
         attr.maxquerylimit.copy(value);
         return;
-      } else if (equals("ncml", 4, name)) {
+      } else if (equals("ncml", name)) {
         attr.ncml.copy(value);
         return;
-      } else if (equals("retentionperiod", 15, name)) {
+      } else if (equals("retentionperiod", name)) {
         attr.retentionperiod.copy(value);
         return;
-      } else if (equals("retentiontype", 13, name)) {
+      } else if (equals("retentiontype", name)) {
         attr.retentiontype.copy(value);
         return;
       }
@@ -1105,70 +1105,70 @@ public:
     //
 
     void addAttribute(const char *name, const char *value) {
-      if (equals("tilemode", 8, name)) {
+      if (equals("tilemode", name)) {
         attr.tilemode.copy(value);
         return;
-      } else if (equals("debug", 5, name)) {
+      } else if (equals("debug", name)) {
         attr.debug.copy(value);
         return;
-      } else if (equals("prefix", 6, name)) {
+      } else if (equals("prefix", name)) {
         attr.prefix.copy(value);
         return;
-      } else if (equals("readonly", 8, name)) {
+      } else if (equals("readonly", name)) {
         attr.readonly.copy(value);
         return;
-      } else if (equals("threads", 7, name)) {
+      } else if (equals("threads", name)) {
         attr.threads.copy(value);
         return;
-      } else if (equals("tilewidthpx", 11, name)) {
+      } else if (equals("tilewidthpx", name)) {
         attr.tilewidthpx.copy(value);
         return;
-      } else if (equals("tileheightpx", 12, name)) {
+      } else if (equals("tileheightpx", name)) {
         attr.tileheightpx.copy(value);
         return;
-      } else if (equals("tilecellsizex", 13, name)) {
+      } else if (equals("tilecellsizex", name)) {
         attr.tilecellsizex.copy(value);
         return;
-      } else if (equals("tilecellsizey", 13, name)) {
+      } else if (equals("tilecellsizey", name)) {
         attr.tilecellsizey.copy(value);
         return;
-      } else if (equals("left", 4, name)) {
+      } else if (equals("left", name)) {
         attr.left.copy(value);
         return;
-      } else if (equals("bottom", 6, name)) {
+      } else if (equals("bottom", name)) {
         attr.bottom.copy(value);
         return;
-      } else if (equals("right", 5, name)) {
+      } else if (equals("right", name)) {
         attr.right.copy(value);
         return;
-      } else if (equals("top", 3, name)) {
+      } else if (equals("top", name)) {
         attr.top.copy(value);
         return;
-      } else if (equals("numtilesx", 9, name)) {
+      } else if (equals("numtilesx", name)) {
         attr.numtilesx.copy(value);
         return;
-      } else if (equals("numtilesy", 9, name)) {
+      } else if (equals("numtilesy", name)) {
         attr.numtilesy.copy(value);
         return;
-      } else if (equals("tileprojection", 14, name)) {
+      } else if (equals("tileprojection", name)) {
         attr.tileprojection.copy(value);
         return;
-      } else if (equals("minlevel", 8, name)) {
+      } else if (equals("minlevel", name)) {
         attr.minlevel.copy(value);
         return;
-      } else if (equals("maxlevel", 8, name)) {
+      } else if (equals("maxlevel", name)) {
         attr.maxlevel.copy(value);
         return;
-      } else if (equals("tilepath", 8, name)) {
+      } else if (equals("tilepath", name)) {
         attr.tilepath.copy(value);
         return;
-      } else if (equals("optimizeextent", 14, name)) {
+      } else if (equals("optimizeextent", name)) {
         attr.optimizeextent.copy(value);
         return;
-      } else if (equals("maxtilesinimage", 15, name)) {
+      } else if (equals("maxtilesinimage", name)) {
         attr.maxtilesinimage.copy(value);
         return;
-      } else if (equals("autotile", 8, name)) {
+      } else if (equals("autotile", name)) {
         attr.autotile.copy(value);
         return;
       }
@@ -1182,7 +1182,7 @@ public:
       CT::string value;
     } attr;
     void addAttribute(const char *name, const char *value) {
-      if (equals("value", 5, name)) {
+      if (equals("value", name)) {
         attr.value.copy(value);
         return;
       }
@@ -1195,16 +1195,16 @@ public:
       float minx, miny, maxx, maxy;
     } attr;
     void addAttribute(const char *name, const char *value) {
-      if (equals("minx", 4, name)) {
+      if (equals("minx", name)) {
         attr.minx = parseFloat(value);
         return;
-      } else if (equals("miny", 4, name)) {
+      } else if (equals("miny", name)) {
         attr.miny = parseFloat(value);
         return;
-      } else if (equals("maxx", 4, name)) {
+      } else if (equals("maxx", name)) {
         attr.maxx = parseFloat(value);
         return;
-      } else if (equals("maxy", 4, name)) {
+      } else if (equals("maxy", name)) {
         attr.maxy = parseFloat(value);
         return;
       }
@@ -1219,34 +1219,34 @@ public:
       bool hidden = false;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("name", 4, attrname)) {
+      if (equals("name", attrname)) {
         attr.name.copy(attrvalue);
         return;
-      } else if (equals("units", 5, attrname)) {
+      } else if (equals("units", attrname)) {
         attr.units.copy(attrvalue);
         return;
-      } else if (equals("default", 7, attrname)) {
+      } else if (equals("default", attrname)) {
         attr.defaultV.copy(attrvalue);
         return;
-      } else if (equals("interval", 8, attrname)) {
+      } else if (equals("interval", attrname)) {
         attr.interval.copy(attrvalue);
         return;
-      } else if (equals("quantizeperiod", 14, attrname)) {
+      } else if (equals("quantizeperiod", attrname)) {
         attr.quantizeperiod.copy(attrvalue);
         return;
-      } else if (equals("fixvalue", 8, attrname)) {
+      } else if (equals("fixvalue", attrname)) {
         attr.fixvalue.copy(attrvalue);
         return;
-      } else if (equals("hidden", 6, attrname)) {
-        if (equals("false", 5, attrvalue)) {
+      } else if (equals("hidden", attrname)) {
+        if (equals("false", attrvalue)) {
           attr.hidden = false;
         }
-        if (equals("true", 4, attrvalue)) {
+        if (equals("true", attrvalue)) {
           attr.hidden = true;
         }
 
         return;
-      } else if (equals("quantizemethod", 14, attrname)) {
+      } else if (equals("quantizemethod", attrname)) {
         attr.quantizemethod.copy(attrvalue);
         return;
       }
@@ -1260,7 +1260,7 @@ public:
       CT::string value;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("value", 5, attrname)) {
+      if (equals("value", attrname)) {
         attr.value.copy(attrvalue);
         return;
       }
@@ -1273,7 +1273,7 @@ public:
       CT::string value;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("value", 5, attrname)) {
+      if (equals("value", attrname)) {
         attr.value.copy(attrvalue);
         return;
       }
@@ -1287,10 +1287,10 @@ public:
       CT::string name, defaultVal;
     } attr;
     void addAttribute(const char *name, const char *value) {
-      if (equals("name", 4, name)) {
+      if (equals("name", name)) {
         attr.name.copy(value);
         return;
-      } else if (equals("default", 7, name)) {
+      } else if (equals("default", name)) {
         attr.defaultVal.copy(value);
         return;
       }
@@ -1303,16 +1303,16 @@ public:
       CT::string enablecleanupsystem, cleanupsystemlimit, cache_age_cacheableresources, cache_age_volatileresources;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("enablecleanupsystem", 19, attrname)) {
+      if (equals("enablecleanupsystem", attrname)) {
         attr.enablecleanupsystem.copy(attrvalue);
         return;
-      } else if (equals("cleanupsystemlimit", 18, attrname)) {
+      } else if (equals("cleanupsystemlimit", attrname)) {
         attr.cleanupsystemlimit.copy(attrvalue);
         return;
-      } else if (equals("cache_age_cacheableresources", 28, attrname)) {
+      } else if (equals("cache_age_cacheableresources", attrname)) {
         attr.cache_age_cacheableresources.copy(attrvalue);
         return;
-      } else if (equals("cache_age_volatileresources", 27, attrname)) {
+      } else if (equals("cache_age_volatileresources", attrname)) {
         attr.cache_age_volatileresources.copy(attrvalue);
         return;
       }
@@ -1325,7 +1325,7 @@ public:
       CT::string value;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("value", 5, attrname)) {
+      if (equals("value", attrname)) {
         attr.value.copy(attrvalue);
         return;
       }
@@ -1338,13 +1338,13 @@ public:
       CT::string parameters, dbtype, maxquerylimit;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("parameters", 10, attrname)) {
+      if (equals("parameters", attrname)) {
         attr.parameters.copy(attrvalue);
         return;
-      } else if (equals("dbtype", 6, attrname)) {
+      } else if (equals("dbtype", attrname)) {
         attr.dbtype.copy(attrvalue);
         return;
-      } else if (equals("maxquerylimit", 13, attrname)) {
+      } else if (equals("maxquerylimit", attrname)) {
         attr.maxquerylimit.copy(attrvalue);
         return;
       }
@@ -1359,11 +1359,11 @@ public:
     std::vector<XMLE_LatLonBox *> LatLonBox;
     ~XMLE_Projection() { XMLE_DELOBJ(LatLonBox); }
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("id", 2, attrname)) {
+      if (equals("id", attrname)) {
         attr.id.copy(attrvalue);
         return;
       }
-      if (equals("proj4", 5, attrname)) {
+      if (equals("proj4", attrname)) {
         attr.proj4.copy(attrvalue);
         return;
       }
@@ -1375,7 +1375,7 @@ public:
         if (value != NULL) this->value.copy(value);
       if (rc == 1) {
         pt2Class = NULL;
-        if (equals("LatLonBox", 9, name)) {
+        if (equals("LatLonBox", name)) {
           XMLE_ADDOBJ(LatLonBox);
         }
       }
@@ -1389,10 +1389,10 @@ public:
       CT::string enabled, optimizeextent;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("enabled", 7, attrname)) {
+      if (equals("enabled", attrname)) {
         attr.enabled.copy(attrvalue);
         return;
-      } else if (equals("optimizeextent", 14, attrname)) {
+      } else if (equals("optimizeextent", attrname)) {
         attr.optimizeextent.copy(attrvalue);
         return;
       }
@@ -1405,19 +1405,19 @@ public:
       CT::string name, driver, mimetype, options;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("name", 4, attrname)) {
+      if (equals("name", attrname)) {
         attr.name.copy(attrvalue);
         return;
       }
-      if (equals("driver", 6, attrname)) {
+      if (equals("driver", attrname)) {
         attr.driver.copy(attrvalue);
         return;
       }
-      if (equals("mimetype", 8, attrname)) {
+      if (equals("mimetype", attrname)) {
         attr.mimetype.copy(attrvalue);
         return;
       }
-      if (equals("options", 7, attrname)) {
+      if (equals("options", attrname)) {
         attr.options.copy(attrvalue);
         return;
       }
@@ -1441,11 +1441,11 @@ public:
         if (value != NULL) this->value.copy(value);
       if (rc == 1) {
         pt2Class = NULL;
-        if (equals("Name", 4, name)) {
+        if (equals("Name", name)) {
           XMLE_ADDOBJ(Name);
-        } else if (equals("Title", 5, name)) {
+        } else if (equals("Title", name)) {
           XMLE_ADDOBJ(Title);
-        } else if (equals("Abstract", 8, name)) {
+        } else if (equals("Abstract", name)) {
           XMLE_ADDOBJ(Abstract);
         }
       }
@@ -1476,13 +1476,13 @@ public:
         if (value != NULL) this->value.copy(value);
       if (rc == 1) {
         pt2Class = NULL;
-        if (equals("ViewServiceCSW", 14, name)) {
+        if (equals("ViewServiceCSW", name)) {
           XMLE_ADDOBJ(ViewServiceCSW);
-        } else if (equals("DatasetCSW", 10, name)) {
+        } else if (equals("DatasetCSW", name)) {
           XMLE_ADDOBJ(DatasetCSW);
-        } else if (equals("AuthorityURL", 12, name)) {
+        } else if (equals("AuthorityURL", name)) {
           XMLE_ADDOBJ(AuthorityURL);
-        } else if (equals("Identifier", 10, name)) {
+        } else if (equals("Identifier", name)) {
           XMLE_ADDOBJ(Identifier);
         }
       }
@@ -1528,29 +1528,29 @@ public:
         if (value != NULL) this->value.copy(value);
       if (rc == 1) {
         pt2Class = NULL;
-        if (equals("Title", 5, name)) {
+        if (equals("Title", name)) {
           XMLE_ADDOBJ(Title);
-        } else if (equals("GridFont", 8, name)) {
+        } else if (equals("GridFont", name)) {
           XMLE_ADDOBJ(GridFont);
-        } else if (equals("Abstract", 8, name)) {
+        } else if (equals("Abstract", name)) {
           XMLE_ADDOBJ(Abstract);
-        } else if (equals("RootLayer", 9, name)) {
+        } else if (equals("RootLayer", name)) {
           XMLE_ADDOBJ(RootLayer);
-        } else if (equals("WMSFormat", 9, name)) {
+        } else if (equals("WMSFormat", name)) {
           XMLE_ADDOBJ(WMSFormat);
-        } else if (equals("WMSExceptions", 13, name)) {
+        } else if (equals("WMSExceptions", name)) {
           XMLE_ADDOBJ(WMSExceptions);
-        } else if (equals("TitleFont", 9, name)) {
+        } else if (equals("TitleFont", name)) {
           XMLE_ADDOBJ(TitleFont);
-        } else if (equals("ContourFont", 11, name)) {
+        } else if (equals("ContourFont", name)) {
           XMLE_ADDOBJ(ContourFont);
-        } else if (equals("LegendFont", 10, name)) {
+        } else if (equals("LegendFont", name)) {
           XMLE_ADDOBJ(LegendFont);
-        } else if (equals("SubTitleFont", 12, name)) {
+        } else if (equals("SubTitleFont", name)) {
           XMLE_ADDOBJ(SubTitleFont);
-        } else if (equals("DimensionFont", 13, name)) {
+        } else if (equals("DimensionFont", name)) {
           XMLE_ADDOBJ(DimensionFont);
-        } else if (equals("Inspire", 7, name)) {
+        } else if (equals("Inspire", name)) {
           XMLE_SETOBJ(Inspire);
         }
         // else if(equals("Keywords",8,name)){XMLE_ADDOBJ(Keywords);}
@@ -1567,10 +1567,10 @@ public:
       CT::string enabled, path;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("enabled", 7, attrname)) {
+      if (equals("enabled", attrname)) {
         attr.enabled.copy(attrvalue);
         return;
-      } else if (equals("path", 4, attrname)) {
+      } else if (equals("path", attrname)) {
         attr.path.copy(attrvalue);
         return;
       }
@@ -1596,13 +1596,13 @@ public:
         if (value != NULL) this->value.copy(value);
       if (rc == 1) {
         pt2Class = NULL;
-        if (equals("Name", 4, name)) {
+        if (equals("Name", name)) {
           XMLE_ADDOBJ(Name);
-        } else if (equals("Title", 5, name)) {
+        } else if (equals("Title", name)) {
           XMLE_ADDOBJ(Title);
-        } else if (equals("Abstract", 8, name)) {
+        } else if (equals("Abstract", name)) {
           XMLE_ADDOBJ(Abstract);
-        } else if (equals("WCSFormat", 9, name)) {
+        } else if (equals("WCSFormat", name)) {
           XMLE_ADDOBJ(WCSFormat);
         }
       }
@@ -1617,10 +1617,10 @@ public:
       CT::string enabled, cachefile;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("enabled", 7, attrname)) {
+      if (equals("enabled", attrname)) {
         attr.enabled.copy(attrvalue);
         return;
-      } else if (equals("cachefile", 9, attrname)) {
+      } else if (equals("cachefile", attrname)) {
         attr.cachefile.copy(attrvalue);
         return;
       }
@@ -1641,19 +1641,19 @@ public:
       }
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("layer", 5, attrname)) {
+      if (equals("layer", attrname)) {
         attr.layer.copy(attrvalue);
         return;
-      } else if (equals("service", 7, attrname)) {
+      } else if (equals("service", attrname)) {
         attr.service.copy(attrvalue);
         return;
-      } else if (equals("transparent", 11, attrname)) {
+      } else if (equals("transparent", attrname)) {
         attr.transparent = parseBool(attrvalue);
         return;
-      } else if (equals("bgcolor", 7, attrname)) {
+      } else if (equals("bgcolor", attrname)) {
         attr.bgcolor.copy(attrvalue);
         return;
-      } else if (equals("style", 5, attrname)) {
+      } else if (equals("style", attrname)) {
         attr.style.copy(attrvalue);
         return;
       }
@@ -1667,25 +1667,25 @@ public:
       CT::string a, b, c, units, algorithm, mode, name;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("a", 1, attrname)) {
+      if (equals("a", attrname)) {
         attr.a.copy(attrvalue);
         return;
-      } else if (equals("b", 1, attrname)) {
+      } else if (equals("b", attrname)) {
         attr.b.copy(attrvalue);
         return;
-      } else if (equals("c", 1, attrname)) {
+      } else if (equals("c", attrname)) {
         attr.c.copy(attrvalue);
         return;
-      } else if (equals("mode", 4, attrname)) {
+      } else if (equals("mode", attrname)) {
         attr.mode.copy(attrvalue);
         return;
-      } else if (equals("name", 4, attrname)) {
+      } else if (equals("name", attrname)) {
         attr.name.copy(attrvalue);
         return;
-      } else if (equals("units", 5, attrname)) {
+      } else if (equals("units", attrname)) {
         attr.units.copy(attrvalue);
         return;
-      } else if (equals("algorithm", 9, attrname)) {
+      } else if (equals("algorithm", attrname)) {
         attr.algorithm.copy(attrvalue);
         return;
       }
@@ -1699,16 +1699,16 @@ public:
       CT::string top, left, right, bottom;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("top", 3, attrname)) {
+      if (equals("top", attrname)) {
         attr.top.copy(attrvalue);
         return;
-      } else if (equals("left", 4, attrname)) {
+      } else if (equals("left", attrname)) {
         attr.left.copy(attrvalue);
         return;
-      } else if (equals("right", 5, attrname)) {
+      } else if (equals("right", attrname)) {
         attr.right.copy(attrvalue);
         return;
-      } else if (equals("bottom", 6, attrname)) {
+      } else if (equals("bottom", attrname)) {
         attr.bottom.copy(attrvalue);
         return;
       }
@@ -1722,13 +1722,13 @@ public:
       CT::string name, precision, resolution;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("name", 4, attrname)) {
+      if (equals("name", attrname)) {
         attr.name.copy(attrvalue);
         return;
-      } else if (equals("precision", 9, attrname)) {
+      } else if (equals("precision", attrname)) {
         attr.precision.copy(attrvalue);
         return;
-      } else if (equals("resolution", 10, attrname)) {
+      } else if (equals("resolution", attrname)) {
         attr.resolution.copy(attrvalue);
         return;
       }
@@ -1742,10 +1742,10 @@ public:
       CT::string replace, style;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("replace", 7, attrname)) {
+      if (equals("replace", attrname)) {
         attr.replace.copy(attrvalue);
         return;
-      } else if (equals("style", 5, attrname)) {
+      } else if (equals("style", attrname)) {
         attr.style.copy(attrvalue);
         return;
       }
@@ -1843,77 +1843,77 @@ public:
         if (value != NULL) this->value.copy(value);
       if (rc == 1) {
 
-        if (equals("Name", 4, name)) {
+        if (equals("Name", name)) {
           XMLE_ADDOBJ(Name);
-        } else if (equals("Group", 5, name)) {
+        } else if (equals("Group", name)) {
           XMLE_ADDOBJ(Group);
-        } else if (equals("Title", 5, name)) {
+        } else if (equals("Title", name)) {
           XMLE_ADDOBJ(Title);
-        } else if (equals("Abstract", 8, name)) {
+        } else if (equals("Abstract", name)) {
           XMLE_ADDOBJ(Abstract);
-        } else if (equals("DataBaseTable", 13, name)) {
+        } else if (equals("DataBaseTable", name)) {
           XMLE_ADDOBJ(DataBaseTable);
-        } else if (equals("Variable", 8, name)) {
+        } else if (equals("Variable", name)) {
           XMLE_ADDOBJ(Variable);
-        } else if (equals("FilePath", 8, name)) {
+        } else if (equals("FilePath", name)) {
           XMLE_ADDOBJ(FilePath);
-        } else if (equals("TileSettings", 12, name)) {
+        } else if (equals("TileSettings", name)) {
           XMLE_ADDOBJ(TileSettings);
-        } else if (equals("DataReader", 10, name)) {
+        } else if (equals("DataReader", name)) {
           XMLE_ADDOBJ(DataReader);
-        } else if (equals("Dimension", 9, name)) {
+        } else if (equals("Dimension", name)) {
           XMLE_ADDOBJ(Dimension);
-        } else if (equals("Legend", 6, name)) {
+        } else if (equals("Legend", name)) {
           XMLE_ADDOBJ(Legend);
-        } else if (equals("Scale", 5, name)) {
+        } else if (equals("Scale", name)) {
           XMLE_ADDOBJ(Scale);
-        } else if (equals("Offset", 6, name)) {
+        } else if (equals("Offset", name)) {
           XMLE_ADDOBJ(Offset);
-        } else if (equals("Min", 3, name)) {
+        } else if (equals("Min", name)) {
           XMLE_ADDOBJ(Min);
-        } else if (equals("Max", 3, name)) {
+        } else if (equals("Max", name)) {
           XMLE_ADDOBJ(Max);
-        } else if (equals("Log", 3, name)) {
+        } else if (equals("Log", name)) {
           XMLE_ADDOBJ(Log);
-        } else if (equals("ShadeInterval", 13, name)) {
+        } else if (equals("ShadeInterval", name)) {
           XMLE_ADDOBJ(ShadeInterval);
-        } else if (equals("ContourLine", 11, name)) {
+        } else if (equals("ContourLine", name)) {
           XMLE_ADDOBJ(ContourLine);
-        } else if (equals("ContourIntervalL", 16, name)) {
+        } else if (equals("ContourIntervalL", name)) {
           XMLE_ADDOBJ(ContourIntervalL);
-        } else if (equals("ContourIntervalH", 16, name)) {
+        } else if (equals("ContourIntervalH", name)) {
           XMLE_ADDOBJ(ContourIntervalH);
-        } else if (equals("ValueRange", 10, name)) {
+        } else if (equals("ValueRange", name)) {
           XMLE_ADDOBJ(ValueRange);
-        } else if (equals("ImageText", 9, name)) {
+        } else if (equals("ImageText", name)) {
           XMLE_ADDOBJ(ImageText);
-        } else if (equals("LatLonBox", 9, name)) {
+        } else if (equals("LatLonBox", name)) {
           XMLE_ADDOBJ(LatLonBox);
-        } else if (equals("Projection", 10, name)) {
+        } else if (equals("Projection", name)) {
           XMLE_ADDOBJ(Projection);
-        } else if (equals("Styles", 6, name)) {
+        } else if (equals("Styles", name)) {
           XMLE_ADDOBJ(Styles);
-        } else if (equals("RenderMethod", 12, name)) {
+        } else if (equals("RenderMethod", name)) {
           XMLE_ADDOBJ(RenderMethod);
-        } else if (equals("MetadataURL", 11, name)) {
+        } else if (equals("MetadataURL", name)) {
           XMLE_ADDOBJ(MetadataURL);
-        } else if (equals("Cache", 5, name)) {
+        } else if (equals("Cache", name)) {
           XMLE_ADDOBJ(Cache);
-        } else if (equals("WMSLayer", 8, name)) {
+        } else if (equals("WMSLayer", name)) {
           XMLE_ADDOBJ(WMSLayer);
-        } else if (equals("DataPostProc", 12, name)) {
+        } else if (equals("DataPostProc", name)) {
           XMLE_ADDOBJ(DataPostProc);
-        } else if (equals("SmoothingFilter", 15, name)) {
+        } else if (equals("SmoothingFilter", name)) {
           XMLE_ADDOBJ(SmoothingFilter);
-        } else if (equals("Position", 8, name)) {
+        } else if (equals("Position", name)) {
           XMLE_ADDOBJ(Position);
-        } else if (equals("WMSFormat", 9, name)) {
+        } else if (equals("WMSFormat", name)) {
           XMLE_ADDOBJ(WMSFormat);
-        } else if (equals("Grid", 4, name)) {
+        } else if (equals("Grid", name)) {
           XMLE_ADDOBJ(Grid);
-        } else if (equals("AdditionalLayer", 15, name)) {
+        } else if (equals("AdditionalLayer", name)) {
           XMLE_ADDOBJ(AdditionalLayer);
-        } else if (equals("FeatureInterval", 15, name)) {
+        } else if (equals("FeatureInterval", name)) {
           XMLE_ADDOBJ(FeatureInterval);
         }
       }
@@ -1923,10 +1923,10 @@ public:
       }
     }
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("type", 4, attrname)) {
+      if (equals("type", attrname)) {
         attr.type.copy(attrvalue);
         return;
-      } else if (equals("hidden", 6, attrname)) {
+      } else if (equals("hidden", attrname)) {
         attr.hidden.copy(attrvalue);
         return;
       }
@@ -1983,43 +1983,43 @@ public:
         if (value != NULL) this->value.copy(value);
       if (rc == 1) {
         pt2Class = NULL;
-        if (equals("Legend", 6, name)) {
+        if (equals("Legend", name)) {
           XMLE_ADDOBJ(Legend);
-        } else if (equals("WMS", 3, name)) {
+        } else if (equals("WMS", name)) {
           XMLE_SETOBJ(WMS);
-        } else if (equals("WCS", 3, name)) {
+        } else if (equals("WCS", name)) {
           XMLE_SETOBJ(WCS);
-        } else if (equals("Path", 4, name)) {
+        } else if (equals("Path", name)) {
           XMLE_ADDOBJ(Path);
-        } else if (equals("OpenDAP", 7, name)) {
+        } else if (equals("OpenDAP", name)) {
           XMLE_ADDOBJ(OpenDAP);
-        } else if (equals("TempDir", 7, name)) {
+        } else if (equals("TempDir", name)) {
           XMLE_ADDOBJ(TempDir);
-        } else if (equals("OnlineResource", 14, name)) {
+        } else if (equals("OnlineResource", name)) {
           XMLE_ADDOBJ(OnlineResource);
-        } else if (equals("DataBase", 8, name)) {
+        } else if (equals("DataBase", name)) {
           XMLE_ADDOBJ(DataBase);
-        } else if (equals("Projection", 10, name)) {
+        } else if (equals("Projection", name)) {
           XMLE_ADDOBJ(Projection);
-        } else if (equals("Layer", 5, name)) {
+        } else if (equals("Layer", name)) {
           XMLE_ADDOBJ(Layer);
-        } else if (equals("Style", 5, name)) {
+        } else if (equals("Style", name)) {
           XMLE_ADDOBJ(Style);
-        } else if (equals("CacheDocs", 9, name)) {
+        } else if (equals("CacheDocs", name)) {
           XMLE_ADDOBJ(CacheDocs);
-        } else if (equals("AutoResource", 12, name)) {
+        } else if (equals("AutoResource", name)) {
           XMLE_ADDOBJ(AutoResource);
-        } else if (equals("Dataset", 7, name)) {
+        } else if (equals("Dataset", name)) {
           XMLE_ADDOBJ(Dataset);
-        } else if (equals("Include", 7, name)) {
+        } else if (equals("Include", name)) {
           XMLE_ADDOBJ(Include);
-        } else if (equals("Logging", 7, name)) {
+        } else if (equals("Logging", name)) {
           XMLE_ADDOBJ(Logging);
-        } else if (equals("Symbol", 6, name)) {
+        } else if (equals("Symbol", name)) {
           XMLE_ADDOBJ(Symbol);
-        } else if (equals("Settings", 8, name)) {
+        } else if (equals("Settings", name)) {
           XMLE_ADDOBJ(Settings);
-        } else if (equals("Environment", 11, name)) {
+        } else if (equals("Environment", name)) {
           XMLE_ADDOBJ(Environment);
         }
       }
@@ -2031,7 +2031,7 @@ public:
     base->currentNode = (CXMLObjectInterface *)this;
     if (rc == 0) {
       pt2Class = NULL;
-      if (equals("Configuration", 13, name)) {
+      if (equals("Configuration", name)) {
         XMLE_SETOBJ(Configuration);
       }
     }
