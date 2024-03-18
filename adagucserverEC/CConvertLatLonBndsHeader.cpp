@@ -27,7 +27,7 @@
 #include "CImageWarper.h"
 #include "CConvertLatLonBnds.h"
 
-#define CConvertLatLonBnds_DEBUG
+// #define CConvertLatLonBnds_DEBUG
 
 /**
  * This function adjusts the cdfObject by creating virtual 2D variables

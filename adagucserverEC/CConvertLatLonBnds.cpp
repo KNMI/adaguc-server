@@ -27,7 +27,7 @@
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
 
-#define CConvertLatLonBnds_DEBUG
+// #define CConvertLatLonBnds_DEBUG
 
 const char *CConvertLatLonBnds::className = "CConvertLatLonBnds";
 

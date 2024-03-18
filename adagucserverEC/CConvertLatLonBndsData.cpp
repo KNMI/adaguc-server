@@ -27,15 +27,12 @@
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
 
-#define CConvertLatLonBnds_DEBUG
+// #define CConvertLatLonBnds_DEBUG
 /**
  * This function draws the virtual 2D variable into a new 2D field
  */
 int CConvertLatLonBnds::convertLatLonBndsData(CDataSource *dataSource, int mode) {
-  CDBDebug("convertLatLonBndsData %s %d", dataSource->getFileName(), mode);
-
   CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
-  CDBDebug("cdfObject %x", cdfObject);
   if (!isThisLatLonBndsData(cdfObject)) return 1;
   CDBDebug("about to getNumDataObjects()");
   size_t nrDataObjects = dataSource->getNumDataObjects();
