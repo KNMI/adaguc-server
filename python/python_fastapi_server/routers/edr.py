@@ -352,7 +352,7 @@ async def get_collection_cube(
                 url=urlrequest.encode("UTF-8")
             )
             logger.info("status: %d", status)
-            ds = Dataset(f"{parameter_name}.nc", memory=response.getbuffer())
+            ds = Dataset(f"{parameter_name}.nc", memory=response.getvalue())
 
             coveragejson = netcdf_to_covjson(ds)
             if coveragejson is not None:
