@@ -34,7 +34,7 @@ def setup_test_data():
 
 
 @pytest.fixture(name="client")
-def fixture_client() -> TestClient:
+def fixture_client():
     # Initialize adaguc-server
     set_environ()
     setup_test_data()

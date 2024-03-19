@@ -2419,10 +2419,11 @@ int CImageDataWriter::end() {
           CT::string resultJSON;
           if (srvParam->JSONP.length() == 0) {
             CDBDebug("CREATING JSON");
-            printf("%s%c%c\n", "Content-Type: application/json", 13, 10);
+            printf("%s%s%c%c\n", "Content-Type: application/json", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
           } else {
             CDBDebug("CREATING JSONP %s", srvParam->JSONP.c_str());
-            printf("%s%c%c\n%s(", "Content-Type: application/javascript", 13, 10, srvParam->JSONP.c_str());
+            printf("%s%s%c%c", "Content-Type: application/javascript", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+            printf("\n%s(", srvParam->JSONP.c_str());
           }
 
           puts(data.c_str());
@@ -2443,9 +2444,9 @@ int CImageDataWriter::end() {
     if (resultFormat == textplain || resultFormat == texthtml) {
       CT::string resultHTML;
       if (resultFormat == textplain) {
-        resultHTML.print("%s%c%c\n", "Content-Type:text/plain", 13, 10);
+        resultHTML.print("%s%s%c%c\n", "Content-Type: text/plain", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
       } else {
-        resultHTML.print("%s%c%c\n", "Content-Type:text/html", 13, 10);
+        resultHTML.print("%s%s%c%c\n", "Content-Type: text/html", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
       }
 
       if (resultFormat == texthtml) resultHTML.printconcat("<html>\n");
@@ -2573,7 +2574,8 @@ int CImageDataWriter::end() {
     if (resultFormat == applicationvndogcgml) {
       CDBDebug("CREATING GML");
       CT::string resultXML;
-      resultXML.print("%s%c%c\n", "Content-Type:text/xml", 13, 10);
+      resultXML.print("%s%s%c%c\n", "Content-Type: text/xml", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+
       resultXML.printconcat("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n");
       resultXML.printconcat("  <FeatureCollection\n");
       resultXML.printconcat("          xmlns:gml=\"http://www.opengis.net/gml\"\n");
@@ -2738,10 +2740,11 @@ int CImageDataWriter::end() {
       CT::string resultJSON;
       if (srvParam->JSONP.length() == 0) {
         CDBDebug("CREATING JSON");
-        resultJSON.print("%s%c%c\n", "Content-Type: application/json", 13, 10);
+        resultJSON.print("%s%s%c%c\n", "Content-Type: application/json", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
       } else {
         CDBDebug("CREATING JSONP %s", srvParam->JSONP.c_str());
-        resultJSON.print("%s%c%c\n", "Content-Type: application/javascript", 13, 10);
+        resultJSON.print("%s%s%c%c", "Content-Type: application/javascript", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+        resultJSON.print("\n%s(", srvParam->JSONP.c_str());
       }
 
       CXMLParser::XMLElement rootElement;
@@ -3453,7 +3456,6 @@ int CImageDataWriter::end() {
     printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl.c_str(), 13, 10);
     status = drawImage.printImagePng32();
   } else if (srvParam->imageFormat == IMAGEFORMAT_IMAGEWEBP) {
-    CDBDebug("Creating 32 bit webp");
     printf("%s%s%c%c\n", "Content-Type:image/webp", cacheControl.c_str(), 13, 10);
     int webPQuality = srvParam->imageQuality;
     if (!srvParam->Format.empty()) {
@@ -3466,7 +3468,7 @@ int CImageDataWriter::end() {
         }
       }
     }
-    CDBDebug("webPQuality = %d", webPQuality);
+    CDBDebug("Creating 32 bit webp quality = %d", webPQuality);
     status = drawImage.printImageWebP32(webPQuality);
   } else if (srvParam->imageFormat == IMAGEFORMAT_IMAGEGIF) {
     // CDBDebug("LegendGraphic GIF");

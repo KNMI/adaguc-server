@@ -741,10 +741,10 @@ int CRequest::generateGetReferenceTimes(CDataSource *dataSource) {
     if (status == CXMLGEN_FATAL_ERROR_OCCURED) return 1;
   }
   if (srvParam->JSONP.length() == 0) {
-    printf("%s%c%c\n", "Content-Type: application/json ", 13, 10);
+    printf("%s%s%c%c\n", "Content-Type: application/json ", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
     printf("%s", XMLdocument.c_str());
   } else {
-    printf("%s%c%c\n", "Content-Type: application/javascript ", 13, 10);
+    printf("%s%s%c%c\n", "Content-Type: application/javascript ", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
     printf("%s(%s)", srvParam->JSONP.c_str(), XMLdocument.c_str());
   }
 
@@ -1496,7 +1496,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
           maxQueryResultLimit = dataSource->cfgLayer->FilePath[0]->attr.maxquerylimit.toInt();
         }
       }
-      CDBDebug("Using maxquerylimit %d", maxQueryResultLimit);
+      // CDBDebug("Using maxquerylimit %d", maxQueryResultLimit);
       store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource, maxQueryResultLimit);
     }
 

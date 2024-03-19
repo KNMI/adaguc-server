@@ -1,20 +1,28 @@
 import asyncio
-from ast import Dict
-import subprocess
 import os
-from os.path import expanduser
 from PIL import Image
 from io import BytesIO
-import io
-import tempfile
+import brotli
 import shutil
 import random
 import string
+import redis.asyncio as redis  # This can also be used to connect to a Redis cluster
+
+import calendar
+import json
+from datetime import datetime
 
 from adaguc.CGIRunner import CGIRunner
 
 
 class runAdaguc:
+    ADAGUC_REDIS = os.getenv("ADAGUC_REDIS", "")
+    use_cache = False
+    redis_pool = None
+
+    if ADAGUC_REDIS.startswith("redis://") or ADAGUC_REDIS.startswith("rediss://"):
+        redis_pool = redis.ConnectionPool.from_url(ADAGUC_REDIS)
+        use_cache = True
 
     def __init__(self):
         """ADAGUC_LOGFILE is the location where logfiles are stored.
@@ -22,19 +30,22 @@ class runAdaguc:
         Please note regenerating the DB each time for each request can cause performance problems.
         You can safely configure a permanent location for the database which is permanent in adaguc.autoresource.xml (or your own config)
         """
-        self.ADAGUC_LOGFILE = ("/tmp/adaguc-server-" +
-                               self.get_random_string(10) + ".log")
+        self.ADAGUC_LOGFILE = (
+            "/tmp/adaguc-server-" + self.get_random_string(10) + ".log"
+        )
         self.ADAGUC_PATH = os.getenv("ADAGUC_PATH", "./")
         self.ADAGUC_CONFIG = self.ADAGUC_PATH + "/data/config/adaguc.autoresource.xml"
-        self.ADAGUC_DATA_DIR = os.getenv("ADAGUC_DATA_DIR",
-                                         "/data/adaguc-data")
-        self.ADAGUC_AUTOWMS_DIR = os.getenv("ADAGUC_AUTOWMS_DIR",
-                                            "/data/adaguc-autowms")
-        self.ADAGUC_DATASET_DIR = os.getenv("ADAGUC_DATASET_DIR",
-                                            "/data/adaguc-datasets")
+        self.ADAGUC_DATA_DIR = os.getenv("ADAGUC_DATA_DIR", "/data/adaguc-data")
+        self.ADAGUC_AUTOWMS_DIR = os.getenv(
+            "ADAGUC_AUTOWMS_DIR", "/data/adaguc-autowms"
+        )
+        self.ADAGUC_DATASET_DIR = os.getenv(
+            "ADAGUC_DATASET_DIR", "/data/adaguc-datasets"
+        )
         self.ADAGUC_TMP = os.getenv("ADAGUC_TMP", "/tmp")
         self.ADAGUC_FONT = os.getenv(
-            "ADAGUC_FONT", self.ADAGUC_PATH + "/data/fonts/Roboto-Medium.ttf")
+            "ADAGUC_FONT", self.ADAGUC_PATH + "/data/fonts/Roboto-Medium.ttf"
+        )
 
     def setAdagucPath(self, newAdagucPath):
         self.ADAGUC_PATH = newAdagucPath
@@ -75,10 +86,11 @@ class runAdaguc:
         adagucenv["ADAGUC_TMP"] = self.ADAGUC_TMP
         adagucenv["ADAGUC_FONT"] = self.ADAGUC_FONT
 
-        status, data, headers = asyncio.run(self.runADAGUCServer(
-            args=["--updatedb", "--config", config],
-            env=adagucenv,
-            isCGI=False))
+        status, data, headers = asyncio.run(
+            self.runADAGUCServer(
+                args=["--updatedb", "--config", config], env=adagucenv, isCGI=False
+            )
+        )
 
         return data.getvalue().decode()
 
@@ -93,9 +105,9 @@ class runAdaguc:
         adagucenv["ADAGUC_DATASET_DIR"] = self.ADAGUC_DATASET_DIR
         adagucenv["ADAGUC_TMP"] = self.ADAGUC_TMP
         adagucenv["ADAGUC_FONT"] = self.ADAGUC_FONT
-        status, data, headers = asyncio.run(self.runADAGUCServer(url,
-                                                                 env=adagucenv,
-                                                                 showLogOnError=False))
+        status, data, headers = asyncio.run(
+            self.runADAGUCServer(url, env=adagucenv, showLogOnError=False)
+        )
         logfile = self.getLogFile()
         self.removeLogFile()
         if data is not None:
@@ -130,6 +142,18 @@ class runAdaguc:
         print(self.getLogFile())
         print("=== END ADAGUC LOGS ===")
 
+    def cache_wanted(self, url: str):
+        """determine if the results of this url request should be stored in
+        the Redis cache
+
+        Returns: boolean
+        """
+        if not runAdaguc.use_cache:
+            return False
+        if "request=getcapabilities" in url.lower():
+            return True
+        return False
+
     async def runADAGUCServer(
         self,
         url=None,
@@ -146,7 +170,8 @@ class runAdaguc:
         adagucenv = env
 
         adagucenv["ADAGUC_ENABLELOGBUFFER"] = os.getenv(
-            "ADAGUC_ENABLELOGBUFFER", "TRUE")
+            "ADAGUC_ENABLELOGBUFFER", "TRUE"
+        )
         adagucenv["ADAGUC_CONFIG"] = self.ADAGUC_CONFIG
         adagucenv["ADAGUC_LOGFILE"] = self.ADAGUC_LOGFILE
         adagucenv["ADAGUC_PATH"] = self.ADAGUC_PATH
@@ -163,7 +188,7 @@ class runAdaguc:
         # Forward all environment variables starting with ADAGUCENV_
         prefix: str = "ADAGUCENV_"
         for key, value in os.environ.items():
-            if key[:len(prefix)] == prefix:
+            if key[: len(prefix)] == prefix:
                 adagucenv[key] = value
 
         ADAGUC_PATH = adagucenv["ADAGUC_PATH"]
@@ -180,6 +205,16 @@ class runAdaguc:
 
         if args is not None:
             adagucargs = adagucargs + args
+
+        # Check cache for entry with keys of (url,adagucargs) if configured
+        if self.cache_wanted(url):
+            cache_key = str((url, adagucargs)).encode("utf-8")
+
+            age, headers, data = await get_cached_response(
+                runAdaguc.redis_pool, cache_key
+            )
+            if age is not None:
+                return 0, data, headers
 
         filetogenerate = BytesIO()
         status, headers, processErr = await CGIRunner().run(
@@ -211,10 +246,13 @@ class runAdaguc:
                 print("Process: No HTTP Headers written")
 
             print("--- END ADAGUC DEBUG INFO ---\n")
-            return status, filetogenerate, headers
 
-        else:
-            return status, filetogenerate, headers
+        # Only cache if status==0
+        if self.cache_wanted(url) and status == 0:
+            await response_to_cache(
+                runAdaguc.redis_pool, cache_key, headers, filetogenerate
+            )
+        return status, filetogenerate, headers
 
     def writetofile(self, filename, data):
         with open(filename, "wb") as f:
@@ -237,3 +275,58 @@ class runAdaguc:
     def mkdir_p(self, directory):
         if not os.path.exists(directory):
             os.makedirs(directory)
+
+
+headers_to_skip = ["x-process-time", "age"]
+
+
+async def response_to_cache(redis_pool, key, headers: str, data):
+    cacheable_headers = []
+    ttl = 0
+    for header in headers:
+        k, v = header.split(":")
+        if k not in headers_to_skip:
+            cacheable_headers.append(header)
+        if k.lower().startswith("cache-control"):
+            for term in v.split(";"):
+                if term.startswith("max-age"):
+                    try:
+                        ttl = int(term.split("=")[1])
+                    except:
+                        pass
+
+    if ttl > 0:
+        cacheable_headers_json = json.dumps(cacheable_headers).encode("utf-8")
+
+        entrytime = f"{calendar.timegm(datetime.utcnow().utctimetuple()):10d}".encode(
+            "utf-8"
+        )
+        redis_client = redis.Redis(connection_pool=redis_pool)
+        await redis_client.set(
+            key,
+            entrytime
+            + f"{len(cacheable_headers_json):06d}".encode("utf-8")
+            + cacheable_headers_json
+            + brotli.compress(data.getvalue()),
+            ex=ttl,
+        )
+        await redis_client.aclose()
+
+
+async def get_cached_response(redis_pool, key):
+    redis_client = redis.Redis(connection_pool=redis_pool)
+    cached = await redis_client.get(key)
+    await redis_client.aclose()
+    if not cached:
+        return None, None, None
+
+    entrytime = int(cached[:10].decode("utf-8"))
+    currenttime = calendar.timegm(datetime.utcnow().utctimetuple())
+    age = currenttime - entrytime
+
+    headers_len = int(cached[10:16].decode("utf-8"))
+    headers = json.loads(cached[16 : 16 + headers_len].decode("utf-8"))
+    headers.append(f"age: {age}")
+
+    data = brotli.decompress(cached[16 + headers_len :])
+    return age, headers, BytesIO(data)

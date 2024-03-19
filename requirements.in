@@ -26,3 +26,4 @@ uvicorn~=0.23.2
 covjson-pydantic~=0.2.0
 geomet~=1.0
 edr-pydantic~=0.2.0
+redis~=5.0
