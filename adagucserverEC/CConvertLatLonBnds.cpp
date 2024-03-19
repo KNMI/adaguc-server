@@ -44,7 +44,6 @@ bool CConvertLatLonBnds::isThisLatLonBndsData(CDFObject *cdfObject) {
     CDF::Variable *pointLon = cdfObject->getVariable("lon_bnds");
     CDF::Variable *pointLat = cdfObject->getVariable("lat_bnds");
   } catch (int e) {
-    CDBError("lat or lon variables not found");
     return false;
   }
   try {

@@ -33,7 +33,6 @@
  * This function adjusts the cdfObject by creating virtual 2D variables
  */
 int CConvertLatLonBnds::convertLatLonBndsHeader(CDFObject *cdfObject, CServerParams *) {
-  CDBDebug("convertLatLonBndsHeader");
   // Check whether this is really an LatLonBnds file
   if (!isThisLatLonBndsData(cdfObject)) return 1;
   CDBDebug("Using CConvertLatLonBnds.h");
@@ -46,11 +45,9 @@ int CConvertLatLonBnds::convertLatLonBndsHeader(CDFObject *cdfObject, CServerPar
     pointLon = cdfObject->getVariable("lon_bnds");
     pointLat = cdfObject->getVariable("lat_bnds");
   } catch (int e) {
-    CDBError("lat or lon variables not found");
+    CDBDebug("lat or lon variables not found");
     return 1;
   }
-
-  CDBDebug("start reading latlon coordinates");
 
   pointLon->readData(CDF_DOUBLE, true);
   pointLat->readData(CDF_DOUBLE, true);
@@ -73,8 +70,6 @@ int CConvertLatLonBnds::convertLatLonBndsHeader(CDFObject *cdfObject, CServerPar
   CDBDebug("%f,%f %f,%f", latMinMax.min, lonMinMax.min, latMinMax.max, lonMinMax.max);
 #endif
   double dfBBOX[] = {lonMinMax.min - 0.5, latMinMax.min - 0.5, lonMinMax.max + 0.5, latMinMax.max + 0.5};
-  // double dfBBOX[]={-180,-90,180,90};
-  // CDBDebug("Datasource dfBBOX:%f %f %f %f",dfBBOX[0],dfBBOX[1],dfBBOX[2],dfBBOX[3]);
 
   // Default size of adaguc 2dField is 2x2
   int width = 2;
