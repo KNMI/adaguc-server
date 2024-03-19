@@ -246,7 +246,6 @@ async def get_collections(req: Request, response: Response, f: str = "json"):
                     storageCrs=DEFAULT_CRS,
                 )
             )
-
     links = get_collections_links(req.url_for("get_collections"))
 
     response.headers["cache-control"] = "max-age=60"  # TODO find better value
@@ -279,7 +278,7 @@ async def get_collection(coll: str, req: Request, f: str = "json"):
         return templates.TemplateResponse(
             "collection.html", {"request": req, "collection": collection.model_dump()}
         )
-    return coll
+    return collection
 
 
 conformanceClasses = [
@@ -423,7 +422,6 @@ async def get_features_for_items(
     if not observed_property_name:
         collinfo = await get_parameters(coll)
         first_param = next(iter(collinfo))
-        print("FIRST", first_param, flush=True)
         observed_property_name = [first_param["name"]]
         # Default observedPropertyName = first layername
 
