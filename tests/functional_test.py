@@ -3,6 +3,7 @@
   The adaguc-server executable is ran with various settings and configuration files.
   Results are checked against expected results and should not differ.
 """
+
 import unittest
 import sys
 from AdagucTests.TestWMS import TestWMS
