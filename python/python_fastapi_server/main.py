@@ -21,6 +21,7 @@ from routers.middleware import FixSchemeMiddleware
 from routers.ogcapi import ogcApiApp
 from routers.opendap import opendapRouter
 from routers.wmswcs import testadaguc, wmsWcsRouter
+from routers.caching_middleware import CachingMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -33,15 +34,6 @@ access_log_format = (
 logging.getLogger("uvicorn.access").handlers.clear()
 app.add_middleware(AccessLoggerMiddleware, format=access_log_format)
 logging.getLogger("access").propagate = False
-
-
-@app.middleware("http")
-async def add_process_time_header(request: Request, call_next):
-    start_time = time.time()
-    response = await call_next(request)
-    process_time = time.time() - start_time
-    response.headers["X-Process-Time"] = str(process_time)
-    return response
 
 
 @app.middleware("http")
@@ -60,17 +52,30 @@ async def add_hsts_header(request: Request, call_next):
     return response
 
 
+if "ADAGUC_REDIS" in os.environ:
+    app.add_middleware(CachingMiddleware)
+
+if "EXTERNALADDRESS" in os.environ:
+    app.add_middleware(FixSchemeMiddleware)
+
+
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = time.time() - start_time
+    response.headers["X-Process-Time"] = str(process_time)
+    return response
+
+
+app.add_middleware(BrotliMiddleware, gzip_fallback=True)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-app.add_middleware(BrotliMiddleware, gzip_fallback=True)
-
-if "EXTERNALADDRESS" in os.environ:
-    app.add_middleware(FixSchemeMiddleware)
 
 
 @app.get("/")

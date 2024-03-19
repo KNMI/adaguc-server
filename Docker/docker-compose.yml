@@ -43,6 +43,7 @@ services:
       - "ADAGUC_AUTOWMS_DIR=/data/adaguc-autowms"
       - "ADAGUC_DATA_DIR=/data/adaguc-data"
       - "ADAGUC_DATASET_DIR=/data/adaguc-datasets"
+      - "ADAGUC_REDIS=redis://adaguc-redis:6379"
     env_file:
       - .env
     restart: unless-stopped
@@ -50,6 +51,7 @@ services:
       - adaguc-db
     depends_on:
       - adaguc-db
+      - adaguc-redis
     logging:
       driver: "json-file"
       options:
@@ -96,6 +98,12 @@ services:
       options:
         max-size: "200k"
         max-file: "10"
+  adaguc-redis:
+    image: redis:7
+    container_name: adaguc-redis
+    hostname: adaguc-redis
+    networks:
+      - adaguc-network
 volumes:
   adaguc-server-compose-adagucdb:
 networks:

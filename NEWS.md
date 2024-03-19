@@ -1,3 +1,10 @@
+**Version 2.21.0 2024-03-14**
+
+- Added support for Redis caching. Redis caching can be enabled by providing a Redis service via the ADAGUC_REDIS environment and configuring caching settings for a dataset in the [Settings](doc/configuration/Settings.md) element.
+- Improved speed of EDR service and added support to cache EDR calls
+- Various performance improvements
+
+
 **Version 2.20.2 2024-02-28**
 - Removed locking mechanism
 

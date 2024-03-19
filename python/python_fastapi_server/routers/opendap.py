@@ -1,4 +1,5 @@
 """opendapRouter"""
+
 import logging
 import os
 
@@ -12,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 @opendapRouter.get("/adagucopendap/{opendappath:path}")
-def handle_opendap(req: Request, opendappath: str):
+async def handle_opendap(req: Request, opendappath: str):
     logger.info(opendappath)
     adaguc_instance = setup_adaguc()
     url = req.url
@@ -25,17 +26,19 @@ def handle_opendap(req: Request, opendappath: str):
     # Set required environment variables
     base_url = f"{url.scheme}://{url.hostname}:{url.port}"
     adagucenv["ADAGUC_ONLINERESOURCE"] = (
-        os.getenv("EXTERNALADDRESS", base_url) + "/adagucopendap?")
+        os.getenv("EXTERNALADDRESS", base_url) + "/adagucopendap?"
+    )
     adagucenv["ADAGUC_DB"] = os.getenv(
-        "ADAGUC_DB",
-        "user=adaguc password=adaguc host=localhost dbname=adaguc")
+        "ADAGUC_DB", "user=adaguc password=adaguc host=localhost dbname=adaguc"
+    )
 
     logger.info("Setting request_uri to %s", base_url)
     adagucenv["REQUEST_URI"] = url.path
     adagucenv["SCRIPT_NAME"] = ""
 
-    status, data, headers = adaguc_instance.runADAGUCServer(
-        query_string, env=adagucenv, showLogOnError=False)
+    status, data, headers = await adaguc_instance.runADAGUCServer(
+        query_string, env=adagucenv, showLogOnError=False
+    )
 
     # Obtain logfile
     logfile = adaguc_instance.getLogFile()
