@@ -25,6 +25,7 @@
 #include "CDBAdapterPostgreSQL.h"
 
 #include <set>
+#include <map>
 #include "CDebugger.h"
 
 const char *CDBAdapterPostgreSQL::className = "CDBAdapterPostgreSQL";
@@ -356,175 +357,110 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     return NULL;
   }
 
-  //   CDBDebug("dataSource->requiredDims.size() = %d",dataSource->requiredDims.size());
-
-  CT::string queryOrderedDESC;
-  CT::string query;
-  queryOrderedDESC.print("select a0.path");
-  for (size_t i = 0; i < dataSource->requiredDims.size(); i++) {
-    queryOrderedDESC.printconcat(",%s,dim%s", dataSource->requiredDims[i]->netCDFDimName.c_str(), dataSource->requiredDims[i]->netCDFDimName.c_str());
+  // Build list of dimensions that will be queried
+  CT::string dimList;
+  for (const auto &dim : dataSource->requiredDims) {
+    dimList.printconcat("E'%s'", dim->netCDFDimName.c_str());
+    if (&dim != &dataSource->requiredDims.back()) dimList += ", ";
   }
 
-  queryOrderedDESC.concat(" from ");
-  bool timeValidationError = false;
+  // Find the table and corresponding dimension for given file path
+  CT::string query;
+  query.print(
+    "SELECT tablename, dimension FROM %s WHERE path=E'P_%s' AND filter=E'F_%s' AND dimension IN (%s)",
+    CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP,
+    dataSource->cfgLayer->FilePath[0]->value.c_str(),
+    dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),
+    dimList.c_str()
+  );
+  CDBStore::Store *tableDimStore = DB->queryToStore(query.c_str());
 
-#ifdef CDBAdapterPostgreSQL_DEBUG
-  CDBDebug("%s", queryOrderedDESC.c_str());
-#endif
+  // Build query to find combination of file paths and dimensions, by filtering on dimensions. Query has following form:
+  //    SELECT DISTINCT t1.path, <dimension 1 name>, dim<dimension 1 name>, ... FROM <table> t1
+  //    INNER JOIN <table for dimension n> tn ON t1.path = tn.path ...
+  //    WHERE <adaguc tiling query> AND <dimension 1 filter> ...
+  //    ORDER BY <dimensions> LIMIT <limit>
 
-  // Compose the query
-  for (size_t i = 0; i < dataSource->requiredDims.size(); i++) {
-    CT::string netCDFDimName(&dataSource->requiredDims[i]->netCDFDimName);
+  query.print("SELECT DISTINCT t1.path");
+  for (const auto &dim : dataSource->requiredDims) {
+    query.printconcat(", %s, dim%s", dim->netCDFDimName.c_str(), dim->netCDFDimName.c_str());
+  }
+  query.printconcat(" FROM %s t1 ", tableDimStore->getRecord(0)->get("tablename")->c_str());
+  for (size_t i = 1; i < tableDimStore->size(); i++) {
+    query.printconcat("INNER JOIN %s t%d ON t1.path = t%d.path ", tableDimStore->getRecord(i)->get("tablename")->c_str(), i + 1, i + 1);
+  }
 
-    CT::string tableName;
-    try {
-      tableName = getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str(), dataSource);
-    } catch (int e) {
-      CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), netCDFDimName.c_str());
+  // Filter on tiling bounding box (or not)
+  query.concat("WHERE ");
+  if (dataSource->queryBBOX) {
+    query.printconcat(
+      "t1.adaguctilinglevel = %d and minx >= %f and maxx <= %f and miny >= %f and maxy <= %f ",
+      dataSource->queryLevel, dataSource->nativeViewPortBBOX[0], dataSource->nativeViewPortBBOX[2], dataSource->nativeViewPortBBOX[1], dataSource->nativeViewPortBBOX[3]
+    );
+  } else {
+    query.concat("t1.adaguctilinglevel != -1 ");
+  }
+
+  // Create a mapping for filtering where key=dimension name, value=dimension value
+  std::map<CT::string, CT::string *> dimMap;
+  for (const auto &dim : dataSource->requiredDims) {
+    CT::string queryParams(&dim->value);
+    // FIXME: should support filtering on multiple dim values when passing a list,of,values
+    CT::string *sDims = queryParams.splitToArray("/"); // Split up by slashes (and put into sDims)
+    // It is allowed to pass time as a range: start/end. If we do this, we assume to given value is datetime string
+
+    // Verify if time dimension is valid
+    bool isTime1Valid = CServerParams::checkTimeFormat(sDims[0]);
+    bool isTime2Valid = true;
+    if (sDims->count > 1) {
+      isTime2Valid = CServerParams::checkTimeFormat(sDims[0]);
+    }
+    if (!isTime1Valid || !isTime2Valid) {
+      // FIXME: should we just print the given dimension? Also maybe datetime validation should happen outside this method 
+      if ((CServerParams::checkDataRestriction() & SHOW_QUERYINFO) == false) query.copy("hidden");
+      CDBError("queryOrderedDESC fails regular expression: '%s'", query.c_str());
       return NULL;
     }
 
-    CT::string subQuery;
-    subQuery.print("(select path,dim%s,%s from %s ", netCDFDimName.c_str(), netCDFDimName.c_str(), tableName.c_str());
-    CT::string queryParams(&dataSource->requiredDims[i]->value);
-    int numQueriesAdded = 0;
-    if (queryParams.equals("*") == false) {
-      CT::string *cDims = queryParams.splitToArray(","); // Split up by commas (and put into cDims)
-      for (size_t k = 0; k < cDims->count; k++) {
-        CT::string *sDims = cDims[k].splitToArray("/"); // Split up by slashes (and put into sDims)
+    dimMap[dim->netCDFDimName.c_str()] = sDims;
+  }
 
-        if (k == 0) {
-          subQuery.concat("where ");
-        }
-        if (sDims->count > 0 && k > 0) subQuery.concat("or ");
-        for (size_t l = 0; l < sDims->count && l < 2; l++) {
-          if (sDims[l].length() > 0) {
-            numQueriesAdded++;
-            // Determine column type (timestamp, integer, real)
-            bool isRealType = false;
-            CT::string dataTypeQuery;
-            dataTypeQuery.print("select data_type from information_schema.columns where table_name = '%s' and column_name = '%s'", tableName.c_str(), netCDFDimName.c_str());
-#ifdef CDBAdapterPostgreSQL_DEBUG
-            CDBDebug("%s", dataTypeQuery.c_str());
-#endif
-            try {
+  // Filter on given dimensions
+  for (size_t i = 0; i < tableDimStore->size(); i++) {
+    const char *dimName = tableDimStore->getRecord(i)->get("dimension")->c_str();
+    const char *tableName = tableDimStore->getRecord(i)->get("tablename")->c_str();
+    CT::string *dimVals = dimMap[dimName];
 
-              CDBStore::Store *dataType = DB->queryToStore(dataTypeQuery.c_str(), true);
+    if (dimVals->count == 1) {
+      const char *dimVal = dimVals[0].c_str();
 
-              if (dataType != NULL) {
-                if (dataType->getSize() == 1) {
-#ifdef CDBAdapterPostgreSQL_DEBUG
-                  CDBDebug("%s", dataType->getRecord(0)->get(0)->c_str());
-#endif
-                  if (dataType->getRecord(0)->get(0)->equals("real")) {
-                    isRealType = true;
-                  }
-                }
-              }
-
-              delete dataType;
-              dataType = NULL;
-
-            } catch (int e) {
-              if ((CServerParams::checkDataRestriction() & SHOW_QUERYINFO) == false) query.copy("hidden");
-              CDBError("Unable to determine column type: '%s'", dataTypeQuery.c_str());
-              return NULL;
-            }
-
-            if (l > 0) subQuery.concat("and ");
-            if (sDims->count == 1) {
-
-              if (!CServerParams::checkTimeFormat(sDims[l])) timeValidationError = true;
-
-              if (isRealType == false) {
-                subQuery.printconcat("%s = '%s' ", netCDFDimName.c_str(), sDims[l].c_str());
-              }
-
-              // This query gets the closest value from the table.
-              if (isRealType) {
-                subQuery.printconcat("abs(%s - %s) = (select min(abs(%s - %s)) from %s)", sDims[l].c_str(), netCDFDimName.c_str(), sDims[l].c_str(), netCDFDimName.c_str(), tableName.c_str());
-              }
-            }
-
-            // TODO Currently only start/stop is supported, start/stop/resolution is not supported yet.
-            if (sDims->count >= 2) {
-              if (l == 0) {
-                if (!CServerParams::checkTimeFormat(sDims[l])) timeValidationError = true;
-                // Get closest lowest value to this requested one, or if request value is way below get earliest value:
-                subQuery.printconcat("%s >= (select max(%s) from %s where %s <= '%s' or %s = (select min(%s) from %s)) ", netCDFDimName.c_str(), netCDFDimName.c_str(), tableName.c_str(),
-                                     netCDFDimName.c_str(), sDims[l].c_str(), netCDFDimName.c_str(), netCDFDimName.c_str(), tableName.c_str());
-                // subQuery.printconcat("%s >= '%s' ",netCDFDimName.c_str(),sDims[l].c_str());
-              }
-              if (l == 1) {
-                if (!CServerParams::checkTimeFormat(sDims[l])) timeValidationError = true;
-                subQuery.printconcat("%s <= '%s' ", netCDFDimName.c_str(), sDims[l].c_str());
-              }
-            }
-          }
-        }
-        delete[] sDims;
-      }
-      delete[] cDims;
-    }
-    if (i == 0) {
-      if (numQueriesAdded == 0) {
-        subQuery.printconcat("where ");
+      // If dimension value is a number, find closest value.
+      // FIXME: not sure if isNumeric() is a perfect subtitution for querying information_schema data_type field
+      if (dimVals[0].isNumeric()) {
+        query.printconcat("AND ABS(%s - %s) = (SELECT MIN(ABS(%s - %s)) FROM %s) ", dimVal, dimName, dimVal, dimName, tableName);
       } else {
-        subQuery.printconcat("and ");
+        query.printconcat("AND %s = '%s' ", dimName, dimVal);
       }
-      if (dataSource->queryBBOX) {
-
-        subQuery.printconcat("adaguctilinglevel = %d and minx >= %f and maxx <= %f and miny >= %f and maxy <= %f ", dataSource->queryLevel, dataSource->nativeViewPortBBOX[0],
-                             dataSource->nativeViewPortBBOX[2], dataSource->nativeViewPortBBOX[1], dataSource->nativeViewPortBBOX[3]);
-
-      } else {
-        subQuery.printconcat("adaguctilinglevel != %d ", -1);
-      }
-      subQuery.printconcat("ORDER BY %s DESC limit %d)a%d ", netCDFDimName.c_str(), limit, i);
-      // subQuery.printconcat("ORDER BY %s DESC )a%d ",netCDFDimName.c_str(),i);
     } else {
-      subQuery.printconcat("ORDER BY %s DESC)a%d ", netCDFDimName.c_str(), i);
+      // Find value within range of dimVals[0] and dimVals[1]
+      // Get closest lowest value to this requested one, or if request value is way below get earliest value:
+      query.printconcat(
+        "AND %s >= (SELECT MAX(%s) FROM %s WHERE %s <= '%s' OR %s = (SELECT MIN(%s) FROM %s)) AND %s <= '%s' ",
+        dimName, dimName, tableName, dimName, dimVals[0].c_str(), dimName, dimName, tableName, dimName, dimVals[1].c_str()
+      );
     }
-    // subQuery.printconcat("ORDER BY %s DESC)a%d ",netCDFDimName.c_str(),i);
-    if (i < dataSource->requiredDims.size() - 1) subQuery.concat(",");
-    queryOrderedDESC.concat(&subQuery);
+    delete[] dimVals;
   }
-  //  CDBDebug("%s",queryOrderedDESC.c_str());
-#ifdef CDBAdapterPostgreSQL_DEBUG
-  CDBDebug("%s", queryOrderedDESC.c_str());
-#endif
-  // Join by path
-  if (dataSource->requiredDims.size() > 1) {
-    queryOrderedDESC.concat(" where a0.path=a1.path");
-    for (size_t i = 2; i < dataSource->requiredDims.size(); i++) {
-      queryOrderedDESC.printconcat(" and a0.path=a%d.path", i);
-    }
-  }
-#ifdef CDBAdapterPostgreSQL_DEBUG
-  CDBDebug("%s", queryOrderedDESC.c_str());
-#endif
+  delete tableDimStore;
 
-  if (timeValidationError == true) {
-    if ((CServerParams::checkDataRestriction() & SHOW_QUERYINFO) == false) queryOrderedDESC.copy("hidden");
-    CDBError("queryOrderedDESC fails regular expression: '%s'", queryOrderedDESC.c_str());
-    return NULL;
-  }
-
-  query.print("select distinct * from (%s)T order by ", queryOrderedDESC.c_str());
-  query.concat(&dataSource->requiredDims[0]->netCDFDimName);
+  // Order and limit query
+  query.printconcat("ORDER BY %s", dataSource->requiredDims[0]->netCDFDimName.c_str());
   for (size_t i = 1; i < dataSource->requiredDims.size(); i++) {
-    query.printconcat(",%s", dataSource->requiredDims[i]->netCDFDimName.c_str());
+    query.printconcat(", %s", dataSource->requiredDims[i]->netCDFDimName.c_str());
   }
+  query.printconcat(" LIMIT %d", limit);
 
   // Execute the query
-
-  // writeLogFile3(query.c_str());
-  // writeLogFile3("\n");
-// values_path = DB.query_select(query.c_str(),0);
-#ifdef CDBAdapterPostgreSQL_DEBUG
-  CDBDebug("%s", query.c_str());
-#endif
-
   CDBStore::Store *store = NULL;
   try {
     store = DB->queryToStore(query.c_str(), true);
@@ -534,6 +470,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     CDBDebug("Query failed with code %d (%s)", e, query.c_str());
     return NULL;
   }
+
 #ifdef MEASURETIME
   StopWatch_Stop("<CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions");
 #endif
