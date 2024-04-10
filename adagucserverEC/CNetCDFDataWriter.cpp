@@ -394,7 +394,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
             ((double *)var->data)[j] = dimValue.toDouble();
             break;
           default:
-            CDBError("Unknown var type [%d]", var->getType());
+            CDBError("Unknown var type [%d] for dimension [%s]", var->getType(), dimName.c_str());
             return 1;
           }
         }
@@ -741,7 +741,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
                 value = ((double *)var->data)[j];
                 break;
               default:
-                CDBError("Unknown var type [%d]", var->getType());
+                CDBError("Unknown var type [%d] for dimension [%s]", var->getType(), dimName.c_str());
                 return 1;
               }
               if (value == valueToFind) {
