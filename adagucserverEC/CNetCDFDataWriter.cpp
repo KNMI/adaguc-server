@@ -381,6 +381,12 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
           case CDF_UINT:
             ((unsigned int *)var->data)[j] = dimValue.toInt();
             break;
+          case CDF_INT64:
+            ((long *)var->data)[j] = dimValue.toLong();
+            break;
+          case CDF_UINT64:  // TODO: All unsigned versions don't work if the full unsigned range is needed
+            ((unsigned long *)var->data)[j] = dimValue.toLong();
+            break;
           case CDF_FLOAT:
             ((float *)var->data)[j] = dimValue.toFloat();
             break;
@@ -388,6 +394,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
             ((double *)var->data)[j] = dimValue.toDouble();
             break;
           default:
+            CDBError("Unknown var type [%d]", var->getType());
             return 1;
           }
         }
@@ -721,16 +728,21 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
               case CDF_UINT:
                 value = ((unsigned int *)var->data)[j];
                 break;
+              case CDF_INT64:  // TODO: This is a narrowing conversion, as not all long's can be exactly represented in a double
+                value = ((long *)var->data)[j];
+                break;
+              case CDF_UINT64:  // TODO: This is a narrowing conversion, as not all long's can be exactly represented in a double
+                value = ((unsigned long *)var->data)[j];
+                break;
               case CDF_FLOAT:
                 value = ((float *)var->data)[j];
                 break;
               case CDF_DOUBLE:
                 value = ((double *)var->data)[j];
                 break;
-              default: {
+              default:
                 CDBError("Unknown var type [%d]", var->getType());
                 return 1;
-              }
               }
               if (value == valueToFind) {
                 indexTofind = j;
@@ -839,16 +851,21 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       case CDF_UINT:
         warpedData = ((unsigned int *)variable->data) + elementOffset;
         break;
+      case CDF_INT64:
+        warpedData = ((long *)variable->data) + elementOffset;
+        break;
+      case CDF_UINT64:
+        warpedData = ((unsigned long *)variable->data) + elementOffset;
+        break;
       case CDF_FLOAT:
         warpedData = ((float *)variable->data) + elementOffset;
         break;
       case CDF_DOUBLE:
         warpedData = ((double *)variable->data) + elementOffset;
         break;
-      default: {
+      default:
         CDBError("Unknown var type [%d]", variable->getType());
         return 1;
-      }
       }
 
       settings.data = warpedData;
@@ -881,12 +898,21 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         case CDF_UINT:
           genericDataWarper.render<uint>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_nearest);
           break;
+        case CDF_INT64:
+          genericDataWarper.render<long>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_nearest);
+          break;
+        case CDF_UINT64:
+          genericDataWarper.render<unsigned long>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_nearest);
+          break;
         case CDF_FLOAT:
           genericDataWarper.render<float>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_nearest);
           break;
         case CDF_DOUBLE:
           genericDataWarper.render<double>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_nearest);
           break;
+        default:
+          CDBError("Unknown var type [%d]", variable->getType());
+          return 1;
         }
       }
 
@@ -914,12 +940,21 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         case CDF_UINT:
           genericDataWarper.render<uint>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_avg_rbg);
           break;
+        case CDF_INT64:
+          genericDataWarper.render<long>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_avg_rbg);
+          break;
+        case CDF_UINT64:
+          genericDataWarper.render<unsigned long>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_avg_rbg);
+          break;
         case CDF_FLOAT:
           genericDataWarper.render<float>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_avg_rbg);
           break;
         case CDF_DOUBLE:
           genericDataWarper.render<double>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_avg_rbg);
           break;
+        default:
+          CDBError("Unknown var type [%d]", variable->getType());
+          return 1;
         }
       }
 
