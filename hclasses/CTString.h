@@ -497,6 +497,11 @@ namespace CT {
     int toInt();
 
     /**
+     * Converts the string to a long number
+     */
+    long toLong();
+
+    /**
      * Test whether string is empty or not
      */
     bool empty();
