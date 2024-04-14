@@ -409,19 +409,6 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     CT::string *sDims = queryParams.splitToArray("/"); // Split up by slashes (and put into sDims)
     // It is allowed to pass time as a range: start/end. If we do this, we assume to given value is datetime string
 
-    // Verify if time dimension is valid
-    bool isTime1Valid = CServerParams::checkTimeFormat(sDims[0]);
-    bool isTime2Valid = true;
-    if (sDims->count > 1) {
-      isTime2Valid = CServerParams::checkTimeFormat(sDims[0]);
-    }
-    if (!isTime1Valid || !isTime2Valid) {
-      // FIXME: should we just print the given dimension? Also maybe datetime validation should happen outside this method 
-      if ((CServerParams::checkDataRestriction() & SHOW_QUERYINFO) == false) query.copy("hidden");
-      CDBError("queryOrderedDESC fails regular expression: '%s'", query.c_str());
-      return NULL;
-    }
-
     dimMap[dim->netCDFDimName.c_str()] = sDims;
   }
 
