@@ -419,6 +419,8 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     CT::string *dimVals = dimMap[dimName];
 
     if (dimVals->count == 1) {
+      if (dimVals[0].equals("*")) continue;
+
       const char *dimVal = dimVals[0].c_str();
 
       // If dimension value is a number, find closest value.
