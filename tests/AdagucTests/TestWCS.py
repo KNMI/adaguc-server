@@ -71,6 +71,37 @@ class TestWCS(unittest.TestCase):
     self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(
       self.testresultspath + filename, self.expectedoutputsspath + filename))
     
+  def test_WCSDescribeCoverage_Multidimdata_large_daily(self):
+    """
+    Check if WCS DescribeCoverage shows information for multidimensional data, with more than 200  equally spaced timestamps
+    """
+    AdagucTestTools().cleanTempDir()
+    # This file has the following dimensions: lon,lat,member,height, and time. 
+    filename = "test_WCSDescribeCoverage_Multidimdata_large_daily.xml"
+    status, data, headers = AdagucTestTools().runADAGUCServer(
+      "source=large_number_timesteps/210_daily_timesteps.nc&SERVICE=WCS&request=describecoverage&coverage=data",
+      env=self.env, maxLogFileSize=16384)  # Silence log flood warning, datafile has lots of variables, each giving log output
+    AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+    self.assertEqual(status, 0)
+    self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(
+      self.testresultspath + filename, self.expectedoutputsspath + filename))
+    
+
+  def test_WCSDescribeCoverage_Multidimdata_large_random(self):
+    """
+    Check if WCS DescribeCoverage shows information for multidimensional data, with more than 200 randomly spaced timestamps
+    """
+    AdagucTestTools().cleanTempDir()
+    # This file has the following dimensions: lon,lat,member,height, and time. 
+    filename = "test_WCSDescribeCoverage_Multidimdata_large_random.xml"
+    status, data, headers = AdagucTestTools().runADAGUCServer(
+      "source=large_number_timesteps/210_random_timesteps.nc&SERVICE=WCS&request=describecoverage&coverage=data",
+      env=self.env, maxLogFileSize=16384)  # Silence log flood warning, datafile has lots of variables, each giving log output
+    AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+    self.assertEqual(status, 0)
+    self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(
+      self.testresultspath + filename, self.expectedoutputsspath + filename))
+    
 
   def test_WCSGetCoverageAAIGRID_testdatanc(self):
     """
