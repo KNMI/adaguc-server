@@ -58,7 +58,7 @@ geojson-pydantic==1.0.2
     # via -r requirements.in
 geomet==1.1.0
     # via -r requirements.in
-gunicorn==21.2.0
+gunicorn==22.0.0
     # via -r requirements.in
 h11==0.14.0
     # via
