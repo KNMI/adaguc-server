@@ -48,7 +48,6 @@ if [ -z "${EXTERNALADDRESS}" ]; then
   fi
 fi
 
-            tree = parse(os.path.join(adaguc_data_set_dir, dataset_file))
 mkdir -p ${ADAGUC_DATASET_DIR}
 
 

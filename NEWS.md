@@ -1,3 +1,6 @@
+**Version 2.21.1 2024-04-10**
+- Support INT64 in CDFDataWriter
+
 **Version 2.21.0 2024-03-14**
 
 - Added support for Redis caching. Redis caching can be enabled by providing a Redis service via the ADAGUC_REDIS environment and configuring caching settings for a dataset in the [Settings](doc/configuration/Settings.md) element.
