@@ -14,7 +14,7 @@ anyio==4.3.0
     #   starlette
 asgi-logger==0.1.0
     # via -r requirements.in
-asgiref==3.7.2
+asgiref==3.8.1
     # via asgi-logger
 async-timeout==4.0.3
     # via redis
@@ -50,7 +50,7 @@ defusedxml==0.7.1
     # via -r requirements.in
 edr-pydantic==0.2.1
     # via -r requirements.in
-exceptiongroup==1.2.0
+exceptiongroup==1.2.1
     # via anyio
 fastapi==0.109.2
     # via -r requirements.in
@@ -64,11 +64,11 @@ h11==0.14.0
     # via
     #   httpcore
     #   uvicorn
-httpcore==1.0.4
+httpcore==1.0.5
     # via httpx
 httpx==0.26.0
     # via -r requirements.in
-idna==3.6
+idna==3.7
     # via
     #   anyio
     #   httpx
@@ -89,18 +89,18 @@ numpy==1.26.4
     #   netcdf4
 owslib==0.29.3
     # via -r requirements.in
-packaging==23.2
+packaging==24.0
     # via gunicorn
-pillow==10.2.0
+pillow==10.3.0
     # via -r requirements.in
-pydantic==2.6.3
+pydantic==2.7.0
     # via
     #   -r requirements.in
     #   covjson-pydantic
     #   edr-pydantic
     #   fastapi
     #   geojson-pydantic
-pydantic-core==2.16.3
+pydantic-core==2.18.1
     # via pydantic
 python-dateutil==2.9.0.post0
     # via owslib
@@ -110,7 +110,7 @@ pytz==2023.4
     #   owslib
 pyyaml==6.0.1
     # via owslib
-redis==5.0.2
+redis==5.0.3
     # via -r requirements.in
 requests==2.31.0
     # via owslib
@@ -124,7 +124,7 @@ starlette==0.36.3
     # via
     #   brotli-asgi
     #   fastapi
-typing-extensions==4.10.0
+typing-extensions==4.11.0
     # via
     #   anyio
     #   asgiref
