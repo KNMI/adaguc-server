@@ -373,6 +373,18 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
   // Get mapping of dimension -> tablename
   std::map<CT::string, CT::string> mapping = getTableNamesForPathFilterAndDimensions(path, filter, dims, dataSource);
 
+  // Create a mapping for filtering where key=dimension name, value=dimension value
+  // FIXME: merge with other mapping?
+  std::map<CT::string, CT::string *> dimMap;
+  for (const auto &dim : dataSource->requiredDims) {
+    CT::string queryParams(&dim->value);
+    // FIXME: should support filtering on multiple dim values when passing a list,of,values
+    CT::string *sDims = queryParams.splitToArray("/"); // Split up by slashes (and put into sDims)
+    // It is allowed to pass time as a range: start/end. If we do this, we assume to given value is datetime string
+
+    dimMap[dim->netCDFDimName.c_str()] = sDims;
+  }
+
   // Build query to find combination of file paths and dimensions, by filtering on dimensions. Query has following form:
   //    SELECT DISTINCT t1.path, <dimension 1 name>, dim<dimension 1 name>, ... FROM <table> t1
   //    INNER JOIN <table for dimension n> tn ON t1.path = tn.path ...
@@ -401,17 +413,6 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     );
   } else {
     query.concat("t1.adaguctilinglevel != -1 ");
-  }
-
-  // Create a mapping for filtering where key=dimension name, value=dimension value
-  std::map<CT::string, CT::string *> dimMap;
-  for (const auto &dim : dataSource->requiredDims) {
-    CT::string queryParams(&dim->value);
-    // FIXME: should support filtering on multiple dim values when passing a list,of,values
-    CT::string *sDims = queryParams.splitToArray("/"); // Split up by slashes (and put into sDims)
-    // It is allowed to pass time as a range: start/end. If we do this, we assume to given value is datetime string
-
-    dimMap[dim->netCDFDimName.c_str()] = sDims;
   }
   
   for (const auto &[dimNameString, tableNameString] : mapping) {
