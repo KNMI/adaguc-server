@@ -46,8 +46,11 @@ public:
   CDBStore::Store *getClosestDataTimeToSystemTime(const char *netcdfDimName, const char *tableName);
 
   CT::string getTableNameForPathFilterAndDimension(const char *path, const char *filter, const char *dimension, CDataSource *dataSource);
-  std::map<CT::string, CT::string> getTableNamesForPathFilterAndDimensions(const char *path, const char *filter, std::vector<CT::string> dimensions, CDataSource *dataSource);
+  std::map<CT::string, std::pair<CT::string, CT::string>> getTableNamesForPathFilterAndDimensions(const char *path, const char *filter, std::vector<CT::string> dimensions, CDataSource *dataSource);
+
   CT::string getLookupIdentifier(const char *path, const char *filter, const char *dimension);
+  void assertLookupTableExists(CT::string lookupTableName);
+  void addToLookupTable(CT::string lookupTableName, const char *path, const char *filter, CT::string dimensionName, CT::string tableName);
 
   int autoUpdateAndScanDimensionTables(CDataSource *dataSource);
   CDBStore::Store *getMin(const char *name, const char *table);
