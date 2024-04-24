@@ -371,7 +371,12 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
   }
 
   // Get mapping of dimension -> tablename
-  std::map<CT::string, std::pair<CT::string, CT::string>> mapping = getTableNamesForPathFilterAndDimensions(path, filter, dims, dataSource);
+  std::map<CT::string, DimInfo> mapping = getTableNamesForPathFilterAndDimensions(path, filter, dims, dataSource);
+
+  for (const auto &[key, value] : mapping) {
+    CDBDebug("@@@ key %s", key.c_str());
+    CDBDebug("@@@ value %s %s", value.tableName.c_str(), value.dataType.c_str());
+  }
 
   // Create a mapping for filtering where key=dimension name, value=dimension value
   // FIXME: merge with other mapping?
@@ -400,9 +405,9 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
   int i = 0;
   for (const auto &[key, value] : mapping) {
     if (i == 0) {
-      query.printconcat(" FROM %s t1 ", value.first.c_str());
+      query.printconcat(" FROM %s t1 ", value.tableName.c_str());
     } else {
-      query.printconcat("INNER JOIN %s t%d ON t1.path = t%d.path ", value.first.c_str(), i + 1, i + 1);
+      query.printconcat("INNER JOIN %s t%d ON t1.path = t%d.path ", value.tableName.c_str(), i + 1, i + 1);
     }
     i++;
   }
@@ -419,8 +424,8 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
   for (const auto &[dimNameString, value] : mapping) {
     CT::string *dimVals = dimMap[dimNameString];
     const char *dimName = dimNameString.c_str();
-    const char *tableName = value.first.c_str();
-    CT::string dimDataType = value.second;
+    const char *tableName = value.tableName.c_str();
+    CT::string dimDataType = value.dataType;
 
     if (dimVals->count == 1) {
       if (dimVals[0].equals("*")) continue;
@@ -620,20 +625,23 @@ void CDBAdapterPostgreSQL::addToLookupTable(CT::string lookupTableName, const ch
   }
 
   CT::string dimDataType = "";
+  CDBDebug("@@@ 1");
   if (dataType->getSize() != 0) {
+    CDBDebug("@@@ 2");
     dimDataType = dataType->getRecord(0)->get("data_type");
   }
+  CDBDebug("@@@ 3");
 
   query.print("INSERT INTO %s values (E'P_%s', E'F_%s', E'%s', E'%s', E'%s')", lookupTableName.c_str(), path, filter, dimensionName.c_str(), tableName.c_str(), dimDataType.c_str());
   int status = DB->query(query.c_str());
+  CDBDebug("@@@ 4");
   if (status != 0) {
     CDBError("Unable to insert records: \"%s\"", query.c_str());
     throw(1);
   }
 }
 
-std::map<CT::string, std::pair<CT::string, CT::string>> CDBAdapterPostgreSQL::getTableNamesForPathFilterAndDimensions(const char *path, const char *filter, std::vector<CT::string> dimensions,
-                                                                                                                      CDataSource *dataSource) {
+std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAndDimensions(const char *path, const char *filter, std::vector<CT::string> dimensions, CDataSource *dataSource) {
 #ifdef MEASURETIME
   StopWatch_Stop("### CDBAdapterPostgreSQL::getTableNamesForPathFilterAndDimensions");
 #endif
@@ -642,7 +650,7 @@ std::map<CT::string, std::pair<CT::string, CT::string>> CDBAdapterPostgreSQL::ge
   // FIXME: Make sure dimDataType also gets stored in lookupCache
   // FIXME: Make sure dimDataType can get fetched in other cases as well
 
-  std::map<CT::string, std::pair<CT::string, CT::string>> mapping;
+  std::map<CT::string, DimInfo> mapping;
 
   // If config has a hardcoded db table name for layer, use it
   if (dataSource->cfgLayer->DataBaseTable.size() == 1) {
@@ -650,7 +658,7 @@ std::map<CT::string, std::pair<CT::string, CT::string>> CDBAdapterPostgreSQL::ge
 
     for (auto &dim : dimensions) {
       dataSource->srvParams->makeCorrectTableName(&tableName, &dim);
-      mapping[dim] = std::make_pair(tableName, "");
+      mapping[dim] = {tableName, ""};
     }
     return mapping;
   }
@@ -659,13 +667,13 @@ std::map<CT::string, std::pair<CT::string, CT::string>> CDBAdapterPostgreSQL::ge
   bool done = true;
   for (const auto &dim : dimensions) {
     CT::string lookupIdentifier = getLookupIdentifier(path, filter, dim.c_str());
-    std::map<std::string, std::string>::iterator it = lookupTableNameCacheMap.find(lookupIdentifier.c_str());
+    std::map<std::string, DimInfo>::iterator it = lookupTableNameCacheMap.find(lookupIdentifier.c_str());
 
-    // FIXME: temporarily disabled lookupTableNameCacheMap lookups. Should we also store dimDataType info in here?
-    if (it != lookupTableNameCacheMap.end() && 0) {
-      mapping[dim].first = (*it).second.c_str();
+    if (it != lookupTableNameCacheMap.end()) {
+      mapping[dim].tableName = (*it).second.tableName.c_str();
+      mapping[dim].dataType = (*it).second.dataType;
     } else {
-      mapping[dim].first = "";
+      mapping[dim].tableName = "";
       done = false;
     }
   }
@@ -696,13 +704,14 @@ std::map<CT::string, std::pair<CT::string, CT::string>> CDBAdapterPostgreSQL::ge
   for (size_t i = 0; i < tableDimStore->size(); i++) {
     CT::string dim = tableDimStore->getRecord(i)->get("dimension");
 
-    if (mapping[dim].first.length() == 0) {
-      mapping[dim].first = tableDimStore->getRecord(i)->get("tablename");
-      mapping[dim].second = tableDimStore->getRecord(i)->get("dimension_datatype");
+    if (mapping[dim].tableName.length() == 0) {
+      mapping[dim].tableName = tableDimStore->getRecord(i)->get("tablename");
+      mapping[dim].dataType = tableDimStore->getRecord(i)->get("dimension_datatype");
 
       // Found tablename in SQL lookup table, also add to the lookupTableNameCacheMap
       CT::string lookupIdentifier = getLookupIdentifier(path, filter, dim.c_str());
-      lookupTableNameCacheMap.insert(std::pair<std::string, std::string>(lookupIdentifier.c_str(), mapping[dim].first.c_str()));
+      DimInfo d = {mapping[dim].tableName, mapping[dim].dataType};
+      lookupTableNameCacheMap[lookupIdentifier.c_str()] = d;
     }
   }
 
@@ -713,7 +722,7 @@ std::map<CT::string, std::pair<CT::string, CT::string>> CDBAdapterPostgreSQL::ge
   // Check if any tables still missing?
   for (auto &m : mapping) {
     // for (const auto &[key, value] : mapping) {
-    if (!m.second.first.empty()) continue;
+    if (!m.second.tableName.empty()) continue;
 
     CT::string tableName;
     tableName.print("t%s_%s", CTime::currentDateTime().c_str(), CServerParams::randomString(20).c_str());
@@ -724,7 +733,8 @@ std::map<CT::string, std::pair<CT::string, CT::string>> CDBAdapterPostgreSQL::ge
 
     addToLookupTable(lookupTableName.c_str(), path, filter, m.first.c_str(), tableName.c_str());
     CT::string lookupIdentifier = getLookupIdentifier(path, filter, m.first.c_str());
-    lookupTableNameCacheMap.insert(std::pair<std::string, std::string>(lookupIdentifier.c_str(), tableName.c_str()));
+    DimInfo d = {tableName, m.second.dataType};
+    lookupTableNameCacheMap[lookupIdentifier.c_str()] = d;
   }
 
   return mapping;
@@ -760,9 +770,9 @@ CT::string CDBAdapterPostgreSQL::getTableNameForPathFilterAndDimension(const cha
   }
   CT::string tableName;
 
-  std::map<std::string, std::string>::iterator it = lookupTableNameCacheMap.find(identifier.c_str());
+  std::map<std::string, DimInfo>::iterator it = lookupTableNameCacheMap.find(identifier.c_str());
   if (it != lookupTableNameCacheMap.end()) {
-    tableName = (*it).second.c_str();
+    tableName = (*it).second.tableName.c_str();
 // CDBDebug("Returning tablename %s from map",tableName.c_str());
 #ifdef MEASURETIME
     StopWatch_Stop("<CDBAdapterPostgreSQL::getTableNameForPathFilterAndDimension");
@@ -798,6 +808,7 @@ CT::string CDBAdapterPostgreSQL::getTableNameForPathFilterAndDimension(const cha
     throw(1);
   }
 
+  CT::string dimDataType;
   try {
 
     status = DB->checkTable(lookupTableName.c_str(), tableColumns.c_str());
@@ -824,8 +835,11 @@ CT::string CDBAdapterPostgreSQL::getTableNameForPathFilterAndDimension(const cha
       CDBError("Unable to select records: \"%s\"", mvRecordQuery.c_str());
       throw(1);
     }
+
     if (rec->getSize() > 0) {
+      // FIXME: use column name instead of column order
       tableName.copy(rec->getRecord(0)->get(3));
+      dimDataType.copy(rec->getRecord(0)->get(4));
       if (tableName.length() > 0) {
         lookupTableIsAvailable = true;
       }
@@ -863,7 +877,8 @@ CT::string CDBAdapterPostgreSQL::getTableNameForPathFilterAndDimension(const cha
 
   if (tableName.length() > 0) {
     // CDBDebug("Pushing %s with id %s",tableName.c_str(),identifier.c_str());
-    lookupTableNameCacheMap.insert(std::pair<std::string, std::string>(identifier.c_str(), tableName.c_str()));
+    DimInfo d = {tableName, dimDataType};
+    lookupTableNameCacheMap[identifier.c_str()] = d;
   }
 
   if (tableName.length() <= 0) {

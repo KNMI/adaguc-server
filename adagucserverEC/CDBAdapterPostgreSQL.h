@@ -27,13 +27,19 @@
 #include "CDebugger.h"
 #include "CPGSQLDB.h"
 
+struct DimInfo {
+  CT::string tableName;
+  CT::string dataType;
+};
+typedef struct DimInfo DimInfo;
+
 class CDBAdapterPostgreSQL : public CDBAdapter {
 private:
   DEF_ERRORFUNCTION();
   CPGSQLDB *dataBaseConnection;
   CPGSQLDB *getDataBaseConnection();
   CServerConfig::XMLE_Configuration *configurationObject;
-  std::map<std::string, std::string> lookupTableNameCacheMap;
+  std::map<std::string, DimInfo> lookupTableNameCacheMap;
   std::map<std::string, std::vector<std::string>> fileListPerTable;
   int createDimTableOfType(const char *dimname, const char *tablename, int type);
 
@@ -46,7 +52,7 @@ public:
   CDBStore::Store *getClosestDataTimeToSystemTime(const char *netcdfDimName, const char *tableName);
 
   CT::string getTableNameForPathFilterAndDimension(const char *path, const char *filter, const char *dimension, CDataSource *dataSource);
-  std::map<CT::string, std::pair<CT::string, CT::string>> getTableNamesForPathFilterAndDimensions(const char *path, const char *filter, std::vector<CT::string> dimensions, CDataSource *dataSource);
+  std::map<CT::string, DimInfo> getTableNamesForPathFilterAndDimensions(const char *path, const char *filter, std::vector<CT::string> dimensions, CDataSource *dataSource);
 
   CT::string getLookupIdentifier(const char *path, const char *filter, const char *dimension);
   void assertLookupTableExists(CT::string lookupTableName);
