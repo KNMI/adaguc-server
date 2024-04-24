@@ -7,6 +7,7 @@ import re
 from lxml import etree, objectify
 import urllib.request
 from PIL import Image
+import subprocess
 
 ADAGUC_PATH = os.getenv("ADAGUC_PATH", " ")
 
@@ -141,6 +142,9 @@ class AdagucTestTools:
             pass
         self.mkdir_p(ADAGUC_TMP)
         return
+
+    def cleanPostgres(self):
+        subprocess.run(["psql", os.getenv("ADAGUC_DB"), "-c", "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"])
 
     def mkdir_p(self, directory):
         if not os.path.exists(directory):
