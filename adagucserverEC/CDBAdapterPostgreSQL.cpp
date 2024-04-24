@@ -996,7 +996,7 @@ int CDBAdapterPostgreSQL::createDimTableOfType(const char *dimname, const char *
   // 0000-00-00T00:00:00Z
   if (type == 3) tableColumns.printconcat(", %s varchar (20), dim%s int", dimname, dimname);
   if (type == 2) tableColumns.printconcat(", %s varchar (64), dim%s int", dimname, dimname);
-  if (type == 1) tableColumns.printconcat(", %s numeric, dim%s int", dimname, dimname);
+  if (type == 1) tableColumns.printconcat(", %s numeric (10, 1), dim%s int", dimname, dimname);
   if (type == 0) tableColumns.printconcat(", %s int, dim%s int", dimname, dimname);
   tableColumns.printconcat(", filedate timestamp");
 
