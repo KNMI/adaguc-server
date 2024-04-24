@@ -144,7 +144,8 @@ class AdagucTestTools:
         return
 
     def cleanPostgres(self):
-        subprocess.run(["psql", os.getenv("ADAGUC_DB"), "-c", "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"])
+        # subprocess.run(["psql", os.getenv("ADAGUC_DB"), "-c", "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"])
+        pass
 
     def mkdir_p(self, directory):
         if not os.path.exists(directory):
