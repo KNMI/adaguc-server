@@ -102,6 +102,7 @@ services:
     image: redis:7
     container_name: adaguc-redis
     hostname: adaguc-redis
+    restart: unless-stopped
     networks:
       - adaguc-network
 volumes:
