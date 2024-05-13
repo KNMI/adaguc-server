@@ -1,3 +1,6 @@
+**Version 2.21.2 2024-04-26**
+- When using docker compose the Redis container now automatically starts when system restarts
+
 **Version 2.21.1 2024-04-10**
 - Support INT64 in CDFDataWriter
 
