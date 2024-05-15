@@ -27,3 +27,4 @@ covjson-pydantic~=0.2.0
 geomet~=1.0
 edr-pydantic~=0.2.0
 redis~=5.0
+python-dateutil~=2.9.0

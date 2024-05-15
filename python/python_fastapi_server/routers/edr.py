@@ -16,6 +16,7 @@ import logging
 import os
 import re
 from datetime import datetime, timezone
+from dateutil.relativedelta import relativedelta
 from typing import Union
 import pickle
 
@@ -161,6 +162,8 @@ def init_edr_collections(
                             edr_collection.attrib.get("vertical_name"),
                             "base_url":
                             collection_url,
+                            "time_interval":
+                            edr_collection.attrib.get("time_interval"),
                         }
         except ParseError:
             pass
@@ -199,8 +202,8 @@ async def get_point_value(
     if instance:
         urlrequest += f"&DIM_reference_time={instance_to_iso(instance)}"
     if z_par:
-        if ("vertical_name" in edr_collectioninfo
-                and edr_collectioninfo["vertical_name"] != "ELEVATION"):
+        if ("vertical_name" in edr_collectioninfo and
+                edr_collectioninfo["vertical_name"].upper() != "ELEVATION"):
             urlrequest += f"&DIM_{edr_collectioninfo['vertical_name']}={z_par}"
         else:
             urlrequest += f"&ELEVATION={z_par}"
@@ -240,11 +243,13 @@ async def get_collection_position(
     returns data for the EDR /position endpoint
     """
     allowed_params = ["coords", "datetime", "parameter-name", "z", "f", "crs"]
-    custom_dims = [k for k in request.query_params if k not in allowed_params]
+    custom_params = [
+        k for k in request.query_params if k not in allowed_params
+    ]
     custom_dims = ""
-    if len(custom_dims) > 0:
-        for custom_dim in custom_dims:
-            custom_dims += f"&DIM_{custom_dim}={request.query_params[custom_dim]}"
+    if len(custom_params) > 0:
+        for custom_param in custom_params:
+            custom_dims += f"&DIM_{custom_param}={request.query_params[custom_param]}"
     edr_collections = get_edr_collections()
 
     parameter_names = parameter_name.split(",")
@@ -324,9 +329,14 @@ async def get_collectioninfo_for_id(
     crs = 'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]'
     spatial = Spatial(bbox=bbox, crs=crs)
 
-    (interval, time_values) = get_times_for_collection(
-        edr_collectioninfo, wmslayers,
-        edr_collectioninfo["parameters"][0]["name"])
+    if instance is None or edr_collectioninfo["time_interval"] is None:
+        (interval, time_values) = get_times_for_collection(
+            edr_collectioninfo, wmslayers,
+            edr_collectioninfo["parameters"][0]["name"])
+    else:
+        (interval,
+         time_values) = create_times_for_instance(edr_collectioninfo,
+                                                  wmslayers, instance)
 
     customlist: list = get_custom_dims_for_collection(
         edr_collectioninfo, wmslayers,
@@ -345,6 +355,7 @@ async def get_collectioninfo_for_id(
     if vertical_dim:
         vertical = Vertical(**vertical_dim)
 
+    print("interval:", interval)
     temporal = Temporal(
         interval=interval,  # [["2022-06-30T09:00:00Z", "2022-07-02T06:00:00Z"]],
         trs=
@@ -400,7 +411,7 @@ async def get_collectioninfo_for_id(
     if instance is None:
         collection = Collection(
             links=links,
-            id=instance if instance else edr_collection,
+            id=edr_collection,
             extent=extent,
             data_queries=data_queries,
             parameter_names=parameter_names,
@@ -410,7 +421,7 @@ async def get_collectioninfo_for_id(
     else:
         collection = Instance(
             links=links,
-            id=instance if instance else edr_collection,
+            id=instance,
             extent=extent,
             data_queries=data_queries,
             parameter_names=parameter_names,
@@ -507,7 +518,7 @@ def get_time_values_for_range(rng: str) -> list[str]:
     if not tstep:
         tstep = 3600
     nsteps = int(timediff / tstep) + 1
-    return [f"R{nsteps}/{iso_start}/{step}"]
+    return [f"R{nsteps}/{iso_start.strftime('%Y-%m-%dT%H:%M:%SZ')}/{step}"]
 
 
 def get_times_for_collection(
@@ -551,6 +562,57 @@ def get_times_for_collection(
     return None, None
 
 
+def create_times_for_instance(edr_collectioninfo: dict, wmslayers,
+                              instance: str):
+    """
+    Returns a list of times for a reference_time, derived from the time_interval EDRCollection attribute in edr_collectioninfo
+
+    """
+    ref_time = parse_instance_time(instance)
+    time_interval = edr_collectioninfo["time_interval"].replace(
+        "{reference_time}", ref_time.strftime("%Y-%m-%dT%H:%M:%SZ"))
+    (repeat_s, ref_t_s, time_step_s) = time_interval.split("/")
+    repeat = int(repeat_s[1:])
+
+    if time_step_s.startswith("PT"):
+        pattern = re.compile(r"""PT(\d+)([HMS])""")
+        match = pattern.match(time_step_s)
+        step = int(match.group(1))
+        step_type = match.group(2).lower()
+    else:
+        pattern = re.compile(r"""P(\d+)([YMD])""")
+        match = pattern.match(time_step_s)
+        step = int(match.group(1))
+        step_type = match.group(2)
+
+    if step_type == "Y":
+        delta = relativedelta(years=step)
+    elif step_type == "M":
+        delta = relativedelta(months=step)
+    elif step_type == "D":
+        delta = relativedelta(days=step)
+    elif step_type == "h":
+        delta = relativedelta(hours=step)
+    elif step_type == "m":
+        delta = relativedelta(minutes=step)
+    elif step_type == "s":
+        delta = relativedelta(seconds=step)
+
+    times = []
+    step_time = ref_time
+    for _d in range(repeat):
+        times.append(step_time.strftime("%Y-%m-%dT%H:%M:%SZ"))
+        step_time = step_time + delta
+
+    interval = [[
+        datetime.strptime(times[0],
+                          "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc),
+        datetime.strptime(times[-1],
+                          "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+    ]]
+    return interval, times
+
+
 def get_custom_dims_for_collection(edr_collectioninfo: dict,
                                    wmslayers,
                                    parameter: str = None):
@@ -572,10 +634,16 @@ def get_custom_dims_for_collection(edr_collectioninfo: dict,
                 edr_collectioninfo.get("vertical_name"),
         ]:
             custom_dim = {
-                "id": dim_name,
-                "interval": [],
-                "values": layer["dimensions"][dim_name]["values"],
-                "reference": f"custom_{dim_name}",
+                "id":
+                dim_name,
+                "interval": [
+                    layer["dimensions"][dim_name]["values"][0],
+                    layer["dimensions"][dim_name]["values"][-1]
+                ],
+                "values":
+                layer["dimensions"][dim_name]["values"],
+                "reference":
+                f"custom_{dim_name}",
             }
             custom.append(custom_dim)
     return custom if len(custom) > 0 else None
@@ -990,117 +1058,119 @@ def covjson_from_resp(dats, vertical_name):
     """
     covjson_list = []
     for dat in dats:
-        (lon, lat) = dat["point"]["coords"].split(",")
-        lat = float(lat)
-        lon = float(lon)
-        dims = makedims(dat["dims"], dat["data"])
-        time_steps = getdimvals(dims, "time")
-        if vertical_name is not None:
-            vertical_steps = getdimvals(dims, vertical_name)
-        else:
-            vertical_steps = getdimvals(dims, "elevation")
+        if len(dat["data"]):
+            (lon, lat) = dat["point"]["coords"].split(",")
+            lat = float(lat)
+            lon = float(lon)
+            dims = makedims(dat["dims"], dat["data"])
+            time_steps = getdimvals(dims, "time")
+            if vertical_name is not None:
+                vertical_steps = getdimvals(dims, vertical_name)
+            else:
+                vertical_steps = getdimvals(dims, "elevation")
 
-        valstack = []
-        # Translate the adaguc GFI object in something we can handle in Python
-        for dim_name in dims:
-            vals = getdimvals(dims, dim_name)
-            valstack.append(vals)
-        tuples = list(itertools.product(*valstack))
-        values = []
-        for mytuple in tuples:
-            value = multi_get(dat["data"], mytuple)
-            if value:
-                try:
-                    values.append(float(value))
-                except ValueError:
-                    if value == "nodata":
-                        values.append(None)
-                    else:
-                        values.append(value)
+            valstack = []
+            # Translate the adaguc GFI object in something we can handle in Python
+            for dim_name in dims:
+                vals = getdimvals(dims, dim_name)
+                valstack.append(vals)
+            tuples = list(itertools.product(*valstack))
+            values = []
+            for mytuple in tuples:
+                value = multi_get(dat["data"], mytuple)
+                if value:
+                    try:
+                        values.append(float(value))
+                    except ValueError:
+                        if value == "nodata":
+                            values.append(None)
+                        else:
+                            values.append(value)
 
-        parameters: dict[str, CovJsonParameter] = {}
-        ranges = {}
+            parameters: dict[str, CovJsonParameter] = {}
+            ranges = {}
 
-        unit = CovJsonUnit(symbol=dat["units"])
-        param = CovJsonParameter(
-            id=dat["name"],
-            observedProperty=CovJsonObservedProperty(
-                label={"en": dat["name"]}),
-            unit=unit,
-        )
-        # TODO: add units to CovJsonParameter
-        parameters[dat["name"]] = param
-        axis_names = ["x", "y", "t"]
-        shape = [1, 1, len(time_steps)]
-        if vertical_steps:
-            axis_names = ["x", "y", "z", "t"]
-            shape = [1, 1, len(vertical_steps), len(time_steps)]
-        _range = {
-            "axisNames": axis_names,
-            "shape": shape,
-            "values": values,
-        }
-        ranges[dat["name"]] = _range
+            unit = CovJsonUnit(symbol=dat["units"])
+            param = CovJsonParameter(
+                id=dat["name"],
+                observedProperty=CovJsonObservedProperty(
+                    label={"en": dat["name"]}),
+                unit=unit,
+            )
+            # TODO: add units to CovJsonParameter
+            parameters[dat["name"]] = param
+            axis_names = ["x", "y", "t"]
+            shape = [1, 1, len(time_steps)]
+            if vertical_steps:
+                axis_names = ["x", "y", "z", "t"]
+                shape = [1, 1, len(vertical_steps), len(time_steps)]
+            _range = {
+                "axisNames": axis_names,
+                "shape": shape,
+                "values": values,
+            }
+            ranges[dat["name"]] = _range
 
-        axes: dict[str, ValuesAxis] = {
-            "x":
-            ValuesAxis[float](values=[lon]),
-            "y":
-            ValuesAxis[float](values=[lat]),
-            "t":
-            ValuesAxis[AwareDatetime](values=[
-                datetime.strptime(t, "%Y-%m-%dT%H:%M:%SZ").replace(
-                    tzinfo=timezone.utc) for t in time_steps
-            ]),
-        }
-        domain_type = "PointSeries"
-        if vertical_steps:
-            axes["z"] = ValuesAxis[float](values=vertical_steps)
-            if len(vertical_steps) > 1:
-                domain_type = "VerticalProfile"
-        if time_steps:
-            axes["t"] = ValuesAxis[AwareDatetime](values=[
-                datetime.strptime(t, "%Y-%m-%dT%H:%M:%SZ").replace(
-                    tzinfo=timezone.utc) for t in time_steps
-            ])
-            if len(time_steps) > 1 and vertical_steps and len(
-                    vertical_steps) > 1:
-                domain_type = "Grid"
+            axes: dict[str, ValuesAxis] = {
+                "x":
+                ValuesAxis[float](values=[lon]),
+                "y":
+                ValuesAxis[float](values=[lat]),
+                "t":
+                ValuesAxis[AwareDatetime](values=[
+                    datetime.strptime(t, "%Y-%m-%dT%H:%M:%SZ").replace(
+                        tzinfo=timezone.utc) for t in time_steps
+                ]),
+            }
+            domain_type = "PointSeries"
+            if vertical_steps:
+                axes["z"] = ValuesAxis[float](values=vertical_steps)
+                if len(vertical_steps) > 1:
+                    domain_type = "VerticalProfile"
+            if time_steps:
+                axes["t"] = ValuesAxis[AwareDatetime](values=[
+                    datetime.strptime(t, "%Y-%m-%dT%H:%M:%SZ").replace(
+                        tzinfo=timezone.utc) for t in time_steps
+                ])
+                if len(time_steps) > 1 and vertical_steps and len(
+                        vertical_steps) > 1:
+                    domain_type = "Grid"
 
-        referencing = [
-            ReferenceSystemConnectionObject(
-                system=ReferenceSystem(
-                    type="GeographicCRS",
-                    id="http://www.opengis.net/def/crs/OGC/1.3/CRS84",
+            referencing = [
+                ReferenceSystemConnectionObject(
+                    system=ReferenceSystem(
+                        type="GeographicCRS",
+                        id="http://www.opengis.net/def/crs/OGC/1.3/CRS84",
+                    ),
+                    coordinates=["x", "y", "z"],
+                ) if vertical_steps else ReferenceSystemConnectionObject(
+                    system=ReferenceSystem(
+                        type="GeographicCRS",
+                        id="http://www.opengis.net/def/crs/OGC/1.3/CRS84",
+                    ),
+                    coordinates=["x", "y"],
                 ),
-                coordinates=["x", "y"],
-            ),
-            ReferenceSystemConnectionObject(
-                system=ReferenceSystem(type="TemporalRS",
-                                       calendar="Gregorian"),
-                coordinates=["t"],
-            ),
-        ]
-        domain = Domain(domainType=domain_type,
-                        axes=axes,
-                        referencing=referencing)
-        covjson = Coverage(
-            id="test",
-            domain=domain,
-            ranges=ranges,
-            parameters=parameters,
-        )
-        covjson_list.append(covjson)
+                ReferenceSystemConnectionObject(
+                    system=ReferenceSystem(type="TemporalRS",
+                                           calendar="Gregorian"),
+                    coordinates=["t"],
+                ),
+            ]
+            domain = Domain(domainType=domain_type,
+                            axes=axes,
+                            referencing=referencing)
+            covjson = Coverage(
+                id="test",
+                domain=domain,
+                ranges=ranges,
+                parameters=parameters,
+            )
+            covjson_list.append(covjson)
 
-        # if not fullcovjson:
-        #     fullcovjson = covjson
-        # else:
-        #     for k, value in covjson.parameters.items():
-        #         fullcovjson.parameters[k] = value
-        #     for k, value in covjson.ranges.items():
-        #         fullcovjson.ranges[k] = value
     if len(covjson_list) == 1:
         return covjson_list[0]
+    if len(covjson_list) == 0:
+        raise EdrException(code=400, description="No data")
 
     coverages = []
     covjson_list.sort(key=lambda x: x.model_dump_json())
