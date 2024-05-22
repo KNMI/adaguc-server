@@ -89,7 +89,4 @@
     "editor.defaultFormatter": "ms-python.black-formatter",
 
   },
-  "python.linting.pylintPath": "env/bin/pylint",
-  "python.formatting.provider": "yapf",
-
 }

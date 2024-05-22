@@ -1,3 +1,7 @@
+"""
+General methods for supporting ogcapi features code
+"""
+
 import itertools
 import logging
 import os
@@ -51,7 +55,7 @@ def get_datasets(adaguc_data_set_dir):
         try:
             tree = parse(os.path.join(adaguc_data_set_dir, dataset_file))
             root = tree.getroot()
-            for _ogcapi in root.iter("OgcApiFeatures"):
+            for _ in root.iter("OgcApiFeatures"):
                 # Note, service is just a placeholder because it is needed by OWSLib.
                 # Adaguc is still run as executable, not as service"""
                 dataset = {
@@ -101,7 +105,6 @@ async def call_adaguc(url):
     )
 
     # Run adaguc-server
-    # pylint: disable=unused-variable
     status, data, headers = await adaguc_instance.runADAGUCServer(
         url, env=adagucenv, showLogOnError=True
     )

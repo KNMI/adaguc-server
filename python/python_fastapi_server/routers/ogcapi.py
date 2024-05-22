@@ -4,7 +4,6 @@ import json
 import logging
 import os
 import os.path
-import traceback
 from collections import OrderedDict
 from typing import Dict, List, Type, Union
 
@@ -69,7 +68,8 @@ templates = Jinja2Templates(directory=templates_abs_file_path)
 
 
 @ogcApiApp.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
+async def validation_exception_handler(exc: RequestValidationError):
+    """Exception handler"""
     return JSONResponse(
         status_code=fastapi_status.HTTP_400_BAD_REQUEST,
         content=jsonable_encoder({"detail": exc.errors(), "body": exc.body}),
@@ -78,7 +78,14 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 @ogcApiApp.get("/", response_model=LandingPage, response_model_exclude_none=True)
 @ogcApiApp.get("", response_model=LandingPage, response_model_exclude_none=True)
-async def handle_ogc_api_root(req: Request, response: Response, f: str = "json"):
+async def handle_ogc_api_root(
+    req: Request,
+    response: Response,
+    responsetype: str = Query(default="json", alias="f"),
+):
+    """
+    Landing page of OGCAPI Features endpoint
+    """
     links: List[Link] = []
     links.append(
         Link(
@@ -132,9 +139,9 @@ async def handle_ogc_api_root(req: Request, response: Response, f: str = "json")
         title="ogcapi", description="ADAGUC OGCAPI-Features server", links=links
     )
 
-    response.headers["cache-control"] = "max-age=60"  # TODO find better value
+    response.headers["cache-control"] = "max-age=60"
 
-    if request_type(f) == "HTML":
+    if request_type(responsetype) == "HTML":
         return templates.TemplateResponse(
             "landingpage.html",
             {"request": req, "landingpage": landing_page.model_dump()},
@@ -143,6 +150,9 @@ async def handle_ogc_api_root(req: Request, response: Response, f: str = "json")
 
 
 def get_collection_links(url):
+    """
+    Create the list of links for a collection url
+    """
     links: List[Link] = []
     url = str(url)
     links.append(
@@ -181,6 +191,9 @@ def get_collection_links(url):
 
 
 def get_collections_links(url):
+    """
+    Create the list of links for a collection url
+    """
     links: List[Link] = []
     url = str(url)
     links.append(
@@ -203,6 +216,9 @@ def get_collections_links(url):
 
 
 def request_type(wanted_format: str) -> str:
+    """
+    Determine requested responsetype
+    """
     json_types = ["application/json", "json"]
     html_types = ["html", "text/html"]
     if wanted_format in json_types:
@@ -218,7 +234,14 @@ def request_type(wanted_format: str) -> str:
 @ogcApiApp.get(
     "/collections", response_model=Collections, response_model_exclude_none=True
 )
-async def get_collections(req: Request, response: Response, f: str = "json"):
+async def get_collections(
+    req: Request,
+    response: Response,
+    responsetype: str = Query(default="json", alias="f"),
+):
+    """
+    Handle the /collections call
+    """
     collections: List[Collection] = []
     parsed_collections = generate_collections()
     for parsed_collection in parsed_collections.values():
@@ -248,9 +271,9 @@ async def get_collections(req: Request, response: Response, f: str = "json"):
 
     links = get_collections_links(req.url_for("get_collections"))
 
-    response.headers["cache-control"] = "max-age=60"  # TODO find better value
+    response.headers["cache-control"] = "max-age=60"
 
-    if request_type(f) == "HTML":
+    if request_type(responsetype) == "HTML":
         collections_list = [c.model_dump() for c in collections]
         return templates.TemplateResponse(
             "collections.html", {"request": req, "collections": collections_list}
@@ -265,7 +288,12 @@ async def get_collections(req: Request, response: Response, f: str = "json"):
 @ogcApiApp.get(
     "/collections/{coll}", response_model=Collection, response_model_exclude_none=True
 )
-async def get_collection(coll: str, req: Request, f: str = "json"):
+async def get_collection(
+    coll: str, req: Request, responsetype: str = Query(default="json", alias="f")
+):
+    """
+    Return the data for a named collection
+    """
     extent = Extent(spatial=Spatial(bbox=[await get_extent(coll)]))
     collection = Collection(
         id=coll,
@@ -274,7 +302,7 @@ async def get_collection(coll: str, req: Request, f: str = "json"):
         extent=extent,
         links=get_collection_links(str(req.url_for("get_collection", coll=coll))),
     )
-    if request_type(f) == "HTML":
+    if request_type(responsetype) == "HTML":
         return templates.TemplateResponse(
             "collection.html", {"request": req, "collection": collection.model_dump()}
         )
@@ -295,9 +323,14 @@ conformanceClasses = [
 @ogcApiApp.get(
     "/conformance", response_model=ConfClasses, response_model_exclude_none=True
 )
-async def get_conformance(req: Request, f: str = "json"):
+async def get_conformance(
+    req: Request, responsetype: str = Query(default="json", alias="f")
+):
+    """
+    Handle the /conformance call
+    """
     conf_classes = ConfClasses(conformsTo=conformanceClasses)
-    if request_type(f) == "HTML":
+    if request_type(responsetype) == "HTML":
         return templates.TemplateResponse(
             "conformance.html",
             {
@@ -361,7 +394,7 @@ async def get_open_api_yaml():
 
 async def get_single_item(item_id: str, url: str) -> FeatureGeoJSON:
     collection, observed_property_name, point, dims, datetime_ = item_id.split(";")
-    coord = list(map(float, point.split(",")))
+    coord = [float(c) for c in point.split(",")]
     dimspec = ""
     if len(dims):
         for dim in dims.split("|"):
@@ -456,7 +489,7 @@ async def get_features_for_items(
                 retval = json.dumps(
                     {"Error": {"code": root[0].attrib["code"], "message": root[0].text}}
                 )
-                return 400, retval  # TODO
+                return 400, retval
             for data in response_data:
                 data_features = feature_from_dat(data, coll, base_url, False)
                 features.extend(data_features)
@@ -471,7 +504,7 @@ def check_point(point: Union[str, None] = Query(default=None)) -> List[float]:
     if len(coords) != 2:
         # Error
         raise HTTPException(status_code=404, detail="point should contain 2 floats")
-    return list(map(float, coords))
+    return [float(c) for c in coords]
 
 
 def check_bbox(bbox: Union[str, None] = Query(default=None)) -> List[float]:
@@ -481,7 +514,7 @@ def check_bbox(bbox: Union[str, None] = Query(default=None)) -> List[float]:
     if len(coords) != 4 and len(coords) != 6:
         # Error
         raise HTTPException(status_code=404, detail="bbox should contain 4 or 6 floats")
-    return list(map(float, coords))
+    return [float(c) for c in coords]
 
 
 def check_observed_property_name(
@@ -549,7 +582,7 @@ async def get_items_for_collection(
     coll: str,
     req: Request,
     response: Response,
-    f: str = "json",
+    responsetype: str = Query(default="json", alias="f"),
     limit: Union[int, None] = Query(default=10),
     start: Union[int, None] = Query(default=0),
     bbox: Union[str, None] = Depends(check_bbox),
@@ -561,7 +594,7 @@ async def get_items_for_collection(
     npoints: Union[int, None] = Query(default=4),
 ):
     allowed_params = [
-        "f",
+        "responsetype",
         "limit",
         "start",
         "point",
@@ -587,62 +620,55 @@ async def get_items_for_collection(
             ),
         )
     base_url = str(req.url_for("get_items_for_collection", coll=coll))
-    try:
-        features = await get_features_for_items(
-            coll=coll,
-            base_url=base_url,
-            point=point,
-            bbox=bbox,
-            datetime_=datetime_,
-            result_time=result_time,
-            observed_property_name=observed_property_name,
-            npoints=npoints,
-            dims=dims,
-        )
-        features_to_return = features[start : start + limit]
-        number_matched = len(features)
-        number_returned = len(features_to_return)
-        prev_start = None
-        if start > 0:
-            prev_start = max(start - limit, 0)
-        next_start = None
-        if (start + limit) < number_matched:
-            next_start = start + limit
-        links = get_items_links(
-            str(req.url_for("get_items_for_collection", coll=coll)),
-            prev_start=prev_start,
-            next_start=next_start,
-            limit=limit,
-        )
+    features = await get_features_for_items(
+        coll=coll,
+        base_url=base_url,
+        point=point,
+        bbox=bbox,
+        datetime_=datetime_,
+        result_time=result_time,
+        observed_property_name=observed_property_name,
+        npoints=npoints,
+        dims=dims,
+    )
+    features_to_return = features[start : start + limit]
+    number_matched = len(features)
+    number_returned = len(features_to_return)
+    prev_start = None
+    if start > 0:
+        prev_start = max(start - limit, 0)
+    next_start = None
+    if (start + limit) < number_matched:
+        next_start = start + limit
+    links = get_items_links(
+        str(req.url_for("get_items_for_collection", coll=coll)),
+        prev_start=prev_start,
+        next_start=next_start,
+        limit=limit,
+    )
 
-        feature_collection = FeatureCollectionGeoJSON(
-            type=Type.FeatureCollection,
-            timeStamp="2023-01-09T12:00:00Z",
-            links=links,
-            features=features_to_return,
-            numberMatched=number_matched,
-            numberReturned=number_returned,
+    feature_collection = FeatureCollectionGeoJSON(
+        type=Type.FeatureCollection,
+        timeStamp="2023-01-09T12:00:00Z",
+        links=links,
+        features=features_to_return,
+        numberMatched=number_matched,
+        numberReturned=number_returned,
+    )
+    response.headers["Content-Crs"] = f"<{DEFAULT_CRS}>"
+    if request_type(responsetype) == "HTML":
+        features = [f.model_dump() for f in feature_collection.features]
+        return templates.TemplateResponse(
+            "items.html",
+            {
+                "request": req,
+                "items": jsonable_encoder(feature_collection),
+                "description": "Description",
+                "collection": coll,
+                "bbox": bbox,
+            },
         )
-        response.headers["Content-Crs"] = f"<{DEFAULT_CRS}>"
-        if request_type(f) == "HTML":
-            features = [f.model_dump() for f in feature_collection.features]
-            return templates.TemplateResponse(
-                "items.html",
-                {
-                    "request": req,
-                    "items": jsonable_encoder(feature_collection),
-                    "description": "Description",
-                    "collection": coll,
-                    "bbox": bbox,
-                },
-            )
-        return feature_collection
-    except Exception as exc:
-        logger.error(
-            "ERR: %s", traceback.format_exception(None, exc, exc.__traceback__)
-        )
-
-    return None
+    return feature_collection
 
 
 @ogcApiApp.get(
@@ -655,14 +681,14 @@ async def get_item_for_collection(
     item_id: str,
     req: Request,
     response: Response,
-    f: str = "json",
+    responsetype: str = Query(defailt="json", alias="f"),
 ):
     url = req.url
     feature_to_return = await get_single_item(item_id, str(url))
 
     if feature_to_return:
         response.headers["Content-Crs"] = f"<{DEFAULT_CRS}>"
-        if request_type(f) == "HTML":
+        if request_type(responsetype) == "HTML":
             return templates.TemplateResponse(
                 "item.html",
                 {

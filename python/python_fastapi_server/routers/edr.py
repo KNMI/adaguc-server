@@ -16,9 +16,8 @@ import logging
 import os
 import re
 from datetime import datetime, timezone
-from dateutil.relativedelta import relativedelta
 from typing import Union
-import pickle
+from dateutil.relativedelta import relativedelta
 
 from covjson_pydantic.coverage import Coverage, CoverageCollection
 from covjson_pydantic.domain import Domain, ValuesAxis
@@ -185,7 +184,7 @@ async def get_point_value(
     z_par: str = None,
     custom_dims: str = None,
 ):
-    """Returns information in EDR format for a given location"""
+    """Returns information in EDR format for a given collection and position"""
     dataset = edr_collectioninfo["dataset"]
     urlrequest = (
         f"SERVICE=WMS&VERSION=1.3.0&REQUEST=GetPointValue&CRS=EPSG:4326"
@@ -216,7 +215,7 @@ async def get_point_value(
 
 @edrApiApp.get(
     "/collections/{collection_name}/position",
-    response_model=Coverage | CoverageCollection,
+    response_model=Union[Coverage, CoverageCollection],
     response_class=CovJSONResponse,
     response_model_exclude_none=True,
 )
@@ -229,7 +228,8 @@ async def get_collection_position(
     parameter_name: str = Query(alias="parameter-name"),
     z_par: str = Query(alias="z", default=None),
 ) -> Coverage:
-    return await get_collection_instance_position(
+    """Returns information in EDR format for a given collection, instance and position"""
+    return await get_coll_inst_position(
         collection_name,
         request,
         coords,
@@ -243,11 +243,11 @@ async def get_collection_position(
 
 @edrApiApp.get(
     "/collections/{collection_name}/instances/{instance}/position",
-    response_model=Coverage | CoverageCollection,
+    response_model=Union[Coverage | CoverageCollection],
     response_class=CovJSONResponse,
     response_model_exclude_none=True,
 )
-async def get_collection_instance_position(
+async def get_coll_inst_position(
     collection_name: str,
     request: Request,
     coords: str,
@@ -306,7 +306,6 @@ async def get_collectioninfo_for_id(
     """
     # logger.info("get_collectioninfo_for_id(%s, %s)", edr_collection, instance)
     edr_collectioninfo = get_edr_collections()[edr_collection]
-    dataset = edr_collectioninfo["dataset"]
 
     base_url = edr_collectioninfo["base_url"]
 
@@ -338,11 +337,11 @@ async def get_collectioninfo_for_id(
 
     if instance is None or edr_collectioninfo["time_interval"] is None:
         (interval, time_values) = get_times_for_collection(
-            edr_collectioninfo, wmslayers, edr_collectioninfo["parameters"][0]["name"]
+            wmslayers, edr_collectioninfo["parameters"][0]["name"]
         )
     else:
         (interval, time_values) = create_times_for_instance(
-            edr_collectioninfo, wmslayers, instance
+            edr_collectioninfo, instance
         )
 
     customlist: list = get_custom_dims_for_collection(
@@ -525,7 +524,7 @@ def get_time_values_for_range(rng: str) -> list[str]:
 
 
 def get_times_for_collection(
-    edr_collectioninfo: dict, wmslayers, parameter: str = None
+    wmslayers, parameter: str = None
 ) -> tuple[list[list[str]], list[str]]:
     """
     Returns a list of times based on the time dimensions, it does a WMS GetCapabilities to the given dataset (cached)
@@ -567,7 +566,7 @@ def get_times_for_collection(
     return None, None
 
 
-def create_times_for_instance(edr_collectioninfo: dict, wmslayers, instance: str):
+def create_times_for_instance(edr_collectioninfo: dict, instance: str):
     """
     Returns a list of times for a reference_time, derived from the time_interval EDRCollection attribute in edr_collectioninfo
 
@@ -576,7 +575,7 @@ def create_times_for_instance(edr_collectioninfo: dict, wmslayers, instance: str
     time_interval = edr_collectioninfo["time_interval"].replace(
         "{reference_time}", ref_time.strftime("%Y-%m-%dT%H:%M:%SZ")
     )
-    (repeat_s, ref_t_s, time_step_s) = time_interval.split("/")
+    (repeat_s, _, time_step_s) = time_interval.split("/")
     repeat = int(repeat_s[1:])
 
     if time_step_s.startswith("PT"):
@@ -605,7 +604,7 @@ def create_times_for_instance(edr_collectioninfo: dict, wmslayers, instance: str
 
     times = []
     step_time = ref_time
-    for _d in range(repeat):
+    for _ in range(repeat):
         times.append(step_time.strftime("%Y-%m-%dT%H:%M:%SZ"))
         step_time = step_time + delta
 
@@ -728,25 +727,21 @@ async def rest_get_edr_collection_by_id(collection_name: str, response: Response
 
 def get_ttl_from_adaguc_headers(headers):
     """Derives an age value from the max-age/age cache headers that ADAGUC executable returns"""
-    try:
-        max_age = None
-        age = None
-        for hdr in headers:
-            hdr_terms = hdr.split(":")
-            if hdr_terms[0].lower() == "cache-control":
-                for cache_control_terms in hdr_terms[1].split(","):
-                    terms = cache_control_terms.split("=")
-                    if terms[0].lower() == "max-age":
-                        max_age = int(terms[1])
-            elif hdr_terms[0].lower() == "age":
-                age = int(hdr_terms[1])
-        if max_age and age:
-            return max_age - age
-        elif max_age:
-            return max_age
-        return None
-    except:
-        pass
+    max_age = None
+    age = None
+    for hdr in headers:
+        hdr_terms = hdr.split(":")
+        if hdr_terms[0].lower() == "cache-control":
+            for cache_control_terms in hdr_terms[1].split(","):
+                terms = cache_control_terms.split("=")
+                if terms[0].lower() == "max-age":
+                    max_age = int(terms[1])
+        elif hdr_terms[0].lower() == "age":
+            age = int(hdr_terms[1])
+    if max_age and age:
+        return max_age - age
+    elif max_age:
+        return max_age
     return None
 
 
@@ -873,9 +868,12 @@ async def rest_get_collection_info(collection_name: str, instance, response: Res
 
 
 def generate_max_age(ttl):
+    """
+    Return max-age header for ttl value
+    """
     if ttl >= 0:
         return f"max-age={ttl}"
-    return f"max-age=0"
+    return "max-age=0"
 
 
 @edrApiApp.get("/", response_model=LandingPageModel, response_model_exclude_none=True)
@@ -1093,7 +1091,6 @@ def covjson_from_resp(dats, vertical_name):
                 observedProperty=CovJsonObservedProperty(label={"en": dat["name"]}),
                 unit=unit,
             )
-            # TODO: add units to CovJsonParameter
             parameters[dat["name"]] = param
             axis_names = ["x", "y", "t"]
             shape = [1, 1, len(time_steps)]
