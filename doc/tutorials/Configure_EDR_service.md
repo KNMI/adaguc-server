@@ -23,14 +23,14 @@ This file is available in the adaguc-server repository with location `data/datas
 Create the following file at the filepath `$ADAGUC_DATASET_DIR/edr.xml`. You can also consider changing `<FilePath>` to `/data/adaguc-data/*.nc`.
 
 ```xml
-<?xml version="1.0" encoding="UTF-8" ?>
+
 <Configuration>
 
     <OgcApiFeatures/>
 
     <OgcApiEdr>
         <EdrCollection name="harmonie">
-            <EdrParameter name="air_temperature__at_2m" unit="Celsius"/>
+            <EdrParameter name="air_temperature__at_2m" unit="°C"  standard_name="air_temperature" label="Air temperature, 2 metre"/>
         </EdrCollection>
     </OgcApiEdr>
 
@@ -43,12 +43,13 @@ Create the following file at the filepath `$ADAGUC_DATASET_DIR/edr.xml`. You can
     </Style>
 
     <!-- Layers -->
+
     <Layer type="database">
+        <Name>air_temperature__at_2m</Name>
         <FilePath>/data/adaguc-data/HARM_N25_20171215090000_dimx16_dimy16_dimtime49_dimforecastreferencetime1_varairtemperatureat2m.nc</FilePath>
         <Variable units="Celsius">air_temperature__at_2m</Variable>
         <Styles>temperature</Styles>
     </Layer>
-
     <!-- End of configuration /-->
 </Configuration>
 

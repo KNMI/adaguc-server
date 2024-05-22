@@ -1,3 +1,7 @@
+**Version 2.21.3 2024-05-22**
+- EDR Metadata can now be harmonized: https://github.com/KNMI/adaguc-server/issues/359
+
+
 **Version 2.21.2 2024-04-26**
 - When using docker compose the Redis container now automatically starts when system restarts
 

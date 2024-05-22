@@ -15,6 +15,7 @@ import os
 import re
 from datetime import datetime, timezone
 from typing import Union
+from xml.etree.ElementTree import Element
 
 from covjson_pydantic.coverage import Coverage
 from covjson_pydantic.domain import Domain, ValuesAxis
@@ -42,6 +43,8 @@ from edr_pydantic.link import EDRQueryLink, Link
 from edr_pydantic.observed_property import ObservedProperty
 from edr_pydantic.parameter import Parameter
 from edr_pydantic.unit import Unit
+from edr_pydantic.unit import Symbol
+
 from edr_pydantic.variables import Variables
 
 
@@ -63,6 +66,9 @@ logger.debug("Starting EDR")
 edrApiApp = FastAPI(debug=False)
 
 OWSLIB_DUMMY_URL = "http://localhost:8000"
+
+SYMBOL_TYPE_URL = "http://www.opengis.net/def/uom/UCUM"
+VOCAB_ENDPOINT_URL = "https://vocab.nerc.ac.uk/standard_name/"
 
 
 def get_base_url(req: Request = None) -> str:
@@ -99,6 +105,33 @@ async def edr_exception_handler(_, exc: EdrException):
     )
 
 
+def find_layer_configuration(layers: Element, name: str):
+    """
+    Checks if the layer is available as WMS layer in the adaguc dataset configuration by checking the layer name or variable
+
+    Args:
+        layers (Element): Layer element from the adaguc dataset
+        name (str): The layer name or layer variable to find
+
+    Returns:
+        _type_: Adaguc-server Layer element
+    """
+    for layer in layers:
+        # First try to find the layer based on its name
+        layer_name_element = layer.find("Name")
+        if layer_name_element is not None:
+            layer_name = layer_name_element.text
+            if name == layer_name:
+                return layer
+        # Second try to find the layer by its variable
+        layer_variable_element = layer.find("Variable")
+        if layer_variable_element is not None:
+            layer_variable = layer_variable_element.text
+            if name == layer_variable:
+                return layer
+    return None
+
+
 def init_edr_collections(adaguc_dataset_dir: str = os.environ["ADAGUC_DATASET_DIR"]):
     """
     Return all possible OGCAPI EDR datasets, based on the dataset directory
@@ -115,6 +148,7 @@ def init_edr_collections(adaguc_dataset_dir: str = os.environ["ADAGUC_DATASET_DI
         try:
             tree = parse(os.path.join(adaguc_dataset_dir, dataset_file))
             root = tree.getroot()
+            adaguc_dataset_layers = root.iter("Layer")
             for ogcapi_edr in root.iter("OgcApiEdr"):
                 for edr_collection in ogcapi_edr.iter("EdrCollection"):
                     edr_params = []
@@ -123,12 +157,29 @@ def init_edr_collections(adaguc_dataset_dir: str = os.environ["ADAGUC_DATASET_DI
                             "name" in edr_parameter.attrib
                             and "unit" in edr_parameter.attrib
                         ):
-                            edr_params.append(
-                                {
-                                    "name": edr_parameter.attrib.get("name"),
+                            name = edr_parameter.attrib.get("name")
+                            layer = find_layer_configuration(
+                                adaguc_dataset_layers, name
+                            )
+                            # If the layer is present in the adaguc dataset configuration, continue.
+                            if layer is not None:
+                                edr_param = {
+                                    "name": name,
                                     "unit": edr_parameter.attrib.get("unit"),
                                 }
-                            )
+                                # Try to take the standard name from the configuration
+                                if "standard_name" in edr_parameter.attrib:
+                                    edr_param["standard_name"] = (
+                                        edr_parameter.attrib.get("standard_name")
+                                    )
+                                # Try to take the observered propertylabel from the configuration
+                                if "label" in edr_parameter.attrib:
+                                    edr_param["label"] = edr_parameter.attrib.get(
+                                        "label"
+                                    )
+
+                                edr_params.append(edr_param)
+
                         else:
                             logger.warning(
                                 "In dataset %s, skipping parameter %s: has no name or units configured",
@@ -161,7 +212,7 @@ def init_edr_collections(adaguc_dataset_dir: str = os.environ["ADAGUC_DATASET_DI
 
 # The edr_collections information is cached locally for a maximum of 2 minutes
 # It will be refreshed if older than 2 minutes
-edr_cache = TTLCache(maxsize=100, ttl=120)
+edr_cache = TTLCache(maxsize=100, ttl=120)  # TODO: Redis?
 
 
 @cached(cache=edr_cache)
@@ -420,11 +471,16 @@ def get_params_for_collection(edr_collection: str) -> dict[str, Parameter]:
         else:
             label = param_el["name"]
 
+        symbol = Symbol(value=param_el["unit"], type=SYMBOL_TYPE_URL)
+        param_id = param_el["name"]
+        # If standard name was configured, use that instead with a vocabulary
+        if "standard_name" in param_el:
+            param_id = VOCAB_ENDPOINT_URL + param_el["standard_name"]
         param = Parameter(
             id=param_el["name"],
-            observedProperty=ObservedProperty(id=param_el["name"], label=label),
+            observedProperty=ObservedProperty(id=param_id, label=label),
             type="Parameter",
-            unit=Unit(symbol=param_el["unit"]),
+            unit=Unit(symbol=symbol),
             label=label,
         )
         parameter_names[param_el["name"]] = param
