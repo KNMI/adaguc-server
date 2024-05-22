@@ -22,7 +22,7 @@ Graphical representations of the data can be made using contour lines, shading, 
 * [Format standard](./doc/format_standard/README.md)
 * [Glossary](./doc/GLOSSARY.md)
 * [Quick Tips](./doc/overview/QuickTips.md)
-* [Tutorials](./doc/tutorials/Readme.md)
+* [Profiling](./doc/developing/profiling.md)
 
 
 For our detailed paper please read https://doi.org/10.5334/jors.382
