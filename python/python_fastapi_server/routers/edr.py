@@ -220,12 +220,6 @@ async def get_point_value(
     response_class=CovJSONResponse,
     response_model_exclude_none=True,
 )
-@edrApiApp.get(
-    "/collections/{collection_name}/instances/{instance}/position",
-    response_model=Coverage | CoverageCollection,
-    response_class=CovJSONResponse,
-    response_model_exclude_none=True,
-)
 async def get_collection_position(
     collection_name: str,
     request: Request,
@@ -247,6 +241,12 @@ async def get_collection_position(
     )
 
 
+@edrApiApp.get(
+    "/collections/{collection_name}/instances/{instance}/position",
+    response_model=Coverage | CoverageCollection,
+    response_class=CovJSONResponse,
+    response_model_exclude_none=True,
+)
 async def get_collection_instance_position(
     collection_name: str,
     request: Request,
