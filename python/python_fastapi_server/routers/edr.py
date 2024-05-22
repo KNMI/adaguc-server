@@ -71,7 +71,7 @@ def get_base_url(req: Request = None) -> str:
     """Returns the base url of this service"""
 
     base_url_from_request = (
-        f"{req.url.scheme}://{req.url.hostname}:{req.url.port}"
+        f"{req.url.scheme}://{req.url.hostname}{(':'+str(req.url.port)) if req.url.port else ''}"
         if req else None)
     base_url = (os.getenv("EXTERNALADDRESS", base_url_from_request)
                 or "http://localhost:8080")
@@ -234,7 +234,22 @@ async def get_collection_position(
         request: Request,
         coords: str,
         response: CovJSONResponse,
-        instance: Union[str, None] = None,
+        datetime_par: str = Query(default=None, alias="datetime"),
+        parameter_name: str = Query(alias="parameter-name"),
+        z_par: str = Query(alias="z", default=None),
+) -> Coverage:
+    return await get_collection_instance_position(collection_name, request,
+                                                  coords, response, None,
+                                                  datetime_par, parameter_name,
+                                                  z_par)
+
+
+async def get_collection_instance_position(
+        collection_name: str,
+        request: Request,
+        coords: str,
+        response: CovJSONResponse,
+        instance: str = None,
         datetime_par: str = Query(default=None, alias="datetime"),
         parameter_name: str = Query(alias="parameter-name"),
         z_par: str = Query(alias="z", default=None),
@@ -636,10 +651,10 @@ def get_custom_dims_for_collection(edr_collectioninfo: dict,
             custom_dim = {
                 "id":
                 dim_name,
-                "interval": [
+                "interval": [[
                     layer["dimensions"][dim_name]["values"][0],
                     layer["dimensions"][dim_name]["values"][-1]
-                ],
+                ]],
                 "values":
                 layer["dimensions"][dim_name]["values"],
                 "reference":
@@ -963,7 +978,7 @@ def get_fixed_api():
     """
     api = get_openapi(
         title=edrApiApp.title,
-        version=edrApiApp.openapi_version,
+        version=edrApiApp.version,
         routes=edrApiApp.routes,
     )
     for pth in api["paths"].values():
