@@ -26,11 +26,16 @@ Create the following file at the filepath `$ADAGUC_DATASET_DIR/edr.xml`. You can
 
 <Configuration>
 
-    <OgcApiFeatures/>
+    <OgcApiFeatures />
 
     <OgcApiEdr>
         <EdrCollection name="harmonie">
-            <EdrParameter name="air_temperature__at_2m" unit="°C"  standard_name="air_temperature" label="Air temperature, 2 metre"/>
+            <EdrParameter
+                name="air_temperature__at_2m"
+                unit="°C"
+                standard_name="air_temperature"
+                observed_property_label="Air temperature"
+                parameter_label="Air temperature, 2 metre" />
         </EdrCollection>
     </OgcApiEdr>
 
@@ -45,16 +50,60 @@ Create the following file at the filepath `$ADAGUC_DATASET_DIR/edr.xml`. You can
     <!-- Layers -->
 
     <Layer type="database">
-        <Name>air_temperature__at_2m</Name>
-        <FilePath>/data/adaguc-data/HARM_N25_20171215090000_dimx16_dimy16_dimtime49_dimforecastreferencetime1_varairtemperatureat2m.nc</FilePath>
+
+        <FilePath>
+            /data/adaguc-data/HARM_N25_20171215090000_dimx16_dimy16_dimtime49_dimforecastreferencetime1_varairtemperatureat2m.nc</FilePath>
         <Variable units="Celsius">air_temperature__at_2m</Variable>
         <Styles>temperature</Styles>
     </Layer>
     <!-- End of configuration /-->
 </Configuration>
 
-
 ```
+
+
+### EdrParameter settings
+
+```xml
+<EdrParameter
+                name="air_temperature__at_2m"
+                unit="°C"
+                standard_name="air_temperature"
+                observed_property_label="Air temperature"
+                parameter_label="Air temperature, 2 metre" />
+```                
+
+- name: Mandatory, Should be one of the WMS Layer names as advertised in the WMS GetCapabilities
+- unit: Mandatory, Sets the unit for the parameter in the parameter_names section of the collection document
+- standard_name: Sets the observedProperty id
+- observed_property_label: Sets the observedProperty label
+- parameter_label: Sets the label for the parameter in the parameter_names section
+
+For the given example this will result in the following parameter name definition:
+
+```json
+parameter_names": {
+    "air_temperature__at_2m": {
+      "type": "Parameter",
+      "id": "air_temperature__at_2m",
+      "label": "Air temperature, 2 metre",
+      "description": "air_temperature__at_2m (air_temperature__at_2m)",
+      "unit": {
+        "symbol": {
+          "value": "°C",
+          "type": "http://www.opengis.net/def/uom/UCUM"
+        }
+      },
+      "observedProperty": {
+        "id": "https://vocab.nerc.ac.uk/standard_name/air_temperature",
+        "label": "Air temperature"
+      }
+    }
+  }
+```
+
+*The description is currently read from the GetCapabilities document, using the WMS Layer Title section .
+
 
 ## Step 3: Scan the new data
 
