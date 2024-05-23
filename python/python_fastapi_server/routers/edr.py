@@ -148,7 +148,6 @@ def init_edr_collections(adaguc_dataset_dir: str = os.environ["ADAGUC_DATASET_DI
         try:
             tree = parse(os.path.join(adaguc_dataset_dir, dataset_file))
             root = tree.getroot()
-            adaguc_dataset_layers = root.iter("Layer")
             for ogcapi_edr in root.iter("OgcApiEdr"):
                 for edr_collection in ogcapi_edr.iter("EdrCollection"):
                     edr_params = []
@@ -158,27 +157,40 @@ def init_edr_collections(adaguc_dataset_dir: str = os.environ["ADAGUC_DATASET_DI
                             and "unit" in edr_parameter.attrib
                         ):
                             name = edr_parameter.attrib.get("name")
-                            layer = find_layer_configuration(
-                                adaguc_dataset_layers, name
-                            )
-                            # If the layer is present in the adaguc dataset configuration, continue.
-                            if layer is not None:
-                                edr_param = {
-                                    "name": name,
-                                    "unit": edr_parameter.attrib.get("unit"),
-                                }
-                                # Try to take the standard name from the configuration
-                                if "standard_name" in edr_parameter.attrib:
-                                    edr_param["standard_name"] = (
-                                        edr_parameter.attrib.get("standard_name")
-                                    )
-                                # Try to take the observered propertylabel from the configuration
-                                if "label" in edr_parameter.attrib:
-                                    edr_param["label"] = edr_parameter.attrib.get(
-                                        "label"
-                                    )
+                        
+                            edr_param = {
+                                "name": name,
+                                "parameter_label":name,
+                                "observed_property_label":name,
+                                "description":name,
+                                "standard_name":None,
+                                "unit": "-",
+                            }
+                            # Try to take the standard name from the configuration
+                            if "standard_name" in edr_parameter.attrib:
+                                edr_param["standard_name"] = (
+                                    edr_parameter.attrib.get("standard_name")
+                                )
+                                # If there is a standard name, set the label to the same as fallback
+                                edr_param["observed_property_label"] = (
+                                    edr_parameter.attrib.get("standard_name")
+                                )
+                                
+                            # Try to take the oobserved_property_label from the configuration
+                            if "observed_property_label" in edr_parameter.attrib:
+                                edr_param["observed_property_label"] = edr_parameter.attrib.get(
+                                    "observed_property_label"
+                                )
+                            # Try to take the parameter_label from the Layer configuration Title
+                            if "parameter_label" in edr_parameter.attrib:
+                                edr_param["parameter_label"] = edr_parameter.attrib.get(
+                                    "parameter_label")
+                            # Try to take the parameter_label from the Layer configuration Title
+                            if "unit" in edr_parameter.attrib:
+                                edr_param["unit"] = edr_parameter.attrib.get(
+                                    "unit")
 
-                                edr_params.append(edr_param)
+                            edr_params.append(edr_param)
 
                         else:
                             logger.warning(
@@ -212,7 +224,7 @@ def init_edr_collections(adaguc_dataset_dir: str = os.environ["ADAGUC_DATASET_DI
 
 # The edr_collections information is cached locally for a maximum of 2 minutes
 # It will be refreshed if older than 2 minutes
-edr_cache = TTLCache(maxsize=100, ttl=120)  # TODO: Redis?
+edr_cache = TTLCache(maxsize=100, ttl=0)  # TODO: Redis?
 
 
 @cached(cache=edr_cache)
@@ -330,7 +342,10 @@ async def get_collectioninfo_for_id(
     Is used to obtain metadata from the dataset configuration and WMS GetCapabilities document.
     """
     logger.info("get_collectioninfo_for_id(%s, %s)", edr_collection, instance)
-    edr_collectioninfo = get_edr_collections()[edr_collection]
+    edr_collectioninfo = get_edr_collections().get(edr_collection)
+    if edr_collectioninfo is None:
+        raise EdrException(code=400, description="Unknown or unconfigured collection")
+        
     dataset = edr_collectioninfo["dataset"]
     logger.info("%s=>%s", edr_collection, dataset)
 
@@ -429,7 +444,7 @@ async def get_collectioninfo_for_id(
     else:
         data_queries = DataQueries(position=EDRQuery(link=position_link))
 
-    parameter_names = get_params_for_collection(edr_collection=edr_collection)
+    parameter_names = get_params_for_collection(edr_collection=edr_collection, wmslayers=wmslayers)
 
     crs = ["EPSG:4326"]
 
@@ -458,32 +473,38 @@ async def get_collectioninfo_for_id(
     return collection, ttl
 
 
-def get_params_for_collection(edr_collection: str) -> dict[str, Parameter]:
+def get_params_for_collection(edr_collection: str, wmslayers: dict) -> dict[str, Parameter]:
     """
     Returns a dictionary with parameters for given EDR collection
     """
     parameter_names = {}
     edr_collections = get_edr_collections()
     for param_el in edr_collections[edr_collection]["parameters"]:
-        # Use name as default for label
-        if "label" in param_el:
-            label = param_el["label"]
-        else:
-            label = param_el["name"]
 
         symbol = Symbol(value=param_el["unit"], type=SYMBOL_TYPE_URL)
         param_id = param_el["name"]
-        # If standard name was configured, use that instead with a vocabulary
-        if "standard_name" in param_el:
-            param_id = VOCAB_ENDPOINT_URL + param_el["standard_name"]
-        param = Parameter(
-            id=param_el["name"],
-            observedProperty=ObservedProperty(id=param_id, label=label),
-            type="Parameter",
-            unit=Unit(symbol=symbol),
-            label=label,
-        )
-        parameter_names[param_el["name"]] = param
+
+
+        if not param_id in  wmslayers:
+            logger.warning("EDR Parameter with name [%s] is not found in any of the adaguc Layer configurations. Available layers are %s", param_id, str(list(wmslayers.keys())))
+        else:
+            wmslayer = wmslayers[param_id]
+            wms_layer_name = param_el["name"]
+            wms_layer_title = wmslayer["title"]
+            parameter_label = param_el["parameter_label"]
+            observed_property_label = param_el["observed_property_label"]
+            # If standard name was configured, use that instead with a vocabulary
+            if "standard_name" in param_el and param_el["standard_name"] is not None:
+                param_id = VOCAB_ENDPOINT_URL + param_el["standard_name"]
+            param = Parameter(
+                id=wms_layer_name,
+                observedProperty=ObservedProperty(id=param_id, label=observed_property_label),
+                description=wms_layer_title,
+                type="Parameter",
+                unit=Unit(symbol=symbol),
+                label=parameter_label
+            )
+            parameter_names[param_el["name"]] = param
     return parameter_names
 
 
@@ -690,6 +711,8 @@ async def rest_get_edr_collection_by_id(collection_name: str, response: Response
     collection, ttl = await get_collectioninfo_for_id(collection_name)
     if ttl is not None:
         response.headers["cache-control"] = generate_max_age(ttl)
+    if collection is None:
+        raise EdrException(code=400, description="Unknown or unconfigured collection")    
     return collection
 
 
@@ -746,10 +769,11 @@ async def get_capabilities(collname):
     for layername, layerinfo in wms.contents.items():
         layers[layername] = {
             "name": layername,
+            "title": layerinfo.title,
             "dimensions": {**layerinfo.dimensions},
             "boundingBoxWGS84": layerinfo.boundingBoxWGS84,
         }
-
+ 
     return layers, ttl
 
 
