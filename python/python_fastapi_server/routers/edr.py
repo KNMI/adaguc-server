@@ -490,7 +490,7 @@ def get_params_for_collection(edr_collection: str, wmslayers: dict) -> dict[str,
         else:
             wmslayer = wmslayers[param_id]
             wms_layer_name = param_el["name"]
-            wms_layer_title = wmslayer["title"]
+            wms_layer_title = edr_collection+" - "+ wmslayer["title"]
             parameter_label = param_el["parameter_label"]
             observed_property_label = param_el["observed_property_label"]
             # If standard name was configured, use that instead with a vocabulary

@@ -87,7 +87,7 @@ parameter_names": {
       "type": "Parameter",
       "id": "air_temperature__at_2m",
       "label": "Air temperature, 2 metre",
-      "description": "air_temperature__at_2m (air_temperature__at_2m)",
+      "description": "harmonie - air_temperature__at_2m (air_temperature__at_2m)",
       "unit": {
         "symbol": {
           "value": "°C",
@@ -102,7 +102,7 @@ parameter_names": {
   }
 ```
 
-*The description is currently read from the GetCapabilities document, using the WMS Layer Title section .
+*The description is currently read from the GetCapabilities document, using the WMS Layer Title section prefixed with the dataset name.
 
 
 ## Step 3: Scan the new data
