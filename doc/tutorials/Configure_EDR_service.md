@@ -102,7 +102,7 @@ parameter_names": {
   }
 ```
 
-*The description is currently read from the GetCapabilities document, using the WMS Layer Title section prefixed with the dataset name.
+*The description is currently read from the GetCapabilities document, using the WMS Layer Title section prefixed with the edr collection name.
 
 
 ## Step 3: Scan the new data
