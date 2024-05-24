@@ -9,14 +9,13 @@ KNMI
 """
 
 import itertools
-import functools
-import operator
 import json
 import logging
 import os
 import re
 from datetime import datetime, timezone
 from typing import Union
+from typing_extensions import Annotated
 from dateutil.relativedelta import relativedelta
 
 from covjson_pydantic.coverage import Coverage, CoverageCollection
@@ -225,8 +224,8 @@ async def get_collection_position(
     coords: str,
     response: CovJSONResponse,
     datetime_par: str = Query(default=None, alias="datetime"),
-    parameter_name: str = Query(alias="parameter-name"),
-    z_par: str = Query(alias="z", default=None),
+    parameter_name: Annotated[str, Query(alias="parameter-name", min_length=1)] = None,
+    z_par: Annotated[str, Query(alias="z", min_length=1)] = None,
 ) -> Coverage:
     """Returns information in EDR format for a given collection, instance and position"""
     return await get_coll_inst_position(
@@ -254,8 +253,8 @@ async def get_coll_inst_position(
     response: CovJSONResponse,
     instance: str = None,
     datetime_par: str = Query(default=None, alias="datetime"),
-    parameter_name: str = Query(alias="parameter-name"),
-    z_par: str = Query(alias="z", default=None),
+    parameter_name: Annotated[str, Query(alias="parameter-name", min_length=1)] = None,
+    z_par: Annotated[str, Query(alias="z", min_length=1)] = None,
 ) -> Coverage:
     """
     returns data for the EDR /position endpoint
@@ -268,24 +267,27 @@ async def get_coll_inst_position(
             custom_dims += f"&DIM_{custom_param}={request.query_params[custom_param]}"
     edr_collections = get_edr_collections()
 
-    parameter_names = parameter_name.split(",")
-    latlons = wkt.loads(coords)
-    coord = {"lat": latlons["coordinates"][1], "lon": latlons["coordinates"][0]}
-    resp, headers = await get_point_value(
-        edr_collections[collection_name],
-        instance,
-        [coord["lon"], coord["lat"]],
-        parameter_names,
-        datetime_par,
-        z_par,
-        custom_dims,
-    )
-    if resp:
-        dat = json.loads(resp)
-        ttl = get_ttl_from_adaguc_headers(headers)
-        if ttl is not None:
-            response.headers["cache-control"] = generate_max_age(ttl)
-        return covjson_from_resp(dat, edr_collections[collection_name]["vertical_name"])
+    if collection_name in edr_collections:
+        parameter_names = parameter_name.split(",")
+        latlons = wkt.loads(coords)
+        coord = {"lat": latlons["coordinates"][1], "lon": latlons["coordinates"][0]}
+        resp, headers = await get_point_value(
+            edr_collections[collection_name],
+            instance,
+            [coord["lon"], coord["lat"]],
+            parameter_names,
+            datetime_par,
+            z_par,
+            custom_dims,
+        )
+        if resp:
+            dat = json.loads(resp)
+            ttl = get_ttl_from_adaguc_headers(headers)
+            if ttl is not None:
+                response.headers["cache-control"] = generate_max_age(ttl)
+            return covjson_from_resp(
+                dat, edr_collections[collection_name]["vertical_name"]
+            )
 
     raise EdrException(code=400, description="No data")
 
@@ -304,8 +306,12 @@ async def get_collectioninfo_for_id(
     Returns collection information for a given collection id and or instance
     Is used to obtain metadata from the dataset configuration and WMS GetCapabilities document.
     """
-    # logger.info("get_collectioninfo_for_id(%s, %s)", edr_collection, instance)
-    edr_collectioninfo = get_edr_collections()[edr_collection]
+    logger.info("get_collectioninfo_for_id(%s, %s)", edr_collection, instance)
+    edr_collectionsinfo = get_edr_collections()
+    if edr_collection not in edr_collectionsinfo:
+        raise EdrException(code=400, description="No data")
+
+    edr_collectioninfo = edr_collectionsinfo[edr_collection]
 
     base_url = edr_collectioninfo["base_url"]
 
@@ -1170,31 +1176,33 @@ def covjson_from_resp(dats, vertical_name):
     if len(covjson_list) == 0:
         raise EdrException(code=400, description="No data")
 
-    coverages = []
-    covjson_list.sort(key=lambda x: x.model_dump_json())
-    for _domain, group in itertools.groupby(covjson_list, lambda x: x.domain):
-        _ranges = {}
-        _parameters = {}
-        for cov in group:
-            param_id = next(iter(cov.parameters))
-            _parameters[param_id] = cov.parameters[param_id]
-            _ranges[param_id] = cov.ranges[param_id]
-        coverages.append(
-            Coverage(
-                domain=_domain,
-                ranges=_ranges,
-                parameters=_parameters,
-            )
-        )
-    if len(coverages) == 1:
-        return coverages[0]
+    coverage_collection = CoverageCollection(coverages=covjson_list)
 
-    parameter_union = functools.reduce(
-        operator.ior, (c.parameters for c in coverages), {}
-    )
-    coverage_collection = CoverageCollection(
-        coverages=coverages, parameters=parameter_union
-    )
+    # coverages = []
+    # covjson_list.sort(key=lambda x: x.model_dump_json())
+    # for _domain, group in itertools.groupby(covjson_list, lambda x: x.domain):
+    #     _ranges = {}
+    #     _parameters = {}
+    #     for cov in group:
+    #         param_id = next(iter(cov.parameters))
+    #         _parameters[param_id] = cov.parameters[param_id]
+    #         _ranges[param_id] = cov.ranges[param_id]
+    #     coverages.append(
+    #         Coverage(
+    #             domain=_domain,
+    #             ranges=_ranges,
+    #             parameters=_parameters,
+    #         )
+    #     )
+    # if len(coverages) == 1:
+    #     return coverages[0]
+
+    # parameter_union = functools.reduce(
+    #     operator.ior, (c.parameters for c in coverages), {}
+    # )
+    # coverage_collection = CoverageCollection(
+    #     coverages=coverages, parameters=parameter_union
+    # )
 
     return coverage_collection
 
