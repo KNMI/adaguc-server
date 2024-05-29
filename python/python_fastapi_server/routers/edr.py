@@ -15,8 +15,10 @@ import os
 import re
 from datetime import datetime, timezone
 from typing import Union
+from typing_extensions import Annotated
+from dateutil.relativedelta import relativedelta
 
-from covjson_pydantic.coverage import Coverage
+from covjson_pydantic.coverage import Coverage, CoverageCollection
 from covjson_pydantic.domain import Domain, ValuesAxis
 from covjson_pydantic.observed_property import (
     ObservedProperty as CovJsonObservedProperty,
@@ -44,7 +46,6 @@ from edr_pydantic.parameter import Parameter
 from edr_pydantic.unit import Unit
 from edr_pydantic.variables import Variables
 
-
 from fastapi import FastAPI, Query, Request, Response
 from fastapi.responses import JSONResponse
 from fastapi.openapi.utils import get_openapi
@@ -69,7 +70,9 @@ def get_base_url(req: Request = None) -> str:
     """Returns the base url of this service"""
 
     base_url_from_request = (
-        f"{req.url.scheme}://{req.url.hostname}:{req.url.port}" if req else None
+        f"{req.url.scheme}://{req.url.hostname}{(':'+str(req.url.port)) if req.url.port else ''}"
+        if req
+        else None
     )
     base_url = (
         os.getenv("EXTERNALADDRESS", base_url_from_request) or "http://localhost:8080"
@@ -153,6 +156,7 @@ def init_edr_collections(adaguc_dataset_dir: str = os.environ["ADAGUC_DATASET_DI
                             "parameters": edr_params,
                             "vertical_name": edr_collection.attrib.get("vertical_name"),
                             "base_url": collection_url,
+                            "time_interval": edr_collection.attrib.get("time_interval"),
                         }
         except ParseError:
             pass
@@ -179,7 +183,7 @@ async def get_point_value(
     z_par: str = None,
     custom_dims: str = None,
 ):
-    """Returns information in EDR format for a given location"""
+    """Returns information in EDR format for a given collection and position"""
     dataset = edr_collectioninfo["dataset"]
     urlrequest = (
         f"SERVICE=WMS&VERSION=1.3.0&REQUEST=GetPointValue&CRS=EPSG:4326"
@@ -194,7 +198,7 @@ async def get_point_value(
     if z_par:
         if (
             "vertical_name" in edr_collectioninfo
-            and edr_collectioninfo["vertical_name"] != "ELEVATION"
+            and edr_collectioninfo["vertical_name"].upper() != "ELEVATION"
         ):
             urlrequest += f"&DIM_{edr_collectioninfo['vertical_name']}={z_par}"
         else:
@@ -210,13 +214,7 @@ async def get_point_value(
 
 @edrApiApp.get(
     "/collections/{collection_name}/position",
-    response_model=Coverage,
-    response_class=CovJSONResponse,
-    response_model_exclude_none=True,
-)
-@edrApiApp.get(
-    "/collections/{collection_name}/instances/{instance}/position",
-    response_model=Coverage,
+    response_model=Union[Coverage, CoverageCollection],
     response_class=CovJSONResponse,
     response_model_exclude_none=True,
 )
@@ -225,41 +223,71 @@ async def get_collection_position(
     request: Request,
     coords: str,
     response: CovJSONResponse,
-    instance: Union[str, None] = None,
     datetime_par: str = Query(default=None, alias="datetime"),
-    parameter_name: str = Query(alias="parameter-name"),
-    z_par: str = Query(alias="z", default=None),
+    parameter_name: Annotated[str, Query(alias="parameter-name", min_length=1)] = None,
+    z_par: Annotated[str, Query(alias="z", min_length=1)] = None,
+) -> Coverage:
+    """Returns information in EDR format for a given collection, instance and position"""
+    return await get_coll_inst_position(
+        collection_name,
+        request,
+        coords,
+        response,
+        None,
+        datetime_par,
+        parameter_name,
+        z_par,
+    )
+
+
+@edrApiApp.get(
+    "/collections/{collection_name}/instances/{instance}/position",
+    response_model=Union[Coverage | CoverageCollection],
+    response_class=CovJSONResponse,
+    response_model_exclude_none=True,
+)
+async def get_coll_inst_position(
+    collection_name: str,
+    request: Request,
+    coords: str,
+    response: CovJSONResponse,
+    instance: str = None,
+    datetime_par: str = Query(default=None, alias="datetime"),
+    parameter_name: Annotated[str, Query(alias="parameter-name", min_length=1)] = None,
+    z_par: Annotated[str, Query(alias="z", min_length=1)] = None,
 ) -> Coverage:
     """
     returns data for the EDR /position endpoint
     """
     allowed_params = ["coords", "datetime", "parameter-name", "z", "f", "crs"]
-    custom_dims = [k for k in request.query_params if k not in allowed_params]
+    custom_params = [k for k in request.query_params if k not in allowed_params]
     custom_dims = ""
-    if len(custom_dims) > 0:
-        for custom_dim in custom_dims:
-            custom_dims += f"&DIM_{custom_dim}={request.query_params[custom_dim]}"
+    if len(custom_params) > 0:
+        for custom_param in custom_params:
+            custom_dims += f"&DIM_{custom_param}={request.query_params[custom_param]}"
     edr_collections = get_edr_collections()
 
-    parameter_names = parameter_name.split(",")
-    latlons = wkt.loads(coords)
-    logger.info("latlons:%s", latlons)
-    coord = {"lat": latlons["coordinates"][1], "lon": latlons["coordinates"][0]}
-    resp, headers = await get_point_value(
-        edr_collections[collection_name],
-        instance,
-        [coord["lon"], coord["lat"]],
-        parameter_names,
-        datetime_par,
-        z_par,
-        custom_dims,
-    )
-    if resp:
-        dat = json.loads(resp)
-        ttl = get_ttl_from_adaguc_headers(headers)
-        if ttl is not None:
-            response.headers["cache-control"] = generate_max_age(ttl)
-        return covjson_from_resp(dat, edr_collections[collection_name]["vertical_name"])
+    if collection_name in edr_collections:
+        parameter_names = parameter_name.split(",")
+        latlons = wkt.loads(coords)
+        coord = {"lat": latlons["coordinates"][1], "lon": latlons["coordinates"][0]}
+        resp, headers = await get_point_value(
+            edr_collections[collection_name],
+            instance,
+            [coord["lon"], coord["lat"]],
+            parameter_names,
+            datetime_par,
+            z_par,
+            custom_dims,
+        )
+        if resp:
+            dat = json.loads(resp)
+            ttl = get_ttl_from_adaguc_headers(headers)
+            if ttl is not None:
+                response.headers["cache-control"] = generate_max_age(ttl)
+            return covjson_from_resp(
+                dat, edr_collections[collection_name]["vertical_name"]
+            )
 
     raise EdrException(code=400, description="No data")
 
@@ -279,12 +307,13 @@ async def get_collectioninfo_for_id(
     Is used to obtain metadata from the dataset configuration and WMS GetCapabilities document.
     """
     logger.info("get_collectioninfo_for_id(%s, %s)", edr_collection, instance)
-    edr_collectioninfo = get_edr_collections()[edr_collection]
-    dataset = edr_collectioninfo["dataset"]
-    logger.info("%s=>%s", edr_collection, dataset)
+    edr_collectionsinfo = get_edr_collections()
+    if edr_collection not in edr_collectionsinfo:
+        raise EdrException(code=400, description="No data")
+
+    edr_collectioninfo = edr_collectionsinfo[edr_collection]
 
     base_url = edr_collectioninfo["base_url"]
-    logger.info("! %s", base_url)
 
     if instance is not None:
         base_url += f"/instances/{instance}"
@@ -312,9 +341,14 @@ async def get_collectioninfo_for_id(
     crs = 'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]'
     spatial = Spatial(bbox=bbox, crs=crs)
 
-    (interval, time_values) = get_times_for_collection(
-        edr_collectioninfo, wmslayers, edr_collectioninfo["parameters"][0]["name"]
-    )
+    if instance is None or edr_collectioninfo["time_interval"] is None:
+        (interval, time_values) = get_times_for_collection(
+            wmslayers, edr_collectioninfo["parameters"][0]["name"]
+        )
+    else:
+        (interval, time_values) = create_times_for_instance(
+            edr_collectioninfo, instance
+        )
 
     customlist: list = get_custom_dims_for_collection(
         edr_collectioninfo, wmslayers, edr_collectioninfo["parameters"][0]["name"]
@@ -347,7 +381,7 @@ async def get_collectioninfo_for_id(
     position_variables = Variables(
         query_type="position",
         default_output_format="CoverageJSON",
-        output_formats=["CoverageJSON", "GeoJSON"],
+        output_formats=["CoverageJSON"],
     )
     position_link = EDRQueryLink(
         href=f"{base_url}/position",
@@ -382,11 +416,11 @@ async def get_collectioninfo_for_id(
 
     crs = ["EPSG:4326"]
 
-    output_formats = ["CoverageJSON", "GeoJSON"]
+    output_formats = ["CoverageJSON"]
     if instance is None:
         collection = Collection(
             links=links,
-            id=instance if instance else edr_collection,
+            id=edr_collection,
             extent=extent,
             data_queries=data_queries,
             parameter_names=parameter_names,
@@ -396,7 +430,7 @@ async def get_collectioninfo_for_id(
     else:
         collection = Instance(
             links=links,
-            id=instance if instance else edr_collection,
+            id=instance,
             extent=extent,
             data_queries=data_queries,
             parameter_names=parameter_names,
@@ -492,18 +526,18 @@ def get_time_values_for_range(rng: str) -> list[str]:
     if not tstep:
         tstep = 3600
     nsteps = int(timediff / tstep) + 1
-    return [f"R{nsteps}/{iso_start}/{step}"]
+    return [f"R{nsteps}/{iso_start.strftime('%Y-%m-%dT%H:%M:%SZ')}/{step}"]
 
 
 def get_times_for_collection(
-    edr_collectioninfo: dict, wmslayers, parameter: str = None
+    wmslayers, parameter: str = None
 ) -> tuple[list[list[str]], list[str]]:
     """
     Returns a list of times based on the time dimensions, it does a WMS GetCapabilities to the given dataset (cached)
 
     It does this for given parameter. When the parameter is not given it will do it for the first Layer in the GetCapabilities document.
     """
-    logger.info("get_times_for_dataset(%s,%s)", edr_collectioninfo["name"], parameter)
+    # logger.info("get_times_for_dataset(%s,%s)", edr_collectioninfo["name"], parameter)
     if parameter and parameter in wmslayers:
         layer = wmslayers[parameter]
     else:
@@ -538,6 +572,61 @@ def get_times_for_collection(
     return None, None
 
 
+def create_times_for_instance(edr_collectioninfo: dict, instance: str):
+    """
+    Returns a list of times for a reference_time, derived from the time_interval EDRCollection attribute in edr_collectioninfo
+
+    """
+    ref_time = parse_instance_time(instance)
+    time_interval = edr_collectioninfo["time_interval"].replace(
+        "{reference_time}", ref_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+    )
+    (repeat_s, _, time_step_s) = time_interval.split("/")
+    repeat = int(repeat_s[1:])
+
+    if time_step_s.startswith("PT"):
+        pattern = re.compile(r"""PT(\d+)([HMS])""")
+        match = pattern.match(time_step_s)
+        step = int(match.group(1))
+        step_type = match.group(2).lower()
+    else:
+        pattern = re.compile(r"""P(\d+)([YMD])""")
+        match = pattern.match(time_step_s)
+        step = int(match.group(1))
+        step_type = match.group(2)
+
+    if step_type == "Y":
+        delta = relativedelta(years=step)
+    elif step_type == "M":
+        delta = relativedelta(months=step)
+    elif step_type == "D":
+        delta = relativedelta(days=step)
+    elif step_type == "h":
+        delta = relativedelta(hours=step)
+    elif step_type == "m":
+        delta = relativedelta(minutes=step)
+    elif step_type == "s":
+        delta = relativedelta(seconds=step)
+
+    times = []
+    step_time = ref_time
+    for _ in range(repeat):
+        times.append(step_time.strftime("%Y-%m-%dT%H:%M:%SZ"))
+        step_time = step_time + delta
+
+    interval = [
+        [
+            datetime.strptime(times[0], "%Y-%m-%dT%H:%M:%SZ").replace(
+                tzinfo=timezone.utc
+            ),
+            datetime.strptime(times[-1], "%Y-%m-%dT%H:%M:%SZ").replace(
+                tzinfo=timezone.utc
+            ),
+        ]
+    ]
+    return interval, times
+
+
 def get_custom_dims_for_collection(
     edr_collectioninfo: dict, wmslayers, parameter: str = None
 ):
@@ -560,7 +649,12 @@ def get_custom_dims_for_collection(
         ]:
             custom_dim = {
                 "id": dim_name,
-                "interval": [],
+                "interval": [
+                    [
+                        layer["dimensions"][dim_name]["values"][0],
+                        layer["dimensions"][dim_name]["values"][-1],
+                    ]
+                ],
                 "values": layer["dimensions"][dim_name]["values"],
                 "reference": f"custom_{dim_name}",
             }
@@ -639,25 +733,21 @@ async def rest_get_edr_collection_by_id(collection_name: str, response: Response
 
 def get_ttl_from_adaguc_headers(headers):
     """Derives an age value from the max-age/age cache headers that ADAGUC executable returns"""
-    try:
-        max_age = None
-        age = None
-        for hdr in headers:
-            hdr_terms = hdr.split(":")
-            if hdr_terms[0].lower() == "cache-control":
-                for cache_control_terms in hdr_terms[1].split(","):
-                    terms = cache_control_terms.split("=")
-                    if terms[0].lower() == "max-age":
-                        max_age = int(terms[1])
-            elif hdr_terms[0].lower() == "age":
-                age = int(hdr_terms[1])
-        if max_age and age:
-            return max_age - age
-        elif max_age:
-            return max_age
-        return None
-    except:
-        pass
+    max_age = None
+    age = None
+    for hdr in headers:
+        hdr_terms = hdr.split(":")
+        if hdr_terms[0].lower() == "cache-control":
+            for cache_control_terms in hdr_terms[1].split(","):
+                terms = cache_control_terms.split("=")
+                if terms[0].lower() == "max-age":
+                    max_age = int(terms[1])
+        elif hdr_terms[0].lower() == "age":
+            age = int(hdr_terms[1])
+    if max_age and age:
+        return max_age - age
+    elif max_age:
+        return max_age
     return None
 
 
@@ -703,7 +793,7 @@ async def get_ref_times_for_coll(edr_collectioninfo: dict, layer: str) -> list[s
     """
     dataset = edr_collectioninfo["dataset"]
     url = f"?DATASET={dataset}&SERVICE=WMS&VERSION=1.3.0&request=getreferencetimes&LAYER={layer}"
-    logger.info("getreftime_url(%s,%s): %s", dataset, layer, url)
+    # logger.info("getreftime_url(%s,%s): %s", dataset, layer, url)
     status, response, _ = await call_adaguc(url=url.encode("UTF-8"))
     if status == 0:
         ref_times = json.loads(response.getvalue())
@@ -784,9 +874,12 @@ async def rest_get_collection_info(collection_name: str, instance, response: Res
 
 
 def generate_max_age(ttl):
+    """
+    Return max-age header for ttl value
+    """
     if ttl >= 0:
         return f"max-age={ttl}"
-    return f"max-age=0"
+    return "max-age=0"
 
 
 @edrApiApp.get("/", response_model=LandingPageModel, response_model_exclude_none=True)
@@ -843,7 +936,7 @@ conformance = ConformanceModel(
 )
 
 
-@edrApiApp.get("/collections/{coll}/locations")
+@edrApiApp.get("/collections/{_coll}/locations")
 def get_locations(_coll: str):
     """
     Returns locations where you could query data.
@@ -871,7 +964,7 @@ def get_fixed_api():
     """
     api = get_openapi(
         title=edrApiApp.title,
-        version=edrApiApp.openapi_version,
+        version=edrApiApp.version,
         routes=edrApiApp.routes,
     )
     for pth in api["paths"].values():
@@ -964,117 +1057,154 @@ def covjson_from_resp(dats, vertical_name):
     """
     Returns a coverage json from a Adaguc WMS GetFeatureInfo request
     """
-    fullcovjson = None
+    covjson_list = []
     for dat in dats:
-        (lon, lat) = dat["point"]["coords"].split(",")
-        lat = float(lat)
-        lon = float(lon)
-        dims = makedims(dat["dims"], dat["data"])
-        time_steps = getdimvals(dims, "time")
-        if vertical_name is not None:
-            vertical_steps = getdimvals(dims, vertical_name)
-        else:
-            vertical_steps = getdimvals(dims, "elevation")
+        if len(dat["data"]):
+            (lon, lat) = dat["point"]["coords"].split(",")
+            lat = float(lat)
+            lon = float(lon)
+            dims = makedims(dat["dims"], dat["data"])
+            time_steps = getdimvals(dims, "time")
+            if vertical_name is not None:
+                vertical_steps = getdimvals(dims, vertical_name)
+            else:
+                vertical_steps = getdimvals(dims, "elevation")
 
-        valstack = []
-        # Translate the adaguc GFI object in something we can handle in Python
-        for dim_name in dims:
-            vals = getdimvals(dims, dim_name)
-            valstack.append(vals)
-        tuples = list(itertools.product(*valstack))
-        values = []
-        for mytuple in tuples:
-            value = multi_get(dat["data"], mytuple)
-            if value:
-                try:
-                    values.append(float(value))
-                except ValueError:
-                    if value == "nodata":
-                        values.append(None)
-                    else:
-                        values.append(value)
+            valstack = []
+            # Translate the adaguc GFI object in something we can handle in Python
+            for dim_name in dims:
+                vals = getdimvals(dims, dim_name)
+                valstack.append(vals)
+            tuples = list(itertools.product(*valstack))
+            values = []
+            for mytuple in tuples:
+                value = multi_get(dat["data"], mytuple)
+                if value:
+                    try:
+                        values.append(float(value))
+                    except ValueError:
+                        if value == "nodata":
+                            values.append(None)
+                        else:
+                            values.append(value)
 
-        parameters: dict[str, CovJsonParameter] = {}
-        ranges = {}
+            parameters: dict[str, CovJsonParameter] = {}
+            ranges = {}
 
-        unit = CovJsonUnit(symbol=dat["units"])
-        param = CovJsonParameter(
-            id=dat["name"],
-            observedProperty=CovJsonObservedProperty(label={"en": dat["name"]}),
-            unit=unit,
-        )
-        # TODO: add units to CovJsonParameter
-        parameters[dat["name"]] = param
-        axis_names = ["x", "y", "t"]
-        shape = [1, 1, len(time_steps)]
-        if vertical_steps:
-            axis_names = ["x", "y", "z", "t"]
-            shape = [1, 1, len(vertical_steps), len(time_steps)]
-        _range = {
-            "axisNames": axis_names,
-            "shape": shape,
-            "values": values,
-        }
-        ranges[dat["name"]] = _range
-
-        axes: dict[str, ValuesAxis] = {
-            "x": ValuesAxis[float](values=[lon]),
-            "y": ValuesAxis[float](values=[lat]),
-            "t": ValuesAxis[AwareDatetime](
-                values=[
-                    datetime.strptime(t, "%Y-%m-%dT%H:%M:%SZ").replace(
-                        tzinfo=timezone.utc
-                    )
-                    for t in time_steps
-                ]
-            ),
-        }
-        domain_type = "PointSeries"
-        if vertical_steps:
-            axes["z"] = ValuesAxis[float](values=vertical_steps)
-            if len(vertical_steps) > 1:
-                domain_type = "VerticalProfile"
-        if time_steps:
-            axes["t"] = ValuesAxis[AwareDatetime](
-                values=[
-                    datetime.strptime(t, "%Y-%m-%dT%H:%M:%SZ").replace(
-                        tzinfo=timezone.utc
-                    )
-                    for t in time_steps
-                ]
+            unit = CovJsonUnit(symbol=dat["units"])
+            param = CovJsonParameter(
+                id=dat["name"],
+                observedProperty=CovJsonObservedProperty(label={"en": dat["name"]}),
+                unit=unit,
             )
-            if len(time_steps) > 1 and vertical_steps and len(vertical_steps) > 1:
-                domain_type = "Grid"
+            parameters[dat["name"]] = param
+            axis_names = ["x", "y", "t"]
+            shape = [1, 1, len(time_steps)]
+            if vertical_steps:
+                axis_names = ["x", "y", "z", "t"]
+                shape = [1, 1, len(vertical_steps), len(time_steps)]
+            _range = {
+                "axisNames": axis_names,
+                "shape": shape,
+                "values": values,
+            }
+            ranges[dat["name"]] = _range
 
-        referencing = [
-            ReferenceSystemConnectionObject(
-                system=ReferenceSystem(
-                    type="GeographicCRS",
-                    id="http://www.opengis.net/def/crs/OGC/1.3/CRS84",
+            axes: dict[str, ValuesAxis] = {
+                "x": ValuesAxis[float](values=[lon]),
+                "y": ValuesAxis[float](values=[lat]),
+                "t": ValuesAxis[AwareDatetime](
+                    values=[
+                        datetime.strptime(t, "%Y-%m-%dT%H:%M:%SZ").replace(
+                            tzinfo=timezone.utc
+                        )
+                        for t in time_steps
+                    ]
                 ),
-                coordinates=["x", "y"],
-            ),
-            ReferenceSystemConnectionObject(
-                system=ReferenceSystem(type="TemporalRS", calendar="Gregorian"),
-                coordinates=["t"],
-            ),
-        ]
-        domain = Domain(domainType=domain_type, axes=axes, referencing=referencing)
-        covjson = Coverage(
-            id="test",
-            domain=domain,
-            ranges=ranges,
-            parameters=parameters,
-        )
-        if not fullcovjson:
-            fullcovjson = covjson
-        else:
-            for k, value in covjson.parameters.items():
-                fullcovjson.parameters[k] = value
-            for k, value in covjson.ranges.items():
-                fullcovjson.ranges[k] = value
+            }
+            domain_type = "PointSeries"
+            if vertical_steps:
+                axes["z"] = ValuesAxis[float](values=vertical_steps)
+                if len(vertical_steps) > 1:
+                    domain_type = "VerticalProfile"
+            if time_steps:
+                axes["t"] = ValuesAxis[AwareDatetime](
+                    values=[
+                        datetime.strptime(t, "%Y-%m-%dT%H:%M:%SZ").replace(
+                            tzinfo=timezone.utc
+                        )
+                        for t in time_steps
+                    ]
+                )
+                if len(time_steps) > 1 and vertical_steps and len(vertical_steps) > 1:
+                    domain_type = "Grid"
 
-    return fullcovjson
+            referencing = [
+                (
+                    ReferenceSystemConnectionObject(
+                        system=ReferenceSystem(
+                            type="GeographicCRS",
+                            id="http://www.opengis.net/def/crs/OGC/1.3/CRS84",
+                        ),
+                        coordinates=["x", "y", "z"],
+                    )
+                    if vertical_steps
+                    else ReferenceSystemConnectionObject(
+                        system=ReferenceSystem(
+                            type="GeographicCRS",
+                            id="http://www.opengis.net/def/crs/OGC/1.3/CRS84",
+                        ),
+                        coordinates=["x", "y"],
+                    )
+                ),
+                ReferenceSystemConnectionObject(
+                    system=ReferenceSystem(type="TemporalRS", calendar="Gregorian"),
+                    coordinates=["t"],
+                ),
+            ]
+            domain = Domain(domainType=domain_type, axes=axes, referencing=referencing)
+            covjson = Coverage(
+                id="test",
+                domain=domain,
+                ranges=ranges,
+                parameters=parameters,
+            )
+            covjson_list.append(covjson)
+
+    if len(covjson_list) == 1:
+        return covjson_list[0]
+    if len(covjson_list) == 0:
+        raise EdrException(code=400, description="No data")
+
+    coverage_collection = CoverageCollection(coverages=covjson_list)
+
+    # coverages = []
+    # covjson_list.sort(key=lambda x: x.model_dump_json())
+    # for _domain, group in itertools.groupby(covjson_list, lambda x: x.domain):
+    #     _ranges = {}
+    #     _parameters = {}
+    #     for cov in group:
+    #         param_id = next(iter(cov.parameters))
+    #         _parameters[param_id] = cov.parameters[param_id]
+    #         _ranges[param_id] = cov.ranges[param_id]
+    #     coverages.append(
+    #         Coverage(
+    #             domain=_domain,
+    #             ranges=_ranges,
+    #             parameters=_parameters,
+    #         )
+    #     )
+    # if len(coverages) == 1:
+    #     return coverages[0]
+
+    # parameter_union = functools.reduce(
+    #     operator.ior, (c.parameters for c in coverages), {}
+    # )
+    # coverage_collection = CoverageCollection(
+    #     coverages=coverages, parameters=parameter_union
+    # )
+
+    return coverage_collection
 
 
 def set_edr_config():

@@ -48,7 +48,7 @@ covjson-pydantic==0.2.1
     # via -r requirements.in
 defusedxml==0.7.1
     # via -r requirements.in
-edr-pydantic==0.2.1
+edr-pydantic==0.3.0
     # via -r requirements.in
 exceptiongroup==1.2.1
     # via anyio
@@ -103,7 +103,9 @@ pydantic==2.7.1
 pydantic-core==2.18.2
     # via pydantic
 python-dateutil==2.9.0.post0
-    # via owslib
+    # via
+    #   -r requirements.in
+    #   owslib
 pytz==2023.4
     # via
     #   -r requirements.in

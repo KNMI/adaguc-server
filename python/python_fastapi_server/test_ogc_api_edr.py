@@ -12,9 +12,9 @@ logger = logging.getLogger(__name__)
 
 
 def set_environ():
-    os.environ["ADAGUC_CONFIG"] = os.path.join(
-        os.environ["ADAGUC_PATH"], "data", "config", "adaguc.dataset.xml"
-    )
+    os.environ["ADAGUC_CONFIG"] = os.path.join(os.environ["ADAGUC_PATH"],
+                                               "data", "config",
+                                               "adaguc.dataset.xml")
 
 
 def setup_test_data():
@@ -57,20 +57,17 @@ def test_collections(client: TestClient):
     print(json.dumps(colls["collections"][0], indent=2))
     coll_5d = colls["collections"][0]
     assert coll_5d.get("id") == "data_5d"
-    assert all(
-        ext_name in coll_5d["extent"]
-        for ext_name in ("spatial", "temporal", "vertical", "custom")
-    )  # TODO 'custom'
+    assert all(ext_name in coll_5d["extent"]
+               for ext_name in ("spatial", "temporal", "vertical",
+                                "custom"))  # TODO 'custom'
     assert [ext_name for ext_name in coll_5d["extent"]] == [
         "spatial",
         "temporal",
         "vertical",
         "custom",
     ]  # TODO 'custom'
-    assert (
-        coll_5d["extent"]["temporal"]["values"][0]
-        == "R6/2017-01-01 00:00:00+00:00/PT5M"
-    )
+    assert (coll_5d["extent"]["temporal"]["values"][0] ==
+            "R6/2017-01-01T00:00:00Z/PT5M")
 
     assert "position" in coll_5d["data_queries"]
 

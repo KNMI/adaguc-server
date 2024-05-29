@@ -85,8 +85,8 @@
     "editor.formatOnSave": true,
     "editor.tabSize": 4,
     "editor.insertSpaces": true,
-    "editor.detectIndentation": false
+    "editor.detectIndentation": false,
+    "editor.defaultFormatter": "ms-python.black-formatter",
+
   },
-  "python.linting.pylintPath": "env/bin/pylint",
-  "python.formatting.provider": "yapf"
 }
