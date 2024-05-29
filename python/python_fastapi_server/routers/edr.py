@@ -381,7 +381,7 @@ async def get_collectioninfo_for_id(
     position_variables = Variables(
         query_type="position",
         default_output_format="CoverageJSON",
-        output_formats=["CoverageJSON", "GeoJSON"],
+        output_formats=["CoverageJSON"],
     )
     position_link = EDRQueryLink(
         href=f"{base_url}/position",
@@ -416,7 +416,7 @@ async def get_collectioninfo_for_id(
 
     crs = ["EPSG:4326"]
 
-    output_formats = ["CoverageJSON", "GeoJSON"]
+    output_formats = ["CoverageJSON"]
     if instance is None:
         collection = Collection(
             links=links,
@@ -936,7 +936,7 @@ conformance = ConformanceModel(
 )
 
 
-@edrApiApp.get("/collections/{coll}/locations")
+@edrApiApp.get("/collections/{_coll}/locations")
 def get_locations(_coll: str):
     """
     Returns locations where you could query data.
