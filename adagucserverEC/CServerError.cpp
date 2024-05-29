@@ -26,7 +26,7 @@
 #include "CServerError.h"
 #include "CDrawImage.h"
 
-//#define ERRORMSGS_SIZE 30000
+// #define ERRORMSGS_SIZE 30000
 
 // static char errormsgs[ERRORMSGS_SIZE];
 
@@ -226,4 +226,7 @@ const char *getExceptionCodeText(ServiceExceptionCode code) {
   }
   return "OperationNotSupported";
 }
-void setExceptionType(ServiceExceptionCode code) { errExceptionCode = code; }
+void setExceptionType(ServiceExceptionCode code) {
+  statusCode = HTTP_STATUSCODE_404_NOT_FOUND;
+  errExceptionCode = code;
+}

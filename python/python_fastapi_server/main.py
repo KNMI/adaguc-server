@@ -44,8 +44,7 @@ async def add_hsts_header(request: Request, call_next):
         scheme = urlsplit(external_address).scheme
         if scheme == "https":
             response.headers["Strict-Transport-Security"] = (
-                "max-age=31536000; includeSubDomains"
-            )
+                "max-age=31536000; includeSubDomains")
             response.headers["X-Content-Type-Options"] = "nosniff"
             response.headers["Content-Security-Policy"] = "default-src 'self'"
 
@@ -81,7 +80,8 @@ app.add_middleware(
 @app.get("/")
 async def root():
     return {
-        "message": "ADAGUC server base URL, use /wms, /wcs, /autowms, /adagucopendap or /ogcapi"
+        "message":
+        "ADAGUC server base URL, use /wms, /wcs, /autowms, /adagucopendap or /ogcapi"
     }
 
 
