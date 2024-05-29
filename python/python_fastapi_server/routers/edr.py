@@ -151,7 +151,7 @@ def init_edr_collections(adaguc_dataset_dir: str = os.environ["ADAGUC_DATASET_DI
                                     edr_parameter.attrib.get("standard_name")
                                 )
 
-                            # Try to take the oobserved_property_label from the configuration
+                            # Try to take the observed_property_label from the configuration
                             if "observed_property_label" in edr_parameter.attrib:
                                 edr_param["observed_property_label"] = edr_parameter.attrib.get(
                                     "observed_property_label"
@@ -475,7 +475,7 @@ async def get_collectioninfo_for_id(
 
     return collection, ttl
 
-def get_param_el(edr_collection_name:str, param_id:str):
+def get_parameter_config(edr_collection_name:str, param_id:str):
     """Gets the EDRParameter configuration based on the edr collection name and parameter id
 
     Args:
@@ -486,30 +486,24 @@ def get_param_el(edr_collection_name:str, param_id:str):
         _type_: parameter element_
     """
     edr_collections = get_edr_collections()
-    edr_collection_parameters= edr_collections[edr_collection_name]["parameters"]
+    edr_collection_parameters = edr_collections[edr_collection_name]["parameters"]
     for param_el in edr_collection_parameters:
         if param_id == param_el["name"]:
             return param_el
     return None
 
-def get_param_metadata( param_id:str, edr_collection_name:str,wmslayers:dict=None)->dict:
+def get_param_metadata(param_id:str, edr_collection_name)->dict:
     """Composes parameter metadata based on the param_el and the wmslayer dictionaries
 
     Args:
-        wmslayers (dict): wmslayers list obtained from the WMS GetCapabilities document
         param_id (str): The parameter / wms layer name to find
         edr_collection_name (str): The collection name
 
     Returns:
         dict: dictionary with all metadata required to construct a Edr Parameter object.
     """
-    param_el = get_param_el(edr_collection_name, param_id)
-    wmslayer_title = param_id
-    if wmslayers is not None and param_id in wmslayers:
-        wmslayer = wmslayers[param_id]
-        wmslayer_title = wmslayer["title"]
+    param_el = get_parameter_config(edr_collection_name, param_id)
     wms_layer_name = param_el["name"]
-    wms_layer_title = edr_collection_name+" - "+ wmslayer_title
     observed_property_id = wms_layer_name
     parameter_label = param_el["parameter_label"]
     parameter_unit = param_el["unit"]
@@ -518,7 +512,6 @@ def get_param_metadata( param_id:str, edr_collection_name:str,wmslayers:dict=Non
         observed_property_id = VOCAB_ENDPOINT_URL + param_el["standard_name"]
 
     return { "wms_layer_name":wms_layer_name,
-            "wms_layer_title":wms_layer_title,
             "observed_property_id":observed_property_id, 
             "observed_property_label":observed_property_label,
             "parameter_label":parameter_label, 
@@ -531,21 +524,17 @@ def get_params_for_collection(edr_collection: str, wmslayers: dict) -> dict[str,
     parameter_names = {}
     edr_collections = get_edr_collections()
     for param_el in edr_collections[edr_collection]["parameters"]:
-
         param_id = param_el["name"]
-
-
         if not param_id in  wmslayers:
             logger.warning("EDR Parameter with name [%s] is not found in any of the adaguc Layer configurations. Available layers are %s", param_id, str(list(wmslayers.keys())))
         else:
-            
-            param_metadata = get_param_metadata(param_id, edr_collection, wmslayers)
+            param_metadata = get_param_metadata(param_id, edr_collection)
             logger.info(param_id)
             logger.info(param_metadata["wms_layer_name"])
             param = Parameter(
                 id=param_metadata["wms_layer_name"],
                 observedProperty=ObservedProperty(id=param_metadata["observed_property_id"], label=param_metadata["observed_property_label"]),
-                description=param_metadata["wms_layer_title"],
+                # description=param_metadata["wms_layer_title"], # TODO in follow up
                 type="Parameter",
                 unit=Unit(symbol=Symbol(value=param_metadata["parameter_unit"], type=SYMBOL_TYPE_URL)),
                 label=param_metadata["parameter_label"]
@@ -1181,10 +1170,7 @@ def covjson_from_resp(dats, vertical_name,  collection_name):
 
             parameters: dict[str, CovJsonParameter] = {}
             ranges = {}
-
-
             param_metadata = get_param_metadata(dat["name"], collection_name)
-
             symbol = CovJsonSymbol(value=param_metadata["parameter_unit"], type=SYMBOL_TYPE_URL)
             unit = CovJsonUnit(symbol=symbol)
             observed_property = CovJsonObservedProperty(id=param_metadata["observed_property_id"], label={"en":param_metadata["observed_property_label"]})
@@ -1192,7 +1178,7 @@ def covjson_from_resp(dats, vertical_name,  collection_name):
             param = CovJsonParameter(
                 id=dat["name"],
                 observedProperty=observed_property,
-                description={"en":param_metadata["wms_layer_title"]},
+                # description={"en":param_metadata["wms_layer_title"]}, # TODO in follow up
                 unit=unit,
                 label={"en:":param_metadata["parameter_label"]}
             )

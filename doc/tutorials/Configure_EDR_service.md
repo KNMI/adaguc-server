@@ -75,9 +75,9 @@ Create the following file at the filepath `$ADAGUC_DATASET_DIR/edr.xml`. You can
 
 - name: Mandatory, Should be one of the WMS Layer names as advertised in the WMS GetCapabilities
 - unit: Mandatory, Sets the unit for the parameter in the parameter_names section of the collection document
-- standard_name: Sets the observedProperty id
-- observed_property_label: Sets the observedProperty label
-- parameter_label: Sets the label for the parameter in the parameter_names section
+- standard_name: Recommended, sets the observedProperty id. If set the id will contain a link to the vocabulary service. If not set, it will fallback to `name` and `observedProperty.id` will not contain a link.
+- observed_property_label: Recommended, sets the observedProperty label, it will fallback to it will fallback first to `standard_name` first, and second to `name`
+- parameter_label: Recommended, sets the label for the parameter in the parameter_names section, it will fallback to the `name`
 
 For the given example this will result in the following parameter name definition:
 

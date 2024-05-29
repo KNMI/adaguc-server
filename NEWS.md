@@ -1,6 +1,6 @@
 **Version 2.22.0 2024-05-22**
-- EDR Metadata can now be harmonized: https://github.com/KNMI/adaguc-server/issues/359. 
-- See  [Configure_EDR_service](doc/tutorials/Configure_EDR_service.md) for details.
+- EDR: Parameters can now be detailed with metadata like standard_names and units: https://github.com/KNMI/adaguc-server/issues/359. 
+- See [Configure_EDR_service](doc/tutorials/Configure_EDR_service.md) for details.
 
 
 **Version 2.21.2 2024-04-26**
