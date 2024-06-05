@@ -144,8 +144,13 @@ class AdagucTestTools:
         return
 
     def cleanPostgres(self):
-        # subprocess.run(["psql", os.getenv("ADAGUC_DB"), "-c", "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"])
-        pass
+        """Clean the postgres database if the ADAGUC_DB variable has been set.
+
+        Some tests fail when using postgres if there is already data present in the database.
+        Running the test separately works."""
+
+        if adaguc_db := os.getenv("ADAGUC_DB", None):
+            subprocess.run(["psql", adaguc_db, "-c", "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"])
 
     def mkdir_p(self, directory):
         if not os.path.exists(directory):
