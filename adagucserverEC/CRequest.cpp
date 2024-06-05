@@ -1178,7 +1178,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
     }
 
     // Check if requested time dimensions use valid characters
-    for (auto &dim: dataSource->requiredDims) {
+    for (auto &dim : dataSource->requiredDims) {
       // FIXME: checkTimeFormat used to get called on every dim value, not just datetime. Check if this is required
       if (!dim->isATimeDimension) continue;
 

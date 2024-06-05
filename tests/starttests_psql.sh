@@ -22,7 +22,7 @@ export ADAGUC_AUTOWMS_DIR=${ADAGUC_PATH}/data/datasets/
 ulimit -c unlimited
 
 # Rewrite the xml configuration files used by tests.
-# Unfortunately macos does not use GNU sed, so the sed command differs slightly.
+# Unfortunately macos does not use GNU sed, so the sed command differs slightly (-i '' vs -i)
 # If support for sqlite gets dropped in the future, we could make this the default
 if [[ "$OSTYPE" == "darwin"* ]]; then
     find data/config -type f -name '*.xml' | xargs sed -i '' 's;<DataBase dbtype="sqlite" parameters="{ADAGUC_TMP}/adaguc.autoresource.db"/>;<DataBase parameters="{ADAGUC_DB}"/>;g'
