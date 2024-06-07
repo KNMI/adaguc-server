@@ -1,3 +1,6 @@
+**Version 2.21.3 2024-04-26**
+- Fixed intermittent issue with ODIM reader being enabled/disabled for hdf files
+
 **Version 2.21.2 2024-04-26**
 - When using docker compose the Redis container now automatically starts when system restarts
 
