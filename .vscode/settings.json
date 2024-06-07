@@ -89,4 +89,10 @@
     "editor.defaultFormatter": "ms-python.black-formatter",
 
   },
+  "[XML]": {
+    "editor.autoClosingBrackets": "never",
+    "files.trimFinalNewlines": true,
+    "editor.wordWrap": "off",
+    "editor.formatOnSave": false,
+  }
 }

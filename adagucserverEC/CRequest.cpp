@@ -932,6 +932,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
             ogcDim->value.copy(&srvParam->requestDims[k]->value);
             ogcDim->queryValue.copy(&srvParam->requestDims[k]->value);
             ogcDim->netCDFDimName.copy(dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
+            ogcDim->hidden = dataSource->cfgLayer->Dimension[i]->attr.hidden;
 
             if (ogcDim->name.equals("time") || ogcDim->name.equals("reference_time")) {
               // Make nice time value 1970-01-01T00:33:26 --> 1970-01-01T00:33:26Z
@@ -1078,6 +1079,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
         dataSource->requiredDims.push_back(ogcDim);
         ogcDim->name.copy(&dimName);
         ogcDim->netCDFDimName.copy(dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
+        ogcDim->hidden = dataSource->cfgLayer->Dimension[i]->attr.hidden;
 
         bool isReferenceTimeDimension = false;
         if (dataSource->cfgLayer->Dimension[i]->value.equals("reference_time")) {
@@ -1187,6 +1189,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
     ogcDim->name.copy("none");
     ogcDim->value.copy("0");
     ogcDim->netCDFDimName.copy("none");
+    ogcDim->hidden = true;
   }
 
 #ifdef CREQUEST_DEBUG

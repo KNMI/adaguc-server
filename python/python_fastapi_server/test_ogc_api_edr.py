@@ -20,7 +20,7 @@ def set_environ():
 def setup_test_data():
     print("About to ingest data")
     AdagucTestTools().cleanTempDir()
-    for service in ["netcdf_5d.xml", "dataset_a.xml"]:
+    for service in ["netcdf_5d.xml", "dataset_a.xml","adaguc.tests.arcus_uwcw.xml"]:
         _status, _data, _headers = AdagucTestTools().runADAGUCServer(
             args=[
                 "--updatedb",
@@ -53,9 +53,14 @@ def test_root(client: TestClient):
 def test_collections(client: TestClient):
     resp = client.get("/edr/collections")
     colls = resp.json()
-    assert len(colls["collections"]) == 1
+    assert len(colls["collections"]) == 2
     print(json.dumps(colls["collections"][0], indent=2))
-    coll_5d = colls["collections"][0]
+
+
+    uwcw_ha43ens_nl_2km_hagl = colls["collections"][0]
+    assert uwcw_ha43ens_nl_2km_hagl.get("id") == "uwcw_ha43ens_nl_2km_hagl"
+
+    coll_5d = colls["collections"][1]
     assert coll_5d.get("id") == "data_5d"
     assert all(ext_name in coll_5d["extent"]
                for ext_name in ("spatial", "temporal", "vertical",
