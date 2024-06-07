@@ -30,6 +30,8 @@ Current data postprocessors:
 7.  beaufort: do conversion of wind speeds in m/s or kts to Beaufort
     values
 8.  toknots: do conversion of wind speeds in m/s to kts
+9.  windspeed_knots_to_ms: do conversion of wind speeds in kts to m/s
+
 
 New datapost processors can be implemented via
 [../../adagucserverEC/CDataPostProcessor.cpp](../../adagucserverEC/CDataPostProcessor.cpp)
