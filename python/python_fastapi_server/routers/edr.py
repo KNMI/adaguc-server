@@ -28,6 +28,7 @@ from covjson_pydantic.reference_system import (
     ReferenceSystemConnectionObject,
 )
 from covjson_pydantic.unit import Unit as CovJsonUnit
+from covjson_pydantic.unit import Symbol as CovJsonSymbol
 from dateutil.relativedelta import relativedelta
 from defusedxml.ElementTree import ParseError, parse
 from edr_pydantic.capabilities import (
@@ -43,6 +44,8 @@ from edr_pydantic.link import EDRQueryLink, Link
 from edr_pydantic.observed_property import ObservedProperty
 from edr_pydantic.parameter import Parameter
 from edr_pydantic.unit import Unit
+from edr_pydantic.unit import Symbol
+
 from edr_pydantic.variables import Variables
 from fastapi import FastAPI, Query, Request, Response
 from fastapi.openapi.utils import get_openapi
@@ -63,6 +66,9 @@ logger.debug("Starting EDR")
 edrApiApp = FastAPI(debug=False)
 
 OWSLIB_DUMMY_URL = "http://localhost:8000"
+
+SYMBOL_TYPE_URL = "http://www.opengis.net/def/uom/UCUM"
+VOCAB_ENDPOINT_URL = "https://vocab.nerc.ac.uk/standard_name/"
 
 
 def get_base_url(req: Request = None) -> str:
@@ -106,10 +112,10 @@ def parse_config_file(
 ):
     """Return translation names for NetCDF data"""
     translate = {}
-    fn = dataset_filename
-    _, ext = os.path.splitext(fn)
+    filename = dataset_filename
+    _, ext = os.path.splitext(filename)
     if ext == "" or ext != ".xml":
-        fn = fn + ".xml"
+        filename = filename + ".xml"
     if os.path.isfile(
         os.path.join(adaguc_dataset_dir, dataset_filename)
     ) and dataset_filename.endswith(".xml"):
@@ -149,12 +155,41 @@ def init_edr_collections(adaguc_dataset_dir: str = os.environ["ADAGUC_DATASET_DI
                             "name" in edr_parameter.attrib
                             and "unit" in edr_parameter.attrib
                         ):
-                            edr_params.append(
-                                {
-                                    "name": edr_parameter.attrib.get("name"),
-                                    "unit": edr_parameter.attrib.get("unit"),
-                                }
-                            )
+                            name = edr_parameter.attrib.get("name")
+                            edr_param = {
+                                "name": name,
+                                "parameter_label": name,
+                                "observed_property_label": name,
+                                "description": name,
+                                "standard_name": None,
+                                "unit": "-",
+                            }
+                            # Try to take the standard name from the configuration
+                            if "standard_name" in edr_parameter.attrib:
+                                edr_param["standard_name"] = edr_parameter.attrib.get(
+                                    "standard_name"
+                                )
+                                # If there is a standard name, set the label to the same as fallback
+                                edr_param["observed_property_label"] = (
+                                    edr_parameter.attrib.get("standard_name")
+                                )
+
+                            # Try to take the observed_property_label from the configuration
+                            if "observed_property_label" in edr_parameter.attrib:
+                                edr_param["observed_property_label"] = (
+                                    edr_parameter.attrib.get("observed_property_label")
+                                )
+                            # Try to take the parameter_label from the Layer configuration Title
+                            if "parameter_label" in edr_parameter.attrib:
+                                edr_param["parameter_label"] = edr_parameter.attrib.get(
+                                    "parameter_label"
+                                )
+                            # Try to take the parameter_label from the Layer configuration Title
+                            if "unit" in edr_parameter.attrib:
+                                edr_param["unit"] = edr_parameter.attrib.get("unit")
+
+                            edr_params.append(edr_param)
+
                         else:
                             logger.warning(
                                 "In dataset %s, skipping parameter %s: has no name or units configured",
@@ -188,7 +223,7 @@ def init_edr_collections(adaguc_dataset_dir: str = os.environ["ADAGUC_DATASET_DI
 
 # The edr_collections information is cached locally for a maximum of 2 minutes
 # It will be refreshed if older than 2 minutes
-edr_cache = TTLCache(maxsize=100, ttl=120)
+edr_cache = TTLCache(maxsize=100, ttl=120)  # TODO: Redis?
 
 
 @cached(cache=edr_cache)
@@ -309,7 +344,7 @@ async def get_coll_inst_position(
             if ttl is not None:
                 response.headers["cache-control"] = generate_max_age(ttl)
             return covjson_from_resp(
-                dat, edr_collections[collection_name]["vertical_name"]
+                dat, edr_collections[collection_name]["vertical_name"], collection_name
             )
 
     raise EdrException(code=400, description="No data")
@@ -332,7 +367,7 @@ async def get_collectioninfo_for_id(
     logger.info("get_collectioninfo_for_id(%s, %s)", edr_collection, instance)
     edr_collectionsinfo = get_edr_collections()
     if edr_collection not in edr_collectionsinfo:
-        raise EdrException(code=400, description="No data")
+        raise EdrException(code=400, description="Unknown or unconfigured collection")
 
     edr_collectioninfo = edr_collectionsinfo[edr_collection]
 
@@ -413,6 +448,19 @@ async def get_collectioninfo_for_id(
         title="Position query",
         variables=position_variables,
     )
+    cube_variables = Variables(
+        query_type="position",
+        default_output_format="CoverageJSON",
+        output_formats=["CoverageJSON"],
+    )
+    cube_link = EDRQueryLink(
+        href=f"{base_url}/cube",
+        rel="data",
+        hreflang="en",
+        title="Cube query",
+        variables=cube_variables,
+    )
+
     instances_link = None
     if ref_times and len(ref_times) > 0:
         instances_variables = Variables(
@@ -430,12 +478,17 @@ async def get_collectioninfo_for_id(
         )
         data_queries = DataQueries(
             position=EDRQuery(link=position_link),
+            cube=EDRQuery(link=cube_link),
             instances=EDRQuery(link=instances_link),
         )
     else:
-        data_queries = DataQueries(position=EDRQuery(link=position_link))
+        data_queries = DataQueries(
+            position=EDRQuery(link=position_link), cube=EDRQuery(link=cube_link)
+        )
 
-    parameter_names = get_params_for_collection(edr_collection=edr_collection)
+    parameter_names = get_params_for_collection(
+        edr_collection=edr_collection, wmslayers=wmslayers
+    )
 
     crs = ["EPSG:4326"]
 
@@ -464,27 +517,88 @@ async def get_collectioninfo_for_id(
     return collection, ttl
 
 
-def get_params_for_collection(edr_collection: str) -> dict[str, Parameter]:
+def get_parameter_config(edr_collection_name: str, param_id: str):
+    """Gets the EDRParameter configuration based on the edr collection name and parameter id
+
+    Args:
+        edr_collection_name (str): edr collection name
+        param_id (str): parameter id
+
+    Returns:
+        _type_: parameter element_
+    """
+    edr_collections = get_edr_collections()
+    edr_collection_parameters = edr_collections[edr_collection_name]["parameters"]
+    for param_el in edr_collection_parameters:
+        if param_id == param_el["name"]:
+            return param_el
+    return None
+
+
+def get_param_metadata(param_id: str, edr_collection_name) -> dict:
+    """Composes parameter metadata based on the param_el and the wmslayer dictionaries
+
+    Args:
+        param_id (str): The parameter / wms layer name to find
+        edr_collection_name (str): The collection name
+
+    Returns:
+        dict: dictionary with all metadata required to construct a Edr Parameter object.
+    """
+    param_el = get_parameter_config(edr_collection_name, param_id)
+    wms_layer_name = param_el["name"]
+    observed_property_id = wms_layer_name
+    parameter_label = param_el["parameter_label"]
+    parameter_unit = param_el["unit"]
+    observed_property_label = param_el["observed_property_label"]
+    if "standard_name" in param_el and param_el["standard_name"] is not None:
+        observed_property_id = VOCAB_ENDPOINT_URL + param_el["standard_name"]
+
+    return {
+        "wms_layer_name": wms_layer_name,
+        "observed_property_id": observed_property_id,
+        "observed_property_label": observed_property_label,
+        "parameter_label": parameter_label,
+        "parameter_unit": parameter_unit,
+    }
+
+
+def get_params_for_collection(
+    edr_collection: str, wmslayers: dict
+) -> dict[str, Parameter]:
     """
     Returns a dictionary with parameters for given EDR collection
     """
     parameter_names = {}
     edr_collections = get_edr_collections()
     for param_el in edr_collections[edr_collection]["parameters"]:
-        # Use name as default for label
-        if "label" in param_el:
-            label = param_el["label"]
+        param_id = param_el["name"]
+        if not param_id in wmslayers:
+            logger.warning(
+                "EDR Parameter with name [%s] is not found in any of the adaguc Layer configurations. Available layers are %s",
+                param_id,
+                str(list(wmslayers.keys())),
+            )
         else:
-            label = param_el["name"]
-
-        param = Parameter(
-            id=param_el["name"],
-            observedProperty=ObservedProperty(id=param_el["name"], label=label),
-            type="Parameter",
-            unit=Unit(symbol=param_el["unit"]),
-            label=label,
-        )
-        parameter_names[param_el["name"]] = param
+            param_metadata = get_param_metadata(param_id, edr_collection)
+            logger.info(param_id)
+            logger.info(param_metadata["wms_layer_name"])
+            param = Parameter(
+                id=param_metadata["wms_layer_name"],
+                observedProperty=ObservedProperty(
+                    id=param_metadata["observed_property_id"],
+                    label=param_metadata["observed_property_label"],
+                ),
+                # description=param_metadata["wms_layer_title"], # TODO in follow up
+                type="Parameter",
+                unit=Unit(
+                    symbol=Symbol(
+                        value=param_metadata["parameter_unit"], type=SYMBOL_TYPE_URL
+                    )
+                ),
+                label=param_metadata["parameter_label"],
+            )
+            parameter_names[param_el["name"]] = param
     return parameter_names
 
 
@@ -751,6 +865,8 @@ async def rest_get_edr_collection_by_id(collection_name: str, response: Response
     collection, ttl = await get_collectioninfo_for_id(collection_name)
     if ttl is not None:
         response.headers["cache-control"] = generate_max_age(ttl)
+    if collection is None:
+        raise EdrException(code=400, description="Unknown or unconfigured collection")
     return collection
 
 
@@ -803,10 +919,10 @@ async def get_capabilities(collname):
     for layername, layerinfo in wms.contents.items():
         layers[layername] = {
             "name": layername,
+            "title": layerinfo.title,
             "dimensions": {**layerinfo.dimensions},
             "boundingBoxWGS84": layerinfo.boundingBoxWGS84,
         }
-
     return layers, ttl
 
 
@@ -1076,7 +1192,7 @@ def makedims(dims, data):
     return dimlist
 
 
-def covjson_from_resp(dats, vertical_name):
+def covjson_from_resp(dats, vertical_name, collection_name):
     """
     Returns a coverage json from a Adaguc WMS GetFeatureInfo request
     """
@@ -1113,13 +1229,24 @@ def covjson_from_resp(dats, vertical_name):
 
             parameters: dict[str, CovJsonParameter] = {}
             ranges = {}
+            param_metadata = get_param_metadata(dat["name"], collection_name)
+            symbol = CovJsonSymbol(
+                value=param_metadata["parameter_unit"], type=SYMBOL_TYPE_URL
+            )
+            unit = CovJsonUnit(symbol=symbol)
+            observed_property = CovJsonObservedProperty(
+                id=param_metadata["observed_property_id"],
+                label={"en": param_metadata["observed_property_label"]},
+            )
 
-            unit = CovJsonUnit(symbol=dat["units"])
             param = CovJsonParameter(
                 id=dat["name"],
-                observedProperty=CovJsonObservedProperty(label={"en": dat["name"]}),
+                observedProperty=observed_property,
+                # description={"en":param_metadata["wms_layer_title"]}, # TODO in follow up
                 unit=unit,
+                label={"en:": param_metadata["parameter_label"]},
             )
+
             parameters[dat["name"]] = param
             axis_names = ["x", "y", "t"]
             shape = [1, 1, len(time_steps)]
@@ -1187,7 +1314,7 @@ def covjson_from_resp(dats, vertical_name):
             ]
             domain = Domain(domainType=domain_type, axes=axes, referencing=referencing)
             covjson = Coverage(
-                id="test",
+                id=f"coverage_{(len(covjson_list)+1)}",
                 domain=domain,
                 ranges=ranges,
                 parameters=parameters,
@@ -1200,32 +1327,6 @@ def covjson_from_resp(dats, vertical_name):
         raise EdrException(code=400, description="No data")
 
     coverage_collection = CoverageCollection(coverages=covjson_list)
-
-    # coverages = []
-    # covjson_list.sort(key=lambda x: x.model_dump_json())
-    # for _domain, group in itertools.groupby(covjson_list, lambda x: x.domain):
-    #     _ranges = {}
-    #     _parameters = {}
-    #     for cov in group:
-    #         param_id = next(iter(cov.parameters))
-    #         _parameters[param_id] = cov.parameters[param_id]
-    #         _ranges[param_id] = cov.ranges[param_id]
-    #     coverages.append(
-    #         Coverage(
-    #             domain=_domain,
-    #             ranges=_ranges,
-    #             parameters=_parameters,
-    #         )
-    #     )
-    # if len(coverages) == 1:
-    #     return coverages[0]
-
-    # parameter_union = functools.reduce(
-    #     operator.ior, (c.parameters for c in coverages), {}
-    # )
-    # coverage_collection = CoverageCollection(
-    #     coverages=coverages, parameters=parameter_union
-    # )
 
     return coverage_collection
 
@@ -1296,6 +1397,7 @@ async def get_coll_inst_cube(
 
     edr_collectioninfo = get_edr_collections()[collection_name]
     dataset = edr_collectioninfo["dataset"]
+    vertical_dim = edr_collectioninfo["vertical_name"]
     ref_times = await get_ref_times_for_coll(
         edr_collectioninfo, edr_collectioninfo["parameters"][0]["name"]
     )
@@ -1335,7 +1437,7 @@ async def get_coll_inst_cube(
             dataset = Dataset(f"{parameter_name}.nc", memory=response.getvalue())
             logger.info("ds: %s", dataset)
 
-            coveragejson = netcdf_to_covjson(dataset, translated_names)
+            coveragejson = netcdf_to_covjson(dataset, translated_names, vertical_dims)
             if coveragejson is not None:
                 coveragejsons.append(coveragejson)
                 parameters = parameters | coveragejson.parameters

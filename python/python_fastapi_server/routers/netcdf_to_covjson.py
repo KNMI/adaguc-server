@@ -88,7 +88,9 @@ def get_proj_info_from_proj_string(projstring: str) -> GeoReferenceInfo:
     return georeferenceinfos[0]
 
 
-def netcdf_to_covjson(netcdfdataset, translated_names: dict[str, str]) -> Coverage:
+def netcdf_to_covjson(
+    netcdfdataset, translated_names: dict[str, str], vertical_dim: dict[str, list[str]]
+) -> Coverage:
     """Converts a netcdf dataset to a CoverageJson object
 
     2022-10-06: Currently this function only handles one variable in the netCDF
@@ -102,7 +104,16 @@ def netcdf_to_covjson(netcdfdataset, translated_names: dict[str, str]) -> Covera
     parameters: Dict[str, Parameter] = {}
 
     # float ta(time, height, y, x) ;
-    netcdfdimname_to_covdimname = {"height": "z", "x": "x", "y": "y", "time": "t"}
+    netcdfdimname_to_covdimname = {
+        "temp_at_hagl": "z",
+        "height": "z",
+        "x": "x",
+        "y": "y",
+        "time": "t",
+    }
+    print("vertical_dim: ", vertical_dim)
+    if vertical_dim:
+        netcdfdimname_to_covdimname[vertical_dim] = "z"
 
     # Loop through the variables in the NetCDF file
     for variablename in netcdfdataset.variables:
@@ -116,6 +127,13 @@ def netcdf_to_covjson(netcdfdataset, translated_names: dict[str, str]) -> Covera
             shape = [None] * len(variable.dimensions)
             for index, dimname in enumerate(variable.dimensions):
                 coverage_axis_name = netcdfdimname_to_covdimname.get(dimname, dimname)
+                print(
+                    "TRANSLATED ",
+                    dimname,
+                    "to",
+                    coverage_axis_name,
+                    netcdfdimname_to_covdimname,
+                )
                 axesnames[index] = coverage_axis_name
                 ncvar = netcdfdataset.variables[dimname]
                 # Fill in the shape object for the NdArray
