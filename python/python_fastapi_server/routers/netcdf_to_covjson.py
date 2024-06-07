@@ -1,6 +1,7 @@
 """
 Convert a netcdf dataset to coverage json
 """
+
 import logging
 from datetime import timezone
 from typing import Dict
@@ -71,7 +72,7 @@ georeferenceinfos: GeoReferenceInfos = [
 ]
 
 
-def get_projection_info_from_proj_string(projstring: str) -> GeoReferenceInfo:
+def get_proj_info_from_proj_string(projstring: str) -> GeoReferenceInfo:
     """Find the GeoReferenceInfo based on a proj4 string
 
     Args:
@@ -87,7 +88,7 @@ def get_projection_info_from_proj_string(projstring: str) -> GeoReferenceInfo:
     return georeferenceinfos[0]
 
 
-def netcdf_to_covjson(netcdfdataset) -> Coverage:
+def netcdf_to_covjson(netcdfdataset, translated_names: dict[str, str]) -> Coverage:
     """Converts a netcdf dataset to a CoverageJson object
 
     2022-10-06: Currently this function only handles one variable in the netCDF
@@ -106,6 +107,7 @@ def netcdf_to_covjson(netcdfdataset) -> Coverage:
     # Loop through the variables in the NetCDF file
     for variablename in netcdfdataset.variables:
         variable = netcdfdataset.variables[variablename]
+        translated_variablename = translated_names.get(variablename, variablename)
 
         # Find a variable with a grid_mapping attribute, this is a grid
         if "grid_mapping" in variable.ncattrs():
@@ -113,7 +115,7 @@ def netcdf_to_covjson(netcdfdataset) -> Coverage:
             axesnames: List = [None] * len(variable.dimensions)
             shape = [None] * len(variable.dimensions)
             for index, dimname in enumerate(variable.dimensions):
-                coverage_axis_name = netcdfdimname_to_covdimname[dimname]
+                coverage_axis_name = netcdfdimname_to_covdimname.get(dimname, dimname)
                 axesnames[index] = coverage_axis_name
                 ncvar = netcdfdataset.variables[dimname]
                 # Fill in the shape object for the NdArray
@@ -140,24 +142,32 @@ def netcdf_to_covjson(netcdfdataset) -> Coverage:
                     # netcdf4-python has made the choice to always return timezone naive datetimes, but guarantees
                     # that the time is in UTC. So we now have to manually set UTC timezone. Quite inefficient! See
                     # https://github.com/Unidata/netcdf4-python/issues/357
-                    values_tz = [v.replace(tzinfo=timezone.utc) for v in values.tolist()]
-                    axes[coverage_axis_name] = ValuesAxis[AwareDatetime](values=values_tz)
+                    values_tz = [
+                        v.replace(tzinfo=timezone.utc) for v in values.tolist()
+                    ]
+                    axes[coverage_axis_name] = ValuesAxis[AwareDatetime](
+                        values=values_tz
+                    )
                 else:
                     # Assign float values
-                    axes[coverage_axis_name] = ValuesAxis[float](values=ncvar[:].data.tolist())
+                    axes[coverage_axis_name] = ValuesAxis[float](
+                        values=ncvar[:].data.tolist()
+                    )
 
             # Create the ndarray for the ranges object
             ndarray = NdArray(
-                axisNames=axesnames, shape=shape, values=ma.masked_invalid(variable[:].flatten(order="C")).tolist()
+                axisNames=axesnames,
+                shape=shape,
+                values=ma.masked_invalid(variable[:].flatten(order="C")).tolist(),
             )
 
             # Make the ranges object
-            ranges[variablename] = ndarray
+            ranges[translated_variablename] = ndarray
 
             unit_of_measurement = variable.units if variable.units else "unknown"
 
             # Add the parameter
-            parameters[variablename] = Parameter(
+            parameters[translated_variablename] = Parameter(
                 # TODO: KDP-1622 Fix the difference in the ObservedProperty between DescribeCoverage from the
                 #  Adaguc Config and the NetCDF values
                 observedProperty=ObservedProperty(label={"en": variable.long_name}),
@@ -176,18 +186,30 @@ def netcdf_to_covjson(netcdfdataset) -> Coverage:
     # Try to detect the georeferencesysteminfo based on the proj string in the crs variable of the netcdf file.
     if "crs" in netcdfdataset.variables:
         crsvar = netcdfdataset.variables["crs"]
-        georeferencesysteminfo = get_projection_info_from_proj_string(crsvar.proj4_params)
+        georeferencesysteminfo = get_proj_info_from_proj_string(crsvar.proj4_params)
 
-    georeferencesystem = ReferenceSystem(type=georeferencesysteminfo.crstype, id=georeferencesysteminfo.crsid)
+    georeferencesystem = ReferenceSystem(
+        type=georeferencesysteminfo.crstype, id=georeferencesysteminfo.crsid
+    )
 
-    georeferencing = ReferenceSystemConnectionObject(system=georeferencesystem, coordinates=georeferencesysteminfo.axes)
+    georeferencing = ReferenceSystemConnectionObject(
+        system=georeferencesystem, coordinates=georeferencesysteminfo.axes
+    )
 
     temporalreferencesystem = ReferenceSystem(type="TemporalRS", calendar="Gregorian")
 
-    temporalreferencing = ReferenceSystemConnectionObject(system=temporalreferencesystem, coordinates=["t"])
+    temporalreferencing = ReferenceSystemConnectionObject(
+        system=temporalreferencesystem, coordinates=["t"]
+    )
+
+    logger.info("DUMP: %s", axes.keys())
 
     # Create the domain based on the axes object
-    domain = Domain(domainType=DomainType.grid, axes=axes, referencing=[georeferencing, temporalreferencing])
+    domain = Domain(
+        domainType=DomainType.grid,
+        axes=axes,
+        referencing=[georeferencing, temporalreferencing],
+    )
 
     # Assemble and return the coveragejson based on the domain and the ranges
     return Coverage(domain=domain, ranges=ranges, parameters=parameters)
@@ -198,7 +220,7 @@ if __name__ == "__main__":
     import requests
 
     SERVICE = "https://geoservices.knmi.nl/adagucserver?"
-    SERVICE= "http://localhost:8080/adagucserver?"
+    SERVICE = "http://localhost:8080/adagucserver?"
 
     # Rijksdriehoek stelsel
     # QUERYSTRING = (
@@ -273,7 +295,7 @@ if __name__ == "__main__":
 
     ds = netCDF4.Dataset("filename.nc", memory=response.content)
 
-    coveragejson = netcdf_to_covjson(ds)
+    coveragejson = netcdf_to_covjson(ds, {})
 
     print(
         coveragejson.model_dump_json(

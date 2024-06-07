@@ -15,9 +15,8 @@ import os
 import re
 from datetime import datetime, timezone
 from typing import Union
-from typing_extensions import Annotated
-from dateutil.relativedelta import relativedelta
 
+from cachetools import TTLCache, cached
 from covjson_pydantic.coverage import Coverage, CoverageCollection
 from covjson_pydantic.domain import Domain, ValuesAxis
 from covjson_pydantic.observed_property import (
@@ -29,8 +28,8 @@ from covjson_pydantic.reference_system import (
     ReferenceSystemConnectionObject,
 )
 from covjson_pydantic.unit import Unit as CovJsonUnit
+from dateutil.relativedelta import relativedelta
 from defusedxml.ElementTree import ParseError, parse
-
 from edr_pydantic.capabilities import (
     ConformanceModel,
     Contact,
@@ -39,23 +38,23 @@ from edr_pydantic.capabilities import (
 )
 from edr_pydantic.collections import Collection, Collections, Instance, Instances
 from edr_pydantic.data_queries import DataQueries, EDRQuery
-from edr_pydantic.extent import Extent, Spatial, Temporal, Vertical, Custom
+from edr_pydantic.extent import Custom, Extent, Spatial, Temporal, Vertical
 from edr_pydantic.link import EDRQueryLink, Link
 from edr_pydantic.observed_property import ObservedProperty
 from edr_pydantic.parameter import Parameter
 from edr_pydantic.unit import Unit
 from edr_pydantic.variables import Variables
-
 from fastapi import FastAPI, Query, Request, Response
-from fastapi.responses import JSONResponse
 from fastapi.openapi.utils import get_openapi
+from fastapi.responses import JSONResponse
 from geomet import wkt
+from netCDF4 import Dataset
 from owslib.wms import WebMapService
 from pydantic import AwareDatetime
-
-from cachetools import cached, TTLCache
+from typing_extensions import Annotated
 
 from .covjsonresponse import CovJSONResponse
+from .netcdf_to_covjson import netcdf_to_covjson
 from .ogcapi_tools import call_adaguc
 
 logger = logging.getLogger(__name__)
@@ -100,6 +99,30 @@ async def edr_exception_handler(_, exc: EdrException):
         status_code=exc.code,
         content={"code": str(exc.code), "description": exc.description},
     )
+
+
+def parse_config_file(
+    dataset_filename: str, adaguc_dataset_dir: str = os.environ["ADAGUC_DATASET_DIR"]
+):
+    """Return translation names for NetCDF data"""
+    translate = {}
+    fn = dataset_filename
+    _, ext = os.path.splitext(fn)
+    if ext == "" or ext != ".xml":
+        fn = fn + ".xml"
+    if os.path.isfile(
+        os.path.join(adaguc_dataset_dir, dataset_filename)
+    ) and dataset_filename.endswith(".xml"):
+        tree = parse(os.path.join(adaguc_dataset_dir, dataset_filename))
+        root = tree.getroot()
+        for lyr in root.iter("Layer"):
+            layer_variables = [l.text for l in lyr.iter("Variable")]
+            if len(layer_variables) == 1:
+                translate[layer_variables[0]] = lyr.find("Name").text
+            print(
+                "Layer:", lyr.find("Name").text, [l.text for l in lyr.iter("Variable")]
+            )
+    return translate
 
 
 def init_edr_collections(adaguc_dataset_dir: str = os.environ["ADAGUC_DATASET_DIR"]):
@@ -1205,6 +1228,119 @@ def covjson_from_resp(dats, vertical_name):
     # )
 
     return coverage_collection
+
+
+@edrApiApp.get(
+    "/collections/{collection_name}/cube",
+    response_model=CoverageCollection,
+    response_class=CovJSONResponse,
+    response_model_exclude_none=True,
+)
+async def get_collection_cube(
+    collection_name: str,
+    request: Request,
+    bbox: str,
+    datetime_par: str = Query(default=None, alias="datetime"),
+    parameter_name: str = Query(alias="parameter-name"),
+    z_par: str = Query(alias="z", default=None),
+    res_x: Union[float, None] = None,
+    res_y: Union[float, None] = None,
+) -> Coverage:
+    """Returns information in EDR format for a given collection and position"""
+    return await get_coll_inst_cube(
+        collection_name,
+        request,
+        bbox,
+        None,
+        datetime_par,
+        parameter_name,
+        z_par,
+        res_x,
+        res_y,
+    )
+
+
+@edrApiApp.get(
+    "/collections/{collection_name}/instances/{instance}/cube",
+    response_model=CoverageCollection,
+    response_class=CovJSONResponse,
+    response_model_exclude_none=True,
+)
+async def get_coll_inst_cube(
+    collection_name: str,
+    request: Request,
+    bbox: str,
+    instance: Union[str, None] = None,
+    datetime_par: str = Query(default=None, alias="datetime"),
+    parameter_name: str = Query(alias="parameter-name"),
+    z_par: str = Query(alias="z", default=None),
+    res_x: Union[float, None] = None,
+    res_y: Union[float, None] = None,
+) -> Coverage:
+    """Returns information in EDR format for a given collection, instance and position"""
+    allowed_params = [
+        "bbox",
+        "datetime",
+        "parameter-name",
+        "z",
+        "f",
+        "crs",
+        "res_x",
+        "res_y",
+    ]
+    custom_dims = [k for k in request.query_params if k not in allowed_params]
+    custom_dims = ""
+    if len(custom_dims) > 0:
+        for custom_dim in custom_dims:
+            custom_dims += f"&DIM_{custom_dim}={request.query_params[custom_dim]}"
+
+    edr_collectioninfo = get_edr_collections()[collection_name]
+    dataset = edr_collectioninfo["dataset"]
+    ref_times = await get_ref_times_for_coll(
+        edr_collectioninfo, edr_collectioninfo["parameters"][0]["name"]
+    )
+    if not instance and len(ref_times) > 0:
+        instance = ref_times[-1]
+
+    parameter_names = parameter_name.split(",")
+
+    if res_x is not None and res_y is not None:
+        res_queryterm = f"&resx={res_x}&resy={res_y}"
+    else:
+        res_queryterm = ""
+
+    collection_info = get_edr_collections().get(collection_name)
+    if "dataset" in collection_info:
+        logger.info("callADAGUC by dataset")
+        dataset = collection_info["dataset"]
+        translated_names = parse_config_file(dataset)
+        coveragejsons = []
+        parameters = {}
+        for parameter_name in parameter_names:
+            if instance is None:
+                urlrequest = (
+                    f"dataset={dataset}&service=wcs&version=1.1.1&request=getcoverage&format=NetCDF4&crs=EPSG:4326&coverage={parameter_name}"
+                    + f"&bbox={bbox}&time={datetime_par}"
+                    + res_queryterm
+                )
+            else:
+                urlrequest = (
+                    f"dataset={dataset}&service=wcs&request=getcoverage&format=NetCDF4&crs=EPSG:4326&coverage={parameter_name}"
+                    + f"&bbox={bbox}&time={datetime_par}&dim_reference_time={instance_to_iso(instance)}"
+                    + res_queryterm
+                )
+
+            status, response, _ = await call_adaguc(url=urlrequest.encode("UTF-8"))
+            logger.info("status: %d", status)
+            dataset = Dataset(f"{parameter_name}.nc", memory=response.getvalue())
+            logger.info("ds: %s", dataset)
+
+            coveragejson = netcdf_to_covjson(dataset, translated_names)
+            if coveragejson is not None:
+                coveragejsons.append(coveragejson)
+                parameters = parameters | coveragejson.parameters
+
+    return CoverageCollection(coverages=coveragejsons, parameters=parameters)
 
 
 def set_edr_config():

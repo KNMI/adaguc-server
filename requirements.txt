@@ -8,7 +8,7 @@ aiocache==0.12.2
     # via -r requirements.in
 annotated-types==0.7.0
     # via pydantic
-anyio==4.3.0
+anyio==4.4.0
     # via
     #   httpx
     #   starlette
@@ -26,7 +26,7 @@ brotli-asgi==1.4.0
     # via -r requirements.in
 cachetools==5.3.3
     # via -r requirements.in
-certifi==2024.2.2
+certifi==2024.6.2
     # via
     #   httpcore
     #   httpx
@@ -44,7 +44,7 @@ click==8.1.7
     # via
     #   geomet
     #   uvicorn
-covjson-pydantic==0.2.1
+covjson-pydantic==0.3.0
     # via -r requirements.in
 defusedxml==0.7.1
     # via -r requirements.in
@@ -93,14 +93,14 @@ packaging==24.0
     # via gunicorn
 pillow==10.3.0
     # via -r requirements.in
-pydantic==2.7.1
+pydantic==2.7.3
     # via
     #   -r requirements.in
     #   covjson-pydantic
     #   edr-pydantic
     #   fastapi
     #   geojson-pydantic
-pydantic-core==2.18.2
+pydantic-core==2.18.4
     # via pydantic
 python-dateutil==2.9.0.post0
     # via
@@ -114,7 +114,7 @@ pyyaml==6.0.1
     # via owslib
 redis==5.0.4
     # via -r requirements.in
-requests==2.32.2
+requests==2.32.3
     # via owslib
 six==1.16.0
     # via python-dateutil
@@ -126,7 +126,7 @@ starlette==0.36.3
     # via
     #   brotli-asgi
     #   fastapi
-typing-extensions==4.11.0
+typing-extensions==4.12.1
     # via
     #   anyio
     #   asgiref
