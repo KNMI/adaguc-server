@@ -29,7 +29,7 @@ def setup_test_data():
             ],
             isCGI=False,
             showLogOnError=False,
-            showLog=True,
+            showLog=False,
         )
 
 
@@ -44,8 +44,8 @@ def fixture_client():
 def test_root(client: TestClient):
     resp = client.get("/edr/")
     root_info = resp.json()
-    print("resp:", resp, json.dumps(root_info, indent=2))
-    print()
+    #print("resp:", resp, json.dumps(root_info, indent=2))
+    #print()
     assert root_info["description"] == "EDR service for ADAGUC datasets"
     assert len(root_info["links"]) >= 4
 
@@ -54,7 +54,7 @@ def test_collections(client: TestClient):
     resp = client.get("/edr/collections")
     colls = resp.json()
     assert len(colls["collections"]) == 2
-    print(json.dumps(colls["collections"][0], indent=2))
+    #print(json.dumps(colls["collections"][0], indent=2))
 
 
     uwcw_ha43ens_nl_2km_hagl = colls["collections"][0]
