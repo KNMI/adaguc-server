@@ -1,7 +1,11 @@
+**Version 2.23.0 2024-06-07**
+- DataPostProcessor `windspeed_knots_to_ms` was added to convert knots to meters per second, use `<DataPostProc algorithm="windspeed_knots_to_ms"/>`
+- TimeSeries fetching with GetFeatureInfo now support multimodel ensembles
+- DataPostProcessor has been refactored
+
 **Version 2.22.0 2024-05-22**
 - EDR: Parameters can now be detailed with metadata like standard_names and units: https://github.com/KNMI/adaguc-server/issues/359. 
 - See [Configure_EDR_service](doc/tutorials/Configure_EDR_service.md) for details.
-
 
 **Version 2.21.2 2024-04-26**
 - When using docker compose the Redis container now automatically starts when system restarts

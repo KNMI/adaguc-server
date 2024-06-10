@@ -135,11 +135,11 @@ def init_edr_collections(adaguc_dataset_dir: str = os.environ["ADAGUC_DATASET_DI
     """
     Return all possible OGCAPI EDR datasets, based on the dataset directory
     """
-    dataset_files = [
+    dataset_files = sorted([
         f
         for f in os.listdir(adaguc_dataset_dir)
         if os.path.isfile(os.path.join(adaguc_dataset_dir, f)) and f.endswith(".xml")
-    ]
+    ])
 
     edr_collections = {}
     for dataset_file in dataset_files:
