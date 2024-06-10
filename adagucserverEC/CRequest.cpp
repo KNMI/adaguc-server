@@ -2445,7 +2445,6 @@ int CRequest::process_querystring() {
   }
 
   queryString.decodeURLSelf();
-  // CDBDebug("QueryString: \"%s\"",queryString.c_str());
   CT::string *parameters = queryString.splitToArray("&");
 
 #ifdef CREQUEST_DEBUG
@@ -2460,6 +2459,10 @@ int CRequest::process_querystring() {
     if (equalPos != -1) {
       uriKeyUpperCase = parameters[j].substring(0, equalPos);
       uriValue = parameters[j].c_str() + equalPos + 1;
+      // Remove trailing equals sign, for gracefully supporting invalid decoded urls from adaguc-viewer
+      if (uriValue.endsWith("=")) {
+        uriValue.setSize(uriValue.length() - 1);
+      }
     } else {
       uriKeyUpperCase = parameters[j].c_str();
     }

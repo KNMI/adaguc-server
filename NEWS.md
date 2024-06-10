@@ -1,3 +1,6 @@
+**Version 2.23.1 2024-06-10**
+ - Links in the form http://localhost:8080/wms?source%3Dtest.nc&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities are now supported
+
 **Version 2.23.0 2024-06-07**
 - DataPostProcessor `windspeed_knots_to_ms` was added to convert knots to meters per second, use `<DataPostProc algorithm="windspeed_knots_to_ms"/>`
 - TimeSeries fetching with GetFeatureInfo now support multimodel ensembles
