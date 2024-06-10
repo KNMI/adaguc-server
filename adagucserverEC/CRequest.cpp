@@ -2444,9 +2444,7 @@ int CRequest::process_querystring() {
     CGI = 1;
   }
 
-  CDBDebug("QueryString: \"%s\"", queryString.c_str());
   queryString.decodeURLSelf();
-  CDBDebug("QueryString: \"%s\"", queryString.c_str());
   CT::string *parameters = queryString.splitToArray("&");
 
 #ifdef CREQUEST_DEBUG
