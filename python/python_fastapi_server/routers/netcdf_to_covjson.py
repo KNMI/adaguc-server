@@ -89,7 +89,7 @@ def get_proj_info_from_proj_string(projstring: str) -> GeoReferenceInfo:
 
 
 def netcdf_to_covjson(
-    netcdfdataset, translated_names: dict[str, str], vertical_dim: dict[str, list[str]]
+    netcdfdataset, translate_names: dict[str, str], translate_dims: dict[str, str]
 ) -> Coverage:
     """Converts a netcdf dataset to a CoverageJson object
 
@@ -105,20 +105,17 @@ def netcdf_to_covjson(
 
     # float ta(time, height, y, x) ;
     netcdfdimname_to_covdimname = {
-        "temp_at_hagl": "z",
         "height": "z",
         "x": "x",
         "y": "y",
         "time": "t",
     }
-    print("vertical_dim: ", vertical_dim)
-    if vertical_dim:
-        netcdfdimname_to_covdimname[vertical_dim] = "z"
+    netcdfdimname_to_covdimname.update(translate_dims)
 
     # Loop through the variables in the NetCDF file
     for variablename in netcdfdataset.variables:
         variable = netcdfdataset.variables[variablename]
-        translated_variablename = translated_names.get(variablename, variablename)
+        translated_variablename = translate_names.get(variablename, variablename)
 
         # Find a variable with a grid_mapping attribute, this is a grid
         if "grid_mapping" in variable.ncattrs():
@@ -127,13 +124,6 @@ def netcdf_to_covjson(
             shape = [None] * len(variable.dimensions)
             for index, dimname in enumerate(variable.dimensions):
                 coverage_axis_name = netcdfdimname_to_covdimname.get(dimname, dimname)
-                print(
-                    "TRANSLATED ",
-                    dimname,
-                    "to",
-                    coverage_axis_name,
-                    netcdfdimname_to_covdimname,
-                )
                 axesnames[index] = coverage_axis_name
                 ncvar = netcdfdataset.variables[dimname]
                 # Fill in the shape object for the NdArray
@@ -155,7 +145,6 @@ def netcdf_to_covjson(
                         }.items()
                         if value is not None
                     }
-                    # pylint: disable=no-member
                     values = netCDF4.num2date(**not_none_parameters)
                     # netcdf4-python has made the choice to always return timezone naive datetimes, but guarantees
                     # that the time is in UTC. So we now have to manually set UTC timezone. Quite inefficient! See
@@ -313,7 +302,7 @@ if __name__ == "__main__":
 
     ds = netCDF4.Dataset("filename.nc", memory=response.content)
 
-    coveragejson = netcdf_to_covjson(ds, {})
+    coveragejson = netcdf_to_covjson(ds, {}, {})
 
     print(
         coveragejson.model_dump_json(

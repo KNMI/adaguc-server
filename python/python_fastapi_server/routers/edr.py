@@ -8,29 +8,11 @@ Author: Ernst de Vreede, 2023-11-23
 KNMI
 """
 
-import itertools
-import json
 import logging
-import os
 import re
 from datetime import datetime, timezone
-from typing import Union
 
-from cachetools import TTLCache, cached
-from covjson_pydantic.coverage import Coverage, CoverageCollection
-from covjson_pydantic.domain import Domain, ValuesAxis
-from covjson_pydantic.observed_property import (
-    ObservedProperty as CovJsonObservedProperty,
-)
-from covjson_pydantic.parameter import Parameter as CovJsonParameter
-from covjson_pydantic.reference_system import (
-    ReferenceSystem,
-    ReferenceSystemConnectionObject,
-)
-from covjson_pydantic.unit import Unit as CovJsonUnit
-from covjson_pydantic.unit import Symbol as CovJsonSymbol
 from dateutil.relativedelta import relativedelta
-from defusedxml.ElementTree import ParseError, parse
 from edr_pydantic.capabilities import (
     ConformanceModel,
     Contact,
@@ -43,57 +25,42 @@ from edr_pydantic.extent import Custom, Extent, Spatial, Temporal, Vertical
 from edr_pydantic.link import EDRQueryLink, Link
 from edr_pydantic.observed_property import ObservedProperty
 from edr_pydantic.parameter import Parameter
-from edr_pydantic.unit import Unit
-from edr_pydantic.unit import Symbol
-
+from edr_pydantic.unit import Symbol, Unit
 from edr_pydantic.variables import Variables
-from fastapi import FastAPI, Query, Request, Response
+from fastapi import FastAPI, Request, Response
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
-from geomet import wkt
-from netCDF4 import Dataset
 from owslib.wms import WebMapService
-from pydantic import AwareDatetime
-from typing_extensions import Annotated
 
-from .covjsonresponse import CovJSONResponse
-from .netcdf_to_covjson import netcdf_to_covjson
+from .edr_utils import (
+    get_base_url,
+    get_edr_collections,
+    get_ref_times_for_coll,
+    parse_iso,
+    parse_instance_time,
+    get_ttl_from_adaguc_headers,
+    generate_max_age,
+)
+from .edr_covjson import get_param_metadata
+from .edr_exception import EdrException
+
+from .edr_locations import router as locations_routers
+from .edr_cube import router as cube_router
+from .edr_position import router as position_router
+
+
 from .ogcapi_tools import call_adaguc
 
 logger = logging.getLogger(__name__)
 logger.debug("Starting EDR")
 
 edrApiApp = FastAPI(debug=False)
+edrApiApp.include_router(cube_router)
+edrApiApp.include_router(position_router)
+edrApiApp.include_router(locations_routers)
 
-OWSLIB_DUMMY_URL = "http://localhost:8000"
 
 SYMBOL_TYPE_URL = "http://www.opengis.net/def/uom/UCUM"
-VOCAB_ENDPOINT_URL = "https://vocab.nerc.ac.uk/standard_name/"
-
-
-def get_base_url(req: Request = None) -> str:
-    """Returns the base url of this service"""
-
-    base_url_from_request = (
-        f"{req.url.scheme}://{req.url.hostname}{(':'+str(req.url.port)) if req.url.port else ''}"
-        if req
-        else None
-    )
-    base_url = (
-        os.getenv("EXTERNALADDRESS", base_url_from_request) or "http://localhost:8080"
-    )
-
-    return base_url.strip("/")
-
-
-class EdrException(Exception):
-    """
-    Exception class for EDR
-    """
-
-    def __init__(self, code: str, description: str):
-        self.code = code
-        self.description = description
 
 
 @edrApiApp.exception_handler(EdrException)
@@ -105,249 +72,6 @@ async def edr_exception_handler(_, exc: EdrException):
         status_code=exc.code,
         content={"code": str(exc.code), "description": exc.description},
     )
-
-
-def parse_config_file(
-    dataset_filename: str, adaguc_dataset_dir: str = os.environ["ADAGUC_DATASET_DIR"]
-):
-    """Return translation names for NetCDF data"""
-    translate = {}
-    filename = dataset_filename
-    _, ext = os.path.splitext(filename)
-    if ext == "" or ext != ".xml":
-        filename = filename + ".xml"
-    if os.path.isfile(
-        os.path.join(adaguc_dataset_dir, dataset_filename)
-    ) and dataset_filename.endswith(".xml"):
-        tree = parse(os.path.join(adaguc_dataset_dir, dataset_filename))
-        root = tree.getroot()
-        for lyr in root.iter("Layer"):
-            layer_variables = [l.text for l in lyr.iter("Variable")]
-            if len(layer_variables) == 1:
-                translate[layer_variables[0]] = lyr.find("Name").text
-            print(
-                "Layer:", lyr.find("Name").text, [l.text for l in lyr.iter("Variable")]
-            )
-    return translate
-
-
-def init_edr_collections(adaguc_dataset_dir: str = os.environ["ADAGUC_DATASET_DIR"]):
-    """
-    Return all possible OGCAPI EDR datasets, based on the dataset directory
-    """
-    dataset_files = sorted([
-        f
-        for f in os.listdir(adaguc_dataset_dir)
-        if os.path.isfile(os.path.join(adaguc_dataset_dir, f)) and f.endswith(".xml")
-    ])
-
-    edr_collections = {}
-    for dataset_file in dataset_files:
-        dataset = dataset_file.replace(".xml", "")
-        try:
-            tree = parse(os.path.join(adaguc_dataset_dir, dataset_file))
-            root = tree.getroot()
-            for ogcapi_edr in root.iter("OgcApiEdr"):
-                for edr_collection in ogcapi_edr.iter("EdrCollection"):
-                    edr_params = []
-                    for edr_parameter in edr_collection.iter("EdrParameter"):
-                        if (
-                            "name" in edr_parameter.attrib
-                            and "unit" in edr_parameter.attrib
-                        ):
-                            name = edr_parameter.attrib.get("name")
-                            edr_param = {
-                                "name": name,
-                                "parameter_label": name,
-                                "observed_property_label": name,
-                                "description": name,
-                                "standard_name": None,
-                                "unit": "-",
-                            }
-                            # Try to take the standard name from the configuration
-                            if "standard_name" in edr_parameter.attrib:
-                                edr_param["standard_name"] = edr_parameter.attrib.get(
-                                    "standard_name"
-                                )
-                                # If there is a standard name, set the label to the same as fallback
-                                edr_param["observed_property_label"] = (
-                                    edr_parameter.attrib.get("standard_name")
-                                )
-
-                            # Try to take the observed_property_label from the configuration
-                            if "observed_property_label" in edr_parameter.attrib:
-                                edr_param["observed_property_label"] = (
-                                    edr_parameter.attrib.get("observed_property_label")
-                                )
-                            # Try to take the parameter_label from the Layer configuration Title
-                            if "parameter_label" in edr_parameter.attrib:
-                                edr_param["parameter_label"] = edr_parameter.attrib.get(
-                                    "parameter_label"
-                                )
-                            # Try to take the parameter_label from the Layer configuration Title
-                            if "unit" in edr_parameter.attrib:
-                                edr_param["unit"] = edr_parameter.attrib.get("unit")
-
-                            edr_params.append(edr_param)
-
-                        else:
-                            logger.warning(
-                                "In dataset %s, skipping parameter %s: has no name or units configured",
-                                dataset_file,
-                                edr_parameter,
-                            )
-
-                    if len(edr_params) == 0:
-                        logger.warning(
-                            "Skipping dataset %s: has no EdrParameter configured",
-                            dataset_file,
-                        )
-                    else:
-                        collection_url = (
-                            get_base_url()
-                            + f"/edr/collections/{edr_collection.attrib.get('name')}"
-                        )
-                        edr_collections[edr_collection.attrib.get("name")] = {
-                            "dataset": dataset,
-                            "name": edr_collection.attrib.get("name"),
-                            "service": f"{OWSLIB_DUMMY_URL}/wms",
-                            "parameters": edr_params,
-                            "vertical_name": edr_collection.attrib.get("vertical_name"),
-                            "base_url": collection_url,
-                            "time_interval": edr_collection.attrib.get("time_interval"),
-                        }
-        except ParseError:
-            pass
-    return edr_collections
-
-
-# The edr_collections information is cached locally for a maximum of 2 minutes
-# It will be refreshed if older than 2 minutes
-edr_cache = TTLCache(maxsize=100, ttl=120)  # TODO: Redis?
-
-
-@cached(cache=edr_cache)
-def get_edr_collections():
-    """Returns all EDR collections"""
-    return init_edr_collections()
-
-
-async def get_point_value(
-    edr_collectioninfo: dict,
-    instance: str,
-    coords: list[float],
-    parameters: list[str],
-    datetime_par: str,
-    z_par: str = None,
-    custom_dims: str = None,
-):
-    """Returns information in EDR format for a given collection and position"""
-    dataset = edr_collectioninfo["dataset"]
-    urlrequest = (
-        f"SERVICE=WMS&VERSION=1.3.0&REQUEST=GetPointValue&CRS=EPSG:4326"
-        f"&DATASET={dataset}&QUERY_LAYERS={','.join(parameters)}"
-        f"&X={coords[0]}&Y={coords[1]}&INFO_FORMAT=application/json"
-    )
-    if datetime_par:
-        urlrequest += f"&TIME={datetime_par}"
-
-    if instance:
-        urlrequest += f"&DIM_reference_time={instance_to_iso(instance)}"
-    if z_par:
-        if (
-            "vertical_name" in edr_collectioninfo
-            and edr_collectioninfo["vertical_name"].upper() != "ELEVATION"
-        ):
-            urlrequest += f"&DIM_{edr_collectioninfo['vertical_name']}={z_par}"
-        else:
-            urlrequest += f"&ELEVATION={z_par}"
-    if custom_dims:
-        urlrequest += custom_dims
-
-    status, response, headers = await call_adaguc(url=urlrequest.encode("UTF-8"))
-    if status == 0:
-        return response.getvalue(), headers
-    return None, None
-
-
-@edrApiApp.get(
-    "/collections/{collection_name}/position",
-    response_model=Union[Coverage, CoverageCollection],
-    response_class=CovJSONResponse,
-    response_model_exclude_none=True,
-)
-async def get_collection_position(
-    collection_name: str,
-    request: Request,
-    coords: str,
-    response: CovJSONResponse,
-    datetime_par: str = Query(default=None, alias="datetime"),
-    parameter_name: Annotated[str, Query(alias="parameter-name", min_length=1)] = None,
-    z_par: Annotated[str, Query(alias="z", min_length=1)] = None,
-) -> Coverage:
-    """Returns information in EDR format for a given collection, instance and position"""
-    return await get_coll_inst_position(
-        collection_name,
-        request,
-        coords,
-        response,
-        None,
-        datetime_par,
-        parameter_name,
-        z_par,
-    )
-
-
-@edrApiApp.get(
-    "/collections/{collection_name}/instances/{instance}/position",
-    response_model=Union[Coverage | CoverageCollection],
-    response_class=CovJSONResponse,
-    response_model_exclude_none=True,
-)
-async def get_coll_inst_position(
-    collection_name: str,
-    request: Request,
-    coords: str,
-    response: CovJSONResponse,
-    instance: str = None,
-    datetime_par: str = Query(default=None, alias="datetime"),
-    parameter_name: Annotated[str, Query(alias="parameter-name", min_length=1)] = None,
-    z_par: Annotated[str, Query(alias="z", min_length=1)] = None,
-) -> Coverage:
-    """
-    returns data for the EDR /position endpoint
-    """
-    allowed_params = ["coords", "datetime", "parameter-name", "z", "f", "crs"]
-    custom_params = [k for k in request.query_params if k not in allowed_params]
-    custom_dims = ""
-    if len(custom_params) > 0:
-        for custom_param in custom_params:
-            custom_dims += f"&DIM_{custom_param}={request.query_params[custom_param]}"
-    edr_collections = get_edr_collections()
-
-    if collection_name in edr_collections:
-        parameter_names = parameter_name.split(",")
-        latlons = wkt.loads(coords)
-        coord = {"lat": latlons["coordinates"][1], "lon": latlons["coordinates"][0]}
-        resp, headers = await get_point_value(
-            edr_collections[collection_name],
-            instance,
-            [coord["lon"], coord["lat"]],
-            parameter_names,
-            datetime_par,
-            z_par,
-            custom_dims,
-        )
-        if resp:
-            dat = json.loads(resp)
-            ttl = get_ttl_from_adaguc_headers(headers)
-            if ttl is not None:
-                response.headers["cache-control"] = generate_max_age(ttl)
-            return covjson_from_resp(
-                dat, edr_collections[collection_name]["vertical_name"], collection_name
-            )
-
-    raise EdrException(code=400, description="No data")
 
 
 DEFAULT_CRS_OBJECT = {
@@ -517,52 +241,6 @@ async def get_collectioninfo_for_id(
     return collection, ttl
 
 
-def get_parameter_config(edr_collection_name: str, param_id: str):
-    """Gets the EDRParameter configuration based on the edr collection name and parameter id
-
-    Args:
-        edr_collection_name (str): edr collection name
-        param_id (str): parameter id
-
-    Returns:
-        _type_: parameter element_
-    """
-    edr_collections = get_edr_collections()
-    edr_collection_parameters = edr_collections[edr_collection_name]["parameters"]
-    for param_el in edr_collection_parameters:
-        if param_id == param_el["name"]:
-            return param_el
-    return None
-
-
-def get_param_metadata(param_id: str, edr_collection_name) -> dict:
-    """Composes parameter metadata based on the param_el and the wmslayer dictionaries
-
-    Args:
-        param_id (str): The parameter / wms layer name to find
-        edr_collection_name (str): The collection name
-
-    Returns:
-        dict: dictionary with all metadata required to construct a Edr Parameter object.
-    """
-    param_el = get_parameter_config(edr_collection_name, param_id)
-    wms_layer_name = param_el["name"]
-    observed_property_id = wms_layer_name
-    parameter_label = param_el["parameter_label"]
-    parameter_unit = param_el["unit"]
-    observed_property_label = param_el["observed_property_label"]
-    if "standard_name" in param_el and param_el["standard_name"] is not None:
-        observed_property_id = VOCAB_ENDPOINT_URL + param_el["standard_name"]
-
-    return {
-        "wms_layer_name": wms_layer_name,
-        "observed_property_id": observed_property_id,
-        "observed_property_label": observed_property_label,
-        "parameter_label": parameter_label,
-        "parameter_unit": parameter_unit,
-    }
-
-
 def get_params_for_collection(
     edr_collection: str, wmslayers: dict
 ) -> dict[str, Parameter]:
@@ -600,42 +278,6 @@ def get_params_for_collection(
             )
             parameter_names[param_el["name"]] = param
     return parameter_names
-
-
-def parse_iso(dts: str) -> datetime:
-    """
-    Converts a ISO8601 string into a datetime object
-    """
-    parsed_dt = None
-    try:
-        parsed_dt = datetime.strptime(dts, "%Y-%m-%dT%H:%M:%SZ").replace(
-            tzinfo=timezone.utc
-        )
-    except ValueError as exc:
-        logger.error("err: %s %s", dts, exc)
-    return parsed_dt
-
-
-def parse_instance_time(dts: str) -> datetime:
-    """
-    Converts EDR instance time in format %Y%m%d%H%M into datetime.
-    """
-    parsed_dt = None
-    try:
-        parsed_dt = datetime.strptime(dts, "%Y%m%d%H%M").replace(tzinfo=timezone.utc)
-    except ValueError as exc:
-        logger.error("err: %s %s", dts, exc)
-    return parsed_dt
-
-
-def instance_to_iso(instance_dt: str):
-    """
-    Converts EDR instance time in format %Y%m%d%H%M into iso8601 time string.
-    """
-    parsed_dt = parse_instance_time(instance_dt)
-    if parsed_dt:
-        return parsed_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
-    return None
 
 
 def get_time_values_for_range(rng: str) -> list[str]:
@@ -795,6 +437,10 @@ def get_custom_dims_for_collection(
                 "values": layer["dimensions"][dim_name]["values"],
                 "reference": f"custom_{dim_name}",
             }
+            if layer["dimensions"][dim_name]["values"] == ["1", "2", "3", "4", "5"]:
+                custom_dim["values"] = ["R5/0/1"]
+            # if dim_name == "member":
+            #     custom_dim["id"] = "number"
             custom.append(custom_dim)
     return custom if len(custom) > 0 else None
 
@@ -870,26 +516,6 @@ async def rest_get_edr_collection_by_id(collection_name: str, response: Response
     return collection
 
 
-def get_ttl_from_adaguc_headers(headers):
-    """Derives an age value from the max-age/age cache headers that ADAGUC executable returns"""
-    max_age = None
-    age = None
-    for hdr in headers:
-        hdr_terms = hdr.split(":")
-        if hdr_terms[0].lower() == "cache-control":
-            for cache_control_terms in hdr_terms[1].split(","):
-                terms = cache_control_terms.split("=")
-                if terms[0].lower() == "max-age":
-                    max_age = int(terms[1])
-        elif hdr_terms[0].lower() == "age":
-            age = int(hdr_terms[1])
-    if max_age and age:
-        return max_age - age
-    elif max_age:
-        return max_age
-    return None
-
-
 async def get_capabilities(collname):
     """
     Get the collectioninfo from the WMS GetCapabilities
@@ -924,21 +550,6 @@ async def get_capabilities(collname):
             "boundingBoxWGS84": layerinfo.boundingBoxWGS84,
         }
     return layers, ttl
-
-
-async def get_ref_times_for_coll(edr_collectioninfo: dict, layer: str) -> list[str]:
-    """
-    Returns available reference times for given collection
-    """
-    dataset = edr_collectioninfo["dataset"]
-    url = f"?DATASET={dataset}&SERVICE=WMS&VERSION=1.3.0&request=getreferencetimes&LAYER={layer}"
-    # logger.info("getreftime_url(%s,%s): %s", dataset, layer, url)
-    status, response, _ = await call_adaguc(url=url.encode("UTF-8"))
-    if status == 0:
-        ref_times = json.loads(response.getvalue())
-        instance_ids = [parse_iso(reft).strftime("%Y%m%d%H%M") for reft in ref_times]
-        return instance_ids
-    return []
 
 
 def get_extent(edr_collectioninfo: dict, wmslayers):
@@ -1012,15 +623,6 @@ async def rest_get_collection_info(collection_name: str, instance, response: Res
     return coll
 
 
-def generate_max_age(ttl):
-    """
-    Return max-age header for ttl value
-    """
-    if ttl >= 0:
-        return f"max-age={ttl}"
-    return "max-age=0"
-
-
 @edrApiApp.get("/", response_model=LandingPageModel, response_model_exclude_none=True)
 async def rest_get_edr_landing_page(request: Request):
     """
@@ -1075,25 +677,6 @@ conformance = ConformanceModel(
 )
 
 
-@edrApiApp.get("/collections/{_coll}/locations")
-def get_locations(_coll: str):
-    """
-    Returns locations where you could query data.
-    """
-    return {
-        "features": [
-            {
-                "id": "100683",
-                "type": "Feature",
-                "geometry": {"coordinates": [5.2, 52.0], "type": "Point"},
-                "properties": {
-                    "name": "De Bilt",
-                },
-            }
-        ]
-    }
-
-
 @edrApiApp.get(
     "/api",
 )
@@ -1135,314 +718,6 @@ async def rest_get_edr_conformance():
     GET /conformance: EDR Conformanc endpoint
     """
     return conformance
-
-
-def multi_get(dict_obj, attrs, default=None):
-    """
-    multi_get
-    """
-    result = dict_obj
-    for attr in attrs:
-        if attr not in result:
-            return default
-        result = result[attr]
-    return result
-
-
-def getdimvals(dims, name):
-    """
-    getdimvals
-    """
-    if name in dims:
-        return dims[name]
-    return None
-
-
-def makedims(dims, data):
-    """
-    Makedims
-    """
-    dimlist = {}
-    if isinstance(dims, str) and dims == "time":
-        times = list(data.keys())
-        dimlist["time"] = times
-        return dimlist
-
-    data1 = list(data.keys())
-    if len(data1) == 0:
-        return []
-    dimlist[dims[0]] = data1
-
-    if len(dims) >= 2:
-        data2 = list(data[data1[0]].keys())
-        dimlist[dims[1]] = data2
-
-    if len(dims) >= 3:
-        data3 = list(data[data1[0]][data2[0]].keys())
-        dimlist[dims[2]] = data3
-
-    if len(dims) >= 4:
-        data4 = list(data[data1[0]][data2[0]][data3[0]].keys())
-        dimlist[dims[3]] = data4
-
-    if len(dims) >= 5:
-        data5 = list(data[data1[0]][data2[0]][data3[0]][data4[0]].keys())
-        dimlist[dims[4]] = data5
-
-    return dimlist
-
-
-def covjson_from_resp(dats, vertical_name, collection_name):
-    """
-    Returns a coverage json from a Adaguc WMS GetFeatureInfo request
-    """
-    covjson_list = []
-    for dat in dats:
-        if len(dat["data"]):
-            (lon, lat) = dat["point"]["coords"].split(",")
-            lat = float(lat)
-            lon = float(lon)
-            dims = makedims(dat["dims"], dat["data"])
-            time_steps = getdimvals(dims, "time")
-            if vertical_name is not None:
-                vertical_steps = getdimvals(dims, vertical_name)
-            else:
-                vertical_steps = getdimvals(dims, "elevation")
-
-            valstack = []
-            # Translate the adaguc GFI object in something we can handle in Python
-            for dim_name in dims:
-                vals = getdimvals(dims, dim_name)
-                valstack.append(vals)
-            tuples = list(itertools.product(*valstack))
-            values = []
-            for mytuple in tuples:
-                value = multi_get(dat["data"], mytuple)
-                if value:
-                    try:
-                        values.append(float(value))
-                    except ValueError:
-                        if value == "nodata":
-                            values.append(None)
-                        else:
-                            values.append(value)
-
-            parameters: dict[str, CovJsonParameter] = {}
-            ranges = {}
-            param_metadata = get_param_metadata(dat["name"], collection_name)
-            symbol = CovJsonSymbol(
-                value=param_metadata["parameter_unit"], type=SYMBOL_TYPE_URL
-            )
-            unit = CovJsonUnit(symbol=symbol)
-            observed_property = CovJsonObservedProperty(
-                id=param_metadata["observed_property_id"],
-                label={"en": param_metadata["observed_property_label"]},
-            )
-
-            param = CovJsonParameter(
-                id=dat["name"],
-                observedProperty=observed_property,
-                # description={"en":param_metadata["wms_layer_title"]}, # TODO in follow up
-                unit=unit,
-                label={"en:": param_metadata["parameter_label"]},
-            )
-
-            parameters[dat["name"]] = param
-            axis_names = ["x", "y", "t"]
-            shape = [1, 1, len(time_steps)]
-            if vertical_steps:
-                axis_names = ["x", "y", "z", "t"]
-                shape = [1, 1, len(vertical_steps), len(time_steps)]
-            _range = {
-                "axisNames": axis_names,
-                "shape": shape,
-                "values": values,
-            }
-            ranges[dat["name"]] = _range
-
-            axes: dict[str, ValuesAxis] = {
-                "x": ValuesAxis[float](values=[lon]),
-                "y": ValuesAxis[float](values=[lat]),
-                "t": ValuesAxis[AwareDatetime](
-                    values=[
-                        datetime.strptime(t, "%Y-%m-%dT%H:%M:%SZ").replace(
-                            tzinfo=timezone.utc
-                        )
-                        for t in time_steps
-                    ]
-                ),
-            }
-            domain_type = "PointSeries"
-            if vertical_steps:
-                axes["z"] = ValuesAxis[float](values=vertical_steps)
-                if len(vertical_steps) > 1:
-                    domain_type = "VerticalProfile"
-            if time_steps:
-                axes["t"] = ValuesAxis[AwareDatetime](
-                    values=[
-                        datetime.strptime(t, "%Y-%m-%dT%H:%M:%SZ").replace(
-                            tzinfo=timezone.utc
-                        )
-                        for t in time_steps
-                    ]
-                )
-                if len(time_steps) > 1 and vertical_steps and len(vertical_steps) > 1:
-                    domain_type = "Grid"
-
-            referencing = [
-                (
-                    ReferenceSystemConnectionObject(
-                        system=ReferenceSystem(
-                            type="GeographicCRS",
-                            id="http://www.opengis.net/def/crs/OGC/1.3/CRS84",
-                        ),
-                        coordinates=["x", "y", "z"],
-                    )
-                    if vertical_steps
-                    else ReferenceSystemConnectionObject(
-                        system=ReferenceSystem(
-                            type="GeographicCRS",
-                            id="http://www.opengis.net/def/crs/OGC/1.3/CRS84",
-                        ),
-                        coordinates=["x", "y"],
-                    )
-                ),
-                ReferenceSystemConnectionObject(
-                    system=ReferenceSystem(type="TemporalRS", calendar="Gregorian"),
-                    coordinates=["t"],
-                ),
-            ]
-            domain = Domain(domainType=domain_type, axes=axes, referencing=referencing)
-            covjson = Coverage(
-                id=f"coverage_{(len(covjson_list)+1)}",
-                domain=domain,
-                ranges=ranges,
-                parameters=parameters,
-            )
-            covjson_list.append(covjson)
-
-    if len(covjson_list) == 1:
-        return covjson_list[0]
-    if len(covjson_list) == 0:
-        raise EdrException(code=400, description="No data")
-
-    coverage_collection = CoverageCollection(coverages=covjson_list)
-
-    return coverage_collection
-
-
-@edrApiApp.get(
-    "/collections/{collection_name}/cube",
-    response_model=CoverageCollection,
-    response_class=CovJSONResponse,
-    response_model_exclude_none=True,
-)
-async def get_collection_cube(
-    collection_name: str,
-    request: Request,
-    bbox: str,
-    datetime_par: str = Query(default=None, alias="datetime"),
-    parameter_name: str = Query(alias="parameter-name"),
-    z_par: str = Query(alias="z", default=None),
-    res_x: Union[float, None] = None,
-    res_y: Union[float, None] = None,
-) -> Coverage:
-    """Returns information in EDR format for a given collection and position"""
-    return await get_coll_inst_cube(
-        collection_name,
-        request,
-        bbox,
-        None,
-        datetime_par,
-        parameter_name,
-        z_par,
-        res_x,
-        res_y,
-    )
-
-
-@edrApiApp.get(
-    "/collections/{collection_name}/instances/{instance}/cube",
-    response_model=CoverageCollection,
-    response_class=CovJSONResponse,
-    response_model_exclude_none=True,
-)
-async def get_coll_inst_cube(
-    collection_name: str,
-    request: Request,
-    bbox: str,
-    instance: Union[str, None] = None,
-    datetime_par: str = Query(default=None, alias="datetime"),
-    parameter_name: str = Query(alias="parameter-name"),
-    z_par: str = Query(alias="z", default=None),
-    res_x: Union[float, None] = None,
-    res_y: Union[float, None] = None,
-) -> Coverage:
-    """Returns information in EDR format for a given collection, instance and position"""
-    allowed_params = [
-        "bbox",
-        "datetime",
-        "parameter-name",
-        "z",
-        "f",
-        "crs",
-        "res_x",
-        "res_y",
-    ]
-    custom_dims = [k for k in request.query_params if k not in allowed_params]
-    custom_dims = ""
-    if len(custom_dims) > 0:
-        for custom_dim in custom_dims:
-            custom_dims += f"&DIM_{custom_dim}={request.query_params[custom_dim]}"
-
-    edr_collectioninfo = get_edr_collections()[collection_name]
-    dataset = edr_collectioninfo["dataset"]
-    vertical_dim = edr_collectioninfo["vertical_name"]
-    ref_times = await get_ref_times_for_coll(
-        edr_collectioninfo, edr_collectioninfo["parameters"][0]["name"]
-    )
-    if not instance and len(ref_times) > 0:
-        instance = ref_times[-1]
-
-    parameter_names = parameter_name.split(",")
-
-    if res_x is not None and res_y is not None:
-        res_queryterm = f"&resx={res_x}&resy={res_y}"
-    else:
-        res_queryterm = ""
-
-    collection_info = get_edr_collections().get(collection_name)
-    if "dataset" in collection_info:
-        logger.info("callADAGUC by dataset")
-        dataset = collection_info["dataset"]
-        translated_names = parse_config_file(dataset)
-        coveragejsons = []
-        parameters = {}
-        for parameter_name in parameter_names:
-            if instance is None:
-                urlrequest = (
-                    f"dataset={dataset}&service=wcs&version=1.1.1&request=getcoverage&format=NetCDF4&crs=EPSG:4326&coverage={parameter_name}"
-                    + f"&bbox={bbox}&time={datetime_par}"
-                    + res_queryterm
-                )
-            else:
-                urlrequest = (
-                    f"dataset={dataset}&service=wcs&request=getcoverage&format=NetCDF4&crs=EPSG:4326&coverage={parameter_name}"
-                    + f"&bbox={bbox}&time={datetime_par}&dim_reference_time={instance_to_iso(instance)}"
-                    + res_queryterm
-                )
-
-            status, response, _ = await call_adaguc(url=urlrequest.encode("UTF-8"))
-            logger.info("status: %d", status)
-            dataset = Dataset(f"{parameter_name}.nc", memory=response.getvalue())
-            logger.info("ds: %s", dataset)
-
-            coveragejson = netcdf_to_covjson(dataset, translated_names, vertical_dims)
-            if coveragejson is not None:
-                coveragejsons.append(coveragejson)
-                parameters = parameters | coveragejson.parameters
-
-    return CoverageCollection(coverages=coveragejsons, parameters=parameters)
 
 
 def set_edr_config():
