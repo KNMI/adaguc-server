@@ -55,8 +55,8 @@ public:
   std::map<CT::string, DimInfo> getTableNamesForPathFilterAndDimensions(const char *path, const char *filter, std::vector<CT::string> dimensions, CDataSource *dataSource);
 
   CT::string getLookupIdentifier(const char *path, const char *filter, const char *dimension);
-  void assertLookupTableExists(CT::string lookupTableName);
-  void addToLookupTable(CT::string lookupTableName, const char *path, const char *filter, CT::string dimensionName, CT::string tableName);
+  void assertLookupTableExists();
+  void addToLookupTable(const char *path, const char *filter, CT::string dimensionName, CT::string tableName);
 
   int autoUpdateAndScanDimensionTables(CDataSource *dataSource);
   CDBStore::Store *getMin(const char *name, const char *table);
