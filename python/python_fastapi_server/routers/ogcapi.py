@@ -268,7 +268,6 @@ async def get_collections(
                     storageCrs=DEFAULT_CRS,
                 )
             )
-
     links = get_collections_links(req.url_for("get_collections"))
 
     response.headers["cache-control"] = "max-age=60"
@@ -306,7 +305,7 @@ async def get_collection(
         return templates.TemplateResponse(
             "collection.html", {"request": req, "collection": collection.model_dump()}
         )
-    return coll
+    return collection
 
 
 conformanceClasses = [
