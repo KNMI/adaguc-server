@@ -156,10 +156,15 @@ def netcdf_to_covjson(
                         values=values_tz
                     )
                 else:
-                    # Assign float values
-                    axes[coverage_axis_name] = ValuesAxis[float](
-                        values=ncvar[:].data.tolist()
-                    )
+                    if "str" in str(ncvar.dtype):
+                        # Assign str values
+                        vals = [str(val) for val in ncvar[:]]
+                        axes[coverage_axis_name] = ValuesAxis[str](values=vals)
+                    else:
+                        # Assign float values
+                        axes[coverage_axis_name] = ValuesAxis[float](
+                            values=ncvar[:].data.tolist()
+                        )
 
             # Create the ndarray for the ranges object
             ndarray = NdArray(
@@ -174,11 +179,20 @@ def netcdf_to_covjson(
             unit_of_measurement = variable.units if variable.units else "unknown"
 
             # Add the parameter
+            if "long_name" in variable.ncattrs():
+                parameter_name = getattr(variable, "long_name")
+                parameter_description = getattr(variable, "long_name")
+            elif "standard_name" in variable.ncattrs():
+                parameter_name = getattr(variable, "standard_name")
+                parameter_description = getattr(variable, "standard_name")
+            else:
+                parameter_name = variablename
+                parameter_description = variablename
             parameters[translated_variablename] = Parameter(
                 # TODO: KDP-1622 Fix the difference in the ObservedProperty between DescribeCoverage from the
                 #  Adaguc Config and the NetCDF values
-                observedProperty=ObservedProperty(label={"en": variable.long_name}),
-                description={"en": variable.long_name},
+                observedProperty=ObservedProperty(label={"en": parameter_name}),
+                description={"en": parameter_description},
                 unit=Unit(
                     symbol=Symbol(
                         value=unit_of_measurement,
@@ -208,8 +222,6 @@ def netcdf_to_covjson(
     temporalreferencing = ReferenceSystemConnectionObject(
         system=temporalreferencesystem, coordinates=["t"]
     )
-
-    logger.info("DUMP: %s", axes.keys())
 
     # Create the domain based on the axes object
     domain = Domain(
@@ -293,12 +305,16 @@ if __name__ == "__main__":
         "TIME=2023-03-23T09:00:00Z"
     )
 
+    QUERYSTRING = "dataset=netcdf_5d&service=wcs&version=1.1.1&request=getcoverage&format=NetCDF4&crs=EPSG:4326&coverage=data&bbox=4.603,51.27,6.274,52.624&time=2017-01-01T00:00Z/2017-01-01T00:30Z&elevation=1000/9000"
+
     WCSGETCOVERAGEURL = SERVICE + QUERYSTRING
 
     # Get a NetCDF file as dataset
     response = requests.get(WCSGETCOVERAGEURL, timeout=60)
 
     print(response.status_code)
+    with open("/tmp/klad.nc", "wb") as f:
+        f.write(response.content)
 
     ds = netCDF4.Dataset("filename.nc", memory=response.content)
 

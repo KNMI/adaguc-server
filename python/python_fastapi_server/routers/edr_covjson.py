@@ -13,23 +13,25 @@ from datetime import datetime, timezone
 
 from covjson_pydantic.coverage import Coverage, CoverageCollection
 from covjson_pydantic.domain import Domain, ValuesAxis
-from covjson_pydantic.observed_property import \
-    ObservedProperty as CovJsonObservedProperty
+from covjson_pydantic.observed_property import (
+    ObservedProperty as CovJsonObservedProperty,
+)
 from covjson_pydantic.parameter import Parameter as CovJsonParameter
-from covjson_pydantic.reference_system import (ReferenceSystem,
-                                               ReferenceSystemConnectionObject)
+from covjson_pydantic.reference_system import (
+    ReferenceSystem,
+    ReferenceSystemConnectionObject,
+)
 from covjson_pydantic.unit import Symbol as CovJsonSymbol
 from covjson_pydantic.unit import Unit as CovJsonUnit
 from pydantic import AwareDatetime
 
 from .edr_exception import EdrException
-from .edr_utils import get_edr_collections
+from .edr_utils import get_edr_collections, get_param_metadata
 
 SYMBOL_TYPE_URL = "http://www.opengis.net/def/uom/UCUM"
-VOCAB_ENDPOINT_URL = "https://vocab.nerc.ac.uk/standard_name/"
 
 
-def covjson_from_resp(dats, vertical_name, collection_name):
+def covjson_from_resp(dats, vertical_name, custom_name, collection_name):
     """
     Returns a coverage json from a Adaguc WMS GetFeatureInfo request
     """
@@ -45,6 +47,10 @@ def covjson_from_resp(dats, vertical_name, collection_name):
                 vertical_steps = getdimvals(dims, vertical_name)
             else:
                 vertical_steps = getdimvals(dims, "elevation")
+
+            custom_dim_values = []
+            if custom_name is not None:
+                custom_dim_values = getdimvals(dims, custom_name)
 
             valstack = []
             # Translate the adaguc GFI object in something we can handle in Python
@@ -90,6 +96,13 @@ def covjson_from_resp(dats, vertical_name, collection_name):
             if vertical_steps:
                 axis_names = ["x", "y", "z", "t"]
                 shape = [1, 1, len(vertical_steps), len(time_steps)]
+            if len(custom_dim_values) > 0:
+                axis_names.insert(-1, custom_name)
+                shape.insert(
+                    -1,
+                    len(custom_dim_values),
+                )
+
             _range = {
                 "axisNames": axis_names,
                 "shape": shape,
@@ -124,6 +137,10 @@ def covjson_from_resp(dats, vertical_name, collection_name):
                     ]
                 )
                 if len(time_steps) > 1 and vertical_steps and len(vertical_steps) > 1:
+                    domain_type = "Grid"
+            if len(custom_dim_values) > 0:
+                axes[custom_name] = ValuesAxis[str](values=custom_dim_values)
+                if vertical_steps and len(vertical_steps) > 1:
                     domain_type = "Grid"
 
             referencing = [
@@ -221,50 +238,3 @@ def makedims(dims, data):
         dimlist[dims[4]] = data5
 
     return dimlist
-
-
-def get_param_metadata(param_id: str, edr_collection_name) -> dict:
-    """Composes parameter metadata based on the param_el and the wmslayer dictionaries
-
-    Args:
-        param_id (str): The parameter / wms layer name to find
-        edr_collection_name (str): The collection name
-
-    Returns:
-        dict: dictionary with all metadata required to construct a Edr Parameter object.
-    """
-    param_el = get_parameter_config(edr_collection_name, param_id)
-    wms_layer_name = param_el["name"]
-    observed_property_id = wms_layer_name
-    parameter_label = param_el["parameter_label"]
-    parameter_unit = param_el["unit"]
-    observed_property_label = param_el["observed_property_label"]
-    if "standard_name" in param_el and param_el["standard_name"] is not None:
-        observed_property_id = VOCAB_ENDPOINT_URL + param_el["standard_name"]
-
-    return {
-        "wms_layer_name": wms_layer_name,
-        "observed_property_id": observed_property_id,
-        "observed_property_label": observed_property_label,
-        "parameter_label": parameter_label,
-        "parameter_unit": parameter_unit,
-    }
-
-
-def get_parameter_config(edr_collection_name: str, param_id: str):
-    """Gets the EDRParameter configuration based on the edr collection name and parameter id
-
-    Args:
-        edr_collection_name (str): edr collection name
-        param_id (str): parameter id
-
-    Returns:
-        _type_: parameter element_
-    """
-
-    edr_collections = get_edr_collections()
-    edr_collection_parameters = edr_collections[edr_collection_name]["parameters"]
-    for param_el in edr_collection_parameters:
-        if param_id == param_el["name"]:
-            return param_el
-    return None

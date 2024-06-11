@@ -80,7 +80,6 @@ async def get_coll_inst_cube(
     res_y: Union[float, None] = None,
 ) -> Coverage:
     """Returns information in EDR format for a given collection, instance and position"""
-    logger.info("CUBE CALLED")
     allowed_params = [
         "bbox",
         "datetime",
@@ -100,10 +99,13 @@ async def get_coll_inst_cube(
             vertical_dim = f"{edr_collectioninfo.get('vertical_name')}={z_par}"
 
     custom_dims = [k for k in request.query_params if k not in allowed_params]
-    custom_dims = ""
+    custom_dim_parameter = ""
+    logger.info("custom dims: %s", custom_dims)
     if len(custom_dims) > 0:
         for custom_dim in custom_dims:
-            custom_dims += f"&DIM_{custom_dim}={request.query_params[custom_dim]}"
+            custom_dim_parameter += (
+                f"&DIM_{custom_dim}={request.query_params[custom_dim]}"
+            )
 
     dataset = edr_collectioninfo["dataset"]
     ref_times = await get_ref_times_for_coll(
@@ -131,27 +133,22 @@ async def get_coll_inst_cube(
                 urlrequest = (
                     f"dataset={dataset}&service=wcs&version=1.1.1&request=getcoverage&format=NetCDF4&crs=EPSG:4326&coverage={parameter_name}"
                     + f"&bbox={bbox}&time={datetime_par}"
-                    + "&"
-                    + custom_dims
-                    + "&"
-                    + vertical_dim
+                    + (f"&{custom_dim_parameter}" if len(custom_dim_parameter)>0 else "")
+                    + (f"&{vertical_dim}" if len(vertical_dim)>0 else "")
                     + res_queryterm
                 )
             else:
                 urlrequest = (
                     f"dataset={dataset}&service=wcs&request=getcoverage&format=NetCDF4&crs=EPSG:4326&coverage={parameter_name}"
                     + f"&bbox={bbox}&time={datetime_par}&dim_reference_time={instance_to_iso(instance)}"
-                    + " &"
-                    + custom_dims
-                    + "&"
-                    + vertical_dim
+                    + (f"&{custom_dim_parameter}" if len(custom_dim_parameter)>0 else "")
+                    + (f"&{vertical_dim}" if len(vertical_dim)>0 else "")
                     + res_queryterm
                 )
 
             status, response, _ = await call_adaguc(url=urlrequest.encode("UTF-8"))
             logger.info("status: %d", status)
             result_dataset = Dataset(f"{parameter_name}.nc", memory=response.getvalue())
-            logger.info("ds: %s", dataset)
 
             coveragejson = netcdf_to_covjson(
                 result_dataset, translate_names, translate_dims
