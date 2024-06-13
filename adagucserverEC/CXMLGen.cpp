@@ -25,6 +25,7 @@
 
 #include <algorithm>
 #include <vector>
+#include <sstream>
 #include <string>
 #include "CXMLGen.h"
 #include "CDBFactory.h"
@@ -37,6 +38,35 @@ const char *CXMLGen::className = "CXMLGen";
 int CXMLGen::WCSDescribeCoverage(CServerParams *srvParam, CT::string *XMLDocument) { return OGCGetCapabilities(srvParam, XMLDocument); }
 
 bool compareStringCase(const std::string &s1, const std::string &s2) { return strcmp(s1.c_str(), s2.c_str()) <= 0; }
+
+// Function to parse a string to double if numeric
+double parseNumeric(std::string const &str, bool &isNumeric) {
+  auto result = double();
+  auto i = std::istringstream(str);
+  i >> result;
+  isNumeric = !i.fail() && i.eof();
+  return result;
+}
+
+// Sort values that can either be numeric of a string
+bool multitypeSort(const CT::string &a, const CT::string &b) {
+  // Try to convert strings to numbers
+  float aNum, bNum;
+  bool isANum, isBNum;
+
+  isANum = false;
+  aNum = parseNumeric(a.c_str(), isANum);
+
+  isBNum = false;
+  bNum = parseNumeric(b.c_str(), isBNum);
+
+  // Do numerical comparison or alphabetical comparison according to type
+  if (isANum && isBNum) {
+    return aNum < bNum;
+  } else {
+    return a < b;
+  }
+}
 
 int CXMLGen::getFileNameForLayer(WMSLayer *myWMSLayer) {
 #ifdef CXMLGEN_DEBUG
@@ -1531,6 +1561,181 @@ int CXMLGen::getWCS_1_0_0_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer 
   return 0;
 }
 
+// TODO: Use this everywhere, remove original lines to call this
+// Make it work with as many timesteps as needed (max of 100 timesteps)
+// Only use when it's a time dimension and the interval is not pre-specified in the dimension
+CT::string CXMLGen::calculateISOInterval(const std::vector<CT::string> &timestamps) {
+  size_t nrTimes = timestamps.size() - 1;
+  tm tms[timestamps.size()];
+  for (size_t j = 0; j < timestamps.size(); j++) {
+    const char *isotime = timestamps[j].c_str();
+#ifdef CXMLGEN_DEBUG
+    CDBDebug("isotime = %s", isotime);
+#endif
+    CT::string year, month, day, hour, minute, second;
+    year.copy(isotime + 0, 4);
+    tms[j].tm_year = year.toInt() - 1900;
+    month.copy(isotime + 5, 2);
+    tms[j].tm_mon = month.toInt() - 1;
+    day.copy(isotime + 8, 2);
+    tms[j].tm_mday = day.toInt();
+    hour.copy(isotime + 11, 2);
+    tms[j].tm_hour = hour.toInt();
+    minute.copy(isotime + 14, 2);
+    tms[j].tm_min = minute.toInt();
+    second.copy(isotime + 17, 2);
+    tms[j].tm_sec = second.toInt();
+  }
+
+  // Don't make start/stop/resolution if we are only working with 4 values
+  // Make a constant instead of 4
+  bool isConst = timestamps.size() < 4; // Question: why 4 - Because it's a small number of values.
+
+  CT::string iso8601timeRes = "P";
+  CT::string yearPart = "";
+  if (tms[1].tm_year - tms[0].tm_year != 0) {
+    if (tms[1].tm_year - tms[0].tm_year == (tms[nrTimes < 10 ? nrTimes : 10].tm_year - tms[0].tm_year) / double(nrTimes < 10 ? nrTimes : 10)) {
+      yearPart.printconcat("%dY", abs(tms[1].tm_year - tms[0].tm_year));
+    } else {
+      isConst = false;
+#ifdef CXMLGEN_DEBUG
+      CDBDebug("year is irregular");
+#endif
+    }
+  }
+
+  if (tms[1].tm_mon - tms[0].tm_mon != 0) {
+    if (tms[1].tm_mon - tms[0].tm_mon == (tms[nrTimes < 10 ? nrTimes : 10].tm_mon - tms[0].tm_mon) / double(nrTimes < 10 ? nrTimes : 10))
+      yearPart.printconcat("%dM", abs(tms[1].tm_mon - tms[0].tm_mon));
+    else {
+      isConst = false;
+#ifdef CXMLGEN_DEBUG
+      CDBDebug("month is irregular");
+#endif
+    }
+  }
+
+  if (tms[1].tm_mday - tms[0].tm_mday != 0) {
+    if (tms[1].tm_mday - tms[0].tm_mday == (tms[nrTimes < 10 ? nrTimes : 10].tm_mday - tms[0].tm_mday) / double(nrTimes < 10 ? nrTimes : 10))
+      yearPart.printconcat("%dD", abs(tms[1].tm_mday - tms[0].tm_mday));
+    else {
+      isConst = false;
+#ifdef CXMLGEN_DEBUG
+      CDBDebug("day irregular");
+      for (size_t j = 0; j < nrTimes; j++) {
+        CDBDebug("Day %d = %d", j, tms[j].tm_mday);
+      }
+#endif
+    }
+  }
+
+  CT::string hourPart = "";
+  if (tms[1].tm_hour - tms[0].tm_hour != 0) {
+    hourPart.printconcat("%dH", abs(tms[1].tm_hour - tms[0].tm_hour));
+  }
+  if (tms[1].tm_min - tms[0].tm_min != 0) {
+    hourPart.printconcat("%dM", abs(tms[1].tm_min - tms[0].tm_min));
+  }
+  if (tms[1].tm_sec - tms[0].tm_sec != 0) {
+    hourPart.printconcat("%dS", abs(tms[1].tm_sec - tms[0].tm_sec));
+  }
+
+  bool hasMultipleValues = !isConst;
+
+  if (isConst) {
+    if (yearPart.length() > 0) {
+      iso8601timeRes.concat(&yearPart);
+    }
+    if (hourPart.length() > 0) {
+      iso8601timeRes.concat("T");
+      iso8601timeRes.concat(&hourPart);
+    }
+#ifdef CXMLGEN_DEBUG
+    CDBDebug("Calculated a timeresolution of %s", iso8601timeRes.c_str());
+#endif
+    return CT::string(iso8601timeRes.c_str());
+  }
+  return CT::string("");
+}
+
+// Extra test files needed:
+// More than 200 timesteps:
+// - One with regular interval
+// - One with irregular interval
+// start/stop/interval
+void CXMLGen::generateRangeSet(CT::string *XMLDoc, WMSLayer *layer) {
+  /*
+  From the documentation:
+  The optional and repeatable axisDescription/AxisDescription element is for compound observations.
+  It describes an additional parameter (that is, an independent variable besides space and time),
+  and the valid values of this parameter, which GetCoverage requests can use to select subsets of a
+  coverage offering.
+  */
+  if (!layer->dimList.size()) {
+    return;
+  }
+  XMLDoc->concat("    <rangeSet>\n"
+                 "      <RangeSet>\n"
+                 "        <name>dimensions</name>\n"
+                 "        <label>dimensions</label>\n");
+  // Dims
+  for (size_t d = 0; d < layer->dimList.size(); d++) {
+    WMSLayer::Dim *dim = layer->dimList[d];
+    // myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.c_str();
+    // Sort the values to make sure they are in the right order
+    CT::string *valueSplit = dim->values.splitToArray(",");
+    std::vector<CT::string> valuesVector(valueSplit, valueSplit + valueSplit->count);
+    std::sort(valuesVector.begin(), valuesVector.end(), multitypeSort);
+
+    XMLDoc->printconcat("        <axisDescription>\n"
+                        "          <AxisDescription>\n"
+                        "            <name>%s</name>\n"
+                        "            <label>%s</label>\n",
+                        dim->name.c_str(), dim->name.c_str());
+    // At least two values (to have a min and a max)
+    if (valueSplit->count >= 2) {
+      for (const auto &value : valuesVector) {
+        XMLDoc->printconcat("value: %s,", value.c_str());
+      }
+      XMLDoc->printconcat("            <values>\n"
+                          "              <interval>\n"
+                          "                <min>%s</min>\n"
+                          "                <max>%s</max>\n",
+                          valuesVector[0].c_str(), valuesVector.back().c_str());
+      // Call getDimsForLayer to precalculate the interval
+
+      // int status = getDimsForLayer(layer);
+      // const char *interval = layer->dataSource->cfgLayer->Dimension[d]->attr.interval.c_str();
+      // const char *interval = dim->interval.c_str();
+      if ((dim->name.indexOf("time") != -1) && valuesVector.size() > 1) {
+        // Print resolution for a time dimension
+        CT::string estimatedISODuration = calculateISOInterval(valuesVector);
+        if (!estimatedISODuration.empty()) {
+          XMLDoc->printconcat("                <res>%s</res>\n", estimatedISODuration.c_str());
+        }
+      }
+
+      // if ((dim->name.indexOf("time") != -1) && interval) {
+      //   XMLDoc->printconcat("                <res>%s</res>\n", interval);
+      // }
+      XMLDoc->printconcat("              </interval>\n");
+      // Print all possible values if there is a relatively small number
+      if ((valueSplit->count <= 100) && (dim->name.indexOf("time") == -1)) {
+        for (size_t i = 0; i < valueSplit->count; i++) {
+          XMLDoc->printconcat("              <singleValue>%s</singleValue>\n", valuesVector[i].c_str());
+        }
+      }
+      XMLDoc->printconcat("            </values>\n");
+    }
+    XMLDoc->printconcat("          </AxisDescription>\n"
+                        "        </axisDescription>\n");
+    delete[] valueSplit;
+  }
+
+  XMLDoc->concat("      </RangeSet>\n"
+                 "    </rangeSet>\n");
+}
+
 int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc, std::vector<WMSLayer *> *myWMSLayerList) {
 
   XMLDoc->copy("<?xml version='1.0' encoding=\"ISO-8859-1\" ?>\n"
@@ -1653,22 +1858,9 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc, std::vector<WMSLa
                 }
                 XMLDoc->concat("      </temporalDomain>\n");
               }
-              XMLDoc->concat("    </domainSet>\n"
-                             "    <rangeSet>\n"
-                             "      <RangeSet>\n"
-                             "        <name>bands</name>\n"
-                             "        <label>bands</label>\n"
-                             "        <axisDescription>\n"
-                             "          <AxisDescription>\n"
-                             "            <name>bands</name>\n"
-                             "            <label>Bands/Channels/Samples</label>\n"
-                             "            <values>\n"
-                             "              <singleValue>1</singleValue>\n"
-                             "            </values>\n"
-                             "          </AxisDescription>\n"
-                             "        </axisDescription>\n"
-                             "      </RangeSet>\n"
-                             "    </rangeSet>\n");
+              XMLDoc->concat("    </domainSet>\n");
+              // Generate the XML code for RangeSet, including dimensions (AxisDescriptions)
+              generateRangeSet(XMLDoc, layer);
               // Supported CRSs
               XMLDoc->concat("    <supportedCRSs>\n");
 
