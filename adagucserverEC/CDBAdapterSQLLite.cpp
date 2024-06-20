@@ -183,7 +183,16 @@ CDBStore::Store *CDBAdapterSQLLite::CSQLLiteDB::queryToStore(const char *pszQuer
 
   for (size_t rowNumber = 0; rowNumber < numRows; rowNumber++) {
     CDBStore::Record *record = new CDBStore::Record(colModel);
-    for (size_t colNumber = 0; colNumber < numCols; colNumber++) record->push(colNumber, queryValues[colNumber + rowNumber * numCols].c_str());
+    for (size_t colNumber = 0; colNumber < numCols; colNumber++) {
+      // SQlite always returns `10.0` if you insert `10.0` or `10`. PSQL always returns `10`
+      // HACK: to make output consistent with PSQL
+      CT::string s(queryValues[colNumber + rowNumber * numCols].c_str());
+      if (s.endsWith(".0")) {
+        s.substringSelf(0, s.length() - 2);
+      }
+
+      record->push(colNumber, s);
+    }
     store->push(record);
   }
 
