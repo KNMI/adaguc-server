@@ -19,7 +19,7 @@
         </KeywordList>
         <OnlineResource xlink:type="simple" xlink:href="SERVICE=WMS&amp;"/>
         <ContactInformation>
-          
+
         </ContactInformation>
         <Fees>no conditions apply</Fees>
         <AccessConstraints>None</AccessConstraints>
@@ -123,7 +123,7 @@
 <BoundingBox CRS="EPSG:3067" minx="-15931605.907041" miny="-19720315.591565" maxx="17051580.684528" maxy="19828593.536145" />
 <BoundingBox CRS="EPSG:4326" minx="89.511108" miny="-180.494446" maxx="-90.488892" maxy="179.505554" />
 <Dimension name="member" units="member number" default="member1" multipleValues="1" nearestValue="0" >member6,member5,member4,member3,member2,member1</Dimension>
-<Dimension name="elevation" units="meters" default="9000.0" multipleValues="1" nearestValue="0" >1000.0,2000.0,3000.0,4000.0,5000.0,6000.0,7000.0,8000.0,9000.0</Dimension>
+<Dimension name="elevation" units="meters" default="9000" multipleValues="1" nearestValue="0" >1000,2000,3000,4000,5000,6000,7000,8000,9000</Dimension>
 <Dimension name="time" units="ISO8601" default="2017-01-01T00:25:00Z" multipleValues="1" nearestValue="0" current="1">2017-01-01T00:00:00Z/2017-01-01T00:25:00Z/PT5M</Dimension>
    <Style>    <Name>testdata/nearest</Name>    <Title>Rainbow colors</Title>    <Abstract>Drawing with rainbow colors</Abstract>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data&amp;format=image/png&amp;STYLE=testdata/nearest"/>    </LegendURL>  </Style>   <Style>    <Name>testdata/bilinear</Name>    <Title>Rainbow colors, bilinear</Title>    <Abstract>Drawing with rainbow colors, bilinear interpolation</Abstract>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data&amp;format=image/png&amp;STYLE=testdata/bilinear"/>    </LegendURL>  </Style>   <Style>    <Name>testdata/nearestcontour</Name>    <Title>Rainbow colors, contours</Title>    <Abstract>Drawing with rainbow colors, contours</Abstract>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data&amp;format=image/png&amp;STYLE=testdata/nearestcontour"/>    </LegendURL>  </Style>   <Style>    <Name>testdata/shadedcontour</Name>    <Title>Rainbow colors, shading and contours</Title>    <Abstract>Drawing with rainbow colors, shading and contours</Abstract>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data&amp;format=image/png&amp;STYLE=testdata/shadedcontour"/>    </LegendURL>  </Style></Layer>
     </Layer>

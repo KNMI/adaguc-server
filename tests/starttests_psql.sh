@@ -23,7 +23,6 @@ ulimit -c unlimited
 
 # Rewrite the xml configuration files used by tests.
 # Unfortunately macos does not use GNU sed, so the sed command differs slightly (-i '' vs -i)
-# If support for sqlite gets dropped in the future, we could make this the default
 if [[ "$OSTYPE" == "darwin"* ]]; then
     find data/config -type f -name '*.xml' | xargs sed -i '' 's;<DataBase dbtype="sqlite" parameters="{ADAGUC_TMP}/adaguc.autoresource.db"/>;<DataBase parameters="{ADAGUC_DB}"/>;g'
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
@@ -35,7 +34,7 @@ fi
 export ADAGUC_DB="user=adaguc password=adaguc host=localhost dbname=postgres"
 psql "$ADAGUC_DB" -c "DROP DATABASE IF EXISTS adaguc_test;"
 psql "$ADAGUC_DB" -c "CREATE DATABASE adaguc_test;"
-export ADAGUC_DB="user=adaguc password=adaguc host=localhost dbname=adaguc_test"
+export ADAGUC_DB="user=adaguc password=adaguc host=host.docker.internal dbname=adaguc_test"
 
 python3 ${ADAGUC_PATH}/tests/functional_test.py $1 && \
 cd ../python/python_fastapi_server && \
