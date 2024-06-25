@@ -374,6 +374,19 @@ async def get_collectioninfo_for_id(
         variables=cube_variables,
     )
 
+    locations_variables = Variables(
+        query_type="locations",
+        default_output_format="GeoJSON",
+        output_formats=["GeoJSON"],
+    )
+    locations_link = EDRQueryLink(
+        href=f"{base_url}/cube",
+        rel="data",
+        hreflang="en",
+        title="Locations query",
+        variables=locations_variables,
+    )
+
     instances_link = None
     if ref_times and len(ref_times) > 0:
         instances_variables = Variables(
@@ -393,10 +406,13 @@ async def get_collectioninfo_for_id(
             position=EDRQuery(link=position_link),
             cube=EDRQuery(link=cube_link),
             instances=EDRQuery(link=instances_link),
+            locations=EDRQuery(link=locations_link),
         )
     else:
         data_queries = DataQueries(
-            position=EDRQuery(link=position_link), cube=EDRQuery(link=cube_link)
+            position=EDRQuery(link=position_link),
+            cube=EDRQuery(link=cube_link),
+            locations=EDRQuery(link=locations_link),
         )
 
     parameter_names = get_params_for_collection(

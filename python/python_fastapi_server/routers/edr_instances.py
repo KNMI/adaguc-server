@@ -34,7 +34,6 @@ async def rest_get_edr_inst_for_coll(
     """
     GET: Returns all available instances for the collection
     """
-    print("OHOH")
     instances_url = (
         get_base_url(request) + f"/edr/collections/{collection_name}/instances"
     )
