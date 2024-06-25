@@ -680,8 +680,11 @@ namespace CT {
   }
 
   int string::toInt() {
-    int dValue = (int)atoi(c_str());
-    return dValue;
+    return atoi(c_str());
+  }
+
+  long string::toLong() {
+    return atol(c_str());
   }
 
   CT::string string::basename() {

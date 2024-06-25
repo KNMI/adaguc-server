@@ -29,7 +29,7 @@ def setup_test_data():
             ],
             isCGI=False,
             showLogOnError=False,
-            showLog=True,
+            showLog=False,
         )
 
 
@@ -45,15 +45,15 @@ def test_root(client: TestClient):
     resp = client.get(
         "/adaguc-server?dataset=netcdf_5d&request=getcapabilities&service=wms&version=1.3.0"
     )
-    print("getcap:", resp.text)
+    # print("getcap:", resp.text)
 
     resp = client.get("/ogcapi/")
-    print("resp:", resp, resp.json())
+    #print("resp:", resp, resp.json())
     assert resp.json()["description"] == "ADAGUC OGCAPI-Features server"
 
 
 def test_collections(client: TestClient):
     resp = client.get("/ogcapi/collections")
     colls = resp.json()
-    print(json.dumps(colls["collections"][1], indent=2))
+    #print(json.dumps(colls["collections"][1], indent=2))
     assert len(colls["collections"]) == 2

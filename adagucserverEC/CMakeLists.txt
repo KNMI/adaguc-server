@@ -74,9 +74,24 @@ add_library(
     CDBFileScannerCleanFiles.cpp
     CDFObjectStore.cpp
     CDFObjectStore.h
-    CDPPGoes16Metadata.cpp
+    CDataPostProcessors/CDataPostProcessor_AddFeatures.cpp
+    CDataPostProcessors/CDataPostProcessor_AddFeatures.h
+    CDataPostProcessors/CDataPostProcessor_CDPDBZtoRR.cpp
+    CDataPostProcessors/CDataPostProcessor_CDPDBZtoRR.h
+    CDataPostProcessors/CDataPostProcessors_MSGCPP.cpp
+    CDataPostProcessors/CDataPostProcessors_MSGCPP.h
+    CDataPostProcessors/CDPPGoes16Metadata.cpp
+    CDataPostProcessors/CDPPGoes16Metadata.h
     CDataPostProcessors/CDataPostProcessor.cpp
     CDataPostProcessors/CDataPostProcessor.h
+    CDataPostProcessors/CDataPostProcessor_AXplusB.cpp
+    CDataPostProcessors/CDataPostProcessor_AXplusB.h
+    CDataPostProcessors/CDataPostProcessor_Beaufort.cpp
+    CDataPostProcessors/CDataPostProcessor_Beaufort.h
+    CDataPostProcessors/CDataPostProcessor_ToKnots.cpp
+    CDataPostProcessors/CDataPostProcessor_ToKnots.h
+    CDataPostProcessors/CDataPostProcessor_WindSpeedKnotsToMs.cpp
+    CDataPostProcessors/CDataPostProcessor_WindSpeedKnotsToMs.h
     CDataPostProcessors/CDataPostProcessor_ClipMinMax.cpp
     CDataPostProcessors/CDataPostProcessor_ClipMinMax.h
     CDataPostProcessors/CDataPostProcessor_IncludeLayer.cpp

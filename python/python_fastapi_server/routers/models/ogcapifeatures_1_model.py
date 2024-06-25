@@ -33,7 +33,7 @@ class Spatial(BaseModel):
         min_length=1,
     )
     crs: Optional[Crs] = Field(
-        'http://www.opengis.net/def/crs/OGC/1.3/CRS84',
+        Crs.http___www_opengis_net_def_crs_OGC_1_3_CRS84,
         description='Coordinate reference system of the coordinates in the spatial extent\n(property `bbox`). The default reference system is WGS 84 longitude/latitude.\nIn the Core this is the only supported coordinate reference system.\nExtensions may support additional coordinate reference systems and add\nadditional enum values.',
     )
 
