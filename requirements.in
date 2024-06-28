@@ -20,7 +20,9 @@ gunicorn~=22.0
 httpx~=0.26.0
 lxml~=4.9
 netCDF4~=1.6
-# numpy~=1.26.4  # Pin to avoid update to 2.0
+# Pin to avoid update to 2.0. NetCDF should be compatible, but cftime is not mentioned on the page:
+# https://github.com/numpy/numpy/issues/26191
+numpy~=1.26
 pydantic~=2.6
 pytz~=2023.3
 uvicorn~=0.23.2
