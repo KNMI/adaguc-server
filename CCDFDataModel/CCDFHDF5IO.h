@@ -88,6 +88,7 @@ public:
     H5Eset_auto2(error_stack, NULL, NULL);
     H5Eset_auto2(H5E_DEFAULT, NULL, NULL);
     b_EnableKNMIHDF5toCFConversion = false;
+    b_EnableODIMHDF5toCFConversion = false;
     b_KNMIHDF5UseEndTime = false;
     forecastReader = NULL;
     fileIsOpen = false;
