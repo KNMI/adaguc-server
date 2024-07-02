@@ -1293,6 +1293,7 @@ CDataSource *CDataSource::clone() {
     ogcDim->value = requiredDims[j]->value;
     ogcDim->queryValue = requiredDims[j]->queryValue;
     ogcDim->netCDFDimName = requiredDims[j]->netCDFDimName;
+    ogcDim->hidden = requiredDims[j]->hidden;
     for (size_t i = 0; i < requiredDims[j]->uniqueValues.size(); i++) {
       ogcDim->uniqueValues.push_back(requiredDims[j]->uniqueValues[i].c_str());
     }

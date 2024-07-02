@@ -1,16 +1,17 @@
 #include "CDataPostProcessor.h"
 
-#ifndef CDATAPOSTPROCESSOR_OPERATOR_H
-#define CDATAPOSTPROCESSOR_OPERATOR_H
-/**
- * Operator algorithm
- */
+#ifndef CDATAPOSTPROCESSOR_ADDFEATURES_H
+#define CDATAPOSTPROCESSOR_ADDFEATURES_H
 
-class CDPPOperator : public CDPPInterface {
+#define CDATAPOSTPROCESSOR_ADDFEATURES_ID "addfeatures"
+
+/**
+ * AddFeature from a GEOJSON shape provider
+ */
+class CDPPAddFeatures : public CDPPInterface {
 private:
   DEF_ERRORFUNCTION();
-  float getElement(void *data, CDFType dataType, size_t index);
-
+  //     float addFeature(float speed);
 public:
   virtual const char *getId();
   virtual int isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode);
@@ -20,5 +21,4 @@ public:
     return CDATAPOSTPROCESSOR_METHOD_NOT_IMPLEMENTED;
   } // TODO: Still need to implement for timeseries
 };
-
 #endif

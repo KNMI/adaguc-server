@@ -5,6 +5,7 @@
 """
 import unittest
 import sys
+from AdagucTests.TestWMSTimeSeries import TestWMSTimeSeries
 from AdagucTests.TestWMS import TestWMS
 from AdagucTests.TestWCS import TestWCS
 from AdagucTests.TestWMSSLD import TestWMSSLD
@@ -23,6 +24,7 @@ from AdagucTests.TestWMSTimeHeightProfiles import TestWMSTimeHeightProfiles
 
 suites = []
 TestLoader = unittest.TestLoader
+suites.append(TestLoader().loadTestsFromTestCase(TestWMSTimeSeries))
 suites.append(TestLoader().loadTestsFromTestCase(TestWMS))
 suites.append(TestLoader().loadTestsFromTestCase(TestWCS))
 suites.append(TestLoader().loadTestsFromTestCase(TestWMSSLD))

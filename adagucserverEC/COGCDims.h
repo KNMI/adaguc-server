@@ -33,6 +33,7 @@ public:
   COGCDims() {
     isATimeDimension = false;
     hasFixedValue = false;
+    hidden = false;
   }
   /**
    * OGC name
@@ -65,6 +66,8 @@ public:
   bool isATimeDimension;
 
   bool hasFixedValue;
+
+  bool hidden;
 };
 
 class CCDFDims {
