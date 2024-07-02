@@ -1,3 +1,6 @@
+**Version 2.23.1 2024-07-02**
+- Add X-Forwarded-For header information in access logs
+
 **Version 2.23.0 2024-06-07**
 - DataPostProcessor `windspeed_knots_to_ms` was added to convert knots to meters per second, use `<DataPostProc algorithm="windspeed_knots_to_ms"/>`
 - TimeSeries fetching with GetFeatureInfo now support multimodel ensembles
