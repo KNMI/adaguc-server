@@ -33,8 +33,8 @@ const char *CConvertLatLonBnds::className = "CConvertLatLonBnds";
 
 bool CConvertLatLonBnds::isThisLatLonBndsData(CDFObject *cdfObject) {
   try {
-    CDF::Attribute *attr = cdfObject->getAttributeNE("USE_ADAGUCCONVERTER");
-    if ((attr != NULL) && (attr->getDataAsString().equals("LatLonBnds") == true)) {
+    CDF::Attribute *attr = cdfObject->getAttributeNE("USE_ADAGUC_LATLONBNDS_CONVERTER");
+    if ((attr != NULL) && attr->getDataAsString().toLowerCase().equals("true")) {
       return true;
     }
   } catch (int e) {
@@ -48,11 +48,11 @@ bool CConvertLatLonBnds::isThisLatLonBndsData(CDFObject *cdfObject) {
   }
   try {
     CDF::Dimension *gridpointDim = cdfObject->getDimension("gridpoint");
-    CDF::Variable *pointLon = cdfObject->getVariable("lon");
-    CDF::Variable *pointLat = cdfObject->getVariable("lat");
+    CDF::Variable *pointLon = cdfObject->getVariable("lon_bnds");
+    CDF::Variable *pointLat = cdfObject->getVariable("lat_bnds");
     pointLon->getDimension("gridpoint");
     pointLat->getDimension("gridpoint");
-    if ((pointLon->dimensionlinks.size() == 1) && (pointLon->dimensionlinks.size() == 1)) {
+    if ((pointLon->dimensionlinks.size() > 1) && (pointLon->dimensionlinks.size() > 1)) {
       return true;
     }
 

@@ -724,7 +724,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
           openAll = true;
         }
 
-        if (dataSources[d]->getDataObject(0)->cdfObject->getAttributeNE("USE_ADAGUCCONVERTER") != NULL) {
+        if (dataSources[d]->getDataObject(0)->cdfObject->getAttributeNE("USE_ADAGUC_LATLONBNDS_CONVERTER") != NULL) {
           openAll = true;
         }
 
