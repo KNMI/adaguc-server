@@ -150,7 +150,14 @@ class AdagucTestTools:
         Running the test separately works."""
 
         if adaguc_db := os.getenv("ADAGUC_DB", None):
-            subprocess.run(["psql", adaguc_db, "-c", "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"])
+            subprocess.run(
+                [
+                    "psql",
+                    adaguc_db,
+                    "-c",
+                    "DROP SCHEMA public CASCADE; CREATE SCHEMA public;",
+                ]
+            )
 
     def mkdir_p(self, directory):
         if not os.path.exists(directory):
