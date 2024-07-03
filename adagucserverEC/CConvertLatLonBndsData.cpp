@@ -69,7 +69,7 @@ int CConvertLatLonBnds::convertLatLonBndsData(CDataSource *dataSource, int mode)
     if (fillValue != NULL) {
       dataObjects[d]->hasNodataValue = true;
       fillValue->getData(&dataObjects[d]->dfNodataValue, 1);
-#ifdef CConvertLatLonGrid_DEBUG
+#ifdef CConvertLatLonBnds_DEBUG
       CDBDebug("_FillValue = %f", dataObjects[d]->dfNodataValue);
 #endif
       float f = dataObjects[d]->dfNodataValue;
