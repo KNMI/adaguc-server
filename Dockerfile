@@ -97,7 +97,7 @@ COPY tests /adaguc/adaguc-server-master/tests
 COPY runtests.sh /adaguc/adaguc-server-master/runtests.sh
 COPY runtests_psql.sh /adaguc/adaguc-server-master/runtests_psql.sh
 
-# Run adaguc-server functional and regression tests
+# Run adaguc-server functional and regression tests. See also `./doc/developing/testing.md`
 RUN bash runtests.sh
 # RUN bash runtests_psql.sh
 
