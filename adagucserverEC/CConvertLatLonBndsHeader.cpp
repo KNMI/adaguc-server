@@ -27,7 +27,7 @@
 #include "CImageWarper.h"
 #include "CConvertLatLonBnds.h"
 
-// #define CConvertLatLonBnds_DEBUG
+#define CConvertLatLonBnds_DEBUG
 
 /**
  * This function adjusts the cdfObject by creating virtual 2D variables
@@ -157,7 +157,7 @@ int CConvertLatLonBnds::convertLatLonBndsHeader(CDFObject *cdfObject, CServerPar
       destRegularGrid->dimensionlinks.push_back(dimY);
       destRegularGrid->dimensionlinks.push_back(dimX);
 
-      destRegularGrid->setType(irregularGridVar->getType());
+      destRegularGrid->setType(CDF_FLOAT);
       destRegularGrid->name = irregularGridVar->name.c_str();
       irregularGridVar->name.concat("_backup");
 
@@ -174,7 +174,6 @@ int CConvertLatLonBnds::convertLatLonBndsHeader(CDFObject *cdfObject, CServerPar
       // Scale and offset are already applied
       destRegularGrid->removeAttribute("scale_factor");
       destRegularGrid->removeAttribute("add_offset");
-      destRegularGrid->setType(CDF_FLOAT);
     }
   }
   return 0;

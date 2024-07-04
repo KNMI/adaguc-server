@@ -48,6 +48,8 @@ int CConvertLatLonBnds::convertLatLonBndsData(CDataSource *dataSource, int mode)
   CDF::Variable *destRegularGrid[nrDataObjects];
   CDF::Variable *irregularGridVar[nrDataObjects];
 
+  bool dataIsDouble[nrDataObjects];
+
   // Make references destRegularGrid and irregularGridVar
   for (size_t d = 0; d < nrDataObjects; d++) {
     destRegularGrid[d] = dataObjects[d]->cdfVariable;
@@ -58,24 +60,39 @@ int CConvertLatLonBnds::convertLatLonBndsData(CDataSource *dataSource, int mode)
       CDBError("Unable to find orignal variable with name %s", orgName.c_str());
       return 1;
     }
+    dataIsDouble[d] = (irregularGridVar[d]->getType() == CDF_DOUBLE);
   }
   CDF::Variable *longitudeBnds = cdfObject->getVariableNE("lon_bnds");
   CDF::Variable *latitudeBnds = cdfObject->getVariableNE("lat_bnds");
 
   for (size_t d = 0; d < nrDataObjects; d++) {
-    dataSource->readVariableDataForCDFDims(irregularGridVar[d], CDF_FLOAT);
-
+    dataSource->readVariableDataForCDFDims(irregularGridVar[d], irregularGridVar[d]->getType());
+    float fltFill = NC_FILL_FLOAT;
+    double dblFill = NC_FILL_DOUBLE;
     CDF::Attribute *fillValue = irregularGridVar[d]->getAttributeNE("_FillValue");
     if (fillValue != NULL) {
       dataObjects[d]->hasNodataValue = true;
-      fillValue->getData(&dataObjects[d]->dfNodataValue, 1);
-#ifdef CConvertLatLonBnds_DEBUG
-      CDBDebug("_FillValue = %f", dataObjects[d]->dfNodataValue);
-#endif
-      float f = dataObjects[d]->dfNodataValue;
-      destRegularGrid[d]->getAttribute("_FillValue")->setData(CDF_FLOAT, &f, 1);
-    } else
+      if (dataIsDouble[d]) {
+        fillValue->getData(&dblFill, 1);
+        dataObjects[d]->dfNodataValue = dblFill;
+        fltFill = (float)dblFill;
+      } else {
+        fillValue->getData(&fltFill, 1);
+        dataObjects[d]->dfNodataValue = fltFill;
+      }
+      destRegularGrid[d]->getAttribute("_FillValue")->setData(CDF_DOUBLE, &fltFill, 1);
+    } else {
       dataObjects[d]->hasNodataValue = false;
+    }
+  }
+  float fltFill = NC_FILL_FLOAT;
+  float dblFill = NC_FILL_DOUBLE;
+  if (dataObjects[0]->hasNodataValue) {
+    if (dataIsDouble[0]) {
+      dblFill = (double)dataObjects[0]->dfNodataValue;
+    } else {
+      fltFill = (float)dataObjects[0]->dfNodataValue;
+    }
   }
 
   // If the data was not populated in the code above, try to read it from the file
@@ -86,14 +103,14 @@ int CConvertLatLonBnds::convertLatLonBndsData(CDataSource *dataSource, int mode)
     latitudeBnds->readData(CDF_DOUBLE, true);
   }
 
-  float fill = (float)dataObjects[0]->dfNodataValue;
-
   // Detect minimum and maximum values
-  MinMax minMax = getMinMax(((float *)irregularGridVar[0]->data), dataObjects[0]->hasNodataValue, fill, irregularGridVar[0]->getSize());
-
-#ifdef CConvertLatLonBnds_DEBUG
-  CDBDebug("Calculated min/max : %f %f", minMax.min, minMax.max);
-#endif
+  MinMax minMax;
+  if (dataIsDouble[0]) {
+    minMax = getMinMax(((double *)irregularGridVar[0]->data), dataObjects[0]->hasNodataValue, dblFill, irregularGridVar[0]->getSize());
+  } else {
+    minMax = getMinMax(((float *)irregularGridVar[0]->data), dataObjects[0]->hasNodataValue, (double)fltFill, irregularGridVar[0]->getSize());
+  }
+  CDBDebug("minMax %f %f", minMax.min, minMax.max);
 
   // Set statistics
   if (dataSource->stretchMinMax) {
@@ -173,7 +190,7 @@ int CConvertLatLonBnds::convertLatLonBndsData(CDataSource *dataSource, int mode)
     // Allocate and clear data
     for (size_t d = 0; d < nrDataObjects; d++) {
       destRegularGrid[d]->setSize(fieldSize);
-      CDF::allocateData(destRegularGrid[d]->getType(), &(destRegularGrid[d]->data), fieldSize);
+      CDF::allocateData(CDF_FLOAT, &(destRegularGrid[d]->data), fieldSize);
       for (size_t j = 0; j < fieldSize; j++) {
         ((float *)dataObjects[d]->cdfVariable->data)[j] = NAN;
       }
@@ -252,15 +269,19 @@ int CConvertLatLonBnds::convertLatLonBndsData(CDataSource *dataSource, int mode)
       int dlons[4], dlats[4];
       for (size_t dataObjectIndex = 0; dataObjectIndex < nrDataObjects; dataObjectIndex++) {
         float *destinationGrid = ((float *)dataObjects[dataObjectIndex]->cdfVariable->data);
-        float *sourceIrregularGrid = (float *)irregularGridVar[dataObjectIndex]->data;
+        void *sourceIrregularGrid = (void *)irregularGridVar[dataObjectIndex]->data;
         float irregularGridValues[4];
-        irregularGridValues[0] = sourceIrregularGrid[gridPointer];
+        if (dataIsDouble[dataObjectIndex]) {
+          irregularGridValues[0] = (float)((double *)sourceIrregularGrid)[gridPointer];
+        } else {
+          irregularGridValues[0] = (float)((double *)sourceIrregularGrid)[gridPointer];
+        }
 
         if (drawBilinear) {
           // Bilinear mode will use the four corner values to draw a quad with those values interpolated
-          irregularGridValues[1] = sourceIrregularGrid[gridPointer];
-          irregularGridValues[2] = sourceIrregularGrid[gridPointer];
-          irregularGridValues[3] = sourceIrregularGrid[gridPointer];
+          irregularGridValues[1] = irregularGridValues[0]; // sourceIrregularGrid[gridPointer];
+          irregularGridValues[2] = irregularGridValues[0]; // sourceIrregularGrid[gridPointer];
+          irregularGridValues[3] = irregularGridValues[0]; // sourceIrregularGrid[gridPointer];
         } else {
           // Nearest mode will use the topleft value for all values in the quad
           irregularGridValues[1] = irregularGridValues[0];
@@ -269,7 +290,11 @@ int CConvertLatLonBnds::convertLatLonBndsData(CDataSource *dataSource, int mode)
         }
         bool irregularGridCellHasNoData = false;
         // Check if this is no data (irregularGridCellHasNoData)
-        if (irregularGridValues[0] == fill || irregularGridValues[1] == fill || irregularGridValues[2] == fill || irregularGridValues[3] == fill) irregularGridCellHasNoData = true;
+        if (dataIsDouble[0]) {
+          if (irregularGridValues[0] == dblFill || irregularGridValues[1] == dblFill || irregularGridValues[2] == dblFill || irregularGridValues[3] == dblFill) irregularGridCellHasNoData = true;
+        } else {
+          if (irregularGridValues[0] == fltFill || irregularGridValues[1] == fltFill || irregularGridValues[2] == fltFill || irregularGridValues[3] == fltFill) irregularGridCellHasNoData = true;
+        }
 
         if (irregularGridCellHasNoData == false) {
           if (dataObjectIndex == 0) {

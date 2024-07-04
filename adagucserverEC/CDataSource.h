@@ -52,7 +52,18 @@ public:
 };
 
 /**
- * Returns minmax values for a data array
+ * Returns minmax values for a float data array
+ * throws integer if no min max are found
+ * @param data The data array in float format
+ * @param hasFillValue Is there a nodata value
+ * @param fillValue the Nodata value
+ * @param numElements The length of the data array
+ * @return minmax object
+ */
+MinMax getMinMax(float *data, bool hasFillValue, double fillValue, size_t numElements);
+
+/**
+ * Returns minmax values for a double data array
  * throws integer if no min max are found
  * @param data The data array in double format
  * @param hasFillValue Is there a nodata value
@@ -60,7 +71,7 @@ public:
  * @param numElements The length of the data array
  * @return minmax object
  */
-MinMax getMinMax(float *data, bool hasFillValue, double fillValue, size_t numElements);
+MinMax getMinMax(double *data, bool hasFillValue, double fillValue, size_t numElements);
 
 /**
  * Returns minmax values for a variable
