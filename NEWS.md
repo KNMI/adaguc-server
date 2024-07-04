@@ -1,5 +1,5 @@
 **Version 2.24.0 2024-06-27**
-- Adds support for grids where the data cells are defibe by lat_bnds and lon_bnds parameters describing the cell bounds.
+- Adds support for grids where the data cells are defined by lat_bnds and lon_bnds parameters describing the cell bounds.
 
 **Version 2.23.0 2024-06-07**
 - DataPostProcessor `windspeed_knots_to_ms` was added to convert knots to meters per second, use `<DataPostProc algorithm="windspeed_knots_to_ms"/>`
