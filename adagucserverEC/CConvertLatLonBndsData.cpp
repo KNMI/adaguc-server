@@ -274,7 +274,7 @@ int CConvertLatLonBnds::convertLatLonBndsData(CDataSource *dataSource, int mode)
         if (dataIsDouble[dataObjectIndex]) {
           irregularGridValues[0] = (float)((double *)sourceIrregularGrid)[gridPointer];
         } else {
-          irregularGridValues[0] = (float)((double *)sourceIrregularGrid)[gridPointer];
+          irregularGridValues[0] = ((float *)sourceIrregularGrid)[gridPointer];
         }
 
         if (drawBilinear) {
