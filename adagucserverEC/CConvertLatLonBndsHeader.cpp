@@ -165,8 +165,10 @@ int CConvertLatLonBnds::convertLatLonBndsHeader(CDFObject *cdfObject, CServerPar
       for (size_t j = 0; j < irregularGridVar->attributes.size(); j++) {
         CDF::Attribute *a = irregularGridVar->attributes[j];
         destRegularGrid->setAttribute(a->name.c_str(), a->getType(), a->data, a->length);
-        destRegularGrid->setAttributeText("ADAGUC_VECTOR", "true");
       }
+
+      // Set destinationGrid to ADAGUC_VECTOR handling
+      destRegularGrid->setAttributeText("ADAGUC_VECTOR", "true");
 
       // The irregularGridVar variable is not directly plotable, so skip it
       irregularGridVar->setAttributeText("ADAGUC_SKIP", "true");

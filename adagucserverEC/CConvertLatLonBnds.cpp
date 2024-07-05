@@ -53,6 +53,7 @@ bool CConvertLatLonBnds::isThisLatLonBndsData(CDFObject *cdfObject) {
     pointLon->getDimension("gridpoint");
     pointLat->getDimension("gridpoint");
     if ((pointLon->dimensionlinks.size() > 1) && (pointLon->dimensionlinks.size() > 1)) {
+      cdfObject->setAttributeText("USE_ADAGUC_LATLONBNDS_CONVERTER", "true");
       return true;
     }
 
