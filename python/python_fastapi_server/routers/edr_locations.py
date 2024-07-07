@@ -10,11 +10,16 @@ KNMI
 
 from fastapi import APIRouter
 
+import logging
+
 router = APIRouter()
+logger = logging.getLogger(__name__)
+logger.debug("Starting EDR")
 
 
 @router.get("/collections/{_coll}/locations")
-def get_locations(_coll: str):
+@router.get("/collections/{_coll}/instances/{instance}/locations")
+async def get_locations(_coll: str):
     """
     Returns locations where you could query data.
     """

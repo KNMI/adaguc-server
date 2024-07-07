@@ -25,7 +25,7 @@ from fastapi.responses import JSONResponse
 
 from .edr_cube import router as cube_router
 from .edr_exception import EdrException
-from .edr_locations import router as locations_routers
+from .edr_locations import router as locations_router
 from .edr_position import router as position_router
 from .edr_instances import router as instances_router
 
@@ -43,7 +43,7 @@ logger.debug("Starting EDR")
 edrApiApp = FastAPI(debug=False)
 edrApiApp.include_router(cube_router)
 edrApiApp.include_router(position_router)
-edrApiApp.include_router(locations_routers)
+edrApiApp.include_router(locations_router)
 edrApiApp.include_router(instances_router)
 
 

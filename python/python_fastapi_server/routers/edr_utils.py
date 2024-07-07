@@ -380,7 +380,7 @@ async def get_collectioninfo_for_id(
         output_formats=["GeoJSON"],
     )
     locations_link = EDRQueryLink(
-        href=f"{base_url}/cube",
+        href=f"{base_url}/locations",
         rel="data",
         hreflang="en",
         title="Locations query",
@@ -452,9 +452,14 @@ def create_times_for_instance(edr_collectioninfo: dict, instance: str):
 
     """
     ref_time = parse_instance_time(instance)
-    time_interval = edr_collectioninfo["time_interval"].replace(
-        "{reference_time}", ref_time.strftime("%Y-%m-%dT%H:%M:%SZ")
-    )
+    offset_steps = 0
+    time_interval = edr_collectioninfo["time_interval"]  # .replace(
+    time_interval_term = time_interval.split("/")[1]
+    offset_pattern = re.compile(r"""(\{.*\})((-|\+)(\d+))""")
+    match = offset_pattern.match(time_interval_term)
+    if match and match.group(2):
+        offset_steps = int(match.group(2))
+    # "{reference_time}", ref_time.strftime("%Y-%m-%dT%H:%M:%SZ"))
     (repeat_s, _, time_step_s) = time_interval.split("/")
     repeat = int(repeat_s[1:])
 
@@ -483,7 +488,7 @@ def create_times_for_instance(edr_collectioninfo: dict, instance: str):
         delta = relativedelta(seconds=step)
 
     times = []
-    step_time = ref_time
+    step_time = ref_time + delta * offset_steps
     for _ in range(repeat):
         times.append(step_time.strftime("%Y-%m-%dT%H:%M:%SZ"))
         step_time = step_time + delta
@@ -498,6 +503,14 @@ def create_times_for_instance(edr_collectioninfo: dict, instance: str):
             ),
         ]
     ]
+    logger.info(
+        "create_times_for_instance %s, %s, %s, %s, %s",
+        ref_time,
+        edr_collectioninfo["time_interval"],
+        time_interval,
+        interval,
+        times,
+    )
     return interval, times
 
 
