@@ -2399,11 +2399,23 @@ class TestWMS(unittest.TestCase):
     
     def test_WMSGetMap_error_on_wrong_dataset(self):
         AdagucTestTools().cleanTempDir()
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            url="DATASET=nonexisting&&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=countryborders&WIDTH=910&HEIGHT=562&SRS=EPSG%3A3857&BBOX=-30765124.555160142,-19000000,30765124.555160142,19000000&STYLES=&FORMAT=image/png&TRANSPARENT=TRUE&",
+            showLogOnError=False,
+            env={"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.dataset.xml"},
+        )
+        # Should return 404 Not Found
+        self.assertEqual(status, 404)
+
+
+
+    def test_WMSGetMap_error_on_existing_dataset_wrong_layer(self):
+        AdagucTestTools().cleanTempDir()
         config = (
             ADAGUC_PATH
             + "/data/config/adaguc.tests.dataset.xml,"
             + ADAGUC_PATH
-            + "/data/config/datasets/adaguc.KNMIHDF5.test.xml"
+            + "/data/config/datasets/adaguc.tests.nearestshadeinterval.xml"
         )
         env = {"ADAGUC_CONFIG": config}
         # pylint: disable=unused-variable
@@ -2412,10 +2424,51 @@ class TestWMS(unittest.TestCase):
         )
         self.assertEqual(status, 0)
 
+
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "?DATASET=nonexisting&&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=countryborders&WIDTH=910&HEIGHT=562&SRS=EPSG%3A3857&BBOX=-30765124.555160142,-19000000,30765124.555160142,19000000&STYLES=&FORMAT=image/png&TRANSPARENT=TRUE&&",
+            "DATASET=adaguc.tests.nearestshadeinterval&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=shadedstylefast%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&",
             env=env,
         )
-        # Should return 404 Not Found
+        # Layer exists, should return 0
+        self.assertEqual(status, 0)
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.nearestshadeinterval&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdatanonexisting&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=shadedstylefast%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&",
+            showLogOnError=False,
+            env=env,
+        )
+        # Layer does not exist, should return 404
         self.assertEqual(status, 404)
-        
+
+
+    def test_WMSGetCapabilities_no_error_on_existing_dataset_misconfigured_layer(self):
+        AdagucTestTools().cleanTempDir()
+        config = (
+            ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,"
+            + ADAGUC_PATH
+            + "/data/config/datasets/adaguc.tests.datasetwithmisconfiguredlayer.xml"
+        )
+        env = {"ADAGUC_CONFIG": config}
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(showLogOnError=False,
+            args=["--updatedb", "--config", config], env=self.env, isCGI=False
+        )
+        self.assertEqual(status, 1)
+
+
+        filename = "test_WMSGetCapabilities_no_error_on_existing_dataset_misconfigured_layer.xml"
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.datasetwithmisconfiguredlayer&SERVICE=WMS&request=GetCapabilities",
+            env=env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        # should return 0
+        self.assertEqual(status, 0)
+        self.assertTrue(
+            AdagucTestTools().compareGetCapabilitiesXML(
+                self.testresultspath + filename, self.expectedoutputsspath + filename
+            )
+        )
+

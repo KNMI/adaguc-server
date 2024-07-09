@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+  <!-- Custom styles -->
+
+
+
+
+  <Layer type="database">
+    
+    <FilePath filter="">{ADAGUC_PATH}data/datasets/testdata.nc</FilePath>
+    <Variable>testdata</Variable>
+    <Styles>auto</Styles>
+    <DataPostProc algorithm="ax+b" a="600" b="-20" units="meter" />
+  </Layer>
+
+
+  <Layer type="database">
+    
+    <FilePath filter="">{ADAGUC_PATH}data/datasets/testdatamisconfigured.nc</FilePath>
+    <Variable>testdatamisconfigured</Variable>
+    <Styles>auto</Styles>
+    <DataPostProc algorithm="ax+b" a="600" b="-20" units="meter" />
+  </Layer>
+
+
+
+
+  <!-- End of configuration /-->
+</Configuration>
