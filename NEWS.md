@@ -7,6 +7,9 @@
 - EDR: Parameters can now be detailed with metadata like standard_names and units: https://github.com/KNMI/adaguc-server/issues/359. 
 - See [Configure_EDR_service](doc/tutorials/Configure_EDR_service.md) for details.
 
+**Version 2.21.3 2024-04-26**
+- Fixed intermittent issue with ODIM reader being enabled/disabled for hdf files
+
 **Version 2.21.2 2024-04-26**
 - When using docker compose the Redis container now automatically starts when system restarts
 
