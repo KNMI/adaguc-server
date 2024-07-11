@@ -96,7 +96,11 @@ async def get_coll_inst_cube(
     vertical_dim = ""
     if z_par:
         if edr_collectioninfo.get("vertical_name"):
-            vertical_dim = f"{edr_collectioninfo.get('vertical_name')}={z_par}"
+            vertical_name = edr_collectioninfo.get("vertical_name")
+            if vertical_name.upper() == "ELEVATION":
+                vertical_dim = f"{edr_collectioninfo.get('vertical_name')}={z_par}"
+            else:
+                vertical_dim = f"DIM_{edr_collectioninfo.get('vertical_name')}={z_par}"
 
     custom_dims = [k for k in request.query_params if k not in allowed_params]
     custom_dim_parameter = ""
