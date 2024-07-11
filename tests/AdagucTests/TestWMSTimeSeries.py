@@ -256,3 +256,33 @@ class TestWMSTimeSeries(unittest.TestCase):
             filename_many_members_data = json.load(fp)
         data_file_all_members = filename_many_members_data[0]["data"]["2024-06-05T03:00:00Z"]
         assert data_file_member_3 == data_file_all_members["3"]
+
+
+    def test_timeseries_adaguc_tests_arcus_uwcw_ha43_dini_5p5km_10x8_air_temperature_pl(self):
+        AdagucTestTools().cleanTempDir()
+
+        config = (
+            ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,"
+            + ADAGUC_PATH
+            + "/data/config/datasets/test.uwcw_ha43_dini_5p5km_10x8.xml"
+        )
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=["--updatedb", "--config", config], env=self.env, isCGI=False
+        )
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSGetFeatureInfoTimeSeries_arcus_uwcw_ha43_dini_5p5km_10x8_air_temperature_pl.json"
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "SERVICE=WMS&VERSION=1.3.0&REQUEST=GetPointValue&CRS=EPSG:4326&DATASET=test.uwcw_ha43_dini_5p5km_10x8&QUERY_LAYERS=air_temperature_pl&X=5.876238072960289&Y=52.296711377037454&INFO_FORMAT=application/json&TIME=2024-07-11T06:00:00Z/2024-07-11T07:00:00Z:00Z&DIM_reference_time=2024-07-11T05:00:00Z&DIM_pressure_level_in_hpa=*",
+            {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml"},
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
+

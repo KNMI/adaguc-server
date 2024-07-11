@@ -1,0 +1,71 @@
+<?xml version="1.0" ?>
+<Configuration>
+  <Include location="/data/adaguc-datasets/includes/StandardStyles_WIK.xml"/>
+  
+  <OgcApiFeatures/>
+  <OgcApiEdr>
+    <EdrCollection name="uwcw_ha43_dini_5p5km_pl" vertical_name="pressure_level_in_hpa">
+      <EdrParameter name="air_temperature_pl" unit="°C" standard_name="air_temperature" parameter_label="Air temperature at pressure level" observed_property_label="Air temperature"/>
+    </EdrCollection>
+  </OgcApiEdr>
+
+
+ <Legend name="temperature_wow" type="interval">
+    <palette index="0" color="#2E2E73"/>
+    <palette index="9" color="#282898"/>
+    <palette index="18" color="#201FBB"/>
+    <palette index="27" color="#1A1ADC"/>
+    <palette index="36" color="#3654DE"/>
+    <palette index="45" color="#548EDC"/>
+    <palette index="54" color="#72CADE"/>
+    <palette index="63" color="#6DD8DF"/>
+    <palette index="72" color="#55CDE2"/>
+    <palette index="81" color="#38BBDC"/>
+    <palette index="90" color="#20B0DC"/>
+    <palette index="99" color="#19BAA6"/>
+    <palette index="108" color="#1CCE6A"/>
+    <palette index="117" color="#1BDF22"/>
+    <palette index="126" color="#82C319"/>
+    <palette index="135" color="#DCA819"/>
+    <palette index="144" color="#DD921A"/>
+    <palette index="153" color="#DE7C1A"/>
+    <palette index="162" color="#DF671A"/>
+    <palette index="171" color="#DE501A"/>
+    <palette index="180" color="#DD3819"/>
+    <palette index="189" color="#DD2319"/>
+    <palette index="198" color="#D21A1E"/>
+    <palette index="207" color="#C31927"/>
+    <palette index="216" color="#AD1A30"/>
+    <palette index="225" color="#9A1A3B"/>
+    <palette index="234" color="#871A44"/>
+    <palette index="240" color="#871A44"/>
+  </Legend>
+
+  <Style name="temperature_wow">
+    <Legend fixed="true" tickinterval="5">temperature_wow</Legend>
+    <Min>-14</Min>
+    <Max>39,33333333</Max>
+    <ShadeInterval>2</ShadeInterval>
+    <ContourLine width="0.8" linecolor="#1a1a1a" textcolor="#1a1a1a" textformatting="%2.0f" interval="10"/>
+    <ContourLine width="0.3" linecolor="#444444" textcolor="#444444" textformatting="%2.0f" interval="2"/>
+    <RenderMethod>shaded,shadedcontour</RenderMethod>
+    <NameMapping name="shaded" title="Filled contours (WOW)" abstract="Filled background (WOW)"/>
+    <NameMapping name="shadedcontour" title="Filled contours and lines (WOW)" abstract="Contour lines with filled background (WOW)"/>
+    <SmoothingFilter>0</SmoothingFilter>
+    <StandardNames standard_name="dew_point_temperature,dewpoint_temperature,air_temperature,temperature,Temperature_2m"/>
+  </Style>
+
+
+  <Layer type="database">
+    <Name>air_temperature_pl</Name>
+    <Title>UWCW_HA43(DINI) Air temperature at pressure level</Title>
+    <Variable>air-temperature-pl</Variable>
+    <FilePath filter="^uwcw_ha43_dini_5p5km_air-temperature-pl_geoweb_nc_20240711T0.*_TEST_10x8\.nc$">{ADAGUC_PATH}data/datasets/ha43_dini/</FilePath>
+    <Styles>temperature_wow</Styles>
+    <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension>
+    <Dimension name="temp_at_pl" units="hPa" default="max" hidden="false">pressure_level_in_hpa</Dimension>
+    <Dimension name="time" units="ISO8601" interval="PT1H" default="min">time</Dimension>
+   
+  </Layer>
+        
+</Configuration>
