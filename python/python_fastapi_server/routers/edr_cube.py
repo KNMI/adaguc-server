@@ -109,7 +109,7 @@ async def get_coll_inst_cube(
 
     dataset = edr_collectioninfo["dataset"]
     ref_times = await get_ref_times_for_coll(
-        edr_collectioninfo, edr_collectioninfo["parameters"][0]["name"]
+        dataset, edr_collectioninfo["parameters"][0]["name"]
     )
     if not instance and len(ref_times) > 0:
         instance = ref_times[-1]
@@ -133,16 +133,24 @@ async def get_coll_inst_cube(
                 urlrequest = (
                     f"dataset={dataset}&service=wcs&version=1.1.1&request=getcoverage&format=NetCDF4&crs=EPSG:4326&coverage={parameter_name}"
                     + f"&bbox={bbox}&time={datetime_par}"
-                    + (f"&{custom_dim_parameter}" if len(custom_dim_parameter)>0 else "")
-                    + (f"&{vertical_dim}" if len(vertical_dim)>0 else "")
+                    + (
+                        f"&{custom_dim_parameter}"
+                        if len(custom_dim_parameter) > 0
+                        else ""
+                    )
+                    + (f"&{vertical_dim}" if len(vertical_dim) > 0 else "")
                     + res_queryterm
                 )
             else:
                 urlrequest = (
                     f"dataset={dataset}&service=wcs&request=getcoverage&format=NetCDF4&crs=EPSG:4326&coverage={parameter_name}"
                     + f"&bbox={bbox}&time={datetime_par}&dim_reference_time={instance_to_iso(instance)}"
-                    + (f"&{custom_dim_parameter}" if len(custom_dim_parameter)>0 else "")
-                    + (f"&{vertical_dim}" if len(vertical_dim)>0 else "")
+                    + (
+                        f"&{custom_dim_parameter}"
+                        if len(custom_dim_parameter) > 0
+                        else ""
+                    )
+                    + (f"&{vertical_dim}" if len(vertical_dim) > 0 else "")
                     + res_queryterm
                 )
 

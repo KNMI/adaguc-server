@@ -42,7 +42,7 @@ async def rest_get_edr_inst_for_coll(
     edr_collections = get_edr_collections()
 
     ref_times = await get_ref_times_for_coll(
-        edr_collections[collection_name],
+        edr_collections[collection_name]["dataset"],
         edr_collections[collection_name]["parameters"][0]["name"],
     )
     print("REF:", ref_times)

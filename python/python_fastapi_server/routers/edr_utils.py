@@ -33,6 +33,10 @@ from .ogcapi_tools import call_adaguc
 
 logger = logging.getLogger(__name__)
 
+# The edr_collections information is cached locally for a maximum of 2 minutes
+# It will be refreshed if older than 2 minutes
+edr_cache = TTLCache(maxsize=100, ttl=120)  # TODO: Redis?
+
 
 def parse_config_file(
     dataset_filename: str, adaguc_dataset_dir: str = os.environ["ADAGUC_DATASET_DIR"]
@@ -80,11 +84,10 @@ def parse_iso(dts: str) -> datetime:
     return parsed_dt
 
 
-async def get_ref_times_for_coll(edr_collectioninfo: dict, layer: str) -> list[str]:
+async def get_ref_times_for_coll(dataset: str, layer: str) -> list[str]:
     """
     Returns available reference times for given collection
     """
-    dataset = edr_collectioninfo["dataset"]
     url = f"?DATASET={dataset}&SERVICE=WMS&VERSION=1.3.0&request=getreferencetimes&LAYER={layer}"
     # logger.info("getreftime_url(%s,%s): %s", dataset, layer, url)
     status, response, _ = await call_adaguc(url=url.encode("UTF-8"))
@@ -207,11 +210,6 @@ def init_edr_collections(adaguc_dataset_dir: str = os.environ["ADAGUC_DATASET_DI
     return edr_collections
 
 
-# The edr_collections information is cached locally for a maximum of 2 minutes
-# It will be refreshed if older than 2 minutes
-edr_cache = TTLCache(maxsize=100, ttl=120)  # TODO: Redis?
-
-
 @cached(cache=edr_cache)
 def get_edr_collections():
     """Returns all EDR collections"""
@@ -296,7 +294,7 @@ async def get_collectioninfo_for_id(
 
     if not instance:
         ref_times = await get_ref_times_for_coll(
-            edr_collectioninfo, edr_collectioninfo["parameters"][0]["name"]
+            edr_collectioninfo["dataset"], edr_collectioninfo["parameters"][0]["name"]
         )
         if ref_times and len(ref_times) > 0:
             instances_link = Link(
@@ -446,31 +444,15 @@ async def get_collectioninfo_for_id(
     return collection, ttl
 
 
-def create_times_for_instance(edr_collectioninfo: dict, instance: str):
-    """
-    Returns a list of times for a reference_time, derived from the time_interval EDRCollection attribute in edr_collectioninfo
-
-    """
-    ref_time = parse_instance_time(instance)
-    offset_steps = 0
-    time_interval = edr_collectioninfo["time_interval"]  # .replace(
-    time_interval_term = time_interval.split("/")[1]
-    offset_pattern = re.compile(r"""(\{.*\})((-|\+)(\d+))""")
-    match = offset_pattern.match(time_interval_term)
-    if match and match.group(2):
-        offset_steps = int(match.group(2))
-    # "{reference_time}", ref_time.strftime("%Y-%m-%dT%H:%M:%SZ"))
-    (repeat_s, _, time_step_s) = time_interval.split("/")
-    repeat = int(repeat_s[1:])
-
-    if time_step_s.startswith("PT"):
+def parse_period_string(period: str):
+    if period.startswith("PT"):
         pattern = re.compile(r"""PT(\d+)([HMS])""")
-        match = pattern.match(time_step_s)
+        match = pattern.match(period)
         step = int(match.group(1))
         step_type = match.group(2).lower()
     else:
         pattern = re.compile(r"""P(\d+)([YMD])""")
-        match = pattern.match(time_step_s)
+        match = pattern.match(period)
         step = int(match.group(1))
         step_type = match.group(2)
 
@@ -486,12 +468,41 @@ def create_times_for_instance(edr_collectioninfo: dict, instance: str):
         delta = relativedelta(minutes=step)
     elif step_type == "s":
         delta = relativedelta(seconds=step)
+    return delta
+
+
+def parse_interval_string(time_interval: str, ref_time: datetime):
+    offset_steps = 0
+    time_interval_term = time_interval.split("/")[1]
+    offset_pattern = re.compile(r"""(\{.*\})((-|\+)(\d+))""")
+    match = offset_pattern.match(time_interval_term)
+    if match and match.group(2):
+        offset_steps = int(match.group(2))
+    # "{reference_time}", ref_time.strftime("%Y-%m-%dT%H:%M:%SZ"))
+    (repeat_s, _, period) = time_interval.split("/")
+    repeat = int(repeat_s[1:])
+
+    delta = parse_period_string(period)
 
     times = []
     step_time = ref_time + delta * offset_steps
     for _ in range(repeat):
         times.append(step_time.strftime("%Y-%m-%dT%H:%M:%SZ"))
         step_time = step_time + delta
+    return times
+
+
+def create_times_for_instance(edr_collectioninfo: dict, instance: str):
+    """
+    Returns a list of times for a reference_time, derived from the time_interval EDRCollection attribute in edr_collectioninfo
+
+    """
+    ref_time = parse_instance_time(instance)
+    time_interval = edr_collectioninfo["time_interval"]
+    print(time_interval)
+
+    times = parse_interval_string(time_interval=time_interval, ref_time=ref_time)
+    print("times=", times)
 
     interval = [
         [
