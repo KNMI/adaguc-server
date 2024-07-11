@@ -310,11 +310,17 @@ async def get_collectioninfo_for_id(
     crs = 'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]'
     spatial = Spatial(bbox=bbox, crs=crs)
 
-    if instance is None or edr_collectioninfo["time_interval"] is None:
+    if (
+        ref_times is None
+        or len(ref_times) == 0
+        or edr_collectioninfo["time_interval"] is None
+    ):
         (interval, time_values) = get_times_for_collection(
             wmslayers, edr_collectioninfo["parameters"][0]["name"]
         )
     else:
+        if instance is None:
+            instance = max(ref_times)  # Default instance is latest instance
         (interval, time_values) = create_times_for_instance(
             edr_collectioninfo, instance
         )
@@ -499,10 +505,8 @@ def create_times_for_instance(edr_collectioninfo: dict, instance: str):
     """
     ref_time = parse_instance_time(instance)
     time_interval = edr_collectioninfo["time_interval"]
-    print(time_interval)
 
     times = parse_interval_string(time_interval=time_interval, ref_time=ref_time)
-    print("times=", times)
 
     interval = [
         [
