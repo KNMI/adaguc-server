@@ -1,3 +1,6 @@
+**Version 2.24.0 2024-07-11**
+- Fixed issue in timeseries functionality via WMS GetFeatureInfo on multidimensional data when selecting multiple elevations at the same time
+
 **Version 2.23.0 2024-06-07**
 - DataPostProcessor `windspeed_knots_to_ms` was added to convert knots to meters per second, use `<DataPostProc algorithm="windspeed_knots_to_ms"/>`
 - TimeSeries fetching with GetFeatureInfo now support multimodel ensembles
