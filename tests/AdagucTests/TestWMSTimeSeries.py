@@ -220,6 +220,34 @@ class TestWMSTimeSeries(unittest.TestCase):
         )
 
 
+    def test_timeseries_adaguc_tests_arcus_uwcw_wind_kts_to_ms_wind_speed_hagl_ms_wrong_dim_order(self):
+        AdagucTestTools().cleanTempDir()
+
+        config = (
+            ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,"
+            + ADAGUC_PATH
+            + "/data/config/datasets/adaguc.tests.arcus_uwcw.xml"
+        )
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=["--updatedb", "--config", config], env=self.env, isCGI=False
+        )
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSGetFeatureInfoTimeSeries_arcus_uwcw_wind_speed_hagl_convertedtoms_wrong_order.json"
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.tests.arcus_uwcw&service=WMS&request=GetFeatureInfo&version=1.3.0&layers=wind_speed_hagl_ms_wrong_dim_order&query_layers=wind_speed_hagl_ms_wrong_dim_order&crs=EPSG%3A3857&bbox=-20378.42428384231%2C5273127.343490437%2C1263825.4854055976%2C8560812.833440565&width=416&height=1065&i=172.99996948242188&j=561&format=image%2Fgif&info_format=application%2Fjson&dim_reference_time=2024-06-05T03%3A00%3A00Z&time=1000-01-01T00%3A00%3A00Z%2F3000-01-01T00%3A00%3A00Z&dim_member=*",
+            {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml"},
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
+
 
     def test_timeseries_adaguc_tests_arcus_uwcw_wind_kts_to_ms_member_3(self):
         AdagucTestTools().cleanTempDir()

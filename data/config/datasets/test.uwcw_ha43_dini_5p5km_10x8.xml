@@ -1,7 +1,6 @@
 <?xml version="1.0" ?>
 <Configuration>
-  <Include location="/data/adaguc-datasets/includes/StandardStyles_WIK.xml"/>
-  
+ 
   <OgcApiFeatures/>
   <OgcApiEdr>
     <EdrCollection name="uwcw_ha43_dini_5p5km_pl" vertical_name="pressure_level_in_hpa">
