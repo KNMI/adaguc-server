@@ -57,7 +57,6 @@ private:
   typedef std::map<std::string, CURFileInfo *>::iterator it_type_file;
   CT::string dimensionKeys[CCUniqueRequests_MAX_DIMS];
   int dimOrdering[CCUniqueRequests_MAX_DIMS];
-  int dimOrdering_reversed[CCUniqueRequests_MAX_DIMS];
   int *getDimOrder() { return dimOrdering; }
   std::vector<CURResult *> results;
   CURAggregatedDimension *dimensions[CCUniqueRequests_MAX_DIMS];

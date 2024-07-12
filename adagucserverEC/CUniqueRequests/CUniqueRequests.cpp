@@ -165,82 +165,6 @@ void CURUniqueRequests::sortAndAggregate() {
   }
 }
 
-void CURUniqueRequests::expandData(CDataSource *dataSource, CDataSource::DataObject *dataObject, CDF::Variable *variable, size_t *start, size_t *count, int dimensionIndexDepth, CURRequest *request,
-                                   int index, int *multiplies) {
-
-  int numberOfDims = dataSource->requiredDims.size();
-  if (dimensionIndexDepth < numberOfDims) {
-    CT::string dimNameToFind = dataSource->requiredDims[dimOrdering_reversed[dimensionIndexDepth]]->netCDFDimName.c_str();
-    int requestDimIndex = -1;
-    for (int i = 0; i < request->numDims; i++) {
-      if (request->dimensions[i]->name.equals(dimNameToFind.c_str())) {
-        requestDimIndex = i;
-      }
-    }
-    if (requestDimIndex == -1) {
-      CDBError("Unable to find dimension %s in request", dimNameToFind.c_str());
-      throw(__LINE__);
-    }
-    int variableDimIndex = variable->getDimensionIndexNE(dimNameToFind);
-    size_t countForDimension = 1;
-
-    if (variableDimIndex != -1) {
-      countForDimension = count[variableDimIndex];
-    }
-
-    if (countForDimension != request->dimensions[requestDimIndex]->values.size()) {
-      CDBError("count[countForDimension]!=request->dimensions[requestDimIndex]->values.size() %d / %d for %s", countForDimension, request->dimensions[requestDimIndex]->values.size(),
-               request->dimensions[requestDimIndex]->name.c_str());
-      throw(__LINE__);
-    }
-
-    for (size_t j = 0; j < request->dimensions[requestDimIndex]->values.size(); j++) {
-      // CDBDebug(" ***************** %d %d = %s = %s with index %d", j, d, request->dimensions[requestDimIndex]->name.c_str(), request->dimensions[requestDimIndex]->values[j].dimValue.c_str(),
-      //          request->dimensions[requestDimIndex]->values[j].dimIndex);
-      dimensionKeys[dimOrdering_reversed[dimensionIndexDepth]] = request->dimensions[requestDimIndex]->values[j].c_str();
-      int in = dimOrdering_reversed[dimensionIndexDepth];
-      size_t nextIndex1 = j * multiplies[in] + index;
-      expandData(dataSource, dataObject, variable, start, count, dimensionIndexDepth + 1, request, nextIndex1, multiplies);
-    }
-  } else {
-
-    double pixel = CImageDataWriter::convertValue(variable->getType(), variable->data, index);
-
-    CT::string dataAsString = "nodata";
-    if ((pixel != dataObject->dfNodataValue && dataObject->hasNodataValue == true && pixel == pixel) || dataObject->hasNodataValue == false) {
-
-      // dataAsString.print("%f",data[index]);
-      if (dataObject->hasStatusFlag) {
-        CT::string flagMeaning;
-        CDataSource::getFlagMeaningHumanReadable(&flagMeaning, &dataObject->statusFlagList, pixel);
-        dataAsString.print("%s (%d)", flagMeaning.c_str(), (int)pixel);
-      } else {
-
-        dataAsString.print("%f", pixel);
-        // dataAsString.print("%0.2f [%d]  ", pixel, index);
-        // for (const std::string &s : debug) {
-        //   dataAsString.printconcat("[%s] - ", s.c_str());
-        // }
-      }
-    }
-    // CDBDebug("VAL [%s][%d][%f]",p.c_str(),index,data[index]);
-    CURResult *result = new CURResult(this);
-
-    for (int dimnr = 0; dimnr < numberOfDims; dimnr++) {
-      result->dimensionKeys[dimnr] = dimensionKeys[dimnr].c_str();
-      // result->dimensionKeys[dimnr].concat("B");
-    }
-    // result->dimensionKeys[0] = dimensionKeys[2].c_str();
-    // result->dimensionKeys[1] = dimensionKeys[1].c_str();
-    // result->dimensionKeys[2] = dimensionKeys[3].c_str();
-    // result->dimensionKeys[3] = dimensionKeys[0].c_str();
-
-    result->value = dataAsString.c_str();
-    result->numDims = numberOfDims;
-    results.push_back(result);
-  }
-}
-
 void CURUniqueRequests::recurDataStructure(CXMLParser::XMLElement *dataStructure, CURResult *result, int depth, int *dimOrdering, std::vector<int> dimIndicesToSkip) {
   int dimIndex = dimOrdering[depth];
 
@@ -353,13 +277,10 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
       break;
     }
   }
-  for (int dimnr = 0; dimnr < numberOfDataSourceDims; dimnr++) {
-    dimOrdering_reversed[dimnr] = dimOrdering[numberOfDataSourceDims - 1 - dimnr];
-  }
 
 #ifdef CCUniqueRequests_DEBUG
   for (int dimnr = 0; dimnr < numberOfDataSourceDims; dimnr++) {
-    CDBDebug("New order = %d/%d/%d = [%s]", dimnr, dimOrdering[dimnr], dimOrdering_reversed[dimnr], dataSource->requiredDims[dimOrdering[dimnr]]->name.c_str());
+    CDBDebug("New order = %d/%d = [%s]", dimnr, dimOrdering[dimnr], dataSource->requiredDims[dimOrdering[dimnr]]->name.c_str());
   }
 #endif
 
@@ -576,7 +497,58 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
                 multiplies[d] = m;
               }
 
-              expandData(dataSource, dataObject, variable, start, count, 0, request, 0, multiplies);
+              for (size_t indexInVariable = 0; indexInVariable < variable->getSize(); indexInVariable++) {
+
+                CURResult *currentResultForIndex = new CURResult(this);
+                results.push_back(currentResultForIndex);
+
+                // Set the number of dimensions
+                currentResultForIndex->numDims = numberOfDataSourceDims;
+
+                // Fill in the dimension keys
+                for (size_t dataSourceDimIndex = 0; dataSourceDimIndex < dataSource->requiredDims.size(); dataSourceDimIndex++) {
+                  CT::string requestDimNameToFind = dataSource->requiredDims[dataSourceDimIndex]->netCDFDimName.c_str();
+                  currentResultForIndex->dimensionKeys[dataSourceDimIndex] = dataSource->requiredDims[dataSourceDimIndex]->value;
+                  int variableDimIndex = -1;
+                  for (size_t d = 0; d < variable->dimensionlinks.size() - 2; d += 1) {
+                    if (variable->dimensionlinks[d]->name.equals(requestDimNameToFind)) {
+                      variableDimIndex = d;
+                    }
+                  }
+                  if (variableDimIndex != -1) {
+                    int requestDimIndex = -1;
+                    for (int i = 0; i < request->numDims; i++) {
+                      if (request->dimensions[i]->name.equals(requestDimNameToFind.c_str())) {
+                        requestDimIndex = i;
+                      }
+                    }
+                    if (requestDimIndex == -1) {
+                      CDBError("Unable to find dimension %s in request", requestDimNameToFind.c_str());
+                      throw(__LINE__);
+                    }
+                    auto values = request->dimensions[requestDimIndex]->values;
+                    size_t numValues = values.size();
+                    size_t multiplyIndex = multiplies[variableDimIndex];
+                    CT::string dimStr = values[(indexInVariable / multiplyIndex) % numValues].c_str();
+                    currentResultForIndex->dimensionKeys[dataSourceDimIndex] = dimStr;
+                  }
+                }
+
+                double pixelValueAtIndex = CImageDataWriter::convertValue(variable->getType(), variable->data, indexInVariable);
+                CT::string pixelValueAsString = "nodata";
+                if ((pixelValueAtIndex != dataObject->dfNodataValue && dataObject->hasNodataValue == true && pixelValueAtIndex == pixelValueAtIndex) || dataObject->hasNodataValue == false) {
+                  if (dataObject->hasStatusFlag) {
+                    CT::string flagMeaning;
+                    CDataSource::getFlagMeaningHumanReadable(&flagMeaning, &dataObject->statusFlagList, pixelValueAtIndex);
+                    pixelValueAsString.print("%s (%d)", flagMeaning.c_str(), (int)pixelValueAtIndex);
+                  } else {
+                    pixelValueAsString.print("%f", pixelValueAtIndex);
+                  }
+                }
+
+                // Set the value
+                currentResultForIndex->value = pixelValueAsString;
+              }
             } catch (int e) {
               CDBError("Error in expandData at line %d", e);
               throw(__LINE__);

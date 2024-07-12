@@ -1,5 +1,8 @@
+**Version 2.25.0 2024-07-11**
+- Fixed issue in EDR position / timeseries functionality via WMS GetFeatureInfo on multidimensional data when selecting multiple elevations at the same time. Added testcases for testing timeseries.
+
 **Version 2.24.0 2024-07-09**
-- Statuscode is now kept to 200 for GetCapabilities and the corresponding error message for the specific layer is embedded in the document
+- Fixed occasional 404's in GetCapabilities: Statuscode is now kept to 200 for GetCapabilities and the corresponding error message for the specific layer is embedded in the document
 
 **Version 2.23.0 2024-06-07**
 - DataPostProcessor `windspeed_knots_to_ms` was added to convert knots to meters per second, use `<DataPostProc algorithm="windspeed_knots_to_ms"/>`
@@ -24,7 +27,6 @@
 - Added support for Redis caching. Redis caching can be enabled by providing a Redis service via the ADAGUC_REDIS environment and configuring caching settings for a dataset in the [Settings](doc/configuration/Settings.md) element.
 - Improved speed of EDR service and added support to cache EDR calls
 - Various performance improvements
-
 
 **Version 2.20.2 2024-02-28**
 - Removed locking mechanism

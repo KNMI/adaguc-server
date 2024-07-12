@@ -3256,12 +3256,12 @@ int CRequest::process_querystring() {
           }
 
           if (srvParam->OGCVersion == WMS_VERSION_1_3_0) {
-            if (dFound_I == 0) {
-              CDBError("ADAGUC Server: Parameter I missing");
+            if (dFound_I == 0 && dFound_X == 0) {
+              CDBError("ADAGUC Server: Parameter I or X missing");
               dErrorOccured = 1;
             }
-            if (dFound_J == 0) {
-              CDBError("ADAGUC Server: Parameter J missing");
+            if (dFound_J == 0 && dFound_Y == 0) {
+              CDBError("ADAGUC Server: Parameter J or Y missing");
               dErrorOccured = 1;
             }
           }
