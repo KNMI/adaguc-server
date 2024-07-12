@@ -44,7 +44,7 @@ click==8.1.7
     # via
     #   geomet
     #   uvicorn
-covjson-pydantic==0.2.1
+covjson-pydantic==0.3.0
     # via -r requirements.in
 defusedxml==0.7.1
     # via -r requirements.in
