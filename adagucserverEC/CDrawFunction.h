@@ -36,6 +36,8 @@ public:
   float legendScale;
   float legendOffset;
   CDrawImage *drawImage;
+  float *smoothingDistanceMatrix = nullptr;
+  int smoothingFiter = 0;
 };
 
 CDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawImage *drawImage, const CStyleConfiguration *styleConfiguration);

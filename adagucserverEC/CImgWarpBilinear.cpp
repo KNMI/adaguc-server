@@ -38,6 +38,7 @@
 #endif
 
 #include "CImgRenderFieldVectors.h"
+#include "CImageOperators/smoothRasterField.h"
 
 const char *CImgWarpBilinear::className = "CImgWarpBilinear";
 void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CDrawImage *drawImage) {
@@ -299,7 +300,7 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
 #ifdef CImgWarpBilinear_DEBUG
     CDBDebug("start smoothing data with filter %d", smoothingFilter);
 #endif
-    smoothData(fpValues, fNodataValue, smoothingFilter, dPixelDestW + 1, dPixelDestH + 1);
+    smoothRasterField(fpValues, fNodataValue, smoothingFilter, dPixelDestW + 1, dPixelDestH + 1);
 
     // Draw the obtained raster by using triangle tesselation (eg gouraud shading)
     int xP[4], yP[4];
@@ -512,68 +513,6 @@ unsigned short CImgWarpBilinear::checkIfContourRequired(float *val) {
   }
 
   return 0;
-}
-
-void CImgWarpBilinear::smoothData(float *valueData, float fNodataValue, int smoothWindow, int W, int H) {
-
-// SmootH!
-#ifdef CImgWarpBilinear_TIME
-  StopWatch_Stop("[SmoothData]");
-#endif
-  if (smoothWindow == 0) return; // No smoothing.
-  size_t drawImageSize = W * H;
-  float *valueData2 = new float[W * H];
-  int smw = smoothWindow;
-  // Create distance window;
-  float distanceWindow[(smw + 1) * 2 * (smw + 1) * 2];
-  float distanceAmmount = 0;
-  int dWinP = 0;
-  for (int y1 = -smw; y1 < smw + 1; y1++) {
-    for (int x1 = -smw; x1 < smw + 1; x1++) {
-      float d = sqrt(x1 * x1 + y1 * y1);
-      // d=d*8;
-
-      d = 1 / (d + 1);
-      // d=1;
-      distanceWindow[dWinP++] = d;
-      distanceAmmount += d;
-    }
-  }
-
-  float d;
-  for (int y = 0; y < H; y++) {
-    for (int x = 0; x < W; x++) {
-      size_t p = size_t(x + y * W);
-      if (valueData[p] != fNodataValue) {
-        dWinP = 0;
-        distanceAmmount = 0;
-        valueData2[p] = 0;
-        for (int y1 = -smw; y1 < smw + 1; y1++) {
-          size_t yp = y1 * W;
-          for (int x1 = -smw; x1 < smw + 1; x1++) {
-            if (x1 + x < W && y1 + y < H && x1 + x >= 0 && y1 + y >= 0) {
-              float val = valueData[p + x1 + yp];
-              if (val != fNodataValue) {
-                d = distanceWindow[dWinP];
-                distanceAmmount += d;
-                valueData2[p] += val * d;
-              }
-            }
-            dWinP++;
-          }
-        }
-        if (distanceAmmount > 0) valueData2[p] /= distanceAmmount;
-      } else
-        valueData2[p] = fNodataValue;
-    }
-  }
-  for (size_t p = 0; p < drawImageSize; p++) {
-    valueData[p] = valueData2[p];
-  }
-  delete[] valueData2;
-#ifdef CImgWarpBilinear_TIME
-  StopWatch_Stop("[/SmoothData]");
-#endif
 }
 
 int CImgWarpBilinear::set(const char *pszSettings) {

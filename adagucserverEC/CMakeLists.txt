@@ -118,6 +118,8 @@ add_library(
     CHandleMetadata.h
     CImageDataWriter.cpp
     CImageDataWriter.h
+    CImageOperators/smoothRasterField.h
+    CImageOperators/smoothRasterField.cpp
     CImageWarper.cpp
     CImageWarper.h
     CImgRenderPolylines.cpp

@@ -29,26 +29,18 @@
 
 #include "CImageWarperRenderInterface.h"
 #include "CGenericDataWarper.h"
+#include "CDrawFunction.h"
+#include "CImageOperators/smoothRasterField.h"
 
 static inline int nfast_mod(const int input, const int ceil) { return input >= ceil ? input % ceil : input; }
 
 class CImgWarpGeneric : public CImageWarperRenderInterface {
 private:
   DEF_ERRORFUNCTION();
-  class Settings {
-  public:
-    double dfNodataValue;
-    double legendValueRange;
-    double legendLowerRange;
-    double legendUpperRange;
-    bool hasNodataValue;
-    float *dataField;
-    int width, height;
-  };
 
   template <class T> static void drawFunction(int x, int y, T val, void *_settings, void *g) {
-    Settings *drawSettings = static_cast<Settings *>(_settings);
-    if (x < 0 || y < 0 || x > drawSettings->width || y > drawSettings->height) return;
+    CDrawFunctionSettings *drawSettings = static_cast<CDrawFunctionSettings *>(_settings);
+    if (x < 0 || y < 0 || x > drawSettings->drawImage->Geo->dWidth || y > drawSettings->drawImage->Geo->dHeight) return;
     GenericDataWarper *genericDataWarper = static_cast<GenericDataWarper *>(g);
     bool isNodata = false;
     if (drawSettings->hasNodataValue) {
@@ -64,21 +56,31 @@ private:
 
       if (sourceDataPY > sourceDataHeight - 1) return;
       if (sourceDataPX > sourceDataWidth - 1) return;
+      if (x >= 0 && y >= 0 && x < (int)drawSettings->drawImage->Geo->dWidth && y < (int)drawSettings->drawImage->Geo->dHeight) {
+        T values[2][2] = {{0, 0}, {0, 0}};
+        if (drawSettings->smoothingFiter == 0) {
 
-      T values[2][2] = {{0, 0}, {0, 0}};
+          values[0][0] += ((T *)sourceData)[nfast_mod(sourceDataPX + 0, sourceDataWidth) + nfast_mod(sourceDataPY + 0, sourceDataHeight) * sourceDataWidth];
+          values[1][0] += ((T *)sourceData)[nfast_mod(sourceDataPX + 1, sourceDataWidth) + nfast_mod(sourceDataPY + 0, sourceDataHeight) * sourceDataWidth];
+          values[0][1] += ((T *)sourceData)[nfast_mod(sourceDataPX + 0, sourceDataWidth) + nfast_mod(sourceDataPY + 1, sourceDataHeight) * sourceDataWidth];
+          values[1][1] += ((T *)sourceData)[nfast_mod(sourceDataPX + 1, sourceDataWidth) + nfast_mod(sourceDataPY + 1, sourceDataHeight) * sourceDataWidth];
+        } else {
+          values[0][0] = smoothingAtLocation((float *)sourceData, drawSettings->smoothingDistanceMatrix, drawSettings->smoothingFiter, (float)drawSettings->dfNodataValue, sourceDataPX, sourceDataPY,
+                                             sourceDataWidth, sourceDataHeight);
+          values[1][0] = smoothingAtLocation((float *)sourceData, drawSettings->smoothingDistanceMatrix, drawSettings->smoothingFiter, (float)drawSettings->dfNodataValue, sourceDataPX + 1,
+                                             sourceDataPY, sourceDataWidth, sourceDataHeight);
+          values[0][1] = smoothingAtLocation((float *)sourceData, drawSettings->smoothingDistanceMatrix, drawSettings->smoothingFiter, (float)drawSettings->dfNodataValue, sourceDataPX,
+                                             sourceDataPY + 1, sourceDataWidth, sourceDataHeight);
+          values[1][1] = smoothingAtLocation((float *)sourceData, drawSettings->smoothingDistanceMatrix, drawSettings->smoothingFiter, (float)drawSettings->dfNodataValue, sourceDataPX + 1,
+                                             sourceDataPY + 1, sourceDataWidth, sourceDataHeight);
+        }
 
-      values[0][0] += ((T *)sourceData)[nfast_mod(sourceDataPX + 0, sourceDataWidth) + nfast_mod(sourceDataPY + 0, sourceDataHeight) * sourceDataWidth];
-      values[1][0] += ((T *)sourceData)[nfast_mod(sourceDataPX + 1, sourceDataWidth) + nfast_mod(sourceDataPY + 0, sourceDataHeight) * sourceDataWidth];
-      values[0][1] += ((T *)sourceData)[nfast_mod(sourceDataPX + 0, sourceDataWidth) + nfast_mod(sourceDataPY + 1, sourceDataHeight) * sourceDataWidth];
-      values[1][1] += ((T *)sourceData)[nfast_mod(sourceDataPX + 1, sourceDataWidth) + nfast_mod(sourceDataPY + 1, sourceDataHeight) * sourceDataWidth];
-
-      if (x >= 0 && y >= 0 && x < (int)drawSettings->width && y < (int)drawSettings->height) {
         float dx = genericDataWarper->tileDx;
         float dy = genericDataWarper->tileDy;
         float gx1 = (1 - dx) * values[0][0] + dx * values[1][0];
         float gx2 = (1 - dx) * values[0][1] + dx * values[1][1];
         float bilValue = (1 - dy) * gx1 + dy * gx2;
-        drawSettings->dataField[x + y * drawSettings->width] = bilValue;
+        setPixelInDrawImage(x, y, bilValue, drawSettings);
       }
     }
   };

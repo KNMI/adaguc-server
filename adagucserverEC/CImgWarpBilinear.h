@@ -259,7 +259,6 @@ public:
   }
 
   void drawContour(float *valueData, float fNodataValue, float interval, CDataSource *dataSource, CDrawImage *drawImage, bool drawLine, bool drawShade, bool drawText);
-  void smoothData(float *valueData, float fNodataValue, int smoothWindow, int W, int H);
 };
 
 #endif

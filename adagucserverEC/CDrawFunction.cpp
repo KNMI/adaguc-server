@@ -1,4 +1,5 @@
 #include "CDrawFunction.h"
+#include "CImageOperators/smoothRasterField.h"
 
 CDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawImage *drawImage, const CStyleConfiguration *styleConfiguration) {
   CDrawFunctionSettings settings;
@@ -43,5 +44,8 @@ CDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawImag
       }
     }
   }
+
+  settings.smoothingFiter = 2;
+  settings.smoothingDistanceMatrix = smoothingMakeDistanceMatrix(settings.smoothingFiter);
   return settings;
 }

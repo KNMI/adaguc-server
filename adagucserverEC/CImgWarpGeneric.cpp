@@ -26,6 +26,7 @@
 #include "CImgWarpGeneric.h"
 #include "CImageDataWriter.h"
 #include "CGenericDataWarper.h"
+#include "CImageOperators/smoothRasterField.h"
 
 const char *CImgWarpGeneric::className = "CImgWarpGeneric";
 
@@ -36,26 +37,27 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
   void *sourceData;
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-  Settings settings;
-  settings.dfNodataValue = dataSource->getDataObject(0)->dfNodataValue;
-  settings.legendValueRange = (bool)styleConfiguration->hasLegendValueRange;
-  settings.legendLowerRange = styleConfiguration->legendLowerRange;
-  settings.legendUpperRange = styleConfiguration->legendUpperRange;
-  settings.hasNodataValue = dataSource->getDataObject(0)->hasNodataValue;
+  // Settings settings;
+  CDrawFunctionSettings settings = getDrawFunctionSettings(dataSource, drawImage, styleConfiguration);
+  // settings.dfNodataValue = dataSource->getDataObject(0)->dfNodataValue;
+  // settings.legendValueRange = (bool)styleConfiguration->hasLegendValueRange;
+  // settings.legendLowerRange = styleConfiguration->legendLowerRange;
+  // settings.legendUpperRange = styleConfiguration->legendUpperRange;
+  // settings.hasNodataValue = dataSource->getDataObject(0)->hasNodataValue;
 
-  if (!settings.hasNodataValue) {
-    settings.hasNodataValue = true;
-    settings.dfNodataValue = -100000.f;
-  }
-  settings.width = drawImage->Geo->dWidth;
-  settings.height = drawImage->Geo->dHeight;
+  // if (!settings.hasNodataValue) {
+  //   settings.hasNodataValue = true;
+  //   settings.dfNodataValue = -100000.f;
+  // }
+  // settings.width = drawImage->Geo->dWidth;
+  // settings.height = drawImage->Geo->dHeight;
 
-  settings.dataField = new float[settings.width * settings.height];
-  for (int y = 0; y < settings.height; y++) {
-    for (int x = 0; x < settings.width; x++) {
-      settings.dataField[x + y * settings.width] = (float)settings.dfNodataValue;
-    }
-  }
+  // float *dataField = new float[settings.drawImage->Geo->dWidth * settings.drawImage->Geo->dHeight];
+  // for (int y = 0; y < settings.drawImage->Geo->dHeight; y++) {
+  //   for (int x = 0; x < settings.drawImage->Geo->dWidth; x++) {
+  //     dataField[x + y * settings.drawImage->Geo->dWidth] = (float)settings.dfNodataValue;
+  //   }
+  // }
 
   CDFType dataType = dataSource->getDataObject(0)->cdfVariable->getType();
   sourceData = dataSource->getDataObject(0)->cdfVariable->data;
@@ -102,22 +104,22 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
     break;
   }
 
-  for (int y = 0; y < (int)settings.height; y = y + 1) {
-    for (int x = 0; x < (int)settings.width; x = x + 1) {
-      float val = settings.dataField[x + y * settings.width];
-      if (val != (float)settings.dfNodataValue && val == val) {
-        if (styleConfiguration->legendLog != 0) val = log10(val + .000001) / log10(styleConfiguration->legendLog);
-        val *= styleConfiguration->legendScale;
-        val += styleConfiguration->legendOffset;
-        if (val >= 239)
-          val = 239;
-        else if (val < 0)
-          val = 0;
-        drawImage->setPixelIndexed(x, y, (unsigned char)val);
-      }
-    }
-  }
-  delete[] settings.dataField;
+  // for (int y = 0; y < settings.drawImage->Geo->dHeight; y = y + 1) {
+  //   for (int x = 0; x < settings.drawImage->Geo->dWidth; x = x + 1) {
+  //     float val = dataField[x + y * settings.drawImage->Geo->dWidth];
+  //     if (val != (float)settings.dfNodataValue && val == val) {
+  //       if (styleConfiguration->legendLog != 0) val = log10(val + .000001) / log10(styleConfiguration->legendLog);
+  //       val *= styleConfiguration->legendScale;
+  //       val += styleConfiguration->legendOffset;
+  //       if (val >= 239)
+  //         val = 239;
+  //       else if (val < 0)
+  //         val = 0;
+  //       drawImage->setPixelIndexed(x, y, (unsigned char)val);
+  //     }
+  //   }
+  // }
+  // delete[] dataField;
   // CDBDebug("render done");
   return;
 }
