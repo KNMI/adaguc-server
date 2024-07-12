@@ -34,7 +34,7 @@ logger.debug("Starting EDR")
 
 @router.get(
     "/collections/{collection_name}/cube",
-    response_model=CoverageCollection,
+    response_model=Union[CoverageCollection, Coverage],
     response_class=CovJSONResponse,
     response_model_exclude_none=True,
 )
@@ -64,7 +64,7 @@ async def get_collection_cube(
 
 @router.get(
     "/collections/{collection_name}/instances/{instance}/cube",
-    response_model=CoverageCollection,
+    response_model=Union[CoverageCollection, Coverage],
     response_class=CovJSONResponse,
     response_model_exclude_none=True,
 )
@@ -168,5 +168,8 @@ async def get_coll_inst_cube(
             if coveragejson is not None:
                 coveragejsons.append(coveragejson)
                 parameters = parameters | coveragejson.parameters
+
+    if len(coveragejsons) == 1:
+        return coveragejsons[0]
 
     return CoverageCollection(coverages=coveragejsons, parameters=parameters)
