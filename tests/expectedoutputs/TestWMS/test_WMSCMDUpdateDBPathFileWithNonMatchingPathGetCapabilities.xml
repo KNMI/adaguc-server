@@ -15,7 +15,7 @@
         <KeywordList>
             <Keyword>view</Keyword>
             <Keyword>infoMapAccessService</Keyword>
-            <Keyword>ADAGUCServer version 2.13.1, of Sep 26 2023 11:14:12 </Keyword>
+            <Keyword>ADAGUCServer version 2.23.0, of Jul  9 2024 12:13:41 </Keyword>
         </KeywordList>
         <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.testScanPathSubfolderSuffix&amp;SERVICE=WMS&amp;"/>
         <ContactInformation>
@@ -60,6 +60,8 @@
         <UserDefinedSymbolization SupportSLD="1" />
 <Layer>
 <Title>WMS of  adaguc.testScanPathSubfolderSuffix</Title>
+
+<!-- Note: Error: Layer [RAD_NL25_PCP_CM] is misconfigured -->
     </Layer>
   </Capability>
 </WMS_Capabilities>
