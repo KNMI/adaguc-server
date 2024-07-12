@@ -1,5 +1,9 @@
 #  Configuration options to enable EDR collections
 
+An EDR service by ADAGUC currently supports the /instances call to retrieve the model_runs (treating the forecast_reference_time as instance name), the /position call for timeseries and point data and the /cube call for extracting 2d/3d data slices.
+
+Data output is in CoverageJSON
+
 [Back to main configuration](../Configuration.md)
 
 For a tutorial on EDR configuration, please check [Configure_EDR_service](../../tutorials/Configure_EDR_service.md)
@@ -34,6 +38,3 @@ EdrParameter:
 - observed_property_label?: Observed property label (for covjson)
 
 
-An EDR service by ADAGUC currently supports the /instances call to retrieve the model_runs (treating the forecast_reference_time as instance name), the /position call for timeseries and point data and the /cube call for extracting 2d/3d data slices.
-
-Data output is in CoverageJSON

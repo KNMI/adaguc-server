@@ -26,7 +26,7 @@ from covjson_pydantic.unit import Unit as CovJsonUnit
 from pydantic import AwareDatetime
 
 from .edr_exception import EdrException
-from .edr_utils import get_edr_collections, get_param_metadata
+from .edr_utils import get_param_metadata
 
 SYMBOL_TYPE_URL = "http://www.opengis.net/def/uom/UCUM"
 

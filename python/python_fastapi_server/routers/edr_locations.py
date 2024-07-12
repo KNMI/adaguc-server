@@ -8,9 +8,8 @@ Author: Ernst de Vreede, 2023-11-23
 KNMI
 """
 
-from fastapi import APIRouter
-
 import logging
+from fastapi import APIRouter
 
 router = APIRouter()
 logger = logging.getLogger(__name__)

@@ -33,6 +33,9 @@ from .ogcapi_tools import call_adaguc
 
 logger = logging.getLogger(__name__)
 
+
+SYMBOL_TYPE_URL = "http://www.opengis.net/def/uom/UCUM"
+
 # The edr_collections information is cached locally for a maximum of 2 minutes
 # It will be refreshed if older than 2 minutes
 edr_cache = TTLCache(maxsize=100, ttl=120)  # TODO: Redis?
@@ -451,6 +454,9 @@ async def get_collectioninfo_for_id(
 
 
 def parse_period_string(period: str):
+    """
+    Parse an ISO8601 period string (for example P60M) and return a relativedelta
+    """
     if period.startswith("PT"):
         pattern = re.compile(r"""PT(\d+)([HMS])""")
         match = pattern.match(period)
@@ -478,6 +484,15 @@ def parse_period_string(period: str):
 
 
 def parse_interval_string(time_interval: str, ref_time: datetime):
+    """
+    Parse an interval string and return an array of time values
+
+    The interval string has the format "R<repeat>/{reference_time}+1/<period> or
+    R<repeat>/2024-06-01T00:00:00Z/<period>
+    where repeat is the number of repeats/values,
+    {reference_time} is a placeholder that gets replaced with the actual reference_time,
+    period is an ISO8601 repeat period (for example PT60M)
+    """
     offset_steps = 0
     time_interval_term = time_interval.split("/")[1]
     offset_pattern = re.compile(r"""(\{.*\})((-|\+)(\d+))""")
@@ -527,9 +542,6 @@ def create_times_for_instance(edr_collectioninfo: dict, instance: str):
         times,
     )
     return interval, times
-
-
-SYMBOL_TYPE_URL = "http://www.opengis.net/def/uom/UCUM"
 
 
 def get_params_for_collection(

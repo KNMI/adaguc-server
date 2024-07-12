@@ -113,12 +113,14 @@ docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh edr
 
 ## Step 4: Check if the EDR endpoint works
 
+These examples test the /instances, /position and the /cube EDR calls
 
 Visit:
 - https://yourhostname/edr/collections/harmonie
 - https://yourhostname/edr/collections/harmonie/instances
 - https://yourhostname/edr/collections/harmonie/instances/?f=application/json
 - https:///yourhostname/edr/collections/harmonie/instances/201712150900/position?coords=POINT(4.782 52.128)&datetime=2017-12-15T09:00Z/2017-12-17T09:00Z&parameter-name=air_temperature__at_2m&crs=EPSG:4326&f=CoverageJSON
+- https:///yourhostname/edr/collections/harmonie/instances/201712150900/cube?bbox=5,52,7,54&datetime=2017-12-15T09:00Z/2017-12-17T09:00Z&parameter-name=air_temperature__at_2m&crs=EPSG:4326&f=CoverageJSON
 
 You can also try it in https://labs.metoffice.gov.uk/edr/static/html/query.html
 

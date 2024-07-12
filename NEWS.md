@@ -1,3 +1,6 @@
+**Version 2.26.0 2024-07-12**
+- Added EDR cube call for gridded datsets to ADAGUC.
+
 **Version 2.25.0 2024-07-11**
 - Fixed issue in EDR position / timeseries functionality via WMS GetFeatureInfo on multidimensional data when selecting multiple elevations at the same time. Added testcases for testing timeseries.
 
