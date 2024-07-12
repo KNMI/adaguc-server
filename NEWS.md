@@ -1,3 +1,6 @@
+**Version 2.27.0 2024-06-27**
+- Adds support for grids where the data cells are defined by lat_bnds and lon_bnds parameters describing the cell bounds.
+
 **Version 2.26.0 2024-07-12**
 - Added EDR cube call for gridded datsets to ADAGUC.
 
