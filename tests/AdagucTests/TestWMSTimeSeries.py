@@ -310,4 +310,11 @@ class TestWMSTimeSeries(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
+        print("---------------- 1 -----------------", file=sys.stderr)
+        print(json.loads(data.getvalue()), file=sys.stderr)
+        print("---------------- 2 -----------------", file=sys.stderr)
+        print(json.loads(AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)), file=sys.stderr)
+        print("---------------- 3 -----------------", file=sys.stderr)
         assert  json.loads(data.getvalue()) == json.loads(AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+        
+
