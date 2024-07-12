@@ -15,7 +15,7 @@
         <KeywordList>
             <Keyword>view</Keyword>
             <Keyword>infoMapAccessService</Keyword>
-            <Keyword>ADAGUCServer version 2.13.7, of Nov  1 2023 11:45:57 </Keyword>
+            <Keyword>ADAGUCServer version 2.23.0, of Jul  9 2024 12:13:41 </Keyword>
         </KeywordList>
         <OnlineResource xlink:type="simple" xlink:href="source=netcdf_5dims%2Fnetcdf_5dims_seq1%2Fnc_5D_20170101000000%2D20170101001000%2Enc&amp;SERVICE=WMS&amp;"/>
         <ContactInformation>
@@ -96,6 +96,10 @@
 <BoundingBox CRS="EPSG:900913" minx="-19201993.871211" miny="-22228632.557364" maxx="19982466.888021" maxy="34805382.412607" />
 <BoundingBox CRS="EPSG:3067" minx="-15931605.907041" miny="-19720315.591565" maxx="17051580.684528" maxy="19828593.536145" />
 <BoundingBox CRS="EPSG:4326" minx="89.511108" miny="-180.494446" maxx="-90.488892" maxy="179.505554" />
+
+<!-- Note: Error: Layer [geojsonbaselayer] is misconfigured -->
+
+<!-- Note: Error: Layer [geojsonoverlay] is misconfigured -->
 <Layer queryable="1" opaque="1" cascaded="0">
 <Name>data</Name>
 <Title>data</Title>
