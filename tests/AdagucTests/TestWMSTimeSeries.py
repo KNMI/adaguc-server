@@ -6,6 +6,7 @@ import json
 import os
 import os.path
 import unittest
+import sys
 from adaguc.AdagucTestTools import AdagucTestTools
 
 ADAGUC_PATH = os.environ["ADAGUC_PATH"]
@@ -309,7 +310,7 @@ class TestWMSTimeSeries(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        print(data.getvalue())
+        print(data.getvalue(), file=sys.stderr)
         self.assertEqual(
             data.getvalue(),
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
