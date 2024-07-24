@@ -350,6 +350,17 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesForIndices(CDataSource *dataSourc
 }
 
 CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSource *dataSource, int limit) {
+  /*
+  Build query to find combination of file paths and dimensions, by filtering on requested dimensions. Query has following form:
+
+    SELECT DISTINCT t1.path, <dimension 1 name>, dim<dimension 1 name>, ... FROM <table> t1
+    INNER JOIN <table for dimension n> tn ON t1.path = tn.path ...
+    WHERE <adaguc tiling query> AND <dimension 1 filter> ...
+    ORDER BY <dimensions> LIMIT <limit>
+
+  Returns the DBStore of this query.
+  */
+
 #ifdef MEASURETIME
   StopWatch_Stop(">CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions");
 #endif
@@ -373,23 +384,11 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
   std::map<CT::string, DimInfo> mapping =
       getTableNamesForPathFilterAndDimensions(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dims, dataSource);
 
-  // Create a mapping for filtering where key=dimension name, value=dimension value
-  // FIXME: merge with other mapping?
-  std::map<CT::string, CT::string *> dimMap;
+  // Create a mapping for filtering where key=dimension name, value=requested dimension value(s)
+  std::map<CT::string, CT::string *> requestedDimMap;
   for (const auto &dim : dataSource->requiredDims) {
-    CT::string queryParams(&dim->value);
-    // FIXME: should support filtering on multiple dim values when passing a list,of,values
-    CT::string *sDims = queryParams.splitToArray("/"); // Split up by slashes (and put into sDims)
-    // It is allowed to pass time as a range: start/end. If we do this, we assume to given value is datetime string
-
-    dimMap[dim->netCDFDimName.c_str()] = sDims;
+    requestedDimMap[dim->netCDFDimName.c_str()] = (&dim->value)->splitToArray(",");
   }
-
-  // Build query to find combination of file paths and dimensions, by filtering on dimensions. Query has following form:
-  //    SELECT DISTINCT t1.path, <dimension 1 name>, dim<dimension 1 name>, ... FROM <table> t1
-  //    INNER JOIN <table for dimension n> tn ON t1.path = tn.path ...
-  //    WHERE <adaguc tiling query> AND <dimension 1 filter> ...
-  //    ORDER BY <dimensions> LIMIT <limit>
 
   CT::string query;
   query.print("SELECT DISTINCT t1.path");
@@ -418,30 +417,42 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
 
   // Filter on the requested dimensions
   for (const auto &m : mapping) {
-
-    CT::string *dimVals = dimMap[m.first];
     const char *dimName = m.first.c_str();
     const char *tableName = m.second.tableName.c_str();
     CT::string dimDataType = m.second.dataType;
+    CT::string whereStatement;
+    CT::string *requestedDimVals = requestedDimMap[m.first];
 
-    if (dimVals->count == 1) {
-      if (dimVals[0].equals("*")) continue;
+    for (int i = 0; i < requestedDimVals->count; ++i) {
+      if (requestedDimVals[i].equals("*")) continue;
 
-      const char *dimVal = dimVals[0].c_str();
-
-      // If dimension value is a number, find closest value.
-      if (dimDataType.equals("real")) {
-        query.printconcat("AND ABS(%s - %s) = (SELECT MIN(ABS(%s - %s)) FROM %s) ", dimVal, dimName, dimVal, dimName, tableName);
-      } else {
-        query.printconcat("AND %s = '%s' ", dimName, dimVal);
+      if (i != 0) {
+        whereStatement.printconcat(" OR ");
       }
-    } else {
-      // Find value within range of dimVals[0] and dimVals[1]
-      // Get closest lowest value to this requested one, or if request value is way below get earliest value:
-      query.printconcat("AND %s >= (SELECT MAX(%s) FROM %s WHERE %s <= '%s' OR %s = (SELECT MIN(%s) FROM %s)) AND %s <= '%s' ", dimName, dimName, tableName, dimName, dimVals[0].c_str(), dimName,
-                        dimName, tableName, dimName, dimVals[1].c_str());
+
+      CT::string *dimVals = requestedDimVals[i].splitToArray("/");
+      if (dimVals->count == 1) {
+        const char *dimVal = dimVals[0].c_str();
+
+        // If dimension value is a number, find closest value.
+        if (dimDataType.equals("real")) {
+          whereStatement.printconcat("ABS(%s - %s) = (SELECT MIN(ABS(%s - %s)) FROM %s)", dimVal, dimName, dimVal, dimName, tableName);
+        } else {
+          whereStatement.printconcat("%s = '%s'", dimName, dimVal);
+        }
+      } else {
+        // Find value within range of dimVals[0] and dimVals[1]
+        // Get closest lowest value to this requested one, or if request value is way below get earliest value:
+        whereStatement.printconcat("%s >= (SELECT MAX(%s) FROM %s WHERE %s <= '%s' OR %s = (SELECT MIN(%s) FROM %s)) AND %s <= '%s'", dimName, dimName, tableName, dimName, dimVals[0].c_str(), dimName,
+                                   dimName, tableName, dimName, dimVals[1].c_str());
+      }
+      delete[] dimVals;
     }
-    delete[] dimVals;
+    if (!whereStatement.empty()) {
+      query.printconcat("AND (%s) ", whereStatement.c_str());
+    }
+
+    delete[] requestedDimVals;
   }
 
   // Order and limit query
@@ -626,8 +637,6 @@ std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAn
     - If no mapping found for all requested dimensions, check if the requested dimensions are in the sql lookup table
     - If the mapping is not complete, fill the lookuptable
   */
-
-  // FIXME: We assume dim is always lowercase. Should we manually lowercase everything in `dimensions`?
 
   std::map<CT::string, DimInfo> mapping;
 
