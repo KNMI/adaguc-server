@@ -1,3 +1,12 @@
+**Version 2.26.0 2024-07-12**
+- Added EDR cube call for gridded datsets to ADAGUC.
+
+**Version 2.25.0 2024-07-11**
+- Fixed issue in EDR position / timeseries functionality via WMS GetFeatureInfo on multidimensional data when selecting multiple elevations at the same time. Added testcases for testing timeseries.
+
+**Version 2.24.0 2024-07-09**
+- Fixed occasional 404's in GetCapabilities: Statuscode is now kept to 200 for GetCapabilities and the corresponding error message for the specific layer is embedded in the document
+
 **Version 2.23.0 2024-06-07**
 - DataPostProcessor `windspeed_knots_to_ms` was added to convert knots to meters per second, use `<DataPostProc algorithm="windspeed_knots_to_ms"/>`
 - TimeSeries fetching with GetFeatureInfo now support multimodel ensembles
@@ -6,6 +15,9 @@
 **Version 2.22.0 2024-05-22**
 - EDR: Parameters can now be detailed with metadata like standard_names and units: https://github.com/KNMI/adaguc-server/issues/359. 
 - See [Configure_EDR_service](doc/tutorials/Configure_EDR_service.md) for details.
+
+**Version 2.21.3 2024-04-26**
+- Fixed intermittent issue with ODIM reader being enabled/disabled for hdf files
 
 **Version 2.21.2 2024-04-26**
 - When using docker compose the Redis container now automatically starts when system restarts
@@ -18,7 +30,6 @@
 - Added support for Redis caching. Redis caching can be enabled by providing a Redis service via the ADAGUC_REDIS environment and configuring caching settings for a dataset in the [Settings](doc/configuration/Settings.md) element.
 - Improved speed of EDR service and added support to cache EDR calls
 - Various performance improvements
-
 
 **Version 2.20.2 2024-02-28**
 - Removed locking mechanism

@@ -1,12 +1,12 @@
 ######### First stage (build) ############
-FROM python:3.10-slim-bookworm as build
+FROM python:3.10-slim-bookworm AS build
 
 USER root
 
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
-LABEL version="2.23.0"
+LABEL version="2.26.0"
 
 # Try to update image packages
 RUN apt-get -q -y update \
@@ -48,7 +48,7 @@ RUN bash compile.sh
 
 
 ######### Second stage, base image for test and prod ############
-FROM python:3.10-slim-bookworm as base
+FROM python:3.10-slim-bookworm AS base
 
 USER root
 
@@ -105,7 +105,7 @@ RUN bash runtests.sh
 RUN echo "TESTSDONE" >  /adaguc/adaguc-server-master/testsdone.txt
 
 ######### Fourth stage, prod ############
-FROM base as prod
+FROM base AS prod
 
 # Set same uid as vivid
 RUN useradd -m adaguc -u 1000 && \

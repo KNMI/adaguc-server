@@ -6,6 +6,7 @@ import json
 import os
 import os.path
 import unittest
+import sys
 from adaguc.AdagucTestTools import AdagucTestTools
 
 ADAGUC_PATH = os.environ["ADAGUC_PATH"]
@@ -220,6 +221,34 @@ class TestWMSTimeSeries(unittest.TestCase):
         )
 
 
+    def test_timeseries_adaguc_tests_arcus_uwcw_wind_kts_to_ms_wind_speed_hagl_ms_wrong_dim_order(self):
+        AdagucTestTools().cleanTempDir()
+
+        config = (
+            ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,"
+            + ADAGUC_PATH
+            + "/data/config/datasets/adaguc.tests.arcus_uwcw.xml"
+        )
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=["--updatedb", "--config", config], env=self.env, isCGI=False
+        )
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSGetFeatureInfoTimeSeries_arcus_uwcw_wind_speed_hagl_convertedtoms_wrong_order.json"
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.tests.arcus_uwcw&service=WMS&request=GetFeatureInfo&version=1.3.0&layers=wind_speed_hagl_ms_wrong_dim_order&query_layers=wind_speed_hagl_ms_wrong_dim_order&crs=EPSG%3A3857&bbox=-20378.42428384231%2C5273127.343490437%2C1263825.4854055976%2C8560812.833440565&width=416&height=1065&i=172.99996948242188&j=561&format=image%2Fgif&info_format=application%2Fjson&dim_reference_time=2024-06-05T03%3A00%3A00Z&time=1000-01-01T00%3A00%3A00Z%2F3000-01-01T00%3A00%3A00Z&dim_member=*",
+            {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml"},
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
+
 
     def test_timeseries_adaguc_tests_arcus_uwcw_wind_kts_to_ms_member_3(self):
         AdagucTestTools().cleanTempDir()
@@ -256,3 +285,41 @@ class TestWMSTimeSeries(unittest.TestCase):
             filename_many_members_data = json.load(fp)
         data_file_all_members = filename_many_members_data[0]["data"]["2024-06-05T03:00:00Z"]
         assert data_file_member_3 == data_file_all_members["3"]
+
+
+    def test_timeseries_adaguc_tests_arcus_uwcw_ha43_dini_5p5km_10x8_air_temperature_pl(self):
+        AdagucTestTools().cleanTempDir()
+
+        config = (
+            ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,"
+            + ADAGUC_PATH
+            + "/data/config/datasets/test.uwcw_ha43_dini_5p5km_10x8.xml"
+        )
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=["--updatedb", "--config", config], env=self.env, isCGI=False
+        )
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSGetFeatureInfoTimeSeries_arcus_uwcw_ha43_dini_5p5km_10x8_air_temperature_pl.json"
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "SERVICE=WMS&VERSION=1.3.0&REQUEST=GetFeatureInfo&CRS=EPSG:4326&DATASET=test.uwcw_ha43_dini_5p5km_10x8&QUERY_LAYERS=air_temperature_pl&LAYERS=air_temperature_pl&crs=EPSG%3A3857&bbox=-20378.42428384231%2C5273127.343490437%2C1263825.4854055976%2C8560812.833440565&width=416&height=1065&i=172.99996948242188&j=561&INFO_FORMAT=application/json&TIME=2024-07-11T06:00:00Z/2024-07-11T07:00:00Z:00Z&DIM_reference_time=2024-07-11T05:00:00Z&DIM_pressure_level_in_hpa=*",
+            {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml"},
+        )
+
+        # TODO Check why pressure levels sometimes have suffix .0 on different environments
+        server_response = data.getvalue().decode("utf-8")
+        server_response = server_response.replace("500.0", "500").replace("700.0", "700").replace("850.0", "850").replace("925.0", "925").encode("utf-8")
+
+        AdagucTestTools().writetofile(self.testresultspath + filename, server_response)
+        self.assertEqual(status, 0)
+        # print("---------------- 1 -----------------", file=sys.stderr)
+        # print(json.loads(server_response), file=sys.stderr)
+        # print("---------------- 2 -----------------", file=sys.stderr)
+        # print(json.loads(AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)), file=sys.stderr)
+        # print("---------------- 3 -----------------", file=sys.stderr)
+        assert  json.loads(server_response) == json.loads(AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+        
+

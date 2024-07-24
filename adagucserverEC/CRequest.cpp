@@ -1714,9 +1714,19 @@ int CRequest::process_all_layers() {
           break;
         }
       }
+
+      // This layer was not found in the configuration
       if (layerNo == srvParam->cfg->Layer.size()) {
-        CDBError("Layer [%s] not found", srvParam->WMSLayers[j].c_str());
-        setStatusCode(HTTP_STATUSCODE_404_NOT_FOUND);
+
+        // Do not set status code for a missing layer to 404 when we request GetCapabilities
+        // GetCapabilities should return statuscode 200 with layers that work.
+        if (srvParam->requestType != REQUEST_WMS_GETCAPABILITIES && srvParam->requestType != REQUEST_WCS_GETCAPABILITIES && srvParam->requestType != REQUEST_WCS_DESCRIBECOVERAGE) {
+          setStatusCode(HTTP_STATUSCODE_404_NOT_FOUND);
+          CDBError("Layer [%s] not found", srvParam->WMSLayers[j].c_str());
+        } else {
+          CDBDebug("Layer [%s] not found", srvParam->WMSLayers[j].c_str());
+        }
+        // Return 1, this layer was not found in the configuration
         return 1;
       }
     }
@@ -2459,7 +2469,7 @@ int CRequest::process_querystring() {
   }
 
   queryString.decodeURLSelf();
-  // CDBDebug("QueryString: \"%s\"",queryString.c_str());
+  // CDBDebug("QueryString: \"%s\"", queryString.c_str());
   CT::string *parameters = queryString.splitToArray("&");
 
 #ifdef CREQUEST_DEBUG
@@ -3260,12 +3270,12 @@ int CRequest::process_querystring() {
           }
 
           if (srvParam->OGCVersion == WMS_VERSION_1_3_0) {
-            if (dFound_I == 0) {
-              CDBError("ADAGUC Server: Parameter I missing");
+            if (dFound_I == 0 && dFound_X == 0) {
+              CDBError("ADAGUC Server: Parameter I or X missing");
               dErrorOccured = 1;
             }
-            if (dFound_J == 0) {
-              CDBError("ADAGUC Server: Parameter J missing");
+            if (dFound_J == 0 && dFound_Y == 0) {
+              CDBError("ADAGUC Server: Parameter J or Y missing");
               dErrorOccured = 1;
             }
           }

@@ -562,7 +562,7 @@ check-str-concat-over-line-jumps=no
 # default to the setting for ``max-line-length``.
 #max-line-length-suggestions=
 
-extension-pkg-whitelist=lxml
+extension-pkg-whitelist=lxml,netCDF4
 
 
 ; disable=logging-fstring-interpolation
