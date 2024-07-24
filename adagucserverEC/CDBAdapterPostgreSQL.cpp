@@ -457,7 +457,10 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     store = DB->queryToStore(query.c_str(), true);
   } catch (int e) {
     if ((CServerParams::checkDataRestriction() & SHOW_QUERYINFO) == false) query.copy("hidden");
-    setExceptionType(InvalidDimensionValue);
+    // The method "setExceptionType" always sets the HTTP statuscode to 404. This breaks the test:
+    //    test_WMSGetCapabilities_no_error_on_existing_dataset_misconfigured_layer
+    // SQLite does not call setExceptionType when the query fails.
+    // setExceptionType(InvalidDimensionValue);
     CDBDebug("Query failed with code %d (%s)", e, query.c_str());
     return NULL;
   }
