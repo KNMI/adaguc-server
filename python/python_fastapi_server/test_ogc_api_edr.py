@@ -181,6 +181,26 @@ def test_coll_multi_dim_position(client: TestClient):
         330000,
     ]
 
+    # Should handle querying multiple heights separated by comma
+    resp = client.get(
+        "/edr/collections/testcollection/instances/2024060100/position?coords=POINT(5.2 52.0)&datetime=2024-06-01T01:00:00Z/2024-06-01T04:00:00Z&parameter-name=testdata&z=10,20"
+    )
+    assert resp.status_code, 200
+    covjson = resp.json()
+
+    print(covjson)
+    assert covjson["domain"]["axes"]["z"]["values"] == [10, 20]
+    assert covjson["ranges"]["testdata"]["values"] == [
+        0.0,
+        10000.0,
+        20000.0,
+        30000.0,
+        100000.0,
+        110000.0,
+        120000.0,
+        130000.0,
+    ]
+
 
 def test_coll_multi_dim_cube(client: TestClient):
     resp = client.get(

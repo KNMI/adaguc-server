@@ -736,6 +736,8 @@ std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAn
 }
 
 CT::string CDBAdapterPostgreSQL::getTableNameForPathFilterAndDimension(const char *path, const char *filter, const char *dimension, CDataSource *dataSource) {
+  // This is now a wrapper which calls `getTableNamesForPathFilterAndDimensions` directly for a single dimension.
+
 #ifdef MEASURETIME
   StopWatch_Stop(">CDBAdapterPostgreSQL::getTableNameForPathFilterAndDimension");
 #endif
