@@ -23,6 +23,7 @@ Graphical representations of the data can be made using contour lines, shading, 
 * [Glossary](./doc/GLOSSARY.md)
 * [Quick Tips](./doc/overview/QuickTips.md)
 * [Profiling](./doc/developing/profiling.md)
+* [Testing](./doc/developing/testing.md)
 
 
 For our detailed paper please read https://doi.org/10.5334/jors.382

@@ -20,6 +20,7 @@ def set_environ():
 def setup_test_data():
     print("About to ingest data")
     AdagucTestTools().cleanTempDir()
+    AdagucTestTools().cleanPostgres()
     for service in ["netcdf_5d.xml", "dataset_a.xml"]:
         _status, _data, _headers = AdagucTestTools().runADAGUCServer(
             args=[

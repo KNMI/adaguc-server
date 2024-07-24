@@ -20,6 +20,7 @@ def set_environ():
 def setup_test_data():
     print("About to ingest data")
     AdagucTestTools().cleanTempDir()
+    AdagucTestTools().cleanPostgres()
     for service in [
         "netcdf_5d.xml",
         "dataset_a.xml",
@@ -178,6 +179,50 @@ def test_coll_multi_dim_position(client: TestClient):
         310000,
         320000,
         330000,
+    ]
+
+    # Should handle querying multiple heights separated by comma
+    resp = client.get(
+        "/edr/collections/testcollection/instances/2024060100/position?coords=POINT(5.2 52.0)&datetime=2024-06-01T01:00:00Z/2024-06-01T04:00:00Z&parameter-name=testdata&z=10,20"
+    )
+    assert resp.status_code, 200
+    covjson = resp.json()
+
+    assert covjson["domain"]["axes"]["z"]["values"] == [10, 20]
+    assert covjson["ranges"]["testdata"]["shape"] == [1, 1, 2, 4]
+    assert covjson["ranges"]["testdata"]["values"] == [
+        0.0,
+        10000.0,
+        20000.0,
+        30000.0,
+        100000.0,
+        110000.0,
+        120000.0,
+        130000.0,
+    ]
+
+    # Should handle querying multiple heights separated by comma, combined with querying ranges
+    resp = client.get(
+        "/edr/collections/testcollection/instances/2024060100/position?coords=POINT(5.2 52.0)&datetime=2024-06-01T01:00:00Z/2024-06-01T04:00:00Z&parameter-name=testdata&z=10,30/40"
+    )
+    assert resp.status_code, 200
+    covjson = resp.json()
+
+    assert covjson["domain"]["axes"]["z"]["values"] == [10, 30, 40]
+    assert covjson["ranges"]["testdata"]["shape"] == [1, 1, 3, 4]
+    assert covjson["ranges"]["testdata"]["values"] == [
+        0.0,
+        10000.0,
+        20000.0,
+        30000.0,
+        200000.0,
+        210000.0,
+        220000.0,
+        230000.0,
+        300000.0,
+        310000.0,
+        320000.0,
+        330000.0,
     ]
 
 

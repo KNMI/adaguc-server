@@ -1,6 +1,7 @@
 *
 !compile.sh
 !runtests.sh
+!runtests_psql.sh
 !CMakeLists.txt
 !Docker/adaguc-server-config-python-postgres.xml
 !Docker/start.sh
@@ -22,3 +23,4 @@
 !tests/inspiretests/
 !tests/functional_test.py
 !tests/starttests.sh
+!tests/starttests_psql.sh

@@ -347,6 +347,7 @@ class TestWMS(unittest.TestCase):
 
     def test_WMSCMDUpdateDBTailPath(self):
         AdagucTestTools().cleanTempDir()
+        AdagucTestTools().cleanPostgres()
         # pylint: disable=unused-variable
         status, data, headers = AdagucTestTools().runADAGUCServer(
             args=[
@@ -404,6 +405,7 @@ class TestWMS(unittest.TestCase):
 
     def test_WMSCMDUpdateDBPath(self):
         AdagucTestTools().cleanTempDir()
+        AdagucTestTools().cleanPostgres()
         # pylint: disable=unused-variable
         status, data, headers = AdagucTestTools().runADAGUCServer(
             args=[
@@ -2021,6 +2023,7 @@ class TestWMS(unittest.TestCase):
         This tests if the autofinddataset option correctly finds the file if it is in a subfolder
         """
         AdagucTestTools().cleanTempDir()
+        AdagucTestTools().cleanPostgres()
         # pylint: disable=unused-variable
 
         config = ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"
