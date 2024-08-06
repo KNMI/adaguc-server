@@ -29,6 +29,8 @@ from pydantic import BaseModel
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+NERC_URI = "https://vocab.nerc.ac.uk/standard_name"
+
 
 class GeoReferenceInfo(BaseModel):
     """GeoReference object"""
@@ -191,7 +193,10 @@ def netcdf_to_covjson(
             parameters[translated_variablename] = Parameter(
                 # TODO: KDP-1622 Fix the difference in the ObservedProperty between DescribeCoverage from the
                 #  Adaguc Config and the NetCDF values
-                observedProperty=ObservedProperty(label={"en": parameter_name}),
+                observedProperty=ObservedProperty(
+                    label={"en": parameter_name},
+                    id=f"{NERC_URI}/{parameter_name}/",
+                ),
                 description={"en": parameter_description},
                 unit=Unit(
                     symbol=Symbol(

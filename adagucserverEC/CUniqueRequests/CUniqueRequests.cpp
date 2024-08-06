@@ -207,6 +207,15 @@ void CURUniqueRequests::createStructure(CDataSource::DataObject *dataObject, CDr
   layerStructure->add(CXMLParser::XMLElement("standard_name", standardName.c_str()));
   layerStructure->add(CXMLParser::XMLElement("units", dataObject->getUnits().c_str()));
 
+  CT::string longName = dataObject->variableName.c_str();
+  CDF::Attribute *attr_long_name = dataObject->cdfVariable->getAttributeNE("long_name");
+  if (attr_long_name != NULL) {
+    longName = attr_long_name->toString();
+  }
+  if (longName.length() > 0) {
+    layerStructure->add(CXMLParser::XMLElement("long_name", longName.c_str()));
+  }
+
   CT::string ckey;
   ckey.print("%d%d%s", dX, dY, dataSource->nativeProj4.c_str());
   CImageDataWriter::ProjCacheInfo projCacheInfo = CImageDataWriter::GetProjInfo(ckey, drawImage, dataSource, imageWarper, dataSource->srvParams, dX, dY);

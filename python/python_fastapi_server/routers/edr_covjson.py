@@ -76,7 +76,8 @@ def covjson_from_resp(dats, vertical_name, custom_name, collection_name):
             symbol = CovJsonSymbol(
                 value=param_metadata["parameter_unit"], type=SYMBOL_TYPE_URL
             )
-            unit = CovJsonUnit(symbol=symbol)
+            unit_label = {"en": "TODO"}
+            unit = CovJsonUnit(symbol=symbol, label=unit_label)
             observed_property = CovJsonObservedProperty(
                 id=param_metadata["observed_property_id"],
                 label={"en": param_metadata["observed_property_label"]},
@@ -85,7 +86,7 @@ def covjson_from_resp(dats, vertical_name, custom_name, collection_name):
             param = CovJsonParameter(
                 id=dat["name"],
                 observedProperty=observed_property,
-                # description={"en":param_metadata["wms_layer_title"]}, # TODO in follow up
+                # description={"en": param_metadata["wms_layer_title"]},
                 unit=unit,
                 label={"en:": param_metadata["parameter_label"]},
             )

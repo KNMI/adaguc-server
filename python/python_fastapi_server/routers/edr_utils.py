@@ -809,7 +809,7 @@ def get_param_metadata(param_id: str, edr_collection_name) -> dict:
     parameter_unit = param_el["unit"]
     observed_property_label = param_el["observed_property_label"]
     if "standard_name" in param_el and param_el["standard_name"] is not None:
-        observed_property_id = VOCAB_ENDPOINT_URL + param_el["standard_name"]
+        observed_property_id = VOCAB_ENDPOINT_URL + param_el["standard_name"] + "/"
 
     return {
         "wms_layer_name": wms_layer_name,
