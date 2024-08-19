@@ -45,7 +45,7 @@ CDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawImag
     }
   }
 
-  settings.smoothingFiter = 2;
-  settings.smoothingDistanceMatrix = smoothingMakeDistanceMatrix(settings.smoothingFiter);
+  settings.smoothingFiter = 0;
+  settings.smoothingDistanceMatrix = nullptr; // smoothingMakeDistanceMatrix(settings.smoothingFiter);
   return settings;
 }

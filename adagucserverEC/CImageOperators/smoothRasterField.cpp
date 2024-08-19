@@ -21,6 +21,9 @@ float *smoothingMakeDistanceMatrix(int smoothWindowSize) {
 }
 
 float smoothingAtLocation(float *inputGrid, float *distanceMatrix, int smoothWindowSize, float fNodataValue, int gridLocationX, int gridLocationY, int gridWidth, int gridHeight) {
+  if (smoothWindowSize == 0 || distanceMatrix == nullptr) {
+    return fNodataValue;
+  }
   size_t p = size_t(gridLocationX + gridLocationY * gridWidth);
   if (inputGrid[p] == fNodataValue) {
     return fNodataValue;

@@ -57,10 +57,12 @@ private:
       if (sourceDataPY > sourceDataHeight - 1) return;
       if (sourceDataPX > sourceDataWidth - 1) return;
       if (x >= 0 && y >= 0 && x < (int)drawSettings->drawImage->Geo->dWidth && y < (int)drawSettings->drawImage->Geo->dHeight) {
-        T values[2][2] = {{0, 0}, {0, 0}};
+        double values[2][2] = {{0, 0}, {0, 0}};
         if (drawSettings->smoothingFiter == 0) {
 
           values[0][0] += ((T *)sourceData)[nfast_mod(sourceDataPX + 0, sourceDataWidth) + nfast_mod(sourceDataPY + 0, sourceDataHeight) * sourceDataWidth];
+
+          // setPixelInDrawImage(x, y, val, drawSettings);
           values[1][0] += ((T *)sourceData)[nfast_mod(sourceDataPX + 1, sourceDataWidth) + nfast_mod(sourceDataPY + 0, sourceDataHeight) * sourceDataWidth];
           values[0][1] += ((T *)sourceData)[nfast_mod(sourceDataPX + 0, sourceDataWidth) + nfast_mod(sourceDataPY + 1, sourceDataHeight) * sourceDataWidth];
           values[1][1] += ((T *)sourceData)[nfast_mod(sourceDataPX + 1, sourceDataWidth) + nfast_mod(sourceDataPY + 1, sourceDataHeight) * sourceDataWidth];
@@ -75,11 +77,13 @@ private:
                                              sourceDataPY + 1, sourceDataWidth, sourceDataHeight);
         }
 
-        float dx = genericDataWarper->tileDx;
-        float dy = genericDataWarper->tileDy;
-        float gx1 = (1 - dx) * values[0][0] + dx * values[1][0];
-        float gx2 = (1 - dx) * values[0][1] + dx * values[1][1];
-        float bilValue = (1 - dy) * gx1 + dy * gx2;
+        double dx = genericDataWarper->tileDx;
+        double dy = genericDataWarper->tileDy;
+
+        double gx1 = (1 - dx) * values[0][0] + dx * values[1][0];
+        double gx2 = (1 - dx) * values[0][1] + dx * values[1][1];
+        double bilValue = (1 - dy) * gx1 + dy * gx2;
+
         setPixelInDrawImage(x, y, bilValue, drawSettings);
       }
     }

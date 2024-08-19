@@ -70,12 +70,12 @@ private:
     int Y2 = yP[middle];
     int Y3 = yP[upper];
 
-    float vX1 = aOrB ? 1 : 0;
-    float vY1 = aOrB ? 0 : 1;
-    float vX2 = aOrB ? 0 : 1;
-    float vY2 = 1;
-    float vX3 = aOrB ? 0 : 1;
-    float vY3 = 0;
+    double vX1 = aOrB ? 1 : 0;
+    double vY1 = aOrB ? 0 : 1;
+    double vX2 = aOrB ? 0 : 1;
+    double vY2 = 1;
+    double vX3 = aOrB ? 0 : 1;
+    double vY3 = 0;
 
     // return 1;
     /*
@@ -96,23 +96,23 @@ private:
       if (maxx < X3) maxx = X3;
       g->tileDy = 0;
       for (int x = minx; x < maxx + 1; x++) {
-        g->tileDx = 0; //(x - minx) / float(maxx-minx);
+        g->tileDx = 0; //(x - minx) / double(maxx-minx);
         drawFunction(x, yP[2], value, settings, genericDataWarper);
       }
       return 1;
     }
 
     /* https://codeplea.com/triangular-interpolation */
-    float dn = ((yP[1] - yP[2]) * (xP[0] - xP[2]) + (xP[2] - xP[1]) * (yP[0] - yP[2]));
+    double dn = ((yP[1] - yP[2]) * (xP[0] - xP[2]) + (xP[2] - xP[1]) * (yP[0] - yP[2]));
 
-    float rcl = float(X3 - X1) / float(Y3 - Y1);
+    double rcl = double(X3 - X1) / double(Y3 - Y1);
     if (Y2 != Y1 && Y1 < H && Y2 > 0) {
-      float rca = float(X2 - X1) / float(Y2 - Y1);
+      double rca = double(X2 - X1) / double(Y2 - Y1);
       int sy = (Y1 < 0) ? 0 : Y1;
       int ey = (Y2 > H) ? H : Y2;
       for (int y = sy; y <= ey - 1; y++) {
-        int xL = floor(rcl * float(y - Y1) + X1);
-        int xA = floor(rca * float(y - Y1) + X1);
+        int xL = floor(rcl * double(y - Y1) + X1);
+        int xA = floor(rca * double(y - Y1) + X1);
         int x1, x2;
         if (xL < xA) {
           x1 = xL;
@@ -125,9 +125,9 @@ private:
           int sx = (x1 < 0) ? 0 : x1;
           int ex = (x2 > W) ? W : x2;
           for (int x = sx; x <= ex - 1; x++) {
-            float WV1 = ((yP[1] - yP[2]) * (x - xP[2]) + (xP[2] - xP[1]) * (y - yP[2])) / dn;
-            float WV2 = ((yP[2] - yP[0]) * (x - xP[2]) + (xP[0] - xP[2]) * (y - yP[2])) / dn;
-            float WV3 = 1 - WV1 - WV2;
+            double WV1 = ((yP[1] - yP[2]) * (x - xP[2]) + (xP[2] - xP[1]) * (y - yP[2])) / dn;
+            double WV2 = ((yP[2] - yP[0]) * (x - xP[2]) + (xP[0] - xP[2]) * (y - yP[2])) / dn;
+            double WV3 = 1 - WV1 - WV2;
 
             g->tileDx = WV1 * vX1 + WV2 * vX2 + WV3 * vX3;
             g->tileDy = WV1 * vY1 + WV2 * vY2 + WV3 * vY3;
@@ -138,12 +138,12 @@ private:
     }
     // return 0;
     if (Y3 != Y2 && Y2 < H && Y3 > 0) {
-      float rcb = float(X3 - X2) / float(Y3 - Y2);
+      double rcb = double(X3 - X2) / double(Y3 - Y2);
       int sy = (Y2 < 0) ? 0 : Y2;
       int ey = (Y3 > H) ? H : Y3;
       for (int y = sy; y <= ey - 1; y++) {
-        int xL = floor(rcl * float(y - Y1) + X1);
-        int xB = floor(rcb * float(y - Y2) + X2);
+        int xL = (rcl * double(y - Y1) + X1); // floor
+        int xB = (rcb * double(y - Y2) + X2); // floor
         int x1, x2;
         if (xL <= xB) {
           x1 = xL;
@@ -155,14 +155,14 @@ private:
         if (x1 < W && x2 > 0) {
           int sx = (x1 < 0) ? 0 : x1;
           int ex = (x2 > W) ? W : x2;
-          for (int x = sx; x <= ex - 1; x++) {
-            float WV1 = ((yP[1] - yP[2]) * (x - xP[2]) + (xP[2] - xP[1]) * (y - yP[2])) / dn;
-            float WV2 = ((yP[2] - yP[0]) * (x - xP[2]) + (xP[0] - xP[2]) * (y - yP[2])) / dn;
-            float WV3 = 1 - WV1 - WV2;
+          for (int x = sx; x < ex; x++) {
+            double WV1 = ((yP[1] - yP[2]) * (x - xP[2]) + (xP[2] - xP[1]) * (y - yP[2])) / dn;
+            double WV2 = ((yP[2] - yP[0]) * (x - xP[2]) + (xP[0] - xP[2]) * (y - yP[2])) / dn;
+            double WV3 = 1 - WV1 - WV2;
 
             g->tileDx = WV1 * vX1 + WV2 * vX2 + WV3 * vX3;
             g->tileDy = WV1 * vY1 + WV2 * vY2 + WV3 * vY3;
-
+            // http://localhost:8080/adaguc-server?DATASET=noaaglm&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=LIGHTNING_COUNTS&WIDTH=1321&HEIGHT=959&CRS=EPSG%3A32661&BBOX=-8314748.562870221,-1301096.785244672,-8149138.113029413,-1180869.3655646304&STYLES=counts_knmi%2Fgeneric&FORMAT=image/png&TRANSPARENT=TRUE&&time=2024-06-28T09%3A00%3A00Z&0.013241703752992606
             drawFunction(x, y, value, settings, genericDataWarper);
           }
         }
@@ -178,7 +178,7 @@ public:
   void *sourceData;
 
   int sourceDataPX, sourceDataPY, sourceDataWidth, sourceDataHeight;
-  float tileDx, tileDy;
+  double tileDx, tileDy;
   bool useHalfCellOffset;
 
   static int findPixelExtent(int *PXExtentBasedOnSource, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, CImageWarper *warper);
@@ -366,8 +366,8 @@ public:
             if (lx2 == lx1) lx2++;
             for (int sjy = ly1; sjy < ly2; sjy++) {
               for (int sjx = lx1; sjx < lx2; sjx++) {
-                this->tileDy = (sjy - ly1) / float(ly2 - ly1);
-                this->tileDx = (sjx - lx1) / float(lx2 - lx1);
+                this->tileDy = (sjy - ly1) / double(ly2 - ly1);
+                this->tileDx = (sjx - lx1) / double(lx2 - lx1);
                 drawFunction(sjx, sjy, value, drawFunctionSettings, this);
               }
             }
@@ -442,8 +442,8 @@ public:
       }
 
       if (warper->isProjectionRequired()) {
-        if (proj_trans_generic(warper->projSourceToDest, PJ_FWD, pxStrided, sizeof(double), dataSizeStrided, pyStrided, sizeof(double),
-                               dataSizeStrided, nullptr, 0, 0, nullptr, 0, 0) != dataSizeStrided) {
+        if (proj_trans_generic(warper->projSourceToDest, PJ_FWD, pxStrided, sizeof(double), dataSizeStrided, pyStrided, sizeof(double), dataSizeStrided, nullptr, 0, 0, nullptr, 0, 0) !=
+            dataSizeStrided) {
           CDBDebug("Unable to do pj_transform");
         }
       }
@@ -451,8 +451,8 @@ public:
         for (int x = 0; x < dataWidth + 1; x++) {
           size_t p = x + y * (dataWidth + 1);
           size_t pS = (x / projStrideFactor) + (y / projStrideFactor) * (dataWidthStrided);
-          float sX = float(x % projStrideFactor) / float(projStrideFactor);
-          float sY = float(y % projStrideFactor) / float(projStrideFactor);
+          double sX = double(x % projStrideFactor) / double(projStrideFactor);
+          double sY = double(y % projStrideFactor) / double(projStrideFactor);
           double x1 = pxStrided[pS] * (1 - sX) + pxStrided[pS + 1] * sX;
           ;
           double x2 = pxStrided[pS + dataWidthStrided] * (1 - sX) + pxStrided[pS + 1 + dataWidthStrided] * sX;
@@ -511,9 +511,9 @@ public:
             lons[2] = px3;
             lons[3] = px4;
 
-            float lonMin, lonMax, lonMiddle = 0;
+            double lonMin, lonMax, lonMiddle = 0;
             for (int j = 0; j < 4; j++) {
-              float lon = lons[j];
+              double lon = lons[j];
               if (j == 0) {
                 lonMin = lon;
                 lonMax = lon;
@@ -548,15 +548,15 @@ public:
             px4 = lons[3];
           }
 
-          px1 = (px1 - dfDestOrigX) * multiDestX + 0.5;
-          px2 = (px2 - dfDestOrigX) * multiDestX + 0.5;
-          px3 = (px3 - dfDestOrigX) * multiDestX + 0.5;
-          px4 = (px4 - dfDestOrigX) * multiDestX + 0.5;
+          px1 = (px1 - dfDestOrigX) * multiDestX;
+          px2 = (px2 - dfDestOrigX) * multiDestX;
+          px3 = (px3 - dfDestOrigX) * multiDestX;
+          px4 = (px4 - dfDestOrigX) * multiDestX;
 
-          py1 = (py1 - dfDestOrigY) * multiDestY + 0.5;
-          py2 = (py2 - dfDestOrigY) * multiDestY + 0.5;
-          py3 = (py3 - dfDestOrigY) * multiDestY + 0.5;
-          py4 = (py4 - dfDestOrigY) * multiDestY + 0.5;
+          py1 = (py1 - dfDestOrigY) * multiDestY;
+          py2 = (py2 - dfDestOrigY) * multiDestY;
+          py3 = (py3 - dfDestOrigY) * multiDestY;
+          py4 = (py4 - dfDestOrigY) * multiDestY;
 
           if (x == 0) avgDX = px2;
           if (y == 0) avgDY = py4;
