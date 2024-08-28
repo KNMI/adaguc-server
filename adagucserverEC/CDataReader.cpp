@@ -208,24 +208,52 @@ bool CDataReader::copyCRSFromConfigToDataSource(CDataSource *dataSource) const {
     return false;
   }
 
-  CREPORT_INFO_NODOC("Projection is obtained from ADAGUC config file", CReportMessage::Categories::GENERAL);
+  auto *projection = dataSource->cfgLayer->Projection[0];
+  // CREPORT_INFO_NODOC("Projection is obtained from ADAGUC config file", CReportMessage::Categories::GENERAL);
 
   // Read the EPSG-code from configuration.
-  if (dataSource->cfgLayer->Projection[0]->attr.id.empty() == false) {
-    dataSource->nativeEPSG.copy(dataSource->cfgLayer->Projection[0]->attr.id.c_str());
+  if (projection->attr.id.empty() == false) {
+    dataSource->nativeEPSG.copy(projection->attr.id.c_str());
   } else {
     CT::string defaultEPSGCode = "EPSG:4326";
-    CREPORT_WARN_NODOC(CT::string("Projection id not in config, using default value ") + defaultEPSGCode, CReportMessage::Categories::GENERAL);
+    // CREPORT_WARN_NODOC(CT::string("Projection id not in config, using default value ") + defaultEPSGCode, CReportMessage::Categories::GENERAL);
     dataSource->nativeEPSG.copy(defaultEPSGCode);
   }
 
   // Read proj4 string from configuration.
-  if (dataSource->cfgLayer->Projection[0]->attr.proj4.empty() == false) {
-    dataSource->nativeProj4.copy(dataSource->cfgLayer->Projection[0]->attr.proj4.c_str());
+  if (projection->attr.proj4.empty() == false) {
+    dataSource->nativeProj4.copy(projection->attr.proj4.c_str());
   } else {
     CT::string defaultProj4String = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs";
-    CREPORT_WARN_NODOC(CT::string("Proj4 string not in config, using default value ") + defaultProj4String, CReportMessage::Categories::GENERAL);
+    // CREPORT_WARN_NODOC(CT::string("Proj4 string not in config, using default value ") + defaultProj4String, CReportMessage::Categories::GENERAL);
     dataSource->nativeProj4.copy(defaultProj4String);
+  }
+
+  // Set extent based on configuration setting in Layer element
+  if (projection->attr.minx != projection->attr.maxx) {
+    if (dataSource->varX->getType() != CDF_DOUBLE) {
+      CDBWarning("Overriding extent is only possible on coordinate variables with CDF_DOUBLE as datatype");
+    } else {
+      // Casting to shorthand pointers
+      double *varXData = (double *)dataSource->varX->data;
+      double *varYData = (double *)dataSource->varY->data;
+      size_t dWidth = dataSource->varX->dimensionlinks[0]->getSize();
+      size_t dHeight = dataSource->varY->dimensionlinks[0]->getSize();
+
+      // Set width, height and cellsize
+      dataSource->dWidth = dWidth;
+      dataSource->dHeight = dHeight;
+      dataSource->dfCellSizeX = (projection->attr.maxx - projection->attr.minx) / dWidth;
+      dataSource->dfCellSizeY = (projection->attr.maxy - projection->attr.miny) / dHeight;
+
+      // Fill in the coordinate variables
+      for (size_t j = 0; j < dWidth; j += 1) {
+        varXData[j] = projection->attr.minx + j * dataSource->dfCellSizeX + dataSource->dfCellSizeX / 2;
+      }
+      for (size_t j = 0; j < dHeight; j += 1) {
+        varYData[j] = projection->attr.miny + j * dataSource->dfCellSizeY + dataSource->dfCellSizeY / 2;
+      }
+    }
   }
 
   return true;
@@ -814,9 +842,6 @@ bool CDataReader::calculateCellSizeAndBBox(CDataSource *dataSource, const CDF::V
     dataSource->dfBBOX[2] = dfdim_X[dataSource->dWidth - 1] + dataSource->dfCellSizeX / 2.0f;
     dataSource->dfBBOX[3] = dfdim_Y[0] - dataSource->dfCellSizeY / 2.0f;
   }
-
-  dataSource->origBBOXLeft = dataSource->dfBBOX[0];
-  dataSource->origBBOXRight = dataSource->dfBBOX[2];
 
   return true;
 }

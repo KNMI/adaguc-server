@@ -22,7 +22,8 @@
  * limitations under the License.
  *
  ******************************************************************************/
-
+#include <iostream>
+#include <string>
 #include "CDFObjectStore.h"
 const char *CDFObjectStore::className = "CDFObjectStore";
 #include "CConvertASCAT.h"
@@ -39,7 +40,9 @@ const char *CDFObjectStore::className = "CDFObjectStore";
 #include "CConvertLatLonGrid.h"
 #include "CDataReader.h"
 #include "CCDFCSVReader.h"
+#include "utils/CDFObjectStoreUtils.h"
 // #define CDFOBJECTSTORE_DEBUG
+
 #define MAX_OPEN_FILES 500
 extern CDFObjectStore cdfObjectStore;
 CDFObjectStore cdfObjectStore;
@@ -301,6 +304,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
           cdfObject->applyNCMLFile(ncmlFileName.c_str());
         }
       }
+      // Set metadata into the variable based on configuration settings
       if (dataSource->cfgLayer->Variable.size() > 0) {
         // Shorthand to variable configuration in the layer.
         auto *cfgVar = dataSource->cfgLayer->Variable[0];
@@ -331,6 +335,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
           var->setAttributeText("standard_name", cfgVar->attr.standard_name);
         }
       }
+      handleAddDimension(dataSource, cdfObject, fileLocationToOpen);
     }
   }
 

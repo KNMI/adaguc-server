@@ -390,7 +390,6 @@ CProj4ToCF::~CProj4ToCF() {}
 
 int CProj4ToCF::convertProjToCF(CDF::Variable *projectionVariable, const char *proj4String) {
   // Create a list with key value pairs of projection options
-
   std::vector<CProj4ToCF::KVP *> projKVPList;
   CT::string proj4CTString;
   proj4CTString.copy(proj4String);
@@ -401,11 +400,13 @@ int CProj4ToCF::convertProjToCF(CDF::Variable *projectionVariable, const char *p
     return 1;
   }
   for (size_t j = 0; j < projElements->count; j++) {
-    KVP *option = new KVP();
     CT::string *element = projElements[j].splitToArray("=");
-    option->name.copy(&element[0]);
-    option->value.copy(&element[1]);
-    projKVPList.push_back(option);
+    if (element != nullptr && element->count == 2) {
+      KVP *option = new KVP();
+      option->name.copy(&element[0]);
+      option->value.copy(&element[1]);
+      projKVPList.push_back(option);
+    }
     delete[] element;
   }
   delete[] projElements;
