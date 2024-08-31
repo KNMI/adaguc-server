@@ -11,105 +11,112 @@
   <description>data</description>
   <name>data</name>
   <label>data</label>
-  <uom>km</uom>
+  <uom></uom>
   <lonLatEnvelope srsName="urn:ogc:def:crs:OGC:1.3:CRS84">
-    <gml:pos>-180.494446 -90.488892</gml:pos>
-    <gml:pos>179.505554 89.511108</gml:pos>
+    <gml:pos>-177.500000 -92.500000</gml:pos>
+    <gml:pos>182.500000 87.500000</gml:pos>
+        <gml:TimePeriod>
+          <gml:begin>2024-01-01T00:00:00Z</gml:begin>
+          <gml:end>2024-07-15T00:00:00Z</gml:end>
+          <gml:duration>P2D</gml:duration>
+        </gml:TimePeriod>
   </lonLatEnvelope>
   <domainSet>
     <spatialDomain>
         <gml:Envelope srsName="EPSG:3411">
-          <gml:pos>-399240949.703125 -399607437.540235</gml:pos>
-          <gml:pos>399487065.269510 398879979.546019</gml:pos>
+          <gml:pos>-934752295.351214 -933897657.529952</gml:pos>
+          <gml:pos>935322198.568163 935607193.582759</gml:pos>
         </gml:Envelope>
         <gml:Envelope srsName="EPSG:3412">
-          <gml:pos>-2868126705.493384 -2870740092.047709</gml:pos>
-          <gml:pos>2869855924.003487 2865475278.583282</gml:pos>
+          <gml:pos>-561309613.991027 -560796725.035447</gml:pos>
+          <gml:pos>560283992.310811 561138633.645077</gml:pos>
         </gml:Envelope>
         <gml:Envelope srsName="EPSG:3575">
-          <gml:pos>-12712149.336113 -12731583.256617</gml:pos>
-          <gml:pos>12735505.704073 12723911.899582</gml:pos>
+          <gml:pos>-12736546.916317 -12717148.538095</gml:pos>
+          <gml:pos>12728786.383025 12740427.774036</gml:pos>
         </gml:Envelope>
         <gml:Envelope srsName="EPSG:3857">
-          <gml:pos>-19201993.871211 -22228632.557364</gml:pos>
-          <gml:pos>19982466.888021 34805382.412607</gml:pos>
+          <gml:pos>-19759209.615806 -27654657.553919</gml:pos>
+          <gml:pos>19425251.143426 24395894.014051</gml:pos>
         </gml:Envelope>
         <gml:Envelope srsName="EPSG:4258">
-          <gml:pos>-180.494446 -90.488892</gml:pos>
-          <gml:pos>179.505554 89.511108</gml:pos>
+          <gml:pos>-177.500000 -92.500000</gml:pos>
+          <gml:pos>182.500000 87.500000</gml:pos>
         </gml:Envelope>
         <gml:Envelope srsName="EPSG:4326">
-          <gml:pos>-180.494446 -90.488892</gml:pos>
-          <gml:pos>179.505554 89.511108</gml:pos>
+          <gml:pos>-177.500000 -92.500000</gml:pos>
+          <gml:pos>182.500000 87.500000</gml:pos>
         </gml:Envelope>
         <gml:Envelope srsName="CRS:84">
-          <gml:pos>-180.494446 -90.488892</gml:pos>
-          <gml:pos>179.505554 89.511108</gml:pos>
+          <gml:pos>-177.500000 -92.500000</gml:pos>
+          <gml:pos>182.500000 87.500000</gml:pos>
         </gml:Envelope>
         <gml:Envelope srsName="EPSG:25831">
-          <gml:pos>-15931605.907041 -19720315.591565</gml:pos>
-          <gml:pos>17051580.684528 19828593.536145</gml:pos>
+          <gml:pos>-16130665.820500 -19940662.730257</gml:pos>
+          <gml:pos>16773561.425558 19609055.102676</gml:pos>
         </gml:Envelope>
         <gml:Envelope srsName="EPSG:25832">
-          <gml:pos>-14709787.414601 -19720736.728277</gml:pos>
-          <gml:pos>17177711.901099 47405035.658741</gml:pos>
+          <gml:pos>-16036501.605628 -19940645.777523</gml:pos>
+          <gml:pos>16923493.804105 60690754.770073</gml:pos>
         </gml:Envelope>
         <gml:Envelope srsName="EPSG:28992">
-          <gml:pos>-352494887.244074 -527708138.497395</gml:pos>
-          <gml:pos>319428390.883462 521690003.576207</gml:pos>
+          <gml:pos>-472960753.832483 -309441675.885504</gml:pos>
+          <gml:pos>848274888.059136 305071541.647454</gml:pos>
         </gml:Envelope>
         <gml:Envelope srsName="EPSG:7399">
-          <gml:pos>-17284159.484400 -8898366.230070</gml:pos>
-          <gml:pos>17986681.325950 9020047.848074</gml:pos>
+          <gml:pos>-17789120.971417 -8980925.065185</gml:pos>
+          <gml:pos>17488459.771900 8942711.608087</gml:pos>
         </gml:Envelope>
         <gml:Envelope srsName="EPSG:50001">
           <gml:pos>-2000000.000000 -2000000.000000</gml:pos>
           <gml:pos>10000000.000000 8500000.000000</gml:pos>
         </gml:Envelope>
         <gml:Envelope srsName="EPSG:54030">
-          <gml:pos>-16294244.470419 -8493172.970167</gml:pos>
-          <gml:pos>16956530.805045 8610630.466538</gml:pos>
+          <gml:pos>-16769347.747524 -8576525.559211</gml:pos>
+          <gml:pos>16485922.151792 8537587.027768</gml:pos>
         </gml:Envelope>
         <gml:Envelope srsName="EPSG:32661">
-          <gml:pos>-407173329.856895 -406795071.401436</gml:pos>
-          <gml:pos>411420024.012517 411546161.390658</gml:pos>
+          <gml:pos>-956875261.313672 -956583178.620243</gml:pos>
+          <gml:pos>959123209.982084 959999102.204602</gml:pos>
         </gml:Envelope>
         <gml:Envelope srsName="EPSG:40000">
-          <gml:pos>-411643188.990840 -411262647.285147</gml:pos>
-          <gml:pos>411891372.245993 412018271.016759</gml:pos>
+          <gml:pos>-964663240.758221 -964369394.990184</gml:pos>
+          <gml:pos>962900613.664068 963781792.962376</gml:pos>
         </gml:Envelope>
         <gml:Envelope srsName="EPSG:900913">
-          <gml:pos>-19201993.871211 -22228632.557364</gml:pos>
-          <gml:pos>19982466.888021 34805382.412607</gml:pos>
+          <gml:pos>-19759209.615806 -27654657.553919</gml:pos>
+          <gml:pos>19425251.143426 24395894.014051</gml:pos>
         </gml:Envelope>
         <gml:Envelope srsName="EPSG:3067">
-          <gml:pos>-15931605.907041 -19720315.591565</gml:pos>
-          <gml:pos>17051580.684528 19828593.536145</gml:pos>
+          <gml:pos>-16130665.820500 -19940662.730257</gml:pos>
+          <gml:pos>16773561.425558 19609055.102676</gml:pos>
         </gml:Envelope>
         <gml:Envelope srsName="EPSG:4326">
-          <gml:pos>-180.494446 89.511108</gml:pos>
-          <gml:pos>179.505554 -90.488892</gml:pos>
+          <gml:pos>-177.500000 -92.500000</gml:pos>
+          <gml:pos>182.500000 87.500000</gml:pos>
         </gml:Envelope>
         <gml:RectifiedGrid dimension="2">
           <gml:limits>
             <gml:GridEnvelope>
               <gml:low>0 0</gml:low>
-              <gml:high>359 179</gml:high>
+              <gml:high>71 35</gml:high>
             </gml:GridEnvelope>
           </gml:limits>
           <gml:axisName>x</gml:axisName>
           <gml:axisName>y</gml:axisName>
           <gml:origin>
-            <gml:pos>-180.494446 89.511108</gml:pos>
+            <gml:pos>-177.500000 -92.500000</gml:pos>
           </gml:origin>
-          <gml:offsetVector>1.000000 0</gml:offsetVector>
-          <gml:offsetVector>0 -1.000000</gml:offsetVector>
+          <gml:offsetVector>5.000000 0</gml:offsetVector>
+          <gml:offsetVector>0 5.000000</gml:offsetVector>
         </gml:RectifiedGrid>
       </spatialDomain>
       <temporalDomain>
-        <gml:timePosition>2017-01-01T00:15:00Z</gml:timePosition>
-        <gml:timePosition>2017-01-01T00:20:00Z</gml:timePosition>
-        <gml:timePosition>2017-01-01T00:25:00Z</gml:timePosition>
+        <gml:TimePeriod>
+          <gml:begin>2024-01-01T00:00:00Z</gml:begin>
+          <gml:end>2024-07-15T00:00:00Z</gml:end>
+          <gml:duration>P2D</gml:duration>
+        </gml:TimePeriod>
       </temporalDomain>
     </domainSet>
     <rangeSet>
@@ -118,51 +125,13 @@
         <label>dimensions</label>
         <axisDescription>
           <AxisDescription>
-            <name>member</name>
-            <label>member</label>
-            <values>
-              <interval>
-                <min>member1</min>
-                <max>member6</max>
-              </interval>
-              <singleValue>member1</singleValue>
-              <singleValue>member2</singleValue>
-              <singleValue>member3</singleValue>
-              <singleValue>member4</singleValue>
-              <singleValue>member5</singleValue>
-              <singleValue>member6</singleValue>
-            </values>
-          </AxisDescription>
-        </axisDescription>
-        <axisDescription>
-          <AxisDescription>
-            <name>elevation</name>
-            <label>elevation</label>
-            <values>
-              <interval>
-                <min>1000.0</min>
-                <max>9000.0</max>
-              </interval>
-              <singleValue>1000.0</singleValue>
-              <singleValue>2000.0</singleValue>
-              <singleValue>3000.0</singleValue>
-              <singleValue>4000.0</singleValue>
-              <singleValue>5000.0</singleValue>
-              <singleValue>6000.0</singleValue>
-              <singleValue>7000.0</singleValue>
-              <singleValue>8000.0</singleValue>
-              <singleValue>9000.0</singleValue>
-            </values>
-          </AxisDescription>
-        </axisDescription>
-        <axisDescription>
-          <AxisDescription>
             <name>time</name>
             <label>time</label>
             <values>
               <interval>
-                <min>2017-01-01T00:15:00Z</min>
-                <max>2017-01-01T00:25:00Z</max>
+                <min>2024-01-01T00:00:00Z</min>
+                <max>2024-07-15T00:00:00Z</max>
+                <res>P2D</res>
               </interval>
             </values>
           </AxisDescription>

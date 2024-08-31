@@ -28,9 +28,10 @@
 #include <vector>
 #include <sstream>
 #include <string>
+#include <time.h>
 #include "CXMLGen.h"
 #include "CDBFactory.h"
-// #define CXMLGEN_DEBUG
+#include "timeutils.h"
 
 const char *CFile::className = "CFile";
 
@@ -49,7 +50,7 @@ double parseNumeric(std::string const &str, bool &isNumeric) {
 }
 
 // Sort values that can either be numeric of a string
-bool multitypeSort(const CT::string &a, const CT::string &b) {
+bool multiTypeSort(const CT::string &a, const CT::string &b) {
   // Try to convert strings to numbers
   float aNum, bNum;
   bool isANum, isBNum;
@@ -398,15 +399,14 @@ int CXMLGen::getDimsForLayer(WMSLayer *myWMSLayer) {
         return 1;
       }
 
+      // Set to false by default for the case of a predefined interval
       bool hasMultipleValues = false;
       bool isTimeDim = false;
       if (myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.empty()) {
         hasMultipleValues = true;
 
         /* Automatically scan the time dimension, two types are avaible, start/stop/resolution and individual values */
-        // TODO try to detect automatically the time resolution of the layer.
         CT::string varName = myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str();
-        // CDBDebug("VarName = [%s]",varName.c_str());
         int ind = varName.indexOf("time");
         if (ind >= 0) {
           // CDBDebug("VarName = [%s] and this is a time dim at %d!",varName.c_str(),ind);
@@ -424,134 +424,26 @@ int CXMLGen::getDimsForLayer(WMSLayer *myWMSLayer) {
 
             // Get the first 100 values from the database, and determine whether the time resolution is continous or multivalue.
             CDBStore::Store *store = CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByValue(pszDimName, 100, true, tableName.c_str());
+
             bool dataHasBeenFoundInStore = false;
             if (store != NULL) {
               if (store->size() != 0) {
                 dataHasBeenFoundInStore = true;
-                tm tms[store->size()];
-
                 try {
-
+                  // Retrieve all timestamps
+                  std::vector<CT::string> isoTimes;
                   for (size_t j = 0; j < store->size(); j++) {
                     store->getRecord(j)->get("time")->setChar(10, 'T');
                     const char *isotime = store->getRecord(j)->get("time")->c_str();
+                    isoTimes.push_back(isotime);
+                  }
+                  CT::string estimatedISODuration = estimateISO8601Duration(isoTimes);
+                  hasMultipleValues = estimatedISODuration.empty();
 #ifdef CXMLGEN_DEBUG
-                    //                    CDBDebug("isotime = %s",isotime);
+                  CDBDebug("Estimated an ISO duration of %s with length %d", estimatedISODuration.c_str(), estimatedISODuration.length());
 #endif
-                    CT::string year, month, day, hour, minute, second;
-                    year.copy(isotime + 0, 4);
-                    tms[j].tm_year = year.toInt() - 1900;
-                    month.copy(isotime + 5, 2);
-                    tms[j].tm_mon = month.toInt() - 1;
-                    day.copy(isotime + 8, 2);
-                    tms[j].tm_mday = day.toInt();
-                    hour.copy(isotime + 11, 2);
-                    tms[j].tm_hour = hour.toInt();
-                    minute.copy(isotime + 14, 2);
-                    tms[j].tm_min = minute.toInt();
-                    second.copy(isotime + 17, 2);
-                    tms[j].tm_sec = second.toInt();
-                  }
-                  size_t nrTimes = store->size() - 1;
-                  bool isConst = true;
-                  if (store->size() < 4) {
-                    isConst = false;
-                  }
-                  try {
-                    CTime time;
-                    time.init(myWMSLayer->dataSource->getDataObject(0)->cdfObject->getVariable("time"));
-                    if (time.getMode() != 0) {
-                      isConst = false;
-                    }
-                  } catch (int e) {
-                  }
-
-                  CT::string iso8601timeRes = "P";
-                  CT::string yearPart = "";
-                  if (tms[1].tm_year - tms[0].tm_year != 0) {
-                    if (tms[1].tm_year - tms[0].tm_year == (tms[nrTimes < 10 ? nrTimes : 10].tm_year - tms[0].tm_year) / double(nrTimes < 10 ? nrTimes : 10)) {
-                      yearPart.printconcat("%dY", abs(tms[1].tm_year - tms[0].tm_year));
-                    } else {
-                      isConst = false;
-#ifdef CXMLGEN_DEBUG
-                      CDBDebug("year is irregular");
-#endif
-                    }
-                  }
-                  if (tms[1].tm_mon - tms[0].tm_mon != 0) {
-                    if (tms[1].tm_mon - tms[0].tm_mon == (tms[nrTimes < 10 ? nrTimes : 10].tm_mon - tms[0].tm_mon) / double(nrTimes < 10 ? nrTimes : 10))
-                      yearPart.printconcat("%dM", abs(tms[1].tm_mon - tms[0].tm_mon));
-                    else {
-                      isConst = false;
-#ifdef CXMLGEN_DEBUG
-                      CDBDebug("month is irregular");
-#endif
-                    }
-                  }
-
-                  if (tms[1].tm_mday - tms[0].tm_mday != 0) {
-                    if (tms[1].tm_mday - tms[0].tm_mday == (tms[nrTimes < 10 ? nrTimes : 10].tm_mday - tms[0].tm_mday) / double(nrTimes < 10 ? nrTimes : 10))
-                      yearPart.printconcat("%dD", abs(tms[1].tm_mday - tms[0].tm_mday));
-                    else {
-                      isConst = false;
-#ifdef CXMLGEN_DEBUG
-                      CDBDebug("day irregular");
-                      for (size_t j = 0; j < nrTimes; j++) {
-                        CDBDebug("Day %d = %d", j, tms[j].tm_mday);
-                      }
-#endif
-                    }
-                  }
-
-                  CT::string hourPart = "";
-                  if (tms[1].tm_hour - tms[0].tm_hour != 0) {
-                    hourPart.printconcat("%dH", abs(tms[1].tm_hour - tms[0].tm_hour));
-                  }
-                  if (tms[1].tm_min - tms[0].tm_min != 0) {
-                    hourPart.printconcat("%dM", abs(tms[1].tm_min - tms[0].tm_min));
-                  }
-                  if (tms[1].tm_sec - tms[0].tm_sec != 0) {
-                    hourPart.printconcat("%dS", abs(tms[1].tm_sec - tms[0].tm_sec));
-                  }
-
-                  int sd = (tms[1].tm_hour * 3600 + tms[1].tm_min * 60 + tms[1].tm_sec) - (tms[0].tm_hour * 3600 + tms[0].tm_min * 60 + tms[0].tm_sec);
-                  for (size_t j = 2; j < store->size() && isConst; j++) {
-                    int d = (tms[j].tm_hour * 3600 + tms[j].tm_min * 60 + tms[j].tm_sec) - (tms[j - 1].tm_hour * 3600 + tms[j - 1].tm_min * 60 + tms[j - 1].tm_sec);
-                    if (d > 0) {
-                      if (sd != d) {
-                        isConst = false;
-#ifdef CXMLGEN_DEBUG
-                        CDBDebug("hour/min/sec is irregular %d ", j);
-#endif
-                      }
-                    }
-                  }
-
-                  // Check whether we found a time resolution
-                  if (isConst == false) {
-                    hasMultipleValues = true;
-#ifdef CXMLGEN_DEBUG
-                    CDBDebug("Not a continous time dimension, multipleValues required");
-#endif
-                  } else {
-#ifdef CXMLGEN_DEBUG
-                    CDBDebug("Continous time dimension, Time resolution needs to be calculated");
-#endif
-                    hasMultipleValues = false;
-                  }
-
-                  if (isConst) {
-                    if (yearPart.length() > 0) {
-                      iso8601timeRes.concat(&yearPart);
-                    }
-                    if (hourPart.length() > 0) {
-                      iso8601timeRes.concat("T");
-                      iso8601timeRes.concat(&hourPart);
-                    }
-#ifdef CXMLGEN_DEBUG
-                    CDBDebug("Calculated a timeresolution of %s", iso8601timeRes.c_str());
-#endif
-                    myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.copy(iso8601timeRes.c_str());
+                  if (estimatedISODuration.length() > 0) { // Check if estimatedISODuration is not an empty string
+                    myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.copy(estimatedISODuration.c_str());
                     myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.units.copy("ISO8601");
                   }
                 } catch (int e) {
@@ -1522,108 +1414,41 @@ int CXMLGen::getWCS_1_0_0_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer 
   return 0;
 }
 
-// TODO: Use this everywhere, remove original lines to call this
-// Make it work with as many timesteps as needed (max of 100 timesteps)
-// Only use when it's a time dimension and the interval is not pre-specified in the dimension
-CT::string CXMLGen::calculateISOInterval(const std::vector<CT::string> &timestamps) {
-  size_t nrTimes = timestamps.size() - 1;
-  tm tms[timestamps.size()];
-  for (size_t j = 0; j < timestamps.size(); j++) {
-    const char *isotime = timestamps[j].c_str();
-#ifdef CXMLGEN_DEBUG
-    CDBDebug("isotime = %s", isotime);
-#endif
-    CT::string year, month, day, hour, minute, second;
-    year.copy(isotime + 0, 4);
-    tms[j].tm_year = year.toInt() - 1900;
-    month.copy(isotime + 5, 2);
-    tms[j].tm_mon = month.toInt() - 1;
-    day.copy(isotime + 8, 2);
-    tms[j].tm_mday = day.toInt();
-    hour.copy(isotime + 11, 2);
-    tms[j].tm_hour = hour.toInt();
-    minute.copy(isotime + 14, 2);
-    tms[j].tm_min = minute.toInt();
-    second.copy(isotime + 17, 2);
-    tms[j].tm_sec = second.toInt();
+std::string mostCommonInterval(const std::vector<int> &intervals) {
+  std::map<int, int> frequency;
+  for (int interval : intervals) {
+    frequency[interval]++;
   }
 
-  // Don't make start/stop/resolution if we are only working with 4 values
-  // Make a constant instead of 4
-  bool isConst = timestamps.size() < 4; // Question: why 4 - Because it's a small number of values.
-
-  CT::string iso8601timeRes = "P";
-  CT::string yearPart = "";
-  if (tms[1].tm_year - tms[0].tm_year != 0) {
-    if (tms[1].tm_year - tms[0].tm_year == (tms[nrTimes < 10 ? nrTimes : 10].tm_year - tms[0].tm_year) / double(nrTimes < 10 ? nrTimes : 10)) {
-      yearPart.printconcat("%dY", abs(tms[1].tm_year - tms[0].tm_year));
-    } else {
-      isConst = false;
-#ifdef CXMLGEN_DEBUG
-      CDBDebug("year is irregular");
-#endif
+  int maxCount = 0;
+  int commonInterval = 0;
+  for (const auto &pair : frequency) {
+    if (pair.second > maxCount) {
+      maxCount = pair.second;
+      commonInterval = pair.first;
     }
   }
-
-  if (tms[1].tm_mon - tms[0].tm_mon != 0) {
-    if (tms[1].tm_mon - tms[0].tm_mon == (tms[nrTimes < 10 ? nrTimes : 10].tm_mon - tms[0].tm_mon) / double(nrTimes < 10 ? nrTimes : 10))
-      yearPart.printconcat("%dM", abs(tms[1].tm_mon - tms[0].tm_mon));
-    else {
-      isConst = false;
-#ifdef CXMLGEN_DEBUG
-      CDBDebug("month is irregular");
-#endif
-    }
-  }
-
-  if (tms[1].tm_mday - tms[0].tm_mday != 0) {
-    if (tms[1].tm_mday - tms[0].tm_mday == (tms[nrTimes < 10 ? nrTimes : 10].tm_mday - tms[0].tm_mday) / double(nrTimes < 10 ? nrTimes : 10))
-      yearPart.printconcat("%dD", abs(tms[1].tm_mday - tms[0].tm_mday));
-    else {
-      isConst = false;
-#ifdef CXMLGEN_DEBUG
-      CDBDebug("day irregular");
-      for (size_t j = 0; j < nrTimes; j++) {
-        CDBDebug("Day %d = %d", j, tms[j].tm_mday);
-      }
-#endif
-    }
-  }
-
-  CT::string hourPart = "";
-  if (tms[1].tm_hour - tms[0].tm_hour != 0) {
-    hourPart.printconcat("%dH", abs(tms[1].tm_hour - tms[0].tm_hour));
-  }
-  if (tms[1].tm_min - tms[0].tm_min != 0) {
-    hourPart.printconcat("%dM", abs(tms[1].tm_min - tms[0].tm_min));
-  }
-  if (tms[1].tm_sec - tms[0].tm_sec != 0) {
-    hourPart.printconcat("%dS", abs(tms[1].tm_sec - tms[0].tm_sec));
-  }
-
-  bool hasMultipleValues = !isConst;
-
-  if (isConst) {
-    if (yearPart.length() > 0) {
-      iso8601timeRes.concat(&yearPart);
-    }
-    if (hourPart.length() > 0) {
-      iso8601timeRes.concat("T");
-      iso8601timeRes.concat(&hourPart);
-    }
-#ifdef CXMLGEN_DEBUG
-    CDBDebug("Calculated a timeresolution of %s", iso8601timeRes.c_str());
-#endif
-    return CT::string(iso8601timeRes.c_str());
-  }
-  return CT::string("");
+  return commonInterval > 0 ? std::to_string(commonInterval) + " months" : "N/A";
 }
 
-// Extra test files needed:
-// More than 200 timesteps:
-// - One with regular interval
-// - One with irregular interval
-// start/stop/interval
+CT::string buildISO8601Duration(time_t totalSeconds) {
+  struct tm *tmDuration = gmtime(&totalSeconds);
+
+  std::string isoDuration;
+  isoDuration += "P";
+  if (tmDuration->tm_year - 70 > 0) isoDuration += std::to_string(tmDuration->tm_year) + "Y";
+  if (tmDuration->tm_mon > 0) isoDuration += std::to_string(tmDuration->tm_mon) + "M";
+  if (tmDuration->tm_mday > 0) isoDuration += std::to_string(tmDuration->tm_mday) + "D";
+
+  if (tmDuration->tm_hour > 0 || tmDuration->tm_min > 0 || tmDuration->tm_sec > 0) {
+    isoDuration += "T";
+    if (tmDuration->tm_hour > 0) isoDuration += std::to_string(tmDuration->tm_hour) + "H";
+    if (tmDuration->tm_min > 0) isoDuration += std::to_string(tmDuration->tm_min) + "M";
+    if (tmDuration->tm_sec > 0) isoDuration += std::to_string(tmDuration->tm_sec) + "S";
+  }
+  return CT::string(isoDuration.c_str());
+}
+
 void CXMLGen::generateRangeSet(CT::string *XMLDoc, WMSLayer *layer) {
   /*
   From the documentation:
@@ -1642,45 +1467,45 @@ void CXMLGen::generateRangeSet(CT::string *XMLDoc, WMSLayer *layer) {
   // Dims
   for (size_t d = 0; d < layer->dimList.size(); d++) {
     WMSLayer::Dim *dim = layer->dimList[d];
-    // myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.c_str();
-    // Sort the values to make sure they are in the right order
-    CT::string *valueSplit = dim->values.splitToArray(",");
-    std::vector<CT::string> valuesVector(valueSplit, valueSplit + valueSplit->count);
-    std::sort(valuesVector.begin(), valuesVector.end(), multitypeSort);
+    CT::string min, max, duration;
+    CT::string *valueSplit;
+    std::vector<CT::string> valuesVector;
+
+    // Case of min/max(/duration), for time dimension
+    valueSplit = dim->values.splitToArray("/");
+    if (valueSplit->count >= 2) {
+      min = valueSplit[0];
+      max = valueSplit[1];
+      // Third value is the interval duration
+      if (valueSplit->count == 3) {
+        duration = valueSplit[2];
+      }
+    } else {
+      // General case of a list of values (of any type)
+      valueSplit = dim->values.splitToArray(",");
+      valuesVector = std::vector<CT::string>(valueSplit, valueSplit + valueSplit->count);
+      std::sort(valuesVector.begin(), valuesVector.end(), multiTypeSort);
+      min = valuesVector[0];
+      max = valuesVector.back();
+    }
 
     XMLDoc->printconcat("        <axisDescription>\n"
                         "          <AxisDescription>\n"
                         "            <name>%s</name>\n"
                         "            <label>%s</label>\n",
                         dim->name.c_str(), dim->name.c_str());
-    // At least two values (to have a min and a max)
     if (valueSplit->count >= 2) {
-      for (const auto &value : valuesVector) {
-        XMLDoc->printconcat("value: %s,", value.c_str());
-      }
       XMLDoc->printconcat("            <values>\n"
                           "              <interval>\n"
                           "                <min>%s</min>\n"
                           "                <max>%s</max>\n",
-                          valuesVector[0].c_str(), valuesVector.back().c_str());
-      // Call getDimsForLayer to precalculate the interval
-
-      // int status = getDimsForLayer(layer);
-      // const char *interval = layer->dataSource->cfgLayer->Dimension[d]->attr.interval.c_str();
-      // const char *interval = dim->interval.c_str();
-      if ((dim->name.indexOf("time") != -1) && valuesVector.size() > 1) {
-        // Print resolution for a time dimension
-        CT::string estimatedISODuration = calculateISOInterval(valuesVector);
-        if (!estimatedISODuration.empty()) {
-          XMLDoc->printconcat("                <res>%s</res>\n", estimatedISODuration.c_str());
-        }
+                          min.c_str(), max.c_str());
+      // Precalculate the interval in the case of time (no interval if fewer than 4 values)
+      if ((dim->name.indexOf("time") != -1) && duration.length() > 0) {
+        XMLDoc->printconcat("                <res>%s</res>\n", duration.c_str()); // .c_str());
       }
-
-      // if ((dim->name.indexOf("time") != -1) && interval) {
-      //   XMLDoc->printconcat("                <res>%s</res>\n", interval);
-      // }
       XMLDoc->printconcat("              </interval>\n");
-      // Print all possible values if there is a relatively small number
+      // Print all possible values if there is a relatively small number, for other dimensions
       if ((valueSplit->count <= 100) && (dim->name.indexOf("time") == -1)) {
         for (size_t i = 0; i < valueSplit->count; i++) {
           XMLDoc->printconcat("              <singleValue>%s</singleValue>\n", valuesVector[i].c_str());

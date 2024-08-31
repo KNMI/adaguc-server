@@ -115,7 +115,6 @@ private:
   int getWCS_1_0_0_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer *> *myWMSLayerList);
   int getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc, std::vector<WMSLayer *> *myWMSLayerList);
   int getStylesForLayer(WMSLayer *myWMSLayer);
-  CT::string calculateISOInterval(const std::vector<CT::string> &timestamps);
   void generateRangeSet(CT::string *XMLDoc, WMSLayer *layer);
   // int getStylesForLayer2(WMSLayer * myWMSLayer);
   CServerParams *srvParam;
