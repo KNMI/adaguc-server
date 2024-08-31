@@ -47,8 +47,9 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
   bool drawUpperTriangle = true;
   bool drawLowerTriangle = true;
 
-  float fontSize = dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.size.toDouble();
-  CT::string fontLocation = dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.location;
+  float fontSize;
+  std::string fontLocation;
+  std::tie(fontSize, fontLocation) = dataSource->srvParams->getLegendFont();
   CT::string textformatting;
 
   /* Take the textformatting from the Style->Legend configuration */

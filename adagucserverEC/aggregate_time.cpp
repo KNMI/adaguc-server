@@ -130,9 +130,8 @@ int main(int argc, const char *argv[]) {
         throw(__LINE__);
       }
 
-      CTime time;
-      time.init(timeVar);
-      CTime::Date date = time.getDate(value);
+      CTime *time = CTime::GetCTimeInstance(timeVar);
+      CTime::Date date = time->getDate(value);
       CTime epochCTime;
       epochCTime.init("seconds since 1970-01-01 0:0:0", NULL);
 

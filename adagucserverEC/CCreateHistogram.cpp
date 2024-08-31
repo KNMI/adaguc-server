@@ -1,5 +1,6 @@
 #include "CCreateHistogram.h"
 #include "CGenericDataWarper.h"
+#include "CImageDataWriter.h"
 const char *CCreateHistogram::className = "CCreateHistogram";
 
 int CCreateHistogram::createHistogram(CDataSource *dataSource, CDrawImage *) {
@@ -10,10 +11,11 @@ int CCreateHistogram::createHistogram(CDataSource *dataSource, CDrawImage *) {
   CT::string resultJSON;
   if (dataSource->srvParams->JSONP.length() == 0) {
     CDBDebug("CREATING JSON");
-    printf("%s%c%c\n", "Content-Type: application/json", 13, 10);
+    printf("%s%s%c%c\n", "Content-Type: application/json", dataSource->srvParams->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
   } else {
     CDBDebug("CREATING JSONP %s", dataSource->srvParams->JSONP.c_str());
-    printf("%s%c%c\n%s(", "Content-Type: application/javascript", 13, 10, dataSource->srvParams->JSONP.c_str());
+    printf("%s%s%c%c", "Content-Type: application/javascript", dataSource->srvParams->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+    printf("\n%s(", dataSource->srvParams->JSONP.c_str());
   }
 
   // puts("{\"a\": 1}");
@@ -148,21 +150,23 @@ int CCreateHistogram::addData(std::vector<CDataSource *> &dataSources) {
     float fieldMin = (float)dataSource->statistics->getMinimum();
     float fieldMax = (float)dataSource->statistics->getMaximum();
 
-    int maxNumBins = 20;
+    int maxNumBins = 50;
 
     int bins[maxNumBins];
 
     for (int j = 0; j < maxNumBins; j++) bins[j] = 0;
 
-    float min = (float)dataSource->statistics->getMinimum();
-    float max = (float)dataSource->statistics->getMaximum();
-
+    double min = CImageDataWriter::getValueForColorIndex(dataSource, 0);
+    double max = CImageDataWriter::getValueForColorIndex(dataSource, 240);
+    if (max == INFINITY) max = 239;
+    if (min == INFINITY) min = 0;
+    if (max == min) max = max + 0.000001;
     // Round min and max
 
-    float roundFactor1 = pow(10, floor(log10((max - min) / float(maxNumBins))));
+    double roundFactor1 = pow(10, floor(log10((max - min) / double(maxNumBins))));
     CDBDebug("roundFactor1 %f", roundFactor1);
-    float roundFactor = floor(((max - min) / float(maxNumBins)) / roundFactor1) * roundFactor1;
-    float binSize = roundFactor * 2;
+    double roundFactor = floor(((max - min) / double(maxNumBins)) / roundFactor1) * roundFactor1;
+    double binSize = roundFactor * 2;
     min = floor(min / roundFactor) * roundFactor;
     max = ceil(max / roundFactor) * roundFactor;
     CDBDebug("binSize = %f min=%f max=%f", binSize, min, max);
@@ -254,10 +258,11 @@ int CCreateHistogram::end() {
   CT::string resultJSON;
   if (baseDataSource->srvParams->JSONP.length() == 0) {
     CDBDebug("CREATING JSON");
-    printf("%s%c%c\n", "Content-Type: application/json", 13, 10);
+    printf("%s%s%c%c\n", "Content-Type: application/json", baseDataSource->srvParams->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
   } else {
     CDBDebug("CREATING JSONP %s", baseDataSource->srvParams->JSONP.c_str());
-    printf("%s%c%c\n%s(", "Content-Type: application/javascript", 13, 10, baseDataSource->srvParams->JSONP.c_str());
+    printf("%s%s%c%c", "Content-Type: application/javascript", baseDataSource->srvParams->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+    printf("\n%s(", baseDataSource->srvParams->JSONP.c_str());
   }
 
   puts(JSONdata.c_str());

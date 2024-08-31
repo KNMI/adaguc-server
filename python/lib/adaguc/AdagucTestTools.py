@@ -1,3 +1,4 @@
+import asyncio
 import os
 from io import BytesIO
 import shutil
@@ -32,11 +33,6 @@ class AdagucTestTools:
         print("\n=== START ADAGUC LOGS ===")
         print(self.getLogFile())
         print("=== END ADAGUC LOGS ===")
-
-    def runRemoteADAGUCServer(self, url=None):
-        req = urllib.request.Request(url)
-        content = urllib.request.urlopen(req)
-        return [content.getcode(), content.read(), content.getheaders()]
 
     def runADAGUCServer(
         self,
@@ -74,14 +70,20 @@ class AdagucTestTools:
         os.chdir(ADAGUC_PATH + "/tests")
 
         filetogenerate = BytesIO()
-        status, headers, processErr = CGIRunner().run(
+        status, headers, processErr = asyncio.run(CGIRunner().run(
             adagucargs,
             url=url,
             output=filetogenerate,
             env=adagucenv,
             path=path,
             isCGI=isCGI,
-        )
+        ))
+
+        # Convert HTTP status codes
+        if status == 32:
+            status = 404
+        elif status == 33:
+            status = 422
 
         if (status != 0 and showLogOnError == True) or showLog == True:
             print("LOG:", ADAGUC_LOGFILE)
@@ -104,7 +106,7 @@ class AdagucTestTools:
                 print("Process: No HTTP Headers written")
 
             print("--- END ADAGUC DEBUG INFO ---\n")
-            return [status, filetogenerate, headers]
+            return status, filetogenerate, headers
 
         else:
             # The executable wrote to stderr, which is unwanted behaviour. Stderr should be empty when running adaguc-server.
@@ -118,7 +120,7 @@ class AdagucTestTools:
                 print(
                     "[WARNING]: Adaguc-server writes too many lines to the logfile, size = %d kilobytes"
                     % (logfileSize / 1024))
-            return [status, filetogenerate, headers]
+            return status, filetogenerate, headers
 
     def writetofile(self, filename, data):
         with open(filename, "wb") as f:
@@ -149,8 +151,7 @@ class AdagucTestTools:
         expectedImagePath,
         returnedImagePath,
         maxAllowedColorDifference=1,
-        maxAllowedColorPercentage=0.01,
-        maxAllowedPaletteDifference=1
+        maxAllowedColorPercentage=0.01
     ):
         """Compare the pictures referred to by the arguments.
 
@@ -159,7 +160,6 @@ class AdagucTestTools:
             returnedImagePath (str): path of the image that we got as output from the test
             maxAllowedColorDifference(int): max allowed difference in a single color band
             maxAllowedColorPercentage(float): max allowed percentage of pixels that have different colors
-            maxAllowedPaletteDifference(int): max allowed difference in the color palette
 
         Returns:
             bool: True if the difference is "small enough"
@@ -177,24 +177,19 @@ class AdagucTestTools:
                 f"\nError, mode of expected and actual image do not match: {expected_image.mode} vs {returned_image.mode}"
             )
             return False
-        if returned_image.mode == "P":
-            expected_palette = expected_image.getpalette()
-            returned_palette = returned_image.getpalette()
-            if expected_palette != returned_palette:
-                if len(expected_palette) != len(returned_palette):
-                    print("Error, palette length don't match!!")
-                    return False
-                max_pallete_difference_exceeded = False
-                for i in range(0, len(expected_palette)):
-                    if expected_palette[i] != returned_palette[i]:
-                        if abs(expected_palette[i] - returned_palette[i]) > maxAllowedPaletteDifference:
-                            max_pallete_difference_exceeded = True
-                        print(f"Palette difference: {i}: {expected_palette[i]}, {returned_palette[i]}")
-                if max_pallete_difference_exceeded:
-                    print(f"Error, max palette difference ({maxAllowedPaletteDifference}) exceeded.")
-                    return False
 
         width, height = expected_image.size
+        if returned_image.mode == "P":
+            expected_palette_values = expected_image.getpalette()
+            returned_palette_values = returned_image.getpalette()
+            if returned_image.palette.mode == "RGB":
+                print(f"\tApplying palette translation for comparison...")
+                expected_palette = [tuple(expected_palette_values[i:i + 3]) for i in range(0, len(expected_palette_values), 3)]
+                returned_palette = [tuple(returned_palette_values[i:i + 3]) for i in range(0, len(returned_palette_values), 3)]
+            else:
+                print(f"\nError: Palette mode {returned_image.palette.mode} not supported!")
+                return False
+
         n_bands = len(expected_image.getbands())
 
         max_color_difference_pixel = None
@@ -208,8 +203,12 @@ class AdagucTestTools:
                 returned_color = returned_image.getpixel(c)
 
                 if n_bands == 1:
-                    expected_color = (expected_color, )
-                    returned_color = (returned_color, )
+                    if returned_image.mode == "P":
+                        expected_color = expected_palette[expected_color]
+                        returned_color = returned_palette[returned_color]
+                    else:
+                        expected_color = (expected_color, )
+                        returned_color = (returned_color, )
                 diff_color = tuple(
                     map(lambda e, g: e - g, expected_color, returned_color))
 

@@ -29,18 +29,13 @@
 #include "CCDFDataModel.h"
 #include "CCDFVariable.h"
 #include "CCDFObject.h"
-#include "CCDFCache.h"
 
 class CDFReader {
 public:
   CT::string fileName;
-  CDFReader() {
-    cdfObject = NULL;
-    cdfCache = NULL;
-  }
+  CDFReader() { cdfObject = NULL; }
   virtual ~CDFReader() {}
   CDFObject *cdfObject;
-  CDFCache *cdfCache;
   virtual int open(const char *fileName) = 0;
   virtual int close() = 0;
 

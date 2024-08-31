@@ -77,26 +77,28 @@ public:
   CT::string styleTitle;
   CT::string styleAbstract;
 
-  void printStyleConfig(CT::string *data) {
-    data->print("name = %s\n", styleCompositionName.c_str());
-    data->printconcat("shadeInterval = %f\n", shadeInterval);
-    data->printconcat("contourIntervalL = %f\n", contourIntervalL);
-    data->printconcat("contourIntervalH = %f\n", contourIntervalH);
-    data->printconcat("legendScale = %f\n", legendScale);
-    data->printconcat("legendOffset = %f\n", legendOffset);
-    data->printconcat("legendLog = %f\n", legendLog);
-    data->printconcat("hasLegendValueRange = %d\n", hasLegendValueRange);
-    data->printconcat("legendLowerRange = %f\n", legendLowerRange);
-    data->printconcat("legendUpperRange = %f\n", legendUpperRange);
-    data->printconcat("smoothingFilter = %d\n", smoothingFilter);
-    data->printconcat("legendTickRound = %f\n", legendTickRound);
-    data->printconcat("legendTickInterval = %f\n", legendTickInterval);
-    data->printconcat("legendIndex = %d\n", legendIndex);
-    data->printconcat("styleIndex = %d\n", styleIndex);
+  CT::string c_str() {
+    CT::string data;
+    data.print("name = %s\n", styleCompositionName.c_str());
+    data.printconcat("shadeInterval = %f\n", shadeInterval);
+    data.printconcat("contourIntervalL = %f\n", contourIntervalL);
+    data.printconcat("contourIntervalH = %f\n", contourIntervalH);
+    data.printconcat("legendScale = %f\n", legendScale);
+    data.printconcat("legendOffset = %f\n", legendOffset);
+    data.printconcat("legendLog = %f\n", legendLog);
+    data.printconcat("hasLegendValueRange = %d\n", hasLegendValueRange);
+    data.printconcat("legendLowerRange = %f\n", legendLowerRange);
+    data.printconcat("legendUpperRange = %f\n", legendUpperRange);
+    data.printconcat("smoothingFilter = %d\n", smoothingFilter);
+    data.printconcat("legendTickRound = %f\n", legendTickRound);
+    data.printconcat("legendTickInterval = %f\n", legendTickInterval);
+    data.printconcat("legendIndex = %d\n", legendIndex);
+    data.printconcat("styleIndex = %d\n", styleIndex);
     // TODO
     CT::string rMethodString;
     getRenderMethodAsString(&rMethodString, renderMethod);
-    data->printconcat("renderMethod = %s", rMethodString.c_str());
+    data.printconcat("renderMethod = %s", rMethodString.c_str());
+    return data;
   }
 };
 #endif

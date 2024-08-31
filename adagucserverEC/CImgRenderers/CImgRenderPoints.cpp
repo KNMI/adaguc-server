@@ -322,7 +322,7 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
             if (!useDrawPointTextColor) {
               if (dataObjectIndex == 0) { // Only calculate color for 1st dataObject, rest gets defaultColor
                 if ((dataSource->getStyle() != NULL) && (dataSource->getStyle()->shadeIntervals != NULL) && (dataSource->getStyle()->shadeIntervals->size() > 0)) {
-                  drawPointTextColor = getPixelColorForValue(dataSource, v);
+                  drawPointTextColor = getPixelColorForValue(drawImage, dataSource, v);
                 } else {
                   int pointColorIndex = getPixelIndexForValue(dataSource, v); // Use value of dataObject[0] for colour
                   drawPointTextColor = drawImage->getColorForIndex(pointColorIndex);
@@ -340,7 +340,7 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
             } else {                        // Text and disc
               if (!useDrawPointFillColor) { //(dataSource->getNumDataObjects()==1) {
                 if ((dataSource->getStyle() != NULL) && (dataSource->getStyle()->shadeIntervals != NULL) && (dataSource->getStyle()->shadeIntervals->size() > 0)) {
-                  drawPointFillColor = getPixelColorForValue(dataSource, v);
+                  drawPointFillColor = getPixelColorForValue(drawImage, dataSource, v);
                 } else {
                   int pointColorIndex = getPixelIndexForValue(dataSource, v); // Use value of dataObject[0] for colour
                   drawPointFillColor = drawImage->getColorForIndex(pointColorIndex);
@@ -414,7 +414,7 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
 
           if (!useDrawPointTextColor) {
             if ((dataSource->getStyle() != NULL) && (dataSource->getStyle()->shadeIntervals != NULL)) {
-              drawPointTextColor = getPixelColorForValue(dataSource, v);
+              drawPointTextColor = getPixelColorForValue(drawImage, dataSource, v);
             } else {
               int pointColorIndex = getPixelIndexForValue(dataSource, v); // Use value of dataObject[0] for colour
               drawPointTextColor = drawImage->getColorForIndex(pointColorIndex);
@@ -430,7 +430,7 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
             }
             if (!useDrawPointFillColor) { //(dataSource->getNumDataObjects()==1) {
               if ((dataSource->getStyle() != NULL) && (dataSource->getStyle()->shadeIntervals != NULL)) {
-                CColor col = getPixelColorForValue(dataSource, v);
+                CColor col = getPixelColorForValue(drawImage, dataSource, v);
                 drawImage->setTextDisc(x, y, drawPointDiscRadius, t.c_str(), drawPointFontFile, drawPointFontSize, drawPointTextColor, col, drawPointLineColor);
               } else {
                 int pointColorIndex = getPixelIndexForValue(dataSource, v); // Use value of dataObject[0] for colour
@@ -565,7 +565,7 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
 
     float strength = (*p1)[j].v;
     float direction = (*p2)[j].v;
-    if (direction == direction) direction += rotation;        // Nan stays Nan
+    if (direction == direction) direction += rotation; // Nan stays Nan
 
     if ((direction == direction) && (strength == strength)) { // Check for Nan
       //        CDBDebug("Drawing wind %f,%f for [%d,%d]", strength, direction, x, y);
@@ -860,7 +860,7 @@ int CImgRenderPoints::getPixelIndexForValue(CDataSource *dataSource, float val) 
   return 0;
 }
 
-CColor CImgRenderPoints::getPixelColorForValue(CDataSource *dataSource, float val) {
+CColor CImgRenderPoints::getPixelColorForValue(CDrawImage *drawImage, CDataSource *dataSource, float val) {
   bool isNodata = false;
 
   CColor color;
@@ -868,8 +868,8 @@ CColor CImgRenderPoints::getPixelColorForValue(CDataSource *dataSource, float va
     if (val == float(dataSource->getDataObject(0)->dfNodataValue)) isNodata = true;
     if (!(val == val)) isNodata = true;
   }
+  CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   if (!isNodata) {
-    CStyleConfiguration *styleConfiguration = dataSource->getStyle();
     for (size_t j = 0; j < styleConfiguration->shadeIntervals->size(); j++) {
       CServerConfig::XMLE_ShadeInterval *shadeInterval = ((*styleConfiguration->shadeIntervals)[j]);
       if (shadeInterval->attr.min.empty() == false && shadeInterval->attr.max.empty() == false) {
@@ -879,5 +879,8 @@ CColor CImgRenderPoints::getPixelColorForValue(CDataSource *dataSource, float va
       }
     }
   }
-  return color;
+  // If shade interval is set, we have to round the color value down to the lower value of the legend class
+  float newValue = styleConfiguration->shadeInterval > 0 ? val = floor(val / styleConfiguration->shadeInterval) * styleConfiguration->shadeInterval : val;
+  int pointColorIndex = getPixelIndexForValue(dataSource, newValue); // Use value of dataObject[0] for colour
+  return drawImage->getColorForIndex(pointColorIndex);
 }

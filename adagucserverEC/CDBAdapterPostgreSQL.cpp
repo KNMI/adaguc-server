@@ -30,7 +30,6 @@
 const char *CDBAdapterPostgreSQL::className = "CDBAdapterPostgreSQL";
 #define CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP "pathfiltertablelookup_v2_0_23"
 // #define CDBAdapterPostgreSQL_DEBUG
-//
 // #define MEASURETIME
 
 CDBAdapterPostgreSQL::CDBAdapterPostgreSQL() {
@@ -553,17 +552,6 @@ int CDBAdapterPostgreSQL::autoUpdateAndScanDimensionTables(CDataSource *dataSour
     return -1;
   }
 
-  CCache::Lock lock;
-  CT::string identifier = "checkDimTables";
-  identifier.concat(cfgLayer->FilePath[0]->value.c_str());
-  identifier.concat("/");
-  identifier.concat(cfgLayer->FilePath[0]->attr.filter.c_str());
-  CT::string cacheDirectory = srvParams->cfg->TempDir[0]->attr.value.c_str();
-  // srvParams->getCacheDirectory(&cacheDirectory);
-  if (cacheDirectory.length() > 0) {
-    lock.claim(cacheDirectory.c_str(), identifier.c_str(), "checkDimTables", srvParams->isAutoResourceEnabled());
-  }
-
 #ifdef CDBAdapterPostgreSQL_DEBUG
   CDBDebug("[checkDimTables]");
 #endif
@@ -657,7 +645,6 @@ int CDBAdapterPostgreSQL::autoUpdateAndScanDimensionTables(CDataSource *dataSour
 #ifdef CDBAdapterPostgreSQL_DEBUG
   CDBDebug("[/checkDimTables]");
 #endif
-  lock.release();
 #ifdef MEASURETIME
   StopWatch_Stop("<CDBAdapterPostgreSQL::autoUpdateAndScanDimensionTables");
 #endif
@@ -702,13 +689,6 @@ CT::string CDBAdapterPostgreSQL::getTableNameForPathFilterAndDimension(const cha
     StopWatch_Stop("<CDBAdapterPostgreSQL::getTableNameForPathFilterAndDimension");
 #endif
     return tableName;
-  }
-
-  CCache::Lock lock;
-  CT::string cacheDirectory = dataSource->cfg->TempDir[0]->attr.value.c_str();
-  // getCacheDirectory(&cacheDirectory);
-  if (cacheDirectory.length() > 0) {
-    lock.claim(cacheDirectory.c_str(), identifier.c_str(), "lookupTableName", dataSource->srvParams->isAutoResourceEnabled());
   }
 
   // This makes use of a lookup table to find the tablename belonging to the filter and path combinations.
@@ -759,6 +739,7 @@ CT::string CDBAdapterPostgreSQL::getTableNameForPathFilterAndDimension(const cha
     } else {
       mvRecordQuery.print("SELECT * FROM %s where path=E'%s' and filter=E'%s'", lookupTableName.c_str(), pathString.c_str(), filterString.c_str());
     }
+
     CDBStore::Store *rec = DB->queryToStore(mvRecordQuery.c_str());
     if (rec == NULL) {
       CDBError("Unable to select records: \"%s\"", mvRecordQuery.c_str());
@@ -796,8 +777,6 @@ CT::string CDBAdapterPostgreSQL::getTableNameForPathFilterAndDimension(const cha
     }
     // Close the database
   } catch (int e) {
-
-    lock.release();
     throw(e);
   }
 
@@ -806,7 +785,6 @@ CT::string CDBAdapterPostgreSQL::getTableNameForPathFilterAndDimension(const cha
     lookupTableNameCacheMap.insert(std::pair<std::string, std::string>(identifier.c_str(), tableName.c_str()));
   }
 
-  lock.release();
   if (tableName.length() <= 0) {
     CDBError("Unable to generate lookup table name for %s", identifier.c_str());
     throw(1);

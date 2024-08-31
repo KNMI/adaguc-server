@@ -1,666 +1,724 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-  <Configuration>
-  
-
-    <Legend name="temperature" type="interval">
-      <palette index="0" color="#2E2E73"/>  <!-- -14 -->
-      <palette index="9" color="#282898"/>  <!-- -12 -->
-      <palette index="18" color="#201FBB"/> <!-- -10 -->
-      <palette index="27" color="#1A1ADC"/> <!-- -8 -->
-      <palette index="36" color="#3654DE"/> <!-- -6 -->
-      <palette index="45" color="#548EDC"/> <!-- -4 -->
-      <palette index="54" color="#72CADE"/> <!-- -2 -->
-      <palette index="63" color="#6DD8DF"/> <!-- 0-->
-      <palette index="72" color="#55CDE2"/> <!-- 2-->
-      <palette index="81" color="#38BBDC"/> <!-- 4 -->
-      <palette index="90" color="#20B0DC"/> <!-- 6 -->
-      <palette index="99" color="#19BAA6"/> <!-- 8 -->
-      <palette index="108" color="#1CCE6A"/> <!-- 10 -->
-      <palette index="117" color="#1BDF22"/> <!-- 12 -->
-      <palette index="126" color="#82C319"/> <!-- 14 -->
-      <palette index="135" color="#DCA819"/> <!-- 16 -->
-      <palette index="144" color="#DD921A"/> <!-- 18 -->
-      <palette index="153" color="#DE7C1A"/> <!-- 20 -->
-      <palette index="162" color="#DF671A"/> <!-- 22 -->
-      <palette index="171" color="#DE501A"/> <!-- 24 -->
-      <palette index="180" color="#DD3819"/> <!-- 26 -->
-      <palette index="189" color="#DD2319"/> <!-- 28 -->
-      <palette index="198" color="#D21A1E"/> <!-- 30 -->
-      <palette index="207" color="#C31927"/> <!-- 32 -->
-      <palette index="216" color="#AD1A30"/> <!-- 34 -->
-      <palette index="225" color="#9A1A3B"/> <!-- 36 -->
-      <palette index="234" color="#871A44"/> <!-- 38 -->
-      <palette index="240" color="#871A44"/> <!--  39,33 -->
-    </Legend>
-
-    <Legend name="precipitation" type="interval">
-      <palette index="0" color="#BACDCB"/>  <!-- 0 -->
-      <palette index="30" color="#A3C3C9"/>  <!-- 0.1 -->
-      <palette index="60" color="#8BBCC8"/> <!-- 0.2 -->
-      <palette index="90" color="#6AAEC1"/> <!-- 0.5 -->
-      <palette index="120" color="#42A1C0"/> <!-- 1 -->
-      <palette index="150" color="#377EAF"/> <!-- 2 -->
-      <palette index="180" color="#46669C"/> <!-- 5 -->
-      <palette index="210" color="#56528D"/> <!-- 10-->
-      <palette index="239" color="#86008D"/> <!-- 30-->
-    </Legend>
-
-    <Legend name="pressure" type="interval">
-      <palette index="0" color="#5C5797"/>  <!-- 960 -->
-      <palette index="12" color="#1D5791"/>  <!-- 964 -->
-      <palette index="24" color="#1E8BC5"/>  <!-- 968 -->
-      <palette index="36" color="#1EA6B9"/>  <!-- 972 -->
-      <palette index="48" color="#1A99A0"/>  <!-- 976 -->
-      <palette index="60" color="#1C7976"/>  <!-- 980 -->
-      <palette index="72" color="#1C7244"/>  <!-- 984 -->
-      <palette index="84" color="#72B060"/>  <!-- 988 -->
-      <palette index="96" color="#AFC560"/>  <!-- 992 -->
-      <palette index="108" color="#C9CF3C"/>  <!-- 996 -->
-      <palette index="120" color="#E3DA36"/>  <!-- 1000 -->
-      <palette index="132" color="#EFE686"/>  <!-- 1004 -->
-      <palette index="144" color="#EFE3BB"/>  <!-- 1008 -->
-      <palette index="156" color="#ECCB90"/>  <!-- 1012 -->
-      <palette index="168" color="#E7A34A"/>  <!-- 1016 -->
-      <palette index="180" color="#DE7222"/>  <!-- 1020 -->
-      <palette index="192" color="#D93531"/>  <!-- 1024 -->
-      <palette index="204" color="#C41F32"/>  <!-- 1028 -->
-      <palette index="216" color="#843537"/>  <!-- 1032 -->
-      <palette index="228" color="#5E3F3A"/>  <!-- 1036 -->
-      <palette index="239" color="#2E3F2A"/>  <!-- 1040 -->
-    </Legend>
-
-     <Legend name="standard" type="colorRange">
-      <palette index="0"  red="132"    green="211"   blue="255"/>
-      <palette index="48" red="247"   green="247" blue="247"/>
-      <palette index="96" red="255"   green="195" blue="57"/>
-      <palette index="144" red="232"  green="28" blue="0"/>
-      <palette index="192" red="165"  green="0" blue="0"/>
-      <palette index="240" red="90"   green="0" blue="0"/>
-    </Legend>
-
-    <Style name="stretch">
-      <Legend fixed="true" tickinterval="2">temperature</Legend>
-      <RenderMethod>point</RenderMethod>
-      <Scale>0</Scale>
-      <Point plotstationid="false" pointstyle="point" discradius="15" textradius="0" dot="false" fontsize="8" textcolor="#000000" />
-    </Style>
-
-    <Style name="temperature">
-      <Legend fixed="true" tickinterval="2">temperature</Legend>
-      <RenderMethod>point</RenderMethod>
-      <Min>-14</Min>
-      <Max>39,33333333</Max> <!-- 39,33333333 = (240 / (234/(38 - -14))) - 14 -->
-      <NameMapping name="point"        title="Temperature" abstract="Temperature"/>
-      <Point plotstationid="false" pointstyle="point" discradius="15" textradius="0" dot="false" fontsize="8" textcolor="#000000" />
-    </Style>
-
-    <Style name="temperature-volume">
-      <Legend fixed="true" tickinterval="2">temperature</Legend>
-      <RenderMethod>point</RenderMethod>
-      <Min>-14</Min>
-      <Max>39,33333333</Max> <!-- 39,33333333 = (240 / (234/(38 - -14))) - 14 -->
-      <NameMapping name="point"        title="Temperature" abstract="Temperature"/>
-      <Point plotstationid="false" pointstyle="volume" discradius="25" fillcolor="#0000FF" />
-    </Style>
-
-    <Style name="temperature-disc">
-      <Legend fixed="true" tickinterval="2">temperature</Legend>
-      <RenderMethod>point</RenderMethod>
-      <Min>-14</Min>
-      <Max>39,33333333</Max> <!-- 39,33333333 = (240 / (234/(38 - -14))) - 14 -->
-      <NameMapping name="point"        title="Temperature" abstract="Temperature"/>
-      <Point plotstationid="false" pointstyle="disc" discradius="25" fillcolor="#80808040" />
-    </Style>
-
-    <Style name="zm">
-      <Legend fixed="true" tickinterval="2">standard</Legend>
-      <RenderMethod>point</RenderMethod>
-      <Min>0</Min>
-      <Max>50000</Max>
-      <NameMapping name="point"        title="Meteorological Optical Range" abstract="Meteorological Optical Range"/>
-      <Point plotstationid="false" pointstyle="point" discradius="7" textradius="16" dot="true" fontsize="8"  textcolor="#000000"/>
-    </Style>
-
-    <Style name="precipitation">
-      <Legend fixed="true" tickinterval="2">precipitation</Legend>
-      <RenderMethod>point</RenderMethod>
-      <Min>0</Min>
-      <Max>30</Max>
-      <NameMapping name="point"        title="precipitation" abstract="precipitation"/>
-      <Point plotstationid="false" pointstyle="point" discradius="15" textradius="0" dot="false" fontsize="8" textcolor="#000000" />
-    </Style>
-
-    <Style name="pressure">
-      <Legend fixed="true" tickinterval="4">pressure</Legend>
-      <RenderMethod>point</RenderMethod>
-      <Min>960</Min>
-      <Max>1040</Max>
-      <NameMapping name="point"        title="pressure" abstract="pressure"/>
-      <Point plotstationid="false" pointstyle="point" discradius="15" textradius="0" dot="false" fontsize="8" textcolor="#000000" textformat="%0.0f"/>
-    </Style>
-
-    <Style name="percentage">
-      <Legend fixed="true" tickinterval="10">standard</Legend>
-      <RenderMethod>point</RenderMethod>
-      <Min>0</Min>
-      <Max>100</Max>
-      <NameMapping name="point"        title="Percentage" abstract="Percentage"/>
-      <Point plotstationid="false" pointstyle="point" discradius="15" textradius="0" dot="false" fontsize="8" textcolor="#000000" />
-    </Style>
-
-   <Style name="duration">
-      <Legend fixed="true" tickinterval="10">standard</Legend>
-      <RenderMethod>point</RenderMethod>
-      <Min>0</Min>
-      <Max>60</Max>
-      <NameMapping name="point"        title="duration[min]" abstract="duration"/>
-      <Point plotstationid="false" pointstyle="point" discradius="15" textradius="0" dot="false" fontsize="8" textcolor="#000000" />
-    </Style>
-
-    <Style name="height">
-      <Legend fixed="true" tickinterval="5">standard</Legend>
-      <RenderMethod>point</RenderMethod>
-      <Min>-10</Min>
-      <Max>70</Max>
-      <NameMapping name="point"        title="Richter magnitude scale" abstract="With discrete colors"/>
-      <Point plotstationid="false" pointstyle="point" discradius="8" textradius="17"  dot="true" fontsize="8"  textcolor="#000000"/>
-     </Style>
-
-    <Style name="weercode">
-      <Legend fixed="true" tickinterval="4">standard</Legend>
-      <RenderMethod>point</RenderMethod>
-      <Min>100</Min>
-      <Max>200</Max>
-      <NameMapping name="point"        title="weercode" abstract="weercode"/>
-      <Point plotstationid="false" pointstyle="point" discradius="15" textradius="0" dot="false" fontsize="8" textcolor="#000000"/>
-    </Style>
-
-     <Style name="wolkenbasis">
-      <Legend fixed="true" tickinterval="4">standard</Legend>
-      <RenderMethod>point</RenderMethod>
-      <Min>0</Min>
-      <Max>35000</Max>
-      <NameMapping name="point"        title="wolkenbasis" abstract="wolkenbasis"/>
-      <Point plotstationid="false" pointstyle="point" discradius="15" textradius="0" dot="false" fontsize="8" textcolor="#000000"/>
-    </Style>
-
-    <Style name="bewolkingsgraad">
-      <Legend fixed="true" tickinterval="4">standard</Legend>
-      <RenderMethod>point</RenderMethod>
-      <Min>0</Min>
-      <Max>8</Max>
-      <NameMapping name="point"        title="bewolkingsgraad[octa]" abstract="bewolkingsgraad"/>
-      <Point plotstationid="false" pointstyle="point" discradius="15" textradius="0" dot="false" fontsize="8" textcolor="#000000"/>
-    </Style>
-
-     <Style name="stationname">
-      <Legend fixed="true" tickinterval="5">standard</Legend>
-      <RenderMethod>point</RenderMethod>
-      <Min>-10</Min>
-      <Max>70</Max>
-      <NameMapping name="point"        title="Richter magnitude scale" abstract="With discrete colors"/>
-      <Point plotstationid="false" pointstyle="point" discradius="1" textradius="6" dot="true" fontsize="8"  textcolor="#000000"/>
-    </Style>
-
-    <Style name="wind_direction">
-      <Legend fixed="true" tickinterval="5">standard</Legend>
-      <RenderMethod>point</RenderMethod>
-      <Min>0</Min>
-      <Max>360</Max>
-      <NameMapping name="point"        title="Wind direction" abstract="With discrete colors"/>
-      <Point plotstationid="false" pointstyle="point" discradius="8" textradius="16" dot="true" fontsize="8"  textcolor="#000000"/>
-    </Style>
-
-    <Style name="windspeed">
-      <Legend fixed="true" tickinterval="5">standard</Legend>
-      <RenderMethod>point</RenderMethod>
-      <Min>0</Min>
-      <Max>75</Max>
-      <NameMapping name="point"        title="Wind direction" abstract="With discrete colors"/>
-      <Point plotstationid="false" pointstyle="point" discradius="8" textradius="16" dot="true" fontsize="8"  textcolor="#000000"/>
-    </Style>
-
-    <Style name="windspeed_arrow">
-      <Legend fixed="true" tickinterval="5">standard</Legend>
-      <Min>0</Min>
-      <Max>75</Max>
-      <NameMapping name="barb"        title="Wind direction arrow" abstract="With an arrow on a disc."/>
-      <Point plotstationid="false" pointstyle="point" discradius="12" textradius="16" dot="true" fontsize="8"  textcolor="#FFFFFF"/>
-      <RenderMethod>barb</RenderMethod>
-      <Vector vectorstyle="disc" linewidth="1.0" linecolor="#000000FF"/>
-    </Style>
-
-    <Style name="windspeed_vector">
-      <Legend fixed="true" tickinterval="5">standard</Legend>
-      <Min>0</Min>
-      <Max>75</Max>
-      <NameMapping name="barb"        title="Wind direction vector" abstract="As vector"/>
-      <Point plotstationid="false" pointstyle="point" discradius="12" textradius="16" dot="true" fontsize="8"  textcolor="#FFFFFF"/>
-      <RenderMethod>barb</RenderMethod>
-      <Vector vectorstyle="vector" linewidth="1.0" linecolor="#000000FF"/>
-    </Style>
-
-    <Style name="windspeed_barb_no_outline">
-      <Legend fixed="true" tickinterval="5">standard</Legend>
-      <Min>0</Min>
-      <Max>75</Max>
-      <NameMapping name="barb"        title="Wind direction barb no outline" abstract="As barb"/>
-      <Point plotstationid="false" pointstyle="point" discradius="12" textradius="16" dot="true" fontsize="8"  textcolor="#FFFFFF"/>
-      <RenderMethod>barb</RenderMethod>
-      <Vector vectorstyle="barb" linewidth="0.0" linecolor="#0000FFFF"/>
-    </Style>
-
-    <Style name="windspeed_barb">
-      <Legend fixed="true" tickinterval="5">standard</Legend>
-      <Min>0</Min>
-      <Max>75</Max>
-      <NameMapping name="barb"        title="Wind direction barb" abstract="As barb"/>
-      <Point plotstationid="false" pointstyle="point" discradius="12" textradius="16" dot="true" fontsize="8"  textcolor="#FFFFFF"/>
-      <RenderMethod>barb</RenderMethod>
-      <Vector vectorstyle="barb" linewidth="1.0" linecolor="#000000FF"/>
-    </Style>
-
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>stationname</Name>
-      <Title>stationsnaam</Title>
-      <Variable>stationname</Variable>
-      <Abstract>stationnaam</Abstract>
-      <Styles>stationname</Styles>
-    </Layer>
-
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>height</Name>
-      <Title>stationshoogte [m]</Title>
-      <Variable>height</Variable>
-      <Abstract>stationshoogte [m]</Abstract>
-      <Styles>height</Styles>
-    </Layer>
-
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>dd</Name>
-      <Title>windrichting [graden]</Title>
-      <Variable>dd</Variable>
-      <Abstract>windrichting [graden] 10 min. gemiddelde</Abstract>
-      <Styles>wind_direction</Styles>
-    </Layer>
-
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>ff</Name>
-      <Title>windsnelheid [m/s]</Title>
-      <Variable>ff</Variable>
-      <Abstract>windsnelheid [m/s] 10 min. gemiddelde</Abstract>
-      <Styles>windspeed</Styles>
-    </Layer>
-
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>ff_dd</Name>
-      <Title>windsnelheid [m/s] en windrichting [graden] </Title>
-      <Variable>ff</Variable>
-      <Variable>dd</Variable>
-      <Abstract>windsnelheid [m/s] en windrichting [graden] 10 min. gemiddelden</Abstract>
-      <Styles>windspeed_arrow,windspeed_vector,windspeed_barb,windspeed_barb_no_outline</Styles>
-    </Layer>
-
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>gff</Name>
-      <Title>windstoten [m/s]</Title>
-      <Variable>gff</Variable>
-      <Abstract>windstoten [m/s] 10 min. maximum</Abstract>
-      <Styles>windspeed</Styles>
-    </Layer>
-
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>ta</Name>
-      <Title>temperatuur [C]</Title>
-      <Variable>ta</Variable>
-      <Abstract>luchttemperatuur 1 min. gemiddelde</Abstract>
-      <Styles>temperature,temperature-volume,temperature-disc</Styles>
-    </Layer>
-
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>rh</Name>
-      <Title>luchtvochtigheid [%]</Title>
-      <Variable>rh</Variable>
-      <Abstract>luchtvochtigheid [%] 1 min. gemiddelde</Abstract>
-      <Styles>percentage</Styles>
-    </Layer>
-
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>pp</Name>
-      <Title>luchtdruk [hPa]</Title>
-      <Variable>pp</Variable>
-      <Abstract>luchtdruk [hPa] 1 min. gemiddelde</Abstract>
-      <Styles>pressure</Styles>
-    </Layer>
-
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>zm</Name>
-      <Title>zicht [m]</Title>
-      <Variable>zm</Variable>
-      <Abstract>zicht [m] 10 min. gemiddelde</Abstract>
-      <Min>0</Min>
-      <Max>50000</Max>
-      <Styles>zm</Styles>
-    </Layer>
-
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>hc</Name>
-      <Title>wolkenbasis [ft]</Title>
-      <Variable>hc</Variable>
-      <Abstract>wolkenbasis [ft]</Abstract>
-      <Styles>wolkenbasis</Styles>
-
-    </Layer>
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>hc1</Name>
-      <Title>wolkenbasis 1e laag [ft]</Title>
-      <Variable>hc1</Variable>
-      <Abstract>wolkenbasis 1e laag [ft]</Abstract>
-      <Styles>wolkenbasis</Styles>
-
-    </Layer>
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>hc2</Name>
-      <Title>wolkenbasis 2e laag [ft]</Title>
-      <Variable>hc2</Variable>
-      <Abstract>wolkenbasis 2e laag [ft]</Abstract>
-      <Styles>wolkenbasis</Styles>
-
-    </Layer>
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>hc3</Name>
-      <Title>wolkenbasis 3e laag [ft]</Title>
-      <Variable>hc3</Variable>
-      <Abstract>wolkenbasis 3e laag [ft]</Abstract>
-      <Styles>wolkenbasis</Styles>
-
-    </Layer>
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>nc</Name>
-      <Title>totale bewolking [octa]</Title>
-      <Variable>nc</Variable>
-      <Abstract>totale bewolking [octa]</Abstract>
-      <Styles>bewolkingsgraad</Styles>
-
-    </Layer>
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>nc1</Name>
-      <Title>bewolkingsgraad 1e laag [octa]</Title>
-      <Variable>nc1</Variable>
-      <Abstract>bewolkingsgraad 1e laag [octa]</Abstract>
-      <Styles>bewolkingsgraad</Styles>
-
-    </Layer>
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>nc2</Name>
-      <Title>bewolkingsgraad 2e laag [octa]</Title>
-      <Variable>nc2</Variable>
-      <Abstract>bewolkingsgraad 2e laag [octa]</Abstract>
-      <Styles>bewolkingsgraad</Styles>
-
-    </Layer>
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>nc3</Name>
-      <Title>bewolkingsgraad 3e laag [octa]</Title>
-      <Variable>nc3</Variable>
-      <Abstract>bewolkingsgraad 3e laag [octa]</Abstract>
-      <Styles>bewolkingsgraad</Styles>
-
-    </Layer>
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>D1H</Name>
-      <Title>neerslagduur in afgelopen uur [min]</Title>
-      <Variable>D1H</Variable>
-      <Abstract>neerslagduur in afgelopen uur [min]</Abstract>
-      <Styles>precipitation</Styles>
-
-    </Layer>
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>D1H</Name>
-      <Title>neerslagduur in afgelopen uur [min]</Title>
-      <Variable>D1H</Variable>
-      <Abstract>neerslagduur in afgelopen uur [min]</Abstract>
-      <Styles>precipitation</Styles>
-
-    </Layer>
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>dr</Name>
-      <Title>neerslagduur(neerslagmeter) [sec]</Title>
-      <Variable>dr</Variable>
-      <Abstract>neerslagduur(neerslagmeter) [sec]</Abstract>
-      <Styles>precipitation</Styles>
-
-    </Layer>
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>pr</Name>
-      <Title>neerslagduur(PWS) [sec]</Title>
-      <Variable>pr</Variable>
-      <Abstract>neerslagduur(PWS) [sec]</Abstract>
-      <Styles>precipitation</Styles>
-
-    </Layer>
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>pr</Name>
-      <Title>neerslagintensiteit(neerslagmeter) [mm/uur]</Title>
-      <Variable>pr</Variable>
-      <Abstract>neerslagintensiteit(neerslagmeter) [mm/uur]</Abstract>
-      <Styles>precipitation</Styles>
-
-    </Layer>
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>pg</Name>
-      <Title>neerslagintensiteit(PWS) [mm/uur]</Title>
-      <Variable>pg</Variable>
-      <Abstract>neerslagintensiteit(PWS) [mm/uur]</Abstract>
-      <Styles>precipitation</Styles>
-
-    </Layer>
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>R1H</Name>
-      <Title>neerslaghoeveelheid laatste uur [mm]</Title>
-      <Variable>R1H</Variable>
-      <Abstract>neerslaghoeveelheid laatste uur [mm]</Abstract>
-      <Styles>precipitation</Styles>
-
-    </Layer>
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>R6H</Name>
-      <Title>neerslaghoeveelheid laatste 6 uur [mm]</Title>
-      <Variable>R6H</Variable>
-      <Abstract>neerslaghoeveelheid laatste 6 uur [mm]</Abstract>
-      <Styles>precipitation</Styles>
-
-    </Layer>
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>R12H</Name>
-      <Title>neerslaghoeveelheid laatste 12 uur [mm]</Title>
-      <Variable>R12H</Variable>
-      <Abstract>neerslaghoeveelheid laatste 12 uur [mm]</Abstract>
-      <Styles>precipitation</Styles>
-
-    </Layer>
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>R24H</Name>
-      <Title>neerslaghoeveelheid laatste 24 uur [mm]</Title>
-      <Variable>R24H</Variable>
-      <Abstract>neerslaghoeveelheid laatste 24 uur [mm]</Abstract>
-      <Styles>precipitation</Styles>
-
-    </Layer>
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>td</Name>
-      <Title>dauwpuntstemperatuur [C]</Title>
-      <Variable>td</Variable>
-      <Abstract>dauwpuntstemperatuur [C]</Abstract>
-      <Styles>temperature</Styles>
-
-    </Layer>
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>tgn</Name>
-      <Title>temperatuur 10cm [C</Title>
-      <Variable>tgn</Variable>
-      <Abstract>temperatuur-10cm [C</Abstract>
-      <Styles>temperature</Styles>
-
-    </Layer>
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>Tgn6</Name>
-      <Title>minimum temperatuur-10cm laatste 6 uur [C]</Title>
-      <Variable>Tgn6</Variable>
-      <Abstract>minimum temperatuur-10cm laatste 6 uur [C]</Abstract>
-      <Styles>temperature</Styles>
-
-    </Layer>
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>Tgn12</Name>
-      <Title>minimum temperatuur-10cm laatste 12 uur [C]</Title>
-      <Variable>Tgn12</Variable>
-      <Abstract>minimum temperatuur-10cm laatste 12 uur [C]</Abstract>
-      <Styles>temperature</Styles>
-
-    </Layer>
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>Tgn14</Name>
-      <Title>minimum temperatuur-10cm laatste 14 uur [C]</Title>
-      <Variable>Tgn14</Variable>
-      <Abstract>minimum temperatuur-10cm laatste 14 uur [C]</Abstract>
-      <Styles>temperature</Styles>
-
-    </Layer>
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>tn</Name>
-      <Title>minimum temperatuur [C]</Title>
-      <Variable>tn</Variable>
-      <Abstract>minimum temperatuur [C]</Abstract>
-      <Styles>temperature</Styles>
-
-    </Layer>
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>Tn6</Name>
-      <Title>minimum temperatuur laatste 6 uur [C]</Title>
-      <Variable>Tn6</Variable>
-      <Abstract>minimum temperatuur laatste 6 uur [C]</Abstract>
-      <Styles>temperature</Styles>
-
-    </Layer>
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>Tn12</Name>
-      <Title>minimum temperatuur laatste 12 uur [C]</Title>
-      <Variable>Tn12</Variable>
-      <Abstract>minimum temperatuur laatste 12 uur [C]</Abstract>
-      <Styles>temperature</Styles>
-
-    </Layer>
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>Tn14</Name>
-      <Title>minimum temperatuur laatste 14 uur [C]</Title>
-      <Variable>Tn14</Variable>
-      <Abstract>minimum temperatuur laatste 14 uur [C]</Abstract>
-      <Styles>temperature</Styles>
-
-    </Layer>
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>tx</Name>
-      <Title>maximum temperatuur [C]</Title>
-      <Variable>tx</Variable>
-      <Abstract>maximum temperatuur [C]</Abstract>
-      <Styles>temperature</Styles>
-
-    </Layer>
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>Tx6</Name>
-      <Title>maximum temperatuur laatste 6 uur [C]</Title>
-      <Variable>Tx6</Variable>
-      <Abstract>maximum temperatuur laatste 6 uur [C]</Abstract>
-      <Styles>temperature</Styles>
-
-    </Layer>
-   <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>Tx12</Name>
-      <Title>maximum temperatuur laatste 12 uur [C]</Title>
-      <Variable>Tx12</Variable>
-      <Abstract>maximum temperatuur laatste 12 uur [C]</Abstract>
-      <Styles>temperature</Styles>
-
-    </Layer>
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>ss</Name>
-      <Title>zonneschijnduur [min]</Title>
-      <Variable>ss</Variable>
-      <Abstract>zonneschijnduur [min]</Abstract>
-      <Styles>duration</Styles>
-
-    </Layer>
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>pwc</Name>
-      <Title>actuele weercode</Title>
-      <Variable>pwc</Variable>
-      <Abstract>actuele weercode</Abstract>
-      <Styles>weercode</Styles>
-
-    </Layer>
-   <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>ww</Name>
-      <Title>actuele wawa weercode</Title>
-      <Variable>ww</Variable>
-      <Abstract>actuele wawa weercode</Abstract>
-      <Styles>weercode</Styles>
-        <Dimension name="time" units="ISO8601" interval="PT5M" >
+<Configuration>
+
+
+  <Legend name="temperature" type="interval">
+    <palette index="0" color="#2E2E73"/>
+    <!-- -14 -->
+    <palette index="9" color="#282898"/>
+    <!-- -12 -->
+    <palette index="18" color="#201FBB"/>
+    <!-- -10 -->
+    <palette index="27" color="#1A1ADC"/>
+    <!-- -8 -->
+    <palette index="36" color="#3654DE"/>
+    <!-- -6 -->
+    <palette index="45" color="#548EDC"/>
+    <!-- -4 -->
+    <palette index="54" color="#72CADE"/>
+    <!-- -2 -->
+    <palette index="63" color="#6DD8DF"/>
+    <!-- 0-->
+    <palette index="72" color="#55CDE2"/>
+    <!-- 2-->
+    <palette index="81" color="#38BBDC"/>
+    <!-- 4 -->
+    <palette index="90" color="#20B0DC"/>
+    <!-- 6 -->
+    <palette index="99" color="#19BAA6"/>
+    <!-- 8 -->
+    <palette index="108" color="#1CCE6A"/>
+    <!-- 10 -->
+    <palette index="117" color="#1BDF22"/>
+    <!-- 12 -->
+    <palette index="126" color="#82C319"/>
+    <!-- 14 -->
+    <palette index="135" color="#DCA819"/>
+    <!-- 16 -->
+    <palette index="144" color="#DD921A"/>
+    <!-- 18 -->
+    <palette index="153" color="#DE7C1A"/>
+    <!-- 20 -->
+    <palette index="162" color="#DF671A"/>
+    <!-- 22 -->
+    <palette index="171" color="#DE501A"/>
+    <!-- 24 -->
+    <palette index="180" color="#DD3819"/>
+    <!-- 26 -->
+    <palette index="189" color="#DD2319"/>
+    <!-- 28 -->
+    <palette index="198" color="#D21A1E"/>
+    <!-- 30 -->
+    <palette index="207" color="#C31927"/>
+    <!-- 32 -->
+    <palette index="216" color="#AD1A30"/>
+    <!-- 34 -->
+    <palette index="225" color="#9A1A3B"/>
+    <!-- 36 -->
+    <palette index="234" color="#871A44"/>
+    <!-- 38 -->
+    <palette index="240" color="#871A44"/>
+    <!--  39,33 -->
+  </Legend>
+
+  <Legend name="precipitation" type="interval">
+    <palette index="0" color="#BACDCB"/>
+    <!-- 0 -->
+    <palette index="30" color="#A3C3C9"/>
+    <!-- 0.1 -->
+    <palette index="60" color="#8BBCC8"/>
+    <!-- 0.2 -->
+    <palette index="90" color="#6AAEC1"/>
+    <!-- 0.5 -->
+    <palette index="120" color="#42A1C0"/>
+    <!-- 1 -->
+    <palette index="150" color="#377EAF"/>
+    <!-- 2 -->
+    <palette index="180" color="#46669C"/>
+    <!-- 5 -->
+    <palette index="210" color="#56528D"/>
+    <!-- 10-->
+    <palette index="239" color="#86008D"/>
+    <!-- 30-->
+  </Legend>
+
+  <Legend name="pressure" type="interval">
+    <palette index="0" color="#5C5797"/>
+    <!-- 960 -->
+    <palette index="12" color="#1D5791"/>
+    <!-- 964 -->
+    <palette index="24" color="#1E8BC5"/>
+    <!-- 968 -->
+    <palette index="36" color="#1EA6B9"/>
+    <!-- 972 -->
+    <palette index="48" color="#1A99A0"/>
+    <!-- 976 -->
+    <palette index="60" color="#1C7976"/>
+    <!-- 980 -->
+    <palette index="72" color="#1C7244"/>
+    <!-- 984 -->
+    <palette index="84" color="#72B060"/>
+    <!-- 988 -->
+    <palette index="96" color="#AFC560"/>
+    <!-- 992 -->
+    <palette index="108" color="#C9CF3C"/>
+    <!-- 996 -->
+    <palette index="120" color="#E3DA36"/>
+    <!-- 1000 -->
+    <palette index="132" color="#EFE686"/>
+    <!-- 1004 -->
+    <palette index="144" color="#EFE3BB"/>
+    <!-- 1008 -->
+    <palette index="156" color="#ECCB90"/>
+    <!-- 1012 -->
+    <palette index="168" color="#E7A34A"/>
+    <!-- 1016 -->
+    <palette index="180" color="#DE7222"/>
+    <!-- 1020 -->
+    <palette index="192" color="#D93531"/>
+    <!-- 1024 -->
+    <palette index="204" color="#C41F32"/>
+    <!-- 1028 -->
+    <palette index="216" color="#843537"/>
+    <!-- 1032 -->
+    <palette index="228" color="#5E3F3A"/>
+    <!-- 1036 -->
+    <palette index="239" color="#2E3F2A"/>
+    <!-- 1040 -->
+  </Legend>
+
+  <Legend name="standard" type="colorRange">
+    <palette index="0" red="132" green="211" blue="255"/>
+    <palette index="48" red="247" green="247" blue="247"/>
+    <palette index="96" red="255" green="195" blue="57"/>
+    <palette index="144" red="232" green="28" blue="0"/>
+    <palette index="192" red="165" green="0" blue="0"/>
+    <palette index="240" red="90" green="0" blue="0"/>
+  </Legend>
+
+  <Style name="stretch">
+    <Legend fixed="true" tickinterval="2">temperature</Legend>
+    <RenderMethod>point</RenderMethod>
+    <Scale>0</Scale>
+    <Point plotstationid="false" pointstyle="point" discradius="15" textradius="0" dot="false" fontsize="8" textcolor="#000000" />
+  </Style>
+
+  <Style name="temperature">
+    <Legend fixed="true" tickinterval="2">temperature</Legend>
+    <RenderMethod>point</RenderMethod>
+    <Min>-14</Min>
+    <Max>39,33333333</Max>    <!-- 39,33333333 = (240 / (234/(38 - -14))) - 14 -->
+    <NameMapping name="point" title="Temperature" abstract="Temperature"/>
+    <Point plotstationid="false" pointstyle="point" discradius="15" textradius="0" dot="false" fontsize="8" textcolor="#000000" />
+  </Style>
+
+  <Style name="temperature-volume">
+    <Legend fixed="true" tickinterval="2">temperature</Legend>
+    <RenderMethod>point</RenderMethod>
+    <Min>-14</Min>
+    <Max>39,33333333</Max>    <!-- 39,33333333 = (240 / (234/(38 - -14))) - 14 -->
+    <NameMapping name="point" title="Temperature" abstract="Temperature"/>
+    <Point plotstationid="false" pointstyle="volume" discradius="25" fillcolor="#0000FF" />
+  </Style>
+
+  <Style name="temperature-disc">
+    <Legend fixed="true" tickinterval="2">temperature</Legend>
+    <RenderMethod>point</RenderMethod>
+    <Min>-14</Min>
+    <Max>39,33333333</Max>    <!-- 39,33333333 = (240 / (234/(38 - -14))) - 14 -->
+    <NameMapping name="point" title="Temperature" abstract="Temperature"/>
+    <Point plotstationid="false" pointstyle="disc" discradius="25" fillcolor="#80808040" textcolor="#000000" />
+  </Style>
+
+  <Style name="zm">
+    <Legend fixed="true" tickinterval="2">standard</Legend>
+    <RenderMethod>point</RenderMethod>
+    <Min>0</Min>
+    <Max>50000</Max>
+    <NameMapping name="point" title="Meteorological Optical Range" abstract="Meteorological Optical Range"/>
+    <Point plotstationid="false" pointstyle="point" discradius="7" textradius="16" dot="true" fontsize="8" textcolor="#000000"/>
+  </Style>
+
+  <Style name="precipitation">
+    <Legend fixed="true" tickinterval="2">precipitation</Legend>
+    <RenderMethod>point</RenderMethod>
+    <Min>0</Min>
+    <Max>30</Max>
+    <NameMapping name="point" title="precipitation" abstract="precipitation"/>
+    <Point plotstationid="false" pointstyle="point" discradius="15" textradius="0" dot="false" fontsize="8" textcolor="#000000" />
+  </Style>
+
+  <Style name="pressure">
+    <Legend fixed="true" tickinterval="4">pressure</Legend>
+    <RenderMethod>point</RenderMethod>
+    <Min>960</Min>
+    <Max>1040</Max>
+    <NameMapping name="point" title="pressure" abstract="pressure"/>
+    <Point plotstationid="false" pointstyle="point" discradius="15" textradius="0" dot="false" fontsize="8" textcolor="#000000" textformat="%0.0f"/>
+  </Style>
+
+  <Style name="percentage">
+    <Legend fixed="true" tickinterval="10">standard</Legend>
+    <RenderMethod>point</RenderMethod>
+    <Min>0</Min>
+    <Max>100</Max>
+    <NameMapping name="point" title="Percentage" abstract="Percentage"/>
+    <Point plotstationid="false" pointstyle="point" discradius="15" textradius="0" dot="false" fontsize="8" textcolor="#000000" />
+  </Style>
+
+  <Style name="duration">
+    <Legend fixed="true" tickinterval="10">standard</Legend>
+    <RenderMethod>point</RenderMethod>
+    <Min>0</Min>
+    <Max>60</Max>
+    <NameMapping name="point" title="duration[min]" abstract="duration"/>
+    <Point plotstationid="false" pointstyle="point" discradius="15" textradius="0" dot="false" fontsize="8" textcolor="#000000" />
+  </Style>
+
+  <Style name="height">
+    <Legend fixed="true" tickinterval="5">standard</Legend>
+    <RenderMethod>point</RenderMethod>
+    <Min>-10</Min>
+    <Max>70</Max>
+    <NameMapping name="point" title="Richter magnitude scale" abstract="With discrete colors"/>
+    <Point plotstationid="false" pointstyle="point" discradius="8" textradius="17" dot="true" fontsize="8" textcolor="#000000"/>
+  </Style>
+
+  <Style name="weercode">
+    <Legend fixed="true" tickinterval="4">standard</Legend>
+    <RenderMethod>point</RenderMethod>
+    <Min>100</Min>
+    <Max>200</Max>
+    <NameMapping name="point" title="weercode" abstract="weercode"/>
+    <Point plotstationid="false" pointstyle="point" discradius="15" textradius="0" dot="false" fontsize="8" textcolor="#000000"/>
+  </Style>
+
+  <Style name="wolkenbasis">
+    <Legend fixed="true" tickinterval="4">standard</Legend>
+    <RenderMethod>point</RenderMethod>
+    <Min>0</Min>
+    <Max>35000</Max>
+    <NameMapping name="point" title="wolkenbasis" abstract="wolkenbasis"/>
+    <Point plotstationid="false" pointstyle="point" discradius="15" textradius="0" dot="false" fontsize="8" textcolor="#000000"/>
+  </Style>
+
+  <Style name="bewolkingsgraad">
+    <Legend fixed="true" tickinterval="4">standard</Legend>
+    <RenderMethod>point</RenderMethod>
+    <Min>0</Min>
+    <Max>8</Max>
+    <NameMapping name="point" title="bewolkingsgraad[octa]" abstract="bewolkingsgraad"/>
+    <Point plotstationid="false" pointstyle="point" discradius="15" textradius="0" dot="false" fontsize="8" textcolor="#000000"/>
+  </Style>
+
+  <Style name="stationname">
+    <Legend fixed="true" tickinterval="5">standard</Legend>
+    <RenderMethod>point</RenderMethod>
+    <Min>-10</Min>
+    <Max>70</Max>
+    <NameMapping name="point" title="Richter magnitude scale" abstract="With discrete colors"/>
+    <Point plotstationid="false" pointstyle="point" discradius="1" textradius="6" dot="true" fontsize="8" textcolor="#000000"/>
+  </Style>
+
+  <Style name="wind_direction">
+    <Legend fixed="true" tickinterval="5">standard</Legend>
+    <RenderMethod>point</RenderMethod>
+    <Min>0</Min>
+    <Max>360</Max>
+    <NameMapping name="point" title="Wind direction" abstract="With discrete colors"/>
+    <Point plotstationid="false" pointstyle="point" discradius="8" textradius="16" dot="true" fontsize="8" textcolor="#000000"/>
+  </Style>
+
+  <Style name="windspeed">
+    <Legend fixed="true" tickinterval="5">standard</Legend>
+    <RenderMethod>point</RenderMethod>
+    <Min>0</Min>
+    <Max>75</Max>
+    <NameMapping name="point" title="Wind direction" abstract="With discrete colors"/>
+    <Point plotstationid="false" pointstyle="point" discradius="8" textradius="16" dot="true" fontsize="8" textcolor="#000000"/>
+  </Style>
+
+  <Style name="windspeed_arrow">
+    <Legend fixed="true" tickinterval="5">standard</Legend>
+    <Min>0</Min>
+    <Max>75</Max>
+    <NameMapping name="barb" title="Wind direction arrow" abstract="With an arrow on a disc."/>
+    <Point plotstationid="false" pointstyle="point" discradius="12" textradius="16" dot="true" fontsize="8" textcolor="#FFFFFF"/>
+    <RenderMethod>barb</RenderMethod>
+    <Vector vectorstyle="disc" linewidth="1.0" linecolor="#000000FF"/>
+  </Style>
+
+  <Style name="windspeed_vector">
+    <Legend fixed="true" tickinterval="5">standard</Legend>
+    <Min>0</Min>
+    <Max>75</Max>
+    <NameMapping name="barb" title="Wind direction vector" abstract="As vector"/>
+    <Point plotstationid="false" pointstyle="point" discradius="12" textradius="16" dot="true" fontsize="8" textcolor="#FFFFFF"/>
+    <RenderMethod>barb</RenderMethod>
+    <Vector vectorstyle="vector" linewidth="1.0" linecolor="#000000FF"/>
+  </Style>
+
+  <Style name="windspeed_barb_no_outline">
+    <Legend fixed="true" tickinterval="5">standard</Legend>
+    <Min>0</Min>
+    <Max>75</Max>
+    <NameMapping name="barb" title="Wind direction barb no outline" abstract="As barb"/>
+    <Point plotstationid="false" pointstyle="point" discradius="12" textradius="16" dot="true" fontsize="8" textcolor="#FFFFFF"/>
+    <RenderMethod>barb</RenderMethod>
+    <Vector vectorstyle="barb" linewidth="0.0" linecolor="#0000FFFF"/>
+  </Style>
+
+  <Style name="windspeed_barb">
+    <Legend fixed="true" tickinterval="5">standard</Legend>
+    <Min>0</Min>
+    <Max>75</Max>
+    <NameMapping name="barb" title="Wind direction barb" abstract="As barb"/>
+    <Point plotstationid="false" pointstyle="point" discradius="12" textradius="16" dot="true" fontsize="8" textcolor="#FFFFFF"/>
+    <RenderMethod>barb</RenderMethod>
+    <Vector vectorstyle="barb" linewidth="1.0" linecolor="#000000FF"/>
+  </Style>
+
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>stationname</Name>
+    <Title>stationsnaam</Title>
+    <Variable>stationname</Variable>
+    <Abstract>stationnaam</Abstract>
+    <Styles>stationname</Styles>
+  </Layer>
+
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>height</Name>
+    <Title>stationshoogte [m]</Title>
+    <Variable>height</Variable>
+    <Abstract>stationshoogte [m]</Abstract>
+    <Styles>height</Styles>
+  </Layer>
+
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>dd</Name>
+    <Title>windrichting [graden]</Title>
+    <Variable>dd</Variable>
+    <Abstract>windrichting [graden] 10 min. gemiddelde</Abstract>
+    <Styles>wind_direction</Styles>
+  </Layer>
+
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>ff</Name>
+    <Title>windsnelheid [m/s]</Title>
+    <Variable>ff</Variable>
+    <Abstract>windsnelheid [m/s] 10 min. gemiddelde</Abstract>
+    <Styles>windspeed</Styles>
+  </Layer>
+
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>ff_dd</Name>
+    <Title>windsnelheid [m/s] en windrichting [graden] </Title>
+    <Variable>ff</Variable>
+    <Variable>dd</Variable>
+    <Abstract>windsnelheid [m/s] en windrichting [graden] 10 min. gemiddelden</Abstract>
+    <Styles>windspeed_arrow,windspeed_vector,windspeed_barb,windspeed_barb_no_outline</Styles>
+  </Layer>
+
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>gff</Name>
+    <Title>windstoten [m/s]</Title>
+    <Variable>gff</Variable>
+    <Abstract>windstoten [m/s] 10 min. maximum</Abstract>
+    <Styles>windspeed</Styles>
+  </Layer>
+
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>ta</Name>
+    <Title>temperatuur [C]</Title>
+    <Variable>ta</Variable>
+    <Abstract>luchttemperatuur 1 min. gemiddelde</Abstract>
+    <Styles>temperature,temperature-volume,temperature-disc</Styles>
+  </Layer>
+
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>rh</Name>
+    <Title>luchtvochtigheid [%]</Title>
+    <Variable>rh</Variable>
+    <Abstract>luchtvochtigheid [%] 1 min. gemiddelde</Abstract>
+    <Styles>percentage</Styles>
+  </Layer>
+
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>pp</Name>
+    <Title>luchtdruk [hPa]</Title>
+    <Variable>pp</Variable>
+    <Abstract>luchtdruk [hPa] 1 min. gemiddelde</Abstract>
+    <Styles>pressure</Styles>
+  </Layer>
+
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>zm</Name>
+    <Title>zicht [m]</Title>
+    <Variable>zm</Variable>
+    <Abstract>zicht [m] 10 min. gemiddelde</Abstract>
+    <Min>0</Min>
+    <Max>50000</Max>
+    <Styles>zm</Styles>
+  </Layer>
+
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>hc</Name>
+    <Title>wolkenbasis [ft]</Title>
+    <Variable>hc</Variable>
+    <Abstract>wolkenbasis [ft]</Abstract>
+    <Styles>wolkenbasis</Styles>
+
+  </Layer>
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>hc1</Name>
+    <Title>wolkenbasis 1e laag [ft]</Title>
+    <Variable>hc1</Variable>
+    <Abstract>wolkenbasis 1e laag [ft]</Abstract>
+    <Styles>wolkenbasis</Styles>
+
+  </Layer>
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>hc2</Name>
+    <Title>wolkenbasis 2e laag [ft]</Title>
+    <Variable>hc2</Variable>
+    <Abstract>wolkenbasis 2e laag [ft]</Abstract>
+    <Styles>wolkenbasis</Styles>
+
+  </Layer>
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>hc3</Name>
+    <Title>wolkenbasis 3e laag [ft]</Title>
+    <Variable>hc3</Variable>
+    <Abstract>wolkenbasis 3e laag [ft]</Abstract>
+    <Styles>wolkenbasis</Styles>
+
+  </Layer>
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>nc</Name>
+    <Title>totale bewolking [octa]</Title>
+    <Variable>nc</Variable>
+    <Abstract>totale bewolking [octa]</Abstract>
+    <Styles>bewolkingsgraad</Styles>
+
+  </Layer>
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>nc1</Name>
+    <Title>bewolkingsgraad 1e laag [octa]</Title>
+    <Variable>nc1</Variable>
+    <Abstract>bewolkingsgraad 1e laag [octa]</Abstract>
+    <Styles>bewolkingsgraad</Styles>
+
+  </Layer>
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>nc2</Name>
+    <Title>bewolkingsgraad 2e laag [octa]</Title>
+    <Variable>nc2</Variable>
+    <Abstract>bewolkingsgraad 2e laag [octa]</Abstract>
+    <Styles>bewolkingsgraad</Styles>
+
+  </Layer>
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>nc3</Name>
+    <Title>bewolkingsgraad 3e laag [octa]</Title>
+    <Variable>nc3</Variable>
+    <Abstract>bewolkingsgraad 3e laag [octa]</Abstract>
+    <Styles>bewolkingsgraad</Styles>
+
+  </Layer>
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>D1H</Name>
+    <Title>neerslagduur in afgelopen uur [min]</Title>
+    <Variable>D1H</Variable>
+    <Abstract>neerslagduur in afgelopen uur [min]</Abstract>
+    <Styles>precipitation</Styles>
+
+  </Layer>
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>D1H</Name>
+    <Title>neerslagduur in afgelopen uur [min]</Title>
+    <Variable>D1H</Variable>
+    <Abstract>neerslagduur in afgelopen uur [min]</Abstract>
+    <Styles>precipitation</Styles>
+
+  </Layer>
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>dr</Name>
+    <Title>neerslagduur(neerslagmeter) [sec]</Title>
+    <Variable>dr</Variable>
+    <Abstract>neerslagduur(neerslagmeter) [sec]</Abstract>
+    <Styles>precipitation</Styles>
+
+  </Layer>
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>pr</Name>
+    <Title>neerslagduur(PWS) [sec]</Title>
+    <Variable>pr</Variable>
+    <Abstract>neerslagduur(PWS) [sec]</Abstract>
+    <Styles>precipitation</Styles>
+
+  </Layer>
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>pr</Name>
+    <Title>neerslagintensiteit(neerslagmeter) [mm/uur]</Title>
+    <Variable>pr</Variable>
+    <Abstract>neerslagintensiteit(neerslagmeter) [mm/uur]</Abstract>
+    <Styles>precipitation</Styles>
+
+  </Layer>
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>pg</Name>
+    <Title>neerslagintensiteit(PWS) [mm/uur]</Title>
+    <Variable>pg</Variable>
+    <Abstract>neerslagintensiteit(PWS) [mm/uur]</Abstract>
+    <Styles>precipitation</Styles>
+
+  </Layer>
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>R1H</Name>
+    <Title>neerslaghoeveelheid laatste uur [mm]</Title>
+    <Variable>R1H</Variable>
+    <Abstract>neerslaghoeveelheid laatste uur [mm]</Abstract>
+    <Styles>precipitation</Styles>
+
+  </Layer>
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>R6H</Name>
+    <Title>neerslaghoeveelheid laatste 6 uur [mm]</Title>
+    <Variable>R6H</Variable>
+    <Abstract>neerslaghoeveelheid laatste 6 uur [mm]</Abstract>
+    <Styles>precipitation</Styles>
+
+  </Layer>
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>R12H</Name>
+    <Title>neerslaghoeveelheid laatste 12 uur [mm]</Title>
+    <Variable>R12H</Variable>
+    <Abstract>neerslaghoeveelheid laatste 12 uur [mm]</Abstract>
+    <Styles>precipitation</Styles>
+
+  </Layer>
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>R24H</Name>
+    <Title>neerslaghoeveelheid laatste 24 uur [mm]</Title>
+    <Variable>R24H</Variable>
+    <Abstract>neerslaghoeveelheid laatste 24 uur [mm]</Abstract>
+    <Styles>precipitation</Styles>
+
+  </Layer>
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>td</Name>
+    <Title>dauwpuntstemperatuur [C]</Title>
+    <Variable>td</Variable>
+    <Abstract>dauwpuntstemperatuur [C]</Abstract>
+    <Styles>temperature</Styles>
+
+  </Layer>
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>tgn</Name>
+    <Title>temperatuur 10cm [C</Title>
+    <Variable>tgn</Variable>
+    <Abstract>temperatuur-10cm [C</Abstract>
+    <Styles>temperature</Styles>
+
+  </Layer>
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>Tgn6</Name>
+    <Title>minimum temperatuur-10cm laatste 6 uur [C]</Title>
+    <Variable>Tgn6</Variable>
+    <Abstract>minimum temperatuur-10cm laatste 6 uur [C]</Abstract>
+    <Styles>temperature</Styles>
+
+  </Layer>
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>Tgn12</Name>
+    <Title>minimum temperatuur-10cm laatste 12 uur [C]</Title>
+    <Variable>Tgn12</Variable>
+    <Abstract>minimum temperatuur-10cm laatste 12 uur [C]</Abstract>
+    <Styles>temperature</Styles>
+
+  </Layer>
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>Tgn14</Name>
+    <Title>minimum temperatuur-10cm laatste 14 uur [C]</Title>
+    <Variable>Tgn14</Variable>
+    <Abstract>minimum temperatuur-10cm laatste 14 uur [C]</Abstract>
+    <Styles>temperature</Styles>
+
+  </Layer>
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>tn</Name>
+    <Title>minimum temperatuur [C]</Title>
+    <Variable>tn</Variable>
+    <Abstract>minimum temperatuur [C]</Abstract>
+    <Styles>temperature</Styles>
+
+  </Layer>
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>Tn6</Name>
+    <Title>minimum temperatuur laatste 6 uur [C]</Title>
+    <Variable>Tn6</Variable>
+    <Abstract>minimum temperatuur laatste 6 uur [C]</Abstract>
+    <Styles>temperature</Styles>
+
+  </Layer>
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>Tn12</Name>
+    <Title>minimum temperatuur laatste 12 uur [C]</Title>
+    <Variable>Tn12</Variable>
+    <Abstract>minimum temperatuur laatste 12 uur [C]</Abstract>
+    <Styles>temperature</Styles>
+
+  </Layer>
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>Tn14</Name>
+    <Title>minimum temperatuur laatste 14 uur [C]</Title>
+    <Variable>Tn14</Variable>
+    <Abstract>minimum temperatuur laatste 14 uur [C]</Abstract>
+    <Styles>temperature</Styles>
+
+  </Layer>
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>tx</Name>
+    <Title>maximum temperatuur [C]</Title>
+    <Variable>tx</Variable>
+    <Abstract>maximum temperatuur [C]</Abstract>
+    <Styles>temperature</Styles>
+
+  </Layer>
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>Tx6</Name>
+    <Title>maximum temperatuur laatste 6 uur [C]</Title>
+    <Variable>Tx6</Variable>
+    <Abstract>maximum temperatuur laatste 6 uur [C]</Abstract>
+    <Styles>temperature</Styles>
+
+  </Layer>
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>Tx12</Name>
+    <Title>maximum temperatuur laatste 12 uur [C]</Title>
+    <Variable>Tx12</Variable>
+    <Abstract>maximum temperatuur laatste 12 uur [C]</Abstract>
+    <Styles>temperature</Styles>
+
+  </Layer>
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>ss</Name>
+    <Title>zonneschijnduur [min]</Title>
+    <Variable>ss</Variable>
+    <Abstract>zonneschijnduur [min]</Abstract>
+    <Styles>duration</Styles>
+
+  </Layer>
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>pwc</Name>
+    <Title>actuele weercode</Title>
+    <Variable>pwc</Variable>
+    <Abstract>actuele weercode</Abstract>
+    <Styles>weercode</Styles>
+
+  </Layer>
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>ww</Name>
+    <Title>actuele wawa weercode</Title>
+    <Variable>ww</Variable>
+    <Abstract>actuele wawa weercode</Abstract>
+    <Styles>weercode</Styles>
+    <Dimension name="time" units="ISO8601" interval="PT5M">
             time
-        </Dimension>
-    </Layer>
-    <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-      <Name>ww-10</Name>
-      <Title>verleden wawa weercode (-10min)</Title>
-      <Variable>ww-10</Variable>
-      <Abstract>verleden wawa weercode (-10min)</Abstract>
-      <Styles>weercode</Styles>
-      
+    </Dimension>
+  </Layer>
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>ww-10</Name>
+    <Title>verleden wawa weercode (-10min)</Title>
+    <Variable>ww-10</Variable>
+    <Abstract>verleden wawa weercode (-10min)</Abstract>
+    <Styles>weercode</Styles>
 
-    </Layer>
 
-  </Configuration>
+  </Layer>
+
+</Configuration>

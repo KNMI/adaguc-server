@@ -159,6 +159,7 @@ void CServerParams::_getCacheDirectory(CT::string *_cacheFileName) {
 
 #include <ctime>
 #include <sys/time.h>
+#include <CReadFile.h>
 
 const CT::string CServerParams::randomString(const int len) {
 #ifdef MEASURETIME
@@ -558,10 +559,27 @@ bool CServerParams::checkTimeFormat(CT::string &timeToCheck) {
   return isValidTime;*/
 }
 
-int CServerParams::parseConfigFile(CT::string &pszConfigFile, std::vector<CServerConfig::XMLE_Environment *> *extraEnvironment) {
-  CT::string configFileData;
+int CServerParams::parseConfigFile(CT::string &pszConfigFile) {
+  // Find variables to substitute
+  std::vector<CServerConfig::XMLE_Environment> extraEnvironment;
+  CServerParams tempServerParam;
+  tempServerParam._parseConfigFile(pszConfigFile, nullptr);
 
-  configFileData = "";
+  if (tempServerParam.configObj != nullptr && tempServerParam.configObj->Configuration.size() > 0 && tempServerParam.configObj->Configuration[0]->Environment.size() > 0) {
+    for (size_t j = 0; j < tempServerParam.configObj->Configuration[0]->Environment.size(); j++) {
+      CServerConfig::XMLE_Environment tmpEnv;
+      tmpEnv.attr.name = (*tempServerParam.configObj->Configuration[0]->Environment[j]).attr.name;
+      tmpEnv.attr.defaultVal = (*tempServerParam.configObj->Configuration[0]->Environment[j]).attr.defaultVal;
+      extraEnvironment.push_back(tmpEnv);
+    }
+  }
+
+  return _parseConfigFile(pszConfigFile, &extraEnvironment);
+}
+
+int CServerParams::_parseConfigFile(CT::string &pszConfigFile, std::vector<CServerConfig::XMLE_Environment> *extraEnvironment) {
+  CT::string configFileData = "";
+
   try {
     try {
       configFileData = CReadFile::open(pszConfigFile.c_str());
@@ -601,8 +619,8 @@ int CServerParams::parseConfigFile(CT::string &pszConfigFile, std::vector<CServe
     if (extraEnvironment != nullptr) {
       /* Substitute any others as specified in env */
       if (extraEnvironment->size() > 0) {
-        for (size_t j = 0; j < extraEnvironment->size(); j++) {
-          CServerConfig::XMLE_Environment *env = (*extraEnvironment)[j];
+        for (size_t j = 0; j < (*extraEnvironment).size(); j++) {
+          CServerConfig::XMLE_Environment *env = &(*extraEnvironment)[j];
           if (env != nullptr) {
             if (!env->attr.name.empty() && !env->attr.defaultVal.empty()) {
 
@@ -670,4 +688,40 @@ CT::string CServerParams::getCacheControlHeader(int mode) {
     }
   }
   return "";
+}
+
+std::tuple<float, std::string> CServerParams::getContourFont() {
+  float contourFontSize = 8;
+  std::string legendfontLocation;
+  for (size_t wmsNr = 0; wmsNr < this->cfg->WMS.size(); wmsNr += 1) {
+    for (size_t fontNr = 0; fontNr < this->cfg->WMS[wmsNr]->ContourFont.size(); fontNr += 1) {
+      if (!this->cfg->WMS[wmsNr]->ContourFont[fontNr]->attr.size.empty()) {
+        contourFontSize = this->cfg->WMS[wmsNr]->ContourFont[fontNr]->attr.size.toDouble();
+      }
+      if (!this->cfg->WMS[wmsNr]->ContourFont[fontNr]->attr.location.empty()) {
+        legendfontLocation = this->cfg->WMS[wmsNr]->ContourFont[fontNr]->attr.location;
+      }
+    }
+  }
+
+  return std::make_tuple(contourFontSize, legendfontLocation);
+}
+
+std::tuple<float, std::string> CServerParams::getLegendFont() {
+  float legendFontSize;
+  std::string legendfontLocation;
+  std::tie(legendFontSize, legendfontLocation) = this->getContourFont();
+
+  for (size_t wmsNr = 0; wmsNr < this->cfg->WMS.size(); wmsNr += 1) {
+    for (size_t fontNr = 0; fontNr < this->cfg->WMS[wmsNr]->LegendFont.size(); fontNr += 1) {
+      if (!this->cfg->WMS[wmsNr]->LegendFont[fontNr]->attr.size.empty()) {
+        legendFontSize = this->cfg->WMS[wmsNr]->LegendFont[fontNr]->attr.size.toDouble();
+      }
+      if (!this->cfg->WMS[wmsNr]->LegendFont[fontNr]->attr.location.empty()) {
+        legendfontLocation = this->cfg->WMS[wmsNr]->LegendFont[fontNr]->attr.location;
+      }
+    }
+  }
+
+  return std::make_tuple(legendFontSize, legendfontLocation);
 }

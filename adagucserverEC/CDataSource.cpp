@@ -113,7 +113,7 @@ MinMax getMinMax(double *data, bool hasFillValue, double fillValue, size_t numEl
     }
   }
   if (minMax.isSet == false) {
-    throw __LINE__ + 100;
+    throw __LINE__;
   }
   return minMax;
 }
@@ -212,8 +212,7 @@ MinMax getMinMax(CDF::Variable *var) {
     }
 
   } else {
-    // CDBError("getMinMax: Variable has not been set");
-    throw __LINE__ + 100;
+    throw __LINE__;
   }
   return minMax;
 }
@@ -357,18 +356,15 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Conf
   srvParams = _srvParams;
   cfg = _cfg;
   cfgLayer = _cfgLayer;
-  //    numVariables = cfgLayer->Variable.size();
-  // CDBDebug("Configure layer ");
   datasourceIndex = layerIndex;
+
+  // Make DataObjects for each Variable defined in the Layer.
   for (size_t j = 0; j < cfgLayer->Variable.size(); j++) {
     DataObject *newDataObject = new DataObject();
     newDataObject->variableName.copy(cfgLayer->Variable[j]->value.c_str());
-    if (!cfgLayer->Variable[j]->attr.orgname.empty()) {
-      newDataObject->variableName = cfgLayer->Variable[j]->value.c_str();
-    }
-
     getDataObjectsVector()->push_back(newDataObject);
   }
+
   // Set the layername
   CT::string layerUniqueName;
   if (_layerName == NULL) {
@@ -382,6 +378,8 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Conf
   else
     layerName = "";
   layerName.concat(_layerName);
+
+  layerTitle = cfgLayer->Title.size() > 0 && !cfgLayer->Title[0]->value.empty() ? cfgLayer->Title[0]->value.c_str() : layerName.c_str();
 
 #ifdef CDATASOURCE_DEBUG
   CDBDebug("LayerName=\"%s\"", layerName.c_str());
@@ -402,6 +400,8 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Conf
     dLayerType = CConfigReaderLayerTypeUnknown;
   } else if (cfgLayer->attr.type.equals("baselayer")) {
     dLayerType = CConfigReaderLayerTypeBaseLayer;
+  } else if (cfgLayer->attr.type.equals("liveupdate")) {
+    dLayerType = CConfigReaderLayerTypeLiveUpdate;
   } else if (cfgLayer->attr.type.empty() == false) {
     if (strlen(cfgLayer->attr.type.c_str()) > 0) {
       dLayerType = CConfigReaderLayerTypeUnknown;
@@ -466,6 +466,7 @@ CT::string CDataSource::getDimensionValue(int i) { return timeSteps[currentAnima
 int CDataSource::getNumTimeSteps() { return (int)timeSteps.size(); }
 
 const char *CDataSource::getLayerName() { return layerName.c_str(); }
+const char *CDataSource::getLayerTitle() { return layerTitle.c_str(); }
 
 CCDFDims *CDataSource::getCDFDims() {
   if (currentAnimationStep >= int(timeSteps.size())) {
@@ -721,8 +722,7 @@ int CDataSource::makeStyleConfig(CStyleConfiguration *styleConfig, CDataSource *
       s->renderMethod=nearest;
       }
   }*/
-  CT::string styleDump;
-  styleConfig->printStyleConfig(&styleDump);
+  CT::string styleDump = styleConfig->c_str();
   //   #ifdef CDATASOURCE_DEBUG
   //
   //   CDBDebug("styleDump:\n%s",styleDump.c_str());
@@ -1293,6 +1293,7 @@ CDataSource *CDataSource::clone() {
     ogcDim->value = requiredDims[j]->value;
     ogcDim->queryValue = requiredDims[j]->queryValue;
     ogcDim->netCDFDimName = requiredDims[j]->netCDFDimName;
+    ogcDim->hidden = requiredDims[j]->hidden;
     for (size_t i = 0; i < requiredDims[j]->uniqueValues.size(); i++) {
       ogcDim->uniqueValues.push_back(requiredDims[j]->uniqueValues[i].c_str());
     }
@@ -1424,4 +1425,32 @@ void CDataSource::detachCDFObject() {
     getDataObject(j)->cdfVariable = NULL;
     getDataObject(j)->cdfObject = NULL;
   }
+}
+
+int CDataSource::readVariableDataForCDFDims(CDF::Variable *variableToRead, CDFType dataTypeToReturnData) {
+  if (variableToRead == nullptr) {
+    CDBError("Variable is not defined");
+    return 1;
+  }
+  size_t numDimensionsForVariableToRead = variableToRead->dimensionlinks.size();
+  size_t start[numDimensionsForVariableToRead];
+  size_t count[numDimensionsForVariableToRead];
+  ptrdiff_t stride[numDimensionsForVariableToRead];
+  auto *cdfDims = this->getCDFDims();
+  for (size_t dimNr = 0; dimNr < numDimensionsForVariableToRead; dimNr += 1) {
+    auto *dimensionLink = variableToRead->dimensionlinks[dimNr];
+    size_t startCountIndex = dimNr;
+    start[startCountIndex] = 0;
+    stride[startCountIndex] = 1;
+    count[startCountIndex] = dimensionLink->getSize();
+    int cdfDimIndex = cdfDims->getArrayIndexForName(dimensionLink->name.c_str());
+    if (cdfDimIndex >= 0) {
+#ifdef CDATASOURCE_DEBUG
+      CDBDebug("Start %d/%d:%s %d:%s ==> %d", startCountIndex, dimNr, dimensionLink->name.c_str(), cdfDimIndex, cdfDims->getDimensionName(cdfDimIndex), cdfDims->getDimensionIndex(cdfDimIndex));
+#endif
+      start[startCountIndex] = cdfDims->getDimensionIndex(cdfDimIndex);
+      count[startCountIndex] = 1;
+    }
+  }
+  return variableToRead->readData(dataTypeToReturnData, start, count, stride, true);
 }

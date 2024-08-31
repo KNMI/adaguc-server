@@ -23,7 +23,6 @@
  *
  ******************************************************************************/
 
-#include <iostream>
 #include <algorithm>
 #include <vector>
 #include <sstream>
@@ -33,6 +32,9 @@
 #include "CDBFactory.h"
 #include "timeutils.h"
 
+#include "LayerTypeLiveUpdate/LayerTypeLiveUpdate.h"
+// #define CXMLGEN_DEBUG
+// #define MEASURE_TIME
 const char *CFile::className = "CFile";
 
 const char *CXMLGen::className = "CXMLGen";
@@ -68,6 +70,21 @@ bool multiTypeSort(const CT::string &a, const CT::string &b) {
     return a < b;
   }
 }
+
+const WMSLayer *getFirstLayerWithoutError(std::vector<WMSLayer *> *myWMSLayerList) {
+  if (myWMSLayerList->size() == 0) {
+    return nullptr;
+  }
+  for (size_t lnr = 0; lnr < myWMSLayerList->size(); lnr++) {
+    WMSLayer *layer = (*myWMSLayerList)[lnr];
+    if (layer->hasError == 0) {
+      return layer;
+    }
+  }
+  return (*myWMSLayerList)[0];
+}
+
+void addErrorInXMLForMisconfiguredLayer(CT::string *XMLDoc, WMSLayer *layer) { XMLDoc->printconcat("\n<!-- Note: Error: Layer [%s] is misconfigured -->\n", layer->name.c_str()); }
 
 int CXMLGen::getFileNameForLayer(WMSLayer *myWMSLayer) {
 #ifdef CXMLGEN_DEBUG
@@ -215,6 +232,13 @@ int CXMLGen::getDataSourceForLayer(WMSLayer *myWMSLayer) {
     }
     return 0;
   }
+  // This a liveupdate layer
+  if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
+#ifdef CXMLGEN_DEBUG
+    CDBDebug("Live update layer");
+#endif
+    return layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(myWMSLayer);
+  }
   if (myWMSLayer->fileName.empty()) {
     CDBError("No file name specified for layer %s", myWMSLayer->dataSource->layerName.c_str());
     return 1;
@@ -283,13 +307,27 @@ int CXMLGen::getProjectionInformationForLayer(WMSLayer *myWMSLayer) {
     }
   }
 
+  if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
+    if (myWMSLayer->dataSource->cfgLayer->LatLonBox.size() == 0) {
+      return 0;
+    }
+  }
+
   CGeoParams geo;
-  CImageWarper warper;
+
   int status;
   for (size_t p = 0; p < srvParam->cfg->Projection.size(); p++) {
     geo.CRS.copy(srvParam->cfg->Projection[p]->attr.id.c_str());
 
+#ifdef MEASURETIME
+    StopWatch_Stop("start initreproj %s", geo.CRS.c_str());
+#endif
+    CImageWarper warper;
     status = warper.initreproj(myWMSLayer->dataSource, &geo, &srvParam->cfg->Projection);
+
+#ifdef MEASURETIME
+    StopWatch_Stop("finished initreproj");
+#endif
 
 #ifdef CXMLGEN_DEBUG
     if (status != 0) {
@@ -311,7 +349,15 @@ int CXMLGen::getProjectionInformationForLayer(WMSLayer *myWMSLayer) {
 
     // Calculate the extent for this projection
 
+#ifdef MEASURETIME
+    StopWatch_Stop("start findExtent");
+#endif
+
     warper.findExtent(myWMSLayer->dataSource, myProjection->dfBBOX);
+
+#ifdef MEASURETIME
+    StopWatch_Stop("finished findExtent");
+#endif
 
 #ifdef CXMLGEN_DEBUG
     CDBDebug("PROJ=%s\tBBOX=(%f,%f,%f,%f)", myProjection->name.c_str(), myProjection->dfBBOX[0], myProjection->dfBBOX[1], myProjection->dfBBOX[2], myProjection->dfBBOX[3]);
@@ -420,6 +466,10 @@ int CXMLGen::getDimsForLayer(WMSLayer *myWMSLayer) {
           if (units.length() > 0) {
 #ifdef CXMLGEN_DEBUG
             CDBDebug("Time dimension units = %s", units.c_str());
+#endif
+
+#ifdef MEASURETIME
+            StopWatch_Stop("Get the first 100 values from the database, and determine whether the time resolution is continous or multivalue.");
 #endif
 
             // Get the first 100 values from the database, and determine whether the time resolution is continous or multivalue.
@@ -640,6 +690,9 @@ int CXMLGen::getStylesForLayer(WMSLayer *myWMSLayer) {
   if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded) {
     return 0;
   }
+  if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
+    return 0;
+  }
 
   CT::PointerList<CStyleConfiguration *> *styleList = myWMSLayer->dataSource->getStyleListForDataSource(myWMSLayer->dataSource);
 
@@ -693,9 +746,10 @@ int CXMLGen::getWMS_1_0_0_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer 
   XMLDoc->replaceSelf("[GLOBALLAYERTITLE]", srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->value.c_str());
   XMLDoc->replaceSelf("[SERVICEONLINERESOURCE]", onlineResource.c_str());
   XMLDoc->replaceSelf("[SERVICEINFO]", serviceInfo.c_str());
-  if (myWMSLayerList->size() > 0) {
-    for (size_t p = 0; p < (*myWMSLayerList)[0]->projectionList.size(); p++) {
-      WMSLayer::Projection *proj = (*myWMSLayerList)[0]->projectionList[p];
+  const auto firstWMLayer = getFirstLayerWithoutError(myWMSLayerList);
+  if (firstWMLayer != nullptr) {
+    for (size_t p = 0; p < firstWMLayer->projectionList.size(); p++) {
+      WMSLayer::Projection *proj = firstWMLayer->projectionList[p];
       XMLDoc->concat("<SRS>");
       XMLDoc->concat(&proj->name);
       XMLDoc->concat("</SRS>\n");
@@ -703,6 +757,9 @@ int CXMLGen::getWMS_1_0_0_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer 
 
     for (size_t lnr = 0; lnr < myWMSLayerList->size(); lnr++) {
       WMSLayer *layer = (*myWMSLayerList)[lnr];
+      if (layer->hasError != 0) {
+        addErrorInXMLForMisconfiguredLayer(XMLDoc, layer);
+      }
       if (layer->hasError == 0) {
         XMLDoc->printconcat("<Layer queryable=\"%d\">\n", layer->isQuerable);
         XMLDoc->concat("<Name>");
@@ -754,9 +811,10 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer 
   XMLDoc->replaceSelf("[GLOBALLAYERTITLE]", srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->value.c_str());
   XMLDoc->replaceSelf("[SERVICEONLINERESOURCE]", onlineResource.c_str());
   XMLDoc->replaceSelf("[SERVICEINFO]", serviceInfo.c_str());
-  if (myWMSLayerList->size() > 0) {
-    for (size_t p = 0; p < (*myWMSLayerList)[0]->projectionList.size(); p++) {
-      WMSLayer::Projection *proj = (*myWMSLayerList)[0]->projectionList[p];
+  const auto firstWMLayer = getFirstLayerWithoutError(myWMSLayerList);
+  if (firstWMLayer != nullptr) {
+    for (size_t p = 0; p < firstWMLayer->projectionList.size(); p++) {
+      WMSLayer::Projection *proj = firstWMLayer->projectionList[p];
       XMLDoc->concat("<SRS>");
       XMLDoc->concat(&proj->name);
       XMLDoc->concat("</SRS>\n");
@@ -839,8 +897,11 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer 
 
       for (size_t lnr = 0; lnr < myWMSLayerList->size(); lnr++) {
         WMSLayer *layer = (*myWMSLayerList)[lnr];
-        if (layer->group.equals(groupKeys[groupIndex].c_str())) {
+        if (layer->group.equals(groupKeys[groupIndex])) {
           // CDBError("layer %d %s",groupDepth,layer->name.c_str());
+          if (layer->hasError != 0) {
+            addErrorInXMLForMisconfiguredLayer(XMLDoc, layer);
+          }
           if (layer->hasError == 0) {
             XMLDoc->printconcat("<Layer queryable=\"%d\" opaque=\"1\" cascaded=\"%d\">\n", layer->isQuerable, layer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded ? 1 : 0);
             XMLDoc->concat("<Name>");
@@ -893,7 +954,7 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer 
             }
 
             if (layer->dataSource->cfgLayer->MetadataURL.size() > 0) {
-              CT::string layerMetaDataURL = (*myWMSLayerList)[0]->dataSource->cfgLayer->MetadataURL[0]->value.c_str();
+              CT::string layerMetaDataURL = firstWMLayer->dataSource->cfgLayer->MetadataURL[0]->value.c_str();
               layerMetaDataURL.replaceSelf("&", "&amp;");
               XMLDoc->concat("   <MetadataURL type=\"TC211\">\n");
               XMLDoc->concat("     <Format>text/xml</Format>\n");
@@ -1096,18 +1157,19 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer 
   XMLDoc->concat("<Layer>\n");
   XMLDoc->printconcat("<Title>%s</Title>\n", srvParam->cfg->WMS[0]->RootLayer[0]->Title[0]->value.c_str());
 
-  if (myWMSLayerList->size() > 0) {
+  const auto firstWMLayer = getFirstLayerWithoutError(myWMSLayerList);
+  if (firstWMLayer != nullptr) {
 
-    for (size_t p = 0; p < (*myWMSLayerList)[0]->projectionList.size(); p++) {
-      WMSLayer::Projection *proj = (*myWMSLayerList)[0]->projectionList[p];
+    for (size_t p = 0; p < firstWMLayer->projectionList.size(); p++) {
+      WMSLayer::Projection *proj = firstWMLayer->projectionList[p];
       if (!proj->name.empty()) {
         XMLDoc->concat("<CRS>");
         XMLDoc->concat(&proj->name);
         XMLDoc->concat("</CRS>\n");
       }
     }
-    for (size_t p = 0; p < (*myWMSLayerList)[0]->projectionList.size(); p++) {
-      WMSLayer::Projection *proj = (*myWMSLayerList)[0]->projectionList[p];
+    for (size_t p = 0; p < firstWMLayer->projectionList.size(); p++) {
+      WMSLayer::Projection *proj = firstWMLayer->projectionList[p];
       if (!proj->name.empty()) {
         if (srvParam->checkBBOXXYOrder(proj->name.c_str()) == true) {
           XMLDoc->printconcat("<BoundingBox CRS=\"%s\" minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\" />\n", proj->name.c_str(), proj->dfBBOX[1], proj->dfBBOX[0], proj->dfBBOX[3], proj->dfBBOX[2]);
@@ -1212,11 +1274,14 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer 
         CDBDebug("Comparing %s == %s", layer->group.c_str(), groupKeys[groupIndex].c_str());
 #endif
 
-        if (layer->group.equals(groupKeys[groupIndex].c_str())) {
+        if (layer->group.equals(groupKeys[groupIndex])) {
 #ifdef CXMLGEN_DEBUG
           CDBDebug("layer %d %s", groupDepth, layer->name.c_str());
 #endif
 
+          if (layer->hasError != 0) {
+            addErrorInXMLForMisconfiguredLayer(XMLDoc, layer);
+          }
           if (layer->hasError == 0) {
             XMLDoc->printconcat("<Layer queryable=\"%d\" opaque=\"1\" cascaded=\"%d\">\n", layer->isQuerable, layer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded ? 1 : 0);
             XMLDoc->concat("<Name>");
@@ -1269,8 +1334,8 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer 
               }
             }
 
-            if ((*myWMSLayerList)[0]->dataSource->cfgLayer->MetadataURL.size() > 0) {
-              CT::string layerMetaDataURL = (*myWMSLayerList)[0]->dataSource->cfgLayer->MetadataURL[0]->value.c_str();
+            if (firstWMLayer->dataSource->cfgLayer->MetadataURL.size() > 0) {
+              CT::string layerMetaDataURL = firstWMLayer->dataSource->cfgLayer->MetadataURL[0]->value.c_str();
               layerMetaDataURL.replaceSelf("&", "&amp;");
               XMLDoc->concat("  <MetadataURL type=\"ISO19115:2005\">\n");
               XMLDoc->concat("     <Format>application/gml+xml; version=3.2</Format>\n");
@@ -1384,6 +1449,9 @@ int CXMLGen::getWCS_1_0_0_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer 
 
     for (size_t lnr = 0; lnr < myWMSLayerList->size(); lnr++) {
       WMSLayer *layer = (*myWMSLayerList)[lnr];
+      if (layer->hasError != 0) {
+        addErrorInXMLForMisconfiguredLayer(XMLDoc, layer);
+      }
       if (layer->hasError == 0) {
         XMLDoc->printconcat("<CoverageOfferingBrief>\n");
         XMLDoc->concat("<description>");
@@ -1533,11 +1601,15 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc, std::vector<WMSLa
                "   xmlns:gml=\"http://www.opengis.net/gml\" \n"
                "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
                "   xsi:schemaLocation=\"http://www.opengis.net/wcs http://schemas.opengis.net/wcs/1.0.0/describeCoverage.xsd\">\n");
-  if (myWMSLayerList->size() > 0) {
+  const auto firstWMLayer = getFirstLayerWithoutError(myWMSLayerList);
+  if (firstWMLayer != nullptr) {
     for (size_t layerIndex = 0; layerIndex < (unsigned)srvParam->WMSLayers->count; layerIndex++) {
       for (size_t lnr = 0; lnr < myWMSLayerList->size(); lnr++) {
         WMSLayer *layer = (*myWMSLayerList)[lnr];
-        if (layer->name.equals(srvParam->WMSLayers[layerIndex].c_str())) {
+        if (layer->name.equals(&srvParam->WMSLayers[layerIndex])) {
+          if (layer->hasError != 0) {
+            addErrorInXMLForMisconfiguredLayer(XMLDoc, layer);
+          }
           if (layer->hasError == 0) {
 
             // Look wether and which dimension is a time dimension
@@ -1651,7 +1723,7 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc, std::vector<WMSLa
               XMLDoc->concat("    <supportedCRSs>\n");
 
               for (size_t p = 0; p < layer->projectionList.size(); p++) {
-                WMSLayer::Projection *proj = (*myWMSLayerList)[0]->projectionList[p];
+                WMSLayer::Projection *proj = firstWMLayer->projectionList[p];
                 CT::string encodedProjString(proj->name.c_str());
 
                 XMLDoc->printconcat("      <requestResponseCRSs>%s</requestResponseCRSs>\n", encodedProjString.c_str());
@@ -1752,7 +1824,7 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam, CT::string *XMLDocumen
             if (status != 0) myWMSLayer->hasError = 1;
           }
 
-          if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded) {
+          if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded || myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
             myWMSLayer->isQuerable = 0;
             if (srvParam->serviceType == SERVICE_WCS) {
               myWMSLayer->hasError = true;
@@ -1760,20 +1832,35 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam, CT::string *XMLDocumen
           }
           // Generate a common projection list information
           if (myWMSLayer->hasError == false) {
+#ifdef MEASURETIME
+            StopWatch_Stop("start getProjectionInformationForLayer");
+#endif
+
             status = getProjectionInformationForLayer(myWMSLayer);
+#ifdef MEASURETIME
+            StopWatch_Stop("finished getProjectionInformationForLayer");
+#endif
+
             if (status != 0) myWMSLayer->hasError = 1;
           }
 
           // Get the dimensions and its extents for this layer
           if (myWMSLayer->hasError == false) {
+#ifdef MEASURETIME
+            StopWatch_Stop("Start getDimsForLayer");
+#endif
+
             status = getDimsForLayer(myWMSLayer);
             if (status != 0) myWMSLayer->hasError = 1;
+#ifdef MEASURETIME
+            StopWatch_Stop("Finished getDimsForLayer");
+#endif
           }
 
           // Auto configure styles
           if (myWMSLayer->hasError == false) {
             if (myWMSLayer->dataSource->cfgLayer->Styles.size() == 0) {
-              if (myWMSLayer->dataSource->dLayerType != CConfigReaderLayerTypeCascaded) {
+              if (myWMSLayer->dataSource->dLayerType != CConfigReaderLayerTypeCascaded && myWMSLayer->dataSource->dLayerType != CConfigReaderLayerTypeLiveUpdate) {
 #ifdef CXMLGEN_DEBUG
                 CDBDebug("cfgLayer->attr.type  %d", myWMSLayer->dataSource->dLayerType);
 #endif
@@ -1795,14 +1882,6 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam, CT::string *XMLDocumen
     }
   }
 
-  // Remove layers which have an error
-  for (size_t j = 0; j < myWMSLayerList.size(); j++) {
-    if (myWMSLayerList[j]->hasError) {
-      delete myWMSLayerList[j];
-      myWMSLayerList.erase(myWMSLayerList.begin() + j);
-      j--;
-    }
-  }
 #ifdef CXMLGEN_DEBUG
   if (myWMSLayerList.size() > 0) {
     CT::string finalLayerList;

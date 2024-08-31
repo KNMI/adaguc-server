@@ -31,7 +31,6 @@
 
 #include "ProjCache.h"
 
-
 DEF_ERRORMAIN();
 
 FILE *pLogDebugFile = NULL;
@@ -45,12 +44,15 @@ void writeLogFile(const char *msg) {
       setvbuf(pLogDebugFile, NULL, _IONBF, 0);
     }
     fputs(msg, pLogDebugFile);
+    // If message line contains data like [D:008:pid250461: adagucserverEC/CCairoPlotter.cpp:878], also append the time.
     if (strncmp(msg, "[D:", 3) == 0 || strncmp(msg, "[W:", 3) == 0 || strncmp(msg, "[E:", 3) == 0) {
-      time_t myTime = time(NULL);
-      tm *myUsableTime = localtime(&myTime);
       char szTemp[128];
-      snprintf(szTemp, 127, "%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ ", myUsableTime->tm_year + 1900, myUsableTime->tm_mon + 1, myUsableTime->tm_mday, myUsableTime->tm_hour, myUsableTime->tm_min,
-               myUsableTime->tm_sec);
+      struct timeval tv;
+      gettimeofday(&tv, NULL);
+      time_t curtime = tv.tv_sec;
+      tm *myUsableTime = localtime(&curtime);
+      snprintf(szTemp, 127, "%.4d-%.2d-%.2dT%.2d:%.2d:%.2d.%.3dZ ", myUsableTime->tm_year + 1900, myUsableTime->tm_mon + 1, myUsableTime->tm_mday, myUsableTime->tm_hour, myUsableTime->tm_min,
+               myUsableTime->tm_sec, int(tv.tv_usec / 1000));
       fputs(szTemp, pLogDebugFile);
     }
   }
@@ -77,6 +79,7 @@ void serverWarningFunction(const char *msg) {
 void serverLogFunctionCMDLine(const char *msg) { printf("%s", msg); }
 
 #include "adagucserver.h"
+#include "Types/ProjectionStore.h"
 
 void serverLogFunctionNothing(const char *) {}
 
@@ -193,6 +196,7 @@ int _main(int argc, char **argv, char **) {
 
   /* Initialize error functions */
   seterrormode(EXCEPTIONS_PLAINTEXT);
+  setStatusCode(HTTP_STATUSCODE_200_OK);
   setErrorFunction(serverLogFunctionCMDLine);
   setWarningFunction(serverLogFunctionCMDLine);
   setDebugFunction(serverLogFunctionCMDLine);
@@ -386,7 +390,7 @@ int _main(int argc, char **argv, char **) {
   StopWatch_Stop("Ready!!!");
 #endif
 
-  return status;
+  return getStatusCode();
 }
 
 int main(int argc, char **argv, char **envp) {
@@ -448,6 +452,7 @@ int main(int argc, char **argv, char **envp) {
   CDFObjectStore::getCDFObjectStore()->clear();
 
   proj_clear_cache();
+  BBOXProjectionClearCache();
 
   if (pLogDebugFile != NULL) {
     fclose(pLogDebugFile);

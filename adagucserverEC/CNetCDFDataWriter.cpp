@@ -344,10 +344,12 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
       // CDBDebug("dimValue.c_str() = %s",dimValue.c_str());
       if (var->getType() != CDF_STRING) {
         if (isTimeDim) {
-          CTime ctime;
-          ctime.init(CDataReader::getTimeDimension(dataSource));
-          // CDBDebug("dimValue.c_str() = %s",dimValue.c_str());
-          double offset = ctime.dateToOffset(ctime.freeDateStringToDate(dimValue.c_str()));
+          CTime *ctime = CTime::GetCTimeInstance(CDataReader::getTimeDimension(dataSource));
+          if (ctime == nullptr) {
+            CDBDebug(CTIME_GETINSTANCE_ERROR_MESSAGE);
+            return 1;
+          }
+          double offset = ctime->dateToOffset(ctime->freeDateStringToDate(dimValue.c_str()));
 #ifdef CNetCDFDataWriter_DEBUG
           CDBDebug("Dimension [%s]: writing value %s with offset %f to index %d", dimName.c_str(), dimValue.c_str(), offset, j);
 #endif
@@ -379,6 +381,12 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
           case CDF_UINT:
             ((unsigned int *)var->data)[j] = dimValue.toInt();
             break;
+          case CDF_INT64:
+            ((long *)var->data)[j] = dimValue.toLong();
+            break;
+          case CDF_UINT64:  // TODO: All unsigned versions don't work if the full unsigned range is needed
+            ((unsigned long *)var->data)[j] = dimValue.toLong();
+            break;
           case CDF_FLOAT:
             ((float *)var->data)[j] = dimValue.toFloat();
             break;
@@ -386,6 +394,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
             ((double *)var->data)[j] = dimValue.toDouble();
             break;
           default:
+            CDBError("Unknown var type [%d] for dimension [%s]", var->getType(), dimName.c_str());
             return 1;
           }
         }
@@ -678,10 +687,14 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         if (var->getType() != CDF_STRING) {
           if (isTimeDim) {
             // CDBDebug("isTimeDim");
-            CTime ctime;
-            ctime.init(CDataReader::getTimeDimension(dataSource));
+            CTime *ctime = CTime::GetCTimeInstance(CDataReader::getTimeDimension(dataSource));
+            if (ctime == nullptr) {
+              CDBDebug(CTIME_GETINSTANCE_ERROR_MESSAGE);
+              return 1;
+            }
+
             // CDBDebug("Trying to convert string %s",dimValue.c_str());
-            double offset = ctime.dateToOffset(ctime.freeDateStringToDate(dimValue.c_str()));
+            double offset = ctime->dateToOffset(ctime->freeDateStringToDate(dimValue.c_str()));
             // CDBDebug("offset = %f",offset);
             for (size_t j = 0; j < var->getSize(); j++) {
               if (((double *)var->data)[j] == offset) {
@@ -715,16 +728,21 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
               case CDF_UINT:
                 value = ((unsigned int *)var->data)[j];
                 break;
+              case CDF_INT64:  // TODO: This is a narrowing conversion, as not all long's can be exactly represented in a double
+                value = ((long *)var->data)[j];
+                break;
+              case CDF_UINT64:  // TODO: This is a narrowing conversion, as not all long's can be exactly represented in a double
+                value = ((unsigned long *)var->data)[j];
+                break;
               case CDF_FLOAT:
                 value = ((float *)var->data)[j];
                 break;
               case CDF_DOUBLE:
                 value = ((double *)var->data)[j];
                 break;
-              default: {
-                CDBError("Unknown var type [%d]", var->getType());
+              default:
+                CDBError("Unknown var type [%d] for dimension [%s]", var->getType(), dimName.c_str());
                 return 1;
-              }
               }
               if (value == valueToFind) {
                 indexTofind = j;
@@ -833,16 +851,21 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       case CDF_UINT:
         warpedData = ((unsigned int *)variable->data) + elementOffset;
         break;
+      case CDF_INT64:
+        warpedData = ((long *)variable->data) + elementOffset;
+        break;
+      case CDF_UINT64:
+        warpedData = ((unsigned long *)variable->data) + elementOffset;
+        break;
       case CDF_FLOAT:
         warpedData = ((float *)variable->data) + elementOffset;
         break;
       case CDF_DOUBLE:
         warpedData = ((double *)variable->data) + elementOffset;
         break;
-      default: {
+      default:
         CDBError("Unknown var type [%d]", variable->getType());
         return 1;
-      }
       }
 
       settings.data = warpedData;
@@ -875,12 +898,21 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         case CDF_UINT:
           genericDataWarper.render<uint>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_nearest);
           break;
+        case CDF_INT64:
+          genericDataWarper.render<long>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_nearest);
+          break;
+        case CDF_UINT64:
+          genericDataWarper.render<unsigned long>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_nearest);
+          break;
         case CDF_FLOAT:
           genericDataWarper.render<float>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_nearest);
           break;
         case CDF_DOUBLE:
           genericDataWarper.render<double>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_nearest);
           break;
+        default:
+          CDBError("Unknown var type [%d]", variable->getType());
+          return 1;
         }
       }
 
@@ -908,12 +940,21 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         case CDF_UINT:
           genericDataWarper.render<uint>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_avg_rbg);
           break;
+        case CDF_INT64:
+          genericDataWarper.render<long>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_avg_rbg);
+          break;
+        case CDF_UINT64:
+          genericDataWarper.render<unsigned long>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_avg_rbg);
+          break;
         case CDF_FLOAT:
           genericDataWarper.render<float>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_avg_rbg);
           break;
         case CDF_DOUBLE:
           genericDataWarper.render<double>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_avg_rbg);
           break;
+        default:
+          CDBError("Unknown var type [%d]", variable->getType());
+          return 1;
         }
       }
 

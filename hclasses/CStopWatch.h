@@ -37,6 +37,6 @@ void _StopWatch_Stop(const char *a, ...);
 extern unsigned int logMessageNumber;
 extern unsigned long logProcessIdentifier;
 #define StopWatch_Stop                                                                                                                                                                                 \
-  _printDebug("[D:%03d:pid%lu: %s:%d %s] ", logMessageNumber, logProcessIdentifier, __FILENAME__, __LINE__, className);                                                                                \
+  _printDebug("[D:%03d:pid%lu: %s:%d] ", logMessageNumber, logProcessIdentifier, __FILENAME__, __LINE__);                                                                                              \
   _StopWatch_Stop
 #endif

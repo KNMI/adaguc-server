@@ -45,6 +45,11 @@ public:
     this->a = a;
   }
   CColor(const char *color) { parse(color); }
+  CT::string c_str() {
+    CT::string r;
+    r.print("#%s%s%s%s", CT::string::getHex(this->r).c_str(), CT::string::getHex(this->g).c_str(), CT::string::getHex(this->b).c_str(), CT::string::getHex(this->a).c_str());
+    return r;
+  }
   void parse(const char *color) {
     /**
      * color can have format #RRGGBB or #RRGGBBAA

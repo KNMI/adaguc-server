@@ -9,6 +9,16 @@ const char *CMakeEProfile::className = "CMakeEProfile";
 
 #define CMakeEProfile_MAX_DIMS 255
 
+#define DEFAULT_VALIDITY_LENGTH_OF_OBSERVATION_IN_SECONDS 12.0f
+
+std::string encodeJSON(CT::string input) {
+  CT::string str = input;
+  str.replaceSelf("\"", "\\");
+  str.replaceSelf("\n", "");
+  str.replaceSelf("\"", "\\\"");
+  return str.c_str();
+}
+
 class EProfileUniqueRequests {
 private:
   DEF_ERRORFUNCTION();
@@ -46,7 +56,7 @@ public:
     AggregatedDimension *dimensions[CMakeEProfile_MAX_DIMS];
   };
 
-  int drawEprofile(CDrawImage *drawImage, CDF::Variable *variable, size_t *start, size_t *count, EProfileUniqueRequests::Request *, CDataSource *dataSource);
+  int drawEprofile(CDrawImage *drawImage, CDF::Variable *variable, size_t *start, size_t *count, EProfileUniqueRequests::Request *, CDataSource *dataSource, CT::string *eProfileJSON);
   int plotHeightRetrieval(CDrawImage *drawImage, CDFObject *cdfObject, const char *varName, CColor c, size_t NrOfDates, double startGraphTime, double startGraphRange, double graphWidth,
                           double graphHeight, int timeWidth);
 
@@ -384,7 +394,7 @@ public:
   // //     }
   //   }
 
-  void makeRequests(CDrawImage *drawImage, CImageWarper *, CDataSource *dataSource, int, int) {
+  void makeRequests(CDrawImage *drawImage, CImageWarper *, CDataSource *dataSource, int, int, CT::string *eProfileJson) {
 #ifdef CMakeEProfile_DEBUG
     CDBDebug("\\makeRequests");
 #endif
@@ -524,7 +534,7 @@ public:
               CDBDebug("Read %d elements", variable->getSize());
 #endif
 
-              drawEprofile(drawImage, variable, start, count, request, dataSource);
+              drawEprofile(drawImage, variable, start, count, request, dataSource, eProfileJson);
 
               //               try{
               //                 expandData(dataObject,variable,start,count,0,request,0);
@@ -565,7 +575,7 @@ public:
 };
 const char *EProfileUniqueRequests::className = "EProfileUniqueRequests";
 
-int CMakeEProfile::MakeEProfile(CDrawImage *drawImage, CImageWarper *imageWarper, std::vector<CDataSource *> dataSources, int dataSourceIndex, int dX, int dY) {
+int CMakeEProfile::MakeEProfile(CDrawImage *drawImage, CImageWarper *imageWarper, std::vector<CDataSource *> dataSources, int dataSourceIndex, int dX, int dY, CT::string *eProfileJson) {
   CDataSource *dataSource = dataSources[dataSourceIndex];
 
   EProfileUniqueRequests uniqueRequest;
@@ -607,7 +617,7 @@ int CMakeEProfile::MakeEProfile(CDrawImage *drawImage, CImageWarper *imageWarper
 
   // Make requests
   try {
-    uniqueRequest.makeRequests(drawImage, imageWarper, dataSource, dX, dY);
+    uniqueRequest.makeRequests(drawImage, imageWarper, dataSource, dX, dY, eProfileJson);
   } catch (int e) {
     CDBError("Error in makeRequests at line %d", e);
     throw(__LINE__);
@@ -655,17 +665,20 @@ int EProfileUniqueRequests::plotHeightRetrieval(CDrawImage *drawImage, CDFObject
         }
       }
     }
-  } else {
-    CDBError("plotHeightRetrievalVariable == NULL");
   }
   return 0;
 }
 
-int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *variable, size_t *, size_t *count, EProfileUniqueRequests::Request *, CDataSource *dataSource) {
+int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *variable, size_t *, size_t *count, EProfileUniqueRequests::Request *, CDataSource *dataSource,
+                                         CT::string *eProfileJson) {
 
   // CTime adagucTime;
   // adagucTime->init(((CDFObject*)variable->getParentCDFObject())->getVariableNE("time_obs"));
   CTime *adagucTime = CTime::GetCTimeInstance(((CDFObject *)variable->getParentCDFObject())->getVariableNE("time_obs"));
+  if (adagucTime == nullptr) {
+    CDBDebug(CTIME_GETINSTANCE_ERROR_MESSAGE);
+    return 1;
+  }
 
   COGCDims *ogcDim = dataSource->requiredDims[0];
 
@@ -721,7 +734,7 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
     CT::string *timeEntries = dataSource->srvParams->requestDims[foundTimeDim]->value.splitToArray("/");
     if (timeEntries->count == 2) {
 #ifdef CMakeEProfile_DEBUG
-      CDBDebug("elevation=%s", dataSource->srvParams->requestDims[foundTimeDim]->value.c_str());
+      CDBDebug("time=%s", dataSource->srvParams->requestDims[foundTimeDim]->value.c_str());
 #endif
       startGraphTime = adagucTime->dateToOffset(adagucTime->freeDateStringToDate(timeEntries[0].c_str()));
       stopGraphTime = adagucTime->dateToOffset(adagucTime->freeDateStringToDate(timeEntries[1].c_str()));
@@ -751,11 +764,116 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
     delete[] elevationEntries;
   }
 
+  if (dataSource->srvParams->InfoFormat.equals("application/json")) {
+    float *data = (float *)varRange->data;
+    eProfileJson->concat("{");
+    CT::string units = dataSource->getDataObject(0)->getUnits();
+    if (!units.empty()) {
+      eProfileJson->printconcat("\"units\":\"%s\",", encodeJSON(units).c_str());
+    } else {
+      eProfileJson->printconcat("\"units\":null,");
+    }
+    CDF::Attribute *unitsY = varRange->getAttributeNE("units");
+    CDF::Attribute *standardName = variable->getAttributeNE("standard_name");
+    CDF::Attribute *longName = variable->getAttributeNE("long_name");
+    CT::string layerName = dataSource->getLayerName();
+    CT::string layerTitle = dataSource->getLayerTitle();
+
+    std::string dq = "\"";
+
+    eProfileJson->printconcat("\"units_y\":%s,", (unitsY != NULL ? dq + std::string(unitsY->getDataAsString().c_str()) + dq : "null").c_str());
+    eProfileJson->printconcat("\"standard_name\":%s,", (standardName != NULL ? dq + std::string(standardName->getDataAsString().c_str()) + dq : "null").c_str());
+    eProfileJson->printconcat("\"long_name\":%s,", (longName != NULL ? dq + encodeJSON(longName->getDataAsString()) + dq : "null").c_str());
+    eProfileJson->printconcat("\"layer_name\":%s,", (layerName.empty() == false ? dq + encodeJSON(layerName) + dq : "null").c_str());
+    eProfileJson->printconcat("\"layer_title\":%s,", (layerTitle.empty() == false ? dq + encodeJSON(layerTitle) + dq : "null").c_str());
+    eProfileJson->printconcat("\"numValues\":%d,", varRange->getSize());
+    eProfileJson->printconcat("\"name\":\"%s\",", encodeJSON(variable->name.replace("_backup", "")).c_str());
+
+    CDBDebug("%d", variable->getSize());
+
+    size_t colOffset = varRange->getSize() * 0;
+    if (count[0] > 1) {
+      for (size_t timeIndex = 0; timeIndex < count[0] - 1; timeIndex++) {
+        double dataTimeStart = ((double *)varTime->data)[timeIndex];
+        double dataTimeEnd = ((double *)varTime->data)[timeIndex + 1];
+        if (startGraphTime > dataTimeStart && startGraphTime < dataTimeEnd) {
+
+          colOffset = timeIndex * varRange->getSize();
+        }
+      }
+    }
+
+    CDBDebug("Querying for time index %d and file %s", colOffset, dataSource->getFileName());
+
+    // Make profile object
+    eProfileJson->concat("\"profile\":{");
+    // Make height object
+    eProfileJson->concat("\n\"heights\":[");
+    CDBDebug("startGraphRange %f %f", startGraphRange, stopGraphRange);
+    bool firstElDone = false;
+    for (size_t j = 0; j < varRange->getSize(); j += 1) {
+      float v = float(data[j]);
+      if (v >= startGraphRange && v < stopGraphRange) {
+        if (firstElDone) {
+          eProfileJson->concat(",");
+        };
+        firstElDone = true;
+        if (v == v) {
+          eProfileJson->printconcat("%g", v);
+        } else {
+          eProfileJson->printconcat("null");
+        }
+      }
+    }
+    eProfileJson->concat("],");
+    // Make values object
+    eProfileJson->concat("\n\"values\":[");
+    firstElDone = false;
+    for (size_t j = 0; j < varRange->getSize(); j += 1) {
+      float v = float(data[j]);
+      if (v >= startGraphRange && v < stopGraphRange) {
+        if (firstElDone) {
+          eProfileJson->concat(",");
+        };
+        firstElDone = true;
+        if (variable->getType() == CDF_FLOAT) {
+          float v = ((float *)variable->data)[j + colOffset];
+          if (v == v) {
+            eProfileJson->printconcat("%g", v);
+          } else {
+            eProfileJson->printconcat("null");
+          }
+        }
+        if (variable->getType() == CDF_DOUBLE) {
+          double v = ((double *)variable->data)[j + colOffset];
+          if (v == v) {
+            eProfileJson->printconcat("%g", v);
+          } else {
+            eProfileJson->printconcat("null");
+          }
+        }
+      }
+    }
+    eProfileJson->concat("]");
+
+    eProfileJson->concat("\n}}");
+
+    return 0;
+  }
+
   double graphWidth = stopGraphTime - startGraphTime;
   double graphHeight = stopGraphRange - startGraphRange;
 
   double imageWidth = drawImage->Geo->dWidth;
   double imageHeight = drawImage->Geo->dHeight;
+
+  if (graphWidth <= 0) {
+    graphWidth = imageWidth;
+  }
+  if (graphHeight <= 0) {
+    graphHeight = imageHeight;
+  }
+
 #ifdef CMakeEProfile_DEBUG
   CDBDebug("startGraphTime = %f stopGraphTime = %f graphWidth = %f imageWidth = %f", startGraphTime, stopGraphTime, graphWidth, imageWidth);
   CDBDebug("startGraphRange = %f stopGraphTime = %f graphWidth = %f imageWidth = %f", startGraphRange, stopGraphTime, graphHeight, imageHeight);
@@ -783,6 +901,15 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
 
   std::vector<CMakeEProfile::DayPass> dayPasses;
   int minWidth = 0;
+
+  // Fallback validity length of the observation, in case there is only one observation in the file
+  double duration = DEFAULT_VALIDITY_LENGTH_OF_OBSERVATION_IN_SECONDS;
+
+  CDF::Attribute *durationAttribute = varTime->getAttributeNE("duration");
+  if (durationAttribute != NULL && durationAttribute->getType() == CDF_DOUBLE) {
+    durationAttribute->getData(&duration, 1);
+  }
+
   for (size_t time = 0; time < count[0]; time++) {
 
     int x1 = int(((((double *)varTime->data)[time] - startGraphTime) / graphWidth) * imageWidth);
@@ -797,8 +924,9 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
           minWidth = x2 - x1;
         }
       }
-    } else
-      x2 = x1 + minWidth + 1;
+    } else {
+      x2 = x1 + int(((duration / graphWidth) * imageWidth) + 0.5) + 1;
+    }
     if (x2 >= 0 && x1 < imageWidth && x1 < x2) {
 
       // CDBDebug("x1 = %d fileTime = %f",x1,fileTime);
@@ -826,6 +954,7 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
               } else
                 val = (-legendOffset);
             }
+
             int pcolorind = (int)(val * legendScale + legendOffset);
             // val+=legendOffset;
             if (pcolorind >= 239)

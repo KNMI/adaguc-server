@@ -139,7 +139,6 @@ namespace CT {
       strings[j].count = n;
       delete token;
     }
-    CTlink(strings, n);
     return strings;
   };
 
@@ -527,6 +526,11 @@ namespace CT {
     return equals(_string.useStack ? _string.stackValue : _string.heapValue, _string.privatelength);
   }
 
+  bool string::equals(std::string const &_string) const {
+    if (allocated == 0) return false;
+    return equals(_string.c_str(), _string.length());
+  }
+
   bool string::equalsIgnoreCase(const char *_value, size_t _length) {
     if (_value == NULL) return false;
     if (allocated == 0) return false;
@@ -666,7 +670,7 @@ namespace CT {
   }
 
   float string::toFloat() {
-    float fValue = (float)atof(c_str());
+    float fValue = (float)atof(trim().c_str());
     return fValue;
   }
 
@@ -676,8 +680,11 @@ namespace CT {
   }
 
   int string::toInt() {
-    int dValue = (int)atoi(c_str());
-    return dValue;
+    return atoi(c_str());
+  }
+
+  long string::toLong() {
+    return atol(c_str());
   }
 
   CT::string string::basename() {
@@ -756,24 +763,24 @@ namespace CT {
   }
 
   bool string::isFloat() {
-    const size_t inputLength = this->length();
-    const char *inputStr = this->c_str();
+    CT::string inputStr = this->trim().c_str();
+
     /*check size */
-    if (this->empty() || inputLength > CT_MAX_NUM_CHARACTERS_FOR_FLOAT) {
+    if (inputStr.empty() || inputStr.length() > CT_MAX_NUM_CHARACTERS_FOR_FLOAT) {
       return false;
     }
     /* NaN is a "float"...in this context */
-    if (this->equals("NaN")) {
+    if (inputStr.equals("NaN")) {
       return true;
     }
 
-    if (std::regex_match(inputStr, isFloatRegex)) {
+    if (std::regex_match(inputStr.c_str(), isFloatRegex)) {
       return true;
     }
     return false;
   }
 
-  string getHex(unsigned int number) {
+  string string::getHex(unsigned int number) {
     int hex = number % 256;
     unsigned char a = hex / 16;
     unsigned char b = hex % 16;

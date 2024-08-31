@@ -79,6 +79,7 @@ export ADAGUC_DATASET_DIR=/data/adaguc-datasets
 export ADAGUC_DATA_DIR=/data/adaguc-data
 export ADAGUC_AUTOWMS_DIR=/data/adaguc-autowms
 export ADAGUC_CONFIG=${ADAGUC_PATH}/python/lib/adaguc/adaguc-server-config-python-postgres.xml
+export ADAGUC_NUMPARALLELPROCESSES=4
 export ADAGUC_DB="user=adaguc password=adaguc host=localhost dbname=adaguc"
 export ADAGUC_ENABLELOGBUFFER=FALSE
 ```
@@ -106,6 +107,7 @@ export ADAGUC_DATASET_DIR=/data/adaguc-datasets
 export ADAGUC_DATA_DIR=/data/adaguc-data
 export ADAGUC_AUTOWMS_DIR=/data/adaguc-autowms
 export ADAGUC_CONFIG=${ADAGUC_PATH}/python/lib/adaguc/adaguc-server-config-python-postgres.xml
+export ADAGUC_NUMPARALLELPROCESSES=4
 export ADAGUC_DB="user=adaguc password=adaguc host=localhost dbname=adaguc"
 export ADAGUC_ENABLELOGBUFFER=FALSE
 

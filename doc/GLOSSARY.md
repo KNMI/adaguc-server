@@ -16,8 +16,10 @@ Band Interleaved by Line.
 Band Interleaved by Pixel.
 ## BSQ       
 Band SeQuential.
-## CF        
+## CF
 Climate and Forecast.
+## EDR
+Environmental Data Retrieval
 ## ECMWF     
 European Centre for Medium-Range Weather Forecasts.
 ## EOS       
@@ -43,7 +45,7 @@ Hierarchical Data Format.
 ## IMAA      
 for Environmental Analysis.
 ## IMAU      
-Institute for Marine and Atmospheric Research.
+Institute for Marine and Atmospheric Research (Utrecht University).
 ## INSPIRE   
 Infrastructure for Spatial Information in the European Community.
 ## ISO       
@@ -123,6 +125,6 @@ World Meteorological Organization.
 ## WMS       
 Web Map Service.
 ## WUR       
-and Research Centre.
+Wageningen University and Research Centre.
 ## XML       
 eXtensible Markup Language.

@@ -36,6 +36,7 @@ const char *CDFObjectStore::className = "CDFObjectStore";
 #include "CConvertGeoJSON.h"
 #include "CConvertEProfile.h"
 #include "CConvertTROPOMI.h"
+#include "CConvertLatLonGrid.h"
 #include "CDataReader.h"
 #include "CCDFCSVReader.h"
 // #define CDFOBJECTSTORE_DEBUG
@@ -281,19 +282,6 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
     throw(1);
   }
 
-  CDFCache *cdfCache = NULL;
-
-  if (srvParams != NULL) {
-    CT::string cacheDir = srvParams->cfg->TempDir[0]->attr.value.c_str();
-    // srvParams->getCacheDirectory(&cacheDir);
-    if (cacheDir.length() > 0) {
-      if (srvParams->isAutoResourceCacheEnabled()) {
-        cdfCache = new CDFCache(cacheDir);
-        cdfReader->cdfCache = cdfCache;
-      }
-    }
-  }
-
   cdfObject->attachCDFReader(cdfReader);
 
   int status = 0;
@@ -352,7 +340,6 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
     CDBError("Unable to open file '%s'", fileLocationToOpen);
     delete cdfObject;
     delete cdfReader;
-    delete cdfCache;
     return NULL;
   }
 
@@ -421,6 +408,11 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
       if (CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(cdfObject, srvParams) == 0) {
         formatConverterActive = true;
       };
+
+    if (!formatConverterActive)
+      if (CConvertLatLonGrid::convertLatLonGridHeader(cdfObject, srvParams) == 0) {
+        formatConverterActive = true;
+      };
   }
 
   return cdfObject;
@@ -437,8 +429,6 @@ void CDFObjectStore::deleteCDFObject(CDFObject **cdfObject) {
       cdfObjects[j] = NULL;
       delete fileNames[j];
       fileNames[j] = NULL;
-      delete cdfReaders[j]->cdfCache;
-      cdfReaders[j]->cdfCache = NULL;
       delete cdfReaders[j];
       cdfReaders[j] = NULL;
 
@@ -467,8 +457,6 @@ void CDFObjectStore::deleteCDFObject(const char *fileName) {
       cdfObjects[j] = NULL;
       delete fileNames[j];
       fileNames[j] = NULL;
-      delete cdfReaders[j]->cdfCache;
-      cdfReaders[j]->cdfCache = NULL;
       delete cdfReaders[j];
       cdfReaders[j] = NULL;
       cdfReaders.erase(cdfReaders.begin() + j);
@@ -492,8 +480,6 @@ void CDFObjectStore::clear() {
     fileNames[j] = NULL;
     delete cdfObjects[j];
     cdfObjects[j] = NULL;
-    delete cdfReaders[j]->cdfCache;
-    cdfReaders[j]->cdfCache = NULL;
     delete cdfReaders[j];
     cdfReaders[j] = NULL;
   }

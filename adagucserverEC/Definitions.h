@@ -28,7 +28,7 @@
 #ifndef Definitions_H
 #define Definitions_H
 
-#define ADAGUCSERVER_VERSION "2.15.0" // Please also update in the Dockerfile to the same version
+#define ADAGUCSERVER_VERSION "2.26.0" // Please also update in the Dockerfile to the same version
 
 // CConfigReaderLayerType
 #define CConfigReaderLayerTypeUnknown 0
@@ -36,6 +36,7 @@
 #define CConfigReaderLayerTypeStyled 2
 #define CConfigReaderLayerTypeCascaded 3
 #define CConfigReaderLayerTypeBaseLayer 4
+#define CConfigReaderLayerTypeLiveUpdate 6
 
 // CRequest
 // Service options
@@ -187,3 +188,10 @@
 
 // #define ADAGUC_USE_GDAL
 #endif
+
+// HTTP status codes
+// Success
+#define HTTP_STATUSCODE_200_OK 0
+// Client errors
+#define HTTP_STATUSCODE_404_NOT_FOUND 32
+#define HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY 33

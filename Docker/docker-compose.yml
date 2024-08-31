@@ -21,6 +21,12 @@ services:
         max-file: "10"
   adaguc-server:
     image: openearth/adaguc-server
+    # build: ..
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: "2"
+    #       memory: 2048M
     container_name: my-adaguc-server
     hostname: my-adaguc-server
     volumes:
@@ -30,12 +36,14 @@ services:
     networks:
       - adaguc-network
     environment:
-      - "EXTERNALADDRESS=${EXTERNALADDRESS}"
+      - "PGBOUNCER_DISABLE_SSL=true"
+      - "PGBOUNCER_ENABLE=true"
       - "ADAGUC_DB=host=adaguc-db port=5432 user=adaguc password=adaguc dbname=adaguc"
       - "ADAGUC_ENABLELOGBUFFER=TRUE"
       - "ADAGUC_AUTOWMS_DIR=/data/adaguc-autowms"
       - "ADAGUC_DATA_DIR=/data/adaguc-data"
       - "ADAGUC_DATASET_DIR=/data/adaguc-datasets"
+      - "ADAGUC_REDIS=redis://adaguc-redis:6379"
     env_file:
       - .env
     restart: unless-stopped
@@ -43,6 +51,7 @@ services:
       - adaguc-db
     depends_on:
       - adaguc-db
+      - adaguc-redis
     logging:
       driver: "json-file"
       options:
@@ -70,7 +79,7 @@ services:
         max-size: "200k"
         max-file: "10"
   adaguc-db:
-    image: postgres:13.12
+    image: postgres:13
     container_name: adaguc-db
     hostname: adaguc-db
     # Ensures containers running in the adaguc-network docker network can connect to the database, provided they use the
@@ -78,9 +87,7 @@ services:
     networks:
       - adaguc-network
     volumes:
-      - adaguc-server-compose-adagucdb:/adaguc/adagucdb
-    expose:
-      - "5432"
+      - adaguc-server-compose-adagucdb:/var/lib/postgresql/data
     environment:
       - "POSTGRES_USER=adaguc"
       - "POSTGRES_PASSWORD=adaguc"
@@ -91,6 +98,13 @@ services:
       options:
         max-size: "200k"
         max-file: "10"
+  adaguc-redis:
+    image: redis:7
+    container_name: adaguc-redis
+    hostname: adaguc-redis
+    restart: unless-stopped
+    networks:
+      - adaguc-network
 volumes:
   adaguc-server-compose-adagucdb:
 networks:

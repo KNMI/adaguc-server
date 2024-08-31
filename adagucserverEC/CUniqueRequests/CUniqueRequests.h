@@ -11,7 +11,6 @@
 #include "CDataSource.h"
 #include "CImageWarper.h"
 
-
 #ifndef CURUNIQUEREQUESTS_H
 #define CURUNIQUEREQUESTS_H
 
@@ -31,10 +30,10 @@ private:
     int *getDimOrder() { return parent->getDimOrder(); }
   };
 
-  void recurDataStructure(CXMLParser::XMLElement *dataStructure, CURResult *result, int depth, int *dimOrdering);
+  void recurDataStructure(CXMLParser::XMLElement *dataStructure, CURResult *result, int depth, int *dimOrdering, std::vector<int> dimIndicesToSkip);
   void createStructure(CDataSource::DataObject *dataObject, CDrawImage *drawImage, CImageWarper *imageWarper, CDataSource *dataSource, int dX, int dY, CXMLParser::XMLElement *gfiStructure);
 
-   struct less_than_key {
+  struct less_than_key {
     inline bool operator()(CURResult *result1, CURResult *result2) {
       int *dimOrder = result1->getDimOrder();
       std::string s1;
@@ -54,7 +53,6 @@ private:
     }
   };
 
-
   std::map<std::string, CURFileInfo *> fileInfoMap; // File name is key
   typedef std::map<std::string, CURFileInfo *>::iterator it_type_file;
   CT::string dimensionKeys[CCUniqueRequests_MAX_DIMS];
@@ -62,23 +60,20 @@ private:
   int *getDimOrder() { return dimOrdering; }
   std::vector<CURResult *> results;
   CURAggregatedDimension *dimensions[CCUniqueRequests_MAX_DIMS];
-  void expandData(CDataSource *dataSource, CDataSource::DataObject *dataObject, CDF::Variable *variable, size_t *start, size_t *count, int d, CURRequest *request, int index);
+  void expandData(CDataSource *dataSource, CDataSource::DataObject *dataObject, CDF::Variable *variable, size_t *start, size_t *count, int d, CURRequest *request, int index, int *multiplies);
   size_t size();
-  CURFileInfo* get(size_t index);
-  void addDimSet(CURDimInfo *dimInfo, int start, std::vector<CT::string> *valueList);
+  CURFileInfo *get(size_t index);
+  void addDimSet(CURDimInfo *dimInfo, int start, std::vector<CT::string> valueList);
   void nestRequest(it_type_diminfo diminfomapiterator, CURFileInfo *fileInfo, int depth);
 
 public:
-  bool readDataAsCDFDouble;  
+  bool readDataAsCDFDouble;
   CURUniqueRequests();
   ~CURUniqueRequests();
 
-  
-
-  void set(const char *filename, const char *dimName, size_t dimIndex, CT::string dimValue) ;
+  void set(const char *filename, const char *dimName, size_t dimIndex, CT::string dimValue);
   void sortAndAggregate();
   void makeRequests(CDrawImage *drawImage, CImageWarper *imageWarper, CDataSource *dataSource, int dX, int dY, CXMLParser::XMLElement *gfiStructure);
-  
 };
 
 #endif

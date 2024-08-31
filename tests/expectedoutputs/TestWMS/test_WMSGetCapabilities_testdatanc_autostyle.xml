@@ -15,7 +15,7 @@
         <KeywordList>
             <Keyword>view</Keyword>
             <Keyword>infoMapAccessService</Keyword>
-            <Keyword>ADAGUCServer version 2.13.7, of Nov  1 2023 11:45:57 </Keyword>
+            <Keyword>ADAGUCServer version 2.23.0, of Jul  9 2024 12:13:41 </Keyword>
         </KeywordList>
         <OnlineResource xlink:type="simple" xlink:href="source=testdata%2Enc&amp;SERVICE=WMS&amp;"/>
         <ContactInformation>
@@ -96,6 +96,10 @@
 <BoundingBox CRS="EPSG:900913" minx="-3032706.025370" miny="4488462.769264" maxx="3637528.401374" maxy="9846321.862963" />
 <BoundingBox CRS="EPSG:3067" minx="-3107150.509005" miny="4216726.250381" maxx="783036.427152" maxy="8092286.994278" />
 <BoundingBox CRS="EPSG:28992" minx="-1500000.013393" miny="1999999.970833" maxx="1500000.013393" maxy="-999999.970833" />
+
+<!-- Note: Error: Layer [geojsonbaselayer] is misconfigured -->
+
+<!-- Note: Error: Layer [geojsonoverlay] is misconfigured -->
 <Layer queryable="1" opaque="1" cascaded="0">
 <Name>testdata</Name>
 <Title>Testdata (testdata)</Title>

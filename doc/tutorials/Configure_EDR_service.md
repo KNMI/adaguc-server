@@ -20,16 +20,22 @@ This file is available in the adaguc-server repository with location `data/datas
 
 ## Step 2: Configure a dataset for this datafile, including EDR support
 
+Create the following file at the filepath `$ADAGUC_DATASET_DIR/edr.xml`. You can also consider changing `<FilePath>` to `/data/adaguc-data/*.nc`.
 
 ```xml
-<?xml version="1.0" encoding="UTF-8" ?>
+
 <Configuration>
 
-    <OgcApiFeatures/>
+    <OgcApiFeatures />
 
     <OgcApiEdr>
         <EdrCollection name="harmonie">
-            <EdrParameter name="air_temperature__at_2m" unit="Celsius"/>
+            <EdrParameter
+                name="air_temperature__at_2m"
+                unit="°C"
+                standard_name="air_temperature"
+                observed_property_label="Air temperature"
+                parameter_label="Air temperature, 2 metre" />
         </EdrCollection>
     </OgcApiEdr>
 
@@ -42,17 +48,62 @@ This file is available in the adaguc-server repository with location `data/datas
     </Style>
 
     <!-- Layers -->
+
     <Layer type="database">
-        <FilePath>/data/adaguc-data/HARM_N25_20171215090000_dimx16_dimy16_dimtime49_dimforecastreferencetime1_varairtemperatureat2m.nc</FilePath>
+
+        <FilePath>
+            /data/adaguc-data/HARM_N25_20171215090000_dimx16_dimy16_dimtime49_dimforecastreferencetime1_varairtemperatureat2m.nc</FilePath>
         <Variable units="Celsius">air_temperature__at_2m</Variable>
         <Styles>temperature</Styles>
     </Layer>
-
     <!-- End of configuration /-->
 </Configuration>
 
-
 ```
+
+
+### EdrParameter settings
+
+```xml
+<EdrParameter
+                name="air_temperature__at_2m"
+                unit="°C"
+                standard_name="air_temperature"
+                observed_property_label="Air temperature"
+                parameter_label="Air temperature, 2 metre" />
+```                
+
+- name: Mandatory, Should be one of the WMS Layer names as advertised in the WMS GetCapabilities
+- unit: Mandatory, Sets the unit for the parameter in the parameter_names section of the collection document
+- standard_name: Recommended, sets the observedProperty id. If set the id will contain a link to the vocabulary service. If not set, it will fallback to `name` and `observedProperty.id` will not contain a link.
+- observed_property_label: Recommended, sets the observedProperty label, it will fallback to it will fallback first to `standard_name` first, and second to `name`
+- parameter_label: Recommended, sets the label for the parameter in the parameter_names section, it will fallback to the `name`
+
+For the given example this will result in the following parameter name definition:
+
+```json
+parameter_names": {
+    "air_temperature__at_2m": {
+      "type": "Parameter",
+      "id": "air_temperature__at_2m",
+      "label": "Air temperature, 2 metre",
+      "description": "harmonie - air_temperature__at_2m (air_temperature__at_2m)",
+      "unit": {
+        "symbol": {
+          "value": "°C",
+          "type": "http://www.opengis.net/def/uom/UCUM"
+        }
+      },
+      "observedProperty": {
+        "id": "https://vocab.nerc.ac.uk/standard_name/air_temperature",
+        "label": "Air temperature"
+      }
+    }
+  }
+```
+
+*The description is currently read from the GetCapabilities document, using the WMS Layer Title section prefixed with the edr collection name.
+
 
 ## Step 3: Scan the new data
 
@@ -62,12 +113,14 @@ docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh edr
 
 ## Step 4: Check if the EDR endpoint works
 
+These examples test the /instances, /position and the /cube EDR calls
 
 Visit:
 - https://yourhostname/edr/collections/harmonie
 - https://yourhostname/edr/collections/harmonie/instances
 - https://yourhostname/edr/collections/harmonie/instances/?f=application/json
 - https:///yourhostname/edr/collections/harmonie/instances/201712150900/position?coords=POINT(4.782 52.128)&datetime=2017-12-15T09:00Z/2017-12-17T09:00Z&parameter-name=air_temperature__at_2m&crs=EPSG:4326&f=CoverageJSON
+- https:///yourhostname/edr/collections/harmonie/instances/201712150900/cube?bbox=5,52,7,54&datetime=2017-12-15T09:00Z/2017-12-17T09:00Z&parameter-name=air_temperature__at_2m&crs=EPSG:4326&f=CoverageJSON
 
 You can also try it in https://labs.metoffice.gov.uk/edr/static/html/query.html
 

@@ -40,7 +40,6 @@
 #include <sys/stat.h>
 
 #include "CDFObjectStore.h"
-#include "CCache.h"
 
 #include "CAutoConfigure.h"
 class CDataReader {
@@ -122,7 +121,7 @@ private:
   bool calculateCellSizeAndBBox(CDataSource *dataSource, const CDF::Variable *dataSourceVar) const;
 
 public:
-  CDataReader() { _enableReporting = true; }
+  CDataReader() { _enableReporting = false; }
   ~CDataReader() {}
   bool enablePostProcessors = true; // Allows disabling of other postprocessors. For example when a datasource is output of another postprocessor.
   bool enableObjectCache = true;

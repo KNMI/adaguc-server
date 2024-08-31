@@ -43,6 +43,10 @@ add_library(
     CConvertKNMIH5EchoToppen.h
     CConvertKNMIH5VolScan.cpp
     CConvertKNMIH5VolScan.h
+    CConvertLatLonGrid.h
+    CConvertLatLonGrid.cpp
+    CConvertLatLonGridHeader.cpp
+    CConvertLatLonGridData.cpp
     CConvertTROPOMI.cpp
     CConvertTROPOMI.h
     CConvertUGRIDMesh.cpp
@@ -64,15 +68,32 @@ add_library(
     CDBFileScannerCleanFiles.cpp
     CDFObjectStore.cpp
     CDFObjectStore.h
-    CDPPGoes16Metadata.cpp
+    CDataPostProcessors/CDataPostProcessor_AddFeatures.cpp
+    CDataPostProcessors/CDataPostProcessor_AddFeatures.h
+    CDataPostProcessors/CDataPostProcessor_CDPDBZtoRR.cpp
+    CDataPostProcessors/CDataPostProcessor_CDPDBZtoRR.h
+    CDataPostProcessors/CDataPostProcessors_MSGCPP.cpp
+    CDataPostProcessors/CDataPostProcessors_MSGCPP.h
+    CDataPostProcessors/CDPPGoes16Metadata.cpp
+    CDataPostProcessors/CDPPGoes16Metadata.h
     CDataPostProcessors/CDataPostProcessor.cpp
     CDataPostProcessors/CDataPostProcessor.h
+    CDataPostProcessors/CDataPostProcessor_AXplusB.cpp
+    CDataPostProcessors/CDataPostProcessor_AXplusB.h
+    CDataPostProcessors/CDataPostProcessor_Beaufort.cpp
+    CDataPostProcessors/CDataPostProcessor_Beaufort.h
+    CDataPostProcessors/CDataPostProcessor_ToKnots.cpp
+    CDataPostProcessors/CDataPostProcessor_ToKnots.h
+    CDataPostProcessors/CDataPostProcessor_WindSpeedKnotsToMs.cpp
+    CDataPostProcessors/CDataPostProcessor_WindSpeedKnotsToMs.h
     CDataPostProcessors/CDataPostProcessor_ClipMinMax.cpp
     CDataPostProcessors/CDataPostProcessor_ClipMinMax.h
     CDataPostProcessors/CDataPostProcessor_IncludeLayer.cpp
     CDataPostProcessors/CDataPostProcessor_IncludeLayer.h
     CDataPostProcessors/CDataPostProcessor_Operator.cpp
     CDataPostProcessors/CDataPostProcessor_Operator.h
+    CDataPostProcessors/CDataPostProcessor_WFP.h
+    CDataPostProcessors/CDataPostProcessor_WFP.cpp
     CDataReader.cpp
     CDataReader.h
     CDataSource.cpp
@@ -154,6 +175,12 @@ add_library(
     CXMLSerializerInterface.h
     json.c
     json.h
+    LayerTypeLiveUpdate/LayerTypeLiveUpdate.cpp
+    LayerTypeLiveUpdate/LayerTypeLiveUpdate.h  
+    Types/BBOX.h
+    Types/BBOX.cpp
+    Types/ProjectionStore.h
+    Types/ProjectionStore.cpp 
     testadagucserver.cpp
     testtimeutils.cpp
     timeutils.cpp

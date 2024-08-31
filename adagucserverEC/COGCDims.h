@@ -30,7 +30,11 @@
 #include "CDebugger.h"
 class COGCDims {
 public:
-  COGCDims() { isATimeDimension = false; hasFixedValue = false; }
+  COGCDims() {
+    isATimeDimension = false;
+    hasFixedValue = false;
+    hidden = false;
+  }
   /**
    * OGC name
    */
@@ -62,6 +66,8 @@ public:
   bool isATimeDimension;
 
   bool hasFixedValue;
+
+  bool hidden;
 };
 
 class CCDFDims {
@@ -88,6 +94,12 @@ public:
   CT::string getDimensionValue(int j);
   const char *getDimensionName(int j);
   void copy(CCDFDims *dim);
+
+  /**
+   * Find the dimension index by name in the CCDFDim object
+   * @param name: Name of the dimension in the CDF model to find
+   * @return The index of the dimension, or -1 when not found
+   */
   int getArrayIndexForName(const char *name);
 };
 #endif

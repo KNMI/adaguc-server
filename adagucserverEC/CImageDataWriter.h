@@ -78,6 +78,7 @@ private:
   // int status;
   int animation;
   int nrImagesAdded;
+  CT::string eProfileJson;
 
 public:
 public:

@@ -696,17 +696,6 @@ int CDBAdapterSQLLite::autoUpdateAndScanDimensionTables(CDataSource *dataSource)
     return -1;
   }
 
-  CCache::Lock lock;
-  CT::string identifier = "checkDimTables";
-  identifier.concat(cfgLayer->FilePath[0]->value.c_str());
-  identifier.concat("/");
-  identifier.concat(cfgLayer->FilePath[0]->attr.filter.c_str());
-  CT::string cacheDirectory = srvParams->cfg->TempDir[0]->attr.value.c_str();
-  // srvParams->getCacheDirectory(&cacheDirectory);
-  if (cacheDirectory.length() > 0) {
-    lock.claim(cacheDirectory.c_str(), identifier.c_str(), "checkDimTables", srvParams->isAutoResourceEnabled());
-  }
-
 #ifdef CDBAdapterSQLLite_DEBUG
   CDBDebug("[checkDimTables]");
 #endif
@@ -800,7 +789,6 @@ int CDBAdapterSQLLite::autoUpdateAndScanDimensionTables(CDataSource *dataSource)
 #ifdef CDBAdapterSQLLite_DEBUG
   CDBDebug("[/checkDimTables]");
 #endif
-  lock.release();
   return 0;
 }
 
@@ -845,13 +833,6 @@ CT::string CDBAdapterSQLLite::getTableNameForPathFilterAndDimension(const char *
     tableName = (*it).second.c_str();
     // CDBDebug("Returning tablename %s from map",tableName.c_str());
     return tableName;
-  }
-
-  CCache::Lock lock;
-  CT::string cacheDirectory = dataSource->cfg->TempDir[0]->attr.value.c_str();
-  // getCacheDirectory(&cacheDirectory);
-  if (cacheDirectory.length() > 0) {
-    lock.claim(cacheDirectory.c_str(), identifier.c_str(), "lookupTableName", dataSource->srvParams->isAutoResourceEnabled());
   }
 
   // This makes use of a lookup table to find the tablename belonging to the filter and path combinations.
@@ -953,7 +934,6 @@ CT::string CDBAdapterSQLLite::getTableNameForPathFilterAndDimension(const char *
     // Close the database
   } catch (int e) {
 
-    lock.release();
     throw(e);
   }
 
@@ -962,7 +942,6 @@ CT::string CDBAdapterSQLLite::getTableNameForPathFilterAndDimension(const char *
     lookupTableNameCacheMap.insert(std::pair<std::string, std::string>(identifier.c_str(), tableName.c_str()));
   }
 
-  lock.release();
   if (tableName.length() <= 0) {
     CDBError("Unable to generate lookup table name for %s", identifier.c_str());
     throw(1);

@@ -28,6 +28,8 @@
 const char *CDFNetCDFReader::className = "NetCDFReader";
 const char *CDFNetCDFWriter::className = "NetCDFWriter";
 
+// #define MEASURETIME
+
 #define CDFNetCDFGroupSeparator "/"
 // const char *CCDFWarper::className="CCDFWarper";
 
@@ -49,7 +51,7 @@ void CDFNetCDFReader::enableLonWarp(bool) {
 }
 void CDFNetCDFReader::ncError(int, const char *className, const char *msg, int e) {
   if (e == NC_NOERR) return;
-  CDBError("%s %s", msg, nc_strerror(e));
+  CDBError("%s %s %s", className, msg, nc_strerror(e));
 }
 
 int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type) { return _readVariableData(var, type, NULL, NULL, NULL); }
@@ -57,15 +59,9 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type) { retur
 int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t *start, size_t *count, ptrdiff_t *stride) {
   int nDims, nVars, nRootAttributes, unlimDimIdP;
 
-  if (cdfCache != NULL) {
-#ifdef CCDFNETCDFIO_DEBUG_OPEN
-    CDBDebug("Looking into cache %s of type %s", var->name.c_str(), CDF::getCDFDataTypeName(type).c_str());
+#ifdef MEASURETIME
+  StopWatch_Stop(">CDFNetCDFReader::_readVariableData");
 #endif
-    int cacheStatus = cdfCache->readVariableData(var, type, start, count, stride, false);
-    if (cacheStatus == 0) {
-      return 0;
-    }
-  }
 
   if (root_id == -1) {
 #ifdef CCDFNETCDFIO_DEBUG_OPEN
@@ -77,11 +73,13 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
       ncError(__LINE__, className, "nc_open: ", status);
       return 1;
     }
+
     status = nc_inq(root_id, &nDims, &nVars, &nRootAttributes, &unlimDimIdP);
     if (status != NC_NOERR) {
       ncError(__LINE__, className, "nc_inq: ", status);
       return 1;
     }
+
 #ifdef CCDFNETCDFIO_DEBUG_OPEN
     CDBDebug("root_id %d", root_id);
     var->id = -1;
@@ -226,11 +224,9 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
       return 1;
     }
 
-    if (cdfCache != NULL) {
-      CDBDebug("Putting into cache %s", var->name.c_str());
-      int cacheStatus = cdfCache->readVariableData(var, type, start, count, stride, true);
-      if (cacheStatus == 0) return 0;
-    }
+#ifdef MEASURETIME
+    StopWatch_Stop("<CDFNetCDFReader::_readVariableData");
+#endif
     return 0;
   }
 
@@ -363,16 +359,11 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
 
   // warper.warpLonData(var);
 
-  if (cdfCache != NULL) {
-#ifdef CCDFNETCDFIO_DEBUG
-    CDBDebug("Putting into cache %s", var->name.c_str());
-#endif
-    int cacheStatus = cdfCache->readVariableData(var, type, start, count, stride, true);
-    if (cacheStatus == 0) return 0;
-  }
-
 #ifdef CCDFNETCDFIO_DEBUG
   CDBDebug("Ready.");
+#endif
+#ifdef MEASURETIME
+  StopWatch_Stop("<CDFNetCDFReader::_readVariableData");
 #endif
   return 0;
 }
@@ -739,14 +730,6 @@ int CDFNetCDFReader::open(const char *fileName) {
   }
   this->fileName = fileName;
 
-  if (cdfCache != NULL) {
-    int cacheStatus = cdfCache->open(fileName, cdfObject, false);
-    if (cacheStatus == 0) {
-      // CDBDebug("Succesfully opened from cache for file %s",fileName);
-      return 0;
-    }
-  }
-
   // Check type sizes
   if (sizeof(char) != 1) {
     CDBError("The size of char is unequeal to 8 Bits");
@@ -816,10 +799,6 @@ int CDFNetCDFReader::open(const char *fileName) {
 #ifdef MEASURETIME
   StopWatch_Stop("readAttr");
 #endif
-  if (cdfCache != NULL) {
-    int cacheStatus = cdfCache->open(fileName, cdfObject, true);
-    if (cacheStatus == 0) return 0;
-  }
   return 0;
 }
 

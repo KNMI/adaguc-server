@@ -50,6 +50,8 @@
 
 #include "COctTreeColorQuantizer.h"
 
+#define CAIROPLOTTER_COLOR_BYTE_TO_NORMAL 1 / 255.0
+
 cairo_status_t writerFunc(void *closure, const unsigned char *data, unsigned int length);
 class CCairoPlotter {
 private:

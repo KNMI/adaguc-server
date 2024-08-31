@@ -5,6 +5,7 @@
 """
 import unittest
 import sys
+from AdagucTests.TestWMSTimeSeries import TestWMSTimeSeries
 from AdagucTests.TestWMS import TestWMS
 from AdagucTests.TestWCS import TestWCS
 from AdagucTests.TestWMSSLD import TestWMSSLD
@@ -19,9 +20,11 @@ from AdagucTests.TestMetadataService import TestMetadataService
 from AdagucTests.TestWMSVolScan import TestWMSVolScan
 from AdagucTests.TestWMSPolylineLabel import TestWMSPolylineLabel
 from AdagucTests.TestDataPostProcessor import TestDataPostProcessor
+from AdagucTests.TestWMSTimeHeightProfiles import TestWMSTimeHeightProfiles
 
 suites = []
 TestLoader = unittest.TestLoader
+suites.append(TestLoader().loadTestsFromTestCase(TestWMSTimeSeries))
 suites.append(TestLoader().loadTestsFromTestCase(TestWMS))
 suites.append(TestLoader().loadTestsFromTestCase(TestWCS))
 suites.append(TestLoader().loadTestsFromTestCase(TestWMSSLD))
@@ -36,6 +39,7 @@ suites.append(TestLoader().loadTestsFromTestCase(TestMetadataService))
 suites.append(TestLoader().loadTestsFromTestCase(TestWMSVolScan))
 suites.append(TestLoader().loadTestsFromTestCase(TestWMSPolylineLabel))
 suites.append(TestLoader().loadTestsFromTestCase(TestDataPostProcessor))
+suites.append(TestLoader().loadTestsFromTestCase(TestWMSTimeHeightProfiles))
 result = unittest.TextTestRunner(verbosity=2).run(unittest.TestSuite(suites))
 
 

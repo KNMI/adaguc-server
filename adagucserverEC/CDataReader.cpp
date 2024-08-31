@@ -37,6 +37,7 @@
 #include "CConvertEProfile.h"
 #include "CConvertTROPOMI.h"
 #include "CConvertKNMIH5VolScan.h"
+#include "CConvertLatLonGrid.h"
 #include "CDBFactory.h"
 #include "CReporter.h"
 #include "CCDFHDF5IO.h"
@@ -291,10 +292,10 @@ bool CDataReader::copyCRSFromADAGUCProjectionVariable(CDataSource *dataSource, c
     return false;
   }
 
-  // if (this->_enableReporting) {
-  //   CREPORT_INFO_NODOC(CT::string("Retrieving the projection according to the ADAGUC standards from the proj4_params or proj4 attribute: ") + proj4Attr->toString(),
-  //   CReportMessage::Categories::GENERAL);
-  // }
+  if (this->_enableReporting) {
+    CREPORT_INFO_NODOC(CT::string("Retrieving the projection according to the ADAGUC standards from the proj4_params or proj4 attribute: ") + proj4Attr->toString(),
+                       CReportMessage::Categories::GENERAL);
+  }
   dataSource->nativeProj4.copy(proj4Attr->toString().c_str());
 
   // Fixes issue https://github.com/KNMI/adaguc-server/issues/279
@@ -339,13 +340,15 @@ void CDataReader::copyEPSGCodeFromProjectionVariable(CDataSource *dataSource, co
   // Get EPSG_code
   CDF::Attribute *epsgAttr = projVar->getAttributeNE("EPSG_code");
   if (epsgAttr != NULL) {
-    CREPORT_INFO_NODOC(CT::string("Using EPSG_code defined in projection variable ") + projVar->name, CReportMessage::Categories::GENERAL);
+    if (this->_enableReporting) {
+      CREPORT_INFO_NODOC(CT::string("Using EPSG_code defined in projection variable ") + projVar->name, CReportMessage::Categories::GENERAL);
+    }
     dataSource->nativeEPSG.copy((char *)epsgAttr->data);
   } else {
     // Make a projection code based on PROJ4: namespace
-    // if (this->_enableReporting) {
-    //   CREPORT_INFO_NODOC(CT::string("Using projection string to create EPSG code.") + dataSource->nativeProj4, CReportMessage::Categories::GENERAL);
-    // }
+    if (this->_enableReporting) {
+      CREPORT_INFO_NODOC(CT::string("Using projection string to create EPSG code.") + dataSource->nativeProj4, CReportMessage::Categories::GENERAL);
+    }
     dataSource->nativeEPSG.print("PROJ4:%s", dataSource->nativeProj4.c_str());
     dataSource->nativeEPSG.replaceSelf("\"", "");
     dataSource->nativeEPSG.replaceSelf("\n", "");
@@ -382,6 +385,8 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
     if (CConvertKNMIH5VolScan::convertKNMIH5VolScanData(dataSource, mode) == 0) dataSource->formatConverterActive = true;
   if (!dataSource->formatConverterActive)
     if (CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(dataSource, mode) == 0) dataSource->formatConverterActive = true;
+  if (!dataSource->formatConverterActive)
+    if (CConvertLatLonGrid::convertLatLonGridData(dataSource, mode) == 0) dataSource->formatConverterActive = true;
 
   CDF::Variable *dataSourceVar = dataSource->getDataObject(0)->cdfVariable;
   CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
@@ -714,12 +719,10 @@ bool CDataReader::determineXandYVars(CDataSource *dataSource, const CDF::Variabl
                         CReportMessage::Categories::GENERAL);
     return false;
   }
-  // if (this->_enableReporting) {
-  //   CREPORT_INFO_NODOC(
-  //       CT::string("Using variable ") + dataSource->varX->name +
-  //       CT::string(" as X variable and variable ") + dataSource->varY->name +
-  //       CT::string(" as Y variable."), CReportMessage::Categories::GENERAL);
-  // }
+  if (this->_enableReporting) {
+    CREPORT_INFO_NODOC(CT::string("Using variable ") + dataSource->varX->name + CT::string(" as X variable and variable ") + dataSource->varY->name + CT::string(" as Y variable."),
+                       CReportMessage::Categories::GENERAL);
+  }
   return true;
 }
 
@@ -743,9 +746,9 @@ void CDataReader::determineStride2DMap(CDataSource *dataSource) const {
   }
 
   dataSource->stride2DMap = 1;
-  // if (this->_enableReporting) {
-  //   CREPORT_INFO_NODOC(CT::string("No stride defined in the RenderSettings, using a default stride of 1."), CReportMessage::Categories::GENERAL);
-  // }
+  if (this->_enableReporting) {
+    CREPORT_INFO_NODOC(CT::string("No stride defined in the RenderSettings, using a default stride of 1."), CReportMessage::Categories::GENERAL);
+  }
   return;
 }
 
@@ -908,6 +911,10 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     return 1;
   }
 
+#ifdef MEASURETIME
+  StopWatch_Stop("parseDimensions done");
+#endif
+
   if (dataSource->useLonTransformation != -1 && gridExtent == NULL) {
     for (size_t varNr = 0; varNr < dataSource->getNumDataObjects(); varNr++) {
       Proc::swapPixelsAtLocation(dataSource, dataSource->getDataObject(varNr)->cdfVariable, 0);
@@ -978,6 +985,11 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 #ifdef CDATAREADER_DEBUG
     CDBDebug("Working on variable %s, %d/%d", dataSource->getDataObject(varNr)->cdfVariable->name.c_str(), varNr, dataSource->getNumDataObjects());
 #endif
+
+#ifdef MEASURETIME
+    StopWatch_Stop("Working on variable %s, %d/%d", dataSource->getDataObject(varNr)->cdfVariable->name.c_str(), varNr, dataSource->getNumDataObjects());
+#endif
+
     // Get Unit
     CDF::Attribute *varUnits = dataSource->getDataObject(varNr)->cdfVariable->getAttributeNE("units");
     if (varUnits != NULL) {
@@ -1015,6 +1027,10 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 
 #ifdef CDATAREADER_DEBUG
     CDBDebug("/Finished Working on variable %s", dataSource->getDataObject(varNr)->cdfVariable->name.c_str());
+#endif
+
+#ifdef MEASURETIME
+    StopWatch_Stop("/Finished Working on variable %s", dataSource->getDataObject(varNr)->cdfVariable->name.c_str());
 #endif
   }
 

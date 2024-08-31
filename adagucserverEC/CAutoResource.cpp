@@ -75,6 +75,7 @@ int CAutoResource::configureDataset(CServerParams *srvParam, bool) {
     }
 
     if (datasetConfigFile.length() == 0) {
+      setStatusCode(HTTP_STATUSCODE_404_NOT_FOUND);
       CDBError("No such dataset");
       return 1;
     }
@@ -83,16 +84,8 @@ int CAutoResource::configureDataset(CServerParams *srvParam, bool) {
       CDBDebug("Found dataset %s", datasetConfigFile.c_str());
     }
 
-    // Find variables to substitute
-    CServerParams tempServerParam;
-    tempServerParam.parseConfigFile(datasetConfigFile, nullptr);
-    std::vector<CServerConfig::XMLE_Environment *> *extraEnvironment = nullptr;
-    if (tempServerParam.configObj != nullptr && tempServerParam.configObj->Configuration.size() > 0 && tempServerParam.configObj->Configuration[0]->Environment.size() > 0) {
-      extraEnvironment = &tempServerParam.configObj->Configuration[0]->Environment;
-    }
-
     // Add the dataset file to the current configuration
-    int status = srvParam->parseConfigFile(datasetConfigFile, extraEnvironment);
+    int status = srvParam->parseConfigFile(datasetConfigFile);
     if (status != 0) {
       CDBError("Invalid dataset configuration file.");
       return 1;

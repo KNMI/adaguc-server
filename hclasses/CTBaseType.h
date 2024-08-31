@@ -62,36 +62,6 @@ namespace CT {
     StackList &operator=(const StackList &) = default;
     StackList &operator=(StackList &&) = default;
   };
-
-  /**
-   * Basetype object
-   */
-  class basetype {
-  public:
-    virtual void init() = 0;
-    virtual ~basetype() {}
-    int id;
-    size_t count;
-    basetype *next, *prev, *start, *end; /* For linked list */
-  };
-
-  /**
-   * Create a linked list of objects of type basetype
-   * @param the object array to linke
-   * @param nr the length of the array
-   */
-  template <class T> void CTlink(T *object, int nr) {
-    for (int j = 0; j < nr; j++) {
-      object[j].next = &object[j + 1];
-      object[j + 1].prev = &object[j];
-      object[j].start = &object[0];
-      object[j].end = &object[nr];
-    }
-    object[0].prev = NULL;
-    object[nr].next = NULL;
-    object[nr].start = &object[0];
-    object[nr].end = &object[nr];
-  }
 }; /* namespace CT */
 
 #endif

@@ -422,6 +422,7 @@ hid_t CDFHDF5Reader::openH5GroupByName(char *varNameOut, size_t maxVarNameLen, c
   return HDF5_group;
 }
 void CDFHDF5Reader::closeH5GroupByName(const char *variableGroupName) {
+  ignoreParameter(variableGroupName);
   // CDBDebug("Warning %s variableGroupName not used", variableGroupName);
   while (opengroups.size() > 0) {
 #ifdef CCDFHDF5IO_DEBUG
