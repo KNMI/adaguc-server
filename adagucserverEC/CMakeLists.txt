@@ -182,6 +182,9 @@ add_library(
     Types/ProjectionStore.h
     Types/ProjectionStore.cpp 
     testadagucserver.cpp
+    testtimeutils.cpp
+    timeutils.cpp
+    timeutils.h
 )
 
 target_include_directories(adagucserverEC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${Cairo_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIRS} ${PostgreSQL_INCLUDE_DIRS} ${GDAL_INCLUDE_DIRS} ${PROJ_INCLUDE_DIR})
@@ -190,3 +193,7 @@ target_link_libraries(adagucserverEC CCDFDataModel hclasses ${NetCDF_LIBRARIES} 
 # Build unit test executable
 add_executable(testadagucserver testadagucserver.cpp)
 target_link_libraries(testadagucserver PRIVATE adagucserverEC CCDFDataModel hclasses CppUnitLite)
+
+# Build unit tests for timeutils
+add_executable(testtimeutils testtimeutils.cpp)
+target_link_libraries(testtimeutils PRIVATE adagucserverEC hclasses CppUnitLite)
