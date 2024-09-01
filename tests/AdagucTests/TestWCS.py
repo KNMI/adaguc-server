@@ -72,6 +72,10 @@ class TestWCS(unittest.TestCase):
     AdagucTestTools().writetofile(self.testresultspath + filename,
                                   data.getvalue())
     self.assertEqual(status, 0)
+    # Debug expected output on pipeline
+    with open(self.expectedoutputsspath + filename, 'r') as file:
+        expected_output = file.read()
+        print("Expected Output:\n", expected_output)
     self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(
         self.testresultspath + filename,
         self.expectedoutputsspath + filename))
