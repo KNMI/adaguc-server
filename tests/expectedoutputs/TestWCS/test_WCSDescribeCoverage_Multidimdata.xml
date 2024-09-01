@@ -60,7 +60,7 @@
         </gml:Envelope>
         <gml:Envelope srsName="EPSG:7399">
           <gml:pos>-17284159.484400 -8898366.230070</gml:pos>
-          <gml:pos>17986681.325950 9020047.848074</gml:pos>
+          <gml:pos>17986681.325950 9011275.281223</gml:pos>
         </gml:Envelope>
         <gml:Envelope srsName="EPSG:50001">
           <gml:pos>-2000000.000000 -2000000.000000</gml:pos>

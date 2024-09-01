@@ -81,16 +81,6 @@ class TestWCS(unittest.TestCase):
     AdagucTestTools().writetofile(self.testresultspath + filename,
                                   data.getvalue())
     self.assertEqual(status, 0)
-    # Debug expected output on pipeline
-    with open(self.expectedoutputsspath + filename, 'r') as file:
-        expected_output = file.read()
-        print("Expected Output:\n", expected_output)
-    with open(self.expectedoutputsspath + filename, 'r') as file:
-        test_Result = file.read()
-        print("Test Result:\n", expected_output)
-    print("Comparison: ")
-    compare_files(self.expectedoutputsspath + filename,self.testresultspath + filename)
-    print("(end of comparison)")
     self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(
         self.testresultspath + filename,
         self.expectedoutputsspath + filename))
@@ -110,6 +100,16 @@ class TestWCS(unittest.TestCase):
     AdagucTestTools().writetofile(self.testresultspath + filename,
                                   data.getvalue())
     self.assertEqual(status, 0)
+    # Debug expected output on pipeline
+    with open(self.expectedoutputsspath + filename, 'r') as file:
+        expected_output = file.read()
+        print("Expected Output:\n", expected_output)
+    with open(self.expectedoutputsspath + filename, 'r') as file:
+        test_Result = file.read()
+        print("Test Result:\n", expected_output)
+    print("Comparison: ")
+    compare_files(self.expectedoutputsspath + filename,self.testresultspath + filename)
+    print("(end of comparison)")
     self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(
         self.testresultspath + filename,
         self.expectedoutputsspath + filename))
