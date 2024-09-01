@@ -14,9 +14,18 @@ import netCDF4
 from netCDF4 import Dataset
 import tempfile
 from adaguc.AdagucTestTools import AdagucTestTools
+import difflib
 
 ADAGUC_PATH = os.environ['ADAGUC_PATH']
 
+def compare_files(file1, file2):
+  with open(file1, 'r') as f1:
+    with open(file2, 'r') as f2:
+        content1 = f1.readlines()
+        content2 = f2.readlines()
+        diff = difflib.unified_diff(content1, content2, fromfile=file1, tofile=file2, lineterm='')
+        for line in diff:
+            print(line)
 
 class TestWCS(unittest.TestCase):
   """
@@ -76,6 +85,12 @@ class TestWCS(unittest.TestCase):
     with open(self.expectedoutputsspath + filename, 'r') as file:
         expected_output = file.read()
         print("Expected Output:\n", expected_output)
+    with open(self.expectedoutputsspath + filename, 'r') as file:
+        test_Result = file.read()
+        print("Test Result:\n", expected_output)
+    print("Comparison: ")
+    compare_files(self.expectedoutputsspath + filename,self.testresultspath + filename)
+    print("(end of comparison)")
     self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(
         self.testresultspath + filename,
         self.expectedoutputsspath + filename))
