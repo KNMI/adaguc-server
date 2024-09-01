@@ -56,6 +56,104 @@ class TestWCS(unittest.TestCase):
     self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(
       self.testresultspath + filename, self.expectedoutputsspath + filename))
 
+
+  def test_WCSDescribeCoverage_Multidimdata(self):
+    """
+    Check if WCS DescribeCoverage shows information for multidimensional data
+    """
+    AdagucTestTools().cleanTempDir()
+    # This file has the following dimensions: lon,lat,member,height, and time.
+    filename = "test_WCSDescribeCoverage_Multidimdata.xml"
+    status, data, headers = AdagucTestTools().runADAGUCServer(
+        "source=netcdf_5dims/netcdf_5dims_seq2/nc_5D_20170101001500-20170101002500.nc&SERVICE=WCS&request=describecoverage&coverage=data",
+        env=self.env,
+        maxLogFileSize=16384
+    )  # Silence log flood warning, datafile has lots of variables, each giving log output
+    AdagucTestTools().writetofile(self.testresultspath + filename,
+                                  data.getvalue())
+    self.assertEqual(status, 0)
+    self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(
+        self.testresultspath + filename,
+        self.expectedoutputsspath + filename))
+
+  def test_WCSDescribeCoverage_Multidimdata_large_daily(self):
+    """
+    Check if WCS DescribeCoverage shows information for multidimensional data, with more than 200 equally spaced timestamps
+    """
+    AdagucTestTools().cleanTempDir()
+    # This file has the following dimensions: lon,lat,member,height, and time.
+    filename = "test_WCSDescribeCoverage_Multidimdata_large_daily.xml"
+    status, data, headers = AdagucTestTools().runADAGUCServer(
+        "source=large_number_timesteps/210_daily_timesteps.nc&SERVICE=WCS&request=describecoverage&coverage=data",
+        env=self.env,
+        maxLogFileSize=16384
+    )  # Silence log flood warning, datafile has lots of variables, each giving log output
+    AdagucTestTools().writetofile(self.testresultspath + filename,
+                                  data.getvalue())
+    self.assertEqual(status, 0)
+    self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(
+        self.testresultspath + filename,
+        self.expectedoutputsspath + filename))
+
+  def test_WCSDescribeCoverage_Multidimdata_large_2day_height(self):
+    """
+    Check if WCS DescribeCoverage shows information for multidimensional data, with more than 200  equally spaced timestamps
+    and one extra dimension (height)
+    """
+    AdagucTestTools().cleanTempDir()
+    # This file has the following dimensions: lon,lat,member,height, and time.
+    filename = "test_WCSDescribeCoverage_Multidimdata_large_2day_height.xml"
+    status, data, headers = AdagucTestTools().runADAGUCServer(
+        "source=large_number_timesteps/210_2day_timesteps_5_heights.nc&SERVICE=WCS&request=describecoverage&coverage=data",
+        env=self.env,
+        maxLogFileSize=16384
+    )  # Silence log flood warning, datafile has lots of variables, each giving log output
+    AdagucTestTools().writetofile(self.testresultspath + filename,
+                                  data.getvalue())
+    self.assertEqual(status, 0)
+    self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(
+        self.testresultspath + filename,
+        self.expectedoutputsspath + filename))
+
+  def test_WCSDescribeCoverage_Multidimdata_99_timesteps(self):
+    """
+    Check if WCS DescribeCoverage shows information for multidimensional data, with 190 equally spaced timestamps
+    """
+    AdagucTestTools().cleanTempDir()
+    # This file has the following dimensions: lon,lat,member,height, and time.
+    filename = "test_WCSDescribeCoverage_Multidimdata_99_timesteps.xml"
+    status, data, headers = AdagucTestTools().runADAGUCServer(
+        "source=large_number_timesteps/99_2day_timesteps.nc&SERVICE=WCS&request=describecoverage&coverage=data",
+        env=self.env,
+        maxLogFileSize=16384
+    )  # Silence log flood warning, datafile has lots of variables, each giving log output
+    AdagucTestTools().writetofile(self.testresultspath + filename,
+                                  data.getvalue())
+    self.assertEqual(status, 0)
+    self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(
+        self.testresultspath + filename,
+        self.expectedoutputsspath + filename))
+
+  def test_WCSDescribeCoverage_Multidimdata_large_random(self):
+    """
+    Check if WCS DescribeCoverage shows information for multidimensional data, with more than 200 randomly spaced timestamps
+    """
+    AdagucTestTools().cleanTempDir()
+    # This file has the following dimensions: lon,lat,member,height, and time.
+    filename = "test_WCSDescribeCoverage_Multidimdata_large_random.xml"
+    status, data, headers = AdagucTestTools().runADAGUCServer(
+        "source=large_number_timesteps%2F210_random_timesteps.nc&&service=WCS&REQUEST=DescribeCoverage&COVERAGE=data",
+        env=self.env,
+        maxLogFileSize=16384,
+        showLog=True
+    )  # Silence log flood warning, datafile has lots of variables, each giving log output
+    AdagucTestTools().writetofile(self.testresultspath + filename,
+                                  data.getvalue())
+    self.assertEqual(status, 0)
+    self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(
+        self.testresultspath + filename,
+        self.expectedoutputsspath + filename))
+
   def test_WCSGetCoverageAAIGRID_testdatanc(self):
     """
     Check if WCS GetCoverage for testdata.nc as AAIGRID file is OK
