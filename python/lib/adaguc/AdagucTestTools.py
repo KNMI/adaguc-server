@@ -306,6 +306,16 @@ class AdagucTestTools:
         removeBBOX(obj1)
         removeBBOX(obj2)
 
+        # Remove contents of <gml:Envelope srsName="EPSG:28992"> because they are inconsistent
+        def removeGmlEnvelope28992(root):
+            envelopes = root.xpath(".//gml:Envelope[@srsName='EPSG:28992']", namespaces={"gml": "http://www.opengis.net/gml"})
+            for envelope in envelopes:
+                for child in envelope.getchildren():
+                    envelope.remove(child)
+
+        removeGmlEnvelope28992(obj1)
+        removeGmlEnvelope28992(obj2)
+
         result = etree.tostring(obj1)
         expect = etree.tostring(obj2)
 
