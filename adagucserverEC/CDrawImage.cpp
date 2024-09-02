@@ -26,6 +26,7 @@
 #include "CDrawImage.h"
 #include "CXMLParser.h"
 const char *CDrawImage::className = "CDrawImage";
+#define MEASURETIME
 
 float convertValueToClass(float val, float interval) {
   float f = int(val / interval);

@@ -98,6 +98,9 @@ services:
       options:
         max-size: "200k"
         max-file: "10"
+    ports:
+      - 5432:5432
+    command: ["postgres", "-c", "log_statement=all"]
   adaguc-redis:
     image: redis:7
     container_name: adaguc-redis

@@ -25,7 +25,7 @@
  ******************************************************************************/
 
 // #define CREQUEST_DEBUG
-// #define MEASURETIME
+#define MEASURETIME
 
 #include "Types/ProjectionStore.h"
 #include "CRequest.h"

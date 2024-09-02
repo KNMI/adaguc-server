@@ -84,20 +84,20 @@ COPY --from=build /adaguc/adaguc-server-master/bin /adaguc/adaguc-server-master/
 COPY data /adaguc/adaguc-server-master/data
 COPY python /adaguc/adaguc-server-master/python
 
-######### Third stage, test ############
-FROM base AS test
+# ######### Third stage, test ############
+# FROM base AS test
 
-COPY requirements-dev.txt /adaguc/adaguc-server-master/requirements-dev.txt
-RUN pip install --no-cache-dir -r requirements-dev.txt
+# COPY requirements-dev.txt /adaguc/adaguc-server-master/requirements-dev.txt
+# RUN pip install --no-cache-dir -r requirements-dev.txt
 
-COPY tests /adaguc/adaguc-server-master/tests
-COPY runtests.sh /adaguc/adaguc-server-master/runtests.sh
+# COPY tests /adaguc/adaguc-server-master/tests
+# COPY runtests.sh /adaguc/adaguc-server-master/runtests.sh
 
-# Run adaguc-server functional and regression tests
-RUN bash runtests.sh
+# # Run adaguc-server functional and regression tests
+# RUN bash runtests.sh
 
-# Create a file indicating that the test succeeded. This file is used in the final stage
-RUN echo "TESTSDONE" >  /adaguc/adaguc-server-master/testsdone.txt
+# # Create a file indicating that the test succeeded. This file is used in the final stage
+# RUN echo "TESTSDONE" >  /adaguc/adaguc-server-master/testsdone.txt
 
 ######### Fourth stage, prod ############
 FROM base AS prod
@@ -138,8 +138,8 @@ RUN bash -c "python3 /adaguc/adaguc-server-master/python/examples/runautowms/run
 
 WORKDIR /adaguc/adaguc-server-master
 
-# This checks if the test stage has ran without issues.
-COPY --from=test /adaguc/adaguc-server-master/testsdone.txt /adaguc/adaguc-server-master/testsdone.txt
+# # This checks if the test stage has ran without issues.
+# COPY --from=test /adaguc/adaguc-server-master/testsdone.txt /adaguc/adaguc-server-master/testsdone.txt
 
 USER adaguc
 

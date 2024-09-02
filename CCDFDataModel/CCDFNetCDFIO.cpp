@@ -28,7 +28,7 @@
 const char *CDFNetCDFReader::className = "NetCDFReader";
 const char *CDFNetCDFWriter::className = "NetCDFWriter";
 
-// #define MEASURETIME
+#define MEASURETIME
 
 #define CDFNetCDFGroupSeparator "/"
 // const char *CCDFWarper::className="CCDFWarper";

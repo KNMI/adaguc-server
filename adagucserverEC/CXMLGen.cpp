@@ -30,7 +30,7 @@
 #include "CDBFactory.h"
 #include "LayerTypeLiveUpdate/LayerTypeLiveUpdate.h"
 // #define CXMLGEN_DEBUG
-// #define MEASURE_TIME
+#define MEASURE_TIME
 const char *CFile::className = "CFile";
 
 const char *CXMLGen::className = "CXMLGen";
