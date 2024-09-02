@@ -22,8 +22,6 @@
  * limitations under the License.
  *
  ******************************************************************************/
-#include <iostream>
-#include <string>
 #include "CDFObjectStore.h"
 const char *CDFObjectStore::className = "CDFObjectStore";
 #include "CConvertASCAT.h"
@@ -42,7 +40,6 @@ const char *CDFObjectStore::className = "CDFObjectStore";
 #include "CCDFCSVReader.h"
 #include "utils/CDFObjectStoreUtils.h"
 // #define CDFOBJECTSTORE_DEBUG
-
 #define MAX_OPEN_FILES 500
 extern CDFObjectStore cdfObjectStore;
 CDFObjectStore cdfObjectStore;
