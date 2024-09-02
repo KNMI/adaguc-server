@@ -11,6 +11,8 @@
 #include <cxxabi.h>
 #include <dlfcn.h>
 
+#include <time.h>
+
 /************************/
 /*      CDPPSolarTerminator  */
 /************************/
@@ -48,15 +50,25 @@ int CDPPSolarTerminator::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CD
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
 }
 
-int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
-  CDBDebug("Calling CDPPSolarTerminator::execute without a timestamp");
-  return CDPPSolarTerminator::execute(proc, dataSource, mode, 0);
+time_t strToEpochTimestamp(const char *timestampStr) {
+  struct tm tmStruct;
+  strptime(timestampStr, "%Y-%m-%dT%H:%M:%SZ", &tmStruct);
+  return mktime(&tmStruct);
 }
 
-int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode, double timestamp) {
+int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
+  CDBDebug("START SolarTerminator");
   if ((isApplicable(proc, dataSource, mode) & mode) == false) {
     return -1;
   }
+  CT::string timestampStr = dataSource->getDimensionValueForNameAndStep("time", dataSource->getCurrentTimeStep());
+  time_t timestampEpoch = strToEpochTimestamp(timestampStr);
+
+  // Retrieve timestamp via data source and server params
+  // Inspiration:
+  // CT::string CDataSource::getDimensionValueForNameAndStep(const char *dimName, int dimStep) { return timeSteps[dimStep]->dims.getDimensionValue(dimName); }
+  // request->getServerParams()
+
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
     CT::string newVariableName = proc->attr.name;
     if (newVariableName.empty()) {
@@ -148,7 +160,9 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
       epochCTime.init("seconds since 1970-01-01 0:0:0", NULL);
       CDF::allocateData(CDF_DOUBLE, &varTime->data, dimTime->length);
 
-      double currentOffset = timestamp;
+      // Cast time_t to double to be able to use the quantize operation
+      double currentOffset = static_cast<double>(timestampEpoch);
+
       for (int off = 0; off < 10; off++) {
         // Every 10 minutes for a day
         double timestep = epochCTime.quantizeTimeToISO8601(currentOffset - off * 60 * 10, "PT30M", "low");
@@ -234,31 +248,8 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
 
     CDBDebug("Applying SolarTerminator 2");
 
-    // Get the current time point
-    // std::tm now = {};  // Initialize with the desired date
-    // now.tm_year = 100; // Year since 1900 (2022 - 1900)
-    // now.tm_mon = 2;    // Month (July is 6)
-    // now.tm_mday = 29;  // Day of the month
-    // now.tm_hour = 12;  // Day of the month
-
-    // std::time_t time = std::mktime(&now);
-    // std::chrono::time_point<std::chrono::system_clock> timestamp = std::chrono::system_clock::from_time_t(time);
-
-    // std::time_t current_time = std::chrono::system_clock::to_time_t(now);
-    // double timestamp = static_cast<double>(current_time);
-    // get the current time
-    // const auto now = std::chrono::system_clock::now();
-
-    // transform the time into a duration since the epoch
-    // const auto epoch = now.time_since_epoch();
-
-    // cast the duration into seconds
-    // const auto seconds = std::chrono::duration_cast<std::chrono::seconds>(epoch);
-
-    // return the number of seconds
-    // return seconds.count();
-
-    double current_time = timestamp; // 1689270178; // static_cast<double>(seconds.count());
+    // Check if we need both currentOffset and current_time
+    double current_time = static_cast<double>(timestampEpoch); // 1689270178; // static_cast<double>(seconds.count());
 
     CImageWarper imageWarper;
     int status = imageWarper.initreproj(dataSource, dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
