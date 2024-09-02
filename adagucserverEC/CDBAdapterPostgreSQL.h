@@ -57,6 +57,7 @@ public:
   CT::string getLookupIdentifier(const char *path, const char *filter, const char *dimension);
   void assertLookupTableExists();
   void addToLookupTable(const char *path, const char *filter, CT::string dimensionName, CT::string tableName);
+  CT::string generateRandomTableName();
 
   int autoUpdateAndScanDimensionTables(CDataSource *dataSource);
   CDBStore::Store *getMin(const char *name, const char *table);

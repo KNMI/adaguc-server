@@ -16,7 +16,7 @@ Configuration
 -   TempDir (value) - Mandatory, directory where cache-files are stored.
 -   [OnlineResource](OnlineResource.md) (value) - Mandatory, the external address of
     the server, usually ends with a ? token.
--   [DataBase](DataBase.md) (dbtype,parameters) - Mandatory, parameters is the
+-   [DataBase](DataBase.md) (parameters) - Mandatory, parameters is the
     attribute where database settings can be configured.
 -   CacheDocs (enabled) - Defaults to false. Set enabled to "true" to
     enable caching of GetCapabilities documents.

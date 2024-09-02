@@ -3,7 +3,7 @@
   <CacheDocs enabled="false"/>
   <TempDir value="{ADAGUC_TMP}"/>
   <Path value="{ADAGUC_PATH}/data"/>
-  <DataBase dbtype="sqlite" parameters="{ADAGUC_TMP}/adaguc.autoresource.db"/>
+  <DataBase parameters="{ADAGUC_TMP}/adaguc.autoresource.db"/>
   
   <!-- WMS settings -->
   <WMS>

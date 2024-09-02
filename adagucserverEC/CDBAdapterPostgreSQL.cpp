@@ -385,9 +385,9 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
       getTableNamesForPathFilterAndDimensions(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dims, dataSource);
 
   // Create a mapping for filtering where key=dimension name, value=requested dimension value(s)
-  std::map<CT::string, CT::string *> requestedDimMap;
+  std::map<CT::string, std::vector<CT::string>> requestedDimMap;
   for (const auto &dim : dataSource->requiredDims) {
-    requestedDimMap[dim->netCDFDimName.c_str()] = (&dim->value)->splitToArray(",");
+    requestedDimMap[dim->netCDFDimName.c_str()] = (&dim->value)->splitToStack(",");
   }
 
   CT::string query;
@@ -421,17 +421,17 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     const char *tableName = m.second.tableName.c_str();
     CT::string dimDataType = m.second.dataType;
     CT::string whereStatement;
-    CT::string *requestedDimVals = requestedDimMap[m.first];
+    std::vector<CT::string> requestedDimVals = requestedDimMap[m.first];
 
-    for (int i = 0; i < requestedDimVals->count; ++i) {
+    for (int i = 0; i < requestedDimVals.size(); ++i) {
       if (requestedDimVals[i].equals("*")) continue;
 
       if (i != 0) {
         whereStatement.printconcat(" OR ");
       }
 
-      CT::string *dimVals = requestedDimVals[i].splitToArray("/");
-      if (dimVals->count == 1) {
+      std::vector<CT::string> dimVals = requestedDimVals[i].splitToStack("/");
+      if (dimVals.size() == 1) {
         const char *dimVal = dimVals[0].c_str();
 
         // If dimension value is a number, find closest value.
@@ -446,13 +446,10 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
         whereStatement.printconcat("%s >= (SELECT MAX(%s) FROM %s WHERE %s <= '%s' OR %s = (SELECT MIN(%s) FROM %s)) AND %s <= '%s'", dimName, dimName, tableName, dimName, dimVals[0].c_str(), dimName,
                                    dimName, tableName, dimName, dimVals[1].c_str());
       }
-      delete[] dimVals;
     }
     if (!whereStatement.empty()) {
       query.printconcat("AND (%s) ", whereStatement.c_str());
     }
-
-    delete[] requestedDimVals;
   }
 
   // Order and limit query
@@ -468,10 +465,6 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     store = DB->queryToStore(query.c_str(), true);
   } catch (int e) {
     if ((CServerParams::checkDataRestriction() & SHOW_QUERYINFO) == false) query.copy("hidden");
-    // The method "setExceptionType" always sets the HTTP statuscode to 404. This breaks the test:
-    //    test_WMSGetCapabilities_no_error_on_existing_dataset_misconfigured_layer
-    // SQLite does not call setExceptionType when the query fails.
-    // setExceptionType(InvalidDimensionValue);
     CDBDebug("Query failed with code %d (%s)", e, query.c_str());
     return NULL;
   }
@@ -624,6 +617,17 @@ void CDBAdapterPostgreSQL::addToLookupTable(const char *path, const char *filter
   }
 }
 
+CT::string CDBAdapterPostgreSQL::generateRandomTableName() {
+  CT::string tableName;
+  tableName.print("t%s_%s", CTime::currentDateTime().c_str(), CServerParams::randomString(20).c_str());
+  tableName.replaceSelf(":", "");
+  tableName.replaceSelf("-", "");
+  tableName.replaceSelf("Z", "");
+  tableName.toLowerCaseSelf();
+
+  return tableName;
+}
+
 std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAndDimensions(const char *path, const char *filter, std::vector<CT::string> dimensions, CDataSource *dataSource) {
 #ifdef MEASURETIME
   StopWatch_Stop(">CDBAdapterPostgreSQL::getTableNamesForPathFilterAndDimensions");
@@ -726,14 +730,7 @@ std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAn
   for (auto &m : mapping) {
     if (!m.second.tableName.empty()) continue;
 
-    // Generate a new random table name
-    CT::string tableName;
-    tableName.print("t%s_%s", CTime::currentDateTime().c_str(), CServerParams::randomString(20).c_str());
-    tableName.replaceSelf(":", "");
-    tableName.replaceSelf("-", "");
-    tableName.replaceSelf("Z", "");
-    tableName.toLowerCaseSelf();
-
+    CT::string tableName = generateRandomTableName();
     addToLookupTable(path, filter, m.first.c_str(), tableName.c_str());
     CT::string lookupIdentifier = getLookupIdentifier(path, filter, m.first.c_str());
     DimInfo d = {tableName, m.second.dataType};

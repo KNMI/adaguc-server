@@ -86,7 +86,7 @@ COPY python /adaguc/adaguc-server-master/python
 
 ######### Third stage, test ############
 # To run the tests against a postgres db, see docs/test_postgesql.md
-FROM base as test
+FROM base AS test
 
 ENV TEST_IN_CONTAINER 1
 

@@ -3,7 +3,7 @@
 
   <TempDir value="{ADAGUC_TMP}"/>
   <Path value="{ADAGUC_PATH}/data"/>
-  <DataBase dbtype="sqlite" parameters="{ADAGUC_TMP}/adaguc.geojson.db"/>
+  <DataBase parameters="{ADAGUC_TMP}/adaguc.geojson.db"/>
   
   <!-- WMS settings -->
   <WMS>
