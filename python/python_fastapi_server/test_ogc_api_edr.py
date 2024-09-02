@@ -113,7 +113,7 @@ def test_collections(client: TestClient):
             }
         },
         "observedProperty": {
-            "id": "https://vocab.nerc.ac.uk/standard_name/air_temperature",
+            "id": "https://vocab.nerc.ac.uk/standard_name/air_temperature/",
             "label": "Air temperature",
         },
     }
