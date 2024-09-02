@@ -31,7 +31,7 @@ jobs:
           exit-code: '1'
           ignore-unfixed: true
           vuln-type: 'os,library'
-          trivyignores: .trivyignore'
+          trivyignores: .trivyignore
 #          severity: 'CRITICAL,HIGH'
   docker-build-and-publish:
     name: Build Docker image and potentially push to Docker Hub
