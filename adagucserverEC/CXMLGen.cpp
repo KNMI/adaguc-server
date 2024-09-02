@@ -29,6 +29,8 @@
 #include "CXMLGen.h"
 #include "CDBFactory.h"
 #include "LayerTypeLiveUpdate/LayerTypeLiveUpdate.h"
+#include <json_adaguc.h>
+#include "utils/tojsonandback.h"
 // #define CXMLGEN_DEBUG
 // #define MEASURE_TIME
 const char *CFile::className = "CFile";
@@ -346,6 +348,16 @@ int CXMLGen::getProjectionInformationForLayer(WMSLayer *myWMSLayer) {
     myProjection->dfBBOX[3] = myWMSLayer->dataSource->dfBBOX[1];
     myProjection->dfBBOX[2] = myWMSLayer->dataSource->dfBBOX[2];
     myProjection->dfBBOX[1] = myWMSLayer->dataSource->dfBBOX[3];
+  }
+
+  try {
+    CT::string tableName =
+        CDBFactory::getDBAdapter(srvParam->cfg)
+            ->getTableNameForPathFilterAndDimension(myWMSLayer->layer->FilePath[0]->value.c_str(), myWMSLayer->layer->FilePath[0]->attr.filter.c_str(), "metadata", myWMSLayer->dataSource);
+
+    std::string projSettingsAsJsonString = convertProjectionListToJsonString(myWMSLayer->projectionList);
+    CDBFactory::getDBAdapter(srvParam->cfg)->storeLayerMetadata(tableName, "projected_extents", projSettingsAsJsonString.c_str());
+  } catch (int e) {
   }
 
   return 0;

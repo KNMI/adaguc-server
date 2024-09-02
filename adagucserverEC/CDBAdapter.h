@@ -16,7 +16,7 @@
 class CDBAdapter {
 public:
   CDBAdapter() {}
-  virtual ~CDBAdapter(){};
+  virtual ~CDBAdapter() {};
 
   class GeoOptions {
   public:
@@ -96,6 +96,9 @@ public:
 
   /** First use setFile<type> as many times as you whish, second use addFilesToDataBase to make it final*/
   virtual int addFilesToDataBase() = 0;
+
+  virtual int storeLayerMetadata(const char *layertable, const char *metadataitem, const char *metadatablob) = 0;
+  virtual CT::string getLayerMetadata(const char *layertable, const char *metadataitem) = 0;
 };
 
 #endif

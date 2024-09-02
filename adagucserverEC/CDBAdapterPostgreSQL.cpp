@@ -423,7 +423,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     CT::string whereStatement;
     CT::string *requestedDimVals = requestedDimMap[m.first];
 
-    for (int i = 0; i < requestedDimVals->count; ++i) {
+    for (size_t i = 0; i < requestedDimVals->count; ++i) {
       if (requestedDimVals[i].equals("*")) continue;
 
       if (i != 0) {
@@ -713,7 +713,7 @@ std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAn
   }
 
   // Found all tablenames for requested dimensions in lookup table
-  int found = tableDimStore->size();
+  size_t found = tableDimStore->size();
   delete tableDimStore;
   if (found == mapping.size()) {
 #ifdef MEASURETIME
@@ -1082,4 +1082,65 @@ int CDBAdapterPostgreSQL::addFilesToDataBase() {
   StopWatch_Stop("<CDBAdapterPostgreSQL::addFilesToDataBase");
 #endif
   return 0;
+}
+
+int CDBAdapterPostgreSQL::storeLayerMetadata(const char *layertable, const char *metadataitem, const char *metadatablob) {
+#ifdef MEASURETIME
+  StopWatch_Stop(">CDBAdapterPostgreSQL::storeLayerMetadata");
+#endif
+  CPGSQLDB *dataBaseConnection = getDataBaseConnection();
+  if (dataBaseConnection == NULL) {
+    return -1;
+  }
+
+  CT::string query;
+  CT::string tableColumns("id varchar (255) PRIMARY KEY, blob JSONB");
+
+  int status = dataBaseConnection->checkTable(layertable, tableColumns.c_str());
+  if (status == 1) {
+    CDBError("\nFAIL: Table autoconfigure_dimensions could not be created: %s", tableColumns.c_str());
+    throw(__LINE__);
+  }
+
+  query.print("INSERT INTO %s values (E'%s', E'%s') ON CONFLICT (id) DO UPDATE SET blob = excluded.blob;", layertable, metadataitem, metadatablob);
+  status = dataBaseConnection->query(query.c_str());
+  if (status != 0) {
+    CDBError("Unable to insert records: \"%s\"", query.c_str());
+    throw(__LINE__);
+  }
+#ifdef MEASURETIME
+  StopWatch_Stop("<CDBAdapterPostgreSQL::storeLayerMetadata");
+#endif
+  return 0;
+}
+
+CT::string CDBAdapterPostgreSQL::getLayerMetadata(const char *layertable, const char *metadataitem) {
+#ifdef MEASURETIME
+  StopWatch_Stop(">CDBAdapterPostgreSQL::getLayerMetadata");
+#endif
+  CPGSQLDB *dataBaseConnection = getDataBaseConnection();
+  if (dataBaseConnection == NULL) {
+    CDBError("No database connection");
+    throw(__LINE__);
+  }
+
+  CT::string query;
+  query.print("SELECT blob from %s wgere ud = '%s';", layertable, metadataitem);
+  auto store = dataBaseConnection->queryToStore(query.c_str());
+  if (store == nullptr) {
+    CDBError("Unable query: \"%s\"", query.c_str());
+    throw(__LINE__);
+  }
+  if (store->size() == 0) {
+    CDBError("No results \"%s\"", query.c_str());
+    throw(__LINE__);
+  }
+
+  CT::string result = store->getRecord(0)->get("blob")->c_str();
+  CDBDebug(store->getRecord(0)->get("blob")->c_str());
+
+#ifdef MEASURETIME
+  StopWatch_Stop("<CDBAdapterPostgreSQL::getLayerMetadata");
+#endif
+  return result;
 }
