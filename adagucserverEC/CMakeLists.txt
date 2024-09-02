@@ -68,6 +68,8 @@ add_library(
     CDBFileScannerCleanFiles.cpp
     CDFObjectStore.cpp
     CDFObjectStore.h
+    utils/CDFObjectStoreUtils.h
+    utils/CDFObjectStoreUtils.cpp
     CDataPostProcessors/CDataPostProcessor_AddFeatures.cpp
     CDataPostProcessors/CDataPostProcessor_AddFeatures.h
     CDataPostProcessors/CDataPostProcessor_CDPDBZtoRR.cpp

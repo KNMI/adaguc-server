@@ -1,3 +1,8 @@
+**Version 2.27.0 2024-08-28**
+- Support PNG files without projection and time information
+- A time dimension can now be set based on the date in the filename in the Layer configuration
+- Un-georeferenced data can now be georeferenced by setting the projection and extent in the Layer configuration
+
 **Version 2.26.0 2024-07-12**
 - Added EDR cube call for gridded datsets to ADAGUC.
 

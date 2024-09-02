@@ -264,7 +264,6 @@ public:
   // Lon transformation is used to swap datasets from 0-360 degrees to -180 till 180 degrees
   // Swap data from >180 degrees to domain of -180 till 180 in case of lat lon source data
   int useLonTransformation;
-  double origBBOXLeft, origBBOXRight;
   int dOrigWidth;
   bool lonTransformDone;
 

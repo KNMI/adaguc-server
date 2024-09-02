@@ -1211,6 +1211,42 @@ public:
     }
   };
 
+  class XMLE_AddDimension : public CXMLObjectInterface {
+  public:
+    class Cattr {
+    public:
+      CT::string name, type, year, month, day, hour, minute, second;
+    } attr;
+    void addAttribute(const char *attrname, const char *attrvalue) {
+      if (equals("name", attrname)) {
+        attr.name.copy(attrvalue);
+        return;
+      } else if (equals("type", attrname)) {
+        attr.type.copy(attrvalue);
+        return;
+      } else if (equals("year", attrname)) {
+        attr.year.copy(attrvalue);
+        return;
+      } else if (equals("month", attrname)) {
+        attr.month.copy(attrvalue);
+        return;
+      } else if (equals("day", attrname)) {
+        attr.day.copy(attrvalue);
+        return;
+      } else if (equals("hour", attrname)) {
+        attr.hour.copy(attrvalue);
+        return;
+      } else if (equals("minute", attrname)) {
+        attr.minute.copy(attrvalue);
+        return;
+      } else if (equals("second", attrname)) {
+        attr.second.copy(attrvalue);
+        return;
+      }
+      return;
+    }
+  };
+
   class XMLE_Dimension : public CXMLObjectInterface {
   public:
     class Cattr {
@@ -1355,16 +1391,27 @@ public:
     class Cattr {
     public:
       CT::string id, proj4;
+      double minx = 0, miny = 0, maxx = 0, maxy = 0;
     } attr;
     std::vector<XMLE_LatLonBox *> LatLonBox;
     ~XMLE_Projection() { XMLE_DELOBJ(LatLonBox); }
     void addAttribute(const char *attrname, const char *attrvalue) {
       if (equals("id", attrname)) {
         attr.id.copy(attrvalue);
-        return;
-      }
-      if (equals("proj4", attrname)) {
+      } else if (equals("proj4", attrname)) {
         attr.proj4.copy(attrvalue);
+        return;
+      } else if (equals("minx", attrname)) {
+        attr.minx = parseDouble(attrvalue);
+        return;
+      } else if (equals("miny", attrname)) {
+        attr.miny = parseDouble(attrvalue);
+        return;
+      } else if (equals("maxx", attrname)) {
+        attr.maxx = parseDouble(attrvalue);
+        return;
+      } else if (equals("maxy", attrname)) {
+        attr.maxy = parseDouble(attrvalue);
         return;
       }
     }
@@ -1770,6 +1817,7 @@ public:
     std::vector<XMLE_TileSettings *> TileSettings;
     std::vector<XMLE_DataReader *> DataReader;
     std::vector<XMLE_Dimension *> Dimension;
+    std::vector<XMLE_AddDimension *> AddDimension;
     std::vector<XMLE_Legend *> Legend;
     std::vector<XMLE_Scale *> Scale;
     std::vector<XMLE_Offset *> Offset;
@@ -1808,6 +1856,7 @@ public:
       XMLE_DELOBJ(TileSettings)
       XMLE_DELOBJ(DataReader);
       XMLE_DELOBJ(Dimension);
+      XMLE_DELOBJ(AddDimension);
       XMLE_DELOBJ(Legend);
       XMLE_DELOBJ(Scale);
       XMLE_DELOBJ(Offset);
@@ -1863,6 +1912,8 @@ public:
           XMLE_ADDOBJ(DataReader);
         } else if (equals("Dimension", name)) {
           XMLE_ADDOBJ(Dimension);
+        } else if (equals("AddDimension", name)) {
+          XMLE_ADDOBJ(AddDimension);
         } else if (equals("Legend", name)) {
           XMLE_ADDOBJ(Legend);
         } else if (equals("Scale", name)) {

@@ -1317,8 +1317,6 @@ CDataSource *CDataSource::clone() {
   d->dimYIndex = dimYIndex;
   d->stride2DMap = stride2DMap;
   d->useLonTransformation = useLonTransformation;
-  d->origBBOXLeft = origBBOXLeft;
-  d->origBBOXRight = origBBOXRight;
   d->dOrigWidth = dOrigWidth;
   d->lonTransformDone = lonTransformDone;
   d->swapXYDimensions = swapXYDimensions;
