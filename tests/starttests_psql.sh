@@ -19,40 +19,18 @@ export ADAGUC_ENABLELOGBUFFER=FALSE
 export ADAGUC_DATASET_DIR=${ADAGUC_PATH}/data/config/datasets/
 export ADAGUC_DATA_DIR=${ADAGUC_PATH}/data/datasets/
 export ADAGUC_AUTOWMS_DIR=${ADAGUC_PATH}/data/datasets/
-ulimit -c unlimited
-
-# Rewrite the xml configuration files used by tests.
-# Unfortunately macos does not use GNU sed, so the sed command differs slightly (-i '' vs -i)
-project_root_dir=`dirname -- "$( readlink -f -- "$0"; )"`
-project_root_dir+="/../data/config"
-if [ -z "${project_root_dir}" ]; then
-    echo "Could not determine root dir of project!"
-    exit 1
-fi
-
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    find "${project_root_dir}" -type f -name '*.xml' | xargs sed -i '' 's;<DataBase dbtype="sqlite" parameters="{ADAGUC_TMP}/adaguc.autoresource.db"/>;<DataBase parameters="{ADAGUC_DB}"/>;g'
-elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    find "${project_root_dir}" -type f -name '*.xml' | xargs sed -i 's;<DataBase dbtype="sqlite" parameters="{ADAGUC_TMP}/adaguc.autoresource.db"/>;<DataBase parameters="{ADAGUC_DB}"/>;g'
-fi
 
 # This assumes you can reach psql on port 5432
 # Tests will use a separate `adaguc_test` database
 # You cannot drop the database you are currently logged in as
 db_host=$([[ "${TEST_IN_CONTAINER}" == 1  ]] && echo "host.docker.internal" || echo "localhost")
-
 export ADAGUC_DB="user=adaguc password=adaguc host=${db_host} dbname=postgres"
 psql "$ADAGUC_DB" -c "DROP DATABASE IF EXISTS adaguc_test;"
 psql "$ADAGUC_DB" -c "CREATE DATABASE adaguc_test;"
 export ADAGUC_DB="user=adaguc password=adaguc host=${db_host} dbname=adaguc_test"
 
+ulimit -c unlimited
+
 python3 ${ADAGUC_PATH}/tests/functional_test.py $1 && \
 cd ../python/python_fastapi_server && \
 bash ./test_server.sh
-
-# Undo changes made to the xml configuration files used by tests
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    find "${project_root_dir}" -type f -name '*.xml' | xargs sed -i '' 's;<DataBase parameters="{ADAGUC_DB}"/>;<DataBase dbtype="sqlite" parameters="{ADAGUC_TMP}/adaguc.autoresource.db"/>;g'
-elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    find "${project_root_dir}" -type f -name '*.xml' | xargs sed -i 's;<DataBase parameters="{ADAGUC_DB}"/>;<DataBase dbtype="sqlite" parameters="{ADAGUC_TMP}/adaguc.autoresource.db"/>;g'
-fi

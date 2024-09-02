@@ -3,7 +3,7 @@
 
   <TempDir value="{ADAGUC_TMP}"/>
   <Path value="{ADAGUC_PATH}/data"/>
-  <DataBase dbtype="postgres" parameters="user=adaguc password=adaguc host=localhost dbname=adaguc"/>
+  <DataBase parameters="user=adaguc password=adaguc host=localhost dbname=adaguc"/>
   
   <!-- WMS settings -->
   <WMS>
