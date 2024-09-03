@@ -282,6 +282,14 @@ int CXMLGen::getProjectionInformationForLayer(WMSLayer *myWMSLayer) {
     }
   }
 
+  // if (getProjectionList(myWMSLayer) != 0) {
+  //   CDBWarning("Unable to get projection list");
+
+  // } else {
+  //   CDBDebug("Proj information fetched!");
+  //   return 0;
+  // }
+
   CGeoParams geo;
 
   int status;
@@ -350,15 +358,9 @@ int CXMLGen::getProjectionInformationForLayer(WMSLayer *myWMSLayer) {
     myProjection->dfBBOX[1] = myWMSLayer->dataSource->dfBBOX[3];
   }
 
-  try {
-    CT::string tableName =
-        CDBFactory::getDBAdapter(srvParam->cfg)
-            ->getTableNameForPathFilterAndDimension(myWMSLayer->layer->FilePath[0]->value.c_str(), myWMSLayer->layer->FilePath[0]->attr.filter.c_str(), "metadata", myWMSLayer->dataSource);
-
-    std::string projSettingsAsJsonString = convertProjectionListToJsonString(myWMSLayer->projectionList);
-    CDBFactory::getDBAdapter(srvParam->cfg)->storeLayerMetadata(tableName, "projected_extents", projSettingsAsJsonString.c_str());
-  } catch (int e) {
-  }
+  // if (storeProjectionList(myWMSLayer) != 0) {
+  //   CDBWarning("Unable to store projection list");
+  // }
 
   return 0;
 }
@@ -452,6 +454,7 @@ int CXMLGen::getDimsForLayer(WMSLayer *myWMSLayer) {
             StopWatch_Stop("Get the first 100 values from the database, and determine whether the time resolution is continous or multivalue.");
 #endif
 
+            CDBDebug("MPPPPPP");
             // Get the first 100 values from the database, and determine whether the time resolution is continous or multivalue.
             CDBStore::Store *store = CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByValue(pszDimName, 100, true, tableName.c_str());
             bool dataHasBeenFoundInStore = false;

@@ -7,4 +7,8 @@
 
 std::string convertProjectionListToJsonString(std::vector<WMSLayer::Projection *> projectionList);
 
+int storeProjectionList(WMSLayer *layer);
+
+int getProjectionList(WMSLayer *layer);
+
 #endif

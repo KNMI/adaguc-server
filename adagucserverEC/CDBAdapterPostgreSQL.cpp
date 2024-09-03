@@ -423,7 +423,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     CT::string whereStatement;
     std::vector<CT::string> requestedDimVals = requestedDimMap[m.first];
 
-    for (int i = 0; i < requestedDimVals.size(); ++i) {
+    for (size_t i = 0; i < requestedDimVals.size(); ++i) {
       if (requestedDimVals[i].equals("*")) continue;
 
       if (i != 0) {
@@ -1122,7 +1122,7 @@ CT::string CDBAdapterPostgreSQL::getLayerMetadata(const char *layertable, const 
   }
 
   CT::string query;
-  query.print("SELECT blob from %s wgere ud = '%s';", layertable, metadataitem);
+  query.print("SELECT blob from %s where id = '%s';", layertable, metadataitem);
   auto store = dataBaseConnection->queryToStore(query.c_str());
   if (store == nullptr) {
     CDBError("Unable query: \"%s\"", query.c_str());
@@ -1134,7 +1134,7 @@ CT::string CDBAdapterPostgreSQL::getLayerMetadata(const char *layertable, const 
   }
 
   CT::string result = store->getRecord(0)->get("blob")->c_str();
-  CDBDebug(store->getRecord(0)->get("blob")->c_str());
+  // CDBDebug(store->getRecord(0)->get("blob")->c_str());
 
 #ifdef MEASURETIME
   StopWatch_Stop("<CDBAdapterPostgreSQL::getLayerMetadata");
