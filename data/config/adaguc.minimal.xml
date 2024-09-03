@@ -5,7 +5,7 @@
   <Path value="/usr/people/plieger/adagucserver/data"/>
   <TempDir value="/tmp/"/>
   <OnlineResource value="http://localhost:8080/cgi-bin/adaguc.minimal.cgi?"/>
-  <DataBase dbtype="sqlite" parameters="/tmp/adaguc.minimal.db"/>
+  <DataBase parameters="/tmp/adaguc.minimal.db"/>
 
   <!-- WMS settings -->
   <WMS>
