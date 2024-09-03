@@ -149,7 +149,8 @@ class AdagucTestTools:
         Some tests fail when using postgres if there is already data present in the database.
         Running the test separately works."""
 
-        if adaguc_db := os.getenv("ADAGUC_DB", None):
+        adaguc_db = os.getenv("ADAGUC_DB", None)
+        if adaguc_db and not adaguc_db.endswith(".db"):
             subprocess.run(
                 [
                     "psql",
