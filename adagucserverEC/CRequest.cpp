@@ -1193,8 +1193,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
   }
   CDBDebug("### [</fillDimValuesForDataSource>]");
 #endif
-  < < < < < < < HEAD CDBDebug("allDimensionOptionsFound %d", allDimensionOptionsFound);
-=======
+
   bool allDimensionsAreAsRequestedInQueryString = true;
   for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
     auto *requiredDim = dataSource->requiredDims[j];
@@ -1211,7 +1210,6 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
     srvParam->setCacheControlOption(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE);
   }
 
->>>>>>> master
   return 0;
 }
 
