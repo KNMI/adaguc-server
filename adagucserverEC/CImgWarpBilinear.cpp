@@ -41,6 +41,8 @@
 
 const char *CImgWarpBilinear::className = "CImgWarpBilinear";
 void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CDrawImage *drawImage) {
+  // CImageWarperRenderInterface::render(warper, sourceImage, drawImage);
+
 #ifdef CImgWarpBilinear_DEBUG
   CDBDebug("Render");
 #endif

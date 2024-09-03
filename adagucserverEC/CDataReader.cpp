@@ -45,7 +45,7 @@
 const char *CDataReader::className = "CDataReader";
 
 // #define CDATAREADER_DEBUG
-// #define MEASURETIME
+#define MEASURETIME
 
 #define uchar unsigned char
 #define MAX_STR_LEN 8191

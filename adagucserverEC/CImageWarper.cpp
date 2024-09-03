@@ -29,6 +29,8 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#define MEASURETIME
+
 const char *CImageWarper::className = "CImageWarper";
 
 void floatToString(char *string, size_t maxlen, int numdigits, float number) {
@@ -237,6 +239,12 @@ int CImageWarper::decodeCRS(CT::string *outputCRS, CT::string *inputCRS, std::ve
 //     return 0;
 //   }
 
+void *CImageWarper::initreproj_bgthread(void *arg) {
+  proj_bg_thread_ctx *ctx = (proj_bg_thread_ctx *)arg;
+  ctx->status = ctx->warper->initreproj(ctx->projString, ctx->geoDest, ctx->prjInfo);
+  pthread_exit(NULL);
+}
+
 int CImageWarper::initreproj(CDataSource *dataSource, CGeoParams *GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj) {
   if (dataSource == NULL || GeoDest == NULL) {
     CDBError("dataSource==%s||GeoDest==%s", dataSource == NULL ? "NULL" : "not-null", GeoDest == NULL ? "NULL" : "not-null");
@@ -246,14 +254,38 @@ int CImageWarper::initreproj(CDataSource *dataSource, CGeoParams *GeoDest, std::
     dataSource->nativeProj4.copy(LATLONPROJECTION);
     // CDBWarning("dataSource->CRS.empty() setting to default latlon");
   }
+
   return initreproj(dataSource->nativeProj4.c_str(), GeoDest, _prj);
+}
+
+int CImageWarper::initreproj_threaded(CDataSource *dataSource, CGeoParams *GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj) {
+  if (dataSource == NULL || GeoDest == NULL) {
+    CDBError("dataSource==%s||GeoDest==%s", dataSource == NULL ? "NULL" : "not-null", GeoDest == NULL ? "NULL" : "not-null");
+    return 1;
+  }
+  if (dataSource->nativeProj4.empty()) {
+    dataSource->nativeProj4.copy(LATLONPROJECTION);
+    // CDBWarning("dataSource->CRS.empty() setting to default latlon");
+  }
+
+  ctx = {this, dataSource->nativeProj4.c_str(), GeoDest, _prj};
+  pthread_create(&proj_bg_thread, NULL, CImageWarper::initreproj_bgthread, &ctx);
+  return 0;
 }
 
 pthread_mutex_t CImageWarper_initreproj;
 int CImageWarper::initreproj(const char *projString, CGeoParams *GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj) {
-  pthread_mutex_lock(&CImageWarper_initreproj);
+#ifdef MEASURETIME
+  StopWatch_Stop(">CImageWarper::initreproj");
+#endif
+
+  // pthread_mutex_lock(&CImageWarper_initreproj);
   int status = _initreprojSynchronized(projString, GeoDest, _prj);
-  pthread_mutex_unlock(&CImageWarper_initreproj);
+  // pthread_mutex_unlock(&CImageWarper_initreproj);
+
+#ifdef MEASURETIME
+  StopWatch_Stop("<CImageWarper::initreproj");
+#endif
   return status;
 }
 int CImageWarper::_initreprojSynchronized(const char *projString, CGeoParams *GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj) {
@@ -361,7 +393,7 @@ int CImageWarper::findExtentUnSynchronized(CDataSource *dataSource, double *dfBB
   BBOX bbox{};
   std::tie(found, bbox) = getBBOXProjection(key);
 
-    if (found) {
+  if (found) {
 #ifdef CIMAGEWARPER_DEBUG
     CDBDebug("FOUND AND REUSING!!! %s %s (%0.3f, %0.3f, %0.3f, %0.3f) to  (%0.3f, %0.3f, %0.3f, %0.3f)", key.sourceCRS.c_str(), key.destCRS.c_str(), key.extent.bbox[0], key.extent.bbox[1],
              key.extent.bbox[2], key.extent.bbox[3], bbox.bbox[0], bbox.bbox[1], bbox.bbox[2], bbox.bbox[3]);

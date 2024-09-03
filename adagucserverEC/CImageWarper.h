@@ -38,6 +38,16 @@ void floatToString(char *string, size_t maxlen, float number);
 void floatToString(char *string, size_t maxlen, int numdigits, float number);
 void floatToString(char *string, size_t maxlen, float min, float max, float number);
 
+class CImageWarper;
+
+struct proj_bg_thread_ctx {
+  CImageWarper *warper;
+  const char *projString;
+  CGeoParams *geoDest;
+  std::vector<CServerConfig::XMLE_Projection *> *prjInfo;
+  int status;
+};
+
 class CImageWarper {
   //  CNetCDFReader reader;
 private:
@@ -57,6 +67,8 @@ private:
 
 public:
   bool requireReprojection;
+  pthread_t proj_bg_thread;
+  proj_bg_thread_ctx ctx;
   CImageWarper() {
     prj = NULL;
     projSourceToDest = nullptr;
@@ -77,7 +89,10 @@ public:
   PJ *projSourceToDest, *projSourceToLatlon, *projLatlonToDest;
   CT::string getDestProjString() { return destinationCRS; }
   int initreproj(CDataSource *dataSource, CGeoParams *GeoDest, std::vector<CServerConfig::XMLE_Projection *> *prj);
+  int initreproj_threaded(CDataSource *dataSource, CGeoParams *GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj);
+
   int initreproj(const char *projString, CGeoParams *GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj);
+  static void *initreproj_bgthread(void *arg);
 
   int closereproj();
   int reprojpoint(double &dfx, double &dfy);

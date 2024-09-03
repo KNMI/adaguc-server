@@ -31,8 +31,11 @@
 #include "CImageWarper.h"
 class CImageWarperRenderInterface {
 public:
-  virtual ~CImageWarperRenderInterface(){};
-  virtual void render(CImageWarper *warper, CDataSource *sourceImage, CDrawImage *drawImage) = 0;
+  virtual ~CImageWarperRenderInterface() {};
+  virtual void render(CImageWarper *warper, CDataSource *sourceImage, CDrawImage *drawImage) {
+    CDBDebug("@@@ GOT HERE");
+    pthread_join(warper->proj_bg_thread, NULL);
+  };
   virtual int set(const char *settings) = 0;
 };
 #endif

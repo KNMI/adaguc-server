@@ -48,7 +48,7 @@
 
 CT::string months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 // #define CIMAGEDATAWRITER_DEBUG
-// #define MEASURETIME
+#define MEASURETIME
 
 void doJacoIntoLatLon(double &u, double &v, double lo, double la, float deltaX, float deltaY, CImageWarper *warper);
 void rotateUvNorth(double &u, double &v, double rlo, double rla, float deltaX, float deltaY, CImageWarper *warper);
@@ -1342,6 +1342,11 @@ std::vector<CImageDataWriter::IndexRange> CImageDataWriter::getIndexRangesForReg
 pthread_mutex_t CImageDataWriter_addData_lock;
 int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) {
 
+  CDBDebug("Starting warpImage???");
+
+  CImageWarper imageWarper;
+  imageWarper.initreproj_threaded(dataSource, drawImage->Geo, &srvParam->cfg->Projection);
+
   // Open the data of this dataSource
   int status = 0;
 #ifdef CIMAGEDATAWRITER_DEBUG
@@ -1468,17 +1473,17 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
       }
     }
   }
-  // Initialize projection algorithm
-#ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("Thread[%d]: initreproj %s", dataSource->threadNr, dataSource->nativeProj4.c_str());
-#endif
-  CImageWarper imageWarper;
-  status = imageWarper.initreproj(dataSource, drawImage->Geo, &srvParam->cfg->Projection);
-  if (status != 0) {
-    CDBError("initreproj failed");
-    reader.close();
-    return 1;
-  }
+  //   // Initialize projection algorithm
+  // #ifdef CIMAGEDATAWRITER_DEBUG
+  //   CDBDebug("Thread[%d]: initreproj %s", dataSource->threadNr, dataSource->nativeProj4.c_str());
+  // #endif
+  // CImageWarper imageWarper;
+  //   status = imageWarper.initreproj(dataSource, drawImage->Geo, &srvParam->cfg->Projection);
+  //   if (status != 0) {
+  //     CDBError("initreproj failed");
+  //     reader.close();
+  //     return 1;
+  //   }
 
   /**
    * Use fast nearest neighbourrenderer
@@ -1649,6 +1654,11 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
       CDBDebug("bilinearSettings.c_str() %s", bilinearSettings.c_str());
 #endif
       imageWarperRenderer->set(bilinearSettings.c_str());
+
+      CDBDebug("Waiting for proj bg thread to complete");
+      pthread_join(imageWarper.proj_bg_thread, NULL);
+      CDBDebug("After waiting for proj bg thread to complete");
+
       imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
       delete imageWarperRenderer;
     }
