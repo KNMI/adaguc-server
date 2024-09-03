@@ -1,3 +1,7 @@
+**Version 2.27.0 2024-09-02**
+- PostgreSQL query from `getFilesAndIndicesForDimensions` has been rewritten, which fixes https://github.com/KNMI/adaguc-server/issues/341.
+- Optimized existing PostgreSQL queries and reduced number of PostgreSQL queries in general. This results in better performance, the benchmark tool runs 9% faster.
+
 **Version 2.26.0 2024-07-12**
 - Added EDR cube call for gridded datsets to ADAGUC.
 

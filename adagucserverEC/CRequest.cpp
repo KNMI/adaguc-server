@@ -1177,6 +1177,20 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
       }
     }
 
+    // Check if requested time dimensions use valid characters
+    for (auto &dim : dataSource->requiredDims) {
+      // FIXME: checkTimeFormat used to get called on every dim value, not just datetime. Check if this is required
+      if (!dim->isATimeDimension) continue;
+
+      CT::string *dimValues = dim->value.splitToArray(",");
+      for (size_t i = 0; i < dimValues->count; i++) {
+        if (!CServerParams::checkTimeFormat(dimValues[i])) {
+          CDBError("Queried dimension %s=%s failed datetime regex", dim->name.c_str(), dim->value.c_str());
+          throw InvalidDimensionValue;
+        }
+      }
+    }
+
     // STOP NOW
   } catch (int i) {
     CDBError("%d", i);
