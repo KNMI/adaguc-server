@@ -19,9 +19,17 @@ export ADAGUC_ENABLELOGBUFFER=FALSE
 export ADAGUC_DATASET_DIR=${ADAGUC_PATH}/data/config/datasets/
 export ADAGUC_DATA_DIR=${ADAGUC_PATH}/data/datasets/
 export ADAGUC_AUTOWMS_DIR=${ADAGUC_PATH}/data/datasets/
-export ADAGUC_DB="${ADAGUC_TMP}/adaguc.autoresource.db"
-ulimit -c unlimited
 
+# This assumes you can reach psql on port 5432
+# Tests will use a separate `adaguc_test` database
+# You cannot drop the database you are currently logged in as
+db_host=$([[ "${TEST_IN_CONTAINER}" == 1  ]] && echo "host.docker.internal" || echo "localhost")
+export ADAGUC_DB="user=adaguc password=adaguc host=${db_host} dbname=postgres"
+psql "$ADAGUC_DB" -c "DROP DATABASE IF EXISTS adaguc_test;"
+psql "$ADAGUC_DB" -c "CREATE DATABASE adaguc_test;"
+export ADAGUC_DB="user=adaguc password=adaguc host=${db_host} dbname=adaguc_test"
+
+ulimit -c unlimited
 
 python3 ${ADAGUC_PATH}/tests/functional_test.py $1 && \
 cd ../python/python_fastapi_server && \

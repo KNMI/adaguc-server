@@ -1335,14 +1335,11 @@ public:
   public:
     class Cattr {
     public:
-      CT::string parameters, dbtype, maxquerylimit;
+      CT::string parameters, maxquerylimit;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
       if (equals("parameters", attrname)) {
         attr.parameters.copy(attrvalue);
-        return;
-      } else if (equals("dbtype", attrname)) {
-        attr.dbtype.copy(attrvalue);
         return;
       } else if (equals("maxquerylimit", attrname)) {
         attr.maxquerylimit.copy(attrvalue);

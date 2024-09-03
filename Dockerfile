@@ -6,7 +6,7 @@ USER root
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
-LABEL version="2.26.0"
+LABEL version="2.27.0"
 
 # Try to update image packages
 RUN apt-get -q -y update \
@@ -76,7 +76,7 @@ WORKDIR /adaguc/adaguc-server-master
 
 # Upgrade pip and install python requirements.txt
 COPY requirements.txt /adaguc/adaguc-server-master/requirements.txt
-RUN pip3 install --no-cache-dir --upgrade pip pip-tools \
+RUN pip3 install --no-cache-dir --upgrade pip pip-tools setuptools \
     && pip install --no-cache-dir -r requirements.txt
 
 # Install compiled adaguc binaries from stage one
@@ -87,14 +87,18 @@ COPY python /adaguc/adaguc-server-master/python
 # ######### Third stage, test ############
 # FROM base AS test
 
+# ENV TEST_IN_CONTAINER 1
+
 # COPY requirements-dev.txt /adaguc/adaguc-server-master/requirements-dev.txt
 # RUN pip install --no-cache-dir -r requirements-dev.txt
 
 # COPY tests /adaguc/adaguc-server-master/tests
 # COPY runtests.sh /adaguc/adaguc-server-master/runtests.sh
+# COPY runtests_psql.sh /adaguc/adaguc-server-master/runtests_psql.sh
 
-# # Run adaguc-server functional and regression tests
+# # Run adaguc-server functional and regression tests. See also `./doc/developing/testing.md`
 # RUN bash runtests.sh
+# RUN bash runtests_psql.sh
 
 # # Create a file indicating that the test succeeded. This file is used in the final stage
 # RUN echo "TESTSDONE" >  /adaguc/adaguc-server-master/testsdone.txt

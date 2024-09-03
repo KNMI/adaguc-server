@@ -28,7 +28,6 @@ jobs:
   #   steps:
   #     - name: Check out the repo
   #       uses: actions/checkout@v4
-
   #     - name: Set up QEMU
   #       uses: docker/setup-qemu-action@v3
   #       with:
@@ -58,5 +57,5 @@ jobs:
           # ensure latest base image is used
           pull: true
           push: ${{ github.repository == 'KNMI/adaguc-server' }}
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ steps.meta.outputs.tags }}-20240903T18
           labels: ${{ steps.meta.outputs.labels }}
