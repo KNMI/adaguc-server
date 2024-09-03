@@ -30,7 +30,7 @@
 #include "CDBFactory.h"
 #include "LayerTypeLiveUpdate/LayerTypeLiveUpdate.h"
 #include <json_adaguc.h>
-#include "utils/tojsonandback.h"
+#include "utils/LayerMetadataStore.h"
 // #define CXMLGEN_DEBUG
 // #define MEASURE_TIME
 const char *CFile::className = "CFile";

@@ -1,5 +1,5 @@
-#ifndef TOJSONANDBACK_H
-#define TOJSONANDBACK_H
+#ifndef LAYER_METADATA_STORE_UTILS_H
+#define LAYER_METADATA_STORE_UTILS_H
 
 #include <string>
 #include <vector>
