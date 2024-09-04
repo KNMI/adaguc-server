@@ -29,11 +29,6 @@ public:
   virtual int execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) = 0;
 
   /**
-   * Executes the data postprocessor on a datasource, on the full grid
-   */
-  virtual int execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode, double timestamp) { return execute(proc, dataSource, mode); };
-
-  /**
    * Executes the data postprocessor for a given array
    */
   virtual int execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode, double *data, size_t numItems) = 0;

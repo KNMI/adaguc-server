@@ -851,7 +851,6 @@ int CRequest::setDimValuesForDataSource(CDataSource *dataSource, CServerParams *
 };
 
 int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams *srvParam) {
-  bool allDimensionOptionsFound = true;
 
 #ifdef CREQUEST_DEBUG
   StopWatch_Stop("### [fillDimValuesForDataSource]");
@@ -1054,7 +1053,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
         if (netCDFDimName.equals("none")) {
           continue;
         }
-        allDimensionOptionsFound = false;
+
         CDBDebug("NOT ADDED: %s", dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
         /* A dimension where the default value is set to filetimedate should not be queried from the db */
         if (dataSource->cfgLayer->Dimension[i]->attr.defaultV.equals("filetimedate")) {

@@ -48,18 +48,13 @@ int CDPPSolarTerminator::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CD
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
 }
 
-int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
-  CDBDebug("Calling CDPPSolarTerminator::execute without a timestamp");
-  return CDPPSolarTerminator::execute(proc, dataSource, mode, 0);
-}
-
 time_t strToEpochTimestamp(const char *timestampStr) {
   struct tm tmStruct;
   strptime(timestampStr, "%Y-%m-%dT%H:%M:%SZ", &tmStruct);
   return mktime(&tmStruct);
 }
 
-int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode, double timestamp) {
+int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
   if ((isApplicable(proc, dataSource, mode) & mode) == false) {
     return -1;
   }

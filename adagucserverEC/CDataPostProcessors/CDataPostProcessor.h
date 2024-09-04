@@ -142,7 +142,6 @@ public:
   CDPPExecutor();
   ~CDPPExecutor();
   const CT::PointerList<CDPPInterface *> *getPossibleProcessors();
-  int executeProcessors(CDataSource *dataSource, int mode, double timestamp);
   int executeProcessors(CDataSource *dataSource, int mode);
   int executeProcessors(CDataSource *dataSource, int mode, double *data, size_t numItems);
   int executeProcessors(CDataSource *dataSource, int mode, double *data, size_t numItems, double timestamp);

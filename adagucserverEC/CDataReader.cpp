@@ -1025,8 +1025,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
      * DataPostProc: Here our datapostprocessor comes into action! It needs scale and offset from datasource.
      * This is stage1, only AX+B will be applied to scale and offset parameters
      */
-    CDBDebug("Request date is   %f", requestDate);
-    CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING, requestDate);
+    CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
   } else {
     CDBDebug("Skipping POSTPROC!@!!!!!");
   }
@@ -1367,7 +1366,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
        * This is stage2, running on data, not metadata
        */
       CDBDebug("Running postproc on data");
-      CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING, requestDate);
+      CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
     }
   }
 // pthread_mutex_unlock(&CDataReader_open_lock);

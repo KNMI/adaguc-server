@@ -557,8 +557,7 @@ CDPPExecutor::~CDPPExecutor() {
 
 const CT::PointerList<CDPPInterface *> *CDPPExecutor::getPossibleProcessors() { return dataPostProcessorList; }
 
-int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode) { return executeProcessors(dataSource, mode, 0); }
-int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode, double timestamp) {
+int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode) {
   for (size_t dpi = 0; dpi < dataSource->cfgLayer->DataPostProc.size(); dpi++) {
     CServerConfig::XMLE_DataPostProc *proc = dataSource->cfgLayer->DataPostProc[dpi];
     for (size_t procId = 0; procId < dataPostProcessorList->size(); procId++) {
@@ -576,9 +575,7 @@ int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode, double ti
             // Check if the postProcessor is of type SolarTerminator
             if (CDPPSolarTerminator *solarTerminator = dynamic_cast<CDPPSolarTerminator *>(dataPostProcessorList->get(procId))) {
               // Call a different method specific to SolarTerminator
-              CDBDebug("SPECIAL CALL FOR SOLAR TERMINATOR");
-              CDBDebug("Timestamp here is %f", timestamp);
-              status = solarTerminator->execute(proc, dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING, timestamp);
+              status = solarTerminator->execute(proc, dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
             } else {
               // Call the regular execute method for other types
               CDBDebug("NORMAL POSTPROCESSOR");
@@ -603,8 +600,7 @@ int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode, double ti
             if (CDPPSolarTerminator *solarTerminator = dynamic_cast<CDPPSolarTerminator *>(dataPostProcessorList->get(procId))) {
               // Call a different method specific to SolarTerminator
               CDBDebug("SPECIAL CALL FOR SOLAR TERMINATOR RUNAFTERREADING");
-              CDBDebug("Timestamp here is %f", timestamp);
-              status = solarTerminator->execute(proc, dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING, timestamp);
+              status = solarTerminator->execute(proc, dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
             } else {
               // Call the regular execute method for other types
               CDBDebug("NORMAL POSTPROCESSOR");
