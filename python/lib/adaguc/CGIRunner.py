@@ -23,6 +23,9 @@ ADAGUC_NUMPARALLELPROCESSES = int(os.getenv("ADAGUC_NUMPARALLELPROCESSES", "4"))
 sem = asyncio.Semaphore(max(ADAGUC_NUMPARALLELPROCESSES, 2))  # At least two, to allow for me layer metadata update
 
 
+import socket
+
+
 class CGIRunner:
     """
     Run the CGI script with specified URL and environment. Stdout is captured and put in a BytesIO object provided in output
@@ -43,23 +46,39 @@ class CGIRunner:
         # Execute adaguc-server binary
         ON_POSIX = "posix" in sys.builtin_module_names
         async with sem:
-            process = await asyncio.create_subprocess_exec(
-                *cmds,
-                stdout=PIPE,
-                stderr=PIPE,
-                env=localenv,
-                close_fds=ON_POSIX,
-            )
-            try:
-                (process_output, process_error) = await asyncio.wait_for(
-                    process.communicate(), timeout=timeout
-                )
-            except asyncio.exceptions.TimeoutError:
-                process.kill()
-                await process.communicate()
-                output.write(b"Adaguc server processs timed out")
-                return HTTP_STATUSCODE_500_TIMEOUT, [], None
-            status = await process.wait()
+            process_output = ""
+
+            client = socket.socket(socket.AF_UNIX)
+            client.connect("/tmp/adaguc.socke")
+            client.send(f"QUERY_STRING={url}".encode())
+
+            process_output = bytearray()
+            while data := client.recv(4096):
+                # print(data)
+                process_output.extend(data)
+
+            process_error = ""
+            status = 0
+
+            process_error = process_error.encode()
+
+            # process = await asyncio.create_subprocess_exec(
+            #     *cmds,
+            #     stdout=PIPE,
+            #     stderr=PIPE,
+            #     env=localenv,
+            #     close_fds=ON_POSIX,
+            # )
+            # try:
+            #     (process_output, process_error) = await asyncio.wait_for(
+            #         process.communicate(), timeout=timeout
+            #     )
+            # except asyncio.exceptions.TimeoutError:
+            #     process.kill()
+            #     await process.communicate()
+            #     output.write(b"Adaguc server processs timed out")
+            #     return HTTP_STATUSCODE_500_TIMEOUT, [], None
+            # status = await process.wait()
 
         # Split headers from body using a regex
         headersEndAt = -2

@@ -49,7 +49,8 @@ void printErrorStream(const char *message) { _printErrorStreamPointer(message); 
 
 void _printErrorStream(const char *pszMessage) { fprintf(stderr, "%s", pszMessage); }
 void _printWarningStream(const char *pszMessage) { fprintf(stderr, "%s", pszMessage); }
-void _printDebugStream(const char *pszMessage) { printf("%s", pszMessage); }
+// void _printDebugStream(const char *pszMessage) { printf("%s", pszMessage); }
+void _printDebugStream(const char *pszMessage) { fprintf(stderr, "%s", pszMessage); }
 
 void _printDebugLine(const char *pszMessage, ...) {
   logMessageNumber++;

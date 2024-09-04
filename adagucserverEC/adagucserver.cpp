@@ -39,6 +39,9 @@
 #include "CConvertGeoJSON.h"
 #include "utils/serverutils.h"
 
+#include <sys/socket.h>
+#include <sys/un.h>
+
 DEF_ERRORMAIN();
 
 FILE *pLogDebugFile = NULL;
@@ -381,7 +384,10 @@ int _main(int argc, char **argv, char **) {
   return getStatusCode();
 }
 
-int main(int argc, char **argv, char **envp) {
+static const char *socket_path = "/tmp/adaguc.socket";
+static const unsigned int nIncomingConnections = 5;
+
+int do_work(int argc, char **argv, char **envp) {
   /* Check if ADAGUC_LOGFILE is set */
   const char *ADAGUC_LOGFILE = getenv("ADAGUC_LOGFILE");
   if (ADAGUC_LOGFILE != NULL) {
@@ -453,6 +459,90 @@ int main(int argc, char **argv, char **envp) {
     fclose(pLogDebugFile);
     pLogDebugFile = NULL;
   }
+  close(1);
+  close(2);
 
   return status;
+}
+
+void handle_client(int client_socket, int argc, char **argv, char **envp) {
+  int recv_buf_len = 4096;
+  char recv_buf[recv_buf_len];
+  memset(recv_buf, 0, recv_buf_len * sizeof(char));
+
+  char *cmd_query = "QUERY_STRING=";
+  int data_recv = recv(client_socket, recv_buf, recv_buf_len, 0);
+  if (data_recv > 0) {
+    if (strncmp(recv_buf, cmd_query, strlen(cmd_query)) == 0) {
+      printf("@@@ creating image in child?");
+      fflush(stdout);
+      dup2(client_socket, STDOUT_FILENO);
+      // dup2(client_socket, STDERR_FILENO);
+
+      CT::string cmd(recv_buf);
+      std::vector<CT::string> cmds = cmd.splitToStack("\"");
+      setenv("QUERY_STRING", cmds[1].c_str(), 1);
+
+      int status = do_work(argc, argv, envp);
+      exit(status);
+    }
+  }
+}
+
+int run_server(int argc, char **argv, char **envp) {
+  int client_socket = 0;
+
+  struct sockaddr_un local, remote;
+  int len = 0;
+
+  int listen_socket = socket(AF_UNIX, SOCK_STREAM, 0);
+  if (-1 == listen_socket) {
+    printf("Error on socket() call \n");
+    return 1;
+  }
+
+  local.sun_family = AF_UNIX;
+  strcpy(local.sun_path, socket_path);
+  unlink(local.sun_path);
+  len = strlen(local.sun_path) + sizeof(local.sun_family);
+
+  if (bind(listen_socket, (struct sockaddr *)&local, len) != 0) {
+    printf("Error on binding socket \n");
+    return 1;
+  }
+
+  if (listen(listen_socket, nIncomingConnections) != 0) {
+    printf("Error on listen call \n");
+  }
+
+  while (1) {
+    unsigned int sock_len = 0;
+    printf("Waiting for connection.... \n");
+
+    if ((client_socket = accept(listen_socket, (struct sockaddr *)&remote, &sock_len)) == -1) {
+      printf("Error on accept() call \n");
+      return 1;
+    }
+
+    if (fork() == 0) {
+      close(listen_socket);
+      handle_client(client_socket, argc, argv, envp);
+    } else {
+      close(client_socket);
+    }
+  }
+
+  return 0;
+}
+
+int main(int argc, char **argv, char **envp) {
+  const char *ADAGUC_FORK = getenv("ADAGUC_FORK");
+  if (ADAGUC_FORK != NULL) {
+    int server_status = run_server(argc, argv, envp);
+  } else {
+    // normal flow without unix socket server/fork
+    return do_work(argc, argv, envp);
+  }
+
+  // setenv("QUERY_STRING", query_string.c_str());
 }

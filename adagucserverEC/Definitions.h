@@ -119,7 +119,7 @@
 
 // #define CImgWarpBilinear_DEBUG
 // #define CImgWarpBilinear_TIME
-// #define MEASURETIME
+#define MEASURETIME
 
 // #define CDATAREADER_DEBUG
 // #define CCDFNETCDFIO_DEBUG
