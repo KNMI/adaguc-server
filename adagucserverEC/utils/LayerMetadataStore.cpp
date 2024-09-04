@@ -120,7 +120,7 @@ int loadLayerProjectionAndExtentListFromMetadataDb(WMSLayer *myWMSLayer) {
       bboxArray[3].get_to((projection->dfBBOX[3]));
     }
   } catch (int e) {
-    CDBError("loadLayerProjectionAndExtentListFromMetadataDb %d", e);
+    // CDBError("loadLayerProjectionAndExtentListFromMetadataDb %d", e);
     return e;
   }
   return 0;
@@ -172,7 +172,7 @@ int loadLayerStyleListFromMetadataDb(WMSLayer *myWMSLayer) {
     }
 
   } catch (int e) {
-    CDBError("loadLayerStyleListFromMetadataDb %d", e);
+    // CDBError("loadLayerStyleListFromMetadataDb %d", e);
     return e;
   }
   return 0;
@@ -227,7 +227,7 @@ int loadLayerDimensionListFromMetadataDb(WMSLayer *myWMSLayer) {
     }
 
   } catch (int e) {
-    CDBDebug("loadLayerDimensionListFromMetadataDb %d", e);
+    // CDBDebug("loadLayerDimensionListFromMetadataDb %d", e);
     return e;
   }
   return 0;

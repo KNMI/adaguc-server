@@ -1118,7 +1118,9 @@ CT::string CDBAdapterPostgreSQL::getLayerMetadata(const char *datasetName, const
 #endif
 
   if (this->layerMetaDataStore == nullptr) {
+#ifdef CDBAdapterPostgreSQL_DEBUG
     CDBDebug("Need to query layer metadata for %s/%s/%s", datasetName, layerName, metadataKey);
+#endif
     CPGSQLDB *dataBaseConnection = getDataBaseConnection();
     if (dataBaseConnection == NULL) {
       CDBError("No database connection");
@@ -1129,7 +1131,9 @@ CT::string CDBAdapterPostgreSQL::getLayerMetadata(const char *datasetName, const
     query.print("SELECT layername, metadatakey, blob from metadata where datasetname = '%s';", datasetName);
     this->layerMetaDataStore = dataBaseConnection->queryToStore(query.c_str());
     if (layerMetaDataStore == nullptr) {
+#ifdef CDBAdapterPostgreSQL_DEBUG
       CDBDebug("Unable query: \"%s\"", query.c_str());
+#endif
       throw(__LINE__);
     }
     if (layerMetaDataStore->size() == 0) {
