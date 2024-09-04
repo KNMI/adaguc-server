@@ -1478,7 +1478,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
   //   CDBDebug("Thread[%d]: initreproj %s", dataSource->threadNr, dataSource->nativeProj4.c_str());
   // #endif
   // CImageWarper imageWarper;
-  //   status = imageWarper.initreproj(dataSource, drawImage->Geo, &srvParam->cfg->Projection);
+  // status = imageWarper.initreproj(dataSource, drawImage->Geo, &srvParam->cfg->Projection);
   //   if (status != 0) {
   //     CDBError("initreproj failed");
   //     reader.close();
@@ -1493,6 +1493,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
     CDBDebug("Using CImgWarpNearestNeighbour");
 #endif
     imageWarperRenderer = new CImgWarpNearestNeighbour();
+    imageWarper.join_bgthread();
     imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
     delete imageWarperRenderer;
   }
@@ -1505,6 +1506,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
     CDBDebug("Using CImgWarpNearestRGBA");
 #endif
     imageWarperRenderer = new CImgWarpNearestRGBA();
+    imageWarper.join_bgthread();
     imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
     delete imageWarperRenderer;
   }
@@ -1654,11 +1656,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
       CDBDebug("bilinearSettings.c_str() %s", bilinearSettings.c_str());
 #endif
       imageWarperRenderer->set(bilinearSettings.c_str());
-
-      CDBDebug("Waiting for proj bg thread to complete");
-      pthread_join(imageWarper.proj_bg_thread, NULL);
-      CDBDebug("After waiting for proj bg thread to complete");
-
+      imageWarper.join_bgthread();
       imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
       delete imageWarperRenderer;
     }
@@ -1672,6 +1670,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
     CDBDebug("Using CImgWarpHillShaded");
 #endif
     imageWarperRenderer = new CImgWarpHillShaded();
+    imageWarper.join_bgthread();
     imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
     delete imageWarperRenderer;
   }
@@ -1684,6 +1683,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
     CDBDebug("Using CImgWarpGeneric");
 #endif
     imageWarperRenderer = new CImgWarpGeneric();
+    imageWarper.join_bgthread();
     imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
     delete imageWarperRenderer;
   }
@@ -1696,6 +1696,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
     CDBDebug("Using CImgRenderStippling");
 #endif
     imageWarperRenderer = new CImgRenderStippling();
+    imageWarper.join_bgthread();
     imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
     delete imageWarperRenderer;
   }
@@ -1712,6 +1713,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
       CT::string renderMethodAsString;
       CStyleConfiguration::getRenderMethodAsString(&renderMethodAsString, renderMethod);
       imageWarperRenderer->set(renderMethodAsString.c_str());
+      imageWarper.join_bgthread();
       imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
       delete imageWarperRenderer;
     }
@@ -1729,6 +1731,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
       CT::string renderMethodAsString;
       CStyleConfiguration::getRenderMethodAsString(&renderMethodAsString, renderMethod);
       imageWarperRenderer->set(renderMethodAsString.c_str());
+      imageWarper.join_bgthread();
       imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
       delete imageWarperRenderer;
     }

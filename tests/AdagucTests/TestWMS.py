@@ -488,7 +488,6 @@ class TestWMS(unittest.TestCase):
             )
         )
 
- 
     def test_WMSGetMap_Report_nounits(self):
         AdagucTestTools().cleanTempDir()
         if os.path.exists(os.environ["ADAGUC_LOGFILE"]):

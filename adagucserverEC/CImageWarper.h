@@ -75,6 +75,7 @@ public:
     projSourceToLatlon = nullptr;
     projLatlonToDest = nullptr;
     initialized = false;
+    proj_bg_thread = NULL;
   }
   ~CImageWarper() {
     if (initialized == true) {
@@ -90,6 +91,7 @@ public:
   CT::string getDestProjString() { return destinationCRS; }
   int initreproj(CDataSource *dataSource, CGeoParams *GeoDest, std::vector<CServerConfig::XMLE_Projection *> *prj);
   int initreproj_threaded(CDataSource *dataSource, CGeoParams *GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj);
+  void join_bgthread();
 
   int initreproj(const char *projString, CGeoParams *GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj);
   static void *initreproj_bgthread(void *arg);

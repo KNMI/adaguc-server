@@ -240,6 +240,7 @@ int CImageWarper::decodeCRS(CT::string *outputCRS, CT::string *inputCRS, std::ve
 //   }
 
 void *CImageWarper::initreproj_bgthread(void *arg) {
+  CDBDebug("Starting initreproj in background thread");
   proj_bg_thread_ctx *ctx = (proj_bg_thread_ctx *)arg;
   ctx->status = ctx->warper->initreproj(ctx->projString, ctx->geoDest, ctx->prjInfo);
   pthread_exit(NULL);
@@ -255,6 +256,7 @@ int CImageWarper::initreproj(CDataSource *dataSource, CGeoParams *GeoDest, std::
     // CDBWarning("dataSource->CRS.empty() setting to default latlon");
   }
 
+  join_bgthread();
   return initreproj(dataSource->nativeProj4.c_str(), GeoDest, _prj);
 }
 
@@ -273,15 +275,24 @@ int CImageWarper::initreproj_threaded(CDataSource *dataSource, CGeoParams *GeoDe
   return 0;
 }
 
+void CImageWarper::join_bgthread() {
+  CDBDebug("Waiting for proj bg thread to complete");
+  if (proj_bg_thread != NULL) {
+    pthread_join(proj_bg_thread, NULL);
+    proj_bg_thread = NULL;
+  }
+  CDBDebug("After waiting for proj bg thread to complete");
+}
+
 pthread_mutex_t CImageWarper_initreproj;
 int CImageWarper::initreproj(const char *projString, CGeoParams *GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj) {
 #ifdef MEASURETIME
   StopWatch_Stop(">CImageWarper::initreproj");
 #endif
 
-  // pthread_mutex_lock(&CImageWarper_initreproj);
+  pthread_mutex_lock(&CImageWarper_initreproj);
   int status = _initreprojSynchronized(projString, GeoDest, _prj);
-  // pthread_mutex_unlock(&CImageWarper_initreproj);
+  pthread_mutex_unlock(&CImageWarper_initreproj);
 
 #ifdef MEASURETIME
   StopWatch_Stop("<CImageWarper::initreproj");
