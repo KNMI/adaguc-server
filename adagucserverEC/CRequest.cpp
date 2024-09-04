@@ -1912,7 +1912,7 @@ int CRequest::process_all_layers() {
   /* Handle WMS Getmap database request */
   /**************************************/
   if (dataSources[j]->dLayerType == CConfigReaderLayerTypeDataBase || dataSources[j]->dLayerType == CConfigReaderLayerTypeStyled || dataSources[j]->dLayerType == CConfigReaderLayerTypeCascaded ||
-      dataSources[j]->dLayerType == CConfigReaderLayerTypeBaseLayer) {
+      dataSources[j]->dLayerType == CConfigReaderLayerTypeBaseLayer || (dataSources[j]->dLayerType == CConfigReaderLayerTypeLiveUpdate && srvParam->requestType != REQUEST_WMS_GETMAP)) {
     try {
       for (size_t d = 0; d < dataSources.size(); d++) {
         dataSources[d]->setTimeStep(0);
@@ -2380,7 +2380,8 @@ int CRequest::process_all_layers() {
     // // Note: add legend etc
     // status = imageDataWriter.end();
     // CDBDebug("Ending imagedatawriter status was %d", status);
-
+    status = imageDataWriter.end();
+    CDBDebug("Ending image data writing with status %d", status);
   } else {
     CDBError("Unknown layer type");
   }

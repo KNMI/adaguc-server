@@ -52,11 +52,11 @@ int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(WMSLayer *myWMSLayer)
   timeInstance.init("seconds since 1970", "standard");
   double epochTime = timeInstance.getEpochTimeFromDateString(CTime::currentDateTime());
   // CTime::Date cdate = timeInstance.getDate(epochTime);
-  double startTimeOffset = timeInstance.quantizeTimeToISO8601(epochTime - 3600, "PT1S", "low");
-  double stopTimeOffset = timeInstance.quantizeTimeToISO8601(epochTime, "PT1S", "low");
+  double startTimeOffset = timeInstance.quantizeTimeToISO8601(epochTime - 3600 * 24 * 365, "PT10M", "low");
+  double stopTimeOffset = timeInstance.quantizeTimeToISO8601(epochTime, "PT10M", "low");
   CT::string startTime = timeInstance.dateToISOString(timeInstance.offsetToDate(startTimeOffset));
   CT::string stopTime = timeInstance.dateToISOString(timeInstance.offsetToDate(stopTimeOffset));
-  CT::string resTime = "PT1S";
+  CT::string resTime = "PT10M";
   WMSLayer::Dim *dim = new WMSLayer::Dim();
   myWMSLayer->dimList.push_back(dim);
   dim->name.copy("time");

@@ -260,6 +260,15 @@ int CXMLGen::getDataSourceForLayer(WMSLayer *myWMSLayer) {
 
     return 0;
   }
+  // Is this a WMS returning current time
+  if (myWMSLayer->dataSource->dLayerType != CConfigReaderLayerTypeLiveUpdate) {
+#ifdef CXMLGEN_DEBUG
+    CDBDebug("Current time layer");
+#endif
+
+    myWMSLayer->title.copy(myWMSLayer->dataSource->cfgLayer->Title[0]->value.c_str());
+    return 0;
+  }
   CDBWarning("Unknown layer type");
   return 0;
 }
@@ -982,7 +991,8 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer 
             addErrorInXMLForMisconfiguredLayer(XMLDoc, layer);
           }
           if (layer->hasError == 0) {
-            XMLDoc->printconcat("<Layer queryable=\"%d\" opaque=\"1\" cascaded=\"%d\">\n", layer->isQuerable, layer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded ? 1 : 0);
+            XMLDoc->printconcat("<Layer queryable=\"%d\" opaque=\"1\" cascaded=\"%d\">\n", layer->isQuerable,
+                                layer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded && layer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate ? 1 : 0);
             XMLDoc->concat("<Name>");
             XMLDoc->concat(&layer->name);
             XMLDoc->concat("</Name>\n");
@@ -1362,7 +1372,8 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer 
             addErrorInXMLForMisconfiguredLayer(XMLDoc, layer);
           }
           if (layer->hasError == 0) {
-            XMLDoc->printconcat("<Layer queryable=\"%d\" opaque=\"1\" cascaded=\"%d\">\n", layer->isQuerable, layer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded ? 1 : 0);
+            XMLDoc->printconcat("<Layer queryable=\"%d\" opaque=\"1\" cascaded=\"%d\">\n", layer->isQuerable,
+                                layer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded && layer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate ? 1 : 0);
             XMLDoc->concat("<Name>");
             XMLDoc->concat(&layer->name);
             XMLDoc->concat("</Name>\n");

@@ -231,7 +231,7 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
       imageWarper.reprojToLatLon(geox, geoy);
 
       // Select final value based on solar zenith angle
-      result[j] = getDayTimeCategory(getSolarZenithAngle(geoy, geox, currentOffset));
+      result[j] = static_cast<float>(getDayTimeCategory(getSolarZenithAngle(geoy, geox, currentOffset)));
     }
   }
   return 0;
