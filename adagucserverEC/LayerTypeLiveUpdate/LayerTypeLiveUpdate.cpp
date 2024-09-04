@@ -14,8 +14,11 @@ int layerTypeLiveUpdateConfigureDimensionsInDataSource(CDataSource *dataSource) 
     requiredDim->value = "2020-01-02T00:00:00Z";
     dataSource->requiredDims.push_back(requiredDim);
   }
-  dataSource->addStep("", NULL);
-  dataSource->getCDFDims()->addDimension("none", "0", 0);
+
+  // // Add step to empty file
+  // dataSource->addStep("", NULL);
+  // dataSource->getCDFDims()->addDimension("none", "0", 0);
+
   return 0;
 }
 
