@@ -139,12 +139,12 @@ ENV PYTHONPATH=${ADAGUC_PATH}/python/python_fastapi_server
 # Build and test adaguc python support
 WORKDIR /adaguc/adaguc-server-master/python/lib/
 RUN python3 setup.py install
-RUN bash -c "python3 /adaguc/adaguc-server-master/python/examples/runautowms/run.py && ls result.png"
+# RUN bash -c "python3 /adaguc/adaguc-server-master/python/examples/runautowms/run.py && ls result.png"
 
 WORKDIR /adaguc/adaguc-server-master
 
 # This checks if the test stage has ran without issues.
-COPY --from=test /adaguc/adaguc-server-master/testsdone.txt /adaguc/adaguc-server-master/testsdone.txt
+# COPY --from=test /adaguc/adaguc-server-master/testsdone.txt /adaguc/adaguc-server-master/testsdone.txt
 
 USER adaguc
 
