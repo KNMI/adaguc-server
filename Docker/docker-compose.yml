@@ -59,6 +59,7 @@ services:
       - "ADAGUC_DATASET_DIR=/data/adaguc-datasets"
       - "ADAGUC_REDIS=redis://adaguc-redis:6379"
       - "ADAGUC_TRACE_TIMINGS=TRUE"
+      - "ADAGUC_FORK_SOCKET_PATH=adaguc.socket"
     env_file:
       - .env
     restart: unless-stopped
