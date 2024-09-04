@@ -49,7 +49,7 @@ class CGIRunner:
             process_output = ""
 
             client = socket.socket(socket.AF_UNIX)
-            client.connect("/tmp/adaguc.socke")
+            client.connect("/tmp/adaguc.socket")
             client.send(f"QUERY_STRING={url}".encode())
 
             process_output = bytearray()

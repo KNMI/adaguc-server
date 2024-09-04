@@ -41,6 +41,7 @@
 
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <stdio.h>
 
 DEF_ERRORMAIN();
 
@@ -148,9 +149,9 @@ int _main(int argc, char **argv, char **) {
   /* Initialize error functions */
   seterrormode(EXCEPTIONS_PLAINTEXT);
   setStatusCode(HTTP_STATUSCODE_200_OK);
-  setErrorFunction(serverLogFunctionCMDLine);
-  setWarningFunction(serverLogFunctionCMDLine);
-  setDebugFunction(serverLogFunctionCMDLine);
+  // setErrorFunction(serverLogFunctionCMDLine);
+  // setWarningFunction(serverLogFunctionCMDLine);
+  // setDebugFunction(serverLogFunctionCMDLine);
 
   int opt;
   int scanFlags = 0;
@@ -364,9 +365,9 @@ int _main(int argc, char **argv, char **) {
   }
 
   /* Process the OGC request */
-  setErrorFunction(serverErrorFunction);
-  setWarningFunction(serverWarningFunction);
-  setDebugFunction(serverDebugFunction);
+  // setErrorFunction(serverErrorFunction);
+  // setWarningFunction(serverWarningFunction);
+  // setDebugFunction(serverDebugFunction);
 
   traceTimingsCheckEnabled();
 
@@ -474,8 +475,6 @@ void handle_client(int client_socket, int argc, char **argv, char **envp) {
   int data_recv = recv(client_socket, recv_buf, recv_buf_len, 0);
   if (data_recv > 0) {
     if (strncmp(recv_buf, cmd_query, strlen(cmd_query)) == 0) {
-      printf("@@@ creating image in child?");
-      fflush(stdout);
       dup2(client_socket, STDOUT_FILENO);
       // dup2(client_socket, STDERR_FILENO);
 
