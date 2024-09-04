@@ -5,10 +5,22 @@
 #include <vector>
 #include "CXMLGen.h"
 
-std::string convertProjectionListToJsonString(std::vector<WMSLayer::Projection *> projectionList);
+int storeLayerMetadataInDb(WMSLayer *myWMSLayer, CT::string metadataKey, std::string metadataBlob);
+CT::string getLayerMetadataFromDb(WMSLayer *myWMSLayer, CT::string metadataKey);
 
-int storeProjectionList(WMSLayer *layer);
+int storeMyWMSLayerIntoMetadataDb(WMSLayer *myWMSLayer);
+int loadMyWMSLayerFromMetadataDb(WMSLayer *myWMSLayer);
 
-int getProjectionList(WMSLayer *layer);
+int storeLayerMetadataStructIntoMetadataDb(WMSLayer *layer);
+int loadLayerMetadataStructFromMetadataDb(WMSLayer *layer);
+
+int storeLayerProjectionAndExtentListIntoMetadataDb(WMSLayer *layer);
+int loadLayerProjectionAndExtentListFromMetadataDb(WMSLayer *layer);
+
+int storeLayerDimensionListIntoMetadataDb(WMSLayer *myWMSLayer);
+int loadLayerDimensionListFromMetadataDb(WMSLayer *layer);
+
+int storeLayerStyleListIntoMetadataDb(WMSLayer *myWMSLayer);
+int loadLayerStyleListFromMetadataDb(WMSLayer *layer);
 
 #endif

@@ -70,6 +70,11 @@ add_library(
     CDFObjectStore.h
     utils/LayerMetadataStore.h
     utils/LayerMetadataStore.cpp
+    utils/XMLGenUtils.h
+    utils/XMLGenUtils.cpp
+    utils/CXMLTemplates.h
+    Types/LayerMetadataType.h
+    Types/LayerMetadataType.cpp
     CDataPostProcessors/CDataPostProcessor_AddFeatures.cpp
     CDataPostProcessors/CDataPostProcessor_AddFeatures.h
     CDataPostProcessors/CDataPostProcessor_CDPDBZtoRR.cpp

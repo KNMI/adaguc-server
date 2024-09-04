@@ -97,8 +97,8 @@ public:
   /** First use setFile<type> as many times as you whish, second use addFilesToDataBase to make it final*/
   virtual int addFilesToDataBase() = 0;
 
-  virtual int storeLayerMetadata(const char *layertable, const char *metadataitem, const char *metadatablob) = 0;
-  virtual CT::string getLayerMetadata(const char *layertable, const char *metadataitem) = 0;
+  virtual int storeLayerMetadata(const char *datasetName, const char *layerName, const char *metadataKey, const char *metadatablob) = 0;
+  virtual CT::string getLayerMetadata(const char *datasetName, const char *layerName, const char *metadataKey) = 0;
 };
 
 #endif

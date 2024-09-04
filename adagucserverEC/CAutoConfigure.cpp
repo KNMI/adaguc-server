@@ -484,10 +484,11 @@ int CAutoConfigure::justLoadAFileHeader(CDataSource *dataSource) {
     return 0;
   }
 
-  CT::string foundFileName;
-
-  /* Use the file specified as header file */
-  foundFileName = dataSource->headerFileName.c_str();
+  CT::string foundFileName = dataSource->getFileName();
+  if (foundFileName.empty()) {
+    /* Use the file specified as header file */
+    foundFileName = dataSource->headerFileName.c_str();
+  }
   if (foundFileName.empty()) {
 
     /* Try to get a file from DB */

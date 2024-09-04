@@ -41,9 +41,9 @@ int layerTypeLiveUpdateRenderIntoDrawImage(CDrawImage *image, CServerParams *srv
 
 int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(WMSLayer *myWMSLayer) {
   if (myWMSLayer->dataSource->cfgLayer->Title.size() != 0) {
-    myWMSLayer->title.copy(myWMSLayer->dataSource->cfgLayer->Title[0]->value.c_str());
+    myWMSLayer->layerMetadata.title.copy(myWMSLayer->dataSource->cfgLayer->Title[0]->value.c_str());
   } else {
-    myWMSLayer->title.copy(myWMSLayer->dataSource->cfgLayer->Name[0]->value.c_str());
+    myWMSLayer->layerMetadata.title.copy(myWMSLayer->dataSource->cfgLayer->Name[0]->value.c_str());
   }
   CTime timeInstance;
   timeInstance.init("seconds since 1970", "standard");
@@ -54,8 +54,8 @@ int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(WMSLayer *myWMSLayer)
   CT::string startTime = timeInstance.dateToISOString(timeInstance.offsetToDate(startTimeOffset));
   CT::string stopTime = timeInstance.dateToISOString(timeInstance.offsetToDate(stopTimeOffset));
   CT::string resTime = "PT1S";
-  WMSLayer::Dim *dim = new WMSLayer::Dim();
-  myWMSLayer->dimList.push_back(dim);
+  LayerMetadataDim *dim = new LayerMetadataDim();
+  myWMSLayer->layerMetadata.dimList.push_back(dim);
   dim->name.copy("time");
   dim->units.copy("ISO8601");
   dim->values.copy(startTime + "/" + stopTime + "/" + resTime);

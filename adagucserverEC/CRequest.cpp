@@ -143,6 +143,7 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
         value0Cap.toUpperCaseSelf();
         if (value0Cap.equals("DATASET")) {
           if (srvParam->datasetLocation.empty()) {
+
             srvParam->datasetLocation.copy(values[1].c_str());
             status = CAutoResource::configureDataset(srvParam, false);
             if (status != 0) {
@@ -700,12 +701,6 @@ int CRequest::getDocFromDocCache(CSimpleStore *simpleStore, CT::string *docName,
 
 int CRequest::generateOGCGetCapabilities(CT::string *XMLdocument) {
   CXMLGen XMLGen;
-  // Set WMSLayers:
-  srvParam->WMSLayers = new CT::string[srvParam->cfg->Layer.size()];
-  for (size_t j = 0; j < srvParam->cfg->Layer.size(); j++) {
-    srvParam->makeUniqueLayerName(&srvParam->WMSLayers[j], srvParam->cfg->Layer[j]);
-    srvParam->WMSLayers[j].count = srvParam->cfg->Layer.size();
-  }
   return XMLGen.OGCGetCapabilities(srvParam, XMLdocument);
 }
 

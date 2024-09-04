@@ -95,12 +95,6 @@
 // WCS Versions
 #define WCS_VERSION_1_0 1
 
-// XMLGen templates
-#define WMS_1_0_0_HEADERFILE "./XMLTemplates/WMS_1.0.0_GetCapabilities_Header.dat"
-#define WMS_1_1_1_HEADERFILE "./XMLTemplates/WMS_1.1.1_GetCapabilities_Header.dat"
-#define WMS_1_3_0_HEADERFILE "./XMLTemplates/WMS_1.3.0_GetCapabilities_Header.dat"
-#define WCS_1_0_HEADERFILE "./XMLTemplates/WCS_1.0.0_GetCapabilities_Header.dat"
-
 #define DEFAULT_FONT "./fonts/FreeSans.ttf"
 
 // CNetCDFReader opening options

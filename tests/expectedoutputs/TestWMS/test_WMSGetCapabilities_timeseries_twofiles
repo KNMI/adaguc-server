@@ -15,7 +15,7 @@
         <KeywordList>
             <Keyword>view</Keyword>
             <Keyword>infoMapAccessService</Keyword>
-            <Keyword>ADAGUCServer version 2.13.7, of Nov  1 2023 11:45:57 </Keyword>
+            <Keyword>ADAGUCServer version 2.27.0, of Sep  4 2024 12:10:25 </Keyword>
         </KeywordList>
         <OnlineResource xlink:type="simple" xlink:href="SERVICE=WMS&amp;"/>
         <ContactInformation>
@@ -98,7 +98,7 @@
 <BoundingBox CRS="EPSG:4326" minx="89.511108" miny="-180.494446" maxx="-90.488892" maxy="179.505554" />
 <Layer queryable="1" opaque="1" cascaded="0">
 <Name>data</Name>
-<Title>data</Title>
+<Title>data (data)</Title>
 <EX_GeographicBoundingBox>
   <westBoundLongitude>-180.494446</westBoundLongitude>
   <eastBoundLongitude>179.505554</eastBoundLongitude>

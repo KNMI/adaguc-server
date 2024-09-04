@@ -1081,7 +1081,7 @@ int CDBAdapterPostgreSQL::addFilesToDataBase() {
   return 0;
 }
 
-int CDBAdapterPostgreSQL::storeLayerMetadata(const char *layertable, const char *metadataitem, const char *metadatablob) {
+int CDBAdapterPostgreSQL::storeLayerMetadata(const char *datasetName, const char *layerName, const char *metadataKey, const char *metadataBlob) {
 #ifdef MEASURETIME
   StopWatch_Stop(">CDBAdapterPostgreSQL::storeLayerMetadata");
 #endif
@@ -1091,15 +1091,16 @@ int CDBAdapterPostgreSQL::storeLayerMetadata(const char *layertable, const char 
   }
 
   CT::string query;
-  CT::string tableColumns("id varchar (255) PRIMARY KEY, blob JSONB");
+  CT::string tableColumns("datasetname varchar (255) ,layername varchar (255), metadatakey varchar (255), blob JSONB, PRIMARY KEY (datasetname, layername, metadatakey)");
 
-  int status = dataBaseConnection->checkTable(layertable, tableColumns.c_str());
+  int status = dataBaseConnection->checkTable("metadata", tableColumns.c_str());
   if (status == 1) {
     CDBError("\nFAIL: Table autoconfigure_dimensions could not be created: %s", tableColumns.c_str());
     throw(__LINE__);
   }
 
-  query.print("INSERT INTO %s values (E'%s', E'%s') ON CONFLICT (id) DO UPDATE SET blob = excluded.blob;", layertable, metadataitem, metadatablob);
+  query.print("INSERT INTO metadata values (E'%s',E'%s', E'%s', E'%s') ON CONFLICT (datasetname, layername, metadatakey) DO UPDATE SET blob = excluded.blob;", datasetName, layerName, metadataKey,
+              metadataBlob);
   status = dataBaseConnection->query(query.c_str());
   if (status != 0) {
     CDBError("Unable to insert records: \"%s\"", query.c_str());
@@ -1111,33 +1112,45 @@ int CDBAdapterPostgreSQL::storeLayerMetadata(const char *layertable, const char 
   return 0;
 }
 
-CT::string CDBAdapterPostgreSQL::getLayerMetadata(const char *layertable, const char *metadataitem) {
+CT::string CDBAdapterPostgreSQL::getLayerMetadata(const char *datasetName, const char *layerName, const char *metadataKey) {
 #ifdef MEASURETIME
   StopWatch_Stop(">CDBAdapterPostgreSQL::getLayerMetadata");
 #endif
-  CPGSQLDB *dataBaseConnection = getDataBaseConnection();
-  if (dataBaseConnection == NULL) {
-    CDBError("No database connection");
-    throw(__LINE__);
+
+  if (this->layerMetaDataStore == nullptr) {
+    CDBDebug("Need to query layer metadata for %s/%s/%s", datasetName, layerName, metadataKey);
+    CPGSQLDB *dataBaseConnection = getDataBaseConnection();
+    if (dataBaseConnection == NULL) {
+      CDBError("No database connection");
+      throw(__LINE__);
+    }
+
+    CT::string query;
+    query.print("SELECT layername, metadatakey, blob from metadata where datasetname = '%s';", datasetName);
+    this->layerMetaDataStore = dataBaseConnection->queryToStore(query.c_str());
+    if (layerMetaDataStore == nullptr) {
+      CDBDebug("Unable query: \"%s\"", query.c_str());
+      throw(__LINE__);
+    }
+    if (layerMetaDataStore->size() == 0) {
+      CDBDebug("No results \"%s\"", query.c_str());
+      throw(__LINE__);
+    }
+  } else {
+    // CDBDebug("Re-using layer metadata");
   }
 
-  CT::string query;
-  query.print("SELECT blob from %s where id = '%s';", layertable, metadataitem);
-  auto store = dataBaseConnection->queryToStore(query.c_str());
-  if (store == nullptr) {
-    CDBError("Unable query: \"%s\"", query.c_str());
-    throw(__LINE__);
+  auto records = layerMetaDataStore->getRecords();
+  for (auto record : records) {
+    if (record->get("layername")->equals(layerName) && record->get("metadatakey")->equals(metadataKey)) {
+      return record->get("blob");
+    }
   }
-  if (store->size() == 0) {
-    CDBError("No results \"%s\"", query.c_str());
-    throw(__LINE__);
-  }
-
-  CT::string result = store->getRecord(0)->get("blob")->c_str();
   // CDBDebug(store->getRecord(0)->get("blob")->c_str());
 
 #ifdef MEASURETIME
   StopWatch_Stop("<CDBAdapterPostgreSQL::getLayerMetadata");
 #endif
-  return result;
+  CDBDebug("No metadata entry found for %s %s %s", datasetName, layerName, metadataKey);
+  throw __LINE__;
 }

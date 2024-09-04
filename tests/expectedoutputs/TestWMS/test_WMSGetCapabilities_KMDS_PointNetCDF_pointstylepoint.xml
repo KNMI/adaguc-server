@@ -15,7 +15,7 @@
         <KeywordList>
             <Keyword>view</Keyword>
             <Keyword>infoMapAccessService</Keyword>
-            <Keyword>ADAGUCServer version 2.23.0, of Jul  9 2024 12:13:41 </Keyword>
+            <Keyword>ADAGUCServer version 2.27.0, of Sep  4 2024 12:10:25 </Keyword>
         </KeywordList>
         <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.testKMDS_PointNetCDF&amp;SERVICE=WMS&amp;"/>
         <ContactInformation>
@@ -94,10 +94,60 @@
 <BoundingBox CRS="EPSG:40000" minx="-9555333.229813" miny="-10285561.445145" maxx="1280134.942825" maxy="-1473840.584239" />
 <BoundingBox CRS="EPSG:900913" minx="-7600430.977505" miny="1360506.839359" maxx="795858.888223" maxy="7439724.721958" />
 <BoundingBox CRS="EPSG:3067" minx="-13588402.263697" miny="1423498.626368" maxx="-747816.881762" maxy="12453122.100930" />
-
-<!-- Note: Error: Layer [stationname] is misconfigured -->
-
-<!-- Note: Error: Layer [height] is misconfigured -->
+<Layer queryable="1" opaque="1" cascaded="0">
+<Name>stationname</Name>
+<Title>stationsnaam</Title>
+<Abstract>stationnaam</Abstract>
+<EX_GeographicBoundingBox>
+  <westBoundLongitude>-68.275833</westBoundLongitude>
+  <eastBoundLongitude>7.149322</eastBoundLongitude>
+  <southBoundLatitude>12.130000</southBoundLatitude>
+  <northBoundLatitude>55.399166</northBoundLatitude>
+</EX_GeographicBoundingBox><BoundingBox CRS="EPSG:3411" minx="-3942117.046146" miny="-9975996.132113" maxx="7877215.337643" maxy="-2369697.552660" />
+<BoundingBox CRS="EPSG:3412" minx="-36574088.915720" miny="5641285.215970" maxx="4899857.294031" maxy="39369117.726749" />
+<BoundingBox CRS="EPSG:3575" minx="-7844965.759495" miny="-8002206.437441" maxx="-189084.750364" maxy="-772564.105215" />
+<BoundingBox CRS="EPSG:3857" minx="-7600430.977505" miny="1360506.839359" maxx="795858.888223" maxy="7439724.721958" />
+<BoundingBox CRS="EPSG:4258" minx="12.130000" miny="-68.275833" maxx="55.399166" maxy="7.149322" />
+<BoundingBox CRS="EPSG:4326" minx="12.130000" miny="-68.275833" maxx="55.399166" maxy="7.149322" />
+<BoundingBox CRS="CRS:84" minx="12.130000" miny="-68.275833" maxx="55.399166" maxy="7.149322" />
+<BoundingBox CRS="EPSG:25831" minx="-9906758.676129" miny="1341055.638469" maxx="951836.432640" maxy="8605856.308089" />
+<BoundingBox CRS="EPSG:25832" minx="-11426227.343341" miny="1341612.511753" maxx="382800.244818" maxy="9034799.679759" />
+<BoundingBox CRS="EPSG:28992" minx="-8805606.109966" miny="-4164572.069133" maxx="372143.463211" maxy="3233625.747402" />
+<BoundingBox CRS="EPSG:7399" minx="-6748084.942175" miny="1495513.911739" maxx="706607.743114" maxy="6426594.553880" />
+<BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
+<BoundingBox CRS="EPSG:54030" minx="-6408021.286199" miny="1297326.829390" maxx="670998.883042" maxy="5878649.483190" />
+<BoundingBox CRS="EPSG:32661" minx="-7498001.230434" miny="-8223848.076474" maxx="3272454.133168" maxy="535002.459267" />
+<BoundingBox CRS="EPSG:40000" minx="-9555333.229813" miny="-10285561.445145" maxx="1280134.942825" maxy="-1473840.584239" />
+<BoundingBox CRS="EPSG:900913" minx="-7600430.977505" miny="1360506.839359" maxx="795858.888223" maxy="7439724.721958" />
+<BoundingBox CRS="EPSG:3067" minx="-13588402.263697" miny="1423498.626368" maxx="-747816.881762" maxy="12453122.100930" />
+   <Style>    <Name>stationname/point</Name>    <Title>Richter magnitude scale</Title>    <Abstract>With discrete colors</Abstract>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.testKMDS_PointNetCDF&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=stationname&amp;format=image/png&amp;STYLE=stationname/point"/>    </LegendURL>  </Style></Layer>
+<Layer queryable="1" opaque="1" cascaded="0">
+<Name>height</Name>
+<Title>stationshoogte [m]</Title>
+<Abstract>stationshoogte [m]</Abstract>
+<EX_GeographicBoundingBox>
+  <westBoundLongitude>-68.275833</westBoundLongitude>
+  <eastBoundLongitude>7.149322</eastBoundLongitude>
+  <southBoundLatitude>12.130000</southBoundLatitude>
+  <northBoundLatitude>55.399166</northBoundLatitude>
+</EX_GeographicBoundingBox><BoundingBox CRS="EPSG:3411" minx="-3942117.046146" miny="-9975996.132113" maxx="7877215.337643" maxy="-2369697.552660" />
+<BoundingBox CRS="EPSG:3412" minx="-36574088.915720" miny="5641285.215970" maxx="4899857.294031" maxy="39369117.726749" />
+<BoundingBox CRS="EPSG:3575" minx="-7844965.759495" miny="-8002206.437441" maxx="-189084.750364" maxy="-772564.105215" />
+<BoundingBox CRS="EPSG:3857" minx="-7600430.977505" miny="1360506.839359" maxx="795858.888223" maxy="7439724.721958" />
+<BoundingBox CRS="EPSG:4258" minx="12.130000" miny="-68.275833" maxx="55.399166" maxy="7.149322" />
+<BoundingBox CRS="EPSG:4326" minx="12.130000" miny="-68.275833" maxx="55.399166" maxy="7.149322" />
+<BoundingBox CRS="CRS:84" minx="12.130000" miny="-68.275833" maxx="55.399166" maxy="7.149322" />
+<BoundingBox CRS="EPSG:25831" minx="-9906758.676129" miny="1341055.638469" maxx="951836.432640" maxy="8605856.308089" />
+<BoundingBox CRS="EPSG:25832" minx="-11426227.343341" miny="1341612.511753" maxx="382800.244818" maxy="9034799.679759" />
+<BoundingBox CRS="EPSG:28992" minx="-8805606.109966" miny="-4164572.069133" maxx="372143.463211" maxy="3233625.747402" />
+<BoundingBox CRS="EPSG:7399" minx="-6748084.942175" miny="1495513.911739" maxx="706607.743114" maxy="6426594.553880" />
+<BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
+<BoundingBox CRS="EPSG:54030" minx="-6408021.286199" miny="1297326.829390" maxx="670998.883042" maxy="5878649.483190" />
+<BoundingBox CRS="EPSG:32661" minx="-7498001.230434" miny="-8223848.076474" maxx="3272454.133168" maxy="535002.459267" />
+<BoundingBox CRS="EPSG:40000" minx="-9555333.229813" miny="-10285561.445145" maxx="1280134.942825" maxy="-1473840.584239" />
+<BoundingBox CRS="EPSG:900913" minx="-7600430.977505" miny="1360506.839359" maxx="795858.888223" maxy="7439724.721958" />
+<BoundingBox CRS="EPSG:3067" minx="-13588402.263697" miny="1423498.626368" maxx="-747816.881762" maxy="12453122.100930" />
+   <Style>    <Name>height/point</Name>    <Title>Richter magnitude scale</Title>    <Abstract>With discrete colors</Abstract>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.testKMDS_PointNetCDF&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=height&amp;format=image/png&amp;STYLE=height/point"/>    </LegendURL>  </Style></Layer>
 <Layer queryable="1" opaque="1" cascaded="0">
 <Name>dd</Name>
 <Title>windrichting [graden]</Title>
