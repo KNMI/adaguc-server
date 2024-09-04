@@ -76,7 +76,7 @@ WORKDIR /adaguc/adaguc-server-master
 
 # Upgrade pip and install python requirements.txt
 COPY requirements.txt /adaguc/adaguc-server-master/requirements.txt
-RUN pip3 install --no-cache-dir --upgrade pip pip-tools \
+RUN pip3 install --no-cache-dir --upgrade pip pip-tools setuptools \
     && pip install --no-cache-dir -r requirements.txt
 
 # Install compiled adaguc binaries from stage one
