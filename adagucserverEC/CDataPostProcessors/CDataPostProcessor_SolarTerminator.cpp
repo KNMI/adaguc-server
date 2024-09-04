@@ -37,8 +37,6 @@ void CDPPSolarTerminator::print_trace() {
   return;
 }
 
-int CDPPSolarTerminator::terminator(double geox, double geoy, double epochtime) {}
-
 int CDPPSolarTerminator::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
   if (proc->attr.algorithm.equals("solarterminator")) {
     if (dataSource->getNumDataObjects() < 1 && mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
@@ -188,40 +186,34 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
     CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
     CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
 
-    // Get the echotoppen variable from the datasource
-    CDF::Variable *echoToppenVar = dataSource->getDataObject(0)->cdfVariable;
-
     // Calculate the gridsize, allocate data and fill the data with a fillvalue
     size_t fieldSize = dimX->length * dimY->length;
-    echoToppenVar->setSize(fieldSize);
-    CDF::allocateData(echoToppenVar->getType(), &(echoToppenVar->data), fieldSize);
-    CDF::fill(echoToppenVar->data, echoToppenVar->getType(), fillValue[0], fieldSize);
+    newDataObject->cdfVariable->setSize(fieldSize);
+    CDF::allocateData(newDataObject->cdfVariable->getType(), &(newDataObject->cdfVariable->data), fieldSize);
+    CDF::fill(newDataObject->cdfVariable->data, newDataObject->cdfVariable->getType(), fillValue[0], fieldSize);
 
     // Calculate cellsize and offset of the echo toppen (ET) 2D virtual grid, using the same grid as the screenspace
-    double cellSizeETX = (dataSource->srvParams->Geo->dfBBOX[2] - dataSource->srvParams->Geo->dfBBOX[0]) / double(dataSource->dWidth);
-    double cellSizeETY = (dataSource->srvParams->Geo->dfBBOX[3] - dataSource->srvParams->Geo->dfBBOX[1]) / double(dataSource->dHeight);
-    double offsetETX = dataSource->srvParams->Geo->dfBBOX[0];
-    double offsetETY = dataSource->srvParams->Geo->dfBBOX[1];
+    double cellSizeX = (dataSource->srvParams->Geo->dfBBOX[2] - dataSource->srvParams->Geo->dfBBOX[0]) / double(dataSource->dWidth);
+    double cellSizeY = (dataSource->srvParams->Geo->dfBBOX[3] - dataSource->srvParams->Geo->dfBBOX[1]) / double(dataSource->dHeight);
+    double offsetX = dataSource->srvParams->Geo->dfBBOX[0];
+    double offsetY = dataSource->srvParams->Geo->dfBBOX[1];
 
     // Fill in the X and Y dimensions with the array of coordinates
     for (size_t j = 0; j < dimX->length; j++) {
-      double x = offsetETX + double(j) * cellSizeETX + cellSizeETX / 2;
+      double x = offsetX + double(j) * cellSizeX + cellSizeX / 2;
       ((double *)varX->data)[j] = x;
     }
     for (size_t j = 0; j < dimY->length; j++) {
-      double y = offsetETY + double(j) * cellSizeETY + cellSizeETY / 2;
+      double y = offsetY + double(j) * cellSizeY + cellSizeY / 2;
       ((double *)varY->data)[j] = y;
     }
   }
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
     CDBDebug("CDATAPOSTPROCESSOR_RUNAFTERREADING::Applying SOLARTERMINATOR");
-    CDBDebug("Applying SolarTerminator 1");
     size_t l = (size_t)dataSource->dHeight * (size_t)dataSource->dWidth;
     CDF::allocateData(dataSource->getDataObject(0)->cdfVariable->getType(), &dataSource->getDataObject(0)->cdfVariable->data, l);
 
     float *result = (float *)dataSource->getDataObject(0)->cdfVariable->data;
-
-    CDBDebug("Applying SolarTerminator 2");
 
     CImageWarper imageWarper;
     int status = imageWarper.initreproj(dataSource, dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
@@ -241,14 +233,10 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
       double geox = (lonRange / dataSource->dWidth) * px + dataSource->dfBBOX[0];
       double geoy = (latRange / dataSource->dHeight) * py + dataSource->dfBBOX[3];
 
-      // Transform EPG:3857 coordinates into latlon (can be done with library)
-      // NOTE: Use proj library to use Amersfoort
-      // Inspiration: https://github.com/KNMI/adaguc-server/blob/master/adagucserverEC/CConvertADAGUCPoint.cpp#L841
-      // double lat = (std::atan(std::sinh(geoy / 20037508.34 * M_PI)) * 180.0) / M_PI;
-      // double lon = (geox / 20037508.34) * 180.0;
+      // Transform EPG:3857 coordinates into latlon
       imageWarper.reprojToLatLon(geox, geoy);
 
-      // if not using lat/lon, reproject
+      // Select final value based on solar zenith angle
       result[j] = getDayTimeCategory(getSolarZenithAngle(geoy, geox, currentOffset));
     }
   }
