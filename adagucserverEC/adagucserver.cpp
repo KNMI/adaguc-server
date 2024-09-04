@@ -34,12 +34,18 @@
 #include "ProjCache.h"
 #include "Types/ProjectionStore.h"
 #include <cdfVariableCache.h>
+#include "fork_server.h"
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <stdio.h>
+#include <signal.h>
+#include <unistd.h>
 
 int processQueryStringRequest() {
   /* Process the OGC request */
-  setErrorFunction(serverErrorFunction);
-  setWarningFunction(serverWarningFunction);
-  setDebugFunction(serverDebugFunction);
+  // setErrorFunction(serverErrorFunction);
+  // setWarningFunction(serverWarningFunction);
+  // setDebugFunction(serverDebugFunction);
   CRequest request;
   if (setCRequestConfigFromEnvironment(&request) != 0) {
     CDBError("Unable to read configuration file.");
@@ -49,7 +55,7 @@ int processQueryStringRequest() {
   return getStatusCode();
 }
 
-int main(int argc, char **argv, char **envp) {
+int run_adaguc_once(int argc, char **argv, char **envp, bool is_forked) {
   traceTimingsCheckEnabled();
   checkLogSettings();
 
@@ -77,4 +83,19 @@ int main(int argc, char **argv, char **envp) {
   varCacheClear();
 
   return status;
+}
+
+int main(int argc, char **argv, char **envp) {
+  // If these lines are commented out, the calls the /edr/collections/instances/<my-instance> fail to return data
+  // because the call to `request=getreferencetimes` does not contain useful output
+  setvbuf(stdout, NULL, _IONBF, 0); // turn off buffering
+  setvbuf(stderr, NULL, _IONBF, 0); // turn off buffering
+
+  const char *ADAGUC_FORK_SOCKET_PATH = getenv("ADAGUC_FORK_SOCKET_PATH");
+  if (ADAGUC_FORK_SOCKET_PATH != NULL) {
+    return run_as_fork_service(run_adaguc_once, argc, argv, envp);
+  } else {
+    // normal flow without unix socket server/fork
+    return run_adaguc_once(argc, argv, envp, false);
+  }
 }
