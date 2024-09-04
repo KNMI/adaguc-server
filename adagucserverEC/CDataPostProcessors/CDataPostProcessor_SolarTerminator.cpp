@@ -11,6 +11,8 @@
 #include <cxxabi.h>
 #include <dlfcn.h>
 
+#include <time.h>
+
 /************************/
 /*      CDPPSolarTerminator  */
 /************************/
@@ -53,15 +55,33 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
   return CDPPSolarTerminator::execute(proc, dataSource, mode, 0);
 }
 
+time_t strToEpochTimestamp(const char *timestampStr) {
+  struct tm tmStruct;
+  strptime(timestampStr, "%Y-%m-%dT%H:%M:%SZ", &tmStruct);
+  return mktime(&tmStruct);
+}
+
 int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode, double timestamp) {
   if ((isApplicable(proc, dataSource, mode) & mode) == false) {
     return -1;
   }
+  CDBDebug("Value of requested dim 0 is: %s", dataSource->srvParams->requestDims[0]->value.c_str());
+
+  CT::string timestampStr = dataSource->srvParams->requestDims[0]->value.c_str(); // dataSource->getDimensionValueForNameAndStep("time", dataSource->getCurrentTimeStep());
+  // for (size_t k = 0; k < srvParam->requestDims.size(); k++) {
+  //   url.printconcat("&%s=%s", srvParam->requestDims[k]->name.c_str(), srvParam->requestDims[k]->value.c_str());
+  // }
+
+  time_t timestampEpoch = strToEpochTimestamp(timestampStr);
+  CDBDebug("TimestampEpoch is: %f, compared to original timestamp: %f", timestamp, static_cast<double>(timestampEpoch));
+  CDBDebug("Timestampstring is: %s", timestampStr.c_str());
+  double currentOffset = static_cast<double>(timestampEpoch); // static_cast<double>(timestampEpoch);
+
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
-    CT::string newVariableName = proc->attr.name;
-    if (newVariableName.empty()) {
-      newVariableName = "SolT";
-    }
+    CDBDebug("Proc attr name %s", proc->attr.name);
+    CT::string newVariableName = "SolT";
+    // proc->attr.name;
+
     if (dataSource->getDataObject(0)->cdfVariable->name.equals(newVariableName.c_str())) return 0;
 
     CDataSource::DataObject *newDataObject = dataSource->getDataObject(0);
@@ -148,7 +168,6 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
       epochCTime.init("seconds since 1970-01-01 0:0:0", NULL);
       CDF::allocateData(CDF_DOUBLE, &varTime->data, dimTime->length);
 
-      double currentOffset = timestamp;
       for (int off = 0; off < 10; off++) {
         // Every 10 minutes for a day
         double timestep = epochCTime.quantizeTimeToISO8601(currentOffset - off * 60 * 10, "PT30M", "low");
@@ -234,32 +253,6 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
 
     CDBDebug("Applying SolarTerminator 2");
 
-    // Get the current time point
-    // std::tm now = {};  // Initialize with the desired date
-    // now.tm_year = 100; // Year since 1900 (2022 - 1900)
-    // now.tm_mon = 2;    // Month (July is 6)
-    // now.tm_mday = 29;  // Day of the month
-    // now.tm_hour = 12;  // Day of the month
-
-    // std::time_t time = std::mktime(&now);
-    // std::chrono::time_point<std::chrono::system_clock> timestamp = std::chrono::system_clock::from_time_t(time);
-
-    // std::time_t current_time = std::chrono::system_clock::to_time_t(now);
-    // double timestamp = static_cast<double>(current_time);
-    // get the current time
-    // const auto now = std::chrono::system_clock::now();
-
-    // transform the time into a duration since the epoch
-    // const auto epoch = now.time_since_epoch();
-
-    // cast the duration into seconds
-    // const auto seconds = std::chrono::duration_cast<std::chrono::seconds>(epoch);
-
-    // return the number of seconds
-    // return seconds.count();
-
-    double current_time = timestamp; // 1689270178; // static_cast<double>(seconds.count());
-
     CImageWarper imageWarper;
     int status = imageWarper.initreproj(dataSource, dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
     if (status != 0) {
@@ -286,7 +279,7 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
       imageWarper.reprojToLatLon(geox, geoy);
 
       // if not using lat/lon, reproject
-      result[j] = getDayTimeCategory(getSolarZenithAngle(geoy, geox, current_time));
+      result[j] = getDayTimeCategory(getSolarZenithAngle(geoy, geox, currentOffset));
     }
   }
   return 0;
