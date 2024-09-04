@@ -259,6 +259,8 @@ add_library(
     CImageOperators/drawContour.cpp
     write_png.cpp
     write_png.h
+    fork_server.h
+    fork_server.cpp
 )
 
 target_include_directories(adagucserverEC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${Cairo_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIRS} ${PostgreSQL_INCLUDE_DIRS} ${GDAL_INCLUDE_DIRS} ${PROJ_INCLUDE_DIR})
