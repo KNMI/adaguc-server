@@ -34,12 +34,18 @@
 #include "ProjCache.h"
 #include "Types/ProjectionStore.h"
 #include <cdfVariableCache.h>
+#include "fork_server.h"
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <stdio.h>
+#include <signal.h>
+#include <unistd.h>
 
 int processQueryStringRequest() {
   /* Process the OGC request */
-  setErrorFunction(serverErrorFunction);
-  setWarningFunction(serverWarningFunction);
-  setDebugFunction(serverDebugFunction);
+  // setErrorFunction(serverErrorFunction);
+  // setWarningFunction(serverWarningFunction);
+  // setDebugFunction(serverDebugFunction);
   CRequest request;
   if (setCRequestConfigFromEnvironment(&request) != 0) {
     CDBError("Unable to read configuration file.");
@@ -49,7 +55,7 @@ int processQueryStringRequest() {
   return getStatusCode();
 }
 
-int main(int argc, char **argv, char **envp) {
+int do_work(int argc, char **argv, char **envp) {
   traceTimingsCheckEnabled();
   checkLogSettings();
 
@@ -78,4 +84,17 @@ int main(int argc, char **argv, char **envp) {
   varCacheClear();
 
   return status;
+}
+
+int main(int argc, char **argv, char **envp) {
+  setvbuf(stdout, NULL, _IONBF, 0); // turn off buffering
+  setvbuf(stderr, NULL, _IONBF, 0); // turn off buffering
+
+  const char *ADAGUC_FORK = getenv("ADAGUC_FORK");
+  if (ADAGUC_FORK != NULL) {
+    return run_server(do_work, argc, argv, envp);
+  } else {
+    // normal flow without unix socket server/fork
+    return do_work(argc, argv, envp);
+  }
 }

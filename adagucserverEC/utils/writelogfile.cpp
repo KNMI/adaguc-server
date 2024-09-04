@@ -32,6 +32,7 @@
 #include <string>
 #include <CTString.h>
 #include <CServerError.h>
+#include <unistd.h>
 
 FILE *pLogDebugFile = NULL;
 enum LogBufferMode { LogBufferMode_TRUE, LogBufferMode_FALSE, LogBufferMode_DISABLELOGGING };
@@ -92,6 +93,8 @@ void closeLogFile() {
     fclose(pLogDebugFile);
     pLogDebugFile = NULL;
   }
+  close(1);
+  close(2);
 }
 
 void logBufferCheckMode() {

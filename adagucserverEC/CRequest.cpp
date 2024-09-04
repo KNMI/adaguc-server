@@ -468,6 +468,9 @@ int CRequest::process_wms_getcap_request() {
     printf("%s", XMLdocument.c_str());
   }
 
+  fflush(stdout);
+  fflush(stderr);
+
   return 0;
 }
 
