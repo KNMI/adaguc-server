@@ -87,9 +87,20 @@ int populateMyWMSLayerStruct(WMSLayer *myWMSLayer, bool readFromDB) {
     return 1;
   }
 
+  std::map<std::string, LayerMetadataProjection *> map;
+
+  for (auto p : myWMSLayer->layerMetadata.projectionList) {
+    map[p->name.c_str()] = p;
+  }
+  myWMSLayer->layerMetadata.projectionList.clear();
+  for (auto p : map) {
+    myWMSLayer->layerMetadata.projectionList.push_back(p.second);
+  }
+
   std::sort(myWMSLayer->layerMetadata.projectionList.begin(), myWMSLayer->layerMetadata.projectionList.end(), compareProjection);
   std::sort(myWMSLayer->layerMetadata.dimList.begin(), myWMSLayer->layerMetadata.dimList.end(), compareDim);
   std::sort(myWMSLayer->layerMetadata.styleList.begin(), myWMSLayer->layerMetadata.styleList.end(), compareStyle);
+
   return 0;
 }
 
