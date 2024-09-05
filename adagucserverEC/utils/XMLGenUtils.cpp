@@ -4,8 +4,52 @@
 #include <CDBStore.h>
 #include <CDBFactory.h>
 #include <LayerTypeLiveUpdate/LayerTypeLiveUpdate.h>
+#include "LayerUtils.h"
 
 int populateMyWMSLayerStruct(WMSLayer *myWMSLayer) {
+  // Make the layer name
+  CT::string layerUniqueName;
+  if (makeUniqueLayerName(&layerUniqueName, myWMSLayer->layer) != 0) {
+    myWMSLayer->hasError = true;
+    return 1;
+  }
+  myWMSLayer->layerMetadata.name.copy(&layerUniqueName);
+
+  // Create and datasource
+  if (myWMSLayer->dataSource == NULL) {
+    myWMSLayer->dataSource = new CDataSource();
+    if (myWMSLayer->dataSource->setCFGLayer(myWMSLayer->srvParams, myWMSLayer->srvParams->configObj->Configuration[0], myWMSLayer->layer, myWMSLayer->layerMetadata.name.c_str(), -1) != 0) {
+      return 1;
+    }
+  }
+
+  // Make the group
+  CT::string layerGroup = "";
+  if (myWMSLayer->layer->Group.size() > 0) {
+    if (myWMSLayer->layer->Group[0]->attr.value.empty() == false) {
+      layerGroup.copy(myWMSLayer->layer->Group[0]->attr.value.c_str());
+    }
+  }
+  myWMSLayer->layerMetadata.group.copy(&layerGroup);
+
+  // Check if this layer is querable
+  int datasetRestriction = CServerParams::checkDataRestriction();
+  if ((datasetRestriction & ALLOW_GFI)) {
+    myWMSLayer->layerMetadata.isQueryable = 1;
+  }
+
+  // Get Abstract
+  if (myWMSLayer->dataSource->cfgLayer->Abstract.size() > 0) {
+    myWMSLayer->layerMetadata.abstract = myWMSLayer->dataSource->cfgLayer->Abstract[0]->value;
+  }
+
+  // Fill in Layer title, with fallback to Name (later this can be set based on metadata or info from the file)
+  if (myWMSLayer->dataSource->cfgLayer->Title.size() != 0) {
+    myWMSLayer->layerMetadata.title.copy(myWMSLayer->dataSource->cfgLayer->Title[0]->value.c_str());
+  } else {
+    myWMSLayer->layerMetadata.title.copy(myWMSLayer->dataSource->cfgLayer->Name[0]->value.c_str());
+  }
+
   // Get a default file name for this layer to obtain some information
   int status = getFileNameForLayer(myWMSLayer);
   if (status != 0) {

@@ -73,6 +73,8 @@ add_library(
     utils/XMLGenUtils.h
     utils/XMLGenUtils.cpp
     utils/CXMLTemplates.h
+    utils/LayerUtils.h
+    utils/LayerUtils.cpp
     Types/LayerMetadataType.h
     Types/LayerMetadataType.cpp
     CDataPostProcessors/CDataPostProcessor_AddFeatures.cpp

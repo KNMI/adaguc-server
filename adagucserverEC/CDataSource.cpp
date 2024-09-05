@@ -26,6 +26,7 @@
 #include "CDataSource.h"
 #include "CDBFileScanner.h"
 #include "CConvertGeoJSON.h"
+#include "utils/LayerUtils.h"
 const char *CDataSource::className = "CDataSource";
 
 // #define CDATASOURCE_DEBUG
@@ -368,7 +369,7 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Conf
   // Set the layername
   CT::string layerUniqueName;
   if (_layerName == NULL) {
-    if (srvParams->makeUniqueLayerName(&layerUniqueName, cfgLayer) != 0) layerUniqueName = "undefined";
+    if (makeUniqueLayerName(&layerUniqueName, cfgLayer) != 0) layerUniqueName = "undefined";
     _layerName = layerUniqueName.c_str();
   }
 

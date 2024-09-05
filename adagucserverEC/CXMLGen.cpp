@@ -33,6 +33,7 @@
 #include "utils/LayerMetadataStore.h"
 #include "utils/XMLGenUtils.h"
 #include "utils/CXMLTemplates.h"
+#include "utils/LayerUtils.h"
 
 // #define CXMLGEN_DEBUG
 // #define MEASURE_TIME
@@ -986,53 +987,8 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam, CT::string *XMLDocumen
     // Create a new layer and push it in the list
     WMSLayer *myWMSLayer = new WMSLayer();
     myWMSLayerList.push_back(myWMSLayer);
-
-    // Set the configuration layer for this layer, as easy reference
     myWMSLayer->layer = srvParam->cfg->Layer[j];
-
-    // Make the layer name
-    CT::string layerUniqueName;
-    if (srvParam->makeUniqueLayerName(&layerUniqueName, srvParam->cfg->Layer[j]) != 0) {
-      myWMSLayer->hasError = true;
-      continue;
-    }
-    myWMSLayer->layerMetadata.name.copy(&layerUniqueName);
-
-    // Make the group
-    CT::string layerGroup = "";
-    if (srvParam->cfg->Layer[j]->Group.size() > 0) {
-      if (srvParam->cfg->Layer[j]->Group[0]->attr.value.empty() == false) {
-        layerGroup.copy(srvParam->cfg->Layer[j]->Group[0]->attr.value.c_str());
-      }
-    }
-    myWMSLayer->layerMetadata.group.copy(&layerGroup);
-
-    // Check if this layer is querable
-    int datasetRestriction = CServerParams::checkDataRestriction();
-    if ((datasetRestriction & ALLOW_GFI)) {
-      myWMSLayer->layerMetadata.isQueryable = 1;
-    }
-
-    // Assign a datasource
-    if (myWMSLayer->dataSource == NULL) {
-      myWMSLayer->dataSource = new CDataSource();
-      if (myWMSLayer->dataSource->setCFGLayer(srvParam, srvParam->configObj->Configuration[0], myWMSLayer->layer, myWMSLayer->layerMetadata.name.c_str(), -1) != 0) {
-        return 1;
-      }
-    }
-
-    // Get Abstract
-    if (myWMSLayer->dataSource->cfgLayer->Abstract.size() > 0) {
-      myWMSLayer->layerMetadata.abstract = myWMSLayer->dataSource->cfgLayer->Abstract[0]->value;
-    }
-
-    // Fill in Layer title, with fallback to Name (later this can be set based on metadata or info from the file)
-    if (myWMSLayer->dataSource->cfgLayer->Title.size() != 0) {
-      myWMSLayer->layerMetadata.title.copy(myWMSLayer->dataSource->cfgLayer->Title[0]->value.c_str());
-    } else {
-      myWMSLayer->layerMetadata.title.copy(myWMSLayer->dataSource->cfgLayer->Name[0]->value.c_str());
-    }
-
+    myWMSLayer->srvParams = srvParam;
     populateMyWMSLayerStruct(myWMSLayer);
   }
 

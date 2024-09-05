@@ -1101,7 +1101,7 @@ std::vector<std::string> CDBFileScanner::searchFileNames(const char *path, CT::s
       if (expr.empty() == false) { // dataSource->cfgLayer->FilePath[0]->attr.filter.c_str()
         fileFilterExpr.copy(&expr);
       }
-      CDBDebug("Reading directory %s with filter %s", filePath.c_str(), fileFilterExpr.c_str());
+      //      CDBDebug("Reading directory %s with filter %s", filePath.c_str(), fileFilterExpr.c_str());
 
       CDirReader *dirReader = CCachedDirReader::getDirReader(filePath.c_str(), fileFilterExpr.c_str());
       dirReader->listDirRecursive(filePath.c_str(), fileFilterExpr.c_str());

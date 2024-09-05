@@ -41,6 +41,7 @@
 #include "LayerTypeLiveUpdate/LayerTypeLiveUpdate.h"
 #include <CReadFile.h>
 #include "Definitions.h"
+#include "utils/LayerUtils.h"
 
 const char *CRequest::className = "CRequest";
 int CRequest::CGI = 0;
@@ -1580,7 +1581,7 @@ int CRequest::process_all_layers() {
       srvParam->requestType = REQUEST_WCS_DESCRIBECOVERAGE;
       srvParam->WMSLayers = new CT::string[srvParam->cfg->Layer.size()];
       for (size_t j = 0; j < srvParam->cfg->Layer.size(); j++) {
-        srvParam->makeUniqueLayerName(&srvParam->WMSLayers[j], srvParam->cfg->Layer[j]);
+        makeUniqueLayerName(&srvParam->WMSLayers[j], srvParam->cfg->Layer[j]);
         srvParam->WMSLayers[j].count = srvParam->cfg->Layer.size();
       }
     } else {
@@ -1602,7 +1603,7 @@ int CRequest::process_all_layers() {
       size_t layerNo = 0;
       for (layerNo = 0; layerNo < srvParam->cfg->Layer.size(); layerNo++) {
 
-        srvParam->makeUniqueLayerName(&layerName, srvParam->cfg->Layer[layerNo]);
+        makeUniqueLayerName(&layerName, srvParam->cfg->Layer[layerNo]);
         // CDBError("comparing (%d) %s==%s",j,layerName.c_str(),srvParam->WMSLayers[j].c_str());
         if (layerName.equals(srvParam->WMSLayers[j].c_str())) {
           CDataSource *dataSource = new CDataSource();
@@ -1630,7 +1631,7 @@ int CRequest::process_all_layers() {
             size_t additionalLayerNo = 0;
             for (additionalLayerNo = 0; additionalLayerNo < srvParam->cfg->Layer.size(); additionalLayerNo++) {
               CT::string additional;
-              srvParam->makeUniqueLayerName(&additional, srvParam->cfg->Layer[additionalLayerNo]);
+              makeUniqueLayerName(&additional, srvParam->cfg->Layer[additionalLayerNo]);
               // CDBDebug("comparing for additionallayer %s==%s", additionalLayerName.c_str(), additional.c_str());
               if (additionalLayerName.equals(additional)) {
                 // CDBDebug("Found additionalLayer [%s]", additional.c_str());
