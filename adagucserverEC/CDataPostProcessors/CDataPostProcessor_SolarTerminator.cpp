@@ -155,12 +155,11 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
     solTVar->setType(CDF_FLOAT);
     float fillValue[] = {-1};
     solTVar->setAttribute("_FillValue", solTVar->getType(), fillValue, 1);
-    // solTVar->dimensionlinks.push_back(dimTime);
     solTVar->dimensionlinks.push_back(dimY);
     solTVar->dimensionlinks.push_back(dimX);
     solTVar->setType(CDF_FLOAT);
     solTVar->name = "SolT";
-    solTVar->addAttribute(new CDF::Attribute("units", "FL (ft*100)"));
+    solTVar->setAttributeText("units", "1");
     solTVar->setAttributeText("grid_mapping", "projection");
     newDataObject->cdfVariable = solTVar;
 

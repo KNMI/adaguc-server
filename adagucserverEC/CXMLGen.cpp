@@ -778,7 +778,8 @@ int CXMLGen::getStylesForLayer(WMSLayer *myWMSLayer) {
   if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded) {
     return 0;
   }
-  if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
+  if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate && myWMSLayer->dataSource->cfgLayer->DataPostProc.empty()) {
+    // Ignore styling in default case of the demo liveupdate layer
     return 0;
   }
 
