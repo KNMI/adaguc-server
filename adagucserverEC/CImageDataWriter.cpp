@@ -2563,6 +2563,9 @@ int CImageDataWriter::end() {
       resetErrors();
 
       printf("%s", resultHTML.c_str());
+
+      fflush(stdout);
+      fflush(stderr);
     } /*End of text html */
 
     /* Text XML */

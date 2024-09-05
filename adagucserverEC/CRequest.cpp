@@ -794,6 +794,7 @@ int CRequest::process_wms_getcap_request() {
     ;
     if (status == CXMLGEN_FATAL_ERROR_OCCURED) return 1;
   }
+
   const char *pszADAGUCWriteToFile = getenv("ADAGUC_WRITETOFILE");
   if (pszADAGUCWriteToFile != NULL) {
     CReadFile::write(pszADAGUCWriteToFile, XMLdocument.c_str(), XMLdocument.length());
@@ -801,6 +802,9 @@ int CRequest::process_wms_getcap_request() {
     printf("%s%s%c%c\n", "Content-Type:text/xml", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
     printf("%s", XMLdocument.c_str());
   }
+
+  fflush(stdout);
+  fflush(stderr);
 
   return 0;
 }
