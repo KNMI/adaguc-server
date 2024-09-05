@@ -59,8 +59,12 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
     return -1;
   }
 
-  CT::string timestampStr = dataSource->srvParams->requestDims[0]->value.c_str();
-  double currentOffset = strToEpochTimestamp(timestampStr);
+  double currentOffset = 1;
+
+  if (!dataSource->srvParams->requestDims.empty()) {
+    CT::string timestampStr = dataSource->srvParams->requestDims[0]->value.c_str();
+    currentOffset = strToEpochTimestamp(timestampStr);
+  }
 
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
     CT::string newVariableName = "SolT";
