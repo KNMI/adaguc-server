@@ -6,7 +6,8 @@
 #include <LayerTypeLiveUpdate/LayerTypeLiveUpdate.h>
 #include "LayerUtils.h"
 
-int populateMyWMSLayerStruct(WMSLayer *myWMSLayer) {
+int populateMyWMSLayerStruct(WMSLayer *myWMSLayer, bool readFromDB) {
+  myWMSLayer->readFromDb = readFromDB;
   // Make the layer name
   CT::string layerUniqueName;
   if (makeUniqueLayerName(&layerUniqueName, myWMSLayer->layer) != 0) {
@@ -56,29 +57,39 @@ int populateMyWMSLayerStruct(WMSLayer *myWMSLayer) {
     myWMSLayer->hasError = 1;
     return 1;
   }
-  myWMSLayer->dataSource->addStep(myWMSLayer->fileName.c_str(), NULL);
+  if (myWMSLayer->dataSource->timeSteps.size() == 0) {
+    myWMSLayer->dataSource->addStep(myWMSLayer->fileName.c_str(), NULL);
+  }
 
   // CDBDebug("Filename for layer is %s / %s", myWMSLayer->fileName.c_str(), myWMSLayer->dataSource->getFileName());
 
-  status = getTitleForLayer(myWMSLayer);
-  if (status != 0) {
+  // CDBDebug("getTitleForLayer");
+  if (getTitleForLayer(myWMSLayer) != 0) {
     myWMSLayer->hasError = 1;
     return 1;
   }
+
+  // CDBDebug("getDimsForLayer");
   if (getDimsForLayer(myWMSLayer) != 0) {
     myWMSLayer->hasError = 1;
     return 1;
   }
 
+  // CDBDebug("getProjectionInformationForLayer");
   if (getProjectionInformationForLayer(myWMSLayer) != 0) {
     myWMSLayer->hasError = 1;
     return 1;
   }
+
+  // CDBDebug("getStylesForLayer");
   if (getStylesForLayer(myWMSLayer) != 0) {
     myWMSLayer->hasError = 1;
     return 1;
   }
 
+  std::sort(myWMSLayer->layerMetadata.projectionList.begin(), myWMSLayer->layerMetadata.projectionList.end(), compareProjection);
+  std::sort(myWMSLayer->layerMetadata.dimList.begin(), myWMSLayer->layerMetadata.dimList.end(), compareDim);
+  std::sort(myWMSLayer->layerMetadata.styleList.begin(), myWMSLayer->layerMetadata.styleList.end(), compareStyle);
   return 0;
 }
 
@@ -94,7 +105,7 @@ int getDimsForLayer(WMSLayer *myWMSLayer) {
   // Dimensions
   if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeDataBase || myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeStyled) {
     if (loadLayerDimensionListFromMetadataDb(myWMSLayer) == 0) {
-      // CDBDebug("LayerMetadata: dimensionList information fetched!");
+      CDBDebug("LayerMetadata: dimensionList information fetched!");
       return 0;
     }
 
@@ -510,8 +521,10 @@ int getProjectionInformationForLayer(WMSLayer *myWMSLayer) {
   }
 
   if (loadLayerProjectionAndExtentListFromMetadataDb(myWMSLayer) == 0) {
-    // CDBDebug("LayerMetadata: Proj information fetched!");
-    return 0;
+    if (loadLayerMetadataStructFromMetadataDb(myWMSLayer) == 0) {
+      // CDBDebug("LayerMetadata: Proj information fetched!");
+      return 0;
+    }
   }
 
   CGeoParams geo;
@@ -641,6 +654,10 @@ int getStylesForLayer(WMSLayer *myWMSLayer) {
 }
 
 bool compareStringCase(const std::string &s1, const std::string &s2) { return strcmp(s1.c_str(), s2.c_str()) <= 0; }
+
+bool compareProjection(const LayerMetadataProjection *p1, const LayerMetadataProjection *p2) { return strcmp(p1->name.c_str(), p2->name.c_str()) <= 0; }
+bool compareDim(const LayerMetadataDim *p1, const LayerMetadataDim *p2) { return strcmp(p1->name.c_str(), p2->name.c_str()) <= 0; }
+bool compareStyle(const LayerMetadataStyle *p1, const LayerMetadataStyle *p2) { return strcmp(p1->name.c_str(), p2->name.c_str()) <= 0; }
 
 int getTitleForLayer(WMSLayer *myWMSLayer) {
 #ifdef CXMLGEN_DEBUG

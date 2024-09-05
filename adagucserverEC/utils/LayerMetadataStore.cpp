@@ -2,6 +2,7 @@
 
 #include <json_adaguc.h>
 #include <CDBFactory.h>
+#include "XMLGenUtils.h"
 
 int storeMyWMSLayerIntoMetadataDb(WMSLayer *myWMSLayer) {
   storeLayerMetadataStructIntoMetadataDb(myWMSLayer);
@@ -60,6 +61,9 @@ int storeLayerMetadataStructIntoMetadataDb(WMSLayer *myWMSLayer) {
 }
 
 int loadLayerMetadataStructFromMetadataDb(WMSLayer *myWMSLayer) {
+  if (!myWMSLayer->readFromDb) {
+    return 1;
+  }
   try {
     CT::string layerMetadataAsJson = getLayerMetadataFromDb(myWMSLayer, "layermetadata");
     if (layerMetadataAsJson.empty()) {
@@ -98,6 +102,9 @@ int storeLayerProjectionAndExtentListIntoMetadataDb(WMSLayer *myWMSLayer) {
 }
 
 int loadLayerProjectionAndExtentListFromMetadataDb(WMSLayer *myWMSLayer) {
+  if (!myWMSLayer->readFromDb) {
+    return 1;
+  }
   if (myWMSLayer->layerMetadata.projectionList.size() != 0) {
     CDBError("myWMSLayer->layerMetadata.projectionList is not empty");
     return 1;
@@ -146,6 +153,9 @@ int loadLayerStyleListFromMetadataDb(WMSLayer *myWMSLayer) {
   if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded || myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
     return 0;
   }
+  if (!myWMSLayer->readFromDb) {
+    return 1;
+  }
 
   if (myWMSLayer->layerMetadata.styleList.size() != 0) {
     CDBError("myWMSLayer->layerMetadata.styleList is not empty");
@@ -179,6 +189,7 @@ int loadLayerStyleListFromMetadataDb(WMSLayer *myWMSLayer) {
 }
 
 int storeLayerDimensionListIntoMetadataDb(WMSLayer *myWMSLayer) {
+  CDBDebug("storeLayerDimensionListIntoMetadataDb");
   try {
     json dimListJson;
     for (auto dimension : myWMSLayer->layerMetadata.dimList) {
@@ -199,6 +210,9 @@ int storeLayerDimensionListIntoMetadataDb(WMSLayer *myWMSLayer) {
 }
 
 int loadLayerDimensionListFromMetadataDb(WMSLayer *myWMSLayer) {
+  if (!myWMSLayer->readFromDb) {
+    return 1;
+  }
   if (myWMSLayer->layerMetadata.dimList.size() != 0) {
     CDBError("myWMSLayer->layerMetadata.dimList is not empty");
     return 1;
@@ -230,5 +244,20 @@ int loadLayerDimensionListFromMetadataDb(WMSLayer *myWMSLayer) {
     // CDBDebug("loadLayerDimensionListFromMetadataDb %d", e);
     return e;
   }
+  return 0;
+}
+
+int updateMetaDataTable(CDataSource *dataSource) {
+  // return 0;
+  if (dataSource->srvParams->datasetLocation.empty()) {
+    return 0;
+  }
+  WMSLayer *myWMSLayer = new WMSLayer();
+  myWMSLayer->layer = dataSource->cfgLayer;
+  myWMSLayer->srvParams = dataSource->srvParams;
+  myWMSLayer->dataSource = dataSource;
+  populateMyWMSLayerStruct(myWMSLayer, false);
+  storeMyWMSLayerIntoMetadataDb(myWMSLayer);
+  delete myWMSLayer;
   return 0;
 }

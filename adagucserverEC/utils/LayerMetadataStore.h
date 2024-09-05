@@ -23,4 +23,5 @@ int loadLayerDimensionListFromMetadataDb(WMSLayer *layer);
 int storeLayerStyleListIntoMetadataDb(WMSLayer *myWMSLayer);
 int loadLayerStyleListFromMetadataDb(WMSLayer *layer);
 
+int updateMetaDataTable(CDataSource *dataSource);
 #endif

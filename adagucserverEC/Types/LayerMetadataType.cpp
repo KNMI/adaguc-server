@@ -6,8 +6,6 @@ WMSLayer::WMSLayer() {
 }
 
 WMSLayer::~WMSLayer() {
-  delete dataSource;
-  dataSource = NULL;
   for (size_t j = 0; j < layerMetadata.projectionList.size(); j++) {
     delete layerMetadata.projectionList[j];
   }

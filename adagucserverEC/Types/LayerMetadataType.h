@@ -46,6 +46,7 @@ public:
   CDataSource *dataSource;
   CServerParams *srvParams;
   CT::string fileName;
+  bool readFromDb = false;
 
   int hasError;
 

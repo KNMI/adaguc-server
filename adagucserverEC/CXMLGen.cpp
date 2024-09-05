@@ -989,7 +989,7 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam, CT::string *XMLDocumen
     myWMSLayerList.push_back(myWMSLayer);
     myWMSLayer->layer = srvParam->cfg->Layer[j];
     myWMSLayer->srvParams = srvParam;
-    populateMyWMSLayerStruct(myWMSLayer);
+    populateMyWMSLayerStruct(myWMSLayer, true);
   }
 
 #ifdef CXMLGEN_DEBUG

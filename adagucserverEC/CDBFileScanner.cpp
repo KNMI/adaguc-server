@@ -31,6 +31,7 @@
 #include "CNetCDFDataWriter.h"
 #include "CCreateTiles.h"
 #include <set>
+#include "utils/LayerMetadataStore.h"
 const char *CDBFileScanner::className = "CDBFileScanner";
 std::vector<CT::string> CDBFileScanner::tableNamesDone;
 // #define CDBFILESCANNER_DEBUG
@@ -820,7 +821,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
               // delete cdfObject;cdfObject=NULL;
               // cdfObject=CDFObjectStore::getCDFObjectStore()->deleteCDFObject(&cdfObject);
             } catch (int linenr) {
-              CDBError("Exception in DBLoopFiles at line %d");
+              CDBError("Exception in DBLoopFiles at line %d", linenr);
               CDBError(" *** SKIPPING FILE %s ***", (*fileList)[j].c_str());
               // Close cdfObject. this is only needed if an exception occurs, otherwise it does nothing...
               // delete cdfObject;cdfObject=NULL;
@@ -1050,6 +1051,10 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
         }
       }
     }
+  }
+
+  if (scanFlags & CDBFILESCANNER_UPDATEDB) {
+    updateMetaDataTable(dataSource);
   }
 
   CDBDebug("  ==> *** Finished update layer [%s] ***", dataSource->cfgLayer->Name[0]->value.c_str());
