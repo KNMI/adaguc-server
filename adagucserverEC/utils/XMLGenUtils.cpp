@@ -656,8 +656,8 @@ int getStylesForLayer(WMSLayer *myWMSLayer) {
 bool compareStringCase(const std::string &s1, const std::string &s2) { return strcmp(s1.c_str(), s2.c_str()) <= 0; }
 
 bool compareProjection(const LayerMetadataProjection *p1, const LayerMetadataProjection *p2) { return strcmp(p1->name.c_str(), p2->name.c_str()) <= 0; }
-bool compareDim(const LayerMetadataDim *p1, const LayerMetadataDim *p2) { return strcmp(p1->name.c_str(), p2->name.c_str()) <= 0; }
-bool compareStyle(const LayerMetadataStyle *p1, const LayerMetadataStyle *p2) { return strcmp(p1->name.c_str(), p2->name.c_str()) <= 0; }
+bool compareDim(const LayerMetadataDim *p2, const LayerMetadataDim *p1) { return strcmp(p1->name.c_str(), p2->name.c_str()) <= 0; }
+bool compareStyle(const LayerMetadataStyle *p1, const LayerMetadataStyle *p2) { return strcmp(p2->name.c_str(), p1->name.c_str()) <= 0; }
 
 int getTitleForLayer(WMSLayer *myWMSLayer) {
 #ifdef CXMLGEN_DEBUG

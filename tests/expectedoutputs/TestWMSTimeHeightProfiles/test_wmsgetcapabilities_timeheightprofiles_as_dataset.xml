@@ -15,7 +15,7 @@
         <KeywordList>
             <Keyword>view</Keyword>
             <Keyword>infoMapAccessService</Keyword>
-            <Keyword>ADAGUCServer version 2.14.1, of Dec 18 2023 11:19:06 </Keyword>
+            <Keyword>ADAGUCServer version 2.27.0, of Sep  5 2024 15:34:21 </Keyword>
         </KeywordList>
         <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.timeheightprofiles&amp;SERVICE=WMS&amp;"/>
         <ContactInformation>
@@ -60,42 +60,42 @@
         <UserDefinedSymbolization SupportSLD="1" />
 <Layer>
 <Title>WMS of  adaguc.tests.timeheightprofiles</Title>
-<CRS>GFI:TIME_ELEVATION</CRS>
-<CRS>EPSG:3411</CRS>
-<CRS>EPSG:3412</CRS>
-<CRS>EPSG:3575</CRS>
-<CRS>EPSG:3857</CRS>
-<CRS>EPSG:4258</CRS>
-<CRS>EPSG:4326</CRS>
 <CRS>CRS:84</CRS>
 <CRS>EPSG:25831</CRS>
 <CRS>EPSG:25832</CRS>
 <CRS>EPSG:28992</CRS>
-<CRS>EPSG:7399</CRS>
+<CRS>EPSG:3067</CRS>
+<CRS>EPSG:32661</CRS>
+<CRS>EPSG:3411</CRS>
+<CRS>EPSG:3412</CRS>
+<CRS>EPSG:3575</CRS>
+<CRS>EPSG:3857</CRS>
+<CRS>EPSG:40000</CRS>
+<CRS>EPSG:4258</CRS>
+<CRS>EPSG:4326</CRS>
 <CRS>EPSG:50001</CRS>
 <CRS>EPSG:54030</CRS>
-<CRS>EPSG:32661</CRS>
-<CRS>EPSG:40000</CRS>
+<CRS>EPSG:7399</CRS>
 <CRS>EPSG:900913</CRS>
-<CRS>EPSG:3067</CRS>
-<BoundingBox CRS="GFI:TIME_ELEVATION" minx="3.095820" miny="50.941341" maxx="4.095820" maxy="51.941341" />
-<BoundingBox CRS="EPSG:3411" minx="3181985.726484" miny="-2936325.838930" maxx="3322855.942587" maxy="-2799483.358645" />
-<BoundingBox CRS="EPSG:3412" minx="1867723.902828" miny="34495333.339115" maxx="2540087.501323" maxy="35511264.460837" />
-<BoundingBox CRS="EPSG:3575" minx="-513615.657195" miny="-4250014.213132" maxx="-428706.448090" maxy="-4137435.259796" />
-<BoundingBox CRS="EPSG:3857" minx="344625.100433" miny="6610924.247303" maxx="455944.591226" maxy="6789526.168440" />
-<BoundingBox CRS="EPSG:4258" minx="50.941341" miny="3.095820" maxx="51.941341" maxy="4.095820" />
-<BoundingBox CRS="EPSG:4326" minx="50.941341" miny="3.095820" maxx="51.941341" maxy="4.095820" />
+<CRS>GFI:TIME_ELEVATION</CRS>
 <BoundingBox CRS="CRS:84" minx="50.941341" miny="3.095820" maxx="51.941341" maxy="4.095820" />
 <BoundingBox CRS="EPSG:25831" minx="506586.685443" miny="5643306.234342" maxx="576989.198618" maxy="5755081.271384" />
 <BoundingBox CRS="EPSG:25832" minx="85335.519937" miny="5654761.926157" maxx="162984.338772" maxy="5770997.834634" />
 <BoundingBox CRS="EPSG:28992" minx="-6037.898649" miny="328758.635711" maxx="66205.391192" maxy="441693.548928" />
-<BoundingBox CRS="EPSG:7399" minx="229341.630247" miny="5971691.317382" maxx="307650.224519" maxy="6075231.074174" />
+<BoundingBox CRS="EPSG:3067" minx="-1168100.884114" miny="5897608.814895" maxx="-1063341.469832" maxy="6029339.633032" />
+<BoundingBox CRS="EPSG:32661" minx="2236636.957682" miny="-2499207.579300" maxx="2321824.106000" maxy="-2370491.121972" />
+<BoundingBox CRS="EPSG:3411" minx="3181985.726484" miny="-2936325.838930" maxx="3322855.942587" maxy="-2799483.358645" />
+<BoundingBox CRS="EPSG:3412" minx="1867723.902828" miny="34495333.339115" maxx="2540087.501323" maxy="35511264.460837" />
+<BoundingBox CRS="EPSG:3575" minx="-513615.657195" miny="-4250014.213132" maxx="-428706.448090" maxy="-4137435.259796" />
+<BoundingBox CRS="EPSG:3857" minx="344625.100433" miny="6610924.247303" maxx="455944.591226" maxy="6789526.168440" />
+<BoundingBox CRS="EPSG:40000" minx="238065.349781" miny="-4526365.773944" maxx="323766.706237" maxy="-4396872.356109" />
+<BoundingBox CRS="EPSG:4258" minx="50.941341" miny="3.095820" maxx="51.941341" maxy="4.095820" />
+<BoundingBox CRS="EPSG:4326" minx="50.941341" miny="3.095820" maxx="51.941341" maxy="4.095820" />
 <BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
 <BoundingBox CRS="EPSG:54030" minx="250267.819665" miny="5424087.672457" maxx="333585.083442" maxy="5526906.416450" />
-<BoundingBox CRS="EPSG:32661" minx="2236636.957682" miny="-2499207.579300" maxx="2321824.106000" maxy="-2370491.121972" />
-<BoundingBox CRS="EPSG:40000" minx="238065.349781" miny="-4526365.773944" maxx="323766.706237" maxy="-4396872.356109" />
+<BoundingBox CRS="EPSG:7399" minx="229341.630247" miny="5971691.317382" maxx="307650.224519" maxy="6075231.074174" />
 <BoundingBox CRS="EPSG:900913" minx="344625.100433" miny="6610924.247303" maxx="455944.591226" maxy="6789526.168440" />
-<BoundingBox CRS="EPSG:3067" minx="-1168100.884114" miny="5897608.814895" maxx="-1063341.469832" maxy="6029339.633032" />
+<BoundingBox CRS="GFI:TIME_ELEVATION" minx="3.095820" miny="50.941341" maxx="4.095820" maxy="51.941341" />
 <Layer queryable="1" opaque="1" cascaded="0">
 <Name>beta_raw</Name>
 <Title>ceilonet 06310 eprofile</Title>
@@ -104,24 +104,24 @@
   <eastBoundLongitude>4.095820</eastBoundLongitude>
   <southBoundLatitude>50.941341</southBoundLatitude>
   <northBoundLatitude>51.941341</northBoundLatitude>
-</EX_GeographicBoundingBox><BoundingBox CRS="GFI:TIME_ELEVATION" minx="3.095820" miny="50.941341" maxx="4.095820" maxy="51.941341" />
+</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="50.941341" miny="3.095820" maxx="51.941341" maxy="4.095820" />
+<BoundingBox CRS="EPSG:25831" minx="506586.685443" miny="5643306.234342" maxx="576989.198618" maxy="5755081.271384" />
+<BoundingBox CRS="EPSG:25832" minx="85335.519937" miny="5654761.926157" maxx="162984.338772" maxy="5770997.834634" />
+<BoundingBox CRS="EPSG:28992" minx="-6037.898649" miny="328758.635711" maxx="66205.391192" maxy="441693.548928" />
+<BoundingBox CRS="EPSG:3067" minx="-1168100.884114" miny="5897608.814895" maxx="-1063341.469832" maxy="6029339.633032" />
+<BoundingBox CRS="EPSG:32661" minx="2236636.957682" miny="-2499207.579300" maxx="2321824.106000" maxy="-2370491.121972" />
 <BoundingBox CRS="EPSG:3411" minx="3181985.726484" miny="-2936325.838930" maxx="3322855.942587" maxy="-2799483.358645" />
 <BoundingBox CRS="EPSG:3412" minx="1867723.902828" miny="34495333.339115" maxx="2540087.501323" maxy="35511264.460837" />
 <BoundingBox CRS="EPSG:3575" minx="-513615.657195" miny="-4250014.213132" maxx="-428706.448090" maxy="-4137435.259796" />
 <BoundingBox CRS="EPSG:3857" minx="344625.100433" miny="6610924.247303" maxx="455944.591226" maxy="6789526.168440" />
+<BoundingBox CRS="EPSG:40000" minx="238065.349781" miny="-4526365.773944" maxx="323766.706237" maxy="-4396872.356109" />
 <BoundingBox CRS="EPSG:4258" minx="50.941341" miny="3.095820" maxx="51.941341" maxy="4.095820" />
 <BoundingBox CRS="EPSG:4326" minx="50.941341" miny="3.095820" maxx="51.941341" maxy="4.095820" />
-<BoundingBox CRS="CRS:84" minx="50.941341" miny="3.095820" maxx="51.941341" maxy="4.095820" />
-<BoundingBox CRS="EPSG:25831" minx="506586.685443" miny="5643306.234342" maxx="576989.198618" maxy="5755081.271384" />
-<BoundingBox CRS="EPSG:25832" minx="85335.519937" miny="5654761.926157" maxx="162984.338772" maxy="5770997.834634" />
-<BoundingBox CRS="EPSG:28992" minx="-6037.898649" miny="328758.635711" maxx="66205.391192" maxy="441693.548928" />
-<BoundingBox CRS="EPSG:7399" minx="229341.630247" miny="5971691.317382" maxx="307650.224519" maxy="6075231.074174" />
 <BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
 <BoundingBox CRS="EPSG:54030" minx="250267.819665" miny="5424087.672457" maxx="333585.083442" maxy="5526906.416450" />
-<BoundingBox CRS="EPSG:32661" minx="2236636.957682" miny="-2499207.579300" maxx="2321824.106000" maxy="-2370491.121972" />
-<BoundingBox CRS="EPSG:40000" minx="238065.349781" miny="-4526365.773944" maxx="323766.706237" maxy="-4396872.356109" />
+<BoundingBox CRS="EPSG:7399" minx="229341.630247" miny="5971691.317382" maxx="307650.224519" maxy="6075231.074174" />
 <BoundingBox CRS="EPSG:900913" minx="344625.100433" miny="6610924.247303" maxx="455944.591226" maxy="6789526.168440" />
-<BoundingBox CRS="EPSG:3067" minx="-1168100.884114" miny="5897608.814895" maxx="-1063341.469832" maxy="6029339.633032" />
+<BoundingBox CRS="GFI:TIME_ELEVATION" minx="3.095820" miny="50.941341" maxx="4.095820" maxy="51.941341" />
 <Dimension name="time" units="ISO8601" default="2023-12-02T06:40:00Z" multipleValues="1" nearestValue="0" current="1">2023-12-02T06:40:00Z</Dimension>
    <Style>    <Name>beta_raw/nearest</Name>    <Title>beta_raw/nearest</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.timeheightprofiles&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=beta_raw&amp;format=image/png&amp;STYLE=beta_raw/nearest"/>    </LegendURL>  </Style>   <Style>    <Name>beta_raw/bilinear</Name>    <Title>beta_raw/bilinear</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.timeheightprofiles&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=beta_raw&amp;format=image/png&amp;STYLE=beta_raw/bilinear"/>    </LegendURL>  </Style></Layer>
     </Layer>
