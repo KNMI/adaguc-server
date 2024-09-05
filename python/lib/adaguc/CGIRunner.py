@@ -43,24 +43,42 @@ class CGIRunner:
             localenv["REQUEST_URI"] = "/myscriptname/" + path
         localenv.update(env)
 
+        # print("# QUERY STRING:", url)
+        # print("# LOCAL ENV:", localenv)
+
         # Execute adaguc-server binary
         ON_POSIX = "posix" in sys.builtin_module_names
         async with sem:
-            process_output = ""
+            # process_output = ""
 
-            client = socket.socket(socket.AF_UNIX)
-            client.connect("/tmp/adaguc.socket")
-            client.send(f"QUERY_STRING={url}".encode())
+            # client = socket.socket(socket.AF_UNIX)
+            # client.connect("/tmp/adaguc.socket")
+            # client.send(url.encode())
 
             process_output = bytearray()
-            while data := client.recv(4096):
-                # print(data)
+            # while data := client.recv(4096):
+            #     # print(data)
+            #     process_output.extend(data)
+
+            # process_error = ""
+            # status = 0
+
+            # process_error = process_error.encode()
+
+            reader, writer = await asyncio.open_unix_connection("/tmp/adaguc.socket")
+            writer.write(url.encode())
+            await writer.drain()
+
+            while data := await reader.read(4096):
+                # print(f"Received: {data}")
                 process_output.extend(data)
 
-            process_error = ""
-            status = 0
+            print("Close the connection")
+            writer.close()
+            await writer.wait_closed()
 
-            process_error = process_error.encode()
+            status = 0
+            process_error = "".encode()
 
             # process = await asyncio.create_subprocess_exec(
             #     *cmds,

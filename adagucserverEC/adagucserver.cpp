@@ -471,20 +471,18 @@ void handle_client(int client_socket, int argc, char **argv, char **envp) {
   char recv_buf[recv_buf_len];
   memset(recv_buf, 0, recv_buf_len * sizeof(char));
 
-  char *cmd_query = "QUERY_STRING=";
   int data_recv = recv(client_socket, recv_buf, recv_buf_len, 0);
   if (data_recv > 0) {
-    if (strncmp(recv_buf, cmd_query, strlen(cmd_query)) == 0) {
-      dup2(client_socket, STDOUT_FILENO);
-      // dup2(client_socket, STDERR_FILENO);
+    dup2(client_socket, STDOUT_FILENO);
+    setenv("QUERY_STRING", recv_buf, 1);
 
-      CT::string cmd(recv_buf);
-      std::vector<CT::string> cmds = cmd.splitToStack("\"");
-      setenv("QUERY_STRING", cmds[1].c_str(), 1);
+    int status = do_work(argc, argv, envp);
+    // fprintf(stderr, "exiting, status=%d", status);
 
-      int status = do_work(argc, argv, envp);
-      exit(status);
-    }
+    fflush(stdout);
+    fflush(stderr);
+
+    exit(status);
   }
 }
 
@@ -516,7 +514,6 @@ int run_server(int argc, char **argv, char **envp) {
 
   while (1) {
     unsigned int sock_len = 0;
-    printf("Waiting for connection.... \n");
 
     if ((client_socket = accept(listen_socket, (struct sockaddr *)&remote, &sock_len)) == -1) {
       printf("Error on accept() call \n");
@@ -535,6 +532,9 @@ int run_server(int argc, char **argv, char **envp) {
 }
 
 int main(int argc, char **argv, char **envp) {
+  setvbuf(stdout, NULL, _IONBF, 0); // turn off buffering
+  setvbuf(stderr, NULL, _IONBF, 0); // turn off buffering
+
   const char *ADAGUC_FORK = getenv("ADAGUC_FORK");
   if (ADAGUC_FORK != NULL) {
     int server_status = run_server(argc, argv, envp);
@@ -542,6 +542,4 @@ int main(int argc, char **argv, char **envp) {
     // normal flow without unix socket server/fork
     return do_work(argc, argv, envp);
   }
-
-  // setenv("QUERY_STRING", query_string.c_str());
 }
