@@ -140,7 +140,8 @@ int storeLayerStyleListIntoMetadataDb(WMSLayer *myWMSLayer) {
       json item;
       item["abstract"] = style->abstract.c_str();
       item["title"] = style->title.c_str();
-      styleListJson[style->name.c_str()] = item;
+      item["name"] = style->name.c_str();
+      styleListJson.push_back(item);
     }
     storeLayerMetadataInDb(myWMSLayer, "stylelist", styleListJson.dump());
   } catch (int e) {
@@ -171,12 +172,11 @@ int loadLayerStyleListFromMetadataDb(WMSLayer *myWMSLayer) {
     json a;
     auto c = a.parse(styleListAsJson.c_str());
 
-    for (auto d : c.items()) {
-      auto styleProperties = d.value();
-
+    for (auto styleJson : c.items()) {
+      auto styleProperties = styleJson.value();
       LayerMetadataStyle *style = new LayerMetadataStyle();
       myWMSLayer->layerMetadata.styleList.push_back(style);
-      style->name = d.key().c_str();
+      style->name = styleProperties["name"].get<std::string>().c_str();
       style->abstract = styleProperties["abstract"].get<std::string>().c_str();
       style->title = styleProperties["title"].get<std::string>().c_str();
     }
