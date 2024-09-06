@@ -119,7 +119,7 @@ int getDimsForLayer(WMSLayer *myWMSLayer) {
   // Dimensions
   if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeDataBase || myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeStyled) {
     if (loadLayerDimensionListFromMetadataDb(myWMSLayer) == 0) {
-      CDBDebug("LayerMetadata: dimensionList information fetched!");
+      // CDBDebug("LayerMetadata: dimensionList information fetched!");
       return 0;
     }
 

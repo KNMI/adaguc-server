@@ -562,8 +562,8 @@ def get_params_for_collection(
             )
         else:
             param_metadata = get_param_metadata(param_id, edr_collection)
-            logger.info(param_id)
-            logger.info(param_metadata["wms_layer_name"])
+            # logger.info(param_id)
+            # logger.info(param_metadata["wms_layer_name"])
             param = Parameter(
                 id=param_metadata["wms_layer_name"],
                 observedProperty=ObservedProperty(

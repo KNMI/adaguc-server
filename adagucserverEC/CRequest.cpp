@@ -756,7 +756,7 @@ int CRequest::generateOGCDescribeCoverage(CT::string *XMLdocument) {
 }
 
 int CRequest::process_wms_getcap_request() {
-  CDBDebug("WMS GETCAPABILITIES");
+  CDBDebug("WMS GETCAPABILITIES [%s]", srvParam->datasetLocation.c_str());
 
   CT::string XMLdocument;
   if (srvParam->enableDocumentCache == true) {
@@ -802,7 +802,7 @@ int CRequest::process_wms_getcap_request() {
 }
 
 int CRequest::process_wms_getreferencetimes_request() {
-  CDBDebug("WMS GETREFERENCETIMES");
+  CDBDebug("WMS GETREFERENCETIMES [%s]", srvParam->datasetLocation.c_str());
   return process_all_layers();
 }
 
