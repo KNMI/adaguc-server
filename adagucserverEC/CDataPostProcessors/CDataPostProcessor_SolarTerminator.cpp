@@ -151,7 +151,6 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
     dataSource->getDataObject(0)->cdfVariable->dimensionlinks.push_back(dimTime);
     // Define the Solar Terminator variable using the defined dimensions, and set the right attributes
     CDF::Variable *solTVar = new CDF::Variable();
-    newDataObject->cdfObject->addVariable(solTVar);
     solTVar->setType(CDF_FLOAT);
     float fillValue[] = {-1};
     solTVar->setAttribute("_FillValue", solTVar->getType(), fillValue, 1);
@@ -159,8 +158,10 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
     solTVar->dimensionlinks.push_back(dimX);
     solTVar->setType(CDF_FLOAT);
     solTVar->name = "SolT";
-    solTVar->setAttributeText("units", "1");
+    CDBDebug("Setting units");
+    solTVar->setAttributeText("units", "categories");
     solTVar->setAttributeText("grid_mapping", "projection");
+    newDataObject->cdfObject->addVariable(solTVar);
     newDataObject->cdfVariable = solTVar;
 
     newDataObject->cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
