@@ -39,10 +39,21 @@ int storeLayerMetadataInDb(WMSLayer *myWMSLayer, CT::string metadataKey, std::st
       return 1;
     }
     CT::string layerName = myWMSLayer->dataSource->getLayerName();
-    return CDBFactory::getDBAdapter(myWMSLayer->dataSource->srvParams->cfg)->storeLayerMetadata(datasetName, layerName, metadataKey, metadataBlob.c_str());
+
+    CT::string updateTime = "now";
+    // Try to find the defaultValue in the time dimension, used for updateTime in the metadata table
+    auto timeDimIt = find_if(myWMSLayer->layerMetadata.dimList.begin(), myWMSLayer->layerMetadata.dimList.end(), [](const LayerMetadataDim *obj) { return obj->name.equals("time"); });
+    if (timeDimIt != myWMSLayer->layerMetadata.dimList.end()) {
+      auto timeDim = *timeDimIt;
+      updateTime = timeDim->defaultValue.c_str();
+    } else {
+      updateTime = CTime::currentDateTime().c_str();
+    }
+    return CDBFactory::getDBAdapter(myWMSLayer->dataSource->srvParams->cfg)->storeLayerMetadata(datasetName, layerName, metadataKey, metadataBlob.c_str(), updateTime.c_str());
   } catch (int e) {
     return e;
   }
+  return 0;
 }
 
 int storeLayerMetadataStructIntoMetadataDb(WMSLayer *myWMSLayer) {

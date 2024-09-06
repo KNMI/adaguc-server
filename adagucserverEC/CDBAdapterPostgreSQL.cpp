@@ -1081,7 +1081,7 @@ int CDBAdapterPostgreSQL::addFilesToDataBase() {
   return 0;
 }
 
-int CDBAdapterPostgreSQL::storeLayerMetadata(const char *datasetName, const char *layerName, const char *metadataKey, const char *metadataBlob) {
+int CDBAdapterPostgreSQL::storeLayerMetadata(const char *datasetName, const char *layerName, const char *metadataKey, const char *metadataBlob, const char *updateTime) {
 #ifdef MEASURETIME
   StopWatch_Stop(">CDBAdapterPostgreSQL::storeLayerMetadata");
 #endif
@@ -1091,7 +1091,7 @@ int CDBAdapterPostgreSQL::storeLayerMetadata(const char *datasetName, const char
   }
 
   CT::string query;
-  CT::string tableColumns("datasetname varchar (255) ,layername varchar (255), metadatakey varchar (255), blob JSONB, PRIMARY KEY (datasetname, layername, metadatakey)");
+  CT::string tableColumns("datasetname varchar (255) ,layername varchar (255), metadatakey varchar (255), updatetime varchar (255), blob JSONB, PRIMARY KEY (datasetname, layername, metadatakey)");
 
   int status = dataBaseConnection->checkTable("metadata", tableColumns.c_str());
   if (status == 1) {
@@ -1099,8 +1099,14 @@ int CDBAdapterPostgreSQL::storeLayerMetadata(const char *datasetName, const char
     throw(__LINE__);
   }
 
-  query.print("INSERT INTO metadata values (E'%s',E'%s', E'%s', E'%s') ON CONFLICT (datasetname, layername, metadatakey) DO UPDATE SET blob = excluded.blob;", datasetName, layerName, metadataKey,
-              metadataBlob);
+  query.print("INSERT INTO metadata values (E'%s',E'%s', E'%s', E'%s', E'%s') "
+              "ON CONFLICT (datasetname, layername, metadatakey) "
+              "DO UPDATE SET blob = excluded.blob, updatetime = excluded.updatetime "
+              "WHERE excluded.updatetime > (select updatetime from metadata where datasetname = '%s' and layername = '%s' and metadatakey = '%s');",
+              datasetName, layerName, metadataKey, updateTime, metadataBlob, datasetName, layerName, metadataKey);
+
+  // query.print("INSERT INTO metadata values (E'%s',E'%s', E'%s', E'%s', E'%s') ON CONFLICT (datasetname, layername, metadatakey, updatetime) DO UPDATE SET blob = excluded.blob;", datasetName,
+  //             layerName, metadataKey, updateTime, metadataBlob);
   status = dataBaseConnection->query(query.c_str());
   if (status != 0) {
     CDBError("Unable to insert records: \"%s\"", query.c_str());

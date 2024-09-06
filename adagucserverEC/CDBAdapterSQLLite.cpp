@@ -1305,7 +1305,7 @@ CDBStore::Store *CDBAdapterSQLLite::getFilesForIndices(CDataSource *dataSource, 
   return store;
 }
 
-int CDBAdapterSQLLite::storeLayerMetadata(const char *, const char *, const char *, const char *) { return 0; }
+int CDBAdapterSQLLite::storeLayerMetadata(const char *, const char *, const char *, const char *, const char *) { return 0; }
 CT::string CDBAdapterSQLLite::getLayerMetadata(const char *, const char *, const char *) { return ""; }
 
 #endif

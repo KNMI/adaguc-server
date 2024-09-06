@@ -1,3 +1,7 @@
+**Version 2.28.0 2024-09-62**
+- Metadata for layer items like the projections, dimensions and styles can now be stored in a metadatatable
+
+
 **Version 2.27.0 2024-09-02**
 - PostgreSQL query from `getFilesAndIndicesForDimensions` has been rewritten, which fixes https://github.com/KNMI/adaguc-server/issues/341.
 - Optimized existing PostgreSQL queries and reduced number of PostgreSQL queries in general. This results in better performance, the benchmark tool runs 9% faster.
