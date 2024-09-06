@@ -50,6 +50,7 @@ int CDPPSolarTerminator::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CD
 
 time_t strToEpochTimestamp(const char *timestampStr) {
   struct tm tmStruct;
+  tmStruct.tm_isdst = 0;
   strptime(timestampStr, "%Y-%m-%dT%H:%M:%SZ", &tmStruct);
   return mktime(&tmStruct);
 }
