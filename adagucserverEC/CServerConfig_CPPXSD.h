@@ -1300,10 +1300,13 @@ public:
   public:
     class Cattr {
     public:
-      CT::string enablecleanupsystem, cleanupsystemlimit, cache_age_cacheableresources, cache_age_volatileresources;
+      CT::string enablemetadatacache, enablecleanupsystem, cleanupsystemlimit, cache_age_cacheableresources, cache_age_volatileresources;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("enablecleanupsystem", attrname)) {
+      if (equals("enablemetadatacache", attrname)) {
+        attr.enablemetadatacache.copy(attrvalue);
+        return;
+      } else if (equals("enablecleanupsystem", attrname)) {
         attr.enablecleanupsystem.copy(attrvalue);
         return;
       } else if (equals("cleanupsystemlimit", attrname)) {

@@ -248,7 +248,7 @@ int loadLayerDimensionListFromMetadataDb(WMSLayer *myWMSLayer) {
 }
 
 int updateMetaDataTable(CDataSource *dataSource) {
-  // return 0;
+
   if (dataSource->srvParams->datasetLocation.empty()) {
     return 0;
   }

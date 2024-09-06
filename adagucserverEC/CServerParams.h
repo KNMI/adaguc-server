@@ -331,6 +331,8 @@ public:
    * Returns the fontsize in px for legend
    */
   std::tuple<float, std::string> getLegendFont();
+
+  bool useMetadataTable();
 };
 
 #endif

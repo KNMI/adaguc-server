@@ -685,3 +685,14 @@ std::tuple<float, std::string> CServerParams::getLegendFont() {
 
   return std::make_tuple(legendFontSize, legendfontLocation);
 }
+
+bool CServerParams::useMetadataTable() {
+  size_t numSettings = this->cfg->Settings.size();
+  if (numSettings > 0 && this->cfg->Settings[numSettings - 1]) {
+    auto settings = this->cfg->Settings[numSettings - 1];
+    if (!settings->attr.enablemetadatacache.equalsIgnoreCase("true")) {
+      return false;
+    }
+  }
+  return true;
+}

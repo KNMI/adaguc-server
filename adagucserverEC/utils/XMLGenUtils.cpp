@@ -8,6 +8,10 @@
 
 int populateMyWMSLayerStruct(WMSLayer *myWMSLayer, bool readFromDB) {
   myWMSLayer->readFromDb = readFromDB;
+  if (!myWMSLayer->srvParams->useMetadataTable()) {
+    myWMSLayer->readFromDb = false;
+  }
+
   // Make the layer name
   CT::string layerUniqueName;
   if (makeUniqueLayerName(&layerUniqueName, myWMSLayer->layer) != 0) {
