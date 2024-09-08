@@ -42,6 +42,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <stdio.h>
+#include <signal.h>
 
 DEF_ERRORMAIN();
 
@@ -488,6 +489,8 @@ void handle_client(int client_socket, int argc, char **argv, char **envp) {
 
 int run_server(int argc, char **argv, char **envp) {
   int client_socket = 0;
+
+  signal(SIGCHLD, SIG_IGN);
 
   struct sockaddr_un local, remote;
   int len = 0;
