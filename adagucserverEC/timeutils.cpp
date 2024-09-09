@@ -113,6 +113,9 @@ long long toSeconds(const TimeInterval &interval) {
   return interval.seconds + interval.minutes * 60 + interval.hours * 3600 + interval.days * 86400 + interval.months * 2592000 + interval.years * 31536000;
 }
 
+// Heuristic estimation of duration in ISO8601 format, given an array of timestamps
+// Checks that a consistent interval is (generally found), with room for inaccuracies (holes in data)
+// controlled by the threshold argument.
 CT::string estimateISO8601Duration(const std::vector<CT::string> &timestamps, double threshold) {
   // Size considered too small to find a pattern
   if (timestamps.size() < 4) return CT::string("");
@@ -132,7 +135,6 @@ CT::string estimateISO8601Duration(const std::vector<CT::string> &timestamps, do
     intervals.push_back(calculateTimeInterval(parsedTimes[i - 1], parsedTimes[i]));
   }
 
-  // Count occurrences of each interval in terms of total seconds
   // Count occurrences of each interval in terms of total seconds
   std::map<long long, int> intervalFrequency;
   std::map<long long, TimeInterval> intervalMap;
