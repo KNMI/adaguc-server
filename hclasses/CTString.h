@@ -356,6 +356,11 @@ namespace CT {
     void trimSelf();
 
     /**
+     * Removes spaces in this string
+     */
+    void trimWhiteSpacesAndLinesSelf();
+
+    /**
      * Returns a new string with removed spaces
      */
     string trim();

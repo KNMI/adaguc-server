@@ -469,6 +469,25 @@ namespace CT {
     substringSelf(s, e + 1);
   }
 
+  void string::trimWhiteSpacesAndLinesSelf() {
+
+    int s = -1, e = privatelength;
+    const char *value = useStack ? stackValue : heapValue;
+    for (size_t j = 0; j < privatelength; j++) {
+      if (value[j] != ' ' || value[j] != 10 || value[j] != 13) {
+        s = j;
+        break;
+      }
+    }
+    for (size_t j = privatelength - 1; j > 0; j--) {
+      if (value[j] != ' ' || value[j] != 10 || value[j] != 13) {
+        e = j;
+        break;
+      }
+    }
+    substringSelf(s, e + 1);
+  }
+
   int string::substringSelf(CT::string *string, size_t start, size_t end) {
     if (start >= string->privatelength || end - start <= 0) {
       copy("");
@@ -679,13 +698,9 @@ namespace CT {
     return fValue;
   }
 
-  int string::toInt() {
-    return atoi(c_str());
-  }
+  int string::toInt() { return atoi(c_str()); }
 
-  long string::toLong() {
-    return atol(c_str());
-  }
+  long string::toLong() { return atol(c_str()); }
 
   CT::string string::basename() {
     const char *last = rindex(this->c_str(), '/');

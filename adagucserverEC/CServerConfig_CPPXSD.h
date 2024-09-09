@@ -296,7 +296,7 @@ public:
       if (rc == 0)
         if (value != NULL) {
           this->value.copy(value);
-          this->value.trimSelf();
+          this->value.trimWhiteSpacesAndLinesSelf();
         }
       if (rc == 1) {
         pt2Class = NULL;
@@ -641,7 +641,7 @@ public:
       if (rc == 0)
         if (value != NULL) {
           this->value.copy(value);
-          this->value.trimSelf();
+          this->value.trimWhiteSpacesAndLinesSelf();
         }
       if (rc == 1) {
         pt2Class = NULL;
@@ -901,7 +901,7 @@ public:
       if (rc == 0)
         if (value != NULL) {
           this->value.copy(value);
-          this->value.trimSelf();
+          this->value.trimWhiteSpacesAndLinesSelf();
         }
       if (rc == 1) {
 
@@ -1383,7 +1383,7 @@ public:
       if (rc == 0)
         if (value != NULL) {
           this->value.copy(value);
-          this->value.trimSelf();
+          this->value.trimWhiteSpacesAndLinesSelf();
         }
       if (rc == 1) {
         pt2Class = NULL;
@@ -1452,7 +1452,7 @@ public:
       if (rc == 0)
         if (value != NULL) {
           this->value.copy(value);
-          this->value.trimSelf();
+          this->value.trimWhiteSpacesAndLinesSelf();
         }
       if (rc == 1) {
         pt2Class = NULL;
@@ -1490,7 +1490,7 @@ public:
       if (rc == 0)
         if (value != NULL) {
           this->value.copy(value);
-          this->value.trimSelf();
+          this->value.trimWhiteSpacesAndLinesSelf();
         }
       if (rc == 1) {
         pt2Class = NULL;
@@ -1545,7 +1545,7 @@ public:
       if (rc == 0)
         if (value != NULL) {
           this->value.copy(value);
-          this->value.trimSelf();
+          this->value.trimWhiteSpacesAndLinesSelf();
         }
       if (rc == 1) {
         pt2Class = NULL;
@@ -1616,7 +1616,7 @@ public:
       if (rc == 0)
         if (value != NULL) {
           this->value.copy(value);
-          this->value.trimSelf();
+          this->value.trimWhiteSpacesAndLinesSelf();
         }
       if (rc == 1) {
         pt2Class = NULL;
@@ -1866,7 +1866,7 @@ public:
       if (rc == 0)
         if (value != NULL) {
           this->value.copy(value);
-          this->value.trimSelf();
+          this->value.trimWhiteSpacesAndLinesSelf();
         }
       if (rc == 1) {
 
@@ -2009,7 +2009,7 @@ public:
       if (rc == 0)
         if (value != NULL) {
           this->value.copy(value);
-          this->value.trimSelf();
+          this->value.trimWhiteSpacesAndLinesSelf();
         }
       if (rc == 1) {
         pt2Class = NULL;

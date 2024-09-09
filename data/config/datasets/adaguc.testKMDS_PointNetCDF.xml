@@ -706,9 +706,7 @@
     <Variable>ww</Variable>
     <Abstract>actuele wawa weercode</Abstract>
     <Styles>weercode</Styles>
-    <Dimension name="time" units="ISO8601" interval="PT5M">
-            time
-    </Dimension>
+    <Dimension name="time" units="ISO8601" interval="PT5M">time</Dimension>
   </Layer>
   <Layer type="database">
     <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>

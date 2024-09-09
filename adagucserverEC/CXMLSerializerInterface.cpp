@@ -33,7 +33,10 @@ void CXMLObjectInterface::addElement(CXMLObjectInterface *baseClass, int rc, con
   CXMLSerializerInterface *base = (CXMLSerializerInterface *)baseClass;
   base->currentNode = (CXMLObjectInterface *)this;
   if (rc == 0)
-    if (value != NULL) this->value.copy(value);
+    if (value != NULL) {
+      this->value.copy(value);
+      this->value.trimWhiteSpacesAndLinesSelf();
+    }
 }
 
 int parseInt(const char *pszValue) {
@@ -131,6 +134,4 @@ int CXMLSerializerInterface::parseFile(const char *xmlFile) {
   return 0;
 }
 
-bool CXMLSerializerInterface::equals(const char *val1, const char *val2) {
-  return strcmp(val1, val2) == 0;
-}
+bool CXMLSerializerInterface::equals(const char *val1, const char *val2) { return strcmp(val1, val2) == 0; }
