@@ -386,7 +386,6 @@ int _main(int argc, char **argv, char **) {
   return getStatusCode();
 }
 
-static const char *socket_path = "/tmp/adaguc.socket";
 static const unsigned int nIncomingConnections = 5;
 
 int do_work(int argc, char **argv, char **envp) {
@@ -502,7 +501,11 @@ int run_server(int argc, char **argv, char **envp) {
   }
 
   local.sun_family = AF_UNIX;
-  strcpy(local.sun_path, socket_path);
+
+  CT::string socket_path(getenv("ADAGUC_PATH"));
+  socket_path.concat("/adaguc.socket");
+
+  strcpy(local.sun_path, socket_path.c_str());
   unlink(local.sun_path);
   len = strlen(local.sun_path) + sizeof(local.sun_family);
 

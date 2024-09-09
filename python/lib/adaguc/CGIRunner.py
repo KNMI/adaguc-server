@@ -65,7 +65,7 @@ class CGIRunner:
 
             # process_error = process_error.encode()
 
-            reader, writer = await asyncio.open_unix_connection("/tmp/adaguc.socket")
+            reader, writer = await asyncio.open_unix_connection(f"{os.getenv('ADAGUC_PATH')}/adaguc.socket")
             writer.write(url.encode())
             await writer.drain()
 
