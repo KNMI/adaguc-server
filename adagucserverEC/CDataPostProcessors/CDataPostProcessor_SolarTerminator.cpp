@@ -48,13 +48,6 @@ int CDPPSolarTerminator::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CD
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
 }
 
-time_t strToEpochTimestamp(const char *timestampStr) {
-  struct tm tmStruct;
-  tmStruct.tm_isdst = 0;
-  strptime(timestampStr, "%Y-%m-%dT%H:%M:%SZ", &tmStruct);
-  return mktime(&tmStruct);
-}
-
 int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
   if ((isApplicable(proc, dataSource, mode) & mode) == false) {
     return -1;
@@ -64,7 +57,7 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
 
   if (!dataSource->srvParams->requestDims.empty()) {
     CT::string timestampStr = dataSource->srvParams->requestDims[0]->value.c_str();
-    currentOffset = strToEpochTimestamp(timestampStr);
+    currentOffset = CTime::getEpochTimeFromDateString(dataSource->srvParams->requestDims[0]->value);
   }
 
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
