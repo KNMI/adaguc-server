@@ -21,40 +21,22 @@
 #include "CTString.h"
 #include "timeutils.h"
 
-TEST(ParseISOTimestamp, TimeUtils) {
-  CT::string isotime("2024-07-29T15:30:45");
-  std::tm expected = {};
-  expected.tm_year = 2024 - 1900;
-  expected.tm_mon = 7 - 1;
-  expected.tm_mday = 29;
-  expected.tm_hour = 15;
-  expected.tm_min = 30;
-  expected.tm_sec = 45;
-
-  std::tm result = parseISOTimestamp(isotime);
-
-  CHECK(result.tm_year == expected.tm_year);
-  CHECK(result.tm_mon == expected.tm_mon);
-  CHECK(result.tm_mday == expected.tm_mday);
-  CHECK(result.tm_hour == expected.tm_hour);
-  CHECK(result.tm_min == expected.tm_min);
-  CHECK(result.tm_sec == expected.tm_sec);
-}
-
 TEST(CalculateTimeInterval, TimeUtils) {
-  std::tm start = {};
-  start.tm_min = 30;
-  start.tm_hour = 15;
-  start.tm_mday = 29;
-  start.tm_mon = 7;
-  start.tm_year = 2024 - 1900;
-  std::tm end = {};
-  end.tm_sec = 45;
-  end.tm_min = 45;
-  end.tm_hour = 16;
-  end.tm_mday = 29;
-  end.tm_mon = 7;
-  end.tm_year = 2025 - 1900;
+  CTime::Date start = {};
+  start.minute = 30;
+  start.hour = 15;
+  start.day = 29;
+  start.month = 8;
+  start.year = 2024;
+  start.second = 0.0;
+
+  CTime::Date end = {};
+  end.second = 45.0;
+  end.minute = 45;
+  end.hour = 16;
+  end.day = 29;
+  end.month = 8;
+  end.year = 2025;
 
   TimeInterval expected = {1, 0, 0, 1, 15, 45};
   TimeInterval result = calculateTimeInterval(start, end);

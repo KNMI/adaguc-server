@@ -20,42 +20,20 @@
 #include <map>
 #include "timeutils.h"
 
-std::tm parseISOTimestamp(const CT::string &isotime) {
-  std::tm timeStruct = {};
-  // Tokenize into individual fields
-  CT::string year, month, day, hour, minute, second;
-  year.copy(isotime + 0, 4);
-  month.copy(isotime + 5, 2);
-  day.copy(isotime + 8, 2);
-  hour.copy(isotime + 11, 2);
-  minute.copy(isotime + 14, 2);
-  second.copy(isotime + 17, 2);
-
-  // Build time struct
-  timeStruct.tm_year = year.toInt() - 1900;
-  timeStruct.tm_mon = month.toInt() - 1;
-  timeStruct.tm_mday = day.toInt();
-  timeStruct.tm_hour = hour.toInt();
-  timeStruct.tm_min = minute.toInt();
-  timeStruct.tm_sec = second.toInt();
-
-  return timeStruct;
-}
-
-TimeInterval calculateTimeInterval(const std::tm &start, const std::tm &end) {
+TimeInterval calculateTimeInterval(const CTime::Date &start, const CTime::Date &end) {
   TimeInterval interval = {0, 0, 0, 0, 0, 0};
 
-  interval.seconds = end.tm_sec - start.tm_sec;
-  interval.minutes = end.tm_min - start.tm_min;
-  interval.hours = end.tm_hour - start.tm_hour;
-  interval.days = end.tm_mday - start.tm_mday;
-  interval.months = end.tm_mon - start.tm_mon;
-  interval.years = end.tm_year - start.tm_year;
+  interval.seconds = int(end.second - start.second);
+  interval.minutes = end.minute - start.minute;
+  interval.hours = end.hour - start.hour;
+  interval.days = end.day - start.day;
+  interval.months = end.month - start.month;
+  interval.years = end.year - start.year;
 
   // Adjust number of minutes if there are negative seconds,
   // meaning there were less than 60 seconds between timestamps.
   if (interval.seconds < 0) {
-    interval.seconds += 60;
+    interval.seconds += 60.0;
     interval.minutes--;
   }
   // Adjust number of hours if there are negative minutes,
@@ -74,17 +52,17 @@ TimeInterval calculateTimeInterval(const std::tm &start, const std::tm &end) {
   // and leap year calculations, also adjust in case of
   // negative days.
   if (interval.days < 0) {
-    // Take month length into consideration (month 0 being January and 11 December)
+    // Take month length into consideration (month 1 being January and 12 December)
     static const int daysInMonth[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-    int previousMonth = (end.tm_mon == 0) ? 11 : end.tm_mon - 1;
-    int year = (end.tm_mon == 0) ? end.tm_year - 1 : end.tm_year;
+    int previousMonth = (end.month == 1) ? 12 : end.month - 1;
+    int year = (end.month == 1) ? end.year - 1 : end.year;
 
     // Adjust for leap years, using the following rules:
     // - In general, a year is a leap year if divisible by 4
     // - In general, end-of-century years (divisible by 100) are NOT
     // - But if divisible by 400, it IS a leap year
-    int daysPrevMonth = daysInMonth[previousMonth];
-    if (previousMonth == 1 && ((year + 1900) % 4 == 0 && ((year + 1900) % 100 != 0 || (year + 1900) % 400 == 0))) {
+    int daysPrevMonth = daysInMonth[previousMonth - 1];
+    if (previousMonth == 2 && ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0)) {
       daysPrevMonth = 29;
     }
     interval.days += daysPrevMonth;
@@ -140,11 +118,13 @@ CT::string estimateISO8601Duration(const std::vector<CT::string> &timestamps, do
   if (timestamps.size() < 4) return CT::string("");
 
   std::vector<TimeInterval> intervals;
+  CTime ctime;
+  ctime.init("seconds since 1970", NULL);
 
   // Parse all timestamps into tm structs
-  std::vector<std::tm> parsedTimes;
+  std::vector<CTime::Date> parsedTimes;
   for (const auto &timestamp : timestamps) {
-    parsedTimes.push_back(parseISOTimestamp(timestamp));
+    parsedTimes.push_back(ctime.ISOStringToDate(timestamp.c_str()));
   }
 
   // Calculate intervals between consecutive timestamps

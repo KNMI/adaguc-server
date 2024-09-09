@@ -17,6 +17,7 @@
  ******************************************************************************/
 
 #include "CTString.h"
+#include "CTime.h"
 #include <ctime>
 
 // Type to represent the relative interval between two timestamps
@@ -29,9 +30,7 @@ struct TimeInterval {
   int seconds;
 };
 
-std::tm parseISOTimestamp(const CT::string &isotime);
-TimeInterval calculateTimeInterval(const std::tm &start, const std::tm &end);
-TimeInterval calculateTimeInterval(const std::tm &start, const std::tm &end);
+TimeInterval calculateTimeInterval(const CTime::Date &start, const CTime::Date &end);
 CT::string toISO8601Interval(const TimeInterval &interval);
 long long toSeconds(const TimeInterval &interval);
 CT::string estimateISO8601Duration(const std::vector<CT::string> &timestamps, double threshold = 0.8);
