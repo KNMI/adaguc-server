@@ -68,11 +68,34 @@ int populateMyWMSLayerStruct(WMSLayer *myWMSLayer, bool readFromDB) {
       myWMSLayer->dataSource->addStep(myWMSLayer->fileName.c_str(), NULL);
     }
 
-    CDBDebug("Filename for layer is %s / %s", myWMSLayer->fileName.c_str(), myWMSLayer->dataSource->getFileName());
-    CDBDebug("getTitleForLayer");
     if (getTitleForLayer(myWMSLayer) != 0) {
       myWMSLayer->hasError = 1;
       return 1;
+    }
+
+    CDataReader reader;
+    status = reader.open(myWMSLayer->dataSource, CNETCDFREADER_MODE_OPEN_DIMENSIONS);
+    if (status != 0) {
+      CDBError("Could not open file: %s", myWMSLayer->dataSource->getFileName());
+      return 1;
+    }
+
+    myWMSLayer->layerMetadata.dfBBOX[0] = myWMSLayer->dataSource->dfBBOX[0];
+    myWMSLayer->layerMetadata.dfBBOX[1] = myWMSLayer->dataSource->dfBBOX[1];
+    myWMSLayer->layerMetadata.dfBBOX[2] = myWMSLayer->dataSource->dfBBOX[2];
+    myWMSLayer->layerMetadata.dfBBOX[3] = myWMSLayer->dataSource->dfBBOX[3];
+
+    myWMSLayer->layerMetadata.width = myWMSLayer->dataSource->dWidth;
+    myWMSLayer->layerMetadata.height = myWMSLayer->dataSource->dHeight;
+    myWMSLayer->layerMetadata.cellsizeX = myWMSLayer->dataSource->dfCellSizeX;
+    myWMSLayer->layerMetadata.cellsizeY = myWMSLayer->dataSource->dfCellSizeY;
+    myWMSLayer->layerMetadata.nativeEPSG = myWMSLayer->dataSource->nativeEPSG;
+
+    auto v = myWMSLayer->dataSource->getDataObjectsVector();
+    for (auto d : (*v)) {
+      LayerMetadataVariable *layerMetadataVariable = new LayerMetadataVariable();
+      layerMetadataVariable->units = (d->getUnits());
+      myWMSLayer->layerMetadata.variableList.push_back(layerMetadataVariable);
     }
   }
   if (getDimsForLayer(myWMSLayer) != 0) {

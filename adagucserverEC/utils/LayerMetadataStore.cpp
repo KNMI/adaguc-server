@@ -53,11 +53,28 @@ int storeLayerMetadataStructIntoMetadataDb(WMSLayer *myWMSLayer) {
   layerMetadataItem["title"] = myWMSLayer->layerMetadata.title;
   layerMetadataItem["group"] = myWMSLayer->layerMetadata.group;
   layerMetadataItem["abstract"] = myWMSLayer->layerMetadata.abstract;
-  layerMetadataItem["isQueryable"] = myWMSLayer->layerMetadata.isQueryable;
+  layerMetadataItem["nativeepsg"] = myWMSLayer->layerMetadata.nativeEPSG;
+  layerMetadataItem["isqueryable"] = myWMSLayer->layerMetadata.isQueryable;
   layerMetadataItem["latlonboxleft"] = myWMSLayer->layerMetadata.dfLatLonBBOX[0];
   layerMetadataItem["latlonboxright"] = myWMSLayer->layerMetadata.dfLatLonBBOX[1];
   layerMetadataItem["latlonboxbottom"] = myWMSLayer->layerMetadata.dfLatLonBBOX[2];
   layerMetadataItem["latlonboxtop"] = myWMSLayer->layerMetadata.dfLatLonBBOX[3];
+  layerMetadataItem["bboxleft"] = myWMSLayer->layerMetadata.dfBBOX[0];
+  layerMetadataItem["bboxright"] = myWMSLayer->layerMetadata.dfBBOX[1];
+  layerMetadataItem["bboxbottom"] = myWMSLayer->layerMetadata.dfBBOX[2];
+  layerMetadataItem["bboxtop"] = myWMSLayer->layerMetadata.dfBBOX[3];
+  layerMetadataItem["width"] = myWMSLayer->layerMetadata.width;
+  layerMetadataItem["height"] = myWMSLayer->layerMetadata.height;
+  layerMetadataItem["cellsizex"] = myWMSLayer->layerMetadata.cellsizeX;
+  layerMetadataItem["cellsizey"] = myWMSLayer->layerMetadata.cellsizeY;
+  json variables;
+  for (auto lv : myWMSLayer->layerMetadata.variableList) {
+    json variable;
+    variable["units"] = lv->units;
+    variables.push_back(variable);
+  }
+  layerMetadataItem["variables"] = variables;
+
   storeLayerMetadataInDb(myWMSLayer, "layermetadata", layerMetadataItem.dump());
   return 0;
 }
@@ -77,11 +94,28 @@ int loadLayerMetadataStructFromMetadataDb(WMSLayer *myWMSLayer) {
     myWMSLayer->layerMetadata.title = i["title"].get<std::string>().c_str();
     myWMSLayer->layerMetadata.group = i["group"].get<std::string>().c_str();
     myWMSLayer->layerMetadata.abstract = i["abstract"].get<std::string>().c_str();
-    myWMSLayer->layerMetadata.isQueryable = i["isQueryable"].get<int>();
+    myWMSLayer->layerMetadata.isQueryable = i["isqueryable"].get<int>();
+    myWMSLayer->layerMetadata.nativeEPSG = i["nativeepsg"].get<std::string>().c_str();
     myWMSLayer->layerMetadata.dfLatLonBBOX[0] = i["latlonboxleft"].get<double>();
     myWMSLayer->layerMetadata.dfLatLonBBOX[1] = i["latlonboxright"].get<double>();
     myWMSLayer->layerMetadata.dfLatLonBBOX[2] = i["latlonboxbottom"].get<double>();
     myWMSLayer->layerMetadata.dfLatLonBBOX[3] = i["latlonboxtop"].get<double>();
+    myWMSLayer->layerMetadata.dfBBOX[0] = i["bboxleft"].get<double>();
+    myWMSLayer->layerMetadata.dfBBOX[1] = i["bboxright"].get<double>();
+    myWMSLayer->layerMetadata.dfBBOX[2] = i["bboxbottom"].get<double>();
+    myWMSLayer->layerMetadata.dfBBOX[3] = i["bboxtop"].get<double>();
+    myWMSLayer->layerMetadata.width = i["width"].get<int>();
+    myWMSLayer->layerMetadata.height = i["height"].get<int>();
+    myWMSLayer->layerMetadata.cellsizeX = i["cellsizex"].get<double>();
+    myWMSLayer->layerMetadata.cellsizeY = i["cellsizey"].get<double>();
+    auto c = i["variables"];
+    for (auto styleJson : c.items()) {
+      auto variableProps = styleJson.value();
+      LayerMetadataVariable *variable = new LayerMetadataVariable();
+      myWMSLayer->layerMetadata.variableList.push_back(variable);
+      variable->units = variableProps["units"].get<std::string>().c_str();
+    }
+
   } catch (json::exception &e) {
     return 1;
   } catch (int e) {

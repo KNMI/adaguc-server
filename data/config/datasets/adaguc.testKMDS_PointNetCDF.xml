@@ -521,9 +521,9 @@
   </Layer>
   <Layer type="database">
     <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
-    <Name>pr</Name>
+    <Name>rg</Name>
     <Title>neerslagintensiteit(neerslagmeter) [mm/uur]</Title>
-    <Variable>pr</Variable>
+    <Variable>rg</Variable>
     <Abstract>neerslagintensiteit(neerslagmeter) [mm/uur]</Abstract>
     <Styles>precipitation</Styles>
 

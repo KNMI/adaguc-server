@@ -294,7 +294,10 @@ public:
       CXMLSerializerInterface *base = (CXMLSerializerInterface *)baseClass;
       base->currentNode = (CXMLObjectInterface *)this;
       if (rc == 0)
-        if (value != NULL) this->value.copy(value);
+        if (value != NULL) {
+          this->value.copy(value);
+          this->value.trimSelf();
+        }
       if (rc == 1) {
         pt2Class = NULL;
         if (equals("palette", name)) {
@@ -636,7 +639,10 @@ public:
       CXMLSerializerInterface *base = (CXMLSerializerInterface *)baseClass;
       base->currentNode = (CXMLObjectInterface *)this;
       if (rc == 0)
-        if (value != NULL) this->value.copy(value);
+        if (value != NULL) {
+          this->value.copy(value);
+          this->value.trimSelf();
+        }
       if (rc == 1) {
         pt2Class = NULL;
         if (equals("Dir", name)) {
@@ -893,7 +899,10 @@ public:
       base->currentNode = (CXMLObjectInterface *)this;
       pt2Class = NULL;
       if (rc == 0)
-        if (value != NULL) this->value.copy(value);
+        if (value != NULL) {
+          this->value.copy(value);
+          this->value.trimSelf();
+        }
       if (rc == 1) {
 
         if (equals("Thinning", name)) {
@@ -1372,7 +1381,10 @@ public:
       CXMLSerializerInterface *base = (CXMLSerializerInterface *)baseClass;
       base->currentNode = (CXMLObjectInterface *)this;
       if (rc == 0)
-        if (value != NULL) this->value.copy(value);
+        if (value != NULL) {
+          this->value.copy(value);
+          this->value.trimSelf();
+        }
       if (rc == 1) {
         pt2Class = NULL;
         if (equals("LatLonBox", name)) {
@@ -1438,7 +1450,10 @@ public:
       CXMLSerializerInterface *base = (CXMLSerializerInterface *)baseClass;
       base->currentNode = (CXMLObjectInterface *)this;
       if (rc == 0)
-        if (value != NULL) this->value.copy(value);
+        if (value != NULL) {
+          this->value.copy(value);
+          this->value.trimSelf();
+        }
       if (rc == 1) {
         pt2Class = NULL;
         if (equals("Name", name)) {
@@ -1473,7 +1488,10 @@ public:
       CXMLSerializerInterface *base = (CXMLSerializerInterface *)baseClass;
       base->currentNode = (CXMLObjectInterface *)this;
       if (rc == 0)
-        if (value != NULL) this->value.copy(value);
+        if (value != NULL) {
+          this->value.copy(value);
+          this->value.trimSelf();
+        }
       if (rc == 1) {
         pt2Class = NULL;
         if (equals("ViewServiceCSW", name)) {
@@ -1525,7 +1543,10 @@ public:
       CXMLSerializerInterface *base = (CXMLSerializerInterface *)baseClass;
       base->currentNode = (CXMLObjectInterface *)this;
       if (rc == 0)
-        if (value != NULL) this->value.copy(value);
+        if (value != NULL) {
+          this->value.copy(value);
+          this->value.trimSelf();
+        }
       if (rc == 1) {
         pt2Class = NULL;
         if (equals("Title", name)) {
@@ -1593,7 +1614,10 @@ public:
       CXMLSerializerInterface *base = (CXMLSerializerInterface *)baseClass;
       base->currentNode = (CXMLObjectInterface *)this;
       if (rc == 0)
-        if (value != NULL) this->value.copy(value);
+        if (value != NULL) {
+          this->value.copy(value);
+          this->value.trimSelf();
+        }
       if (rc == 1) {
         pt2Class = NULL;
         if (equals("Name", name)) {
@@ -1840,7 +1864,10 @@ public:
       base->currentNode = (CXMLObjectInterface *)this;
       pt2Class = NULL;
       if (rc == 0)
-        if (value != NULL) this->value.copy(value);
+        if (value != NULL) {
+          this->value.copy(value);
+          this->value.trimSelf();
+        }
       if (rc == 1) {
 
         if (equals("Name", name)) {
@@ -1980,7 +2007,10 @@ public:
       CXMLSerializerInterface *base = (CXMLSerializerInterface *)baseClass;
       base->currentNode = (CXMLObjectInterface *)this;
       if (rc == 0)
-        if (value != NULL) this->value.copy(value);
+        if (value != NULL) {
+          this->value.copy(value);
+          this->value.trimSelf();
+        }
       if (rc == 1) {
         pt2Class = NULL;
         if (equals("Legend", name)) {

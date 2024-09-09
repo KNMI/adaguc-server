@@ -25,15 +25,25 @@ struct LayerMetadataStyle {
   CT::string abstract;
 };
 
+struct LayerMetadataVariable {
+  CT::string units;
+};
+
 struct LayerMetadata {
 
+  int width = -1;
+  int height = -1;
+  double cellsizeX = 0;
+  double cellsizeY = 0;
   double dfLatLonBBOX[4] = {-180, -90, 180, 90};
+  double dfBBOX[4] = {-180, -90, 180, 90};
   int isQueryable = 0;
-  CT::string name, title, group, abstract;
+  CT::string name, title, group, abstract, nativeEPSG;
 
   std::vector<LayerMetadataProjection *> projectionList;
   std::vector<LayerMetadataDim *> dimList;
   std::vector<LayerMetadataStyle *> styleList;
+  std::vector<LayerMetadataVariable *> variableList;
 };
 
 // TODO should rename this class

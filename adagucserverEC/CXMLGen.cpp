@@ -269,8 +269,8 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer 
               XMLDoc->concat("  </Style>");
             }
 
-            if (layer->dataSource->cfgLayer->MetadataURL.size() > 0) {
-              CT::string layerMetaDataURL = firstWMLayer->dataSource->cfgLayer->MetadataURL[0]->value.c_str();
+            if (layer->layer->MetadataURL.size() > 0) {
+              CT::string layerMetaDataURL = firstWMLayer->layer->MetadataURL[0]->value.c_str();
               layerMetaDataURL.replaceSelf("&", "&amp;");
               XMLDoc->concat("   <MetadataURL type=\"TC211\">\n");
               XMLDoc->concat("     <Format>text/xml</Format>\n");
@@ -623,7 +623,7 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer 
 #endif
             // XMLDoc->concat("<Keyword>"); XMLDoc->concat(&layer->abstract);XMLDoc->concat("</Keyword>\n");
 
-            /*if(layer->dataSource->cfgLayer->MetadataURL.size()>0){
+            /*if(layer->layerMetadata.cfgLayer->MetadataURL.size()>0){
                 XMLDoc->concat("  <KeywordList><Keyword>precipitation_amount</Keyword></KeywordList>\n");
             }*/
             XMLDoc->printconcat("<EX_GeographicBoundingBox>\n"
@@ -646,8 +646,8 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer 
               }
             }
 
-            if (firstWMLayer->dataSource->cfgLayer->MetadataURL.size() > 0) {
-              CT::string layerMetaDataURL = firstWMLayer->dataSource->cfgLayer->MetadataURL[0]->value.c_str();
+            if (firstWMLayer->layer->MetadataURL.size() > 0) {
+              CT::string layerMetaDataURL = firstWMLayer->layer->MetadataURL[0]->value.c_str();
               layerMetaDataURL.replaceSelf("&", "&amp;");
               XMLDoc->concat("  <MetadataURL type=\"ISO19115:2005\">\n");
               XMLDoc->concat("     <Format>application/gml+xml; version=3.2</Format>\n");
@@ -832,8 +832,8 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc, std::vector<WMSLa
                                   "  <name>%s</name>\n"
                                   "  <label>%s</label>\n",
                                   layer->layerMetadata.name.c_str(), layer->layerMetadata.name.c_str(), layerTitle.c_str());
-              if (layer->dataSource->dataObjects.size() > 0) {
-                XMLDoc->printconcat("  <uom>%s</uom>\n", layer->dataSource->dataObjects[0]->getUnits().c_str());
+              if (layer->layerMetadata.variableList.size() > 0) {
+                XMLDoc->printconcat("  <uom>%s</uom>\n", layer->layerMetadata.variableList[0]->units.c_str());
               }
               XMLDoc->printconcat("  <lonLatEnvelope srsName=\"urn:ogc:def:crs:OGC:1.3:CRS84\">\n"
                                   "    <gml:pos>%f %f</gml:pos>\n"
@@ -866,8 +866,8 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc, std::vector<WMSLa
                                     "        </gml:Envelope>\n",
                                     encodedProjString.c_str(), proj->dfBBOX[0], proj->dfBBOX[1], proj->dfBBOX[2], proj->dfBBOX[3]);
               }
-              int width = layer->dataSource->dWidth - 1;
-              int height = layer->dataSource->dHeight - 1;
+              int width = layer->layerMetadata.width - 1;
+              int height = layer->layerMetadata.height - 1;
               if (width <= 1) {
                 width = 999;
               }
@@ -891,9 +891,9 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc, std::vector<WMSLa
                                   "        </gml:RectifiedGrid>\n"
                                   "      </spatialDomain>\n",
                                   width, height,
-                                  layer->dataSource->dfBBOX[0], //+layer->dataSource->dfCellSizeX/2,
-                                  layer->dataSource->dfBBOX[3], //+layer->dataSource->dfCellSizeY/2,
-                                  layer->dataSource->dfCellSizeX, layer->dataSource->dfCellSizeY);
+                                  layer->layerMetadata.dfBBOX[0], //+layer->layerMetadata.dfCellSizeX/2,
+                                  layer->layerMetadata.dfBBOX[3], //+layer->layerMetadata.dfCellSizeY/2,
+                                  layer->layerMetadata.cellsizeX, layer->layerMetadata.cellsizeY);
 
               if (timeDimIndex >= 0) {
                 XMLDoc->concat("      <temporalDomain>\n");
@@ -943,7 +943,7 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc, std::vector<WMSLa
                 XMLDoc->printconcat("      <requestResponseCRSs>%s</requestResponseCRSs>\n", encodedProjString.c_str());
               }
 
-              CT::string prettyCRS = layer->dataSource->nativeEPSG.c_str();
+              CT::string prettyCRS = layer->layerMetadata.nativeEPSG.c_str();
               XMLDoc->printconcat("      <nativeCRSs>%s</nativeCRSs>\n    </supportedCRSs>\n", prettyCRS.c_str());
 
               XMLDoc->concat("    <supportedFormats nativeFormat=\"NetCDF4\">\n"
