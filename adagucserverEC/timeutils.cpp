@@ -16,7 +16,6 @@
  *
  ******************************************************************************/
 
-#include <iostream>
 #include <map>
 #include "timeutils.h"
 
@@ -108,11 +107,6 @@ CT::string toISO8601Interval(const TimeInterval &interval) {
   return result;
 }
 
-long long toSeconds(const TimeInterval &interval) {
-  // Convert a TimeInterval to approximate seconds for sorting
-  return interval.seconds + interval.minutes * 60 + interval.hours * 3600 + interval.days * 86400 + interval.months * 2592000 + interval.years * 31536000;
-}
-
 // Heuristic estimation of duration in ISO8601 format, given an array of timestamps
 // Checks that a consistent interval is (generally found), with room for inaccuracies (holes in data)
 // controlled by the threshold argument.
@@ -135,48 +129,29 @@ CT::string estimateISO8601Duration(const std::vector<CT::string> &timestamps, do
     intervals.push_back(calculateTimeInterval(parsedTimes[i - 1], parsedTimes[i]));
   }
 
+  TimeInterval smallestInterval = *std::min_element(intervals.begin(), intervals.end());
+
   // Count occurrences of each interval in terms of total seconds
-  std::map<long long, int> intervalFrequency;
-  std::map<long long, TimeInterval> intervalMap;
+  std::map<TimeInterval, int> intervalFrequency;
   for (const auto &interval : intervals) {
-    long long intervalInSeconds = toSeconds(interval);
-    intervalFrequency[intervalInSeconds]++;
-    intervalMap[intervalInSeconds] = interval;
+    intervalFrequency[interval]++;
   }
 
-  // Retrieve the most frequent and smallest interval
-  // In case of missing incoming values, we will find some occurrences of
-  // larger intervals.
-  // Heuristic: This interval has to present itself at least 80% of the time
-  long long mostFrequentIntervalInSeconds = 0;
-  int maxFrequency = 0;
-  //  Each entry has [intervalInSeconds,frequency]
-  for (const auto &entry : intervalFrequency) {
-    if (entry.second > maxFrequency || (entry.second == maxFrequency && entry.first < mostFrequentIntervalInSeconds)) {
-      mostFrequentIntervalInSeconds = entry.first;
-      maxFrequency = entry.second;
-    }
+  // Sort each pair by number of occurrences
+  const std::pair<TimeInterval, int> &mostFrequentIntervalInfo =
+      *std::max_element(intervalFrequency.begin(), intervalFrequency.end(), [](const std::pair<TimeInterval, int> &a, const std::pair<TimeInterval, int> &b) { return a.second < b.second; });
+
+  TimeInterval mostFrequentInterval = mostFrequentIntervalInfo.first;
+
+  // If the smallest interval is not the most frequent, we do not have a regular interval
+  if (!(smallestInterval == mostFrequentInterval)) return "";
+
+  // Otherwise, it is possible we have some missing data. Check if frequency is over threshold
+  if ((double(mostFrequentIntervalInfo.second) / double(timestamps.size() - 1)) >= threshold) {
+    // We return the interval corresponding to this estimation
+    return toISO8601Interval(mostFrequentInterval);
   }
 
-  // Check if all intervals are the same
-  // const TimeInterval &firstInterval = intervals[0];
-  // for (size_t i = 1; i < intervals.size(); ++i) {
-  //   if (intervals[i].years != firstInterval.years || intervals[i].months != firstInterval.months || intervals[i].days != firstInterval.days || intervals[i].hours != firstInterval.hours ||
-  //       intervals[i].minutes != firstInterval.minutes || intervals[i].seconds != firstInterval.seconds) {
-  //     return CT::string(""); // No consistent interval found
-  //   }
-  // }
-
-  // If all intervals are the same, convert the first interval to ISO8601 format
-  // return toISO8601Interval(firstInterval);
-  // Check if the most frequent interval meets the threshold
-  // Check if the most frequent interval meets the threshold
-  double frequencyPercentage = static_cast<double>(maxFrequency) / intervals.size();
-  if (frequencyPercentage < threshold) {
-    return CT::string(""); // No interval meets the threshold requirement
-  }
-
-  // Use the most frequent interval
-  TimeInterval mostFrequentInterval = intervalMap[mostFrequentIntervalInSeconds];
-  return toISO8601Interval(mostFrequentInterval);
+  // No estimation possible
+  return "";
 }
