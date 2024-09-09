@@ -55,25 +55,26 @@ int populateMyWMSLayerStruct(WMSLayer *myWMSLayer, bool readFromDB) {
     myWMSLayer->layerMetadata.title.copy(myWMSLayer->dataSource->cfgLayer->Name[0]->value.c_str());
   }
 
-  // Get a default file name for this layer to obtain some information
-  int status = getFileNameForLayer(myWMSLayer);
-  if (status != 0) {
-    myWMSLayer->hasError = 1;
-    return 1;
-  }
-  if (myWMSLayer->dataSource->timeSteps.size() == 0) {
-    myWMSLayer->dataSource->addStep(myWMSLayer->fileName.c_str(), NULL);
-  }
+  bool readFileInfo = readFromDB ? (loadLayerMetadataStructFromMetadataDb(myWMSLayer) != 0) : true;
+  if (readFileInfo) {
+    // Get a default file name for this layer to obtain some information
+    int status = getFileNameForLayer(myWMSLayer);
+    if (status != 0) {
+      myWMSLayer->hasError = 1;
+      return 1;
+    }
 
-  // CDBDebug("Filename for layer is %s / %s", myWMSLayer->fileName.c_str(), myWMSLayer->dataSource->getFileName());
+    if (myWMSLayer->dataSource->timeSteps.size() == 0) {
+      myWMSLayer->dataSource->addStep(myWMSLayer->fileName.c_str(), NULL);
+    }
 
-  // CDBDebug("getTitleForLayer");
-  if (getTitleForLayer(myWMSLayer) != 0) {
-    myWMSLayer->hasError = 1;
-    return 1;
+    CDBDebug("Filename for layer is %s / %s", myWMSLayer->fileName.c_str(), myWMSLayer->dataSource->getFileName());
+    CDBDebug("getTitleForLayer");
+    if (getTitleForLayer(myWMSLayer) != 0) {
+      myWMSLayer->hasError = 1;
+      return 1;
+    }
   }
-
-  // CDBDebug("getDimsForLayer");
   if (getDimsForLayer(myWMSLayer) != 0) {
     myWMSLayer->hasError = 1;
     return 1;
@@ -535,10 +536,8 @@ int getProjectionInformationForLayer(WMSLayer *myWMSLayer) {
   }
 
   if (loadLayerProjectionAndExtentListFromMetadataDb(myWMSLayer) == 0) {
-    if (loadLayerMetadataStructFromMetadataDb(myWMSLayer) == 0) {
-      // CDBDebug("LayerMetadata: Proj information fetched!");
-      return 0;
-    }
+
+    return 0;
   }
 
   CGeoParams geo;

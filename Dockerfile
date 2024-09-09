@@ -88,7 +88,7 @@ COPY python /adaguc/adaguc-server-master/python
 # To run the tests against a postgres db, see docs/test_postgesql.md
 FROM base AS test
 
-ENV TEST_IN_CONTAINER 1
+ENV TEST_IN_CONTAINER=1
 
 COPY requirements-dev.txt /adaguc/adaguc-server-master/requirements-dev.txt
 RUN pip install --no-cache-dir -r requirements-dev.txt

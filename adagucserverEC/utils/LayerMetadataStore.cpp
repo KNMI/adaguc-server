@@ -40,16 +40,7 @@ int storeLayerMetadataInDb(WMSLayer *myWMSLayer, CT::string metadataKey, std::st
     }
     CT::string layerName = myWMSLayer->dataSource->getLayerName();
 
-    CT::string updateTime = "now";
-    // Try to find the defaultValue in the time dimension, used for updateTime in the metadata table
-    auto timeDimIt = find_if(myWMSLayer->layerMetadata.dimList.begin(), myWMSLayer->layerMetadata.dimList.end(), [](const LayerMetadataDim *obj) { return obj->name.equals("time"); });
-    if (timeDimIt != myWMSLayer->layerMetadata.dimList.end()) {
-      auto timeDim = *timeDimIt;
-      updateTime = timeDim->defaultValue.c_str();
-    } else {
-      updateTime = CTime::currentDateTime().c_str();
-    }
-    return CDBFactory::getDBAdapter(myWMSLayer->dataSource->srvParams->cfg)->storeLayerMetadata(datasetName, layerName, metadataKey, metadataBlob.c_str(), updateTime.c_str());
+    return CDBFactory::getDBAdapter(myWMSLayer->dataSource->srvParams->cfg)->storeLayerMetadata(datasetName, layerName, metadataKey, metadataBlob.c_str());
   } catch (int e) {
     return e;
   }
@@ -58,11 +49,11 @@ int storeLayerMetadataInDb(WMSLayer *myWMSLayer, CT::string metadataKey, std::st
 
 int storeLayerMetadataStructIntoMetadataDb(WMSLayer *myWMSLayer) {
   json layerMetadataItem;
-  // layerMetadataItem["name"] = myWMSLayer->layerMetadata.name;
-  // layerMetadataItem["title"] = myWMSLayer->layerMetadata.title;
-  // layerMetadataItem["group"] = myWMSLayer->layerMetadata.group;
-  // layerMetadataItem["abstract"] = myWMSLayer->layerMetadata.abstract;
-  // layerMetadataItem["isQueryable"] = myWMSLayer->layerMetadata.isQueryable;
+  layerMetadataItem["name"] = myWMSLayer->layerMetadata.name;
+  layerMetadataItem["title"] = myWMSLayer->layerMetadata.title;
+  layerMetadataItem["group"] = myWMSLayer->layerMetadata.group;
+  layerMetadataItem["abstract"] = myWMSLayer->layerMetadata.abstract;
+  layerMetadataItem["isQueryable"] = myWMSLayer->layerMetadata.isQueryable;
   layerMetadataItem["latlonboxleft"] = myWMSLayer->layerMetadata.dfLatLonBBOX[0];
   layerMetadataItem["latlonboxright"] = myWMSLayer->layerMetadata.dfLatLonBBOX[1];
   layerMetadataItem["latlonboxbottom"] = myWMSLayer->layerMetadata.dfLatLonBBOX[2];
@@ -82,15 +73,17 @@ int loadLayerMetadataStructFromMetadataDb(WMSLayer *myWMSLayer) {
     }
     json a;
     auto i = a.parse(layerMetadataAsJson.c_str());
-    // myWMSLayer->layerMetadata.name = i["name"].get<std::string>().c_str();
-    // myWMSLayer->layerMetadata.title = i["title"].get<std::string>().c_str();
-    // myWMSLayer->layerMetadata.group = i["group"].get<std::string>().c_str();
-    // myWMSLayer->layerMetadata.abstract = i["abstract"].get<std::string>().c_str();
-    // myWMSLayer->layerMetadata.isQueryable = i["isQueryable"].get<int>();
+    myWMSLayer->layerMetadata.name = i["name"].get<std::string>().c_str();
+    myWMSLayer->layerMetadata.title = i["title"].get<std::string>().c_str();
+    myWMSLayer->layerMetadata.group = i["group"].get<std::string>().c_str();
+    myWMSLayer->layerMetadata.abstract = i["abstract"].get<std::string>().c_str();
+    myWMSLayer->layerMetadata.isQueryable = i["isQueryable"].get<int>();
     myWMSLayer->layerMetadata.dfLatLonBBOX[0] = i["latlonboxleft"].get<double>();
     myWMSLayer->layerMetadata.dfLatLonBBOX[1] = i["latlonboxright"].get<double>();
     myWMSLayer->layerMetadata.dfLatLonBBOX[2] = i["latlonboxbottom"].get<double>();
     myWMSLayer->layerMetadata.dfLatLonBBOX[3] = i["latlonboxtop"].get<double>();
+  } catch (json::exception &e) {
+    return 1;
   } catch (int e) {
     CDBError("loadLayerMetadataStructFromMetadataDb %d", e);
     return e;
@@ -137,6 +130,8 @@ int loadLayerProjectionAndExtentListFromMetadataDb(WMSLayer *myWMSLayer) {
       bboxArray[2].get_to((projection->dfBBOX[2]));
       bboxArray[3].get_to((projection->dfBBOX[3]));
     }
+  } catch (json::exception &e) {
+    return 1;
   } catch (int e) {
     // CDBError("loadLayerProjectionAndExtentListFromMetadataDb %d", e);
     return e;
@@ -192,6 +187,8 @@ int loadLayerStyleListFromMetadataDb(WMSLayer *myWMSLayer) {
       style->title = styleProperties["title"].get<std::string>().c_str();
     }
 
+  } catch (json::exception &e) {
+    return 1;
   } catch (int e) {
     // CDBError("loadLayerStyleListFromMetadataDb %d", e);
     return e;
@@ -214,6 +211,8 @@ int storeLayerDimensionListIntoMetadataDb(WMSLayer *myWMSLayer) {
       dimListJson[dimension->name.c_str()] = item;
     }
     storeLayerMetadataInDb(myWMSLayer, "dimensionlist", dimListJson.dump());
+  } catch (json::exception &e) {
+    return 1;
   } catch (int e) {
     return e;
   }
@@ -250,9 +249,9 @@ int loadLayerDimensionListFromMetadataDb(WMSLayer *myWMSLayer) {
       dimension->units = dimensionProperties["units"].get<std::string>().c_str();
       dimension->values = dimensionProperties["values"].get<std::string>().c_str();
     }
-
+  } catch (json::exception &e) {
+    return 1;
   } catch (int e) {
-    // CDBDebug("loadLayerDimensionListFromMetadataDb %d", e);
     return e;
   }
   return 0;

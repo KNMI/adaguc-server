@@ -89,6 +89,6 @@ public:
   int setFileString(const char *tablename, const char *file, const char *dimvalue, int dimindex, const char *filedate, GeoOptions *geoOptions);
   int setFileTimeStamp(const char *tablename, const char *file, const char *dimvalue, int dimindex, const char *filedate, GeoOptions *geoOptions);
   int addFilesToDataBase();
-  int storeLayerMetadata(const char *datasetName, const char *layerName, const char *metadataKey, const char *metadatablob, const char *updateTime);
+  int storeLayerMetadata(const char *datasetName, const char *layerName, const char *metadataKey, const char *metadatablob);
   CT::string getLayerMetadata(const char *datasetName, const char *layerName, const char *metadataKey);
 };
