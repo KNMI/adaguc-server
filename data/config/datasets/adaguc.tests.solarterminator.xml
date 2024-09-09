@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Configuration>
-  <Style name="solarterminator">
+  <Style name="soltstyle">
     <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
     <Min>0</Min>
     <Max>4</Max>
@@ -11,19 +11,17 @@
     <ShadeInterval min="3.00" max="4.00"    label="Civil Twilight"    fillcolor="#999999"/>
     <ShadeInterval min="4.00" max="5.00"    label="Day"    fillcolor="#FFFFFF"/>
 
-    <NameMapping name="nearest"   title="Rainbow colors" abstract="Drawing with rainbow colors"/>
-    <NameMapping name="bilinear"   title="Rainbow colors, bilinear" abstract="Drawing with rainbow colors, bilinear interpolation"/>
-    <NameMapping name="nearestcontour"   title="Rainbow colors, contours" abstract="Drawing with rainbow colors, contours"/>
-    <NameMapping name="shadedcontour"   title="Rainbow colors, shading and contours" abstract="Drawing with rainbow colors, shading and contours"/>
-    <RenderMethod>nearest,bilinear,nearestcontour,shadedcontour</RenderMethod>
-    
+    <NameMapping name="shadedcontour"   title="Shaded categories" abstract="Drawing with rainbow colors, shading and contours"/>
+    <RenderMethod>shadedcontour</RenderMethod>
+
   </Style>
   
   <Layer type="liveupdate">
-    <FilePath filter="" gfi_openall="true">{ADAGUC_PATH}data/datasets/testdata.nc</FilePath>
+    <FilePath filter="" gfi_openall="true">{ADAGUC_PATH}data/datasets/solt.nc</FilePath>
     <DataPostProc algorithm="solarterminator"/>
-    <Variable>testdata</Variable> 
-    <Styles>solarterminator</Styles>
+    <Variable>solarterminator</Variable>
+    <Styles>soltstyle</Styles>
   </Layer>
+
 
 </Configuration>
