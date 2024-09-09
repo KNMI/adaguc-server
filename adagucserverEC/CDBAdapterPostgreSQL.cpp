@@ -1150,6 +1150,9 @@ CT::string CDBAdapterPostgreSQL::getLayerMetadata(const char *datasetName, const
   auto records = layerMetaDataStore->getRecords();
   for (auto record : records) {
     if (record->get("layername")->equals(layerName) && record->get("metadatakey")->equals(metadataKey)) {
+#ifdef MEASURETIME
+      StopWatch_Stop("<CDBAdapterPostgreSQL::getLayerMetadata");
+#endif
       return record->get("blob");
     }
   }
