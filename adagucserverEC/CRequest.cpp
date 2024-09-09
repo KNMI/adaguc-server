@@ -42,6 +42,9 @@
 #include <CReadFile.h>
 #include "Definitions.h"
 #include "utils/LayerUtils.h"
+#include "utils/XMLGenUtils.h"
+#include "utils/LayerMetadataStore.h"
+#include <json_adaguc.h>
 
 const char *CRequest::className = "CRequest";
 int CRequest::CGI = 0;
@@ -2279,16 +2282,52 @@ int CRequest::process_all_layers() {
 
       // WMS GetMetaData
       if (srvParam->requestType == REQUEST_WMS_GETMETADATA) {
-        printf("%s%c%c\n", "Content-Type:text/plain", 13, 10);
-        CDataReader reader;
-        status = reader.open(dataSources[j], CNETCDFREADER_MODE_OPEN_HEADER);
-        if (status != 0) {
-          CDBError("Could not open file: %s", dataSources[j]->getFileName());
-          throw(__LINE__);
+        if (srvParam->Format.equals("application/json")) {
+          json result;
+          json dataset;
+          json layer;
+
+          WMSLayer *myWMSLayer = new WMSLayer();
+          myWMSLayer->readFromDb = true;
+          myWMSLayer->layer = dataSources[j]->cfgLayer;
+          myWMSLayer->srvParams = srvParam;
+          myWMSLayer->dataSource = dataSources[j];
+          loadMyWMSLayerFromMetadataDb(myWMSLayer);
+
+          json dimListJson, layerMetadataItem, projsettings, styleListJson;
+
+          getDimensionListAsJson(myWMSLayer, dimListJson);
+          getLayerMetadataAsJson(myWMSLayer, layerMetadataItem);
+          getProjectionListAsJson(myWMSLayer, projsettings);
+          getStyleListMetadataAsJson(myWMSLayer, styleListJson);
+          CT::string datasetName = myWMSLayer->dataSource->srvParams->datasetLocation;
+          if (datasetName.empty()) {
+            CDBDebug("Not a dataset");
+            return 1;
+          }
+          CT::string layerName = myWMSLayer->dataSource->getLayerName();
+
+          layer["dims"] = dimListJson;
+          layer["layer"] = layerMetadataItem;
+          layer["projections"] = projsettings;
+          layer["styles"] = styleListJson;
+          dataset[layerName.c_str()] = layer;
+          result[datasetName.c_str()] = dataset;
+          printf("%s%c%c\n", "Content-Type:application/json", 13, 10);
+          printf("%s", result.dump().c_str());
+        } else {
+          printf("%s%c%c\n", "Content-Type:text/plain", 13, 10);
+          CDataReader reader;
+          status = reader.open(dataSources[j], CNETCDFREADER_MODE_OPEN_HEADER);
+          if (status != 0) {
+            CDBError("Could not open file: %s", dataSources[j]->getFileName());
+            throw(__LINE__);
+          }
+          CT::string dumpString = CDF::dump(dataSources[j]->getDataObject(0)->cdfObject);
+          printf("%s", dumpString.c_str());
+          reader.close();
         }
-        CT::string dumpString = CDF::dump(dataSources[j]->getDataObject(0)->cdfObject);
-        printf("%s", dumpString.c_str());
-        reader.close();
+        return 0;
       }
 
       if (srvParam->requestType == REQUEST_WMS_GETREFERENCETIMES) {

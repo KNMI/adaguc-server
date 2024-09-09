@@ -4,6 +4,12 @@
 #include <string>
 #include <vector>
 #include "CXMLGen.h"
+#include <json_adaguc.h>
+
+int getDimensionListAsJson(WMSLayer *myWMSLayer, json &dimListJson);
+int getLayerMetadataAsJson(WMSLayer *myWMSLayer, json &layerMetadataItem);
+int getProjectionListAsJson(WMSLayer *myWMSLayer, json &projsettings);
+int getStyleListMetadataAsJson(WMSLayer *myWMSLayer, json &styleListJson);
 
 int storeLayerMetadataInDb(WMSLayer *myWMSLayer, CT::string metadataKey, std::string metadataBlob);
 CT::string getLayerMetadataFromDb(WMSLayer *myWMSLayer, CT::string metadataKey);

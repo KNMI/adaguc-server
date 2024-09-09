@@ -4,6 +4,86 @@
 #include <CDBFactory.h>
 #include "XMLGenUtils.h"
 
+int getDimensionListAsJson(WMSLayer *myWMSLayer, json &dimListJson) {
+  try {
+
+    for (auto dimension : myWMSLayer->layerMetadata.dimList) {
+      json item;
+      item["defaultValue"] = dimension->defaultValue.c_str();
+      item["hasMultipleValues"] = dimension->hasMultipleValues;
+      item["hidden"] = dimension->hidden;
+      item["name"] = dimension->name.c_str();
+      item["units"] = dimension->units.c_str();
+      item["values"] = dimension->values.c_str();
+      dimListJson[dimension->name.c_str()] = item;
+    }
+  } catch (json::exception &e) {
+    return 1;
+  }
+  return 0;
+}
+
+int getLayerMetadataAsJson(WMSLayer *myWMSLayer, json &layerMetadataItem) {
+  try {
+    layerMetadataItem["name"] = myWMSLayer->layerMetadata.name;
+    layerMetadataItem["title"] = myWMSLayer->layerMetadata.title;
+    layerMetadataItem["group"] = myWMSLayer->layerMetadata.group;
+    layerMetadataItem["abstract"] = myWMSLayer->layerMetadata.abstract;
+    layerMetadataItem["nativeepsg"] = myWMSLayer->layerMetadata.nativeEPSG;
+    layerMetadataItem["isqueryable"] = myWMSLayer->layerMetadata.isQueryable;
+    layerMetadataItem["latlonboxleft"] = myWMSLayer->layerMetadata.dfLatLonBBOX[0];
+    layerMetadataItem["latlonboxright"] = myWMSLayer->layerMetadata.dfLatLonBBOX[1];
+    layerMetadataItem["latlonboxbottom"] = myWMSLayer->layerMetadata.dfLatLonBBOX[2];
+    layerMetadataItem["latlonboxtop"] = myWMSLayer->layerMetadata.dfLatLonBBOX[3];
+    layerMetadataItem["bboxleft"] = myWMSLayer->layerMetadata.dfBBOX[0];
+    layerMetadataItem["bboxright"] = myWMSLayer->layerMetadata.dfBBOX[1];
+    layerMetadataItem["bboxbottom"] = myWMSLayer->layerMetadata.dfBBOX[2];
+    layerMetadataItem["bboxtop"] = myWMSLayer->layerMetadata.dfBBOX[3];
+    layerMetadataItem["width"] = myWMSLayer->layerMetadata.width;
+    layerMetadataItem["height"] = myWMSLayer->layerMetadata.height;
+    layerMetadataItem["cellsizex"] = myWMSLayer->layerMetadata.cellsizeX;
+    layerMetadataItem["cellsizey"] = myWMSLayer->layerMetadata.cellsizeY;
+    json variables;
+    for (auto lv : myWMSLayer->layerMetadata.variableList) {
+      json variable;
+      variable["units"] = lv->units;
+      variables.push_back(variable);
+    }
+    layerMetadataItem["variables"] = variables;
+
+  } catch (json::exception &e) {
+    return 1;
+  }
+  return 0;
+}
+int getProjectionListAsJson(WMSLayer *myWMSLayer, json &projsettings) {
+  try {
+    for (auto projection : myWMSLayer->layerMetadata.projectionList) {
+      json item = {projection->dfBBOX[0], projection->dfBBOX[1], projection->dfBBOX[2], projection->dfBBOX[3]};
+      projsettings[projection->name.c_str()] = item;
+    }
+  } catch (json::exception &e) {
+    return 1;
+  }
+  return 0;
+}
+
+int getStyleListMetadataAsJson(WMSLayer *myWMSLayer, json &styleListJson) {
+  try {
+
+    for (auto style : myWMSLayer->layerMetadata.styleList) {
+      json item;
+      item["abstract"] = style->abstract.c_str();
+      item["title"] = style->title.c_str();
+      item["name"] = style->name.c_str();
+      styleListJson.push_back(item);
+    }
+  } catch (json::exception &e) {
+    return 1;
+  }
+  return 0;
+}
+
 int storeMyWMSLayerIntoMetadataDb(WMSLayer *myWMSLayer) {
   storeLayerMetadataStructIntoMetadataDb(myWMSLayer);
   storeLayerDimensionListIntoMetadataDb(myWMSLayer);
@@ -12,7 +92,6 @@ int storeMyWMSLayerIntoMetadataDb(WMSLayer *myWMSLayer) {
   return 0;
 }
 
-// Not sure if this will be used
 int loadMyWMSLayerFromMetadataDb(WMSLayer *myWMSLayer) {
   loadLayerMetadataStructFromMetadataDb(myWMSLayer);
   loadLayerDimensionListFromMetadataDb(myWMSLayer);
@@ -49,31 +128,10 @@ int storeLayerMetadataInDb(WMSLayer *myWMSLayer, CT::string metadataKey, std::st
 
 int storeLayerMetadataStructIntoMetadataDb(WMSLayer *myWMSLayer) {
   json layerMetadataItem;
-  layerMetadataItem["name"] = myWMSLayer->layerMetadata.name;
-  layerMetadataItem["title"] = myWMSLayer->layerMetadata.title;
-  layerMetadataItem["group"] = myWMSLayer->layerMetadata.group;
-  layerMetadataItem["abstract"] = myWMSLayer->layerMetadata.abstract;
-  layerMetadataItem["nativeepsg"] = myWMSLayer->layerMetadata.nativeEPSG;
-  layerMetadataItem["isqueryable"] = myWMSLayer->layerMetadata.isQueryable;
-  layerMetadataItem["latlonboxleft"] = myWMSLayer->layerMetadata.dfLatLonBBOX[0];
-  layerMetadataItem["latlonboxright"] = myWMSLayer->layerMetadata.dfLatLonBBOX[1];
-  layerMetadataItem["latlonboxbottom"] = myWMSLayer->layerMetadata.dfLatLonBBOX[2];
-  layerMetadataItem["latlonboxtop"] = myWMSLayer->layerMetadata.dfLatLonBBOX[3];
-  layerMetadataItem["bboxleft"] = myWMSLayer->layerMetadata.dfBBOX[0];
-  layerMetadataItem["bboxright"] = myWMSLayer->layerMetadata.dfBBOX[1];
-  layerMetadataItem["bboxbottom"] = myWMSLayer->layerMetadata.dfBBOX[2];
-  layerMetadataItem["bboxtop"] = myWMSLayer->layerMetadata.dfBBOX[3];
-  layerMetadataItem["width"] = myWMSLayer->layerMetadata.width;
-  layerMetadataItem["height"] = myWMSLayer->layerMetadata.height;
-  layerMetadataItem["cellsizex"] = myWMSLayer->layerMetadata.cellsizeX;
-  layerMetadataItem["cellsizey"] = myWMSLayer->layerMetadata.cellsizeY;
-  json variables;
-  for (auto lv : myWMSLayer->layerMetadata.variableList) {
-    json variable;
-    variable["units"] = lv->units;
-    variables.push_back(variable);
+
+  if (getLayerMetadataAsJson(myWMSLayer, layerMetadataItem) != 0) {
+    return 1;
   }
-  layerMetadataItem["variables"] = variables;
 
   storeLayerMetadataInDb(myWMSLayer, "layermetadata", layerMetadataItem.dump());
   return 0;
@@ -128,9 +186,8 @@ int loadLayerMetadataStructFromMetadataDb(WMSLayer *myWMSLayer) {
 int storeLayerProjectionAndExtentListIntoMetadataDb(WMSLayer *myWMSLayer) {
   try {
     json projsettings;
-    for (auto projection : myWMSLayer->layerMetadata.projectionList) {
-      json item = {projection->dfBBOX[0], projection->dfBBOX[1], projection->dfBBOX[2], projection->dfBBOX[3]};
-      projsettings[projection->name.c_str()] = item;
+    if (getProjectionListAsJson(myWMSLayer, projsettings) != 0) {
+      return 1;
     }
     storeLayerMetadataInDb(myWMSLayer, "projected_extents", projsettings.dump());
   } catch (int e) {
@@ -176,12 +233,8 @@ int loadLayerProjectionAndExtentListFromMetadataDb(WMSLayer *myWMSLayer) {
 int storeLayerStyleListIntoMetadataDb(WMSLayer *myWMSLayer) {
   try {
     json styleListJson;
-    for (auto style : myWMSLayer->layerMetadata.styleList) {
-      json item;
-      item["abstract"] = style->abstract.c_str();
-      item["title"] = style->title.c_str();
-      item["name"] = style->name.c_str();
-      styleListJson.push_back(item);
+    if (getStyleListMetadataAsJson(myWMSLayer, styleListJson) != 0) {
+      return 1;
     }
     storeLayerMetadataInDb(myWMSLayer, "stylelist", styleListJson.dump());
   } catch (int e) {
@@ -234,15 +287,8 @@ int storeLayerDimensionListIntoMetadataDb(WMSLayer *myWMSLayer) {
   CDBDebug("storeLayerDimensionListIntoMetadataDb");
   try {
     json dimListJson;
-    for (auto dimension : myWMSLayer->layerMetadata.dimList) {
-      json item;
-      item["defaultValue"] = dimension->defaultValue.c_str();
-      item["hasMultipleValues"] = dimension->hasMultipleValues;
-      item["hidden"] = dimension->hidden;
-      item["name"] = dimension->name.c_str();
-      item["units"] = dimension->units.c_str();
-      item["values"] = dimension->values.c_str();
-      dimListJson[dimension->name.c_str()] = item;
+    if (getDimensionListAsJson(myWMSLayer, dimListJson) != 0) {
+      return 1;
     }
     storeLayerMetadataInDb(myWMSLayer, "dimensionlist", dimListJson.dump());
   } catch (json::exception &e) {
