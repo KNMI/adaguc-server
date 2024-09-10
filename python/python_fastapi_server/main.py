@@ -94,5 +94,5 @@ app.include_router(autowms_router)
 app.include_router(opendapRouter)
 
 if __name__ == "__main__":
-    # testadaguc()
+    testadaguc()
     uvicorn.run(app="main:app", host="0.0.0.0", port=8080, reload=True)
