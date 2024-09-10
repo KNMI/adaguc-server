@@ -1133,7 +1133,7 @@ CT::string CDBAdapterPostgreSQL::getLayerMetadata(const char *datasetName, const
     }
 
     CT::string query;
-    query.print("SELECT layername, metadatakey, blob from metadata where datasetname = '%s';", datasetName);
+    query.print("SELECT layername, metadatakey, blob from layermetadata where datasetname = '%s';", datasetName);
     this->layerMetaDataStore = dataBaseConnection->queryToStore(query.c_str());
     if (layerMetaDataStore == nullptr) {
 #ifdef CDBAdapterPostgreSQL_DEBUG
