@@ -1092,9 +1092,9 @@ int CDBAdapterPostgreSQL::storeLayerMetadata(const char *datasetName, const char
 
   CT::string tableColumns("datasetname varchar (255), layername varchar (255), metadatakey varchar (255), updatetime TIMESTAMPTZ, blob JSONB, PRIMARY KEY (datasetname, layername, metadatakey)");
 
-  int status = dataBaseConnection->checkTable("metadata", tableColumns.c_str());
+  int status = dataBaseConnection->checkTable("layermetadata", tableColumns.c_str());
   if (status == 1) {
-    CDBError("\nFAIL: Table metadata could not be created: %s", tableColumns.c_str());
+    CDBError("\nFAIL: Table layermetadata could not be created: %s", tableColumns.c_str());
     throw(__LINE__);
   }
 

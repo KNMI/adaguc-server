@@ -474,13 +474,13 @@ namespace CT {
     int s = -1, e = privatelength;
     const char *value = useStack ? stackValue : heapValue;
     for (size_t j = 0; j < privatelength; j++) {
-      if (value[j] != ' ' || value[j] != 10 || value[j] != 13) {
+      if (value[j] != ' ' && value[j] != '\n' && value[j] != '\r') {
         s = j;
         break;
       }
     }
     for (size_t j = privatelength - 1; j > 0; j--) {
-      if (value[j] != ' ' || value[j] != 10 || value[j] != 13) {
+      if (value[j] != ' ' && value[j] != '\n' && value[j] != '\r') {
         e = j;
         break;
       }
