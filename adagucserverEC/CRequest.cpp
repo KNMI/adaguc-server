@@ -45,6 +45,7 @@
 #include "utils/XMLGenUtils.h"
 #include "utils/LayerMetadataStore.h"
 #include <json_adaguc.h>
+#include "utils/LayerMetadataToJson.h"
 
 const char *CRequest::className = "CRequest";
 int CRequest::CGI = 0;
@@ -2283,36 +2284,10 @@ int CRequest::process_all_layers() {
       // WMS GetMetaData
       if (srvParam->requestType == REQUEST_WMS_GETMETADATA) {
         if (srvParam->Format.equals("application/json")) {
+
           json result;
-          json dataset;
-          json layer;
+          getLayerMetadataAsJson(dataSources[j], result);
 
-          WMSLayer *myWMSLayer = new WMSLayer();
-          myWMSLayer->readFromDb = true;
-          myWMSLayer->layer = dataSources[j]->cfgLayer;
-          myWMSLayer->srvParams = srvParam;
-          myWMSLayer->dataSource = dataSources[j];
-          loadMyWMSLayerFromMetadataDb(myWMSLayer);
-
-          json dimListJson, layerMetadataItem, projsettings, styleListJson;
-
-          getDimensionListAsJson(myWMSLayer, dimListJson);
-          getLayerMetadataAsJson(myWMSLayer, layerMetadataItem);
-          getProjectionListAsJson(myWMSLayer, projsettings);
-          getStyleListMetadataAsJson(myWMSLayer, styleListJson);
-          CT::string datasetName = myWMSLayer->dataSource->srvParams->datasetLocation;
-          if (datasetName.empty()) {
-            CDBDebug("Not a dataset");
-            return 1;
-          }
-          CT::string layerName = myWMSLayer->dataSource->getLayerName();
-
-          layer["dims"] = dimListJson;
-          layer["layer"] = layerMetadataItem;
-          layer["projections"] = projsettings;
-          layer["styles"] = styleListJson;
-          dataset[layerName.c_str()] = layer;
-          result[datasetName.c_str()] = dataset;
           printf("%s%c%c\n", "Content-Type:application/json", 13, 10);
           printf("%s", result.dump().c_str());
         } else {

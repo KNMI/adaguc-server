@@ -75,6 +75,8 @@ add_library(
     utils/CXMLTemplates.h
     utils/LayerUtils.h
     utils/LayerUtils.cpp
+    utils/LayerMetadataToJson.h
+    utils/LayerMetadataToJson.cpp
     Types/LayerMetadataType.h
     Types/LayerMetadataType.cpp
     CDataPostProcessors/CDataPostProcessor_AddFeatures.cpp

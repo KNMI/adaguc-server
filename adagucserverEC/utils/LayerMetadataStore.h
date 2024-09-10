@@ -7,7 +7,7 @@
 #include <json_adaguc.h>
 
 int getDimensionListAsJson(WMSLayer *myWMSLayer, json &dimListJson);
-int getLayerMetadataAsJson(WMSLayer *myWMSLayer, json &layerMetadataItem);
+int getLayerBaseMetadataAsJson(WMSLayer *myWMSLayer, json &layerMetadataItem);
 int getProjectionListAsJson(WMSLayer *myWMSLayer, json &projsettings);
 int getStyleListMetadataAsJson(WMSLayer *myWMSLayer, json &styleListJson);
 
