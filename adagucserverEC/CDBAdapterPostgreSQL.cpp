@@ -1101,7 +1101,7 @@ int CDBAdapterPostgreSQL::storeLayerMetadata(const char *datasetName, const char
   CT::string updateTime = CTime::currentDateTime().c_str();
   updateTime.setSize(19);
   CT::string query;
-  query.print("INSERT INTO metadata values (E'%s',E'%s', E'%s', E'%s', E'%s') "
+  query.print("INSERT INTO layermetadata values (E'%s',E'%s', E'%s', E'%s', E'%s') "
               "ON CONFLICT (datasetname, layername, metadatakey) "
               "DO UPDATE SET blob = excluded.blob, updatetime = excluded.updatetime;",
               datasetName, layerName, metadataKey, updateTime.c_str(), metadataBlob);
