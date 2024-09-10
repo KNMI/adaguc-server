@@ -43,6 +43,7 @@
 #include <sys/un.h>
 #include <stdio.h>
 #include <signal.h>
+#include <unistd.h>
 
 DEF_ERRORMAIN();
 
@@ -486,10 +487,25 @@ void handle_client(int client_socket, int argc, char **argv, char **envp) {
   }
 }
 
+static std::map<pid_t, int> child_sockets;
+
+void on_child_exit(int child_signal) {
+  int child_status;
+  pid_t child_pid = wait(&child_status);
+
+  int child_sock = child_sockets[child_pid];
+  fprintf(stderr, "@ on_child_exit [%d] [%d] [%d] [%d]", child_pid, child_sock, child_signal, child_status);
+
+  write(child_sock, reinterpret_cast<const char *>(&child_status), sizeof(child_status));
+  close(child_sock);
+
+  child_sockets.erase(child_pid);
+}
+
 int run_server(int argc, char **argv, char **envp) {
   int client_socket = 0;
 
-  signal(SIGCHLD, SIG_IGN);
+  signal(SIGCHLD, on_child_exit);
 
   struct sockaddr_un local, remote;
   int len = 0;
@@ -526,11 +542,12 @@ int run_server(int argc, char **argv, char **envp) {
       return 1;
     }
 
-    if (fork() == 0) {
+    pid_t pid = fork();
+    if (pid == 0) {
       close(listen_socket);
       handle_client(client_socket, argc, argv, envp);
     } else {
-      close(client_socket);
+      child_sockets[pid] = client_socket;
     }
   }
 
