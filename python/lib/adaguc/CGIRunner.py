@@ -14,6 +14,7 @@ import time
 import chardet
 from queue import Queue, Empty  # python 3.x
 import re
+from typing import NamedTuple
 
 HTTP_STATUSCODE_404_NOT_FOUND = 32  # Must be the same as in Definitions.h
 HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY = 33  # Must be the same as in Definitions.h
@@ -29,7 +30,86 @@ ADAGUC_NUMPARALLELPROCESSES = int(os.getenv("ADAGUC_NUMPARALLELPROCESSES", "4"))
 sem = asyncio.Semaphore(max(ADAGUC_NUMPARALLELPROCESSES, 2))  # At least two, to allow for me layer metadata update
 
 
-import socket
+ADAGUC_FORK_UNIX_SOCKET = f"{os.getenv('ADAGUC_PATH')}/adaguc.socket"
+ON_POSIX = "posix" in sys.builtin_module_names
+
+
+class AdagucResponse(NamedTuple):
+    status_code: int
+    process_output: bytearray
+
+
+async def wait_socket_communicate(url, timeout) -> AdagucResponse:
+    """
+    If `socket_communicate` takes longer than `timeout`, we send a 500 timeout to the client.
+    The adagucserver process will get cleaned up by the adagucserver parent process.
+    """
+
+    try:
+        resp = await asyncio.wait_for(socket_communicate(url), timeout=timeout)
+    except asyncio.exceptions.TimeoutError:
+        return AdagucResponse(status_code=HTTP_STATUSCODE_500_TIMEOUT, process_output=None)
+    return resp
+
+
+async def socket_communicate(url: str) -> AdagucResponse:
+    """
+    Connect to unix socket, send query string over socket, receive bytes from adagucserver.
+
+    Last 4 bytes are status code.
+    """
+
+    process_output = bytearray()
+    reader, writer = await asyncio.open_unix_connection(ADAGUC_FORK_UNIX_SOCKET)
+    writer.write(url.encode())
+    await writer.drain()
+
+    process_output = await reader.read()
+
+    writer.close()
+    await writer.wait_closed()
+
+    # Status code is stored in the last 4 bytes from the received data
+    status_code = int.from_bytes(process_output[-4:], sys.byteorder)
+    process_output = process_output[:-4]
+    return AdagucResponse(status_code=status_code, process_output=process_output)
+
+
+async def wait_process_communicate(cmds, localenv, timeout) -> AdagucResponse:
+    """
+    If `process_communicate` takes longer than `timeout`, we send a 500 timeout to the client.
+    We also have to manually kill the adagucserver process that we spawned before.
+    """
+
+    try:
+        process = None
+        resp = await asyncio.wait_for(process_communicate(process, cmds, localenv), timeout=timeout)
+    except asyncio.exceptions.TimeoutError:
+        if process:
+            process.kill()
+            await process.communicate()
+
+        return AdagucResponse(status_code=HTTP_STATUSCODE_500_TIMEOUT, process_output=None)
+    return resp
+
+
+async def process_communicate(process, cmds, localenv) -> AdagucResponse:
+    """
+    Spawn a new adagucserver process, wait for output.
+    """
+
+    process = await asyncio.create_subprocess_exec(
+        *cmds,
+        stdout=PIPE,
+        stderr=PIPE,
+        env=localenv,
+        close_fds=ON_POSIX,
+    )
+
+    process_output, _ = await process.communicate()
+    status = await process.wait()
+
+    return AdagucResponse(status_code=status, process_output=process_output)
 
 
 class CGIRunner:
@@ -49,17 +129,17 @@ class CGIRunner:
             localenv["REQUEST_URI"] = "/myscriptname/" + path
         localenv.update(env)
 
-        # print("# QUERY STRING:", url)
-        # print("# LOCAL ENV:", localenv)
+        # print("@@@@", url)
 
-        # Execute adaguc-server binary
-        ON_POSIX = "posix" in sys.builtin_module_names
         async with sem:
-            # process_output = ""
+            if os.getenv("ADAGUC_FORK", None):
+                response = await wait_socket_communicate(url, timeout=timeout)
+            else:
+                response = await wait_process_communicate(cmds, localenv, timeout=timeout)
 
-            # client = socket.socket(socket.AF_UNIX)
-            # client.connect("/tmp/adaguc.socket")
-            # client.send(url.encode())
+            if response.status_code == HTTP_STATUSCODE_500_TIMEOUT:
+                output.write(b"Adaguc server processs timed out")
+                return HTTP_STATUSCODE_500_TIMEOUT, [], None
 
             process_output = bytearray()
             # while data := client.recv(4096):
@@ -118,7 +198,8 @@ class CGIRunner:
                 output.write(b"Error: No headers found in response from adaguc-server application, status was %d" % status)
                 return 1, [], None
 
-        body = process_output[headersEndAt + 2 : -4]
+        body = process_output[headersEndAt + 2 :]
+
         output.write(body)
         headersList = headers.split("\r\n")
         return status, [s for s in headersList if s != "\n" and ":" in s], process_error
