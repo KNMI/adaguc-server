@@ -65,19 +65,18 @@ class CGIRunner:
 
             # process_error = process_error.encode()
 
-            reader, writer = await asyncio.open_unix_connection(f"{os.getenv('ADAGUC_PATH')}/adaguc.socket")
+            reader, writer = await asyncio.open_unix_connection(
+                f"{os.getenv('ADAGUC_PATH')}/adaguc.socke"
+            )
             writer.write(url.encode())
             await writer.drain()
 
-            while data := await reader.read(4096):
-                # print(f"Received: {data}")
-                process_output.extend(data)
+            process_output = await reader.read()
 
             print("Close the connection")
             writer.close()
             await writer.wait_closed()
 
-            status = 0
             process_error = "".encode()
 
             # process = await asyncio.create_subprocess_exec(
@@ -98,6 +97,10 @@ class CGIRunner:
             #     return HTTP_STATUSCODE_500_TIMEOUT, [], None
             # status = await process.wait()
 
+        # Status code is stored in the last 4 bytes from the received data
+        status = int.from_bytes(process_output[-4:], byteorder="little")
+        print("@ status", status, process_output[-4:])
+
         # Split headers from body using a regex
         headersEndAt = -2
         headers = ""
@@ -114,7 +117,7 @@ class CGIRunner:
                 )
                 return 1, [], None
 
-        body = process_output[headersEndAt + 2 :]
+        body = process_output[headersEndAt + 2 : -4]
         output.write(body)
         headersList = headers.split("\r\n")
         return status, [s for s in headersList if s != "\n" and ":" in s], process_error
