@@ -87,6 +87,8 @@ int do_work(int argc, char **argv, char **envp) {
 }
 
 int main(int argc, char **argv, char **envp) {
+  // If these lines are commented out, the calls the /edr/collections/instances/<my-instance> fail to return data
+  // because the call to `request=getreferencetimes` does not contain useful output
   setvbuf(stdout, NULL, _IONBF, 0); // turn off buffering
   setvbuf(stderr, NULL, _IONBF, 0); // turn off buffering
 
