@@ -39,7 +39,7 @@ int layerTypeLiveUpdateRenderIntoDrawImage(CDrawImage *image, CServerParams *srv
   return 0;
 }
 
-int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(WMSLayer *myWMSLayer) {
+int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(MetadataLayer *myWMSLayer) {
   if (myWMSLayer->dataSource->cfgLayer->Title.size() != 0) {
     myWMSLayer->layerMetadata.title.copy(myWMSLayer->dataSource->cfgLayer->Title[0]->value.c_str());
   } else {

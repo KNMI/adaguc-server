@@ -44,6 +44,10 @@ CDBAdapterPostgreSQL::~CDBAdapterPostgreSQL() {
 #ifdef CDBAdapterPostgreSQL_DEBUG
   CDBDebug("~CDBAdapterPostgreSQL()");
 #endif
+  if (layerMetaDataStore != nullptr) {
+    delete layerMetaDataStore;
+    layerMetaDataStore = nullptr;
+  }
   if (dataBaseConnection != NULL) {
     dataBaseConnection->close2();
   }
@@ -1128,7 +1132,6 @@ CT::string CDBAdapterPostgreSQL::getLayerMetadata(const char *datasetName, const
 #endif
     CPGSQLDB *dataBaseConnection = getDataBaseConnection();
     if (dataBaseConnection == NULL) {
-      CDBError("No database connection");
       throw(__LINE__);
     }
 
@@ -1139,11 +1142,11 @@ CT::string CDBAdapterPostgreSQL::getLayerMetadata(const char *datasetName, const
 #ifdef CDBAdapterPostgreSQL_DEBUG
       CDBDebug("Unable query: \"%s\"", query.c_str());
 #endif
-      throw(__LINE__);
+      return "";
     }
     if (layerMetaDataStore->size() == 0) {
-      CDBDebug("No results \"%s\"", query.c_str());
-      throw(__LINE__);
+      CDBDebug("No results for layerMetaDataStore \"%s\"", query.c_str());
+      return "";
     }
   }
 

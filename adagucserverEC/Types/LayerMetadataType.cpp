@@ -1,11 +1,11 @@
 #include "LayerMetadataType.h"
 
-WMSLayer::WMSLayer() {
+MetadataLayer::MetadataLayer() {
   hasError = 0;
   dataSource = NULL;
 }
 
-WMSLayer::~WMSLayer() {
+MetadataLayer::~MetadataLayer() {
   for (size_t j = 0; j < layerMetadata.projectionList.size(); j++) {
     delete layerMetadata.projectionList[j];
   }

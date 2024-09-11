@@ -4,7 +4,7 @@
 #include <CDBFactory.h>
 #include "XMLGenUtils.h"
 
-int storeMyWMSLayerIntoMetadataDb(WMSLayer *myWMSLayer) {
+int storeMyWMSLayerIntoMetadataDb(MetadataLayer *myWMSLayer) {
   storeLayerMetadataStructIntoMetadataDb(myWMSLayer);
   storeLayerDimensionListIntoMetadataDb(myWMSLayer);
   storeLayerProjectionAndExtentListIntoMetadataDb(myWMSLayer);
@@ -12,16 +12,7 @@ int storeMyWMSLayerIntoMetadataDb(WMSLayer *myWMSLayer) {
   return 0;
 }
 
-// Not sure if this will be used
-int loadMyWMSLayerFromMetadataDb(WMSLayer *myWMSLayer) {
-  loadLayerMetadataStructFromMetadataDb(myWMSLayer);
-  loadLayerDimensionListFromMetadataDb(myWMSLayer);
-  loadLayerProjectionAndExtentListFromMetadataDb(myWMSLayer);
-  loadLayerStyleListFromMetadataDb(myWMSLayer);
-  return 0;
-}
-
-CT::string getLayerMetadataFromDb(WMSLayer *myWMSLayer, CT::string metadataKey) {
+CT::string getLayerMetadataFromDb(MetadataLayer *myWMSLayer, CT::string metadataKey) {
   CT::string layerName = myWMSLayer->dataSource->getLayerName();
   CT::string datasetName = myWMSLayer->dataSource->srvParams->datasetLocation;
   if (datasetName.empty()) {
@@ -31,7 +22,7 @@ CT::string getLayerMetadataFromDb(WMSLayer *myWMSLayer, CT::string metadataKey) 
   return CDBFactory::getDBAdapter(myWMSLayer->dataSource->srvParams->cfg)->getLayerMetadata(datasetName, layerName, metadataKey);
 }
 
-int storeLayerMetadataInDb(WMSLayer *myWMSLayer, CT::string metadataKey, std::string metadataBlob) {
+int storeLayerMetadataInDb(MetadataLayer *myWMSLayer, CT::string metadataKey, std::string metadataBlob) {
   try {
     CT::string datasetName = myWMSLayer->dataSource->srvParams->datasetLocation;
     if (datasetName.empty()) {
@@ -47,7 +38,7 @@ int storeLayerMetadataInDb(WMSLayer *myWMSLayer, CT::string metadataKey, std::st
   return 0;
 }
 
-int storeLayerMetadataStructIntoMetadataDb(WMSLayer *myWMSLayer) {
+int storeLayerMetadataStructIntoMetadataDb(MetadataLayer *myWMSLayer) {
   json layerMetadataItem;
   layerMetadataItem["name"] = myWMSLayer->layerMetadata.name;
   layerMetadataItem["title"] = myWMSLayer->layerMetadata.title;
@@ -79,7 +70,7 @@ int storeLayerMetadataStructIntoMetadataDb(WMSLayer *myWMSLayer) {
   return 0;
 }
 
-int loadLayerMetadataStructFromMetadataDb(WMSLayer *myWMSLayer) {
+int loadLayerMetadataStructFromMetadataDb(MetadataLayer *myWMSLayer) {
   if (!myWMSLayer->readFromDb) {
     return 1;
   }
@@ -125,7 +116,7 @@ int loadLayerMetadataStructFromMetadataDb(WMSLayer *myWMSLayer) {
   return 0;
 }
 
-int storeLayerProjectionAndExtentListIntoMetadataDb(WMSLayer *myWMSLayer) {
+int storeLayerProjectionAndExtentListIntoMetadataDb(MetadataLayer *myWMSLayer) {
   try {
     json projsettings;
     for (auto projection : myWMSLayer->layerMetadata.projectionList) {
@@ -139,7 +130,7 @@ int storeLayerProjectionAndExtentListIntoMetadataDb(WMSLayer *myWMSLayer) {
   return 0;
 }
 
-int loadLayerProjectionAndExtentListFromMetadataDb(WMSLayer *myWMSLayer) {
+int loadLayerProjectionAndExtentListFromMetadataDb(MetadataLayer *myWMSLayer) {
   if (!myWMSLayer->readFromDb) {
     return 1;
   }
@@ -173,7 +164,7 @@ int loadLayerProjectionAndExtentListFromMetadataDb(WMSLayer *myWMSLayer) {
   return 0;
 }
 
-int storeLayerStyleListIntoMetadataDb(WMSLayer *myWMSLayer) {
+int storeLayerStyleListIntoMetadataDb(MetadataLayer *myWMSLayer) {
   try {
     json styleListJson;
     for (auto style : myWMSLayer->layerMetadata.styleList) {
@@ -190,7 +181,7 @@ int storeLayerStyleListIntoMetadataDb(WMSLayer *myWMSLayer) {
   return 0;
 }
 
-int loadLayerStyleListFromMetadataDb(WMSLayer *myWMSLayer) {
+int loadLayerStyleListFromMetadataDb(MetadataLayer *myWMSLayer) {
   if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded || myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
     return 0;
   }
@@ -230,7 +221,7 @@ int loadLayerStyleListFromMetadataDb(WMSLayer *myWMSLayer) {
   return 0;
 }
 
-int storeLayerDimensionListIntoMetadataDb(WMSLayer *myWMSLayer) {
+int storeLayerDimensionListIntoMetadataDb(MetadataLayer *myWMSLayer) {
   CDBDebug("storeLayerDimensionListIntoMetadataDb");
   try {
     json dimListJson;
@@ -253,7 +244,7 @@ int storeLayerDimensionListIntoMetadataDb(WMSLayer *myWMSLayer) {
   return 0;
 }
 
-int loadLayerDimensionListFromMetadataDb(WMSLayer *myWMSLayer) {
+int loadLayerDimensionListFromMetadataDb(MetadataLayer *myWMSLayer) {
   if (!myWMSLayer->readFromDb) {
     return 1;
   }
@@ -296,7 +287,7 @@ int updateMetaDataTable(CDataSource *dataSource) {
   if (dataSource->srvParams->datasetLocation.empty()) {
     return 0;
   }
-  WMSLayer *myWMSLayer = new WMSLayer();
+  MetadataLayer *myWMSLayer = new MetadataLayer();
   myWMSLayer->layer = dataSource->cfgLayer;
   myWMSLayer->srvParams = dataSource->srvParams;
   myWMSLayer->dataSource = dataSource;

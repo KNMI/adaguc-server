@@ -6,7 +6,7 @@
 #include <LayerTypeLiveUpdate/LayerTypeLiveUpdate.h>
 #include "LayerUtils.h"
 
-int populateMyWMSLayerStruct(WMSLayer *myWMSLayer, bool readFromDB) {
+int populateMyWMSLayerStruct(MetadataLayer *myWMSLayer, bool readFromDB) {
   myWMSLayer->readFromDb = readFromDB;
   if (!myWMSLayer->srvParams->useMetadataTable()) {
     myWMSLayer->readFromDb = false;
@@ -131,7 +131,7 @@ int populateMyWMSLayerStruct(WMSLayer *myWMSLayer, bool readFromDB) {
   return 0;
 }
 
-int getDimsForLayer(WMSLayer *myWMSLayer) {
+int getDimsForLayer(MetadataLayer *myWMSLayer) {
 #ifdef CXMLGEN_DEBUG
   CDBDebug("getDimsForLayer");
 #endif
@@ -548,7 +548,7 @@ int getDimsForLayer(WMSLayer *myWMSLayer) {
   return 0;
 }
 
-int getProjectionInformationForLayer(WMSLayer *myWMSLayer) {
+int getProjectionInformationForLayer(MetadataLayer *myWMSLayer) {
 #ifdef CXMLGEN_DEBUG
   CDBDebug("getProjectionInformationForLayer");
 #endif
@@ -644,7 +644,7 @@ int getProjectionInformationForLayer(WMSLayer *myWMSLayer) {
   return 0;
 }
 
-int getStylesForLayer(WMSLayer *myWMSLayer) {
+int getStylesForLayer(MetadataLayer *myWMSLayer) {
   if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded || myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
     return 0;
   }
@@ -695,7 +695,7 @@ bool compareProjection(const LayerMetadataProjection *p1, const LayerMetadataPro
 bool compareDim(const LayerMetadataDim *p2, const LayerMetadataDim *p1) { return strcmp(p1->name.c_str(), p2->name.c_str()) <= 0; }
 bool compareStyle(const LayerMetadataStyle *p1, const LayerMetadataStyle *p2) { return strcmp(p2->name.c_str(), p1->name.c_str()) <= 0; }
 
-int getTitleForLayer(WMSLayer *myWMSLayer) {
+int getTitleForLayer(MetadataLayer *myWMSLayer) {
 #ifdef CXMLGEN_DEBUG
   CDBDebug("getTitleForLayer");
 #endif
@@ -740,7 +740,7 @@ int getTitleForLayer(WMSLayer *myWMSLayer) {
   return 0;
 }
 
-int getFileNameForLayer(WMSLayer *myWMSLayer) {
+int getFileNameForLayer(MetadataLayer *myWMSLayer) {
 #ifdef CXMLGEN_DEBUG
   CDBDebug("getFileNameForLayer");
 #endif
