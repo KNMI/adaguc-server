@@ -21,6 +21,9 @@ int getLayerMetadataAsJson(CServerParams *srvParams, json &result) {
   json dataset;
   json layer;
   CDBStore::Store *layerMetaDataStore = CDBFactory::getDBAdapter(srvParams->cfg)->getLayerMetadataStore(nullptr);
+  if (layerMetaDataStore == nullptr) {
+    return 1;
+  }
   auto records = layerMetaDataStore->getRecords();
   std::map<std::string, std::set<std::string>> datasetNames;
   for (auto record : records) {
