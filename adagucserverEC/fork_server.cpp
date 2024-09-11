@@ -69,10 +69,14 @@ int run_server(int (*do_work)(int, char **, char **), int argc, char **argv, cha
   CT::string socket_path(getenv("ADAGUC_PATH"));
   socket_path.concat("/adaguc.socket");
 
-  strcpy(local.sun_path, socket_path.c_str());
-  unlink(local.sun_path);
-  len = strlen(local.sun_path) + sizeof(local.sun_family);
+  strncpy(local.sun_path, socket_path.c_str(), sizeof(local.sun_path));
+  local.sun_path[sizeof(local.sun_path) - 1] = '\0';
 
+  // Remove old adaguc.socket file
+  unlink(local.sun_path);
+
+  // Bind name to the "local" socket
+  len = strlen(local.sun_path) + sizeof(local.sun_family) + 1;
   if (bind(listen_socket, (struct sockaddr *)&local, len) != 0) {
     printf("Error on binding socket \n");
     return 1;
@@ -80,6 +84,7 @@ int run_server(int (*do_work)(int, char **, char **), int argc, char **argv, cha
 
   if (listen(listen_socket, max_pending_connections) != 0) {
     printf("Error on listen call \n");
+    return 1;
   }
 
   while (1) {

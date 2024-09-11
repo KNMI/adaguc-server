@@ -129,8 +129,7 @@ class CGIRunner:
             localenv["REQUEST_URI"] = "/myscriptname/" + path
         localenv.update(env)
 
-        print("@@@@", url)
-        # TODO: check why hash of out.png is different after refactor of CGIRunner.py?
+        # print("@@@@", url)
 
         async with sem:
             if os.getenv("ADAGUC_FORK", None):
@@ -164,7 +163,8 @@ class CGIRunner:
                 )
                 return 1, [], None
 
-        body = process_output[headersEndAt + 2 : -4]
+        body = process_output[headersEndAt + 2 :]
+
         output.write(body)
         headersList = headers.split("\r\n")
         return status, [s for s in headersList if s != "\n" and ":" in s], process_error
