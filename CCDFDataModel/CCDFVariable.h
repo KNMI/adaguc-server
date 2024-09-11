@@ -291,15 +291,6 @@ namespace CDF {
     void setSize(size_t size) { currentSize = size; }
     size_t getSize() { return currentSize; }
 
-    bool hasAttribute(const char *name) const {
-      for (size_t j = 0; j < attributes.size(); j++) {
-        if (attributes[j]->name.equals(name)) {
-          return true;
-        }
-      }
-      return false;
-    }
-
     Attribute *getAttribute(const char *name) const {
       Attribute *a = getAttributeNE(name);
       if (a == nullptr) {
@@ -307,6 +298,7 @@ namespace CDF {
       }
       return a;
     }
+
     Attribute *getAttributeNE(const char *name) const {
       for (size_t j = 0; j < attributes.size(); j++) {
         if (attributes[j]->name.equals(name)) {
