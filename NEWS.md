@@ -1,5 +1,5 @@
 **Version 2.28.0 2024-09-62**
-- Metadata for layer items like the projections, dimensions and styles can now be stored in a metadatatable
+- Metadata for layer items like variables, projections, dimensions and styles are now stored in a metadatatable. This can be disabled via the `enablemetadatacache` property in [Settings](doc/configuration/Settings.md).
 
 
 **Version 2.27.0 2024-09-02**

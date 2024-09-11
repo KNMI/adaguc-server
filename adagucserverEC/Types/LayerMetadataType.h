@@ -49,10 +49,10 @@ struct LayerMetadata {
 };
 
 // TODO should rename this class
-class WMSLayer {
+class MetadataLayer {
 public:
-  WMSLayer();
-  ~WMSLayer();
+  MetadataLayer();
+  ~MetadataLayer();
   // TODO: Would be nice to get rid of these in this class
   CServerConfig::XMLE_Layer *layer;
   CDataSource *dataSource;

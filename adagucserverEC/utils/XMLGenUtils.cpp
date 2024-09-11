@@ -6,93 +6,94 @@
 #include <LayerTypeLiveUpdate/LayerTypeLiveUpdate.h>
 #include "LayerUtils.h"
 
-int populateMyWMSLayerStruct(WMSLayer *myWMSLayer, bool readFromDB) {
-  myWMSLayer->readFromDb = readFromDB;
-  if (!myWMSLayer->srvParams->useMetadataTable()) {
-    myWMSLayer->readFromDb = false;
+int populateLayerMetadataStruct(MetadataLayer *metadataLayer, bool readFromDB) {
+  metadataLayer->readFromDb = readFromDB;
+  if (!metadataLayer->srvParams->useMetadataTable()) {
+    metadataLayer->readFromDb = false;
   }
 
   // Make the layer name
   CT::string layerUniqueName;
-  if (makeUniqueLayerName(&layerUniqueName, myWMSLayer->layer) != 0) {
-    myWMSLayer->hasError = true;
+  if (makeUniqueLayerName(&layerUniqueName, metadataLayer->layer) != 0) {
+    metadataLayer->hasError = true;
     return 1;
   }
-  myWMSLayer->layerMetadata.name.copy(&layerUniqueName);
+  metadataLayer->layerMetadata.name.copy(&layerUniqueName);
 
   // Create and datasource
-  if (myWMSLayer->dataSource == NULL) {
-    myWMSLayer->dataSource = new CDataSource();
-    if (myWMSLayer->dataSource->setCFGLayer(myWMSLayer->srvParams, myWMSLayer->srvParams->configObj->Configuration[0], myWMSLayer->layer, myWMSLayer->layerMetadata.name.c_str(), -1) != 0) {
+  if (metadataLayer->dataSource == NULL) {
+    metadataLayer->dataSource = new CDataSource();
+    if (metadataLayer->dataSource->setCFGLayer(metadataLayer->srvParams, metadataLayer->srvParams->configObj->Configuration[0], metadataLayer->layer, metadataLayer->layerMetadata.name.c_str(), -1) !=
+        0) {
       return 1;
     }
   }
 
   // Make the group
   CT::string layerGroup = "";
-  if (myWMSLayer->layer->Group.size() > 0) {
-    if (myWMSLayer->layer->Group[0]->attr.value.empty() == false) {
-      layerGroup.copy(myWMSLayer->layer->Group[0]->attr.value.c_str());
+  if (metadataLayer->layer->Group.size() > 0) {
+    if (metadataLayer->layer->Group[0]->attr.value.empty() == false) {
+      layerGroup.copy(metadataLayer->layer->Group[0]->attr.value.c_str());
     }
   }
-  myWMSLayer->layerMetadata.group.copy(&layerGroup);
+  metadataLayer->layerMetadata.group.copy(&layerGroup);
 
   // Check if this layer is querable
   int datasetRestriction = CServerParams::checkDataRestriction();
   if ((datasetRestriction & ALLOW_GFI)) {
-    myWMSLayer->layerMetadata.isQueryable = 1;
+    metadataLayer->layerMetadata.isQueryable = 1;
   }
 
   // Get Abstract
-  if (myWMSLayer->dataSource->cfgLayer->Abstract.size() > 0) {
-    myWMSLayer->layerMetadata.abstract = myWMSLayer->dataSource->cfgLayer->Abstract[0]->value;
+  if (metadataLayer->dataSource->cfgLayer->Abstract.size() > 0) {
+    metadataLayer->layerMetadata.abstract = metadataLayer->dataSource->cfgLayer->Abstract[0]->value;
   }
 
   // Fill in Layer title, with fallback to Name (later this can be set based on metadata or info from the file)
-  if (myWMSLayer->dataSource->cfgLayer->Title.size() != 0) {
-    myWMSLayer->layerMetadata.title.copy(myWMSLayer->dataSource->cfgLayer->Title[0]->value.c_str());
+  if (metadataLayer->dataSource->cfgLayer->Title.size() != 0) {
+    metadataLayer->layerMetadata.title.copy(metadataLayer->dataSource->cfgLayer->Title[0]->value.c_str());
   } else {
-    myWMSLayer->layerMetadata.title.copy(myWMSLayer->dataSource->cfgLayer->Name[0]->value.c_str());
+    metadataLayer->layerMetadata.title.copy(metadataLayer->dataSource->cfgLayer->Name[0]->value.c_str());
   }
 
-  bool readFileInfo = readFromDB ? (loadLayerMetadataStructFromMetadataDb(myWMSLayer) != 0) : true;
+  bool readFileInfo = readFromDB ? (loadLayerMetadataStructFromMetadataDb(metadataLayer) != 0) : true;
   if (readFileInfo) {
     // Get a default file name for this layer to obtain some information
-    int status = getFileNameForLayer(myWMSLayer);
+    int status = getFileNameForLayer(metadataLayer);
     if (status != 0) {
-      myWMSLayer->hasError = 1;
+      metadataLayer->hasError = 1;
       return 1;
     }
 
-    if (myWMSLayer->dataSource->timeSteps.size() == 0) {
-      myWMSLayer->dataSource->addStep(myWMSLayer->fileName.c_str(), NULL);
+    if (metadataLayer->dataSource->timeSteps.size() == 0) {
+      metadataLayer->dataSource->addStep(metadataLayer->fileName.c_str(), NULL);
     }
 
-    if (getTitleForLayer(myWMSLayer) != 0) {
-      myWMSLayer->hasError = 1;
+    if (getTitleForLayer(metadataLayer) != 0) {
+      metadataLayer->hasError = 1;
       return 1;
     }
 
     CDataReader reader;
-    status = reader.open(myWMSLayer->dataSource, CNETCDFREADER_MODE_OPEN_DIMENSIONS);
+    status = reader.open(metadataLayer->dataSource, CNETCDFREADER_MODE_OPEN_DIMENSIONS);
     if (status != 0) {
-      CDBError("Could not open file: %s", myWMSLayer->dataSource->getFileName());
+      CDBError("Could not open file: %s", metadataLayer->dataSource->getFileName());
       return 1;
     }
 
-    myWMSLayer->layerMetadata.dfBBOX[0] = myWMSLayer->dataSource->dfBBOX[0];
-    myWMSLayer->layerMetadata.dfBBOX[1] = myWMSLayer->dataSource->dfBBOX[1];
-    myWMSLayer->layerMetadata.dfBBOX[2] = myWMSLayer->dataSource->dfBBOX[2];
-    myWMSLayer->layerMetadata.dfBBOX[3] = myWMSLayer->dataSource->dfBBOX[3];
+    metadataLayer->layerMetadata.dfBBOX[0] = metadataLayer->dataSource->dfBBOX[0];
+    metadataLayer->layerMetadata.dfBBOX[1] = metadataLayer->dataSource->dfBBOX[1];
+    metadataLayer->layerMetadata.dfBBOX[2] = metadataLayer->dataSource->dfBBOX[2];
+    metadataLayer->layerMetadata.dfBBOX[3] = metadataLayer->dataSource->dfBBOX[3];
 
-    myWMSLayer->layerMetadata.width = myWMSLayer->dataSource->dWidth;
-    myWMSLayer->layerMetadata.height = myWMSLayer->dataSource->dHeight;
-    myWMSLayer->layerMetadata.cellsizeX = myWMSLayer->dataSource->dfCellSizeX;
-    myWMSLayer->layerMetadata.cellsizeY = myWMSLayer->dataSource->dfCellSizeY;
-    myWMSLayer->layerMetadata.nativeEPSG = myWMSLayer->dataSource->nativeEPSG;
-    myWMSLayer->layerMetadata.projstring = myWMSLayer->dataSource->nativeProj4;
+    metadataLayer->layerMetadata.width = metadataLayer->dataSource->dWidth;
+    metadataLayer->layerMetadata.height = metadataLayer->dataSource->dHeight;
+    metadataLayer->layerMetadata.cellsizeX = metadataLayer->dataSource->dfCellSizeX;
+    metadataLayer->layerMetadata.cellsizeY = metadataLayer->dataSource->dfCellSizeY;
+    metadataLayer->layerMetadata.nativeEPSG = metadataLayer->dataSource->nativeEPSG;
+    metadataLayer->layerMetadata.projstring = metadataLayer->dataSource->nativeProj4;
 
-    auto v = myWMSLayer->dataSource->getDataObjectsVector();
+    auto v = metadataLayer->dataSource->getDataObjectsVector();
     for (auto d : (*v)) {
       LayerMetadataVariable *layerMetadataVariable = new LayerMetadataVariable();
       layerMetadataVariable->units = (d->getUnits());
@@ -105,43 +106,43 @@ int populateMyWMSLayerStruct(WMSLayer *myWMSLayer, bool readFromDB) {
       CT::string label = longName != nullptr ? longName->getDataAsString() : d->variableName;
 
       layerMetadataVariable->label = (label);
-      myWMSLayer->layerMetadata.variableList.push_back(layerMetadataVariable);
+      metadataLayer->layerMetadata.variableList.push_back(layerMetadataVariable);
     }
   }
-  if (getDimsForLayer(myWMSLayer) != 0) {
-    myWMSLayer->hasError = 1;
+  if (getDimsForLayer(metadataLayer) != 0) {
+    metadataLayer->hasError = 1;
     return 1;
   }
 
   // CDBDebug("getProjectionInformationForLayer");
-  if (getProjectionInformationForLayer(myWMSLayer) != 0) {
-    myWMSLayer->hasError = 1;
+  if (getProjectionInformationForLayer(metadataLayer) != 0) {
+    metadataLayer->hasError = 1;
     return 1;
   }
 
   // CDBDebug("getStylesForLayer");
-  if (getStylesForLayer(myWMSLayer) != 0) {
-    myWMSLayer->hasError = 1;
+  if (getStylesForLayer(metadataLayer) != 0) {
+    metadataLayer->hasError = 1;
     return 1;
   }
 
   std::map<std::string, LayerMetadataProjection *> projectionMap;
   // Make a unique list of projections
-  for (auto p : myWMSLayer->layerMetadata.projectionList) {
+  for (auto p : metadataLayer->layerMetadata.projectionList) {
     projectionMap[p->name.c_str()] = p;
   }
-  myWMSLayer->layerMetadata.projectionList.clear();
+  metadataLayer->layerMetadata.projectionList.clear();
   for (auto p : projectionMap) {
-    myWMSLayer->layerMetadata.projectionList.push_back(p.second);
+    metadataLayer->layerMetadata.projectionList.push_back(p.second);
   }
 
-  std::sort(myWMSLayer->layerMetadata.projectionList.begin(), myWMSLayer->layerMetadata.projectionList.end(), compareProjection);
-  std::sort(myWMSLayer->layerMetadata.dimList.begin(), myWMSLayer->layerMetadata.dimList.end(), compareDim);
+  std::sort(metadataLayer->layerMetadata.projectionList.begin(), metadataLayer->layerMetadata.projectionList.end(), compareProjection);
+  std::sort(metadataLayer->layerMetadata.dimList.begin(), metadataLayer->layerMetadata.dimList.end(), compareDim);
 
   return 0;
 }
 
-int getDimsForLayer(WMSLayer *myWMSLayer) {
+int getDimsForLayer(MetadataLayer *metadataLayer) {
 #ifdef CXMLGEN_DEBUG
   CDBDebug("getDimsForLayer");
 #endif
@@ -151,24 +152,24 @@ int getDimsForLayer(WMSLayer *myWMSLayer) {
   // int hastimedomain = 0;
 
   // Dimensions
-  if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeDataBase || myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeStyled) {
-    if (loadLayerDimensionListFromMetadataDb(myWMSLayer) == 0) {
+  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeDataBase || metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeStyled) {
+    if (loadLayerDimensionListFromMetadataDb(metadataLayer) == 0) {
       // CDBDebug("LayerMetadata: dimensionList information fetched!");
       return 0;
     }
 
 #ifdef CXMLGEN_DEBUG
     CDBDebug("Start looping dimensions");
-    CDBDebug("Number of dimensions is %d", myWMSLayer->dataSource->cfgLayer->Dimension.size());
+    CDBDebug("Number of dimensions is %d", metadataLayer->dataSource->cfgLayer->Dimension.size());
 #endif
     /* Auto configure dimensions */
-    for (size_t i = 0; i < myWMSLayer->dataSource->cfgLayer->Dimension.size(); i++) {
+    for (size_t i = 0; i < metadataLayer->dataSource->cfgLayer->Dimension.size(); i++) {
 
       /* This dimension is a filetimedate type, its values come from the modification date of the file */
-      if (myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.defaultV.equals("filetimedate")) {
-        CT::string fileDate = CDirReader::getFileDate(myWMSLayer->layer->FilePath[0]->value.c_str());
+      if (metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.defaultV.equals("filetimedate")) {
+        CT::string fileDate = CDirReader::getFileDate(metadataLayer->layer->FilePath[0]->value.c_str());
         LayerMetadataDim *dim = new LayerMetadataDim();
-        myWMSLayer->layerMetadata.dimList.push_back(dim);
+        metadataLayer->layerMetadata.dimList.push_back(dim);
         dim->name.copy("time");
         dim->units.copy("ISO8601");
         dim->values.copy(fileDate.c_str());
@@ -177,24 +178,25 @@ int getDimsForLayer(WMSLayer *myWMSLayer) {
         break;
       }
 #ifdef CXMLGEN_DEBUG
-      CDBDebug("%d = %s / %s", i, myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str(), myWMSLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
+      CDBDebug("%d = %s / %s", i, metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str(), metadataLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
 #endif
-      if (i == 0 && myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.equals("none")) break;
+      if (i == 0 && metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.name.equals("none")) break;
       // Shorthand dimName
-      const char *pszDimName = myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str();
+      const char *pszDimName = metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str();
 
       // Create a new dim to store in the layer
       LayerMetadataDim *dim = new LayerMetadataDim();
-      myWMSLayer->layerMetadata.dimList.push_back(dim);
-      dim->name.copy(myWMSLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
+      metadataLayer->layerMetadata.dimList.push_back(dim);
+      dim->name.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
       // Get the tablename
       CT::string tableName;
-      CServerParams *srvParam = myWMSLayer->dataSource->srvParams;
+      CServerParams *srvParam = metadataLayer->dataSource->srvParams;
       try {
         tableName = CDBFactory::getDBAdapter(srvParam->cfg)
-                        ->getTableNameForPathFilterAndDimension(myWMSLayer->layer->FilePath[0]->value.c_str(), myWMSLayer->layer->FilePath[0]->attr.filter.c_str(), pszDimName, myWMSLayer->dataSource);
+                        ->getTableNameForPathFilterAndDimension(metadataLayer->layer->FilePath[0]->value.c_str(), metadataLayer->layer->FilePath[0]->attr.filter.c_str(), pszDimName,
+                                                                metadataLayer->dataSource);
       } catch (int e) {
-        CDBError("Unable to create tableName from '%s' '%s' '%s'", myWMSLayer->layer->FilePath[0]->value.c_str(), myWMSLayer->layer->FilePath[0]->attr.filter.c_str(), pszDimName);
+        CDBError("Unable to create tableName from '%s' '%s' '%s'", metadataLayer->layer->FilePath[0]->value.c_str(), metadataLayer->layer->FilePath[0]->attr.filter.c_str(), pszDimName);
         return 1;
       }
 
@@ -202,17 +204,17 @@ int getDimsForLayer(WMSLayer *myWMSLayer) {
       bool isTimeDim = false;
 
       CDataReader reader;
-      int status = reader.open(myWMSLayer->dataSource, CNETCDFREADER_MODE_OPEN_DIMENSIONS);
+      int status = reader.open(metadataLayer->dataSource, CNETCDFREADER_MODE_OPEN_DIMENSIONS);
       if (status != 0) {
-        CDBError("Could not open file: %s", myWMSLayer->dataSource->getFileName());
+        CDBError("Could not open file: %s", metadataLayer->dataSource->getFileName());
         return 1;
       }
-      if (myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.empty()) {
+      if (metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.empty()) {
         hasMultipleValues = true;
 
         /* Automatically scan the time dimension, two types are avaible, start/stop/resolution and individual values */
         // TODO try to detect automatically the time resolution of the layer.
-        CT::string varName = myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str();
+        CT::string varName = metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str();
         // CDBDebug("VarName = [%s]",varName.c_str());
         int ind = varName.indexOf("time");
         if (ind >= 0) {
@@ -220,7 +222,7 @@ int getDimsForLayer(WMSLayer *myWMSLayer) {
           CT::string units;
           isTimeDim = true;
           try {
-            myWMSLayer->dataSource->getDataObject(0)->cdfObject->getVariable("time")->getAttribute("units")->getDataAsString(&units);
+            metadataLayer->dataSource->getDataObject(0)->cdfObject->getVariable("time")->getAttribute("units")->getDataAsString(&units);
 
           } catch (int e) {
           }
@@ -269,7 +271,7 @@ int getDimsForLayer(WMSLayer *myWMSLayer) {
                     isConst = false;
                   }
                   try {
-                    CTime *time = CTime::GetCTimeInstance(myWMSLayer->dataSource->getDataObject(0)->cdfObject->getVariable("time"));
+                    CTime *time = CTime::GetCTimeInstance(metadataLayer->dataSource->getDataObject(0)->cdfObject->getVariable("time"));
                     if (time == nullptr) {
                       CDBDebug(CTIME_GETINSTANCE_ERROR_MESSAGE);
                       return 1;
@@ -365,8 +367,8 @@ int getDimsForLayer(WMSLayer *myWMSLayer) {
 #ifdef CXMLGEN_DEBUG
                     CDBDebug("Calculated a timeresolution of %s", iso8601timeRes.c_str());
 #endif
-                    myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.copy(iso8601timeRes.c_str());
-                    myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.units.copy("ISO8601");
+                    metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.copy(iso8601timeRes.c_str());
+                    metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.units.copy("ISO8601");
                   }
                 } catch (int e) {
                 }
@@ -400,14 +402,14 @@ int getDimsForLayer(WMSLayer *myWMSLayer) {
           // if(srvParam->requestType==REQUEST_WMS_GETCAPABILITIES)
           {
 
-            dim->name.copy(myWMSLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
+            dim->name.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
 
             // Try to get units from the variable
             dim->units.copy("NA");
-            if (myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.units.empty()) {
+            if (metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.units.empty()) {
               CT::string units;
               try {
-                myWMSLayer->dataSource->getDataObject(0)->cdfObject->getVariable(dim->name.c_str())->getAttribute("units")->getDataAsString(&units);
+                metadataLayer->dataSource->getDataObject(0)->cdfObject->getVariable(dim->name.c_str())->getAttribute("units")->getDataAsString(&units);
                 dim->units.copy(&units);
               } catch (int e) {
               }
@@ -427,12 +429,12 @@ int getDimsForLayer(WMSLayer *myWMSLayer) {
               dim->units.copy("ISO8601");
             }
 
-            if (!myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.units.empty()) {
+            if (!metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.units.empty()) {
               // Units are configured in the configuration file.
-              dim->units.copy(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.units.c_str());
+              dim->units.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.units.c_str());
             }
 
-            const char *pszDefaultV = myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.defaultV.c_str();
+            const char *pszDefaultV = metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.defaultV.c_str();
             CT::string defaultV;
             if (pszDefaultV != NULL) defaultV = pszDefaultV;
 
@@ -500,25 +502,25 @@ int getDimsForLayer(WMSLayer *myWMSLayer) {
       }
       delete[] values;*/
 
-        if (myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.empty()) {
+        if (metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.empty()) {
           // TODO
           CDBError("Dimension interval '%d' not defined", i);
           return 1;
         }
-        // strncpy(szInterval,myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.c_str(),32);szInterval[31]='\0';
-        const char *pszInterval = myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.c_str();
+        // strncpy(szInterval,metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.c_str(),32);szInterval[31]='\0';
+        const char *pszInterval = metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.c_str();
         // hastimedomain = 1;
         // if(srvParam->requestType==REQUEST_WMS_GETCAPABILITIES)
         {
           CT::string dimUnits("ISO8601");
-          if (myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.units.empty() == false) {
-            dimUnits.copy(myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.units.c_str());
+          if (metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.units.empty() == false) {
+            dimUnits.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.units.c_str());
           }
-          dim->name.copy(myWMSLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
+          dim->name.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
           dim->units.copy(dimUnits.c_str());
           dim->hasMultipleValues = 0;
-          // myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.defaultV.c_str()
-          const char *pszDefaultV = myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.defaultV.c_str();
+          // metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.defaultV.c_str()
+          const char *pszDefaultV = metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.defaultV.c_str();
           CT::string defaultV;
           if (pszDefaultV != NULL) defaultV = pszDefaultV;
           if (defaultV.length() == 0 || defaultV.equals("max", 3)) {
@@ -542,14 +544,14 @@ int getDimsForLayer(WMSLayer *myWMSLayer) {
       }
 
       // Check for forced values
-      if (!myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.fixvalue.empty()) {
-        dim->values = myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.fixvalue;
-        dim->defaultValue = myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.fixvalue;
+      if (!metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.fixvalue.empty()) {
+        dim->values = metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.fixvalue;
+        dim->defaultValue = metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.fixvalue;
         dim->hasMultipleValues = false;
       }
 
       // Check if it should be hidden
-      if (myWMSLayer->dataSource->cfgLayer->Dimension[i]->attr.hidden == true) {
+      if (metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.hidden == true) {
         dim->hidden = true;
       }
     }
@@ -558,17 +560,17 @@ int getDimsForLayer(WMSLayer *myWMSLayer) {
   return 0;
 }
 
-int getProjectionInformationForLayer(WMSLayer *myWMSLayer) {
+int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
 #ifdef CXMLGEN_DEBUG
   CDBDebug("getProjectionInformationForLayer");
 #endif
-  if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded || myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
-    if (myWMSLayer->dataSource->cfgLayer->LatLonBox.size() == 0) {
+  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded || metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
+    if (metadataLayer->dataSource->cfgLayer->LatLonBox.size() == 0) {
       return 0;
     }
   }
 
-  if (loadLayerProjectionAndExtentListFromMetadataDb(myWMSLayer) == 0) {
+  if (loadLayerProjectionAndExtentListFromMetadataDb(metadataLayer) == 0) {
 
     return 0;
   }
@@ -576,13 +578,13 @@ int getProjectionInformationForLayer(WMSLayer *myWMSLayer) {
   CGeoParams geo;
 
   CDataReader reader;
-  int status = reader.open(myWMSLayer->dataSource, CNETCDFREADER_MODE_OPEN_DIMENSIONS);
+  int status = reader.open(metadataLayer->dataSource, CNETCDFREADER_MODE_OPEN_DIMENSIONS);
   if (status != 0) {
-    CDBError("Could not open file: %s", myWMSLayer->dataSource->getFileName());
+    CDBError("Could not open file: %s", metadataLayer->dataSource->getFileName());
     return 1;
   }
 
-  CServerParams *srvParam = myWMSLayer->dataSource->srvParams;
+  CServerParams *srvParam = metadataLayer->dataSource->srvParams;
 
   for (size_t p = 0; p < srvParam->cfg->Projection.size(); p++) {
     geo.CRS.copy(srvParam->cfg->Projection[p]->attr.id.c_str());
@@ -591,7 +593,7 @@ int getProjectionInformationForLayer(WMSLayer *myWMSLayer) {
     StopWatch_Stop("start initreproj %s", geo.CRS.c_str());
 #endif
     CImageWarper warper;
-    status = warper.initreproj(myWMSLayer->dataSource, &geo, &srvParam->cfg->Projection);
+    status = warper.initreproj(metadataLayer->dataSource, &geo, &srvParam->cfg->Projection);
 
 #ifdef MEASURETIME
     StopWatch_Stop("finished initreproj");
@@ -610,7 +612,7 @@ int getProjectionInformationForLayer(WMSLayer *myWMSLayer) {
 
     // Find the max extent of the image
     LayerMetadataProjection *myProjection = new LayerMetadataProjection();
-    myWMSLayer->layerMetadata.projectionList.push_back(myProjection);
+    metadataLayer->layerMetadata.projectionList.push_back(myProjection);
 
     // Set the projection string
     myProjection->name.copy(srvParam->cfg->Projection[p]->attr.id.c_str());
@@ -621,7 +623,7 @@ int getProjectionInformationForLayer(WMSLayer *myWMSLayer) {
     StopWatch_Stop("start findExtent");
 #endif
 
-    warper.findExtent(myWMSLayer->dataSource, myProjection->dfBBOX);
+    warper.findExtent(metadataLayer->dataSource, myProjection->dfBBOX);
 
 #ifdef MEASURETIME
     StopWatch_Stop("finished findExtent");
@@ -634,53 +636,53 @@ int getProjectionInformationForLayer(WMSLayer *myWMSLayer) {
     // TODO!!! THIS IS DONE WAY TO OFTEN!
     // Calculate the latlonBBOX
     if (srvParam->cfg->Projection[p]->attr.id.equals("EPSG:4326")) {
-      for (int k = 0; k < 4; k++) myWMSLayer->layerMetadata.dfLatLonBBOX[k] = myProjection->dfBBOX[k];
+      for (int k = 0; k < 4; k++) metadataLayer->layerMetadata.dfLatLonBBOX[k] = myProjection->dfBBOX[k];
     }
 
     warper.closereproj();
   }
 
   // Add the layers native projection as well
-  if (!myWMSLayer->dataSource->nativeEPSG.empty()) {
+  if (!metadataLayer->dataSource->nativeEPSG.empty()) {
     LayerMetadataProjection *myProjection = new LayerMetadataProjection();
-    myWMSLayer->layerMetadata.projectionList.push_back(myProjection);
-    myProjection->name.copy(myWMSLayer->dataSource->nativeEPSG.c_str());
-    myProjection->dfBBOX[0] = myWMSLayer->dataSource->dfBBOX[0];
-    myProjection->dfBBOX[3] = myWMSLayer->dataSource->dfBBOX[1];
-    myProjection->dfBBOX[2] = myWMSLayer->dataSource->dfBBOX[2];
-    myProjection->dfBBOX[1] = myWMSLayer->dataSource->dfBBOX[3];
+    metadataLayer->layerMetadata.projectionList.push_back(myProjection);
+    myProjection->name.copy(metadataLayer->dataSource->nativeEPSG.c_str());
+    myProjection->dfBBOX[0] = metadataLayer->dataSource->dfBBOX[0];
+    myProjection->dfBBOX[3] = metadataLayer->dataSource->dfBBOX[1];
+    myProjection->dfBBOX[2] = metadataLayer->dataSource->dfBBOX[2];
+    myProjection->dfBBOX[1] = metadataLayer->dataSource->dfBBOX[3];
   }
 
   return 0;
 }
 
-int getStylesForLayer(WMSLayer *myWMSLayer) {
-  if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded || myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
+int getStylesForLayer(MetadataLayer *metadataLayer) {
+  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded || metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
     return 0;
   }
 
-  if (loadLayerStyleListFromMetadataDb(myWMSLayer) == 0) {
+  if (loadLayerStyleListFromMetadataDb(metadataLayer) == 0) {
     return 0;
   }
 
   // Auto configure styles
-  if (myWMSLayer->hasError == false) {
-    if (myWMSLayer->dataSource->cfgLayer->Styles.size() == 0) {
-      if (myWMSLayer->dataSource->dLayerType != CConfigReaderLayerTypeCascaded && myWMSLayer->dataSource->dLayerType != CConfigReaderLayerTypeLiveUpdate) {
+  if (metadataLayer->hasError == false) {
+    if (metadataLayer->dataSource->cfgLayer->Styles.size() == 0) {
+      if (metadataLayer->dataSource->dLayerType != CConfigReaderLayerTypeCascaded && metadataLayer->dataSource->dLayerType != CConfigReaderLayerTypeLiveUpdate) {
 #ifdef CXMLGEN_DEBUG
-        CDBDebug("cfgLayer->attr.type  %d", myWMSLayer->dataSource->dLayerType);
+        CDBDebug("cfgLayer->attr.type  %d", metadataLayer->dataSource->dLayerType);
 #endif
-        int status = CAutoConfigure::autoConfigureStyles(myWMSLayer->dataSource);
+        int status = CAutoConfigure::autoConfigureStyles(metadataLayer->dataSource);
         if (status != 0) {
-          myWMSLayer->hasError = 1;
-          CDBError("Unable to autoconfigure styles for layer %s", myWMSLayer->layerMetadata.name.c_str());
+          metadataLayer->hasError = 1;
+          CDBError("Unable to autoconfigure styles for layer %s", metadataLayer->layerMetadata.name.c_str());
         }
         // Get the defined styles for this layer
       }
     }
   }
 
-  CT::PointerList<CStyleConfiguration *> *styleListFromDataSource = myWMSLayer->dataSource->getStyleListForDataSource(myWMSLayer->dataSource);
+  CT::PointerList<CStyleConfiguration *> *styleListFromDataSource = metadataLayer->dataSource->getStyleListForDataSource(metadataLayer->dataSource);
 
   if (styleListFromDataSource == NULL) return 1;
 
@@ -691,7 +693,7 @@ int getStylesForLayer(WMSLayer *myWMSLayer) {
     style->title.copy(styleListFromDataSource->get(j)->styleTitle.c_str());
     style->abstract.copy(styleListFromDataSource->get(j)->styleAbstract.c_str());
 
-    myWMSLayer->layerMetadata.styleList.push_back(style);
+    metadataLayer->layerMetadata.styleList.push_back(style);
   }
 
   delete styleListFromDataSource;
@@ -705,65 +707,65 @@ bool compareProjection(const LayerMetadataProjection *p1, const LayerMetadataPro
 bool compareDim(const LayerMetadataDim *p2, const LayerMetadataDim *p1) { return strcmp(p1->name.c_str(), p2->name.c_str()) <= 0; }
 bool compareStyle(const LayerMetadataStyle *p1, const LayerMetadataStyle *p2) { return strcmp(p2->name.c_str(), p1->name.c_str()) <= 0; }
 
-int getTitleForLayer(WMSLayer *myWMSLayer) {
+int getTitleForLayer(MetadataLayer *metadataLayer) {
 #ifdef CXMLGEN_DEBUG
   CDBDebug("getTitleForLayer");
 #endif
   // Is this a cascaded WMS server?
-  if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded) {
+  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded) {
     return 0;
   }
   // This a liveupdate layer
-  if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
-    return layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(myWMSLayer);
+  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
+    return layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(metadataLayer);
   }
   // Get a nice name for this layer (if not configured) from the file attributes
-  if (myWMSLayer->dataSource->cfgLayer->Title.size() == 0) {
-    if (myWMSLayer->fileName.empty()) {
-      CDBError("No file name specified for layer %s", myWMSLayer->dataSource->layerName.c_str());
+  if (metadataLayer->dataSource->cfgLayer->Title.size() == 0) {
+    if (metadataLayer->fileName.empty()) {
+      CDBError("No file name specified for layer %s", metadataLayer->dataSource->layerName.c_str());
       return 1;
     }
     // TODO, possibly read file metadata from db in future?
     CDataReader reader;
-    int status = reader.open(myWMSLayer->dataSource, CNETCDFREADER_MODE_OPEN_DIMENSIONS); // TODO, would open header also work?
-    if (status != 0 || myWMSLayer->dataSource->getNumDataObjects() == 0) {
-      CDBError("Could not open file: %s", myWMSLayer->dataSource->getFileName());
+    int status = reader.open(metadataLayer->dataSource, CNETCDFREADER_MODE_OPEN_DIMENSIONS); // TODO, would open header also work?
+    if (status != 0 || metadataLayer->dataSource->getNumDataObjects() == 0) {
+      CDBError("Could not open file: %s", metadataLayer->dataSource->getFileName());
       return 1;
     }
-    CDF::Attribute *longName = myWMSLayer->dataSource->getDataObject(0)->cdfVariable->getAttributeNE("long_name");
+    CDF::Attribute *longName = metadataLayer->dataSource->getDataObject(0)->cdfVariable->getAttributeNE("long_name");
     if (longName != nullptr) {
-      myWMSLayer->layerMetadata.title.copy(longName->getDataAsString());
+      metadataLayer->layerMetadata.title.copy(longName->getDataAsString());
       // Concat variable name prefixed with longname
-      myWMSLayer->layerMetadata.title.printconcat(" (%s)", myWMSLayer->dataSource->getDataObject(0)->cdfVariable->name.c_str());
+      metadataLayer->layerMetadata.title.printconcat(" (%s)", metadataLayer->dataSource->getDataObject(0)->cdfVariable->name.c_str());
     } else {
-      CDF::Attribute *standardName = myWMSLayer->dataSource->getDataObject(0)->cdfVariable->getAttributeNE("standard_name");
+      CDF::Attribute *standardName = metadataLayer->dataSource->getDataObject(0)->cdfVariable->getAttributeNE("standard_name");
       if (standardName != nullptr) {
-        myWMSLayer->layerMetadata.title.copy(standardName->getDataAsString());
+        metadataLayer->layerMetadata.title.copy(standardName->getDataAsString());
         // Concat variable name prefixed with standardname
-        myWMSLayer->layerMetadata.title.printconcat(" (%s)", myWMSLayer->dataSource->getDataObject(0)->cdfVariable->name.c_str());
+        metadataLayer->layerMetadata.title.printconcat(" (%s)", metadataLayer->dataSource->getDataObject(0)->cdfVariable->name.c_str());
       } else {
         // Only variable name
-        myWMSLayer->layerMetadata.title.copy(myWMSLayer->dataSource->getDataObject(0)->cdfVariable->name);
+        metadataLayer->layerMetadata.title.copy(metadataLayer->dataSource->getDataObject(0)->cdfVariable->name);
       }
     }
   }
   return 0;
 }
 
-int getFileNameForLayer(WMSLayer *myWMSLayer) {
+int getFileNameForLayer(MetadataLayer *metadataLayer) {
 #ifdef CXMLGEN_DEBUG
   CDBDebug("getFileNameForLayer");
 #endif
-  if (!myWMSLayer->fileName.empty()) {
+  if (!metadataLayer->fileName.empty()) {
     CDBDebug("seems already done");
     return 0;
   }
-  CServerParams *srvParam = myWMSLayer->dataSource->srvParams;
+  CServerParams *srvParam = metadataLayer->dataSource->srvParams;
 
-  if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeDataBase || myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeStyled) {
-    if (myWMSLayer->dataSource->cfgLayer->Dimension.size() == 0) {
-      myWMSLayer->fileName.copy(myWMSLayer->dataSource->cfgLayer->FilePath[0]->value.c_str());
-      if (CAutoConfigure::autoConfigureDimensions(myWMSLayer->dataSource) != 0) {
+  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeDataBase || metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeStyled) {
+    if (metadataLayer->dataSource->cfgLayer->Dimension.size() == 0) {
+      metadataLayer->fileName.copy(metadataLayer->dataSource->cfgLayer->FilePath[0]->value.c_str());
+      if (CAutoConfigure::autoConfigureDimensions(metadataLayer->dataSource) != 0) {
         CDBError("Unable to autoconfigure dimensions");
         return 1;
       }
@@ -771,28 +773,28 @@ int getFileNameForLayer(WMSLayer *myWMSLayer) {
 
     /* A dimension where the default value is set to filetimedate should not be queried from the db */
     bool dataBaseDimension = true;
-    if (myWMSLayer->layer->Dimension.size() == 1 && myWMSLayer->layer->Dimension[0]->attr.defaultV.equals("filetimedate")) {
+    if (metadataLayer->layer->Dimension.size() == 1 && metadataLayer->layer->Dimension[0]->attr.defaultV.equals("filetimedate")) {
       dataBaseDimension = false;
     }
 
     // Check if any dimension is given:
-    if (dataBaseDimension == false || (myWMSLayer->layer->Dimension.size() == 0) || (myWMSLayer->layer->Dimension.size() == 1 && myWMSLayer->layer->Dimension[0]->attr.name.equals("none"))) {
+    if (dataBaseDimension == false || (metadataLayer->layer->Dimension.size() == 0) || (metadataLayer->layer->Dimension.size() == 1 && metadataLayer->layer->Dimension[0]->attr.name.equals("none"))) {
 #ifdef CXMLGEN_DEBUG
-      CDBDebug("Layer %s has no dimensions", myWMSLayer->dataSource->layerName.c_str());
+      CDBDebug("Layer %s has no dimensions", metadataLayer->dataSource->layerName.c_str());
 #endif
       // If not, just return the filename as configured in the layer
       std::vector<std::string> fileList;
       try {
-        fileList = CDBFileScanner::searchFileNames(myWMSLayer->dataSource->cfgLayer->FilePath[0]->value.c_str(), myWMSLayer->dataSource->cfgLayer->FilePath[0]->attr.filter, NULL);
+        fileList = CDBFileScanner::searchFileNames(metadataLayer->dataSource->cfgLayer->FilePath[0]->value.c_str(), metadataLayer->dataSource->cfgLayer->FilePath[0]->attr.filter, NULL);
       } catch (int linenr) {
       };
-      myWMSLayer->fileName.copy(fileList[0].c_str());
+      metadataLayer->fileName.copy(fileList[0].c_str());
       return 0;
     }
 
     // Auto scan in case of autowms
     if (srvParam->isAutoLocalFileResourceEnabled() == true) {
-      int status = CDBFactory::getDBAdapter(srvParam->cfg)->autoUpdateAndScanDimensionTables(myWMSLayer->dataSource);
+      int status = CDBFactory::getDBAdapter(srvParam->cfg)->autoUpdateAndScanDimensionTables(metadataLayer->dataSource);
       if (status != 0) {
         CDBError("Unable to checkDimTables");
         return 1;
@@ -801,13 +803,13 @@ int getFileNameForLayer(WMSLayer *myWMSLayer) {
 
     // Find the first occuring filename.
     CT::string tableName;
-    CT::string dimName(myWMSLayer->layer->Dimension[0]->attr.name.c_str());
+    CT::string dimName(metadataLayer->layer->Dimension[0]->attr.name.c_str());
     try {
-      tableName =
-          CDBFactory::getDBAdapter(srvParam->cfg)
-              ->getTableNameForPathFilterAndDimension(myWMSLayer->layer->FilePath[0]->value.c_str(), myWMSLayer->layer->FilePath[0]->attr.filter.c_str(), dimName.c_str(), myWMSLayer->dataSource);
+      tableName = CDBFactory::getDBAdapter(srvParam->cfg)
+                      ->getTableNameForPathFilterAndDimension(metadataLayer->layer->FilePath[0]->value.c_str(), metadataLayer->layer->FilePath[0]->attr.filter.c_str(), dimName.c_str(),
+                                                              metadataLayer->dataSource);
     } catch (int e) {
-      CDBError("Unable to create tableName from '%s' '%s' '%s'", myWMSLayer->layer->FilePath[0]->value.c_str(), myWMSLayer->layer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
+      CDBError("Unable to create tableName from '%s' '%s' '%s'", metadataLayer->layer->FilePath[0]->value.c_str(), metadataLayer->layer->FilePath[0]->attr.filter.c_str(), dimName.c_str());
       return 1;
     }
 
@@ -816,7 +818,7 @@ int getFileNameForLayer(WMSLayer *myWMSLayer) {
     bool databaseError = false;
 
     if (values == NULL) {
-      CDBError("No files found for %s ", myWMSLayer->dataSource->layerName.c_str());
+      CDBError("No files found for %s ", metadataLayer->dataSource->layerName.c_str());
       databaseError = true;
     }
     if (databaseError == false) {
@@ -824,11 +826,11 @@ int getFileNameForLayer(WMSLayer *myWMSLayer) {
 #ifdef CXMLGEN_DEBUG
         CDBDebug("Query  succeeded: Filename = %s", values->getRecord(0)->get(0)->c_str());
 #endif
-        myWMSLayer->fileName.copy(values->getRecord(0)->get(0));
+        metadataLayer->fileName.copy(values->getRecord(0)->get(0));
       } else {
         // The file is not in the database, probably an error during the database scan has been detected earlier.
         // Ignore the file for now too
-        CDBError("Query for '%s' not succeeded", myWMSLayer->layer->FilePath[0]->value.c_str());
+        CDBError("Query for '%s' not succeeded", metadataLayer->layer->FilePath[0]->value.c_str());
         databaseError = true;
       }
       delete values;

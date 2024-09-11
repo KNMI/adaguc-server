@@ -41,12 +41,12 @@
 const char *CXMLGen::className = "CXMLGen";
 int CXMLGen::WCSDescribeCoverage(CServerParams *srvParam, CT::string *XMLDocument) { return OGCGetCapabilities(srvParam, XMLDocument); }
 
-const WMSLayer *getFirstLayerWithoutError(std::vector<WMSLayer *> *myWMSLayerList) {
+const MetadataLayer *getFirstLayerWithoutError(std::vector<MetadataLayer *> *myWMSLayerList) {
   if (myWMSLayerList->size() == 0) {
     return nullptr;
   }
   for (size_t lnr = 0; lnr < myWMSLayerList->size(); lnr++) {
-    WMSLayer *layer = (*myWMSLayerList)[lnr];
+    MetadataLayer *layer = (*myWMSLayerList)[lnr];
     if (layer->hasError == 0) {
       return layer;
     }
@@ -54,9 +54,9 @@ const WMSLayer *getFirstLayerWithoutError(std::vector<WMSLayer *> *myWMSLayerLis
   return (*myWMSLayerList)[0];
 }
 
-void addErrorInXMLForMisconfiguredLayer(CT::string *XMLDoc, WMSLayer *layer) { XMLDoc->printconcat("\n<!-- Note: Error: Layer [%s] is misconfigured -->\n", layer->layerMetadata.name.c_str()); }
+void addErrorInXMLForMisconfiguredLayer(CT::string *XMLDoc, MetadataLayer *layer) { XMLDoc->printconcat("\n<!-- Note: Error: Layer [%s] is misconfigured -->\n", layer->layerMetadata.name.c_str()); }
 
-int CXMLGen::getWMS_1_0_0_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer *> *myWMSLayerList) {
+int CXMLGen::getWMS_1_0_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataLayer *> *myWMSLayerList) {
   CT::string onlineResource = srvParam->getOnlineResource();
   onlineResource.concat("SERVICE=WMS&amp;");
   XMLDoc->copy(WMS_1_0_0_GetCapabilities_Header);
@@ -75,7 +75,7 @@ int CXMLGen::getWMS_1_0_0_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer 
     }
 
     for (size_t lnr = 0; lnr < myWMSLayerList->size(); lnr++) {
-      WMSLayer *layer = (*myWMSLayerList)[lnr];
+      MetadataLayer *layer = (*myWMSLayerList)[lnr];
       if (layer->hasError != 0) {
         addErrorInXMLForMisconfiguredLayer(XMLDoc, layer);
       }
@@ -118,7 +118,7 @@ int CXMLGen::getWMS_1_0_0_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer 
   return 0;
 }
 
-int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer *> *myWMSLayerList) {
+int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc, std::vector<MetadataLayer *> *myWMSLayerList) {
   CT::string onlineResource = srvParam->getOnlineResource();
   onlineResource.concat("SERVICE=WMS&amp;");
   XMLDoc->copy(WMS_1_1_1_GetCapabilities_Header);
@@ -139,7 +139,7 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer 
     // Make a unique list of all groups
     std::vector<std::string> groupKeys;
     for (size_t lnr = 0; lnr < myWMSLayerList->size(); lnr++) {
-      WMSLayer *layer = (*myWMSLayerList)[lnr];
+      MetadataLayer *layer = (*myWMSLayerList)[lnr];
       std::string key = "";
       if (layer->layerMetadata.group.length() > 0) key = layer->layerMetadata.group.c_str();
       size_t j = 0;
@@ -212,7 +212,7 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer 
       }
 
       for (size_t lnr = 0; lnr < myWMSLayerList->size(); lnr++) {
-        WMSLayer *layer = (*myWMSLayerList)[lnr];
+        MetadataLayer *layer = (*myWMSLayerList)[lnr];
         if (layer->layerMetadata.group.equals(groupKeys[groupIndex])) {
           // CDBError("layer %d %s",groupDepth,layer->name.c_str());
           if (layer->hasError != 0) {
@@ -296,7 +296,7 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer 
   return 0;
 }
 
-int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer *> *myWMSLayerList) {
+int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataLayer *> *myWMSLayerList) {
   CT::string onlineResource = srvParam->getOnlineResource();
   onlineResource.concat("SERVICE=WMS&amp;");
   XMLDoc->copy(WMS_1_3_0_GetCapabilities_Header);
@@ -505,7 +505,7 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer 
     // Make a unique list of all groups
     std::vector<std::string> groupKeys;
     for (size_t lnr = 0; lnr < myWMSLayerList->size(); lnr++) {
-      WMSLayer *layer = (*myWMSLayerList)[lnr];
+      MetadataLayer *layer = (*myWMSLayerList)[lnr];
       std::string key = "";
       if (layer->layerMetadata.group.length() > 0) key = layer->layerMetadata.group.c_str();
       size_t j = 0;
@@ -581,7 +581,7 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer 
       }
 
       for (size_t lnr = 0; lnr < myWMSLayerList->size(); lnr++) {
-        WMSLayer *layer = (*myWMSLayerList)[lnr];
+        MetadataLayer *layer = (*myWMSLayerList)[lnr];
 #ifdef CXMLGEN_DEBUG
         CDBDebug("Comparing %s == %s", layer->group.c_str(), groupKeys[groupIndex].c_str());
 #endif
@@ -731,7 +731,7 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer 
   return 0;
 }
 
-int CXMLGen::getWCS_1_0_0_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer *> *myWMSLayerList) {
+int CXMLGen::getWCS_1_0_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataLayer *> *myWMSLayerList) {
   CT::string onlineResource = srvParam->getOnlineResource();
   onlineResource.concat("SERVICE=WCS&amp;");
 
@@ -757,7 +757,7 @@ int CXMLGen::getWCS_1_0_0_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer 
   if (myWMSLayerList->size() > 0) {
 
     for (size_t lnr = 0; lnr < myWMSLayerList->size(); lnr++) {
-      WMSLayer *layer = (*myWMSLayerList)[lnr];
+      MetadataLayer *layer = (*myWMSLayerList)[lnr];
       if (layer->hasError != 0) {
         addErrorInXMLForMisconfiguredLayer(XMLDoc, layer);
       }
@@ -791,7 +791,7 @@ int CXMLGen::getWCS_1_0_0_Capabilities(CT::string *XMLDoc, std::vector<WMSLayer 
   return 0;
 }
 
-int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc, std::vector<WMSLayer *> *myWMSLayerList) {
+int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc, std::vector<MetadataLayer *> *myWMSLayerList) {
 
   XMLDoc->copy("<?xml version='1.0' encoding=\"ISO-8859-1\" ?>\n"
                "<CoverageDescription\n"
@@ -806,7 +806,7 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc, std::vector<WMSLa
   if (firstWMLayer != nullptr) {
     for (size_t layerIndex = 0; layerIndex < (unsigned)srvParam->WMSLayers->count; layerIndex++) {
       for (size_t lnr = 0; lnr < myWMSLayerList->size(); lnr++) {
-        WMSLayer *layer = (*myWMSLayerList)[lnr];
+        MetadataLayer *layer = (*myWMSLayerList)[lnr];
         if (layer->layerMetadata.name.equals(&srvParam->WMSLayers[layerIndex])) {
           if (layer->hasError != 0) {
             addErrorInXMLForMisconfiguredLayer(XMLDoc, layer);
@@ -975,7 +975,7 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam, CT::string *XMLDocumen
   this->srvParam = _srvParam;
 
   int status = 0;
-  std::vector<WMSLayer *> myWMSLayerList;
+  std::vector<MetadataLayer *> myWMSLayerList;
 
   for (size_t j = 0; j < srvParam->cfg->Layer.size(); j++) {
     if (srvParam->cfg->Layer[j]->attr.type.equals("autoscan")) {
@@ -985,11 +985,11 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam, CT::string *XMLDocumen
       continue;
     }
     // Create a new layer and push it in the list
-    WMSLayer *myWMSLayer = new WMSLayer();
-    myWMSLayerList.push_back(myWMSLayer);
-    myWMSLayer->layer = srvParam->cfg->Layer[j];
-    myWMSLayer->srvParams = srvParam;
-    populateMyWMSLayerStruct(myWMSLayer, true);
+    MetadataLayer *metadataLayer = new MetadataLayer();
+    myWMSLayerList.push_back(metadataLayer);
+    metadataLayer->layer = srvParam->cfg->Layer[j];
+    metadataLayer->srvParams = srvParam;
+    populateLayerMetadataStruct(metadataLayer, true);
   }
 
 #ifdef CXMLGEN_DEBUG

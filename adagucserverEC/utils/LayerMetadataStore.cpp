@@ -4,10 +4,10 @@
 #include <CDBFactory.h>
 #include "XMLGenUtils.h"
 
-int getDimensionListAsJson(WMSLayer *myWMSLayer, json &dimListJson) {
+int getDimensionListAsJson(MetadataLayer *myMetadataLayer, json &dimListJson) {
   try {
 
-    for (auto dimension : myWMSLayer->layerMetadata.dimList) {
+    for (auto dimension : myMetadataLayer->layerMetadata.dimList) {
       json item;
       item["defaultValue"] = dimension->defaultValue.c_str();
       item["hasMultipleValues"] = dimension->hasMultipleValues;
@@ -24,37 +24,37 @@ int getDimensionListAsJson(WMSLayer *myWMSLayer, json &dimListJson) {
   return 0;
 }
 
-int getLayerBaseMetadataAsJson(WMSLayer *myWMSLayer, json &layerMetadataItem) {
+int getLayerBaseMetadataAsJson(MetadataLayer *myMetadataLayer, json &layerMetadataItem) {
   try {
-    layerMetadataItem["name"] = myWMSLayer->layerMetadata.name;
-    layerMetadataItem["title"] = myWMSLayer->layerMetadata.title;
-    layerMetadataItem["group"] = myWMSLayer->layerMetadata.group;
-    layerMetadataItem["abstract"] = myWMSLayer->layerMetadata.abstract;
-    layerMetadataItem["nativeepsg"] = myWMSLayer->layerMetadata.nativeEPSG;
+    layerMetadataItem["name"] = myMetadataLayer->layerMetadata.name;
+    layerMetadataItem["title"] = myMetadataLayer->layerMetadata.title;
+    layerMetadataItem["group"] = myMetadataLayer->layerMetadata.group;
+    layerMetadataItem["abstract"] = myMetadataLayer->layerMetadata.abstract;
+    layerMetadataItem["nativeepsg"] = myMetadataLayer->layerMetadata.nativeEPSG;
 
-    layerMetadataItem["isqueryable"] = myWMSLayer->layerMetadata.isQueryable;
+    layerMetadataItem["isqueryable"] = myMetadataLayer->layerMetadata.isQueryable;
     json latlonbox;
     for (size_t j = 0; j < 4; j++) {
-      latlonbox.push_back(myWMSLayer->layerMetadata.dfLatLonBBOX[j]);
+      latlonbox.push_back(myMetadataLayer->layerMetadata.dfLatLonBBOX[j]);
     }
     layerMetadataItem["latlonbox"] = latlonbox;
 
     json gridspec;
     json bbox;
     for (size_t j = 0; j < 4; j++) {
-      bbox.push_back(myWMSLayer->layerMetadata.dfBBOX[j]);
+      bbox.push_back(myMetadataLayer->layerMetadata.dfBBOX[j]);
     }
     gridspec["bbox"] = bbox;
-    gridspec["width"] = myWMSLayer->layerMetadata.width;
-    gridspec["height"] = myWMSLayer->layerMetadata.height;
-    gridspec["cellsizex"] = myWMSLayer->layerMetadata.cellsizeX;
-    gridspec["cellsizey"] = myWMSLayer->layerMetadata.cellsizeY;
-    gridspec["projstring"] = myWMSLayer->layerMetadata.projstring;
+    gridspec["width"] = myMetadataLayer->layerMetadata.width;
+    gridspec["height"] = myMetadataLayer->layerMetadata.height;
+    gridspec["cellsizex"] = myMetadataLayer->layerMetadata.cellsizeX;
+    gridspec["cellsizey"] = myMetadataLayer->layerMetadata.cellsizeY;
+    gridspec["projstring"] = myMetadataLayer->layerMetadata.projstring;
 
     layerMetadataItem["gridspec"] = gridspec;
 
     json variables;
-    for (auto lv : myWMSLayer->layerMetadata.variableList) {
+    for (auto lv : myMetadataLayer->layerMetadata.variableList) {
       json variable;
       variable["units"] = lv->units;
       variable["label"] = lv->label;
@@ -69,9 +69,9 @@ int getLayerBaseMetadataAsJson(WMSLayer *myWMSLayer, json &layerMetadataItem) {
   }
   return 0;
 }
-int getProjectionListAsJson(WMSLayer *myWMSLayer, json &projsettings) {
+int getProjectionListAsJson(MetadataLayer *myMetadataLayer, json &projsettings) {
   try {
-    for (auto projection : myWMSLayer->layerMetadata.projectionList) {
+    for (auto projection : myMetadataLayer->layerMetadata.projectionList) {
       json item = {projection->dfBBOX[0], projection->dfBBOX[1], projection->dfBBOX[2], projection->dfBBOX[3]};
       projsettings[projection->name.c_str()] = item;
     }
@@ -82,10 +82,10 @@ int getProjectionListAsJson(WMSLayer *myWMSLayer, json &projsettings) {
   return 0;
 }
 
-int getStyleListMetadataAsJson(WMSLayer *myWMSLayer, json &styleListJson) {
+int getStyleListMetadataAsJson(MetadataLayer *myMetadataLayer, json &styleListJson) {
   try {
 
-    for (auto style : myWMSLayer->layerMetadata.styleList) {
+    for (auto style : myMetadataLayer->layerMetadata.styleList) {
       json item;
       item["abstract"] = style->abstract.c_str();
       item["title"] = style->title.c_str();
@@ -99,31 +99,33 @@ int getStyleListMetadataAsJson(WMSLayer *myWMSLayer, json &styleListJson) {
   return 0;
 }
 
-int storeMyWMSLayerIntoMetadataDb(WMSLayer *myWMSLayer) {
-  storeLayerMetadataStructIntoMetadataDb(myWMSLayer);
-  storeLayerDimensionListIntoMetadataDb(myWMSLayer);
-  storeLayerProjectionAndExtentListIntoMetadataDb(myWMSLayer);
-  storeLayerStyleListIntoMetadataDb(myWMSLayer);
+int storeMyMetadataLayerIntoMetadataDb(MetadataLayer *myMetadataLayer) {
+  storeLayerMetadataStructIntoMetadataDb(myMetadataLayer);
+  storeLayerDimensionListIntoMetadataDb(myMetadataLayer);
+  storeLayerProjectionAndExtentListIntoMetadataDb(myMetadataLayer);
+  storeLayerStyleListIntoMetadataDb(myMetadataLayer);
   return 0;
 }
 
-int loadMyWMSLayerFromMetadataDb(WMSLayer *myWMSLayer) {
-  loadLayerMetadataStructFromMetadataDb(myWMSLayer);
-  loadLayerDimensionListFromMetadataDb(myWMSLayer);
-  loadLayerProjectionAndExtentListFromMetadataDb(myWMSLayer);
-  loadLayerStyleListFromMetadataDb(myWMSLayer);
+int loadMyMetadataLayerFromMetadataDb(MetadataLayer *myMetadataLayer) {
+  loadLayerMetadataStructFromMetadataDb(myMetadataLayer);
+  loadLayerDimensionListFromMetadataDb(myMetadataLayer);
+  loadLayerProjectionAndExtentListFromMetadataDb(myMetadataLayer);
+  loadLayerStyleListFromMetadataDb(myMetadataLayer);
   return 0;
 }
 
-CT::string getLayerMetadataFromDb(WMSLayer *myWMSLayer, CT::string metadataKey) {
-  CT::string layerName = myWMSLayer->dataSource->getLayerName();
-  CT::string datasetName = myWMSLayer->dataSource->srvParams->datasetLocation;
+CT::string getLayerMetadataFromDb(MetadataLayer *myMetadataLayer, CT::string metadataKey) {
+  CT::string layerName = myMetadataLayer->dataSource->getLayerName();
+  CT::string datasetName = myMetadataLayer->dataSource->srvParams->datasetLocation;
   if (datasetName.empty()) {
     // CDBDebug("Not a dataset");
     return "";
   }
-  CDBStore::Store *layerMetaDataStore = CDBFactory::getDBAdapter(myWMSLayer->dataSource->srvParams->cfg)->getLayerMetadataStore(datasetName);
-
+  CDBStore::Store *layerMetaDataStore = CDBFactory::getDBAdapter(myMetadataLayer->dataSource->srvParams->cfg)->getLayerMetadataStore(datasetName);
+  if (layerMetaDataStore == nullptr) {
+    return "";
+  }
   auto records = layerMetaDataStore->getRecords();
   for (auto record : records) {
     if (record->get("layername")->equals(layerName) && record->get("metadatakey")->equals(metadataKey)) {
@@ -141,70 +143,70 @@ CT::string getLayerMetadataFromDb(WMSLayer *myWMSLayer, CT::string metadataKey) 
   throw __LINE__;
 }
 
-int storeLayerMetadataInDb(WMSLayer *myWMSLayer, CT::string metadataKey, std::string metadataBlob) {
+int storeLayerMetadataInDb(MetadataLayer *myMetadataLayer, CT::string metadataKey, std::string metadataBlob) {
   try {
-    CT::string datasetName = myWMSLayer->dataSource->srvParams->datasetLocation;
+    CT::string datasetName = myMetadataLayer->dataSource->srvParams->datasetLocation;
     if (datasetName.empty()) {
       CDBDebug("Not a dataset");
       return 1;
     }
-    CT::string layerName = myWMSLayer->dataSource->getLayerName();
+    CT::string layerName = myMetadataLayer->dataSource->getLayerName();
 
-    return CDBFactory::getDBAdapter(myWMSLayer->dataSource->srvParams->cfg)->storeLayerMetadata(datasetName, layerName, metadataKey, metadataBlob.c_str());
+    return CDBFactory::getDBAdapter(myMetadataLayer->dataSource->srvParams->cfg)->storeLayerMetadata(datasetName, layerName, metadataKey, metadataBlob.c_str());
   } catch (int e) {
     return e;
   }
   return 0;
 }
 
-int storeLayerMetadataStructIntoMetadataDb(WMSLayer *myWMSLayer) {
+int storeLayerMetadataStructIntoMetadataDb(MetadataLayer *myMetadataLayer) {
   json layerMetadataItem;
 
-  if (getLayerBaseMetadataAsJson(myWMSLayer, layerMetadataItem) != 0) {
+  if (getLayerBaseMetadataAsJson(myMetadataLayer, layerMetadataItem) != 0) {
     return 1;
   }
 
-  storeLayerMetadataInDb(myWMSLayer, "layermetadata", layerMetadataItem.dump());
+  storeLayerMetadataInDb(myMetadataLayer, "layermetadata", layerMetadataItem.dump());
   return 0;
 }
 
-int loadLayerMetadataStructFromMetadataDb(WMSLayer *myWMSLayer) {
-  if (!myWMSLayer->readFromDb) {
+int loadLayerMetadataStructFromMetadataDb(MetadataLayer *myMetadataLayer) {
+  if (!myMetadataLayer->readFromDb) {
     return 1;
   }
   try {
-    CT::string layerMetadataAsJson = getLayerMetadataFromDb(myWMSLayer, "layermetadata");
+    CT::string layerMetadataAsJson = getLayerMetadataFromDb(myMetadataLayer, "layermetadata");
     if (layerMetadataAsJson.empty()) {
       return 1;
     }
     json a;
     auto i = a.parse(layerMetadataAsJson.c_str());
-    myWMSLayer->layerMetadata.name = i["name"].get<std::string>().c_str();
-    myWMSLayer->layerMetadata.title = i["title"].get<std::string>().c_str();
-    myWMSLayer->layerMetadata.group = i["group"].get<std::string>().c_str();
-    myWMSLayer->layerMetadata.abstract = i["abstract"].get<std::string>().c_str();
-    myWMSLayer->layerMetadata.isQueryable = i["isqueryable"].get<int>();
-    myWMSLayer->layerMetadata.nativeEPSG = i["nativeepsg"].get<std::string>().c_str();
+    myMetadataLayer->layerMetadata.name = i["name"].get<std::string>().c_str();
+    myMetadataLayer->layerMetadata.title = i["title"].get<std::string>().c_str();
+    myMetadataLayer->layerMetadata.group = i["group"].get<std::string>().c_str();
+    myMetadataLayer->layerMetadata.abstract = i["abstract"].get<std::string>().c_str();
+    myMetadataLayer->layerMetadata.isQueryable = i["isqueryable"].get<int>();
+    myMetadataLayer->layerMetadata.nativeEPSG = i["nativeepsg"].get<std::string>().c_str();
 
     json latlonbox = i["latlonbox"];
     for (size_t j = 0; j < 4; j += 1) {
-      latlonbox[j].get_to((myWMSLayer->layerMetadata.dfLatLonBBOX[j]));
+      latlonbox[j].get_to((myMetadataLayer->layerMetadata.dfLatLonBBOX[j]));
     }
     json gridspec = i["gridspec"];
     json bbox = gridspec["bbox"];
     for (size_t j = 0; j < 4; j += 1) {
-      bbox[j].get_to((myWMSLayer->layerMetadata.dfBBOX[j]));
+      bbox[j].get_to((myMetadataLayer->layerMetadata.dfBBOX[j]));
     }
-    myWMSLayer->layerMetadata.width = gridspec["width"].get<int>();
-    myWMSLayer->layerMetadata.height = gridspec["height"].get<int>();
-    myWMSLayer->layerMetadata.cellsizeX = gridspec["cellsizex"].get<double>();
-    myWMSLayer->layerMetadata.cellsizeY = gridspec["cellsizey"].get<double>();
-    myWMSLayer->layerMetadata.projstring = gridspec["projstring"].get<std::string>().c_str();
+    myMetadataLayer->layerMetadata.width = gridspec["width"].get<int>();
+    myMetadataLayer->layerMetadata.height = gridspec["height"].get<int>();
+    myMetadataLayer->layerMetadata.cellsizeX = gridspec["cellsizex"].get<double>();
+    myMetadataLayer->layerMetadata.cellsizeY = gridspec["cellsizey"].get<double>();
+    myMetadataLayer->layerMetadata.projstring = gridspec["projstring"].get<std::string>().c_str();
     auto c = i["variables"];
     for (auto styleJson : c.items()) {
       auto variableProps = styleJson.value();
       LayerMetadataVariable *variable = new LayerMetadataVariable();
-      myWMSLayer->layerMetadata.variableList.push_back(variable);
+      myMetadataLayer->layerMetadata.variableList.push_back(variable);
       variable->units = variableProps["units"].get<std::string>().c_str();
       variable->label = variableProps["label"].get<std::string>().c_str();
       variable->variableName = variableProps["variableName"].get<std::string>().c_str();
@@ -220,29 +222,29 @@ int loadLayerMetadataStructFromMetadataDb(WMSLayer *myWMSLayer) {
   return 0;
 }
 
-int storeLayerProjectionAndExtentListIntoMetadataDb(WMSLayer *myWMSLayer) {
+int storeLayerProjectionAndExtentListIntoMetadataDb(MetadataLayer *myMetadataLayer) {
   try {
     json projsettings;
-    if (getProjectionListAsJson(myWMSLayer, projsettings) != 0) {
+    if (getProjectionListAsJson(myMetadataLayer, projsettings) != 0) {
       return 1;
     }
-    storeLayerMetadataInDb(myWMSLayer, "projected_extents", projsettings.dump());
+    storeLayerMetadataInDb(myMetadataLayer, "projected_extents", projsettings.dump());
   } catch (int e) {
     return e;
   }
   return 0;
 }
 
-int loadLayerProjectionAndExtentListFromMetadataDb(WMSLayer *myWMSLayer) {
-  if (!myWMSLayer->readFromDb) {
+int loadLayerProjectionAndExtentListFromMetadataDb(MetadataLayer *myMetadataLayer) {
+  if (!myMetadataLayer->readFromDb) {
     return 1;
   }
-  if (myWMSLayer->layerMetadata.projectionList.size() != 0) {
-    CDBError("myWMSLayer->layerMetadata.projectionList is not empty");
+  if (myMetadataLayer->layerMetadata.projectionList.size() != 0) {
+    CDBError("myMetadataLayer->layerMetadata.projectionList is not empty");
     return 1;
   }
   try {
-    CT::string projInfo = getLayerMetadataFromDb(myWMSLayer, "projected_extents");
+    CT::string projInfo = getLayerMetadataFromDb(myMetadataLayer, "projected_extents");
     if (projInfo.empty()) {
       return 1;
     }
@@ -251,7 +253,7 @@ int loadLayerProjectionAndExtentListFromMetadataDb(WMSLayer *myWMSLayer) {
     for (auto d : c.items()) {
       auto bboxArray = d.value();
       LayerMetadataProjection *projection = new LayerMetadataProjection();
-      myWMSLayer->layerMetadata.projectionList.push_back(projection);
+      myMetadataLayer->layerMetadata.projectionList.push_back(projection);
       projection->name = d.key().c_str();
       bboxArray[0].get_to((projection->dfBBOX[0]));
       bboxArray[1].get_to((projection->dfBBOX[1]));
@@ -268,34 +270,34 @@ int loadLayerProjectionAndExtentListFromMetadataDb(WMSLayer *myWMSLayer) {
   return 0;
 }
 
-int storeLayerStyleListIntoMetadataDb(WMSLayer *myWMSLayer) {
+int storeLayerStyleListIntoMetadataDb(MetadataLayer *myMetadataLayer) {
   try {
     json styleListJson;
-    if (getStyleListMetadataAsJson(myWMSLayer, styleListJson) != 0) {
+    if (getStyleListMetadataAsJson(myMetadataLayer, styleListJson) != 0) {
       return 1;
     }
-    storeLayerMetadataInDb(myWMSLayer, "stylelist", styleListJson.dump());
+    storeLayerMetadataInDb(myMetadataLayer, "stylelist", styleListJson.dump());
   } catch (int e) {
     return e;
   }
   return 0;
 }
 
-int loadLayerStyleListFromMetadataDb(WMSLayer *myWMSLayer) {
-  if (myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded || myWMSLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
+int loadLayerStyleListFromMetadataDb(MetadataLayer *myMetadataLayer) {
+  if (myMetadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded || myMetadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
     return 0;
   }
-  if (!myWMSLayer->readFromDb) {
+  if (!myMetadataLayer->readFromDb) {
     return 1;
   }
 
-  if (myWMSLayer->layerMetadata.styleList.size() != 0) {
-    CDBError("myWMSLayer->layerMetadata.styleList is not empty");
+  if (myMetadataLayer->layerMetadata.styleList.size() != 0) {
+    CDBError("myMetadataLayer->layerMetadata.styleList is not empty");
     return 1;
   }
   try {
 
-    CT::string styleListAsJson = getLayerMetadataFromDb(myWMSLayer, "stylelist");
+    CT::string styleListAsJson = getLayerMetadataFromDb(myMetadataLayer, "stylelist");
     if (styleListAsJson.empty()) {
       return 1;
     }
@@ -306,7 +308,7 @@ int loadLayerStyleListFromMetadataDb(WMSLayer *myWMSLayer) {
     for (auto styleJson : c.items()) {
       auto styleProperties = styleJson.value();
       LayerMetadataStyle *style = new LayerMetadataStyle();
-      myWMSLayer->layerMetadata.styleList.push_back(style);
+      myMetadataLayer->layerMetadata.styleList.push_back(style);
       style->name = styleProperties["name"].get<std::string>().c_str();
       style->abstract = styleProperties["abstract"].get<std::string>().c_str();
       style->title = styleProperties["title"].get<std::string>().c_str();
@@ -322,14 +324,14 @@ int loadLayerStyleListFromMetadataDb(WMSLayer *myWMSLayer) {
   return 0;
 }
 
-int storeLayerDimensionListIntoMetadataDb(WMSLayer *myWMSLayer) {
+int storeLayerDimensionListIntoMetadataDb(MetadataLayer *myMetadataLayer) {
   CDBDebug("storeLayerDimensionListIntoMetadataDb");
   try {
     json dimListJson;
-    if (getDimensionListAsJson(myWMSLayer, dimListJson) != 0) {
+    if (getDimensionListAsJson(myMetadataLayer, dimListJson) != 0) {
       return 1;
     }
-    storeLayerMetadataInDb(myWMSLayer, "dimensionlist", dimListJson.dump());
+    storeLayerMetadataInDb(myMetadataLayer, "dimensionlist", dimListJson.dump());
   } catch (json::exception &e) {
     CDBWarning("Unable to build json structure");
     return 1;
@@ -339,16 +341,16 @@ int storeLayerDimensionListIntoMetadataDb(WMSLayer *myWMSLayer) {
   return 0;
 }
 
-int loadLayerDimensionListFromMetadataDb(WMSLayer *myWMSLayer) {
-  if (!myWMSLayer->readFromDb) {
+int loadLayerDimensionListFromMetadataDb(MetadataLayer *myMetadataLayer) {
+  if (!myMetadataLayer->readFromDb) {
     return 1;
   }
-  if (myWMSLayer->layerMetadata.dimList.size() != 0) {
-    CDBError("myWMSLayer->layerMetadata.dimList is not empty");
+  if (myMetadataLayer->layerMetadata.dimList.size() != 0) {
+    CDBError("myMetadataLayer->layerMetadata.dimList is not empty");
     return 1;
   }
   try {
-    CT::string dimensionListAsJson = getLayerMetadataFromDb(myWMSLayer, "dimensionlist");
+    CT::string dimensionListAsJson = getLayerMetadataFromDb(myMetadataLayer, "dimensionlist");
     if (dimensionListAsJson.empty()) {
       return 1;
     }
@@ -360,7 +362,7 @@ int loadLayerDimensionListFromMetadataDb(WMSLayer *myWMSLayer) {
       auto dimensionProperties = d.value();
 
       LayerMetadataDim *dimension = new LayerMetadataDim();
-      myWMSLayer->layerMetadata.dimList.push_back(dimension);
+      myMetadataLayer->layerMetadata.dimList.push_back(dimension);
       dimension->name = d.key().c_str();
       dimension->defaultValue = dimensionProperties["defaultValue"].get<std::string>().c_str();
       dimension->hasMultipleValues = dimensionProperties["hasMultipleValues"].get<int>();
@@ -383,12 +385,12 @@ int updateMetaDataTable(CDataSource *dataSource) {
   if (dataSource->srvParams->datasetLocation.empty()) {
     return 0;
   }
-  WMSLayer *myWMSLayer = new WMSLayer();
-  myWMSLayer->layer = dataSource->cfgLayer;
-  myWMSLayer->srvParams = dataSource->srvParams;
-  myWMSLayer->dataSource = dataSource;
-  populateMyWMSLayerStruct(myWMSLayer, false);
-  storeMyWMSLayerIntoMetadataDb(myWMSLayer);
-  delete myWMSLayer;
+  MetadataLayer *myMetadataLayer = new MetadataLayer();
+  myMetadataLayer->layer = dataSource->cfgLayer;
+  myMetadataLayer->srvParams = dataSource->srvParams;
+  myMetadataLayer->dataSource = dataSource;
+  populateLayerMetadataStruct(myMetadataLayer, false);
+  storeMyMetadataLayerIntoMetadataDb(myMetadataLayer);
+  delete myMetadataLayer;
   return 0;
 }
