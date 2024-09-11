@@ -108,15 +108,12 @@
     </domainSet>
     <rangeSet>
       <RangeSet>
-        <name>bands</name>
-        <label>bands</label>
+        <name>dimensions</name>
+        <label>dimensions</label>
         <axisDescription>
           <AxisDescription>
-            <name>bands</name>
-            <label>Bands/Channels/Samples</label>
-            <values>
-              <singleValue>1</singleValue>
-            </values>
+            <name>time</name>
+            <label>time</label>
           </AxisDescription>
         </axisDescription>
       </RangeSet>
@@ -255,15 +252,12 @@
     </domainSet>
     <rangeSet>
       <RangeSet>
-        <name>bands</name>
-        <label>bands</label>
+        <name>dimensions</name>
+        <label>dimensions</label>
         <axisDescription>
           <AxisDescription>
-            <name>bands</name>
-            <label>Bands/Channels/Samples</label>
-            <values>
-              <singleValue>1</singleValue>
-            </values>
+            <name>time</name>
+            <label>time</label>
           </AxisDescription>
         </axisDescription>
       </RangeSet>
@@ -402,15 +396,12 @@
     </domainSet>
     <rangeSet>
       <RangeSet>
-        <name>bands</name>
-        <label>bands</label>
+        <name>dimensions</name>
+        <label>dimensions</label>
         <axisDescription>
           <AxisDescription>
-            <name>bands</name>
-            <label>Bands/Channels/Samples</label>
-            <values>
-              <singleValue>1</singleValue>
-            </values>
+            <name>time</name>
+            <label>time</label>
           </AxisDescription>
         </axisDescription>
       </RangeSet>

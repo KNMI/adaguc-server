@@ -50,6 +50,7 @@ add_executable(geojsondump ./adagucserverEC/geojsondump.cpp)
 
 add_test(testhclasses hclasses/testhclasses)
 add_test(testadagucserver adagucserverEC/testadagucserver)
+add_test(testtimeutils adagucserverEC/testtimeutils)
 
 target_link_libraries(adagucserver adagucserverEC hclasses CCDFDataModel)
 target_link_libraries(h5ncdump adagucserverEC hclasses CCDFDataModel)
