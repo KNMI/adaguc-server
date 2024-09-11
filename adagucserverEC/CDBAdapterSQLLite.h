@@ -23,6 +23,10 @@
  *
  ******************************************************************************/
 #ifdef ADAGUC_USE_SQLITE
+
+#ifndef CDBADAPTERSQLLITE_H
+#define CDBADAPTERSQLLITE_H
+
 #include "CDBAdapter.h"
 #include "CDebugger.h"
 #include <set>
@@ -122,4 +126,7 @@ public:
   int storeLayerMetadata(const char *datasetName, const char *layerName, const char *metadataKey, const char *metadatablob);
   CT::string getLayerMetadata(const char *datasetName, const char *layerName, const char *metadataKey);
 };
+
+#endif
+
 #endif

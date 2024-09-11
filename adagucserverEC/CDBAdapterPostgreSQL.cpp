@@ -1094,7 +1094,7 @@ int CDBAdapterPostgreSQL::storeLayerMetadata(const char *datasetName, const char
     return -1;
   }
 
-  CT::string tableColumns("datasetname varchar (255), layername varchar (255), metadatakey varchar (255), updatetime TIMESTAMPTZ, blob JSONB, PRIMARY KEY (datasetname, layername, metadatakey)");
+  CT::string tableColumns("datasetname varchar (511), layername varchar (511), metadatakey varchar (255), updatetime TIMESTAMPTZ, blob JSONB, PRIMARY KEY (datasetname, layername, metadatakey)");
 
   int status = dataBaseConnection->checkTable("layermetadata", tableColumns.c_str());
   if (status == 1) {
@@ -1105,7 +1105,8 @@ int CDBAdapterPostgreSQL::storeLayerMetadata(const char *datasetName, const char
   CT::string updateTime = CTime::currentDateTime().c_str();
   updateTime.setSize(19);
   CT::string query;
-  query.print("INSERT INTO layermetadata values (E'%s',E'%s', E'%s', E'%s', E'%s') "
+  query.print("INSERT INTO layermetadata (datasetname, layername, metadatakey, updatetime, blob) "
+              "VALUES (E'%s',E'%s', E'%s', E'%s', E'%s') "
               "ON CONFLICT (datasetname, layername, metadatakey) "
               "DO UPDATE SET blob = excluded.blob, updatetime = excluded.updatetime;",
               datasetName, layerName, metadataKey, updateTime.c_str(), metadataBlob);
@@ -1135,8 +1136,13 @@ CT::string CDBAdapterPostgreSQL::getLayerMetadata(const char *datasetName, const
       throw(__LINE__);
     }
 
+    if (CServerParams::checkForValidTokens(datasetName, "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-:/.") == false) {
+      CDBError("Invalid dataset name. ");
+      throw(__LINE__);
+    }
+
     CT::string query;
-    query.print("SELECT layername, metadatakey, blob from layermetadata where datasetname = '%s';", datasetName);
+    query.print("SELECT layername, metadatakey, blob FROM layermetadata WHERE datasetname = '%s';", datasetName);
     this->layerMetaDataStore = dataBaseConnection->queryToStore(query.c_str());
     if (layerMetaDataStore == nullptr) {
 #ifdef CDBAdapterPostgreSQL_DEBUG

@@ -22,7 +22,8 @@
  * limitations under the License.
  *
  ******************************************************************************/
-
+#ifndef CDBADAPTERPOSTGRESQL_H
+#define CDBADAPTERPOSTGRESQL_H
 #include "CDBAdapter.h"
 #include "CDebugger.h"
 #include "CPGSQLDB.h"
@@ -92,3 +93,5 @@ public:
   int storeLayerMetadata(const char *datasetName, const char *layerName, const char *metadataKey, const char *metadatablob);
   CT::string getLayerMetadata(const char *datasetName, const char *layerName, const char *metadataKey);
 };
+
+#endif
