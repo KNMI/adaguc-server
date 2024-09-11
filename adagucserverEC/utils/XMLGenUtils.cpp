@@ -57,7 +57,7 @@ int populateLayerMetadataStruct(MetadataLayer *metadataLayer, bool readFromDB) {
   }
 
   bool readFileInfo = readFromDB ? (loadLayerMetadataStructFromMetadataDb(metadataLayer) != 0) : true;
-  CDBDebug("Not using db info but reading from file instead flag: %d", readFileInfo);
+
   if (readFileInfo) {
     metadataLayer->readFromDb = false;
     // Get a default file name for this layer to obtain some information
