@@ -2283,25 +2283,16 @@ int CRequest::process_all_layers() {
 
       // WMS GetMetaData
       if (srvParam->requestType == REQUEST_WMS_GETMETADATA) {
-        if (srvParam->Format.equals("application/json")) {
-
-          json result;
-          getLayerMetadataAsJson(dataSources[j], result);
-
-          printf("%s%c%c\n", "Content-Type:application/json", 13, 10);
-          printf("%s", result.dump().c_str());
-        } else {
-          printf("%s%c%c\n", "Content-Type:text/plain", 13, 10);
-          CDataReader reader;
-          status = reader.open(dataSources[j], CNETCDFREADER_MODE_OPEN_HEADER);
-          if (status != 0) {
-            CDBError("Could not open file: %s", dataSources[j]->getFileName());
-            throw(__LINE__);
-          }
-          CT::string dumpString = CDF::dump(dataSources[j]->getDataObject(0)->cdfObject);
-          printf("%s", dumpString.c_str());
-          reader.close();
+        printf("%s%c%c\n", "Content-Type:text/plain", 13, 10);
+        CDataReader reader;
+        status = reader.open(dataSources[j], CNETCDFREADER_MODE_OPEN_HEADER);
+        if (status != 0) {
+          CDBError("Could not open file: %s", dataSources[j]->getFileName());
+          throw(__LINE__);
         }
+        CT::string dumpString = CDF::dump(dataSources[j]->getDataObject(0)->cdfObject);
+        printf("%s", dumpString.c_str());
+        reader.close();
         return 0;
       }
 
@@ -3367,6 +3358,16 @@ int CRequest::process_querystring() {
         CDBError("ADAGUC Server: GetMetaData is restricted");
         return 1;
       }
+
+      if (srvParam->Format.equals("application/json")) {
+        // GetMetadata for specific dataset and layer
+        json result;
+        getLayerMetadataAsJson(srvParam, result);
+        printf("%s%c%c\n", "Content-Type:application/json", 13, 10);
+        printf("%s", result.dump().c_str());
+        return 0;
+      }
+
       if (dFound_WMSLAYER == 0) {
         CDBError("ADAGUC Server: Parameter LAYER missing");
         dErrorOccured = 1;

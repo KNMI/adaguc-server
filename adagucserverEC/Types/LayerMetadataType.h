@@ -27,6 +27,8 @@ struct LayerMetadataStyle {
 
 struct LayerMetadataVariable {
   CT::string units;
+  CT::string variableName;
+  CT::string label;
 };
 
 struct LayerMetadata {
@@ -38,7 +40,7 @@ struct LayerMetadata {
   double dfLatLonBBOX[4] = {-180, -90, 180, 90};
   double dfBBOX[4] = {-180, -90, 180, 90};
   int isQueryable = 0;
-  CT::string name, title, group, abstract, nativeEPSG;
+  CT::string name, title, group, abstract, nativeEPSG, projstring;
 
   std::vector<LayerMetadataProjection *> projectionList;
   std::vector<LayerMetadataDim *> dimList;

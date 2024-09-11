@@ -3,6 +3,6 @@
 #include <CDataSource.h>
 #include <json_adaguc.h>
 
-int getLayerMetadataAsJson(CDataSource *dataSource, json &result);
+int getLayerMetadataAsJson(CServerParams *srvParams, json &result);
 
 #endif

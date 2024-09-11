@@ -18,7 +18,7 @@ int getDimensionListAsJson(WMSLayer *myWMSLayer, json &dimListJson) {
       dimListJson[dimension->name.c_str()] = item;
     }
   } catch (json::exception &e) {
-    CDBError("Unable to build json structure");
+    CDBWarning("Unable to build json structure");
     return 1;
   }
   return 0;
@@ -31,6 +31,7 @@ int getLayerBaseMetadataAsJson(WMSLayer *myWMSLayer, json &layerMetadataItem) {
     layerMetadataItem["group"] = myWMSLayer->layerMetadata.group;
     layerMetadataItem["abstract"] = myWMSLayer->layerMetadata.abstract;
     layerMetadataItem["nativeepsg"] = myWMSLayer->layerMetadata.nativeEPSG;
+
     layerMetadataItem["isqueryable"] = myWMSLayer->layerMetadata.isQueryable;
     json latlonbox;
     for (size_t j = 0; j < 4; j++) {
@@ -48,18 +49,22 @@ int getLayerBaseMetadataAsJson(WMSLayer *myWMSLayer, json &layerMetadataItem) {
     gridspec["height"] = myWMSLayer->layerMetadata.height;
     gridspec["cellsizex"] = myWMSLayer->layerMetadata.cellsizeX;
     gridspec["cellsizey"] = myWMSLayer->layerMetadata.cellsizeY;
+    gridspec["projstring"] = myWMSLayer->layerMetadata.projstring;
+
     layerMetadataItem["gridspec"] = gridspec;
 
     json variables;
     for (auto lv : myWMSLayer->layerMetadata.variableList) {
       json variable;
       variable["units"] = lv->units;
+      variable["label"] = lv->label;
+      variable["variableName"] = lv->variableName;
       variables.push_back(variable);
     }
     layerMetadataItem["variables"] = variables;
 
   } catch (json::exception &e) {
-    CDBError("Unable to build json structure");
+    CDBWarning("Unable to build json structure");
     return 1;
   }
   return 0;
@@ -71,7 +76,7 @@ int getProjectionListAsJson(WMSLayer *myWMSLayer, json &projsettings) {
       projsettings[projection->name.c_str()] = item;
     }
   } catch (json::exception &e) {
-    CDBError("Unable to build json structure");
+    CDBWarning("Unable to build json structure");
     return 1;
   }
   return 0;
@@ -88,7 +93,7 @@ int getStyleListMetadataAsJson(WMSLayer *myWMSLayer, json &styleListJson) {
       styleListJson.push_back(item);
     }
   } catch (json::exception &e) {
-    CDBError("Unable to build json structure");
+    CDBWarning("Unable to build json structure");
     return 1;
   }
   return 0;
@@ -117,7 +122,23 @@ CT::string getLayerMetadataFromDb(WMSLayer *myWMSLayer, CT::string metadataKey) 
     // CDBDebug("Not a dataset");
     return "";
   }
-  return CDBFactory::getDBAdapter(myWMSLayer->dataSource->srvParams->cfg)->getLayerMetadata(datasetName, layerName, metadataKey);
+  CDBStore::Store *layerMetaDataStore = CDBFactory::getDBAdapter(myWMSLayer->dataSource->srvParams->cfg)->getLayerMetadataStore(datasetName);
+
+  auto records = layerMetaDataStore->getRecords();
+  for (auto record : records) {
+    if (record->get("layername")->equals(layerName) && record->get("metadatakey")->equals(metadataKey)) {
+#ifdef MEASURETIME
+      StopWatch_Stop("<CDBAdapterPostgreSQL::getLayerMetadata");
+#endif
+      return record->get("blob");
+    }
+  }
+
+#ifdef MEASURETIME
+  StopWatch_Stop("<CDBAdapterPostgreSQL::getLayerMetadata");
+#endif
+  CDBDebug("No metadata entry found for %s %s %s", datasetName, layerName, metadataKey);
+  throw __LINE__;
 }
 
 int storeLayerMetadataInDb(WMSLayer *myWMSLayer, CT::string metadataKey, std::string metadataBlob) {
@@ -178,16 +199,19 @@ int loadLayerMetadataStructFromMetadataDb(WMSLayer *myWMSLayer) {
     myWMSLayer->layerMetadata.height = gridspec["height"].get<int>();
     myWMSLayer->layerMetadata.cellsizeX = gridspec["cellsizex"].get<double>();
     myWMSLayer->layerMetadata.cellsizeY = gridspec["cellsizey"].get<double>();
+    myWMSLayer->layerMetadata.projstring = gridspec["projstring"].get<std::string>().c_str();
     auto c = i["variables"];
     for (auto styleJson : c.items()) {
       auto variableProps = styleJson.value();
       LayerMetadataVariable *variable = new LayerMetadataVariable();
       myWMSLayer->layerMetadata.variableList.push_back(variable);
       variable->units = variableProps["units"].get<std::string>().c_str();
+      variable->label = variableProps["label"].get<std::string>().c_str();
+      variable->variableName = variableProps["variableName"].get<std::string>().c_str();
     }
 
   } catch (json::exception &e) {
-    CDBError("Unable to build json structure");
+    CDBWarning("Unable to build json structure");
     return 1;
   } catch (int e) {
     CDBError("loadLayerMetadataStructFromMetadataDb %d", e);
@@ -235,7 +259,7 @@ int loadLayerProjectionAndExtentListFromMetadataDb(WMSLayer *myWMSLayer) {
       bboxArray[3].get_to((projection->dfBBOX[3]));
     }
   } catch (json::exception &e) {
-    CDBError("Unable to build json structure");
+    CDBWarning("Unable to build json structure");
     return 1;
   } catch (int e) {
     // CDBError("loadLayerProjectionAndExtentListFromMetadataDb %d", e);
@@ -289,7 +313,7 @@ int loadLayerStyleListFromMetadataDb(WMSLayer *myWMSLayer) {
     }
 
   } catch (json::exception &e) {
-    CDBError("Unable to build json structure");
+    CDBWarning("Unable to build json structure");
     return 1;
   } catch (int e) {
     // CDBError("loadLayerStyleListFromMetadataDb %d", e);
@@ -307,7 +331,7 @@ int storeLayerDimensionListIntoMetadataDb(WMSLayer *myWMSLayer) {
     }
     storeLayerMetadataInDb(myWMSLayer, "dimensionlist", dimListJson.dump());
   } catch (json::exception &e) {
-    CDBError("Unable to build json structure");
+    CDBWarning("Unable to build json structure");
     return 1;
   } catch (int e) {
     return e;
@@ -346,7 +370,7 @@ int loadLayerDimensionListFromMetadataDb(WMSLayer *myWMSLayer) {
       dimension->values = dimensionProperties["values"].get<std::string>().c_str();
     }
   } catch (json::exception &e) {
-    CDBError("Unable to build json structure");
+    CDBWarning("Unable to build json structure");
     return 1;
   } catch (int e) {
     return e;

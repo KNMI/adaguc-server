@@ -90,11 +90,21 @@ int populateMyWMSLayerStruct(WMSLayer *myWMSLayer, bool readFromDB) {
     myWMSLayer->layerMetadata.cellsizeX = myWMSLayer->dataSource->dfCellSizeX;
     myWMSLayer->layerMetadata.cellsizeY = myWMSLayer->dataSource->dfCellSizeY;
     myWMSLayer->layerMetadata.nativeEPSG = myWMSLayer->dataSource->nativeEPSG;
+    myWMSLayer->layerMetadata.projstring = myWMSLayer->dataSource->nativeProj4;
 
     auto v = myWMSLayer->dataSource->getDataObjectsVector();
     for (auto d : (*v)) {
       LayerMetadataVariable *layerMetadataVariable = new LayerMetadataVariable();
       layerMetadataVariable->units = (d->getUnits());
+      layerMetadataVariable->variableName = (d->variableName);
+
+      CDF::Attribute *longName = d->cdfVariable->getAttributeNE("long_name");
+      if (longName == nullptr) {
+        longName = d->cdfVariable->getAttributeNE("standard_name");
+      }
+      CT::string label = longName != nullptr ? longName->getDataAsString() : d->variableName;
+
+      layerMetadataVariable->label = (label);
       myWMSLayer->layerMetadata.variableList.push_back(layerMetadataVariable);
     }
   }
