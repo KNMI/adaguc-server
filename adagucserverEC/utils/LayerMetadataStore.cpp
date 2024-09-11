@@ -139,7 +139,7 @@ CT::string getLayerMetadataFromDb(MetadataLayer *myMetadataLayer, CT::string met
 #ifdef MEASURETIME
   StopWatch_Stop("<CDBAdapterPostgreSQL::getLayerMetadata");
 #endif
-  CDBDebug("No metadata entry found for %s %s %s", datasetName, layerName, metadataKey);
+  CDBDebug("No metadata entry found for %s %s %s", datasetName.c_str(), layerName.c_str(), metadataKey.c_str());
   throw __LINE__;
 }
 

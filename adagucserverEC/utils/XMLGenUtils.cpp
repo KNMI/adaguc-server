@@ -57,7 +57,9 @@ int populateLayerMetadataStruct(MetadataLayer *metadataLayer, bool readFromDB) {
   }
 
   bool readFileInfo = readFromDB ? (loadLayerMetadataStructFromMetadataDb(metadataLayer) != 0) : true;
+  CDBDebug("Not using db info but reading from file instead flag: %d", readFileInfo);
   if (readFileInfo) {
+    metadataLayer->readFromDb = false;
     // Get a default file name for this layer to obtain some information
     int status = getFileNameForLayer(metadataLayer);
     if (status != 0) {
@@ -85,7 +87,6 @@ int populateLayerMetadataStruct(MetadataLayer *metadataLayer, bool readFromDB) {
     metadataLayer->layerMetadata.dfBBOX[1] = metadataLayer->dataSource->dfBBOX[1];
     metadataLayer->layerMetadata.dfBBOX[2] = metadataLayer->dataSource->dfBBOX[2];
     metadataLayer->layerMetadata.dfBBOX[3] = metadataLayer->dataSource->dfBBOX[3];
-
     metadataLayer->layerMetadata.width = metadataLayer->dataSource->dWidth;
     metadataLayer->layerMetadata.height = metadataLayer->dataSource->dHeight;
     metadataLayer->layerMetadata.cellsizeX = metadataLayer->dataSource->dfCellSizeX;
