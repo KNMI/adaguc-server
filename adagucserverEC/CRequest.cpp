@@ -794,7 +794,6 @@ int CRequest::process_wms_getcap_request() {
     ;
     if (status == CXMLGEN_FATAL_ERROR_OCCURED) return 1;
   }
-
   const char *pszADAGUCWriteToFile = getenv("ADAGUC_WRITETOFILE");
   if (pszADAGUCWriteToFile != NULL) {
     CReadFile::write(pszADAGUCWriteToFile, XMLdocument.c_str(), XMLdocument.length());

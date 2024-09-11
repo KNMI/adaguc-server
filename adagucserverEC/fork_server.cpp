@@ -3,7 +3,6 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/wait.h>
-#include <sys/wait.h>
 #include <unistd.h>
 
 #include "CTString.h"
@@ -19,7 +18,9 @@ void handle_client(int client_socket, int (*do_work)(int, char **, char **), int
 
   int data_recv = recv(client_socket, recv_buf, recv_buf_len, 0);
   if (data_recv > 0) {
+    // The child stdout should end up in the client socket
     dup2(client_socket, STDOUT_FILENO);
+
     setenv("QUERY_STRING", recv_buf, 1);
 
     int status = do_work(argc, argv, envp);
@@ -33,20 +34,32 @@ void handle_client(int client_socket, int (*do_work)(int, char **, char **), int
 }
 
 void on_child_exit(int child_signal) {
+  /*
+  This function gets executed once a child exits/signals (through SIGCHLD)
+  Note: the kernel does not queue signals. If a child exits during the handling of another signal, the exit/signal gets dropped.
+  */
+
   int stat_val;
-  pid_t child_pid = wait(&stat_val);
+  pid_t child_pid;
 
-  // TODO: check what happens with handling signals after wait(), have to use macro, see `man 2 wait`
-  if (WIFEXITED(stat_val)) {
-    int child_status = WEXITSTATUS(stat_val);
+  // Loop over all exited children. WNOHANG makes the call non-blocking.
+  while ((child_pid = waitpid(-1, &stat_val, WNOHANG)) > 0) {
+    // If child exited normally
+    if (WIFEXITED(stat_val)) {
+      int child_status = WEXITSTATUS(stat_val);
 
-    int child_sock = child_sockets[child_pid];
-    fprintf(stderr, "@ on_child_exit [%d] [%d] [%d] [%d]", child_pid, child_sock, child_signal, child_status);
+      int child_sock = child_sockets[child_pid];
+      fprintf(stderr, "@ on_child_exit [%d] [%d] [%d] [%d]\n", child_pid, child_sock, child_signal, child_status);
 
-    write(child_sock, reinterpret_cast<const char *>(&child_status), sizeof(child_status));
-    close(child_sock);
+      // Write the status code from the child pid into the unix socket back to python
+      write(child_sock, reinterpret_cast<const char *>(&child_status), sizeof(child_status));
+      close(child_sock);
 
-    child_sockets.erase(child_pid);
+      child_sockets.erase(child_pid);
+    } else if (WIFSIGNALED(stat_val)) {
+      int child_signal2 = WTERMSIG(stat_val);
+      fprintf(stderr, "@ on_child_signal [%d] [%d]\n", child_pid, child_signal2);
+    }
   }
 }
 
@@ -90,6 +103,7 @@ int run_server(int (*do_work)(int, char **, char **), int argc, char **argv, cha
   while (1) {
     unsigned int sock_len = 0;
 
+    // Once someone connects to the unix socket, immediately fork and execute the client request in `handle_client`
     if ((client_socket = accept(listen_socket, (struct sockaddr *)&remote, &sock_len)) == -1) {
       printf("Error on accept() call \n");
       return 1;
