@@ -9,7 +9,6 @@
 class CDPPSolarTerminator : public CDPPInterface {
 private:
   DEF_ERRORFUNCTION();
-  void print_trace();
 
 public:
   virtual const char *getId();

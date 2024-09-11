@@ -15,10 +15,6 @@ int layerTypeLiveUpdateConfigureDimensionsInDataSource(CDataSource *dataSource) 
     dataSource->requiredDims.push_back(requiredDim);
   }
 
-  // // Add step to empty file
-  // dataSource->addStep("", NULL);
-  // dataSource->getCDFDims()->addDimension("none", "0", 0);
-
   return 0;
 }
 

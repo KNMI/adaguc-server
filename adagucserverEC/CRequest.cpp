@@ -1825,53 +1825,29 @@ int CRequest::process_all_layers() {
     if (dataSources[j]->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
       // This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.
       layerTypeLiveUpdateConfigureDimensionsInDataSource(dataSources[j]);
+      // Basic case of liveupdate layer
       if (dataSources[j]->cfgLayer->DataPostProc.empty()) {
         // // Add step to empty file
         dataSources[j]->addStep("", NULL);
         dataSources[j]->getCDFDims()->addDimension("none", "0", 0);
       } else {
-        if (dataSources[j]->cfgLayer->Dimension.size() != 0) {
+        // Case of liveupdate layers with data post processors (such as solar terminator)
+        // Currently one (dummy) file is required
+        std::vector<std::string> fileList;
+        if (!dataSources[j]->cfgLayer->FilePath.empty()) {
           try {
-            if (setDimValuesForDataSource(dataSources[j], srvParam) != 0) {
-              CDBError("Error in setDimValuesForDataSource: Unable to find data for layer %s", dataSources[j]->layerName.c_str());
-              return 1;
-            }
-
-          } catch (ServiceExceptionCode e) {
-            CDBError("Invalid dimensions values: No data available for layer %s", dataSources[j]->layerName.c_str());
-            setExceptionType(e);
+            fileList = CDBFileScanner::searchFileNames(dataSources[j]->cfgLayer->FilePath[0]->value.c_str(), dataSources[j]->cfgLayer->FilePath[0]->attr.filter, NULL);
+          } catch (int e) {
+            CDBError("Could not find any filename");
             return 1;
           }
 
-        } else {
-          CDBDebug("Layer has no dims");
-          // This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.
-          std::vector<std::string> fileList;
-          if (dataSources[j]->cfgLayer->FilePath.empty()) {
-            dataSources[j]->addStep("", NULL);
-            dataSources[j]->getCDFDims()->addDimension("none", "0", 0);
-            CDBDebug("Path empty");
-          } else {
-
-            try {
-              fileList = CDBFileScanner::searchFileNames(dataSources[j]->cfgLayer->FilePath[0]->value.c_str(), dataSources[j]->cfgLayer->FilePath[0]->attr.filter, NULL);
-            } catch (int e) {
-              CDBError("Could not find any filename");
-              return 1;
-            }
-
-            if (fileList.size() == 0) {
-              CDBError("fileList.size()==0");
-              return 1;
-            }
-            dataSources[j]->addStep(fileList[0].c_str(), NULL);
+          if (fileList.size() == 0) {
+            CDBError("fileList.size()==0");
+            return 1;
           }
+          dataSources[j]->addStep(fileList[0].c_str(), NULL);
         }
-
-        // dataSources[j]->addStep("", NULL);
-
-        // dataSources[j]->getCDFDims()->addDimension("none", "0", 0);
-        // layerTypeLiveUpdateConfigureDimensionsInDataSource(dataSources[j]);
       }
     }
   }
@@ -2366,22 +2342,14 @@ int CRequest::process_all_layers() {
       image.printImagePng8(true);
     } else {
       // General case: Liveupdate with some data postprocessors
-      // CDrawImage image;
-      // CDataReader reader;
+      // Covers case of Solar Terminator
       CImageDataWriter imageDataWriter;
       // bool imageDataWriterIsInitialized = false;
       status = imageDataWriter.init(srvParam, dataSources[j], dataSources[j]->getNumTimeSteps());
       CDBDebug("Init imageDataWriter status %d", status);
-      // if (status != 0) throw(__LINE__);
-      // imageDataWriterIsInitialized = true;
-      // // When we have multiple timesteps, we will create an animation.
-      CDBDebug("Num timesteps was %d", dataSources[j]->getNumTimeSteps());
       if (dataSources[j]->getNumTimeSteps() > 1) CDBDebug("Status from create animation was %d", imageDataWriter.createAnimation());
       status = imageDataWriter.addData(dataSources);
       CDBDebug("Adding data status was %d", status);
-      // // Note: add legend etc
-      // status = imageDataWriter.end();
-      // CDBDebug("Ending imagedatawriter status was %d", status);
       status = imageDataWriter.end();
     }
     CDBDebug("Ending image data writing with status %d", status);
