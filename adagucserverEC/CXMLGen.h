@@ -48,11 +48,11 @@
 class CXMLGen {
 private:
   DEF_ERRORFUNCTION();
-  int getWMS_1_0_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataLayer *> *myWMSLayerList);
-  int getWMS_1_1_1_Capabilities(CT::string *XMLDoc, std::vector<MetadataLayer *> *myWMSLayerList);
-  int getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataLayer *> *myWMSLayerList);
-  int getWCS_1_0_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataLayer *> *myWMSLayerList);
-  int getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc, std::vector<MetadataLayer *> *myWMSLayerList);
+  int getWMS_1_0_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataLayer *> *metadataLayerList);
+  int getWMS_1_1_1_Capabilities(CT::string *XMLDoc, std::vector<MetadataLayer *> *metadataLayerList);
+  int getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataLayer *> *metadataLayerList);
+  int getWCS_1_0_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataLayer *> *metadataLayerList);
+  int getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc, std::vector<MetadataLayer *> *metadataLayerList);
   CServerParams *srvParam;
   CT::string serviceInfo;
 

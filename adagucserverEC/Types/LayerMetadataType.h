@@ -11,10 +11,17 @@ struct LayerMetadataDim {
   CT::string values;
   CT::string defaultValue;
   int hasMultipleValues;
-  bool hidden = false;
+  bool hidden;
 };
 
 struct LayerMetadataProjection {
+  LayerMetadataProjection() {}
+  LayerMetadataProjection(CT::string &name, double bbox[]) {
+    this->name = name;
+    for (size_t j = 0; j < 4; j++) {
+      this->dfBBOX[j] = bbox[j];
+    }
+  }
   CT::string name;
   double dfBBOX[4];
 };
@@ -30,7 +37,6 @@ struct LayerMetadataVariable {
 };
 
 struct LayerMetadata {
-
   int width = -1;
   int height = -1;
   double cellsizeX = 0;
@@ -39,26 +45,22 @@ struct LayerMetadata {
   double dfBBOX[4] = {-180, -90, 180, 90};
   int isQueryable = 0;
   CT::string name, title, group, abstract, nativeEPSG;
-
-  std::vector<LayerMetadataProjection *> projectionList;
-  std::vector<LayerMetadataDim *> dimList;
-  std::vector<LayerMetadataStyle *> styleList;
-  std::vector<LayerMetadataVariable *> variableList;
+  std::vector<LayerMetadataProjection> projectionList;
+  std::vector<LayerMetadataDim> dimList;
+  std::vector<LayerMetadataStyle> styleList;
+  std::vector<LayerMetadataVariable> variableList;
 };
 
 // TODO should rename this class
 class MetadataLayer {
 public:
-  MetadataLayer();
-  ~MetadataLayer();
   // TODO: Would be nice to get rid of these in this class
   CServerConfig::XMLE_Layer *layer;
-  CDataSource *dataSource;
+  CDataSource *dataSource = nullptr;
   CServerParams *srvParams;
   CT::string fileName;
   bool readFromDb = false;
-
-  int hasError;
+  int hasError = 0;
 
   LayerMetadata layerMetadata;
 };

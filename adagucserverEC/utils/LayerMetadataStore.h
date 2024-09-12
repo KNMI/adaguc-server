@@ -5,10 +5,10 @@
 #include <vector>
 #include "CXMLGen.h"
 
-int storeLayerMetadataInDb(MetadataLayer *myWMSLayer, CT::string metadataKey, std::string metadataBlob);
-CT::string getLayerMetadataFromDb(MetadataLayer *myWMSLayer, CT::string metadataKey);
+int storeLayerMetadataInDb(MetadataLayer *metadataLayer, CT::string metadataKey, std::string metadataBlob);
+CT::string getLayerMetadataFromDb(MetadataLayer *metadataLayer, CT::string metadataKey);
 
-int storeMyWMSLayerIntoMetadataDb(MetadataLayer *myWMSLayer);
+int storeMetadataLayerIntoMetadataDb(MetadataLayer *metadataLayer);
 
 int storeLayerMetadataStructIntoMetadataDb(MetadataLayer *layer);
 int loadLayerMetadataStructFromMetadataDb(MetadataLayer *layer);
@@ -16,10 +16,10 @@ int loadLayerMetadataStructFromMetadataDb(MetadataLayer *layer);
 int storeLayerProjectionAndExtentListIntoMetadataDb(MetadataLayer *layer);
 int loadLayerProjectionAndExtentListFromMetadataDb(MetadataLayer *layer);
 
-int storeLayerDimensionListIntoMetadataDb(MetadataLayer *myWMSLayer);
+int storeLayerDimensionListIntoMetadataDb(MetadataLayer *metadataLayer);
 int loadLayerDimensionListFromMetadataDb(MetadataLayer *layer);
 
-int storeLayerStyleListIntoMetadataDb(MetadataLayer *myWMSLayer);
+int storeLayerStyleListIntoMetadataDb(MetadataLayer *metadataLayer);
 int loadLayerStyleListFromMetadataDb(MetadataLayer *layer);
 
 int updateMetaDataTable(CDataSource *dataSource);

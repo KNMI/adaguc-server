@@ -1094,7 +1094,7 @@ int CDBAdapterPostgreSQL::storeLayerMetadata(const char *datasetName, const char
     return -1;
   }
 
-  CT::string tableColumns("datasetname varchar (511), layername varchar (511), metadatakey varchar (255), updatetime TIMESTAMPTZ, blob JSONB, PRIMARY KEY (datasetname, layername, metadatakey)");
+  CT::string tableColumns("datasetname varchar (511), layername varchar (511), metadatakey varchar (255), updatetime TIMESTAMP, blob JSONB, PRIMARY KEY (datasetname, layername, metadatakey)");
 
   int status = dataBaseConnection->checkTable("layermetadata", tableColumns.c_str());
   if (status == 1) {
