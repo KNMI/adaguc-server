@@ -669,9 +669,9 @@ int getStylesForLayer(MetadataLayer *metadataLayer) {
 
   for (size_t j = 0; j < styleListFromDataSource->size(); j++) {
     LayerMetadataStyle style = {
-      name : styleListFromDataSource->get(j)->styleCompositionName,
-      title : styleListFromDataSource->get(j)->styleTitle,
-      abstract : styleListFromDataSource->get(j)->styleAbstract
+      .name = styleListFromDataSource->get(j)->styleCompositionName,
+      .title = styleListFromDataSource->get(j)->styleTitle,
+      .abstract = styleListFromDataSource->get(j)->styleAbstract
     };
     metadataLayer->layerMetadata.styleList.push_back(style);
   }
@@ -681,10 +681,10 @@ int getStylesForLayer(MetadataLayer *metadataLayer) {
   return 0;
 }
 
-bool compareStringCase(const std::string &s1, const std::string &s2) { return strcmp(s1.c_str(), s2.c_str()) <= 0; }
+bool compareStringCase(const std::string &s1, const std::string &s2) { return strcmp(s1.c_str(), s2.c_str()) < 0; }
 
-bool compareProjection(const LayerMetadataProjection &p1, const LayerMetadataProjection &p2) { return strcmp(p1.name.c_str(), p2.name.c_str()) <= 0; }
-bool compareDim(const LayerMetadataDim &p2, const LayerMetadataDim &p1) { return strcmp(p1.name.c_str(), p2.name.c_str()) <= 0; }
+bool compareProjection(const LayerMetadataProjection &p1, const LayerMetadataProjection &p2) { return strcmp(p1.name.c_str(), p2.name.c_str()) < 0; }
+bool compareDim(const LayerMetadataDim &p2, const LayerMetadataDim &p1) { return strcmp(p1.name.c_str(), p2.name.c_str()) < 0; }
 
 int getTitleForLayer(MetadataLayer *metadataLayer) {
 #ifdef CXMLGEN_DEBUG

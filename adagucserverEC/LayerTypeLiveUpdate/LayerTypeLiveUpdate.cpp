@@ -54,7 +54,7 @@ int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(MetadataLayer *metada
   CT::string startTime = timeInstance.dateToISOString(timeInstance.offsetToDate(startTimeOffset));
   CT::string stopTime = timeInstance.dateToISOString(timeInstance.offsetToDate(stopTimeOffset));
   CT::string resTime = "PT1S";
-  LayerMetadataDim dim = {name : "time", units : "ISO8601", values : startTime + "/" + stopTime + "/" + resTime, defaultValue : stopTime, hasMultipleValues : true, hidden : false};
+  LayerMetadataDim dim = {.name = "time", .units = "ISO8601", .values = startTime + "/" + stopTime + "/" + resTime, .defaultValue = stopTime, .hasMultipleValues = true, .hidden = false};
   metadataLayer->layerMetadata.dimList.push_back(dim);
 
   return 0;

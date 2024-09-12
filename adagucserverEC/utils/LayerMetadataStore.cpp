@@ -204,9 +204,9 @@ int loadLayerStyleListFromMetadataDb(MetadataLayer *metadataLayer) {
     for (auto styleJson : c.items()) {
       auto styleProperties = styleJson.value();
       LayerMetadataStyle style = {
-        name : styleProperties["name"].get<std::string>().c_str(),
-        title : styleProperties["title"].get<std::string>().c_str(),
-        abstract : styleProperties["abstract"].get<std::string>().c_str(),
+        .name = styleProperties["name"].get<std::string>().c_str(),
+        .title = styleProperties["title"].get<std::string>().c_str(),
+        .abstract = styleProperties["abstract"].get<std::string>().c_str(),
       };
       metadataLayer->layerMetadata.styleList.push_back(style);
     }
@@ -264,12 +264,12 @@ int loadLayerDimensionListFromMetadataDb(MetadataLayer *metadataLayer) {
       auto dimensionProperties = d.value();
 
       LayerMetadataDim dimension = {
-        name : dimensionProperties["name"].get<std::string>().c_str(),
-        units : dimensionProperties["units"].get<std::string>().c_str(),
-        values : dimensionProperties["values"].get<std::string>().c_str(),
-        defaultValue : dimensionProperties["defaultValue"].get<std::string>().c_str(),
-        hasMultipleValues : dimensionProperties["hasMultipleValues"].get<int>(),
-        hidden : dimensionProperties["hidden"].get<bool>(),
+        .name = dimensionProperties["name"].get<std::string>().c_str(),
+        .units = dimensionProperties["units"].get<std::string>().c_str(),
+        .values = dimensionProperties["values"].get<std::string>().c_str(),
+        .defaultValue = dimensionProperties["defaultValue"].get<std::string>().c_str(),
+        .hasMultipleValues = dimensionProperties["hasMultipleValues"].get<int>(),
+        .hidden = dimensionProperties["hidden"].get<bool>(),
       };
       metadataLayer->layerMetadata.dimList.push_back(dimension);
     }
