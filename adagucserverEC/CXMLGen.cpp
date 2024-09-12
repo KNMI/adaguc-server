@@ -225,7 +225,7 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc, std::vector<MetadataL
             XMLDoc->concat(&layerTitle);
             XMLDoc->concat("</Title>\n");
 
-            for (auto proj : firstWMLayer->layerMetadata.projectionList) {
+            for (auto proj : layer->layerMetadata.projectionList) {
               XMLDoc->concat("<SRS>");
               XMLDoc->concat(&proj.name);
               XMLDoc->concat("</SRS>\n");
@@ -262,7 +262,7 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc, std::vector<MetadataL
             }
 
             if (layer->layer->MetadataURL.size() > 0) {
-              CT::string layerMetaDataURL = firstWMLayer->layer->MetadataURL[0]->value.c_str();
+              CT::string layerMetaDataURL = layer->layer->MetadataURL[0]->value.c_str();
               layerMetaDataURL.replaceSelf("&", "&amp;");
               XMLDoc->concat("   <MetadataURL type=\"TC211\">\n");
               XMLDoc->concat("     <Format>text/xml</Format>\n");
@@ -624,7 +624,7 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataL
                                 "</EX_GeographicBoundingBox>",
                                 layer->layerMetadata.dfLatLonBBOX[0], layer->layerMetadata.dfLatLonBBOX[2], layer->layerMetadata.dfLatLonBBOX[1], layer->layerMetadata.dfLatLonBBOX[3]);
 
-            for (auto proj : firstWMLayer->layerMetadata.projectionList) {
+            for (auto proj : layer->layerMetadata.projectionList) {
               if (srvParam->checkBBOXXYOrder(proj.name.c_str()) == true) {
                 XMLDoc->printconcat("<BoundingBox CRS=\"%s\" minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\" />\n", proj.name.c_str(), proj.dfBBOX[1], proj.dfBBOX[0], proj.dfBBOX[3], proj.dfBBOX[2]);
               } else {
