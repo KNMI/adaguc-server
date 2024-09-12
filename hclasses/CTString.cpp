@@ -451,36 +451,17 @@ namespace CT {
     replaceSelf("<", "&gt;");
   }
 
-  void string::trimSelf() {
+  void string::trimSelf(bool trimWhiteSpace) {
     int s = -1, e = privatelength;
     const char *value = useStack ? stackValue : heapValue;
     for (size_t j = 0; j < privatelength; j++) {
-      if (value[j] != ' ') {
+      if (trimWhiteSpace ? value[j] != ' ' && value[j] != '\n' && value[j] != '\r' : value[j] != ' ') {
         s = j;
         break;
       }
     }
     for (size_t j = privatelength - 1; j > 0; j--) {
-      if (value[j] != ' ') {
-        e = j;
-        break;
-      }
-    }
-    substringSelf(s, e + 1);
-  }
-
-  void string::trimWhiteSpacesAndLinesSelf() {
-
-    int s = -1, e = privatelength;
-    const char *value = useStack ? stackValue : heapValue;
-    for (size_t j = 0; j < privatelength; j++) {
-      if (value[j] != ' ' && value[j] != '\n' && value[j] != '\r') {
-        s = j;
-        break;
-      }
-    }
-    for (size_t j = privatelength - 1; j > 0; j--) {
-      if (value[j] != ' ' && value[j] != '\n' && value[j] != '\r') {
+      if (trimWhiteSpace ? value[j] != ' ' && value[j] != '\n' && value[j] != '\r' : value[j] != ' ') {
         e = j;
         break;
       }
