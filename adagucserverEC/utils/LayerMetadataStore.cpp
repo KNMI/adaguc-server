@@ -84,7 +84,6 @@ int getProjectionListAsJson(MetadataLayer *metadataLayer, json &projsettings) {
 
 int getStyleListMetadataAsJson(MetadataLayer *metadataLayer, json &styleListJson) {
   try {
-    json styleListJson;
     for (auto style : metadataLayer->layerMetadata.styleList) {
       json item;
       item["abstract"] = style.abstract.c_str();
@@ -275,10 +274,12 @@ int storeLayerStyleListIntoMetadataDb(MetadataLayer *metadataLayer) {
   try {
     json styleListJson;
     if (getStyleListMetadataAsJson(metadataLayer, styleListJson) != 0) {
+      CDBWarning("Unable to convert stylelist to json");
       return 1;
     }
     storeLayerMetadataInDb(metadataLayer, "stylelist", styleListJson.dump());
   } catch (int e) {
+    CDBWarning("Unable to store stylelist json in db");
     return e;
   }
   return 0;
