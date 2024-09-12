@@ -55,9 +55,7 @@ int populateLayerMetadataStruct(MetadataLayer *metadataLayer, bool readFromDB) {
   } else {
     metadataLayer->layerMetadata.title.copy(metadataLayer->dataSource->cfgLayer->Name[0]->value.c_str());
   }
-
   bool readFileInfo = readFromDB ? (loadLayerMetadataStructFromMetadataDb(metadataLayer) != 0) : true;
-
   if (readFileInfo) {
     metadataLayer->readFromDb = false;
     // Get a default file name for this layer to obtain some information
@@ -87,6 +85,7 @@ int populateLayerMetadataStruct(MetadataLayer *metadataLayer, bool readFromDB) {
     metadataLayer->layerMetadata.dfBBOX[1] = metadataLayer->dataSource->dfBBOX[1];
     metadataLayer->layerMetadata.dfBBOX[2] = metadataLayer->dataSource->dfBBOX[2];
     metadataLayer->layerMetadata.dfBBOX[3] = metadataLayer->dataSource->dfBBOX[3];
+
     metadataLayer->layerMetadata.width = metadataLayer->dataSource->dWidth;
     metadataLayer->layerMetadata.height = metadataLayer->dataSource->dHeight;
     metadataLayer->layerMetadata.cellsizeX = metadataLayer->dataSource->dfCellSizeX;
@@ -96,17 +95,16 @@ int populateLayerMetadataStruct(MetadataLayer *metadataLayer, bool readFromDB) {
 
     auto v = metadataLayer->dataSource->getDataObjectsVector();
     for (auto d : (*v)) {
-      LayerMetadataVariable *layerMetadataVariable = new LayerMetadataVariable();
-      layerMetadataVariable->units = (d->getUnits());
-      layerMetadataVariable->variableName = (d->variableName);
-
       CDF::Attribute *longName = d->cdfVariable->getAttributeNE("long_name");
       if (longName == nullptr) {
         longName = d->cdfVariable->getAttributeNE("standard_name");
       }
       CT::string label = longName != nullptr ? longName->getDataAsString() : d->variableName;
-
-      layerMetadataVariable->label = (label);
+      LayerMetadataVariable layerMetadataVariable = {
+          .variableName = d->cdfVariable->name,
+          .units = d->getUnits(),
+          .label = label,
+      };
       metadataLayer->layerMetadata.variableList.push_back(layerMetadataVariable);
     }
   }
@@ -127,10 +125,10 @@ int populateLayerMetadataStruct(MetadataLayer *metadataLayer, bool readFromDB) {
     return 1;
   }
 
-  std::map<std::string, LayerMetadataProjection *> projectionMap;
+  std::map<std::string, LayerMetadataProjection> projectionMap;
   // Make a unique list of projections
   for (auto p : metadataLayer->layerMetadata.projectionList) {
-    projectionMap[p->name.c_str()] = p;
+    projectionMap[p.name.c_str()] = p;
   }
   metadataLayer->layerMetadata.projectionList.clear();
   for (auto p : projectionMap) {
@@ -169,13 +167,15 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
       /* This dimension is a filetimedate type, its values come from the modification date of the file */
       if (metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.defaultV.equals("filetimedate")) {
         CT::string fileDate = CDirReader::getFileDate(metadataLayer->layer->FilePath[0]->value.c_str());
-        LayerMetadataDim *dim = new LayerMetadataDim();
+
+        LayerMetadataDim dim;
+        dim.name.copy("time");
+        dim.units.copy("ISO8601");
+        dim.values.copy(fileDate.c_str());
+        dim.defaultValue.copy(fileDate.c_str());
+        dim.hasMultipleValues = true;
+        dim.hidden = false;
         metadataLayer->layerMetadata.dimList.push_back(dim);
-        dim->name.copy("time");
-        dim->units.copy("ISO8601");
-        dim->values.copy(fileDate.c_str());
-        dim->defaultValue.copy(fileDate.c_str());
-        dim->hasMultipleValues = true;
         break;
       }
 #ifdef CXMLGEN_DEBUG
@@ -186,9 +186,10 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
       const char *pszDimName = metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str();
 
       // Create a new dim to store in the layer
-      LayerMetadataDim *dim = new LayerMetadataDim();
-      metadataLayer->layerMetadata.dimList.push_back(dim);
-      dim->name.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
+      LayerMetadataDim dim;
+      dim.hidden = false;
+      dim.name.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
+
       // Get the tablename
       CT::string tableName;
       CServerParams *srvParam = metadataLayer->dataSource->srvParams;
@@ -403,22 +404,22 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
           // if(srvParam->requestType==REQUEST_WMS_GETCAPABILITIES)
           {
 
-            dim->name.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
+            dim.name.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
 
             // Try to get units from the variable
-            dim->units.copy("NA");
+            dim.units.copy("NA");
             if (metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.units.empty()) {
               CT::string units;
               try {
-                metadataLayer->dataSource->getDataObject(0)->cdfObject->getVariable(dim->name.c_str())->getAttribute("units")->getDataAsString(&units);
-                dim->units.copy(&units);
+                metadataLayer->dataSource->getDataObject(0)->cdfObject->getVariable(dim.name.c_str())->getAttribute("units")->getDataAsString(&units);
+                dim.units.copy(&units);
               } catch (int e) {
               }
             }
 
-            dim->hasMultipleValues = 1;
+            dim.hasMultipleValues = 1;
             if (isTimeDim == true) {
-              dim->units.copy("ISO8601");
+              dim.units.copy("ISO8601");
               for (size_t j = 0; j < values->getSize(); j++) {
                 // 2011-01-01T22:00:01Z
                 // 01234567890123456789
@@ -427,12 +428,12 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
                   values->getRecord(j)->get(0)->printconcat("Z");
                 }
               }
-              dim->units.copy("ISO8601");
+              dim.units.copy("ISO8601");
             }
 
             if (!metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.units.empty()) {
               // Units are configured in the configuration file.
-              dim->units.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.units.c_str());
+              dim.units.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.units.c_str());
             }
 
             const char *pszDefaultV = metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.defaultV.c_str();
@@ -440,16 +441,16 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
             if (pszDefaultV != NULL) defaultV = pszDefaultV;
 
             if (defaultV.length() == 0 || defaultV.equals("max", 3)) {
-              dim->defaultValue.copy(values->getRecord(values->getSize() - 1)->get(0)->c_str());
+              dim.defaultValue.copy(values->getRecord(values->getSize() - 1)->get(0)->c_str());
             } else if (defaultV.equals("min", 3)) {
-              dim->defaultValue.copy(values->getRecord(0)->get(0)->c_str());
+              dim.defaultValue.copy(values->getRecord(0)->get(0)->c_str());
             } else {
-              dim->defaultValue.copy(&defaultV);
+              dim.defaultValue.copy(&defaultV);
             }
 
-            dim->values.copy(values->getRecord(0)->get(0));
+            dim.values.copy(values->getRecord(0)->get(0));
             for (size_t j = 1; j < values->getSize(); j++) {
-              dim->values.printconcat(",%s", values->getRecord(j)->get(0)->c_str());
+              dim.values.printconcat(",%s", values->getRecord(j)->get(0)->c_str());
             }
           }
         }
@@ -517,44 +518,45 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
           if (metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.units.empty() == false) {
             dimUnits.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.units.c_str());
           }
-          dim->name.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
-          dim->units.copy(dimUnits.c_str());
-          dim->hasMultipleValues = 0;
+          dim.name.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
+          dim.units.copy(dimUnits.c_str());
+          dim.hasMultipleValues = 0;
           // metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.defaultV.c_str()
           const char *pszDefaultV = metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.defaultV.c_str();
           CT::string defaultV;
           if (pszDefaultV != NULL) defaultV = pszDefaultV;
           if (defaultV.length() == 0 || defaultV.equals("max", 3)) {
-            dim->defaultValue.copy(szMaxTime);
+            dim.defaultValue.copy(szMaxTime);
           } else if (defaultV.equals("min", 3)) {
-            dim->defaultValue.copy(szMinTime);
+            dim.defaultValue.copy(szMinTime);
           } else {
-            dim->defaultValue.copy(&defaultV);
+            dim.defaultValue.copy(&defaultV);
           }
-          if (dim->defaultValue.length() == 19) {
-            dim->defaultValue.concat("Z");
+          if (dim.defaultValue.length() == 19) {
+            dim.defaultValue.concat("Z");
           }
 
           CT::string minTime = szMinTime;
           if (minTime.equals(szMaxTime)) {
-            dim->values.print("%s", szMinTime);
+            dim.values.print("%s", szMinTime);
           } else {
-            dim->values.print("%s/%s/%s", szMinTime, szMaxTime, pszInterval);
+            dim.values.print("%s/%s/%s", szMinTime, szMaxTime, pszInterval);
           }
         }
       }
 
       // Check for forced values
       if (!metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.fixvalue.empty()) {
-        dim->values = metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.fixvalue;
-        dim->defaultValue = metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.fixvalue;
-        dim->hasMultipleValues = false;
+        dim.values = metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.fixvalue;
+        dim.defaultValue = metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.fixvalue;
+        dim.hasMultipleValues = false;
       }
 
       // Check if it should be hidden
       if (metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.hidden == true) {
-        dim->hidden = true;
+        dim.hidden = true;
       }
+      metadataLayer->layerMetadata.dimList.push_back(dim);
     }
   }
 
@@ -576,8 +578,6 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
     return 0;
   }
 
-  CGeoParams geo;
-
   CDataReader reader;
   int status = reader.open(metadataLayer->dataSource, CNETCDFREADER_MODE_OPEN_DIMENSIONS);
   if (status != 0) {
@@ -588,13 +588,18 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
   CServerParams *srvParam = metadataLayer->dataSource->srvParams;
 
   for (size_t p = 0; p < srvParam->cfg->Projection.size(); p++) {
+    CGeoParams geo;
     geo.CRS.copy(srvParam->cfg->Projection[p]->attr.id.c_str());
 
 #ifdef MEASURETIME
     StopWatch_Stop("start initreproj %s", geo.CRS.c_str());
 #endif
     CImageWarper warper;
-    status = warper.initreproj(metadataLayer->dataSource, &geo, &srvParam->cfg->Projection);
+    int status = warper.initreproj(metadataLayer->dataSource, &geo, &srvParam->cfg->Projection);
+    if (status != 0) {
+      warper.closereproj();
+      return 1;
+    }
 
 #ifdef MEASURETIME
     StopWatch_Stop("finished initreproj");
@@ -606,38 +611,27 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
       CDBDebug("Unable to initialize projection ");
     }
 #endif
-    if (status != 0) {
-      warper.closereproj();
-      return 1;
-    }
-
-    // Find the max extent of the image
-    LayerMetadataProjection *myProjection = new LayerMetadataProjection();
-    metadataLayer->layerMetadata.projectionList.push_back(myProjection);
-
-    // Set the projection string
-    myProjection->name.copy(srvParam->cfg->Projection[p]->attr.id.c_str());
-
-    // Calculate the extent for this projection
 
 #ifdef MEASURETIME
     StopWatch_Stop("start findExtent");
 #endif
 
-    warper.findExtent(metadataLayer->dataSource, myProjection->dfBBOX);
+    double bboxToFind[4];
+    warper.findExtent(metadataLayer->dataSource, bboxToFind);
+    metadataLayer->layerMetadata.projectionList.push_back(LayerMetadataProjection(geo.CRS.c_str(), bboxToFind));
 
 #ifdef MEASURETIME
     StopWatch_Stop("finished findExtent");
 #endif
 
 #ifdef CXMLGEN_DEBUG
-    CDBDebug("PROJ=%s\tBBOX=(%f,%f,%f,%f)", myProjection->name.c_str(), myProjection->dfBBOX[0], myProjection->dfBBOX[1], myProjection->dfBBOX[2], myProjection->dfBBOX[3]);
+    CDBDebug("PROJ=%s\tBBOX=(%f,%f,%f,%f)", myProjection.name.c_str(), myProjection.dfBBOX[0], myProjection.dfBBOX[1], myProjection.dfBBOX[2], myProjection.dfBBOX[3]);
 #endif
 
     // TODO!!! THIS IS DONE WAY TO OFTEN!
     // Calculate the latlonBBOX
-    if (srvParam->cfg->Projection[p]->attr.id.equals("EPSG:4326")) {
-      for (int k = 0; k < 4; k++) metadataLayer->layerMetadata.dfLatLonBBOX[k] = myProjection->dfBBOX[k];
+    if (geo.CRS.equals("EPSG:4326")) {
+      for (int k = 0; k < 4; k++) metadataLayer->layerMetadata.dfLatLonBBOX[k] = bboxToFind[k];
     }
 
     warper.closereproj();
@@ -645,13 +639,7 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
 
   // Add the layers native projection as well
   if (!metadataLayer->dataSource->nativeEPSG.empty()) {
-    LayerMetadataProjection *myProjection = new LayerMetadataProjection();
-    metadataLayer->layerMetadata.projectionList.push_back(myProjection);
-    myProjection->name.copy(metadataLayer->dataSource->nativeEPSG.c_str());
-    myProjection->dfBBOX[0] = metadataLayer->dataSource->dfBBOX[0];
-    myProjection->dfBBOX[3] = metadataLayer->dataSource->dfBBOX[1];
-    myProjection->dfBBOX[2] = metadataLayer->dataSource->dfBBOX[2];
-    myProjection->dfBBOX[1] = metadataLayer->dataSource->dfBBOX[3];
+    metadataLayer->layerMetadata.projectionList.push_back(LayerMetadataProjection(metadataLayer->dataSource->nativeEPSG, metadataLayer->dataSource->dfBBOX));
   }
 
   return 0;
@@ -688,12 +676,8 @@ int getStylesForLayer(MetadataLayer *metadataLayer) {
   if (styleListFromDataSource == NULL) return 1;
 
   for (size_t j = 0; j < styleListFromDataSource->size(); j++) {
-
-    LayerMetadataStyle *style = new LayerMetadataStyle();
-    style->name.copy(styleListFromDataSource->get(j)->styleCompositionName.c_str());
-    style->title.copy(styleListFromDataSource->get(j)->styleTitle.c_str());
-    style->abstract.copy(styleListFromDataSource->get(j)->styleAbstract.c_str());
-
+    LayerMetadataStyle style = {
+        .name = styleListFromDataSource->get(j)->styleCompositionName, .title = styleListFromDataSource->get(j)->styleTitle, .abstract = styleListFromDataSource->get(j)->styleAbstract};
     metadataLayer->layerMetadata.styleList.push_back(style);
   }
 
@@ -702,11 +686,10 @@ int getStylesForLayer(MetadataLayer *metadataLayer) {
   return 0;
 }
 
-bool compareStringCase(const std::string &s1, const std::string &s2) { return strcmp(s1.c_str(), s2.c_str()) <= 0; }
+bool compareStringCase(const std::string &s1, const std::string &s2) { return strcmp(s1.c_str(), s2.c_str()) < 0; }
 
-bool compareProjection(const LayerMetadataProjection *p1, const LayerMetadataProjection *p2) { return strcmp(p1->name.c_str(), p2->name.c_str()) <= 0; }
-bool compareDim(const LayerMetadataDim *p2, const LayerMetadataDim *p1) { return strcmp(p1->name.c_str(), p2->name.c_str()) <= 0; }
-bool compareStyle(const LayerMetadataStyle *p1, const LayerMetadataStyle *p2) { return strcmp(p2->name.c_str(), p1->name.c_str()) <= 0; }
+bool compareProjection(const LayerMetadataProjection &p1, const LayerMetadataProjection &p2) { return strcmp(p1.name.c_str(), p2.name.c_str()) < 0; }
+bool compareDim(const LayerMetadataDim &p2, const LayerMetadataDim &p1) { return strcmp(p1.name.c_str(), p2.name.c_str()) < 0; }
 
 int getTitleForLayer(MetadataLayer *metadataLayer) {
 #ifdef CXMLGEN_DEBUG

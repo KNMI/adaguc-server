@@ -35,7 +35,7 @@ void CXMLObjectInterface::addElement(CXMLObjectInterface *baseClass, int rc, con
   if (rc == 0)
     if (value != NULL) {
       this->value.copy(value);
-      this->value.trimWhiteSpacesAndLinesSelf();
+      this->value.trimSelf(true);
     }
 }
 

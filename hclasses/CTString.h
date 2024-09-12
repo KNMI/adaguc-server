@@ -353,12 +353,7 @@ namespace CT {
     /**
      * Removes spaces in this string
      */
-    void trimSelf();
-
-    /**
-     * Removes spaces in this string
-     */
-    void trimWhiteSpacesAndLinesSelf();
+    void trimSelf(bool trimWhiteSpace = false);
 
     /**
      * Returns a new string with removed spaces

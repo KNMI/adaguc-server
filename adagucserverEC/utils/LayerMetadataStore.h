@@ -14,7 +14,7 @@ int getStyleListMetadataAsJson(MetadataLayer *myMetadataLayer, json &styleListJs
 int storeLayerMetadataInDb(MetadataLayer *myMetadataLayer, CT::string metadataKey, std::string metadataBlob);
 CT::string getLayerMetadataFromDb(MetadataLayer *myMetadataLayer, CT::string metadataKey);
 
-int storeMyMetadataLayerIntoMetadataDb(MetadataLayer *myMetadataLayer);
+int storeLayerMetadataStructIntoMetadataDb(MetadataLayer *myMetadataLayer);
 
 int storeLayerMetadataStructIntoMetadataDb(MetadataLayer *layer);
 int loadLayerMetadataStructFromMetadataDb(MetadataLayer *layer);

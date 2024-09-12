@@ -78,7 +78,6 @@ add_library(
     utils/LayerMetadataToJson.h
     utils/LayerMetadataToJson.cpp
     Types/LayerMetadataType.h
-    Types/LayerMetadataType.cpp
     CDataPostProcessors/CDataPostProcessor_AddFeatures.cpp
     CDataPostProcessors/CDataPostProcessor_AddFeatures.h
     CDataPostProcessors/CDataPostProcessor_CDPDBZtoRR.cpp
