@@ -922,6 +922,7 @@ CT::string CDBAdapterSQLLite::getTableNameForPathFilterAndDimension(const char *
       randomTableString.concat("_");
       randomTableString.concat(CServerParams::randomString(20));
       randomTableString.replaceSelf(":", "");
+      randomTableString.replaceSelf(".", "");
       randomTableString.replaceSelf("-", "");
       randomTableString.replaceSelf("Z", "");
 
@@ -1307,5 +1308,6 @@ CDBStore::Store *CDBAdapterSQLLite::getFilesForIndices(CDataSource *dataSource, 
 
 int CDBAdapterSQLLite::storeLayerMetadata(const char *, const char *, const char *, const char *) { return 0; }
 CDBStore::Store *CDBAdapterSQLLite::getLayerMetadataStore(const char *) { return nullptr; }
+int CDBAdapterSQLLite::dropLayerFromLayerMetadataStore(const char *, const char *) { return 0; };
 
 #endif

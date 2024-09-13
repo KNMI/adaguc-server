@@ -624,6 +624,7 @@ void CDBAdapterPostgreSQL::addToLookupTable(const char *path, const char *filter
 CT::string CDBAdapterPostgreSQL::generateRandomTableName() {
   CT::string tableName;
   tableName.print("t%s_%s", CTime::currentDateTime().c_str(), CServerParams::randomString(20).c_str());
+  tableName.replaceSelf(".", "");
   tableName.replaceSelf(":", "");
   tableName.replaceSelf("-", "");
   tableName.replaceSelf("Z", "");
@@ -1094,7 +1095,7 @@ int CDBAdapterPostgreSQL::storeLayerMetadata(const char *datasetName, const char
     return -1;
   }
 
-  CT::string tableColumns("datasetname varchar (511), layername varchar (511), metadatakey varchar (255), updatetime TIMESTAMP, blob JSONB, PRIMARY KEY (datasetname, layername, metadatakey)");
+  CT::string tableColumns("datasetname varchar (511), layername varchar (511), metadatakey varchar (255), updatetime TIMESTAMPTZ, blob JSONB, PRIMARY KEY (datasetname, layername, metadatakey)");
 
   int status = dataBaseConnection->checkTable("layermetadata", tableColumns.c_str());
   if (status == 1) {
@@ -1103,7 +1104,6 @@ int CDBAdapterPostgreSQL::storeLayerMetadata(const char *datasetName, const char
   }
 
   CT::string updateTime = CTime::currentDateTime().c_str();
-  updateTime.setSize(19);
   CT::string query;
   query.print("INSERT INTO layermetadata (datasetname, layername, metadatakey, updatetime, blob) "
               "VALUES (E'%s',E'%s', E'%s', E'%s', E'%s') "
@@ -1160,4 +1160,17 @@ CDBStore::Store *CDBAdapterPostgreSQL::getLayerMetadataStore(const char *dataset
   StopWatch_Stop("<CDBAdapterPostgreSQL::getLayerMetadata");
 #endif
   return layerMetaDataStore;
+}
+
+int CDBAdapterPostgreSQL::dropLayerFromLayerMetadataStore(const char *datasetName, const char *layerName) {
+  CPGSQLDB *dataBaseConnection = getDataBaseConnection();
+  if (dataBaseConnection == NULL) {
+    return -1;
+  }
+
+  CT::string query;
+  query.print("DELETE FROM layermetadata "
+              "WHERE datasetname='%s' AND layername = '%s';",
+              datasetName, layerName);
+  return dataBaseConnection->query(query.c_str());
 }

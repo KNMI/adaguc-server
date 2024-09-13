@@ -463,26 +463,7 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
   return 0;
 }
 
-int CAutoConfigure::justLoadAFileHeader(CDataSource *dataSource) {
-
-  if (dataSource == NULL) {
-    CDBError("datasource == NULL");
-    return 1;
-  }
-  if (dataSource->cfgLayer == NULL) {
-    CDBError("datasource->cfgLayer == NULL");
-    return 1;
-  }
-  if (dataSource->getNumDataObjects() == 0) {
-    CDBError("dataSource->getNumDataObjects()==0");
-    return 1;
-  }
-  if (dataSource->getDataObject(0)->cdfVariable != NULL) {
-#ifdef CAUTOCONFIGURE_DEBUG
-    CDBDebug("already loaded: dataSource->getDataObject(0)->cdfVariable!=NULL");
-#endif
-    return 0;
-  }
+int CAutoConfigure::getFileNameForDataSource(CDataSource *dataSource, std::string &fileName) {
 
   CT::string foundFileName = dataSource->getFileName();
   if (foundFileName.empty()) {
@@ -498,8 +479,16 @@ int CAutoConfigure::justLoadAFileHeader(CDataSource *dataSource) {
     bool removeRequiredDims = false;
     if (dataSource->requiredDims.size() == 0) {
       removeRequiredDims = true;
+      if (CAutoConfigure::autoConfigureDimensions(dataSource) != 0) {
+        CDBWarning("Unable to autoconfigure dims");
+      }
       if (dataSource->cfgLayer->Dimension.size() > 0) {
-        CRequest::fillDimValuesForDataSource(dataSource, dataSource->srvParams);
+        try {
+          CRequest::fillDimValuesForDataSource(dataSource, dataSource->srvParams);
+        } catch (ServiceExceptionCode e) {
+          CDBDebug("Unable to fillDimValuesForDataSource");
+          return 1;
+        }
       } else {
         CDBDebug("Required dims is still zero, add none now");
         COGCDims *ogcDim = new COGCDims();
@@ -510,7 +499,7 @@ int CAutoConfigure::justLoadAFileHeader(CDataSource *dataSource) {
         ogcDim->netCDFDimName.copy("none");
       }
     }
-    CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getFilesAndIndicesForDimensions(dataSource, 1000);
+    CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getFilesAndIndicesForDimensions(dataSource, 1);
     if (store != NULL && store->getSize() > 0) {
       CT::string fileNamestr = store->getRecord(0)->get(0)->c_str();
       // CDBDebug("fileName from DB: %s", fileNamestr.c_str());
@@ -532,7 +521,36 @@ int CAutoConfigure::justLoadAFileHeader(CDataSource *dataSource) {
       return 1;
     }
   }
+  fileName = foundFileName.c_str();
+  return 0;
+}
 
+int CAutoConfigure::justLoadAFileHeader(CDataSource *dataSource) {
+  if (dataSource == NULL) {
+    CDBError("datasource == NULL");
+    return 1;
+  }
+  if (dataSource->cfgLayer == NULL) {
+    CDBError("datasource->cfgLayer == NULL");
+    return 1;
+  }
+  if (dataSource->getNumDataObjects() == 0) {
+    CDBError("dataSource->getNumDataObjects()==0");
+    return 1;
+  }
+  if (dataSource->getDataObject(0)->cdfVariable != NULL) {
+#ifdef CAUTOCONFIGURE_DEBUG
+    CDBDebug("already loaded: dataSource->getDataObject(0)->cdfVariable!=NULL");
+#endif
+    return 0;
+  }
+
+  std::string foundFileName;
+
+  if (getFileNameForDataSource(dataSource, foundFileName) != 0) {
+    CDBDebug("Unable to getFileNameForDataSource");
+    return 1;
+  }
   /* Open a file */
   try {
     // CDBDebug("Loading header [%s]", foundFileName.c_str());

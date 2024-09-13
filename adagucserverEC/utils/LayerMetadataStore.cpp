@@ -328,7 +328,6 @@ int loadLayerStyleListFromMetadataDb(MetadataLayer *metadataLayer) {
 }
 
 int storeLayerDimensionListIntoMetadataDb(MetadataLayer *metadataLayer) {
-  CDBDebug("storeLayerDimensionListIntoMetadataDb");
   try {
     json dimListJson;
     if (getDimensionListAsJson(metadataLayer, dimListJson) != 0) {
