@@ -1308,5 +1308,6 @@ CDBStore::Store *CDBAdapterSQLLite::getFilesForIndices(CDataSource *dataSource, 
 
 int CDBAdapterSQLLite::storeLayerMetadata(const char *, const char *, const char *, const char *) { return 0; }
 CDBStore::Store *CDBAdapterSQLLite::getLayerMetadataStore(const char *) { return nullptr; }
+int CDBAdapterSQLLite::dropLayerFromLayerMetadataStore(const char *, const char *) { return 0; };
 
 #endif

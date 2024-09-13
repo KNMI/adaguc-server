@@ -1161,3 +1161,16 @@ CDBStore::Store *CDBAdapterPostgreSQL::getLayerMetadataStore(const char *dataset
 #endif
   return layerMetaDataStore;
 }
+
+int CDBAdapterPostgreSQL::dropLayerFromLayerMetadataStore(const char *datasetName, const char *layerName) {
+  CPGSQLDB *dataBaseConnection = getDataBaseConnection();
+  if (dataBaseConnection == NULL) {
+    return -1;
+  }
+
+  CT::string query;
+  query.print("DELETE FROM layermetadata "
+              "WHERE datasetname='%s' AND layername = '%s';",
+              datasetName, layerName);
+  return dataBaseConnection->query(query.c_str());
+}

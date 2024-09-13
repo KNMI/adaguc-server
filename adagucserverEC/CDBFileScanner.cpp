@@ -957,8 +957,6 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
           fileList.push_back(dataSource->cfgLayer->FilePath[0]->value.c_str());
           CDBDebug("Obtained filename from layer configuration [%s]", dataSource->cfgLayer->FilePath[0]->value.c_str());
         } else {
-          CDBDebug("CDBFILESCANNER_UPDATEDB_ONLYFILEFROMDEFAULTQUERY");
-
           std::string fileName;
           if (CAutoConfigure::getFileNameForDataSource(dataSource, fileName) != 0) {
             CDBDebug("Unable to getFileNameForDataSource");
