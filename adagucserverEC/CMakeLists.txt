@@ -77,6 +77,10 @@ add_library(
     utils/LayerUtils.cpp
     utils/LayerMetadataToJson.h
     utils/LayerMetadataToJson.cpp
+    utils/UpdateLayerMetadata.h
+    utils/UpdateLayerMetadata.cpp
+    utils/ConfigurationUtils.h
+    utils/ConfigurationUtils.cpp    
     Types/LayerMetadataType.h
     CDataPostProcessors/CDataPostProcessor_AddFeatures.cpp
     CDataPostProcessors/CDataPostProcessor_AddFeatures.h

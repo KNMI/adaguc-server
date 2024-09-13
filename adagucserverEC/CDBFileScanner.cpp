@@ -32,6 +32,7 @@
 #include "CCreateTiles.h"
 #include <set>
 #include "utils/LayerMetadataStore.h"
+#include "utils/ConfigurationUtils.h"
 const char *CDBFileScanner::className = "CDBFileScanner";
 std::vector<CT::string> CDBFileScanner::tableNamesDone;
 // #define CDBFILESCANNER_DEBUG
@@ -951,7 +952,34 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
   if (fileToUpdate.length() == 0) {
     // No file specified, just scan the directory for matching filenames.
     try {
-      fileList = searchFileNames(dataSource->cfgLayer->FilePath[0]->value.c_str(), filter.c_str(), tailPath.c_str());
+      if (scanFlags & CDBFILESCANNER_UPDATEDB_ONLYFILEFROMDEFAULTQUERY) {
+        if (checkIfPathIsFile(dataSource->cfgLayer->FilePath[0]->value.c_str())) {
+          fileList.push_back(dataSource->cfgLayer->FilePath[0]->value.c_str());
+          CDBDebug("Obtained filename from layer configuration [%s]", dataSource->cfgLayer->FilePath[0]->value.c_str());
+        } else {
+          CDBDebug("CDBFILESCANNER_UPDATEDB_ONLYFILEFROMDEFAULTQUERY");
+          int status = CRequest::setDimValuesForDataSource(dataSource, dataSource->srvParams);
+          if (status != 0) {
+            CDBError("setDimValuesForDataSource");
+            return 1;
+          }
+          status = CRequest::fillDimValuesForDataSource(dataSource, dataSource->srvParams);
+          if (status != 0) {
+            CDBError("fillDimValuesForDataSource");
+            return 1;
+          }
+          status = CRequest::queryDimValuesForDataSource(dataSource, dataSource->srvParams);
+          if (status != 0) {
+            CDBError("queryDimValuesForDataSource");
+            return 1;
+          }
+          fileList.push_back(dataSource->getFileName());
+          CDBDebug("Queried file from database with filename [%s]", dataSource->getFileName());
+        }
+      } else {
+        fileList = searchFileNames(dataSource->cfgLayer->FilePath[0]->value.c_str(), filter.c_str(), tailPath.c_str());
+      }
+
     } catch (int linenr) {
       CDBDebug("Exception in searchFileNames [%s] [%s]", dataSource->cfgLayer->FilePath[0]->value.c_str(), filter.c_str(), tailPath.c_str());
       return 0;
@@ -1089,10 +1117,8 @@ std::vector<std::string> CDBFileScanner::searchFileNames(const char *path, CT::s
       }
     }
   }
-  // CDBDebug("Checking if this is a file: [%s]", filePath.c_str());
-  if (filePath.endsWith(".nc") || filePath.endsWith(".h5") || filePath.endsWith(".hdf5") || filePath.endsWith(".he5") || filePath.endsWith(".png") || filePath.endsWith(".csv") ||
-      filePath.endsWith(".geojson") || filePath.endsWith(".json") || filePath.startsWith("http://") || filePath.startsWith("https://") || filePath.startsWith("dodsc://")) {
-    // Add single file or opendap URL.
+
+  if (checkIfPathIsFile(filePath)) {
     std::vector<std::string> fileList;
     fileList.push_back(filePath.c_str());
     //    CDBDebug("%s is a file",filePath.c_str());
