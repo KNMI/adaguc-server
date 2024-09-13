@@ -6,7 +6,7 @@
 #include <LayerTypeLiveUpdate/LayerTypeLiveUpdate.h>
 #include "LayerUtils.h"
 
-int populateLayerMetadataStruct(MetadataLayer *metadataLayer, bool readFromDB) {
+int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
   metadataLayer->readFromDb = readFromDB;
   if (!metadataLayer->srvParams->useMetadataTable()) {
     metadataLayer->readFromDb = false;

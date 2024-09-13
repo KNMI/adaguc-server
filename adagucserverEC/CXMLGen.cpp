@@ -971,7 +971,7 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam, CT::string *XMLDocumen
     metadataLayerList.push_back(metadataLayer);
     metadataLayer->layer = srvParam->cfg->Layer[j];
     metadataLayer->srvParams = srvParam;
-    populateLayerMetadataStruct(metadataLayer, true);
+    populateMetadataLayerStruct(metadataLayer, true);
   }
 
 #ifdef CXMLGEN_DEBUG

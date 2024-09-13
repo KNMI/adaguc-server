@@ -392,7 +392,7 @@ int updateMetaDataTable(CDataSource *dataSource) {
   metadataLayer->layer = dataSource->cfgLayer;
   metadataLayer->srvParams = dataSource->srvParams;
   metadataLayer->dataSource = dataSource;
-  populateLayerMetadataStruct(metadataLayer, false);
+  populateMetadataLayerStruct(metadataLayer, false);
   storemetadataLayerIntoMetadataDb(metadataLayer);
   delete metadataLayer;
   return 0;
