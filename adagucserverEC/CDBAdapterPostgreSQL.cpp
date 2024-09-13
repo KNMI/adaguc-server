@@ -1122,7 +1122,7 @@ int CDBAdapterPostgreSQL::storeLayerMetadata(const char *datasetName, const char
   return 0;
 }
 
-CT::string CDBAdapterPostgreSQL::getLayerMetadata(const char *datasetName, const char *layerName, const char *metadataKey) {
+CDBStore::Store *CDBAdapterPostgreSQL::getLayerMetadataStore(const char *datasetName) {
 #ifdef MEASURETIME
   StopWatch_Stop(">CDBAdapterPostgreSQL::getLayerMetadata");
 #endif
@@ -1133,43 +1133,31 @@ CT::string CDBAdapterPostgreSQL::getLayerMetadata(const char *datasetName, const
 #endif
     CPGSQLDB *dataBaseConnection = getDataBaseConnection();
     if (dataBaseConnection == NULL) {
-      throw(__LINE__);
-    }
-
-    if (CServerParams::checkForValidTokens(datasetName, "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-:/.") == false) {
-      CDBError("Invalid dataset name. ");
-      throw(__LINE__);
+      return nullptr;
     }
 
     CT::string query;
-    query.print("SELECT layername, metadatakey, blob FROM layermetadata WHERE datasetname = '%s';", datasetName);
+    if (datasetName != nullptr) {
+      if (CServerParams::checkForValidTokens(datasetName, "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-:/.") == false) {
+        CDBError("Invalid dataset name. ");
+        throw(__LINE__);
+      }
+      query.print("SELECT datasetname, layername, metadatakey, blob FROM layermetadata WHERE datasetname = '%s';", datasetName);
+    } else {
+      query.print("SELECT datasetname, layername, metadatakey, blob FROM layermetadata");
+    }
+
     this->layerMetaDataStore = dataBaseConnection->queryToStore(query.c_str());
     if (layerMetaDataStore == nullptr) {
 #ifdef CDBAdapterPostgreSQL_DEBUG
       CDBDebug("Unable query: \"%s\"", query.c_str());
 #endif
-      return "";
-    }
-    if (layerMetaDataStore->size() == 0) {
-      CDBDebug("No results for layerMetaDataStore \"%s\"", query.c_str());
-      return "";
+      return nullptr;
     }
   }
-
-  auto records = layerMetaDataStore->getRecords();
-  for (auto record : records) {
-    if (record->get("layername")->equals(layerName) && record->get("metadatakey")->equals(metadataKey)) {
-#ifdef MEASURETIME
-      StopWatch_Stop("<CDBAdapterPostgreSQL::getLayerMetadata");
-#endif
-      return record->get("blob");
-    }
-  }
-  // CDBDebug(store->getRecord(0)->get("blob")->c_str());
 
 #ifdef MEASURETIME
   StopWatch_Stop("<CDBAdapterPostgreSQL::getLayerMetadata");
 #endif
-  CDBDebug("No metadata entry found for %s %s %s", datasetName, layerName, metadataKey);
-  throw __LINE__;
+  return layerMetaDataStore;
 }

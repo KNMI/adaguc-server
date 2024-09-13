@@ -4,11 +4,113 @@
 #include <CDBFactory.h>
 #include "XMLGenUtils.h"
 
-int storeMetadataLayerIntoMetadataDb(MetadataLayer *metadataLayer) {
+int getDimensionListAsJson(MetadataLayer *metadataLayer, json &dimListJson) {
+  try {
+
+    for (auto dimension : metadataLayer->layerMetadata.dimList) {
+      json item;
+      item["defaultValue"] = dimension.defaultValue.c_str();
+      item["hasMultipleValues"] = dimension.hasMultipleValues;
+      item["hidden"] = dimension.hidden;
+      item["name"] = dimension.name.c_str();
+      item["units"] = dimension.units.c_str();
+      item["values"] = dimension.values.c_str();
+      dimListJson[dimension.name.c_str()] = item;
+    }
+  } catch (json::exception &e) {
+    CDBWarning("Unable to build json structure");
+    return 1;
+  }
+  return 0;
+}
+
+int getLayerBaseMetadataAsJson(MetadataLayer *metadataLayer, json &layerMetadataItem) {
+  try {
+    layerMetadataItem["name"] = metadataLayer->layerMetadata.name;
+    layerMetadataItem["title"] = metadataLayer->layerMetadata.title;
+    layerMetadataItem["group"] = metadataLayer->layerMetadata.group;
+    layerMetadataItem["abstract"] = metadataLayer->layerMetadata.abstract;
+    layerMetadataItem["nativeepsg"] = metadataLayer->layerMetadata.nativeEPSG;
+
+    layerMetadataItem["isqueryable"] = metadataLayer->layerMetadata.isQueryable;
+    json latlonbox;
+    for (size_t j = 0; j < 4; j++) {
+      latlonbox.push_back(metadataLayer->layerMetadata.dfLatLonBBOX[j]);
+    }
+    layerMetadataItem["latlonbox"] = latlonbox;
+
+    json gridspec;
+    json bbox;
+    for (size_t j = 0; j < 4; j++) {
+      bbox.push_back(metadataLayer->layerMetadata.dfBBOX[j]);
+    }
+    gridspec["bbox"] = bbox;
+    gridspec["width"] = metadataLayer->layerMetadata.width;
+    gridspec["height"] = metadataLayer->layerMetadata.height;
+    gridspec["cellsizex"] = metadataLayer->layerMetadata.cellsizeX;
+    gridspec["cellsizey"] = metadataLayer->layerMetadata.cellsizeY;
+    gridspec["projstring"] = metadataLayer->layerMetadata.projstring;
+
+    layerMetadataItem["gridspec"] = gridspec;
+
+    json variables;
+    for (auto lv : metadataLayer->layerMetadata.variableList) {
+      json variable;
+      variable["units"] = lv.units;
+      variable["label"] = lv.label;
+      variable["variableName"] = lv.variableName;
+      variables.push_back(variable);
+    }
+    layerMetadataItem["variables"] = variables;
+
+  } catch (json::exception &e) {
+    CDBWarning("Unable to build json structure");
+    return 1;
+  }
+  return 0;
+}
+int getProjectionListAsJson(MetadataLayer *metadataLayer, json &projsettings) {
+  try {
+    for (auto projection : metadataLayer->layerMetadata.projectionList) {
+      json item = {projection.dfBBOX[0], projection.dfBBOX[1], projection.dfBBOX[2], projection.dfBBOX[3]};
+      projsettings[projection.name.c_str()] = item;
+    }
+  } catch (json::exception &e) {
+    CDBWarning("Unable to build json structure");
+    return 1;
+  }
+  return 0;
+}
+
+int getStyleListMetadataAsJson(MetadataLayer *metadataLayer, json &styleListJson) {
+  try {
+    for (auto style : metadataLayer->layerMetadata.styleList) {
+      json item;
+      item["abstract"] = style.abstract.c_str();
+      item["title"] = style.title.c_str();
+      item["name"] = style.name.c_str();
+      styleListJson.push_back(item);
+    }
+  } catch (json::exception &e) {
+    CDBWarning("Unable to build json structure");
+    return 1;
+  }
+  return 0;
+}
+
+int storemetadataLayerIntoMetadataDb(MetadataLayer *metadataLayer) {
   storeLayerMetadataStructIntoMetadataDb(metadataLayer);
   storeLayerDimensionListIntoMetadataDb(metadataLayer);
   storeLayerProjectionAndExtentListIntoMetadataDb(metadataLayer);
   storeLayerStyleListIntoMetadataDb(metadataLayer);
+  return 0;
+}
+
+int loadmetadataLayerFromMetadataDb(MetadataLayer *metadataLayer) {
+  loadLayerMetadataStructFromMetadataDb(metadataLayer);
+  loadLayerDimensionListFromMetadataDb(metadataLayer);
+  loadLayerProjectionAndExtentListFromMetadataDb(metadataLayer);
+  loadLayerStyleListFromMetadataDb(metadataLayer);
   return 0;
 }
 
@@ -19,7 +121,25 @@ CT::string getLayerMetadataFromDb(MetadataLayer *metadataLayer, CT::string metad
     // CDBDebug("Not a dataset");
     return "";
   }
-  return CDBFactory::getDBAdapter(metadataLayer->dataSource->srvParams->cfg)->getLayerMetadata(datasetName, layerName, metadataKey);
+  CDBStore::Store *layerMetaDataStore = CDBFactory::getDBAdapter(metadataLayer->dataSource->srvParams->cfg)->getLayerMetadataStore(datasetName);
+  if (layerMetaDataStore == nullptr) {
+    return "";
+  }
+  auto records = layerMetaDataStore->getRecords();
+  for (auto record : records) {
+    if (record->get("layername")->equals(layerName) && record->get("metadatakey")->equals(metadataKey)) {
+#ifdef MEASURETIME
+      StopWatch_Stop("<CDBAdapterPostgreSQL::getLayerMetadata");
+#endif
+      return record->get("blob");
+    }
+  }
+
+#ifdef MEASURETIME
+  StopWatch_Stop("<CDBAdapterPostgreSQL::getLayerMetadata");
+#endif
+  CDBDebug("No metadata entry found for %s %s %s", datasetName.c_str(), layerName.c_str(), metadataKey.c_str());
+  throw __LINE__;
 }
 
 int storeLayerMetadataInDb(MetadataLayer *metadataLayer, CT::string metadataKey, std::string metadataBlob) {
@@ -39,32 +159,12 @@ int storeLayerMetadataInDb(MetadataLayer *metadataLayer, CT::string metadataKey,
 }
 
 int storeLayerMetadataStructIntoMetadataDb(MetadataLayer *metadataLayer) {
+
   json layerMetadataItem;
-  layerMetadataItem["name"] = metadataLayer->layerMetadata.name;
-  layerMetadataItem["title"] = metadataLayer->layerMetadata.title;
-  layerMetadataItem["group"] = metadataLayer->layerMetadata.group;
-  layerMetadataItem["abstract"] = metadataLayer->layerMetadata.abstract;
-  layerMetadataItem["nativeepsg"] = metadataLayer->layerMetadata.nativeEPSG;
-  layerMetadataItem["isqueryable"] = metadataLayer->layerMetadata.isQueryable;
-  layerMetadataItem["latlonboxleft"] = metadataLayer->layerMetadata.dfLatLonBBOX[0];
-  layerMetadataItem["latlonboxright"] = metadataLayer->layerMetadata.dfLatLonBBOX[1];
-  layerMetadataItem["latlonboxbottom"] = metadataLayer->layerMetadata.dfLatLonBBOX[2];
-  layerMetadataItem["latlonboxtop"] = metadataLayer->layerMetadata.dfLatLonBBOX[3];
-  layerMetadataItem["bboxleft"] = metadataLayer->layerMetadata.dfBBOX[0];
-  layerMetadataItem["bboxright"] = metadataLayer->layerMetadata.dfBBOX[1];
-  layerMetadataItem["bboxbottom"] = metadataLayer->layerMetadata.dfBBOX[2];
-  layerMetadataItem["bboxtop"] = metadataLayer->layerMetadata.dfBBOX[3];
-  layerMetadataItem["width"] = metadataLayer->layerMetadata.width;
-  layerMetadataItem["height"] = metadataLayer->layerMetadata.height;
-  layerMetadataItem["cellsizex"] = metadataLayer->layerMetadata.cellsizeX;
-  layerMetadataItem["cellsizey"] = metadataLayer->layerMetadata.cellsizeY;
-  json variables;
-  for (auto lv : metadataLayer->layerMetadata.variableList) {
-    json variable;
-    variable["units"] = lv.units;
-    variables.push_back(variable);
+
+  if (getLayerBaseMetadataAsJson(metadataLayer, layerMetadataItem) != 0) {
+    return 1;
   }
-  layerMetadataItem["variables"] = variables;
 
   storeLayerMetadataInDb(metadataLayer, "layermetadata", layerMetadataItem.dump());
   return 0;
@@ -87,25 +187,33 @@ int loadLayerMetadataStructFromMetadataDb(MetadataLayer *metadataLayer) {
     metadataLayer->layerMetadata.abstract = i["abstract"].get<std::string>().c_str();
     metadataLayer->layerMetadata.isQueryable = i["isqueryable"].get<int>();
     metadataLayer->layerMetadata.nativeEPSG = i["nativeepsg"].get<std::string>().c_str();
-    metadataLayer->layerMetadata.dfLatLonBBOX[0] = i["latlonboxleft"].get<double>();
-    metadataLayer->layerMetadata.dfLatLonBBOX[1] = i["latlonboxright"].get<double>();
-    metadataLayer->layerMetadata.dfLatLonBBOX[2] = i["latlonboxbottom"].get<double>();
-    metadataLayer->layerMetadata.dfLatLonBBOX[3] = i["latlonboxtop"].get<double>();
-    metadataLayer->layerMetadata.dfBBOX[0] = i["bboxleft"].get<double>();
-    metadataLayer->layerMetadata.dfBBOX[1] = i["bboxright"].get<double>();
-    metadataLayer->layerMetadata.dfBBOX[2] = i["bboxbottom"].get<double>();
-    metadataLayer->layerMetadata.dfBBOX[3] = i["bboxtop"].get<double>();
-    metadataLayer->layerMetadata.width = i["width"].get<int>();
-    metadataLayer->layerMetadata.height = i["height"].get<int>();
-    metadataLayer->layerMetadata.cellsizeX = i["cellsizex"].get<double>();
-    metadataLayer->layerMetadata.cellsizeY = i["cellsizey"].get<double>();
+
+    json latlonbox = i["latlonbox"];
+    for (size_t j = 0; j < 4; j += 1) {
+      latlonbox[j].get_to((metadataLayer->layerMetadata.dfLatLonBBOX[j]));
+    }
+    json gridspec = i["gridspec"];
+    json bbox = gridspec["bbox"];
+    for (size_t j = 0; j < 4; j += 1) {
+      bbox[j].get_to((metadataLayer->layerMetadata.dfBBOX[j]));
+    }
+    metadataLayer->layerMetadata.width = gridspec["width"].get<int>();
+    metadataLayer->layerMetadata.height = gridspec["height"].get<int>();
+    metadataLayer->layerMetadata.cellsizeX = gridspec["cellsizex"].get<double>();
+    metadataLayer->layerMetadata.cellsizeY = gridspec["cellsizey"].get<double>();
+    metadataLayer->layerMetadata.projstring = gridspec["projstring"].get<std::string>().c_str();
     auto c = i["variables"];
     for (auto styleJson : c.items()) {
       auto variableProps = styleJson.value();
-      LayerMetadataVariable variable = {variableProps["units"].get<std::string>().c_str()};
+      LayerMetadataVariable variable = {
+          .variableName = variableProps["variableName"].get<std::string>().c_str(),
+          .units = variableProps["units"].get<std::string>().c_str(),
+          .label = variableProps["label"].get<std::string>().c_str(),
+      };
       metadataLayer->layerMetadata.variableList.push_back(variable);
     }
   } catch (json::exception &e) {
+    CDBWarning("Unable to build json structure");
     return 1;
   } catch (int e) {
     CDBError("loadLayerMetadataStructFromMetadataDb %d", e);
@@ -117,9 +225,8 @@ int loadLayerMetadataStructFromMetadataDb(MetadataLayer *metadataLayer) {
 int storeLayerProjectionAndExtentListIntoMetadataDb(MetadataLayer *metadataLayer) {
   try {
     json projsettings;
-    for (auto projection : metadataLayer->layerMetadata.projectionList) {
-      json item = {projection.dfBBOX[0], projection.dfBBOX[1], projection.dfBBOX[2], projection.dfBBOX[3]};
-      projsettings[projection.name.c_str()] = item;
+    if (getProjectionListAsJson(metadataLayer, projsettings) != 0) {
+      return 1;
     }
     storeLayerMetadataInDb(metadataLayer, "projected_extents", projsettings.dump());
   } catch (int e) {
@@ -154,6 +261,7 @@ int loadLayerProjectionAndExtentListFromMetadataDb(MetadataLayer *metadataLayer)
       metadataLayer->layerMetadata.projectionList.push_back(projection);
     }
   } catch (json::exception &e) {
+    CDBWarning("Unable to build json structure");
     return 1;
   } catch (int e) {
     // CDBError("loadLayerProjectionAndExtentListFromMetadataDb %d", e);
@@ -165,15 +273,13 @@ int loadLayerProjectionAndExtentListFromMetadataDb(MetadataLayer *metadataLayer)
 int storeLayerStyleListIntoMetadataDb(MetadataLayer *metadataLayer) {
   try {
     json styleListJson;
-    for (auto style : metadataLayer->layerMetadata.styleList) {
-      json item;
-      item["abstract"] = style.abstract.c_str();
-      item["title"] = style.title.c_str();
-      item["name"] = style.name.c_str();
-      styleListJson.push_back(item);
+    if (getStyleListMetadataAsJson(metadataLayer, styleListJson) != 0) {
+      CDBWarning("Unable to convert stylelist to json");
+      return 1;
     }
     storeLayerMetadataInDb(metadataLayer, "stylelist", styleListJson.dump());
   } catch (int e) {
+    CDBWarning("Unable to store stylelist json in db");
     return e;
   }
   return 0;
@@ -204,14 +310,15 @@ int loadLayerStyleListFromMetadataDb(MetadataLayer *metadataLayer) {
     for (auto styleJson : c.items()) {
       auto styleProperties = styleJson.value();
       LayerMetadataStyle style = {
-        .name = styleProperties["name"].get<std::string>().c_str(),
-        .title = styleProperties["title"].get<std::string>().c_str(),
-        .abstract = styleProperties["abstract"].get<std::string>().c_str(),
+          .name = styleProperties["name"].get<std::string>().c_str(),
+          .title = styleProperties["title"].get<std::string>().c_str(),
+          .abstract = styleProperties["abstract"].get<std::string>().c_str(),
       };
       metadataLayer->layerMetadata.styleList.push_back(style);
     }
 
   } catch (json::exception &e) {
+    CDBWarning("Unable to build json structure");
     return 1;
   } catch (int e) {
     // CDBError("loadLayerStyleListFromMetadataDb %d", e);
@@ -224,18 +331,12 @@ int storeLayerDimensionListIntoMetadataDb(MetadataLayer *metadataLayer) {
   CDBDebug("storeLayerDimensionListIntoMetadataDb");
   try {
     json dimListJson;
-    for (auto dimension : metadataLayer->layerMetadata.dimList) {
-      json item;
-      item["defaultValue"] = dimension.defaultValue.c_str();
-      item["hasMultipleValues"] = dimension.hasMultipleValues;
-      item["hidden"] = dimension.hidden;
-      item["name"] = dimension.name.c_str();
-      item["units"] = dimension.units.c_str();
-      item["values"] = dimension.values.c_str();
-      dimListJson[dimension.name.c_str()] = item;
+    if (getDimensionListAsJson(metadataLayer, dimListJson) != 0) {
+      return 1;
     }
     storeLayerMetadataInDb(metadataLayer, "dimensionlist", dimListJson.dump());
   } catch (json::exception &e) {
+    CDBWarning("Unable to build json structure");
     return 1;
   } catch (int e) {
     return e;
@@ -264,16 +365,17 @@ int loadLayerDimensionListFromMetadataDb(MetadataLayer *metadataLayer) {
       auto dimensionProperties = d.value();
 
       LayerMetadataDim dimension = {
-        .name = dimensionProperties["name"].get<std::string>().c_str(),
-        .units = dimensionProperties["units"].get<std::string>().c_str(),
-        .values = dimensionProperties["values"].get<std::string>().c_str(),
-        .defaultValue = dimensionProperties["defaultValue"].get<std::string>().c_str(),
-        .hasMultipleValues = dimensionProperties["hasMultipleValues"].get<int>(),
-        .hidden = dimensionProperties["hidden"].get<bool>(),
+          .name = dimensionProperties["name"].get<std::string>().c_str(),
+          .units = dimensionProperties["units"].get<std::string>().c_str(),
+          .values = dimensionProperties["values"].get<std::string>().c_str(),
+          .defaultValue = dimensionProperties["defaultValue"].get<std::string>().c_str(),
+          .hasMultipleValues = dimensionProperties["hasMultipleValues"].get<int>(),
+          .hidden = dimensionProperties["hidden"].get<bool>(),
       };
       metadataLayer->layerMetadata.dimList.push_back(dimension);
     }
   } catch (json::exception &e) {
+    CDBWarning("Unable to build json structure");
     return 1;
   } catch (int e) {
     return e;
@@ -291,7 +393,7 @@ int updateMetaDataTable(CDataSource *dataSource) {
   metadataLayer->srvParams = dataSource->srvParams;
   metadataLayer->dataSource = dataSource;
   populateMetadataLayerStruct(metadataLayer, false);
-  storeMetadataLayerIntoMetadataDb(metadataLayer);
+  storemetadataLayerIntoMetadataDb(metadataLayer);
   delete metadataLayer;
   return 0;
 }

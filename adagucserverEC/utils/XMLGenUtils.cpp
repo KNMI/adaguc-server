@@ -55,9 +55,9 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
   } else {
     metadataLayer->layerMetadata.title.copy(metadataLayer->dataSource->cfgLayer->Name[0]->value.c_str());
   }
-
   bool readFileInfo = readFromDB ? (loadLayerMetadataStructFromMetadataDb(metadataLayer) != 0) : true;
   if (readFileInfo) {
+    metadataLayer->readFromDb = false;
     // Get a default file name for this layer to obtain some information
     int status = getFileNameForLayer(metadataLayer);
     if (status != 0) {
@@ -91,10 +91,20 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
     metadataLayer->layerMetadata.cellsizeX = metadataLayer->dataSource->dfCellSizeX;
     metadataLayer->layerMetadata.cellsizeY = metadataLayer->dataSource->dfCellSizeY;
     metadataLayer->layerMetadata.nativeEPSG = metadataLayer->dataSource->nativeEPSG;
+    metadataLayer->layerMetadata.projstring = metadataLayer->dataSource->nativeProj4;
 
     auto v = metadataLayer->dataSource->getDataObjectsVector();
     for (auto d : (*v)) {
-      LayerMetadataVariable layerMetadataVariable = {d->getUnits()};
+      CDF::Attribute *longName = d->cdfVariable->getAttributeNE("long_name");
+      if (longName == nullptr) {
+        longName = d->cdfVariable->getAttributeNE("standard_name");
+      }
+      CT::string label = longName != nullptr ? longName->getDataAsString() : d->variableName;
+      LayerMetadataVariable layerMetadataVariable = {
+          .variableName = d->cdfVariable->name,
+          .units = d->getUnits(),
+          .label = label,
+      };
       metadataLayer->layerMetadata.variableList.push_back(layerMetadataVariable);
     }
   }
@@ -568,8 +578,6 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
     return 0;
   }
 
-  CGeoParams geo;
-
   CDataReader reader;
   int status = reader.open(metadataLayer->dataSource, CNETCDFREADER_MODE_OPEN_DIMENSIONS);
   if (status != 0) {
@@ -580,13 +588,18 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
   CServerParams *srvParam = metadataLayer->dataSource->srvParams;
 
   for (size_t p = 0; p < srvParam->cfg->Projection.size(); p++) {
+    CGeoParams geo;
     geo.CRS.copy(srvParam->cfg->Projection[p]->attr.id.c_str());
 
 #ifdef MEASURETIME
     StopWatch_Stop("start initreproj %s", geo.CRS.c_str());
 #endif
     CImageWarper warper;
-    status = warper.initreproj(metadataLayer->dataSource, &geo, &srvParam->cfg->Projection);
+    int status = warper.initreproj(metadataLayer->dataSource, &geo, &srvParam->cfg->Projection);
+    if (status != 0) {
+      warper.closereproj();
+      return 1;
+    }
 
 #ifdef MEASURETIME
     StopWatch_Stop("finished initreproj");
@@ -598,19 +611,14 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
       CDBDebug("Unable to initialize projection ");
     }
 #endif
-    if (status != 0) {
-      warper.closereproj();
-      return 1;
-    }
 
 #ifdef MEASURETIME
     StopWatch_Stop("start findExtent");
 #endif
 
     double bboxToFind[4];
-
     warper.findExtent(metadataLayer->dataSource, bboxToFind);
-    metadataLayer->layerMetadata.projectionList.push_back(LayerMetadataProjection(srvParam->cfg->Projection[p]->attr.id, bboxToFind));
+    metadataLayer->layerMetadata.projectionList.push_back(LayerMetadataProjection(geo.CRS.c_str(), bboxToFind));
 
 #ifdef MEASURETIME
     StopWatch_Stop("finished findExtent");
@@ -622,7 +630,7 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
 
     // TODO!!! THIS IS DONE WAY TO OFTEN!
     // Calculate the latlonBBOX
-    if (srvParam->cfg->Projection[p]->attr.id.equals("EPSG:4326")) {
+    if (geo.CRS.equals("EPSG:4326")) {
       for (int k = 0; k < 4; k++) metadataLayer->layerMetadata.dfLatLonBBOX[k] = bboxToFind[k];
     }
 
@@ -669,10 +677,7 @@ int getStylesForLayer(MetadataLayer *metadataLayer) {
 
   for (size_t j = 0; j < styleListFromDataSource->size(); j++) {
     LayerMetadataStyle style = {
-      .name = styleListFromDataSource->get(j)->styleCompositionName,
-      .title = styleListFromDataSource->get(j)->styleTitle,
-      .abstract = styleListFromDataSource->get(j)->styleAbstract
-    };
+        .name = styleListFromDataSource->get(j)->styleCompositionName, .title = styleListFromDataSource->get(j)->styleTitle, .abstract = styleListFromDataSource->get(j)->styleAbstract};
     metadataLayer->layerMetadata.styleList.push_back(style);
   }
 
