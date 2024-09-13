@@ -10,6 +10,8 @@ import re
 import datetime
 from adaguc.AdagucTestTools import AdagucTestTools
 from lxml import etree, objectify
+from moto import mock_aws
+import boto3
 
 ADAGUC_PATH = os.environ["ADAGUC_PATH"]
 
@@ -2475,3 +2477,33 @@ class TestWMS(unittest.TestCase):
             )
         )
 
+    @mock_aws
+    def test_WMSGetMap_S3(self):
+
+        # Set up mock S3 bucket and copy test NetCDF file
+        print("Current Working Directory:", os.getcwd())
+        s3 = boto3.client("s3", region_name="eu-west-1")
+        bucket_name = "adaguc-test-bucket"
+        file_key = "testdata.nc"
+        s3.create_bucket(
+            Bucket=bucket_name,
+            CreateBucketConfiguration={"LocationConstraint": "eu-west-1"})
+        with open("../data/datasets/testdata.nc", "rb") as data:
+            s3.upload_fileobj(data, bucket_name, file_key)
+        # Bucket URL for the file (referenced in the adaguc-tests.s3file.xml config file)
+        s3_url = f"s3://{bucket_name}/{file_key}"
+
+        # Set up Adaguc to 
+        AdagucTestTools().cleanTempDir()
+        filename = "test_WMSGetMap_S3_testdatanc.png"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.s3file&SERVICE=WMS&request=GetCapabilities",
+            env=self.env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
