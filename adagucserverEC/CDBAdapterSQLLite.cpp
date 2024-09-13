@@ -922,6 +922,7 @@ CT::string CDBAdapterSQLLite::getTableNameForPathFilterAndDimension(const char *
       randomTableString.concat("_");
       randomTableString.concat(CServerParams::randomString(20));
       randomTableString.replaceSelf(":", "");
+      randomTableString.replaceSelf(".", "");
       randomTableString.replaceSelf("-", "");
       randomTableString.replaceSelf("Z", "");
 

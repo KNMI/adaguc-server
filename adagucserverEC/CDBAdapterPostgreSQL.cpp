@@ -624,6 +624,7 @@ void CDBAdapterPostgreSQL::addToLookupTable(const char *path, const char *filter
 CT::string CDBAdapterPostgreSQL::generateRandomTableName() {
   CT::string tableName;
   tableName.print("t%s_%s", CTime::currentDateTime().c_str(), CServerParams::randomString(20).c_str());
+  tableName.replaceSelf(".", "");
   tableName.replaceSelf(":", "");
   tableName.replaceSelf("-", "");
   tableName.replaceSelf("Z", "");
@@ -1094,7 +1095,7 @@ int CDBAdapterPostgreSQL::storeLayerMetadata(const char *datasetName, const char
     return -1;
   }
 
-  CT::string tableColumns("datasetname varchar (511), layername varchar (511), metadatakey varchar (255), updatetime TIMESTAMP, blob JSONB, PRIMARY KEY (datasetname, layername, metadatakey)");
+  CT::string tableColumns("datasetname varchar (511), layername varchar (511), metadatakey varchar (255), updatetime TIMESTAMPTZ, blob JSONB, PRIMARY KEY (datasetname, layername, metadatakey)");
 
   int status = dataBaseConnection->checkTable("layermetadata", tableColumns.c_str());
   if (status == 1) {
@@ -1103,7 +1104,6 @@ int CDBAdapterPostgreSQL::storeLayerMetadata(const char *datasetName, const char
   }
 
   CT::string updateTime = CTime::currentDateTime().c_str();
-  updateTime.setSize(19);
   CT::string query;
   query.print("INSERT INTO layermetadata (datasetname, layername, metadatakey, updatetime, blob) "
               "VALUES (E'%s',E'%s', E'%s', E'%s', E'%s') "
