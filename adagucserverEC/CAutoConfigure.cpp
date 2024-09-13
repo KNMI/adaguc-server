@@ -479,9 +479,6 @@ int CAutoConfigure::getFileNameForDataSource(CDataSource *dataSource, std::strin
     bool removeRequiredDims = false;
     if (dataSource->requiredDims.size() == 0) {
       removeRequiredDims = true;
-      if (CAutoConfigure::autoConfigureDimensions(dataSource) != 0) {
-        CDBWarning("Unable to autoconfigure dims");
-      }
       if (dataSource->cfgLayer->Dimension.size() > 0) {
         try {
           CRequest::fillDimValuesForDataSource(dataSource, dataSource->srvParams);
