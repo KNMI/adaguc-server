@@ -2,6 +2,9 @@
 #include <CDebugger.h>
 #include <CRequest.h>
 #include "ConfigurationUtils.h"
+#include <CDBFactory.h>
+#include <CDBStore.h>
+#include <json_adaguc.h>
 
 void serverLogFunctionNothing(const char *) {}
 
@@ -33,7 +36,7 @@ int updateLayerMetadata(CRequest &request) {
   CServerParams *srvParam = request.getServerParams();
 
   auto datasetList = getEnabledDatasetsConfigurations(srvParam);
-  // TODO: Remove datasets in metadatable which don't have a matching configuration
+  // TODO: Remove datasets and layers in metadatable which don't have a matching configuration
   // TODO: Remove dimension tables which don't have a matching configuration
 
   for (auto &dataset : datasetList) {
@@ -46,11 +49,14 @@ int updateLayerMetadata(CRequest &request) {
     int status = setCRequestConfigFromEnvironment(&requestPerDataset, dataset.c_str());
     if (status != 0) {
       CDBError("Unable to read configuration file");
-      return 1;
+      continue;
     }
-    status = requestPerDataset.updatedb(nullptr, nullptr, CDBFILESCANNER_UPDATEDB | CDBFILESCANNER_DONTREMOVEDATAFROMDB | CDBFILESCANNER_UPDATEDB_ONLYFILEFROMDEFAULTQUERY, "");
+    CT::string layerPathToScan;
+    CT::string tailPath;
+    status = requestPerDataset.updatedb(&tailPath, &layerPathToScan, CDBFILESCANNER_UPDATEDB | CDBFILESCANNER_DONTREMOVEDATAFROMDB | CDBFILESCANNER_UPDATEDB_ONLYFILEFROMDEFAULTQUERY, "");
     if (status != 0) {
       CDBError("Error occured in updating the database");
+      continue;
     }
     // return 0;
   }

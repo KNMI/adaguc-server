@@ -958,23 +958,14 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
           CDBDebug("Obtained filename from layer configuration [%s]", dataSource->cfgLayer->FilePath[0]->value.c_str());
         } else {
           CDBDebug("CDBFILESCANNER_UPDATEDB_ONLYFILEFROMDEFAULTQUERY");
-          int status = CRequest::setDimValuesForDataSource(dataSource, dataSource->srvParams);
-          if (status != 0) {
-            CDBError("setDimValuesForDataSource");
+
+          std::string fileName;
+          if (CAutoConfigure::getFileNameForDataSource(dataSource, fileName) != 0) {
+            CDBDebug("Unable to getFileNameForDataSource");
             return 1;
           }
-          status = CRequest::fillDimValuesForDataSource(dataSource, dataSource->srvParams);
-          if (status != 0) {
-            CDBError("fillDimValuesForDataSource");
-            return 1;
-          }
-          status = CRequest::queryDimValuesForDataSource(dataSource, dataSource->srvParams);
-          if (status != 0) {
-            CDBError("queryDimValuesForDataSource");
-            return 1;
-          }
-          fileList.push_back(dataSource->getFileName());
-          CDBDebug("Queried file from database with filename [%s]", dataSource->getFileName());
+          fileList.push_back(fileName);
+          CDBDebug("Queried file from database with filename [%s]", fileName.c_str());
         }
       } else {
         fileList = searchFileNames(dataSource->cfgLayer->FilePath[0]->value.c_str(), filter.c_str(), tailPath.c_str());
