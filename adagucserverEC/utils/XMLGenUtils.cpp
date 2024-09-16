@@ -175,6 +175,8 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
         dim.defaultValue.copy(fileDate.c_str());
         dim.hasMultipleValues = true;
         dim.hidden = false;
+        dim.isvertical = false;
+        dim.iscustom = false;
         metadataLayer->layerMetadata.dimList.push_back(dim);
         break;
       }
@@ -188,6 +190,8 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
       // Create a new dim to store in the layer
       LayerMetadataDim dim;
       dim.hidden = false;
+      dim.isvertical = false;
+      dim.iscustom = false;
       dim.name.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
 
       // Get the tablename
@@ -556,6 +560,17 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
       if (metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.hidden == true) {
         dim.hidden = true;
       }
+
+      // Check if dim is vertical dim
+      if (metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.isvertical == true) {
+        dim.isvertical = true;
+      }
+
+      // Check if dim is custom dim
+      if (metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.iscustom == true) {
+        dim.iscustom = true;
+      }
+
       metadataLayer->layerMetadata.dimList.push_back(dim);
     }
   }

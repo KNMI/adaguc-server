@@ -12,6 +12,8 @@ int getDimensionListAsJson(MetadataLayer *metadataLayer, json &dimListJson) {
       item["defaultValue"] = dimension.defaultValue.c_str();
       item["hasMultipleValues"] = dimension.hasMultipleValues;
       item["hidden"] = dimension.hidden;
+      item["isvertical"] = dimension.isvertical;
+      item["iscustom"] = dimension.iscustom;
       item["name"] = dimension.name.c_str();
       item["units"] = dimension.units.c_str();
       item["values"] = dimension.values.c_str();
@@ -371,6 +373,8 @@ int loadLayerDimensionListFromMetadataDb(MetadataLayer *metadataLayer) {
           .defaultValue = dimensionProperties["defaultValue"].get<std::string>().c_str(),
           .hasMultipleValues = dimensionProperties["hasMultipleValues"].get<int>(),
           .hidden = dimensionProperties["hidden"].get<bool>(),
+          .isvertical = dimensionProperties["isvertical"].get<bool>(),
+          .iscustom = dimensionProperties["iscustom"].get<bool>(),
       };
       metadataLayer->layerMetadata.dimList.push_back(dimension);
     }

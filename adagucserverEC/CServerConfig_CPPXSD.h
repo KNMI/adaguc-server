@@ -1226,6 +1226,8 @@ public:
     public:
       CT::string name, interval, defaultV, units, quantizeperiod, quantizemethod, fixvalue;
       bool hidden = false;
+      bool isvertical = false;
+      bool iscustom = false;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
       if (equals("name", attrname)) {
@@ -1253,10 +1255,25 @@ public:
         if (equals("true", attrvalue)) {
           attr.hidden = true;
         }
-
         return;
       } else if (equals("quantizemethod", attrname)) {
         attr.quantizemethod.copy(attrvalue);
+        return;
+      } else if (equals("isvertical", attrname)) {
+        if (equals("false", attrvalue)) {
+          attr.isvertical = false;
+        }
+        if (equals("true", attrvalue)) {
+          attr.isvertical = true;
+        }
+        return;
+      } else if (equals("iscustom", attrname)) {
+        if (equals("false", attrvalue)) {
+          attr.iscustom = false;
+        }
+        if (equals("true", attrvalue)) {
+          attr.iscustom = true;
+        }
         return;
       }
     }
