@@ -15,8 +15,8 @@ from fastapi import APIRouter, Request, Response
 from .edr_utils import (
     generate_max_age,
     get_base_url,
-    get_collectioninfo_for_id,
-    get_edr_collections,
+    get_metadata,
+    get_collectioninfo_from_md,
     get_ref_times_for_coll,
 )
 
@@ -39,12 +39,10 @@ async def rest_get_edr_inst_for_coll(
     )
 
     instances: list[Instance] = []
-    edr_collections = get_edr_collections()
 
-    ref_times = await get_ref_times_for_coll(
-        edr_collections[collection_name]["dataset"],
-        edr_collections[collection_name]["parameters"][0]["name"],
-    )
+    metadata = await get_metadata(collection_name)
+
+    ref_times = get_ref_times_for_coll(metadata[collection_name])
     print("REF:", ref_times)
     links: list[Link] = []
     links.append(Link(href=instances_url, rel="collection"))
@@ -53,9 +51,7 @@ async def rest_get_edr_inst_for_coll(
         instance_links: list[Link] = []
         instance_link = Link(href=f"{instances_url}/{instance}", rel="collection")
         instance_links.append(instance_link)
-        instance_info, ttl = await get_collectioninfo_for_id(collection_name, instance)
-        if ttl is not None:
-            ttl_set.add(ttl)
+        instance_info = get_collectioninfo_from_md(metadata, collection_name, instance)
         instances.append(instance_info)
 
     instances_data = Instances(instances=instances, links=links)
@@ -73,7 +69,6 @@ async def rest_get_collection_info(collection_name: str, instance, response: Res
     """
     GET  "/collections/{collection_name}/instances/{instance}"
     """
-    coll, ttl = await get_collectioninfo_for_id(collection_name, instance)
-    if ttl is not None:
-        response.headers["cache-control"] = generate_max_age(ttl)
+    metadata = await get_metadata(collection_name)
+    coll = get_collectioninfo_from_md(metadata, collection_name, instance)
     return coll

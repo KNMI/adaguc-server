@@ -22,7 +22,7 @@ from .edr_exception import EdrException
 from .edr_utils import (
     call_adaguc,
     generate_max_age,
-    get_edr_collections,
+    get_metadata,
     get_ttl_from_adaguc_headers,
     instance_to_iso,
 )
@@ -83,19 +83,30 @@ async def get_coll_inst_position(
     if len(custom_params) > 0:
         for custom_param in custom_params:
             custom_dims += f"&DIM_{custom_param}={request.query_params[custom_param]}"
-    edr_collections = get_edr_collections()
 
-    if collection_name in edr_collections:
+    metadata = await get_metadata(collection_name)
+
+    if metadata is not None:
         parameter_names = parameter_name.split(",")
+        vertical_dim_name = "z"
+        for dim_name in metadata[collection_name][parameter_names[0]]["dims"]:
+            if (
+                "isvertical"
+                in metadata[collection_name][parameter_names[0]]["dims"][dim_name]
+                and metadata[collection_name][parameter_names[0]]["dims"][dim_name]
+                == "true"
+            ):
+                vertical_dim_name = dim_name
         latlons = wkt.loads(coords)
         coord = {"lat": latlons["coordinates"][1], "lon": latlons["coordinates"][0]}
         resp, headers = await get_point_value(
-            edr_collections[collection_name],
+            collection_name,
             instance,
             [coord["lon"], coord["lat"]],
             parameter_names,
             datetime_par,
             z_par,
+            vertical_dim_name,
             custom_dims,
         )
         if resp:
@@ -105,28 +116,26 @@ async def get_coll_inst_position(
                 response.headers["cache-control"] = generate_max_age(ttl)
             return covjson_from_resp(
                 dat,
-                edr_collections[collection_name]["vertical_name"],
-                edr_collections[collection_name]["custom_name"],
-                collection_name,
+                metadata[collection_name],
             )
 
     raise EdrException(code=400, description="No data")
 
 
 async def get_point_value(
-    edr_collectioninfo: dict,
+    collection_name: str,
     instance: str,
     coords: list[float],
     parameters: list[str],
     datetime_par: str,
     z_par: str = None,
+    z_name: str = None,
     custom_dims: str = None,
 ):
     """Returns information in EDR format for a given collection and position"""
-    dataset = edr_collectioninfo["dataset"]
     urlrequest = (
         f"SERVICE=WMS&VERSION=1.3.0&REQUEST=GetPointValue&CRS=EPSG:4326"
-        f"&DATASET={dataset}&QUERY_LAYERS={','.join(parameters)}"
+        f"&DATASET={collection_name}&QUERY_LAYERS={','.join(parameters)}"
         f"&X={coords[0]}&Y={coords[1]}&INFO_FORMAT=application/json"
     )
     if datetime_par:
@@ -135,11 +144,8 @@ async def get_point_value(
     if instance:
         urlrequest += f"&DIM_reference_time={instance_to_iso(instance)}"
     if z_par:
-        if (
-            "vertical_name" in edr_collectioninfo
-            and edr_collectioninfo["vertical_name"].upper() != "ELEVATION"
-        ):
-            urlrequest += f"&DIM_{edr_collectioninfo['vertical_name']}={z_par}"
+        if urlrequest.upper() != "ELEVATION":
+            urlrequest += f"&DIM_{z_name}={z_par}"
         else:
             urlrequest += f"&ELEVATION={z_par}"
     if custom_dims:

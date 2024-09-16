@@ -41,38 +41,6 @@ SYMBOL_TYPE_URL = "http://www.opengis.net/def/uom/UCUM"
 edr_cache = TTLCache(maxsize=100, ttl=120)  # TODO: Redis?
 
 
-def parse_config_file(
-    dataset_filename: str, adaguc_dataset_dir: str = os.environ["ADAGUC_DATASET_DIR"]
-):
-    """Return translation names for NetCDF data"""
-    translate = {}
-    dim_translate = {}
-    filename = dataset_filename
-    _, ext = os.path.splitext(filename)
-    if ext == "" or ext != ".xml":
-        filename = filename + ".xml"
-
-    if os.path.isfile(os.path.join(adaguc_dataset_dir, filename)) and filename.endswith(
-        ".xml"
-    ):
-        tree = parse(os.path.join(adaguc_dataset_dir, filename))
-        root = tree.getroot()
-        for lyr in root.iter("Layer"):
-            layer_variables = [l.text for l in lyr.iter("Variable")]
-            if len(layer_variables) == 1:
-                translate[layer_variables[0]] = (
-                    lyr.find("Name") or lyr.find("Variable")
-                ).text
-        for coll in root.iter("EdrCollection"):
-            if "vertical_name" in coll.attrib:
-                vertical_name = coll.attrib["vertical_name"]
-                for lyr in root.iter("Layer"):
-                    for dimension in lyr.iter("Dimension"):
-                        if dimension.text == vertical_name:
-                            dim_translate[dimension.attrib["name"]] = "z"
-    return translate, dim_translate
-
-
 def parse_iso(dts: str) -> datetime:
     """
     Converts a ISO8601 string into a datetime object
@@ -87,16 +55,23 @@ def parse_iso(dts: str) -> datetime:
     return parsed_dt
 
 
-async def get_ref_times_for_coll(dataset: str, layer: str) -> list[str]:
+def get_ref_times_for_coll(metadata) -> list[str]:
     """
     Returns available reference times for given collection
     """
-    url = f"?DATASET={dataset}&SERVICE=WMS&VERSION=1.3.0&request=getreferencetimes&LAYER={layer}"
-    # logger.info("getreftime_url(%s,%s): %s", dataset, layer, url)
-    status, response, _ = await call_adaguc(url=url.encode("UTF-8"))
-    if status == 0:
-        ref_times = json.loads(response.getvalue())
-        instance_ids = [parse_iso(reft).strftime("%Y%m%d%H%M") for reft in ref_times]
+    first_param = next(iter(metadata))
+    print("MD:", first_param, metadata[first_param])
+    if "reference_time" in metadata[first_param]["dims"]:
+        print(
+            "REFT:",
+            metadata[first_param]["dims"]["reference_time"]["values"],
+        )
+        instance_ids = [
+            parse_iso(reft).strftime("%Y%m%d%H%M")
+            for reft in metadata[first_param]["dims"]["reference_time"]["values"].split(
+                ","
+            )
+        ]
         return instance_ids
     return []
 
@@ -132,91 +107,18 @@ def init_edr_collections(adaguc_dataset_dir: str = os.environ["ADAGUC_DATASET_DI
         ]
     )
 
-    edr_collections = {}
+    edr_collections = []
     for dataset_file in dataset_files:
         dataset = dataset_file.replace(".xml", "")
         try:
             tree = parse(os.path.join(adaguc_dataset_dir, dataset_file))
             root = tree.getroot()
-            for ogcapi_edr in root.iter("OgcApiEdr"):
-                for edr_collection in ogcapi_edr.iter("EdrCollection"):
-                    edr_params = []
-                    for edr_parameter in edr_collection.iter("EdrParameter"):
-                        if (
-                            "name" in edr_parameter.attrib
-                            and "unit" in edr_parameter.attrib
-                        ):
-                            name = edr_parameter.attrib.get("name")
-                            edr_param = {
-                                "name": name,
-                                "parameter_label": name,
-                                "observed_property_label": name,
-                                "description": name,
-                                "standard_name": None,
-                                "unit": "-",
-                            }
-                            # Try to take the standard name from the configuration
-                            if "standard_name" in edr_parameter.attrib:
-                                edr_param["standard_name"] = edr_parameter.attrib.get(
-                                    "standard_name"
-                                )
-                                # If there is a standard name, set the label to the same as fallback
-                                edr_param["observed_property_label"] = (
-                                    edr_parameter.attrib.get("standard_name")
-                                )
-
-                            # Try to take the observed_property_label from the configuration
-                            if "observed_property_label" in edr_parameter.attrib:
-                                edr_param["observed_property_label"] = (
-                                    edr_parameter.attrib.get("observed_property_label")
-                                )
-                            # Try to take the parameter_label from the Layer configuration Title
-                            if "parameter_label" in edr_parameter.attrib:
-                                edr_param["parameter_label"] = edr_parameter.attrib.get(
-                                    "parameter_label"
-                                )
-                            # Try to take the parameter_label from the Layer configuration Title
-                            if "unit" in edr_parameter.attrib:
-                                edr_param["unit"] = edr_parameter.attrib.get("unit")
-
-                            edr_params.append(edr_param)
-
-                        else:
-                            logger.warning(
-                                "In dataset %s, skipping parameter %s: has no name or units configured",
-                                dataset_file,
-                                edr_parameter,
-                            )
-
-                    if len(edr_params) == 0:
-                        logger.warning(
-                            "Skipping dataset %s: has no EdrParameter configured",
-                            dataset_file,
-                        )
-                    else:
-                        collection_url = (
-                            get_base_url()
-                            + f"/edr/collections/{edr_collection.attrib.get('name')}"
-                        )
-                        edr_collections[edr_collection.attrib.get("name")] = {
-                            "dataset": dataset,
-                            "name": edr_collection.attrib.get("name"),
-                            "service": f"{OWSLIB_DUMMY_URL}/wms",
-                            "parameters": edr_params,
-                            "vertical_name": edr_collection.attrib.get("vertical_name"),
-                            "custom_name": edr_collection.attrib.get("custom_name"),
-                            "base_url": collection_url,
-                            "time_interval": edr_collection.attrib.get("time_interval"),
-                        }
+            for _ in root.iter("OgcApiEdr"):
+                edr_collections.append(dataset)
         except ParseError:
             pass
+    # ['RADAR', 'ecmwf_ens_nl_0p1deg', 'multi_dim', 'uwcw_ha43_dini_5p5km', 'uwcw_ha43_nl_2km', 'uwcw_ha43ens_nl_2km']
     return edr_collections
-
-
-@cached(cache=edr_cache)
-def get_edr_collections():
-    """Returns all EDR collections"""
-    return init_edr_collections()
 
 
 def instance_to_iso(instance_dt: str):
@@ -270,22 +172,31 @@ def generate_max_age(ttl):
     return "max-age=0"
 
 
-async def get_collectioninfo_for_id(
-    edr_collection: str,
+def get_collectioninfo_from_md(
+    metadata: dict,
+    collection_name: str,
     instance: str = None,
-) -> tuple[Collection, datetime]:
+) -> Collection:
     """
     Returns collection information for a given collection id and or instance
     Is used to obtain metadata from the dataset configuration and WMS GetCapabilities document.
     """
-    logger.info("get_collectioninfo_for_id(%s, %s)", edr_collection, instance)
-    edr_collectionsinfo = get_edr_collections()
-    if edr_collection not in edr_collectionsinfo:
-        raise EdrException(code=400, description="Unknown or unconfigured collection")
+    logger.info("get_collectioninfo_for_id(%s, %s)", collection_name, instance)
 
-    edr_collectioninfo = edr_collectionsinfo[edr_collection]
+    if metadata is None:
+        return None
 
-    base_url = edr_collectioninfo["base_url"]
+    first_param = next(iter(metadata[collection_name]))
+    if metadata[collection_name][first_param]["layer"]["variables"] is None:
+        return None
+
+    # edr_collectionsinfo = get_edr_collections()
+    # if edr_collection not in edr_collectionsinfo:
+    #     raise EdrException(code=400, description="Unknown or unconfigured collection")
+
+    # edr_collectioninfo = edr_collectionsinfo[edr_collection]
+
+    base_url = get_base_url() + f"/edr/collections/{collection_name}"
 
     if instance is not None:
         base_url += f"/instances/{instance}"
@@ -294,44 +205,38 @@ async def get_collectioninfo_for_id(
     links.append(Link(href=f"{base_url}", rel="collection", type="application/json"))
 
     ref_times = None
-
     if not instance:
-        ref_times = await get_ref_times_for_coll(
-            edr_collectioninfo["dataset"], edr_collectioninfo["parameters"][0]["name"]
-        )
+        ref_times = get_ref_times_for_coll(metadata[collection_name])
         if ref_times and len(ref_times) > 0:
             instances_link = Link(
                 href=f"{base_url}/instances", rel="collection", type="application/json"
             )
             links.append(instances_link)
 
-    wmslayers, ttl = await get_capabilities(edr_collectioninfo["name"])
+    print("MD:", metadata[collection_name][first_param])
 
-    bbox = get_extent(edr_collectioninfo, wmslayers)
+    bbox = [metadata[collection_name][first_param]["layer"]["latlonbox"]]
     if bbox is None:
         return None, None
     crs = 'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]'
     spatial = Spatial(bbox=bbox, crs=crs)
 
-    if (
-        ref_times is None
-        or len(ref_times) == 0
-        or edr_collectioninfo["time_interval"] is None
-    ):
-        (interval, time_values) = get_times_for_collection(
-            wmslayers, edr_collectioninfo["parameters"][0]["name"]
-        )
-    else:
-        if instance is None:
-            instance = max(ref_times)  # Default instance is latest instance
-        (interval, time_values) = create_times_for_instance(
-            edr_collectioninfo, instance
-        )
+    # if ref_times is None or len(ref_times) == 0:
+    (interval, time_values) = get_times_for_collection(
+        metadata[collection_name], first_param
+    )
+    # else:
+    # if instance is None:
+    #     instance = max(ref_times)  # Default instance is latest instance
+    # (interval, time_values) = create_times_for_instance(
+    #     edr_collectioninfo, instance
+    # )
 
     customlist: list = get_custom_dims_for_collection(
-        edr_collectioninfo, wmslayers, edr_collectioninfo["parameters"][0]["name"]
+        metadata[collection_name], first_param
     )
 
+    print("CUSTOM:", customlist)
     # Custom can be a list of custom dimensions, like ensembles, thresholds
     custom = []
     if customlist is not None:
@@ -340,7 +245,7 @@ async def get_collectioninfo_for_id(
 
     vertical = None
     vertical_dim = get_vertical_dim_for_collection(
-        edr_collectioninfo, wmslayers, edr_collectioninfo["parameters"][0]["name"]
+        metadata[collection_name], first_param
     )
     if vertical_dim:
         vertical = Vertical(**vertical_dim)
@@ -350,6 +255,7 @@ async def get_collectioninfo_for_id(
         trs='TIMECRS["DateTime",TDATUM["Gregorian Calendar"],CS[TemporalDateTime,1],AXIS["Time (T)",future]',
         values=time_values,  # ["R49/2022-06-30T06:00:00/PT60M"],
     )
+    logger.info("TEMPORAL [%s]: %s, %s", collection_name, interval, time_values)
 
     extent = Extent(
         spatial=spatial, temporal=temporal, custom=custom, vertical=vertical
@@ -422,9 +328,7 @@ async def get_collectioninfo_for_id(
             locations=EDRQuery(link=locations_link),
         )
 
-    parameter_names = get_params_for_collection(
-        edr_collection=edr_collection, wmslayers=wmslayers
-    )
+    parameter_info = get_params_for_collection(metadata[collection_name])
 
     crs = ["EPSG:4326"]
 
@@ -432,10 +336,10 @@ async def get_collectioninfo_for_id(
     if instance is None:
         collection = Collection(
             links=links,
-            id=edr_collection,
+            id=collection_name,
             extent=extent,
             data_queries=data_queries,
-            parameter_names=parameter_names,
+            parameter_names=parameter_info,
             crs=crs,
             output_formats=output_formats,
         )
@@ -445,12 +349,12 @@ async def get_collectioninfo_for_id(
             id=instance,
             extent=extent,
             data_queries=data_queries,
-            parameter_names=parameter_names,
+            parameter_names=parameter_info,
             crs=crs,
             output_formats=output_formats,
         )
 
-    return collection, ttl
+    return collection
 
 
 def parse_period_string(period: str):
@@ -544,161 +448,112 @@ def create_times_for_instance(edr_collectioninfo: dict, instance: str):
     return interval, times
 
 
-def get_params_for_collection(
-    edr_collection: str, wmslayers: dict
-) -> dict[str, Parameter]:
+def get_params_for_collection(metadata: dict) -> dict[str, Parameter]:
     """
     Returns a dictionary with parameters for given EDR collection
     """
     parameter_names = {}
-    edr_collections = get_edr_collections()
-    for param_el in edr_collections[edr_collection]["parameters"]:
-        param_id = param_el["name"]
-        if not param_id in wmslayers:
-            logger.warning(
-                "EDR Parameter with name [%s] is not found in any of the adaguc Layer configurations. Available layers are %s",
-                param_id,
-                str(list(wmslayers.keys())),
-            )
-        else:
-            param_metadata = get_param_metadata(param_id, edr_collection)
-            param = Parameter(
-                id=param_metadata["wms_layer_name"],
-                observedProperty=ObservedProperty(
-                    id=param_metadata["observed_property_id"],
-                    label=param_metadata["observed_property_label"],
-                ),
-                # description=param_metadata["wms_layer_title"], # TODO in follow up
-                type="Parameter",
-                unit=Unit(
-                    symbol=Symbol(
-                        value=param_metadata["parameter_unit"], type=SYMBOL_TYPE_URL
-                    )
-                ),
-                label=param_metadata["parameter_label"],
-            )
-            parameter_names[param_el["name"]] = param
+    for param_id in metadata:
+        param_metadata = get_param_metadata(metadata[param_id])
+        param = Parameter(
+            id=param_metadata["wms_layer_name"],
+            observedProperty=ObservedProperty(
+                id=param_metadata["observed_property_id"],
+                label=param_metadata["observed_property_label"],
+            ),
+            # description=param_metadata["wms_layer_title"], # TODO in follow up
+            type="Parameter",
+            unit=Unit(
+                symbol=Symbol(
+                    value=param_metadata["parameter_unit"], type=SYMBOL_TYPE_URL
+                )
+            ),
+            label=param_metadata["parameter_label"],
+        )
+        parameter_names[param_id] = param
     return parameter_names
 
 
-async def get_capabilities(collname):
-    """
-    Get the collectioninfo from the WMS GetCapabilities
-    """
-    collection_info = get_edr_collections().get(collname)
-    if "dataset" in collection_info:
-        logger.info("callADAGUC by dataset")
-        dataset = collection_info["dataset"]
-        urlrequest = (
-            f"dataset={dataset}&service=wms&version=1.3.0&request=getcapabilities"
-        )
-        status, response, headers = await call_adaguc(url=urlrequest.encode("UTF-8"))
-        ttl = get_ttl_from_adaguc_headers(headers)
-        logger.info("status: %d", status)
-        if status == 0:
-            xml = response.getvalue()
-            wms = WebMapService(collection_info["service"], xml=xml, version="1.3.0")
-        else:
-            logger.error("status: %d", status)
-            return {}
+async def get_metadata(collname=None):
+    """get metadata from ADAGUC"""
+    logger.info("callADAGUC by dataset")
+    urlrequest = "service=wms&version=1.3.0&request=getmetadata&format=application/json"
+    if collname:
+        urlrequest = f"dataset={collname}&service=wms&version=1.3.0&request=getmetadata&format=application/json"
+    status, response, headers = await call_adaguc(url=urlrequest.encode("UTF-8"))
+    #        ttl = get_ttl_from_adaguc_headers(headers)
+    logger.info("status: %d", status)
+    metadata = {}
+    if status == 0:
+        metadata = json.loads(response.getvalue().decode("UTF-8"))
     else:
-        logger.info("callADAGUC by service %s", dataset)
-        wms = WebMapService(dataset["service"], version="1.3.0")
-        ttl = None
-
-    layers = {}
-    for layername, layerinfo in wms.contents.items():
-        layers[layername] = {
-            "name": layername,
-            "title": layerinfo.title,
-            "dimensions": {**layerinfo.dimensions},
-            "boundingBoxWGS84": layerinfo.boundingBoxWGS84,
-        }
-    return layers, ttl
+        logger.error("status: %d", status)
+        return {}
+    return metadata
 
 
-def get_vertical_dim_for_collection(
-    edr_collectioninfo: dict, wmslayers, parameter: str = None
-):
+def get_vertical_dim_for_collection(metadata: dict, parameter: str = None):
     """
     Return the verticel dimension the WMS GetCapabilities document.
     """
-    if parameter and parameter in list(wmslayers):
-        layer = wmslayers[parameter]
+    if parameter and parameter in list(metadata):
+        layer = metadata[parameter]
     else:
-        layer = wmslayers[list(wmslayers)[0]]
+        layer = metadata[list(metadata)[0]]
 
-    for dim_name in layer["dimensions"]:
+    for dim_name in layer["dims"]:
         if dim_name in ["elevation"] or (
-            "vertical_name" in edr_collectioninfo
-            and dim_name == edr_collectioninfo["vertical_name"]
+            "isvertical" in layer["dims"] and layer["dims"]["isvertical"] == "true"
         ):
             vertical_dim = {
                 "interval": [],
-                "values": layer["dimensions"][dim_name]["values"],
+                "values": layer["dims"][dim_name]["values"],
                 "vrs": "customvrs",
             }
             return vertical_dim
     return None
 
 
-def get_custom_dims_for_collection(
-    edr_collectioninfo: dict, wmslayers, parameter: str = None
-):
+def get_custom_dims_for_collection(metadata: dict, parameter: str = None):
     """
     Return the dimensions other then elevation or time from the WMS GetCapabilities document.
     """
     custom = []
-    if parameter and parameter in list(wmslayers):
-        layer = wmslayers[parameter]
+    if parameter and parameter in list(metadata):
+        layer = metadata[parameter]
     else:
         # default to first layer
-        layer = wmslayers[list(wmslayers)[0]]
-    for dim_name in layer["dimensions"]:
-        # Not needed for non custom dims:
-        if dim_name not in [
-            "reference_time",
-            "time",
-            "elevation",
-            edr_collectioninfo.get("vertical_name"),
-        ]:
-            custom_dim = {
-                "id": dim_name,
-                "interval": [
-                    [
-                        layer["dimensions"][dim_name]["values"][0],
-                        layer["dimensions"][dim_name]["values"][-1],
-                    ]
-                ],
-                "values": layer["dimensions"][dim_name]["values"],
-                "reference": f"custom_{dim_name}",
-            }
-            if layer["dimensions"][dim_name]["values"] == ["1", "2", "3", "4", "5"]:
-                custom_dim["values"] = ["R5/1/1"]
-            # if dim_name == "member":
-            #     custom_dim["id"] = "number"
-            custom.append(custom_dim)
+        layer = metadata[list(metadata)[0]]
+    for dim_name in layer["dims"]:
+        print("layer", layer["dims"][dim_name])
+        if not layer["dims"][dim_name]["hidden"]:
+            # Not needed for non custom dims:
+            if dim_name not in [
+                "reference_time",
+                "time",
+                "elevation",
+            ]:
+                custom_dim = {
+                    "id": dim_name,
+                    "interval": [
+                        [
+                            layer["dims"][dim_name]["values"][0],
+                            layer["dims"][dim_name]["values"][-1],
+                        ]
+                    ],
+                    "values": [layer["dims"][dim_name]["values"]],
+                    "reference": f"custom_{dim_name}",
+                }
+                if layer["dims"][dim_name]["values"] == ["1", "2", "3", "4", "5"]:
+                    custom_dim["values"] = ["R5/1/1"]
+                # if dim_name == "member":
+                #     custom_dim["id"] = "number"
+                custom.append(custom_dim)
     return custom if len(custom) > 0 else None
 
 
-def get_extent(edr_collectioninfo: dict, wmslayers):
-    """
-    Get the boundingbox extent from the WMS GetCapabilities
-    """
-    first_layer = edr_collectioninfo["parameters"][0]["name"]
-    if len(wmslayers):
-        if first_layer in wmslayers:
-            bbox = wmslayers[first_layer]["boundingBoxWGS84"]
-        else:
-            # Fallback to first layer in getcapabilities
-            bbox = wmslayers[next(iter(wmslayers))]["boundingBoxWGS84"]
-
-        return [[bbox[0], bbox[1]], [bbox[2], bbox[3]]]
-    return None
-
-
 def get_times_for_collection(
-    wmslayers, parameter: str = None
+    metadata, parameter: str = None
 ) -> tuple[list[list[str]], list[str]]:
     """
     Returns a list of times based on the time dimensions, it does a WMS GetCapabilities to the given dataset (cached)
@@ -706,15 +561,16 @@ def get_times_for_collection(
     It does this for given parameter. When the parameter is not given it will do it for the first Layer in the GetCapabilities document.
     """
     # logger.info("get_times_for_dataset(%s,%s)", edr_collectioninfo["name"], parameter)
-    if parameter and parameter in wmslayers:
-        layer = wmslayers[parameter]
+    if parameter and parameter in metadata:
+        layer = metadata[parameter]
     else:
-        layer = wmslayers[list(wmslayers)[0]]
+        layer = metadata[list(metadata)[0]]
 
-    if "time" in layer["dimensions"]:
-        time_dim = layer["dimensions"]["time"]
-        if "/" in time_dim["values"][0]:
-            terms = time_dim["values"][0].split("/")
+    if "time" in layer["dims"]:
+        time_dim = layer["dims"]["time"]["values"]
+        print("TIME_DIM:", time_dim)
+        if "/" in time_dim:
+            terms = time_dim.split("/")
             interval = [
                 [
                     datetime.strptime(terms[0], "%Y-%m-%dT%H:%M:%SZ").replace(
@@ -725,19 +581,20 @@ def get_times_for_collection(
                     ),
                 ]
             ]
-            return interval, get_time_values_for_range(time_dim["values"][0])
+            return interval, get_time_values_for_range(time_dim)
+
+        terms = time_dim.split(",")
         interval = [
             [
-                datetime.strptime(time_dim["values"][0], "%Y-%m-%dT%H:%M:%SZ").replace(
+                datetime.strptime(terms[0], "%Y-%m-%dT%H:%M:%SZ").replace(
                     tzinfo=timezone.utc
                 ),
-                datetime.strptime(time_dim["values"][-1], "%Y-%m-%dT%H:%M:%SZ").replace(
+                datetime.strptime(terms[-1], "%Y-%m-%dT%H:%M:%SZ").replace(
                     tzinfo=timezone.utc
                 ),
             ]
         ]
-        return interval, time_dim["values"]
-    return None, None
+        return interval, terms
 
 
 def get_time_values_for_range(rng: str) -> list[str]:
@@ -771,43 +628,26 @@ def get_time_values_for_range(rng: str) -> list[str]:
 VOCAB_ENDPOINT_URL = "https://vocab.nerc.ac.uk/standard_name/"
 
 
-def get_parameter_config(edr_collection_name: str, param_id: str):
-    """Gets the EDRParameter configuration based on the edr collection name and parameter id
-
-    Args:
-        edr_collection_name (str): edr collection name
-        param_id (str): parameter id
-
-    Returns:
-        _type_: parameter element_
-    """
-
-    edr_collections = get_edr_collections()
-    edr_collection_parameters = edr_collections[edr_collection_name]["parameters"]
-    for param_el in edr_collection_parameters:
-        if param_id == param_el["name"]:
-            return param_el
-    return None
-
-
-def get_param_metadata(param_id: str, edr_collection_name) -> dict:
+def get_param_metadata(param_metadata: dict) -> dict:
     """Composes parameter metadata based on the param_el and the wmslayer dictionaries
 
     Args:
-        param_id (str): The parameter / wms layer name to find
-        edr_collection_name (str): The collection name
+        param_metadata (dict): The parameter / wms layer name to find
 
     Returns:
         dict: dictionary with all metadata required to construct a Edr Parameter object.
     """
-    param_el = get_parameter_config(edr_collection_name, param_id)
-    wms_layer_name = param_el["name"]
+    wms_layer_name = param_metadata["layer"]["name"]
     observed_property_id = wms_layer_name
-    parameter_label = param_el["parameter_label"]
-    parameter_unit = param_el["unit"]
-    observed_property_label = param_el["observed_property_label"]
-    if "standard_name" in param_el and param_el["standard_name"] is not None:
-        observed_property_id = VOCAB_ENDPOINT_URL + param_el["standard_name"]
+    parameter_label = param_metadata["layer"]["title"]
+    parameter_unit = param_metadata["layer"]["variables"][0]["units"]
+    if len(parameter_unit) == 0:
+        parameter_unit = "-^-"
+    observed_property_label = param_metadata["layer"]["variables"][0]["label"]
+    if "standard_name" in param_metadata["layer"]["variables"][0]:
+        observed_property_id = (
+            VOCAB_ENDPOINT_URL + param_metadata["layer"]["variables"][0]
+        )
 
     return {
         "wms_layer_name": wms_layer_name,

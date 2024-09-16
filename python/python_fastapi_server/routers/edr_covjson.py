@@ -31,7 +31,7 @@ from .edr_utils import get_param_metadata
 SYMBOL_TYPE_URL = "http://www.opengis.net/def/uom/UCUM"
 
 
-def covjson_from_resp(dats, vertical_name, custom_name, collection_name):
+def covjson_from_resp(dats, metadata):
     """
     Returns a coverage json from a Adaguc WMS GetFeatureInfo request
     """
@@ -39,6 +39,16 @@ def covjson_from_resp(dats, vertical_name, custom_name, collection_name):
     for dat in dats:
         if len(dat["data"]):
             (lon, lat) = dat["point"]["coords"].split(",")
+            custom_name = None
+            vertical_name = None
+            for param_dim in metadata[dat["name"]]["dims"].values():
+                print("Checking dim ", param_dim["name"])
+                if param_dim["name"] not in ["x", "y", "reference_time", "time"]:
+                    if not param_dim["hidden"]:
+                        if "isvertical" in param_dim:
+                            vertical_name = param_dim["name"]
+                        else:
+                            custom_name = param_dim["name"]
             lat = float(lat)
             lon = float(lon)
             dims = makedims(dat["dims"], dat["data"])
@@ -49,7 +59,8 @@ def covjson_from_resp(dats, vertical_name, custom_name, collection_name):
                 vertical_steps = getdimvals(dims, "elevation")
 
             custom_dim_values = []
-            if custom_name is not None:
+            if custom_name is not None and len(custom_name) > 0:
+                print("CUSTOM_DIM:", custom_name, dat)
                 custom_dim_values = getdimvals(dims, custom_name)
 
             valstack = []
@@ -72,7 +83,7 @@ def covjson_from_resp(dats, vertical_name, custom_name, collection_name):
 
             parameters: dict[str, CovJsonParameter] = {}
             ranges = {}
-            param_metadata = get_param_metadata(dat["name"], collection_name)
+            param_metadata = get_param_metadata(metadata[dat["name"]])
             symbol = CovJsonSymbol(
                 value=param_metadata["parameter_unit"], type=SYMBOL_TYPE_URL
             )

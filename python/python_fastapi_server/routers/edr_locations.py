@@ -18,7 +18,7 @@ logger.debug("Starting EDR")
 
 @router.get("/collections/{_coll}/locations")
 @router.get("/collections/{_coll}/instances/{instance}/locations")
-async def get_locations(_coll: str):
+async def get_locations(_coll: str, instance: str):
     """
     Returns locations where you could query data.
     """
