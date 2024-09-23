@@ -968,7 +968,7 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
             return 1;
           }
           fileList.push_back(fileName);
-          // CDBDebug("Queried file from database with filename [%s]", fileName.c_str());
+          CDBDebug("Queried file from database with filename [%s]", fileName.c_str());
         }
       } else {
         fileList = searchFileNames(dataSource->cfgLayer->FilePath[0]->value.c_str(), filter.c_str(), tailPath.c_str());

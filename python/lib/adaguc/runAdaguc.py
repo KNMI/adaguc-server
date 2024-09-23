@@ -106,7 +106,7 @@ class runAdaguc:
         adagucenv = self.getAdagucEnv()
         status, data, headers = asyncio.run(
             self.runADAGUCServer(
-                args=["--updatelayermetadata"], env=adagucenv, isCGI=False, showLogOnError = False
+                args=["--updatelayermetadata"], env=adagucenv, isCGI=False, showLogOnError = True
             )
         )
 
