@@ -38,11 +38,11 @@ int layerTypeLiveUpdateRenderIntoDrawImage(CDrawImage *image, CServerParams *srv
   return 0;
 }
 
-int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(WMSLayer *myWMSLayer) {
-  if (myWMSLayer->dataSource->cfgLayer->Title.size() != 0) {
-    myWMSLayer->title.copy(myWMSLayer->dataSource->cfgLayer->Title[0]->value.c_str());
+int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(MetadataLayer *metadataLayer) {
+  if (metadataLayer->dataSource->cfgLayer->Title.size() != 0) {
+    metadataLayer->layerMetadata.title.copy(metadataLayer->dataSource->cfgLayer->Title[0]->value.c_str());
   } else {
-    myWMSLayer->title.copy(myWMSLayer->dataSource->cfgLayer->Name[0]->value.c_str());
+    metadataLayer->layerMetadata.title.copy(metadataLayer->dataSource->cfgLayer->Name[0]->value.c_str());
   }
   CTime timeInstance;
   timeInstance.init("seconds since 1970", "standard");
@@ -53,12 +53,8 @@ int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(WMSLayer *myWMSLayer)
   CT::string startTime = timeInstance.dateToISOString(timeInstance.offsetToDate(startTimeOffset));
   CT::string stopTime = timeInstance.dateToISOString(timeInstance.offsetToDate(stopTimeOffset));
   CT::string resTime = "PT10M";
-  WMSLayer::Dim *dim = new WMSLayer::Dim();
-  myWMSLayer->dimList.push_back(dim);
-  dim->name.copy("time");
-  dim->units.copy("ISO8601");
-  dim->values.copy(startTime + "/" + stopTime + "/" + resTime);
-  dim->defaultValue.copy(stopTime.c_str());
-  dim->hasMultipleValues = true;
+  LayerMetadataDim dim = {.name = "time", .units = "ISO8601", .values = startTime + "/" + stopTime + "/" + resTime, .defaultValue = stopTime, .hasMultipleValues = true, .hidden = false};
+  metadataLayer->layerMetadata.dimList.push_back(dim);
+
   return 0;
 }

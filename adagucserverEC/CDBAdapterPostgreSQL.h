@@ -22,7 +22,8 @@
  * limitations under the License.
  *
  ******************************************************************************/
-
+#ifndef CDBADAPTERPOSTGRESQL_H
+#define CDBADAPTERPOSTGRESQL_H
 #include "CDBAdapter.h"
 #include "CDebugger.h"
 #include "CPGSQLDB.h"
@@ -42,6 +43,8 @@ private:
   std::map<std::string, DimInfo> lookupTableNameCacheMap;
   std::map<std::string, std::vector<std::string>> fileListPerTable;
   int createDimTableOfType(const char *dimname, const char *tablename, int type);
+
+  CDBStore::Store *layerMetaDataStore = nullptr;
 
 public:
   CDBAdapterPostgreSQL();
@@ -87,4 +90,11 @@ public:
   int setFileString(const char *tablename, const char *file, const char *dimvalue, int dimindex, const char *filedate, GeoOptions *geoOptions);
   int setFileTimeStamp(const char *tablename, const char *file, const char *dimvalue, int dimindex, const char *filedate, GeoOptions *geoOptions);
   int addFilesToDataBase();
+  int storeLayerMetadata(const char *datasetName, const char *layerName, const char *metadataKey, const char *metadatablob);
+  CDBStore::Store *getLayerMetadataStore(const char *datasetName);
+  int dropLayerFromLayerMetadataStore(const char *datasetName, const char *layerName);
+  bool tryAdvisoryLock(size_t);
+  bool advisoryUnLock(size_t);
 };
+
+#endif

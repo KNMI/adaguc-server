@@ -4,6 +4,7 @@
 #include "CSLD.h"
 #include "../hclasses/CXMLParser.h"
 #include "../hclasses/CHTTPTools.h"
+#include "utils/LayerUtils.h"
 
 const char *CSLD::className = "CSLD";
 
@@ -62,7 +63,7 @@ int CSLD::processSLDUrl(CT::string sldUrl) {
 
         // Generate unique layer name for layer in Server Config
         CT::string layerUniqueName;
-        if (this->serverParams->makeUniqueLayerName(&layerUniqueName, this->serverConfig->Layer[j]) != 0) {
+        if (makeUniqueLayerName(&layerUniqueName, this->serverConfig->Layer[j]) != 0) {
           CDBError("Unable to compose layer name");
           return 1;
         }
