@@ -172,6 +172,52 @@ def generate_max_age(ttl):
     return "max-age=0"
 
 
+def get_extent_from_md(metadata: dict, parameter: str):
+    print("MD:", metadata[parameter], parameter)
+
+    bbox = [metadata[parameter]["layer"]["latlonbox"]]
+    if bbox is None:
+        return None, None
+    crs = 'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]'
+    spatial = Spatial(bbox=bbox, crs=crs)
+
+    # if ref_times is None or len(ref_times) == 0:
+    (interval, time_values) = get_times_for_collection(metadata, parameter)
+    # else:
+    # if instance is None:
+    #     instance = max(ref_times)  # Default instance is latest instance
+    # (interval, time_values) = create_times_for_instance(
+    #     edr_collectioninfo, instance
+    # )
+
+    customlist: list = get_custom_dims_for_collection(metadata, parameter)
+
+    # print("CUSTOM:", customlist)
+    # Custom can be a list of custom dimensions, like ensembles, thresholds
+    custom = []
+    if customlist is not None:
+        for custom_el in customlist:
+            custom.append(Custom(**custom_el))
+
+    vertical = None
+    vertical_dim = get_vertical_dim_for_collection(metadata, parameter)
+    if vertical_dim:
+        vertical = Vertical(**vertical_dim)
+
+    temporal = Temporal(
+        interval=interval,  # [["2022-06-30T09:00:00Z", "2022-07-02T06:00:00Z"]],
+        trs='TIMECRS["DateTime",TDATUM["Gregorian Calendar"],CS[TemporalDateTime,1],AXIS["Time (T)",future]',
+        values=time_values,  # ["R49/2022-06-30T06:00:00/PT60M"],
+    )
+    # logger.info("TEMPORAL [%s]: %s, %s", parameter, interval, time_values)
+
+    extent = Extent(
+        spatial=spatial, temporal=temporal, custom=custom, vertical=vertical
+    )
+
+    return extent
+
+
 def get_collectioninfo_from_md(
     metadata: dict,
     collection_name: str,
@@ -190,12 +236,6 @@ def get_collectioninfo_from_md(
     if metadata[collection_name][first_param]["layer"]["variables"] is None:
         return None
 
-    # edr_collectionsinfo = get_edr_collections()
-    # if edr_collection not in edr_collectionsinfo:
-    #     raise EdrException(code=400, description="Unknown or unconfigured collection")
-
-    # edr_collectioninfo = edr_collectionsinfo[edr_collection]
-
     base_url = get_base_url() + f"/edr/collections/{collection_name}"
 
     if instance is not None:
@@ -204,62 +244,17 @@ def get_collectioninfo_from_md(
     links: list[Link] = []
     links.append(Link(href=f"{base_url}", rel="collection", type="application/json"))
 
-    ref_times = None
+    has_instances = False
     if not instance:
         ref_times = get_ref_times_for_coll(metadata[collection_name])
         if ref_times and len(ref_times) > 0:
+            has_instances = True
             instances_link = Link(
                 href=f"{base_url}/instances", rel="collection", type="application/json"
             )
             links.append(instances_link)
 
-    print("MD:", metadata[collection_name][first_param])
-
-    bbox = [metadata[collection_name][first_param]["layer"]["latlonbox"]]
-    if bbox is None:
-        return None, None
-    crs = 'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]'
-    spatial = Spatial(bbox=bbox, crs=crs)
-
-    # if ref_times is None or len(ref_times) == 0:
-    (interval, time_values) = get_times_for_collection(
-        metadata[collection_name], first_param
-    )
-    # else:
-    # if instance is None:
-    #     instance = max(ref_times)  # Default instance is latest instance
-    # (interval, time_values) = create_times_for_instance(
-    #     edr_collectioninfo, instance
-    # )
-
-    customlist: list = get_custom_dims_for_collection(
-        metadata[collection_name], first_param
-    )
-
-    print("CUSTOM:", customlist)
-    # Custom can be a list of custom dimensions, like ensembles, thresholds
-    custom = []
-    if customlist is not None:
-        for custom_el in customlist:
-            custom.append(Custom(**custom_el))
-
-    vertical = None
-    vertical_dim = get_vertical_dim_for_collection(
-        metadata[collection_name], first_param
-    )
-    if vertical_dim:
-        vertical = Vertical(**vertical_dim)
-
-    temporal = Temporal(
-        interval=interval,  # [["2022-06-30T09:00:00Z", "2022-07-02T06:00:00Z"]],
-        trs='TIMECRS["DateTime",TDATUM["Gregorian Calendar"],CS[TemporalDateTime,1],AXIS["Time (T)",future]',
-        values=time_values,  # ["R49/2022-06-30T06:00:00/PT60M"],
-    )
-    logger.info("TEMPORAL [%s]: %s, %s", collection_name, interval, time_values)
-
-    extent = Extent(
-        spatial=spatial, temporal=temporal, custom=custom, vertical=vertical
-    )
+    primary_extent = get_extent_from_md(metadata[collection_name], first_param)
 
     #   crs_details=[crs_object],
     position_variables = Variables(
@@ -301,7 +296,7 @@ def get_collectioninfo_from_md(
     )
 
     instances_link = None
-    if ref_times and len(ref_times) > 0:
+    if has_instances:
         instances_variables = Variables(
             query_type="instances",
             #  crs_details=[crs_object],
@@ -328,7 +323,9 @@ def get_collectioninfo_from_md(
             locations=EDRQuery(link=locations_link),
         )
 
-    parameter_info = get_params_for_collection(metadata[collection_name])
+    parameter_info = get_params_for_collection(
+        metadata[collection_name], primary_extent
+    )
 
     crs = ["EPSG:4326"]
 
@@ -337,7 +334,7 @@ def get_collectioninfo_from_md(
         collection = Collection(
             links=links,
             id=collection_name,
-            extent=extent,
+            extent=primary_extent,
             data_queries=data_queries,
             parameter_names=parameter_info,
             crs=crs,
@@ -347,7 +344,7 @@ def get_collectioninfo_from_md(
         collection = Instance(
             links=links,
             id=instance,
-            extent=extent,
+            extent=primary_extent,
             data_queries=data_queries,
             parameter_names=parameter_info,
             crs=crs,
@@ -448,12 +445,15 @@ def create_times_for_instance(edr_collectioninfo: dict, instance: str):
     return interval, times
 
 
-def get_params_for_collection(metadata: dict) -> dict[str, Parameter]:
+def get_params_for_collection(
+    metadata: dict, primary_extent: Extent
+) -> dict[str, Parameter]:
     """
     Returns a dictionary with parameters for given EDR collection
     """
     parameter_names = {}
     for param_id in metadata:
+        current_extent = get_extent_from_md(metadata, param_id)
         param_metadata = get_param_metadata(metadata[param_id])
         param = Parameter(
             id=param_metadata["wms_layer_name"],
@@ -469,6 +469,7 @@ def get_params_for_collection(metadata: dict) -> dict[str, Parameter]:
                 )
             ),
             label=param_metadata["parameter_label"],
+            extent=current_extent if current_extent != primary_extent else None,
         )
         parameter_names[param_id] = param
     return parameter_names
@@ -525,7 +526,6 @@ def get_custom_dims_for_collection(metadata: dict, parameter: str = None):
         # default to first layer
         layer = metadata[list(metadata)[0]]
     for dim_name in layer["dims"]:
-        print("layer", layer["dims"][dim_name])
         if not layer["dims"][dim_name]["hidden"]:
             # Not needed for non custom dims:
             if dim_name not in [
@@ -533,19 +533,18 @@ def get_custom_dims_for_collection(metadata: dict, parameter: str = None):
                 "time",
                 "elevation",
             ]:
+                dim_values = layer["dims"][dim_name]["values"].split(",")
                 custom_dim = {
                     "id": dim_name,
                     "interval": [
                         [
-                            layer["dims"][dim_name]["values"][0],
-                            layer["dims"][dim_name]["values"][-1],
+                            dim_values[0],
+                            dim_values[-1],
                         ]
                     ],
-                    "values": [layer["dims"][dim_name]["values"]],
+                    "values": dim_values,
                     "reference": f"custom_{dim_name}",
                 }
-                if layer["dims"][dim_name]["values"] == ["1", "2", "3", "4", "5"]:
-                    custom_dim["values"] = ["R5/1/1"]
                 # if dim_name == "member":
                 #     custom_dim["id"] = "number"
                 custom.append(custom_dim)
