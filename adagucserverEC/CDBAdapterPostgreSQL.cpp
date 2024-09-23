@@ -1174,3 +1174,50 @@ int CDBAdapterPostgreSQL::dropLayerFromLayerMetadataStore(const char *datasetNam
               datasetName, layerName);
   return dataBaseConnection->query(query.c_str());
 }
+
+bool CDBAdapterPostgreSQL::tryAdvisoryLock(size_t key) {
+  CPGSQLDB *dataBaseConnection = getDataBaseConnection();
+  if (dataBaseConnection == NULL) {
+    return false;
+  }
+  CT::string query;
+  query.print("SELECT pg_try_advisory_lock(%d) as \"result\";", key);
+  auto *store = dataBaseConnection->queryToStore(query.c_str());
+  if (store == nullptr || store->getSize() != 1) {
+    CDBError("Query failed [%s]:", dataBaseConnection->getError());
+    return false;
+  }
+  auto result = store->getRecord(0)->get("result");
+  bool succesfullylocked = result != nullptr && result->equals("t");
+  if (succesfullylocked) {
+    CDBDebug("pg_try_advisory_lock succesfullylocked");
+  } else {
+    CDBDebug("pg_try_advisory_lock NOT succesfullylocked");
+  }
+  delete store;
+  return succesfullylocked;
+}
+
+bool CDBAdapterPostgreSQL::advisoryUnLock(size_t key) {
+  CPGSQLDB *dataBaseConnection = getDataBaseConnection();
+  if (dataBaseConnection == NULL) {
+    return false;
+  }
+  CT::string query;
+
+  query.print("SELECT pg_advisory_unlock(%d) as \"result\";", key);
+  auto store = dataBaseConnection->queryToStore(query.c_str());
+  if (store == nullptr || store->getSize() != 1) {
+    CDBError("Query failed [%s]:", dataBaseConnection->getError());
+    return false;
+  }
+  auto result = store->getRecord(0)->get("result");
+  bool succesfullyunlocked = result != nullptr && result->equals("t");
+  if (succesfullyunlocked) {
+    CDBDebug("pg_advisory_unlock succesfullyunlocked");
+  } else {
+    CDBWarning("pg_advisory_unlock NOT succesfullyunlocked");
+  }
+  delete store;
+  return succesfullyunlocked;
+}

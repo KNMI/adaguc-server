@@ -250,15 +250,14 @@ int loadLayerProjectionAndExtentListFromMetadataDb(MetadataLayer *metadataLayer)
     }
     json a;
     auto c = json::parse(projInfo.c_str());
-    for (const auto& d : c.items()) {
+    for (const auto &d : c.items()) {
       auto bboxArray = d.value();
-      double bbox[4] =
-          {
-              bboxArray[0].get_to((bbox[0])),
-              bboxArray[1].get_to((bbox[1])),
-              bboxArray[2].get_to((bbox[2])),
-              bboxArray[3].get_to((bbox[3])),
-          };
+      double bbox[4] = {
+          bboxArray[0].get_to((bbox[0])),
+          bboxArray[1].get_to((bbox[1])),
+          bboxArray[2].get_to((bbox[2])),
+          bboxArray[3].get_to((bbox[3])),
+      };
       LayerMetadataProjection projection(d.key().c_str(), bbox);
       projection.name = d.key().c_str();
       metadataLayer->layerMetadata.projectionList.push_back(projection);

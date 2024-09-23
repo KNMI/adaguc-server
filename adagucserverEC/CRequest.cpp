@@ -3422,11 +3422,11 @@ int CRequest::updatedb(CT::string *tailPath, CT::string *layerPathToScan, int sc
   } else {
     CDBDebug("***** Finished DB Update *****");
   }
-
+  // TODO: 2024-09-20: Probably not the right place to clear these
   CDFObjectStore::getCDFObjectStore()->clear();
   CConvertGeoJSON::clearFeatureStore();
   CDFStore::clear();
-  CDBFactory::clear();
+
   return errorHasOccured > 0;
 }
 

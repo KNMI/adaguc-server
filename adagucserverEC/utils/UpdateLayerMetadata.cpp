@@ -93,7 +93,7 @@ int updateLayerMetadata(CRequest &request) {
     CT::string *datasetName = record->get("datasetname");
     CT::string *layerName = record->get("layername");
     if (datasetName != nullptr && layerName != nullptr) {
-      datasetNamesFromDB[record->get("datasetname")->c_str()].insert(record->get("layername")->c_str());
+      datasetNamesFromDB[datasetName->c_str()].insert(layerName->c_str());
     }
   }
 
