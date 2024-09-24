@@ -14,10 +14,11 @@ int getDimensionListAsJson(MetadataLayer *metadataLayer, json &dimListJson) {
       item["hidden"] = dimension.hidden;
       item["isvertical"] = dimension.isvertical;
       item["iscustom"] = dimension.iscustom;
-      item["name"] = dimension.name.c_str();
+      item["serviceName"] = dimension.serviceName.c_str();
+      item["cdfName"] = dimension.cdfName.c_str();
       item["units"] = dimension.units.c_str();
       item["values"] = dimension.values.c_str();
-      dimListJson[dimension.name.c_str()] = item;
+      dimListJson[dimension.serviceName.c_str()] = item;
     }
   } catch (json::exception &e) {
     CDBWarning("Unable to build json structure");
@@ -28,7 +29,7 @@ int getDimensionListAsJson(MetadataLayer *metadataLayer, json &dimListJson) {
 
 int getLayerBaseMetadataAsJson(MetadataLayer *metadataLayer, json &layerMetadataItem) {
   try {
-    layerMetadataItem["name"] = metadataLayer->layerMetadata.name;
+    layerMetadataItem["layername"] = metadataLayer->layerMetadata.name;
     layerMetadataItem["title"] = metadataLayer->layerMetadata.title;
     layerMetadataItem["group"] = metadataLayer->layerMetadata.group;
     layerMetadataItem["abstract"] = metadataLayer->layerMetadata.abstract;
@@ -183,7 +184,7 @@ int loadLayerMetadataStructFromMetadataDb(MetadataLayer *metadataLayer) {
     }
     json a;
     auto i = a.parse(layerMetadataAsJson.c_str());
-    metadataLayer->layerMetadata.name = i["name"].get<std::string>().c_str();
+    metadataLayer->layerMetadata.name = i["layername"].get<std::string>().c_str();
     metadataLayer->layerMetadata.title = i["title"].get<std::string>().c_str();
     metadataLayer->layerMetadata.group = i["group"].get<std::string>().c_str();
     metadataLayer->layerMetadata.abstract = i["abstract"].get<std::string>().c_str();
@@ -251,15 +252,17 @@ int loadLayerProjectionAndExtentListFromMetadataDb(MetadataLayer *metadataLayer)
       return 1;
     }
     json a;
-    auto c = a.parse(projInfo.c_str());
-    for (auto d : c.items()) {
+    auto c = json::parse(projInfo.c_str());
+    for (const auto &d : c.items()) {
       auto bboxArray = d.value();
-      LayerMetadataProjection projection;
+      double bbox[4] = {
+          bboxArray[0].get_to((bbox[0])),
+          bboxArray[1].get_to((bbox[1])),
+          bboxArray[2].get_to((bbox[2])),
+          bboxArray[3].get_to((bbox[3])),
+      };
+      LayerMetadataProjection projection(d.key().c_str(), bbox);
       projection.name = d.key().c_str();
-      bboxArray[0].get_to((projection.dfBBOX[0]));
-      bboxArray[1].get_to((projection.dfBBOX[1]));
-      bboxArray[2].get_to((projection.dfBBOX[2]));
-      bboxArray[3].get_to((projection.dfBBOX[3]));
       metadataLayer->layerMetadata.projectionList.push_back(projection);
     }
   } catch (json::exception &e) {
@@ -330,7 +333,6 @@ int loadLayerStyleListFromMetadataDb(MetadataLayer *metadataLayer) {
 }
 
 int storeLayerDimensionListIntoMetadataDb(MetadataLayer *metadataLayer) {
-  CDBDebug("storeLayerDimensionListIntoMetadataDb");
   try {
     json dimListJson;
     if (getDimensionListAsJson(metadataLayer, dimListJson) != 0) {
@@ -367,7 +369,8 @@ int loadLayerDimensionListFromMetadataDb(MetadataLayer *metadataLayer) {
       auto dimensionProperties = d.value();
 
       LayerMetadataDim dimension = {
-          .name = dimensionProperties["name"].get<std::string>().c_str(),
+          .serviceName = dimensionProperties["serviceName"].get<std::string>().c_str(),
+          .cdfName = dimensionProperties["cdfName"].get<std::string>().c_str(),
           .units = dimensionProperties["units"].get<std::string>().c_str(),
           .values = dimensionProperties["values"].get<std::string>().c_str(),
           .defaultValue = dimensionProperties["defaultValue"].get<std::string>().c_str(),
@@ -396,7 +399,7 @@ int updateMetaDataTable(CDataSource *dataSource) {
   metadataLayer->layer = dataSource->cfgLayer;
   metadataLayer->srvParams = dataSource->srvParams;
   metadataLayer->dataSource = dataSource;
-  populateLayerMetadataStruct(metadataLayer, false);
+  populateMetadataLayerStruct(metadataLayer, false);
   storemetadataLayerIntoMetadataDb(metadataLayer);
   delete metadataLayer;
   return 0;

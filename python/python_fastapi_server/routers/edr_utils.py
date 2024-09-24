@@ -636,7 +636,7 @@ def get_param_metadata(param_metadata: dict) -> dict:
     Returns:
         dict: dictionary with all metadata required to construct a Edr Parameter object.
     """
-    wms_layer_name = param_metadata["layer"]["name"]
+    wms_layer_name = param_metadata["layer"]["layername"]
     observed_property_id = wms_layer_name
     parameter_label = param_metadata["layer"]["title"]
     parameter_unit = param_metadata["layer"]["variables"][0]["units"]

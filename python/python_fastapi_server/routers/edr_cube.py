@@ -186,6 +186,6 @@ def get_translate_dims(metadata: dict) -> dict:
     translated_dims = {}
     for layer_name in metadata:
         for dim_name in metadata[layer_name]["dims"]:
-            dim_netcdf_name = metadata[layer_name]["dims"]["name"]
-            translated_dims[dim_netcdf_name] = dim_name
+            dim_cdfname = metadata[layer_name]["dims"][dim_name]["cdfName"]
+            translated_dims[dim_cdfname] = dim_cdfname
     return {}

@@ -42,13 +42,13 @@ def covjson_from_resp(dats, metadata):
             custom_name = None
             vertical_name = None
             for param_dim in metadata[dat["name"]]["dims"].values():
-                print("Checking dim ", param_dim["name"])
-                if param_dim["name"] not in ["x", "y", "reference_time", "time"]:
+                print("Checking dim ", param_dim["cdfName"])
+                if param_dim["cdfName"] not in ["x", "y", "reference_time", "time"]:
                     if not param_dim["hidden"]:
-                        if "isvertical" in param_dim:
-                            vertical_name = param_dim["name"]
-                        else:
-                            custom_name = param_dim["name"]
+                        if "isvertical" in param_dim and param_dim["isvertical"]:
+                            vertical_name = param_dim["cdfName"]
+                        elif "iscustom" in param_dim and param_dim["iscustom"]:
+                            custom_name = param_dim["cdfName"]
             lat = float(lat)
             lon = float(lon)
             dims = makedims(dat["dims"], dat["data"])
@@ -60,8 +60,8 @@ def covjson_from_resp(dats, metadata):
 
             custom_dim_values = []
             if custom_name is not None and len(custom_name) > 0:
-                print("CUSTOM_DIM:", custom_name, dat)
                 custom_dim_values = getdimvals(dims, custom_name)
+                print("CUSTOM_DIM:", custom_name, custom_dim_values)
 
             valstack = []
             # Translate the adaguc GFI object in something we can handle in Python

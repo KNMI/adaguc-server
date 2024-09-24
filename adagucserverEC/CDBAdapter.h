@@ -99,6 +99,10 @@ public:
 
   virtual int storeLayerMetadata(const char *datasetName, const char *layerName, const char *metadataKey, const char *metadatablob) = 0;
   virtual CDBStore::Store *getLayerMetadataStore(const char *datasetName) = 0;
+  virtual int dropLayerFromLayerMetadataStore(const char *datasetName, const char *layerName) = 0;
+
+  virtual bool tryAdvisoryLock(size_t key) = 0;
+  virtual bool advisoryUnLock(size_t key) = 0;
 };
 
 #endif
