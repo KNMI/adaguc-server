@@ -249,15 +249,17 @@ int loadLayerProjectionAndExtentListFromMetadataDb(MetadataLayer *metadataLayer)
       return 1;
     }
     json a;
-    auto c = a.parse(projInfo.c_str());
-    for (auto d : c.items()) {
+    auto c = json::parse(projInfo.c_str());
+    for (const auto &d : c.items()) {
       auto bboxArray = d.value();
-      LayerMetadataProjection projection;
+      double bbox[4] = {
+          bboxArray[0].get_to((bbox[0])),
+          bboxArray[1].get_to((bbox[1])),
+          bboxArray[2].get_to((bbox[2])),
+          bboxArray[3].get_to((bbox[3])),
+      };
+      LayerMetadataProjection projection(d.key().c_str(), bbox);
       projection.name = d.key().c_str();
-      bboxArray[0].get_to((projection.dfBBOX[0]));
-      bboxArray[1].get_to((projection.dfBBOX[1]));
-      bboxArray[2].get_to((projection.dfBBOX[2]));
-      bboxArray[3].get_to((projection.dfBBOX[3]));
       metadataLayer->layerMetadata.projectionList.push_back(projection);
     }
   } catch (json::exception &e) {

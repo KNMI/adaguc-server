@@ -30,7 +30,7 @@ int getLayerMetadataAsJson(CServerParams *srvParams, json &result) {
     CT::string *datasetName = record->get("datasetname");
     CT::string *layerName = record->get("layername");
     if (datasetName != nullptr && layerName != nullptr) {
-      datasetNames[record->get("datasetname")->c_str()].insert(record->get("layername")->c_str());
+      datasetNames[datasetName->c_str()].insert(layerName->c_str());
     }
   }
 

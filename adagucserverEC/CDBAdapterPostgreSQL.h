@@ -93,6 +93,8 @@ public:
   int storeLayerMetadata(const char *datasetName, const char *layerName, const char *metadataKey, const char *metadatablob);
   CDBStore::Store *getLayerMetadataStore(const char *datasetName);
   int dropLayerFromLayerMetadataStore(const char *datasetName, const char *layerName);
+  bool tryAdvisoryLock(size_t);
+  bool advisoryUnLock(size_t);
 };
 
 #endif

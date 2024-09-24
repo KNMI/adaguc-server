@@ -15,8 +15,7 @@ struct LayerMetadataDim {
 };
 
 struct LayerMetadataProjection {
-  LayerMetadataProjection() {}
-  LayerMetadataProjection(CT::string name, double bbox[]) {
+  LayerMetadataProjection(const CT::string& name, const double bbox[]) {
     this->name = name;
     for (size_t j = 0; j < 4; j++) {
       this->dfBBOX[j] = bbox[j];

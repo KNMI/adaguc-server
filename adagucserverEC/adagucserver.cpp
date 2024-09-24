@@ -34,6 +34,8 @@
 #include "Types/ProjectionStore.h"
 #include "utils/UpdateLayerMetadata.h"
 #include "utils/ConfigurationUtils.h"
+#include "CDBFactory.h"
+#include "CConvertGeoJSON.h"
 
 DEF_ERRORMAIN();
 
@@ -326,7 +328,19 @@ int _main(int argc, char **argv, char **) {
       CDBError("setCRequestConfigFromEnvironment failed");
       return 1;
     }
+    auto db = CDBFactory::getDBAdapter(baseRequest.getServerParams()->cfg);
+    if (db == nullptr || db->tryAdvisoryLock(LOCK_METADATATABLE_ID) == false) {
+      CDBDebug("UPDATELAYERMETADATA: Skipping updateLayerMetadata already busy (tryAdvisoryLock)");
+      return 1;
+    } else {
+      CDBDebug("UPDATELAYERMETADATA: tryAdvisoryLock obtained");
+    }
+
+    CDBDebug("UPDATELAYERMETADATA: STARTING");
     status = updateLayerMetadata(baseRequest);
+    CDBDebug("UPDATELAYERMETADATA: DONE");
+    db->advisoryUnLock(LOCK_METADATATABLE_ID);
+    CDBDebug("UPDATELAYERMETADATA: Unlocked");
     return status;
   }
 
@@ -433,6 +447,8 @@ int main(int argc, char **argv, char **envp) {
   CTime::cleanInstances();
 
   CDFObjectStore::getCDFObjectStore()->clear();
+
+  CDBFactory::clear();
 
   proj_clear_cache();
   BBOXProjectionClearCache();

@@ -127,11 +127,11 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
 
   std::map<std::string, LayerMetadataProjection> projectionMap;
   // Make a unique list of projections
-  for (auto p : metadataLayer->layerMetadata.projectionList) {
-    projectionMap[p.name.c_str()] = p;
+  for (const auto& p : metadataLayer->layerMetadata.projectionList) {
+    projectionMap.emplace(p.name.c_str(), p);
   }
   metadataLayer->layerMetadata.projectionList.clear();
-  for (auto p : projectionMap) {
+  for (const auto& p : projectionMap) {
     metadataLayer->layerMetadata.projectionList.push_back(p.second);
   }
 

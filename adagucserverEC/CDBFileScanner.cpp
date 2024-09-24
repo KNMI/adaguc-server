@@ -958,6 +958,11 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
           CDBDebug("Obtained filename from layer configuration [%s]", dataSource->cfgLayer->FilePath[0]->value.c_str());
         } else {
           std::string fileName;
+          if (dataSource->requiredDims.size() == 0) {
+            if (CAutoConfigure::autoConfigureDimensions(dataSource) != 0) {
+              CDBWarning("Unable to autoconfigure dims");
+            }
+          }
           if (CAutoConfigure::getFileNameForDataSource(dataSource, fileName) != 0) {
             CDBDebug("Unable to getFileNameForDataSource");
             return 1;
