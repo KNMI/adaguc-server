@@ -100,8 +100,8 @@ int CXMLGen::getWMS_1_0_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataL
         // Dims
         for (auto dim : layer->layerMetadata.dimList) {
           if (dim.hidden) continue;
-          XMLDoc->printconcat("<Dimension name=\"%s\" units=\"%s\"/>\n", dim.name.c_str(), dim.units.c_str());
-          XMLDoc->printconcat("<Extent name=\"%s\" default=\"%s\" multipleValues=\"%d\" nearestValue=\"0\">", dim.name.c_str(), dim.defaultValue.c_str(), 1);
+          XMLDoc->printconcat("<Dimension name=\"%s\" units=\"%s\"/>\n", dim.serviceName.c_str(), dim.units.c_str());
+          XMLDoc->printconcat("<Extent name=\"%s\" default=\"%s\" multipleValues=\"%d\" nearestValue=\"0\">", dim.serviceName.c_str(), dim.defaultValue.c_str(), 1);
           XMLDoc->concat(dim.values.c_str());
           XMLDoc->concat("</Extent>\n");
         }
@@ -237,8 +237,8 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc, std::vector<MetadataL
             // Dims
             for (auto dim : layer->layerMetadata.dimList) {
               if (dim.hidden) continue;
-              XMLDoc->printconcat("<Dimension name=\"%s\" units=\"%s\"/>\n", dim.name.c_str(), dim.units.c_str());
-              XMLDoc->printconcat("<Extent name=\"%s\" default=\"%s\" multipleValues=\"%d\" nearestValue=\"0\">", dim.name.c_str(), dim.defaultValue.c_str(), 1);
+              XMLDoc->printconcat("<Dimension name=\"%s\" units=\"%s\"/>\n", dim.serviceName.c_str(), dim.units.c_str());
+              XMLDoc->printconcat("<Extent name=\"%s\" default=\"%s\" multipleValues=\"%d\" nearestValue=\"0\">", dim.serviceName.c_str(), dim.defaultValue.c_str(), 1);
               XMLDoc->concat(dim.values.c_str());
               XMLDoc->concat("</Extent>\n");
             }
@@ -649,11 +649,12 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataL
             // Dims
             for (auto dim : layer->layerMetadata.dimList) {
               if (dim.hidden) continue;
-              if (dim.name.indexOf("time") != -1) {
-                XMLDoc->printconcat("<Dimension name=\"%s\" units=\"%s\" default=\"%s\" multipleValues=\"%d\" nearestValue=\"0\" current=\"1\">", dim.name.c_str(), dim.units.c_str(),
+              if (dim.serviceName.indexOf("time") != -1) {
+                XMLDoc->printconcat("<Dimension name=\"%s\" units=\"%s\" default=\"%s\" multipleValues=\"%d\" nearestValue=\"0\" current=\"1\">", dim.serviceName.c_str(), dim.units.c_str(),
                                     dim.defaultValue.c_str(), 1);
               } else {
-                XMLDoc->printconcat("<Dimension name=\"%s\" units=\"%s\" default=\"%s\" multipleValues=\"%d\" nearestValue=\"0\" >", dim.name.c_str(), dim.units.c_str(), dim.defaultValue.c_str(), 1);
+                XMLDoc->printconcat("<Dimension name=\"%s\" units=\"%s\" default=\"%s\" multipleValues=\"%d\" nearestValue=\"0\" >", dim.serviceName.c_str(), dim.units.c_str(),
+                                    dim.defaultValue.c_str(), 1);
               }
               XMLDoc->concat(dim.values.c_str());
               XMLDoc->concat("</Dimension>\n");

@@ -12,10 +12,11 @@ int getDimensionListAsJson(MetadataLayer *metadataLayer, json &dimListJson) {
       item["defaultValue"] = dimension.defaultValue.c_str();
       item["hasMultipleValues"] = dimension.hasMultipleValues;
       item["hidden"] = dimension.hidden;
-      item["name"] = dimension.name.c_str();
+      item["serviceName"] = dimension.serviceName.c_str();
+      item["cdfName"] = dimension.cdfName.c_str();
       item["units"] = dimension.units.c_str();
       item["values"] = dimension.values.c_str();
-      dimListJson[dimension.name.c_str()] = item;
+      dimListJson[dimension.serviceName.c_str()] = item;
     }
   } catch (json::exception &e) {
     CDBWarning("Unable to build json structure");
@@ -26,7 +27,7 @@ int getDimensionListAsJson(MetadataLayer *metadataLayer, json &dimListJson) {
 
 int getLayerBaseMetadataAsJson(MetadataLayer *metadataLayer, json &layerMetadataItem) {
   try {
-    layerMetadataItem["name"] = metadataLayer->layerMetadata.name;
+    layerMetadataItem["layername"] = metadataLayer->layerMetadata.name;
     layerMetadataItem["title"] = metadataLayer->layerMetadata.title;
     layerMetadataItem["group"] = metadataLayer->layerMetadata.group;
     layerMetadataItem["abstract"] = metadataLayer->layerMetadata.abstract;
@@ -181,7 +182,7 @@ int loadLayerMetadataStructFromMetadataDb(MetadataLayer *metadataLayer) {
     }
     json a;
     auto i = a.parse(layerMetadataAsJson.c_str());
-    metadataLayer->layerMetadata.name = i["name"].get<std::string>().c_str();
+    metadataLayer->layerMetadata.name = i["layername"].get<std::string>().c_str();
     metadataLayer->layerMetadata.title = i["title"].get<std::string>().c_str();
     metadataLayer->layerMetadata.group = i["group"].get<std::string>().c_str();
     metadataLayer->layerMetadata.abstract = i["abstract"].get<std::string>().c_str();
@@ -366,7 +367,8 @@ int loadLayerDimensionListFromMetadataDb(MetadataLayer *metadataLayer) {
       auto dimensionProperties = d.value();
 
       LayerMetadataDim dimension = {
-          .name = dimensionProperties["name"].get<std::string>().c_str(),
+          .serviceName = dimensionProperties["serviceName"].get<std::string>().c_str(),
+          .cdfName = dimensionProperties["cdfName"].get<std::string>().c_str(),
           .units = dimensionProperties["units"].get<std::string>().c_str(),
           .values = dimensionProperties["values"].get<std::string>().c_str(),
           .defaultValue = dimensionProperties["defaultValue"].get<std::string>().c_str(),
