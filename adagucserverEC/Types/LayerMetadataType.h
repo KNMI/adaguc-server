@@ -6,7 +6,8 @@
 #include <CDataSource.h>
 
 struct LayerMetadataDim {
-  CT::string name;
+  CT::string serviceName;
+  CT::string cdfName;
   CT::string units;
   CT::string values;
   CT::string defaultValue;
@@ -15,7 +16,7 @@ struct LayerMetadataDim {
 };
 
 struct LayerMetadataProjection {
-  LayerMetadataProjection(const CT::string& name, const double bbox[]) {
+  LayerMetadataProjection(const CT::string &name, const double bbox[]) {
     this->name = name;
     for (size_t j = 0; j < 4; j++) {
       this->dfBBOX[j] = bbox[j];

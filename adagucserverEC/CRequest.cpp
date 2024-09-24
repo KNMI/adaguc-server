@@ -42,6 +42,10 @@
 #include <CReadFile.h>
 #include "Definitions.h"
 #include "utils/LayerUtils.h"
+#include "utils/XMLGenUtils.h"
+#include "utils/LayerMetadataStore.h"
+#include <json_adaguc.h>
+#include "utils/LayerMetadataToJson.h"
 
 const char *CRequest::className = "CRequest";
 int CRequest::CGI = 0;
@@ -2144,6 +2148,7 @@ int CRequest::process_all_layers() {
         CT::string dumpString = CDF::dump(dataSources[j]->getDataObject(0)->cdfObject);
         printf("%s", dumpString.c_str());
         reader.close();
+        return 0;
       }
 
       if (srvParam->requestType == REQUEST_WMS_GETREFERENCETIMES) {
@@ -3199,6 +3204,16 @@ int CRequest::process_querystring() {
         CDBError("ADAGUC Server: GetMetaData is restricted");
         return 1;
       }
+
+      if (srvParam->Format.equals("application/json")) {
+        // GetMetadata for specific dataset and layer
+        json result;
+        getLayerMetadataAsJson(srvParam, result);
+        printf("%s%c%c\n", "Content-Type:application/json", 13, 10);
+        printf("%s", result.dump().c_str());
+        return 0;
+      }
+
       if (dFound_WMSLAYER == 0) {
         CDBError("ADAGUC Server: Parameter LAYER missing");
         dErrorOccured = 1;
