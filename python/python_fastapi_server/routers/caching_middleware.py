@@ -52,7 +52,7 @@ async def response_to_cache(redis_pool, request, headers, data, ex: int):
         "utf-8"
     )
     compressed_data = brotli.compress(data, quality=4)
-    if len(data) < MAX_SIZE_FOR_CACHING:
+    if len(compressed_data) < MAX_SIZE_FOR_CACHING:
         redis_client = redis.Redis(connection_pool=redis_pool)
         await redis_client.set(
             key,
