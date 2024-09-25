@@ -10,6 +10,7 @@ from datetime import datetime
 import redis.asyncio as redis  # This can also be used to connect to a Redis cluster
 
 import json
+import brotli
 
 ADAGUC_REDIS = os.environ.get("ADAGUC_REDIS")
 
@@ -31,7 +32,7 @@ async def get_cached_response(redis_pool, request):
     headers_len = int(cached[10:16].decode("utf-8"))
     headers = json.loads(cached[16 : 16 + headers_len].decode("utf-8"))
 
-    data = cached[16 + headers_len :]
+    data = brotli.decompress(cached[16 + headers_len :])
     return age, headers, data
 
 
@@ -50,14 +51,15 @@ async def response_to_cache(redis_pool, request, headers, data, ex: int):
     entrytime = f"{calendar.timegm(datetime.utcnow().utctimetuple()):10d}".encode(
         "utf-8"
     )
-    if len(data) < MAX_SIZE_FOR_CACHING:
+    compressed_data = brotli.compress(data, quality=4)
+    if len(compressed_data) < MAX_SIZE_FOR_CACHING:
         redis_client = redis.Redis(connection_pool=redis_pool)
         await redis_client.set(
             key,
             entrytime
             + f"{len(headers_json):06d}".encode("utf-8")
             + headers_json
-            + data,
+            + compressed_data,
             ex=ex,
         )
         await redis_client.aclose()
