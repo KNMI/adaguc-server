@@ -30,6 +30,12 @@
 #include <getopt.h>
 
 #include "ProjCache.h"
+#include "adagucserver.h"
+#include "Types/ProjectionStore.h"
+#include "utils/UpdateLayerMetadata.h"
+#include "utils/ConfigurationUtils.h"
+#include "CDBFactory.h"
+#include "CConvertGeoJSON.h"
 
 DEF_ERRORMAIN();
 
@@ -78,35 +84,6 @@ void serverWarningFunction(const char *msg) {
 
 void serverLogFunctionCMDLine(const char *msg) { printf("%s", msg); }
 
-#include "adagucserver.h"
-#include "Types/ProjectionStore.h"
-
-void serverLogFunctionNothing(const char *) {}
-
-/* Set config file from environment variable ADAGUC_CONFIG */
-int setCRequestConfigFromEnvironment(CRequest *request, const char *additionalDataset = nullptr) {
-  char *configfile = getenv("ADAGUC_CONFIG");
-  if (configfile != NULL) {
-    CT::string configWithAdditionalDataset = configfile;
-    if (additionalDataset != nullptr && strlen(additionalDataset) > 0) {
-      configWithAdditionalDataset.concat(",");
-      configWithAdditionalDataset.concat(additionalDataset);
-    }
-    int status = request->setConfigFile(configWithAdditionalDataset.c_str());
-
-    /* Check logging level */
-    if (request->getServerParams()->isDebugLoggingEnabled() == false) {
-      setDebugFunction(serverLogFunctionNothing);
-    }
-
-    return status;
-  } else {
-    CDBError("No configuration file is set. Please set ADAGUC_CONFIG environment variable accordingly.");
-    return 1;
-  }
-  return 0;
-}
-
 /**
  * @param layerPathToScan: the provided file to scan
  */
@@ -128,49 +105,42 @@ std::set<std::string> findDataSetsToScan(CT::string layerPathToScan, bool verbos
     CDBDebug("directoryOfFileToScan = [%s]", directoryOfFileToScan.c_str());
   }
   srvParam->verbose = false;
-  std::vector<CT::string> listOfDatasets;
-  for (size_t j = 0; j < srvParam->cfg->Dataset.size(); j++) {
-    if (srvParam->cfg->Dataset[j]->attr.enabled.equals("true") && srvParam->cfg->Dataset[j]->attr.location.empty() == false) {
-      if (verbose) {
-        CDBDebug("Dataset locations %s", srvParam->cfg->Dataset[j]->attr.location.c_str());
-      }
-      auto files = CDirReader::listDir(srvParam->cfg->Dataset[j]->attr.location.c_str(), false, "^.*\\.xml$");
-      for (auto &dataset : files) {
-        if (verbose) {
-          CDBDebug("Testing dataset %s", dataset.c_str());
-        }
-        CRequest configParser;
-        auto configSrvParam = configParser.getServerParams();
-        configSrvParam->verbose = false;
-        setCRequestConfigFromEnvironment(&configParser, dataset.c_str());
+  auto datasetList = getEnabledDatasetsConfigurations(srvParam);
 
-        if (configSrvParam && configSrvParam->cfg) {
-          auto layers = configSrvParam->cfg->Layer;
-          for (size_t j = 0; j < layers.size(); j++) {
-            if (layers[j]->attr.type.equals("database")) {
-              if (layers[j]->FilePath.size() > 0) {
-                CT::string filePath = CDirReader::makeCleanPath(layers[j]->FilePath[0]->value);
-                // Directories need to end with a /
-                CT::string filePathWithTrailingSlash = filePath + "/";
-                CT::string filter = layers[j]->FilePath[0]->attr.filter;
-                // CDBDebug(" %s %s", directoryOfFileToScan.c_str(), directoryOfFileToScan.c_str());
-                // When the FilePath in the Layer configuration is exactly the same as the file to scan, give a Match
-                if (layerPathToScan.equals(filePath)) {
-                  if (verbose) {
-                    CDBDebug("Exactly matching: %s", filePath.c_str());
-                  }
-                  datasetsToScan.insert(dataset.c_str());
-                  break;
-                  // When the directory of the file to scan matches the FilePath and the filter matches, give a Match
-                } else if (directoryOfFileToScan.startsWith(filePathWithTrailingSlash)) {
-                  if (CDirReader::testRegEx(layerPathToScan.basename(), filter.c_str()) == 1) {
-                    if (verbose) {
-                      CDBDebug("Directories Matching: %s / %s", filePath.c_str(), filter.c_str());
-                    }
-                    datasetsToScan.insert(dataset.c_str());
-                    break;
-                  }
+  for (auto &dataset : datasetList) {
+    if (verbose) {
+      CDBDebug("Testing dataset %s", dataset.c_str());
+    }
+    CRequest configParser;
+    auto configSrvParam = configParser.getServerParams();
+    configSrvParam->verbose = false;
+    setCRequestConfigFromEnvironment(&configParser, dataset.c_str());
+
+    if (configSrvParam && configSrvParam->cfg) {
+      auto layers = configSrvParam->cfg->Layer;
+      for (size_t j = 0; j < layers.size(); j++) {
+        if (layers[j]->attr.type.equals("database")) {
+          if (layers[j]->FilePath.size() > 0) {
+            CT::string filePath = CDirReader::makeCleanPath(layers[j]->FilePath[0]->value);
+            // Directories need to end with a /
+            CT::string filePathWithTrailingSlash = filePath + "/";
+            CT::string filter = layers[j]->FilePath[0]->attr.filter;
+            // CDBDebug(" %s %s", directoryOfFileToScan.c_str(), directoryOfFileToScan.c_str());
+            // When the FilePath in the Layer configuration is exactly the same as the file to scan, give a Match
+            if (layerPathToScan.equals(filePath)) {
+              if (verbose) {
+                CDBDebug("Exactly matching: %s", filePath.c_str());
+              }
+              datasetsToScan.insert(dataset.c_str());
+              break;
+              // When the directory of the file to scan matches the FilePath and the filter matches, give a Match
+            } else if (directoryOfFileToScan.startsWith(filePathWithTrailingSlash)) {
+              if (CDirReader::testRegEx(layerPathToScan.basename(), filter.c_str()) == 1) {
+                if (verbose) {
+                  CDBDebug("Directories Matching: %s / %s", filePath.c_str(), filter.c_str());
                 }
+                datasetsToScan.insert(dataset.c_str());
+                break;
               }
             }
           }
@@ -178,6 +148,7 @@ std::set<std::string> findDataSetsToScan(CT::string layerPathToScan, bool verbos
       }
     }
   }
+
   return datasetsToScan;
 }
 
@@ -218,6 +189,7 @@ int _main(int argc, char **argv, char **) {
     static struct option long_options[] = {{"updatedb", no_argument, 0, 0},
                                            {"config", required_argument, 0, 0},
                                            {"createtiles", no_argument, 0, 0},
+                                           {"updatelayermetadata", no_argument, 0, 0},
                                            {"tailpath", required_argument, 0, 0},
                                            {"path", required_argument, 0, 0},
                                            {"rescan", no_argument, 0, 0},
@@ -244,6 +216,10 @@ int _main(int argc, char **argv, char **) {
       }
       if (strncmp(long_options[opt_idx].name, "autofinddataset", 15) == 0) {
         automaticallyFindMatchingDataset = true;
+      }
+
+      if (strncmp(long_options[opt_idx].name, "updatelayermetadata", 19) == 0) {
+        scanFlags += CDBUPDATE_LAYER_METADATA;
       }
 
       if (strncmp(long_options[opt_idx].name, "test", 4) == 0) {
@@ -344,6 +320,27 @@ int _main(int argc, char **argv, char **) {
       }
     }
     readyerror();
+    return status;
+  } else if (scanFlags & CDBUPDATE_LAYER_METADATA) {
+    CRequest baseRequest;
+    int status = setCRequestConfigFromEnvironment(&baseRequest);
+    if (status != 0) {
+      CDBError("setCRequestConfigFromEnvironment failed");
+      return 1;
+    }
+    auto db = CDBFactory::getDBAdapter(baseRequest.getServerParams()->cfg);
+    if (db == nullptr || db->tryAdvisoryLock(LOCK_METADATATABLE_ID) == false) {
+      CDBDebug("UPDATELAYERMETADATA: Skipping updateLayerMetadata already busy (tryAdvisoryLock)");
+      return 1;
+    } else {
+      CDBDebug("UPDATELAYERMETADATA: tryAdvisoryLock obtained");
+    }
+
+    CDBDebug("UPDATELAYERMETADATA: STARTING");
+    status = updateLayerMetadata(baseRequest);
+    CDBDebug("UPDATELAYERMETADATA: DONE");
+    db->advisoryUnLock(LOCK_METADATATABLE_ID);
+    CDBDebug("UPDATELAYERMETADATA: Unlocked");
     return status;
   }
 
@@ -450,6 +447,8 @@ int main(int argc, char **argv, char **envp) {
   CTime::cleanInstances();
 
   CDFObjectStore::getCDFObjectStore()->clear();
+
+  CDBFactory::clear();
 
   proj_clear_cache();
   BBOXProjectionClearCache();

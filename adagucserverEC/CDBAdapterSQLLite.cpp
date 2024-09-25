@@ -694,11 +694,6 @@ CDBStore::Store *CDBAdapterSQLLite::getFilesAndIndicesForDimensions(CDataSource 
 
 int CDBAdapterSQLLite::autoUpdateAndScanDimensionTables(CDataSource *dataSource) {
   CServerParams *srvParams = dataSource->srvParams;
-  ;
-  //   if(srvParams->isAutoLocalFileResourceEnabled()==false){
-  //     CDBDebug("Auto update is not available");
-  //     return 0;
-  //   }
   CServerConfig::XMLE_Layer *cfgLayer = dataSource->cfgLayer;
   CSQLLiteDB *dataBaseConnection = getDataBaseConnection();
   if (dataBaseConnection == NULL) {
@@ -927,6 +922,7 @@ CT::string CDBAdapterSQLLite::getTableNameForPathFilterAndDimension(const char *
       randomTableString.concat("_");
       randomTableString.concat(CServerParams::randomString(20));
       randomTableString.replaceSelf(":", "");
+      randomTableString.replaceSelf(".", "");
       randomTableString.replaceSelf("-", "");
       randomTableString.replaceSelf("Z", "");
 
@@ -1309,5 +1305,9 @@ CDBStore::Store *CDBAdapterSQLLite::getFilesForIndices(CDataSource *dataSource, 
   }
   return store;
 }
+
+int CDBAdapterSQLLite::storeLayerMetadata(const char *, const char *, const char *, const char *) { return 0; }
+CDBStore::Store *CDBAdapterSQLLite::getLayerMetadataStore(const char *) { return nullptr; }
+int CDBAdapterSQLLite::dropLayerFromLayerMetadataStore(const char *, const char *) { return 0; };
 
 #endif

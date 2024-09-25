@@ -373,6 +373,8 @@ public:
    * @return 0 on succes, 1 on failure
    */
   int readVariableDataForCDFDims(CDF::Variable *variableToRead, CDFType dataTypeToReturnData);
+
+  std::string getDataSetName();
 };
 
 #endif

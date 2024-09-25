@@ -4,7 +4,7 @@ Content-Type:text/xml
 <ServiceExceptionReport version="1.3.0"  xmlns="http://www.opengis.net/ogc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/ogc http://schemas.opengis.net/wms/1.3.0/exceptions_1_3_0.xsd">
   <ServiceException code="InvalidDimensionValue">
     No time units found for variable time;
-    Exception in DBLoopFiles at line -1232049787;
+    Exception in DBLoopFiles at line 611;
     *** SKIPPING FILE /home/plieger/code/github/KNMI/adaguc-server/data/datasets/test/testdata_report_nounits.nc ***;
     Invalid dimensions values: No data available for layer sow_a1;
     WMS GetMap Request failed;
