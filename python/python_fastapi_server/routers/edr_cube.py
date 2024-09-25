@@ -93,14 +93,15 @@ async def get_coll_inst_cube(
     metadata = await get_metadata(collection_name)
 
     vertical_dim = ""
+    vertical_name = None
     custom_name = None
     first_layer_name = parameter_name.split(",")[0]
     for param_dim in metadata[collection_name][first_layer_name]["dims"].values():
         if not param_dim["hidden"]:
-            if "isvertical" in param_dim:
-                vertical_name = param_dim["name"]
-            else:
-                custom_name = param_dim["name"]
+            if "isvertical" in param_dim and param_dim["isvertical"]:
+                vertical_name = param_dim["cdfName"]
+            elif "iscustom" in param_dim and param_dim["iscustom"]:
+                custom_name = param_dim["cdfName"]
     if z_par:
         if vertical_name is not None:
             if vertical_name.upper() == "ELEVATION":
@@ -162,7 +163,7 @@ async def get_coll_inst_cube(
         result_dataset = Dataset(f"{parameter_name}.nc", memory=response.getvalue())
 
         coveragejson = netcdf_to_covjson(
-            result_dataset, translate_names, translate_dims
+            metadata[collection_name], result_dataset, translate_names, translate_dims
         )
         if coveragejson is not None:
             coveragejsons.append(coveragejson)
@@ -175,17 +176,18 @@ async def get_coll_inst_cube(
 
 
 def get_translate_names(metadata: dict) -> dict:
-    translated_names = {}
+    translate_names = {}
     for layer_name in metadata:
         var_name = metadata[layer_name]["layer"]["variables"][0]["variableName"]
-        translated_names[var_name] = layer_name
-    return {}
+        print("TRANSLATE:", var_name, layer_name)
+        translate_names[var_name] = layer_name
+    return translate_names
 
 
 def get_translate_dims(metadata: dict) -> dict:
-    translated_dims = {}
+    translate_dims = {}
     for layer_name in metadata:
         for dim_name in metadata[layer_name]["dims"]:
             dim_cdfname = metadata[layer_name]["dims"][dim_name]["cdfName"]
-            translated_dims[dim_cdfname] = dim_cdfname
-    return {}
+            translate_dims[dim_cdfname] = dim_name
+    return translate_dims

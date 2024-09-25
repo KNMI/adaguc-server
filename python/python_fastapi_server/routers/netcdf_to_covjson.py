@@ -89,7 +89,10 @@ def get_proj_info_from_proj_string(projstring: str) -> GeoReferenceInfo:
 
 
 def netcdf_to_covjson(
-    netcdfdataset, translate_names: dict[str, str], translate_dims: dict[str, str]
+    metadata: dict,
+    netcdfdataset,
+    translate_names: dict[str, str],
+    translate_dims: dict[str, str],
 ) -> Coverage:
     """Converts a netcdf dataset to a CoverageJson object
 
@@ -115,7 +118,7 @@ def netcdf_to_covjson(
     # Loop through the variables in the NetCDF file
     for variablename in netcdfdataset.variables:
         variable = netcdfdataset.variables[variablename]
-        translated_variablename = translate_names.get(variablename, variablename)
+        layer_name = translate_names.get(variablename, variablename + "X")
 
         # Find a variable with a grid_mapping attribute, this is a grid
         if "grid_mapping" in variable.ncattrs():
@@ -174,7 +177,7 @@ def netcdf_to_covjson(
             )
 
             # Make the ranges object
-            ranges[translated_variablename] = ndarray
+            ranges[layer_name] = ndarray
 
             unit_of_measurement = variable.units if variable.units else "unknown"
 
@@ -188,7 +191,7 @@ def netcdf_to_covjson(
             else:
                 parameter_name = variablename
                 parameter_description = variablename
-            parameters[translated_variablename] = Parameter(
+            parameters[layer_name] = Parameter(
                 # TODO: KDP-1622 Fix the difference in the ObservedProperty between DescribeCoverage from the
                 #  Adaguc Config and the NetCDF values
                 observedProperty=ObservedProperty(label={"en": parameter_name}),
