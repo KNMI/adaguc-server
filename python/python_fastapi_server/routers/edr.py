@@ -122,16 +122,21 @@ async def rest_get_edr_collections(request: Request, response: Response):
     collections: list[Collection] = []
     ttl_set = set()
     metadata = await get_metadata()
-    for coll_name in metadata.keys():
-        print("COLL:", coll_name)
+    import json
+
+    print("METADATA:", json.dumps(metadata, indent=2))
+    for collection_name in metadata.keys():
+        print("COLL:", collection_name)
         try:
-            coll = get_collectioninfo_from_md(
-                {coll_name: metadata[coll_name]}, coll_name
+            colls = get_collectioninfo_from_md(
+                metadata[collection_name], collection_name
             )
-            if coll:
-                collections.append(coll)
+            if colls:
+                collections.extend(colls)
             else:
-                logger.warning("Unable to fetch WMS GetMetadata for %s", coll_name)
+                logger.warning(
+                    "Unable to fetch WMS GetMetadata for %s", collection_name
+                )
         except Exception as exc:
             print("ERR", exc)
     collections_data = Collections(links=links, collections=collections)
@@ -152,7 +157,7 @@ async def rest_get_edr_collection_by_id(collection_name: str, response: Response
     metadata = await get_metadata(collection_name)
     ttl = None
 
-    collection = get_collectioninfo_from_md(metadata, collection_name)
+    collection = get_collectioninfo_from_md(metadata[collection_name], collection_name)
     if ttl is not None:
         response.headers["cache-control"] = generate_max_age(ttl)
     if collection is None:

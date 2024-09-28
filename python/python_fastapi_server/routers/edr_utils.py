@@ -60,7 +60,7 @@ def get_ref_times_for_coll(metadata) -> list[str]:
     Returns available reference times for given collection
     """
     first_param = next(iter(metadata))
-    print("MD:", first_param, metadata[first_param])
+    print("MD1:", first_param, metadata[first_param])
     if "reference_time" in metadata[first_param]["dims"]:
         print(
             "REFT:",
@@ -232,8 +232,10 @@ def get_collectioninfo_from_md(
     if metadata is None:
         return None
 
-    first_param = next(iter(metadata[collection_name]))
-    if metadata[collection_name][first_param]["layer"]["variables"] is None:
+    first_param = next(iter(metadata))
+    print("MMDD:", metadata)
+    print("FIRST:", first_param)
+    if metadata[first_param]["layer"]["variables"] is None:
         return None
 
     base_url = get_base_url() + f"/edr/collections/{collection_name}"
@@ -246,7 +248,7 @@ def get_collectioninfo_from_md(
 
     has_instances = False
     if not instance:
-        ref_times = get_ref_times_for_coll(metadata[collection_name])
+        ref_times = get_ref_times_for_coll(metadata)
         if ref_times and len(ref_times) > 0:
             has_instances = True
             instances_link = Link(
@@ -254,7 +256,7 @@ def get_collectioninfo_from_md(
             )
             links.append(instances_link)
 
-    primary_extent = get_extent_from_md(metadata[collection_name], first_param)
+    primary_extent = get_extent_from_md(metadata, first_param)
 
     #   crs_details=[crs_object],
     position_variables = Variables(
@@ -323,9 +325,7 @@ def get_collectioninfo_from_md(
             locations=EDRQuery(link=locations_link),
         )
 
-    parameter_info = get_params_for_collection(
-        metadata[collection_name], primary_extent
-    )
+    parameter_info = get_params_for_collection(metadata, primary_extent)
 
     crs = ["EPSG:4326"]
 
@@ -454,9 +454,11 @@ def get_params_for_collection(
     parameter_names = {}
     for param_id in metadata:
         current_extent = get_extent_from_md(metadata, param_id)
+        print("prePM:", metadata[param_id]["layer"])
         param_metadata = get_param_metadata(metadata[param_id])
+        print("PM:", param_metadata)
         param = Parameter(
-            id=param_metadata["wms_layer_name"],
+            id=param_metadata["param_id"],
             observedProperty=ObservedProperty(
                 id=param_metadata["observed_property_id"],
                 label=param_metadata["observed_property_label"],
@@ -475,10 +477,28 @@ def get_params_for_collection(
     return parameter_names
 
 
+def handle_metadata(md: dict):
+    collections = dict()
+    for dataset in md:
+        for layername, layerdata in md[dataset].items():
+            if layerdata:
+                collection_name = layerdata["layer"].get("collection", dataset)
+                if not collection_name in collections:
+                    collections[collection_name] = dict()
+                collections[collection_name][layername] = layerdata
+            else:
+                print(layername, "NULL")
+    for c in collections:
+        print("####", c)
+        for l in collections[c]:
+            print("####  ", l)
+    return collections
+
+
 async def get_metadata(collname=None):
     """get metadata from ADAGUC"""
     logger.info("callADAGUC by dataset")
-    urlrequest = "service=wms&version=1.3.0&request=getmetadata&format=application/json"
+    urlrequest = "service=wms&version=1.3.0&request=getmetadata&format=application/json&dataset=ecmwf_ens_nl_0p1deg"
     if collname:
         urlrequest = f"dataset={collname}&service=wms&version=1.3.0&request=getmetadata&format=application/json"
     status, response, headers = await call_adaguc(url=urlrequest.encode("UTF-8"))
@@ -487,10 +507,9 @@ async def get_metadata(collname=None):
     metadata = {}
     if status == 0:
         metadata = json.loads(response.getvalue().decode("UTF-8"))
-    else:
-        logger.error("status: %d", status)
-        return {}
-    return metadata
+        return handle_metadata(metadata)
+    logger.error("status: %d", status)
+    return {}
 
 
 def get_vertical_dim_for_collection(metadata: dict, parameter: str = None):

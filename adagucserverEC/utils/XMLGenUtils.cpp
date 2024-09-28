@@ -18,7 +18,6 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
     metadataLayer->hasError = true;
     return 1;
   }
-  metadataLayer->layerMetadata.name.copy(&layerUniqueName);
 
   // Create and datasource
   if (metadataLayer->dataSource == NULL) {
@@ -42,6 +41,12 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
   int datasetRestriction = CServerParams::checkDataRestriction();
   if ((datasetRestriction & ALLOW_GFI)) {
     metadataLayer->layerMetadata.isQueryable = 1;
+  }
+
+  // Get collection for layer
+
+  if (metadataLayer->layer->Collection.size() > 0) {
+    metadataLayer->layerMetadata.collection.copy(metadataLayer->layer->Collection[0]->value);
   }
 
   // Get Abstract

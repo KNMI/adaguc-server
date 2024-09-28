@@ -35,6 +35,8 @@ int getLayerBaseMetadataAsJson(MetadataLayer *metadataLayer, json &layerMetadata
     layerMetadataItem["abstract"] = metadataLayer->layerMetadata.abstract;
     layerMetadataItem["nativeepsg"] = metadataLayer->layerMetadata.nativeEPSG;
 
+    layerMetadataItem["collection"] = metadataLayer->layerMetadata.collection;
+
     layerMetadataItem["isqueryable"] = metadataLayer->layerMetadata.isQueryable;
     json latlonbox;
     for (size_t j = 0; j < 4; j++) {
@@ -188,8 +190,10 @@ int loadLayerMetadataStructFromMetadataDb(MetadataLayer *metadataLayer) {
     metadataLayer->layerMetadata.title = i["title"].get<std::string>().c_str();
     metadataLayer->layerMetadata.group = i["group"].get<std::string>().c_str();
     metadataLayer->layerMetadata.abstract = i["abstract"].get<std::string>().c_str();
+    metadataLayer->layerMetadata.collection = i["collection"].get<std::string>().c_str();
     metadataLayer->layerMetadata.isQueryable = i["isqueryable"].get<int>();
     metadataLayer->layerMetadata.nativeEPSG = i["nativeepsg"].get<std::string>().c_str();
+    metadataLayer->layerMetadata.nativeEPSG = i["collection"].get<std::string>().c_str();
 
     json latlonbox = i["latlonbox"];
     for (size_t j = 0; j < 4; j += 1) {

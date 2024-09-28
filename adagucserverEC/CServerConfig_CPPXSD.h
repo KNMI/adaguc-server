@@ -1022,6 +1022,8 @@ public:
     }
   };
   class XMLE_Abstract : public CXMLObjectInterface {};
+  class XMLE_Collection : public CXMLObjectInterface {};
+
   class XMLE_DataBaseTable : public CXMLObjectInterface {};
   class XMLE_Variable : public CXMLObjectInterface {
   public:
@@ -1804,6 +1806,7 @@ public:
     std::vector<XMLE_Group *> Group;
     std::vector<XMLE_Title *> Title;
     std::vector<XMLE_Abstract *> Abstract;
+    std::vector<XMLE_Collection *> Collection;
 
     std::vector<XMLE_DataBaseTable *> DataBaseTable;
     std::vector<XMLE_Variable *> Variable;
@@ -1843,6 +1846,7 @@ public:
       XMLE_DELOBJ(Group);
       XMLE_DELOBJ(Title);
       XMLE_DELOBJ(Abstract);
+      XMLE_DELOBJ(Collection);
       XMLE_DELOBJ(DataBaseTable);
       XMLE_DELOBJ(Variable);
       XMLE_DELOBJ(FilePath);
@@ -1895,6 +1899,8 @@ public:
           XMLE_ADDOBJ(Title);
         } else if (equals("Abstract", name)) {
           XMLE_ADDOBJ(Abstract);
+        } else if (equals("Collection", name)) {
+          XMLE_ADDOBJ(Collection);
         } else if (equals("DataBaseTable", name)) {
           XMLE_ADDOBJ(DataBaseTable);
         } else if (equals("Variable", name)) {
