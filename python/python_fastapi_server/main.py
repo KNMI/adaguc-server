@@ -42,7 +42,7 @@ async def lifespan(_fastapiapp: FastAPI):
     logger.info("=== Starting AsyncIO Scheduler ===")
     # start scheduler to refresh collections & docs every minute
     scheduler = AsyncIOScheduler()
-    scheduler.add_job(update_layermetadatatable, "cron", [], minute="*/1", jitter=0, max_instances=1, coalesce=True)
+    scheduler.add_job(update_layermetadatatable, "cron", [], minute="*", jitter=0, max_instances=1, coalesce=True)
     scheduler.start()
 
     yield
