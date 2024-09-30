@@ -19,6 +19,7 @@ export ADAGUC_ENABLELOGBUFFER=FALSE
 export ADAGUC_DATASET_DIR=${ADAGUC_PATH}/data/config/datasets/
 export ADAGUC_DATA_DIR=${ADAGUC_PATH}/data/datasets/
 export ADAGUC_AUTOWMS_DIR=${ADAGUC_PATH}/data/datasets/
+export ADAGUC_DB="${ADAGUC_TMP}/adaguc.autoresource.db"
 ulimit -c unlimited
 
 

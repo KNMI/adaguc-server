@@ -19,6 +19,6 @@ int layerTypeLiveUpdateRenderIntoDrawImage(CDrawImage *image, CServerParams *srv
 /**
  * Configures an actual time range in a WMSLayer object. This is used for generating the Layer element in the WMS GetCapabilities file
  */
-int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(WMSLayer *myWMSLayer);
+int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(MetadataLayer *metadataLayer);
 
 #endif // !LAYERTYPELIVEUPDATE_H

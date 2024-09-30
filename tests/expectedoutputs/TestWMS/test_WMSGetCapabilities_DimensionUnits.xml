@@ -15,7 +15,7 @@
         <KeywordList>
             <Keyword>view</Keyword>
             <Keyword>infoMapAccessService</Keyword>
-            <Keyword>ADAGUCServer version 2.13.7, of Nov  1 2023 11:45:57 </Keyword>
+            <Keyword>ADAGUCServer version 2.27.0, of Sep  6 2024 09:44:02 </Keyword>
         </KeywordList>
         <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.311-getcapabilities-dimension-units&amp;SERVICE=WMS&amp;"/>
         <ContactInformation>
@@ -60,41 +60,41 @@
         <UserDefinedSymbolization SupportSLD="1" />
 <Layer>
 <Title>WMS of  adaguc.tests.311-getcapabilities-dimension-units</Title>
-<CRS>EPSG:3411</CRS>
-<CRS>EPSG:3412</CRS>
-<CRS>EPSG:3575</CRS>
-<CRS>EPSG:3857</CRS>
-<CRS>EPSG:4258</CRS>
-<CRS>EPSG:4326</CRS>
 <CRS>CRS:84</CRS>
 <CRS>EPSG:25831</CRS>
 <CRS>EPSG:25832</CRS>
 <CRS>EPSG:28992</CRS>
-<CRS>EPSG:7399</CRS>
+<CRS>EPSG:3067</CRS>
+<CRS>EPSG:32661</CRS>
+<CRS>EPSG:3411</CRS>
+<CRS>EPSG:3412</CRS>
+<CRS>EPSG:3575</CRS>
+<CRS>EPSG:3857</CRS>
+<CRS>EPSG:40000</CRS>
+<CRS>EPSG:4258</CRS>
+<CRS>EPSG:4326</CRS>
 <CRS>EPSG:50001</CRS>
 <CRS>EPSG:54030</CRS>
-<CRS>EPSG:32661</CRS>
-<CRS>EPSG:40000</CRS>
+<CRS>EPSG:7399</CRS>
 <CRS>EPSG:900913</CRS>
-<CRS>EPSG:3067</CRS>
 <CRS>PROJ4:%2Bproj%3Dlonglat%20%2Bellps%3DWGS84%20%2Bdatum%3DWGS84%20%2Bno_defs</CRS>
-<BoundingBox CRS="EPSG:3411" minx="3217276.885814" miny="-3283673.977407" maxx="3340381.936649" maxy="-3160539.570626" />
-<BoundingBox CRS="EPSG:3412" minx="-29136.465087" miny="32764459.494720" maxx="611831.596821" maxy="33387933.819837" />
-<BoundingBox CRS="EPSG:3575" minx="-781931.373100" miny="-4426233.086688" maxx="-685731.226910" maxy="-4340158.599536" />
-<BoundingBox CRS="EPSG:3857" minx="-5565.974540" miny="6266381.694671" maxx="116885.465333" maxy="6385881.202576" />
-<BoundingBox CRS="EPSG:4258" minx="48.950000" miny="-0.050000" maxx="49.650000" maxy="1.050000" />
-<BoundingBox CRS="EPSG:4326" minx="48.950000" miny="-0.050000" maxx="49.650000" maxy="1.050000" />
 <BoundingBox CRS="CRS:84" minx="48.950000" miny="-0.050000" maxx="49.650000" maxy="1.050000" />
 <BoundingBox CRS="EPSG:25831" minx="276706.492867" miny="5423730.017406" maxx="359241.642834" maxy="5504184.844720" />
 <BoundingBox CRS="EPSG:25832" minx="-162215.924111" miny="5452428.998738" maxx="-73577.697170" maxy="5539161.628146" />
 <BoundingBox CRS="EPSG:28992" minx="-243286.563797" miny="115692.137850" maxx="-158210.857658" maxy="198758.393647" />
-<BoundingBox CRS="EPSG:7399" minx="-3854.940004" miny="5763075.644727" maxx="80953.740090" maxy="5836770.452716" />
+<BoundingBox CRS="EPSG:3067" minx="-1467755.480414" miny="5755116.469362" maxx="-1360791.221574" maxy="5860768.051867" />
+<BoundingBox CRS="EPSG:32661" minx="1995850.338946" miny="-2755161.899057" maxx="2087138.015594" maxy="-2666365.726464" />
+<BoundingBox CRS="EPSG:3411" minx="3217276.885814" miny="-3283673.977407" maxx="3340381.936649" maxy="-3160539.570626" />
+<BoundingBox CRS="EPSG:3412" minx="-29136.465087" miny="32764459.494720" maxx="611831.596821" maxy="33387933.819837" />
+<BoundingBox CRS="EPSG:3575" minx="-781931.373100" miny="-4426233.086688" maxx="-685731.226910" maxy="-4340158.599536" />
+<BoundingBox CRS="EPSG:3857" minx="-5565.974540" miny="6266381.694671" maxx="116885.465333" maxy="6385881.202576" />
+<BoundingBox CRS="EPSG:40000" minx="-4174.709310" miny="-4783865.089595" maxx="87663.999592" maxy="-4694532.924008" />
+<BoundingBox CRS="EPSG:4258" minx="48.950000" miny="-0.050000" maxx="49.650000" maxy="1.050000" />
+<BoundingBox CRS="EPSG:4326" minx="48.950000" miny="-0.050000" maxx="49.650000" maxy="1.050000" />
 <BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
 <BoundingBox CRS="EPSG:54030" minx="-4129.484085" miny="5218050.618405" maxx="86719.165778" maxy="5290663.240390" />
-<BoundingBox CRS="EPSG:32661" minx="1995850.338946" miny="-2755161.899057" maxx="2087138.015594" maxy="-2666365.726464" />
-<BoundingBox CRS="EPSG:40000" minx="-4174.709310" miny="-4783865.089595" maxx="87663.999592" maxy="-4694532.924008" />
+<BoundingBox CRS="EPSG:7399" minx="-3854.940004" miny="5763075.644727" maxx="80953.740090" maxy="5836770.452716" />
 <BoundingBox CRS="EPSG:900913" minx="-5565.974540" miny="6266381.694671" maxx="116885.465333" maxy="6385881.202576" />
-<BoundingBox CRS="EPSG:3067" minx="-1467755.480414" miny="5755116.469362" maxx="-1360791.221574" maxy="5860768.051867" />
 <BoundingBox CRS="PROJ4:%2Bproj%3Dlonglat%20%2Bellps%3DWGS84%20%2Bdatum%3DWGS84%20%2Bno_defs" minx="-0.050000" miny="48.950000" maxx="1.050000" maxy="49.650000" />
 <Layer queryable="1" opaque="1" cascaded="0">
 <Name>wind-speed-of-gust-hagl</Name>
@@ -104,27 +104,27 @@
   <eastBoundLongitude>1.050000</eastBoundLongitude>
   <southBoundLatitude>48.950000</southBoundLatitude>
   <northBoundLatitude>49.650000</northBoundLatitude>
-</EX_GeographicBoundingBox><BoundingBox CRS="EPSG:3411" minx="3217276.885814" miny="-3283673.977407" maxx="3340381.936649" maxy="-3160539.570626" />
-<BoundingBox CRS="EPSG:3412" minx="-29136.465087" miny="32764459.494720" maxx="611831.596821" maxy="33387933.819837" />
-<BoundingBox CRS="EPSG:3575" minx="-781931.373100" miny="-4426233.086688" maxx="-685731.226910" maxy="-4340158.599536" />
-<BoundingBox CRS="EPSG:3857" minx="-5565.974540" miny="6266381.694671" maxx="116885.465333" maxy="6385881.202576" />
-<BoundingBox CRS="EPSG:4258" minx="48.950000" miny="-0.050000" maxx="49.650000" maxy="1.050000" />
-<BoundingBox CRS="EPSG:4326" minx="48.950000" miny="-0.050000" maxx="49.650000" maxy="1.050000" />
-<BoundingBox CRS="CRS:84" minx="48.950000" miny="-0.050000" maxx="49.650000" maxy="1.050000" />
+</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="48.950000" miny="-0.050000" maxx="49.650000" maxy="1.050000" />
 <BoundingBox CRS="EPSG:25831" minx="276706.492867" miny="5423730.017406" maxx="359241.642834" maxy="5504184.844720" />
 <BoundingBox CRS="EPSG:25832" minx="-162215.924111" miny="5452428.998738" maxx="-73577.697170" maxy="5539161.628146" />
 <BoundingBox CRS="EPSG:28992" minx="-243286.563797" miny="115692.137850" maxx="-158210.857658" maxy="198758.393647" />
-<BoundingBox CRS="EPSG:7399" minx="-3854.940004" miny="5763075.644727" maxx="80953.740090" maxy="5836770.452716" />
+<BoundingBox CRS="EPSG:3067" minx="-1467755.480414" miny="5755116.469362" maxx="-1360791.221574" maxy="5860768.051867" />
+<BoundingBox CRS="EPSG:32661" minx="1995850.338946" miny="-2755161.899057" maxx="2087138.015594" maxy="-2666365.726464" />
+<BoundingBox CRS="EPSG:3411" minx="3217276.885814" miny="-3283673.977407" maxx="3340381.936649" maxy="-3160539.570626" />
+<BoundingBox CRS="EPSG:3412" minx="-29136.465087" miny="32764459.494720" maxx="611831.596821" maxy="33387933.819837" />
+<BoundingBox CRS="EPSG:3575" minx="-781931.373100" miny="-4426233.086688" maxx="-685731.226910" maxy="-4340158.599536" />
+<BoundingBox CRS="EPSG:3857" minx="-5565.974540" miny="6266381.694671" maxx="116885.465333" maxy="6385881.202576" />
+<BoundingBox CRS="EPSG:40000" minx="-4174.709310" miny="-4783865.089595" maxx="87663.999592" maxy="-4694532.924008" />
+<BoundingBox CRS="EPSG:4258" minx="48.950000" miny="-0.050000" maxx="49.650000" maxy="1.050000" />
+<BoundingBox CRS="EPSG:4326" minx="48.950000" miny="-0.050000" maxx="49.650000" maxy="1.050000" />
 <BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
 <BoundingBox CRS="EPSG:54030" minx="-4129.484085" miny="5218050.618405" maxx="86719.165778" maxy="5290663.240390" />
-<BoundingBox CRS="EPSG:32661" minx="1995850.338946" miny="-2755161.899057" maxx="2087138.015594" maxy="-2666365.726464" />
-<BoundingBox CRS="EPSG:40000" minx="-4174.709310" miny="-4783865.089595" maxx="87663.999592" maxy="-4694532.924008" />
+<BoundingBox CRS="EPSG:7399" minx="-3854.940004" miny="5763075.644727" maxx="80953.740090" maxy="5836770.452716" />
 <BoundingBox CRS="EPSG:900913" minx="-5565.974540" miny="6266381.694671" maxx="116885.465333" maxy="6385881.202576" />
-<BoundingBox CRS="EPSG:3067" minx="-1467755.480414" miny="5755116.469362" maxx="-1360791.221574" maxy="5860768.051867" />
 <BoundingBox CRS="PROJ4:%2Bproj%3Dlonglat%20%2Bellps%3DWGS84%20%2Bdatum%3DWGS84%20%2Bno_defs" minx="-0.050000" miny="48.950000" maxx="1.050000" maxy="49.650000" />
 <Dimension name="time" units="ISO8601" default="2023-10-26T05:00:00Z" multipleValues="1" nearestValue="0" current="1">2023-10-26T05:00:00Z</Dimension>
-<Dimension name="height_above_ground_level_in_m" units="m" default="10.0" multipleValues="1" nearestValue="0" >10.0</Dimension>
 <Dimension name="reference_time" units="ISO8601" default="2023-10-26T00:00:00Z" multipleValues="1" nearestValue="0" current="1">2023-10-26T00:00:00Z</Dimension>
+<Dimension name="height_above_ground_level_in_m" units="m" default="10" multipleValues="1" nearestValue="0" >10</Dimension>
    <Style>    <Name>auto/nearest</Name>    <Title>auto/nearest</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.311-getcapabilities-dimension-units&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=wind-speed-of-gust-hagl&amp;format=image/png&amp;STYLE=auto/nearest"/>    </LegendURL>  </Style>   <Style>    <Name>auto/bilinear</Name>    <Title>auto/bilinear</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.311-getcapabilities-dimension-units&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=wind-speed-of-gust-hagl&amp;format=image/png&amp;STYLE=auto/bilinear"/>    </LegendURL>  </Style>   <Style>    <Name>auto/point</Name>    <Title>auto/point</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.311-getcapabilities-dimension-units&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=wind-speed-of-gust-hagl&amp;format=image/png&amp;STYLE=auto/point"/>    </LegendURL>  </Style>   <Style>    <Name>auto/barb</Name>    <Title>auto/barb</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.311-getcapabilities-dimension-units&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=wind-speed-of-gust-hagl&amp;format=image/png&amp;STYLE=auto/barb"/>    </LegendURL>  </Style></Layer>
     </Layer>
   </Capability>

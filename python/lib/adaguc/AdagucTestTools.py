@@ -7,6 +7,7 @@ import re
 from lxml import etree, objectify
 import urllib.request
 from PIL import Image
+import subprocess
 
 ADAGUC_PATH = os.getenv("ADAGUC_PATH", " ")
 
@@ -141,6 +142,23 @@ class AdagucTestTools:
             pass
         self.mkdir_p(ADAGUC_TMP)
         return
+
+    def cleanPostgres(self):
+        """Clean the postgres database if the ADAGUC_DB variable has been set.
+
+        Some tests fail when using postgres if there is already data present in the database.
+        Running the test separately works."""
+
+        adaguc_db = os.getenv("ADAGUC_DB", None)
+        if adaguc_db and not adaguc_db.endswith(".db"):
+            subprocess.run(
+                [
+                    "psql",
+                    adaguc_db,
+                    "-c",
+                    "DROP SCHEMA public CASCADE; CREATE SCHEMA public;",
+                ]
+            )
 
     def mkdir_p(self, directory):
         if not os.path.exists(directory):

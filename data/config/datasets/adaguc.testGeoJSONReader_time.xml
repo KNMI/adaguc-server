@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Configuration>
   <CacheDocs enabled="false"/>
+  <Settings enablemetadatacache="false"/>
   <!-- Custom styles -->
   
   <Style name="features">

@@ -36,7 +36,7 @@ CDBAdapter *CDBFactory::getDBAdapter(CServerConfig::XMLE_Configuration *cfg) {
       CDBError("DataBase not properly configured");
       exit(1);
     }
-    if (cfg->DataBase[0]->attr.dbtype.equals("sqlite")) {
+    if (cfg->DataBase[0]->attr.parameters.endsWith(".db")) {
       CDBDebug("Using sqlite");
 #ifdef ADAGUC_USE_SQLITE
       staticCDBAdapter = new CDBAdapterSQLLite();

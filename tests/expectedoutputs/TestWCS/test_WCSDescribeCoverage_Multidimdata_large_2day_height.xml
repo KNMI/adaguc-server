@@ -23,30 +23,6 @@
   </lonLatEnvelope>
   <domainSet>
     <spatialDomain>
-        <gml:Envelope srsName="EPSG:3411">
-          <gml:pos>-467744480.581090 -467459543.281553</gml:pos>
-          <gml:pos>466605078.535150 467459543.281553</gml:pos>
-        </gml:Envelope>
-        <gml:Envelope srsName="EPSG:3412">
-          <gml:pos>-280152792.512996 -280152792.512996</gml:pos>
-          <gml:pos>280494531.893237 280494531.893237</gml:pos>
-        </gml:Envelope>
-        <gml:Envelope srsName="EPSG:3575">
-          <gml:pos>-12735668.795456 -12735668.795456</gml:pos>
-          <gml:pos>12720152.344808 12720152.344808</gml:pos>
-        </gml:Envelope>
-        <gml:Envelope srsName="EPSG:3857">
-          <gml:pos>-19480910.888823 -23232576.780082</gml:pos>
-          <gml:pos>19703549.870409 19971868.880409</gml:pos>
-        </gml:Envelope>
-        <gml:Envelope srsName="EPSG:4258">
-          <gml:pos>-175.000000 -95.000000</gml:pos>
-          <gml:pos>185.000000 85.000000</gml:pos>
-        </gml:Envelope>
-        <gml:Envelope srsName="EPSG:4326">
-          <gml:pos>-175.000000 -95.000000</gml:pos>
-          <gml:pos>185.000000 85.000000</gml:pos>
-        </gml:Envelope>
         <gml:Envelope srsName="CRS:84">
           <gml:pos>-175.000000 -95.000000</gml:pos>
           <gml:pos>185.000000 85.000000</gml:pos>
@@ -63,9 +39,41 @@
           <gml:pos>-288940224.722197 -561625982.106351</gml:pos>
           <gml:pos>266207703.868375 1005853853.334681</gml:pos>
         </gml:Envelope>
-        <gml:Envelope srsName="EPSG:7399">
-          <gml:pos>-17537334.096874 -8921410.650524</gml:pos>
-          <gml:pos>17737760.772267 8824978.852257</gml:pos>
+        <gml:Envelope srsName="EPSG:3067">
+          <gml:pos>-15525733.593319 -19664133.594210</gml:pos>
+          <gml:pos>17120498.212243 19885331.913357</gml:pos>
+        </gml:Envelope>
+        <gml:Envelope srsName="EPSG:32661">
+          <gml:pos>-476720074.926217 -477304033.059373</gml:pos>
+          <gml:pos>481304033.059373 480720074.926217</gml:pos>
+        </gml:Envelope>
+        <gml:Envelope srsName="EPSG:3411">
+          <gml:pos>-467744480.581090 -467459543.281553</gml:pos>
+          <gml:pos>466605078.535150 467459543.281553</gml:pos>
+        </gml:Envelope>
+        <gml:Envelope srsName="EPSG:3412">
+          <gml:pos>-280152792.512996 -280152792.512996</gml:pos>
+          <gml:pos>280494531.893237 280494531.893237</gml:pos>
+        </gml:Envelope>
+        <gml:Envelope srsName="EPSG:3575">
+          <gml:pos>-12735668.795456 -12735668.795456</gml:pos>
+          <gml:pos>12720152.344808 12720152.344808</gml:pos>
+        </gml:Envelope>
+        <gml:Envelope srsName="EPSG:3857">
+          <gml:pos>-19480910.888823 -23232576.780082</gml:pos>
+          <gml:pos>19703549.870409 19971868.880409</gml:pos>
+        </gml:Envelope>
+        <gml:Envelope srsName="EPSG:40000">
+          <gml:pos>-481609733.326174 -482197216.357518</gml:pos>
+          <gml:pos>482197216.357518 481609733.326174</gml:pos>
+        </gml:Envelope>
+        <gml:Envelope srsName="EPSG:4258">
+          <gml:pos>-175.000000 -95.000000</gml:pos>
+          <gml:pos>185.000000 85.000000</gml:pos>
+        </gml:Envelope>
+        <gml:Envelope srsName="EPSG:4326">
+          <gml:pos>-175.000000 -95.000000</gml:pos>
+          <gml:pos>185.000000 85.000000</gml:pos>
         </gml:Envelope>
         <gml:Envelope srsName="EPSG:50001">
           <gml:pos>-2000000.000000 -2000000.000000</gml:pos>
@@ -75,25 +83,13 @@
           <gml:pos>-16532317.502283 -8516243.829905</gml:pos>
           <gml:pos>16721258.273737 8419013.706324</gml:pos>
         </gml:Envelope>
-        <gml:Envelope srsName="EPSG:32661">
-          <gml:pos>-476720074.926217 -477304033.059373</gml:pos>
-          <gml:pos>481304033.059373 480720074.926217</gml:pos>
-        </gml:Envelope>
-        <gml:Envelope srsName="EPSG:40000">
-          <gml:pos>-481609733.326174 -482197216.357518</gml:pos>
-          <gml:pos>482197216.357518 481609733.326174</gml:pos>
+        <gml:Envelope srsName="EPSG:7399">
+          <gml:pos>-17537334.096874 -8921410.650524</gml:pos>
+          <gml:pos>17737760.772267 8824978.852257</gml:pos>
         </gml:Envelope>
         <gml:Envelope srsName="EPSG:900913">
           <gml:pos>-19480910.888823 -23232576.780082</gml:pos>
           <gml:pos>19703549.870409 19971868.880409</gml:pos>
-        </gml:Envelope>
-        <gml:Envelope srsName="EPSG:3067">
-          <gml:pos>-15525733.593319 -19664133.594210</gml:pos>
-          <gml:pos>17120498.212243 19885331.913357</gml:pos>
-        </gml:Envelope>
-        <gml:Envelope srsName="EPSG:4326">
-          <gml:pos>-175.000000 -95.000000</gml:pos>
-          <gml:pos>185.000000 85.000000</gml:pos>
         </gml:Envelope>
         <gml:RectifiedGrid dimension="2">
           <gml:limits>
@@ -125,23 +121,6 @@
         <label>dimensions</label>
         <axisDescription>
           <AxisDescription>
-            <name>elevation</name>
-            <label>elevation</label>
-            <values>
-              <interval>
-                <min>0.0</min>
-                <max>4.0</max>
-              </interval>
-              <singleValue>0.0</singleValue>
-              <singleValue>1.0</singleValue>
-              <singleValue>2.0</singleValue>
-              <singleValue>3.0</singleValue>
-              <singleValue>4.0</singleValue>
-            </values>
-          </AxisDescription>
-        </axisDescription>
-        <axisDescription>
-          <AxisDescription>
             <name>time</name>
             <label>time</label>
             <values>
@@ -153,27 +132,43 @@
             </values>
           </AxisDescription>
         </axisDescription>
+        <axisDescription>
+          <AxisDescription>
+            <name>height</name>
+            <label>height</label>
+            <values>
+              <interval>
+                <min>0</min>
+                <max>4</max>
+              </interval>
+              <singleValue>0</singleValue>
+              <singleValue>1</singleValue>
+              <singleValue>2</singleValue>
+              <singleValue>3</singleValue>
+              <singleValue>4</singleValue>
+            </values>
+          </AxisDescription>
+        </axisDescription>
       </RangeSet>
     </rangeSet>
     <supportedCRSs>
-      <requestResponseCRSs>EPSG:3411</requestResponseCRSs>
-      <requestResponseCRSs>EPSG:3412</requestResponseCRSs>
-      <requestResponseCRSs>EPSG:3575</requestResponseCRSs>
-      <requestResponseCRSs>EPSG:3857</requestResponseCRSs>
-      <requestResponseCRSs>EPSG:4258</requestResponseCRSs>
-      <requestResponseCRSs>EPSG:4326</requestResponseCRSs>
       <requestResponseCRSs>CRS:84</requestResponseCRSs>
       <requestResponseCRSs>EPSG:25831</requestResponseCRSs>
       <requestResponseCRSs>EPSG:25832</requestResponseCRSs>
       <requestResponseCRSs>EPSG:28992</requestResponseCRSs>
-      <requestResponseCRSs>EPSG:7399</requestResponseCRSs>
+      <requestResponseCRSs>EPSG:3067</requestResponseCRSs>
+      <requestResponseCRSs>EPSG:32661</requestResponseCRSs>
+      <requestResponseCRSs>EPSG:3411</requestResponseCRSs>
+      <requestResponseCRSs>EPSG:3412</requestResponseCRSs>
+      <requestResponseCRSs>EPSG:3575</requestResponseCRSs>
+      <requestResponseCRSs>EPSG:3857</requestResponseCRSs>
+      <requestResponseCRSs>EPSG:40000</requestResponseCRSs>
+      <requestResponseCRSs>EPSG:4258</requestResponseCRSs>
+      <requestResponseCRSs>EPSG:4326</requestResponseCRSs>
       <requestResponseCRSs>EPSG:50001</requestResponseCRSs>
       <requestResponseCRSs>EPSG:54030</requestResponseCRSs>
-      <requestResponseCRSs>EPSG:32661</requestResponseCRSs>
-      <requestResponseCRSs>EPSG:40000</requestResponseCRSs>
+      <requestResponseCRSs>EPSG:7399</requestResponseCRSs>
       <requestResponseCRSs>EPSG:900913</requestResponseCRSs>
-      <requestResponseCRSs>EPSG:3067</requestResponseCRSs>
-      <requestResponseCRSs>EPSG:4326</requestResponseCRSs>
       <nativeCRSs>EPSG:4326</nativeCRSs>
     </supportedCRSs>
     <supportedFormats nativeFormat="NetCDF4">

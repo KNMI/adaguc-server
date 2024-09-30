@@ -18,30 +18,6 @@
   </lonLatEnvelope>
   <domainSet>
     <spatialDomain>
-        <gml:Envelope srsName="EPSG:3411">
-          <gml:pos>-934752295.351214 -933897657.529952</gml:pos>
-          <gml:pos>935322198.568163 935607193.582759</gml:pos>
-        </gml:Envelope>
-        <gml:Envelope srsName="EPSG:3412">
-          <gml:pos>-561309613.991027 -560796725.035447</gml:pos>
-          <gml:pos>560283992.310811 561138633.645077</gml:pos>
-        </gml:Envelope>
-        <gml:Envelope srsName="EPSG:3575">
-          <gml:pos>-12736546.916317 -12717148.538095</gml:pos>
-          <gml:pos>12728786.383025 12740427.774036</gml:pos>
-        </gml:Envelope>
-        <gml:Envelope srsName="EPSG:3857">
-          <gml:pos>-19759209.615806 -27654657.553919</gml:pos>
-          <gml:pos>19425251.143426 24395894.014051</gml:pos>
-        </gml:Envelope>
-        <gml:Envelope srsName="EPSG:4258">
-          <gml:pos>-177.500000 -92.500000</gml:pos>
-          <gml:pos>182.500000 87.500000</gml:pos>
-        </gml:Envelope>
-        <gml:Envelope srsName="EPSG:4326">
-          <gml:pos>-177.500000 -92.500000</gml:pos>
-          <gml:pos>182.500000 87.500000</gml:pos>
-        </gml:Envelope>
         <gml:Envelope srsName="CRS:84">
           <gml:pos>-177.500000 -92.500000</gml:pos>
           <gml:pos>182.500000 87.500000</gml:pos>
@@ -58,9 +34,41 @@
           <gml:pos>-472960753.832483 -309441675.885504</gml:pos>
           <gml:pos>848274888.059136 305071541.647454</gml:pos>
         </gml:Envelope>
-        <gml:Envelope srsName="EPSG:7399">
-          <gml:pos>-17789120.971417 -8980925.065185</gml:pos>
-          <gml:pos>17488459.771900 8942711.608087</gml:pos>
+        <gml:Envelope srsName="EPSG:3067">
+          <gml:pos>-16130665.820500 -19940662.730257</gml:pos>
+          <gml:pos>16773561.425558 19609055.102676</gml:pos>
+        </gml:Envelope>
+        <gml:Envelope srsName="EPSG:32661">
+          <gml:pos>-956875261.313672 -956583178.620243</gml:pos>
+          <gml:pos>959123209.982084 959999102.204602</gml:pos>
+        </gml:Envelope>
+        <gml:Envelope srsName="EPSG:3411">
+          <gml:pos>-934752295.351214 -933897657.529952</gml:pos>
+          <gml:pos>935322198.568163 935607193.582759</gml:pos>
+        </gml:Envelope>
+        <gml:Envelope srsName="EPSG:3412">
+          <gml:pos>-561309613.991027 -560796725.035447</gml:pos>
+          <gml:pos>560283992.310811 561138633.645077</gml:pos>
+        </gml:Envelope>
+        <gml:Envelope srsName="EPSG:3575">
+          <gml:pos>-12736546.916317 -12717148.538095</gml:pos>
+          <gml:pos>12728786.383025 12740427.774036</gml:pos>
+        </gml:Envelope>
+        <gml:Envelope srsName="EPSG:3857">
+          <gml:pos>-19759209.615806 -27654657.553919</gml:pos>
+          <gml:pos>19425251.143426 24395894.014051</gml:pos>
+        </gml:Envelope>
+        <gml:Envelope srsName="EPSG:40000">
+          <gml:pos>-964663240.758221 -964369394.990184</gml:pos>
+          <gml:pos>962900613.664068 963781792.962376</gml:pos>
+        </gml:Envelope>
+        <gml:Envelope srsName="EPSG:4258">
+          <gml:pos>-177.500000 -92.500000</gml:pos>
+          <gml:pos>182.500000 87.500000</gml:pos>
+        </gml:Envelope>
+        <gml:Envelope srsName="EPSG:4326">
+          <gml:pos>-177.500000 -92.500000</gml:pos>
+          <gml:pos>182.500000 87.500000</gml:pos>
         </gml:Envelope>
         <gml:Envelope srsName="EPSG:50001">
           <gml:pos>-2000000.000000 -2000000.000000</gml:pos>
@@ -70,25 +78,13 @@
           <gml:pos>-16769347.747524 -8576525.559211</gml:pos>
           <gml:pos>16485922.151792 8537587.027768</gml:pos>
         </gml:Envelope>
-        <gml:Envelope srsName="EPSG:32661">
-          <gml:pos>-956875261.313672 -956583178.620243</gml:pos>
-          <gml:pos>959123209.982084 959999102.204602</gml:pos>
-        </gml:Envelope>
-        <gml:Envelope srsName="EPSG:40000">
-          <gml:pos>-964663240.758221 -964369394.990184</gml:pos>
-          <gml:pos>962900613.664068 963781792.962376</gml:pos>
+        <gml:Envelope srsName="EPSG:7399">
+          <gml:pos>-17789120.971417 -8980925.065185</gml:pos>
+          <gml:pos>17488459.771900 8942711.608087</gml:pos>
         </gml:Envelope>
         <gml:Envelope srsName="EPSG:900913">
           <gml:pos>-19759209.615806 -27654657.553919</gml:pos>
           <gml:pos>19425251.143426 24395894.014051</gml:pos>
-        </gml:Envelope>
-        <gml:Envelope srsName="EPSG:3067">
-          <gml:pos>-16130665.820500 -19940662.730257</gml:pos>
-          <gml:pos>16773561.425558 19609055.102676</gml:pos>
-        </gml:Envelope>
-        <gml:Envelope srsName="EPSG:4326">
-          <gml:pos>-177.500000 -92.500000</gml:pos>
-          <gml:pos>182.500000 87.500000</gml:pos>
         </gml:Envelope>
         <gml:RectifiedGrid dimension="2">
           <gml:limits>
@@ -338,24 +334,23 @@
       </RangeSet>
     </rangeSet>
     <supportedCRSs>
-      <requestResponseCRSs>EPSG:3411</requestResponseCRSs>
-      <requestResponseCRSs>EPSG:3412</requestResponseCRSs>
-      <requestResponseCRSs>EPSG:3575</requestResponseCRSs>
-      <requestResponseCRSs>EPSG:3857</requestResponseCRSs>
-      <requestResponseCRSs>EPSG:4258</requestResponseCRSs>
-      <requestResponseCRSs>EPSG:4326</requestResponseCRSs>
       <requestResponseCRSs>CRS:84</requestResponseCRSs>
       <requestResponseCRSs>EPSG:25831</requestResponseCRSs>
       <requestResponseCRSs>EPSG:25832</requestResponseCRSs>
       <requestResponseCRSs>EPSG:28992</requestResponseCRSs>
-      <requestResponseCRSs>EPSG:7399</requestResponseCRSs>
+      <requestResponseCRSs>EPSG:3067</requestResponseCRSs>
+      <requestResponseCRSs>EPSG:32661</requestResponseCRSs>
+      <requestResponseCRSs>EPSG:3411</requestResponseCRSs>
+      <requestResponseCRSs>EPSG:3412</requestResponseCRSs>
+      <requestResponseCRSs>EPSG:3575</requestResponseCRSs>
+      <requestResponseCRSs>EPSG:3857</requestResponseCRSs>
+      <requestResponseCRSs>EPSG:40000</requestResponseCRSs>
+      <requestResponseCRSs>EPSG:4258</requestResponseCRSs>
+      <requestResponseCRSs>EPSG:4326</requestResponseCRSs>
       <requestResponseCRSs>EPSG:50001</requestResponseCRSs>
       <requestResponseCRSs>EPSG:54030</requestResponseCRSs>
-      <requestResponseCRSs>EPSG:32661</requestResponseCRSs>
-      <requestResponseCRSs>EPSG:40000</requestResponseCRSs>
+      <requestResponseCRSs>EPSG:7399</requestResponseCRSs>
       <requestResponseCRSs>EPSG:900913</requestResponseCRSs>
-      <requestResponseCRSs>EPSG:3067</requestResponseCRSs>
-      <requestResponseCRSs>EPSG:4326</requestResponseCRSs>
       <nativeCRSs>EPSG:4326</nativeCRSs>
     </supportedCRSs>
     <supportedFormats nativeFormat="NetCDF4">

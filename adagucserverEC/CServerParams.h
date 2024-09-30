@@ -147,13 +147,6 @@ public:
   ~CServerParams();
 
   /**
-   * Function which generates a unique layername from the Layer's configuration
-   * @param layerName the returned name
-   * @param cfgLayer the configuration object of the corresponding layer
-   */
-  int makeUniqueLayerName(CT::string *layerName, CServerConfig::XMLE_Layer *cfgLayer);
-
-  /**
    * Function which generates a group name from the Layer's configuration
    * @param groupName the returned name
    * @param cfgLayer the configuration object of the corresponding layer
@@ -338,6 +331,8 @@ public:
    * Returns the fontsize in px for legend
    */
   std::tuple<float, std::string> getLegendFont();
+
+  bool useMetadataTable();
 };
 
 #endif
