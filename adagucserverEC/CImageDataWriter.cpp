@@ -36,7 +36,8 @@
 #include "CMakeEProfile.h"
 #include "CReporter.h"
 #include "CImgWarpHillShaded.h"
-#include "CImgWarpGeneric.h"
+#include "GenericDataWarper/CImgWarpGeneric.h"
+#include "GenericDataWarper/gdwFindPixelExtent.h"
 
 #ifndef rad2deg
 #define rad2deg (180. / M_PI) // conversion for rad to deg
@@ -1378,7 +1379,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
     sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
     sourceGeo.CRS = dataSource->nativeProj4;
     int PXExtentBasedOnSource[4];
-    GenericDataWarper::findPixelExtent(PXExtentBasedOnSource, &sourceGeo, srvParam->Geo, &warper);
+    gdwFindPixelExtent(PXExtentBasedOnSource, &sourceGeo, srvParam->Geo, &warper);
 
     status = reader.openExtent(dataSource, CNETCDFREADER_MODE_OPEN_EXTENT, PXExtentBasedOnSource);
   } else {
