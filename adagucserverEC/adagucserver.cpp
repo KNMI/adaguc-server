@@ -147,7 +147,7 @@ int runRequest() {
   return request.runRequest();
 }
 
-int _main(int argc, char **argv, char **) {
+int _main(int argc, char **argv, char **, bool is_forked) {
 
   /* Initialize error functions */
   seterrormode(EXCEPTIONS_PLAINTEXT);
@@ -440,7 +440,7 @@ int run_adaguc_once(int argc, char **argv, char **envp, bool is_forked) {
     CDBDebug("ADAGUC_TMP environment variable is not set, setting to : [%s]", ADAGUC_TMP);
   }
 
-  int status = _main(argc, argv, envp);
+  int status = _main(argc, argv, envp, is_forked);
 
   /* Print the check report formatted as JSON. */
   CReportWriter::writeJSONReportToFile();
