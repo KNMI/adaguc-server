@@ -95,9 +95,9 @@ int gdwDrawTriangle(int *xP, int *yP, T value, int destWidth, int destHeight, vo
     double rca = double(X2 - X1) / double(Y2 - Y1);
     int sy = (Y1 < 0) ? 0 : Y1;
     int ey = (Y2 > H) ? H : Y2;
-    for (int y = sy; y <= ey - 1; y++) {
-      int xL = floor(rcl * double(y - Y1) + X1);
-      int xA = floor(rca * double(y - Y1) + X1);
+    for (int y = sy; y < ey; y++) {
+      int xL = (rcl * double(y - Y1) + X1);
+      int xA = (rca * double(y - Y1) + X1);
       int x1, x2;
       if (xL < xA) {
         x1 = xL;
@@ -109,14 +109,16 @@ int gdwDrawTriangle(int *xP, int *yP, T value, int destWidth, int destHeight, vo
       if (x1 < W && x2 > 0) {
         int sx = (x1 < 0) ? 0 : x1;
         int ex = (x2 > W) ? W : x2;
-        for (int x = sx; x <= ex - 1; x++) {
+        for (int x = sx; x < ex + 1; x++) {
           double WV1 = ((yP[1] - yP[2]) * (x - xP[2]) + (xP[2] - xP[1]) * (y - yP[2])) / dn;
           double WV2 = ((yP[2] - yP[0]) * (x - xP[2]) + (xP[0] - xP[2]) * (y - yP[2])) / dn;
           double WV3 = 1 - WV1 - WV2;
 
           g->warperState.tileDx = WV1 * vX1 + WV2 * vX2 + WV3 * vX3;
           g->warperState.tileDy = WV1 * vY1 + WV2 * vY2 + WV3 * vY3;
-          drawFunction(x, y, value, settings, genericDataWarper);
+          if (g->warperState.tileDy >= 0.0 && g->warperState.tileDy < 1.0 && g->warperState.tileDx >= 0.0 && g->warperState.tileDx < 1.0) {
+            drawFunction(x, y, value, settings, genericDataWarper);
+          }
         }
       }
     }
@@ -124,11 +126,11 @@ int gdwDrawTriangle(int *xP, int *yP, T value, int destWidth, int destHeight, vo
   // return 0;
   if (Y3 != Y2 && Y2 < H && Y3 > 0) {
     double rcb = double(X3 - X2) / double(Y3 - Y2);
-    int sy = (Y2 < 0) ? 0 : Y2;
+    int sy = (Y2 <= 0) ? 0 : Y2;
     int ey = (Y3 > H) ? H : Y3;
-    for (int y = sy; y <= ey - 1; y++) {
-      int xL = (rcl * double(y - Y1) + X1); // floor
-      int xB = (rcb * double(y - Y2) + X2); // floor
+    for (int y = sy; y < ey; y++) {
+      int xL = (rcl * double(y - Y1) + X1);
+      int xB = (rcb * double(y - Y2) + X2);
       int x1, x2;
       if (xL <= xB) {
         x1 = xL;
@@ -138,17 +140,17 @@ int gdwDrawTriangle(int *xP, int *yP, T value, int destWidth, int destHeight, vo
         x1 = xB;
       }
       if (x1 < W && x2 > 0) {
-        int sx = (x1 < 0) ? 0 : x1;
+        int sx = (x1 <= 0) ? 0 : x1;
         int ex = (x2 > W) ? W : x2;
-        for (int x = sx; x < ex; x++) {
+        for (int x = sx; x < ex + 1; x++) {
           double WV1 = ((yP[1] - yP[2]) * (x - xP[2]) + (xP[2] - xP[1]) * (y - yP[2])) / dn;
           double WV2 = ((yP[2] - yP[0]) * (x - xP[2]) + (xP[0] - xP[2]) * (y - yP[2])) / dn;
           double WV3 = 1 - WV1 - WV2;
-
           g->warperState.tileDx = WV1 * vX1 + WV2 * vX2 + WV3 * vX3;
           g->warperState.tileDy = WV1 * vY1 + WV2 * vY2 + WV3 * vY3;
-          // http://localhost:8080/adaguc-server?DATASET=noaaglm&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=LIGHTNING_COUNTS&WIDTH=1321&HEIGHT=959&CRS=EPSG%3A32661&BBOX=-8314748.562870221,-1301096.785244672,-8149138.113029413,-1180869.3655646304&STYLES=counts_knmi%2Fgeneric&FORMAT=image/png&TRANSPARENT=TRUE&&time=2024-06-28T09%3A00%3A00Z&0.013241703752992606
-          drawFunction(x, y, value, settings, genericDataWarper);
+          if (g->warperState.tileDy >= 0.0 && g->warperState.tileDy < 1.0 && g->warperState.tileDx >= 0.0 && g->warperState.tileDx < 1.0) {
+            drawFunction(x, y, value, settings, genericDataWarper);
+          }
         }
       }
     }
