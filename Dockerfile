@@ -1,12 +1,12 @@
 ######### First stage (build) ############
-FROM python:3.10-slim-bookworm as build
+FROM python:3.10-slim-bookworm AS build
 
 USER root
 
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
-LABEL version="2.24.0"
+LABEL version="2.28.0"
 
 # Try to update image packages
 RUN apt-get -q -y update \
@@ -48,7 +48,7 @@ RUN bash compile.sh
 
 
 ######### Second stage, base image for test and prod ############
-FROM python:3.10-slim-bookworm as base
+FROM python:3.10-slim-bookworm AS base
 
 USER root
 
@@ -76,7 +76,7 @@ WORKDIR /adaguc/adaguc-server-master
 
 # Upgrade pip and install python requirements.txt
 COPY requirements.txt /adaguc/adaguc-server-master/requirements.txt
-RUN pip3 install --no-cache-dir --upgrade pip pip-tools \
+RUN pip3 install --no-cache-dir --upgrade pip pip-tools setuptools \
     && pip install --no-cache-dir -r requirements.txt
 
 # Install compiled adaguc binaries from stage one
@@ -85,22 +85,27 @@ COPY data /adaguc/adaguc-server-master/data
 COPY python /adaguc/adaguc-server-master/python
 
 ######### Third stage, test ############
-FROM base as test
+# To run the tests against a postgres db, see docs/test_postgesql.md
+FROM base AS test
+
+ENV TEST_IN_CONTAINER=1
 
 COPY requirements-dev.txt /adaguc/adaguc-server-master/requirements-dev.txt
 RUN pip install --no-cache-dir -r requirements-dev.txt
 
 COPY tests /adaguc/adaguc-server-master/tests
 COPY runtests.sh /adaguc/adaguc-server-master/runtests.sh
+COPY runtests_psql.sh /adaguc/adaguc-server-master/runtests_psql.sh
 
-# Run adaguc-server functional and regression tests
+# Run adaguc-server functional and regression tests. See also `./doc/developing/testing.md`
 RUN bash runtests.sh
+# RUN bash runtests_psql.sh
 
 # Create a file indicating that the test succeeded. This file is used in the final stage
 RUN echo "TESTSDONE" >  /adaguc/adaguc-server-master/testsdone.txt
 
 ######### Fourth stage, prod ############
-FROM base as prod
+FROM base AS prod
 
 # Set same uid as vivid
 RUN useradd -m adaguc -u 1000 && \

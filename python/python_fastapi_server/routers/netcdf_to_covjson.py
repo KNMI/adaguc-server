@@ -1,6 +1,7 @@
 """
 Convert a netcdf dataset to coverage json
 """
+
 import logging
 from datetime import timezone
 from typing import Dict
@@ -71,7 +72,7 @@ georeferenceinfos: GeoReferenceInfos = [
 ]
 
 
-def get_projection_info_from_proj_string(projstring: str) -> GeoReferenceInfo:
+def get_proj_info_from_proj_string(projstring: str) -> GeoReferenceInfo:
     """Find the GeoReferenceInfo based on a proj4 string
 
     Args:
@@ -87,7 +88,9 @@ def get_projection_info_from_proj_string(projstring: str) -> GeoReferenceInfo:
     return georeferenceinfos[0]
 
 
-def netcdf_to_covjson(netcdfdataset) -> Coverage:
+def netcdf_to_covjson(
+    netcdfdataset, translate_names: dict[str, str], translate_dims: dict[str, str]
+) -> Coverage:
     """Converts a netcdf dataset to a CoverageJson object
 
     2022-10-06: Currently this function only handles one variable in the netCDF
@@ -101,11 +104,18 @@ def netcdf_to_covjson(netcdfdataset) -> Coverage:
     parameters: Dict[str, Parameter] = {}
 
     # float ta(time, height, y, x) ;
-    netcdfdimname_to_covdimname = {"height": "z", "x": "x", "y": "y", "time": "t"}
+    netcdfdimname_to_covdimname = {
+        "height": "z",
+        "x": "x",
+        "y": "y",
+        "time": "t",
+    }
+    netcdfdimname_to_covdimname.update(translate_dims)
 
     # Loop through the variables in the NetCDF file
     for variablename in netcdfdataset.variables:
         variable = netcdfdataset.variables[variablename]
+        translated_variablename = translate_names.get(variablename, variablename)
 
         # Find a variable with a grid_mapping attribute, this is a grid
         if "grid_mapping" in variable.ncattrs():
@@ -113,7 +123,7 @@ def netcdf_to_covjson(netcdfdataset) -> Coverage:
             axesnames: List = [None] * len(variable.dimensions)
             shape = [None] * len(variable.dimensions)
             for index, dimname in enumerate(variable.dimensions):
-                coverage_axis_name = netcdfdimname_to_covdimname[dimname]
+                coverage_axis_name = netcdfdimname_to_covdimname.get(dimname, dimname)
                 axesnames[index] = coverage_axis_name
                 ncvar = netcdfdataset.variables[dimname]
                 # Fill in the shape object for the NdArray
@@ -135,33 +145,54 @@ def netcdf_to_covjson(netcdfdataset) -> Coverage:
                         }.items()
                         if value is not None
                     }
-                    # pylint: disable=no-member
                     values = netCDF4.num2date(**not_none_parameters)
                     # netcdf4-python has made the choice to always return timezone naive datetimes, but guarantees
                     # that the time is in UTC. So we now have to manually set UTC timezone. Quite inefficient! See
                     # https://github.com/Unidata/netcdf4-python/issues/357
-                    values_tz = [v.replace(tzinfo=timezone.utc) for v in values.tolist()]
-                    axes[coverage_axis_name] = ValuesAxis[AwareDatetime](values=values_tz)
+                    values_tz = [
+                        v.replace(tzinfo=timezone.utc) for v in values.tolist()
+                    ]
+                    axes[coverage_axis_name] = ValuesAxis[AwareDatetime](
+                        values=values_tz
+                    )
                 else:
-                    # Assign float values
-                    axes[coverage_axis_name] = ValuesAxis[float](values=ncvar[:].data.tolist())
+                    if "str" in str(ncvar.dtype):
+                        # Assign str values
+                        vals = [str(val) for val in ncvar[:]]
+                        axes[coverage_axis_name] = ValuesAxis[str](values=vals)
+                    else:
+                        # Assign float values
+                        axes[coverage_axis_name] = ValuesAxis[float](
+                            values=ncvar[:].data.tolist()
+                        )
 
             # Create the ndarray for the ranges object
             ndarray = NdArray(
-                axisNames=axesnames, shape=shape, values=ma.masked_invalid(variable[:].flatten(order="C")).tolist()
+                axisNames=axesnames,
+                shape=shape,
+                values=ma.masked_invalid(variable[:].flatten(order="C")).tolist(),
             )
 
             # Make the ranges object
-            ranges[variablename] = ndarray
+            ranges[translated_variablename] = ndarray
 
             unit_of_measurement = variable.units if variable.units else "unknown"
 
             # Add the parameter
-            parameters[variablename] = Parameter(
+            if "long_name" in variable.ncattrs():
+                parameter_name = getattr(variable, "long_name")
+                parameter_description = getattr(variable, "long_name")
+            elif "standard_name" in variable.ncattrs():
+                parameter_name = getattr(variable, "standard_name")
+                parameter_description = getattr(variable, "standard_name")
+            else:
+                parameter_name = variablename
+                parameter_description = variablename
+            parameters[translated_variablename] = Parameter(
                 # TODO: KDP-1622 Fix the difference in the ObservedProperty between DescribeCoverage from the
                 #  Adaguc Config and the NetCDF values
-                observedProperty=ObservedProperty(label={"en": variable.long_name}),
-                description={"en": variable.long_name},
+                observedProperty=ObservedProperty(label={"en": parameter_name}),
+                description={"en": parameter_description},
                 unit=Unit(
                     symbol=Symbol(
                         value=unit_of_measurement,
@@ -176,107 +207,28 @@ def netcdf_to_covjson(netcdfdataset) -> Coverage:
     # Try to detect the georeferencesysteminfo based on the proj string in the crs variable of the netcdf file.
     if "crs" in netcdfdataset.variables:
         crsvar = netcdfdataset.variables["crs"]
-        georeferencesysteminfo = get_projection_info_from_proj_string(crsvar.proj4_params)
+        georeferencesysteminfo = get_proj_info_from_proj_string(crsvar.proj4_params)
 
-    georeferencesystem = ReferenceSystem(type=georeferencesysteminfo.crstype, id=georeferencesysteminfo.crsid)
+    georeferencesystem = ReferenceSystem(
+        type=georeferencesysteminfo.crstype, id=georeferencesysteminfo.crsid
+    )
 
-    georeferencing = ReferenceSystemConnectionObject(system=georeferencesystem, coordinates=georeferencesysteminfo.axes)
+    georeferencing = ReferenceSystemConnectionObject(
+        system=georeferencesystem, coordinates=georeferencesysteminfo.axes
+    )
 
     temporalreferencesystem = ReferenceSystem(type="TemporalRS", calendar="Gregorian")
 
-    temporalreferencing = ReferenceSystemConnectionObject(system=temporalreferencesystem, coordinates=["t"])
+    temporalreferencing = ReferenceSystemConnectionObject(
+        system=temporalreferencesystem, coordinates=["t"]
+    )
 
     # Create the domain based on the axes object
-    domain = Domain(domainType=DomainType.grid, axes=axes, referencing=[georeferencing, temporalreferencing])
+    domain = Domain(
+        domainType=DomainType.grid,
+        axes=axes,
+        referencing=[georeferencing, temporalreferencing],
+    )
 
     # Assemble and return the coveragejson based on the domain and the ranges
     return Coverage(domain=domain, ranges=ranges, parameters=parameters)
-
-
-if __name__ == "__main__":
-    # Run with python3.10 api/application/app/netcdf_to_covjson.py
-    import requests
-
-    SERVICE = "https://geoservices.knmi.nl/adagucserver?"
-    SERVICE= "http://localhost:8080/adagucserver?"
-
-    # Rijksdriehoek stelsel
-    # QUERYSTRING = (
-    #     "dataset=Tg_1_oper&"
-    #     "SERVICE=WCS&"
-    #     "REQUEST=GetCoverage&"
-    #     "COVERAGE=daily_temperature/INTER_OPER_R___TAVGD___L3__0005_prediction&"
-    #     "CRS=EPSG%3A28992&"
-    #     "FORMAT=NetCDF3&"
-    #     "BBOX=0,290000,300000,640000&"
-    #     "RESX=10000&"
-    #     "RESY=10000&"
-    #     "TIME=2022-10-05T00:00:00Z"
-    # )
-
-    # Native grid:
-    # QUERYSTRING = (
-    #     "dataset=Tg_1_oper&"
-    #     "SERVICE=WCS&"
-    #     "REQUEST=GetCoverage&"
-    #     "COVERAGE=daily_temperature/INTER_OPER_R___TAVGD___L3__0005_prediction&"
-    #     "FORMAT=NetCDF3&"
-    #     "TIME=2022-10-05T00:00:00Z"
-    # )
-
-    # WGS84 Lat/Lon projection
-    QUERYSTRING = (
-        "dataset=Tg_1_oper&"
-        "SERVICE=WCS&"
-        "REQUEST=GetCoverage&"
-        "COVERAGE=daily_temperature/INTER_OPER_R___TAVGD___L3__0005_prediction&"
-        "CRS=EPSG%3A4326&"
-        "FORMAT=NetCDF3&"
-        "BBOX=3.039095,50.580161,7.584775,53.746892&"
-        "RESX=0.25&"
-        "RESY=0.25&"
-        "TIME=2022-10-05T00:00:00Z"
-    )
-
-    # QUERYSTRING = (
-    #     "source=DEMO%2FWINS50%2FWINS50_43h21_fERA5_CTL_ptA_NETHERLANDS.NL_20190101.nc&"
-    #     "SERVICE=WCS&"
-    #     "REQUEST=GetCoverage&"
-    #     "COVERAGE=ta&"
-    #     "CRS=EPSG%3A4326&"
-    #     "FORMAT=NetCDF4&"
-    #     "BBOX=1.293392,50.065788,10.033752,55.667788&"
-    #     "WIDTH=20&"
-    #     "HEIGHT=20&"
-    #     "TIME=2019-01-01T23:00:00Z&"
-    #     "ELEVATION=600"
-    # )
-    QUERYSTRING = (
-        "dataset=HARM_N25&"
-        "SERVICE=WCS&"
-        "REQUEST=GetCoverage&"
-        "COVERAGE=air_temperature__at_2m&"
-        "CRS=EPSG%3A4326&"
-        "FORMAT=NetCDF3&"
-        "BBOX=3.039095,50.580161,7.584775,53.746892&"
-        # "RESX=0.25&"
-        # "RESY=0.25&"
-        "TIME=2023-03-23T09:00:00Z"
-    )
-
-    WCSGETCOVERAGEURL = SERVICE + QUERYSTRING
-
-    # Get a NetCDF file as dataset
-    response = requests.get(WCSGETCOVERAGEURL, timeout=60)
-
-    print(response.status_code)
-
-    ds = netCDF4.Dataset("filename.nc", memory=response.content)
-
-    coveragejson = netcdf_to_covjson(ds)
-
-    print(
-        coveragejson.model_dump_json(
-            exclude_none=True,
-        )
-    )

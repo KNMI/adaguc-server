@@ -22,10 +22,17 @@
  * limitations under the License.
  *
  ******************************************************************************/
-
+#ifndef CDBADAPTERPOSTGRESQL_H
+#define CDBADAPTERPOSTGRESQL_H
 #include "CDBAdapter.h"
 #include "CDebugger.h"
 #include "CPGSQLDB.h"
+
+struct DimInfo {
+  CT::string tableName;
+  CT::string dataType;
+};
+typedef struct DimInfo DimInfo;
 
 class CDBAdapterPostgreSQL : public CDBAdapter {
 private:
@@ -33,9 +40,11 @@ private:
   CPGSQLDB *dataBaseConnection;
   CPGSQLDB *getDataBaseConnection();
   CServerConfig::XMLE_Configuration *configurationObject;
-  std::map<std::string, std::string> lookupTableNameCacheMap;
+  std::map<std::string, DimInfo> lookupTableNameCacheMap;
   std::map<std::string, std::vector<std::string>> fileListPerTable;
   int createDimTableOfType(const char *dimname, const char *tablename, int type);
+
+  CDBStore::Store *layerMetaDataStore = nullptr;
 
 public:
   CDBAdapterPostgreSQL();
@@ -46,6 +55,13 @@ public:
   CDBStore::Store *getClosestDataTimeToSystemTime(const char *netcdfDimName, const char *tableName);
 
   CT::string getTableNameForPathFilterAndDimension(const char *path, const char *filter, const char *dimension, CDataSource *dataSource);
+  std::map<CT::string, DimInfo> getTableNamesForPathFilterAndDimensions(const char *path, const char *filter, std::vector<CT::string> dimensions, CDataSource *dataSource);
+
+  CT::string getLookupIdentifier(const char *path, const char *filter, const char *dimension);
+  void assertLookupTableExists();
+  void addToLookupTable(const char *path, const char *filter, CT::string dimensionName, CT::string tableName);
+  CT::string generateRandomTableName();
+
   int autoUpdateAndScanDimensionTables(CDataSource *dataSource);
   CDBStore::Store *getMin(const char *name, const char *table);
   CDBStore::Store *getMax(const char *name, const char *table);
@@ -74,4 +90,11 @@ public:
   int setFileString(const char *tablename, const char *file, const char *dimvalue, int dimindex, const char *filedate, GeoOptions *geoOptions);
   int setFileTimeStamp(const char *tablename, const char *file, const char *dimvalue, int dimindex, const char *filedate, GeoOptions *geoOptions);
   int addFilesToDataBase();
+  int storeLayerMetadata(const char *datasetName, const char *layerName, const char *metadataKey, const char *metadatablob);
+  CDBStore::Store *getLayerMetadataStore(const char *datasetName);
+  int dropLayerFromLayerMetadataStore(const char *datasetName, const char *layerName);
+  bool tryAdvisoryLock(size_t);
+  bool advisoryUnLock(size_t);
 };
+
+#endif

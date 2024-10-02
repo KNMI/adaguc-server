@@ -3,8 +3,8 @@
 
   <TempDir value="{ADAGUC_TMP}"/>
   <Path value="{ADAGUC_PATH}/data"/>
-  <!--<DataBase dbtype="postgresql" parameters="host=localhost dbname=tiles"/>-->
-  <DataBase dbtype="sqlite" parameters="/tmp/tiles.db"/>
+  <!--<DataBase parameters="host=localhost dbname=tiles"/>-->
+  <DataBase parameters="/tmp/tiles.db"/>
   
   <!-- WMS settings -->
   <WMS>

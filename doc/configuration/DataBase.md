@@ -1,4 +1,4 @@
-DataBase (dbtype,parameters, maxquerylimit)
+DataBase (parameters, maxquerylimit)
 ===========================================
 
 Back to [Configuration](./Configuration.md)
@@ -10,12 +10,11 @@ Configuration to access a PostgreSQL or SQLite database, for example:
 ```
 
 ```xml
-<DataBase dbtype="sqlite" parameters="databasefile.db"/>
+<DataBase parameters="databasefile.db"/>
 ```
 
--   dbtype can be either sqlite or postgresql. Default is postgresl
--   parameters are the database parameters required for making the
-    connection
--   maxquerylimit is the maximum number of results for a getfeatureinfo
+-   `parameters` are the database parameters required for making the
+    connection. If the `parameters` string ends with `.db`, we assume adaguc should use `sqlite`.
+-   `maxquerylimit` is the maximum number of results for a getfeatureinfo
     call.
 

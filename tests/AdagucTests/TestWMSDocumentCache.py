@@ -41,6 +41,8 @@ class TestWMSDocumentCache(unittest.TestCase):
 
   def test_WMSCMDUpdateDBTailPath(self):
     AdagucTestTools().cleanTempDir()
+    AdagucTestTools().cleanPostgres()
+
     ADAGUC_PATH = os.environ['ADAGUC_PATH']
     config = ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml,' + \
         ADAGUC_PATH + '/data/config/datasets/adaguc.testtimeseriescached.xml'

@@ -4,6 +4,7 @@
 # pip-sync
 
 aiocache~=0.12.2
+APScheduler~=3.10.4
 Brotli~=1.0
 Jinja2~=3.1
 OWSLib~=0.29.2
@@ -26,7 +27,7 @@ numpy~=1.26
 pydantic~=2.6
 pytz~=2023.3
 uvicorn~=0.23.2
-covjson-pydantic~=0.2.0
+covjson-pydantic~=0.3.0
 geomet~=1.0
 edr-pydantic~=0.3.0
 redis~=5.0
