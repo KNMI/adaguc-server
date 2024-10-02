@@ -55,7 +55,7 @@ int processQueryStringRequest() {
   return getStatusCode();
 }
 
-int do_work(int argc, char **argv, char **envp) {
+int run_adaguc_once(int argc, char **argv, char **envp, bool is_forked) {
   traceTimingsCheckEnabled();
   checkLogSettings();
 
@@ -92,11 +92,11 @@ int main(int argc, char **argv, char **envp) {
   setvbuf(stdout, NULL, _IONBF, 0); // turn off buffering
   setvbuf(stderr, NULL, _IONBF, 0); // turn off buffering
 
-  const char *ADAGUC_FORK = getenv("ADAGUC_FORK");
-  if (ADAGUC_FORK != NULL) {
-    return run_server(do_work, argc, argv, envp);
+  const char *ADAGUC_FORK_SOCKET_PATH = getenv("ADAGUC_FORK_SOCKET_PATH");
+  if (ADAGUC_FORK_SOCKET_PATH != NULL) {
+    return run_as_fork_service(run_adaguc_once, argc, argv, envp);
   } else {
     // normal flow without unix socket server/fork
-    return do_work(argc, argv, envp);
+    return run_adaguc_once(argc, argv, envp, false);
   }
 }

@@ -26,7 +26,7 @@ done
 
 export ADAGUC_PATH=/adaguc/adaguc-server-master/ && \
 export ADAGUC_TMP=/tmp && \
-env -u ADAGUC_FORK /adaguc/adaguc-server-master/bin/adagucserver --updatedb \
+env -u ADAGUC_FORK_SOCKET_PATH /adaguc/adaguc-server-master/bin/adagucserver --updatedb \
   --config /adaguc/adaguc-server-config.xml,baselayers.xml
 
 if [ $? -ne 0 ]
