@@ -11,7 +11,7 @@
 static std::map<pid_t, int> child_sockets;
 static const unsigned int max_pending_connections = 5;
 
-void handle_client(int client_socket, int (*do_work)(int, char **, char **), int argc, char **argv, char **envp) {
+void handle_client(int client_socket, int (*run_adaguc_once)(int, char **, char **, bool), int argc, char **argv, char **envp) {
   int recv_buf_len = 4096;
   char recv_buf[recv_buf_len];
   memset(recv_buf, 0, recv_buf_len * sizeof(char));
@@ -23,7 +23,7 @@ void handle_client(int client_socket, int (*do_work)(int, char **, char **), int
 
     setenv("QUERY_STRING", recv_buf, 1);
 
-    int status = do_work(argc, argv, envp);
+    int status = run_adaguc_once(argc, argv, envp, true);
     // fprintf(stderr, "exiting, status=%d", status);
 
     // fflush(stdout);
@@ -63,7 +63,7 @@ void on_child_exit(int child_signal) {
   }
 }
 
-int run_server(int (*do_work)(int, char **, char **), int argc, char **argv, char **envp) {
+int run_as_fork_service(int (*run_adaguc_once)(int, char **, char **, bool), int argc, char **argv, char **envp) {
   int client_socket = 0;
 
   signal(SIGCHLD, on_child_exit);
@@ -112,7 +112,7 @@ int run_server(int (*do_work)(int, char **, char **), int argc, char **argv, cha
     pid_t pid = fork();
     if (pid == 0) {
       close(listen_socket);
-      handle_client(client_socket, do_work, argc, argv, envp);
+      handle_client(client_socket, run_adaguc_once, argc, argv, envp);
     } else {
       child_sockets[pid] = client_socket;
     }

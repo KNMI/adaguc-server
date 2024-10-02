@@ -131,8 +131,11 @@ class CGIRunner:
 
         # print("@@@@", url)
 
+        # Only use fork server if ADAGUC_FORK is set and adaguc is not executed with extra arguments e.g. `--updatelayermetadata`
+        use_fork = os.getenv("ADAGUC_FORK", None) and len(cmds) == 1
+
         async with sem:
-            if os.getenv("ADAGUC_FORK", None):
+            if use_fork:
                 response = await wait_socket_communicate(url, timeout=timeout)
             else:
                 response = await wait_process_communicate(
