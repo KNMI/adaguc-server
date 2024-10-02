@@ -6,7 +6,7 @@
 #include <pthread.h>
 #include "CDataSource.h"
 #include "CDrawImage.h"
-#include "CGenericDataWarper.h"
+#include "GenericDataWarper/CGenericDataWarper.h"
 #include "CStyleConfiguration.h"
 
 class CDrawFunctionSettings {

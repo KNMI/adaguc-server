@@ -1,6 +1,6 @@
 #include "CDataPostProcessor_WFP.h"
 #include "CRequest.h"
-#include "CGenericDataWarper.h"
+#include "GenericDataWarper/CGenericDataWarper.h"
 #include <utils/LayerUtils.h>
 
 /************************/
@@ -176,7 +176,7 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
       CDBError("Unable to initialize projection");
       return 1;
     }
-    GenericDataWarper genericDataWarper;
+    CGenericDataWarper genericDataWarper;
 
     genericDataWarper.render<float>(&warper, windSectorDataField, &sourceGeo, &destGeo, &settings, &drawFunction);
   }
@@ -186,7 +186,7 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
 
 void CDPPWFP::drawFunction(int x, int y, float, void *_settings, void *warperInstance) {
   Settings *settings = (Settings *)_settings;
-  GenericDataWarper *warper = (GenericDataWarper *)warperInstance;
+  CGenericDataWarper *warper = (CGenericDataWarper *)warperInstance;
   if (x >= 0 && y >= 0 && x < (int)settings->width && y < (int)settings->height) {
     float windSpeed = settings->destGridWindSpeed[x + y * settings->width];
     float windDir = settings->destGridWindDirection[x + y * settings->width];

@@ -1,5 +1,5 @@
 #include "CCreateHistogram.h"
-#include "CGenericDataWarper.h"
+#include "GenericDataWarper/CGenericDataWarper.h"
 #include "CImageDataWriter.h"
 const char *CCreateHistogram::className = "CCreateHistogram";
 
@@ -107,7 +107,7 @@ int CCreateHistogram::addData(std::vector<CDataSource *> &dataSources) {
       sourceGeo.CRS = dataSource->nativeProj4;
 
       CDBDebug("Rendering %f,%f", sourceGeo.dfBBOX[0], sourceGeo.dfBBOX[1]);
-      GenericDataWarper genericDataWarper;
+      CGenericDataWarper genericDataWarper;
       switch (dataType) {
       case CDF_CHAR:
         genericDataWarper.render<char>(&warper, sourceData, &sourceGeo, dataSource->srvParams->Geo, &settings, &drawFunction);

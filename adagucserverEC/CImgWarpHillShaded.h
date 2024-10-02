@@ -27,7 +27,7 @@
 #define CImgWarpHillShaded_H
 #include <stdlib.h>
 #include "CImageWarperRenderInterface.h"
-#include "CGenericDataWarper.h"
+#include "GenericDataWarper/CGenericDataWarper.h"
 #include "utils.h"
 
 class Vector {
@@ -71,7 +71,7 @@ private:
   template <class T> static void drawFunction(int x, int y, T val, void *_settings, void *g) {
     Settings *drawSettings = static_cast<Settings *>(_settings);
     if (x < 0 || y < 0 || x > drawSettings->width || y > drawSettings->height) return;
-    GenericDataWarper *genericDataWarper = static_cast<GenericDataWarper *>(g);
+    CGenericDataWarper *genericDataWarper = static_cast<CGenericDataWarper *>(g);
     bool isNodata = false;
     if (drawSettings->hasNodataValue) {
       if ((val) == (T)drawSettings->dfNodataValue) isNodata = true;

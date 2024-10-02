@@ -328,7 +328,7 @@ int CGDALDataWriter::addData(std::vector<CDataSource *> &dataSources) {
   settings.width = srvParam->Geo->dWidth;
   settings.height = srvParam->Geo->dHeight;
   settings.data = warpedData;
-  GenericDataWarper genericDataWarper;
+  CGenericDataWarper genericDataWarper;
   switch (dataType) {
   case CDF_CHAR:
     genericDataWarper.render<char>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction);

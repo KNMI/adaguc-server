@@ -81,6 +81,16 @@ add_library(
     utils/UpdateLayerMetadata.cpp
     utils/ConfigurationUtils.h
     utils/ConfigurationUtils.cpp    
+    GenericDataWarper/gdwDrawTriangle.h
+    GenericDataWarper/gdwDrawTriangle.cpp    
+    GenericDataWarper/gdwDrawFunction.h
+    GenericDataWarper/gdwDrawFunction.cpp    
+    GenericDataWarper/CGenericDataWarper.cpp
+    GenericDataWarper/CGenericDataWarper.h
+    GenericDataWarper/CImgWarpGeneric.cpp
+    GenericDataWarper/CImgWarpGeneric.h
+    GenericDataWarper/gdwFindPixelExtent.cpp
+    GenericDataWarper/gdwFindPixelExtent.h
     Types/LayerMetadataType.h
     CDataPostProcessors/CDataPostProcessor_AddFeatures.cpp
     CDataPostProcessors/CDataPostProcessor_AddFeatures.h
@@ -120,8 +130,6 @@ add_library(
     CFillTriangle.h
     CGDALDataWriter.cpp
     CGDALDataWriter.h
-    CGenericDataWarper.cpp
-    CGenericDataWarper.h
     CGeoJSONData.cpp
     CGeoJSONData.h
     CGeoParams.cpp
@@ -146,8 +154,6 @@ add_library(
     CImgWarpBilinear.h
     CImgWarpBoolean.cpp
     CImgWarpBoolean.h
-    CImgWarpGeneric.cpp
-    CImgWarpGeneric.h
     CImgWarpHillShaded.cpp
     CImgWarpHillShaded.h
     CImgWarpNearestNeighbour.cpp

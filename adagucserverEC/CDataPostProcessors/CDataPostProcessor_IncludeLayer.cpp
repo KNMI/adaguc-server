@@ -239,7 +239,7 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
         CDBError("Unable to initialize projection");
         return 1;
       }
-      GenericDataWarper genericDataWarper;
+      CGenericDataWarper genericDataWarper;
       switch (varToWriteTo->getType()) {
       case CDF_CHAR:
         genericDataWarper.render<char>(&warper, sourceData, &sourceGeo, &destGeo, &settings, &drawFunction);

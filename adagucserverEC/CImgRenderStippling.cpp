@@ -24,7 +24,7 @@
  ******************************************************************************/
 
 #include "CImgRenderStippling.h"
-#include "CGenericDataWarper.h"
+#include "GenericDataWarper/CGenericDataWarper.h"
 int CImgRenderStippling::set(const char *) { return 0; }
 
 const char *CImgRenderStippling::className = "CImgRenderStippling";
@@ -207,7 +207,7 @@ void CImgRenderStippling::render(CImageWarper *warper, CDataSource *dataSource, 
   int startY = int(((dataSource->srvParams->Geo->dfBBOX[1]) / bboxHeight) * dataSource->srvParams->Geo->dHeight);
   startY = (startY % (yDistance * 2)) - (yDistance * 2);
 
-  GenericDataWarper genericDataWarper;
+  CGenericDataWarper genericDataWarper;
   switch (dataType) {
   case CDF_CHAR:
     genericDataWarper.render<char>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &drawFunction);
