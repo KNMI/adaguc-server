@@ -10,19 +10,19 @@
 #include "CDebugger.h"
 #include "CGenericDataWarperTools.h"
 
+struct GDWWarperState {
+  void *sourceData;
+  int sourceDataPX, sourceDataPY, sourceDataWidth, sourceDataHeight;
+  double tileDx, tileDy;
+  bool useHalfCellOffset;
+};
+
 class CGenericDataWarper {
 private:
   DEF_ERRORFUNCTION();
 
 public:
-  CGenericDataWarper() { useHalfCellOffset = false; }
-
-  /* Can be used in drawfunctions */
-  void *sourceData;
-  int sourceDataPX, sourceDataPY, sourceDataWidth, sourceDataHeight;
-  double tileDx, tileDy;
-  bool useHalfCellOffset;
-
+  GDWWarperState warperState;
   template <typename T>
   int render(CImageWarper *warper, void *_sourceData, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, void *drawFunctionSettings,
              void (*drawFunction)(int, int, T, void *drawFunctionSettings, void *genericDataWarper));

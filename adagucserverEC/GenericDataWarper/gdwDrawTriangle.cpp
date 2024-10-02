@@ -79,9 +79,9 @@ int gdwDrawTriangle(int *xP, int *yP, T value, int destWidth, int destHeight, vo
     int maxx = X1;
     if (maxx < X2) maxx = X2;
     if (maxx < X3) maxx = X3;
-    g->tileDy = 0;
+    g->warperState.tileDy = 0;
     for (int x = minx; x < maxx + 1; x++) {
-      g->tileDx = 0; //(x - minx) / double(maxx-minx);
+      g->warperState.tileDx = 0; //(x - minx) / double(maxx-minx);
       drawFunction(x, yP[2], value, settings, genericDataWarper);
     }
     return 1;
@@ -114,8 +114,8 @@ int gdwDrawTriangle(int *xP, int *yP, T value, int destWidth, int destHeight, vo
           double WV2 = ((yP[2] - yP[0]) * (x - xP[2]) + (xP[0] - xP[2]) * (y - yP[2])) / dn;
           double WV3 = 1 - WV1 - WV2;
 
-          g->tileDx = WV1 * vX1 + WV2 * vX2 + WV3 * vX3;
-          g->tileDy = WV1 * vY1 + WV2 * vY2 + WV3 * vY3;
+          g->warperState.tileDx = WV1 * vX1 + WV2 * vX2 + WV3 * vX3;
+          g->warperState.tileDy = WV1 * vY1 + WV2 * vY2 + WV3 * vY3;
           drawFunction(x, y, value, settings, genericDataWarper);
         }
       }
@@ -145,8 +145,8 @@ int gdwDrawTriangle(int *xP, int *yP, T value, int destWidth, int destHeight, vo
           double WV2 = ((yP[2] - yP[0]) * (x - xP[2]) + (xP[0] - xP[2]) * (y - yP[2])) / dn;
           double WV3 = 1 - WV1 - WV2;
 
-          g->tileDx = WV1 * vX1 + WV2 * vX2 + WV3 * vX3;
-          g->tileDy = WV1 * vY1 + WV2 * vY2 + WV3 * vY3;
+          g->warperState.tileDx = WV1 * vX1 + WV2 * vX2 + WV3 * vX3;
+          g->warperState.tileDy = WV1 * vY1 + WV2 * vY2 + WV3 * vY3;
           // http://localhost:8080/adaguc-server?DATASET=noaaglm&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=LIGHTNING_COUNTS&WIDTH=1321&HEIGHT=959&CRS=EPSG%3A32661&BBOX=-8314748.562870221,-1301096.785244672,-8149138.113029413,-1180869.3655646304&STYLES=counts_knmi%2Fgeneric&FORMAT=image/png&TRANSPARENT=TRUE&&time=2024-06-28T09%3A00%3A00Z&0.013241703752992606
           drawFunction(x, y, value, settings, genericDataWarper);
         }

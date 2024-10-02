@@ -48,7 +48,7 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
   sourceGeo.CRS = dataSource->nativeProj4;
 
   CGenericDataWarper genericDataWarper;
-  genericDataWarper.useHalfCellOffset = true;
+  genericDataWarper.warperState.useHalfCellOffset = true;
   switch (dataType) {
   case CDF_CHAR:
     genericDataWarper.render<char>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &gdwDrawFunction);

@@ -31,7 +31,7 @@ const char *CGenericDataWarper::className = "GenericDataWarper";
 template <typename T>
 int CGenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, void *drawFunctionSettings,
                                void (*drawFunction)(int, int, T, void *drawFunctionSettings, void *genericDataWarper)) {
-  this->sourceData = _sourceData;
+  this->warperState.sourceData = _sourceData;
 #ifdef GenericDataWarper_DEBUG
   CDBDebug("render");
 #endif
@@ -97,15 +97,15 @@ int CGenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoPara
   CDBDebug("Creating px extent");
 #endif
 
-  sourceDataWidth = sourceGeoParams->dWidth;
-  sourceDataHeight = sourceGeoParams->dHeight;
+  warperState.sourceDataWidth = sourceGeoParams->dWidth;
+  warperState.sourceDataHeight = sourceGeoParams->dHeight;
 
   int PXExtentBasedOnSource[4];
 
   PXExtentBasedOnSource[0] = 0;
   PXExtentBasedOnSource[1] = 0;
-  PXExtentBasedOnSource[2] = sourceDataWidth;
-  PXExtentBasedOnSource[3] = sourceDataHeight;
+  PXExtentBasedOnSource[2] = warperState.sourceDataWidth;
+  PXExtentBasedOnSource[3] = warperState.sourceDataHeight;
 
   bool tryToFindExtend = false;
 
@@ -189,9 +189,9 @@ int CGenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoPara
         //
 
         if (!skip) {
-          this->sourceDataPX = x;
-          this->sourceDataPY = sourceGeoParams->dHeight - 1 - y;
-          T value = ((T *)sourceData)[this->sourceDataPX + (this->sourceDataPY) * sourceGeoParams->dWidth];
+          this->warperState.sourceDataPX = x;
+          this->warperState.sourceDataPY = sourceGeoParams->dHeight - 1 - y;
+          T value = ((T *)warperState.sourceData)[this->warperState.sourceDataPX + (this->warperState.sourceDataPY) * sourceGeoParams->dWidth];
           int lx1, lx2, ly1, ly2;
           if (sx1 > sx2) {
             lx2 = sx1;
@@ -211,8 +211,8 @@ int CGenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoPara
           if (lx2 == lx1) lx2++;
           for (int sjy = ly1; sjy < ly2; sjy++) {
             for (int sjx = lx1; sjx < lx2; sjx++) {
-              this->tileDy = (sjy - ly1) / double(ly2 - ly1);
-              this->tileDx = (sjx - lx1) / double(lx2 - lx1);
+              this->warperState.tileDy = (sjy - ly1) / double(ly2 - ly1);
+              this->warperState.tileDx = (sjx - lx1) / double(lx2 - lx1);
               drawFunction(sjx, sjy, value, drawFunctionSettings, this);
             }
           }
@@ -232,7 +232,7 @@ int CGenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoPara
     useStridingProjection = true;
   }
 
-  double halfCell = useHalfCellOffset ? 0.5 : 0;
+  double halfCell = warperState.useHalfCellOffset ? 0.5 : 0;
 
   size_t dataSize = (dataWidth + 1) * (dataHeight + 1);
 
@@ -454,9 +454,9 @@ int CGenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoPara
         if (doDraw) {
           int sourceGridX = x + PXExtentBasedOnSource[0];
           int sourceGridY = y + PXExtentBasedOnSource[1];
-          this->sourceDataPX = sourceGridX;
-          this->sourceDataPY = (sourceDataHeight - 1 - sourceGridY);
-          T value = ((T *)sourceData)[this->sourceDataPX + this->sourceDataPY * sourceDataWidth];
+          this->warperState.sourceDataPX = sourceGridX;
+          this->warperState.sourceDataPY = (warperState.sourceDataHeight - 1 - sourceGridY);
+          T value = ((T *)warperState.sourceData)[this->warperState.sourceDataPX + this->warperState.sourceDataPY * warperState.sourceDataWidth];
 
           int xP[3];
           int yP[3];

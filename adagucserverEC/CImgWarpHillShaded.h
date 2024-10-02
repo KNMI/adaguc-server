@@ -81,11 +81,11 @@ private:
       if (drawSettings->legendValueRange)
         if (val < drawSettings->legendLowerRange || val > drawSettings->legendUpperRange) isNodata = true;
     if (!isNodata) {
-      T *sourceData = (T *)genericDataWarper->sourceData;
-      size_t sourceDataPX = genericDataWarper->sourceDataPX;
-      size_t sourceDataPY = genericDataWarper->sourceDataPY;
-      size_t sourceDataWidth = genericDataWarper->sourceDataWidth;
-      size_t sourceDataHeight = genericDataWarper->sourceDataHeight;
+      T *sourceData = (T *)genericDataWarper->warperState.sourceData;
+      size_t sourceDataPX = genericDataWarper->warperState.sourceDataPX;
+      size_t sourceDataPY = genericDataWarper->warperState.sourceDataPY;
+      size_t sourceDataWidth = genericDataWarper->warperState.sourceDataWidth;
+      size_t sourceDataHeight = genericDataWarper->warperState.sourceDataHeight;
 
       if (sourceDataPY > sourceDataHeight - 1) return;
       if (sourceDataPX > sourceDataWidth - 1) return;
@@ -126,8 +126,8 @@ private:
         float c10 = DotProduct(lightSource, normal10);
         float c01 = DotProduct(lightSource, normal01);
         float c11 = DotProduct(lightSource, normal11);
-        float dx = genericDataWarper->tileDx;
-        float dy = genericDataWarper->tileDy;
+        float dx = genericDataWarper->warperState.tileDx;
+        float dy = genericDataWarper->warperState.tileDy;
         float gx1 = (1 - dx) * c00 + dx * c10;
         float gx2 = (1 - dx) * c01 + dx * c11;
         float bilValue = (1 - dy) * gx1 + dy * gx2;

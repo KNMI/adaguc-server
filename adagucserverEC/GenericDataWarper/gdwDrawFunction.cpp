@@ -15,11 +15,11 @@ template <typename T> void gdwDrawFunction(int x, int y, T val, void *_settings,
   }
   if (!(val == val)) isNodata = true;
   if (!isNodata) {
-    T *sourceData = (T *)genericDataWarper->sourceData;
-    size_t sourceDataPX = genericDataWarper->sourceDataPX;
-    size_t sourceDataPY = genericDataWarper->sourceDataPY;
-    size_t sourceDataWidth = genericDataWarper->sourceDataWidth;
-    size_t sourceDataHeight = genericDataWarper->sourceDataHeight;
+    T *sourceData = (T *)genericDataWarper->warperState.sourceData;
+    size_t sourceDataPX = genericDataWarper->warperState.sourceDataPX;
+    size_t sourceDataPY = genericDataWarper->warperState.sourceDataPY;
+    size_t sourceDataWidth = genericDataWarper->warperState.sourceDataWidth;
+    size_t sourceDataHeight = genericDataWarper->warperState.sourceDataHeight;
 
     if (sourceDataPY > sourceDataHeight - 1) return;
     if (sourceDataPX > sourceDataWidth - 1) return;
@@ -44,8 +44,8 @@ template <typename T> void gdwDrawFunction(int x, int y, T val, void *_settings,
                                            sourceDataPY + 1, sourceDataWidth, sourceDataHeight);
       }
 
-      double dx = genericDataWarper->tileDx;
-      double dy = genericDataWarper->tileDy;
+      double dx = genericDataWarper->warperState.tileDx;
+      double dy = genericDataWarper->warperState.tileDy;
 
       double gx1 = (1 - dx) * values[0][0] + dx * values[1][0];
       double gx2 = (1 - dx) * values[0][1] + dx * values[1][1];
