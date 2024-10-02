@@ -91,11 +91,11 @@ int gdwDrawTriangle(int *xP, int *yP, T value, int destWidth, int destHeight, vo
   double dn = ((yP[1] - yP[2]) * (xP[0] - xP[2]) + (xP[2] - xP[1]) * (yP[0] - yP[2]));
 
   double rcl = double(X3 - X1) / double(Y3 - Y1);
-  if (Y2 != Y1 && Y1 < H && Y2 > 0) {
+  if (Y2 != Y1 && Y1 < H && Y2 >= 0) {
     double rca = double(X2 - X1) / double(Y2 - Y1);
     int sy = (Y1 < 0) ? 0 : Y1;
     int ey = (Y2 > H) ? H : Y2;
-    for (int y = sy; y < ey; y++) {
+    for (int y = sy; y < ey + 1; y++) {
       int xL = (rcl * double(y - Y1) + X1);
       int xA = (rca * double(y - Y1) + X1);
       int x1, x2;
@@ -106,7 +106,7 @@ int gdwDrawTriangle(int *xP, int *yP, T value, int destWidth, int destHeight, vo
         x2 = xL;
         x1 = xA;
       }
-      if (x1 < W && x2 > 0) {
+      if (x1 < W && x2 >= 0) {
         int sx = (x1 < 0) ? 0 : x1;
         int ex = (x2 > W) ? W : x2;
         for (int x = sx; x < ex + 1; x++) {
@@ -124,11 +124,11 @@ int gdwDrawTriangle(int *xP, int *yP, T value, int destWidth, int destHeight, vo
     }
   }
   // return 0;
-  if (Y3 != Y2 && Y2 < H && Y3 > 0) {
+  if (Y3 != Y2 && Y2 < H && Y3 >= 0) {
     double rcb = double(X3 - X2) / double(Y3 - Y2);
     int sy = (Y2 <= 0) ? 0 : Y2;
     int ey = (Y3 > H) ? H : Y3;
-    for (int y = sy; y < ey; y++) {
+    for (int y = sy; y < ey + 1; y++) {
       int xL = (rcl * double(y - Y1) + X1);
       int xB = (rcb * double(y - Y2) + X2);
       int x1, x2;
@@ -139,7 +139,7 @@ int gdwDrawTriangle(int *xP, int *yP, T value, int destWidth, int destHeight, vo
         x2 = xL;
         x1 = xB;
       }
-      if (x1 < W && x2 > 0) {
+      if (x1 < W && x2 >= 0) {
         int sx = (x1 <= 0) ? 0 : x1;
         int ex = (x2 > W) ? W : x2;
         for (int x = sx; x < ex + 1; x++) {
