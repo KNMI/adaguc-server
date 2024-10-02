@@ -292,20 +292,20 @@ namespace CDF {
     size_t getSize() { return currentSize; }
 
     Attribute *getAttribute(const char *name) const {
+      Attribute *a = getAttributeNE(name);
+      if (a == nullptr) {
+        throw(CDF_E_ATTNOTFOUND);
+      }
+      return a;
+    }
+
+    Attribute *getAttributeNE(const char *name) const {
       for (size_t j = 0; j < attributes.size(); j++) {
         if (attributes[j]->name.equals(name)) {
           return attributes[j];
         }
       }
-      throw(CDF_E_ATTNOTFOUND);
-      return NULL;
-    }
-    Attribute *getAttributeNE(const char *name) const {
-      try {
-        return getAttribute(name);
-      } catch (int e) {
-        return NULL;
-      }
+      return nullptr;
     }
 
     /**

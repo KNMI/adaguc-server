@@ -26,6 +26,7 @@
 #include "CDataSource.h"
 #include "CDBFileScanner.h"
 #include "CConvertGeoJSON.h"
+#include "utils/LayerUtils.h"
 const char *CDataSource::className = "CDataSource";
 
 // #define CDATASOURCE_DEBUG
@@ -368,7 +369,7 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Conf
   // Set the layername
   CT::string layerUniqueName;
   if (_layerName == NULL) {
-    if (srvParams->makeUniqueLayerName(&layerUniqueName, cfgLayer) != 0) layerUniqueName = "undefined";
+    if (makeUniqueLayerName(&layerUniqueName, cfgLayer) != 0) layerUniqueName = "undefined";
     _layerName = layerUniqueName.c_str();
   }
 
@@ -433,13 +434,6 @@ void CDataSource::addStep(const char *fileName, CCDFDims *dims) {
   if (dims != NULL) {
     timeStep->dims.copy(dims);
   }
-  //   for(size_t j=0;j<cfgLayer->Variable.size();j++){
-  //     DataObject *newDataObject = new DataObject();
-  //     newDataObject->variableName.copy(cfgLayer->Variable[j]->value.c_str());
-  //
-  //     getDataObjectsVector()->push_back(newDataObject);
-  //
-  //   }
 }
 
 const char *CDataSource::getFileName() {
@@ -860,6 +854,7 @@ CT::PointerList<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(C
 #ifdef CDATASOURCE_DEBUG
   CDBDebug("getStyleListForDataSource %s", dataSource->layerName.c_str());
 #endif
+
   CT::PointerList<CStyleConfiguration *> *styleConfigurationList = new CT::PointerList<CStyleConfiguration *>();
 
   CServerConfig::XMLE_Configuration *serverCFG = dataSource->cfg;
@@ -869,13 +864,11 @@ CT::PointerList<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(C
 
   // Auto configure styles, if no legends or styles are defined
   if (dataSource->cfgLayer->Styles.size() == 0 && dataSource->cfgLayer->Legend.size() == 0) {
-
     renderMethods = getRenderMethodListForDataSource(dataSource, NULL);
     if (renderMethods->size() > 0) {
       CAutoConfigure::autoConfigureStyles(dataSource);
     }
   }
-
   delete renderMethods;
   renderMethods = NULL;
 
@@ -1454,3 +1447,5 @@ int CDataSource::readVariableDataForCDFDims(CDF::Variable *variableToRead, CDFTy
   }
   return variableToRead->readData(dataTypeToReturnData, start, count, stride, true);
 }
+
+std::string CDataSource::getDataSetName() { return std::string(this->srvParams->datasetLocation.c_str()); }

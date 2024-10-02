@@ -15,7 +15,7 @@
         <KeywordList>
             <Keyword>view</Keyword>
             <Keyword>infoMapAccessService</Keyword>
-            <Keyword>ADAGUCServer version 2.13.7, of Nov  1 2023 11:45:57 </Keyword>
+            <Keyword>ADAGUCServer version 2.27.0, of Sep  6 2024 09:44:02 </Keyword>
         </KeywordList>
         <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FRAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;"/>
         <ContactInformation>
@@ -60,40 +60,40 @@
         <UserDefinedSymbolization SupportSLD="1" />
 <Layer>
 <Title>WMS of  AutoResource RAD_NL62_VOL_NA_202106181850.h5</Title>
-<CRS>EPSG:3411</CRS>
-<CRS>EPSG:3412</CRS>
-<CRS>EPSG:3575</CRS>
-<CRS>EPSG:3857</CRS>
-<CRS>EPSG:4258</CRS>
-<CRS>EPSG:4326</CRS>
 <CRS>CRS:84</CRS>
 <CRS>EPSG:25831</CRS>
 <CRS>EPSG:25832</CRS>
 <CRS>EPSG:28992</CRS>
-<CRS>EPSG:7399</CRS>
+<CRS>EPSG:3067</CRS>
+<CRS>EPSG:32661</CRS>
+<CRS>EPSG:3411</CRS>
+<CRS>EPSG:3412</CRS>
+<CRS>EPSG:3575</CRS>
+<CRS>EPSG:3857</CRS>
+<CRS>EPSG:40000</CRS>
+<CRS>EPSG:4258</CRS>
+<CRS>EPSG:4326</CRS>
 <CRS>EPSG:50001</CRS>
 <CRS>EPSG:54030</CRS>
-<CRS>EPSG:32661</CRS>
-<CRS>EPSG:40000</CRS>
+<CRS>EPSG:7399</CRS>
 <CRS>EPSG:900913</CRS>
-<CRS>EPSG:3067</CRS>
-<BoundingBox CRS="EPSG:3411" minx="2514414.861870" miny="-3363656.629081" maxx="3896647.970727" maxy="-2039591.691597" />
-<BoundingBox CRS="EPSG:3412" minx="0.000000" miny="31477273.731401" maxx="7424899.887536" maxy="42758294.312639" />
-<BoundingBox CRS="EPSG:3575" minx="-795234.829762" miny="-4579574.864800" maxx="0.000000" maxy="-3470963.934518" />
-<BoundingBox CRS="EPSG:3857" minx="0.000000" miny="6106854.834885" maxx="1113194.907933" maxy="7967317.535016" />
-<BoundingBox CRS="EPSG:4258" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
-<BoundingBox CRS="EPSG:4326" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
 <BoundingBox CRS="CRS:84" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
 <BoundingBox CRS="EPSG:25831" minx="276224.084601" miny="5316306.196727" maxx="1022031.406674" maxy="6450163.243181" />
 <BoundingBox CRS="EPSG:25832" minx="-171063.799865" miny="5316306.196727" maxx="574595.112487" maxy="6464193.024106" />
 <BoundingBox CRS="EPSG:28992" minx="-247285.743639" miny="658.604297" maxx="499511.309095" maxy="1126503.885526" />
-<BoundingBox CRS="EPSG:7399" minx="0.000000" miny="5662449.720378" maxx="780138.689361" maxy="6683635.707220" />
+<BoundingBox CRS="EPSG:3067" minx="-1503655.594145" miny="5457843.755718" maxx="-498223.163992" maxy="6751383.090388" />
+<BoundingBox CRS="EPSG:32661" minx="2000000.000000" miny="-2875235.426448" maxx="2846575.747500" maxy="-1588990.874438" />
+<BoundingBox CRS="EPSG:3411" minx="2514414.861870" miny="-3363656.629081" maxx="3896647.970727" maxy="-2039591.691597" />
+<BoundingBox CRS="EPSG:3412" minx="0.000000" miny="31477273.731401" maxx="7424899.887536" maxy="42758294.312639" />
+<BoundingBox CRS="EPSG:3575" minx="-795234.829762" miny="-4579574.864800" maxx="0.000000" maxy="-3470963.934518" />
+<BoundingBox CRS="EPSG:3857" minx="0.000000" miny="6106854.834885" maxx="1113194.907933" maxy="7967317.535016" />
+<BoundingBox CRS="EPSG:40000" minx="0.000000" miny="-4904663.406889" maxx="851685.862676" maxy="-3610654.803257" />
+<BoundingBox CRS="EPSG:4258" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
+<BoundingBox CRS="EPSG:4326" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
 <BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
 <BoundingBox CRS="EPSG:54030" minx="0.000000" miny="5119205.279776" maxx="831089.375852" maxy="6138840.719018" />
-<BoundingBox CRS="EPSG:32661" minx="2000000.000000" miny="-2875235.426448" maxx="2846575.747500" maxy="-1588990.874438" />
-<BoundingBox CRS="EPSG:40000" minx="0.000000" miny="-4904663.406889" maxx="851685.862676" maxy="-3610654.803257" />
+<BoundingBox CRS="EPSG:7399" minx="0.000000" miny="5662449.720378" maxx="780138.689361" maxy="6683635.707220" />
 <BoundingBox CRS="EPSG:900913" minx="0.000000" miny="6106854.834885" maxx="1113194.907933" maxy="7967317.535016" />
-<BoundingBox CRS="EPSG:3067" minx="-1503655.594145" miny="5457843.755718" maxx="-498223.163992" maxy="6751383.090388" />
 <Layer queryable="1" opaque="1" cascaded="0">
 <Name>KDP</Name>
 <Title>KDP (KDP)</Title>
@@ -102,23 +102,23 @@
   <eastBoundLongitude>10.000000</eastBoundLongitude>
   <southBoundLatitude>48.000000</southBoundLatitude>
   <northBoundLatitude>58.000000</northBoundLatitude>
-</EX_GeographicBoundingBox><BoundingBox CRS="EPSG:3411" minx="2514414.861870" miny="-3363656.629081" maxx="3896647.970727" maxy="-2039591.691597" />
-<BoundingBox CRS="EPSG:3412" minx="0.000000" miny="31477273.731401" maxx="7424899.887536" maxy="42758294.312639" />
-<BoundingBox CRS="EPSG:3575" minx="-795234.829762" miny="-4579574.864800" maxx="0.000000" maxy="-3470963.934518" />
-<BoundingBox CRS="EPSG:3857" minx="0.000000" miny="6106854.834885" maxx="1113194.907933" maxy="7967317.535016" />
-<BoundingBox CRS="EPSG:4258" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
-<BoundingBox CRS="EPSG:4326" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
-<BoundingBox CRS="CRS:84" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
+</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
 <BoundingBox CRS="EPSG:25831" minx="276224.084601" miny="5316306.196727" maxx="1022031.406674" maxy="6450163.243181" />
 <BoundingBox CRS="EPSG:25832" minx="-171063.799865" miny="5316306.196727" maxx="574595.112487" maxy="6464193.024106" />
 <BoundingBox CRS="EPSG:28992" minx="-247285.743639" miny="658.604297" maxx="499511.309095" maxy="1126503.885526" />
-<BoundingBox CRS="EPSG:7399" minx="0.000000" miny="5662449.720378" maxx="780138.689361" maxy="6683635.707220" />
+<BoundingBox CRS="EPSG:3067" minx="-1503655.594145" miny="5457843.755718" maxx="-498223.163992" maxy="6751383.090388" />
+<BoundingBox CRS="EPSG:32661" minx="2000000.000000" miny="-2875235.426448" maxx="2846575.747500" maxy="-1588990.874438" />
+<BoundingBox CRS="EPSG:3411" minx="2514414.861870" miny="-3363656.629081" maxx="3896647.970727" maxy="-2039591.691597" />
+<BoundingBox CRS="EPSG:3412" minx="0.000000" miny="31477273.731401" maxx="7424899.887536" maxy="42758294.312639" />
+<BoundingBox CRS="EPSG:3575" minx="-795234.829762" miny="-4579574.864800" maxx="0.000000" maxy="-3470963.934518" />
+<BoundingBox CRS="EPSG:3857" minx="0.000000" miny="6106854.834885" maxx="1113194.907933" maxy="7967317.535016" />
+<BoundingBox CRS="EPSG:40000" minx="0.000000" miny="-4904663.406889" maxx="851685.862676" maxy="-3610654.803257" />
+<BoundingBox CRS="EPSG:4258" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
+<BoundingBox CRS="EPSG:4326" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
 <BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
 <BoundingBox CRS="EPSG:54030" minx="0.000000" miny="5119205.279776" maxx="831089.375852" maxy="6138840.719018" />
-<BoundingBox CRS="EPSG:32661" minx="2000000.000000" miny="-2875235.426448" maxx="2846575.747500" maxy="-1588990.874438" />
-<BoundingBox CRS="EPSG:40000" minx="0.000000" miny="-4904663.406889" maxx="851685.862676" maxy="-3610654.803257" />
+<BoundingBox CRS="EPSG:7399" minx="0.000000" miny="5662449.720378" maxx="780138.689361" maxy="6683635.707220" />
 <BoundingBox CRS="EPSG:900913" minx="0.000000" miny="6106854.834885" maxx="1113194.907933" maxy="7967317.535016" />
-<BoundingBox CRS="EPSG:3067" minx="-1503655.594145" miny="5457843.755718" maxx="-498223.163992" maxy="6751383.090388" />
 <Dimension name="time" units="ISO8601" default="2021-06-18T18:50:00Z" multipleValues="1" nearestValue="0" current="1">2021-06-18T18:50:00Z</Dimension>
 <Dimension name="scan_elevation" units="degrees" default="8" multipleValues="1" nearestValue="0" >0.3,0.3l,0.8,1.2,2,2.8,4,6,8</Dimension>
    <Style>    <Name>auto/nearest</Name>    <Title>auto/nearest</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FRAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=KDP&amp;format=image/png&amp;STYLE=auto/nearest"/>    </LegendURL>  </Style>   <Style>    <Name>auto/bilinear</Name>    <Title>auto/bilinear</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FRAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=KDP&amp;format=image/png&amp;STYLE=auto/bilinear"/>    </LegendURL>  </Style>   <Style>    <Name>auto/point</Name>    <Title>auto/point</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FRAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=KDP&amp;format=image/png&amp;STYLE=auto/point"/>    </LegendURL>  </Style>   <Style>    <Name>auto/barb</Name>    <Title>auto/barb</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FRAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=KDP&amp;format=image/png&amp;STYLE=auto/barb"/>    </LegendURL>  </Style></Layer>
@@ -130,23 +130,23 @@
   <eastBoundLongitude>10.000000</eastBoundLongitude>
   <southBoundLatitude>48.000000</southBoundLatitude>
   <northBoundLatitude>58.000000</northBoundLatitude>
-</EX_GeographicBoundingBox><BoundingBox CRS="EPSG:3411" minx="2514414.861870" miny="-3363656.629081" maxx="3896647.970727" maxy="-2039591.691597" />
-<BoundingBox CRS="EPSG:3412" minx="0.000000" miny="31477273.731401" maxx="7424899.887536" maxy="42758294.312639" />
-<BoundingBox CRS="EPSG:3575" minx="-795234.829762" miny="-4579574.864800" maxx="0.000000" maxy="-3470963.934518" />
-<BoundingBox CRS="EPSG:3857" minx="0.000000" miny="6106854.834885" maxx="1113194.907933" maxy="7967317.535016" />
-<BoundingBox CRS="EPSG:4258" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
-<BoundingBox CRS="EPSG:4326" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
-<BoundingBox CRS="CRS:84" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
+</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
 <BoundingBox CRS="EPSG:25831" minx="276224.084601" miny="5316306.196727" maxx="1022031.406674" maxy="6450163.243181" />
 <BoundingBox CRS="EPSG:25832" minx="-171063.799865" miny="5316306.196727" maxx="574595.112487" maxy="6464193.024106" />
 <BoundingBox CRS="EPSG:28992" minx="-247285.743639" miny="658.604297" maxx="499511.309095" maxy="1126503.885526" />
-<BoundingBox CRS="EPSG:7399" minx="0.000000" miny="5662449.720378" maxx="780138.689361" maxy="6683635.707220" />
+<BoundingBox CRS="EPSG:3067" minx="-1503655.594145" miny="5457843.755718" maxx="-498223.163992" maxy="6751383.090388" />
+<BoundingBox CRS="EPSG:32661" minx="2000000.000000" miny="-2875235.426448" maxx="2846575.747500" maxy="-1588990.874438" />
+<BoundingBox CRS="EPSG:3411" minx="2514414.861870" miny="-3363656.629081" maxx="3896647.970727" maxy="-2039591.691597" />
+<BoundingBox CRS="EPSG:3412" minx="0.000000" miny="31477273.731401" maxx="7424899.887536" maxy="42758294.312639" />
+<BoundingBox CRS="EPSG:3575" minx="-795234.829762" miny="-4579574.864800" maxx="0.000000" maxy="-3470963.934518" />
+<BoundingBox CRS="EPSG:3857" minx="0.000000" miny="6106854.834885" maxx="1113194.907933" maxy="7967317.535016" />
+<BoundingBox CRS="EPSG:40000" minx="0.000000" miny="-4904663.406889" maxx="851685.862676" maxy="-3610654.803257" />
+<BoundingBox CRS="EPSG:4258" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
+<BoundingBox CRS="EPSG:4326" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
 <BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
 <BoundingBox CRS="EPSG:54030" minx="0.000000" miny="5119205.279776" maxx="831089.375852" maxy="6138840.719018" />
-<BoundingBox CRS="EPSG:32661" minx="2000000.000000" miny="-2875235.426448" maxx="2846575.747500" maxy="-1588990.874438" />
-<BoundingBox CRS="EPSG:40000" minx="0.000000" miny="-4904663.406889" maxx="851685.862676" maxy="-3610654.803257" />
+<BoundingBox CRS="EPSG:7399" minx="0.000000" miny="5662449.720378" maxx="780138.689361" maxy="6683635.707220" />
 <BoundingBox CRS="EPSG:900913" minx="0.000000" miny="6106854.834885" maxx="1113194.907933" maxy="7967317.535016" />
-<BoundingBox CRS="EPSG:3067" minx="-1503655.594145" miny="5457843.755718" maxx="-498223.163992" maxy="6751383.090388" />
 <Dimension name="time" units="ISO8601" default="2021-06-18T18:50:00Z" multipleValues="1" nearestValue="0" current="1">2021-06-18T18:50:00Z</Dimension>
 <Dimension name="scan_elevation" units="degrees" default="8" multipleValues="1" nearestValue="0" >0.3,0.3l,0.8,1.2,2,2.8,4,6,8</Dimension>
    <Style>    <Name>auto/nearest</Name>    <Title>auto/nearest</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FRAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=PhiDP&amp;format=image/png&amp;STYLE=auto/nearest"/>    </LegendURL>  </Style>   <Style>    <Name>auto/bilinear</Name>    <Title>auto/bilinear</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FRAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=PhiDP&amp;format=image/png&amp;STYLE=auto/bilinear"/>    </LegendURL>  </Style>   <Style>    <Name>auto/point</Name>    <Title>auto/point</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FRAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=PhiDP&amp;format=image/png&amp;STYLE=auto/point"/>    </LegendURL>  </Style>   <Style>    <Name>auto/barb</Name>    <Title>auto/barb</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FRAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=PhiDP&amp;format=image/png&amp;STYLE=auto/barb"/>    </LegendURL>  </Style></Layer>
@@ -158,23 +158,23 @@
   <eastBoundLongitude>10.000000</eastBoundLongitude>
   <southBoundLatitude>48.000000</southBoundLatitude>
   <northBoundLatitude>58.000000</northBoundLatitude>
-</EX_GeographicBoundingBox><BoundingBox CRS="EPSG:3411" minx="2514414.861870" miny="-3363656.629081" maxx="3896647.970727" maxy="-2039591.691597" />
-<BoundingBox CRS="EPSG:3412" minx="0.000000" miny="31477273.731401" maxx="7424899.887536" maxy="42758294.312639" />
-<BoundingBox CRS="EPSG:3575" minx="-795234.829762" miny="-4579574.864800" maxx="0.000000" maxy="-3470963.934518" />
-<BoundingBox CRS="EPSG:3857" minx="0.000000" miny="6106854.834885" maxx="1113194.907933" maxy="7967317.535016" />
-<BoundingBox CRS="EPSG:4258" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
-<BoundingBox CRS="EPSG:4326" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
-<BoundingBox CRS="CRS:84" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
+</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
 <BoundingBox CRS="EPSG:25831" minx="276224.084601" miny="5316306.196727" maxx="1022031.406674" maxy="6450163.243181" />
 <BoundingBox CRS="EPSG:25832" minx="-171063.799865" miny="5316306.196727" maxx="574595.112487" maxy="6464193.024106" />
 <BoundingBox CRS="EPSG:28992" minx="-247285.743639" miny="658.604297" maxx="499511.309095" maxy="1126503.885526" />
-<BoundingBox CRS="EPSG:7399" minx="0.000000" miny="5662449.720378" maxx="780138.689361" maxy="6683635.707220" />
+<BoundingBox CRS="EPSG:3067" minx="-1503655.594145" miny="5457843.755718" maxx="-498223.163992" maxy="6751383.090388" />
+<BoundingBox CRS="EPSG:32661" minx="2000000.000000" miny="-2875235.426448" maxx="2846575.747500" maxy="-1588990.874438" />
+<BoundingBox CRS="EPSG:3411" minx="2514414.861870" miny="-3363656.629081" maxx="3896647.970727" maxy="-2039591.691597" />
+<BoundingBox CRS="EPSG:3412" minx="0.000000" miny="31477273.731401" maxx="7424899.887536" maxy="42758294.312639" />
+<BoundingBox CRS="EPSG:3575" minx="-795234.829762" miny="-4579574.864800" maxx="0.000000" maxy="-3470963.934518" />
+<BoundingBox CRS="EPSG:3857" minx="0.000000" miny="6106854.834885" maxx="1113194.907933" maxy="7967317.535016" />
+<BoundingBox CRS="EPSG:40000" minx="0.000000" miny="-4904663.406889" maxx="851685.862676" maxy="-3610654.803257" />
+<BoundingBox CRS="EPSG:4258" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
+<BoundingBox CRS="EPSG:4326" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
 <BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
 <BoundingBox CRS="EPSG:54030" minx="0.000000" miny="5119205.279776" maxx="831089.375852" maxy="6138840.719018" />
-<BoundingBox CRS="EPSG:32661" minx="2000000.000000" miny="-2875235.426448" maxx="2846575.747500" maxy="-1588990.874438" />
-<BoundingBox CRS="EPSG:40000" minx="0.000000" miny="-4904663.406889" maxx="851685.862676" maxy="-3610654.803257" />
+<BoundingBox CRS="EPSG:7399" minx="0.000000" miny="5662449.720378" maxx="780138.689361" maxy="6683635.707220" />
 <BoundingBox CRS="EPSG:900913" minx="0.000000" miny="6106854.834885" maxx="1113194.907933" maxy="7967317.535016" />
-<BoundingBox CRS="EPSG:3067" minx="-1503655.594145" miny="5457843.755718" maxx="-498223.163992" maxy="6751383.090388" />
 <Dimension name="time" units="ISO8601" default="2021-06-18T18:50:00Z" multipleValues="1" nearestValue="0" current="1">2021-06-18T18:50:00Z</Dimension>
 <Dimension name="scan_elevation" units="degrees" default="8" multipleValues="1" nearestValue="0" >0.3,0.3l,0.8,1.2,2,2.8,4,6,8</Dimension>
    <Style>    <Name>auto/nearest</Name>    <Title>auto/nearest</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FRAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=RhoHV&amp;format=image/png&amp;STYLE=auto/nearest"/>    </LegendURL>  </Style>   <Style>    <Name>auto/bilinear</Name>    <Title>auto/bilinear</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FRAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=RhoHV&amp;format=image/png&amp;STYLE=auto/bilinear"/>    </LegendURL>  </Style>   <Style>    <Name>auto/point</Name>    <Title>auto/point</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FRAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=RhoHV&amp;format=image/png&amp;STYLE=auto/point"/>    </LegendURL>  </Style>   <Style>    <Name>auto/barb</Name>    <Title>auto/barb</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FRAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=RhoHV&amp;format=image/png&amp;STYLE=auto/barb"/>    </LegendURL>  </Style></Layer>
@@ -186,23 +186,23 @@
   <eastBoundLongitude>10.000000</eastBoundLongitude>
   <southBoundLatitude>48.000000</southBoundLatitude>
   <northBoundLatitude>58.000000</northBoundLatitude>
-</EX_GeographicBoundingBox><BoundingBox CRS="EPSG:3411" minx="2514414.861870" miny="-3363656.629081" maxx="3896647.970727" maxy="-2039591.691597" />
-<BoundingBox CRS="EPSG:3412" minx="0.000000" miny="31477273.731401" maxx="7424899.887536" maxy="42758294.312639" />
-<BoundingBox CRS="EPSG:3575" minx="-795234.829762" miny="-4579574.864800" maxx="0.000000" maxy="-3470963.934518" />
-<BoundingBox CRS="EPSG:3857" minx="0.000000" miny="6106854.834885" maxx="1113194.907933" maxy="7967317.535016" />
-<BoundingBox CRS="EPSG:4258" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
-<BoundingBox CRS="EPSG:4326" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
-<BoundingBox CRS="CRS:84" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
+</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
 <BoundingBox CRS="EPSG:25831" minx="276224.084601" miny="5316306.196727" maxx="1022031.406674" maxy="6450163.243181" />
 <BoundingBox CRS="EPSG:25832" minx="-171063.799865" miny="5316306.196727" maxx="574595.112487" maxy="6464193.024106" />
 <BoundingBox CRS="EPSG:28992" minx="-247285.743639" miny="658.604297" maxx="499511.309095" maxy="1126503.885526" />
-<BoundingBox CRS="EPSG:7399" minx="0.000000" miny="5662449.720378" maxx="780138.689361" maxy="6683635.707220" />
+<BoundingBox CRS="EPSG:3067" minx="-1503655.594145" miny="5457843.755718" maxx="-498223.163992" maxy="6751383.090388" />
+<BoundingBox CRS="EPSG:32661" minx="2000000.000000" miny="-2875235.426448" maxx="2846575.747500" maxy="-1588990.874438" />
+<BoundingBox CRS="EPSG:3411" minx="2514414.861870" miny="-3363656.629081" maxx="3896647.970727" maxy="-2039591.691597" />
+<BoundingBox CRS="EPSG:3412" minx="0.000000" miny="31477273.731401" maxx="7424899.887536" maxy="42758294.312639" />
+<BoundingBox CRS="EPSG:3575" minx="-795234.829762" miny="-4579574.864800" maxx="0.000000" maxy="-3470963.934518" />
+<BoundingBox CRS="EPSG:3857" minx="0.000000" miny="6106854.834885" maxx="1113194.907933" maxy="7967317.535016" />
+<BoundingBox CRS="EPSG:40000" minx="0.000000" miny="-4904663.406889" maxx="851685.862676" maxy="-3610654.803257" />
+<BoundingBox CRS="EPSG:4258" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
+<BoundingBox CRS="EPSG:4326" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
 <BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
 <BoundingBox CRS="EPSG:54030" minx="0.000000" miny="5119205.279776" maxx="831089.375852" maxy="6138840.719018" />
-<BoundingBox CRS="EPSG:32661" minx="2000000.000000" miny="-2875235.426448" maxx="2846575.747500" maxy="-1588990.874438" />
-<BoundingBox CRS="EPSG:40000" minx="0.000000" miny="-4904663.406889" maxx="851685.862676" maxy="-3610654.803257" />
+<BoundingBox CRS="EPSG:7399" minx="0.000000" miny="5662449.720378" maxx="780138.689361" maxy="6683635.707220" />
 <BoundingBox CRS="EPSG:900913" minx="0.000000" miny="6106854.834885" maxx="1113194.907933" maxy="7967317.535016" />
-<BoundingBox CRS="EPSG:3067" minx="-1503655.594145" miny="5457843.755718" maxx="-498223.163992" maxy="6751383.090388" />
 <Dimension name="time" units="ISO8601" default="2021-06-18T18:50:00Z" multipleValues="1" nearestValue="0" current="1">2021-06-18T18:50:00Z</Dimension>
 <Dimension name="scan_elevation" units="degrees" default="8" multipleValues="1" nearestValue="0" >0.3,0.3l,0.8,1.2,2,2.8,4,6,8</Dimension>
    <Style>    <Name>auto/nearest</Name>    <Title>auto/nearest</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FRAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=V&amp;format=image/png&amp;STYLE=auto/nearest"/>    </LegendURL>  </Style>   <Style>    <Name>auto/bilinear</Name>    <Title>auto/bilinear</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FRAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=V&amp;format=image/png&amp;STYLE=auto/bilinear"/>    </LegendURL>  </Style>   <Style>    <Name>auto/point</Name>    <Title>auto/point</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FRAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=V&amp;format=image/png&amp;STYLE=auto/point"/>    </LegendURL>  </Style>   <Style>    <Name>auto/barb</Name>    <Title>auto/barb</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FRAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=V&amp;format=image/png&amp;STYLE=auto/barb"/>    </LegendURL>  </Style></Layer>
@@ -214,23 +214,23 @@
   <eastBoundLongitude>10.000000</eastBoundLongitude>
   <southBoundLatitude>48.000000</southBoundLatitude>
   <northBoundLatitude>58.000000</northBoundLatitude>
-</EX_GeographicBoundingBox><BoundingBox CRS="EPSG:3411" minx="2514414.861870" miny="-3363656.629081" maxx="3896647.970727" maxy="-2039591.691597" />
-<BoundingBox CRS="EPSG:3412" minx="0.000000" miny="31477273.731401" maxx="7424899.887536" maxy="42758294.312639" />
-<BoundingBox CRS="EPSG:3575" minx="-795234.829762" miny="-4579574.864800" maxx="0.000000" maxy="-3470963.934518" />
-<BoundingBox CRS="EPSG:3857" minx="0.000000" miny="6106854.834885" maxx="1113194.907933" maxy="7967317.535016" />
-<BoundingBox CRS="EPSG:4258" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
-<BoundingBox CRS="EPSG:4326" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
-<BoundingBox CRS="CRS:84" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
+</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
 <BoundingBox CRS="EPSG:25831" minx="276224.084601" miny="5316306.196727" maxx="1022031.406674" maxy="6450163.243181" />
 <BoundingBox CRS="EPSG:25832" minx="-171063.799865" miny="5316306.196727" maxx="574595.112487" maxy="6464193.024106" />
 <BoundingBox CRS="EPSG:28992" minx="-247285.743639" miny="658.604297" maxx="499511.309095" maxy="1126503.885526" />
-<BoundingBox CRS="EPSG:7399" minx="0.000000" miny="5662449.720378" maxx="780138.689361" maxy="6683635.707220" />
+<BoundingBox CRS="EPSG:3067" minx="-1503655.594145" miny="5457843.755718" maxx="-498223.163992" maxy="6751383.090388" />
+<BoundingBox CRS="EPSG:32661" minx="2000000.000000" miny="-2875235.426448" maxx="2846575.747500" maxy="-1588990.874438" />
+<BoundingBox CRS="EPSG:3411" minx="2514414.861870" miny="-3363656.629081" maxx="3896647.970727" maxy="-2039591.691597" />
+<BoundingBox CRS="EPSG:3412" minx="0.000000" miny="31477273.731401" maxx="7424899.887536" maxy="42758294.312639" />
+<BoundingBox CRS="EPSG:3575" minx="-795234.829762" miny="-4579574.864800" maxx="0.000000" maxy="-3470963.934518" />
+<BoundingBox CRS="EPSG:3857" minx="0.000000" miny="6106854.834885" maxx="1113194.907933" maxy="7967317.535016" />
+<BoundingBox CRS="EPSG:40000" minx="0.000000" miny="-4904663.406889" maxx="851685.862676" maxy="-3610654.803257" />
+<BoundingBox CRS="EPSG:4258" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
+<BoundingBox CRS="EPSG:4326" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
 <BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
 <BoundingBox CRS="EPSG:54030" minx="0.000000" miny="5119205.279776" maxx="831089.375852" maxy="6138840.719018" />
-<BoundingBox CRS="EPSG:32661" minx="2000000.000000" miny="-2875235.426448" maxx="2846575.747500" maxy="-1588990.874438" />
-<BoundingBox CRS="EPSG:40000" minx="0.000000" miny="-4904663.406889" maxx="851685.862676" maxy="-3610654.803257" />
+<BoundingBox CRS="EPSG:7399" minx="0.000000" miny="5662449.720378" maxx="780138.689361" maxy="6683635.707220" />
 <BoundingBox CRS="EPSG:900913" minx="0.000000" miny="6106854.834885" maxx="1113194.907933" maxy="7967317.535016" />
-<BoundingBox CRS="EPSG:3067" minx="-1503655.594145" miny="5457843.755718" maxx="-498223.163992" maxy="6751383.090388" />
 <Dimension name="time" units="ISO8601" default="2021-06-18T18:50:00Z" multipleValues="1" nearestValue="0" current="1">2021-06-18T18:50:00Z</Dimension>
 <Dimension name="scan_elevation" units="degrees" default="8" multipleValues="1" nearestValue="0" >0.3,0.3l,0.8,1.2,2,2.8,4,6,8</Dimension>
    <Style>    <Name>auto/nearest</Name>    <Title>auto/nearest</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FRAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=W&amp;format=image/png&amp;STYLE=auto/nearest"/>    </LegendURL>  </Style>   <Style>    <Name>auto/bilinear</Name>    <Title>auto/bilinear</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FRAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=W&amp;format=image/png&amp;STYLE=auto/bilinear"/>    </LegendURL>  </Style>   <Style>    <Name>auto/point</Name>    <Title>auto/point</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FRAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=W&amp;format=image/png&amp;STYLE=auto/point"/>    </LegendURL>  </Style>   <Style>    <Name>auto/barb</Name>    <Title>auto/barb</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FRAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=W&amp;format=image/png&amp;STYLE=auto/barb"/>    </LegendURL>  </Style></Layer>
@@ -242,23 +242,23 @@
   <eastBoundLongitude>10.000000</eastBoundLongitude>
   <southBoundLatitude>48.000000</southBoundLatitude>
   <northBoundLatitude>58.000000</northBoundLatitude>
-</EX_GeographicBoundingBox><BoundingBox CRS="EPSG:3411" minx="2514414.861870" miny="-3363656.629081" maxx="3896647.970727" maxy="-2039591.691597" />
-<BoundingBox CRS="EPSG:3412" minx="0.000000" miny="31477273.731401" maxx="7424899.887536" maxy="42758294.312639" />
-<BoundingBox CRS="EPSG:3575" minx="-795234.829762" miny="-4579574.864800" maxx="0.000000" maxy="-3470963.934518" />
-<BoundingBox CRS="EPSG:3857" minx="0.000000" miny="6106854.834885" maxx="1113194.907933" maxy="7967317.535016" />
-<BoundingBox CRS="EPSG:4258" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
-<BoundingBox CRS="EPSG:4326" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
-<BoundingBox CRS="CRS:84" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
+</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
 <BoundingBox CRS="EPSG:25831" minx="276224.084601" miny="5316306.196727" maxx="1022031.406674" maxy="6450163.243181" />
 <BoundingBox CRS="EPSG:25832" minx="-171063.799865" miny="5316306.196727" maxx="574595.112487" maxy="6464193.024106" />
 <BoundingBox CRS="EPSG:28992" minx="-247285.743639" miny="658.604297" maxx="499511.309095" maxy="1126503.885526" />
-<BoundingBox CRS="EPSG:7399" minx="0.000000" miny="5662449.720378" maxx="780138.689361" maxy="6683635.707220" />
+<BoundingBox CRS="EPSG:3067" minx="-1503655.594145" miny="5457843.755718" maxx="-498223.163992" maxy="6751383.090388" />
+<BoundingBox CRS="EPSG:32661" minx="2000000.000000" miny="-2875235.426448" maxx="2846575.747500" maxy="-1588990.874438" />
+<BoundingBox CRS="EPSG:3411" minx="2514414.861870" miny="-3363656.629081" maxx="3896647.970727" maxy="-2039591.691597" />
+<BoundingBox CRS="EPSG:3412" minx="0.000000" miny="31477273.731401" maxx="7424899.887536" maxy="42758294.312639" />
+<BoundingBox CRS="EPSG:3575" minx="-795234.829762" miny="-4579574.864800" maxx="0.000000" maxy="-3470963.934518" />
+<BoundingBox CRS="EPSG:3857" minx="0.000000" miny="6106854.834885" maxx="1113194.907933" maxy="7967317.535016" />
+<BoundingBox CRS="EPSG:40000" minx="0.000000" miny="-4904663.406889" maxx="851685.862676" maxy="-3610654.803257" />
+<BoundingBox CRS="EPSG:4258" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
+<BoundingBox CRS="EPSG:4326" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
 <BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
 <BoundingBox CRS="EPSG:54030" minx="0.000000" miny="5119205.279776" maxx="831089.375852" maxy="6138840.719018" />
-<BoundingBox CRS="EPSG:32661" minx="2000000.000000" miny="-2875235.426448" maxx="2846575.747500" maxy="-1588990.874438" />
-<BoundingBox CRS="EPSG:40000" minx="0.000000" miny="-4904663.406889" maxx="851685.862676" maxy="-3610654.803257" />
+<BoundingBox CRS="EPSG:7399" minx="0.000000" miny="5662449.720378" maxx="780138.689361" maxy="6683635.707220" />
 <BoundingBox CRS="EPSG:900913" minx="0.000000" miny="6106854.834885" maxx="1113194.907933" maxy="7967317.535016" />
-<BoundingBox CRS="EPSG:3067" minx="-1503655.594145" miny="5457843.755718" maxx="-498223.163992" maxy="6751383.090388" />
 <Dimension name="time" units="ISO8601" default="2021-06-18T18:50:00Z" multipleValues="1" nearestValue="0" current="1">2021-06-18T18:50:00Z</Dimension>
 <Dimension name="scan_elevation" units="degrees" default="8" multipleValues="1" nearestValue="0" >0.3,0.3l,0.8,1.2,2,2.8,4,6,8</Dimension>
    <Style>    <Name>auto/nearest</Name>    <Title>auto/nearest</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FRAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=Z&amp;format=image/png&amp;STYLE=auto/nearest"/>    </LegendURL>  </Style>   <Style>    <Name>auto/bilinear</Name>    <Title>auto/bilinear</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FRAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=Z&amp;format=image/png&amp;STYLE=auto/bilinear"/>    </LegendURL>  </Style>   <Style>    <Name>auto/point</Name>    <Title>auto/point</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FRAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=Z&amp;format=image/png&amp;STYLE=auto/point"/>    </LegendURL>  </Style>   <Style>    <Name>auto/barb</Name>    <Title>auto/barb</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FRAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=Z&amp;format=image/png&amp;STYLE=auto/barb"/>    </LegendURL>  </Style></Layer>
@@ -270,23 +270,23 @@
   <eastBoundLongitude>10.000000</eastBoundLongitude>
   <southBoundLatitude>48.000000</southBoundLatitude>
   <northBoundLatitude>58.000000</northBoundLatitude>
-</EX_GeographicBoundingBox><BoundingBox CRS="EPSG:3411" minx="2514414.861870" miny="-3363656.629081" maxx="3896647.970727" maxy="-2039591.691597" />
-<BoundingBox CRS="EPSG:3412" minx="0.000000" miny="31477273.731401" maxx="7424899.887536" maxy="42758294.312639" />
-<BoundingBox CRS="EPSG:3575" minx="-795234.829762" miny="-4579574.864800" maxx="0.000000" maxy="-3470963.934518" />
-<BoundingBox CRS="EPSG:3857" minx="0.000000" miny="6106854.834885" maxx="1113194.907933" maxy="7967317.535016" />
-<BoundingBox CRS="EPSG:4258" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
-<BoundingBox CRS="EPSG:4326" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
-<BoundingBox CRS="CRS:84" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
+</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
 <BoundingBox CRS="EPSG:25831" minx="276224.084601" miny="5316306.196727" maxx="1022031.406674" maxy="6450163.243181" />
 <BoundingBox CRS="EPSG:25832" minx="-171063.799865" miny="5316306.196727" maxx="574595.112487" maxy="6464193.024106" />
 <BoundingBox CRS="EPSG:28992" minx="-247285.743639" miny="658.604297" maxx="499511.309095" maxy="1126503.885526" />
-<BoundingBox CRS="EPSG:7399" minx="0.000000" miny="5662449.720378" maxx="780138.689361" maxy="6683635.707220" />
+<BoundingBox CRS="EPSG:3067" minx="-1503655.594145" miny="5457843.755718" maxx="-498223.163992" maxy="6751383.090388" />
+<BoundingBox CRS="EPSG:32661" minx="2000000.000000" miny="-2875235.426448" maxx="2846575.747500" maxy="-1588990.874438" />
+<BoundingBox CRS="EPSG:3411" minx="2514414.861870" miny="-3363656.629081" maxx="3896647.970727" maxy="-2039591.691597" />
+<BoundingBox CRS="EPSG:3412" minx="0.000000" miny="31477273.731401" maxx="7424899.887536" maxy="42758294.312639" />
+<BoundingBox CRS="EPSG:3575" minx="-795234.829762" miny="-4579574.864800" maxx="0.000000" maxy="-3470963.934518" />
+<BoundingBox CRS="EPSG:3857" minx="0.000000" miny="6106854.834885" maxx="1113194.907933" maxy="7967317.535016" />
+<BoundingBox CRS="EPSG:40000" minx="0.000000" miny="-4904663.406889" maxx="851685.862676" maxy="-3610654.803257" />
+<BoundingBox CRS="EPSG:4258" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
+<BoundingBox CRS="EPSG:4326" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
 <BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
 <BoundingBox CRS="EPSG:54030" minx="0.000000" miny="5119205.279776" maxx="831089.375852" maxy="6138840.719018" />
-<BoundingBox CRS="EPSG:32661" minx="2000000.000000" miny="-2875235.426448" maxx="2846575.747500" maxy="-1588990.874438" />
-<BoundingBox CRS="EPSG:40000" minx="0.000000" miny="-4904663.406889" maxx="851685.862676" maxy="-3610654.803257" />
+<BoundingBox CRS="EPSG:7399" minx="0.000000" miny="5662449.720378" maxx="780138.689361" maxy="6683635.707220" />
 <BoundingBox CRS="EPSG:900913" minx="0.000000" miny="6106854.834885" maxx="1113194.907933" maxy="7967317.535016" />
-<BoundingBox CRS="EPSG:3067" minx="-1503655.594145" miny="5457843.755718" maxx="-498223.163992" maxy="6751383.090388" />
 <Dimension name="time" units="ISO8601" default="2021-06-18T18:50:00Z" multipleValues="1" nearestValue="0" current="1">2021-06-18T18:50:00Z</Dimension>
 <Dimension name="scan_elevation" units="degrees" default="8" multipleValues="1" nearestValue="0" >0.3,0.3l,0.8,1.2,2,2.8,4,6,8</Dimension>
    <Style>    <Name>auto/nearest</Name>    <Title>auto/nearest</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FRAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=Zv&amp;format=image/png&amp;STYLE=auto/nearest"/>    </LegendURL>  </Style>   <Style>    <Name>auto/bilinear</Name>    <Title>auto/bilinear</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FRAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=Zv&amp;format=image/png&amp;STYLE=auto/bilinear"/>    </LegendURL>  </Style>   <Style>    <Name>auto/point</Name>    <Title>auto/point</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FRAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=Zv&amp;format=image/png&amp;STYLE=auto/point"/>    </LegendURL>  </Style>   <Style>    <Name>auto/barb</Name>    <Title>auto/barb</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FRAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=Zv&amp;format=image/png&amp;STYLE=auto/barb"/>    </LegendURL>  </Style></Layer>
@@ -298,23 +298,23 @@
   <eastBoundLongitude>10.000000</eastBoundLongitude>
   <southBoundLatitude>48.000000</southBoundLatitude>
   <northBoundLatitude>58.000000</northBoundLatitude>
-</EX_GeographicBoundingBox><BoundingBox CRS="EPSG:3411" minx="2514414.861870" miny="-3363656.629081" maxx="3896647.970727" maxy="-2039591.691597" />
-<BoundingBox CRS="EPSG:3412" minx="0.000000" miny="31477273.731401" maxx="7424899.887536" maxy="42758294.312639" />
-<BoundingBox CRS="EPSG:3575" minx="-795234.829762" miny="-4579574.864800" maxx="0.000000" maxy="-3470963.934518" />
-<BoundingBox CRS="EPSG:3857" minx="0.000000" miny="6106854.834885" maxx="1113194.907933" maxy="7967317.535016" />
-<BoundingBox CRS="EPSG:4258" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
-<BoundingBox CRS="EPSG:4326" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
-<BoundingBox CRS="CRS:84" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
+</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
 <BoundingBox CRS="EPSG:25831" minx="276224.084601" miny="5316306.196727" maxx="1022031.406674" maxy="6450163.243181" />
 <BoundingBox CRS="EPSG:25832" minx="-171063.799865" miny="5316306.196727" maxx="574595.112487" maxy="6464193.024106" />
 <BoundingBox CRS="EPSG:28992" minx="-247285.743639" miny="658.604297" maxx="499511.309095" maxy="1126503.885526" />
-<BoundingBox CRS="EPSG:7399" minx="0.000000" miny="5662449.720378" maxx="780138.689361" maxy="6683635.707220" />
+<BoundingBox CRS="EPSG:3067" minx="-1503655.594145" miny="5457843.755718" maxx="-498223.163992" maxy="6751383.090388" />
+<BoundingBox CRS="EPSG:32661" minx="2000000.000000" miny="-2875235.426448" maxx="2846575.747500" maxy="-1588990.874438" />
+<BoundingBox CRS="EPSG:3411" minx="2514414.861870" miny="-3363656.629081" maxx="3896647.970727" maxy="-2039591.691597" />
+<BoundingBox CRS="EPSG:3412" minx="0.000000" miny="31477273.731401" maxx="7424899.887536" maxy="42758294.312639" />
+<BoundingBox CRS="EPSG:3575" minx="-795234.829762" miny="-4579574.864800" maxx="0.000000" maxy="-3470963.934518" />
+<BoundingBox CRS="EPSG:3857" minx="0.000000" miny="6106854.834885" maxx="1113194.907933" maxy="7967317.535016" />
+<BoundingBox CRS="EPSG:40000" minx="0.000000" miny="-4904663.406889" maxx="851685.862676" maxy="-3610654.803257" />
+<BoundingBox CRS="EPSG:4258" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
+<BoundingBox CRS="EPSG:4326" minx="48.000000" miny="0.000000" maxx="58.000000" maxy="10.000000" />
 <BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
 <BoundingBox CRS="EPSG:54030" minx="0.000000" miny="5119205.279776" maxx="831089.375852" maxy="6138840.719018" />
-<BoundingBox CRS="EPSG:32661" minx="2000000.000000" miny="-2875235.426448" maxx="2846575.747500" maxy="-1588990.874438" />
-<BoundingBox CRS="EPSG:40000" minx="0.000000" miny="-4904663.406889" maxx="851685.862676" maxy="-3610654.803257" />
+<BoundingBox CRS="EPSG:7399" minx="0.000000" miny="5662449.720378" maxx="780138.689361" maxy="6683635.707220" />
 <BoundingBox CRS="EPSG:900913" minx="0.000000" miny="6106854.834885" maxx="1113194.907933" maxy="7967317.535016" />
-<BoundingBox CRS="EPSG:3067" minx="-1503655.594145" miny="5457843.755718" maxx="-498223.163992" maxy="6751383.090388" />
 <Dimension name="time" units="ISO8601" default="2021-06-18T18:50:00Z" multipleValues="1" nearestValue="0" current="1">2021-06-18T18:50:00Z</Dimension>
 <Dimension name="scan_elevation" units="degrees" default="8" multipleValues="1" nearestValue="0" >0.3,0.3l,0.8,1.2,2,2.8,4,6,8</Dimension>
    <Style>    <Name>auto/nearest</Name>    <Title>auto/nearest</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FRAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=ZDR&amp;format=image/png&amp;STYLE=auto/nearest"/>    </LegendURL>  </Style>   <Style>    <Name>auto/bilinear</Name>    <Title>auto/bilinear</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FRAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=ZDR&amp;format=image/png&amp;STYLE=auto/bilinear"/>    </LegendURL>  </Style>   <Style>    <Name>auto/point</Name>    <Title>auto/point</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FRAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=ZDR&amp;format=image/png&amp;STYLE=auto/point"/>    </LegendURL>  </Style>   <Style>    <Name>auto/barb</Name>    <Title>auto/barb</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FRAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=ZDR&amp;format=image/png&amp;STYLE=auto/barb"/>    </LegendURL>  </Style></Layer>

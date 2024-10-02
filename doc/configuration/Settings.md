@@ -1,10 +1,11 @@
-Settings (enablecleanupsystem)
+Settings (enablemetadatacache, enablecleanupsystem, cleanupsystemlimit, cache_age_cacheableresources, cache_age_volatileresources)
+
 ===============
 
 Back to [Configuration](./Configuration.md)
 
-Available since: 2.8.6
 
+- enablemetadatacache (false | true): Defaults to true, uses a layermetadata table in the db to cache layer information. This information is updated during a scan.
 - enablecleanupsystem (false | true | dryrun): Enables the auto cleanup system. See [FilePath](./FilePath.md) and retentionperiod for details
 - cleanupsystemlimit (number): Configures how many files will be deleted at once, defaults to 10 (CDBFILESCANNER_CLEANUP_DEFAULT_LIMIT).
 - cache_age_cacheableresources (number) defaults to 0 (disabled), Sets the cache header for fully specified getmap requests

@@ -51,7 +51,7 @@ async def response_to_cache(redis_pool, request, headers, data, ex: int):
     entrytime = f"{calendar.timegm(datetime.utcnow().utctimetuple()):10d}".encode(
         "utf-8"
     )
-    compressed_data = brotli.compress(data)
+    compressed_data = brotli.compress(data, quality=4)
     if len(compressed_data) < MAX_SIZE_FOR_CACHING:
         redis_client = redis.Redis(connection_pool=redis_pool)
         await redis_client.set(
@@ -59,7 +59,7 @@ async def response_to_cache(redis_pool, request, headers, data, ex: int):
             entrytime
             + f"{len(headers_json):06d}".encode("utf-8")
             + headers_json
-            + brotli.compress(data),
+            + compressed_data,
             ex=ex,
         )
         await redis_client.aclose()

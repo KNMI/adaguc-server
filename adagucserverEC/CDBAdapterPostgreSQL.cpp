@@ -44,6 +44,10 @@ CDBAdapterPostgreSQL::~CDBAdapterPostgreSQL() {
 #ifdef CDBAdapterPostgreSQL_DEBUG
   CDBDebug("~CDBAdapterPostgreSQL()");
 #endif
+  if (layerMetaDataStore != nullptr) {
+    delete layerMetaDataStore;
+    layerMetaDataStore = nullptr;
+  }
   if (dataBaseConnection != NULL) {
     dataBaseConnection->close2();
   }
@@ -423,7 +427,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     CT::string whereStatement;
     std::vector<CT::string> requestedDimVals = requestedDimMap[m.first];
 
-    for (int i = 0; i < requestedDimVals.size(); ++i) {
+    for (size_t i = 0; i < requestedDimVals.size(); ++i) {
       if (requestedDimVals[i].equals("*")) continue;
 
       if (i != 0) {
@@ -620,6 +624,7 @@ void CDBAdapterPostgreSQL::addToLookupTable(const char *path, const char *filter
 CT::string CDBAdapterPostgreSQL::generateRandomTableName() {
   CT::string tableName;
   tableName.print("t%s_%s", CTime::currentDateTime().c_str(), CServerParams::randomString(20).c_str());
+  tableName.replaceSelf(".", "");
   tableName.replaceSelf(":", "");
   tableName.replaceSelf("-", "");
   tableName.replaceSelf("Z", "");
@@ -717,7 +722,7 @@ std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAn
   }
 
   // Found all tablenames for requested dimensions in lookup table
-  int found = tableDimStore->size();
+  size_t found = tableDimStore->size();
   delete tableDimStore;
   if (found == mapping.size()) {
 #ifdef MEASURETIME
@@ -1079,4 +1084,140 @@ int CDBAdapterPostgreSQL::addFilesToDataBase() {
   StopWatch_Stop("<CDBAdapterPostgreSQL::addFilesToDataBase");
 #endif
   return 0;
+}
+
+int CDBAdapterPostgreSQL::storeLayerMetadata(const char *datasetName, const char *layerName, const char *metadataKey, const char *metadataBlob) {
+#ifdef MEASURETIME
+  StopWatch_Stop(">CDBAdapterPostgreSQL::storeLayerMetadata");
+#endif
+  CPGSQLDB *dataBaseConnection = getDataBaseConnection();
+  if (dataBaseConnection == NULL) {
+    return -1;
+  }
+
+  CT::string tableColumns("datasetname varchar (511), layername varchar (511), metadatakey varchar (255), updatetime TIMESTAMPTZ, blob JSONB, PRIMARY KEY (datasetname, layername, metadatakey)");
+
+  int status = dataBaseConnection->checkTable("layermetadata", tableColumns.c_str());
+  if (status == 1) {
+    CDBError("\nFAIL: Table layermetadata could not be created: %s", tableColumns.c_str());
+    throw(__LINE__);
+  }
+
+  CT::string updateTime = CTime::currentDateTime().c_str();
+  CT::string query;
+  query.print("INSERT INTO layermetadata (datasetname, layername, metadatakey, updatetime, blob) "
+              "VALUES (E'%s',E'%s', E'%s', E'%s', E'%s') "
+              "ON CONFLICT (datasetname, layername, metadatakey) "
+              "DO UPDATE SET blob = excluded.blob, updatetime = excluded.updatetime;",
+              datasetName, layerName, metadataKey, updateTime.c_str(), metadataBlob);
+
+  status = dataBaseConnection->query(query.c_str());
+  if (status != 0) {
+    CDBError("Unable to insert records: \"%s\"", query.c_str());
+    throw(__LINE__);
+  }
+#ifdef MEASURETIME
+  StopWatch_Stop("<CDBAdapterPostgreSQL::storeLayerMetadata");
+#endif
+  return 0;
+}
+
+CDBStore::Store *CDBAdapterPostgreSQL::getLayerMetadataStore(const char *datasetName) {
+#ifdef MEASURETIME
+  StopWatch_Stop(">CDBAdapterPostgreSQL::getLayerMetadata");
+#endif
+
+  if (this->layerMetaDataStore == nullptr) {
+#ifdef CDBAdapterPostgreSQL_DEBUG
+    CDBDebug("Need to query layer metadata for %s/%s/%s", datasetName, layerName, metadataKey);
+#endif
+    CPGSQLDB *dataBaseConnection = getDataBaseConnection();
+    if (dataBaseConnection == NULL) {
+      return nullptr;
+    }
+
+    CT::string query;
+    if (datasetName != nullptr) {
+      if (CServerParams::checkForValidTokens(datasetName, "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-:/.") == false) {
+        CDBError("Invalid dataset name. ");
+        throw(__LINE__);
+      }
+      query.print("SELECT datasetname, layername, metadatakey, blob FROM layermetadata WHERE datasetname = '%s';", datasetName);
+    } else {
+      query.print("SELECT datasetname, layername, metadatakey, blob FROM layermetadata");
+    }
+
+    this->layerMetaDataStore = dataBaseConnection->queryToStore(query.c_str());
+    if (layerMetaDataStore == nullptr) {
+#ifdef CDBAdapterPostgreSQL_DEBUG
+      CDBDebug("Unable query: \"%s\"", query.c_str());
+#endif
+      return nullptr;
+    }
+  }
+
+#ifdef MEASURETIME
+  StopWatch_Stop("<CDBAdapterPostgreSQL::getLayerMetadata");
+#endif
+  return layerMetaDataStore;
+}
+
+int CDBAdapterPostgreSQL::dropLayerFromLayerMetadataStore(const char *datasetName, const char *layerName) {
+  CPGSQLDB *dataBaseConnection = getDataBaseConnection();
+  if (dataBaseConnection == NULL) {
+    return -1;
+  }
+
+  CT::string query;
+  query.print("DELETE FROM layermetadata "
+              "WHERE datasetname='%s' AND layername = '%s';",
+              datasetName, layerName);
+  return dataBaseConnection->query(query.c_str());
+}
+
+bool CDBAdapterPostgreSQL::tryAdvisoryLock(size_t key) {
+  CPGSQLDB *dataBaseConnection = getDataBaseConnection();
+  if (dataBaseConnection == NULL) {
+    return false;
+  }
+  CT::string query;
+  query.print("SELECT pg_try_advisory_lock(%d) as \"result\";", key);
+  auto *store = dataBaseConnection->queryToStore(query.c_str());
+  if (store == nullptr || store->getSize() != 1) {
+    CDBError("Query failed [%s]:", dataBaseConnection->getError());
+    return false;
+  }
+  auto result = store->getRecord(0)->get("result");
+  bool succesfullylocked = result != nullptr && result->equals("t");
+  if (succesfullylocked) {
+    CDBDebug("pg_try_advisory_lock succesfullylocked");
+  } else {
+    CDBDebug("pg_try_advisory_lock NOT succesfullylocked");
+  }
+  delete store;
+  return succesfullylocked;
+}
+
+bool CDBAdapterPostgreSQL::advisoryUnLock(size_t key) {
+  CPGSQLDB *dataBaseConnection = getDataBaseConnection();
+  if (dataBaseConnection == NULL) {
+    return false;
+  }
+  CT::string query;
+
+  query.print("SELECT pg_advisory_unlock(%d) as \"result\";", key);
+  auto store = dataBaseConnection->queryToStore(query.c_str());
+  if (store == nullptr || store->getSize() != 1) {
+    CDBError("Query failed [%s]:", dataBaseConnection->getError());
+    return false;
+  }
+  auto result = store->getRecord(0)->get("result");
+  bool succesfullyunlocked = result != nullptr && result->equals("t");
+  if (succesfullyunlocked) {
+    CDBDebug("pg_advisory_unlock succesfullyunlocked");
+  } else {
+    CDBWarning("pg_advisory_unlock NOT succesfullyunlocked");
+  }
+  delete store;
+  return succesfullyunlocked;
 }

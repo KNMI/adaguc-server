@@ -64,8 +64,8 @@ int CDPPOperator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
       newDataObject->cdfVariable->setAttributeText("units", proc->attr.units);
     }
 
-    short attrData[3];
-    attrData[0] = -1;
+    double attrData[1];
+    attrData[0] = 0;
     newDataObject->cdfVariable->setAttribute("_FillValue", newDataObject->cdfVariable->getType(), attrData, 1);
 
     newDataObject->cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);

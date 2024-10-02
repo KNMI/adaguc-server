@@ -95,7 +95,7 @@ int CDirReader::listDirRecursive(const char *directory, const char *ext_filter) 
       return 1;
     } else {
       /* Already done */
-      CDBDebug("Using cached results for [%s]", directory);
+      // CDBDebug("Using cached results for [%s]", directory);
       return 0;
     }
   }

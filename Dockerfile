@@ -6,7 +6,7 @@ USER root
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
-LABEL version="2.27.0"
+LABEL version="2.28.0"
 
 # Try to update image packages
 RUN apt-get -q -y update \
@@ -88,7 +88,7 @@ COPY python /adaguc/adaguc-server-master/python
 # To run the tests against a postgres db, see docs/test_postgesql.md
 FROM base AS test
 
-ENV TEST_IN_CONTAINER 1
+ENV TEST_IN_CONTAINER=1
 
 COPY requirements-dev.txt /adaguc/adaguc-server-master/requirements-dev.txt
 RUN pip install --no-cache-dir -r requirements-dev.txt

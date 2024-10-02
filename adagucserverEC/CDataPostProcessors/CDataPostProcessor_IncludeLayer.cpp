@@ -1,6 +1,7 @@
 #include <ranges>
 #include "CDataPostProcessor_IncludeLayer.h"
 #include "CRequest.h"
+#include <utils/LayerUtils.h>
 /************************/
 /*CDPPIncludeLayer */
 /************************/
@@ -20,7 +21,7 @@ CDataSource *CDPPIncludeLayer::getDataSource(CServerConfig::XMLE_DataPostProc *p
   size_t additionalLayerNo = 0;
   for (size_t j = 0; j < dataSource->srvParams->cfg->Layer.size(); j++) {
     CT::string layerName;
-    dataSource->srvParams->makeUniqueLayerName(&layerName, dataSource->srvParams->cfg->Layer[j]);
+    makeUniqueLayerName(&layerName, dataSource->srvParams->cfg->Layer[j]);
     // CDBDebug("comparing for additionallayer %s==%s", additionalLayerName.c_str(), layerName.c_str());
     if (additionalLayerName.equals(layerName)) {
       additionalLayerNo = j;

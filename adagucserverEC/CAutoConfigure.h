@@ -56,5 +56,13 @@ private:
 public:
   static int autoConfigureDimensions(CDataSource *dataSource);
   static int autoConfigureStyles(CDataSource *dataSource);
+
+  /**
+   * Find the default filename for a datasource from the database
+   * @param dataSource
+   * @param fileName - The filename to return
+   * @returns Zero on success.
+   */
+  static int getFileNameForDataSource(CDataSource *dataSource, std::string &fileName);
 };
 #endif

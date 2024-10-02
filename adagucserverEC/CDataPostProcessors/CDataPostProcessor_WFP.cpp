@@ -1,6 +1,7 @@
 #include "CDataPostProcessor_WFP.h"
 #include "CRequest.h"
 #include "CGenericDataWarper.h"
+#include <utils/LayerUtils.h>
 
 /************************/
 /*      CDPPWFP  */
@@ -25,7 +26,7 @@ CDataSource *CDPPWFP::getDataSource(CDataSource *dataSource, CT::string baseLaye
   size_t additionalLayerNo = 0;
   for (size_t j = 0; j < dataSource->srvParams->cfg->Layer.size(); j++) {
     CT::string layerName;
-    dataSource->srvParams->makeUniqueLayerName(&layerName, dataSource->srvParams->cfg->Layer[j]);
+    makeUniqueLayerName(&layerName, dataSource->srvParams->cfg->Layer[j]);
     if (baseLayerName.equals(layerName)) {
       additionalLayerNo = j;
       break;

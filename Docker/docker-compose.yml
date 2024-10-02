@@ -1,5 +1,3 @@
-version: "3.1"
-
 services:
   adaguc-viewer:
     image: openearth/adaguc-viewer
@@ -11,6 +9,22 @@ services:
       - "LOCAL_ADAGUCSERVER_ADDR=${EXTERNALADDRESS}" # Should be same as adaguc-server's EXTERNALADDRESS
       - "REMOTE_ADAGUCSERVER_ADDR=http://adaguc-server:8080/" # Do not change this within the docker-compose environment
       - "ADAGUCSERVICES_AUTOWMS=${EXTERNALADDRESS}/autowms?"
+    env_file:
+      - .env
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
+  adaguc-data-explorer:
+    image: openearth/adaguc-data-explorer
+    container_name: adaguc-data-explorer
+    hostname: adaguc-data-explorer
+    networks:
+      - adaguc-network
+    environment:
+      - "ADAGUC_AUTOWMS_ENDPOINT=${EXTERNALADDRESS}/autowms?"
     env_file:
       - .env
     restart: unless-stopped

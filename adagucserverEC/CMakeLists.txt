@@ -68,6 +68,20 @@ add_library(
     CDBFileScannerCleanFiles.cpp
     CDFObjectStore.cpp
     CDFObjectStore.h
+    utils/LayerMetadataStore.h
+    utils/LayerMetadataStore.cpp
+    utils/XMLGenUtils.h
+    utils/XMLGenUtils.cpp
+    utils/CXMLTemplates.h
+    utils/LayerUtils.h
+    utils/LayerUtils.cpp
+    utils/LayerMetadataToJson.h
+    utils/LayerMetadataToJson.cpp
+    utils/UpdateLayerMetadata.h
+    utils/UpdateLayerMetadata.cpp
+    utils/ConfigurationUtils.h
+    utils/ConfigurationUtils.cpp    
+    Types/LayerMetadataType.h
     CDataPostProcessors/CDataPostProcessor_AddFeatures.cpp
     CDataPostProcessors/CDataPostProcessor_AddFeatures.h
     CDataPostProcessors/CDataPostProcessor_CDPDBZtoRR.cpp

@@ -4,6 +4,7 @@
 # pip-sync
 
 aiocache~=0.12.2
+APScheduler~=3.10.4
 Brotli~=1.0
 Jinja2~=3.1
 OWSLib~=0.29.2

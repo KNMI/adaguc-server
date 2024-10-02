@@ -15,7 +15,7 @@
         <KeywordList>
             <Keyword>view</Keyword>
             <Keyword>infoMapAccessService</Keyword>
-            <Keyword>ADAGUCServer version 2.15.0, of Feb  2 2024 11:40:13 </Keyword>
+            <Keyword>ADAGUCServer version 2.27.0, of Sep  6 2024 09:44:02 </Keyword>
         </KeywordList>
         <OnlineResource xlink:type="simple" xlink:href="source=example_file_irregular_1Dlat1Dlon_grid%2Enc&amp;SERVICE=WMS&amp;"/>
         <ContactInformation>
@@ -60,40 +60,40 @@
         <UserDefinedSymbolization SupportSLD="1" />
 <Layer>
 <Title>WMS of  AutoResource example_file_irregular_1Dlat1Dlon_grid.nc</Title>
-<CRS>EPSG:3411</CRS>
-<CRS>EPSG:3412</CRS>
-<CRS>EPSG:3575</CRS>
-<CRS>EPSG:3857</CRS>
-<CRS>EPSG:4258</CRS>
-<CRS>EPSG:4326</CRS>
 <CRS>CRS:84</CRS>
 <CRS>EPSG:25831</CRS>
 <CRS>EPSG:25832</CRS>
 <CRS>EPSG:28992</CRS>
-<CRS>EPSG:7399</CRS>
+<CRS>EPSG:3067</CRS>
+<CRS>EPSG:32661</CRS>
+<CRS>EPSG:3411</CRS>
+<CRS>EPSG:3412</CRS>
+<CRS>EPSG:3575</CRS>
+<CRS>EPSG:3857</CRS>
+<CRS>EPSG:40000</CRS>
+<CRS>EPSG:4258</CRS>
+<CRS>EPSG:4326</CRS>
 <CRS>EPSG:50001</CRS>
 <CRS>EPSG:54030</CRS>
-<CRS>EPSG:32661</CRS>
-<CRS>EPSG:40000</CRS>
+<CRS>EPSG:7399</CRS>
 <CRS>EPSG:900913</CRS>
-<CRS>EPSG:3067</CRS>
-<BoundingBox CRS="EPSG:3411" minx="2064656.256257" miny="-3989496.198511" maxx="3989496.198511" maxy="-2064656.256257" />
-<BoundingBox CRS="EPSG:3412" minx="-8338966.390604" miny="31264396.207114" maxx="8338966.390604" maxy="40107778.643636" />
-<BoundingBox CRS="EPSG:3575" minx="-1715538.939396" miny="-4579562.464643" maxx="159824.857893" maxy="-3465869.545704" />
-<BoundingBox CRS="EPSG:3857" minx="-1335833.889519" miny="6106854.834885" maxx="1335833.889519" maxy="7558415.656082" />
-<BoundingBox CRS="EPSG:4258" minx="48.000000" miny="-12.000000" maxx="56.000000" maxy="12.000000" />
-<BoundingBox CRS="EPSG:4326" minx="48.000000" miny="-12.000000" maxx="56.000000" maxy="12.000000" />
 <BoundingBox CRS="CRS:84" minx="48.000000" miny="-12.000000" maxx="56.000000" maxy="12.000000" />
 <BoundingBox CRS="EPSG:25831" minx="-617472.866520" miny="5316302.374392" maxx="1171063.799865" maxy="6308105.878760" />
 <BoundingBox CRS="EPSG:25832" minx="-1062120.485288" miny="5316319.574920" maxx="723775.915399" maxy="6406966.575199" />
 <BoundingBox CRS="EPSG:28992" minx="-1136402.742573" miny="679.856932" maxx="648666.695131" maxy="1024615.234950" />
-<BoundingBox CRS="EPSG:7399" minx="-936166.427234" miny="5662449.720378" maxx="936166.427234" maxy="6486546.956900" />
+<BoundingBox CRS="EPSG:3067" minx="-2368217.657676" miny="5426200.148164" maxx="-431413.447765" maxy="6912956.275031" />
+<BoundingBox CRS="EPSG:32661" minx="986381.559353" miny="-2875182.623640" maxx="3013618.440647" maxy="-1800251.543330" />
+<BoundingBox CRS="EPSG:3411" minx="2064656.256257" miny="-3989496.198511" maxx="3989496.198511" maxy="-2064656.256257" />
+<BoundingBox CRS="EPSG:3412" minx="-8338966.390604" miny="31264396.207114" maxx="8338966.390604" maxy="40107778.643636" />
+<BoundingBox CRS="EPSG:3575" minx="-1715538.939396" miny="-4579562.464643" maxx="159824.857893" maxy="-3465869.545704" />
+<BoundingBox CRS="EPSG:3857" minx="-1335833.889519" miny="6106854.834885" maxx="1335833.889519" maxy="7558415.656082" />
+<BoundingBox CRS="EPSG:40000" minx="-1019736.861818" miny="-4904610.285352" maxx="1019736.861818" maxy="-3823190.687455" />
+<BoundingBox CRS="EPSG:4258" minx="48.000000" miny="-12.000000" maxx="56.000000" maxy="12.000000" />
+<BoundingBox CRS="EPSG:4326" minx="48.000000" miny="-12.000000" maxx="56.000000" maxy="12.000000" />
 <BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
 <BoundingBox CRS="EPSG:54030" minx="-997307.251023" miny="5119205.279776" maxx="997307.251023" maxy="5939113.229856" />
-<BoundingBox CRS="EPSG:32661" minx="986381.559353" miny="-2875182.623640" maxx="3013618.440647" maxy="-1800251.543330" />
-<BoundingBox CRS="EPSG:40000" minx="-1019736.861818" miny="-4904610.285352" maxx="1019736.861818" maxy="-3823190.687455" />
+<BoundingBox CRS="EPSG:7399" minx="-936166.427234" miny="5662449.720378" maxx="936166.427234" maxy="6486546.956900" />
 <BoundingBox CRS="EPSG:900913" minx="-1335833.889519" miny="6106854.834885" maxx="1335833.889519" maxy="7558415.656082" />
-<BoundingBox CRS="EPSG:3067" minx="-2368217.657676" miny="5426200.148164" maxx="-431413.447765" maxy="6912956.275031" />
 <Layer queryable="1" opaque="1" cascaded="0">
 <Name>data_var_1</Name>
 <Title>data_var_1 (data_var_1)</Title>
@@ -102,25 +102,25 @@
   <eastBoundLongitude>12.000000</eastBoundLongitude>
   <southBoundLatitude>48.000000</southBoundLatitude>
   <northBoundLatitude>56.000000</northBoundLatitude>
-</EX_GeographicBoundingBox><BoundingBox CRS="EPSG:3411" minx="2064656.256257" miny="-3989496.198511" maxx="3989496.198511" maxy="-2064656.256257" />
-<BoundingBox CRS="EPSG:3412" minx="-8338966.390604" miny="31264396.207114" maxx="8338966.390604" maxy="40107778.643636" />
-<BoundingBox CRS="EPSG:3575" minx="-1715538.939396" miny="-4579562.464643" maxx="159824.857893" maxy="-3465869.545704" />
-<BoundingBox CRS="EPSG:3857" minx="-1335833.889519" miny="6106854.834885" maxx="1335833.889519" maxy="7558415.656082" />
-<BoundingBox CRS="EPSG:4258" minx="48.000000" miny="-12.000000" maxx="56.000000" maxy="12.000000" />
-<BoundingBox CRS="EPSG:4326" minx="48.000000" miny="-12.000000" maxx="56.000000" maxy="12.000000" />
-<BoundingBox CRS="CRS:84" minx="48.000000" miny="-12.000000" maxx="56.000000" maxy="12.000000" />
+</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="48.000000" miny="-12.000000" maxx="56.000000" maxy="12.000000" />
 <BoundingBox CRS="EPSG:25831" minx="-617472.866520" miny="5316302.374392" maxx="1171063.799865" maxy="6308105.878760" />
 <BoundingBox CRS="EPSG:25832" minx="-1062120.485288" miny="5316319.574920" maxx="723775.915399" maxy="6406966.575199" />
 <BoundingBox CRS="EPSG:28992" minx="-1136402.742573" miny="679.856932" maxx="648666.695131" maxy="1024615.234950" />
-<BoundingBox CRS="EPSG:7399" minx="-936166.427234" miny="5662449.720378" maxx="936166.427234" maxy="6486546.956900" />
+<BoundingBox CRS="EPSG:3067" minx="-2368217.657676" miny="5426200.148164" maxx="-431413.447765" maxy="6912956.275031" />
+<BoundingBox CRS="EPSG:32661" minx="986381.559353" miny="-2875182.623640" maxx="3013618.440647" maxy="-1800251.543330" />
+<BoundingBox CRS="EPSG:3411" minx="2064656.256257" miny="-3989496.198511" maxx="3989496.198511" maxy="-2064656.256257" />
+<BoundingBox CRS="EPSG:3412" minx="-8338966.390604" miny="31264396.207114" maxx="8338966.390604" maxy="40107778.643636" />
+<BoundingBox CRS="EPSG:3575" minx="-1715538.939396" miny="-4579562.464643" maxx="159824.857893" maxy="-3465869.545704" />
+<BoundingBox CRS="EPSG:3857" minx="-1335833.889519" miny="6106854.834885" maxx="1335833.889519" maxy="7558415.656082" />
+<BoundingBox CRS="EPSG:40000" minx="-1019736.861818" miny="-4904610.285352" maxx="1019736.861818" maxy="-3823190.687455" />
+<BoundingBox CRS="EPSG:4258" minx="48.000000" miny="-12.000000" maxx="56.000000" maxy="12.000000" />
+<BoundingBox CRS="EPSG:4326" minx="48.000000" miny="-12.000000" maxx="56.000000" maxy="12.000000" />
 <BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
 <BoundingBox CRS="EPSG:54030" minx="-997307.251023" miny="5119205.279776" maxx="997307.251023" maxy="5939113.229856" />
-<BoundingBox CRS="EPSG:32661" minx="986381.559353" miny="-2875182.623640" maxx="3013618.440647" maxy="-1800251.543330" />
-<BoundingBox CRS="EPSG:40000" minx="-1019736.861818" miny="-4904610.285352" maxx="1019736.861818" maxy="-3823190.687455" />
+<BoundingBox CRS="EPSG:7399" minx="-936166.427234" miny="5662449.720378" maxx="936166.427234" maxy="6486546.956900" />
 <BoundingBox CRS="EPSG:900913" minx="-1335833.889519" miny="6106854.834885" maxx="1335833.889519" maxy="7558415.656082" />
-<BoundingBox CRS="EPSG:3067" minx="-2368217.657676" miny="5426200.148164" maxx="-431413.447765" maxy="6912956.275031" />
-<Dimension name="extra" units="extra" default="0.9" multipleValues="1" nearestValue="0" >0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9</Dimension>
 <Dimension name="time" units="ISO8601" default="2017-01-01T00:11:00Z" multipleValues="1" nearestValue="0" current="1">2017-01-01T00:10:00Z,2017-01-01T00:11:00Z</Dimension>
+<Dimension name="extra" units="extra" default="0.9" multipleValues="1" nearestValue="0" >0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9</Dimension>
    <Style>    <Name>auto/nearest</Name>    <Title>auto/nearest</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=example_file_irregular_1Dlat1Dlon_grid%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data_var_1&amp;format=image/png&amp;STYLE=auto/nearest"/>    </LegendURL>  </Style>   <Style>    <Name>auto/bilinear</Name>    <Title>auto/bilinear</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=example_file_irregular_1Dlat1Dlon_grid%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data_var_1&amp;format=image/png&amp;STYLE=auto/bilinear"/>    </LegendURL>  </Style>   <Style>    <Name>auto/point</Name>    <Title>auto/point</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=example_file_irregular_1Dlat1Dlon_grid%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data_var_1&amp;format=image/png&amp;STYLE=auto/point"/>    </LegendURL>  </Style>   <Style>    <Name>auto/barb</Name>    <Title>auto/barb</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=example_file_irregular_1Dlat1Dlon_grid%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=data_var_1&amp;format=image/png&amp;STYLE=auto/barb"/>    </LegendURL>  </Style></Layer>
     </Layer>
   </Capability>
