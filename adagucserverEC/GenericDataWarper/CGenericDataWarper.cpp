@@ -232,7 +232,7 @@ int CGenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoPara
     useStridingProjection = true;
   }
 
-  double halfCell = warperState.useHalfCellOffset ? 0.5 : 0;
+  double halfCell = useHalfCellOffset ? 0.5 : 0;
 
   size_t dataSize = (dataWidth + 1) * (dataHeight + 1);
 
@@ -299,15 +299,10 @@ int CGenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoPara
         double sX = double(x % projStrideFactor) / double(projStrideFactor);
         double sY = double(y % projStrideFactor) / double(projStrideFactor);
         double x1 = pxStrided[pS] * (1 - sX) + pxStrided[pS + 1] * sX;
-        ;
         double x2 = pxStrided[pS + dataWidthStrided] * (1 - sX) + pxStrided[pS + 1 + dataWidthStrided] * sX;
-        ;
         px[p] = x1 * (1 - sY) + x2 * sY;
-
         double y1 = pyStrided[pS] * (1 - sY) + pyStrided[pS + dataWidthStrided] * sY;
-        ;
         double y2 = pyStrided[pS + 1] * (1 - sY) + pyStrided[pS + dataWidthStrided + 1] * sY;
-        ;
         py[p] = y1 * (1 - sX) + y2 * sX;
       }
     }
