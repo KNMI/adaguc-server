@@ -1678,7 +1678,32 @@ int CRequest::process_all_layers() {
       // dataSources[j]->getCDFDims()->addDimension("none","0",0);
     }
     if (dataSources[j]->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
+      // This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.
       layerTypeLiveUpdateConfigureDimensionsInDataSource(dataSources[j]);
+      // Basic case of liveupdate layer
+      if (dataSources[j]->cfgLayer->DataPostProc.empty()) {
+        // // Add step to empty file
+        dataSources[j]->addStep("", NULL);
+        dataSources[j]->getCDFDims()->addDimension("none", "0", 0);
+      } else {
+        // Case of liveupdate layers with data post processors (such as solar terminator)
+        // Currently one (dummy) file is required
+        std::vector<std::string> fileList;
+        if (!dataSources[j]->cfgLayer->FilePath.empty()) {
+          try {
+            fileList = CDBFileScanner::searchFileNames(dataSources[j]->cfgLayer->FilePath[0]->value.c_str(), dataSources[j]->cfgLayer->FilePath[0]->attr.filter, NULL);
+          } catch (int e) {
+            CDBError("Could not find any filename");
+            return 1;
+          }
+
+          if (fileList.size() == 0) {
+            CDBError("fileList.size()==0");
+            return 1;
+          }
+          dataSources[j]->addStep(fileList[0].c_str(), NULL);
+        }
+      }
     }
   }
 
@@ -1717,7 +1742,7 @@ int CRequest::process_all_layers() {
   /* Handle WMS Getmap database request */
   /**************************************/
   if (dataSources[j]->dLayerType == CConfigReaderLayerTypeDataBase || dataSources[j]->dLayerType == CConfigReaderLayerTypeStyled || dataSources[j]->dLayerType == CConfigReaderLayerTypeCascaded ||
-      dataSources[j]->dLayerType == CConfigReaderLayerTypeBaseLayer) {
+      dataSources[j]->dLayerType == CConfigReaderLayerTypeBaseLayer || (dataSources[j]->dLayerType == CConfigReaderLayerTypeLiveUpdate && srvParam->requestType != REQUEST_WMS_GETMAP)) {
     try {
       for (size_t d = 0; d < dataSources.size(); d++) {
         dataSources[d]->setTimeStep(0);
@@ -2163,11 +2188,27 @@ int CRequest::process_all_layers() {
       return 1;
     }
   } else if (dataSources[j]->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
-    // Render the current time in an image for testing purpose / frontend development
-    CDrawImage image;
-    layerTypeLiveUpdateRenderIntoDrawImage(&image, srvParam);
-    printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
-    image.printImagePng8(true);
+    CDBDebug("in special liveupdate case with timesteps %d", dataSources[j]->getNumTimeSteps());
+    if (dataSources[j]->cfgLayer->DataPostProc.empty()) {
+      // Demo case: render the current time in an image for testing purpose / frontend development
+      CDrawImage image;
+      layerTypeLiveUpdateRenderIntoDrawImage(&image, srvParam);
+      printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
+      CDBDebug("***Number of timesteps %d", dataSources[j]->getNumTimeSteps());
+      image.printImagePng8(true);
+    } else {
+      // General case: Liveupdate with some data postprocessors
+      // Covers case of Solar Terminator
+      CImageDataWriter imageDataWriter;
+      // bool imageDataWriterIsInitialized = false;
+      status = imageDataWriter.init(srvParam, dataSources[j], dataSources[j]->getNumTimeSteps());
+      CDBDebug("Init imageDataWriter status %d", status);
+      if (dataSources[j]->getNumTimeSteps() > 1) CDBDebug("Status from create animation was %d", imageDataWriter.createAnimation());
+      status = imageDataWriter.addData(dataSources);
+      CDBDebug("Adding data status was %d", status);
+      status = imageDataWriter.end();
+    }
+    CDBDebug("Ending image data writing with status %d", status);
   } else {
     CDBError("Unknown layer type");
   }
