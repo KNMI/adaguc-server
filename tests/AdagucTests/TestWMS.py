@@ -2543,3 +2543,27 @@ class TestWMS(unittest.TestCase):
             data.getvalue(),
             AdagucTestTools().readfromfile(self.expectedoutputsspath +
                                            filename))
+
+
+    def test_WMSGetLegendGraphic_SolarTerminator(self):
+    # Testing the solar terminator legend
+        AdagucTestTools().cleanTempDir()
+        config = ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml,' + \
+            ADAGUC_PATH + '/data/config/datasets/adaguc.tests.solarterminator.xml'
+        env = {'ADAGUC_CONFIG': config}
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=['--updatedb', '--config', config], env=self.env, isCGI=False)
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSGetLegendGrahic_SolarTerminator.png"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "DATASET=solarterminator&SERVICE=WMS&&version=1.3.0&service=WMS&request=GetLegendGraphic&layer=solarterminator&format=image/png&STYLE=auto/nearest&layers=solarterminator&&&transparent=true&",
+            env=env)
+        AdagucTestTools().writetofile(self.testresultspath + filename,
+                                      data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath +
+                                           filename))

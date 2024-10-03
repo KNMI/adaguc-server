@@ -646,7 +646,9 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
 }
 
 int getStylesForLayer(MetadataLayer *metadataLayer) {
-  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded || metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
+  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded ||
+      (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) && metadataLayer->dataSource->cfgLayer->DataPostProc.empty()) {
+    // Ignore styling in default case of the demo liveupdate layer, but not if there are data postprocessors
     return 0;
   }
 

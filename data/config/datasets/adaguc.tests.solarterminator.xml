@@ -11,7 +11,7 @@
     <ShadeInterval min="3.00" max="4.00"    label="Civil Twilight"    fillcolor="#999999"/>
     <ShadeInterval min="4.00" max="5.00"    label="Day"    fillcolor="#FFFFFF"/>
 
-    <NameMapping name="shadedcontour"   title="Shaded categories" abstract="Drawing with rainbow colors, shading and contours"/>
+    <NameMapping name="shadedcontour"   title="Shaded categories" abstract="Shades representing different phases from night to day."/>
     <RenderMethod>shadedcontour</RenderMethod>
 
   </Style>
