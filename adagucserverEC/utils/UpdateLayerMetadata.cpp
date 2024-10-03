@@ -7,40 +7,15 @@
 #include <json_adaguc.h>
 #include "LayerUtils.h"
 
-void serverLogFunctionNothing(const char *) {}
-
-/* Set config file from environment variable ADAGUC_CONFIG */
-int setCRequestConfigFromEnvironment(CRequest *request, const char *additionalDataset) {
-  char *configfile = getenv("ADAGUC_CONFIG");
-  if (configfile != NULL) {
-    CT::string configWithAdditionalDataset = configfile;
-    if (additionalDataset != nullptr && strlen(additionalDataset) > 0) {
-      configWithAdditionalDataset.concat(",");
-      configWithAdditionalDataset.concat(additionalDataset);
-    }
-    int status = request->setConfigFile(configWithAdditionalDataset.c_str());
-
-    /* Check logging level */
-    if (request->getServerParams()->isDebugLoggingEnabled() == false) {
-      setDebugFunction(serverLogFunctionNothing);
-    }
-
-    return status;
-  } else {
-    CDBError("No configuration file is set. Please set ADAGUC_CONFIG environment variable accordingly.");
-    return 1;
-  }
-  return 0;
-}
+typedef std::pair<std::string, std::string> DatasetAndLayerPair;
 
 int updateLayerMetadata(CRequest &request) {
   CServerParams *srvParam = request.getServerParams();
 
   auto datasetList = getEnabledDatasetsConfigurations(srvParam);
-  // TODO: Remove datasets and layers in metadatable which don't have a matching configuration
   // TODO: Remove dimension tables which don't have a matching configuration
 
-  std::map<std::string, std::set<std::string>> dataSetConfigsWithLayers;
+  std::set<DatasetAndLayerPair> dataSetConfigsWithLayers;
 
   for (auto &dataset : datasetList) {
     CT::string datasetAsCTString = dataset.c_str();
@@ -52,8 +27,7 @@ int updateLayerMetadata(CRequest &request) {
       CDBDebug("\n\n *********************************** Updating metadatatable for dataset [%s] **************************************************", dataset.c_str());
     }
     CRequest requestPerDataset;
-    // dataset = "/data/adaguc-datasets/test.uwcw_ha43_dini_5p5km_10x8.xml";
-    // dataset = "/data/adaguc-datasets/testdata.xml";
+
     int status = setCRequestConfigFromEnvironment(&requestPerDataset, dataset.c_str());
     if (status != 0) {
       CDBError("Unable to read configuration file");
@@ -67,7 +41,7 @@ int updateLayerMetadata(CRequest &request) {
         layerName.print("ID_%s", tmp.c_str());
       }
 
-      dataSetConfigsWithLayers[datasetBaseName].insert(layerName.c_str());
+      dataSetConfigsWithLayers.insert(std::make_pair(datasetBaseName, layerName.c_str()));
     }
     CT::string layerPathToScan;
     CT::string tailPath;
@@ -76,10 +50,9 @@ int updateLayerMetadata(CRequest &request) {
       CDBError("Error occured in updating the database");
       continue;
     }
-    // return 0;
   }
 
-  // Check for datasets which are not configured anymore.
+  // Check for datasets and or layers which are not configured anymore.
   json dataset;
   json layer;
 
@@ -88,43 +61,25 @@ int updateLayerMetadata(CRequest &request) {
     return 1;
   }
   auto records = layerMetaDataStore->getRecords();
-  std::map<std::string, std::set<std::string>> datasetNamesFromDB;
+
+  std::set<DatasetAndLayerPair> datasetNamesFromDB;
+
   for (auto record : records) {
     CT::string *datasetName = record->get("datasetname");
     CT::string *layerName = record->get("layername");
     if (datasetName != nullptr && layerName != nullptr) {
-      datasetNamesFromDB[datasetName->c_str()].insert(layerName->c_str());
+      datasetNamesFromDB.insert(std::make_pair(datasetName->c_str(), layerName->c_str()));
     }
   }
 
-  std::map<std::string, std::set<std::string>> layersToDeleteFromMetadataTable;
-  for (auto datasetFromDB : datasetNamesFromDB) {
-    for (auto layerNameDb : datasetFromDB.second) {
-      bool hasLayer = false;
-      for (auto datasetConfig : dataSetConfigsWithLayers) {
-        if (datasetConfig.first == datasetFromDB.first) {
-          for (auto layerNameConfig : datasetConfig.second) {
-            if (layerNameConfig == layerNameDb) {
-              hasLayer = true;
-              break;
-            }
-          }
-        }
-      }
-      if (!hasLayer) {
-        // CDBDebug("NO: %s/%s ", datasetFromDB.first.c_str(), layerNameDb.c_str());
-        layersToDeleteFromMetadataTable[datasetFromDB.first].insert(layerNameDb);
-      } else {
-        // CDBDebug("YES: %s/%s ", datasetFromDB.first.c_str(), layerNameDb.c_str());
-      }
-    }
-  }
+  std::set<DatasetAndLayerPair> layersToDeleteFromMetadataTable;
 
-  for (auto dataset : layersToDeleteFromMetadataTable) {
-    for (auto layer : dataset.second) {
-      CDBDebug("DROP: %s/%s ", dataset.first.c_str(), layer.c_str());
-      CDBFactory::getDBAdapter(srvParam->cfg)->dropLayerFromLayerMetadataStore(dataset.first.c_str(), layer.c_str());
-    }
+  std::set_difference(datasetNamesFromDB.begin(), datasetNamesFromDB.end(), dataSetConfigsWithLayers.begin(), dataSetConfigsWithLayers.end(),
+                      std::inserter(layersToDeleteFromMetadataTable, layersToDeleteFromMetadataTable.end()));
+
+  for (auto p : layersToDeleteFromMetadataTable) {
+    CDBDebug("DROP: %s/%s ", p.first.c_str(), p.second.c_str());
+    CDBFactory::getDBAdapter(srvParam->cfg)->dropLayerFromLayerMetadataStore(p.first.c_str(), p.second.c_str());
   }
 
   return 0;

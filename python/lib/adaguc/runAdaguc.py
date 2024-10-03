@@ -106,7 +106,7 @@ class runAdaguc:
         adagucenv = self.getAdagucEnv()
         status, data, headers = asyncio.run(
             self.runADAGUCServer(
-                args=["--updatelayermetadata"], env=adagucenv, isCGI=False, showLogOnError = False
+                args=["--updatelayermetadata"], env=adagucenv, isCGI=False, showLogOnError = True
             )
         )
 
@@ -314,7 +314,7 @@ async def response_to_cache(redis_pool, key, headers: str, data):
             entrytime
             + f"{len(cacheable_headers_json):06d}".encode("utf-8")
             + cacheable_headers_json
-            + brotli.compress(data.getvalue()),
+            + brotli.compress(data.getvalue(), quality=4),
             ex=ttl,
         )
         await redis_client.aclose()

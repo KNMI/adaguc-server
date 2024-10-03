@@ -127,11 +127,11 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
 
   std::map<std::string, LayerMetadataProjection> projectionMap;
   // Make a unique list of projections
-  for (const auto& p : metadataLayer->layerMetadata.projectionList) {
+  for (const auto &p : metadataLayer->layerMetadata.projectionList) {
     projectionMap.emplace(p.name.c_str(), p);
   }
   metadataLayer->layerMetadata.projectionList.clear();
-  for (const auto& p : projectionMap) {
+  for (const auto &p : projectionMap) {
     metadataLayer->layerMetadata.projectionList.push_back(p.second);
   }
 
@@ -169,7 +169,8 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
         CT::string fileDate = CDirReader::getFileDate(metadataLayer->layer->FilePath[0]->value.c_str());
 
         LayerMetadataDim dim;
-        dim.name.copy("time");
+        dim.serviceName.copy("time");
+        dim.cdfName.copy("time");
         dim.units.copy("ISO8601");
         dim.values.copy(fileDate.c_str());
         dim.defaultValue.copy(fileDate.c_str());
@@ -188,7 +189,8 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
       // Create a new dim to store in the layer
       LayerMetadataDim dim;
       dim.hidden = false;
-      dim.name.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
+      dim.serviceName.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
+      dim.cdfName.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
 
       // Get the tablename
       CT::string tableName;
@@ -404,14 +406,15 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
           // if(srvParam->requestType==REQUEST_WMS_GETCAPABILITIES)
           {
 
-            dim.name.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
+            dim.serviceName.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
+            dim.cdfName.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
 
             // Try to get units from the variable
             dim.units.copy("NA");
             if (metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.units.empty()) {
               CT::string units;
               try {
-                metadataLayer->dataSource->getDataObject(0)->cdfObject->getVariable(dim.name.c_str())->getAttribute("units")->getDataAsString(&units);
+                metadataLayer->dataSource->getDataObject(0)->cdfObject->getVariable(dim.cdfName.c_str())->getAttribute("units")->getDataAsString(&units);
                 dim.units.copy(&units);
               } catch (int e) {
               }
@@ -518,7 +521,8 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
           if (metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.units.empty() == false) {
             dimUnits.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.units.c_str());
           }
-          dim.name.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
+          dim.serviceName.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
+          dim.cdfName.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
           dim.units.copy(dimUnits.c_str());
           dim.hasMultipleValues = 0;
           // metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.defaultV.c_str()
@@ -691,7 +695,7 @@ int getStylesForLayer(MetadataLayer *metadataLayer) {
 bool compareStringCase(const std::string &s1, const std::string &s2) { return strcmp(s1.c_str(), s2.c_str()) < 0; }
 
 bool compareProjection(const LayerMetadataProjection &p1, const LayerMetadataProjection &p2) { return strcmp(p1.name.c_str(), p2.name.c_str()) < 0; }
-bool compareDim(const LayerMetadataDim &p2, const LayerMetadataDim &p1) { return strcmp(p1.name.c_str(), p2.name.c_str()) < 0; }
+bool compareDim(const LayerMetadataDim &p2, const LayerMetadataDim &p1) { return strcmp(p1.serviceName.c_str(), p2.serviceName.c_str()) < 0; }
 
 int getTitleForLayer(MetadataLayer *metadataLayer) {
 #ifdef CXMLGEN_DEBUG
