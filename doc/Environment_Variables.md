@@ -12,8 +12,8 @@ Some of these environment variables might be set via the `docker-compose.yml` fi
 | `ADAGUC_ERRORFILE` | optional pointer which logs only error messages
 | `ADAGUC_FONT` | Place where a TrueType font is stored, e.g. FreeSans.ttf
 | `ADAGUC_DATARESTRICTION` | Optional pointer which controls access restrictions, by default set to FALSE, can be combinations of `ALLOW_WCS\|ALLOW_GFI\|ALLOW_METADATA\|SHOW_QUERYINFO`, separated with the \| token.<br /><br />`FALSE`: No restrictions (default, same as `ALLOW_WCS\|ALLOW_GFI\|ALLOW_METADATA`)<br>`ALLOW_WCS`: Allows the Web Coverage Service, download of data<br />`ALLOW_GFI`: Allows GetFeatureInfo requests, e.g. getting information about a certain location<br>`ALLOW_METADATA`: Allows getting NetCDF header metadata information<br>`SHOW_QUERYINFO`: When a query has failed, the corresponding query will be presented to the user. This feature is disabled by default.
-| `ADAGUC_PATH` | optional, is used as variable susbstitution {ADAGUC_PATH} in the configuration files, should point to the adagucserver installation
-| `ADAGUC_TMP` | optional, is used as variable susbstitution {ADAGUC_TMP} in the configuration files, location where tempfiles need to be written
+| `ADAGUC_PATH` | optional, is used as variable substitution {ADAGUC_PATH} in the configuration files, should point to the adagucserver installation
+| `ADAGUC_TMP` | optional, is used as variable substitution {ADAGUC_TMP} in the configuration files, location where tempfiles need to be written
 | `ADAGUC_ONLINERESOURCE` | optional, specify the online resource in the CGI script itself, see [OnlineResource](/doc/configuration/OnlineResource.md) to configure in the xml file.
 | `PGBOUNCER_ENABLE` | Enable or disable the usage of PostgreSQL connection pooling by PGBouncer. Default: `true`.
 | `PGBOUNCER_DISABLE_SSL` | If PGBouncer is used, disable the usage of SSL. Default: `true`.

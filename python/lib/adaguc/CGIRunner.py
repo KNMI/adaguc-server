@@ -40,6 +40,10 @@ async def wait_socket_communicate(url, timeout) -> AdagucResponse:
         return AdagucResponse(
             status_code=HTTP_STATUSCODE_500_TIMEOUT, process_output=None
         )
+    except ConnectionRefusedError:
+        # TODO: If for whatever reason socket communication to the fork server fails, should we fall back to regular process spawning?
+        raise
+
     return resp
 
 
