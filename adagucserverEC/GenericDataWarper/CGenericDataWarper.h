@@ -12,6 +12,7 @@
 
 struct GDWWarperState {
   void *sourceData;
+  float *destinationGrid;
   int sourceDataPX, sourceDataPY, sourceDataWidth, sourceDataHeight;
   double tileDx, tileDy;
 };
@@ -23,7 +24,10 @@ private:
 public:
   GDWWarperState warperState;
   bool useHalfCellOffset;
-  CGenericDataWarper() { useHalfCellOffset = false; }
+  CGenericDataWarper() {
+    useHalfCellOffset = false;
+    warperState.destinationGrid = nullptr;
+  }
 
   template <typename T>
   int render(CImageWarper *warper, void *_sourceData, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, void *drawFunctionSettings,

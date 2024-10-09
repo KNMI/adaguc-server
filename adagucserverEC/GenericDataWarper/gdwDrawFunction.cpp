@@ -16,44 +16,72 @@ template <typename T> void gdwDrawFunction(int x, int y, T val, void *_settings,
   if (!(val == val)) isNodata = true;
   if (!isNodata) {
     T *sourceData = (T *)genericDataWarper->warperState.sourceData;
-    size_t sourceDataPX = genericDataWarper->warperState.sourceDataPX;
-    size_t sourceDataPY = genericDataWarper->warperState.sourceDataPY;
-    size_t sourceDataWidth = genericDataWarper->warperState.sourceDataWidth;
-    size_t sourceDataHeight = genericDataWarper->warperState.sourceDataHeight;
+    int sourceDataPX = genericDataWarper->warperState.sourceDataPX;
+    int sourceDataPY = genericDataWarper->warperState.sourceDataPY;
+    int sourceDataWidth = genericDataWarper->warperState.sourceDataWidth;
+    int sourceDataHeight = genericDataWarper->warperState.sourceDataHeight;
 
-    if (sourceDataPY > sourceDataHeight - 1) return;
-    if (sourceDataPX > sourceDataWidth - 1) return;
-    if (x >= 0 && y >= 0 && x < (int)drawSettings->drawImage->Geo->dWidth && y < (int)drawSettings->drawImage->Geo->dHeight) {
-      double values[2][2] = {{0, 0}, {0, 0}};
+    if (sourceDataPX < 0 || sourceDataPY < 0 || sourceDataPY > sourceDataHeight - 1 || sourceDataPX > sourceDataWidth - 1) return;
+    bool bilinear = true;
+    if (x >= 0 && y >= 0 && x < drawSettings->drawImage->Geo->dWidth && y < drawSettings->drawImage->Geo->dHeight) {
+
       if (drawSettings->smoothingFiter == 0) {
 
-        values[0][0] += ((T *)sourceData)[nfast_mod(sourceDataPX + 0, sourceDataWidth) + nfast_mod(sourceDataPY + 0, sourceDataHeight) * sourceDataWidth];
+        if (bilinear) {
+          if (sourceDataPY > sourceDataHeight - 2 || sourceDataPX > sourceDataWidth - 2) return;
+          // int xL = nfast_mod(sourceDataPX + 0, sourceDataWidth);
+          // int yT = nfast_mod(sourceDataPY + 0, sourceDataHeight);
+          // int xR = nfast_mod(sourceDataPX + 1, sourceDataWidth);
+          // int yB = nfast_mod(sourceDataPY + 1, sourceDataHeight);
 
-        // setPixelInDrawImage(x, y, val, drawSettings);
-        values[1][0] += ((T *)sourceData)[nfast_mod(sourceDataPX + 1, sourceDataWidth) + nfast_mod(sourceDataPY + 0, sourceDataHeight) * sourceDataWidth];
-        values[0][1] += ((T *)sourceData)[nfast_mod(sourceDataPX + 0, sourceDataWidth) + nfast_mod(sourceDataPY + 1, sourceDataHeight) * sourceDataWidth];
-        values[1][1] += ((T *)sourceData)[nfast_mod(sourceDataPX + 1, sourceDataWidth) + nfast_mod(sourceDataPY + 1, sourceDataHeight) * sourceDataWidth];
-      } else {
-        values[0][0] = smoothingAtLocation((float *)sourceData, drawSettings->smoothingDistanceMatrix, drawSettings->smoothingFiter, (float)drawSettings->dfNodataValue, sourceDataPX, sourceDataPY,
-                                           sourceDataWidth, sourceDataHeight);
-        values[1][0] = smoothingAtLocation((float *)sourceData, drawSettings->smoothingDistanceMatrix, drawSettings->smoothingFiter, (float)drawSettings->dfNodataValue, sourceDataPX + 1, sourceDataPY,
-                                           sourceDataWidth, sourceDataHeight);
-        values[0][1] = smoothingAtLocation((float *)sourceData, drawSettings->smoothingDistanceMatrix, drawSettings->smoothingFiter, (float)drawSettings->dfNodataValue, sourceDataPX, sourceDataPY + 1,
-                                           sourceDataWidth, sourceDataHeight);
-        values[1][1] = smoothingAtLocation((float *)sourceData, drawSettings->smoothingDistanceMatrix, drawSettings->smoothingFiter, (float)drawSettings->dfNodataValue, sourceDataPX + 1,
-                                           sourceDataPY + 1, sourceDataWidth, sourceDataHeight);
-      }
+          int xL = (sourceDataPX + 0);
+          int yT = (sourceDataPY + 0);
+          int xR = (sourceDataPX + 1);
+          int yB = (sourceDataPY + 1);
+          double values[2][2];
+          values[0][0] = ((T *)sourceData)[xL + yT * sourceDataWidth];
+          values[1][0] = ((T *)sourceData)[xR + yT * sourceDataWidth];
+          values[0][1] = ((T *)sourceData)[xL + yB * sourceDataWidth];
+          values[1][1] = ((T *)sourceData)[xR + yB * sourceDataWidth];
 
-      double dx = genericDataWarper->warperState.tileDx;
-      double dy = genericDataWarper->warperState.tileDy;
+          double dx = genericDataWarper->warperState.tileDx;
+          double dy = genericDataWarper->warperState.tileDy;
+          double gx1 = (1 - dx) * values[0][0] + dx * values[1][0];
+          double gx2 = (1 - dx) * values[0][1] + dx * values[1][1];
+          double billValue = (1 - dy) * gx1 + dy * gx2;
+          setPixelInDrawImage(x, y, billValue, drawSettings);
 
-      double gx1 = (1 - dx) * values[0][0] + dx * values[1][0];
-      double gx2 = (1 - dx) * values[0][1] + dx * values[1][1];
-      double bilValue = (1 - dy) * gx1 + dy * gx2;
-      if (dy >= 0.0 && dy < 1.0) {
-        if (dx >= 0.0 && dx < 1.0) {
-          setPixelInDrawImage(x, y, bilValue, drawSettings);
+          if (genericDataWarper->warperState.destinationGrid != nullptr) {
+            genericDataWarper->warperState.destinationGrid[x + y * drawSettings->drawImage->Geo->dWidth] = billValue;
+          }
+        } else {
+          int xL = (sourceDataPX + 0);
+          int yT = (sourceDataPY + 0);
+          double value = ((T *)sourceData)[xL + yT * sourceDataWidth];
+          setPixelInDrawImage(x, y, value, drawSettings);
         }
+        // } else {
+        //   int xL = nfast_mod(sourceDataPX + 0, sourceDataWidth);
+        //   int yT = nfast_mod(sourceDataPY + 0, sourceDataHeight);
+        //   double v = ((T *)sourceData)[xL + yT * sourceDataWidth];
+        //   values[0][0] = v;
+        //   values[1][0] = v;
+        //   values[0][1] = v;
+        //   values[1][1] = v;
+
+        //   // double values[2][2] = {{0, 0}, {0, 0}};
+        // }
+      } else {
+        // values[0][0] = smoothingAtLocation((float *)sourceData, drawSettings->smoothingDistanceMatrix, drawSettings->smoothingFiter, (float)drawSettings->dfNodataValue, sourceDataPX, sourceDataPY,
+        //                                    sourceDataWidth, sourceDataHeight);
+        // values[1][0] = smoothingAtLocation((float *)sourceData, drawSettings->smoothingDistanceMatrix, drawSettings->smoothingFiter, (float)drawSettings->dfNodataValue, sourceDataPX + 1,
+        // sourceDataPY,
+        //                                    sourceDataWidth, sourceDataHeight);
+        // values[0][1] = smoothingAtLocation((float *)sourceData, drawSettings->smoothingDistanceMatrix, drawSettings->smoothingFiter, (float)drawSettings->dfNodataValue, sourceDataPX, sourceDataPY +
+        // 1,
+        //                                    sourceDataWidth, sourceDataHeight);
+        // values[1][1] = smoothingAtLocation((float *)sourceData, drawSettings->smoothingDistanceMatrix, drawSettings->smoothingFiter, (float)drawSettings->dfNodataValue, sourceDataPX + 1,
+        //                                    sourceDataPY + 1, sourceDataWidth, sourceDataHeight);
       }
     }
   }

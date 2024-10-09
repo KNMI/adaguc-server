@@ -30,7 +30,7 @@
 #include <iostream>
 #include "CDebugger.h"
 #include "CTypes.h"
-#include "CColor.h"
+#include "Types/CColor.h"
 #include "Definitions.h"
 #include "CStopWatch.h"
 #include <stdio.h>
@@ -47,7 +47,7 @@
 #include "gdfonts.h"
 #include "gdfontmb.h"
 #include "CCairoPlotter.h"
-#include "CColor.h"
+#include "Types/CColor.h"
 #include "CRectangleText.h"
 
 float convertValueToClass(float val, float interval);
@@ -268,4 +268,5 @@ public:
   void setRenderer(int renderer);
 };
 
+float convertValueToClass(float val, float interval);
 #endif

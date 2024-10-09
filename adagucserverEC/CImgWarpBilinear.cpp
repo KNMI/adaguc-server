@@ -39,6 +39,7 @@
 
 #include "CImgRenderFieldVectors.h"
 #include "CImageOperators/smoothRasterField.h"
+#include "CImageOperators/drawContour.h"
 
 const char *CImgWarpBilinear::className = "CImgWarpBilinear";
 void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CDrawImage *drawImage) {
@@ -681,18 +682,6 @@ int CImgWarpBilinear::set(const char *pszSettings) {
   return 0;
 }
 
-bool IsTextTooClose(std::vector<Point> *textLocations, int x, int y) {
-
-  for (size_t j = 0; j < textLocations->size(); j++) {
-    int dx = x - (*textLocations)[j].x;
-    int dy = y - (*textLocations)[j].y;
-    if ((dx * dx + dy * dy) < 10 * 10) {
-      return true;
-    }
-  }
-  return false;
-}
-
 void CImgWarpBilinear::drawTextForContourLines(CDrawImage *drawImage, ContourDefinition *contourDefinition, int lineX, int lineY, int endX, int endY, std::vector<Point> *, float value,
                                                CColor textColor, CColor textStrokeColor, const char *fontLocation, float fontSize, float textStrokeWidth) {
 
@@ -713,22 +702,6 @@ void CImgWarpBilinear::drawTextForContourLines(CDrawImage *drawImage, ContourDef
     drawImage->setTextStroke(x, y, angle, text.c_str(), fontLocation, fontSize, textStrokeWidth, textStrokeColor, textColor);
   }
 }
-
-/*
-Search window for xdir and ydir:
-      -1  0  1  (x)
-  -1   6  5  4
-   0   7  X  3
-   1   0  1  2
-  (y)
-            0  1  2  3  4  5  6  7 */
-int xdir[] = {-1, 0, 1, 1, 1, 0, -1, -1};
-int ydir[] = {1, 1, 1, 0, -1, -1, -1, 0};
-/*                0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15 */
-int xdirOuter[] = {-2, -1, 0, 1, 2, 2, 2, 2, 2, 1, 0, -1, -2, -2, -2, -2};
-int ydirOuter[] = {2, 2, 2, 2, 2, 1, 0, -1, -2, -2, -2, -2, -2, -1, 0, 1};
-
-#define MAX_LINE_SEGMENTS 1000
 
 void CImgWarpBilinear::traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *valueField, int lineX, int lineY, int dImageWidth, int dImageHeight, float lineWidth, CColor lineColor,
                                     CColor textColor, CColor textStrokeColor, ContourDefinition *contourDefinition, DISTANCEFIELDTYPE lineMask, bool, std::vector<Point> *textLocations, double scaling,

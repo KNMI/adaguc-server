@@ -3,11 +3,11 @@
  * Project:  ADAGUC Server
  * Purpose:  ADAGUC OGC Server
  * Author:   Maarten Plieger, plieger "at" knmi.nl
- * Date:     2013-06-01
+ * Date:     2022-06-30
  *
  ******************************************************************************
  *
- * Copyright 2013, Royal Netherlands Meteorological Institute (KNMI)
+ * Copyright 2022, Royal Netherlands Meteorological Institute (KNMI)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,42 +22,23 @@
  * limitations under the License.
  *
  ******************************************************************************/
-#ifndef CRectangleText_H
-#define CRectangleText_H
-#include "CDebugger.h"
-#include "CTypes.h"
+#ifndef CCOLOR_H
+#define CCOLOR_H
 
-#include "Definitions.h"
-#include "Types/CColor.h"
+#include <stdio.h>
+#include <string.h>
+#include "CTString.h"
 
-class CRectangleText {
+#define CSERVER_HEXDIGIT_TO_DEC(DIGIT) (DIGIT > 96 ? DIGIT - 87 : DIGIT > 64 ? DIGIT - 55 : DIGIT - 48) // Converts "9" to 9, "A" to 10 and "a" to 10
+
+class CColor {
 public:
-  int llx;
-  int lly;
-  int urx;
-  int ury;
-  float angle;
-  int padding;
-  CT::string text;
-  CT::string fontFile;
-  float fontSize;
-  CColor color;
-
-  DEF_ERRORFUNCTION();
-  CRectangleText() {}
-
-  void init(int llx, int lly, int urx, int ury, float angle, int padding, const char *text, const char *fontFile, float fontSize, CColor color) {
-    this->llx = llx;
-    this->lly = lly;
-    this->urx = urx;
-    this->ury = ury;
-    this->angle = angle;
-    this->padding = padding;
-    this->text = CT::string(text);
-    this->fontFile = CT::string(fontFile);
-    this->fontSize = fontSize;
-    this->color = color;
-  }
-  bool overlaps(CRectangleText &r1);
+  unsigned char r, g, b, a;
+  CColor();
+  CColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
+  CColor(const char *color);
+  CColor(CT::string &color);
+  CT::string c_str();
+  void parse(const char *color);
 };
 #endif

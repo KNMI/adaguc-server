@@ -28,6 +28,7 @@
 #include "GenericDataWarper/CGenericDataWarper.h"
 #include "CImageOperators/smoothRasterField.h"
 #include "GenericDataWarper/gdwDrawFunction.h"
+#include <CImageOperators/drawContour.h>
 
 const char *CImgWarpGeneric::className = "CImgWarpGeneric";
 
@@ -48,6 +49,14 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
   sourceGeo.CRS = dataSource->nativeProj4;
 
   CGenericDataWarper genericDataWarper;
+  genericDataWarper.warperState.destinationGrid = new float[drawImage->Geo->dWidth * drawImage->Geo->dHeight];
+
+  // In case of contourlines and bilinear
+  genericDataWarper.useHalfCellOffset = true;
+
+  for (size_t j = 0; j < drawImage->Geo->dWidth * drawImage->Geo->dHeight; j += 1) {
+    genericDataWarper.warperState.destinationGrid[j] = NAN;
+  }
 
   switch (dataType) {
   case CDF_CHAR:
@@ -78,6 +87,10 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
     genericDataWarper.render<double>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &gdwDrawFunction);
     break;
   }
+
+  drawContour(genericDataWarper.warperState.destinationGrid, dataSource, drawImage);
+  delete[] genericDataWarper.warperState.destinationGrid;
+  genericDataWarper.warperState.destinationGrid = nullptr;
   return;
 }
 

@@ -27,7 +27,7 @@
 #define CServerConfig_H
 #include "CXMLSerializerInterface.h"
 #include "CDirReader.h"
-#include "CColor.h"
+#include "Types/CColor.h"
 
 // f 102 >15
 // F 70 > 15

@@ -72,7 +72,9 @@ template <class T> void setPixelInDrawImage(int x, int y, T val, CDrawFunctionSe
         settings->drawImage->setPixel(x, y, settings->bgColor);
       }
     } else {
+      val = floor(val / 2) * 2;
       if (settings->legendLog != 0) {
+
         if (val > 0) {
           val = (T)(log10(val) / settings->legendLogAsLog);
         } else
