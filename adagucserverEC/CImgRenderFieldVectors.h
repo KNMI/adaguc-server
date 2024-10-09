@@ -251,7 +251,7 @@ int applyUVConversion(CImageWarper *warper, CDataSource *sourceImage, bool enabl
 
             xpntNorthSph = sin(vecAngle); // Rotate the point/vector (0,1) around Z-axis with vecAngle
             ypntNorthSph = cos(vecAngle);
-            xpntEastSph = ypntNorthSph;   // Rotate the same point/vector around Z-axis with 90 degrees
+            xpntEastSph = ypntNorthSph; // Rotate the same point/vector around Z-axis with 90 degrees
             ypntEastSph = -xpntNorthSph;
 
             // zpntNorthSph = 0; zpntEastSph = 0;  // not needed in 2D
@@ -380,8 +380,8 @@ std::vector<CalculatedWindVector> renderBarbsAndVectors(CImageWarper *warper, CD
       if (!(units.equals("kts") || units.equals("knots"))) convertToKnots = true;
 
       // Number of pixels between the vectors:
-      int vectorDensityPy = 50; // 22;
-      int vectorDensityPx = 50; // 22;
+      int vectorDensityPy = 60; // 22;
+      int vectorDensityPx = 60; // 22;
       firstXPos = int(tx) % vectorDensityPy;
       firstYPos = int(ty) % vectorDensityPx;
       double u, v;
@@ -417,7 +417,7 @@ std::vector<CalculatedWindVector> renderBarbsAndVectors(CImageWarper *warper, CD
               }
               if (!drawGridVectors) {
                 if ((int(x - firstXPos) % vectorDensityPy == 0 && (y - firstYPos) % vectorDensityPx == 0) || (enableContour == false && enableShade == false)) {
-                  strength = (strength)*1.0;
+                  strength = (strength) * 1.0;
 
                   // Calculate coordinates from requested coordinate system
                   double projectedCoordX = ((double(x) / double(dImageWidth)) * (drawImage->Geo->dfBBOX[2] - drawImage->Geo->dfBBOX[0])) + drawImage->Geo->dfBBOX[0];

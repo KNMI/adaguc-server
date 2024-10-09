@@ -413,7 +413,7 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
     for (size_t sz = 0; sz < windVectors.size(); sz++) {
       wv = windVectors[sz];
       float outlineWidth = 0;
-      drawImage->drawBarb(wv.x, wv.y, wv.dir, wv.strength, CColor(0, 0, 255, 255), outlineWidth, wv.convertToKnots, wv.flip, false);
+      drawImage->drawBarb(wv.x, wv.y, wv.dir, wv.strength, CColor(0, 0, 255, 255), outlineWidth, wv.convertToKnots, wv.flip, true);
     }
   }
 
