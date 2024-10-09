@@ -5,6 +5,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include "CDebugger.h"
 #include "CTString.h"
 #include "fork_server.h"
 
@@ -89,13 +90,13 @@ void child_signal_handler(int child_signal) {
 void *clean_child_procs(void *arg) {
   /*
   Every `CHECK_CHILD_PROC_INTERVAL` seconds, check all child procs stored in map.
-  If child proc was started more than `MAX_CHILD_PROC_TIMEOUT` seconds ago, send SIGKILL.
+  If child proc was started more than `ADAGUC_MAX_PROC_TIMEOUT` seconds ago, send SIGKILL.
   */
 
   int max_child_proc_timeout = get_env_var_int("ADAGUC_MAX_PROC_TIMEOUT", DEFAULT_MAX_PROC_TIMEOUT);
+  CDBDebug("Checking every %d seconds for processes older than %d seconds\n", CHECK_CHILD_PROC_INTERVAL, max_child_proc_timeout);
   while (1) {
     time_t now = time(NULL);
-    printf("Checking all child procs\n");
 
     for (const auto &child_proc_mapping : child_procs) {
       child_proc_t child_proc = child_proc_mapping.second;
@@ -104,10 +105,9 @@ void *clean_child_procs(void *arg) {
         continue;
       }
 
-      printf("Child timeout!");
-
+      CDBWarning("Child process with pid %d running longer than %d, sending SIGKILL to clean up\n", child_proc_mapping.first, max_child_proc_timeout);
       if (kill(child_proc_mapping.first, SIGKILL) == -1) {
-        printf("Failed to send SIGKILL to child process");
+        CDBError("Failed to send SIGKILL to child process %d\n", child_proc_mapping.first);
         // TODO: What to do if we cannot SIGKILL child process?
       }
     }

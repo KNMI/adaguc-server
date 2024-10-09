@@ -44,6 +44,10 @@ async def wait_socket_communicate(url, timeout) -> AdagucResponse:
         resp = await asyncio.wait_for(socket_communicate(url), timeout=timeout)
     except asyncio.exceptions.TimeoutError:
         return AdagucResponse(status_code=HTTP_STATUSCODE_500_TIMEOUT, process_output=None)
+    except ConnectionRefusedError:
+        # TODO: If for whatever reason socket communication to the fork server fails, should we fall back to regular process spawning?
+        raise
+
     return resp
 
 
@@ -112,9 +116,7 @@ class CGIRunner:
     Run the CGI script with specified URL and environment. Stdout is captured and put in a BytesIO object provided in output
     """
 
-    async def run(
-        self, cmds, url, output, env=[], path=None, isCGI=True, timeout=MAX_PROC_TIMEOUT
-    ):
+    async def run(self, cmds, url, output, env=[], path=None, isCGI=True, timeout=MAX_PROC_TIMEOUT):
         localenv = {}
         if url != None:
             localenv["QUERY_STRING"] = url
