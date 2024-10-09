@@ -10,21 +10,14 @@
 
 // Check this many seconds for old left-over processes
 const int CHECK_CHILD_PROC_INTERVAL = 60;
-// Old left-over child process should be killed after this many seconds
-// TODO: should this become same as `timeout=300` from CGIRunner.py? Should this be configurable?
-const int MAX_CHILD_PROC_TIMEOUT = 300;
+// Allow a backlog of this many connections. Uses `ADAGUC_NUMPARALLELPROCESSES` env var.
 const int DEFAULT_QUEUED_CONNECTIONS = 4;
+// Old left-over child process should be killed after this many seconds. Uses `ADAGUC_MAX_PROC_TIMEOUT` env var.
+const int DEFAULT_MAX_PROC_TIMEOUT = 300;
 
-int get_max_pending_connections() {
-  // Set the max number of queued connections on the socket via ADAGUC_NUMPARALLELPROCESSES
-  CT::string num_parallel_processes(getenv("ADAGUC_NUMPARALLELPROCESSES"));
-  int max_pending_connections;
-  if (num_parallel_processes.isInt()) {
-    return num_parallel_processes.toInt();
-  }
-
-  // Default to 4 queued connections
-  return DEFAULT_QUEUED_CONNECTIONS;
+int get_env_var_int(const char *env, int default_val) {
+  CT::string env_var(getenv(env));
+  return env_var.isInt() ? env_var.toInt() : default_val;
 }
 
 void handle_client(int client_socket, int (*run_adaguc_once)(int, char **, char **, bool), int argc, char **argv, char **envp) {
@@ -99,6 +92,7 @@ void *clean_child_procs(void *arg) {
   If child proc was started more than `MAX_CHILD_PROC_TIMEOUT` seconds ago, send SIGKILL.
   */
 
+  int max_child_proc_timeout = get_env_var_int("ADAGUC_MAX_PROC_TIMEOUT", DEFAULT_MAX_PROC_TIMEOUT);
   while (1) {
     time_t now = time(NULL);
     printf("Checking all child procs\n");
@@ -106,7 +100,7 @@ void *clean_child_procs(void *arg) {
     for (const auto &child_proc_mapping : child_procs) {
       child_proc_t child_proc = child_proc_mapping.second;
 
-      if (difftime(now, child_proc.forked_at) < MAX_CHILD_PROC_TIMEOUT) {
+      if (difftime(now, child_proc.forked_at) < max_child_proc_timeout) {
         continue;
       }
 
@@ -175,7 +169,8 @@ int run_as_fork_service(int (*run_adaguc_once)(int, char **, char **, bool), int
   }
 
   // Start listening on the socket. Can have `max_pending_connections` number of connections queued.
-  if (listen(listen_socket, get_max_pending_connections()) != 0) {
+  int max_pending_connections = get_env_var_int("ADAGUC_NUMPARALLELPROCESSES", DEFAULT_QUEUED_CONNECTIONS);
+  if (listen(listen_socket, max_pending_connections) != 0) {
     printf("Error on listen call \n");
     return 1;
   }

@@ -5,14 +5,8 @@
 
 import asyncio
 import sys
-from subprocess import PIPE, Popen, STDOUT, TimeoutExpired
-from threading import Thread
+from subprocess import PIPE
 import os
-import io
-import errno
-import time
-import chardet
-from queue import Queue, Empty  # python 3.x
 import re
 from typing import NamedTuple
 
@@ -23,9 +17,10 @@ HTTP_STATUSCODE_500_TIMEOUT = 34  # Not defined in C++, is generated from this f
 ADAGUC_NUMPARALLELPROCESSES = os.getenv("ADAGUC_NUMPARALLELPROCESSES", "4")
 sem = asyncio.Semaphore(int(ADAGUC_NUMPARALLELPROCESSES))
 
-
-ADAGUC_FORK_UNIX_SOCKET = f"{os.getenv('ADAGUC_PATH')}/adaguc.socket"
+ADAGUC_FORK_SOCKET_PATH = f"{os.getenv('ADAGUC_PATH')}/adaguc.socket"
 ON_POSIX = "posix" in sys.builtin_module_names
+
+MAX_PROC_TIMEOUT = int(os.getenv("ADAGUC_MAX_PROC_TIMEOUT", "300"))
 
 
 class AdagucResponse(NamedTuple):
@@ -56,7 +51,7 @@ async def socket_communicate(url: str) -> AdagucResponse:
     """
 
     process_output = bytearray()
-    reader, writer = await asyncio.open_unix_connection(ADAGUC_FORK_UNIX_SOCKET)
+    reader, writer = await asyncio.open_unix_connection(ADAGUC_FORK_SOCKET_PATH)
     writer.write(url.encode())
     await writer.drain()
 
@@ -117,7 +112,9 @@ class CGIRunner:
     Run the CGI script with specified URL and environment. Stdout is captured and put in a BytesIO object provided in output
     """
 
-    async def run(self, cmds, url, output, env=[], path=None, isCGI=True, timeout=300):
+    async def run(
+        self, cmds, url, output, env=[], path=None, isCGI=True, timeout=MAX_PROC_TIMEOUT
+    ):
         localenv = {}
         if url != None:
             localenv["QUERY_STRING"] = url
@@ -131,8 +128,8 @@ class CGIRunner:
 
         # print("@@@@", url)
 
-        # Only use fork server if ADAGUC_FORK is set and adaguc is not executed with extra arguments e.g. `--updatelayermetadata`
-        use_fork = os.getenv("ADAGUC_FORK", None) and len(cmds) == 1
+        # Only use fork server if ADAGUC_FORK_SOCKET_PATH is set and adaguc is not executed with extra arguments e.g. `--updatelayermetadata`
+        use_fork = os.getenv("ADAGUC_FORK_SOCKET_PATH", None) and len(cmds) == 1
 
         async with sem:
             if use_fork:

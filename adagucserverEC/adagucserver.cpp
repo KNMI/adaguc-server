@@ -476,8 +476,8 @@ int main(int argc, char **argv, char **envp) {
   setvbuf(stdout, NULL, _IONBF, 0); // turn off buffering
   setvbuf(stderr, NULL, _IONBF, 0); // turn off buffering
 
-  const char *ADAGUC_FORK = getenv("ADAGUC_FORK");
-  if (ADAGUC_FORK != NULL) {
+  const char *ADAGUC_FORK_SOCKET_PATH = getenv("ADAGUC_FORK_SOCKET_PATH");
+  if (ADAGUC_FORK_SOCKET_PATH != NULL) {
     return run_as_fork_service(run_adaguc_once, argc, argv, envp);
   } else {
     // normal flow without unix socket server/fork
