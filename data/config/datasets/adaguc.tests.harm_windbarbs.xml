@@ -9,13 +9,13 @@
     <NameMapping name="thinbarb"     title="Wind barbs (thinned)" abstract="Rendered with thinned barbs"/>
   </Style>
 
-   <Style name="Windbarbwithnumbers">
+  <Style name="Windbarbwithnumbers">
     <Scale>1</Scale>
     <Offset>0</Offset>
     <RenderMethod>barb</RenderMethod>
     <RenderSettings rendertextforvectors="true" />
-    <NameMapping name="barb"         title="Wind barbs" abstract="Rendered with barbs and text"/>
-    <NameMapping name="thinbarb"     title="Wind barbs (thinned)" abstract="Rendered with thinned barbs and text"/>
+    <NameMapping name="barb"         title="Wind barbs with number" abstract="Rendered with barbs and wundspeed number"/>
+    <NameMapping name="thinbarb"     title="Wind barbs with number (thinned)" abstract="Rendered with thinned barbs and windpeed number"/>
   </Style>
 
   <Layer type="database">
