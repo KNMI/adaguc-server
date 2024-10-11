@@ -1,5 +1,5 @@
 **Version 2.28.1 2024-10-11**
-- Windbarbs on modelfields now display the windspeed in kts as text.
+- Windbarbs on modelfields can now display the windspeed in kts as text when rendertextforvectors in RenderSettings is set to true.
 
 **Version 2.28.0 2024-09-11**
 - Metadata for layer items like variables, projections, dimensions and styles are now stored in a database table called `layermetadata`. This can be disabled via the `enablemetadatacache` property in [Settings](doc/configuration/Settings.md).

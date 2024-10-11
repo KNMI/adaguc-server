@@ -1,4 +1,4 @@
-RenderSettings (settings, striding, renderer, scalewidth, scalecontours, renderhint)
+RenderSettings (settings, striding, renderer, scalewidth, scalecontours, renderhint, rendertextforvectors)
 =============================================
 
 Back to [Configuration](./Configuration.md)
@@ -18,6 +18,14 @@ Controls behaviour of nearestneighbour rendering
 ```xml
 <RenderSettings settings="precise"/>
 ```
+
+# rendertextforvectors
+
+```xml
+<RenderSettings rendertextforvectors="true" />
+```
+
+When set to true, it will render text with windbarbs.
 
 # striding
 

@@ -9,6 +9,15 @@
     <NameMapping name="thinbarb"     title="Wind barbs (thinned)" abstract="Rendered with thinned barbs"/>
   </Style>
 
+   <Style name="Windbarbwithnumbers">
+    <Scale>1</Scale>
+    <Offset>0</Offset>
+    <RenderMethod>barb</RenderMethod>
+    <RenderSettings rendertextforvectors="true" />
+    <NameMapping name="barb"         title="Wind barbs" abstract="Rendered with barbs and text"/>
+    <NameMapping name="thinbarb"     title="Wind barbs (thinned)" abstract="Rendered with thinned barbs and text"/>
+  </Style>
+
   <Layer type="database">
     <Name>wind__at_10m</Name>
     <Title>Wind 10m flags</Title>
@@ -18,7 +27,7 @@
     <DataPostProc algorithm="ax+b" a="1" b="0" units="m/s"/>
     <Dimension name="time" units="ISO8601" default="min">time</Dimension>
     <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension>
-    <Styles>Windbarbs</Styles>
+    <Styles>Windbarbs,Windbarbwithnumbers</Styles>
   </Layer>
 
   <!-- End of configuration /-->
