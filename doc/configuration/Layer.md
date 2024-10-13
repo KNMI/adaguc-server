@@ -72,7 +72,10 @@ This layer type displays a GetMap image with the current time per second for the
 
 <img src='2024-02-14-liveupdate-layer.png' />
 
-If you configure the ```solarterminator``` data postprocessor, the liveupdate layer will display a GetMap image showing the areas where it is day, night, and different twilight levels (values from 0 to 4). 
+If you configure the ```solarterminator``` data postprocessor, the liveupdate layer will display a GetMap image showing the areas where it is day, night, and different twilight levels (values from 0 to 4). The solar terminator algorithm is based on the calculations presented in the book *Astronomical Algorithms* (1991) by Jean Meeus. 
+
+More information on how to configure this type of layer can be found [here](../tutorials/Configure_solar_terminator.md).
+
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
