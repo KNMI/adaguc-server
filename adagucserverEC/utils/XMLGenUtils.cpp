@@ -650,7 +650,9 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
 }
 
 int getStylesForLayer(MetadataLayer *metadataLayer) {
-  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded || metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
+  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded ||
+      (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate && metadataLayer->dataSource->cfgLayer->DataPostProc.empty())) {
+    // Ignore styling in default case of the demo liveupdate layer, but not if there are data postprocessors
     return 0;
   }
 
@@ -750,7 +752,8 @@ int getFileNameForLayer(MetadataLayer *metadataLayer) {
   }
   CServerParams *srvParam = metadataLayer->dataSource->srvParams;
 
-  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeDataBase || metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeStyled) {
+  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeDataBase || metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeStyled ||
+      metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
     if (metadataLayer->dataSource->cfgLayer->Dimension.size() == 0) {
       metadataLayer->fileName.copy(metadataLayer->dataSource->cfgLayer->FilePath[0]->value.c_str());
       if (CAutoConfigure::autoConfigureDimensions(metadataLayer->dataSource) != 0) {

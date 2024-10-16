@@ -5,6 +5,7 @@ Tutorials
 
 -   [Create a WMS service on a series of KNMI HDF5 files obtained from the KNMI data platform](Create_WMS_on_series_KNMI_HDF5_radar_files.md)
 -   [Configure EDR timeseries service](Configure_EDR_service.md)
+-   [Configure a solar terminator layer](Configure_solar_terminator.md)
 
 
 <!-- -   [Create a WMS service on a series of files with a time dimension](Create_a_WMS_service_on_a_series_of_files_with_a_time_dimension.md)

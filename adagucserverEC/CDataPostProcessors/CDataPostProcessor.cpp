@@ -12,6 +12,7 @@
 #include "CDataPostProcessors_MSGCPP.h"
 #include "CDataPostProcessor_CDPDBZtoRR.h"
 #include "CDataPostProcessor_AddFeatures.h"
+#include "CDataPostProcessor_SolarTerminator.h"
 
 extern CDPPExecutor cdppExecutorInstance;
 CDPPExecutor cdppExecutorInstance;
@@ -37,6 +38,7 @@ CDPPExecutor::CDPPExecutor() {
   dataPostProcessorList->push_back(new CDPPOperator());
   dataPostProcessorList->push_back(new CDPPWFP());
   dataPostProcessorList->push_back(new CDPPWindSpeedKnotsToMs());
+  dataPostProcessorList->push_back(new CDPPSolarTerminator());
 }
 
 CDPPExecutor::~CDPPExecutor() {

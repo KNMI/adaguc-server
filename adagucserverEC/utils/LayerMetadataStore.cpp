@@ -289,7 +289,9 @@ int storeLayerStyleListIntoMetadataDb(MetadataLayer *metadataLayer) {
 }
 
 int loadLayerStyleListFromMetadataDb(MetadataLayer *metadataLayer) {
-  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded || metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
+  CDBWarning("loadLayerStyleListFromMetadataDb start");
+  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded ||
+      (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) && metadataLayer->dataSource->cfgLayer->DataPostProc.empty()) {
     return 0;
   }
   if (!metadataLayer->readFromDb) {
