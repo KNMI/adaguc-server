@@ -1,4 +1,5 @@
 #include "LayerTypeLiveUpdate.h"
+#include "CServerParams.h"
 
 int layerTypeLiveUpdateConfigureDimensionsInDataSource(CDataSource *dataSource) {
   // This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.
@@ -14,8 +15,47 @@ int layerTypeLiveUpdateConfigureDimensionsInDataSource(CDataSource *dataSource) 
     requiredDim->value = "2020-01-02T00:00:00Z";
     dataSource->requiredDims.push_back(requiredDim);
   }
+  // Basic case of liveupdate layer
+  if (dataSource->cfgLayer->DataPostProc.empty()) {
+    // // Add step to empty file
+    dataSource->addStep("", NULL);
+    dataSource->getCDFDims()->addDimension("none", "0", 0);
+  } else {
+    // Case of liveupdate layers with data post processors (such as solar terminator)
+    // Currently one (dummy) file is required
+    std::vector<std::string> fileList;
+    if (!dataSource->cfgLayer->FilePath.empty()) {
+      try {
+        fileList = CDBFileScanner::searchFileNames(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter, NULL);
+      } catch (int e) {
+        CDBError("Could not find any filename");
+        return 1;
+      }
 
+      if (fileList.size() == 0) {
+        CDBError("fileList.size()==0");
+        return 1;
+      }
+      dataSource->addStep(fileList[0].c_str(), NULL);
+    }
+  }
   return 0;
+}
+
+int layerTypeLiveUpdateRender(CDataSource *dataSource, CServerParams *srvParam) {
+  CDBDebug("in special liveupdate case with timesteps %d", dataSource->getNumTimeSteps());
+
+  if (dataSource->cfgLayer->DataPostProc.empty()) {
+    // Demo case: render the current time in an image for testing purposes / frontend development
+    CDrawImage image;
+    layerTypeLiveUpdateRenderIntoDrawImage(&image, srvParam);
+    printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
+    CDBDebug("***Number of timesteps %d", dataSource->getNumTimeSteps());
+    return image.printImagePng8(true);
+  } else {
+    // General case: Liveupdate with some data postprocessors
+    return layerTypeLiveUpdateRenderIntoImageDataWriter(dataSource, srvParam);
+  }
 }
 
 int layerTypeLiveUpdateRenderIntoDrawImage(CDrawImage *image, CServerParams *srvParam) {
@@ -36,6 +76,26 @@ int layerTypeLiveUpdateRenderIntoDrawImage(CDrawImage *image, CServerParams *srv
     }
   }
   return 0;
+}
+
+int layerTypeLiveUpdateRenderIntoImageDataWriter(CDataSource *dataSource, CServerParams *srvParam) {
+  // General case: Liveupdate with some data postprocessors
+  // Covers case of Solar Terminator
+  CImageDataWriter imageDataWriter;
+  int status = imageDataWriter.init(srvParam, dataSource, dataSource->getNumTimeSteps());
+  CDBDebug("Init imageDataWriter status %d", status);
+
+  if (dataSource->getNumTimeSteps() > 1) {
+    CDBDebug("Status from create animation was %d", imageDataWriter.createAnimation());
+  }
+
+  std::vector<CDataSource *> dataSourceRef = {dataSource};
+  status = imageDataWriter.addData(dataSourceRef);
+  CDBDebug("Adding data status was %d", status);
+
+  status = imageDataWriter.end();
+  CDBDebug("Ending image data writing with status %d", status);
+  return status;
 }
 
 int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(MetadataLayer *metadataLayer) {
