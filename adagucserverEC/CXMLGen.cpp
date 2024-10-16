@@ -43,35 +43,6 @@
 const char *CXMLGen::className = "CXMLGen";
 int CXMLGen::WCSDescribeCoverage(CServerParams *srvParam, CT::string *XMLDocument) { return OGCGetCapabilities(srvParam, XMLDocument); }
 
-// Function to parse a string to double if numeric
-double parseNumeric(std::string const &str, bool &isNumeric) {
-  auto result = double();
-  auto i = std::istringstream(str);
-  i >> result;
-  isNumeric = !i.fail() && i.eof();
-  return result;
-}
-
-// Sort values that can either be numeric of a string
-bool multiTypeSort(const CT::string &a, const CT::string &b) {
-  // Try to convert strings to numbers
-  float aNum, bNum;
-  bool isANum, isBNum;
-
-  isANum = false;
-  aNum = parseNumeric(a.c_str(), isANum);
-
-  isBNum = false;
-  bNum = parseNumeric(b.c_str(), isBNum);
-
-  // Do numerical comparison or alphabetical comparison according to type
-  if (isANum && isBNum) {
-    return aNum < bNum;
-  } else {
-    return a < b;
-  }
-}
-
 const MetadataLayer *getFirstLayerWithoutError(std::vector<MetadataLayer *> *metadataLayerList) {
   if (metadataLayerList->size() == 0) {
     return nullptr;
@@ -806,7 +777,7 @@ int CXMLGen::getWCS_1_0_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataL
   return 0;
 }
 
-void generateRangeSet(CT::string *XMLDoc, MetadataLayer *layer) {
+void generateWCSRangeSet(CT::string *XMLDoc, MetadataLayer *layer) {
   /*
   From the documentation:
   The optional and repeatable axisDescription/AxisDescription element is for compound observations.
@@ -1008,7 +979,7 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc, std::vector<Metad
               }
               XMLDoc->concat("    </domainSet>\n");
               // Generate the XML code for RangeSet, including dimensions (AxisDescriptions)
-              generateRangeSet(XMLDoc, layer);
+              generateWCSRangeSet(XMLDoc, layer);
               // Supported CRSs
               XMLDoc->concat("    <supportedCRSs>\n");
 
