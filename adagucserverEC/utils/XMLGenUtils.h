@@ -12,4 +12,5 @@ bool compareDim(const LayerMetadataDim &p1, const LayerMetadataDim &p2);
 int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDb);
 int getTitleForLayer(MetadataLayer *metadataLayer);
 int getFileNameForLayer(MetadataLayer *metadataLayer);
+bool multiTypeSort(const CT::string &a, const CT::string &b);
 #endif
