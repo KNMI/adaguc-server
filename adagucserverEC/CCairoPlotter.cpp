@@ -1252,6 +1252,8 @@ void CCairoPlotter::drawBarb(int x, int y, double direction, double strength, CC
   CT::string text;
   text.print("%d", strengthInKnots);
   if (drawText) {
-    this->drawStrokedText(x - cos(direction + M_PI) * 15 - 5, y + sin(direction + M_PI) * 12 + 5, 0, text.c_str(), 12, 1 * drawOutline, outlineColor, barbColor);
+    // If speed is really low, draw the text below the circle
+    double textDirection = strengthInKnotsRoundedToFive <= 2 ? -M_PI / 2.1 : direction;
+    this->drawStrokedText(x - cos(textDirection + M_PI) * 15 - 5, y + sin(textDirection + M_PI) * 12 + 5, 0, text.c_str(), 12, 1 * drawOutline, outlineColor, barbColor);
   }
 }
