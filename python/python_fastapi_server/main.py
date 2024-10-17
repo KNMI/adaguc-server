@@ -1,4 +1,5 @@
 """Main file where FastAPI is defined and started"""
+import asyncio
 import logging
 import os
 import time
@@ -41,8 +42,8 @@ async def lifespan(_fastapiapp: FastAPI):
 
     logger.info("=== Starting AsyncIO Scheduler ===")
     # start scheduler to refresh collections & docs every minute
-    scheduler = AsyncIOScheduler()
-    scheduler.add_job(update_layermetadatatable, "cron", [], minute="*", jitter=0, max_instances=1, coalesce=True)
+    scheduler = AsyncIOScheduler(event_loop=asyncio.get_running_loop())
+    scheduler.add_job(update_layermetadatatable, "cron", [], second="*", jitter=0, max_instances=1, coalesce=True)
     scheduler.start()
 
     yield

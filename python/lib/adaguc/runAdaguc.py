@@ -1,5 +1,6 @@
 import asyncio
 import os
+import subprocess
 from PIL import Image
 from io import BytesIO
 import brotli
@@ -101,17 +102,20 @@ class runAdaguc:
 
         return adagucenv
 
+    def run_adaguc_cmd(self, args):
+        """ Execute adaguc-server binary """
+        adagucenv = self.getAdagucEnv()
+        cmds = [adagucenv["ADAGUC_PATH"] + "/bin/adagucserver"]
+        cmds.extend(args)
+        try:
+            adaguc_out = subprocess.check_output(cmds)                       
+        except subprocess.CalledProcessError as adaguc_exc:                                                                                                   
+            return adaguc_exc.returncode, adaguc_exc.output.decode()
+        return 0, adaguc_out.decode()
+
     def updateLayerMetadata(self):
         """Uses the adaguc executable to update the layermetadatatable"""
-        adagucenv = self.getAdagucEnv()
-        status, data, headers = asyncio.run(
-            self.runADAGUCServer(
-                args=["--updatelayermetadata"], env=adagucenv, isCGI=False, showLogOnError = True
-            )
-        )
-
-
-        return status, data.getvalue().decode()        
+        return self.run_adaguc_cmd(["--updatelayermetadata"])
 
     def scanDataset(self, datasetName):
         config = self.ADAGUC_CONFIG + "," + datasetName
