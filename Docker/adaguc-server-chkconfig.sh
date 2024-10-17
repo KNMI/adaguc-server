@@ -30,8 +30,24 @@ if [ ! -f "${ADAGUC_CONFIG}" ]; then
   exit 1
 fi
 
-echo "Using adagucserver from  ${ADAGUC_PATH}"
-echo "Using config from ${ADAGUC_CONFIG}"
+### Check ADAGUC_DATA_DIR directory and set it if not set
+if [ ! -d "${ADAGUC_DATA_DIR}" ]; then
+  export ADAGUC_DATA_DIR="/data/adaguc-data"
+fi
+
+### Check ADAGUC_DATASET_DIR directory and set it if not set
+if [ ! -d "${ADAGUC_DATASET_DIR}" ]; then
+  export ADAGUC_DATASET_DIR="/data/adaguc-datasets"
+fi
+
+### Check ADAGUC_AUTOWMS_DIR directory and set it if not set
+if [ ! -d "${ADAGUC_AUTOWMS_DIR}" ]; then
+  export ADAGUC_AUTOWMS_DIR="/data/adaguc-autowms"
+fi
+
+
+# echo "Using adagucserver from  ${ADAGUC_PATH}"
+# echo "Using config from ${ADAGUC_CONFIG}"
 
 
 export ADAGUC_TMP=/tmp
