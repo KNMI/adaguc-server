@@ -1,11 +1,11 @@
-DOCKER_ADAGUC_PATH=/adaguc/adaguc-server-master
-DOCKER_ADAGUC_CONFIG=/adaguc/adaguc-server-config.xml
+DEFAULT_ADAGUC_PATH=/adaguc/adaguc-server-master
+DEFAULT_ADAGUC_CONFIG=/adaguc/adaguc-server-config.xml
 
 THISSCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 ### Check if ADAGUC_PATH is set externally, if not set it to default ###
 if [ ! -f "${ADAGUC_PATH}/bin/adagucserver" ]; then
-  export ADAGUC_PATH=${DOCKER_ADAGUC_PATH}
+  export ADAGUC_PATH=${DEFAULT_ADAGUC_PATH}
 fi
 
 ### Check if we can find adaguc executable at default location, otherwise try it from this location ###
@@ -21,7 +21,7 @@ fi
 
 ### Check configuratiion file location ###
 if [ ! -f "${ADAGUC_CONFIG}" ]; then
-  export ADAGUC_CONFIG=${DOCKER_ADAGUC_CONFIG}
+  export ADAGUC_CONFIG=${DEFAULT_ADAGUC_CONFIG}
 fi
 
 ### Checks if configuration file exists
@@ -44,11 +44,6 @@ fi
 if [ ! -d "${ADAGUC_AUTOWMS_DIR}" ]; then
   export ADAGUC_AUTOWMS_DIR="/data/adaguc-autowms"
 fi
-
-
-# echo "Using adagucserver from  ${ADAGUC_PATH}"
-# echo "Using config from ${ADAGUC_CONFIG}"
-
 
 export ADAGUC_TMP=/tmp
 export ADAGUC_ONLINERESOURCE=""

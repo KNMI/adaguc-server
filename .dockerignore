@@ -24,3 +24,6 @@
 !tests/functional_test.py
 !tests/starttests.sh
 !tests/starttests_psql.sh
+!scripts/scan.sh
+!scripts/createtiles.sh
+!scripts/adaguc-server-chkconfig.sh

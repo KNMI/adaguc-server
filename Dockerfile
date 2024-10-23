@@ -123,6 +123,7 @@ COPY ./Docker/adaguc-server-config-python-postgres.xml /adaguc/adaguc-server-con
 COPY ./Docker/start.sh /adaguc/
 COPY ./Docker/adaguc-server-*.sh /adaguc/
 COPY ./Docker/baselayers.xml /adaguc/adaguc-datasets-internal/baselayers.xml
+COPY ./scripts/*.sh /adaguc/adaguc-server-master/scripts/
 # Copy pgbouncer and supervisord config files
 COPY ./Docker/pgbouncer/ /adaguc/pgbouncer/
 COPY ./Docker/supervisord/ /etc/supervisor/conf.d/
@@ -130,6 +131,7 @@ COPY ./Docker/run_supervisord.sh /adaguc/run_supervisord.sh
 # Set permissions
 RUN  chmod +x /adaguc/adaguc-server-*.sh && \
     chmod +x /adaguc/start.sh && \
+    chmod +x /adaguc/adaguc-server-master/scripts/*.sh && \
     chown -R adaguc:adaguc /data/adaguc* /adaguc /adaguc/*
 
 ENV ADAGUC_PATH=/adaguc/adaguc-server-master
