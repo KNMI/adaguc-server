@@ -130,7 +130,7 @@ This file is called a dataset configuration and is normally stored in the adaguc
 # Step 4: Scan the files
 
 ```
-docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh RAD_NL25_PCP_CM
+docker exec -i -t my-adaguc-server /adaguc/scan.sh -d RAD_NL25_PCP_CM
 ```
 
 ## Output:
