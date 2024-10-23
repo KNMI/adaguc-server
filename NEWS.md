@@ -1,3 +1,6 @@
+**Version 2.28.2 2024-10-23**
+- Fix bug which caused sheduled metadata updates to only work intermittently.
+
 **Version 2.28.1 2024-10-11**
 - Windbarbs on modelfields can now display the windspeed in kts as text when rendertextforvectors in RenderSettings is set to true.
 
