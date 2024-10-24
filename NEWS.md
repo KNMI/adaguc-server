@@ -1,3 +1,6 @@
+**Version 2.28.3 2024-10-24**
+- Fix bug where directory reader could not figure out the file type (opendir ent->d_type == DT_UNKNOWN)
+
 **Version 2.28.2 2024-10-23**
 - Fix bug which caused sheduled metadata updates to only work intermittently.
 
