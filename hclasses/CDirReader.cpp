@@ -51,7 +51,6 @@ std::vector<std::string> CDirReader::listDir(const char *directory, bool recursi
   DIR *dir;
   struct dirent *ent;
   if ((dir = opendir(directory)) != NULL) {
-    errno = 0;
     /* print all the files and directories within directory */
     while ((ent = readdir(dir)) != NULL) {
       CT::string fullName = directory;
@@ -88,13 +87,6 @@ std::vector<std::string> CDirReader::listDir(const char *directory, bool recursi
       }
     }
     closedir(dir);
-    if (errno != 0) {
-      if (exceptionOnError) {
-        CDBWarning("errno != 0: Unable to readdir [%s]", directory);
-        /* could read directory */
-        throw "Error: Could not readdir";
-      }
-    }
   } else {
     if (exceptionOnError) {
       CDBWarning("Unable to open dir [%s]", directory);
