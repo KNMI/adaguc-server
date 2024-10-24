@@ -103,7 +103,7 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
     // Include additional config files given as argument
     if (configFileList.size() > 1) {
       for (size_t j = 1; j < configFileList.size() - 1; j++) {
-        // CDBDebug("Include '%s'",configFileList[j].c_str());
+        // CDBDebug("Include '%s'", configFileList[j].c_str());
         status = srvParam->parseConfigFile(configFileList[j]);
         if (status != 0) {
           CDBError("There is an error with include '%s'", configFileList[j].c_str());
@@ -239,8 +239,6 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
         CDBError("Configuration error at layer %d: <FilePath> not defined", j);
         return 1;
       }
-
-      // bool layerConfigCacheAvailable = false;
       try {
         /* Create the list of layers from a directory list */
         const char *baseDir = srvParam->cfg->Layer[j]->FilePath[0]->value.c_str();
