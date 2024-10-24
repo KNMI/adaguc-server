@@ -19,7 +19,7 @@ int updateLayerMetadata(CRequest &request) {
     CDBWarning("No datasets found in dataset configuration directories. Not going to do update or cleanup.");
     return 1;
   } else {
-    CDBDebug("Found %d dataset(s)", datasetList.size());
+    CDBDebug("Found %d dataset(s) in total", datasetList.size());
   }
 
   std::set<DatasetAndLayerPair> dataSetConfigsWithLayers;
@@ -67,7 +67,7 @@ int updateLayerMetadata(CRequest &request) {
     }
   }
 
-  CDBDebug("Found %d layers in total over all datasets this instance", dataSetConfigsWithLayers.size());
+  CDBDebug("Found %d layers in total over all datasets in this instance", dataSetConfigsWithLayers.size());
 
   // Check for datasets and or layers which are not configured anymore.
   json dataset;
