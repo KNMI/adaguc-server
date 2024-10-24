@@ -89,15 +89,15 @@ std::vector<std::string> CDirReader::listDir(const char *directory, bool recursi
     }
     closedir(dir);
     if (errno != 0) {
-      CDBWarning("errno != 0: Unable to readdir");
       if (exceptionOnError) {
+        CDBWarning("errno != 0: Unable to readdir [%s]", directory);
         /* could read directory */
         throw "Error: Could not readdir";
       }
     }
   } else {
-    CDBWarning("Unable to open dir");
     if (exceptionOnError) {
+      CDBWarning("Unable to open dir [%s]", directory);
       /* could not open directory */
       throw "Error";
     }
