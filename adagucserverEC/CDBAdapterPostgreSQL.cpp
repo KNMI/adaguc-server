@@ -1190,7 +1190,7 @@ bool CDBAdapterPostgreSQL::tryAdvisoryLock(size_t key) {
   auto result = store->getRecord(0)->get("result");
   bool succesfullylocked = result != nullptr && result->equals("t");
   if (succesfullylocked) {
-    CDBDebug("pg_try_advisory_lock succesfullylocked");
+    CDBDebug("pg_try_advisory_lock succesfully locked");
   } else {
     CDBDebug("pg_try_advisory_lock NOT succesfully locked");
   }
