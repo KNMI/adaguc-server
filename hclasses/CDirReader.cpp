@@ -51,6 +51,7 @@ std::vector<std::string> CDirReader::listDir(const char *directory, bool recursi
   DIR *dir;
   struct dirent *ent;
   if ((dir = opendir(directory)) != NULL) {
+    errno = 0;
     /* print all the files and directories within directory */
     while ((ent = readdir(dir)) != NULL) {
       CT::string fullName = directory;
@@ -59,7 +60,7 @@ std::vector<std::string> CDirReader::listDir(const char *directory, bool recursi
       // Deal with filesystems that don't provide d_type
       auto d_type = ent->d_type;
       if (d_type == DT_UNKNOWN) {
-        struct stat path_stat{};
+        struct stat path_stat {};
         int ret = stat(fullName.c_str(), &path_stat);
         if (ret == 0 && S_ISREG(path_stat.st_mode)) {
           d_type = DT_REG;
@@ -70,7 +71,7 @@ std::vector<std::string> CDirReader::listDir(const char *directory, bool recursi
       }
 
       if (d_type == DT_REG || d_type == DT_DIR) {
-        if (ent->d_name[0] != '.') { // Omit dirs starting with a .
+        if (ent->d_name[0] != '.') { // Omit files and directories starting with a .
           if (((filesAndOrDirs & CDIRREADER_INCLUDE_FILES) && d_type == DT_REG) || ((filesAndOrDirs & CDIRREADER_INCLUDE_DIRECTORIES) && d_type == DT_DIR)) {
             if (ext_filter == nullptr || std::regex_match(ent->d_name, self_regex)) {
               result.push_back(makeCleanPath(fullName.c_str()).c_str());
@@ -87,7 +88,15 @@ std::vector<std::string> CDirReader::listDir(const char *directory, bool recursi
       }
     }
     closedir(dir);
+    if (errno != 0) {
+      CDBWarning("errno != 0: Unable to readdir");
+      if (exceptionOnError) {
+        /* could read directory */
+        throw "Error: Could not readdir";
+      }
+    }
   } else {
+    CDBWarning("Unable to open dir");
     if (exceptionOnError) {
       /* could not open directory */
       throw "Error";
