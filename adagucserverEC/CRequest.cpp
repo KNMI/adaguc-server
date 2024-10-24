@@ -103,7 +103,7 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
     // Include additional config files given as argument
     if (configFileList.size() > 1) {
       for (size_t j = 1; j < configFileList.size() - 1; j++) {
-        CDBDebug("Include '%s'", configFileList[j].c_str());
+        // CDBDebug("Include '%s'", configFileList[j].c_str());
         status = srvParam->parseConfigFile(configFileList[j]);
         if (status != 0) {
           CDBError("There is an error with include '%s'", configFileList[j].c_str());
@@ -115,9 +115,9 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
       if (configFileList.size() > 1) {
         srvParam->datasetLocation.copy(configFileList[configFileList.size() - 1].basename().c_str());
         srvParam->datasetLocation.substringSelf(0, srvParam->datasetLocation.lastIndexOf("."));
-        // if (srvParam->verbose) {
-        CDBDebug("Dataset name based on passed configfile is [%s]", srvParam->datasetLocation.c_str());
-        // }
+        if (srvParam->verbose) {
+          CDBDebug("Dataset name based on passed configfile is [%s]", srvParam->datasetLocation.c_str());
+        }
         status = CAutoResource::configureDataset(srvParam, false);
         if (status != 0) {
           CDBError("ConfigureDataset failed for %s", configFileList[1].c_str());
@@ -189,9 +189,9 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
     for (size_t j = 0; j < srvParam->cfg->Include.size(); j++) {
       if (srvParam->cfg->Include[j]->attr.location.empty() == false) {
         int index = (srvParam->cfg->Include.size() - 1) - j;
-        // #ifdef CREQUEST_DEBUG
+#ifdef CREQUEST_DEBUG
         CDBDebug("Include '%s'", srvParam->cfg->Include[index]->attr.location.c_str());
-        // #endif
+#endif
         status = srvParam->parseConfigFile(srvParam->cfg->Include[index]->attr.location);
         if (status != 0) {
           CDBError("There is an error with include '%s'", srvParam->cfg->Include[index]->attr.location.c_str());

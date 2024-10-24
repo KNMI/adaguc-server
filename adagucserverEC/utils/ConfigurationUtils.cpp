@@ -7,9 +7,9 @@ std::vector<std::string> getEnabledDatasetsConfigurations(CServerParams *srvPara
   }
   for (auto dataset : srvParam->cfg->Dataset) {
     if (dataset->attr.enabled.equals("true") && dataset->attr.location.empty() == false) {
-      // if (srvParam->verbose) {
-      CDBDebug("Checking dataset location %s", dataset->attr.location.c_str());
-      // }
+      if (srvParam->verbose) {
+        CDBDebug("Checking dataset location %s", dataset->attr.location.c_str());
+      }
       auto files = CDirReader::listDir(dataset->attr.location.c_str(), false, "^.*\\.xml$");
       if (files.size() == 0) {
         CDBWarning("No datasets found in directory [%s]", dataset->attr.location.c_str());
@@ -36,11 +36,7 @@ int setCRequestConfigFromEnvironment(CRequest *request, CT::string additionalDat
     if (additionalDataset.empty() == false) {
       configWithAdditionalDataset.concat(",");
       configWithAdditionalDataset.concat(additionalDataset);
-    } else {
-      CDBDebug("No additional dataset provided");
     }
-
-    CDBDebug("Using config %s", configWithAdditionalDataset.c_str());
 
     int status = request->setConfigFile(configWithAdditionalDataset.c_str());
 

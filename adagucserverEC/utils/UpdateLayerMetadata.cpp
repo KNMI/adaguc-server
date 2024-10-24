@@ -18,8 +18,6 @@ int updateLayerMetadata(CRequest &request) {
   if (datasetList.size() == 0) {
     CDBWarning("No datasets found in dataset configuration directories. Not going to do update or cleanup.");
     return 1;
-  } else {
-    CDBDebug("Found %d dataset(s) in total", datasetList.size());
   }
 
   std::set<DatasetAndLayerPair> dataSetConfigsWithLayers;
