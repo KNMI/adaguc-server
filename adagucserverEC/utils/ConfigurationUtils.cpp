@@ -2,12 +2,18 @@
 
 std::vector<std::string> getEnabledDatasetsConfigurations(CServerParams *srvParam) {
   std::vector<std::string> datasetList;
+  if (srvParam->cfg->Dataset.size() == 0) {
+    CDBWarning("No dataset paths are configured");
+  }
   for (auto dataset : srvParam->cfg->Dataset) {
     if (dataset->attr.enabled.equals("true") && dataset->attr.location.empty() == false) {
       if (srvParam->verbose) {
-        CDBDebug("Dataset locations %s", dataset->attr.location.c_str());
+        CDBDebug("Checking dataset location %s", dataset->attr.location.c_str());
       }
       auto files = CDirReader::listDir(dataset->attr.location.c_str(), false, "^.*\\.xml$");
+      if (files.size() == 0) {
+        CDBWarning("No datasets found in directory [%s]", dataset->attr.location.c_str());
+      }
       datasetList.insert(datasetList.end(), files.begin(), files.end());
     }
   }
@@ -23,14 +29,15 @@ bool checkIfPathIsFile(CT::string filePath) {
 void serverLogFunctionNothing(const char *) {}
 
 /* Set config file from environment variable ADAGUC_CONFIG */
-int setCRequestConfigFromEnvironment(CRequest *request, const char *additionalDataset) {
+int setCRequestConfigFromEnvironment(CRequest *request, CT::string additionalDataset) {
   char *configfile = getenv("ADAGUC_CONFIG");
   if (configfile != NULL) {
     CT::string configWithAdditionalDataset = configfile;
-    if (additionalDataset != nullptr && strlen(additionalDataset) > 0) {
+    if (additionalDataset.empty() == false) {
       configWithAdditionalDataset.concat(",");
       configWithAdditionalDataset.concat(additionalDataset);
     }
+
     int status = request->setConfigFile(configWithAdditionalDataset.c_str());
 
     /* Check logging level */
