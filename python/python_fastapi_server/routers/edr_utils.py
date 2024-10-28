@@ -14,7 +14,6 @@ import os
 import re
 from datetime import datetime, timezone
 
-from cachetools import TTLCache, cached
 from dateutil.relativedelta import relativedelta
 from defusedxml.ElementTree import ParseError, parse
 from edr_pydantic.collections import Collection, Instance
@@ -26,7 +25,6 @@ from edr_pydantic.parameter import Parameter
 from edr_pydantic.unit import Symbol, Unit
 from edr_pydantic.variables import Variables
 from fastapi import Request
-from owslib.wms import WebMapService
 
 from .edr_exception import EdrException
 from .ogcapi_tools import call_adaguc
@@ -35,10 +33,6 @@ logger = logging.getLogger(__name__)
 
 
 SYMBOL_TYPE_URL = "http://www.opengis.net/def/uom/UCUM"
-
-# The edr_collections information is cached locally for a maximum of 2 minutes
-# It will be refreshed if older than 2 minutes
-edr_cache = TTLCache(maxsize=100, ttl=120)  # TODO: Redis?
 
 
 def parse_iso(dts: str) -> datetime:
@@ -59,13 +53,17 @@ def get_ref_times_for_coll(metadata) -> list[str]:
     """
     Returns available reference times for given collection
     """
-    first_param = next(iter(metadata))
-    print("MD1:", first_param, metadata[first_param])
-    if "reference_time" in metadata[first_param]["dims"]:
-        print(
-            "REFT:",
-            metadata[first_param]["dims"]["reference_time"]["values"],
-        )
+    first_param = None
+    for param in metadata:
+        if param not in ["baselayer", "overlay"]:
+            first_param = param
+    if (
+        first_param is not None
+        and len(first_param) > 0
+        and "dims" in metadata[first_param]
+        and metadata[first_param]["dims"] is not None
+        and "reference_time" in metadata[first_param]["dims"]
+    ):
         instance_ids = [
             parse_iso(reft).strftime("%Y%m%d%H%M")
             for reft in metadata[first_param]["dims"]["reference_time"]["values"].split(
@@ -173,7 +171,6 @@ def generate_max_age(ttl):
 
 
 def get_extent_from_md(metadata: dict, parameter: str):
-    print("MD:", metadata[parameter], parameter)
 
     bbox = [metadata[parameter]["layer"]["latlonbox"]]
     if bbox is None:
@@ -183,6 +180,8 @@ def get_extent_from_md(metadata: dict, parameter: str):
 
     # if ref_times is None or len(ref_times) == 0:
     (interval, time_values) = get_times_for_collection(metadata, parameter)
+    if interval is None:
+        return None
     # else:
     # if instance is None:
     #     instance = max(ref_times)  # Default instance is latest instance
@@ -192,7 +191,6 @@ def get_extent_from_md(metadata: dict, parameter: str):
 
     customlist: list = get_custom_dims_for_collection(metadata, parameter)
 
-    # print("CUSTOM:", customlist)
     # Custom can be a list of custom dimensions, like ensembles, thresholds
     custom = []
     if customlist is not None:
@@ -201,7 +199,7 @@ def get_extent_from_md(metadata: dict, parameter: str):
 
     vertical = None
     vertical_dim = get_vertical_dim_for_collection(metadata, parameter)
-    if vertical_dim:
+    if vertical_dim is not None:
         vertical = Vertical(**vertical_dim)
 
     temporal = Temporal(
@@ -232,8 +230,10 @@ def get_collectioninfo_from_md(
     if metadata is None:
         return None
 
-    first_param = next(iter(metadata))
-    print("MMDD:", metadata)
+    first_param = None
+    for param in metadata:
+        if param not in ["baselayer", "overlay"]:
+            first_param = param
     print("FIRST:", first_param)
     if metadata[first_param]["layer"]["variables"] is None:
         return None
@@ -381,6 +381,8 @@ def parse_period_string(period: str):
         delta = relativedelta(minutes=step)
     elif step_type == "s":
         delta = relativedelta(seconds=step)
+    else:
+        return None  # Should never be reached
     return delta
 
 
@@ -453,14 +455,15 @@ def get_params_for_collection(
     """
     parameter_names = {}
     for param_id in metadata:
+        if metadata[param_id]["dims"] is None:
+            continue
         current_extent = get_extent_from_md(metadata, param_id)
-        print("prePM:", metadata[param_id]["layer"])
         param_metadata = get_param_metadata(metadata[param_id])
-        print("PM:", param_metadata)
+        observed_property_id = param_metadata.get("observed_property_id", param_id)
         param = Parameter(
-            id=param_metadata["param_id"],
+            id=param_id,
             observedProperty=ObservedProperty(
-                id=param_metadata["observed_property_id"],
+                id=observed_property_id,
                 label=param_metadata["observed_property_label"],
             ),
             # description=param_metadata["wms_layer_title"], # TODO in follow up
@@ -482,34 +485,36 @@ def handle_metadata(md: dict):
     for dataset in md:
         for layername, layerdata in md[dataset].items():
             if layerdata:
-                collection_name = layerdata["layer"].get("collection", dataset)
+                if (
+                    "collection" in layerdata["layer"]
+                    and len(layerdata["layer"]["collection"]) > 0
+                ):
+                    collection_name = dataset + "." + layerdata["layer"]["collection"]
+                else:
+                    collection_name = dataset
                 if not collection_name in collections:
                     collections[collection_name] = dict()
                 collections[collection_name][layername] = layerdata
-            else:
-                print(layername, "NULL")
-    for c in collections:
-        print("####", c)
-        for l in collections[c]:
-            print("####  ", l)
     return collections
 
 
-async def get_metadata(collname=None):
+async def get_metadata(collection_name=None):
     """get metadata from ADAGUC"""
     logger.info("callADAGUC by dataset")
-    urlrequest = "service=wms&version=1.3.0&request=getmetadata&format=application/json&dataset=ecmwf_ens_nl_0p1deg"
-    if collname:
-        urlrequest = f"dataset={collname}&service=wms&version=1.3.0&request=getmetadata&format=application/json"
+    urlrequest = "service=wms&version=1.3.0&request=getmetadata&format=application/json"
+    if collection_name is not None:
+        dataset_name = collection_name.split(".", 1)[0]
+        urlrequest = f"dataset={dataset_name}&service=wms&version=1.3.0&request=getmetadata&format=application/json"
     status, response, headers = await call_adaguc(url=urlrequest.encode("UTF-8"))
     #        ttl = get_ttl_from_adaguc_headers(headers)
-    logger.info("status: %d", status)
-    metadata = {}
+    logger.info("status for %s: %d", urlrequest, status)
+    # print("()()", response.getvalue())
+    metadata = None
     if status == 0:
         metadata = json.loads(response.getvalue().decode("UTF-8"))
         return handle_metadata(metadata)
     logger.error("status: %d", status)
-    return {}
+    return None
 
 
 def get_vertical_dim_for_collection(metadata: dict, parameter: str = None):
@@ -531,6 +536,7 @@ def get_vertical_dim_for_collection(metadata: dict, parameter: str = None):
                 "vrs": "customvrs",
             }
             return vertical_dim
+    print(parameter, "vertical(NONE)")
     return None
 
 
@@ -559,10 +565,12 @@ def get_custom_dims_for_collection(metadata: dict, parameter: str = None):
                         [
                             dim_values[0],
                             dim_values[-1],
+                            # int(dim_values[0]),
+                            # int(dim_values[-1]),
                         ]
                     ],
-                    "values": dim_values,
-                    "reference": f"custom_{dim_name}",
+                    "values": ["R51/0/1"],  # dim_values,
+                    "reference": "https://www.ecmwf.int/sites/default/files/elibrary/2012/14557-ecmwf-ensemble-prediction-system.pdf",  # f"custom_{dim_name}",
                 }
                 # if dim_name == "member":
                 #     custom_dim["id"] = "number"
@@ -584,9 +592,8 @@ def get_times_for_collection(
     else:
         layer = metadata[list(metadata)[0]]
 
-    if "time" in layer["dims"]:
+    if layer["dims"] and "time" in layer["dims"]:
         time_dim = layer["dims"]["time"]["values"]
-        print("TIME_DIM:", time_dim)
         if "/" in time_dim:
             terms = time_dim.split("/")
             interval = [
@@ -613,6 +620,7 @@ def get_times_for_collection(
             ]
         ]
         return interval, terms
+    return None, None
 
 
 def get_time_values_for_range(rng: str) -> list[str]:
@@ -640,7 +648,7 @@ def get_time_values_for_range(rng: str) -> list[str]:
     if not tstep:
         tstep = 3600
     nsteps = int(timediff / tstep) + 1
-    return [f"R{nsteps}/{iso_start.strftime('%Y-%m-%dT%H:%M:%SZ')}/{step}"]
+    return [f"R{nsteps}/{iso_start.strftime('%Y-%m-%dT%H:%MZ')}/{step}"]
 
 
 VOCAB_ENDPOINT_URL = "https://vocab.nerc.ac.uk/standard_name/"

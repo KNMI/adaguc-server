@@ -21,6 +21,7 @@ from .edr_utils import (
     get_ref_times_for_coll,
     instance_to_iso,
     get_metadata,
+    EdrException,
 )
 from .netcdf_to_covjson import netcdf_to_covjson
 from .ogcapi_tools import call_adaguc
@@ -75,8 +76,8 @@ async def get_coll_inst_cube(
     datetime_par: str = Query(default=None, alias="datetime"),
     parameter_name: str = Query(alias="parameter-name"),
     z_par: str = Query(alias="z", default=None),
-    res_x: Union[float, None] = None,
-    res_y: Union[float, None] = None,
+    resolution_x: Union[float, None] = None,
+    resolution_y: Union[float, None] = None,
 ) -> Coverage:
     """Returns information in EDR format for a given collection, instance and position"""
     allowed_params = [
@@ -91,7 +92,10 @@ async def get_coll_inst_cube(
     ]
 
     metadata = await get_metadata(collection_name)
+    if metadata is None:
+        raise EdrException(code=400, description=f"{collection_name} unknown")
 
+    dataset_name = collection_name.split(".", 1)[0]
     vertical_dim = ""
     vertical_name = None
     custom_name = None
@@ -124,13 +128,12 @@ async def get_coll_inst_cube(
 
     parameter_names = parameter_name.split(",")
 
-    if res_x is not None and res_y is not None:
-        res_queryterm = f"&resx={res_x}&resy={res_y}"
+    if resolution_x is not None and resolution_y is not None:
+        res_queryterm = f"&resx={resolution_x}&resy={resolution_y}"
     else:
         res_queryterm = ""
 
     logger.info("callADAGUC by dataset")
-    dataset = collection_name
 
     translate_names = get_translate_names(metadata[collection_name])
     translate_dims = get_translate_dims(metadata[collection_name])
@@ -143,7 +146,7 @@ async def get_coll_inst_cube(
     for parameter_name in parameter_names:
         if instance is None:
             urlrequest = (
-                f"dataset={dataset}&service=wcs&version=1.1.1&request=getcoverage&format=NetCDF4&crs=EPSG:4326&coverage={parameter_name}"
+                f"dataset={dataset_name}&service=wcs&version=1.1.1&request=getcoverage&format=NetCDF4&crs=EPSG:4326&coverage={parameter_name}"
                 + f"&bbox={bbox}&time={datetime_arg}"
                 + (f"&{custom_dim_parameter}" if len(custom_dim_parameter) > 0 else "")
                 + (f"&{vertical_dim}" if len(vertical_dim) > 0 else "")
@@ -151,7 +154,7 @@ async def get_coll_inst_cube(
             )
         else:
             urlrequest = (
-                f"dataset={dataset}&service=wcs&request=getcoverage&format=NetCDF4&crs=EPSG:4326&coverage={parameter_name}"
+                f"dataset={dataset_name}&service=wcs&request=getcoverage&format=NetCDF4&crs=EPSG:4326&coverage={parameter_name}"
                 + f"&bbox={bbox}&time={datetime_arg}&dim_reference_time={instance_to_iso(instance)}"
                 + (f"&{custom_dim_parameter}" if len(custom_dim_parameter) > 0 else "")
                 + (f"&{vertical_dim}" if len(vertical_dim) > 0 else "")
@@ -178,16 +181,17 @@ async def get_coll_inst_cube(
 def get_translate_names(metadata: dict) -> dict:
     translate_names = {}
     for layer_name in metadata:
-        var_name = metadata[layer_name]["layer"]["variables"][0]["variableName"]
-        print("TRANSLATE:", var_name, layer_name)
-        translate_names[var_name] = layer_name
+        if "dims" in metadata[layer_name] and metadata[layer_name]["dims"] is not None:
+            var_name = metadata[layer_name]["layer"]["variables"][0]["variableName"]
+            translate_names[var_name] = layer_name
     return translate_names
 
 
 def get_translate_dims(metadata: dict) -> dict:
     translate_dims = {}
     for layer_name in metadata:
-        for dim_name in metadata[layer_name]["dims"]:
-            dim_cdfname = metadata[layer_name]["dims"][dim_name]["cdfName"]
-            translate_dims[dim_cdfname] = dim_name
+        if "dims" in metadata[layer_name] and metadata[layer_name]["dims"] is not None:
+            for dim_name in metadata[layer_name]["dims"]:
+                dim_cdfname = metadata[layer_name]["dims"][dim_name]["cdfName"]
+                translate_dims[dim_cdfname] = dim_name
     return translate_dims

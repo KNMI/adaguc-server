@@ -72,7 +72,7 @@ async def get_coll_inst_position(
     instance: str = None,
     datetime_par: str = Query(default=None, alias="datetime"),
     parameter_name: Annotated[str, Query(alias="parameter-name", min_length=1)] = None,
-    z_par: Annotated[str, Query(alias="z", min_length=1)] = None,
+    z_value: Annotated[str, Query(alias="z", min_length=1)] = None,
 ) -> Coverage:
     """
     returns data for the EDR /position endpoint
@@ -87,14 +87,35 @@ async def get_coll_inst_position(
     metadata = await get_metadata(collection_name)
 
     if metadata is not None:
+        # Check parameter_name argument, at least 1 parameter should exist in collection
+        if parameter_name is None:
+            raise EdrException(code=400, description="No parameter-name")
         parameter_names = parameter_name.split(",")
+        if not any(param in metadata[collection_name] for param in parameter_names):
+            raise EdrException(code=404, description=f"Parameter-name {parameter_name}")
+        cleaned_parameter_names = []
+        for param in parameter_names:
+            if param in metadata[collection_name]:
+                cleaned_parameter_names.append(param)
+        if len(cleaned_parameter_names) == 0:
+            raise EdrException(
+                code=404, description=f"Parameter-names unknown {parameter_name}"
+            )
+
         vertical_dim_name = "z"
         for dim_name in metadata[collection_name][parameter_names[0]]["dims"]:
+            print(
+                "DIM:%s %s",
+                dim_name,
+                metadata[collection_name][parameter_names[0]]["dims"][dim_name],
+            )
             if (
                 "isvertical"
                 in metadata[collection_name][parameter_names[0]]["dims"][dim_name]
-                and metadata[collection_name][parameter_names[0]]["dims"][dim_name]
-                == "true"
+                and metadata[collection_name][parameter_names[0]]["dims"][dim_name][
+                    "isvertical"
+                ]
+                is True
             ):
                 vertical_dim_name = dim_name
         latlons = wkt.loads(coords)
@@ -103,9 +124,9 @@ async def get_coll_inst_position(
             collection_name,
             instance,
             [coord["lon"], coord["lat"]],
-            parameter_names,
+            cleaned_parameter_names,
             datetime_par,
-            z_par,
+            z_value,
             vertical_dim_name,
             custom_dims,
         )
@@ -118,8 +139,11 @@ async def get_coll_inst_position(
                 dat,
                 metadata[collection_name],
             )
-
-    raise EdrException(code=400, description="No data")
+    else:
+        raise EdrException(
+            code=404, description=f"Collection {collection_name} not found"
+        )
+    raise EdrException(code=404, description="No data")
 
 
 async def get_point_value(
@@ -128,14 +152,15 @@ async def get_point_value(
     coords: list[float],
     parameters: list[str],
     datetime_par: str,
-    z_par: str = None,
+    z_value: str = None,
     z_name: str = None,
     custom_dims: str = None,
 ):
     """Returns information in EDR format for a given collection and position"""
+    dataset_name = collection_name.split(".", 1)[0]
     urlrequest = (
         f"SERVICE=WMS&VERSION=1.3.0&REQUEST=GetPointValue&CRS=EPSG:4326"
-        f"&DATASET={collection_name}&QUERY_LAYERS={','.join(parameters)}"
+        f"&DATASET={dataset_name}&QUERY_LAYERS={','.join(parameters)}"
         f"&X={coords[0]}&Y={coords[1]}&INFO_FORMAT=application/json"
     )
     if datetime_par:
@@ -143,11 +168,11 @@ async def get_point_value(
 
     if instance:
         urlrequest += f"&DIM_reference_time={instance_to_iso(instance)}"
-    if z_par:
+    if z_value:
         if urlrequest.upper() != "ELEVATION":
-            urlrequest += f"&DIM_{z_name}={z_par}"
+            urlrequest += f"&DIM_{z_name}={z_value}"
         else:
-            urlrequest += f"&ELEVATION={z_par}"
+            urlrequest += f"&ELEVATION={z_value}"
     if custom_dims:
         urlrequest += custom_dims
 

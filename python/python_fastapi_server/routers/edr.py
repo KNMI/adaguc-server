@@ -122,23 +122,23 @@ async def rest_get_edr_collections(request: Request, response: Response):
     collections: list[Collection] = []
     ttl_set = set()
     metadata = await get_metadata()
-    import json
-
-    print("METADATA:", json.dumps(metadata, indent=2))
+    if metadata is None:
+        raise EdrException(code=400, description="No datasets configured")
     for collection_name in metadata.keys():
-        print("COLL:", collection_name)
         try:
             colls = get_collectioninfo_from_md(
                 metadata[collection_name], collection_name
             )
             if colls:
-                collections.extend(colls)
+                collections.append(colls)
             else:
                 logger.warning(
                     "Unable to fetch WMS GetMetadata for %s", collection_name
                 )
         except Exception as exc:
-            print("ERR", exc)
+            import traceback
+
+            print("ERR", collection_name, traceback.format_exc())
     collections_data = Collections(links=links, collections=collections)
     if ttl_set:
         response.headers["cache-control"] = generate_max_age(min(ttl_set))
@@ -155,6 +155,12 @@ async def rest_get_edr_collection_by_id(collection_name: str, response: Response
     GET Returns collection information for given collection id
     """
     metadata = await get_metadata(collection_name)
+    if metadata is None:
+        raise EdrException(
+            code=400,
+            description=f"Unknown or unconfigured collection {collection_name}",
+        )
+
     ttl = None
 
     collection = get_collectioninfo_from_md(metadata[collection_name], collection_name)

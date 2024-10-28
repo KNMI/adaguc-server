@@ -42,13 +42,14 @@ def covjson_from_resp(dats, metadata):
             custom_name = None
             vertical_name = None
             for param_dim in metadata[dat["name"]]["dims"].values():
-                print("Checking dim ", param_dim["cdfName"])
                 if param_dim["cdfName"] not in ["x", "y", "reference_time", "time"]:
                     if not param_dim["hidden"]:
                         if "isvertical" in param_dim and param_dim["isvertical"]:
-                            vertical_name = param_dim["cdfName"]
+                            # vertical_cdf_name = param_dim["cdfName"]
+                            vertical_name = param_dim["serviceName"]
                         elif "iscustom" in param_dim and param_dim["iscustom"]:
-                            custom_name = param_dim["cdfName"]
+                            # custom_cdf_name = param_dim["cdfName"]
+                            custom_name = param_dim["serviceName"]
             lat = float(lat)
             lon = float(lon)
             dims = makedims(dat["dims"], dat["data"])
@@ -61,7 +62,6 @@ def covjson_from_resp(dats, metadata):
             custom_dim_values = []
             if custom_name is not None and len(custom_name) > 0:
                 custom_dim_values = getdimvals(dims, custom_name)
-                print("CUSTOM_DIM:", custom_name, custom_dim_values)
 
             valstack = []
             # Translate the adaguc GFI object in something we can handle in Python
@@ -102,15 +102,14 @@ def covjson_from_resp(dats, metadata):
             )
 
             parameters[dat["name"]] = param
-            axis_names = ["x", "y", "t"]
-            shape = [1, 1, len(time_steps)]
+            axis_names = ["t"]
+            shape = [len(time_steps)]
             if vertical_steps:
-                axis_names = ["x", "y", "z", "t"]
-                shape = [1, 1, len(vertical_steps), len(time_steps)]
-            if len(custom_dim_values) > 0:
-                axis_names.insert(-1, custom_name)
-                shape.insert(
-                    -1,
+                axis_names = ["z", "t"]
+                shape = [len(vertical_steps), len(time_steps)]
+            if len(custom_dim_values) > 1:
+                axis_names.append(custom_name)
+                shape.append(
                     len(custom_dim_values),
                 )
 
@@ -149,7 +148,7 @@ def covjson_from_resp(dats, metadata):
                 )
                 if len(time_steps) > 1 and vertical_steps and len(vertical_steps) > 1:
                     domain_type = "Grid"
-            if len(custom_dim_values) > 0:
+            if len(custom_dim_values) > 1:  # TODO 1 or 0?
                 axes[custom_name] = ValuesAxis[str](values=custom_dim_values)
                 if vertical_steps and len(vertical_steps) > 1:
                     domain_type = "Grid"
@@ -177,7 +176,11 @@ def covjson_from_resp(dats, metadata):
                     coordinates=["t"],
                 ),
             ]
-            domain = Domain(domainType=domain_type, axes=axes, referencing=referencing)
+            domain = Domain(
+                domainType=domain_type,
+                axes=axes,
+                referencing=referencing,
+            )
             covjson = Coverage(
                 id=f"coverage_{(len(covjson_list)+1)}",
                 domain=domain,

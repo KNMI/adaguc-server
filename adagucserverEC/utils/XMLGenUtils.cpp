@@ -18,6 +18,7 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
     metadataLayer->hasError = true;
     return 1;
   }
+  metadataLayer->layerMetadata.name.copy(&layerUniqueName);
 
   // Create and datasource
   if (metadataLayer->dataSource == NULL) {
