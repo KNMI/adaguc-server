@@ -1190,9 +1190,9 @@ bool CDBAdapterPostgreSQL::tryAdvisoryLock(size_t key) {
   auto result = store->getRecord(0)->get("result");
   bool succesfullylocked = result != nullptr && result->equals("t");
   if (succesfullylocked) {
-    CDBDebug("pg_try_advisory_lock succesfullylocked");
+    CDBDebug("pg_try_advisory_lock succesfully locked");
   } else {
-    CDBDebug("pg_try_advisory_lock NOT succesfullylocked");
+    CDBDebug("pg_try_advisory_lock NOT succesfully locked");
   }
   delete store;
   return succesfullylocked;
@@ -1214,9 +1214,9 @@ bool CDBAdapterPostgreSQL::advisoryUnLock(size_t key) {
   auto result = store->getRecord(0)->get("result");
   bool succesfullyunlocked = result != nullptr && result->equals("t");
   if (succesfullyunlocked) {
-    CDBDebug("pg_advisory_unlock succesfullyunlocked");
+    CDBDebug("pg_advisory_unlock succesfully unlocked");
   } else {
-    CDBWarning("pg_advisory_unlock NOT succesfullyunlocked");
+    CDBWarning("pg_advisory_unlock NOT succesfully unlocked");
   }
   delete store;
   return succesfullyunlocked;
