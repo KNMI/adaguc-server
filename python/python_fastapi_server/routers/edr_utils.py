@@ -329,6 +329,7 @@ def get_collectioninfo_from_md(
 
     crs = ["EPSG:4326"]
 
+    print("PRIMARY:", primary_extent.model_dump_json(indent=2))
     output_formats = ["CoverageJSON"]
     if instance is None:
         collection = Collection(
@@ -530,13 +531,14 @@ def get_vertical_dim_for_collection(metadata: dict, parameter: str = None):
         if dim_name in ["elevation"] or (
             "isvertical" in layer["dims"] and layer["dims"]["isvertical"] == "true"
         ):
+            values = layer["dims"][dim_name]["values"].split(",")
+            print("VERT:", [[values[0]], [values[-1]]])
             vertical_dim = {
-                "interval": [],
-                "values": layer["dims"][dim_name]["values"],
+                "interval": [[values[0], values[-1]]],
+                "values": values,
                 "vrs": "customvrs",
             }
             return vertical_dim
-    print(parameter, "vertical(NONE)")
     return None
 
 
@@ -569,7 +571,7 @@ def get_custom_dims_for_collection(metadata: dict, parameter: str = None):
                             # int(dim_values[-1]),
                         ]
                     ],
-                    "values": ["R51/0/1"],  # dim_values,
+                    "values": [", ".join(dim_values)],  ##["R51/0/1"],  # dim_values,
                     "reference": "https://www.ecmwf.int/sites/default/files/elibrary/2012/14557-ecmwf-ensemble-prediction-system.pdf",  # f"custom_{dim_name}",
                 }
                 # if dim_name == "member":

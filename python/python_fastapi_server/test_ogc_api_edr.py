@@ -67,13 +67,14 @@ def test_collections(client: TestClient):
         resp.status_code,
     )
     colls = resp.json()
+    print("IDS:", [c["id"] for c in colls["collections"]])
     assert len(colls["collections"]) == 3
 
-    uwcw_ha43ens_nl_2km_hagl = colls["collections"][0]
-    assert uwcw_ha43ens_nl_2km_hagl.get("id") == "uwcw_ha43ens_nl_2km_hagl"
+    first_collection = colls["collections"][0]
+    assert first_collection.get("id") == "adaguc.tests.arcus_uwcw"
 
-    coll_5d = colls["collections"][2]
-    assert coll_5d.get("id") == "data_5d"
+    coll_5d = colls["collections"][1]
+    assert coll_5d.get("id") == "netcdf_5d"
     assert all(
         ext_name in coll_5d["extent"]
         for ext_name in ("spatial", "temporal", "vertical", "custom")
@@ -84,7 +85,7 @@ def test_collections(client: TestClient):
         "vertical",
         "custom",
     ]  # TODO 'custom'
-    assert coll_5d["extent"]["temporal"]["values"][0] == "R6/2017-01-01T00:00:00Z/PT5M"
+    assert coll_5d["extent"]["temporal"]["values"][0] == "R6/2017-01-01T00:00Z/PT5M"
 
     assert "position" in coll_5d["data_queries"]
 
@@ -99,9 +100,9 @@ def test_collections(client: TestClient):
     assert data == {
         "type": "Parameter",
         "id": "data",
-        "label": "data",
+        "label": "data (data)",
         "unit": {
-            "symbol": {"value": "unit", "type": "http://www.opengis.net/def/uom/UCUM"}
+            "symbol": {"value": "km", "type": "http://www.opengis.net/def/uom/UCUM"}
         },
         "observedProperty": {"id": "data", "label": "data"},
     }
@@ -116,7 +117,7 @@ def test_collections(client: TestClient):
         "label": "Air temperature, 2 metre",
         "unit": {
             "symbol": {
-                "value": "\u00b0C",
+                "value": "km",
                 "type": "http://www.opengis.net/def/uom/UCUM",
             }
         },

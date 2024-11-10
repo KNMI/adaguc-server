@@ -115,13 +115,13 @@ def netcdf_to_covjson(
 
     # float ta(time, height, y, x) ;
     netcdfdimname_to_covdimname = {
-        "height": "z",
         "x": "x",
         "y": "y",
         "time": "t",
     }
     netcdfdimname_to_covdimname.update(translate_dims)
     netcdfdimname_to_covdimname["time"] = "t"
+    print("TRANSLATE:", netcdfdimname_to_covdimname)
 
     # Loop through the variables in the NetCDF file
     custom_dims = {}
@@ -135,10 +135,10 @@ def netcdf_to_covjson(
             axesnames = []
             shape = []
             for _, dimname in enumerate(variable.dimensions):
+                layer_dim_name = get_dim(metadata[layer_name], dimname).get(
+                    "serviceName"
+                )
                 if dimname not in ["x", "y", "time"]:
-                    layer_dim_name = get_dim(metadata[layer_name], dimname).get(
-                        "serviceName"
-                    )
                     if (
                         layer_dim_name in metadata[layer_name]["dims"]
                         and "hidden" in metadata[layer_name]["dims"][layer_dim_name]
@@ -146,13 +146,29 @@ def netcdf_to_covjson(
                     ):
                         continue
                 ncvar = netcdfdataset.variables[dimname]
-                if ncvar.size == 1:
-                    if dimname not in ["x", "y", "time"]:
+                if ncvar.size >= 1 and dimname not in ["x", "y", "time"]:
+                    if not (
+                        "isvertical" in metadata[layer_name]["dims"][layer_dim_name]
+                        and metadata[layer_name]["dims"][layer_dim_name]["isvertical"]
+                    ):
                         custom_dims[
                             netcdfdimname_to_covdimname.get(dimname, dimname)
                         ] = float(ncvar[0])
                         continue
+                print(
+                    "NETCDF:",
+                    dimname,
+                    layer_dim_name,
+                    netcdfdimname_to_covdimname.get(dimname, dimname),
+                )
                 coverage_axis_name = netcdfdimname_to_covdimname.get(dimname, dimname)
+                print("MD:", metadata[layer_name]["dims"])
+                if (
+                    dimname not in ["x", "y", "time"]
+                    and "isvertical" in metadata[layer_name]["dims"][layer_dim_name]
+                    and metadata[layer_name]["dims"][layer_dim_name]["isvertical"]
+                ):
+                    coverage_axis_name = "z"
                 axesnames.append(coverage_axis_name)
                 # Fill in the shape object for the NdArray
                 shape.append(ncvar.size)
