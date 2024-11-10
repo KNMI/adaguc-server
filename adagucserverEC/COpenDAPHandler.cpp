@@ -2,6 +2,7 @@
 #include "CRequest.h"
 #include "CDBFactory.h"
 #include "CAutoResource.h"
+#include "utils/LayerUtils.h"
 const char *COpenDAPHandler::className = "COpenDAPHandler";
 
 // References: http://opendap.org/pdf/ESE-RFC-004v1.2.pdf
@@ -580,7 +581,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
     if (srvParam->cfg->Layer[layerNo]->attr.type.equals("database")) {
       CT::string intLayerName;
 
-      srvParam->makeUniqueLayerName(&intLayerName, srvParam->cfg->Layer[layerNo]);
+      makeUniqueLayerName(&intLayerName, srvParam->cfg->Layer[layerNo]);
       if (layerName.length() == 0) {
         layerName = intLayerName;
       }

@@ -347,6 +347,7 @@ class TestWMS(unittest.TestCase):
 
     def test_WMSCMDUpdateDBTailPath(self):
         AdagucTestTools().cleanTempDir()
+        AdagucTestTools().cleanPostgres()
         # pylint: disable=unused-variable
         status, data, headers = AdagucTestTools().runADAGUCServer(
             args=[
@@ -404,6 +405,7 @@ class TestWMS(unittest.TestCase):
 
     def test_WMSCMDUpdateDBPath(self):
         AdagucTestTools().cleanTempDir()
+        AdagucTestTools().cleanPostgres()
         # pylint: disable=unused-variable
         status, data, headers = AdagucTestTools().runADAGUCServer(
             args=[
@@ -2021,6 +2023,7 @@ class TestWMS(unittest.TestCase):
         This tests if the autofinddataset option correctly finds the file if it is in a subfolder
         """
         AdagucTestTools().cleanTempDir()
+        AdagucTestTools().cleanPostgres()
         # pylint: disable=unused-variable
 
         config = ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"
@@ -2073,6 +2076,37 @@ class TestWMS(unittest.TestCase):
 
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "DATASET=adaguc.tests.harm_windbarbs&SERVICE=WMS&SERVICE=WMS&=&=&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind__at_10m&WIDTH=914&HEIGHT=966&CRS=EPSG:3857&BBOX=10144.960912989336,6256275.017522922,1229386.3384520854,7544882.425294002&STYLES=Windbarbs/barb&FORMAT=image/png&TRANSPARENT=FALSE&time=2023-09-30T06:00:00Z&DIM_reference_time=2023-09-28T06:00:00Z&BGCOLOR=0x000000&",
+            {"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"},
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertTrue(
+            AdagucTestTools().compareImage(
+                self.expectedoutputsspath + filename,
+                self.testresultspath + filename,
+                3,
+                0.1,
+            )
+        )
+    
+    def test_WMSGetMapWithHarmWindBarbsWithText(self):
+        AdagucTestTools().cleanTempDir()
+        filename = "test_WMSGetMapWithHarmWindBarbs_without_outline_with_text.png"
+        config = ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=[
+                "--updatedb",
+                "--config",
+                config + ",adaguc.tests.harm_windbarbs.xml",
+            ],
+            env=self.env,
+            isCGI=False,
+        )
+        self.assertEqual(status, 0)
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.harm_windbarbs&SERVICE=WMS&SERVICE=WMS&=&=&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind__at_10m&WIDTH=914&HEIGHT=966&CRS=EPSG:3857&BBOX=10144.960912989336,6256275.017522922,1229386.3384520854,7544882.425294002&STYLES=Windbarbwithnumbers/barb&FORMAT=image/png&TRANSPARENT=FALSE&time=2023-09-30T06:00:00Z&DIM_reference_time=2023-09-28T06:00:00Z&BGCOLOR=0x000000&",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"},
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())

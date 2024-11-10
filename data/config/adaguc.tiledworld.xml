@@ -3,8 +3,8 @@
 
   <TempDir value="{ADAGUC_TMP}"/>
   <Path value="{ADAGUC_PATH}/data"/>
-  <DataBase maxquerylimit="1" dbtype="postgresql" parameters="host=localhost dbname=adaguc password=adaguc user=adaguc"/>
-  <!--<DataBase dbtype="sqlite" parameters="/tmp/tile2s.db"/>-->
+  <DataBase maxquerylimit="1" parameters="host=localhost dbname=adaguc password=adaguc user=adaguc"/>
+  <!--<DataBase parameters="/tmp/tile2s.db"/>-->
   
   <!-- WMS settings -->
   <WMS>

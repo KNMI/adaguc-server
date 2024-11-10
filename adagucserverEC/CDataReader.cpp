@@ -424,7 +424,6 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
 #ifdef CDATAREADER_DEBUG
   CDBDebug("Number of dimensions = %d", dataSource->dNetCDFNumDims);
 #endif
-
   // Determine the X and Y dimensions and variables.
   determineXAndYDimIndices(dataSource, dataSourceVar);
   if (!determineXandYVars(dataSource, dataSourceVar, cdfObject)) {
@@ -850,15 +849,10 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
   if (x != -1 && y != -1) {
     singleCellMode = true;
   }
-
   CT::string dataSourceFilename;
   dataSourceFilename.copy(dataSource->getFileName());
-
-  // CCache cache;
-  // CT::string cacheFilename;
-  // pthread_mutex_lock(&CDataReader_open_lock);
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-  // pthread_mutex_unlock(&CDataReader_open_lock);
+
   // Use autoscale of legendcolors when the legendscale factor has been set to zero.
   if (styleConfiguration != NULL) {
     if (dataSource->stretchMinMaxDone == false) {
@@ -870,7 +864,6 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
   }
 
   CDFObject *cdfObject = NULL;
-
 #ifdef CDATAREADER_DEBUG
   CDBDebug("Working on [%s] with mode %d and (%d,%d)", dataSourceFilename.c_str(), mode, x, y);
 
@@ -879,11 +872,9 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     CDBDebug("Working on [%s]", dataSourceFilename.c_str());
   }
 #endif
-
   if (mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS || mode == CNETCDFREADER_MODE_OPEN_HEADER) {
     cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams, dataSourceFilename.c_str(), enableObjectCache);
   }
-
   if (mode == CNETCDFREADER_MODE_OPEN_ALL || mode == CNETCDFREADER_MODE_GET_METADATA || mode == CNETCDFREADER_MODE_OPEN_EXTENT) {
     cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource, dataSourceFilename.c_str(), enableObjectCache);
   }
@@ -891,7 +882,6 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     CDBError("Unable to get CDFObject from store");
     return 1;
   }
-
   if (dataSource->attachCDFObject(cdfObject) != 0) {
     CDBError("Unable to attach CDFObject");
     return 1;
@@ -917,7 +907,6 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 #ifdef MEASURETIME
   StopWatch_Stop("parseDimensions done");
 #endif
-
   if (dataSource->useLonTransformation != -1 && gridExtent == NULL) {
     for (size_t varNr = 0; varNr < dataSource->getNumDataObjects(); varNr++) {
       Proc::swapPixelsAtLocation(dataSource, dataSource->getDataObject(varNr)->cdfVariable, 0);

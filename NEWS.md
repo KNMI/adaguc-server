@@ -1,5 +1,23 @@
-**Version 2.27.0 2024-06-27**
+<<<<<<< HEAD
+**Version 2.29.0 2024-11-11**
 - Adds support for grids where the data cells are defined by lat_bnds and lon_bnds parameters describing the cell bounds.
+=======
+**Version 2.28.3 2024-10-24**
+- Fix bug where directory reader could not figure out the file type (opendir ent->d_type == DT_UNKNOWN)
+
+**Version 2.28.2 2024-10-23**
+- Fix bug which caused sheduled metadata updates to only work intermittently.
+
+**Version 2.28.1 2024-10-11**
+- Windbarbs on modelfields can now display the windspeed in kts as text when rendertextforvectors in RenderSettings is set to true.
+
+**Version 2.28.0 2024-09-11**
+- Metadata for layer items like variables, projections, dimensions and styles are now stored in a database table called `layermetadata`. This can be disabled via the `enablemetadatacache` property in [Settings](doc/configuration/Settings.md).
+
+**Version 2.27.0 2024-09-02**
+- PostgreSQL query from `getFilesAndIndicesForDimensions` has been rewritten, which fixes https://github.com/KNMI/adaguc-server/issues/341.
+- Optimized existing PostgreSQL queries and reduced number of PostgreSQL queries in general. This results in better performance, the benchmark tool runs 9% faster.
+>>>>>>> origin
 
 **Version 2.26.0 2024-07-12**
 - Added EDR cube call for gridded datsets to ADAGUC.

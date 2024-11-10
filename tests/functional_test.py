@@ -6,6 +6,7 @@
 
 import unittest
 import sys
+from AdagucTests.TestMetadataRequest import TestMetadataRequest
 from AdagucTests.TestWMSTimeSeries import TestWMSTimeSeries
 from AdagucTests.TestWMS import TestWMS
 from AdagucTests.TestWCS import TestWCS
@@ -23,8 +24,10 @@ from AdagucTests.TestWMSPolylineLabel import TestWMSPolylineLabel
 from AdagucTests.TestDataPostProcessor import TestDataPostProcessor
 from AdagucTests.TestWMSTimeHeightProfiles import TestWMSTimeHeightProfiles
 
+
 suites = []
 TestLoader = unittest.TestLoader
+suites.append(TestLoader().loadTestsFromTestCase(TestMetadataRequest))
 suites.append(TestLoader().loadTestsFromTestCase(TestWMSTimeSeries))
 suites.append(TestLoader().loadTestsFromTestCase(TestWMS))
 suites.append(TestLoader().loadTestsFromTestCase(TestWCS))

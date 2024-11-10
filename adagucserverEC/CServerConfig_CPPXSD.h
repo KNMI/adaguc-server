@@ -294,7 +294,10 @@ public:
       CXMLSerializerInterface *base = (CXMLSerializerInterface *)baseClass;
       base->currentNode = (CXMLObjectInterface *)this;
       if (rc == 0)
-        if (value != NULL) this->value.copy(value);
+        if (value != NULL) {
+          this->value.copy(value);
+          this->value.trimSelf(true);
+        }
       if (rc == 1) {
         pt2Class = NULL;
         if (equals("palette", name)) {
@@ -636,7 +639,10 @@ public:
       CXMLSerializerInterface *base = (CXMLSerializerInterface *)baseClass;
       base->currentNode = (CXMLObjectInterface *)this;
       if (rc == 0)
-        if (value != NULL) this->value.copy(value);
+        if (value != NULL) {
+          this->value.copy(value);
+          this->value.trimSelf(true);
+        }
       if (rc == 1) {
         pt2Class = NULL;
         if (equals("Dir", name)) {
@@ -800,7 +806,7 @@ public:
   public:
     class Cattr {
     public:
-      CT::string settings, striding, renderer, scalewidth, scalecontours, renderhint, randomizefeatures, featuresoverlap;
+      CT::string settings, striding, renderer, scalewidth, scalecontours, renderhint, randomizefeatures, featuresoverlap, rendertextforvectors;
     } attr;
     void addAttribute(const char *name, const char *value) {
       if (equals("settings", name)) {
@@ -826,6 +832,9 @@ public:
         return;
       } else if (equals("featuresoverlap", name)) {
         attr.featuresoverlap.copy(value);
+        return;
+      } else if (equals("rendertextforvectors", name)) {
+        attr.rendertextforvectors.copy(value);
         return;
       }
     }
@@ -893,7 +902,10 @@ public:
       base->currentNode = (CXMLObjectInterface *)this;
       pt2Class = NULL;
       if (rc == 0)
-        if (value != NULL) this->value.copy(value);
+        if (value != NULL) {
+          this->value.copy(value);
+          this->value.trimSelf(true);
+        }
       if (rc == 1) {
 
         if (equals("Thinning", name)) {
@@ -1300,10 +1312,13 @@ public:
   public:
     class Cattr {
     public:
-      CT::string enablecleanupsystem, cleanupsystemlimit, cache_age_cacheableresources, cache_age_volatileresources;
+      CT::string enablemetadatacache, enablecleanupsystem, cleanupsystemlimit, cache_age_cacheableresources, cache_age_volatileresources;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("enablecleanupsystem", attrname)) {
+      if (equals("enablemetadatacache", attrname)) {
+        attr.enablemetadatacache.copy(attrvalue);
+        return;
+      } else if (equals("enablecleanupsystem", attrname)) {
         attr.enablecleanupsystem.copy(attrvalue);
         return;
       } else if (equals("cleanupsystemlimit", attrname)) {
@@ -1335,14 +1350,11 @@ public:
   public:
     class Cattr {
     public:
-      CT::string parameters, dbtype, maxquerylimit;
+      CT::string parameters, maxquerylimit;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
       if (equals("parameters", attrname)) {
         attr.parameters.copy(attrvalue);
-        return;
-      } else if (equals("dbtype", attrname)) {
-        attr.dbtype.copy(attrvalue);
         return;
       } else if (equals("maxquerylimit", attrname)) {
         attr.maxquerylimit.copy(attrvalue);
@@ -1372,7 +1384,10 @@ public:
       CXMLSerializerInterface *base = (CXMLSerializerInterface *)baseClass;
       base->currentNode = (CXMLObjectInterface *)this;
       if (rc == 0)
-        if (value != NULL) this->value.copy(value);
+        if (value != NULL) {
+          this->value.copy(value);
+          this->value.trimSelf(true);
+        }
       if (rc == 1) {
         pt2Class = NULL;
         if (equals("LatLonBox", name)) {
@@ -1438,7 +1453,10 @@ public:
       CXMLSerializerInterface *base = (CXMLSerializerInterface *)baseClass;
       base->currentNode = (CXMLObjectInterface *)this;
       if (rc == 0)
-        if (value != NULL) this->value.copy(value);
+        if (value != NULL) {
+          this->value.copy(value);
+          this->value.trimSelf(true);
+        }
       if (rc == 1) {
         pt2Class = NULL;
         if (equals("Name", name)) {
@@ -1473,7 +1491,10 @@ public:
       CXMLSerializerInterface *base = (CXMLSerializerInterface *)baseClass;
       base->currentNode = (CXMLObjectInterface *)this;
       if (rc == 0)
-        if (value != NULL) this->value.copy(value);
+        if (value != NULL) {
+          this->value.copy(value);
+          this->value.trimSelf(true);
+        }
       if (rc == 1) {
         pt2Class = NULL;
         if (equals("ViewServiceCSW", name)) {
@@ -1525,7 +1546,10 @@ public:
       CXMLSerializerInterface *base = (CXMLSerializerInterface *)baseClass;
       base->currentNode = (CXMLObjectInterface *)this;
       if (rc == 0)
-        if (value != NULL) this->value.copy(value);
+        if (value != NULL) {
+          this->value.copy(value);
+          this->value.trimSelf(true);
+        }
       if (rc == 1) {
         pt2Class = NULL;
         if (equals("Title", name)) {
@@ -1593,7 +1617,10 @@ public:
       CXMLSerializerInterface *base = (CXMLSerializerInterface *)baseClass;
       base->currentNode = (CXMLObjectInterface *)this;
       if (rc == 0)
-        if (value != NULL) this->value.copy(value);
+        if (value != NULL) {
+          this->value.copy(value);
+          this->value.trimSelf(true);
+        }
       if (rc == 1) {
         pt2Class = NULL;
         if (equals("Name", name)) {
@@ -1840,7 +1867,10 @@ public:
       base->currentNode = (CXMLObjectInterface *)this;
       pt2Class = NULL;
       if (rc == 0)
-        if (value != NULL) this->value.copy(value);
+        if (value != NULL) {
+          this->value.copy(value);
+          this->value.trimSelf(true);
+        }
       if (rc == 1) {
 
         if (equals("Name", name)) {
@@ -1980,7 +2010,10 @@ public:
       CXMLSerializerInterface *base = (CXMLSerializerInterface *)baseClass;
       base->currentNode = (CXMLObjectInterface *)this;
       if (rc == 0)
-        if (value != NULL) this->value.copy(value);
+        if (value != NULL) {
+          this->value.copy(value);
+          this->value.trimSelf(true);
+        }
       if (rc == 1) {
         pt2Class = NULL;
         if (equals("Legend", name)) {

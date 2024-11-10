@@ -28,7 +28,7 @@
 #ifndef Definitions_H
 #define Definitions_H
 
-#define ADAGUCSERVER_VERSION "2.27.0" // Please also update in the Dockerfile to the same version
+#define ADAGUCSERVER_VERSION "2.29.0" // Please also update in the Dockerfile to the same version
 
 // CConfigReaderLayerType
 #define CConfigReaderLayerTypeUnknown 0
@@ -53,7 +53,6 @@
 #define REQUEST_WCS_DESCRIBECOVERAGE 6
 #define REQUEST_WCS_GETCOVERAGE 7
 #define REQUEST_WMS_GETMETADATA 8
-#define REQUEST_WMS_GETSTYLES 9
 #define REQUEST_WMS_GETPOINTVALUE 10
 #define REQUEST_WMS_GETREFERENCETIMES 11
 #define REQUEST_WMS_GETHISTOGRAM 12
@@ -94,12 +93,6 @@
 
 // WCS Versions
 #define WCS_VERSION_1_0 1
-
-// XMLGen templates
-#define WMS_1_0_0_HEADERFILE "./XMLTemplates/WMS_1.0.0_GetCapabilities_Header.dat"
-#define WMS_1_1_1_HEADERFILE "./XMLTemplates/WMS_1.1.1_GetCapabilities_Header.dat"
-#define WMS_1_3_0_HEADERFILE "./XMLTemplates/WMS_1.3.0_GetCapabilities_Header.dat"
-#define WCS_1_0_HEADERFILE "./XMLTemplates/WCS_1.0.0_GetCapabilities_Header.dat"
 
 #define DEFAULT_FONT "./fonts/FreeSans.ttf"
 
@@ -195,3 +188,5 @@
 // Client errors
 #define HTTP_STATUSCODE_404_NOT_FOUND 32
 #define HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY 33
+
+#define LOCK_METADATATABLE_ID 1
