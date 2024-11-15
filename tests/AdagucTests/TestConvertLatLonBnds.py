@@ -46,8 +46,13 @@ class TestConvertLatLonBnds(unittest.TestCase):
         AdagucTestTools().cleanTempDir()
         filename = "test_ConvertLatLonBnds_getMap.png"
         # pylint: disable=unused-variable
+
+        AdagucTestTools().runADAGUCServer(
+            "source=example_file_latlonbnds.nc&SERVICE=WMS&request=getcapabilities",
+            env=self.env,
+        )
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "source=example_file_latlonbnds.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=probability&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=50,2,57,9&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&",
+            "source=example_file_latlonbnds.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=probability&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=50,2,57,9&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&showlegend=true&DIM_threshold=20&time=2024-06-01T00:00:00Z",
             env=self.env,
             args=["--report"],
         )
