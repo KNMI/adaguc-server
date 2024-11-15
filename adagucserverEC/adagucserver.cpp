@@ -119,7 +119,7 @@ std::set<std::string> findDataSetsToScan(CT::string layerPathToScan, bool verbos
     if (configSrvParam && configSrvParam->cfg) {
       auto layers = configSrvParam->cfg->Layer;
       for (size_t j = 0; j < layers.size(); j++) {
-        if (layers[j]->attr.type.equals("database")) {
+        if (layers[j]->attr.type.empty() || layers[j]->attr.type.equals("database")) {
           if (layers[j]->FilePath.size() > 0) {
             CT::string filePath = CDirReader::makeCleanPath(layers[j]->FilePath[0]->value);
             // Directories need to end with a /
