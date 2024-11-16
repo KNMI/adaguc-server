@@ -40,6 +40,7 @@ Create the following file at the filepath `$ADAGUC_DATASET_DIR/solt.xml`
   </Style>
   
   <Layer type="liveupdate">
+    <Name>solarterminator</Name>
     <FilePath filter="" gfi_openall="true">{ADAGUC_PATH}data/datasets/solt.nc</FilePath>
     <DataPostProc algorithm="solarterminator"/>
     <Variable>solarterminator</Variable>

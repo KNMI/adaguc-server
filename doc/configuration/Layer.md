@@ -97,6 +97,7 @@ More information on how to configure this type of layer can be found [here](../t
 
 <Configuration>
   <Layer type="liveupdate">
+    <Name>solarterminator</Name>
     <FilePath filter="" gfi_openall="true">{ADAGUC_PATH}data/datasets/solt.nc</FilePath>
     <DataPostProc algorithm="solarterminator"/>
     <Variable>solarterminator</Variable>
