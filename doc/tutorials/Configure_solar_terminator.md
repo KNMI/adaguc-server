@@ -45,6 +45,7 @@ Create the following file at the filepath `$ADAGUC_DATASET_DIR/solt.xml`
     <DataPostProc algorithm="solarterminator"/>
     <Variable>solarterminator</Variable>
     <Styles>soltstyle</Styles>
+    <Dimension interval="PT10M">time</Dimension>
   </Layer>
 
 
