@@ -35,7 +35,9 @@
 int CConvertLatLonBnds::convertLatLonBndsHeader(CDFObject *cdfObject, CServerParams *) {
   // Check whether this is really an LatLonBnds file
   if (!isThisLatLonBndsData(cdfObject)) return 1;
+#ifdef CConvertLatLonGrid_DEBUG
   CDBDebug("Using CConvertLatLonBnds.h");
+#endif
 
   // Standard bounding box of adaguc data is worldwide
   CDF::Variable *pointLon;

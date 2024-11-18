@@ -93,7 +93,9 @@ int CConvertLatLonBnds::convertLatLonBndsData(CDataSource *dataSource, int mode)
   // Detect minimum and maximum values
   MinMax minMax;
   minMax = getMinMax(((float *)irregularGridVar[0]->data), dataObjects[0]->hasNodataValue, (double)fltFill, irregularGridVar[0]->getSize());
+#ifdef CConvertLatLonBnds_DEBUG
   CDBDebug("minMax %f %f", minMax.min, minMax.max);
+#endif
 
   // Set statistics
   if (dataSource->stretchMinMax) {
