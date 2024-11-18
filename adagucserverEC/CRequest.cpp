@@ -1676,6 +1676,7 @@ int CRequest::process_all_layers() {
       // dataSources[j]->getCDFDims()->addDimension("none","0",0);
     }
     if (dataSources[j]->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
+      // This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.
       layerTypeLiveUpdateConfigureDimensionsInDataSource(dataSources[j]);
     }
   }
@@ -1715,7 +1716,7 @@ int CRequest::process_all_layers() {
   /* Handle WMS Getmap database request */
   /**************************************/
   if (dataSources[j]->dLayerType == CConfigReaderLayerTypeDataBase || dataSources[j]->dLayerType == CConfigReaderLayerTypeStyled || dataSources[j]->dLayerType == CConfigReaderLayerTypeCascaded ||
-      dataSources[j]->dLayerType == CConfigReaderLayerTypeBaseLayer) {
+      dataSources[j]->dLayerType == CConfigReaderLayerTypeBaseLayer || (dataSources[j]->dLayerType == CConfigReaderLayerTypeLiveUpdate && srvParam->requestType != REQUEST_WMS_GETMAP)) {
     try {
       for (size_t d = 0; d < dataSources.size(); d++) {
         dataSources[d]->setTimeStep(0);
@@ -2161,11 +2162,7 @@ int CRequest::process_all_layers() {
       return 1;
     }
   } else if (dataSources[j]->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
-    // Render the current time in an image for testing purpose / frontend development
-    CDrawImage image;
-    layerTypeLiveUpdateRenderIntoDrawImage(&image, srvParam);
-    printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
-    image.printImagePng8(true);
+    layerTypeLiveUpdateRender(dataSources[j], srvParam);
   } else {
     CDBError("Unknown layer type");
   }

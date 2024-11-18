@@ -1,3 +1,6 @@
+**Version 2.28.5 2024-11-04**
+- Added Solar Terminator post-processor to use in combination with LiveUpdate layer type. 
+
 **Version 2.28.4 2024-11-12**
 - Fix bug where autofinddataset would not use Layer configurations which do not have a type configured
 
