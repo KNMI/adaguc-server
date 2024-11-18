@@ -66,9 +66,12 @@ This layer type displays a GetMap image with the current time per second for the
   -->
   <Layer type="liveupdate">
     <Name>liveupdate</Name>
+    <Dimension interval="PT1S">time</Dimension>
   </Layer>
 </Configuration>
 ```
+
+Note, default interval is PT10M for the liveupdate, you can overide this with the interval attribute in the dimension.
 
 <img src='2024-02-14-liveupdate-layer.png' />
 
@@ -102,6 +105,7 @@ More information on how to configure this type of layer can be found [here](../t
     <DataPostProc algorithm="solarterminator"/>
     <Variable>solarterminator</Variable>
     <Styles>soltstyle</Styles>
+    <Dimension interval="PT10M">time</Dimension>
   </Layer>
 </Configuration>
 ```
