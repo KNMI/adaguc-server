@@ -47,6 +47,7 @@ class TestConvertLatLonBnds(unittest.TestCase):
         filename = "test_ConvertLatLonBnds_getMap.png"
         # pylint: disable=unused-variable
 
+        # Work-around to force SQLite updates
         AdagucTestTools().runADAGUCServer(
             "source=example_file_latlonbnds.nc&SERVICE=WMS&request=getcapabilities",
             env=self.env,
@@ -67,9 +68,14 @@ class TestConvertLatLonBnds(unittest.TestCase):
     def test_ConvertLatLonBnds_getFeatureInfo(self):
         AdagucTestTools().cleanTempDir()
         filename = "test_ConvertLatLonBnds_getFeatureInfo.txt"
+        # Work-around to force SQLite updates
+        AdagucTestTools().runADAGUCServer(
+            "source=example_file_latlonbnds.nc&SERVICE=WMS&request=getcapabilities",
+            env=self.env,
+        )
         # pylint: disable=unused-variable
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "source=example_file_latlonbnds.nc&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetPointValue&QUERY_LAYERS=probability&X=4.78&Y=52.13&CRS=EPSG:4326&INFO_FORMAT=application/json&DIM_THRESHOLD=*",
+            "source=example_file_latlonbnds.nc&&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=probability&QUERY_LAYERS=probability&CRS=EPSG:4326&BBOX=51,3,53,7&WIDTH=100&HEIGHT=100&I=45&J=65&FORMAT=image/gif&INFO_FORMAT=application/json&STYLES=&&time=2024-06-01T02:00:00Z&DIM_THRESHOLD=40",
             env=self.env,
             args=["--report"],
         )

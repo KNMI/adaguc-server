@@ -25,14 +25,16 @@ def createnc(fn="spens1.nc", prob_type="f8", fill_value=None):
 
     if fill_value:
         probability_var = nc_file.createVariable(
-            "probability", prob_type, ("time", "threshold", "gridpoint")
+            "probability",
+            prob_type,
+            ("time", "threshold", "gridpoint"),
+            fill_value=fill_value,
         )
     else:
         probability_var = nc_file.createVariable(
             "probability",
             prob_type,
             ("time", "threshold", "gridpoint"),
-            fill_value=fill_value,
         )
     probability_var.coordinates = "lat lon"
     value = []
