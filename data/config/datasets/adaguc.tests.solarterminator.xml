@@ -22,7 +22,7 @@
     <DataPostProc algorithm="solarterminator"/>
     <Variable>solarterminator</Variable>
     <Styles>soltstyle</Styles>
-    <Dimension interval="PT1M">time</Dimension>
+    <Dimension interval="PT10M">time</Dimension>
   </Layer>
 
 
