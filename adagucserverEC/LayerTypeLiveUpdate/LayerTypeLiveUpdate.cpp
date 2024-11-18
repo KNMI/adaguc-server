@@ -105,16 +105,24 @@ int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(MetadataLayer *metada
     metadataLayer->layerMetadata.title.copy(metadataLayer->dataSource->cfgLayer->Name[0]->value.c_str());
   }
   CTime timeInstance;
+
+  CT::string timeResolution = "PT10M";
+
+  for (auto dim : metadataLayer->layer->Dimension) {
+    if (dim->value.equals("time") && !dim->attr.interval.empty()) {
+      timeResolution = dim->attr.interval;
+    }
+  }
+
   timeInstance.init("seconds since 1970", "standard");
   double epochTime = timeInstance.getEpochTimeFromDateString(CTime::currentDateTime());
   // CTime::Date cdate = timeInstance.getDate(epochTime);
-  double startTimeOffset = timeInstance.quantizeTimeToISO8601(epochTime - 3600 * 24 * 365, "PT10M", "low");
-  double stopTimeOffset = timeInstance.quantizeTimeToISO8601(epochTime, "PT10M", "low");
+  double startTimeOffset = timeInstance.quantizeTimeToISO8601(epochTime - 3600 * 24 * 365, timeResolution.c_str(), "low");
+  double stopTimeOffset = timeInstance.quantizeTimeToISO8601(epochTime, timeResolution.c_str(), "low");
   CT::string startTime = timeInstance.dateToISOString(timeInstance.offsetToDate(startTimeOffset));
   CT::string stopTime = timeInstance.dateToISOString(timeInstance.offsetToDate(stopTimeOffset));
-  CT::string resTime = "PT10M";
   LayerMetadataDim dim = {
-      .serviceName = "time", .cdfName = "time", .units = "ISO8601", .values = startTime + "/" + stopTime + "/" + resTime, .defaultValue = stopTime, .hasMultipleValues = true, .hidden = false};
+      .serviceName = "time", .cdfName = "time", .units = "ISO8601", .values = startTime + "/" + stopTime + "/" + timeResolution, .defaultValue = stopTime, .hasMultipleValues = true, .hidden = false};
   metadataLayer->layerMetadata.dimList.push_back(dim);
 
   return 0;
