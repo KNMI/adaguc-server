@@ -1,3 +1,6 @@
+**Version 2.29.0 2024-11-11**
+- Adds support for grids where the data cells are defined by lat_bnds and lon_bnds parameters describing the cell bounds.
+
 **Version 2.28.5 2024-11-04**
 - Added Solar Terminator post-processor to use in combination with LiveUpdate layer type. 
 
