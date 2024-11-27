@@ -3,6 +3,7 @@
 #include <json_adaguc.h>
 #include <CDBFactory.h>
 #include "XMLGenUtils.h"
+#include <LayerTypeLiveUpdate/LayerTypeLiveUpdate.h>
 
 int getDimensionListAsJson(MetadataLayer *metadataLayer, json &dimListJson) {
   try {
@@ -111,14 +112,6 @@ int storemetadataLayerIntoMetadataDb(MetadataLayer *metadataLayer) {
   return 0;
 }
 
-int loadmetadataLayerFromMetadataDb(MetadataLayer *metadataLayer) {
-  loadLayerMetadataStructFromMetadataDb(metadataLayer);
-  loadLayerDimensionListFromMetadataDb(metadataLayer);
-  loadLayerProjectionAndExtentListFromMetadataDb(metadataLayer);
-  loadLayerStyleListFromMetadataDb(metadataLayer);
-  return 0;
-}
-
 CT::string getLayerMetadataFromDb(MetadataLayer *metadataLayer, CT::string metadataKey) {
   CT::string layerName = metadataLayer->dataSource->getLayerName();
   CT::string datasetName = metadataLayer->dataSource->srvParams->datasetLocation;
@@ -176,6 +169,10 @@ int storeLayerMetadataStructIntoMetadataDb(MetadataLayer *metadataLayer) {
 }
 
 int loadLayerMetadataStructFromMetadataDb(MetadataLayer *metadataLayer) {
+  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded || (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate)) {
+    layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(metadataLayer);
+    return 0;
+  }
   if (!metadataLayer->readFromDb) {
     return 1;
   }
@@ -295,9 +292,10 @@ int storeLayerStyleListIntoMetadataDb(MetadataLayer *metadataLayer) {
 }
 
 int loadLayerStyleListFromMetadataDb(MetadataLayer *metadataLayer) {
-  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded || metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
+  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded) {
     return 0;
   }
+
   if (!metadataLayer->readFromDb) {
     return 1;
   }
