@@ -44,13 +44,70 @@ int CConvertKNMIH5VolScan::checkIfIsKNMIH5VolScan(CDFObject *cdfObject, CServerP
   return 0;
 }
 
+bool sortFunction(CT::string one, CT::string other) {
+  if (one.endsWith("s")) return true;
+  return (std::atof(one) < std::atof(other));
+}
+
 int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CServerParams *srvParams) {
   if (checkIfIsKNMIH5VolScan(cdfObject, srvParams) != 0) return 1;
   CDBDebug("convertKNMIH5VolScanHeader()");
 
-  int scans[] = {15, 16, 6, 14, 5, 13, 4, 12, 3};
-  int nrscans = sizeof(scans) / sizeof(int);
-  CT::string elevation_names[] = {"0.3", "0.3l", "0.8", "1.2", "2", "2.8", "4", "6", "8"};
+  int scan_i = 0;
+  int nrscans = 0;
+  std::vector<int> scans;
+  std::vector<CT::string> elevation_names;
+  while (true) {
+    scan_i++;
+    CT::string scanVarName;
+    scanVarName.print("scan%1d", scan_i);
+    CDF::Variable *scanVar = cdfObject->getVariableNE(scanVarName.c_str());
+    if (scanVar == NULL) break;
+    float scanElevation;
+    scanVar->getAttribute("scan_elevation")->getData(&scanElevation, 1);
+    int scanElevationInt = lround(scanElevation * 10.0);
+    /* Skip 90 degree scan */
+    if (scanElevationInt == 900) continue;
+    CT::string elevation_name;
+    elevation_name.print("%d.%d", scanElevationInt / 10, scanElevationInt % 10);
+    /* Dutch radars contain 3 0.3 degree scans. 1st is long range, second is short range, third is long range again. */
+    /* Keep the first 2 and skip the last. */
+    bool shortRangePresent = false;
+    int scanElevationIndex = -1;
+    for (int i = 0; i < nrscans; i++) {
+      if (elevation_names[i].equals(elevation_name)) {
+        scanElevationIndex = i;
+      }
+      if (elevation_names[i].equals(CT::string("0.3l"))) {
+        shortRangePresent = true;
+      }
+    }
+    if (scanElevationIndex >= 0) {
+      if (scanElevationInt == 3 && !shortRangePresent) {
+        elevation_names[scanElevationIndex] = CT::string("0.3l");
+      } else {
+        continue;
+      }
+    }
+    scans.push_back(scan_i);
+    elevation_names.push_back(elevation_name);
+    nrscans++;
+  }
+  /* Sort by elevation_name */
+  std::vector<CT::string> elevation_names_original(elevation_names);
+  std::sort(elevation_names.begin(), elevation_names.end(), sortFunction);
+  std::vector<int> sorted_scans;
+  for (int i = 0; i < nrscans; i++) {
+    int sort_index = -1;
+    for (int j = 0; j < nrscans; j++) {
+      if (elevation_names[i].equals(elevation_names_original[j])) {
+        sort_index = j;
+      }
+    }
+    if (sort_index == -1) return 1;
+    sorted_scans.push_back(scans[sort_index]);
+  }
+
   CT::string scan_params[] = {"KDP", "PhiDP", "RhoHV", "V", "W", "Z", "Zv", "ZDR"};
   CT::string units[] = {"deg/km", "deg", "-", "-", "-", "dbZ", "dbZ", "dbZ"};
 
@@ -63,6 +120,18 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
       }
     }
     if (var->name.startsWith("visualisation")) {
+      var->setAttributeText("ADAGUC_SKIP", "TRUE");
+    }
+    if (var->name.startsWith("dataset")) {
+      var->setAttributeText("ADAGUC_SKIP", "TRUE");
+    }
+    if (var->name.startsWith("how")) {
+      var->setAttributeText("ADAGUC_SKIP", "TRUE");
+    }
+    if (var->name.startsWith("what")) {
+      var->setAttributeText("ADAGUC_SKIP", "TRUE");
+    }
+    if (var->name.startsWith("where")) {
       var->setAttributeText("ADAGUC_SKIP", "TRUE");
     }
   }
@@ -207,18 +276,22 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
 
     for (int i = 0; i < nrscans; i++) {
       CT::string scanVarName;
-      scanVarName.print("scan%1d", scans[i]);
+      scanVarName.print("scan%1d", sorted_scans[i]);
       CDF::Variable *scanVar = cdfObject->getVariable(scanVarName.c_str());
       float scanElevation;
       scanVar->getAttribute("scan_elevation")->getData(&scanElevation, 1);
       ((char **)varElevation->data)[i] = strdup(elevation_names[i].c_str());
-      ((unsigned int *)varScan->data)[i] = scans[i];
+      ((unsigned int *)varScan->data)[i] = sorted_scans[i];
     }
   }
   // CDFHDF5Reader::CustomVolScanReader *volScanReader = new CDFHDF5Reader::CustomVolScanReader();
   // CDF::Variable::CustomMemoryReader *memoryReader = CDF::Variable::CustomMemoryReaderInstance;
   int cnt = 0;
   for (CT::string s : scan_params) {
+    CT::string dataVarName;
+    dataVarName.print("scan%1d.scan_%s_data", sorted_scans[0], s.c_str());
+    CDF::Variable *dataVar = cdfObject->getVariableNE(dataVarName.c_str());
+    if (dataVar == NULL) continue;
     CDF::Variable *var = new CDF::Variable();
     var->setType(CDF_FLOAT);
     var->name.copy(s);
@@ -445,9 +518,12 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
     CImageWarper radarProj;
     radarProj.initreproj(scanProj4.c_str(), dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
 
-    double x, y;
-    float rang, azim;
+    double x, y, ground_range, ground_height;
+    float range, azim;
     int ir, ia;
+    double scan_elevation_rad = scan_elevation * M_PI / 180.0;
+    double four_thirds_radius = 6371.0 * 4.0 / 3.0;
+    double radar_height = 0.0;          // Radar height is not present in KNMI HDF5 format, but it is in ODIM format so it could be used there.
     float *p = (float *)new2DVar->data; // ptr to store data
     std::vector<unsigned short *> pScans = {(unsigned short *)scanDataVar->data};
     std::vector<float> factors = {factor};
@@ -463,9 +539,11 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
         x = ((double *)varX->data)[col];
         y = ((double *)varY->data)[row];
         radarProj.reprojpoint(x, y);
-        rang = sqrt(x * x + y * y);
+        ground_range = sqrt(x * x + y * y);
+        ground_height = ((cos(scan_elevation_rad) * (four_thirds_radius + radar_height)) / cos(scan_elevation_rad + (ground_range / four_thirds_radius))) - four_thirds_radius;
+        range = ((ground_height + four_thirds_radius) * sin(ground_range / four_thirds_radius)) / cos(scan_elevation_rad);
         azim = atan2(x, y) * 180.0 / M_PI;
-        ir = (int)(rang / scan_rscale);
+        ir = (int)(range / scan_rscale);
         if (ir < scan_nrang) {
           ia = (int)(azim / scan_ascale);
           ia = (ia + scan_nazim) % scan_nazim;

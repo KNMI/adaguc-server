@@ -98,6 +98,11 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
   if (whereVar == nullptr) {
     return 2;
   }
+  CDF::Attribute *whereHeightAttr = whereVar->getAttributeNE("height");
+  if (whereHeightAttr != nullptr) {
+    CDBDebug("Is an ODIM volume file, skipping parsing as projected dataset");
+    return 2;
+  }
   std::map<std::string, std::string> quantityToUnits = {{"TH", "dBZ"}, {"TV", "dBZ"}, {"DBZH", "dBZ"}, {"DBZV", "dBZ"}, {"ZDR", "dB"}, {"UZDR", "dB"}, {"RHOHV", "-"}, {"URHOHV", "-"}, {"ACRR", "mm"}};
 
   const size_t MAX_ODIM_DATASETS = 100;
