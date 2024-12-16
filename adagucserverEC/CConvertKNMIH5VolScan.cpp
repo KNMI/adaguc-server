@@ -60,6 +60,7 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
   if (checkIfIsKNMIH5VolScan(cdfObject, srvParams) != 0) return 1;
   CDBDebug("convertKNMIH5VolScanHeader()");
 
+  /* Read all scans from file and give them a name based on their elevation */
   int nrscans = 0;
   std::vector<int> scan_ranges;
   std::vector<int> scans;
@@ -139,6 +140,7 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
     if (var->name.startsWith("visualisation")) {
       var->setAttributeText("ADAGUC_SKIP", "TRUE");
     }
+    /* Allow hybrid format used in IRC */
     if (var->name.startsWith("dataset")) {
       var->setAttributeText("ADAGUC_SKIP", "TRUE");
     }
