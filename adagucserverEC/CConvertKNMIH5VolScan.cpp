@@ -291,7 +291,16 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
     CT::string dataVarName;
     dataVarName.print("scan%1d.scan_%s_data", sorted_scans[0], s.c_str());
     CDF::Variable *dataVar = cdfObject->getVariableNE(dataVarName.c_str());
-    if (dataVar == NULL) continue;
+    if (dataVar == NULL) {
+      if (!s.equals("ZDR")) continue;
+      CT::string dataZvName;
+      dataZvName.print("scan%1d.scan_Zv_data", sorted_scans[0]);
+      CDF::Variable *dataZv = cdfObject->getVariableNE(dataZvName.c_str());
+      CT::string dataZName;
+      dataZName.print("scan%1d.scan_Z_data", sorted_scans[0]);
+      CDF::Variable *dataZ = cdfObject->getVariableNE(dataZName.c_str());
+      if (dataZv == NULL || dataZ == NULL) continue;
+    }
     CDF::Variable *var = new CDF::Variable();
     var->setType(CDF_FLOAT);
     var->name.copy(s);
@@ -345,6 +354,14 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
     new2DVar = dataObjects[0]->cdfVariable;
 
     bool doZdr = (new2DVar->name.equals("ZDR"));
+    if (doZdr) {
+      CT::string dataZdrName;
+      dataZdrName.print("scan%1d.scan_ZDR_data", 1); // FIXME
+      CDF::Variable *dataZdr = cdfObject->getVariableNE(dataZdrName.c_str());
+      if (dataZdr != NULL) {
+        doZdr = false;
+      }
+    }
 
     // Make the width and height of the new 2D adaguc field the same as the viewing window
     dataSource->dWidth = dataSource->srvParams->Geo->dWidth;
@@ -525,11 +542,21 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
     double four_thirds_radius = 6371.0 * 4.0 / 3.0;
     double radar_height = 0.0;          // Radar height is not present in KNMI HDF5 format, but it is in ODIM format so it could be used there.
     float *p = (float *)new2DVar->data; // ptr to store data
-    std::vector<unsigned short *> pScans = {(unsigned short *)scanDataVar->data};
+    std::vector<unsigned char *> pScansChar;
+    std::vector<unsigned short *> pScans;
+    if (scanDataVar->getType() == CDF_UBYTE) {
+      pScansChar = {(unsigned char *)scanDataVar->data};
+    } else {
+      pScans = {(unsigned short *)scanDataVar->data};
+    }
     std::vector<float> factors = {factor};
     std::vector<float> offsets = {offset};
     if (doZdr) {
-      pScans.push_back((unsigned short *)scanDataVar_Zv->data);
+      if (scanDataVar->getType() == CDF_UBYTE) {
+        pScansChar.push_back((unsigned char *)scanDataVar_Zv->data);
+      } else {
+        pScans.push_back((unsigned short *)scanDataVar_Zv->data);
+      }
       factors.push_back(zv_factor);
       offsets.push_back(zv_offset);
     }
@@ -547,14 +574,26 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
         if (ir < scan_nrang) {
           ia = (int)(azim / scan_ascale);
           ia = (ia + scan_nazim) % scan_nazim;
-          std::vector<unsigned short> vs;
-          for (auto pScan : pScans) {
-            vs.push_back(pScan[ir + ia * scan_nrang]);
-          }
-          if (doZdr) {
-            *p++ = vs[0] * factors[0] + offsets[0] - (vs[1] * factors[1] + offsets[1]);
+          if (scanDataVar->getType() == CDF_UBYTE) {
+            std::vector<unsigned char> vs;
+            for (auto pScanChar : pScansChar) {
+              vs.push_back(pScanChar[ir + ia * scan_nrang]);
+            }
+            if (doZdr) {
+              *p++ = vs[0] * factors[0] + offsets[0] - (vs[1] * factors[1] + offsets[1]);
+            } else {
+              *p++ = vs[0] * factors[0] + offsets[0];
+            }
           } else {
-            *p++ = vs[0] * factors[0] + offsets[0];
+            std::vector<unsigned short> vs;
+            for (auto pScan : pScans) {
+              vs.push_back(pScan[ir + ia * scan_nrang]);
+            }
+            if (doZdr) {
+              *p++ = vs[0] * factors[0] + offsets[0] - (vs[1] * factors[1] + offsets[1]);
+            } else {
+              *p++ = vs[0] * factors[0] + offsets[0];
+            }
           }
         } else {
           *p++ = FLT_MAX;
