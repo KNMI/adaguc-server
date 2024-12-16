@@ -286,8 +286,10 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
   }
   // CDFHDF5Reader::CustomVolScanReader *volScanReader = new CDFHDF5Reader::CustomVolScanReader();
   // CDF::Variable::CustomMemoryReader *memoryReader = CDF::Variable::CustomMemoryReaderInstance;
-  int cnt = 0;
+  int cnt = -1;
   for (CT::string s : scan_params) {
+    cnt++;
+
     CT::string dataVarName;
     dataVarName.print("scan%1d.scan_%s_data", sorted_scans[0], s.c_str());
     CDF::Variable *dataVar = cdfObject->getVariableNE(dataVarName.c_str());
@@ -319,8 +321,6 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
     var->dimensionlinks.push_back(dimElevation);
     var->dimensionlinks.push_back(dimY);
     var->dimensionlinks.push_back(dimX);
-
-    cnt++;
   }
 
   return 0;
