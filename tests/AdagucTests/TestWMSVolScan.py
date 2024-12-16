@@ -1,15 +1,15 @@
-import datetime
-import json
 import os
 import os.path
-import re
+from io import BytesIO
+import unittest
 import shutil
 import subprocess
-import unittest
-from io import BytesIO
-
+import json
+from lxml import etree, objectify
+import re
 from adaguc.AdagucTestTools import AdagucTestTools
 from lxml import etree, objectify
+import datetime
 
 ADAGUC_PATH = os.environ["ADAGUC_PATH"]
 
