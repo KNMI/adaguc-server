@@ -108,8 +108,8 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
     sorted_scans.push_back(scans[sort_index]);
   }
 
-  CT::string scan_params[] = {"KDP", "PhiDP", "RhoHV", "V", "W", "Z", "Zv", "ZDR", "Height"};
-  CT::string units[] = {"deg/km", "deg", "-", "-", "-", "dbZ", "dbZ", "dbZ", "km"};
+  CT::string scan_params[] = {"CCOR", "CCORv", "CPA", "CPAv", "KDP", "PhiDP", "RhoHV", "SQI", "V", "Vv", "W", "Wv", "Z", "Zv", "uPhiDP", "uZ", "uZv", "ZDR", "Height"};
+  CT::string units[] = {"dB", "dB", "-", "-", "deg/km", "deg", "-", "-", "m/s", "m/s", "m/s", "m/s", "dBZ", "dBZ", "deg", "dBZ", "dBZ", "dB", "km"};
 
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
