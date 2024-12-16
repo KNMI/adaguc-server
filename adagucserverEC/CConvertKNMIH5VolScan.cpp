@@ -574,7 +574,7 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
         radarProj.reprojpoint(x, y);
         ground_range = sqrt(x * x + y * y);
         /* Formulas below are only valid when (scan_elevation_rad + ground_range / four_thirds_radius) < (M_PI / 2). */
-        /* Longest range for DE/BE/NL radars is ~400 km, which is ~700 km ground range, so we cap the ground range. */
+        /* Longest range for DE/BE/NL radars is ~400 km, which is an equivalent ground range, so we cap the ground range. */
         if (ground_range > 1000.0) {
           *p++ = FLT_MAX;
           continue;
