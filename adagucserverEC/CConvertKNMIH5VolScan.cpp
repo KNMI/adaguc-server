@@ -45,7 +45,14 @@ int CConvertKNMIH5VolScan::checkIfIsKNMIH5VolScan(CDFObject *cdfObject, CServerP
 }
 
 bool sortFunction(CT::string one, CT::string other) {
-  if (one.endsWith("s")) return true;
+  if (one.endsWith("l")) {
+    one = one.substring(0, one.lastIndexOf("l"));
+    if (one.equals(other)) return true;
+  }
+  if (other.endsWith("l")) {
+    other = other.substring(0, other.lastIndexOf("l"));
+    if (one.equals(other)) return false;
+  }
   return (std::atof(one) < std::atof(other));
 }
 
@@ -54,16 +61,22 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
   CDBDebug("convertKNMIH5VolScanHeader()");
 
   int nrscans = 0;
+  std::vector<int> scan_ranges;
   std::vector<int> scans;
   std::vector<CT::string> elevation_names;
   /* Assume no scan with number higher than 99 */
-  for (int scan_i = 1; scan_i < 100; scan_i++) {
+  for (int scan = 1; scan < 100; scan++) {
     CT::string scanVarName;
-    scanVarName.print("scan%1d", scan_i);
+    scanVarName.print("scan%1d", scan);
     CDF::Variable *scanVar = cdfObject->getVariableNE(scanVarName.c_str());
     if (scanVar == NULL) continue;
     float scanElevation;
-    scanVar->getAttribute("scan_elevation")->getData(&scanElevation, 1);
+    scanVar->getAttribute("scan_elevation")->getData<float>(&scanElevation, 1);
+    int scan_nrang;
+    scanVar->getAttribute("scan_number_range")->getData<int>(&scan_nrang, 1);
+    float scan_rscale;
+    scanVar->getAttribute("scan_range_bin")->getData<float>(&scan_rscale, 1);
+    int scan_range = lround(scan_nrang * scan_rscale);
     int scanElevationInt = lround(scanElevation * 10.0);
     /* Skip 90 degree scan */
     if (scanElevationInt == 900) continue;
@@ -71,24 +84,29 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
     elevation_name.print("%d.%d", scanElevationInt / 10, scanElevationInt % 10);
     /* Dutch radars contain 3 0.3 degree scans. 1st is long range, second is short range, third is long range again. */
     /* Keep the first 2 and skip the last. */
-    bool shortRangePresent = false;
+    bool longRangePresent = false;
     int scanElevationIndex = -1;
     for (int i = 0; i < nrscans; i++) {
       if (elevation_names[i].equals(elevation_name)) {
         scanElevationIndex = i;
       }
-      if (elevation_names[i].equals(CT::string("0.3l"))) {
-        shortRangePresent = true;
+      if (elevation_names[i].equals(elevation_name + "l")) {
+        longRangePresent = true;
       }
     }
     if (scanElevationIndex >= 0) {
-      if (scanElevationInt == 3 && !shortRangePresent) {
-        elevation_names[scanElevationIndex] = CT::string("0.3l");
+      if (!longRangePresent || scan_ranges[scanElevationIndex] == scan_range) {
+        if (scan_ranges[scanElevationIndex] < scan_range) {
+          elevation_name += "l";
+        } else {
+          elevation_names[scanElevationIndex] = elevation_name + "l";
+        }
       } else {
         continue;
       }
     }
-    scans.push_back(scan_i);
+    scan_ranges.push_back(scan_range);
+    scans.push_back(scan);
     elevation_names.push_back(elevation_name);
     nrscans++;
   }
