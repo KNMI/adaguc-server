@@ -565,10 +565,12 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
     double four_thirds_radius = 6371.0 * 4.0 / 3.0;
     double radar_height = 0.0;          // Radar height is not present in KNMI HDF5 format, but it is in ODIM format so it could be used there.
     float *p = (float *)new2DVar->data; // ptr to store data
+
     std::vector<unsigned char *> pScansChar;
     std::vector<unsigned short *> pScans;
     std::vector<float> factors = {factor};
     std::vector<float> offsets = {offset};
+
     if (!doHeight) {
       if (scanDataVar->getType() == CDF_UBYTE) {
         pScansChar = {(unsigned char *)scanDataVar->data};
