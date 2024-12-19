@@ -34,8 +34,8 @@ services:
         max-size: "200k"
         max-file: "10"
   adaguc-server:
-    image: openearth/adaguc-server
-    # build: ..
+    # image: openearth/adaguc-server
+    build: ..
     # deploy:
     #   resources:
     #     limits:

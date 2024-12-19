@@ -515,10 +515,11 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
     CDF::Variable *scanDataVar;
     CDF::Variable *scanDataVar_Zv;
 
+    CT::string scanCalibrationVarName;
+    scanCalibrationVarName.print("scan%1d.calibration", scan);
+    CDF::Variable *scanCalibrationVar = cdfObject->getVariable(scanCalibrationVarName);
+
     if (!doHeight) {
-      CT::string scanCalibrationVarName;
-      scanCalibrationVarName.print("scan%1d.calibration", scan);
-      CDF::Variable *scanCalibrationVar = cdfObject->getVariable(scanCalibrationVarName);
       CT::string componentCalibrationStringName;
       if (!doZdr) {
         componentCalibrationStringName.print("calibration_%s_formulas", new2DVar->name.c_str());
@@ -565,9 +566,13 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
     double four_thirds_radius = 6371.0 * 4.0 / 3.0;
     double radar_height = 0.0;          // Radar height is not present in KNMI HDF5 format, but it is in ODIM format so it could be used there.
     float *p = (float *)new2DVar->data; // ptr to store data
+    int missingDataInt;
+    scanCalibrationVar->getAttribute("calibration_missing_data")->getData<int>(&missingDataInt, 1);
 
     std::vector<unsigned char *> pScansChar;
+    unsigned char missingDataChar = (unsigned char)missingDataInt;
     std::vector<unsigned short *> pScans;
+    unsigned short missingData = (unsigned short)missingDataInt;
     std::vector<float> factors = {factor};
     std::vector<float> offsets = {offset};
 
@@ -616,7 +621,15 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
             for (auto pScanChar : pScansChar) {
               vs.push_back(pScanChar[ir + ia * scan_nrang]);
             }
+            if (vs[0] == missingDataChar) {
+              *p++ = FLT_MAX;
+              continue;
+            }
             if (doZdr) {
+              if (vs[1] == missingDataChar) {
+                *p++ = FLT_MAX;
+                continue;
+              }
               *p++ = vs[0] * factors[0] + offsets[0] - (vs[1] * factors[1] + offsets[1]);
             } else {
               *p++ = vs[0] * factors[0] + offsets[0];
@@ -626,7 +639,15 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
             for (auto pScan : pScans) {
               vs.push_back(pScan[ir + ia * scan_nrang]);
             }
+            if (vs[0] == missingData) {
+              *p++ = FLT_MAX;
+              continue;
+            }
             if (doZdr) {
+              if (vs[1] == missingData) {
+                *p++ = FLT_MAX;
+                continue;
+              }
               *p++ = vs[0] * factors[0] + offsets[0] - (vs[1] * factors[1] + offsets[1]);
             } else {
               *p++ = vs[0] * factors[0] + offsets[0];
