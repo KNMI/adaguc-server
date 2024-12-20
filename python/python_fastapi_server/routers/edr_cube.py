@@ -10,10 +10,10 @@ KNMI
 
 import logging
 from typing import Union
-
+import time
 
 from covjson_pydantic.coverage import Coverage, CoverageCollection
-from fastapi import Query, Request, APIRouter
+from fastapi import HTTPException, Query, Request, APIRouter
 from netCDF4 import Dataset
 
 from .covjsonresponse import CovJSONResponse
@@ -99,13 +99,15 @@ async def get_coll_inst_cube(
     vertical_dim = ""
     vertical_name = None
     custom_name = None
-    first_layer_name = parameter_name.split(",")[0]
-    for param_dim in metadata[collection_name][first_layer_name]["dims"].values():
+    first_requested_layer_name = parameter_name.split(",")[0]
+    for param_dim in metadata[collection_name][first_requested_layer_name][
+        "dims"
+    ].values():
         if not param_dim["hidden"]:
             if "isvertical" in param_dim and param_dim["isvertical"]:
-                vertical_name = param_dim["cdfName"]
+                vertical_name = param_dim["serviceName"]
             elif "iscustom" in param_dim and param_dim["iscustom"]:
-                custom_name = param_dim["cdfName"]
+                custom_name = param_dim["serviceName"]
     if z_par:
         if vertical_name is not None:
             if vertical_name.upper() == "ELEVATION":
@@ -161,16 +163,23 @@ async def get_coll_inst_cube(
                 + res_queryterm
             )
 
+        start = time.time()
         status, response, _ = await call_adaguc(url=urlrequest.encode("UTF-8"))
-        logger.info("status: %d", status)
+        logger.info("status: %d [%f]", status, time.time() - start)
+        if status != 0:
+            raise HTTPException(
+                status_code=404,
+                detail=f"cube call failed for parameter {parameter_name} [{status}]",
+            )
         result_dataset = Dataset(f"{parameter_name}.nc", memory=response.getvalue())
 
         coveragejson = netcdf_to_covjson(
             metadata[collection_name], result_dataset, translate_names, translate_dims
         )
         if coveragejson is not None:
-            coveragejsons.append(coveragejson)
-            parameters = parameters | coveragejson.parameters
+            coveragejsons.extend(coveragejson)
+            for covjson in coveragejson:
+                parameters = parameters | covjson.parameters
 
     if len(coveragejsons) == 1:
         return coveragejsons[0]

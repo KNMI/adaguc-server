@@ -9,6 +9,7 @@ KNMI
 """
 
 import itertools
+import math
 from datetime import datetime, timezone
 
 from covjson_pydantic.coverage import Coverage, CoverageCollection
@@ -31,11 +32,20 @@ from .edr_utils import get_param_metadata
 SYMBOL_TYPE_URL = "http://www.opengis.net/def/uom/UCUM"
 
 
+def try_numeric(values):
+    try:
+        new_values = [float(i) for i in values]
+        return new_values
+    except ValueError:
+        return values
+
+
 def covjson_from_resp(dats, metadata):
     """
     Returns a coverage json from a Adaguc WMS GetFeatureInfo request
     """
     covjson_list = []
+    dataset_name = list(metadata.keys())[0].split(".")[0]
     for dat in dats:
         if len(dat["data"]):
             (lon, lat) = dat["point"]["coords"].split(",")
@@ -62,6 +72,7 @@ def covjson_from_resp(dats, metadata):
             custom_dim_values = []
             if custom_name is not None and len(custom_name) > 0:
                 custom_dim_values = getdimvals(dims, custom_name)
+                custom_dim_values = try_numeric(custom_dim_values)
 
             valstack = []
             # Translate the adaguc GFI object in something we can handle in Python
@@ -83,7 +94,7 @@ def covjson_from_resp(dats, metadata):
 
             parameters: dict[str, CovJsonParameter] = {}
             ranges = {}
-            param_metadata = get_param_metadata(metadata[dat["name"]])
+            param_metadata = get_param_metadata(metadata[dat["name"]], dataset_name)
             symbol = CovJsonSymbol(
                 value=param_metadata["parameter_unit"], type=SYMBOL_TYPE_URL
             )
@@ -107,13 +118,9 @@ def covjson_from_resp(dats, metadata):
             if vertical_steps:
                 axis_names = ["z", "t"]
                 shape = [len(vertical_steps), len(time_steps)]
-            if len(custom_dim_values) > 1:
-                axis_names.append(custom_name)
-                shape.append(
-                    len(custom_dim_values),
-                )
 
             _range = {
+                "dataType": "float",
                 "axisNames": axis_names,
                 "shape": shape,
                 "values": values,
@@ -123,20 +130,11 @@ def covjson_from_resp(dats, metadata):
             axes: dict[str, ValuesAxis] = {
                 "x": ValuesAxis[float](values=[lon]),
                 "y": ValuesAxis[float](values=[lat]),
-                "t": ValuesAxis[AwareDatetime](
-                    values=[
-                        datetime.strptime(t, "%Y-%m-%dT%H:%M:%SZ").replace(
-                            tzinfo=timezone.utc
-                        )
-                        for t in time_steps
-                    ]
-                ),
             }
-            domain_type = "PointSeries"
+            domain_type = "Point"
+            separate_timesteps = False
             if vertical_steps:
                 axes["z"] = ValuesAxis[float](values=vertical_steps)
-                if len(vertical_steps) > 1:
-                    domain_type = "VerticalProfile"
             if time_steps:
                 axes["t"] = ValuesAxis[AwareDatetime](
                     values=[
@@ -147,11 +145,23 @@ def covjson_from_resp(dats, metadata):
                     ]
                 )
                 if len(time_steps) > 1 and vertical_steps and len(vertical_steps) > 1:
-                    domain_type = "Grid"
-            if len(custom_dim_values) > 1:  # TODO 1 or 0?
-                axes[custom_name] = ValuesAxis[str](values=custom_dim_values)
-                if vertical_steps and len(vertical_steps) > 1:
-                    domain_type = "Grid"
+                    domain_type = "VerticalProfile"
+                    separate_timesteps = True
+                elif (
+                    len(time_steps) == 1 and vertical_steps and len(vertical_steps) > 1
+                ):
+                    domain_type = "VerticalProfile"
+                elif (
+                    len(time_steps) == 1 and vertical_steps and len(vertical_steps) == 1
+                ):
+                    domain_type = "Point"
+                elif len(time_steps) > 1:
+                    domain_type = "PointSeries"
+
+            # if len(custom_dim_values) > 1:  # TODO 1 or 0?
+            #     axes[custom_name] = ValuesAxis[str](values=custom_dim_values)
+            #     if vertical_steps and len(vertical_steps) > 1:
+            #         domain_type = "Grid"
 
             referencing = [
                 (
@@ -162,7 +172,7 @@ def covjson_from_resp(dats, metadata):
                         ),
                         coordinates=["x", "y", "z"],
                     )
-                    if vertical_steps
+                    if vertical_steps and len(vertical_steps) > 0
                     else ReferenceSystemConnectionObject(
                         system=ReferenceSystem(
                             type="GeographicCRS",
@@ -176,18 +186,78 @@ def covjson_from_resp(dats, metadata):
                     coordinates=["t"],
                 ),
             ]
-            domain = Domain(
-                domainType=domain_type,
-                axes=axes,
-                referencing=referencing,
-            )
-            covjson = Coverage(
-                id=f"coverage_{(len(covjson_list)+1)}",
-                domain=domain,
-                ranges=ranges,
-                parameters=parameters,
-            )
-            covjson_list.append(covjson)
+
+            if separate_timesteps:
+                for time_step in time_steps:
+                    time_step_axes: dict[str, ValuesAxis] = {
+                        "x": ValuesAxis[float](values=[lon]),
+                        "y": ValuesAxis[float](values=[lat]),
+                        "z": axes["z"] if vertical_steps else None,
+                        "t": ValuesAxis[AwareDatetime](
+                            values=[
+                                datetime.strptime(
+                                    time_step, "%Y-%m-%dT%H:%M:%SZ"
+                                ).replace(tzinfo=timezone.utc)
+                            ]
+                        ),
+                    }
+                    time_step_domain = Domain(
+                        domainType=domain_type,
+                        axes=time_step_axes,
+                        referencing=referencing,
+                    )
+                    covjson = Coverage(
+                        id=f"coverage_{(len(covjson_list)+1)}-{time_step}",
+                        domain=time_step_domain,
+                        ranges=ranges,
+                        parameters=parameters,
+                    )
+                    covjson_list.append(covjson)
+            else:
+                if len(custom_dim_values) > 0:
+                    step_len = math.prod(shape)
+                    for custom_dim_value_idx, custom_dim_value in enumerate(custom_dim_values)):
+                        custom = {
+                            f"custom:{custom_name}": custom_dim_value
+                        }
+                        domain = Domain(
+                            domainType=domain_type,
+                            axes=axes,
+                            referencing=referencing,
+                            **custom,
+                        )
+                        partial_ranges = {
+                            dat["name"]: {
+                                "values": ranges[dat["name"]]["values"][
+                                    custom_dim_value_idx
+                                    * step_len : (custom_dim_value_idx + 1)
+                                    * step_len
+                                ],
+                                "dataType": "float",
+                                "axisNames": axis_names,
+                                "shape": shape,
+                            }
+                        }
+                        covjson = Coverage(
+                            id=f"coverage_{(len(covjson_list)+1)}",
+                            domain=domain,
+                            ranges=partial_ranges,
+                            parameters=parameters,
+                        )
+                        covjson_list.append(covjson)
+                else:
+                    domain = Domain(
+                        domainType=domain_type,
+                        axes=axes,
+                        referencing=referencing,
+                    )
+                    covjson = Coverage(
+                        id=f"coverage_{(len(covjson_list)+1)}",
+                        domain=domain,
+                        ranges=ranges,
+                        parameters=parameters,
+                    )
+                    covjson_list.append(covjson)
 
     if len(covjson_list) == 1:
         return covjson_list[0]

@@ -59,7 +59,7 @@ async def rest_get_edr_inst_for_coll(
         instance_info = get_collectioninfo_from_md(
             metadata[collection_name], collection_name, instance
         )
-        instances.append(instance_info)
+        instances.extend(instance_info)
 
     instances_data = Instances(instances=instances, links=links)
     if ttl_set:
@@ -82,4 +82,4 @@ async def rest_get_collection_info(collection_name: str, instance, response: Res
     coll = get_collectioninfo_from_md(
         metadata[collection_name], collection_name, instance
     )
-    return coll
+    return coll[0]

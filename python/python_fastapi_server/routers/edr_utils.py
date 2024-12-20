@@ -13,6 +13,7 @@ import logging
 import os
 import re
 from datetime import datetime, timezone
+from typing import Union, List
 
 from dateutil.relativedelta import relativedelta
 from defusedxml.ElementTree import ParseError, parse
@@ -27,6 +28,8 @@ from edr_pydantic.variables import Variables
 from fastapi import Request
 
 from .edr_exception import EdrException
+
+from .edr_locations import location_list
 from .ogcapi_tools import call_adaguc
 
 logger = logging.getLogger(__name__)
@@ -90,33 +93,6 @@ def get_base_url(req: Request = None) -> str:
 
 
 OWSLIB_DUMMY_URL = "http://localhost:8000"
-
-
-def init_edr_collections(adaguc_dataset_dir: str = os.environ["ADAGUC_DATASET_DIR"]):
-    """
-    Return all possible OGCAPI EDR datasets, based on the dataset directory
-    """
-    dataset_files = sorted(
-        [
-            f
-            for f in os.listdir(adaguc_dataset_dir)
-            if os.path.isfile(os.path.join(adaguc_dataset_dir, f))
-            and f.endswith(".xml")
-        ]
-    )
-
-    edr_collections = []
-    for dataset_file in dataset_files:
-        dataset = dataset_file.replace(".xml", "")
-        try:
-            tree = parse(os.path.join(adaguc_dataset_dir, dataset_file))
-            root = tree.getroot()
-            for _ in root.iter("OgcApiEdr"):
-                edr_collections.append(dataset)
-        except ParseError:
-            pass
-    # ['RADAR', 'ecmwf_ens_nl_0p1deg', 'multi_dim', 'uwcw_ha43_dini_5p5km', 'uwcw_ha43_nl_2km', 'uwcw_ha43ens_nl_2km']
-    return edr_collections
 
 
 def instance_to_iso(instance_dt: str):
@@ -225,7 +201,14 @@ def get_collectioninfo_from_md(
     Returns collection information for a given collection id and or instance
     Is used to obtain metadata from the dataset configuration and WMS GetCapabilities document.
     """
-    logger.info("get_collectioninfo_for_id(%s, %s)", collection_name, instance)
+    logger.info("get_collectioninfo_from_md(%s, %s)", collection_name, instance)
+
+    dataset_name = collection_name.split(".")[0]
+    terms = collection_name.split(".")
+    if len(terms) == 1:
+        subcollection_name = None
+    else:
+        subcollection_name = terms[1]
 
     if metadata is None:
         return None
@@ -234,7 +217,6 @@ def get_collectioninfo_from_md(
     for param in metadata:
         if param not in ["baselayer", "overlay"]:
             first_param = param
-    print("FIRST:", first_param)
     if metadata[first_param]["layer"]["variables"] is None:
         return None
 
@@ -283,19 +265,20 @@ def get_collectioninfo_from_md(
         title="Cube query",
         variables=cube_variables,
     )
-
-    locations_variables = Variables(
-        query_type="locations",
-        default_output_format="GeoJSON",
-        output_formats=["GeoJSON"],
-    )
-    locations_link = EDRQueryLink(
-        href=f"{base_url}/locations",
-        rel="data",
-        hreflang="en",
-        title="Locations query",
-        variables=locations_variables,
-    )
+    locations_link = None
+    if len(location_list) > 0:
+        locations_variables = Variables(
+            query_type="locations",
+            default_output_format="GeoJSON",
+            output_formats=["GeoJSON"],
+        )
+        locations_link = EDRQueryLink(
+            href=f"{base_url}/locations",
+            rel="data",
+            hreflang="en",
+            title="Locations query",
+            variables=locations_variables,
+        )
 
     instances_link = None
     if has_instances:
@@ -312,47 +295,67 @@ def get_collectioninfo_from_md(
             title="Instances query",
             variables=instances_variables,
         )
-        data_queries = DataQueries(
-            position=EDRQuery(link=position_link),
-            cube=EDRQuery(link=cube_link),
-            instances=EDRQuery(link=instances_link),
-            locations=EDRQuery(link=locations_link),
-        )
+        if locations_link is not None:
+            data_queries = DataQueries(
+                position=EDRQuery(link=position_link),
+                cube=EDRQuery(link=cube_link),
+                instances=EDRQuery(link=instances_link),
+                locations=EDRQuery(link=locations_link),
+            )
+        else:
+            data_queries = DataQueries(
+                position=EDRQuery(link=position_link),
+                cube=EDRQuery(link=cube_link),
+                instances=EDRQuery(link=instances_link),
+            )
     else:
-        data_queries = DataQueries(
-            position=EDRQuery(link=position_link),
-            cube=EDRQuery(link=cube_link),
-            locations=EDRQuery(link=locations_link),
-        )
+        if locations_link is not None:
+            data_queries = DataQueries(
+                position=EDRQuery(link=position_link),
+                cube=EDRQuery(link=cube_link),
+                locations=EDRQuery(link=locations_link),
+            )
+        else:
+            data_queries = DataQueries(
+                position=EDRQuery(link=position_link),
+                cube=EDRQuery(link=cube_link),
+            )
 
-    parameter_info = get_params_for_collection(metadata, primary_extent)
+    parameter_info = get_params_for_dataset(metadata, collection_name, primary_extent)
+    collections = []
 
     crs = ["EPSG:4326"]
 
-    print("PRIMARY:", primary_extent.model_dump_json(indent=2))
     output_formats = ["CoverageJSON"]
-    if instance is None:
-        collection = Collection(
-            links=links,
-            id=collection_name,
-            extent=primary_extent,
-            data_queries=data_queries,
-            parameter_names=parameter_info,
-            crs=crs,
-            output_formats=output_formats,
-        )
+    if subcollection_name is not None:
+        collection_names = [f"{dataset_name}.{subcollection_name}"]
     else:
-        collection = Instance(
-            links=links,
-            id=instance,
-            extent=primary_extent,
-            data_queries=data_queries,
-            parameter_names=parameter_info,
-            crs=crs,
-            output_formats=output_formats,
-        )
+        collection_names = list(parameter_info.keys())
+    for collection_name in collection_names:
+        if instance is None:
+            collection = Collection(
+                links=links,
+                id=collection_name,
+                extent=primary_extent,
+                data_queries=data_queries,
+                parameter_names=parameter_info[collection_name],
+                crs=crs,
+                output_formats=output_formats,
+            )
+        else:
+            collection = Instance(
+                links=links,
+                id=f"{instance}",
+                extent=primary_extent,
+                data_queries=data_queries,
+                parameter_names=parameter_info[collection_name],
+                crs=crs,
+                output_formats=output_formats,
+            )
 
-    return collection
+        collections.append(collection)
+
+    return collections
 
 
 def parse_period_string(period: str):
@@ -448,8 +451,8 @@ def create_times_for_instance(edr_collectioninfo: dict, instance: str):
     return interval, times
 
 
-def get_params_for_collection(
-    metadata: dict, primary_extent: Extent
+def get_params_for_dataset(
+    metadata: dict, dataset_name: str, primary_extent: Extent
 ) -> dict[str, Parameter]:
     """
     Returns a dictionary with parameters for given EDR collection
@@ -459,7 +462,7 @@ def get_params_for_collection(
         if metadata[param_id]["dims"] is None:
             continue
         current_extent = get_extent_from_md(metadata, param_id)
-        param_metadata = get_param_metadata(metadata[param_id])
+        param_metadata = get_param_metadata(metadata[param_id], dataset_name)
         observed_property_id = param_metadata.get("observed_property_id", param_id)
         param = Parameter(
             id=param_id,
@@ -477,7 +480,50 @@ def get_params_for_collection(
             label=param_metadata["parameter_label"],
             extent=current_extent if current_extent != primary_extent else None,
         )
-        parameter_names[param_id] = param
+        if param_metadata["collection"] not in parameter_names:
+            parameter_names[param_metadata["collection"]] = {}
+        parameter_names[param_metadata["collection"]][param_id] = param
+    return parameter_names
+
+
+def get_params_for_collection(
+    metadata: dict,
+    dataset_name: str,
+    primary_extent: Extent,
+    collection_name: Union[str, None] = None,
+) -> dict[str, Parameter]:
+    """
+    Returns a dictionary with parameters for given EDR collection
+    """
+    dataset_name = collection_name.split(".")[0]
+    parameter_names = {}
+    for param_id in metadata:
+        if metadata[param_id]["dims"] is None:
+            continue
+        if param_metadata["collection"] != collection_name:
+            continue
+        current_extent = get_extent_from_md(metadata, param_id)
+        param_metadata = get_param_metadata(metadata[param_id], dataset_name)
+        observed_property_id = param_metadata.get("observed_property_id", param_id)
+        param = Parameter(
+            id=param_id,
+            observedProperty=ObservedProperty(
+                id=observed_property_id,
+                label=param_metadata["observed_property_label"],
+            ),
+            # description=param_metadata["wms_layer_title"], # TODO in follow up
+            type="Parameter",
+            unit=Unit(
+                symbol=Symbol(
+                    value=param_metadata["parameter_unit"], type=SYMBOL_TYPE_URL
+                )
+            ),
+            label=param_metadata["parameter_label"],
+            extent=current_extent if current_extent != primary_extent else None,
+        )
+        if param_metadata["collection"] not in parameter_names:
+            parameter_names[param_metadata["collection"]] = {}
+        parameter_names[param_metadata["collection"]][param_id] = param
     return parameter_names
 
 
@@ -509,12 +555,20 @@ async def get_metadata(collection_name=None):
     status, response, headers = await call_adaguc(url=urlrequest.encode("UTF-8"))
     #        ttl = get_ttl_from_adaguc_headers(headers)
     logger.info("status for %s: %d", urlrequest, status)
-    # print("()()", response.getvalue())
     metadata = None
     if status == 0:
         metadata = json.loads(response.getvalue().decode("UTF-8"))
-        return handle_metadata(metadata)
-    logger.error("status: %d", status)
+        collection_metadata = handle_metadata(metadata)
+        if collection_metadata is None:
+            return None
+        if collection_name is None:
+            # Return all metadata if no collection_name is specified
+            return collection_metadata
+        if collection_name in collection_metadata:
+            if (coll := collection_metadata.get(collection_name)) is not None:
+                return {collection_name: coll}
+            return None
+        return None
     return None
 
 
@@ -532,7 +586,6 @@ def get_vertical_dim_for_collection(metadata: dict, parameter: str = None):
             "isvertical" in layer["dims"] and layer["dims"]["isvertical"] == "true"
         ):
             values = layer["dims"][dim_name]["values"].split(",")
-            print("VERT:", [[values[0]], [values[-1]]])
             vertical_dim = {
                 "interval": [[values[0], values[-1]]],
                 "values": values,
@@ -540,6 +593,14 @@ def get_vertical_dim_for_collection(metadata: dict, parameter: str = None):
             }
             return vertical_dim
     return None
+
+
+def try_numeric_conversion(values: List[str]):
+    try:
+        new_values = [float(v) for v in values]
+        return new_values
+    except ValueError:
+        return values
 
 
 def get_custom_dims_for_collection(metadata: dict, parameter: str = None):
@@ -561,6 +622,7 @@ def get_custom_dims_for_collection(metadata: dict, parameter: str = None):
                 "elevation",
             ]:
                 dim_values = layer["dims"][dim_name]["values"].split(",")
+                dim_values = try_numeric_conversion(dim_values)
                 custom_dim = {
                     "id": dim_name,
                     "interval": [
@@ -571,7 +633,7 @@ def get_custom_dims_for_collection(metadata: dict, parameter: str = None):
                             # int(dim_values[-1]),
                         ]
                     ],
-                    "values": [", ".join(dim_values)],  ##["R51/0/1"],  # dim_values,
+                    "values": dim_values,  ##["R51/0/1"],  # dim_values,
                     "reference": "https://www.ecmwf.int/sites/default/files/elibrary/2012/14557-ecmwf-ensemble-prediction-system.pdf",  # f"custom_{dim_name}",
                 }
                 # if dim_name == "member":
@@ -656,7 +718,7 @@ def get_time_values_for_range(rng: str) -> list[str]:
 VOCAB_ENDPOINT_URL = "https://vocab.nerc.ac.uk/standard_name/"
 
 
-def get_param_metadata(param_metadata: dict) -> dict:
+def get_param_metadata(param_metadata: dict, dataset_name) -> dict:
     """Composes parameter metadata based on the param_el and the wmslayer dictionaries
 
     Args:
@@ -676,6 +738,13 @@ def get_param_metadata(param_metadata: dict) -> dict:
         observed_property_id = (
             VOCAB_ENDPOINT_URL + param_metadata["layer"]["variables"][0]
         )
+    if (
+        "collection" in param_metadata["layer"]
+        and len(param_metadata["layer"]["collection"]) > 0
+    ):
+        collection = dataset_name  # f'{param_metadata["layer"]["collection"]}'
+    else:
+        collection = dataset_name
 
     return {
         "wms_layer_name": wms_layer_name,
@@ -683,4 +752,5 @@ def get_param_metadata(param_metadata: dict) -> dict:
         "observed_property_label": observed_property_label,
         "parameter_label": parameter_label,
         "parameter_unit": parameter_unit,
+        "collection": collection,
     }
