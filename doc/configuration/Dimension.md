@@ -6,9 +6,7 @@ Back to [Configuration](./Configuration.md)
 -   name - The name of the dimension in the netcdf file
 -   interval - Optional, the time resolution of the dataset in
     [ISO8601](ISO8601.md) format.
--   default - The default value of the dimension in [ISO8601](ISO8601.md)
-    format, can also be "min" or "max" to select the first or latest
-    date as default. Defaults to "max".
+-   default - Defaults to "max". See details below
 -   units - Override the units of the dimension
 -   quantizeperiod - Optional, see below
 -   quantizemethod - Optional, see below
@@ -25,8 +23,15 @@ Back to [Configuration](./Configuration.md)
 
 -   See [ISO8601](../info/ISO8601.md) for the time resolution specification
 
-Time quantization
------------------
+## default value 
+
+- The default value of the dimension can be specified as datestring in [ISO8601](ISO8601.md) format
+- Can be "min" or "max" to select the first or latest
+- Can be set to "forecast_reference_time" to reference the default value of the forecast_reference_time dimension.
+- Can be set to "forecast_reference_time+PT1H" to reference the default value of the forecast_reference_time dimension, and it will add a ISO8601 Period to the derived value. See test [data/config/datasets/adaguc.tests.403_default_time_referenced_to_forecast_time.xml](../../data/config/datasets/adaguc.tests.403_default_time_referenced_to_forecast_time.xml) for details.
+
+
+## Time quantization
 
 Time values received in the URL as input can be rounded to more discrete
 time periods. For example when noon, 12:03:53, is received as input, it
