@@ -17,7 +17,8 @@
         "${workspaceFolder}/hclasses/CppUnitLite/CppUnitLite",
         "${workspaceFolder}/hclasses",
         "${workspaceFolder}/CCDFDataModel",
-        "${workspaceFolder}/adagucserverEC"
+        "${workspaceFolder}/adagucserverEC",
+        "/usr/include/x86_64-linux-gnu"
       ],
       "defines": ["${default}"],
       "macFrameworkPath": ["${default}"],
