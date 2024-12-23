@@ -1,3 +1,6 @@
+**Version 2.29.2 2024-12-23**
+- Fixed issue with irrular grids for SSS SMOS L4 OI - LOPS-v2021 and Global Ocean - Coriolis Observation Re-Analysis CORA5.2. Added test (Issue #316)
+
 **Version 2.29.1 2024-12-23**
 - Default value for time dimension can now be based on default value of reference_time dimension (Issue #403)
 
