@@ -23,57 +23,57 @@
  *
  ******************************************************************************/
 
-#include "CConvertLatLonGrid.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
+#include "CConvertLatLonBnds.h"
+
+// #define CConvertLatLonBnds_DEBUG
 
 /**
  * This function adjusts the cdfObject by creating virtual 2D variables
  */
-int CConvertLatLonGrid::convertLatLonGridHeader(CDFObject *cdfObject, CServerParams *) {
+int CConvertLatLonBnds::convertLatLonBndsHeader(CDFObject *cdfObject, CServerParams *) {
+  // Check whether this is really an LatLonBnds file
+  if (!isThisLatLonBndsData(cdfObject)) return 1;
 #ifdef CConvertLatLonGrid_DEBUG
-  CDBDebug("CHECKING convertLatLonGridHeader");
+  CDBDebug("Using CConvertLatLonBnds.h");
 #endif
-  if (!isLatLonGrid(cdfObject)) return 1;
 
-  // Determine bbox based on 2D lat/lon
-  double dfBBOX[] = {-180, -90, 180, 90};
-  CDF::Variable *longitudeGrid = getLon2D(cdfObject);
-  CDF::Variable *latitudeGrid = getLat2D(cdfObject);
+  // Standard bounding box of adaguc data is worldwide
+  CDF::Variable *pointLon;
+  CDF::Variable *pointLat;
 
-  if (longitudeGrid == nullptr) {
-    CDBDebug("longitudeGrid = longitudeGrid");
-    longitudeGrid = getLon1D(cdfObject);
-    CDBDebug("longitudeGrid = longitudeGrid");
-  }
-  if (latitudeGrid == nullptr) {
-    latitudeGrid = getLat1D(cdfObject);
+  try {
+    pointLon = cdfObject->getVariable("lon_bnds");
+    pointLat = cdfObject->getVariable("lat_bnds");
+  } catch (int e) {
+    CDBDebug("lat or lon variables not found");
+    return 1;
   }
 
-  if (longitudeGrid != nullptr && latitudeGrid != nullptr) {
-    // If the data was not populated in the code above, try to read it from the file
-    if (longitudeGrid->data == nullptr) {
-      longitudeGrid->readData(CDF_DOUBLE, true);
-    }
-    if (latitudeGrid->data == nullptr) {
-      latitudeGrid->readData(CDF_DOUBLE, true);
-    }
-    if (longitudeGrid->data != nullptr && latitudeGrid->data != nullptr) {
-      try {
-        MinMax lonMinMax = getMinMax(longitudeGrid);
-        MinMax latMinMax = getMinMax(latitudeGrid);
-        dfBBOX[0] = lonMinMax.min;
-        dfBBOX[1] = latMinMax.min;
-        dfBBOX[2] = lonMinMax.max;
-        dfBBOX[3] = latMinMax.max;
-      } catch (int e) {
-        CDBDebug("CALC BOX ERROR %d", e);
-      }
-    }
-  } else {
-    CDBWarning("Unable to determine BBOX from lat/lon variables");
+  pointLon->readData(CDF_DOUBLE, true);
+  pointLat->readData(CDF_DOUBLE, true);
+
+#ifdef CConvertLatLonBnds_DEBUG
+  StopWatch_Stop("DATA READ");
+#endif
+  MinMax lonMinMax;
+  MinMax latMinMax;
+  lonMinMax.min = -180; // Initialize to whole world
+  latMinMax.min = -90;
+  lonMinMax.max = 180;
+  latMinMax.max = 90;
+  if (pointLon->getSize() > 0) {
+    lonMinMax = getMinMax(pointLon);
+    latMinMax = getMinMax(pointLat);
   }
-  // Default size of new virtual 2dField is 2x2
+#ifdef CConvertLatLonBnds_DEBUG
+  StopWatch_Stop("MIN/MAX Calculated");
+  CDBDebug("%f,%f %f,%f", latMinMax.min, lonMinMax.min, latMinMax.max, lonMinMax.max);
+#endif
+  double dfBBOX[] = {lonMinMax.min - 0.5, latMinMax.min - 0.5, lonMinMax.max + 0.5, latMinMax.max + 0.5};
+
+  // Default size of adaguc 2dField is 2x2
   int width = 2;
   int height = 2;
 
@@ -83,37 +83,37 @@ int CConvertLatLonGrid::convertLatLonGridHeader(CDFObject *cdfObject, CServerPar
   double offsetY = dfBBOX[1];
 
   // Add geo variables, only if they are not there already
-  CDF::Dimension *dimX = cdfObject->getDimensionNE("adx");
-  CDF::Dimension *dimY = cdfObject->getDimensionNE("ady");
-  CDF::Variable *varX = cdfObject->getVariableNE("adx");
-  CDF::Variable *varY = cdfObject->getVariableNE("ady");
+  CDF::Dimension *dimX = cdfObject->getDimensionNE("x");
+  CDF::Dimension *dimY = cdfObject->getDimensionNE("y");
+  CDF::Variable *varX = cdfObject->getVariableNE("x");
+  CDF::Variable *varY = cdfObject->getVariableNE("y");
   if (dimX == NULL || dimY == NULL || varX == NULL || varY == NULL) {
     // If not available, create new dimensions and variables (X,Y,T)
     // For x
     dimX = new CDF::Dimension();
-    dimX->name = "adx";
+    dimX->name = "x";
     dimX->setSize(width);
     cdfObject->addDimension(dimX);
     varX = new CDF::Variable();
     varX->setType(CDF_DOUBLE);
-    varX->name.copy("adx");
+    varX->name.copy("x");
     varX->isDimension = true;
     varX->dimensionlinks.push_back(dimX);
     cdfObject->addVariable(varX);
-    varX->allocateData(dimX->length);
+    CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
 
     // For y
     dimY = new CDF::Dimension();
-    dimY->name = "ady";
+    dimY->name = "y";
     dimY->setSize(height);
     cdfObject->addDimension(dimY);
     varY = new CDF::Variable();
     varY->setType(CDF_DOUBLE);
-    varY->name.copy("ady");
+    varY->name.copy("y");
     varY->isDimension = true;
     varY->dimensionlinks.push_back(dimY);
     cdfObject->addVariable(varY);
-    varY->allocateData(dimY->length);
+    CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
 
     // Fill in the X and Y dimensions with the array of coordinates
     for (size_t j = 0; j < dimX->length; j++) {
@@ -132,29 +132,10 @@ int CConvertLatLonGrid::convertLatLonGridHeader(CDFObject *cdfObject, CServerPar
     CDF::Variable *var = cdfObject->variables[v];
     if (var->isDimension == false) {
       if (var->dimensionlinks.size() >= 2 && !var->name.equals("acquisition_time") && !var->name.equals("time") && !var->name.equals("lon") && !var->name.equals("lat") &&
-          !var->name.equals("longitude") && !var->name.equals("latitude")) {
+          !var->name.equals("longitude") && !var->name.equals("latitude") && !var->name.equals("lon_bnds") && !var->name.equals("lat_bnds")) {
         varsToConvert.add(CT::string(var->name.c_str()));
       }
     }
-  }
-
-  // Add time dimension
-  bool addCustomTimeDimension = false;
-  try {
-    CDF::Dimension *timeDim = cdfObject->getDimensionNE("time");
-    if (timeDim == nullptr) {
-
-      CDF::Variable *timeVar = cdfObject->getVariableNE("acquisition_time");
-      if (timeVar != nullptr) {
-        timeVar->name = "time";
-        timeDim = new CDF::Dimension("time", 1);
-        cdfObject->addDimension(timeDim);
-        timeVar->dimensionlinks.push_back(timeDim);
-        addCustomTimeDimension = true;
-      }
-    }
-
-  } catch (int e) {
   }
 
   // Create the new regular grid field variables based on the irregular grid variables
@@ -169,23 +150,16 @@ int CConvertLatLonGrid::convertLatLonGridHeader(CDFObject *cdfObject, CServerPar
       cdfObject->addVariable(destRegularGrid);
 
       // Assign all other dims except Y and X
-      for (size_t dimlinkNr = 0; dimlinkNr < irregularGridVar->dimensionlinks.size() - 2; dimlinkNr += 1) {
+      for (size_t dimlinkNr = 0; dimlinkNr < irregularGridVar->dimensionlinks.size() - 1; dimlinkNr += 1) {
         auto dimlink = irregularGridVar->dimensionlinks[dimlinkNr];
         destRegularGrid->dimensionlinks.push_back(dimlink);
-      }
-
-      if (addCustomTimeDimension) {
-        CDF::Dimension *timeDim = cdfObject->getDimensionNE("time");
-        if (timeDim) {
-          destRegularGrid->dimensionlinks.push_back(timeDim);
-        }
       }
 
       // Assign X,Y
       destRegularGrid->dimensionlinks.push_back(dimY);
       destRegularGrid->dimensionlinks.push_back(dimX);
 
-      destRegularGrid->setType(irregularGridVar->getType());
+      destRegularGrid->setType(CDF_FLOAT);
       destRegularGrid->name = irregularGridVar->name.c_str();
       irregularGridVar->name.concat("_backup");
 

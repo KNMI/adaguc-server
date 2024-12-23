@@ -66,8 +66,48 @@ This layer type displays a GetMap image with the current time per second for the
   -->
   <Layer type="liveupdate">
     <Name>liveupdate</Name>
+    <Dimension interval="PT1S">time</Dimension>
   </Layer>
 </Configuration>
 ```
 
+Note, default interval is PT10M for the liveupdate, you can overide this with the interval attribute in the dimension.
+
 <img src='2024-02-14-liveupdate-layer.png' />
+
+If you configure the ```solarterminator``` data postprocessor, the liveupdate layer will display a GetMap image showing the areas where it is day, night, and different twilight levels (values from 0 to 4). The solar terminator algorithm is based on the calculations presented in the book *Astronomical Algorithms* (1991) by Jean Meeus. 
+
+More information on how to configure this type of layer can be found [here](../tutorials/Configure_solar_terminator.md).
+
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+  <Style name="soltstyle">
+    <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
+    <Min>0</Min>
+    <Max>4</Max>
+  
+    <ShadeInterval min="0.00" max="1.00"    label="Night"    fillcolor="#000000"/>
+    <ShadeInterval min="1.00" max="2.00"    label="Astronomical Twilight"    fillcolor="#333333"/>
+    <ShadeInterval min="2.00" max="3.00"    label="Nautical Twilight"    fillcolor="#666666"/>
+    <ShadeInterval min="3.00" max="4.00"    label="Civil Twilight"    fillcolor="#999999"/>
+    <ShadeInterval min="4.00" max="5.00"    label="Day"    fillcolor="#FFFFFF"/>
+
+    <NameMapping name="shadedcontour"   title="Shaded categories" abstract="Displays different phases of twilight and day using shades of gray, with black for night and white for day."/>
+    <RenderMethod>shadedcontour</RenderMethod>
+
+  </Style>
+
+<Configuration>
+  <Layer type="liveupdate">
+    <Name>solarterminator</Name>
+    <FilePath filter="" gfi_openall="true">{ADAGUC_PATH}data/datasets/solt.nc</FilePath>
+    <DataPostProc algorithm="solarterminator"/>
+    <Variable>solarterminator</Variable>
+    <Styles>soltstyle</Styles>
+    <Dimension interval="PT10M">time</Dimension>
+  </Layer>
+</Configuration>
+```
+
+<img src='2024-10-11-solt-layer.png' />

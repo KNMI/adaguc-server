@@ -217,7 +217,8 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc, std::vector<MetadataL
             addErrorInXMLForMisconfiguredLayer(XMLDoc, layer);
           }
           if (layer->hasError == 0) {
-            XMLDoc->printconcat("<Layer queryable=\"%d\" opaque=\"1\" cascaded=\"%d\">\n", layer->layerMetadata.isQueryable, layer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded ? 1 : 0);
+            XMLDoc->printconcat("<Layer queryable=\"%d\" opaque=\"1\" cascaded=\"%d\">\n", layer->layerMetadata.isQueryable,
+                                layer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded && layer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate ? 1 : 0);
             XMLDoc->concat("<Name>");
             XMLDoc->concat(&layer->layerMetadata.name);
             XMLDoc->concat("</Name>\n");
@@ -587,7 +588,8 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataL
             addErrorInXMLForMisconfiguredLayer(XMLDoc, layer);
           }
           if (layer->hasError == 0) {
-            XMLDoc->printconcat("<Layer queryable=\"%d\" opaque=\"1\" cascaded=\"%d\">\n", layer->layerMetadata.isQueryable, layer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded ? 1 : 0);
+            XMLDoc->printconcat("<Layer queryable=\"%d\" opaque=\"1\" cascaded=\"%d\">\n", layer->layerMetadata.isQueryable,
+                                layer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded && layer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate ? 1 : 0);
             XMLDoc->concat("<Name>");
             XMLDoc->concat(&layer->layerMetadata.name);
             XMLDoc->concat("</Name>\n");

@@ -33,6 +33,9 @@ jobs:
           vuln-type: 'os,library'
           trivyignores: .trivyignore
 #          severity: 'CRITICAL,HIGH'
+        env:
+          TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db:2
+          TRIVY_JAVA_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-java-db:1
   docker-build-and-publish:
     name: Build Docker image and potentially push to Docker Hub
     runs-on: ubuntu-latest
