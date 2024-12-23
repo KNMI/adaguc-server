@@ -185,7 +185,6 @@ int CConvertLatLonBnds::convertLatLonBndsData(CDataSource *dataSource, int mode)
     double *latData = (double *)latitudeBnds->data;
 
     int numY = latitudeBnds->dimensionlinks[0]->getSize();
-    int numX = longitudeBnds->dimensionlinks[0]->getSize();
 #ifdef CConvertLatLonBnds_DEBUG
     CDBDebug("numRows %d numCells %d", numY, numX);
 #endif
@@ -217,12 +216,6 @@ int CConvertLatLonBnds::convertLatLonBndsData(CDataSource *dataSource, int mode)
         CDBError("Unable to init projection");
         return 1;
       }
-    }
-
-    bool drawBilinear = false;
-    CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-    if (styleConfiguration->styleCompositionName.indexOf("bilinear") >= 0) {
-      drawBilinear = true;
     }
 
     CDF::Dimension *gridpoint = cdfObject->getDimensionNE("gridpoint");
