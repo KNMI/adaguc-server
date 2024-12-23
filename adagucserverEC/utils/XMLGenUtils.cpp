@@ -141,14 +141,69 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
   return 0;
 }
 
+int checkDependenciesBetweenDims(MetadataLayer *mL) {
+  // mL->layerMetadata.dimList[0].defaultValue = "A";
+  auto &lmDims = mL->layerMetadata.dimList;           // Layer metadata dimensions, referenced by & so we can adjust the value in the object of the vector
+  auto cfgDims = mL->dataSource->cfgLayer->Dimension; // Layer configuration dimensions
+
+  // Find time and reference_time dimensions in the layerMetadata dimList
+  auto lmDimTimeIt = std::find_if(lmDims.begin(), lmDims.end(), [](const LayerMetadataDim &d) -> bool { return d.serviceName.equals("time"); });
+  auto lmDimRefTimeIt =
+      std::find_if(lmDims.begin(), lmDims.end(), [](const LayerMetadataDim &d) -> bool { return d.serviceName.equals("reference_time") || d.serviceName.equals("forecast_reference_time"); });
+  if (lmDimTimeIt == lmDims.end() || lmDimRefTimeIt == lmDims.end()) {
+    return 1;
+  }
+  // Find time and reference_time dimensions configuration options in the XMLE_DIMENSION list
+  auto xmleDimTimeIt = std::find_if(cfgDims.begin(), cfgDims.end(), [](const CServerConfig::XMLE_Dimension *d) -> bool { return d->value.equals("time"); });
+  auto xmleDimRefTimeIt =
+      std::find_if(cfgDims.begin(), cfgDims.end(), [](const CServerConfig::XMLE_Dimension *d) -> bool { return d->value.equals("reference_time") || d->value.equals("forecast_reference_time"); });
+  if (xmleDimTimeIt == cfgDims.end() || xmleDimRefTimeIt == cfgDims.end()) {
+    return 1;
+  }
+
+  LayerMetadataDim layerMetadataTimeDim = lmDimTimeIt[0];
+  LayerMetadataDim layerMetadataRefTimeDim = lmDimRefTimeIt[0];
+  CServerConfig::XMLE_Dimension *layerCfgTimeDim = xmleDimTimeIt[0];
+  CServerConfig::XMLE_Dimension *layerCfgRefTimeDim = xmleDimRefTimeIt[0];
+
+  // Time dimension references the forecast reference time dimension
+  if (layerCfgTimeDim->attr.defaultV.startsWith(layerCfgRefTimeDim->attr.name)) {
+    // Check if a duration is added, if so, try to work with this
+    int hasIsoDuration = layerCfgTimeDim->attr.defaultV.indexOf("+");
+    if (hasIsoDuration > 0) {
+      CT::string isoDurationString = layerCfgTimeDim->attr.defaultV.substring(hasIsoDuration + 1, -1);
+      CDBDebug("Going to use isoduration [%s] to add to [%s]", isoDurationString.c_str(), layerMetadataRefTimeDim.defaultValue.c_str());
+      try {
+        CTime *time = CTime::GetCTimeInstance(mL->dataSource->getDataObject(0)->cdfObject->getVariable("time"));
+        CTime::Date refTimeDate = time->freeDateStringToDate(layerMetadataRefTimeDim.defaultValue.c_str());
+        CTime::Date refTimeWithAddedPeriod = time->addPeriodToDate(refTimeDate, isoDurationString);
+        // Assign the default value of the reference time dimension in the layer metadata to the default value of the the time dimension
+        lmDimTimeIt->defaultValue = time->dateToISOString(refTimeWithAddedPeriod);
+      } catch (int e) {
+        CDBWarning("Unable to parse given duration in default value of time dimension");
+      }
+    } else {
+      CDBDebug("Assigning default value of reference time to time: [%s]", layerCfgTimeDim->attr.defaultV.c_str());
+      // Assign the default value of the reference time dimension in the layer metadata to the default value of the the time dimension
+      lmDimTimeIt->defaultValue = layerMetadataRefTimeDim.defaultValue;
+    }
+    CDBDebug("New defaultvalue for time is [%s]", lmDimTimeIt->defaultValue.c_str());
+  }
+
+  return 0;
+}
+
 int getDimsForLayer(MetadataLayer *metadataLayer) {
+  bool verboseLog = false;
 #ifdef CXMLGEN_DEBUG
   CDBDebug("getDimsForLayer");
+  verboseLog = true;
+#endif
+#ifdef MEASURETIME
+  verboseLog = true;
 #endif
   char szMaxTime[32];
   char szMinTime[32];
-  // char szInterval[32];
-  // int hastimedomain = 0;
 
   // Dimensions
   if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeDataBase || metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeStyled) {
@@ -157,11 +212,10 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
       return 0;
     }
 
-#ifdef CXMLGEN_DEBUG
-    CDBDebug("Start looping dimensions");
-    CDBDebug("Number of dimensions is %d", metadataLayer->dataSource->cfgLayer->Dimension.size());
-#endif
-    /* Auto configure dimensions */
+    if (verboseLog) {
+      CDBDebug("Start looping dimensions. Number of dimensions is %d", metadataLayer->dataSource->cfgLayer->Dimension.size());
+    }
+    /// Auto configure dimensions
     for (size_t i = 0; i < metadataLayer->dataSource->cfgLayer->Dimension.size(); i++) {
 
       /* This dimension is a filetimedate type, its values come from the modification date of the file */
@@ -179,9 +233,9 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
         metadataLayer->layerMetadata.dimList.push_back(dim);
         break;
       }
-#ifdef CXMLGEN_DEBUG
-      CDBDebug("%d = %s / %s", i, metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str(), metadataLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
-#endif
+      if (verboseLog) {
+        CDBDebug("%d = %s / %s", i, metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str(), metadataLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
+      }
       if (i == 0 && metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.name.equals("none")) break;
       // Shorthand dimName
       const char *pszDimName = metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str();
@@ -231,14 +285,9 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
           } catch (int e) {
           }
           if (units.length() > 0) {
-#ifdef CXMLGEN_DEBUG
-            CDBDebug("Time dimension units = %s", units.c_str());
-#endif
-
-#ifdef MEASURETIME
-            StopWatch_Stop("Get the first 100 values from the database, and determine whether the time resolution is continous or multivalue.");
-#endif
-
+            if (verboseLog) {
+              StopWatch_Stop("Get the first 100 values from the database, and determine whether the time resolution is continous or multivalue.");
+            }
             // Get the first 100 values from the database, and determine whether the time resolution is continous or multivalue.
             CDBStore::Store *store = CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByValue(pszDimName, 100, true, tableName.c_str());
             bool dataHasBeenFoundInStore = false;
@@ -252,9 +301,6 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
                   for (size_t j = 0; j < store->size(); j++) {
                     store->getRecord(j)->get("time")->setChar(10, 'T');
                     const char *isotime = store->getRecord(j)->get("time")->c_str();
-#ifdef CXMLGEN_DEBUG
-                    //                    CDBDebug("isotime = %s",isotime);
-#endif
                     CT::string year, month, day, hour, minute, second;
                     year.copy(isotime + 0, 4);
                     tms[j].tm_year = year.toInt() - 1900;
@@ -293,9 +339,9 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
                       yearPart.printconcat("%dY", abs(tms[1].tm_year - tms[0].tm_year));
                     } else {
                       isConst = false;
-#ifdef CXMLGEN_DEBUG
-                      CDBDebug("year is irregular");
-#endif
+                      if (verboseLog) {
+                        CDBDebug("year is irregular");
+                      }
                     }
                   }
                   if (tms[1].tm_mon - tms[0].tm_mon != 0) {
@@ -303,9 +349,9 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
                       yearPart.printconcat("%dM", abs(tms[1].tm_mon - tms[0].tm_mon));
                     else {
                       isConst = false;
-#ifdef CXMLGEN_DEBUG
-                      CDBDebug("month is irregular");
-#endif
+                      if (verboseLog) {
+                        CDBDebug("month is irregular");
+                      }
                     }
                   }
 
@@ -314,12 +360,12 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
                       yearPart.printconcat("%dD", abs(tms[1].tm_mday - tms[0].tm_mday));
                     else {
                       isConst = false;
-#ifdef CXMLGEN_DEBUG
-                      CDBDebug("day irregular");
-                      for (size_t j = 0; j < nrTimes; j++) {
-                        CDBDebug("Day %d = %d", j, tms[j].tm_mday);
+                      if (verboseLog) {
+                        CDBDebug("day irregular");
+                        for (size_t j = 0; j < nrTimes; j++) {
+                          CDBDebug("Day %d = %d", j, tms[j].tm_mday);
+                        }
                       }
-#endif
                     }
                   }
 
@@ -340,9 +386,9 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
                     if (d > 0) {
                       if (sd != d) {
                         isConst = false;
-#ifdef CXMLGEN_DEBUG
-                        CDBDebug("hour/min/sec is irregular %d ", j);
-#endif
+                        if (verboseLog) {
+                          CDBDebug("hour/min/sec is irregular %d ", j);
+                        }
                       }
                     }
                   }
@@ -350,13 +396,13 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
                   // Check whether we found a time resolution
                   if (isConst == false) {
                     hasMultipleValues = true;
-#ifdef CXMLGEN_DEBUG
-                    CDBDebug("Not a continous time dimension, multipleValues required");
-#endif
+                    if (verboseLog) {
+                      CDBDebug("Not a continous time dimension, multipleValues required");
+                    }
                   } else {
-#ifdef CXMLGEN_DEBUG
-                    CDBDebug("Continous time dimension, Time resolution needs to be calculated");
-#endif
+                    if (verboseLog) {
+                      CDBDebug("Continous time dimension, Time resolution needs to be calculated");
+                    }
                     hasMultipleValues = false;
                   }
 
@@ -368,9 +414,9 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
                       iso8601timeRes.concat("T");
                       iso8601timeRes.concat(&hourPart);
                     }
-#ifdef CXMLGEN_DEBUG
-                    CDBDebug("Calculated a timeresolution of %s", iso8601timeRes.c_str());
-#endif
+                    if (verboseLog) {
+                      CDBDebug("Calculated a timeresolution of %s", iso8601timeRes.c_str());
+                    }
                     metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.copy(iso8601timeRes.c_str());
                     metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.units.copy("ISO8601");
                   }
@@ -393,7 +439,6 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
         if (isTimeDim) {
           values = CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByValue(pszDimName, 0, true, tableName.c_str());
         } else {
-          // query.print("select distinct %s,dim%s from %s order by dim%s,%s",pszDimName,pszDimName,tableName.c_str(),pszDimName,pszDimName);
           values = CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByIndex(pszDimName, 0, true, tableName.c_str());
         }
 
@@ -403,58 +448,54 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
         }
 
         if (values->getSize() > 0) {
-          // if(srvParam->requestType==REQUEST_WMS_GETCAPABILITIES)
-          {
+          dim.serviceName.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
+          dim.cdfName.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
 
-            dim.serviceName.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
-            dim.cdfName.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
+          // Try to get units from the variable
+          dim.units.copy("NA");
+          if (metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.units.empty()) {
+            CT::string units;
+            try {
+              metadataLayer->dataSource->getDataObject(0)->cdfObject->getVariable(dim.cdfName.c_str())->getAttribute("units")->getDataAsString(&units);
+              dim.units.copy(&units);
+            } catch (int e) {
+            }
+          }
 
-            // Try to get units from the variable
-            dim.units.copy("NA");
-            if (metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.units.empty()) {
-              CT::string units;
-              try {
-                metadataLayer->dataSource->getDataObject(0)->cdfObject->getVariable(dim.cdfName.c_str())->getAttribute("units")->getDataAsString(&units);
-                dim.units.copy(&units);
-              } catch (int e) {
+          dim.hasMultipleValues = 1;
+          if (isTimeDim == true) {
+            dim.units.copy("ISO8601");
+            for (size_t j = 0; j < values->getSize(); j++) {
+              // 2011-01-01T22:00:01Z
+              // 01234567890123456789
+              values->getRecord(j)->get(0)->setChar(10, 'T');
+              if (values->getRecord(j)->get(0)->length() == 19) {
+                values->getRecord(j)->get(0)->printconcat("Z");
               }
             }
+            dim.units.copy("ISO8601");
+          }
 
-            dim.hasMultipleValues = 1;
-            if (isTimeDim == true) {
-              dim.units.copy("ISO8601");
-              for (size_t j = 0; j < values->getSize(); j++) {
-                // 2011-01-01T22:00:01Z
-                // 01234567890123456789
-                values->getRecord(j)->get(0)->setChar(10, 'T');
-                if (values->getRecord(j)->get(0)->length() == 19) {
-                  values->getRecord(j)->get(0)->printconcat("Z");
-                }
-              }
-              dim.units.copy("ISO8601");
-            }
+          if (!metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.units.empty()) {
+            // Units are configured in the configuration file.
+            dim.units.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.units.c_str());
+          }
 
-            if (!metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.units.empty()) {
-              // Units are configured in the configuration file.
-              dim.units.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.units.c_str());
-            }
+          const char *pszDefaultV = metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.defaultV.c_str();
+          CT::string defaultV;
+          if (pszDefaultV != NULL) defaultV = pszDefaultV;
 
-            const char *pszDefaultV = metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.defaultV.c_str();
-            CT::string defaultV;
-            if (pszDefaultV != NULL) defaultV = pszDefaultV;
+          if (defaultV.length() == 0 || defaultV.equals("max", 3)) {
+            dim.defaultValue.copy(values->getRecord(values->getSize() - 1)->get(0)->c_str());
+          } else if (defaultV.equals("min", 3)) {
+            dim.defaultValue.copy(values->getRecord(0)->get(0)->c_str());
+          } else {
+            dim.defaultValue.copy(&defaultV);
+          }
 
-            if (defaultV.length() == 0 || defaultV.equals("max", 3)) {
-              dim.defaultValue.copy(values->getRecord(values->getSize() - 1)->get(0)->c_str());
-            } else if (defaultV.equals("min", 3)) {
-              dim.defaultValue.copy(values->getRecord(0)->get(0)->c_str());
-            } else {
-              dim.defaultValue.copy(&defaultV);
-            }
-
-            dim.values.copy(values->getRecord(0)->get(0));
-            for (size_t j = 1; j < values->getSize(); j++) {
-              dim.values.printconcat(",%s", values->getRecord(j)->get(0)->c_str());
-            }
+          dim.values.copy(values->getRecord(0)->get(0));
+          for (size_t j = 1; j < values->getSize(); j++) {
+            dim.values.printconcat(",%s", values->getRecord(j)->get(0)->c_str());
           }
         }
         delete values;
@@ -485,67 +526,42 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
         }
         delete values;
 
-        // Retrieve all values for time position
-        //    if(srvParam->serviceType==SERVICE_WCS){
-
-        /*
-      query.print("select %s from %s",dimName,tableName.c_str());
-      values = DB.query_select(query.c_str(),0);
-      if(values == NULL){CDBError("Query failed");DB.close();return 1;}
-      if(values->count>0){
-        if(TimePositions!=NULL){
-          delete[] TimePositions;
-          TimePositions=NULL;
-        }
-        TimePositions=new CT::string[values->count];
-        char szTemp[32];
-        for(size_t l=0;l<values->count;l++){
-          snprintf(szTemp,31,"%s",values[l].c_str());szTemp[10]='T';
-          TimePositions[l].copy(szTemp);
-          TimePositions[l].count=values[l].count;
-        }
-      }
-      delete[] values;*/
-
         if (metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.empty()) {
           // TODO
           CDBError("Dimension interval '%d' not defined", i);
           return 1;
         }
-        // strncpy(szInterval,metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.c_str(),32);szInterval[31]='\0';
-        const char *pszInterval = metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.c_str();
-        // hastimedomain = 1;
-        // if(srvParam->requestType==REQUEST_WMS_GETCAPABILITIES)
-        {
-          CT::string dimUnits("ISO8601");
-          if (metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.units.empty() == false) {
-            dimUnits.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.units.c_str());
-          }
-          dim.serviceName.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
-          dim.cdfName.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
-          dim.units.copy(dimUnits.c_str());
-          dim.hasMultipleValues = 0;
-          // metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.defaultV.c_str()
-          const char *pszDefaultV = metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.defaultV.c_str();
-          CT::string defaultV;
-          if (pszDefaultV != NULL) defaultV = pszDefaultV;
-          if (defaultV.length() == 0 || defaultV.equals("max", 3)) {
-            dim.defaultValue.copy(szMaxTime);
-          } else if (defaultV.equals("min", 3)) {
-            dim.defaultValue.copy(szMinTime);
-          } else {
-            dim.defaultValue.copy(&defaultV);
-          }
-          if (dim.defaultValue.length() == 19) {
-            dim.defaultValue.concat("Z");
-          }
 
-          CT::string minTime = szMinTime;
-          if (minTime.equals(szMaxTime)) {
-            dim.values.print("%s", szMinTime);
-          } else {
-            dim.values.print("%s/%s/%s", szMinTime, szMaxTime, pszInterval);
-          }
+        const char *pszInterval = metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.c_str();
+
+        CT::string dimUnits("ISO8601");
+        if (metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.units.empty() == false) {
+          dimUnits.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.units.c_str());
+        }
+        dim.serviceName.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
+        dim.cdfName.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
+        dim.units.copy(dimUnits.c_str());
+        dim.hasMultipleValues = 0;
+        // metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.defaultV.c_str()
+        const char *pszDefaultV = metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.defaultV.c_str();
+        CT::string defaultV;
+        if (pszDefaultV != NULL) defaultV = pszDefaultV;
+        if (defaultV.length() == 0 || defaultV.equals("max", 3)) {
+          dim.defaultValue.copy(szMaxTime);
+        } else if (defaultV.equals("min", 3)) {
+          dim.defaultValue.copy(szMinTime);
+        } else {
+          dim.defaultValue.copy(&defaultV);
+        }
+        if (dim.defaultValue.length() == 19) {
+          dim.defaultValue.concat("Z");
+        }
+
+        CT::string minTime = szMinTime;
+        if (minTime.equals(szMaxTime)) {
+          dim.values.print("%s", szMinTime);
+        } else {
+          dim.values.print("%s/%s/%s", szMinTime, szMaxTime, pszInterval);
         }
       }
 
@@ -562,6 +578,8 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
       }
       metadataLayer->layerMetadata.dimList.push_back(dim);
     }
+    // Check dependencies between dimensions
+    checkDependenciesBetweenDims(metadataLayer);
   }
 
   return 0;

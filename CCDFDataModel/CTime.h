@@ -231,6 +231,17 @@ public:
    * @return Date
    */
   Date subtractPeriodFromDate(CTime::Date date, CT::string period);
+  Date subtractPeriodFromDate(CTime::Date date, Date period);
+
+  /**
+   * @brief Can be used to add an iso8601 period string to a date. The function ensures that allowed ranges for the individual time componets are preserved.
+   *
+   * @param date
+   * @param period
+   * @return Date
+   */
+  Date addPeriodToDate(CTime::Date date, CT::string period);
+  Date addPeriodToDate(CTime::Date date, Date period);
 
   /**
    * @brief Converts a iso8601 period string to a date
