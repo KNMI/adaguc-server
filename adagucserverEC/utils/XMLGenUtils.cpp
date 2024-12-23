@@ -5,6 +5,7 @@
 #include <CDBFactory.h>
 #include <LayerTypeLiveUpdate/LayerTypeLiveUpdate.h>
 #include "LayerUtils.h"
+#include <sstream>
 
 int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
   metadataLayer->readFromDb = readFromDB;
@@ -854,4 +855,33 @@ int getFileNameForLayer(MetadataLayer *metadataLayer) {
   }
 
   return 0;
+}
+
+// Function to parse a string to double if numeric
+double parseNumeric(std::string const &str, bool &isNumeric) {
+  auto result = double();
+  auto i = std::istringstream(str);
+  i >> result;
+  isNumeric = !i.fail() && i.eof();
+  return result;
+}
+
+// Sort values that can either be numeric of a string
+bool multiTypeSort(const CT::string &a, const CT::string &b) {
+  // Try to convert strings to numbers
+  float aNum, bNum;
+  bool isANum, isBNum;
+
+  isANum = false;
+  aNum = parseNumeric(a.c_str(), isANum);
+
+  isBNum = false;
+  bNum = parseNumeric(b.c_str(), isBNum);
+
+  // Do numerical comparison or alphabetical comparison according to type
+  if (isANum && isBNum) {
+    return aNum < bNum;
+  } else {
+    return a < b;
+  }
 }
