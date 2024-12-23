@@ -1055,6 +1055,10 @@ time_t CTime::getEpochTimeFromDateString(CT::string dateString) {
 
 CTime::Date CTime::subtractPeriodFromDate(CTime::Date date, CT::string period) {
   CTime::Date datePeriod = periodToDate(period);
+  return this->subtractPeriodFromDate(date, datePeriod);
+}
+
+CTime::Date CTime::subtractPeriodFromDate(CTime::Date date, CTime::Date datePeriod) {
   Date newDate;
   newDate.year = date.year - datePeriod.year;
   newDate.month = date.month - datePeriod.month;
@@ -1063,7 +1067,23 @@ CTime::Date CTime::subtractPeriodFromDate(CTime::Date date, CT::string period) {
   newDate.minute = date.minute - datePeriod.minute;
   newDate.second = date.second - datePeriod.second;
   double offset = this->dateToOffset(newDate);
+  return this->offsetToDate(offset);
+}
 
+CTime::Date CTime::addPeriodToDate(CTime::Date date, CT::string period) {
+  CTime::Date datePeriod = periodToDate(period);
+  return this->addPeriodToDate(date, datePeriod);
+}
+
+CTime::Date CTime::addPeriodToDate(CTime::Date date, CTime::Date datePeriod) {
+  Date newDate;
+  newDate.year = date.year + datePeriod.year;
+  newDate.month = date.month + datePeriod.month;
+  newDate.day = date.day + datePeriod.day;
+  newDate.hour = date.hour + datePeriod.hour;
+  newDate.minute = date.minute + datePeriod.minute;
+  newDate.second = date.second + datePeriod.second;
+  double offset = this->dateToOffset(newDate);
   return this->offsetToDate(offset);
 }
 

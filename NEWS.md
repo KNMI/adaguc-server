@@ -1,3 +1,6 @@
+**Version 2.29.1 2024-12-23**
+- Default value for time dimension can now be based on default value of reference_time dimension (Issue #403)
+
 **Version 2.29.0 2024-11-11**
 - Adds support for grids where the data cells are defined by lat_bnds and lon_bnds parameters describing the cell bounds.
 

@@ -2598,3 +2598,37 @@ class TestWMS(unittest.TestCase):
             data.getvalue(),
             AdagucTestTools().readfromfile(self.expectedoutputsspath +
                                            filename))
+
+
+
+    def test_WMSGetCapabilities_403_default_time_referenced_to_forecast_time(self):
+        """
+        See https://github.com/KNMI/adaguc-server/issues/403
+        """
+        AdagucTestTools().cleanTempDir()
+
+        config = (
+            ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,"
+            + ADAGUC_PATH
+            + "/data/config/datasets/adaguc.tests.403_default_time_referenced_to_forecast_time.xml"
+        )
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=["--updatedb", "--config", config], env=self.env, isCGI=False
+        )
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSGetCapabilities_403_default_time_referenced_to_forecast_time.xml"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.tests.403_default_time_referenced_to_forecast_time&service=WMS&request=GetCapabilities",
+            {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml"},
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertTrue(
+            AdagucTestTools().compareGetCapabilitiesXML(
+                self.testresultspath + filename, self.expectedoutputsspath + filename
+            )
+        )
