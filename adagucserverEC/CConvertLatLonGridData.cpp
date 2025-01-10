@@ -64,6 +64,7 @@ int CConvertLatLonGrid::convertLatLonGridData(CDataSource *dataSource, int mode)
 
   // Read original data first
   for (size_t d = 0; d < nrDataObjects; d++) {
+    // Read the data as CDF_FLOAT on purpose, data handling here is done in CDF_FLOAT
     dataSource->readVariableDataForCDFDims(irregularGridVar[d], CDF_FLOAT);
 
     CDF::Attribute *fillValue = irregularGridVar[d]->getAttributeNE("_FillValue");
@@ -93,7 +94,7 @@ int CConvertLatLonGrid::convertLatLonGridData(CDataSource *dataSource, int mode)
   MinMax minMax = getMinMax(((float *)irregularGridVar[0]->data), dataObjects[0]->hasNodataValue, fill, irregularGridVar[0]->getSize());
 
 #ifdef CConvertLatLonGrid_DEBUG
-  CDBDebug("Calculated min/max : %f %f", min, max);
+  CDBDebug("Calculated min/max : %f %f", minMax.min, minMax.max);
 #endif
 
   // Set statistics
@@ -173,11 +174,8 @@ int CConvertLatLonGrid::convertLatLonGridData(CDataSource *dataSource, int mode)
 
     // Allocate and clear data
     for (size_t d = 0; d < nrDataObjects; d++) {
-      destRegularGrid[d]->setSize(fieldSize);
-      CDF::allocateData(destRegularGrid[d]->getType(), &(destRegularGrid[d]->data), fieldSize);
-      for (size_t j = 0; j < fieldSize; j++) {
-        ((float *)dataObjects[d]->cdfVariable->data)[j] = NAN;
-      }
+      destRegularGrid[d]->allocateData(fieldSize);
+      destRegularGrid[d]->fill(NAN);
     }
 
     double *lonData = (double *)longitudeGrid->data;

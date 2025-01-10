@@ -27,7 +27,7 @@
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
 
-#define CConvertLatLonGrid_DEBUG
+// #define CConvertLatLonGrid_DEBUG
 
 const char *CConvertLatLonGrid::className = "CConvertLatLonGrid";
 

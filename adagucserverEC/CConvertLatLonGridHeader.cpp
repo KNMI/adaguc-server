@@ -185,7 +185,8 @@ int CConvertLatLonGrid::convertLatLonGridHeader(CDFObject *cdfObject, CServerPar
       destRegularGrid->dimensionlinks.push_back(dimY);
       destRegularGrid->dimensionlinks.push_back(dimX);
 
-      destRegularGrid->setType(irregularGridVar->getType());
+      // The newly allocated grid will always be a float grid and will be internally handled as a float
+      destRegularGrid->setType(CDF_FLOAT);
       destRegularGrid->name = irregularGridVar->name.c_str();
       irregularGridVar->name.concat("_backup");
 

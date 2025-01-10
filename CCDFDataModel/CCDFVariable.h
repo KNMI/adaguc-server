@@ -137,6 +137,13 @@ namespace CDF {
 
     void setCDFObjectDim(Variable *sourceVar, const char *dimName);
 
+    void fill(double value) {
+      if (data == NULL) {
+        return;
+      };
+      CDF::fill(this->data, this->currentType, value, this->currentSize);
+    }
+
     void allocateData(size_t size) {
       if (data != NULL) {
         CDF::freeData(&data);
