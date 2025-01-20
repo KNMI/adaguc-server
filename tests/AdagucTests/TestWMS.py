@@ -2431,6 +2431,37 @@ class TestWMS(unittest.TestCase):
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
     
+    def test_WMSGetMap_IrregularGrid_issue_316_double_precision_type(self):
+        """
+        This will test  a file where lon and lat variables have irregular spacing. These lat/lon variables are 2D. Dimensions have been changed to allow for generating another new image.
+        """
+        AdagucTestTools().cleanTempDir()
+        config = ADAGUC_PATH + "/data/config/adaguc.autoresource.xml"
+
+
+        filename = (
+            "test_WMSGetMap_IrregularGrid_issue_316_double_precision_type.png"
+        )
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "source=example_file_irregular_2Dlat2Dlon_grid_doubleprecision.nc&SERVICE=WMS&request=GetCapabilities",
+            {"ADAGUC_CONFIG": config},
+        )
+
+        self.assertEqual(status, 0)
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "source=example_file_irregular_2Dlat2Dlon_grid_doubleprecision.nc&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=data_var_1&WIDTH=512&HEIGHT=320&CRS=EPSG%3A3857&BBOX=-162669.9922884648,6411680.00083944,1827705.159150465,10780913.16460056&STYLES=auto/nearest&FORMAT=image/png&TRANSPARENT=FALSE&BGCOLOR=0xFF0000&DIM_extra=0.8&time=2017-01-01T00:11:00Z&colorscalerange=0,2&",
+            {"ADAGUC_CONFIG": config},
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
+    
+    
     def test_WMSGetMap_error_on_wrong_dataset(self):
         AdagucTestTools().cleanTempDir()
         status, data, headers = AdagucTestTools().runADAGUCServer(
@@ -2598,3 +2629,37 @@ class TestWMS(unittest.TestCase):
             data.getvalue(),
             AdagucTestTools().readfromfile(self.expectedoutputsspath +
                                            filename))
+
+
+
+    def test_WMSGetCapabilities_403_default_time_referenced_to_forecast_time(self):
+        """
+        See https://github.com/KNMI/adaguc-server/issues/403
+        """
+        AdagucTestTools().cleanTempDir()
+
+        config = (
+            ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,"
+            + ADAGUC_PATH
+            + "/data/config/datasets/adaguc.tests.403_default_time_referenced_to_forecast_time.xml"
+        )
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=["--updatedb", "--config", config], env=self.env, isCGI=False
+        )
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSGetCapabilities_403_default_time_referenced_to_forecast_time.xml"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.tests.403_default_time_referenced_to_forecast_time&service=WMS&request=GetCapabilities",
+            {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml"},
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertTrue(
+            AdagucTestTools().compareGetCapabilitiesXML(
+                self.testresultspath + filename, self.expectedoutputsspath + filename
+            )
+        )
