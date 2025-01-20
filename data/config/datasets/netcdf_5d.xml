@@ -3,16 +3,6 @@
 
   <OgcApiFeatures/>
   <OgcApiEdr>
-    <EdrCollection name="data_5d" time_interval="R9/2017-01-01T00:25:00Z/PT5M" vertical_name="height">
-      <EdrParameter name="data" unit="unit"/>
-      <EdrParameter
-                name="data_extra_metadata"
-                unit="°C"
-                standard_name="air_temperature"
-                observed_property_label="Air temperature"
-                parameter_label="Air temperature, 2 metre" />
-
-    </EdrCollection>
   </OgcApiEdr>
 
   <!-- Custom styles -->
@@ -41,15 +31,17 @@
   <Layer type="database">
     <FilePath filter="^nc_5D_.*\.nc$">{ADAGUC_PATH}/data/datasets/netcdf_5dims</FilePath>
     <Variable>data</Variable>
+    <Collection>data_5d</Collection>
     <Styles>testdata</Styles>
 
   </Layer>
 
   <Layer type="database">
     <Name>data_extra_metadata</Name>
-    <Title>data_extra_metadata</Title>
+    <Title>data extra metadata</Title>
     <FilePath filter="^nc_5D_.*\.nc$">{ADAGUC_PATH}/data/datasets/netcdf_5dims</FilePath>
-    <Variable>data</Variable>
+    <Variable standard_name="extra_metadata">data</Variable>
+    <Collection>data_5d</Collection>
     <Styles>testdata</Styles>
 
   </Layer>

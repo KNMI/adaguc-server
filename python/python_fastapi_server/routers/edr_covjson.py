@@ -11,6 +11,7 @@ KNMI
 import itertools
 import math
 from datetime import datetime, timezone
+from copy import deepcopy
 
 from covjson_pydantic.coverage import Coverage, CoverageCollection
 from covjson_pydantic.domain import Domain, ValuesAxis
@@ -45,7 +46,7 @@ def covjson_from_resp(dats, metadata):
     Returns a coverage json from a Adaguc WMS GetFeatureInfo request
     """
     covjson_list = []
-    dataset_name = list(metadata.keys())[0].split(".")[0]
+    dataset_name = list(metadata.keys())[0].rsplit(".")[0]
     for dat in dats:
         if len(dat["data"]):
             (lon, lat) = dat["point"]["coords"].split(",")
@@ -188,6 +189,7 @@ def covjson_from_resp(dats, metadata):
             ]
 
             if separate_timesteps:
+                index = 0
                 for time_step in time_steps:
                     time_step_axes: dict[str, ValuesAxis] = {
                         "x": ValuesAxis[float](values=[lon]),
@@ -206,20 +208,27 @@ def covjson_from_resp(dats, metadata):
                         axes=time_step_axes,
                         referencing=referencing,
                     )
+                    step_ranges = deepcopy(ranges)
+                    step_ranges[dat["name"]]["values"] = ranges[dat["name"]]["values"][
+                        index :: len(time_steps)
+                    ]
+                    step_ranges[dat["name"]]["shape"][1] = 1
+
                     covjson = Coverage(
                         id=f"coverage_{(len(covjson_list)+1)}-{time_step}",
                         domain=time_step_domain,
-                        ranges=ranges,
+                        ranges=step_ranges,
                         parameters=parameters,
                     )
                     covjson_list.append(covjson)
+                    index += 1
             else:
                 if len(custom_dim_values) > 0:
                     step_len = math.prod(shape)
-                    for custom_dim_value_idx, custom_dim_value in enumerate(custom_dim_values)):
-                        custom = {
-                            f"custom:{custom_name}": custom_dim_value
-                        }
+                    for custom_dim_value_idx, custom_dim_value in enumerate(
+                        custom_dim_values
+                    ):
+                        custom = {f"custom:{custom_name}": custom_dim_value}
                         domain = Domain(
                             domainType=domain_type,
                             axes=axes,

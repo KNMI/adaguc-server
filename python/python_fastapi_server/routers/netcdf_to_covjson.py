@@ -89,9 +89,9 @@ def get_proj_info_from_proj_string(projstring: str) -> GeoReferenceInfo:
 
 
 def get_dim(metadata: dict, dimname: str):
-    for d in metadata["dims"]:
-        if dimname == metadata["dims"][d]["cdfName"]:
-            return metadata["dims"][d]
+    for dim in metadata["dims"]:
+        if dimname == metadata["dims"][dim]["cdfName"]:
+            return metadata["dims"][dim]
     return {}
 
 
@@ -150,9 +150,11 @@ def netcdf_to_covjson(
                         continue
                 ncvar = netcdfdataset.variables[dimname]
                 if ncvar.size >= 1 and dimname not in ["x", "y", "time"]:
-                    if not (
-                        "isvertical" in metadata[layer_name]["dims"][layer_dim_name]
-                        and metadata[layer_name]["dims"][layer_dim_name]["isvertical"]
+                    if (
+                        not metadata[layer_name]["dims"][layer_dim_name].get(
+                            "isvertical"
+                        )
+                        is True
                     ):
                         custom_dim_name = netcdfdimname_to_covdimname.get(
                             dimname, dimname
@@ -160,11 +162,9 @@ def netcdf_to_covjson(
                         custom_dim_values = ncvar[:]
                         continue
                 coverage_axis_name = netcdfdimname_to_covdimname.get(dimname, dimname)
-                if (
-                    dimname not in ["x", "y", "time"]
-                    and "isvertical" in metadata[layer_name]["dims"][layer_dim_name]
-                    and metadata[layer_name]["dims"][layer_dim_name]["isvertical"]
-                ):
+                if dimname not in ["x", "y", "time"] and metadata[layer_name]["dims"][
+                    layer_dim_name
+                ].get("isvertical"):
                     coverage_axis_name = "z"
                 axisnames.append(coverage_axis_name)
                 # Fill in the shape object for the NdArray

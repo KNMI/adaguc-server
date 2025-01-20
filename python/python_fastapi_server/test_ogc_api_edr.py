@@ -71,10 +71,10 @@ def test_collections(client: TestClient):
     assert len(colls["collections"]) == 3
 
     first_collection = colls["collections"][0]
-    assert first_collection.get("id") == "adaguc.tests.arcus_uwcw"
+    assert first_collection.get("id") == "adaguc.tests.arcus_uwcw.hagl_member"
 
     coll_5d = colls["collections"][1]
-    assert coll_5d.get("id") == "netcdf_5d"
+    assert coll_5d.get("id") == "netcdf_5d.data_5d"
     assert all(
         ext_name in coll_5d["extent"]
         for ext_name in ("spatial", "temporal", "vertical", "custom")
@@ -104,7 +104,10 @@ def test_collections(client: TestClient):
         "unit": {
             "symbol": {"value": "km", "type": "http://www.opengis.net/def/uom/UCUM"}
         },
-        "observedProperty": {"id": "data", "label": "data"},
+        "observedProperty": {
+            "id": "https://vocab.nerc.ac.uk/standard_name/data",
+            "label": "data",
+        },
     }
 
     assert "data_extra_metadata" in parameter_names
@@ -114,7 +117,7 @@ def test_collections(client: TestClient):
     assert data_extra_metadata == {
         "type": "Parameter",
         "id": "data_extra_metadata",
-        "label": "Air temperature, 2 metre",
+        "label": "data extra metadata",
         "unit": {
             "symbol": {
                 "value": "km",
@@ -122,8 +125,8 @@ def test_collections(client: TestClient):
             }
         },
         "observedProperty": {
-            "id": "https://vocab.nerc.ac.uk/standard_name/air_temperature",
-            "label": "Air temperature",
+            "id": "https://vocab.nerc.ac.uk/standard_name/data",
+            "label": "data extra metadata",
         },
     }
 

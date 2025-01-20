@@ -65,6 +65,7 @@ int getLayerBaseMetadataAsJson(MetadataLayer *metadataLayer, json &layerMetadata
       variable["units"] = lv.units;
       variable["label"] = lv.label;
       variable["variableName"] = lv.variableName;
+      variable["standard_name"] = lv.standard_name;
       variables.push_back(variable);
     }
     layerMetadataItem["variables"] = variables;
@@ -213,6 +214,7 @@ int loadLayerMetadataStructFromMetadataDb(MetadataLayer *metadataLayer) {
           .variableName = variableProps["variableName"].get<std::string>().c_str(),
           .units = variableProps["units"].get<std::string>().c_str(),
           .label = variableProps["label"].get<std::string>().c_str(),
+          .standard_name = variableProps["standard_name"].get<std::string>().c_str(),
       };
       metadataLayer->layerMetadata.variableList.push_back(variable);
     }

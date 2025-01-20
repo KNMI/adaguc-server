@@ -95,7 +95,7 @@ async def get_coll_inst_cube(
     if metadata is None:
         raise EdrException(code=400, description=f"{collection_name} unknown")
 
-    dataset_name = collection_name.split(".", 1)[0]
+    dataset_name = collection_name.rsplit(".", 1)[-1]
     vertical_dim = ""
     vertical_name = None
     custom_name = None

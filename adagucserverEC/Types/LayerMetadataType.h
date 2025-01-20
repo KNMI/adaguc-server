@@ -38,6 +38,7 @@ struct LayerMetadataVariable {
   CT::string variableName;
   CT::string units;
   CT::string label;
+  CT::string standard_name;
 };
 
 struct LayerMetadata {

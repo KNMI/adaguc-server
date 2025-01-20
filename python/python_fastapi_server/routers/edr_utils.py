@@ -168,8 +168,9 @@ def get_extent_from_md(metadata: dict, parameter: str):
     customlist: list = get_custom_dims_for_collection(metadata, parameter)
 
     # Custom can be a list of custom dimensions, like ensembles, thresholds
-    custom = []
+    custom = None
     if customlist is not None:
+        custom = []
         for custom_el in customlist:
             custom.append(Custom(**custom_el))
 
@@ -203,8 +204,8 @@ def get_collectioninfo_from_md(
     """
     logger.info("get_collectioninfo_from_md(%s, %s)", collection_name, instance)
 
-    dataset_name = collection_name.split(".")[0]
-    terms = collection_name.split(".")
+    dataset_name = collection_name.rsplit(".", 1)[0]
+    terms = collection_name.rsplit(".", 1)
     if len(terms) == 1:
         subcollection_name = None
     else:
@@ -217,7 +218,17 @@ def get_collectioninfo_from_md(
     for param in metadata:
         if param not in ["baselayer", "overlay"]:
             first_param = param
-    if metadata[first_param]["layer"]["variables"] is None:
+            break
+    print(
+        "FIRST:",
+        first_param,
+        collection_name,
+        dataset_name,
+        subcollection_name,
+        list(metadata.keys()),
+        [p for p in metadata],
+    )
+    if first_param is None or metadata[first_param]["layer"]["variables"] is None:
         return None
 
     base_url = get_base_url() + f"/edr/collections/{collection_name}"
@@ -331,6 +342,7 @@ def get_collectioninfo_from_md(
         collection_names = [f"{dataset_name}.{subcollection_name}"]
     else:
         collection_names = list(parameter_info.keys())
+    print("SUB:", subcollection_name, collection_names)
     for collection_name in collection_names:
         if instance is None:
             collection = Collection(
@@ -495,7 +507,7 @@ def get_params_for_collection(
     """
     Returns a dictionary with parameters for given EDR collection
     """
-    dataset_name = collection_name.split(".")[0]
+    dataset_name = collection_name.rsplit("., 1")[0]
     parameter_names = {}
     for param_id in metadata:
         if metadata[param_id]["dims"] is None:
@@ -550,7 +562,7 @@ async def get_metadata(collection_name=None):
     logger.info("callADAGUC by dataset")
     urlrequest = "service=wms&version=1.3.0&request=getmetadata&format=application/json"
     if collection_name is not None:
-        dataset_name = collection_name.split(".", 1)[0]
+        dataset_name = collection_name.rsplit(".", 1)[0]
         urlrequest = f"dataset={dataset_name}&service=wms&version=1.3.0&request=getmetadata&format=application/json"
     status, response, headers = await call_adaguc(url=urlrequest.encode("UTF-8"))
     #        ttl = get_ttl_from_adaguc_headers(headers)
@@ -559,6 +571,9 @@ async def get_metadata(collection_name=None):
     if status == 0:
         metadata = json.loads(response.getvalue().decode("UTF-8"))
         collection_metadata = handle_metadata(metadata)
+        print(
+            f"METADATA({collection_name}:\n{json.dumps(collection_metadata, indent=2)}"
+        )
         if collection_metadata is None:
             return None
         if collection_name is None:
@@ -583,7 +598,8 @@ def get_vertical_dim_for_collection(metadata: dict, parameter: str = None):
 
     for dim_name in layer["dims"]:
         if dim_name in ["elevation"] or (
-            "isvertical" in layer["dims"] and layer["dims"]["isvertical"] == "true"
+            "isvertical" in layer["dims"][dim_name]
+            and layer["dims"][dim_name].get("isvertical")
         ):
             values = layer["dims"][dim_name]["values"].split(",")
             vertical_dim = {
@@ -614,7 +630,9 @@ def get_custom_dims_for_collection(metadata: dict, parameter: str = None):
         # default to first layer
         layer = metadata[list(metadata)[0]]
     for dim_name in layer["dims"]:
-        if not layer["dims"][dim_name]["hidden"]:
+        if not layer["dims"][dim_name]["hidden"] and not layer["dims"][dim_name].get(
+            "isvertical"
+        ):
             # Not needed for non custom dims:
             if dim_name not in [
                 "reference_time",
@@ -718,26 +736,32 @@ def get_time_values_for_range(rng: str) -> list[str]:
 VOCAB_ENDPOINT_URL = "https://vocab.nerc.ac.uk/standard_name/"
 
 
-def get_param_metadata(param_metadata: dict, dataset_name) -> dict:
+def get_param_metadata(param_metadata: dict, dataset_name: str) -> dict:
     """Composes parameter metadata based on the param_el and the wmslayer dictionaries
 
     Args:
         param_metadata (dict): The parameter / wms layer name to find
+        dataset_name (str): The name of the dataset
 
     Returns:
         dict: dictionary with all metadata required to construct a Edr Parameter object.
     """
+    print(f"get_param_metadata({json.dumps(param_metadata['layer'])}, {dataset_name})")
     wms_layer_name = param_metadata["layer"]["layername"]
     observed_property_id = wms_layer_name
-    parameter_label = param_metadata["layer"]["title"]
+    if "standard_name" in param_metadata["layer"]["variables"][0]:
+        observed_property_id = (
+            VOCAB_ENDPOINT_URL
+            + param_metadata["layer"]["variables"][0]["standard_name"]
+        )
+
+    parameter_label = param_metadata["layer"]["variables"][0]["label"]
     parameter_unit = param_metadata["layer"]["variables"][0]["units"]
     if len(parameter_unit) == 0:
         parameter_unit = "-^-"
+
     observed_property_label = param_metadata["layer"]["variables"][0]["label"]
-    if "standard_name" in param_metadata["layer"]["variables"][0]:
-        observed_property_id = (
-            VOCAB_ENDPOINT_URL + param_metadata["layer"]["variables"][0]
-        )
+
     if (
         "collection" in param_metadata["layer"]
         and len(param_metadata["layer"]["collection"]) > 0

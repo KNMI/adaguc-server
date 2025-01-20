@@ -157,7 +157,7 @@ async def get_point_value(
     custom_dims: str = None,
 ):
     """Returns information in EDR format for a given collection and position"""
-    dataset_name = collection_name.split(".", 1)[0]
+    dataset_name = collection_name.rsplit(".", 1)[0]
     urlrequest = (
         f"SERVICE=WMS&VERSION=1.3.0&REQUEST=GetPointValue&CRS=EPSG:4326"
         f"&DATASET={dataset_name}&QUERY_LAYERS={','.join(parameters)}"

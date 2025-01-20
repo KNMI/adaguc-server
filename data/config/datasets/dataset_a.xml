@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Configuration>
   <OgcApiFeatures/>
+  <OgcApiEdr/>
   <!--
   See https://dev.knmi.nl/projects/adagucserver/wiki/Dataset, for details
   This file can be included by using the adaguc.dataset.cgi?service=wms&DATASET=testdata& key value pair in the URL

@@ -6,16 +6,15 @@
   -->
   
 <OgcApiEdr>
-  <!-- <EdrCollection name="testcollection" time_interval="R4/{reference_time}+1/PT60M" vertical_name="height">
-       <EdrParameter name="testdata" unit="m2 s-2" standard_name="atmosphere_helicity" parameter_label="Absolute updraft helicity in atmosphere" observed_property_label="testdata"/>
-       <EdrParameter name="testdata2" unit="m2 s-2" standard_name="atmosphere_helicity2" parameter_label="Absolute updraft helicity in atmosphere 2" observed_property_label="testdata2"/>
-  </EdrCollection> -->
 </OgcApiEdr>
 
 
   <Layer type="database">
+    <Title>t_testdata</Title>
+    <Name>testdata</Name>
     <FilePath>{ADAGUC_PATH}/data/datasets/multi_dim.nc</FilePath>
-    <Variable>testdata</Variable>
+    <Variable standard_name="st_testdata">testdata</Variable>
+    <Collection>testcollection</Collection>
     <Styles>auto</Styles>
     <Dimension name="time" units="ISO8601" interval="PT1H" default="min">time</Dimension>
     <Dimension name="height" units="m" isvertical="true">height</Dimension>
@@ -23,8 +22,11 @@
   </Layer>
   
   <Layer type="database">
+    <Title>t_testdata2</Title>
+    <Name>testdata2</Name>
     <FilePath>{ADAGUC_PATH}/data/datasets/multi_dim.nc</FilePath>
-    <Variable>testdata2</Variable>
+    <Variable standard_name="st_testdata2">testdata2</Variable>
+    <Collection>testcollection</Collection>
     <Styles>auto</Styles>
     <Dimension name="time" units="ISO8601" interval="PT1H" default="min">time</Dimension>
     <Dimension name="height2" units="m" isvertical="true">height</Dimension>

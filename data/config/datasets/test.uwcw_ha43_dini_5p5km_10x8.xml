@@ -3,9 +3,6 @@
  
   <OgcApiFeatures/>
   <OgcApiEdr>
-    <EdrCollection name="uwcw_ha43_dini_5p5km_pl" vertical_name="pressure_level_in_hpa">
-      <EdrParameter name="air_temperature_pl" unit="°C" standard_name="air_temperature" parameter_label="Air temperature at pressure level" observed_property_label="Air temperature"/>
-    </EdrCollection>
   </OgcApiEdr>
 
 
@@ -59,6 +56,7 @@
     <Name>air_temperature_pl</Name>
     <Title>UWCW_HA43(DINI) Air temperature at pressure level</Title>
     <Variable>air-temperature-pl</Variable>
+    <Collection>pressure_level</Collection>
     <FilePath filter="^uwcw_ha43_dini_5p5km_air-temperature-pl_geoweb_nc_20240711T0.*_TEST_10x8\.nc$">{ADAGUC_PATH}data/datasets/ha43_dini/</FilePath>
     <Styles>temperature_wow</Styles>
     <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension>
