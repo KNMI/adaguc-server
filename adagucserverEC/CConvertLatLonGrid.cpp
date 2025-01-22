@@ -27,7 +27,7 @@
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
 
-#define CConvertLatLonGrid_DEBUG
+// #define CConvertLatLonGrid_DEBUG
 
 const char *CConvertLatLonGrid::className = "CConvertLatLonGrid";
 
@@ -112,6 +112,10 @@ bool CConvertLatLonGrid::isLatLonGrid(CDFObject *cdfObject) {
 
   bool hasXYDimensions = cdfObject->getDimensionNE("x") != NULL && cdfObject->getDimensionNE("y") != NULL;
   bool hasXYVariables = cdfObject->getVariableNE("x") != NULL && cdfObject->getVariableNE("y") != NULL;
+
+  CDF::Variable *latBndsVar = cdfObject->getVariableNE("lat_bnds");
+  CDF::Variable *lonBndsVar = cdfObject->getVariableNE("lon_bnds");
+  if ((latBndsVar != NULL) || (lonBndsVar != NULL)) return false;
 
   bool fixIrregular = checkIfIrregularLatLon(cdfObject);
 

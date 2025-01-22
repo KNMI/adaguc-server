@@ -1,3 +1,21 @@
+**Version 2.29.2 2024-12-23**
+- Fixed issue with irregular grids for SSS SMOS L4 OI - LOPS-v2021 and Global Ocean - Coriolis Observation Re-Analysis CORA5.2. Added test (Issue #316)
+
+**Version 2.29.1 2024-12-23**
+- Default value for time dimension can now be based on default value of reference_time dimension (Issue #403)
+
+**Version 2.29.0 2024-11-11**
+- Adds support for grids where the data cells are defined by lat_bnds and lon_bnds parameters describing the cell bounds.
+
+**Version 2.28.5 2024-11-04**
+- Added Solar Terminator post-processor to use in combination with LiveUpdate layer type. 
+
+**Version 2.28.4 2024-11-12**
+- Fix bug where autofinddataset would not use Layer configurations which do not have a type configured
+
+**Version 2.28.3 2024-10-24**
+- Fix bug where directory reader could not figure out the file type (opendir ent->d_type == DT_UNKNOWN)
+
 **Version 2.28.2 2024-10-23**
 - Fix bug which caused sheduled metadata updates to only work intermittently.
 

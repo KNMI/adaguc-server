@@ -723,6 +723,11 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
         if (dataSources[d]->getDataObject(0)->cdfObject->getAttributeNE("ADAGUC_GEOJSON") != NULL) {
           openAll = true;
         }
+
+        if (dataSources[d]->getDataObject(0)->cdfObject->getAttributeNE("USE_ADAGUC_LATLONBNDS_CONVERTER") != NULL) {
+          openAll = true;
+        }
+
         if (dataSources[d]->cfgLayer->FilePath.size() == 1 && dataSources[d]->cfgLayer->FilePath[0]->attr.gfi_openall.equals("true")) {
           openAll = true;
         }

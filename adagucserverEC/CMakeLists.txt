@@ -47,10 +47,16 @@ add_library(
     CConvertLatLonGrid.cpp
     CConvertLatLonGridHeader.cpp
     CConvertLatLonGridData.cpp
+    CConvertLatLonBnds.h
+    CConvertLatLonBnds.cpp
+    CConvertLatLonBndsHeader.cpp
+    CConvertLatLonBndsData.cpp
     CConvertTROPOMI.cpp
     CConvertTROPOMI.h
     CConvertUGRIDMesh.cpp
     CConvertUGRIDMesh.h
+    CConvertLatLonBnds.cpp
+    CConvertLatLonBnds.h
     CCreateHistogram.cpp
     CCreateHistogram.h
     CCreateScaleBar.cpp
@@ -106,6 +112,10 @@ add_library(
     CDataPostProcessors/CDataPostProcessor_IncludeLayer.h
     CDataPostProcessors/CDataPostProcessor_Operator.cpp
     CDataPostProcessors/CDataPostProcessor_Operator.h
+    CDataPostProcessors/CDataPostProcessor_SolarTerminator.h
+    CDataPostProcessors/CDataPostProcessor_SolarTerminator.cpp
+    CDataPostProcessors/solar/solar_terminator.h
+    CDataPostProcessors/solar/solar_terminator.cpp
     CDataPostProcessors/CDataPostProcessor_WFP.h
     CDataPostProcessors/CDataPostProcessor_WFP.cpp
     CDataReader.cpp
@@ -190,12 +200,15 @@ add_library(
     json.c
     json.h
     LayerTypeLiveUpdate/LayerTypeLiveUpdate.cpp
-    LayerTypeLiveUpdate/LayerTypeLiveUpdate.h  
+    LayerTypeLiveUpdate/LayerTypeLiveUpdate.h
     Types/BBOX.h
     Types/BBOX.cpp
     Types/ProjectionStore.h
-    Types/ProjectionStore.cpp 
+    Types/ProjectionStore.cpp
     testadagucserver.cpp
+    testtimeutils.cpp
+    timeutils.cpp
+    timeutils.h
 )
 
 target_include_directories(adagucserverEC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${Cairo_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIRS} ${PostgreSQL_INCLUDE_DIRS} ${GDAL_INCLUDE_DIRS} ${PROJ_INCLUDE_DIR})
@@ -204,3 +217,7 @@ target_link_libraries(adagucserverEC CCDFDataModel hclasses ${NetCDF_LIBRARIES} 
 # Build unit test executable
 add_executable(testadagucserver testadagucserver.cpp)
 target_link_libraries(testadagucserver PRIVATE adagucserverEC CCDFDataModel hclasses CppUnitLite)
+
+# Build unit tests for timeutils
+add_executable(testtimeutils testtimeutils.cpp)
+target_link_libraries(testtimeutils PRIVATE adagucserverEC hclasses CppUnitLite)

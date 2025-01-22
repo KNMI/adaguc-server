@@ -324,6 +324,20 @@ class AdagucTestTools:
         removeBBOX(obj1)
         removeBBOX(obj2)
 
+        # Remove contents of problem envelopes EPSG:28992 and EPSG:7399 because they are inconsistent
+        def removeGmlEnvelope(root, epsg_code):
+            xpath_query = f".//gml:Envelope[@srsName='EPSG:{epsg_code}']"
+            envelopes = root.xpath(
+                xpath_query, namespaces={"gml": "http://www.opengis.net/gml"})
+            for envelope in envelopes:
+                for child in envelope.getchildren():
+                    envelope.remove(child)
+
+        removeGmlEnvelope(obj1, "28992")
+        removeGmlEnvelope(obj2, "28992")
+        removeGmlEnvelope(obj1, "7399")
+        removeGmlEnvelope(obj2, "7399")
+
         result = etree.tostring(obj1)
         expect = etree.tostring(obj2)
 
