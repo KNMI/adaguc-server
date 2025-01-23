@@ -100,7 +100,7 @@ def test_collections(client: TestClient):
     assert data == {
         "type": "Parameter",
         "id": "data",
-        "label": "data (data)",
+        "label": "data",
         "unit": {
             "symbol": {"value": "km", "type": "http://www.opengis.net/def/uom/UCUM"}
         },
@@ -117,7 +117,7 @@ def test_collections(client: TestClient):
     assert data_extra_metadata == {
         "type": "Parameter",
         "id": "data_extra_metadata",
-        "label": "data extra metadata",
+        "label": "data",
         "unit": {
             "symbol": {
                 "value": "km",
@@ -126,7 +126,7 @@ def test_collections(client: TestClient):
         },
         "observedProperty": {
             "id": "https://vocab.nerc.ac.uk/standard_name/data",
-            "label": "data extra metadata",
+            "label": "data",
         },
     }
 
