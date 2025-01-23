@@ -79,7 +79,7 @@ fi
 if [[ -n "${ADAGUC_DATASET}" ]]; then
   STATUSCODE=0
   echo "Scanning full dataset [${ADAGUC_DATASET}]:"
-  command="${ADAGUC_PATH}/bin/adagucserver --updatedb --verboseoff --config ${ADAGUC_CONFIG},${ADAGUC_DATASET}"
+  command="${ADAGUC_PATH}/bin/adagucserver --updatedb --config ${ADAGUC_CONFIG},${ADAGUC_DATASET}"
   echo $command
   $command
   OUT=$?
