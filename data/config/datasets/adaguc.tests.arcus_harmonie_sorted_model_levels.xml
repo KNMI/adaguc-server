@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+    <Layer type="database">
+        <Name>air-temperature-ml</Name>
+        <Title>air-temperature-ml</Title>
+        <Variable>air-temperature-ml</Variable>
+        <FilePath
+            filter="^netcdf_air-temperature-ml_1_time_90_levels\.nc$">
+            {ADAGUC_PATH}data/datasets/arcus_90_model_levels/</FilePath>
+        <Styles>auto</Styles>
+        <Dimension name="forecast_reference_time" units="ISO8601" default="max">reference_time</Dimension>
+        <Dimension name="temp_at_ml" units="hPa" default="max" hidden="false">model_level_number</Dimension>
+        <Dimension name="time" units="ISO8601" interval="PT1H" default="min">time</Dimension>
+
+    </Layer>
+</Configuration>
