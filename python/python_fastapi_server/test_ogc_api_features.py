@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 
@@ -6,7 +5,7 @@ import pytest
 from adaguc.AdagucTestTools import AdagucTestTools
 from fastapi.testclient import TestClient
 
-from main import app
+from python_fastapi_server.main import app
 
 logger = logging.getLogger(__name__)
 
@@ -49,12 +48,12 @@ def test_root(client: TestClient):
     # print("getcap:", resp.text)
 
     resp = client.get("/ogcapi/")
-    #print("resp:", resp, resp.json())
+    # print("resp:", resp, resp.json())
     assert resp.json()["description"] == "ADAGUC OGCAPI-Features server"
 
 
 def test_collections(client: TestClient):
     resp = client.get("/ogcapi/collections")
     colls = resp.json()
-    #print(json.dumps(colls["collections"][1], indent=2))
+    # print(json.dumps(colls["collections"][1], indent=2))
     assert len(colls["collections"]) == 2

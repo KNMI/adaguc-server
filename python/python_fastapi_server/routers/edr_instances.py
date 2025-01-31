@@ -12,9 +12,9 @@ from edr_pydantic.collections import Collection, Instance, Instances
 from edr_pydantic.link import Link
 from fastapi import APIRouter, Request, Response
 
-from .edr_exception import EdrException
+from .utils.edr_exception import EdrException
 
-from .edr_utils import (
+from .utils.edr_utils import (
     generate_max_age,
     get_base_url,
     get_metadata,

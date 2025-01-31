@@ -30,7 +30,7 @@ from .models.ogcapifeatures_1_model import (
     Spatial,
     Type,
 )
-from .ogcapi_tools import (
+from .utils.ogcapi_tools import (
     calculate_coords,
     call_adaguc,
     feature_from_dat,

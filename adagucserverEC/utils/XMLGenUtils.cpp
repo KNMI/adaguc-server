@@ -45,11 +45,14 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
     metadataLayer->layerMetadata.isQueryable = 1;
   }
 
-  // Get collection for layer
-
-  if (metadataLayer->layer->Collection.size() > 0) {
-    metadataLayer->layerMetadata.collection.copy(metadataLayer->layer->Collection[0]->value);
+  // Get collection for layer from Group def
+  CT::string collection = "";
+  if (metadataLayer->layer->Group.size() > 0) {
+    if (metadataLayer->layer->Group[0]->attr.collection.empty() == false) {
+      collection.copy(metadataLayer->layer->Group[0]->attr.collection.c_str());
+    }
   }
+  metadataLayer->layerMetadata.collection.copy(&collection);
 
   // Get Abstract
   if (metadataLayer->dataSource->cfgLayer->Abstract.size() > 0) {
@@ -243,8 +246,7 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
         dim.defaultValue.copy(fileDate.c_str());
         dim.hasMultipleValues = true;
         dim.hidden = false;
-        dim.isvertical = false;
-        dim.iscustom = false;
+        dim.type = "dimtype_none";
         metadataLayer->layerMetadata.dimList.push_back(dim);
         break;
       }
@@ -258,8 +260,7 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
       // Create a new dim to store in the layer
       LayerMetadataDim dim;
       dim.hidden = false;
-      dim.isvertical = false;
-      dim.iscustom = false;
+      dim.type = "dimtype_none";
       dim.serviceName.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
       dim.cdfName.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
 
@@ -594,15 +595,7 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
         dim.hidden = true;
       }
 
-      // Check if dim is vertical dim
-      if (metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.isvertical == true) {
-        dim.isvertical = true;
-      }
-
-      // Check if dim is custom dim
-      if (metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.iscustom == true) {
-        dim.iscustom = true;
-      }
+      dim.type = metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.type;
 
       metadataLayer->layerMetadata.dimList.push_back(dim);
     }

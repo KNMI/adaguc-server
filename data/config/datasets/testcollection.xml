@@ -5,31 +5,28 @@
   This file can be included by using the adaguc.dataset.cgi?service=wms&DATASET=testdata& key value pair in the URL 
   -->
   
-<OgcApiEdr>
-</OgcApiEdr>
-
 
   <Layer type="database">
+    <Group collection="testcollection"/>
     <Title>t_testdata</Title>
     <Name>testdata</Name>
     <FilePath>{ADAGUC_PATH}/data/datasets/multi_dim.nc</FilePath>
     <Variable standard_name="st_testdata">testdata</Variable>
-    <Collection>testcollection</Collection>
     <Styles>auto</Styles>
     <Dimension name="time" units="ISO8601" interval="PT1H" default="min">time</Dimension>
-    <Dimension name="height" units="m" isvertical="true">height</Dimension>
+    <Dimension name="height" units="m" type="dimtype_vertical">height</Dimension>
     <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension> 
   </Layer>
   
   <Layer type="database">
+    <Group collection="testcollection"/>
     <Title>t_testdata2</Title>
     <Name>testdata2</Name>
     <FilePath>{ADAGUC_PATH}/data/datasets/multi_dim.nc</FilePath>
     <Variable standard_name="st_testdata2">testdata2</Variable>
-    <Collection>testcollection</Collection>
     <Styles>auto</Styles>
     <Dimension name="time" units="ISO8601" interval="PT1H" default="min">time</Dimension>
-    <Dimension name="height2" units="m" isvertical="true">height</Dimension>
+    <Dimension name="height2" units="m" type="dimtype_vertical">height</Dimension>
     <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension> 
   </Layer>
   

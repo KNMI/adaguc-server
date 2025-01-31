@@ -2,8 +2,6 @@
 <Configuration>
 
   <OgcApiFeatures/>
-  <OgcApiEdr>
-  </OgcApiEdr>
 
   <!-- Custom styles -->
   <Style name="testdata">
@@ -29,19 +27,19 @@
   </Style>
 
   <Layer type="database">
+    <Group collection="data_5d"/>
     <FilePath filter="^nc_5D_.*\.nc$">{ADAGUC_PATH}/data/datasets/netcdf_5dims</FilePath>
     <Variable>data</Variable>
-    <Collection>data_5d</Collection>
     <Styles>testdata</Styles>
 
   </Layer>
 
   <Layer type="database">
+    <Group collection="data_5d"/>
     <Name>data_extra_metadata</Name>
     <Title>data extra metadata</Title>
     <FilePath filter="^nc_5D_.*\.nc$">{ADAGUC_PATH}/data/datasets/netcdf_5dims</FilePath>
     <Variable standard_name="extra_metadata">data</Variable>
-    <Collection>data_5d</Collection>
     <Styles>testdata</Styles>
 
   </Layer>

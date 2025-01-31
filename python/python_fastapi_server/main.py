@@ -11,16 +11,16 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from asgi_logger import AccessLoggerMiddleware
 
-from routers.autowms import autowms_router
-from routers.edr import edrApiApp
-from routers.healthcheck import health_check_router
-from routers.middleware import FixSchemeMiddleware
-from routers.ogcapi import ogcApiApp
-from routers.opendap import opendapRouter
-from routers.wmswcs import testadaguc, wmsWcsRouter
-from routers.caching_middleware import CachingMiddleware
-from routers.setup_adaguc import setup_adaguc
-from configure_logging import configure_logging
+from python_fastapi_server.routers.autowms import autowms_router
+from python_fastapi_server.routers.edr import edrApiApp
+from python_fastapi_server.routers.healthcheck import health_check_router
+from python_fastapi_server.routers.middleware import FixSchemeMiddleware
+from python_fastapi_server.routers.ogcapi import ogcApiApp
+from python_fastapi_server.routers.opendap import opendapRouter
+from python_fastapi_server.routers.wmswcs import testadaguc, wmsWcsRouter
+from python_fastapi_server.routers.caching_middleware import CachingMiddleware
+from python_fastapi_server.routers.setup_adaguc import setup_adaguc
+from .configure_logging import configure_logging
 
 configure_logging(logging)
 

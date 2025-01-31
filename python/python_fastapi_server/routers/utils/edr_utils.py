@@ -16,7 +16,6 @@ from datetime import datetime, timezone
 from typing import Union, List
 
 from dateutil.relativedelta import relativedelta
-from defusedxml.ElementTree import ParseError, parse
 from edr_pydantic.collections import Collection, Instance
 from edr_pydantic.data_queries import DataQueries, EDRQuery
 from edr_pydantic.extent import Custom, Extent, Spatial, Temporal, Vertical
@@ -27,12 +26,13 @@ from edr_pydantic.unit import Symbol, Unit
 from edr_pydantic.variables import Variables
 from fastapi import Request
 
-from .edr_exception import EdrException
-
-from .edr_locations import location_list
 from .ogcapi_tools import call_adaguc
 
 logger = logging.getLogger(__name__)
+
+location_list = [
+    {"id": "06260", "name": "De Bilt", "coordinates": [5.1797, 52.0989]},
+]
 
 
 SYMBOL_TYPE_URL = "http://www.opengis.net/def/uom/UCUM"
@@ -219,15 +219,6 @@ def get_collectioninfo_from_md(
         if param not in ["baselayer", "overlay"]:
             first_param = param
             break
-    print(
-        "FIRST:",
-        first_param,
-        collection_name,
-        dataset_name,
-        subcollection_name,
-        list(metadata.keys()),
-        [p for p in metadata],
-    )
     if first_param is None or metadata[first_param]["layer"]["variables"] is None:
         return None
 
@@ -342,7 +333,6 @@ def get_collectioninfo_from_md(
         collection_names = [f"{dataset_name}.{subcollection_name}"]
     else:
         collection_names = list(parameter_info.keys())
-    print("SUB:", subcollection_name, collection_names)
     for collection_name in collection_names:
         if instance is None:
             collection = Collection(
@@ -571,9 +561,6 @@ async def get_metadata(collection_name=None):
     if status == 0:
         metadata = json.loads(response.getvalue().decode("UTF-8"))
         collection_metadata = handle_metadata(metadata)
-        print(
-            f"METADATA({collection_name}:\n{json.dumps(collection_metadata, indent=2)}"
-        )
         if collection_metadata is None:
             return None
         if collection_name is None:
@@ -597,9 +584,9 @@ def get_vertical_dim_for_collection(metadata: dict, parameter: str = None):
         layer = metadata[list(metadata)[0]]
 
     for dim_name in layer["dims"]:
-        if dim_name in ["elevation"] or (
-            "isvertical" in layer["dims"][dim_name]
-            and layer["dims"][dim_name].get("isvertical")
+        if (
+            dim_name in ["elevation"]
+            or layer["dims"][dim_name]["type"] == "dimtype_vertical"
         ):
             values = layer["dims"][dim_name]["values"].split(",")
             vertical_dim = {
@@ -630,8 +617,9 @@ def get_custom_dims_for_collection(metadata: dict, parameter: str = None):
         # default to first layer
         layer = metadata[list(metadata)[0]]
     for dim_name in layer["dims"]:
-        if not layer["dims"][dim_name]["hidden"] and not layer["dims"][dim_name].get(
-            "isvertical"
+        if (
+            not layer["dims"][dim_name]["hidden"]
+            and not layer["dims"][dim_name]["type"] == "dimtype_vertical"
         ):
             # Not needed for non custom dims:
             if dim_name not in [
@@ -746,7 +734,6 @@ def get_param_metadata(param_metadata: dict, dataset_name: str) -> dict:
     Returns:
         dict: dictionary with all metadata required to construct a Edr Parameter object.
     """
-    print(f"get_param_metadata({json.dumps(param_metadata['layer'])}, {dataset_name})")
     wms_layer_name = param_metadata["layer"]["layername"]
     observed_property_id = wms_layer_name
     if "standard_name" in param_metadata["layer"]["variables"][0]:

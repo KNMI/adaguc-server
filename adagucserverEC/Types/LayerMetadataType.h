@@ -11,10 +11,9 @@ struct LayerMetadataDim {
   CT::string units;
   CT::string values;
   CT::string defaultValue;
+  CT::string type;
   int hasMultipleValues;
   bool hidden;
-  bool isvertical;
-  bool iscustom;
 };
 
 struct LayerMetadataProjection {

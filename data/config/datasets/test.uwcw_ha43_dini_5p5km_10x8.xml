@@ -2,8 +2,6 @@
 <Configuration>
  
   <OgcApiFeatures/>
-  <OgcApiEdr>
-  </OgcApiEdr>
 
 
  <Legend name="temperature_wow" type="interval">
@@ -52,11 +50,11 @@
   </Style>
 
 
-  <Layer type="database">
+  <Layer type="database">"
+    <Group collection="pressure_level"/>
     <Name>air_temperature_pl</Name>
     <Title>UWCW_HA43(DINI) Air temperature at pressure level</Title>
     <Variable>air-temperature-pl</Variable>
-    <Collection>pressure_level</Collection>
     <FilePath filter="^uwcw_ha43_dini_5p5km_air-temperature-pl_geoweb_nc_20240711T0.*_TEST_10x8\.nc$">{ADAGUC_PATH}data/datasets/ha43_dini/</FilePath>
     <Styles>temperature_wow</Styles>
     <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension>

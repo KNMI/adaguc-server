@@ -12,13 +12,11 @@ import logging
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import RedirectResponse
 
+from .utils.edr_utils import location_list
+
 router = APIRouter()
 logger = logging.getLogger(__name__)
 logger.debug("Starting EDR")
-
-location_list = [
-    {"id": "06260", "name": "De Bilt", "coordinates": [5.1797, 52.0989]},
-]
 
 
 @router.get("/collections/{_coll}/locations")

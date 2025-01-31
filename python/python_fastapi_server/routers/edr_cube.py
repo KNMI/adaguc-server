@@ -17,14 +17,15 @@ from fastapi import HTTPException, Query, Request, APIRouter
 from netCDF4 import Dataset
 
 from .covjsonresponse import CovJSONResponse
-from .edr_utils import (
+from .utils.edr_utils import (
     get_ref_times_for_coll,
     instance_to_iso,
     get_metadata,
-    EdrException,
 )
+from .utils.edr_exception import EdrException
+
 from .netcdf_to_covjson import netcdf_to_covjson
-from .ogcapi_tools import call_adaguc
+from .utils.ogcapi_tools import call_adaguc
 
 router = APIRouter()
 
@@ -104,9 +105,9 @@ async def get_coll_inst_cube(
         "dims"
     ].values():
         if not param_dim["hidden"]:
-            if "isvertical" in param_dim and param_dim["isvertical"]:
+            if param_dim["type"] == "dimtype_vertical":
                 vertical_name = param_dim["serviceName"]
-            elif "iscustom" in param_dim and param_dim["iscustom"]:
+            elif param_dim["type"] == "dimtype_custom":
                 custom_name = param_dim["serviceName"]
     if z_par:
         if vertical_name is not None:

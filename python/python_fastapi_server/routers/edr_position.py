@@ -18,8 +18,8 @@ from typing_extensions import Annotated
 
 from .covjsonresponse import CovJSONResponse
 from .edr_covjson import covjson_from_resp
-from .edr_exception import EdrException
-from .edr_utils import (
+from .utils.edr_exception import EdrException
+from .utils.edr_utils import (
     call_adaguc,
     generate_max_age,
     get_metadata,
@@ -110,12 +110,8 @@ async def get_coll_inst_position(
                 metadata[collection_name][parameter_names[0]]["dims"][dim_name],
             )
             if (
-                "isvertical"
-                in metadata[collection_name][parameter_names[0]]["dims"][dim_name]
-                and metadata[collection_name][parameter_names[0]]["dims"][dim_name][
-                    "isvertical"
-                ]
-                is True
+                metadata[collection_name][parameter_names[0]]["dims"][dim_name]["type"]
+                == "dimtype_vertical"
             ):
                 vertical_dim_name = dim_name
         latlons = wkt.loads(coords)

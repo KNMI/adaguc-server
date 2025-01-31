@@ -24,12 +24,12 @@ from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 
 from .edr_cube import router as cube_router
-from .edr_exception import EdrException
+from .utils.edr_exception import EdrException
 from .edr_locations import router as locations_router
 from .edr_position import router as position_router
 from .edr_instances import router as instances_router
 
-from .edr_utils import (
+from .utils.edr_utils import (
     generate_max_age,
     get_base_url,
     get_collectioninfo_from_md,

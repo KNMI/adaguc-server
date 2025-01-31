@@ -27,8 +27,8 @@ from covjson_pydantic.unit import Symbol as CovJsonSymbol
 from covjson_pydantic.unit import Unit as CovJsonUnit
 from pydantic import AwareDatetime
 
-from .edr_exception import EdrException
-from .edr_utils import get_param_metadata
+from .utils.edr_exception import EdrException
+from .utils.edr_utils import get_param_metadata
 
 SYMBOL_TYPE_URL = "http://www.opengis.net/def/uom/UCUM"
 
@@ -55,11 +55,9 @@ def covjson_from_resp(dats, metadata):
             for param_dim in metadata[dat["name"]]["dims"].values():
                 if param_dim["cdfName"] not in ["x", "y", "reference_time", "time"]:
                     if not param_dim["hidden"]:
-                        if "isvertical" in param_dim and param_dim["isvertical"]:
-                            # vertical_cdf_name = param_dim["cdfName"]
+                        if param_dim["type"] == "dimtype_vertical":
                             vertical_name = param_dim["serviceName"]
-                        elif "iscustom" in param_dim and param_dim["iscustom"]:
-                            # custom_cdf_name = param_dim["cdfName"]
+                        elif param_dim["type"] == "dimtype_custom":
                             custom_name = param_dim["serviceName"]
             lat = float(lat)
             lon = float(lon)

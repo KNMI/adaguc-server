@@ -1025,7 +1025,6 @@ public:
     }
   };
   class XMLE_Abstract : public CXMLObjectInterface {};
-  class XMLE_Collection : public CXMLObjectInterface {};
 
   class XMLE_DataBaseTable : public CXMLObjectInterface {};
   class XMLE_Variable : public CXMLObjectInterface {
@@ -1194,10 +1193,15 @@ public:
     class Cattr {
     public:
       CT::string value;
+      CT::string collection;
     } attr;
     void addAttribute(const char *name, const char *value) {
       if (equals("value", name)) {
         attr.value.copy(value);
+        return;
+      }
+      if (equals("collection", name)) {
+        attr.collection.copy(value);
         return;
       }
     }
@@ -1231,8 +1235,7 @@ public:
     public:
       CT::string name, interval, defaultV, units, quantizeperiod, quantizemethod, fixvalue;
       bool hidden = false;
-      bool isvertical = false;
-      bool iscustom = false;
+      CT::string type = "dimtype_none";
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
       if (equals("name", attrname)) {
@@ -1264,20 +1267,15 @@ public:
       } else if (equals("quantizemethod", attrname)) {
         attr.quantizemethod.copy(attrvalue);
         return;
-      } else if (equals("isvertical", attrname)) {
-        if (equals("false", attrvalue)) {
-          attr.isvertical = false;
-        }
-        if (equals("true", attrvalue)) {
-          attr.isvertical = true;
-        }
-        return;
-      } else if (equals("iscustom", attrname)) {
-        if (equals("false", attrvalue)) {
-          attr.iscustom = false;
-        }
-        if (equals("true", attrvalue)) {
-          attr.iscustom = true;
+      } else if (equals("type", attrname)) {
+        if (equals(attrvalue, "vertical")) {
+          attr.type = "dimtype_vertical";
+        } else if (equals(attrvalue, "custom")) {
+          attr.type = "dimtype_custom";
+        } else if (equals(attrvalue, "time")) {
+          attr.type = "dimtype_time";
+        } else if (equals(attrvalue, "reference_time")) {
+          attr.type = "dimtype_reference_time";
         }
         return;
       }
@@ -1809,7 +1807,6 @@ public:
     std::vector<XMLE_Group *> Group;
     std::vector<XMLE_Title *> Title;
     std::vector<XMLE_Abstract *> Abstract;
-    std::vector<XMLE_Collection *> Collection;
 
     std::vector<XMLE_DataBaseTable *> DataBaseTable;
     std::vector<XMLE_Variable *> Variable;
@@ -1849,7 +1846,6 @@ public:
       XMLE_DELOBJ(Group);
       XMLE_DELOBJ(Title);
       XMLE_DELOBJ(Abstract);
-      XMLE_DELOBJ(Collection);
       XMLE_DELOBJ(DataBaseTable);
       XMLE_DELOBJ(Variable);
       XMLE_DELOBJ(FilePath);
@@ -1902,8 +1898,6 @@ public:
           XMLE_ADDOBJ(Title);
         } else if (equals("Abstract", name)) {
           XMLE_ADDOBJ(Abstract);
-        } else if (equals("Collection", name)) {
-          XMLE_ADDOBJ(Collection);
         } else if (equals("DataBaseTable", name)) {
           XMLE_ADDOBJ(DataBaseTable);
         } else if (equals("Variable", name)) {
