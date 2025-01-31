@@ -8,6 +8,10 @@
 // #define CCUniqueRequests_DEBUG_HIGH
 const char *CURUniqueRequests::className = "CURUniqueRequests";
 
+void padTo(std::string &str, const size_t num, const char paddingChar) {
+  if (num > str.size()) str.insert(0, num - str.size(), paddingChar);
+}
+
 CURUniqueRequests::CURUniqueRequests() { readDataAsCDFDouble = false; }
 
 CURUniqueRequests::~CURUniqueRequests() {

@@ -13,6 +13,7 @@
 
 #ifndef CURUNIQUEREQUESTS_H
 #define CURUNIQUEREQUESTS_H
+void padTo(std::string &str, const size_t num, const char paddingChar = ' ');
 
 class CURUniqueRequests {
 private:
@@ -44,9 +45,16 @@ private:
         // CDBDebug("Dimension order = %d", dimOrderIndex);
         // CDBDebug("Dimension order A= %s", result1->dimensionKeys[dimOrderIndex].c_str());
         // CDBDebug("Dimension order B= %s", result2->dimensionKeys[dimOrderIndex].c_str());
-        s1 += result1->dimensionKeys[dimOrderIndex].c_str();
-        s2 += result2->dimensionKeys[dimOrderIndex].c_str();
+        std::string ps1 = result1->dimensionKeys[dimOrderIndex].c_str();
+        padTo(ps1, 8);
+        std::string ps2 = result2->dimensionKeys[dimOrderIndex].c_str();
+        padTo(ps2, 8);
+        s1 += ps1;
+        s1 += "_";
+        s2 += ps2;
+        s2 += "_";
       }
+      // CDBDebug("Compare [%s] [%s]", s1.c_str(), s2.c_str());
       if (s1.compare(s2) < 0) return true;
       return false;
       // return (struct1.key < struct2.key);
