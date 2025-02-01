@@ -39,10 +39,11 @@ jobs:
   docker-build-and-publish:
     strategy:
       matrix:
-        - platform: linux/amd64
-          runner: ubuntu-latest
-        - platform: linux/arm64
-          runner: ubuntu-22.04-arm
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-22.04-arm
 
     name: Build Docker image and potentially push to Docker Hub
     runs-on: ${{ matrix.runner }}
