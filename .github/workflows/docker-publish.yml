@@ -8,6 +8,34 @@ on:
       - '[0-9]+.[0-9]+.[0-9]+'
 
 jobs:
+  docker-build-arm-only:
+    name: Build Docker arm64 image (quick turnaround)
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Build and potentially push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          # ensure latest base image is used
+          pull: true
+          push: false
+          tags: adaguc-server
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: 'adaguc-server'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          trivyignores: .trivyignore
+#          severity: 'CRITICAL,HIGH'
+        env:
+          TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db:2
+          TRIVY_JAVA_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-java-db:1
   docker-build-amd-only:
     name: Build Docker amd64 image (quick turnaround)
     runs-on: ubuntu-latest
