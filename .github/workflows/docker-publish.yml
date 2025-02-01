@@ -37,11 +37,10 @@ jobs:
           TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db:2
           TRIVY_JAVA_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-java-db:1
   docker-build-and-publish:
-    build_matrix:
-      strategy:
-        matrix:
-          - runner: ubuntu-latest
-          - runner: ubuntu-22.04-arm
+    strategy:
+      matrix:
+        - runner: ubuntu-latest
+        - runner: ubuntu-22.04-arm
 
     name: Build Docker image and potentially push to Docker Hub
     runs-on: ${{ matrix.runner }}
