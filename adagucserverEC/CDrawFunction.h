@@ -6,7 +6,7 @@
 #include <pthread.h>
 #include "CDataSource.h"
 #include "CDrawImage.h"
-#include "CGenericDataWarper.h"
+#include "GenericDataWarper/CGenericDataWarper.h"
 #include "CStyleConfiguration.h"
 
 class CDrawFunctionSettings {
@@ -36,6 +36,8 @@ public:
   float legendScale;
   float legendOffset;
   CDrawImage *drawImage;
+  float *smoothingDistanceMatrix = nullptr;
+  int smoothingFiter = 0;
 };
 
 CDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawImage *drawImage, const CStyleConfiguration *styleConfiguration);

@@ -1,5 +1,6 @@
 #include "CNetCDFDataWriter.h"
-#include "CGenericDataWarper.h"
+#include "GenericDataWarper/CGenericDataWarper.h"
+#include "GenericDataWarper/gdwFindPixelExtent.h"
 const char *CNetCDFDataWriter::className = "CNetCDFDataWriter";
 #include "CRequest.h"
 // #define CNetCDFDataWriter_DEBUG
@@ -384,7 +385,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
           case CDF_INT64:
             ((long *)var->data)[j] = dimValue.toLong();
             break;
-          case CDF_UINT64:  // TODO: All unsigned versions don't work if the full unsigned range is needed
+          case CDF_UINT64: // TODO: All unsigned versions don't work if the full unsigned range is needed
             ((unsigned long *)var->data)[j] = dimValue.toLong();
             break;
           case CDF_FLOAT:
@@ -576,7 +577,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       ;
       PXExtentBasedOnSource[3] = dataSource->dHeight;
       ;
-      GenericDataWarper::findPixelExtent(PXExtentBasedOnSource, &sourceGeo, this->srvParam->Geo, &warper);
+      gdwFindPixelExtent(PXExtentBasedOnSource, &sourceGeo, this->srvParam->Geo, &warper);
 
       if (PXExtentBasedOnSource[0] == PXExtentBasedOnSource[2] || PXExtentBasedOnSource[1] == PXExtentBasedOnSource[3]) {
         // CDBDebug("PXExtentBasedOnSource = [%d,%d,%d,%d]",PXExtentBasedOnSource[0],PXExtentBasedOnSource[1],PXExtentBasedOnSource[2],PXExtentBasedOnSource[3]);
@@ -728,10 +729,10 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
               case CDF_UINT:
                 value = ((unsigned int *)var->data)[j];
                 break;
-              case CDF_INT64:  // TODO: This is a narrowing conversion, as not all long's can be exactly represented in a double
+              case CDF_INT64: // TODO: This is a narrowing conversion, as not all long's can be exactly represented in a double
                 value = ((long *)var->data)[j];
                 break;
-              case CDF_UINT64:  // TODO: This is a narrowing conversion, as not all long's can be exactly represented in a double
+              case CDF_UINT64: // TODO: This is a narrowing conversion, as not all long's can be exactly represented in a double
                 value = ((unsigned long *)var->data)[j];
                 break;
               case CDF_FLOAT:
@@ -875,7 +876,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       }
 
       if (drawFunctionMode == CNetCDFDataWriter_NEAREST) {
-        GenericDataWarper genericDataWarper;
+        CGenericDataWarper genericDataWarper;
         switch (variable->getType()) {
         case CDF_CHAR:
           genericDataWarper.render<char>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_nearest);
@@ -917,7 +918,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       }
 
       if (drawFunctionMode == CNetCDFDataWriter_AVG_RGB) {
-        GenericDataWarper genericDataWarper;
+        CGenericDataWarper genericDataWarper;
         switch (variable->getType()) {
         case CDF_CHAR:
           genericDataWarper.render<char>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_avg_rbg);
