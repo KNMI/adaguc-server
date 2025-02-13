@@ -145,7 +145,6 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
 
     newDataObject->cdfVariable->setSize(dataSource->dWidth * dataSource->dHeight);
 
-    CDBDebug("Setting width");
     // Make the width and height of the new 2D adaguc field the same as the viewing window
     dataSource->dWidth = dataSource->srvParams->Geo->dWidth;
     dataSource->dHeight = dataSource->srvParams->Geo->dHeight;
@@ -154,7 +153,6 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
     if (dataSource->dWidth < 2) dataSource->dWidth = 2;
     if (dataSource->dHeight < 2) dataSource->dHeight = 2;
 
-    CDBDebug("Setting dimension");
     // Get the X and Y dimensions previousely defined and adjust them to the new settings and new grid (Grid in screenview space)
     dimX->setSize(dataSource->dWidth);
     dimY->setSize(dataSource->dHeight);
@@ -163,21 +161,18 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
     CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
     CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
 
-    CDBDebug("Calculate gridsize");
     // Calculate the gridsize, allocate data and fill the data with a fillvalue
     size_t fieldSize = dimX->length * dimY->length;
     newDataObject->cdfVariable->setSize(fieldSize);
     CDF::allocateData(newDataObject->cdfVariable->getType(), &(newDataObject->cdfVariable->data), fieldSize);
     CDF::fill(newDataObject->cdfVariable->data, newDataObject->cdfVariable->getType(), fillValue[0], fieldSize);
 
-    CDBDebug("Calculate cellsize and offset");
     // Calculate cellsize and offset of the echo toppen (ET) 2D virtual grid, using the same grid as the screenspace
     double cellSizeX = (dataSource->srvParams->Geo->dfBBOX[2] - dataSource->srvParams->Geo->dfBBOX[0]) / double(dataSource->dWidth);
     double cellSizeY = (dataSource->srvParams->Geo->dfBBOX[3] - dataSource->srvParams->Geo->dfBBOX[1]) / double(dataSource->dHeight);
     double offsetX = dataSource->srvParams->Geo->dfBBOX[0];
     double offsetY = dataSource->srvParams->Geo->dfBBOX[1];
 
-    CDBDebug("Fill in X and Y");
     // Fill in the X and Y dimensions with the array of coordinates
     for (size_t j = 0; j < dimX->length; j++) {
       double x = offsetX + double(j) * cellSizeX + cellSizeX / 2;
