@@ -12,11 +12,13 @@ bool sortDimensionKeysRecursive(CURResult &result1, CURResult &result2, int dept
     d = sortDimensionKeysRecursive(result1, result2, depth + 1);
   }
 
-  int *dimOrder = result1.parent->getDimOrder();
+  int *dimOrder = result1.parent->__getDimOrder();
   int dimOrderIndex = dimOrder[depth];
-  std::string s1 = result1.dimensionKeys[dimOrderIndex].name;
-  std::string s2 = result2.dimensionKeys[dimOrderIndex].name;
-  padTo(s1, 8);
-  padTo(s2, 8);
-  return s1.compare(s2) < 0 || d;
+  if (result1.dimensionKeys[dimOrderIndex].isNumeric) {
+    double n1 = std::stod(result1.dimensionKeys[dimOrderIndex].name);
+    double n2 = std::stod(result2.dimensionKeys[dimOrderIndex].name);
+    return n1 < n2 || d;
+  } else {
+    return result1.dimensionKeys[dimOrderIndex].name.compare(result2.dimensionKeys[dimOrderIndex].name) < 0 || d;
+  }
 }

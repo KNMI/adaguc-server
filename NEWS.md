@@ -1,3 +1,6 @@
+**Version 2.29.5 2025-02-14**
+- Timeseries are now sorted properly by key.
+
 **Version 2.29.2 2024-12-23**
 - Fixed issue with irregular grids for SSS SMOS L4 OI - LOPS-v2021 and Global Ocean - Coriolis Observation Re-Analysis CORA5.2. Added test (Issue #316)
 

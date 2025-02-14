@@ -11,7 +11,6 @@ const char *CMakeJSONTimeSeries::className = "CMakeJSONTimeSeries";
 int CMakeJSONTimeSeries::MakeJSONTimeSeries(CDrawImage *drawImage, CImageWarper *imageWarper, std::vector<CDataSource *> dataSources, int dataSourceIndex, int dX, int dY,
                                             CXMLParser::XMLElement *gfiStructure) {
   CDataSource *dataSource = dataSources[dataSourceIndex];
-
   CURUniqueRequests uniqueRequest;
   /**
    * DataPostProc: Here our datapostprocessor comes into action!
@@ -40,26 +39,11 @@ int CMakeJSONTimeSeries::MakeJSONTimeSeries(CDrawImage *drawImage, CImageWarper 
     dataSource->setTimeStep(step);
     for (int dimnr = 0; dimnr < numberOfDims; dimnr++) {
       COGCDims *ogcDim = dataSource->requiredDims[dimnr];
-      uniqueRequest.set(dataSource->getFileName(), ogcDim->netCDFDimName.c_str(), dataSource->getDimensionIndex(dimnr), dataSource->getDimensionValue(dimnr));
+      uniqueRequest.addDimensionRangeRequest(dataSource->getFileName(), ogcDim->netCDFDimName.c_str(), dataSource->getDimensionIndex(dimnr), dataSource->getDimensionValue(dimnr).c_str());
     }
   }
 
-#ifdef CMakeJSONTimeSeries_DEBUG
-  CDBDebug("2): ***** sortAndAggregate *****");
-#endif
-  /* Sort it */
-  try {
-    uniqueRequest.sortAndAggregate();
-  } catch (int e) {
-    CDBError("Error in sortAndAggregate at line %d", e);
-    throw(__LINE__);
-  }
-
-#ifdef CMakeJSONTimeSeries_DEBUG
-  CDBDebug("3): ***** makeRequests and expanddata *****");
-#endif
-
-  /* Now efficiently fetch the data from the data files */
+  /* Bundle and make the requests */
   try {
     uniqueRequest.makeRequests(drawImage, imageWarper, dataSource, dX, dY, gfiStructure);
   } catch (int e) {

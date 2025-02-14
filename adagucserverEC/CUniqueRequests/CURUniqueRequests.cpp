@@ -8,9 +8,11 @@
 // #define CCUniqueRequests_DEBUG_HIGH
 const char *CURUniqueRequests::className = "CURUniqueRequests";
 
-int *CURUniqueRequests::getDimOrder() { return dimOrdering; }
+int *CURUniqueRequests::__getDimOrder() { return dimOrdering; }
 
-void CURUniqueRequests::set(const char *filename, const char *dimName, size_t dimIndex, CT::string dimValue) { fileInfoMap[filename].dimInfoMap[dimName].dimValuesMap[dimIndex] = dimValue.c_str(); }
+void CURUniqueRequests::addDimensionRangeRequest(const char *filename, const char *dimName, size_t dimIndex, std::string dimValue) {
+  fileInfoMap[filename].dimInfoMap[dimName].dimValuesMap[dimIndex] = dimValue;
+}
 
 void CURUniqueRequests::addDimSet(CURDimInfo &dimInfo, int start, std::vector<std::string> valueList) { dimInfo.aggregatedValues.push_back({.start = start, .values = valueList}); }
 
@@ -30,7 +32,7 @@ void CURUniqueRequests::nestRequest(it_type_diminfo diminfomapiterator, CURFileI
 #ifdef CCUniqueRequests_DEBUG_HIGH
     CDBDebug("Add request with following:");
 #endif
-    std::vector<CURAggregatedDimensionAndName> d;
+    std::vector<CURAggregatedDimension> d;
     for (int j = 0; j < depth; j++) {
       d.push_back(aggregatedDimensions[j]);
     }
@@ -113,7 +115,7 @@ void CURUniqueRequests::recurDataStructure(CXMLParser::XMLElement *dataStructure
       return recurDataStructure(dataStructure, result, depth + 1, dimOrdering, dimIndicesToSkip);
     }
   }
-  CT::string dimIndexName = result->dimensionKeys[dimIndex].name.c_str();
+  std::string dimIndexName = result->dimensionKeys[dimIndex].name;
 
   CXMLParser::XMLElement *el = NULL;
   try {
@@ -129,7 +131,7 @@ void CURUniqueRequests::recurDataStructure(CXMLParser::XMLElement *dataStructure
   }
 }
 
-void CURUniqueRequests::createStructure(CDataSource::DataObject *dataObject, CDrawImage *drawImage, CImageWarper *imageWarper, CDataSource *dataSource, int dX, int dY,
+void CURUniqueRequests::createStructure(std::vector<CURResult> results, CDataSource::DataObject *dataObject, CDrawImage *drawImage, CImageWarper *imageWarper, CDataSource *dataSource, int dX, int dY,
                                         CXMLParser::XMLElement *gfiStructure) {
 
   int numberOfDims = dataSource->requiredDims.size();
@@ -138,7 +140,7 @@ void CURUniqueRequests::createStructure(CDataSource::DataObject *dataObject, CDr
   layerStructure->add(CXMLParser::XMLElement("name", dataSource->getLayerName()));
 
   /* Add metadata */
-  CT::string standardName = dataObject->variableName.c_str();
+  std::string standardName = dataObject->variableName.c_str();
   CDF::Attribute *attr_standard_name = dataObject->cdfVariable->getAttributeNE("standard_name");
   if (attr_standard_name != NULL) {
     standardName = attr_standard_name->toString();
@@ -166,11 +168,8 @@ void CURUniqueRequests::createStructure(CDataSource::DataObject *dataObject, CDr
   }
 
   for (size_t i = 0; i < size_t(numberOfDims); i++) {
-
     if (std::find(dimIndicesToSkip.begin(), dimIndicesToSkip.end(), i) == dimIndicesToSkip.end()) {
-      CT::string dimNameToFind = dataSource->requiredDims[dimOrdering[i]]->name.c_str();
-
-      layerStructure->add(CXMLParser::XMLElement("dims", dimNameToFind.c_str()));
+      layerStructure->add(CXMLParser::XMLElement("dims", dataSource->requiredDims[dimOrdering[i]]->name.c_str()));
     }
   }
 
@@ -191,6 +190,7 @@ void CURUniqueRequests::createStructure(CDataSource::DataObject *dataObject, CDr
 }
 
 void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageWarper, CDataSource *dataSource, int dX, int dY, CXMLParser::XMLElement *gfiStructure) {
+  sortAndAggregate();
 #ifdef CCUniqueRequests_DEBUG_HIGH
   CDBDebug("======================== makeRequests ========================================");
 #endif
@@ -228,7 +228,9 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
   int numberOfDims = numberOfDataSourceDims + 2;
   size_t start[numberOfDims], count[numberOfDims];
   ptrdiff_t stride[numberOfDims];
-  CT::string dimName[numberOfDims];
+  std::string dimName[numberOfDims];
+
+  std::vector<CURResult> results;
 
   reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
 
@@ -237,9 +239,8 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
 #endif
   for (size_t dataObjectNr = 0; dataObjectNr < dataSource->dataObjects.size(); dataObjectNr++) {
 
-    results.clear();
     CDataSource::DataObject *dataObject = dataSource->getDataObject(dataObjectNr);
-    CT::string variableName = dataObject->cdfVariable->name;
+    std::string variableName = dataObject->cdfVariable->name.c_str();
     // Show all requests
 
     for (it_type_file filemapiterator = fileInfoMap.begin(); filemapiterator != fileInfoMap.end(); filemapiterator++) {
@@ -413,8 +414,14 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
 
                 // Fill in the dimension keys
                 for (size_t dataSourceDimIndex = 0; dataSourceDimIndex < dataSource->requiredDims.size(); dataSourceDimIndex++) {
-                  CT::string requestDimNameToFind = dataSource->requiredDims[dataSourceDimIndex]->netCDFDimName.c_str();
+                  std::string requestDimNameToFind = dataSource->requiredDims[dataSourceDimIndex]->netCDFDimName.c_str();
                   currentResultForIndex.dimensionKeys[dataSourceDimIndex].name = dataSource->requiredDims[dataSourceDimIndex]->value;
+                  auto dimVariable = variable->getParentCDFObject()->getVariableNE(requestDimNameToFind.c_str());
+                  auto isTime = dataSource->requiredDims[dataSourceDimIndex]->isATimeDimension;
+                  auto varType = dimVariable->getType();
+                  currentResultForIndex.dimensionKeys[dataSourceDimIndex].cdfDimensionVariable = dimVariable;
+                  currentResultForIndex.dimensionKeys[dataSourceDimIndex].isNumeric = isTime ? false : CDF::isCDFNumeric(varType);
+
                   int variableDimIndex = -1;
                   for (size_t d = 0; d < variable->dimensionlinks.size() - 2; d += 1) {
                     if (variable->dimensionlinks[d]->name.equals(requestDimNameToFind)) {
@@ -422,6 +429,7 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
                     }
                   }
                   if (variableDimIndex != -1) {
+
                     int requestDimIndex = -1;
                     for (size_t i = 0; i < request.size(); i++) {
                       if (request[i].name.equals(requestDimNameToFind.c_str())) {
@@ -435,8 +443,7 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
                     auto values = request[requestDimIndex].values;
                     size_t numValues = values.size();
                     size_t multiplyIndex = multiplies[variableDimIndex];
-                    CT::string dimStr = values[(indexInVariable / multiplyIndex) % numValues].c_str();
-                    currentResultForIndex.dimensionKeys[dataSourceDimIndex].name = dimStr;
+                    currentResultForIndex.dimensionKeys[dataSourceDimIndex].name = values[(indexInVariable / multiplyIndex) % numValues];
                   }
                 }
 
@@ -470,7 +477,7 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
       CDBDebug("**************** Create Structure ********************");
       CDBDebug("dataObjectNr: %d", dataObjectNr);
 #endif
-      createStructure(dataObject, drawImage, imageWarper, dataSource, dX, dY, gfiStructure);
+      createStructure(results, dataObject, drawImage, imageWarper, dataSource, dX, dY, gfiStructure);
     } catch (int e) {
       CDBError("Error in createStructure at line %d", e);
       throw(__LINE__);
