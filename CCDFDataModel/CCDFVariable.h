@@ -32,7 +32,10 @@
 #include "CCDFDimension.h"
 // #define CCDFDATAMODEL_DEBUG
 #include "CDebugger.h"
+
+class CDFObject;
 namespace CDF {
+
   class Variable {
 
   public:
@@ -58,7 +61,7 @@ namespace CDF {
   private:
     std::vector<CDFObjectClass *> cdfObjectList;
     void *cdfReaderPointer;
-    void *parentCDFObject;
+    CDFObject *parentCDFObject;
     bool _hasCustomReader;
 
   public:
@@ -97,8 +100,8 @@ namespace CDF {
     bool hasCustomReader() { return _hasCustomReader; }
 
     void setCDFReaderPointer(void *cdfReaderPointer) { this->cdfReaderPointer = cdfReaderPointer; }
-    void setParentCDFObject(void *parentCDFObject) { this->parentCDFObject = parentCDFObject; }
-    void *getParentCDFObject() const {
+    void setParentCDFObject(CDFObject *parentCDFObject) { this->parentCDFObject = parentCDFObject; }
+    CDFObject *getParentCDFObject() const {
       if (parentCDFObject == NULL) {
         throw(CDF_E_VARHASNOPARENT);
       }

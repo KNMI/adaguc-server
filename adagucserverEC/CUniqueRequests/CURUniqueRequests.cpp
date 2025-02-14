@@ -2,84 +2,29 @@
 #include <algorithm>
 #include "CMakeJSONTimeSeries.h"
 #include "CImageDataWriter.h"
-#include "CUniqueRequests.h"
+#include "CURUniqueRequests.h"
 
 // #define CCUniqueRequests_DEBUG
 // #define CCUniqueRequests_DEBUG_HIGH
 const char *CURUniqueRequests::className = "CURUniqueRequests";
 
-CURUniqueRequests::CURUniqueRequests() { readDataAsCDFDouble = false; }
+int *CURUniqueRequests::__getDimOrder() { return dimOrdering; }
 
-CURUniqueRequests::~CURUniqueRequests() {
-  typedef std::map<std::string, CURFileInfo *>::iterator it_type_file;
-  for (it_type_file filemapiterator = fileInfoMap.begin(); filemapiterator != fileInfoMap.end(); filemapiterator++) {
-
-    delete filemapiterator->second;
-  }
-  for (size_t j = 0; j < results.size(); j++) {
-    delete results[j];
-  }
-  results.clear();
+void CURUniqueRequests::addDimensionRangeRequest(const char *filename, const char *dimName, size_t dimIndex, std::string dimValue) {
+  fileInfoMap[filename].dimInfoMap[dimName].dimValuesMap[dimIndex] = dimValue;
 }
 
-void CURUniqueRequests::set(const char *filename, const char *dimName, size_t dimIndex, CT::string dimValue) {
+void CURUniqueRequests::addDimSet(CURDimInfo &dimInfo, int start, std::vector<std::string> valueList) { dimInfo.aggregatedValues.push_back({.start = start, .values = valueList}); }
 
-  /* Find the right file based on filename */
-  CURFileInfo *fileInfo = NULL;
-  std::map<std::string, CURFileInfo *>::iterator itf = fileInfoMap.find(filename);
-  if (itf != fileInfoMap.end()) {
-    fileInfo = (*itf).second;
-  } else {
-    fileInfo = new CURFileInfo();
-    fileInfoMap.insert(std::pair<std::string, CURFileInfo *>(filename, fileInfo));
-  }
-
-  /* Find the right diminfo based on dimension name */
-  CURDimInfo *dimInfo = NULL;
-  std::map<std::string, CURDimInfo *>::iterator itd = fileInfo->dimInfoMap.find(dimName);
-  if (itd != fileInfo->dimInfoMap.end()) {
-    dimInfo = (*itd).second;
-  } else {
-    dimInfo = new CURDimInfo();
-    fileInfo->dimInfoMap.insert(std::pair<std::string, CURDimInfo *>(dimName, dimInfo));
-  }
-
-  /* Find the right dimension indexes and values based on dimension index */
-  CT::string *dimIndexesAndValues = NULL;
-  std::map<int, CT::string *>::iterator itdi = dimInfo->dimValuesMap.find(dimIndex);
-  if (itdi != dimInfo->dimValuesMap.end()) {
-    dimIndexesAndValues = (*itdi).second;
-  } else {
-    dimIndexesAndValues = new CT::string();
-    dimInfo->dimValuesMap.insert(std::pair<int, CT::string *>(dimIndex, dimIndexesAndValues));
-  }
-
-  dimIndexesAndValues->copy(dimValue.c_str());
-#ifdef CCUniqueRequests_DEBUG
-  CDBDebug("Adding %s %d %s", dimName, dimIndex, dimValue.c_str());
-#endif
-}
-
-void CURUniqueRequests::addDimSet(CURDimInfo *dimInfo, int start, std::vector<CT::string> valueList) {
-#ifdef CCUniqueRequests_DEBUG
-  CDBDebug("Adding %d with %d values", start, valueList.size());
-#endif
-  CURAggregatedDimension *aggregatedValue = new CURAggregatedDimension();
-  aggregatedValue->start = start;
-  aggregatedValue->values.assign(valueList.begin(), valueList.end());
-  dimInfo->aggregatedValues.push_back(aggregatedValue);
-}
-
-void CURUniqueRequests::nestRequest(it_type_diminfo diminfomapiterator, CURFileInfo *fileInfo, int depth) {
-  if (diminfomapiterator != fileInfo->dimInfoMap.end()) {
+void CURUniqueRequests::nestRequest(it_type_diminfo diminfomapiterator, CURFileInfo &fileInfo, int depth) {
+  if (diminfomapiterator != fileInfo.dimInfoMap.end()) {
     it_type_diminfo currentIt = diminfomapiterator;
     int currentDepth = depth;
     diminfomapiterator++;
     depth++;
-    for (size_t j = 0; j < (currentIt->second)->aggregatedValues.size(); j++) {
-      CURAggregatedDimension *aggregatedValue = (currentIt->second)->aggregatedValues[j];
-      aggregatedValue->name = (currentIt->first).c_str();
-      dimensions[currentDepth] = aggregatedValue;
+    for (size_t j = 0; j < (currentIt->second).aggregatedValues.size(); j++) {
+      auto *aggregatedValue = &(currentIt->second).aggregatedValues[j];
+      aggregatedDimensions[currentDepth] = {.name = (currentIt->first).c_str(), .start = aggregatedValue->start, .values = aggregatedValue->values};
       nestRequest(diminfomapiterator, fileInfo, depth);
     }
     return;
@@ -87,35 +32,32 @@ void CURUniqueRequests::nestRequest(it_type_diminfo diminfomapiterator, CURFileI
 #ifdef CCUniqueRequests_DEBUG_HIGH
     CDBDebug("Add request with following:");
 #endif
-    CURRequest *request = new CURRequest();
+    std::vector<CURAggregatedDimension> d;
     for (int j = 0; j < depth; j++) {
-#ifdef CCUniqueRequests_DEBUG_HIGH
-      CDBDebug("  %d %s %d %d", j, dimensions[j]->name.c_str(), dimensions[j]->start, dimensions[j]->values.size());
-#endif
-      request->dimensions[j] = dimensions[j];
+      d.push_back(aggregatedDimensions[j]);
     }
-    request->numDims = depth;
-    fileInfo->requests.push_back(request);
+    fileInfo.requests.push_back(d);
     return;
   }
 }
 
 void CURUniqueRequests::sortAndAggregate() {
   for (it_type_file filemapiterator = fileInfoMap.begin(); filemapiterator != fileInfoMap.end(); filemapiterator++) {
-
-    for (it_type_diminfo diminfomapiterator = (filemapiterator->second)->dimInfoMap.begin(); diminfomapiterator != (filemapiterator->second)->dimInfoMap.end(); diminfomapiterator++) {
+    auto dimInfoMap = &(filemapiterator->second).dimInfoMap;
+    for (it_type_diminfo diminfomapiterator = dimInfoMap->begin(); diminfomapiterator != dimInfoMap->end(); diminfomapiterator++) {
 #ifdef CCUniqueRequests_DEBUG
       CDBDebug("%s/%s", (filemapiterator->first).c_str(), (diminfomapiterator->first).c_str());
 #endif
-      std::map<int, CT::string *> *dimValuesMap = &diminfomapiterator->second->dimValuesMap;
+
       int currentDimIndex = -1;
       int dimindex;
 
       int startDimIndex;
-      std::vector<CT::string> dimValues;
-      for (it_type_dimvalindex dimvalindexmapiterator = dimValuesMap->begin(); dimvalindexmapiterator != dimValuesMap->end(); dimvalindexmapiterator++) {
+      std::vector<std::string> dimValues;
+      map_type_dimvalindex dimValuesMap = diminfomapiterator->second.dimValuesMap;
+      for (it_type_dimvalindex dimvalindexmapiterator = dimValuesMap.begin(); dimvalindexmapiterator != dimValuesMap.end(); dimvalindexmapiterator++) {
         dimindex = dimvalindexmapiterator->first;
-        const char *dimvalue = dimvalindexmapiterator->second->c_str();
+        const char *dimvalue = dimvalindexmapiterator->second.c_str();
 
         if (currentDimIndex != -1) {
           if (currentDimIndex == dimindex - 1) {
@@ -161,7 +103,7 @@ void CURUniqueRequests::sortAndAggregate() {
 
   // Generate CURUniqueRequests
   for (it_type_file filemapiterator = fileInfoMap.begin(); filemapiterator != fileInfoMap.end(); filemapiterator++) {
-    nestRequest((filemapiterator->second)->dimInfoMap.begin(), filemapiterator->second, 0);
+    nestRequest((filemapiterator->second).dimInfoMap.begin(), filemapiterator->second, 0);
   }
 }
 
@@ -173,13 +115,13 @@ void CURUniqueRequests::recurDataStructure(CXMLParser::XMLElement *dataStructure
       return recurDataStructure(dataStructure, result, depth + 1, dimOrdering, dimIndicesToSkip);
     }
   }
-  CT::string dimindexvalue = result->dimensionKeys[dimIndex].c_str();
+  std::string dimIndexName = result->dimensionKeys[dimIndex].name;
 
   CXMLParser::XMLElement *el = NULL;
   try {
-    el = dataStructure->get(dimindexvalue.c_str());
+    el = dataStructure->get(dimIndexName.c_str());
   } catch (int e) {
-    dataStructure->add(CXMLParser::XMLElement(dimindexvalue.c_str()));
+    dataStructure->add(CXMLParser::XMLElement(dimIndexName.c_str()));
     el = dataStructure->getLast();
   }
   if (depth + 1 < result->numDims) {
@@ -189,7 +131,7 @@ void CURUniqueRequests::recurDataStructure(CXMLParser::XMLElement *dataStructure
   }
 }
 
-void CURUniqueRequests::createStructure(CDataSource::DataObject *dataObject, CDrawImage *drawImage, CImageWarper *imageWarper, CDataSource *dataSource, int dX, int dY,
+void CURUniqueRequests::createStructure(std::vector<CURResult> results, CDataSource::DataObject *dataObject, CDrawImage *drawImage, CImageWarper *imageWarper, CDataSource *dataSource, int dX, int dY,
                                         CXMLParser::XMLElement *gfiStructure) {
 
   int numberOfDims = dataSource->requiredDims.size();
@@ -198,7 +140,7 @@ void CURUniqueRequests::createStructure(CDataSource::DataObject *dataObject, CDr
   layerStructure->add(CXMLParser::XMLElement("name", dataSource->getLayerName()));
 
   /* Add metadata */
-  CT::string standardName = dataObject->variableName.c_str();
+  std::string standardName = dataObject->variableName.c_str();
   CDF::Attribute *attr_standard_name = dataObject->cdfVariable->getAttributeNE("standard_name");
   if (attr_standard_name != NULL) {
     standardName = attr_standard_name->toString();
@@ -226,11 +168,8 @@ void CURUniqueRequests::createStructure(CDataSource::DataObject *dataObject, CDr
   }
 
   for (size_t i = 0; i < size_t(numberOfDims); i++) {
-
     if (std::find(dimIndicesToSkip.begin(), dimIndicesToSkip.end(), i) == dimIndicesToSkip.end()) {
-      CT::string dimNameToFind = dataSource->requiredDims[dimOrdering[i]]->name.c_str();
-
-      layerStructure->add(CXMLParser::XMLElement("dims", dimNameToFind.c_str()));
+      layerStructure->add(CXMLParser::XMLElement("dims", dataSource->requiredDims[dimOrdering[i]]->name.c_str()));
     }
   }
 
@@ -242,15 +181,16 @@ void CURUniqueRequests::createStructure(CDataSource::DataObject *dataObject, CDr
     dataStructure = layerStructure->getLast();
   }
 
-  std::sort(results.begin(), results.end(), less_than_key());
+  std::sort(results.begin(), results.end(), compareFunctionCurResult());
   CDBDebug("Found %d elements", results.size());
 
   for (size_t j = 0; j < results.size(); j++) {
-    recurDataStructure(dataStructure, results[j], 0, dimOrdering, dimIndicesToSkip);
+    recurDataStructure(dataStructure, &results[j], 0, dimOrdering, dimIndicesToSkip);
   }
 }
 
 void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageWarper, CDataSource *dataSource, int dX, int dY, CXMLParser::XMLElement *gfiStructure) {
+  sortAndAggregate();
 #ifdef CCUniqueRequests_DEBUG_HIGH
   CDBDebug("======================== makeRequests ========================================");
 #endif
@@ -288,7 +228,9 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
   int numberOfDims = numberOfDataSourceDims + 2;
   size_t start[numberOfDims], count[numberOfDims];
   ptrdiff_t stride[numberOfDims];
-  CT::string dimName[numberOfDims];
+  std::string dimName[numberOfDims];
+
+  std::vector<CURResult> results;
 
   reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
 
@@ -296,13 +238,9 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
   CDBDebug("===================== iterating data objects ==================");
 #endif
   for (size_t dataObjectNr = 0; dataObjectNr < dataSource->dataObjects.size(); dataObjectNr++) {
-    // CDBDebug("Found %d elements",results.size());
-    for (size_t j = 0; j < results.size(); j++) {
-      delete results[j];
-    }
-    results.clear();
+
     CDataSource::DataObject *dataObject = dataSource->getDataObject(dataObjectNr);
-    CT::string variableName = dataObject->cdfVariable->name;
+    std::string variableName = dataObject->cdfVariable->name.c_str();
     // Show all requests
 
     for (it_type_file filemapiterator = fileInfoMap.begin(); filemapiterator != fileInfoMap.end(); filemapiterator++) {
@@ -312,33 +250,6 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
 
       if (projCacheInfo.isOutsideBBOX == false) {
         CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams, (filemapiterator->first).c_str());
-
-        //   if (cdfObject->getVariableNE("forecast_reference_time") != NULL) {
-        //     CDBDebug("Has forecast_reference_time");
-        //     CDF::Dimension *forecastRefDim = new CDF::Dimension();
-        //     forecastRefDim->name = "forecast_reference_time";
-        //     forecastRefDim->setSize(1);
-        //     forecastRefDim->isVirtualDimension = true;
-        //     cdfObject->addDimension(forecastRefDim);
-        //   }
-
-        //   bool foundReferenceTime = false;
-        //   for (size_t j = 0; j < dataObject->cdfVariable->dimensionlinks.size(); j++) {
-        //     if (dataObject->cdfVariable->dimensionlinks[j]->name.equals("forecast_reference_time")) {
-        //       foundReferenceTime = true;
-        //       break;
-        //     }
-        //   }
-        //   if (foundReferenceTime == false) {
-        //     CDF::Dimension *forecastRefDim = cdfObject->getDimensionNE("forecast_reference_time");
-        //     if (forecastRefDim != NULL) {
-        //       // TODO: Maarten Plieger 2022-01-20, This is inserted at thewrong place
-        //       // dataObject->cdfVariable->dimensionlinks.insert(dataObject->cdfVariable->dimensionlinks.begin() + dataObject->cdfVariable->dimensionlinks.size() - 2, forecastRefDim);
-        //       // dataObject->cdfVariable->dimensionlinks.insert(dataObject->cdfVariable->dimensionlinks.begin(), forecastRefDim);
-        //       /* Add the forecast_reference_time dimension to the end of the list to avoid messing up other indices */
-        //       dataObject->cdfVariable->dimensionlinks.push_back(forecastRefDim);
-        //     }
-        //   }
 
 #ifdef CCUniqueRequests_DEBUG
         CDBDebug("Getting data variable [%s]", variableName.c_str());
@@ -351,9 +262,8 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
           throw(__LINE__);
         }
 
-        for (size_t j = 0; j < (filemapiterator->second)->requests.size(); j++) {
+        for (auto request : (filemapiterator->second).requests) {
 
-          CURRequest *request = (filemapiterator->second)->requests[j];
 #ifdef CCUniqueRequests_DEBUG
           CDBDebug("Reading file %s  for variable %s", (filemapiterator->first).c_str(), variable->name.c_str());
 #endif
@@ -374,36 +284,35 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
           dimName[dataSource->dimXIndex] = "x";
           dimName[dataSource->dimYIndex] = "y";
 
-          for (int i = 0; i < request->numDims; i++) {
+          for (size_t i = 0; i < request.size(); i++) {
             int netcdfDimIndex = -1;
-            CDataReader::DimensionType dtype = CDataReader::getDimensionType(cdfObject, request->dimensions[i]->name.c_str());
+            CDataReader::DimensionType dtype = CDataReader::getDimensionType(cdfObject, request[i].name.c_str());
             if (dtype != CDataReader::dtype_reference_time) {
               if (dtype == CDataReader::dtype_none) {
-                CDBWarning("dtype_none for %s", dtype, request->dimensions[i]->name.c_str());
+                CDBWarning("dtype_none for %s", dtype, request[i].name.c_str());
               }
               try {
                 /* CHECK */
 
-                netcdfDimIndex = variable->getDimensionIndex(request->dimensions[i]->name.c_str());
+                netcdfDimIndex = variable->getDimensionIndex(request[i].name.c_str());
               } catch (int e) {
-                // CDBError("Unable to find dimension [%s]",request->dimensions[i]->name.c_str());
+                // CDBError("Unable to find dimension [%s]",request[i]->name.c_str());
                 if (dtype == CDataReader::dtype_reference_time) {
-                  CDBDebug("IS REFERENCE TIME %s", request->dimensions[i]->name.c_str());
+                  CDBDebug("IS REFERENCE TIME %s", request[i].name.c_str());
 
                 } else {
-                  CDBError("IS NOT REFERENCE TIME %s", request->dimensions[i]->name.c_str());
+                  CDBError("IS NOT REFERENCE TIME %s", request[i].name.c_str());
                   throw(__LINE__);
                 }
               }
               if (netcdfDimIndex == dataSource->dimXIndex || netcdfDimIndex == dataSource->dimYIndex) {
-                CDBWarning("netcdfDimIndex %d already taken for %s", netcdfDimIndex, request->dimensions[i]->name.c_str());
+                CDBWarning("netcdfDimIndex %d already taken for %s", netcdfDimIndex, request[i].name.c_str());
               }
-              start[netcdfDimIndex] = request->dimensions[i]->start;
-              count[netcdfDimIndex] = request->dimensions[i]->values.size();
-              dimName[netcdfDimIndex] = request->dimensions[i]->name;
+              start[netcdfDimIndex] = request[i].start;
+              count[netcdfDimIndex] = request[i].values.size();
+              dimName[netcdfDimIndex] = request[i].name;
 #ifdef CCUniqueRequests_DEBUG
-              CDBDebug("  request index: %d  netcdfdimindex %d  %s %d %d", i, netcdfDimIndex, request->dimensions[i]->name.c_str(), request->dimensions[i]->start,
-                       request->dimensions[i]->values.size());
+              CDBDebug("  request index: %d  netcdfdimindex %d  %s %d %d", i, netcdfDimIndex, request[i]->name.c_str(), request[i]->start, request[i]->values.size());
 #endif
             }
           }
@@ -499,16 +408,20 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
 
               for (size_t indexInVariable = 0; indexInVariable < variable->getSize(); indexInVariable++) {
 
-                CURResult *currentResultForIndex = new CURResult(this);
-                results.push_back(currentResultForIndex);
-
-                // Set the number of dimensions
-                currentResultForIndex->numDims = numberOfDataSourceDims;
+                CURResult currentResultForIndex;
+                currentResultForIndex.parent = this;
+                currentResultForIndex.numDims = numberOfDataSourceDims;
 
                 // Fill in the dimension keys
                 for (size_t dataSourceDimIndex = 0; dataSourceDimIndex < dataSource->requiredDims.size(); dataSourceDimIndex++) {
-                  CT::string requestDimNameToFind = dataSource->requiredDims[dataSourceDimIndex]->netCDFDimName.c_str();
-                  currentResultForIndex->dimensionKeys[dataSourceDimIndex] = dataSource->requiredDims[dataSourceDimIndex]->value;
+                  std::string requestDimNameToFind = dataSource->requiredDims[dataSourceDimIndex]->netCDFDimName.c_str();
+                  currentResultForIndex.dimensionKeys[dataSourceDimIndex].name = dataSource->requiredDims[dataSourceDimIndex]->value;
+                  auto dimVariable = variable->getParentCDFObject()->getVariableNE(requestDimNameToFind.c_str());
+                  auto isTime = dataSource->requiredDims[dataSourceDimIndex]->isATimeDimension;
+                  auto varType = dimVariable->getType();
+                  currentResultForIndex.dimensionKeys[dataSourceDimIndex].cdfDimensionVariable = dimVariable;
+                  currentResultForIndex.dimensionKeys[dataSourceDimIndex].isNumeric = isTime ? false : CDF::isCDFNumeric(varType);
+
                   int variableDimIndex = -1;
                   for (size_t d = 0; d < variable->dimensionlinks.size() - 2; d += 1) {
                     if (variable->dimensionlinks[d]->name.equals(requestDimNameToFind)) {
@@ -516,9 +429,10 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
                     }
                   }
                   if (variableDimIndex != -1) {
+
                     int requestDimIndex = -1;
-                    for (int i = 0; i < request->numDims; i++) {
-                      if (request->dimensions[i]->name.equals(requestDimNameToFind.c_str())) {
+                    for (size_t i = 0; i < request.size(); i++) {
+                      if (request[i].name.equals(requestDimNameToFind.c_str())) {
                         requestDimIndex = i;
                       }
                     }
@@ -526,11 +440,10 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
                       CDBError("Unable to find dimension %s in request", requestDimNameToFind.c_str());
                       throw(__LINE__);
                     }
-                    auto values = request->dimensions[requestDimIndex]->values;
+                    auto values = request[requestDimIndex].values;
                     size_t numValues = values.size();
                     size_t multiplyIndex = multiplies[variableDimIndex];
-                    CT::string dimStr = values[(indexInVariable / multiplyIndex) % numValues].c_str();
-                    currentResultForIndex->dimensionKeys[dataSourceDimIndex] = dimStr;
+                    currentResultForIndex.dimensionKeys[dataSourceDimIndex].name = values[(indexInVariable / multiplyIndex) % numValues];
                   }
                 }
 
@@ -547,7 +460,8 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
                 }
 
                 // Set the value
-                currentResultForIndex->value = pixelValueAsString;
+                currentResultForIndex.value = pixelValueAsString;
+                results.push_back(currentResultForIndex);
               }
             } catch (int e) {
               CDBError("Error in expandData at line %d", e);
@@ -563,7 +477,7 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
       CDBDebug("**************** Create Structure ********************");
       CDBDebug("dataObjectNr: %d", dataObjectNr);
 #endif
-      createStructure(dataObject, drawImage, imageWarper, dataSource, dX, dY, gfiStructure);
+      createStructure(results, dataObject, drawImage, imageWarper, dataSource, dX, dY, gfiStructure);
     } catch (int e) {
       CDBError("Error in createStructure at line %d", e);
       throw(__LINE__);
@@ -574,16 +488,4 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
 #ifdef CCUniqueRequests_DEBUG
   CDBDebug("/makeRequests");
 #endif
-}
-
-size_t CURUniqueRequests::size() { return fileInfoMap.size(); }
-
-CURFileInfo *CURUniqueRequests::get(size_t index) {
-  typedef std::map<std::string, CURFileInfo *>::iterator it_type_file;
-  size_t s = 0;
-  for (it_type_file filemapiterator = fileInfoMap.begin(); filemapiterator != fileInfoMap.end(); filemapiterator++) {
-    if (s == index) return filemapiterator->second;
-    s++;
-  }
-  return NULL;
 }

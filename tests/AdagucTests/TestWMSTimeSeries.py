@@ -323,3 +323,47 @@ class TestWMSTimeSeries(unittest.TestCase):
         assert  json.loads(server_response) == json.loads(AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
         
 
+
+
+    def test_wmsgetfeatureinfo_json_timeheight_profile_for_sorted_model_levels(self):
+      
+        AdagucTestTools().cleanTempDir()
+
+        config = (
+            ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,"
+            + ADAGUC_PATH
+            + "/data/config/datasets/adaguc.tests.arcus_harmonie_sorted_model_levels.xml"
+        )
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=["--updatedb", "--config", config], env=self.env, isCGI=False
+        )
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSGetCapabilities_adaguc_arcus_harmonie_sorted_model_levels.xml"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.tests.arcus_harmonie_sorted_model_levels&service=WMS&request=GetCapabilities",
+            {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml"},
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertTrue(
+            AdagucTestTools().compareGetCapabilitiesXML(
+                self.testresultspath + filename, self.expectedoutputsspath + filename
+            )
+        )
+        
+        filename = "test_WMSGetFeatureInfoTimeSeries_arcus_harmonie_sorted_model_levels.json"
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.tests.arcus_harmonie_sorted_model_levels&service=WMS&request=GetFeatureInfo&version=1.3.0&layers=air-temperature-ml&query_layers=air-temperature-ml&crs=EPSG%3A3857&bbox=-14204.36702572%2C1107764.666804308%2C1269999.54266372%2C12726175.510126693&width=106&height=959&i=54&j=478&format=image%2Fgif&info_format=application%2Fjson&time=1000-01-01T00%3A00%3A00Z%2F3000-01-01T00%3A00%3A00Z&dim_reference_time=2024-12-22T06%3A00%3A00Z&dim_model_level_number=*&",
+            {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml"},
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )

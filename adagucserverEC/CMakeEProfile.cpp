@@ -2,6 +2,7 @@
 #include <algorithm>
 #include "CMakeEProfile.h"
 #include "CImageDataWriter.h"
+#include "CUniqueRequests/CURTypes.h"
 
 const char *CMakeEProfile::className = "CMakeEProfile";
 
@@ -30,22 +31,12 @@ public:
   public:
     CT::string name;
     int start;
-    std::vector<CT::string> values;
+    std::vector<std::string> values;
   };
 
-  typedef std::map<int, CT::string *>::iterator it_type_dimvalindex;
-  class DimInfo {
-  public:
-    std::map<int, CT::string *> dimValuesMap;            // All values, many starts with 1 count, result of set()
+  struct DimInfo {
+    std::map<int, std::string> dimValuesMap;             // All values, many starts with 1 count, result of set()
     std::vector<AggregatedDimension *> aggregatedValues; // Aggregated values (start/count series etc), result of  addDimSet()
-    ~DimInfo() {
-      for (it_type_dimvalindex dimvalindexmapiterator = dimValuesMap.begin(); dimvalindexmapiterator != dimValuesMap.end(); dimvalindexmapiterator++) {
-        delete dimvalindexmapiterator->second;
-      }
-      for (size_t j = 0; j < aggregatedValues.size(); j++) {
-        delete aggregatedValues[j];
-      }
-    }
   };
 
   typedef std::map<std::string, DimInfo *>::iterator it_type_diminfo;
@@ -78,27 +69,10 @@ public:
 
   typedef std::map<std::string, FileInfo *>::iterator it_type_file;
 
-  CT::string *dimensionKeys[CMakeEProfile_MAX_DIMS];
-
   int dimOrdering[CMakeEProfile_MAX_DIMS];
 
   int *getDimOrder() { return dimOrdering; }
 
-  //   class Result{
-  //     private:
-  //     EProfileUniqueRequests *parent;
-  //   public:
-  //     Result( EProfileUniqueRequests *parent){
-  //       this->parent=parent;
-  //     }
-  //      CT::string *dimensionKeys[CMakeEProfile_MAX_DIMS];
-  //      //CT::string value;
-  //      int numDims;
-  //      int *getDimOrder(){return parent->getDimOrder();}
-  //
-  //   };
-  //   std::vector<Result*> results;
-  //
   EProfileUniqueRequests() { readDataAsCDFDouble = false; }
   ~EProfileUniqueRequests() {
     typedef std::map<std::string, FileInfo *>::iterator it_type_file;
@@ -134,29 +108,20 @@ public:
       fileInfo->dimInfoMap.insert(std::pair<std::string, DimInfo *>(dimName, dimInfo));
     }
 
-    /* Find the right dimension indexes and values based on dimension index */
-    CT::string *dimIndexesAndValues = NULL;
-    std::map<int, CT::string *>::iterator itdi = dimInfo->dimValuesMap.find(dimIndex);
-    if (itdi != dimInfo->dimValuesMap.end()) {
-      dimIndexesAndValues = (*itdi).second;
-    } else {
-      dimIndexesAndValues = new CT::string();
-      dimInfo->dimValuesMap.insert(std::pair<int, CT::string *>(dimIndex, dimIndexesAndValues));
-    }
+    dimInfo->dimValuesMap[dimIndex] = dimValue.c_str();
 
-    dimIndexesAndValues->copy(dimValue.c_str());
 #ifdef CMakeEProfile_DEBUG
 //    CDBDebug("Adding %s %d %s",dimName,dimIndex,dimValue.c_str());
 #endif
   }
 
-  void addDimSet(DimInfo *dimInfo, int start, std::vector<CT::string> *valueList) {
+  void addDimSet(DimInfo *dimInfo, int start, std::vector<std::string> valueList) {
 #ifdef CMakeEProfile_DEBUG
     CDBDebug("Adding %d with %d values", start, valueList->size());
 #endif
     AggregatedDimension *aggregatedValue = new AggregatedDimension();
     aggregatedValue->start = start;
-    aggregatedValue->values = *valueList;
+    aggregatedValue->values = valueList;
     dimInfo->aggregatedValues.push_back(aggregatedValue);
   }
 
@@ -198,17 +163,17 @@ public:
 #ifdef CMakeEProfile_DEBUG
         CDBDebug("%s/%s", (filemapiterator->first).c_str(), (diminfomapiterator->first).c_str());
 #endif
-        std::map<int, CT::string *> *dimValuesMap = &diminfomapiterator->second->dimValuesMap;
+        map_type_dimvalindex *dimValuesMap = &diminfomapiterator->second->dimValuesMap;
         int currentDimIndex = -1;
         int dimindex;
 
         int startDimIndex;
-        std::vector<CT::string> dimValues;
+        std::vector<std::string> dimValues;
         for (it_type_dimvalindex dimvalindexmapiterator = dimValuesMap->begin(); dimvalindexmapiterator != dimValuesMap->end(); dimvalindexmapiterator++) {
           // const char *filename=(filemapiterator->first).c_str();
           // const char *dimname=(diminfomapiterator->first).c_str();
           dimindex = dimvalindexmapiterator->first;
-          const char *dimvalue = dimvalindexmapiterator->second->c_str();
+          const char *dimvalue = dimvalindexmapiterator->second.c_str();
 
           if (currentDimIndex != -1) {
             if (currentDimIndex == dimindex - 1) {
@@ -220,7 +185,7 @@ public:
               CDBDebug("Print stop at %d", currentDimIndex);
 #endif
               currentDimIndex = -1;
-              addDimSet(diminfomapiterator->second, startDimIndex, &dimValues);
+              addDimSet(diminfomapiterator->second, startDimIndex, dimValues);
             }
           }
 
@@ -246,7 +211,7 @@ public:
           CDBDebug("Print stop at %d", dimindex);
 #endif
           currentDimIndex = -1;
-          addDimSet(diminfomapiterator->second, startDimIndex, &dimValues);
+          addDimSet(diminfomapiterator->second, startDimIndex, dimValues);
         }
       }
     }
@@ -256,143 +221,6 @@ public:
       nestRequest((filemapiterator->second)->dimInfoMap.begin(), filemapiterator->second, 0);
     }
   }
-
-  /*
-    void expandData(CDataSource::DataObject *dataObject,CDF::Variable *variable,size_t *start,size_t *count,int d,Request *request,int index){
-      CDBDebug("\ExpandData");
-      if(d<int(variable->dimensionlinks.size())-2){
-        CDF::Dimension *dim = variable->dimensionlinks[d];
-
-        int requestDimIndex=-1;
-        for(int i=0;i<request->numDims;i++){if(request->dimensions[i]->name.equals(dim->name.c_str())){requestDimIndex = i;}}
-        if(requestDimIndex==-1){CDBError("Unable to find dimension %s in request",dim->name.c_str());throw(__LINE__);}
-        if(count[d]!=request->dimensions[requestDimIndex]->values.size()){CDBError("count[d]!=request->dimensions[requestDimIndex]->values.size()");throw(__LINE__);}
-
-        int multiplier = 1;
-        for(size_t j=d+1;j<variable->dimensionlinks.size()-2;j++){
-          multiplier*=count[j];
-        }
-        for(size_t j=0;j<request->dimensions[requestDimIndex]->values.size();j++){
-          dimensionKeys[d] = &request->dimensions[requestDimIndex]->values[j];
-          expandData(dataObject,variable,start,count,d+1,request,j*multiplier+index);
-        }
-      }else{
-        double pixel=CImageDataWriter::convertValue(variable->getType(),variable->data,index);
-        CT::string dataAsString="nodata";
-        if((pixel!=dataObject->dfNodataValue&&dataObject->hasNodataValue==true&&pixel==pixel)||dataObject->hasNodataValue==false){
-
-          //dataAsString.print("%f",data[index]);
-          if(dataObject->hasStatusFlag){
-            CT::string flagMeaning;
-            CDataSource::getFlagMeaningHumanReadable(&flagMeaning,&dataObject->statusFlagList,pixel);
-            dataAsString.print("%s (%d)",flagMeaning.c_str(),(int)pixel);
-          }else{
-            dataAsString.print("%f",pixel);//=szTemp;
-          }
-        }
-        //CDBDebug("VAL [%s][%d][%f]",p.c_str(),index,data[index]);
-        Result *result = new Result(this);
-        for(size_t j=0;j<variable->dimensionlinks.size()-2;j++){
-          result->dimensionKeys[j] = dimensionKeys[j];
-        }
-        result->value = dataAsString.c_str();
-        result->numDims= variable->dimensionlinks.size()-2;
-        results.push_back(result);
-      }
-      CDBDebug("/ExpandData");
-    }
-
-   */
-
-  //   struct less_than_key{
-  //       inline bool operator() (Result* result1, Result* result2)
-  //       {
-  //         int *dimOrder= result1->getDimOrder();
-  //         std::string s1;
-  //         std::string s2;
-  //         for(int d=0;d<result1->numDims;d++){
-  //           s1+=result1->dimensionKeys[dimOrder[d]]->c_str();
-  //           s2+=result2->dimensionKeys[dimOrder[d]]->c_str();
-  //
-  //         }
-  //         if(s1.compare(s2)<0)return true;
-  //         return false;
-  //         //return (struct1.key < struct2.key);
-  //       }
-  //   };
-
-  //   void createStructure(CDataSource::DataObject *dataObject,CDrawImage *drawImage,CImageWarper *imageWarper,CDataSource *dataSource,int dX,int dY,CXMLParser::XMLElement *gfiStructure){
-  //     CDBDebug("createStructure");
-  //     /* Determine ordering of dimensions */
-  //     int numberOfDims = dataSource->requiredDims.size();
-  //     int timeDimIndex = -1;
-  //
-  //     for(int dimnr = 0;dimnr<numberOfDims;dimnr++){
-  //       COGCDims *ogcDim=dataSource->requiredDims[dimnr];
-  //       if(ogcDim->isATimeDimension){
-  //         timeDimIndex=dimnr;
-  //         break;
-  //       }
-  //     }
-  //
-  //     for(int dimnr = 0;dimnr<numberOfDims;dimnr++){
-  //       dimOrdering[dimnr]=dimnr;
-  //     }
-  //     if(timeDimIndex!=-1){
-  //       int a= dimOrdering[timeDimIndex];
-  //       int b= dimOrdering[numberOfDims-1];
-  //       dimOrdering[timeDimIndex]=b;
-  //       dimOrdering[numberOfDims-1]=a;
-  //     }else{
-  //       timeDimIndex = 0;
-  //     }
-  //
-  //     for(int dimnr = 0;dimnr<numberOfDims;dimnr++){
-  //       CDBDebug("New order = %d/%d",dimnr,dimOrdering[dimnr]);
-  //     }
-  //
-  //     CXMLParser::XMLElement *layerStructure = gfiStructure->add("root");
-  //     layerStructure->add(CXMLParser::XMLElement("name", dataSource->getLayerName()));
-  //
-  //     /* Add metadata */
-  //     CT::string standardName = dataObject->variableName.c_str();
-  //     CDF::Attribute * attr_standard_name=dataObject->cdfVariable->getAttributeNE("standard_name");
-  //     if(attr_standard_name!=NULL){
-  //       standardName = attr_standard_name->toString();
-  //     }
-  //
-  //     layerStructure->add(CXMLParser::XMLElement("standard_name",standardName.c_str()));
-  //     layerStructure->add(CXMLParser::XMLElement("units",dataObject->getUnits().c_str()));
-  //
-  //     CT::string ckey;
-  //     ckey.print("%d%d%s",dX,dY,dataSource->nativeProj4.c_str());
-  //     CImageDataWriter::ProjCacheInfo projCacheInfo = CImageDataWriter::GetProjInfo(ckey,drawImage,dataSource,imageWarper, dataSource->srvParams,dX,dY);
-  //     CXMLParser::XMLElement point("point");
-  //     point.add(CXMLParser::XMLElement("SRS", "EPSG:4326"));
-  //     CT::string coord;
-  //     coord.print("%f,%f", projCacheInfo.lonX, projCacheInfo.lonY);
-  //     point.add(CXMLParser::XMLElement("coords", coord.c_str()));
-  //     layerStructure->add(point);
-  //
-  //     for(size_t i=0;i<dataSource->requiredDims.size();i++){
-  //       COGCDims *ogcDim=dataSource->requiredDims[dimOrdering[i]];
-  //       layerStructure->add(CXMLParser::XMLElement("dims",ogcDim->name.c_str()));
-  //     }
-  //
-  //     CXMLParser::XMLElement *dataStructure= NULL;
-  //     try{
-  //       dataStructure = layerStructure->get("data");
-  //     }catch(int e){
-  //       layerStructure->add(CXMLParser::XMLElement("data"));
-  //       dataStructure = layerStructure->getLast();
-  //     }
-  //     CDBDebug("Sorting");
-  // //     std::sort(results.begin(), results.end(), less_than_key());
-  // //     CDBDebug("Found %d elements",results.size());
-  // //     for(size_t j=0;j<results.size();j++){
-  // //       //recurDataStructure(dataStructure,results[j],0,dimOrdering);
-  // //     }
-  //   }
 
   void makeRequests(CDrawImage *drawImage, CImageWarper *, CDataSource *dataSource, int, int, CT::string *eProfileJson) {
 #ifdef CMakeEProfile_DEBUG

@@ -241,3 +241,13 @@ int CDF::fill(void *destdata, CDFType destType, double value, size_t size) {
   }
   return 0;
 }
+
+bool CDF::isCDFNumeric(CDFType type) {
+  switch (type) {
+  case CDF_CHAR:
+  case CDF_STRING:
+    return false;
+  default:
+    return true;
+  }
+}
