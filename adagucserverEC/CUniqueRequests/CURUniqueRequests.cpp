@@ -10,16 +10,6 @@ const char *CURUniqueRequests::className = "CURUniqueRequests";
 
 CURUniqueRequests::CURUniqueRequests() { readDataAsCDFDouble = false; }
 
-CURUniqueRequests::~CURUniqueRequests() {
-  typedef std::map<std::string, CURFileInfo *>::iterator it_type_file;
-  for (it_type_file filemapiterator = fileInfoMap.begin(); filemapiterator != fileInfoMap.end(); filemapiterator++) {
-
-    delete filemapiterator->second;
-  }
-
-  results.clear();
-}
-
 int *CURUniqueRequests::getDimOrder() { return dimOrdering; }
 
 void CURUniqueRequests::set(const char *filename, const char *dimName, size_t dimIndex, CT::string dimValue) {
@@ -44,23 +34,14 @@ void CURUniqueRequests::set(const char *filename, const char *dimName, size_t di
     fileInfo->dimInfoMap.insert(std::pair<std::string, CURDimInfo *>(dimName, dimInfo));
   }
 
-  /* Find the right dimension indexes and values based on dimension index */
-  CT::string *dimIndexesAndValues = NULL;
-  std::map<int, CT::string *>::iterator itdi = dimInfo->dimValuesMap.find(dimIndex);
-  if (itdi != dimInfo->dimValuesMap.end()) {
-    dimIndexesAndValues = (*itdi).second;
-  } else {
-    dimIndexesAndValues = new CT::string();
-    dimInfo->dimValuesMap.insert(std::pair<int, CT::string *>(dimIndex, dimIndexesAndValues));
-  }
+  dimInfo->dimValuesMap[dimIndex] = dimValue.c_str();
 
-  dimIndexesAndValues->copy(dimValue.c_str());
 #ifdef CCUniqueRequests_DEBUG
   CDBDebug("Adding %s %d %s", dimName, dimIndex, dimValue.c_str());
 #endif
 }
 
-void CURUniqueRequests::addDimSet(CURDimInfo *dimInfo, int start, std::vector<CT::string> valueList) {
+void CURUniqueRequests::addDimSet(CURDimInfo *dimInfo, int start, std::vector<std::string> valueList) {
 #ifdef CCUniqueRequests_DEBUG
   CDBDebug("Adding %d with %d values", start, valueList.size());
 #endif
@@ -107,15 +88,16 @@ void CURUniqueRequests::sortAndAggregate() {
 #ifdef CCUniqueRequests_DEBUG
       CDBDebug("%s/%s", (filemapiterator->first).c_str(), (diminfomapiterator->first).c_str());
 #endif
-      std::map<int, CT::string *> *dimValuesMap = &diminfomapiterator->second->dimValuesMap;
+
       int currentDimIndex = -1;
       int dimindex;
 
       int startDimIndex;
-      std::vector<CT::string> dimValues;
-      for (it_type_dimvalindex dimvalindexmapiterator = dimValuesMap->begin(); dimvalindexmapiterator != dimValuesMap->end(); dimvalindexmapiterator++) {
+      std::vector<std::string> dimValues;
+      map_type_dimvalindex dimValuesMap = diminfomapiterator->second->dimValuesMap;
+      for (it_type_dimvalindex dimvalindexmapiterator = dimValuesMap.begin(); dimvalindexmapiterator != dimValuesMap.end(); dimvalindexmapiterator++) {
         dimindex = dimvalindexmapiterator->first;
-        const char *dimvalue = dimvalindexmapiterator->second->c_str();
+        const char *dimvalue = dimvalindexmapiterator->second.c_str();
 
         if (currentDimIndex != -1) {
           if (currentDimIndex == dimindex - 1) {

@@ -2,6 +2,7 @@
 #include <algorithm>
 #include "CMakeEProfile.h"
 #include "CImageDataWriter.h"
+#include "CUniqueRequests/CURConstants.h"
 
 const char *CMakeEProfile::className = "CMakeEProfile";
 
@@ -30,22 +31,12 @@ public:
   public:
     CT::string name;
     int start;
-    std::vector<CT::string> values;
+    std::vector<std::string> values;
   };
 
-  typedef std::map<int, CT::string *>::iterator it_type_dimvalindex;
-  class DimInfo {
-  public:
-    std::map<int, CT::string *> dimValuesMap;            // All values, many starts with 1 count, result of set()
+  struct DimInfo {
+    std::map<int, std::string> dimValuesMap;             // All values, many starts with 1 count, result of set()
     std::vector<AggregatedDimension *> aggregatedValues; // Aggregated values (start/count series etc), result of  addDimSet()
-    ~DimInfo() {
-      for (it_type_dimvalindex dimvalindexmapiterator = dimValuesMap.begin(); dimvalindexmapiterator != dimValuesMap.end(); dimvalindexmapiterator++) {
-        delete dimvalindexmapiterator->second;
-      }
-      for (size_t j = 0; j < aggregatedValues.size(); j++) {
-        delete aggregatedValues[j];
-      }
-    }
   };
 
   typedef std::map<std::string, DimInfo *>::iterator it_type_diminfo;
@@ -134,29 +125,20 @@ public:
       fileInfo->dimInfoMap.insert(std::pair<std::string, DimInfo *>(dimName, dimInfo));
     }
 
-    /* Find the right dimension indexes and values based on dimension index */
-    CT::string *dimIndexesAndValues = NULL;
-    std::map<int, CT::string *>::iterator itdi = dimInfo->dimValuesMap.find(dimIndex);
-    if (itdi != dimInfo->dimValuesMap.end()) {
-      dimIndexesAndValues = (*itdi).second;
-    } else {
-      dimIndexesAndValues = new CT::string();
-      dimInfo->dimValuesMap.insert(std::pair<int, CT::string *>(dimIndex, dimIndexesAndValues));
-    }
+    dimInfo->dimValuesMap[dimIndex] = dimValue.c_str();
 
-    dimIndexesAndValues->copy(dimValue.c_str());
 #ifdef CMakeEProfile_DEBUG
 //    CDBDebug("Adding %s %d %s",dimName,dimIndex,dimValue.c_str());
 #endif
   }
 
-  void addDimSet(DimInfo *dimInfo, int start, std::vector<CT::string> *valueList) {
+  void addDimSet(DimInfo *dimInfo, int start, std::vector<std::string> valueList) {
 #ifdef CMakeEProfile_DEBUG
     CDBDebug("Adding %d with %d values", start, valueList->size());
 #endif
     AggregatedDimension *aggregatedValue = new AggregatedDimension();
     aggregatedValue->start = start;
-    aggregatedValue->values = *valueList;
+    aggregatedValue->values = valueList;
     dimInfo->aggregatedValues.push_back(aggregatedValue);
   }
 
@@ -198,17 +180,17 @@ public:
 #ifdef CMakeEProfile_DEBUG
         CDBDebug("%s/%s", (filemapiterator->first).c_str(), (diminfomapiterator->first).c_str());
 #endif
-        std::map<int, CT::string *> *dimValuesMap = &diminfomapiterator->second->dimValuesMap;
+        map_type_dimvalindex *dimValuesMap = &diminfomapiterator->second->dimValuesMap;
         int currentDimIndex = -1;
         int dimindex;
 
         int startDimIndex;
-        std::vector<CT::string> dimValues;
+        std::vector<std::string> dimValues;
         for (it_type_dimvalindex dimvalindexmapiterator = dimValuesMap->begin(); dimvalindexmapiterator != dimValuesMap->end(); dimvalindexmapiterator++) {
           // const char *filename=(filemapiterator->first).c_str();
           // const char *dimname=(diminfomapiterator->first).c_str();
           dimindex = dimvalindexmapiterator->first;
-          const char *dimvalue = dimvalindexmapiterator->second->c_str();
+          const char *dimvalue = dimvalindexmapiterator->second.c_str();
 
           if (currentDimIndex != -1) {
             if (currentDimIndex == dimindex - 1) {
@@ -220,7 +202,7 @@ public:
               CDBDebug("Print stop at %d", currentDimIndex);
 #endif
               currentDimIndex = -1;
-              addDimSet(diminfomapiterator->second, startDimIndex, &dimValues);
+              addDimSet(diminfomapiterator->second, startDimIndex, dimValues);
             }
           }
 
@@ -246,7 +228,7 @@ public:
           CDBDebug("Print stop at %d", dimindex);
 #endif
           currentDimIndex = -1;
-          addDimSet(diminfomapiterator->second, startDimIndex, &dimValues);
+          addDimSet(diminfomapiterator->second, startDimIndex, dimValues);
         }
       }
     }

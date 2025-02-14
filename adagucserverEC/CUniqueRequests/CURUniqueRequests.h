@@ -35,12 +35,11 @@ private:
   void expandData(CDataSource *dataSource, CDataSource::DataObject *dataObject, CDF::Variable *variable, size_t *start, size_t *count, int d, CURRequest *request, int index, int *multiplies);
 
   CURFileInfo *get(size_t index);
-  void addDimSet(CURDimInfo *dimInfo, int start, std::vector<CT::string> valueList);
+  void addDimSet(CURDimInfo *dimInfo, int start, std::vector<std::string> valueList);
   void nestRequest(it_type_diminfo diminfomapiterator, CURFileInfo *fileInfo, int depth);
   size_t size();
 
 public:
-  ~CURUniqueRequests();
   CURUniqueRequests();
 
   bool readDataAsCDFDouble;

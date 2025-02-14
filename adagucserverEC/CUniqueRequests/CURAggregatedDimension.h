@@ -8,6 +8,6 @@ class CURAggregatedDimension {
 public:
   CT::string name;
   int start;
-  std::vector<CT::string> values;
+  std::vector<std::string> values;
 };
 #endif
