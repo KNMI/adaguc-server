@@ -2550,7 +2550,7 @@ class TestWMS(unittest.TestCase):
 
         filename = "test_WMSGetMap_SolarTerminatorEquinox.png"
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "DATASET=solarterminator&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=solarterminator&WIDTH=836&HEIGHT=638&CRS=EPSG%3A3857&BBOX=-27591378.677139122,-15819675.465716192,24482445.32432534,23920874.430138264&STYLES=solarterminator%2Fshadedcontour&FORMAT=image/png&TRANSPARENT=TRUE&&time=2023-03-21T00%3A00%3A00Z&",
+            "DATASET=solarterminator&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=solarterminator&WIDTH=200&HEIGHT=200&CRS=EPSG%3A3857&BBOX=-27591378.677139122,-15819675.465716192,24482445.32432534,23920874.430138264&STYLES=solarterminator%2Fshadedcontour&FORMAT=image/png&TRANSPARENT=TRUE&&time=2023-03-21T00%3A00%3A00Z&",
             env=env)
         AdagucTestTools().writetofile(self.testresultspath + filename,
                                       data.getvalue())
@@ -2573,7 +2573,7 @@ class TestWMS(unittest.TestCase):
 
         filename = "test_WMSGetMap_SolarTerminatorSolstice.png"
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "DATASET=solarterminator&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=solarterminator&WIDTH=836&HEIGHT=638&CRS=EPSG%3A3857&BBOX=-27591378.677139122,-15819675.465716192,24482445.32432534,23920874.430138264&STYLES=solarterminator%2Fshadedcontour&FORMAT=image/png&TRANSPARENT=TRUE&&time=2022-12-21T00%3A00%3A00Z&",
+            "DATASET=solarterminator&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=solarterminator&WIDTH=200&HEIGHT=200&CRS=EPSG%3A3857&BBOX=-27591378.677139122,-15819675.465716192,24482445.32432534,23920874.430138264&STYLES=solarterminator%2Fshadedcontour&FORMAT=image/png&TRANSPARENT=TRUE&&time=2022-12-21T00%3A00%3A00Z&",
             env=env)
         AdagucTestTools().writetofile(self.testresultspath + filename,
                                       data.getvalue())
@@ -2596,7 +2596,7 @@ class TestWMS(unittest.TestCase):
 
         filename = "test_WMSGetMap_SolarTerminatorQuarterPoint.png"
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "DATASET=solarterminator&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=solarterminator&WIDTH=836&HEIGHT=638&CRS=EPSG%3A3857&BBOX=-27591378.677139122,-15819675.465716192,24482445.32432534,23920874.430138264&STYLES=solarterminator%2Fshadedcontour&FORMAT=image/png&TRANSPARENT=TRUE&&time=2000-08-07T00%3A00%3A00Z&",
+            "DATASET=solarterminator&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=solarterminator&WIDTH=200&HEIGHT=200&CRS=EPSG%3A3857&BBOX=-27591378.677139122,-15819675.465716192,24482445.32432534,23920874.430138264&STYLES=solarterminator%2Fshadedcontour&FORMAT=image/png&TRANSPARENT=TRUE&&time=2000-08-07T00%3A00%3A00Z&",
             env=env)
         AdagucTestTools().writetofile(self.testresultspath + filename,
                                       data.getvalue())
