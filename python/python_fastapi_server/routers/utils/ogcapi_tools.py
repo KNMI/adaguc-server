@@ -12,14 +12,16 @@ from defusedxml.ElementTree import ParseError, parse
 
 from owslib.wms import WebMapService
 
-from .models.ogcapifeatures_1_model import (
+
+from python_fastapi_server.routers.models.ogcapifeatures_1_model import (
     FeatureGeoJSON,
     Link,
     PointGeoJSON,
     Type1,
     Type7,
 )
-from .setup_adaguc import setup_adaguc
+
+from ..setup_adaguc import setup_adaguc
 
 logger = logging.getLogger(__name__)
 
