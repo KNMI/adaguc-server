@@ -1,6 +1,6 @@
 #ifndef REQUESTUTILS_H
 #define REQUESTUTILS_H
-#include "CUniqueRequests/CURResult.h"
+#include "CUniqueRequests/CURTypes.h"
 
 void padTo(std::string &str, const size_t num, const char paddingChar = ' ');
 

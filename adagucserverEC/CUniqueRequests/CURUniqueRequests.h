@@ -5,18 +5,13 @@
 #include <map>
 #include "CTString.h"
 #include "CDebugger.h"
-#include "CURConstants.h"
-#include "CURDimInfo.h"
-#include "CURFileInfo.h"
+#include "CURTypes.h"
 #include "CServerParams.h"
 #include "CDrawImage.h"
 #include "CDataSource.h"
 #include "CImageWarper.h"
-#include "CUniqueRequests/CURResult.h"
 #include "CUniqueRequests/requestUtils.h"
 #include "requestUtils.h"
-
-struct CURResult;
 
 class CURUniqueRequests {
 

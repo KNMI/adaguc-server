@@ -2,7 +2,7 @@
 #include <algorithm>
 #include "CMakeEProfile.h"
 #include "CImageDataWriter.h"
-#include "CUniqueRequests/CURConstants.h"
+#include "CUniqueRequests/CURTypes.h"
 
 const char *CMakeEProfile::className = "CMakeEProfile";
 
