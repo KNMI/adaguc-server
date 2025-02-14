@@ -2,10 +2,6 @@
 #include "CUniqueRequests/requestUtils.h"
 #include "CUniqueRequests/CURUniqueRequests.h"
 
-void padTo(std::string &str, const size_t num, const char paddingChar) {
-  if (num > str.size()) str.insert(0, num - str.size(), paddingChar);
-}
-
 bool sortDimensionKeysRecursive(CURResult &result1, CURResult &result2, int depth) {
   bool d = false;
   if (depth < result1.numDims) {

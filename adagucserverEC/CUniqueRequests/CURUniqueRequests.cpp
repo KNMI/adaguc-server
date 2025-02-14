@@ -181,7 +181,7 @@ void CURUniqueRequests::createStructure(std::vector<CURResult> results, CDataSou
     dataStructure = layerStructure->getLast();
   }
 
-  std::sort(results.begin(), results.end(), less_than_key());
+  std::sort(results.begin(), results.end(), compareFunctionCurResult());
   CDBDebug("Found %d elements", results.size());
 
   for (size_t j = 0; j < results.size(); j++) {
