@@ -16,9 +16,7 @@ CURUniqueRequests::~CURUniqueRequests() {
 
     delete filemapiterator->second;
   }
-  for (size_t j = 0; j < results.size(); j++) {
-    delete results[j];
-  }
+
   results.clear();
 }
 
@@ -175,7 +173,7 @@ void CURUniqueRequests::recurDataStructure(CXMLParser::XMLElement *dataStructure
       return recurDataStructure(dataStructure, result, depth + 1, dimOrdering, dimIndicesToSkip);
     }
   }
-  CT::string dimindexvalue = result->dimensionKeys[dimIndex].c_str();
+  CT::string dimindexvalue = result->dimensionKeys[dimIndex].name.c_str();
 
   CXMLParser::XMLElement *el = NULL;
   try {
@@ -248,7 +246,7 @@ void CURUniqueRequests::createStructure(CDataSource::DataObject *dataObject, CDr
   CDBDebug("Found %d elements", results.size());
 
   for (size_t j = 0; j < results.size(); j++) {
-    recurDataStructure(dataStructure, results[j], 0, dimOrdering, dimIndicesToSkip);
+    recurDataStructure(dataStructure, &results[j], 0, dimOrdering, dimIndicesToSkip);
   }
 }
 
@@ -298,10 +296,7 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
   CDBDebug("===================== iterating data objects ==================");
 #endif
   for (size_t dataObjectNr = 0; dataObjectNr < dataSource->dataObjects.size(); dataObjectNr++) {
-    // CDBDebug("Found %d elements",results.size());
-    for (size_t j = 0; j < results.size(); j++) {
-      delete results[j];
-    }
+
     results.clear();
     CDataSource::DataObject *dataObject = dataSource->getDataObject(dataObjectNr);
     CT::string variableName = dataObject->cdfVariable->name;
@@ -501,16 +496,14 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
 
               for (size_t indexInVariable = 0; indexInVariable < variable->getSize(); indexInVariable++) {
 
-                CURResult *currentResultForIndex = new CURResult(this);
-                results.push_back(currentResultForIndex);
-
-                // Set the number of dimensions
-                currentResultForIndex->numDims = numberOfDataSourceDims;
+                CURResult currentResultForIndex;
+                currentResultForIndex.parent = this;
+                currentResultForIndex.numDims = numberOfDataSourceDims;
 
                 // Fill in the dimension keys
                 for (size_t dataSourceDimIndex = 0; dataSourceDimIndex < dataSource->requiredDims.size(); dataSourceDimIndex++) {
                   CT::string requestDimNameToFind = dataSource->requiredDims[dataSourceDimIndex]->netCDFDimName.c_str();
-                  currentResultForIndex->dimensionKeys[dataSourceDimIndex] = dataSource->requiredDims[dataSourceDimIndex]->value;
+                  currentResultForIndex.dimensionKeys[dataSourceDimIndex].name = dataSource->requiredDims[dataSourceDimIndex]->value;
                   int variableDimIndex = -1;
                   for (size_t d = 0; d < variable->dimensionlinks.size() - 2; d += 1) {
                     if (variable->dimensionlinks[d]->name.equals(requestDimNameToFind)) {
@@ -532,7 +525,7 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
                     size_t numValues = values.size();
                     size_t multiplyIndex = multiplies[variableDimIndex];
                     CT::string dimStr = values[(indexInVariable / multiplyIndex) % numValues].c_str();
-                    currentResultForIndex->dimensionKeys[dataSourceDimIndex] = dimStr;
+                    currentResultForIndex.dimensionKeys[dataSourceDimIndex].name = dimStr;
                   }
                 }
 
@@ -549,7 +542,8 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
                 }
 
                 // Set the value
-                currentResultForIndex->value = pixelValueAsString;
+                currentResultForIndex.value = pixelValueAsString;
+                results.push_back(currentResultForIndex);
               }
             } catch (int e) {
               CDBError("Error in expandData at line %d", e);

@@ -193,7 +193,6 @@ add_library(
     CStyleConfiguration.cpp
     CStyleConfiguration.h
     CUniqueRequests/CURResult.h
-    CUniqueRequests/CURResult.cpp
     CUniqueRequests/requestUtils.h
     CUniqueRequests/requestUtils.cpp
     CUniqueRequests/CURUniqueRequests.cpp

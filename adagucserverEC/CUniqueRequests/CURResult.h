@@ -6,16 +6,16 @@
 
 class CURUniqueRequests;
 
-class CURResult {
-private:
-  CURUniqueRequests *parent;
+struct CURDimensionKey {
+  std::string name;
+  int type;
+};
 
-public:
-  CURResult(CURUniqueRequests *parent);
-  CT::string dimensionKeys[CCUniqueRequests_MAX_DIMS];
+struct CURResult {
+  CURUniqueRequests *parent;
+  CURDimensionKey dimensionKeys[CCUniqueRequests_MAX_DIMS];
   CT::string value;
   int numDims;
-  int *getDimOrder();
 };
 
 #endif

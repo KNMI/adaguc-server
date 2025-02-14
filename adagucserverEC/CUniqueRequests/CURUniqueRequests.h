@@ -27,12 +27,13 @@ private:
   std::map<std::string, CURFileInfo *> fileInfoMap; // File name is key
   CT::string dimensionKeys[CCUniqueRequests_MAX_DIMS];
   int dimOrdering[CCUniqueRequests_MAX_DIMS];
-  std::vector<CURResult *> results;
+  std::vector<CURResult> results;
   CURAggregatedDimension *dimensions[CCUniqueRequests_MAX_DIMS];
 
   void recurDataStructure(CXMLParser::XMLElement *dataStructure, CURResult *result, int depth, int *dimOrdering, std::vector<int> dimIndicesToSkip);
   void createStructure(CDataSource::DataObject *dataObject, CDrawImage *drawImage, CImageWarper *imageWarper, CDataSource *dataSource, int dX, int dY, CXMLParser::XMLElement *gfiStructure);
   void expandData(CDataSource *dataSource, CDataSource::DataObject *dataObject, CDF::Variable *variable, size_t *start, size_t *count, int d, CURRequest *request, int index, int *multiplies);
+
   CURFileInfo *get(size_t index);
   void addDimSet(CURDimInfo *dimInfo, int start, std::vector<CT::string> valueList);
   void nestRequest(it_type_diminfo diminfomapiterator, CURFileInfo *fileInfo, int depth);
