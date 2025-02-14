@@ -12,53 +12,26 @@ CURUniqueRequests::CURUniqueRequests() { readDataAsCDFDouble = false; }
 
 int *CURUniqueRequests::getDimOrder() { return dimOrdering; }
 
-void CURUniqueRequests::set(const char *filename, const char *dimName, size_t dimIndex, CT::string dimValue) {
+void CURUniqueRequests::set(const char *filename, const char *dimName, size_t dimIndex, CT::string dimValue) { fileInfoMap[filename].dimInfoMap[dimName].dimValuesMap[dimIndex] = dimValue.c_str(); }
 
-  /* Find the right file based on filename */
-  CURFileInfo *fileInfo = NULL;
-  std::map<std::string, CURFileInfo *>::iterator itf = fileInfoMap.find(filename);
-  if (itf != fileInfoMap.end()) {
-    fileInfo = (*itf).second;
-  } else {
-    fileInfo = new CURFileInfo();
-    fileInfoMap.insert(std::pair<std::string, CURFileInfo *>(filename, fileInfo));
-  }
-
-  /* Find the right diminfo based on dimension name */
-  CURDimInfo *dimInfo = NULL;
-  std::map<std::string, CURDimInfo *>::iterator itd = fileInfo->dimInfoMap.find(dimName);
-  if (itd != fileInfo->dimInfoMap.end()) {
-    dimInfo = (*itd).second;
-  } else {
-    dimInfo = new CURDimInfo();
-    fileInfo->dimInfoMap.insert(std::pair<std::string, CURDimInfo *>(dimName, dimInfo));
-  }
-
-  dimInfo->dimValuesMap[dimIndex] = dimValue.c_str();
-
-#ifdef CCUniqueRequests_DEBUG
-  CDBDebug("Adding %s %d %s", dimName, dimIndex, dimValue.c_str());
-#endif
-}
-
-void CURUniqueRequests::addDimSet(CURDimInfo *dimInfo, int start, std::vector<std::string> valueList) {
+void CURUniqueRequests::addDimSet(CURDimInfo &dimInfo, int start, std::vector<std::string> valueList) {
 #ifdef CCUniqueRequests_DEBUG
   CDBDebug("Adding %d with %d values", start, valueList.size());
 #endif
   CURAggregatedDimension *aggregatedValue = new CURAggregatedDimension();
   aggregatedValue->start = start;
   aggregatedValue->values.assign(valueList.begin(), valueList.end());
-  dimInfo->aggregatedValues.push_back(aggregatedValue);
+  dimInfo.aggregatedValues.push_back(aggregatedValue);
 }
 
-void CURUniqueRequests::nestRequest(it_type_diminfo diminfomapiterator, CURFileInfo *fileInfo, int depth) {
-  if (diminfomapiterator != fileInfo->dimInfoMap.end()) {
+void CURUniqueRequests::nestRequest(it_type_diminfo diminfomapiterator, CURFileInfo &fileInfo, int depth) {
+  if (diminfomapiterator != fileInfo.dimInfoMap.end()) {
     it_type_diminfo currentIt = diminfomapiterator;
     int currentDepth = depth;
     diminfomapiterator++;
     depth++;
-    for (size_t j = 0; j < (currentIt->second)->aggregatedValues.size(); j++) {
-      CURAggregatedDimension *aggregatedValue = (currentIt->second)->aggregatedValues[j];
+    for (size_t j = 0; j < (currentIt->second).aggregatedValues.size(); j++) {
+      CURAggregatedDimension *aggregatedValue = (currentIt->second).aggregatedValues[j];
       aggregatedValue->name = (currentIt->first).c_str();
       dimensions[currentDepth] = aggregatedValue;
       nestRequest(diminfomapiterator, fileInfo, depth);
@@ -76,15 +49,15 @@ void CURUniqueRequests::nestRequest(it_type_diminfo diminfomapiterator, CURFileI
       request->dimensions[j] = dimensions[j];
     }
     request->numDims = depth;
-    fileInfo->requests.push_back(request);
+    fileInfo.requests.push_back(request);
     return;
   }
 }
 
 void CURUniqueRequests::sortAndAggregate() {
   for (it_type_file filemapiterator = fileInfoMap.begin(); filemapiterator != fileInfoMap.end(); filemapiterator++) {
-
-    for (it_type_diminfo diminfomapiterator = (filemapiterator->second)->dimInfoMap.begin(); diminfomapiterator != (filemapiterator->second)->dimInfoMap.end(); diminfomapiterator++) {
+    auto dimInfoMap = &(filemapiterator->second).dimInfoMap;
+    for (it_type_diminfo diminfomapiterator = dimInfoMap->begin(); diminfomapiterator != dimInfoMap->end(); diminfomapiterator++) {
 #ifdef CCUniqueRequests_DEBUG
       CDBDebug("%s/%s", (filemapiterator->first).c_str(), (diminfomapiterator->first).c_str());
 #endif
@@ -94,7 +67,7 @@ void CURUniqueRequests::sortAndAggregate() {
 
       int startDimIndex;
       std::vector<std::string> dimValues;
-      map_type_dimvalindex dimValuesMap = diminfomapiterator->second->dimValuesMap;
+      map_type_dimvalindex dimValuesMap = diminfomapiterator->second.dimValuesMap;
       for (it_type_dimvalindex dimvalindexmapiterator = dimValuesMap.begin(); dimvalindexmapiterator != dimValuesMap.end(); dimvalindexmapiterator++) {
         dimindex = dimvalindexmapiterator->first;
         const char *dimvalue = dimvalindexmapiterator->second.c_str();
@@ -143,7 +116,7 @@ void CURUniqueRequests::sortAndAggregate() {
 
   // Generate CURUniqueRequests
   for (it_type_file filemapiterator = fileInfoMap.begin(); filemapiterator != fileInfoMap.end(); filemapiterator++) {
-    nestRequest((filemapiterator->second)->dimInfoMap.begin(), filemapiterator->second, 0);
+    nestRequest((filemapiterator->second).dimInfoMap.begin(), filemapiterator->second, 0);
   }
 }
 
@@ -330,9 +303,9 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
           throw(__LINE__);
         }
 
-        for (size_t j = 0; j < (filemapiterator->second)->requests.size(); j++) {
+        for (size_t j = 0; j < (filemapiterator->second).requests.size(); j++) {
 
-          CURRequest *request = (filemapiterator->second)->requests[j];
+          CURRequest *request = (filemapiterator->second).requests[j];
 #ifdef CCUniqueRequests_DEBUG
           CDBDebug("Reading file %s  for variable %s", (filemapiterator->first).c_str(), variable->name.c_str());
 #endif
@@ -557,10 +530,10 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
 size_t CURUniqueRequests::size() { return fileInfoMap.size(); }
 
 CURFileInfo *CURUniqueRequests::get(size_t index) {
-  typedef std::map<std::string, CURFileInfo *>::iterator it_type_file;
+  typedef std::map<std::string, CURFileInfo>::iterator it_type_file;
   size_t s = 0;
   for (it_type_file filemapiterator = fileInfoMap.begin(); filemapiterator != fileInfoMap.end(); filemapiterator++) {
-    if (s == index) return filemapiterator->second;
+    if (s == index) return &(filemapiterator->second);
     s++;
   }
   return NULL;

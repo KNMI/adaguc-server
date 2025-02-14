@@ -20,11 +20,11 @@ class CURResult;
 
 class CURUniqueRequests {
 
-  typedef std::map<std::string, CURFileInfo *>::iterator it_type_file;
+  typedef std::map<std::string, CURFileInfo>::iterator it_type_file;
 
 private:
   DEF_ERRORFUNCTION();
-  std::map<std::string, CURFileInfo *> fileInfoMap; // File name is key
+  std::map<std::string, CURFileInfo> fileInfoMap; // File name is key
   CT::string dimensionKeys[CCUniqueRequests_MAX_DIMS];
   int dimOrdering[CCUniqueRequests_MAX_DIMS];
   std::vector<CURResult> results;
@@ -35,8 +35,8 @@ private:
   void expandData(CDataSource *dataSource, CDataSource::DataObject *dataObject, CDF::Variable *variable, size_t *start, size_t *count, int d, CURRequest *request, int index, int *multiplies);
 
   CURFileInfo *get(size_t index);
-  void addDimSet(CURDimInfo *dimInfo, int start, std::vector<std::string> valueList);
-  void nestRequest(it_type_diminfo diminfomapiterator, CURFileInfo *fileInfo, int depth);
+  void addDimSet(CURDimInfo &dimInfo, int start, std::vector<std::string> valueList);
+  void nestRequest(it_type_diminfo diminfomapiterator, CURFileInfo &fileInfo, int depth);
   size_t size();
 
 public:

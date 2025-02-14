@@ -19,6 +19,6 @@ public:
   }
 };
 
-typedef std::map<std::string, CURDimInfo *>::iterator it_type_diminfo;
+typedef std::map<std::string, CURDimInfo>::iterator it_type_diminfo;
 
 #endif
