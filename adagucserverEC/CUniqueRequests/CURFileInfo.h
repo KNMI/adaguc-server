@@ -6,10 +6,9 @@
 #ifndef CURFILEINFO_H
 #define CURFILEINFO_H
 
-class CURFileInfo {
-public:
-  std::vector<CURRequest *> requests;
-  std::map<std::string, CURDimInfo> dimInfoMap; // AggregatedDimension name is key
+struct CURFileInfo {
+  std::vector<CURRequest> requests;
+  map_type_diminfo dimInfoMap; // AggregatedDimension name is key
 };
 
 #endif

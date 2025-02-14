@@ -16,7 +16,7 @@
 #include "CUniqueRequests/requestUtils.h"
 #include "requestUtils.h"
 
-class CURResult;
+struct CURResult;
 
 class CURUniqueRequests {
 
@@ -25,10 +25,9 @@ class CURUniqueRequests {
 private:
   DEF_ERRORFUNCTION();
   std::map<std::string, CURFileInfo> fileInfoMap; // File name is key
-  CT::string dimensionKeys[CCUniqueRequests_MAX_DIMS];
   int dimOrdering[CCUniqueRequests_MAX_DIMS];
   std::vector<CURResult> results;
-  CURAggregatedDimension *dimensions[CCUniqueRequests_MAX_DIMS];
+  CURAggregatedDimensionAndName aggregatedDimensions[CCUniqueRequests_MAX_DIMS];
 
   void recurDataStructure(CXMLParser::XMLElement *dataStructure, CURResult *result, int depth, int *dimOrdering, std::vector<int> dimIndicesToSkip);
   void createStructure(CDataSource::DataObject *dataObject, CDrawImage *drawImage, CImageWarper *imageWarper, CDataSource *dataSource, int dX, int dY, CXMLParser::XMLElement *gfiStructure);
@@ -37,7 +36,6 @@ private:
   CURFileInfo *get(size_t index);
   void addDimSet(CURDimInfo &dimInfo, int start, std::vector<std::string> valueList);
   void nestRequest(it_type_diminfo diminfomapiterator, CURFileInfo &fileInfo, int depth);
-  size_t size();
 
 public:
   CURUniqueRequests();

@@ -7,18 +7,12 @@
 #ifndef CURDIMINFO_H
 #define CURDIMINFO_H
 
-class CURDimInfo {
-public:
-  map_type_dimvalindex dimValuesMap;                      // All values, many starts with 1 count, result of set()
-  std::vector<CURAggregatedDimension *> aggregatedValues; // Aggregated values (start/count series etc), result of  addDimSet()
-  ~CURDimInfo() {
-
-    for (size_t j = 0; j < aggregatedValues.size(); j++) {
-      delete aggregatedValues[j];
-    }
-  }
+struct CURDimInfo {
+  map_type_dimvalindex dimValuesMap;                          // All values, many starts with 1 count, result of set()
+  std::vector<CURAggregatedDimensionNoName> aggregatedValues; // Aggregated values (start/count series etc), result of  addDimSet()
 };
 
-typedef std::map<std::string, CURDimInfo>::iterator it_type_diminfo;
+typedef std::map<std::string, CURDimInfo> map_type_diminfo;
+typedef map_type_diminfo::iterator it_type_diminfo;
 
 #endif

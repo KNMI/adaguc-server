@@ -4,10 +4,8 @@
 #ifndef CURREQUEST_H
 #define CURREQUEST_H
 
-class CURRequest {
-public:
-  int numDims;
-  CURAggregatedDimension *dimensions[CCUniqueRequests_MAX_DIMS];
+struct CURRequest {
+  std::vector<CURAggregatedDimensionAndName> dimensions;
 };
 
 #endif
