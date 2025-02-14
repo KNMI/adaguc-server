@@ -2,15 +2,11 @@
 #include <algorithm>
 #include "CMakeJSONTimeSeries.h"
 #include "CImageDataWriter.h"
-#include "CUniqueRequests.h"
+#include "CURUniqueRequests.h"
 
 // #define CCUniqueRequests_DEBUG
 // #define CCUniqueRequests_DEBUG_HIGH
 const char *CURUniqueRequests::className = "CURUniqueRequests";
-
-void padTo(std::string &str, const size_t num, const char paddingChar) {
-  if (num > str.size()) str.insert(0, num - str.size(), paddingChar);
-}
 
 CURUniqueRequests::CURUniqueRequests() { readDataAsCDFDouble = false; }
 
@@ -25,6 +21,8 @@ CURUniqueRequests::~CURUniqueRequests() {
   }
   results.clear();
 }
+
+int *CURUniqueRequests::getDimOrder() { return dimOrdering; }
 
 void CURUniqueRequests::set(const char *filename, const char *dimName, size_t dimIndex, CT::string dimValue) {
 

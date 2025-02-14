@@ -2,7 +2,7 @@
 #include <algorithm>
 #include "CMakeJSONTimeSeries.h"
 #include "CImageDataWriter.h"
-#include "CUniqueRequests/CUniqueRequests.h"
+#include "CUniqueRequests/CURUniqueRequests.h"
 
 const char *CMakeJSONTimeSeries::className = "CMakeJSONTimeSeries";
 
@@ -55,7 +55,6 @@ int CMakeJSONTimeSeries::MakeJSONTimeSeries(CDrawImage *drawImage, CImageWarper 
     throw(__LINE__);
   }
 
-  
 #ifdef CMakeJSONTimeSeries_DEBUG
   CDBDebug("3): ***** makeRequests and expanddata *****");
 #endif
