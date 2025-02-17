@@ -401,10 +401,10 @@ int main(int argc, char **argv, char **envp) {
   }
 
   /* Check if we enable logbuffer:
-    - true means unbuffered output with live logging but means a slower service
-    - false means buffered logging
-    - nologging means no logging at all
-  */
+     - FALSE (unset / default): unbuffered output with live logging but can have a slower service as effect
+     - TRUE: buffered logging
+     - DISABLELOGGING: no logging at all
+   */
   const char *ADAGUC_ENABLELOGBUFFER = getenv("ADAGUC_ENABLELOGBUFFER");
   if (ADAGUC_ENABLELOGBUFFER != NULL) {
     CT::string check = ADAGUC_ENABLELOGBUFFER;

@@ -31,13 +31,13 @@ You could copy these files from [here - python/examples/rundataset/data/sequence
 When everything is configured, you are ready to scan (or ingest) the files, this can be done with the following command:
 
 ```
-docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh mymonthlyconfig
+docker exec -i -t my-adaguc-server /adaguc/scan.sh -d mymonthlyconfig
 ```
 
 It should print something like:
 
 ```
-$ docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh mymonthlyconfig
+$ docker exec -i -t my-adaguc-server /adaguc/scan.sh -d mymonthlyconfig
 Using adagucserver from  /adaguc/adaguc-server-master
 Using config from /adaguc/adaguc-server-config.xml
 
@@ -76,13 +76,13 @@ If you would like to add a single file in the configured data directory,
 you can do:
 
 ```
-docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh mymonthlyconfig apr.nc
+docker exec -i -t my-adaguc-server /adaguc/scan.sh -d mymonthlyconfig apr.nc
 ```
 
 If you would like to scan specific files in a certain subdirectory of
 the configured data directory, you can do:
 ```
-docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh mymonthlyconfig 2013
+docker exec -i -t my-adaguc-server /adaguc/scan.sh -d mymonthlyconfig 2013
 ```
 
 This adds the files which are located in the given subdirectory. If
@@ -95,7 +95,7 @@ If you would like to remove files from the service, because they do not
 exist anymore on the filesystem or for any other reason, you can call
 updatedb again with only the dataset:
 ```
-docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh mymonthlyconfig
+docker exec -i -t my-adaguc-server /adaguc/scan.sh -d mymonthlyconfig
 ```
 
 This checks if files are present in adaguc-server database but not on the filesystem. It will also check if files have been updated.

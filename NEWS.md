@@ -1,3 +1,7 @@
+**Version 2.29.3 2025-01-22**
+
+- Refactored scan scripts
+
 **Version 2.29.2 2024-12-23**
 - Fixed issue with irregular grids for SSS SMOS L4 OI - LOPS-v2021 and Global Ocean - Coriolis Observation Re-Analysis CORA5.2. Added test (Issue #316)
 
