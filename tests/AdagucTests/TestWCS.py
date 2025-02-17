@@ -208,18 +208,18 @@ class TestWCS(unittest.TestCase):
                      b'II*\x00\x08\x00\x00\x00\x12\x00')
 
   # TODO: This test (which uses GDAL) produces incorrect results. Made a ticket in backlog.
-  # def test_WCSGetCoverageAAIGRID_NATIVE_testdatanc(self):
-  #   """
-  #   Check if WCS GetCoverage for testdata.nc as Native grid is OK
-  #   """
-  #   AdagucTestTools().cleanTempDir()
-  #   filename = "test_WCSGetCoverageAAIGRID_NATIVE_testdatanc.grd"
-  #   status, data, headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=testdata&FORMAT=aaigrid&",
-  #                                                             env=self.env, args=["--report"])
-  #   AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
-  #   self.assertEqual(status, 0)
-  #   self.assertEqual(data.getvalue(), AdagucTestTools(
-  #   ).readfromfile(self.expectedoutputsspath + filename))
+  def test_WCSGetCoverageAAIGRID_NATIVE_testdatanc(self):
+    """
+    Check if WCS GetCoverage for testdata.nc as Native grid is OK
+    """
+    AdagucTestTools().cleanTempDir()
+    filename = "test_WCSGetCoverageAAIGRID_NATIVE_testdatanc.grd"
+    status, data, headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=testdata&FORMAT=aaigrid&",
+                                                              env=self.env, args=["--report"])
+    AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+    self.assertEqual(status, 0)
+    self.assertEqual(data.getvalue(), AdagucTestTools(
+    ).readfromfile(self.expectedoutputsspath + filename))
 
 
   def test_WCSGetCoverageNetCDF4_testdatanc_adaguc_wcs_destgridspec_specifiedgridresxresy(self):
