@@ -192,7 +192,11 @@ add_library(
     CServerParams.h
     CStyleConfiguration.cpp
     CStyleConfiguration.h
-    CUniqueRequests/CUniqueRequests.cpp
+    CUniqueRequests/CURTypes.h
+    CUniqueRequests/requestUtils.h
+    CUniqueRequests/requestUtils.cpp
+    CUniqueRequests/CURUniqueRequests.h
+    CUniqueRequests/CURUniqueRequests.cpp
     CXMLGen.cpp
     CXMLGen.h
     CXMLSerializerInterface.cpp
