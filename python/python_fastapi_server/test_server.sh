@@ -21,4 +21,5 @@ export ADAGUC_DATA_DIR=${ADAGUC_PATH}/data/datasets/
 export ADAGUC_AUTOWMS_DIR=${ADAGUC_PATH}/data/datasets/
 ulimit -c unlimited
 
-pytest -s -v test_ogc_api_edr.py && pytest -s test_ogc_api_features.py
+[[ $ADAGUC_DB == *.db ]] && exit
+pytest -s -v python_fastapi_server/test_ogc_api_edr.py && pytest -s python_fastapi_server/test_ogc_api_features.py

@@ -45,6 +45,15 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
     metadataLayer->layerMetadata.isQueryable = 1;
   }
 
+  // Get collection for layer from Group def
+  CT::string collection = "";
+  if (metadataLayer->layer->Group.size() > 0) {
+    if (metadataLayer->layer->Group[0]->attr.collection.empty() == false) {
+      collection.copy(metadataLayer->layer->Group[0]->attr.collection.c_str());
+    }
+  }
+  metadataLayer->layerMetadata.collection.copy(&collection);
+
   // Get Abstract
   if (metadataLayer->dataSource->cfgLayer->Abstract.size() > 0) {
     metadataLayer->layerMetadata.abstract = metadataLayer->dataSource->cfgLayer->Abstract[0]->value;
@@ -100,12 +109,18 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
       if (longName == nullptr) {
         longName = d->cdfVariable->getAttributeNE("standard_name");
       }
+      CDF::Attribute *standardNameAttr = d->cdfVariable->getAttributeNE("standard_name");
+
       CT::string label = longName != nullptr ? longName->getDataAsString() : d->variableName;
       LayerMetadataVariable layerMetadataVariable = {
           .variableName = d->cdfVariable->name,
           .units = d->getUnits(),
           .label = label,
       };
+      if (standardNameAttr != nullptr) {
+        layerMetadataVariable.standard_name = standardNameAttr->getDataAsString();
+        CDBDebug("standard_name for %s: %s", d->cdfVariable->name.c_str(), standardNameAttr->getDataAsString().c_str());
+      }
       metadataLayer->layerMetadata.variableList.push_back(layerMetadataVariable);
     }
   }
@@ -231,6 +246,7 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
         dim.defaultValue.copy(fileDate.c_str());
         dim.hasMultipleValues = true;
         dim.hidden = false;
+        dim.type = "dimtype_none";
         metadataLayer->layerMetadata.dimList.push_back(dim);
         break;
       }
@@ -244,6 +260,7 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
       // Create a new dim to store in the layer
       LayerMetadataDim dim;
       dim.hidden = false;
+      dim.type = "dimtype_none";
       dim.serviceName.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
       dim.cdfName.copy(metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
 
@@ -577,6 +594,9 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
       if (metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.hidden == true) {
         dim.hidden = true;
       }
+
+      dim.type = metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.type;
+
       metadataLayer->layerMetadata.dimList.push_back(dim);
     }
     // Check dependencies between dimensions
