@@ -9,6 +9,7 @@
 
 import os
 import os.path
+import re
 import unittest
 import netCDF4
 from netCDF4 import Dataset
@@ -208,19 +209,45 @@ class TestWCS(unittest.TestCase):
                      b'II*\x00\x08\x00\x00\x00\x12\x00')
 
   # TODO: This test (which uses GDAL) produces incorrect results. Made a ticket in backlog.
-  # def test_WCSGetCoverageAAIGRID_NATIVE_testdatanc(self):
-  #   """
-  #   Check if WCS GetCoverage for testdata.nc as Native grid is OK
-  #   """
-  #   AdagucTestTools().cleanTempDir()
-  #   filename = "test_WCSGetCoverageAAIGRID_NATIVE_testdatanc.grd"
-  #   status, data, headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=testdata&FORMAT=aaigrid&",
-  #                                                             env=self.env, args=["--report"])
-  #   AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
-  #   self.assertEqual(status, 0)
-  #   self.assertEqual(data.getvalue(), AdagucTestTools(
-  #   ).readfromfile(self.expectedoutputsspath + filename))
+  def test_WCSGetCoverageAAIGRID_NATIVE_testdatanc(self):
+    """
+    Check if WCS GetCoverage for testdata.nc as Native grid is OK
+    """
+    AdagucTestTools().cleanTempDir()
+    filename = "test_WCSGetCoverageAAIGRID_NATIVE_testdatanc.grd"
+    status, data, headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=testdata&FORMAT=aaigrid&",
+                                                              env=self.env, args=["--report"])
+    AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+    self.assertEqual(status, 0)
+    
+    lines=str(data.getvalue().decode('UTF-8')).splitlines()
 
+    
+    aaigrid_header_items = [re.split(r'\s+', lines[0])[0] ,
+        re.split(r'\s+', lines[0])[1] ,
+        re.split(r'\s+', lines[1])[0] ,
+        re.split(r'\s+', lines[1])[1] ,
+        re.split(r'\s+', lines[2])[0] ,
+        round(float(re.split(r'\s+', lines[2])[1]),2) ,
+        re.split(r'\s+', lines[3])[0] ,
+        round(float(re.split(r'\s+', lines[3])[1]),2),
+        re.split(r'\s+', lines[4])[0] ,
+        round(float(re.split(r'\s+', lines[4])[1]),2) ,
+        re.split(r'\s+', lines[5])[0] ,
+        round(float(re.split(r'\s+', lines[5])[1]),2) ,
+        re.split(r'\s+', lines[6])[0] ,
+        round(float(re.split(r'\s+', lines[6])[1]),3)]
+    
+    self.assertEqual([  'ncols', '29',
+                        'nrows', '31', 
+                        'xllcorner', -1500000.01, 
+                        'yllcorner', -999999.97, 
+                        'dx',        103448.28,
+                        'dy',        96774.19,
+                        'NODATA_value', -0.01],
+                     aaigrid_header_items)
+
+    
 
   def test_WCSGetCoverageNetCDF4_testdatanc_adaguc_wcs_destgridspec_specifiedgridresxresy(self):
     """
