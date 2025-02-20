@@ -521,11 +521,7 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
 
     if (!doHeight) {
       CT::string componentCalibrationStringName;
-      if (!doZdr) {
-        componentCalibrationStringName.print("calibration_%s_formulas", new2DVar->name.c_str());
-        CT::string calibrationFormula = scanCalibrationVar->getAttribute(componentCalibrationStringName.c_str())->getDataAsString();
-        getCalibrationParameters(calibrationFormula, factor, offset);
-      } else {
+      if (doZdr) {
         componentCalibrationStringName.print("calibration_%s_formulas", "Z");
         CT::string calibrationFormula = scanCalibrationVar->getAttribute(componentCalibrationStringName.c_str())->getDataAsString();
         getCalibrationParameters(calibrationFormula, factor, offset);
@@ -533,19 +529,40 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
         componentCalibrationStringName.print("calibration_%s_formulas", "Zv");
         calibrationFormula = scanCalibrationVar->getAttribute(componentCalibrationStringName.c_str())->getDataAsString();
         getCalibrationParameters(calibrationFormula, zv_factor, zv_offset);
-      }
 
-      if (doZdr) {
         scanDataVarName.print("scan%d.scan_%s_data", scan, "Z");
         scanDataVar = cdfObject->getVariable(scanDataVarName);
-        scanDataVar->readData(scanDataVar->getType());
+        if (scanDataVar->getType() != CDF_UBYTE && scanDataVar->getType() != CDF_USHORT) return 1;
+        scanDataVar->readData(CDF_USHORT);
         scanDataVarName.print("scan%d.scan_%s_data", scan, "Zv");
         scanDataVar_Zv = cdfObject->getVariable(scanDataVarName);
-        scanDataVar_Zv->readData(scanDataVar_Zv->getType());
+        if (scanDataVar_Zv->getType() != CDF_UBYTE && scanDataVar_Zv->getType() != CDF_USHORT) return 1;
+        scanDataVar_Zv->readData(CDF_USHORT);
       } else {
+        componentCalibrationStringName.print("calibration_%s_formulas", new2DVar->name.c_str());
+        CT::string calibrationFormula = scanCalibrationVar->getAttribute(componentCalibrationStringName.c_str())->getDataAsString();
+        getCalibrationParameters(calibrationFormula, factor, offset);
+
         scanDataVarName.print("scan%d.scan_%s_data", scan, new2DVar->name.c_str());
         scanDataVar = cdfObject->getVariable(scanDataVarName);
-        scanDataVar->readData(scanDataVar->getType());
+        if (scanDataVar->getType() != CDF_UBYTE && scanDataVar->getType() != CDF_USHORT) return 1;
+        scanDataVar->readData(CDF_USHORT);
+      }
+    }
+    int missingDataInt;
+    scanCalibrationVar->getAttribute("calibration_missing_data")->getData<int>(&missingDataInt, 1);
+
+    std::vector<unsigned short *> pScans;
+    unsigned short missingData = (unsigned short)missingDataInt;
+    std::vector<float> factors = {factor};
+    std::vector<float> offsets = {offset};
+
+    if (!doHeight) {
+      pScans = {(unsigned short *)scanDataVar->data};
+      if (doZdr) {
+        pScans.push_back((unsigned short *)scanDataVar_Zv->data);
+        factors.push_back(zv_factor);
+        offsets.push_back(zv_offset);
       }
     }
 
@@ -566,32 +583,6 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
     double four_thirds_radius = 6371.0 * 4.0 / 3.0;
     double radar_height = 0.0;          // Radar height is not present in KNMI HDF5 format, but it is in ODIM format so it could be used there.
     float *p = (float *)new2DVar->data; // ptr to store data
-    int missingDataInt;
-    scanCalibrationVar->getAttribute("calibration_missing_data")->getData<int>(&missingDataInt, 1);
-
-    std::vector<unsigned char *> pScansChar;
-    unsigned char missingDataChar = (unsigned char)missingDataInt;
-    std::vector<unsigned short *> pScans;
-    unsigned short missingData = (unsigned short)missingDataInt;
-    std::vector<float> factors = {factor};
-    std::vector<float> offsets = {offset};
-
-    if (!doHeight) {
-      if (scanDataVar->getType() == CDF_UBYTE) {
-        pScansChar = {(unsigned char *)scanDataVar->data};
-      } else {
-        pScans = {(unsigned short *)scanDataVar->data};
-      }
-      if (doZdr) {
-        if (scanDataVar->getType() == CDF_UBYTE) {
-          pScansChar.push_back((unsigned char *)scanDataVar_Zv->data);
-        } else {
-          pScans.push_back((unsigned short *)scanDataVar_Zv->data);
-        }
-        factors.push_back(zv_factor);
-        offsets.push_back(zv_offset);
-      }
-    }
 
     for (int row = 0; row < height; row++) {
       for (int col = 0; col < width; col++) {
@@ -616,42 +607,22 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
           }
           ia = (int)(azim / scan_ascale);
           ia = (ia + scan_nazim) % scan_nazim;
-          if (scanDataVar->getType() == CDF_UBYTE) {
-            std::vector<unsigned char> vs;
-            for (auto pScanChar : pScansChar) {
-              vs.push_back(pScanChar[ir + ia * scan_nrang]);
-            }
-            if (vs[0] == missingDataChar) {
+          std::vector<unsigned short> vs;
+          for (auto pScan : pScans) {
+            vs.push_back(pScan[ir + ia * scan_nrang]);
+          }
+          if (vs[0] == missingData) {
+            *p++ = FLT_MAX;
+            continue;
+          }
+          if (doZdr) {
+            if (vs[1] == missingData) {
               *p++ = FLT_MAX;
               continue;
             }
-            if (doZdr) {
-              if (vs[1] == missingDataChar) {
-                *p++ = FLT_MAX;
-                continue;
-              }
-              *p++ = vs[0] * factors[0] + offsets[0] - (vs[1] * factors[1] + offsets[1]);
-            } else {
-              *p++ = vs[0] * factors[0] + offsets[0];
-            }
+            *p++ = vs[0] * factors[0] + offsets[0] - (vs[1] * factors[1] + offsets[1]);
           } else {
-            std::vector<unsigned short> vs;
-            for (auto pScan : pScans) {
-              vs.push_back(pScan[ir + ia * scan_nrang]);
-            }
-            if (vs[0] == missingData) {
-              *p++ = FLT_MAX;
-              continue;
-            }
-            if (doZdr) {
-              if (vs[1] == missingData) {
-                *p++ = FLT_MAX;
-                continue;
-              }
-              *p++ = vs[0] * factors[0] + offsets[0] - (vs[1] * factors[1] + offsets[1]);
-            } else {
-              *p++ = vs[0] * factors[0] + offsets[0];
-            }
+            *p++ = vs[0] * factors[0] + offsets[0];
           }
         } else {
           *p++ = FLT_MAX;
