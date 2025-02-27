@@ -553,7 +553,12 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
     scanCalibrationVar->getAttribute("calibration_missing_data")->getData<int>(&missingDataInt, 1);
 
     int outOfImageInt;
-    scanCalibrationVar->getAttribute("calibration_out_of_image")->getData<int>(&outOfImageInt, 1);
+    CDF::Attribute *outOfImageAttr = scanCalibrationVar->getAttributeNE("calibration_out_of_image");
+    if (outOfImageAttr == nullptr) {
+      outOfImageInt = missingDataInt;
+    } else {
+      outOfImageAttr->getData<int>(&outOfImageInt, 1);
+    }
 
     std::vector<unsigned short *> pScans;
     unsigned short missingData = (unsigned short)missingDataInt;
