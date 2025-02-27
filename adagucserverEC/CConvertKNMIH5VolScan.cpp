@@ -552,8 +552,12 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
     int missingDataInt;
     scanCalibrationVar->getAttribute("calibration_missing_data")->getData<int>(&missingDataInt, 1);
 
+    int outOfImageInt;
+    scanCalibrationVar->getAttribute("calibration_out_of_image")->getData<int>(&outOfImageInt, 1);
+
     std::vector<unsigned short *> pScans;
     unsigned short missingData = (unsigned short)missingDataInt;
+    unsigned short outOfImage = (unsigned short)outOfImageInt;
     std::vector<float> factors = {factor};
     std::vector<float> offsets = {offset};
 
@@ -611,12 +615,12 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
           for (auto pScan : pScans) {
             vs.push_back(pScan[ir + ia * scan_nrang]);
           }
-          if (vs[0] == missingData) {
+          if (vs[0] == missingData || vs[0] == outOfImage) {
             *p++ = FLT_MAX;
             continue;
           }
           if (doZdr) {
-            if (vs[1] == missingData) {
+            if (vs[1] == missingData || vs[1] == outOfImage) {
               *p++ = FLT_MAX;
               continue;
             }
