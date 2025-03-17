@@ -1,16 +1,14 @@
-from io import BytesIO
+import calendar
+import json
 import os
+from datetime import datetime
+from io import BytesIO
 
+import brotli
+import redis.asyncio as redis  # This can also be used to connect to a Redis cluster
+from fastapi import BackgroundTasks
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
-from fastapi import BackgroundTasks
-
-import calendar
-from datetime import datetime
-import redis.asyncio as redis  # This can also be used to connect to a Redis cluster
-
-import json
-import brotli
 
 ADAGUC_REDIS = os.environ.get("ADAGUC_REDIS")
 
@@ -72,6 +70,7 @@ def generate_key(request):
     return key
 
 
+# pylint: disable=too-few-public-methods
 class CachingMiddleware(BaseHTTPMiddleware):
     shortcut = True
 

@@ -8,12 +8,12 @@ Author: Ernst de Vreede, 2023-11-23
 KNMI
 """
 
+from __future__ import annotations
 import json
 import logging
 import os
 import re
 from datetime import datetime, timezone
-from typing import Union, List
 
 from dateutil.relativedelta import relativedelta
 from edr_pydantic.collections import Collection, Instance
@@ -67,13 +67,16 @@ def get_ref_times_for_coll(metadata) -> list[str]:
         and metadata[first_param]["dims"] is not None
         and "reference_time" in metadata[first_param]["dims"]
     ):
-        instance_ids = [
-            parse_iso(reft).strftime("%Y%m%d%H%M")
-            for reft in metadata[first_param]["dims"]["reference_time"]["values"].split(
-                ","
-            )
-        ]
-        return instance_ids
+        try:
+            instance_ids = [
+                parse_iso(reft).strftime("%Y%m%d%H%M")
+                for reft in metadata[first_param]["dims"]["reference_time"][
+                    "values"
+                ].split(",")
+            ]
+            return instance_ids
+        except ValueError:
+            pass
     return []
 
 
@@ -132,9 +135,7 @@ def get_ttl_from_adaguc_headers(headers):
             age = int(hdr_terms[1])
     if max_age and age:
         return max_age - age
-    elif max_age:
-        return max_age
-    return None
+    return max_age
 
 
 def generate_max_age(ttl):
@@ -282,7 +283,7 @@ def get_collectioninfo_from_md(
             variables=locations_variables,
         )
 
-    instances_link = None
+    instances_query_link = None
     if has_instances:
         instances_variables = Variables(
             query_type="instances",
@@ -290,7 +291,7 @@ def get_collectioninfo_from_md(
             default_output_format="CoverageJSON",
             output_formats=["CoverageJSON", "GeoJSON"],
         )
-        instances_link = EDRQueryLink(
+        instances_query_link = EDRQueryLink(
             href=f"{base_url}/instances",
             rel="collection",
             hreflang="en",
@@ -301,14 +302,14 @@ def get_collectioninfo_from_md(
             data_queries = DataQueries(
                 position=EDRQuery(link=position_link),
                 cube=EDRQuery(link=cube_link),
-                instances=EDRQuery(link=instances_link),
+                instances=EDRQuery(link=instances_query_link),
                 locations=EDRQuery(link=locations_link),
             )
         else:
             data_queries = DataQueries(
                 position=EDRQuery(link=position_link),
                 cube=EDRQuery(link=cube_link),
-                instances=EDRQuery(link=instances_link),
+                instances=EDRQuery(link=instances_query_link),
             )
     else:
         if locations_link is not None:
@@ -333,14 +334,14 @@ def get_collectioninfo_from_md(
         collection_names = [f"{dataset_name}.{subcollection_name}"]
     else:
         collection_names = list(parameter_info.keys())
-    for collection_name in collection_names:
+    for collection_name_ in collection_names:
         if instance is None:
             collection = Collection(
                 links=links,
-                id=collection_name,
+                id=collection_name_,
                 extent=primary_extent,
                 data_queries=data_queries,
-                parameter_names=parameter_info[collection_name],
+                parameter_names=parameter_info[collection_name_],
                 crs=crs,
                 output_formats=output_formats,
             )
@@ -350,7 +351,7 @@ def get_collectioninfo_from_md(
                 id=f"{instance}",
                 extent=primary_extent,
                 data_queries=data_queries,
-                parameter_names=parameter_info[collection_name],
+                parameter_names=parameter_info[collection_name_],
                 crs=crs,
                 output_formats=output_formats,
             )
@@ -492,7 +493,7 @@ def get_params_for_collection(
     metadata: dict,
     dataset_name: str,
     primary_extent: Extent,
-    collection_name: Union[str, None] = None,
+    collection_name: str | None = None,
 ) -> dict[str, Parameter]:
     """
     Returns a dictionary with parameters for given EDR collection
@@ -529,10 +530,10 @@ def get_params_for_collection(
     return parameter_names
 
 
-def handle_metadata(md: dict):
-    collections = dict()
-    for dataset in md:
-        for layername, layerdata in md[dataset].items():
+def handle_metadata(metadata: dict):
+    collections = {}
+    for dataset in metadata:
+        for layername, layerdata in metadata[dataset].items():
             if layerdata:
                 if (
                     "collection" in layerdata["layer"]
@@ -542,7 +543,7 @@ def handle_metadata(md: dict):
                 else:
                     collection_name = dataset
                 if not collection_name in collections:
-                    collections[collection_name] = dict()
+                    collections[collection_name] = {}
                 collections[collection_name][layername] = layerdata
     return collections
 
@@ -554,7 +555,8 @@ async def get_metadata(collection_name=None):
     if collection_name is not None:
         dataset_name = collection_name.rsplit(".", 1)[0]
         urlrequest = f"dataset={dataset_name}&service=wms&version=1.3.0&request=getmetadata&format=application/json"
-    status, response, headers = await call_adaguc(url=urlrequest.encode("UTF-8"))
+
+    status, response, _ = await call_adaguc(url=urlrequest.encode("UTF-8"))
     #        ttl = get_ttl_from_adaguc_headers(headers)
     logger.info("status for %s: %d", urlrequest, status)
     metadata = None
@@ -598,7 +600,7 @@ def get_vertical_dim_for_collection(metadata: dict, parameter: str = None):
     return None
 
 
-def try_numeric_conversion(values: List[str]):
+def try_numeric_conversion(values: list[str]):
     try:
         new_values = [float(v) for v in values]
         return new_values

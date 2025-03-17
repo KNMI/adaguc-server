@@ -104,11 +104,6 @@ async def get_coll_inst_position(
 
         vertical_dim_name = "z"
         for dim_name in metadata[collection_name][parameter_names[0]]["dims"]:
-            print(
-                "DIM:%s %s",
-                dim_name,
-                metadata[collection_name][parameter_names[0]]["dims"][dim_name],
-            )
             if (
                 metadata[collection_name][parameter_names[0]]["dims"][dim_name]["type"]
                 == "dimtype_vertical"

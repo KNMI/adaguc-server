@@ -22,14 +22,14 @@ logger.debug("Starting EDR")
 @router.get("/collections/{_coll}/locations")
 @router.get("/collections/{_coll}/instances/{instance}/locations")
 @router.get("/collections/{_coll}/locations/{id}")
-@router.get("/collections/{_coll}/instances/{instance}/locations/{id}")
+@router.get("/collections/{_coll}/instances/{instance}/locations/{location_id}")
 async def get_locations(
-    _coll: str, request: Request, instance: str = None, id: str = None
+    _coll: str, request: Request, instance: str = None, location_id: str = None
 ):
     """
     Returns locations where you could query data.
     """
-    if id is None:
+    if location_id is None:
         feature_list = [
             {
                 "id": loc["id"],
@@ -45,13 +45,18 @@ async def get_locations(
     # in coords=POINT() argument if location id is known
     req_url = str(request.url)
     for loc in location_list:
-        if loc["id"] == id:
-            repl_url = req_url.replace(f"/locations/{id}", "/position")
+        if loc["id"] == location_id:
+            if instance:
+                repl_url = req_url.replace(
+                    f"/locations/{instance}/{location_id}", "/position"
+                )
+            else:
+                repl_url = req_url.replace(f"/locations/{location_id}", "/position")
             repl_url = (
                 repl_url
-                + ("?&" if not "?" in req_url else "&")
+                + ("?&" if "?" not in req_url else "&")
                 + f"coords=POINT({loc['coordinates'][0]} {loc['coordinates'][1]})"
             )
             return RedirectResponse(repl_url, status_code=302)
 
-    raise HTTPException(status_code=404, detail=f"location {id} not found")
+    raise HTTPException(status_code=404, detail=f"location {location_id} not found")

@@ -21,13 +21,13 @@ def setup_test_data():
     print("About to ingest data")
     AdagucTestTools().cleanTempDir()
     AdagucTestTools().cleanPostgres()
-    for service in [
+    for service in (
         "netcdf_5d.xml",
         "dataset_a.xml",
         "adaguc.tests.arcus_uwcw.xml",
         "testcollection.xml",
-    ]:
-        status, _data, _headers = AdagucTestTools().runADAGUCServer(
+    ):
+        status, _, _ = AdagucTestTools().runADAGUCServer(
             args=[
                 "--updatedb",
                 "--config",
@@ -79,7 +79,7 @@ def test_collections(client: TestClient):
         ext_name in coll_5d["extent"]
         for ext_name in ("spatial", "temporal", "vertical", "custom")
     )  # TODO 'custom'
-    assert [ext_name for ext_name in coll_5d["extent"]] == [
+    assert list(coll_5d["extent"]) == [
         "spatial",
         "temporal",
         "vertical",

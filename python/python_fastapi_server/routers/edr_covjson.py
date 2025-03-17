@@ -52,13 +52,18 @@ def covjson_from_resp(dats, metadata):
             (lon, lat) = dat["point"]["coords"].split(",")
             custom_name = None
             vertical_name = None
+            reference_time_name = None
             for param_dim in metadata[dat["name"]]["dims"].values():
-                if param_dim["cdfName"] not in ["x", "y", "reference_time", "time"]:
+                if param_dim["cdfName"] not in ["x", "y", "time"]:
                     if not param_dim["hidden"]:
                         if param_dim["type"] == "dimtype_vertical":
                             vertical_name = param_dim["serviceName"]
                         elif param_dim["type"] == "dimtype_custom":
                             custom_name = param_dim["serviceName"]
+                        elif param_dim["serviceName"] != "reference_time":
+                            custom_name = param_dim["serviceName"]
+                        else:
+                            reference_time_name = param_dim["serviceName"]
             lat = float(lat)
             lon = float(lon)
             dims = makedims(dat["dims"], dat["data"])
@@ -72,6 +77,9 @@ def covjson_from_resp(dats, metadata):
             if custom_name is not None and len(custom_name) > 0:
                 custom_dim_values = getdimvals(dims, custom_name)
                 custom_dim_values = try_numeric(custom_dim_values)
+
+            if reference_time_name is not None and len(reference_time_name) > 0:
+                reference_time_value = getdimvals(dims, reference_time_name)[0]
 
             valstack = []
             # Translate the adaguc GFI object in something we can handle in Python
@@ -227,6 +235,10 @@ def covjson_from_resp(dats, metadata):
                         custom_dim_values
                     ):
                         custom = {f"custom:{custom_name}": custom_dim_value}
+                        if reference_time_name is not None:
+                            custom[f"custom:{reference_time_name}"] = (
+                                reference_time_value
+                            )
                         domain = Domain(
                             domainType=domain_type,
                             axes=axes,

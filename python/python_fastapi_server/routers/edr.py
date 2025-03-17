@@ -10,6 +10,7 @@ KNMI
 
 import logging
 from datetime import datetime, timezone
+import traceback
 
 from edr_pydantic.capabilities import (
     ConformanceModel,
@@ -132,8 +133,6 @@ async def rest_get_edr_collections(request: Request, response: Response):
             else:
                 logger.warning("Unable to fetch WMS GetMetadata for %s", dataset_name)
         except Exception:
-            import traceback
-
             print("ERR", dataset_name, traceback.format_exc())
     collections_data = Collections(links=links, collections=collections)
     if ttl_set:

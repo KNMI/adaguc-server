@@ -72,7 +72,7 @@ async def rest_get_edr_inst_for_coll(
     response_model=Collection,
     response_model_exclude_none=True,
 )
-async def rest_get_collection_info(collection_name: str, instance, response: Response):
+async def rest_get_collection_info(collection_name: str, instance):
     """
     GET  "/collections/{collection_name}/instances/{instance}"
     """

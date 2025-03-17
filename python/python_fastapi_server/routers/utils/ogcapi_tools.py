@@ -2,11 +2,11 @@
 General methods for supporting ogcapi features code
 """
 
+from __future__ import annotations
 import itertools
 import logging
 import os
 import time
-from typing import List
 
 from defusedxml.ElementTree import ParseError, parse
 
@@ -246,8 +246,8 @@ def get_items_links(
     prev_start: int = None,
     next_start: int = None,
     limit: int = None,
-) -> List[Link]:
-    links: List[Link] = []
+) -> list[Link]:
+    links: list[Link] = []
     links.append(
         Link(
             href=f"{url}",
@@ -301,8 +301,8 @@ def get_single_item_links(
     prev_start: int = None,
     next_start: int = None,
     limit: int = None,
-) -> List[Link]:
-    links: List[Link] = []
+) -> list[Link]:
+    links: list[Link] = []
     links.append(
         Link(
             href=f"{url}",

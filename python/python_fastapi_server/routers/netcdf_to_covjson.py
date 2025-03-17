@@ -2,15 +2,15 @@
 Convert a netcdf dataset to coverage json
 """
 
+from __future__ import annotations
 import logging
 from datetime import timezone
-from typing import Dict
 from typing import List
 import math
 
 import netCDF4
-import numpy.ma as ma
-from covjson_pydantic.coverage import Coverage, Union
+from numpy import ma
+from covjson_pydantic.coverage import Coverage
 from covjson_pydantic.domain import Domain
 from covjson_pydantic.domain import DomainType
 from covjson_pydantic.domain import ValuesAxis
@@ -36,7 +36,7 @@ class GeoReferenceInfo(BaseModel):
     proj: str
     crsid: str
     crstype: str
-    axes: List[str]
+    axes: list[str]
 
 
 GeoReferenceInfos = List[GeoReferenceInfo]
@@ -109,9 +109,9 @@ def netcdf_to_covjson(
         Coverage: Representation of the NetCDF file as Coverage
     """
 
-    axes: Dict[str, ValuesAxis] = {}
-    ranges: Dict[str, Union[NdArrayFloat, TiledNdArrayFloat, AnyUrl]] = {}
-    parameters: Dict[str, Parameter] = {}
+    axes: dict[str, ValuesAxis] = {}
+    ranges: dict[str, NdArrayFloat | TiledNdArrayFloat | AnyUrl] = {}
+    parameters: dict[str, Parameter] = {}
 
     # float ta(time, height, y, x) ;
     netcdfdimname_to_covdimname = {

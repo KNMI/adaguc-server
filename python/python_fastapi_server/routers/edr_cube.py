@@ -8,8 +8,8 @@ Author: Ernst de Vreede, 2023-11-23
 KNMI
 """
 
+from __future__ import annotations
 import logging
-from typing import Union
 import time
 
 from covjson_pydantic.coverage import Coverage, CoverageCollection
@@ -35,7 +35,7 @@ logger.debug("Starting EDR")
 
 @router.get(
     "/collections/{collection_name}/cube",
-    response_model=Union[CoverageCollection, Coverage],
+    response_model=CoverageCollection | Coverage,
     response_class=CovJSONResponse,
     response_model_exclude_none=True,
 )
@@ -46,8 +46,8 @@ async def get_collection_cube(
     datetime_par: str = Query(default=None, alias="datetime"),
     parameter_name: str = Query(alias="parameter-name"),
     z_par: str = Query(alias="z", default=None),
-    res_x: Union[float, None] = None,
-    res_y: Union[float, None] = None,
+    res_x: float | None = None,
+    res_y: float | None = None,
 ) -> Coverage:
     """Returns information in EDR format for a given collection and position"""
     return await get_coll_inst_cube(
@@ -65,7 +65,7 @@ async def get_collection_cube(
 
 @router.get(
     "/collections/{collection_name}/instances/{instance}/cube",
-    response_model=Union[CoverageCollection, Coverage],
+    response_model=CoverageCollection | Coverage,
     response_class=CovJSONResponse,
     response_model_exclude_none=True,
 )
@@ -73,12 +73,12 @@ async def get_coll_inst_cube(
     collection_name: str,
     request: Request,
     bbox: str,
-    instance: Union[str, None] = None,
+    instance: str | None = None,
     datetime_par: str = Query(default=None, alias="datetime"),
-    parameter_name: str = Query(alias="parameter-name"),
+    parameter_name_par: str = Query(alias="parameter-name"),
     z_par: str = Query(alias="z", default=None),
-    resolution_x: Union[float, None] = None,
-    resolution_y: Union[float, None] = None,
+    resolution_x: float | None = None,
+    resolution_y: float | None = None,
 ) -> Coverage:
     """Returns information in EDR format for a given collection, instance and position"""
     allowed_params = [
@@ -100,7 +100,7 @@ async def get_coll_inst_cube(
     vertical_dim = ""
     vertical_name = None
     custom_name = None
-    first_requested_layer_name = parameter_name.split(",")[0]
+    first_requested_layer_name = parameter_name_par.split(",")[0]
     for param_dim in metadata[collection_name][first_requested_layer_name][
         "dims"
     ].values():
@@ -129,7 +129,7 @@ async def get_coll_inst_cube(
     if not instance and len(ref_times) > 0:
         instance = ref_times[-1]
 
-    parameter_names = parameter_name.split(",")
+    parameter_names = parameter_name_par.split(",")
 
     if resolution_x is not None and resolution_y is not None:
         res_queryterm = f"&resx={resolution_x}&resy={resolution_y}"
@@ -144,7 +144,8 @@ async def get_coll_inst_cube(
     coveragejsons = []
     parameters = {}
     datetime_arg = datetime_par
-    if datetime_arg is None:
+    print("TYPE:", type(datetime_arg))
+    if datetime_par is None:
         datetime_arg = "*"
     for parameter_name in parameter_names:
         if instance is None:
