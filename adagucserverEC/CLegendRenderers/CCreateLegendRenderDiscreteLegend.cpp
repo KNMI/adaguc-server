@@ -129,14 +129,25 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
   /**
    * Defined blocks based on defined interval
    */
+  // test_WMSGetMapWithShowLegendSecondLayer_testdatanc
+  // test_WMSGetLegendGraphic_SolarTerminator
+  // test_WMSGetLegendGraphic_NearestRenderWithShadeInterval
 
   if (definedLegendOnShadeClasses) {
+    // test_WMSGetMapWithShowLegendSecondLayer_testdatanc
+    // test_WMSGetLegendGraphic_SolarTerminator
+    // test_WMSGetLegendGraphic_NearestRenderWithShadeInterval
+    // if (definedLegendOnShadeClasses) {
+    const size_t MAX_DISCRETE_CLASSES = 15;
     float blockHeight = float(legendImage->Geo->dHeight - 30) / float(styleConfiguration->shadeIntervals->size());
     /* Legend classes displayed as blocks in the legend can have a maximum and a minimum height depending on the amount of classes and legendheight */
     if (blockHeight > 12) blockHeight = 12;
     if (blockHeight < 3) blockHeight = 3;
     char szTemp[1024];
-    for (size_t j = 0; j < styleConfiguration->shadeIntervals->size(); j++) {
+    size_t numShadeIntervals = styleConfiguration->shadeIntervals->size();
+
+    for (size_t j = 0; j < numShadeIntervals; j++) {
+
       CServerConfig::XMLE_ShadeInterval *s = (*styleConfiguration->shadeIntervals)[j];
       if (s->attr.min.empty() == false && s->attr.max.empty() == false) {
         int cY1 = int(cbH - ((j)*blockHeight) * scaling);
@@ -147,13 +158,22 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
         } else {
           color = legendImage->getColorForIndex(CImageDataWriter::getColorIndexForValue(dataSource, parseFloat(s->attr.min.c_str())));
         }
-        legendImage->rectangle(4 * scaling + pLeft, cY2 + pTop, (int(cbW) + 7) * scaling + pLeft, cY1 + pTop, color, CColor(0, 0, 0, 255));
+        legendImage->rectangle(4 * scaling + pLeft, cY2 + pTop, (int(cbW) + 7) * scaling + pLeft, cY1 + pTop, color, color);
+        // legendImage->rectangle(4 * scaling + pLeft, cY2 + pTop, (int(cbW) + 7) * scaling + pLeft, cY1 + pTop, color, CColor(0, 0, 0, 255));
+        // legendImage->borderlessrectangle(4 * scaling + pLeft, cY2 + pTop, (int(cbW) + 7) * scaling + pLeft, cY1 + pTop, color);
 
         // legendImage->rectangle(pLeft+4*scaling,
         // pTop + boxUpperY,
         // pLeft + (int(cbW)+7)*scaling,
         // pTop+boxLowerY,
         //(colorIndex),248);
+
+        // Do not print all of them if too many (we put one every 5 as a test)
+        // Probably should compare color distance
+        CDBDebug("MAX_DISCRETE_CLASSES:%d", MAX_DISCRETE_CLASSES);
+        if (numShadeIntervals > MAX_DISCRETE_CLASSES && j % 5 != 0) {
+          continue;
+        }
 
         if (s->attr.label.empty()) {
           snprintf(szTemp, 1000, "%s - %s", s->attr.min.c_str(), s->attr.max.c_str());
@@ -167,7 +187,11 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
     }
   }
 
-  if (definedLegendForFeatures) {
+  // Check what code would run here
+  if (false) {
+    // test_WMSGetMapWithShowLegendAllLayers_testdatanc
+    // test_WMSGetMapWithShowLegendTrue_testdatanc
+    //   if (definedLegendForFeatures) {
 
     char szTemp[1024];
     for (size_t j = 0; j < styleConfiguration->featureIntervals->size(); j++) {
@@ -191,19 +215,25 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
     }
   }
 
-  if (discreteLegendOnInterval) {
+  if (false) {
+    // Nothing new fails
+    //   if (discreteLegendOnInterval) {
     /*
      * maxIterations is the maximum number of labels in the legendgraphic, more makes no sense as legend image is quite small
      * Sometimes this function tries to render thousands of labels in a few pixels, maxIterations prevents this.
      */
     int maxIterations = 250;
     int currentIteration = 0;
+    const int maxAllowedClasses = 8; // Note: Relationship between this and maxIterations?
 
     /**
      * Discrete blocks based on continous interval
      */
 
     numClasses = int((iMax - iMin) / legendInterval);
+
+    // Check if we need to start skipping labels
+    bool skipLabels = (numClasses > maxAllowedClasses);
 
     int classSizeY = ((legendHeight - 24) / (numClasses));
     if (classSizeY > 12) classSizeY = 12;
@@ -247,21 +277,25 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
         } else {
           legendImage->rectangle(pLeft + 4 * scaling, pTop + boxUpperY, pLeft + (int(cbW) + 7) * scaling, pTop + boxLowerY, (colorIndex), (colorIndex));
         }
-        if (textformatting.empty() == false) {
-          CT::string textFormat;
-          textFormat.print("%s - %s", textformatting.c_str(), textformatting.c_str());
-          snprintf(szTemp, szTempLength, textFormat.c_str(), v, v + legendInterval);
-        } else {
-          if (textRounding <= 0) snprintf(szTemp, szTempLength, "%2.0f - %2.0f", v, v + legendInterval);
-          if (textRounding == 1) snprintf(szTemp, szTempLength, "%2.1f - %2.1f", v, v + legendInterval);
-          if (textRounding == 2) snprintf(szTemp, szTempLength, "%2.2f - %2.2f", v, v + legendInterval);
-          if (textRounding == 3) snprintf(szTemp, szTempLength, "%2.3f - %2.3f", v, v + legendInterval);
-          if (textRounding == 4) snprintf(szTemp, szTempLength, "%2.4f - %2.4f", v, v + legendInterval);
-          if (textRounding == 5) snprintf(szTemp, szTempLength, "%2.5f - %2.5f", v, v + legendInterval);
-          if (textRounding == 5) snprintf(szTemp, szTempLength, "%2.6f - %2.6f", v, v + legendInterval);
-          if (textRounding > 6) snprintf(szTemp, szTempLength, "%f - %f", v, v + legendInterval);
+        // Render one in every 5 if too many labels, or all of them otherwise
+        // if (!skipLabels || (classNr % (5 * classSizeY) == 0)) {
+        if (false) {
+          if (textformatting.empty() == false) {
+            CT::string textFormat;
+            textFormat.print("%s - %s", textformatting.c_str(), textformatting.c_str());
+            snprintf(szTemp, szTempLength, textFormat.c_str(), v, v + legendInterval);
+          } else {
+            if (textRounding <= 0) snprintf(szTemp, szTempLength, "%2.0f - %2.0f", v, v + legendInterval);
+            if (textRounding == 1) snprintf(szTemp, szTempLength, "%2.1f - %2.1f", v, v + legendInterval);
+            if (textRounding == 2) snprintf(szTemp, szTempLength, "%2.2f - %2.2f", v, v + legendInterval);
+            if (textRounding == 3) snprintf(szTemp, szTempLength, "%2.3f - %2.3f", v, v + legendInterval);
+            if (textRounding == 4) snprintf(szTemp, szTempLength, "%2.4f - %2.4f", v, v + legendInterval);
+            if (textRounding == 5) snprintf(szTemp, szTempLength, "%2.5f - %2.5f", v, v + legendInterval);
+            if (textRounding == 5) snprintf(szTemp, szTempLength, "%2.6f - %2.6f", v, v + legendInterval);
+            if (textRounding > 6) snprintf(szTemp, szTempLength, "%f - %f", v, v + legendInterval);
+          }
+          legendImage->drawText(((int)cbW + 10 + pLeft) * scaling, (((boxLowerY)) + pTop) - fontSize * scaling / 4 + 1, fontLocation.c_str(), fontSize * scaling, 0, szTemp, 248);
         }
-        legendImage->drawText(((int)cbW + 10 + pLeft) * scaling, (((boxLowerY)) + pTop) - fontSize * scaling / 4 + 1, fontLocation.c_str(), fontSize * scaling, 0, szTemp, 248);
       }
     }
   }
