@@ -72,7 +72,7 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
   int number_scan_groups;
   number_scan_groups_attr->getData(&number_scan_groups, 1);
   if (number_scan_groups > 100) {
-    // Prevent extremely long loops
+    /* Prevent extremely long loops */
     number_scan_groups = 100;
   }
   for (int scan = 1; scan <= number_scan_groups; scan++) {
