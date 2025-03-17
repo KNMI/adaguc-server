@@ -67,8 +67,15 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
   std::vector<int> scan_ranges;
   std::vector<int> scans;
   std::vector<CT::string> elevation_names;
-  /* Assume no scan with number higher than 99 */
-  for (int scan = 1; scan < 100; scan++) {
+
+  CDF::Attribute *number_scan_groups_attr = cdfObject->getVariable("overview")->getAttribute("number_scan_groups");
+  int number_scan_groups;
+  number_scan_groups_attr->getData(&number_scan_groups, 1);
+  if (number_scan_groups > 100) {
+    // Prevent extremely long loops
+    number_scan_groups = 100;
+  }
+  for (int scan = 1; scan <= number_scan_groups; scan++) {
     CT::string scanVarName;
     scanVarName.print("scan%1d", scan);
     CDF::Variable *scanVar = cdfObject->getVariableNE(scanVarName.c_str());
