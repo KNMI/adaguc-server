@@ -28,7 +28,7 @@
 #include <stdio.h>
 #include <CDebugger.h>
 
-enum ServiceExceptionCode { OperationNotSupported, InvalidDimensionValue }; // OGC WMS Exceptions
+enum ServiceExceptionCode { OperationNotSupported, InvalidDimensionValue, UnprocessableEntity }; // OGC WMS Exceptions
 
 void printerror(const char *text);
 void printdebug(const char *text, int prioritylevel);
