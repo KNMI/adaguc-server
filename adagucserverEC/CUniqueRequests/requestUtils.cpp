@@ -9,7 +9,7 @@ bool sortDimensionKeysRecursive(CURResult &result1, CURResult &result2, int dept
   }
 
   int *dimOrder = result1.parent->__getDimOrder();
-  int dimOrderIndex = dimOrder[depth];
+  int dimOrderIndex = dimOrder[depth - 1];
   if (result1.dimensionKeys[dimOrderIndex].isNumeric) {
     double n1 = std::stod(result1.dimensionKeys[dimOrderIndex].name);
     double n2 = std::stod(result2.dimensionKeys[dimOrderIndex].name);
