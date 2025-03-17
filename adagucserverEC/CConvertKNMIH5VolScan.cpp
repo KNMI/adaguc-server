@@ -30,6 +30,8 @@
 
 // #define CCONVERTKNMIH5VOLSCAN_DEBUG
 const char *CConvertKNMIH5VolScan::className = "CConvertKNMIH5VolScan";
+const CT::string scan_params[] = {"CCOR", "CCORv", "CPA", "CPAv", "KDP", "PhiDP", "RhoHV", "SQI", "V", "Vv", "W", "Wv", "Z", "Zv", "uPhiDP", "uZ", "uZv", "ZDR", "Height"};
+const CT::string units[] = {"dB", "dB", "-", "-", "deg/km", "deg", "-", "-", "m/s", "m/s", "m/s", "m/s", "dBZ", "dBZ", "deg", "dBZ", "dBZ", "dB", "km"};
 
 int CConvertKNMIH5VolScan::checkIfIsKNMIH5VolScan(CDFObject *cdfObject, CServerParams *) {
   try {
@@ -125,9 +127,6 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
     if (sort_index == -1) return 1;
     sorted_scans.push_back(scans[sort_index]);
   }
-
-  CT::string scan_params[] = {"CCOR", "CCORv", "CPA", "CPAv", "KDP", "PhiDP", "RhoHV", "SQI", "V", "Vv", "W", "Wv", "Z", "Zv", "uPhiDP", "uZ", "uZv", "ZDR", "Height"};
-  CT::string units[] = {"dB", "dB", "-", "-", "deg/km", "deg", "-", "-", "m/s", "m/s", "m/s", "m/s", "dBZ", "dBZ", "deg", "dBZ", "dBZ", "dB", "km"};
 
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
@@ -477,18 +476,7 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
     new2DVar->setSize(fieldSize);
 
     CDF::allocateData(new2DVar->getType(), &(new2DVar->data), fieldSize);
-    // Draw data!
-    if (dataObjects[0]->hasNodataValue) {
-      float *fp = ((float *)dataObjects[0]->cdfVariable->data);
-      for (size_t j = 0; j < fieldSize; j++) {
-        *fp++ = (float)dataObjects[0]->dfNodataValue;
-      }
-    } else {
-      float *fp = ((float *)dataObjects[0]->cdfVariable->data);
-      for (size_t j = 0; j < fieldSize; j++) {
-        *fp++ = NAN;
-      }
-    }
+    new2DVar->fill(FLT_MAX);
 
     float radarLonLat[2];
     cdfObject->getVariable("radar1")->getAttribute("radar_location")->getData<float>(radarLonLat, 2);
@@ -597,7 +585,10 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
       for (int col = 0; col < width; col++) {
         x = ((double *)varX->data)[col];
         y = ((double *)varY->data)[row];
-        radarProj.reprojpoint(x, y);
+        if (radarProj.reprojpoint(x, y)) {
+          *p++ = FLT_MAX;
+          continue;
+        }
         ground_range = sqrt(x * x + y * y);
         /* Formulas below are only valid when (scan_elevation_rad + ground_range / four_thirds_radius) < (M_PI / 2). */
         /* Longest range for DE/BE/NL radars is ~400 km, which is an equivalent ground range, so we cap the ground range. */
