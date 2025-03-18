@@ -1,4 +1,5 @@
 """Main file where FastAPI is defined and started"""
+
 import logging
 import os
 import time
@@ -11,16 +12,16 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from asgi_logger import AccessLoggerMiddleware
 
-from python_fastapi_server.routers.autowms import autowms_router
-from python_fastapi_server.routers.edr import edrApiApp
-from python_fastapi_server.routers.healthcheck import health_check_router
-from python_fastapi_server.routers.middleware import FixSchemeMiddleware
-from python_fastapi_server.routers.ogcapi import ogcApiApp
-from python_fastapi_server.routers.opendap import opendapRouter
-from python_fastapi_server.routers.wmswcs import testadaguc, wmsWcsRouter
-from python_fastapi_server.routers.caching_middleware import CachingMiddleware
-from python_fastapi_server.routers.setup_adaguc import setup_adaguc
-from .configure_logging import configure_logging
+from routers.autowms import autowms_router
+from routers.edr import edrApiApp
+from routers.healthcheck import health_check_router
+from routers.middleware import FixSchemeMiddleware
+from routers.ogcapi import ogcApiApp
+from routers.opendap import opendapRouter
+from routers.wmswcs import testadaguc, wmsWcsRouter
+from routers.caching_middleware import CachingMiddleware
+from routers.setup_adaguc import setup_adaguc
+from configure_logging import configure_logging
 
 configure_logging(logging)
 
@@ -35,7 +36,9 @@ async def update_layermetadatatable():
     if adaguc.isLoggingEnabled():
         logger.info(log)
     else:
-        logger.info("Logging for updateLayerMetadata is disabled, status was %d", status)
+        logger.info(
+            "Logging for updateLayerMetadata is disabled, status was %d", status
+        )
 
 
 @asynccontextmanager
@@ -45,7 +48,15 @@ async def lifespan(_fastapiapp: FastAPI):
     logger.info("=== Starting AsyncIO Scheduler ===")
     # start scheduler to refresh collections & docs every minute
     scheduler = AsyncIOScheduler()
-    scheduler.add_job(update_layermetadatatable, "cron", [], minute="*", jitter=0, max_instances=1, coalesce=True)
+    scheduler.add_job(
+        update_layermetadatatable,
+        "cron",
+        [],
+        minute="*",
+        jitter=0,
+        max_instances=1,
+        coalesce=True,
+    )
     scheduler.start()
 
     yield
@@ -65,7 +76,6 @@ app.add_middleware(AccessLoggerMiddleware, format=ACCESS_LOG_FORMAT)
 logging.getLogger("access").propagate = False
 
 
-
 @app.middleware("http")
 async def add_hsts_header(request: Request, call_next):
     """Middleware to HTTP Strict Transport Security (HSTS) header"""
@@ -75,7 +85,8 @@ async def add_hsts_header(request: Request, call_next):
         scheme = urlsplit(external_address).scheme
         if scheme == "https":
             response.headers["Strict-Transport-Security"] = (
-                "max-age=31536000; includeSubDomains")
+                "max-age=31536000; includeSubDomains"
+            )
             response.headers["X-Content-Type-Options"] = "nosniff"
             response.headers["Content-Security-Policy"] = "default-src 'self'"
 
@@ -113,8 +124,7 @@ app.add_middleware(
 async def root():
     """Root page"""
     return {
-        "message":
-        "ADAGUC server base URL, use /wms, /wcs, /autowms, /adagucopendap or /ogcapi"
+        "message": "ADAGUC server base URL, use /wms, /wcs, /autowms, /adagucopendap or /ogcapi"
     }
 
 
