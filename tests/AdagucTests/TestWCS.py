@@ -219,7 +219,7 @@ class TestWCS(unittest.TestCase):
                                                               env=self.env, args=["--report"])
     AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
     self.assertEqual(status, 0)
-    lines = str(data.getvalue().decode('UTF-8')).splitlines()
+    lines = str(data.getvalue().decode('UTF-8')).splitlines()[0:6]
     parsed = [re.split(r'\s+', line) for line in lines]
     aaigrid_header_items = [(p[0], round(float(p[1]), 3)) for p in parsed]
 
