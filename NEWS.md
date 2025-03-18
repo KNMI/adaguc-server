@@ -1,3 +1,6 @@
+**Version 2.29.6 2025-03-17**
+- Sorting function for timeseries now works without causing intermittent crashes
+
 **Version 2.29.5 2025-02-14**
 - Timeseries are now sorted properly by key.
 
