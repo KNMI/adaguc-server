@@ -31,6 +31,6 @@ export ADAGUC_DB="user=adaguc password=adaguc host=${db_host} dbname=adaguc_test
 
 ulimit -c unlimited
 
-# python3 ${ADAGUC_PATH}/tests/functional_test.py $1 && \
+python3 ${ADAGUC_PATH}/tests/functional_test.py $1 && \
 cd ../python/python_fastapi_server && \
 bash ./test_server.sh
