@@ -538,9 +538,11 @@ int CGDALDataWriter::end() {
     delete[] co;
   }
   if (driverName.equalsIgnoreCase("AAIGRID")) {
-    CDBDebug("Setting FORCE_CELLSIZE to TRUE for AAIGRID");
-    // papszOptions = CSLSetNameValue(papszOptions, "FORCE_CELLSIZE", "TRUE");
-    papszOptions = CSLSetNameValue(papszOptions, "GDAL_VALIDATE_CREATION_OPTIONS", "FALSE");
+    // We allow the aagrid format writer to use a cellsize which does not have to be a square.
+    // See https://gdal.org/en/stable/drivers/raster/aaigrid.html
+    CDBDebug("Setting FORCE_CELLSIZE to FALSE for AAIGRID");
+    papszOptions = CSLSetNameValue(papszOptions, "FORCE_CELLSIZE", "FALSE");
+    papszOptions = CSLSetNameValue(papszOptions, "GDAL_VALIDATE_CREATION_OPTIONS", "NO");
   };
 
 #ifdef CGDALDATAWRITER_DEBUG

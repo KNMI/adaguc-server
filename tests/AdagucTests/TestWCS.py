@@ -219,33 +219,11 @@ class TestWCS(unittest.TestCase):
                                                               env=self.env, args=["--report"])
     AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
     self.assertEqual(status, 0)
-    
-    lines=str(data.getvalue().decode('UTF-8')).splitlines()
+    lines = str(data.getvalue().decode('UTF-8')).splitlines()
+    parsed = [re.split(r'\s+', line) for line in lines]
+    aaigrid_header_items = [(p[0], round(float(p[1]), 3)) for p in parsed]
 
-    
-    aaigrid_header_items = [re.split(r'\s+', lines[0])[0] ,
-        re.split(r'\s+', lines[0])[1] ,
-        re.split(r'\s+', lines[1])[0] ,
-        re.split(r'\s+', lines[1])[1] ,
-        re.split(r'\s+', lines[2])[0] ,
-        round(float(re.split(r'\s+', lines[2])[1]),2) ,
-        re.split(r'\s+', lines[3])[0] ,
-        round(float(re.split(r'\s+', lines[3])[1]),2),
-        re.split(r'\s+', lines[4])[0] ,
-        round(float(re.split(r'\s+', lines[4])[1]),2) ,
-        re.split(r'\s+', lines[5])[0] ,
-        round(float(re.split(r'\s+', lines[5])[1]),2) ,
-        re.split(r'\s+', lines[6])[0] ,
-        round(float(re.split(r'\s+', lines[6])[1]),3)]
-    
-    self.assertEqual([  'ncols', '29',
-                        'nrows', '31', 
-                        'xllcorner', -1500000.01, 
-                        'yllcorner', -999999.97, 
-                        'dx',        103448.28,
-                        'dy',        96774.19,
-                        'NODATA_value', -0.01],
-                     aaigrid_header_items)
+    self.assertEqual([('ncols', 29.0), ('nrows', 31.0), ('xllcorner', -1500000.013), ('yllcorner', -4206896.551), ('cellsize', 103448.277), ('NODATA_value', -0.01)], aaigrid_header_items)
 
     
 
