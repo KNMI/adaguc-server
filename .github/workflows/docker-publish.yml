@@ -38,23 +38,15 @@ jobs:
           TRIVY_JAVA_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-java-db:1
   docker-build-and-publish:
     name: Build Docker image and potentially push to Docker Hub
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      matrix:
-        platform: [linux/amd64, linux/arm64]
-        include:
-          - platform: linux/amd64
-            runner: ubuntu-22.04
-          - platform: linux/arm64
-            runner: ubuntu-22.04-arm
+    runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
 
-          #      - name: Set up QEMU
-          #uses: docker/setup-qemu-action@v3
-          #with:
-          #platforms: 'arm64'
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: 'arm64'
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -73,10 +65,10 @@ jobs:
           images: openearth/adaguc-server
 
       - name: Build and potentially push Docker image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v5
         with:
           context: .
-          platforms: ${{ matrix.platform }}
+          platforms: linux/amd64,linux/arm64
           # ensure latest base image is used
           pull: true
           push: ${{ github.repository == 'KNMI/adaguc-server' }}
