@@ -370,6 +370,10 @@ class TestWMSTimeSeries(unittest.TestCase):
 
     def test_WMSGetFeatureInfo_exceed_maxquerylimit(self):
         AdagucTestTools().cleanTempDir()
+        if os.getenv("ADAGUC_DB", "").endswith(".db"):
+            print("SKIP: Only PSQL")
+            return
+
         status, *_ = AdagucTestTools().runADAGUCServer(
             args=[
                 "--updatedb",
