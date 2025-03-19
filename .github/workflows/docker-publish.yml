@@ -62,8 +62,8 @@ jobs:
 #        with:
 #          platforms: 'arm64'
 
-#      - name: Set up Docker Buildx
-#        uses: docker/setup-buildx-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Log in to Docker Hub
         if: github.repository == 'KNMI/adaguc-server'
@@ -78,7 +78,8 @@ jobs:
         with:
           images: openearth/adaguc-server
 
-      - name: Build and potentially push Docker image
+      - name: Build and push by digest
+        id: build
         uses: docker/build-push-action@v6
         with:
           context: .
