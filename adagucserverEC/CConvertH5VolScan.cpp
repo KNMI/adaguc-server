@@ -149,9 +149,9 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
   double radarHeight;
   std::tie(radarLon, radarLat, radarHeight) = getRadarLocation(cdfObject);
 
-  // double dfBBOX[] = {radarLon - max_range / (111.0 * cos(radarLat * M_PI / 180.0)), radarLat - max_range / 111.0, radarLon + max_range / (111.0 * cos(radarLat * M_PI / 180.0)),
-  //                    radarLat + max_range / 111.0};
-  double dfBBOX[] = {0, 48, 10, 58};
+  double dfBBOX[] = {radarLon - max_range / (111.0 * cos(radarLat * M_PI / 180.0)), radarLat - max_range / 111.0, radarLon + max_range / (111.0 * cos(radarLat * M_PI / 180.0)),
+                     radarLat + max_range / 111.0};
+
   // Default size of adaguc 2dField is 2x2
   int width = 2;  // swathMiddleLon->dimensionlinks[1]->getSize();
   int height = 2; // swathMiddleLon->dimensionlinks[0]->getSize();
