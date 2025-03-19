@@ -87,7 +87,7 @@ std::tuple<double, int, double, int, double> getScanMetadata(CDFObject *cdfObjec
     int scan_nazim;
     scanVarWhere->getAttribute("nrays")->getData<int>(&scan_nazim, 1);
     double scan_ascale = 360.0 / scan_nazim;
-    return std::make_tuple(scan_elevation, scan_nrang, scan_rscale, scan_nazim, scan_ascale);
+    return std::make_tuple(scan_elevation, scan_nrang, scan_rscale * 0.001, scan_nazim, scan_ascale);
   } else {
     CT::string scanVarName;
     scanVarName.print("scan%1d", scan);
@@ -115,7 +115,7 @@ std::tuple<double, double, double> getRadarLocation(CDFObject *cdfObject) {
     cdfObject->getVariable("where")->getAttribute("lon")->getData<double>(&radarLon, 1);
     cdfObject->getVariable("where")->getAttribute("lat")->getData<double>(&radarLat, 1);
     cdfObject->getVariable("where")->getAttribute("height")->getData<double>(&radarHeight, 1);
-    return std::make_tuple(radarLon, radarLat, radarHeight);
+    return std::make_tuple(radarLon, radarLat, radarHeight * 0.001);
   } else {
     double radarLonLat[2];
     cdfObject->getVariable("radar1")->getAttribute("radar_location")->getData<double>(radarLonLat, 2);
@@ -130,7 +130,7 @@ CT::string getRadarStartTime(CDFObject *cdfObject) {
     CT::string h5Date = cdfObject->getVariable("what")->getAttribute("date")->getDataAsString();
     CT::string h5Time = cdfObject->getVariable("what")->getAttribute("time")->getDataAsString();
     CT::string timeString;
-    timeString.print("%sT%sZ", h5Date.c_str(), h5Time.c_str());
+    timeString.print("%sT%s00Z", h5Date.c_str(), h5Time.substring(0, 4).c_str());
     return timeString;
   } else {
     char szStartTime[100];
@@ -160,7 +160,7 @@ int findOdimParamNum(CDFObject *cdfObject, int scan, CT::string param) {
   /* Assume no more than 99 params */
   for (int paramNum = 1; paramNum < 100; paramNum++) {
     CT::string dataWhatVarName;
-    dataWhatVarName.print("dataset%1d.data%s.what", scan, paramNum);
+    dataWhatVarName.print("dataset%1d.data%1d.what", scan, paramNum);
     CDF::Variable *dataWhatVar = cdfObject->getVariableNE(dataWhatVarName.c_str());
     if (dataWhatVar == nullptr) break;
     CT::string quantity = dataWhatVar->getAttribute("quantity")->getDataAsString();
@@ -202,7 +202,7 @@ CDF::Variable *getDataVarForParam(CDFObject *cdfObject, int scan, CT::string par
     int paramNum = findOdimParamNum(cdfObject, scan, param);
     if (paramNum == -1) return nullptr;
     CT::string dataVarName;
-    dataVarName.print("dataset%1d.data%s.data", scan, paramNum);
+    dataVarName.print("dataset%1d.data%1d.data", scan, paramNum);
     CDF::Variable *dataVar = cdfObject->getVariableNE(dataVarName.c_str());
     return dataVar;
   } else {
@@ -220,7 +220,7 @@ std::tuple<double, double, double, double> getCalibrationParameters(CDFObject *c
   if (checkH5VolScanType(cdfObject) == ODIM_H5) {
     int paramNum = findOdimParamNum(cdfObject, scan, param);
     CT::string dataWhatVarName;
-    dataWhatVarName.print("dataset%1d.data%s.what", scan, paramNum);
+    dataWhatVarName.print("dataset%1d.data%1d.what", scan, paramNum);
     CDF::Variable *dataWhatVar = cdfObject->getVariable(dataWhatVarName.c_str());
     double gain;
     double offset;
