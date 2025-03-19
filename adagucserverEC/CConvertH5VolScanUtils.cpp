@@ -174,9 +174,9 @@ bool hasParam(CDFObject *cdfObject, std::vector<int> sorted_scans, CT::string pa
     int paramNum = findOdimParamNum(cdfObject, sorted_scans[0], param);
     if (paramNum == -1 && !param.equals("Height")) {
       if (!param.equals("ZDR")) return false;
-      int paramNumZv = findOdimParamNum(cdfObject, sorted_scans[0], CT::string("Zv"));
-      int paramNumZ = findOdimParamNum(cdfObject, sorted_scans[0], CT::string("Z"));
-      if (paramNumZv == -1 || paramNumZ == -1) return false;
+      int paramNumDBZV = findOdimParamNum(cdfObject, sorted_scans[0], CT::string("DBZV"));
+      int paramNumDBZH = findOdimParamNum(cdfObject, sorted_scans[0], CT::string("DBZH"));
+      if (paramNumDBZV == -1 || paramNumDBZH == -1) return false;
     }
     return true;
   } else {
@@ -185,13 +185,13 @@ bool hasParam(CDFObject *cdfObject, std::vector<int> sorted_scans, CT::string pa
     CDF::Variable *dataVar = cdfObject->getVariableNE(dataVarName.c_str());
     if (dataVar == nullptr && !param.equals("Height")) {
       if (!param.equals("ZDR")) return false;
-      CT::string dataZvName;
-      dataZvName.print("scan%1d.scan_Zv_data", sorted_scans[0]);
-      CDF::Variable *dataZv = cdfObject->getVariableNE(dataZvName.c_str());
-      CT::string dataZName;
-      dataZName.print("scan%1d.scan_Z_data", sorted_scans[0]);
-      CDF::Variable *dataZ = cdfObject->getVariableNE(dataZName.c_str());
-      if (dataZv == nullptr || dataZ == nullptr) return false;
+      CT::string dataDBZVName;
+      dataDBZVName.print("scan%1d.scan_Zv_data", sorted_scans[0]);
+      CDF::Variable *dataDBZV = cdfObject->getVariableNE(dataDBZVName.c_str());
+      CT::string dataDBZHName;
+      dataDBZHName.print("scan%1d.scan_Z_data", sorted_scans[0]);
+      CDF::Variable *dataDBZH = cdfObject->getVariableNE(dataDBZHName.c_str());
+      if (dataDBZV == nullptr || dataDBZH == nullptr) return false;
     }
     return true;
   }
@@ -206,6 +206,7 @@ CDF::Variable *getDataVarForParam(CDFObject *cdfObject, int scan, CT::string par
     CDF::Variable *dataVar = cdfObject->getVariableNE(dataVarName.c_str());
     return dataVar;
   } else {
+    if (param.equals("DBZH")) param = CT::string("Z");
     if (param.equals("DBZV")) param = CT::string("Zv");
     CT::string dataVarName;
     dataVarName.print("scan%1d.scan_%s_data", scan, param.c_str());

@@ -323,13 +323,7 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
   CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
   if (checkIfIsH5VolScan(cdfObject) != 0) return 1;
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
-    size_t nrDataObjects = dataSource->getNumDataObjects();
-    CDataSource::DataObject *dataObjects[nrDataObjects];
-    for (size_t d = 0; d < nrDataObjects; d++) {
-      dataObjects[d] = dataSource->getDataObject(d);
-    }
-    CDF::Variable *new2DVar;
-    new2DVar = dataObjects[0]->cdfVariable;
+    CDF::Variable *new2DVar = dataSource->getDataObject(0)->cdfVariable;
 
     bool doZdr = (new2DVar->name.equals("ZDR"));
     bool doHeight = (new2DVar->name.equals("Height"));
@@ -347,7 +341,7 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
     double offsetY = dataSource->srvParams->Geo->dfBBOX[1];
 
 #ifdef CCONVERTH5VOLSCAN_DEBUG
-    CDBDebug("Drawing %s with WH = [%d,%d]", "new2DVar" /*new2DVar->name.c_str()*/, dataSource->dWidth, dataSource->dHeight);
+    CDBDebug("Drawing %s with WH = [%d,%d]", new2DVar->name.c_str(), dataSource->dWidth, dataSource->dHeight);
     CDBDebug("  %f %f %f %f", cellSizeX, cellSizeY, offsetX, offsetY);
 #endif
 
@@ -423,7 +417,7 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
 
     if (doZdr) {
       CDF::Variable *dataZdr = getDataVarForParam(cdfObject, scan, CT::string("ZDR"));
-      if (dataZdr != NULL) {
+      if (dataZdr != nullptr) {
         doZdr = false;
       }
     }
