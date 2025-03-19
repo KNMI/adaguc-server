@@ -53,3 +53,11 @@ A default TTF font location for print fonts in imagery. E.gFreeSans.ttf.
 ## ADAGUC_ONLINERESOURCE 
 
 optional, specify the online resource in the CGI script itself, see [OnlineResource](configuration/OnlineResource.md) to configure in    
+
+## PGBOUNCER_ENABLE 	
+
+Enable or disable the usage of PostgreSQL connection pooling by PGBouncer. Default: true.
+
+## PGBOUNCER_DISABLE_SSL 	
+
+If PGBouncer is used, disable the usage of SSL. Default: true.
