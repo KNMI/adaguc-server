@@ -4,6 +4,7 @@
 #include <sys/un.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "CDebugger.h"
 #include "CTString.h"
@@ -138,8 +139,9 @@ int run_as_fork_service(int (*run_adaguc_once)(int, char **, char **, bool), int
   sigaction(SIGCHLD, &sa, NULL);
 
   // Start cleaning thread in the background
-  pthread_t clean_child_procs_thread;
-  pthread_create(&clean_child_procs_thread, NULL, clean_child_procs, NULL);
+  // TODO: this thread results in segfaults :)
+  // pthread_t clean_child_procs_thread;
+  // pthread_create(&clean_child_procs_thread, NULL, clean_child_procs, NULL);
 
   // Create an endpoint for communicating through a unix socket
   int listen_socket = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -175,24 +177,31 @@ int run_as_fork_service(int (*run_adaguc_once)(int, char **, char **, bool), int
     return 1;
   }
 
+  printf("@@@ Entering fork server loop\n");
   while (1) {
-    unsigned int sock_len = 0;
+    socklen_t sock_len = sizeof(remote);
 
     // Once someone connects to the unix socket, immediately fork and execute the client request in `handle_client`
+    printf("@@@ Before accept\n");
     if ((client_socket = accept(listen_socket, (struct sockaddr *)&remote, &sock_len)) == -1) {
-      printf("Error on accept() call \n");
+      printf("@@@ Error on accept() call \n");
       return 1;
     }
+    printf("@@@ After accept, before fork\n");
 
     pid_t pid = fork();
+    printf("@@@ After fork, pid %d\n", pid);
     if (pid == 0) {
       // Child process handles request. Communication with python happens through `client_socket`
       close(listen_socket);
       handle_client(client_socket, run_adaguc_once, argc, argv, envp);
-    } else {
+    } else if (pid > 0) {
       // Parent process keeps track of new socket and returns to listen for new connections
       child_proc_t child_proc = {client_socket, time(NULL)};
       child_procs[pid] = child_proc;
+    } else {
+      printf("@@@ Error on fork() call");
+      close(client_socket); // Close the socket if fork fails
     }
   }
 
