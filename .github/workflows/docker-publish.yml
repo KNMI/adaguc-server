@@ -7,6 +7,9 @@ on:
     tags:
       - '[0-9]+.[0-9]+.[0-9]+'
 
+env:
+  REGISTRY_IMAGE: openearth/adaguc-server
+
 jobs:
   docker-build-amd-only:
     name: Build Docker amd64 image (quick turnaround)
@@ -76,7 +79,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: openearth/adaguc-server
+          images: ${{ env.REGISTRY_IMAGE }}
 
       - name: Build and push by digest
         id: build
@@ -88,7 +91,7 @@ jobs:
           platforms: ${{ matrix.platform }}
 #          push: ${{ github.repository == 'KNMI/adaguc-server' }}
           labels: ${{ steps.meta.outputs.labels }}
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ env.REGISTRY_IMAGE }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
 
       - name: Export digest
