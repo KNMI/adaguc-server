@@ -1,6 +1,11 @@
-**Version 2.29.3 2025-01-22**
-
+**Version 2.29.7 2025-01-22**
 - Refactored scan scripts
+
+**Version 2.29.6 2025-03-17**
+- Sorting function for timeseries now works without causing intermittent crashes
+
+**Version 2.29.5 2025-02-14**
+- Timeseries are now sorted properly by key.
 
 **Version 2.29.2 2024-12-23**
 - Fixed issue with irregular grids for SSS SMOS L4 OI - LOPS-v2021 and Global Ocean - Coriolis Observation Re-Analysis CORA5.2. Added test (Issue #316)

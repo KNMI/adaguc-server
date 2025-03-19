@@ -34,8 +34,8 @@
 
 #include "CTypes.h"
 
-//#define CCDFDATAMODEL_DEBUG
-// CDF: Common Data Format
+// #define CCDFDATAMODEL_DEBUG
+//  CDF: Common Data Format
 
 /* Types supported by CDF */
 typedef int CDFType;
@@ -76,6 +76,8 @@ namespace CDF {
   int allocateData(CDFType type, void **p, size_t length);
   int freeData(void **p);
 
+  // Check if this is a string type or a numeric type
+  bool isCDFNumeric(CDFType type);
   // Copies data from one array to another and performs type conversion
   // Destdata must be a pointer to an empty array with non-void type
   class DataCopier {

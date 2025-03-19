@@ -18,14 +18,18 @@ THISSCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )
 . ${THISSCRIPTDIR}/adaguc-server-chkconfig.sh
 
 ADAGUC_DATASET=''
+VERBOSE='--verboseoff'
 
-while getopts "d:f:le" o; do
+while getopts "d:f:vle" o; do
     case "${o}" in
         d)
             ADAGUC_DATASET=${OPTARG}
             ;;
         f)
             ADAGUC_DATAFILE=${OPTARG}
+            ;;
+        v)
+            VERBOSE=''
             ;;
         l)
             ls ${ADAGUC_DATASET_DIR}
@@ -48,7 +52,7 @@ if [[ -n "${ADAGUC_DATASET}" &&  -n "${ADAGUC_DATAFILE}" ]]; then
   $command
   OUT=$?
   if [ ${OUT} -ne 0 ]; then
-    STATUSCODE=1
+    STATUSCODE=${OUT}
   fi
   exit ${STATUSCODE} 
 fi
@@ -62,7 +66,7 @@ if [[ -n "${ADAGUC_DATAFILE}" ]]; then
   
   STATUSCODE=0
   echo "Adding file [${ADAGUC_DATAFILE}] to dataset [${alldatasets}]:"
-  command="${ADAGUC_PATH}/bin/adagucserver --updatedb --autofinddataset --verboseoff --config ${ADAGUC_CONFIG} --path ${ADAGUC_DATAFILE}"
+  command="${ADAGUC_PATH}/bin/adagucserver --updatedb --autofinddataset ${VERBOSE} --config ${ADAGUC_CONFIG} --path ${ADAGUC_DATAFILE}"
   echo $command
   $command
   OUT=$?
@@ -76,7 +80,7 @@ fi
 if [[ -n "${ADAGUC_DATASET}" ]] && [ "${ADAGUC_DATASET}" != "*" ]; then
   STATUSCODE=0
   echo "Scanning full dataset [${ADAGUC_DATASET}]:"
-  command="${ADAGUC_PATH}/bin/adagucserver --updatedb --verboseoff --config ${ADAGUC_CONFIG},${ADAGUC_DATASET}"
+  command="${ADAGUC_PATH}/bin/adagucserver --updatedb ${VERBOSE} --config ${ADAGUC_CONFIG},${ADAGUC_DATASET}"
   echo $command
   $command
   OUT=$?
@@ -86,18 +90,18 @@ if [[ -n "${ADAGUC_DATASET}" ]] && [ "${ADAGUC_DATASET}" != "*" ]; then
   exit ${STATUSCODE} 
 fi
 
-# Scan al datasets
+# Scan all datasets
 if [[ -n "${ADAGUC_DATASET}" ]] && [ "${ADAGUC_DATASET}" == "*" ]; then
   echo "Scanning all datasets"
+  STATUSCODE=0
   for configfile in ${ADAGUC_DATASET_DIR}/*xml ;do
-    STATUSCODE=0
     echo "Scanning full dataset [${configfile}]:"
-    command="${ADAGUC_PATH}/bin/adagucserver --updatedb --verboseoff --config ${ADAGUC_CONFIG},${configfile}"
+    command="${ADAGUC_PATH}/bin/adagucserver --updatedb ${VERBOSE} --config ${ADAGUC_CONFIG},${configfile}"
     echo $command
     $command
     OUT=$?
     if [ ${OUT} -ne 0 ]; then
-      STATUSCODE=1
+      STATUSCODE=${OUT}
     fi
   done
   exit ${STATUSCODE} 
