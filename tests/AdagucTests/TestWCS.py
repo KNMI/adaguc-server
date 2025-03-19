@@ -9,6 +9,7 @@
 
 import os
 import os.path
+import re
 import unittest
 import netCDF4
 from netCDF4 import Dataset
@@ -208,19 +209,29 @@ class TestWCS(unittest.TestCase):
                      b'II*\x00\x08\x00\x00\x00\x12\x00')
 
   # TODO: This test (which uses GDAL) produces incorrect results. Made a ticket in backlog.
-  # def test_WCSGetCoverageAAIGRID_NATIVE_testdatanc(self):
-  #   """
-  #   Check if WCS GetCoverage for testdata.nc as Native grid is OK
-  #   """
-  #   AdagucTestTools().cleanTempDir()
-  #   filename = "test_WCSGetCoverageAAIGRID_NATIVE_testdatanc.grd"
-  #   status, data, headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=testdata&FORMAT=aaigrid&",
-  #                                                             env=self.env, args=["--report"])
-  #   AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
-  #   self.assertEqual(status, 0)
-  #   self.assertEqual(data.getvalue(), AdagucTestTools(
-  #   ).readfromfile(self.expectedoutputsspath + filename))
+  def test_WCSGetCoverageAAIGRID_NATIVE_testdatanc(self):
+    """
+    Check if WCS GetCoverage for testdata.nc as Native grid is OK
+    """
+    AdagucTestTools().cleanTempDir()
+    filename = "test_WCSGetCoverageAAIGRID_NATIVE_testdatanc.grd"
+    status, data, headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=testdata&FORMAT=aaigrid&",
+                                                              env=self.env, args=["--report"])
+    AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+    self.assertEqual(status, 0)
+    lines = str(data.getvalue().decode('UTF-8')).splitlines()[0:6]
+    parsed = [re.split(r'\s+', line) for line in lines]
+    aaigrid_header_items = [(p[0], round(float(p[1]), 3)) for p in parsed]
 
+    self.assertEqual([('ncols', 29.0),
+                      ('nrows', 31.0),
+                      ('xllcorner', -1500000.013),
+                      ('yllcorner', -999999.971),
+                      ('dx', 103448.277),
+                      ('dy', 96774.192)],
+                    aaigrid_header_items)
+
+    
 
   def test_WCSGetCoverageNetCDF4_testdatanc_adaguc_wcs_destgridspec_specifiedgridresxresy(self):
     """
