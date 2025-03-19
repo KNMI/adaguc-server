@@ -1,3 +1,12 @@
+**Version 2.30.1 2025-03-19**
+- A request which results in exceeding the `maxquerylimit` (default=512) will now return HTTP 422
+
+**Version 2.30.0 2025-03-18**
+- Improve knmi hdf5 volume scan support, so that more files and variables are supported and projection is more accurate
+
+**Version 2.29.6 2025-03-17**
+- Sorting function for timeseries now works without causing intermittent crashes
+
 **Version 2.29.5 2025-02-14**
 - Timeseries are now sorted properly by key.
 
