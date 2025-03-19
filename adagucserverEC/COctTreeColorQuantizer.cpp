@@ -8,9 +8,9 @@
 #define COLORBITS 8
 #define TREEDEPTH 6
 byte MASK[COLORBITS] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
-#define BIT(b, n) (((b)&MASK[n]) >> n)
+#define BIT(b, n) (((b) & MASK[n]) >> n)
 #define LEVEL(c, d) ((BIT((c)->r, (d))) << 2 | BIT((c)->g, (d)) << 1 | BIT((c)->b, (d)))
-OctreeType *reducelist[TREEDEPTH]; // List of reducible nodes
+OctreeType *reducelist[TREEDEPTH + 1]; // List of reducible nodes
 static byte glbLeafLevel = TREEDEPTH;
 static uint glbTotalLeaves = 0;
 static void *getMem(size_t size);
@@ -91,19 +91,19 @@ OctreeType *CreateOctNode(int level) {
 // MakeReducible -- Adds a node to the reducible list for the specified level
 //
 static void MakeReducible(int level, OctreeType *node) {
-  node->nextnode = reducelist[level];
-  reducelist[level] = node;
+  node->nextnode = reducelist[level + 1];
+  reducelist[level + 1] = node;
 }
 // GetReducible -- Returns next available reducible node at tree's leaf level
 //
 static OctreeType *GetReducible(void) {
   OctreeType *node;
 
-  while (reducelist[glbLeafLevel - 1] == NULL) {
+  while (reducelist[glbLeafLevel] == NULL) {
     glbLeafLevel--;
   }
-  node = reducelist[glbLeafLevel - 1];
-  reducelist[glbLeafLevel - 1] = reducelist[glbLeafLevel - 1]->nextnode;
+  node = reducelist[glbLeafLevel];
+  reducelist[glbLeafLevel] = reducelist[glbLeafLevel]->nextnode;
   return node;
 }
 // MakePaletteTable -- Given a color octree, traverse tree and:

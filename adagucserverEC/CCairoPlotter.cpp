@@ -827,7 +827,7 @@ int CCairoPlotter::writeARGBPng(int width, int height, unsigned char *ARGBByteBu
         color.r = ARGBByteBuffer[2 + j * 4];
         color.realblue = ARGBByteBuffer[0 + j * 4];
         color.realalpha = ARGBByteBuffer[3 + j * 4];
-        InsertTree(&tree, &color, -1);  // TODO: This results in out-of-boundary array read (and write)
+        InsertTree(&tree, &color, -1);
       }
     } else {
       bool something = false;
@@ -840,7 +840,7 @@ int CCairoPlotter::writeARGBPng(int width, int height, unsigned char *ARGBByteBu
           color.r = ARGBByteBuffer[2 + j * 4];
           color.realblue = ARGBByteBuffer[0 + j * 4];
           color.realalpha = ARGBByteBuffer[3 + j * 4];
-          InsertTree(&tree, &color, -1);  // TODO: This results in out-of-boundary array read (and write)
+          InsertTree(&tree, &color, -1);
         }
       }
       if (!something) {
@@ -850,7 +850,7 @@ int CCairoPlotter::writeARGBPng(int width, int height, unsigned char *ARGBByteBu
         color.b = 0;
         color.realblue = 0;
         color.realalpha = 0;
-        InsertTree(&tree, &color, -1);  // TODO: This results in out-of-boundary array read (and write)
+        InsertTree(&tree, &color, -1);
       }
     }
 
@@ -1033,7 +1033,7 @@ int CCairoPlotter::writeARGBPng(int width, int height, unsigned char *ARGBByteBu
   }
 
   png_write_end(png_ptr, NULL);
-
+  png_destroy_write_struct(&png_ptr, &info_ptr);
 #ifdef MEASURETIME
   StopWatch_Stop("end writeRGBAPng.");
 #endif
