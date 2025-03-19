@@ -367,3 +367,44 @@ class TestWMSTimeSeries(unittest.TestCase):
             data.getvalue(),
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
+
+    def test_WMSGetFeatureInfo_exceed_maxquerylimit(self):
+        AdagucTestTools().cleanTempDir()
+        if os.getenv("ADAGUC_DB", "").endswith(".db"):
+            print("SKIP: Only PSQL")
+            return
+
+        status, *_ = AdagucTestTools().runADAGUCServer(
+            args=[
+                "--updatedb",
+                "--config",
+                ADAGUC_PATH
+                + "/data/config/adaguc.tests.dataset.xml,"
+                + ADAGUC_PATH
+                + "/data/config/datasets/adaguc.test.members.xml",
+            ],
+            isCGI=False,
+        )
+        self.assertEqual(status, 0)
+
+        # Querying a NetCDF file with 60 timesteps and a single member should succeed
+        status, *_ = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.test.members&service=WMS&request=GetFeatureInfo&version=1.3.0&layers=mymemberdata&query_layers=mymemberdata&crs=EPSG%3A3857&bbox=497598.1238462%2C6418354.600684818%2C838235.7656737999%2C7557289.301081181&width=294&height=983&i=134&j=352&info_format=application%2Fjson&time=1000-01-01T00%3A00%3A00Z%2F3000-01-01T00%3A00%3A00Z&dim_reference_time=2025-03-01T00%3A00%3A00Z&dim_member=1",
+            {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml"},
+        )
+        self.assertEqual(status, 0)
+
+        # Querying all 50 members (members=*) will exceed the default `maxquerylimit=512` and should return a HTTP 422
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.test.members&service=WMS&request=GetFeatureInfo&version=1.3.0&layers=mymemberdata&query_layers=mymemberdata&crs=EPSG%3A3857&bbox=497598.1238462%2C6418354.600684818%2C838235.7656737999%2C7557289.301081181&width=294&height=983&i=134&j=352&info_format=application%2Fjson&time=1000-01-01T00%3A00%3A00Z%2F3000-01-01T00%3A00%3A00Z&dim_reference_time=2025-03-01T00%3A00%3A00Z&dim_member=*",
+            {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml"},
+        )
+
+        filename = "test_WMSGetFeatureInfo_exceed_maxquerylimit"
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 422)
+
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
