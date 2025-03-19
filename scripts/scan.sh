@@ -14,7 +14,7 @@ usage () {
     echo "  [-f] <file to add> [-d] <datasetname>             [Scan a single file for specified dataset]"
     echo "  [-f] <file to add>                                [Scan a single file, dataset is automatically detected]"
     echo "  [-d] <datasetname>                                [Scan a dataset, all layers within dataset will be checked]"
-    echo "  [-d] *                                            [Scan all available datasets]"
+    echo "  [-d] \"*\"                                        [Scan all available datasets]"
     echo "  [-l]                                              [List all datasets]"
     echo "  [-v]                                              [Verbose logging]"
     echo "  [-r]                                              [Rescan by ignoring file modification date of files]"
@@ -61,7 +61,7 @@ while getopts "d:f:vtkrleh" o; do
 done
 
 
-if [ $OPTIND -eq 1 ]; then ADAGUC_DATASET="*"; fi
+if [ $OPTIND -eq 1 ]; then usage; fi
 
 
 
