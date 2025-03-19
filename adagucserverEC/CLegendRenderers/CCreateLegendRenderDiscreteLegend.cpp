@@ -140,8 +140,8 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
    * Defined blocks based on defined interval
    */
   if (definedLegendOnShadeClasses) {
-    // If this type of legend has too many classes (15+), we will treat it differently to create
-    // a summarised version, with the following characteristics:
+    // If this type of legend has too many classes (15+) with a relatively small height (<=500 px), we
+    // will treat it differently to create a summarised version, with the following characteristics:
     // - The class border is removed for extra visibility
     // - Labels are simplified and will only show the min of the interval the class represents
     // - Only one every 5 labels will be printed (this is just a rule of thumb) plus the top label
@@ -149,7 +149,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
     const size_t MAX_DISCRETE_CLASSES = 15;
 
     // Case where the legend has too many classes to plot
-    if (styleConfiguration->shadeIntervals->size() > MAX_DISCRETE_CLASSES) {
+    if (styleConfiguration->shadeIntervals->size() > MAX_DISCRETE_CLASSES && legendImage->Geo->dHeight <= 500) {
       float blockHeight = float(legendImage->Geo->dHeight - 30) / float(styleConfiguration->shadeIntervals->size());
       /* Legend classes displayed as blocks in the legend can have a maximum and a minimum height depending on the amount of classes and legendheight */
       if (blockHeight > 12) blockHeight = 12;
