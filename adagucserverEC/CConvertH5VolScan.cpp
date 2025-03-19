@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  ADAGUC Server
- * Purpose:  Convert KNMI HDF5 volume scan data to CDM
+ * Purpose:  Convert HDF5 volume scan data to CDM
  * Author:   Ernst de Vreede, ernst.de.vreede "at" knmi.nl
  * Date:     2022-08-15
  *
@@ -23,28 +23,16 @@
  *
  ******************************************************************************/
 
-#include "CConvertKNMIH5VolScan.h"
+#include <tuple>
+#include <vector>
+#include "CConvertH5VolScan.h"
+#include "CConvertH5VolScanUtils.h"
 #include "CImageWarper.h"
 #include "COGCDims.h"
 #include "CCDFHDF5IO.h"
 
-// #define CCONVERTKNMIH5VOLSCAN_DEBUG
-const char *CConvertKNMIH5VolScan::className = "CConvertKNMIH5VolScan";
-const CT::string scan_params[] = {"CCOR", "CCORv", "CPA", "CPAv", "KDP", "PhiDP", "RhoHV", "SQI", "V", "Vv", "W", "Wv", "Z", "Zv", "uPhiDP", "uZ", "uZv", "ZDR", "Height"};
-const CT::string units[] = {"dB", "dB", "-", "-", "deg/km", "deg", "-", "-", "m/s", "m/s", "m/s", "m/s", "dBZ", "dBZ", "deg", "dBZ", "dBZ", "dB", "km"};
-
-int CConvertKNMIH5VolScan::checkIfIsKNMIH5VolScan(CDFObject *cdfObject, CServerParams *) {
-  try {
-    /* Check if the image1.statistics variable and stat_cell_number is set */
-    CDF::Attribute *attr = cdfObject->getVariable("overview")->getAttribute("number_scan_groups");
-    int number_scan_groups;
-    attr->getData(&number_scan_groups, 1);
-    if (number_scan_groups == 0) return 1;
-  } catch (int e) {
-    return 1;
-  }
-  return 0;
-}
+// #define CCONVERTH5VOLSCAN_DEBUG
+const char *CConvertH5VolScan::className = "CConvertH5VolScan";
 
 bool sortFunction(CT::string one, CT::string other) {
   if (one.endsWith("l")) {
@@ -58,36 +46,31 @@ bool sortFunction(CT::string one, CT::string other) {
   return (std::atof(one) < std::atof(other));
 }
 
-int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CServerParams *srvParams) {
-  if (checkIfIsKNMIH5VolScan(cdfObject, srvParams) != 0) return 1;
-  CDBDebug("convertKNMIH5VolScanHeader()");
+int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParams *srvParams) {
+  if (checkIfIsH5VolScan(cdfObject) != 0) return 1;
+  CDBDebug("convertH5VolScanHeader()");
 
   /* Read all scans from file and give them a name based on their elevation */
   int nrscans = 0;
   std::vector<int> scan_ranges;
   std::vector<int> scans;
   std::vector<CT::string> elevation_names;
+  std::vector<CT::string> scan_params = getScanParams(cdfObject);
+  std::vector<CT::string> units = getUnits(cdfObject);
 
-  CDF::Attribute *number_scan_groups_attr = cdfObject->getVariable("overview")->getAttribute("number_scan_groups");
-  int number_scan_groups;
-  number_scan_groups_attr->getData(&number_scan_groups, 1);
-  if (number_scan_groups > 100) {
-    /* Prevent extremely long loops */
-    number_scan_groups = 100;
-  }
-  for (int scan = 1; scan <= number_scan_groups; scan++) {
-    CT::string scanVarName;
-    scanVarName.print("scan%1d", scan);
-    CDF::Variable *scanVar = cdfObject->getVariableNE(scanVarName.c_str());
-    if (scanVar == NULL) continue;
-    float scanElevation;
-    scanVar->getAttribute("scan_elevation")->getData<float>(&scanElevation, 1);
+  int max_range = 0;
+  /* Assume no more than 99 scans */
+  for (int scan = 1; scan < 100; scan++) {
+    double scan_elevation;
     int scan_nrang;
-    scanVar->getAttribute("scan_number_range")->getData<int>(&scan_nrang, 1);
-    float scan_rscale;
-    scanVar->getAttribute("scan_range_bin")->getData<float>(&scan_rscale, 1);
+    double scan_rscale;
+    int scan_nazim;
+    double scan_ascale;
+    std::tie(scan_elevation, scan_nrang, scan_rscale, scan_nazim, scan_ascale) = getScanMetadata(cdfObject, scan);
+    if (scan_nrang == -1) continue;
     int scan_range = lround(scan_nrang * scan_rscale);
-    int scanElevationInt = lround(scanElevation * 10.0);
+    if (scan_range > max_range) max_range = scan_range;
+    int scanElevationInt = lround(scan_elevation * 10.0);
     /* Skip 90 degree scan */
     if (scanElevationInt == 900) continue;
     CT::string elevation_name;
@@ -161,8 +144,14 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
     }
   }
 
-  // double *dfBBOX = new double[4];
-  double dfBBOX[] = {0, 48, 10, 58}; // TODO: retrieve actual bbox from HDF5
+  double radarLon;
+  double radarLat;
+  double radarHeight;
+  std::tie(radarLon, radarLat, radarHeight) = getRadarLocation(cdfObject);
+
+  // double dfBBOX[] = {radarLon - max_range / (111.0 * cos(radarLat * M_PI / 180.0)), radarLat - max_range / 111.0, radarLon + max_range / (111.0 * cos(radarLat * M_PI / 180.0)),
+  //                    radarLat + max_range / 111.0};
+  double dfBBOX[] = {0, 48, 10, 58};
   // Default size of adaguc 2dField is 2x2
   int width = 2;  // swathMiddleLon->dimensionlinks[1]->getSize();
   int height = 2; // swathMiddleLon->dimensionlinks[0]->getSize();
@@ -176,7 +165,7 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
     height = srvParams->Geo->dHeight;
   }
 
-#ifdef CCONVERTKNMIH5VOLSCAN_DEBUG
+#ifdef CCONVERTH5VOLSCAN_DEBUG
   CDBDebug("Width = %d, Height = %d", width, height);
 #endif
   if (width < 2 || height < 2) {
@@ -229,7 +218,7 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
     cdfObject->addVariable(varY);
     CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
 
-#ifdef CCONVERTKNMIH5VOLSCAN_DEBUG
+#ifdef CCONVERTH5VOLSCAN_DEBUG
     CDBDebug("Data allocated for 'x' and 'y' variables (%zu x %zu)", dimX->getSize(), dimY->getSize());
 #endif
 
@@ -247,16 +236,13 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
     dimT->name = "time";
     dimT->setSize(1);
     cdfObject->addDimension(dimT);
-    CT::string time = cdfObject->getVariable("overview")->getAttribute("product_datetime_start")->getDataAsString();
     timeVar->setType(CDF_DOUBLE);
     timeVar->name.copy("time");
     timeVar->setAttributeText("standard_name", "time");
     timeVar->setAttributeText("long_name", "time");
     timeVar->isDimension = true;
-    char szStartTime[100];
     CT::string time_units = "minutes since 2000-01-01 00:00:00\0";
-    CT::string h5Time = cdfObject->getVariable("overview")->getAttribute("product_datetime_start")->getDataAsString();
-    CDFHDF5Reader::HDF5ToADAGUCTime(szStartTime, h5Time.c_str());
+    CT::string szStartTime = getRadarStartTime(cdfObject);
     // Set adaguc time
     CTime ctime;
     if (ctime.init(time_units, NULL) != 0) {
@@ -265,7 +251,7 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
     }
     double offset;
     try {
-      offset = ctime.dateToOffset(ctime.stringToDate(szStartTime));
+      offset = ctime.dateToOffset(ctime.stringToDate(szStartTime.c_str()));
     } catch (int e) {
       CT::string message = CTime::getErrorMessage(e);
       CDBError("CTime Exception %s", message.c_str());
@@ -300,11 +286,6 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
     CDF::allocateData(varScan->getType(), &varScan->data, dimElevation->length);
 
     for (int i = 0; i < nrscans; i++) {
-      CT::string scanVarName;
-      scanVarName.print("scan%1d", sorted_scans[i]);
-      CDF::Variable *scanVar = cdfObject->getVariable(scanVarName.c_str());
-      float scanElevation;
-      scanVar->getAttribute("scan_elevation")->getData(&scanElevation, 1);
       ((char **)varElevation->data)[i] = strdup(elevation_names[i].c_str());
       ((unsigned int *)varScan->data)[i] = sorted_scans[i];
     }
@@ -312,28 +293,15 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
   // CDFHDF5Reader::CustomVolScanReader *volScanReader = new CDFHDF5Reader::CustomVolScanReader();
   // CDF::Variable::CustomMemoryReader *memoryReader = CDF::Variable::CustomMemoryReaderInstance;
   int cnt = -1;
-  for (CT::string s : scan_params) {
+  for (CT::string param : scan_params) {
     cnt++;
-
-    CT::string dataVarName;
-    dataVarName.print("scan%1d.scan_%s_data", sorted_scans[0], s.c_str());
-    CDF::Variable *dataVar = cdfObject->getVariableNE(dataVarName.c_str());
-    if (dataVar == NULL && !s.equals("Height")) {
-      if (!s.equals("ZDR")) continue;
-      CT::string dataZvName;
-      dataZvName.print("scan%1d.scan_Zv_data", sorted_scans[0]);
-      CDF::Variable *dataZv = cdfObject->getVariableNE(dataZvName.c_str());
-      CT::string dataZName;
-      dataZName.print("scan%1d.scan_Z_data", sorted_scans[0]);
-      CDF::Variable *dataZ = cdfObject->getVariableNE(dataZName.c_str());
-      if (dataZv == NULL || dataZ == NULL) continue;
-    }
+    if (!hasParam(cdfObject, sorted_scans, param)) continue;
     CDF::Variable *var = new CDF::Variable();
     var->setType(CDF_FLOAT);
-    var->name.copy(s);
+    var->name.copy(param);
     cdfObject->addVariable(var);
-    var->setAttributeText("standard_name", s.c_str());
-    var->setAttributeText("long_name", s.c_str());
+    var->setAttributeText("standard_name", param.c_str());
+    var->setAttributeText("long_name", param.c_str());
     var->setAttributeText("grid_mapping", "projection");
     var->setAttributeText("ADAGUC_VOL_SCAN", "TRUE");
     var->setAttributeText("ADAGUC_VECTOR", "true"); /* Set this to true to tell adagucserverEC/CImageDataWriter.cpp, 708 to use full screenspace to retrieve GetFeatureInfo value */
@@ -351,24 +319,9 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
   return 0;
 }
 
-int CConvertKNMIH5VolScan::getCalibrationParameters(CT::string formula, float &factor, float &offset) {
-  int rightPartFormulaPos = formula.indexOf("=");
-  int multiplicationSignPos = formula.indexOf("*");
-  int additionSignPos = formula.indexOf("+");
-  if (rightPartFormulaPos != -1 && multiplicationSignPos != -1 && additionSignPos != -1) {
-    factor = formula.substring(rightPartFormulaPos + 1, multiplicationSignPos).trim().toFloat();
-    offset = formula.substring(additionSignPos + 1, formula.length()).trim().toFloat();
-    return 0;
-  }
-  CDBDebug("Using default factor/offset from %s", formula.c_str());
-  factor = 1;
-  offset = 0;
-  return 1;
-}
-
-int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int mode) {
+int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
   CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
-  if (checkIfIsKNMIH5VolScan(cdfObject, dataSource->srvParams) != 0) return 1;
+  if (checkIfIsH5VolScan(cdfObject) != 0) return 1;
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
     size_t nrDataObjects = dataSource->getNumDataObjects();
     CDataSource::DataObject *dataObjects[nrDataObjects];
@@ -393,7 +346,7 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
     double offsetX = dataSource->srvParams->Geo->dfBBOX[0];
     double offsetY = dataSource->srvParams->Geo->dfBBOX[1];
 
-#ifdef CCONVERTKNMIH5VOLSCAN_DEBUG
+#ifdef CCONVERTH5VOLSCAN_DEBUG
     CDBDebug("Drawing %s with WH = [%d,%d]", "new2DVar" /*new2DVar->name.c_str()*/, dataSource->dWidth, dataSource->dHeight);
     CDBDebug("  %f %f %f %f", cellSizeX, cellSizeY, offsetX, offsetY);
 #endif
@@ -416,7 +369,7 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
     CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
     CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
 
-#ifdef CCONVERTKNMIH5VOLSCAN_DEBUG
+#ifdef CCONVERTH5VOLSCAN_DEBUG
     CDBDebug("Data allocated for 'x' and 'y' variables");
 #endif
 
@@ -431,8 +384,6 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
       ((double *)varY->data)[j] = y;
     }
     int height = dimY->length;
-
-    CDF::Variable *scanVar;
 
     CImageWarper imageWarper;
     bool projectionRequired = false;
@@ -460,7 +411,7 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
       }
     }
 
-#ifdef CCONVERTKNMIH5VOLSCAN_DEBUG
+#ifdef CCONVERTH5VOLSCAN_DEBUG
     CDBDebug("Datasource CRS = %s nativeproj4 = %s", dataSource->nativeEPSG.c_str(), dataSource->nativeProj4.c_str());
     CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->Geo->dfBBOX[0], dataSource->srvParams->Geo->dfBBOX[1], dataSource->srvParams->Geo->dfBBOX[2], dataSource->srvParams->Geo->dfBBOX[3]);
     CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
@@ -471,9 +422,7 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
     int scan = scanNumberVar->getDataAt<int>(scan_index);
 
     if (doZdr) {
-      CT::string dataZdrName;
-      dataZdrName.print("scan%1d.scan_ZDR_data", scan);
-      CDF::Variable *dataZdr = cdfObject->getVariableNE(dataZdrName.c_str());
+      CDF::Variable *dataZdr = getDataVarForParam(cdfObject, scan, CT::string("ZDR"));
       if (dataZdr != NULL) {
         doZdr = false;
       }
@@ -485,88 +434,53 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
     CDF::allocateData(new2DVar->getType(), &(new2DVar->data), fieldSize);
     new2DVar->fill(FLT_MAX);
 
-    float radarLonLat[2];
-    cdfObject->getVariable("radar1")->getAttribute("radar_location")->getData<float>(radarLonLat, 2);
-    float radarLon = radarLonLat[0];
-    float radarLat = radarLonLat[1];
+    double radarLon;
+    double radarLat;
+    double radarHeight;
+    std::tie(radarLon, radarLat, radarHeight) = getRadarLocation(cdfObject);
 
-    CT::string scanName;
-    scanName.print("scan%1d", scan);
-    scanVar = cdfObject->getVariable(scanName);
-    float scan_elevation;
-    scanVar->getAttribute("scan_elevation")->getData<float>(&scan_elevation, 1);
+    double scan_elevation;
     int scan_nrang;
-    scanVar->getAttribute("scan_number_range")->getData<int>(&scan_nrang, 1);
+    double scan_rscale;
     int scan_nazim;
-    scanVar->getAttribute("scan_number_azim")->getData<int>(&scan_nazim, 1);
-    float scan_rscale;
-    scanVar->getAttribute("scan_range_bin")->getData<float>(&scan_rscale, 1);
-    float scan_ascale;
-    scanVar->getAttribute("scan_azim_bin")->getData<float>(&scan_ascale, 1);
+    double scan_ascale;
+    std::tie(scan_elevation, scan_nrang, scan_rscale, scan_nazim, scan_ascale) = getScanMetadata(cdfObject, scan);
 
-    float factor = 1, offset = 0;
-    float zv_factor, zv_offset;
+    double gain, offset;
+    double gainDBZV, offsetDBZV;
+    double undetect, nodata;
     CT::string scanDataVarName;
     CDF::Variable *scanDataVar;
-    CDF::Variable *scanDataVar_Zv;
-
-    CT::string scanCalibrationVarName;
-    scanCalibrationVarName.print("scan%1d.calibration", scan);
-    CDF::Variable *scanCalibrationVar = cdfObject->getVariable(scanCalibrationVarName);
+    CDF::Variable *scanDataVarDBZV;
 
     if (!doHeight) {
       CT::string componentCalibrationStringName;
       if (doZdr) {
-        componentCalibrationStringName.print("calibration_%s_formulas", "Z");
-        CT::string calibrationFormula = scanCalibrationVar->getAttribute(componentCalibrationStringName.c_str())->getDataAsString();
-        getCalibrationParameters(calibrationFormula, factor, offset);
+        std::tie(gainDBZV, offsetDBZV, undetect, nodata) = getCalibrationParameters(cdfObject, scan, CT::string("DBZV"));
+        scanDataVarDBZV = getDataVarForParam(cdfObject, scan, CT::string("DBZV"));
+        scanDataVarDBZV->readData(CDF_DOUBLE);
 
-        componentCalibrationStringName.print("calibration_%s_formulas", "Zv");
-        calibrationFormula = scanCalibrationVar->getAttribute(componentCalibrationStringName.c_str())->getDataAsString();
-        getCalibrationParameters(calibrationFormula, zv_factor, zv_offset);
-
-        scanDataVarName.print("scan%d.scan_%s_data", scan, "Z");
-        scanDataVar = cdfObject->getVariable(scanDataVarName);
-        if (scanDataVar->getType() != CDF_UBYTE && scanDataVar->getType() != CDF_USHORT) return 1;
-        scanDataVar->readData(CDF_USHORT);
-        scanDataVarName.print("scan%d.scan_%s_data", scan, "Zv");
-        scanDataVar_Zv = cdfObject->getVariable(scanDataVarName);
-        if (scanDataVar_Zv->getType() != CDF_UBYTE && scanDataVar_Zv->getType() != CDF_USHORT) return 1;
-        scanDataVar_Zv->readData(CDF_USHORT);
+        /* Assume nodata and undetect are the same between DBZV and DBZH */
+        std::tie(gain, offset, undetect, nodata) = getCalibrationParameters(cdfObject, scan, CT::string("DBZH"));
+        scanDataVar = getDataVarForParam(cdfObject, scan, CT::string("DBZH"));
+        scanDataVar->readData(CDF_DOUBLE);
       } else {
-        componentCalibrationStringName.print("calibration_%s_formulas", new2DVar->name.c_str());
-        CT::string calibrationFormula = scanCalibrationVar->getAttribute(componentCalibrationStringName.c_str())->getDataAsString();
-        getCalibrationParameters(calibrationFormula, factor, offset);
-
-        scanDataVarName.print("scan%d.scan_%s_data", scan, new2DVar->name.c_str());
-        scanDataVar = cdfObject->getVariable(scanDataVarName);
-        if (scanDataVar->getType() != CDF_UBYTE && scanDataVar->getType() != CDF_USHORT) return 1;
-        scanDataVar->readData(CDF_USHORT);
+        std::tie(gain, offset, undetect, nodata) = getCalibrationParameters(cdfObject, scan, new2DVar->name);
+        scanDataVar = getDataVarForParam(cdfObject, scan, new2DVar->name);
+        scanDataVar->readData(CDF_DOUBLE);
       }
     }
-    int missingDataInt;
-    scanCalibrationVar->getAttribute("calibration_missing_data")->getData<int>(&missingDataInt, 1);
 
-    int outOfImageInt;
-    CDF::Attribute *outOfImageAttr = scanCalibrationVar->getAttributeNE("calibration_out_of_image");
-    if (outOfImageAttr == nullptr) {
-      outOfImageInt = missingDataInt;
-    } else {
-      outOfImageAttr->getData<int>(&outOfImageInt, 1);
-    }
-
-    std::vector<unsigned short *> pScans;
-    unsigned short missingData = (unsigned short)missingDataInt;
-    unsigned short outOfImage = (unsigned short)outOfImageInt;
-    std::vector<float> factors = {factor};
-    std::vector<float> offsets = {offset};
+    std::vector<double *> pScans;
+    std::vector<double> gains = {gain};
+    std::vector<double> offsets = {offset};
 
     if (!doHeight) {
-      pScans = {(unsigned short *)scanDataVar->data};
+      pScans = {(double *)scanDataVar->data};
       if (doZdr) {
-        pScans.push_back((unsigned short *)scanDataVar_Zv->data);
-        factors.push_back(zv_factor);
-        offsets.push_back(zv_offset);
+        pScans.push_back((double *)scanDataVarDBZV->data);
+        gains.push_back(gainDBZV);
+        offsets.push_back(offsetDBZV);
       }
     }
 
@@ -581,7 +495,7 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
     radarProj.initreproj(scanProj4.c_str(), dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
 
     double x, y, ground_range;
-    float range, azim, ground_height;
+    double range, azim, ground_height;
     int ir, ia;
     double scan_elevation_rad = scan_elevation * M_PI / 180.0;
     double four_thirds_radius = 6371.0 * 4.0 / 3.0;
@@ -614,22 +528,22 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanData(CDataSource *dataSource, int
           }
           ia = (int)(azim / scan_ascale);
           ia = (ia + scan_nazim) % scan_nazim;
-          std::vector<unsigned short> vs;
+          std::vector<double> vs;
           for (auto pScan : pScans) {
             vs.push_back(pScan[ir + ia * scan_nrang]);
           }
-          if (vs[0] == missingData || vs[0] == outOfImage) {
+          if (vs[0] == undetect || vs[0] == nodata) {
             *p++ = FLT_MAX;
             continue;
           }
           if (doZdr) {
-            if (vs[1] == missingData || vs[1] == outOfImage) {
+            if (vs[1] == undetect || vs[1] == nodata) {
               *p++ = FLT_MAX;
               continue;
             }
-            *p++ = vs[0] * factors[0] + offsets[0] - (vs[1] * factors[1] + offsets[1]);
+            *p++ = vs[0] * gains[0] + offsets[0] - (vs[1] * gains[1] + offsets[1]);
           } else {
-            *p++ = vs[0] * factors[0] + offsets[0];
+            *p++ = vs[0] * gains[0] + offsets[0];
           }
         } else {
           *p++ = FLT_MAX;

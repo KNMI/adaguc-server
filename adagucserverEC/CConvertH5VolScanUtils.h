@@ -23,20 +23,21 @@
  *
  ******************************************************************************/
 
-#ifndef CCONVERTKNMIH5VOLSCAN_H
-#define CCONVERTKNMIH5VOLSCAN_H
+#ifndef CCONVERTH5VOLSCANUTILS_H
+#define CCONVERTH5VOLSCANUTILS_H
+#include <tuple>
+#include <vector>
 #include "CDataSource.h"
 #include "CImageWarper.h"
 #include "COGCDims.h"
 
-class CConvertKNMIH5VolScan {
-private:
-  DEF_ERRORFUNCTION();
-  static int checkIfIsKNMIH5VolScan(CDFObject *cdfObject, CServerParams *srvParams);
-  static int getCalibrationParameters(CT::string formula, float &factor, float &offset);
-
-public:
-  static int convertKNMIH5VolScanHeader(CDFObject *cdfObject, CServerParams *srvParams);
-  static int convertKNMIH5VolScanData(CDataSource *dataSource, int mode);
-};
+int checkIfIsH5VolScan(CDFObject *cdfObject);
+std::tuple<double, int, double, int, double> getScanMetadata(CDFObject *cdfObject, int scan);
+std::tuple<double, double, double> getRadarLocation(CDFObject *cdfObject);
+CT::string getRadarStartTime(CDFObject *cdfObject);
+std::vector<CT::string> getScanParams(CDFObject *cdfObject);
+std::vector<CT::string> getUnits(CDFObject *cdfObject);
+bool hasParam(CDFObject *cdfObject, std::vector<int> sorted_scans, CT::string param);
+CDF::Variable *getDataVarForParam(CDFObject *cdfObject, int scan, CT::string param);
+std::tuple<double, double, double, double> getCalibrationParameters(CDFObject *cdfObject, int scan, CT::string param);
 #endif
