@@ -94,6 +94,27 @@ CDF::Attribute *CDFHDF5Reader::getNestedAttribute(CDFObject *cdfObject, size_t d
 
 /*  https://www.eumetnet.eu/wp-content/uploads/2021/07/ODIM_H5_v2.4.pdf */
 int CDFHDF5Reader::convertODIMHDF5toCF() {
+  CDF::Attribute *conventionsAttr = cdfObject->getAttributeNE("Conventions");
+  if (conventionsAttr == nullptr) {
+    return 2;
+  }
+  CT::string conventionsString = conventionsAttr->getDataAsString();
+  if (conventionsString.startsWith("ODIM_H5") == 0) {
+    return 2;
+  }
+  CDF::Variable *whatVar = cdfObject->getVariableNE("what");
+  if (whatVar == nullptr) {
+    return 2;
+  }
+  CDF::Attribute *whatObjectAttr = whatVar->getAttributeNE("object");
+  if (whatObjectAttr == nullptr) {
+    return 2;
+  }
+  CT::string whatObjectString = whatObjectAttr->getDataAsString();
+  if (not whatObjectString.equals("COMP") && not whatObjectString.equals("IMAGE")) {
+    CDBDebug("Is not a 2D dataset, skipping parsing as 2D dataset");
+    return 2;
+  }
   CDF::Variable *whereVar = cdfObject->getVariableNE("where");
   if (whereVar == nullptr) {
     return 2;

@@ -704,9 +704,7 @@ int CRequest::setDimValuesForDataSource(CDataSource *dataSource, CServerParams *
 #endif
   int status = fillDimValuesForDataSource(dataSource, srvParam);
   if (status != 0) return status;
-  status = queryDimValuesForDataSource(dataSource, srvParam);
-  if (status != 0) return status;
-  return 0;
+  return queryDimValuesForDataSource(dataSource, srvParam);
 };
 
 int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams *srvParam) {
@@ -1417,8 +1415,8 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
 
     delete store;
   } catch (int i) {
-    CDBError("%d", i);
-    return 2;
+    CDBError("Exception %d in queryDimValuesForDataSource", i);
+    throw i;
   }
 #ifdef CREQUEST_DEBUG
   CDBDebug("Datasource has %d steps", dataSource->getNumTimeSteps());
@@ -1639,13 +1637,10 @@ int CRequest::process_all_layers() {
             return 1;
           }
         } catch (ServiceExceptionCode e) {
-          CDBError("Invalid dimensions values: No data available for layer %s", dataSources[j]->layerName.c_str());
+          CDBError("Exception in setDimValuesForDataSource for layer %s with ServiceExceptionCode=%d", dataSources[j]->layerName.c_str(), e);
           setExceptionType(e);
           return 1;
         }
-        /*delete[] values_path;
-        delete[] values_dim;
-        delete[] date_time;*/
       } else {
         CDBDebug("Layer has no dims");
         // This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.
@@ -3125,7 +3120,7 @@ int CRequest::process_querystring() {
           int status = process_wms_getfeatureinfo_request();
           if (status != 0) {
             if (status != 2) {
-              CDBError("WMS GetFeatureInfo Request failed");
+              CDBError("WMS GetFeatureInfo Request failed, status=%d", status);
             }
             return 1;
           }
