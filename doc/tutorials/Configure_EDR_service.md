@@ -108,7 +108,7 @@ parameter_names": {
 ## Step 3: Scan the new data
 
 ```
-docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh edr
+docker exec -i -t my-adaguc-server /adaguc/scan.sh -d edr
 ```
 
 ## Step 4: Check if the EDR endpoint works

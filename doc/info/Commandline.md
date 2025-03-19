@@ -18,7 +18,6 @@ adagucserver
 -   --rescan Ignores file modification date and re-inserts the file.
 -   --noclean Do not remove file records from the database
 -   --recreate Drops and recreates database tables
--   --dumpheader Shows NetCDF header
 -   --verboseoff Do not show verbose logs to trace errors
 -   --autofinddataset When providing a --path, adaguc will automatically find the matching dataset. 
 
