@@ -169,7 +169,7 @@ class HimawariConverter:
         if os.path.isfile(outputname) == False:
             try:
                 self.convertonc(inputname,mfile, self.imgextent,self.imgproj,self.product,outputname)  
-                subprocess.call(("docker exec -i -t my-adaguc-server bash /adaguc/adaguc-server-createtiles.sh " + self.adagucdatasetname).split())
+                subprocess.call(("docker exec -i -t my-adaguc-server bash /adaguc/adaguc-server-master/scripts/createtiles.sh " + self.adagucdatasetname).split())
             except:
                 print "Error converting image %s" % inputname
                 os.remove(inputname)
