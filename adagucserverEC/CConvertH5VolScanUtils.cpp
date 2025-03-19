@@ -206,7 +206,7 @@ CDF::Variable *getDataVarForParam(CDFObject *cdfObject, int scan, CT::string par
     CDF::Variable *dataVar = cdfObject->getVariableNE(dataVarName.c_str());
     return dataVar;
   } else {
-    if (param.equals("DBZV")) param = "Zv";
+    if (param.equals("DBZV")) param = CT::string("Zv");
     CT::string dataVarName;
     dataVarName.print("scan%1d.scan_%s_data", scan, param.c_str());
     CDF::Variable *dataVar = cdfObject->getVariableNE(dataVarName.c_str());
@@ -245,13 +245,13 @@ std::tuple<double, double, double, double> getCalibrationParameters(CDFObject *c
     }
     return std::make_tuple(gain, offset, undetect, nodata);
   } else {
-    if (param.equals("DBZH")) param = "Z";
-    if (param.equals("DBZV")) param = "Zv";
+    if (param.equals("DBZH")) param = CT::string("Z");
+    if (param.equals("DBZV")) param = CT::string("Zv");
     CT::string scanCalibrationVarName;
     scanCalibrationVarName.print("scan%1d.calibration", scan);
     CDF::Variable *scanCalibrationVar = cdfObject->getVariable(scanCalibrationVarName);
     CT::string componentCalibrationStringName;
-    componentCalibrationStringName.print("calibration_%s_formulas", param);
+    componentCalibrationStringName.print("calibration_%s_formulas", param.c_str());
     CT::string formula = scanCalibrationVar->getAttribute(componentCalibrationStringName.c_str())->getDataAsString();
     int rightPartFormulaPos = formula.indexOf("=");
     int multiplicationSignPos = formula.indexOf("*");
