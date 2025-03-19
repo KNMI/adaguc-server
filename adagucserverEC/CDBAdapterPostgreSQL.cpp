@@ -476,7 +476,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     return NULL;
   }
 
-  if (store->size() > limit) {
+  if (int(store->size()) > limit) {
     delete store;
     CDBError("Requested data exceeded maxquerylimit=%d", limit);
     throw UnprocessableEntity;

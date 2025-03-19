@@ -261,7 +261,7 @@ int CDF::Variable::readData(CDFType type, size_t *_start, size_t *_count, ptrdif
           }
           Variable *tVar = tCDFObject->getVariable(name.c_str());
           if (tVar->readData(type, start, count, stride) != 0) throw(__LINE__);
-            // Put the read data chunk in our destination variable
+          // Put the read data chunk in our destination variable
 #ifdef CCDFDATAMODEL_DEBUG
           CDBDebug("Copying %d elements to variable %s", tVar->getSize(), name.c_str());
 #endif
