@@ -1033,7 +1033,7 @@ int CCairoPlotter::writeARGBPng(int width, int height, unsigned char *ARGBByteBu
   }
 
   png_write_end(png_ptr, NULL);
-
+  png_destroy_write_struct(&png_ptr, &info_ptr);
 #ifdef MEASURETIME
   StopWatch_Stop("end writeRGBAPng.");
 #endif
