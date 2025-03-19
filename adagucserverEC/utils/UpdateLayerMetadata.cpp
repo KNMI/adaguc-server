@@ -15,6 +15,11 @@ int updateLayerMetadata(CRequest &request) {
   auto datasetList = getEnabledDatasetsConfigurations(srvParam);
   // TODO: Remove dimension tables which don't have a matching configuration
 
+  if (datasetList.size() == 0) {
+    CDBWarning("No datasets found in dataset configuration directories. Not going to do update or cleanup.");
+    return 1;
+  }
+
   std::set<DatasetAndLayerPair> dataSetConfigsWithLayers;
 
   for (auto &dataset : datasetList) {
@@ -25,6 +30,9 @@ int updateLayerMetadata(CRequest &request) {
 
     if (dataset.length() > 0) {
       CDBDebug("\n\n *********************************** Updating metadatatable for dataset [%s] **************************************************", dataset.c_str());
+    } else {
+      CDBWarning("Datasetname is empty");
+      continue;
     }
     CRequest requestPerDataset;
 
@@ -33,6 +41,12 @@ int updateLayerMetadata(CRequest &request) {
       CDBError("Unable to read configuration file");
       continue;
     }
+    if (requestPerDataset.getServerParams()->cfg->Layer.size() == 0) {
+      CDBWarning("Found no layers in dataset %s", dataset.c_str());
+      continue;
+    } else {
+      CDBDebug("Found %d layer(s) in dataset %s", requestPerDataset.getServerParams()->cfg->Layer.size(), dataset.c_str());
+    }
     for (auto layer : requestPerDataset.getServerParams()->cfg->Layer) {
       CT::string layerName;
       makeUniqueLayerName(&layerName, layer);
@@ -40,7 +54,6 @@ int updateLayerMetadata(CRequest &request) {
         CT::string tmp = layerName;
         layerName.print("ID_%s", tmp.c_str());
       }
-
       dataSetConfigsWithLayers.insert(std::make_pair(datasetBaseName, layerName.c_str()));
     }
     CT::string layerPathToScan;
@@ -51,6 +64,8 @@ int updateLayerMetadata(CRequest &request) {
       continue;
     }
   }
+
+  CDBDebug("Found %d layers in total over all datasets in this instance", dataSetConfigsWithLayers.size());
 
   // Check for datasets and or layers which are not configured anymore.
   json dataset;

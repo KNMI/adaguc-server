@@ -2,6 +2,7 @@
 import logging
 import os
 import time
+from contextlib import asynccontextmanager
 from urllib.parse import urlsplit
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import uvicorn
@@ -25,17 +26,19 @@ configure_logging(logging)
 
 logger = logging.getLogger(__name__)
 
-def update_layermetadatatable():
+
+async def update_layermetadatatable():
     """Update layermetadata table in adaguc for GetCapabilities caching"""
     adaguc = setup_adaguc(False)
     logger.info("Calling updateLayerMetadata")
-    status, log = adaguc.updateLayerMetadata()
+    status, log = await adaguc.updateLayerMetadata()
     if adaguc.isLoggingEnabled():
         logger.info(log)
     else:
         logger.info("Logging for updateLayerMetadata is disabled, status was %d", status)
 
 
+@asynccontextmanager
 async def lifespan(_fastapiapp: FastAPI):
     """Captures FASTAPI Lifespan events to start the AsyncIOScheduler"""
 

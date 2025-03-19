@@ -49,6 +49,8 @@ if [ -z "${EXTERNALADDRESS}" ]; then
 fi
 
 mkdir -p ${ADAGUC_DATASET_DIR}
+mkdir -p ${ADAGUC_DATA_DIR}
+mkdir -p ${ADAGUC_AUTOWMS_DIR}
 
 
 rm .env

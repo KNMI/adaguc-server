@@ -1,7 +1,38 @@
+**Version 2.30.0 2025-03-18**
+- Improve knmi hdf5 volume scan support, so that more files and variables are supported and projection is more accurate
+
+**Version 2.29.6 2025-03-17**
+- Sorting function for timeseries now works without causing intermittent crashes
+
+**Version 2.29.5 2025-02-14**
+- Timeseries are now sorted properly by key.
+
+**Version 2.29.2 2024-12-23**
+- Fixed issue with irregular grids for SSS SMOS L4 OI - LOPS-v2021 and Global Ocean - Coriolis Observation Re-Analysis CORA5.2. Added test (Issue #316)
+
+**Version 2.29.1 2024-12-23**
+- Default value for time dimension can now be based on default value of reference_time dimension (Issue #403)
+
+**Version 2.29.0 2024-11-11**
+- Adds support for grids where the data cells are defined by lat_bnds and lon_bnds parameters describing the cell bounds.
+
+**Version 2.28.5 2024-11-04**
+- Added Solar Terminator post-processor to use in combination with LiveUpdate layer type. 
+
+**Version 2.28.4 2024-11-12**
+- Fix bug where autofinddataset would not use Layer configurations which do not have a type configured
+
+**Version 2.28.3 2024-10-24**
+- Fix bug where directory reader could not figure out the file type (opendir ent->d_type == DT_UNKNOWN)
+
+**Version 2.28.2 2024-10-23**
+- Fix bug which caused sheduled metadata updates to only work intermittently.
+
+**Version 2.28.1 2024-10-11**
+- Windbarbs on modelfields can now display the windspeed in kts as text when rendertextforvectors in RenderSettings is set to true.
+
 **Version 2.28.0 2024-09-11**
 - Metadata for layer items like variables, projections, dimensions and styles are now stored in a database table called `layermetadata`. This can be disabled via the `enablemetadatacache` property in [Settings](doc/configuration/Settings.md).
-
-
 
 **Version 2.27.0 2024-09-02**
 - PostgreSQL query from `getFilesAndIndicesForDimensions` has been rewritten, which fixes https://github.com/KNMI/adaguc-server/issues/341.

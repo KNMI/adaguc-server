@@ -101,15 +101,12 @@ class runAdaguc:
 
         return adagucenv
 
-    def updateLayerMetadata(self):
+    async def updateLayerMetadata(self):
         """Uses the adaguc executable to update the layermetadatatable"""
         adagucenv = self.getAdagucEnv()
-        status, data, headers = asyncio.run(
-            self.runADAGUCServer(
-                args=["--updatelayermetadata"], env=adagucenv, isCGI=False, showLogOnError = True
-            )
+        status, data, headers = await self.runADAGUCServer(
+            args=["--updatelayermetadata"], env=adagucenv, isCGI=False, showLogOnError = True
         )
-
 
         return status, data.getvalue().decode()        
 

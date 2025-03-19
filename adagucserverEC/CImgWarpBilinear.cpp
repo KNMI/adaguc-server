@@ -43,6 +43,7 @@
 
 const char *CImgWarpBilinear::className = "CImgWarpBilinear";
 void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CDrawImage *drawImage) {
+  CStyleConfiguration *styleConfiguration = sourceImage->getStyle();
 #ifdef CImgWarpBilinear_DEBUG
   CDBDebug("Render");
 #endif
@@ -411,11 +412,13 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
     }
   }
   if (enableBarb) {
-    CalculatedWindVector wv;
+
+    bool rendertextforvectors = styleConfiguration != nullptr && styleConfiguration->styleConfig != nullptr && styleConfiguration->styleConfig->RenderSettings.size() > 0 &&
+                                styleConfiguration->styleConfig->RenderSettings[0]->attr.rendertextforvectors.equals("true");
     for (size_t sz = 0; sz < windVectors.size(); sz++) {
-      wv = windVectors[sz];
+      CalculatedWindVector wv = windVectors[sz];
       float outlineWidth = 0;
-      drawImage->drawBarb(wv.x, wv.y, wv.dir, wv.strength, CColor(0, 0, 255, 255), outlineWidth, wv.convertToKnots, wv.flip, false);
+      drawImage->drawBarb(wv.x, wv.y, wv.dir, wv.strength, CColor(0, 0, 255, 255), outlineWidth, wv.convertToKnots, wv.flip, rendertextforvectors);
     }
   }
 

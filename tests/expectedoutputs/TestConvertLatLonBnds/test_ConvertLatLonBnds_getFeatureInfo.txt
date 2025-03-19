@@ -1,0 +1,1 @@
+[{"name":"probability","standard_name":"probability","feature_name":"probability_0","units":{},"point":{"SRS":"EPSG:4326","coords":"4.800000,51.700000"},"dims":["threshold","time"],"data":{"40":{"2024-06-01T02:00:00Z":"232.000000"}}}]
