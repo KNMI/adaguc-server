@@ -82,7 +82,7 @@ void serverWarningFunction(const char *msg) {
   printdebug(msg, 1);
 }
 
-void serverLogFunctionCMDLine(const char *msg) { printf("%s", msg); }
+void serverLogFunctionCMDLine(const char *msg) { setvbuf(stdout, NULL, _IONBF, 0); printf("%s", msg); }
 
 /**
  * @param layerPathToScan: the provided file to scan
