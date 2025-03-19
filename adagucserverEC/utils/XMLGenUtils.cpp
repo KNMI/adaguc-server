@@ -37,7 +37,7 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
       layerGroup.copy(metadataLayer->layer->Group[0]->attr.value.c_str());
     }
   }
-  metadataLayer->layerMetadata.group.copy(&layerGroup);
+  metadataLayer->layerMetadata.wmsgroup.copy(&layerGroup);
 
   // Check if this layer is querable
   int datasetRestriction = CServerParams::checkDataRestriction();

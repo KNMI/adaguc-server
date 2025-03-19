@@ -31,7 +31,7 @@ int getLayerBaseMetadataAsJson(MetadataLayer *metadataLayer, json &layerMetadata
   try {
     layerMetadataItem["layername"] = metadataLayer->layerMetadata.name;
     layerMetadataItem["title"] = metadataLayer->layerMetadata.title;
-    layerMetadataItem["group"] = metadataLayer->layerMetadata.group;
+    layerMetadataItem["wmsgroup"] = metadataLayer->layerMetadata.wmsgroup;
     layerMetadataItem["abstract"] = metadataLayer->layerMetadata.abstract;
     layerMetadataItem["nativeepsg"] = metadataLayer->layerMetadata.nativeEPSG;
 
@@ -185,7 +185,7 @@ int loadLayerMetadataStructFromMetadataDb(MetadataLayer *metadataLayer) {
     auto i = a.parse(layerMetadataAsJson.c_str());
     metadataLayer->layerMetadata.name = i["layername"].get<std::string>().c_str();
     metadataLayer->layerMetadata.title = i["title"].get<std::string>().c_str();
-    metadataLayer->layerMetadata.group = i["group"].get<std::string>().c_str();
+    metadataLayer->layerMetadata.wmsgroup = i["wmsgroup"].get<std::string>().c_str();
     metadataLayer->layerMetadata.abstract = i["abstract"].get<std::string>().c_str();
     metadataLayer->layerMetadata.collection = i["collection"].get<std::string>().c_str();
     metadataLayer->layerMetadata.isQueryable = i["isqueryable"].get<int>();

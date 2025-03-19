@@ -127,7 +127,7 @@ int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(MetadataLayer *metada
       .units = "ISO8601",
       .values = startTime + "/" + stopTime + "/" + timeResolution,
       .defaultValue = stopTime,
-      .type = "dimtype_none",
+      .type = "dimtype_time",
       .hasMultipleValues = true,
   };
   metadataLayer->layerMetadata.dimList.push_back(dim);
