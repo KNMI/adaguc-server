@@ -6,7 +6,7 @@
 aiocache~=0.12.2
 APScheduler~=3.10.4
 Brotli~=1.0
-Jinja2~=3.1.5
+Jinja2~=3.1.6
 OWSLib~=0.29.2
 Pillow~=10.3
 asgi-logger~=0.1.0
