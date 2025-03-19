@@ -1,15 +1,15 @@
+import datetime
+import json
 import os
 import os.path
-from io import BytesIO
-import unittest
+import re
 import shutil
 import subprocess
-import json
-from lxml import etree, objectify
-import re
+import unittest
+from io import BytesIO
+
 from adaguc.AdagucTestTools import AdagucTestTools
 from lxml import etree, objectify
-import datetime
 
 ADAGUC_PATH = os.environ["ADAGUC_PATH"]
 
@@ -48,7 +48,7 @@ class TestWMSVolScan(unittest.TestCase):
 
     def test_WMSGetMap_VolScan(self):
         AdagucTestTools().cleanTempDir()
-        for layer in ["ZDR", "KDP", "RhoHV"]:
+        for layer in ["ZDR", "KDP", "RhoHV", "Height"]:
             for elev in ["0.3l", "0.3", "8.0"]:
                 filename = f"test_WMSGetMap_VolScan_{layer}_{elev}.png"
                 wms_arg = f"source=test/volscan/RAD_NL62_VOL_NA_202106181850.h5&SERVICE=WMS&request=getmap&LAYERS={layer}&format=image/png&STYLES=&WMS=1.3.0&CRS=EPSG:4326&BBOX=46,0,58,12&WIDTH=400&HEIGHT=400&SHOWDIMS=true&DIM_scan_elevation={elev}"
