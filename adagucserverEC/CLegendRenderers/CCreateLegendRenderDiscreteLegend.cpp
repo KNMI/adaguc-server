@@ -194,7 +194,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
           // The boolean at the end of this call creates a "compact" rectangle with no vertical space to maximise its size
           // This extra pixels are very important when the legend block is at the minimum of 3 pixels
           // The same goes for the black border (in this version of the rectangle there is no border for clarity)
-          legendImage->rectangle(4 * scaling + pLeft, cY2 + pTop, (int(cbW) + 7) * scaling + pLeft, cY1 + pTop, color, color, true);
+          legendImage->rectangle(4 * scaling + pLeft, cY2 + pTop - 1, (int(cbW) + 7) * scaling + pLeft, cY1 + pTop + 1, color, color);
           // We spare the top class and then in general we remove 4 out of every 5 labels (assuming the label is a multiple of 5)
           // We print every label containing a multiple of 5.
           if (j != (drawIntervals - 1) && numShadeIntervals > MAX_DISCRETE_CLASSES && (int)(std::abs(parseFloat(s->attr.min.c_str()))) % 5 != 0) {

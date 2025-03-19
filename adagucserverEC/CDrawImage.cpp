@@ -1426,15 +1426,11 @@ int CDrawImage::createGDPalette(CServerConfig::XMLE_Legend *legend) {
   return 1;
 }
 
-void CDrawImage::rectangle(int x1, int y1, int x2, int y2, CColor innercolor, CColor outercolor, bool noVerticalSpace) {
+void CDrawImage::rectangle(int x1, int y1, int x2, int y2, CColor innercolor, CColor outercolor) {
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
     cairo->setFillColor(innercolor.r, innercolor.g, innercolor.b, innercolor.a);
     cairo->setColor(outercolor.r, outercolor.g, outercolor.b, outercolor.a);
-    if (noVerticalSpace) {
-      cairo->filledRectangle(x1, y1 - 1, x2, y2 + 1); // Reduce vertical space
-    } else {
-      cairo->filledRectangle(x1, y1, x2, y2);
-    }
+    cairo->filledRectangle(x1, y1, x2, y2);
   } else {
     int gdinnercolor = getClosestGDColor(innercolor.r, innercolor.g, innercolor.b);
     int gdoutercolor = getClosestGDColor(outercolor.r, outercolor.g, outercolor.b);

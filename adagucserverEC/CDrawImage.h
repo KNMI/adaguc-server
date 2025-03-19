@@ -211,7 +211,7 @@ public:
   void setTextStroke(int x, int y, float angle, const char *text, const char *fontFile, float fontsize, float strokeWidth, CColor bgcolor, CColor fgcolor);
   void rectangle(int x1, int y1, int x2, int y2, int innercolor, int outercolor);
   void rectangle(int x1, int y1, int x2, int y2, int outercolor);
-  void rectangle(int x1, int y1, int x2, int y2, CColor innercolor, CColor outercolor, bool noVerticalSpace = false);
+  void rectangle(int x1, int y1, int x2, int y2, CColor innercolor, CColor outercolor);
   CColor getColorForIndex(int index);
   int copyPalette();
   int addImage(int delay);
