@@ -146,4 +146,6 @@ bash runtests.sh
 
 ## To scan datasets
 
-`bash ./Docker/adaguc-server-updatedatasets.sh <dataset name>`
+
+- list datasets: `bash ./scripts/scan.sh -l`
+- scan a dataset: `bash ./scripts/scan.sh -d <dataset name>`

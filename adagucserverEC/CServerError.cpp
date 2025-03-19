@@ -219,14 +219,30 @@ const char *getExceptionCodeText(ServiceExceptionCode code) {
   switch (code) {
   case OperationNotSupported:
     return "OperationNotSupported";
-    break;
   case InvalidDimensionValue:
     return "InvalidDimensionValue";
+  case UnprocessableEntity:
+    return "UnprocessableEntity";
+  default:
+    return "OperationNotSupported";
+  }
+}
+
+void setExceptionType(ServiceExceptionCode code) {
+  switch (code) {
+  case OperationNotSupported:
+    statusCode = HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY;
+    break;
+  case InvalidDimensionValue:
+    statusCode = HTTP_STATUSCODE_404_NOT_FOUND;
+    break;
+  case UnprocessableEntity:
+    statusCode = HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY;
+    break;
+  default:
+    statusCode = HTTP_STATUSCODE_404_NOT_FOUND;
     break;
   }
-  return "OperationNotSupported";
-}
-void setExceptionType(ServiceExceptionCode code) {
-  statusCode = HTTP_STATUSCODE_404_NOT_FOUND;
+
   errExceptionCode = code;
 }

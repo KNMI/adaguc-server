@@ -27,6 +27,7 @@
 #include <set>
 #include <map>
 #include "CDebugger.h"
+#include "CServerError.h"
 
 const char *CDBAdapterPostgreSQL::className = "CDBAdapterPostgreSQL";
 #define CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP "pathfiltertablelookup_v2_0_23"
@@ -461,7 +462,9 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
   for (size_t i = 1; i < dataSource->requiredDims.size(); i++) {
     query.printconcat(", %s", dataSource->requiredDims[i]->netCDFDimName.c_str());
   }
-  query.printconcat(" LIMIT %d", limit);
+
+  // We limit on `maxquery limit` + 1 and we'll check if we reached it later
+  query.printconcat(" LIMIT %d", limit + 1);
 
   // Execute the query
   CDBStore::Store *store = NULL;
@@ -472,6 +475,13 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     CDBDebug("Query failed with code %d (%s)", e, query.c_str());
     return NULL;
   }
+
+  if (int(store->size()) > limit) {
+    delete store;
+    CDBError("Requested data exceeded maxquerylimit=%d", limit);
+    throw UnprocessableEntity;
+  }
+
 #ifdef MEASURETIME
   StopWatch_Stop("<CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions");
 #endif

@@ -289,10 +289,13 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
 #ifdef CImgWarpBilinear_DEBUG
   StopWatch_Stop("reprojection finished");
 #endif
-
-  float *uValues = valObj[0].fpValues;
-  float *vValues = valObj[1].fpValues;
-  applyUVConversion(warper, sourceImage, enableVector, enableBarb, dPixelExtent, uValues, vValues);
+  bool hasTwoDataObjects = sourceImage->getNumDataObjects() == 2;
+  bool isVectorLike = hasTwoDataObjects && (enableVector || enableBarb);
+  if (isVectorLike) {
+    float *uValues = valObj[0].fpValues;
+    float *vValues = valObj[1].fpValues;
+    applyUVConversion(warper, sourceImage, enableVector, enableBarb, dPixelExtent, uValues, vValues);
+  }
 
   for (size_t varNr = 0; varNr < sourceImage->getNumDataObjects(); varNr++) {
     float *fpValues = valObj[varNr].fpValues;
@@ -393,32 +396,32 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
     }
   }
 
-  float *uValueData = valObj[0].valueData;
-  float *vValueData = valObj[1].valueData;
-  std::vector<CalculatedWindVector> windVectors =
-      renderBarbsAndVectors(warper, sourceImage, drawImage, enableShade, enableContour, enableBarb, drawMap, enableVector, drawGridVectors, dPixelExtent, uValueData, vValueData, dpDestX, dpDestY);
-
   // Make Contour if desired
-  // drawContour(valueData,fNodataValue,500,5000,drawImage);
   if (enableContour || enableShade) {
     drawContour(valueData, fNodataValue, shadeInterval, sourceImage, drawImage, enableContour, enableShade, enableContour);
   }
 
-  if (enableVector) {
-    CalculatedWindVector wv;
-    for (size_t sz = 0; sz < windVectors.size(); sz++) {
-      wv = windVectors[sz];
-      drawImage->drawVector(wv.x, wv.y, wv.dir, wv.strength, 240);
-    }
-  }
-  if (enableBarb) {
+  if (isVectorLike) {
 
-    bool rendertextforvectors = styleConfiguration != nullptr && styleConfiguration->styleConfig != nullptr && styleConfiguration->styleConfig->RenderSettings.size() > 0 &&
-                                styleConfiguration->styleConfig->RenderSettings[0]->attr.rendertextforvectors.equals("true");
-    for (size_t sz = 0; sz < windVectors.size(); sz++) {
-      CalculatedWindVector wv = windVectors[sz];
-      float outlineWidth = 0;
-      drawImage->drawBarb(wv.x, wv.y, wv.dir, wv.strength, CColor(0, 0, 255, 255), outlineWidth, wv.convertToKnots, wv.flip, rendertextforvectors);
+    float *uValueData = valObj[0].valueData;
+    float *vValueData = valObj[1].valueData;
+    std::vector<CalculatedWindVector> windVectors =
+        renderBarbsAndVectors(warper, sourceImage, drawImage, enableShade, enableContour, enableBarb, drawMap, enableVector, drawGridVectors, dPixelExtent, uValueData, vValueData, dpDestX, dpDestY);
+    if (enableVector) {
+      CalculatedWindVector wv;
+      for (size_t sz = 0; sz < windVectors.size(); sz++) {
+        wv = windVectors[sz];
+        drawImage->drawVector(wv.x, wv.y, wv.dir, wv.strength, 240);
+      }
+    }
+    if (enableBarb) {
+      bool rendertextforvectors = styleConfiguration != nullptr && styleConfiguration->styleConfig != nullptr && styleConfiguration->styleConfig->RenderSettings.size() > 0 &&
+                                  styleConfiguration->styleConfig->RenderSettings[0]->attr.rendertextforvectors.equals("true");
+      for (size_t sz = 0; sz < windVectors.size(); sz++) {
+        CalculatedWindVector wv = windVectors[sz];
+        float outlineWidth = 0;
+        drawImage->drawBarb(wv.x, wv.y, wv.dir, wv.strength, CColor(0, 0, 255, 255), outlineWidth, wv.convertToKnots, wv.flip, rendertextforvectors);
+      }
     }
   }
 

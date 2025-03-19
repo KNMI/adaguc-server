@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <Layer type="database">
+    <Name>mymemberdata</Name>
+    <Variable>mydata</Variable>
+    <FilePath filter="">{ADAGUC_PATH}/data/datasets/members.nc</FilePath>
+    <Styles>auto</Styles>
+    <Dimension name="time" units="ISO8601" interval="PT1H" default="min">time</Dimension>
+    <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension>
+    <Dimension name="member" units="" default="min" hidden="false">member</Dimension>
+  </Layer>
+</Configuration>
