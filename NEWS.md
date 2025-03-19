@@ -1,3 +1,6 @@
+**Version 2.31.0 2025-03-19**
+- Refactored scan scripts
+
 **Version 2.30.1 2025-03-19**
 - A request which results in exceeding the `maxquerylimit` (default=512) will now return HTTP 422
 
