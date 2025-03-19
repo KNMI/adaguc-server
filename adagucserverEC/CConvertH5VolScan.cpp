@@ -379,7 +379,34 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
     }
     int height = dimY->length;
 
+    CImageWarper imageWarper;
+    bool projectionRequired = false;
+    if (dataSource->srvParams->Geo->CRS.length() > 0) {
+      projectionRequired = true;
+      new2DVar->setAttributeText("grid_mapping", "customgridprojection");
+      // Apply once
+      if (cdfObject->getVariableNE("customgridprojection") == NULL) {
+        CDBDebug("Adding customgridprojection");
+        CDF::Variable *projectionVar = new CDF::Variable();
+        projectionVar->name.copy("customgridprojection");
+        cdfObject->addVariable(projectionVar);
+        dataSource->nativeEPSG = dataSource->srvParams->Geo->CRS.c_str();
+        imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
+        if (dataSource->nativeProj4.length() == 0) {
+          dataSource->nativeProj4 = LATLONPROJECTION;
+          dataSource->nativeEPSG = "EPSG:4326";
+          projectionRequired = false;
+        }
+        if (projectionRequired) {
+          CDBDebug("Reprojection is needed");
+        }
+
+        projectionVar->setAttributeText("proj4_params", dataSource->nativeProj4.c_str());
+      }
+    }
+
 #ifdef CCONVERTH5VOLSCAN_DEBUG
+    CDBDebug("Datasource CRS = %s nativeproj4 = %s", dataSource->nativeEPSG.c_str(), dataSource->nativeProj4.c_str());
     CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->Geo->dfBBOX[0], dataSource->srvParams->Geo->dfBBOX[1], dataSource->srvParams->Geo->dfBBOX[2], dataSource->srvParams->Geo->dfBBOX[3]);
     CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
 #endif
@@ -455,7 +482,9 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
     CT::string scanProj4;
 
     scanProj4.print("+proj=aeqd +a=6378.137 +b=6356.752 +R_A +lat_0=%.3f +lon_0=%.3f +x_0=0 +y_0=0", radarLat, radarLon);
-
+    if (!projectionRequired) {
+      return 0;
+    }
     CImageWarper radarProj;
     radarProj.initreproj(scanProj4.c_str(), dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
 
