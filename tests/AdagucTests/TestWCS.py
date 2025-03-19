@@ -223,7 +223,13 @@ class TestWCS(unittest.TestCase):
     parsed = [re.split(r'\s+', line) for line in lines]
     aaigrid_header_items = [(p[0], round(float(p[1]), 3)) for p in parsed]
 
-    self.assertEqual([('ncols', 29.0), ('nrows', 31.0), ('xllcorner', -1500000.013), ('yllcorner', -4206896.551), ('cellsize', 103448.277), ('NODATA_value', -0.01)], aaigrid_header_items)
+    self.assertEqual([('ncols', 29.0),
+                      ('nrows', 31.0),
+                      ('xllcorner', -1500000.013),
+                      ('yllcorner', -999999.971),
+                      ('dx', 103448.277),
+                      ('dy', 96774.192)],
+                    aaigrid_header_items)
 
     
 
