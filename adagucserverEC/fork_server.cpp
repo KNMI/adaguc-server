@@ -1,4 +1,5 @@
 #include <map>
+#include <mutex>
 #include <signal.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -77,14 +78,23 @@ void child_signal_handler(int child_signal) {
       child_status = 1;
     }
 
-    int child_sock = child_procs[child_pid].socket;
+    int index = pid_index[child_pid].load();
+    if (index >= 0 && index < MAX_PROCS) {
+      // children[index].exited.store(true); // ✅ Mark child as exited
+      children[index].pid.store(-1);
+
+      write(children[index].socket, reinterpret_cast<const char *>(&child_status), sizeof(child_status));
+      close(children[index].socket);
+    }
+
+    // int child_sock = child_procs[child_pid].socket;
     // fprintf(stderr, "@ on_child_exit [%d] [%d] [%d] [%d]\n", child_pid, child_sock, child_signal, child_status);
 
     // Write the status code from the child pid into the unix socket back to python
-    write(child_sock, reinterpret_cast<const char *>(&child_status), sizeof(child_status));
-    close(child_sock);
+    // write(child_sock, reinterpret_cast<const char *>(&child_status), sizeof(child_status));
+    // close(child_sock);
 
-    child_procs.erase(child_pid);
+    // child_procs.erase(child_pid);
   }
 }
 
@@ -99,20 +109,42 @@ void *clean_child_procs(void *arg) {
   while (1) {
     time_t now = time(NULL);
 
-    for (const auto &child_proc_mapping : child_procs) {
-      child_proc_t child_proc = child_proc_mapping.second;
+    // for (const auto &child_proc_mapping : child_procs) {
+    //   child_proc_t child_proc = child_proc_mapping.second;
 
-      if (difftime(now, child_proc.forked_at) < max_child_proc_timeout) {
-        continue;
-      }
+    //   if (difftime(now, child_proc.forked_at) < max_child_proc_timeout) {
+    //     continue;
+    //   }
 
-      CDBWarning("Child process with pid %d running longer than %d, sending SIGKILL to clean up\n", child_proc_mapping.first, max_child_proc_timeout);
-      if (kill(child_proc_mapping.first, SIGKILL) == -1) {
-        CDBError("Failed to send SIGKILL to child process %d\n", child_proc_mapping.first);
-        // TODO: What to do if we cannot SIGKILL child process?
+    //   // CDBWarning("Child process with pid %d running longer than %d, sending SIGKILL to clean up\n", child_proc_mapping.first, max_child_proc_timeout);
+    //   if (kill(child_proc_mapping.first, SIGKILL) == -1) {
+    //     // CDBError("Failed to send SIGKILL to child process %d\n", child_proc_mapping.first);
+    //     // TODO: What to do if we cannot SIGKILL child process?
+    //   }
+    // }
+
+    for (int i = 0; i < MAX_PROCS; i++) {
+      if (difftime(now, children[i].forked_at) > max_child_proc_timeout) { // ✅ Safe atomic read
+        // close(children[i].socket);                   // Clean up socket
+        pid_index[children[i].pid.load()].store(-1); // Remove PID lookup
+        children[i].pid.store(-1);                   // Mark slot as free
+        children[i].exited.store(false);
       }
     }
+
     sleep(CHECK_CHILD_PROC_INTERVAL);
+  }
+}
+
+void add_child_proc(pid_t pid, int socket) {
+  for (int i = 0; i < MAX_PROCS; i++) {
+    int expected = -1;
+    if (children[i].pid.compare_exchange_strong(expected, pid)) {
+      children[i].socket = socket;
+      children[i].forked_at = time(NULL);
+      pid_index[pid].store(i); // ✅ Store PID lookup
+      return;
+    }
   }
 }
 
@@ -140,8 +172,8 @@ int run_as_fork_service(int (*run_adaguc_once)(int, char **, char **, bool), int
 
   // Start cleaning thread in the background
   // TODO: this thread results in segfaults :)
-  // pthread_t clean_child_procs_thread;
-  // pthread_create(&clean_child_procs_thread, NULL, clean_child_procs, NULL);
+  pthread_t clean_child_procs_thread;
+  pthread_create(&clean_child_procs_thread, NULL, clean_child_procs, NULL);
 
   // Create an endpoint for communicating through a unix socket
   int listen_socket = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -197,8 +229,9 @@ int run_as_fork_service(int (*run_adaguc_once)(int, char **, char **, bool), int
       handle_client(client_socket, run_adaguc_once, argc, argv, envp);
     } else if (pid > 0) {
       // Parent process keeps track of new socket and returns to listen for new connections
-      child_proc_t child_proc = {client_socket, time(NULL)};
-      child_procs[pid] = child_proc;
+      add_child_proc(pid, client_socket);
+      // child_proc_t child_proc = {client_socket, time(NULL)};
+      // child_procs[pid] = child_proc;
     } else {
       printf("@@@ Error on fork() call");
       close(client_socket); // Close the socket if fork fails
