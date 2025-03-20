@@ -12,6 +12,36 @@ int checkMultipleOfFiveContained(float min, float max) {
   return -1;
 }
 
+// Aux function to calculate block height based on total height and number
+// of classes in a legend based on shade classes.
+int calculateShadeClassBlockHeight(int totalHeight, int intervals) {
+  float blockHeight = float(totalHeight - 30) / float(intervals);
+  /* Legend classes displayed as blocks in the legend can have a maximum
+  and a minimum height */
+  if (blockHeight > 12) return 12;
+  if (blockHeight < 3) return 3;
+}
+
+std::tuple<int, int> calculateShadedClassLegendClipping(int minValue, int maxValue, CStyleConfiguration *styleConfiguration) {
+  // Calculate which part of the legend to draw (only between min and max)
+  int minInterval = 0;
+  int maxInterval = styleConfiguration->shadeIntervals->size();
+  for (size_t j = 0; j < styleConfiguration->shadeIntervals->size(); j++) {
+    CServerConfig::XMLE_ShadeInterval *s = (*styleConfiguration->shadeIntervals)[j];
+    if (!s->attr.min.empty() && !s->attr.max.empty()) {
+      float intervalMinf = parseFloat(s->attr.min.c_str());
+      float intervalMaxf = parseFloat(s->attr.max.c_str());
+      if (intervalMaxf >= maxValue && intervalMinf <= maxValue) {
+        maxInterval = j;
+      }
+      if (intervalMinf <= minValue && intervalMaxf >= minValue) {
+        minInterval = j;
+      }
+    }
+  }
+  return std::make_tuple(minInterval, maxInterval);
+}
+
 int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *legendImage, CStyleConfiguration *styleConfiguration, bool, bool estimateMinMax) {
 #ifdef CIMAGEDATAWRITER_DEBUG
   CDBDebug("legendtype discrete");
