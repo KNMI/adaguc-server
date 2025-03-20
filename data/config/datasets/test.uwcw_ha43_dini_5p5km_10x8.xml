@@ -299,7 +299,7 @@
     <Title>UWCW_HA43(DINI) Air temperature at pressure level</Title>
     <Variable>air-temperature-pl</Variable>
     <FilePath filter="^uwcw_ha43_dini_5p5km_air-temperature-pl_geoweb_nc_20240711T0.*_TEST_10x8\.nc$">{ADAGUC_PATH}data/datasets/ha43_dini/</FilePath>
-    <Styles>temperature,temperature_wow</Styles>
+    <Styles>temperature,temperature_clip,temperature_wow</Styles>
     <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension>
     <Dimension name="temp_at_pl" units="hPa" default="max" hidden="false">pressure_level_in_hpa</Dimension>
     <Dimension name="time" units="ISO8601" interval="PT1H" default="min">time</Dimension>
