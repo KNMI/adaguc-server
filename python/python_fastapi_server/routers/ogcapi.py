@@ -1,11 +1,11 @@
 """ogcApiApp"""
 
+from __future__ import annotations
 import json
 import logging
 import os
 import os.path
 from collections import OrderedDict
-from typing import Dict, List, Type, Union
 
 import yaml
 from defusedxml.ElementTree import fromstring
@@ -30,7 +30,7 @@ from .models.ogcapifeatures_1_model import (
     Spatial,
     Type,
 )
-from .ogcapi_tools import (
+from .utils.ogcapi_tools import (
     calculate_coords,
     call_adaguc,
     feature_from_dat,
@@ -86,7 +86,7 @@ async def handle_ogc_api_root(
     """
     Landing page of OGCAPI Features endpoint
     """
-    links: List[Link] = []
+    links: list[Link] = []
     links.append(
         Link(
             href=str(req.url_for("handle_ogc_api_root")),
@@ -153,7 +153,7 @@ def get_collection_links(url):
     """
     Create the list of links for a collection url
     """
-    links: List[Link] = []
+    links: list[Link] = []
     url = str(url)
     links.append(
         Link(
@@ -194,7 +194,7 @@ def get_collections_links(url):
     """
     Create the list of links for a collection url
     """
-    links: List[Link] = []
+    links: list[Link] = []
     url = str(url)
     links.append(
         Link(
@@ -242,7 +242,7 @@ async def get_collections(
     """
     Handle the /collections call
     """
-    collections: List[Collection] = []
+    collections: list[Collection] = []
     parsed_collections = generate_collections()
     for parsed_collection in parsed_collections.values():
         parsed_extent = await get_extent(parsed_collection["dataset"])
@@ -441,8 +441,8 @@ async def get_features_for_items(
     observed_property_name=None,
     dims=None,
     npoints=None,
-) -> List[FeatureGeoJSON]:
-    features: List[FeatureGeoJSON] = []
+) -> list[FeatureGeoJSON]:
+    features: list[FeatureGeoJSON] = []
     if not point:
         if not bbox:
             bbox = make_bbox(await get_extent(coll))
@@ -497,7 +497,7 @@ async def get_features_for_items(
     return features
 
 
-def check_point(point: Union[str, None] = Query(default=None)) -> List[float]:
+def check_point(point: str | None = Query(default=None)) -> list[float]:
     if point is None:
         return None
     coords = point.split(",")
@@ -507,7 +507,7 @@ def check_point(point: Union[str, None] = Query(default=None)) -> List[float]:
     return [float(c) for c in coords]
 
 
-def check_bbox(bbox: Union[str, None] = Query(default=None)) -> List[float]:
+def check_bbox(bbox: str | None = Query(default=None)) -> list[float]:
     if bbox is None:
         return None
     coords = bbox.split(",")
@@ -518,8 +518,8 @@ def check_bbox(bbox: Union[str, None] = Query(default=None)) -> List[float]:
 
 
 def check_observed_property_name(
-    observed_property_name: Union[str, None] = Query(default=None)
-) -> List[str]:
+    observed_property_name: str | None = Query(default=None),
+) -> list[str]:
     if observed_property_name is None:
         return None
     names = observed_property_name.split(",")
@@ -531,7 +531,7 @@ def check_observed_property_name(
     return names
 
 
-def check_dims(dims: Union[str, None] = Query(default=None)) -> Dict[str, str]:
+def check_dims(dims: str | None = Query(default=None)) -> dict[str, str]:
     if dims is None:
         return None
     dim_terms = dims.split(";")
@@ -549,9 +549,7 @@ def check_dims(dims: Union[str, None] = Query(default=None)) -> Dict[str, str]:
     return dimensions
 
 
-def check_bbox_crs(
-    bbox_crs: Union[str, None] = Query(default=None, alias="bbox-crs")
-) -> str:
+def check_bbox_crs(bbox_crs: str | None = Query(default=None, alias="bbox-crs")) -> str:
     if bbox_crs is None:
         return None
 
@@ -563,7 +561,7 @@ def check_bbox_crs(
     return bbox_crs
 
 
-def check_crs(crs: Union[str, None] = Query(default=None)) -> str:
+def check_crs(crs: str | None = Query(default=None)) -> str:
     if crs is None:
         return None
 
@@ -583,15 +581,15 @@ async def get_items_for_collection(
     req: Request,
     response: Response,
     responsetype: str = Query(default="json", alias="f"),
-    limit: Union[int, None] = Query(default=10),
-    start: Union[int, None] = Query(default=0),
-    bbox: Union[str, None] = Depends(check_bbox),
-    point: Union[str, None] = Depends(check_point),
-    result_time: Union[str, None] = Query(default=None),
-    datetime_: Union[str, None] = Query(default=None, alias="datetime"),
-    observed_property_name: Union[str, None] = Depends(check_observed_property_name),
-    dims: Union[str, None] = Depends(check_dims),
-    npoints: Union[int, None] = Query(default=4),
+    limit: int | None = Query(default=10),
+    start: int | None = Query(default=0),
+    bbox: str | None = Depends(check_bbox),
+    point: str | None = Depends(check_point),
+    result_time: str | None = Query(default=None),
+    datetime_: str | None = Query(default=None, alias="datetime"),
+    observed_property_name: str | None = Depends(check_observed_property_name),
+    dims: str | None = Depends(check_dims),
+    npoints: int | None = Query(default=4),
 ):
     allowed_params = [
         "responsetype",

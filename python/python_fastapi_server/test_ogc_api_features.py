@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 
@@ -21,8 +20,8 @@ def setup_test_data():
     print("About to ingest data")
     AdagucTestTools().cleanTempDir()
     AdagucTestTools().cleanPostgres()
-    for service in ["netcdf_5d.xml", "dataset_a.xml"]:
-        _status, _data, _headers = AdagucTestTools().runADAGUCServer(
+    for service in ("netcdf_5d.xml", "dataset_a.xml"):
+        _, _, _ = AdagucTestTools().runADAGUCServer(
             args=[
                 "--updatedb",
                 "--config",
@@ -49,12 +48,12 @@ def test_root(client: TestClient):
     # print("getcap:", resp.text)
 
     resp = client.get("/ogcapi/")
-    #print("resp:", resp, resp.json())
+    # print("resp:", resp, resp.json())
     assert resp.json()["description"] == "ADAGUC OGCAPI-Features server"
 
 
 def test_collections(client: TestClient):
     resp = client.get("/ogcapi/collections")
     colls = resp.json()
-    #print(json.dumps(colls["collections"][1], indent=2))
+    # print(json.dumps(colls["collections"][1], indent=2))
     assert len(colls["collections"]) == 2
