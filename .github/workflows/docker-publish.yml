@@ -11,35 +11,6 @@ env:
   REGISTRY_IMAGE: openearth/adaguc-server
 
 jobs:
-  docker-build-amd-only:
-    name: Build Docker amd64 image (quick turnaround)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v4
-
-      - name: Build and potentially push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          # ensure latest base image is used
-          pull: true
-          push: false
-          tags: adaguc-server
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.24.0
-        with:
-          image-ref: 'adaguc-server'
-          format: 'table'
-          exit-code: '1'
-          ignore-unfixed: true
-          vuln-type: 'os,library'
-          trivyignores: .trivyignore
-#          severity: 'CRITICAL,HIGH'
-        env:
-          TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db:2
-          TRIVY_JAVA_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-java-db:1
-
   build:
     runs-on: ${{ matrix.runner }}
     strategy:
@@ -89,6 +60,20 @@ jobs:
           tags: ${{ env.REGISTRY_IMAGE }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
 
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: 'adaguc-server'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          trivyignores: .trivyignore
+        #          severity: 'CRITICAL,HIGH'
+        env:
+          TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db:2
+          TRIVY_JAVA_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-java-db:1
+
       - name: Export digest
         run: |
           mkdir -p ${{ runner.temp }}/digests
@@ -130,6 +115,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY_IMAGE }}
+# Enable this if we want semver (untested), see https://github.com/docker/metadata-action?tab=readme-ov-file#semver
 #          tags: |
 #            type=ref,event=branch
 #            type=ref,event=pr
