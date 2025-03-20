@@ -335,60 +335,62 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
 
                   CT::string iso8601timeRes = "P";
                   CT::string yearPart = "";
-                  if (tms[1].tm_year - tms[0].tm_year != 0) {
-                    if (tms[1].tm_year - tms[0].tm_year == (tms[nrTimes < 10 ? nrTimes : 10].tm_year - tms[0].tm_year) / double(nrTimes < 10 ? nrTimes : 10)) {
-                      yearPart.printconcat("%dY", abs(tms[1].tm_year - tms[0].tm_year));
-                    } else {
-                      isConst = false;
-                      if (verboseLog) {
-                        CDBDebug("year is irregular");
-                      }
-                    }
-                  }
-                  if (tms[1].tm_mon - tms[0].tm_mon != 0) {
-                    if (tms[1].tm_mon - tms[0].tm_mon == (tms[nrTimes < 10 ? nrTimes : 10].tm_mon - tms[0].tm_mon) / double(nrTimes < 10 ? nrTimes : 10))
-                      yearPart.printconcat("%dM", abs(tms[1].tm_mon - tms[0].tm_mon));
-                    else {
-                      isConst = false;
-                      if (verboseLog) {
-                        CDBDebug("month is irregular");
-                      }
-                    }
-                  }
-
-                  if (tms[1].tm_mday - tms[0].tm_mday != 0) {
-                    if (tms[1].tm_mday - tms[0].tm_mday == (tms[nrTimes < 10 ? nrTimes : 10].tm_mday - tms[0].tm_mday) / double(nrTimes < 10 ? nrTimes : 10))
-                      yearPart.printconcat("%dD", abs(tms[1].tm_mday - tms[0].tm_mday));
-                    else {
-                      isConst = false;
-                      if (verboseLog) {
-                        CDBDebug("day irregular");
-                        for (size_t j = 0; j < nrTimes; j++) {
-                          CDBDebug("Day %d = %d", j, tms[j].tm_mday);
+                  CT::string hourPart = "";
+                  if (nrTimes >= 1) {
+                    if (tms[1].tm_year - tms[0].tm_year != 0) {
+                      if (tms[1].tm_year - tms[0].tm_year == (tms[nrTimes < 10 ? nrTimes : 10].tm_year - tms[0].tm_year) / double(nrTimes < 10 ? nrTimes : 10)) {
+                        yearPart.printconcat("%dY", abs(tms[1].tm_year - tms[0].tm_year));
+                      } else {
+                        isConst = false;
+                        if (verboseLog) {
+                          CDBDebug("year is irregular");
                         }
                       }
                     }
-                  }
-
-                  CT::string hourPart = "";
-                  if (tms[1].tm_hour - tms[0].tm_hour != 0) {
-                    hourPart.printconcat("%dH", abs(tms[1].tm_hour - tms[0].tm_hour));
-                  }
-                  if (tms[1].tm_min - tms[0].tm_min != 0) {
-                    hourPart.printconcat("%dM", abs(tms[1].tm_min - tms[0].tm_min));
-                  }
-                  if (tms[1].tm_sec - tms[0].tm_sec != 0) {
-                    hourPart.printconcat("%dS", abs(tms[1].tm_sec - tms[0].tm_sec));
-                  }
-
-                  int sd = (tms[1].tm_hour * 3600 + tms[1].tm_min * 60 + tms[1].tm_sec) - (tms[0].tm_hour * 3600 + tms[0].tm_min * 60 + tms[0].tm_sec);
-                  for (size_t j = 2; j < store->size() && isConst; j++) {
-                    int d = (tms[j].tm_hour * 3600 + tms[j].tm_min * 60 + tms[j].tm_sec) - (tms[j - 1].tm_hour * 3600 + tms[j - 1].tm_min * 60 + tms[j - 1].tm_sec);
-                    if (d > 0) {
-                      if (sd != d) {
+                    if (tms[1].tm_mon - tms[0].tm_mon != 0) {
+                      if (tms[1].tm_mon - tms[0].tm_mon == (tms[nrTimes < 10 ? nrTimes : 10].tm_mon - tms[0].tm_mon) / double(nrTimes < 10 ? nrTimes : 10))
+                        yearPart.printconcat("%dM", abs(tms[1].tm_mon - tms[0].tm_mon));
+                      else {
                         isConst = false;
                         if (verboseLog) {
-                          CDBDebug("hour/min/sec is irregular %d ", j);
+                          CDBDebug("month is irregular");
+                        }
+                      }
+                    }
+
+                    if (tms[1].tm_mday - tms[0].tm_mday != 0) {
+                      if (tms[1].tm_mday - tms[0].tm_mday == (tms[nrTimes < 10 ? nrTimes : 10].tm_mday - tms[0].tm_mday) / double(nrTimes < 10 ? nrTimes : 10))
+                        yearPart.printconcat("%dD", abs(tms[1].tm_mday - tms[0].tm_mday));
+                      else {
+                        isConst = false;
+                        if (verboseLog) {
+                          CDBDebug("day irregular");
+                          for (size_t j = 0; j < nrTimes; j++) {
+                            CDBDebug("Day %d = %d", j, tms[j].tm_mday);
+                          }
+                        }
+                      }
+                    }
+
+                    if (tms[1].tm_hour - tms[0].tm_hour != 0) {
+                      hourPart.printconcat("%dH", abs(tms[1].tm_hour - tms[0].tm_hour));
+                    }
+                    if (tms[1].tm_min - tms[0].tm_min != 0) {
+                      hourPart.printconcat("%dM", abs(tms[1].tm_min - tms[0].tm_min));
+                    }
+                    if (tms[1].tm_sec - tms[0].tm_sec != 0) {
+                      hourPart.printconcat("%dS", abs(tms[1].tm_sec - tms[0].tm_sec));
+                    }
+
+                    int sd = (tms[1].tm_hour * 3600 + tms[1].tm_min * 60 + tms[1].tm_sec) - (tms[0].tm_hour * 3600 + tms[0].tm_min * 60 + tms[0].tm_sec);
+                    for (size_t j = 2; j < store->size() && isConst; j++) {
+                      int d = (tms[j].tm_hour * 3600 + tms[j].tm_min * 60 + tms[j].tm_sec) - (tms[j - 1].tm_hour * 3600 + tms[j - 1].tm_min * 60 + tms[j - 1].tm_sec);
+                      if (d > 0) {
+                        if (sd != d) {
+                          isConst = false;
+                          if (verboseLog) {
+                            CDBDebug("hour/min/sec is irregular %d ", j);
+                          }
                         }
                       }
                     }
