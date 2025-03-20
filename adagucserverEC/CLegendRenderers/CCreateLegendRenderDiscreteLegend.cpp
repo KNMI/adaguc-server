@@ -2,24 +2,18 @@
 #include "CDataReader.h"
 #include "CImageDataWriter.h"
 
-// Aux function used in the case of a legend with too many classes
-int checkMultipleOfFiveContained(float min, float max) {
-  // Find multiple of 5 closest to the min of the interval
-  int multiple = std::ceil(min / 5.0) * 5.0;
-  if (multiple >= min && multiple < max) {
-    return multiple;
-  }
-  return -1;
-}
+#define MIN_SHADE_CLASS_BLOCK_SIZE 3
+#define MAX_SHADE_CLASS_BLOCK_SIZE 12
 
 // Aux function to calculate block height based on total height and number
 // of classes in a legend based on shade classes.
-int calculateShadeClassBlockHeight(int totalHeight, int intervals) {
+float calculateShadeClassBlockHeight(int totalHeight, int intervals) {
   float blockHeight = float(totalHeight - 30) / float(intervals);
   /* Legend classes displayed as blocks in the legend can have a maximum
   and a minimum height */
-  if (blockHeight > 12) return 12;
-  if (blockHeight < 3) return 3;
+  if (blockHeight > MAX_SHADE_CLASS_BLOCK_SIZE) return MAX_SHADE_CLASS_BLOCK_SIZE;
+  if (blockHeight < MIN_SHADE_CLASS_BLOCK_SIZE) return MIN_SHADE_CLASS_BLOCK_SIZE;
+  return blockHeight;
 }
 
 std::tuple<int, int> calculateShadedClassLegendClipping(int minValue, int maxValue, CStyleConfiguration *styleConfiguration) {
@@ -32,7 +26,7 @@ std::tuple<int, int> calculateShadedClassLegendClipping(int minValue, int maxVal
       float intervalMinf = parseFloat(s->attr.min.c_str());
       float intervalMaxf = parseFloat(s->attr.max.c_str());
       if (intervalMaxf >= maxValue && intervalMinf <= maxValue) {
-        maxInterval = j;
+        maxInterval = j + 1;
       }
       if (intervalMinf <= minValue && intervalMaxf >= minValue) {
         minInterval = j;
@@ -175,40 +169,28 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
     // - The class border is removed for extra visibility
     // - Labels are simplified and will only show the min of the interval the class represents
     // - Only one every 5 labels will be printed (this is just a rule of thumb) plus the top label
-    // - Only classes the min and the max data value will be added
-    const size_t MAX_DISCRETE_CLASSES = 15;
+    // - If the cliplegend render option is set, only classes with the min and the max data value will be added
+    char szTemp[1024];
 
-    // Case where the legend has too many classes to plot
-    if (styleConfiguration->shadeIntervals->size() > MAX_DISCRETE_CLASSES && legendImage->Geo->dHeight <= 500) {
-      float blockHeight = float(legendImage->Geo->dHeight - 30) / float(styleConfiguration->shadeIntervals->size());
-      /* Legend classes displayed as blocks in the legend can have a maximum and a minimum height depending on the amount of classes and legendheight */
-      if (blockHeight > 12) blockHeight = 12;
-      if (blockHeight < 3) blockHeight = 3;
-      char szTemp[1024];
-      size_t numShadeIntervals = styleConfiguration->shadeIntervals->size();
+    // Initial estimation of block height
+    float initialBlockHeight = calculateShadeClassBlockHeight(legendImage->Geo->dHeight, styleConfiguration->shadeIntervals->size());
+    CDBDebug("Initial block height: %f ", initialBlockHeight);
 
-      // Calculate which part of the legend to draw (only between min and max)
-      int minInterval = 0;
-      int maxInterval = numShadeIntervals;
-      for (size_t j = 0; j < numShadeIntervals; j++) {
-        CServerConfig::XMLE_ShadeInterval *s = (*styleConfiguration->shadeIntervals)[j];
-        if (!s->attr.min.empty() && !s->attr.max.empty()) {
-          float intervalMinf = parseFloat(s->attr.min.c_str());
-          float intervalMaxf = parseFloat(s->attr.max.c_str());
-          if (intervalMaxf >= maxValue && intervalMinf <= maxValue) {
-            maxInterval = j;
-          }
-          if (intervalMinf <= minValue && intervalMaxf >= minValue) {
-            minInterval = j;
-          }
-        }
-      }
+    // Based on the render settings, we can clip the values on the legend to only include the values
+    // present in the data
+    int minInterval = 0;
+    int maxInterval = styleConfiguration->shadeIntervals->size();
+    if (styleConfiguration->styleConfig != NULL && styleConfiguration->styleConfig->RenderSettings.size() == 1 && styleConfiguration->styleConfig->RenderSettings[0]->attr.cliplegend.equals("true")) {
+      std::tie(minInterval, maxInterval) = calculateShadedClassLegendClipping(minValue, maxValue, styleConfiguration);
+    }
+    // Only a subset of intervals to appear on screen to save space
+    size_t drawIntervals = maxInterval - minInterval;
+    // Recalculate block size based on the intervals to appear on the legend
+    float blockHeight = float(legendImage->Geo->dHeight - 30) / drawIntervals;
+    CDBDebug("General block height: %f ", initialBlockHeight);
 
-      // Only a subset of intervals to appear on screen to save space
-      size_t drawIntervals = maxInterval - minInterval + 1;
-
-      // Recalculate block size based on the intervals to appear on the legend
-      blockHeight = float(legendImage->Geo->dHeight - 30) / drawIntervals;
+    // With a blockHeight smaller than 4, we will use the compact legend for better visibility
+    if (initialBlockHeight <= MIN_SHADE_CLASS_BLOCK_SIZE) {
       for (size_t j = 0; j < drawIntervals; j++) {
         size_t realj = minInterval + j;
         CServerConfig::XMLE_ShadeInterval *s = (*styleConfiguration->shadeIntervals)[realj];
@@ -221,13 +203,14 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
           } else {
             color = legendImage->getColorForIndex(CImageDataWriter::getColorIndexForValue(dataSource, parseFloat(s->attr.min.c_str())));
           }
-          // The boolean at the end of this call creates a "compact" rectangle with no vertical space to maximise its size
-          // This extra pixels are very important when the legend block is at the minimum of 3 pixels
-          // The same goes for the black border (in this version of the rectangle there is no border for clarity)
+          // This rectangle is borderless, and the resulting classes have no vertical blank space between them
           legendImage->rectangle(4 * scaling + pLeft, cY2 + pTop - 1, (int(cbW) + 7) * scaling + pLeft, cY1 + pTop + 1, color, color);
-          // We spare the top class and then in general we remove 4 out of every 5 labels (assuming the label is a multiple of 5)
+          // We remove 4 out of every 5 labels (assuming the label is a multiple of 5)
           // We print every label containing a multiple of 5.
-          if (j != (drawIntervals - 1) && numShadeIntervals > MAX_DISCRETE_CLASSES && (int)(std::abs(parseFloat(s->attr.min.c_str()))) % 5 != 0) {
+          // if (j != (drawIntervals - 1) && numShadeIntervals > MAX_DISCRETE_CLASSES && (int)(std::abs(parseFloat(s->attr.min.c_str()))) % 5 != 0) {
+          //   continue;
+          // }
+          if ((int)(std::abs(parseFloat(s->attr.min.c_str()))) % 5 != 0) {
             continue;
           }
           snprintf(szTemp, 1000, "%s", s->attr.min.c_str());
@@ -236,15 +219,14 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
       }
     } else {
       // General case for this type of legend, where we draw every label and print every class interval
-      float blockHeight = float(legendImage->Geo->dHeight - 30) / float(styleConfiguration->shadeIntervals->size());
-      if (blockHeight > 12) blockHeight = 12;
-      if (blockHeight < 3) blockHeight = 3;
-      char szTemp[1024];
-
-      for (size_t j = 0; j < styleConfiguration->shadeIntervals->size(); j++) {
-
-        CServerConfig::XMLE_ShadeInterval *s = (*styleConfiguration->shadeIntervals)[j];
+      // We can also clip this type of legend
+      // drawIntervals = styleConfiguration->shadeIntervals->size();
+      for (size_t j = 0; j < drawIntervals; j++) {
+        size_t realj = minInterval + j;
+        CServerConfig::XMLE_ShadeInterval *s = (*styleConfiguration->shadeIntervals)[realj];
         if (s->attr.min.empty() == false && s->attr.max.empty() == false) {
+          CDBDebug("minInterval is %d", minInterval);
+          CDBDebug("Draw interval %d with realj %d, min %s", j, realj, s->attr.min.c_str());
           int cY1 = int(cbH - ((j)*blockHeight) * scaling);
           int cY2 = int(cbH - ((((j + 1) * blockHeight) - 2)) * scaling);
           CColor color;
