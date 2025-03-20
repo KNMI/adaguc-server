@@ -17,13 +17,19 @@ from covjson_pydantic.coverage import Coverage, CoverageCollection
 from fastapi import HTTPException, Query, Request, APIRouter
 from netCDF4 import Dataset
 
+from python.python_fastapi_server.routers.utils.edr_exception import exc_failed_call
+
 from .covjsonresponse import CovJSONResponse
 from .utils.edr_utils import (
-    get_ref_times_for_coll,
+    get_custom,
+    get_dataset_from_collection,
+    get_instance,
+    get_parameters,
+    get_vertical,
     instance_to_iso,
     get_metadata,
 )
-from .utils.edr_exception import exc_unknown_collection
+
 
 from .netcdf_to_covjson import netcdf_to_covjson
 from .utils.ogcapi_tools import call_adaguc
@@ -96,48 +102,23 @@ async def get_coll_inst_cube(
     ]
 
     metadata = await get_metadata(collection_name)
-    if metadata is None:
-        raise exc_unknown_collection(collection_name)
 
-    dataset_name = collection_name.rsplit(".", 1)[0]
-    vertical_dim = ""
-    vertical_name = None
-    custom_name = None
-    first_requested_layer_name = parameter_name_par.split(",")[0]
-    for param_dim in metadata[collection_name][first_requested_layer_name][
-        "dims"
-    ].values():
-        if not param_dim["hidden"]:
-            if param_dim["type"] == "dimtype_vertical":
-                vertical_name = param_dim["serviceName"]
-            elif param_dim["type"] == "dimtype_custom":
-                custom_name = param_dim["serviceName"]
-    if z_par:
-        if vertical_name is not None:
-            if vertical_name.upper() == "ELEVATION":
-                vertical_dim = f"{vertical_name}={z_par}"
-            else:
-                vertical_dim = f"DIM_{vertical_name}={z_par}"
+    dataset_name = get_dataset_from_collection(metadata, collection_name)
+    instance = get_instance(metadata, collection_name, instance)
+    parameter_names = get_parameters(metadata, collection_name, parameter_name_par)
+    print("PARAMS:", parameter_names)
 
-    custom_dims = [k for k in request.query_params if k not in allowed_params]
-    custom_dim_parameter = ""
-    logger.info("custom dims: %s %s", custom_dims, custom_name)
-    if len(custom_dims) > 0:
-        for custom_dim in custom_dims:
-            custom_dim_parameter += (
-                f"&DIM_{custom_dim}={request.query_params[custom_dim]}"
-            )
+    _, vertical_dim = get_vertical(metadata, collection_name, parameter_names[0], z_par)
 
-    ref_times = get_ref_times_for_coll(metadata[collection_name])
-    if not instance and len(ref_times) > 0:
-        instance = ref_times[-1]
-
-    parameter_names = parameter_name_par.split(",")
+    custom_dims = get_custom(
+        request.query_params,
+        allowed_params,
+    )
 
     if resolution_x is not None and resolution_y is not None:
-        res_queryterm = f"&resx={resolution_x}&resy={resolution_y}"
+        res_queryterm = [f"resx={resolution_x}", f"resy={resolution_y}"]
     else:
-        res_queryterm = ""
+        res_queryterm = []
 
     logger.info("callADAGUC by dataset")
 
@@ -149,32 +130,28 @@ async def get_coll_inst_cube(
     datetime_arg = datetime_par
     print("TYPE:", type(datetime_arg))
     if datetime_par is None:
-        datetime_arg = "*"
+        datetime_arg = "2000/3000"
     for parameter_name in parameter_names:
-        if instance is None:
-            urlrequest = (
-                f"dataset={dataset_name}&service=wcs&version=1.1.1&request=getcoverage&format=NetCDF4&crs=EPSG:4326&coverage={parameter_name}"
-                + f"&bbox={bbox}&time={datetime_arg}"
-                + (f"&{custom_dim_parameter}" if len(custom_dim_parameter) > 0 else "")
-                + (f"&{vertical_dim}" if len(vertical_dim) > 0 else "")
-                + res_queryterm
-            )
-        else:
-            urlrequest = (
-                f"dataset={dataset_name}&service=wcs&request=getcoverage&format=NetCDF4&crs=EPSG:4326&coverage={parameter_name}"
-                + f"&bbox={bbox}&time={datetime_arg}&dim_reference_time={instance_to_iso(instance)}"
-                + (f"&{custom_dim_parameter}" if len(custom_dim_parameter) > 0 else "")
-                + (f"&{vertical_dim}" if len(vertical_dim) > 0 else "")
-                + res_queryterm
-            )
+        urlrequest = "&".join(
+            [
+                f"dataset={dataset_name}",
+                "service=wcs&version=1.1.1&request=getcoverage&format=NetCDF4&crs=EPSG:4326",
+                f"coverage={parameter_name}",
+                f"bbox={bbox}",
+                f"time={datetime_arg}",
+                f"dim_reference_time={instance_to_iso(instance)}",
+                *custom_dims,
+                f"{vertical_dim}" if len(vertical_dim) > 0 else "",
+                *res_queryterm,
+            ]
+        )
 
         start = time.time()
         status, response, _ = await call_adaguc(url=urlrequest.encode("UTF-8"))
         logger.info("status: %d [%f]", status, time.time() - start)
         if status != 0:
-            raise HTTPException(
-                status_code=404,
-                detail=f"cube call failed for parameter {parameter_name} [{status}]",
+            raise exc_failed_call(
+                f"cube call failed for parameter {parameter_name} [{status}]"
             )
         result_dataset = Dataset(f"{parameter_name}.nc", memory=response.getvalue())
 

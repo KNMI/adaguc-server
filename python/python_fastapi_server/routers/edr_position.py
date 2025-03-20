@@ -22,8 +22,13 @@ from .utils.edr_exception import EdrException, exc_unknown_collection
 from .utils.edr_utils import (
     call_adaguc,
     generate_max_age,
+    get_custom,
+    get_dataset_from_collection,
+    get_instance,
     get_metadata,
+    get_parameters,
     get_ttl_from_adaguc_headers,
+    get_vertical,
     instance_to_iso,
 )
 
@@ -71,86 +76,65 @@ async def get_coll_inst_position(
     response: CovJSONResponse,
     instance: str = None,
     datetime_par: str = Query(default=None, alias="datetime"),
-    parameter_name: Annotated[str, Query(alias="parameter-name", min_length=1)] = None,
+    parameter_name_par: Annotated[
+        str, Query(alias="parameter-name", min_length=1)
+    ] = None,
     z_par: Annotated[str, Query(alias="z", min_length=1)] = None,
 ) -> Coverage:
     """
     returns data for the EDR /position endpoint
     """
     allowed_params = ["coords", "datetime", "parameter-name", "z", "f", "crs"]
-    custom_params = [k for k in request.query_params if k not in allowed_params]
-    custom_dims = ""
-    if len(custom_params) > 0:
-        for custom_param in custom_params:
-            custom_dims += f"&DIM_{custom_param}={request.query_params[custom_param]}"
 
     metadata = await get_metadata(collection_name)
 
-    if metadata is not None:
-        # Check parameter_name argument, at least 1 parameter should exist in collection
-        if parameter_name is None:
-            parameter_names = list(metadata[collection_name])
-        else:
-            parameter_names = parameter_name.split(",")
-            if not any(param in metadata[collection_name] for param in parameter_names):
-                raise EdrException(
-                    code=404, description=f"Parameter-name {parameter_name}"
-                )
-        cleaned_parameter_names = []
-        for param in parameter_names:
-            if param in metadata[collection_name]:
-                cleaned_parameter_names.append(param)
-        if len(cleaned_parameter_names) == 0:
-            raise EdrException(
-                code=404, description=f"Parameter-names unknown {parameter_name}"
-            )
+    dataset_name = get_dataset_from_collection(metadata, collection_name)
+    instance = get_instance(metadata, collection_name, instance)
+    parameter_names = get_parameters(metadata, collection_name, parameter_name_par)
+    print("PARAMS:", parameter_names)
 
-        vertical_dim_name = "z"
-        for dim_name in metadata[collection_name][parameter_names[0]]["dims"]:
-            if (
-                metadata[collection_name][parameter_names[0]]["dims"][dim_name]["type"]
-                == "dimtype_vertical"
-            ):
-                vertical_dim_name = dim_name
-        latlons = wkt.loads(coords)
-        coord = {"lat": latlons["coordinates"][1], "lon": latlons["coordinates"][0]}
-        resp, headers = await get_point_value(
-            collection_name,
-            instance,
-            [coord["lon"], coord["lat"]],
-            cleaned_parameter_names,
-            datetime_par,
-            z_par,
-            vertical_dim_name,
-            custom_dims,
+    _, vertical_dim = get_vertical(metadata, collection_name, parameter_names[0], z_par)
+
+    custom_dims = get_custom(
+        request.query_params,
+        allowed_params,
+    )
+
+    latlons = wkt.loads(coords)
+    coord = {"lat": latlons["coordinates"][1], "lon": latlons["coordinates"][0]}
+
+    resp, headers = await get_point_value(
+        dataset_name,
+        instance,
+        [coord["lon"], coord["lat"]],
+        parameter_names,
+        datetime_par,
+        vertical_dim,
+        custom_dims,
+    )
+    if resp:
+        dat = json.loads(resp)
+        ttl = get_ttl_from_adaguc_headers(headers)
+        if ttl is not None:
+            response.headers["cache-control"] = generate_max_age(ttl)
+        return covjson_from_resp(
+            dat,
+            metadata[collection_name],
         )
-        if resp:
-            dat = json.loads(resp)
-            ttl = get_ttl_from_adaguc_headers(headers)
-            if ttl is not None:
-                response.headers["cache-control"] = generate_max_age(ttl)
-            return covjson_from_resp(
-                dat,
-                metadata[collection_name],
-            )
-    else:
-        raise exc_unknown_collection(collection_name)
 
     raise EdrException(code=404, description="No data")
 
 
 async def get_point_value(
-    collection_name: str,
+    dataset_name: str,
     instance: str,
     coords: list[float],
     parameters: list[str],
     datetime_par: str,
-    z_value: str = None,
-    z_name: str = None,
+    vertical_dim: str = None,
     custom_dims: str = None,
 ):
     """Returns information in EDR format for a given collection and position"""
-    dataset_name = collection_name.rsplit(".", 1)[0]
     urlrequest = (
         f"SERVICE=WMS&VERSION=1.3.0&REQUEST=GetPointValue&CRS=EPSG:4326"
         f"&DATASET={dataset_name}&QUERY_LAYERS={','.join(parameters)}"
@@ -161,11 +145,8 @@ async def get_point_value(
 
     if instance:
         urlrequest += f"&DIM_reference_time={instance_to_iso(instance)}"
-    if z_value:
-        if urlrequest.upper() != "ELEVATION":
-            urlrequest += f"&DIM_{z_name}={z_value}"
-        else:
-            urlrequest += f"&ELEVATION={z_value}"
+    if vertical_dim:
+        urlrequest += f"&{vertical_dim}"
     if custom_dims:
         urlrequest += custom_dims
 

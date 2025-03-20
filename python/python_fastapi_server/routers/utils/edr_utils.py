@@ -25,6 +25,14 @@ from edr_pydantic.parameter import Parameter
 from edr_pydantic.unit import Symbol, Unit
 from edr_pydantic.variables import Variables
 from fastapi import Request
+from fastapi.datastructures import QueryParams
+
+from .edr_exception import (
+    exc_unknown_collection,
+    exc_incorrect_instance,
+    exc_no_datasets,
+    exec_unknown_parameter,
+)
 
 from .ogcapi_tools import call_adaguc
 
@@ -767,3 +775,70 @@ def get_param_metadata(param_metadata: dict, dataset_name: str) -> dict:
         "parameter_unit": parameter_unit,
         "collection": collection,
     }
+
+
+def get_dataset_from_collection(metadata: dict, collection_name: str) -> str:
+    if metadata is None:
+        raise exc_unknown_collection(collection_name)
+
+    dataset_name = collection_name.rsplit(".", 1)[0]
+    return dataset_name
+
+
+def get_instance(
+    metadata: dict, collection_name: str, instance: str | None = None
+) -> str:
+    ref_times = get_ref_times_for_coll(metadata[collection_name])
+    if len(ref_times) == 0:
+        if instance is not None:
+            raise exc_incorrect_instance(collection_name, instance)
+    elif not instance:
+        instance = ref_times[-1]
+    elif instance not in ref_times:
+        raise exc_incorrect_instance(collection_name, instance)
+
+    return instance
+
+
+def get_parameters(
+    metadata: dict, collection_name: str, parameter_name_par: str
+) -> list[str]:
+    parameters = parameter_name_par.split(",")
+    for param in parameters:
+        print("PPP:", param, param in metadata[collection_name])
+        if param not in metadata[collection_name]:
+            raise exec_unknown_parameter(collection_name, param)
+    return parameters
+
+
+def get_vertical(
+    metadata: dict, collection_name: str, first_requested_param: str, z_par: str | None
+) -> tuple[str, str]:
+    vertical_name = None
+    vertical_dim = ""
+    for param_dim in metadata[collection_name][first_requested_param]["dims"].values():
+        if not param_dim["hidden"]:
+            if param_dim["type"] == "dimtype_vertical":
+                vertical_name = param_dim["serviceName"]
+                break
+
+    if z_par:
+        if vertical_name is not None:
+            vertical_dim = f"DIM_{vertical_name}={z_par}"
+
+    return (vertical_name, vertical_dim)
+
+
+def get_custom(
+    query_params: QueryParams,
+    allowed_params: list[str],
+) -> list[str]:
+
+    custom_name = None
+    custom_dims = [k for k in query_params if k not in allowed_params]
+    logger.info("custom dims: %s %s", custom_dims, custom_name)
+    custom_dim_parameters = []
+    for custom_dim in custom_dims:
+        custom_dim_parameters.append(f"DIM_{custom_dim}={query_params[custom_dim]}")
+
+    return custom_dim_parameters

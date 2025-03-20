@@ -165,11 +165,6 @@ def covjson_from_resp(dats, metadata):
                 elif len(time_steps) > 1:
                     domain_type = "PointSeries"
 
-            # if len(custom_dim_values) > 1:  # TODO 1 or 0?
-            #     axes[custom_name] = ValuesAxis[str](values=custom_dim_values)
-            #     if vertical_steps and len(vertical_steps) > 1:
-            #         domain_type = "Grid"
-
             referencing = [
                 (
                     ReferenceSystemConnectionObject(
