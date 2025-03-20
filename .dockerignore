@@ -17,6 +17,7 @@
 !cmake/
 !data/
 !hclasses/
+!scripts/
 !python/
 !tests/AdagucTests/
 !tests/expectedoutputs/

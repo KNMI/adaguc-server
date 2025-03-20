@@ -89,7 +89,7 @@ int layerTypeLiveUpdateRenderIntoImageDataWriter(CDataSource *dataSource, CServe
     CDBDebug("Status from create animation was %d", imageDataWriter.createAnimation());
   }
 
-  std::vector<CDataSource *> dataSourceRef = {dataSource};
+  std::vector<CDataSource *> dataSourceRef = {dataSource->clone()};
   status = imageDataWriter.addData(dataSourceRef);
   CDBDebug("Adding data status was %d", status);
 
