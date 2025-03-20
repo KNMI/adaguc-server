@@ -41,6 +41,8 @@
 #include "CImageOperators/smoothRasterField.h"
 #include "CImageOperators/drawContour.h"
 
+// #define CImgWarpBilinear_DEBUG
+
 const char *CImgWarpBilinear::className = "CImgWarpBilinear";
 void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CDrawImage *drawImage) {
   CStyleConfiguration *styleConfiguration = sourceImage->getStyle();
@@ -395,7 +397,9 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
       }
     }
   }
-
+  // auto a = CColor(0, 0, 0, 255);
+  // auto b = CColor(100, 100, 255, 255);
+  // drawImage->setTextStroke(50, 80, -0.5, "bilinear renderer is deprecated!! Use generic.", NULL, 20, 2, a, b);
   // Make Contour if desired
   if (enableContour || enableShade) {
     drawContour(valueData, fNodataValue, shadeInterval, sourceImage, drawImage, enableContour, enableShade, enableContour);

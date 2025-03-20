@@ -420,7 +420,6 @@ private:
       sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
       sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
       sourceGeo.CRS = dataSource->nativeProj4;
-      CDBDebug("PRECISING?");
       CGenericDataWarper genericDataWarper;
       switch (dataType) {
       case CDF_CHAR:
