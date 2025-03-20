@@ -557,7 +557,7 @@ class TestWMS(unittest.TestCase):
         expectedErrors = [
             "No time units found for variable time",
             "Exception in DBLoopFiles",
-            "Invalid dimensions values: No data available for layer sow_a1",
+            "Exception in setDimValuesForDataSource for layer sow_a1 with ServiceExceptionCode=1",
             "WMS GetMap Request failed",
         ]
         foundErrors = []

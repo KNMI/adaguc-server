@@ -126,6 +126,7 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
     }
 
     dataSource->getDataObject(0)->cdfVariable->dimensionlinks.push_back(dimTime);
+    dataSource->formatConverterActive = true;
     // Define the Solar Terminator variable using the defined dimensions, and set the right attributes
     CDF::Variable *solTVar = new CDF::Variable();
     solTVar->setType(CDF_FLOAT);

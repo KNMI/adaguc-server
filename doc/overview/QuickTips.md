@@ -4,9 +4,24 @@
 
 ## Scanning datasets
 
-Scan with the adaguc-server container:
+List datasets: 
 ```
-docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh <optional datasetname>
+docker exec -i -t my-adaguc-server /adaguc/scan.sh -l
+```
+
+Scan a dataset:
+```
+docker exec -i -t my-adaguc-server /adaguc/scan.sh -d <datasetname>
+```
+
+Scan a file:
+```
+docker exec -i -t my-adaguc-server /adaguc/scan.sh -f <filename to scan>
+```
+
+Scan all datasets: 
+```
+docker exec -i -t my-adaguc-server /adaguc/scan.sh
 ```
 
 Similar command, but in this case we go inside the container and call the script directly:
@@ -14,8 +29,8 @@ Similar command, but in this case we go inside the container and call the script
 ```
 docker exec -it my-adaguc-server bash
 cd /adaguc
-. ./adaguc-server-chkconfig.sh
-${ADAGUC_PATH}/bin/adagucserver --updatedb --config ${ADAGUC_CONFIG},<optional datasetname>
+. adaguc-server-chkconfig.sh
+${ADAGUC_PATH}/bin/adagucserver --updatedb --config ${ADAGUC_CONFIG},<datasetname>
 ```
 
 

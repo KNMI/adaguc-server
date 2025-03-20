@@ -6,7 +6,7 @@ USER root
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
-LABEL version="2.30.0"
+LABEL version="2.31.0"
 
 # Try to update image packages
 RUN apt-get -q -y update \
@@ -123,13 +123,15 @@ COPY ./Docker/adaguc-server-config-python-postgres.xml /adaguc/adaguc-server-con
 COPY ./Docker/start.sh /adaguc/
 COPY ./Docker/adaguc-server-*.sh /adaguc/
 COPY ./Docker/baselayers.xml /adaguc/adaguc-datasets-internal/baselayers.xml
+COPY scripts /adaguc/adaguc-server-master/scripts
+COPY ./scripts/*.sh /adaguc/
 # Copy pgbouncer and supervisord config files
 COPY ./Docker/pgbouncer/ /adaguc/pgbouncer/
 COPY ./Docker/supervisord/ /etc/supervisor/conf.d/
 COPY ./Docker/run_supervisord.sh /adaguc/run_supervisord.sh
 # Set permissions
-RUN  chmod +x /adaguc/adaguc-server-*.sh && \
-    chmod +x /adaguc/start.sh && \
+RUN  chmod +x /adaguc/*.sh && \
+    chmod +x /adaguc/adaguc-server-master/scripts/*.sh && \
     chown -R adaguc:adaguc /data/adaguc* /adaguc /adaguc/*
 
 ENV ADAGUC_PATH=/adaguc/adaguc-server-master
