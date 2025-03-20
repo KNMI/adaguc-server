@@ -11,6 +11,7 @@ KNMI
 from __future__ import annotations
 import logging
 import time
+from typing_extensions import Annotated
 
 from covjson_pydantic.coverage import Coverage, CoverageCollection
 from fastapi import HTTPException, Query, Request, APIRouter
@@ -22,7 +23,7 @@ from .utils.edr_utils import (
     instance_to_iso,
     get_metadata,
 )
-from .utils.edr_exception import EdrException
+from .utils.edr_exception import exc_unknown_collection
 
 from .netcdf_to_covjson import netcdf_to_covjson
 from .utils.ogcapi_tools import call_adaguc
@@ -44,10 +45,10 @@ async def get_collection_cube(
     request: Request,
     bbox: str,
     datetime_par: str = Query(default=None, alias="datetime"),
-    parameter_name: str = Query(alias="parameter-name"),
-    z_par: str = Query(alias="z", default=None),
-    res_x: float | None = None,
-    res_y: float | None = None,
+    parameter_name: Annotated[str, Query(alias="parameter-name", min_length=1)] = None,
+    z_par: Annotated[str, Query(alias="z", min_length=1)] = None,
+    resolution_x: float | None = None,
+    resolution_y: float | None = None,
 ) -> Coverage:
     """Returns information in EDR format for a given collection and position"""
     return await get_coll_inst_cube(
@@ -58,8 +59,8 @@ async def get_collection_cube(
         datetime_par,
         parameter_name,
         z_par,
-        res_x,
-        res_y,
+        resolution_x,
+        resolution_y,
     )
 
 
@@ -75,8 +76,10 @@ async def get_coll_inst_cube(
     bbox: str,
     instance: str | None = None,
     datetime_par: str = Query(default=None, alias="datetime"),
-    parameter_name_par: str = Query(alias="parameter-name"),
-    z_par: str = Query(alias="z", default=None),
+    parameter_name_par: Annotated[
+        str, Query(alias="parameter-name", min_length=1)
+    ] = None,
+    z_par: Annotated[str, Query(alias="z", min_length=1)] = None,
     resolution_x: float | None = None,
     resolution_y: float | None = None,
 ) -> Coverage:
@@ -88,13 +91,13 @@ async def get_coll_inst_cube(
         "z",
         "f",
         "crs",
-        "res_x",
-        "res_y",
+        "resolution_x",
+        "resolution_y",
     ]
 
     metadata = await get_metadata(collection_name)
     if metadata is None:
-        raise EdrException(code=400, description=f"{collection_name} unknown")
+        raise exc_unknown_collection(collection_name)
 
     dataset_name = collection_name.rsplit(".", 1)[0]
     vertical_dim = ""

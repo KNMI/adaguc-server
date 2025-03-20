@@ -18,7 +18,7 @@ from typing_extensions import Annotated
 
 from .covjsonresponse import CovJSONResponse
 from .edr_covjson import covjson_from_resp
-from .utils.edr_exception import EdrException
+from .utils.edr_exception import EdrException, exc_unknown_collection
 from .utils.edr_utils import (
     call_adaguc,
     generate_max_age,
@@ -72,7 +72,7 @@ async def get_coll_inst_position(
     instance: str = None,
     datetime_par: str = Query(default=None, alias="datetime"),
     parameter_name: Annotated[str, Query(alias="parameter-name", min_length=1)] = None,
-    z_value: Annotated[str, Query(alias="z", min_length=1)] = None,
+    z_par: Annotated[str, Query(alias="z", min_length=1)] = None,
 ) -> Coverage:
     """
     returns data for the EDR /position endpoint
@@ -89,10 +89,13 @@ async def get_coll_inst_position(
     if metadata is not None:
         # Check parameter_name argument, at least 1 parameter should exist in collection
         if parameter_name is None:
-            raise EdrException(code=400, description="No parameter-name")
-        parameter_names = parameter_name.split(",")
-        if not any(param in metadata[collection_name] for param in parameter_names):
-            raise EdrException(code=404, description=f"Parameter-name {parameter_name}")
+            parameter_names = list(metadata[collection_name])
+        else:
+            parameter_names = parameter_name.split(",")
+            if not any(param in metadata[collection_name] for param in parameter_names):
+                raise EdrException(
+                    code=404, description=f"Parameter-name {parameter_name}"
+                )
         cleaned_parameter_names = []
         for param in parameter_names:
             if param in metadata[collection_name]:
@@ -117,7 +120,7 @@ async def get_coll_inst_position(
             [coord["lon"], coord["lat"]],
             cleaned_parameter_names,
             datetime_par,
-            z_value,
+            z_par,
             vertical_dim_name,
             custom_dims,
         )
@@ -131,9 +134,8 @@ async def get_coll_inst_position(
                 metadata[collection_name],
             )
     else:
-        raise EdrException(
-            code=404, description=f"Collection {collection_name} not found"
-        )
+        raise exc_unknown_collection(collection_name)
+
     raise EdrException(code=404, description="No data")
 
 

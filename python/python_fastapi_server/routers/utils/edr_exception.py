@@ -17,3 +17,11 @@ class EdrException(Exception):
     def __init__(self, code: str, description: str):
         self.code = code
         self.description = description
+
+
+def exc_unknown_collection(collection: str) -> EdrException:
+    return EdrException(code=400, description=f"Collection {collection} unknown")
+
+
+def exc_no_datasets() -> EdrException:
+    return EdrException(code=404, description="No datasets available")

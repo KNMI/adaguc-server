@@ -12,7 +12,7 @@ from edr_pydantic.collections import Collection, Instance, Instances
 from edr_pydantic.link import Link
 from fastapi import APIRouter, Request, Response
 
-from .utils.edr_exception import EdrException
+from .utils.edr_exception import exc_unknown_collection
 
 from .utils.edr_utils import (
     generate_max_age,
@@ -45,9 +45,8 @@ async def rest_get_edr_inst_for_coll(
     metadata = await get_metadata(collection_name)
 
     if metadata is None:
-        raise EdrException(
-            code=400, description=f"Collection {collection_name} unknown"
-        )
+        raise exc_unknown_collection(collection_name)
+
     ref_times = get_ref_times_for_coll(metadata[collection_name])
     links: list[Link] = []
     links.append(Link(href=instances_url, rel="collection"))
@@ -78,7 +77,8 @@ async def rest_get_collection_info(collection_name: str, instance):
     """
     metadata = await get_metadata(collection_name)
     if metadata is None:
-        raise EdrException(code=400, description=f"{collection_name} unknown")
+        raise exc_unknown_collection(collection_name)
+
     coll = get_collectioninfo_from_md(
         metadata[collection_name], collection_name, instance
     )
