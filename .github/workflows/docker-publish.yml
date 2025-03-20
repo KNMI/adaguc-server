@@ -61,9 +61,10 @@ jobs:
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
 
       - name: Run Trivy vulnerability scanner
+        if: matrix.platform == 'linux/amd64'  # Run trivy only once
         uses: aquasecurity/trivy-action@0.24.0
         with:
-          image-ref: 'adaguc-server'
+          image-ref: ${{ env.REGISTRY_IMAGE }}
           format: 'table'
           exit-code: '1'
           ignore-unfixed: true
