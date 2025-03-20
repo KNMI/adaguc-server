@@ -1,9 +1,9 @@
 /******************************************************************************
  *
  * Project:  ADAGUC Server
- * Purpose:  Convert KNMI HDF5 volume scan data to CDM
- * Author:   Ernst de Vreede, ernst.de.vreede "at" knmi.nl
- * Date:     2022-08-15
+ * Purpose:  Utils for conversion HDF5 volume scan data to CDM
+ * Author:   Mats Veldhuizen mats.veldhuizen "at" knmi.nl
+ * Date:     2025-03-20
  *
  ******************************************************************************
  *
