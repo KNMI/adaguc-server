@@ -16,7 +16,6 @@
                 "ADAGUC_TMP": "/tmp",
                 "ADAGUC_CONFIG": "${workspaceFolder}/python/lib/adaguc/adaguc-server-config-python-postgres.xml",
                 "ADAGUC_ENABLELOGBUFFER": "FALSE",
-                "QUERY_STRING": "service=WMS&request=GetCapabilities",
                 "ADAGUC_PORT": "8080",
                 "EXTERNALADDRESS": "http://localhost:8080"
             }
