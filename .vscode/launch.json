@@ -1,0 +1,85 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "debug python server",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/python/python_fastapi_server/main.py",
+            "console": "integratedTerminal",
+            "envFile": "${workspaceFolder}/Docker/.env",
+            "env": {
+                "ADAGUC_PATH": "${workspaceFolder}",
+                "ADAGUC_DB": "user=adaguc password=adaguc host=localhost dbname=adaguc",
+                "ADAGUC_ONLINERESOURCE": "",
+                "ADAGUC_NUMPARALLELPROCESSES": "4",
+                "ADAGUC_TMP": "/tmp",
+                "ADAGUC_CONFIG": "${workspaceFolder}/python/lib/adaguc/adaguc-server-config-python-postgres.xml",
+                "ADAGUC_ENABLELOGBUFFER": "FALSE",
+                "QUERY_STRING": "service=WMS&request=GetCapabilities",
+                "ADAGUC_PORT": "8080",
+                "EXTERNALADDRESS": "http://localhost:8080"
+            }
+        },
+        {
+            "name": "debug adaguc request",
+            "type": "cppdbg",
+            "request": "launch",
+            // Resolved by CMake Tools:
+            "program": "${command:cmake.launchTargetPath}",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "envFile": "${workspaceFolder}/Docker/.env",
+            "environment": [
+                {
+                    // add the directory where our target was built to the PATHs
+                    // it gets resolved by CMake Tools:
+                    "name": "PATH",
+                    "value": "$PATH:${command:cmake.launchTargetDirectory}"
+                },
+                {
+                    "name": "ADAGUC_PATH",
+                    "value": "${workspaceFolder}",
+                },
+                {
+                    "name": "ADAGUC_DB",
+                    "value": "user=adaguc password=adaguc host=localhost dbname=adaguc",
+                },
+                {
+                    "name": "ADAGUC_ONLINERESOURCE",
+                    "value": "",
+                },
+                {
+                    "name": "ADAGUC_NUMPARALLELPROCESSES",
+                    "value": "4",
+                },
+                {
+                    "name": "ADAGUC_TMP",
+                    "value": "/tmp",
+                },
+                {
+                    "name": "ADAGUC_CONFIG",
+                    "value": "${workspaceFolder}/python/lib/adaguc/adaguc-server-config-python-postgres.xml",
+                },
+                {
+                    "name": "ADAGUC_ENABLELOGBUFFER",
+                    "value": "FALSE"
+                },
+                {
+                    "name": "QUERY_STRING",
+                    "value": "service=WMS&request=GetCapabilities"
+                }
+            ],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        }
+    ]
+}
