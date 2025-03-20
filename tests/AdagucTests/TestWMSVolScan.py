@@ -54,7 +54,7 @@ class TestWMSVolScan(unittest.TestCase):
         AdagucTestTools().cleanTempDir()
         for file_type in ["ODIM", "KNMI"]:
             for layer in ["ZDR", "KDP", "RHOHV", "Height"]:
-                for elev in ["0.3l", "0.3", "8.0"]:
+                for elev in ["0.3l", "0.3", "8"]:
                     filename = f"test_WMSGetMap_VolScan_{layer}_{elev}.png"
                     request_layer = layer
                     if file_type == "KNMI" and layer == "RHOHV":
