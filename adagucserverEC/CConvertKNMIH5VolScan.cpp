@@ -91,7 +91,11 @@ int CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(CDFObject *cdfObject, CSer
     /* Skip 90 degree scan */
     if (scanElevationInt == 900) continue;
     CT::string elevation_name;
-    elevation_name.print("%d.%d", scanElevationInt / 10, scanElevationInt % 10);
+    if (scanElevationInt % 10 == 0) {
+      elevation_name.print("%d", scanElevationInt / 10);
+    } else {
+      elevation_name.print("%d.%d", scanElevationInt / 10, scanElevationInt % 10);
+    }
     /* Dutch radars contain 3 0.3 degree scans. 1st is long range, second is short range, third is long range again. */
     /* Keep the first 2 and skip the last. */
     bool longRangePresent = false;

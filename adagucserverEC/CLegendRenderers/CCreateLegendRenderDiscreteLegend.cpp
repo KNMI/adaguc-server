@@ -2,6 +2,40 @@
 #include "CDataReader.h"
 #include "CImageDataWriter.h"
 
+#define MIN_SHADE_CLASS_BLOCK_SIZE 3
+#define MAX_SHADE_CLASS_BLOCK_SIZE 12
+
+// Aux function to calculate block height based on total height and number
+// of classes in a legend based on shade classes.
+float calculateShadeClassBlockHeight(int totalHeight, int intervals) {
+  float blockHeight = float(totalHeight - 30) / float(intervals);
+  /* Legend classes displayed as blocks in the legend can have a maximum
+  and a minimum height */
+  if (blockHeight > MAX_SHADE_CLASS_BLOCK_SIZE) return MAX_SHADE_CLASS_BLOCK_SIZE;
+  if (blockHeight < MIN_SHADE_CLASS_BLOCK_SIZE) return MIN_SHADE_CLASS_BLOCK_SIZE;
+  return blockHeight;
+}
+
+std::tuple<int, int> calculateShadedClassLegendClipping(int minValue, int maxValue, CStyleConfiguration *styleConfiguration) {
+  // Calculate which part of the legend to draw (only between min and max)
+  int minInterval = 0;
+  int maxInterval = styleConfiguration->shadeIntervals->size();
+  for (size_t j = 0; j < styleConfiguration->shadeIntervals->size(); j++) {
+    CServerConfig::XMLE_ShadeInterval *s = (*styleConfiguration->shadeIntervals)[j];
+    if (!s->attr.min.empty() && !s->attr.max.empty()) {
+      float intervalMinf = parseFloat(s->attr.min.c_str());
+      float intervalMaxf = parseFloat(s->attr.max.c_str());
+      if (intervalMaxf >= maxValue && intervalMinf <= maxValue) {
+        maxInterval = j + 1;
+      }
+      if (intervalMinf <= minValue && intervalMaxf >= minValue) {
+        minInterval = j;
+      }
+    }
+  }
+  return std::make_tuple(minInterval, maxInterval);
+}
+
 int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *legendImage, CStyleConfiguration *styleConfiguration, bool, bool estimateMinMax) {
 #ifdef CIMAGEDATAWRITER_DEBUG
   CDBDebug("legendtype discrete");
@@ -129,40 +163,79 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
   /**
    * Defined blocks based on defined interval
    */
-
   if (definedLegendOnShadeClasses) {
-    float blockHeight = float(legendImage->Geo->dHeight - 30) / float(styleConfiguration->shadeIntervals->size());
-    /* Legend classes displayed as blocks in the legend can have a maximum and a minimum height depending on the amount of classes and legendheight */
-    if (blockHeight > 12) blockHeight = 12;
-    if (blockHeight < 3) blockHeight = 3;
+    // If this type of legend has too many classes (15+) with a relatively small height (<=500 px), we
+    // will treat it differently to create a summarised version, with the following characteristics:
+    // - The class border is removed for extra visibility
+    // - Labels are simplified and will only show the min of the interval the class represents
+    // - One in every five labels will be displayed (for classes that are multiples of 5)
+    // - If the cliplegend render option is set, only classes with the min and the max data value will be added
     char szTemp[1024];
-    for (size_t j = 0; j < styleConfiguration->shadeIntervals->size(); j++) {
-      CServerConfig::XMLE_ShadeInterval *s = (*styleConfiguration->shadeIntervals)[j];
-      if (s->attr.min.empty() == false && s->attr.max.empty() == false) {
-        int cY1 = int(cbH - ((j)*blockHeight) * scaling);
-        int cY2 = int(cbH - ((((j + 1) * blockHeight) - 2)) * scaling);
-        CColor color;
-        if (s->attr.fillcolor.empty() == false) {
-          color = CColor(s->attr.fillcolor.c_str());
-        } else {
-          color = legendImage->getColorForIndex(CImageDataWriter::getColorIndexForValue(dataSource, parseFloat(s->attr.min.c_str())));
+
+    // Initial estimation of block height
+    float initialBlockHeight = calculateShadeClassBlockHeight(legendImage->Geo->dHeight, styleConfiguration->shadeIntervals->size());
+
+    // Based on the render settings, we can clip the values on the legend to only include the values
+    // present in the data
+    int minInterval = 0;
+    int maxInterval = styleConfiguration->shadeIntervals->size();
+    if (styleConfiguration->styleConfig != NULL && styleConfiguration->styleConfig->RenderSettings.size() == 1 && styleConfiguration->styleConfig->RenderSettings[0]->attr.cliplegend.equals("true")) {
+      std::tie(minInterval, maxInterval) = calculateShadedClassLegendClipping(minValue, maxValue, styleConfiguration);
+    }
+    // Only a subset of intervals to appear on screen to save space
+    size_t drawIntervals = maxInterval - minInterval;
+    // With a small blockHeight, use the compact legend for better visibility
+    if (initialBlockHeight <= MIN_SHADE_CLASS_BLOCK_SIZE + 1) {
+      // Recalculate block size based on the final intervals to appear on the legend
+      float blockHeight = calculateShadeClassBlockHeight(legendImage->Geo->dHeight, drawIntervals - 1);
+      for (size_t j = 0; j < drawIntervals; j++) {
+        size_t realj = minInterval + j;
+        CServerConfig::XMLE_ShadeInterval *s = (*styleConfiguration->shadeIntervals)[realj];
+        if (s->attr.min.empty() == false && s->attr.max.empty() == false) {
+          int cY1 = int(cbH - ((j)*blockHeight) * scaling);
+          int cY2 = int(cbH - ((((j + 1) * blockHeight) - 2)) * scaling);
+          CColor color;
+          if (s->attr.fillcolor.empty() == false) {
+            color = CColor(s->attr.fillcolor.c_str());
+          } else {
+            color = legendImage->getColorForIndex(CImageDataWriter::getColorIndexForValue(dataSource, parseFloat(s->attr.min.c_str())));
+          }
+          // This rectangle is borderless, and the resulting classes have no vertical blank space between them
+          legendImage->rectangle(4 * scaling + pLeft, cY2 + pTop - 1, (int(cbW) + 7) * scaling + pLeft, cY1 + pTop + 1, color, color);
+          // We print every label containing a multiple of 5.
+          if ((int)(std::abs(parseFloat(s->attr.min.c_str()))) % 5 != 0) {
+            continue;
+          }
+          snprintf(szTemp, 1000, "%s", s->attr.min.c_str());
+          legendImage->drawText(((int)cbW + 12 + pLeft) * scaling, (cY1 + pTop) - ((fontSize * scaling) / 4) + 3, fontLocation.c_str(), fontSize * scaling, 0, szTemp, 248);
         }
-        legendImage->rectangle(4 * scaling + pLeft, cY2 + pTop, (int(cbW) + 7) * scaling + pLeft, cY1 + pTop, color, CColor(0, 0, 0, 255));
+      }
+    } else {
+      // General case for this type of legend, where we draw every label and print every class interval
+      // We can also clip this type of legend
+      float blockHeight = calculateShadeClassBlockHeight(legendImage->Geo->dHeight, drawIntervals);
+      for (size_t j = 0; j < drawIntervals; j++) {
+        size_t realj = minInterval + j;
+        CServerConfig::XMLE_ShadeInterval *s = (*styleConfiguration->shadeIntervals)[realj];
+        if (s->attr.min.empty() == false && s->attr.max.empty() == false) {
+          int cY1 = int(cbH - ((j)*blockHeight) * scaling);
+          int cY2 = int(cbH - ((((j + 1) * blockHeight) - 2)) * scaling);
+          CColor color;
+          if (s->attr.fillcolor.empty() == false) {
+            color = CColor(s->attr.fillcolor.c_str());
+          } else {
+            color = legendImage->getColorForIndex(CImageDataWriter::getColorIndexForValue(dataSource, parseFloat(s->attr.min.c_str())));
+          }
+          legendImage->rectangle(4 * scaling + pLeft, cY2 + pTop, (int(cbW) + 7) * scaling + pLeft, cY1 + pTop, color, CColor(0, 0, 0, 255));
 
-        // legendImage->rectangle(pLeft+4*scaling,
-        // pTop + boxUpperY,
-        // pLeft + (int(cbW)+7)*scaling,
-        // pTop+boxLowerY,
-        //(colorIndex),248);
+          if (s->attr.label.empty()) {
+            snprintf(szTemp, 1000, "%s - %s", s->attr.min.c_str(), s->attr.max.c_str());
+          } else {
+            snprintf(szTemp, 1000, "%s", s->attr.label.c_str());
+          }
 
-        if (s->attr.label.empty()) {
-          snprintf(szTemp, 1000, "%s - %s", s->attr.min.c_str(), s->attr.max.c_str());
-        } else {
-          snprintf(szTemp, 1000, "%s", s->attr.label.c_str());
+          legendImage->drawText(((int)cbW + 12 + pLeft) * scaling, (cY1 + pTop) - ((fontSize * scaling) / 4) + 3, fontLocation.c_str(), fontSize * scaling, 0, szTemp, 248);
         }
-
-        // legendImage->setText(szTemp,strlen(szTemp),int(cbW)+12+pLeft,cY2+pTop,248,-1);
-        legendImage->drawText(((int)cbW + 12 + pLeft) * scaling, (cY1 + pTop) - ((fontSize * scaling) / 4) + 3, fontLocation.c_str(), fontSize * scaling, 0, szTemp, 248);
       }
     }
   }
