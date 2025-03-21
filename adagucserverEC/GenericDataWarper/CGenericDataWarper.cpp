@@ -455,24 +455,24 @@ int CGenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoPara
 
           int xP[3];
           int yP[3];
-          xP[0] = px1 - 0.5;
-          yP[0] = py1 + 0.5;
+          xP[0] = round(px1);
+          yP[0] = round(py1);
 
-          xP[1] = px2 - 0.5;
-          yP[1] = py2 + 0.5;
+          xP[1] = round(px2);
+          yP[1] = round(py2);
 
-          xP[2] = px3 - 0.5;
-          yP[2] = py3 + 0.5;
+          xP[2] = round(px3);
+          yP[2] = round(py3);
           gdwDrawTriangle<T>(xP, yP, value, imageWidth, imageHeight, drawFunctionSettings, drawFunction, (void *)this, false);
 
-          xP[0] = px3 - 0.5;
-          yP[0] = py3 + 0.5;
+          xP[0] = round(px3);
+          yP[0] = round(py3);
 
-          xP[1] = px1 - 0.5;
-          yP[1] = py1 + 0.5;
+          xP[1] = round(px1);
+          yP[1] = round(py1);
 
-          xP[2] = px4 - 0.5;
-          yP[2] = py4 + 0.5;
+          xP[2] = round(px4);
+          yP[2] = round(py4);
           gdwDrawTriangle<T>(xP, yP, value, imageWidth, imageHeight, drawFunctionSettings, drawFunction, (void *)this, true);
         }
         pLengthD = lengthD;
