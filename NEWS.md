@@ -1,3 +1,6 @@
+**Version 2.31.1 2025-03-19**
+- Fix tests for convert h5 volscan not working for psql
+
 **Version 2.31.0 2025-03-19**
 - Refactored scan scripts
 
