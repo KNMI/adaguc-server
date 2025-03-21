@@ -25,3 +25,4 @@
 !tests/functional_test.py
 !tests/starttests.sh
 !tests/starttests_psql.sh
+!conftest.py

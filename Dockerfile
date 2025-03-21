@@ -96,9 +96,15 @@ RUN pip install --no-cache-dir -r requirements-dev.txt
 COPY tests /adaguc/adaguc-server-master/tests
 COPY runtests.sh /adaguc/adaguc-server-master/runtests.sh
 COPY runtests_psql.sh /adaguc/adaguc-server-master/runtests_psql.sh
+COPY conftest.py /adaguc/adaguc-server-master/conftest.py
 
 # Run adaguc-server functional and regression tests. See also `./doc/developing/testing.md`
 RUN bash runtests.sh
+
+# RUN cd ./python/lib/ && python3 setup.py develop
+# RUN pytest python/python_fastapi_server/ -o "python_files=test_*.py" -v
+# RUN pytest tests/AdagucTests/ -o "python_files=Test*.py" -vs
+
 # RUN bash runtests_psql.sh
 
 # Create a file indicating that the test succeeded. This file is used in the final stage
