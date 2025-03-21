@@ -8,13 +8,11 @@ const char *CDPPToKnots::className = "CDPPToToKnots";
 const char *CDPPToKnots::getId() { return "toknots"; }
 int CDPPToKnots::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int) {
   if (proc->attr.algorithm.equals("toknots")) {
-    if (CDATAPOSTPROCESSOR_RUNAFTERREADING) {
-      if (dataSource->getNumDataObjects() != 1 && dataSource->getNumDataObjects() != 2) {
-        CDBError("1 or 2 variables are needed for toknots, found %d", dataSource->getNumDataObjects());
-        return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
-      }
-      return CDATAPOSTPROCESSOR_RUNAFTERREADING;
+    if (dataSource->getNumDataObjects() != 1 && dataSource->getNumDataObjects() != 2) {
+      CDBError("1 or 2 variables are needed for toknots, found %d", dataSource->getNumDataObjects());
+      return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
     }
+    return CDATAPOSTPROCESSOR_RUNAFTERREADING | CDATAPOSTPROCESSOR_RUNBEFOREREADING;
   }
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
 }
@@ -23,15 +21,29 @@ int CDPPToKnots::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *da
   if (isApplicable(proc, dataSource, mode) == false) {
     return -1;
   }
-  CDBDebug("Applying toknots %d", mode == CDATAPOSTPROCESSOR_RUNAFTERREADING);
+  CDBDebug("Applying toknots, mode: %d", mode);
+
   float factor = 1;
+  if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
+    if (dataSource->getDataObject(0)->getUnits().equals("m/s") || dataSource->getDataObject(0)->getUnits().equals("m s-1")) {
+      factor = 3600 / 1852.;
+      dataSource->getDataObject(0)->setUnits("kts");
+      if (dataSource->getNumDataObjects() == 2) {
+        if (dataSource->getDataObject(1)->getUnits().equals("m/s") || dataSource->getDataObject(1)->getUnits().equals("m s-1")) {
+          dataSource->getDataObject(1)->setUnits("kts");
+        }
+      }
+    }
+    dataSource->getDataObject(0)->cdfVariable->setAttribute("toknots_factor", CDF_FLOAT, &factor, 1);
+  }
+
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
+    dataSource->getDataObject(0)->cdfVariable->getAttribute("toknots_factor")->getData<float>(&factor, 1);
+    dataSource->getDataObject(0)->cdfVariable->removeAttribute("toknots_factor");
     if (dataSource->getNumDataObjects() == 1) {
       CDBDebug("Applying toknots for 1 element");
-      if (dataSource->getDataObject(0)->getUnits().equals("m/s") || dataSource->getDataObject(0)->getUnits().equals("m s-1")) {
-        factor = 3600 / 1852.;
+      if (dataSource->getDataObject(0)->getUnits().equals("kts")) {
         CDBDebug("Applying toknots for 1 element with factor %f to grid", factor);
-        dataSource->getDataObject(0)->setUnits("kts");
         size_t l = (size_t)dataSource->dHeight * (size_t)dataSource->dWidth;
         float *src = (float *)dataSource->getDataObject(0)->cdfVariable->data;
         float noDataValue = dataSource->getDataObject(0)->dfNodataValue;
@@ -60,10 +72,8 @@ int CDPPToKnots::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *da
     }
     if (dataSource->getNumDataObjects() == 2) {
       CDBDebug("Applying toknots for 2 elements %s %s", dataSource->getDataObject(0)->getUnits().c_str(), dataSource->getDataObject(1)->getUnits().c_str());
-      if ((dataSource->getDataObject(0)->getUnits().equals("m/s") || dataSource->getDataObject(0)->getUnits().equals("m s-1")) && dataSource->getDataObject(1)->getUnits().equals("degree")) {
-        factor = 3600 / 1852.;
+      if (dataSource->getDataObject(0)->getUnits().equals("kts") && dataSource->getDataObject(1)->getUnits().equals("degree")) {
         // This is a (wind speed,direction) pair
-        dataSource->getDataObject(0)->setUnits("kts");
         size_t l = (size_t)dataSource->dHeight * (size_t)dataSource->dWidth;
         float *src = (float *)dataSource->getDataObject(0)->cdfVariable->data;
         float noDataValue = dataSource->getDataObject(0)->dfNodataValue;
@@ -88,11 +98,8 @@ int CDPPToKnots::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *da
           }
         }
       }
-      if ((dataSource->getDataObject(0)->getUnits().equals("m/s") || dataSource->getDataObject(0)->getUnits().equals("m s-1")) &&
-          (dataSource->getDataObject(1)->getUnits().equals("m/s") || dataSource->getDataObject(1)->getUnits().equals("m s-1"))) {
+      if (dataSource->getDataObject(0)->getUnits().equals("kts") && dataSource->getDataObject(1)->getUnits().equals("kts")) {
         // This is a (u,v) pair
-        dataSource->getDataObject(0)->setUnits("kts");
-
         size_t l = (size_t)dataSource->dHeight * (size_t)dataSource->dWidth;
         float *srcu = (float *)dataSource->getDataObject(0)->cdfVariable->data;
         float *srcv = (float *)dataSource->getDataObject(1)->cdfVariable->data;
@@ -143,11 +150,20 @@ int CDPPToKnots::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *da
     return -1;
   }
   float factor = 1;
+  if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
+    if (dataSource->getDataObject(0)->getUnits().equals("m/s") || dataSource->getDataObject(0)->getUnits().equals("m s-1")) {
+      factor = 3600 / 1852.;
+      dataSource->getDataObject(0)->setUnits("kts");
+    }
+    dataSource->getDataObject(0)->cdfVariable->setAttribute("toknots_factor", CDF_FLOAT, &factor, 1);
+  }
+
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
+    dataSource->getDataObject(0)->cdfVariable->getAttribute("toknots_factor")->getData<float>(&factor, 1);
+    dataSource->getDataObject(0)->cdfVariable->removeAttribute("toknots_factor");
     if (dataSource->getNumDataObjects() == 1) {
       CDBDebug("Applying toknots for 1 element");
-      if (dataSource->getDataObject(0)->getUnits().equals("m/s") || dataSource->getDataObject(0)->getUnits().equals("m s-1")) {
-        factor = 3600 / 1852.;
+      if (dataSource->getDataObject(0)->getUnits().equals("kts")) {
         CDBDebug("Applying toknots for 1 element with factor %f to timeseries", factor);
         dataSource->getDataObject(0)->setUnits("kts");
         double noDataValue = dataSource->getDataObject(0)->dfNodataValue;
