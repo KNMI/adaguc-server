@@ -71,7 +71,12 @@
                 }
             ],
             "externalConsole": false,
-            "MIMode": "gdb",
+            "linux": {
+                "MIMode": "gdb",
+            },
+            "osx": {
+                "MIMode": "lldb"
+            },
             "setupCommands": [
                 {
                     "description": "Enable pretty-printing for gdb",
