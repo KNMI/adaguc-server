@@ -499,7 +499,7 @@ CDBStore::Store *CDBAdapterSQLLite::getClosestDataTimeToSystemTime(const char *n
   return result;
 };
 
-CDBStore::Store *CDBAdapterSQLLite::getFilesAndIndicesForDimensions(CDataSource *dataSource, int limit) {
+CDBStore::Store *CDBAdapterSQLLite::getFilesAndIndicesForDimensions(CDataSource *dataSource, int limit, bool) {
   CSQLLiteDB *DB = getDataBaseConnection();
   if (DB == NULL) {
     return NULL;
