@@ -31,7 +31,7 @@ const char *CDFObjectStore::className = "CDFObjectStore";
 #include "CConvertADAGUCPoint.h"
 #include "CConvertKNMIH5EchoToppen.h"
 #include "CConvertCurvilinear.h"
-#include "CConvertKNMIH5VolScan.h"
+#include "CConvertH5VolScan.h"
 #include "CConvertHexagon.h"
 #include "CConvertGeoJSON.h"
 #include "CConvertEProfile.h"
@@ -412,7 +412,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
       };
 
     if (!formatConverterActive)
-      if (CConvertKNMIH5VolScan::convertKNMIH5VolScanHeader(cdfObject, srvParams) == 0) {
+      if (CConvertH5VolScan::convertH5VolScanHeader(cdfObject, srvParams) == 0) {
         formatConverterActive = true;
       };
 
