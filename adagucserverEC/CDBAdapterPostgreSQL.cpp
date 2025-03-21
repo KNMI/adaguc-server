@@ -354,7 +354,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesForIndices(CDataSource *dataSourc
   return store;
 }
 
-CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSource *dataSource, int limit) {
+CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSource *dataSource, int limit, bool raiseExceptionWhenOverLimit) {
   /*
   Build query to find combination of file paths and dimensions, by filtering on requested dimensions. Query has following form:
 
@@ -463,8 +463,12 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     query.printconcat(", %s", dataSource->requiredDims[i]->netCDFDimName.c_str());
   }
 
-  // We limit on `maxquery limit` + 1 and we'll check if we reached it later
-  query.printconcat(" LIMIT %d", limit + 1);
+  if (raiseExceptionWhenOverLimit) {
+    // We limit on `maxquery limit` + 1 and we'll check if we reached it later
+    query.printconcat(" LIMIT %d", limit + 1);
+  } else {
+    query.printconcat(" LIMIT %d", limit);
+  }
 
   // Execute the query
   CDBStore::Store *store = NULL;
@@ -475,11 +479,12 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     CDBDebug("Query failed with code %d (%s)", e, query.c_str());
     return NULL;
   }
-
-  if (int(store->size()) > limit) {
-    delete store;
-    CDBError("Requested data exceeded maxquerylimit=%d", limit);
-    throw UnprocessableEntity;
+  if (raiseExceptionWhenOverLimit) {
+    if (int(store->size()) > limit) {
+      delete store;
+      CDBError("Requested data exceeded maxquerylimit=%d", limit);
+      throw UnprocessableEntity;
+    }
   }
 
 #ifdef MEASURETIME

@@ -69,7 +69,7 @@ public:
   CT::string getDimValueForFileName(const char *filename, const char *table);
   CDBStore::Store *getUniqueValuesOrderedByValue(const char *name, int limit, bool orderDescOrAsc, const char *table);
   CDBStore::Store *getUniqueValuesOrderedByIndex(const char *name, int limit, bool orderDescOrAsc, const char *table);
-  CDBStore::Store *getFilesAndIndicesForDimensions(CDataSource *dataSource, int limit);
+  CDBStore::Store *getFilesAndIndicesForDimensions(CDataSource *dataSource, int limit, bool raiseExceptionWhenOverLimit);
   CDBStore::Store *getFilesForIndices(CDataSource *dataSource, size_t *start, size_t *count, ptrdiff_t *stride, int limit);
 
   CDBStore::Store *getDimensionInfoForLayerTableAndLayerName(const char *layertable, const char *layername);

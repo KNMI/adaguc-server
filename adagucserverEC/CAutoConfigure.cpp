@@ -496,7 +496,7 @@ int CAutoConfigure::getFileNameForDataSource(CDataSource *dataSource, std::strin
         ogcDim->netCDFDimName.copy("none");
       }
     }
-    CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getFilesAndIndicesForDimensions(dataSource, 1);
+    CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getFilesAndIndicesForDimensions(dataSource, 1, false);
     if (store != NULL && store->getSize() > 0) {
       CT::string fileNamestr = store->getRecord(0)->get(0)->c_str();
       // CDBDebug("fileName from DB: %s", fileNamestr.c_str());
