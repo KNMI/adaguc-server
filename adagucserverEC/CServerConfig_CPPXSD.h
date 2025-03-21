@@ -689,11 +689,14 @@ public:
   public:
     class Cattr {
     public:
-      CT::string location;
+      CT::string location, name;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
       if (equals("location", attrname)) {
         attr.location.copy(attrvalue);
+        return;
+      } else if (equals("name", attrname)) {
+        attr.name.copy(attrvalue);
         return;
       }
     }
@@ -806,7 +809,7 @@ public:
   public:
     class Cattr {
     public:
-      CT::string settings, striding, renderer, scalewidth, scalecontours, renderhint, randomizefeatures, featuresoverlap, rendertextforvectors;
+      CT::string settings, striding, renderer, scalewidth, scalecontours, renderhint, randomizefeatures, featuresoverlap, rendertextforvectors, render;
     } attr;
     void addAttribute(const char *name, const char *value) {
       if (equals("settings", name)) {
@@ -814,6 +817,9 @@ public:
         return;
       } else if (equals("renderer", name)) {
         attr.renderer.copy(value);
+        return;
+      } else if (equals("render", name)) {
+        attr.render.copy(value);
         return;
       } else if (equals("striding", name)) {
         attr.striding.copy(value);
@@ -866,6 +872,7 @@ public:
     std::vector<XMLE_FeatureInterval *> FeatureInterval;
     std::vector<XMLE_Stippling *> Stippling;
     std::vector<XMLE_RenderSettings *> RenderSettings;
+    std::vector<XMLE_Include *> Include;
 
     ~XMLE_Style() {
       XMLE_DELOBJ(Thinning);
@@ -892,11 +899,13 @@ public:
       XMLE_DELOBJ(FeatureInterval);
       XMLE_DELOBJ(Stippling);
       XMLE_DELOBJ(RenderSettings);
+      XMLE_DELOBJ(Include);
     }
     class Cattr {
     public:
       CT::string name;
     } attr;
+
     void addElement(CXMLObjectInterface *baseClass, int rc, const char *name, const char *value) {
       CXMLSerializerInterface *base = (CXMLSerializerInterface *)baseClass;
       base->currentNode = (CXMLObjectInterface *)this;
@@ -930,6 +939,8 @@ public:
           XMLE_ADDOBJ(Log);
         } else if (equals("ValueRange", name)) {
           XMLE_ADDOBJ(ValueRange);
+        } else if (equals("Include", name)) {
+          XMLE_ADDOBJ(Include);
         } else if (equals("ContourIntervalL", name)) {
           XMLE_ADDOBJ(ContourIntervalL);
         } else if (equals("ContourIntervalH", name)) {
@@ -2070,9 +2081,15 @@ public:
     }
     if (pt2Class != NULL) pt2Class->addElement(baseClass, rc - pt2Class->level, name, value);
   }
-  void addAttributeEntry(const char *name, const char *value) {
-    if (currentNode != NULL && pt2Class != NULL) {
-      currentNode->addAttribute(name, value);
+  void addAttributeEntry(const char *parentName, const char *name, const char *value) {
+    if (currentNode != NULL && pt2Class != NULL && currentNode->pt2Class == NULL) {
+      if (this->level == 0) {
+        if (this->pt2Class != NULL) {
+          if (currentNode->parentName.equals(parentName)) {
+            currentNode->addAttribute(name, value);
+          }
+        }
+      }
     }
   }
   std::vector<XMLE_Configuration *> Configuration;

@@ -52,9 +52,13 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
   genericDataWarper.warperState.destinationGrid = new float[drawImage->Geo->dWidth * drawImage->Geo->dHeight];
 
   // In case of contourlines and bilinear
-  genericDataWarper.useHalfCellOffset = true;
+  if (settings.drawInImage == DrawInImageNearest) {
+    genericDataWarper.useHalfCellOffset = false;
+  } else {
+    genericDataWarper.useHalfCellOffset = true;
+  }
 
-  for (size_t j = 0; j < drawImage->Geo->dWidth * drawImage->Geo->dHeight; j += 1) {
+  for (size_t j = 0; j < size_t(drawImage->Geo->dWidth * drawImage->Geo->dHeight); j += 1) {
     genericDataWarper.warperState.destinationGrid[j] = NAN;
   }
 
@@ -89,6 +93,11 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
   }
 
   drawContour(genericDataWarper.warperState.destinationGrid, dataSource, drawImage);
+  auto a = CColor(0, 0, 0, 255);
+  auto b = CColor(100, 100, 255, 255);
+  CT::string text;
+  text.print("GENERIC %d", settings.drawInImage);
+  drawImage->setTextStroke(50, 80, -0.5, text.c_str(), NULL, 20, 2, a, b);
   delete[] genericDataWarper.warperState.destinationGrid;
   genericDataWarper.warperState.destinationGrid = nullptr;
   return;

@@ -9,6 +9,10 @@
 #include "GenericDataWarper/CGenericDataWarper.h"
 #include "CStyleConfiguration.h"
 
+enum DrawInImage { DrawInImageNone, DrawInImageNearest, DrawInImageBilinear };
+enum DrawInDataGrid { DrawInDataGridNone, DrawInDataGridNearest, DrawInDataGridBilinear };
+enum LegendMode { LegendModeContinuous, LegendModeDiscrete };
+
 class CDrawFunctionSettings {
 public:
   class Interval {
@@ -30,12 +34,15 @@ public:
   double legendValueRange;
   double legendLowerRange;
   double legendUpperRange;
+  double shadeInterval = 0;
   bool hasNodataValue;
   float legendLog;
   float legendLogAsLog;
   float legendScale;
   float legendOffset;
   CDrawImage *drawImage;
+  DrawInImage drawInImage = DrawInImageNone;
+  DrawInDataGrid drawInDataGrid = DrawInDataGridNone;
   float *smoothingDistanceMatrix = nullptr;
   int smoothingFiter = 0;
 };
@@ -60,17 +67,21 @@ template <class T> void setPixelInDrawImage(int x, int y, T val, CDrawFunctionSe
     if (settings->legendValueRange)
       if (val < settings->legendLowerRange || val > settings->legendUpperRange) isNodata = true;
   if (!isNodata) {
-    if (settings->isUsingShadeIntervals) {
+    if (settings->isUsingShadeIntervals && settings->shadeInterval == 0) {
       bool pixelSet = false; // Remember if a pixel was set. If not set and bgColorDefined is defined, draw the background color.
-      for (size_t j = 0; (j < settings->intervals.size() && pixelSet == false); j += 1) {
-        if (val >= settings->intervals[j].min && val < settings->intervals[j].max) {
-          settings->drawImage->setPixel(x, y, settings->intervals[j].color);
-          pixelSet = true;
+      if (settings->intervals.size() > 0) {
+        for (size_t j = 0; (j < settings->intervals.size() && pixelSet == false); j += 1) {
+          if (val >= settings->intervals[j].min && val < settings->intervals[j].max) {
+            settings->drawImage->setPixel(x, y, settings->intervals[j].color);
+            pixelSet = true;
+          }
         }
       }
-      if (settings->bgColorDefined && pixelSet == false) {
+
+      if (pixelSet == false && settings->bgColorDefined) {
         settings->drawImage->setPixel(x, y, settings->bgColor);
       }
+
     } else {
       // val = floor(val / 2) * 2;
       if (settings->legendLog != 0) {
@@ -79,6 +90,10 @@ template <class T> void setPixelInDrawImage(int x, int y, T val, CDrawFunctionSe
           val = (T)(log10(val) / settings->legendLogAsLog);
         } else
           val = (T)(-settings->legendOffset);
+      }
+      if (settings->shadeInterval > 0) {
+        val = floor(val / settings->shadeInterval);
+        val = val * settings->shadeInterval;
       }
       int pcolorind = (int)(val * settings->legendScale + settings->legendOffset);
       if (pcolorind >= 239)

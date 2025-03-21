@@ -533,198 +533,6 @@ void CDataSource::getFlagMeaningHumanReadable(CT::string *flagMeaning, std::vect
 CT::string CDataSource::getDimensionValueForNameAndStep(const char *dimName, int dimStep) { return timeSteps[dimStep]->dims.getDimensionValue(dimName); }
 
 /**
- * Fills in the styleConfig object based on datasource,stylename, legendname and rendermethod
- *
- * @param styleConfig
- *
- *
- */
-int CDataSource::makeStyleConfig(CStyleConfiguration *styleConfig, CDataSource *dataSource) { //,const char *styleName,const char *legendName,const char *renderMethod){
-  // CT::string errorMessage;
-  // CT::string renderMethodString = renderMethod;
-  //   CT::StackList<CT::string> sl = renderMethodString.splitToStack("/");
-  //   if(sl.size()==2){
-  //     renderMethodString.copy(&sl[0]);
-  //     //if(sl[1].equals("HQ")){CDBDebug("32bitmode");}
-  //   }
-
-  //   styleConfig->renderMethod = CDataSource::getRenderMethodFromString(&renderMethodString);
-  //   if(styleConfig->renderMethod == RM_UNDEFINED){errorMessage.print("rendermethod %s",renderMethod); }
-  //   styleConfig->styleIndex   = getServerStyleIndexByName(styleName,dataSource->cfg->Style);
-  //   //if(styleConfig->styleIndex == -1){errorMessage.print("styleIndex %s",styleName); }
-  //   styleConfig->legendIndex  = getServerLegendIndexByName(legendName,dataSource->cfg->Legend);
-  //   if(styleConfig->legendIndex == -1){errorMessage.print("legendIndex %s",legendName); }
-  //
-  //   if(errorMessage.length()>0){
-  //     CDBError("Unable to configure style: %s is invalid",errorMessage.c_str());
-  //     return -1;
-  //   }
-  //
-  // Set defaults
-  CStyleConfiguration *s = styleConfig;
-  s->shadeInterval = 0.0f;
-  s->contourIntervalL = 0.0f;
-  s->contourIntervalH = 0.0f;
-  s->legendScale = 0.0f;
-  s->legendOffset = 0.0f;
-  s->legendLog = 0.0f;
-  s->legendLowerRange = 0.0f;
-  s->legendUpperRange = 0.0f;
-  s->smoothingFilter = 0;
-  s->hasLegendValueRange = false;
-
-  float min = 0.0f;
-  float max = 0.0f;
-  s->minMaxSet = false;
-
-  if (s->styleIndex != -1) {
-    // Get info from style
-    CServerConfig::XMLE_Style *style = dataSource->cfg->Style[s->styleIndex];
-    s->styleConfig = style;
-    if (style->Scale.size() > 0) s->legendScale = parseFloat(style->Scale[0]->value.c_str());
-    if (style->Offset.size() > 0) s->legendOffset = parseFloat(style->Offset[0]->value.c_str());
-    if (style->Log.size() > 0) s->legendLog = parseFloat(style->Log[0]->value.c_str());
-
-    if (style->ContourIntervalL.size() > 0) s->contourIntervalL = parseFloat(style->ContourIntervalL[0]->value.c_str());
-    if (style->ContourIntervalH.size() > 0) s->contourIntervalH = parseFloat(style->ContourIntervalH[0]->value.c_str());
-    s->shadeInterval = s->contourIntervalL;
-    if (style->ShadeInterval.size() > 0) s->shadeInterval = parseFloat(style->ShadeInterval[0]->value.c_str());
-    if (style->SmoothingFilter.size() > 0) s->smoothingFilter = parseInt(style->SmoothingFilter[0]->value.c_str());
-
-    if (style->ValueRange.size() > 0) {
-      s->hasLegendValueRange = true;
-      s->legendLowerRange = parseFloat(style->ValueRange[0]->attr.min.c_str());
-      s->legendUpperRange = parseFloat(style->ValueRange[0]->attr.max.c_str());
-    }
-
-    if (style->Min.size() > 0) {
-      min = parseFloat(style->Min[0]->value.c_str());
-      s->minMaxSet = true;
-    }
-    if (style->Max.size() > 0) {
-      max = parseFloat(style->Max[0]->value.c_str());
-      s->minMaxSet = true;
-    }
-
-    s->contourLines = &style->ContourLine;
-    s->shadeIntervals = &style->ShadeInterval;
-    s->symbolIntervals = &style->SymbolInterval;
-    s->featureIntervals = &style->FeatureInterval;
-
-    if (style->Legend.size() > 0) {
-      if (style->Legend[0]->attr.tickinterval.empty() == false) {
-        styleConfig->legendTickInterval = parseDouble(style->Legend[0]->attr.tickinterval.c_str());
-      }
-      if (style->Legend[0]->attr.tickround.empty() == false) {
-        styleConfig->legendTickRound = parseDouble(style->Legend[0]->attr.tickround.c_str());
-      }
-      if (style->Legend[0]->attr.fixedclasses.equals("true")) {
-        styleConfig->legendHasFixedMinMax = true;
-      }
-    }
-  }
-
-  // Legend settings can always be overriden in the layer itself!
-  CServerConfig::XMLE_Layer *layer = dataSource->cfgLayer;
-  if (layer->Scale.size() > 0) s->legendScale = parseFloat(layer->Scale[0]->value.c_str());
-  if (layer->Offset.size() > 0) s->legendOffset = parseFloat(layer->Offset[0]->value.c_str());
-  if (layer->Log.size() > 0) s->legendLog = parseFloat(layer->Log[0]->value.c_str());
-
-  if (layer->ContourIntervalL.size() > 0) s->contourIntervalL = parseFloat(layer->ContourIntervalL[0]->value.c_str());
-  if (layer->ContourIntervalH.size() > 0) s->contourIntervalH = parseFloat(layer->ContourIntervalH[0]->value.c_str());
-  if (s->shadeInterval == 0.0f) s->shadeInterval = s->contourIntervalL;
-  if (layer->ShadeInterval.size() > 0) s->shadeInterval = parseFloat(layer->ShadeInterval[0]->value.c_str());
-  if (layer->SmoothingFilter.size() > 0) s->smoothingFilter = parseInt(layer->SmoothingFilter[0]->value.c_str());
-
-  if (layer->ValueRange.size() > 0) {
-    s->hasLegendValueRange = true;
-    s->legendLowerRange = parseFloat(layer->ValueRange[0]->attr.min.c_str());
-    s->legendUpperRange = parseFloat(layer->ValueRange[0]->attr.max.c_str());
-  }
-
-  if (layer->Min.size() > 0) {
-    min = parseFloat(layer->Min[0]->value.c_str());
-    s->minMaxSet = true;
-  }
-  if (layer->Max.size() > 0) {
-    max = parseFloat(layer->Max[0]->value.c_str());
-    s->minMaxSet = true;
-  }
-
-  if (layer->ContourLine.size() > 0) {
-    s->contourLines = &layer->ContourLine;
-  }
-  if (layer->ShadeInterval.size() > 0) {
-    s->shadeIntervals = &layer->ShadeInterval;
-  }
-  if (layer->FeatureInterval.size() > 0) {
-    s->featureIntervals = &layer->FeatureInterval;
-  }
-
-  if (layer->Legend.size() > 0) {
-    if (layer->Legend[0]->attr.tickinterval.empty() == false) {
-      styleConfig->legendTickInterval = parseDouble(layer->Legend[0]->attr.tickinterval.c_str());
-    }
-    if (layer->Legend[0]->attr.tickround.empty() == false) {
-      styleConfig->legendTickRound = parseDouble(layer->Legend[0]->attr.tickround.c_str());
-    }
-    if (layer->Legend[0]->attr.fixedclasses.equals("true")) {
-      styleConfig->legendHasFixedMinMax = true;
-    }
-  }
-
-  // Min and max can again be overriden by WMS extension settings
-  if (dataSource->srvParams->wmsExtensions.colorScaleRangeSet) {
-    s->minMaxSet = true;
-    min = dataSource->srvParams->wmsExtensions.colorScaleRangeMin;
-    max = dataSource->srvParams->wmsExtensions.colorScaleRangeMax;
-  }
-  // Log can again be overriden by WMS extension settings
-  if (dataSource->srvParams->wmsExtensions.logScale) {
-    s->legendLog = 10;
-  }
-
-  if (dataSource->srvParams->wmsExtensions.numColorBandsSet) {
-    float interval = (max - min) / dataSource->srvParams->wmsExtensions.numColorBands;
-    s->shadeInterval = interval;
-    s->contourIntervalL = interval;
-    if (dataSource->srvParams->wmsExtensions.numColorBands > 0 && dataSource->srvParams->wmsExtensions.numColorBands < 300) {
-      s->legendTickInterval = int((max - min) / double(dataSource->srvParams->wmsExtensions.numColorBands) + 0.5);
-      // s->legendTickRound = s->legendTickInterval;//pow(10,(log10(s->legendTickInterval)-1));
-      // if(s->legendTickRound > 0.1)s->legendTickRound =0.1;
-      //
-    }
-  }
-
-  // When min and max are given, calculate the scale and offset according to min and max.
-  if (s->minMaxSet) {
-#ifdef CDATASOURCE_DEBUG
-    CDBDebug("Found min and max in layer configuration");
-#endif
-    calculateScaleAndOffsetFromMinMax(s->legendScale, s->legendOffset, min, max, s->legendLog);
-
-    dataSource->stretchMinMax = false;
-    // s->legendScale=240/(max-min);
-    // s->legendOffset=min*(-s->legendScale);
-  }
-
-  // Some safety checks, we cannot create contourlines with negative values.
-  /*if(s->contourIntervalL<=0.0f||s->contourIntervalH<=0.0f){
-    if(s->renderMethod==contour||
-      s->renderMethod==bilinearcontour||
-      s->renderMethod==nearestcontour){
-      s->renderMethod=nearest;
-      }
-  }*/
-  CT::string styleDump = styleConfig->c_str();
-  //   #ifdef CDATASOURCE_DEBUG
-  //
-  //   CDBDebug("styleDump:\n%s",styleDump.c_str());
-  //   #endif
-  return 0;
-}
-
-/**
  * Returns a stringlist with all available legends for this datasource and chosen style.
  * @param dataSource pointer to the datasource
  * @param style pointer to the style to find the legends for
@@ -776,7 +584,7 @@ CT::PointerList<CT::string *> *CDataSource::getRenderMethodListForDataSource(CDa
   //   CDBDebug("RendermethodListString = %s",renderMethodList.c_str());
   // If still no list of rendermethods is found, use the default list
   if (renderMethodList.length() == 0) {
-    renderMethodList.copy("nearest");
+    renderMethodList.copy("generic");
   }
 
   CT::PointerList<CT::string *> *renderMethods = renderMethodList.splitToPointer(",");
@@ -957,7 +765,7 @@ CT::PointerList<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(C
 #ifdef CDATASOURCE_DEBUG
               CDBDebug("Pushing %s with legendIndex %d and styleIndex %d", styleName.c_str(), dLegendIndex, dStyleIndex);
 #endif
-              int status = makeStyleConfig(styleConfig, dataSource); //,styleNames->get(i)->c_str(),legendList->get(l)->c_str(),renderMethods->get(r)->c_str());
+              int status = styleConfig->makeStyleConfig(dataSource); //,styleNames->get(i)->c_str(),legendList->get(l)->c_str(),renderMethods->get(r)->c_str());
 
               if (status == -1) {
                 styleConfig->hasError = true;
@@ -1169,7 +977,7 @@ CStyleConfiguration *CDataSource::getStyle() {
     }
 
     if (_currentStyle->styleIndex == -1) {
-      int status = makeStyleConfig(_currentStyle, this);
+      int status = _currentStyle->makeStyleConfig(this);
       if (status == -1) {
         _currentStyle->hasError = true;
       }
@@ -1214,7 +1022,7 @@ int CDataSource::setStyle(const char *styleName) {
   }
 
   if (_currentStyle->styleIndex == -1) {
-    int status = makeStyleConfig(_currentStyle, this); //,styleNames->get(i)->c_str(),legendList->get(l)->c_str(),renderMethods->get(r)->c_str());
+    int status = _currentStyle->makeStyleConfig(this); //,styleNames->get(i)->c_str(),legendList->get(l)->c_str(),renderMethods->get(r)->c_str());
     if (status == -1) {
       _currentStyle->hasError = true;
     }

@@ -53,8 +53,11 @@ async def lifespan(_fastapiapp: FastAPI):
     logger.info("=== Stopping AsyncIO Scheduler ===")
     scheduler.shutdown()
 
+ADAGUC_AUTOSYNCLAYERMETADATA = os.getenv("ADAGUC_AUTOSYNCLAYERMETADATA", "TRUE")
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan) if ADAGUC_AUTOSYNCLAYERMETADATA == "TRUE" else FastAPI()
+
+
 
 # Set uvicorn access log format using middleware
 ACCESS_LOG_FORMAT = (

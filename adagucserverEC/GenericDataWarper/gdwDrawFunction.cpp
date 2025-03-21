@@ -22,18 +22,16 @@ template <typename T> void gdwDrawFunction(int x, int y, T val, void *_settings,
     int sourceDataHeight = genericDataWarper->warperState.sourceDataHeight;
 
     if (sourceDataPX < 0 || sourceDataPY < 0 || sourceDataPY > sourceDataHeight - 1 || sourceDataPX > sourceDataWidth - 1) return;
-    bool bilinear = true;
+
+    bool bilinear = drawSettings->drawInImage == DrawInImageBilinear || drawSettings->drawInDataGrid == DrawInDataGridBilinear;
+    bool nearest = drawSettings->drawInImage == DrawInImageNearest || drawSettings->drawInDataGrid == DrawInDataGridNearest;
+
     if (x >= 0 && y >= 0 && x < drawSettings->drawImage->Geo->dWidth && y < drawSettings->drawImage->Geo->dHeight) {
 
       if (drawSettings->smoothingFiter == 0) {
 
-        if (bilinear) {
-          if (sourceDataPY > sourceDataHeight - 2 || sourceDataPX > sourceDataWidth - 2) return;
-          // int xL = nfast_mod(sourceDataPX + 0, sourceDataWidth);
-          // int yT = nfast_mod(sourceDataPY + 0, sourceDataHeight);
-          // int xR = nfast_mod(sourceDataPX + 1, sourceDataWidth);
-          // int yB = nfast_mod(sourceDataPY + 1, sourceDataHeight);
-
+        // Bilinear
+        if (bilinear && sourceDataPY <= sourceDataHeight - 2 && sourceDataPX <= sourceDataWidth - 2) {
           int xL = (sourceDataPX + 0);
           int yT = (sourceDataPY + 0);
           int xR = (sourceDataPX + 1);
@@ -49,28 +47,32 @@ template <typename T> void gdwDrawFunction(int x, int y, T val, void *_settings,
           double gx1 = (1 - dx) * values[0][0] + dx * values[1][0];
           double gx2 = (1 - dx) * values[0][1] + dx * values[1][1];
           double billValue = (1 - dy) * gx1 + dy * gx2;
-          setPixelInDrawImage(x, y, billValue, drawSettings);
+          // Draw in drawImage pixels, interpolated with bilinear method
+          if (drawSettings->drawInImage == DrawInImageBilinear) {
+            setPixelInDrawImage(x, y, billValue, drawSettings);
+          }
 
-          if (genericDataWarper->warperState.destinationGrid != nullptr) {
+          if (drawSettings->drawInDataGrid == DrawInDataGridBilinear && genericDataWarper->warperState.destinationGrid != nullptr) {
             genericDataWarper->warperState.destinationGrid[x + y * drawSettings->drawImage->Geo->dWidth] = billValue;
           }
-        } else {
+        }
+
+        // Nearest
+        if (nearest) {
           int xL = (sourceDataPX + 0);
           int yT = (sourceDataPY + 0);
           double value = ((T *)sourceData)[xL + yT * sourceDataWidth];
-          setPixelInDrawImage(x, y, value, drawSettings);
-        }
-        // } else {
-        //   int xL = nfast_mod(sourceDataPX + 0, sourceDataWidth);
-        //   int yT = nfast_mod(sourceDataPY + 0, sourceDataHeight);
-        //   double v = ((T *)sourceData)[xL + yT * sourceDataWidth];
-        //   values[0][0] = v;
-        //   values[1][0] = v;
-        //   values[0][1] = v;
-        //   values[1][1] = v;
 
-        //   // double values[2][2] = {{0, 0}, {0, 0}};
-        // }
+          // Draw in drawImage pixels, interpolated with nearest method
+          if (drawSettings->drawInImage == DrawInImageNearest) {
+            setPixelInDrawImage(x, y, value, drawSettings);
+          }
+
+          if (drawSettings->drawInDataGrid == DrawInDataGridNearest && genericDataWarper->warperState.destinationGrid != nullptr) {
+            genericDataWarper->warperState.destinationGrid[x + y * drawSettings->drawImage->Geo->dWidth] = value;
+          }
+        }
+
       } else {
         // values[0][0] = smoothingAtLocation((float *)sourceData, drawSettings->smoothingDistanceMatrix, drawSettings->smoothingFiter, (float)drawSettings->dfNodataValue, sourceDataPX, sourceDataPY,
         //                                    sourceDataWidth, sourceDataHeight);

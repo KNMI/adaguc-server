@@ -19,28 +19,45 @@ CDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawImag
   settings.legendScale = styleConfiguration->legendScale;
   settings.legendOffset = styleConfiguration->legendOffset;
   settings.drawImage = drawImage;
-
-  /* Check the if we want to use discrete type */
   if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL && styleConfiguration->styleConfig->RenderSettings.size() == 1) {
-    CT::string renderHint = styleConfiguration->styleConfig->RenderSettings[0]->attr.renderhint;
-    if (renderHint.equals(RENDERHINT_DISCRETECLASSES)) {
+    /* Check the if we want to use discrete type */
+    auto renderSettings = styleConfiguration->styleConfig->RenderSettings[0];
+    if (renderSettings->attr.renderhint.equals(RENDERHINT_DISCRETECLASSES)) {
       settings.isUsingShadeIntervals = true;
+    }
+
+    /* Check if we want to interpolate nearest or bilinear */
+    if (renderSettings->attr.render.equals(RENDERSETTINGS_RENDER_BILINEAR)) {
+      settings.drawInImage = DrawInImageBilinear;
+
+    } else if (renderSettings->attr.render.equals(RENDERSETTINGS_RENDER_SHADED)) {
+      settings.drawInImage = DrawInImageBilinear;
+    } else if (renderSettings->attr.render.equals(RENDERSETTINGS_RENDER_CONTOUR)) {
+      settings.drawInDataGrid = DrawInDataGridBilinear;
+    } else {
+      settings.drawInImage = DrawInImageNearest;
     }
   }
 
   /* Make a shorthand vector from the shadeInterval configuration*/
   if (settings.isUsingShadeIntervals) {
     int numShadeDefs = (int)styleConfiguration->shadeIntervals->size();
-    settings.intervals.reserve(numShadeDefs);
-    for (int j = 0; j < numShadeDefs; j++) {
-      CServerConfig::XMLE_ShadeInterval *shadeInterVal = ((*styleConfiguration->shadeIntervals)[j]);
-      settings.intervals.push_back(CDrawFunctionSettings::Interval(shadeInterVal->attr.min.toFloat(), shadeInterVal->attr.max.toFloat(), CColor(shadeInterVal->attr.fillcolor.c_str())));
-      /* Check for bgcolor */
-      if (j == 0) {
-        if (shadeInterVal->attr.bgcolor.empty() == false) {
-          settings.bgColorDefined = true;
-          settings.bgColor = CColor(shadeInterVal->attr.bgcolor.c_str());
+    if (numShadeDefs > 0) {
+      if (((*styleConfiguration->shadeIntervals)[0])->value.empty()) {
+        settings.intervals.reserve(numShadeDefs);
+        for (int j = 0; j < numShadeDefs; j++) {
+          CServerConfig::XMLE_ShadeInterval *shadeInterVal = ((*styleConfiguration->shadeIntervals)[j]);
+          settings.intervals.push_back(CDrawFunctionSettings::Interval(shadeInterVal->attr.min.toFloat(), shadeInterVal->attr.max.toFloat(), CColor(shadeInterVal->attr.fillcolor.c_str())));
+          /* Check for bgcolor */
+          if (j == 0) {
+            if (shadeInterVal->attr.bgcolor.empty() == false) {
+              settings.bgColorDefined = true;
+              settings.bgColor = CColor(shadeInterVal->attr.bgcolor.c_str());
+            }
+          }
         }
+      } else {
+        settings.shadeInterval = ((*styleConfiguration->shadeIntervals)[0])->value.toDouble();
       }
     }
   }
