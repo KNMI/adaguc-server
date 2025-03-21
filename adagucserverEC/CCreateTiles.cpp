@@ -231,7 +231,7 @@ int CCreateTiles::createTilesForFile(CDataSource *dataSource, int, CT::string fi
     }
     CDBDebug("dataSource->requiredDims value %s", dataSource->requiredDims[0]->value.c_str());
 
-    CDBStore::Store *store = dbAdapter->getFilesAndIndicesForDimensions(dataSource, 3000);
+    CDBStore::Store *store = dbAdapter->getFilesAndIndicesForDimensions(dataSource, 3000, false);
     if (store == NULL) {
       CDBError("Unable to get results");
       return 1;
@@ -368,11 +368,11 @@ int CCreateTiles::createTilesForFile(CDataSource *dataSource, int, CT::string fi
                   if (baseOnRootDataFile) {
                     ds.queryBBOX = 0;
                     ds.queryLevel = 1; // TODO MAKE CONFIGURABLE
-                    store = dbAdapter->getFilesAndIndicesForDimensions(dataSource, 1);
+                    store = dbAdapter->getFilesAndIndicesForDimensions(dataSource, 1, false);
                   } else {
                     ds.queryBBOX = 1;
                     ds.queryLevel = level - 1;
-                    store = dbAdapter->getFilesAndIndicesForDimensions(&ds, 3000);
+                    store = dbAdapter->getFilesAndIndicesForDimensions(&ds, 3000, false);
                   }
 
                   if (store != NULL) {
@@ -386,7 +386,7 @@ int CCreateTiles::createTilesForFile(CDataSource *dataSource, int, CT::string fi
                       CDBDebug("Finding root, dataSource->requiredDims.size() = %d", dataSource->requiredDims.size());
 #endif
 
-                      store = dbAdapter->getFilesAndIndicesForDimensions(dataSource, 1);
+                      store = dbAdapter->getFilesAndIndicesForDimensions(dataSource, 1, false);
                     }
                     if (store == NULL) {
                       CREPORT_ERROR_NODOC("Found no data!", CReportMessage::Categories::GENERAL);
