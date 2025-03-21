@@ -481,14 +481,13 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
         offsets.push_back(offsetDBZV);
       }
     }
-
-    /*Setting geographical projection parameters of input Cartesian grid.*/
-    CT::string scanProj4;
-
-    scanProj4.print("+proj=aeqd +a=6378.137 +b=6356.752 +R_A +lat_0=%.3f +lon_0=%.3f +x_0=0 +y_0=0", radarLat, radarLon);
     if (!projectionRequired) {
       return 0;
     }
+
+    /*Setting geographical projection parameters of input Cartesian grid.*/
+    CT::string scanProj4;
+    scanProj4.print("+proj=aeqd +a=6378.137 +b=6356.752 +R_A +lat_0=%.3f +lon_0=%.3f +x_0=0 +y_0=0", radarLat, radarLon);
     CImageWarper radarProj;
     radarProj.initreproj(scanProj4.c_str(), dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
 
@@ -497,7 +496,6 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
     int ir, ia;
     double scan_elevation_rad = scan_elevation * M_PI / 180.0;
     double four_thirds_radius = 6371.0 * 4.0 / 3.0;
-    double radar_height = 0.0;          // Radar height is not present in KNMI HDF5 format, but it is in ODIM format so it could be used there.
     float *p = (float *)new2DVar->data; // ptr to store data
 
     for (int row = 0; row < height; row++) {
@@ -515,7 +513,7 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
           *p++ = FLT_MAX;
           continue;
         }
-        ground_height = ((cos(scan_elevation_rad) * (four_thirds_radius + radar_height)) / cos(scan_elevation_rad + (ground_range / four_thirds_radius))) - four_thirds_radius;
+        ground_height = ((cos(scan_elevation_rad) * (four_thirds_radius + radarHeight)) / cos(scan_elevation_rad + (ground_range / four_thirds_radius))) - four_thirds_radius;
         range = ((ground_height + four_thirds_radius) * sin(ground_range / four_thirds_radius)) / cos(scan_elevation_rad);
         azim = atan2(x, y) * 180.0 / M_PI;
         ir = (int)(range / scan_rscale);
