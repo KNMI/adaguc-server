@@ -1,3 +1,6 @@
+**Version 2.31.2 2025-03-19**
+- Add debugging config for vscode (launch.json)
+
 **Version 2.31.1 2025-03-19**
 - Fix tests for convert h5 volscan not working for psql
 
