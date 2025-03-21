@@ -1302,7 +1302,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
       if (!dataSource->cfgLayer->TileSettings[0]->attr.maxtilesinimage.empty()) {
         maxTilesInImage = dataSource->cfgLayer->TileSettings[0]->attr.maxtilesinimage.toInt();
       }
-      store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource, maxTilesInImage);
+      store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource, maxTilesInImage, false);
       if (store == NULL) {
         CDBError("Unable to query bbox for tiles");
         return 1;
@@ -1317,7 +1317,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
         dataSource->nativeViewPortBBOX[2] = 2000000;
         dataSource->nativeViewPortBBOX[3] = 2000000;
         dataSource->queryBBOX = true;
-        store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource, 1);
+        store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource, 1, false);
         if (store == NULL) {
           CDBError("Unable to query bbox for tiles");
           return 1;
@@ -1365,7 +1365,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
         }
       }
       // CDBDebug("Using maxquerylimit %d", maxQueryResultLimit);
-      store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource, maxQueryResultLimit);
+      store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource, maxQueryResultLimit, true);
     }
 
     if (store == NULL) {
