@@ -24,7 +24,6 @@ add_library(
     CAutoResource.h
     CCairoPlotter.cpp
     CCairoPlotter.h
-    CColor.h
     CConvertADAGUCPoint.cpp
     CConvertADAGUCPoint.h
     CConvertADAGUCVector.cpp
@@ -87,7 +86,26 @@ add_library(
     utils/UpdateLayerMetadata.cpp
     utils/ConfigurationUtils.h
     utils/ConfigurationUtils.cpp    
+    GenericDataWarper/gdwDrawTriangle.h
+    GenericDataWarper/gdwDrawTriangle.cpp    
+    GenericDataWarper/gdwDrawFunction.h
+    GenericDataWarper/gdwDrawFunction.cpp    
+    GenericDataWarper/CGenericDataWarper.cpp
+    GenericDataWarper/CGenericDataWarper.h
+    GenericDataWarper/CImgWarpGeneric.cpp
+    GenericDataWarper/CImgWarpGeneric.h
+    GenericDataWarper/gdwFindPixelExtent.cpp
+    GenericDataWarper/gdwFindPixelExtent.h
     Types/LayerMetadataType.h
+    Types/CColor.h
+    Types/CColor.cpp
+    Types/DrawShadeDefinition.h
+    Types/DrawContourDefinition.h
+    Types/DrawPoint.h
+    Types/BBOX.h
+    Types/BBOX.cpp
+    Types/ProjectionStore.h
+    Types/ProjectionStore.cpp 
     CDataPostProcessors/CDataPostProcessor_AddFeatures.cpp
     CDataPostProcessors/CDataPostProcessor_AddFeatures.h
     CDataPostProcessors/CDataPostProcessor_CDPDBZtoRR.cpp
@@ -130,8 +148,6 @@ add_library(
     CFillTriangle.h
     CGDALDataWriter.cpp
     CGDALDataWriter.h
-    CGenericDataWarper.cpp
-    CGenericDataWarper.h
     CGeoJSONData.cpp
     CGeoJSONData.h
     CGeoParams.cpp
@@ -142,6 +158,10 @@ add_library(
     CHandleMetadata.h
     CImageDataWriter.cpp
     CImageDataWriter.h
+    CImageOperators/smoothRasterField.h
+    CImageOperators/smoothRasterField.cpp
+    CImageOperators/drawContour.h
+    CImageOperators/drawContour.cpp
     CImageWarper.cpp
     CImageWarper.h
     CImgRenderPolylines.cpp
@@ -154,8 +174,6 @@ add_library(
     CImgWarpBilinear.h
     CImgWarpBoolean.cpp
     CImgWarpBoolean.h
-    CImgWarpGeneric.cpp
-    CImgWarpGeneric.h
     CImgWarpHillShaded.cpp
     CImgWarpHillShaded.h
     CImgWarpNearestNeighbour.cpp
@@ -204,6 +222,7 @@ add_library(
     json.c
     json.h
     LayerTypeLiveUpdate/LayerTypeLiveUpdate.cpp
+    LayerTypeLiveUpdate/LayerTypeLiveUpdate.h  
     LayerTypeLiveUpdate/LayerTypeLiveUpdate.h
     Types/BBOX.h
     Types/BBOX.cpp

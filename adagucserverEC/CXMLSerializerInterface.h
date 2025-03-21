@@ -38,6 +38,7 @@
   {                                                                                                                                                                                                    \
     pt2Class = new XMLE_##variableName();                                                                                                                                                              \
     pt2Class->level = rc;                                                                                                                                                                              \
+    pt2Class->parentName = #variableName;                                                                                                                                                              \
     variableName.push_back(((XMLE_##variableName *)pt2Class));                                                                                                                                         \
   }
 #define XMLE_SETOBJ(variableName)                                                                                                                                                                      \
@@ -51,12 +52,9 @@
     }                                                                                                                                                                                                  \
   }
 #define XMLE_DELOBJ(variableName)                                                                                                                                                                      \
-  {                                                                                                                                                                                                    \
-    {                                                                                                                                                                                                  \
-      for (size_t j = 0; j < variableName.size(); j++) {                                                                                                                                               \
-        delete variableName[j];                                                                                                                                                                        \
-      }                                                                                                                                                                                                \
-    }                                                                                                                                                                                                  \
+  {{for (size_t j = 0; j < variableName.size(); j++){delete variableName[j];                                                                                                                           \
+  }                                                                                                                                                                                                    \
+  }                                                                                                                                                                                                    \
   }
 
 /**
@@ -68,6 +66,7 @@ public:
   virtual ~CXMLObjectInterface() {}
   int level;
   CT::string value;
+  CT::string parentName;
   CXMLObjectInterface *pt2Class;
   virtual void addElement(CXMLObjectInterface *baseClass, int rc, const char *name, const char *value);
   virtual void addAttribute(const char *, const char *) {}
@@ -90,7 +89,7 @@ public:
   CXMLObjectInterface *currentNode;
   CXMLSerializerInterface *baseClass;
   virtual void addElementEntry(int rc, const char *name, const char *value) = 0;
-  virtual void addAttributeEntry(const char *name, const char *value) = 0;
+  virtual void addAttributeEntry(const char *parentName, const char *name, const char *value) = 0;
 
   int parse(const char *xmlData, size_t xmlSize);
   int parseFile(const char *xmlFile);

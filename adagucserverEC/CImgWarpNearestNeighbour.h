@@ -29,7 +29,7 @@
 #include <float.h>
 #include <pthread.h>
 #include "CImageWarperRenderInterface.h"
-#include "CGenericDataWarper.h"
+#include "GenericDataWarper/CGenericDataWarper.h"
 #include "CAreaMapper.h"
 #include "CDrawFunction.h"
 
@@ -420,8 +420,7 @@ private:
       sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
       sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
       sourceGeo.CRS = dataSource->nativeProj4;
-
-      GenericDataWarper genericDataWarper;
+      CGenericDataWarper genericDataWarper;
       switch (dataType) {
       case CDF_CHAR:
         genericDataWarper.render<char>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &drawFunction);

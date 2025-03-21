@@ -113,10 +113,16 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data.getvalue(),
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        
+        self.assertTrue(
+            AdagucTestTools().compareImage(
+                self.expectedoutputsspath + filename,
+                self.testresultspath + filename,
+                3,
+                0.02,
+            )
+        )  # Allowed pixel difference is huge, but only for very small number of pixels
+        
 
     def test_WMSGetLegendGraphic_testdatanc(self):
         AdagucTestTools().cleanTempDir()

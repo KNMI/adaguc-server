@@ -25,7 +25,7 @@
 
 #include "CImgWarpHillShaded.h"
 #include "CImageDataWriter.h"
-#include "CGenericDataWarper.h"
+#include "GenericDataWarper/CGenericDataWarper.h"
 
 const char *CImgWarpHillShaded::className = "CImgWarpHillShaded";
 
@@ -70,7 +70,7 @@ void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, C
   sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
   sourceGeo.CRS = dataSource->nativeProj4;
 
-  GenericDataWarper genericDataWarper;
+  CGenericDataWarper genericDataWarper;
   switch (dataType) {
   case CDF_CHAR:
     genericDataWarper.render<char>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &drawFunction);
