@@ -806,7 +806,7 @@ public:
   public:
     class Cattr {
     public:
-      CT::string settings, striding, renderer, scalewidth, scalecontours, renderhint, randomizefeatures, featuresoverlap, rendertextforvectors;
+      CT::string settings, striding, renderer, scalewidth, scalecontours, renderhint, randomizefeatures, featuresoverlap, rendertextforvectors, cliplegend;
     } attr;
     void addAttribute(const char *name, const char *value) {
       if (equals("settings", name)) {
@@ -835,6 +835,9 @@ public:
         return;
       } else if (equals("rendertextforvectors", name)) {
         attr.rendertextforvectors.copy(value);
+        return;
+      } else if (equals("cliplegend", name)) {
+        attr.cliplegend.copy(value);
         return;
       }
     }
