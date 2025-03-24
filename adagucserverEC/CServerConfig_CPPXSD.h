@@ -906,7 +906,7 @@ public:
     }
     class Cattr {
     public:
-      CT::string name;
+      CT::string name, title, abstract;
     } attr;
 
     void addElement(CXMLObjectInterface *baseClass, int rc, const char *name, const char *value) {
@@ -981,6 +981,13 @@ public:
     void addAttribute(const char *name, const char *value) {
       if (equals("name", name)) {
         attr.name.copy(value);
+        return;
+      } else if (equals("title", name)) {
+        attr.title.copy(value);
+        return;
+      }
+      if (equals("abstract", name)) {
+        attr.abstract.copy(value);
         return;
       }
     }

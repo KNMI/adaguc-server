@@ -25,43 +25,54 @@
 
 class CDataSource;
 
+typedef unsigned int RenderMethod;
+CT::string getRenderMethodAsString(RenderMethod renderMethod);
+RenderMethod getRenderMethodFromString(const char *_renderMethodString);
 class CStyleConfiguration {
+private:
+  void parseStyleInfo(CDataSource *dataSource, int styleIndex, int depth = 0);
+  void _reset();
+
 public:
-  typedef unsigned int RenderMethod;
-  static RenderMethod getRenderMethodFromString(CT::string *renderMethodString);
-  static void getRenderMethodAsString(CT::string *renderMethodString, RenderMethod renderMethod);
-  float shadeInterval, contourIntervalL, contourIntervalH;
-  float legendScale, legendOffset, legendLog;
-  float legendLowerRange, legendUpperRange; // Values in which values are visible (ValueRange)
-  int smoothingFilter;
+  bool minMaxSet;
   bool hasLegendValueRange;
   bool hasError;
   bool legendHasFixedMinMax; // True to fix the classes in the legend, False to determine automatically which values occur.
-  double legendTickInterval;
-  double legendTickRound;
-  bool minMaxSet;
+  int smoothingFilter;
   int legendIndex;
   int styleIndex;
+  float shadeInterval;
+  float contourIntervalL;
+  float contourIntervalH;
+  float legendScale;
+  float legendOffset;
+  float legendLog;
+  float legendLowerRange;
+  float legendUpperRange; // Values in which values are visible (ValueRange)
+  double legendTickInterval;
+  double legendTickRound;
+  double minValue;
+  double maxValue;
   RenderMethod renderMethod;
-  std::vector<CServerConfig::XMLE_ContourLine *> *contourLines;
-  std::vector<CServerConfig::XMLE_ShadeInterval *> *shadeIntervals;
-  std::vector<CServerConfig::XMLE_SymbolInterval *> *symbolIntervals;
-  std::vector<CServerConfig::XMLE_FeatureInterval *> *featureIntervals;
-  CServerConfig::XMLE_Style *styleConfig;
+  CT::string legendName;
   CT::string styleCompositionName;
   CT::string styleTitle;
   CT::string styleAbstract;
 
+  std::vector<CServerConfig::XMLE_ContourLine *> contourLines;
+  std::vector<CServerConfig::XMLE_RenderSettings *> renderSettings;
+  std::vector<CServerConfig::XMLE_ShadeInterval *> shadeIntervals;
+  std::vector<CServerConfig::XMLE_SymbolInterval *> *symbolIntervals;
+  std::vector<CServerConfig::XMLE_FeatureInterval *> *featureIntervals;
+
+  CServerConfig::XMLE_Style *styleConfig;
+
   CStyleConfiguration();
-  /**
-   * Resets styleConfiguration back to default
-   */
-  void reset();
 
   /**
    * Outputs styleConfiguration as string
    */
-  CT::string c_str();
+  CT::string dump();
 
   /**
    * Fills in the styleConfig object based on datasource,stylename, legendname and rendermethod

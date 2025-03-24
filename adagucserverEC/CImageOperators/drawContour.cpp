@@ -4,6 +4,7 @@
 #include <Types/DrawPoint.h>
 #include <set>
 #include <Types/DrawShadeDefinition.h>
+#include <Types/DrawContourDefinition.h>
 
 #define CONTOURDEFINITIONLOOKUPLENGTH 32
 #define DISTANCEFIELDTYPE unsigned int
@@ -18,6 +19,27 @@ bool IsTextTooClose(std::vector<Point> *textLocations, int x, int y) {
     }
   }
   return false;
+}
+
+void drawTextForContourLines(CDrawImage *drawImage, CServerConfig::XMLE_ContourLine *contourDefinition, int lineX, int lineY, int endX, int endY, std::vector<Point> *, float value, CColor textColor,
+                             CColor textStrokeColor, const char *fontLocation, float fontSize, float textStrokeWidth) {
+
+  /* Draw text */
+  CT::string text;
+  contourDefinition->attr.textformatting.empty() ? text.print(contourDefinition->attr.textformatting.c_str(), value) : text.print("%g", value);
+
+  double angle = atan2(lineX - endX, lineY - endY) - M_PI / 2;
+  double angleP = atan2(endY - lineY, endX - lineX) + M_PI / 2;
+
+  if (angle < -M_PI / 2 || angle > M_PI / 2) {
+    int x = lineX + cos(angleP) * (fontSize / 2);
+    int y = lineY + sin(angleP) * (fontSize / 2);
+    drawImage->setTextStroke(x, y, -angleP + M_PI / 2, text.c_str(), fontLocation, fontSize, textStrokeWidth, textStrokeColor, textColor);
+  } else {
+    int x = endX - cos(angleP) * (fontSize / 2);
+    int y = endY - sin(angleP) * (fontSize / 2);
+    drawImage->setTextStroke(x, y, angle, text.c_str(), fontLocation, fontSize, textStrokeWidth, textStrokeColor, textColor);
+  }
 }
 
 void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *valueField, int lineX, int lineY, int dImageWidth, int dImageHeight, float lineWidth, CColor lineColor, CColor textColor,
@@ -143,33 +165,33 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
   float scaledLineWidth = lineWidth * scaling;
 
   for (int j = 0; j < lineSegmentCounter; j++) {
-    // if (doDrawText) {
-    //   if (j % drawTextAtEveryNPixels == drawTextAngleNSteps && j + drawTextAngleNSteps5 < lineSegmentCounter) {
-    //     textOn = false;
-    //     if (IsTextTooClose(textLocations, lineSegmentsX[j], lineSegmentsY[j]) == false) {
-    //       textSkip = false;
-    //       textLocations->push_back(Point(lineSegmentsX[j], lineSegmentsY[j]));
-    //       float startX = lineSegmentsX[j];
-    //       float startY = lineSegmentsY[j];
-    //       float endX = lineSegmentsX[j + drawTextAngleNSteps5];
-    //       float endY = lineSegmentsY[j + drawTextAngleNSteps5];
-    //       //   this->drawTextForContourLines(drawImage, contourDefinition, startX, startY, endX, endY, textLocations, binnedLineSegmentsValue, textColor, textStrokeColor, fontLocation, fontSize *
-    //       //   scaling,
-    //       //                                 textStrokeWidth * scaling);
-    //       textOn = true;
-    //     } else {
-    //       textSkip = true;
-    //     }
-    //   }
-    //   if (j % drawTextAtEveryNPixels == drawTextAngleNSteps && textOn && !textSkip) {
-    //     drawImage->endLine(dashes, numDashes);
-    //   }
-    //   if (j % drawTextAtEveryNPixels > drawTextAngleNSteps5 || textSkip) {
-    //     drawImage->lineTo(lineSegmentsX[j], lineSegmentsY[j], scaledLineWidth, lineColor);
-    //   }
-    // } else {
-    drawImage->lineTo(lineSegmentsX[j], lineSegmentsY[j], scaledLineWidth, lineColor);
-    // }
+    if (doDrawText) {
+      if (j % drawTextAtEveryNPixels == drawTextAngleNSteps && j + drawTextAngleNSteps5 < lineSegmentCounter) {
+        textOn = false;
+        if (IsTextTooClose(textLocations, lineSegmentsX[j], lineSegmentsY[j]) == false) {
+          textSkip = false;
+          textLocations->push_back(Point(lineSegmentsX[j], lineSegmentsY[j]));
+          float startX = lineSegmentsX[j];
+          float startY = lineSegmentsY[j];
+          float endX = lineSegmentsX[j + drawTextAngleNSteps5];
+          float endY = lineSegmentsY[j + drawTextAngleNSteps5];
+          drawTextForContourLines(drawImage, contourDefinition, startX, startY, endX, endY, textLocations, binnedLineSegmentsValue, textColor, textStrokeColor, fontLocation, fontSize * scaling,
+                                  textStrokeWidth * scaling);
+
+          textOn = true;
+        } else {
+          textSkip = true;
+        }
+      }
+      if (j % drawTextAtEveryNPixels == drawTextAngleNSteps && textOn && !textSkip) {
+        drawImage->endLine(dashes, numDashes);
+      }
+      if (j % drawTextAtEveryNPixels > drawTextAngleNSteps5 || textSkip) {
+        drawImage->lineTo(lineSegmentsX[j], lineSegmentsY[j], scaledLineWidth, lineColor);
+      }
+    } else {
+      drawImage->lineTo(lineSegmentsX[j], lineSegmentsY[j], scaledLineWidth, lineColor);
+    }
   }
 
   drawImage->endLine(dashes, numDashes);
@@ -202,7 +224,7 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
       if (val[0] != fNodataValue && val[1] != fNodataValue && val[2] != fNodataValue && val[3] != fNodataValue && val[0] == val[0] && val[1] == val[1] && val[2] == val[2] && val[3] == val[3]) {
 
         int mask = 1;
-        for (auto contourLine : (*styleConfiguration->contourLines)) {
+        for (auto contourLine : (styleConfiguration->contourLines)) {
           // Check for lines at specified classes
           if (contourLine->attr.classes.empty() == false) {
             auto classes = contourLine->attr.classes.splitToStack(",");
@@ -261,8 +283,8 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
   CColor defaultTextColor = CColor(0, 0, 0, 255);
   CColor defaultTextStrokeColor = CColor(0, 0, 0, 0);
 
-  CDBDebug("B %d", styleConfiguration->contourLines->size());
-  for (auto contourLine : (*styleConfiguration->contourLines)) {
+  // CDBDebug("B %d", styleConfiguration->contourLines.size());
+  for (auto contourLine : (styleConfiguration->contourLines)) {
 
     CColor lineColor = contourLine->attr.linecolor.empty() ? defaultLineColor : CColor(contourLine->attr.linecolor);
     CColor textColor = contourLine->attr.textcolor.empty() ? defaultTextColor : CColor(contourLine->attr.textcolor);

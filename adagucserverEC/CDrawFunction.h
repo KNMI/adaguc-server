@@ -47,7 +47,7 @@ public:
   int smoothingFiter = 0;
 };
 
-CDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawImage *drawImage, const CStyleConfiguration *styleConfiguration);
+CDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration);
 
 template <class T> void setPixelInDrawImage(int x, int y, T val, CDrawFunctionSettings *settings) {
   bool isNodata = false;

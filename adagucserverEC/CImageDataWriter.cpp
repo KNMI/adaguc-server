@@ -1419,11 +1419,11 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
 
   CImageWarperRenderInterface *imageWarperRenderer;
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-  CStyleConfiguration::RenderMethod renderMethod = styleConfiguration->renderMethod;
+  RenderMethod renderMethod = styleConfiguration->renderMethod;
 
   /** Apply FeatureInterval config */
-  if (styleConfiguration->featureIntervals != NULL && styleConfiguration->shadeIntervals != NULL) {
-    if (styleConfiguration->featureIntervals->size() > 0) { //&&styleConfiguration->shadeIntervals->size()==0){
+  if (styleConfiguration->featureIntervals != NULL) {
+    if (styleConfiguration->featureIntervals->size() > 0) {
 
       int numFeatures = 0;
       try {
@@ -1461,7 +1461,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
               std::vector<CImageDataWriter::IndexRange> ranges = getIndexRangesForRegex(featureInterval->attr.match, attributeValues, numFeatures);
               for (size_t i = 0; i < ranges.size(); i++) {
                 CServerConfig::XMLE_ShadeInterval *shadeInterval = new CServerConfig::XMLE_ShadeInterval();
-                styleConfiguration->shadeIntervals->push_back(shadeInterval);
+                styleConfiguration->shadeIntervals.push_back(shadeInterval);
                 shadeInterval->attr.min.print("%d", ranges[i].min);
                 shadeInterval->attr.max.print("%d", ranges[i].max);
                 shadeInterval->attr.fillcolor = featureInterval->attr.fillcolor;
@@ -1557,27 +1557,26 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
         bilinearSettings.printconcat("shadeInterval=%0.12f;contourBigInterval=%0.12f;contourSmallInterval=%0.12f;", styleConfiguration->shadeInterval, styleConfiguration->contourIntervalH,
                                      styleConfiguration->contourIntervalL);
 
-        if (styleConfiguration->shadeIntervals != NULL) {
-          for (size_t j = 0; j < styleConfiguration->shadeIntervals->size(); j++) {
-            CServerConfig::XMLE_ShadeInterval *shadeInterval = ((*styleConfiguration->shadeIntervals)[j]);
-            if (shadeInterval->attr.min.empty() == false && shadeInterval->attr.max.empty() == false) {
-              bilinearSettings.printconcat("shading=min(%s)$max(%s)$", shadeInterval->attr.min.c_str(), shadeInterval->attr.max.c_str());
-              if (shadeInterval->attr.fillcolor.empty() == false) {
-                bilinearSettings.printconcat("$fillcolor(%s)$", shadeInterval->attr.fillcolor.c_str());
-              }
-              if (!shadeInterval->attr.bgcolor.empty()) {
-                bilinearSettings.printconcat("$bgcolor(%s)$", shadeInterval->attr.bgcolor.c_str());
-              }
-              bilinearSettings.printconcat(";");
+        for (size_t j = 0; j < styleConfiguration->shadeIntervals.size(); j++) {
+          CServerConfig::XMLE_ShadeInterval *shadeInterval = ((styleConfiguration->shadeIntervals)[j]);
+          if (shadeInterval->attr.min.empty() == false && shadeInterval->attr.max.empty() == false) {
+            bilinearSettings.printconcat("shading=min(%s)$max(%s)$", shadeInterval->attr.min.c_str(), shadeInterval->attr.max.c_str());
+            if (shadeInterval->attr.fillcolor.empty() == false) {
+              bilinearSettings.printconcat("$fillcolor(%s)$", shadeInterval->attr.fillcolor.c_str());
             }
+            if (!shadeInterval->attr.bgcolor.empty()) {
+              bilinearSettings.printconcat("$bgcolor(%s)$", shadeInterval->attr.bgcolor.c_str());
+            }
+            bilinearSettings.printconcat(";");
           }
         }
       }
+
       if (drawContour == true) {
 
-        if (styleConfiguration->contourLines != NULL) {
-          for (size_t j = 0; j < styleConfiguration->contourLines->size(); j++) {
-            CServerConfig::XMLE_ContourLine *contourLine = ((*styleConfiguration->contourLines)[j]);
+        if (styleConfiguration->contourLines.size() > 0) {
+          for (size_t j = 0; j < styleConfiguration->contourLines.size(); j++) {
+            CServerConfig::XMLE_ContourLine *contourLine = ((styleConfiguration->contourLines)[j]);
             // Check if we have a interval contour line or a contourline with separate classes
             if (contourLine->attr.interval.empty() == false) {
               // ContourLine interval
@@ -1705,8 +1704,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
       CDBDebug("Using CImgRenderPoints");
 #endif
       imageWarperRenderer = new CImgRenderPoints();
-      CT::string renderMethodAsString;
-      CStyleConfiguration::getRenderMethodAsString(&renderMethodAsString, renderMethod);
+      CT::string renderMethodAsString = getRenderMethodAsString(renderMethod);
       imageWarperRenderer->set(renderMethodAsString.c_str());
       imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
       delete imageWarperRenderer;
@@ -1722,8 +1720,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
       CDBDebug("Using CImgRenderPolylines");
 #endif
       imageWarperRenderer = new CImgRenderPolylines();
-      CT::string renderMethodAsString;
-      CStyleConfiguration::getRenderMethodAsString(&renderMethodAsString, renderMethod);
+      CT::string renderMethodAsString = getRenderMethodAsString(renderMethod);
       imageWarperRenderer->set(renderMethodAsString.c_str());
       imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
       delete imageWarperRenderer;
@@ -3550,8 +3547,8 @@ CColor CImageDataWriter::getPixelColorForValue(CDataSource *dataSource, float va
   }
   if (!isNodata) {
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-    for (size_t j = 0; j < styleConfiguration->shadeIntervals->size(); j++) {
-      CServerConfig::XMLE_ShadeInterval *shadeInterval = ((*styleConfiguration->shadeIntervals)[j]);
+    for (size_t j = 0; j < styleConfiguration->shadeIntervals.size(); j++) {
+      CServerConfig::XMLE_ShadeInterval *shadeInterval = ((styleConfiguration->shadeIntervals)[j]);
       if (shadeInterval->attr.min.empty() == false && shadeInterval->attr.max.empty() == false) {
         if ((val >= atof(shadeInterval->attr.min.c_str())) && (val < atof(shadeInterval->attr.max.c_str()))) {
           return CColor(shadeInterval->attr.fillcolor.c_str());

@@ -163,30 +163,29 @@ private:
 
     bool shade = false;
     if (styleConfiguration != NULL) {
-      if (styleConfiguration->shadeIntervals != NULL) {
-        if (styleConfiguration->shadeIntervals->size() > 0) {
-          shade = true;
-        }
+
+      if (styleConfiguration->shadeIntervals.size() > 0) {
+        shade = true;
       }
     }
 
     if (shade) {
       /* TODO: make use of drawfunction as well, less code duplication */
-      int numShadeDefs = (int)styleConfiguration->shadeIntervals->size();
+      int numShadeDefs = (int)styleConfiguration->shadeIntervals.size();
       T shadeDefMin[numShadeDefs];
       T shadeDefMax[numShadeDefs];
       CColor fillColors[numShadeDefs];
       CColor bgColor;
       bool hasBgColor = false;
       for (int j = 0; j < numShadeDefs; j++) {
-        CServerConfig::XMLE_ShadeInterval *featureInterval = ((*styleConfiguration->shadeIntervals)[j]);
-        shadeDefMin[j] = (T)featureInterval->attr.min.toDouble();
-        shadeDefMax[j] = (T)featureInterval->attr.max.toDouble();
-        fillColors[j] = CColor(featureInterval->attr.fillcolor.c_str());
+        CServerConfig::XMLE_ShadeInterval *shadeInterval = ((styleConfiguration->shadeIntervals)[j]);
+        shadeDefMin[j] = (T)shadeInterval->attr.min.toDouble();
+        shadeDefMax[j] = (T)shadeInterval->attr.max.toDouble();
+        fillColors[j] = CColor(shadeInterval->attr.fillcolor.c_str());
         if (j == 0) {
-          if (featureInterval->attr.bgcolor.empty() == false) {
+          if (shadeInterval->attr.bgcolor.empty() == false) {
             hasBgColor = true;
-            bgColor = CColor(featureInterval->attr.bgcolor.c_str());
+            bgColor = CColor(shadeInterval->attr.bgcolor.c_str());
           }
         }
       }
