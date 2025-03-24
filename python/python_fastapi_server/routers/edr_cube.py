@@ -14,10 +14,10 @@ import time
 from typing_extensions import Annotated
 
 from covjson_pydantic.coverage import Coverage, CoverageCollection
-from fastapi import HTTPException, Query, Request, APIRouter
+from fastapi import Query, Request, APIRouter
 from netCDF4 import Dataset
 
-from python.python_fastapi_server.routers.utils.edr_exception import exc_failed_call
+from .utils.edr_exception import exc_failed_call
 
 from .covjsonresponse import CovJSONResponse
 from .utils.edr_utils import (

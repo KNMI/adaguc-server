@@ -26,11 +26,7 @@ brotli==1.1.0
     #   brotli-asgi
 brotli-asgi==1.4.0
     # via -r requirements.in
-<<<<<<< HEAD
-cachetools==5.5.1
-=======
 cachetools==5.5.2
->>>>>>> 8ae2488068566e80fe172e721d9ac7e12c60c5b9
     # via -r requirements.in
 certifi==2025.1.31
     # via
@@ -101,11 +97,7 @@ packaging==24.2
     # via gunicorn
 pillow==10.4.0
     # via -r requirements.in
-<<<<<<< HEAD
-pydantic==2.10.5
-=======
 pydantic==2.10.6
->>>>>>> 8ae2488068566e80fe172e721d9ac7e12c60c5b9
     # via
     #   -r requirements.in
     #   covjson-pydantic
