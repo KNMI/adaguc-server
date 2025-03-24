@@ -54,13 +54,13 @@ edr-pydantic==0.3.0
     # via -r requirements.in
 exceptiongroup==1.2.2
     # via anyio
-fastapi==0.115.11
+fastapi==0.115.12
     # via -r requirements.in
 geojson-pydantic==1.2.0
     # via -r requirements.in
 geomet==1.1.0
     # via -r requirements.in
-gunicorn==22.0.0
+gunicorn==23.0.0
     # via -r requirements.in
 h11==0.14.0
     # via
