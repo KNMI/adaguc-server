@@ -22,6 +22,18 @@ jobs:
             runner: ubuntu-24.04
           - platform: linux/arm64
             runner: ubuntu-24.04-arm
+
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: adaguc
+          POSTGRES_PASSWORD: adaguc
+          POSTGRES_DB: adaguc
+        ports:
+        - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
     steps:
       - name: Prepare
         run: |
@@ -59,6 +71,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           tags: ${{ env.REGISTRY_IMAGE }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
+          network: ${{ job.container.network }}
 
       - name: Run Trivy vulnerability scanner
         if: matrix.platform == 'linux/amd64'  # Run trivy only once
