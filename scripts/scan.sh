@@ -106,7 +106,6 @@ if [[ -n "${ADAGUC_DATASET}" ]] && [ "${ADAGUC_DATASET}" != "*" ]; then
   command="${ADAGUC_PATH}/bin/adagucserver --updatedb ${NOCLEAN} ${VERBOSE} ${RESCAN} ${RECREATETABLES} --config ${ADAGUC_CONFIG},${ADAGUC_DATASET}"
   echo $command
   stdbuf -i0 -o0 -e0 $command
-  $command
   OUT=$?
   echo adagucserver --updatedb exited with status code ${OUT}
   if [ ${OUT} -ne 0 ]; then
