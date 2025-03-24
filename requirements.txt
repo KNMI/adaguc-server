@@ -54,7 +54,7 @@ edr-pydantic==0.3.0
     # via -r requirements.in
 exceptiongroup==1.2.2
     # via anyio
-fastapi==0.115.11
+fastapi==0.115.12
     # via -r requirements.in
 geojson-pydantic==1.2.0
     # via -r requirements.in
