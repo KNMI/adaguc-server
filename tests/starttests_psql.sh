@@ -25,7 +25,7 @@ export ADAGUC_AUTOWMS_DIR=${ADAGUC_PATH}/data/datasets/
 # You cannot drop the database you are currently logged in as
 
 # db_host=$([[ "${TEST_IN_CONTAINER}" == 1  ]] && echo "host.docker.internal" || echo "localhost")
-db_host="postgres"
+db_host="localhost"
 
 export ADAGUC_DB="user=adaguc password=adaguc host=${db_host} dbname=postgres"
 psql "$ADAGUC_DB" -c "DROP DATABASE IF EXISTS adaguc_test;"
