@@ -132,23 +132,24 @@ async def get_point_value(
     parameters: list[str],
     datetime_par: str,
     vertical_dim: str = None,
-    custom_dims: str = None,
+    custom_dims: list[str] | None = None,
 ):
     """Returns information in EDR format for a given collection and position"""
-    urlrequest = (
-        f"SERVICE=WMS&VERSION=1.3.0&REQUEST=GetPointValue&CRS=EPSG:4326"
-        f"&DATASET={dataset_name}&QUERY_LAYERS={','.join(parameters)}"
-        f"&X={coords[0]}&Y={coords[1]}&INFO_FORMAT=application/json"
-    )
-    if datetime_par:
-        urlrequest += f"&TIME={datetime_par}"
 
-    if instance:
-        urlrequest += f"&DIM_reference_time={instance_to_iso(instance)}"
-    if vertical_dim:
-        urlrequest += f"&{vertical_dim}"
-    if custom_dims:
-        urlrequest += custom_dims
+    custom_dims = [] if custom_dims is None else custom_dims
+    urlrequest = "&".join(
+        [
+            f"dataset={dataset_name}",
+            "service=wms&version=1.3.0&request=GetPointValue&info_format=application/json&crs=EPSG:4326",
+            f"query_layers={','.join(parameters)}",
+            f"X={coords[0]}",
+            f"Y={coords[1]}",
+            f"time={datetime_par}" if datetime_par else "",
+            f"dim_reference_time={instance_to_iso(instance)}",
+            *custom_dims,
+            f"{vertical_dim}" if len(vertical_dim) > 0 else "",
+        ]
+    )
 
     status, response, headers = await call_adaguc(url=urlrequest.encode("UTF-8"))
     if status == 0:

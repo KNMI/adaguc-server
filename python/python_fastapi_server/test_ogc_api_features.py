@@ -33,11 +33,16 @@ def setup_test_data():
         )
 
 
+# Call this once during the whole pytest session
+@pytest.fixture(scope="session", autouse=True)
+def ingest_data():
+    set_environ()
+    setup_test_data()
+
+
 @pytest.fixture(name="client")
 def fixture_client():
     # Initialize adaguc-server
-    set_environ()
-    setup_test_data()
     yield TestClient(app)
 
 

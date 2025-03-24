@@ -803,6 +803,7 @@ def get_instance(
 def get_parameters(
     metadata: dict, collection_name: str, parameter_name_par: str
 ) -> list[str]:
+    # TODO: this crashes if you don't pass a parameter name
     parameters = parameter_name_par.split(",")
     for param in parameters:
         print("PPP:", param, param in metadata[collection_name])

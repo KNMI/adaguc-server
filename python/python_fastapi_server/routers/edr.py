@@ -53,9 +53,10 @@ async def edr_exception_handler(_, exc: EdrException):
     """
     Handler for EDR exceptions
     """
+
     return JSONResponse(
-        status_code=exc.code,
-        content={"code": str(exc.code), "description": exc.description},
+        status_code=exc.status_code,
+        content={"code": str(exc.status_code), "description": exc.detail},
     )
 
 
