@@ -20,13 +20,16 @@ export ADAGUC_DATASET_DIR=${ADAGUC_PATH}/data/config/datasets/
 export ADAGUC_DATA_DIR=${ADAGUC_PATH}/data/datasets/
 export ADAGUC_AUTOWMS_DIR=${ADAGUC_PATH}/data/datasets/
 
+if [[ $CI == "true" ]]; then
+    # When running in CI, psql will be available on localhost
+    db_host="localhost";
+else
+    db_host=$([[ "${TEST_IN_CONTAINER}" == 1  ]] && echo "host.docker.internal" || echo "localhost")
+fi
+
 # This assumes you can reach psql on port 5432
 # Tests will use a separate `adaguc_test` database
 # You cannot drop the database you are currently logged in as
-
-# db_host=$([[ "${TEST_IN_CONTAINER}" == 1  ]] && echo "host.docker.internal" || echo "localhost")
-db_host="localhost"
-
 export ADAGUC_DB="user=adaguc password=adaguc host=${db_host} dbname=postgres"
 psql "$ADAGUC_DB" -c "DROP DATABASE IF EXISTS adaguc_test;"
 psql "$ADAGUC_DB" -c "CREATE DATABASE adaguc_test;"
