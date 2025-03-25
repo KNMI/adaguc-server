@@ -73,7 +73,7 @@ if [[ -n "${ADAGUC_DATASET}" &&  -n "${ADAGUC_DATAFILE}" ]]; then
   echo "Adding file [${ADAGUC_DATAFILE}] to dataset [${ADAGUC_DATASET}]:"
   command="${ADAGUC_PATH}/bin/adagucserver --updatedb ${NOCLEAN} ${VERBOSE} ${RESCAN} ${RECREATETABLES} --config ${ADAGUC_CONFIG},${ADAGUC_DATASET} --path ${ADAGUC_DATAFILE}"
   echo $command
-  stdbuf -i0 -o0 -e0 $command
+  $command
   OUT=$?
   if [ ${OUT} -ne 0 ]; then
     STATUSCODE=${OUT}
@@ -91,7 +91,7 @@ if [[ -n "${ADAGUC_DATAFILE}" ]]; then
   echo "Adding file [${ADAGUC_DATAFILE}] to dataset [${alldatasets}]:"
   command="${ADAGUC_PATH}/bin/adagucserver --updatedb --autofinddataset ${NOCLEAN} ${VERBOSE} ${RESCAN} ${RECREATETABLES} --config ${ADAGUC_CONFIG} --path ${ADAGUC_DATAFILE}"
   echo $command
-  stdbuf -i0 -o0 -e0 $command
+  $command
   OUT=$?
   if [ ${OUT} -ne 0 ]; then
     STATUSCODE=1
@@ -105,9 +105,8 @@ if [[ -n "${ADAGUC_DATASET}" ]] && [ "${ADAGUC_DATASET}" != "*" ]; then
   echo "Scanning full dataset [${ADAGUC_DATASET}]:"
   command="${ADAGUC_PATH}/bin/adagucserver --updatedb ${NOCLEAN} ${VERBOSE} ${RESCAN} ${RECREATETABLES} --config ${ADAGUC_CONFIG},${ADAGUC_DATASET}"
   echo $command
-  stdbuf -i0 -o0 -e0 $command
+  $command
   OUT=$?
-  echo adagucserver --updatedb exited with status code ${OUT}
   if [ ${OUT} -ne 0 ]; then
     STATUSCODE=1
   fi
