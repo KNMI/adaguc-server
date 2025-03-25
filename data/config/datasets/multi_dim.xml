@@ -12,7 +12,7 @@
     <Variable>testdata</Variable>
     <Styles>auto</Styles>
     <Dimension name="time" units="ISO8601" interval="PT1H" default="min">time</Dimension>
-    <Dimension name="height" units="m" type="dimtype_vertical">height</Dimension>
+    <Dimension name="height" units="m" type="vertical">height</Dimension>
     <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension> 
   </Layer>
   
@@ -22,7 +22,7 @@
     <Variable>testdata2</Variable>
     <Styles>auto</Styles>
     <Dimension name="time" units="ISO8601" interval="PT1H" default="min">time</Dimension>
-    <Dimension name="height2" units="m" type="dimtype_vertical">height</Dimension>
+    <Dimension name="height2" units="m" type="vertical">height</Dimension>
     <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension> 
   </Layer>
   

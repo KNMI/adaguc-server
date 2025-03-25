@@ -801,12 +801,14 @@ def get_instance(
 
 
 def get_parameters(
-    metadata: dict, collection_name: str, parameter_name_par: str
+    metadata: dict, collection_name: str, parameter_name_par: str | None
 ) -> list[str]:
-    # TODO: this crashes if you don't pass a parameter name
+    # TODO: if parameter_name_par is None, we should return all parameters, for now just raise
+    if parameter_name_par is None:
+        raise exec_unknown_parameter(collection_name, "")
+
     parameters = parameter_name_par.split(",")
     for param in parameters:
-        print("PPP:", param, param in metadata[collection_name])
         if param not in metadata[collection_name]:
             raise exec_unknown_parameter(collection_name, param)
     return parameters
