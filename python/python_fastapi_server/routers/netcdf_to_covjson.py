@@ -356,7 +356,7 @@ def netcdf_to_covjson(
                         system=temporalreferencesystem, coordinates=["t"]
                     )
 
-                    custom = {f"custom:{custom_dim_name}": float(custom_dim_value)}
+                    custom = {f"custom:{custom_dim_name}": custom_dim_value}
                     # Create the domain based on the axes object
                     domain = Domain(
                         domainType=DomainType.grid,

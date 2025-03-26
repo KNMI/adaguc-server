@@ -30,7 +30,6 @@ from fastapi.datastructures import QueryParams
 from .edr_exception import (
     exc_unknown_collection,
     exc_incorrect_instance,
-    exc_no_datasets,
     exec_unknown_parameter,
 )
 

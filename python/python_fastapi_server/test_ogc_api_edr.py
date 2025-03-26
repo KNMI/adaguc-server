@@ -607,12 +607,11 @@ def test_cube_custom_dim_request_all_members(client: TestClient):
             400,
             "Unknown or unconfigured collection my_unknown_collection",
         ),
-        # TODO: this doesn't happen but it should
-        # (
-        #     "/edr/collections/adaguc.tests.members.mycollection/instances/12345",
-        #     404,
-        #     "Incorrect instance 2025030100 for collection adaguc.tests.members.mycollection",
-        # ),
+        (
+            "/edr/collections/adaguc.tests.members.mycollection/instances/12345",
+            404,
+            "Incorrect instance 12345 for collection adaguc.tests.members.mycollection",
+        ),
         (
             "/edr/collections/adaguc.tests.members.mycollection/instances/202503010000/position?coords=POINT(5.0 52.0)&parameter-name=myunknown-parameter",
             404,
@@ -626,7 +625,7 @@ def test_cube_custom_dim_request_all_members(client: TestClient):
     ],
     ids=[
         "unknown_collection",
-        # "incorrect_instance",
+        "incorrect_instance",
         "incorrect_parameter",
         "no_parameter",
     ],
