@@ -46,9 +46,6 @@ LogBufferMode logMode = LogBufferMode::LogBufferMode_FALSE;
 void writeLogFile(const char *msg) {
   if (logMode == LogBufferMode_DISABLELOGGING) return;
   if (pLogDebugFile != NULL) {
-    if (logMode == LogBufferMode_FALSE) {
-      setvbuf(pLogDebugFile, NULL, _IONBF, 0);
-    }
     fputs(msg, pLogDebugFile);
     // If message line contains data like [D:008:pid250461: adagucserverEC/CCairoPlotter.cpp:878], also append the time.
     if (strncmp(msg, "[D:", 3) == 0 || strncmp(msg, "[W:", 3) == 0 || strncmp(msg, "[E:", 3) == 0) {
@@ -314,6 +311,10 @@ int _main(int argc, char **argv, char **) {
         CDBError("Unable to read configuration file");
         return 1;
       }
+      if (logMode == LogBufferMode_FALSE) {
+        // Set line buffering on stdout
+        setvbuf(stdout, NULL, _IOLBF, 1024);
+      }
       status = request.updatedb(&tailPath, &layerPathToScan, scanFlags, layerName);
       if (status != 0) {
         CDBError("Error occured in updating the database");
@@ -336,6 +337,10 @@ int _main(int argc, char **argv, char **) {
       CDBDebug("UPDATELAYERMETADATA: tryAdvisoryLock obtained");
     }
 
+    if (logMode == LogBufferMode_FALSE) {
+      // Set line buffering on stdout
+      setvbuf(stdout, NULL, _IOLBF, 1024);
+    }
     CDBDebug("UPDATELAYERMETADATA: STARTING");
     status = updateLayerMetadata(baseRequest);
     CDBDebug("UPDATELAYERMETADATA: DONE");
@@ -414,6 +419,11 @@ int main(int argc, char **argv, char **envp) {
     if (check.equalsIgnoreCase("DISABLELOGGING")) {
       logMode = LogBufferMode::LogBufferMode_DISABLELOGGING;
     }
+  }
+
+  if (pLogDebugFile != NULL && logMode == LogBufferMode_FALSE) {
+    // Set line buffering on log file
+    setvbuf(pLogDebugFile, NULL, _IONBF, 1024);
   }
 
   /* Check if ADAGUC_PATH is set, if not set it here */

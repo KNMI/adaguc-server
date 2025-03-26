@@ -78,7 +78,7 @@ if [[ -n "${ADAGUC_DATASET}" &&  -n "${ADAGUC_DATAFILE}" ]]; then
   if [ ${OUT} -ne 0 ]; then
     STATUSCODE=${OUT}
   fi
-  exit ${STATUSCODE} 
+  exit ${STATUSCODE}
 fi
 
 ### Scan a file ###

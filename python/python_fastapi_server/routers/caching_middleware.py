@@ -101,10 +101,9 @@ class CachingMiddleware(BaseHTTPMiddleware):
         response: Response = await call_next(request)
 
         if response.status_code == 200:
-            if (
-                "cache-control" in response.headers
-                and response.headers["cache-control"] != "no-store"
-            ):
+            if "cache-control" not in response.headers:
+                response.headers["cache-control"] = "max-age: 15"
+            if response.headers["cache-control"] != "no-store":
                 cache_control_terms = response.headers["cache-control"].split(",")
                 ttl = None
                 for term in cache_control_terms:

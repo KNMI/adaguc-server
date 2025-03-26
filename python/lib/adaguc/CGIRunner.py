@@ -19,8 +19,8 @@ HTTP_STATUSCODE_404_NOT_FOUND = 32  # Must be the same as in Definitions.h
 HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY = 33  # Must be the same as in Definitions.h
 HTTP_STATUSCODE_500_TIMEOUT = 34  # Not defined in C++, is generated from this file
 
-ADAGUC_NUMPARALLELPROCESSES = os.getenv("ADAGUC_NUMPARALLELPROCESSES", "4")
-sem = asyncio.Semaphore(int(ADAGUC_NUMPARALLELPROCESSES))
+ADAGUC_NUMPARALLELPROCESSES = int(os.getenv("ADAGUC_NUMPARALLELPROCESSES", "4"))
+sem = asyncio.Semaphore(max(ADAGUC_NUMPARALLELPROCESSES, 2))  # At least two, to allow for me layer metadata update
 
 
 class CGIRunner:

@@ -30,7 +30,6 @@ from fastapi.datastructures import QueryParams
 from .edr_exception import (
     exc_unknown_collection,
     exc_incorrect_instance,
-    exc_no_datasets,
     exec_unknown_parameter,
 )
 
@@ -593,22 +592,23 @@ def get_vertical_dim_for_collection(metadata: dict, parameter: str = None):
     else:
         layer = metadata[list(metadata)[0]]
 
-    for dim_name in layer["dims"]:
-        if (
-            dim_name in ["elevation"]
-            or layer["dims"][dim_name]["type"] == "dimtype_vertical"
-        ):
-            values = layer["dims"][dim_name]["values"].split(",")
-            vertical_dim = {
-                "interval": [[values[0], values[-1]]],
-                "values": values,
-                "vrs": "customvrs",
-            }
-            return vertical_dim
+    if "dims" in layer and metadata["dims"] is not None:
+        for dim_name in layer["dims"]:
+            if (
+                dim_name in ["elevation"]
+                or layer["dims"][dim_name]["type"] == "dimtype_vertical"
+            ):
+                values = layer["dims"][dim_name]["values"].split(",")
+                vertical_dim = {
+                    "interval": [[values[0], values[-1]]],
+                    "values": values,
+                    "vrs": "customvrs",
+                }
+                return vertical_dim
     return None
 
 
-def try_numeric_conversion(values: list[str]):
+def try_numeric_conversion(values: list[str | float]):
     try:
         new_values = [float(v) for v in values]
         return new_values
@@ -626,36 +626,39 @@ def get_custom_dims_for_collection(metadata: dict, parameter: str = None):
     else:
         # default to first layer
         layer = metadata[list(metadata)[0]]
-    for dim_name in layer["dims"]:
-        if (
-            not layer["dims"][dim_name]["hidden"]
-            and not layer["dims"][dim_name]["type"] == "dimtype_vertical"
-        ):
-            # Not needed for non custom dims:
-            if dim_name not in [
-                "reference_time",
-                "time",
-                "elevation",
-            ]:
-                dim_values = layer["dims"][dim_name]["values"].split(",")
-                dim_values = try_numeric_conversion(dim_values)
-                custom_dim = {
-                    "id": dim_name,
-                    "interval": [
-                        [
-                            dim_values[0],
-                            dim_values[-1],
-                            # int(dim_values[0]),
-                            # int(dim_values[-1]),
-                        ]
-                    ],
-                    "values": dim_values,  ##["R51/0/1"],  # dim_values,
-                    "reference": "https://www.ecmwf.int/sites/default/files/elibrary/2012/14557-ecmwf-ensemble-prediction-system.pdf",  # f"custom_{dim_name}",
-                }
-                # if dim_name == "member":
-                #     custom_dim["id"] = "number"
-                custom.append(custom_dim)
-    return custom if len(custom) > 0 else None
+
+    if "dims" in layer and metadata["dims"] is not None:
+        for dim_name in layer["dims"]:
+            if (
+                not layer["dims"][dim_name]["hidden"]
+                and not layer["dims"][dim_name]["type"] == "dimtype_vertical"
+            ):
+                # Not needed for non custom dims:
+                if dim_name not in [
+                    "reference_time",
+                    "time",
+                    "elevation",
+                ]:
+                    dim_values = layer["dims"][dim_name]["values"].split(",")
+                    dim_values = try_numeric_conversion(dim_values)
+                    custom_dim = {
+                        "id": dim_name,
+                        "interval": [
+                            [
+                                dim_values[0],
+                                dim_values[-1],
+                                # int(dim_values[0]),
+                                # int(dim_values[-1]),
+                            ]
+                        ],
+                        "values": dim_values,  ##["R51/0/1"],  # dim_values,
+                        "reference": "https://www.ecmwf.int/sites/default/files/elibrary/2012/14557-ecmwf-ensemble-prediction-system.pdf",  # f"custom_{dim_name}",
+                    }
+                    # if dim_name == "member":
+                    #     custom_dim["id"] = "number"
+                    custom.append(custom_dim)
+        return custom if len(custom) > 0 else None
+    return None
 
 
 def get_times_for_collection(

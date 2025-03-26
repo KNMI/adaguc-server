@@ -89,9 +89,10 @@ def get_proj_info_from_proj_string(projstring: str) -> GeoReferenceInfo:
 
 
 def get_dim(metadata: dict, dimname: str):
-    for dim in metadata["dims"]:
-        if dimname == metadata["dims"][dim]["cdfName"]:
-            return metadata["dims"][dim]
+    if "dims" in metadata and metadata["dims"] is not None:
+        for dim in metadata["dims"]:
+            if dimname == metadata["dims"][dim]["cdfName"]:
+                return metadata["dims"][dim]
     return {}
 
 
@@ -356,7 +357,7 @@ def netcdf_to_covjson(
                         system=temporalreferencesystem, coordinates=["t"]
                     )
 
-                    custom = {f"custom:{custom_dim_name}": float(custom_dim_value)}
+                    custom = {f"custom:{custom_dim_name}": custom_dim_value}
                     # Create the domain based on the axes object
                     domain = Domain(
                         domainType=DomainType.grid,

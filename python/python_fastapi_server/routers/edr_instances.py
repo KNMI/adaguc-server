@@ -17,6 +17,7 @@ from .utils.edr_exception import exc_unknown_collection
 from .utils.edr_utils import (
     generate_max_age,
     get_base_url,
+    get_instance,
     get_metadata,
     get_collectioninfo_from_md,
     get_ref_times_for_coll,
@@ -71,13 +72,15 @@ async def rest_get_edr_inst_for_coll(
     response_model=Collection,
     response_model_exclude_none=True,
 )
-async def rest_get_collection_info(collection_name: str, instance):
+async def rest_get_collection_info(collection_name: str, instance: str):
     """
     GET  "/collections/{collection_name}/instances/{instance}"
     """
     metadata = await get_metadata(collection_name)
     if metadata is None:
         raise exc_unknown_collection(collection_name)
+
+    instance = get_instance(metadata, collection_name, instance)
 
     coll = get_collectioninfo_from_md(
         metadata[collection_name], collection_name, instance
