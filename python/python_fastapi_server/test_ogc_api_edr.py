@@ -59,8 +59,6 @@ def fixture_client():
 def test_root(client: TestClient):
     resp = client.get("/edr/")
     root_info = resp.json()
-    print("resp:", resp, json.dumps(root_info, indent=2))
-    print()
     assert root_info["description"] == "EDR service for ADAGUC datasets"
     assert len(root_info["links"]) >= 4
 

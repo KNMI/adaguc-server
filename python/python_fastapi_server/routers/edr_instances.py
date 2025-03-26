@@ -61,6 +61,9 @@ async def rest_get_edr_inst_for_coll(
         )
         instances.extend(instance_info)
 
+    # Instance ordering should be most recent first
+    instances.sort(key=lambda x: x.id, reverse=True)
+
     instances_data = Instances(instances=instances, links=links)
     if ttl_set:
         response.headers["cache-control"] = generate_max_age(min(ttl_set))
