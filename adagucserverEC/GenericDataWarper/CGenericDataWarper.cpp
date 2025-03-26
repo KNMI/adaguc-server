@@ -453,27 +453,15 @@ int CGenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoPara
           this->warperState.sourceDataPY = (warperState.sourceDataHeight - 1 - sourceGridY);
           T value = ((T *)warperState.sourceData)[this->warperState.sourceDataPX + this->warperState.sourceDataPY * warperState.sourceDataWidth];
 
-          int xP[3];
-          int yP[3];
-          xP[0] = round(px1);
-          yP[0] = round(py1);
+          double xCornersA[3] = {px1, px2, px3};
+          double yCornersA[3] = {py1, py2, py3};
 
-          xP[1] = round(px2);
-          yP[1] = round(py2);
+          double xCornersB[3] = {px3, px1, px4};
+          double yCornersB[3] = {py3, py1, py4};
 
-          xP[2] = round(px3);
-          yP[2] = round(py3);
-          gdwDrawTriangle<T>(xP, yP, value, imageWidth, imageHeight, drawFunctionSettings, drawFunction, (void *)this, false);
+          gdwDrawTriangle<T>(xCornersA, yCornersA, value, imageWidth, imageHeight, drawFunctionSettings, drawFunction, (void *)this, false);
 
-          xP[0] = round(px3);
-          yP[0] = round(py3);
-
-          xP[1] = round(px1);
-          yP[1] = round(py1);
-
-          xP[2] = round(px4);
-          yP[2] = round(py4);
-          gdwDrawTriangle<T>(xP, yP, value, imageWidth, imageHeight, drawFunctionSettings, drawFunction, (void *)this, true);
+          gdwDrawTriangle<T>(xCornersB, yCornersB, value, imageWidth, imageHeight, drawFunctionSettings, drawFunction, (void *)this, true);
         }
         pLengthD = lengthD;
       }

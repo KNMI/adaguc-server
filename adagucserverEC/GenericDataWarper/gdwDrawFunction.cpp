@@ -37,10 +37,10 @@ template <typename T> void gdwDrawFunction(int x, int y, T val, void *_settings,
           int xR = (sourceDataPX + 1);
           int yB = (sourceDataPY + 1);
           double values[2][2];
-          values[0][0] = ((T *)sourceData)[xL + yT * sourceDataWidth];
-          values[1][0] = ((T *)sourceData)[xR + yT * sourceDataWidth];
-          values[0][1] = ((T *)sourceData)[xL + yB * sourceDataWidth];
-          values[1][1] = ((T *)sourceData)[xR + yB * sourceDataWidth];
+          values[0][0] = (double)((T *)sourceData)[xL + yT * sourceDataWidth];
+          values[1][0] = (double)((T *)sourceData)[xR + yT * sourceDataWidth];
+          values[0][1] = (double)((T *)sourceData)[xL + yB * sourceDataWidth];
+          values[1][1] = (double)((T *)sourceData)[xR + yB * sourceDataWidth];
 
           double dx = genericDataWarper->warperState.tileDx;
           double dy = genericDataWarper->warperState.tileDy;

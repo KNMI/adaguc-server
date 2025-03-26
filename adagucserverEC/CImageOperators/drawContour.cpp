@@ -197,6 +197,11 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
   drawImage->endLine(dashes, numDashes);
 }
 
+struct ContourLineStructure {
+  std::vector<double> classes;
+  double interval;
+};
+
 void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawImage) {
   CStyleConfiguration *styleConfiguration = dataSource->getStyle(); // TODO SLOW
   CDBDebug("drawContour");
@@ -213,37 +218,45 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
   // Determine contour lines
   memset(distance, 0, imageSize * sizeof(DISTANCEFIELDTYPE));
 
+  std::vector<ContourLineStructure> contourlineList;
+
+  for (auto contourLine : (styleConfiguration->contourLines)) {
+    std::vector<double> classes;
+    double interval = 0;
+    if (contourLine->attr.classes.empty() == false) {
+      auto classesString = contourLine->attr.classes.splitToStack(",");
+      for (auto classString : classesString) {
+        classes.push_back(classString.toDouble());
+      }
+    } else if (contourLine->attr.interval.empty() == false) {
+      interval = contourLine->attr.interval.toDouble();
+    }
+
+    // Check for lines at specified classes
+    contourlineList.push_back({.classes = classes, .interval = interval});
+  }
+
   float fNodataValue = dataSource->getDataObject(0)->dfNodataValue;
   bool drawText = true;
   for (int y = 0; y < dImageHeight - 1; y++) {
     for (int x = 0; x < dImageWidth - 1; x++) {
       size_t p1 = size_t(x + y * dImageWidth);
-      float val[4] = {sourceGrid[p1], sourceGrid[p1 + 1], sourceGrid[p1 + dImageWidth], sourceGrid[p1 + dImageWidth + 1]};
-
+      const float val[4] = {sourceGrid[p1], sourceGrid[p1 + 1], sourceGrid[p1 + dImageWidth], sourceGrid[p1 + dImageWidth + 1]};
       // Check if all pixels have values...
       if (val[0] != fNodataValue && val[1] != fNodataValue && val[2] != fNodataValue && val[3] != fNodataValue && val[0] == val[0] && val[1] == val[1] && val[2] == val[2] && val[3] == val[3]) {
-
         int mask = 1;
-        for (auto contourLine : (styleConfiguration->contourLines)) {
+        for (auto contourLine : contourlineList) {
           // Check for lines at specified classes
-          if (contourLine->attr.classes.empty() == false) {
-            auto classes = contourLine->attr.classes.splitToStack(",");
-            for (size_t c = 0; c < classes.size(); c++) {
-              double cc = classes[c].toDouble();
-              // Check for classes
-
-              if ((val[0] >= cc && val[1] < cc) || (val[0] > cc && val[1] <= cc) || (val[0] < cc && val[1] >= cc) || (val[0] <= cc && val[1] > cc) || (val[0] > cc && val[2] <= cc) ||
-                  (val[0] >= cc && val[2] < cc) || (val[0] <= cc && val[2] > cc) || (val[0] < cc && val[2] >= cc)
-
-              ) {
-                distance[p1] |= mask;
-                break;
-              }
+          for (double cc : contourLine.classes) {
+            if ((val[0] >= cc && val[1] < cc) || (val[0] > cc && val[1] <= cc) || (val[0] < cc && val[1] >= cc) || (val[0] <= cc && val[1] > cc) || (val[0] > cc && val[2] <= cc) ||
+                (val[0] >= cc && val[2] < cc) || (val[0] <= cc && val[2] > cc) || (val[0] < cc && val[2] >= cc)) {
+              distance[p1] |= mask;
+              break;
             }
-
-          } else if (contourLine->attr.interval.empty() == false) {
+          }
+          if (contourLine.interval > 0) {
             // Check for lines at continous interval
-            double contourinterval = contourLine->attr.interval.toDouble();
+            double contourinterval = contourLine.interval;
             float min, max;
             min = val[0];
             max = val[0];
@@ -285,7 +298,6 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
 
   // CDBDebug("B %d", styleConfiguration->contourLines.size());
   for (auto contourLine : (styleConfiguration->contourLines)) {
-
     CColor lineColor = contourLine->attr.linecolor.empty() ? defaultLineColor : CColor(contourLine->attr.linecolor);
     CColor textColor = contourLine->attr.textcolor.empty() ? defaultTextColor : CColor(contourLine->attr.textcolor);
     CColor textstrokecolor = contourLine->attr.textstrokecolor.empty() ? defaultTextStrokeColor : CColor(contourLine->attr.textstrokecolor);

@@ -1,7 +1,7 @@
 #include "GenericDataWarper/CGenericDataWarper.h"
 
 template <typename T>
-int gdwDrawTriangle(int *xP, int *yP, T value, int destWidth, int destHeight, void *settings, void (*drawFunction)(int, int, T, void *settings, void *genericDataWarper), void *genericDataWarper,
+int gdwDrawTriangle(double *xP, double *yP, T value, int destWidth, int destHeight, void *settings, void (*drawFunction)(int, int, T, void *settings, void *genericDataWarper), void *genericDataWarper,
                     bool aOrB) {
   CGenericDataWarper *g = (CGenericDataWarper *)genericDataWarper;
   int W = destWidth;
@@ -48,12 +48,12 @@ int gdwDrawTriangle(int *xP, int *yP, T value, int destWidth, int destHeight, vo
     }
   }
 
-  int X1 = xP[lower];
-  int X2 = xP[middle];
-  int X3 = xP[upper];
-  int Y1 = yP[lower];
-  int Y2 = yP[middle];
-  int Y3 = yP[upper];
+  double X1 = xP[lower];
+  double X2 = xP[middle];
+  double X3 = xP[upper];
+  double Y1 = yP[lower];
+  double Y2 = yP[middle];
+  double Y3 = yP[upper];
 
   double vX1 = aOrB ? 1 : 0;
   double vY1 = aOrB ? 0 : 1;
@@ -158,23 +158,23 @@ int gdwDrawTriangle(int *xP, int *yP, T value, int destWidth, int destHeight, vo
   return 0;
 }
 
-template int gdwDrawTriangle<char>(int *xP, int *yP, char value, int destWidth, int destHeight, void *settings, void (*drawFunction)(int, int, char, void *settings, void *genericDataWarper),
+template int gdwDrawTriangle<char>(double *xP, double *yP, char value, int destWidth, int destHeight, void *settings, void (*drawFunction)(int, int, char, void *settings, void *genericDataWarper),
                                    void *genericDataWarper, bool aOrB);
-template int gdwDrawTriangle<unsigned char>(int *xP, int *yP, unsigned char value, int destWidth, int destHeight, void *settings,
+template int gdwDrawTriangle<unsigned char>(double *xP, double *yP, unsigned char value, int destWidth, int destHeight, void *settings,
                                             void (*drawFunction)(int, int, unsigned char, void *settings, void *genericDataWarper), void *genericDataWarper, bool aOrB);
-template int gdwDrawTriangle<short>(int *xP, int *yP, short value, int destWidth, int destHeight, void *settings, void (*drawFunction)(int, int, short, void *settings, void *genericDataWarper),
+template int gdwDrawTriangle<short>(double *xP, double *yP, short value, int destWidth, int destHeight, void *settings, void (*drawFunction)(int, int, short, void *settings, void *genericDataWarper),
                                     void *genericDataWarper, bool aOrB);
-template int gdwDrawTriangle<ushort>(int *xP, int *yP, ushort value, int destWidth, int destHeight, void *settings, void (*drawFunction)(int, int, ushort, void *settings, void *genericDataWarper),
-                                     void *genericDataWarper, bool aOrB);
-template int gdwDrawTriangle<int>(int *xP, int *yP, int value, int destWidth, int destHeight, void *settings, void (*drawFunction)(int, int, int, void *settings, void *genericDataWarper),
+template int gdwDrawTriangle<unsigned short>(double *xP, double *yP, unsigned short value, int destWidth, int destHeight, void *settings,
+                                             void (*drawFunction)(int, int, unsigned short, void *settings, void *genericDataWarper), void *genericDataWarper, bool aOrB);
+template int gdwDrawTriangle<int>(double *xP, double *yP, int value, int destWidth, int destHeight, void *settings, void (*drawFunction)(int, int, int, void *settings, void *genericDataWarper),
                                   void *genericDataWarper, bool aOrB);
-template int gdwDrawTriangle<uint>(int *xP, int *yP, uint value, int destWidth, int destHeight, void *settings, void (*drawFunction)(int, int, uint, void *settings, void *genericDataWarper),
+template int gdwDrawTriangle<uint>(double *xP, double *yP, uint value, int destWidth, int destHeight, void *settings, void (*drawFunction)(int, int, uint, void *settings, void *genericDataWarper),
                                    void *genericDataWarper, bool aOrB);
-template int gdwDrawTriangle<long>(int *xP, int *yP, long value, int destWidth, int destHeight, void *settings, void (*drawFunction)(int, int, long, void *settings, void *genericDataWarper),
+template int gdwDrawTriangle<long>(double *xP, double *yP, long value, int destWidth, int destHeight, void *settings, void (*drawFunction)(int, int, long, void *settings, void *genericDataWarper),
                                    void *genericDataWarper, bool aOrB);
-template int gdwDrawTriangle<unsigned long>(int *xP, int *yP, unsigned long value, int destWidth, int destHeight, void *settings,
+template int gdwDrawTriangle<unsigned long>(double *xP, double *yP, unsigned long value, int destWidth, int destHeight, void *settings,
                                             void (*drawFunction)(int, int, unsigned long, void *settings, void *genericDataWarper), void *genericDataWarper, bool aOrB);
-template int gdwDrawTriangle<float>(int *xP, int *yP, float value, int destWidth, int destHeight, void *settings, void (*drawFunction)(int, int, float, void *settings, void *genericDataWarper),
+template int gdwDrawTriangle<float>(double *xP, double *yP, float value, int destWidth, int destHeight, void *settings, void (*drawFunction)(int, int, float, void *settings, void *genericDataWarper),
                                     void *genericDataWarper, bool aOrB);
-template int gdwDrawTriangle<double>(int *xP, int *yP, double value, int destWidth, int destHeight, void *settings, void (*drawFunction)(int, int, double, void *settings, void *genericDataWarper),
-                                     void *genericDataWarper, bool aOrB);
+template int gdwDrawTriangle<double>(double *xP, double *yP, double value, int destWidth, int destHeight, void *settings,
+                                     void (*drawFunction)(int, int, double, void *settings, void *genericDataWarper), void *genericDataWarper, bool aOrB);
