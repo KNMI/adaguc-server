@@ -77,7 +77,7 @@ async def get_coll_inst_position(
     instance: str = None,
     datetime_par: str = Query(default=None, alias="datetime"),
     parameter_name_par: Annotated[
-        str, Query(alias="parameter-name", min_length=1)
+        str | None, Query(alias="parameter-name", min_length=1)
     ] = None,
     z_par: Annotated[str, Query(alias="z", min_length=1)] = None,
 ) -> Coverage:
