@@ -29,7 +29,7 @@ Configuration
 -   [Logging](Logging.md) - (debug) - Configure the type of logging
 -   [Settings](Settings.md) - (enablemetadatacache, enablecleanupsystem, cleanupsystemlimit, cache_age_cacheableresources, cache_age_volatileresources) - Configure global settings of the server / Dataset
 -   [Environment](Environment.md) - (name, default) - For within dataset configuration, specify which values should be substituted
--   [OgcApiEdr](EDRConfiguration/EDR.md) - Configuration options to enable EDR collections
+-   [EDR](EDRConfiguration/EDR.md) - Configuration options to enable EDR collections
 
 <!-- -->
 
