@@ -44,7 +44,7 @@ fi
 
 psql "$ADAGUC_DB" -c "DROP DATABASE IF EXISTS adaguc_test;"
 psql "$ADAGUC_DB" -c "CREATE DATABASE adaguc_test;"
-export ADAGUC_DB="user=adaguc password=adaguc host=${db_host} dbname=adaguc_test"
+export ADAGUC_DB="user=adaguc password=adaguc host=${db_host} dbname=adaguc_test port=54321"
 
 ulimit -c unlimited
 
