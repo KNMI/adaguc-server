@@ -31,12 +31,13 @@ Create the following file at the filepath `$ADAGUC_DATASET_DIR/edr.xml`. You can
 
     <!-- Layers -->
     <Layer type="database">
+        <Name>my_temperature</Name>
+        <Title>Temperature</Title>
+        <Abstract>The temperature at 2m height</Abstract>
         <Group collection="mycollection" />
-        <FilePath>/data/adaguc-data/HARM_N25_20171215090000_dimx16_dimy16_dimtime49_dimforecastreferencetime1_varairtemperatureat2m.nc</FilePath>
-        <Variable units="Celsius">air_temperature__at_2m</Variable>
+        <FilePath>/data/adaguc-data/tutorial/HARM_N25_20171215090000_dimx16_dimy16_dimtime49_dimforecastreferencetime1_varairtemperatureat2m.nc</FilePath>
+        <Variable units="Celsius" long_name="air_temperature">air_temperature__at_2m</Variable>
         <Styles>temperature</Styles>
-        <Name>my_cool_name</Name>
-        <Title>My cool title</Title>
     </Layer>
 </Configuration>
 ```
@@ -45,10 +46,11 @@ For the given example this will result in the following parameter name definitio
 
 ```json
 "parameter_names": {
-  "air_temperature__at_2m": {
+  "my_temperature": {
     "type": "Parameter",
-    "id": "air_temperature__at_2m",
-    "label": "air_temperature__at_2m",
+    "id": "my_temperature",
+    "label": "Temperature",
+    "description": "The temperature at 2m height",
     "unit": {
       "symbol": {
         "value": "Celsius",
@@ -57,7 +59,7 @@ For the given example this will result in the following parameter name definitio
     },
     "observedProperty": {
       "id": "https://vocab.nerc.ac.uk/standard_name/air_temperature",
-      "label": "air_temperature__at_2m"
+      "label": "air_temperature"
     }
   }
 }

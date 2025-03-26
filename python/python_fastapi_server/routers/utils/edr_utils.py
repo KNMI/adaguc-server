@@ -480,48 +480,7 @@ def get_params_for_dataset(
                 id=observed_property_id,
                 label=param_metadata["observed_property_label"],
             ),
-            # description=param_metadata["wms_layer_title"], # TODO in follow up
-            type="Parameter",
-            unit=Unit(
-                symbol=Symbol(
-                    value=param_metadata["parameter_unit"], type=SYMBOL_TYPE_URL
-                )
-            ),
-            label=param_metadata["parameter_label"],
-            extent=current_extent if current_extent != primary_extent else None,
-        )
-        if param_metadata["collection"] not in parameter_names:
-            parameter_names[param_metadata["collection"]] = {}
-        parameter_names[param_metadata["collection"]][param_id] = param
-    return parameter_names
-
-
-def get_params_for_collection(
-    metadata: dict,
-    dataset_name: str,
-    primary_extent: Extent,
-    collection_name: str | None = None,
-) -> dict[str, Parameter]:
-    """
-    Returns a dictionary with parameters for given EDR collection
-    """
-    dataset_name = collection_name.rsplit("., 1")[0]
-    parameter_names = {}
-    for param_id in metadata:
-        if metadata[param_id]["dims"] is None:
-            continue
-        if param_metadata["collection"] != collection_name:
-            continue
-        current_extent = get_extent_from_md(metadata, param_id)
-        param_metadata = get_param_metadata(metadata[param_id], dataset_name)
-        observed_property_id = param_metadata.get("observed_property_id", param_id)
-        param = Parameter(
-            id=param_id,
-            observedProperty=ObservedProperty(
-                id=observed_property_id,
-                label=param_metadata["observed_property_label"],
-            ),
-            # description=param_metadata["wms_layer_title"], # TODO in follow up
+            description=param_metadata["description"],
             type="Parameter",
             unit=Unit(
                 symbol=Symbol(
@@ -755,28 +714,24 @@ def get_param_metadata(param_metadata: dict, dataset_name: str) -> dict:
             + param_metadata["layer"]["variables"][0]["standard_name"]
         )
 
-    parameter_label = param_metadata["layer"]["variables"][0]["label"]
+    parameter_label = param_metadata["layer"]["title"]
     parameter_unit = param_metadata["layer"]["variables"][0]["units"]
     if len(parameter_unit) == 0:
         parameter_unit = "-^-"
 
     observed_property_label = param_metadata["layer"]["variables"][0]["label"]
 
-    if (
-        "collection" in param_metadata["layer"]
-        and len(param_metadata["layer"]["collection"]) > 0
-    ):
-        collection = dataset_name  # f'{param_metadata["layer"]["collection"]}'
-    else:
-        collection = dataset_name
+    abstract = param_metadata["layer"]["abstract"]
+    if abstract == "":
+        abstract = param_metadata["layer"]["title"]
 
     return {
-        "wms_layer_name": wms_layer_name,
+        "description": abstract,
         "observed_property_id": observed_property_id,
         "observed_property_label": observed_property_label,
         "parameter_label": parameter_label,
         "parameter_unit": parameter_unit,
-        "collection": collection,
+        "collection": dataset_name,
     }
 
 

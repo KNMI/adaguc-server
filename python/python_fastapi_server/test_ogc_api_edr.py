@@ -67,13 +67,7 @@ def test_root(client: TestClient):
 
 def test_collections(client: TestClient):
     resp = client.get("/edr/collections")
-    print(
-        ">>>> testcollections",
-        [coll["id"] for coll in resp.json()["collections"]],
-        resp.status_code,
-    )
     colls = resp.json()
-    print("IDS:", [c["id"] for c in colls["collections"]])
     assert len(colls["collections"]) == 4
 
     first_collection = colls["collections"][0]
@@ -106,7 +100,8 @@ def test_collections(client: TestClient):
     assert data == {
         "type": "Parameter",
         "id": "data",
-        "label": "data",
+        "label": "data (data)",
+        "description": "data (data)",
         "unit": {
             "symbol": {"value": "km", "type": "http://www.opengis.net/def/uom/UCUM"}
         },
@@ -123,7 +118,8 @@ def test_collections(client: TestClient):
     assert data_extra_metadata == {
         "type": "Parameter",
         "id": "data_extra_metadata",
-        "label": "data",
+        "label": "data extra metadata",
+        "description": "data extra metadata",
         "unit": {
             "symbol": {
                 "value": "km",
