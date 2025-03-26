@@ -16,8 +16,8 @@ class EdrException(HTTPException):
     Exception class for EDR
     """
 
-    def __init__(self, code: str, description: str):
-        super().__init__(code, description)
+    def __init__(self, code: int, description: str):
+        super().__init__(int(code), description)
 
 
 def exc_unknown_collection(collection: str) -> EdrException:
