@@ -592,7 +592,7 @@ def get_vertical_dim_for_collection(metadata: dict, parameter: str = None):
     else:
         layer = metadata[list(metadata)[0]]
 
-    if "dims" in layer and metadata["dims"] is not None:
+    if "dims" in layer and layer["dims"] is not None:
         for dim_name in layer["dims"]:
             if (
                 dim_name in ["elevation"]
@@ -627,7 +627,7 @@ def get_custom_dims_for_collection(metadata: dict, parameter: str = None):
         # default to first layer
         layer = metadata[list(metadata)[0]]
 
-    if "dims" in layer and metadata["dims"] is not None:
+    if "dims" in layer and layer["dims"] is not None:
         for dim_name in layer["dims"]:
             if (
                 not layer["dims"][dim_name]["hidden"]
