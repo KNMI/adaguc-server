@@ -135,7 +135,7 @@ async def get_point_value(
     custom_dims: list[str] | None = None,
 ):
     """Returns information in EDR format for a given collection and position"""
-
+    print("instance %s", instance)
     custom_dims = [] if custom_dims is None else custom_dims
     urlrequest = "&".join(
         [
@@ -145,7 +145,7 @@ async def get_point_value(
             f"X={coords[0]}",
             f"Y={coords[1]}",
             f"time={datetime_par}" if datetime_par else "",
-            f"dim_reference_time={instance_to_iso(instance)}",
+            f"dim_reference_time={instance_to_iso(instance)}" if instance else "",
             *custom_dims,
             f"{vertical_dim}" if len(vertical_dim) > 0 else "",
         ]

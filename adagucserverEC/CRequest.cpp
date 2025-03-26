@@ -1533,7 +1533,7 @@ int CRequest::process_all_layers() {
                 }
                 delete checkForData;
 
-                CDBDebug("add = %d replaceAllDataSource = %d replacePreviousDataSource = %d", add, replaceAllDataSource, replacePreviousDataSource);
+                // CDBDebug("add = %d replaceAllDataSource = %d replacePreviousDataSource = %d", add, replaceAllDataSource, replacePreviousDataSource);
                 if (add) {
                   if (replaceAllDataSource) {
                     for (size_t j = 0; j < dataSources.size(); j++) {

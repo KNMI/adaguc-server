@@ -139,7 +139,7 @@ async def get_coll_inst_cube(
                 f"coverage={parameter_name}",
                 f"bbox={bbox}",
                 f"time={datetime_arg}",
-                f"dim_reference_time={instance_to_iso(instance)}",
+                f"dim_reference_time={instance_to_iso(instance)}" if instance else "",
                 *custom_dims,
                 f"{vertical_dim}" if len(vertical_dim) > 0 else "",
                 *res_queryterm,
