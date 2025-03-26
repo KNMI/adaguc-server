@@ -1,0 +1,17 @@
+services:
+  adaguc-test-db:
+    image: postgres:13
+    container_name: adaguc-test-db
+    hostname: adaguc-test-db
+    environment:
+      - "POSTGRES_USER=adaguc"
+      - "POSTGRES_PASSWORD=adaguc"
+      - "POSTGRES_DB=adaguc"
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
+    ports:
+      - 54321:5432

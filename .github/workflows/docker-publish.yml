@@ -31,7 +31,7 @@ jobs:
           POSTGRES_PASSWORD: adaguc
           POSTGRES_DB: adaguc
         ports:
-        - 5432:5432
+        - 54321:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
@@ -75,6 +75,8 @@ jobs:
           tags: ${{ env.REGISTRY_IMAGE }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
           network: host
+          build-args: |
+            TEST_IN_CONTAINER=github_build
 
       - name: Run Trivy vulnerability scanner
         if: matrix.platform == 'linux/amd64'  # Run trivy only once
