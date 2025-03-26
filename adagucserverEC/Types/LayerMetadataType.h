@@ -48,6 +48,7 @@ struct LayerMetadata {
   double dfLatLonBBOX[4] = {-180, -90, 180, 90};
   double dfBBOX[4] = {-180, -90, 180, 90};
   int isQueryable = 0;
+  bool hidden = false;
   CT::string name, title, wmsgroup, abstract, nativeEPSG, projstring, collection;
   std::vector<LayerMetadataProjection> projectionList;
   std::vector<LayerMetadataDim> dimList;
@@ -64,6 +65,7 @@ public:
   CServerParams *srvParams;
   CT::string fileName;
   bool readFromDb = false;
+
   int hasError = 0;
 
   LayerMetadata layerMetadata;

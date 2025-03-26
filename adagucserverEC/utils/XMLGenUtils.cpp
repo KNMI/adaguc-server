@@ -59,6 +59,11 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
     metadataLayer->layerMetadata.abstract = metadataLayer->dataSource->cfgLayer->Abstract[0]->value;
   }
 
+  // Check if it is hidden
+  if (metadataLayer->dataSource->cfgLayer->attr.hidden.equals("true")) {
+    metadataLayer->layerMetadata.hidden = true;
+  }
+
   // Fill in Layer title, with fallback to Name (later this can be set based on metadata or info from the file)
   if (metadataLayer->dataSource->cfgLayer->Title.size() != 0) {
     metadataLayer->layerMetadata.title.copy(metadataLayer->dataSource->cfgLayer->Title[0]->value.c_str());

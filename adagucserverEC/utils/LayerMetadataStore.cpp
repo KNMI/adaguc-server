@@ -34,10 +34,9 @@ int getLayerBaseMetadataAsJson(MetadataLayer *metadataLayer, json &layerMetadata
     layerMetadataItem["wmsgroup"] = metadataLayer->layerMetadata.wmsgroup;
     layerMetadataItem["abstract"] = metadataLayer->layerMetadata.abstract;
     layerMetadataItem["nativeepsg"] = metadataLayer->layerMetadata.nativeEPSG;
-
     layerMetadataItem["collection"] = metadataLayer->layerMetadata.collection;
-
     layerMetadataItem["isqueryable"] = metadataLayer->layerMetadata.isQueryable;
+    layerMetadataItem["hidden"] = metadataLayer->layerMetadata.hidden;
     json latlonbox;
     for (size_t j = 0; j < 4; j++) {
       latlonbox.push_back(metadataLayer->layerMetadata.dfLatLonBBOX[j]);
@@ -189,6 +188,7 @@ int loadLayerMetadataStructFromMetadataDb(MetadataLayer *metadataLayer) {
     metadataLayer->layerMetadata.abstract = i["abstract"].get<std::string>().c_str();
     metadataLayer->layerMetadata.collection = i["collection"].get<std::string>().c_str();
     metadataLayer->layerMetadata.isQueryable = i["isqueryable"].get<int>();
+    metadataLayer->layerMetadata.hidden = i["hidden"].get<bool>();
     metadataLayer->layerMetadata.nativeEPSG = i["nativeepsg"].get<std::string>().c_str();
     metadataLayer->layerMetadata.nativeEPSG = i["collection"].get<std::string>().c_str();
 
