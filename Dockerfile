@@ -87,7 +87,8 @@ COPY python /adaguc/adaguc-server-master/python
 ######### Third stage, test ############
 FROM base AS test
 
-ENV TEST_IN_CONTAINER=local_build
+ARG TEST_IN_CONTAINER
+ENV TEST_IN_CONTAINER=${TEST_IN_CONTAINER:-local_build}
 
 COPY requirements-dev.txt /adaguc/adaguc-server-master/requirements-dev.txt
 RUN pip install --no-cache-dir -r requirements-dev.txt
