@@ -199,23 +199,20 @@ CT::string ncmlHandleVariable(xmlNode *cur_node, CDFObject *cdfObject) {
       }
       // Rename a variable
       if (pszOrgName != NULL && pszName != NULL) {
-        try {
-          CDF::Variable *var = cdfObject->getVariable(pszOrgName);
-          var->name.copy(pszName);
-        } catch (...) {
+        auto *var = cdfObject->getVariableNE(pszOrgName);
+        if (var == NULL) {
+          CDBError("Can not find variable '%s' to rename", pszOrgName);
+          throw(__LINE__);
         }
+        var->name.copy(pszName);
       }
       if (pszName != NULL) {
-        CDF::Variable *var = NULL;
-        try {
-          var = cdfObject->getVariable(pszName);
-        } catch (...) {
-          if (pszOrgName == NULL) {
-            var = new CDF::Variable();
-            var->currentType = CDF_CHAR;
-            var->name.copy(pszName);
-            cdfObject->addVariable(var);
-          }
+        auto var = cdfObject->getVariableNE(pszName);
+        if (var == NULL) {
+          var = new CDF::Variable();
+          var->currentType = CDF_CHAR;
+          var->name.copy(pszName);
+          cdfObject->addVariable(var);
         }
         /* Set type */
         if (pszType != NULL) {
