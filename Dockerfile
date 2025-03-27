@@ -85,10 +85,8 @@ COPY data /adaguc/adaguc-server-master/data
 COPY python /adaguc/adaguc-server-master/python
 
 ######### Third stage, test ############
-# To run the tests against a postgres db, see docs/test_postgesql.md
 FROM base AS test
 
-ENV TEST_IN_CONTAINER=1
 
 COPY requirements-dev.txt /adaguc/adaguc-server-master/requirements-dev.txt
 RUN pip install --no-cache-dir -r requirements-dev.txt
@@ -97,9 +95,12 @@ COPY tests /adaguc/adaguc-server-master/tests
 COPY runtests.sh /adaguc/adaguc-server-master/runtests.sh
 COPY runtests_psql.sh /adaguc/adaguc-server-master/runtests_psql.sh
 
+# Determine if we're building in github actions or via a local docker build
+ARG TEST_IN_CONTAINER
+ENV TEST_IN_CONTAINER=${TEST_IN_CONTAINER:-local_build}
+
 # Run adaguc-server functional and regression tests. See also `./doc/developing/testing.md`
-RUN bash runtests.sh
-# RUN bash runtests_psql.sh
+RUN bash runtests_psql.sh
 
 # Create a file indicating that the test succeeded. This file is used in the final stage
 RUN echo "TESTSDONE" >  /adaguc/adaguc-server-master/testsdone.txt

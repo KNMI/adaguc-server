@@ -20,14 +20,31 @@ export ADAGUC_DATASET_DIR=${ADAGUC_PATH}/data/config/datasets/
 export ADAGUC_DATA_DIR=${ADAGUC_PATH}/data/datasets/
 export ADAGUC_AUTOWMS_DIR=${ADAGUC_PATH}/data/datasets/
 
+
+if [[ "${TEST_IN_CONTAINER}" == "github_build" ]]; then
+    db_host="localhost"
+elif [[ "${TEST_IN_CONTAINER}" == "local_build" ]]; then
+    db_host="host.docker.internal"
+else
+    db_host="localhost"
+fi
+
 # This assumes you can reach psql on port 5432
 # Tests will use a separate `adaguc_test` database
 # You cannot drop the database you are currently logged in as
-db_host=$([[ "${TEST_IN_CONTAINER}" == 1  ]] && echo "host.docker.internal" || echo "localhost")
-export ADAGUC_DB="user=adaguc password=adaguc host=${db_host} dbname=postgres"
+export ADAGUC_DB="user=adaguc password=adaguc host=${db_host} dbname=postgres port=54321"
+
+psql "${ADAGUC_DB}" -c "SELECT 1";
+if [[ $? -ne 0 ]]; then
+    echo ""
+    echo -e "No Adaguc test database available. Please run:\n"
+    echo -e "\tdocker compose -f Docker/docker-compose-test.yml up -Vd"
+    exit 1
+fi
+
 psql "$ADAGUC_DB" -c "DROP DATABASE IF EXISTS adaguc_test;"
 psql "$ADAGUC_DB" -c "CREATE DATABASE adaguc_test;"
-export ADAGUC_DB="user=adaguc password=adaguc host=${db_host} dbname=adaguc_test"
+export ADAGUC_DB="user=adaguc password=adaguc host=${db_host} dbname=adaguc_test port=54321"
 
 ulimit -c unlimited
 
