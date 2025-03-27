@@ -1,8 +1,7 @@
 # Configure an EDR timeseries service using AdagucServer
 
 - [Back to readme](./Readme.md)
-- [Configuration details for OgcApiEdr](../configuration/EDRConfiguration/EDR.md)
-
+- [Configuration details for EDR](../configuration/EDRConfiguration/EDR.md)
 
 ## Prerequisites
 
@@ -10,36 +9,19 @@ Make sure adaguc-server is running, follow the instructions at [Starting the ada
 
 ## Step 1: Copy a file with timesteps into the adaguc-data folder
 
-Copy the file HARM_N25_20171215090000_dimx16_dimy16_dimtime49_dimforecastreferencetime1_varairtemperatureat2m.nc into the adaguc-data folder:
+Copy the file from the adaguc-server repository under `data/datasets/forecast_reference_time/HARM_N25_20171215090000_dimx16_dimy16_dimtime49_dimforecastreferencetime1_varairtemperatureat2m.nc` into the configured adaguc-data folder:
 
-
-```
+```bash
 cp ${ADAGUC_PATH}/data/datasets/forecast_reference_time/HARM_N25_20171215090000_dimx16_dimy16_dimtime49_dimforecastreferencetime1_varairtemperatureat2m.nc ${ADAGUC_DATA_DIR}
 ```
-This file is available in the adaguc-server repository with location `data/datasets/forecast_reference_time/HARM_N25_20171215090000_dimx16_dimy16_dimtime49_dimforecastreferencetime1_varairtemperatureat2m.nc`
 
 ## Step 2: Configure a dataset for this datafile, including EDR support
 
 Create the following file at the filepath `$ADAGUC_DATASET_DIR/edr.xml`. You can also consider changing `<FilePath>` to `/data/adaguc-data/*.nc`.
 
 ```xml
-
+<?xml version="1.0" encoding="UTF-8" ?>
 <Configuration>
-
-    <OgcApiFeatures />
-
-    <OgcApiEdr>
-        <EdrCollection name="harmonie">
-            <EdrParameter
-                name="air_temperature__at_2m"
-                unit="°C"
-                standard_name="air_temperature"
-                observed_property_label="Air temperature"
-                parameter_label="Air temperature, 2 metre" />
-        </EdrCollection>
-    </OgcApiEdr>
-
-
     <!-- Styles -->
     <Style name="temperature">
         <Legend fixedclasses="true" textformatting="%0.0f" tickinterval="2">bluewhitered</Legend>
@@ -48,81 +30,63 @@ Create the following file at the filepath `$ADAGUC_DATASET_DIR/edr.xml`. You can
     </Style>
 
     <!-- Layers -->
-
     <Layer type="database">
-
-        <FilePath>
-            /data/adaguc-data/HARM_N25_20171215090000_dimx16_dimy16_dimtime49_dimforecastreferencetime1_varairtemperatureat2m.nc</FilePath>
-        <Variable units="Celsius">air_temperature__at_2m</Variable>
+        <Name>my_temperature</Name>
+        <Title>Temperature</Title>
+        <Abstract>The temperature at 2m height</Abstract>
+        <Group collection="mycollection" />
+        <FilePath>/data/adaguc-data/tutorial/HARM_N25_20171215090000_dimx16_dimy16_dimtime49_dimforecastreferencetime1_varairtemperatureat2m.nc</FilePath>
+        <Variable units="Celsius" long_name="air_temperature">air_temperature__at_2m</Variable>
         <Styles>temperature</Styles>
     </Layer>
-    <!-- End of configuration /-->
 </Configuration>
-
 ```
-
-
-### EdrParameter settings
-
-```xml
-<EdrParameter
-                name="air_temperature__at_2m"
-                unit="°C"
-                standard_name="air_temperature"
-                observed_property_label="Air temperature"
-                parameter_label="Air temperature, 2 metre" />
-```                
-
-- name: Mandatory, Should be one of the WMS Layer names as advertised in the WMS GetCapabilities
-- unit: Mandatory, Sets the unit for the parameter in the parameter_names section of the collection document
-- standard_name: Recommended, sets the observedProperty id. If set the id will contain a link to the vocabulary service. If not set, it will fallback to `name` and `observedProperty.id` will not contain a link.
-- observed_property_label: Recommended, sets the observedProperty label, it will fallback to it will fallback first to `standard_name` first, and second to `name`
-- parameter_label: Recommended, sets the label for the parameter in the parameter_names section, it will fallback to the `name`
 
 For the given example this will result in the following parameter name definition:
 
 ```json
-parameter_names": {
-    "air_temperature__at_2m": {
-      "type": "Parameter",
-      "id": "air_temperature__at_2m",
-      "label": "Air temperature, 2 metre",
-      "description": "harmonie - air_temperature__at_2m (air_temperature__at_2m)",
-      "unit": {
-        "symbol": {
-          "value": "°C",
-          "type": "http://www.opengis.net/def/uom/UCUM"
-        }
-      },
-      "observedProperty": {
-        "id": "https://vocab.nerc.ac.uk/standard_name/air_temperature",
-        "label": "Air temperature"
+"parameter_names": {
+  "my_temperature": {
+    "type": "Parameter",
+    "id": "my_temperature",
+    "label": "Temperature",
+    "description": "The temperature at 2m height",
+    "unit": {
+      "symbol": {
+        "value": "Celsius",
+        "type": "http://www.opengis.net/def/uom/UCUM"
       }
+    },
+    "observedProperty": {
+      "id": "https://vocab.nerc.ac.uk/standard_name/air_temperature",
+      "label": "air_temperature"
     }
   }
+}
 ```
-
-*The description is currently read from the GetCapabilities document, using the WMS Layer Title section prefixed with the edr collection name.
-
 
 ## Step 3: Scan the new data
 
-```
+```bash
 docker exec -i -t my-adaguc-server /adaguc/scan.sh -d edr
 ```
 
 ## Step 4: Check if the EDR endpoint works
 
-These examples test the /instances, /position and the /cube EDR calls
+The EDR endpoint is at `/edr/collections`. This will list all the configured collections.
 
-Visit:
-- https://yourhostname/edr/collections/harmonie
-- https://yourhostname/edr/collections/harmonie/instances
-- https://yourhostname/edr/collections/harmonie/instances/?f=application/json
-- https:///yourhostname/edr/collections/harmonie/instances/201712150900/position?coords=POINT(4.782 52.128)&datetime=2017-12-15T09:00Z/2017-12-17T09:00Z&parameter-name=air_temperature__at_2m&crs=EPSG:4326&f=CoverageJSON
-- https:///yourhostname/edr/collections/harmonie/instances/201712150900/cube?bbox=5,52,7,54&datetime=2017-12-15T09:00Z/2017-12-17T09:00Z&parameter-name=air_temperature__at_2m&crs=EPSG:4326&f=CoverageJSON
+You can find the collection from above under `edr.mycollection`. This EDR collection name is a combination of the dataset name (`edr`) and the "group collection" (`mycollection`).
 
-You can also try it in https://labs.metoffice.gov.uk/edr/static/html/query.html
+The following examples test the `/collections`, `/instances`, `/position` and the `/cube` EDR calls:
+- https://yourhostname/edr/collections
+- https://yourhostname/edr/collections/edr.mycollection
+- https://yourhostname/edr/collections/edr.mycollection/instances
+- https://yourhostname/edr/collections/edr.mycollection/instances/201712150900
+- https://yourhostname/edr/collections/edr.mycollection/instances/201712150900/position?coords=POINT(4.782%2052.128)&datetime=2017-12-15T09:00Z/2017-12-17T09:00Z&parameter-name=air_temperature__at_2m&crs=EPSG:4326&f=CoverageJSON
+- https://yourhostname/edr/collections/edr.mycollection/instances/201712150900/cube?bbox=5,52,7,54&datetime=2017-12-15T09:00Z/2017-12-17T09:00Z&parameter-name=air_temperature__at_2m&crs=EPSG:4326&f=CoverageJSON
+
+
+You can also try pasting your EDR endpoint https://yourhostname/edr/collections in https://labs.metoffice.gov.uk/edr/static/html/query.html.
 
 
 See:

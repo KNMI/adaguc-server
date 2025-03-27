@@ -1,4 +1,4 @@
-Dimension (name,interval,default,units,quantizeperiod,quantizemethod,hidden,fixvalue) <value>
+Dimension (name,interval,default,units,quantizeperiod,quantizemethod,hidden,fixvalue,type) <value>
 =====================================================
 
 Back to [Configuration](./Configuration.md)
@@ -12,7 +12,8 @@ Back to [Configuration](./Configuration.md)
 -   quantizemethod - Optional, see below
 -   hidden - Optional, hide this dimension from the GetCapabilities document
 -   fixvalue - Optional, fix the value of the dimension. When elevation has a range from 0,10,20,30, you can fixate the value to 20 with fixvalue="20"
--   <value> - The name of the dimension in the WMS service
+-   type - Optional, see [EDR configuration](/doc/configuration/EDRConfiguration/EDR.md)
+-   \<value\> - The name of the dimension in the WMS service
 
 ```xml
 <Layer>
@@ -23,7 +24,7 @@ Back to [Configuration](./Configuration.md)
 
 -   See [ISO8601](../info/ISO8601.md) for the time resolution specification
 
-## default value 
+## Default value
 
 - The default value of the dimension can be specified as datestring in [ISO8601](ISO8601.md) format
 - Can be "min" or "max" to select the first or latest
@@ -47,7 +48,7 @@ defaults to round.
 
 Example with 5 minute quantization perdiod and method round:
 
-```xml 
+```xml
 <Dimension name="time" interval="PT5M" quantizeperiod="PT5M" quantizemethod="round" >time</Dimension>
 ```
 

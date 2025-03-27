@@ -61,7 +61,7 @@ async def handle_wms(
     adaguc_instance.removeLogFile()
 
     if len(logfile) > 0:
-        logger.info(f":\n{logfile}")
+        logger.info(":\n%s", logfile)
 
     response_code = 200
     # Note: The Adaguc implementation requires non-zero status codes to correspond to the

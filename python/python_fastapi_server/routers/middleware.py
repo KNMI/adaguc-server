@@ -10,6 +10,7 @@ from urllib.parse import urlsplit
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 
+# pylint: disable=too-few-public-methods
 class FixSchemeMiddleware:
     """Fix https scheme behind proxy"""
 

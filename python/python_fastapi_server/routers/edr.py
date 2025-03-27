@@ -10,6 +10,7 @@ KNMI
 
 import logging
 from datetime import datetime, timezone
+import traceback
 
 from edr_pydantic.capabilities import (
     ConformanceModel,
@@ -24,17 +25,17 @@ from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 
 from .edr_cube import router as cube_router
-from .edr_exception import EdrException
+from .utils.edr_exception import EdrException, exc_no_datasets
 from .edr_locations import router as locations_router
 from .edr_position import router as position_router
 from .edr_instances import router as instances_router
 
-from .edr_utils import (
+from .utils.edr_utils import (
     generate_max_age,
     get_base_url,
-    get_collectioninfo_for_id,
-    get_edr_collections,
+    get_collectioninfo_from_md,
     get_time_values_for_range,
+    get_metadata,
 )
 
 logger = logging.getLogger(__name__)
@@ -52,9 +53,10 @@ async def edr_exception_handler(_, exc: EdrException):
     """
     Handler for EDR exceptions
     """
+
     return JSONResponse(
-        status_code=exc.code,
-        content={"code": str(exc.code), "description": exc.description},
+        status_code=exc.status_code,
+        content={"code": str(exc.status_code), "description": exc.detail},
     )
 
 
@@ -112,7 +114,7 @@ def get_times_for_collection(
 )
 async def rest_get_edr_collections(request: Request, response: Response):
     """
-    GET /collections, returns a list of available collections
+    GET /collections, returns all available collections
     """
     links: list[Link] = []
     collection_url = get_base_url(request) + "/edr/collections"
@@ -121,15 +123,18 @@ async def rest_get_edr_collections(request: Request, response: Response):
     links.append(self_link)
     collections: list[Collection] = []
     ttl_set = set()
-    edr_collections = get_edr_collections()
-    for edr_coll in edr_collections:
-        coll, ttl = await get_collectioninfo_for_id(edr_coll)
-        if coll:
-            collections.append(coll)
-            if ttl is not None:
-                ttl_set.add(ttl)
-        else:
-            logger.warning("Unable to fetch WMS GetCapabilities for %s", edr_coll)
+    metadata = await get_metadata()
+    if metadata is None:
+        raise exc_no_datasets()
+    for dataset_name in metadata.keys():
+        try:
+            colls = get_collectioninfo_from_md(metadata[dataset_name], dataset_name)
+            if colls:
+                collections.extend(colls)
+            else:
+                logger.warning("Unable to fetch WMS GetMetadata for %s", dataset_name)
+        except Exception:
+            print("ERR", dataset_name, traceback.format_exc())
     collections_data = Collections(links=links, collections=collections)
     if ttl_set:
         response.headers["cache-control"] = generate_max_age(min(ttl_set))
@@ -145,7 +150,18 @@ async def rest_get_edr_collection_by_id(collection_name: str, response: Response
     """
     GET Returns collection information for given collection id
     """
-    collection, ttl = await get_collectioninfo_for_id(collection_name)
+    metadata = await get_metadata(collection_name)
+    if metadata is None:
+        raise EdrException(
+            code=400,
+            description=f"Unknown or unconfigured collection {collection_name}",
+        )
+
+    ttl = None
+
+    collection = get_collectioninfo_from_md(metadata[collection_name], collection_name)[
+        0
+    ]
     if ttl is not None:
         response.headers["cache-control"] = generate_max_age(ttl)
     if collection is None:
@@ -219,26 +235,6 @@ def get_fixed_api():
         version=edrApiApp.version,
         routes=edrApiApp.routes,
     )
-    for pth in api["paths"].values():
-        if "parameters" in pth["get"]:
-            for param in pth["get"]["parameters"]:
-                if param["in"] == "query" and param["name"] == "datetime":
-                    param["style"] = "form"
-                    param["explode"] = False
-                    param["schema"] = {
-                        "type": "string",
-                    }
-                if "schema" in param:
-                    if "anyOf" in param["schema"]:
-                        for itany in param["schema"]["anyOf"]:
-                            if itany.get("type") == "null":
-                                print("NULL found p")
-
-    if "CompactAxis" in api["components"]["schemas"]:
-        comp = api["components"]["schemas"]["CompactAxis"]
-        if "exclusiveMinimum" in comp["properties"]["num"]:
-            comp["properties"]["num"]["exclusiveMinimum"] = False
-
     return api
 
 

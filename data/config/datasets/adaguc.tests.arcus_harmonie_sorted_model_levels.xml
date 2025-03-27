@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration>
     <Layer type="database">
+        <Group collection="ml" />
         <Name>air-temperature-ml</Name>
         <Title>air-temperature-ml</Title>
         <Variable>air-temperature-ml</Variable>
