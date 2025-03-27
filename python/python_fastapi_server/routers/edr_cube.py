@@ -106,7 +106,6 @@ async def get_coll_inst_cube(
     dataset_name = get_dataset_from_collection(metadata, collection_name)
     instance = get_instance(metadata, collection_name, instance)
     parameter_names = get_parameters(metadata, collection_name, parameter_name_par)
-    print("PARAMS:", parameter_names)
 
     _, vertical_dim = get_vertical(metadata, collection_name, parameter_names[0], z_par)
 

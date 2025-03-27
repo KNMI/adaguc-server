@@ -616,12 +616,18 @@ def test_cube_custom_dim_request_all_members(client: TestClient):
             404,
             "Incorrect parameter  requested for collection adaguc.tests.members.mycollection",
         ),
+        (
+            "/edr/collections/adaguc.tests.members.mycollection/instances/202503010000/position?coords=POINT()&parameter-name=mymemberdata",
+            400,
+            "Could not parse WKT Point, received coords=POINT()",
+        ),
     ],
     ids=[
         "unknown_collection",
         "incorrect_instance",
         "incorrect_parameter",
         "no_parameter",
+        "invalid_point",
     ],
 )
 def test_edr_exceptions(url, status_code, description, client: TestClient):

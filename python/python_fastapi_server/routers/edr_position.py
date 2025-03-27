@@ -18,7 +18,7 @@ from typing_extensions import Annotated
 
 from .covjsonresponse import CovJSONResponse
 from .edr_covjson import covjson_from_resp
-from .utils.edr_exception import EdrException, exc_unknown_collection
+from .utils.edr_exception import EdrException, exc_invalid_point
 from .utils.edr_utils import (
     call_adaguc,
     generate_max_age,
@@ -91,7 +91,6 @@ async def get_coll_inst_position(
     dataset_name = get_dataset_from_collection(metadata, collection_name)
     instance = get_instance(metadata, collection_name, instance)
     parameter_names = get_parameters(metadata, collection_name, parameter_name_par)
-    print("PARAMS:", parameter_names)
 
     _, vertical_dim = get_vertical(metadata, collection_name, parameter_names[0], z_par)
 
@@ -100,8 +99,11 @@ async def get_coll_inst_position(
         allowed_params,
     )
 
-    latlons = wkt.loads(coords)
-    coord = {"lat": latlons["coordinates"][1], "lon": latlons["coordinates"][0]}
+    try:
+        latlons = wkt.loads(coords)
+        coord = {"lat": latlons["coordinates"][1], "lon": latlons["coordinates"][0]}
+    except Exception:
+        raise exc_invalid_point(coords)
 
     resp, headers = await get_point_value(
         dataset_name,
