@@ -52,5 +52,5 @@ def exc_failed_call(mess: str) -> EdrException:
 def exc_invalid_point(coords: str) -> EdrException:
     return EdrException(
         code=400,
-        description=f"Could not parse WKT Point, received coords={coords}",
+        description=f"Could not parse WKT POINT, received coords={coords}",
     )

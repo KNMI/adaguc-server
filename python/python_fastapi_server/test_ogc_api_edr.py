@@ -619,7 +619,7 @@ def test_cube_custom_dim_request_all_members(client: TestClient):
         (
             "/edr/collections/adaguc.tests.members.mycollection/instances/202503010000/position?coords=POINT()&parameter-name=mymemberdata",
             400,
-            "Could not parse WKT Point, received coords=POINT()",
+            "Could not parse WKT POINT, received coords=POINT()",
         ),
     ],
     ids=[
