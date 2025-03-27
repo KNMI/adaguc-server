@@ -24,7 +24,7 @@ logger.debug("Starting EDR")
 @router.get("/collections/{_coll}/locations/{id}")
 @router.get("/collections/{_coll}/instances/{instance}/locations/{location_id}")
 async def get_locations(
-    _coll: str, request: Request, instance: str = None, location_id: str = None
+    _coll: str, request: Request, _instance: str = None, location_id: str = None
 ):
     """
     Returns locations where you could query data.
@@ -46,12 +46,7 @@ async def get_locations(
     req_url = str(request.url)
     for loc in location_list:
         if loc["id"] == location_id:
-            if instance:
-                repl_url = req_url.replace(
-                    f"/locations/{instance}/{location_id}", "/position"
-                )
-            else:
-                repl_url = req_url.replace(f"/locations/{location_id}", "/position")
+            repl_url = req_url.replace(f"/locations/{location_id}", "/position")
             repl_url = (
                 repl_url
                 + ("?&" if "?" not in req_url else "&")
