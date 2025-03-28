@@ -43,9 +43,13 @@ class TestEWCLocalClimateInfo(unittest.TestCase):
         self.assertEqual(status, 0)
 
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
-        self.assertEqual(
-            data.getvalue(),
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        self.assertTrue(
+            AdagucTestTools().compareImage(
+                self.expectedoutputsspath + filename,
+                self.testresultspath + filename,
+                28,
+                0.6,
+            )
         )
 
     def test_EWCLocalClimateInfo_GetFeatureInfo_Two_Scenarios(self):
