@@ -8,6 +8,7 @@ import unittest
 import sys
 from AdagucTests.TestMetadataRequest import TestMetadataRequest
 from AdagucTests.TestWMSTimeSeries import TestWMSTimeSeries
+from AdagucTests.TestEWCLocalClimateInfo import TestEWCLocalClimateInfo
 from AdagucTests.TestWMS import TestWMS
 from AdagucTests.TestWCS import TestWCS
 from AdagucTests.TestWMSSLD import TestWMSSLD
@@ -30,6 +31,7 @@ suites = []
 TestLoader = unittest.TestLoader
 suites.append(TestLoader().loadTestsFromTestCase(TestMetadataRequest))
 suites.append(TestLoader().loadTestsFromTestCase(TestWMSTimeSeries))
+suites.append(TestLoader().loadTestsFromTestCase(TestEWCLocalClimateInfo))
 suites.append(TestLoader().loadTestsFromTestCase(TestWMS))
 suites.append(TestLoader().loadTestsFromTestCase(TestWCS))
 suites.append(TestLoader().loadTestsFromTestCase(TestWMSSLD))

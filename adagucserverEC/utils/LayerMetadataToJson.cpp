@@ -35,8 +35,8 @@ int getLayerMetadataAsJson(CServerParams *srvParams, json &result) {
   }
 
   CT::string layerNameInRequest;
-  if (srvParams->WMSLayers != nullptr && srvParams->WMSLayers->count > 0) {
-    layerNameInRequest = srvParams->WMSLayers[0].c_str();
+  if (srvParams->requestedLayerNames.size() > 0) {
+    layerNameInRequest = srvParams->requestedLayerNames[0].c_str();
   }
 
   for (auto dataset : datasetNames) {

@@ -688,7 +688,9 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
   int status = 0;
   isProfileData = false;
   for (size_t d = 0; d < dataSources.size(); d++) {
-
+    if (dataSources[d]->cfgLayer->attr.hidden.equals("true")) {
+      continue;
+    }
     GetFeatureInfoResult *getFeatureInfoResult = new GetFeatureInfoResult();
     getFeatureInfoResultList.push_back(getFeatureInfoResult);
     bool headerIsAvailable = false;
@@ -937,6 +939,10 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
 
           // Retrieve variable names
           for (size_t o = 0; o < dataSource->getNumDataObjects(); o++) {
+            if (dataSource->getDataObject(o)->cdfVariable->data == nullptr) {
+              CDBWarning("No variable defined for dataObject %d for [%s]", o, dataSource->getDataObject(o)->cdfVariable->name.c_str());
+              continue;
+            }
 
             //        size_t j=d+o*dataSources.size();
             // CDBDebug("j = %d",j);

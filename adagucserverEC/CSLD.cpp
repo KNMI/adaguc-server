@@ -62,11 +62,7 @@ int CSLD::processSLDUrl(CT::string sldUrl) {
         CServerConfig::XMLE_Layer *layer = this->serverConfig->Layer[j];
 
         // Generate unique layer name for layer in Server Config
-        CT::string layerUniqueName;
-        if (makeUniqueLayerName(&layerUniqueName, this->serverConfig->Layer[j]) != 0) {
-          CDBError("Unable to compose layer name");
-          return 1;
-        }
+        CT::string layerUniqueName = makeUniqueLayerName(this->serverConfig->Layer[j]);
 
 #ifdef CSLD_DEBUG
         CDBDebug("Checking layer [%s]", layerUniqueName.c_str());
