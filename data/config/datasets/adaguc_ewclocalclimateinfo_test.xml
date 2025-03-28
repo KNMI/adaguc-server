@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+    <WMS>
+        <WMSFormat name="image/png" format="image/png32" />
+        <ContourFont location="{ADAGUC_PATH}/data/fonts/Roboto-Light.ttf" size="8" />
+        <LegendFont location="{ADAGUC_PATH}/data/fonts/Roboto-Light.ttf" size="7" />
+        <TitleFont location="{ADAGUC_PATH}/data/fonts/Roboto-Light.ttf" size="20" />
+        <SubTitleFont location="{ADAGUC_PATH}/data/fonts/Roboto-Light.ttf" size="12" />
+    </WMS>
+    <Legend name="temperature_wn" type="colorRange">
+        <palette index="000" red="100" green="100" blue="186" />
+        <palette index="006" red="079" green="072" blue="149" />
+        <palette index="012" red="000" green="057" blue="128" />
+        <palette index="018" red="000" green="084" blue="157" />
+        <palette index="024" red="000" green="112" blue="184" />
+        <palette index="030" red="000" green="139" blue="208" />
+        <palette index="036" red="000" green="158" blue="205" />
+        <palette index="042" red="001" green="168" blue="186" />
+        <palette index="048" red="045" green="183" blue="185" />
+        <palette index="054" red="000" green="153" blue="161" />
+        <palette index="060" red="000" green="125" blue="143" />
+        <palette index="066" red="000" green="113" blue="109" />
+        <palette index="072" red="001" green="100" blue="047" />
+        <palette index="078" red="000" green="109" blue="051" />
+        <palette index="084" red="040" green="154" blue="067" />
+        <palette index="090" red="118" green="184" blue="086" />
+        <palette index="096" red="149" green="195" blue="107" />
+        <palette index="102" red="175" green="203" blue="082" />
+        <palette index="108" red="197" green="213" blue="080" />
+        <palette index="120" red="222" green="219" blue="000" />
+        <palette index="126" red="241" green="229" blue="031" />
+        <palette index="132" red="255" green="240" blue="063" />
+        <palette index="138" red="255" green="244" blue="129" />
+        <palette index="144" red="255" green="246" blue="177" />
+        <palette index="150" red="255" green="241" blue="196" />
+        <palette index="156" red="255" green="231" blue="171" />
+        <palette index="162" red="253" green="213" blue="144" />
+        <palette index="168" red="250" green="193" blue="114" />
+        <palette index="174" red="247" green="170" blue="066" />
+        <palette index="180" red="239" green="127" blue="001" />
+        <palette index="186" red="235" green="105" blue="009" />
+        <palette index="192" red="232" green="079" blue="019" />
+        <palette index="198" red="228" green="046" blue="024" />
+        <palette index="204" red="227" green="000" blue="027" />
+        <palette index="210" red="209" green="000" blue="024" />
+        <palette index="216" red="189" green="010" blue="029" />
+        <palette index="222" red="152" green="027" blue="033" />
+        <palette index="228" red="102" green="038" blue="036" />
+        <palette index="234" red="080" green="041" blue="036" />
+        <palette index="240" red="080" green="041" blue="036" />
+    </Legend>
+    <Legend name="baselayer" type="interval">
+        <palette min="0" max="240" red="0" green="0" blue="0" />
+    </Legend>
+    <Style name="jaartemperatuur">
+        <Legend fixedclasses="false">temperature_wn</Legend>
+        <ShadeInterval>0.3</ShadeInterval>
+        <Point fontsize="{ADAGUCENV_POINTTEXTSIZE}" textformatting="%2.0f" discradius="{ADAGUCENV_POINTDISCRADIUS}" pointstyle="point" textcolor="{ADAGUCENV_POINTTEXTCOLOR}"
+            textradius="{ADAGUCENV_POINTTEXTRADIUS}" />
+        <ContourLine width="0.8" linecolor="#444444" textcolor="#222222" textformatting="%2.1f" interval="0.3" />
+        <RenderMethod>shadedcontour</RenderMethod>
+        <Min>0</Min>
+        <Max>24</Max>
+    </Style>
+    <Style name="filledcountries">
+        <Legend fixedclasses="true" tickinterval="1000" tickround="1">baselayer</Legend>
+        <Min>0.0</Min>
+        <Max>1000</Max>
+        <RenderMethod>nearest</RenderMethod>
+        <NameMapping name="polyline" title="Overlay countries" abstract="Overlay countries" />
+        <FeatureInterval match="0" matchid="Type" fillcolor="#D2FEFE" />
+        <FeatureInterval match="2" matchid="Type" fillcolor="#D1E1FC" />
+        <FeatureInterval match="3" matchid="Type" fillcolor="#D2D2D2" />
+        <FeatureInterval match="4" matchid="Type" fillcolor="#D2D2D2" />
+        <FeatureInterval match="5" matchid="Type" fillcolor="#D2D2D2" />
+        <FeatureInterval match="6" matchid="Type" fillcolor="#D2D2D2" />
+    </Style>
+    <Style name="countryborders">
+        <Legend fixedclasses="true" tickinterval="1000" tickround="1">baselayer</Legend>
+        <Min>0.0</Min>
+        <Max>1000</Max>
+        <RenderMethod>polyline</RenderMethod>
+        <NameMapping name="polyline" title="Overlay countries" abstract="Overlay countries" />
+        <FeatureInterval match="0" matchid="Type" bgcolor="#CCCCFF" fillcolor="#000080FF" bordercolor="#7EAFFFFF" borderwidth="0.67" />
+        <FeatureInterval match="1" matchid="Type" bgcolor="#CCCCFF" fillcolor="#000080FF" bordercolor="#444444FF" borderwidth="0.5" />
+        <FeatureInterval match="2" matchid="Type" bgcolor="#CCCCFF" fillcolor="#000080FF" bordercolor="#7EAFFFFF" borderwidth=".27" />
+        <FeatureInterval match="3" matchid="Type" bgcolor="#CCCCFF" fillcolor="#000080FF" bordercolor="#444444FF" borderwidth="0.6" />
+        <FeatureInterval match="4" matchid="Type" bgcolor="#CCCCFF" fillcolor="#000080FF" bordercolor="#444444FF" borderwidth="0.6" />
+        <FeatureInterval match="5" matchid="Type" bgcolor="#CCCCFF" fillcolor="#000080FF" bordercolor="#444444FF" borderwidth="0.6" />
+        <FeatureInterval match="6" matchid="Type" bgcolor="#CCCCFF" fillcolor="#000080FF" bordercolor="#444444FF" borderwidth="0.6" />
+    </Style>
+    <Style name="provinces">
+        <Legend fixedclasses="true" tickinterval="1000" tickround="1">baselayer</Legend>
+        <Min>0.0</Min>
+        <Max>1000</Max>
+        <RenderMethod>polyline</RenderMethod>
+        <NameMapping name="polyline" title="Overlay countries" abstract="Overlay countries" />
+        <FeatureInterval match=".*" bgcolor="#00FF00FF" fillcolor="#FFFFFFFF" bordercolor="#555555"
+            borderwidth="0.5" />
+    </Style>
+
+    <!-- include layers -->
+    <Layer hidden="true">
+        <Name>overlaymask</Name>
+        <Title>overlaymask</Title>
+        <FilePath>
+            {ADAGUC_PATH}/data/datasets/knmi/overlays/GSIE-NL-overlaymask.geojson</FilePath>
+        <Variable>features</Variable>
+        <Styles>filledcountries</Styles>
+    </Layer>
+    <Layer hidden="true">
+        <Name>filledcountries</Name>
+        <Title>filledcountries</Title>
+        <FilePath>
+            {ADAGUC_PATH}/data/datasets/knmi/overlays/GSIE-NL-CountryOverlay-with-waterbodies.geojson</FilePath>
+        <Variable>features</Variable>
+        <Styles>filledcountries</Styles>
+    </Layer>
+    <Layer hidden="true">
+        <Name>countryborders</Name>
+        <Title>countryborders</Title>
+        <FilePath>
+            {ADAGUC_PATH}/data/datasets/knmi/overlays/GSIE-NL-CountryOverlay-with-waterbodies.geojson</FilePath>
+        <Variable>features</Variable>
+        <Styles>countryborders</Styles>
+    </Layer>
+    <Layer hidden="true">
+        <Name>provinces</Name>
+        <Title>provinces</Title>
+        <FilePath>
+            {ADAGUC_PATH}/data/datasets/knmi/overlays/GSIE-NL-provinces-overlay.geojson</FilePath>
+        <Variable>features</Variable>
+        <Styles>provinces</Styles>
+    </Layer>
+    <Layer type="database" hidden="false">
+        <Group value="jaarlijks" />
+        <Name force="false">tas_mean_2050</Name>
+        <Title>Jaargemiddelde temperatuur voor scenario 2050</Title>
+        <FilePath filter="^jaarlijks-tas_mean-2050.*-ANN-.*_gridded.nc$">{ADAGUC_PATH}</FilePath>
+        <Variable>interpolatedObs</Variable>
+        <Styles>jaartemperatuur</Styles>
+        <AdditionalLayer replace="false" style="provinces/polyline">provinces</AdditionalLayer>
+        <AdditionalLayer replace="false" style="filledcountries/nearest">filledcountries</AdditionalLayer>
+        <AdditionalLayer replace="false" style="filledcountries/nearest">overlaymask</AdditionalLayer>
+        <AdditionalLayer replace="false" style="countryborders/polyline">countryborders</AdditionalLayer>
+        <Dimension name="time" units="ISO8601" interval="P1Y" default="min">time</Dimension>
+        <Dimension name="seasonyear" hidden="true">seasonyear</Dimension>
+        <Dimension name="scenario">scenario</Dimension>
+    </Layer>
+
+</Configuration>

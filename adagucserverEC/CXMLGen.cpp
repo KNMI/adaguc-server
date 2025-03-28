@@ -865,10 +865,10 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc, std::vector<Metad
                "   xsi:schemaLocation=\"http://www.opengis.net/wcs http://schemas.opengis.net/wcs/1.0.0/describeCoverage.xsd\">\n");
   const auto firstWMLayer = getFirstLayerWithoutError(metadataLayerList);
   if (firstWMLayer != nullptr) {
-    for (size_t layerIndex = 0; layerIndex < (unsigned)srvParam->WMSLayers->count; layerIndex++) {
+    for (size_t layerIndex = 0; layerIndex < srvParam->requestedLayerNames.size(); layerIndex++) {
       for (size_t lnr = 0; lnr < metadataLayerList->size(); lnr++) {
         MetadataLayer *layer = (*metadataLayerList)[lnr];
-        if (layer->layerMetadata.name.equals(&srvParam->WMSLayers[layerIndex])) {
+        if (layer->layerMetadata.name.equals(srvParam->requestedLayerNames[layerIndex])) {
           if (layer->hasError != 0) {
             addErrorInXMLForMisconfiguredLayer(XMLDoc, layer);
           }

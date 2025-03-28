@@ -14,12 +14,7 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
   }
 
   // Make the layer name
-  CT::string layerUniqueName;
-  if (makeUniqueLayerName(&layerUniqueName, metadataLayer->layer) != 0) {
-    metadataLayer->hasError = true;
-    return 1;
-  }
-  metadataLayer->layerMetadata.name.copy(&layerUniqueName);
+  metadataLayer->layerMetadata.name = makeUniqueLayerName(metadataLayer->layer);
 
   // Create and datasource
   if (metadataLayer->dataSource == NULL) {
@@ -117,14 +112,11 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
       CDF::Attribute *standardNameAttr = d->cdfVariable->getAttributeNE("standard_name");
 
       CT::string label = longName != nullptr ? longName->getDataAsString() : d->variableName;
-      LayerMetadataVariable layerMetadataVariable = {
-          .variableName = d->cdfVariable->name,
-          .units = d->getUnits(),
-          .label = label,
-      };
+      LayerMetadataVariable layerMetadataVariable = {.variableName = d->cdfVariable->name, .units = d->getUnits(), .label = label, .standard_name = d->cdfVariable->name};
+
       if (standardNameAttr != nullptr) {
         layerMetadataVariable.standard_name = standardNameAttr->getDataAsString();
-        CDBDebug("standard_name for %s: %s", d->cdfVariable->name.c_str(), standardNameAttr->getDataAsString().c_str());
+        // CDBDebug("standard_name for %s: %s", d->cdfVariable->name.c_str(), standardNameAttr->getDataAsString().c_str());
       }
       metadataLayer->layerMetadata.variableList.push_back(layerMetadataVariable);
     }

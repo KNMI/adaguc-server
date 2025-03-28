@@ -6,9 +6,9 @@
 
 /**
  * Function which generates a unique layername from the Layer's configuration
- * @param layerName the returned name
- * @param cfgLayer the configuration object of the corresponding layer
+ * @param cfgLayer t*he configuration object of the corresponding layer
+ * @return the returned name
  */
-int makeUniqueLayerName(CT::string *layerName, CServerConfig::XMLE_Layer *cfgLayer);
+CT::string makeUniqueLayerName(CServerConfig::XMLE_Layer *cfgLayer, const char *optionalLayerName = nullptr);
 
 #endif
