@@ -48,13 +48,7 @@ int updateLayerMetadata(CRequest &request) {
       CDBDebug("Found %d layer(s) in dataset %s", requestPerDataset.getServerParams()->cfg->Layer.size(), dataset.c_str());
     }
     for (auto layer : requestPerDataset.getServerParams()->cfg->Layer) {
-      CT::string layerName;
-      makeUniqueLayerName(&layerName, layer);
-      if (isalpha(layerName.charAt(0)) == 0) {
-        CT::string tmp = layerName;
-        layerName.print("ID_%s", tmp.c_str());
-      }
-      dataSetConfigsWithLayers.insert(std::make_pair(datasetBaseName, layerName.c_str()));
+      dataSetConfigsWithLayers.insert(std::make_pair(datasetBaseName, makeUniqueLayerName(layer).c_str()));
     }
     CT::string layerPathToScan;
     CT::string tailPath;

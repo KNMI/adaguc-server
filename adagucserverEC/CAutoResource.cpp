@@ -513,7 +513,7 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *const srvParam, CDFObject
         // TODO This must be accomplished with standard name / global attribute mappings
         if (featureType->getDataAsString().equals("timeSeries") || featureType->getDataAsString().equals("point")) {
           CServerConfig::XMLE_RenderMethod *xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
-          CREPORT_INFO_NODOC((*variableNames)[0] + " featureType is timeSeries or point. Assuming point render method for now.", CReportMessage::Categories::GENERAL);
+          // CREPORT_INFO_NODOC((*variableNames)[0] + " featureType is timeSeries or point. Assuming point render method for now.", CReportMessage::Categories::GENERAL);
           xmleRenderMethod->value.copy("point");
           xmleLayer->RenderMethod.insert(xmleLayer->RenderMethod.begin(), xmleRenderMethod);
         }
