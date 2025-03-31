@@ -1,3 +1,6 @@
+**Version 2.32.0 2025-03-31**
+- Added odim hdf5 volume data support, as extension to existing knmi hdf5 volume data support.
+
 **Version 2.31.3 2025-03-24**
 - Fix units in legend for toknots data post processor
 
