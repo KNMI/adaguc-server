@@ -137,7 +137,7 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenHeader(CDFObject *cdfObject
     echoToppenVar->dimensionlinks.push_back(dimX);
     echoToppenVar->setType(CDF_FLOAT);
     echoToppenVar->name = CConvertKNMIH5EchoToppen_EchoToppenVar;
-    echoToppenVar->addAttribute(new CDF::Attribute("units", "FL (ft*100)"));
+    echoToppenVar->addAttribute(new CDF::Attribute("units", "FL"));
     echoToppenVar->setAttributeText("grid_mapping", "projection");
   }
   return 0;
