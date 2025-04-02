@@ -48,7 +48,8 @@ async def get_locations(
         if loc["id"] == location_id:
             if instance:
                 repl_url = req_url.replace(
-                    f"/locations/{instance}/{location_id}", "/position"
+                    f"/instances/{instance}/locations/{location_id}",
+                    f"/instances/{instance}/position",
                 )
             else:
                 repl_url = req_url.replace(f"/locations/{location_id}", "/position")
