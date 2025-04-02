@@ -101,9 +101,14 @@ async def get_coll_inst_position(
 
     try:
         latlons = wkt.loads(coords)
-        coord = {"lat": latlons["coordinates"][1], "lon": latlons["coordinates"][0]}
-    except Exception:
+    except StopIteration:
         raise exc_invalid_point(coords)
+
+    # TODO: for now only support POINT and not MULTIPOINT
+    if len(latlons.get("coordinates", [])) != 2:
+        raise exc_invalid_point(coords)
+
+    coord = {"lat": latlons["coordinates"][1], "lon": latlons["coordinates"][0]}
 
     resp, headers = await get_point_value(
         dataset_name,

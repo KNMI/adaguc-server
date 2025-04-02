@@ -87,6 +87,8 @@ add_library(
     utils/UpdateLayerMetadata.cpp
     utils/ConfigurationUtils.h
     utils/ConfigurationUtils.cpp    
+    utils/CRequestUtils.h
+    utils/CRequestUtils.cpp
     Types/LayerMetadataType.h
     CDataPostProcessors/CDataPostProcessor_AddFeatures.cpp
     CDataPostProcessors/CDataPostProcessor_AddFeatures.h

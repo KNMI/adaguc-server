@@ -158,7 +158,7 @@ def netcdf_to_covjson(
                         custom_dim_name = netcdfdimname_to_covdimname.get(
                             dimname, dimname
                         )
-                        custom_dim_values = ncvar[:].data.tolist()
+                        custom_dim_values = ncvar[:].tolist()
                         continue
                 coverage_axis_name = netcdfdimname_to_covdimname.get(dimname, dimname)
                 if (

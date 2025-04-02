@@ -499,6 +499,9 @@ def get_params_for_dataset(
 def handle_metadata(metadata: dict):
     collections = {}
     for dataset in metadata:
+        # Check if there is something configured for this dataset, otherwise continue.
+        if not metadata[dataset]:
+            continue
         for layername, layerdata in metadata[dataset].items():
             if layerdata:
                 if (
@@ -506,11 +509,16 @@ def handle_metadata(metadata: dict):
                     and len(layerdata["layer"]["collection"]) > 0
                 ):
                     collection_name = dataset + "." + layerdata["layer"]["collection"]
+                elif "." in dataset:
+                    # Note, no collections were configured. There is a "." in the datasetname, so we cannot make an EDR dataset out of it.
+                    collection_name = None
                 else:
                     collection_name = dataset
-                if not collection_name in collections:
-                    collections[collection_name] = {}
-                collections[collection_name][layername] = layerdata
+                # Add the collection to the dictionary
+                if collection_name:
+                    if not collection_name in collections:
+                        collections[collection_name] = {}
+                    collections[collection_name][layername] = layerdata
     return collections
 
 
