@@ -22,6 +22,18 @@ jobs:
             runner: ubuntu-24.04
           - platform: linux/arm64
             runner: ubuntu-24.04-arm
+
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: adaguc
+          POSTGRES_PASSWORD: adaguc
+          POSTGRES_DB: adaguc
+        ports:
+        - 54321:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
     steps:
       - name: Prepare
         run: |
@@ -33,6 +45,9 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            network=host
 
       - name: Log in to Docker Hub
         if: github.repository == 'KNMI/adaguc-server'
@@ -59,6 +74,9 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           tags: ${{ env.REGISTRY_IMAGE }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
+          network: host
+          build-args: |
+            TEST_IN_CONTAINER=github_build
 
       - name: Run Trivy vulnerability scanner
         if: matrix.platform == 'linux/amd64'  # Run trivy only once
