@@ -579,9 +579,8 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
 
   for (size_t layerNo = 0; layerNo < srvParam->cfg->Layer.size(); layerNo++) {
     if (srvParam->cfg->Layer[layerNo]->attr.type.equals("database")) {
-      CT::string intLayerName;
+      CT::string intLayerName = makeUniqueLayerName(srvParam->cfg->Layer[layerNo]);
 
-      makeUniqueLayerName(&intLayerName, srvParam->cfg->Layer[layerNo]);
       if (layerName.length() == 0) {
         layerName = intLayerName;
       }

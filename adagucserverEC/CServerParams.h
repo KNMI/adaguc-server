@@ -88,7 +88,7 @@ public:
   int dFound_BBOX;
   double dX, dY;
   bool verbose = false;
-  CT::string *WMSLayers;
+  std::vector<CT::string> requestedLayerNames;
   CT::string Format;
   CT::string InfoFormat;
   int imageFormat;

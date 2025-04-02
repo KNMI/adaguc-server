@@ -44,13 +44,14 @@ charset-normalizer==3.4.1
     # via requests
 click==8.1.8
     # via
+    #   -r requirements.in
     #   geomet
     #   uvicorn
-covjson-pydantic==0.3.0
+covjson-pydantic==0.5.0
     # via -r requirements.in
 defusedxml==0.7.1
     # via -r requirements.in
-edr-pydantic==0.3.0
+edr-pydantic==0.5.0
     # via -r requirements.in
 exceptiongroup==1.2.2
     # via anyio

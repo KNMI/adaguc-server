@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 
@@ -21,8 +20,8 @@ def setup_test_data():
     print("About to ingest data")
     AdagucTestTools().cleanTempDir()
     AdagucTestTools().cleanPostgres()
-    for service in ["netcdf_5d.xml", "dataset_a.xml"]:
-        _status, _data, _headers = AdagucTestTools().runADAGUCServer(
+    for service in ("netcdf_5d.xml", "dataset_a.xml"):
+        _, _, _ = AdagucTestTools().runADAGUCServer(
             args=[
                 "--updatedb",
                 "--config",
@@ -34,11 +33,16 @@ def setup_test_data():
         )
 
 
+# Call this once during the whole pytest session
+@pytest.fixture(scope="session", autouse=True)
+def ingest_data():
+    set_environ()
+    setup_test_data()
+
+
 @pytest.fixture(name="client")
 def fixture_client():
     # Initialize adaguc-server
-    set_environ()
-    setup_test_data()
     yield TestClient(app)
 
 
@@ -49,12 +53,12 @@ def test_root(client: TestClient):
     # print("getcap:", resp.text)
 
     resp = client.get("/ogcapi/")
-    #print("resp:", resp, resp.json())
+    # print("resp:", resp, resp.json())
     assert resp.json()["description"] == "ADAGUC OGCAPI-Features server"
 
 
 def test_collections(client: TestClient):
     resp = client.get("/ogcapi/collections")
     colls = resp.json()
-    #print(json.dumps(colls["collections"][1], indent=2))
+    # print(json.dumps(colls["collections"][1], indent=2))
     assert len(colls["collections"]) == 2

@@ -5,29 +5,24 @@
   This file can be included by using the adaguc.dataset.cgi?service=wms&DATASET=testdata& key value pair in the URL 
   -->
   
-<OgcApiEdr>
- <EdrCollection name="testcollection" time_interval="R4/{reference_time}+1/PT60M" vertical_name="height">
-       <EdrParameter name="testdata" unit="m2 s-2" standard_name="atmosphere_helicity" parameter_label="Absolute updraft helicity in atmosphere" observed_property_label="testdata"/>
-       <EdrParameter name="testdata2" unit="m2 s-2" standard_name="atmosphere_helicity2" parameter_label="Absolute updraft helicity in atmosphere 2" observed_property_label="testdata2"/>
-</EdrCollection>
-</OgcApiEdr>
-
 
   <Layer type="database">
+    <Group collection="testcollection"/>
     <FilePath>{ADAGUC_PATH}/data/datasets/multi_dim.nc</FilePath>
     <Variable>testdata</Variable>
     <Styles>auto</Styles>
     <Dimension name="time" units="ISO8601" interval="PT1H" default="min">time</Dimension>
-    <Dimension name="height" units="m">height</Dimension>
+    <Dimension name="height" units="m" type="vertical">height</Dimension>
     <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension> 
   </Layer>
   
   <Layer type="database">
+    <Group collection="testcollection"/>
     <FilePath>{ADAGUC_PATH}/data/datasets/multi_dim.nc</FilePath>
     <Variable>testdata2</Variable>
     <Styles>auto</Styles>
     <Dimension name="time" units="ISO8601" interval="PT1H" default="min">time</Dimension>
-    <Dimension name="height2" units="m">height</Dimension>
+    <Dimension name="height2" units="m" type="vertical">height</Dimension>
     <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension> 
   </Layer>
   

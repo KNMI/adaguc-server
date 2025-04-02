@@ -25,8 +25,7 @@ CDataSource *CDPPWFP::getDataSource(CDataSource *dataSource, CT::string baseLaye
   CDataSource *tempDataSource = new CDataSource();
   size_t additionalLayerNo = 0;
   for (size_t j = 0; j < dataSource->srvParams->cfg->Layer.size(); j++) {
-    CT::string layerName;
-    makeUniqueLayerName(&layerName, dataSource->srvParams->cfg->Layer[j]);
+    CT::string layerName = makeUniqueLayerName(dataSource->srvParams->cfg->Layer[j]);
     if (baseLayerName.equals(layerName)) {
       additionalLayerNo = j;
       break;

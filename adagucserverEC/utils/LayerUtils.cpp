@@ -1,30 +1,30 @@
 #include "LayerUtils.h"
 
-int makeUniqueLayerName(CT::string *layerName, CServerConfig::XMLE_Layer *cfgLayer) {
+CT::string makeUniqueLayerName(CServerConfig::XMLE_Layer *cfgLayer, const char *optionalLayerName) {
 
-  layerName->copy("");
-  if (cfgLayer->Group.size() == 1) {
-    if (cfgLayer->Group[0]->attr.value.empty() == false) {
-      layerName->copy(cfgLayer->Group[0]->attr.value.c_str());
-      layerName->concat("/");
+  CT::string layerName;
+  if (optionalLayerName == nullptr) {
+    // If no Name is configured, use the configured Variable name instead.
+    if (cfgLayer->Name.size() == 0) {
+      CServerConfig::XMLE_Name *name = new CServerConfig::XMLE_Name();
+      cfgLayer->Name.push_back(name);
+      if (cfgLayer->Variable.size() == 0) {
+        name->value.copy("undefined_variable");
+      } else {
+        name->value.copy(cfgLayer->Variable[0]->value.c_str());
+      }
     }
-  }
-  if (cfgLayer->Name.size() == 0) {
-    CServerConfig::XMLE_Name *name = new CServerConfig::XMLE_Name();
-    cfgLayer->Name.push_back(name);
-    if (cfgLayer->Variable.size() == 0) {
-      name->value.copy("undefined_variable");
+    // The groupname should be suffixed to the real layername
+    if (cfgLayer->Group.size() == 1 && !cfgLayer->Name[0]->attr.force.equals("true") && cfgLayer->Group[0]->attr.value.empty() == false) {
+      layerName.print("%s/%s", cfgLayer->Group[0]->attr.value.c_str(), cfgLayer->Name[0]->value.c_str());
     } else {
-      name->value.copy(cfgLayer->Variable[0]->value.c_str());
+      layerName.copy(cfgLayer->Name[0]->value.c_str());
     }
-  }
-
-  if (!cfgLayer->Name[0]->attr.force.equals("true")) {
-    layerName->concat(cfgLayer->Name[0]->value.c_str());
-    layerName->replaceSelf(" ", "_");
+    // Spaces are not allowed
+    layerName.replaceSelf(" ", "_");
   } else {
-    layerName->copy(cfgLayer->Name[0]->value.c_str());
+    layerName = optionalLayerName;
   }
 
-  return 0;
+  return layerName;
 }

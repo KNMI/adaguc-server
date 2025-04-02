@@ -2,11 +2,6 @@
 <Configuration>
  
   <OgcApiFeatures/>
-  <OgcApiEdr>
-    <EdrCollection name="uwcw_ha43_dini_5p5km_pl" vertical_name="pressure_level_in_hpa">
-      <EdrParameter name="air_temperature_pl" unit="°C" standard_name="air_temperature" parameter_label="Air temperature at pressure level" observed_property_label="Air temperature"/>
-    </EdrCollection>
-  </OgcApiEdr>
 
 
  <Legend name="temperature_wow" type="interval">
@@ -294,7 +289,8 @@
   </Style>
 
 
-  <Layer type="database">
+  <Layer type="database">"
+    <Group collection="pressure_level"/>
     <Name>air_temperature_pl</Name>
     <Title>UWCW_HA43(DINI) Air temperature at pressure level</Title>
     <Variable>air-temperature-pl</Variable>
