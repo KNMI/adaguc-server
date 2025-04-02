@@ -533,198 +533,6 @@ void CDataSource::getFlagMeaningHumanReadable(CT::string *flagMeaning, std::vect
 CT::string CDataSource::getDimensionValueForNameAndStep(const char *dimName, int dimStep) { return timeSteps[dimStep]->dims.getDimensionValue(dimName); }
 
 /**
- * Fills in the styleConfig object based on datasource,stylename, legendname and rendermethod
- *
- * @param styleConfig
- *
- *
- */
-int CDataSource::makeStyleConfig(CStyleConfiguration *styleConfig, CDataSource *dataSource) { //,const char *styleName,const char *legendName,const char *renderMethod){
-  // CT::string errorMessage;
-  // CT::string renderMethodString = renderMethod;
-  //   CT::StackList<CT::string> sl = renderMethodString.splitToStack("/");
-  //   if(sl.size()==2){
-  //     renderMethodString.copy(&sl[0]);
-  //     //if(sl[1].equals("HQ")){CDBDebug("32bitmode");}
-  //   }
-
-  //   styleConfig->renderMethod = CDataSource::getRenderMethodFromString(&renderMethodString);
-  //   if(styleConfig->renderMethod == RM_UNDEFINED){errorMessage.print("rendermethod %s",renderMethod); }
-  //   styleConfig->styleIndex   = getServerStyleIndexByName(styleName,dataSource->cfg->Style);
-  //   //if(styleConfig->styleIndex == -1){errorMessage.print("styleIndex %s",styleName); }
-  //   styleConfig->legendIndex  = getServerLegendIndexByName(legendName,dataSource->cfg->Legend);
-  //   if(styleConfig->legendIndex == -1){errorMessage.print("legendIndex %s",legendName); }
-  //
-  //   if(errorMessage.length()>0){
-  //     CDBError("Unable to configure style: %s is invalid",errorMessage.c_str());
-  //     return -1;
-  //   }
-  //
-  // Set defaults
-  CStyleConfiguration *s = styleConfig;
-  s->shadeInterval = 0.0f;
-  s->contourIntervalL = 0.0f;
-  s->contourIntervalH = 0.0f;
-  s->legendScale = 0.0f;
-  s->legendOffset = 0.0f;
-  s->legendLog = 0.0f;
-  s->legendLowerRange = 0.0f;
-  s->legendUpperRange = 0.0f;
-  s->smoothingFilter = 0;
-  s->hasLegendValueRange = false;
-
-  float min = 0.0f;
-  float max = 0.0f;
-  s->minMaxSet = false;
-
-  if (s->styleIndex != -1) {
-    // Get info from style
-    CServerConfig::XMLE_Style *style = dataSource->cfg->Style[s->styleIndex];
-    s->styleConfig = style;
-    if (style->Scale.size() > 0) s->legendScale = parseFloat(style->Scale[0]->value.c_str());
-    if (style->Offset.size() > 0) s->legendOffset = parseFloat(style->Offset[0]->value.c_str());
-    if (style->Log.size() > 0) s->legendLog = parseFloat(style->Log[0]->value.c_str());
-
-    if (style->ContourIntervalL.size() > 0) s->contourIntervalL = parseFloat(style->ContourIntervalL[0]->value.c_str());
-    if (style->ContourIntervalH.size() > 0) s->contourIntervalH = parseFloat(style->ContourIntervalH[0]->value.c_str());
-    s->shadeInterval = s->contourIntervalL;
-    if (style->ShadeInterval.size() > 0) s->shadeInterval = parseFloat(style->ShadeInterval[0]->value.c_str());
-    if (style->SmoothingFilter.size() > 0) s->smoothingFilter = parseInt(style->SmoothingFilter[0]->value.c_str());
-
-    if (style->ValueRange.size() > 0) {
-      s->hasLegendValueRange = true;
-      s->legendLowerRange = parseFloat(style->ValueRange[0]->attr.min.c_str());
-      s->legendUpperRange = parseFloat(style->ValueRange[0]->attr.max.c_str());
-    }
-
-    if (style->Min.size() > 0) {
-      min = parseFloat(style->Min[0]->value.c_str());
-      s->minMaxSet = true;
-    }
-    if (style->Max.size() > 0) {
-      max = parseFloat(style->Max[0]->value.c_str());
-      s->minMaxSet = true;
-    }
-
-    s->contourLines = &style->ContourLine;
-    s->shadeIntervals = &style->ShadeInterval;
-    s->symbolIntervals = &style->SymbolInterval;
-    s->featureIntervals = &style->FeatureInterval;
-
-    if (style->Legend.size() > 0) {
-      if (style->Legend[0]->attr.tickinterval.empty() == false) {
-        styleConfig->legendTickInterval = parseDouble(style->Legend[0]->attr.tickinterval.c_str());
-      }
-      if (style->Legend[0]->attr.tickround.empty() == false) {
-        styleConfig->legendTickRound = parseDouble(style->Legend[0]->attr.tickround.c_str());
-      }
-      if (style->Legend[0]->attr.fixedclasses.equals("true")) {
-        styleConfig->legendHasFixedMinMax = true;
-      }
-    }
-  }
-
-  // Legend settings can always be overriden in the layer itself!
-  CServerConfig::XMLE_Layer *layer = dataSource->cfgLayer;
-  if (layer->Scale.size() > 0) s->legendScale = parseFloat(layer->Scale[0]->value.c_str());
-  if (layer->Offset.size() > 0) s->legendOffset = parseFloat(layer->Offset[0]->value.c_str());
-  if (layer->Log.size() > 0) s->legendLog = parseFloat(layer->Log[0]->value.c_str());
-
-  if (layer->ContourIntervalL.size() > 0) s->contourIntervalL = parseFloat(layer->ContourIntervalL[0]->value.c_str());
-  if (layer->ContourIntervalH.size() > 0) s->contourIntervalH = parseFloat(layer->ContourIntervalH[0]->value.c_str());
-  if (s->shadeInterval == 0.0f) s->shadeInterval = s->contourIntervalL;
-  if (layer->ShadeInterval.size() > 0) s->shadeInterval = parseFloat(layer->ShadeInterval[0]->value.c_str());
-  if (layer->SmoothingFilter.size() > 0) s->smoothingFilter = parseInt(layer->SmoothingFilter[0]->value.c_str());
-
-  if (layer->ValueRange.size() > 0) {
-    s->hasLegendValueRange = true;
-    s->legendLowerRange = parseFloat(layer->ValueRange[0]->attr.min.c_str());
-    s->legendUpperRange = parseFloat(layer->ValueRange[0]->attr.max.c_str());
-  }
-
-  if (layer->Min.size() > 0) {
-    min = parseFloat(layer->Min[0]->value.c_str());
-    s->minMaxSet = true;
-  }
-  if (layer->Max.size() > 0) {
-    max = parseFloat(layer->Max[0]->value.c_str());
-    s->minMaxSet = true;
-  }
-
-  if (layer->ContourLine.size() > 0) {
-    s->contourLines = &layer->ContourLine;
-  }
-  if (layer->ShadeInterval.size() > 0) {
-    s->shadeIntervals = &layer->ShadeInterval;
-  }
-  if (layer->FeatureInterval.size() > 0) {
-    s->featureIntervals = &layer->FeatureInterval;
-  }
-
-  if (layer->Legend.size() > 0) {
-    if (layer->Legend[0]->attr.tickinterval.empty() == false) {
-      styleConfig->legendTickInterval = parseDouble(layer->Legend[0]->attr.tickinterval.c_str());
-    }
-    if (layer->Legend[0]->attr.tickround.empty() == false) {
-      styleConfig->legendTickRound = parseDouble(layer->Legend[0]->attr.tickround.c_str());
-    }
-    if (layer->Legend[0]->attr.fixedclasses.equals("true")) {
-      styleConfig->legendHasFixedMinMax = true;
-    }
-  }
-
-  // Min and max can again be overriden by WMS extension settings
-  if (dataSource->srvParams->wmsExtensions.colorScaleRangeSet) {
-    s->minMaxSet = true;
-    min = dataSource->srvParams->wmsExtensions.colorScaleRangeMin;
-    max = dataSource->srvParams->wmsExtensions.colorScaleRangeMax;
-  }
-  // Log can again be overriden by WMS extension settings
-  if (dataSource->srvParams->wmsExtensions.logScale) {
-    s->legendLog = 10;
-  }
-
-  if (dataSource->srvParams->wmsExtensions.numColorBandsSet) {
-    float interval = (max - min) / dataSource->srvParams->wmsExtensions.numColorBands;
-    s->shadeInterval = interval;
-    s->contourIntervalL = interval;
-    if (dataSource->srvParams->wmsExtensions.numColorBands > 0 && dataSource->srvParams->wmsExtensions.numColorBands < 300) {
-      s->legendTickInterval = int((max - min) / double(dataSource->srvParams->wmsExtensions.numColorBands) + 0.5);
-      // s->legendTickRound = s->legendTickInterval;//pow(10,(log10(s->legendTickInterval)-1));
-      // if(s->legendTickRound > 0.1)s->legendTickRound =0.1;
-      //
-    }
-  }
-
-  // When min and max are given, calculate the scale and offset according to min and max.
-  if (s->minMaxSet) {
-#ifdef CDATASOURCE_DEBUG
-    CDBDebug("Found min and max in layer configuration");
-#endif
-    calculateScaleAndOffsetFromMinMax(s->legendScale, s->legendOffset, min, max, s->legendLog);
-
-    dataSource->stretchMinMax = false;
-    // s->legendScale=240/(max-min);
-    // s->legendOffset=min*(-s->legendScale);
-  }
-
-  // Some safety checks, we cannot create contourlines with negative values.
-  /*if(s->contourIntervalL<=0.0f||s->contourIntervalH<=0.0f){
-    if(s->renderMethod==contour||
-      s->renderMethod==bilinearcontour||
-      s->renderMethod==nearestcontour){
-      s->renderMethod=nearest;
-      }
-  }*/
-  CT::string styleDump = styleConfig->c_str();
-  //   #ifdef CDATASOURCE_DEBUG
-  //
-  //   CDBDebug("styleDump:\n%s",styleDump.c_str());
-  //   #endif
-  return 0;
-}
-
-/**
  * Returns a stringlist with all available legends for this datasource and chosen style.
  * @param dataSource pointer to the datasource
  * @param style pointer to the style to find the legends for
@@ -773,71 +581,15 @@ CT::PointerList<CT::string *> *CDataSource::getRenderMethodListForDataSource(CDa
       }
     }
   }
-  //   CDBDebug("RendermethodListString = %s",renderMethodList.c_str());
+
   // If still no list of rendermethods is found, use the default list
   if (renderMethodList.length() == 0) {
-    renderMethodList.copy("nearest");
+    renderMethodList.copy("generic");
   }
 
   CT::PointerList<CT::string *> *renderMethods = renderMethodList.splitToPointer(",");
-  //   if(dataSource!=NULL){
-  //     if(dataSource->getNumDataObjects()>0){
-  //       if(dataSource->getDataObject(0)->cdfObject!=NULL){
-  //
-  //         try{
-  //           if(dataSource->getDataObject(0)->cdfObject->getAttribute("featureType")->toString().equals("timeSeries")||dataSource->getDataObject(0)->cdfObject->getAttribute("featureType")->toString().equals("point")){
-  //             renderMethods->insert(renderMethods->begin(),1,new CT::string("pointnearest"));
-  //           }
-  //         }catch(int e){
-  //         }
-  //       }
-  //     }
-  //   }
   return renderMethods;
 }
-
-// /**
-// * This function calls getStyleListForDataSource in mode (1).
-// *
-// * @param dataSource pointer to the datasource to find the stylelist for
-// * @return the stringlist with all possible stylenames. Pointer should be deleted with delete!
-// */
-// CT::PointerList<CT::string*> *CDataSource::getStyleListForDataSource(CDataSource *dataSource){
-//   return getStyleListForDataSource(dataSource,NULL);
-// }
-
-/**
- * Sets a new CStyleConfiguration in datasource which contains all settings for the corresponding styles. This function calls getStyleListForDataSource in mode(2).
- * @param styleName
- * @param serverCFG
- */
-// void CDataSource::getStyleConfigurationByName(const char *styleName,CDataSource *dataSource){
-//   //#ifdef CDATASOURCE_DEBUG
-//   CDBDebug("getStyleConfigurationByName for layer %s with name %s",dataSource->layerName.c_str(),styleName);
-//   //#endif
-//   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-//   if( styleConfiguration != NULL){
-//     CDBDebug("styleConfiguration already set");
-//     return;
-//   }
-//   //CServerConfig::XMLE_Configuration *serverCFG = dataSource->cfg;
-//
-//
-// //   styleConfiguration->reset();
-// //   styleConfiguration->styleCompositionName=styleName;
-//   CT::PointerList<CStyleConfiguration*> *styles = getStyleListForDataSource(dataSource);
-//   CDBDebug("Found %d styles",styles->size());
-//   styleConfiguration = styles->get(0);
-//   for(size_t j=0;j<styles->size();j++){
-//     if(styles->get(j)->styleCompositionName.equals(styleName)){
-//        dataSource->setStyle(styles->get(j));
-//        break;
-//     }
-//       //CDBDebug("getStyleConfigurationByName: %s == %s",styleName,styles->get(j)->styleCompositionName.c_str());
-//   }
-//
-//   delete styles;
-// }
 
 /**
  * This function has two modes, return a string list (1) or (2) configure a CStyleConfiguration object.
@@ -884,7 +636,7 @@ CT::PointerList<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(C
     for (size_t i = start; i < styleNames->size(); i++) {
 
       // Lookup the style index in the servers configuration
-      int dStyleIndex = getServerStyleIndexByName(styleNames->get(i)->c_str(), serverCFG->Style);
+      int dStyleIndex = dataSource->srvParams->getServerStyleIndexByName(styleNames->get(i)->c_str());
 
 #ifdef CDATASOURCE_DEBUG
       CDBDebug("dStyleIndex = %d", dStyleIndex);
@@ -909,7 +661,7 @@ CT::PointerList<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(C
         for (size_t l = 0; l < legendList->size(); l++) {
           for (size_t r = 0; r < renderMethods->size(); r++) {
             if (renderMethods->get(r)->length() > 0) {
-              int dLegendIndex = getServerLegendIndexByName(legendList->get(l)->c_str(), dataSource->cfg->Legend);
+              int dLegendIndex = dataSource->srvParams->getServerLegendIndexByName(legendList->get(l)->c_str());
               if (legendList->size() > 1) {
                 styleName.print("%s_%s/%s", styleNames->get(i)->c_str(), legendList->get(l)->c_str(), renderMethods->get(r)->c_str());
               } else {
@@ -933,7 +685,7 @@ CT::PointerList<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(C
               //  We found the correspondign legend/style and rendermethod corresponding with the requested stylename!
               //  Now fill in the CStyleConfiguration Object.
 
-              styleConfig->renderMethod = CStyleConfiguration::getRenderMethodFromString(renderMethods->get(r));
+              styleConfig->renderMethod = getRenderMethodFromString(renderMethods->get(r)->c_str());
               styleConfig->styleIndex = dStyleIndex;
 
               styleConfig->legendIndex = dLegendIndex;
@@ -957,18 +709,11 @@ CT::PointerList<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(C
 #ifdef CDATASOURCE_DEBUG
               CDBDebug("Pushing %s with legendIndex %d and styleIndex %d", styleName.c_str(), dLegendIndex, dStyleIndex);
 #endif
-              int status = makeStyleConfig(styleConfig, dataSource); //,styleNames->get(i)->c_str(),legendList->get(l)->c_str(),renderMethods->get(r)->c_str());
-
+              int status = styleConfig->makeStyleConfig(dataSource); //,styleNames->get(i)->c_str(),legendList->get(l)->c_str(),renderMethods->get(r)->c_str());
+              // CDBDebug("%s", styleConfig->dump().c_str());
               if (status == -1) {
                 styleConfig->hasError = true;
               }
-              // Stop with iterating:
-              // throw(__LINE__);
-              //}
-
-              // if(returnStringList){
-
-              //}
             }
           }
         }
@@ -982,11 +727,6 @@ CT::PointerList<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(C
     delete styleNames;
     styleNames = NULL;
 
-    // We have been through the loop, but the styleConfig has not been created. This is an error.
-    //     if(styleConfig!=NULL){
-    //       CDBError("Unable to find style %s",styleToSearchString.c_str());
-    //       styleConfig->hasError=true;
-    //     }
   } catch (int e) {
 
     delete legendList;
@@ -1009,32 +749,6 @@ CT::PointerList<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(C
 
   return styleConfigurationList;
 }
-
-/**
- * Returns a stringlist with all possible legends available for this Legend config object.
- * This is usually a configured legend element in a layer, or a configured legend element in a style.
- * @param Legend a XMLE_Legend object configured in a style or in a layer
- * @return Pointer to a new stringlist with all possible legend names, must be deleted with delete. Is NULL on failure.
- */
-/*
-CT::PointerList<CT::string*> *CDataSource::getLegendNames(std::vector <CServerConfig::XMLE_Legend*> Legend){
-  if(Legend.size()==0){CDBError("No legends defined");return NULL;}
-  CT::PointerList<CT::string*> *stringList = new CT::PointerList<CT::string*>();
-
-  for(size_t j=0;j<Legend.size();j++){
-    CT::string legendValue=Legend[j]->value.c_str();
-    CT::StackList<CT::string> l1=legendValue.splitToStack(",");
-    for(size_t i=0;i<l1.size();i++){
-      if(l1[i].length()>0){
-        CT::string * val = new CT::string();
-        stringList->push_back(val);
-        val->copy(&l1[i]);
-      }
-    }
-  }
-  return stringList;
-}
-*/
 
 /**
  * Returns a stringlist with all possible styles available for this style config object.
@@ -1071,56 +785,6 @@ CT::PointerList<CT::string *> *CDataSource::getStyleNames(std::vector<CServerCon
 }
 
 /**
- * Retrieves the position of for the requested style name in the servers configured style elements.
- * @param styleName The name of the style to locate
- * @param serverStyles Pointer to the servers configured styles.
- * @return The style index as integer, points to the position in the servers configured styles. Is -1 on failure.
- */
-int CDataSource::getServerStyleIndexByName(const char *styleName, std::vector<CServerConfig::XMLE_Style *> serverStyles) {
-#ifdef CDATASOURCE_DEBUG
-  CDBDebug("getServerStyleIndexByName");
-#endif
-  if (styleName == NULL) {
-    CDBError("No style name provided");
-    return -1;
-  }
-  CT::string styleString = styleName;
-  if (styleString.equals("default") || styleString.equals("default/HQ")) return -1;
-  for (size_t j = 0; j < serverStyles.size(); j++) {
-    if (serverStyles[j]->attr.name.empty() == false) {
-      if (styleString.equals(serverStyles[j]->attr.name.c_str())) {
-#ifdef CDATASOURCE_DEBUG
-        CDBDebug("/getServerStyleIndexByName");
-#endif
-
-        return j;
-      }
-    }
-  }
-  CDBError("No style found with name [%s]", styleName);
-  return -1;
-}
-
-/**
- * Retrieves the position of for the requested legend name in the servers configured legend elements.
- * @param legendName The name of the legend to locate
- * @param serverLegends Pointer to the servers configured legends.
- * @return The legend index as integer, points to the position in the servers configured legends. Is -1 on failure.
- */
-int CDataSource::getServerLegendIndexByName(const char *legendName, std::vector<CServerConfig::XMLE_Legend *> serverLegends) {
-  int dLegendIndex = -1;
-  CT::string legendString = legendName;
-  if (legendName == NULL) return -1;
-  for (size_t j = 0; j < serverLegends.size() && dLegendIndex == -1; j++) {
-    if (legendString.equals(serverLegends[j]->attr.name.c_str())) {
-      dLegendIndex = j;
-      break;
-    }
-  }
-  return dLegendIndex;
-}
-
-/**
  *
  */
 void CDataSource::calculateScaleAndOffsetFromMinMax(float &scale, float &offset, float min, float max, float log) {
@@ -1135,54 +799,73 @@ void CDataSource::calculateScaleAndOffsetFromMinMax(float &scale, float &offset,
 }
 
 CStyleConfiguration *CDataSource::getStyle() {
-  if (_currentStyle == NULL) {
-    if (_styles == NULL) {
-      _styles = getStyleListForDataSource(this);
-    }
-    if (_styles->size() == 0) {
-      CDBError("There are no styles available");
-      return NULL;
-    }
-    CT::string styleName = "default";
-    CT::string styles(srvParams->Styles.c_str());
+  if (_currentStyle != NULL) {
+    return _currentStyle;
+  }
 
-    // TODO CHECK CDBDebug("Server Styles=%s",srvParam->Styles.c_str());
-    CT::StackList<CT::string> layerstyles = styles.splitToStack(",");
-    int layerIndex = datasourceIndex;
-    if (layerstyles.size() != 0) {
-      // Make sure default layer index is within the right bounds.
-      if (layerIndex < 0) layerIndex = 0;
-      if (layerIndex > ((int)layerstyles.size()) - 1) layerIndex = layerstyles.size() - 1;
-      styleName = layerstyles[layerIndex].c_str();
-      if (styleName.length() == 0) {
-        styleName.copy("default");
-      }
-    }
-
-    _currentStyle = _styles->get(0);
-
-    for (size_t j = 0; j < _styles->size(); j++) {
-      if (_styles->get(j)->styleCompositionName.equals(styleName)) {
-        _currentStyle = _styles->get(j);
-        break;
-      }
-    }
-
-    if (_currentStyle->styleIndex == -1) {
-      int status = makeStyleConfig(_currentStyle, this);
-      if (status == -1) {
-        _currentStyle->hasError = true;
-      }
-    }
-    if (_currentStyle->legendIndex == -1) {
-      CT::PointerList<CT::string *> *legendList = getLegendListForDataSource(this, NULL);
-      if (legendList != NULL) {
-        _currentStyle->legendIndex = getServerLegendIndexByName(legendList->get(0)->c_str(), this->cfg->Legend);
-      }
-      delete legendList;
+  CT::string styleName = "default";
+  CT::string styles(srvParams->Styles.c_str());
+  CT::StackList<CT::string> layerstyles = styles.splitToStack(",");
+  int layerIndex = datasourceIndex;
+  if (layerstyles.size() != 0) {
+    // Make sure default layer index is within the right bounds.
+    if (layerIndex < 0) layerIndex = 0;
+    if (layerIndex > ((int)layerstyles.size()) - 1) layerIndex = layerstyles.size() - 1;
+    styleName = layerstyles[layerIndex].c_str();
+    if (styleName.length() == 0) {
+      styleName.copy("default");
     }
   }
 
+  // TODO, this currrently only works for single layers.
+  // int styleIndex = this->srvParams->getServerStyleIndexByName(styleName.c_str());
+  // if (styleIndex != -1) {
+  //   _currentStyle = new CStyleConfiguration();
+  //   _currentStyle->styleCompositionName = styleName;
+  //   _currentStyle->styleTitle.copy(styleName);
+  //   _currentStyle->styleAbstract.copy(styleName);
+  //   _currentStyle->styleIndex = styleIndex;
+  //   int status = _currentStyle->makeStyleConfig(this);
+  //   if (status != -1) {
+
+  //     CDBDebug("Style %s", _currentStyle->dump().c_str());
+  //     return _currentStyle;
+  //   }
+  // }
+
+  if (_styles == NULL) {
+    _styles = getStyleListForDataSource(this);
+  }
+  if (_styles->size() == 0) {
+    CDBError("There are no styles available");
+    return NULL;
+  }
+
+  _currentStyle = _styles->get(0);
+
+  for (size_t j = 0; j < _styles->size(); j++) {
+    if (_styles->get(j)->styleCompositionName.equals(styleName)) {
+      _currentStyle = _styles->get(j);
+      break;
+    }
+  }
+
+  if (_currentStyle->styleIndex == -1) {
+    int status = _currentStyle->makeStyleConfig(this);
+    // CDBDebug("%s", _currentStyle->dump().c_str());
+    if (status == -1) {
+      _currentStyle->hasError = true;
+    }
+  }
+  if (_currentStyle->legendIndex == -1) {
+    CT::PointerList<CT::string *> *legendList = getLegendListForDataSource(this, NULL);
+    if (legendList != NULL) {
+      _currentStyle->legendIndex = this->srvParams->getServerLegendIndexByName(legendList->get(0)->c_str());
+    }
+    delete legendList;
+  }
+
+  // CDBDebug("Style %s", _currentStyle->dump().c_str());
   return _currentStyle;
 }
 
@@ -1214,7 +897,9 @@ int CDataSource::setStyle(const char *styleName) {
   }
 
   if (_currentStyle->styleIndex == -1) {
-    int status = makeStyleConfig(_currentStyle, this); //,styleNames->get(i)->c_str(),legendList->get(l)->c_str(),renderMethods->get(r)->c_str());
+    int status = _currentStyle->makeStyleConfig(this);
+    CDBDebug("%s", _currentStyle->dump().c_str());
+
     if (status == -1) {
       _currentStyle->hasError = true;
     }
@@ -1222,37 +907,13 @@ int CDataSource::setStyle(const char *styleName) {
   if (_currentStyle->legendIndex == -1) {
     CT::PointerList<CT::string *> *legendList = getLegendListForDataSource(this, NULL);
     if (legendList != NULL) {
-      _currentStyle->legendIndex = getServerLegendIndexByName(legendList->get(0)->c_str(), this->cfg->Legend);
+      _currentStyle->legendIndex = this->srvParams->getServerLegendIndexByName(legendList->get(0)->c_str());
     }
     delete legendList;
   }
   if (_currentStyle->hasError) return 1;
   return 0;
 };
-
-/*
-for(size_t d=0;d<dataObjects.size();d++){
- delete dataObjects[d];
- dataObjects[d]=NULL;
-}
-
-for(size_t j=0;j<timeSteps.size();j++){
-
- delete timeSteps[j];
- timeSteps[j]=NULL;
-}
-for(size_t j=0;j<requiredDims.size();j++)delete requiredDims[j];
-if(statistics!=NULL)delete statistics;statistics=NULL;
-
-if(_styles != NULL){
- delete _styles;
- _styles = NULL;
-}
-
-if (featureSet.length()!=0) {
- CConvertGeoJSON::clearFeatureStore(featureSet);
- featureSet=NULL;
-}*/
 
 CDataSource *CDataSource::clone() {
 

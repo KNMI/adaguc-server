@@ -46,7 +46,7 @@
 #include FT_FREETYPE_H
 #include <stdio.h>
 #include <math.h>
-#include "CColor.h"
+#include "Types/CColor.h"
 
 #include "COctTreeColorQuantizer.h"
 

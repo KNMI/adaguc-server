@@ -86,13 +86,13 @@
     "editor.tabSize": 4,
     "editor.insertSpaces": true,
     "editor.detectIndentation": false,
-    "editor.defaultFormatter": "ms-python.black-formatter",
-
+    "editor.defaultFormatter": "ms-python.black-formatter"
   },
   "[XML]": {
     "editor.autoClosingBrackets": "never",
     "files.trimFinalNewlines": true,
     "editor.wordWrap": "off",
-    "editor.formatOnSave": false,
-  }
+    "editor.formatOnSave": false
+  },
+  "C_Cpp.errorSquiggles": "enabled"
 }

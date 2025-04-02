@@ -54,6 +54,10 @@ A default TTF font location for print fonts in imagery. E.gFreeSans.ttf.
 
 optional, specify the online resource in the CGI script itself, see [OnlineResource](configuration/OnlineResource.md) to configure in    
 
+## ADAGUC_AUTOSYNCLAYERMETADATA
+
+optional, when set to TRUE (default) the layermetadata will be updated automatically every minute. When set to FALSE, it will not do update by itself. Useful for inspecting logs without interuptions.
+
 ## PGBOUNCER_ENABLE 	
 
 Enable or disable the usage of PostgreSQL connection pooling by PGBouncer. Default: true.
