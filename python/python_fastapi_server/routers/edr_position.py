@@ -101,8 +101,8 @@ async def get_coll_inst_position(
 
     try:
         latlons = wkt.loads(coords)
-    except StopIteration:
-        raise exc_invalid_point(coords)
+    except StopIteration as exc:
+        raise exc_invalid_point(coords) from exc
 
     # TODO: for now only support POINT and not MULTIPOINT
     if len(latlons.get("coordinates", [])) != 2:
