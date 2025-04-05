@@ -49,6 +49,7 @@ struct LayerMetadata {
   double dfBBOX[4] = {-180, -90, 180, 90};
   int isQueryable = 0;
   bool hidden = false;
+  bool enable_edr = true;
   CT::string name, title, wmsgroup, abstract, nativeEPSG, projstring, collection;
   std::vector<LayerMetadataProjection> projectionList;
   std::vector<LayerMetadataDim> dimList;

@@ -333,6 +333,8 @@ public:
   std::tuple<float, std::string> getLegendFont();
 
   bool useMetadataTable();
+
+  bool isEdrEnabled();
 };
 
 #endif

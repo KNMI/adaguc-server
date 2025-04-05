@@ -13,6 +13,8 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
     metadataLayer->readFromDb = false;
   }
 
+  bool isEdrEnabled = metadataLayer->srvParams->isEdrEnabled();
+
   // Make the layer name
   metadataLayer->layerMetadata.name = makeUniqueLayerName(metadataLayer->layer);
 
@@ -57,6 +59,16 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
   // Check if it is hidden
   if (metadataLayer->dataSource->cfgLayer->attr.hidden.equals("true")) {
     metadataLayer->layerMetadata.hidden = true;
+  }
+
+  // Determine if edr is enabled for this layer
+  CT::string layer_enable_edr = metadataLayer->layer->attr.enable_edr;
+  if (layer_enable_edr.equals("false")) {
+    metadataLayer->layerMetadata.enable_edr = false;
+  } else if (layer_enable_edr.equals("true")) {
+    metadataLayer->layerMetadata.enable_edr = true;
+  } else {
+    metadataLayer->layerMetadata.enable_edr = isEdrEnabled;
   }
 
   // Fill in Layer title, with fallback to Name (later this can be set based on metadata or info from the file)

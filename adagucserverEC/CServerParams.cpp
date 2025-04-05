@@ -691,3 +691,16 @@ bool CServerParams::useMetadataTable() {
   }
   return true;
 }
+
+bool CServerParams::isEdrEnabled() {
+  size_t numSettings = this->cfg->Settings.size();
+  if (numSettings > 0 && this->cfg->Settings[numSettings - 1]) {
+    auto settings = this->cfg->Settings[numSettings - 1];
+    if (settings->attr.enable_edr.equalsIgnoreCase("false")) {
+      return false;
+    } else if (settings->attr.enable_edr.equalsIgnoreCase("true")) {
+      return true;
+    }
+  }
+  return true;
+}
