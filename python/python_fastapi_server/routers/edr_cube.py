@@ -14,17 +14,19 @@ import time
 from typing_extensions import Annotated
 
 from covjson_pydantic.coverage import Coverage, CoverageCollection
-from fastapi import Query, Request, APIRouter
+from fastapi import Query, Request, APIRouter, Response
 from netCDF4 import Dataset
 
 from .utils.edr_exception import exc_failed_call
 
 from .covjsonresponse import CovJSONResponse
 from .utils.edr_utils import (
+    generate_max_age,
     get_custom,
     get_dataset_from_collection,
     get_instance,
     get_parameters,
+    get_ttl_from_adaguc_headers,
     get_vertical,
     instance_to_iso,
     get_metadata,
@@ -79,6 +81,7 @@ async def get_collection_cube(
 async def get_coll_inst_cube(
     collection_name: str,
     request: Request,
+    response: Response,
     bbox: str,
     instance: str | None = None,
     datetime_par: str = Query(default=None, alias="datetime"),
@@ -88,7 +91,7 @@ async def get_coll_inst_cube(
     z_par: Annotated[str, Query(alias="z", min_length=1)] = None,
     resolution_x: float | None = None,
     resolution_y: float | None = None,
-) -> Coverage:
+) -> CoverageCollection | Coverage:
     """Returns information in EDR format for a given collection, instance and position"""
     allowed_params = [
         "bbox",
@@ -146,13 +149,19 @@ async def get_coll_inst_cube(
         )
 
         start = time.time()
-        status, response, _ = await call_adaguc(url=urlrequest.encode("UTF-8"))
+        status, wcs_response, headers = await call_adaguc(
+            url=urlrequest.encode("UTF-8")
+        )
+        ttl = get_ttl_from_adaguc_headers(headers)
+        if ttl is not None:
+            response.headers["cache-control"] = generate_max_age(ttl)
+
         logger.info("status: %d [%f]", status, time.time() - start)
         if status != 0:
             raise exc_failed_call(
                 f"cube call failed for parameter {parameter_name} [{status}]"
             )
-        result_dataset = Dataset(f"{parameter_name}.nc", memory=response.getvalue())
+        result_dataset = Dataset(f"{parameter_name}.nc", memory=wcs_response.getvalue())
 
         coveragejson = netcdf_to_covjson(
             metadata[collection_name], result_dataset, translate_names, translate_dims
