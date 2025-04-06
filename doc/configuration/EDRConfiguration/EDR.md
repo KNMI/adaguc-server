@@ -16,7 +16,13 @@ For a tutorial on EDR configuration, please check [Configure_EDR_service](../../
 
 By default Adaguc will try to enable EDR for configured Adaguc layers. If your dataset is called `my_dataset.xml`, your layers can be found under the collection `my_dataset`.
 
-It can be useful to group collections together, for example to indicate that collections belong to the same forecast model.
+If you want to disable EDR for a dataset, add an attribute `enable_edr="false"` to the `Settings` element:
+`<Settings enable_edr="false" ....>`
+You can disable EDR for a layer, by adding an attribute `enable_edr="false"` to the `Layer` element:
+`<Layer ... enable_edr="false"/>` or `<Layer ... enable_edr="true"/>` overriding the global setting in `Settings`.
+
+It can be useful to group collections together, for example to indicate that collections belong to the same forecast model or to bundle a set of similar parameters, for example parameters with a height dimension or with a pressure level dimension.
+
 To group collections together, you use the `<Group collection="my_collection">` element to your layer. The layer will then be available under `my_dataset.my_collection`.
 
 ### Dimension types
