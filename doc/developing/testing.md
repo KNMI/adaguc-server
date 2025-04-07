@@ -13,7 +13,7 @@ The main [Dockerfile](~/Dockerfile) contains a _test stage_ which executes `runt
 
 To run all tests, trigger a build:
 ```bash
-docker build --progress plain -t adaguc-server . --add-host=host.docker.internal:host-gateway
+docker build -t adaguc-server --progress plain  --add-host=host.docker.internal:host-gateway .
 
 ```
 
@@ -56,7 +56,7 @@ RUN bash runtests_psql.sh
 ```
 6. Trigger a new build:
 ```bash
-docker build --progress plain -t adaguc-server . --add-host=host.docker.internal:host-gateway
+docker build -t adaguc-server --progress plain  --add-host=host.docker.internal:host-gateway .
 ```
 
 All tests should now run against postgres via the docker build.
