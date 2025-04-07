@@ -210,7 +210,7 @@ def get_collectioninfo_from_md(
     Returns collection information for a given collection id and or instance
     Is used to obtain metadata from the dataset configuration and WMS GetCapabilities document.
     """
-    logger.info("get_collectioninfo_from_md(%s, %s)", collection_name, instance)
+    # logger.info("get_collectioninfo_from_md(%s, %s)", collection_name, instance)
 
     dataset_name = collection_name.rsplit(".", 1)[0]
     terms = collection_name.rsplit(".", 1)
@@ -222,13 +222,20 @@ def get_collectioninfo_from_md(
     if metadata is None:
         return None
 
+    if not any(l for l in metadata if metadata[l]["layer"]["enable_edr"] is True):
+        return []
+
+    # Identify first parameter with enable_edr==True
     first_param = None
     for param in metadata:
-        if param not in ["baselayer", "overlay"]:
+        if (
+            param not in ["baselayer", "overlay"]
+            and metadata[param]["layer"].get("enable_edr") is True
+        ):
             first_param = param
             break
     if first_param is None or metadata[first_param]["layer"]["variables"] is None:
-        return None
+        return []
 
     base_url = get_base_url() + f"/edr/collections/{collection_name}"
 
@@ -470,6 +477,8 @@ def get_params_for_dataset(
     parameter_names = {}
     for param_id in metadata:
         if metadata[param_id]["dims"] is None:
+            continue
+        if metadata[param_id]["layer"]["enable_edr"] is False:
             continue
         current_extent = get_extent_from_md(metadata, param_id)
         param_metadata = get_param_metadata(metadata[param_id], dataset_name)

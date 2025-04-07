@@ -37,6 +37,7 @@ int getLayerBaseMetadataAsJson(MetadataLayer *metadataLayer, json &layerMetadata
     layerMetadataItem["collection"] = metadataLayer->layerMetadata.collection;
     layerMetadataItem["isqueryable"] = metadataLayer->layerMetadata.isQueryable;
     layerMetadataItem["hidden"] = metadataLayer->layerMetadata.hidden;
+    layerMetadataItem["enable_edr"] = metadataLayer->layerMetadata.enable_edr;
     json latlonbox;
     for (size_t j = 0; j < 4; j++) {
       latlonbox.push_back(metadataLayer->layerMetadata.dfLatLonBBOX[j]);
@@ -189,6 +190,7 @@ int loadLayerMetadataStructFromMetadataDb(MetadataLayer *metadataLayer) {
     metadataLayer->layerMetadata.collection = i["collection"].get<std::string>().c_str();
     metadataLayer->layerMetadata.isQueryable = i["isqueryable"].get<int>();
     metadataLayer->layerMetadata.hidden = i["hidden"].get<bool>();
+    metadataLayer->layerMetadata.enable_edr = i["enable_edr"].get<bool>();
     metadataLayer->layerMetadata.nativeEPSG = i["nativeepsg"].get<std::string>().c_str();
     metadataLayer->layerMetadata.nativeEPSG = i["collection"].get<std::string>().c_str();
 

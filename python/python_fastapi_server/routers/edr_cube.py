@@ -51,6 +51,7 @@ logger.debug("Starting EDR")
 async def get_collection_cube(
     collection_name: str,
     request: Request,
+    response: Response,
     bbox: str,
     datetime_par: str = Query(default=None, alias="datetime"),
     parameter_name: Annotated[str, Query(alias="parameter-name", min_length=1)] = None,
@@ -62,13 +63,14 @@ async def get_collection_cube(
     return await get_coll_inst_cube(
         collection_name,
         request,
-        bbox,
-        None,
-        datetime_par,
-        parameter_name,
-        z_par,
-        resolution_x,
-        resolution_y,
+        response=response,
+        bbox=bbox,
+        instance=None,
+        datetime_par=datetime_par,
+        parameter_name_par=parameter_name,
+        z_par=z_par,
+        resolution_x=resolution_x,
+        resolution_y=resolution_y,
     )
 
 
@@ -130,7 +132,6 @@ async def get_coll_inst_cube(
     coveragejsons = []
     parameters = {}
     datetime_arg = datetime_par
-    print("TYPE:", type(datetime_arg))
     if datetime_par is None:
         datetime_arg = "2000/3000"
     for parameter_name in parameter_names:

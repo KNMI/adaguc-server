@@ -27,7 +27,7 @@ def setup_test_data():
         "adaguc.tests.arcus_uwcw.xml",
         "testcollection.xml",
         "adaguc.tests.members.xml",
-        "adaguc_ewclocalclimateinfo_test.xml"
+        "adaguc_ewclocalclimateinfo_test.xml",
     ):
         status, _, _ = AdagucTestTools().runADAGUCServer(
             args=[
@@ -315,6 +315,7 @@ def test_coll_multi_dim_position_coverage_collection_multiple_z(client: TestClie
         110000,
     ]
 
+
 def test_coll_multi_dim_position_auto_ewc_local_climate_info(client: TestClient):
     # Querying a CoverageCollection with two scenarios (2050Hd and 2050Hn) for ewc local climate info
     resp = client.get(
@@ -328,22 +329,95 @@ def test_coll_multi_dim_position_auto_ewc_local_climate_info(client: TestClient)
     assert covjson["coverages"][0]["type"] == "Coverage"
     assert covjson["coverages"][0]["domain"]["domainType"] == "PointSeries"
     assert len(covjson["coverages"][0]["domain"]["axes"]["t"]["values"]) == 30
-    assert covjson["coverages"][0]["domain"]["axes"]["t"]["values"][0] == "2036-01-01T00:00:00Z"
-    assert covjson["coverages"][0]["domain"]["axes"]["t"]["values"][29] == "2065-01-01T00:00:00Z"
+    assert (
+        covjson["coverages"][0]["domain"]["axes"]["t"]["values"][0]
+        == "2036-01-01T00:00:00Z"
+    )
+    assert (
+        covjson["coverages"][0]["domain"]["axes"]["t"]["values"][29]
+        == "2065-01-01T00:00:00Z"
+    )
     assert covjson["coverages"][0]["domain"]["custom:scenario"] == "2050Hd"
 
     assert len(covjson["coverages"][1]["domain"]["axes"]["t"]["values"]) == 30
-    assert covjson["coverages"][1]["domain"]["axes"]["t"]["values"][0] == "2036-01-01T00:00:00Z"
-    assert covjson["coverages"][1]["domain"]["axes"]["t"]["values"][29] == "2065-01-01T00:00:00Z"
+    assert (
+        covjson["coverages"][1]["domain"]["axes"]["t"]["values"][0]
+        == "2036-01-01T00:00:00Z"
+    )
+    assert (
+        covjson["coverages"][1]["domain"]["axes"]["t"]["values"][29]
+        == "2065-01-01T00:00:00Z"
+    )
     assert covjson["coverages"][1]["domain"]["custom:scenario"] == "2050Hn"
 
     assert covjson["coverages"][0]["ranges"]["jaarlijks/tas_mean_2050"]["shape"] == [30]
     assert covjson["coverages"][1]["ranges"]["jaarlijks/tas_mean_2050"]["shape"] == [30]
-    
-    assert covjson["coverages"][0]["ranges"]["jaarlijks/tas_mean_2050"]["values"] == [10.90503,12.007289,11.059411,12.062785,11.947086,10.081615,11.765973,11.881777,12.438473,12.412801,11.976863,12.304342,12.01673,11.909211,12.190491,12.779091,12.678858,12.103762,12.038959,10.637293,12.453781,11.861727,11.348157,13.191739,12.320773,12.319611,12.470861,12.96588,12.703981,13.242649]
-    
-    assert covjson["coverages"][1]["ranges"]["jaarlijks/tas_mean_2050"]["values"] == [10.82554,11.873678,11.01875,11.902385,11.815706,10.020253,11.643116,11.819782,12.285396,12.28452,11.84561,12.195546,11.844776,11.799691,12.05139,12.585763,12.544561,11.989633,11.920113,10.537866,12.319339,11.716161,11.255101,12.989518,12.206244,12.159081,12.357863,12.784953,12.555624,13.065644]
 
+    assert covjson["coverages"][0]["ranges"]["jaarlijks/tas_mean_2050"]["values"] == [
+        10.90503,
+        12.007289,
+        11.059411,
+        12.062785,
+        11.947086,
+        10.081615,
+        11.765973,
+        11.881777,
+        12.438473,
+        12.412801,
+        11.976863,
+        12.304342,
+        12.01673,
+        11.909211,
+        12.190491,
+        12.779091,
+        12.678858,
+        12.103762,
+        12.038959,
+        10.637293,
+        12.453781,
+        11.861727,
+        11.348157,
+        13.191739,
+        12.320773,
+        12.319611,
+        12.470861,
+        12.96588,
+        12.703981,
+        13.242649,
+    ]
+
+    assert covjson["coverages"][1]["ranges"]["jaarlijks/tas_mean_2050"]["values"] == [
+        10.82554,
+        11.873678,
+        11.01875,
+        11.902385,
+        11.815706,
+        10.020253,
+        11.643116,
+        11.819782,
+        12.285396,
+        12.28452,
+        11.84561,
+        12.195546,
+        11.844776,
+        11.799691,
+        12.05139,
+        12.585763,
+        12.544561,
+        11.989633,
+        11.920113,
+        10.537866,
+        12.319339,
+        11.716161,
+        11.255101,
+        12.989518,
+        12.206244,
+        12.159081,
+        12.357863,
+        12.784953,
+        12.555624,
+        13.065644,
+    ]
 
 
 def test_coll_multi_dim_position_coverage_collection_z_range(client: TestClient):
@@ -404,6 +478,7 @@ def test_coll_multi_dim_cube(client: TestClient):
     )
     assert resp.status_code, 200
     covjson = resp.json()
+    print("RESP:", json.dumps(covjson, indent=2))
     assert covjson["type"] == "Coverage"
     assert covjson["domain"]["axes"]["z"]["values"] == [40]
     assert covjson["domain"]["axes"]["t"]["values"] == ["2024-06-01T01:00:00Z"]

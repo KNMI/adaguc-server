@@ -1333,6 +1333,7 @@ public:
     class Cattr {
     public:
       CT::string enablemetadatacache, enablecleanupsystem, cleanupsystemlimit, cache_age_cacheableresources, cache_age_volatileresources;
+      CT::string enable_edr = "true";
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
       if (equals("enablemetadatacache", attrname)) {
@@ -1350,6 +1351,9 @@ public:
       } else if (equals("cache_age_volatileresources", attrname)) {
         attr.cache_age_volatileresources.copy(attrvalue);
         return;
+      } else if (equals("enable_edr", attrname)) {
+        attr.enable_edr.copy(attrvalue);
+        ;
       }
     }
   };
@@ -1804,6 +1808,7 @@ public:
     class Cattr {
     public:
       CT::string type, hidden;
+      CT::string enable_edr = "";
     } attr;
 
     std::vector<XMLE_Name *> Name;
@@ -1978,6 +1983,9 @@ public:
         return;
       } else if (equals("hidden", attrname)) {
         attr.hidden.copy(attrvalue);
+        return;
+      } else if (equals("enable_edr", attrname)) {
+        attr.enable_edr.copy(attrvalue);
         return;
       }
     }
