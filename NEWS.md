@@ -1,3 +1,14 @@
+**Version 3.0.0. 2025-04-07**
+- EDR: /cube call (based on WCS)
+- EDR: /instances call using reference times
+- EDR: support for vertical dimensions (z in EDR requests) for model_levels, pressure_levels etc
+- EDR: support for custom dimensions [using custom: namespace] for example for percentile classes or ensemble members
+- EDR: EDR support can be switched on or off for a dataset or for a layer
+- EDR: getMetadata request output has been extended with a few attributes for EDR support
+- EDR: uses getMetadata request which reads from database for increased performance as no dataset configuration needs
+   to be read
+- EDR: should now support requests for generating soundings, ensemble plots (percentiles or plumes), time series, returning a CoverageCollection with multiple Coverages or a single Coverage
+ 
 **Version 2.32.0 2025-03-31**
 - Added odim hdf5 volume data support, as extension to existing knmi hdf5 volume data support.
 
