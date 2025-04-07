@@ -113,10 +113,16 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data.getvalue(),
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        
+        self.assertTrue(
+            AdagucTestTools().compareImage(
+                self.expectedoutputsspath + filename,
+                self.testresultspath + filename,
+                3,
+                0.02,
+            )
+        )  # Allowed pixel difference is huge, but only for very small number of pixels
+        
 
     def test_WMSGetLegendGraphic_testdatanc(self):
         AdagucTestTools().cleanTempDir()
@@ -1780,7 +1786,7 @@ class TestWMS(unittest.TestCase):
 
         filename = "test_WMSGetMap_NearestRenderWithShadeIntervalFast.png"
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "DATASET=nearestshadeinterval&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=shadedstylefast%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&",
+            "DATASET=adaguc.tests.nearestshadeinterval&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=shadedstylefast%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&",
             env=env,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())

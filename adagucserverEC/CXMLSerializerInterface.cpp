@@ -73,8 +73,12 @@ void CXMLSerializerInterface::parse_element_attributes(void *_a_node) {
   char *content = NULL;
   char *name = NULL;
   name = (char *)a_node->name;
-  if (a_node->children != NULL) content = (char *)a_node->children->content;
-  if (content != NULL) addAttributeEntry(name, content);
+  if (a_node->children != NULL) {
+    content = (char *)a_node->children->content;
+  }
+  if (content != NULL && a_node->parent != NULL && a_node->parent->name != NULL) {
+    addAttributeEntry((char *)a_node->parent->name, name, content);
+  }
   a_node = a_node->next;
   if (a_node != NULL) parse_element_attributes(a_node);
 }
