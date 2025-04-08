@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <!-- 
+  See https://dev.knmi.nl/projects/adagucserver/wiki/Dataset, for details
+  This file can be included by using the adaguc.dataset.cgi?service=wms&DATASET=testdata& key value pair in the URL 
+  -->
+  
+
+  <Layer type="database">
+    <Group collection="testcollection"/>
+    <Title>t_testdata</Title>
+    <Name>testdata</Name>
+    <FilePath>{ADAGUC_PATH}/data/datasets/multi_dim.nc</FilePath>
+    <Variable standard_name="st_testdata">testdata</Variable>
+    <Styles>auto</Styles>
+    <Dimension name="time" units="ISO8601" interval="PT1H" default="min">time</Dimension>
+    <Dimension name="height" units="m" type="vertical">height</Dimension>
+    <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension> 
+  </Layer>
+  
+  <Layer type="database">
+    <Group collection="testcollection"/>
+    <Title>t_testdata2</Title>
+    <Name>testdata2</Name>
+    <FilePath>{ADAGUC_PATH}/data/datasets/multi_dim.nc</FilePath>
+    <Variable standard_name="st_testdata2">testdata2</Variable>
+    <Styles>auto</Styles>
+    <Dimension name="time" units="ISO8601" interval="PT1H" default="min">time</Dimension>
+    <Dimension name="height2" units="m" type="vertical">height</Dimension>
+    <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension> 
+  </Layer>
+  
+</Configuration>
+

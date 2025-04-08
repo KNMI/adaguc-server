@@ -46,6 +46,7 @@
 #include "utils/LayerMetadataStore.h"
 #include <json_adaguc.h>
 #include "utils/LayerMetadataToJson.h"
+#include "utils/CRequestUtils.h"
 
 const char *CRequest::className = "CRequest";
 int CRequest::CGI = 0;
@@ -317,14 +318,7 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
   return status;
 }
 
-int CRequest::process_wms_getmetadata_request() {
-  if (srvParam->WMSLayers != NULL) {
-    for (size_t j = 0; j < srvParam->WMSLayers->count; j++) {
-      CDBDebug("WMS GETMETADATA %s", srvParam->WMSLayers[j].c_str());
-    }
-  }
-  return process_all_layers();
-}
+int CRequest::process_wms_getmetadata_request() { return process_all_layers(); }
 
 CServerParams *CRequest::getServerParams() { return srvParam; }
 
@@ -416,30 +410,14 @@ int CRequest::generateGetReferenceTimesDoc(CT::string *result, CDataSource *data
   return 0;
 }
 
-int CRequest::process_wms_getlegendgraphic_request() {
-  if (srvParam->WMSLayers != NULL)
-    for (size_t j = 0; j < srvParam->WMSLayers->count; j++) {
-      CDBDebug("WMS GETLEGENDGRAPHIC %s", srvParam->WMSLayers[j].c_str());
-    }
-  return process_all_layers();
-}
-int CRequest::process_wms_getfeatureinfo_request() {
-  if (srvParam->WMSLayers != NULL)
-    for (size_t j = 0; j < srvParam->WMSLayers->count; j++) {
-      CDBDebug("WMS GETFEATUREINFO %s", srvParam->WMSLayers[j].c_str());
-    }
-  return process_all_layers();
-}
+int CRequest::process_wms_getlegendgraphic_request() { return process_all_layers(); }
+int CRequest::process_wms_getfeatureinfo_request() { return process_all_layers(); }
 
 int CRequest::process_wcs_getcoverage_request() {
 #ifndef ADAGUC_USE_GDAL
   CServerParams::showWCSNotEnabledErrorMessage();
   return 1;
 #else
-  if (srvParam->WMSLayers != NULL)
-    for (size_t j = 0; j < srvParam->WMSLayers->count; j++) {
-      CDBDebug("WCS GETCOVERAGE %s", srvParam->WMSLayers[j].c_str());
-    }
   return process_all_layers();
 #endif
 }
@@ -606,8 +584,8 @@ int CRequest::generateGetReferenceTimes(CDataSource *dataSource) {
 
 int CRequest::generateOGCDescribeCoverage(CT::string *XMLdocument) {
   CXMLGen XMLGen;
-  for (size_t j = 0; j < srvParam->WMSLayers->count; j++) {
-    CDBDebug("WCS_DESCRIBECOVERAGE %s", srvParam->WMSLayers[j].c_str());
+  for (size_t j = 0; j < srvParam->requestedLayerNames.size(); j++) {
+    CDBDebug("WCS_DESCRIBECOVERAGE %s", srvParam->requestedLayerNames[j].c_str());
   }
   return XMLGen.OGCGetCapabilities(srvParam, XMLdocument);
 }
@@ -671,30 +649,26 @@ int CRequest::process_wcs_getcap_request() {
 int CRequest::process_wcs_describecov_request() { return process_all_layers(); }
 
 int CRequest::process_wms_getmap_request() {
-  if (srvParam->WMSLayers != NULL) {
-    CT::string message = "WMS GETMAP ";
-    for (size_t j = 0; j < srvParam->WMSLayers->count; j++) {
-      if (j > 0) message.concat(",");
-      message.printconcat("(%d) %s", j, srvParam->WMSLayers[j].c_str());
-    }
-    CDBDebug(message.c_str());
-  } else {
-    CDBDebug("WMS GETMAP no layers");
+
+  CT::string message = "WMS GETMAP ";
+  for (size_t j = 0; j < srvParam->requestedLayerNames.size(); j++) {
+    if (j > 0) message.concat(",");
+    message.printconcat("(%d) %s", j, srvParam->requestedLayerNames[j].c_str());
   }
+  CDBDebug(message.c_str());
+
   return process_all_layers();
 }
 
 int CRequest::process_wms_gethistogram_request() {
-  if (srvParam->WMSLayers != NULL) {
-    CT::string message = "WMS GETHISTOGRAM ";
-    for (size_t j = 0; j < srvParam->WMSLayers->count; j++) {
-      if (j > 0) message.concat(",");
-      message.printconcat("(%d) %s", j, srvParam->WMSLayers[j].c_str());
-    }
-    CDBDebug(message.c_str());
-  } else {
-    CDBDebug("WMS GETMAP no layers");
+
+  CT::string message = "WMS GETHISTOGRAM ";
+  for (size_t j = 0; j < srvParam->requestedLayerNames.size(); j++) {
+    if (j > 0) message.concat(",");
+    message.printconcat("(%d) %s", j, srvParam->requestedLayerNames[j].c_str());
   }
+  CDBDebug(message.c_str());
+
   return process_all_layers();
 }
 
@@ -1429,15 +1403,13 @@ int CRequest::process_all_layers() {
   CT::string pathFileName;
 
   // No layers defined, so maybe the DescribeCoverage request did not define any coverages...
-  if (srvParam->WMSLayers == NULL) {
+  if (srvParam->requestedLayerNames.size() == 0) {
     if (srvParam->requestType == REQUEST_WCS_DESCRIBECOVERAGE) {
       // Therefore we read all the coverages, we do this by defining WMSLayers, as if the user entered in the coverages
       // section all layers.
       srvParam->requestType = REQUEST_WCS_DESCRIBECOVERAGE;
-      srvParam->WMSLayers = new CT::string[srvParam->cfg->Layer.size()];
       for (size_t j = 0; j < srvParam->cfg->Layer.size(); j++) {
-        makeUniqueLayerName(&srvParam->WMSLayers[j], srvParam->cfg->Layer[j]);
-        srvParam->WMSLayers[j].count = srvParam->cfg->Layer.size();
+        srvParam->requestedLayerNames.push_back(makeUniqueLayerName(srvParam->cfg->Layer[j]));
       }
     } else {
       CDBError("No layers/coverages defined");
@@ -1445,140 +1417,36 @@ int CRequest::process_all_layers() {
     }
   } else {
     // Otherwise WMSLayers are defined by the user, so we need only the selection the user has made
-    if (srvParam->WMSLayers->count == 0) {
+    if (srvParam->requestedLayerNames.size() == 0) {
       CDBError("No layers/coverages defined");
       return 1;
     }
 
-    // dataSources = new CDataSource[srvParam->WMSLayers->count];
-    // Now set the properties of these sourceimages
-    CT::string layerName;
-
-    for (size_t j = 0; j < srvParam->WMSLayers->count; j++) {
-      size_t layerNo = 0;
-      for (layerNo = 0; layerNo < srvParam->cfg->Layer.size(); layerNo++) {
-
-        makeUniqueLayerName(&layerName, srvParam->cfg->Layer[layerNo]);
-        // CDBError("comparing (%d) %s==%s",j,layerName.c_str(),srvParam->WMSLayers[j].c_str());
-        if (layerName.equals(srvParam->WMSLayers[j].c_str())) {
-          CDataSource *dataSource = new CDataSource();
-
-          dataSources.push_back(dataSource);
-
-          if (dataSource->setCFGLayer(srvParam, srvParam->configObj->Configuration[0], srvParam->cfg->Layer[layerNo], layerName.c_str(), j) != 0) {
-            return 1;
-          }
-
-          // Check if layer has an additional layer
-          for (size_t additionalLayerNr = 0; additionalLayerNr < srvParam->cfg->Layer[layerNo]->AdditionalLayer.size(); additionalLayerNr++) {
-            CServerConfig::XMLE_AdditionalLayer *additionalLayer = srvParam->cfg->Layer[layerNo]->AdditionalLayer[additionalLayerNr];
-            bool replacePreviousDataSource = false;
-            bool replaceAllDataSource = false;
-
-            if (additionalLayer->attr.replace.equals("true") || additionalLayer->attr.replace.equals("previous")) {
-              replacePreviousDataSource = true;
-            }
-            if (additionalLayer->attr.replace.equals("all")) {
-              replaceAllDataSource = true;
-            }
-
-            CT::string additionalLayerName = additionalLayer->value.c_str();
-            size_t additionalLayerNo = 0;
-            for (additionalLayerNo = 0; additionalLayerNo < srvParam->cfg->Layer.size(); additionalLayerNo++) {
-              CT::string additional;
-              makeUniqueLayerName(&additional, srvParam->cfg->Layer[additionalLayerNo]);
-              // CDBDebug("comparing for additionallayer %s==%s", additionalLayerName.c_str(), additional.c_str());
-              if (additionalLayerName.equals(additional)) {
-                // CDBDebug("Found additionalLayer [%s]", additional.c_str());
-                CDataSource *additionalDataSource = new CDataSource();
-
-                // CDBDebug("setCFGLayer for additionallayer %s", additionalLayerName.c_str());
-                if (additionalDataSource->setCFGLayer(srvParam, srvParam->configObj->Configuration[0], srvParam->cfg->Layer[additionalLayerNo], additionalLayerName.c_str(), j) != 0) {
-                  delete additionalDataSource;
-                  return 1;
-                }
-
-                /* Configure the Dimensions object if not set. */
-                if (additionalDataSource->cfgLayer->Dimension.size() == 0) {
-                  // CDBDebug("additionalDataSource: Dimensions not configured, trying to do now");
-                  if (CAutoConfigure::autoConfigureDimensions(additionalDataSource) != 0) {
-                    CDBError("additionalDataSource: : setCFGLayer::Unable to configure dimensions automatically");
-                  }
-                  // else {
-                  //   for (size_t j = 0; j < additionalDataSource->cfgLayer->Dimension.size(); j++) {
-                  //     CDBDebug("additionalDataSource: : Configured dim %d %s", j, additionalDataSource->cfgLayer->Dimension[j]->value.c_str());
-                  //   }
-                  // }
-                }
-
-                /* Set the dims based on server parameters */
-                try {
-                  CRequest::fillDimValuesForDataSource(additionalDataSource, additionalDataSource->srvParams);
-                } catch (ServiceExceptionCode e) {
-                  CDBError("additionalDataSource: Exception in setDimValuesForDataSource");
-                  return 1;
-                }
-                bool add = true;
-
-                CDataSource *checkForData = additionalDataSource->clone();
-
-                try {
-                  if (setDimValuesForDataSource(checkForData, srvParam) != 0) {
-                    CDBDebug("setDimValuesForDataSource for additionallayer %s failed", additionalLayerName.c_str());
-                    add = false;
-                  }
-                } catch (ServiceExceptionCode e) {
-                  CDBDebug("setDimValuesForDataSource for additionallayer %s failed", additionalLayerName.c_str());
-                  add = false;
-                }
-                delete checkForData;
-
-                CDBDebug("add = %d replaceAllDataSource = %d replacePreviousDataSource = %d", add, replaceAllDataSource, replacePreviousDataSource);
-                if (add) {
-                  if (replaceAllDataSource) {
-                    for (size_t j = 0; j < dataSources.size(); j++) {
-                      delete dataSources[j];
-                    }
-                    dataSources.clear();
-                  } else {
-                    if (replacePreviousDataSource) {
-                      if (dataSources.size() > 0) {
-                        delete dataSources.back();
-                        dataSources.pop_back();
-                      }
-                    }
-                  }
-                  if (additionalLayer->attr.style.empty() == false) {
-                    additionalDataSource->setStyle(additionalLayer->attr.style.c_str());
-                  } else {
-                    additionalDataSource->setStyle("default");
-                  }
-                  dataSources.push_back(additionalDataSource);
-                } else {
-                  delete additionalDataSource;
-                }
-
-                break;
-              }
-            } /* End of looping additionallayers */
-          }
-          break;
-        }
-      }
-
-      // This layer was not found in the configuration
-      if (layerNo == srvParam->cfg->Layer.size()) {
+    // Loop through all layers as request in the request
+    for (size_t layerIndex = 0; layerIndex < srvParam->requestedLayerNames.size(); layerIndex++) {
+      CT::string requestedLayerName = srvParam->requestedLayerNames[layerIndex];
+      auto cfgLayer = findLayerConfigForRequestedLayer(srvParam, requestedLayerName);
+      if (cfgLayer == nullptr) {
 
         // Do not set status code for a missing layer to 404 when we request GetCapabilities
         // GetCapabilities should return statuscode 200 with layers that work.
         if (srvParam->requestType != REQUEST_WMS_GETCAPABILITIES && srvParam->requestType != REQUEST_WCS_GETCAPABILITIES && srvParam->requestType != REQUEST_WCS_DESCRIBECOVERAGE) {
           setStatusCode(HTTP_STATUSCODE_404_NOT_FOUND);
-          CDBError("Layer [%s] not found", srvParam->WMSLayers[j].c_str());
+          CDBError("Layer [%s] not found", requestedLayerName.c_str());
         } else {
-          CDBDebug("Layer [%s] not found", srvParam->WMSLayers[j].c_str());
+          CDBDebug("Layer [%s] not found", requestedLayerName.c_str());
         }
-        // Return 1, this layer was not found in the configuration
         return 1;
+      }
+
+      if (cfgLayer != nullptr) {
+        CT::string layerName = makeUniqueLayerName(cfgLayer);
+        if (layerName.equals(requestedLayerName.c_str())) {
+          if (this->addDataSources(cfgLayer, layerIndex) != 0) {
+            CDBError("Unable to create datasources for %d", layerName.c_str());
+            return 1;
+          }
+        }
       }
     }
   }
@@ -1611,475 +1479,36 @@ int CRequest::process_all_layers() {
     }
   }
 
-  for (size_t j = 0; j < dataSources.size(); j++) {
-
-    if (dataSources[j]->dLayerType == CConfigReaderLayerTypeUnknown) {
-      CDBError("Unknow layer type");
-      return 0;
-    }
-
-    /***************************/
-    /* Type = Database layer   */
-    /***************************/
-    if (dataSources[j]->dLayerType == CConfigReaderLayerTypeDataBase || dataSources[j]->dLayerType == CConfigReaderLayerTypeStyled || dataSources[j]->dLayerType == CConfigReaderLayerTypeBaseLayer) {
-
-      if (dataSources[j]->cfgLayer->Dimension.size() == 0) {
-
-        if (CAutoConfigure::autoConfigureDimensions(dataSources[j]) != 0) {
-          CDBError("Unable to configure dimensions automatically");
-          return 1;
-        }
-      }
-      if (dataSources[j]->cfgLayer->Dimension.size() != 0) {
-        try {
-          if (setDimValuesForDataSource(dataSources[j], srvParam) != 0) {
-            CDBError("Error in setDimValuesForDataSource: Unable to find data for layer %s", dataSources[j]->layerName.c_str());
-            return 1;
-          }
-        } catch (ServiceExceptionCode e) {
-          CDBError("Exception in setDimValuesForDataSource for layer %s with ServiceExceptionCode=%d", dataSources[j]->layerName.c_str(), e);
-          setExceptionType(e);
-          return 1;
-        }
-      } else {
-        CDBDebug("Layer has no dims");
-        // This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.
-
-        std::vector<std::string> fileList;
-        try {
-          fileList = CDBFileScanner::searchFileNames(dataSources[j]->cfgLayer->FilePath[0]->value.c_str(), dataSources[j]->cfgLayer->FilePath[0]->attr.filter, NULL);
-        } catch (int linenr) {
-          CDBError("Could not find any filename");
-          return 1;
-        }
-
-        if (fileList.size() == 0) {
-          CDBError("fileList.size()==0");
-          return 1;
-        }
-
-        CDBDebug("Addstep");
-        dataSources[j]->addStep(fileList[0].c_str(), NULL);
-        // dataSources[j]->getCDFDims()->addDimension("none","0",0);
-      }
-    }
-
-    if (dataSources[j]->dLayerType == CConfigReaderLayerTypeCascaded) {
-      // This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.
-      CDBDebug("Addstep");
-      dataSources[j]->addStep("", NULL);
-      // dataSources[j]->getCDFDims()->addDimension("none","0",0);
-    }
-    if (dataSources[j]->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
-      // This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.
-      layerTypeLiveUpdateConfigureDimensionsInDataSource(dataSources[j]);
-    }
+  // Set layer types for all datasources
+  if (this->determineTypesForDataSources() != 0) {
+    return 1;
   }
 
   // Try to find BBOX automatically, when not provided.
-  if (srvParam->requestType == REQUEST_WMS_GETMAP) {
-    if (srvParam->dFound_BBOX == 0) {
-      for (size_t d = 0; d < dataSources.size(); d++) {
-        if (dataSources[d]->dLayerType != CConfigReaderLayerTypeCascaded && dataSources[d]->dLayerType != CConfigReaderLayerTypeBaseLayer &&
-            dataSources[d]->dLayerType != CConfigReaderLayerTypeLiveUpdate) {
-          CImageWarper warper;
-          CDataReader reader;
-          status = reader.open(dataSources[d], CNETCDFREADER_MODE_OPEN_HEADER);
-          reader.close();
-          status = warper.initreproj(dataSources[d], srvParam->Geo, &srvParam->cfg->Projection);
-          if (status != 0) {
-            warper.closereproj();
-            CDBDebug("Unable to initialize projection ");
-          }
-          srvParam->Geo->dfBBOX[0] = -180;
-          srvParam->Geo->dfBBOX[1] = -90;
-          srvParam->Geo->dfBBOX[2] = 180;
-          srvParam->Geo->dfBBOX[3] = 90;
-          warper.findExtent(dataSources[d], srvParam->Geo->dfBBOX);
-          warper.closereproj();
-          CDBDebug("Found bbox %s %f %f %f %f", srvParam->Geo->CRS.c_str(), srvParam->Geo->dfBBOX[0], srvParam->Geo->dfBBOX[1], srvParam->Geo->dfBBOX[2], srvParam->Geo->dfBBOX[3]);
-          srvParam->dFound_BBOX = 1;
-          break;
-        }
-      }
-    }
-  }
+  this->autoDetectBBOX();
 
-  int j = 0;
-
+  auto firstDataSource = dataSources[0];
   /**************************************/
   /* Handle WMS Getmap database request */
   /**************************************/
-  if (dataSources[j]->dLayerType == CConfigReaderLayerTypeDataBase || dataSources[j]->dLayerType == CConfigReaderLayerTypeStyled || dataSources[j]->dLayerType == CConfigReaderLayerTypeCascaded ||
-      dataSources[j]->dLayerType == CConfigReaderLayerTypeBaseLayer || (dataSources[j]->dLayerType == CConfigReaderLayerTypeLiveUpdate && srvParam->requestType != REQUEST_WMS_GETMAP)) {
+  if (firstDataSource->dLayerType == CConfigReaderLayerTypeDataBase || firstDataSource->dLayerType == CConfigReaderLayerTypeStyled || firstDataSource->dLayerType == CConfigReaderLayerTypeCascaded ||
+      firstDataSource->dLayerType == CConfigReaderLayerTypeBaseLayer || (firstDataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate && srvParam->requestType != REQUEST_WMS_GETMAP)) {
     try {
       for (size_t d = 0; d < dataSources.size(); d++) {
         dataSources[d]->setTimeStep(0);
       }
+      int status = 0;
       if (srvParam->requestType == REQUEST_WMS_GETMAP) {
-
-        CImageDataWriter imageDataWriter;
-
-        /**
-          We want like give priority to our own internal layers, instead to external cascaded layers. This is because
-          our internal layers have an exact customized legend, and we would like to use this always.
-        */
-
-        bool imageDataWriterIsInitialized = false;
-        int dataSourceToUse = 0;
-        for (size_t d = 0; d < dataSources.size() && imageDataWriterIsInitialized == false; d++) {
-          if (dataSources[d]->dLayerType != CConfigReaderLayerTypeCascaded) {
-            // CDBDebug("INIT");
-            status = imageDataWriter.init(srvParam, dataSources[d], dataSources[d]->getNumTimeSteps());
-            if (status != 0) throw(__LINE__);
-            imageDataWriterIsInitialized = true;
-            dataSourceToUse = d;
-          }
-        }
-
-        // There are only cascaded layers, so we intialize the imagedatawriter with this the first layer.
-        if (imageDataWriterIsInitialized == false) {
-          status = imageDataWriter.init(srvParam, dataSources[0], dataSources[0]->getNumTimeSteps());
-          if (status != 0) throw(__LINE__);
-          dataSourceToUse = 0;
-          imageDataWriterIsInitialized = true;
-        }
-        bool measurePerformance = false;
-
-        bool useThreading = false;
-        int numThreads = 4;
-        if (dataSources[dataSourceToUse]->cfgLayer->TileSettings.size() == 1) {
-          if (dataSources[dataSourceToUse]->cfgLayer->TileSettings[0]->attr.threads.empty() == false) {
-            numThreads = dataSources[dataSourceToUse]->cfgLayer->TileSettings[0]->attr.threads.toInt();
-            if (numThreads <= 1) {
-              useThreading = false;
-            } else {
-              useThreading = true;
-            }
-            // measurePerformance = true;
-          }
-        }
-        if (measurePerformance) {
-          StopWatch_Stop("Start imagewarper");
-        }
-        if (useThreading) {
-
-          // When we have multiple timesteps, we will create an animation.
-          if (dataSources[dataSourceToUse]->getNumTimeSteps() > 1) imageDataWriter.createAnimation();
-          size_t numTimeSteps = (size_t)dataSources[dataSourceToUse]->getNumTimeSteps();
-
-          int errcode;
-          pthread_t threads[numThreads];
-
-          CImageDataWriter_addData_args args[numThreads];
-          for (int worker = 0; worker < numThreads; worker++) {
-
-            for (size_t d = 0; d < dataSources.size(); d++) {
-              args[worker].dataSources.push_back(dataSources[d]->clone());
-              ;
-            }
-            args[worker].imageDataWriter = &imageDataWriter;
-            args[worker].finished = false;
-            args[worker].running = false;
-            args[worker].used = false;
-          }
-
-          for (size_t k = 0; k < numTimeSteps; k = k + 1) {
-
-            if (dataSources[j]->dLayerType == CConfigReaderLayerTypeDataBase || dataSources[j]->dLayerType == CConfigReaderLayerTypeCascaded ||
-                dataSources[j]->dLayerType == CConfigReaderLayerTypeBaseLayer) {
-              bool OK = false;
-              while (OK == false) {
-                for (int worker = 0; worker < numThreads && OK == false; worker++) {
-                  if (args[worker].running == false) {
-                    args[worker].running = true;
-                    args[worker].used = true;
-
-                    args[worker].dataSources[dataSourceToUse]->setTimeStep(k);
-                    for (size_t d = 0; d < args[worker].dataSources.size(); d++) {
-                      args[worker].dataSources[d]->threadNr = worker;
-                    }
-
-                    errcode = pthread_create(&threads[worker], NULL, CImageDataWriter_addData, &args[worker]);
-                    if (errcode) {
-                      CDBError("pthread_create");
-                      return 1;
-                    }
-
-                    if (measurePerformance) {
-                      StopWatch_Stop("Started thread %d for timestep %d", worker, k);
-                    }
-                    OK = true;
-                    break;
-                  }
-                }
-                if (OK == false) {
-                  usleep(1000);
-                }
-              }
-            }
-          }
-          if (measurePerformance) {
-            StopWatch_Stop("All submitted");
-          }
-          for (int worker = 0; worker < numThreads; worker++) {
-            if (args[worker].used) {
-              args[worker].used = false;
-              errcode = pthread_join(threads[worker], (void **)&status);
-              if (errcode) {
-                CDBError("pthread_join");
-                return 1;
-              }
-            }
-          }
-          if (measurePerformance) {
-            StopWatch_Stop("All done");
-          }
-          for (int worker = 0; worker < numThreads; worker++) {
-            for (size_t j = 0; j < args[worker].dataSources.size(); j++) {
-              delete args[worker].dataSources[j];
-            }
-            args[worker].dataSources.clear();
-          }
-          if (measurePerformance) {
-            StopWatch_Stop("All deleted");
-          }
-        } else {
-          /*Standard non threading functionality */
-          for (size_t k = 0; k < (size_t)dataSources[dataSourceToUse]->getNumTimeSteps(); k++) {
-            for (size_t d = 0; d < dataSources.size(); d++) {
-              dataSources[d]->setTimeStep(k);
-            }
-            if (dataSources[j]->dLayerType == CConfigReaderLayerTypeDataBase || dataSources[j]->dLayerType == CConfigReaderLayerTypeCascaded ||
-                dataSources[j]->dLayerType == CConfigReaderLayerTypeBaseLayer) {
-
-              status = imageDataWriter.addData(dataSources);
-              if (status != 0) {
-                /**
-                 * Adding data failed:
-                 * Do not ruin an animation if one timestep fails to load.
-                 * If there is a single time step then throw an exception otherwise continue.
-                 */
-                if (dataSources[dataSourceToUse]->getNumTimeSteps() == 1) {
-                  // Not an animation, so throw an exception
-                  CDBError("Unable to convert datasource %s to image", dataSources[j]->layerName.c_str());
-                  throw(__LINE__);
-                } else {
-                  // This is an animation, report an error and continue with adding images.
-                  CDBError("Unable to load datasource %s at line %d", dataSources[dataSourceToUse]->getDataObject(0)->variableName.c_str(), __LINE__);
-                }
-              }
-            }
-            if (dataSources[j]->dLayerType == CConfigReaderLayerTypeStyled) {
-              // Special styled layer for GEOMON project
-              status = imageDataWriter.calculateData(dataSources);
-              if (status != 0) throw(__LINE__);
-            }
-            if (dataSources[dataSourceToUse]->getNumTimeSteps() > 1 && dataSources[dataSourceToUse]->queryBBOX == false) {
-              // Print the animation data into the image
-              char szTemp[1024];
-              snprintf(szTemp, 1023, "%s UTC", dataSources[dataSourceToUse]->getDimensionValueForNameAndStep("time", k).c_str());
-              imageDataWriter.setDate(szTemp);
-            }
-          }
-        }
-        if (measurePerformance) {
-          StopWatch_Stop("Finished imagewarper");
-        }
-
-        CColor textBGColor = CColor(255, 255, 255, 0); /* TODO: 2021-01-12, Maarten Plieger: Should make the text background configurable */
-
-        double scaling = dataSources[dataSourceToUse]->getScaling();
-        int textY = (int)(scaling * 6);
-        // int prevTextY=0;
-        if (srvParam->mapTitle.length() > 0) {
-          if (srvParam->cfg->WMS[0]->TitleFont.size() > 0) {
-            float fontSize = parseFloat(srvParam->cfg->WMS[0]->TitleFont[0]->attr.size.c_str());
-            /* Check if scaling in relation to a reference width/height is needed */
-            fontSize = fontSize * scaling;
-            textY += int(fontSize);
-            textY += imageDataWriter.drawImage.drawTextArea((int)(scaling * 6), textY, srvParam->cfg->WMS[0]->TitleFont[0]->attr.location.c_str(), fontSize, 0, srvParam->mapTitle.c_str(),
-                                                            CColor(0, 0, 0, 255), textBGColor);
-            // textY+=12;
-          }
-        }
-        if (srvParam->mapSubTitle.length() > 0) {
-          if (srvParam->cfg->WMS[0]->SubTitleFont.size() > 0) {
-            float fontSize = parseFloat(srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.size.c_str());
-            fontSize = fontSize * scaling;
-            // textY+=int(fontSize)/5;
-            textY += imageDataWriter.drawImage.drawTextArea((int)(scaling * 6), textY, srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(), fontSize, 0, srvParam->mapSubTitle.c_str(),
-                                                            CColor(0, 0, 0, 255), textBGColor);
-            // textY+=8;
-          }
-        }
-
-        if (srvParam->showDimensionsInImage) {
-          textY += 4 * (int)scaling;
-          CDataSource *dataSource = dataSources[dataSourceToUse];
-          size_t nDims = dataSource->requiredDims.size();
-
-          for (size_t d = 0; d < nDims; d++) {
-            CT::string message;
-            float fontSize = parseFloat(srvParam->cfg->WMS[0]->DimensionFont[0]->attr.size.c_str());
-            fontSize = fontSize * scaling;
-            textY += int(fontSize * 1.2);
-            message.print("%s: %s", dataSource->requiredDims[d]->name.c_str(), dataSource->requiredDims[d]->value.c_str());
-            imageDataWriter.drawImage.drawText(6, textY, srvParam->cfg->WMS[0]->DimensionFont[0]->attr.location.c_str(), fontSize, 0, message.c_str(), CColor(0, 0, 0, 255), textBGColor);
-            textY += 4 * (int)scaling;
-          }
-        }
-
-        if (!srvParam->showLegendInImage.equals("false") && !srvParam->showLegendInImage.empty()) {
-          // Draw legend
-          bool drawAllLegends = srvParam->showLegendInImage.equals("true");
-
-          /* List of specified legends */
-          CT::StackList<CT::string> legendLayerList = srvParam->showLegendInImage.splitToStack(",");
-
-          //          int numberOfLegendsDrawn = 0;
-          int legendOffsetX = 0;
-          for (size_t d = 0; d < dataSources.size(); d++) {
-            if (dataSources[d]->dLayerType != CConfigReaderLayerTypeCascaded) {
-              bool drawThisLegend = false;
-
-              if (!drawAllLegends) {
-                for (size_t li = 0; li < legendLayerList.size(); li++) {
-                  CDBDebug("Comparing [%s] == [%s]", dataSources[d]->layerName.c_str(), legendLayerList[li].c_str());
-                  if (dataSources[d]->layerName.toLowerCase().equals(legendLayerList[li])) {
-                    drawThisLegend = true;
-                  }
-                }
-              } else {
-                drawThisLegend = true;
-              }
-              if (drawThisLegend) {
-                /* Draw the legend */
-                int padding = 4;
-                int minimumLegendWidth = 100;
-                CDrawImage legendImage;
-                int legendWidth = LEGEND_WIDTH * scaling;
-                if (legendWidth < minimumLegendWidth) legendWidth = minimumLegendWidth;
-                imageDataWriter.drawImage.enableTransparency(true);
-                legendImage.createImage(&imageDataWriter.drawImage, legendWidth, (imageDataWriter.drawImage.Geo->dHeight / 3) - padding * 2 + 2);
-
-                CStyleConfiguration *styleConfiguration = dataSources[d]->getStyle();
-                if (styleConfiguration != NULL && styleConfiguration->legendIndex != -1) {
-                  legendImage.createGDPalette(srvParam->cfg->Legend[styleConfiguration->legendIndex]);
-                }
-
-                status = imageDataWriter.createLegend(dataSources[d], &legendImage);
-                if (status != 0) throw(__LINE__);
-                // legendImage.rectangle(0,0,10000,10000,240);
-                int posX = imageDataWriter.drawImage.Geo->dWidth - (legendImage.Geo->dWidth + padding) - legendOffsetX;
-                // int posY=imageDataWriter.drawImage.Geo->dHeight-(legendImage.Geo->dHeight+padding);
-                // int posX=padding*scaling;//imageDataWriter.drawImage.Geo->dWidth-(scaleBarImage.Geo->dWidth+padding);
-                int posY = imageDataWriter.drawImage.Geo->dHeight - (legendImage.Geo->dHeight + padding * scaling);
-                imageDataWriter.drawImage.draw(posX, posY, 0, 0, &legendImage);
-                //                numberOfLegendsDrawn++;
-                legendOffsetX += legendImage.Geo->dWidth + padding;
-              }
-            }
-          }
-        }
-
-        if (srvParam->showScaleBarInImage) {
-          // Draw legend
-
-          int padding = 4;
-
-          CDrawImage scaleBarImage;
-
-          imageDataWriter.drawImage.enableTransparency(true);
-          // scaleBarImage.setBGColor(1,0,0);
-
-          scaleBarImage.createImage(&imageDataWriter.drawImage, 200 * scaling, 30 * scaling);
-
-          // scaleBarImage.rectangle(0,0,scaleBarImage.Geo->dWidth,scaleBarImage.Geo->dHeight,CColor(0,0,0,0),CColor(0,0,0,255));
-          status = imageDataWriter.createScaleBar(dataSources[0]->srvParams->Geo, &scaleBarImage, scaling);
-          if (status != 0) throw(__LINE__);
-          int posX = padding * scaling; // imageDataWriter.drawImage.Geo->dWidth-(scaleBarImage.Geo->dWidth+padding);
-          int posY = imageDataWriter.drawImage.Geo->dHeight - (scaleBarImage.Geo->dHeight + padding * scaling);
-          // posY-=50;
-          // imageDataWriter.drawImage.rectangle(posX,posY,scaleBarImage.Geo->dWidth+posX+1,scaleBarImage.Geo->dHeight+posY+1,CColor(255,255,255,180),CColor(255,255,255,0));
-          imageDataWriter.drawImage.draw(posX, posY, 0, 0, &scaleBarImage);
-        }
-
-        if (srvParam->showNorthArrow) {
-        }
-        status = imageDataWriter.end();
-        if (status != 0) throw(__LINE__);
-        fclose(stdout);
+        status = this->handleGetMapRequest(firstDataSource);
       }
 
       if (srvParam->requestType == REQUEST_WCS_GETCOVERAGE) {
-        CBaseDataWriterInterface *wcsWriter = NULL;
-        CT::string driverName = "ADAGUCNetCDF";
-        setDimValuesForDataSource(dataSources[j], srvParam);
-
-        for (size_t i = 0; i < srvParam->cfg->WCS[0]->WCSFormat.size(); i++) {
-          if (srvParam->Format.equals(srvParam->cfg->WCS[0]->WCSFormat[i]->attr.name.c_str())) {
-            driverName.copy(srvParam->cfg->WCS[0]->WCSFormat[i]->attr.driver.c_str());
-            break;
-          }
-        }
-        if (driverName.equals("ADAGUCNetCDF")) {
-          CDBDebug("Creating CNetCDFDataWriter");
-          wcsWriter = new CNetCDFDataWriter();
-        }
-
-#ifdef ADAGUC_USE_GDAL
-        if (wcsWriter == NULL) {
-          wcsWriter = new CGDALDataWriter();
-        }
-#endif
-        if (wcsWriter == NULL) {
-          CDBError("No WCS Writer found");
-          return 1;
-        }
-        try {
-          try {
-            status = wcsWriter->init(srvParam, dataSources[j], dataSources[j]->getNumTimeSteps());
-            if (status != 0) throw(__LINE__);
-          } catch (int e) {
-            CDBError("Exception code %d", e);
-
-            throw(__LINE__);
-          }
-
-          for (int k = 0; k < dataSources[j]->getNumTimeSteps(); k++) {
-            dataSources[j]->setTimeStep(k);
-            CDBDebug("WCS dataset %d/ timestep %d of %d", j, k, dataSources[j]->getNumTimeSteps());
-
-            try {
-              status = wcsWriter->addData(dataSources);
-            } catch (int e) {
-              CDBError("Exception code %d", e);
-              throw(__LINE__);
-            }
-            if (status != 0) throw(__LINE__);
-          }
-          try {
-            status = wcsWriter->end();
-            if (status != 0) throw(__LINE__);
-          } catch (int e) {
-            CDBError("Exception code %d", e);
-            throw(__LINE__);
-          }
-        } catch (int line) {
-          CDBDebug("%d", line);
-          delete wcsWriter;
-          wcsWriter = NULL;
-          throw(__LINE__);
-        }
-
-        delete wcsWriter;
-        wcsWriter = NULL;
+        status = handleGetCoverageRequest(firstDataSource);
       }
 
       if (srvParam->requestType == REQUEST_WMS_GETFEATUREINFO) {
         CImageDataWriter imageDataWriter;
-        status = imageDataWriter.init(srvParam, dataSources[j], dataSources[j]->getNumTimeSteps());
+        status = imageDataWriter.init(srvParam, firstDataSource, firstDataSource->getNumTimeSteps());
         if (status != 0) throw(__LINE__);
         status = imageDataWriter.getFeatureInfo(dataSources, 0, int(srvParam->dX), int(srvParam->dY));
         if (status != 0) throw(__LINE__);
@@ -2090,11 +1519,11 @@ int CRequest::process_all_layers() {
       // WMS Getlegendgraphic
       if (srvParam->requestType == REQUEST_WMS_GETLEGENDGRAPHIC) {
         CImageDataWriter imageDataWriter;
-        status = imageDataWriter.init(srvParam, dataSources[j], 1);
+        status = imageDataWriter.init(srvParam, firstDataSource, 1);
         if (status != 0) throw(__LINE__);
         bool rotate = srvParam->Geo->dWidth > srvParam->Geo->dHeight;
         CDBDebug("creatinglegend %dx%d %d", srvParam->Geo->dWidth, srvParam->Geo->dHeight, rotate);
-        status = imageDataWriter.createLegend(dataSources[j], &imageDataWriter.drawImage, rotate);
+        status = imageDataWriter.createLegend(firstDataSource, &imageDataWriter.drawImage, rotate);
         if (status != 0) throw(__LINE__);
         status = imageDataWriter.end();
         if (status != 0) throw(__LINE__);
@@ -2106,7 +1535,7 @@ int CRequest::process_all_layers() {
         CDBDebug("REQUEST_WMS_GETHISTOGRAM");
 
         try {
-          status = histogramCreator.init(srvParam, dataSources[j], dataSources[j]->getNumTimeSteps());
+          status = histogramCreator.init(srvParam, firstDataSource, firstDataSource->getNumTimeSteps());
           if (status != 0) throw(__LINE__);
         } catch (int e) {
           CDBError("Exception code %d", e);
@@ -2134,19 +1563,19 @@ int CRequest::process_all_layers() {
       if (srvParam->requestType == REQUEST_WMS_GETMETADATA) {
         printf("%s%c%c\n", "Content-Type:text/plain", 13, 10);
         CDataReader reader;
-        status = reader.open(dataSources[j], CNETCDFREADER_MODE_OPEN_HEADER);
+        status = reader.open(firstDataSource, CNETCDFREADER_MODE_OPEN_HEADER);
         if (status != 0) {
-          CDBError("Could not open file: %s", dataSources[j]->getFileName());
+          CDBError("Could not open file: %s", firstDataSource->getFileName());
           throw(__LINE__);
         }
-        CT::string dumpString = CDF::dump(dataSources[j]->getDataObject(0)->cdfObject);
+        CT::string dumpString = CDF::dump(firstDataSource->getDataObject(0)->cdfObject);
         printf("%s", dumpString.c_str());
         reader.close();
         return 0;
       }
 
       if (srvParam->requestType == REQUEST_WMS_GETREFERENCETIMES) {
-        status = generateGetReferenceTimes(dataSources[j]);
+        status = generateGetReferenceTimes(firstDataSource);
         if (status != 0) {
           throw(__LINE__);
         }
@@ -2156,8 +1585,8 @@ int CRequest::process_all_layers() {
       CDBError("Returning from line %d", i);
       return 1;
     }
-  } else if (dataSources[j]->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
-    layerTypeLiveUpdateRender(dataSources[j], srvParam);
+  } else if (firstDataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
+    layerTypeLiveUpdateRender(firstDataSource, srvParam);
   } else {
     CDBError("Unknown layer type");
   }
@@ -2262,7 +1691,6 @@ int CRequest::process_querystring() {
   int dFound_BGColor = 0;
   int dErrorOccured = 0;
   int dFound_WMSLAYERS = 0;
-  int dFound_WMSLAYER = 0;
   int dFound_WCSCOVERAGE = 0;
   int dFound_Version = 0;
   int dFound_Exceptions = 0;
@@ -2594,37 +2022,23 @@ int CRequest::process_querystring() {
       }
 
       // WMS Layers parameter
-      if (uriKeyUpperCase.equals("LAYERS")) {
-        if (srvParam->WMSLayers != NULL) {
-          delete[] srvParam->WMSLayers;
-        }
-        srvParam->WMSLayers = uriValue.splitToArray(",");
+      if (uriKeyUpperCase.equals("LAYERS") || uriKeyUpperCase.equals("LAYER")) {
+        srvParam->requestedLayerNames = uriValue.splitToStack(",");
         dFound_WMSLAYERS = 1;
-      }
-      // WMS Layer parameter
-      if (uriKeyUpperCase.equals("LAYER")) {
-        if (srvParam->WMSLayers != NULL) {
-          delete[] srvParam->WMSLayers;
-        }
-        srvParam->WMSLayers = uriValue.splitToArray(",");
-        dFound_WMSLAYER = 1;
       }
 
       // WMS Layer parameter
       if (uriKeyUpperCase.equals("QUERY_LAYERS")) {
-        if (srvParam->WMSLayers != NULL) {
-          delete[] srvParam->WMSLayers;
-        }
-        srvParam->WMSLayers = uriValue.splitToArray(",");
-        dFound_WMSLAYER = 1;
+        srvParam->requestedLayerNames = uriValue.splitToStack(",");
+        dFound_WMSLAYERS = 1;
       }
       // WCS Coverage parameter
       if (uriKeyUpperCase.equals("COVERAGE")) {
-        if (srvParam->WMSLayers != NULL) {
+        if (srvParam->requestedLayerNames.size() > 0) {
           CDBError("ADAGUC Server: COVERAGE already defined");
           dErrorOccured = 1;
         } else {
-          srvParam->WMSLayers = uriValue.splitToArray(",");
+          srvParam->requestedLayerNames = uriValue.splitToStack(",");
         }
         dFound_WCSCOVERAGE = 1;
       }
@@ -3167,7 +2581,7 @@ int CRequest::process_querystring() {
     }
 
     if (dErrorOccured == 0 && srvParam->requestType == REQUEST_WMS_GETLEGENDGRAPHIC) {
-      if (dFound_WMSLAYER == 0) {
+      if (dFound_WMSLAYERS == 0) {
         CDBError("ADAGUC Server: Parameter LAYER missing");
         dErrorOccured = 1;
       }
@@ -3204,7 +2618,7 @@ int CRequest::process_querystring() {
         return 0;
       }
 
-      if (dFound_WMSLAYER == 0) {
+      if (dFound_WMSLAYERS == 0) {
         CDBError("ADAGUC Server: Parameter LAYER missing");
         dErrorOccured = 1;
       }
@@ -3353,13 +2767,14 @@ int CRequest::updatedb(CT::string *tailPath, CT::string *layerPathToScan, int sc
 
   for (size_t layerNo = 0; layerNo < numberOfLayers; layerNo++) {
     CDataSource *dataSource = new CDataSource();
-    if (dataSource->setCFGLayer(srvParam, srvParam->configObj->Configuration[0], srvParam->cfg->Layer[layerNo], NULL, layerNo) != 0) {
+    auto cfgLayer = srvParam->cfg->Layer[layerNo];
+    if (dataSource->setCFGLayer(srvParam, srvParam->configObj->Configuration[0], cfgLayer, NULL, layerNo) != 0) {
       delete dataSource;
       return 1;
     }
     if (!layerName.empty()) {
-      if (srvParam->cfg->Layer[layerNo]->Name.size() == 1) {
-        CT::string simpleLayerName = srvParam->cfg->Layer[layerNo]->Name[0]->value;
+      if (cfgLayer->Name.size() == 1) {
+        CT::string simpleLayerName = cfgLayer->Name[0]->value;
         if (layerName.equals(simpleLayerName)) {
           dataSources.push_back(dataSource);
         }
@@ -3479,4 +2894,570 @@ void *CImageDataWriter_addData(void *arg) {
   //   pthread_mutex_unlock(&CImageDataWriter_addData_lock);
   imgdwArg->running = false;
   return NULL;
+}
+
+void CRequest::autoDetectBBOX() {
+  if (srvParam->requestType == REQUEST_WMS_GETMAP && srvParam->dFound_BBOX == 0) {
+    int found;
+    std::array<double, 4> bbox;
+    std::tie(found, bbox) = findBBoxForDataSource(dataSources);
+    if (found == 0) {
+      for (size_t i = 0; i < 4; i++) {
+        srvParam->Geo->dfBBOX[i] = bbox[i];
+      }
+      srvParam->dFound_BBOX = 1;
+    }
+  }
+}
+
+int CRequest::determineTypesForDataSources() {
+  for (size_t j = 0; j < dataSources.size(); j++) {
+
+    if (dataSources[j]->dLayerType == CConfigReaderLayerTypeUnknown) {
+      CDBError("Unknow layer type");
+      return 0;
+    }
+
+    /***************************/
+    /* Type = Database layer   */
+    /***************************/
+    if (dataSources[j]->dLayerType == CConfigReaderLayerTypeDataBase || dataSources[j]->dLayerType == CConfigReaderLayerTypeStyled || dataSources[j]->dLayerType == CConfigReaderLayerTypeBaseLayer) {
+
+      if (dataSources[j]->cfgLayer->Dimension.size() == 0) {
+
+        if (CAutoConfigure::autoConfigureDimensions(dataSources[j]) != 0) {
+          CDBError("Unable to configure dimensions automatically");
+          return 1;
+        }
+      }
+      if (dataSources[j]->cfgLayer->Dimension.size() != 0) {
+        try {
+          if (setDimValuesForDataSource(dataSources[j], srvParam) != 0) {
+            CDBError("Error in setDimValuesForDataSource: Unable to find data for layer %s", dataSources[j]->layerName.c_str());
+            return 1;
+          }
+        } catch (ServiceExceptionCode e) {
+          CDBError("Exception in setDimValuesForDataSource for layer %s with ServiceExceptionCode=%d", dataSources[j]->layerName.c_str(), e);
+          setExceptionType(e);
+          return 1;
+        }
+      } else {
+        CDBDebug("Layer has no dims");
+        // This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.
+
+        std::vector<std::string> fileList;
+        try {
+          fileList = CDBFileScanner::searchFileNames(dataSources[j]->cfgLayer->FilePath[0]->value.c_str(), dataSources[j]->cfgLayer->FilePath[0]->attr.filter, NULL);
+        } catch (int linenr) {
+          CDBError("Could not find any filename");
+          return 1;
+        }
+
+        if (fileList.size() == 0) {
+          CDBError("fileList.size()==0");
+          return 1;
+        }
+
+        CDBDebug("Addstep");
+        dataSources[j]->addStep(fileList[0].c_str(), NULL);
+        // dataSources[j]->getCDFDims()->addDimension("none","0",0);
+      }
+    }
+
+    if (dataSources[j]->dLayerType == CConfigReaderLayerTypeCascaded) {
+      // This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.
+      CDBDebug("Addstep");
+      dataSources[j]->addStep("", NULL);
+      // dataSources[j]->getCDFDims()->addDimension("none","0",0);
+    }
+    if (dataSources[j]->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
+      // This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.
+      layerTypeLiveUpdateConfigureDimensionsInDataSource(dataSources[j]);
+    }
+  }
+  return 0;
+}
+
+int CRequest::addDataSources(CServerConfig::XMLE_Layer *cfgLayer, int layerIndex) {
+  CT::string layerName = makeUniqueLayerName(cfgLayer);
+  CDataSource *dataSource = new CDataSource();
+
+  dataSources.push_back(dataSource);
+
+  if (dataSource->setCFGLayer(srvParam, srvParam->configObj->Configuration[0], cfgLayer, layerName.c_str(), layerIndex) != 0) {
+    return 1;
+  }
+  if (srvParam->requestType != REQUEST_WMS_GETMAP) {
+    return 0;
+  }
+
+  // Check if layer has an additional layer
+  for (size_t additionalLayerNr = 0; additionalLayerNr < cfgLayer->AdditionalLayer.size(); additionalLayerNr++) {
+    CServerConfig::XMLE_AdditionalLayer *additionalLayer = cfgLayer->AdditionalLayer[additionalLayerNr];
+    bool replacePreviousDataSource = false;
+    bool replaceAllDataSource = false;
+
+    if (additionalLayer->attr.replace.equals("true") || additionalLayer->attr.replace.equals("previous")) {
+      replacePreviousDataSource = true;
+    }
+    if (additionalLayer->attr.replace.equals("all")) {
+      replaceAllDataSource = true;
+    }
+
+    CT::string additionalLayerName = additionalLayer->value.c_str();
+    size_t additionalLayerNo = 0;
+    for (additionalLayerNo = 0; additionalLayerNo < srvParam->cfg->Layer.size(); additionalLayerNo++) {
+      CT::string additional = makeUniqueLayerName(srvParam->cfg->Layer[additionalLayerNo]);
+      // CDBDebug("comparing for additionallayer %s==%s", additionalLayerName.c_str(), additional.c_str());
+      if (additionalLayerName.equals(additional)) {
+        // CDBDebug("Found additionalLayer [%s]", additional.c_str());
+        CDataSource *additionalDataSource = new CDataSource();
+
+        // CDBDebug("setCFGLayer for additionallayer %s", additionalLayerName.c_str());
+        if (additionalDataSource->setCFGLayer(srvParam, srvParam->configObj->Configuration[0], srvParam->cfg->Layer[additionalLayerNo], additionalLayerName.c_str(), layerIndex) != 0) {
+          delete additionalDataSource;
+          return 1;
+        }
+
+        /* Configure the Dimensions object if not set. */
+        if (additionalDataSource->cfgLayer->Dimension.size() == 0) {
+          // CDBDebug("additionalDataSource: Dimensions not configured, trying to do now");
+          if (CAutoConfigure::autoConfigureDimensions(additionalDataSource) != 0) {
+            CDBError("additionalDataSource: : setCFGLayer::Unable to configure dimensions automatically");
+          }
+          // else {
+          //   for (size_t j = 0; j < additionalDataSource->cfgLayer->Dimension.size(); j++) {
+          //     CDBDebug("additionalDataSource: : Configured dim %d %s", j, additionalDataSource->cfgLayer->Dimension[j]->value.c_str());
+          //   }
+          // }
+        }
+
+        /* Set the dims based on server parameters */
+        try {
+          CRequest::fillDimValuesForDataSource(additionalDataSource, additionalDataSource->srvParams);
+        } catch (ServiceExceptionCode e) {
+          CDBError("additionalDataSource: Exception in setDimValuesForDataSource");
+          return 1;
+        }
+        bool add = true;
+
+        CDataSource *checkForData = additionalDataSource->clone();
+
+        try {
+          if (setDimValuesForDataSource(checkForData, srvParam) != 0) {
+            CDBDebug("setDimValuesForDataSource for additionallayer %s failed", additionalLayerName.c_str());
+            add = false;
+          }
+        } catch (ServiceExceptionCode e) {
+          CDBDebug("setDimValuesForDataSource for additionallayer %s failed", additionalLayerName.c_str());
+          add = false;
+        }
+        delete checkForData;
+
+        // CDBDebug("add = %d replaceAllDataSource = %d replacePreviousDataSource = %d", add, replaceAllDataSource, replacePreviousDataSource);
+        if (add) {
+          if (replaceAllDataSource) {
+            for (size_t j = 0; j < dataSources.size(); j++) {
+              delete dataSources[j];
+            }
+            dataSources.clear();
+          } else {
+            if (replacePreviousDataSource) {
+              if (dataSources.size() > 0) {
+                delete dataSources.back();
+                dataSources.pop_back();
+              }
+            }
+          }
+          if (additionalLayer->attr.style.empty() == false) {
+            additionalDataSource->setStyle(additionalLayer->attr.style.c_str());
+          } else {
+            additionalDataSource->setStyle("default");
+          }
+          dataSources.push_back(additionalDataSource);
+        } else {
+          delete additionalDataSource;
+        }
+
+        break;
+      }
+    } /* End of looping additionallayers */
+  }
+  return 0;
+}
+
+int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
+  int status = 0;
+  if (srvParam->requestType == REQUEST_WMS_GETMAP) {
+
+    CImageDataWriter imageDataWriter;
+
+    /**
+      We want like give priority to our own internal layers, instead to external cascaded layers. This is because
+      our internal layers have an exact customized legend, and we would like to use this always.
+    */
+
+    bool imageDataWriterIsInitialized = false;
+    int dataSourceToUse = 0;
+    for (size_t d = 0; d < dataSources.size() && imageDataWriterIsInitialized == false; d++) {
+      if (dataSources[d]->dLayerType != CConfigReaderLayerTypeCascaded) {
+        // CDBDebug("INIT");
+        status = imageDataWriter.init(srvParam, dataSources[d], dataSources[d]->getNumTimeSteps());
+        if (status != 0) throw(__LINE__);
+        imageDataWriterIsInitialized = true;
+        dataSourceToUse = d;
+      }
+    }
+
+    // There are only cascaded layers, so we intialize the imagedatawriter with this the first layer.
+    if (imageDataWriterIsInitialized == false) {
+      status = imageDataWriter.init(srvParam, dataSources[0], dataSources[0]->getNumTimeSteps());
+      if (status != 0) throw(__LINE__);
+      dataSourceToUse = 0;
+      imageDataWriterIsInitialized = true;
+    }
+    bool measurePerformance = false;
+
+    bool useThreading = false;
+    int numThreads = 4;
+    if (dataSources[dataSourceToUse]->cfgLayer->TileSettings.size() == 1) {
+      if (dataSources[dataSourceToUse]->cfgLayer->TileSettings[0]->attr.threads.empty() == false) {
+        numThreads = dataSources[dataSourceToUse]->cfgLayer->TileSettings[0]->attr.threads.toInt();
+        if (numThreads <= 1) {
+          useThreading = false;
+        } else {
+          useThreading = true;
+        }
+        // measurePerformance = true;
+      }
+    }
+    if (measurePerformance) {
+      StopWatch_Stop("Start imagewarper");
+    }
+    if (useThreading) {
+
+      // When we have multiple timesteps, we will create an animation.
+      if (dataSources[dataSourceToUse]->getNumTimeSteps() > 1) imageDataWriter.createAnimation();
+      size_t numTimeSteps = (size_t)dataSources[dataSourceToUse]->getNumTimeSteps();
+
+      int errcode;
+      pthread_t threads[numThreads];
+
+      CImageDataWriter_addData_args args[numThreads];
+      for (int worker = 0; worker < numThreads; worker++) {
+
+        for (size_t d = 0; d < dataSources.size(); d++) {
+          args[worker].dataSources.push_back(dataSources[d]->clone());
+          ;
+        }
+        args[worker].imageDataWriter = &imageDataWriter;
+        args[worker].finished = false;
+        args[worker].running = false;
+        args[worker].used = false;
+      }
+
+      for (size_t k = 0; k < numTimeSteps; k = k + 1) {
+
+        if (firstDataSource->dLayerType == CConfigReaderLayerTypeDataBase || firstDataSource->dLayerType == CConfigReaderLayerTypeCascaded ||
+            firstDataSource->dLayerType == CConfigReaderLayerTypeBaseLayer) {
+          bool OK = false;
+          while (OK == false) {
+            for (int worker = 0; worker < numThreads && OK == false; worker++) {
+              if (args[worker].running == false) {
+                args[worker].running = true;
+                args[worker].used = true;
+
+                args[worker].dataSources[dataSourceToUse]->setTimeStep(k);
+                for (size_t d = 0; d < args[worker].dataSources.size(); d++) {
+                  args[worker].dataSources[d]->threadNr = worker;
+                }
+
+                errcode = pthread_create(&threads[worker], NULL, CImageDataWriter_addData, &args[worker]);
+                if (errcode) {
+                  CDBError("pthread_create");
+                  return 1;
+                }
+
+                if (measurePerformance) {
+                  StopWatch_Stop("Started thread %d for timestep %d", worker, k);
+                }
+                OK = true;
+                break;
+              }
+            }
+            if (OK == false) {
+              usleep(1000);
+            }
+          }
+        }
+      }
+      if (measurePerformance) {
+        StopWatch_Stop("All submitted");
+      }
+      for (int worker = 0; worker < numThreads; worker++) {
+        if (args[worker].used) {
+          args[worker].used = false;
+          errcode = pthread_join(threads[worker], (void **)&status);
+          if (errcode) {
+            CDBError("pthread_join");
+            return 1;
+          }
+        }
+      }
+      if (measurePerformance) {
+        StopWatch_Stop("All done");
+      }
+      for (int worker = 0; worker < numThreads; worker++) {
+        for (size_t j = 0; j < args[worker].dataSources.size(); j++) {
+          delete args[worker].dataSources[j];
+        }
+        args[worker].dataSources.clear();
+      }
+      if (measurePerformance) {
+        StopWatch_Stop("All deleted");
+      }
+    } else {
+      /*Standard non threading functionality */
+      for (size_t k = 0; k < (size_t)dataSources[dataSourceToUse]->getNumTimeSteps(); k++) {
+        for (size_t d = 0; d < dataSources.size(); d++) {
+          dataSources[d]->setTimeStep(k);
+        }
+        if (firstDataSource->dLayerType == CConfigReaderLayerTypeDataBase || firstDataSource->dLayerType == CConfigReaderLayerTypeCascaded ||
+            firstDataSource->dLayerType == CConfigReaderLayerTypeBaseLayer) {
+
+          status = imageDataWriter.addData(dataSources);
+          if (status != 0) {
+            /**
+             * Adding data failed:
+             * Do not ruin an animation if one timestep fails to load.
+             * If there is a single time step then throw an exception otherwise continue.
+             */
+            if (dataSources[dataSourceToUse]->getNumTimeSteps() == 1) {
+              // Not an animation, so throw an exception
+              CDBError("Unable to convert datasource %s to image", firstDataSource->layerName.c_str());
+              throw(__LINE__);
+            } else {
+              // This is an animation, report an error and continue with adding images.
+              CDBError("Unable to load datasource %s at line %d", dataSources[dataSourceToUse]->getDataObject(0)->variableName.c_str(), __LINE__);
+            }
+          }
+        }
+        if (firstDataSource->dLayerType == CConfigReaderLayerTypeStyled) {
+          // Special styled layer for GEOMON project
+          status = imageDataWriter.calculateData(dataSources);
+          if (status != 0) throw(__LINE__);
+        }
+        if (dataSources[dataSourceToUse]->getNumTimeSteps() > 1 && dataSources[dataSourceToUse]->queryBBOX == false) {
+          // Print the animation data into the image
+          char szTemp[1024];
+          snprintf(szTemp, 1023, "%s UTC", dataSources[dataSourceToUse]->getDimensionValueForNameAndStep("time", k).c_str());
+          imageDataWriter.setDate(szTemp);
+        }
+      }
+    }
+    if (measurePerformance) {
+      StopWatch_Stop("Finished imagewarper");
+    }
+
+    CColor textBGColor = CColor(255, 255, 255, 0); /* TODO: 2021-01-12, Maarten Plieger: Should make the text background configurable */
+
+    double scaling = dataSources[dataSourceToUse]->getScaling();
+    int textY = (int)(scaling * 6);
+    // int prevTextY=0;
+    if (srvParam->mapTitle.length() > 0) {
+      if (srvParam->cfg->WMS[0]->TitleFont.size() > 0) {
+        float fontSize = parseFloat(srvParam->cfg->WMS[0]->TitleFont[0]->attr.size.c_str());
+        /* Check if scaling in relation to a reference width/height is needed */
+        fontSize = fontSize * scaling;
+        textY += int(fontSize);
+        textY += imageDataWriter.drawImage.drawTextArea((int)(scaling * 6), textY, srvParam->cfg->WMS[0]->TitleFont[0]->attr.location.c_str(), fontSize, 0, srvParam->mapTitle.c_str(),
+                                                        CColor(0, 0, 0, 255), textBGColor);
+        // textY+=12;
+      }
+    }
+    if (srvParam->mapSubTitle.length() > 0) {
+      if (srvParam->cfg->WMS[0]->SubTitleFont.size() > 0) {
+        float fontSize = parseFloat(srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.size.c_str());
+        fontSize = fontSize * scaling;
+        // textY+=int(fontSize)/5;
+        textY += imageDataWriter.drawImage.drawTextArea((int)(scaling * 6), textY, srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(), fontSize, 0, srvParam->mapSubTitle.c_str(),
+                                                        CColor(0, 0, 0, 255), textBGColor);
+        // textY+=8;
+      }
+    }
+
+    if (srvParam->showDimensionsInImage) {
+      textY += 4 * (int)scaling;
+      CDataSource *dataSource = dataSources[dataSourceToUse];
+      size_t nDims = dataSource->requiredDims.size();
+
+      for (size_t d = 0; d < nDims; d++) {
+        CT::string message;
+        float fontSize = parseFloat(srvParam->cfg->WMS[0]->DimensionFont[0]->attr.size.c_str());
+        fontSize = fontSize * scaling;
+        textY += int(fontSize * 1.2);
+        message.print("%s: %s", dataSource->requiredDims[d]->name.c_str(), dataSource->requiredDims[d]->value.c_str());
+        imageDataWriter.drawImage.drawText(6, textY, srvParam->cfg->WMS[0]->DimensionFont[0]->attr.location.c_str(), fontSize, 0, message.c_str(), CColor(0, 0, 0, 255), textBGColor);
+        textY += 4 * (int)scaling;
+      }
+    }
+
+    if (!srvParam->showLegendInImage.equals("false") && !srvParam->showLegendInImage.empty()) {
+      // Draw legend
+      bool drawAllLegends = srvParam->showLegendInImage.equals("true");
+
+      /* List of specified legends */
+      CT::StackList<CT::string> legendLayerList = srvParam->showLegendInImage.splitToStack(",");
+
+      //          int numberOfLegendsDrawn = 0;
+      int legendOffsetX = 0;
+      for (size_t d = 0; d < dataSources.size(); d++) {
+        if (dataSources[d]->dLayerType != CConfigReaderLayerTypeCascaded) {
+          bool drawThisLegend = false;
+
+          if (!drawAllLegends) {
+            for (size_t li = 0; li < legendLayerList.size(); li++) {
+              CDBDebug("Comparing [%s] == [%s]", dataSources[d]->layerName.c_str(), legendLayerList[li].c_str());
+              if (dataSources[d]->layerName.toLowerCase().equals(legendLayerList[li])) {
+                drawThisLegend = true;
+              }
+            }
+          } else {
+            if (!dataSources[d]->cfgLayer->attr.hidden.equals("true")) {
+              drawThisLegend = true;
+            }
+          }
+          if (drawThisLegend) {
+            /* Draw the legend */
+            int padding = 4;
+            int minimumLegendWidth = 100;
+            CDrawImage legendImage;
+            int legendWidth = LEGEND_WIDTH * scaling;
+            if (legendWidth < minimumLegendWidth) legendWidth = minimumLegendWidth;
+            imageDataWriter.drawImage.enableTransparency(true);
+            legendImage.createImage(&imageDataWriter.drawImage, legendWidth, (imageDataWriter.drawImage.Geo->dHeight / 3) - padding * 2 + 2);
+
+            CStyleConfiguration *styleConfiguration = dataSources[d]->getStyle();
+            if (styleConfiguration != NULL && styleConfiguration->legendIndex != -1) {
+              legendImage.createGDPalette(srvParam->cfg->Legend[styleConfiguration->legendIndex]);
+            }
+
+            status = imageDataWriter.createLegend(dataSources[d], &legendImage);
+            if (status != 0) throw(__LINE__);
+            // legendImage.rectangle(0,0,10000,10000,240);
+            int posX = imageDataWriter.drawImage.Geo->dWidth - (legendImage.Geo->dWidth + padding) - legendOffsetX;
+            // int posY=imageDataWriter.drawImage.Geo->dHeight-(legendImage.Geo->dHeight+padding);
+            // int posX=padding*scaling;//imageDataWriter.drawImage.Geo->dWidth-(scaleBarImage.Geo->dWidth+padding);
+            int posY = imageDataWriter.drawImage.Geo->dHeight - (legendImage.Geo->dHeight + padding * scaling);
+            imageDataWriter.drawImage.draw(posX, posY, 0, 0, &legendImage);
+            //                numberOfLegendsDrawn++;
+            legendOffsetX += legendImage.Geo->dWidth + padding;
+          }
+        }
+      }
+    }
+
+    if (srvParam->showScaleBarInImage) {
+      // Draw legend
+
+      int padding = 4;
+
+      CDrawImage scaleBarImage;
+
+      imageDataWriter.drawImage.enableTransparency(true);
+      // scaleBarImage.setBGColor(1,0,0);
+
+      scaleBarImage.createImage(&imageDataWriter.drawImage, 200 * scaling, 30 * scaling);
+
+      // scaleBarImage.rectangle(0,0,scaleBarImage.Geo->dWidth,scaleBarImage.Geo->dHeight,CColor(0,0,0,0),CColor(0,0,0,255));
+      status = imageDataWriter.createScaleBar(dataSources[0]->srvParams->Geo, &scaleBarImage, scaling);
+      if (status != 0) throw(__LINE__);
+      int posX = padding * scaling; // imageDataWriter.drawImage.Geo->dWidth-(scaleBarImage.Geo->dWidth+padding);
+      int posY = imageDataWriter.drawImage.Geo->dHeight - (scaleBarImage.Geo->dHeight + padding * scaling);
+      // posY-=50;
+      // imageDataWriter.drawImage.rectangle(posX,posY,scaleBarImage.Geo->dWidth+posX+1,scaleBarImage.Geo->dHeight+posY+1,CColor(255,255,255,180),CColor(255,255,255,0));
+      imageDataWriter.drawImage.draw(posX, posY, 0, 0, &scaleBarImage);
+    }
+
+    if (srvParam->showNorthArrow) {
+    }
+    status = imageDataWriter.end();
+    if (status != 0) throw(__LINE__);
+    fclose(stdout);
+  }
+  return status;
+}
+
+int CRequest::handleGetCoverageRequest(CDataSource *firstDataSource) {
+  int status = 0;
+
+  if (srvParam->requestType == REQUEST_WCS_GETCOVERAGE) {
+    CBaseDataWriterInterface *wcsWriter = NULL;
+    CT::string driverName = "ADAGUCNetCDF";
+    setDimValuesForDataSource(firstDataSource, srvParam);
+
+    for (size_t i = 0; i < srvParam->cfg->WCS[0]->WCSFormat.size(); i++) {
+      if (srvParam->Format.equals(srvParam->cfg->WCS[0]->WCSFormat[i]->attr.name.c_str())) {
+        driverName.copy(srvParam->cfg->WCS[0]->WCSFormat[i]->attr.driver.c_str());
+        break;
+      }
+    }
+    if (driverName.equals("ADAGUCNetCDF")) {
+      CDBDebug("Creating CNetCDFDataWriter");
+      wcsWriter = new CNetCDFDataWriter();
+    }
+
+#ifdef ADAGUC_USE_GDAL
+    if (wcsWriter == NULL) {
+      wcsWriter = new CGDALDataWriter();
+    }
+#endif
+    if (wcsWriter == NULL) {
+      CDBError("No WCS Writer found");
+      return 1;
+    }
+    try {
+      try {
+        status = wcsWriter->init(srvParam, firstDataSource, firstDataSource->getNumTimeSteps());
+        if (status != 0) throw(__LINE__);
+      } catch (int e) {
+        CDBError("Exception code %d", e);
+
+        throw(__LINE__);
+      }
+
+      for (int k = 0; k < firstDataSource->getNumTimeSteps(); k++) {
+        // Do not add hidden layers to the output
+        if (firstDataSource->cfgLayer->attr.hidden.equals("true")) {
+          continue;
+        }
+        firstDataSource->setTimeStep(k);
+        // CDBDebug("WCS dataset %d/ timestep %d of %d", 0, k, firstDataSource->getNumTimeSteps());
+
+        try {
+          status = wcsWriter->addData(dataSources);
+        } catch (int e) {
+          CDBError("Exception code %d", e);
+          throw(__LINE__);
+        }
+        if (status != 0) throw(__LINE__);
+      }
+      try {
+        status = wcsWriter->end();
+        if (status != 0) throw(__LINE__);
+      } catch (int e) {
+        CDBError("Exception code %d", e);
+        throw(__LINE__);
+      }
+    } catch (int line) {
+      CDBDebug("%d", line);
+      delete wcsWriter;
+      wcsWriter = NULL;
+      throw(__LINE__);
+    }
+
+    delete wcsWriter;
+    wcsWriter = NULL;
+  }
+  return status;
 }

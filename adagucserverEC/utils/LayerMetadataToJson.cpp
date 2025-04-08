@@ -35,8 +35,8 @@ int getLayerMetadataAsJson(CServerParams *srvParams, json &result) {
   }
 
   CT::string layerNameInRequest;
-  if (srvParams->WMSLayers != nullptr && srvParams->WMSLayers->count > 0) {
-    layerNameInRequest = srvParams->WMSLayers[0].c_str();
+  if (srvParams->requestedLayerNames.size() > 0) {
+    layerNameInRequest = srvParams->requestedLayerNames[0].c_str();
   }
 
   for (auto dataset : datasetNames) {
@@ -45,16 +45,21 @@ int getLayerMetadataAsJson(CServerParams *srvParams, json &result) {
       json datasetJSON;
       for (auto layerName : dataset.second) {
         if (layerNameInRequest.empty() || layerNameInRequest.equals(layerName.c_str())) {
-          json layer;
-          json a;
           try {
+            json layer;
+            json a;
             layer["layer"] = a.parse(getBlob(layerMetaDataStore, dataSetName.c_str(), layerName.c_str(), "layermetadata").c_str());
             layer["dims"] = a.parse(getBlob(layerMetaDataStore, dataSetName.c_str(), layerName.c_str(), "dimensionlist").c_str());
             // layer["styles"] = a.parse(getBlob(layerMetaDataStore, dataSetName.c_str(), layerName.c_str(), "stylelist").c_str());
             // layer["projected_extents"] = a.parse(getBlob(layerMetaDataStore, dataSetName.c_str(), layerName.c_str(), "projected_extents").c_str());
+
+            if (layer["layer"]["hidden"].get<bool>() == false) {
+              datasetJSON[layerName.c_str()] = layer;
+            }
+
           } catch (json::exception &e) {
+            CDBWarning("Unable to parse json for layer %s", layerName.c_str());
           }
-          datasetJSON[layerName.c_str()] = layer;
         }
       }
 

@@ -17,15 +17,16 @@ usage () {
     echo "  [-d] \"*\"                                          [Scan all available datasets]"
     echo "  [-l]                                              [List all datasets]"
     echo "  [-v]                                              [Verbose logging]"
-    echo "  [-r]                                              [Rescan by ignoring file modification date of files]"
-    echo "  [-t]                                              [Drops and recreates database tables for mathing file or dataset]"
-    echo "  [-k]                                              [Keep index information in database, disable cleaning]"
+    echo "  [-r]                                              [Rescan by ignoring file modification date of files (--rescan)]"
+    echo "  [-t]                                              [Drops and recreates database tables for mathing file or dataset (--recreate)]"
+    echo "  [-k]                                              [Keep index information in database, disable cleaning (--noclean)]"
+    echo "  [-m]                                              [Update dataset and layermetadata table only (--updatelayermetadata)]"
     echo "  [-e]                                              [Inspect environment]"
     exit
 }
 
 
-while getopts "d:f:vtkrleh" o; do
+while getopts "d:f:vtkrlmeh" o; do
     case "${o}" in
         d)
             ADAGUC_DATASET=${OPTARG}
@@ -44,6 +45,12 @@ while getopts "d:f:vtkrleh" o; do
             ;;
         k)
             NOCLEAN='--noclean'
+            ;;
+        m)
+            echo "Updating layermetadata table"
+            command="${ADAGUC_PATH}/bin/adagucserver --updatelayermetadata --config ${ADAGUC_CONFIG}"
+            echo $command
+            $command
             ;;
         l)
             for i in ${ADAGUC_DATASET_DIR}/*xml;do

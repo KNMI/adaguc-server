@@ -20,8 +20,7 @@ CDataSource *CDPPIncludeLayer::getDataSource(CServerConfig::XMLE_DataPostProc *p
   CT::string additionalLayerName = proc->attr.name.c_str();
   size_t additionalLayerNo = 0;
   for (size_t j = 0; j < dataSource->srvParams->cfg->Layer.size(); j++) {
-    CT::string layerName;
-    makeUniqueLayerName(&layerName, dataSource->srvParams->cfg->Layer[j]);
+    CT::string layerName = makeUniqueLayerName(dataSource->srvParams->cfg->Layer[j]);
     // CDBDebug("comparing for additionallayer %s==%s", additionalLayerName.c_str(), layerName.c_str());
     if (additionalLayerName.equals(layerName)) {
       additionalLayerNo = j;

@@ -62,3 +62,12 @@ docker exec -i -t my-adaguc-server bash -c "ls -lrt /data/adaguc-datasets"
 * https://&lt;your hostname&gt;:&lt;port&gt;/autowms? For getting the list of visualizable resources
 
 Print your ./Docker/.env file for current docker-compose settings with `cat ./Docker/.env`
+
+## Updating the layer metadata table
+
+
+This refreshes the layermetadata table immediately. This is also done automatically every minute by the server itself, and is also done when you scan a dataset or file.
+ 
+ ```
+ docker exec -i -t my-adaguc-server /adaguc/scan.sh -m
+ ```

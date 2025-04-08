@@ -1,4 +1,5 @@
 """Main file where FastAPI is defined and started"""
+
 import logging
 import os
 import time
@@ -35,7 +36,9 @@ async def update_layermetadatatable():
     if adaguc.isLoggingEnabled():
         logger.info(log)
     else:
-        logger.info("Logging for updateLayerMetadata is disabled, status was %d", status)
+        logger.info(
+            "Logging for updateLayerMetadata is disabled, status was %d", status
+        )
 
 
 @asynccontextmanager
@@ -45,7 +48,15 @@ async def lifespan(_fastapiapp: FastAPI):
     logger.info("=== Starting AsyncIO Scheduler ===")
     # start scheduler to refresh collections & docs every minute
     scheduler = AsyncIOScheduler()
-    scheduler.add_job(update_layermetadatatable, "cron", [], minute="*", jitter=0, max_instances=1, coalesce=True)
+    scheduler.add_job(
+        update_layermetadatatable,
+        "cron",
+        [],
+        minute="*",
+        jitter=0,
+        max_instances=1,
+        coalesce=True,
+    )
     scheduler.start()
 
     yield
@@ -65,7 +76,6 @@ app.add_middleware(AccessLoggerMiddleware, format=ACCESS_LOG_FORMAT)
 logging.getLogger("access").propagate = False
 
 
-
 @app.middleware("http")
 async def add_hsts_header(request: Request, call_next):
     """Middleware to HTTP Strict Transport Security (HSTS) header"""
@@ -75,7 +85,8 @@ async def add_hsts_header(request: Request, call_next):
         scheme = urlsplit(external_address).scheme
         if scheme == "https":
             response.headers["Strict-Transport-Security"] = (
-                "max-age=31536000; includeSubDomains")
+                "max-age=31536000; includeSubDomains"
+            )
             response.headers["X-Content-Type-Options"] = "nosniff"
             response.headers["Content-Security-Policy"] = "default-src 'self'"
 
@@ -113,8 +124,7 @@ app.add_middleware(
 async def root():
     """Root page"""
     return {
-        "message":
-        "ADAGUC server base URL, use /wms, /wcs, /autowms, /adagucopendap or /ogcapi"
+        "message": "ADAGUC server base URL, use /wms, /wcs, /autowms, /adagucopendap or /ogcapi"
     }
 
 

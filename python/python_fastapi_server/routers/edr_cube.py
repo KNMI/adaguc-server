@@ -8,23 +8,33 @@ Author: Ernst de Vreede, 2023-11-23
 KNMI
 """
 
+from __future__ import annotations
 import logging
-from typing import Union
-
+import time
+from typing_extensions import Annotated
 
 from covjson_pydantic.coverage import Coverage, CoverageCollection
-from fastapi import Query, Request, APIRouter
+from fastapi import Query, Request, APIRouter, Response
 from netCDF4 import Dataset
 
+from .utils.edr_exception import exc_failed_call
+
 from .covjsonresponse import CovJSONResponse
-from .edr_utils import (
-    parse_config_file,
-    get_ref_times_for_coll,
-    get_edr_collections,
+from .utils.edr_utils import (
+    generate_max_age,
+    get_custom,
+    get_dataset_from_collection,
+    get_instance,
+    get_parameters,
+    get_ttl_from_adaguc_headers,
+    get_vertical,
     instance_to_iso,
+    get_metadata,
 )
+
+
 from .netcdf_to_covjson import netcdf_to_covjson
-from .ogcapi_tools import call_adaguc
+from .utils.ogcapi_tools import call_adaguc
 
 router = APIRouter()
 
@@ -34,51 +44,56 @@ logger.debug("Starting EDR")
 
 @router.get(
     "/collections/{collection_name}/cube",
-    response_model=Union[CoverageCollection, Coverage],
+    response_model=CoverageCollection | Coverage,
     response_class=CovJSONResponse,
     response_model_exclude_none=True,
 )
 async def get_collection_cube(
     collection_name: str,
     request: Request,
+    response: Response,
     bbox: str,
     datetime_par: str = Query(default=None, alias="datetime"),
-    parameter_name: str = Query(alias="parameter-name"),
-    z_par: str = Query(alias="z", default=None),
-    res_x: Union[float, None] = None,
-    res_y: Union[float, None] = None,
+    parameter_name: Annotated[str, Query(alias="parameter-name", min_length=1)] = None,
+    z_par: Annotated[str, Query(alias="z", min_length=1)] = None,
+    resolution_x: float | None = None,
+    resolution_y: float | None = None,
 ) -> Coverage:
     """Returns information in EDR format for a given collection and position"""
     return await get_coll_inst_cube(
         collection_name,
         request,
-        bbox,
-        None,
-        datetime_par,
-        parameter_name,
-        z_par,
-        res_x,
-        res_y,
+        response=response,
+        bbox=bbox,
+        instance=None,
+        datetime_par=datetime_par,
+        parameter_name_par=parameter_name,
+        z_par=z_par,
+        resolution_x=resolution_x,
+        resolution_y=resolution_y,
     )
 
 
 @router.get(
     "/collections/{collection_name}/instances/{instance}/cube",
-    response_model=Union[CoverageCollection, Coverage],
+    response_model=CoverageCollection | Coverage,
     response_class=CovJSONResponse,
     response_model_exclude_none=True,
 )
 async def get_coll_inst_cube(
     collection_name: str,
     request: Request,
+    response: Response,
     bbox: str,
-    instance: Union[str, None] = None,
+    instance: str | None = None,
     datetime_par: str = Query(default=None, alias="datetime"),
-    parameter_name: str = Query(alias="parameter-name"),
-    z_par: str = Query(alias="z", default=None),
-    res_x: Union[float, None] = None,
-    res_y: Union[float, None] = None,
-) -> Coverage:
+    parameter_name_par: Annotated[
+        str | None, Query(alias="parameter-name", min_length=1)
+    ] = None,
+    z_par: Annotated[str, Query(alias="z", min_length=1)] = None,
+    resolution_x: float | None = None,
+    resolution_y: float | None = None,
+) -> CoverageCollection | Coverage:
     """Returns information in EDR format for a given collection, instance and position"""
     allowed_params = [
         "bbox",
@@ -87,89 +102,96 @@ async def get_coll_inst_cube(
         "z",
         "f",
         "crs",
-        "res_x",
-        "res_y",
+        "resolution_x",
+        "resolution_y",
     ]
 
-    edr_collectioninfo = get_edr_collections()[collection_name]
+    metadata = await get_metadata(collection_name)
 
-    vertical_dim = ""
-    if z_par:
-        if edr_collectioninfo.get("vertical_name"):
-            vertical_name = edr_collectioninfo.get("vertical_name")
-            if vertical_name.upper() == "ELEVATION":
-                vertical_dim = f"{edr_collectioninfo.get('vertical_name')}={z_par}"
-            else:
-                vertical_dim = f"DIM_{edr_collectioninfo.get('vertical_name')}={z_par}"
+    dataset_name = get_dataset_from_collection(metadata, collection_name)
+    instance = get_instance(metadata, collection_name, instance)
+    parameter_names = get_parameters(metadata, collection_name, parameter_name_par)
 
-    custom_dims = [k for k in request.query_params if k not in allowed_params]
-    custom_dim_parameter = ""
-    logger.info("custom dims: %s", custom_dims)
-    if len(custom_dims) > 0:
-        for custom_dim in custom_dims:
-            custom_dim_parameter += (
-                f"&DIM_{custom_dim}={request.query_params[custom_dim]}"
-            )
+    _, vertical_dim = get_vertical(metadata, collection_name, parameter_names[0], z_par)
 
-    dataset = edr_collectioninfo["dataset"]
-    ref_times = await get_ref_times_for_coll(
-        dataset, edr_collectioninfo["parameters"][0]["name"]
+    custom_dims = get_custom(
+        request.query_params,
+        allowed_params,
     )
-    if not instance and len(ref_times) > 0:
-        instance = ref_times[-1]
 
-    parameter_names = parameter_name.split(",")
-
-    if res_x is not None and res_y is not None:
-        res_queryterm = f"&resx={res_x}&resy={res_y}"
+    if resolution_x is not None and resolution_y is not None:
+        res_queryterm = [f"resx={resolution_x}", f"resy={resolution_y}"]
     else:
-        res_queryterm = ""
+        res_queryterm = []
 
-    collection_info = get_edr_collections().get(collection_name)
-    if "dataset" in collection_info:
-        logger.info("callADAGUC by dataset")
-        dataset = collection_info["dataset"]
-        translate_names, translate_dims = parse_config_file(dataset)
-        coveragejsons = []
-        parameters = {}
-        for parameter_name in parameter_names:
-            if instance is None:
-                urlrequest = (
-                    f"dataset={dataset}&service=wcs&version=1.1.1&request=getcoverage&format=NetCDF4&crs=EPSG:4326&coverage={parameter_name}"
-                    + f"&bbox={bbox}&time={datetime_par}"
-                    + (
-                        f"&{custom_dim_parameter}"
-                        if len(custom_dim_parameter) > 0
-                        else ""
-                    )
-                    + (f"&{vertical_dim}" if len(vertical_dim) > 0 else "")
-                    + res_queryterm
-                )
-            else:
-                urlrequest = (
-                    f"dataset={dataset}&service=wcs&request=getcoverage&format=NetCDF4&crs=EPSG:4326&coverage={parameter_name}"
-                    + f"&bbox={bbox}&time={datetime_par}&dim_reference_time={instance_to_iso(instance)}"
-                    + (
-                        f"&{custom_dim_parameter}"
-                        if len(custom_dim_parameter) > 0
-                        else ""
-                    )
-                    + (f"&{vertical_dim}" if len(vertical_dim) > 0 else "")
-                    + res_queryterm
-                )
+    logger.info("callADAGUC by dataset")
 
-            status, response, _ = await call_adaguc(url=urlrequest.encode("UTF-8"))
-            logger.info("status: %d", status)
-            result_dataset = Dataset(f"{parameter_name}.nc", memory=response.getvalue())
+    translate_names = get_translate_names(metadata[collection_name])
+    translate_dims = get_translate_dims(metadata[collection_name])
 
-            coveragejson = netcdf_to_covjson(
-                result_dataset, translate_names, translate_dims
+    coveragejsons = []
+    parameters = {}
+    datetime_arg = datetime_par
+    if datetime_par is None:
+        datetime_arg = "2000/3000"
+    for parameter_name in parameter_names:
+        urlrequest = "&".join(
+            [
+                f"dataset={dataset_name}",
+                "service=wcs&version=1.1.1&request=getcoverage&format=NetCDF4&crs=EPSG:4326",
+                f"coverage={parameter_name}",
+                f"bbox={bbox}",
+                f"time={datetime_arg}",
+                f"dim_reference_time={instance_to_iso(instance)}" if instance else "",
+                *custom_dims,
+                f"{vertical_dim}" if len(vertical_dim) > 0 else "",
+                *res_queryterm,
+            ]
+        )
+
+        start = time.time()
+        status, wcs_response, headers = await call_adaguc(
+            url=urlrequest.encode("UTF-8")
+        )
+        ttl = get_ttl_from_adaguc_headers(headers)
+        if ttl is not None:
+            response.headers["cache-control"] = generate_max_age(ttl)
+
+        logger.info("status: %d [%f]", status, time.time() - start)
+        if status != 0:
+            raise exc_failed_call(
+                f"cube call failed for parameter {parameter_name} [{status}]"
             )
-            if coveragejson is not None:
-                coveragejsons.append(coveragejson)
-                parameters = parameters | coveragejson.parameters
+        result_dataset = Dataset(f"{parameter_name}.nc", memory=wcs_response.getvalue())
+
+        coveragejson = netcdf_to_covjson(
+            metadata[collection_name], result_dataset, translate_names, translate_dims
+        )
+        if coveragejson is not None:
+            coveragejsons.extend(coveragejson)
+            for covjson in coveragejson:
+                parameters = parameters | covjson.parameters
 
     if len(coveragejsons) == 1:
         return coveragejsons[0]
 
     return CoverageCollection(coverages=coveragejsons, parameters=parameters)
+
+
+def get_translate_names(metadata: dict) -> dict:
+    translate_names = {}
+    for layer_name in metadata:
+        if "dims" in metadata[layer_name] and metadata[layer_name]["dims"] is not None:
+            var_name = metadata[layer_name]["layer"]["variables"][0]["variableName"]
+            translate_names[var_name] = layer_name
+    return translate_names
+
+
+def get_translate_dims(metadata: dict) -> dict:
+    translate_dims = {}
+    for layer_name in metadata:
+        if "dims" in metadata[layer_name] and metadata[layer_name]["dims"] is not None:
+            for dim_name in metadata[layer_name]["dims"]:
+                dim_cdfname = metadata[layer_name]["dims"][dim_name]["cdfName"]
+                translate_dims[dim_cdfname] = dim_name
+    return translate_dims

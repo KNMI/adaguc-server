@@ -88,7 +88,7 @@ public:
   int dFound_BBOX;
   double dX, dY;
   bool verbose = false;
-  CT::string *WMSLayers;
+  std::vector<CT::string> requestedLayerNames;
   CT::string Format;
   CT::string InfoFormat;
   int imageFormat;
@@ -333,6 +333,8 @@ public:
   std::tuple<float, std::string> getLegendFont();
 
   bool useMetadataTable();
+
+  bool isEdrEnabled();
 };
 
 #endif

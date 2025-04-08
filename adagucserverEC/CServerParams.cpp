@@ -29,7 +29,6 @@ const char *CServerParams::className = "CServerParams";
 
 CServerParams::CServerParams() {
 
-  WMSLayers = NULL;
   serviceType = -1;
   requestType = -1;
   OGCVersion = -1;
@@ -54,10 +53,6 @@ CServerParams::CServerParams() {
 }
 
 CServerParams::~CServerParams() {
-  if (WMSLayers != NULL) {
-    delete[] WMSLayers;
-    WMSLayers = NULL;
-  }
   if (configObj != NULL) {
     delete configObj;
     configObj = NULL;
@@ -692,6 +687,19 @@ bool CServerParams::useMetadataTable() {
     auto settings = this->cfg->Settings[numSettings - 1];
     if (settings->attr.enablemetadatacache.equalsIgnoreCase("false")) {
       return false;
+    }
+  }
+  return true;
+}
+
+bool CServerParams::isEdrEnabled() {
+  size_t numSettings = this->cfg->Settings.size();
+  if (numSettings > 0 && this->cfg->Settings[numSettings - 1]) {
+    auto settings = this->cfg->Settings[numSettings - 1];
+    if (settings->attr.enable_edr.equalsIgnoreCase("false")) {
+      return false;
+    } else if (settings->attr.enable_edr.equalsIgnoreCase("true")) {
+      return true;
     }
   }
   return true;

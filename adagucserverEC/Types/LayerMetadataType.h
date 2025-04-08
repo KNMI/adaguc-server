@@ -11,6 +11,7 @@ struct LayerMetadataDim {
   CT::string units;
   CT::string values;
   CT::string defaultValue;
+  CT::string type;
   int hasMultipleValues;
   bool hidden;
 };
@@ -36,6 +37,7 @@ struct LayerMetadataVariable {
   CT::string variableName;
   CT::string units;
   CT::string label;
+  CT::string standard_name;
 };
 
 struct LayerMetadata {
@@ -46,7 +48,9 @@ struct LayerMetadata {
   double dfLatLonBBOX[4] = {-180, -90, 180, 90};
   double dfBBOX[4] = {-180, -90, 180, 90};
   int isQueryable = 0;
-  CT::string name, title, group, abstract, nativeEPSG, projstring;
+  bool hidden = false;
+  bool enable_edr = true;
+  CT::string name, title, wmsgroup, abstract, nativeEPSG, projstring, collection;
   std::vector<LayerMetadataProjection> projectionList;
   std::vector<LayerMetadataDim> dimList;
   std::vector<LayerMetadataStyle> styleList;
@@ -62,6 +66,7 @@ public:
   CServerParams *srvParams;
   CT::string fileName;
   bool readFromDb = false;
+
   int hasError = 0;
 
   LayerMetadata layerMetadata;

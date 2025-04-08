@@ -2,24 +2,26 @@
 General methods for supporting ogcapi features code
 """
 
+from __future__ import annotations
 import itertools
 import logging
 import os
 import time
-from typing import List
 
 from defusedxml.ElementTree import ParseError, parse
 
 from owslib.wms import WebMapService
 
-from .models.ogcapifeatures_1_model import (
+
+from routers.models.ogcapifeatures_1_model import (
     FeatureGeoJSON,
     Link,
     PointGeoJSON,
     Type1,
     Type7,
 )
-from .setup_adaguc import setup_adaguc
+
+from ..setup_adaguc import setup_adaguc
 
 logger = logging.getLogger(__name__)
 
@@ -244,8 +246,8 @@ def get_items_links(
     prev_start: int = None,
     next_start: int = None,
     limit: int = None,
-) -> List[Link]:
-    links: List[Link] = []
+) -> list[Link]:
+    links: list[Link] = []
     links.append(
         Link(
             href=f"{url}",
@@ -299,8 +301,8 @@ def get_single_item_links(
     prev_start: int = None,
     next_start: int = None,
     limit: int = None,
-) -> List[Link]:
-    links: List[Link] = []
+) -> list[Link]:
+    links: list[Link] = []
     links.append(
         Link(
             href=f"{url}",
