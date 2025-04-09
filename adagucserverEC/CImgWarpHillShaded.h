@@ -54,87 +54,20 @@ static inline float DotProduct(const Vector &a, const Vector &b) { return a.x * 
 
 static inline int mfast_mod(const int input, const int ceil) { return input >= ceil ? input % ceil : input; }
 
+struct HillShadeSettings {
+  double dfNodataValue;
+  double legendValueRange;
+  double legendLowerRange;
+  double legendUpperRange;
+  bool hasNodataValue;
+  float *dataField;
+  int width, height;
+};
+
+template <class T> void hillShadedDrawFunction(int x, int y, T val, void *_settings, void *_warper);
 class CImgWarpHillShaded : public CImageWarperRenderInterface {
 private:
   DEF_ERRORFUNCTION();
-  class Settings {
-  public:
-    double dfNodataValue;
-    double legendValueRange;
-    double legendLowerRange;
-    double legendUpperRange;
-    bool hasNodataValue;
-    float *dataField;
-    int width, height;
-  };
-
-  template <class T> static void drawFunction(int x, int y, T val, void *_settings, void *g) {
-    Settings *drawSettings = static_cast<Settings *>(_settings);
-    if (x < 0 || y < 0 || x > drawSettings->width || y > drawSettings->height) return;
-    CGenericDataWarper *genericDataWarper = static_cast<CGenericDataWarper *>(g);
-    bool isNodata = false;
-    if (drawSettings->hasNodataValue) {
-      if ((val) == (T)drawSettings->dfNodataValue) isNodata = true;
-    }
-    if (!(val == val)) isNodata = true;
-    if (!isNodata)
-      if (drawSettings->legendValueRange)
-        if (val < drawSettings->legendLowerRange || val > drawSettings->legendUpperRange) isNodata = true;
-    if (!isNodata) {
-      T *sourceData = (T *)genericDataWarper->warperState.sourceData;
-      size_t sourceDataPX = genericDataWarper->warperState.sourceDataPX;
-      size_t sourceDataPY = genericDataWarper->warperState.sourceDataPY;
-      size_t sourceDataWidth = genericDataWarper->warperState.sourceDataWidth;
-      size_t sourceDataHeight = genericDataWarper->warperState.sourceDataHeight;
-
-      if (sourceDataPY > sourceDataHeight - 1) return;
-      if (sourceDataPX > sourceDataWidth - 1) return;
-
-      float values[3][3] = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
-
-      /* TODO make window size configurable */
-      for (int wy = -1; wy < 2; wy++) {
-        for (int wx = -1; wx < 2; wx++) {
-          values[0][0] += (float)((T *)sourceData)[mfast_mod(sourceDataPX + 0 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 0, sourceDataHeight) * sourceDataWidth];
-          values[1][0] += (float)((T *)sourceData)[mfast_mod(sourceDataPX + 1 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 0, sourceDataHeight) * sourceDataWidth];
-          values[2][0] += (float)((T *)sourceData)[mfast_mod(sourceDataPX + 2 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 0, sourceDataHeight) * sourceDataWidth];
-          values[0][1] += (float)((T *)sourceData)[mfast_mod(sourceDataPX + 0 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 1, sourceDataHeight) * sourceDataWidth];
-          values[1][1] += (float)((T *)sourceData)[mfast_mod(sourceDataPX + 1 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 1, sourceDataHeight) * sourceDataWidth];
-          values[2][1] += (float)((T *)sourceData)[mfast_mod(sourceDataPX + 2 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 1, sourceDataHeight) * sourceDataWidth];
-          values[0][2] += (float)((T *)sourceData)[mfast_mod(sourceDataPX + 0 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 2, sourceDataHeight) * sourceDataWidth];
-          values[1][2] += (float)((T *)sourceData)[mfast_mod(sourceDataPX + 1 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 2, sourceDataHeight) * sourceDataWidth];
-          values[2][2] += (float)((T *)sourceData)[mfast_mod(sourceDataPX + 2 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 2, sourceDataHeight) * sourceDataWidth];
-        }
-      }
-
-      Vector v00 = Vector((float)(sourceDataPX + 0), (float)sourceDataPY + 0, values[0][0]);
-      Vector v10 = Vector((float)(sourceDataPX + 1), (float)sourceDataPY + 0, values[1][0]);
-      Vector v20 = Vector((float)(sourceDataPX + 2), (float)sourceDataPY + 0, values[2][0]);
-      Vector v01 = Vector((float)(sourceDataPX + 0), (float)sourceDataPY + 1, values[0][1]);
-      Vector v11 = Vector((float)(sourceDataPX + 1), (float)sourceDataPY + 1, values[1][1]);
-      Vector v21 = Vector((float)(sourceDataPX + 2), (float)sourceDataPY + 1, values[2][1]);
-      Vector v02 = Vector((float)(sourceDataPX + 0), (float)sourceDataPY + 2, values[0][2]);
-      Vector v12 = Vector((float)(sourceDataPX + 1), (float)sourceDataPY + 2, values[1][2]);
-
-      if (x >= 0 && y >= 0 && x < (int)drawSettings->width && y < (int)drawSettings->height) {
-        Vector normal00 = CrossProduct(v10 - v00, v01 - v00).normalize();
-        Vector normal10 = CrossProduct(v20 - v10, v11 - v10).normalize();
-        Vector normal01 = CrossProduct(v11 - v01, v02 - v01).normalize();
-        Vector normal11 = CrossProduct(v21 - v11, v12 - v11).normalize();
-        Vector lightSource = (Vector(-1, -1, -1)).normalize(); /* TODO make light source configurable */
-        float c00 = DotProduct(lightSource, normal00);
-        float c10 = DotProduct(lightSource, normal10);
-        float c01 = DotProduct(lightSource, normal01);
-        float c11 = DotProduct(lightSource, normal11);
-        float dx = genericDataWarper->warperState.tileDx;
-        float dy = genericDataWarper->warperState.tileDy;
-        float gx1 = (1 - dx) * c00 + dx * c10;
-        float gx2 = (1 - dx) * c01 + dx * c11;
-        float bilValue = (1 - dy) * gx1 + dy * gx2;
-        drawSettings->dataField[x + y * drawSettings->width] = (bilValue + 1) / 1.816486;
-      }
-    }
-  };
 
 public:
   CImgWarpHillShaded() {}
