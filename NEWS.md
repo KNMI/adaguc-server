@@ -3,7 +3,7 @@
 - EDR: /instances call using reference times
 - EDR: support for vertical dimensions (z in EDR requests) for model_levels, pressure_levels etc
 - EDR: support for custom dimensions [using custom: namespace] for example for percentile classes o"r ensemble members
-- EDR: EDR support can be switched on or off for a dataset or for a layer. Adding `edr_enabled="true"` to a dataset's `<Settings>` element disables EDR for an entire dataset. Using `edr_enabled="false"` in a layer's `<Collection>` element disables EDR for that layer, using  `edr_enabled="true"` forces enabling EDR for a single layer
+- EDR: EDR support can be switched on or off for a dataset or for a layer. Adding `edr_enabled="true"` to a dataset's `<Settings>` element enables EDR for an entire dataset. Using `edr_enabled="false"` in a layer's `<Collection>` element disables EDR for that layer, using  `edr_enabled="true"` forces enabling EDR for a single layer
 - EDR: getMetadata request output has been extended with a few attributes for EDR support
 - EDR: uses getMetadata request which reads from database for increased performance as no dataset configuration needs
 to be read
