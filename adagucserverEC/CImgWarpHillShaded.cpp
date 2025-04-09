@@ -124,7 +124,6 @@ void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, C
 int CImgWarpHillShaded::set(const char *) { return 0; }
 
 template <class T> void hillShadedDrawFunction(int x, int y, T val, void *_settings, void *_warper) {
-  return;
   HillShadeSettings *drawSettings = static_cast<HillShadeSettings *>(_settings);
   if (x < 0 || y < 0 || x > drawSettings->width || y > drawSettings->height) return;
   CGenericDataWarper *genericDataWarper = static_cast<CGenericDataWarper *>(_warper);
