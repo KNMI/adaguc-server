@@ -1,16 +1,14 @@
-from io import BytesIO
+import calendar
+import json
 import os
+from datetime import datetime
+from io import BytesIO
 
+import brotli
+import redis.asyncio as redis  # This can also be used to connect to a Redis cluster
+from fastapi import BackgroundTasks
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
-from fastapi import BackgroundTasks
-
-import calendar
-from datetime import datetime
-import redis.asyncio as redis  # This can also be used to connect to a Redis cluster
-
-import json
-import brotli
 
 ADAGUC_REDIS = os.environ.get("ADAGUC_REDIS")
 
@@ -72,6 +70,7 @@ def generate_key(request):
     return key
 
 
+# pylint: disable=too-few-public-methods
 class CachingMiddleware(BaseHTTPMiddleware):
     shortcut = True
 
@@ -102,10 +101,9 @@ class CachingMiddleware(BaseHTTPMiddleware):
         response: Response = await call_next(request)
 
         if response.status_code == 200:
-            if (
-                "cache-control" in response.headers
-                and response.headers["cache-control"] != "no-store"
-            ):
+            if "cache-control" not in response.headers:
+                response.headers["cache-control"] = "max-age=15"
+            if response.headers["cache-control"] != "no-store":
                 cache_control_terms = response.headers["cache-control"].split(",")
                 ttl = None
                 for term in cache_control_terms:

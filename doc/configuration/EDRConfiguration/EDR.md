@@ -1,40 +1,51 @@
 #  Configuration options to enable EDR collections
 
-An EDR service by ADAGUC currently supports the /instances call to retrieve the model_runs (treating the forecast_reference_time as instance name), the /position call for timeseries and point data and the /cube call for extracting 2d/3d data slices.
-
-Data output is in CoverageJSON
-
 [Back to main configuration](../Configuration.md)
 
-For a tutorial on EDR configuration, please check [Configure_EDR_service](../../tutorials/Configure_EDR_service.md)
+The EDR service by ADAGUC currently supports:
 
-The OGC API EDR service can be configured in a dataset configuration by adding the following elements:
+- `/instances` to retrieve the model_runs (treating the forecast_reference_time as instance name)
+- `/position` for timeseries and point data
+- `/cube` for extracting 2d/3d data slices
 
-```xml
-    <OgcApiEdr>
-        <EdrCollection name="harmonie" time_interval="R48/{reference_time}+1/PT60M" vertical_name="height" >
-            <EdrParameter name="air_temperature__at_height" unit="Celsius" standard_name="air_temperature"  parameter_label="Temperature of air" observed_property_label="Air temperature"/>
-        </EdrCollection>
-        <EdrCollection name="....">
-          <EdrParameter name="..."/>
-        </EdrCollection>
-    </OgcApiEdr>
-```
+Data output is in CoverageJSON.
 
-EdrCollection:
-- name: The name of the EDR collection
-- vertical_name?: For example pressure_level, the name of the vertical dimension in the WMS layer configuration
-- time interval?: A description of the available times steps of a single run (EDR collection instance), expressed as a repeat number starting at the reference time (with an optional offset in time steps). For example "R2/{reference_time}+1/PT60M" means ["2024-06-01T01:00:00Z", "2024-06-01T02:00:00Z"] for a reference_time of 2024-06-1T00:00:00Z. This time range will be presented in the /collections call output. If the time_interval is not specified the whole time range from the WMS GetCapabilities output is used.
+For a tutorial on EDR configuration, please check [Configure_EDR_service](../../tutorials/Configure_EDR_service.md).
+
+## Configuration details
+
+By default Adaguc will try to enable EDR for configured Adaguc layers. If your dataset is called `my_dataset.xml`, your layers can be found under the collection `my_dataset`.
+
+If you want to disable EDR for a dataset, add an attribute `enable_edr="false"` to the `Settings` element:
+`<Settings enable_edr="false" ....>`
+You can disable EDR for a layer, by adding an attribute `enable_edr="false"` to the `Layer` element:
+`<Layer ... enable_edr="false"/>` or `<Layer ... enable_edr="true"/>` overriding the global setting in `Settings`.
+
+It can be useful to group collections together, for example to indicate that collections belong to the same forecast model or to bundle a set of similar parameters, for example parameters with a height dimension or with a pressure level dimension.
+
+To group collections together, you use the `<Group collection="my_collection">` element to your layer. The layer will then be available under `my_dataset.my_collection`.
+
+### Dimension types
+
+You can specify a dimension type when configuring a dimension. The following dimension types are supported:
+
+- `type="time"`: the time dimension, EDR will call this dimension `t`
+- `type="reference_time"`: the reference time, EDR will call this dimension `custom:reference_time`
+- `type="height"`: the height dimension, EDR will call this dimension `z`
+- `type="custom"`: the custom (non-time, non-height, non-reference time) dimension, EDR will call this dimension `custom:your_dimension_name`
+
+See [Dimension.md](/doc/configuration/Dimension.md) for additional Dimension configuration options.
+
+## Collection rules
 
 One dataset file can contain multiple collection definitions.
-All parameters in an EDR collection should share identically named vertical and custom dimensions. It is not required that all parameters have exactly the same set of values for the shared dimensions; for example the fist parameter could have values 2 and 10 for it's height dimension and the second parameter could have the values 2, 10 and 100 for the height dimension.
 
+All parameters in an EDR collection should share identically named vertical and custom dimensions. For example: if you have a layer with a custom "member" dimension, and another layer with a custom "percentile" dimension, you should put these into separate collections through `<Group collection="member">` and `<Group collection="percentile">`. You will then find these in EDR under the collections `my_dataset.member` and `my_dataset.percentile` respectively.
 
-EdrParameter:
-- name: The name of the layer in the WMS service
-- unit: The unit of the Layer
-- standard_name: Standard name of parameter
-- parameter_label?: Label text for parameter
-- observed_property_label?: Observed property label (for covjson)
+It is not required that all parameters have exactly the same set of values for the shared dimensions; for example the first parameter could have values 2 and 10 for it's height dimension and the second parameter could have the values 2, 10 and 100 for the height dimension.
 
+## Metadata API
 
+Internally, EDR will use the metadata endpoint under `/adagucserver?service=wms&request=getmetadata&format=application/json`.
+
+If you scan your dataset with `docker exec -i -t my-adaguc-server /adaguc/scan.sh -d my_dataset`, adaguc will fill/update the metadata for your dataset. Additionally, will periodically update the metadata for all configured datasets.

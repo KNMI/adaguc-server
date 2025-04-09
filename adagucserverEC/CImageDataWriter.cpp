@@ -689,7 +689,9 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
   int status = 0;
   isProfileData = false;
   for (size_t d = 0; d < dataSources.size(); d++) {
-
+    if (dataSources[d]->cfgLayer->attr.hidden.equals("true")) {
+      continue;
+    }
     GetFeatureInfoResult *getFeatureInfoResult = new GetFeatureInfoResult();
     getFeatureInfoResultList.push_back(getFeatureInfoResult);
     bool headerIsAvailable = false;
@@ -938,6 +940,10 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
 
           // Retrieve variable names
           for (size_t o = 0; o < dataSource->getNumDataObjects(); o++) {
+            if (dataSource->getDataObject(o)->cdfVariable->data == nullptr) {
+              CDBWarning("No variable defined for dataObject %d for [%s]", o, dataSource->getDataObject(o)->cdfVariable->name.c_str());
+              continue;
+            }
 
             //        size_t j=d+o*dataSources.size();
             // CDBDebug("j = %d",j);
@@ -2741,8 +2747,7 @@ int CImageDataWriter::end() {
         resultJSON.print("%s%s%c%c\n", "Content-Type: application/json", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
       } else {
         CDBDebug("CREATING JSONP %s", srvParam->JSONP.c_str());
-        resultJSON.print("%s%s%c%c", "Content-Type: application/javascript", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
-        resultJSON.print("\n%s(", srvParam->JSONP.c_str());
+        resultJSON.print("%s%s%c%c\n", "Content-Type: application/javascript", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
       }
 
       CXMLParser::XMLElement rootElement;

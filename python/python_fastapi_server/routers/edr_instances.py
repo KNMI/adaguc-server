@@ -12,11 +12,14 @@ from edr_pydantic.collections import Collection, Instance, Instances
 from edr_pydantic.link import Link
 from fastapi import APIRouter, Request, Response
 
-from .edr_utils import (
+from .utils.edr_exception import exc_unknown_collection
+
+from .utils.edr_utils import (
     generate_max_age,
     get_base_url,
-    get_collectioninfo_for_id,
-    get_edr_collections,
+    get_instance,
+    get_metadata,
+    get_collectioninfo_from_md,
     get_ref_times_for_coll,
 )
 
@@ -39,13 +42,13 @@ async def rest_get_edr_inst_for_coll(
     )
 
     instances: list[Instance] = []
-    edr_collections = get_edr_collections()
 
-    ref_times = await get_ref_times_for_coll(
-        edr_collections[collection_name]["dataset"],
-        edr_collections[collection_name]["parameters"][0]["name"],
-    )
-    print("REF:", ref_times)
+    metadata = await get_metadata(collection_name)
+
+    if metadata is None:
+        raise exc_unknown_collection(collection_name)
+
+    ref_times = get_ref_times_for_coll(metadata[collection_name])
     links: list[Link] = []
     links.append(Link(href=instances_url, rel="collection"))
     ttl_set = set()
@@ -53,10 +56,13 @@ async def rest_get_edr_inst_for_coll(
         instance_links: list[Link] = []
         instance_link = Link(href=f"{instances_url}/{instance}", rel="collection")
         instance_links.append(instance_link)
-        instance_info, ttl = await get_collectioninfo_for_id(collection_name, instance)
-        if ttl is not None:
-            ttl_set.add(ttl)
-        instances.append(instance_info)
+        instance_info = get_collectioninfo_from_md(
+            metadata[collection_name], collection_name, instance
+        )
+        instances.extend(instance_info)
+
+    # Instance ordering should be most recent first
+    instances.sort(key=lambda x: x.id, reverse=True)
 
     instances_data = Instances(instances=instances, links=links)
     if ttl_set:
@@ -69,11 +75,17 @@ async def rest_get_edr_inst_for_coll(
     response_model=Collection,
     response_model_exclude_none=True,
 )
-async def rest_get_collection_info(collection_name: str, instance, response: Response):
+async def rest_get_collection_info(collection_name: str, instance: str):
     """
     GET  "/collections/{collection_name}/instances/{instance}"
     """
-    coll, ttl = await get_collectioninfo_for_id(collection_name, instance)
-    if ttl is not None:
-        response.headers["cache-control"] = generate_max_age(ttl)
-    return coll
+    metadata = await get_metadata(collection_name)
+    if metadata is None:
+        raise exc_unknown_collection(collection_name)
+
+    instance = get_instance(metadata, collection_name, instance)
+
+    coll = get_collectioninfo_from_md(
+        metadata[collection_name], collection_name, instance
+    )
+    return coll[0]

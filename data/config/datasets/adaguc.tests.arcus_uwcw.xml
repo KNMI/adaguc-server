@@ -2,14 +2,8 @@
 <Configuration>
   <OgcApiFeatures />
 
-  <OgcApiEdr>
-    <EdrCollection name="uwcw_ha43ens_nl_2km_hagl" vertical_name="height_above_ground_level_in_m">
-      <EdrParameter name="air_temperature_hagl" unit="°C" standard_name="air_temperature"
-        label="Air temperature at 2 m" />
-    </EdrCollection>
-  </OgcApiEdr>
-
   <Layer type="database">
+    <Group collection="hagl_member"/>
     <Name>air_temperature_hagl</Name>
     <Title>UWCW_HA43ENS(NL) Air temperature at 2 m</Title>
     <Variable>air-temperature-hagl</Variable>
@@ -18,11 +12,12 @@
     <Dimension name="forecast_reference_time" units="ISO8601" hidden="false">reference_time</Dimension>
     <Dimension name="time" units="ISO8601" default="min">time</Dimension>
     <Dimension name="temp_at_hagl" units="m" default="min" hidden="true">height_above_ground_level_in_m</Dimension>
-    <Dimension name="member" units="" default="min" hidden="false">member</Dimension>
+    <Dimension name="member" units="" default="min" type="custom" hidden="false">member</Dimension>
   </Layer>  
   
 
   <Layer type="database">
+    <Group collection="hagl_member"/>
     <Name>wind_speed_hagl_kts</Name>
     <Title>UWCW_HA43ENS(NL) Wind speed at height above ground level in Knots</Title>
     <Variable>wind-speed-hagl</Variable>
@@ -31,10 +26,11 @@
     <Dimension name="forecast_reference_time" units="ISO8601" hidden="false">reference_time</Dimension>
     <Dimension name="time" units="ISO8601" default="min">time</Dimension>
     <Dimension name="wind_at_hagl" units="m" default="min" hidden="true">height_above_ground_level_in_m</Dimension>
-    <Dimension name="member" units="" default="min" hidden="false">member</Dimension>
+    <Dimension name="member" units="" default="min" type="custom" hidden="false">member</Dimension>
   </Layer>  
 
   <Layer type="database">
+    <Group collection="hagl_member"/>
     <Name>wind_speed_hagl_ms</Name>
     <Title>UWCW_HA43ENS(NL) Wind speed at height above ground level in ms</Title>
     <Variable>wind-speed-hagl</Variable>
@@ -43,17 +39,18 @@
     <Dimension name="forecast_reference_time" units="ISO8601" hidden="false">reference_time</Dimension>
     <Dimension name="time" units="ISO8601" default="min">time</Dimension>
     <Dimension name="wind_at_hagl" units="m" default="min" hidden="true">height_above_ground_level_in_m</Dimension>
-    <Dimension name="member" units="" default="min" hidden="false">member</Dimension>
+    <Dimension name="member" units="" default="min" type="custom" hidden="false">member</Dimension>
     <DataPostProc algorithm="windspeed_knots_to_ms"/>
   </Layer>  
 
     <Layer type="database">
+    <Group collection="hagl_member"/>
     <Name>wind_speed_hagl_ms_wrong_dim_order</Name>
     <Title>UWCW_HA43ENS(NL) Wind speed at height above ground level in ms</Title>
     <Variable>wind-speed-hagl</Variable>
     <FilePath filter="(uwcw_ha43ens_nl_2km_wind-speed-hagl_geoweb_nc_[0-9T]{11}\.nc)">{ADAGUC_PATH}/data/datasets/arcustest_uwcw/uwcw_ha43ens_nl_2km_wind-speed-hagl_geoweb_nc_20240605T03_5x5.nc</FilePath>
     <Styles>auto</Styles>
-    <Dimension name="member" units="" default="min" hidden="false">member</Dimension>
+    <Dimension name="member" units="" default="min" type="custom" hidden="false">member</Dimension>
     <Dimension name="wind_at_hagl" units="m" default="min" hidden="true">height_above_ground_level_in_m</Dimension>
     <Dimension name="time" units="ISO8601" default="min">time</Dimension>
     <Dimension name="forecast_reference_time" units="ISO8601" hidden="false">reference_time</Dimension>
@@ -63,6 +60,7 @@
 
 
   <Layer type="database">
+    <Group collection="hagl_member"/>
     <Name>wind_speed_hagl_ms_member_3</Name>
     <Title>UWCW_HA43ENS(NL) Wind speed at height above ground level in ms for member 3</Title>
     <Variable>wind-speed-hagl</Variable>
@@ -71,7 +69,7 @@
     <Dimension name="forecast_reference_time" units="ISO8601" hidden="false">reference_time</Dimension>
     <Dimension name="time" units="ISO8601" default="min">time</Dimension>
     <Dimension name="wind_at_hagl" units="m" default="min" hidden="true">height_above_ground_level_in_m</Dimension>
-    <Dimension name="member" units="" default="min" hidden="true">member</Dimension>
+    <Dimension name="member" units="" default="min" type="custom" hidden="true">member</Dimension>
     <DataPostProc algorithm="windspeed_knots_to_ms"/>
   </Layer>  
   

@@ -139,7 +139,7 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc, std::vector<MetadataL
     for (size_t lnr = 0; lnr < metadataLayerList->size(); lnr++) {
       MetadataLayer *layer = (*metadataLayerList)[lnr];
       std::string key = "";
-      if (layer->layerMetadata.group.length() > 0) key = layer->layerMetadata.group.c_str();
+      if (layer->layerMetadata.wmsgroup.length() > 0) key = layer->layerMetadata.wmsgroup.c_str();
       size_t j = 0;
       for (j = 0; j < groupKeys.size(); j++) {
         if (groupKeys[j] == key) break;
@@ -211,7 +211,7 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc, std::vector<MetadataL
 
       for (size_t lnr = 0; lnr < metadataLayerList->size(); lnr++) {
         MetadataLayer *layer = (*metadataLayerList)[lnr];
-        if (layer->layerMetadata.group.equals(groupKeys[groupIndex])) {
+        if (layer->layerMetadata.wmsgroup.equals(groupKeys[groupIndex])) {
           // CDBError("layer %d %s",groupDepth,layer->name.c_str());
           if (layer->hasError != 0) {
             addErrorInXMLForMisconfiguredLayer(XMLDoc, layer);
@@ -500,7 +500,7 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataL
     for (size_t lnr = 0; lnr < metadataLayerList->size(); lnr++) {
       MetadataLayer *layer = (*metadataLayerList)[lnr];
       std::string key = "";
-      if (layer->layerMetadata.group.length() > 0) key = layer->layerMetadata.group.c_str();
+      if (layer->layerMetadata.wmsgroup.length() > 0) key = layer->layerMetadata.wmsgroup.c_str();
       size_t j = 0;
       for (j = 0; j < groupKeys.size(); j++) {
         if (groupKeys[j] == key) break;
@@ -579,7 +579,7 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataL
         CDBDebug("Comparing %s == %s", layer->group.c_str(), groupKeys[groupIndex].c_str());
 #endif
 
-        if (layer->layerMetadata.group.equals(groupKeys[groupIndex])) {
+        if (layer->layerMetadata.wmsgroup.equals(groupKeys[groupIndex])) {
 #ifdef CXMLGEN_DEBUG
           CDBDebug("layer %d %s", groupDepth, layer->name.c_str());
 #endif
@@ -865,10 +865,10 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc, std::vector<Metad
                "   xsi:schemaLocation=\"http://www.opengis.net/wcs http://schemas.opengis.net/wcs/1.0.0/describeCoverage.xsd\">\n");
   const auto firstWMLayer = getFirstLayerWithoutError(metadataLayerList);
   if (firstWMLayer != nullptr) {
-    for (size_t layerIndex = 0; layerIndex < (unsigned)srvParam->WMSLayers->count; layerIndex++) {
+    for (size_t layerIndex = 0; layerIndex < srvParam->requestedLayerNames.size(); layerIndex++) {
       for (size_t lnr = 0; lnr < metadataLayerList->size(); lnr++) {
         MetadataLayer *layer = (*metadataLayerList)[lnr];
-        if (layer->layerMetadata.name.equals(&srvParam->WMSLayers[layerIndex])) {
+        if (layer->layerMetadata.name.equals(srvParam->requestedLayerNames[layerIndex])) {
           if (layer->hasError != 0) {
             addErrorInXMLForMisconfiguredLayer(XMLDoc, layer);
           }

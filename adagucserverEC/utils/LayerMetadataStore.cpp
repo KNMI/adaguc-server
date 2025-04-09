@@ -13,6 +13,7 @@ int getDimensionListAsJson(MetadataLayer *metadataLayer, json &dimListJson) {
       item["defaultValue"] = dimension.defaultValue.c_str();
       item["hasMultipleValues"] = dimension.hasMultipleValues;
       item["hidden"] = dimension.hidden;
+      item["type"] = dimension.type;
       item["serviceName"] = dimension.serviceName.c_str();
       item["cdfName"] = dimension.cdfName.c_str();
       item["units"] = dimension.units.c_str();
@@ -30,11 +31,13 @@ int getLayerBaseMetadataAsJson(MetadataLayer *metadataLayer, json &layerMetadata
   try {
     layerMetadataItem["layername"] = metadataLayer->layerMetadata.name;
     layerMetadataItem["title"] = metadataLayer->layerMetadata.title;
-    layerMetadataItem["group"] = metadataLayer->layerMetadata.group;
+    layerMetadataItem["wmsgroup"] = metadataLayer->layerMetadata.wmsgroup;
     layerMetadataItem["abstract"] = metadataLayer->layerMetadata.abstract;
     layerMetadataItem["nativeepsg"] = metadataLayer->layerMetadata.nativeEPSG;
-
+    layerMetadataItem["collection"] = metadataLayer->layerMetadata.collection;
     layerMetadataItem["isqueryable"] = metadataLayer->layerMetadata.isQueryable;
+    layerMetadataItem["hidden"] = metadataLayer->layerMetadata.hidden;
+    layerMetadataItem["enable_edr"] = metadataLayer->layerMetadata.enable_edr;
     json latlonbox;
     for (size_t j = 0; j < 4; j++) {
       latlonbox.push_back(metadataLayer->layerMetadata.dfLatLonBBOX[j]);
@@ -61,6 +64,7 @@ int getLayerBaseMetadataAsJson(MetadataLayer *metadataLayer, json &layerMetadata
       variable["units"] = lv.units;
       variable["label"] = lv.label;
       variable["variableName"] = lv.variableName;
+      variable["standard_name"] = lv.standard_name;
       variables.push_back(variable);
     }
     layerMetadataItem["variables"] = variables;
@@ -181,10 +185,14 @@ int loadLayerMetadataStructFromMetadataDb(MetadataLayer *metadataLayer) {
     auto i = a.parse(layerMetadataAsJson.c_str());
     metadataLayer->layerMetadata.name = i["layername"].get<std::string>().c_str();
     metadataLayer->layerMetadata.title = i["title"].get<std::string>().c_str();
-    metadataLayer->layerMetadata.group = i["group"].get<std::string>().c_str();
+    metadataLayer->layerMetadata.wmsgroup = i["wmsgroup"].get<std::string>().c_str();
     metadataLayer->layerMetadata.abstract = i["abstract"].get<std::string>().c_str();
+    metadataLayer->layerMetadata.collection = i["collection"].get<std::string>().c_str();
     metadataLayer->layerMetadata.isQueryable = i["isqueryable"].get<int>();
+    metadataLayer->layerMetadata.hidden = i["hidden"].get<bool>();
+    metadataLayer->layerMetadata.enable_edr = i["enable_edr"].get<bool>();
     metadataLayer->layerMetadata.nativeEPSG = i["nativeepsg"].get<std::string>().c_str();
+    metadataLayer->layerMetadata.nativeEPSG = i["collection"].get<std::string>().c_str();
 
     json latlonbox = i["latlonbox"];
     for (size_t j = 0; j < 4; j += 1) {
@@ -207,6 +215,7 @@ int loadLayerMetadataStructFromMetadataDb(MetadataLayer *metadataLayer) {
           .variableName = variableProps["variableName"].get<std::string>().c_str(),
           .units = variableProps["units"].get<std::string>().c_str(),
           .label = variableProps["label"].get<std::string>().c_str(),
+          .standard_name = variableProps["standard_name"].get<std::string>().c_str(),
       };
       metadataLayer->layerMetadata.variableList.push_back(variable);
     }
@@ -370,6 +379,7 @@ int loadLayerDimensionListFromMetadataDb(MetadataLayer *metadataLayer) {
           .units = dimensionProperties["units"].get<std::string>().c_str(),
           .values = dimensionProperties["values"].get<std::string>().c_str(),
           .defaultValue = dimensionProperties["defaultValue"].get<std::string>().c_str(),
+          .type = dimensionProperties["type"].get<std::string>().c_str(),
           .hasMultipleValues = dimensionProperties["hasMultipleValues"].get<int>(),
           .hidden = dimensionProperties["hidden"].get<bool>(),
       };

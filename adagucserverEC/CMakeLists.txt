@@ -40,8 +40,10 @@ add_library(
     CConvertHexagon.h
     CConvertKNMIH5EchoToppen.cpp
     CConvertKNMIH5EchoToppen.h
-    CConvertKNMIH5VolScan.cpp
-    CConvertKNMIH5VolScan.h
+    CConvertH5VolScan.cpp
+    CConvertH5VolScan.h
+    CConvertH5VolScanUtils.cpp
+    CConvertH5VolScanUtils.h
     CConvertLatLonGrid.h
     CConvertLatLonGrid.cpp
     CConvertLatLonGridHeader.cpp
@@ -96,6 +98,8 @@ add_library(
     GenericDataWarper/CImgWarpGeneric.h
     GenericDataWarper/gdwFindPixelExtent.cpp
     GenericDataWarper/gdwFindPixelExtent.h
+    utils/CRequestUtils.h
+    utils/CRequestUtils.cpp
     Types/LayerMetadataType.h
     Types/CColor.h
     Types/CColor.cpp

@@ -1046,6 +1046,7 @@ public:
     }
   };
   class XMLE_Abstract : public CXMLObjectInterface {};
+
   class XMLE_DataBaseTable : public CXMLObjectInterface {};
   class XMLE_Variable : public CXMLObjectInterface {
   public:
@@ -1213,10 +1214,15 @@ public:
     class Cattr {
     public:
       CT::string value;
+      CT::string collection;
     } attr;
     void addAttribute(const char *name, const char *value) {
       if (equals("value", name)) {
         attr.value.copy(value);
+        return;
+      }
+      if (equals("collection", name)) {
+        attr.collection.copy(value);
         return;
       }
     }
@@ -1250,6 +1256,7 @@ public:
     public:
       CT::string name, interval, defaultV, units, quantizeperiod, quantizemethod, fixvalue;
       bool hidden = false;
+      CT::string type = "dimtype_none";
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
       if (equals("name", attrname)) {
@@ -1277,10 +1284,20 @@ public:
         if (equals("true", attrvalue)) {
           attr.hidden = true;
         }
-
         return;
       } else if (equals("quantizemethod", attrname)) {
         attr.quantizemethod.copy(attrvalue);
+        return;
+      } else if (equals("type", attrname)) {
+        if (equals(attrvalue, "vertical")) {
+          attr.type = "dimtype_vertical";
+        } else if (equals(attrvalue, "custom")) {
+          attr.type = "dimtype_custom";
+        } else if (equals(attrvalue, "time")) {
+          attr.type = "dimtype_time";
+        } else if (equals(attrvalue, "reference_time")) {
+          attr.type = "dimtype_reference_time";
+        }
         return;
       }
     }
@@ -1334,6 +1351,7 @@ public:
     class Cattr {
     public:
       CT::string enablemetadatacache, enablecleanupsystem, cleanupsystemlimit, cache_age_cacheableresources, cache_age_volatileresources;
+      CT::string enable_edr = "true";
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
       if (equals("enablemetadatacache", attrname)) {
@@ -1351,6 +1369,9 @@ public:
       } else if (equals("cache_age_volatileresources", attrname)) {
         attr.cache_age_volatileresources.copy(attrvalue);
         return;
+      } else if (equals("enable_edr", attrname)) {
+        attr.enable_edr.copy(attrvalue);
+        ;
       }
     }
   };
@@ -1805,6 +1826,7 @@ public:
     class Cattr {
     public:
       CT::string type, hidden;
+      CT::string enable_edr = "";
     } attr;
 
     std::vector<XMLE_Name *> Name;
@@ -1979,6 +2001,9 @@ public:
         return;
       } else if (equals("hidden", attrname)) {
         attr.hidden.copy(attrvalue);
+        return;
+      } else if (equals("enable_edr", attrname)) {
+        attr.enable_edr.copy(attrvalue);
         return;
       }
     }

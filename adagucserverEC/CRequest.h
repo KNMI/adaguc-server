@@ -173,6 +173,11 @@ private:
   int generateGetReferenceTimes(CDataSource *dataSource);
   int generateGetReferenceTimesDoc(CT::string *result, CDataSource *dataSource);
   int generateOGCDescribeCoverage(CT::string *XMLdocument);
+  void autoDetectBBOX();
+  int addDataSources(CServerConfig::XMLE_Layer *cfgLayer, int layerIndex);
+  int determineTypesForDataSources();
+  int handleGetMapRequest(CDataSource *firstDataSource);
+  int handleGetCoverageRequest(CDataSource *firstDataSource);
 
 public:
   static int setDimValuesForDataSource(CDataSource *dataSource, CServerParams *srvParam);
