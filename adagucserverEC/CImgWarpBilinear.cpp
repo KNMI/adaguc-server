@@ -398,8 +398,8 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
 
   if (isVectorLike) {
     // Note: Calculation from u and v to speed it is done in this method.
-    windVectors = renderBarbsAndVectors(warper, sourceImage, drawImage, enableShade, enableContour, enableBarb, drawMap, enableVector, drawGridVectors, dPixelExtent, valObj[0].valueData,
-                                        valObj[1].valueData, dpDestX, dpDestY);
+    windVectors = calculateBarbsAndVectorsAndSpeedFromUVComponents(warper, sourceImage, drawImage, enableShade, enableContour, enableBarb, drawMap, enableVector, drawGridVectors, dPixelExtent,
+                                                                   valObj[0].valueData, valObj[1].valueData, dpDestX, dpDestY);
   }
 
   // Make Contour if desired
