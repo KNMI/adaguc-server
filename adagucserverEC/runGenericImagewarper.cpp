@@ -4,7 +4,7 @@
 #include <fstream>
 
 int imageWidth = 1000;
-int imageHeight = 1100;
+int imageHeight = 800;
 
 struct WarperSettings {
   double dx;
@@ -61,7 +61,7 @@ int main() {
   CColor b(0, 0, 255, 255);
   CColor y(255, 255, 0, 255);
 
-  double numtriangles = 50000;
+  double numtriangles = 10000;
 
   for (double r = 0; r < numtriangles; r += 1) {
 
@@ -119,9 +119,21 @@ int main() {
     // image.setPixel(px3, py3, y);
   }
 
-  double xCornersB[3] = {0, 10, 20};
-  double yCornersB[3] = {1000, 1000, 1000};
-  gdwDrawTriangle<double>(xCornersB, yCornersB, 5, imageWidth, imageHeight, &drawFunctionSettings, drawFunction, &warper, true);
+  // double xCornersB[3] = {500, 10, 920};
+  // double yCornersB[3] = {20, 500, 701};
+  // gdwDrawTriangle<double>(xCornersB, yCornersB, 5, imageWidth, imageHeight, &drawFunctionSettings, drawFunction, &warper, true);
+
+  // double xCornersC[3] = {500, 10, 80};
+  // double yCornersC[3] = {20, 500, 121};
+  // gdwDrawTriangle<double>(xCornersC, yCornersC, 5, imageWidth, imageHeight, &drawFunctionSettings, drawFunction, &warper, true);
+
+  // double xCornersD[3] = {500, 920, 980};
+  // double yCornersD[3] = {20, 701, 221};
+  // gdwDrawTriangle<double>(xCornersD, yCornersD, 5, imageWidth, imageHeight, &drawFunctionSettings, drawFunction, &warper, true);
+
+  double xCornersE[3] = {0, 0, 1000};
+  double yCornersE[3] = {500, 500, 250};
+  gdwDrawTriangle<double>(xCornersE, yCornersE, 5, imageWidth, imageHeight, &drawFunctionSettings, drawFunction, &warper, true);
 
   FILE *myfile;
   myfile = fopen("test.png", "wb");
