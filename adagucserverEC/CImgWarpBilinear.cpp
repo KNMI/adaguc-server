@@ -394,17 +394,20 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
     }
   }
 
+  std::vector<CalculatedWindVector> windVectors;
+
+  if (isVectorLike) {
+    // Note: Calculation from u and v to speed it is done in this method.
+    windVectors = calculateBarbsAndVectorsAndSpeedFromUVComponents(warper, sourceImage, drawImage, enableShade, enableContour, enableBarb, drawMap, enableVector, drawGridVectors, dPixelExtent,
+                                                                   valObj[0].valueData, valObj[1].valueData, dpDestX, dpDestY);
+  }
+
   // Make Contour if desired
   if (enableContour || enableShade) {
     drawContour(valueData, fNodataValue, shadeInterval, sourceImage, drawImage, enableContour, enableShade, enableContour);
   }
 
   if (isVectorLike) {
-
-    float *uValueData = valObj[0].valueData;
-    float *vValueData = valObj[1].valueData;
-    std::vector<CalculatedWindVector> windVectors =
-        renderBarbsAndVectors(warper, sourceImage, drawImage, enableShade, enableContour, enableBarb, drawMap, enableVector, drawGridVectors, dPixelExtent, uValueData, vValueData, dpDestX, dpDestY);
     if (enableVector) {
       CalculatedWindVector wv;
       for (size_t sz = 0; sz < windVectors.size(); sz++) {

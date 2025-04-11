@@ -337,8 +337,9 @@ int applyUVConversion(CImageWarper *warper, CDataSource *sourceImage, bool enabl
   return 0;
 };
 
-std::vector<CalculatedWindVector> renderBarbsAndVectors(CImageWarper *warper, CDataSource *sourceImage, CDrawImage *drawImage, bool enableShade, bool enableContour, bool enableBarb, bool drawMap,
-                                                        bool enableVector, bool drawGridVectors, int *dPixelExtent, float *uValueData, float *vValueData, int *dpDestX, int *dpDestY) {
+std::vector<CalculatedWindVector> calculateBarbsAndVectorsAndSpeedFromUVComponents(CImageWarper *warper, CDataSource *sourceImage, CDrawImage *drawImage, bool enableShade, bool enableContour,
+                                                                                   bool enableBarb, bool drawMap, bool enableVector, bool drawGridVectors, int *dPixelExtent, float *uValueData,
+                                                                                   float *vValueData, int *dpDestX, int *dpDestY) {
   float fNodataValue = sourceImage->getDataObject(0)->dfNodataValue;
   double dfSourceExtW = (sourceImage->dfBBOX[2] - sourceImage->dfBBOX[0]);
   double dfSourceExtH = (sourceImage->dfBBOX[1] - sourceImage->dfBBOX[3]);
