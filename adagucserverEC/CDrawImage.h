@@ -107,7 +107,7 @@ private:
   unsigned char backgroundAlpha;
   // bool _bAntiAliased;
   int brect[8];
-  CCairoPlotter *cairo;
+
   const char *TTFFontLocation;
   float TTFFontSize;
   // char *fontConfig ;
@@ -125,6 +125,7 @@ private:
   void _drawBarbGd(int x, int y, double direction, double strength, CColor color, float lineWidth, bool toKnots, bool flip);
 
 public:
+  CCairoPlotter *cairo;
   float *rField, *gField, *bField;
   int *numField;
   bool trueColorAVG_RGBA;

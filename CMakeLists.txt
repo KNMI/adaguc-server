@@ -20,7 +20,7 @@ IF (CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "arm64" OR CMAKE_HOST_SYSTEM_PROCESSOR 
   # leaks --quiet -atExit -- adagucserver
   set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffp-contract=off")
 ELSE()
-  set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -Wall -Wextra -g3")
+  set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -Wall -Wextra -g3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse ")
   #set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -Wall -Wextra -g3 -fsanitize=address") # <= Use to find memory issues
   set(CMAKE_CXX_FLAGS_RELEASE "-O3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse")
 ENDIF()
@@ -44,6 +44,7 @@ add_subdirectory(CCDFDataModel)
 add_subdirectory(adagucserverEC)
 
 add_executable(adagucserver ./adagucserverEC/adagucserver.cpp)
+add_executable(genericimagewarper ./adagucserverEC/runGenericImagewarper.cpp)
 add_executable(h5ncdump ./adagucserverEC/h5ncdump.cpp)
 add_executable(aggregate_time ./adagucserverEC/aggregate_time.cpp)
 add_executable(geojsondump ./adagucserverEC/geojsondump.cpp)
@@ -53,6 +54,7 @@ add_test(testadagucserver adagucserverEC/testadagucserver)
 add_test(testtimeutils adagucserverEC/testtimeutils)
 
 target_link_libraries(adagucserver adagucserverEC hclasses CCDFDataModel)
+target_link_libraries(genericimagewarper adagucserverEC hclasses CCDFDataModel)
 target_link_libraries(h5ncdump adagucserverEC hclasses CCDFDataModel)
 target_link_libraries(aggregate_time adagucserverEC hclasses CCDFDataModel)
 target_link_libraries(geojsondump adagucserverEC hclasses CCDFDataModel)
