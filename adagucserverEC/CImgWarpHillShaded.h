@@ -30,40 +30,6 @@
 #include "GenericDataWarper/CGenericDataWarper.h"
 #include "utils.h"
 
-class Vector {
-public:
-  Vector(float x, float y, float z) {
-    this->x = x;
-    this->y = y;
-    this->z = z;
-  }
-  Vector operator-(const Vector &v) { return Vector(x - v.x, y - v.y, z - v.z); }
-  float square() { return x * x + y * y + z * z; }
-  float magnitude() { return sqrt(square()); }
-  Vector normalize() {
-    float f = magnitude();
-    if (f == 0) return Vector(0, 0, 0);
-    return Vector(x / f, y / f, z / f);
-  }
-  float x, y, z;
-};
-
-static inline Vector CrossProduct(const Vector &v1, const Vector &v2) { return Vector(v1.y * v2.z - v1.z * v2.y, v1.z * v2.x - v1.x * v2.z, v1.x * v2.y - v1.y * v2.x); }
-
-static inline float DotProduct(const Vector &a, const Vector &b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
-
-static inline int mfast_mod(const int input, const int ceil) { return input >= ceil ? input % ceil : input; }
-
-struct HillShadeSettings {
-  double dfNodataValue;
-  double legendValueRange;
-  double legendLowerRange;
-  double legendUpperRange;
-  bool hasNodataValue;
-  float *dataField;
-  int width, height;
-};
-
 template <class T> void hillShadedDrawFunction(int x, int y, T val, void *_settings, void *_warper);
 class CImgWarpHillShaded : public CImageWarperRenderInterface {
 private:

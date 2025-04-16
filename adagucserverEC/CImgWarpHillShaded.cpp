@@ -29,9 +29,47 @@
 
 const char *CImgWarpHillShaded::className = "CImgWarpHillShaded";
 
-void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage) {
-  // CDBDebug("render");
+/**
+ * Vector of x,y,z
+ */
+struct f8vector {
+  double x, y, z;
+  f8vector operator-(const f8vector &v) { return f8vector({.x = x - v.x, .y = y - v.y, .z = z - v.z}); }
+  double square() { return x * x + y * y + z * z; }
+  double magnitude() { return sqrt(x * x + y * y + z * z); }
+  f8vector norm() {
+    double f = magnitude();
+    if (f == 0) return f8vector({.x = 0, .y = 0, .z = 0});
+    return f8vector({.x = x / f, .y = y / f, .z = z / f});
+  }
+};
 
+/**
+ * Calculate dot product of vector a and b
+ */
+inline double dot(const f8vector &a, const f8vector &b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
+
+/**
+ * Calculate cross product of a and b
+ */
+f8vector cross(const f8vector &v1, const f8vector &v2) { return f8vector({.x = v1.y * v2.z - v1.z * v2.y, .y = v1.z * v2.x - v1.x * v2.z, .z = v1.x * v2.y - v1.y * v2.x}); }
+
+/**
+ * Lightsource
+ */
+const f8vector lightSource = (f8vector({.x = -1, .y = -1, .z = -1})).norm();
+
+struct HillShadeSettings {
+  double dfNodataValue;
+  double legendValueRange;
+  double legendLowerRange;
+  double legendUpperRange;
+  double *dataField;
+  int width, height;
+  bool hasNodataValue;
+};
+
+void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage) {
   CT::string color;
   void *sourceData;
 
@@ -50,10 +88,10 @@ void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, C
   settings.width = drawImage->Geo->dWidth;
   settings.height = drawImage->Geo->dHeight;
 
-  settings.dataField = new float[settings.width * settings.height];
+  settings.dataField = new double[settings.width * settings.height];
   for (int y = 0; y < settings.height; y++) {
     for (int x = 0; x < settings.width; x++) {
-      settings.dataField[x + y * settings.width] = (float)settings.dfNodataValue;
+      settings.dataField[x + y * settings.width] = (double)settings.dfNodataValue;
     }
   }
 
@@ -103,8 +141,8 @@ void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, C
 
   for (int y = 0; y < (int)settings.height; y = y + 1) {
     for (int x = 0; x < (int)settings.width; x = x + 1) {
-      float val = settings.dataField[x + y * settings.width];
-      if (val != (float)settings.dfNodataValue && val == val) {
+      double val = settings.dataField[x + y * settings.width];
+      if (val != (double)settings.dfNodataValue && val == val) {
         if (styleConfiguration->legendLog != 0) val = log10(val + .000001) / log10(styleConfiguration->legendLog);
         val *= styleConfiguration->legendScale;
         val += styleConfiguration->legendOffset;
@@ -137,57 +175,67 @@ template <class T> void hillShadedDrawFunction(int x, int y, T val, void *_setti
       if (val < drawSettings->legendLowerRange || val > drawSettings->legendUpperRange) isNodata = true;
   if (!isNodata) {
     T *sourceData = (T *)genericDataWarper->warperState.sourceData;
-    size_t sourceDataPX = genericDataWarper->warperState.sourceDataPX;
-    size_t sourceDataPY = genericDataWarper->warperState.sourceDataPY;
-    size_t sourceDataWidth = genericDataWarper->warperState.sourceDataWidth;
-    size_t sourceDataHeight = genericDataWarper->warperState.sourceDataHeight;
+    int sourceDataPX = genericDataWarper->warperState.sourceDataPX;
+    int sourceDataPY = genericDataWarper->warperState.sourceDataPY;
+    int sourceDataWidth = genericDataWarper->warperState.sourceDataWidth;
+    int sourceDataHeight = genericDataWarper->warperState.sourceDataHeight;
 
     if (sourceDataPY > sourceDataHeight - 1) return;
     if (sourceDataPX > sourceDataWidth - 1) return;
 
-    float values[3][3] = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
+    double values[3][3] = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
 
+    T *sd = (T *)sourceData;
     /* TODO make window size configurable */
     for (int wy = -1; wy < 2; wy++) {
+      int y0 = (sourceDataPY + 0 + wy) % sourceDataHeight;
+      int y1 = (sourceDataPY + 1 + wy) % sourceDataHeight;
+      int y2 = (sourceDataPY + 2 + wy) % sourceDataHeight;
       for (int wx = -1; wx < 2; wx++) {
-        values[0][0] += (float)((T *)sourceData)[mfast_mod(sourceDataPX + 0 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 0, sourceDataHeight) * sourceDataWidth];
-        values[1][0] += (float)((T *)sourceData)[mfast_mod(sourceDataPX + 1 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 0, sourceDataHeight) * sourceDataWidth];
-        values[2][0] += (float)((T *)sourceData)[mfast_mod(sourceDataPX + 2 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 0, sourceDataHeight) * sourceDataWidth];
-        values[0][1] += (float)((T *)sourceData)[mfast_mod(sourceDataPX + 0 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 1, sourceDataHeight) * sourceDataWidth];
-        values[1][1] += (float)((T *)sourceData)[mfast_mod(sourceDataPX + 1 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 1, sourceDataHeight) * sourceDataWidth];
-        values[2][1] += (float)((T *)sourceData)[mfast_mod(sourceDataPX + 2 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 1, sourceDataHeight) * sourceDataWidth];
-        values[0][2] += (float)((T *)sourceData)[mfast_mod(sourceDataPX + 0 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 2, sourceDataHeight) * sourceDataWidth];
-        values[1][2] += (float)((T *)sourceData)[mfast_mod(sourceDataPX + 1 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 2, sourceDataHeight) * sourceDataWidth];
-        values[2][2] += (float)((T *)sourceData)[mfast_mod(sourceDataPX + 2 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 2, sourceDataHeight) * sourceDataWidth];
+        int x0 = (sourceDataPX + 0 + wx) % sourceDataWidth;
+        int x1 = (sourceDataPX + 1 + wx) % sourceDataWidth;
+        int x2 = (sourceDataPX + 2 + wx) % sourceDataWidth;
+
+        values[0][0] += sd[x0 + y0 * sourceDataWidth];
+        values[1][0] += sd[x1 + y0 * sourceDataWidth];
+        values[2][0] += sd[x2 + y0 * sourceDataWidth];
+
+        values[0][1] += sd[x0 + y1 * sourceDataWidth];
+        values[1][1] += sd[x1 + y1 * sourceDataWidth];
+        values[2][1] += sd[x2 + y1 * sourceDataWidth];
+
+        values[0][2] += sd[x0 + y2 * sourceDataWidth];
+        values[1][2] += sd[x1 + y2 * sourceDataWidth];
+        values[2][2] += sd[x2 + y2 * sourceDataWidth];
       }
     }
 
-    Vector v00 = Vector((float)(sourceDataPX + 0), (float)sourceDataPY + 0, values[0][0]);
-    Vector v10 = Vector((float)(sourceDataPX + 1), (float)sourceDataPY + 0, values[1][0]);
-    Vector v20 = Vector((float)(sourceDataPX + 2), (float)sourceDataPY + 0, values[2][0]);
-    Vector v01 = Vector((float)(sourceDataPX + 0), (float)sourceDataPY + 1, values[0][1]);
-    Vector v11 = Vector((float)(sourceDataPX + 1), (float)sourceDataPY + 1, values[1][1]);
-    Vector v21 = Vector((float)(sourceDataPX + 2), (float)sourceDataPY + 1, values[2][1]);
-    Vector v02 = Vector((float)(sourceDataPX + 0), (float)sourceDataPY + 2, values[0][2]);
-    Vector v12 = Vector((float)(sourceDataPX + 1), (float)sourceDataPY + 2, values[1][2]);
+    double sdpx = sourceDataPX;
+    double sdpy = sourceDataPY;
+    f8vector v00 = {.x = sdpx + 0, .y = sdpy + 0, .z = values[0][0]};
+    f8vector v10 = {.x = sdpx + 1, .y = sdpy + 0, .z = values[1][0]};
+    f8vector v20 = {.x = sdpx + 2, .y = sdpy + 0, .z = values[2][0]};
+    f8vector v01 = {.x = sdpx + 0, .y = sdpy + 1, .z = values[0][1]};
+    f8vector v11 = {.x = sdpx + 1, .y = sdpy + 1, .z = values[1][1]};
+    f8vector v21 = {.x = sdpx + 2, .y = sdpy + 1, .z = values[2][1]};
+    f8vector v02 = {.x = sdpx + 0, .y = sdpy + 2, .z = values[0][2]};
+    f8vector v12 = {.x = sdpx + 1, .y = sdpy + 2, .z = values[1][2]};
 
-    if (x >= 0 && y >= 0 && x < (int)drawSettings->width && y < (int)drawSettings->height) {
-      Vector normal00 = CrossProduct(v10 - v00, v01 - v00).normalize();
-      Vector normal10 = CrossProduct(v20 - v10, v11 - v10).normalize();
-      Vector normal01 = CrossProduct(v11 - v01, v02 - v01).normalize();
-      Vector normal11 = CrossProduct(v21 - v11, v12 - v11).normalize();
-      Vector lightSource = (Vector(-1, -1, -1)).normalize(); /* TODO make light source configurable */
-      float c00 = DotProduct(lightSource, normal00);
-      float c10 = DotProduct(lightSource, normal10);
-      float c01 = DotProduct(lightSource, normal01);
-      float c11 = DotProduct(lightSource, normal11);
-      float dx = genericDataWarper->warperState.tileDx;
-      float dy = genericDataWarper->warperState.tileDy;
-      float gx1 = (1 - dx) * c00 + dx * c10;
-      float gx2 = (1 - dx) * c01 + dx * c11;
-      float bilValue = (1 - dy) * gx1 + dy * gx2;
-      drawSettings->dataField[x + y * drawSettings->width] = (bilValue + 1) / 1.816486;
-    }
+    f8vector normal00 = cross(v10 - v00, v01 - v00).norm();
+    f8vector normal10 = cross(v20 - v10, v11 - v10).norm();
+    f8vector normal01 = cross(v11 - v01, v02 - v01).norm();
+    f8vector normal11 = cross(v21 - v11, v12 - v11).norm();
+
+    double c00 = dot(lightSource, normal00);
+    double c10 = dot(lightSource, normal10);
+    double c01 = dot(lightSource, normal01);
+    double c11 = dot(lightSource, normal11);
+    double dx = genericDataWarper->warperState.tileDx;
+    double dy = genericDataWarper->warperState.tileDy;
+    double gx1 = (1 - dx) * c00 + dx * c10;
+    double gx2 = (1 - dx) * c01 + dx * c11;
+    double bilValue = (1 - dy) * gx1 + dy * gx2;
+    drawSettings->dataField[x + y * drawSettings->width] = (bilValue + 1) / 1.816486;
   }
 };
 

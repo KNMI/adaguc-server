@@ -91,9 +91,9 @@ public:
    */
   class Date {
   public:
-    int year, month, day, hour, minute;
-    double second;
-    double offset;
+    int year = 0, month = 0, day = 0, hour = 0, minute = 0;
+    double second = 0;
+    double offset = 0;
   };
 
 private:

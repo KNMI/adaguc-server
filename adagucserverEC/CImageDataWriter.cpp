@@ -3036,8 +3036,8 @@ int CImageDataWriter::end() {
         // CDBDebug("%d) %s in %s",j,plotObject->name.c_str(),plotObject->units.c_str());
 
         // Find min and max dates
-        double minDate;
-        double maxDate;
+        double minDate = 0;
+        double maxDate = 0;
         try {
 
           minDate = ctime->ISOStringToDate(plotObject->elements[0]->cdfDims.getDimensionValue("time").c_str()).offset;
