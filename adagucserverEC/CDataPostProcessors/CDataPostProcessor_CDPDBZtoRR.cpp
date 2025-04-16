@@ -48,16 +48,30 @@ int CDPDBZtoRR::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dat
   }
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
     size_t l = (size_t)dataSource->dHeight * (size_t)dataSource->dWidth;
-    float *src = (float *)dataSource->getDataObject(0)->cdfVariable->data;
-    float noDataValue = dataSource->getDataObject(0)->dfNodataValue;
-    for (size_t cnt = 0; cnt < l; cnt++) {
-      float dbZ = *src;
-      if (dbZ == dbZ) {
-        if (dbZ != noDataValue) {
-          *src = getRR(dbZ);
+    if (dataSource->getDataObject(0)->cdfVariable->currentType == CDF_FLOAT) {
+      float *src = (float *)dataSource->getDataObject(0)->cdfVariable->data;
+      float noDataValue = dataSource->getDataObject(0)->dfNodataValue;
+      for (size_t cnt = 0; cnt < l; cnt++) {
+        float dbZ = *src;
+        if (dbZ == dbZ) {
+          if (dbZ != noDataValue) {
+            *src = getRR(dbZ);
+          }
         }
+        src++;
       }
-      src++;
+    } else {
+      double *src = (double *)dataSource->getDataObject(0)->cdfVariable->data;
+      double noDataValue = dataSource->getDataObject(0)->dfNodataValue;
+      for (size_t cnt = 0; cnt < l; cnt++) {
+        double dbZ = *src;
+        if (dbZ == dbZ) {
+          if (dbZ != noDataValue) {
+            *src = getRR(dbZ);
+          }
+        }
+        src++;
+      }
     }
   }
   return 0;
