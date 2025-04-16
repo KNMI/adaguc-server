@@ -72,12 +72,7 @@ int gdwDrawTriangle(double *_xP, double *_yP, T value, int W, int H, void *setti
   gdwfloat yv2 = yP[1];
   gdwfloat yv3 = yP[2];
 
-  gdwfloat vX1 = aOrB ? 1 : 0;
-  gdwfloat vY1 = aOrB ? 0 : 1;
-  gdwfloat vX2 = aOrB ? 0 : 1;
-  gdwfloat vY2 = 1;
-  gdwfloat vX3 = aOrB ? 0 : 1;
-  gdwfloat vY3 = 0;
+  bool bOrA = !aOrB;
 
   gdwfloat screenW = W;
   gdwfloat screenH = H;
@@ -91,7 +86,7 @@ int gdwDrawTriangle(double *_xP, double *_yP, T value, int W, int H, void *setti
 
   // clip startY and endY to the screen
   gdwfloat sy = Y1 < 0 ? 0 : Y1;
-  gdwfloat ey = Y3 > screenH - 1 ? screenH - 1 : Y3;
+  gdwfloat ey = Y3 > screenH ? screenH : Y3;
 
   /* https://codeplea.com/triangular-interpolation */
 
@@ -115,8 +110,8 @@ int gdwDrawTriangle(double *_xP, double *_yP, T value, int W, int H, void *setti
       gdwfloat WV1 = ((yv2 - yv3) * (x - xv3) + (xv3 - xv2) * (y - yv3)) / dn;
       gdwfloat WV2 = ((yv3 - yv1) * (x - xv3) + (xv1 - xv3) * (y - yv3)) / dn;
       gdwfloat WV3 = 1 - WV1 - WV2;
-      g->warperState.tileDx = WV1 * vX1 + WV2 * vX2 + WV3 * vX3;
-      g->warperState.tileDy = WV1 * vY1 + WV2 * vY2 + WV3 * vY3;
+      g->warperState.tileDx = WV1 * aOrB + WV2 * bOrA + WV3 * bOrA;
+      g->warperState.tileDy = WV1 * bOrA + WV2 * 1 + WV3 * 0;
       drawFunction(x, y, value, settings, genericDataWarper);
     }
   }
