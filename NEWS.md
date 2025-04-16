@@ -1,3 +1,7 @@
+**Version 3.0.1. 2025-04-11**
+
+- Fixed bug where windspeed was not calculated according to u and v components when using style barbshaded or vectorshaded
+
 **Version 3.0.0. 2025-04-07**
 - EDR: /cube call (based on WCS)
 - EDR: /instances call using reference times
