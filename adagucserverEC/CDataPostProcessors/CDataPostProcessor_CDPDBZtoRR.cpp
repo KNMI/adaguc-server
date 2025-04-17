@@ -38,7 +38,7 @@ CDPDBZtoRR::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSou
 }
 
 int CDPDBZtoRR::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode, double *data, size_t numItems) { //
-  return execute(proc, dataSource, mode, data, numItems);                                                                           //
+  return execute<double>(proc, dataSource, mode, data, numItems);                                                                   //
 }
 
 int CDPDBZtoRR::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
