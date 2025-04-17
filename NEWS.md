@@ -1,3 +1,7 @@
+**Version 3.0.2. 2025-04-17**
+
+- Fixed bug where dbz to rr postprocessor did not handle doubles well
+
 **Version 3.0.1. 2025-04-11**
 
 - Fixed bug where windspeed was not calculated according to u and v components when using style barbshaded or vectorshaded
