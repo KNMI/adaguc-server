@@ -14,8 +14,9 @@ int CDPDBZtoRR::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
 }
 
-template <class T, typename std::enable_if<std::is_same<T, double>::value || std::is_same<T, float>::value>::type * = nullptr>
-int CDPDBZtoRR::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode, T *data, size_t numItems) {
+template <class T>
+typename std::enable_if<std::is_same<T, double>::value || std::is_same<T, float>::value, int>::type CDPDBZtoRR::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode,
+                                                                                                                        T *data, size_t numItems) {
   CDBDebug("CDPDBZtoRR");
   if (isApplicable(proc, dataSource, mode) == false) {
     return -1;

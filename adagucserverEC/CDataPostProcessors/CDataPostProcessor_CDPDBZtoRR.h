@@ -11,8 +11,9 @@
 class CDPDBZtoRR : public CDPPInterface {
 private:
   DEF_ERRORFUNCTION();
-  template <class T, typename std::enable_if<std::is_same<T, double>::value || std::is_same<T, float>::value>::type * = nullptr>
-  int execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode, T *data, size_t numItems);
+  template <class T>
+  typename std::enable_if<std::is_same<T, double>::value || std::is_same<T, float>::value, int>::type execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode, T *data,
+                                                                                                              size_t numItems);
 
 public:
   virtual const char *getId();
