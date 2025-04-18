@@ -30,7 +30,7 @@
 #include <iostream>
 #include "CDebugger.h"
 #include "CTypes.h"
-#include "CColor.h"
+#include "Types/CColor.h"
 #include "Definitions.h"
 #include "CStopWatch.h"
 #include <stdio.h>
@@ -47,7 +47,7 @@
 #include "gdfonts.h"
 #include "gdfontmb.h"
 #include "CCairoPlotter.h"
-#include "CColor.h"
+#include "Types/CColor.h"
 #include "CRectangleText.h"
 
 float convertValueToClass(float val, float interval);
@@ -107,7 +107,7 @@ private:
   unsigned char backgroundAlpha;
   // bool _bAntiAliased;
   int brect[8];
-  CCairoPlotter *cairo;
+
   const char *TTFFontLocation;
   float TTFFontSize;
   // char *fontConfig ;
@@ -125,9 +125,9 @@ private:
   void _drawBarbGd(int x, int y, double direction, double strength, CColor color, float lineWidth, bool toKnots, bool flip);
 
 public:
+  CCairoPlotter *cairo;
   float *rField, *gField, *bField;
   int *numField;
-  bool trueColorAVG_RGBA;
   int getRenderer();
   int _colors[256];
   gdImagePtr image;
@@ -268,4 +268,5 @@ public:
   void setRenderer(int renderer);
 };
 
+float convertValueToClass(float val, float interval);
 #endif

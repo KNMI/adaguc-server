@@ -28,7 +28,7 @@
 #include "CTypes.h"
 
 #include "Definitions.h"
-#include "CColor.h"
+#include "Types/CColor.h"
 
 class CRectangleText {
 public:

@@ -25,9 +25,12 @@
 
 #ifndef CGeoParams_H
 #define CGeoParams_H
+
 #include "CTypes.h"
 #include <math.h>
 #include <map>
+class CDataSource;
+
 // static float  NegativeNaN = log(-1) ;
 
 class CKeyValue {
@@ -64,6 +67,7 @@ public:
     dfCellSizeX = 0;
     dfCellSizeY = 0;
   }
+  CGeoParams(CDataSource *dataSource);
   int copy(CGeoParams *_Geo) {
     if (_Geo == NULL) return 1;
     dWidth = _Geo->dWidth;
