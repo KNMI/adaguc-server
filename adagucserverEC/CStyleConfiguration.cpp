@@ -19,15 +19,9 @@ RenderMethod getRenderMethodFromString(const char *_renderMethodString) {
   if (renderMethodString.indexOf("vector") != -1) renderMethod |= RM_VECTOR;
   if (renderMethodString.indexOf("barb") != -1) renderMethod |= RM_BARB;
   if (renderMethodString.indexOf("thin") != -1) renderMethod |= RM_THIN;
-  if (renderMethodString.indexOf("avg_rgba") != -1) renderMethod |= RM_AVG_RGBA;
   if (renderMethodString.indexOf("rgba") != -1) renderMethod |= RM_RGBA;
   if (renderMethodString.indexOf("stippling") != -1) renderMethod |= RM_STIPPLING;
   if (renderMethodString.indexOf("polyline") != -1) renderMethod |= RM_POLYLINE;
-
-  /* When RM_AVG_RGBA is requested, disable RM_RGBA, otherwise two RGBA rendereres come into action */
-  if (renderMethod & RM_AVG_RGBA) {
-    renderMethod &= ~RM_RGBA;
-  }
 
   return renderMethod;
 }
@@ -48,7 +42,6 @@ CT::string getRenderMethodAsString(RenderMethod renderMethod) {
   if (renderMethod & RM_BARB) renderMethodString.concat("barb");
   if (renderMethod & RM_THIN) renderMethodString.concat("thin");
   if (renderMethod & RM_RGBA) renderMethodString.concat("rgba");
-  if (renderMethod & RM_AVG_RGBA) renderMethodString.concat("avg_rgba");
   if (renderMethod & RM_STIPPLING) renderMethodString.concat("stippling");
   if (renderMethod & RM_POLYLINE) renderMethodString.concat("polyline");
   if (renderMethod & RM_POINT_LINEARINTERPOLATION) renderMethodString.concat("linearinterpolation");

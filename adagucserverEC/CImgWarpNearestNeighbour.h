@@ -256,35 +256,14 @@ private:
     }
   }
 
-  template <class T> static void drawFunction(int x, int y, T val, void *_settings, void *) {
+  template <class T> static void drawFunction(int x, int y, T val, void *_settings) {
     /*
       Please note that this is part of the precise renderer. Changes to this routine should also be implemented in:
 
       adagucserverEC/CAreaMapper.cpp, myDrawRawTile
     */
-    CDrawFunctionSettings *settings = (CDrawFunctionSettings *)_settings;
-    if (settings->drawImage->trueColorAVG_RGBA == false) {
-      /* Using the precise renderer with shadeinterval */
-
-      /* Using the precise renderer with a legend */
-      setPixelInDrawImage(x, y, val, settings);
-    } else {
-      if (x >= 0 && y >= 0 && x < settings->drawImage->Geo->dWidth && y < settings->drawImage->Geo->dHeight) {
-        size_t p = x + y * settings->drawImage->Geo->dWidth;
-        uint v = val;
-        unsigned char a = ((unsigned char)(v >> 24));
-        if (a == 255) {
-          settings->drawImage->numField[p]++;
-          unsigned char r = ((unsigned char)v);
-          unsigned char g = ((unsigned char)(v >> 8));
-          unsigned char b = ((unsigned char)(v >> 16));
-          settings->drawImage->rField[p] += r;
-          settings->drawImage->gField[p] += g;
-          settings->drawImage->bField[p] += b;
-          settings->drawImage->setPixelTrueColorOverWrite(x, y, r, g, b, 255);
-        }
-      }
-    }
+    GDWDrawFunctionSettings *settings = (GDWDrawFunctionSettings *)_settings;
+    setPixelInDrawImage(x, y, val, settings);
   }
 
   pthread_mutex_t CImgWarpNearestNeighbour_render_lock;
@@ -370,9 +349,7 @@ private:
     if (renderSettings == 0 && dataSource->dWidth * dataSource->dHeight < 700 * 700) {
       usePrecise = true;
     }
-    if (styleConfiguration->renderMethod & RM_AVG_RGBA) {
-      usePrecise = true;
-    }
+
     if (dataSource->cfgLayer->TileSettings.size() == 1) {
       usePrecise = false;
     }
@@ -383,28 +360,7 @@ private:
       usePrecise = true;
     }
     if (usePrecise) {
-      CDrawFunctionSettings settings = getDrawFunctionSettings(dataSource, drawImage, styleConfiguration);
-
-      if (styleConfiguration->renderMethod & RM_AVG_RGBA) {
-
-        pthread_mutex_lock(&CImgWarpNearestNeighbour_render_lock);
-        settings.drawImage->trueColorAVG_RGBA = true;
-        size_t size = settings.drawImage->Geo->dWidth * settings.drawImage->Geo->dHeight;
-        if (settings.drawImage->rField == NULL) {
-          CDBDebug("Allocating fields");
-          settings.drawImage->rField = new float[size];
-          settings.drawImage->gField = new float[size];
-          settings.drawImage->bField = new float[size];
-          settings.drawImage->numField = new int[size];
-          for (size_t j = 0; j < size; j++) {
-            settings.drawImage->rField[j] = 0;
-            settings.drawImage->gField[j] = 0;
-            settings.drawImage->bField[j] = 0;
-            settings.drawImage->numField[j] = 0;
-          }
-        }
-        pthread_mutex_unlock(&CImgWarpNearestNeighbour_render_lock);
-      }
+      GDWDrawFunctionSettings settings = getDrawFunctionSettings(dataSource, drawImage, styleConfiguration);
 
       CDFType dataType = dataSource->getDataObject(0)->cdfVariable->getType();
       void *sourceData = dataSource->getDataObject(0)->cdfVariable->data;

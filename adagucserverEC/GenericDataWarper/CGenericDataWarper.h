@@ -10,27 +10,40 @@
 #include "CDebugger.h"
 #include "CGenericDataWarperTools.h"
 
+struct GDWWarperState;
+typedef void (*FPSetValueInDestination)(GDWWarperState *drawFunctionSettings);
+typedef double (*FPGetValueFromSource)(int, int, GDWWarperState *);
+
 struct GDWWarperState {
+  CDFType sourceDataType;
   void *sourceData;
-  float *destinationGrid;
   int sourceDataPX, sourceDataPY, sourceDataWidth, sourceDataHeight;
   double tileDx, tileDy;
+
+  FPSetValueInDestination setValueInDestinationFunction;
+  FPGetValueFromSource getValueFromSourceFunction;
+
+  double dfNodataValue;
+  bool hasNodataValue;
+  bool useHalfCellOffset = false;
+  int destDataWidth, destDataHeight, destX, destY; // TODO
+  CDFType destinationDataType;
+  void *destinationGrid = nullptr; // TODO
 };
+template <typename T> int warpT(CImageWarper *warper, void *_sourceData, CDFType sourceDataType, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, GDWWarperState *drawFunctionSetting);
+
+int warp(CImageWarper *warper, void *_sourceData, CDFType sourceDataType, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, GDWWarperState *drawFunctionSetting);
 
 class CGenericDataWarper {
 private:
   DEF_ERRORFUNCTION();
 
 public:
-  GDWWarperState warperState;
-  bool useHalfCellOffset;
-  CGenericDataWarper() {
-    useHalfCellOffset = false;
-    warperState.destinationGrid = nullptr;
-  }
-
   template <typename T>
   int render(CImageWarper *warper, void *_sourceData, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, void *drawFunctionSettings,
-             void (*drawFunction)(int, int, T, void *drawFunctionSettings, void *genericDataWarper));
+
+             void (*drawFunction)(int, int, T, void *drawFunctionSettings));
+
+  // int renderI(CImageWarper *warper, void *_sourceData, CDFType sourceDataType, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, void *drawFunctionSettings, void *drawFunction);
 };
 #endif

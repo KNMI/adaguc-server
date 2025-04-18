@@ -1495,7 +1495,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
   /**
    * Use fast nearest neighbourrenderer
    */
-  if (renderMethod & RM_NEAREST || renderMethod & RM_AVG_RGBA || renderMethod & RM_POINT_LINEARINTERPOLATION) {
+  if (renderMethod & RM_NEAREST || renderMethod & RM_POINT_LINEARINTERPOLATION) {
 #ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("Using CImgWarpNearestNeighbour");
 #endif

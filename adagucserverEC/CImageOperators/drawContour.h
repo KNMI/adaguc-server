@@ -23,6 +23,6 @@ const int ydirOuter[16] = {2, 2, 2, 2, 2, 1, 0, -1, -2, -2, -2, -2, -2, -1, 0, 1
 
 bool IsTextTooClose(std::vector<Point> *textLocations, int x, int y);
 
-void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawImage);
+void drawContour(double *sourceGrid, CDataSource *dataSource, CDrawImage *drawImage);
 
 #endif

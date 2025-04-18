@@ -1,8 +1,8 @@
 #include "CDrawFunction.h"
 #include "CImageOperators/smoothRasterField.h"
 
-CDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration) {
-  CDrawFunctionSettings settings;
+GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration) {
+  GDWDrawFunctionSettings settings;
 
   settings.dfNodataValue = dataSource->getDataObject(0)->dfNodataValue;
   settings.legendValueRange = styleConfiguration->hasLegendValueRange;
@@ -70,7 +70,7 @@ CDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawImag
         settings.intervals.reserve(numShadeDefs);
         for (int j = 0; j < numShadeDefs; j++) {
           CServerConfig::XMLE_ShadeInterval *shadeInterVal = ((styleConfiguration->shadeIntervals)[j]);
-          settings.intervals.push_back(CDrawFunctionSettings::Interval(shadeInterVal->attr.min.toFloat(), shadeInterVal->attr.max.toFloat(), CColor(shadeInterVal->attr.fillcolor.c_str())));
+          settings.intervals.push_back(Interval(shadeInterVal->attr.min.toFloat(), shadeInterVal->attr.max.toFloat(), CColor(shadeInterVal->attr.fillcolor.c_str())));
           /* Check for bgcolor */
           if (j == 0) {
             if (shadeInterVal->attr.bgcolor.empty() == false) {

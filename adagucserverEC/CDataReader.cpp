@@ -856,7 +856,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
   // Use autoscale of legendcolors when the legendscale factor has been set to zero.
   if (styleConfiguration != NULL) {
     if (dataSource->stretchMinMaxDone == false) {
-      if (styleConfiguration->legendScale == 0.0f && !(styleConfiguration->renderMethod & RM_RGBA) && !(styleConfiguration->renderMethod & RM_AVG_RGBA))
+      if (styleConfiguration->legendScale == 0.0f && !(styleConfiguration->renderMethod & RM_RGBA))
         dataSource->stretchMinMax = true;
       else
         dataSource->stretchMinMax = false;

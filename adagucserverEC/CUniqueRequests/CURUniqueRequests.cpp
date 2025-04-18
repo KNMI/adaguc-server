@@ -52,7 +52,7 @@ void CURUniqueRequests::sortAndAggregate() {
       int currentDimIndex = -1;
       int dimindex;
 
-      int startDimIndex;
+      int startDimIndex = 0;
       std::vector<std::string> dimValues;
       map_type_dimvalindex dimValuesMap = diminfomapiterator->second.dimValuesMap;
       for (it_type_dimvalindex dimvalindexmapiterator = dimValuesMap.begin(); dimvalindexmapiterator != dimValuesMap.end(); dimvalindexmapiterator++) {

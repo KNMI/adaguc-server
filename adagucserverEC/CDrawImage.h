@@ -128,7 +128,6 @@ public:
   CCairoPlotter *cairo;
   float *rField, *gField, *bField;
   int *numField;
-  bool trueColorAVG_RGBA;
   int getRenderer();
   int _colors[256];
   gdImagePtr image;

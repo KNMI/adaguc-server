@@ -30,7 +30,6 @@
 #include "GenericDataWarper/CGenericDataWarper.h"
 #include "utils.h"
 
-template <class T> void hillShadedDrawFunction(int x, int y, T val, void *_settings, void *_warper);
 class CImgWarpHillShaded : public CImageWarperRenderInterface {
 private:
   DEF_ERRORFUNCTION();

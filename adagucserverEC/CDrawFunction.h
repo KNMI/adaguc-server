@@ -8,48 +8,11 @@
 #include "CDrawImage.h"
 #include "GenericDataWarper/CGenericDataWarper.h"
 #include "CStyleConfiguration.h"
+#include "GenericDataWarper/gdwDrawFunction.h"
 
-enum DrawInImage { DrawInImageNone, DrawInImageNearest, DrawInImageBilinear };
-enum DrawInDataGrid { DrawInDataGridNone, DrawInDataGridNearest, DrawInDataGridBilinear };
-enum LegendMode { LegendModeContinuous, LegendModeDiscrete };
+GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration);
 
-class CDrawFunctionSettings {
-public:
-  class Interval {
-  public:
-    float min;
-    float max;
-    CColor color;
-    Interval(float min, float max, CColor color) {
-      this->min = min;
-      this->max = max;
-      this->color = color;
-    }
-  };
-  bool isUsingShadeIntervals = false;
-  std::vector<Interval> intervals;
-  CColor bgColor;
-  bool bgColorDefined = false;
-  double dfNodataValue;
-  double legendValueRange;
-  double legendLowerRange;
-  double legendUpperRange;
-  double shadeInterval = 0;
-  bool hasNodataValue;
-  float legendLog;
-  float legendLogAsLog;
-  float legendScale;
-  float legendOffset;
-  CDrawImage *drawImage;
-  DrawInImage drawInImage = DrawInImageNone;
-  DrawInDataGrid drawInDataGrid = DrawInDataGridNone;
-  float *smoothingDistanceMatrix = nullptr;
-  int smoothingFiter = 0;
-};
-
-CDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration);
-
-template <class T> void setPixelInDrawImage(int x, int y, T val, CDrawFunctionSettings *settings) {
+template <class T> void setPixelInDrawImage(int x, int y, T val, GDWDrawFunctionSettings *settings) {
   bool isNodata = false;
 
   if (settings->hasNodataValue) {

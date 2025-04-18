@@ -29,7 +29,6 @@
 
 #include "CImageWarperRenderInterface.h"
 #include "GenericDataWarper/CGenericDataWarper.h"
-#include "CDrawFunction.h"
 #include "CImageOperators/smoothRasterField.h"
 
 class CImgWarpGeneric : public CImageWarperRenderInterface {

@@ -64,14 +64,15 @@ class TestWMSVolScan(unittest.TestCase):
                         wms_arg, env=self.env
                     )
                     AdagucTestTools().writetofile(
-                        self.testresultspath + f"{file_type}_{filename}",
+                        self.expectedoutputsspath + f"{file_type}_{filename}",
                         data.getvalue(),
                     )
                     self.assertEqual(status, 0)
+                    
                     self.assertEqual(
                         data.getvalue(),
                         AdagucTestTools().readfromfile(
-                            self.expectedoutputsspath + filename
+                            self.expectedoutputsspath + f"{file_type}_{filename}"
                         ),
-                        self.expectedoutputsspath + filename,
+                        self.expectedoutputsspath + f"{file_type}_{filename}",
                     )

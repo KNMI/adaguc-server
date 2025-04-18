@@ -2,7 +2,7 @@
 #include "CRequest.h"
 #include "GenericDataWarper/CGenericDataWarper.h"
 #include <utils/LayerUtils.h>
-
+#include "./GenericDataWarper/CGenericDataWarper.h"
 /************************/
 /*      CDPPWFP  */
 /************************/
@@ -34,6 +34,82 @@ CDataSource *CDPPWFP::getDataSource(CDataSource *dataSource, CT::string baseLaye
   tempDataSource->setCFGLayer(dataSource->srvParams, dataSource->srvParams->configObj->Configuration[0], dataSource->srvParams->cfg->Layer[additionalLayerNo], baseLayerName.c_str(), 0);
   return tempDataSource;
 }
+
+struct Settings : GDWWarperState {
+
+  float *WindSpeedWindparksOff;        // Grid to write TO, same grid as dest grid
+  float *WindSpeedWindparksOnImproved; // Grid to write TO, same grid as dest grid
+  float *windSpeedDifference;          // Grid to write TO, same grid as dest grid
+  float *windSectors;                  // Grid with found windSectors
+  float *destGridWindSpeed;
+  float *destGridWindDirection;
+  CDF::Variable *windSpeedDifferenceVariable; // Lookup table / source grid with the pre-calculated wind secors
+  CDF::Variable *windSectorVariable;          // Lookup table / source grid with the different sectors/directions
+  size_t dimWindSectorQuantile;               // Quantile dimension length in wind sector lookup table
+  size_t dimWindSectorHeightLevel;            // Height dimension length in wind sector lookup table
+  size_t dimWindSectorY;                      // Y dimension length  in wind sector lookup table
+  size_t dimWindSectorX;                      // X dimension length in wind sector lookup table
+};
+
+void drawFunction(GDWWarperState *_settings) {
+  Settings *settings = (Settings *)_settings;
+  if (settings->destX < 0 || settings->destY < 0 || settings->destX > settings->destDataWidth || settings->destY > settings->destDataHeight) return;
+
+  // double val = settings->getValue(settings->sourceDataPX, settings->sourceDataPY, settings);
+  int x = settings->destX;
+  int y = settings->destY;
+  if (x >= 0 && y >= 0 && x < (int)settings->destDataWidth && y < (int)settings->destDataHeight) {
+    float windSpeed = settings->destGridWindSpeed[x + y * settings->destDataWidth];
+    float windDir = settings->destGridWindDirection[x + y * settings->destDataWidth];
+
+    // Determine the windsector dimension value based on the WINS50 winddirection grid value
+    int selectedS = -1;
+    for (size_t sectorIndex = 0; sectorIndex < settings->windSectorVariable->getSize(); sectorIndex++) {
+      int windSector = ((int *)settings->windSectorVariable->data)[sectorIndex] - 15; // TODO 15
+      int nexWindSector = windSector + 30;                                            // TODO 30
+      if (windDir >= windSector && windDir < nexWindSector) {
+        selectedS = sectorIndex;
+        break;
+      }
+    }
+    // If the sector was not found, set a NAN
+    if (selectedS == -1) {
+      ((float *)settings->WindSpeedWindparksOff)[x + y * settings->destDataWidth] = NAN;
+      return;
+    }
+
+    /* Now calculate the wind difference*/
+    size_t numX = settings->dimWindSectorX;
+    size_t numY = settings->dimWindSectorY;
+    size_t numZ = settings->dimWindSectorHeightLevel;
+    size_t numQ = settings->dimWindSectorQuantile;
+
+    size_t selectedQ = 1; // Second quantile, which is currently 0.95
+    size_t selectedH = 0; // Currently only the first (10 meter)
+    size_t selectedX = settings->sourceDataPX;
+    size_t selectedY = settings->sourceDataPY;
+    size_t gridLocationPointer = selectedX + selectedY * numX;
+    size_t windHeightPointer = selectedH * numY * numX;
+    size_t windQuantilePointer = selectedQ * numZ * numY * numX;
+    size_t windSectorPointer = selectedS * numQ * numZ * numY * numX;
+
+    CDF::Variable *windSpeedDifferenceVariable = settings->windSpeedDifferenceVariable;
+
+    float windSpeedDifference = ((float *)windSpeedDifferenceVariable->data)[gridLocationPointer + windHeightPointer + windQuantilePointer + windSectorPointer];
+    float MSTOKTS = 2;
+    float correctionFactor = 1.15;
+
+    if (windSpeedDifference < 1) windSpeedDifference = 0;
+
+    float windSpeedDifferenceKTS = windSpeedDifference * MSTOKTS;
+    float windSpeedDifferenceMinKTS = windSpeedDifference * MSTOKTS * correctionFactor;
+    ((float *)settings->windSectors)[x + y * settings->destDataWidth] = selectedS;
+    ((float *)settings->windSpeedDifference)[x + y * settings->destDataWidth] = windSpeedDifferenceKTS;
+
+    ((float *)settings->WindSpeedWindparksOff)[x + y * settings->destDataWidth] = windSpeed + windSpeedDifferenceKTS;
+    ((float *)settings->WindSpeedWindparksOnImproved)[x + y * settings->destDataWidth] = windSpeed - windSpeedDifferenceMinKTS;
+  }
+};
 
 CDF::Variable *CDPPWFP::cloneVariable(CDF::Variable *varToClone, const char *name, int size) {
   CDF::Variable *var = new CDF::Variable(name, CDF_FLOAT, NULL, 0, false);
@@ -126,8 +202,8 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
     CDF::fill(WindSpeedWindparksOff->data, WindSpeedWindparksOff->getType(), -1, (size_t)dataSource->dHeight * (size_t)dataSource->dWidth);
 
     Settings settings;
-    settings.width = dataSource->dWidth;
-    settings.height = dataSource->dHeight;
+    settings.sourceDataWidth = dataSource->dWidth;
+    settings.sourceDataHeight = dataSource->dHeight;
     settings.WindSpeedWindparksOff = (float *)dataSource->getDataObject(0)->cdfVariable->data;        // Array / grid to write TO
     settings.WindSpeedWindparksOnImproved = (float *)dataSource->getDataObject(1)->cdfVariable->data; // Array / grid to write TO
     settings.windSpeedDifference = (float *)dataSource->getDataObject(2)->cdfVariable->data;          // Array / grid to write TO
@@ -168,73 +244,16 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
     destGeo.dfCellSizeY = dataSource->dfCellSizeY;
     destGeo.CRS = dataSource->nativeProj4;
 
-    CImageWarper warper;
+    CImageWarper imageWarper;
 
-    status = warper.initreproj(sourceGeo.CRS, &destGeo, &dataSource->srvParams->cfg->Projection);
+    status = imageWarper.initreproj(sourceGeo.CRS, &destGeo, &dataSource->srvParams->cfg->Projection);
     if (status != 0) {
       CDBError("Unable to initialize projection");
       return 1;
     }
-    CGenericDataWarper genericDataWarper;
-
-    genericDataWarper.render<float>(&warper, windSectorDataField, &sourceGeo, &destGeo, &settings, &drawFunction);
+    settings.setValueInDestinationFunction = &drawFunction;
+    warp(&imageWarper, windSectorDataField, CDF_FLOAT, &sourceGeo, &destGeo, &settings);
   }
 
   return 0;
 }
-
-void CDPPWFP::drawFunction(int x, int y, float, void *_settings, void *warperInstance) {
-  Settings *settings = (Settings *)_settings;
-  CGenericDataWarper *warper = (CGenericDataWarper *)warperInstance;
-  if (x >= 0 && y >= 0 && x < (int)settings->width && y < (int)settings->height) {
-    float windSpeed = settings->destGridWindSpeed[x + y * settings->width];
-    float windDir = settings->destGridWindDirection[x + y * settings->width];
-
-    // Determine the windsector dimension value based on the WINS50 winddirection grid value
-    int selectedS = -1;
-    for (size_t sectorIndex = 0; sectorIndex < settings->windSectorVariable->getSize(); sectorIndex++) {
-      int windSector = ((int *)settings->windSectorVariable->data)[sectorIndex] - 15; // TODO 15
-      int nexWindSector = windSector + 30;                                            // TODO 30
-      if (windDir >= windSector && windDir < nexWindSector) {
-        selectedS = sectorIndex;
-        break;
-      }
-    }
-    // If the sector was not found, set a NAN
-    if (selectedS == -1) {
-      ((float *)settings->WindSpeedWindparksOff)[x + y * settings->width] = NAN;
-      return;
-    }
-
-    /* Now calculate the wind difference*/
-    size_t numX = settings->dimWindSectorX;
-    size_t numY = settings->dimWindSectorY;
-    size_t numZ = settings->dimWindSectorHeightLevel;
-    size_t numQ = settings->dimWindSectorQuantile;
-
-    size_t selectedQ = 1; // Second quantile, which is currently 0.95
-    size_t selectedH = 0; // Currently only the first (10 meter)
-    size_t selectedX = warper->warperState.sourceDataPX;
-    size_t selectedY = warper->warperState.sourceDataPY;
-    size_t gridLocationPointer = selectedX + selectedY * numX;
-    size_t windHeightPointer = selectedH * numY * numX;
-    size_t windQuantilePointer = selectedQ * numZ * numY * numX;
-    size_t windSectorPointer = selectedS * numQ * numZ * numY * numX;
-
-    CDF::Variable *windSpeedDifferenceVariable = settings->windSpeedDifferenceVariable;
-
-    float windSpeedDifference = ((float *)windSpeedDifferenceVariable->data)[gridLocationPointer + windHeightPointer + windQuantilePointer + windSectorPointer];
-    float MSTOKTS = 2;
-    float correctionFactor = 1.15;
-
-    if (windSpeedDifference < 1) windSpeedDifference = 0;
-
-    float windSpeedDifferenceKTS = windSpeedDifference * MSTOKTS;
-    float windSpeedDifferenceMinKTS = windSpeedDifference * MSTOKTS * correctionFactor;
-    ((float *)settings->windSectors)[x + y * settings->width] = selectedS;
-    ((float *)settings->windSpeedDifference)[x + y * settings->width] = windSpeedDifferenceKTS;
-
-    ((float *)settings->WindSpeedWindparksOff)[x + y * settings->width] = windSpeed + windSpeedDifferenceKTS;
-    ((float *)settings->WindSpeedWindparksOnImproved)[x + y * settings->width] = windSpeed - windSpeedDifferenceMinKTS;
-  }
-};

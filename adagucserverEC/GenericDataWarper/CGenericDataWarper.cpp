@@ -26,12 +26,23 @@
 #include "CGenericDataWarper.h"
 #include "GenericDataWarper/gdwDrawTriangle.h"
 #include "GenericDataWarper/gdwFindPixelExtent.h"
-const char *CGenericDataWarper::className = "GenericDataWarper";
+#include "GenericDataWarper/gdwDrawFunction.h"
+
+template <typename T> double getGridValueFromFloat(int x, int y, GDWWarperState *drawSettings) { return ((T *)drawSettings->sourceData)[x + y * drawSettings->sourceDataWidth]; }
+
 // #define GenericDataWarper_DEBUG
-template <typename T>
-int CGenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, void *drawFunctionSettings,
-                               void (*drawFunction)(int, int, T, void *drawFunctionSettings, void *genericDataWarper)) {
-  this->warperState.sourceData = _sourceData;
+template <typename T> int warpT(CImageWarper *warper, void *_sourceData, CDFType sourceDataType, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, GDWWarperState *drawFunctionSettings) {
+  drawFunctionSettings->sourceData = _sourceData;
+  drawFunctionSettings->sourceDataType = sourceDataType; // TODO REMOVE
+
+  drawFunctionSettings->destDataWidth = destGeoParams->dWidth;
+  drawFunctionSettings->destDataHeight = destGeoParams->dHeight;
+
+  drawFunctionSettings->sourceDataWidth = sourceGeoParams->dWidth;
+  drawFunctionSettings->sourceDataHeight = sourceGeoParams->dHeight;
+
+  drawFunctionSettings->getValueFromSourceFunction = getGridValueFromFloat<T>;
+
 #ifdef GenericDataWarper_DEBUG
   CDBDebug("render");
 #endif
@@ -97,15 +108,15 @@ int CGenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoPara
   CDBDebug("Creating px extent");
 #endif
 
-  warperState.sourceDataWidth = sourceGeoParams->dWidth;
-  warperState.sourceDataHeight = sourceGeoParams->dHeight;
+  drawFunctionSettings->sourceDataWidth = sourceGeoParams->dWidth;
+  drawFunctionSettings->sourceDataHeight = sourceGeoParams->dHeight;
 
   int PXExtentBasedOnSource[4];
 
   PXExtentBasedOnSource[0] = 0;
   PXExtentBasedOnSource[1] = 0;
-  PXExtentBasedOnSource[2] = warperState.sourceDataWidth;
-  PXExtentBasedOnSource[3] = warperState.sourceDataHeight;
+  PXExtentBasedOnSource[2] = drawFunctionSettings->sourceDataWidth;
+  PXExtentBasedOnSource[3] = drawFunctionSettings->sourceDataHeight;
 
   bool tryToFindExtend = false;
 
@@ -120,54 +131,9 @@ int CGenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoPara
 
   /* When geographical map projections are equal, just do a simple linear transformation */
   if (warper->isProjectionRequired() == false) {
-    // CDBDebug("warper->isProjectionRequired() = %d: Applying simple linear transformation",warper->isProjectionRequired());
-
-    // // PXExtentBasedOnSource[0] = source
-
-    // CDBDebug("dfSourceW [%f] ", dfSourceW);
-    // CDBDebug("dfSourceOrigX [%f] ", dfSourceOrigX);
-    // CDBDebug("dfSourceExtW [%f] ", dfSourceExtW);
-
-    // CDBDebug("dfDestW [%f] ", dfDestW);
-    // CDBDebug("dfDestOrigX [%f] ", dfDestOrigX);
-    // CDBDebug("dfDestExtW [%f] ", dfDestExtW);
-
-    // double tX = ((dfDestOrigX-dfSourceOrigX)/dfSourceExtW)*dfSourceW;
-    // double tY = (((dfDestOrigY+dfDestExtH)-dfSourceOrigY)/dfSourceExtH)*dfSourceH;
-
-    // double eY = ((dfDestOrigY-dfSourceOrigY)/dfSourceExtH)*dfSourceH + 1;
-    // double eX = (((dfDestOrigX+dfDestExtW)-dfSourceOrigX)/dfSourceExtW)*dfSourceW + 1;
-
-    // // CDBDebug("TESTX = %f;%f, %f;%f", tX, eX, tY, eY);
-
-    // PXExtentBasedOnSource[0] = tX < 0 ? 0 : tX;
-    // PXExtentBasedOnSource[1] = tY < 0 ? 0 : tY;
-    // PXExtentBasedOnSource[2] = eX > sourceDataWidth  ?  sourceDataWidth : eX;
-    // PXExtentBasedOnSource[3] = eY > sourceDataHeight  ? sourceDataHeight : eY;
-    // // CDBDebug("PX extent is [%d,%d,%d,%d] ", PXExtentBasedOnSource[0], PXExtentBasedOnSource[1], PXExtentBasedOnSource[2], PXExtentBasedOnSource[3]);
 
     dataWidth = PXExtentBasedOnSource[2] - PXExtentBasedOnSource[0];
     dataHeight = PXExtentBasedOnSource[3] - PXExtentBasedOnSource[1];
-
-#ifdef GenericDataWarper_DEBUG
-
-    CDBDebug("PX extent is [%d,%d,%d,%d] ", PXExtentBasedOnSource[0], PXExtentBasedOnSource[1], PXExtentBasedOnSource[2], PXExtentBasedOnSource[3]);
-
-    CDBDebug("dfSourceW [%f] ", dfSourceW);
-    CDBDebug("dfDestW [%f] ", dfDestW);
-    CDBDebug("dfSourceExtW [%f] ", dfSourceExtW);
-    CDBDebug("dfDestExtW [%f] ", dfDestExtW);
-    CDBDebug("dfSourceOrigX [%f] ", dfSourceOrigX);
-    CDBDebug("dfDestOrigX [%f] ", dfDestOrigX);
-
-    CDBDebug("dfSourceH [%f] ", dfSourceH);
-    CDBDebug("dfDestH [%f] ", dfDestH);
-    CDBDebug("dfSourceExtH [%f] ", dfSourceExtH);
-    CDBDebug("dfDestExtH [%f] ", dfDestExtH);
-    CDBDebug("dfSourceOrigY [%f] ", dfSourceOrigX);
-    CDBDebug("dfDestOrigY [%f] ", dfDestOrigX);
-
-#endif
 
     for (int y = PXExtentBasedOnSource[1]; y < PXExtentBasedOnSource[3]; y++) {
       for (int x = PXExtentBasedOnSource[0]; x < PXExtentBasedOnSource[2]; x++) {
@@ -189,9 +155,9 @@ int CGenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoPara
         //
 
         if (!skip) {
-          this->warperState.sourceDataPX = x;
-          this->warperState.sourceDataPY = sourceGeoParams->dHeight - 1 - y;
-          T value = ((T *)warperState.sourceData)[this->warperState.sourceDataPX + (this->warperState.sourceDataPY) * sourceGeoParams->dWidth];
+          drawFunctionSettings->sourceDataPX = x;
+          drawFunctionSettings->sourceDataPY = sourceGeoParams->dHeight - 1 - y;
+          // T value = ((T *)warperState.sourceData)[drawFunctionSettings->sourceDataPX + (drawFunctionSettings->sourceDataPY) * sourceGeoParams->dWidth];
           int lx1, lx2, ly1, ly2;
           if (sx1 > sx2) {
             lx2 = sx1;
@@ -211,9 +177,12 @@ int CGenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoPara
           if (lx2 == lx1) lx2++;
           for (int sjy = ly1; sjy < ly2; sjy++) {
             for (int sjx = lx1; sjx < lx2; sjx++) {
-              this->warperState.tileDy = (sjy - ly1) / double(ly2 - ly1);
-              this->warperState.tileDx = (sjx - lx1) / double(lx2 - lx1);
-              drawFunction(sjx, sjy, value, drawFunctionSettings, this);
+              drawFunctionSettings->tileDy = (sjy - ly1) / double(ly2 - ly1);
+              drawFunctionSettings->tileDx = (sjx - lx1) / double(lx2 - lx1);
+              drawFunctionSettings->destX = sjx;
+              drawFunctionSettings->destY = sjy;
+              // drawFunction(sjx, sjy, value, drawFunctionSettings, this);
+              drawFunctionSettings->setValueInDestinationFunction(drawFunctionSettings);
             }
           }
         }
@@ -231,6 +200,9 @@ int CGenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoPara
   if (dataWidth * dataHeight > 1000 * 1000) {
     useStridingProjection = true;
   }
+
+  // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  bool useHalfCellOffset = false;
 
   double halfCell = useHalfCellOffset ? 0.5 : 0;
 
@@ -413,25 +385,6 @@ int CGenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoPara
           doDraw = false;
         }
 
-        // /*
-        //   If the previous pixel width is suddenly 10 times bigger,
-        //   or 10 times smaller, skip it .
-        //   It is probably wrapped arround the date border.
-        // */
-        // if (x ==0 && y==0) {
-        //   prevpx1=px1;
-        //   prevpx2=px2;
-        // }
-        // if (fabs(prevpx2-prevpx1) < (fabs(px2-px1)/10.0f)) {
-        //    doDraw = false;
-        // }
-        // if (fabs(prevpx2-prevpx1) > (fabs(px2-px1)*10.0f)) {
-        //    doDraw = false;
-        // }
-
-        // prevpx1=px1;
-        // prevpx2=px2;
-
         if (x == dataWidth - 1) {
           if (fabs(avgDX - px1) < fabs(px1 - px2) / 2) {
             doDraw = false;
@@ -449,9 +402,9 @@ int CGenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoPara
         if (doDraw) {
           int sourceGridX = x + PXExtentBasedOnSource[0];
           int sourceGridY = y + PXExtentBasedOnSource[1];
-          this->warperState.sourceDataPX = sourceGridX;
-          this->warperState.sourceDataPY = (warperState.sourceDataHeight - 1 - sourceGridY);
-          T value = ((T *)warperState.sourceData)[this->warperState.sourceDataPX + this->warperState.sourceDataPY * warperState.sourceDataWidth];
+          drawFunctionSettings->sourceDataPX = sourceGridX;
+          drawFunctionSettings->sourceDataPY = (drawFunctionSettings->sourceDataHeight - 1 - sourceGridY);
+          // T value = ((T *)warperState.sourceData)[this->warperState.sourceDataPX + this->warperState.sourceDataPY * warperState.sourceDataWidth];
 
           double xCornersA[3] = {px1, px2, px3};
           double yCornersA[3] = {py1, py2, py3};
@@ -459,9 +412,8 @@ int CGenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoPara
           double xCornersB[3] = {px3, px1, px4};
           double yCornersB[3] = {py3, py1, py4};
 
-          gdwDrawTriangle<T>(xCornersA, yCornersA, value, imageWidth, imageHeight, drawFunctionSettings, drawFunction, (void *)this, false);
-
-          gdwDrawTriangle<T>(xCornersB, yCornersB, value, imageWidth, imageHeight, drawFunctionSettings, drawFunction, (void *)this, true);
+          gdwDrawTriangle(xCornersA, yCornersA, false, drawFunctionSettings);
+          gdwDrawTriangle(xCornersB, yCornersB, true, drawFunctionSettings);
         }
         pLengthD = lengthD;
       }
@@ -475,24 +427,104 @@ int CGenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoPara
 #endif
   return 0;
 }
+template <typename T> struct GenericSettings : GDWWarperState {
+
+  void *oldDrawFunction;
+  void (*oldDrawFunction2)(int, int, T, void *drawFunctionSettings);
+  void *drawFunctionSettings;
+};
+
+template <typename T> void genericDrawFunction(GDWWarperState *_drawSettings) {
+  GenericSettings<T> *drawSettings = (GenericSettings<T> *)_drawSettings;
+  int x = drawSettings->destX;
+  int y = drawSettings->destY;
+  if (x < 0 || y < 0 || x >= drawSettings->destDataWidth || y >= drawSettings->destDataHeight) return;
+  T val = drawSettings->getValueFromSourceFunction(drawSettings->sourceDataPX, drawSettings->sourceDataPY, drawSettings);
+
+  auto f = (void (*)(int, int, T, void *, void *))drawSettings->oldDrawFunction;
+  f(drawSettings->destX, drawSettings->destY, val, drawSettings->drawFunctionSettings, nullptr);
+}
+
+int warp(CImageWarper *warper, void *sourceData, CDFType sourceDataType, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, GDWWarperState *drawFunctionSetting) {
+  switch (sourceDataType) {
+  case CDF_BYTE: {
+    warpT<char>(warper, sourceData, sourceDataType, sourceGeoParams, destGeoParams, drawFunctionSetting);
+    break;
+  }
+  case CDF_CHAR: {
+    warpT<char>(warper, sourceData, sourceDataType, sourceGeoParams, destGeoParams, drawFunctionSetting);
+    break;
+  }
+  case CDF_SHORT: {
+    warpT<short>(warper, sourceData, sourceDataType, sourceGeoParams, destGeoParams, drawFunctionSetting);
+    break;
+  }
+  case CDF_INT: {
+    warpT<int>(warper, sourceData, sourceDataType, sourceGeoParams, destGeoParams, drawFunctionSetting);
+    break;
+  }
+  case CDF_UBYTE: {
+    warpT<unsigned char>(warper, sourceData, sourceDataType, sourceGeoParams, destGeoParams, drawFunctionSetting);
+    break;
+  }
+  case CDF_USHORT: {
+    warpT<unsigned short>(warper, sourceData, sourceDataType, sourceGeoParams, destGeoParams, drawFunctionSetting);
+    break;
+  }
+  case CDF_UINT: {
+    warpT<unsigned int>(warper, sourceData, sourceDataType, sourceGeoParams, destGeoParams, drawFunctionSetting);
+    break;
+  }
+  case CDF_INT64: {
+    warpT<long>(warper, sourceData, sourceDataType, sourceGeoParams, destGeoParams, drawFunctionSetting);
+    break;
+  }
+  case CDF_UINT64: {
+    warpT<unsigned long>(warper, sourceData, sourceDataType, sourceGeoParams, destGeoParams, drawFunctionSetting);
+    break;
+  }
+  case CDF_FLOAT: {
+    warpT<float>(warper, sourceData, sourceDataType, sourceGeoParams, destGeoParams, drawFunctionSetting);
+    break;
+  }
+  case CDF_DOUBLE: {
+    warpT<double>(warper, sourceData, sourceDataType, sourceGeoParams, destGeoParams, drawFunctionSetting);
+    break;
+  }
+  }
+  return 0;
+}
+
+template <typename T>
+int CGenericDataWarper::render(CImageWarper *warper, void *sourceData, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, void *drawFunctionSettings,
+                               void (*drawFunction)(int, int, T, void *drawFunctionSettings)) {
+  GenericSettings<T> settings;
+  settings.destDataWidth = destGeoParams->dWidth;
+  settings.destDataHeight = destGeoParams->dHeight;
+  settings.setValueInDestinationFunction = genericDrawFunction<T>;
+  settings.drawFunctionSettings = drawFunctionSettings;
+  settings.oldDrawFunction = (void *)drawFunction;
+
+  return warpT<T>(warper, sourceData, CDF_FLOAT, sourceGeoParams, destGeoParams, &settings);
+}
 
 template int CGenericDataWarper::render<char>(CImageWarper *warper, void *_sourceData, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, void *drawFunctionSettings,
-                                              void (*drawFunction)(int, int, char, void *drawFunctionSettings, void *genericDataWarper));
+                                              void (*drawFunction)(int, int, char, void *drawFunctionSettings));
 template int CGenericDataWarper::render<unsigned char>(CImageWarper *warper, void *_sourceData, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, void *drawFunctionSettings,
-                                                       void (*drawFunction)(int, int, unsigned char, void *drawFunctionSettings, void *genericDataWarper));
+                                                       void (*drawFunction)(int, int, unsigned char, void *drawFunctionSettings));
 template int CGenericDataWarper::render<short>(CImageWarper *warper, void *_sourceData, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, void *drawFunctionSettings,
-                                               void (*drawFunction)(int, int, short, void *drawFunctionSettings, void *genericDataWarper));
-template int CGenericDataWarper::render<ushort>(CImageWarper *warper, void *_sourceData, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, void *drawFunctionSettings,
-                                                void (*drawFunction)(int, int, ushort, void *drawFunctionSettings, void *genericDataWarper));
+                                               void (*drawFunction)(int, int, short, void *drawFunctionSettings));
+template int CGenericDataWarper::render<unsigned short>(CImageWarper *warper, void *_sourceData, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, void *drawFunctionSettings,
+                                                        void (*drawFunction)(int, int, unsigned short, void *drawFunctionSettings));
 template int CGenericDataWarper::render<int>(CImageWarper *warper, void *_sourceData, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, void *drawFunctionSettings,
-                                             void (*drawFunction)(int, int, int, void *drawFunctionSettings, void *genericDataWarper));
+                                             void (*drawFunction)(int, int, int, void *drawFunctionSettings));
 template int CGenericDataWarper::render<uint>(CImageWarper *warper, void *_sourceData, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, void *drawFunctionSettings,
-                                              void (*drawFunction)(int, int, uint, void *drawFunctionSettings, void *genericDataWarper));
+                                              void (*drawFunction)(int, int, uint, void *drawFunctionSettings));
 template int CGenericDataWarper::render<long>(CImageWarper *warper, void *_sourceData, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, void *drawFunctionSettings,
-                                              void (*drawFunction)(int, int, long, void *drawFunctionSettings, void *genericDataWarper));
+                                              void (*drawFunction)(int, int, long, void *drawFunctionSettings));
 template int CGenericDataWarper::render<unsigned long>(CImageWarper *warper, void *_sourceData, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, void *drawFunctionSettings,
-                                                       void (*drawFunction)(int, int, unsigned long, void *drawFunctionSettings, void *genericDataWarper));
+                                                       void (*drawFunction)(int, int, unsigned long, void *drawFunctionSettings));
 template int CGenericDataWarper::render<float>(CImageWarper *warper, void *_sourceData, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, void *drawFunctionSettings,
-                                               void (*drawFunction)(int, int, float, void *drawFunctionSettings, void *genericDataWarper));
+                                               void (*drawFunction)(int, int, float, void *drawFunctionSettings));
 template int CGenericDataWarper::render<double>(CImageWarper *warper, void *_sourceData, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, void *drawFunctionSettings,
-                                                void (*drawFunction)(int, int, double, void *drawFunctionSettings, void *genericDataWarper));
+                                                void (*drawFunction)(int, int, double, void *drawFunctionSettings));

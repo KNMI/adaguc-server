@@ -26,6 +26,7 @@
 #ifndef CDATASOURCE_H
 #define CDATASOURCE_H
 #include <math.h>
+#include "CGeoParams.h"
 #include "CXMLSerializerInterface.h"
 #include "CServerParams.h"
 #include "CServerConfig_CPPXSD.h"
@@ -41,7 +42,7 @@
 #include "CGeoJSONData.h"
 
 /**
- * Class which holds min and max values.
+ * Class which holds min and max values.destinationGrid
  * isSet indicates whether the values have been set or not.
  */
 class MinMax {

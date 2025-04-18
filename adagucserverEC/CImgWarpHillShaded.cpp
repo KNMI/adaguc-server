@@ -59,133 +59,38 @@ f8vector cross(const f8vector &v1, const f8vector &v2) { return f8vector({.x = v
  */
 const f8vector lightSource = (f8vector({.x = -1, .y = -1, .z = -1})).norm();
 
-struct HillShadeSettings {
-  double dfNodataValue;
+struct HillShadeSettings : GDWWarperState {
   double legendValueRange;
   double legendLowerRange;
   double legendUpperRange;
-  double *dataField;
-  int width, height;
-  bool hasNodataValue;
 };
 
-void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage) {
-  CT::string color;
-  void *sourceData;
+void hillShadedDrawFunction(GDWWarperState *_drawSettings) {
+  HillShadeSettings *drawSettings = (HillShadeSettings *)_drawSettings;
+  if (drawSettings->destX < 0 || drawSettings->destY < 0 || drawSettings->destX > drawSettings->destDataWidth || drawSettings->destY > drawSettings->destDataHeight) return;
 
-  CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-  HillShadeSettings settings;
-  settings.dfNodataValue = dataSource->getDataObject(0)->dfNodataValue;
-  settings.legendValueRange = (bool)styleConfiguration->hasLegendValueRange;
-  settings.legendLowerRange = styleConfiguration->legendLowerRange;
-  settings.legendUpperRange = styleConfiguration->legendUpperRange;
-  settings.hasNodataValue = dataSource->getDataObject(0)->hasNodataValue;
+  double val = drawSettings->getValueFromSourceFunction(drawSettings->sourceDataPX, drawSettings->sourceDataPY, drawSettings);
 
-  if (!settings.hasNodataValue) {
-    settings.hasNodataValue = true;
-    settings.dfNodataValue = -100000.f;
-  }
-  settings.width = drawImage->Geo->dWidth;
-  settings.height = drawImage->Geo->dHeight;
-
-  settings.dataField = new double[settings.width * settings.height];
-  for (int y = 0; y < settings.height; y++) {
-    for (int x = 0; x < settings.width; x++) {
-      settings.dataField[x + y * settings.width] = (double)settings.dfNodataValue;
-    }
-  }
-
-  CDFType dataType = dataSource->getDataObject(0)->cdfVariable->getType();
-  sourceData = dataSource->getDataObject(0)->cdfVariable->data;
-  CGeoParams sourceGeo;
-  sourceGeo.dWidth = dataSource->dWidth;
-  sourceGeo.dHeight = dataSource->dHeight;
-  sourceGeo.dfBBOX[0] = dataSource->dfBBOX[0];
-  sourceGeo.dfBBOX[1] = dataSource->dfBBOX[1];
-  sourceGeo.dfBBOX[2] = dataSource->dfBBOX[2];
-  sourceGeo.dfBBOX[3] = dataSource->dfBBOX[3];
-  sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
-  sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
-  sourceGeo.CRS = dataSource->nativeProj4;
-
-  CGenericDataWarper genericDataWarper;
-  switch (dataType) {
-  case CDF_CHAR:
-    genericDataWarper.render<char>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &hillShadedDrawFunction);
-    break;
-  case CDF_BYTE:
-    genericDataWarper.render<char>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &hillShadedDrawFunction);
-    break;
-  case CDF_UBYTE:
-    genericDataWarper.render<unsigned char>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &hillShadedDrawFunction);
-    break;
-  case CDF_SHORT:
-    genericDataWarper.render<short>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &hillShadedDrawFunction);
-    break;
-  case CDF_USHORT:
-    genericDataWarper.render<ushort>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &hillShadedDrawFunction);
-    break;
-  case CDF_INT:
-    genericDataWarper.render<int>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &hillShadedDrawFunction);
-    break;
-  case CDF_UINT:
-    genericDataWarper.render<uint>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &hillShadedDrawFunction);
-    break;
-  case CDF_FLOAT:
-    genericDataWarper.render<float>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &hillShadedDrawFunction);
-    break;
-  case CDF_DOUBLE:
-    genericDataWarper.render<double>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &hillShadedDrawFunction);
-    break;
-  }
-
-  for (int y = 0; y < (int)settings.height; y = y + 1) {
-    for (int x = 0; x < (int)settings.width; x = x + 1) {
-      double val = settings.dataField[x + y * settings.width];
-      if (val != (double)settings.dfNodataValue && val == val) {
-        if (styleConfiguration->legendLog != 0) val = log10(val + .000001) / log10(styleConfiguration->legendLog);
-        val *= styleConfiguration->legendScale;
-        val += styleConfiguration->legendOffset;
-        if (val >= 239)
-          val = 239;
-        else if (val < 0)
-          val = 0;
-        drawImage->setPixelIndexed(x, y, (unsigned char)val);
-      }
-    }
-  }
-  delete[] settings.dataField;
-  // CDBDebug("render done");
-  return;
-}
-
-int CImgWarpHillShaded::set(const char *) { return 0; }
-
-template <class T> void hillShadedDrawFunction(int x, int y, T val, void *_settings, void *_warper) {
-  HillShadeSettings *drawSettings = static_cast<HillShadeSettings *>(_settings);
-  if (x < 0 || y < 0 || x > drawSettings->width || y > drawSettings->height) return;
-  CGenericDataWarper *genericDataWarper = static_cast<CGenericDataWarper *>(_warper);
+  ;
   bool isNodata = false;
   if (drawSettings->hasNodataValue) {
-    if ((val) == (T)drawSettings->dfNodataValue) isNodata = true;
+    if (val == drawSettings->dfNodataValue) isNodata = true;
   }
   if (!(val == val)) isNodata = true;
   if (!isNodata)
     if (drawSettings->legendValueRange)
       if (val < drawSettings->legendLowerRange || val > drawSettings->legendUpperRange) isNodata = true;
   if (!isNodata) {
-    T *sourceData = (T *)genericDataWarper->warperState.sourceData;
-    int sourceDataPX = genericDataWarper->warperState.sourceDataPX;
-    int sourceDataPY = genericDataWarper->warperState.sourceDataPY;
-    int sourceDataWidth = genericDataWarper->warperState.sourceDataWidth;
-    int sourceDataHeight = genericDataWarper->warperState.sourceDataHeight;
+    int sourceDataPX = drawSettings->sourceDataPX;
+    int sourceDataPY = drawSettings->sourceDataPY;
+    int sourceDataWidth = drawSettings->sourceDataWidth;
+    int sourceDataHeight = drawSettings->sourceDataHeight;
 
     if (sourceDataPY > sourceDataHeight - 1) return;
     if (sourceDataPX > sourceDataWidth - 1) return;
 
     double values[3][3] = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
 
-    T *sd = (T *)sourceData;
     /* TODO make window size configurable */
     for (int wy = -1; wy < 2; wy++) {
       int y0 = (sourceDataPY + 0 + wy) % sourceDataHeight;
@@ -196,17 +101,17 @@ template <class T> void hillShadedDrawFunction(int x, int y, T val, void *_setti
         int x1 = (sourceDataPX + 1 + wx) % sourceDataWidth;
         int x2 = (sourceDataPX + 2 + wx) % sourceDataWidth;
 
-        values[0][0] += sd[x0 + y0 * sourceDataWidth];
-        values[1][0] += sd[x1 + y0 * sourceDataWidth];
-        values[2][0] += sd[x2 + y0 * sourceDataWidth];
+        values[0][0] += drawSettings->getValueFromSourceFunction(x0, y0, drawSettings);
+        values[1][0] += drawSettings->getValueFromSourceFunction(x1, y0, drawSettings);
+        values[2][0] += drawSettings->getValueFromSourceFunction(x2, y0, drawSettings);
 
-        values[0][1] += sd[x0 + y1 * sourceDataWidth];
-        values[1][1] += sd[x1 + y1 * sourceDataWidth];
-        values[2][1] += sd[x2 + y1 * sourceDataWidth];
+        values[0][1] += drawSettings->getValueFromSourceFunction(x0, y1, drawSettings);
+        values[1][1] += drawSettings->getValueFromSourceFunction(x1, y1, drawSettings);
+        values[2][1] += drawSettings->getValueFromSourceFunction(x2, y1, drawSettings);
 
-        values[0][2] += sd[x0 + y2 * sourceDataWidth];
-        values[1][2] += sd[x1 + y2 * sourceDataWidth];
-        values[2][2] += sd[x2 + y2 * sourceDataWidth];
+        values[0][2] += drawSettings->getValueFromSourceFunction(x0, y2, drawSettings);
+        values[1][2] += drawSettings->getValueFromSourceFunction(x1, y2, drawSettings);
+        values[2][2] += drawSettings->getValueFromSourceFunction(x2, y2, drawSettings);
       }
     }
 
@@ -230,22 +135,66 @@ template <class T> void hillShadedDrawFunction(int x, int y, T val, void *_setti
     double c10 = dot(lightSource, normal10);
     double c01 = dot(lightSource, normal01);
     double c11 = dot(lightSource, normal11);
-    double dx = genericDataWarper->warperState.tileDx;
-    double dy = genericDataWarper->warperState.tileDy;
+    double dx = drawSettings->tileDx;
+    double dy = drawSettings->tileDy;
     double gx1 = (1 - dx) * c00 + dx * c10;
     double gx2 = (1 - dx) * c01 + dx * c11;
     double bilValue = (1 - dy) * gx1 + dy * gx2;
-    drawSettings->dataField[x + y * drawSettings->width] = (bilValue + 1) / 1.816486;
+    ((double *)drawSettings->destinationGrid)[drawSettings->destX + drawSettings->destY * drawSettings->destDataWidth] = (bilValue + 1) / 1.816486;
   }
 };
 
-template void hillShadedDrawFunction<char>(int x, int y, char val, void *_settings, void *g);
-template void hillShadedDrawFunction<unsigned char>(int x, int y, unsigned char val, void *_settings, void *g);
-template void hillShadedDrawFunction<short>(int x, int y, short val, void *_settings, void *g);
-template void hillShadedDrawFunction<ushort>(int x, int y, ushort val, void *_settings, void *g);
-template void hillShadedDrawFunction<int>(int x, int y, int val, void *_settings, void *g);
-template void hillShadedDrawFunction<uint>(int x, int y, uint val, void *_settings, void *g);
-template void hillShadedDrawFunction<long>(int x, int y, long val, void *_settings, void *g);
-template void hillShadedDrawFunction<unsigned long>(int x, int y, unsigned long val, void *_settings, void *g);
-template void hillShadedDrawFunction<float>(int x, int y, float val, void *_settings, void *g);
-template void hillShadedDrawFunction<double>(int x, int y, double val, void *_settings, void *g);
+void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage) {
+  CT::string color;
+  void *sourceData;
+
+  CStyleConfiguration *styleConfiguration = dataSource->getStyle();
+  HillShadeSettings settings;
+  settings.dfNodataValue = dataSource->getDataObject(0)->dfNodataValue;
+  settings.legendValueRange = (bool)styleConfiguration->hasLegendValueRange;
+  settings.legendLowerRange = styleConfiguration->legendLowerRange;
+  settings.legendUpperRange = styleConfiguration->legendUpperRange;
+  settings.hasNodataValue = dataSource->getDataObject(0)->hasNodataValue;
+  settings.destDataWidth = drawImage->Geo->dWidth;
+  settings.destDataHeight = drawImage->Geo->dHeight;
+  settings.setValueInDestinationFunction = hillShadedDrawFunction;
+
+  if (!settings.hasNodataValue) {
+    settings.hasNodataValue = true;
+    settings.dfNodataValue = -100000.f;
+  }
+
+  settings.destinationGrid = new double[settings.destDataWidth * settings.destDataHeight];
+  for (int y = 0; y < settings.destDataHeight; y++) {
+    for (int x = 0; x < settings.destDataWidth; x++) {
+      ((double *)settings.destinationGrid)[x + y * settings.destDataWidth] = (double)settings.dfNodataValue;
+    }
+  }
+
+  CDFType dataType = dataSource->getDataObject(0)->cdfVariable->getType();
+  sourceData = dataSource->getDataObject(0)->cdfVariable->data;
+  CGeoParams sourceGeo(dataSource);
+
+  warp(warper, sourceData, dataType, &sourceGeo, drawImage->Geo, &settings);
+
+  for (int y = 0; y < settings.destDataHeight; y = y + 1) {
+    for (int x = 0; x < settings.destDataWidth; x = x + 1) {
+      double val = ((double *)settings.destinationGrid)[x + y * settings.destDataWidth];
+      if (val != (double)settings.dfNodataValue && val == val) {
+        if (styleConfiguration->legendLog != 0) val = log10(val + .000001) / log10(styleConfiguration->legendLog);
+        val *= styleConfiguration->legendScale;
+        val += styleConfiguration->legendOffset;
+        if (val >= 239)
+          val = 239;
+        else if (val < 0)
+          val = 0;
+        drawImage->setPixelIndexed(x, y, (unsigned char)val);
+      }
+    }
+  }
+  delete[] ((double *)settings.destinationGrid);
+  // CDBDebug("render done");
+  return;
+}
+
+int CImgWarpHillShaded::set(const char *) { return 0; }

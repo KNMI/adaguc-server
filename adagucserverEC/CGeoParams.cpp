@@ -24,6 +24,7 @@
  ******************************************************************************/
 
 #include "CGeoParams.h"
+#include "CDataSource.h"
 
 void CoordinatesXYtoScreenXY(double &x, double &y, CGeoParams *geoParam) {
   x -= geoParam->dfBBOX[0];
@@ -50,4 +51,16 @@ void CoordinatesXYtoScreenXY(CPoint &p, CGeoParams *geoParam) {
 void CoordinatesXYtoScreenXY(CBBOX &b, CGeoParams *geoParam) {
   CoordinatesXYtoScreenXY(b.left, b.top, geoParam);
   CoordinatesXYtoScreenXY(b.right, b.bottom, geoParam);
+}
+
+CGeoParams::CGeoParams(CDataSource *dataSource) {
+  this->dWidth = dataSource->dWidth;
+  this->dHeight = dataSource->dHeight;
+  this->dfBBOX[0] = dataSource->dfBBOX[0];
+  this->dfBBOX[1] = dataSource->dfBBOX[1];
+  this->dfBBOX[2] = dataSource->dfBBOX[2];
+  this->dfBBOX[3] = dataSource->dfBBOX[3];
+  this->dfCellSizeX = dataSource->dfCellSizeX;
+  this->dfCellSizeY = dataSource->dfCellSizeY;
+  this->CRS = dataSource->nativeProj4;
 }

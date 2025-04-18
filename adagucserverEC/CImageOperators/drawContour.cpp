@@ -42,7 +42,7 @@ void drawTextForContourLines(CDrawImage *drawImage, CServerConfig::XMLE_ContourL
   }
 }
 
-void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *valueField, int lineX, int lineY, int dImageWidth, int dImageHeight, float lineWidth, CColor lineColor, CColor textColor,
+void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, double *valueField, int lineX, int lineY, int dImageWidth, int dImageHeight, float lineWidth, CColor lineColor, CColor textColor,
                   CColor textStrokeColor, CServerConfig::XMLE_ContourLine *contourDefinition, DISTANCEFIELDTYPE lineMask, bool, std::vector<Point> *textLocations, double scaling,
                   const char *fontLocation, float fontSize, float textStrokeWidth, std::vector<double> dashesVector) {
   size_t p = lineX + lineY * dImageWidth; /* Starting pointer */
@@ -202,7 +202,7 @@ struct ContourLineStructure {
   double interval;
 };
 
-void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawImage) {
+void drawContour(double *sourceGrid, CDataSource *dataSource, CDrawImage *drawImage) {
   CStyleConfiguration *styleConfiguration = dataSource->getStyle(); // TODO SLOW
   CDBDebug("drawContour");
   double scaling = dataSource->getContourScaling();

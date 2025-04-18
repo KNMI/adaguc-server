@@ -34,72 +34,34 @@ const char *CImgWarpGeneric::className = "CImgWarpGeneric";
 
 void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage) {
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-  CDrawFunctionSettings settings = getDrawFunctionSettings(dataSource, drawImage, styleConfiguration);
+  GDWDrawFunctionSettings settings = getDrawFunctionSettings(dataSource, drawImage, styleConfiguration);
   CDFType dataType = dataSource->getDataObject(0)->cdfVariable->getType();
   void *sourceData = dataSource->getDataObject(0)->cdfVariable->data;
-  CGeoParams sourceGeo;
-  sourceGeo.dWidth = dataSource->dWidth;
-  sourceGeo.dHeight = dataSource->dHeight;
-  sourceGeo.dfBBOX[0] = dataSource->dfBBOX[0];
-  sourceGeo.dfBBOX[1] = dataSource->dfBBOX[1];
-  sourceGeo.dfBBOX[2] = dataSource->dfBBOX[2];
-  sourceGeo.dfBBOX[3] = dataSource->dfBBOX[3];
-  sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
-  sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
-  sourceGeo.CRS = dataSource->nativeProj4;
+  CGeoParams sourceGeo(dataSource);
 
-  CGenericDataWarper genericDataWarper;
-  genericDataWarper.warperState.destinationGrid = new float[drawImage->Geo->dWidth * drawImage->Geo->dHeight];
+  settings.destinationGrid = new double[drawImage->Geo->dWidth * drawImage->Geo->dHeight];
 
   // In case of contourlines and bilinear
   if (settings.drawInImage == DrawInImageNearest) {
-    genericDataWarper.useHalfCellOffset = false;
+    settings.useHalfCellOffset = false;
   } else {
-    genericDataWarper.useHalfCellOffset = true;
+    settings.useHalfCellOffset = true;
   }
 
   for (size_t j = 0; j < size_t(drawImage->Geo->dWidth * drawImage->Geo->dHeight); j += 1) {
-    genericDataWarper.warperState.destinationGrid[j] = NAN;
+    ((double *)settings.destinationGrid)[j] = NAN;
   }
+  settings.setValueInDestinationFunction = gdwDrawFunction;
+  warp(warper, sourceData, dataType, &sourceGeo, drawImage->Geo, &settings);
 
-  switch (dataType) {
-  case CDF_CHAR:
-    genericDataWarper.render<char>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &gdwDrawFunction);
-    break;
-  case CDF_BYTE:
-    genericDataWarper.render<char>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &gdwDrawFunction);
-    break;
-  case CDF_UBYTE:
-    genericDataWarper.render<unsigned char>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &gdwDrawFunction);
-    break;
-  case CDF_SHORT:
-    genericDataWarper.render<short>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &gdwDrawFunction);
-    break;
-  case CDF_USHORT:
-    genericDataWarper.render<ushort>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &gdwDrawFunction);
-    break;
-  case CDF_INT:
-    genericDataWarper.render<int>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &gdwDrawFunction);
-    break;
-  case CDF_UINT:
-    genericDataWarper.render<uint>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &gdwDrawFunction);
-    break;
-  case CDF_FLOAT:
-    genericDataWarper.render<float>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &gdwDrawFunction);
-    break;
-  case CDF_DOUBLE:
-    genericDataWarper.render<double>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &gdwDrawFunction);
-    break;
-  }
-
-  drawContour(genericDataWarper.warperState.destinationGrid, dataSource, drawImage);
+  drawContour(((double *)settings.destinationGrid), dataSource, drawImage);
   auto a = CColor(0, 0, 0, 255);
   auto b = CColor(100, 100, 255, 255);
   CT::string text;
   text.print("GENERIC %d", settings.drawInImage);
   drawImage->setTextStroke(50, 80, -0.5, text.c_str(), NULL, 20, 2, a, b);
-  delete[] genericDataWarper.warperState.destinationGrid;
-  genericDataWarper.warperState.destinationGrid = nullptr;
+  delete[] ((double *)settings.destinationGrid);
+  settings.destinationGrid = nullptr;
   return;
 }
 
