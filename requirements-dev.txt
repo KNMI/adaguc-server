@@ -8,36 +8,36 @@ astroid==2.15.8
     # via pylint
 black==24.10.0
     # via -r requirements-dev.in
-click==8.1.7
+click==8.1.8
     # via
-    #   -c /home/vreedede/Projects/adaguc-server-test/adaguc-server-workshop/requirements.txt
+    #   -c /home/mats/projects/adaguc-server/requirements.txt
     #   black
-dill==0.3.9
+dill==0.4.0
     # via pylint
 exceptiongroup==1.2.2
     # via
-    #   -c /home/vreedede/Projects/adaguc-server-test/adaguc-server-workshop/requirements.txt
+    #   -c /home/mats/projects/adaguc-server/requirements.txt
     #   pytest
-iniconfig==2.0.0
+iniconfig==2.1.0
     # via pytest
 isort==5.13.2
     # via
     #   -r requirements-dev.in
     #   pylint
-lazy-object-proxy==1.10.0
+lazy-object-proxy==1.11.0
     # via astroid
 mccabe==0.7.0
     # via pylint
-mypy-extensions==1.0.0
+mypy-extensions==1.1.0
     # via black
-packaging==24.1
+packaging==25.0
     # via
-    #   -c /home/vreedede/Projects/adaguc-server-test/adaguc-server-workshop/requirements.txt
+    #   -c /home/mats/projects/adaguc-server/requirements.txt
     #   black
     #   pytest
 pathspec==0.12.1
     # via black
-platformdirs==4.3.6
+platformdirs==4.3.7
     # via
     #   black
     #   pylint
@@ -51,17 +51,17 @@ pytest==7.4.4
     #   pytest-asyncio
 pytest-asyncio==0.23.8
     # via -r requirements-dev.in
-tomli==2.0.2
+tomli==2.2.1
     # via
     #   black
     #   pylint
     #   pytest
 tomlkit==0.13.2
     # via pylint
-typing-extensions==4.12.2
+typing-extensions==4.13.2
     # via
-    #   -c /home/vreedede/Projects/adaguc-server-test/adaguc-server-workshop/requirements.txt
+    #   -c /home/mats/projects/adaguc-server/requirements.txt
     #   astroid
     #   black
-wrapt==1.16.0
+wrapt==1.17.2
     # via astroid

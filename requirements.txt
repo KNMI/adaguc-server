@@ -28,7 +28,7 @@ brotli-asgi==1.4.0
     # via -r requirements.in
 cachetools==5.5.2
     # via -r requirements.in
-certifi==2025.1.31
+certifi==2025.4.26
     # via
     #   httpcore
     #   httpx
@@ -63,11 +63,11 @@ geomet==1.1.0
     # via -r requirements.in
 gunicorn==23.0.0
     # via -r requirements.in
-h11==0.14.0
+h11==0.16.0
     # via
     #   httpcore
     #   uvicorn
-httpcore==1.0.7
+httpcore==1.0.9
     # via httpx
 httpx==0.26.0
     # via -r requirements.in
@@ -93,19 +93,21 @@ numpy==1.26.4
     #   netcdf4
 owslib==0.29.3
     # via -r requirements.in
-packaging==24.2
+packaging==25.0
     # via gunicorn
 pillow==10.4.0
     # via -r requirements.in
-pydantic==2.10.6
+pydantic==2.11.4
     # via
     #   -r requirements.in
     #   covjson-pydantic
     #   edr-pydantic
     #   fastapi
     #   geojson-pydantic
-pydantic-core==2.27.2
+pydantic-core==2.33.2
     # via pydantic
+pyjwt==2.9.0
+    # via redis
 python-dateutil==2.9.0.post0
     # via
     #   -r requirements.in
@@ -117,7 +119,7 @@ pytz==2023.4
     #   owslib
 pyyaml==6.0.2
     # via owslib
-redis==5.2.1
+redis==5.3.0
     # via -r requirements.in
 requests==2.32.3
     # via owslib
@@ -129,21 +131,24 @@ sniffio==1.3.1
     # via
     #   anyio
     #   httpx
-starlette==0.46.1
+starlette==0.46.2
     # via
     #   brotli-asgi
     #   fastapi
-typing-extensions==4.12.2
+typing-extensions==4.13.2
     # via
     #   anyio
     #   asgiref
     #   fastapi
     #   pydantic
     #   pydantic-core
+    #   typing-inspection
     #   uvicorn
+typing-inspection==0.4.0
+    # via pydantic
 tzlocal==5.3.1
     # via apscheduler
-urllib3==2.3.0
+urllib3==2.4.0
     # via requests
-uvicorn==0.23.2
+uvicorn==0.34.2
     # via -r requirements.in
