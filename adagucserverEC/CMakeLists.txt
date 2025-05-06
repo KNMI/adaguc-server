@@ -166,6 +166,8 @@ add_library(
     CImgWarpNearestNeighbour.h
     CImgWarpNearestRGBA.cpp
     CImgWarpNearestRGBA.h
+    CImgRenderFieldVectors.h
+    CImgRenderFieldVectors.cpp
     CInspire.cpp
     CInspire.h
     CLegendRenderers/CCreateLegend.cpp

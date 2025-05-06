@@ -38,14 +38,6 @@
 #include "CImgWarpHillShaded.h"
 #include "CImgWarpGeneric.h"
 
-#ifndef rad2deg
-#define rad2deg (180. / M_PI) // conversion for rad to deg
-#endif
-
-#ifndef deg2rad
-#define deg2rad (M_PI / 180.) // conversion for deg to rad
-#endif
-
 CT::string months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 // #define CIMAGEDATAWRITER_DEBUG
 // #define MEASURETIME
@@ -3640,7 +3632,7 @@ void rotateUvNorth(double &u, double &v, double rlo, double rla, float deltaX, f
   double magnitude, newMagnitude;
   double uu;
   double vv;
-#define radians(aDeg) (deg2rad * aDeg)
+
 #define NormVector(vec0, vec1, vec2)                                                                                                                                                                   \
   {                                                                                                                                                                                                    \
     double vecLen = sqrt(vec0 * vec0 + vec1 * vec1 + vec2 * vec2);                                                                                                                                     \

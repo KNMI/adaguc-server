@@ -29,14 +29,6 @@
 #include <gd.h>
 #include <set>
 
-#ifndef rad2deg
-#define rad2deg (180. / M_PI) // conversion for rad to deg
-#endif
-
-#ifndef deg2rad
-#define deg2rad (M_PI / 180.) // conversion for deg to rad
-#endif
-
 #include "CImgRenderFieldVectors.h"
 
 const char *CImgWarpBilinear::className = "CImgWarpBilinear";
