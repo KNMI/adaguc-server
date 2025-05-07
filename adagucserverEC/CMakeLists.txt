@@ -122,6 +122,8 @@ add_library(
     CDataPostProcessors/solar/solar_terminator.cpp
     CDataPostProcessors/CDataPostProcessor_WFP.h
     CDataPostProcessors/CDataPostProcessor_WFP.cpp
+    CDataPostProcessors/CDataPostProcessor_UVComponents.h
+    CDataPostProcessors/CDataPostProcessor_UVComponents.cpp
     CDataReader.cpp
     CDataReader.h
     CDataSource.cpp

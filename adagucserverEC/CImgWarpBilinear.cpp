@@ -279,8 +279,8 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
 #ifdef CImgWarpBilinear_DEBUG
   StopWatch_Stop("reprojection finished");
 #endif
-  bool has_u_v_grid_rel = sourceImage->getNumDataObjects() == 2 || (sourceImage->getNumDataObjects() >= 3 && (sourceImage->getDataObject(2)->variableName.equals(U_COMPONENT_GRID_ABSOLUTE) &&
-                                                                                                              sourceImage->getDataObject(3)->variableName.equals(V_COMPONENT_GRID_ABSOLUTE)));
+  bool has_u_v_grid_rel = (sourceImage->getNumDataObjects() >= 3 &&
+                           (sourceImage->getDataObject(2)->variableName.equals(U_COMPONENT_GRID_ABSOLUTE) && sourceImage->getDataObject(3)->variableName.equals(V_COMPONENT_GRID_ABSOLUTE)));
   bool isVectorLike = has_u_v_grid_rel && (enableVector || enableBarb);
 
   CDBDebug("TODO: isVectorLike %d", isVectorLike);

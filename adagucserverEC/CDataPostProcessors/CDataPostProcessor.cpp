@@ -5,6 +5,7 @@
 #include "CDataPostProcessor_ClipMinMax.h"
 #include "CDataPostProcessor_Operator.h"
 #include "CDataPostProcessor_WFP.h"
+#include "CDataPostProcessor_UVComponents.h"
 #include "CDataPostProcessor_ToKnots.h"
 #include "CDataPostProcessor_WindSpeedKnotsToMs.h"
 #include "CDataPostProcessor_AXplusB.h"
@@ -37,6 +38,7 @@ CDPPExecutor::CDPPExecutor() {
   dataPostProcessorList->push_back(new CDPPClipMinMax());
   dataPostProcessorList->push_back(new CDPPOperator());
   dataPostProcessorList->push_back(new CDPPWFP());
+  dataPostProcessorList->push_back(new CDDPUVComponents());
   dataPostProcessorList->push_back(new CDPPWindSpeedKnotsToMs());
   dataPostProcessorList->push_back(new CDPPSolarTerminator());
 }

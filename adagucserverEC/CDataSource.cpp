@@ -1342,6 +1342,23 @@ double CDataSource::getContourScaling() {
   return 1;
 }
 
+CDataSource::DataObject *CDataSource::getDataObjectByName(const char *name) {
+  for (auto it = dataObjects.begin(); it != dataObjects.end(); ++it) {
+    CDataSource::DataObject *dataObject = *it;
+    if (dataObject->cdfVariable->name.equals(name)) {
+      return dataObject;
+    }
+    if (dataObject->variableName.equals(name)) {
+      return dataObject;
+    }
+
+    if (dataObject->dataObjectName.equals(name)) {
+      return dataObject;
+    }
+  }
+  return nullptr;
+}
+
 CDataSource::DataObject *CDataSource::getDataObject(const char *name) {
   for (auto it = dataObjects.begin(); it != dataObjects.end(); ++it) {
     CDataSource::DataObject *dataObject = *it;
@@ -1349,6 +1366,10 @@ CDataSource::DataObject *CDataSource::getDataObject(const char *name) {
       return dataObject;
     }
     if (dataObject->variableName.equals(name)) {
+      return dataObject;
+    }
+
+    if (dataObject->dataObjectName.equals(name)) {
       return dataObject;
     }
   }

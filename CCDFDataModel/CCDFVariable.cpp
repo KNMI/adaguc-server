@@ -617,10 +617,17 @@ void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimNam
 
 CDF::Variable *CDF::Variable::clone(CDFType newType, CT::string newName) {
   CDF::Variable *newVariable = new CDF::Variable(newName.c_str(), newType, this->dimensionlinks, this->isDimension);
+
+  for (auto attribute : attributes) {
+    newVariable->addAttribute(new CDF::Attribute(attribute));
+  }
   newVariable->parentCDFObject = parentCDFObject;
   newVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
-  size_t size = this->getSize();
-  newVariable->allocateData(size);
-  DataCopier::copy(newVariable->data, newType, data, currentType, 0, 0, size);
+  newVariable->data = nullptr;
   return newVariable;
+}
+void CDF::Variable::copy(CDF::Variable *sourceVariable) {
+  size_t size = sourceVariable->getSize();
+  this->allocateData(size);
+  DataCopier::copy(this->data, this->currentType, sourceVariable->data, sourceVariable->currentType, 0, 0, size);
 }

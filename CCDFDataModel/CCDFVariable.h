@@ -59,6 +59,7 @@ namespace CDF {
     };
 
     CDF::Variable *clone(CDFType newType, CT::string newName);
+    void copy(CDF::Variable *sourceVariable);
 
   private:
     std::vector<CDFObjectClass *> cdfObjectList;

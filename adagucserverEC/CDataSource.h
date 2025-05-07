@@ -333,6 +333,7 @@ public:
   const char *getFileName();
 
   DataObject *getDataObject(const char *name);
+  DataObject *getDataObjectByName(const char *name);
   DataObject *getDataObject(int j);
 
   std::vector<DataObject *> *getDataObjectsVector() { return &(dataObjects); }

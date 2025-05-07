@@ -44,6 +44,7 @@
 #include "CCDFHDF5IO.h"
 #include "CDBFileScanner.h"
 #include "CImgRenderFieldVectors.h"
+#include "CDataPostProcessors/CDataPostProcessor_UVComponents.h"
 const char *CDataReader::className = "CDataReader";
 
 // #define CDATAREADER_DEBUG
@@ -1027,6 +1028,24 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 #endif
   }
 
+  bool isVectorLike = false;
+  // dataSource->getNumDataObjects() == 2 && dataSource->srvParams->Styles.indexOf("/barb") != -1;
+  if (dataSource->getNumDataObjects() == 2) {
+    char u = dataSource->getDataObject(0)->getStandardName().charAt(0);
+    char v = dataSource->getDataObject(1)->getStandardName().charAt(0);
+    if (u == 'x' || u == 'u') {
+      if (v == 'y' || v == 'u') {
+        isVectorLike = true;
+      }
+    }
+  }
+
+  if (isVectorLike) {
+    CServerConfig::XMLE_DataPostProc *proc = new CServerConfig::XMLE_DataPostProc();
+    proc->attr.algorithm = CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ID;
+    dataSource->cfgLayer->DataPostProc.push_back(proc);
+  }
+
   if (enablePostProcessors) {
     CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
   }
@@ -1360,75 +1379,6 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 #ifdef MEASURETIME
     StopWatch_Stop("all read");
 #endif
-
-    bool isVectorLike = false;
-    // dataSource->getNumDataObjects() == 2 && dataSource->srvParams->Styles.indexOf("/barb") != -1;
-    if (dataSource->getNumDataObjects() == 2) {
-      char u = dataSource->getDataObject(0)->getStandardName().charAt(0);
-      char v = dataSource->getDataObject(1)->getStandardName().charAt(0);
-      if (u == 'x' || u == 'u') {
-        if (v == 'y' || v == 'u') {
-          isVectorLike = true;
-        }
-      }
-    }
-    if (isVectorLike) {
-      CImageWarper warper;
-      warper.initreproj(dataSource, dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
-      int dPixelExtent[4];
-      dPixelExtent[0] = 0;
-      dPixelExtent[1] = 0;
-      dPixelExtent[2] = dataSource->dWidth;
-      dPixelExtent[3] = dataSource->dHeight;
-
-      CDataSource::DataObject *ugridrel = dataSource->getDataObject(0)->clone();
-      ugridrel->cdfObject = cdfObject;
-      ugridrel->cdfVariable = dataSource->getDataObject(0)->cdfVariable->clone(CDF_FLOAT, U_COMPONENT_GRID_ABSOLUTE);
-      ugridrel->variableName.copy(ugridrel->cdfVariable->name);
-      cdfObject->addVariable(ugridrel->cdfVariable);
-
-      CDataSource::DataObject *vgridrel = dataSource->getDataObject(1)->clone();
-      vgridrel->cdfObject = cdfObject;
-      vgridrel->cdfVariable = dataSource->getDataObject(1)->cdfVariable->clone(CDF_FLOAT, V_COMPONENT_GRID_ABSOLUTE);
-      vgridrel->variableName.copy(vgridrel->cdfVariable->name);
-      cdfObject->addVariable(vgridrel->cdfVariable);
-
-      CDataSource::DataObject *speedObject = dataSource->getDataObject(0)->clone();
-      speedObject->cdfObject = cdfObject;
-      speedObject->cdfVariable = dataSource->getDataObject(1)->cdfVariable->clone(CDF_FLOAT, SPEED_COMPONENT);
-      speedObject->variableName.copy(speedObject->cdfVariable->name);
-      cdfObject->addVariable(speedObject->cdfVariable);
-
-      CDataSource::DataObject *directionObject = dataSource->getDataObject(0)->clone();
-      directionObject->cdfObject = cdfObject;
-      directionObject->cdfVariable = dataSource->getDataObject(0)->cdfVariable->clone(CDF_FLOAT, DIRECTION_COMPONENT);
-      directionObject->variableName.copy(directionObject->cdfVariable->name);
-      directionObject->setUnits("degrees");
-      cdfObject->addVariable(directionObject->cdfVariable);
-
-      // dataSource->getDataObjectsVector()->push_back(ugridrel);
-      // dataSource->getDataObjectsVector()->push_back(vgridrel);
-
-      dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), vgridrel);
-      dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), ugridrel);
-      dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), directionObject);
-      dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), speedObject);
-      float *uValues = (float *)ugridrel->cdfVariable->data;
-      float *vValues = (float *)vgridrel->cdfVariable->data;
-      float *directionData = (float *)directionObject->cdfVariable->data;
-      float *speedData = (float *)speedObject->cdfVariable->data;
-
-      applyUVConversion(&warper, dataSource, dPixelExtent, uValues, vValues);
-      size_t size = speedObject->cdfVariable->getSize();
-      CDBDebug("size %d", size);
-      for (size_t j = 0; j < size; j++) {
-        speedData[j] = sqrt(uValues[j] * uValues[j] + vValues[j] * vValues[j]);
-        directionData[j] = ((atan2(uValues[j], vValues[j])) * (180 / M_PI) + 180);
-      }
-
-      CDBDebug("DONE!");
-      dataSource->formatConverterActive = true;
-    }
 
     if (enablePostProcessors) {
       CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);

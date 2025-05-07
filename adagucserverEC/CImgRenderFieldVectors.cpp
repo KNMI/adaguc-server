@@ -4,7 +4,7 @@
 
 bool verboseLog = true;
 
-f8component jacobianTransform(f8component speedVector, f8point gridCoordUL, f8point gridCoordLR, CImageWarper *warper, bool gridRelative, double fNodataValue) {
+f8component jacobianTransform(f8component speedVector, f8point gridCoordUL, f8point gridCoordLR, CImageWarper *warper, bool gridRelative) {
   // Degrees offset in latitude/longutide space to determine rotation of projected model grid per grid cell
   f8point deltaLatLon = {.x = 0.01, .y = 0.01};
 
@@ -103,7 +103,6 @@ f8component jacobianTransform(f8component speedVector, f8point gridCoordUL, f8po
 
 int applyUVConversion(CImageWarper *warper, CDataSource *dataSource, int *dPixelExtent, float *uValues, float *vValues) {
   int gridWidth = dPixelExtent[2] - dPixelExtent[0];
-  double dfNodataValue = dataSource->getDataObject(0)->dfNodataValue;
   // If there are 2 components, we have wind u and v.
   // Use Jacobians for rotating u and v
   // After calculations
@@ -114,7 +113,7 @@ int applyUVConversion(CImageWarper *warper, CDataSource *dataSource, int *dPixel
       f8point gridCoordUL = {.x = dataSource->dfCellSizeX * double(x) + dataSource->dfBBOX[0], .y = dataSource->dfCellSizeY * double(y) + dataSource->dfBBOX[3]};
       f8point gridCoordLR = {.x = dataSource->dfCellSizeX * x + fabs(dataSource->dfCellSizeX) + dataSource->dfBBOX[0],
                              .y = dataSource->dfCellSizeY * y + fabs(dataSource->dfCellSizeY) + dataSource->dfBBOX[3]};
-      f8component newSpeed = jacobianTransform({.u = uValues[p], .v = vValues[p]}, gridCoordUL, gridCoordLR, warper, gridRelative, dfNodataValue);
+      f8component newSpeed = jacobianTransform({.u = uValues[p], .v = vValues[p]}, gridCoordUL, gridCoordLR, warper, gridRelative);
       uValues[p] = newSpeed.u;
       vValues[p] = newSpeed.v;
     }
@@ -160,10 +159,7 @@ std::vector<CalculatedWindVector> calculateBarbsAndVectorsAndSpeedFromUVComponen
   int vectorDensityPx = 60; // 22;
   firstXPos = int(tx) % vectorDensityPy;
   firstYPos = int(ty) % vectorDensityPx;
-  double u, v;
 
-  double direction = 0;
-  double strength;
   int stepx = vectorDensityPx; // Raster stride at barb distances
   int stepy = vectorDensityPy;
   // If contouring, drawMap or shading is wanted, step through all destination raster points
