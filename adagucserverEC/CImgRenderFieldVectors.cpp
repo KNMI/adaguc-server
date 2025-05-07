@@ -22,10 +22,8 @@ int applyUVConversion(CImageWarper *warper, CDataSource *sourceImage, bool enabl
 
   double dfSourceExtW = (sourceImage->dfBBOX[2] - sourceImage->dfBBOX[0]);
   double dfSourceExtH = (sourceImage->dfBBOX[1] - sourceImage->dfBBOX[3]);
-  double dfSourceW = double(sourceImage->dWidth);
-  double dfSourceH = double(sourceImage->dHeight);
-  double dfSourcedExtW = dfSourceExtW / dfSourceW;
-  double dfSourcedExtH = dfSourceExtH / dfSourceH;
+  double dfSourcedExtW = dfSourceExtW / sourceImage->dWidth;
+  double dfSourcedExtH = dfSourceExtH / sourceImage->dHeight;
   double dfSourceOrigX = sourceImage->dfBBOX[0];
   double dfSourceOrigY = sourceImage->dfBBOX[3];
   int dPixelDestW = dPixelExtent[2] - dPixelExtent[0];
@@ -58,44 +56,24 @@ int applyUVConversion(CImageWarper *warper, CDataSource *sourceImage, bool enabl
     }
 
     double delta = 0.01;
-    double deltaLon;
-    double deltaLat;
+    double deltaLon = delta; // dfSourcedExtW > 0 ? delta : -delta;
+    double deltaLat = delta; // dfSourcedExtH > 0 ? delta : -delta;
 
     if (verboseLog) {
       CDBDebug("Data raster: %f,%f with %f,%f (%f,%f) ll: (%d,%d) ur: (%d,%d) [%d,%d]\n", dfSourceOrigX, dfSourceOrigY, dfSourcedExtW, dfSourcedExtH, dfSourceExtW, dfSourceExtH, dPixelExtent[0],
                dPixelExtent[1], dPixelExtent[2], dPixelExtent[3], dPixelDestW, 0);
     }
-    if (dfSourcedExtH < 0) {
-      deltaLat = -delta;
-    } else {
-      deltaLat = +delta;
-    }
-    if (dfSourcedExtW > 0) {
-      deltaLon = delta;
-    } else {
-      deltaLon = -delta;
-    }
-    deltaLat = +delta; // TODO Check this (and delete previous 2 if blocks)
-    deltaLon = delta;
 
     for (int y = dPixelExtent[1]; y < dPixelExtent[3]; y = y + 1) {
       for (int x = dPixelExtent[0]; x < dPixelExtent[2]; x = x + 1) {
         size_t p = size_t((x - (dPixelExtent[0])) + ((y - (dPixelExtent[1])) * (dPixelDestW + 1)));
-        if ((uValues[p] != fNodataValue) && (vValues[p] != fNodataValue)) {
-          double modelX, modelY;
-          if (x == dPixelExtent[2] - 1) {
-            modelX = dfSourcedExtW * double(x - 1) + dfSourceOrigX;
-          } else {
-            modelX = dfSourcedExtW * double(x) + dfSourceOrigX;
-          }
-          if (y == dPixelExtent[3] - 1) {
-            modelY = dfSourcedExtH * double(y - 1) + dfSourceOrigY;
-          } else {
-            modelY = dfSourcedExtH * double(y) + dfSourceOrigY;
-          }
+        double uComponent = uValues[p];
+        double vComponent = vValues[p];
 
-          double modelXLat, modelYLat;
-          double modelXLon, modelYLon;
+        if ((uComponent != fNodataValue) && (vComponent != fNodataValue)) {
+          double modelX = (x == dPixelExtent[2] - 1) ? dfSourcedExtW * (x - 1) + dfSourceOrigX : dfSourcedExtW * (x) + dfSourceOrigX;
+          double modelY = (y == dPixelExtent[3] - 1) ? dfSourcedExtH * double(y - 1) + dfSourceOrigY : dfSourcedExtH * double(y) + dfSourceOrigY;
+
           double VJaa, VJab, VJba, VJbb;
 
           if (gridRelative) {
@@ -196,8 +174,8 @@ int applyUVConversion(CImageWarper *warper, CDataSource *sourceImage, bool enabl
             VJbb = ypntNorthSph;
 
             // 2) Transform the UV vector with jacobian matrix
-            u = uValues[p];
-            v = vValues[p];
+            u = uComponent;
+            v = vComponent;
             //              u = 0.0;  v = 6.0; // test: 6 m/s along the easting direction of the grid
             magnitude = hypot(u, v); // old vector magnitude in the model space
             //(uu) =   (VJaa VJab) * ( u )
@@ -210,14 +188,14 @@ int applyUVConversion(CImageWarper *warper, CDataSource *sourceImage, bool enabl
 
             // 3) Apply scaling of the vector so that the vector keeps the original length (model space)
             newMagnitude = hypot(uu, vv);
-            uValues[p] = uu * magnitude / newMagnitude;
-            vValues[p] = vv * magnitude / newMagnitude;
+            uComponent = uu * magnitude / newMagnitude;
+            vComponent = vv * magnitude / newMagnitude;
           }
           warper->reprojModelToLatLon(modelX, modelY); // model to latlon proj.
-          modelXLon = modelX + deltaLon;               // latlons
-          modelYLon = modelY;
-          modelXLat = modelX;
-          modelYLat = modelY + deltaLat;
+          double modelXLon = modelX + deltaLon;        // latlons
+          double modelYLon = modelY;
+          double modelXLat = modelX;
+          double modelYLat = modelY + deltaLat;
           warper->reprojfromLatLon(modelX, modelY); // latlon to vis proj.
           warper->reprojfromLatLon(modelXLon, modelYLon);
           warper->reprojfromLatLon(modelXLat, modelYLat);
@@ -229,15 +207,18 @@ int applyUVConversion(CImageWarper *warper, CDataSource *sourceImage, bool enabl
           VJab = (modelXLat - modelX) / distLat;
           VJba = (modelYLon - modelY) / distLon;
           VJbb = (modelYLat - modelY) / distLat;
-          double magnitude = hypot(uValues[p], vValues[p]);
+          double magnitude = hypot(uComponent, vComponent);
           double uu;
           double vv;
-          uu = VJaa * uValues[p] + VJab * vValues[p];
-          vv = VJba * uValues[p] + VJbb * vValues[p];
+          uu = VJaa * uComponent + VJab * vComponent;
+          vv = VJba * uComponent + VJbb * vComponent;
           double newMagnitude = hypot(uu, vv);
-          uValues[p] = uu * magnitude / newMagnitude;
-          vValues[p] = vv * magnitude / newMagnitude;
+          uComponent = uu * magnitude / newMagnitude;
+          vComponent = vv * magnitude / newMagnitude;
         }
+        // TODO: Avoid overwriting original data.
+        uValues[p] = uComponent;
+        vValues[p] = vComponent;
       }
     }
   }
