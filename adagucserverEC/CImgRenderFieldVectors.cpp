@@ -18,6 +18,150 @@
 
 bool verboseLog = true;
 
+std::tuple<double, double> doit(double uComponent, double vComponent, double modelX, double modelY, CImageWarper *warper, bool gridRelative, float fNodataValue, double lon_pntEast, double lat_pntEast,
+                                double lon_pntNorth, double lat_pntNorth) {
+  double delta = 0.01;
+  double deltaLon = delta;
+  double deltaLat = delta;
+
+  if ((uComponent != fNodataValue) && (vComponent != fNodataValue)) {
+
+    double VJaa, VJab, VJba, VJbb;
+
+    if (gridRelative) {
+
+      double dLatNorth, dLonNorth;
+      double xpntEastSph, ypntEastSph;
+      double xpntNorthSph, ypntNorthSph, zpntNorthSph;
+      double xpntNorthSphRot, ypntNorthSphRot, zpntNorthSphRot;
+      double xpnt0Sph, ypnt0Sph, zpnt0Sph;
+      double xnormSph, ynormSph, znormSph;
+      double xncross, yncross, zncross;
+      double vecAngle;
+      double VJaa, VJab, VJba, VJbb;
+      double u, v;
+      double magnitude, newMagnitude;
+      double uu;
+      double vv;
+
+      warper->reprojModelToLatLon(lon_pntNorth, lat_pntEast);
+      warper->reprojModelToLatLon(lon_pntNorth, lat_pntNorth);
+      warper->reprojModelToLatLon(lon_pntEast, lat_pntEast);
+
+      // (lon_pntNorth, lat_pntNorth)
+      //     ^
+      //     |       (lon_pntCenter, lat_pntCenter)   center of the cell-diagonal
+      //     |
+      // (lon_pnt0,lat_pnt0) ----> (lon_pntEast,lat_pntEast)
+      // This is the local coordinate system of a grid cell where we have (u,v) at location (xpnt0,ypnt0).
+      // The local coordinate system is now centered around (lon_pnt0,lat_pnt0)
+      // The vector towards north pole at this location will be (0,1,0)
+      // The tangent plane at this location is XY wil a normal (0, 0, 1)
+
+      // Nummerical approach using projection onto a unit sphere
+      dLonNorth = radians(lon_pntNorth);
+      dLatNorth = radians(lat_pntNorth);
+      xpntNorthSph = cos(dLatNorth) * cos(dLonNorth);
+      ypntNorthSph = cos(dLatNorth) * sin(dLonNorth); // # Get [dLonNorth,dLatNorth] on the unit sphere.
+      zpntNorthSph = sin(dLatNorth);                  // # Only XY plane is needed.
+
+      double lon_pnt0 = radians(lon_pntNorth);
+      double lat_pnt0 = radians(lat_pntEast);
+      xpnt0Sph = cos(lat_pnt0) * cos(lon_pnt0);
+      ypnt0Sph = cos(lat_pnt0) * sin(lon_pnt0); // # Get [lon_pnt0,lat_pnt0] on the unit sphere.
+      zpnt0Sph = sin(lat_pnt0);                 // # Only XY plane is needed.
+
+      xpntNorthSph -= xpnt0Sph, ypntNorthSph -= ypnt0Sph;
+      zpntNorthSph -= zpnt0Sph;
+
+      NormVector(xpntNorthSph, ypntNorthSph, zpntNorthSph); // vecy
+
+      xnormSph = xpnt0Sph;
+      ynormSph = ypnt0Sph;
+      znormSph = zpnt0Sph;
+      NormVector(xnormSph, ynormSph, znormSph); // normal vector to the sphere at the point pnt0Sph
+      // # vecn = (0.0,0.0,1.0)                   // up-vector in a global coordinate system
+      // # Project vecn onto plane XY, where plane-normal is vecz
+      // # vecnProjXY = vecn - D*vecz;   D= a*x1+b*y1+c*z1;  vecz=(a,b,c); vecn=(x1,y1,z1)=(0,0,1)
+      // #                               D= vecz[2]*1;
+      // # vecyRot = NormVector( (0.0 - vecz[2]*vecz[0],0.0  - vecz[2]*vecz[1], 1.0  - vecz[2]*vecz[2]) )
+
+      // double Dist =  xnormSph * 0.0 +  ynormSph * 0.0 + znormSph * 1.0; // Left out for optimization
+      xpntNorthSphRot = -znormSph * xnormSph;      // xpntNorthSphRot = 0.0 - Dist*xnormSph;
+      ypntNorthSphRot = -znormSph * ynormSph;      // ypntNorthSphRot = 0.0 - Dist*ynormSph;
+      zpntNorthSphRot = 1.0 - znormSph * znormSph; // zpntNorthSphRot = 1.0 - Dist*znormSph;
+      NormVector(xpntNorthSphRot, ypntNorthSphRot, zpntNorthSphRot);
+
+      // This would create in 3D the rotated Easting vector; but we don't need it in this routine.
+      // Left out to optimize computation
+      // CrossProd( xpntNorthSphRot, ypntNorthSphRot, zpntNorthSphRot, xnormSph, ynormSph, znormSph,
+      //            xpntEastSph,  ypntEastSphRot,  zpntEastSphRot ); //vecxRot = CrossProd(vecy,vecz)
+
+      vecAngle = acos((xpntNorthSph * xpntNorthSphRot + ypntNorthSph * ypntNorthSphRot + zpntNorthSph * zpntNorthSphRot));
+      // Determine the sign of the angle
+      CrossProd(xpntNorthSphRot, ypntNorthSphRot, zpntNorthSphRot, xpntNorthSph, ypntNorthSph, zpntNorthSph, xncross, yncross, zncross);
+      if ((xncross * xnormSph + yncross * ynormSph + zncross * znormSph) > 0.0) // dotProduct
+        vecAngle *= -1.0;
+
+      xpntNorthSph = sin(vecAngle); // Rotate the point/vector (0,1) around Z-axis with vecAngle
+      ypntNorthSph = cos(vecAngle);
+      xpntEastSph = ypntNorthSph; // Rotate the same point/vector around Z-axis with 90 degrees
+      ypntEastSph = -xpntNorthSph;
+
+      // zpntNorthSph = 0; zpntEastSph = 0;  // not needed in 2D
+
+      // 1) Build the rotation matrix and put the axes-base vectors into the matrix
+      VJaa = xpntEastSph;
+      VJab = xpntNorthSph;
+      VJba = ypntEastSph;
+      VJbb = ypntNorthSph;
+
+      // 2) Transform the UV vector with jacobian matrix
+      u = uComponent;
+      v = vComponent;
+      //              u = 0.0;  v = 6.0; // test: 6 m/s along the easting direction of the grid
+      magnitude = hypot(u, v); // old vector magnitude in the model space
+      //(uu) =   (VJaa VJab) * ( u )
+      //(vv)     (VJba VJbb)   ( v )
+      uu = VJaa * u + VJab * v;
+      vv = VJba * u + VJbb * v;
+      //(uu) =   (VJaa VJab VJac) * ( u )
+      //(vv)     (VJba VJbb VJbc)   ( v )
+      //(ww)     (VJba VJbb VJcc)   ( w )
+
+      // 3) Apply scaling of the vector so that the vector keeps the original length (model space)
+      newMagnitude = hypot(uu, vv);
+      uComponent = uu * magnitude / newMagnitude;
+      vComponent = vv * magnitude / newMagnitude;
+    }
+    warper->reprojModelToLatLon(modelX, modelY); // model to latlon proj.
+    double modelXLon = modelX + deltaLon;        // latlons
+    double modelYLon = modelY;
+    double modelXLat = modelX;
+    double modelYLat = modelY + deltaLat;
+    warper->reprojfromLatLon(modelX, modelY); // latlon to vis proj.
+    warper->reprojfromLatLon(modelXLon, modelYLon);
+    warper->reprojfromLatLon(modelXLat, modelYLat);
+
+    double distLon = hypot(modelXLon - modelX, modelYLon - modelY);
+    double distLat = hypot(modelXLat - modelX, modelYLat - modelY);
+
+    VJaa = (modelXLon - modelX) / distLon;
+    VJab = (modelXLat - modelX) / distLat;
+    VJba = (modelYLon - modelY) / distLon;
+    VJbb = (modelYLat - modelY) / distLat;
+    double magnitude = hypot(uComponent, vComponent);
+    double uu;
+    double vv;
+    uu = VJaa * uComponent + VJab * vComponent;
+    vv = VJba * uComponent + VJbb * vComponent;
+    double newMagnitude = hypot(uu, vv);
+    uComponent = uu * magnitude / newMagnitude;
+    vComponent = vv * magnitude / newMagnitude;
+  }
+  return std::tuple<double, double>(uComponent, vComponent);
+}
+
 int applyUVConversion(CImageWarper *warper, CDataSource *sourceImage, bool enableVector, bool enableBarb, int *dPixelExtent, float *uValues, float *vValues) {
 
   double dfSourceExtW = (sourceImage->dfBBOX[2] - sourceImage->dfBBOX[0]);
@@ -27,6 +171,7 @@ int applyUVConversion(CImageWarper *warper, CDataSource *sourceImage, bool enabl
   double dfSourceOrigX = sourceImage->dfBBOX[0];
   double dfSourceOrigY = sourceImage->dfBBOX[3];
   int dPixelDestW = dPixelExtent[2] - dPixelExtent[0];
+
   float fNodataValue = sourceImage->getDataObject(0)->dfNodataValue;
 
   // If there are 2 components, we have wind u and v.
@@ -55,10 +200,6 @@ int applyUVConversion(CImageWarper *warper, CDataSource *sourceImage, bool enabl
       CDBDebug("Grid propery gridRelative=%d", gridRelative);
     }
 
-    double delta = 0.01;
-    double deltaLon = delta; // dfSourcedExtW > 0 ? delta : -delta;
-    double deltaLat = delta; // dfSourcedExtH > 0 ? delta : -delta;
-
     if (verboseLog) {
       CDBDebug("Data raster: %f,%f with %f,%f (%f,%f) ll: (%d,%d) ur: (%d,%d) [%d,%d]\n", dfSourceOrigX, dfSourceOrigY, dfSourcedExtW, dfSourcedExtH, dfSourceExtW, dfSourceExtH, dPixelExtent[0],
                dPixelExtent[1], dPixelExtent[2], dPixelExtent[3], dPixelDestW, 0);
@@ -67,156 +208,22 @@ int applyUVConversion(CImageWarper *warper, CDataSource *sourceImage, bool enabl
     for (int y = dPixelExtent[1]; y < dPixelExtent[3]; y = y + 1) {
       for (int x = dPixelExtent[0]; x < dPixelExtent[2]; x = x + 1) {
         size_t p = size_t((x - (dPixelExtent[0])) + ((y - (dPixelExtent[1])) * (dPixelDestW + 1)));
-        double uComponent = uValues[p];
-        double vComponent = vValues[p];
 
-        if ((uComponent != fNodataValue) && (vComponent != fNodataValue)) {
-          double modelX = (x == dPixelExtent[2] - 1) ? dfSourcedExtW * (x - 1) + dfSourceOrigX : dfSourcedExtW * (x) + dfSourceOrigX;
-          double modelY = (y == dPixelExtent[3] - 1) ? dfSourcedExtH * double(y - 1) + dfSourceOrigY : dfSourcedExtH * double(y) + dfSourceOrigY;
+        double modelX = (x == dPixelExtent[2] - 1) ? dfSourcedExtW * (x - 1) + dfSourceOrigX : dfSourcedExtW * (x) + dfSourceOrigX;
+        double modelY = (y == dPixelExtent[3] - 1) ? dfSourcedExtH * double(y - 1) + dfSourceOrigY : dfSourcedExtH * double(y) + dfSourceOrigY;
 
-          double VJaa, VJab, VJba, VJbb;
-
-          if (gridRelative) {
-            double lon_pnt0, lat_pnt0;
-            double lon_pntEast, lat_pntEast;
-            double lon_pntNorth, lat_pntNorth;
-            double dLatNorth, dLonNorth;
-            double xpntEastSph, ypntEastSph;
-            double xpntNorthSph, ypntNorthSph, zpntNorthSph;
-            double xpntNorthSphRot, ypntNorthSphRot, zpntNorthSphRot;
-            double xpnt0Sph, ypnt0Sph, zpnt0Sph;
-            double xnormSph, ynormSph, znormSph;
-            double xncross, yncross, zncross;
-            double vecAngle;
-            double VJaa, VJab, VJba, VJbb;
-            double u, v;
-            double magnitude, newMagnitude;
-            double uu;
-            double vv;
-            lon_pnt0 = dfSourcedExtW * double(x) + dfSourceOrigX;
-            lat_pnt0 = dfSourcedExtH * double(y) + dfSourceOrigY;
-
-            lon_pntEast = lon_pnt0 + fabs(dfSourcedExtW);
-            lat_pntEast = lat_pnt0;
-            lon_pntNorth = lon_pnt0;
-            lat_pntNorth = lat_pnt0 + fabs(dfSourcedExtH);
-
-            warper->reprojModelToLatLon(lon_pnt0, lat_pnt0);
-            warper->reprojModelToLatLon(lon_pntNorth, lat_pntNorth);
-            warper->reprojModelToLatLon(lon_pntEast, lat_pntEast);
-
-            // (lon_pntNorth, lat_pntNorth)
-            //     ^
-            //     |       (lon_pntCenter, lat_pntCenter)   center of the cell-diagonal
-            //     |
-            // (lon_pnt0,lat_pnt0) ----> (lon_pntEast,lat_pntEast)
-            // This is the local coordinate system of a grid cell where we have (u,v) at location (xpnt0,ypnt0).
-            // The local coordinate system is now centered around (lon_pnt0,lat_pnt0)
-            // The vector towards north pole at this location will be (0,1,0)
-            // The tangent plane at this location is XY wil a normal (0, 0, 1)
-
-            // Nummerical approach using projection onto a unit sphere
-            dLonNorth = radians(lon_pntNorth);
-            dLatNorth = radians(lat_pntNorth);
-            xpntNorthSph = cos(dLatNorth) * cos(dLonNorth);
-            ypntNorthSph = cos(dLatNorth) * sin(dLonNorth); // # Get [dLonNorth,dLatNorth] on the unit sphere.
-            zpntNorthSph = sin(dLatNorth);                  // # Only XY plane is needed.
-
-            lon_pnt0 = radians(lon_pnt0);
-            lat_pnt0 = radians(lat_pnt0);
-            xpnt0Sph = cos(lat_pnt0) * cos(lon_pnt0);
-            ypnt0Sph = cos(lat_pnt0) * sin(lon_pnt0); // # Get [lon_pnt0,lat_pnt0] on the unit sphere.
-            zpnt0Sph = sin(lat_pnt0);                 // # Only XY plane is needed.
-
-            xpntNorthSph -= xpnt0Sph, ypntNorthSph -= ypnt0Sph;
-            zpntNorthSph -= zpnt0Sph;
-
-            NormVector(xpntNorthSph, ypntNorthSph, zpntNorthSph); // vecy
-
-            xnormSph = xpnt0Sph;
-            ynormSph = ypnt0Sph;
-            znormSph = zpnt0Sph;
-            NormVector(xnormSph, ynormSph, znormSph); // normal vector to the sphere at the point pnt0Sph
-            // # vecn = (0.0,0.0,1.0)                   // up-vector in a global coordinate system
-            // # Project vecn onto plane XY, where plane-normal is vecz
-            // # vecnProjXY = vecn - D*vecz;   D= a*x1+b*y1+c*z1;  vecz=(a,b,c); vecn=(x1,y1,z1)=(0,0,1)
-            // #                               D= vecz[2]*1;
-            // # vecyRot = NormVector( (0.0 - vecz[2]*vecz[0],0.0  - vecz[2]*vecz[1], 1.0  - vecz[2]*vecz[2]) )
-
-            // double Dist =  xnormSph * 0.0 +  ynormSph * 0.0 + znormSph * 1.0; // Left out for optimization
-            xpntNorthSphRot = -znormSph * xnormSph;      // xpntNorthSphRot = 0.0 - Dist*xnormSph;
-            ypntNorthSphRot = -znormSph * ynormSph;      // ypntNorthSphRot = 0.0 - Dist*ynormSph;
-            zpntNorthSphRot = 1.0 - znormSph * znormSph; // zpntNorthSphRot = 1.0 - Dist*znormSph;
-            NormVector(xpntNorthSphRot, ypntNorthSphRot, zpntNorthSphRot);
-
-            // This would create in 3D the rotated Easting vector; but we don't need it in this routine.
-            // Left out to optimize computation
-            // CrossProd( xpntNorthSphRot, ypntNorthSphRot, zpntNorthSphRot, xnormSph, ynormSph, znormSph,
-            //            xpntEastSph,  ypntEastSphRot,  zpntEastSphRot ); //vecxRot = CrossProd(vecy,vecz)
-
-            vecAngle = acos((xpntNorthSph * xpntNorthSphRot + ypntNorthSph * ypntNorthSphRot + zpntNorthSph * zpntNorthSphRot));
-            // Determine the sign of the angle
-            CrossProd(xpntNorthSphRot, ypntNorthSphRot, zpntNorthSphRot, xpntNorthSph, ypntNorthSph, zpntNorthSph, xncross, yncross, zncross);
-            if ((xncross * xnormSph + yncross * ynormSph + zncross * znormSph) > 0.0) // dotProduct
-              vecAngle *= -1.0;
-
-            xpntNorthSph = sin(vecAngle); // Rotate the point/vector (0,1) around Z-axis with vecAngle
-            ypntNorthSph = cos(vecAngle);
-            xpntEastSph = ypntNorthSph; // Rotate the same point/vector around Z-axis with 90 degrees
-            ypntEastSph = -xpntNorthSph;
-
-            // zpntNorthSph = 0; zpntEastSph = 0;  // not needed in 2D
-
-            // 1) Build the rotation matrix and put the axes-base vectors into the matrix
-            VJaa = xpntEastSph;
-            VJab = xpntNorthSph;
-            VJba = ypntEastSph;
-            VJbb = ypntNorthSph;
-
-            // 2) Transform the UV vector with jacobian matrix
-            u = uComponent;
-            v = vComponent;
-            //              u = 0.0;  v = 6.0; // test: 6 m/s along the easting direction of the grid
-            magnitude = hypot(u, v); // old vector magnitude in the model space
-            //(uu) =   (VJaa VJab) * ( u )
-            //(vv)     (VJba VJbb)   ( v )
-            uu = VJaa * u + VJab * v;
-            vv = VJba * u + VJbb * v;
-            //(uu) =   (VJaa VJab VJac) * ( u )
-            //(vv)     (VJba VJbb VJbc)   ( v )
-            //(ww)     (VJba VJbb VJcc)   ( w )
-
-            // 3) Apply scaling of the vector so that the vector keeps the original length (model space)
-            newMagnitude = hypot(uu, vv);
-            uComponent = uu * magnitude / newMagnitude;
-            vComponent = vv * magnitude / newMagnitude;
-          }
-          warper->reprojModelToLatLon(modelX, modelY); // model to latlon proj.
-          double modelXLon = modelX + deltaLon;        // latlons
-          double modelYLon = modelY;
-          double modelXLat = modelX;
-          double modelYLat = modelY + deltaLat;
-          warper->reprojfromLatLon(modelX, modelY); // latlon to vis proj.
-          warper->reprojfromLatLon(modelXLon, modelYLon);
-          warper->reprojfromLatLon(modelXLat, modelYLat);
-
-          double distLon = hypot(modelXLon - modelX, modelYLon - modelY);
-          double distLat = hypot(modelXLat - modelX, modelYLat - modelY);
-
-          VJaa = (modelXLon - modelX) / distLon;
-          VJab = (modelXLat - modelX) / distLat;
-          VJba = (modelYLon - modelY) / distLon;
-          VJbb = (modelYLat - modelY) / distLat;
-          double magnitude = hypot(uComponent, vComponent);
-          double uu;
-          double vv;
-          uu = VJaa * uComponent + VJab * vComponent;
-          vv = VJba * uComponent + VJbb * vComponent;
-          double newMagnitude = hypot(uu, vv);
-          uComponent = uu * magnitude / newMagnitude;
-          vComponent = vv * magnitude / newMagnitude;
-        }
+        double uComponent, vComponent;
         // TODO: Avoid overwriting original data.
+
+        double lon_pnt0 = dfSourcedExtW * double(x) + dfSourceOrigX;
+        double lat_pnt0 = dfSourcedExtH * double(y) + dfSourceOrigY;
+
+        double lon_pntEast = lon_pnt0 + fabs(dfSourcedExtW);
+        double lat_pntEast = lat_pnt0;
+        double lon_pntNorth = lon_pnt0;
+        double lat_pntNorth = lat_pnt0 + fabs(dfSourcedExtH);
+
+        std::tie(uComponent, vComponent) = doit(uValues[p], vValues[p], modelX, modelY, warper, gridRelative, fNodataValue, lon_pntEast, lat_pntEast, lon_pntNorth, lat_pntNorth);
         uValues[p] = uComponent;
         vValues[p] = vComponent;
       }
