@@ -44,6 +44,14 @@ CDataSource::DataObject::DataObject() {
   std::vector<f8point> points;
 }
 
+CDataSource::DataObject *CDataSource::DataObject::clone(CDFType newType, CT::string newName) {
+  auto nd = clone();
+  nd->cdfVariable = cdfVariable->clone(newType, newName);
+  nd->variableName = newName;
+  nd->dataObjectName = newName;
+  return nd;
+}
+
 CDataSource::DataObject *CDataSource::DataObject::clone() {
   CDataSource::DataObject *nd = new CDataSource::DataObject();
   nd->hasStatusFlag = hasStatusFlag;
@@ -53,14 +61,10 @@ CDataSource::DataObject *CDataSource::DataObject::clone() {
   nd->dfNodataValue = dfNodataValue;
   nd->dfscale_factor = dfscale_factor;
   nd->dfadd_offset = dfadd_offset;
-  nd->cdfVariable = cdfVariable;
   nd->cdfObject = cdfObject;
   nd->overruledUnits = overruledUnits;
   nd->variableName = variableName;
-
-  //   std::vector<StatusFlag*> statusFlagList;
-  //   std::vector<PointDVWithLatLon> points;
-  //   std::map<int,CFeature> features;
+  nd->cdfVariable = nullptr;
   return nd;
 }
 

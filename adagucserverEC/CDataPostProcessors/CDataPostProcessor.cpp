@@ -64,6 +64,7 @@ int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode) {
       if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
         if (code & CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
           try {
+            // CDBDebug("Applying beforereading processor %s", dataPostProcessorList->get(procId)->getId());
             int status = dataPostProcessorList->get(procId)->execute(proc, dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
             if (status != 0) {
               CDBError("Processor %s failed RUNBEFOREREADING, statuscode %d", dataPostProcessorList->get(procId)->getId(), status);
@@ -77,6 +78,7 @@ int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode) {
       if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
         if (code & CDATAPOSTPROCESSOR_RUNAFTERREADING) {
           try {
+            // CDBDebug("Applying afterreading processor %s", dataPostProcessorList->get(procId)->getId());
             int status = dataPostProcessorList->get(procId)->execute(proc, dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
             if (status != 0) {
               CDBError("Processor %s failed RUNAFTERREADING, statuscode %d", dataPostProcessorList->get(procId)->getId(), status);

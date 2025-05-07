@@ -115,6 +115,7 @@ public:
     DataObject();
     bool hasStatusFlag, hasNodataValue, appliedScaleOffset, hasScaleOffset;
     double dfNodataValue, dfscale_factor, dfadd_offset;
+    bool noFurtherProcessing = false;
     std::vector<StatusFlag> statusFlagList;
     CDF::Variable *cdfVariable;
     CDFObject *cdfObject;
@@ -136,6 +137,7 @@ public:
     void setUnits(CT::string units);
     std::vector<PointDVWithLatLon> points;
     std::map<int, CFeature> features;
+    DataObject *clone(CDFType newType, CT::string newName);
     DataObject *clone();
     CT::string dataObjectName;
   };

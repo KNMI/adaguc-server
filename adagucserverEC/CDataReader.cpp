@@ -1043,7 +1043,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
   if (isVectorLike) {
     CServerConfig::XMLE_DataPostProc *proc = new CServerConfig::XMLE_DataPostProc();
     proc->attr.algorithm = CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ID;
-    dataSource->cfgLayer->DataPostProc.push_back(proc);
+    dataSource->cfgLayer->DataPostProc.insert(dataSource->cfgLayer->DataPostProc.begin(), proc);
   }
 
   if (enablePostProcessors) {
