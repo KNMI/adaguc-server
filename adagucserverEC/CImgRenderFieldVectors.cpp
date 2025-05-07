@@ -1,20 +1,6 @@
 #include <CImgRenderFieldVectors.h>
 #include "CImgWarpBilinear.h"
-
-#define NormVector(vec0, vec1, vec2)                                                                                                                                                                   \
-  {                                                                                                                                                                                                    \
-    double vecLen = sqrt(vec0 * vec0 + vec1 * vec1 + vec2 * vec2);                                                                                                                                     \
-    vec0 = vec0 / vecLen;                                                                                                                                                                              \
-    vec1 = vec1 / vecLen;                                                                                                                                                                              \
-    vec2 = vec2 / vecLen;                                                                                                                                                                              \
-  }
-
-#define CrossProd(vecx0, vecx1, vecx2, vecy0, vecy1, vecy2, vecz0, vecz1, vecz2)                                                                                                                       \
-  {                                                                                                                                                                                                    \
-    vecz0 = vecx1 * vecy2 - vecy1 * vecx2;                                                                                                                                                             \
-    vecz1 = vecx2 * vecy0 - vecy2 * vecx0;                                                                                                                                                             \
-    vecz2 = vecx0 * vecy1 - vecy0 * vecx1;                                                                                                                                                             \
-  }
+#include "f8vector.h"
 
 bool verboseLog = true;
 
@@ -26,23 +12,7 @@ std::tuple<double, double> doit(double uComponent, double vComponent, double mod
 
   if ((uComponent != fNodataValue) && (vComponent != fNodataValue)) {
 
-    double VJaa, VJab, VJba, VJbb;
-
     if (gridRelative) {
-
-      double dLatNorth, dLonNorth;
-      double xpntEastSph, ypntEastSph;
-      double xpntNorthSph, ypntNorthSph, zpntNorthSph;
-      double xpntNorthSphRot, ypntNorthSphRot, zpntNorthSphRot;
-      double xpnt0Sph, ypnt0Sph, zpnt0Sph;
-      double xnormSph, ynormSph, znormSph;
-      double xncross, yncross, zncross;
-      double vecAngle;
-      double VJaa, VJab, VJba, VJbb;
-      double u, v;
-      double magnitude, newMagnitude;
-      double uu;
-      double vv;
 
       warper->reprojModelToLatLon(lon_pntNorth, lat_pntEast);
       warper->reprojModelToLatLon(lon_pntNorth, lat_pntNorth);
@@ -57,80 +27,64 @@ std::tuple<double, double> doit(double uComponent, double vComponent, double mod
       // The local coordinate system is now centered around (lon_pnt0,lat_pnt0)
       // The vector towards north pole at this location will be (0,1,0)
       // The tangent plane at this location is XY wil a normal (0, 0, 1)
-
       // Nummerical approach using projection onto a unit sphere
-      dLonNorth = radians(lon_pntNorth);
-      dLatNorth = radians(lat_pntNorth);
-      xpntNorthSph = cos(dLatNorth) * cos(dLonNorth);
-      ypntNorthSph = cos(dLatNorth) * sin(dLonNorth); // # Get [dLonNorth,dLatNorth] on the unit sphere.
-      zpntNorthSph = sin(dLatNorth);                  // # Only XY plane is needed.
+
+      double dLonNorth = radians(lon_pntNorth);
+      double dLatNorth = radians(lat_pntNorth);
+
+      f8vector pntNorthSph = {.x = cos(dLatNorth) * cos(dLonNorth), .y = cos(dLatNorth) * sin(dLonNorth), .z = sin(dLatNorth)};
 
       double lon_pnt0 = radians(lon_pntNorth);
       double lat_pnt0 = radians(lat_pntEast);
-      xpnt0Sph = cos(lat_pnt0) * cos(lon_pnt0);
-      ypnt0Sph = cos(lat_pnt0) * sin(lon_pnt0); // # Get [lon_pnt0,lat_pnt0] on the unit sphere.
-      zpnt0Sph = sin(lat_pnt0);                 // # Only XY plane is needed.
 
-      xpntNorthSph -= xpnt0Sph, ypntNorthSph -= ypnt0Sph;
-      zpntNorthSph -= zpnt0Sph;
+      f8vector pnt0Sph = {.x = cos(lat_pnt0) * cos(lon_pnt0), .y = cos(lat_pnt0) * sin(lon_pnt0), .z = sin(lat_pnt0)};
 
-      NormVector(xpntNorthSph, ypntNorthSph, zpntNorthSph); // vecy
+      f8vector pntNorthSphNorm = (pntNorthSph - pnt0Sph).norm();
 
-      xnormSph = xpnt0Sph;
-      ynormSph = ypnt0Sph;
-      znormSph = zpnt0Sph;
-      NormVector(xnormSph, ynormSph, znormSph); // normal vector to the sphere at the point pnt0Sph
-      // # vecn = (0.0,0.0,1.0)                   // up-vector in a global coordinate system
-      // # Project vecn onto plane XY, where plane-normal is vecz
-      // # vecnProjXY = vecn - D*vecz;   D= a*x1+b*y1+c*z1;  vecz=(a,b,c); vecn=(x1,y1,z1)=(0,0,1)
-      // #                               D= vecz[2]*1;
-      // # vecyRot = NormVector( (0.0 - vecz[2]*vecz[0],0.0  - vecz[2]*vecz[1], 1.0  - vecz[2]*vecz[2]) )
+      f8vector normSph = pnt0Sph.norm();
 
-      // double Dist =  xnormSph * 0.0 +  ynormSph * 0.0 + znormSph * 1.0; // Left out for optimization
-      xpntNorthSphRot = -znormSph * xnormSph;      // xpntNorthSphRot = 0.0 - Dist*xnormSph;
-      ypntNorthSphRot = -znormSph * ynormSph;      // ypntNorthSphRot = 0.0 - Dist*ynormSph;
-      zpntNorthSphRot = 1.0 - znormSph * znormSph; // zpntNorthSphRot = 1.0 - Dist*znormSph;
-      NormVector(xpntNorthSphRot, ypntNorthSphRot, zpntNorthSphRot);
+      f8vector pntNorthSphRotNorm = f8vector({
+                                                 .x = -normSph.z * normSph.x,
+                                                 .y = -normSph.z * normSph.y,
+                                                 .z = 1.0 - normSph.z * normSph.z,
+                                             })
+                                        .norm();
 
-      // This would create in 3D the rotated Easting vector; but we don't need it in this routine.
-      // Left out to optimize computation
-      // CrossProd( xpntNorthSphRot, ypntNorthSphRot, zpntNorthSphRot, xnormSph, ynormSph, znormSph,
-      //            xpntEastSph,  ypntEastSphRot,  zpntEastSphRot ); //vecxRot = CrossProd(vecy,vecz)
+      double vecAngleF8 = acos(dot(pntNorthSphNorm, pntNorthSphRotNorm));
 
-      vecAngle = acos((xpntNorthSph * xpntNorthSphRot + ypntNorthSph * ypntNorthSphRot + zpntNorthSph * zpntNorthSphRot));
       // Determine the sign of the angle
-      CrossProd(xpntNorthSphRot, ypntNorthSphRot, zpntNorthSphRot, xpntNorthSph, ypntNorthSph, zpntNorthSph, xncross, yncross, zncross);
-      if ((xncross * xnormSph + yncross * ynormSph + zncross * znormSph) > 0.0) // dotProduct
-        vecAngle *= -1.0;
+      if (dot(cross(pntNorthSphRotNorm, pntNorthSphNorm), normSph) > 0.0) {
+        vecAngleF8 *= -1.0;
+      }
 
-      xpntNorthSph = sin(vecAngle); // Rotate the point/vector (0,1) around Z-axis with vecAngle
-      ypntNorthSph = cos(vecAngle);
-      xpntEastSph = ypntNorthSph; // Rotate the same point/vector around Z-axis with 90 degrees
-      ypntEastSph = -xpntNorthSph;
+      double xpntNorthSph = sin(vecAngleF8); // Rotate the point/vector (0,1) around Z-axis with vecAngle
+      double ypntNorthSph = cos(vecAngleF8);
+      double xpntEastSph = ypntNorthSph; // Rotate the same point/vector around Z-axis with 90 degrees
+      double ypntEastSph = -xpntNorthSph;
 
       // zpntNorthSph = 0; zpntEastSph = 0;  // not needed in 2D
 
       // 1) Build the rotation matrix and put the axes-base vectors into the matrix
-      VJaa = xpntEastSph;
-      VJab = xpntNorthSph;
-      VJba = ypntEastSph;
-      VJbb = ypntNorthSph;
+      double VJaa = xpntEastSph;
+      double VJab = xpntNorthSph;
+      double VJba = ypntEastSph;
+      double VJbb = ypntNorthSph;
 
       // 2) Transform the UV vector with jacobian matrix
-      u = uComponent;
-      v = vComponent;
+      double u = uComponent;
+      double v = vComponent;
       //              u = 0.0;  v = 6.0; // test: 6 m/s along the easting direction of the grid
-      magnitude = hypot(u, v); // old vector magnitude in the model space
+      double magnitude = hypot(u, v); // old vector magnitude in the model space
       //(uu) =   (VJaa VJab) * ( u )
       //(vv)     (VJba VJbb)   ( v )
-      uu = VJaa * u + VJab * v;
-      vv = VJba * u + VJbb * v;
+      double uu = VJaa * u + VJab * v;
+      double vv = VJba * u + VJbb * v;
       //(uu) =   (VJaa VJab VJac) * ( u )
       //(vv)     (VJba VJbb VJbc)   ( v )
       //(ww)     (VJba VJbb VJcc)   ( w )
 
       // 3) Apply scaling of the vector so that the vector keeps the original length (model space)
-      newMagnitude = hypot(uu, vv);
+      double newMagnitude = hypot(uu, vv);
       uComponent = uu * magnitude / newMagnitude;
       vComponent = vv * magnitude / newMagnitude;
     }
@@ -146,10 +100,10 @@ std::tuple<double, double> doit(double uComponent, double vComponent, double mod
     double distLon = hypot(modelXLon - modelX, modelYLon - modelY);
     double distLat = hypot(modelXLat - modelX, modelYLat - modelY);
 
-    VJaa = (modelXLon - modelX) / distLon;
-    VJab = (modelXLat - modelX) / distLat;
-    VJba = (modelYLon - modelY) / distLon;
-    VJbb = (modelYLat - modelY) / distLat;
+    double VJaa = (modelXLon - modelX) / distLon;
+    double VJab = (modelXLat - modelX) / distLat;
+    double VJba = (modelYLon - modelY) / distLon;
+    double VJbb = (modelYLat - modelY) / distLat;
     double magnitude = hypot(uComponent, vComponent);
     double uu;
     double vv;

@@ -107,14 +107,8 @@ public:
   }
 };
 
-class CPoint {
-public:
+struct CPoint {
   double x, y;
-  CPoint &operator=(double f[2]) {
-    x = f[0];
-    y = f[1];
-    return *this;
-  }
 };
 
 /**
