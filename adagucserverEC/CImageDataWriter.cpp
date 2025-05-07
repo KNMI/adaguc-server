@@ -2114,8 +2114,8 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         }
       }
 
-      CPoint topLeft;
-      CBBOX latLonBBOX;
+      f8point topLeft;
+      f8box latLonBBOX;
       // Find lat lon BBox;
       topLeft.x = srvParam->Geo->dfBBOX[0];
 
@@ -2171,7 +2171,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       CDBDebug("numPointsX = %d, numPointsY = %d", numPointsX, numPointsY);
 #endif
 
-      CPoint *gridP = new CPoint[numPoints];
+      f8point *gridP = new f8point[numPoints];
 
       for (int y = 0; y < numPointsY; y++) {
         for (int x = 0; x < numPointsX; x++) {

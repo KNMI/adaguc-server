@@ -11,7 +11,7 @@ struct CalculatedWindVector {
   bool convertToKnots, flip;
 };
 
-int applyUVConversion(CImageWarper *warper, CDataSource *sourceImage, bool enableVector, bool enableBarb, int *dPixelExtent, float *uValues, float *vValues);
+int applyUVConversion(CImageWarper *warper, CDataSource *sourceImage, int *dPixelExtent, float *uValues, float *vValues);
 
 std::vector<CalculatedWindVector> calculateBarbsAndVectorsAndSpeedFromUVComponents(CImageWarper *warper, CDataSource *sourceImage, CDrawImage *drawImage, bool enableShade, bool enableContour,
                                                                                    bool enableBarb, bool drawMap, bool enableVector, bool drawGridVectors, int *dPixelExtent, float *uValueData,

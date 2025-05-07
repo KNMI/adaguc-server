@@ -39,15 +39,9 @@ CDataSource::DataObject::DataObject() {
   hasScaleOffset = false;
   cdfVariable = NULL;
   cdfObject = NULL;
-  overruledUnits = NULL;
   dfadd_offset = 0;
   dfscale_factor = 1;
-  std::vector<CPoint> points;
-}
-CDataSource::DataObject::~DataObject() {
-  for (size_t j = 0; j < statusFlagList.size(); j++) {
-    delete statusFlagList[j];
-  }
+  std::vector<f8point> points;
 }
 
 CDataSource::DataObject *CDataSource::DataObject::clone() {
@@ -78,6 +72,15 @@ CT::string CDataSource::DataObject::getUnits() {
     }
   }
   return overruledUnits;
+}
+
+CT::string CDataSource::DataObject::getStandardName() {
+  CT::string standard_name = variableName;
+  CDF::Attribute *standardNameAttr = cdfVariable->getAttributeNE("standard_name");
+  if (standardNameAttr != nullptr) {
+    standard_name = standardNameAttr->toString();
+  }
+  return standard_name;
 }
 
 void CDataSource::DataObject::setUnits(CT::string units) { overruledUnits = units; }
@@ -459,8 +462,7 @@ CCDFDims *CDataSource::getCDFDims() {
   return &timeSteps[currentAnimationStep]->dims;
 }
 
-void CDataSource::readStatusFlags(CDF::Variable *var, std::vector<CDataSource::StatusFlag *> *statusFlagList) {
-  for (size_t i = 0; i < statusFlagList->size(); i++) delete (*statusFlagList)[i];
+void CDataSource::readStatusFlags(CDF::Variable *var, std::vector<CDataSource::StatusFlag> *statusFlagList) {
   statusFlagList->clear();
   if (var != NULL) {
     CDF::Attribute *attr_flag_meanings = var->getAttributeNE("flag_meanings");
@@ -485,11 +487,7 @@ void CDataSource::readStatusFlags(CDF::Variable *var, std::vector<CDataSource::S
             double dfFlagValues[nrOfFlagMeanings + 1];
             attr_flag_values->getData(dfFlagValues, attr_flag_values->length);
             for (size_t j = 0; j < nrOfFlagMeanings; j++) {
-              CDataSource::StatusFlag *statusFlag = new CDataSource::StatusFlag;
-              statusFlagList->push_back(statusFlag);
-              statusFlag->meaning.copy(flagStrings[j].c_str());
-              // statusFlag->meaning.replaceSelf("_"," ");
-              statusFlag->value = dfFlagValues[j];
+              statusFlagList->push_back({.meaning = flagStrings[j], .value = dfFlagValues[j]});
             }
           } else {
             CDBError("ReadStatusFlags: nrOfFlagMeanings!=nrOfFlagValues, %d!=%d", nrOfFlagMeanings, nrOfFlagValues);
@@ -505,16 +503,16 @@ void CDataSource::readStatusFlags(CDF::Variable *var, std::vector<CDataSource::S
   }
 }
 
-const char *CDataSource::getFlagMeaning(std::vector<CDataSource::StatusFlag *> *statusFlagList, double value) {
+const char *CDataSource::getFlagMeaning(std::vector<CDataSource::StatusFlag> *statusFlagList, double value) {
   for (size_t j = 0; j < statusFlagList->size(); j++) {
-    if ((*statusFlagList)[j]->value == value) {
-      return (*statusFlagList)[j]->meaning.c_str();
+    if ((*statusFlagList)[j].value == value) {
+      return (*statusFlagList)[j].meaning.c_str();
     }
   }
   return "no_flag_meaning";
 }
 
-void CDataSource::getFlagMeaningHumanReadable(CT::string *flagMeaning, std::vector<CDataSource::StatusFlag *> *statusFlagList, double value) {
+void CDataSource::getFlagMeaningHumanReadable(CT::string *flagMeaning, std::vector<CDataSource::StatusFlag> *statusFlagList, double value) {
   flagMeaning->copy(getFlagMeaning(statusFlagList, value));
   flagMeaning->replaceSelf("_", " ");
 }
@@ -1438,3 +1436,26 @@ int CDataSource::readVariableDataForCDFDims(CDF::Variable *variableToRead, CDFTy
 }
 
 std::string CDataSource::getDataSetName() { return std::string(this->srvParams->datasetLocation.c_str()); }
+
+bool CDataSource::isGridRelative() {
+  bool verboseLog = true;
+  bool gridRelative = true; // default is gridRelative=true
+
+  if (getNumDataObjects() >= 2) {
+    // Check standard_name/var_name for first vector component
+    // if x_wind/grid_east_wind of y_wind/grid_northward_wind then gridRelative=true
+    // if eastward_wind/northward_wind then gridRelative=false
+    // default is gridRelative=true
+    CT::string standard_name = getDataObject(4)->getStandardName();
+
+    if (standard_name.equals("x_wind") || standard_name.equals("grid_eastward_wind") || standard_name.equals("y_wind") || standard_name.equals("grid_northward_wind")) {
+      gridRelative = true;
+    } else {
+      gridRelative = false;
+    }
+    if (verboseLog) {
+      CDBDebug("Grid propery gridRelative=%d", gridRelative);
+    }
+  }
+  return gridRelative;
+}

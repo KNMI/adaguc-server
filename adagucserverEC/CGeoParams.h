@@ -95,20 +95,20 @@ public:
   }
 };
 
-class CBBOX {
-public:
+struct f8box {
   double left, bottom, right, top;
-  CBBOX &operator=(double f[4]) {
-    left = f[0];
-    bottom = f[1];
-    right = f[2];
-    top = f[3];
-    return *this;
-  }
 };
 
-struct CPoint {
+struct f8point {
   double x, y;
+  f8point rad() { return {.x = (x * (M_PI / 180.)), .y = (y * (M_PI / 180.))}; }
+};
+
+struct f8component {
+  double u, v;
+  double magnitude() { return hypot(u, v); }
+  double direction() { return atan2(v, u); }                         // CHECK
+  double angledeg() { return ((atan2(u, v) * (180 / M_PI) + 180)); } // CHECK
 };
 
 /**
@@ -208,6 +208,6 @@ public:
 };
 
 void CoordinatesXYtoScreenXY(double &x, double &y, CGeoParams *geoParam);
-void CoordinatesXYtoScreenXY(CPoint &p, CGeoParams *geoParam);
-void CoordinatesXYtoScreenXY(CBBOX &b, CGeoParams *geoParam);
+void CoordinatesXYtoScreenXY(f8point &p, CGeoParams *geoParam);
+void CoordinatesXYtoScreenXY(f8box &b, CGeoParams *geoParam);
 #endif
