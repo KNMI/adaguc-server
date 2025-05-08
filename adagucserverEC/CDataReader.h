@@ -125,7 +125,7 @@ private:
    * Calculates the cell size and bounding box based on the x and y variables.
    * The bounding box is calculated in a different order when the x variable is named 'col'.
    */
-  bool calculateCellSizeAndBBox(CDataSource *dataSource, const CDF::Variable *dataSourceVar) const;
+  bool calculateCellSizeAndBBox(CDataSource *dataSource, const CDF::Variable *dataSourceVar, bool singleCellMode, int x, int y) const;
 
 public:
   CDataReader() { _enableReporting = false; }

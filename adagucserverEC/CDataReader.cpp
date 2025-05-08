@@ -633,7 +633,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
   applyAxisScalingConversion(dataSource);
 
   // Calculate cellsize and BBOX based on read X,Y dims.
-  if (!calculateCellSizeAndBBox(dataSource, dataSourceVar)) {
+  if (!calculateCellSizeAndBBox(dataSource, dataSourceVar, singleCellMode, x, y)) {
     return 1;
   }
 
@@ -791,7 +791,7 @@ void CDataReader::determineDWidthAndDHeight(CDataSource *dataSource, const bool 
   }
 }
 
-bool CDataReader::calculateCellSizeAndBBox(CDataSource *dataSource, const CDF::Variable *dataSourceVar) const {
+bool CDataReader::calculateCellSizeAndBBox(CDataSource *dataSource, const CDF::Variable *dataSourceVar, bool singleCellMode, int x, int y) const {
 
   double *dfdim_X = (double *)dataSource->varX->data;
   double *dfdim_Y = (double *)dataSource->varY->data;
@@ -817,6 +817,15 @@ bool CDataReader::calculateCellSizeAndBBox(CDataSource *dataSource, const CDF::V
     dataSource->dfBBOX[1] = dfdim_Y[dataSource->dHeight - 1] + dataSource->dfCellSizeY / 2.0f;
     dataSource->dfBBOX[2] = dfdim_X[dataSource->dWidth - 1] + dataSource->dfCellSizeX / 2.0f;
     dataSource->dfBBOX[3] = dfdim_Y[0] - dataSource->dfCellSizeY / 2.0f;
+  }
+  if (singleCellMode) {
+    double orgX = dfdim_X[0] - dataSource->dfCellSizeX / 2.0f;
+    double orgY = dfdim_Y[0] - dataSource->dfCellSizeY / 2.0f;
+    dataSource->dfBBOX[0] = orgY + (x + 2) * dataSource->dfCellSizeX;
+    dataSource->dfBBOX[1] = orgX + (y + 2) * dataSource->dfCellSizeY;
+    dataSource->dfBBOX[2] = orgX + (x + 0) * dataSource->dfCellSizeX;
+    dataSource->dfBBOX[3] = orgY + (y + 0) * dataSource->dfCellSizeY;
+    // CDBDebug("%d %d %f %f %f %f %f %f ", x, y, dataSource->dfCellSizeX, dataSource->dfCellSizeY, dataSource->dfBBOX[0], dataSource->dfBBOX[1], dataSource->dfBBOX[2], dataSource->dfBBOX[3]);
   }
 
   dataSource->origBBOXLeft = dataSource->dfBBOX[0];

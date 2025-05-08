@@ -721,7 +721,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
         }
 
         if (dataSources[d]->getDataObject(0)->cdfObject->getAttributeNE(CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ID) != NULL) {
-          openAll = true;
+          sameHeaderForAll = true;
         }
 
         if (dataSources[d]->cfgLayer->FilePath.size() == 1 && dataSources[d]->cfgLayer->FilePath[0]->attr.gfi_openall.equals("true")) {
