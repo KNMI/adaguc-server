@@ -33,21 +33,21 @@ int executeBeforeReading(CDataSource *dataSource) {
   dataSource->getDataObject(0)->dataObjectName = CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ORG_U_COMPONENT;
   dataSource->getDataObject(1)->dataObjectName = CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ORG_V_COMPONENT;
 
-  CDataSource::DataObject *ugridrel = dataSource->getDataObject(0)->clone(CDF_FLOAT, U_COMPONENT_GRID_ABSOLUTE);
-  ugridrel->noFurtherProcessing = true;
-  ugridrel->cdfVariable->setAttributeText("standard_name", "eastward_wind");
-  ugridrel->cdfVariable->setAttributeText("long_name", "eastward_wind");
-  ugridrel->cdfVariable->removeAttribute("short_name");
-  ugridrel->cdfVariable->setAttributeText("note", "Created by UVCOMPONENTS data post processor. This is absolute eastward wind.");
-  cdfObject->addVariable(ugridrel->cdfVariable);
+  CDataSource::DataObject *ugridabsolute = dataSource->getDataObject(0)->clone(CDF_FLOAT, U_COMPONENT_GRID_ABSOLUTE);
+  ugridabsolute->noFurtherProcessing = true;
+  ugridabsolute->cdfVariable->setAttributeText("standard_name", "eastward_wind");
+  ugridabsolute->cdfVariable->setAttributeText("long_name", "eastward_wind");
+  ugridabsolute->cdfVariable->removeAttribute("short_name");
+  ugridabsolute->cdfVariable->setAttributeText("note", "Created by UVCOMPONENTS data post processor. This is absolute eastward wind.");
+  cdfObject->addVariable(ugridabsolute->cdfVariable);
 
-  CDataSource::DataObject *vgridrel = dataSource->getDataObject(1)->clone(CDF_FLOAT, V_COMPONENT_GRID_ABSOLUTE);
-  vgridrel->noFurtherProcessing = true;
-  vgridrel->cdfVariable->setAttributeText("standard_name", "northward_wind");
-  vgridrel->cdfVariable->setAttributeText("long_name", "northward_wind");
-  vgridrel->cdfVariable->removeAttribute("short_name");
-  vgridrel->cdfVariable->setAttributeText("note", "Created by UVCOMPONENTS data post processor. This is absolute northward wind.");
-  cdfObject->addVariable(vgridrel->cdfVariable);
+  CDataSource::DataObject *vgridabsolute = dataSource->getDataObject(1)->clone(CDF_FLOAT, V_COMPONENT_GRID_ABSOLUTE);
+  vgridabsolute->noFurtherProcessing = true;
+  vgridabsolute->cdfVariable->setAttributeText("standard_name", "northward_wind");
+  vgridabsolute->cdfVariable->setAttributeText("long_name", "northward_wind");
+  vgridabsolute->cdfVariable->removeAttribute("short_name");
+  vgridabsolute->cdfVariable->setAttributeText("note", "Created by UVCOMPONENTS data post processor. This is absolute northward wind.");
+  cdfObject->addVariable(vgridabsolute->cdfVariable);
 
   CDataSource::DataObject *speedObject = dataSource->getDataObject(0)->clone(CDF_FLOAT, SPEED_COMPONENT);
   speedObject->noFurtherProcessing = true;
@@ -69,10 +69,12 @@ int executeBeforeReading(CDataSource *dataSource) {
   directionObject->dataObjectName = CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_DIRECTION_COMPONENT;
   cdfObject->addVariable(directionObject->cdfVariable);
 
-  dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), vgridrel);
-  dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), ugridrel);
+  dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), vgridabsolute);
+  dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), ugridabsolute);
   dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), directionObject);
   dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), speedObject);
+
+  cdfObject->setAttributeText(CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ID, "true");
   return 0;
 }
 
@@ -80,12 +82,15 @@ int CDDPUVComponents::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
   if ((isApplicable(proc, dataSource, mode) & mode) == false) {
     return -1;
   }
-  CDBDebug("Applying CDDPUVComponents for grid");
+  CDBDebug("Applying CDDPUVComponents for grid with mode %d", mode);
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
     return executeBeforeReading(dataSource);
   }
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
     CImageWarper warper;
+    if (dataSource->srvParams->Geo->CRS.empty()) {
+      dataSource->srvParams->Geo->CRS = "EPSG:4236";
+    }
     warper.initreproj(dataSource, dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
 
     int dPixelExtent[4];
@@ -94,13 +99,13 @@ int CDDPUVComponents::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
     dPixelExtent[2] = dataSource->dWidth;
     dPixelExtent[3] = dataSource->dHeight;
 
-    CDataSource::DataObject *ugridrel = dataSource->getDataObject(U_COMPONENT_GRID_ABSOLUTE);
-    CDataSource::DataObject *vgridrel = dataSource->getDataObject(V_COMPONENT_GRID_ABSOLUTE);
+    CDataSource::DataObject *ugridabsolute = dataSource->getDataObject(U_COMPONENT_GRID_ABSOLUTE);
+    CDataSource::DataObject *vgridabsolute = dataSource->getDataObject(V_COMPONENT_GRID_ABSOLUTE);
     CDataSource::DataObject *speedObject = dataSource->getDataObject(SPEED_COMPONENT);
     CDataSource::DataObject *directionObject = dataSource->getDataObject(DIRECTION_COMPONENT);
 
-    ugridrel->cdfVariable->copy(dataSource->getDataObject(CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ORG_U_COMPONENT)->cdfVariable);
-    vgridrel->cdfVariable->copy(dataSource->getDataObject(CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ORG_V_COMPONENT)->cdfVariable);
+    ugridabsolute->cdfVariable->copy(dataSource->getDataObject(CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ORG_U_COMPONENT)->cdfVariable);
+    vgridabsolute->cdfVariable->copy(dataSource->getDataObject(CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ORG_V_COMPONENT)->cdfVariable);
 
     size_t size = speedObject->cdfVariable->getSize();
     CDBDebug("Size %d", size);
@@ -108,8 +113,8 @@ int CDDPUVComponents::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
     directionObject->cdfVariable->allocateData(size);
     speedObject->cdfVariable->allocateData(size);
 
-    float *uValues = (float *)ugridrel->cdfVariable->data;
-    float *vValues = (float *)vgridrel->cdfVariable->data;
+    float *uValues = (float *)ugridabsolute->cdfVariable->data;
+    float *vValues = (float *)vgridabsolute->cdfVariable->data;
     float *directionData = (float *)directionObject->cdfVariable->data;
     float *speedData = (float *)speedObject->cdfVariable->data;
 

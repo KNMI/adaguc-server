@@ -102,6 +102,7 @@ f8component jacobianTransform(f8component speedVector, f8point gridCoordUL, f8po
 }
 
 int applyUVConversion(CImageWarper *warper, CDataSource *dataSource, int *dPixelExtent, float *uValues, float *vValues) {
+  CDBDebug("applyUVConversion");
   int gridWidth = dPixelExtent[2] - dPixelExtent[0];
   // If there are 2 components, we have wind u and v.
   // Use Jacobians for rotating u and v
@@ -155,8 +156,8 @@ std::vector<CalculatedWindVector> calculateBarbsAndVectorsAndSpeedFromUVComponen
   if (!(units.equals("kts") || units.equals("knots"))) convertToKnots = true;
 
   // Number of pixels between the vectors:
-  int vectorDensityPy = 60; // 22;
-  int vectorDensityPx = 60; // 22;
+  int vectorDensityPy = 80; // 22;
+  int vectorDensityPx = 80; // 22;
   firstXPos = int(tx) % vectorDensityPy;
   firstYPos = int(ty) % vectorDensityPx;
 
@@ -168,13 +169,14 @@ std::vector<CalculatedWindVector> calculateBarbsAndVectorsAndSpeedFromUVComponen
     stepx = 1;
   }
   // Loops through complete destination image in screen coord.
-  for (int y = firstYPos - vectorDensityPx; y < dImageHeight; y = y + stepy) {
-    for (int x = firstXPos - vectorDensityPy; x < dImageWidth; x = x + stepx) {
-      if (x >= 0 && y >= 0) {
-        size_t p = size_t(x + y * dImageWidth); // pointer in dest. image
-        f8component comp = {.u = uValueData[p], .v = vValueData[p]};
-        if (comp.u != fNodataValue && comp.v != fNodataValue) {
-          if (!drawGridVectors) {
+  if (!drawGridVectors) {
+    for (int y = firstYPos - vectorDensityPx; y < dImageHeight; y = y + stepy) {
+      for (int x = firstXPos - vectorDensityPy; x < dImageWidth; x = x + stepx) {
+        if (x >= 0 && y >= 0) {
+          size_t p = size_t(x + y * dImageWidth); // pointer in dest. image
+          f8component comp = {.u = uValueData[p], .v = vValueData[p]};
+          if (comp.u != fNodataValue && comp.v != fNodataValue) {
+
             if ((int(x - firstXPos) % vectorDensityPy == 0 && (y - firstYPos) % vectorDensityPx == 0) || (enableContour == false && enableShade == false)) {
               // Calculate coordinates from requested coordinate system
               double projectedCoordX = ((double(x) / double(dImageWidth)) * (drawImage->Geo->dfBBOX[2] - drawImage->Geo->dfBBOX[0])) + drawImage->Geo->dfBBOX[0];

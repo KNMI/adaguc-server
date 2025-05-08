@@ -1034,7 +1034,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     char u = dataSource->getDataObject(0)->getStandardName().charAt(0);
     char v = dataSource->getDataObject(1)->getStandardName().charAt(0);
     if (u == 'x' || u == 'u') {
-      if (v == 'y' || v == 'u') {
+      if (v == 'y' || v == 'v') {
         isVectorLike = true;
       }
     }
