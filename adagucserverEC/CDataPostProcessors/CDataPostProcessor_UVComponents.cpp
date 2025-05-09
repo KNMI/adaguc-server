@@ -33,6 +33,20 @@ int executeBeforeReading(CDataSource *dataSource) {
   dataSource->getDataObject(0)->dataObjectName = CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ORG_U_COMPONENT;
   dataSource->getDataObject(1)->dataObjectName = CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ORG_V_COMPONENT;
 
+  // Make dimensions the same if possible
+  if (dataSource->getDataObject(0)->cdfVariable->dimensionlinks.size() == dataSource->getDataObject(1)->cdfVariable->dimensionlinks.size()) {
+    bool isSame = true;
+    for (size_t i = 0; i < dataSource->getDataObject(0)->cdfVariable->dimensionlinks.size(); i += 1) {
+      if (dataSource->getDataObject(0)->cdfVariable->dimensionlinks[i]->getSize() != dataSource->getDataObject(1)->cdfVariable->dimensionlinks[i]->getSize()) {
+        isSame = false;
+      }
+    }
+    if (isSame) {
+      dataSource->getDataObject(1)->cdfVariable->dimensionlinks.clear();
+      dataSource->getDataObject(1)->cdfVariable->dimensionlinks = dataSource->getDataObject(0)->cdfVariable->dimensionlinks;
+    }
+  }
+
   CDataSource::DataObject *ugridabsolute = dataSource->getDataObject(0)->clone(CDF_FLOAT, U_COMPONENT_GRID_ABSOLUTE);
   ugridabsolute->noFurtherProcessing = true;
   ugridabsolute->cdfVariable->setAttributeText("standard_name", "eastward_wind");
