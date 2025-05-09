@@ -36,7 +36,7 @@ void CoordinatesXYtoScreenXY(double &x, double &y, CGeoParams *geoParam) {
   y *= double(geoParam->dHeight);
 }
 
-void CoordinatesXYtoScreenXY(CPoint &p, CGeoParams *geoParam) {
+void CoordinatesXYtoScreenXY(f8point &p, CGeoParams *geoParam) {
   p.x -= geoParam->dfBBOX[0];
   p.y -= geoParam->dfBBOX[3];
   double bboxW = geoParam->dfBBOX[2] - geoParam->dfBBOX[0];
@@ -47,7 +47,7 @@ void CoordinatesXYtoScreenXY(CPoint &p, CGeoParams *geoParam) {
   p.y *= double(geoParam->dHeight);
 }
 
-void CoordinatesXYtoScreenXY(CBBOX &b, CGeoParams *geoParam) {
+void CoordinatesXYtoScreenXY(f8box &b, CGeoParams *geoParam) {
   CoordinatesXYtoScreenXY(b.left, b.top, geoParam);
   CoordinatesXYtoScreenXY(b.right, b.bottom, geoParam);
 }

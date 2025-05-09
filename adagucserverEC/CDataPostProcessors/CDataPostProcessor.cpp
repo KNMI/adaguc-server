@@ -5,6 +5,7 @@
 #include "CDataPostProcessor_ClipMinMax.h"
 #include "CDataPostProcessor_Operator.h"
 #include "CDataPostProcessor_WFP.h"
+#include "CDataPostProcessor_UVComponents.h"
 #include "CDataPostProcessor_ToKnots.h"
 #include "CDataPostProcessor_WindSpeedKnotsToMs.h"
 #include "CDataPostProcessor_AXplusB.h"
@@ -37,6 +38,7 @@ CDPPExecutor::CDPPExecutor() {
   dataPostProcessorList->push_back(new CDPPClipMinMax());
   dataPostProcessorList->push_back(new CDPPOperator());
   dataPostProcessorList->push_back(new CDPPWFP());
+  dataPostProcessorList->push_back(new CDDPUVComponents());
   dataPostProcessorList->push_back(new CDPPWindSpeedKnotsToMs());
   dataPostProcessorList->push_back(new CDPPSolarTerminator());
 }
@@ -62,6 +64,7 @@ int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode) {
       if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
         if (code & CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
           try {
+            // CDBDebug("Applying beforereading processor %s", dataPostProcessorList->get(procId)->getId());
             int status = dataPostProcessorList->get(procId)->execute(proc, dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
             if (status != 0) {
               CDBError("Processor %s failed RUNBEFOREREADING, statuscode %d", dataPostProcessorList->get(procId)->getId(), status);
@@ -75,6 +78,7 @@ int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode) {
       if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
         if (code & CDATAPOSTPROCESSOR_RUNAFTERREADING) {
           try {
+            // CDBDebug("Applying afterreading processor %s", dataPostProcessorList->get(procId)->getId());
             int status = dataPostProcessorList->get(procId)->execute(proc, dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
             if (status != 0) {
               CDBError("Processor %s failed RUNAFTERREADING, statuscode %d", dataPostProcessorList->get(procId)->getId(), status);

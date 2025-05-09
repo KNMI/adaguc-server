@@ -89,8 +89,7 @@ private:
   DEF_ERRORFUNCTION();
 
 public:
-  class StatusFlag {
-  public:
+  struct StatusFlag {
     CT::string meaning;
     double value;
   };
@@ -110,21 +109,35 @@ public:
   }
 
   class DataObject {
-  public:
-    DataObject();
-    ~DataObject();
-    bool hasStatusFlag, hasNodataValue, appliedScaleOffset, hasScaleOffset;
-    double dfNodataValue, dfscale_factor, dfadd_offset;
-    std::vector<StatusFlag *> statusFlagList;
-    CDF::Variable *cdfVariable;
-    CDFObject *cdfObject;
     CT::string overruledUnits;
 
+  public:
+    DataObject();
+    bool hasStatusFlag, hasNodataValue, appliedScaleOffset, hasScaleOffset;
+    double dfNodataValue, dfscale_factor, dfadd_offset;
+    bool noFurtherProcessing = false;
+    std::vector<StatusFlag> statusFlagList;
+    CDF::Variable *cdfVariable;
+    CDFObject *cdfObject;
+
     CT::string variableName;
+
+    /**
+     * Returns the standardname of the DataObject based on 1. standard_name attribute, 2. variable name.
+     */
+    CT::string getStandardName();
+    /**
+     * Return the units associated with this dataobject
+     */
     CT::string getUnits();
+
+    /**
+     * Return the units associated with this dataobject. Note that this is not set in the CDF data model
+     */
     void setUnits(CT::string units);
     std::vector<PointDVWithLatLon> points;
     std::map<int, CFeature> features;
+    DataObject *clone(CDFType newType, CT::string newName);
     DataObject *clone();
     CT::string dataObjectName;
   };
@@ -312,9 +325,9 @@ public:
 
   CDataSource();
   ~CDataSource();
-  static void readStatusFlags(CDF::Variable *var, std::vector<CDataSource::StatusFlag *> *statusFlagList);
-  static const char *getFlagMeaning(std::vector<CDataSource::StatusFlag *> *statusFlagList, double value);
-  static void getFlagMeaningHumanReadable(CT::string *flagMeaning, std::vector<CDataSource::StatusFlag *> *statusFlagList, double value);
+  static void readStatusFlags(CDF::Variable *var, std::vector<CDataSource::StatusFlag> *statusFlagList);
+  static const char *getFlagMeaning(std::vector<CDataSource::StatusFlag> *statusFlagList, double value);
+  static void getFlagMeaningHumanReadable(CT::string *flagMeaning, std::vector<CDataSource::StatusFlag> *statusFlagList, double value);
   // int autoCompleteDimensions(CPGSQLDB *dataBaseConnection);
 
   int setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Configuration *_cfg, CServerConfig::XMLE_Layer *_cfgLayer, const char *_layerName, int layerIndex);
@@ -322,6 +335,7 @@ public:
   const char *getFileName();
 
   DataObject *getDataObject(const char *name);
+  DataObject *getDataObjectByName(const char *name);
   DataObject *getDataObject(int j);
 
   std::vector<DataObject *> *getDataObjectsVector() { return &(dataObjects); }
@@ -386,6 +400,8 @@ public:
   int readVariableDataForCDFDims(CDF::Variable *variableToRead, CDFType dataTypeToReturnData);
 
   std::string getDataSetName();
+
+  bool isGridRelative();
 };
 
 #endif

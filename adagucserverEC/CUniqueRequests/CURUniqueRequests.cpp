@@ -137,7 +137,13 @@ void CURUniqueRequests::createStructure(std::vector<CURResult> results, CDataSou
   int numberOfDims = dataSource->requiredDims.size();
 
   CXMLParser::XMLElement *layerStructure = gfiStructure->add("root");
-  layerStructure->add(CXMLParser::XMLElement("name", dataSource->getLayerName()));
+
+  CT::string structureName = dataSource->getLayerName();
+
+  if (dataSource->getNumDataObjects() > 1) {
+    structureName = dataObject->dataObjectName;
+  }
+  layerStructure->add(CXMLParser::XMLElement("name", structureName.c_str()));
 
   /* Add metadata */
   std::string standardName = dataObject->variableName.c_str();
@@ -296,21 +302,26 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
 
                 netcdfDimIndex = variable->getDimensionIndex(request[i].name.c_str());
               } catch (int e) {
-                // CDBError("Unable to find dimension [%s]",request[i]->name.c_str());
+                CDBDebug("Unable to find dimension [%s] for variable %s", request[i].name.c_str(), variable->name.c_str());
+
                 if (dtype == CDataReader::dtype_reference_time) {
                   CDBDebug("IS REFERENCE TIME %s", request[i].name.c_str());
+                } else if (variable->getParentCDFObject()->getDimensionNE(request[i].name.c_str()) != nullptr) {
+                  CDBDebug("IT IS IN THE DATAMODEL");
 
                 } else {
-                  CDBError("IS NOT REFERENCE TIME %s", request[i].name.c_str());
+                  CDBError("Unable to find dimension [%s] for variable %s", request[i].name.c_str(), variable->name.c_str());
                   throw(__LINE__);
                 }
               }
               if (netcdfDimIndex == dataSource->dimXIndex || netcdfDimIndex == dataSource->dimYIndex) {
                 CDBWarning("netcdfDimIndex %d already taken for %s", netcdfDimIndex, request[i].name.c_str());
               }
-              start[netcdfDimIndex] = request[i].start;
-              count[netcdfDimIndex] = request[i].values.size();
-              dimName[netcdfDimIndex] = request[i].name;
+              if (netcdfDimIndex != -1) {
+                start[netcdfDimIndex] = request[i].start;
+                count[netcdfDimIndex] = request[i].values.size();
+                dimName[netcdfDimIndex] = request[i].name;
+              }
 #ifdef CCUniqueRequests_DEBUG
               CDBDebug("  request index: %d  netcdfdimindex %d  %s %d %d", i, netcdfDimIndex, request[i]->name.c_str(), request[i]->start, request[i]->values.size());
 #endif
