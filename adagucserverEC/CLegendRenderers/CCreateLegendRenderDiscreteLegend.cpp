@@ -19,9 +19,9 @@ float calculateShadeClassBlockHeight(int totalHeight, int intervals) {
 std::tuple<int, int> calculateShadedClassLegendClipping(int minValue, int maxValue, CStyleConfiguration *styleConfiguration) {
   // Calculate which part of the legend to draw (only between min and max)
   int minInterval = 0;
-  int maxInterval = styleConfiguration->shadeIntervals->size();
-  for (size_t j = 0; j < styleConfiguration->shadeIntervals->size(); j++) {
-    CServerConfig::XMLE_ShadeInterval *s = (*styleConfiguration->shadeIntervals)[j];
+  int maxInterval = styleConfiguration->shadeIntervals.size();
+  for (size_t j = 0; j < styleConfiguration->shadeIntervals.size(); j++) {
+    CServerConfig::XMLE_ShadeInterval *s = (styleConfiguration->shadeIntervals)[j];
     if (!s->attr.min.empty() && !s->attr.max.empty()) {
       float intervalMinf = parseFloat(s->attr.min.c_str());
       float intervalMaxf = parseFloat(s->attr.max.c_str());
@@ -143,11 +143,10 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
   bool definedLegendOnShadeClasses = false;
   bool definedLegendForFeatures = false;
 
-  if (styleConfiguration->shadeIntervals != NULL) {
-    if (styleConfiguration->shadeIntervals->size() > 0) {
-      definedLegendOnShadeClasses = true;
-    }
+  if (styleConfiguration->shadeIntervals.size() > 0) {
+    definedLegendOnShadeClasses = true;
   }
+
   if (styleConfiguration->featureIntervals != NULL) {
     if (styleConfiguration->featureIntervals->size() > 0) {
       definedLegendForFeatures = true;
@@ -173,12 +172,12 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
     char szTemp[1024];
 
     // Initial estimation of block height
-    float initialBlockHeight = calculateShadeClassBlockHeight(legendImage->Geo->dHeight, styleConfiguration->shadeIntervals->size());
+    float initialBlockHeight = calculateShadeClassBlockHeight(legendImage->Geo->dHeight, styleConfiguration->shadeIntervals.size());
 
     // Based on the render settings, we can clip the values on the legend to only include the values
     // present in the data
     int minInterval = 0;
-    int maxInterval = styleConfiguration->shadeIntervals->size();
+    int maxInterval = styleConfiguration->shadeIntervals.size();
     if (styleConfiguration->styleConfig != NULL && styleConfiguration->styleConfig->RenderSettings.size() == 1 && styleConfiguration->styleConfig->RenderSettings[0]->attr.cliplegend.equals("true")) {
       std::tie(minInterval, maxInterval) = calculateShadedClassLegendClipping(minValue, maxValue, styleConfiguration);
     }
@@ -190,7 +189,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
       float blockHeight = calculateShadeClassBlockHeight(legendImage->Geo->dHeight, drawIntervals - 1);
       for (size_t j = 0; j < drawIntervals; j++) {
         size_t realj = minInterval + j;
-        CServerConfig::XMLE_ShadeInterval *s = (*styleConfiguration->shadeIntervals)[realj];
+        CServerConfig::XMLE_ShadeInterval *s = (styleConfiguration->shadeIntervals)[realj];
         if (s->attr.min.empty() == false && s->attr.max.empty() == false) {
           int cY1 = int(cbH - ((j)*blockHeight) * scaling);
           int cY2 = int(cbH - ((((j + 1) * blockHeight) - 2)) * scaling);
@@ -216,7 +215,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
       float blockHeight = calculateShadeClassBlockHeight(legendImage->Geo->dHeight, drawIntervals);
       for (size_t j = 0; j < drawIntervals; j++) {
         size_t realj = minInterval + j;
-        CServerConfig::XMLE_ShadeInterval *s = (*styleConfiguration->shadeIntervals)[realj];
+        CServerConfig::XMLE_ShadeInterval *s = (styleConfiguration->shadeIntervals)[realj];
         if (s->attr.min.empty() == false && s->attr.max.empty() == false) {
           int cY1 = int(cbH - ((j)*blockHeight) * scaling);
           int cY2 = int(cbH - ((((j + 1) * blockHeight) - 2)) * scaling);

@@ -2761,7 +2761,7 @@ int CRequest::process_querystring() {
 
 int CRequest::updatedb(CT::string *tailPath, CT::string *layerPathToScan, int scanFlags, CT::string layerName) {
   int errorHasOccured = 0;
-  int status;
+  int status = 0;
   // Fill in all data sources from the configuration object
   size_t numberOfLayers = srvParam->cfg->Layer.size();
 

@@ -28,7 +28,7 @@
 #include <float.h>
 #include <pthread.h>
 #include "CImageWarperRenderInterface.h"
-#include "CGenericDataWarper.h"
+#include "GenericDataWarper/CGenericDataWarper.h"
 
 #define CImgRenderStipplingModeDefault 0
 #define CImgRenderStipplingModeThreshold 1
@@ -64,7 +64,7 @@ private:
   };
   Settings *settings;
 
-  template <class T> static void drawFunction(int x, int y, T val, void *_settings, void *) {
+  template <class T> static void drawFunction(int x, int y, T val, void *_settings) {
     Settings *settings = (Settings *)_settings;
     bool isNodata = false;
     if (settings->hasNodataValue) {

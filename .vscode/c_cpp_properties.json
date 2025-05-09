@@ -3,6 +3,7 @@
     {
       "name": "ADAGUC",
       "includePath": [
+        "/usr/include/linux/",
         "/usr/include/cairo/",
         "/usr/include/freetype2/",
         "/usr/include/freetype2/",
@@ -18,12 +19,13 @@
         "${workspaceFolder}/hclasses",
         "${workspaceFolder}/CCDFDataModel",
         "${workspaceFolder}/adagucserverEC",
-        "/usr/include/x86_64-linux-gnu"
+        "/usr/include/x86_64-linux-gnu",
+        "/usr/include/linux"
       ],
       "defines": ["${default}"],
       "macFrameworkPath": ["${default}"],
       "forcedInclude": ["${default}"],
-      "compileCommands": "${default}",
+      "compileCommands": ["${default}"],
       "browse": {
         "limitSymbolsToIncludedHeaders": true,
         "databaseFilename": "${default}",
