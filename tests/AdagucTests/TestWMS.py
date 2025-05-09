@@ -2789,3 +2789,31 @@ class TestWMS(unittest.TestCase):
             AdagucTestTools().readfromfile(self.expectedoutputsspath +
                                            filename),
         )
+
+    def test_WMS_MultiDim_PreconfiguredDataBaseTable(self):
+        """A dataset configuration with multiple dimensions and a DataBaseTable should work"""
+
+        AdagucTestTools().cleanTempDir()
+        config = (
+            ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,"
+            + ADAGUC_PATH
+            + "/data/config/datasets/multi_dim.xml"
+        )
+        env = {"ADAGUC_CONFIG": config}
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            args=["--updatedb", "--config", config], env=self.env, isCGI=False
+        )
+        self.assertEqual(status, 0)
+
+        filename = "test_WMS_MultiDim_PreconfiguredDataBaseTable.png"
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            "DATASET=multi_dim&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=my_testdata&WIDTH=193&HEIGHT=333&CRS=EPSG%3A3857&BBOX=521390.29046548845,6703587.877386019,789268.3657551267,7165781.654958297&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&&time=2024-06-01T02%3A00%3A00Z&DIM_reference_time=2024-06-01T00%3A00%3A00Z&DIM_height=40",
+            env=env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
