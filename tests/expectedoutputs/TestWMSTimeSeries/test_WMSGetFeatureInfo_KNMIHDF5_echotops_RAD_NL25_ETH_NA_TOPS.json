@@ -1,1 +1,1 @@
-[{"name":"echotops","standard_name":"echotops","feature_name":"echotops_0","units":"FL","point":{"SRS":"EPSG:4326","coords":"5.680000,50.890000"},"dims":"time","data":{"2020-04-30T13:15:00Z":"160.000000"}}]
+[{"name":"echotops","layername":"RAD_NL25_ETH_NA_TOPS","variablename":"echotops","standard_name":"echotops","feature_name":"echotops_0","units":"FL","point":{"SRS":"EPSG:4326","coords":"5.680000,50.890000"},"dims":"time","data":{"2020-04-30T13:15:00Z":"160.000000"}}]

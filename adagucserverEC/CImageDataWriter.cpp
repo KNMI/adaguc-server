@@ -2587,6 +2587,8 @@ int CImageDataWriter::end() {
           featureName.replaceSelf(" ", "_");
           CXMLParser::XMLElement paramElement("param");
           paramElement.add(CXMLParser::XMLElement("name", e->var_name.c_str()));
+          paramElement.add(CXMLParser::XMLElement("layername", g->layerName.c_str()));
+          paramElement.add(CXMLParser::XMLElement("variablename", e->var_name.c_str()));
           paramElement.add(CXMLParser::XMLElement("standard_name", e->standard_name.c_str()));
           paramElement.add(CXMLParser::XMLElement("feature_name", e->feature_name.c_str()));
           paramElement.add(CXMLParser::XMLElement("units", e->units.c_str()));

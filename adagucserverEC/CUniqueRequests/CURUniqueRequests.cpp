@@ -137,13 +137,9 @@ void CURUniqueRequests::createStructure(std::vector<CURResult> results, CDataSou
   int numberOfDims = dataSource->requiredDims.size();
 
   CXMLParser::XMLElement *layerStructure = gfiStructure->add("root");
-
-  CT::string structureName = dataSource->getLayerName();
-
-  if (dataSource->getNumDataObjects() > 1) {
-    structureName = dataObject->dataObjectName;
-  }
-  layerStructure->add(CXMLParser::XMLElement("name", structureName.c_str()));
+  layerStructure->add(CXMLParser::XMLElement("name", dataObject->dataObjectName.empty() ? dataSource->getLayerName() : dataObject->dataObjectName.c_str()));
+  layerStructure->add(CXMLParser::XMLElement("layername", dataSource->getLayerName()));
+  layerStructure->add(CXMLParser::XMLElement("variablename", dataObject->variableName.c_str()));
 
   /* Add metadata */
   std::string standardName = dataObject->variableName.c_str();

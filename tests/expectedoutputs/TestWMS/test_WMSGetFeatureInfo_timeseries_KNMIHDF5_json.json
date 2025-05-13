@@ -1,1 +1,1 @@
-[{"name":"RAD_NL25_PCP_CM","standard_name":"image1.image_data","units":"mm/hr","point":{"SRS":"EPSG:4326","coords":"6.163147,51.837904"},"dims":"time","data":{"2021-06-22T20:00:00Z":"5.225240"}}]
+[{"name":"RAD_NL25_PCP_CM","layername":"RAD_NL25_PCP_CM","variablename":"image1.image_data","standard_name":"image1.image_data","units":"mm/hr","point":{"SRS":"EPSG:4326","coords":"6.163147,51.837904"},"dims":"time","data":{"2021-06-22T20:00:00Z":"5.225240"}}]
