@@ -778,14 +778,17 @@ def get_instance(
 def get_parameters(
     metadata: dict, collection_name: str, parameter_name_par: str | None
 ) -> list[str]:
-    # TODO: if parameter_name_par is None, we should return all parameters, for now just raise
     if parameter_name_par is None:
-        raise exec_unknown_parameter(collection_name, "")
+        return list(metadata[collection_name].keys())
 
-    parameters = parameter_name_par.split(",")
-    for param in parameters:
-        if param not in metadata[collection_name]:
-            raise exec_unknown_parameter(collection_name, param)
+    requested_parameters = parameter_name_par.split(",")
+    parameters = []
+    for param in requested_parameters:
+        if param in metadata[collection_name]:
+            parameters.append(param)
+
+    if len(parameters) == 0:
+        raise exec_unknown_parameter(collection_name, parameter_name_par)
     return parameters
 
 
