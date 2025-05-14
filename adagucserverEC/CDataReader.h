@@ -43,8 +43,8 @@
 
 #include "CAutoConfigure.h"
 
-#define U_COMPONENT_GRID_ABSOLUTE "u_grid_absolute"
-#define V_COMPONENT_GRID_ABSOLUTE "v_grid_absolute"
+#define U_COMPONENT_GRID_ABSOLUTE "eastward_component"
+#define V_COMPONENT_GRID_ABSOLUTE "northward_component"
 
 #define SPEED_COMPONENT "speed_component"
 #define DIRECTION_COMPONENT "direction_component"

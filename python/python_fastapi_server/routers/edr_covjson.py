@@ -53,9 +53,6 @@ def covjson_from_resp(dats, metadata):
             custom_name = None
             vertical_name = None
             reference_time_name = None
-            # TODO CHECK
-            print("-----------------------------------------------")
-            print(dat["layername"])
             for param_dim in metadata[dat["layername"]]["dims"].values():
                 if param_dim["cdfName"] not in ["x", "y", "time"]:
                     if not param_dim["hidden"]:
