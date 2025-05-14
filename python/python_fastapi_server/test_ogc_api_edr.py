@@ -718,11 +718,6 @@ def test_cube_custom_dim_request_all_members(client: TestClient):
             "Incorrect parameter myunknown-parameter requested for collection adaguc.tests.members.mycollection",
         ),
         (
-            "/edr/collections/adaguc.tests.members.mycollection/instances/202503010000/position?coords=POINT(5.0 52.0)",
-            404,
-            "Incorrect parameter  requested for collection adaguc.tests.members.mycollection",
-        ),
-        (
             "/edr/collections/adaguc.tests.members.mycollection/instances/202503010000/position?coords=POINT()&parameter-name=mymemberdata",
             400,
             "Could not parse WKT POINT, received coords=POINT()",
@@ -732,11 +727,19 @@ def test_cube_custom_dim_request_all_members(client: TestClient):
         "unknown_collection",
         "incorrect_instance",
         "incorrect_parameter",
-        "no_parameter",
         "invalid_point",
     ],
 )
 def test_edr_exceptions(url, status_code, description, client: TestClient):
     resp = client.get(url)
+    print(json.dumps(resp.json(), indent=2))
     assert resp.status_code == status_code
     assert resp.json()["description"] == description
+
+
+def test_no_parameters(client: TestClient):
+    url = "/edr/collections/adaguc.tests.members.mycollection/instances/202503010000/position?coords=POINT(5.0 52.0)"
+    resp = client.get(url)
+    print(json.dumps(resp.json(), indent=2))
+    assert resp.status_code == 200
+    assert list(resp.json()["parameters"].keys()) == ["mymemberdata"]

@@ -124,10 +124,7 @@ async def get_coll_inst_position(
         ttl = get_ttl_from_adaguc_headers(headers)
         if ttl is not None:
             response.headers["cache-control"] = generate_max_age(ttl)
-        return covjson_from_resp(
-            dat,
-            metadata[collection_name],
-        )
+        return covjson_from_resp(dat, metadata[collection_name], collection_name)
 
     raise EdrException(code=404, description="No data")
 

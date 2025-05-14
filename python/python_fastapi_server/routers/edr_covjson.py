@@ -41,13 +41,16 @@ def try_numeric(values):
         return values
 
 
-def covjson_from_resp(dats, metadata):
+def covjson_from_resp(dats, metadata, collection_name):
     """
     Returns a coverage json from a Adaguc WMS GetFeatureInfo request
     """
     covjson_list = []
-    dataset_name = list(metadata.keys())[0].rsplit(".")[0]
+    dataset_name = collection_name.rsplit(".")[0]
     for dat in dats:
+        if dat["name"] not in list(metadata.keys()):
+            print("SKIPPING data named ", dat["name"])
+            break
         if len(dat["data"]):
             (lon, lat) = dat["point"]["coords"].split(",")
             custom_name = None

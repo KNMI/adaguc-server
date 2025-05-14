@@ -570,9 +570,9 @@ def get_vertical_dim_for_collection(metadata: dict, parameter: str = None):
 
     if "dims" in layer and layer["dims"] is not None:
         for dim_name in layer["dims"]:
-            if (
-                dim_name in ["elevation"]
-                or layer["dims"][dim_name]["type"] == "dimtype_vertical"
+            if dim_name in ["elevation"] or (
+                layer["dims"][dim_name]["type"] == "dimtype_vertical"
+                and not layer["dims"][dim_name]["hidden"]
             ):
                 values = layer["dims"][dim_name]["values"].split(",")
                 vertical_dim = {
