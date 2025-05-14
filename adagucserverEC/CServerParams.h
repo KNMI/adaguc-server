@@ -222,7 +222,7 @@ public:
    * @param dimName The dimension name which will be appended to the table name
    */
 
-  static void makeCorrectTableName(CT::string *tableName, CT::string *dimName);
+  static CT::string makeCorrectTableName(CT::string tableName, CT::string dimName);
 
   /**
    * Check whether a filepath or urlpath contains valid tokens or not

@@ -674,7 +674,7 @@ std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAn
   if (dataSource->cfgLayer->DataBaseTable.size() == 1) {
     for (auto &dim : dimensions) {
       CT::string tableName = dataSource->cfgLayer->DataBaseTable[0]->value.c_str();
-      dataSource->srvParams->makeCorrectTableName(&tableName, &dim);
+      CT::string correctedTableName = dataSource->srvParams->makeCorrectTableName(tableName, dim);
       mapping[dim] = {tableName, ""};
     }
 #ifdef MEASURETIME
