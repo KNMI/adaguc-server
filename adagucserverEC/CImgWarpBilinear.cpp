@@ -284,7 +284,7 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
                            (sourceImage->getDataObject(2)->variableName.equals(U_COMPONENT_GRID_ABSOLUTE) && sourceImage->getDataObject(3)->variableName.equals(V_COMPONENT_GRID_ABSOLUTE)));
   bool isVectorLike = has_u_v_grid_rel && (enableVector || enableBarb);
 
-  CDBDebug("TODO: isVectorLike %d", isVectorLike);
+  // TODO: isVectorLike handling
 
   for (size_t varNr = 0; varNr < sourceImage->getNumDataObjects(); varNr++) {
     float *fpValues = valObj[varNr].fpValues;
@@ -391,7 +391,6 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
     // Note: Calculation from u and v to speed it is done in this method.
     windVectors = calculateBarbsAndVectorsAndSpeedFromUVComponents(warper, sourceImage, drawImage, enableShade, enableContour, enableBarb, drawMap, enableVector, drawGridVectors, dPixelExtent,
                                                                    valObj[2].valueData, valObj[3].valueData, dpDestX, dpDestY);
-    CDBDebug("Found %d", windVectors.size());
   }
 
   // Make Contour if desired
