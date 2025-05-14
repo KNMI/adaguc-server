@@ -260,6 +260,20 @@ namespace CDF {
       }
       isDimension = isCoordinateVariable;
     }
+    Variable(const char *name, CDFType type) {
+      isDimension = false;
+      data = NULL;
+      currentSize = 0;
+      currentType = CDF_NONE;
+      nativeType = CDF_NONE;
+      cdfReaderPointer = NULL;
+      parentCDFObject = NULL;
+      _hasCustomReader = false;
+      _isString = false;
+      setName(name);
+      setType(type);
+      isDimension = false;
+    }
     Variable() {
       isDimension = false;
       data = NULL;
