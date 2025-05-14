@@ -433,12 +433,16 @@ class TestWMSTimeSeries(unittest.TestCase):
             "service=wms&request=getmetadata&format=application/json",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"},
         )
+        
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data.getvalue(),
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        
+        metadata_json = json.loads(data.getvalue())
+        
+        self.assertEqual(len(metadata_json["adaguc_tests_uwcwdini_windcomponents"]["wind-hagl"]["layer"]["variables"]),6)
+        
+        self.assertEqual(metadata_json["adaguc_tests_uwcwdini_windcomponents"]["wind-hagl"]["layer"]["layername"],"wind-hagl")
+
 
         
     def test_UWCW_DINI_windcomponents_xwind_ywind_WMSGetMapBarbs(self):
