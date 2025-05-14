@@ -195,13 +195,14 @@ const CT::string CServerParams::randomString(const int len) {
 
 // Table names need to be different between dims like time and height.
 //  Therefore create unique tablenames like tablename_time and tablename_height
-void CServerParams::makeCorrectTableName(CT::string *tableName, CT::string *dimName) {
-  tableName->concat("_");
-  tableName->concat(dimName);
-  tableName->replaceSelf("-", "_m_");
-  tableName->replaceSelf("+", "_p_");
-  tableName->replaceSelf(".", "_");
-  tableName->toLowerCaseSelf();
+CT::string CServerParams::makeCorrectTableName(CT::string tableName, CT::string dimName) {
+  CT::string correctedTableName;
+  correctedTableName.print("%s_%s", tableName.c_str(), dimName.c_str());
+  correctedTableName.replaceSelf("-", "_m_");
+  correctedTableName.replaceSelf("+", "_p_");
+  correctedTableName.replaceSelf(".", "_");
+  correctedTableName.toLowerCaseSelf();
+  return correctedTableName;
 }
 
 void CServerParams::showWCSNotEnabledErrorMessage() { CDBError("WCS is not enabled because GDAL was not compiled into the server. "); }

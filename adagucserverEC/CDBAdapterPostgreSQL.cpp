@@ -389,6 +389,12 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
   std::map<CT::string, DimInfo> mapping =
       getTableNamesForPathFilterAndDimensions(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dims, dataSource);
 
+#ifdef CDBAdapterPostgreSQL_DEBUG
+  for (const auto &m : mapping) {
+    CDBDebug("Will query dim=%s -> tablename=%s", m.first.c_str(), m.second.tableName.c_str());
+  }
+#endif
+
   // Create a mapping for filtering where key=dimension name, value=requested dimension value(s)
   std::map<CT::string, std::vector<CT::string>> requestedDimMap;
   for (const auto &dim : dataSource->requiredDims) {
@@ -666,11 +672,10 @@ std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAn
 
   // If config has a hardcoded db table name for layer, use it
   if (dataSource->cfgLayer->DataBaseTable.size() == 1) {
-    CT::string tableName = dataSource->cfgLayer->DataBaseTable[0]->value.c_str();
-
     for (auto &dim : dimensions) {
-      dataSource->srvParams->makeCorrectTableName(&tableName, &dim);
-      mapping[dim] = {tableName, ""};
+      CT::string tableName = dataSource->cfgLayer->DataBaseTable[0]->value.c_str();
+      CT::string correctedTableName = dataSource->srvParams->makeCorrectTableName(tableName, dim);
+      mapping[dim] = {correctedTableName, ""};
     }
 #ifdef MEASURETIME
     StopWatch_Stop("<CDBAdapterPostgreSQL::getTableNamesForPathFilterAndDimensions");
@@ -1144,7 +1149,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getLayerMetadataStore(const char *dataset
 
   if (this->layerMetaDataStore == nullptr) {
 #ifdef CDBAdapterPostgreSQL_DEBUG
-    CDBDebug("Need to query layer metadata for %s/%s/%s", datasetName, layerName, metadataKey);
+    CDBDebug("Need to query layer metadata for %s", datasetName);
 #endif
     CPGSQLDB *dataBaseConnection = getDataBaseConnection();
     if (dataBaseConnection == NULL) {
