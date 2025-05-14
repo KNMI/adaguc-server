@@ -1,3 +1,7 @@
+**Version 3.0.3. 2025-05-14**
+
+- Fixed bug where a multidimensional dataset with a configured `DataBaseTable` could not get queried
+
 **Version 3.0.2. 2025-04-17**
 
 - Fixed bug where dbz to rr postprocessor did not handle doubles well
