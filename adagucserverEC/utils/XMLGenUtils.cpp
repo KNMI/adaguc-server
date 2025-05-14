@@ -97,7 +97,7 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
     }
 
     CDataReader reader;
-    status = reader.open(metadataLayer->dataSource, CNETCDFREADER_MODE_OPEN_DIMENSIONS);
+    status = reader.open(metadataLayer->dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
     if (status != 0) {
       CDBError("Could not open file: %s", metadataLayer->dataSource->getFileName());
       return 1;

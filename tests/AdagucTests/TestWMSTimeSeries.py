@@ -411,6 +411,36 @@ class TestWMSTimeSeries(unittest.TestCase):
         )
 
 
+    def test_UWCW_DINI_windcomponents_GetMetadata(self):
+        AdagucTestTools().cleanTempDir()
+        AdagucTestTools().cleanPostgres()
+        
+        filename = "test_UWCW_DINI_windcomponents_GetMetadata.json"
+        config = ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=[
+                "--updatedb",
+                "--config",
+                config + ",adaguc_tests_uwcwdini_windcomponents.xml",
+            ],
+            env=self.env,
+            isCGI=False,
+        )
+        self.assertEqual(status, 0)
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "service=wms&request=getmetadata&format=application/json",
+            {"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"},
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
+
+        
     def test_UWCW_DINI_windcomponents_xwind_ywind_WMSGetMapBarbs(self):
         AdagucTestTools().cleanTempDir()
         filename = "test_UWCW_DINI_windcomponents_xwind_ywind_WMSGetMapBarbs.png"
@@ -420,7 +450,7 @@ class TestWMSTimeSeries(unittest.TestCase):
             args=[
                 "--updatedb",
                 "--config",
-                config + ",adaguc.tests.uwcwdini_windcomponents.xml",
+                config + ",adaguc_tests_uwcwdini_windcomponents.xml",
             ],
             env=self.env,
             isCGI=False,
@@ -428,7 +458,7 @@ class TestWMSTimeSeries(unittest.TestCase):
         self.assertEqual(status, 0)
 
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "DATASET=adaguc.tests.uwcwdini_windcomponents&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind-hagl&WIDTH=512&HEIGHT=512&CRS=EPSG%3A3857&BBOX=4509.516234000213,5087774.625591068,1352501.5362287262,6506770.215673305&STYLES=windbarbs_kts%2Fbarbshadedcontour&FORMAT=image/png&TRANSPARENT=TRUE&&DIM_wind_at_10m=10&time=2024-09-07T12%3A00%3A00Z&DIM_reference_time=2024-09-05T00%3A00%3A00Z&showlegend=true",
+            "DATASET=adaguc_tests_uwcwdini_windcomponents&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind-hagl&WIDTH=512&HEIGHT=512&CRS=EPSG%3A3857&BBOX=4509.516234000213,5087774.625591068,1352501.5362287262,6506770.215673305&STYLES=windbarbs_kts%2Fbarbshadedcontour&FORMAT=image/png&TRANSPARENT=TRUE&&DIM_wind_at_10m=10&time=2024-09-07T12%3A00%3A00Z&DIM_reference_time=2024-09-05T00%3A00%3A00Z&showlegend=true",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"},
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
@@ -451,7 +481,7 @@ class TestWMSTimeSeries(unittest.TestCase):
             args=[
                 "--updatedb",
                 "--config",
-                config + ",adaguc.tests.uwcwdini_windcomponents.xml",
+                config + ",adaguc_tests_uwcwdini_windcomponents.xml",
             ],
             env=self.env,
             isCGI=False,
@@ -459,7 +489,7 @@ class TestWMSTimeSeries(unittest.TestCase):
         self.assertEqual(status, 0)
 
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "dataset=adaguc.tests.uwcwdini_windcomponents&service=WMS&request=GetFeatureInfo&version=1.3.0&layers=wind-hagl&query_layers=wind-hagl&crs=EPSG%3A3857&bbox=4509.516234000446%2C4728761.919206079%2C1352501.536228726%2C6865782.922058294&width=832&height=1319&i=423&j=647&format=image%2Fgif&info_format=application%2Fjson&dim_wind_at_10m=10&time=2024-09-05T20%3A00%3A00Z%2F2024-09-05T20%3A00%3A00Z&dim_reference_time=2024-09-05T00%3A00%3A00Z&",
+            "dataset=adaguc_tests_uwcwdini_windcomponents&service=WMS&request=GetFeatureInfo&version=1.3.0&layers=wind-hagl&query_layers=wind-hagl&crs=EPSG%3A3857&bbox=4509.516234000446%2C4728761.919206079%2C1352501.536228726%2C6865782.922058294&width=832&height=1319&i=423&j=647&format=image%2Fgif&info_format=application%2Fjson&dim_wind_at_10m=10&time=2024-09-05T20%3A00%3A00Z%2F2024-09-05T20%3A00%3A00Z&dim_reference_time=2024-09-05T00%3A00%3A00Z&",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"},
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
@@ -479,7 +509,7 @@ class TestWMSTimeSeries(unittest.TestCase):
             args=[
                 "--updatedb",
                 "--config",
-                config + ",adaguc.tests.uwcwdini_windcomponents.xml",
+                config + ",adaguc_tests_uwcwdini_windcomponents.xml",
             ],
             env=self.env,
             isCGI=False,
@@ -487,7 +517,7 @@ class TestWMSTimeSeries(unittest.TestCase):
         self.assertEqual(status, 0)
 
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "dataset=adaguc.tests.uwcwdini_windcomponents&&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=wind-hagl&QUERY_LAYERS=wind-hagl&CRS=EPSG%3A3857&BBOX=-2696318.373760471,3217800.239685233,2821293.326680254,11965071.673436817&WIDTH=832&HEIGHT=1319&I=461&J=696&FORMAT=image/gif&INFO_FORMAT=text/html&STYLES=&&DIM_wind_at_10m=10&time=2024-09-07T12%3A00%3A00Z&DIM_reference_time=2024-09-05T00%3A00%3A00Z",
+            "dataset=adaguc_tests_uwcwdini_windcomponents&&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=wind-hagl&QUERY_LAYERS=wind-hagl&CRS=EPSG%3A3857&BBOX=-2696318.373760471,3217800.239685233,2821293.326680254,11965071.673436817&WIDTH=832&HEIGHT=1319&I=461&J=696&FORMAT=image/gif&INFO_FORMAT=text/html&STYLES=&&DIM_wind_at_10m=10&time=2024-09-07T12%3A00%3A00Z&DIM_reference_time=2024-09-05T00%3A00%3A00Z",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"},
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
@@ -507,7 +537,7 @@ class TestWMSTimeSeries(unittest.TestCase):
             args=[
                 "--updatedb",
                 "--config",
-                config + ",adaguc.tests.uwcwdini_windcomponents.xml",
+                config + ",adaguc_tests_uwcwdini_windcomponents.xml",
             ],
             env=self.env,
             isCGI=False,
@@ -515,7 +545,7 @@ class TestWMSTimeSeries(unittest.TestCase):
         self.assertEqual(status, 0)
 
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "dataset=adaguc.tests.uwcwdini_windcomponents&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=wind-hagl&CRS=EPSG%3A4326&FORMAT=NetCDF3&BBOX=-42.15749,37.709509,38.831969,69.575&RESX=10.123682375000001&RESY=4.552213000000001&DIM_WIND_AT_10M=10&TIME=2024-09-07T12:00:00Z&DIM_REFERENCE_TIME=2024-09-05T00:00:00Z",
+            "dataset=adaguc_tests_uwcwdini_windcomponents&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=wind-hagl&CRS=EPSG%3A4326&FORMAT=NetCDF3&BBOX=-42.15749,37.709509,38.831969,69.575&RESX=10.123682375000001&RESY=4.552213000000001&DIM_WIND_AT_10M=10&TIME=2024-09-07T12:00:00Z&DIM_REFERENCE_TIME=2024-09-05T00:00:00Z",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"},
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
@@ -561,4 +591,4 @@ class TestWMSTimeSeries(unittest.TestCase):
                 37,
                 0.1,
             )
-        )        
+        )

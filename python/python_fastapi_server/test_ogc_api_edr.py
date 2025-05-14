@@ -28,6 +28,7 @@ def setup_test_data():
         "testcollection.xml",
         "adaguc.tests.members.xml",
         "adaguc_ewclocalclimateinfo_test.xml",
+        "adaguc_tests_uwcwdini_windcomponents.xml"
     ):
         status, _, _ = AdagucTestTools().runADAGUCServer(
             args=[
@@ -67,12 +68,12 @@ def test_root(client: TestClient):
 def test_collections(client: TestClient):
     resp = client.get("/edr/collections")
     colls = resp.json()
-    assert len(colls["collections"]) == 5
+    assert len(colls["collections"]) == 6
     print(colls["collections"])
     first_collection = colls["collections"][0]
     assert first_collection.get("id") == "adaguc.tests.arcus_uwcw.hagl_member"
 
-    coll_5d = colls["collections"][3]
+    coll_5d = colls["collections"][4]
     assert coll_5d.get("id") == "netcdf_5d.data_5d"
     assert all(
         ext_name in coll_5d["extent"]
@@ -740,3 +741,18 @@ def test_edr_exceptions(url, status_code, description, client: TestClient):
     resp = client.get(url)
     assert resp.status_code == status_code
     assert resp.json()["description"] == description
+
+
+def test_adaguc_tests_uwcwdini_windcomponents_position(client: TestClient):
+    # Querying a CoverageCollection with two scenarios (2050Hd and 2050Hn) for ewc local climate info
+    resp = client.get(
+        "/edr/collections/adaguc_tests_uwcwdini_windcomponents/position?coords=POINT(5.15 52.67)&parameter-name=wind-hagl&datetime=2024-09-05T10:00:00Z/2024-09-06T17:00:00Z"
+    )
+    assert resp.status_code, 200
+    covjson = resp.json()
+
+    assert covjson["type"] == "CoverageCollection"
+    assert len(covjson["coverages"]) == 6
+    assert covjson["coverages"][0]["type"] == "Coverage"
+    assert covjson["coverages"][0]["domain"]["domainType"] == "PointSeries"
+   

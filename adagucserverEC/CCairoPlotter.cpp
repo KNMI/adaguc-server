@@ -1249,21 +1249,24 @@ void CCairoPlotter::drawBarb(int x, int y, double direction, double strength, CC
   cairo_path_destroy(cp);
   cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
   if (drawText) {
-    CT::string text;
-    double degrees = fmod(((270 - ((direction) * (180 / M_PI)))), 360);
-    text.print("%02d %03d°", strengthInKnots, int(round(degrees)));
+    bool showDirection = false;
+    if (showDirection == false) {
+      CT::string text;
+      text.print("%d", strengthInKnots);
 
-    // If speed is really low, draw the text below the circle
-    double textDirection = strengthInKnotsRoundedToFive <= 2 ? -M_PI / 2.1 : direction;
-    int tx = x - cos(textDirection + M_PI) * 15 - 5 - text.length();
-    int ty = y + sin(textDirection + M_PI) * 12 + 5;
-    this->drawStrokedText(tx, ty, 0, text.c_str(), 12, 1 * drawOutline, outlineColor, barbColor);
+      // If speed is really low, draw the text below the circle
+      double textDirection = strengthInKnotsRoundedToFive <= 2 ? -M_PI / 2.1 : direction;
+      this->drawStrokedText(x - cos(textDirection + M_PI) * 15 - 5, y + sin(textDirection + M_PI) * 12 + 5, 0, text.c_str(), 12, 1 * drawOutline, outlineColor, barbColor);
+    } else {
+      double degrees = fmod(((270 - ((direction) * (180 / M_PI)))), 360);
+      CT::string text;
+      text.print("%02d %03d°", strengthInKnots, int(round(degrees)));
 
-    // text.print("(%0.0f°)", fmod(((270 - ((direction) * (180 / M_PI)))), 360));
-    // CColor green = CColor(0, 100, 0, 255);
-    // this->drawStrokedText(tx - 5, ty + 12, 0, text.c_str(), 11, 1 * drawOutline, outlineColor, barbColor);
-    // // text.print("%0.2f", strength);
-    // CColor yellow = CColor(200, 100, 0, 255);
-    // this->drawStrokedText(tx, ty + 24, 0, text.c_str(), 9, 1 * drawOutline, outlineColor, yellow);
+      // If speed is really low, draw the text below the circle
+      double textDirection = strengthInKnotsRoundedToFive <= 2 ? -M_PI / 2.1 : direction;
+      int tx = x - cos(textDirection + M_PI) * 15 - 5 - text.length();
+      int ty = y + sin(textDirection + M_PI) * 12 + 5;
+      this->drawStrokedText(tx, ty, 0, text.c_str(), 12, 1 * drawOutline, outlineColor, barbColor);
+    }
   }
 }
