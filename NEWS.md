@@ -1,3 +1,7 @@
+**Version 3.0.3. 2025-05-14**
+
+- Fixed bug where a multidimensional dataset with a configured `DataBaseTable` could not get queried
+
 **Version 3.0.2. 2025-04-17**
 
 - Fixed bug where dbz to rr postprocessor did not handle doubles well
@@ -10,18 +14,15 @@
 - EDR: /cube call (based on WCS)
 - EDR: /instances call using reference times
 - EDR: support for vertical dimensions (z in EDR requests) for model_levels, pressure_levels etc
-- EDR: support for custom dimensions [using custom: namespace] for example for percentile classes o"r ensemble members
-- EDR: EDR support can be switched on or off for a dataset or for a layer. Adding `edr_enabled="true"` to a dataset's `<Settings>` element disables EDR for an entire dataset. Using `edr_enabled="false"` in a layer's `<Collection>` element disables EDR for that layer, using  `edr_enabled="true"` forces enabling EDR for a single layer
+- EDR: support for custom dimensions [using custom: namespace] for example for percentile classes or ensemble members
+- EDR: By default EDR is now enabled for all datasets and layers. EDR support can be switched on or off for a dataset or for a layer. Setting `enable_edr="false"` to a dataset's `<Settings>` element disables EDR for a dataset. Using `enable_edr="false"` in a layer's `<Layer>` element disables EDR for that layer. Using  enable_edr="true" in a `<Layer>` element forces enabling EDR for a single layer, even if it is disabled in the dataset `<Settings>` element.
 - EDR: getMetadata request output has been extended with a few attributes for EDR support
-- EDR: uses getMetadata request which reads from database for increased performance as no dataset configuration needs
-to be read
-- EDR: should now support requests for generating soundings, ensemble plots (percentiles or plumes), time series, returning a CoverageCollection with multiple Coverages or a single Coverage
-- EDR: dimensions can be configured to be hidden with the attribute `hidden="true"` in the `<Dimension>` element. These
-dimenions will be marked as hidden in getMetadata output and do not have to be specified for EDR requests like /cube or
-/position. Hidden dimensions do not appear in EDR output. Hidden dimensions are useful when layers have a single value dimension (like a single height).
-- EDR: dimensions can by typed in the configuration by specifying the `dim_type` attribute of the `<Dimension>` elements.
-The type can be `time`, `reference_time`, `vertical` or `custom`. Vertical dimensions end up as `z` in EDR. A layer can have a single custom dimension, for example for ensemble member.
-- 
+- EDR: uses getMetadata request which reads from database for increased performance as no dataset configuration needs to be read. the. This should make response times of EDR calls faster.
+- EDR:  now support requests for generating soundings, ensemble plots (percentiles or plumes), time series, returning a CoverageCollection with multiple Coverages or a single Coverage in case of a single result.
+- EDR: dimensions can be configured to be `hidden` with the attribute `hidden="true"` in the `<Dimension>` element. These dimensions will be marked as hidden in getMetadata output and do not have to be specified for EDR requests like `/cube` or `/position`. Hidden dimensions do not appear in EDR output. Hidden dimensions are useful when layers have a single value dimension (like a single height).
+-  EDR: dimensions can by typed in the configuration by specifying the `dim_type` attribute of the `<Dimension>` elements. The type can be `time`, `reference_time`, `vertical` or `custom`. Vertical dimensions end up as z in EDR. A layer can have a single custom dimension, for example for ensemble member.
+- See docs: https://github.com/KNMI/adaguc-server/blob/master/doc/configuration/EDRConfiguration/EDR.md
+
 **Version 2.32.0 2025-03-31**
 - Added odim hdf5 volume data support, as extension to existing knmi hdf5 volume data support.
 
