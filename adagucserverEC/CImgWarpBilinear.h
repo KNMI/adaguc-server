@@ -187,8 +187,8 @@ public:
   int getPixelIndexForValue(CDataSource *dataSource, float val) {
     bool isNodata = false;
 
-    if (dataSource->getDataObject(0)->hasNodataValue) {
-      if (val == float(dataSource->getDataObject(0)->dfNodataValue)) isNodata = true;
+    if (dataSource->getFirstAvailableDataObject()->hasNodataValue) {
+      if (val == float(dataSource->getFirstAvailableDataObject()->dfNodataValue)) isNodata = true;
       if (!(val == val)) isNodata = true;
     }
     if (!isNodata) {
@@ -215,8 +215,8 @@ public:
   static void setValuePixel(CDataSource *dataSource, CDrawImage *drawImage, int destX, int destY, float val) {
     bool isNodata = false;
 
-    if (dataSource->getDataObject(0)->hasNodataValue) {
-      if (val == float(dataSource->getDataObject(0)->dfNodataValue)) {
+    if (dataSource->getFirstAvailableDataObject()->hasNodataValue) {
+      if (val == float(dataSource->getFirstAvailableDataObject()->dfNodataValue)) {
         isNodata = true;
         return;
       }

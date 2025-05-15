@@ -22,85 +22,118 @@ int CDDPUVComponents::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CData
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
 }
 
-int executeBeforeReading(CDataSource *dataSource) {
-  if (dataSource->getDataObjectByName(CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_SPEED_COMPONENT) != nullptr) {
-    CDBDebug("Datamodel seems already applied. Skipping!");
-    return 0;
-  }
+void adjustCDFModel(CDataSource *dataSource) {
 
   auto cdfObject = dataSource->getDataObject(0)->cdfObject;
+  auto globAttr = cdfObject->getAttributeNE(CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ID);
+  if (globAttr != nullptr && (globAttr->getDataAsString().equals("metadata") || globAttr->getDataAsString().equals("applied"))) {
+    return;
+  }
 
-  dataSource->getDataObject(0)->dataObjectName = CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ORG_U_COMPONENT;
-  dataSource->getDataObject(1)->dataObjectName = CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ORG_V_COMPONENT;
+  auto varUComponent = dataSource->getDataObject(0)->cdfVariable;
+  auto varVComponent = dataSource->getDataObject(1)->cdfVariable;
 
   // Make dimensions the same if possible
-  if (dataSource->getDataObject(0)->cdfVariable->dimensionlinks.size() == dataSource->getDataObject(1)->cdfVariable->dimensionlinks.size()) {
+  if (varUComponent->dimensionlinks.size() == varVComponent->dimensionlinks.size()) {
     bool isSame = true;
-    for (size_t i = 0; i < dataSource->getDataObject(0)->cdfVariable->dimensionlinks.size(); i += 1) {
-      if (dataSource->getDataObject(0)->cdfVariable->dimensionlinks[i]->getSize() != dataSource->getDataObject(1)->cdfVariable->dimensionlinks[i]->getSize()) {
+    for (size_t i = 0; i < varUComponent->dimensionlinks.size(); i += 1) {
+      if (varUComponent->dimensionlinks[i]->getSize() != varVComponent->dimensionlinks[i]->getSize()) {
         isSame = false;
       }
     }
     if (isSame) {
-      dataSource->getDataObject(1)->cdfVariable->dimensionlinks.clear();
-      dataSource->getDataObject(1)->cdfVariable->dimensionlinks = dataSource->getDataObject(0)->cdfVariable->dimensionlinks;
+      varVComponent->dimensionlinks.clear();
+      varVComponent->dimensionlinks = varUComponent->dimensionlinks;
     }
   }
 
-  CDataSource::DataObject *ugridabsolute = dataSource->getDataObject(0)->clone(CDF_FLOAT, U_COMPONENT_GRID_ABSOLUTE);
+  CDF::Variable *ugridabsoluteCdfVariable = dataSource->getDataObject(0)->cdfVariable->clone(CDF_FLOAT, U_COMPONENT_GRID_ABSOLUTE);
+  ugridabsoluteCdfVariable->setAttributeText("standard_name", "eastward_wind");
+  ugridabsoluteCdfVariable->setAttributeText("long_name", "eastward_wind");
+  ugridabsoluteCdfVariable->removeAttribute("short_name");
+  ugridabsoluteCdfVariable->setAttributeText("note", "Created by UVCOMPONENTS data post processor. This is absolute eastward wind.");
+  cdfObject->addVariable(ugridabsoluteCdfVariable);
+
+  CDF::Variable *vgridabsoluteCdfVariable = dataSource->getDataObject(1)->cdfVariable->clone(CDF_FLOAT, V_COMPONENT_GRID_ABSOLUTE);
+  vgridabsoluteCdfVariable->setAttributeText("standard_name", "northward_wind");
+  vgridabsoluteCdfVariable->setAttributeText("long_name", "northward_wind");
+  vgridabsoluteCdfVariable->removeAttribute("short_name");
+  vgridabsoluteCdfVariable->setAttributeText("note", "Created by UVCOMPONENTS data post processor. This is absolute northward wind.");
+  cdfObject->addVariable(vgridabsoluteCdfVariable);
+
+  CDF::Variable *speedObjectCdfVariable = dataSource->getDataObject(0)->cdfVariable->clone(CDF_FLOAT, SPEED_COMPONENT);
+  speedObjectCdfVariable->setAttributeText("standard_name", "wind_speed");
+  speedObjectCdfVariable->setAttributeText("long_name", "Wind speed");
+  speedObjectCdfVariable->removeAttribute("short_name");
+  speedObjectCdfVariable->setAttributeText("note", "Created by UVCOMPONENTS data post processor");
+  cdfObject->addVariable(speedObjectCdfVariable);
+
+  CDF::Variable *directionObjectCdfVariable = dataSource->getDataObject(0)->cdfVariable->clone(CDF_FLOAT, DIRECTION_COMPONENT);
+  directionObjectCdfVariable->setAttributeText("units", "degrees");
+  directionObjectCdfVariable->setAttributeText("standard_name", "wind_direction");
+  directionObjectCdfVariable->setAttributeText("long_name", "Wind direction");
+  directionObjectCdfVariable->removeAttribute("short_name");
+  directionObjectCdfVariable->setAttributeText("note", "Created by UVCOMPONENTS data post processor");
+  cdfObject->addVariable(directionObjectCdfVariable);
+  cdfObject->setAttributeText(CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ID, "metadata");
+}
+
+void addDataObject(CDataSource *dataSource) {
+  if (dataSource->getNumDataObjects() == 6) {
+    CDBDebug("DataSource has already 6 dataObjects. Skipping further.");
+    return;
+  }
+
+  dataSource->getDataObject(0)->dataObjectName = CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ORG_U_COMPONENT;
+  dataSource->getDataObject(1)->dataObjectName = CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ORG_V_COMPONENT;
+
+  auto cdfObject = dataSource->getDataObject(0)->cdfObject;
+  CDataSource::DataObject *ugridabsolute = dataSource->getDataObject(0)->clone();
   ugridabsolute->noFurtherProcessing = true;
-  ugridabsolute->cdfVariable->setAttributeText("standard_name", "eastward_wind");
-  ugridabsolute->cdfVariable->setAttributeText("long_name", "eastward_wind");
-  ugridabsolute->cdfVariable->removeAttribute("short_name");
-  ugridabsolute->cdfVariable->setAttributeText("note", "Created by UVCOMPONENTS data post processor. This is absolute eastward wind.");
-  cdfObject->addVariable(ugridabsolute->cdfVariable);
+  ugridabsolute->cdfVariable = cdfObject->getVariable(U_COMPONENT_GRID_ABSOLUTE);
+  ugridabsolute->variableName = U_COMPONENT_GRID_ABSOLUTE;
+  ugridabsolute->dataObjectName = U_COMPONENT_GRID_ABSOLUTE;
 
-  CDataSource::DataObject *vgridabsolute = dataSource->getDataObject(1)->clone(CDF_FLOAT, V_COMPONENT_GRID_ABSOLUTE);
+  CDataSource::DataObject *vgridabsolute = dataSource->getDataObject(0)->clone();
   vgridabsolute->noFurtherProcessing = true;
-  vgridabsolute->cdfVariable->setAttributeText("standard_name", "northward_wind");
-  vgridabsolute->cdfVariable->setAttributeText("long_name", "northward_wind");
-  vgridabsolute->cdfVariable->removeAttribute("short_name");
-  vgridabsolute->cdfVariable->setAttributeText("note", "Created by UVCOMPONENTS data post processor. This is absolute northward wind.");
-  cdfObject->addVariable(vgridabsolute->cdfVariable);
+  vgridabsolute->cdfVariable = cdfObject->getVariable(V_COMPONENT_GRID_ABSOLUTE);
+  vgridabsolute->variableName = V_COMPONENT_GRID_ABSOLUTE;
+  vgridabsolute->dataObjectName = V_COMPONENT_GRID_ABSOLUTE;
 
-  CDataSource::DataObject *speedObject = dataSource->getDataObject(0)->clone(CDF_FLOAT, SPEED_COMPONENT);
-  speedObject->noFurtherProcessing = true;
-  speedObject->cdfVariable->setAttributeText("standard_name", "wind_speed");
-  speedObject->cdfVariable->setAttributeText("long_name", "Wind speed");
-  speedObject->cdfVariable->removeAttribute("short_name");
-  speedObject->cdfVariable->setAttributeText("note", "Created by UVCOMPONENTS data post processor");
-  speedObject->dataObjectName = CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_SPEED_COMPONENT;
-  cdfObject->addVariable(speedObject->cdfVariable);
-
-  CDataSource::DataObject *directionObject = dataSource->getDataObject(0)->clone(CDF_FLOAT, DIRECTION_COMPONENT);
+  CDataSource::DataObject *directionObject = dataSource->getDataObject(0)->clone();
   directionObject->noFurtherProcessing = true;
+  directionObject->cdfVariable = cdfObject->getVariable(DIRECTION_COMPONENT);
+  directionObject->variableName = DIRECTION_COMPONENT;
+  directionObject->dataObjectName = DIRECTION_COMPONENT;
   directionObject->setUnits("degrees");
-  directionObject->cdfVariable->setAttributeText("units", "degrees");
-  directionObject->cdfVariable->setAttributeText("standard_name", "wind_direction");
-  directionObject->cdfVariable->setAttributeText("long_name", "Wind direction");
-  directionObject->cdfVariable->removeAttribute("short_name");
-  directionObject->cdfVariable->setAttributeText("note", "Created by UVCOMPONENTS data post processor");
-  directionObject->dataObjectName = CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_DIRECTION_COMPONENT;
-  cdfObject->addVariable(directionObject->cdfVariable);
+
+  CDataSource::DataObject *speedObject = dataSource->getDataObject(0)->clone();
+  speedObject->noFurtherProcessing = true;
+  speedObject->cdfVariable = cdfObject->getVariable(SPEED_COMPONENT);
+  speedObject->variableName = SPEED_COMPONENT;
+  speedObject->dataObjectName = SPEED_COMPONENT;
 
   dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), vgridabsolute);
   dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), ugridabsolute);
   dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), directionObject);
   dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), speedObject);
-
-  cdfObject->setAttributeText(CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ID, "true");
-  return 0;
 }
 
 int CDDPUVComponents::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
   if ((isApplicable(proc, dataSource, mode) & mode) == false) {
     return -1;
   }
-  CDBDebug("Applying CDDPUVComponents for grid with mode %d", mode);
-  if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
-    return executeBeforeReading(dataSource);
-  }
+  adjustCDFModel(dataSource);
+  addDataObject(dataSource);
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
+    auto cdfObject = dataSource->getDataObject(0)->cdfObject;
+    auto globAttr = cdfObject->getAttributeNE(CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ID);
+    if (globAttr != nullptr && (globAttr->getDataAsString().equals("applied"))) {
+      CDBDebug("Datamodel seems already applied. Skipping!");
+      return 0;
+    }
+    CDBDebug("Applying CDDPUVComponents after reading");
+
     CImageWarper warper;
     if (dataSource->srvParams->Geo->CRS.empty()) {
       dataSource->srvParams->Geo->CRS = "EPSG:4236";
@@ -143,22 +176,7 @@ int CDDPUVComponents::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
   return 0;
 }
 
-int a = 0;
-
-int CDDPUVComponents::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode, double *data, size_t size) {
-  if ((isApplicable(proc, dataSource, mode) & mode) == false) {
-    return -1;
-  }
-  CDBDebug("Applying CDDPUVComponents for timeseries");
-  if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
-    return executeBeforeReading(dataSource);
-  }
-  if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
-    // TODO: FIX TIME SERIES PROCESSOR
-    for (size_t j = 0; j < size; j++) {
-      data[j] = j + a * size;
-    }
-  }
-  a++;
-  return 0;
+int CDDPUVComponents::execute(CServerConfig::XMLE_DataPostProc *, CDataSource *, int, double *, size_t) {
+  CDBError("Not implemented");
+  return 1;
 }

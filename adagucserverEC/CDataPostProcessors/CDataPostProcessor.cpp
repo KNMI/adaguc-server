@@ -6,6 +6,9 @@
 #include "CDataPostProcessor_Operator.h"
 #include "CDataPostProcessor_WFP.h"
 #include "CDataPostProcessor_UVComponents.h"
+#include "CDataPostProcessor_FilterDataObjects.h"
+#include "CDataPostProcessor_MetadataVariable.h"
+
 #include "CDataPostProcessor_ToKnots.h"
 #include "CDataPostProcessor_WindSpeedKnotsToMs.h"
 #include "CDataPostProcessor_AXplusB.h"
@@ -39,6 +42,8 @@ CDPPExecutor::CDPPExecutor() {
   dataPostProcessorList->push_back(new CDPPOperator());
   dataPostProcessorList->push_back(new CDPPWFP());
   dataPostProcessorList->push_back(new CDDPUVComponents());
+  dataPostProcessorList->push_back(new CDDPFilterDataObjects());
+  dataPostProcessorList->push_back(new CDDPMetadataVariable());
   dataPostProcessorList->push_back(new CDPPWindSpeedKnotsToMs());
   dataPostProcessorList->push_back(new CDPPSolarTerminator());
 }

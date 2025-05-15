@@ -44,13 +44,13 @@ CDataSource::DataObject::DataObject() {
   std::vector<f8point> points;
 }
 
-CDataSource::DataObject *CDataSource::DataObject::clone(CDFType newType, CT::string newName) {
-  auto nd = clone();
-  nd->cdfVariable = cdfVariable->clone(newType, newName);
-  nd->variableName = newName;
-  nd->dataObjectName = newName;
-  return nd;
-}
+// CDataSource::DataObject *CDataSource::DataObject::clone(CDFType newType, CT::string newName) {
+//   auto nd = clone();
+//   nd->cdfVariable = cdfVariable->clone(newType, newName);
+//   nd->variableName = newName;
+//   nd->dataObjectName = newName;
+//   return nd;
+// }
 
 CDataSource::DataObject *CDataSource::DataObject::clone() {
   CDataSource::DataObject *nd = new CDataSource::DataObject();
@@ -228,7 +228,7 @@ MinMax getMinMax(CDF::Variable *var) {
 int CDataSource::Statistics::calculate(CDataSource *dataSource) {
   // Get Min and Max
   // CDBDebug("calculate stat ");
-  CDataSource::DataObject *dataObject = dataSource->getDataObject(0);
+  CDataSource::DataObject *dataObject = dataSource->getFirstAvailableDataObject();
   if (dataObject->cdfVariable->data != NULL) {
     size_t size = dataObject->cdfVariable->getSize(); // dataSource->dWidth*dataSource->dHeight;
 
@@ -771,19 +771,7 @@ CT::PointerList<CT::string *> *CDataSource::getRenderMethodListForDataSource(CDa
   }
 
   CT::PointerList<CT::string *> *renderMethods = renderMethodList.splitToPointer(",");
-  //   if(dataSource!=NULL){
-  //     if(dataSource->getNumDataObjects()>0){
-  //       if(dataSource->getDataObject(0)->cdfObject!=NULL){
-  //
-  //         try{
-  //           if(dataSource->getDataObject(0)->cdfObject->getAttribute("featureType")->toString().equals("timeSeries")||dataSource->getDataObject(0)->cdfObject->getAttribute("featureType")->toString().equals("point")){
-  //             renderMethods->insert(renderMethods->begin(),1,new CT::string("pointnearest"));
-  //           }
-  //         }catch(int e){
-  //         }
-  //       }
-  //     }
-  //   }
+
   return renderMethods;
 }
 
@@ -1382,8 +1370,19 @@ CDataSource::DataObject *CDataSource::getDataObject(const char *name) {
     CDataSource::DataObject *dataObject = *it;
     candidates.printconcat("%s,", dataObject->cdfVariable->name.c_str());
   }
-  CDBError("DataObject %s not found. Canditates are %s", name, candidates.c_str());
+  CDBError("DataObject %s not found. Candidates are %s", name, candidates.c_str());
   throw(CEXCEPTION_NULLPOINTER);
+}
+
+CDataSource::DataObject *CDataSource::getFirstAvailableDataObject() {
+  for (size_t o = 0; o < this->getNumDataObjects(); o++) {
+    if (this->getDataObject(o)->filterFromOutput) {
+      continue;
+    }
+    return this->getDataObject(o);
+  }
+  CDBWarning("No dataobjects available");
+  return nullptr;
 }
 
 CDataSource::DataObject *CDataSource::getDataObject(int j) {

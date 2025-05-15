@@ -1053,6 +1053,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     CServerConfig::XMLE_DataPostProc *proc = new CServerConfig::XMLE_DataPostProc();
     proc->attr.algorithm = CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ID;
     CDBDebug("Adding Data postprocessor UVCOMPONENTS (isVectorLike) ");
+    // TODO: DISCUSS IF WE WANT TO ADD THIS AUTOMATICALLY
     dataSource->cfgLayer->DataPostProc.insert(dataSource->cfgLayer->DataPostProc.begin(), proc);
   }
 

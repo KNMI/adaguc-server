@@ -692,35 +692,35 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
     CDataReader reader;
     reader.open(dataSources[d], CNETCDFREADER_MODE_OPEN_HEADER);
     if (dataSources[d]->getNumDataObjects() > 0) {
-      if (dataSources[d]->getDataObject(0)->cdfVariable != NULL) {
+      if (dataSources[d]->getFirstAvailableDataObject()->cdfVariable != NULL) {
         if (dataSources[d]->isConfigured) {
           if (dataSources[d]->nativeProj4.length() > 0) {
             headerIsAvailable = true;
           }
         }
-        if (dataSources[d]->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_VECTOR") != NULL) {
+        if (dataSources[d]->getFirstAvailableDataObject()->cdfVariable->getAttributeNE("ADAGUC_VECTOR") != NULL) {
           openAll = true;
         }
 
-        if (dataSources[d]->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_POINT") != NULL) {
+        if (dataSources[d]->getFirstAvailableDataObject()->cdfVariable->getAttributeNE("ADAGUC_POINT") != NULL) {
           openAll = true;
         }
 
-        if (dataSources[d]->getDataObject(0)->cdfVariable->getAttributeNE("UGRID_MESH") != NULL) {
+        if (dataSources[d]->getFirstAvailableDataObject()->cdfVariable->getAttributeNE("UGRID_MESH") != NULL) {
           openAll = true;
         }
-        if (dataSources[d]->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_PROFILE") != NULL) {
+        if (dataSources[d]->getFirstAvailableDataObject()->cdfVariable->getAttributeNE("ADAGUC_PROFILE") != NULL) {
           isProfileData = true;
         }
-        if (dataSources[d]->getDataObject(0)->cdfObject->getAttributeNE("ADAGUC_GEOJSON") != NULL) {
+        if (dataSources[d]->getFirstAvailableDataObject()->cdfObject->getAttributeNE("ADAGUC_GEOJSON") != NULL) {
           openAll = true;
         }
 
-        if (dataSources[d]->getDataObject(0)->cdfObject->getAttributeNE("USE_ADAGUC_LATLONBNDS_CONVERTER") != NULL) {
+        if (dataSources[d]->getFirstAvailableDataObject()->cdfObject->getAttributeNE("USE_ADAGUC_LATLONBNDS_CONVERTER") != NULL) {
           openAll = true;
         }
 
-        if (dataSources[d]->getDataObject(0)->cdfObject->getAttributeNE(CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ID) != NULL) {
+        if (dataSources[d]->getFirstAvailableDataObject()->cdfObject->getAttributeNE(CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ID) != NULL) {
           sameHeaderForAll = true;
         }
 
@@ -776,8 +776,8 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
         getFeatureInfoResult->dataSourceIndex = dataSourceIndex;
 
 #ifdef CIMAGEDATAWRITER_DEBUG
-        CDBDebug("Processing dataSource %d with result %d of %d results (%d) %f", d, step, dataSources[d]->getNumTimeSteps(), dataSources[d]->getDataObject(0)->hasNodataValue,
-                 dataSources[d]->getDataObject(0)->dfNodataValue);
+        CDBDebug("Processing dataSource %d with result %d of %d results (%d) %f", d, step, dataSources[d]->getNumTimeSteps(), dataSources[d]->getFirstAvailableDataObject()->hasNodataValue,
+                 dataSources[d]->getFirstAvailableDataObject()->dfNodataValue);
 #endif
 
         CDataReader reader;
@@ -870,6 +870,9 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
           for (size_t o = 0; o < dataSource->getNumDataObjects(); o++) {
             if (dataSource->getDataObject(o)->cdfVariable->data == nullptr) {
               CDBWarning("No variable defined for dataObject %d for [%s]", o, dataSource->getDataObject(o)->cdfVariable->name.c_str());
+              continue;
+            }
+            if (dataSource->getDataObject(o)->filterFromOutput) {
               continue;
             }
 
@@ -1207,7 +1210,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
 
       int numFeatures = 0;
       try {
-        numFeatures = dataSource->getDataObject(0)->cdfObject->getDimension("features")->getSize();
+        numFeatures = dataSource->getFirstAvailableDataObject()->cdfObject->getDimension("features")->getSize();
       } catch (int e) {
 #ifdef CIMAGEDATAWRITER_DEBUG
         CDBDebug("Note: While configuring featureInterval: Unable to find features variable");
@@ -1223,8 +1226,8 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
             CT::string attributeName = featureInterval->attr.matchid;
             for (int featureNr = 0; featureNr < numFeatures; featureNr++) {
               attributeValues[featureNr] = "";
-              std::map<int, CFeature>::iterator feature = dataSource->getDataObject(0)->features.find(featureNr);
-              if (feature != dataSource->getDataObject(0)->features.end()) {
+              std::map<int, CFeature>::iterator feature = dataSource->getFirstAvailableDataObject()->features.find(featureNr);
+              if (feature != dataSource->getFirstAvailableDataObject()->features.end()) {
                 std::map<std::string, std::string>::iterator attributeValueItr = feature->second.paramMap.find(attributeName.c_str());
                 if (attributeValueItr != feature->second.paramMap.end()) {
                   attributeValues[featureNr] = attributeValueItr->second.c_str();
@@ -1297,7 +1300,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
 #ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("Using CImgWarpBilinear");
 #endif
-    if (dataSource->getDataObject(0)->points.size() == 0) {
+    if (dataSource->getFirstAvailableDataObject()->points.size() == 0) {
       imageWarperRenderer = new CImgWarpBilinear();
       CT::string bilinearSettings;
       bool drawMap = false;
@@ -1480,7 +1483,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
    * Use point renderer
    */
   if (renderMethod & RM_BARB || renderMethod & RM_VECTOR || renderMethod & RM_POINT) {
-    if (dataSource->getDataObject(0)->points.size() != 0) {
+    if (dataSource->getFirstAvailableDataObject()->points.size() != 0) {
 #ifdef CIMAGEDATAWRITER_DEBUG
       CDBDebug("Using CImgRenderPoints");
 #endif
@@ -1664,7 +1667,7 @@ int CImageDataWriter::calculateData(std::vector<CDataSource *> &dataSources) {
             if (dsj->dfBBOX[1] > dsj->dfBBOX[3]) yj = dsj->dHeight - yj - 1;
             size_t ptrj = xj + yj * dsj->dWidth;
 
-            pixel[j] = convertValue(dsj->getDataObject(0)->cdfVariable->getType(), dsj->getDataObject(0)->cdfVariable->data, ptrj);
+            pixel[j] = convertValue(dsj->getFirstAvailableDataObject()->cdfVariable->getType(), dsj->getFirstAvailableDataObject()->cdfVariable->data, ptrj);
 
             if (inputMapExpression[j] == between) {
               if (pixel[j] >= inputMapExprValuesLow[j] && pixel[j] <= inputMapExprValuesHigh[j])
@@ -1710,7 +1713,7 @@ int CImageDataWriter::calculateData(std::vector<CDataSource *> &dataSources) {
             pixel[0] = 1;
           else
             pixel[0] = 0;
-          setValue(dataSources[0]->getDataObject(0)->cdfVariable->getType(), dataSources[0]->getDataObject(0)->cdfVariable->data, ptr, pixel[0]);
+          setValue(dataSources[0]->getFirstAvailableDataObject()->cdfVariable->getType(), dataSources[0]->getFirstAvailableDataObject()->cdfVariable->data, ptr, pixel[0]);
         }
       }
       CDBDebug("Warping with style %s", srvParam->Styles.c_str());
@@ -1835,7 +1838,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
             if (attrToSearch != NULL) {
               // CDBDebug("Determining ImageText based on netcdf attribute %s",attrToSearch);
               try {
-                CDF::Attribute *attr = dataSource->getDataObject(0)->cdfObject->getAttribute(attrToSearch);
+                CDF::Attribute *attr = dataSource->getFirstAvailableDataObject()->cdfObject->getAttribute(attrToSearch);
                 if (attr->length > 0) {
                   imageText.copy(attrToSearch);
                   imageText.concat(": ");
@@ -3325,8 +3328,8 @@ CColor CImageDataWriter::getPixelColorForValue(CDataSource *dataSource, float va
   bool isNodata = false;
 
   CColor color;
-  if (dataSource->getDataObject(0)->hasNodataValue) {
-    if (val == float(dataSource->getDataObject(0)->dfNodataValue)) isNodata = true;
+  if (dataSource->getFirstAvailableDataObject()->hasNodataValue) {
+    if (val == float(dataSource->getFirstAvailableDataObject()->dfNodataValue)) isNodata = true;
     if (!(val == val)) isNodata = true;
   }
   if (!isNodata) {

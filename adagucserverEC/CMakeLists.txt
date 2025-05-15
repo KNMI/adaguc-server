@@ -124,6 +124,11 @@ add_library(
     CDataPostProcessors/CDataPostProcessor_WFP.cpp
     CDataPostProcessors/CDataPostProcessor_UVComponents.h
     CDataPostProcessors/CDataPostProcessor_UVComponents.cpp
+    CDataPostProcessors/CDataPostProcessor_FilterDataObjects.h
+    CDataPostProcessors/CDataPostProcessor_FilterDataObjects.cpp
+    CDataPostProcessors/CDataPostProcessor_MetadataVariable.h
+    CDataPostProcessors/CDataPostProcessor_MetadataVariable.cpp
+    
     CDataReader.cpp
     CDataReader.h
     CDataSource.cpp

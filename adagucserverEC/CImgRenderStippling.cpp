@@ -96,11 +96,11 @@ void CImgRenderStippling::render(CImageWarper *warper, CDataSource *dataSource, 
   Settings settings;
   this->settings = &settings;
   styleConfiguration = dataSource->getStyle();
-  settings.dfNodataValue = dataSource->getDataObject(0)->dfNodataValue;
+  settings.dfNodataValue = dataSource->getFirstAvailableDataObject()->dfNodataValue;
   settings.legendValueRange = styleConfiguration->hasLegendValueRange;
   settings.legendLowerRange = styleConfiguration->legendLowerRange;
   settings.legendUpperRange = styleConfiguration->legendUpperRange;
-  settings.hasNodataValue = dataSource->getDataObject(0)->hasNodataValue;
+  settings.hasNodataValue = dataSource->getFirstAvailableDataObject()->hasNodataValue;
 
   if (!settings.hasNodataValue) {
     settings.hasNodataValue = true;
@@ -116,8 +116,8 @@ void CImgRenderStippling::render(CImageWarper *warper, CDataSource *dataSource, 
     }
   }
 
-  CDFType dataType = dataSource->getDataObject(0)->cdfVariable->getType();
-  sourceData = dataSource->getDataObject(0)->cdfVariable->data;
+  CDFType dataType = dataSource->getFirstAvailableDataObject()->cdfVariable->getType();
+  sourceData = dataSource->getFirstAvailableDataObject()->cdfVariable->data;
   CGeoParams sourceGeo;
 
   sourceGeo.dWidth = dataSource->dWidth;

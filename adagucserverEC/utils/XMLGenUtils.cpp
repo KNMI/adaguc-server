@@ -117,6 +117,9 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
 
     auto v = metadataLayer->dataSource->getDataObjectsVector();
     for (auto d : (*v)) {
+      if (d->filterFromOutput) {
+        continue;
+      }
       CDF::Attribute *longName = d->cdfVariable->getAttributeNE("long_name");
       if (longName == nullptr) {
         longName = d->cdfVariable->getAttributeNE("standard_name");
