@@ -37,11 +37,11 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   Settings settings;
-  settings.dfNodataValue = dataSource->getDataObject(0)->dfNodataValue;
+  settings.dfNodataValue = dataSource->getFirstAvailableDataObject()->dfNodataValue;
   settings.legendValueRange = (bool)styleConfiguration->hasLegendValueRange;
   settings.legendLowerRange = styleConfiguration->legendLowerRange;
   settings.legendUpperRange = styleConfiguration->legendUpperRange;
-  settings.hasNodataValue = dataSource->getDataObject(0)->hasNodataValue;
+  settings.hasNodataValue = dataSource->getFirstAvailableDataObject()->hasNodataValue;
 
   if (!settings.hasNodataValue) {
     settings.hasNodataValue = true;
@@ -57,8 +57,8 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
     }
   }
 
-  CDFType dataType = dataSource->getDataObject(0)->cdfVariable->getType();
-  sourceData = dataSource->getDataObject(0)->cdfVariable->data;
+  CDFType dataType = dataSource->getFirstAvailableDataObject()->cdfVariable->getType();
+  sourceData = dataSource->getFirstAvailableDataObject()->cdfVariable->data;
   CGeoParams sourceGeo;
   sourceGeo.dWidth = dataSource->dWidth;
   sourceGeo.dHeight = dataSource->dHeight;

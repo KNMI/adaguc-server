@@ -25,6 +25,9 @@ int CDPPAXplusB::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *da
   }
   // CDBDebug("Applying ax+b");
   for (size_t varNr = 0; varNr < dataSource->getNumDataObjects(); varNr++) {
+    if (dataSource->getDataObject(varNr)->noFurtherProcessing) {
+      continue;
+    }
     dataSource->getDataObject(varNr)->hasScaleOffset = true;
     dataSource->getDataObject(varNr)->cdfVariable->setType(CDF_DOUBLE);
 

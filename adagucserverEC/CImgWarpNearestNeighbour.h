@@ -142,12 +142,12 @@ private:
 
   template <class T> void _plot(CImageWarper *, CDataSource *dataSource, CDrawImage *drawImage) {
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-    double dfNodataValue = dataSource->getDataObject(0)->dfNodataValue;
+    double dfNodataValue = dataSource->getFirstAvailableDataObject()->dfNodataValue;
 
     double legendValueRange = styleConfiguration->hasLegendValueRange;
     double legendLowerRange = styleConfiguration->legendLowerRange;
     double legendUpperRange = styleConfiguration->legendUpperRange;
-    bool hasNodataValue = dataSource->getDataObject(0)->hasNodataValue;
+    bool hasNodataValue = dataSource->getFirstAvailableDataObject()->hasNodataValue;
     T nodataValue = (T)dfNodataValue;
     float legendLog = styleConfiguration->legendLog;
     float legendLogAsLog;
@@ -159,7 +159,7 @@ private:
     float legendScale = styleConfiguration->legendScale;
     float legendOffset = styleConfiguration->legendOffset;
 
-    T *data = (T *)dataSource->getDataObject(0)->cdfVariable->data;
+    T *data = (T *)dataSource->getFirstAvailableDataObject()->cdfVariable->data;
 
     bool shade = false;
     if (styleConfiguration != NULL) {
@@ -320,7 +320,7 @@ private:
 #ifdef CIMGWARPNEARESTNEIGHBOUR_DEBUG
       CDBDebug("fieldsAreIdentical: using _plot");
 #endif
-      CDFType dataType = dataSource->getDataObject(0)->cdfVariable->getType();
+      CDFType dataType = dataSource->getFirstAvailableDataObject()->cdfVariable->getType();
       switch (dataType) {
       case CDF_CHAR:
         return _plot<char>(warper, dataSource, drawImage);
@@ -407,8 +407,8 @@ private:
         pthread_mutex_unlock(&CImgWarpNearestNeighbour_render_lock);
       }
 
-      CDFType dataType = dataSource->getDataObject(0)->cdfVariable->getType();
-      void *sourceData = dataSource->getDataObject(0)->cdfVariable->data;
+      CDFType dataType = dataSource->getFirstAvailableDataObject()->cdfVariable->getType();
+      void *sourceData = dataSource->getFirstAvailableDataObject()->cdfVariable->data;
       CGeoParams sourceGeo;
 
       sourceGeo.dWidth = dataSource->dWidth;

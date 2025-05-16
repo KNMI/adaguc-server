@@ -97,7 +97,7 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
     }
 
     CDataReader reader;
-    status = reader.open(metadataLayer->dataSource, CNETCDFREADER_MODE_OPEN_DIMENSIONS);
+    status = reader.open(metadataLayer->dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
     if (status != 0) {
       CDBError("Could not open file: %s", metadataLayer->dataSource->getFileName());
       return 1;
@@ -117,6 +117,9 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
 
     auto v = metadataLayer->dataSource->getDataObjectsVector();
     for (auto d : (*v)) {
+      if (d->filterFromOutput) {
+        continue;
+      }
       CDF::Attribute *longName = d->cdfVariable->getAttributeNE("long_name");
       if (longName == nullptr) {
         longName = d->cdfVariable->getAttributeNE("standard_name");

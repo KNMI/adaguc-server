@@ -3,11 +3,11 @@
 CDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawImage *drawImage, const CStyleConfiguration *styleConfiguration) {
   CDrawFunctionSettings settings;
 
-  settings.dfNodataValue = dataSource->getDataObject(0)->dfNodataValue;
+  settings.dfNodataValue = dataSource->getFirstAvailableDataObject()->dfNodataValue;
   settings.legendValueRange = styleConfiguration->hasLegendValueRange;
   settings.legendLowerRange = styleConfiguration->legendLowerRange;
   settings.legendUpperRange = styleConfiguration->legendUpperRange;
-  settings.hasNodataValue = dataSource->getDataObject(0)->hasNodataValue;
+  settings.hasNodataValue = dataSource->getFirstAvailableDataObject()->hasNodataValue;
 
   settings.legendLog = styleConfiguration->legendLog;
   if (settings.legendLog > 0) {

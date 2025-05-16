@@ -31,10 +31,25 @@ You can specify a dimension type when configuring a dimension. The following dim
 
 - `type="time"`: the time dimension, EDR will call this dimension `t`
 - `type="reference_time"`: the reference time, EDR will call this dimension `custom:reference_time`
-- `type="height"`: the height dimension, EDR will call this dimension `z`
+- `type="vertical"`: the vertical/height dimension, EDR will call this dimension `z`
 - `type="custom"`: the custom (non-time, non-height, non-reference time) dimension, EDR will call this dimension `custom:your_dimension_name`
 
 See [Dimension.md](/doc/configuration/Dimension.md) for additional Dimension configuration options.
+
+In a Layer configuration this looks like:
+
+```xml
+
+  <Layer type="database" enable_edr="true">
+    <Name>air-pressure-ml</Name>
+    <Variable>air-pressure-ml</Variable>
+    <FilePath maxquerylimit="2048" retentionperiod="P3D" retentiontype="datatime" filter="uwcw_ha43_dini_sounding_geoweb_nc.*\.nc$">/data/adaguc-data/uwcw_ha43_dini_sounding_geoweb_nc/</FilePath>
+    <Styles>pressure_cwk</Styles>
+    <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension>
+    <Dimension name="time" units="ISO8601" interval="PT1H" default="min" type="time">time</Dimension>
+    <Dimension name="pml_at_ml" units="m" default="min" type="vertical">elevation</Dimension>
+  </Layer>
+```
 
 ## Collection rules
 

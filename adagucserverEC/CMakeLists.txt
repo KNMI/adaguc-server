@@ -122,6 +122,13 @@ add_library(
     CDataPostProcessors/solar/solar_terminator.cpp
     CDataPostProcessors/CDataPostProcessor_WFP.h
     CDataPostProcessors/CDataPostProcessor_WFP.cpp
+    CDataPostProcessors/CDataPostProcessor_UVComponents.h
+    CDataPostProcessors/CDataPostProcessor_UVComponents.cpp
+    CDataPostProcessors/CDataPostProcessor_FilterDataObjects.h
+    CDataPostProcessors/CDataPostProcessor_FilterDataObjects.cpp
+    CDataPostProcessors/CDataPostProcessor_MetadataVariable.h
+    CDataPostProcessors/CDataPostProcessor_MetadataVariable.cpp
+    
     CDataReader.cpp
     CDataReader.h
     CDataSource.cpp
@@ -166,6 +173,8 @@ add_library(
     CImgWarpNearestNeighbour.h
     CImgWarpNearestRGBA.cpp
     CImgWarpNearestRGBA.h
+    CImgRenderFieldVectors.h
+    CImgRenderFieldVectors.cpp
     CInspire.cpp
     CInspire.h
     CLegendRenderers/CCreateLegend.cpp

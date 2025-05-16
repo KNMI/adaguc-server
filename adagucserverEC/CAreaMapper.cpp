@@ -69,8 +69,8 @@ void CAreaMapper::init(CDataSource *dataSource, CDrawImage *drawImage, int tileW
 }
 
 int CAreaMapper::drawTile(double *x_corners, double *y_corners, int &dDestX, int &dDestY) {
-  CDFType dataType = dataSource->getDataObject(0)->cdfVariable->getType();
-  void *data = dataSource->getDataObject(0)->cdfVariable->data;
+  CDFType dataType = dataSource->getFirstAvailableDataObject()->cdfVariable->getType();
+  void *data = dataSource->getFirstAvailableDataObject()->cdfVariable->data;
   switch (dataType) {
   case CDF_CHAR:
     return myDrawRawTile((const char *)data, x_corners, y_corners, dDestX, dDestY);

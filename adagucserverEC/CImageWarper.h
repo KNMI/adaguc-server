@@ -81,7 +81,7 @@ public:
 
   int closereproj();
   int reprojpoint(double &dfx, double &dfy);
-  int reprojpoint(CPoint &p);
+  int reprojpoint(f8point &p);
   int reprojpoint_inv(double &dfx, double &dfy);
 
   /**
@@ -90,9 +90,10 @@ public:
    * It uses the BBOX and WIDTH/HEIGHT for this.
    */
   int reprojpoint_inv_topx(double &dfx, double &dfy);
-  int reprojpoint_inv(CPoint &p);
+  int reprojpoint_inv(f8point &p);
   int reprojModelToLatLon(double &dfx, double &dfy);
   int reprojModelFromLatLon(double &dfx, double &dfy);
+  int reprojModelToLatLon(f8point &point);
   void reprojBBOX(double *df4PixelExtent);
   int reprojfromLatLon(double &dfx, double &dfy);
   int reprojToLatLon(double &dfx, double &dfy);

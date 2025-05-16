@@ -190,3 +190,13 @@
 #define HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY 33
 
 #define LOCK_METADATATABLE_ID 1
+
+#ifndef rad2deg
+#define rad2deg (180. / M_PI) // conversion for rad to deg
+#endif
+
+#ifndef deg2rad
+#define deg2rad (M_PI / 180.) // conversion for deg to rad
+#endif
+
+#define radians(aDeg) (deg2rad * aDeg)

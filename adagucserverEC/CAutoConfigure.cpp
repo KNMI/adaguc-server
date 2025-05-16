@@ -335,6 +335,9 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
   CT::string searchVariableName = dataSource->getDataObject(0)->variableName.c_str();
 
   try {
+    if (dataSource->getDataObject(0)->cdfVariable == nullptr) {
+      throw __LINE__;
+    }
     dataSource->getDataObject(0)->cdfVariable->getAttribute("standard_name")->getDataAsString(&searchStandardName);
   } catch (int e) {
   }
