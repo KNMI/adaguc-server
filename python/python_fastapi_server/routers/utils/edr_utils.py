@@ -570,9 +570,9 @@ def get_vertical_dim_for_collection(metadata: dict, parameter: str = None):
 
     if "dims" in layer and layer["dims"] is not None:
         for dim_name in layer["dims"]:
-            if dim_name in ["elevation"] or (
-                layer["dims"][dim_name]["type"] == "dimtype_vertical"
-                and not layer["dims"][dim_name]["hidden"]
+            if not layer["dims"][dim_name]["hidden"] and (
+                dim_name in ["elevation"]
+                or layer["dims"][dim_name]["type"] == "dimtype_vertical"
             ):
                 values = layer["dims"][dim_name]["values"].split(",")
                 vertical_dim = {
@@ -616,22 +616,17 @@ def get_custom_dims_for_collection(metadata: dict, parameter: str = None):
                     "elevation",
                 ]:
                     dim_values = layer["dims"][dim_name]["values"].split(",")
-                    dim_values = try_numeric_conversion(dim_values)
                     custom_dim = {
                         "id": dim_name,
                         "interval": [
                             [
                                 dim_values[0],
                                 dim_values[-1],
-                                # int(dim_values[0]),
-                                # int(dim_values[-1]),
                             ]
                         ],
                         "values": dim_values,  ##["R51/0/1"],  # dim_values,
                         "reference": "https://www.ecmwf.int/sites/default/files/elibrary/2012/14557-ecmwf-ensemble-prediction-system.pdf",  # f"custom_{dim_name}",
                     }
-                    # if dim_name == "member":
-                    #     custom_dim["id"] = "number"
                     custom.append(custom_dim)
         return custom if len(custom) > 0 else None
     return None
@@ -797,16 +792,21 @@ def get_vertical(
 ) -> tuple[str, str]:
     vertical_name = None
     vertical_dim = ""
+    vertical_values = []
     for param_dim in metadata[collection_name][first_requested_param]["dims"].values():
         if not param_dim["hidden"]:
             if param_dim["type"] == "dimtype_vertical":
                 vertical_name = param_dim["serviceName"]
+                vertical_values = metadata[collection_name][first_requested_param][
+                    "dims"
+                ][vertical_name]["values"][:].split(",")
                 break
 
     if z_par:
         if vertical_name is not None:
             vertical_dim = f"DIM_{vertical_name}={z_par}"
-
+    elif vertical_name is not None:
+        vertical_dim = f"DIM_{vertical_name}=*"
     return (vertical_name, vertical_dim)
 
 
