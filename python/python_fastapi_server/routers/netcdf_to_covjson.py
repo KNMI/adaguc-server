@@ -220,7 +220,11 @@ def netcdf_to_covjson(
                 # Make the ranges object
                 ranges[layer_name] = ndarray
 
-                unit_of_measurement = variable.unit if variable.unit else "unknown"
+                unit_of_measurement = (
+                    variable.getncattr("unit")
+                    if "unit" in variable.ncattrs()
+                    else "unknown"
+                )
 
                 # Add the parameter
                 if "label" in metadata[layer_name]["layer"]:
@@ -323,7 +327,9 @@ def netcdf_to_covjson(
                     ranges[layer_name] = ndarray
 
                     unit_of_measurement = (
-                        variable.units if variable.units else "unknown"
+                        variable.getncattr("unit")
+                        if "unit" in variable.ncattrs()
+                        else "unknown"
                     )
 
                     # Add the parameter
