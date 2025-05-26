@@ -588,17 +588,16 @@ def test_coll_multi_dim_cube(client: TestClient):
     )
     assert resp.status_code, 200
     covjson = resp.json()
-    print("COVJSON:", covjson)
-    assert covjson["type"] == "CoverageCollection"
+    assert covjson["type"] == "Coverage"
 
-    assert covjson["coverages"][0]["domain"]["axes"]["z"]["values"] == [40]
-    assert covjson["coverages"][0]["domain"]["axes"]["t"]["values"] == [
+    assert covjson["domain"]["axes"]["z"]["values"] == [40]
+    assert covjson["domain"]["axes"]["t"]["values"] == [
         "2024-06-01T01:00:00Z",
         "2024-06-01T02:00:00Z",
         "2024-06-01T03:00:00Z",
         "2024-06-01T04:00:00Z",
     ]
-    assert covjson["coverages"][0]["ranges"]["testdata"]["values"] == [
+    assert covjson["ranges"]["testdata"]["values"] == [
         300101,
         300201,
         310101,

@@ -788,18 +788,14 @@ def get_parameters(
 
 
 def get_vertical(
-    metadata: dict, collection_name: str, first_requested_param: str, z_par: str | None
+    metadata: dict, collection_name: str, requested_param: str, z_par: str | None
 ) -> tuple[str, str]:
     vertical_name = None
     vertical_dim = ""
-    vertical_values = []
-    for param_dim in metadata[collection_name][first_requested_param]["dims"].values():
+    for param_dim in metadata[collection_name][requested_param]["dims"].values():
         if not param_dim["hidden"]:
             if param_dim["type"] == "dimtype_vertical":
                 vertical_name = param_dim["serviceName"]
-                vertical_values = metadata[collection_name][first_requested_param][
-                    "dims"
-                ][vertical_name]["values"][:].split(",")
                 break
 
     if z_par:

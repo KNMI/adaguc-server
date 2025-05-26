@@ -112,8 +112,6 @@ async def get_coll_inst_cube(
     instance = get_instance(metadata, collection_name, instance)
     parameter_names = get_parameters(metadata, collection_name, parameter_name_par)
 
-    _, vertical_dim = get_vertical(metadata, collection_name, parameter_names[0], z_par)
-
     custom_dims = get_custom(
         request.query_params,
         allowed_params,
@@ -135,6 +133,8 @@ async def get_coll_inst_cube(
     if datetime_par is None:
         datetime_arg = "2000/3000"
     for parameter_name in parameter_names:
+        _, vertical_dim = get_vertical(metadata, collection_name, parameter_name, z_par)
+
         urlrequest = "&".join(
             [
                 f"dataset={dataset_name}",
@@ -159,9 +159,7 @@ async def get_coll_inst_cube(
 
         logger.info("status: %d [%f]", status, time.time() - start)
         if status != 0:
-            raise exc_failed_call(
-                f"cube call failed for parameter {parameter_name} [{status}]"
-            )
+            continue
         result_dataset = Dataset(f"{parameter_name}.nc", memory=wcs_response.getvalue())
 
         coveragejson = netcdf_to_covjson(
@@ -172,6 +170,10 @@ async def get_coll_inst_cube(
             for covjson in coveragejson:
                 parameters = parameters | covjson.parameters
 
+    if len(coveragejsons) == 0:
+        raise exc_failed_call(
+            f"cube call failed for parameters {','.join(parameter_names)} [{status}]"
+        )
     if len(coveragejsons) == 1:
         return coveragejsons[0]
 
