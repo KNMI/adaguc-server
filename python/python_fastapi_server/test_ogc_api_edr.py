@@ -135,7 +135,7 @@ def test_collections(client: TestClient):
 def test_coll_multi_dim_position_single_coverage(client: TestClient):
     # Querying a single datetime and single Z results in a Coverage
     resp = client.get(
-        "/edr/collections/testcollection.testcollection/instances/202406010000/position?coords=POINT(5.2 52.0)&datetime=2024-06-01T01:00:00Z&parameter-name=testdata"
+        "/edr/collections/testcollection.testcollection/instances/202406010000/position?coords=POINT(5.2 52.0)&datetime=2024-06-01T01:00:00Z&parameter-name=testdata&z=40"
     )
     assert resp.status_code, 200
     covjson = resp.json()
@@ -228,10 +228,69 @@ def test_cube_domain_types(client: TestClient):
     assert covjson["domain"]["domainType"] == "Grid"
 
 
-def test_coll_multi_dim_position_coverage_collection_all_z(client: TestClient):
+def test_coll_multi_dim_position_coverage_collection_all_z_star(client: TestClient):
     # Querying a multiple datetime and all z results in a CoverageCollection
     resp = client.get(
         "/edr/collections/testcollection.testcollection/instances/202406010000/position?coords=POINT(5.2 52.0)&datetime=2024-06-01T01:00:00Z/2024-06-01T04:00:00Z&parameter-name=testdata&z=*"
+    )
+    assert resp.status_code, 200
+    covjson = resp.json()
+
+    assert covjson["type"] == "CoverageCollection"
+    assert len(covjson["coverages"]) == 4
+
+    # All coverages should have same z
+    assert all(
+        [
+            c["domain"]["axes"]["z"]["values"] == [10, 20, 30, 40]
+            for c in covjson["coverages"]
+        ]
+    )
+
+    # All coverages should have same shape
+    assert all(
+        [c["ranges"]["testdata"]["shape"] == [4, 1] for c in covjson["coverages"]]
+    )
+
+    assert [c["domain"]["axes"]["t"]["values"] for c in covjson["coverages"]] == [
+        ["2024-06-01T01:00:00Z"],
+        ["2024-06-01T02:00:00Z"],
+        ["2024-06-01T03:00:00Z"],
+        ["2024-06-01T04:00:00Z"],
+    ]
+
+    assert covjson["coverages"][0]["ranges"]["testdata"]["values"] == [
+        0,
+        100000,
+        200000,
+        300000,
+    ]
+    assert covjson["coverages"][1]["ranges"]["testdata"]["values"] == [
+        10000,
+        110000,
+        210000,
+        310000,
+    ]
+    assert covjson["coverages"][2]["ranges"]["testdata"]["values"] == [
+        20000,
+        120000,
+        220000,
+        320000,
+    ]
+    assert covjson["coverages"][3]["ranges"]["testdata"]["values"] == [
+        30000,
+        130000,
+        230000,
+        330000,
+    ]
+
+
+def test_coll_multi_dim_position_coverage_collection_all_z_undefined(
+    client: TestClient,
+):
+    # Querying a multiple datetime without a z results in a CoverageCollection
+    resp = client.get(
+        "/edr/collections/testcollection.testcollection/instances/202406010000/position?coords=POINT(5.2 52.0)&datetime=2024-06-01T01:00:00Z/2024-06-01T04:00:00Z&parameter-name=testdata"
     )
     assert resp.status_code, 200
     covjson = resp.json()
@@ -462,7 +521,7 @@ def test_coll_multi_dim_cube(client: TestClient):
     assert resp.status_code, 200
     covjson = resp.json()
     resp = client.get(
-        "/edr/collections/testcollection.testcollection/instances/202406010000/cube?bbox=5.5,52.5,6.5,53.5&datetime=2024-06-01T01:00:00Z&parameter-name=testdata"
+        "/edr/collections/testcollection.testcollection/instances/202406010000/cube?bbox=5.5,52.5,6.5,53.5&datetime=2024-06-01T01:00:00Z&parameter-name=testdata&z=40"
     )
     assert resp.status_code, 200
     covjson = resp.json()
@@ -474,7 +533,7 @@ def test_coll_multi_dim_cube(client: TestClient):
 
     # Without instance, should use the latest instance (same as above)
     resp = client.get(
-        "/edr/collections/testcollection.testcollection/cube?bbox=5.5,52.5,6.5,53.5&datetime=2024-06-01T01:00:00Z&parameter-name=testdata"
+        "/edr/collections/testcollection.testcollection/cube?bbox=5.5,52.5,6.5,53.5&datetime=2024-06-01T01:00:00Z&parameter-name=testdata&z=40"
     )
     assert resp.status_code, 200
     covjson = resp.json()
@@ -486,7 +545,7 @@ def test_coll_multi_dim_cube(client: TestClient):
 
     # Without instance multiple timesteps, should use the latest instance
     resp = client.get(
-        "/edr/collections/testcollection.testcollection/cube?bbox=5.5,52.5,6.5,53.5&datetime=2024-06-01T01:00:00Z/2024-06-01T04:00:00Z&parameter-name=testdata"
+        "/edr/collections/testcollection.testcollection/cube?bbox=5.5,52.5,6.5,53.5&datetime=2024-06-01T01:00:00Z/2024-06-01T04:00:00Z&parameter-name=testdata&z=40"
     )
     assert resp.status_code, 200
     covjson = resp.json()
@@ -503,7 +562,7 @@ def test_coll_multi_dim_cube(client: TestClient):
     # Layer testdata2
     # Without instance multiple timesteps, should use the latest instance
     resp = client.get(
-        "/edr/collections/testcollection.testcollection/cube?bbox=5.5,52.5,6.5,53.5&datetime=2024-06-01T01:00:00Z/2024-06-01T04:00:00Z&parameter-name=testdata2"
+        "/edr/collections/testcollection.testcollection/cube?bbox=5.5,52.5,6.5,53.5&datetime=2024-06-01T01:00:00Z/2024-06-01T04:00:00Z&parameter-name=testdata2&z=30"
     )
     assert resp.status_code, 200
     covjson = resp.json()
@@ -525,20 +584,20 @@ def test_coll_multi_dim_cube(client: TestClient):
     # Layers testdata,testdata2
     # Without instance multiple timesteps, should use the latest instance
     resp = client.get(
-        "/edr/collections/testcollection.testcollection/cube?bbox=5.5,52.5,7.5,53.5&datetime=2024-06-01T01:00:00Z/2024-06-01T04:00:00Z&parameter-name=testdata,testdata2"
+        "/edr/collections/testcollection.testcollection/cube?bbox=5.5,52.5,7.5,53.5&datetime=2024-06-01T01:00:00Z/2024-06-01T04:00:00Z&parameter-name=testdata,testdata2&z=40"
     )
     assert resp.status_code, 200
     covjson = resp.json()
-    assert covjson["type"] == "CoverageCollection"
+    assert covjson["type"] == "Coverage"
 
-    assert covjson["coverages"][0]["domain"]["axes"]["z"]["values"] == [40]
-    assert covjson["coverages"][0]["domain"]["axes"]["t"]["values"] == [
+    assert covjson["domain"]["axes"]["z"]["values"] == [40]
+    assert covjson["domain"]["axes"]["t"]["values"] == [
         "2024-06-01T01:00:00Z",
         "2024-06-01T02:00:00Z",
         "2024-06-01T03:00:00Z",
         "2024-06-01T04:00:00Z",
     ]
-    assert covjson["coverages"][0]["ranges"]["testdata"]["values"] == [
+    assert covjson["ranges"]["testdata"]["values"] == [
         300101,
         300201,
         310101,
@@ -718,11 +777,6 @@ def test_cube_custom_dim_request_all_members(client: TestClient):
             "Incorrect parameter myunknown-parameter requested for collection adaguc.tests.members.mycollection",
         ),
         (
-            "/edr/collections/adaguc.tests.members.mycollection/instances/202503010000/position?coords=POINT(5.0 52.0)",
-            404,
-            "Incorrect parameter  requested for collection adaguc.tests.members.mycollection",
-        ),
-        (
             "/edr/collections/adaguc.tests.members.mycollection/instances/202503010000/position?coords=POINT()&parameter-name=mymemberdata",
             400,
             "Could not parse WKT POINT, received coords=POINT()",
@@ -732,11 +786,19 @@ def test_cube_custom_dim_request_all_members(client: TestClient):
         "unknown_collection",
         "incorrect_instance",
         "incorrect_parameter",
-        "no_parameter",
         "invalid_point",
     ],
 )
 def test_edr_exceptions(url, status_code, description, client: TestClient):
     resp = client.get(url)
+    print(json.dumps(resp.json(), indent=2))
     assert resp.status_code == status_code
     assert resp.json()["description"] == description
+
+
+def test_no_parameters(client: TestClient):
+    url = "/edr/collections/adaguc.tests.members.mycollection/instances/202503010000/position?coords=POINT(5.0 52.0)"
+    resp = client.get(url)
+    print(json.dumps(resp.json(), indent=2))
+    assert resp.status_code == 200
+    assert list(resp.json()["parameters"].keys()) == ["mymemberdata"]

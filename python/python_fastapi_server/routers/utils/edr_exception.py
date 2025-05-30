@@ -44,7 +44,7 @@ def exec_unknown_parameter(collection_name: str, param: str) -> EdrException:
 
 def exc_failed_call(mess: str) -> EdrException:
     return EdrException(
-        code=500,
+        code=400,
         description=mess,
     )
 
