@@ -6,6 +6,10 @@
 - A new processor named `filter_dataobjects` is added
 - A new processor named `metadata_variable` is added
 - DataPostProcessors can now also be configured via the style
+- StatusFlag class is refactored to a struct, and is no longer a pointer in the StatusFlagList vector
+- The json version of GetFeatureInfo now outputs multiple variables and has an additional property called layername.
+- GetFeatureInfo response via application/html as shown in adaguc-viewer and geoweb now outputs the 6 different components.
+- The metadata table is extended with a variablename and layername response. This is needed to identify the different components in the layer. The EDR code uses this metadata.
 - see [DataPostProc.md](doc/configuration/DataPostProc.md) for details
 
 **Version 3.0.3. 2025-05-14**

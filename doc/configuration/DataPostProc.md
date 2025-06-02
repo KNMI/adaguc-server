@@ -433,7 +433,9 @@ Wind speed (wind-hagl)
 
 Implementation is done in  [DataPostProcessor_UVComponents.cpp](../../adagucserverEC/CDataPostProcessors/CDataPostProcessor_UVComponents.cpp)
 
-A full configuration to display windbarbs is shown in [adaguc.tests.harm_windbarbs.xml](../../data/config/datasets/adaguc.tests.harm_windbarbs.xml) and [adaguc_tests_uwcwdini_windcomponents.xml](../../data/config/datasets/adaguc_tests_uwcwdini_windcomponents.xml)
+A full configuration to display windbarbs is shown in:
+- [adaguc.tests.harm_windbarbs.xml](../../data/config/datasets/adaguc.tests.harm_windbarbs.xml) 
+- [adaguc_tests_uwcwdini_windcomponents.xml](../../data/config/datasets/adaguc_tests_uwcwdini_windcomponents.xml)
 
 ## 17. *CDDPFilterDataObjects*   `algorithm="filter_dataobjects"`
 
