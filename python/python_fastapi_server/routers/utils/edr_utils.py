@@ -702,7 +702,7 @@ def get_time_values_for_range(rng: str) -> list[str]:
     if not tstep:
         tstep = 3600
     nsteps = int(timediff / tstep) + 1
-    return [f"R{nsteps}/{iso_start.strftime('%Y-%m-%dT%H:%MZ')}/{step}"]
+    return [f"R{nsteps}/{iso_start.strftime('%Y-%m-%dT%H:%M:%SZ')}/{step}"]
 
 
 VOCAB_ENDPOINT_URL = "https://vocab.nerc.ac.uk/standard_name/"

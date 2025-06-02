@@ -84,7 +84,7 @@ def test_collections(client: TestClient):
         "vertical",
         "custom",
     ]
-    assert coll_5d["extent"]["temporal"]["values"][0] == "R6/2017-01-01T00:00Z/PT5M"
+    assert coll_5d["extent"]["temporal"]["values"][0] == "R6/2017-01-01T00:00:00Z/PT5M"
 
     assert "position" in coll_5d["data_queries"]
 
