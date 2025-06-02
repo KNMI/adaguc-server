@@ -570,7 +570,7 @@ def get_vertical_dim_for_collection(metadata: dict, parameter: str = None):
 
     if "dims" in layer and layer["dims"] is not None:
         for dim_name in layer["dims"]:
-            if (
+            if not layer["dims"][dim_name]["hidden"] and (
                 dim_name in ["elevation"]
                 or layer["dims"][dim_name]["type"] == "dimtype_vertical"
             ):
@@ -616,22 +616,17 @@ def get_custom_dims_for_collection(metadata: dict, parameter: str = None):
                     "elevation",
                 ]:
                     dim_values = layer["dims"][dim_name]["values"].split(",")
-                    dim_values = try_numeric_conversion(dim_values)
                     custom_dim = {
                         "id": dim_name,
                         "interval": [
                             [
                                 dim_values[0],
                                 dim_values[-1],
-                                # int(dim_values[0]),
-                                # int(dim_values[-1]),
                             ]
                         ],
                         "values": dim_values,  ##["R51/0/1"],  # dim_values,
                         "reference": "https://www.ecmwf.int/sites/default/files/elibrary/2012/14557-ecmwf-ensemble-prediction-system.pdf",  # f"custom_{dim_name}",
                     }
-                    # if dim_name == "member":
-                    #     custom_dim["id"] = "number"
                     custom.append(custom_dim)
         return custom if len(custom) > 0 else None
     return None
@@ -778,23 +773,26 @@ def get_instance(
 def get_parameters(
     metadata: dict, collection_name: str, parameter_name_par: str | None
 ) -> list[str]:
-    # TODO: if parameter_name_par is None, we should return all parameters, for now just raise
     if parameter_name_par is None:
-        raise exec_unknown_parameter(collection_name, "")
+        return list(metadata[collection_name].keys())
 
-    parameters = parameter_name_par.split(",")
-    for param in parameters:
-        if param not in metadata[collection_name]:
-            raise exec_unknown_parameter(collection_name, param)
+    requested_parameters = parameter_name_par.split(",")
+    parameters = []
+    for param in requested_parameters:
+        if param in metadata[collection_name]:
+            parameters.append(param)
+
+    if len(parameters) == 0:
+        raise exec_unknown_parameter(collection_name, parameter_name_par)
     return parameters
 
 
 def get_vertical(
-    metadata: dict, collection_name: str, first_requested_param: str, z_par: str | None
+    metadata: dict, collection_name: str, requested_param: str, z_par: str | None
 ) -> tuple[str, str]:
     vertical_name = None
     vertical_dim = ""
-    for param_dim in metadata[collection_name][first_requested_param]["dims"].values():
+    for param_dim in metadata[collection_name][requested_param]["dims"].values():
         if not param_dim["hidden"]:
             if param_dim["type"] == "dimtype_vertical":
                 vertical_name = param_dim["serviceName"]
@@ -803,7 +801,8 @@ def get_vertical(
     if z_par:
         if vertical_name is not None:
             vertical_dim = f"DIM_{vertical_name}={z_par}"
-
+    elif vertical_name is not None:
+        vertical_dim = f"DIM_{vertical_name}=*"
     return (vertical_name, vertical_dim)
 
 

@@ -329,7 +329,11 @@ void CImageDataWriter::getFeatureInfoGetPointDataResults(CDataSource *dataSource
           element->value.print("%s (%d)", flagMeaning.c_str(), (int)val);
           element->units = "";
         } else {
-          element->value.print("%f", val);
+          if (pixel > .1) {
+            element->value.print("%0.2f", val);
+          } else {
+            element->value.print("%g", val);
+          }
         }
       }
 
@@ -990,8 +994,11 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
                   // Add raster value
                   // char szTemp[1024];
                   // floatToString(szTemp,1023,pixel);
-
-                  element->value.print("%f", pixel); //=szTemp;
+                  if (pixel > .1) {
+                    element->value.print("%0.2f", pixel);
+                  } else {
+                    element->value.print("%g", pixel);
+                  }
                 }
 #ifdef CIMAGEDATAWRITER_DEBUG
                 CDBDebug("Element value == %s", element->value.c_str());
@@ -2241,28 +2248,12 @@ int CImageDataWriter::end() {
         GetFeatureInfoResult *g = getFeatureInfoResultList[0];
         if (resultFormat == texthtml) {
           // resultHTML.printconcat("coordinates (%0.2f , %0.2f)<br>\n",g->x_imageCoordinate,g->y_imageCoordinate);
-          resultHTML.printconcat("<b>Coordinates</b> - (lon=%0.2f; lat=%0.2f)<br>\n", g->lon_coordinate, g->lat_coordinate);
+          resultHTML.printconcat("Pointer Coordinates: (lon=%0.2f; lat=%0.2f)<br>\n", g->lon_coordinate, g->lat_coordinate);
 
         } else {
-          // resultHTML.printconcat("coordinates (%0.2f , %0.2f)\n",g->x_imageCoordinate,g->y_imageCoordinate);
           resultHTML.printconcat("Coordinates - (lon=%0.2f; lat=%0.2f)\n", g->lon_coordinate, g->lat_coordinate);
         }
 
-        /*for(size_t j=0;j<getFeatureInfoResultList.size();j++){
-          GetFeatureInfoResult *g = getFeatureInfoResultList[j];
-          int elNR = 0;
-          GetFeatureInfoResult::Element * e=g->elements[elNR];
-          if(g->elements.size()>1){
-            resultHTML.printconcat("%d: ",elNR);
-          }
-          if(resultFormat==texthtml){
-            resultHTML.printconcat("<b>%s</b> - %s<br>\n",e->var_name.c_str(),e->feature_name.c_str());
-          }else{
-            resultHTML.printconcat("%s - %s\n",e->var_name.c_str(),e->feature_name.c_str());
-          }
-        }*/
-        // if(resultFormat==texthtml)resultHTML.printconcat("<hr>\n");
-        // CDBDebug("getFeatureInfoResultList.size() %d",getFeatureInfoResultList.size());
         for (size_t j = 0; j < getFeatureInfoResultList.size(); j++) {
 
           GetFeatureInfoResult *g = getFeatureInfoResultList[j];

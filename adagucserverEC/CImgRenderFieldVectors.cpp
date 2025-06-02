@@ -4,9 +4,7 @@
 
 bool verboseLog = true;
 
-f8component jacobianTransform(f8component speedVector, f8point gridCoordUL, f8point gridCoordLR, CImageWarper *warper, bool gridRelative) {
-  // Degrees offset in latitude/longutide space to determine rotation of projected model grid per grid cell
-  f8point deltaLatLon = {.x = 0.01, .y = 0.01};
+f8component jacobianTransform(f8component speedVector, f8point gridCoordUL, f8point gridCoordLR, CImageWarper *warper, bool gridRelative, bool rotateRelativeToViewProjection = false) {
 
   if (gridRelative) {
     f8point pnt0 = {.x = gridCoordUL.x, .y = gridCoordUL.y};
@@ -75,14 +73,23 @@ f8component jacobianTransform(f8component speedVector, f8point gridCoordUL, f8po
 
   double modelX = gridCoordUL.x;
   double modelY = gridCoordUL.y;
+
+  // Degrees offset in latitude/longutide space to determine rotation of projected model grid per grid cell (small grid cell)
+  f8point deltaLatLon = {.x = 0.001, .y = 0.001};
   warper->reprojModelToLatLon(modelX, modelY); // model to latlon proj.
   double modelXLon = modelX + deltaLatLon.x;   // latlons
   double modelYLon = modelY;
   double modelXLat = modelX;
   double modelYLat = modelY + deltaLatLon.y;
-  warper->reprojfromLatLon(modelX, modelY); // latlon to vis proj.
-  warper->reprojfromLatLon(modelXLon, modelYLon);
-  warper->reprojfromLatLon(modelXLat, modelYLat);
+
+  if (rotateRelativeToViewProjection) {
+    // The following does the direction correction from lat/lon projection to the requested view projection.
+    // Since 2025-06-02 this is not needed anymore, as the drawing of the windbarbs itself takes rotation of the projection into account.
+    // Not doing the extra rotation is much clearer. For example getfeatureinfo and WCS now return expected results.
+    warper->reprojfromLatLon(modelX, modelY); // latlon to vis proj.
+    warper->reprojfromLatLon(modelXLon, modelYLon);
+    warper->reprojfromLatLon(modelXLat, modelYLat);
+  }
 
   double distLon = hypot(modelXLon - modelX, modelYLon - modelY);
   double distLat = hypot(modelXLat - modelX, modelYLat - modelY);
@@ -102,7 +109,7 @@ f8component jacobianTransform(f8component speedVector, f8point gridCoordUL, f8po
 }
 
 int applyUVConversion(CImageWarper *warper, CDataSource *dataSource, int *dPixelExtent, float *uValues, float *vValues) {
-  CDBDebug("applyUVConversion");
+
   int gridWidth = dPixelExtent[2] - dPixelExtent[0];
   // If there are 2 components, we have wind u and v.
   // Use Jacobians for rotating u and v
@@ -156,8 +163,8 @@ std::vector<CalculatedWindVector> calculateBarbsAndVectorsAndSpeedFromUVComponen
   if (!(units.equals("kts") || units.equals("knots"))) convertToKnots = true;
 
   // Number of pixels between the vectors:
-  int vectorDensityPy = 80; // 22;
-  int vectorDensityPx = 80; // 22;
+  int vectorDensityPy = 60; // 22;
+  int vectorDensityPx = 60; // 22;
   firstXPos = int(tx) % vectorDensityPy;
   firstYPos = int(ty) % vectorDensityPx;
 
@@ -181,10 +188,25 @@ std::vector<CalculatedWindVector> calculateBarbsAndVectorsAndSpeedFromUVComponen
               // Calculate coordinates from requested coordinate system
               double projectedCoordX = ((double(x) / double(dImageWidth)) * (drawImage->Geo->dfBBOX[2] - drawImage->Geo->dfBBOX[0])) + drawImage->Geo->dfBBOX[0];
               double projectedCoordY = ((double(dImageHeight - y) / double(dImageHeight)) * (drawImage->Geo->dfBBOX[3] - drawImage->Geo->dfBBOX[1])) + drawImage->Geo->dfBBOX[1];
-              warper->reprojToLatLon(projectedCoordX, projectedCoordY);
-              bool flip = projectedCoordY < 0; // Remember if we have to flip barb dir for southern hemisphere
+
+              // Transform view point on screen to lat/lon
+              double coordLon = projectedCoordX;
+              double coordLat = projectedCoordY;
+              warper->reprojToLatLon(coordLon, coordLat);
+
+              //  Create offset coordinate, 0.001 degree higher
+              double projectedCoordXOffset = coordLon;
+              double projectedCoordYOffset = coordLat - 0.001;
+              // Convert back to view coordinate
+              warper->reprojfromLatLon(projectedCoordXOffset, projectedCoordYOffset);
+
+              // Calculate angle correction
+              float angleCorrection = ((atan2(projectedCoordYOffset - projectedCoordY, projectedCoordXOffset - projectedCoordX))) + M_PI_2;
+              bool flip = coordLat < 0; // Remember if we have to flip barb dir for southern hemisphere
               flip = false;
-              windVectors.push_back({.x = x, .y = y, .dir = comp.direction(), .strength = comp.magnitude(), .convertToKnots = convertToKnots, .flip = flip});
+
+              double fullAngle = angleCorrection + comp.direction();
+              windVectors.push_back({.x = x, .y = y, .dir = fullAngle, .strength = comp.magnitude(), .convertToKnots = convertToKnots, .flip = flip});
             }
           }
         }
@@ -206,7 +228,8 @@ std::vector<CalculatedWindVector> calculateBarbsAndVectorsAndSpeedFromUVComponen
         if ((dpDestX[p] >= 0) && (dpDestX[p] < dImageWidth) && (dpDestY[p] >= 0) && (dpDestY[p] < dImageHeight)) {
           f8component comp = {.u = uValueData[p], .v = vValueData[p]};
           if (comp.u != fNodataValue && comp.v != fNodataValue) {
-            windVectors.push_back({.x = dpDestX[p], .y = dpDestY[p], .dir = comp.direction(), .strength = comp.magnitude(), .convertToKnots = convertToKnots, .flip = false});
+            // TODO IN FOLLOW UP
+            // windVectors.push_back({.x = dpDestX[p], .y = dpDestY[p], .dir = comp.direction(), .strength = comp.magnitude(), .convertToKnots = convertToKnots, .flip = false});
           }
         }
       }

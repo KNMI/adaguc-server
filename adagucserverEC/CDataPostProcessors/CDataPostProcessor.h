@@ -26,6 +26,7 @@
 #ifndef CDATAPOSTPROCESSOR_H
 #define CDATAPOSTPROCESSOR_H
 
+#include <cstdint>
 #include "CDataSource.h"
 #include "CDPPInterface.h"
 
