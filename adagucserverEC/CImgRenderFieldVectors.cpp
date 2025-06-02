@@ -14,7 +14,6 @@ f8component jacobianTransform(f8component speedVector, f8point gridCoordUL, f8po
     warper->reprojModelToLatLon(pntN);
     f8point pntRadN = pntN.rad();
 
-    // TODO CHECK WHY NOT USED with Ernst:
     // f8point pntE = {.x = _lon_pntEast, .y = _lat_pntEast};
     // warper->reprojModelToLatLon(pntE);
     // f8point pntRadE = pntE.rad();
@@ -214,6 +213,7 @@ std::vector<CalculatedWindVector> calculateBarbsAndVectorsAndSpeedFromUVComponen
     }
   }
 
+  // TODO: Follow up
   if (((enableVector || enableBarb) && drawGridVectors)) {
     int wantedSpacing = 40;
     float distPoint = hypot(dpDestX[numDestPixels / 2 + 1] - dpDestX[numDestPixels / 2], dpDestY[numDestPixels / 2 + 1] - dpDestY[numDestPixels / 2]);

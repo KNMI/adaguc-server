@@ -14,7 +14,7 @@ const char *CDDPUVComponents::getId() { return CDATAPOSTPROCESSOR_CDDPUVCOMPONEN
 int CDDPUVComponents::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
   if (proc->attr.algorithm.equals(getId())) {
     if (dataSource->getNumDataObjects() == 1 && mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
-      CDBError("2 variables are needed for UVCOMPONENTS, found %d", dataSource->getNumDataObjects());
+      CDBError("2 variables are needed for convert_uv_components, found %d", dataSource->getNumDataObjects());
       return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
     }
     return CDATAPOSTPROCESSOR_RUNAFTERREADING | CDATAPOSTPROCESSOR_RUNBEFOREREADING;
@@ -51,21 +51,21 @@ void adjustCDFModel(CDataSource *dataSource) {
   ugridabsoluteCdfVariable->setAttributeText("standard_name", "eastward_wind");
   ugridabsoluteCdfVariable->setAttributeText("long_name", "eastward_wind");
   ugridabsoluteCdfVariable->removeAttribute("short_name");
-  ugridabsoluteCdfVariable->setAttributeText("note", "Created by UVCOMPONENTS data post processor. This is absolute eastward wind.");
+  ugridabsoluteCdfVariable->setAttributeText("note", "Created by convert_uv_components data post processor. This is absolute eastward wind.");
   cdfObject->addVariable(ugridabsoluteCdfVariable);
 
   CDF::Variable *vgridabsoluteCdfVariable = dataSource->getDataObject(1)->cdfVariable->clone(CDF_FLOAT, V_COMPONENT_GRID_ABSOLUTE);
   vgridabsoluteCdfVariable->setAttributeText("standard_name", "northward_wind");
   vgridabsoluteCdfVariable->setAttributeText("long_name", "northward_wind");
   vgridabsoluteCdfVariable->removeAttribute("short_name");
-  vgridabsoluteCdfVariable->setAttributeText("note", "Created by UVCOMPONENTS data post processor. This is absolute northward wind.");
+  vgridabsoluteCdfVariable->setAttributeText("note", "Created by convert_uv_components data post processor. This is absolute northward wind.");
   cdfObject->addVariable(vgridabsoluteCdfVariable);
 
   CDF::Variable *speedObjectCdfVariable = dataSource->getDataObject(0)->cdfVariable->clone(CDF_FLOAT, SPEED_COMPONENT);
   speedObjectCdfVariable->setAttributeText("standard_name", "wind_speed");
   speedObjectCdfVariable->setAttributeText("long_name", "Wind speed");
   speedObjectCdfVariable->removeAttribute("short_name");
-  speedObjectCdfVariable->setAttributeText("note", "Created by UVCOMPONENTS data post processor");
+  speedObjectCdfVariable->setAttributeText("note", "Created by convert_uv_components data post processor");
   cdfObject->addVariable(speedObjectCdfVariable);
 
   CDF::Variable *directionObjectCdfVariable = dataSource->getDataObject(0)->cdfVariable->clone(CDF_FLOAT, DIRECTION_COMPONENT);
@@ -73,7 +73,7 @@ void adjustCDFModel(CDataSource *dataSource) {
   directionObjectCdfVariable->setAttributeText("standard_name", "wind_direction");
   directionObjectCdfVariable->setAttributeText("long_name", "Wind direction");
   directionObjectCdfVariable->removeAttribute("short_name");
-  directionObjectCdfVariable->setAttributeText("note", "Created by UVCOMPONENTS data post processor");
+  directionObjectCdfVariable->setAttributeText("note", "Created by convert_uv_components data post processor");
   cdfObject->addVariable(directionObjectCdfVariable);
   cdfObject->setAttributeText(CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ID, "metadata");
 }
@@ -126,12 +126,6 @@ int CDDPUVComponents::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
   adjustCDFModel(dataSource);
   addDataObject(dataSource);
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
-    auto cdfObject = dataSource->getDataObject(0)->cdfObject;
-    auto globAttr = cdfObject->getAttributeNE(CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ID);
-    if (globAttr != nullptr && (globAttr->getDataAsString().equals("applied"))) {
-      CDBDebug("Datamodel seems already applied. Skipping!");
-      return 0;
-    }
     CDBDebug("Applying CDDPUVComponents after reading");
 
     CImageWarper warper;

@@ -41,11 +41,11 @@ CDPPExecutor::CDPPExecutor() {
   dataPostProcessorList->push_back(new CDPPClipMinMax());
   dataPostProcessorList->push_back(new CDPPOperator());
   dataPostProcessorList->push_back(new CDPPWFP());
+  dataPostProcessorList->push_back(new CDPPWindSpeedKnotsToMs());
+  dataPostProcessorList->push_back(new CDPPSolarTerminator());
   dataPostProcessorList->push_back(new CDDPUVComponents());
   dataPostProcessorList->push_back(new CDDPFilterDataObjects());
   dataPostProcessorList->push_back(new CDDPMetadataVariable());
-  dataPostProcessorList->push_back(new CDPPWindSpeedKnotsToMs());
-  dataPostProcessorList->push_back(new CDPPSolarTerminator());
 }
 
 CDPPExecutor::~CDPPExecutor() {
@@ -55,9 +55,23 @@ CDPPExecutor::~CDPPExecutor() {
 
 const CT::PointerList<CDPPInterface *> *CDPPExecutor::getPossibleProcessors() { return dataPostProcessorList; }
 
+std::vector<CServerConfig::XMLE_DataPostProc *> getProcessorList(CDataSource *dataSource) {
+  std::vector<CServerConfig::XMLE_DataPostProc *> dataProcessorList;
+  for (auto dp : dataSource->cfgLayer->DataPostProc) {
+    dataProcessorList.push_back(dp);
+  }
+
+  if (dataSource->getStyle() != nullptr && dataSource->getStyle()->styleConfig != nullptr) {
+    for (auto dp : dataSource->getStyle()->styleConfig->DataPostProc) {
+      dataProcessorList.push_back(dp);
+    }
+  }
+  return dataProcessorList;
+}
+
 int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode) {
-  for (size_t dpi = 0; dpi < dataSource->cfgLayer->DataPostProc.size(); dpi++) {
-    CServerConfig::XMLE_DataPostProc *proc = dataSource->cfgLayer->DataPostProc[dpi];
+  std::vector<CServerConfig::XMLE_DataPostProc *> dataProcessorList = getProcessorList(dataSource);
+  for (auto proc : dataProcessorList) {
     for (size_t procId = 0; procId < dataPostProcessorList->size(); procId++) {
       int code = dataPostProcessorList->get(procId)->isApplicable(proc, dataSource, mode);
 
@@ -99,10 +113,8 @@ int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode) {
 }
 
 int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode, double *data, size_t numItems) {
-  // const CT::PointerList<CDPPInterface*> *availableProcs = getPossibleProcessors();
-  // CDBDebug("executeProcessors, found %d",dataSource->cfgLayer->DataPostProc.size());
-  for (size_t dpi = 0; dpi < dataSource->cfgLayer->DataPostProc.size(); dpi++) {
-    CServerConfig::XMLE_DataPostProc *proc = dataSource->cfgLayer->DataPostProc[dpi];
+  std::vector<CServerConfig::XMLE_DataPostProc *> dataProcessorList = getProcessorList(dataSource);
+  for (auto proc : dataProcessorList) {
     for (size_t procId = 0; procId < dataPostProcessorList->size(); procId++) {
       int code = dataPostProcessorList->get(procId)->isApplicable(proc, dataSource, mode);
 

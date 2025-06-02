@@ -3,6 +3,8 @@ Datapostprocessors (algorithm, a, b, c, units, name, mode)
 
 Back to [Configuration](./Configuration.md)
 
+# Data postprocessors
+
 Data postprocessors modify the data inside the adagucserver before any
 further operations are applied. The modified data can be visualized
 using WMS and retrieved using WCS. DataPostprocessors can be for example
@@ -16,27 +18,34 @@ simple unit conversions from Kelvin to Celsius.
 -   name - name attributes, function depending on the processor
 -   mode - additional settings for the processor
 
-Current data postprocessors:
+# Current data postprocessors:
 
-1.  ax+b: Linear transformation ax+b - Suitable for unit conversions
-2.  include_layer: Include another layer into your layer as new
-    dataobject
-3.  datamask: Mask one variable with another variable with several
-    options
-4.  MSGCPP VISIBLE-mask - Display the visible part of the disk
-5.  HIWC-mask: Thresholds for detection of “High Ice Water Content”
-    according to HAIC case.
-6.  addfeatures: Turn geographical features (areas) into a grid
-7.  beaufort: do conversion of wind speeds in m/s or kts to Beaufort
-    values
-8.  toknots: do conversion of wind speeds in m/s to kts
-9.  windspeed_knots_to_ms: do conversion of wind speeds in kts to m/s
+1.  *CDPPAXplusB*             `algorithm="ax+b"`: Linear transformation ax+b - Suitable for unit conversions
+2.  *CDPPIncludeLayer*        `algorithm="include_layer"`: Include another layer into your layer as new  dataobject
+3.  *CDPPDATAMASK*            `algorithm="datamask"`: Mask one variable with another variable with several options
+4.  *CDPPMSGCPPVisibleMask*   `algorithm="msgcppvisiblemask"` - Display the visible part of the disk
+5.  *CDPPMSGCPPHIWCMask*      `algorithm="msgcpphiwcmask"`: Thresholds for detection of “High Ice Water Content”  according to HAIC case.
+6.  *CDPPAddFeatures*         `algorithm="addfeatures"`: Turn geographical features (areas) into a grid
+7.  *CDPPBeaufort*            `algorithm="beaufort"`: do conversion of wind speeds in m/s or kts to Beaufort values
+8.  *CDPPToKnots*             `algorithm="toknots"`: do conversion of wind speeds in m/s to kts
+9.  *CDPPWindSpeedKnotsToMs*  `algorithm="windspeed_knots_to_ms"`: do conversion of wind speeds in kts to m/s
+10. *CDPDBZtoRR*              `algorithm="dbztorr"`: Converts dbz to mm/h for radata data
+11. *CDPPGoes16Metadata*      `algorithm="goes16metadata"`: Adjusts Noaa goes16 NetCDF metadata to make it compatible with adaguc
+12. *CDPPClipMinMax*          `algorithm="clipminmax"`: Clips min and max from the data
+13. *CDPPOperator*            `algorithm="operator"`: Does numerical operators between two dataobjects and stores the result in a new one.
+14. *CDPPWFP*                 `algorithm="WFP"`: Wind speed processor, can be used to adjust windspeed by lee of windfarms
+15. *CDPPSolarTerminator*     `algorithm="solarterminator"`: Solar terminator processor, [Configure_solar_terminator](../../doc/tutorials/Configure_solar_terminator.md)
+16. *CDDPUVComponents*        `algorithm="convert_uv_components"`: Data postprocessor to transform grid relative x and y components of a vector to relative to north components. In addition windspeed and winddirection is derived. This uses a jacobian transformation.
+17. *CDDPFilterDataObjects*   `algorithm="filter_dataobjects"`: Filter out data objects from the GetMap and GetFeatureInfo responses. E.g. to hide components you do not want to show.
+18. *CDDPMetadataVariable*    `algorithm="metadata_variable"`: Add extra metadata to the CDF Data model.
 
 
+
+        
 New datapost processors can be implemented via
-[../../adagucserverEC/CDataPostProcessor.cpp](../../adagucserverEC/CDataPostProcessor.cpp)
+[CDataPostProcessor.cpp](../../adagucserverEC/CDataPostProcessors/CDataPostProcessor.cpp)
 
-1. ax+b: Linear transformation ax+b - Suitable for unit conversions
+## 1. ax+b: Linear transformation ax+b - Suitable for unit conversions
 -------------------------------------------------------------------
 
 Example to convert cloudcover fraction to octa:
@@ -44,7 +53,7 @@ Example to convert cloudcover fraction to octa:
 <DataPostProc algorithm="ax+b" a="8" b="0" units="octa"/>
 ```
 
-2. include_layer: Include another layer into your layer as new dataobject
+## 2. include_layer: Include another layer into your layer as new dataobject
 --------------------------------------------------------------------------
 
 -   Available since adagucserver version 2.0.9
@@ -119,7 +128,7 @@ Minimum 2-m Temperature (secondlayer)
      -    Maximum 2-m Temperature    284.590302    K
 ```
 
-3. datamask: Mask one variable with another variable with several options
+## 3. datamask: Mask one variable with another variable with several options
 -------------------------------------------------------------------------
 
 -   Available since adagucserver version 2.0.9
@@ -205,7 +214,7 @@ Configuration which has been used to create image above:
   </Layer>
 ```
 
-4. MSGCPP VISIBLE-mask - Display the visible part of the disk
+## 4. MSGCPP VISIBLE-mask - Display the visible part of the disk
 -------------------------------------------------------------
 
 Based on sunz and satz.
@@ -230,7 +239,7 @@ Parameter a is sunz+satz threshold and b is satz threshold
   </Layer>
 ```
 
-5. MSGCPP HIWC-mask - Used for detecting high ice water content derived from four input variables.
+## 5. MSGCPP HIWC-mask - Used for detecting high ice water content derived from four input variables.
 --------------------------------------------------------------------------------------------------
 
 MSGCPP HIWC-mask: Thresholds for detection of “High Ice Water Content”
@@ -261,7 +270,7 @@ according to HAIC case.
   </Layer>
 ```
 
-6. Colour geographical features according to point values
+## 6. *CDPPAddFeatures* `algorithm="addfeatures"` - Colour geographical features according to point values
 ---------------------------------------------------------
 
 A common case is to have data for a set of geographical features, for
@@ -356,7 +365,7 @@ call, but can also be downloaded through a WCS call, to be used in
 further processing.
 
 
-7. Calculate windshear.
+## 13.*CDPPOperator* `algorithm="operator"`: , e.g. valculate windshear.
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
@@ -393,3 +402,68 @@ further processing.
 </Configuration>
 ```
 
+## 16. *CDDPUVComponents*        `algorithm="convert_uv_components"` 
+
+Data postprocessor to transform grid relative x and y components of a vector to relative to north components. This uses a jacobian transformation.
+
+
+  Usage:
+  ```xml
+          <DataPostProc algorithm="convert_uv_components"/>
+  ```
+
+This processor will add four more dataobjects to the datasource. The two original components are now last. The new one dataobjects are:
+- `speed_component`: based on the magnitude of the eastward_wind and northward_wind components
+- `direction_component`: based on the direction of the eastward_wind and northward_wind components
+- `eastward_component`: based on the original x and y components. Corrected using jacobian transformation
+- `northward_component`: based on the original x and y components. Corrected using jacobian transformation
+
+A getfeatureinfo call demonstrates this:
+
+  ```
+  Pointer Coordinates: (lon=-15.50; lat=47.95)
+Wind speed (wind-hagl)
+ 	-	Wind speed	20.58	kts
+ 	-	Wind direction	356.79	degrees
+ 	-	eastward_wind	1.15	kts
+ 	-	northward_wind	-20.55	kts
+ 	-	Wind x-component at height above ground level	2.70	kts
+ 	-	Wind y-component at height above ground level	-20.41	kts
+  ```
+
+Implementation is done in  [DataPostProcessor_UVComponents.cpp](../../adagucserverEC/CDataPostProcessors/CDataPostProcessor_UVComponents.cpp)
+
+A full configuration to display windbarbs is shown in [adaguc.tests.harm_windbarbs.xml](../../data/config/datasets/adaguc.tests.harm_windbarbs.xml) and [adaguc_tests_uwcwdini_windcomponents.xml](../../data/config/datasets/adaguc_tests_uwcwdini_windcomponents.xml)
+
+## 17. *CDDPFilterDataObjects*   `algorithm="filter_dataobjects"`
+
+Filter out data objects from the GetMap and GetFeatureInfo responses. E.g. to hide components you do not want to show.
+
+Attributes:
+
+-  `select` attribute will ensure that the the selected component is included in the response of GetFeatureInfo.
+
+Usage:
+```xml
+          <DataPostProc algorithm="convert_uv_components"/>
+          <DataPostProc algorithm="filter_dataobjects" select="speed_component,direction_component" />
+  ```
+
+
+## 18. *CDDPMetadataVariable*    `algorithm="metadata_variable"`
+
+Add extra metadata to the CDF Data model. This can be used to adjust metadata which are incorrectly advertised in existing NetCDF files. Previousely this could be done via NCML.
+
+Attributes:
+- variable - The variable to select
+- name - The new name of the variable
+- units - Set the units attribute of the variable
+- standard_name - Set the standard_name attribute of the variable
+- long_name - Set the long_name attribute of the variable
+
+
+Usage:
+
+```xml
+<DataPostProc algorithm="metadata_variable" variable="direction_component" name="wind_from_direction" units="degrees" standard_name="wind wind_from_direction" long_name="Wind direction" />
+```

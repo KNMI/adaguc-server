@@ -50,6 +50,7 @@
     <Variable>y-wind-hagl</Variable>
     <FilePath filter="">{ADAGUC_PATH}data/datasets/wcs_processed_8x7_uwcw_ha43_dini_5p5km_wind-speed-xy_20240905T00.nc</FilePath>
     <Styles>Windbarbs,Windbarbwithnumbers,windbarbs_kts</Styles>
+    <DataPostProc algorithm="convert_uv_components"/>
   </Layer>
 
   <!-- End of configuration /-->

@@ -1,3 +1,13 @@
+**Version 3.1.0. 2025-06-02**
+
+- The calculation and rendering of winbarbs is now changed. The adjustements of grid-relative x/y wind components is now handled via a datapostprocessor, named `convert_uv_components`. Use ```<DataPostProc algorithm="convert_uv_components"/>```
+- The jacobian transformation code is refactored, see [CImgRenderFieldVectors.md](adagucserverEC/CImgRenderFieldVectors.cpp)
+- Wind direction and wind speed are now correctly advertised in GetFeatureInfo. In addition the numbers are now displayed with a precision of two digits. The direction is now correctly calculated and is relative to the top side of the screen.
+- A new processor named `filter_dataobjects` is added
+- A new processor named `metadata_variable` is added
+- DataPostProcessors can now also be configured via the style
+- see [DataPostProc.md](doc/configuration/DataPostProc.md) for details
+
 **Version 3.0.3. 2025-05-14**
 
 - Fixed bug where a multidimensional dataset with a configured `DataBaseTable` could not get queried

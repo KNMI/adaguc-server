@@ -1032,29 +1032,9 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     CDBDebug("/Finished Working on variable %s", dataSource->getDataObject(varNr)->cdfVariable->name.c_str());
 #endif
 
-#ifdef MEASURETIME
+#ifdef MEASURETIMEpD
     StopWatch_Stop("/Finished Working on variable %s", dataSource->getDataObject(varNr)->cdfVariable->name.c_str());
 #endif
-  }
-
-  bool isVectorLike = false;
-  // dataSource->getNumDataObjects() == 2 && dataSource->srvParams->Styles.indexOf("/barb") != -1;
-  if (dataSource->getNumDataObjects() == 2) {
-    char u = dataSource->getDataObject(0)->getStandardName().charAt(0);
-    char v = dataSource->getDataObject(1)->getStandardName().charAt(0);
-    if (u == 'x' || u == 'u') {
-      if (v == 'y' || v == 'v') {
-        isVectorLike = true;
-      }
-    }
-  }
-
-  if (isVectorLike) {
-    CServerConfig::XMLE_DataPostProc *proc = new CServerConfig::XMLE_DataPostProc();
-    proc->attr.algorithm = CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ID;
-    CDBDebug("Adding Data postprocessor UVCOMPONENTS (isVectorLike) ");
-    // TODO: DISCUSS IF WE WANT TO ADD THIS AUTOMATICALLY
-    dataSource->cfgLayer->DataPostProc.insert(dataSource->cfgLayer->DataPostProc.begin(), proc);
   }
 
   if (enablePostProcessors) {

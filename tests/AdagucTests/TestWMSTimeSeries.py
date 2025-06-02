@@ -558,7 +558,7 @@ class TestWMSTimeSeries(unittest.TestCase):
         
         # Check NetCDF file: Number of variables and global attribute
         ds = netCDF4.Dataset("filename.nc", memory=data.getvalue())
-        self.assertEqual(ds.getncattr("UVCOMPONENTS"), "metadata")
+        self.assertEqual(ds.getncattr("convert_uv_components"), "metadata")
         self.assertEqual(list(ds.variables), ['x', 'y', 'time', 'wind_at_10m', 'forecast_reference_time', 'crs', 'speed_component', 'direction_component', 'eastward_component', 'northward_component', 'x-wind-hagl', 'y-wind-hagl'])
 
 
