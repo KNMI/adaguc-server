@@ -2299,7 +2299,19 @@ int CImageDataWriter::end() {
                   resultHTML.printconcat("<td>%s</td><td><b >%s</b><div style=\"background-color:#%s;width:100%;height:30px;\"/></td>", e->long_name.c_str(), newValue.c_str(),
                                          e->value.toHex24().c_str());
                 } else {
-                  resultHTML.printconcat("<td>%s</td><td><b>%s</b></td>", e->long_name.c_str(), e->value.c_str());
+
+                  resultHTML.printconcat("<td>%s</td><td><b>", e->long_name.c_str());
+                  if (e->value.isNumeric()) {
+                    double value = e->value.toDouble();
+                    if (fabs(value) > 0.1) {
+                      resultHTML.printconcat("%0.2f", value);
+                    } else {
+                      resultHTML.printconcat("%g", value);
+                    }
+                  } else {
+                    resultHTML.printconcat("%s", e->value.c_str());
+                  }
+                  resultHTML.printconcat("</b></td>");
                 }
 
               } else {
