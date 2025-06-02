@@ -329,11 +329,7 @@ void CImageDataWriter::getFeatureInfoGetPointDataResults(CDataSource *dataSource
           element->value.print("%s (%d)", flagMeaning.c_str(), (int)val);
           element->units = "";
         } else {
-          if (pixel > .1) {
-            element->value.print("%0.2f", val);
-          } else {
-            element->value.print("%g", val);
-          }
+          element->value.print("%f", val);
         }
       }
 
@@ -992,13 +988,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
                   element->units = "";
                 } else {
                   // Add raster value
-                  // char szTemp[1024];
-                  // floatToString(szTemp,1023,pixel);
-                  if (pixel > .1) {
-                    element->value.print("%0.2f", pixel);
-                  } else {
-                    element->value.print("%g", pixel);
-                  }
+                  element->value.print("%f", pixel);
                 }
 #ifdef CIMAGEDATAWRITER_DEBUG
                 CDBDebug("Element value == %s", element->value.c_str());
