@@ -5,6 +5,10 @@
 #include "CDataPostProcessor_ClipMinMax.h"
 #include "CDataPostProcessor_Operator.h"
 #include "CDataPostProcessor_WFP.h"
+#include "CDataPostProcessor_UVComponents.h"
+#include "CDataPostProcessor_FilterDataObjects.h"
+#include "CDataPostProcessor_MetadataVariable.h"
+
 #include "CDataPostProcessor_ToKnots.h"
 #include "CDataPostProcessor_WindSpeedKnotsToMs.h"
 #include "CDataPostProcessor_AXplusB.h"
@@ -39,6 +43,9 @@ CDPPExecutor::CDPPExecutor() {
   dataPostProcessorList->push_back(new CDPPWFP());
   dataPostProcessorList->push_back(new CDPPWindSpeedKnotsToMs());
   dataPostProcessorList->push_back(new CDPPSolarTerminator());
+  dataPostProcessorList->push_back(new CDDPUVComponents());
+  dataPostProcessorList->push_back(new CDDPFilterDataObjects());
+  dataPostProcessorList->push_back(new CDDPMetadataVariable());
 }
 
 CDPPExecutor::~CDPPExecutor() {
@@ -48,9 +55,23 @@ CDPPExecutor::~CDPPExecutor() {
 
 const CT::PointerList<CDPPInterface *> *CDPPExecutor::getPossibleProcessors() { return dataPostProcessorList; }
 
+std::vector<CServerConfig::XMLE_DataPostProc *> getProcessorList(CDataSource *dataSource) {
+  std::vector<CServerConfig::XMLE_DataPostProc *> dataProcessorList;
+  for (auto dp : dataSource->cfgLayer->DataPostProc) {
+    dataProcessorList.push_back(dp);
+  }
+
+  if (dataSource->getStyle() != nullptr && dataSource->getStyle()->styleConfig != nullptr) {
+    for (auto dp : dataSource->getStyle()->styleConfig->DataPostProc) {
+      dataProcessorList.push_back(dp);
+    }
+  }
+  return dataProcessorList;
+}
+
 int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode) {
-  for (size_t dpi = 0; dpi < dataSource->cfgLayer->DataPostProc.size(); dpi++) {
-    CServerConfig::XMLE_DataPostProc *proc = dataSource->cfgLayer->DataPostProc[dpi];
+  std::vector<CServerConfig::XMLE_DataPostProc *> dataProcessorList = getProcessorList(dataSource);
+  for (auto proc : dataProcessorList) {
     for (size_t procId = 0; procId < dataPostProcessorList->size(); procId++) {
       int code = dataPostProcessorList->get(procId)->isApplicable(proc, dataSource, mode);
 
@@ -62,6 +83,7 @@ int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode) {
       if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
         if (code & CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
           try {
+            // CDBDebug("Applying beforereading processor %s", dataPostProcessorList->get(procId)->getId());
             int status = dataPostProcessorList->get(procId)->execute(proc, dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
             if (status != 0) {
               CDBError("Processor %s failed RUNBEFOREREADING, statuscode %d", dataPostProcessorList->get(procId)->getId(), status);
@@ -75,6 +97,7 @@ int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode) {
       if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
         if (code & CDATAPOSTPROCESSOR_RUNAFTERREADING) {
           try {
+            // CDBDebug("Applying afterreading processor %s", dataPostProcessorList->get(procId)->getId());
             int status = dataPostProcessorList->get(procId)->execute(proc, dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
             if (status != 0) {
               CDBError("Processor %s failed RUNAFTERREADING, statuscode %d", dataPostProcessorList->get(procId)->getId(), status);
@@ -90,10 +113,8 @@ int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode) {
 }
 
 int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode, double *data, size_t numItems) {
-  // const CT::PointerList<CDPPInterface*> *availableProcs = getPossibleProcessors();
-  // CDBDebug("executeProcessors, found %d",dataSource->cfgLayer->DataPostProc.size());
-  for (size_t dpi = 0; dpi < dataSource->cfgLayer->DataPostProc.size(); dpi++) {
-    CServerConfig::XMLE_DataPostProc *proc = dataSource->cfgLayer->DataPostProc[dpi];
+  std::vector<CServerConfig::XMLE_DataPostProc *> dataProcessorList = getProcessorList(dataSource);
+  for (auto proc : dataProcessorList) {
     for (size_t procId = 0; procId < dataPostProcessorList->size(); procId++) {
       int code = dataPostProcessorList->get(procId)->isApplicable(proc, dataSource, mode);
 

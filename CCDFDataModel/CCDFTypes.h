@@ -56,14 +56,14 @@ typedef int CDFType;
 
 /* Possible error codes, thrown by CDF */
 typedef int CDFError;
-#define CDF_E_NONE 0        /* Unknown */
-#define CDF_E_ERROR 1       /* Unknown */
-#define CDF_E_VARNOTFOUND 2 /* Variable not found */
-#define CDF_E_DIMNOTFOUND 3 /* Dimension not found */
-#define CDF_E_ATTNOTFOUND 4 /* Attribute not found */
-#define CDF_E_NRDIMSNOTEQUAL 5
-#define CDF_E_VARHASNOPARENT 6 /*Variable has no parent CDFObject*/
-#define CDF_E_VARHASNODATA 7   /*Variable has no data*/
+#define CDF_E_NONE 1000        /* Unknown */
+#define CDF_E_ERROR 1001       /* Unknown */
+#define CDF_E_VARNOTFOUND 1002 /* Variable not found */
+#define CDF_E_DIMNOTFOUND 1003 /* Dimension not found */
+#define CDF_E_ATTNOTFOUND 1004 /* Attribute not found */
+#define CDF_E_NRDIMSNOTEQUAL 1005
+#define CDF_E_VARHASNOPARENT 1006 /*Variable has no parent CDFObject*/
+#define CDF_E_VARHASNODATA 1007   /*Variable has no data*/
 
 /*#define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)

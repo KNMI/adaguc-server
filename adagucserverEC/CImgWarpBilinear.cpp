@@ -29,15 +29,8 @@
 #include <gd.h>
 #include <set>
 
-#ifndef rad2deg
-#define rad2deg (180. / M_PI) // conversion for rad to deg
-#endif
-
-#ifndef deg2rad
-#define deg2rad (M_PI / 180.) // conversion for deg to rad
-#endif
-
 #include "CImgRenderFieldVectors.h"
+#include "CDataPostProcessors/CDataPostProcessor_UVComponents.h"
 
 const char *CImgWarpBilinear::className = "CImgWarpBilinear";
 void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CDrawImage *drawImage) {
@@ -177,25 +170,25 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
     valObj[dNr].valueData = new float[dImageWidth * dImageHeight];
   }
 
-  if (!sourceImage->getDataObject(0)->hasNodataValue) {
-/* When the datasource has no nodata value, assign -9999.0f */
+  if (!sourceImage->getFirstAvailableDataObject()->hasNodataValue) {
+/* When the datasource has no nodata value, assign NAN */
 #ifdef CImgWarpBilinear_DEBUG
-    CDBDebug("Source image has no NoDataValue, assigning -9999.0f");
+    CDBDebug("Source image has no NoDataValue, assigning NAN");
 #endif
-    sourceImage->getDataObject(0)->dfNodataValue = -9999.0f;
-    sourceImage->getDataObject(0)->hasNodataValue = true;
+    sourceImage->getFirstAvailableDataObject()->dfNodataValue = NAN;
+    sourceImage->getFirstAvailableDataObject()->hasNodataValue = true;
   } else {
     /* Create a real nodata value instead of a nanf. */
 
-    if (!(sourceImage->getDataObject(0)->dfNodataValue == sourceImage->getDataObject(0)->dfNodataValue)) {
+    if (!(sourceImage->getFirstAvailableDataObject()->dfNodataValue == sourceImage->getFirstAvailableDataObject()->dfNodataValue)) {
 #ifdef CImgWarpBilinear_DEBUG
-      CDBDebug("Source image has no nodata value NaNf, changing this to -9999.0f");
+      CDBDebug("Source image has no nodata value NaNf, changing this to NAN");
 #endif
-      sourceImage->getDataObject(0)->dfNodataValue = -9999.0f;
+      sourceImage->getFirstAvailableDataObject()->dfNodataValue = NAN;
     }
   }
   // Get the nodatavalue
-  float fNodataValue = sourceImage->getDataObject(0)->dfNodataValue;
+  float fNodataValue = sourceImage->getFirstAvailableDataObject()->dfNodataValue;
 
 // Reproject all the points
 #ifdef CImgWarpBilinear_DEBUG
@@ -203,7 +196,7 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
 
   StopWatch_Stop("Start Reprojecting all the points");
   char temp[32];
-  CDF::getCDFDataTypeName(temp, 31, sourceImage->getDataObject(0)->cdfVariable->getType());
+  CDF::getCDFDataTypeName(temp, 31, sourceImage->getFirstAvailableDataObject()->cdfVariable->getType());
   CDBDebug("datatype: %s", temp);
   for (int j = 0; j < 4; j++) {
     CDBDebug("dPixelExtent[%d]=%d", j, dPixelExtent[j]);
@@ -287,13 +280,9 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
 #ifdef CImgWarpBilinear_DEBUG
   StopWatch_Stop("reprojection finished");
 #endif
-  bool hasTwoDataObjects = sourceImage->getNumDataObjects() == 2;
-  bool isVectorLike = hasTwoDataObjects && (enableVector || enableBarb);
-  if (isVectorLike) {
-    float *uValues = valObj[0].fpValues;
-    float *vValues = valObj[1].fpValues;
-    applyUVConversion(warper, sourceImage, enableVector, enableBarb, dPixelExtent, uValues, vValues);
-  }
+  bool has_u_v_grid_rel = (sourceImage->getNumDataObjects() >= 3 &&
+                           (sourceImage->getDataObject(2)->variableName.equals(U_COMPONENT_GRID_ABSOLUTE) && sourceImage->getDataObject(3)->variableName.equals(V_COMPONENT_GRID_ABSOLUTE)));
+  bool isVectorLike = has_u_v_grid_rel && (enableVector || enableBarb);
 
   for (size_t varNr = 0; varNr < sourceImage->getNumDataObjects(); varNr++) {
     float *fpValues = valObj[varNr].fpValues;
@@ -398,8 +387,9 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
 
   if (isVectorLike) {
     // Note: Calculation from u and v to speed it is done in this method.
+
     windVectors = calculateBarbsAndVectorsAndSpeedFromUVComponents(warper, sourceImage, drawImage, enableShade, enableContour, enableBarb, drawMap, enableVector, drawGridVectors, dPixelExtent,
-                                                                   valObj[0].valueData, valObj[1].valueData, dpDestX, dpDestY);
+                                                                   valObj[2].valueData, valObj[3].valueData, dpDestX, dpDestY);
   }
 
   // Make Contour if desired
@@ -421,7 +411,7 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
       for (size_t sz = 0; sz < windVectors.size(); sz++) {
         CalculatedWindVector wv = windVectors[sz];
         float outlineWidth = 0;
-        drawImage->drawBarb(wv.x, wv.y, wv.dir, wv.strength, CColor(0, 0, 255, 255), outlineWidth, wv.convertToKnots, wv.flip, rendertextforvectors);
+        drawImage->drawBarb(wv.x, wv.y, wv.dir, wv.viewDirCorrection, wv.strength, CColor(0, 0, 255, 255), outlineWidth, wv.convertToKnots, wv.flip, rendertextforvectors);
       }
     }
   }

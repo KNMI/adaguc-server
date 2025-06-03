@@ -183,7 +183,7 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
 
     for (size_t j = 0; j < numFlags; j++) {
       float y = j * blockDistance + (cbH - numFlags * blockDistance + 8);
-      double value = dataSource->getDataObject(0)->statusFlagList[j]->value;
+      double value = dataSource->getDataObject(0)->statusFlagList[j].value;
       if (useShadeIntervals) {
         CColor col = CImageDataWriter::getPixelColorForValue(dataSource, value);
         legendImage->rectangle(1 + pLeft, int(2 + dH + y) + pTop, (int)cbW + 9 + pLeft, (int)y + 2 + dH + blockHeight + pTop, col, black);

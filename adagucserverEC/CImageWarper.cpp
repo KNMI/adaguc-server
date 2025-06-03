@@ -92,8 +92,8 @@ int CImageWarper::reprojpoint(double &dfx, double &dfy) {
   }
   return 0;
 }
-int CImageWarper::reprojpoint(CPoint &p) { return reprojpoint(p.x, p.y); }
-int CImageWarper::reprojpoint_inv(CPoint &p) { return reprojpoint_inv(p.x, p.y); }
+int CImageWarper::reprojpoint(f8point &p) { return reprojpoint(p.x, p.y); }
+int CImageWarper::reprojpoint_inv(f8point &p) { return reprojpoint_inv(p.x, p.y); }
 
 int CImageWarper::reprojToLatLon(double &dfx, double &dfy) {
   if (proj_trans_generic(projLatlonToDest, PJ_INV, &dfx, sizeof(double), 1, &dfy, sizeof(double), 1, nullptr, 0, 0, nullptr, 0, 0) != 1) {
@@ -134,6 +134,13 @@ int CImageWarper::reprojfromLatLon(double &dfx, double &dfy) {
 
 int CImageWarper::reprojModelToLatLon(double &dfx, double &dfy) {
   if (proj_trans_generic(projSourceToLatlon, PJ_FWD, &dfx, sizeof(double), 1, &dfy, sizeof(double), 1, nullptr, 0, 0, nullptr, 0, 0) != 1) {
+    return 1;
+  }
+  return 0;
+}
+
+int CImageWarper::reprojModelToLatLon(f8point &point) {
+  if (proj_trans_generic(projSourceToLatlon, PJ_FWD, &point.x, sizeof(double), 1, &point.y, sizeof(double), 1, nullptr, 0, 0, nullptr, 0, 0) != 1) {
     return 1;
   }
   return 0;
@@ -361,7 +368,7 @@ int CImageWarper::findExtentUnSynchronized(CDataSource *dataSource, double *dfBB
   BBOX bbox{};
   std::tie(found, bbox) = getBBOXProjection(key);
 
-    if (found) {
+  if (found) {
 #ifdef CIMAGEWARPER_DEBUG
     CDBDebug("FOUND AND REUSING!!! %s %s (%0.3f, %0.3f, %0.3f, %0.3f) to  (%0.3f, %0.3f, %0.3f, %0.3f)", key.sourceCRS.c_str(), key.destCRS.c_str(), key.extent.bbox[0], key.extent.bbox[1],
              key.extent.bbox[2], key.extent.bbox[3], bbox.bbox[0], bbox.bbox[1], bbox.bbox[2], bbox.bbox[3]);

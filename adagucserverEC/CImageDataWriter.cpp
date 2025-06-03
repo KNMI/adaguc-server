@@ -37,21 +37,11 @@
 #include "CReporter.h"
 #include "CImgWarpHillShaded.h"
 #include "CImgWarpGeneric.h"
-
-#ifndef rad2deg
-#define rad2deg (180. / M_PI) // conversion for rad to deg
-#endif
-
-#ifndef deg2rad
-#define deg2rad (M_PI / 180.) // conversion for deg to rad
-#endif
+#include "CDataPostProcessors/CDataPostProcessor_UVComponents.h"
 
 CT::string months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 // #define CIMAGEDATAWRITER_DEBUG
 // #define MEASURETIME
-
-void doJacoIntoLatLon(double &u, double &v, double lo, double la, float deltaX, float deltaY, CImageWarper *warper);
-void rotateUvNorth(double &u, double &v, double rlo, double rla, float deltaX, float deltaY, CImageWarper *warper);
 
 std::map<std::string, CImageDataWriter::ProjCacheInfo> CImageDataWriter::projCacheMap;
 std::map<std::string, CImageDataWriter::ProjCacheInfo>::iterator CImageDataWriter::projCacheIter;
@@ -702,32 +692,36 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
     CDataReader reader;
     reader.open(dataSources[d], CNETCDFREADER_MODE_OPEN_HEADER);
     if (dataSources[d]->getNumDataObjects() > 0) {
-      if (dataSources[d]->getDataObject(0)->cdfVariable != NULL) {
+      if (dataSources[d]->getFirstAvailableDataObject()->cdfVariable != NULL) {
         if (dataSources[d]->isConfigured) {
           if (dataSources[d]->nativeProj4.length() > 0) {
             headerIsAvailable = true;
           }
         }
-        if (dataSources[d]->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_VECTOR") != NULL) {
+        if (dataSources[d]->getFirstAvailableDataObject()->cdfVariable->getAttributeNE("ADAGUC_VECTOR") != NULL) {
           openAll = true;
         }
 
-        if (dataSources[d]->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_POINT") != NULL) {
+        if (dataSources[d]->getFirstAvailableDataObject()->cdfVariable->getAttributeNE("ADAGUC_POINT") != NULL) {
           openAll = true;
         }
 
-        if (dataSources[d]->getDataObject(0)->cdfVariable->getAttributeNE("UGRID_MESH") != NULL) {
+        if (dataSources[d]->getFirstAvailableDataObject()->cdfVariable->getAttributeNE("UGRID_MESH") != NULL) {
           openAll = true;
         }
-        if (dataSources[d]->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_PROFILE") != NULL) {
+        if (dataSources[d]->getFirstAvailableDataObject()->cdfVariable->getAttributeNE("ADAGUC_PROFILE") != NULL) {
           isProfileData = true;
         }
-        if (dataSources[d]->getDataObject(0)->cdfObject->getAttributeNE("ADAGUC_GEOJSON") != NULL) {
+        if (dataSources[d]->getFirstAvailableDataObject()->cdfObject->getAttributeNE("ADAGUC_GEOJSON") != NULL) {
           openAll = true;
         }
 
-        if (dataSources[d]->getDataObject(0)->cdfObject->getAttributeNE("USE_ADAGUC_LATLONBNDS_CONVERTER") != NULL) {
+        if (dataSources[d]->getFirstAvailableDataObject()->cdfObject->getAttributeNE("USE_ADAGUC_LATLONBNDS_CONVERTER") != NULL) {
           openAll = true;
+        }
+
+        if (dataSources[d]->getFirstAvailableDataObject()->cdfObject->getAttributeNE(CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ID) != NULL) {
+          sameHeaderForAll = true;
         }
 
         if (dataSources[d]->cfgLayer->FilePath.size() == 1 && dataSources[d]->cfgLayer->FilePath[0]->attr.gfi_openall.equals("true")) {
@@ -782,8 +776,8 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
         getFeatureInfoResult->dataSourceIndex = dataSourceIndex;
 
 #ifdef CIMAGEDATAWRITER_DEBUG
-        CDBDebug("Processing dataSource %d with result %d of %d results (%d) %f", d, step, dataSources[d]->getNumTimeSteps(), dataSources[d]->getDataObject(0)->hasNodataValue,
-                 dataSources[d]->getDataObject(0)->dfNodataValue);
+        CDBDebug("Processing dataSource %d with result %d of %d results (%d) %f", d, step, dataSources[d]->getNumTimeSteps(), dataSources[d]->getFirstAvailableDataObject()->hasNodataValue,
+                 dataSources[d]->getFirstAvailableDataObject()->dfNodataValue);
 #endif
 
         CDataReader reader;
@@ -811,13 +805,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
             return 1;
           }
         }
-
-        //(89,26)       (5.180666,52.101790)    (5.180666,52.101790)
-
-        // double CoordX=5.180666,CoordY=52.101790;
-        // double nativeCoordX=5.180666,nativeCoordY=52.101790;
-        // double lonX=5.180666,lonY=52.101790;
-        // int imx=89,imy=26;
 
         CT::string ckey;
         ckey.print("%d:%d:%d:%d:%s:%f:%f:%f:%f", dX, dY, dataSource->dWidth, dataSource->dHeight, dataSource->nativeProj4.c_str(), dataSource->dfBBOX[0], dataSource->dfBBOX[1], dataSource->dfBBOX[2],
@@ -860,14 +847,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
 
             status = reader.open(dataSources[d], CNETCDFREADER_MODE_OPEN_ALL, projCacheInfo.imx, projCacheInfo.imy);
 
-            // dataSource->getDataObject(0)->cdfVariable->data = malloc(4);
-
-            //((float*)dataSource->getDataObject(0)->cdfVariable->data)[0]=step;
-            //           size_t ptr=0;
-            //           if(openAll){
-            //             ptr=projCacheInfo.imx+projCacheInfo.imy*projCacheInfo.dWidth;
-            //           }
-            // double pixel=convertValue(dataSource->getDataObject(d)->cdfVariable->getType(),dataSource->getDataObject(d)->cdfVariable->data,ptr);
 #ifdef CIMAGEDATAWRITER_DEBUG
             CDBDebug("Done");
 #endif
@@ -883,59 +862,9 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
             CDBError("Could not open file: %s", dataSource->getFileName());
             return 1;
           }
-        } /*else{
-
-           GetFeatureInfoResult::Element * element = new GetFeatureInfoResult::Element();
-           element->dataSource=dataSource;
-           //Get variable name
-           element->var_name.copy(&dataSources[d]->getDataObject(d)->variableName);
-           //Get variable units
-           CT::string units=dataSources[d]->getDataObject(d)->getUnits();
-           element->units.copy(&units);
-           element->value="nodata";
-           getFeatureInfoResult->elements.push_back(element);
-
-           //isOutsideBBOX = true;
-           //everythingIsInBBOX = false;
-         }*/
-        //     }
-        //
-        //
-        //     //SPLIT UP OF DATA RETRIEVAL AND DATA PROCESSING
-        //      for(int step=0;step<dataSources[d]->getNumTimeSteps();step++){
-        //       dataSources[d]->setTimeStep(step);
-        //       dataSource = dataSources[d];
+        }
 
         if (everythingIsInBBOX == true) {
-
-          // TODO find raster projection units and find image projection units.
-
-          // Determine if this is a GridRelative vector product
-          // bool windVectorProduct=false;
-          bool gridRelative = false;
-
-          //         if (dataSource->getNumDataObjects()>1){
-          //
-          //           //windVectorProduct=true;
-          //           // Check standard_name/var_name for first vector component
-          //           // if x_wind/grid_east_wind of y_wind/grid_northward_wind then gridRelative=true
-          //           // if eastward_wind/northward_wind then gridRelative=false
-          //           // default is gridRelative=true
-          //           CT::string standard_name;
-          //           standard_name=dataSource->getDataObject(0)->variableName;
-          //           try {
-          //             dataSource->getDataObject(0)->cdfVariable->getAttribute("standard_name")->getDataAsString(&standard_name);
-          //           } catch (CDFError e) {}
-          //           if (standard_name.equals("x_wind")||standard_name.equals("grid_eastward_wind")||
-          //             standard_name.equals("y_wind")||standard_name.equals("grid_northward_wind")) {
-          //             gridRelative=true;
-          //           } else {
-          //             gridRelative=false;
-          //           }
-          //           #ifdef CIMAGEDATAWRITER_DEBUG
-          //           CDBDebug("Grid propery gridRelative=%d", gridRelative);
-          //           #endif
-          //         }
 
           // Retrieve variable names
           for (size_t o = 0; o < dataSource->getNumDataObjects(); o++) {
@@ -943,10 +872,9 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
               CDBWarning("No variable defined for dataObject %d for [%s]", o, dataSource->getDataObject(o)->cdfVariable->name.c_str());
               continue;
             }
-
-            //        size_t j=d+o*dataSources.size();
-            // CDBDebug("j = %d",j);
-            // Create a new element and at it to the elements list.
+            if (dataSource->getDataObject(o)->filterFromOutput) {
+              continue;
+            }
 
             CT::string dimkey = "";
             for (size_t j = 0; j < dataSources[d]->requiredDims.size(); j++) {
@@ -1060,10 +988,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
                   element->units = "";
                 } else {
                   // Add raster value
-                  // char szTemp[1024];
-                  // floatToString(szTemp,1023,pixel);
-
-                  element->value.print("%f", pixel); //=szTemp;
+                  element->value.print("%f", pixel);
                 }
 #ifdef CIMAGEDATAWRITER_DEBUG
                 CDBDebug("Element value == %s", element->value.c_str());
@@ -1122,156 +1047,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
 #ifdef CIMAGEDATAWRITER_DEBUG
           CDBDebug("dataSource->getNumDataObjects()==%d", dataSource->getNumDataObjects());
 #endif
-
-          // For vectors, we will calculate angle and strength
-          if ((dataSource->getNumDataObjects() == 2) && (dataSource->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_GEOJSONPOINT") == NULL)) {
-            //          CDBDebug("VECTOR GFI!@!!!!!!!!");
-            size_t ptr = 0;
-            if (openAll) {
-              ptr = projCacheInfo.imx + projCacheInfo.imy * projCacheInfo.dWidth;
-            }
-
-            double pixel1 = convertValue(dataSource->getDataObject(0)->cdfVariable->getType(), dataSource->getDataObject(0)->cdfVariable->data, ptr);
-            double pixel2 = convertValue(dataSource->getDataObject(1)->cdfVariable->getType(), dataSource->getDataObject(1)->cdfVariable->data, ptr);
-
-            bool windDataValid = (((pixel1 == pixel1 && everythingIsInBBOX == true && dataSource->getDataObject(0)->hasNodataValue == true && pixel1 != dataSource->getDataObject(0)->dfNodataValue) ||
-                                   dataSource->getDataObject(0)->hasNodataValue == false) &&
-                                  ((pixel2 == pixel2 && everythingIsInBBOX == true && dataSource->getDataObject(1)->hasNodataValue == true && pixel2 != dataSource->getDataObject(1)->dfNodataValue) ||
-                                   dataSource->getDataObject(1)->hasNodataValue == false));
-
-            /**
-             * Derived wind vector calculation is now based on U and V, this gives incorrect results when using rotation and strength.
-             * To prevent wrong answers in GFI this is disabled.
-             */
-            if (false) {
-              if (gridRelative && windDataValid == true) {
-                // Add raster value
-
-                status = imageWarper.initreproj(dataSource, drawImage.Geo, &srvParam->cfg->Projection);
-#ifdef ORIGINAL_JACOBIAN
-#ifdef CIMAGEDATAWRITER_DEBUG
-                CDBDebug("doJacoIntoLatLon(%f,%f,%f, %f, %f, %f)", pixel1, pixel2, projCacheInfo.lonX, projCacheInfo.lonY, 0.01, 0.01);
-#endif
-                doJacoIntoLatLon(pixel1, pixel2, projCacheInfo.lonX, projCacheInfo.lonY, 0.01, 0.01, &imageWarper);
-#else
-#ifdef CIMAGEDATAWRITER_DEBUG
-                CDBDebug("Rot_UV_North(%f,%f,%f, %f, %f, %f)", pixel1, pixel2, projCacheInfo.lonX, projCacheInfo.lonY, 0.01, 0.01);
-#endif
-                rotateUvNorth(pixel1, pixel2, projCacheInfo.nativeCoordX, projCacheInfo.nativeCoordY, 0.01, 0.01, &imageWarper);
-#endif
-                imageWarper.closereproj();
-
-                char szTemp[1024];
-                floatToString(szTemp, 1023, pixel1); // New val
-                getFeatureInfoResult->elements[getFeatureInfoResult->elements.size() - 2]->value = szTemp;
-                floatToString(szTemp, 1023, pixel2); // New val
-                getFeatureInfoResult->elements[getFeatureInfoResult->elements.size() - 1]->value = szTemp;
-              }
-
-              GetFeatureInfoResult::Element *element2 = new GetFeatureInfoResult::Element();
-              CCDFDims *cdfDims = dataSources[d]->getCDFDims();
-              CT::string value, name;
-              // element2->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
-              for (size_t j = 0; j < dataSources[d]->requiredDims.size(); j++) {
-                value = cdfDims->getDimensionValue(j);
-                name = cdfDims->getDimensionName(j);
-                //             if(name.indexOf("time")==0){
-                //               value=element2->cdfDims.getDimensionValue("time").c_str();
-                //             }
-                element2->cdfDims.addDimension(name.c_str(), value.c_str(), cdfDims->getDimensionIndex(j));
-              }
-              element2->dataSource = dataSource;
-              getFeatureInfoResult->elements.push_back(element2);
-              element2->long_name = "wind direction";
-              element2->var_name = "wind direction";
-              element2->standard_name = "dir";
-              element2->feature_name = "wind direction";
-              element2->units = "degrees";
-
-              if (windDataValid) {
-                double angle = 270 - atan2(pixel2, pixel1) * 180 / M_PI;
-                if (angle > 360) angle -= 360;
-                if (angle < 0) angle = angle + 360;
-                element2->value.print("%3.0f", angle);
-              } else {
-                element2->value.print("%s", "nodata");
-              }
-#ifdef CIMAGEDATAWRITER_DEBUG
-              CDBDebug("pushed wind dir %s for step %d [%d]", element2->value.c_str(), step, getFeatureInfoResult->elements.size());
-#endif
-              // element2->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
-
-              GetFeatureInfoResult::Element *windspeedOrigElement = new GetFeatureInfoResult::Element();
-              windspeedOrigElement->dataSource = dataSource;
-              //           windspeedOrigElement->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
-              for (size_t j = 0; j < dataSources[d]->requiredDims.size(); j++) {
-                value = cdfDims->getDimensionValue(j);
-                name = cdfDims->getDimensionName(j);
-                //             if(name.indexOf("time")==0){
-                //               value=windspeedOrigElement->cdfDims.getDimensionValue("time").c_str();
-                //             }
-                windspeedOrigElement->cdfDims.addDimension(name.c_str(), value.c_str(), cdfDims->getDimensionIndex(j));
-              }
-              getFeatureInfoResult->elements.push_back(windspeedOrigElement);
-              windspeedOrigElement->long_name = "wind speed";
-              windspeedOrigElement->var_name = "wind speed";
-              windspeedOrigElement->standard_name = "speed1";
-              windspeedOrigElement->feature_name = "wind speed";
-              windspeedOrigElement->units = dataSource->getDataObject(0)->getUnits();
-              //           windspeedOrigElement->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
-              if (windDataValid) {
-                double windspeed = hypot(pixel1, pixel2);
-                windspeedOrigElement->value.print("%3.1f", windspeed);
-              } else {
-                windspeedOrigElement->value.print("%s", "nodata");
-              }
-#ifdef CIMAGEDATAWRITER_DEBUG
-              CDBDebug("pushed wind speed %s for step %d [%d]", windspeedOrigElement->value.c_str(), step, getFeatureInfoResult->elements.size());
-#endif
-
-              // Skip KTS calculation if input data is not u and v vectors in m/s.
-              bool skipKTSCalc = true;
-              try {
-                if (dataSource->getDataObject(0)->getUnits().indexOf("m/s") >= 0) {
-                  skipKTSCalc = false;
-                }
-              } catch (int e) {
-              }
-
-              if (!skipKTSCalc) {
-                GetFeatureInfoResult::Element *element3 = new GetFeatureInfoResult::Element();
-                element3->dataSource = dataSource;
-                //             element3->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
-                CCDFDims *cdfDims = dataSources[d]->getCDFDims();
-                CT::string value, name;
-                for (size_t j = 0; j < dataSources[d]->requiredDims.size(); j++) {
-                  value = cdfDims->getDimensionValue(j);
-                  name = cdfDims->getDimensionName(j);
-                  /*           if(name.indexOf("time")==0){
-                                value=windspeedOrigElement->cdfDims.getDimensionValue("time").c_str();
-                              }
-                  */
-                  element3->cdfDims.addDimension(name.c_str(), value.c_str(), cdfDims->getDimensionIndex(j));
-                }
-                getFeatureInfoResult->elements.push_back(element3);
-                element3->long_name = "wind speed";
-                element3->var_name = "wind speed";
-                element3->standard_name = "speed2";
-                element3->feature_name = "wind speed kts";
-                element3->units = "kts";
-                //             element3->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
-                if (windDataValid) {
-                  double windspeedKTS = hypot(pixel1, pixel2) * (3600. / 1852.);
-                  element3->value.print("%3.1f", windspeedKTS);
-                } else {
-                  element3->value.print("%s", "nodata");
-                }
-#ifdef CIMAGEDATAWRITER_DEBUG
-                CDBDebug("pushed wind speed KTS %f for step %d [%d]\n", element3->value.c_str(), step, getFeatureInfoResult->elements.size());
-#endif
-              }
-            }
-          }
         }
       }
     }
@@ -1432,7 +1207,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
 
       int numFeatures = 0;
       try {
-        numFeatures = dataSource->getDataObject(0)->cdfObject->getDimension("features")->getSize();
+        numFeatures = dataSource->getFirstAvailableDataObject()->cdfObject->getDimension("features")->getSize();
       } catch (int e) {
 #ifdef CIMAGEDATAWRITER_DEBUG
         CDBDebug("Note: While configuring featureInterval: Unable to find features variable");
@@ -1448,8 +1223,8 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
             CT::string attributeName = featureInterval->attr.matchid;
             for (int featureNr = 0; featureNr < numFeatures; featureNr++) {
               attributeValues[featureNr] = "";
-              std::map<int, CFeature>::iterator feature = dataSource->getDataObject(0)->features.find(featureNr);
-              if (feature != dataSource->getDataObject(0)->features.end()) {
+              std::map<int, CFeature>::iterator feature = dataSource->getFirstAvailableDataObject()->features.find(featureNr);
+              if (feature != dataSource->getFirstAvailableDataObject()->features.end()) {
                 std::map<std::string, std::string>::iterator attributeValueItr = feature->second.paramMap.find(attributeName.c_str());
                 if (attributeValueItr != feature->second.paramMap.end()) {
                   attributeValues[featureNr] = attributeValueItr->second.c_str();
@@ -1522,7 +1297,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
 #ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("Using CImgWarpBilinear");
 #endif
-    if (dataSource->getDataObject(0)->points.size() == 0) {
+    if (dataSource->getFirstAvailableDataObject()->points.size() == 0) {
       imageWarperRenderer = new CImgWarpBilinear();
       CT::string bilinearSettings;
       bool drawMap = false;
@@ -1705,7 +1480,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
    * Use point renderer
    */
   if (renderMethod & RM_BARB || renderMethod & RM_VECTOR || renderMethod & RM_POINT) {
-    if (dataSource->getDataObject(0)->points.size() != 0) {
+    if (dataSource->getFirstAvailableDataObject()->points.size() != 0) {
 #ifdef CIMAGEDATAWRITER_DEBUG
       CDBDebug("Using CImgRenderPoints");
 #endif
@@ -1889,7 +1664,7 @@ int CImageDataWriter::calculateData(std::vector<CDataSource *> &dataSources) {
             if (dsj->dfBBOX[1] > dsj->dfBBOX[3]) yj = dsj->dHeight - yj - 1;
             size_t ptrj = xj + yj * dsj->dWidth;
 
-            pixel[j] = convertValue(dsj->getDataObject(0)->cdfVariable->getType(), dsj->getDataObject(0)->cdfVariable->data, ptrj);
+            pixel[j] = convertValue(dsj->getFirstAvailableDataObject()->cdfVariable->getType(), dsj->getFirstAvailableDataObject()->cdfVariable->data, ptrj);
 
             if (inputMapExpression[j] == between) {
               if (pixel[j] >= inputMapExprValuesLow[j] && pixel[j] <= inputMapExprValuesHigh[j])
@@ -1935,7 +1710,7 @@ int CImageDataWriter::calculateData(std::vector<CDataSource *> &dataSources) {
             pixel[0] = 1;
           else
             pixel[0] = 0;
-          setValue(dataSources[0]->getDataObject(0)->cdfVariable->getType(), dataSources[0]->getDataObject(0)->cdfVariable->data, ptr, pixel[0]);
+          setValue(dataSources[0]->getFirstAvailableDataObject()->cdfVariable->getType(), dataSources[0]->getFirstAvailableDataObject()->cdfVariable->data, ptr, pixel[0]);
         }
       }
       CDBDebug("Warping with style %s", srvParam->Styles.c_str());
@@ -2060,7 +1835,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
             if (attrToSearch != NULL) {
               // CDBDebug("Determining ImageText based on netcdf attribute %s",attrToSearch);
               try {
-                CDF::Attribute *attr = dataSource->getDataObject(0)->cdfObject->getAttribute(attrToSearch);
+                CDF::Attribute *attr = dataSource->getFirstAvailableDataObject()->cdfObject->getAttribute(attrToSearch);
                 if (attr->length > 0) {
                   imageText.copy(attrToSearch);
                   imageText.concat(": ");
@@ -2122,8 +1897,8 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         }
       }
 
-      CPoint topLeft;
-      CBBOX latLonBBOX;
+      f8point topLeft;
+      f8box latLonBBOX;
       // Find lat lon BBox;
       topLeft.x = srvParam->Geo->dfBBOX[0];
 
@@ -2179,7 +1954,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       CDBDebug("numPointsX = %d, numPointsY = %d", numPointsX, numPointsY);
 #endif
 
-      CPoint *gridP = new CPoint[numPoints];
+      f8point *gridP = new f8point[numPoints];
 
       for (int y = 0; y < numPointsY; y++) {
         for (int x = 0; x < numPointsX; x++) {
@@ -2463,28 +2238,12 @@ int CImageDataWriter::end() {
         GetFeatureInfoResult *g = getFeatureInfoResultList[0];
         if (resultFormat == texthtml) {
           // resultHTML.printconcat("coordinates (%0.2f , %0.2f)<br>\n",g->x_imageCoordinate,g->y_imageCoordinate);
-          resultHTML.printconcat("<b>Coordinates</b> - (lon=%0.2f; lat=%0.2f)<br>\n", g->lon_coordinate, g->lat_coordinate);
+          resultHTML.printconcat("Pointer Coordinates: (lon=%0.2f; lat=%0.2f)<br>\n", g->lon_coordinate, g->lat_coordinate);
 
         } else {
-          // resultHTML.printconcat("coordinates (%0.2f , %0.2f)\n",g->x_imageCoordinate,g->y_imageCoordinate);
           resultHTML.printconcat("Coordinates - (lon=%0.2f; lat=%0.2f)\n", g->lon_coordinate, g->lat_coordinate);
         }
 
-        /*for(size_t j=0;j<getFeatureInfoResultList.size();j++){
-          GetFeatureInfoResult *g = getFeatureInfoResultList[j];
-          int elNR = 0;
-          GetFeatureInfoResult::Element * e=g->elements[elNR];
-          if(g->elements.size()>1){
-            resultHTML.printconcat("%d: ",elNR);
-          }
-          if(resultFormat==texthtml){
-            resultHTML.printconcat("<b>%s</b> - %s<br>\n",e->var_name.c_str(),e->feature_name.c_str());
-          }else{
-            resultHTML.printconcat("%s - %s\n",e->var_name.c_str(),e->feature_name.c_str());
-          }
-        }*/
-        // if(resultFormat==texthtml)resultHTML.printconcat("<hr>\n");
-        // CDBDebug("getFeatureInfoResultList.size() %d",getFeatureInfoResultList.size());
         for (size_t j = 0; j < getFeatureInfoResultList.size(); j++) {
 
           GetFeatureInfoResult *g = getFeatureInfoResultList[j];
@@ -2540,7 +2299,19 @@ int CImageDataWriter::end() {
                   resultHTML.printconcat("<td>%s</td><td><b >%s</b><div style=\"background-color:#%s;width:100%;height:30px;\"/></td>", e->long_name.c_str(), newValue.c_str(),
                                          e->value.toHex24().c_str());
                 } else {
-                  resultHTML.printconcat("<td>%s</td><td><b>%s</b></td>", e->long_name.c_str(), e->value.c_str());
+
+                  resultHTML.printconcat("<td>%s</td><td><b>", e->long_name.c_str());
+                  if (e->value.isNumeric()) {
+                    double value = e->value.toDouble();
+                    if (fabs(value) > 0.1) {
+                      resultHTML.printconcat("%0.2f", value);
+                    } else {
+                      resultHTML.printconcat("%g", value);
+                    }
+                  } else {
+                    resultHTML.printconcat("%s", e->value.c_str());
+                  }
+                  resultHTML.printconcat("</b></td>");
                 }
 
               } else {
@@ -2812,6 +2583,8 @@ int CImageDataWriter::end() {
           featureName.replaceSelf(" ", "_");
           CXMLParser::XMLElement paramElement("param");
           paramElement.add(CXMLParser::XMLElement("name", e->var_name.c_str()));
+          paramElement.add(CXMLParser::XMLElement("layername", g->layerName.c_str()));
+          paramElement.add(CXMLParser::XMLElement("variablename", e->var_name.c_str()));
           paramElement.add(CXMLParser::XMLElement("standard_name", e->standard_name.c_str()));
           paramElement.add(CXMLParser::XMLElement("feature_name", e->feature_name.c_str()));
           paramElement.add(CXMLParser::XMLElement("units", e->units.c_str()));
@@ -3548,8 +3321,8 @@ CColor CImageDataWriter::getPixelColorForValue(CDataSource *dataSource, float va
   bool isNodata = false;
 
   CColor color;
-  if (dataSource->getDataObject(0)->hasNodataValue) {
-    if (val == float(dataSource->getDataObject(0)->dfNodataValue)) isNodata = true;
+  if (dataSource->getFirstAvailableDataObject()->hasNodataValue) {
+    if (val == float(dataSource->getFirstAvailableDataObject()->dfNodataValue)) isNodata = true;
     if (!(val == val)) isNodata = true;
   }
   if (!isNodata) {
@@ -3582,178 +3355,6 @@ int CImageDataWriter::createLegend(CDataSource *dataSource, CDrawImage *legendIm
 int CImageDataWriter::drawText(int x, int y, const char *fontlocation, float size, float angle, const char *text, unsigned char colorIndex) {
   drawImage.drawText(x, y, fontlocation, size, angle, text, colorIndex);
   return 0;
-}
-
-void doJacoIntoLatLon(double &u, double &v, double lo, double la, float deltaX, float deltaY, CImageWarper *warper) {
-  double modelXLat, modelYLat;
-  double modelXLon, modelYLon;
-  double VJaa, VJab, VJba, VJbb;
-  int signLon = (deltaX < 0) ? -1 : 1;
-  int signLat = (deltaY < 0) ? -1 : 1;
-
-  double modelX = lo;
-  double modelY = la;
-  warper->reprojModelFromLatLon(modelX, modelY); // model to vis proj.
-  modelXLon = modelX + deltaX;
-  modelYLon = modelY;
-  modelXLat = modelX;
-  modelYLat = modelY + deltaY;
-  //              warper->reprojpoint_inv(lo, la); // model to vis proj.
-  //              warper->reprojpoint_inv(modelXLon, modelYLon);
-  //              warper->reprojpoint_inv(modelXLat, modelYLat);
-  //              warper->reprojModelToLatLon(lo, la); // model to vis proj.
-  warper->reprojModelToLatLon(modelXLon, modelYLon);
-  warper->reprojModelToLatLon(modelXLat, modelYLat);
-  double distLon = hypot(modelXLon - lo, modelYLon - la);
-  double distLat = hypot(modelXLat - lo, modelYLat - la);
-
-  VJaa = signLon * (modelXLon - lo) / distLon;
-  VJab = signLon * (modelXLat - lo) / distLat;
-  VJba = signLat * (modelYLon - la) / distLon;
-  VJbb = signLat * (modelYLat - la) / distLat;
-  double magnitude = hypot(u, v);
-  double uu;
-  double vv;
-  uu = VJaa * u + VJab * v;
-  vv = VJba * u + VJbb * v;
-
-  double newMagnitude = hypot(uu, vv);
-  u = uu * magnitude / newMagnitude;
-  v = vv * magnitude / newMagnitude;
-}
-
-void rotateUvNorth(double &u, double &v, double rlo, double rla, float deltaX, float deltaY, CImageWarper *warper) {
-  fprintf(stderr, "rotateUvNorth(%f,%f,%f,%f,%f,%f)\n", u, v, rlo, rla, deltaX, deltaY);
-  double lon_pnt0, lat_pnt0;
-  double lon_pntEast, lat_pntEast;
-  double lon_pntNorth, lat_pntNorth;
-  double dLatEast, dLonEast;
-  double dLatNorth, dLonNorth;
-  double xpntEastSph, ypntEastSph, zpntEastSph;
-  double xpntNorthSph, ypntNorthSph, zpntNorthSph;
-  double xpntNorthSphRot, ypntNorthSphRot, zpntNorthSphRot;
-  double xpnt0Sph, ypnt0Sph, zpnt0Sph;
-  double xnormSph, ynormSph, znormSph;
-  double xncross, yncross, zncross;
-  double vecAngle;
-  double VJaa, VJab, VJba, VJbb;
-  double magnitude, newMagnitude;
-  double uu;
-  double vv;
-#define radians(aDeg) (deg2rad * aDeg)
-#define NormVector(vec0, vec1, vec2)                                                                                                                                                                   \
-  {                                                                                                                                                                                                    \
-    double vecLen = sqrt(vec0 * vec0 + vec1 * vec1 + vec2 * vec2);                                                                                                                                     \
-    vec0 = vec0 / vecLen;                                                                                                                                                                              \
-    vec1 = vec1 / vecLen;                                                                                                                                                                              \
-    vec2 = vec2 / vecLen;                                                                                                                                                                              \
-  }
-
-#define CrossProd(vecx0, vecx1, vecx2, vecy0, vecy1, vecy2, vecz0, vecz1, vecz2)                                                                                                                       \
-  {                                                                                                                                                                                                    \
-    vecz0 = vecx1 * vecy2 - vecy1 * vecx2;                                                                                                                                                             \
-    vecz1 = vecx2 * vecy0 - vecy2 * vecx0;                                                                                                                                                             \
-    vecz2 = vecx0 * vecy1 - vecy0 * vecx1;                                                                                                                                                             \
-  }
-
-  lon_pnt0 = rlo;
-  lat_pnt0 = rla;
-  lon_pntEast = lon_pnt0 + deltaX;
-  lat_pntEast = lat_pnt0;
-  lon_pntNorth = lon_pnt0;
-  lat_pntNorth = lat_pnt0 + deltaY;
-  warper->reprojModelToLatLon(lon_pnt0, lat_pnt0);
-  warper->reprojModelToLatLon(lon_pntNorth, lat_pntNorth);
-  warper->reprojModelToLatLon(lon_pntEast, lat_pntEast);
-
-  // (lon_pntNorth, lat_pntNorth)
-  //     ^
-  //     |       (lon_pntCenter, lat_pntCenter)   center of the cell-diagonal
-  //     |
-  // (lon_pnt0,lat_pnt0) ----> (lon_pntEast,lat_pntEast)
-
-  // lon_pntCenter = 0.5*(lon_pntNorth + lon_pntEast);
-  // lat_pntCenter = 0.5*(lat_pntNorth + lat_pntEast);
-  // lon_pnt0 -= lon_pntCenter; lon_pntEast -= lon_pntCenter; lon_pntNorth -= lon_pntCenter;
-  // lat_pnt0 -= lat_pntCenter; lat_pntEast -= lat_pntCenter; lat_pntNorth -= lat_pntCenter;
-
-  // This is the local coordinate system of a grid cell where we have (u,v) at location (xpnt0,ypnt0).
-
-  // The local coordinate system is now centered around (lon_pnt0,lat_pnt0)
-  // The vector towards north pole at this location will be (0,1,0)
-  // The tangent plane at this location is XY wil a normal (0, 0, 1)
-
-  // Nummerical approach using projection onto a unit sphere
-  dLonNorth = radians(lon_pntNorth);
-  dLatNorth = radians(lat_pntNorth);
-  xpntNorthSph = cos(dLatNorth) * cos(dLonNorth);
-  ypntNorthSph = cos(dLatNorth) * sin(dLonNorth); // Get [dLonNorth,dLatNorth] on the unit sphere.
-  zpntNorthSph = sin(dLatNorth);                  // Only XY plane is needed.
-  dLonEast = radians(lon_pntEast);
-  dLatEast = radians(lat_pntEast);
-  xpntEastSph = cos(dLatEast) * cos(dLonEast);
-  ypntEastSph = cos(dLatEast) * sin(dLonEast); // Get [dLonEast,dLatEast] on the unit sphere.
-  zpntEastSph = sin(dLatEast);                 // Only XY plane is needed.
-  lon_pnt0 = radians(lon_pnt0);
-  lat_pnt0 = radians(lat_pnt0);
-  xpnt0Sph = cos(lat_pnt0) * cos(lon_pnt0);
-  ypnt0Sph = cos(lat_pnt0) * sin(lon_pnt0); // Get [lon_pnt0,lat_pnt0] on the unit sphere.
-  zpnt0Sph = sin(lat_pnt0);                 // Only XY plane is needed.
-
-  xpntEastSph -= xpnt0Sph;
-  ypntEastSph -= ypnt0Sph;
-  zpntEastSph -= zpnt0Sph; // make vectors from points
-  xpntNorthSph -= xpnt0Sph, ypntNorthSph -= ypnt0Sph;
-  zpntNorthSph -= zpnt0Sph;
-
-  NormVector(xpntEastSph, ypntEastSph, zpntEastSph);    // vecx
-  NormVector(xpntNorthSph, ypntNorthSph, zpntNorthSph); // vecy
-
-  CrossProd(xpntEastSph, ypntEastSph, zpntEastSph, xpntNorthSph, ypntNorthSph, zpntNorthSph, xnormSph, ynormSph, znormSph); // vec z
-  xpntNorthSphRot = -znormSph * xnormSph;                                                                                   // xpntNorthSphRot = 0.0 - Dist*xnormSph;
-  ypntNorthSphRot = -znormSph * ynormSph;                                                                                   // ypntNorthSphRot = 0.0 - Dist*ynormSph;
-  zpntNorthSphRot = 1.0 - znormSph * znormSph;                                                                              // zpntNorthSphRot = 1.0 - Dist*znormSph;
-  NormVector(xpntNorthSphRot, ypntNorthSphRot, zpntNorthSphRot);
-
-  // This would create in 3D the rotated Easting vector; but we don't need it in this routine.
-  // Left out to optimize computation
-  // CrossProd( xpntNorthSphRot, ypntNorthSphRot, zpntNorthSphRot, xnormSph, ynormSph, znormSph,
-  //            xpntEastSph,  ypntEastSphRot,  zpntEastSphRot ); //vecxRot = CrossProd(vecy,vecz)
-
-  vecAngle = acos((xpntNorthSph * xpntNorthSphRot + ypntNorthSph * ypntNorthSphRot + zpntNorthSph * zpntNorthSphRot));
-  // Determine the sign of the angle
-  CrossProd(xpntNorthSphRot, ypntNorthSphRot, zpntNorthSphRot, xpntNorthSph, ypntNorthSph, zpntNorthSph, xncross, yncross, zncross);
-  if ((xncross * xnormSph + yncross * ynormSph + zncross * znormSph) > 0.0) // dotProduct
-    vecAngle *= -1.0;
-
-  xpntNorthSph = sin(vecAngle); // Rotate the point/vector (0,1) around Z-axis with vecAngle
-  ypntNorthSph = cos(vecAngle);
-  xpntEastSph = ypntNorthSph; // Rotate the same point/vector around Z-axis with 90 degrees
-  ypntEastSph = -xpntNorthSph;
-
-  // zpntNorthSph = 0; zpntEastSph = 0;  // not needed in 2D
-
-  // 1) Build the rotation matrix and put the axes-base vectors into the matrix
-  VJaa = xpntEastSph;
-  VJab = xpntNorthSph;
-  VJba = ypntEastSph;
-  VJbb = ypntNorthSph;
-
-  // 2) Transform the UV vector with jacobian matrix
-  //              u = 0.0;  v = 6.0; // test: 6 m/s along the easting direction of the grid
-  magnitude = hypot(u, v); // old vector magnitude in the model space
-  //(uu) =   (VJaa VJab) * ( u )
-  //(vv)     (VJba VJbb)   ( v )
-  uu = VJaa * u + VJab * v;
-  vv = VJba * u + VJbb * v;
-  //(uu) =   (VJaa VJab VJac) * ( u )
-  //(vv)     (VJba VJbb VJbc)   ( v )
-  //(ww)     (VJba VJbb VJcc)   ( w )
-
-  // 3) Apply scaling of the vector so that the vector keeps the original length (model space)
-  newMagnitude = hypot(uu, vv);
-  u = uu * magnitude / newMagnitude;
-  v = vv * magnitude / newMagnitude;
 }
 
 int CImageDataWriter::createScaleBar(CGeoParams *geoParams, CDrawImage *scaleBarImage, float scaling) { return CCreateScaleBar::createScaleBar(scaleBarImage, geoParams, scaling); }

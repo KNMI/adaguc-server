@@ -2149,7 +2149,70 @@ class TestWMS(unittest.TestCase):
                 0.1,
             )
         )
+        
+    def test_WMSGetMapWindComponentsAllNorthEuropeStereoGraphic(self):
+        AdagucTestTools().cleanTempDir()
+        filename = "test_WMSGetMapWindComponentsAllNorth.png"
+        config = ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=[
+                "--updatedb",
+                "--config",
+                config + ",adaguc_tests_xycomponents_all_north.xml",
+            ],
+            env=self.env,
+            isCGI=False,
+        )
+        self.assertEqual(status, 0)
 
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc_tests_xycomponents_all_north&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind-hagl&WIDTH=512&HEIGHT=512&CRS=EPSG%3A3575&BBOX=-4094182.3312461236,-6387609.657566892,3335917.464195122,23694.56643311167&STYLES=windbarbs_kts%2Fbarbshaded&FORMAT=image/png&TRANSPARENT=TRUE&&time=2017-10-15T07%3A31%3A52Z",
+            {"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"},
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertTrue(
+            AdagucTestTools().compareImage(
+                self.expectedoutputsspath + filename,
+                self.testresultspath + filename,
+                37,
+                0.1,
+            )
+        )
+
+
+    def test_WMSGetMapWindComponentsAllNorthMercator(self):
+        AdagucTestTools().cleanTempDir()
+        filename = "test_WMSGetMapWindComponentsAllNorthMercator.png"
+        config = ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=[
+                "--updatedb",
+                "--config",
+                config + ",adaguc_tests_xycomponents_all_north.xml",
+            ],
+            env=self.env,
+            isCGI=False,
+        )
+        self.assertEqual(status, 0)
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc_tests_xycomponents_all_north&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind-hagl&WIDTH=512&HEIGHT=512&CRS=EPSG%3A3857&BBOX=-9704794.415410386,1643015.5210643038,11614624.422801377,20039172.20990392&STYLES=windbarbs_kts%2Fbarbshaded&FORMAT=image/png&TRANSPARENT=TRUE&&time=2017-10-15T07%3A31%3A52Z",
+            {"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"},
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertTrue(
+            AdagucTestTools().compareImage(
+                self.expectedoutputsspath + filename,
+                self.testresultspath + filename,
+                37,
+                0.1,
+            )
+        )
+        
     def test_WMSGetMap_EPSG3067(self):
         AdagucTestTools().cleanTempDir()
 

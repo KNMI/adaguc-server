@@ -28,7 +28,7 @@
 #ifndef Definitions_H
 #define Definitions_H
 
-#define ADAGUCSERVER_VERSION "3.0.4" // Please also update in the Dockerfile to the same version
+#define ADAGUCSERVER_VERSION "3.1.0" // Please also update in the Dockerfile to the same version
 
 // CConfigReaderLayerType
 #define CConfigReaderLayerTypeUnknown 0
@@ -190,3 +190,13 @@
 #define HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY 33
 
 #define LOCK_METADATATABLE_ID 1
+
+#ifndef rad2deg
+#define rad2deg (180. / M_PI) // conversion for rad to deg
+#endif
+
+#ifndef deg2rad
+#define deg2rad (M_PI / 180.) // conversion for deg to rad
+#endif
+
+#define radians(aDeg) (deg2rad * aDeg)

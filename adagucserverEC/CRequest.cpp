@@ -3418,8 +3418,10 @@ int CRequest::handleGetCoverageRequest(CDataSource *firstDataSource) {
     }
     try {
       try {
-        status = wcsWriter->init(srvParam, firstDataSource, firstDataSource->getNumTimeSteps());
-        if (status != 0) throw(__LINE__);
+        for (size_t d = 0; d < dataSources.size(); d++) {
+          status = wcsWriter->init(srvParam, dataSources[d], firstDataSource->getNumTimeSteps());
+          if (status != 0) throw(__LINE__);
+        }
       } catch (int e) {
         CDBError("Exception code %d", e);
 
@@ -3431,8 +3433,10 @@ int CRequest::handleGetCoverageRequest(CDataSource *firstDataSource) {
         if (firstDataSource->cfgLayer->attr.hidden.equals("true")) {
           continue;
         }
-        firstDataSource->setTimeStep(k);
-        // CDBDebug("WCS dataset %d/ timestep %d of %d", 0, k, firstDataSource->getNumTimeSteps());
+
+        for (size_t d = 0; d < dataSources.size(); d++) {
+          dataSources[d]->setTimeStep(k);
+        }
 
         try {
           status = wcsWriter->addData(dataSources);
