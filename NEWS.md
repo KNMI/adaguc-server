@@ -1,3 +1,9 @@
+**Version 3.0.4. 2025-06-03**
+
+- Fixed the (slightly) incorrect formatting of the model data time range for EDR.
+Test is adapted.
+- A print statement was removed.
+
 **Version 3.0.3. 2025-05-14**
 
 - Fixed bug where a multidimensional dataset with a configured `DataBaseTable` could not get queried
