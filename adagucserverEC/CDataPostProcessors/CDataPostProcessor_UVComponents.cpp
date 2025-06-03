@@ -140,13 +140,13 @@ int CDDPUVComponents::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
     dPixelExtent[2] = dataSource->dWidth;
     dPixelExtent[3] = dataSource->dHeight;
 
-    CDataSource::DataObject *ugridabsolute = dataSource->getDataObject(U_COMPONENT_GRID_ABSOLUTE);
-    CDataSource::DataObject *vgridabsolute = dataSource->getDataObject(V_COMPONENT_GRID_ABSOLUTE);
-    CDataSource::DataObject *speedObject = dataSource->getDataObject(SPEED_COMPONENT);
-    CDataSource::DataObject *directionObject = dataSource->getDataObject(DIRECTION_COMPONENT);
+    CDataSource::DataObject *ugridabsolute = dataSource->getDataObjectByName(U_COMPONENT_GRID_ABSOLUTE);
+    CDataSource::DataObject *vgridabsolute = dataSource->getDataObjectByName(V_COMPONENT_GRID_ABSOLUTE);
+    CDataSource::DataObject *speedObject = dataSource->getDataObjectByName(SPEED_COMPONENT);
+    CDataSource::DataObject *directionObject = dataSource->getDataObjectByName(DIRECTION_COMPONENT);
 
-    ugridabsolute->cdfVariable->copy(dataSource->getDataObject(CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ORG_U_COMPONENT)->cdfVariable);
-    vgridabsolute->cdfVariable->copy(dataSource->getDataObject(CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ORG_V_COMPONENT)->cdfVariable);
+    ugridabsolute->cdfVariable->copy(dataSource->getDataObjectByName(CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ORG_U_COMPONENT)->cdfVariable);
+    vgridabsolute->cdfVariable->copy(dataSource->getDataObjectByName(CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ORG_V_COMPONENT)->cdfVariable);
 
     size_t size = speedObject->cdfVariable->getSize();
     CDBDebug("Size %d", size);

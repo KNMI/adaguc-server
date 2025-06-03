@@ -7,7 +7,7 @@
 
 struct CalculatedWindVector {
   int x, y;
-  double dir, strength;
+  double dir, viewDirCorrection, strength;
   bool convertToKnots, flip;
 };
 

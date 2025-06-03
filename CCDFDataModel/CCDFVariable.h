@@ -241,10 +241,8 @@ namespace CDF {
         dimensionlinks.push_back(dims[j]);
       }
       isDimension = isCoordinateVariable;
-      // CDBDebug("done");
     }
     Variable(const char *name, CDFType type, std::vector<CDF::Dimension *> idimensionlinks, bool isCoordinateVariable) {
-      isDimension = false;
       data = NULL;
       currentSize = 0;
       currentType = CDF_NONE;
@@ -261,7 +259,6 @@ namespace CDF {
       isDimension = isCoordinateVariable;
     }
     Variable(const char *name, CDFType type) {
-      isDimension = false;
       data = NULL;
       currentSize = 0;
       currentType = CDF_NONE;

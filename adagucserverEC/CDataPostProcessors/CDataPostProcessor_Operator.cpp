@@ -79,16 +79,15 @@ int CDPPOperator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
     float *result = (float *)dataSource->getDataObject(0)->cdfVariable->data;
 
     CDataSource::DataObject *dataObjectA, *dataObjectB;
-    try {
-      dataObjectA = dataSource->getDataObject(proc->attr.a);
-    } catch (int e) {
+
+    dataObjectA = dataSource->getDataObjectByName(proc->attr.a);
+    if (dataObjectA == nullptr) {
       CDBError("Variable %s not found", proc->attr.a.c_str());
       return 1;
     }
 
-    try {
-      dataObjectB = dataSource->getDataObject(proc->attr.b);
-    } catch (int e) {
+    dataObjectB = dataSource->getDataObjectByName(proc->attr.b);
+    if (dataObjectB == nullptr) {
       CDBError("Variable %s not found", proc->attr.b.c_str());
       return 1;
     }

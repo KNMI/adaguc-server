@@ -121,7 +121,7 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
     float *windSectorYData = (float *)windSectorY->data;
 
     // This is the variable to write To
-    CDF::Variable *WindSpeedWindparksOff = dataSource->getDataObject("WindSpeedWindparksOff")->cdfVariable;
+    CDF::Variable *WindSpeedWindparksOff = dataSource->getDataObjectByName("WindSpeedWindparksOff")->cdfVariable;
     windSpeedDifferenceVariable->readData(CDF_FLOAT);
     CDF::fill(WindSpeedWindparksOff->data, WindSpeedWindparksOff->getType(), -1, (size_t)dataSource->dHeight * (size_t)dataSource->dWidth);
 

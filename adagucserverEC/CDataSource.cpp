@@ -44,14 +44,6 @@ CDataSource::DataObject::DataObject() {
   std::vector<f8point> points;
 }
 
-// CDataSource::DataObject *CDataSource::DataObject::clone(CDFType newType, CT::string newName) {
-//   auto nd = clone();
-//   nd->cdfVariable = cdfVariable->clone(newType, newName);
-//   nd->variableName = newName;
-//   nd->dataObjectName = newName;
-//   return nd;
-// }
-
 CDataSource::DataObject *CDataSource::DataObject::clone() {
   CDataSource::DataObject *nd = new CDataSource::DataObject();
   nd->hasStatusFlag = hasStatusFlag;
@@ -1337,41 +1329,20 @@ double CDataSource::getContourScaling() {
 CDataSource::DataObject *CDataSource::getDataObjectByName(const char *name) {
   for (auto it = dataObjects.begin(); it != dataObjects.end(); ++it) {
     CDataSource::DataObject *dataObject = *it;
-    if (dataObject->cdfVariable->name.equals(name)) {
+
+    if (dataObject->dataObjectName.equals(name)) {
       return dataObject;
     }
+
     if (dataObject->variableName.equals(name)) {
       return dataObject;
     }
 
-    if (dataObject->dataObjectName.equals(name)) {
+    if (dataObject->cdfVariable->name.equals(name)) {
       return dataObject;
     }
   }
   return nullptr;
-}
-
-CDataSource::DataObject *CDataSource::getDataObject(const char *name) {
-  for (auto it = dataObjects.begin(); it != dataObjects.end(); ++it) {
-    CDataSource::DataObject *dataObject = *it;
-    if (dataObject->cdfVariable->name.equals(name)) {
-      return dataObject;
-    }
-    if (dataObject->variableName.equals(name)) {
-      return dataObject;
-    }
-
-    if (dataObject->dataObjectName.equals(name)) {
-      return dataObject;
-    }
-  }
-  CT::string candidates;
-  for (auto it = dataObjects.begin(); it != dataObjects.end(); ++it) {
-    CDataSource::DataObject *dataObject = *it;
-    candidates.printconcat("%s,", dataObject->cdfVariable->name.c_str());
-  }
-  CDBError("DataObject %s not found. Candidates are %s", name, candidates.c_str());
-  throw(CEXCEPTION_NULLPOINTER);
 }
 
 CDataSource::DataObject *CDataSource::getFirstAvailableDataObject() {
@@ -1460,26 +1431,3 @@ int CDataSource::readVariableDataForCDFDims(CDF::Variable *variableToRead, CDFTy
 }
 
 std::string CDataSource::getDataSetName() { return std::string(this->srvParams->datasetLocation.c_str()); }
-
-bool CDataSource::isGridRelative() {
-  bool verboseLog = true;
-  bool gridRelative = true; // default is gridRelative=true
-
-  if (getNumDataObjects() >= 2) {
-    // Check standard_name/var_name for first vector component
-    // if x_wind/grid_east_wind of y_wind/grid_northward_wind then gridRelative=true
-    // if eastward_wind/northward_wind then gridRelative=false
-    // default is gridRelative=true
-    CT::string standard_name = getDataObject(4)->getStandardName();
-
-    if (standard_name.equals("x_wind") || standard_name.equals("grid_eastward_wind") || standard_name.equals("y_wind") || standard_name.equals("grid_northward_wind")) {
-      gridRelative = true;
-    } else {
-      gridRelative = false;
-    }
-    if (verboseLog) {
-      CDBDebug("Grid propery gridRelative=%d", gridRelative);
-    }
-  }
-  return gridRelative;
-}

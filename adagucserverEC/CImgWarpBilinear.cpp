@@ -171,20 +171,20 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
   }
 
   if (!sourceImage->getFirstAvailableDataObject()->hasNodataValue) {
-/* When the datasource has no nodata value, assign -9999.0f */
+/* When the datasource has no nodata value, assign NAN */
 #ifdef CImgWarpBilinear_DEBUG
-    CDBDebug("Source image has no NoDataValue, assigning -9999.0f");
+    CDBDebug("Source image has no NoDataValue, assigning NAN");
 #endif
-    sourceImage->getFirstAvailableDataObject()->dfNodataValue = -9999.0f;
+    sourceImage->getFirstAvailableDataObject()->dfNodataValue = NAN;
     sourceImage->getFirstAvailableDataObject()->hasNodataValue = true;
   } else {
     /* Create a real nodata value instead of a nanf. */
 
     if (!(sourceImage->getFirstAvailableDataObject()->dfNodataValue == sourceImage->getFirstAvailableDataObject()->dfNodataValue)) {
 #ifdef CImgWarpBilinear_DEBUG
-      CDBDebug("Source image has no nodata value NaNf, changing this to -9999.0f");
+      CDBDebug("Source image has no nodata value NaNf, changing this to NAN");
 #endif
-      sourceImage->getFirstAvailableDataObject()->dfNodataValue = -9999.0f;
+      sourceImage->getFirstAvailableDataObject()->dfNodataValue = NAN;
     }
   }
   // Get the nodatavalue
@@ -283,8 +283,6 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
   bool has_u_v_grid_rel = (sourceImage->getNumDataObjects() >= 3 &&
                            (sourceImage->getDataObject(2)->variableName.equals(U_COMPONENT_GRID_ABSOLUTE) && sourceImage->getDataObject(3)->variableName.equals(V_COMPONENT_GRID_ABSOLUTE)));
   bool isVectorLike = has_u_v_grid_rel && (enableVector || enableBarb);
-
-  // TODO: isVectorLike handling
 
   for (size_t varNr = 0; varNr < sourceImage->getNumDataObjects(); varNr++) {
     float *fpValues = valObj[varNr].fpValues;
@@ -389,6 +387,7 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
 
   if (isVectorLike) {
     // Note: Calculation from u and v to speed it is done in this method.
+
     windVectors = calculateBarbsAndVectorsAndSpeedFromUVComponents(warper, sourceImage, drawImage, enableShade, enableContour, enableBarb, drawMap, enableVector, drawGridVectors, dPixelExtent,
                                                                    valObj[2].valueData, valObj[3].valueData, dpDestX, dpDestY);
   }
@@ -412,7 +411,7 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
       for (size_t sz = 0; sz < windVectors.size(); sz++) {
         CalculatedWindVector wv = windVectors[sz];
         float outlineWidth = 0;
-        drawImage->drawBarb(wv.x, wv.y, wv.dir, wv.strength, CColor(0, 0, 255, 255), outlineWidth, wv.convertToKnots, wv.flip, rendertextforvectors);
+        drawImage->drawBarb(wv.x, wv.y, wv.dir, wv.viewDirCorrection, wv.strength, CColor(0, 0, 255, 255), outlineWidth, wv.convertToKnots, wv.flip, rendertextforvectors);
       }
     }
   }

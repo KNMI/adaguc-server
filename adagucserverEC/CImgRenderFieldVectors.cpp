@@ -4,7 +4,7 @@
 
 bool verboseLog = true;
 
-f8component jacobianTransform(f8component speedVector, f8point gridCoordUL, f8point gridCoordLR, CImageWarper *warper, bool gridRelative, bool rotateRelativeToViewProjection = false) {
+f8component jacobianTransform(f8component speedVector, f8point gridCoordUL, f8point gridCoordLR, CImageWarper *warper, bool gridRelative) {
 
   if (gridRelative) {
     f8point pnt0 = {.x = gridCoordUL.x, .y = gridCoordUL.y};
@@ -81,15 +81,6 @@ f8component jacobianTransform(f8component speedVector, f8point gridCoordUL, f8po
   double modelXLat = modelX;
   double modelYLat = modelY + deltaLatLon.y;
 
-  if (rotateRelativeToViewProjection) {
-    // The following does the direction correction from lat/lon projection to the requested view projection.
-    // Since 2025-06-02 this is not needed anymore, as the drawing of the windbarbs itself takes rotation of the projection into account.
-    // Not doing the extra rotation is much clearer. For example getfeatureinfo and WCS now return expected results.
-    warper->reprojfromLatLon(modelX, modelY); // latlon to vis proj.
-    warper->reprojfromLatLon(modelXLon, modelYLon);
-    warper->reprojfromLatLon(modelXLat, modelYLat);
-  }
-
   double distLon = hypot(modelXLon - modelX, modelYLon - modelY);
   double distLat = hypot(modelXLat - modelX, modelYLat - modelY);
 
@@ -107,13 +98,36 @@ f8component jacobianTransform(f8component speedVector, f8point gridCoordUL, f8po
   return speedVector;
 }
 
+bool isGridRelative(CDataSource *dataSource) {
+  bool verboseLog = true;
+  bool gridRelative = true; // default is gridRelative=true
+
+  if (dataSource->getNumDataObjects() >= 6) {
+    // Check standard_name/var_name for first vector component
+    // if x_wind/grid_east_wind of y_wind/grid_northward_wind then gridRelative=true
+    // if eastward_wind/northward_wind then gridRelative=false
+    // default is gridRelative=true
+    CT::string standard_name = dataSource->getDataObject(4)->getStandardName();
+
+    if (standard_name.equals("x_wind") || standard_name.equals("grid_eastward_wind") || standard_name.equals("y_wind") || standard_name.equals("grid_northward_wind")) {
+      gridRelative = true;
+    } else {
+      gridRelative = false;
+    }
+    if (verboseLog) {
+      CDBDebug("Grid propery gridRelative=%d", gridRelative);
+    }
+  }
+  return gridRelative;
+}
+
 int applyUVConversion(CImageWarper *warper, CDataSource *dataSource, int *dPixelExtent, float *uValues, float *vValues) {
 
   int gridWidth = dPixelExtent[2] - dPixelExtent[0];
   // If there are 2 components, we have wind u and v.
   // Use Jacobians for rotating u and v
   // After calculations
-  bool gridRelative = dataSource->isGridRelative();
+  bool gridRelative = isGridRelative(dataSource);
   for (int y = dPixelExtent[1]; y < dPixelExtent[3]; y = y + 1) {
     for (int x = dPixelExtent[0]; x < dPixelExtent[2]; x = x + 1) {
       size_t p = size_t((x - (dPixelExtent[0])) + ((y - (dPixelExtent[1])) * (gridWidth)));
@@ -181,7 +195,7 @@ std::vector<CalculatedWindVector> calculateBarbsAndVectorsAndSpeedFromUVComponen
         if (x >= 0 && y >= 0) {
           size_t p = size_t(x + y * dImageWidth); // pointer in dest. image
           f8component comp = {.u = uValueData[p], .v = vValueData[p]};
-          if (comp.u != fNodataValue && comp.v != fNodataValue) {
+          if (comp.u == comp.u && comp.v == comp.v && comp.u != fNodataValue && comp.v != fNodataValue) {
 
             if ((int(x - firstXPos) % vectorDensityPy == 0 && (y - firstYPos) % vectorDensityPx == 0) || (enableContour == false && enableShade == false)) {
               // Calculate coordinates from requested coordinate system
@@ -200,12 +214,11 @@ std::vector<CalculatedWindVector> calculateBarbsAndVectorsAndSpeedFromUVComponen
               warper->reprojfromLatLon(projectedCoordXOffset, projectedCoordYOffset);
 
               // Calculate angle correction
-              float angleCorrection = ((atan2(projectedCoordYOffset - projectedCoordY, projectedCoordXOffset - projectedCoordX))) + M_PI_2;
+              float viewDirCorrection = ((atan2(projectedCoordYOffset - projectedCoordY, projectedCoordXOffset - projectedCoordX))) + M_PI_2;
               bool flip = coordLat < 0; // Remember if we have to flip barb dir for southern hemisphere
               flip = false;
 
-              double fullAngle = angleCorrection + comp.direction();
-              windVectors.push_back({.x = x, .y = y, .dir = fullAngle, .strength = comp.magnitude(), .convertToKnots = convertToKnots, .flip = flip});
+              windVectors.push_back({.x = x, .y = y, .dir = comp.direction(), .viewDirCorrection = viewDirCorrection, .strength = comp.magnitude(), .convertToKnots = convertToKnots, .flip = flip});
             }
           }
         }

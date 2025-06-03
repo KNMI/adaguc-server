@@ -48,9 +48,9 @@ def covjson_from_resp(dats, metadata, collection_name):
     covjson_list = []
     dataset_name = collection_name.rsplit(".")[0]
     for dat in dats:
-        # if dat["name"] not in list(metadata.keys()): // TODO: DISCUSS with Ernst
-        #     print("SKIPPING data named ", dat["name"])
-        #     break
+        if dat["layername"] not in list(metadata.keys()):
+            print("SKIPPING layername named ", dat["layername"])
+            break
         if len(dat["data"]):
             (lon, lat) = dat["point"]["coords"].split(",")
             custom_name = None

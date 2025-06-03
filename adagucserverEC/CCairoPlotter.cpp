@@ -1132,12 +1132,14 @@ static int drawBarbTriangle(cairo_t *cr, int x, int y, int nPennants, double dir
   return pos;
 }
 
-void CCairoPlotter::drawBarb(int x, int y, double direction, double strength, CColor barbColor, CColor outlineColor, bool drawOutline, float lineWidth, bool toKnots, bool flip, bool drawText) {
+void CCairoPlotter::drawBarb(int x, int y, double uncorrectedDirection, double viewDirCorrection, double strength, CColor barbColor, CColor outlineColor, bool drawOutline, float lineWidth,
+                             bool toKnots, bool flip, bool drawText) {
   // Barb settings
   float centerDiscRadius = 3;
   int shaftLength = 37;
   int barbLength = 12;
   int halfBarbLength = 6;
+  double direction = uncorrectedDirection + viewDirCorrection;
 
   // Preserve path
   cairo_save(cr);
@@ -1258,7 +1260,7 @@ void CCairoPlotter::drawBarb(int x, int y, double direction, double strength, CC
       double textDirection = strengthInKnotsRoundedToFive <= 2 ? -M_PI / 2.1 : direction;
       this->drawStrokedText(x - cos(textDirection + M_PI) * 15 - 5, y + sin(textDirection + M_PI) * 12 + 5, 0, text.c_str(), 12, 1 * drawOutline, outlineColor, barbColor);
     } else {
-      double degrees = fmod(((270 - ((direction) * (180 / M_PI)))), 360);
+      double degrees = fmod(((270 - ((uncorrectedDirection) * (180 / M_PI)))), 360);
       CT::string text;
       text.print("%02d %03d°", strengthInKnots, int(round(degrees)));
 

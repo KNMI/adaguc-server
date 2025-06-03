@@ -1032,7 +1032,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     CDBDebug("/Finished Working on variable %s", dataSource->getDataObject(varNr)->cdfVariable->name.c_str());
 #endif
 
-#ifdef MEASURETIMEpD
+#ifdef MEASURETIME
     StopWatch_Stop("/Finished Working on variable %s", dataSource->getDataObject(varNr)->cdfVariable->name.c_str());
 #endif
   }

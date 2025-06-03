@@ -437,6 +437,7 @@ A full configuration to display windbarbs is shown in:
 - [adaguc.tests.harm_windbarbs.xml](../../data/config/datasets/adaguc.tests.harm_windbarbs.xml) 
 - [adaguc_tests_uwcwdini_windcomponents.xml](../../data/config/datasets/adaguc_tests_uwcwdini_windcomponents.xml)
 
+
 ## 17. *CDDPFilterDataObjects*   `algorithm="filter_dataobjects"`
 
 Filter out data objects from the GetMap and GetFeatureInfo responses. E.g. to hide components you do not want to show.
@@ -454,7 +455,7 @@ Usage:
 
 ## 18. *CDDPMetadataVariable*    `algorithm="metadata_variable"`
 
-Add extra metadata to the CDF Data model. This can be used to adjust metadata which are incorrectly advertised in existing NetCDF files. Previousely this could be done via NCML.
+Add extra metadata to the CDF Data model. This can be used to adjust metadata which are incorrectly advertised in existing NetCDF files. Previously this could be done via NCML.
 
 Attributes:
 - variable - The variable to select

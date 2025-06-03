@@ -335,7 +335,6 @@ public:
   void addStep(const char *fileName, CCDFDims *dims);
   const char *getFileName();
 
-  DataObject *getDataObject(const char *name);
   DataObject *getDataObjectByName(const char *name);
   DataObject *getDataObject(int j);
 
@@ -403,8 +402,6 @@ public:
   int readVariableDataForCDFDims(CDF::Variable *variableToRead, CDFType dataTypeToReturnData);
 
   std::string getDataSetName();
-
-  bool isGridRelative();
 };
 
 #endif

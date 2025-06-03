@@ -466,9 +466,9 @@ void CDrawImage::_drawBarbGd(int x, int y, double direction, double strength, CC
   line(wx1, wy1, wx2, wy2, lineWidth, color);
 }
 
-void CDrawImage::drawBarb(int x, int y, double direction, double strength, CColor color, float lineWidth, bool toKnots, bool flip, bool drawText) {
+void CDrawImage::drawBarb(int x, int y, double direction, double viewDirCorrection, double strength, CColor color, float lineWidth, bool toKnots, bool flip, bool drawText) {
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
-    _drawBarbGd(x, y, direction, strength, color, lineWidth, toKnots, flip);
+    _drawBarbGd(x, y, direction + viewDirCorrection, strength, color, lineWidth, toKnots, flip);
     if (drawText) {
       // TODO: DRAW TEXT
     }
@@ -478,7 +478,7 @@ void CDrawImage::drawBarb(int x, int y, double direction, double strength, CColo
     // If no linewidth, no outline should be drawn, set inner barblineWidth to 0.8 to ensure we draw a barb
     bool drawOutline = lineWidth == 0 ? false : true;
     float barblineWidth = lineWidth == 0 ? 0.8 : lineWidth;
-    cairo->drawBarb(x, y, direction, strength, color, outLineColor, drawOutline, barblineWidth, toKnots, flip, drawText);
+    cairo->drawBarb(x, y, direction, viewDirCorrection, strength, color, outLineColor, drawOutline, barblineWidth, toKnots, flip, drawText);
   }
 }
 

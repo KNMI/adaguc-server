@@ -200,7 +200,11 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
       CDF::Variable *varToClone = dataSourceToInclude->getDataObject(dataObjectNr)->cdfVariable;
 
       // This is the variable to write To
-      CDF::Variable *varToWriteTo = dataSource->getDataObject(varToClone->name.c_str())->cdfVariable;
+      auto *dataObjectForClone = dataSource->getDataObjectByName(varToClone->name.c_str());
+      if (dataObjectForClone == nullptr) {
+        return 1;
+      }
+      CDF::Variable *varToWriteTo = dataObjectForClone->cdfVariable;
       CDF::fill(varToWriteTo->data, varToWriteTo->getType(), 0, (size_t)dataSource->dHeight * (size_t)dataSource->dWidth);
 
       Settings settings;

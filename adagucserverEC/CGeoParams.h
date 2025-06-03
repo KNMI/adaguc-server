@@ -107,8 +107,8 @@ struct f8point {
 struct f8component {
   double u, v;
   double magnitude() { return hypot(u, v); }
-  double direction() { return atan2(v, u); }                         // CHECK
-  double angledeg() { return ((atan2(u, v) * (180 / M_PI) + 180)); } // CHECK
+  double direction() { return atan2(v, u); }
+  double angledeg() { return ((atan2(u, v) * (180 / M_PI) + 180)); }
 };
 
 /**

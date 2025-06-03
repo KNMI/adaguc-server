@@ -576,9 +576,9 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
           toKnots = true;
         }
         if (lat > 0) {
-          drawImage->drawBarb(x, y, ((270 - direction) / 360) * M_PI * 2, strength, drawVectorLineColor, drawVectorLineWidth, toKnots, false, drawVectorPlotValue);
+          drawImage->drawBarb(x, y, ((270 - direction) / 360) * M_PI * 2, 0, strength, drawVectorLineColor, drawVectorLineWidth, toKnots, false, drawVectorPlotValue);
         } else {
-          drawImage->drawBarb(x, y, ((270 - direction) / 360) * M_PI * 2, strength, drawVectorLineColor, drawVectorLineWidth, toKnots, true, drawVectorPlotValue);
+          drawImage->drawBarb(x, y, ((270 - direction) / 360) * M_PI * 2, 0, strength, drawVectorLineColor, drawVectorLineWidth, toKnots, true, drawVectorPlotValue);
         }
       }
       if (drawVector) {

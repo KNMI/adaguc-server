@@ -53,5 +53,29 @@
     <DataPostProc algorithm="convert_uv_components"/>
   </Layer>
 
+  <!-- The following layer returns only the speed component in EDR and GetFeatureinfo -->
+  <Layer type="database">
+    <Name>wind-speed-hagl</Name>
+    <Title>Wind speed 10m</Title>
+    <Variable>x-wind-hagl</Variable>
+    <Variable>y-wind-hagl</Variable>
+    <FilePath filter="">{ADAGUC_PATH}data/datasets/wcs_processed_8x7_uwcw_ha43_dini_5p5km_wind-speed-xy_20240905T00.nc</FilePath>
+    <Styles>Windbarbs,Windbarbwithnumbers,windbarbs_kts</Styles>
+    <DataPostProc algorithm="convert_uv_components"/>
+    <DataPostProc algorithm="filter_dataobjects" select="speed_component"/>
+  </Layer>
+
+  <!-- The following layer returns only the direction component in EDR and GetFeatureinfo -->
+  <Layer type="database">
+    <Name>wind-direction-hagl</Name>
+    <Title>Wind direction 10m</Title>
+    <Variable>x-wind-hagl</Variable>
+    <Variable>y-wind-hagl</Variable>
+    <FilePath filter="">{ADAGUC_PATH}data/datasets/wcs_processed_8x7_uwcw_ha43_dini_5p5km_wind-speed-xy_20240905T00.nc</FilePath>
+    <Styles>Windbarbs,Windbarbwithnumbers,windbarbs_kts</Styles>
+    <DataPostProc algorithm="convert_uv_components"/>
+    <DataPostProc algorithm="filter_dataobjects" select="direction_component"/>
+  </Layer>
+
   <!-- End of configuration /-->
 </Configuration>
