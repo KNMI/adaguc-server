@@ -771,13 +771,12 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
 #ifdef CREQUEST_DEBUG
                   CDBDebug("Got Time value [%s]", ogcDim->value.c_str());
 #endif
-                  CTime ctime;
-                  ctime.init("seconds since 1970", NULL);
+                  CTime *ctime = CTime::GetCTimeEpochInstance();
                   double currentTimeAsEpoch;
 
                   try {
-                    currentTimeAsEpoch = ctime.dateToOffset(ctime.freeDateStringToDate(ogcDim->value.c_str()));
-                    CT::string currentDateConverted = ctime.dateToISOString(ctime.getDate(currentTimeAsEpoch));
+                    currentTimeAsEpoch = ctime->dateToOffset(ctime->freeDateStringToDate(ogcDim->value.c_str()));
+                    CT::string currentDateConverted = ctime->dateToISOString(ctime->getDate(currentTimeAsEpoch));
                     ogcDim->value = currentDateConverted;
                   } catch (int e) {
                     CDBDebug("Unable to convert %s to epoch", ogcDim->value.c_str());

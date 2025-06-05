@@ -1,3 +1,7 @@
+**Version 3.1.1. 2025-06-05**
+
+- Fix occasional time and reftime dependency issues
+
 **Version 3.1.0. 2025-06-02**
 
 - The calculation and rendering of windbarbs is now handled differently. The computation of grid-relative x/y wind components is now handled via a datapostprocessor, named `convert_uv_components`. Use ```<DataPostProc algorithm="convert_uv_components"/>```
