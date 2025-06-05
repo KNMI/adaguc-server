@@ -115,13 +115,13 @@ CT::string estimateISO8601Duration(const std::vector<CT::string> &timestamps, do
   if (timestamps.size() < 4) return CT::string("");
 
   std::vector<TimeInterval> intervals;
-  CTime ctime;
-  ctime.init("seconds since 1970", NULL);
+
+  CTime *ctime = CTime::GetCTimeEpochInstance();
 
   // Parse all timestamps into tm structs
   std::vector<CTime::Date> parsedTimes;
   for (const auto &timestamp : timestamps) {
-    parsedTimes.push_back(ctime.ISOStringToDate(timestamp.c_str()));
+    parsedTimes.push_back(ctime->ISOStringToDate(timestamp.c_str()));
   }
 
   // Calculate intervals between consecutive timestamps

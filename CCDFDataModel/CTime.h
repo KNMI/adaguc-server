@@ -50,6 +50,8 @@
 
 #define CTIME_GETINSTANCE_ERROR_MESSAGE "Unable to obtain ctime instance from variable"
 
+#define CTIME_EPOCH_UNITS "seconds since 1970"
+
 // #define CTIME_CALENDARTYPE_365day  1
 
 #include "CDebugger.h"
@@ -217,6 +219,7 @@ public:
   double quantizeTimeToISO8601(double offsetOrig, CT::string period, CT::string method);
 
   static CTime *GetCTimeInstance(CDF::Variable *timeVariable);
+  static CTime *GetCTimeEpochInstance();
   static void cleanInstances();
   static std::map<CT::string, CTime *> CTimeInstances;
   static void *currentInitializedVar;

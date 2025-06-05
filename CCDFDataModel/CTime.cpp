@@ -94,6 +94,22 @@ CTime *CTime::GetCTimeInstance(CDF::Variable *timeVariable) {
   return ctime;
 }
 
+CTime *CTime::GetCTimeEpochInstance() {
+  CT::string timeUnits = CTIME_EPOCH_UNITS;
+  CT::string key = timeUnits;
+  std::map<CT::string, CTime *>::iterator it = CTimeInstances.find(key);
+  if (it != CTimeInstances.end()) {
+    return it->second;
+  }
+  auto ctime = new CTime();
+  if (ctime->init(timeUnits, NULL) != 0) {
+    CDBError("Unable to initialize CTime");
+    return NULL;
+  }
+  CTimeInstances.insert(std::pair<CT::string, CTime *>(key, ctime));
+  return ctime;
+}
+
 void CTime::cleanInstances() {
   for (std::map<CT::string, CTime *>::iterator it = CTimeInstances.begin(); it != CTimeInstances.end(); ++it) {
     delete it->second;
@@ -1080,9 +1096,26 @@ CTime::Date CTime::addPeriodToDate(CTime::Date date, CTime::Date datePeriod) {
   newDate.year = date.year + datePeriod.year;
   newDate.month = date.month + datePeriod.month;
   newDate.day = date.day + datePeriod.day;
-  newDate.hour = date.hour + datePeriod.hour;
-  newDate.minute = date.minute + datePeriod.minute;
+
   newDate.second = date.second + datePeriod.second;
+  newDate.minute = date.minute + datePeriod.minute;
+  newDate.hour = date.hour + datePeriod.hour;
+
+  while (newDate.second >= 60) {
+    newDate.second -= 60;
+    newDate.minute++;
+  }
+
+  while (newDate.minute >= 60) {
+    newDate.minute -= 60;
+    newDate.hour++;
+  }
+
+  while (newDate.hour >= 24) {
+    newDate.hour -= 24;
+    newDate.day++;
+  }
+
   double offset = this->dateToOffset(newDate);
   return this->offsetToDate(offset);
 }

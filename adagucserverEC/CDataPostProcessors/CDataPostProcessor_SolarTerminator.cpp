@@ -115,13 +115,12 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
     varTime->dimensionlinks.push_back(dimTime);
     newDataObject->cdfObject->addVariable(varTime);
     varTime->setAttributeText("units", "seconds since 1970");
-    CTime epochCTime;
-    epochCTime.init("seconds since 1970-01-01 0:0:0", NULL);
+    CTime *epochCTime = CTime::GetCTimeEpochInstance();
     CDF::allocateData(CDF_DOUBLE, &varTime->data, dimTime->length);
 
     for (int off = 0; off < 10; off++) {
       // Every 10 minutes for a day
-      double timestep = epochCTime.quantizeTimeToISO8601(currentOffset - off * 60 * 10, "PT30M", "low");
+      double timestep = epochCTime->quantizeTimeToISO8601(currentOffset - off * 60 * 10, "PT30M", "low");
       ((double *)varTime->data)[off] = timestep; // timestep;
     }
 

@@ -84,15 +84,14 @@ int CDBFileScanner::cleanFiles(CDataSource *dataSource, int) {
     return 1;
   }
 
-  CTime ctime;
-  ctime.init("seconds since 1970", "none");
+  CTime *ctime = CTime::GetCTimeEpochInstance();
 
   CT::string currentTime = CTime::currentDateTime();
-  CTime::Date date = ctime.freeDateStringToDate(currentTime.c_str());
+  CTime::Date date = ctime->freeDateStringToDate(currentTime.c_str());
 
-  // CDBDebug("currentDate\t\t\t%s", ctime.dateToISOString(date).c_str());
+  // CDBDebug("currentDate\t\t\t%s", ctime->dateToISOString(date).c_str());
 
-  CT::string dateMinusRetentionPeriod = ctime.dateToISOString(ctime.subtractPeriodFromDate(date, retentionperiod.c_str()));
+  CT::string dateMinusRetentionPeriod = ctime->dateToISOString(ctime->subtractPeriodFromDate(date, retentionperiod.c_str()));
 
   // CDBDebug("dateMinusRetentionPeriod\t%s", dateMinusRetentionPeriod.c_str());
 
