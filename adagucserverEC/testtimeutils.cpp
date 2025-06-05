@@ -141,6 +141,40 @@ TEST(checkDependenciesBetweenDims, TimeUtils) {
   result = checkDependenciesBetweenDims(&ml);
   CHECK(result == 0)
   CHECK(ml.layerMetadata.dimList[0].defaultValue.equals("2025-05-11T00:00:00Z") == true)
+
+  // Try other cases
+  ml.layerMetadata.dimList[1].defaultValue = "2025-05-10T18:00:00Z";
+  result = checkDependenciesBetweenDims(&ml);
+  CHECK(result == 0)
+  CHECK(ml.layerMetadata.dimList[0].defaultValue.equals("2025-05-10T19:00:00Z") == true)
+
+  timeDim->attr.defaultV = "reference_time+PT1S";
+  ml.layerMetadata.dimList[1].defaultValue = "2025-05-10T23:00:59Z";
+  result = checkDependenciesBetweenDims(&ml);
+  CHECK(result == 0)
+  CHECK(ml.layerMetadata.dimList[0].defaultValue.equals("2025-05-10T23:01:00Z") == true)
+
+  ml.layerMetadata.dimList[1].defaultValue = "2025-05-10T23:59:59Z";
+  result = checkDependenciesBetweenDims(&ml);
+  CHECK(result == 0)
+  CHECK(ml.layerMetadata.dimList[0].defaultValue.equals("2025-05-11T00:00:00Z") == true)
+
+  timeDim->attr.defaultV = "reference_time+PT3600S";
+  ml.layerMetadata.dimList[1].defaultValue = "2025-05-10T18:00:00Z";
+  result = checkDependenciesBetweenDims(&ml);
+  CHECK(result == 0)
+  CHECK(ml.layerMetadata.dimList[0].defaultValue.equals("2025-05-10T19:00:00Z") == true)
+
+  timeDim->attr.defaultV = "reference_time";
+  ml.layerMetadata.dimList[1].defaultValue = "2025-05-10T18:00:00Z";
+  result = checkDependenciesBetweenDims(&ml);
+  CHECK(result == XMLGENUTILS_CHECKDEP_DATASOURCE_NO_ISO_DURATION)
+
+  timeDim->attr.defaultV = "reference_time+PT0H";
+  ml.layerMetadata.dimList[1].defaultValue = "2025-05-10T18:00:00Z";
+  result = checkDependenciesBetweenDims(&ml);
+  CHECK(result == 0)
+  CHECK(ml.layerMetadata.dimList[0].defaultValue.equals("2025-05-10T18:00:00Z") == true)
 }
 
 int main() {

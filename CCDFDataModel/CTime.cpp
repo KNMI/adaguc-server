@@ -1098,18 +1098,19 @@ CTime::Date CTime::addPeriodToDate(CTime::Date date, CTime::Date datePeriod) {
   newDate.day = date.day + datePeriod.day;
 
   newDate.second = date.second + datePeriod.second;
+  newDate.minute = date.minute + datePeriod.minute;
+  newDate.hour = date.hour + datePeriod.hour;
+
   while (newDate.second >= 60) {
     newDate.second -= 60;
     newDate.minute++;
   }
-  newDate.minute = date.minute + datePeriod.minute;
 
   while (newDate.minute >= 60) {
     newDate.minute -= 60;
     newDate.hour++;
   }
 
-  newDate.hour = date.hour + datePeriod.hour;
   while (newDate.hour >= 24) {
     newDate.hour -= 24;
     newDate.day++;

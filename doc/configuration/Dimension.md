@@ -29,7 +29,7 @@ Back to [Configuration](./Configuration.md)
 - The default value of the dimension can be specified as datestring in [ISO8601](ISO8601.md) format
 - Can be "min" or "max" to select the first or latest
 - Can be set to "forecast_reference_time" to reference the default value of the forecast_reference_time dimension.
-- Can be set to "forecast_reference_time+PT1H" to reference the default value of the forecast_reference_time dimension, and it will add a ISO8601 Period to the derived value. See test [data/config/datasets/adaguc.tests.403_default_time_referenced_to_forecast_time.xml](../../data/config/datasets/adaguc.tests.403_default_time_referenced_to_forecast_time.xml) for details. Can also be set to "forecast_reference_time+0" to just reference the model run.
+- Can be set to "forecast_reference_time+PT1H" to reference the default value of the forecast_reference_time dimension, and it will add a ISO8601 Period to the derived value. See test [data/config/datasets/adaguc.tests.403_default_time_referenced_to_forecast_time.xml](../../data/config/datasets/adaguc.tests.403_default_time_referenced_to_forecast_time.xml) for details. Can also be set to "forecast_reference_time+PT0H" to just reference the model run.
 
 
 ## Time quantization
