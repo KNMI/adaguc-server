@@ -121,7 +121,7 @@ pyyaml==6.0.2
     # via owslib
 redis==5.3.0
     # via -r requirements.in
-requests==2.32.3
+requests==2.32.4
     # via owslib
 six==1.17.0
     # via
