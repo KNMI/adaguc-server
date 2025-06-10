@@ -1,3 +1,7 @@
+**Version 3.1.2. 2025-06-10**
+
+- Prevent invalid filenames in tests
+
 **Version 3.1.1. 2025-06-05**
 
 - Fix occasional time and reftime dependency issues

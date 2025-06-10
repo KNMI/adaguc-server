@@ -62,7 +62,8 @@ class TestGeoJSON(unittest.TestCase):
              '2018-12-04T12:10:00Z']
 
     for date in dates:
-      filename = "test_GeoJSON_timesupport"+date+".png"
+      filename = ("test_GeoJSON_timesupport"+date+".png").replace(":","_")
+      
       status, data, headers = AdagucTestTools().runADAGUCServer(
           "&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=features&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=40,-10,60,40&STYLES=features&FORMAT=image/png&TRANSPARENT=TRUE&TIME=" + date, env={'ADAGUC_CONFIG': config})
       AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
