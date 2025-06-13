@@ -183,9 +183,8 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
   return 0;
 }
 
-void CDPPWFP::drawFunction(int x, int y, float, void *_settings, void *warperInstance) {
+void CDPPWFP::drawFunction(int x, int y, float, void *_settings) {
   Settings *settings = (Settings *)_settings;
-  GenericDataWarper *warper = (GenericDataWarper *)warperInstance;
   if (x >= 0 && y >= 0 && x < (int)settings->width && y < (int)settings->height) {
     float windSpeed = settings->destGridWindSpeed[x + y * settings->width];
     float windDir = settings->destGridWindDirection[x + y * settings->width];
@@ -214,8 +213,8 @@ void CDPPWFP::drawFunction(int x, int y, float, void *_settings, void *warperIns
 
     size_t selectedQ = 1; // Second quantile, which is currently 0.95
     size_t selectedH = 0; // Currently only the first (10 meter)
-    size_t selectedX = warper->sourceDataPX;
-    size_t selectedY = warper->sourceDataPY;
+    size_t selectedX = settings->sourceDataPX;
+    size_t selectedY = settings->sourceDataPY;
     size_t gridLocationPointer = selectedX + selectedY * numX;
     size_t windHeightPointer = selectedH * numY * numX;
     size_t windQuantilePointer = selectedQ * numZ * numY * numX;
