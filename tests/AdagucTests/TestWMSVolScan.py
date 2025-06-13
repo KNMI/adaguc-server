@@ -71,7 +71,6 @@ class TestWMSVolScan(unittest.TestCase):
                     self.assertEqual(
                         data.getvalue(),
                         AdagucTestTools().readfromfile(
-                            self.expectedoutputsspath + filename
-                        ),
-                        self.expectedoutputsspath + filename,
+                            self.expectedoutputsspath + f"{file_type}_{filename}",
+                        ),                        
                     )

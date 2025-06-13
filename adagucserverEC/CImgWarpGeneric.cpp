@@ -36,7 +36,7 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
   void *sourceData;
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-  Settings settings;
+  CImgWarpGenericSettings settings;
   settings.dfNodataValue = dataSource->getFirstAvailableDataObject()->dfNodataValue;
   settings.legendValueRange = (bool)styleConfiguration->hasLegendValueRange;
   settings.legendLowerRange = styleConfiguration->legendLowerRange;
@@ -71,7 +71,7 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
   sourceGeo.CRS = dataSource->nativeProj4;
 
   GenericDataWarper genericDataWarper;
-  genericDataWarper.useHalfCellOffset = true;
+  settings.useHalfCellOffset = true;
   switch (dataType) {
   case CDF_CHAR:
     genericDataWarper.render<char>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &drawFunction);

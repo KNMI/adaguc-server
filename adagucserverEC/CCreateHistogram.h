@@ -19,7 +19,7 @@ private:
     void *data;
   };
 
-  template <class T> static void drawFunction(int x, int y, T val, void *_settings, void *) {
+  template <class T> static void drawFunction(int x, int y, T val, void *_settings) {
     Settings *settings = (Settings *)_settings;
     if (x >= 0 && y >= 0 && x < (int)settings->width && y < (int)settings->height) {
       ((float *)settings->data)[x + y * settings->width] = val;
@@ -28,7 +28,7 @@ private:
   CDataSource *baseDataSource;
 
 public:
-  virtual ~CCreateHistogram(){};
+  virtual ~CCreateHistogram() {};
   static int createHistogram(CDataSource *dataSource, CDrawImage *legendImage);
   // Virtual functions
   int init(CServerParams *srvParam, CDataSource *dataSource, int nrOfBands);

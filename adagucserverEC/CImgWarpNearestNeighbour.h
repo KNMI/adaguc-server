@@ -257,7 +257,7 @@ private:
     }
   }
 
-  template <class T> static void drawFunction(int x, int y, T val, void *_settings, void *) {
+  template <class T> static void drawFunction(int x, int y, T val, void *_settings) {
     /*
       Please note that this is part of the precise renderer. Changes to this routine should also be implemented in:
 

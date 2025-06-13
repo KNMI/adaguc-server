@@ -27,7 +27,7 @@
 #define CImgWarpHillShaded_H
 #include <stdlib.h>
 #include "CImageWarperRenderInterface.h"
-#include "CGenericDataWarper.h"
+#include "CImgWarpGeneric.h"
 #include "utils.h"
 
 class Vector {
@@ -57,21 +57,10 @@ static inline int mfast_mod(const int input, const int ceil) { return input >= c
 class CImgWarpHillShaded : public CImageWarperRenderInterface {
 private:
   DEF_ERRORFUNCTION();
-  class Settings {
-  public:
-    double dfNodataValue;
-    double legendValueRange;
-    double legendLowerRange;
-    double legendUpperRange;
-    bool hasNodataValue;
-    float *dataField;
-    int width, height;
-  };
 
-  template <class T> static void drawFunction(int x, int y, T val, void *_settings, void *g) {
-    Settings *drawSettings = static_cast<Settings *>(_settings);
+  template <class T> static void drawFunction(int x, int y, T val, void *_settings) {
+    CImgWarpGenericSettings *drawSettings = static_cast<CImgWarpGenericSettings *>(_settings);
     if (x < 0 || y < 0 || x > drawSettings->width || y > drawSettings->height) return;
-    GenericDataWarper *genericDataWarper = static_cast<GenericDataWarper *>(g);
     bool isNodata = false;
     if (drawSettings->hasNodataValue) {
       if ((val) == (T)drawSettings->dfNodataValue) isNodata = true;
@@ -81,11 +70,11 @@ private:
       if (drawSettings->legendValueRange)
         if (val < drawSettings->legendLowerRange || val > drawSettings->legendUpperRange) isNodata = true;
     if (!isNodata) {
-      T *sourceData = (T *)genericDataWarper->sourceData;
-      size_t sourceDataPX = genericDataWarper->sourceDataPX;
-      size_t sourceDataPY = genericDataWarper->sourceDataPY;
-      size_t sourceDataWidth = genericDataWarper->sourceDataWidth;
-      size_t sourceDataHeight = genericDataWarper->sourceDataHeight;
+      T *sourceData = (T *)drawSettings->sourceData;
+      size_t sourceDataPX = drawSettings->sourceDataPX;
+      size_t sourceDataPY = drawSettings->sourceDataPY;
+      size_t sourceDataWidth = drawSettings->sourceDataWidth;
+      size_t sourceDataHeight = drawSettings->sourceDataHeight;
 
       if (sourceDataPY > sourceDataHeight - 1) return;
       if (sourceDataPX > sourceDataWidth - 1) return;
@@ -126,8 +115,8 @@ private:
         float c10 = DotProduct(lightSource, normal10);
         float c01 = DotProduct(lightSource, normal01);
         float c11 = DotProduct(lightSource, normal11);
-        float dx = genericDataWarper->tileDx;
-        float dy = genericDataWarper->tileDy;
+        float dx = drawSettings->tileDx;
+        float dy = drawSettings->tileDy;
         float gx1 = (1 - dx) * c00 + dx * c10;
         float gx2 = (1 - dx) * c01 + dx * c11;
         float bilValue = (1 - dy) * gx1 + dy * gx2;

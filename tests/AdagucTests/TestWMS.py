@@ -201,7 +201,7 @@ class TestWMS(unittest.TestCase):
                 self.testresultspath + filename, self.expectedoutputsspath + filename
             )
         )
-        filename = "test_WMSGetMap_testdatanc.png"
+        filename = "test_WMSGetCapabilitiesGetMap_testdatanc.png"
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&",
             env=self.env,
@@ -215,7 +215,7 @@ class TestWMS(unittest.TestCase):
 
     def test_WMSGetMapGetCapabilities_testdatanc(self):
         AdagucTestTools().cleanTempDir()
-        filename = "test_WMSGetMap_testdatanc.png"
+        filename = "test_WMSGetMapGetCapabilities_testdatanc.png"
         # pylint: disable=unused-variable
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "source=testdata.nc&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=testdata&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=30,-30,75,30&STYLES=testdata%2Fnearest&FORMAT=image/png&TRANSPARENT=FALSE&",

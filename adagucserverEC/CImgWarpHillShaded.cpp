@@ -26,6 +26,7 @@
 #include "CImgWarpHillShaded.h"
 #include "CImageDataWriter.h"
 #include "CGenericDataWarper.h"
+#include "CImgWarpGeneric.h"
 
 const char *CImgWarpHillShaded::className = "CImgWarpHillShaded";
 
@@ -36,7 +37,7 @@ void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, C
   void *sourceData;
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-  Settings settings;
+  CImgWarpGenericSettings settings;
   settings.dfNodataValue = dataSource->getDataObject(0)->dfNodataValue;
   settings.legendValueRange = (bool)styleConfiguration->hasLegendValueRange;
   settings.legendLowerRange = styleConfiguration->legendLowerRange;

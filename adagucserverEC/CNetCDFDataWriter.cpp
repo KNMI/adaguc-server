@@ -2,6 +2,7 @@
 #include "CGenericDataWarper.h"
 const char *CNetCDFDataWriter::className = "CNetCDFDataWriter";
 #include "CRequest.h"
+#include "GenericDataWarper/gdwFindPixelExtent.h"
 // #define CNetCDFDataWriter_DEBUG
 
 void CNetCDFDataWriter::createProjectionVariables(CDFObject *cdfObject, int width, int height, double *bbox) {
@@ -585,7 +586,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       ;
       PXExtentBasedOnSource[3] = dataSource->dHeight;
       ;
-      GenericDataWarper::findPixelExtent(PXExtentBasedOnSource, &sourceGeo, this->srvParam->Geo, &warper);
+      gdwFindPixelExtent(PXExtentBasedOnSource, &sourceGeo, this->srvParam->Geo, &warper);
 
       if (PXExtentBasedOnSource[0] == PXExtentBasedOnSource[2] || PXExtentBasedOnSource[1] == PXExtentBasedOnSource[3]) {
         // CDBDebug("PXExtentBasedOnSource = [%d,%d,%d,%d]",PXExtentBasedOnSource[0],PXExtentBasedOnSource[1],PXExtentBasedOnSource[2],PXExtentBasedOnSource[3]);
