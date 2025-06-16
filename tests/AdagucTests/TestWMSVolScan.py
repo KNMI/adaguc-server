@@ -72,5 +72,5 @@ class TestWMSVolScan(unittest.TestCase):
                         data.getvalue(),
                         AdagucTestTools().readfromfile(
                             self.expectedoutputsspath + f"{file_type}_{filename}",
-                        ),                        
+                        )
                     )
