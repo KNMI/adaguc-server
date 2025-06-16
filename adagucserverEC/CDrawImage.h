@@ -266,6 +266,8 @@ public:
    * Set renderer type, CDRAWIMAGERENDERER_CAIRO or CDRAWIMAGERENDERER_GD
    */
   void setRenderer(int renderer);
+
+  double getTextWidth(const std::string &text, const std::string &fontPath, int fontSize, int angle);
 };
 
 #endif

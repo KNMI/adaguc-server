@@ -1893,3 +1893,16 @@ int CDrawImage::getWidth() { return Geo->dWidth; }
 const char *CDrawImage::getFontLocation() { return this->TTFFontLocation; }
 
 float CDrawImage::getFontSize() { return this->TTFFontSize; }
+
+// TODO: Calculate actual width based on font size (with and without CAIRO)
+double CDrawImage::getTextWidth(const std::string &text, const std::string &fontPath, int fontSize, int angle) {
+  constexpr double digit_width_factor = 0.6; // Not good even if we know the factor by font
+  int num_chars = text.length();
+  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
+    int w = 0, h = 0;
+    cairo->getTextSize(w, h, angle, text.c_str());
+    return w;
+  } else {
+    return fontSize * digit_width_factor * num_chars;
+  }
+}
