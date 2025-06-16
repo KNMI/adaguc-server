@@ -16,6 +16,8 @@ export ADAGUC_LOGFILE=${ADAGUC_PATH}/tests/log/adaguc-server.log
 export ADAGUC_FONT="${ADAGUC_PATH}/data/fonts/FreeSans.ttf"
 export ADAGUC_ONLINERESOURCE=""
 export ADAGUC_ENABLELOGBUFFER=FALSE
+export ADAGUC_TRACE_TIMINGS=FALSE
+
 export ADAGUC_DATASET_DIR=${ADAGUC_PATH}/data/config/datasets/
 export ADAGUC_DATA_DIR=${ADAGUC_PATH}/data/datasets/
 export ADAGUC_AUTOWMS_DIR=${ADAGUC_PATH}/data/datasets/

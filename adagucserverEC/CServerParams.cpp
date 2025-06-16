@@ -155,6 +155,7 @@ void CServerParams::_getCacheDirectory(CT::string *_cacheFileName) {
 #include <ctime>
 #include <sys/time.h>
 #include <CReadFile.h>
+#include "traceTimings.h"
 
 const CT::string CServerParams::randomString(const int len) {
 #ifdef MEASURETIME
@@ -624,26 +625,27 @@ int CServerParams::_parseConfigFile(CT::string &pszConfigFile, std::vector<CServ
   }
 }
 
-CT::string CServerParams::getCacheControlHeader(int mode) {
+CT::string CServerParams::getResponseHeaders(int mode) {
+  auto tracingHeaders = traceTimingsGetHeader();
   if (cfg != nullptr && cfg->Settings.size() == 1) {
     CT::string cacheString = "\r\nCache-Control:max-age=";
     if (mode == CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE) {
       if (!cfg->Settings[0]->attr.cache_age_volatileresources.empty()) {
         if (cfg->Settings[0]->attr.cache_age_volatileresources.toInt() != 0) {
           cacheString.printconcat("%d", cfg->Settings[0]->attr.cache_age_volatileresources.toInt());
-          return cacheString;
+          return cacheString + tracingHeaders;
         }
       }
     } else if (mode == CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE) {
       if (!cfg->Settings[0]->attr.cache_age_cacheableresources.empty()) {
         if (cfg->Settings[0]->attr.cache_age_cacheableresources.toInt() != 0) {
           cacheString.printconcat("%d", cfg->Settings[0]->attr.cache_age_cacheableresources.toInt());
-          return cacheString;
+          return cacheString + tracingHeaders;
         }
       }
     }
   }
-  return "";
+  return tracingHeaders;
 }
 
 std::tuple<float, std::string> CServerParams::getContourFont() {
