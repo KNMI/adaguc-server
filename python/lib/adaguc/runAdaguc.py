@@ -94,6 +94,9 @@ class runAdaguc:
         adagucenv["ADAGUC_ENABLELOGBUFFER"] = os.getenv(
             "ADAGUC_ENABLELOGBUFFER", "TRUE"
         )
+        adagucenv["ADAGUC_TRACE_TIMINGS"] = os.getenv(
+            "ADAGUC_TRACE_TIMINGS", "FALSE"
+        )
         ld_library_path = os.getenv("LD_LIBRARY_PATH")
         if ld_library_path:
             adagucenv["LD_LIBRARY_PATH"] = ld_library_path

@@ -16,6 +16,8 @@ find_package(WebP REQUIRED)
 
 add_library(
     adagucserverEC
+    traceTimings.h
+    traceTimings.cpp
     CAreaMapper.cpp
     CAreaMapper.h
     CAutoConfigure.cpp

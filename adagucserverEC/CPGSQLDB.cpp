@@ -24,6 +24,7 @@
  ******************************************************************************/
 
 #include "CPGSQLDB.h"
+#include "traceTimings.h"
 // #define CPGSQLDB_DEBUG_H
 const char *CPGSQLDB::className = "CPGSQLDB";
 void CPGSQLDB::clearResult() {
@@ -142,6 +143,8 @@ int CPGSQLDB::query(const char *pszQuery) {
 
 CDBStore::Store *CPGSQLDB::queryToStore(const char *pszQuery, bool throwException) {
 
+  traceTimingsSpanStart(TimingTraceType::DB);
+
   LastErrorMsg[0] = '\0';
 
   if (dConnected == 0) {
@@ -191,6 +194,8 @@ CDBStore::Store *CPGSQLDB::queryToStore(const char *pszQuery, bool throwExceptio
   }
 
   clearResult();
+
+  traceTimingsSpanEnd(TimingTraceType::DB);
   return store;
   ;
 }
