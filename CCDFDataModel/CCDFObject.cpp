@@ -29,7 +29,7 @@
 #include "CCDFObject.h"
 #include "CCDFReader.h"
 #include "CTime.h"
-#include "../adagucserverEC/traceTimings.h"
+#include "traceTimings.h"
 
 const char *CDFObject::className = "CDFObject";
 

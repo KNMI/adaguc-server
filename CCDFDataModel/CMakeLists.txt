@@ -6,6 +6,8 @@ find_package(PNG REQUIRED)
 find_package(PROJ REQUIRED)
 
 add_library(CCDFDataModel
+    traceTimings.h
+    traceTimings.cpp
     CCDFDataModel.h
     CCDFNetCDFIO.h
     CReadPNG.h
