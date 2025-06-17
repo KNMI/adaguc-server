@@ -58,23 +58,23 @@ class CImgWarpHillShaded : public CImageWarperRenderInterface {
 private:
   DEF_ERRORFUNCTION();
 
-  template <class T> static void drawFunction(int x, int y, T val, void *_settings) {
-    CImgWarpGenericDrawFunctionState *drawSettings = static_cast<CImgWarpGenericDrawFunctionState *>(_settings);
-    if (x < 0 || y < 0 || x > drawSettings->width || y > drawSettings->height) return;
+  template <class T> static void drawFunction(int x, int y, T val, void *_drawFunctionState) {
+    CImgWarpGenericDrawFunctionState *drawFunctionState = static_cast<CImgWarpGenericDrawFunctionState *>(_drawFunctionState);
+    if (x < 0 || y < 0 || x > drawFunctionState->width || y > drawFunctionState->height) return;
     bool isNodata = false;
-    if (drawSettings->hasNodataValue) {
-      if ((val) == (T)drawSettings->dfNodataValue) isNodata = true;
+    if (drawFunctionState->hasNodataValue) {
+      if ((val) == (T)drawFunctionState->dfNodataValue) isNodata = true;
     }
     if (!(val == val)) isNodata = true;
     if (!isNodata)
-      if (drawSettings->legendValueRange)
-        if (val < drawSettings->legendLowerRange || val > drawSettings->legendUpperRange) isNodata = true;
+      if (drawFunctionState->legendValueRange)
+        if (val < drawFunctionState->legendLowerRange || val > drawFunctionState->legendUpperRange) isNodata = true;
     if (!isNodata) {
-      T *sourceData = (T *)drawSettings->sourceData;
-      size_t sourceDataPX = drawSettings->sourceDataPX;
-      size_t sourceDataPY = drawSettings->sourceDataPY;
-      size_t sourceDataWidth = drawSettings->sourceDataWidth;
-      size_t sourceDataHeight = drawSettings->sourceDataHeight;
+      T *sourceData = (T *)drawFunctionState->sourceData;
+      size_t sourceDataPX = drawFunctionState->sourceDataPX;
+      size_t sourceDataPY = drawFunctionState->sourceDataPY;
+      size_t sourceDataWidth = drawFunctionState->sourceDataWidth;
+      size_t sourceDataHeight = drawFunctionState->sourceDataHeight;
 
       if (sourceDataPY > sourceDataHeight - 1) return;
       if (sourceDataPX > sourceDataWidth - 1) return;
@@ -105,7 +105,7 @@ private:
       Vector v02 = Vector((float)(sourceDataPX + 0), (float)sourceDataPY + 2, values[0][2]);
       Vector v12 = Vector((float)(sourceDataPX + 1), (float)sourceDataPY + 2, values[1][2]);
 
-      if (x >= 0 && y >= 0 && x < (int)drawSettings->width && y < (int)drawSettings->height) {
+      if (x >= 0 && y >= 0 && x < (int)drawFunctionState->width && y < (int)drawFunctionState->height) {
         Vector normal00 = CrossProduct(v10 - v00, v01 - v00).normalize();
         Vector normal10 = CrossProduct(v20 - v10, v11 - v10).normalize();
         Vector normal01 = CrossProduct(v11 - v01, v02 - v01).normalize();
@@ -115,12 +115,12 @@ private:
         float c10 = DotProduct(lightSource, normal10);
         float c01 = DotProduct(lightSource, normal01);
         float c11 = DotProduct(lightSource, normal11);
-        float dx = drawSettings->tileDx;
-        float dy = drawSettings->tileDy;
+        float dx = drawFunctionState->tileDx;
+        float dy = drawFunctionState->tileDy;
         float gx1 = (1 - dx) * c00 + dx * c10;
         float gx2 = (1 - dx) * c01 + dx * c11;
         float bilValue = (1 - dy) * gx1 + dy * gx2;
-        drawSettings->dataField[x + y * drawSettings->width] = (bilValue + 1) / 1.816486;
+        drawFunctionState->dataField[x + y * drawFunctionState->width] = (bilValue + 1) / 1.816486;
       }
     }
   };

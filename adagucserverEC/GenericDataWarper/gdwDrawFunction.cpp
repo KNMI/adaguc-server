@@ -3,7 +3,7 @@
 
 static inline int nfast_mod(const int input, const int ceil) { return input >= ceil ? input % ceil : input; }
 
-void setPixelInDrawImage(int x, int y, double val, GDWDrawFunctionSettings *settings) {
+void setPixelInDrawImage(int x, int y, double val, GDWDrawFunctionState *settings) {
   bool isNodata = false;
   if (settings->hasNodataValue) {
     if (val == settings->dfNodataValue) isNodata = true;
@@ -52,8 +52,8 @@ void setPixelInDrawImage(int x, int y, double val, GDWDrawFunctionSettings *sett
   }
 }
 
-void gdwDrawFunction(GDWDrawFunctionState *_drawSettings) {
-  GDWDrawFunctionSettings *drawSettings = (GDWDrawFunctionSettings *)_drawSettings;
+void gdwDrawFunction(GDWDrawFunctionBaseState *_drawSettings) {
+  GDWDrawFunctionState *drawSettings = (GDWDrawFunctionState *)_drawSettings;
   int x = drawSettings->destX;
   int y = drawSettings->destY;
   if (x < 0 || y < 0 || x >= drawSettings->destDataWidth || y >= drawSettings->destDataHeight) return;
@@ -120,18 +120,6 @@ void gdwDrawFunction(GDWDrawFunctionState *_drawSettings) {
           ((double *)drawSettings->destinationGrid)[x + y * drawSettings->drawImage->Geo->dWidth] = value; // TODO
         }
       }
-
-    } else {
-      // values[0][0] = smoothingAtLocation((float *)sourceData, drawSettings->smoothingDistanceMatrix, drawSettings->smoothingFiter, (float)drawSettings->dfNodataValue, sourceDataPX, sourceDataPY,
-      //                                    sourceDataWidth, sourceDataHeight);
-      // values[1][0] = smoothingAtLocation((float *)sourceData, drawSettings->smoothingDistanceMatrix, drawSettings->smoothingFiter, (float)drawSettings->dfNodataValue, sourceDataPX + 1,
-      // sourceDataPY,
-      //                                    sourceDataWidth, sourceDataHeight);
-      // values[0][1] = smoothingAtLocation((float *)sourceData, drawSettings->smoothingDistanceMatrix, drawSettings->smoothingFiter, (float)drawSettings->dfNodataValue, sourceDataPX, sourceDataPY +
-      // 1,
-      //                                    sourceDataWidth, sourceDataHeight);
-      // values[1][1] = smoothingAtLocation((float *)sourceData, drawSettings->smoothingDistanceMatrix, drawSettings->smoothingFiter, (float)drawSettings->dfNodataValue, sourceDataPX + 1,
-      //                                    sourceDataPY + 1, sourceDataWidth, sourceDataHeight);
     }
   }
 };

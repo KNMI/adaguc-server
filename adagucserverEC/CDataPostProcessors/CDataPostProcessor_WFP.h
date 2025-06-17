@@ -7,7 +7,7 @@
  * WFP algorithm
  */
 
-struct PostProcDrawFunctionState : GDWDrawFunctionState {
+struct PostProcDrawFunctionState : GDWDrawFunctionBaseState {
   size_t width;
   size_t height;
   float *WindSpeedWindparksOff;        // Grid to write TO, same grid as dest grid

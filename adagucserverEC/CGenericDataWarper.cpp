@@ -28,10 +28,11 @@
 #include "GenericDataWarper/gdwFindPixelExtent.h"
 #include "GenericDataWarper/gdwDrawFunction.h"
 
-template <typename T> double getValueFromGrid(int x, int y, GDWDrawFunctionState *drawFunctionState) { return ((T *)drawFunctionState->sourceData)[x + y * drawFunctionState->sourceDataWidth]; }
+template <typename T> double getValueFromGrid(int x, int y, GDWDrawFunctionBaseState *drawFunctionState) { return ((T *)drawFunctionState->sourceData)[x + y * drawFunctionState->sourceDataWidth]; }
 
 // #define GenericDataWarper_DEBUG
-template <typename T> int warpT(CImageWarper *warper, void *_sourceData, CDFType sourceDataType, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, GDWDrawFunctionState *drawFunctionSettings) {
+template <typename T>
+int warpT(CImageWarper *warper, void *_sourceData, CDFType sourceDataType, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, GDWDrawFunctionBaseState *drawFunctionSettings) {
   drawFunctionSettings->sourceData = _sourceData;
   drawFunctionSettings->sourceDataType = sourceDataType; // TODO REMOVE
 
@@ -427,14 +428,14 @@ template <typename T> int warpT(CImageWarper *warper, void *_sourceData, CDFType
 #endif
   return 0;
 }
-template <typename T> struct DrawFunctionState : GDWDrawFunctionState {
+template <typename T> struct DrawFunctionState : GDWDrawFunctionBaseState {
 
   void *oldDrawFunction;
   void (*oldDrawFunction2)(int, int, T, void *drawFunctionSettings);
   void *drawFunctionSettings;
 };
 
-template <typename T> void genericDrawFunction(GDWDrawFunctionState *_drawSettings) {
+template <typename T> void genericDrawFunction(GDWDrawFunctionBaseState *_drawSettings) {
   DrawFunctionState<T> *drawFunctionState = (DrawFunctionState<T> *)_drawSettings;
   int x = drawFunctionState->destX;
   int y = drawFunctionState->destY;

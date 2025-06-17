@@ -10,11 +10,11 @@
 #include "CDebugger.h"
 #include "CGenericDataWarperTools.h"
 
-struct GDWDrawFunctionState;
-typedef void (*FPSetValueInDestination)(GDWDrawFunctionState *drawFunctionSettings);
-typedef double (*FPGetValueFromSource)(int, int, GDWDrawFunctionState *);
+struct GDWDrawFunctionBaseState;
+typedef void (*FPSetValueInDestination)(GDWDrawFunctionBaseState *drawFunctionSettings);
+typedef double (*FPGetValueFromSource)(int, int, GDWDrawFunctionBaseState *);
 
-struct GDWDrawFunctionState {
+struct GDWDrawFunctionBaseState {
   CDFType sourceDataType;
   void *sourceData;
   int sourceDataPX, sourceDataPY, sourceDataWidth, sourceDataHeight;
@@ -30,9 +30,9 @@ struct GDWDrawFunctionState {
   CDFType destinationDataType;
   void *destinationGrid = nullptr; // TODO
 };
-template <typename T> int warpT(CImageWarper *warper, void *_sourceData, CDFType sourceDataType, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, GDWDrawFunctionState *drawFunctionSetting);
+template <typename T> int warpT(CImageWarper *warper, void *_sourceData, CDFType sourceDataType, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, GDWDrawFunctionBaseState *drawFunctionSetting);
 
-int warp(CImageWarper *warper, void *_sourceData, CDFType sourceDataType, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, GDWDrawFunctionState *drawFunctionSetting);
+int warp(CImageWarper *warper, void *_sourceData, CDFType sourceDataType, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, GDWDrawFunctionBaseState *drawFunctionSetting);
 
 class GenericDataWarper {
 private:
