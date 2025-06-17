@@ -158,7 +158,7 @@ int warpT(CImageWarper *warper, void *_sourceData, CDFType sourceDataType, CGeoP
         if (!skip) {
           drawFunctionSettings->sourceDataPX = x;
           drawFunctionSettings->sourceDataPY = sourceGeoParams->dHeight - 1 - y;
-          // T value = ((T *)warperState.sourceData)[drawFunctionSettings->sourceDataPX + (drawFunctionSettings->sourceDataPY) * sourceGeoParams->dWidth];
+          // T value = ((T *)drawFunctionState.sourceData)[drawFunctionSettings->sourceDataPX + (drawFunctionSettings->sourceDataPY) * sourceGeoParams->dWidth];
           int lx1, lx2, ly1, ly2;
           if (sx1 > sx2) {
             lx2 = sx1;
@@ -405,7 +405,7 @@ int warpT(CImageWarper *warper, void *_sourceData, CDFType sourceDataType, CGeoP
           int sourceGridY = y + PXExtentBasedOnSource[1];
           drawFunctionSettings->sourceDataPX = sourceGridX;
           drawFunctionSettings->sourceDataPY = (drawFunctionSettings->sourceDataHeight - 1 - sourceGridY);
-          // T value = ((T *)warperState.sourceData)[this->warperState.sourceDataPX + this->warperState.sourceDataPY * warperState.sourceDataWidth];
+          // T value = ((T *)drawFunctionState.sourceData)[this->drawFunctionState.sourceDataPX + this->drawFunctionState.sourceDataPY * drawFunctionState.sourceDataWidth];
 
           double xCornersA[3] = {px1, px2, px3};
           double yCornersA[3] = {py1, py2, py3};

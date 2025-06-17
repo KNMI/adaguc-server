@@ -1,8 +1,8 @@
 #include "CGenericDataWarper.h"
 
-int gdwDrawTriangle(double *_xP, double *_yP, bool aOrB, GDWDrawFunctionBaseState *warperState) {
-  int W = warperState->destDataWidth;
-  int H = warperState->destDataHeight;
+int gdwDrawTriangle(double *_xP, double *_yP, bool aOrB, GDWDrawFunctionBaseState *drawFunctionState) {
+  int W = drawFunctionState->destDataWidth;
+  int H = drawFunctionState->destDataHeight;
   if (_xP[0] < 0 && _xP[1] < 0 && _xP[2] < 0) return 0;
   if (_xP[0] >= W && _xP[1] >= W && _xP[2] >= W) return 0;
   if (_yP[0] < 0 && _yP[1] < 0 && _yP[2] < 0) return 0;
@@ -105,11 +105,11 @@ int gdwDrawTriangle(double *_xP, double *_yP, bool aOrB, GDWDrawFunctionBaseStat
       double WV1 = ((yv2 - yv3) * (x - xv3) + (xv3 - xv2) * (y - yv3)) / dn;
       double WV2 = ((yv3 - yv1) * (x - xv3) + (xv1 - xv3) * (y - yv3)) / dn;
       double WV3 = 1 - WV1 - WV2;
-      warperState->tileDx = WV1 * aOrB + WV2 * bOrA + WV3 * bOrA;
-      warperState->tileDy = WV1 * bOrA + WV2 * 1 + WV3 * 0;
-      warperState->destX = x;
-      warperState->destY = y;
-      warperState->setValueInDestinationFunction(warperState);
+      drawFunctionState->tileDx = WV1 * aOrB + WV2 * bOrA + WV3 * bOrA;
+      drawFunctionState->tileDy = WV1 * bOrA + WV2 * 1 + WV3 * 0;
+      drawFunctionState->destX = x;
+      drawFunctionState->destY = y;
+      drawFunctionState->setValueInDestinationFunction(drawFunctionState);
     }
   }
   return 0;
