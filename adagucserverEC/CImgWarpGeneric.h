@@ -32,7 +32,7 @@
 
 static inline int nfast_mod(const int input, const int ceil) { return input >= ceil ? input % ceil : input; }
 
-struct CImgWarpGenericSettings : GDWWarperState {
+struct CImgWarpGenericSettings : GDWDrawFunctionState {
   double dfNodataValue;
   double legendValueRange;
   double legendLowerRange;

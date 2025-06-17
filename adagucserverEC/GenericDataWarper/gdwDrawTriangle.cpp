@@ -1,6 +1,6 @@
 #include "CGenericDataWarper.h"
 
-int gdwDrawTriangle(double *_xP, double *_yP, bool aOrB, GDWWarperState *warperState) {
+int gdwDrawTriangle(double *_xP, double *_yP, bool aOrB, GDWDrawFunctionState *warperState) {
   int W = warperState->destDataWidth;
   int H = warperState->destDataHeight;
   if (_xP[0] < 0 && _xP[1] < 0 && _xP[2] < 0) return 0;

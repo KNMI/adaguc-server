@@ -23,7 +23,7 @@ public:
   }
 };
 
-struct GDWDrawFunctionSettings : GDWWarperState {
+struct GDWDrawFunctionSettings : GDWDrawFunctionState {
   double dfNodataValue;
   double legendValueRange;
   double legendLowerRange;
@@ -45,6 +45,6 @@ struct GDWDrawFunctionSettings : GDWWarperState {
   CDrawImage *drawImage;
 };
 
-void gdwDrawFunction(GDWWarperState *_drawSettings);
+void gdwDrawFunction(GDWDrawFunctionState *_drawSettings);
 
 #endif

@@ -285,38 +285,38 @@ int CGDALDataWriter::addData(std::vector<CDataSource *> &dataSources) {
   CDFType dataType = dataSource->getDataObject(0)->cdfVariable->getType();
   void *sourceData = dataSource->getDataObject(0)->cdfVariable->data;
 
-  Settings settings;
-  settings.width = srvParam->Geo->dWidth;
-  settings.height = srvParam->Geo->dHeight;
-  settings.data = warpedData;
+  GdalDrawFunctionState drawFunctionState;
+  drawFunctionState.width = srvParam->Geo->dWidth;
+  drawFunctionState.height = srvParam->Geo->dHeight;
+  drawFunctionState.data = warpedData;
   GenericDataWarper genericDataWarper;
   switch (dataType) {
   case CDF_CHAR:
-    genericDataWarper.render<char>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction);
+    genericDataWarper.render<char>(&warper, sourceData, &sourceGeo, srvParam->Geo, &drawFunctionState, &drawFunction);
     break;
   case CDF_BYTE:
-    genericDataWarper.render<char>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction);
+    genericDataWarper.render<char>(&warper, sourceData, &sourceGeo, srvParam->Geo, &drawFunctionState, &drawFunction);
     break;
   case CDF_UBYTE:
-    genericDataWarper.render<unsigned char>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction);
+    genericDataWarper.render<unsigned char>(&warper, sourceData, &sourceGeo, srvParam->Geo, &drawFunctionState, &drawFunction);
     break;
   case CDF_SHORT:
-    genericDataWarper.render<short>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction);
+    genericDataWarper.render<short>(&warper, sourceData, &sourceGeo, srvParam->Geo, &drawFunctionState, &drawFunction);
     break;
   case CDF_USHORT:
-    genericDataWarper.render<ushort>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction);
+    genericDataWarper.render<ushort>(&warper, sourceData, &sourceGeo, srvParam->Geo, &drawFunctionState, &drawFunction);
     break;
   case CDF_INT:
-    genericDataWarper.render<int>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction);
+    genericDataWarper.render<int>(&warper, sourceData, &sourceGeo, srvParam->Geo, &drawFunctionState, &drawFunction);
     break;
   case CDF_UINT:
-    genericDataWarper.render<uint>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction);
+    genericDataWarper.render<uint>(&warper, sourceData, &sourceGeo, srvParam->Geo, &drawFunctionState, &drawFunction);
     break;
   case CDF_FLOAT:
-    genericDataWarper.render<float>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction);
+    genericDataWarper.render<float>(&warper, sourceData, &sourceGeo, srvParam->Geo, &drawFunctionState, &drawFunction);
     break;
   case CDF_DOUBLE:
-    genericDataWarper.render<double>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction);
+    genericDataWarper.render<double>(&warper, sourceData, &sourceGeo, srvParam->Geo, &drawFunctionState, &drawFunction);
     break;
   }
 

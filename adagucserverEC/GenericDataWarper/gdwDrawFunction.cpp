@@ -52,7 +52,7 @@ void setPixelInDrawImage(int x, int y, double val, GDWDrawFunctionSettings *sett
   }
 }
 
-void gdwDrawFunction(GDWWarperState *_drawSettings) {
+void gdwDrawFunction(GDWDrawFunctionState *_drawSettings) {
   GDWDrawFunctionSettings *drawSettings = (GDWDrawFunctionSettings *)_drawSettings;
   int x = drawSettings->destX;
   int y = drawSettings->destY;

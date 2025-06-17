@@ -7,7 +7,7 @@
  * WFP algorithm
  */
 
-struct Settings : GDWWarperState {
+struct PostProcDrawFunctionState : GDWDrawFunctionState {
   size_t width;
   size_t height;
   float *WindSpeedWindparksOff;        // Grid to write TO, same grid as dest grid
@@ -27,7 +27,7 @@ class CDPPWFP : public CDPPInterface {
 private:
   DEF_ERRORFUNCTION();
 
-  static void drawFunction(int x, int y, float val, void *_settingswarperInstance);
+  static void drawFunction(int x, int y, float val, void *_drawFunctionState);
   CDF::Variable *cloneVariable(CDF::Variable *varToClone, const char *name, int size);
 
 public:
