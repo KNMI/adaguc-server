@@ -1,38 +1,38 @@
 services:
-  adaguc-viewer:
-    image: openearth/adaguc-viewer
-    container_name: adaguc-viewer
-    hostname: adaguc-viewer
-    networks:
-      - adaguc-network
-    environment:
-      - "LOCAL_ADAGUCSERVER_ADDR=${EXTERNALADDRESS}" # Should be same as adaguc-server's EXTERNALADDRESS
-      - "REMOTE_ADAGUCSERVER_ADDR=http://adaguc-server:8080/" # Do not change this within the docker-compose environment
-      - "ADAGUCSERVICES_AUTOWMS=${EXTERNALADDRESS}/autowms?"
-    env_file:
-      - .env
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "200k"
-        max-file: "10"
-  adaguc-data-explorer:
-    image: openearth/adaguc-data-explorer
-    container_name: adaguc-data-explorer
-    hostname: adaguc-data-explorer
-    networks:
-      - adaguc-network
-    environment:
-      - "ADAGUC_AUTOWMS_ENDPOINT=${EXTERNALADDRESS}/autowms?"
-    env_file:
-      - .env
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "200k"
-        max-file: "10"
+  # adaguc-viewer:
+  #   image: openearth/adaguc-viewer
+  #   container_name: adaguc-viewer
+  #   hostname: adaguc-viewer
+  #   networks:
+  #     - adaguc-network
+  #   environment:
+  #     - "LOCAL_ADAGUCSERVER_ADDR=${EXTERNALADDRESS}" # Should be same as adaguc-server's EXTERNALADDRESS
+  #     - "REMOTE_ADAGUCSERVER_ADDR=http://adaguc-server:8080/" # Do not change this within the docker-compose environment
+  #     - "ADAGUCSERVICES_AUTOWMS=${EXTERNALADDRESS}/autowms?"
+  #   env_file:
+  #     - .env
+  #   restart: unless-stopped
+  #   logging:
+  #     driver: "json-file"
+  #     options:
+  #       max-size: "200k"
+  #       max-file: "10"
+  # adaguc-data-explorer:
+  #   image: openearth/adaguc-data-explorer
+  #   container_name: adaguc-data-explorer
+  #   hostname: adaguc-data-explorer
+  #   networks:
+  #     - adaguc-network
+  #   environment:
+  #     - "ADAGUC_AUTOWMS_ENDPOINT=${EXTERNALADDRESS}/autowms?"
+  #   env_file:
+  #     - .env
+  #   restart: unless-stopped
+  #   logging:
+  #     driver: "json-file"
+  #     options:
+  #       max-size: "200k"
+  #       max-file: "10"
   adaguc-server:
     image: openearth/adaguc-server
     # build: ..
@@ -59,6 +59,8 @@ services:
       - "ADAGUC_AUTOWMS_DIR=/data/adaguc-autowms"
       - "ADAGUC_DATA_DIR=/data/adaguc-data"
       - "ADAGUC_DATASET_DIR=/data/adaguc-datasets"
+      - "ADAGUC_NUMPARALLELPROCESSES=8"
+      - "ADAGUC_TRACE_TIMINGS=TRUE"
       # - "ADAGUC_REDIS=redis://adaguc-redis:6379"
     env_file:
       - .env
