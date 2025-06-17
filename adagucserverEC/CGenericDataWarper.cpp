@@ -28,7 +28,7 @@
 #include "GenericDataWarper/gdwFindPixelExtent.h"
 #include "GenericDataWarper/gdwDrawFunction.h"
 
-template <typename T> double getGridValueFromFloat(int x, int y, GDWDrawFunctionState *drawSettings) { return ((T *)drawSettings->sourceData)[x + y * drawSettings->sourceDataWidth]; }
+template <typename T> double getValueFromGrid(int x, int y, GDWDrawFunctionState *drawFunctionState) { return ((T *)drawFunctionState->sourceData)[x + y * drawFunctionState->sourceDataWidth]; }
 
 // #define GenericDataWarper_DEBUG
 template <typename T> int warpT(CImageWarper *warper, void *_sourceData, CDFType sourceDataType, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, GDWDrawFunctionState *drawFunctionSettings) {
@@ -41,7 +41,7 @@ template <typename T> int warpT(CImageWarper *warper, void *_sourceData, CDFType
   drawFunctionSettings->sourceDataWidth = sourceGeoParams->dWidth;
   drawFunctionSettings->sourceDataHeight = sourceGeoParams->dHeight;
 
-  drawFunctionSettings->getValueFromSourceFunction = getGridValueFromFloat<T>;
+  drawFunctionSettings->getValueFromSourceFunction = getValueFromGrid<T>;
 
 #ifdef GenericDataWarper_DEBUG
   CDBDebug("render");
@@ -427,7 +427,7 @@ template <typename T> int warpT(CImageWarper *warper, void *_sourceData, CDFType
 #endif
   return 0;
 }
-template <typename T> struct GenericSettings : GDWDrawFunctionState {
+template <typename T> struct DrawFunctionState : GDWDrawFunctionState {
 
   void *oldDrawFunction;
   void (*oldDrawFunction2)(int, int, T, void *drawFunctionSettings);
@@ -435,71 +435,21 @@ template <typename T> struct GenericSettings : GDWDrawFunctionState {
 };
 
 template <typename T> void genericDrawFunction(GDWDrawFunctionState *_drawSettings) {
-  GenericSettings<T> *drawSettings = (GenericSettings<T> *)_drawSettings;
-  int x = drawSettings->destX;
-  int y = drawSettings->destY;
-  if (x < 0 || y < 0 || x >= drawSettings->destDataWidth || y >= drawSettings->destDataHeight) return;
-  T val = drawSettings->getValueFromSourceFunction(drawSettings->sourceDataPX, drawSettings->sourceDataPY, drawSettings);
+  DrawFunctionState<T> *drawFunctionState = (DrawFunctionState<T> *)_drawSettings;
+  int x = drawFunctionState->destX;
+  int y = drawFunctionState->destY;
+  if (x < 0 || y < 0 || x >= drawFunctionState->destDataWidth || y >= drawFunctionState->destDataHeight) return;
+  T val = drawFunctionState->getValueFromSourceFunction(drawFunctionState->sourceDataPX, drawFunctionState->sourceDataPY, drawFunctionState);
 
-  auto f = (void (*)(int, int, T, void *, void *))drawSettings->oldDrawFunction;
-  f(drawSettings->destX, drawSettings->destY, val, drawSettings->drawFunctionSettings, nullptr);
-}
-
-int warp(CImageWarper *warper, void *sourceData, CDFType sourceDataType, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, GDWDrawFunctionState *drawFunctionSetting) {
-  switch (sourceDataType) {
-  case CDF_BYTE: {
-    warpT<char>(warper, sourceData, sourceDataType, sourceGeoParams, destGeoParams, drawFunctionSetting);
-    break;
-  }
-  case CDF_CHAR: {
-    warpT<char>(warper, sourceData, sourceDataType, sourceGeoParams, destGeoParams, drawFunctionSetting);
-    break;
-  }
-  case CDF_SHORT: {
-    warpT<short>(warper, sourceData, sourceDataType, sourceGeoParams, destGeoParams, drawFunctionSetting);
-    break;
-  }
-  case CDF_INT: {
-    warpT<int>(warper, sourceData, sourceDataType, sourceGeoParams, destGeoParams, drawFunctionSetting);
-    break;
-  }
-  case CDF_UBYTE: {
-    warpT<unsigned char>(warper, sourceData, sourceDataType, sourceGeoParams, destGeoParams, drawFunctionSetting);
-    break;
-  }
-  case CDF_USHORT: {
-    warpT<unsigned short>(warper, sourceData, sourceDataType, sourceGeoParams, destGeoParams, drawFunctionSetting);
-    break;
-  }
-  case CDF_UINT: {
-    warpT<unsigned int>(warper, sourceData, sourceDataType, sourceGeoParams, destGeoParams, drawFunctionSetting);
-    break;
-  }
-  case CDF_INT64: {
-    warpT<long>(warper, sourceData, sourceDataType, sourceGeoParams, destGeoParams, drawFunctionSetting);
-    break;
-  }
-  case CDF_UINT64: {
-    warpT<unsigned long>(warper, sourceData, sourceDataType, sourceGeoParams, destGeoParams, drawFunctionSetting);
-    break;
-  }
-  case CDF_FLOAT: {
-    warpT<float>(warper, sourceData, sourceDataType, sourceGeoParams, destGeoParams, drawFunctionSetting);
-    break;
-  }
-  case CDF_DOUBLE: {
-    warpT<double>(warper, sourceData, sourceDataType, sourceGeoParams, destGeoParams, drawFunctionSetting);
-    break;
-  }
-  }
-  return 0;
+  auto f = (void (*)(int, int, T, void *, void *))drawFunctionState->oldDrawFunction;
+  f(drawFunctionState->destX, drawFunctionState->destY, val, drawFunctionState->drawFunctionSettings, nullptr);
 }
 
 template <typename T>
 int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, void *drawFunctionSettings,
                               void (*drawFunction)(int, int, T, void *drawFunctionSettings)) {
 
-  GenericSettings<T> settings;
+  DrawFunctionState<T> settings;
   settings.destDataWidth = destGeoParams->dWidth;
   settings.destDataHeight = destGeoParams->dHeight;
   settings.setValueInDestinationFunction = genericDrawFunction<T>;

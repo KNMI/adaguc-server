@@ -59,7 +59,7 @@ private:
   DEF_ERRORFUNCTION();
 
   template <class T> static void drawFunction(int x, int y, T val, void *_settings) {
-    CImgWarpGenericSettings *drawSettings = static_cast<CImgWarpGenericSettings *>(_settings);
+    CImgWarpGenericDrawFunctionState *drawSettings = static_cast<CImgWarpGenericDrawFunctionState *>(_settings);
     if (x < 0 || y < 0 || x > drawSettings->width || y > drawSettings->height) return;
     bool isNodata = false;
     if (drawSettings->hasNodataValue) {

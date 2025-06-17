@@ -37,7 +37,7 @@ void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, C
   void *sourceData;
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-  CImgWarpGenericSettings settings;
+  CImgWarpGenericDrawFunctionState settings;
   settings.dfNodataValue = dataSource->getDataObject(0)->dfNodataValue;
   settings.legendValueRange = (bool)styleConfiguration->hasLegendValueRange;
   settings.legendLowerRange = styleConfiguration->legendLowerRange;
