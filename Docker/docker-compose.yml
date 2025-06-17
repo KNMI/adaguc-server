@@ -43,6 +43,8 @@ services:
     #       memory: 2048M
     container_name: my-adaguc-server
     hostname: my-adaguc-server
+    ports:
+      - "8080:8080"
     volumes:
       - ${ADAGUC_DATASET_DIR}/:/data/adaguc-datasets
       - ${ADAGUC_AUTOWMS_DIR}/:/data/adaguc-autowms
@@ -57,7 +59,7 @@ services:
       - "ADAGUC_AUTOWMS_DIR=/data/adaguc-autowms"
       - "ADAGUC_DATA_DIR=/data/adaguc-data"
       - "ADAGUC_DATASET_DIR=/data/adaguc-datasets"
-      - "ADAGUC_REDIS=redis://adaguc-redis:6379"
+      # - "ADAGUC_REDIS=redis://adaguc-redis:6379"
     env_file:
       - .env
     restart: unless-stopped
@@ -65,37 +67,39 @@ services:
       - adaguc-db
     depends_on:
       - adaguc-db
-      - adaguc-redis
+      # - adaguc-redis
     logging:
       driver: "json-file"
       options:
         max-size: "200k"
         max-file: "10"
-  nginx:
-    build: nginx-adaguc
-    container_name: nginx-adaguc
-    hostname: nginx-adaguc
-    ports:
-      - "${ADAGUC_PORT}:443"
-    networks:
-      - adaguc-network
-    environment:
-      - "SSL_ADMIN_EMAIL=adaguc@knmi.nl"
-      - "SSL_DOMAINS=${EXTERNALADDRESS}"
-      - "EXTERNAL_HOSTNAME=${EXTERNALADDRESS}"
-    volumes:
-      - /etc/letsencrypt
-      - /cert
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "200k"
-        max-file: "10"
+  # nginx:
+  #   build: nginx-adaguc
+  #   container_name: nginx-adaguc
+  #   hostname: nginx-adaguc
+  #   ports:
+  #     - "${ADAGUC_PORT}:443"
+  #   networks:
+  #     - adaguc-network
+  #   environment:
+  #     - "SSL_ADMIN_EMAIL=adaguc@knmi.nl"
+  #     - "SSL_DOMAINS=${EXTERNALADDRESS}"
+  #     - "EXTERNAL_HOSTNAME=${EXTERNALADDRESS}"
+  #   volumes:
+  #     - /etc/letsencrypt
+  #     - /cert
+  #   restart: unless-stopped
+  #   logging:
+  #     driver: "json-file"
+  #     options:
+  #       max-size: "200k"
+  #       max-file: "10"
   adaguc-db:
     image: postgres:13
     container_name: adaguc-db
     hostname: adaguc-db
+    ports:
+      - "5432:5432"
     # Ensures containers running in the adaguc-network docker network can connect to the database, provided they use the
     # right credentials
     networks:
@@ -112,13 +116,13 @@ services:
       options:
         max-size: "200k"
         max-file: "10"
-  adaguc-redis:
-    image: redis:7
-    container_name: adaguc-redis
-    hostname: adaguc-redis
-    restart: unless-stopped
-    networks:
-      - adaguc-network
+  # adaguc-redis:
+  #   image: redis:7
+  #   container_name: adaguc-redis
+  #   hostname: adaguc-redis
+  #   restart: unless-stopped
+  #   networks:
+  #     - adaguc-network
 volumes:
   adaguc-server-compose-adagucdb:
 networks:
