@@ -34,7 +34,7 @@ services:
   #       max-size: "200k"
   #       max-file: "10"
   adaguc-server:
-    image: openearth/adaguc-server
+    image: openearth/adaguc-server:gstf-cloud
     # build: ..
     # deploy:
     #   resources:
