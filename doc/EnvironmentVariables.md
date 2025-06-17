@@ -2,6 +2,13 @@
 
 List and overview of environment variables.
 
+## ADAGUC_TRACE_TIMINGS
+
+- TRUE: Measure timings like how much amount is spent on database queries, fileaccess and image generation
+- FALSE: off.
+
+The informaiton is available in the logging and in a header named `x-trace-timings`. 
+
 ## ADAGUC_ENABLELOGBUFFER
 
 Controls behaviour of logstream buffer:

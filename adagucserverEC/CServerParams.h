@@ -317,7 +317,7 @@ public:
    * mode CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE is for urls which response might change often (shorter max-age)
    * mode CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE is fully specified urls
    */
-  CT::string getCacheControlHeader(int mode);
+  CT::string getResponseHeaders(int mode);
 
   void setCacheControlOption(int mode) { cacheControlOption = mode; }
   int getCacheControlOption() { return cacheControlOption; }

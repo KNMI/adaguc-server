@@ -38,6 +38,7 @@
 #include "CImgWarpHillShaded.h"
 #include "CImgWarpGeneric.h"
 #include "CDataPostProcessors/CDataPostProcessor_UVComponents.h"
+#include "traceTimings.h"
 
 CT::string months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 // #define CIMAGEDATAWRITER_DEBUG
@@ -1125,7 +1126,6 @@ std::vector<CImageDataWriter::IndexRange> CImageDataWriter::getIndexRangesForReg
   return ranges;
 }
 
-pthread_mutex_t CImageDataWriter_addData_lock;
 int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) {
 
   // Open the data of this dataSource
@@ -1135,7 +1135,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
 #endif
 
   CDataReader reader;
-  pthread_mutex_lock(&CImageDataWriter_addData_lock);
+
 #ifdef MEASURETIME
   StopWatch_Stop("Thread[%d]: start Opening grid", dataSource->threadNr);
 #endif
@@ -1174,7 +1174,6 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
   StopWatch_Stop("Thread[%d]: Opened grid", dataSource->threadNr);
 #endif
 
-  pthread_mutex_unlock(&CImageDataWriter_addData_lock);
   // return 0;
 #ifdef CIMAGEDATAWRITER_DEBUG
   CDBDebug("Thread[%d]: Has opened %s", dataSource->threadNr, dataSource->getFileName());
@@ -1266,6 +1265,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
     return 1;
   }
 
+  traceTimingsSpanStart(TimingTraceType::WARPIMAGERENDER);
   /**
    * Use fast nearest neighbourrenderer
    */
@@ -1512,6 +1512,8 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
 #ifdef MEASURETIME
   StopWatch_Stop("Thread[%d]: warp finished", dataSource->threadNr);
 #endif
+
+  traceTimingsSpanEnd(TimingTraceType::WARPIMAGERENDER);
   // imageWarper.closereproj();
   reader.close();
 
@@ -1808,7 +1810,9 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       CDBDebug("Start warping");
 #endif
 
+      traceTimingsSpanStart(TimingTraceType::WARPIMAGE);
       status = warpImage(dataSource, &drawImage);
+      traceTimingsSpanEnd(TimingTraceType::WARPIMAGE);
 
 #ifdef CIMAGEDATAWRITER_DEBUG
       CDBDebug("Finished warping %s for step %d/%d", dataSource->layerName.c_str(), dataSource->getCurrentTimeStep(), dataSource->getNumTimeSteps());
@@ -2181,10 +2185,10 @@ int CImageDataWriter::end() {
       resultFormat = imagepng_eprofile;
 
       if (srvParam->InfoFormat.equals("image/png")) {
-        printf("%s%s%c%c\n", "Content-Type:image/png", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+        printf("%s%s%c%c\n", "Content-Type:image/png", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
         drawImage.printImagePng8(true);
       } else {
-        printf("%s%s%c%c\n", "Content-Type:application/json", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+        printf("%s%s%c%c\n", "Content-Type:application/json", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
         printf("%s", eProfileJson.c_str());
       }
 
@@ -2200,10 +2204,10 @@ int CImageDataWriter::end() {
           CT::string resultJSON;
           if (srvParam->JSONP.length() == 0) {
             CDBDebug("CREATING JSON");
-            printf("%s%s%c%c\n", "Content-Type: application/json", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+            printf("%s%s%c%c\n", "Content-Type: application/json", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
           } else {
             CDBDebug("CREATING JSONP %s", srvParam->JSONP.c_str());
-            printf("%s%s%c%c", "Content-Type: application/javascript", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+            printf("%s%s%c%c", "Content-Type: application/javascript", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
             printf("\n%s(", srvParam->JSONP.c_str());
           }
 
@@ -2225,9 +2229,9 @@ int CImageDataWriter::end() {
     if (resultFormat == textplain || resultFormat == texthtml) {
       CT::string resultHTML;
       if (resultFormat == textplain) {
-        resultHTML.print("%s%s%c%c\n", "Content-Type: text/plain", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+        resultHTML.print("%s%s%c%c\n", "Content-Type: text/plain", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
       } else {
-        resultHTML.print("%s%s%c%c\n", "Content-Type: text/html", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+        resultHTML.print("%s%s%c%c\n", "Content-Type: text/html", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
       }
 
       if (resultFormat == texthtml) resultHTML.printconcat("<html>\n");
@@ -2351,7 +2355,7 @@ int CImageDataWriter::end() {
     if (resultFormat == applicationvndogcgml) {
       CDBDebug("CREATING GML");
       CT::string resultXML;
-      resultXML.print("%s%s%c%c\n", "Content-Type: text/xml", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+      resultXML.print("%s%s%c%c\n", "Content-Type: text/xml", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
 
       resultXML.printconcat("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n");
       resultXML.printconcat("  <FeatureCollection\n");
@@ -2517,10 +2521,10 @@ int CImageDataWriter::end() {
       CT::string resultJSON;
       if (srvParam->JSONP.length() == 0) {
         CDBDebug("CREATING JSON");
-        resultJSON.print("%s%s%c%c\n", "Content-Type: application/json", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+        resultJSON.print("%s%s%c%c\n", "Content-Type: application/json", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
       } else {
         CDBDebug("CREATING JSONP %s", srvParam->JSONP.c_str());
-        resultJSON.print("%s%s%c%c\n", "Content-Type: application/javascript", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+        resultJSON.print("%s%s%c%c\n", "Content-Type: application/javascript", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
       }
 
       CXMLParser::XMLElement rootElement;
@@ -3215,8 +3219,9 @@ int CImageDataWriter::end() {
   // CDBDebug("srvParam->imageFormat = %d",srvParam->imageFormat);
   int status = 1;
 
-  CT::string cacheControl = srvParam->getCacheControlHeader(srvParam->getCacheControlOption());
-
+  CT::string cacheControl = srvParam->getResponseHeaders(srvParam->getCacheControlOption());
+  CT::string timingsInfo = traceTimingsGetInfo();
+  drawImage.setText(timingsInfo.c_str(), timingsInfo.length(), 200, 130, CColor(0, 0, 0, 244), 22);
   if (srvParam->imageFormat == IMAGEFORMAT_IMAGEPNG8) {
     CDBDebug("Creating 8 bit png with alpha");
     printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl.c_str(), 13, 10);

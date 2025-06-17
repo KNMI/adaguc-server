@@ -11,10 +11,10 @@ int CCreateHistogram::createHistogram(CDataSource *dataSource, CDrawImage *) {
   CT::string resultJSON;
   if (dataSource->srvParams->JSONP.length() == 0) {
     CDBDebug("CREATING JSON");
-    printf("%s%s%c%c\n", "Content-Type: application/json", dataSource->srvParams->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+    printf("%s%s%c%c\n", "Content-Type: application/json", dataSource->srvParams->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
   } else {
     CDBDebug("CREATING JSONP %s", dataSource->srvParams->JSONP.c_str());
-    printf("%s%s%c%c", "Content-Type: application/javascript", dataSource->srvParams->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+    printf("%s%s%c%c", "Content-Type: application/javascript", dataSource->srvParams->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
     printf("\n%s(", dataSource->srvParams->JSONP.c_str());
   }
 
@@ -258,10 +258,10 @@ int CCreateHistogram::end() {
   CT::string resultJSON;
   if (baseDataSource->srvParams->JSONP.length() == 0) {
     CDBDebug("CREATING JSON");
-    printf("%s%s%c%c\n", "Content-Type: application/json", baseDataSource->srvParams->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+    printf("%s%s%c%c\n", "Content-Type: application/json", baseDataSource->srvParams->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
   } else {
     CDBDebug("CREATING JSONP %s", baseDataSource->srvParams->JSONP.c_str());
-    printf("%s%s%c%c", "Content-Type: application/javascript", baseDataSource->srvParams->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+    printf("%s%s%c%c", "Content-Type: application/javascript", baseDataSource->srvParams->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
     printf("\n%s(", baseDataSource->srvParams->JSONP.c_str());
   }
 
