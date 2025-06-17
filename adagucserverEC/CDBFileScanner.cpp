@@ -514,7 +514,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
           }
 
           // The file metadata does not already reside in the db.
-          // Therefore we need to read information from it
+          // Therefor we need to read information from it
           if (fileExistsInDB == 0) {
 #ifdef CDBFILESCANNER_DEBUG
             CDBDebug("fileExistsInDB == 0");
@@ -529,7 +529,8 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
 #ifdef CDBFILESCANNER_DEBUG
               CDBDebug("Creating new CDFObject");
 #endif
-              cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource, (*fileList)[j].c_str());
+              CDBDebug("New...");
+              cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource, (*fileList)[j].c_str(), true);
               if (cdfObject == NULL) {
                 CDBError("cdfObject == NULL");
                 throw(__LINE__);
@@ -670,36 +671,38 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
 
                 if (requiresProjectionInfo) {
                   CDataReader reader;
+                  CDataSource* tempDataSource = dataSource->clone();
                   // reader.enableReporting(false); //Functional tests fail if set to false
-                  dataSource->addStep((*fileList)[j].c_str(), NULL);
-                  reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
-                  //                      CDBDebug("---> CRS:  [%s]",dataSource->nativeProj4.c_str());
+                  tempDataSource->addStep((*fileList)[j].c_str(), NULL);
+                  reader.open(tempDataSource, CNETCDFREADER_MODE_OPEN_HEADER);
+                  //                      CDBDebug("---> CRS:  [%s]",tempDataSource->nativeProj4.c_str());
                   //                      CDBDebug("---> BBOX: [%f %f %f
-                  //                      %f]",dataSource->dfBBOX[0],dataSource->dfBBOX[1],dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
-                  /* crs = dataSource->nativeProj4.c_str();
-                   minx = dataSource->dfBBOX[0];
-                   miny = dataSource->dfBBOX[1];
-                   maxx = dataSource->dfBBOX[2];
-                   maxy = dataSource->dfBBOX[3];
+                  //                      %f]",tempDataSource->dfBBOX[0],tempDataSource->dfBBOX[1],tempDataSource->dfBBOX[2],tempDataSource->dfBBOX[3]);
+                  /* crs = tempDataSource->nativeProj4.c_str();
+                   minx = tempDataSource->dfBBOX[0];
+                   miny = tempDataSource->dfBBOX[1];
+                   maxx = tempDataSource->dfBBOX[2];
+                   maxy = tempDataSource->dfBBOX[3];
                    level = 1 ; //Highest detail, highest resolution, most files.
                   */
                   geoOptions.level = 0;
-                  geoOptions.proj4 = dataSource->nativeProj4.c_str();
-                  geoOptions.bbox[0] = dataSource->dfBBOX[0];
-                  geoOptions.bbox[1] = dataSource->dfBBOX[1];
-                  geoOptions.bbox[2] = dataSource->dfBBOX[2];
-                  geoOptions.bbox[3] = dataSource->dfBBOX[3];
+                  geoOptions.proj4 = tempDataSource->nativeProj4.c_str();
+                  geoOptions.bbox[0] = tempDataSource->dfBBOX[0];
+                  geoOptions.bbox[1] = tempDataSource->dfBBOX[1];
+                  geoOptions.bbox[2] = tempDataSource->dfBBOX[2];
+                  geoOptions.bbox[3] = tempDataSource->dfBBOX[3];
                   geoOptions.indices[0] = 0;
                   geoOptions.indices[1] = 1;
                   geoOptions.indices[2] = 2;
                   geoOptions.indices[3] = 3;
 
-                  CDF::Attribute *adagucTileLevelAttr = dataSource->getDataObject(0)->cdfObject->getAttributeNE("adaguctilelevel");
+                  CDF::Attribute *adagucTileLevelAttr = tempDataSource->getDataObject(0)->cdfObject->getAttributeNE("adaguctilelevel");
 
                   if (adagucTileLevelAttr != NULL) {
                     geoOptions.level = adagucTileLevelAttr->toString().toInt();
                     // CDBDebug( "Found adaguctilelevel %d in NetCDF header",geoOptions.level);
                   }
+                  delete tempDataSource;
                 }
                 if (dimVar->name.equals("none")) {
                   dbAdapter->setFileInt(tableNames[d].c_str(), (*fileList)[j].c_str(), int(0), int(0), fileDate.c_str(), &geoOptions);
@@ -832,6 +835,9 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
       }
       // End of dimloop, start inserting our collected records in one statement
       if (numberOfFilesAddedToDbStore % 50 == 0) dbAdapter->addFilesToDataBase();
+
+      CDBDebug("Delete...");
+//      delete cdfObject;cdfObject=NULL;
     }
 
     // End of dimloop, start inserting our collected records in one statement

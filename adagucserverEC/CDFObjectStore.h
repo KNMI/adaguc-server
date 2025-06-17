@@ -64,7 +64,7 @@ private:
 
 public:
   ~CDFObjectStore() { clear(); }
-  void deleteCDFObject(CDFObject **cdfObject);
+//  void deleteCDFObject(CDFObject **cdfObject);
   void deleteCDFObject(const char *fileName);
   /**
    * Gets the current allocated object store

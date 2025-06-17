@@ -41,10 +41,29 @@ const char *CDFObjectStore::className = "CDFObjectStore";
 #include "CDataReader.h"
 #include "CCDFCSVReader.h"
 // #define CDFOBJECTSTORE_DEBUG
-#define MAX_OPEN_FILES 500
+#define MAX_OPEN_FILES 10
 extern CDFObjectStore cdfObjectStore;
 CDFObjectStore cdfObjectStore;
 bool EXTRACT_HDF_NC_VERBOSE = false;
+
+
+std::string gen_random_string( size_t length )
+{
+  auto randchar = []() -> char
+  {
+    const char charset[] =
+        "0123456789"
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "abcdefghijklmnopqrstuvwxyz";
+    const size_t max_index = (sizeof(charset) - 1);
+    return charset[ rand() % max_index ];
+  };
+  std::string str(length,0);
+  std::generate_n( str.begin(), length, randchar );
+  return str;
+}
+
+
 /**
  * Get a CDFReader based on information in the datasource. In the Layer element this can be configured with <DataReader>HDF5</DataReader>
  * @param dataSource The configured datasource or NULL pointer. NULL pointer defaults to a NetCDF/OPeNDAP reader
@@ -228,6 +247,8 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, const char *fil
 CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *srvParams, const char *fileName, bool plain, bool cached) {
   CT::string uniqueIDForFile = fileName;
 
+  CDBDebug("Entering CDFObjectStore %s %d", fileName, cached);
+
   if (srvParams == NULL && dataSource != NULL) {
     srvParams = dataSource->srvParams;
   }
@@ -235,18 +256,22 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
     CDBError("getCDFObject:: srvParams is not set");
     throw(__LINE__);
   }
+  CDBDebug("%d %d %d", cached, fileNames.size(), cdfObjects.size());
   if (cached) {
     for (size_t j = 0; j < fileNames.size(); j++) {
       if (fileNames[j]->equals(uniqueIDForFile.c_str())) {
 #ifdef CDFOBJECTSTORE_DEBUG
         CDBDebug("Found CDFObject with filename %s", uniqueIDForFile.c_str());
 #endif
+        CDBDebug("Found existing object...");
         return cdfObjects[j];
       }
     }
   }
+  CDBDebug("Before while... %d", cdfObjects.size());
   if (cdfObjects.size() > MAX_OPEN_FILES) {
-    deleteCDFObject(&cdfObjects[0]);
+//    deleteCDFObject(&cdfObjects[0]);
+    deleteCDFObject(fileNames[0]->c_str());
   }
 #ifdef CDFOBJECTSTORE_DEBUG
   CDBDebug("Creating CDFObject with id %s", uniqueIDForFile.c_str());
@@ -309,9 +334,9 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
         if (!cfgVar->attr.orgname.empty()) {
           CDF::Variable *var = cdfObject->getVariable(cfgVar->attr.orgname);
           var->name.copy(cfgVar->value);
-          // This cdfobject should not be cached, as the variable
-          // can no longer be found by other layers using the same cdfobject.
-          cached = false;
+          // HACK: We want it in the cache (so the store is responsible for cleaning it up),
+          // but we don't want it reused.
+          uniqueIDForFile = gen_random_string(42).c_str();
         }
 
         // Set long_name
@@ -346,7 +371,9 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
 
   // CDBDebug("PUSHING %s",uniqueIDForFile.c_str());
   // Push everything into the store
+  CDBDebug("Cache still on? %d", cached);
   if (cached) {
+    CDBDebug("Caching...");
     fileNames.push_back(new CT::string(uniqueIDForFile.c_str()));
     cdfObjects.push_back(cdfObject);
     cdfReaders.push_back(cdfReader);
@@ -426,39 +453,47 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
 }
 CDFObjectStore *CDFObjectStore::getCDFObjectStore() { return &cdfObjectStore; };
 
-void CDFObjectStore::deleteCDFObject(CDFObject **cdfObject) {
-  // CDBDebug("Deleting CDFObject  %d", (*cdfObject));
-  int numDeleted = 0;
-  for (size_t j = 0; j < cdfObjects.size(); j++) {
-    if (cdfObjects[j] == (*cdfObject)) {
-      // CDBDebug("Closing %s",fileNames[j]->c_str());
-      delete cdfObjects[j];
-      cdfObjects[j] = NULL;
-      delete fileNames[j];
-      fileNames[j] = NULL;
-      delete cdfReaders[j];
-      cdfReaders[j] = NULL;
-
-      cdfObjects.erase(cdfObjects.begin() + j);
-      fileNames.erase(fileNames.begin() + j);
-      cdfReaders.erase(cdfReaders.begin() + j);
-
-      numDeleted++;
-    }
-  }
-  // CDBDebug("Deleted [%d] CDFObjects",numDeleted);
-  if (numDeleted != 0) {
-    deleteCDFObject(cdfObject);
-  } else {
-    (*cdfObject) = NULL;
-  }
-}
+//void CDFObjectStore::deleteCDFObject(CDFObject** cdfObject) {
+//  CDBDebug("Deleting CDFObject  %d", (*cdfObject));
+//  int numDeleted = 0;
+//  for (size_t j = 0; j < cdfObjects.size(); j++) {
+//    if (cdfObjects[j] == (*cdfObject)) {
+//      // CDBDebug("Closing %s",fileNames[j]->c_str());
+//      delete cdfObjects[j];
+//      cdfObjects[j] = NULL;
+//      delete fileNames[j];
+//      fileNames[j] = NULL;
+//      delete cdfReaders[j];
+//      cdfReaders[j] = NULL;
+//
+//      cdfObjects.erase(cdfObjects.begin() + j);
+//      fileNames.erase(fileNames.begin() + j);
+//      cdfReaders.erase(cdfReaders.begin() + j);
+//
+//      numDeleted++;
+//    }
+//  }
+//  // CDBDebug("Deleted [%d] CDFObjects",numDeleted);
+//  if (numDeleted != 0) {
+//    CDBDebug("Iterating...");
+//    deleteCDFObject(cdfObject);
+//  } else {
+//    (*cdfObject) = NULL;
+//  }
+//}
 
 void CDFObjectStore::deleteCDFObject(const char *fileName) {
-  // CDBDebug("Deleting CDFObject");
+  CDBDebug("Deleting CDFObject: %s", fileName);
+  CDBDebug("Size %d", cdfObjects.size());
+  CDBDebug("Size %d", fileNames.size());
+//  for (size_t j = 0; j < cdfObjects.size(); j++) {
+//    CDBDebug("%s", fileNames[j]->c_str());
+//  }
+  CT::string fn(fileName);
   int numDeleted = 0;
   for (size_t j = 0; j < cdfObjects.size(); j++) {
-    if (fileNames[j]->equals(fileName)) {
+//    CDBDebug("%s", fileNames[j]->c_str());
+    if (fileNames[j]->equals(fn)) {
       // CDBDebug("Closing %s",fileNames[j]->c_str());
       delete cdfObjects[j];
       cdfObjects[j] = NULL;
@@ -474,7 +509,8 @@ void CDFObjectStore::deleteCDFObject(const char *fileName) {
   }
   // CDBDebug("Deleted [%d] CDFObjects",numDeleted);
   if (numDeleted != 0) {
-    deleteCDFObject(fileName);
+    CDBDebug("Iterating...");
+    deleteCDFObject(fn.c_str());
   }
 }
 
