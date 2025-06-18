@@ -47,24 +47,6 @@ extern CDFObjectStore cdfObjectStore;
 CDFObjectStore cdfObjectStore;
 bool EXTRACT_HDF_NC_VERBOSE = false;
 
-
-std::string gen_random_string( size_t length )
-{
-  auto randchar = []() -> char
-  {
-    const char charset[] =
-        "0123456789"
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        "abcdefghijklmnopqrstuvwxyz";
-    const size_t max_index = (sizeof(charset) - 1);
-    return charset[ rand() % max_index ];
-  };
-  std::string str(length,0);
-  std::generate_n( str.begin(), length, randchar );
-  return str;
-}
-
-
 /**
  * Get a CDFReader based on information in the datasource. In the Layer element this can be configured with <DataReader>HDF5</DataReader>
  * @param dataSource The configured datasource or NULL pointer. NULL pointer defaults to a NetCDF/OPeNDAP reader
@@ -330,7 +312,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
           CDF::Variable *var = cdfObject->getVariable(cfgVar->attr.orgname);
           var->name.copy(cfgVar->value);
           // HACK: We want it in the cache (so the store is responsible for cleaning it up), but we don't want it reused.
-          uniqueIDForFile = uniqueIDForFile + "_" + gen_random_string(10).c_str();
+          uniqueIDForFile = uniqueIDForFile + "_" + CServerParams::randomString(10).c_str();
         }
 
         // Set long_name
