@@ -27,7 +27,7 @@
 #include "CCDFObject.h"
 #include "CCDFReader.h"
 #include "CTime.h"
-#include "traceTimings.h"
+#include "traceTimings/traceTimings.h"
 const char *CDF::Variable::className = "Variable";
 
 extern CDF::Variable::CustomMemoryReader customMemoryReaderInstance;
@@ -140,9 +140,9 @@ int CDF::Variable::readData(CDFType readType, size_t *_start, size_t *_count, pt
 }
 
 int CDF::Variable::readData(CDFType type, size_t *_start, size_t *_count, ptrdiff_t *_stride) {
-  traceTimingsSpanStart(TimingTraceType::FSREADVAR);
+  traceTimingsSpanStart(TraceTimingType::FSREADVAR);
   int status = _readData(type, _start, _count, _stride);
-  traceTimingsSpanEnd(TimingTraceType::FSREADVAR);
+  traceTimingsSpanEnd(TraceTimingType::FSREADVAR);
   return status;
 }
 

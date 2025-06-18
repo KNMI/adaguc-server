@@ -6,8 +6,9 @@ find_package(PNG REQUIRED)
 find_package(PROJ REQUIRED)
 
 add_library(CCDFDataModel
-    traceTimings.h
-    traceTimings.cpp
+    traceTimings/traceTimings.h
+    traceTimings/traceTimings.cpp
+    traceTimings/traceTimingsTests.cpp
     CCDFDataModel.h
     CCDFNetCDFIO.h
     CReadPNG.h
@@ -48,3 +49,6 @@ add_executable(testccdfdatamodel testccdfdatamodel.cpp)
 target_link_libraries(testccdfdatamodel PRIVATE CCDFDataModel hclasses)
 
 add_test(NAME testccdfdatamodel COMMAND "testccdfdatamodel" WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+add_test(traceTimingsTests traceTimingsTests)
+add_executable(traceTimingsTests traceTimings/traceTimingsTests.cpp)
+target_link_libraries(traceTimingsTests PRIVATE adagucserverEC hclasses CppUnitLite)

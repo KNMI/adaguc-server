@@ -1,7 +1,4 @@
-#include <stdio.h>
-#include <iostream>
-#include <map>
-#include <chrono>
+
 
 #include "traceTimings.h"
 #include "CDebugger.h"
@@ -9,38 +6,37 @@
 bool adagucTraceTimings = false;
 uint64_t tracingStart = 0;
 
-std::map<TimingTraceType, std::vector<uint64_t>> timingsMapRel;
+std::map<TraceTimingType, std::vector<uint64_t>> timingsMapRel;
 
-struct TraceInfo {
-  uint64_t total;
-  int numevents;
-};
-
-std::map<TimingTraceType, TraceInfo> timingsMapTotal;
+TraceTimingsReport timingsMapTotal;
 
 // Get time stamp in microseconds.
 uint64_t micros() {
   uint64_t us = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
   return us;
 }
-void traceTimingsCheckInit() {
+void traceTimingsCheckEnabled() {
   const char *ADAGUC_TRACE_TIMINGS = getenv("ADAGUC_TRACE_TIMINGS");
   if (ADAGUC_TRACE_TIMINGS != NULL) {
     CT::string check = ADAGUC_TRACE_TIMINGS;
     if (check.equalsIgnoreCase("true")) {
-      adagucTraceTimings = true;
-      tracingStart = micros();
+      traceTimingsEnableAndInit();
     }
   }
 }
 
-void traceTimingsSpanStart(TimingTraceType type) {
+void traceTimingsEnableAndInit() {
+  adagucTraceTimings = true;
+  tracingStart = micros();
+}
+
+void traceTimingsSpanStart(TraceTimingType type) {
   if (!adagucTraceTimings) return;
   auto current = micros();
   timingsMapRel[type].push_back(current);
 }
 
-void traceTimingsSpanEnd(TimingTraceType type) {
+void traceTimingsSpanEnd(TraceTimingType type) {
   if (!adagucTraceTimings) return;
   // Should not be zero, but it could happen. TODO, what if it does?
   if (timingsMapRel[type].size() == 0) {
@@ -59,33 +55,33 @@ void traceTimingsSpanEnd(TimingTraceType type) {
   timingsMapTotal[type].numevents++;
 }
 
-CT::string typeToString(TimingTraceType typein) {
+CT::string typeToString(TraceTimingType typein) {
   CT::string type;
   switch (typein) {
-  case TimingTraceType::DB:
+  case TraceTimingType::DB:
     return "DB";
-  case TimingTraceType::DBCONNECT:
+  case TraceTimingType::DBCONNECT:
     return "DBCONNECT";
-  case TimingTraceType::DBCHECKTABLE:
+  case TraceTimingType::DBCHECKTABLE:
     return "DBCHECKTABLE";
-  case TimingTraceType::DBCLOSE:
+  case TraceTimingType::DBCLOSE:
     return "DBCLOSE";
-  case TimingTraceType::FSREADVAR:
+  case TraceTimingType::FSREADVAR:
     return "FSREADVAR";
-  case TimingTraceType::WARPIMAGERENDER:
+  case TraceTimingType::WARPIMAGERENDER:
     return "WARPIMAGE.RENDER";
-  case TimingTraceType::WARPIMAGE:
+  case TraceTimingType::WARPIMAGE:
     return "WARPIMAGE";
-  case TimingTraceType::FSOPEN:
+  case TraceTimingType::FSOPEN:
     return "FSOPEN";
-  case TimingTraceType::APP:
+  case TraceTimingType::APP:
     return "APP";
   default:
     return "?";
   }
 }
 
-CT::string traceTimingsGetInfo() {
+CT::string traceTimingsGetReport() {
   if (!adagucTraceTimings) return "";
 
   CT::string summary;
@@ -107,6 +103,8 @@ CT::string traceTimingsGetInfo() {
 
 CT::string traceTimingsGetHeader() {
   if (!adagucTraceTimings) return "";
-  CT::string summary = traceTimingsGetInfo();
+  CT::string summary = traceTimingsGetReport();
   return CT::string("\r\nX-Trace-Timings: ") + summary;
 }
+
+TraceTimingsReport traceTimingsGetMap() { return timingsMapTotal; }

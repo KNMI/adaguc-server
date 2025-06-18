@@ -155,7 +155,7 @@ void CServerParams::_getCacheDirectory(CT::string *_cacheFileName) {
 #include <ctime>
 #include <sys/time.h>
 #include <CReadFile.h>
-#include "traceTimings.h"
+#include "traceTimings/traceTimings.h"
 
 const CT::string CServerParams::randomString(const int len) {
 #ifdef MEASURETIME

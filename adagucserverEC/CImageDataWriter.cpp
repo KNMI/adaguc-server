@@ -38,7 +38,7 @@
 #include "CImgWarpHillShaded.h"
 #include "CImgWarpGeneric.h"
 #include "CDataPostProcessors/CDataPostProcessor_UVComponents.h"
-#include "traceTimings.h"
+#include "traceTimings/traceTimings.h"
 
 CT::string months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 // #define CIMAGEDATAWRITER_DEBUG
@@ -1265,7 +1265,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
     return 1;
   }
 
-  traceTimingsSpanStart(TimingTraceType::WARPIMAGERENDER);
+  traceTimingsSpanStart(TraceTimingType::WARPIMAGERENDER);
   /**
    * Use fast nearest neighbourrenderer
    */
@@ -1513,7 +1513,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
   StopWatch_Stop("Thread[%d]: warp finished", dataSource->threadNr);
 #endif
 
-  traceTimingsSpanEnd(TimingTraceType::WARPIMAGERENDER);
+  traceTimingsSpanEnd(TraceTimingType::WARPIMAGERENDER);
   // imageWarper.closereproj();
   reader.close();
 
@@ -1810,9 +1810,9 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       CDBDebug("Start warping");
 #endif
 
-      traceTimingsSpanStart(TimingTraceType::WARPIMAGE);
+      traceTimingsSpanStart(TraceTimingType::WARPIMAGE);
       status = warpImage(dataSource, &drawImage);
-      traceTimingsSpanEnd(TimingTraceType::WARPIMAGE);
+      traceTimingsSpanEnd(TraceTimingType::WARPIMAGE);
 
 #ifdef CIMAGEDATAWRITER_DEBUG
       CDBDebug("Finished warping %s for step %d/%d", dataSource->layerName.c_str(), dataSource->getCurrentTimeStep(), dataSource->getNumTimeSteps());
@@ -3220,8 +3220,6 @@ int CImageDataWriter::end() {
   int status = 1;
 
   CT::string cacheControl = srvParam->getResponseHeaders(srvParam->getCacheControlOption());
-  CT::string timingsInfo = traceTimingsGetInfo();
-  drawImage.setText(timingsInfo.c_str(), timingsInfo.length(), 200, 130, CColor(0, 0, 0, 244), 22);
   if (srvParam->imageFormat == IMAGEFORMAT_IMAGEPNG8) {
     CDBDebug("Creating 8 bit png with alpha");
     printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl.c_str(), 13, 10);

@@ -29,7 +29,7 @@
 #include "CReportWriter.h"
 #include <getopt.h>
 
-#include "traceTimings.h"
+#include "traceTimings/traceTimings.h"
 #include "ProjCache.h"
 #include "adagucserver.h"
 #include "Types/ProjectionStore.h"
@@ -382,7 +382,7 @@ int _main(int argc, char **argv, char **) {
   setWarningFunction(serverWarningFunction);
   setDebugFunction(serverDebugFunction);
 
-  traceTimingsCheckInit();
+  traceTimingsCheckEnabled();
 
 #ifdef MEASURETIME
   StopWatch_Start();

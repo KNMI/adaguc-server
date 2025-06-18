@@ -24,7 +24,7 @@
  ******************************************************************************/
 
 #include "CPGSQLDB.h"
-#include "traceTimings.h"
+#include "traceTimings/traceTimings.h"
 // #define CPGSQLDB_DEBUG_H
 const char *CPGSQLDB::className = "CPGSQLDB";
 void CPGSQLDB::clearResult() {
@@ -45,9 +45,9 @@ CPGSQLDB::~CPGSQLDB() { close2(); }
 int CPGSQLDB::close2() {
   if (dConnected == 1) {
     clearResult();
-    traceTimingsSpanStart(TimingTraceType::DBCLOSE);
+    traceTimingsSpanStart(TraceTimingType::DBCLOSE);
     PQfinish(connection);
-    traceTimingsSpanEnd(TimingTraceType::DBCLOSE);
+    traceTimingsSpanEnd(TraceTimingType::DBCLOSE);
   }
   dConnected = 0;
   return 0;
@@ -57,9 +57,9 @@ int CPGSQLDB::connect(const char *pszOptions) {
   LastErrorMsg[0] = '\0';
   if (dConnected == 1) return 0;
   // CDBDebug("[DB CONNECT]");
-  traceTimingsSpanStart(TimingTraceType::DBCONNECT);
+  traceTimingsSpanStart(TraceTimingType::DBCONNECT);
   connection = PQconnectdb(pszOptions);
-  traceTimingsSpanEnd(TimingTraceType::DBCONNECT);
+  traceTimingsSpanEnd(TraceTimingType::DBCONNECT);
   if (PQstatus(connection) == CONNECTION_BAD) {
     snprintf(szTemp, CPGSQLDB_MAX_STR_LEN, "Connection to database failed: %s", PQerrorMessage(connection));
     CDBError(szTemp);
@@ -130,9 +130,9 @@ int CPGSQLDB::query(const char *pszQuery) {
 #ifdef CPGSQLDB_DEBUG_H
   CDBDebug("query PQexec %s", pszQuery);
 #endif
-  traceTimingsSpanStart(TimingTraceType::DB);
+  traceTimingsSpanStart(TraceTimingType::DB);
   result = PQexec(connection, pszQuery);
-  traceTimingsSpanEnd(TimingTraceType::DB);
+  traceTimingsSpanEnd(TraceTimingType::DB);
   if (PQresultStatus(result) != PGRES_COMMAND_OK) /* did the query fail? */
   {
     snprintf(LastErrorMsg, CPGSQLDB_MAX_STR_LEN, "%s: %s (%s)", PQresStatus(PQresultStatus(result)), PQresultErrorMessage(result), pszQuery);
@@ -202,19 +202,19 @@ CDBStore::Store *CPGSQLDB::_queryToStore(const char *pszQuery, bool throwExcepti
 
 CDBStore::Store *CPGSQLDB::queryToStore(const char *pszQuery, bool throwException) {
   try {
-    traceTimingsSpanStart(TimingTraceType::DB);
+    traceTimingsSpanStart(TraceTimingType::DB);
     auto result = this->_queryToStore(pszQuery, throwException);
-    traceTimingsSpanEnd(TimingTraceType::DB);
+    traceTimingsSpanEnd(TraceTimingType::DB);
     return result;
   } catch (int ex) {
-    traceTimingsSpanEnd(TimingTraceType::DB);
+    traceTimingsSpanEnd(TraceTimingType::DB);
     throw(ex);
   }
 }
 
 int CPGSQLDB::checkTable(const char *pszTableName, const char *pszColumns) {
-  traceTimingsSpanStart(TimingTraceType::DBCHECKTABLE);
+  traceTimingsSpanStart(TraceTimingType::DBCHECKTABLE);
   auto result = this->_checkTable(pszTableName, pszColumns);
-  traceTimingsSpanEnd(TimingTraceType::DBCHECKTABLE);
+  traceTimingsSpanEnd(TraceTimingType::DBCHECKTABLE);
   return result;
 }
