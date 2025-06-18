@@ -1895,12 +1895,13 @@ const char *CDrawImage::getFontLocation() { return this->TTFFontLocation; }
 float CDrawImage::getFontSize() { return this->TTFFontSize; }
 
 // TODO: Calculate actual width based on font size (with and without CAIRO)
-double CDrawImage::getTextWidth(const std::string &text, const std::string &fontPath, int fontSize, int angle) {
+int CDrawImage::getTextWidth(CT::string text, const std::string &fontPath, int fontSize, int angle) {
   constexpr double digit_width_factor = 0.6; // Not good even if we know the factor by font
-  int num_chars = text.length();
+  size_t num_chars = text.length();
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
     int w = 0, h = 0;
     cairo->getTextSize(w, h, angle, text.c_str());
+    CDBDebug("String %s is %d pixels wide", text.c_str(), w);
     return w;
   } else {
     return fontSize * digit_width_factor * num_chars;

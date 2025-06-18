@@ -267,7 +267,10 @@ public:
    */
   void setRenderer(int renderer);
 
-  double getTextWidth(const std::string &text, const std::string &fontPath, int fontSize, int angle);
+  /**
+   * Get renderer width of the given text, supports CDRAWIMAGERENDERER_CAIRO and otherwise an approximation
+   */
+  int getTextWidth(CT::string text, const std::string &fontPath, int fontSize, int angle);
 };
 
 #endif

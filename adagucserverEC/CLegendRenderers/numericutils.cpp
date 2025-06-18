@@ -4,7 +4,7 @@
 int fieldWidth(std::vector<CT::string> column) {
   int intWidth = maxIntWidth(column);
   int decWidth = maxDecimalWidth(column);
-  int signWidth = negWidth(column);
+  int signWidth = hasNeg(column);
 
   if (decWidth > 0) {
     return intWidth + signWidth + 1 + decWidth;
@@ -27,7 +27,7 @@ int maxIntWidth(std::vector<CT::string> column) {
   return width;
 }
 
-int negWidth(std::vector<CT::string> column) {
+int hasNeg(std::vector<CT::string> column) {
   int isNeg = 0;
 
   for (const CT::string &item : column) {
@@ -53,13 +53,38 @@ int maxDecimalWidth(std::vector<CT::string> column) {
   return width;
 }
 
-int fieldWidthAsPixels(std::vector<CT::string> column, int dotWidth, int numbericGlyphWidth) {
+int fieldWidthAsPixels(std::vector<CT::string> column, int dashWidth, int dotWidth, int numbericGlyphWidth) {
   int intWidth = maxIntWidth(column);
   int decWidth = maxDecimalWidth(column);
+  int hasDash = hasNeg(column);
 
   if (decWidth > 0) {
-    return intWidth * numbericGlyphWidth + 1 + decWidth;
+    return intWidth * numbericGlyphWidth + hasDash * dashWidth + decWidth;
   } else {
-    return intWidth * numbericGlyphWidth;
+    return intWidth * numbericGlyphWidth + hasDash * dashWidth;
   }
+}
+
+std::vector<CT::string> extractColumn(size_t drawIntervals, int minInterval, std::vector<CServerConfig::XMLE_ShadeInterval *> *shadeIntervals, bool isMin) {
+  // We calculate the min column
+  // Convert the min into an array of CT::string
+  std::vector<CT::string> column;
+  for (size_t j = 0; j < drawIntervals; j++) {
+    size_t realj = minInterval + j;
+    CServerConfig::XMLE_ShadeInterval *s = (*shadeIntervals)[realj];
+    if (!s->attr.min.empty() && !s->attr.max.empty()) {
+      if (isMin) {
+        if ((int)(std::abs(parseFloat(s->attr.min.c_str()))) % 5 != 0) {
+          continue;
+        }
+        column.push_back(s->attr.min.c_str());
+      } else {
+        if ((int)(std::abs(parseFloat(s->attr.max.c_str()))) % 5 != 0) {
+          continue;
+        }
+        column.push_back(s->attr.max.c_str());
+      }
+    }
+  }
+  return column;
 }

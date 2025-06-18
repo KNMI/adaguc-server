@@ -1,6 +1,7 @@
 #include "CCreateLegend.h"
 #include "CDataReader.h"
 #include "CImageDataWriter.h"
+#include "numericutils.h"
 
 #define MIN_SHADE_CLASS_BLOCK_SIZE 3
 #define MAX_SHADE_CLASS_BLOCK_SIZE 12
@@ -209,8 +210,16 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
         CDBDebug("maxTextWidth = %d", maxTextWidth);
       }
 
+      std::vector<CT::string> minColumn = extractColumn(drawIntervals, minInterval, styleConfiguration->shadeIntervals, true);
+      std::vector<CT::string> maxColumn = extractColumn(drawIntervals, minInterval, styleConfiguration->shadeIntervals, false);
+
       // Recalculate block size based on the final intervals to appear on the legend
       float blockHeight = calculateShadeClassBlockHeight(legendImage->Geo->dHeight, drawIntervals - 1);
+      int dashWidth = legendImage->getTextWidth("-", fontLocation.c_str(), fontSize * scaling, angle);
+      int dotWidth = legendImage->getTextWidth(".", fontLocation.c_str(), fontSize * scaling, angle);
+      // Assume monospaced for numbers
+      int numberWidth = legendImage->getTextWidth("0", fontLocation.c_str(), fontSize * scaling, angle);
+
       for (size_t j = 0; j < drawIntervals; j++) {
         size_t realj = minInterval + j;
         CServerConfig::XMLE_ShadeInterval *s = (*styleConfiguration->shadeIntervals)[realj];
@@ -233,8 +242,6 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
           int textWidth = legendImage->getTextWidth(szTemp, fontLocation.c_str(), fontSize * scaling, angle);
           int textX = ((int)cbW + 12 + pLeft) * scaling + (maxTextWidth - textWidth);
           legendImage->drawText(textX, (cY1 + pTop) - ((fontSize * scaling) / 4) + 3, fontLocation.c_str(), fontSize * scaling, angle, szTemp, 248);
-
-          // legendImage->drawText(((int)cbW + 12 + pLeft) * scaling, (cY1 + pTop) - ((fontSize * scaling) / 4) + 3, fontLocation.c_str(), fontSize * scaling, 0, szTemp, 248);
         }
       }
     } else {
@@ -271,7 +278,29 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
       }
 
       float blockHeight = calculateShadeClassBlockHeight(legendImage->Geo->dHeight, drawIntervals);
+      int dashWidth = legendImage->getTextWidth("-", fontLocation.c_str(), fontSize * scaling, angle);
+      int dotWidth = legendImage->getTextWidth(".", fontLocation.c_str(), fontSize * scaling, angle);
+      // Assume monospaced for numbers
+      int numberWidth = legendImage->getTextWidth("0", fontLocation.c_str(), fontSize * scaling, angle);
+
+      // We calculate the min column
+      // Convert the min into an array of CT::string
+      std::vector<CT::string> minColumn;
       for (size_t j = 0; j < drawIntervals; j++) {
+        size_t realj = minInterval + j;
+        CServerConfig::XMLE_ShadeInterval *s = (*styleConfiguration->shadeIntervals)[realj];
+        if (!s->attr.min.empty() && !s->attr.max.empty()) {
+          if ((int)(std::abs(parseFloat(s->attr.min.c_str()))) % 5 != 0) {
+            continue;
+          }
+          minColumn.push_back(s->attr.min.c_str());
+        }
+      }
+
+      std::vector<CT::string> maxColumn = extractColumn(drawIntervals, minInterval, styleConfiguration->shadeIntervals, false);
+
+      for (size_t j = 0; j < drawIntervals; j++) {
+        CDBDebug("Interval loop iteration");
         size_t realj = minInterval + j;
         CServerConfig::XMLE_ShadeInterval *s = (*styleConfiguration->shadeIntervals)[realj];
         if (s->attr.min.empty() == false && s->attr.max.empty() == false) {
@@ -291,26 +320,73 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
             int textY = (cY1 + pTop) - ((fontSize * scaling) / 4) + 3;
 
             // Right edge of the min column
-            int colMinRight = ((int)cbW + 12 + pLeft) * scaling + maxTextWidthMin;
+            int colRightMin = ((int)cbW + 12 + pLeft) * scaling + maxTextWidthMin;
+            int columnCenterMin = colRightMin - maxDecimalWidth(minColumn) * numberWidth;
 
             // Right edge of the max column (min column + extra spacing + max column width)
-            int colMaxRight = colMinRight + (10 * scaling) + maxTextWidthMax;
+            int colRightMax = colRightMin + (10 * scaling) + maxTextWidthMax;
 
             // Draw min right-aligned
+            // snprintf(szTemp, sizeof(szTemp), "%s", s->attr.min.c_str());
+            // int textWidthMin = legendImage->getTextWidth(szTemp, fontLocation.c_str(), fontSize * scaling, angle);
+            // int textXMin = colMinRight - textWidthMin;
+            // legendImage->drawText(textXMin, textY, fontLocation.c_str(), fontSize * scaling, angle, szTemp, 248);
+
+            // Draw min, dot-aligned
             snprintf(szTemp, sizeof(szTemp), "%s", s->attr.min.c_str());
-            int textWidthMin = legendImage->getTextWidth(szTemp, fontLocation.c_str(), fontSize * scaling, angle);
-            int textXMin = colMinRight - textWidthMin;
+            const char *dotPos = strchr(szTemp, '.');
+            const char *negPos = strchr(szTemp, '-');
+            // Problem: The debug statement below returns weird stuff
+            // negative sign found at -2054485040 for string -80
+            // negative sign found at 0 for string 4.5
+            // Solution: Check if different from zero
+            CDBDebug("--- negative sign found at %d for string %s", negPos, szTemp);
+            bool isNeg = strchr(szTemp, '-') != 0;
+            if (isNeg) {
+              CDBDebug("--- Number %s is negative", szTemp);
+            }
+            int leftCharsMin = dotPos ? (dotPos - szTemp) : strlen(szTemp); // chars before dot
+            int textXMin = columnCenterMin - (leftCharsMin * numberWidth);
+            if (isNeg) {
+              textXMin = textXMin + dashWidth; // Make space for the negative dash
+            }
+            // textXMin = textXMin + ((int)cbW + 12 + pLeft) * scaling; // test (probably use block size + margin)
+            textXMin = textXMin + ((int)cbW + pLeft + 2) * scaling;
+
+            CDBDebug("Drawing min");
             legendImage->drawText(textXMin, textY, fontLocation.c_str(), fontSize * scaling, angle, szTemp, 248);
 
             // Central dash
-            int dashWidth = legendImage->getTextWidth("-", fontLocation.c_str(), fontSize * scaling, angle);
-            int dashX = colMinRight + (5 * scaling); // small gap from min column (maybe remove or use fixed no of pixels?)
-            legendImage->drawText(dashX, textY, fontLocation.c_str(), fontSize * scaling, angle, "-", 248);
+            CDBDebug("Drawing dash");
+            int dashWidth = legendImage->getTextWidth("–", fontLocation.c_str(), fontSize * scaling, angle);
+            int dashX = colRightMin + (12 * scaling); // small gap from min column (maybe remove or use fixed no of pixels?)
+            legendImage->drawText(dashX, textY, fontLocation.c_str(), fontSize * scaling, angle, "–", 248);
 
-            // MAx column
+            // Max column
+            CDBDebug("Drawing max");
+            // Draw max, dot-aligned
             snprintf(szTemp, sizeof(szTemp), "%s", s->attr.max.c_str());
-            int textWidthMax = legendImage->getTextWidth(szTemp, fontLocation.c_str(), fontSize * scaling, angle);
-            int textXMax = colMaxRight - textWidthMax + dashWidth;
+            const char *dotPosMax = strchr(szTemp, '.');
+            const char *negPosMax = strchr(szTemp, '-');
+            bool isNegMax = negPosMax != 0;
+            if (isNegMax) {
+              CDBDebug("--- Max number %s is negative", szTemp);
+            }
+
+            int leftCharsMax = dotPosMax ? (dotPosMax - szTemp) : strlen(szTemp);
+
+            // Calculate column center for max value
+            int columnCenterMax = colRightMax - maxDecimalWidth(maxColumn) * numberWidth;
+
+            // Align max string so that the dot falls on the column center
+            int textXMax = columnCenterMax - (leftCharsMax * numberWidth);
+            if (isNegMax) {
+              textXMax = textXMax + dashWidth; // account for negative sign width
+            }
+
+            // Apply overall left offset plus some spacing
+            textXMax += ((int)cbW + pLeft + 15) * scaling; // Think of the 15 number
+
             legendImage->drawText(textXMax, textY, fontLocation.c_str(), fontSize * scaling, angle, szTemp, 248);
 
           } else {
