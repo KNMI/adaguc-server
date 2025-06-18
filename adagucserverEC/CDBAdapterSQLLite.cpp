@@ -920,7 +920,7 @@ CT::string CDBAdapterSQLLite::getTableNameForPathFilterAndDimension(const char *
       CT::string randomTableString = "t";
       randomTableString.concat(CTime::currentDateTime());
       randomTableString.concat("_");
-      randomTableString.concat(CServerParams::randomString(20));
+      randomTableString.concat(CServerParams::randomString(20).c_str());
       randomTableString.replaceSelf(":", "");
       randomTableString.replaceSelf(".", "");
       randomTableString.replaceSelf("-", "");
