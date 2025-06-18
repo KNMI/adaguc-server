@@ -22,7 +22,10 @@
  * limitations under the License.
  *
  ******************************************************************************/
-
+#include <algorithm>
+#include <cstdio>
+#include <random>
+#include "CReadFile.h"
 #include "CServerParams.h"
 #include "CStopWatch.h"
 const char *CServerParams::className = "CServerParams";
@@ -72,7 +75,7 @@ void CServerParams::getCacheFileName(CT::string *cacheFileName) {
   CT::string cacheName("WMSCACHE");
   bool useProvidedCacheFileName = false;
   // Check wether a cachefile has been provided in the config
-  if (cfg->CacheDocs.size() > 0) {
+  if (!cfg->CacheDocs.empty()) {
     if (cfg->CacheDocs[0]->attr.cachefile.empty() == false) {
       useProvidedCacheFileName = true;
       cacheName.concat("_");
@@ -107,94 +110,38 @@ void CServerParams::getCacheFileName(CT::string *cacheFileName) {
   cacheFileName->concat("/simplecachestore.dat");
 }
 
-void CServerParams::_getCacheDirectory(CT::string *_cacheFileName) {
-  CT::string cacheFileName;
-  // CDBDebug("getCacheDirectory");
-  CT::string cacheName("WMSCACHE");
-  bool useProvidedCacheFileName = false;
-  // Check wether a cachefile has been provided in the config
-  if (cfg->CacheDocs.size() > 0) {
-    if (cfg->CacheDocs[0]->attr.cachefile.empty() == false) {
-      useProvidedCacheFileName = true;
-      cacheName.concat("_");
-      cacheName.concat(cfg->CacheDocs[0]->attr.cachefile.c_str());
-    }
-  }
-  if (useProvidedCacheFileName == false) {
-    // If no cache filename is provided, we will create a standard one
-    // Based on the name of the configuration file
-    cacheName.concat(&configFileName);
-    for (size_t j = 0; j < cacheName.length(); j++) {
-      char c = cacheName.charAt(j);
-      if (c == '/') c = '_';
-      if (c == '\\') c = '_';
-      if (c == '.') c = '_';
-      cacheName.setChar(j, c);
-    }
-  }
-  // Insert the tmp dir in the beginning
-  cacheFileName.copy(cfg->TempDir[0]->attr.value.c_str());
-  cacheFileName.concat("/");
-  cacheFileName.concat(&cacheName);
 
-  // Split up
-
-  int maxlength = 200;
-  size_t nrStrings = (cacheFileName.length() / maxlength) + 1;
-  CT::string myidinparts = "";
-  for (size_t j = 0; j < nrStrings; j++) {
-    myidinparts += "/";
-    myidinparts += cacheFileName.substring(j * maxlength, j * maxlength + maxlength);
-  }
-  _cacheFileName->copy(myidinparts.c_str());
-}
-
-#include <stdio.h>
-#define USE_DEVRANDOM
-
-#include <ctime>
-#include <sys/time.h>
-#include <CReadFile.h>
-
-const CT::string CServerParams::randomString(const int len) {
+std::string CServerParams::randomString(const int length) {
 #ifdef MEASURETIME
   StopWatch_Stop(">CServerParams::randomString");
 #endif
 
-  char s[len + 1];
+  const char charset[] =
+      "0123456789"
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+      "abcdefghijklmnopqrstuvwxyz";
+  // -1 for the \0 and -1 because uniform_int_distribution uses closed bounds
+  const size_t max_index = (sizeof(charset) - 2);
 
-  timeval curTime;
-  gettimeofday(&curTime, NULL);
+  static std::mt19937 engine=[](){
+    std::random_device rd;
+    return std::mt19937(rd());
+  }();
+  static std::uniform_int_distribution<int> dist(0, max_index);
 
-#ifdef USE_DEVRANDOM
-  FILE *randomData = fopen("/dev/urandom", "r");
-  int myRandomInteger;
-  (void)!fread(&myRandomInteger, sizeof myRandomInteger, 1, randomData);
-  srand(myRandomInteger);
-  fclose(randomData);
-#else
-  srand((curTime.tv_sec * 1000) + (curTime.tv_usec / 1000));
-#endif
+  auto randChar = [&charset]() -> char {return charset[dist(engine)];};
 
-  static const char alphanum[] = "0123456789"
-                                 "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                                 "abcdefghijklmnopqrstuvwxyz";
-
-  for (int i = 0; i < len; ++i) {
-    s[i] = alphanum[rand() % (sizeof(alphanum) - 1)];
-  }
-
-  s[len] = 0;
-  CT::string r = s;
+  std::string str(length, 0);
+  std::generate_n(str.begin(), length, randChar);
 
 #ifdef MEASURETIME
   StopWatch_Stop("<CServerParams::randomString");
 #endif
-  return r;
+  return str;
 }
 
 // Table names need to be different between dims like time and height.
-//  Therefore create unique tablenames like tablename_time and tablename_height
+//  Therefor create unique tablenames like tablename_time and tablename_height
 CT::string CServerParams::makeCorrectTableName(CT::string tableName, CT::string dimName) {
   CT::string correctedTableName;
   correctedTableName.print("%s_%s", tableName.c_str(), dimName.c_str());
