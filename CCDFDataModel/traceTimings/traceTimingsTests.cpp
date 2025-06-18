@@ -48,6 +48,8 @@ TEST(TraceTimings, traceTimingsEnableAndInit) {
   CHECK(mapReport[TraceTimingType::WARPIMAGE].numevents == 2);
   CHECK(mapReport[TraceTimingType::DB].numevents == 1);
   CHECK(mapReport[TraceTimingType::DBCHECKTABLE].numevents == 3);
+
+  CHECK(mapReport[TraceTimingType::FSOPEN].numevents == 0);
 }
 
 int main() {
