@@ -529,7 +529,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
 #ifdef CDBFILESCANNER_DEBUG
               CDBDebug("Creating new CDFObject");
 #endif
-              cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource, (*fileList)[j].c_str(), true);
+              cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource, (*fileList)[j].c_str());
               if (cdfObject == NULL) {
                 CDBError("cdfObject == NULL");
                 throw(__LINE__);
