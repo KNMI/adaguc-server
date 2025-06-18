@@ -7,7 +7,7 @@ List and overview of environment variables.
 - TRUE: Measure timings like how much amount is spent on database queries, fileaccess and image generation
 - FALSE: off.
 
-The information logged and made available in a header named `x-trace-timings`. 
+The information is logged and made available in a header named `x-trace-timings`. 
 
 ## ADAGUC_ENABLELOGBUFFER
 
