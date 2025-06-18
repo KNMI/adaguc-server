@@ -202,7 +202,7 @@ CDFReader *CDFObjectStore::getCDFReader(const char *fileName) {
   return cdfReader;
 }
 
-CDFObject *CDFObjectStore::getCDFObjectHeader(CDataSource *dataSource, CServerParams *srvParams, const char *fileName, bool cached) {
+CDFObject *CDFObjectStore::getCDFObjectHeader(CDataSource *dataSource, CServerParams *srvParams, const char *fileName, const bool cached) {
   if (srvParams == NULL) {
     CDBError("srvParams == NULL");
     return NULL;
@@ -211,7 +211,7 @@ CDFObject *CDFObjectStore::getCDFObjectHeader(CDataSource *dataSource, CServerPa
   return getCDFObject(dataSource, srvParams, fileName, false, cached);
 }
 
-CDFObject *CDFObjectStore::getCDFObjectHeaderPlain(CDataSource *dataSource, CServerParams *srvParams, const char *fileName, bool cached) {
+CDFObject *CDFObjectStore::getCDFObjectHeaderPlain(CDataSource *dataSource, CServerParams *srvParams, const char *fileName, const bool cached) {
   if (srvParams == NULL) {
     CDBError("srvParams == NULL");
     return NULL;
@@ -225,9 +225,9 @@ CDFObject *CDFObjectStore::getCDFObjectHeaderPlain(CDataSource *dataSource, CSer
  * @param dataSource The configured datasource or NULL pointer. NULL pointer defaults to a NetCDF/OPeNDAP reader
  * @param fileName The filename to read.
  */
-CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, const char *fileName, bool cached) { return getCDFObject(dataSource, NULL, fileName, false, cached); }
+CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, const char *fileName, const bool cached) { return getCDFObject(dataSource, NULL, fileName, false, cached); }
 
-CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *srvParams, const char *fileName, bool plain, bool cached) {
+CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *srvParams, const char *fileName, bool plain, const bool cached) {
   CT::string uniqueIDForFile = fileName;
 
   if (srvParams == NULL && dataSource != NULL) {
