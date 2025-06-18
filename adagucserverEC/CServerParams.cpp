@@ -28,6 +28,7 @@
 #include "CReadFile.h"
 #include "CServerParams.h"
 #include "CStopWatch.h"
+#include <traceTimings/traceTimings.h>
 const char *CServerParams::className = "CServerParams";
 
 CServerParams::CServerParams() {
