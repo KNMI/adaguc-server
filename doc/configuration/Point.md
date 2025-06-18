@@ -1,4 +1,4 @@
-Point(min,max,pointstyle,fillcolor,linecolor,textcolor,textformat,fontfile,fontsize,discradius,textradius,dot,anglestart,anglestop,plotstationid)
+Point(min,max,pointstyle,fillcolor,linecolor,textcolor,textoutlinecolor, textformat,fontfile,fontsize,discradius,textradius,dot,anglestart,anglestop,plotstationid)
 =================================================================================================================================================
 
 Back to [Configuration](./Configuration.md)
@@ -36,7 +36,7 @@ no text is rendered when textformat is set to a blank space (" ").
 ### Pointstyle point
 
 ```xml
-  <Point fillcolor="" linecolor="" textcolor="" fontfile="" fontsize="" discradius="5" textradius="" textformat="%f" dot="false" anglestart="" anglestep="" plotstationid="true" pointstyle="point"></Point>
+  <Point fillcolor="" linecolor="" textcolor="" textoutlinecolor ="" fontfile="" fontsize="" discradius="5" textradius="" textformat="%f" dot="false" anglestart="" anglestep="" plotstationid="true" pointstyle="point"></Point>
   <RenderMethod>point</RenderMethod>
 ```
 This pointstyle draws a circle at the station location, coloured
@@ -60,11 +60,13 @@ specified fixed color. A circle will be drawn around the disc in the
 The attribute **dot** plots a dot at the station's location; this can be
 useful during testing of the configuration of a point data style.
 
+In case of plotting text only (**discradius** of 0), a **textoutlinecolor** can be set. This will draw an outline around the text in the specified color. 
+
 Single variable layer example: ![](point1.png)
 
 Multiple variable layer example: ![](point3.png)
 
-Example:
+Text only with a **textoutlinecolor** example: ![](point4.png)
 
 ### Pointstyle disc
 
@@ -74,7 +76,7 @@ The attribute **discradius** defines the size of the disc on which the
 value text is drawn, **fillcolor** defines the color of the disc (this
 color can contain transparency).
 
-The attributes **anglestart**, **anglestep**, **linecolor**,
+The attributes **anglestart**, **anglestep**, **linecolor**, **textoutlinecolor**,
 **plotstationid** and **textradius** have no meaning here.
 
 Example with temperature data:
@@ -89,7 +91,7 @@ The base color of the disc is defined by the **fillcolor** attribute.
 A station id is plotted if the **plotstationid** attribute has the value
 true.
 
-The attributes **anglestart**, **anglestep**, **linecolor** and
+The attributes **anglestart**, **anglestep**, **linecolor**, **textoutlinecolor** and
 **textradius** have no meaning here.
 
 Example:

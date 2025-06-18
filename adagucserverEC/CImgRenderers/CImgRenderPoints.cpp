@@ -335,7 +335,7 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
               if (drawPointPlotStationId) {
                 drawImage->drawCenteredText(x, y + drawPointTextRadius + 3, drawPointFontFile, drawPointFontSize, 0, t.c_str(), drawPointTextColor);
               } else {
-                drawImage->drawCenteredText(x, y, drawPointFontFile, drawPointFontSize, 0, t.c_str(), drawPointTextColor);
+                drawImage->drawCenteredText(x, y, drawPointFontFile, drawPointFontSize, 0, t.c_str(), drawPointTextColor, drawPointTextOutlineColor);
               }
             } else {                        // Text and disc
               if (!useDrawPointFillColor) { //(dataSource->getNumDataObjects()==1) {
