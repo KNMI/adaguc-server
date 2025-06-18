@@ -1084,12 +1084,17 @@ CCairoPlotter *CDrawImage::getCairoPlotter(const char *fontfile, float size, int
   }
 }
 
-void CDrawImage::drawCenteredText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color) {
+void CDrawImage::drawCenteredText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color, CColor textOutlineColor) {
 
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
     CCairoPlotter *freeType = this->getCairoPlotter(fontfile, size, Geo->dWidth, Geo->dHeight, cairo->getByteBuffer());
     freeType->setColor(color.r, color.g, color.b, color.a);
-    freeType->drawCenteredText(x, y, angle, text);
+    if (textOutlineColor.a == 0) {
+      freeType->drawCenteredText(x, y, angle, text);
+    } else {
+      freeType->drawStrokedText(x, y, angle, text, size + 6, 1, textOutlineColor, color, true);
+    }
+
     cairo->isAlphaUsed |= freeType->isAlphaUsed; // remember freetype's isAlphaUsed flag
   } else {
     // TODO GD renderer does not center text yet

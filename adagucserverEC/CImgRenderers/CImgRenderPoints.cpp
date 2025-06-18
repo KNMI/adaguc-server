@@ -649,6 +649,7 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
   drawPointPlotStationId = false;
   drawPointTextFormat = "%0.1f";
   drawPointTextColor = CColor(0, 0, 0, 255);
+  drawPointTextOutlineColor = CColor(255, 255, 255, 0);
   drawPointFillColor = CColor(0, 0, 0, 128);
   drawPointLineColor = CColor(0, 0, 0, 255);
   defaultColor = CColor(0, 0, 0, 255);
@@ -690,6 +691,9 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
     if (pointConfig->attr.textcolor.empty() == false) {
       drawPointTextColor.parse(pointConfig->attr.textcolor.c_str());
       useDrawPointTextColor = true;
+    }
+    if (pointConfig->attr.textoutlinecolor.empty() == false) {
+      drawPointTextOutlineColor.parse(pointConfig->attr.textoutlinecolor.c_str());
     }
     if (pointConfig->attr.fontfile.empty() == false) {
       drawPointFontFile = pointConfig->attr.fontfile.c_str();
