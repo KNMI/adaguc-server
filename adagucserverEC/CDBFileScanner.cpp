@@ -514,7 +514,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
           }
 
           // The file metadata does not already reside in the db.
-          // Therefore we need to read information from it
+          // Therefor we need to read information from it
           if (fileExistsInDB == 0) {
 #ifdef CDBFILESCANNER_DEBUG
             CDBDebug("fileExistsInDB == 0");

@@ -99,6 +99,7 @@ int CPGSQLDB::_checkTable(const char *pszTableName, const char *pszColumns) {
     clearResult();
     return 0;
   }
+  clearResult();
 
   // No table exists yet
   queryString.print("CREATE TABLE %s (%s)", pszTableName, pszColumns);

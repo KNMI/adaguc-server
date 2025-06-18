@@ -441,7 +441,7 @@ int CTime::init(const char *units, const char *calendar) {
   }
 
   // Try udunits
-  if (utInit("") != 0) {
+  if (!utIsInit() && utInit("") != 0) {
     CDBError("Couldn't initialize Unidata units library, try setting UDUNITS_PATH to udunits.dat or try setting UDUNITS2_XML_PATH to udunits2.xml");
     return 1;
   }
