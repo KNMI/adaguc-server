@@ -25,6 +25,7 @@
 
 #include "CDFObjectStore.h"
 const char *CDFObjectStore::className = "CDFObjectStore";
+#include <algorithm>
 #include "CConvertASCAT.h"
 #include "CConvertUGRIDMesh.h"
 #include "CConvertADAGUCVector.h"
@@ -41,7 +42,7 @@ const char *CDFObjectStore::className = "CDFObjectStore";
 #include "CDataReader.h"
 #include "CCDFCSVReader.h"
 // #define CDFOBJECTSTORE_DEBUG
-#define MAX_OPEN_FILES 10
+#define MAX_OPEN_FILES 500
 extern CDFObjectStore cdfObjectStore;
 CDFObjectStore cdfObjectStore;
 bool EXTRACT_HDF_NC_VERBOSE = false;
@@ -247,8 +248,6 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, const char *fil
 CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *srvParams, const char *fileName, bool plain, bool cached) {
   CT::string uniqueIDForFile = fileName;
 
-  CDBDebug("Entering CDFObjectStore %s %d", fileName, cached);
-
   if (srvParams == NULL && dataSource != NULL) {
     srvParams = dataSource->srvParams;
   }
@@ -256,22 +255,18 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
     CDBError("getCDFObject:: srvParams is not set");
     throw(__LINE__);
   }
-  CDBDebug("%d %d %d", cached, fileNames.size(), cdfObjects.size());
   if (cached) {
     for (size_t j = 0; j < fileNames.size(); j++) {
       if (fileNames[j]->equals(uniqueIDForFile.c_str())) {
 #ifdef CDFOBJECTSTORE_DEBUG
         CDBDebug("Found CDFObject with filename %s", uniqueIDForFile.c_str());
 #endif
-        CDBDebug("Found existing object...");
         return cdfObjects[j];
       }
     }
   }
-  CDBDebug("Before while... %d", cdfObjects.size());
   if (cdfObjects.size() > MAX_OPEN_FILES) {
-//    deleteCDFObject(&cdfObjects[0]);
-    deleteCDFObject(fileNames[0]->c_str());
+    deleteCDFObject(*fileNames[0]);
   }
 #ifdef CDFOBJECTSTORE_DEBUG
   CDBDebug("Creating CDFObject with id %s", uniqueIDForFile.c_str());
@@ -334,9 +329,8 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
         if (!cfgVar->attr.orgname.empty()) {
           CDF::Variable *var = cdfObject->getVariable(cfgVar->attr.orgname);
           var->name.copy(cfgVar->value);
-          // HACK: We want it in the cache (so the store is responsible for cleaning it up),
-          // but we don't want it reused.
-          uniqueIDForFile = gen_random_string(42).c_str();
+          // HACK: We want it in the cache (so the store is responsible for cleaning it up), but we don't want it reused.
+          uniqueIDForFile = uniqueIDForFile + "_" + gen_random_string(10).c_str();
         }
 
         // Set long_name
@@ -371,9 +365,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
 
   // CDBDebug("PUSHING %s",uniqueIDForFile.c_str());
   // Push everything into the store
-  CDBDebug("Cache still on? %d", cached);
   if (cached) {
-    CDBDebug("Caching...");
     fileNames.push_back(new CT::string(uniqueIDForFile.c_str()));
     cdfObjects.push_back(cdfObject);
     cdfReaders.push_back(cdfReader);
@@ -453,64 +445,26 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
 }
 CDFObjectStore *CDFObjectStore::getCDFObjectStore() { return &cdfObjectStore; };
 
-//void CDFObjectStore::deleteCDFObject(CDFObject** cdfObject) {
-//  CDBDebug("Deleting CDFObject  %d", (*cdfObject));
-//  int numDeleted = 0;
-//  for (size_t j = 0; j < cdfObjects.size(); j++) {
-//    if (cdfObjects[j] == (*cdfObject)) {
-//      // CDBDebug("Closing %s",fileNames[j]->c_str());
-//      delete cdfObjects[j];
-//      cdfObjects[j] = NULL;
-//      delete fileNames[j];
-//      fileNames[j] = NULL;
-//      delete cdfReaders[j];
-//      cdfReaders[j] = NULL;
-//
-//      cdfObjects.erase(cdfObjects.begin() + j);
-//      fileNames.erase(fileNames.begin() + j);
-//      cdfReaders.erase(cdfReaders.begin() + j);
-//
-//      numDeleted++;
-//    }
-//  }
-//  // CDBDebug("Deleted [%d] CDFObjects",numDeleted);
-//  if (numDeleted != 0) {
-//    CDBDebug("Iterating...");
-//    deleteCDFObject(cdfObject);
-//  } else {
-//    (*cdfObject) = NULL;
-//  }
-//}
-
-void CDFObjectStore::deleteCDFObject(const char *fileName) {
-  CDBDebug("Deleting CDFObject: %s", fileName);
-  CDBDebug("Size %d", cdfObjects.size());
-  CDBDebug("Size %d", fileNames.size());
-//  for (size_t j = 0; j < cdfObjects.size(); j++) {
-//    CDBDebug("%s", fileNames[j]->c_str());
-//  }
-  CT::string fn(fileName);
-  int numDeleted = 0;
-  for (size_t j = 0; j < cdfObjects.size(); j++) {
-//    CDBDebug("%s", fileNames[j]->c_str());
-    if (fileNames[j]->equals(fn)) {
-      // CDBDebug("Closing %s",fileNames[j]->c_str());
-      delete cdfObjects[j];
-      cdfObjects[j] = NULL;
-      delete fileNames[j];
-      fileNames[j] = NULL;
-      delete cdfReaders[j];
-      cdfReaders[j] = NULL;
-      cdfReaders.erase(cdfReaders.begin() + j);
-      fileNames.erase(fileNames.begin() + j);
-      cdfObjects.erase(cdfObjects.begin() + j);
-      numDeleted++;
-    }
+void CDFObjectStore::deleteCDFObject(const CT::string& fileName) {
+  auto it = fileNames.begin();
+  std::vector<ptrdiff_t> indicesToDelete;
+  while ((it = std::find_if(it, fileNames.end(), [fileName](CT::string *x) { return x->equals(fileName); })) != fileNames.end()) {
+    indicesToDelete.push_back(std::distance(fileNames.begin(), it));
+    it++;
   }
-  // CDBDebug("Deleted [%d] CDFObjects",numDeleted);
-  if (numDeleted != 0) {
-    CDBDebug("Iterating...");
-    deleteCDFObject(fn.c_str());
+
+  // indicesToDelete is ordered, we iterate over it in reverse order to delete from the back, to avoid issues with moves
+  for (auto indexIter = indicesToDelete.rbegin(); indexIter != indicesToDelete.rend(); ++indexIter) {
+    auto index = *indexIter;
+    delete cdfObjects[index];
+    cdfObjects[index] = nullptr;
+    delete fileNames[index];
+    fileNames[index] = nullptr;
+    delete cdfReaders[index];
+    cdfReaders[index] = nullptr;
+    cdfReaders.erase(cdfReaders.begin() + index);
+    fileNames.erase(fileNames.begin() + index);
+    cdfObjects.erase(cdfObjects.begin() + index);
   }
 }
 

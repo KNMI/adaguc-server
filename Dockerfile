@@ -100,7 +100,7 @@ ARG TEST_IN_CONTAINER
 ENV TEST_IN_CONTAINER=${TEST_IN_CONTAINER:-local_build}
 
 # Run adaguc-server functional and regression tests. See also `./doc/developing/testing.md`
-#RUN bash runtests_psql.sh
+RUN bash runtests_psql.sh
 
 # Create a file indicating that the test succeeded. This file is used in the final stage
 RUN echo "TESTSDONE" >  /adaguc/adaguc-server-master/testsdone.txt
@@ -142,7 +142,7 @@ ENV PYTHONPATH=${ADAGUC_PATH}/python/python_fastapi_server
 # Build and test adaguc python support
 WORKDIR /adaguc/adaguc-server-master/python/lib/
 RUN python3 setup.py install
-#RUN bash -c "python3 /adaguc/adaguc-server-master/python/examples/runautowms/run.py && ls result.png"
+RUN bash -c "python3 /adaguc/adaguc-server-master/python/examples/runautowms/run.py && ls result.png"
 
 WORKDIR /adaguc/adaguc-server-master
 
