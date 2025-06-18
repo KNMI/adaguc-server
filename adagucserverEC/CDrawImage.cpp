@@ -1092,7 +1092,7 @@ void CDrawImage::drawCenteredText(int x, int y, const char *fontfile, float size
     if (textOutlineColor.a == 0) {
       freeType->drawCenteredText(x, y, angle, text);
     } else {
-      freeType->drawStrokedText(x, y, angle, text, size + 6, 1, textOutlineColor, color, true);
+      freeType->drawStrokedText(x, y, angle, text, size * 1.4, 1, textOutlineColor, color, true);
     }
 
     cairo->isAlphaUsed |= freeType->isAlphaUsed; // remember freetype's isAlphaUsed flag
