@@ -5,26 +5,8 @@ Adaguc contains two types of tests:
 - Tests specifically for adaguc-server
 - Tests specifically for the Python wrapper/EDR functionality
 
-During the tests, adaguc can use either the SQLite or PostgreSQL backend.
+During the tests, adaguc makes use of a PostgreSQL backend.
 
-## Running tests in Docker via SQLite
-
-The main [Dockerfile](~/Dockerfile) contains a _test stage_ which executes `runtests.sh`. This means that all tests will be executed during a regular docker build. Running the tests in Docker is recommended especially for users that don't run Linux/amd64.
-
-To run all tests, trigger a build:
-```bash
-docker build -t adaguc-server --progress plain  --add-host=host.docker.internal:host-gateway .
-
-```
-
-The build will fail if any of the tests have failed.
-
-
-## Running tests outside Docker via SQLite
-
-Running the tests outside of Docker is possible by executing the `./runtests.sh` script.
-
-> **⚠️ Note**: some tests might fail due to platform architecture differences between amd64 and arm64.
 
 ## Using postgres
 
@@ -51,7 +33,6 @@ docker compose up -d
 ```
 5. Edit `./Dockerfile`, to enable the `runtests_psql.sh`:
 ```Dockerfile
-# RUN bash runtests.sh
 RUN bash runtests_psql.sh
 ```
 6. Trigger a new build:
@@ -65,6 +46,7 @@ All tests should now run against postgres via the docker build.
 
 To run the tests outside of Docker, make sure Postgres is reachable on port 5432, and then execute the test script directly:
 ```bash
+docker compose -f Docker/docker-compose-test.yml up -Vd
 ./runtests_psql.sh
 ```
 

@@ -1,6 +1,6 @@
 *
 !compile.sh
-!runtests.sh
+!runtests_deprecated.sh
 !runtests_psql.sh
 !CMakeLists.txt
 !Docker/adaguc-server-config-python-postgres.xml
