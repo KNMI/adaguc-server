@@ -1,7 +1,7 @@
 #include <array>
-#include "CGeoParams.h"
-#include "CImageWarper.h"
-
+#include <limits>
+#include <CGeoParams.h>
+#include <CImageWarper.h>
 int gdwFindPixelExtent(int *PXExtentBasedOnSource, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, CImageWarper *warper) {
   int sourceDataWidth = sourceGeoParams->dWidth;
   int sourceDataHeight = sourceGeoParams->dHeight;
@@ -16,13 +16,13 @@ int gdwFindPixelExtent(int *PXExtentBasedOnSource, CGeoParams *sourceGeoParams, 
   PXExtentBasedOnSource[2] = -1;
   PXExtentBasedOnSource[3] = -1;
 
-  auto dfSourceW = double(sourceGeoParams->dWidth);
-  auto dfSourceH = double(sourceGeoParams->dHeight);
+  double dfSourceW = double(sourceGeoParams->dWidth);
+  double dfSourceH = double(sourceGeoParams->dHeight);
 
   int imageHeight = destGeoParams->dHeight;
   int imageWidth = destGeoParams->dWidth;
-  auto dfDestW = double(destGeoParams->dWidth);
-  auto dfDestH = double(destGeoParams->dHeight);
+  double dfDestW = double(destGeoParams->dWidth);
+  double dfDestH = double(destGeoParams->dHeight);
 
   int lowerIndex = 1, higherIndex = 3;
 
@@ -49,67 +49,71 @@ int gdwFindPixelExtent(int *PXExtentBasedOnSource, CGeoParams *sourceGeoParams, 
   while (OK == false) {
     OK = true;
 
+    bool attemptToContintue = true;
+
     int incY = double(imageHeight) / 16 + 0.5;
     int incX = double(imageWidth) / 16 + 0.5;
     if (incY < 1) incY = 1;
     if (incX < 1) incX = 1;
 
-    for (int y = startY; y < stopY + incY && OK; y = y + incY) {
-      for (int x = startX; x < stopX + incX && OK; x = x + incX) {
-        if (x == startX || y == startY || x == stopX || y == stopY || fullScan == true || true) {
-          double destCoordX, destCoordY;
-          destCoordX = (double(x) / dfDestW) * dfDestExtW + dfDestOrigX;
-          destCoordY = (double(y) / dfDestH) * dfDestExtH + dfDestOrigY;
+    if (attemptToContintue) {
+      for (int y = startY; y < stopY + incY && OK; y = y + incY) {
+        for (int x = startX; x < stopX + incX && OK; x = x + incX) {
+          if (x == startX || y == startY || x == stopX || y == stopY || fullScan == true || true) {
+            double destCoordX, destCoordY;
+            destCoordX = (double(x) / dfDestW) * dfDestExtW + dfDestOrigX;
+            destCoordY = (double(y) / dfDestH) * dfDestExtH + dfDestOrigY;
 
-          bool skip = false;
-          double px = destCoordX, py = destCoordY;
-          if (needsProjection) {
-            if (warper->isProjectionRequired()) {
-              if (proj_trans_generic(warper->projSourceToDest, PJ_INV, &px, sizeof(double), 1, &py, sizeof(double), 1, nullptr, 0, 0, nullptr, 0, 0) != 1) {
-                skip = true;
-                CDBDebug("skip %f %f", px, py);
-              }
-            }
-          }
-
-          double sourcePixelX = ((px - dfSourceOrigX) / dfSourceExtW) * dfSourceW;
-          double sourcePixelY = ((py - dfSourceOrigY) / dfSourceExtH) * dfSourceH;
-
-          const double infinity = std::numeric_limits<double>::infinity();
-          if (!skip && px == px && py == py && px != -infinity && px != infinity && py != -infinity && py != infinity) {
-            transFormationRequired = true;
-
-            if (sourcePixelX == sourcePixelX && sourcePixelY == sourcePixelY && sourcePixelX != -infinity && sourcePixelX != infinity && sourcePixelY != -infinity && sourcePixelY != infinity) {
-
-              if (firstExtent) {
-                PXExtentBasedOnSource[0] = int(sourcePixelX);
-                PXExtentBasedOnSource[1] = int(sourcePixelY);
-                PXExtentBasedOnSource[2] = int(sourcePixelX);
-                PXExtentBasedOnSource[3] = int(sourcePixelY);
-                firstExtent = false;
-              } else {
-                if (sourcePixelX < PXExtentBasedOnSource[0]) PXExtentBasedOnSource[0] = sourcePixelX;
-                if (sourcePixelX > PXExtentBasedOnSource[2]) PXExtentBasedOnSource[2] = sourcePixelX;
-                if (sourcePixelY < PXExtentBasedOnSource[1]) {
-                  PXExtentBasedOnSource[1] = sourcePixelY;
-                }
-                if (sourcePixelY > PXExtentBasedOnSource[3]) {
-                  PXExtentBasedOnSource[3] = sourcePixelY;
+            bool skip = false;
+            double px = destCoordX, py = destCoordY;
+            if (needsProjection) {
+              if (warper->isProjectionRequired()) {
+                if (proj_trans_generic(warper->projSourceToDest, PJ_INV, &px, sizeof(double), 1, &py, sizeof(double), 1, nullptr, 0, 0, nullptr, 0, 0) != 1) {
+                  skip = true;
+                  CDBDebug("skip %f %f", px, py);
                 }
               }
             }
 
-          } else {
+            double sourcePixelX = ((px - dfSourceOrigX) / dfSourceExtW) * dfSourceW;
+            double sourcePixelY = ((py - dfSourceOrigY) / dfSourceExtH) * dfSourceH;
 
-            if (OK == true && fullScan == false) {
-              OK = false;
-              fullScan = true;
+            if (!skip && px == px && py == py && px != -INFINITY && px != INFINITY && py != -INFINITY && py != INFINITY) {
+              transFormationRequired = true;
+
+              if (sourcePixelX == sourcePixelX && sourcePixelY == sourcePixelY && sourcePixelX != -INFINITY && sourcePixelX != INFINITY && sourcePixelY != -INFINITY && sourcePixelY != INFINITY) {
+
+                if (firstExtent) {
+                  PXExtentBasedOnSource[0] = int(sourcePixelX);
+                  PXExtentBasedOnSource[1] = int(sourcePixelY);
+                  PXExtentBasedOnSource[2] = int(sourcePixelX);
+                  PXExtentBasedOnSource[3] = int(sourcePixelY);
+                  firstExtent = false;
+                } else {
+                  if (sourcePixelX < PXExtentBasedOnSource[0]) PXExtentBasedOnSource[0] = sourcePixelX;
+                  if (sourcePixelX > PXExtentBasedOnSource[2]) PXExtentBasedOnSource[2] = sourcePixelX;
+                  if (sourcePixelY < PXExtentBasedOnSource[1]) {
+                    PXExtentBasedOnSource[1] = sourcePixelY;
+                  }
+                  if (sourcePixelY > PXExtentBasedOnSource[3]) {
+                    PXExtentBasedOnSource[3] = sourcePixelY;
+                  }
+                }
+              }
+
+            } else {
+
+              if (OK == true && fullScan == false) {
+                OK = false;
+                fullScan = true;
+              }
             }
           }
         }
       }
+
+      if (OK == true && fullScan == true) break;
     }
-    if (OK == true && fullScan == true) break;
   }
 
 #ifdef GenericDataWarper_DEBUG

@@ -429,8 +429,7 @@ int warpT(CImageWarper *warper, void *_sourceData, CDFType sourceDataType, CGeoP
 }
 template <typename T> struct DrawFunctionState : GDWDrawFunctionBaseState {
 
-  void *oldDrawFunction;
-  void (*oldDrawFunction2)(int, int, T, void *drawFunctionSettings);
+  void *drawFunction;
   void *drawFunctionSettings;
 };
 
@@ -441,7 +440,7 @@ template <typename T> void genericDrawFunction(GDWDrawFunctionBaseState *_drawSe
   if (x < 0 || y < 0 || x >= drawFunctionState->destDataWidth || y >= drawFunctionState->destDataHeight) return;
   T val = drawFunctionState->getValueFromSourceFunction(drawFunctionState->sourceDataPX, drawFunctionState->sourceDataPY, drawFunctionState);
 
-  auto f = (void (*)(int, int, T, void *, void *))drawFunctionState->oldDrawFunction;
+  auto f = (void (*)(int, int, T, void *, void *))drawFunctionState->drawFunction;
   f(drawFunctionState->destX, drawFunctionState->destY, val, drawFunctionState->drawFunctionSettings, nullptr);
 }
 
@@ -454,7 +453,7 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
   settings.destDataHeight = destGeoParams->dHeight;
   settings.setValueInDestinationFunction = genericDrawFunction<T>;
   settings.drawFunctionSettings = drawFunctionSettings;
-  settings.oldDrawFunction = (void *)drawFunction;
+  settings.drawFunction = (void *)drawFunction;
 
   return warpT<T>(warper, _sourceData, CDF_FLOAT, sourceGeoParams, destGeoParams, &settings);
 }
