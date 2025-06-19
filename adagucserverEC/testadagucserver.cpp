@@ -123,14 +123,14 @@ TEST(CImgRenderFieldVectors, jacobianTransform) {
   int status = warper.initreproj(crs.c_str(), &geo, &v);
   CHECK(status == 0);
 
+  // Grid cell to do the calculation for
+  f8point gridCoordUL = {.x = 1.1, .y = 1.4};
+  f8point gridCoordLR = {.x = 1.15, .y = 1.45};
+
   // Make speed vector
   f8component speedVector = {.u = -6.222803, .v = 4.235688};
   DOUBLES_EQUAL(speedVector.magnitude(), 7.527, 0.001);
   DOUBLES_EQUAL(speedVector.angledeg(), 124.242, 0.001);
-
-  // Grid cell to do the calculation for
-  f8point gridCoordUL = {.x = 1.1, .y = 1.4};
-  f8point gridCoordLR = {.x = 1.15, .y = 1.45};
 
   // Check if projection transformation from model to latlon works:
   f8point gridCoordULtoLatLon = gridCoordUL;
