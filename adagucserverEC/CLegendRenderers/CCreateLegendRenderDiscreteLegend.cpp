@@ -300,7 +300,6 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
       std::vector<CT::string> maxColumn = extractColumn(drawIntervals, minInterval, styleConfiguration->shadeIntervals, false);
 
       for (size_t j = 0; j < drawIntervals; j++) {
-        CDBDebug("Interval loop iteration");
         size_t realj = minInterval + j;
         CServerConfig::XMLE_ShadeInterval *s = (*styleConfiguration->shadeIntervals)[realj];
         if (s->attr.min.empty() == false && s->attr.max.empty() == false) {
@@ -319,69 +318,58 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
             snprintf(szTemp, 1000, "%s - %s", s->attr.min.c_str(), s->attr.max.c_str());
             int textY = (cY1 + pTop) - ((fontSize * scaling) / 4) + 3;
 
-            // Right edge of the min column
-            int colRightMin = ((int)cbW + 12 + pLeft) * scaling + maxTextWidthMin;
-            int columnCenterMin = colRightMin - maxDecimalWidth(minColumn) * numberWidth;
+            CDBDebug("Drawing min");
 
-            // Right edge of the max column (min column + extra spacing + max column width)
-            int colRightMax = colRightMin + (10 * scaling) + maxTextWidthMax;
+            // Right edge of the min column
+            int colRightMin = ((int)cbW + pLeft) * scaling + maxTextWidthMin - 10;
+            // int columnCenterMin = colRightMin - maxDecimalWidth(minColumn) * numberWidth;
+            int columnCenterMin = colRightMin - numberWidth; // - maxDecimalWidth(minColumn) * numberWidth;
 
             // Draw min, dot-aligned
-            snprintf(szTemp, sizeof(szTemp), "%s", s->attr.min.c_str());
-            const char *dotPos = strchr(szTemp, '.');
-            const char *negPos = strchr(szTemp, '-');
-            // Problem: The debug statement below returns weird stuff
-            // negative sign found at -2054485040 for string -80
-            // negative sign found at 0 for string 4.5
-            // Solution: Check if different from zero
-            CDBDebug("--- negative sign found at %d for string %s", negPos, szTemp);
-            bool isNeg = strchr(szTemp, '-') != 0;
-            if (isNeg) {
-              CDBDebug("--- Number %s is negative", szTemp);
-            }
-            int leftCharsMin = dotPos ? (dotPos - szTemp) : strlen(szTemp); // chars before dot
-            int textXMin = columnCenterMin - (leftCharsMin * numberWidth);
-            if (isNeg) {
-              textXMin = textXMin + dashWidth; // Make space for the negative dash
-            }
-            // textXMin = textXMin + ((int)cbW + 12 + pLeft) * scaling; // test (probably use block size + margin)
-            textXMin = textXMin + ((int)cbW + pLeft + 8) * scaling; // Probably the 4 stands for an em (?)
+            float numericMinVal = atof(s->attr.min.c_str());
 
-            CDBDebug("Drawing min");
+            // Calculate number of decimals for min column
+            std::string floatFormat = "%." + std::to_string(maxDecimalWidth(minColumn)) + "f";
+
+            snprintf(szTemp, sizeof(szTemp), floatFormat.c_str(), numericMinVal);
+            const char *dotPos = strchr(szTemp, '.');
+            int leftCharsMin = dotPos ? (dotPos - szTemp) : strlen(szTemp); // chars before dot
+
+            // Positioning (leaving space for the class rectangle)
+            int textXMin = columnCenterMin - (leftCharsMin * numberWidth);
+            textXMin = textXMin + (int(cbW)) * scaling + pLeft;
+
             legendImage->drawText(textXMin, textY, fontLocation.c_str(), fontSize * scaling, angle, szTemp, 248);
 
-            // // Central dash
-            // CDBDebug("Drawing dash");
-            // int dashWidth = legendImage->getTextWidth("–", fontLocation.c_str(), fontSize * scaling, angle);
-            // int dashX = colRightMin + (12 * scaling); // small gap from min column (maybe remove or use fixed no of pixels?)
-            // legendImage->drawText(dashX, textY, fontLocation.c_str(), fontSize * scaling, angle, "–", 248);
+            // Central dash
+            CDBDebug("Drawing dash");
+            int dashX = colRightMin + (maxDecimalWidth(minColumn) + 4) * numberWidth; // Leave gap between min column and this dash
 
-            // // Max column
-            // CDBDebug("Drawing max");
-            // // Draw max, dot-aligned
-            // snprintf(szTemp, sizeof(szTemp), "%s", s->attr.max.c_str());
-            // const char *dotPosMax = strchr(szTemp, '.');
-            // const char *negPosMax = strchr(szTemp, '-');
-            // bool isNegMax = negPosMax != 0;
-            // if (isNegMax) {
-            //   CDBDebug("--- Max number %s is negative", szTemp);
-            // }
+            legendImage->drawText(dashX, textY, fontLocation.c_str(), fontSize * scaling, angle, "–", 248);
 
-            // int leftCharsMax = dotPosMax ? (dotPosMax - szTemp) : strlen(szTemp);
+            // Max column (to the right)
+            CDBDebug("Drawing max");
 
-            // // Calculate column center for max value
-            // int columnCenterMax = colRightMax - maxDecimalWidth(maxColumn) * numberWidth;
+            // Right edge of the max column (min column + extra spacing + max column width)
+            int colRightMax = colRightMin + maxTextWidthMax;
+            // Calculate column center for max value
+            int columnCenterMax = colRightMax + numberWidth * 2; //  - numberWidth; // colRightMax - maxDecimalWidth(maxColumn) * numberWidth;
 
-            // // Align max string so that the dot falls on the column center
-            // int textXMax = columnCenterMax - (leftCharsMax * numberWidth);
-            // if (isNegMax) {
-            //   textXMax = textXMax + dashWidth; // account for negative sign width
-            // }
+            // Draw max, dot-aligned
+            float numericMaxVal = atof(s->attr.max.c_str());
+            std::string floatFormatMax = "%." + std::to_string(maxDecimalWidth(maxColumn)) + "f";
+            snprintf(szTemp, sizeof(szTemp), floatFormatMax.c_str(), numericMaxVal);
 
-            // // Apply overall left offset plus some spacing
-            // textXMax += ((int)cbW + pLeft + 15) * scaling; // Think of the 15 number
+            const char *dotPosMax = strchr(szTemp, '.');
+            int leftCharsMax = dotPosMax ? (dotPosMax - szTemp) : strlen(szTemp);
 
-            // legendImage->drawText(textXMax, textY, fontLocation.c_str(), fontSize * scaling, angle, szTemp, 248);
+            // Align max string so that the dot falls on the column center
+            int textXMax = columnCenterMax - (leftCharsMax * numberWidth);
+
+            // Apply overall left offset plus some spacing
+            textXMax += ((int)cbW + pLeft) * scaling + (maxDecimalWidth(maxColumn) + 1) * numberWidth; // Think of the 15 number
+
+            legendImage->drawText(textXMax, textY, fontLocation.c_str(), fontSize * scaling, angle, szTemp, 248);
 
           } else {
             // Do not align to the right: this is a non-numeric label
