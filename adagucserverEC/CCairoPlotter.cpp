@@ -686,7 +686,7 @@ void CCairoPlotter::drawStrokedText(int x, int y, double angle, const char *text
     cairo_text_extents_t te;
     cairo_text_extents(cr, text, &te);
     x = x - (te.x_bearing + te.width / 2);
-    y = y = y - (te.y_bearing + te.height / 2);
+    y = y - (te.y_bearing + te.height / 2);
   }
 
   cairo_move_to(cr, x, y);
