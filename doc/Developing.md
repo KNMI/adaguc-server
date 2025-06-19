@@ -82,6 +82,7 @@ export ADAGUC_CONFIG=${ADAGUC_PATH}/python/lib/adaguc/adaguc-server-config-pytho
 export ADAGUC_NUMPARALLELPROCESSES=4
 export ADAGUC_DB="user=adaguc password=adaguc host=localhost dbname=adaguc"
 export ADAGUC_ENABLELOGBUFFER=FALSE
+export ADAGUC_TRACE_TIMINGS=FALSE
 ```
 
 # 4. compile adaguc server binaries
@@ -110,6 +111,7 @@ export ADAGUC_CONFIG=${ADAGUC_PATH}/python/lib/adaguc/adaguc-server-config-pytho
 export ADAGUC_NUMPARALLELPROCESSES=4
 export ADAGUC_DB="user=adaguc password=adaguc host=localhost dbname=adaguc"
 export ADAGUC_ENABLELOGBUFFER=FALSE
+export ADAGUC_TRACE_TIMINGS=TRUE
 
 # To enable core dump generation, additionally do:
 #ulimit -c unlimited
