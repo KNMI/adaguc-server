@@ -51,7 +51,7 @@ int gdwDrawTriangle(double *_xP, double *_yP, bool aOrB, GDWDrawFunctionBaseStat
   double Y1 = yP[lower];
   double Y3 = yP[upper];
   double ylength = Y3 - Y1;
-  // The triangle is less then a pixel heigh, it has no area so ignore.
+  // The triangle is less than a pixel height, it has no area so ignore.
   if (Y1 >= H || ylength < 1) {
     return 0;
   }

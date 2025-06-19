@@ -26,7 +26,6 @@
 #include "CGenericDataWarper.h"
 #include "GenericDataWarper/gdwDrawTriangle.h"
 #include "GenericDataWarper/gdwFindPixelExtent.h"
-#include "GenericDataWarper/gdwDrawFunction.h"
 
 template <typename T> double getValueFromGrid(int x, int y, GDWDrawFunctionBaseState *drawFunctionState) { return ((T *)drawFunctionState->sourceData)[x + y * drawFunctionState->sourceDataWidth]; }
 
