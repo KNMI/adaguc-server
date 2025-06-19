@@ -321,7 +321,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
             CDBDebug("Drawing min");
 
             // Right edge of the min column
-            int colRightMin = ((int)cbW + pLeft) * scaling + maxTextWidthMin - 10;
+            int colRightMin = ((int)cbW + pLeft) * scaling + maxIntWidth(minColumn) * numberWidth;
             // int columnCenterMin = colRightMin - maxDecimalWidth(minColumn) * numberWidth;
             int columnCenterMin = colRightMin - numberWidth; // - maxDecimalWidth(minColumn) * numberWidth;
 
