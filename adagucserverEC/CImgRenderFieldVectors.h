@@ -11,6 +11,8 @@ struct CalculatedWindVector {
   bool convertToKnots, flip;
 };
 
+f8component jacobianTransform(f8component speedVector, f8point gridCoordUL, f8point gridCoordLR, CImageWarper *warper, bool gridRelative);
+
 int applyUVConversion(CImageWarper *warper, CDataSource *sourceImage, int *dPixelExtent, float *uValues, float *vValues);
 
 std::vector<CalculatedWindVector> calculateBarbsAndVectorsAndSpeedFromUVComponents(CImageWarper *warper, CDataSource *sourceImage, CDrawImage *drawImage, bool enableShade, bool enableContour,
