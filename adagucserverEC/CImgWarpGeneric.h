@@ -32,35 +32,35 @@
 
 static inline int nfast_mod(const int input, const int ceil) { return input >= ceil ? input % ceil : input; }
 
+struct CImgWarpGenericDrawFunctionState : GDWDrawFunctionBaseState {
+  double dfNodataValue;
+  double legendValueRange;
+  double legendLowerRange;
+  double legendUpperRange;
+  bool hasNodataValue;
+  float *dataField;
+  int width, height;
+};
+
 class CImgWarpGeneric : public CImageWarperRenderInterface {
 private:
   DEF_ERRORFUNCTION();
-  class Settings {
-  public:
-    double dfNodataValue;
-    double legendValueRange;
-    double legendLowerRange;
-    double legendUpperRange;
-    bool hasNodataValue;
-    float *dataField;
-    int width, height;
-  };
 
-  template <class T> static void drawFunction(int x, int y, T val, void *_settings, void *g) {
-    Settings *drawSettings = static_cast<Settings *>(_settings);
-    if (x < 0 || y < 0 || x > drawSettings->width || y > drawSettings->height) return;
-    GenericDataWarper *genericDataWarper = static_cast<GenericDataWarper *>(g);
+  template <class T> static void drawFunction(int x, int y, T val, void *_drawFunctionState) {
+    CImgWarpGenericDrawFunctionState *drawFunctionState = static_cast<CImgWarpGenericDrawFunctionState *>(_drawFunctionState);
+    if (x < 0 || y < 0 || x > drawFunctionState->width || y > drawFunctionState->height) return;
+
     bool isNodata = false;
-    if (drawSettings->hasNodataValue) {
-      if ((val) == (T)drawSettings->dfNodataValue) isNodata = true;
+    if (drawFunctionState->hasNodataValue) {
+      if ((val) == (T)drawFunctionState->dfNodataValue) isNodata = true;
     }
     if (!(val == val)) isNodata = true;
     if (!isNodata) {
-      T *sourceData = (T *)genericDataWarper->sourceData;
-      size_t sourceDataPX = genericDataWarper->sourceDataPX;
-      size_t sourceDataPY = genericDataWarper->sourceDataPY;
-      size_t sourceDataWidth = genericDataWarper->sourceDataWidth;
-      size_t sourceDataHeight = genericDataWarper->sourceDataHeight;
+      T *sourceData = (T *)drawFunctionState->sourceData;
+      size_t sourceDataPX = drawFunctionState->sourceDataPX;
+      size_t sourceDataPY = drawFunctionState->sourceDataPY;
+      size_t sourceDataWidth = drawFunctionState->sourceDataWidth;
+      size_t sourceDataHeight = drawFunctionState->sourceDataHeight;
 
       if (sourceDataPY > sourceDataHeight - 1) return;
       if (sourceDataPX > sourceDataWidth - 1) return;
@@ -72,13 +72,13 @@ private:
       values[0][1] += ((T *)sourceData)[nfast_mod(sourceDataPX + 0, sourceDataWidth) + nfast_mod(sourceDataPY + 1, sourceDataHeight) * sourceDataWidth];
       values[1][1] += ((T *)sourceData)[nfast_mod(sourceDataPX + 1, sourceDataWidth) + nfast_mod(sourceDataPY + 1, sourceDataHeight) * sourceDataWidth];
 
-      if (x >= 0 && y >= 0 && x < (int)drawSettings->width && y < (int)drawSettings->height) {
-        float dx = genericDataWarper->tileDx;
-        float dy = genericDataWarper->tileDy;
+      if (x >= 0 && y >= 0 && x < (int)drawFunctionState->width && y < (int)drawFunctionState->height) {
+        float dx = drawFunctionState->tileDx;
+        float dy = drawFunctionState->tileDy;
         float gx1 = (1 - dx) * values[0][0] + dx * values[1][0];
         float gx2 = (1 - dx) * values[0][1] + dx * values[1][1];
         float bilValue = (1 - dy) * gx1 + dy * gx2;
-        drawSettings->dataField[x + y * drawSettings->width] = bilValue;
+        drawFunctionState->dataField[x + y * drawFunctionState->width] = bilValue;
       }
     }
   };
