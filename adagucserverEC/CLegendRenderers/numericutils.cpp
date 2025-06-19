@@ -55,15 +55,15 @@ int maxDecimalWidth(std::vector<CT::string> column) { //
   return width - 1;
 }
 
-int fieldWidthAsPixels(std::vector<CT::string> column, int dashWidth, int dotWidth, int numbericGlyphWidth) {
+int fieldWidthAsPixels(std::vector<CT::string> column, int dashWidth, int dotWidth, int numericGlyphWidth) {
   int intWidth = maxIntWidth(column);
   int decWidth = maxDecimalWidth(column);
   int hasDash = hasNeg(column);
 
   if (decWidth > 0) {
-    return intWidth * numbericGlyphWidth + hasDash * dashWidth + decWidth;
+    return intWidth * numericGlyphWidth + hasDash * dashWidth + decWidth;
   } else {
-    return intWidth * numbericGlyphWidth + hasDash * dashWidth;
+    return intWidth * numericGlyphWidth + hasDash * dashWidth;
   }
 }
 

@@ -9,7 +9,7 @@
 void plotTwoColumnMinMax(CDrawImage *legendImage, double scaling, std::string fontLocation, float fontSize, int angle, CServerConfig::XMLE_ShadeInterval *s, int cbW, int pLeft, int textY,
                          std::vector<CT::string> minColumn, std::vector<CT::string> maxColumn, int maxTextWidthMax) {
 
-  char szTemp[1024];
+  char tempText[1024];
 
   // With a monospaced font, this will be the spacing for every character, numeric or not
   int numberWidth = legendImage->getTextWidth("0", fontLocation.c_str(), fontSize * scaling, angle);
@@ -25,37 +25,33 @@ void plotTwoColumnMinMax(CDrawImage *legendImage, double scaling, std::string fo
   // Calculate number of decimals for min column
   std::string floatFormat = "%." + std::to_string(maxDecimalWidth(minColumn)) + "f";
 
-  snprintf(szTemp, sizeof(szTemp), floatFormat.c_str(), numericMinVal);
-  const char *dotPos = strchr(szTemp, '.');
-  int leftCharsMin = dotPos ? (dotPos - szTemp) : strlen(szTemp); // chars before dot
+  snprintf(tempText, sizeof(tempText), floatFormat.c_str(), numericMinVal);
+  const char *dotPos = strchr(tempText, '.');
+  int leftCharsMin = dotPos ? (dotPos - tempText) : strlen(tempText); // chars before dot
 
   // Positioning (leaving space for the class rectangle)
   int textXMin = columnCenterMin - (leftCharsMin * numberWidth);
   textXMin = textXMin + (int(cbW)) * scaling + pLeft;
 
-  legendImage->drawText(textXMin, textY, fontLocation.c_str(), fontSize * scaling, angle, szTemp, 248);
+  legendImage->drawText(textXMin, textY, fontLocation.c_str(), fontSize * scaling, angle, tempText, 248);
 
-  // Central dash
-  CDBDebug("Drawing dash");
+  // Draw central dash
   int dashX = colRightMin + (maxDecimalWidth(minColumn) + 4) * numberWidth; // Leave gap between min column and this dash
-
   legendImage->drawText(dashX, textY, fontLocation.c_str(), fontSize * scaling, angle, "–", 248);
 
-  // Max column (to the right)
-  CDBDebug("Drawing max");
-
+  // Draw max column (to the right of the dash)
   // Right edge of the max column (min column + extra spacing + max column width)
   int colRightMax = colRightMin + maxTextWidthMax;
   // Calculate column center for max value
-  int columnCenterMax = colRightMax + numberWidth * 2; //  - numberWidth; // colRightMax - maxDecimalWidth(maxColumn) * numberWidth;
+  int columnCenterMax = colRightMax + numberWidth;
 
   // Draw max, dot-aligned
   float numericMaxVal = atof(s->attr.max.c_str());
   std::string floatFormatMax = "%." + std::to_string(maxDecimalWidth(maxColumn)) + "f";
-  snprintf(szTemp, sizeof(szTemp), floatFormatMax.c_str(), numericMaxVal);
+  snprintf(tempText, sizeof(tempText), floatFormatMax.c_str(), numericMaxVal);
 
-  const char *dotPosMax = strchr(szTemp, '.');
-  int leftCharsMax = dotPosMax ? (dotPosMax - szTemp) : strlen(szTemp);
+  const char *dotPosMax = strchr(tempText, '.');
+  int leftCharsMax = dotPosMax ? (dotPosMax - tempText) : strlen(tempText);
 
   // Align max string so that the dot falls on the column center
   int textXMax = columnCenterMax - (leftCharsMax * numberWidth);
@@ -63,7 +59,7 @@ void plotTwoColumnMinMax(CDrawImage *legendImage, double scaling, std::string fo
   // Apply overall left offset plus some spacing
   textXMax += ((int)cbW + pLeft) * scaling + (maxDecimalWidth(maxColumn) + 1) * numberWidth; // Think of the 15 number
 
-  legendImage->drawText(textXMax, textY, fontLocation.c_str(), fontSize * scaling, angle, szTemp, 248);
+  legendImage->drawText(textXMax, textY, fontLocation.c_str(), fontSize * scaling, angle, tempText, 248);
 }
 
 // Aux function to calculate block height based on total height and number
@@ -307,41 +303,18 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
     } else {
       // General case for this type of legend, where we draw every label and print every class interval
       // We can also clip this type of legend
-      char tempText[1000];
-      int maxTextWidthMin = 0;
-      int maxTextWidthMax = 0;
-
       for (size_t j = 0; j < drawIntervals; j++) {
         size_t realj = minInterval + j;
         CServerConfig::XMLE_ShadeInterval *s = (*styleConfiguration->shadeIntervals)[realj];
-
-        if (!s->attr.min.empty() && !s->attr.max.empty()) {
-          if ((int)(std::abs(parseFloat(s->attr.min.c_str()))) % 5 != 0) {
-            continue;
-          }
-
-          // Note: This can probably be simplified because it's monospace (!)
-          // Note2: This couldn't work well if we had decimals (maybe not needed? otherwise center around .)
-          snprintf(tempText, sizeof(tempText), "%s", s->attr.min.c_str());
-          int textWidthMin = legendImage->getTextWidth(tempText, fontLocation.c_str(), fontSize * scaling, angle);
-          if (textWidthMin > maxTextWidthMin) {
-            maxTextWidthMin = textWidthMin;
-          }
-
-          // Measure max text width
-          snprintf(tempText, sizeof(tempText), "%s", s->attr.max.c_str());
-          int textWidthMax = legendImage->getTextWidth(tempText, fontLocation.c_str(), fontSize * scaling, angle);
-          if (textWidthMax > maxTextWidthMax) {
-            maxTextWidthMax = textWidthMax;
-          }
-        }
       }
-
-      float blockHeight = calculateShadeClassBlockHeight(legendImage->Geo->dHeight, drawIntervals);
+      std::vector<CT::string> maxColumn = extractColumn(drawIntervals, minInterval, styleConfiguration->shadeIntervals, false);
+      // std::vector<CT::string> minColumn = extractColumn(drawIntervals, maxInterval, styleConfiguration->shadeIntervals, true);
       int dashWidth = legendImage->getTextWidth("-", fontLocation.c_str(), fontSize * scaling, angle);
       int dotWidth = legendImage->getTextWidth(".", fontLocation.c_str(), fontSize * scaling, angle);
       // Assume monospaced for numbers
       int numberWidth = legendImage->getTextWidth("0", fontLocation.c_str(), fontSize * scaling, angle);
+
+      float blockHeight = calculateShadeClassBlockHeight(legendImage->Geo->dHeight, drawIntervals);
 
       // We calculate the min column
       // Convert the min into an array of CT::string
@@ -356,8 +329,8 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
           minColumn.push_back(s->attr.min.c_str());
         }
       }
-
-      std::vector<CT::string> maxColumn = extractColumn(drawIntervals, minInterval, styleConfiguration->shadeIntervals, false);
+      int maxTextWidthMax = fieldWidthAsPixels(maxColumn, dashWidth, dotWidth, numberWidth);
+      CDBDebug("maxTextWidthMax = %d, fieldWidthAsPixels = %d", maxTextWidthMax, fieldWidthAsPixels(maxColumn, dashWidth, dotWidth, numberWidth));
 
       for (size_t j = 0; j < drawIntervals; j++) {
         size_t realj = minInterval + j;
@@ -373,7 +346,6 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
           }
           legendImage->rectangle(4 * scaling + pLeft, cY2 + pTop, (int(cbW) + 7) * scaling + pLeft, cY1 + pTop, color, CColor(0, 0, 0, 255));
 
-          // TODO: How to measure font width of a text when not using CAIRO(?) and how to configure a test for this case
           if (s->attr.label.empty()) {
             // snprintf(szTemp, 1000, "%s - %s", s->attr.min.c_str(), s->attr.max.c_str());
             int textY = (cY1 + pTop) - ((fontSize * scaling) / 4) + 3;
