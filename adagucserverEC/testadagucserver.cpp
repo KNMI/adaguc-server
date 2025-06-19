@@ -131,6 +131,7 @@ TEST(CImgRenderFieldVectors, jacobianTransform) {
   f8component speedVector = {.u = -6.222803, .v = 4.235688};
   DOUBLES_EQUAL(speedVector.magnitude(), 7.527, 0.001);
   DOUBLES_EQUAL(speedVector.angledeg(), 124.242, 0.001);
+  DOUBLES_EQUAL(speedVector.direction(), 2.543957, 0.001);
 
   // Check if projection transformation from model to latlon works:
   f8point gridCoordULtoLatLon = gridCoordUL;
@@ -160,4 +161,7 @@ TEST(CImgRenderFieldVectors, jacobianTransform) {
   // Magnitudes should be the same
   DOUBLES_EQUAL(compNoGridRel.magnitude(), compGridRel.magnitude(), 0.001);
   DOUBLES_EQUAL(speedVector.magnitude(), compGridRel.magnitude(), 0.001);
+
+  // Direction for non grid rel should be the same
+  DOUBLES_EQUAL(speedVector.direction(), compNoGridRel.direction(), 0.001);
 }
