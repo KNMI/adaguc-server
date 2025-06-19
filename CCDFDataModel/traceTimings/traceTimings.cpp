@@ -6,9 +6,9 @@
 bool adagucTraceTimings = false;
 uint64_t tracingStart = 0;
 
-std::map<TraceTimingType, std::vector<uint64_t>> timingsMapRel;
+static std::map<TraceTimingType, std::vector<uint64_t>> timingsMapRel;
 
-TraceTimingsReport timingsMapTotal;
+static TraceTimingsReport timingsMapTotal;
 
 // Get time stamp in microseconds.
 uint64_t micros() {
@@ -38,8 +38,8 @@ void traceTimingsSpanStart(TraceTimingType type) {
 
 void traceTimingsSpanEnd(TraceTimingType type) {
   if (!adagucTraceTimings) return;
-  // Should not be zero, but it could happen. TODO, what if it does?
-  if (timingsMapRel[type].size() == 0) {
+  // Should always be defined, but it could theoratically not be. TODO, what if it does?
+  if (timingsMapRel[type].empty()) {
     return;
   }
   auto current = micros();
