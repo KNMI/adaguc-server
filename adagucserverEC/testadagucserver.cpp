@@ -159,4 +159,5 @@ TEST(CImgRenderFieldVectors, jacobianTransform) {
 
   // Magnitudes should be the same
   DOUBLES_EQUAL(compNoGridRel.magnitude(), compGridRel.magnitude(), 0.001);
+  DOUBLES_EQUAL(speedVector.magnitude(), compGridRel.magnitude(), 0.001);
 }
