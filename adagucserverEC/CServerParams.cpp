@@ -28,6 +28,7 @@
 #include "CReadFile.h"
 #include "CServerParams.h"
 #include "CStopWatch.h"
+#include <traceTimings/traceTimings.h>
 const char *CServerParams::className = "CServerParams";
 
 CServerParams::CServerParams() {
@@ -110,26 +111,24 @@ void CServerParams::getCacheFileName(CT::string *cacheFileName) {
   cacheFileName->concat("/simplecachestore.dat");
 }
 
-
 std::string CServerParams::randomString(const int length) {
 #ifdef MEASURETIME
   StopWatch_Stop(">CServerParams::randomString");
 #endif
 
-  const char charset[] =
-      "0123456789"
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-      "abcdefghijklmnopqrstuvwxyz";
+  const char charset[] = "0123456789"
+                         "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                         "abcdefghijklmnopqrstuvwxyz";
   // -1 for the \0 and -1 because uniform_int_distribution uses closed bounds
   const size_t max_index = (sizeof(charset) - 2);
 
-  static std::mt19937 engine=[](){
+  static std::mt19937 engine = []() {
     std::random_device rd;
     return std::mt19937(rd());
   }();
   static std::uniform_int_distribution<int> dist(0, max_index);
 
-  auto randChar = [&charset]() -> char {return charset[dist(engine)];};
+  auto randChar = [&charset]() -> char { return charset[dist(engine)]; };
 
   std::string str(length, 0);
   std::generate_n(str.begin(), length, randChar);
@@ -571,26 +570,27 @@ int CServerParams::_parseConfigFile(CT::string &pszConfigFile, std::vector<CServ
   }
 }
 
-CT::string CServerParams::getCacheControlHeader(int mode) {
+CT::string CServerParams::getResponseHeaders(int mode) {
+  auto tracingHeaders = traceTimingsGetHeader();
   if (cfg != nullptr && cfg->Settings.size() == 1) {
     CT::string cacheString = "\r\nCache-Control:max-age=";
     if (mode == CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE) {
       if (!cfg->Settings[0]->attr.cache_age_volatileresources.empty()) {
         if (cfg->Settings[0]->attr.cache_age_volatileresources.toInt() != 0) {
           cacheString.printconcat("%d", cfg->Settings[0]->attr.cache_age_volatileresources.toInt());
-          return cacheString;
+          return cacheString + tracingHeaders;
         }
       }
     } else if (mode == CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE) {
       if (!cfg->Settings[0]->attr.cache_age_cacheableresources.empty()) {
         if (cfg->Settings[0]->attr.cache_age_cacheableresources.toInt() != 0) {
           cacheString.printconcat("%d", cfg->Settings[0]->attr.cache_age_cacheableresources.toInt());
-          return cacheString;
+          return cacheString + tracingHeaders;
         }
       }
     }
   }
-  return "";
+  return tracingHeaders;
 }
 
 std::tuple<float, std::string> CServerParams::getContourFont() {

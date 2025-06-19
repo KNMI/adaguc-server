@@ -662,7 +662,7 @@ void CCairoPlotter::drawText(int x, int y, double angle, const char *text) {
   _drawFreeTypeText(x, y, w, h, angle, text, true);
 }
 
-void CCairoPlotter::drawStrokedText(int x, int y, double angle, const char *text, float fontSize, float strokeWidth, CColor bgcolor, CColor fgcolor) {
+void CCairoPlotter::drawStrokedText(int x, int y, double angle, const char *text, float fontSize, float strokeWidth, CColor bgcolor, CColor fgcolor, bool centerText) {
   if (library == NULL) {
     int status = initializeFreeType();
     if (status != 0) {
@@ -681,6 +681,13 @@ void CCairoPlotter::drawStrokedText(int x, int y, double angle, const char *text
 
   cairo_new_path(cr);
   cairo_set_dash(cr, 0, 0, 0);
+
+  if (centerText) {
+    cairo_text_extents_t te;
+    cairo_text_extents(cr, text, &te);
+    x = x - (te.x_bearing + te.width / 2);
+    y = y - (te.y_bearing + te.height / 2);
+  }
 
   cairo_move_to(cr, x, y);
   cairo_rotate(cr, angle);

@@ -220,8 +220,8 @@ public:
   public:
     class Cattr {
     public:
-      CT::string fillcolor, linecolor, textcolor, fontfile, fontsize, discradius, textradius, dot, anglestart, anglestep, textformat, plotstationid, pointstyle, min, max, symbol, maxpointspercell,
-          maxpointcellsize;
+      CT::string fillcolor, linecolor, textcolor, textoutlinecolor, fontfile, fontsize, discradius, textradius, dot, anglestart, anglestep, textformat, plotstationid, pointstyle, min, max, symbol,
+          maxpointspercell, maxpointcellsize;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
       if (equals("fillcolor", attrname)) {
@@ -232,6 +232,9 @@ public:
         return;
       } else if (equals("textcolor", attrname)) {
         attr.textcolor.copy(attrvalue);
+        return;
+      } else if (equals("textoutlinecolor", attrname)) {
+        attr.textoutlinecolor.copy(attrvalue);
         return;
       } else if (equals("fontfile", attrname)) {
         attr.fontfile.copy(attrvalue);

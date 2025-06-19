@@ -37,6 +37,8 @@ class CDFObject;
 namespace CDF {
 
   class Variable {
+  private:
+    int _readData(CDFType type, size_t *_start, size_t *_count, ptrdiff_t *_stride);
 
   public:
     CDFType nativeType;

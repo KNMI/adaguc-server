@@ -66,6 +66,8 @@ public:
   CT::string legendName;
 };
 
+static CColor drawPointTextOutlineColor = CColor(255, 255, 255, 0);
+
 class CDrawImage {
 public:
   /*
@@ -158,7 +160,7 @@ public:
   void drawText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor fgcolor);
   void drawText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor fgcolor, CColor bgcolor);
   void drawAnchoredText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color, int anchor);
-  void drawCenteredText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color);
+  void drawCenteredText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color, CColor textOutlineColor = drawPointTextOutlineColor);
   void drawCenteredTextNoOverlap(int x, int y, const char *fontfile, float size, float angle, int padding, const char *text, CColor color, bool noOverlap, std::vector<CRectangleText> &rects);
   int drawTextArea(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor fgcolor, CColor bgcolor);
 
