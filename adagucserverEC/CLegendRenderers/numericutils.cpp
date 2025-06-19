@@ -40,15 +40,12 @@ int hasNeg(std::vector<CT::string> column) {
 
 int maxDecimalWidth(std::vector<CT::string> column) { //
   int width = 0;
-  for (int i = 1; i < column.size(); i++) { // CT::string &item : column) {
-    // CT::string curr(item.c_str());
+  for (int i = 1; i < column.size(); i++) {
     int index = column[i].indexOf(".");
 
     int currWidth = column[i].length() - index;
 
     if (currWidth > width) {
-      CDBDebug("Decimal width of %d reached with number %s", currWidth, column[i].c_str());
-      CDBDebug("Total length = %d,  index of dot = %d", currWidth, index);
       if (index < 0) {
         break; // dot not found
       }

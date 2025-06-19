@@ -6,6 +6,66 @@
 #define MIN_SHADE_CLASS_BLOCK_SIZE 3
 #define MAX_SHADE_CLASS_BLOCK_SIZE 12
 
+void plotTwoColumnMinMax(CDrawImage *legendImage, double scaling, std::string fontLocation, float fontSize, int angle, CServerConfig::XMLE_ShadeInterval *s, int cbW, int pLeft, int textY,
+                         std::vector<CT::string> minColumn, std::vector<CT::string> maxColumn, int maxTextWidthMax) {
+
+  char szTemp[1024];
+
+  // With a monospaced font, this will be the spacing for every character, numeric or not
+  int numberWidth = legendImage->getTextWidth("0", fontLocation.c_str(), fontSize * scaling, angle);
+
+  // Right edge of the min column
+  int colRightMin = ((int)cbW + pLeft) * scaling + maxIntWidth(minColumn) * numberWidth;
+  // int columnCenterMin = colRightMin - maxDecimalWidth(minColumn) * numberWidth;
+  int columnCenterMin = colRightMin - numberWidth; // - maxDecimalWidth(minColumn) * numberWidth;
+
+  // Draw min, dot-aligned
+  float numericMinVal = atof(s->attr.min.c_str());
+
+  // Calculate number of decimals for min column
+  std::string floatFormat = "%." + std::to_string(maxDecimalWidth(minColumn)) + "f";
+
+  snprintf(szTemp, sizeof(szTemp), floatFormat.c_str(), numericMinVal);
+  const char *dotPos = strchr(szTemp, '.');
+  int leftCharsMin = dotPos ? (dotPos - szTemp) : strlen(szTemp); // chars before dot
+
+  // Positioning (leaving space for the class rectangle)
+  int textXMin = columnCenterMin - (leftCharsMin * numberWidth);
+  textXMin = textXMin + (int(cbW)) * scaling + pLeft;
+
+  legendImage->drawText(textXMin, textY, fontLocation.c_str(), fontSize * scaling, angle, szTemp, 248);
+
+  // Central dash
+  CDBDebug("Drawing dash");
+  int dashX = colRightMin + (maxDecimalWidth(minColumn) + 4) * numberWidth; // Leave gap between min column and this dash
+
+  legendImage->drawText(dashX, textY, fontLocation.c_str(), fontSize * scaling, angle, "–", 248);
+
+  // Max column (to the right)
+  CDBDebug("Drawing max");
+
+  // Right edge of the max column (min column + extra spacing + max column width)
+  int colRightMax = colRightMin + maxTextWidthMax;
+  // Calculate column center for max value
+  int columnCenterMax = colRightMax + numberWidth * 2; //  - numberWidth; // colRightMax - maxDecimalWidth(maxColumn) * numberWidth;
+
+  // Draw max, dot-aligned
+  float numericMaxVal = atof(s->attr.max.c_str());
+  std::string floatFormatMax = "%." + std::to_string(maxDecimalWidth(maxColumn)) + "f";
+  snprintf(szTemp, sizeof(szTemp), floatFormatMax.c_str(), numericMaxVal);
+
+  const char *dotPosMax = strchr(szTemp, '.');
+  int leftCharsMax = dotPosMax ? (dotPosMax - szTemp) : strlen(szTemp);
+
+  // Align max string so that the dot falls on the column center
+  int textXMax = columnCenterMax - (leftCharsMax * numberWidth);
+
+  // Apply overall left offset plus some spacing
+  textXMax += ((int)cbW + pLeft) * scaling + (maxDecimalWidth(maxColumn) + 1) * numberWidth; // Think of the 15 number
+
+  legendImage->drawText(textXMax, textY, fontLocation.c_str(), fontSize * scaling, angle, szTemp, 248);
+}
+
 // Aux function to calculate block height based on total height and number
 // of classes in a legend based on shade classes.
 float calculateShadeClassBlockHeight(int totalHeight, int intervals) {
@@ -315,61 +375,10 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
 
           // TODO: How to measure font width of a text when not using CAIRO(?) and how to configure a test for this case
           if (s->attr.label.empty()) {
-            snprintf(szTemp, 1000, "%s - %s", s->attr.min.c_str(), s->attr.max.c_str());
+            // snprintf(szTemp, 1000, "%s - %s", s->attr.min.c_str(), s->attr.max.c_str());
             int textY = (cY1 + pTop) - ((fontSize * scaling) / 4) + 3;
 
-            CDBDebug("Drawing min");
-
-            // Right edge of the min column
-            int colRightMin = ((int)cbW + pLeft) * scaling + maxIntWidth(minColumn) * numberWidth;
-            // int columnCenterMin = colRightMin - maxDecimalWidth(minColumn) * numberWidth;
-            int columnCenterMin = colRightMin - numberWidth; // - maxDecimalWidth(minColumn) * numberWidth;
-
-            // Draw min, dot-aligned
-            float numericMinVal = atof(s->attr.min.c_str());
-
-            // Calculate number of decimals for min column
-            std::string floatFormat = "%." + std::to_string(maxDecimalWidth(minColumn)) + "f";
-
-            snprintf(szTemp, sizeof(szTemp), floatFormat.c_str(), numericMinVal);
-            const char *dotPos = strchr(szTemp, '.');
-            int leftCharsMin = dotPos ? (dotPos - szTemp) : strlen(szTemp); // chars before dot
-
-            // Positioning (leaving space for the class rectangle)
-            int textXMin = columnCenterMin - (leftCharsMin * numberWidth);
-            textXMin = textXMin + (int(cbW)) * scaling + pLeft;
-
-            legendImage->drawText(textXMin, textY, fontLocation.c_str(), fontSize * scaling, angle, szTemp, 248);
-
-            // Central dash
-            CDBDebug("Drawing dash");
-            int dashX = colRightMin + (maxDecimalWidth(minColumn) + 4) * numberWidth; // Leave gap between min column and this dash
-
-            legendImage->drawText(dashX, textY, fontLocation.c_str(), fontSize * scaling, angle, "–", 248);
-
-            // Max column (to the right)
-            CDBDebug("Drawing max");
-
-            // Right edge of the max column (min column + extra spacing + max column width)
-            int colRightMax = colRightMin + maxTextWidthMax;
-            // Calculate column center for max value
-            int columnCenterMax = colRightMax + numberWidth * 2; //  - numberWidth; // colRightMax - maxDecimalWidth(maxColumn) * numberWidth;
-
-            // Draw max, dot-aligned
-            float numericMaxVal = atof(s->attr.max.c_str());
-            std::string floatFormatMax = "%." + std::to_string(maxDecimalWidth(maxColumn)) + "f";
-            snprintf(szTemp, sizeof(szTemp), floatFormatMax.c_str(), numericMaxVal);
-
-            const char *dotPosMax = strchr(szTemp, '.');
-            int leftCharsMax = dotPosMax ? (dotPosMax - szTemp) : strlen(szTemp);
-
-            // Align max string so that the dot falls on the column center
-            int textXMax = columnCenterMax - (leftCharsMax * numberWidth);
-
-            // Apply overall left offset plus some spacing
-            textXMax += ((int)cbW + pLeft) * scaling + (maxDecimalWidth(maxColumn) + 1) * numberWidth; // Think of the 15 number
-
-            legendImage->drawText(textXMax, textY, fontLocation.c_str(), fontSize * scaling, angle, szTemp, 248);
+            plotTwoColumnMinMax(legendImage, scaling, fontLocation, fontSize, angle, s, cbW, pLeft, textY, minColumn, maxColumn, maxTextWidthMax);
 
           } else {
             // Do not align to the right: this is a non-numeric label
