@@ -122,7 +122,7 @@ async def get_coll_inst_cube(
     else:
         res_queryterm = []
 
-    logger.info("callADAGUC by dataset")
+    logger.info("call_adaguc by dataset")
 
     translate_names = get_translate_names(metadata[collection_name])
     translate_dims = get_translate_dims(metadata[collection_name])

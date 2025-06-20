@@ -14,6 +14,8 @@ from asgi_logger import AccessLoggerMiddleware
 
 from routers.autowms import autowms_router
 from routers.edr import edrApiApp
+from routers.utils.edr_utils import get_metadata
+from routers.utils.ogcapi_tools import add_to_cache
 from routers.healthcheck import health_check_router
 from routers.middleware import FixSchemeMiddleware
 from routers.ogcapi import ogcApiApp
@@ -22,6 +24,8 @@ from routers.wmswcs import testadaguc, wmsWcsRouter
 from routers.caching_middleware import CachingMiddleware
 from routers.setup_adaguc import setup_adaguc
 from configure_logging import configure_logging
+
+import json
 
 configure_logging(logging)
 
@@ -39,6 +43,13 @@ async def update_layermetadatatable():
         logger.info(
             "Logging for updateLayerMetadata is disabled, status was %d", status
         )
+    if "ADAGUC_REDIS" in os.environ:
+        # call getmetadata for all datasets
+        all_metadata = await get_metadata()
+        for dataset_name, metadata in all_metadata.items():
+            url = f"dataset={dataset_name}&service=wms&version=1.3.0&request=getmetadata&format=application/json"
+            redis_key = f"DIRECT_CALL:{url}"
+            await add_to_cache(redis_key, 200, json.dumps(metadata).encode("utf-8"), [])
 
 
 @asynccontextmanager

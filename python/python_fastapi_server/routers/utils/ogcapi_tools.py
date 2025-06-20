@@ -3,7 +3,11 @@ General methods for supporting ogcapi features code
 """
 
 from __future__ import annotations
+import calendar
+from datetime import datetime
+from io import BytesIO
 import itertools
+import json
 import logging
 import os
 import time
@@ -11,6 +15,7 @@ import time
 from defusedxml.ElementTree import ParseError, parse
 
 from owslib.wms import WebMapService
+import redis.asyncio as redis
 
 
 from routers.models.ogcapifeatures_1_model import (
@@ -24,6 +29,17 @@ from routers.models.ogcapifeatures_1_model import (
 from ..setup_adaguc import setup_adaguc
 
 logger = logging.getLogger(__name__)
+
+REDIS_POOL = None
+
+
+def get_redis_pool():
+    global REDIS_POOL
+    if REDIS_POOL is None:
+        redis_url = os.getenv("ADAGUC_REDIS", None)
+        if redis_url is not None:
+            REDIS_POOL = redis.ConnectionPool.from_url(redis_url)
+    return REDIS_POOL
 
 
 def make_bbox(extent):
@@ -86,7 +102,57 @@ def calculate_coords(bbox, nlon, nlat):
     return coords
 
 
-async def call_adaguc(url):
+async def get_from_cache(key: str):
+    logger.info("Checking cache for %s", key)
+    cache_key = ("DIRECT_CALL:" + key).encode("utf-8")
+    redis_client = redis.Redis(connection_pool=get_redis_pool())
+    cached = await redis_client.get(cache_key)
+    await redis_client.aclose()
+    if not cached:
+        return None, None, None
+
+    entrytime = int(cached[:10].decode("utf-8"))
+
+    status = int(cached[10:16].decode("utf-8"))
+    headers_len = int(cached[16:22].decode("utf-8"))
+    headers = json.loads(cached[22 : 22 + headers_len].decode("utf-8"))
+
+    data = cached[22 + headers_len :]
+    return status, data, headers
+
+
+headers_to_skip = ["x-process-time", "age"]
+
+
+async def add_to_cache(key: str, status, resp, headers, ttl=15):
+    logger.info("Caching for %s", key)
+    cache_key = ("DIRECT_CALL:" + key).encode("utf-8")
+    cacheable_headers = []
+    for header in headers:
+        k, v = header.split(":")
+        if k not in headers_to_skip:
+            cacheable_headers.append(header)
+    if ttl > 0:
+        cacheable_headers_json = json.dumps(cacheable_headers).encode("utf-8")
+
+        entrytime = f"{calendar.timegm(datetime.utcnow().utctimetuple()):10d}".encode(
+            "utf-8"
+        )
+        redis_client = redis.Redis(connection_pool=get_redis_pool())
+        await redis_client.set(
+            cache_key,
+            entrytime
+            + f"{status:06d}".encode("utf-8")
+            + f"{len(cacheable_headers_json):06d}".encode("utf-8")
+            + cacheable_headers_json
+            + resp,
+            ex=ttl,
+        )
+        await redis_client.aclose()
+    return
+
+
+async def call_adaguc(url, use_cache=False):
     """Call adaguc-server"""
     adaguc_instance = setup_adaguc()
 
@@ -94,6 +160,12 @@ async def call_adaguc(url):
     if "?" in url:
         url = url[url.index("?") + 1 :]
     logger.info(url)
+
+    if use_cache:
+        status, data, headers = await get_from_cache(url)
+        if status is not None:
+            return status, BytesIO(data), headers
+
     stage1 = time.perf_counter()
 
     adagucenv = {}
@@ -121,6 +193,8 @@ async def call_adaguc(url):
     if len(logfile) > 0:
         logger.info(logfile)
 
+    if use_cache and status >= 0:
+        await add_to_cache(url, status, data.getvalue(), headers, ttl=70)
     return status, data, headers
 
 

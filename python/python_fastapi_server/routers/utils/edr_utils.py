@@ -533,18 +533,19 @@ def handle_metadata(metadata: dict):
 
 async def get_metadata(collection_name=None):
     """get metadata from ADAGUC"""
-    logger.info("callADAGUC by dataset")
+    logger.info("get_metadata by dataset")
     urlrequest = "service=wms&version=1.3.0&request=getmetadata&format=application/json"
     if collection_name is not None:
         dataset_name = collection_name.rsplit(".", 1)[0]
         urlrequest = f"dataset={dataset_name}&service=wms&version=1.3.0&request=getmetadata&format=application/json"
 
-    status, response, _ = await call_adaguc(url=urlrequest.encode("UTF-8"))
-    #        ttl = get_ttl_from_adaguc_headers(headers)
+    status, response, _ = await call_adaguc(
+        url=urlrequest.encode("UTF-8"), use_cache=True
+    )
     logger.info("status for %s: %d", urlrequest, status)
     metadata = None
     if status == 0:
-        metadata = json.loads(response.getvalue().decode("UTF-8"))
+        metadata = json.loads(response.getvalue().decode("utf-8"))
         collection_metadata = handle_metadata(metadata)
         if collection_metadata is None:
             return None
