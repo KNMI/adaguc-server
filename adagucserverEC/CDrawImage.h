@@ -226,7 +226,19 @@ public:
   // void setAntiAliased(bool enable){      _bAntiAliased=enable;   };
   // bool getAntialiased(){return _bAntiAliased;}
 
-  void setTTFFontLocation(const char *_TTFFontLocation) { TTFFontLocation = _TTFFontLocation; }
+  void setTTFFontLocation(const char *_TTFFontLocation) {
+    TTFFontLocation = _TTFFontLocation;
+    // TODO: Memory management
+    if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
+      // Always true color
+
+      if (_bEnableTransparency == false) {
+        cairo = new CCairoPlotter(Geo->dWidth, Geo->dHeight, TTFFontSize, TTFFontLocation, BGColorR, BGColorG, BGColorB, 255);
+      } else {
+        cairo = new CCairoPlotter(Geo->dWidth, Geo->dHeight, TTFFontSize, TTFFontLocation, 0, 0, 0, 0);
+      }
+    }
+  }
   void setTTFFontSize(float _TTFFontSize) { TTFFontSize = _TTFFontSize; }
   const char *getFontLocation();
   float getFontSize();

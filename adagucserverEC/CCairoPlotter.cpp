@@ -314,7 +314,6 @@ const char *decode_utf8_char(const char *p, uint32_t *out_char) {
 int CCairoPlotter::_drawFreeTypeText(int x, int y, int &w, int &h, float angle, const char *text, bool render) {
   // Draw text :)
 
-  CDBDebug("* Trying to render text: %s", text);
   w = 0;
   h = 0;
   if (library == NULL) {
@@ -350,7 +349,7 @@ int CCairoPlotter::_drawFreeTypeText(int x, int y, int &w, int &h, float angle, 
     uint32_t codepoint;
     const char *prev = p;
     p = decode_utf8_char(p, &codepoint);
-    CDBDebug("* Decoded char U+%04X from: %.*s", codepoint, (int)(p - prev), prev);
+    // CDBDebug("* Decoded char U+%04X from: %.*s", codepoint, (int)(p - prev), prev);
 
     FT_Set_Transform(face, &matrix, &pen);
     int glyphIndex = FT_Get_Char_Index(face, codepoint);

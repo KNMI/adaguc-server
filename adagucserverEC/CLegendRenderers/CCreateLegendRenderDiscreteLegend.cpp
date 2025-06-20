@@ -6,8 +6,8 @@
 #define MIN_SHADE_CLASS_BLOCK_SIZE 3
 #define MAX_SHADE_CLASS_BLOCK_SIZE 12
 
-void plotTwoColumnMinMax(CDrawImage *legendImage, double scaling, std::string fontLocation, float fontSize, int angle, CServerConfig::XMLE_ShadeInterval *s, int cbW, int pLeft, int textY,
-                         std::vector<CT::string> minColumn, std::vector<CT::string> maxColumn, int maxTextWidthMax) {
+void plotNumericLabels(CDrawImage *legendImage, double scaling, std::string fontLocation, float fontSize, int angle, CServerConfig::XMLE_ShadeInterval *s, int cbW, int pLeft, int textY,
+                       std::vector<CT::string> minColumn, std::vector<CT::string> maxColumn, int maxTextWidthMax) {
 
   char tempText[1024];
 
@@ -110,6 +110,12 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
   float fontSize;
   std::string fontLocation;
   std::tie(fontSize, fontLocation) = dataSource->srvParams->getLegendFont();
+
+  legendImage->setTTFFontLocation(fontLocation.c_str());
+  legendImage->setTTFFontSize(fontSize);
+
+  CDBDebug("renderDiscreteLegend function: fontLocation %s with size %f", fontLocation.c_str(), fontSize);
+  CDBDebug("parameter legendImage: fontLocation %s with size %f", legendImage->TTFFontLocation, legendImage->TTFFontSize);
 
   CT::string textformatting;
 
@@ -243,6 +249,15 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
     }
     // Only a subset of intervals to appear on screen to save space
     size_t drawIntervals = maxInterval - minInterval;
+
+    // Calculate columns and text properties
+    std::vector<CT::string> minColumn = extractColumn(drawIntervals, minInterval, styleConfiguration->shadeIntervals, true);
+    std::vector<CT::string> maxColumn = extractColumn(drawIntervals, minInterval, styleConfiguration->shadeIntervals, false);
+    int dashWidth = legendImage->getTextWidth("-", fontLocation.c_str(), fontSize * scaling, angle);
+    int dotWidth = legendImage->getTextWidth(".", fontLocation.c_str(), fontSize * scaling, angle);
+    // Assume monospaced for numbers
+    int numberWidth = legendImage->getTextWidth("0", fontLocation.c_str(), fontSize * scaling, angle);
+
     // With a small blockHeight, use the compact legend for better visibility
     if (initialBlockHeight <= MIN_SHADE_CLASS_BLOCK_SIZE + 1) {
       // For right alignment of labels
@@ -265,16 +280,8 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
         }
         CDBDebug("maxTextWidth = %d", maxTextWidth);
       }
-
-      std::vector<CT::string> minColumn = extractColumn(drawIntervals, minInterval, styleConfiguration->shadeIntervals, true);
-      std::vector<CT::string> maxColumn = extractColumn(drawIntervals, minInterval, styleConfiguration->shadeIntervals, false);
-
       // Recalculate block size based on the final intervals to appear on the legend
       float blockHeight = calculateShadeClassBlockHeight(legendImage->Geo->dHeight, drawIntervals - 1);
-      int dashWidth = legendImage->getTextWidth("-", fontLocation.c_str(), fontSize * scaling, angle);
-      int dotWidth = legendImage->getTextWidth(".", fontLocation.c_str(), fontSize * scaling, angle);
-      // Assume monospaced for numbers
-      int numberWidth = legendImage->getTextWidth("0", fontLocation.c_str(), fontSize * scaling, angle);
 
       for (size_t j = 0; j < drawIntervals; j++) {
         size_t realj = minInterval + j;
@@ -303,38 +310,14 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
     } else {
       // General case for this type of legend, where we draw every label and print every class interval
       // We can also clip this type of legend
-      for (size_t j = 0; j < drawIntervals; j++) {
-        size_t realj = minInterval + j;
-        CServerConfig::XMLE_ShadeInterval *s = (*styleConfiguration->shadeIntervals)[realj];
-      }
-      std::vector<CT::string> maxColumn = extractColumn(drawIntervals, minInterval, styleConfiguration->shadeIntervals, false);
-      // std::vector<CT::string> minColumn = extractColumn(drawIntervals, maxInterval, styleConfiguration->shadeIntervals, true);
-      int dashWidth = legendImage->getTextWidth("-", fontLocation.c_str(), fontSize * scaling, angle);
-      int dotWidth = legendImage->getTextWidth(".", fontLocation.c_str(), fontSize * scaling, angle);
-      // Assume monospaced for numbers
-      int numberWidth = legendImage->getTextWidth("0", fontLocation.c_str(), fontSize * scaling, angle);
-
       float blockHeight = calculateShadeClassBlockHeight(legendImage->Geo->dHeight, drawIntervals);
-
-      // We calculate the min column
-      // Convert the min into an array of CT::string
-      std::vector<CT::string> minColumn;
-      for (size_t j = 0; j < drawIntervals; j++) {
-        size_t realj = minInterval + j;
-        CServerConfig::XMLE_ShadeInterval *s = (*styleConfiguration->shadeIntervals)[realj];
-        if (!s->attr.min.empty() && !s->attr.max.empty()) {
-          if ((int)(std::abs(parseFloat(s->attr.min.c_str()))) % 5 != 0) {
-            continue;
-          }
-          minColumn.push_back(s->attr.min.c_str());
-        }
-      }
       int maxTextWidthMax = fieldWidthAsPixels(maxColumn, dashWidth, dotWidth, numberWidth);
       CDBDebug("maxTextWidthMax = %d, fieldWidthAsPixels = %d", maxTextWidthMax, fieldWidthAsPixels(maxColumn, dashWidth, dotWidth, numberWidth));
 
       for (size_t j = 0; j < drawIntervals; j++) {
         size_t realj = minInterval + j;
         CServerConfig::XMLE_ShadeInterval *s = (*styleConfiguration->shadeIntervals)[realj];
+        // TODO: Remove this if (maybe return if the opposite is true?)
         if (s->attr.min.empty() == false && s->attr.max.empty() == false) {
           int cY1 = int(cbH - ((j)*blockHeight) * scaling);
           int cY2 = int(cbH - ((((j + 1) * blockHeight) - 2)) * scaling);
@@ -347,10 +330,8 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
           legendImage->rectangle(4 * scaling + pLeft, cY2 + pTop, (int(cbW) + 7) * scaling + pLeft, cY1 + pTop, color, CColor(0, 0, 0, 255));
 
           if (s->attr.label.empty()) {
-            // snprintf(szTemp, 1000, "%s - %s", s->attr.min.c_str(), s->attr.max.c_str());
             int textY = (cY1 + pTop) - ((fontSize * scaling) / 4) + 3;
-
-            plotTwoColumnMinMax(legendImage, scaling, fontLocation, fontSize, angle, s, cbW, pLeft, textY, minColumn, maxColumn, maxTextWidthMax);
+            plotNumericLabels(legendImage, scaling, fontLocation, fontSize, angle, s, cbW, pLeft, textY, minColumn, maxColumn, maxTextWidthMax);
 
           } else {
             // Do not align to the right: this is a non-numeric label
