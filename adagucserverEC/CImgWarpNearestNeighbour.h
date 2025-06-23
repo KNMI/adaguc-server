@@ -257,32 +257,32 @@ private:
     }
   }
 
-  template <class T> static void drawFunction(int x, int y, T val, GDWState &, CDrawFunctionSettings *settings) {
+  template <class T> static void drawFunction(int x, int y, T val, GDWState &, CDrawFunctionSettings &settings) {
     /*
      Please note that this is part of the precise renderer. Changes to this routine should also be implemented in:
 
      adagucserverEC/CAreaMapper.cpp, myDrawRawTile
    */
 
-    if (settings->drawImage->trueColorAVG_RGBA == false) {
+    if (settings.drawImage->trueColorAVG_RGBA == false) {
       /* Using the precise renderer with shadeinterval */
 
       /* Using the precise renderer with a legend */
-      setPixelInDrawImage(x, y, val, settings);
+      setPixelInDrawImage(x, y, val, &settings);
     } else {
-      if (x >= 0 && y >= 0 && x < settings->drawImage->Geo->dWidth && y < settings->drawImage->Geo->dHeight) {
-        size_t p = x + y * settings->drawImage->Geo->dWidth;
+      if (x >= 0 && y >= 0 && x < settings.drawImage->Geo->dWidth && y < settings.drawImage->Geo->dHeight) {
+        size_t p = x + y * settings.drawImage->Geo->dWidth;
         uint v = val;
         unsigned char a = ((unsigned char)(v >> 24));
         if (a == 255) {
-          settings->drawImage->numField[p]++;
+          settings.drawImage->numField[p]++;
           unsigned char r = ((unsigned char)v);
           unsigned char g = ((unsigned char)(v >> 8));
           unsigned char b = ((unsigned char)(v >> 16));
-          settings->drawImage->rField[p] += r;
-          settings->drawImage->gField[p] += g;
-          settings->drawImage->bField[p] += b;
-          settings->drawImage->setPixelTrueColorOverWrite(x, y, r, g, b, 255);
+          settings.drawImage->rField[p] += r;
+          settings.drawImage->gField[p] += g;
+          settings.drawImage->bField[p] += b;
+          settings.drawImage->setPixelTrueColorOverWrite(x, y, r, g, b, 255);
         }
       }
     }
@@ -427,39 +427,39 @@ private:
       switch (dataType) {
       case CDF_CHAR:
         genericDataWarper.render<char>(warper, sourceData, &sourceGeo, drawImage->Geo,
-                                       [&settings](int x, int y, char val, GDWState &warperState) { return drawFunction<char>(x, y, val, warperState, &settings); });
+                                       [&settings](int x, int y, char val, GDWState &warperState) { return drawFunction<char>(x, y, val, warperState, settings); });
         break;
       case CDF_BYTE:
         genericDataWarper.render<uchar>(warper, sourceData, &sourceGeo, drawImage->Geo,
-                                        [&settings](int x, int y, uchar val, GDWState &warperState) { return drawFunction<uchar>(x, y, val, warperState, &settings); });
+                                        [&settings](int x, int y, uchar val, GDWState &warperState) { return drawFunction<uchar>(x, y, val, warperState, settings); });
         break;
       case CDF_UBYTE:
         genericDataWarper.render<ubyte>(warper, sourceData, &sourceGeo, drawImage->Geo,
-                                        [&settings](int x, int y, ubyte val, GDWState &warperState) { return drawFunction<ubyte>(x, y, val, warperState, &settings); });
+                                        [&settings](int x, int y, ubyte val, GDWState &warperState) { return drawFunction<ubyte>(x, y, val, warperState, settings); });
         break;
       case CDF_SHORT:
         genericDataWarper.render<short>(warper, sourceData, &sourceGeo, drawImage->Geo,
-                                        [&settings](int x, int y, short val, GDWState &warperState) { return drawFunction<short>(x, y, val, warperState, &settings); });
+                                        [&settings](int x, int y, short val, GDWState &warperState) { return drawFunction<short>(x, y, val, warperState, settings); });
         break;
       case CDF_USHORT:
         genericDataWarper.render<ushort>(warper, sourceData, &sourceGeo, drawImage->Geo,
-                                         [&settings](int x, int y, ushort val, GDWState &warperState) { return drawFunction<ushort>(x, y, val, warperState, &settings); });
+                                         [&settings](int x, int y, ushort val, GDWState &warperState) { return drawFunction<ushort>(x, y, val, warperState, settings); });
         break;
       case CDF_INT:
         genericDataWarper.render<int>(warper, sourceData, &sourceGeo, drawImage->Geo,
-                                      [&settings](int x, int y, int val, GDWState &warperState) { return drawFunction<int>(x, y, val, warperState, &settings); });
+                                      [&settings](int x, int y, int val, GDWState &warperState) { return drawFunction<int>(x, y, val, warperState, settings); });
         break;
       case CDF_UINT:
         genericDataWarper.render<uint>(warper, sourceData, &sourceGeo, drawImage->Geo,
-                                       [&settings](int x, int y, uint val, GDWState &warperState) { return drawFunction<uint>(x, y, val, warperState, &settings); });
+                                       [&settings](int x, int y, uint val, GDWState &warperState) { return drawFunction<uint>(x, y, val, warperState, settings); });
         break;
       case CDF_FLOAT:
         genericDataWarper.render<float>(warper, sourceData, &sourceGeo, drawImage->Geo,
-                                        [&settings](int x, int y, float val, GDWState &warperState) { return drawFunction<float>(x, y, val, warperState, &settings); });
+                                        [&settings](int x, int y, float val, GDWState &warperState) { return drawFunction<float>(x, y, val, warperState, settings); });
         break;
       case CDF_DOUBLE:
         genericDataWarper.render<double>(warper, sourceData, &sourceGeo, drawImage->Geo,
-                                         [&settings](int x, int y, double val, GDWState &warperState) { return drawFunction<double>(x, y, val, warperState, &settings); });
+                                         [&settings](int x, int y, double val, GDWState &warperState) { return drawFunction<double>(x, y, val, warperState, settings); });
         break;
       }
 

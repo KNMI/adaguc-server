@@ -63,9 +63,9 @@ private:
     void *data;
   };
 
-  template <class T> static void drawFunction(int x, int y, T val, GDWState &warperState, GdalDrawFunctionState *drawFunctionState) {
-    if (x >= 0 && y >= 0 && x < (int)drawFunctionState->width && y < (int)drawFunctionState->height) {
-      ((T *)drawFunctionState->data)[x + y * drawFunctionState->width] = val;
+  template <class T> static void drawFunction(int x, int y, T val, GDWState &, GdalDrawFunctionState &drawFunctionState) {
+    if (x >= 0 && y >= 0 && x < (int)drawFunctionState.width && y < (int)drawFunctionState.height) {
+      ((T *)drawFunctionState.data)[x + y * drawFunctionState.width] = val;
     }
   };
 

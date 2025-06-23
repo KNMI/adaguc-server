@@ -890,48 +890,48 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         switch (variable->getType()) {
         case CDF_CHAR:
           genericDataWarper.render<char>(&warper, sourceData, &sourceGeo, srvParam->Geo,
-                                         [&settings](int x, int y, char val, GDWState &warperState) { return drawFunction_nearest<char>(x, y, val, warperState, &settings); });
+                                         [&settings](int x, int y, char val, GDWState &warperState) { return drawFunction_nearest<char>(x, y, val, warperState, settings); });
           break;
         case CDF_BYTE:
           genericDataWarper.render<uchar>(&warper, sourceData, &sourceGeo, srvParam->Geo,
-                                          [&settings](int x, int y, uchar val, GDWState &warperState) { return drawFunction_nearest<uchar>(x, y, val, warperState, &settings); });
+                                          [&settings](int x, int y, uchar val, GDWState &warperState) { return drawFunction_nearest<uchar>(x, y, val, warperState, settings); });
           break;
         case CDF_UBYTE:
           genericDataWarper.render<ubyte>(&warper, sourceData, &sourceGeo, srvParam->Geo,
-                                          [&settings](int x, int y, ubyte val, GDWState &warperState) { return drawFunction_nearest<ubyte>(x, y, val, warperState, &settings); });
+                                          [&settings](int x, int y, ubyte val, GDWState &warperState) { return drawFunction_nearest<ubyte>(x, y, val, warperState, settings); });
           break;
         case CDF_SHORT:
           genericDataWarper.render<short>(&warper, sourceData, &sourceGeo, srvParam->Geo,
-                                          [&settings](int x, int y, short val, GDWState &warperState) { return drawFunction_nearest<short>(x, y, val, warperState, &settings); });
+                                          [&settings](int x, int y, short val, GDWState &warperState) { return drawFunction_nearest<short>(x, y, val, warperState, settings); });
           break;
         case CDF_USHORT:
           genericDataWarper.render<ushort>(&warper, sourceData, &sourceGeo, srvParam->Geo,
-                                           [&settings](int x, int y, ushort val, GDWState &warperState) { return drawFunction_nearest<ushort>(x, y, val, warperState, &settings); });
+                                           [&settings](int x, int y, ushort val, GDWState &warperState) { return drawFunction_nearest<ushort>(x, y, val, warperState, settings); });
           break;
         case CDF_INT:
           genericDataWarper.render<int>(&warper, sourceData, &sourceGeo, srvParam->Geo,
-                                        [&settings](int x, int y, int val, GDWState &warperState) { return drawFunction_nearest<int>(x, y, val, warperState, &settings); });
+                                        [&settings](int x, int y, int val, GDWState &warperState) { return drawFunction_nearest<int>(x, y, val, warperState, settings); });
           break;
         case CDF_UINT:
           genericDataWarper.render<uint>(&warper, sourceData, &sourceGeo, srvParam->Geo,
-                                         [&settings](int x, int y, uint val, GDWState &warperState) { return drawFunction_nearest<uint>(x, y, val, warperState, &settings); });
+                                         [&settings](int x, int y, uint val, GDWState &warperState) { return drawFunction_nearest<uint>(x, y, val, warperState, settings); });
           break;
         case CDF_INT64:
           genericDataWarper.render<long>(&warper, sourceData, &sourceGeo, srvParam->Geo,
-                                         [&settings](int x, int y, long val, GDWState &warperState) { return drawFunction_nearest<long>(x, y, val, warperState, &settings); });
+                                         [&settings](int x, int y, long val, GDWState &warperState) { return drawFunction_nearest<long>(x, y, val, warperState, settings); });
           break;
         case CDF_UINT64:
           genericDataWarper.render<ulong>(&warper, sourceData, &sourceGeo, srvParam->Geo,
-                                          [&settings](int x, int y, ulong val, GDWState &warperState) { return drawFunction_nearest<ulong>(x, y, val, warperState, &settings); });
+                                          [&settings](int x, int y, ulong val, GDWState &warperState) { return drawFunction_nearest<ulong>(x, y, val, warperState, settings); });
           break;
 
         case CDF_FLOAT:
           genericDataWarper.render<float>(&warper, sourceData, &sourceGeo, srvParam->Geo,
-                                          [&settings](int x, int y, float val, GDWState &warperState) { return drawFunction_nearest<float>(x, y, val, warperState, &settings); });
+                                          [&settings](int x, int y, float val, GDWState &warperState) { return drawFunction_nearest<float>(x, y, val, warperState, settings); });
           break;
         case CDF_DOUBLE:
           genericDataWarper.render<double>(&warper, sourceData, &sourceGeo, srvParam->Geo,
-                                           [&settings](int x, int y, double val, GDWState &warperState) { return drawFunction_nearest<double>(x, y, val, warperState, &settings); });
+                                           [&settings](int x, int y, double val, GDWState &warperState) { return drawFunction_nearest<double>(x, y, val, warperState, settings); });
           break;
         default:
           CDBError("Unknown var type [%d]", variable->getType());
@@ -944,48 +944,48 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         switch (variable->getType()) {
         case CDF_CHAR:
           genericDataWarper.render<char>(&warper, sourceData, &sourceGeo, srvParam->Geo,
-                                         [&settings](int x, int y, char val, GDWState &warperState) { return drawFunction_avg_rgb<char>(x, y, val, warperState, &settings); });
+                                         [&settings](int x, int y, char val, GDWState &warperState) { return drawFunction_avg_rgb<char>(x, y, val, warperState, settings); });
           break;
         case CDF_BYTE:
           genericDataWarper.render<uchar>(&warper, sourceData, &sourceGeo, srvParam->Geo,
-                                          [&settings](int x, int y, uchar val, GDWState &warperState) { return drawFunction_avg_rgb<uchar>(x, y, val, warperState, &settings); });
+                                          [&settings](int x, int y, uchar val, GDWState &warperState) { return drawFunction_avg_rgb<uchar>(x, y, val, warperState, settings); });
           break;
         case CDF_UBYTE:
           genericDataWarper.render<ubyte>(&warper, sourceData, &sourceGeo, srvParam->Geo,
-                                          [&settings](int x, int y, ubyte val, GDWState &warperState) { return drawFunction_avg_rgb<ubyte>(x, y, val, warperState, &settings); });
+                                          [&settings](int x, int y, ubyte val, GDWState &warperState) { return drawFunction_avg_rgb<ubyte>(x, y, val, warperState, settings); });
           break;
         case CDF_SHORT:
           genericDataWarper.render<short>(&warper, sourceData, &sourceGeo, srvParam->Geo,
-                                          [&settings](int x, int y, short val, GDWState &warperState) { return drawFunction_avg_rgb<short>(x, y, val, warperState, &settings); });
+                                          [&settings](int x, int y, short val, GDWState &warperState) { return drawFunction_avg_rgb<short>(x, y, val, warperState, settings); });
           break;
         case CDF_USHORT:
           genericDataWarper.render<ushort>(&warper, sourceData, &sourceGeo, srvParam->Geo,
-                                           [&settings](int x, int y, ushort val, GDWState &warperState) { return drawFunction_avg_rgb<ushort>(x, y, val, warperState, &settings); });
+                                           [&settings](int x, int y, ushort val, GDWState &warperState) { return drawFunction_avg_rgb<ushort>(x, y, val, warperState, settings); });
           break;
         case CDF_INT:
           genericDataWarper.render<int>(&warper, sourceData, &sourceGeo, srvParam->Geo,
-                                        [&settings](int x, int y, int val, GDWState &warperState) { return drawFunction_avg_rgb<int>(x, y, val, warperState, &settings); });
+                                        [&settings](int x, int y, int val, GDWState &warperState) { return drawFunction_avg_rgb<int>(x, y, val, warperState, settings); });
           break;
         case CDF_UINT:
           genericDataWarper.render<uint>(&warper, sourceData, &sourceGeo, srvParam->Geo,
-                                         [&settings](int x, int y, uint val, GDWState &warperState) { return drawFunction_avg_rgb<uint>(x, y, val, warperState, &settings); });
+                                         [&settings](int x, int y, uint val, GDWState &warperState) { return drawFunction_avg_rgb<uint>(x, y, val, warperState, settings); });
           break;
         case CDF_INT64:
           genericDataWarper.render<long>(&warper, sourceData, &sourceGeo, srvParam->Geo,
-                                         [&settings](int x, int y, long val, GDWState &warperState) { return drawFunction_avg_rgb<long>(x, y, val, warperState, &settings); });
+                                         [&settings](int x, int y, long val, GDWState &warperState) { return drawFunction_avg_rgb<long>(x, y, val, warperState, settings); });
           break;
         case CDF_UINT64:
           genericDataWarper.render<ulong>(&warper, sourceData, &sourceGeo, srvParam->Geo,
-                                          [&settings](int x, int y, ulong val, GDWState &warperState) { return drawFunction_avg_rgb<ulong>(x, y, val, warperState, &settings); });
+                                          [&settings](int x, int y, ulong val, GDWState &warperState) { return drawFunction_avg_rgb<ulong>(x, y, val, warperState, settings); });
           break;
 
         case CDF_FLOAT:
           genericDataWarper.render<float>(&warper, sourceData, &sourceGeo, srvParam->Geo,
-                                          [&settings](int x, int y, float val, GDWState &warperState) { return drawFunction_avg_rgb<float>(x, y, val, warperState, &settings); });
+                                          [&settings](int x, int y, float val, GDWState &warperState) { return drawFunction_avg_rgb<float>(x, y, val, warperState, settings); });
           break;
         case CDF_DOUBLE:
           genericDataWarper.render<double>(&warper, sourceData, &sourceGeo, srvParam->Geo,
-                                           [&settings](int x, int y, double val, GDWState &warperState) { return drawFunction_avg_rgb<double>(x, y, val, warperState, &settings); });
+                                           [&settings](int x, int y, double val, GDWState &warperState) { return drawFunction_avg_rgb<double>(x, y, val, warperState, settings); });
           break;
         default:
           CDBError("Unknown var type [%d]", variable->getType());
