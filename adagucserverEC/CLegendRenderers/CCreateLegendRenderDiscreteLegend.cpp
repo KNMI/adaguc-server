@@ -6,6 +6,7 @@
 #define MIN_SHADE_CLASS_BLOCK_SIZE 3
 #define MAX_SHADE_CLASS_BLOCK_SIZE 12
 
+// Aux function to plot numberic labels, optionally as two columns (representing an interval)
 void plotNumericLabels(CDrawImage *legendImage, double scaling, std::string fontLocation, float fontSize, int angle, CServerConfig::XMLE_ShadeInterval *s, int cbW, int pLeft, int textY,
                        std::vector<CT::string> minColumn, std::vector<CT::string> maxColumn, int maxTextWidthMax) {
 
@@ -264,9 +265,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
       int maxTextWidth = 0;
       char tempText[1000];
 
-      // Calculate the max text width, we can probably simplify this because monospace
       for (size_t j = 0; j < drawIntervals; j++) {
-        CDBDebug("MAX WIDTH CALCULATION");
         size_t realj = minInterval + j;
         CServerConfig::XMLE_ShadeInterval *s = (*styleConfiguration->shadeIntervals)[realj];
         if (!s->attr.min.empty() && !s->attr.max.empty()) {
@@ -275,10 +274,8 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
           }
           snprintf(tempText, 1000, "%s", s->attr.min.c_str());
           int textWidth = legendImage->getTextWidth(tempText, fontLocation.c_str(), fontSize * scaling, angle);
-          CDBDebug("Width of %s = %d", tempText, textWidth);
           if (textWidth > maxTextWidth) maxTextWidth = textWidth;
         }
-        CDBDebug("maxTextWidth = %d", maxTextWidth);
       }
       // Recalculate block size based on the final intervals to appear on the legend
       float blockHeight = calculateShadeClassBlockHeight(legendImage->Geo->dHeight, drawIntervals - 1);
@@ -312,32 +309,32 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
       // We can also clip this type of legend
       float blockHeight = calculateShadeClassBlockHeight(legendImage->Geo->dHeight, drawIntervals);
       int maxTextWidthMax = fieldWidthAsPixels(maxColumn, dashWidth, dotWidth, numberWidth);
-      CDBDebug("maxTextWidthMax = %d, fieldWidthAsPixels = %d", maxTextWidthMax, fieldWidthAsPixels(maxColumn, dashWidth, dotWidth, numberWidth));
 
       for (size_t j = 0; j < drawIntervals; j++) {
         size_t realj = minInterval + j;
         CServerConfig::XMLE_ShadeInterval *s = (*styleConfiguration->shadeIntervals)[realj];
-        // TODO: Remove this if (maybe return if the opposite is true?)
-        if (s->attr.min.empty() == false && s->attr.max.empty() == false) {
-          int cY1 = int(cbH - ((j)*blockHeight) * scaling);
-          int cY2 = int(cbH - ((((j + 1) * blockHeight) - 2)) * scaling);
-          CColor color;
-          if (s->attr.fillcolor.empty() == false) {
-            color = CColor(s->attr.fillcolor.c_str());
-          } else {
-            color = legendImage->getColorForIndex(CImageDataWriter::getColorIndexForValue(dataSource, parseFloat(s->attr.min.c_str())));
-          }
-          legendImage->rectangle(4 * scaling + pLeft, cY2 + pTop, (int(cbW) + 7) * scaling + pLeft, cY1 + pTop, color, CColor(0, 0, 0, 255));
+        if (s->attr.min.empty() || s->attr.max.empty()) {
+          continue;
+        }
 
-          if (s->attr.label.empty()) {
-            int textY = (cY1 + pTop) - ((fontSize * scaling) / 4) + 3;
-            plotNumericLabels(legendImage, scaling, fontLocation, fontSize, angle, s, cbW, pLeft, textY, minColumn, maxColumn, maxTextWidthMax);
+        int cY1 = int(cbH - ((j)*blockHeight) * scaling);
+        int cY2 = int(cbH - ((((j + 1) * blockHeight) - 2)) * scaling);
+        CColor color;
+        if (s->attr.fillcolor.empty() == false) {
+          color = CColor(s->attr.fillcolor.c_str());
+        } else {
+          color = legendImage->getColorForIndex(CImageDataWriter::getColorIndexForValue(dataSource, parseFloat(s->attr.min.c_str())));
+        }
+        legendImage->rectangle(4 * scaling + pLeft, cY2 + pTop, (int(cbW) + 7) * scaling + pLeft, cY1 + pTop, color, CColor(0, 0, 0, 255));
 
-          } else {
-            // Do not align to the right: this is a non-numeric label
-            snprintf(szTemp, 1000, "%s", s->attr.label.c_str());
-            legendImage->drawText(((int)cbW + 12 + pLeft) * scaling, (cY1 + pTop) - ((fontSize * scaling) / 4) + 3, fontLocation.c_str(), fontSize * scaling, 0, szTemp, 248);
-          }
+        if (s->attr.label.empty()) {
+          int textY = (cY1 + pTop) - ((fontSize * scaling) / 4) + 3;
+          plotNumericLabels(legendImage, scaling, fontLocation, fontSize, angle, s, cbW, pLeft, textY, minColumn, maxColumn, maxTextWidthMax);
+
+        } else {
+          // Do not align to the right: this is a non-numeric label
+          snprintf(szTemp, 1000, "%s", s->attr.label.c_str());
+          legendImage->drawText(((int)cbW + 12 + pLeft) * scaling, (cY1 + pTop) - ((fontSize * scaling) / 4) + 3, fontLocation.c_str(), fontSize * scaling, 0, szTemp, 248);
         }
       }
     }

@@ -664,7 +664,6 @@ void CCairoPlotter::poly(float x[], float y[], int n, float lineWidth, bool clos
 
 void CCairoPlotter::drawText(int x, int y, double angle, const char *text) {
   int w, h;
-  CDBDebug("Calling drawText");
   _drawFreeTypeText(x, y, w, h, angle, text, true);
 }
 
