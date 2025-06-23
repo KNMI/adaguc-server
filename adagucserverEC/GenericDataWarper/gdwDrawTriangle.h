@@ -3,6 +3,6 @@
 
 #include "CGenericDataWarper.h"
 
-int gdwDrawTriangle(double *_xP, double *_yP, bool aOrB, GDWDrawFunctionBaseState *drawFunctionState);
+template <typename T> int gdwDrawTriangle(double *_xP, double *_yP, T value, bool aOrB, GDWState &warperState, const std::function<void(int, int, T, GDWState &warperState)> &drawFunction);
 
 #endif

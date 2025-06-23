@@ -36,24 +36,24 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
   void *sourceData;
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-  CImgWarpGenericDrawFunctionState drawFunctionSettings;
-  drawFunctionSettings.dfNodataValue = dataSource->getFirstAvailableDataObject()->dfNodataValue;
-  drawFunctionSettings.legendValueRange = (bool)styleConfiguration->hasLegendValueRange;
-  drawFunctionSettings.legendLowerRange = styleConfiguration->legendLowerRange;
-  drawFunctionSettings.legendUpperRange = styleConfiguration->legendUpperRange;
-  drawFunctionSettings.hasNodataValue = dataSource->getFirstAvailableDataObject()->hasNodataValue;
+  CImgWarpGenericDrawFunctionState settings;
+  settings.dfNodataValue = dataSource->getFirstAvailableDataObject()->dfNodataValue;
+  settings.legendValueRange = (bool)styleConfiguration->hasLegendValueRange;
+  settings.legendLowerRange = styleConfiguration->legendLowerRange;
+  settings.legendUpperRange = styleConfiguration->legendUpperRange;
+  settings.hasNodataValue = dataSource->getFirstAvailableDataObject()->hasNodataValue;
 
-  if (!drawFunctionSettings.hasNodataValue) {
-    drawFunctionSettings.hasNodataValue = true;
-    drawFunctionSettings.dfNodataValue = -100000.f;
+  if (!settings.hasNodataValue) {
+    settings.hasNodataValue = true;
+    settings.dfNodataValue = -100000.f;
   }
-  drawFunctionSettings.width = drawImage->Geo->dWidth;
-  drawFunctionSettings.height = drawImage->Geo->dHeight;
+  settings.width = drawImage->Geo->dWidth;
+  settings.height = drawImage->Geo->dHeight;
 
-  drawFunctionSettings.dataField = new float[drawFunctionSettings.width * drawFunctionSettings.height];
-  for (int y = 0; y < drawFunctionSettings.height; y++) {
-    for (int x = 0; x < drawFunctionSettings.width; x++) {
-      drawFunctionSettings.dataField[x + y * drawFunctionSettings.width] = (float)drawFunctionSettings.dfNodataValue;
+  settings.dataField = new float[settings.width * settings.height];
+  for (int y = 0; y < settings.height; y++) {
+    for (int x = 0; x < settings.width; x++) {
+      settings.dataField[x + y * settings.width] = (float)settings.dfNodataValue;
     }
   }
 
@@ -71,41 +71,58 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
   sourceGeo.CRS = dataSource->nativeProj4;
 
   GenericDataWarper genericDataWarper;
-  drawFunctionSettings.useHalfCellOffset = true;
+  settings.useHalfCellOffset = true;
   switch (dataType) {
   case CDF_CHAR:
-    genericDataWarper.render<char>(warper, sourceData, &sourceGeo, drawImage->Geo, &drawFunctionSettings, &drawFunction);
+    genericDataWarper.render<char>(warper, sourceData, &sourceGeo, drawImage->Geo,
+                                   [settings](int x, int y, char val, GDWState &warperState) { return drawFunction<char>(x, y, val, warperState, settings); });
     break;
   case CDF_BYTE:
-    genericDataWarper.render<char>(warper, sourceData, &sourceGeo, drawImage->Geo, &drawFunctionSettings, &drawFunction);
+    genericDataWarper.render<uchar>(warper, sourceData, &sourceGeo, drawImage->Geo,
+                                    [settings](int x, int y, uchar val, GDWState &warperState) { return drawFunction<uchar>(x, y, val, warperState, settings); });
     break;
   case CDF_UBYTE:
-    genericDataWarper.render<unsigned char>(warper, sourceData, &sourceGeo, drawImage->Geo, &drawFunctionSettings, &drawFunction);
+    genericDataWarper.render<ubyte>(warper, sourceData, &sourceGeo, drawImage->Geo,
+                                    [settings](int x, int y, ubyte val, GDWState &warperState) { return drawFunction<ubyte>(x, y, val, warperState, settings); });
     break;
   case CDF_SHORT:
-    genericDataWarper.render<short>(warper, sourceData, &sourceGeo, drawImage->Geo, &drawFunctionSettings, &drawFunction);
+    genericDataWarper.render<short>(warper, sourceData, &sourceGeo, drawImage->Geo,
+                                    [settings](int x, int y, short val, GDWState &warperState) { return drawFunction<short>(x, y, val, warperState, settings); });
     break;
   case CDF_USHORT:
-    genericDataWarper.render<ushort>(warper, sourceData, &sourceGeo, drawImage->Geo, &drawFunctionSettings, &drawFunction);
+    genericDataWarper.render<ushort>(warper, sourceData, &sourceGeo, drawImage->Geo,
+                                     [settings](int x, int y, ushort val, GDWState &warperState) { return drawFunction<ushort>(x, y, val, warperState, settings); });
     break;
   case CDF_INT:
-    genericDataWarper.render<int>(warper, sourceData, &sourceGeo, drawImage->Geo, &drawFunctionSettings, &drawFunction);
+    genericDataWarper.render<int>(warper, sourceData, &sourceGeo, drawImage->Geo,
+                                  [settings](int x, int y, int val, GDWState &warperState) { return drawFunction<int>(x, y, val, warperState, settings); });
     break;
   case CDF_UINT:
-    genericDataWarper.render<uint>(warper, sourceData, &sourceGeo, drawImage->Geo, &drawFunctionSettings, &drawFunction);
+    genericDataWarper.render<uint>(warper, sourceData, &sourceGeo, drawImage->Geo,
+                                   [settings](int x, int y, uint val, GDWState &warperState) { return drawFunction<uint>(x, y, val, warperState, settings); });
+    break;
+  case CDF_INT64:
+    genericDataWarper.render<long>(warper, sourceData, &sourceGeo, drawImage->Geo,
+                                   [settings](int x, int y, long val, GDWState &warperState) { return drawFunction<long>(x, y, val, warperState, settings); });
+    break;
+  case CDF_UINT64:
+    genericDataWarper.render<ulong>(warper, sourceData, &sourceGeo, drawImage->Geo,
+                                    [settings](int x, int y, ulong val, GDWState &warperState) { return drawFunction<ulong>(x, y, val, warperState, settings); });
     break;
   case CDF_FLOAT:
-    genericDataWarper.render<float>(warper, sourceData, &sourceGeo, drawImage->Geo, &drawFunctionSettings, &drawFunction);
+    genericDataWarper.render<float>(warper, sourceData, &sourceGeo, drawImage->Geo,
+                                    [settings](int x, int y, float val, GDWState &warperState) { return drawFunction<float>(x, y, val, warperState, settings); });
     break;
   case CDF_DOUBLE:
-    genericDataWarper.render<double>(warper, sourceData, &sourceGeo, drawImage->Geo, &drawFunctionSettings, &drawFunction);
+    genericDataWarper.render<double>(warper, sourceData, &sourceGeo, drawImage->Geo,
+                                     [settings](int x, int y, double val, GDWState &warperState) { return drawFunction<double>(x, y, val, warperState, settings); });
     break;
   }
 
-  for (int y = 0; y < (int)drawFunctionSettings.height; y = y + 1) {
-    for (int x = 0; x < (int)drawFunctionSettings.width; x = x + 1) {
-      float val = drawFunctionSettings.dataField[x + y * drawFunctionSettings.width];
-      if (val != (float)drawFunctionSettings.dfNodataValue && val == val) {
+  for (int y = 0; y < (int)settings.height; y = y + 1) {
+    for (int x = 0; x < (int)settings.width; x = x + 1) {
+      float val = settings.dataField[x + y * settings.width];
+      if (val != (float)settings.dfNodataValue && val == val) {
         if (styleConfiguration->legendLog != 0) val = log10(val + .000001) / log10(styleConfiguration->legendLog);
         val *= styleConfiguration->legendScale;
         val += styleConfiguration->legendOffset;
@@ -117,7 +134,7 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
       }
     }
   }
-  delete[] drawFunctionSettings.dataField;
+  delete[] settings.dataField;
   // CDBDebug("render done");
   return;
 }

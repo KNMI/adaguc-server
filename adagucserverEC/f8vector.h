@@ -25,7 +25,7 @@
 
 #ifndef F8_VECTOR_H
 #define F8_VECTOR_H
-
+#include <math.h>
 /*Usage:
 
     #include "f8vector.h"
@@ -45,6 +45,7 @@
 struct f8vector {
   double x, y, z;
   f8vector operator-(const f8vector &v) { return f8vector({.x = x - v.x, .y = y - v.y, .z = z - v.z}); }
+
   double square() { return x * x + y * y + z * z; }
   double magnitude() { return sqrt(x * x + y * y + z * z); }
   f8vector norm() {
@@ -62,6 +63,6 @@ inline double dot(const f8vector &a, const f8vector &b) { return a.x * b.x + a.y
 /**
  * Calculate cross product of a and b
  */
-f8vector cross(const f8vector &v1, const f8vector &v2) { return f8vector({.x = v1.y * v2.z - v1.z * v2.y, .y = v1.z * v2.x - v1.x * v2.z, .z = v1.x * v2.y - v1.y * v2.x}); }
+inline f8vector cross(const f8vector &v1, const f8vector &v2) { return f8vector({.x = v1.y * v2.z - v1.z * v2.y, .y = v1.z * v2.x - v1.x * v2.z, .z = v1.x * v2.y - v1.y * v2.x}); }
 
 #endif

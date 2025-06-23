@@ -257,32 +257,32 @@ private:
     }
   }
 
-  template <class T> static void drawFunction(int x, int y, T val, void *_settings) {
+  template <class T> static void drawFunction(int x, int y, T val, GDWState &, CDrawFunctionSettings settings) {
     /*
-      Please note that this is part of the precise renderer. Changes to this routine should also be implemented in:
+     Please note that this is part of the precise renderer. Changes to this routine should also be implemented in:
 
-      adagucserverEC/CAreaMapper.cpp, myDrawRawTile
-    */
-    CDrawFunctionSettings *settings = (CDrawFunctionSettings *)_settings;
-    if (settings->drawImage->trueColorAVG_RGBA == false) {
+     adagucserverEC/CAreaMapper.cpp, myDrawRawTile
+   */
+
+    if (settings.drawImage->trueColorAVG_RGBA == false) {
       /* Using the precise renderer with shadeinterval */
 
       /* Using the precise renderer with a legend */
-      setPixelInDrawImage(x, y, val, settings);
+      setPixelInDrawImage(x, y, val, &settings);
     } else {
-      if (x >= 0 && y >= 0 && x < settings->drawImage->Geo->dWidth && y < settings->drawImage->Geo->dHeight) {
-        size_t p = x + y * settings->drawImage->Geo->dWidth;
+      if (x >= 0 && y >= 0 && x < settings.drawImage->Geo->dWidth && y < settings.drawImage->Geo->dHeight) {
+        size_t p = x + y * settings.drawImage->Geo->dWidth;
         uint v = val;
         unsigned char a = ((unsigned char)(v >> 24));
         if (a == 255) {
-          settings->drawImage->numField[p]++;
+          settings.drawImage->numField[p]++;
           unsigned char r = ((unsigned char)v);
           unsigned char g = ((unsigned char)(v >> 8));
           unsigned char b = ((unsigned char)(v >> 16));
-          settings->drawImage->rField[p] += r;
-          settings->drawImage->gField[p] += g;
-          settings->drawImage->bField[p] += b;
-          settings->drawImage->setPixelTrueColorOverWrite(x, y, r, g, b, 255);
+          settings.drawImage->rField[p] += r;
+          settings.drawImage->gField[p] += g;
+          settings.drawImage->bField[p] += b;
+          settings.drawImage->setPixelTrueColorOverWrite(x, y, r, g, b, 255);
         }
       }
     }
@@ -422,54 +422,45 @@ private:
       sourceGeo.CRS = dataSource->nativeProj4;
 
       GenericDataWarper genericDataWarper;
+
       switch (dataType) {
       case CDF_CHAR:
-        genericDataWarper.render<char>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &drawFunction);
+        genericDataWarper.render<char>(warper, sourceData, &sourceGeo, drawImage->Geo,
+                                       [settings](int x, int y, char val, GDWState &warperState) { return drawFunction<char>(x, y, val, warperState, settings); });
         break;
       case CDF_BYTE:
-        genericDataWarper.render<char>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &drawFunction);
+        genericDataWarper.render<uchar>(warper, sourceData, &sourceGeo, drawImage->Geo,
+                                        [settings](int x, int y, uchar val, GDWState &warperState) { return drawFunction<uchar>(x, y, val, warperState, settings); });
         break;
       case CDF_UBYTE:
-        genericDataWarper.render<unsigned char>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &drawFunction);
+        genericDataWarper.render<ubyte>(warper, sourceData, &sourceGeo, drawImage->Geo,
+                                        [settings](int x, int y, ubyte val, GDWState &warperState) { return drawFunction<ubyte>(x, y, val, warperState, settings); });
         break;
       case CDF_SHORT:
-        genericDataWarper.render<short>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &drawFunction);
+        genericDataWarper.render<short>(warper, sourceData, &sourceGeo, drawImage->Geo,
+                                        [settings](int x, int y, short val, GDWState &warperState) { return drawFunction<short>(x, y, val, warperState, settings); });
         break;
       case CDF_USHORT:
-        genericDataWarper.render<ushort>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &drawFunction);
+        genericDataWarper.render<ushort>(warper, sourceData, &sourceGeo, drawImage->Geo,
+                                         [settings](int x, int y, ushort val, GDWState &warperState) { return drawFunction<ushort>(x, y, val, warperState, settings); });
         break;
       case CDF_INT:
-        genericDataWarper.render<int>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &drawFunction);
+        genericDataWarper.render<int>(warper, sourceData, &sourceGeo, drawImage->Geo,
+                                      [settings](int x, int y, int val, GDWState &warperState) { return drawFunction<int>(x, y, val, warperState, settings); });
         break;
       case CDF_UINT:
-        genericDataWarper.render<uint>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &drawFunction);
+        genericDataWarper.render<uint>(warper, sourceData, &sourceGeo, drawImage->Geo,
+                                       [settings](int x, int y, uint val, GDWState &warperState) { return drawFunction<uint>(x, y, val, warperState, settings); });
         break;
       case CDF_FLOAT:
-        genericDataWarper.render<float>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &drawFunction);
+        genericDataWarper.render<float>(warper, sourceData, &sourceGeo, drawImage->Geo,
+                                        [settings](int x, int y, float val, GDWState &warperState) { return drawFunction<float>(x, y, val, warperState, settings); });
         break;
       case CDF_DOUBLE:
-        genericDataWarper.render<double>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &drawFunction);
+        genericDataWarper.render<double>(warper, sourceData, &sourceGeo, drawImage->Geo,
+                                         [settings](int x, int y, double val, GDWState &warperState) { return drawFunction<double>(x, y, val, warperState, settings); });
         break;
       }
-
-      //       if(styleConfiguration->renderMethod&RM_AVG_RGBA&&settings.drawImage->rField!=NULL){
-      //         pthread_mutex_lock(&CImgWarpNearestNeighbour_render_lock);
-      //         for(int y=0;y<settings.drawImage->Geo->dHeight;y++){
-      //           for(int x=0;x<settings.drawImage->Geo->dWidth;x++){
-      //             size_t p = x+y*settings.drawImage->Geo->dWidth;
-      //             if(settings.drawImage->numField[p]!=0){
-      //
-      //               unsigned char r= (settings.drawImage->rField[p]/settings.drawImage->numField[p]);
-      //               unsigned char g= (settings.drawImage->gField[p]/settings.drawImage->numField[p]);
-      //               unsigned char b= (settings.drawImage->bField[p]/settings.drawImage->numField[p]);
-      //               unsigned char a=255;
-      //               settings.drawImage->setPixelTrueColorOverWrite(x,y,r,g,b,a);
-      //             }
-      //           }
-      //         }
-      //         pthread_mutex_unlock(&CImgWarpNearestNeighbour_render_lock);
-      //       }
-      //
 
       return;
     }

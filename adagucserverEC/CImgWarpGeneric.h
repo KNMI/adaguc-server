@@ -32,7 +32,7 @@
 
 static inline int nfast_mod(const int input, const int ceil) { return input >= ceil ? input % ceil : input; }
 
-struct CImgWarpGenericDrawFunctionState : GDWDrawFunctionBaseState {
+struct CImgWarpGenericDrawFunctionState {
   double dfNodataValue;
   double legendValueRange;
   double legendLowerRange;
@@ -40,27 +40,27 @@ struct CImgWarpGenericDrawFunctionState : GDWDrawFunctionBaseState {
   bool hasNodataValue;
   float *dataField;
   int width, height;
+  bool useHalfCellOffset;
 };
 
 class CImgWarpGeneric : public CImageWarperRenderInterface {
 private:
   DEF_ERRORFUNCTION();
 
-  template <class T> static void drawFunction(int x, int y, T val, void *_drawFunctionState) {
-    CImgWarpGenericDrawFunctionState *drawFunctionState = static_cast<CImgWarpGenericDrawFunctionState *>(_drawFunctionState);
-    if (x < 0 || y < 0 || x > drawFunctionState->width || y > drawFunctionState->height) return;
+  template <class T> static void drawFunction(int x, int y, T val, GDWState &warperState, CImgWarpGenericDrawFunctionState settings) {
+    if (x < 0 || y < 0 || x > settings.width || y > settings.height) return;
 
     bool isNodata = false;
-    if (drawFunctionState->hasNodataValue) {
-      if ((val) == (T)drawFunctionState->dfNodataValue) isNodata = true;
+    if (settings.hasNodataValue) {
+      if ((val) == (T)settings.dfNodataValue) isNodata = true;
     }
     if (!(val == val)) isNodata = true;
     if (!isNodata) {
-      T *sourceData = (T *)drawFunctionState->sourceData;
-      size_t sourceDataPX = drawFunctionState->sourceDataPX;
-      size_t sourceDataPY = drawFunctionState->sourceDataPY;
-      size_t sourceDataWidth = drawFunctionState->sourceDataWidth;
-      size_t sourceDataHeight = drawFunctionState->sourceDataHeight;
+      T *sourceData = (T *)warperState.sourceData;
+      size_t sourceDataPX = warperState.sourceDataPX;
+      size_t sourceDataPY = warperState.sourceDataPY;
+      size_t sourceDataWidth = warperState.sourceDataWidth;
+      size_t sourceDataHeight = warperState.sourceDataHeight;
 
       if (sourceDataPY > sourceDataHeight - 1) return;
       if (sourceDataPX > sourceDataWidth - 1) return;
@@ -72,13 +72,13 @@ private:
       values[0][1] += ((T *)sourceData)[nfast_mod(sourceDataPX + 0, sourceDataWidth) + nfast_mod(sourceDataPY + 1, sourceDataHeight) * sourceDataWidth];
       values[1][1] += ((T *)sourceData)[nfast_mod(sourceDataPX + 1, sourceDataWidth) + nfast_mod(sourceDataPY + 1, sourceDataHeight) * sourceDataWidth];
 
-      if (x >= 0 && y >= 0 && x < (int)drawFunctionState->width && y < (int)drawFunctionState->height) {
-        float dx = drawFunctionState->tileDx;
-        float dy = drawFunctionState->tileDy;
+      if (x >= 0 && y >= 0 && x < (int)settings.width && y < (int)settings.height) {
+        float dx = warperState.tileDx;
+        float dy = warperState.tileDy;
         float gx1 = (1 - dx) * values[0][0] + dx * values[1][0];
         float gx2 = (1 - dx) * values[0][1] + dx * values[1][1];
         float bilValue = (1 - dy) * gx1 + dy * gx2;
-        drawFunctionState->dataField[x + y * drawFunctionState->width] = bilValue;
+        settings.dataField[x + y * settings.width] = bilValue;
       }
     }
   };

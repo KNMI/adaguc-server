@@ -1,5 +1,7 @@
 #ifndef GenericDataWarper_H
 #define GenericDataWarper_H
+#include <functional>
+#include <iostream>
 #include <math.h>
 #include <stdlib.h>
 #include <proj.h>
@@ -10,40 +12,29 @@
 #include "CDebugger.h"
 #include "CGenericDataWarperTools.h"
 
-struct GDWDrawFunctionBaseState;
-typedef void (*FPSetValueInDestination)(GDWDrawFunctionBaseState *drawFunctionSettings);
-typedef double (*FPGetValueFromSource)(int, int, GDWDrawFunctionBaseState *);
+typedef unsigned char uchar;
+typedef unsigned char ubyte;
 
-struct GDWDrawFunctionBaseState {
+struct GDWState {
   CDFType sourceDataType;
   void *sourceData;
   int sourceDataPX, sourceDataPY, sourceDataWidth, sourceDataHeight;
   double tileDx, tileDy;
-
-  FPSetValueInDestination setValueInDestinationFunction;
-  FPGetValueFromSource getValueFromSourceFunction;
-
   double dfNodataValue;
   bool hasNodataValue;
   bool useHalfCellOffset = false;
-  int destDataWidth, destDataHeight, destX, destY; // TODO
+  int destDataWidth, destDataHeight, destX, destY;
   CDFType destinationDataType;
-  void *destinationGrid = nullptr; // TODO
+  void *destinationGrid = nullptr;
 };
-template <typename T> int warpT(CImageWarper *warper, void *_sourceData, CDFType sourceDataType, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, GDWDrawFunctionBaseState *drawFunctionSetting);
-
-int warp(CImageWarper *warper, void *_sourceData, CDFType sourceDataType, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, GDWDrawFunctionBaseState *drawFunctionSetting);
 
 class GenericDataWarper {
 private:
   DEF_ERRORFUNCTION();
+  GDWState warperState;
 
 public:
   template <typename T>
-
-  int render(CImageWarper *warper, void *_sourceData, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, void *drawFunctionSettings,
-             void (*drawFunction)(int, int, T, void *drawFunctionSettings));
-
-  // int renderI(CImageWarper *warper, void *_sourceData, CDFType sourceDataType, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, void *drawFunctionSettings, void *drawFunction);
+  int render(CImageWarper *warper, void *_sourceData, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, const std::function<void(int, int, T, GDWState &warperState)> &drawFunction);
 };
 #endif

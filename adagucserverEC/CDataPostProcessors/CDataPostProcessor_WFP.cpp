@@ -176,24 +176,23 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
       return 1;
     }
     GenericDataWarper genericDataWarper;
-
-    genericDataWarper.render<float>(&warper, windSectorDataField, &sourceGeo, &destGeo, &drawFunctionState, &drawFunction);
+    auto f = [drawFunctionState](int x, int y, float val, GDWState &warperState) { return drawFunction(x, y, val, warperState, drawFunctionState); };
+    genericDataWarper.render<float>(&warper, windSectorDataField, &sourceGeo, &destGeo, f);
   }
 
   return 0;
 }
 
-void CDPPWFP::drawFunction(int x, int y, float, void *_drawFunctionState) {
-  auto *drawFunctionState = (PostProcDrawFunctionState *)_drawFunctionState;
-  if (x >= 0 && y >= 0 && x < (int)drawFunctionState->width && y < (int)drawFunctionState->height) {
-    float windSpeed = drawFunctionState->destGridWindSpeed[x + y * drawFunctionState->width];
-    float windDir = drawFunctionState->destGridWindDirection[x + y * drawFunctionState->width];
+void CDPPWFP::drawFunction(int x, int y, float, GDWState &warperState, PostProcDrawFunctionState drawFunctionState) {
+  if (x >= 0 && y >= 0 && x < (int)drawFunctionState.width && y < (int)drawFunctionState.height) {
+    float windSpeed = drawFunctionState.destGridWindSpeed[x + y * drawFunctionState.width];
+    float windDir = drawFunctionState.destGridWindDirection[x + y * drawFunctionState.width];
 
     // Determine the windsector dimension value based on the WINS50 winddirection grid value
     int selectedS = -1;
-    for (size_t sectorIndex = 0; sectorIndex < drawFunctionState->windSectorVariable->getSize(); sectorIndex++) {
-      int windSector = ((int *)drawFunctionState->windSectorVariable->data)[sectorIndex] - 15; // TODO 15
-      int nexWindSector = windSector + 30;                                                     // TODO 30
+    for (size_t sectorIndex = 0; sectorIndex < drawFunctionState.windSectorVariable->getSize(); sectorIndex++) {
+      int windSector = ((int *)drawFunctionState.windSectorVariable->data)[sectorIndex] - 15; // TODO 15
+      int nexWindSector = windSector + 30;                                                    // TODO 30
       if (windDir >= windSector && windDir < nexWindSector) {
         selectedS = sectorIndex;
         break;
@@ -201,26 +200,26 @@ void CDPPWFP::drawFunction(int x, int y, float, void *_drawFunctionState) {
     }
     // If the sector was not found, set a NAN
     if (selectedS == -1) {
-      ((float *)drawFunctionState->WindSpeedWindparksOff)[x + y * drawFunctionState->width] = NAN;
+      ((float *)drawFunctionState.WindSpeedWindparksOff)[x + y * drawFunctionState.width] = NAN;
       return;
     }
 
     /* Now calculate the wind difference*/
-    size_t numX = drawFunctionState->dimWindSectorX;
-    size_t numY = drawFunctionState->dimWindSectorY;
-    size_t numZ = drawFunctionState->dimWindSectorHeightLevel;
-    size_t numQ = drawFunctionState->dimWindSectorQuantile;
+    size_t numX = drawFunctionState.dimWindSectorX;
+    size_t numY = drawFunctionState.dimWindSectorY;
+    size_t numZ = drawFunctionState.dimWindSectorHeightLevel;
+    size_t numQ = drawFunctionState.dimWindSectorQuantile;
 
     size_t selectedQ = 1; // Second quantile, which is currently 0.95
     size_t selectedH = 0; // Currently only the first (10 meter)
-    size_t selectedX = drawFunctionState->sourceDataPX;
-    size_t selectedY = drawFunctionState->sourceDataPY;
+    size_t selectedX = drawFunctionState.sourceDataPX;
+    size_t selectedY = drawFunctionState.sourceDataPY;
     size_t gridLocationPointer = selectedX + selectedY * numX;
     size_t windHeightPointer = selectedH * numY * numX;
     size_t windQuantilePointer = selectedQ * numZ * numY * numX;
     size_t windSectorPointer = selectedS * numQ * numZ * numY * numX;
 
-    CDF::Variable *windSpeedDifferenceVariable = drawFunctionState->windSpeedDifferenceVariable;
+    CDF::Variable *windSpeedDifferenceVariable = drawFunctionState.windSpeedDifferenceVariable;
 
     float windSpeedDifference = ((float *)windSpeedDifferenceVariable->data)[gridLocationPointer + windHeightPointer + windQuantilePointer + windSectorPointer];
     float MSTOKTS = 2;
@@ -230,10 +229,10 @@ void CDPPWFP::drawFunction(int x, int y, float, void *_drawFunctionState) {
 
     float windSpeedDifferenceKTS = windSpeedDifference * MSTOKTS;
     float windSpeedDifferenceMinKTS = windSpeedDifference * MSTOKTS * correctionFactor;
-    ((float *)drawFunctionState->windSectors)[x + y * drawFunctionState->width] = selectedS;
-    ((float *)drawFunctionState->windSpeedDifference)[x + y * drawFunctionState->width] = windSpeedDifferenceKTS;
+    ((float *)drawFunctionState.windSectors)[x + y * drawFunctionState.width] = selectedS;
+    ((float *)drawFunctionState.windSpeedDifference)[x + y * drawFunctionState.width] = windSpeedDifferenceKTS;
 
-    ((float *)drawFunctionState->WindSpeedWindparksOff)[x + y * drawFunctionState->width] = windSpeed + windSpeedDifferenceKTS;
-    ((float *)drawFunctionState->WindSpeedWindparksOnImproved)[x + y * drawFunctionState->width] = windSpeed - windSpeedDifferenceMinKTS;
+    ((float *)drawFunctionState.WindSpeedWindparksOff)[x + y * drawFunctionState.width] = windSpeed + windSpeedDifferenceKTS;
+    ((float *)drawFunctionState.WindSpeedWindparksOnImproved)[x + y * drawFunctionState.width] = windSpeed - windSpeedDifferenceMinKTS;
   }
 };
