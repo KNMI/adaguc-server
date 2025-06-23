@@ -17,9 +17,9 @@ private:
     void *data;
   };
 
-  template <class T> static void drawFunction(int x, int y, T val, GDWState &warperState, CDPPIncludeLayerSettings settings) {
-    if (x >= 0 && y >= 0 && x < (int)settings.width && y < (int)settings.height) {
-      ((T *)settings.data)[x + y * settings.width] = val;
+  template <class T> static void drawFunction(int x, int y, T val, GDWState &warperState, CDPPIncludeLayerSettings *settings) {
+    if (x >= 0 && y >= 0 && x < (int)settings->width && y < (int)settings->height) {
+      ((T *)settings->data)[x + y * settings->width] = val;
     }
   };
   CDataSource *getDataSource(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource);

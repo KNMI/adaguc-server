@@ -37,16 +37,16 @@ class CImgWarpHillShaded : public CImageWarperRenderInterface {
 private:
   DEF_ERRORFUNCTION();
 
-  template <class T> static void drawFunction(int x, int y, T val, GDWState &warperState, CImgWarpGenericDrawFunctionState drawFunctionState) {
-    if (x < 0 || y < 0 || x > drawFunctionState.width || y > drawFunctionState.height) return;
+  template <class T> static void drawFunction(int x, int y, T val, GDWState &warperState, CImgWarpGenericDrawFunctionState *drawFunctionState) {
+    if (x < 0 || y < 0 || x > drawFunctionState->width || y > drawFunctionState->height) return;
     bool isNodata = false;
     if (warperState.hasNodataValue) {
       if ((val) == (T)warperState.dfNodataValue) isNodata = true;
     }
     if (!(val == val)) isNodata = true;
     if (!isNodata)
-      if (drawFunctionState.legendValueRange)
-        if (val < drawFunctionState.legendLowerRange || val > drawFunctionState.legendUpperRange) isNodata = true;
+      if (drawFunctionState->legendValueRange)
+        if (val < drawFunctionState->legendLowerRange || val > drawFunctionState->legendUpperRange) isNodata = true;
     if (!isNodata) {
       T *sourceData = (T *)warperState.sourceData;
       size_t sourceDataPX = warperState.sourceDataPX;
@@ -83,7 +83,7 @@ private:
       f8vector v02 = f8vector({.x = sourceDataPX + 0., .y = sourceDataPY + 2., .z = values[0][2]});
       f8vector v12 = f8vector({.x = sourceDataPX + 1., .y = sourceDataPY + 2., .z = values[1][2]});
 
-      if (x >= 0 && y >= 0 && x < (int)drawFunctionState.width && y < (int)drawFunctionState.height) {
+      if (x >= 0 && y >= 0 && x < (int)drawFunctionState->width && y < (int)drawFunctionState->height) {
         f8vector normal00 = cross(v10 - v00, v01 - v00).norm();
         f8vector normal10 = cross(v20 - v10, v11 - v10).norm();
         f8vector normal01 = cross(v11 - v01, v02 - v01).norm();
@@ -98,7 +98,7 @@ private:
         float gx1 = (1 - dx) * c00 + dx * c10;
         float gx2 = (1 - dx) * c01 + dx * c11;
         float bilValue = (1 - dy) * gx1 + dy * gx2;
-        drawFunctionState.dataField[x + y * drawFunctionState.width] = (bilValue + 1) / 1.816486;
+        drawFunctionState->dataField[x + y * drawFunctionState->width] = (bilValue + 1) / 1.816486;
       }
     }
   };

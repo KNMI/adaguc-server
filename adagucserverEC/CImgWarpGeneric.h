@@ -47,12 +47,12 @@ class CImgWarpGeneric : public CImageWarperRenderInterface {
 private:
   DEF_ERRORFUNCTION();
 
-  template <class T> static void drawFunction(int x, int y, T val, GDWState &warperState, CImgWarpGenericDrawFunctionState settings) {
-    if (x < 0 || y < 0 || x > settings.width || y > settings.height) return;
+  template <class T> static void drawFunction(int x, int y, T val, GDWState &warperState, CImgWarpGenericDrawFunctionState *settings) {
+    if (x < 0 || y < 0 || x > settings->width || y > settings->height) return;
 
     bool isNodata = false;
-    if (settings.hasNodataValue) {
-      if ((val) == (T)settings.dfNodataValue) isNodata = true;
+    if (settings->hasNodataValue) {
+      if ((val) == (T)settings->dfNodataValue) isNodata = true;
     }
     if (!(val == val)) isNodata = true;
     if (!isNodata) {
@@ -72,13 +72,13 @@ private:
       values[0][1] += ((T *)sourceData)[nfast_mod(sourceDataPX + 0, sourceDataWidth) + nfast_mod(sourceDataPY + 1, sourceDataHeight) * sourceDataWidth];
       values[1][1] += ((T *)sourceData)[nfast_mod(sourceDataPX + 1, sourceDataWidth) + nfast_mod(sourceDataPY + 1, sourceDataHeight) * sourceDataWidth];
 
-      if (x >= 0 && y >= 0 && x < (int)settings.width && y < (int)settings.height) {
+      if (x >= 0 && y >= 0 && x < (int)settings->width && y < (int)settings->height) {
         float dx = warperState.tileDx;
         float dy = warperState.tileDy;
         float gx1 = (1 - dx) * values[0][0] + dx * values[1][0];
         float gx2 = (1 - dx) * values[0][1] + dx * values[1][1];
         float bilValue = (1 - dy) * gx1 + dy * gx2;
-        settings.dataField[x + y * settings.width] = bilValue;
+        settings->dataField[x + y * settings->width] = bilValue;
       }
     }
   };
