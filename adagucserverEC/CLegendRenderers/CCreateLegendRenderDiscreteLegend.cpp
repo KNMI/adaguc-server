@@ -8,7 +8,7 @@
 
 // Aux function to plot numberic labels, optionally as two columns (representing an interval)
 void plotNumericLabels(CDrawImage *legendImage, double scaling, std::string fontLocation, float fontSize, int angle, CServerConfig::XMLE_ShadeInterval *s, int cbW, int pLeft, int textY,
-                       std::vector<CT::string> minColumn, std::vector<CT::string> maxColumn, int maxTextWidthMax) {
+                       const std::vector<CT::string> &minColumn, const std::vector<CT::string> &maxColumn, int maxTextWidth) {
 
   char tempText[1024];
 
@@ -36,13 +36,17 @@ void plotNumericLabels(CDrawImage *legendImage, double scaling, std::string font
 
   legendImage->drawText(textXMin, textY, fontLocation.c_str(), fontSize * scaling, angle, tempText, 248);
 
+  // If no maxColumn, stop
+  if (maxColumn.empty()) {
+    return;
+  }
+
   // Draw central dash
   int dashX = colRightMin + (maxDecimalWidth(minColumn) + 4) * numberWidth; // Leave gap between min column and this dash
   legendImage->drawText(dashX, textY, fontLocation.c_str(), fontSize * scaling, angle, "–", 248);
 
   // Draw max column (to the right of the dash)
-  // Right edge of the max column (min column + extra spacing + max column width)
-  int colRightMax = colRightMin + maxTextWidthMax;
+  int colRightMax = colRightMin + maxTextWidth;
   // Calculate column center for max value
   int columnCenterMax = colRightMax + numberWidth;
 
@@ -114,9 +118,6 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
 
   legendImage->setTTFFontLocation(fontLocation.c_str());
   legendImage->setTTFFontSize(fontSize);
-
-  CDBDebug("renderDiscreteLegend function: fontLocation %s with size %f", fontLocation.c_str(), fontSize);
-  CDBDebug("parameter legendImage: fontLocation %s with size %f", legendImage->TTFFontLocation, legendImage->TTFFontSize);
 
   CT::string textformatting;
 
@@ -298,10 +299,13 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
           if ((int)(std::abs(parseFloat(s->attr.min.c_str()))) % 5 != 0) {
             continue;
           }
-          snprintf(szTemp, 1000, "%s", s->attr.min.c_str());
-          int textWidth = legendImage->getTextWidth(szTemp, fontLocation.c_str(), fontSize * scaling, angle);
-          int textX = ((int)cbW + 12 + pLeft) * scaling + (maxTextWidth - textWidth);
-          legendImage->drawText(textX, (cY1 + pTop) - ((fontSize * scaling) / 4) + 3, fontLocation.c_str(), fontSize * scaling, angle, szTemp, 248);
+
+          int textY = (cY1 + pTop) - ((fontSize * scaling) / 4) + 3;
+          for (size_t i = 0; i < minColumn.size(); ++i) {
+            CDBDebug(" minColumn[%d]=%s", i, minColumn[i].c_str());
+          }
+          // We only print min column values because, it would make no sense to print intervals when not every interval is printed.
+          plotNumericLabels(legendImage, scaling, fontLocation, fontSize, angle, s, cbW, pLeft, textY, minColumn, {}, 0);
         }
       }
     } else {

@@ -38,21 +38,22 @@ int hasNeg(std::vector<CT::string> column) {
   return isNeg;
 }
 
-int maxDecimalWidth(std::vector<CT::string> column) { //
-  int width = 0;
-  for (int i = 1; i < column.size(); i++) {
-    int index = column[i].indexOf(".");
+int maxDecimalWidth(std::vector<CT::string> column) {
+  int maxDecimals = 0;
 
-    int currWidth = column[i].length() - index;
+  for (auto &item : column) {
+    int dotIndex = item.indexOf(".");
+    if (dotIndex < 0) {
+      continue; // dot not found
+    }
 
-    if (currWidth > width) {
-      if (index < 0) {
-        break; // dot not found
-      }
-      width = currWidth;
-    };
+    int decimals = item.length() - dotIndex - 1;
+    if (decimals > maxDecimals) {
+      maxDecimals = decimals;
+    }
   }
-  return width - 1;
+
+  return maxDecimals;
 }
 
 int fieldWidthAsPixels(std::vector<CT::string> column, int dashWidth, int dotWidth, int numericGlyphWidth) {
