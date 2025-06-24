@@ -32,7 +32,7 @@ We provide several scripts to setup postgresql on your machine:
 Or alternatively, run a postgresql database using docker:
 ```shell
 docker run --rm -d \
-    --name adaguc_db \
+    --name adaguc_db_dev \
     -e POSTGRES_USER=adaguc \
     -e POSTGRES_PASSWORD=adaguc \
     -e POSTGRES_DB=adaguc \
@@ -40,7 +40,7 @@ docker run --rm -d \
     postgres:13.4
 ```
 
-When started, the database is available via username adaguc, databasename adaguc, password adageuc, and localhost. You can use the following to inspect the database:
+When started, the database is available via username adaguc, databasename adaguc, password adaguc, and localhost. You can use the following to inspect the database:
 
 `psql "dbname=adaguc user=adaguc password=adaguc host=localhost"`
 
@@ -82,6 +82,7 @@ export ADAGUC_CONFIG=${ADAGUC_PATH}/python/lib/adaguc/adaguc-server-config-pytho
 export ADAGUC_NUMPARALLELPROCESSES=4
 export ADAGUC_DB="user=adaguc password=adaguc host=localhost dbname=adaguc"
 export ADAGUC_ENABLELOGBUFFER=FALSE
+export ADAGUC_TRACE_TIMINGS=FALSE
 ```
 
 # 4. compile adaguc server binaries
@@ -90,12 +91,6 @@ After the dependencies have been installed you need to execute a script to start
 
 ```
 bash compile.sh
-```
-
-Optionally you can check the correct functioning of the adaguc-server by starting the functional tests by doing
-
-```
-bash runtests.sh
 ```
 
 # 5. Start adaguc-server
@@ -110,6 +105,7 @@ export ADAGUC_CONFIG=${ADAGUC_PATH}/python/lib/adaguc/adaguc-server-config-pytho
 export ADAGUC_NUMPARALLELPROCESSES=4
 export ADAGUC_DB="user=adaguc password=adaguc host=localhost dbname=adaguc"
 export ADAGUC_ENABLELOGBUFFER=FALSE
+export ADAGUC_TRACE_TIMINGS=TRUE
 
 # To enable core dump generation, additionally do:
 #ulimit -c unlimited
@@ -125,6 +121,13 @@ Note: the data directories cannot point to a symbolic link, for security purpose
 
 Note: For production purposes the server should be started with gunicorn: [Start adaguc-server with gunicorn](./developing/scripts/start-adaguc-server-production-with-gunicorn.md)
 
+You can check the correct functioning of the adaguc-server by starting the functional tests by doing
+
+```
+docker compose -f Docker/docker-compose-test.yml up -Vd
+bash runtests_psql.sh
+```
+
 # 6. Test the server with geographical referenced testdata
 
 Copy a test netcdf file and display:
@@ -138,10 +141,16 @@ Copy a test netcdf file and display:
 
 # 7. Run tests
 
-Run the tests by doing:
+First start the docker used for testing: 
 
 ```
-bash runtests.sh
+docker compose -f Docker/docker-compose-test.yml up -Vd
+```
+
+Then run the tests by doing:
+
+```
+bash runtests_psql.sh
 ```
 
 ## To scan datasets
