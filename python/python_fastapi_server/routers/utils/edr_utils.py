@@ -545,7 +545,7 @@ async def get_metadata(collection_name=None):
     logger.info("status for %s: %d", urlrequest, status)
     metadata = None
     if status == 0:
-        metadata = json.loads(response.getvalue().decode("utf-8"))
+        metadata = json.loads(response.getvalue().decode("UTF-8"))
         collection_metadata = handle_metadata(metadata)
         if collection_metadata is None:
             return None
