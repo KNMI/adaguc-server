@@ -174,45 +174,67 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
   classes = abs(int((max - min) / increment));
   if (increment <= 0) increment = (std::max(max, min) - std::min(max, min)) / 3;
 
-  size_t szTempLength = 256;
-  char szTemp[szTempLength];
   if (styleConfiguration->legendLog != 0) {
     // vertical axis going from log(min) to log(max)
     // log(intermediate values)
     // Fixed number of intermediate classes: 2,5,10
     // assume log 10
-    classes = floor(log10(max) - log10(min)) + 2;
+    // 1. Collect all tick values and their formatted labels
+    std::vector<CT::string> logLabels;
+    std::vector<double> tickValues;
 
     double tick = min;
-
     while (tick < max) {
-      double difference = log(max) - log(tick);
-      double c = (difference / (log(max) - log(min))) * cbH;
-      int labelY = (int)c + 6 + dH + pTop;
-      legendImage->line(((int)cbW - 1) * scaling + pLeft, labelY, ((int)cbW + 6) * scaling + pLeft, (int)c + 6 + dH + pTop, lineWidth, 248);
-
-      strcpy(szTemp, formatTickLabel(textformatting, szTemp, szTempLength, tick, min, max, tickRound));
-
-      if (!fontLocation.empty()) {
-        int textX = ((int)cbW + 12 + pLeft) * scaling;
-        int textY = labelY + 4;
-        legendImage->drawText(textX, textY, fontLocation.c_str(), fontSize * scaling, 0, szTemp, 248);
-      }
-
+      char temp[256];
+      formatTickLabel(textformatting, temp, sizeof(temp), tick, min, max, tickRound);
+      logLabels.push_back(CT::string(temp));
+      tickValues.push_back(tick);
       tick = nextTick(tick);
     }
 
-    // Case for max
-    int labelY = (int)6 + dH + pTop;
-    legendImage->line(((int)cbW - 1) * scaling + pLeft, labelY, ((int)cbW + 6) * scaling + pLeft, 6 + dH + pTop, lineWidth, 248);
+    // Include max explicitly
+    char temp[256];
+    formatTickLabel(textformatting, temp, sizeof(temp), max, min, max, tickRound);
+    logLabels.push_back(CT::string(temp));
+    tickValues.push_back(max);
 
-    strcpy(szTemp, formatTickLabel(textformatting, szTemp, szTempLength, max, min, max, tickRound));
+    // Calculate widths
+    int numberWidth = legendImage->getTextWidth("0", fontLocation.c_str(), fontSize * scaling, 0);
+    int minusWidth = legendImage->getTextWidth("-", fontLocation.c_str(), fontSize * scaling, 0);
+    int intWidth = maxIntWidth(logLabels);
 
-    if (!fontLocation.empty()) {
-      int textX = ((int)cbW + 12 + pLeft) * scaling;
-      int textY = labelY + 4;
-      legendImage->drawText(textX, textY, fontLocation.c_str(), fontSize * scaling, 0, szTemp, 248);
+    // Calculate center (either last decimal digit or decimal dot)
+    int colRight = ((int)cbW + pLeft) * scaling + intWidth * numberWidth;
+    int columnCenter = colRight - numberWidth;
+
+    // Render the labels, aligned to the center above
+    for (size_t i = 0; i < tickValues.size(); ++i) {
+      double tickVal = tickValues[i];
+
+      double difference = log(max) - log(tickVal);
+      double c = (difference / (log(max) - log(min))) * cbH;
+      int labelY = (int)c + 6 + dH + pTop;
+
+      legendImage->line(((int)cbW - 1) * scaling + pLeft, labelY, ((int)cbW + 6) * scaling + pLeft, labelY, lineWidth, 248);
+
+      if (!fontLocation.empty()) {
+        const CT::string &label = logLabels[i];
+        char tempText[256];
+        snprintf(tempText, sizeof(tempText), "%s", label.c_str());
+
+        const char *dotPos = strchr(tempText, '.');
+        int leftChars = dotPos ? (dotPos - tempText) : strlen(tempText);
+
+        int textX = columnCenter - (leftChars * numberWidth) + ((int)cbW) * scaling + pLeft;
+        if (tempText[0] == '-') {
+          textX -= (minusWidth - numberWidth);
+        }
+
+        int textY = labelY + 4;
+        legendImage->drawText(textX, textY, fontLocation.c_str(), fontSize * scaling, 0, tempText, 248);
+      }
     }
+
   } else {
     bool isInverted = min > max;
     double loopMin = min;
@@ -221,29 +243,59 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
       loopMin = -min;
       loopMax = -max;
     }
-    for (double j = loopMin; j < loopMax + increment; j = j + increment) {
-      double lineY = cbH - ((j - loopMin) / (loopMax - loopMin)) * cbH;
-      double v = j; // pow(j,10);
-      if (isInverted) {
-        v = -v;
-      }
-      if (lineY >= -2 && lineY < cbH + 2) {
-        legendImage->line(((int)cbW - 1) * scaling + pLeft, (int)lineY + 6 + dH + pTop, ((int)cbW + 6) * scaling + pLeft, (int)lineY + 6 + dH + pTop, lineWidth, 248);
-        if (textformatting.empty() == false) {
-          CT::string textFormat;
-          textFormat.print("%s", textformatting.c_str());
-          snprintf(szTemp, szTempLength, textFormat.c_str(), v);
+    std::vector<CT::string> allLabels;
+    char tempText[1024];
+
+    // Pre-calculate all labels first
+    for (double j = loopMin; j < loopMax + increment; j += increment) {
+      double v = isInverted ? -j : j;
+
+      if (!textformatting.empty()) {
+        CT::string textFormat;
+        textFormat.print("%s", textformatting.c_str());
+        snprintf(tempText, sizeof(tempText), textFormat.c_str(), v);
+      } else {
+        if (tickRound == 0) {
+          floatToString(tempText, sizeof(tempText), min, max, v);
         } else {
-          if (tickRound == 0) {
-            floatToString(szTemp, 255, min, max, v);
-          } else {
-            floatToString(szTemp, 255, tickRound, v);
-          }
-        }
-        if (!fontLocation.empty()) {
-          legendImage->drawText(((int)cbW + 12 + pLeft) * scaling, ((int)lineY + dH + pTop) + ((fontSize * scaling) / 4) + 6, fontLocation.c_str(), fontSize * scaling, 0, szTemp, 248);
+          floatToString(tempText, sizeof(tempText), tickRound, v);
         }
       }
+
+      allLabels.push_back(CT::string(tempText));
+    }
+
+    // Calculate widths
+    int numberWidth = legendImage->getTextWidth("0", fontLocation.c_str(), fontSize * scaling, 0);
+    int minusWidth = legendImage->getTextWidth("-", fontLocation.c_str(), fontSize * scaling, 0);
+
+    int intWidth = maxIntWidth(allLabels);
+
+    // Calculate center (either last decimal digit or decimal dot)
+    int colRight = ((int)cbW + pLeft) * scaling + intWidth * numberWidth;
+    int columnCenter = colRight - numberWidth;
+
+    // Render the labels, aligned to the center above
+    int labelIndex = 0;
+    for (double j = loopMin; j < loopMax + increment; j += increment) {
+      double lineY = cbH - ((j - loopMin) / (loopMax - loopMin)) * cbH;
+      if (lineY < -2 || lineY >= cbH + 2) continue;
+
+      legendImage->line(((int)cbW - 1) * scaling + pLeft, (int)lineY + 6 + dH + pTop, ((int)cbW + 6) * scaling + pLeft, (int)lineY + 6 + dH + pTop, lineWidth, 248);
+
+      CT::string label = allLabels[labelIndex++];
+      snprintf(tempText, sizeof(tempText), "%s", label.c_str());
+
+      const char *dotPos = strchr(tempText, '.');
+      int leftChars = dotPos ? (dotPos - tempText) : strlen(tempText);
+
+      int textX = columnCenter - (leftChars * numberWidth) + ((int)cbW) * scaling + pLeft;
+
+      if (tempText[0] == '-') {
+        textX -= (minusWidth - numberWidth); // Fix for non-monospaced fonts
+      }
+
+      legendImage->drawText(textX, ((int)lineY + dH + pTop) + ((fontSize * scaling) / 4) + 6, fontLocation.c_str(), fontSize * scaling, 0, tempText, 248);
     }
   }
   // Get units
