@@ -14,6 +14,7 @@ void plotNumericLabels(CDrawImage *legendImage, double scaling, std::string font
 
   // With a monospaced font, this will be the spacing for every character, numeric or not
   int numberWidth = legendImage->getTextWidth("0", fontLocation.c_str(), fontSize * scaling, angle);
+  int minusWidth = legendImage->getTextWidth("-", fontLocation.c_str(), fontSize * scaling, angle);
 
   // Right edge of the min column
   int colRightMin = ((int)cbW + pLeft) * scaling + maxIntWidth(minColumn) * numberWidth;
@@ -33,6 +34,9 @@ void plotNumericLabels(CDrawImage *legendImage, double scaling, std::string font
   // Positioning (leaving space for the class rectangle)
   int textXMin = columnCenterMin - (leftCharsMin * numberWidth);
   textXMin = textXMin + (int(cbW)) * scaling + pLeft;
+  if (numericMinVal < 0) {
+    textXMin -= minusWidth - numberWidth;
+  }
 
   legendImage->drawText(textXMin, textY, fontLocation.c_str(), fontSize * scaling, angle, tempText, 248);
 
@@ -60,7 +64,9 @@ void plotNumericLabels(CDrawImage *legendImage, double scaling, std::string font
 
   // Align max string so that the dot falls on the column center
   int textXMax = columnCenterMax - (leftCharsMax * numberWidth);
-
+  if (numericMaxVal < 0) {
+    textXMax -= minusWidth - numberWidth;
+  }
   // Apply overall left offset plus some spacing
   textXMax += ((int)cbW + pLeft) * scaling + (maxDecimalWidth(maxColumn) + 1) * numberWidth; // Think of the 15 number
 

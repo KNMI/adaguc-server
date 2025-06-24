@@ -5,7 +5,7 @@
     <SubTitleFont location="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" size="19"/>
     <DimensionFont location="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" size="7"/>
     <ContourFont location="{ADAGUC_PATH}/data/fonts/arialbd.ttf" size="9"/>
-    <LegendFont location="{ADAGUC_PATH}/data/fonts/RobotoMono-Light.ttf" size="9"/>
+    <LegendFont location="{ADAGUC_PATH}/data/fonts/OpenSans-Regular.ttf" size="9"/>
     <GridFont location="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" size="5"/>
   </WMS>
 </Configuration>
