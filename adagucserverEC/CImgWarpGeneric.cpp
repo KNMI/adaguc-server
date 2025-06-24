@@ -69,51 +69,15 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
   sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
   sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
   sourceGeo.CRS = dataSource->nativeProj4;
+  settings.useHalfCellOffset = true;
 
   GenericDataWarper genericDataWarper;
-  settings.useHalfCellOffset = true;
-  switch (dataType) {
-  case CDF_CHAR:
-    genericDataWarper.render<char>(warper, sourceData, &sourceGeo, drawImage->Geo, [&](int x, int y, char val, GDWState &warperState) { return drawFunction<char>(x, y, val, warperState, settings); });
-    break;
-  case CDF_BYTE:
-    genericDataWarper.render<uchar>(warper, sourceData, &sourceGeo, drawImage->Geo,
-                                    [&](int x, int y, uchar val, GDWState &warperState) { return drawFunction<uchar>(x, y, val, warperState, settings); });
-    break;
-  case CDF_UBYTE:
-    genericDataWarper.render<ubyte>(warper, sourceData, &sourceGeo, drawImage->Geo,
-                                    [&](int x, int y, ubyte val, GDWState &warperState) { return drawFunction<ubyte>(x, y, val, warperState, settings); });
-    break;
-  case CDF_SHORT:
-    genericDataWarper.render<short>(warper, sourceData, &sourceGeo, drawImage->Geo,
-                                    [&](int x, int y, short val, GDWState &warperState) { return drawFunction<short>(x, y, val, warperState, settings); });
-    break;
-  case CDF_USHORT:
-    genericDataWarper.render<ushort>(warper, sourceData, &sourceGeo, drawImage->Geo,
-                                     [&](int x, int y, ushort val, GDWState &warperState) { return drawFunction<ushort>(x, y, val, warperState, settings); });
-    break;
-  case CDF_INT:
-    genericDataWarper.render<int>(warper, sourceData, &sourceGeo, drawImage->Geo, [&](int x, int y, int val, GDWState &warperState) { return drawFunction<int>(x, y, val, warperState, settings); });
-    break;
-  case CDF_UINT:
-    genericDataWarper.render<uint>(warper, sourceData, &sourceGeo, drawImage->Geo, [&](int x, int y, uint val, GDWState &warperState) { return drawFunction<uint>(x, y, val, warperState, settings); });
-    break;
-  case CDF_INT64:
-    genericDataWarper.render<long>(warper, sourceData, &sourceGeo, drawImage->Geo, [&](int x, int y, long val, GDWState &warperState) { return drawFunction<long>(x, y, val, warperState, settings); });
-    break;
-  case CDF_UINT64:
-    genericDataWarper.render<ulong>(warper, sourceData, &sourceGeo, drawImage->Geo,
-                                    [&](int x, int y, ulong val, GDWState &warperState) { return drawFunction<ulong>(x, y, val, warperState, settings); });
-    break;
-  case CDF_FLOAT:
-    genericDataWarper.render<float>(warper, sourceData, &sourceGeo, drawImage->Geo,
-                                    [&](int x, int y, float val, GDWState &warperState) { return drawFunction<float>(x, y, val, warperState, settings); });
-    break;
-  case CDF_DOUBLE:
-    genericDataWarper.render<double>(warper, sourceData, &sourceGeo, drawImage->Geo,
-                                     [&](int x, int y, double val, GDWState &warperState) { return drawFunction<double>(x, y, val, warperState, settings); });
-    break;
-  }
+  GDWArgs args = {.warper = warper, .sourceData = sourceData, .sourceGeoParams = &sourceGeo, .destGeoParams = drawImage->Geo};
+
+#define ENUMERATE_CDFTYPE(CDFTYPE, CPPTYPE)                                                                                                                                                            \
+  if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction(x, y, val, warperState, settings); });
+  ENUMERATE_CDFTYPES
+#undef ENUMERATE_CDFTYPE
 
   for (int y = 0; y < (int)settings.height; y = y + 1) {
     for (int x = 0; x < (int)settings.width; x = x + 1) {

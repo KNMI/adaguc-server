@@ -242,46 +242,16 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
         CDBError("Unable to initialize projection");
         return 1;
       }
-      GenericDataWarper genericDataWarper;
 
-      switch (varToWriteTo->getType()) {
-      case CDF_CHAR:
-        genericDataWarper.render<char>(&warper, sourceData, &sourceGeo, &destGeo,
-                                       [&settings](int x, int y, char val, GDWState &warperState) { return drawFunction<char>(x, y, val, warperState, settings); });
-        break;
-      case CDF_BYTE:
-        genericDataWarper.render<uchar>(&warper, sourceData, &sourceGeo, &destGeo,
-                                        [&settings](int x, int y, uchar val, GDWState &warperState) { return drawFunction<uchar>(x, y, val, warperState, settings); });
-        break;
-      case CDF_UBYTE:
-        genericDataWarper.render<ubyte>(&warper, sourceData, &sourceGeo, &destGeo,
-                                        [&settings](int x, int y, ubyte val, GDWState &warperState) { return drawFunction<ubyte>(x, y, val, warperState, settings); });
-        break;
-      case CDF_SHORT:
-        genericDataWarper.render<short>(&warper, sourceData, &sourceGeo, &destGeo,
-                                        [&settings](int x, int y, short val, GDWState &warperState) { return drawFunction<short>(x, y, val, warperState, settings); });
-        break;
-      case CDF_USHORT:
-        genericDataWarper.render<ushort>(&warper, sourceData, &sourceGeo, &destGeo,
-                                         [&settings](int x, int y, ushort val, GDWState &warperState) { return drawFunction<ushort>(x, y, val, warperState, settings); });
-        break;
-      case CDF_INT:
-        genericDataWarper.render<int>(&warper, sourceData, &sourceGeo, &destGeo,
-                                      [&settings](int x, int y, int val, GDWState &warperState) { return drawFunction<int>(x, y, val, warperState, settings); });
-        break;
-      case CDF_UINT:
-        genericDataWarper.render<uint>(&warper, sourceData, &sourceGeo, &destGeo,
-                                       [&settings](int x, int y, uint val, GDWState &warperState) { return drawFunction<uint>(x, y, val, warperState, settings); });
-        break;
-      case CDF_FLOAT:
-        genericDataWarper.render<float>(&warper, sourceData, &sourceGeo, &destGeo,
-                                        [&settings](int x, int y, float val, GDWState &warperState) { return drawFunction<float>(x, y, val, warperState, settings); });
-        break;
-      case CDF_DOUBLE:
-        genericDataWarper.render<double>(&warper, sourceData, &sourceGeo, &destGeo,
-                                         [&settings](int x, int y, double val, GDWState &warperState) { return drawFunction<double>(x, y, val, warperState, settings); });
-        break;
-      }
+      auto dataType = varToWriteTo->getType();
+
+      GenericDataWarper genericDataWarper;
+      GDWArgs args = {.warper = &warper, .sourceData = sourceData, .sourceGeoParams = &sourceGeo, .destGeoParams = &destGeo};
+
+#define ENUMERATE_CDFTYPE(CDFTYPE, CPPTYPE)                                                                                                                                                            \
+  if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction(x, y, val, warperState, settings); });
+      ENUMERATE_CDFTYPES
+#undef ENUMERATE_CDFTYPE
     }
 
     reader.close();

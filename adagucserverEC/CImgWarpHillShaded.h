@@ -37,6 +37,7 @@ class CImgWarpHillShaded : public CImageWarperRenderInterface {
 private:
   DEF_ERRORFUNCTION();
 
+public:
   template <class T> static void drawFunction(int x, int y, T val, GDWState &warperState, CImgWarpGenericDrawFunctionState &drawFunctionState) {
     if (x < 0 || y < 0 || x > drawFunctionState.width || y > drawFunctionState.height) return;
     bool isNodata = false;
