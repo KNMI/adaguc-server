@@ -195,8 +195,8 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
     for (int y = 0; y < dataHeight + 1; y++) {
       for (int x = 0; x < dataWidth + 1; x++) {
         size_t p = x + y * (dataWidth + 1);
-        double valX = dfSourcedExtW * (x + 0 + PXExtentBasedOnSource[0]) + dfSourceOrigX;
-        double valY = dfSourcedExtH * (y - 0 + PXExtentBasedOnSource[1]) + dfSourceOrigY;
+        double valX = dfSourcedExtW * (x + PXExtentBasedOnSource[0]) + dfSourceOrigX;
+        double valY = dfSourcedExtH * (y + PXExtentBasedOnSource[1]) + dfSourceOrigY;
         px[p] = valX;
         py[p] = valY;
         skip[p] = false;
