@@ -45,7 +45,6 @@
 struct f8vector {
   double x, y, z;
   f8vector operator-(const f8vector &v) { return f8vector({.x = x - v.x, .y = y - v.y, .z = z - v.z}); }
-
   double square() { return x * x + y * y + z * z; }
   double magnitude() { return sqrt(x * x + y * y + z * z); }
   f8vector norm() {

@@ -114,12 +114,6 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
   PXExtentBasedOnSource[2] = warperState.sourceDataWidth;
   PXExtentBasedOnSource[3] = warperState.sourceDataHeight;
 
-  bool tryToFindExtend = false;
-
-  if (tryToFindExtend) {
-    gdwFindPixelExtent(PXExtentBasedOnSource, sourceGeoParams, destGeoParams, warper);
-  }
-
   if (PXExtentBasedOnSource[2] - PXExtentBasedOnSource[0] <= 0) return 0;
   if (PXExtentBasedOnSource[3] - PXExtentBasedOnSource[1] <= 0) return 0;
   int dataWidth = PXExtentBasedOnSource[2] - PXExtentBasedOnSource[0];
@@ -127,10 +121,6 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
 
   /* When geographical map projections are equal, just do a simple linear transformation */
   if (warper->isProjectionRequired() == false) {
-
-    dataWidth = PXExtentBasedOnSource[2] - PXExtentBasedOnSource[0];
-    dataHeight = PXExtentBasedOnSource[3] - PXExtentBasedOnSource[1];
-
     for (int y = PXExtentBasedOnSource[1]; y < PXExtentBasedOnSource[3]; y++) {
       for (int x = PXExtentBasedOnSource[0]; x < PXExtentBasedOnSource[2]; x++) {
 
@@ -195,10 +185,6 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
     useStridingProjection = true;
   }
 
-  bool useHalfCellOffset = false;
-
-  double halfCell = useHalfCellOffset ? 0.5 : 0;
-
   size_t dataSize = (dataWidth + 1) * (dataHeight + 1);
 
   double *px = new double[dataSize];
@@ -209,8 +195,8 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
     for (int y = 0; y < dataHeight + 1; y++) {
       for (int x = 0; x < dataWidth + 1; x++) {
         size_t p = x + y * (dataWidth + 1);
-        double valX = dfSourcedExtW * (x + halfCell + PXExtentBasedOnSource[0]) + dfSourceOrigX;
-        double valY = dfSourcedExtH * (y - halfCell + PXExtentBasedOnSource[1]) + dfSourceOrigY;
+        double valX = dfSourcedExtW * (x + 0 + PXExtentBasedOnSource[0]) + dfSourceOrigX;
+        double valY = dfSourcedExtH * (y - 0 + PXExtentBasedOnSource[1]) + dfSourceOrigY;
         px[p] = valX;
         py[p] = valY;
         skip[p] = false;
@@ -244,8 +230,8 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
       for (size_t x = 0; x < dataWidthStrided; x++) {
         size_t pS = x + y * dataWidthStrided;
 
-        double valX = dfSourcedExtW * (x * projStrideFactor + halfCell + PXExtentBasedOnSource[0]) + dfSourceOrigX;
-        double valY = dfSourcedExtH * (y * projStrideFactor - halfCell + PXExtentBasedOnSource[1]) + dfSourceOrigY;
+        double valX = dfSourcedExtW * (x * projStrideFactor + 0 + PXExtentBasedOnSource[0]) + dfSourceOrigX;
+        double valY = dfSourcedExtH * (y * projStrideFactor - 0 + PXExtentBasedOnSource[1]) + dfSourceOrigY;
         pxStrided[pS] = valX;
         pyStrided[pS] = valY;
       }
@@ -405,8 +391,8 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
           double xCornersB[3] = {px3, px1, px4};
           double yCornersB[3] = {py3, py1, py4};
 
-          gdwDrawTriangle<T>(xCornersA, yCornersA, value, false, warperState, drawFunction);
-          gdwDrawTriangle<T>(xCornersB, yCornersB, value, true, warperState, drawFunction);
+          gdwDrawTriangle(xCornersA, yCornersA, value, false, warperState, drawFunction);
+          gdwDrawTriangle(xCornersB, yCornersB, value, true, warperState, drawFunction);
         }
         pLengthD = lengthD;
       }

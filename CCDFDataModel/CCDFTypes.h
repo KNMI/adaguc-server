@@ -54,6 +54,7 @@ typedef int CDFType;
 #define CDF_INT64 12   /* signed 8 byte integer */
 #define CDF_UINT64 13  /* unsigned 8 byte integer */
 
+// This is a hack to automatically enumerate all template type mappings used in CDF
 #define ENUMERATE_CDFTYPES                                                                                                                                                                             \
   ENUMERATE_CDFTYPE(CDF_CHAR, char)                                                                                                                                                                    \
   ENUMERATE_CDFTYPE(CDF_BYTE, int8_t)                                                                                                                                                                  \

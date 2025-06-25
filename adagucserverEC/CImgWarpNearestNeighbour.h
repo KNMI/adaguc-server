@@ -426,7 +426,7 @@ private:
       GDWArgs args = {.warper = warper, .sourceData = sourceData, .sourceGeoParams = &sourceGeo, .destGeoParams = drawImage->Geo};
 
 #define ENUMERATE_CDFTYPE(CDFTYPE, CPPTYPE)                                                                                                                                                            \
-  if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&settings](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction<CPPTYPE>(x, y, val, warperState, settings); });
+  if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction(x, y, val, warperState, settings); });
       ENUMERATE_CDFTYPES
 #undef ENUMERATE_CDFTYPE
 
