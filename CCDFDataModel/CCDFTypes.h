@@ -55,8 +55,7 @@ typedef int CDFType;
 #define CDF_UINT64 13  /* unsigned 8 byte integer */
 
 #define ENUMERATE_CDFTYPES                                                                                                                                                                             \
-  ENUMERATE_CDFTYPE(CDF_CHAR, char)                                                                                                                                                                    \
-  ENUMERATE_CDFTYPE(CDF_BYTE, uchar)                                                                                                                                                                   \
+  ENUMERATE_CDFTYPE(CDF_CHAR || CDF_BYTE, char)                                                                                                                                                        \
   ENUMERATE_CDFTYPE(CDF_UBYTE, ubyte)                                                                                                                                                                  \
   ENUMERATE_CDFTYPE(CDF_SHORT, short)                                                                                                                                                                  \
   ENUMERATE_CDFTYPE(CDF_USHORT, ushort)                                                                                                                                                                \

@@ -178,13 +178,11 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
               warperState.destX = sjx;
               warperState.destY = sjy;
               drawFunction(sjx, sjy, value, warperState);
-              // warperState.setValueInDestinationFunction(drawFunctionSettings);
             }
           }
         }
       }
     }
-    // CDBDebug("warper->isProjectionRequired() = %d: Finished simple linear transformation",warper->isProjectionRequired());
     return 0;
   }
 #ifdef GenericDataWarper_DEBUG
@@ -197,7 +195,6 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
     useStridingProjection = true;
   }
 
-  // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   bool useHalfCellOffset = false;
 
   double halfCell = useHalfCellOffset ? 0.5 : 0;
@@ -424,23 +421,8 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
   return 0;
 }
 
-template int GenericDataWarper::render<char>(CImageWarper *warper, void *_sourceData, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams,
-                                             const std::function<void(int, int, char, GDWState &warperState)> &drawFunction);
-template int GenericDataWarper::render<unsigned char>(CImageWarper *warper, void *_sourceData, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams,
-                                                      const std::function<void(int, int, unsigned char, GDWState &warperState)> &drawFunction);
-template int GenericDataWarper::render<short>(CImageWarper *warper, void *_sourceData, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams,
-                                              const std::function<void(int, int, short, GDWState &warperState)> &drawFunction);
-template int GenericDataWarper::render<unsigned short>(CImageWarper *warper, void *_sourceData, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams,
-                                                       const std::function<void(int, int, unsigned short, GDWState &warperState)> &drawFunction);
-template int GenericDataWarper::render<int>(CImageWarper *warper, void *_sourceData, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams,
-                                            const std::function<void(int, int, int, GDWState &warperState)> &drawFunction);
-template int GenericDataWarper::render<uint>(CImageWarper *warper, void *_sourceData, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams,
-                                             const std::function<void(int, int, uint, GDWState &warperState)> &drawFunction);
-template int GenericDataWarper::render<long>(CImageWarper *warper, void *_sourceData, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams,
-                                             const std::function<void(int, int, long, GDWState &warperState)> &drawFunction);
-template int GenericDataWarper::render<ulong>(CImageWarper *warper, void *_sourceData, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams,
-                                              const std::function<void(int, int, ulong, GDWState &warperState)> &drawFunction);
-template int GenericDataWarper::render<float>(CImageWarper *warper, void *_sourceData, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams,
-                                              const std::function<void(int, int, float, GDWState &warperState)> &drawFunction);
-template int GenericDataWarper::render<double>(CImageWarper *warper, void *_sourceData, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams,
-                                               const std::function<void(int, int, double, GDWState &warperState)> &drawFunction);
+#define ENUMERATE_CDFTYPE(CDFTYPE, CPPTYPE)                                                                                                                                                            \
+  template int GenericDataWarper::render<CPPTYPE>(CImageWarper * warper, void *_sourceData, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams,                                                    \
+                                                  const std::function<void(int, int, CPPTYPE, GDWState &warperState)> &drawFunction);
+ENUMERATE_CDFTYPES
+#undef ENUMERATE_CDFTYPE
