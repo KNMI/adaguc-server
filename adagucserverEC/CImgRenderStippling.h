@@ -52,8 +52,7 @@ private:
 
   void _setStippling(int screenX, int screenY, float val);
   template <typename T> void _stippleMiddleOfPoints();
-  class Settings {
-  public:
+  struct CStipplingSettings {
     double dfNodataValue;
     double legendValueRange;
     double legendLowerRange;
@@ -62,21 +61,21 @@ private:
     float *dataField;
     size_t width, height;
   };
-  Settings *settings;
+  CStipplingSettings *settings;
 
-  template <class T> static void drawFunction(int x, int y, T val, void *_settings, void *) {
-    Settings *settings = (Settings *)_settings;
+  template <class T> static void drawFunction(int x, int y, T val, GDWState &, CStipplingSettings &settings) {
+
     bool isNodata = false;
-    if (settings->hasNodataValue) {
-      if ((val) == (T)settings->dfNodataValue) isNodata = true;
+    if (settings.hasNodataValue) {
+      if ((val) == (T)settings.dfNodataValue) isNodata = true;
     }
     if (!(val == val)) isNodata = true;
     if (!isNodata)
-      if (settings->legendValueRange)
-        if (val < settings->legendLowerRange || val > settings->legendUpperRange) isNodata = true;
+      if (settings.legendValueRange)
+        if (val < settings.legendLowerRange || val > settings.legendUpperRange) isNodata = true;
     if (!isNodata) {
-      if (x >= 0 && y >= 0 && x < (int)settings->width && y < (int)settings->height) {
-        settings->dataField[x + y * settings->width] = (float)val;
+      if (x >= 0 && y >= 0 && x < (int)settings.width && y < (int)settings.height) {
+        settings.dataField[x + y * settings.width] = (float)val;
       }
     }
   };

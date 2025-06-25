@@ -38,6 +38,7 @@
 #include "CImgWarpHillShaded.h"
 #include "CImgWarpGeneric.h"
 #include "CDataPostProcessors/CDataPostProcessor_UVComponents.h"
+#include "GenericDataWarper/gdwFindPixelExtent.h"
 #include "traceTimings/traceTimings.h"
 
 CT::string months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
@@ -1164,7 +1165,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
     sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
     sourceGeo.CRS = dataSource->nativeProj4;
     int PXExtentBasedOnSource[4];
-    GenericDataWarper::findPixelExtent(PXExtentBasedOnSource, &sourceGeo, srvParam->Geo, &warper);
+    gdwFindPixelExtent(PXExtentBasedOnSource, &sourceGeo, srvParam->Geo, &warper);
 
     status = reader.openExtent(dataSource, CNETCDFREADER_MODE_OPEN_EXTENT, PXExtentBasedOnSource);
   } else {

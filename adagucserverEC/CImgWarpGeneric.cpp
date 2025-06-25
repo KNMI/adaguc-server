@@ -36,7 +36,7 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
   void *sourceData;
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-  Settings settings;
+  CImgWarpGenericDrawFunctionState settings;
   settings.dfNodataValue = dataSource->getFirstAvailableDataObject()->dfNodataValue;
   settings.legendValueRange = (bool)styleConfiguration->hasLegendValueRange;
   settings.legendLowerRange = styleConfiguration->legendLowerRange;
@@ -69,38 +69,15 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
   sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
   sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
   sourceGeo.CRS = dataSource->nativeProj4;
+  settings.useHalfCellOffset = true;
 
   GenericDataWarper genericDataWarper;
-  genericDataWarper.useHalfCellOffset = true;
-  switch (dataType) {
-  case CDF_CHAR:
-    genericDataWarper.render<char>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &drawFunction);
-    break;
-  case CDF_BYTE:
-    genericDataWarper.render<char>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &drawFunction);
-    break;
-  case CDF_UBYTE:
-    genericDataWarper.render<unsigned char>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &drawFunction);
-    break;
-  case CDF_SHORT:
-    genericDataWarper.render<short>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &drawFunction);
-    break;
-  case CDF_USHORT:
-    genericDataWarper.render<ushort>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &drawFunction);
-    break;
-  case CDF_INT:
-    genericDataWarper.render<int>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &drawFunction);
-    break;
-  case CDF_UINT:
-    genericDataWarper.render<uint>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &drawFunction);
-    break;
-  case CDF_FLOAT:
-    genericDataWarper.render<float>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &drawFunction);
-    break;
-  case CDF_DOUBLE:
-    genericDataWarper.render<double>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &drawFunction);
-    break;
-  }
+  GDWArgs args = {.warper = warper, .sourceData = sourceData, .sourceGeoParams = &sourceGeo, .destGeoParams = drawImage->Geo};
+
+#define ENUMERATE_CDFTYPE(CDFTYPE, CPPTYPE)                                                                                                                                                            \
+  if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction(x, y, val, warperState, settings); });
+  ENUMERATE_CDFTYPES
+#undef ENUMERATE_CDFTYPE
 
   for (int y = 0; y < (int)settings.height; y = y + 1) {
     for (int x = 0; x < (int)settings.width; x = x + 1) {

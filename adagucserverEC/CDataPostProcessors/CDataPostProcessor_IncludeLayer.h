@@ -1,7 +1,8 @@
-#include "CDataPostProcessor.h"
-
 #ifndef CDATAPOSTPROCESSOR_INCLUDELAYER_H
 #define CDATAPOSTPROCESSOR_INCLUDELAYER_H
+
+#include "CGenericDataWarper.h"
+#include "CDataPostProcessor.h"
 
 /**
  * IncludeLayer algorithm
@@ -9,17 +10,16 @@
 class CDPPIncludeLayer : public CDPPInterface {
 private:
   DEF_ERRORFUNCTION();
-  class Settings {
+  class CDPPIncludeLayerSettings {
   public:
     size_t width;
     size_t height;
     void *data;
   };
 
-  template <class T> static void drawFunction(int x, int y, T val, void *_settings, void *) {
-    Settings *settings = (Settings *)_settings;
-    if (x >= 0 && y >= 0 && x < (int)settings->width && y < (int)settings->height) {
-      ((T *)settings->data)[x + y * settings->width] = val;
+  template <class T> static void drawFunction(int x, int y, T val, GDWState &, CDPPIncludeLayerSettings &settings) {
+    if (x >= 0 && y >= 0 && x < (int)settings.width && y < (int)settings.height) {
+      ((T *)settings.data)[x + y * settings.width] = val;
     }
   };
   CDataSource *getDataSource(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource);

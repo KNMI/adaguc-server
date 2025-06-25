@@ -57,17 +57,15 @@
 class CGDALDataWriter : public CBaseDataWriterInterface {
 private:
   CT::string driverName;
-  class Settings {
-  public:
+  struct GdalDrawFunctionState {
     size_t width;
     size_t height;
     void *data;
   };
 
-  template <class T> static void drawFunction(int x, int y, T val, void *_settings, void *) {
-    Settings *settings = (Settings *)_settings;
-    if (x >= 0 && y >= 0 && x < (int)settings->width && y < (int)settings->height) {
-      ((T *)settings->data)[x + y * settings->width] = val;
+  template <class T> static void drawFunction(int x, int y, T val, GDWState &, GdalDrawFunctionState &drawFunctionState) {
+    if (x >= 0 && y >= 0 && x < (int)drawFunctionState.width && y < (int)drawFunctionState.height) {
+      ((T *)drawFunctionState.data)[x + y * drawFunctionState.width] = val;
     }
   };
 
