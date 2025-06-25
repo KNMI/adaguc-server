@@ -2,6 +2,7 @@
 #include "CGenericDataWarper.h"
 const char *CNetCDFDataWriter::className = "CNetCDFDataWriter";
 #include "CRequest.h"
+#include "GenericDataWarper/gdwFindPixelExtent.h"
 // #define CNetCDFDataWriter_DEBUG
 
 void CNetCDFDataWriter::createProjectionVariables(CDFObject *cdfObject, int width, int height, double *bbox) {
@@ -585,7 +586,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       ;
       PXExtentBasedOnSource[3] = dataSource->dHeight;
       ;
-      GenericDataWarper::findPixelExtent(PXExtentBasedOnSource, &sourceGeo, this->srvParam->Geo, &warper);
+      gdwFindPixelExtent(PXExtentBasedOnSource, &sourceGeo, this->srvParam->Geo, &warper);
 
       if (PXExtentBasedOnSource[0] == PXExtentBasedOnSource[2] || PXExtentBasedOnSource[1] == PXExtentBasedOnSource[3]) {
         // CDBDebug("PXExtentBasedOnSource = [%d,%d,%d,%d]",PXExtentBasedOnSource[0],PXExtentBasedOnSource[1],PXExtentBasedOnSource[2],PXExtentBasedOnSource[3]);
@@ -885,86 +886,25 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
 
       if (drawFunctionMode == CNetCDFDataWriter_NEAREST) {
         GenericDataWarper genericDataWarper;
-        switch (variable->getType()) {
-        case CDF_CHAR:
-          genericDataWarper.render<char>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_nearest);
-          break;
-        case CDF_BYTE:
-          genericDataWarper.render<char>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_nearest);
-          break;
-        case CDF_UBYTE:
-          genericDataWarper.render<unsigned char>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_nearest);
-          break;
-        case CDF_SHORT:
-          genericDataWarper.render<short>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_nearest);
-          break;
-        case CDF_USHORT:
-          genericDataWarper.render<ushort>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_nearest);
-          break;
-        case CDF_INT:
-          genericDataWarper.render<int>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_nearest);
-          break;
-        case CDF_UINT:
-          genericDataWarper.render<uint>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_nearest);
-          break;
-        case CDF_INT64:
-          genericDataWarper.render<long>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_nearest);
-          break;
-        case CDF_UINT64:
-          genericDataWarper.render<unsigned long>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_nearest);
-          break;
-        case CDF_FLOAT:
-          genericDataWarper.render<float>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_nearest);
-          break;
-        case CDF_DOUBLE:
-          genericDataWarper.render<double>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_nearest);
-          break;
-        default:
-          CDBError("Unknown var type [%d]", variable->getType());
-          return 1;
-        }
+        GDWArgs args = {.warper = &warper, .sourceData = sourceData, .sourceGeoParams = &sourceGeo, .destGeoParams = srvParam->Geo};
+        auto dataType = variable->getType();
+
+#define ENUMERATE_CDFTYPE(CDFTYPE, CPPTYPE)                                                                                                                                                            \
+  if (dataType == CDFTYPE)                                                                                                                                                                             \
+    genericDataWarper.render<CPPTYPE>(args, [&settings](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction_nearest<CPPTYPE>(x, y, val, warperState, settings); });
+        ENUMERATE_CDFTYPES
+#undef ENUMERATE_CDFTYPE
       }
 
       if (drawFunctionMode == CNetCDFDataWriter_AVG_RGB) {
         GenericDataWarper genericDataWarper;
-        switch (variable->getType()) {
-        case CDF_CHAR:
-          genericDataWarper.render<char>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_avg_rbg);
-          break;
-        case CDF_BYTE:
-          genericDataWarper.render<char>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_avg_rbg);
-          break;
-        case CDF_UBYTE:
-          genericDataWarper.render<unsigned char>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_avg_rbg);
-          break;
-        case CDF_SHORT:
-          genericDataWarper.render<short>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_avg_rbg);
-          break;
-        case CDF_USHORT:
-          genericDataWarper.render<ushort>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_avg_rbg);
-          break;
-        case CDF_INT:
-          genericDataWarper.render<int>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_avg_rbg);
-          break;
-        case CDF_UINT:
-          genericDataWarper.render<uint>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_avg_rbg);
-          break;
-        case CDF_INT64:
-          genericDataWarper.render<long>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_avg_rbg);
-          break;
-        case CDF_UINT64:
-          genericDataWarper.render<unsigned long>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_avg_rbg);
-          break;
-        case CDF_FLOAT:
-          genericDataWarper.render<float>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_avg_rbg);
-          break;
-        case CDF_DOUBLE:
-          genericDataWarper.render<double>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction_avg_rbg);
-          break;
-        default:
-          CDBError("Unknown var type [%d]", variable->getType());
-          return 1;
-        }
+        GDWArgs args = {.warper = &warper, .sourceData = sourceData, .sourceGeoParams = &sourceGeo, .destGeoParams = srvParam->Geo};
+        auto dataType = variable->getType();
+#define ENUMERATE_CDFTYPE(CDFTYPE, CPPTYPE)                                                                                                                                                            \
+  if (dataType == CDFTYPE)                                                                                                                                                                             \
+    genericDataWarper.render<CPPTYPE>(args, [&settings](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction_avg_rgb<CPPTYPE>(x, y, val, warperState, settings); });
+        ENUMERATE_CDFTYPES
+#undef ENUMERATE_CDFTYPE
       }
 
       reader.close();
