@@ -1,6 +1,8 @@
 **Version ?.?.? - ?**
 
 - Added option ADAGUC_TRACE_TIMINGS to measure the amount spent on db access, file reading and image generation.
+- Added option ADAGUC_AUTOSYNCLAYERMETADATA to enable or disable automatic layermetadata table updates
+
 
 **Version 3.1.2. 2025-06-10**
 

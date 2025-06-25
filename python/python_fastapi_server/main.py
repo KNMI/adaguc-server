@@ -27,6 +27,7 @@ configure_logging(logging)
 
 logger = logging.getLogger(__name__)
 
+ADAGUC_AUTOSYNCLAYERMETADATA = os.getenv("ADAGUC_AUTOSYNCLAYERMETADATA", "TRUE")
 
 async def update_layermetadatatable():
     """Update layermetadata table in adaguc for GetCapabilities caching"""
@@ -65,7 +66,8 @@ async def lifespan(_fastapiapp: FastAPI):
     scheduler.shutdown()
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan) if ADAGUC_AUTOSYNCLAYERMETADATA == "TRUE" else FastAPI()
+
 
 # Set uvicorn access log format using middleware
 ACCESS_LOG_FORMAT = (
