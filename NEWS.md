@@ -2,10 +2,6 @@
 
 - Added option ADAGUC_TRACE_TIMINGS to measure the amount spent on db access, file reading and image generation.
 - GenericDataWarper has been refactored.
-
-
-**Version 3.1.2. 2025-06-10**
-
 - Prevent invalid filenames in tests
 
 **Version 3.1.1. 2025-06-05**
