@@ -5,7 +5,6 @@
 bool verboseLog = true;
 
 f8component jacobianTransform(f8component speedVector, f8point gridCoordUL, f8point gridCoordLR, CImageWarper *warper, bool gridRelative) {
-
   if (gridRelative) {
     f8point pnt0 = {.x = gridCoordUL.x, .y = gridCoordUL.y};
     warper->reprojModelToLatLon(pnt0);
@@ -69,32 +68,6 @@ f8component jacobianTransform(f8component speedVector, f8point gridCoordUL, f8po
     speedVector.u = uu * magnitude / newMagnitude;
     speedVector.v = vv * magnitude / newMagnitude;
   }
-
-  double modelX = gridCoordUL.x;
-  double modelY = gridCoordUL.y;
-
-  // Degrees offset in latitude/longutide space to determine rotation of projected model grid per grid cell (small grid cell)
-  f8point deltaLatLon = {.x = 0.001, .y = 0.001};
-  warper->reprojModelToLatLon(modelX, modelY); // model to latlon proj.
-  double modelXLon = modelX + deltaLatLon.x;   // latlons
-  double modelYLon = modelY;
-  double modelXLat = modelX;
-  double modelYLat = modelY + deltaLatLon.y;
-
-  double distLon = hypot(modelXLon - modelX, modelYLon - modelY);
-  double distLat = hypot(modelXLat - modelX, modelYLat - modelY);
-
-  double VJaa = (modelXLon - modelX) / distLon;
-  double VJab = (modelXLat - modelX) / distLat;
-  double VJba = (modelYLon - modelY) / distLon;
-  double VJbb = (modelYLat - modelY) / distLat;
-  double magnitude = speedVector.magnitude();
-  double uu = VJaa * speedVector.u + VJab * speedVector.v;
-  double vv = VJba * speedVector.u + VJbb * speedVector.v;
-  double newMagnitude = hypot(uu, vv);
-  speedVector.u = uu * magnitude / newMagnitude;
-  speedVector.v = vv * magnitude / newMagnitude;
-
   return speedVector;
 }
 
