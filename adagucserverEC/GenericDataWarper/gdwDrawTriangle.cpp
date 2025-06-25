@@ -116,6 +116,7 @@ template <typename T> int gdwDrawTriangle(double *_xP, double *_yP, T value, boo
 }
 
 template int gdwDrawTriangle<char>(double *_xP, double *_yP, char value, bool aOrB, GDWState &warperState, const std::function<void(int, int, char, GDWState &warperState)> &drawFunction);
+template int gdwDrawTriangle<int8_t>(double *_xP, double *_yP, int8_t value, bool aOrB, GDWState &warperState, const std::function<void(int, int, int8_t, GDWState &warperState)> &drawFunction);
 template int gdwDrawTriangle<uchar>(double *_xP, double *_yP, uchar value, bool aOrB, GDWState &warperState, const std::function<void(int, int, uchar, GDWState &warperState)> &drawFunction);
 template int gdwDrawTriangle<short>(double *_xP, double *_yP, short value, bool aOrB, GDWState &warperState, const std::function<void(int, int, short, GDWState &warperState)> &drawFunction);
 template int gdwDrawTriangle<ushort>(double *_xP, double *_yP, ushort value, bool aOrB, GDWState &warperState, const std::function<void(int, int, ushort, GDWState &warperState)> &drawFunction);
