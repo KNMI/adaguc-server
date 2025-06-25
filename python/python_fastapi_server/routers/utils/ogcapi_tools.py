@@ -156,12 +156,14 @@ async def call_adaguc(url, use_cache=False):
     """Call adaguc-server"""
     adaguc_instance = setup_adaguc()
 
+    actually_use_cache = use_cache and REDIS_POOL is not None
+
     url = url.decode()
     if "?" in url:
         url = url[url.index("?") + 1 :]
     logger.info(url)
 
-    if use_cache:
+    if actually_use_cache:
         status, data, headers = await get_from_cache(url)
         if status is not None:
             return status, BytesIO(data), headers
@@ -193,7 +195,7 @@ async def call_adaguc(url, use_cache=False):
     if len(logfile) > 0:
         logger.info(logfile)
 
-    if use_cache and status >= 0:
+    if actually_use_cache and status >= 0:
         await add_to_cache(url, status, data.getvalue(), headers, ttl=70)
     return status, data, headers
 
