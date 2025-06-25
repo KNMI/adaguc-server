@@ -54,6 +54,20 @@ typedef int CDFType;
 #define CDF_INT64 12   /* signed 8 byte integer */
 #define CDF_UINT64 13  /* unsigned 8 byte integer */
 
+// This is a hack to automatically enumerate all template type mappings used in CDF
+#define ENUMERATE_CDFTYPES                                                                                                                                                                             \
+  ENUMERATE_CDFTYPE(CDF_CHAR, char)                                                                                                                                                                    \
+  ENUMERATE_CDFTYPE(CDF_BYTE, int8_t)                                                                                                                                                                  \
+  ENUMERATE_CDFTYPE(CDF_UBYTE, ubyte)                                                                                                                                                                  \
+  ENUMERATE_CDFTYPE(CDF_SHORT, short)                                                                                                                                                                  \
+  ENUMERATE_CDFTYPE(CDF_USHORT, ushort)                                                                                                                                                                \
+  ENUMERATE_CDFTYPE(CDF_INT, int)                                                                                                                                                                      \
+  ENUMERATE_CDFTYPE(CDF_UINT, uint)                                                                                                                                                                    \
+  ENUMERATE_CDFTYPE(CDF_INT64, long)                                                                                                                                                                   \
+  ENUMERATE_CDFTYPE(CDF_UINT64, ulong)                                                                                                                                                                 \
+  ENUMERATE_CDFTYPE(CDF_FLOAT, float)                                                                                                                                                                  \
+  ENUMERATE_CDFTYPE(CDF_DOUBLE, double)
+
 /* Possible error codes, thrown by CDF */
 typedef int CDFError;
 #define CDF_E_NONE 1000        /* Unknown */
