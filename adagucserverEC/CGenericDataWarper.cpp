@@ -230,8 +230,8 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
       for (size_t x = 0; x < dataWidthStrided; x++) {
         size_t pS = x + y * dataWidthStrided;
 
-        double valX = dfSourcedExtW * (x * projStrideFactor + 0 + PXExtentBasedOnSource[0]) + dfSourceOrigX;
-        double valY = dfSourcedExtH * (y * projStrideFactor - 0 + PXExtentBasedOnSource[1]) + dfSourceOrigY;
+        double valX = dfSourcedExtW * (x * projStrideFactor + PXExtentBasedOnSource[0]) + dfSourceOrigX;
+        double valY = dfSourcedExtH * (y * projStrideFactor + PXExtentBasedOnSource[1]) + dfSourceOrigY;
         pxStrided[pS] = valX;
         pyStrided[pS] = valY;
       }
