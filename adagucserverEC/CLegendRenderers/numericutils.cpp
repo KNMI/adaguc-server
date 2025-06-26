@@ -77,14 +77,8 @@ std::vector<CT::string> extractColumn(size_t drawIntervals, int minInterval, std
     CServerConfig::XMLE_ShadeInterval *s = (*shadeIntervals)[realj];
     if (!s->attr.min.empty() && !s->attr.max.empty()) {
       if (isMin) {
-        if ((int)(std::abs(parseFloat(s->attr.min.c_str()))) % 5 != 0) {
-          continue;
-        }
         column.push_back(s->attr.min.c_str());
       } else {
-        if ((int)(std::abs(parseFloat(s->attr.max.c_str()))) % 5 != 0) {
-          continue;
-        }
         column.push_back(s->attr.max.c_str());
       }
     }

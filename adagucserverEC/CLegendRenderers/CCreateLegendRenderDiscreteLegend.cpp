@@ -407,6 +407,36 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
       }
     }
 
+    int numberWidth = legendImage->getTextWidth("0", fontLocation.c_str(), fontSize * scaling, 0);
+    int maxWidthMin = 0;
+    int maxWidthMax = 0;
+
+    // Precalculate the formatting to be used
+    std::string floatFormat;
+    if (textformatting.empty() == false) {
+      // Default case where a specific formatting is supplied
+      floatFormat = textformatting.c_str();
+    } else {
+      if (textRounding > 6) {
+        floatFormat = "%f";
+      } else {
+        floatFormat = "%." + std::to_string(textRounding) + "f";
+      }
+    }
+
+    char szTemp[100];
+    for (float j = iMin; j < iMax + legendInterval; j = j + legendInterval) {
+      // Look for the max width for the min value in this interval
+      snprintf(szTemp, sizeof(szTemp), floatFormat.c_str(), j);
+      int widthMin = legendImage->getTextWidth(szTemp, fontLocation.c_str(), fontSize * scaling, 0);
+      if (widthMin > maxWidthMin) maxWidthMin = widthMin;
+
+      // Look for the max width for the max value in this interval
+      snprintf(szTemp, sizeof(szTemp), floatFormat.c_str(), j + legendInterval);
+      int widthMax = legendImage->getTextWidth(szTemp, fontLocation.c_str(), fontSize * scaling, 0);
+      if (widthMax > maxWidthMax) maxWidthMax = widthMax;
+    }
+
     int classNr = 0;
     for (float j = iMin; j < iMax + legendInterval; j = j + legendInterval) {
       currentIteration++;
@@ -430,21 +460,26 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
         } else {
           legendImage->rectangle(pLeft + 4 * scaling, pTop + boxUpperY, pLeft + (int(cbW) + 7) * scaling, pTop + boxLowerY, (colorIndex), (colorIndex));
         }
-        if (textformatting.empty() == false) {
-          CT::string textFormat;
-          textFormat.print("%s - %s", textformatting.c_str(), textformatting.c_str());
-          snprintf(szTemp, szTempLength, textFormat.c_str(), v, v + legendInterval);
-        } else {
-          if (textRounding <= 0) snprintf(szTemp, szTempLength, "%2.0f - %2.0f", v, v + legendInterval);
-          if (textRounding == 1) snprintf(szTemp, szTempLength, "%2.1f - %2.1f", v, v + legendInterval);
-          if (textRounding == 2) snprintf(szTemp, szTempLength, "%2.2f - %2.2f", v, v + legendInterval);
-          if (textRounding == 3) snprintf(szTemp, szTempLength, "%2.3f - %2.3f", v, v + legendInterval);
-          if (textRounding == 4) snprintf(szTemp, szTempLength, "%2.4f - %2.4f", v, v + legendInterval);
-          if (textRounding == 5) snprintf(szTemp, szTempLength, "%2.5f - %2.5f", v, v + legendInterval);
-          if (textRounding == 5) snprintf(szTemp, szTempLength, "%2.6f - %2.6f", v, v + legendInterval);
-          if (textRounding > 6) snprintf(szTemp, szTempLength, "%f - %f", v, v + legendInterval);
-        }
-        legendImage->drawText(((int)cbW + 10 + pLeft) * scaling, (((boxLowerY)) + pTop) - fontSize * scaling / 4 + 1, fontLocation.c_str(), fontSize * scaling, 0, szTemp, 248);
+        // Prepare alignment
+        char minText[100], maxText[100];
+        snprintf(minText, sizeof(minText), floatFormat.c_str(), v);
+        snprintf(maxText, sizeof(maxText), floatFormat.c_str(), v + legendInterval);
+        int currentWidthMin = legendImage->getTextWidth(minText, fontLocation.c_str(), fontSize * scaling, 0);
+        int currentWidthMax = legendImage->getTextWidth(maxText, fontLocation.c_str(), fontSize * scaling, 0);
+
+        int textY = (((boxLowerY)) + pTop) - fontSize * scaling / 4 + 1;
+        int colGap = 3 * numberWidth;
+
+        int columnXMin = ((int)cbW + 10 + pLeft) * scaling;
+        int columnXMax = columnXMin + maxWidthMin + colGap;
+
+        int textXMin = columnXMin + (maxWidthMin - currentWidthMin);
+        int textXMax = columnXMax + (maxWidthMax - currentWidthMax);
+
+        // Draw as 3 columns (min dash max)
+        legendImage->drawText(textXMin, textY, fontLocation.c_str(), fontSize * scaling, 0, minText, 248);
+        legendImage->drawText(textXMax - 2 * numberWidth, textY, fontLocation.c_str(), fontSize * scaling, 0, "–", 248);
+        legendImage->drawText(textXMax, textY, fontLocation.c_str(), fontSize * scaling, 0, maxText, 248);
       }
     }
   }
