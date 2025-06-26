@@ -1,3 +1,32 @@
+**Version ?.?.? - ?**
+
+- Added option ADAGUC_TRACE_TIMINGS to measure the amount spent on db access, file reading and image generation.
+- GenericDataWarper has been refactored.
+- Prevent invalid filenames in tests
+
+**Version 3.1.1. 2025-06-05**
+
+- Fix occasional time and reftime dependency issues
+
+**Version 3.1.0. 2025-06-02**
+
+- The calculation and rendering of windbarbs is now handled differently. The computation of grid-relative x/y wind components is now handled via a datapostprocessor, named `convert_uv_components`. Use ```<DataPostProc algorithm="convert_uv_components"/>```
+- The jacobian transformation code is refactored, see [CImgRenderFieldVectors.md](adagucserverEC/CImgRenderFieldVectors.cpp)
+- Wind direction and wind speed based on a vector component are now advertised in the GetFeatureInfo request. In addition the numbers are now displayed with a precision of two digits.
+- A new processor named `filter_dataobjects` is added
+- A new processor named `metadata_variable` is added
+- DataPostProcessors can now also be configured via the style. This could be used to make different style with different units. Like windspeed in kts or m/s.
+- StatusFlag class is refactored to a struct, and is no longer a pointer in the StatusFlagList vector
+- The json version of GetFeatureInfo now outputs multiple variables and has an additional property called layername.
+- GetFeatureInfo response via application/html as shown in adaguc-viewer and geoweb now outputs the 6 different components for vectors when the `convert_uv_components` processor is used.
+- see [DataPostProc.md](doc/configuration/DataPostProc.md) for details
+
+**Version 3.0.4. 2025-06-03**
+
+- Fixed the (slightly) incorrect formatting of the model data time range for EDR.
+Test is adapted.
+- A print statement was removed.
+
 **Version 3.0.3. 2025-05-14**
 
 - Fixed bug where a multidimensional dataset with a configured `DataBaseTable` could not get queried

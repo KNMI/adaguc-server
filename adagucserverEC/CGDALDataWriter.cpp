@@ -285,42 +285,20 @@ int CGDALDataWriter::addData(std::vector<CDataSource *> &dataSources) {
   CDFType dataType = dataSource->getDataObject(0)->cdfVariable->getType();
   void *sourceData = dataSource->getDataObject(0)->cdfVariable->data;
 
-  Settings settings;
-  settings.width = srvParam->Geo->dWidth;
-  settings.height = srvParam->Geo->dHeight;
-  settings.data = warpedData;
-  GenericDataWarper genericDataWarper;
-  switch (dataType) {
-  case CDF_CHAR:
-    genericDataWarper.render<char>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction);
-    break;
-  case CDF_BYTE:
-    genericDataWarper.render<char>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction);
-    break;
-  case CDF_UBYTE:
-    genericDataWarper.render<unsigned char>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction);
-    break;
-  case CDF_SHORT:
-    genericDataWarper.render<short>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction);
-    break;
-  case CDF_USHORT:
-    genericDataWarper.render<ushort>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction);
-    break;
-  case CDF_INT:
-    genericDataWarper.render<int>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction);
-    break;
-  case CDF_UINT:
-    genericDataWarper.render<uint>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction);
-    break;
-  case CDF_FLOAT:
-    genericDataWarper.render<float>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction);
-    break;
-  case CDF_DOUBLE:
-    genericDataWarper.render<double>(&warper, sourceData, &sourceGeo, srvParam->Geo, &settings, &drawFunction);
-    break;
-  }
+  GdalDrawFunctionState drawFunctionState;
+  drawFunctionState.width = srvParam->Geo->dWidth;
+  drawFunctionState.height = srvParam->Geo->dHeight;
+  drawFunctionState.data = warpedData;
 
-  CPLErr gdalStatus = GDALRasterIO(hSrcBand, GF_Write, 0, 0, srvParam->Geo->dWidth, srvParam->Geo->dHeight, warpedData, srvParam->Geo->dWidth, srvParam->Geo->dHeight, datatype, 0, 0);
+  GenericDataWarper genericDataWarper;
+  GDWArgs args = {.warper = &warper, .sourceData = sourceData, .sourceGeoParams = &sourceGeo, .destGeoParams = srvParam->Geo};
+
+#define ENUMERATE_CDFTYPE(CDFTYPE, CPPTYPE)                                                                                                                                                            \
+  if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction(x, y, val, warperState, drawFunctionState); });
+  ENUMERATE_CDFTYPES
+#undef ENUMERATE_CDFTYPE
+
+   CPLErr gdalStatus = GDALRasterIO(hSrcBand, GF_Write, 0, 0, srvParam->Geo->dWidth, srvParam->Geo->dHeight, warpedData, srvParam->Geo->dWidth, srvParam->Geo->dHeight, datatype, 0, 0);
   CDF::freeData(&warpedData);
 
   if (gdalStatus != CE_None) {
@@ -587,7 +565,7 @@ int CGDALDataWriter::end() {
     printf("Content-Description: File Transfer\r\n");
     printf("Content-Transfer-Encoding: binary\r\n");
     printf("Content-Length: %zu\r\n", endPos);
-    printf("%s%s\r\n\n", mimeType.c_str(), srvParam->getCacheControlHeader(srvParam->getCacheControlOption()).c_str());
+    printf("%s%s\r\n\n", mimeType.c_str(), srvParam->getResponseHeaders(srvParam->getCacheControlOption()).c_str());
     for (size_t j = 0; j < endPos; j++) putchar(getc(fp));
     fclose(fp);
     fclose(stdout);

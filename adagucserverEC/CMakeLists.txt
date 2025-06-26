@@ -92,6 +92,12 @@ add_library(
     utils/CRequestUtils.h
     utils/CRequestUtils.cpp
     Types/LayerMetadataType.h
+    GenericDataWarper/gdwDrawTriangle.h
+    GenericDataWarper/gdwDrawTriangle.cpp
+    CGenericDataWarper.cpp
+    CGenericDataWarper.h
+    GenericDataWarper/gdwFindPixelExtent.cpp
+    GenericDataWarper/gdwFindPixelExtent.h
     CDataPostProcessors/CDataPostProcessor_AddFeatures.cpp
     CDataPostProcessors/CDataPostProcessor_AddFeatures.h
     CDataPostProcessors/CDataPostProcessor_CDPDBZtoRR.cpp
@@ -122,6 +128,12 @@ add_library(
     CDataPostProcessors/solar/solar_terminator.cpp
     CDataPostProcessors/CDataPostProcessor_WFP.h
     CDataPostProcessors/CDataPostProcessor_WFP.cpp
+    CDataPostProcessors/CDataPostProcessor_UVComponents.h
+    CDataPostProcessors/CDataPostProcessor_UVComponents.cpp
+    CDataPostProcessors/CDataPostProcessor_FilterDataObjects.h
+    CDataPostProcessors/CDataPostProcessor_FilterDataObjects.cpp
+    CDataPostProcessors/CDataPostProcessor_MetadataVariable.h
+    CDataPostProcessors/CDataPostProcessor_MetadataVariable.cpp    
     CDataReader.cpp
     CDataReader.h
     CDataSource.cpp
@@ -134,8 +146,6 @@ add_library(
     CFillTriangle.h
     CGDALDataWriter.cpp
     CGDALDataWriter.h
-    CGenericDataWarper.cpp
-    CGenericDataWarper.h
     CGeoJSONData.cpp
     CGeoJSONData.h
     CGeoParams.cpp
@@ -166,6 +176,8 @@ add_library(
     CImgWarpNearestNeighbour.h
     CImgWarpNearestRGBA.cpp
     CImgWarpNearestRGBA.h
+    CImgRenderFieldVectors.h
+    CImgRenderFieldVectors.cpp
     CInspire.cpp
     CInspire.h
     CLegendRenderers/CCreateLegend.cpp

@@ -335,7 +335,7 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
               if (drawPointPlotStationId) {
                 drawImage->drawCenteredText(x, y + drawPointTextRadius + 3, drawPointFontFile, drawPointFontSize, 0, t.c_str(), drawPointTextColor);
               } else {
-                drawImage->drawCenteredText(x, y, drawPointFontFile, drawPointFontSize, 0, t.c_str(), drawPointTextColor);
+                drawImage->drawCenteredText(x, y, drawPointFontFile, drawPointFontSize, 0, t.c_str(), drawPointTextColor, drawPointTextOutlineColor);
               }
             } else {                        // Text and disc
               if (!useDrawPointFillColor) { //(dataSource->getNumDataObjects()==1) {
@@ -576,9 +576,9 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
           toKnots = true;
         }
         if (lat > 0) {
-          drawImage->drawBarb(x, y, ((270 - direction) / 360) * M_PI * 2, strength, drawVectorLineColor, drawVectorLineWidth, toKnots, false, drawVectorPlotValue);
+          drawImage->drawBarb(x, y, ((270 - direction) / 360) * M_PI * 2, 0, strength, drawVectorLineColor, drawVectorLineWidth, toKnots, false, drawVectorPlotValue);
         } else {
-          drawImage->drawBarb(x, y, ((270 - direction) / 360) * M_PI * 2, strength, drawVectorLineColor, drawVectorLineWidth, toKnots, true, drawVectorPlotValue);
+          drawImage->drawBarb(x, y, ((270 - direction) / 360) * M_PI * 2, 0, strength, drawVectorLineColor, drawVectorLineWidth, toKnots, true, drawVectorPlotValue);
         }
       }
       if (drawVector) {
@@ -649,6 +649,7 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
   drawPointPlotStationId = false;
   drawPointTextFormat = "%0.1f";
   drawPointTextColor = CColor(0, 0, 0, 255);
+  drawPointTextOutlineColor = CColor(255, 255, 255, 0);
   drawPointFillColor = CColor(0, 0, 0, 128);
   drawPointLineColor = CColor(0, 0, 0, 255);
   defaultColor = CColor(0, 0, 0, 255);
@@ -690,6 +691,9 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
     if (pointConfig->attr.textcolor.empty() == false) {
       drawPointTextColor.parse(pointConfig->attr.textcolor.c_str());
       useDrawPointTextColor = true;
+    }
+    if (pointConfig->attr.textoutlinecolor.empty() == false) {
+      drawPointTextOutlineColor.parse(pointConfig->attr.textoutlinecolor.c_str());
     }
     if (pointConfig->attr.fontfile.empty() == false) {
       drawPointFontFile = pointConfig->attr.fontfile.c_str();

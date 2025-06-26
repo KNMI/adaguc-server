@@ -8,6 +8,7 @@ import os.path
 import unittest
 import sys
 from adaguc.AdagucTestTools import AdagucTestTools
+import netCDF4
 
 ADAGUC_PATH = os.environ["ADAGUC_PATH"]
 
@@ -407,4 +408,191 @@ class TestWMSTimeSeries(unittest.TestCase):
         self.assertEqual(
             data.getvalue(),
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
+
+
+    def test_UWCW_DINI_windcomponents_GetMetadata(self):
+        AdagucTestTools().cleanTempDir()
+        AdagucTestTools().cleanPostgres()
+        
+        filename = "test_UWCW_DINI_windcomponents_GetMetadata.json"
+        config = ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=[
+                "--updatedb",
+                "--config",
+                config + ",adaguc_tests_uwcwdini_windcomponents.xml",
+            ],
+            env=self.env,
+            isCGI=False,
+        )
+        self.assertEqual(status, 0)
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "service=wms&request=getmetadata&format=application/json",
+            {"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"},
+        )
+        
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        
+        metadata_json = json.loads(data.getvalue())
+        
+        self.assertEqual(len(metadata_json["adaguc_tests_uwcwdini_windcomponents"]["wind-hagl"]["layer"]["variables"]),6)
+        
+        self.assertEqual(metadata_json["adaguc_tests_uwcwdini_windcomponents"]["wind-hagl"]["layer"]["layername"],"wind-hagl")
+
+
+        
+    def test_UWCW_DINI_windcomponents_xwind_ywind_WMSGetMapBarbs(self):
+        AdagucTestTools().cleanTempDir()
+        filename = "test_UWCW_DINI_windcomponents_xwind_ywind_WMSGetMapBarbs.png"
+        config = ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=[
+                "--updatedb",
+                "--config",
+                config + ",adaguc_tests_uwcwdini_windcomponents.xml",
+            ],
+            env=self.env,
+            isCGI=False,
+        )
+        self.assertEqual(status, 0)
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc_tests_uwcwdini_windcomponents&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind-hagl&WIDTH=512&HEIGHT=512&CRS=EPSG%3A3857&BBOX=4509.516234000213,5087774.625591068,1352501.5362287262,6506770.215673305&STYLES=windbarbs_kts%2Fbarbshadedcontour&FORMAT=image/png&TRANSPARENT=TRUE&&DIM_wind_at_10m=10&time=2024-09-07T12%3A00%3A00Z&DIM_reference_time=2024-09-05T00%3A00%3A00Z&showlegend=true",
+            {"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"},
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertTrue(
+            AdagucTestTools().compareImage(
+                self.expectedoutputsspath + filename,
+                self.testresultspath + filename,
+                37,
+                0.1,
+            )
+        )
+        
+    def test_UWCW_DINI_windcomponents_xwind_ywind_WMSGetFeatureInfoTimeSeries(self):
+        AdagucTestTools().cleanTempDir()
+        filename = "test_UWCW_DINI_windcomponents_xwind_ywind_WMSGetFeatureInfoTimeSeries.json"
+        config = ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=[
+                "--updatedb",
+                "--config",
+                config + ",adaguc_tests_uwcwdini_windcomponents.xml",
+            ],
+            env=self.env,
+            isCGI=False,
+        )
+        self.assertEqual(status, 0)
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc_tests_uwcwdini_windcomponents&service=WMS&request=GetFeatureInfo&version=1.3.0&layers=wind-hagl&query_layers=wind-hagl&crs=EPSG%3A3857&bbox=4509.516234000446%2C4728761.919206079%2C1352501.536228726%2C6865782.922058294&width=832&height=1319&i=423&j=647&format=image%2Fgif&info_format=application%2Fjson&dim_wind_at_10m=10&time=2024-09-05T20%3A00%3A00Z%2F2024-09-05T20%3A00%3A00Z&dim_reference_time=2024-09-05T00%3A00%3A00Z&",
+            {"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"},
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
+
+    def test_UWCW_DINI_windcomponents_xwind_ywind_WMSGetFeatureInfoHtml(self):
+        AdagucTestTools().cleanTempDir()
+        filename = "test_UWCW_DINI_windcomponents_xwind_ywind_WMSGetFeatureInfoHtml.html"
+        config = ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=[
+                "--updatedb",
+                "--config",
+                config + ",adaguc_tests_uwcwdini_windcomponents.xml",
+            ],
+            env=self.env,
+            isCGI=False,
+        )
+        self.assertEqual(status, 0)
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc_tests_uwcwdini_windcomponents&&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=wind-hagl&QUERY_LAYERS=wind-hagl&CRS=EPSG%3A3857&BBOX=-2696318.373760471,3217800.239685233,2821293.326680254,11965071.673436817&WIDTH=832&HEIGHT=1319&I=461&J=696&FORMAT=image/gif&INFO_FORMAT=text/html&STYLES=&&DIM_wind_at_10m=10&time=2024-09-07T12%3A00%3A00Z&DIM_reference_time=2024-09-05T00%3A00%3A00Z",
+            {"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"},
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )        
+        
+    def test_UWCW_DINI_windcomponents_xwind_ywind_WCSGetCoverage(self):
+        AdagucTestTools().cleanTempDir()
+        filename = "test_UWCW_DINI_windcomponents_xwind_ywind_WCSGetCoverage.nc"
+        config = ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=[
+                "--updatedb",
+                "--config",
+                config + ",adaguc_tests_uwcwdini_windcomponents.xml",
+            ],
+            env=self.env,
+            isCGI=False,
+        )
+        self.assertEqual(status, 0)
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc_tests_uwcwdini_windcomponents&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=wind-hagl&CRS=EPSG%3A4326&FORMAT=NetCDF3&BBOX=-42.15749,37.709509,38.831969,69.575&RESX=10.123682375000001&RESY=4.552213000000001&DIM_WIND_AT_10M=10&TIME=2024-09-07T12:00:00Z&DIM_REFERENCE_TIME=2024-09-05T00:00:00Z",
+            {"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"},
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+
+        self.assertEqual(status, 0)
+        
+        # Check NetCDF file: Number of variables and global attribute
+        ds = netCDF4.Dataset("filename.nc", memory=data.getvalue())
+        self.assertEqual(ds.getncattr("convert_uv_components"), "metadata")
+        self.assertEqual(list(ds.variables), ['x', 'y', 'time', 'wind_at_10m', 'forecast_reference_time', 'crs', 'speed_component', 'direction_component', 'eastward_component', 'northward_component', 'x-wind-hagl', 'y-wind-hagl'])
+
+
+        
+        # Do getmap request on the NetCDF file we just obtained via WCS, query the direction_component
+        filename = "test_UWCW_DINI_windcomponents_xwind_ywind_GetMapOnWCSCoverage_direction_component.png"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "source=TestWMSTimeSeries%2Ftest_UWCW_DINI_windcomponents_xwind_ywind_WCSGetCoverage%2Enc&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=direction_component&WIDTH=512HEIGHT=512&CRS=EPSG%3A3857&BBOX=-4787988.272387099,4425096.702571644,4348576.567740106,10946270.416926505&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&&DIM_wind_at_10m=10&time=2024-09-07T12%3A00%3A00Z&DIM_reference_time=2024-09-05T00%3A00%3A00Z&0.783935864573529",
+            {"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.autoresource.xml",
+             "ADAGUC_AUTOWMS_DIR":self.testresultspath},showLog=False)
+        self.assertEqual(status, 0)
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertTrue(
+            AdagucTestTools().compareImage(
+                self.expectedoutputsspath + filename,
+                self.testresultspath + filename,
+                37,
+                0.1,
+            )
+        )
+        
+        # Do getmap request on the NetCDF file we just obtained via WCS, query the speed_component
+        filename = "test_UWCW_DINI_windcomponents_xwind_ywind_GetMapOnWCSCoverage_speed_component.png"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "source=TestWMSTimeSeries%2Ftest_UWCW_DINI_windcomponents_xwind_ywind_WCSGetCoverage%2Enc&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=speed_component&WIDTH=512HEIGHT=512&CRS=EPSG%3A3857&BBOX=-4787988.272387099,4425096.702571644,4348576.567740106,10946270.416926505&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&&DIM_wind_at_10m=10&time=2024-09-07T12%3A00%3A00Z&DIM_reference_time=2024-09-05T00%3A00%3A00Z&0.783935864573529",
+            {"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.autoresource.xml",
+             "ADAGUC_AUTOWMS_DIR":self.testresultspath},showLog=False)
+        self.assertEqual(status, 0)
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertTrue(
+            AdagucTestTools().compareImage(
+                self.expectedoutputsspath + filename,
+                self.testresultspath + filename,
+                37,
+                0.1,
+            )
         )

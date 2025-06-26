@@ -1,6 +1,8 @@
 [
   {
     "name": "jaarlijks/tas_mean_2050",
+    "layername": "jaarlijks/tas_mean_2050",
+    "variablename": "interpolatedObs",
     "standard_name": "interpolatedObs",
     "units": "degrees Celsius",
     "point": {

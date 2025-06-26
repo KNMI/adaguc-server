@@ -28,6 +28,7 @@ def setup_test_data():
         "testcollection.xml",
         "adaguc.tests.members.xml",
         "adaguc_ewclocalclimateinfo_test.xml",
+        "adaguc_tests_uwcwdini_windcomponents.xml"
     ):
         status, _, _ = AdagucTestTools().runADAGUCServer(
             args=[
@@ -67,12 +68,12 @@ def test_root(client: TestClient):
 def test_collections(client: TestClient):
     resp = client.get("/edr/collections")
     colls = resp.json()
-    assert len(colls["collections"]) == 5
+    assert len(colls["collections"]) == 6
     print(colls["collections"])
     first_collection = colls["collections"][0]
     assert first_collection.get("id") == "adaguc.tests.arcus_uwcw.hagl_member"
 
-    coll_5d = colls["collections"][3]
+    coll_5d = colls["collections"][4]
     assert coll_5d.get("id") == "netcdf_5d.data_5d"
     assert all(
         ext_name in coll_5d["extent"]
@@ -84,7 +85,7 @@ def test_collections(client: TestClient):
         "vertical",
         "custom",
     ]
-    assert coll_5d["extent"]["temporal"]["values"][0] == "R6/2017-01-01T00:00Z/PT5M"
+    assert coll_5d["extent"]["temporal"]["values"][0] == "R6/2017-01-01T00:00:00Z/PT5M"
 
     assert "position" in coll_5d["data_queries"]
 
@@ -135,7 +136,7 @@ def test_collections(client: TestClient):
 def test_coll_multi_dim_position_single_coverage(client: TestClient):
     # Querying a single datetime and single Z results in a Coverage
     resp = client.get(
-        "/edr/collections/testcollection.testcollection/instances/202406010000/position?coords=POINT(5.2 52.0)&datetime=2024-06-01T01:00:00Z&parameter-name=testdata"
+        "/edr/collections/testcollection.testcollection/instances/202406010000/position?coords=POINT(5.2 52.0)&datetime=2024-06-01T01:00:00Z&parameter-name=testdata&z=40"
     )
     assert resp.status_code, 200
     covjson = resp.json()
@@ -228,10 +229,69 @@ def test_cube_domain_types(client: TestClient):
     assert covjson["domain"]["domainType"] == "Grid"
 
 
-def test_coll_multi_dim_position_coverage_collection_all_z(client: TestClient):
+def test_coll_multi_dim_position_coverage_collection_all_z_star(client: TestClient):
     # Querying a multiple datetime and all z results in a CoverageCollection
     resp = client.get(
         "/edr/collections/testcollection.testcollection/instances/202406010000/position?coords=POINT(5.2 52.0)&datetime=2024-06-01T01:00:00Z/2024-06-01T04:00:00Z&parameter-name=testdata&z=*"
+    )
+    assert resp.status_code, 200
+    covjson = resp.json()
+
+    assert covjson["type"] == "CoverageCollection"
+    assert len(covjson["coverages"]) == 4
+
+    # All coverages should have same z
+    assert all(
+        [
+            c["domain"]["axes"]["z"]["values"] == [10, 20, 30, 40]
+            for c in covjson["coverages"]
+        ]
+    )
+
+    # All coverages should have same shape
+    assert all(
+        [c["ranges"]["testdata"]["shape"] == [4, 1] for c in covjson["coverages"]]
+    )
+
+    assert [c["domain"]["axes"]["t"]["values"] for c in covjson["coverages"]] == [
+        ["2024-06-01T01:00:00Z"],
+        ["2024-06-01T02:00:00Z"],
+        ["2024-06-01T03:00:00Z"],
+        ["2024-06-01T04:00:00Z"],
+    ]
+
+    assert covjson["coverages"][0]["ranges"]["testdata"]["values"] == [
+        0,
+        100000,
+        200000,
+        300000,
+    ]
+    assert covjson["coverages"][1]["ranges"]["testdata"]["values"] == [
+        10000,
+        110000,
+        210000,
+        310000,
+    ]
+    assert covjson["coverages"][2]["ranges"]["testdata"]["values"] == [
+        20000,
+        120000,
+        220000,
+        320000,
+    ]
+    assert covjson["coverages"][3]["ranges"]["testdata"]["values"] == [
+        30000,
+        130000,
+        230000,
+        330000,
+    ]
+
+
+def test_coll_multi_dim_position_coverage_collection_all_z_undefined(
+    client: TestClient,
+):
+    # Querying a multiple datetime without a z results in a CoverageCollection
+    resp = client.get(
+        "/edr/collections/testcollection.testcollection/instances/202406010000/position?coords=POINT(5.2 52.0)&datetime=2024-06-01T01:00:00Z/2024-06-01T04:00:00Z&parameter-name=testdata"
     )
     assert resp.status_code, 200
     covjson = resp.json()
@@ -462,7 +522,7 @@ def test_coll_multi_dim_cube(client: TestClient):
     assert resp.status_code, 200
     covjson = resp.json()
     resp = client.get(
-        "/edr/collections/testcollection.testcollection/instances/202406010000/cube?bbox=5.5,52.5,6.5,53.5&datetime=2024-06-01T01:00:00Z&parameter-name=testdata"
+        "/edr/collections/testcollection.testcollection/instances/202406010000/cube?bbox=5.5,52.5,6.5,53.5&datetime=2024-06-01T01:00:00Z&parameter-name=testdata&z=40"
     )
     assert resp.status_code, 200
     covjson = resp.json()
@@ -474,7 +534,7 @@ def test_coll_multi_dim_cube(client: TestClient):
 
     # Without instance, should use the latest instance (same as above)
     resp = client.get(
-        "/edr/collections/testcollection.testcollection/cube?bbox=5.5,52.5,6.5,53.5&datetime=2024-06-01T01:00:00Z&parameter-name=testdata"
+        "/edr/collections/testcollection.testcollection/cube?bbox=5.5,52.5,6.5,53.5&datetime=2024-06-01T01:00:00Z&parameter-name=testdata&z=40"
     )
     assert resp.status_code, 200
     covjson = resp.json()
@@ -486,7 +546,7 @@ def test_coll_multi_dim_cube(client: TestClient):
 
     # Without instance multiple timesteps, should use the latest instance
     resp = client.get(
-        "/edr/collections/testcollection.testcollection/cube?bbox=5.5,52.5,6.5,53.5&datetime=2024-06-01T01:00:00Z/2024-06-01T04:00:00Z&parameter-name=testdata"
+        "/edr/collections/testcollection.testcollection/cube?bbox=5.5,52.5,6.5,53.5&datetime=2024-06-01T01:00:00Z/2024-06-01T04:00:00Z&parameter-name=testdata&z=40"
     )
     assert resp.status_code, 200
     covjson = resp.json()
@@ -503,7 +563,7 @@ def test_coll_multi_dim_cube(client: TestClient):
     # Layer testdata2
     # Without instance multiple timesteps, should use the latest instance
     resp = client.get(
-        "/edr/collections/testcollection.testcollection/cube?bbox=5.5,52.5,6.5,53.5&datetime=2024-06-01T01:00:00Z/2024-06-01T04:00:00Z&parameter-name=testdata2"
+        "/edr/collections/testcollection.testcollection/cube?bbox=5.5,52.5,6.5,53.5&datetime=2024-06-01T01:00:00Z/2024-06-01T04:00:00Z&parameter-name=testdata2&z=30"
     )
     assert resp.status_code, 200
     covjson = resp.json()
@@ -525,20 +585,20 @@ def test_coll_multi_dim_cube(client: TestClient):
     # Layers testdata,testdata2
     # Without instance multiple timesteps, should use the latest instance
     resp = client.get(
-        "/edr/collections/testcollection.testcollection/cube?bbox=5.5,52.5,7.5,53.5&datetime=2024-06-01T01:00:00Z/2024-06-01T04:00:00Z&parameter-name=testdata,testdata2"
+        "/edr/collections/testcollection.testcollection/cube?bbox=5.5,52.5,7.5,53.5&datetime=2024-06-01T01:00:00Z/2024-06-01T04:00:00Z&parameter-name=testdata,testdata2&z=40"
     )
     assert resp.status_code, 200
     covjson = resp.json()
-    assert covjson["type"] == "CoverageCollection"
+    assert covjson["type"] == "Coverage"
 
-    assert covjson["coverages"][0]["domain"]["axes"]["z"]["values"] == [40]
-    assert covjson["coverages"][0]["domain"]["axes"]["t"]["values"] == [
+    assert covjson["domain"]["axes"]["z"]["values"] == [40]
+    assert covjson["domain"]["axes"]["t"]["values"] == [
         "2024-06-01T01:00:00Z",
         "2024-06-01T02:00:00Z",
         "2024-06-01T03:00:00Z",
         "2024-06-01T04:00:00Z",
     ]
-    assert covjson["coverages"][0]["ranges"]["testdata"]["values"] == [
+    assert covjson["ranges"]["testdata"]["values"] == [
         300101,
         300201,
         310101,
@@ -718,11 +778,6 @@ def test_cube_custom_dim_request_all_members(client: TestClient):
             "Incorrect parameter myunknown-parameter requested for collection adaguc.tests.members.mycollection",
         ),
         (
-            "/edr/collections/adaguc.tests.members.mycollection/instances/202503010000/position?coords=POINT(5.0 52.0)",
-            404,
-            "Incorrect parameter  requested for collection adaguc.tests.members.mycollection",
-        ),
-        (
             "/edr/collections/adaguc.tests.members.mycollection/instances/202503010000/position?coords=POINT()&parameter-name=mymemberdata",
             400,
             "Could not parse WKT POINT, received coords=POINT()",
@@ -732,11 +787,34 @@ def test_cube_custom_dim_request_all_members(client: TestClient):
         "unknown_collection",
         "incorrect_instance",
         "incorrect_parameter",
-        "no_parameter",
         "invalid_point",
     ],
 )
 def test_edr_exceptions(url, status_code, description, client: TestClient):
     resp = client.get(url)
+    print(json.dumps(resp.json(), indent=2))
     assert resp.status_code == status_code
     assert resp.json()["description"] == description
+
+
+def test_adaguc_tests_uwcwdini_windcomponents_position(client: TestClient):
+    # Querying from dini with x-wind and y wind. Should become grid relative
+    resp = client.get(
+        "/edr/collections/adaguc_tests_uwcwdini_windcomponents/position?coords=POINT(5.15 52.67)&parameter-name=wind-hagl&datetime=2024-09-06T10:00:00Z/2024-09-06T17:00:00Z"
+    )
+    assert resp.status_code, 200
+    covjson = resp.json()
+
+    assert covjson["type"] == "CoverageCollection"
+    assert len(covjson["coverages"]) == 6
+    assert covjson["coverages"][0]["type"] == "Coverage"
+    assert covjson["coverages"][0]["domain"]["domainType"] == "PointSeries"
+    
+    assert covjson == {"type":"CoverageCollection","coverages":[{"id":"coverage_1","type":"Coverage","domain":{"type":"Domain","domainType":"PointSeries","axes":{"x":{"values":[5.15]},"y":{"values":[52.67]},"t":{"values":["2024-09-06T10:00:00Z","2024-09-06T11:00:00Z","2024-09-06T12:00:00Z","2024-09-06T13:00:00Z","2024-09-06T14:00:00Z","2024-09-06T15:00:00Z","2024-09-06T16:00:00Z","2024-09-06T17:00:00Z"]}},"referencing":[{"coordinates":["x","y"],"system":{"type":"GeographicCRS","id":"http://www.opengis.net/def/crs/OGC/1.3/CRS84"}},{"coordinates":["t"],"system":{"type":"TemporalRS","calendar":"Gregorian"}}],"custom:wind_at_10m":10.0,"custom:reference_time":"2024-09-05T00:00:00Z"},"parameters":{"wind-hagl":{"type":"Parameter","id":"wind-hagl","label":{"en:":"Wind 10m flags"},"observedProperty":{"id":"https://vocab.nerc.ac.uk/standard_name/wind_speed","label":{"en":"Wind speed"}},"unit":{"symbol":{"value":"kts","type":"http://www.opengis.net/def/uom/UCUM"}}}},"ranges":{"wind-hagl":{"type":"NdArray","dataType":"float","axisNames":["t"],"shape":[8],"values":[1.956041,1.337519,1.479398,1.818598,1.407661,0.972856,1.073346,2.957065]}}},{"id":"coverage_2","type":"Coverage","domain":{"type":"Domain","domainType":"PointSeries","axes":{"x":{"values":[5.15]},"y":{"values":[52.67]},"t":{"values":["2024-09-06T10:00:00Z","2024-09-06T11:00:00Z","2024-09-06T12:00:00Z","2024-09-06T13:00:00Z","2024-09-06T14:00:00Z","2024-09-06T15:00:00Z","2024-09-06T16:00:00Z","2024-09-06T17:00:00Z"]}},"referencing":[{"coordinates":["x","y"],"system":{"type":"GeographicCRS","id":"http://www.opengis.net/def/crs/OGC/1.3/CRS84"}},{"coordinates":["t"],"system":{"type":"TemporalRS","calendar":"Gregorian"}}],"custom:wind_at_10m":10.0,"custom:reference_time":"2024-09-05T00:00:00Z"},"parameters":{"wind-hagl":{"type":"Parameter","id":"wind-hagl","label":{"en:":"Wind 10m flags"},"observedProperty":{"id":"https://vocab.nerc.ac.uk/standard_name/wind_speed","label":{"en":"Wind speed"}},"unit":{"symbol":{"value":"kts","type":"http://www.opengis.net/def/uom/UCUM"}}}},"ranges":{"wind-hagl":{"type":"NdArray","dataType":"float","axisNames":["t"],"shape":[8],"values":[213.127808,228.926041,168.582031,179.922195,202.443619,277.001556,319.504364,155.448151]}}},{"id":"coverage_3","type":"Coverage","domain":{"type":"Domain","domainType":"PointSeries","axes":{"x":{"values":[5.15]},"y":{"values":[52.67]},"t":{"values":["2024-09-06T10:00:00Z","2024-09-06T11:00:00Z","2024-09-06T12:00:00Z","2024-09-06T13:00:00Z","2024-09-06T14:00:00Z","2024-09-06T15:00:00Z","2024-09-06T16:00:00Z","2024-09-06T17:00:00Z"]}},"referencing":[{"coordinates":["x","y"],"system":{"type":"GeographicCRS","id":"http://www.opengis.net/def/crs/OGC/1.3/CRS84"}},{"coordinates":["t"],"system":{"type":"TemporalRS","calendar":"Gregorian"}}],"custom:wind_at_10m":10.0,"custom:reference_time":"2024-09-05T00:00:00Z"},"parameters":{"wind-hagl":{"type":"Parameter","id":"wind-hagl","label":{"en:":"Wind 10m flags"},"observedProperty":{"id":"https://vocab.nerc.ac.uk/standard_name/wind_speed","label":{"en":"Wind speed"}},"unit":{"symbol":{"value":"kts","type":"http://www.opengis.net/def/uom/UCUM"}}}},"ranges":{"wind-hagl":{"type":"NdArray","dataType":"float","axisNames":["t"],"shape":[8],"values":[1.068993,1.008305,-0.292869,-0.00247,0.537409,0.965601,0.697021,-1.228709]}}},{"id":"coverage_4","type":"Coverage","domain":{"type":"Domain","domainType":"PointSeries","axes":{"x":{"values":[5.15]},"y":{"values":[52.67]},"t":{"values":["2024-09-06T10:00:00Z","2024-09-06T11:00:00Z","2024-09-06T12:00:00Z","2024-09-06T13:00:00Z","2024-09-06T14:00:00Z","2024-09-06T15:00:00Z","2024-09-06T16:00:00Z","2024-09-06T17:00:00Z"]}},"referencing":[{"coordinates":["x","y"],"system":{"type":"GeographicCRS","id":"http://www.opengis.net/def/crs/OGC/1.3/CRS84"}},{"coordinates":["t"],"system":{"type":"TemporalRS","calendar":"Gregorian"}}],"custom:wind_at_10m":10.0,"custom:reference_time":"2024-09-05T00:00:00Z"},"parameters":{"wind-hagl":{"type":"Parameter","id":"wind-hagl","label":{"en:":"Wind 10m flags"},"observedProperty":{"id":"https://vocab.nerc.ac.uk/standard_name/wind_speed","label":{"en":"Wind speed"}},"unit":{"symbol":{"value":"kts","type":"http://www.opengis.net/def/uom/UCUM"}}}},"ranges":{"wind-hagl":{"type":"NdArray","dataType":"float","axisNames":["t"],"shape":[8],"values":[1.638094,0.878794,1.450119,1.818596,1.301039,-0.118588,-0.816232,2.689704]}}},{"id":"coverage_5","type":"Coverage","domain":{"type":"Domain","domainType":"PointSeries","axes":{"x":{"values":[5.15]},"y":{"values":[52.67]},"t":{"values":["2024-09-06T10:00:00Z","2024-09-06T11:00:00Z","2024-09-06T12:00:00Z","2024-09-06T13:00:00Z","2024-09-06T14:00:00Z","2024-09-06T15:00:00Z","2024-09-06T16:00:00Z","2024-09-06T17:00:00Z"]}},"referencing":[{"coordinates":["x","y"],"system":{"type":"GeographicCRS","id":"http://www.opengis.net/def/crs/OGC/1.3/CRS84"}},{"coordinates":["t"],"system":{"type":"TemporalRS","calendar":"Gregorian"}}],"custom:wind_at_10m":10.0,"custom:reference_time":"2024-09-05T00:00:00Z"},"parameters":{"wind-hagl":{"type":"Parameter","id":"wind-hagl","label":{"en:":"Wind 10m flags"},"observedProperty":{"id":"https://vocab.nerc.ac.uk/standard_name/wind_speed","label":{"en":"Wind speed"}},"unit":{"symbol":{"value":"kts","type":"http://www.opengis.net/def/uom/UCUM"}}}},"ranges":{"wind-hagl":{"type":"NdArray","dataType":"float","axisNames":["t"],"shape":[8],"values":[0.468258,0.661647,-0.75519,-0.602721,0.077754,0.950612,0.92741,-2.047795]}}},{"id":"coverage_6","type":"Coverage","domain":{"type":"Domain","domainType":"PointSeries","axes":{"x":{"values":[5.15]},"y":{"values":[52.67]},"t":{"values":["2024-09-06T10:00:00Z","2024-09-06T11:00:00Z","2024-09-06T12:00:00Z","2024-09-06T13:00:00Z","2024-09-06T14:00:00Z","2024-09-06T15:00:00Z","2024-09-06T16:00:00Z","2024-09-06T17:00:00Z"]}},"referencing":[{"coordinates":["x","y"],"system":{"type":"GeographicCRS","id":"http://www.opengis.net/def/crs/OGC/1.3/CRS84"}},{"coordinates":["t"],"system":{"type":"TemporalRS","calendar":"Gregorian"}}],"custom:wind_at_10m":10.0,"custom:reference_time":"2024-09-05T00:00:00Z"},"parameters":{"wind-hagl":{"type":"Parameter","id":"wind-hagl","label":{"en:":"Wind 10m flags"},"observedProperty":{"id":"https://vocab.nerc.ac.uk/standard_name/wind_speed","label":{"en":"Wind speed"}},"unit":{"symbol":{"value":"kts","type":"http://www.opengis.net/def/uom/UCUM"}}}},"ranges":{"wind-hagl":{"type":"NdArray","dataType":"float","axisNames":["t"],"shape":[8],"values":[1.899166,1.162403,1.272127,1.715816,1.405512,0.206844,-0.540354,2.133253]}}}]}\
+
+def test_no_parameters(client: TestClient):
+    url = "/edr/collections/adaguc.tests.members.mycollection/instances/202503010000/position?coords=POINT(5.0 52.0)"
+    resp = client.get(url)
+    print(json.dumps(resp.json(), indent=2))
+    assert resp.status_code == 200
+    assert list(resp.json()["parameters"].keys()) == ["mymemberdata"]

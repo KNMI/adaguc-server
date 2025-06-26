@@ -466,9 +466,9 @@ void CDrawImage::_drawBarbGd(int x, int y, double direction, double strength, CC
   line(wx1, wy1, wx2, wy2, lineWidth, color);
 }
 
-void CDrawImage::drawBarb(int x, int y, double direction, double strength, CColor color, float lineWidth, bool toKnots, bool flip, bool drawText) {
+void CDrawImage::drawBarb(int x, int y, double direction, double viewDirCorrection, double strength, CColor color, float lineWidth, bool toKnots, bool flip, bool drawText) {
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
-    _drawBarbGd(x, y, direction, strength, color, lineWidth, toKnots, flip);
+    _drawBarbGd(x, y, direction + viewDirCorrection, strength, color, lineWidth, toKnots, flip);
     if (drawText) {
       // TODO: DRAW TEXT
     }
@@ -478,7 +478,7 @@ void CDrawImage::drawBarb(int x, int y, double direction, double strength, CColo
     // If no linewidth, no outline should be drawn, set inner barblineWidth to 0.8 to ensure we draw a barb
     bool drawOutline = lineWidth == 0 ? false : true;
     float barblineWidth = lineWidth == 0 ? 0.8 : lineWidth;
-    cairo->drawBarb(x, y, direction, strength, color, outLineColor, drawOutline, barblineWidth, toKnots, flip, drawText);
+    cairo->drawBarb(x, y, direction, viewDirCorrection, strength, color, outLineColor, drawOutline, barblineWidth, toKnots, flip, drawText);
   }
 }
 
@@ -1084,12 +1084,17 @@ CCairoPlotter *CDrawImage::getCairoPlotter(const char *fontfile, float size, int
   }
 }
 
-void CDrawImage::drawCenteredText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color) {
+void CDrawImage::drawCenteredText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color, CColor textOutlineColor) {
 
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
     CCairoPlotter *freeType = this->getCairoPlotter(fontfile, size, Geo->dWidth, Geo->dHeight, cairo->getByteBuffer());
     freeType->setColor(color.r, color.g, color.b, color.a);
-    freeType->drawCenteredText(x, y, angle, text);
+    if (textOutlineColor.a == 0) {
+      freeType->drawCenteredText(x, y, angle, text);
+    } else {
+      freeType->drawStrokedText(x, y, angle, text, size * 1.4, 1, textOutlineColor, color, true);
+    }
+
     cairo->isAlphaUsed |= freeType->isAlphaUsed; // remember freetype's isAlphaUsed flag
   } else {
     // TODO GD renderer does not center text yet

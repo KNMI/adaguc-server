@@ -77,7 +77,7 @@ async def get_coll_inst_position(
     instance: str = None,
     datetime_par: str = Query(default=None, alias="datetime"),
     parameter_name_par: Annotated[
-        str | None, Query(alias="parameter-name", min_length=1)
+        str, Query(alias="parameter-name", min_length=1)
     ] = None,
     z_par: Annotated[str, Query(alias="z", min_length=1)] = None,
 ) -> Coverage:
@@ -124,10 +124,7 @@ async def get_coll_inst_position(
         ttl = get_ttl_from_adaguc_headers(headers)
         if ttl is not None:
             response.headers["cache-control"] = generate_max_age(ttl)
-        return covjson_from_resp(
-            dat,
-            metadata[collection_name],
-        )
+        return covjson_from_resp(dat, metadata[collection_name], collection_name)
 
     raise EdrException(code=404, description="No data")
 
@@ -139,10 +136,9 @@ async def get_point_value(
     parameters: list[str],
     datetime_par: str,
     vertical_dim: str = None,
-    custom_dims: list[str] | None = None,
+    custom_dims: list[str] = None,
 ):
     """Returns information in EDR format for a given collection and position"""
-    print("instance %s", instance)
     custom_dims = [] if custom_dims is None else custom_dims
     urlrequest = "&".join(
         [

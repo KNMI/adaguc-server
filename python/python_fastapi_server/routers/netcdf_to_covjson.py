@@ -29,6 +29,8 @@ from pydantic import BaseModel
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+VOCAB_ENDPOINT_URL = "https://vocab.nerc.ac.uk/standard_name/"
+
 
 class GeoReferenceInfo(BaseModel):
     """GeoReference object"""
@@ -218,27 +220,51 @@ def netcdf_to_covjson(
                 # Make the ranges object
                 ranges[layer_name] = ndarray
 
-                unit_of_measurement = variable.units if variable.units else "unknown"
+                unit_of_measurement = (
+                    variable.getncattr("unit")
+                    if "unit" in variable.ncattrs()
+                    else "unknown"
+                )
 
                 # Add the parameter
-                if "long_name" in variable.ncattrs():
+                if "label" in metadata[layer_name]["layer"]:
+                    parameter_name = metadata[layer_name]["layer"]["variables"][0][
+                        "label"
+                    ]
+                    parameter_description = metadata[layer_name]["layer"]["variables"][
+                        0
+                    ]["label"]
+                    parameter_standard_name = metadata[layer_name]["layer"][
+                        "variables"
+                    ][0]["standard_name"]
+                elif "long_name" in variable.ncattrs():
                     parameter_name = getattr(variable, "long_name")
                     parameter_description = getattr(variable, "long_name")
+                    parameter_standard_name = metadata[layer_name]["layer"][
+                        "variables"
+                    ][0].get("standard_name", getattr(variable, "long_name"))
                 elif "standard_name" in variable.ncattrs():
                     parameter_name = getattr(variable, "standard_name")
                     parameter_description = getattr(variable, "standard_name")
+                    parameter_standard_name = getattr(variable, "standard_name")
                 else:
                     parameter_name = variablename
                     parameter_description = variablename
+                    parameter_standard_name = variablename
+
                 parameters[layer_name] = Parameter(
                     # TODO: KDP-1622 Fix the difference in the ObservedProperty between DescribeCoverage from the
                     #  Adaguc Config and the NetCDF values
-                    observedProperty=ObservedProperty(label={"en": parameter_name}),
+                    id=parameter_name,
+                    observedProperty=ObservedProperty(
+                        id=f"{VOCAB_ENDPOINT_URL}{parameter_standard_name}",
+                        label={"en": parameter_name},
+                    ),
                     description={"en": parameter_description},
                     unit=Unit(
                         symbol=Symbol(
                             value=unit_of_measurement,
-                            type="http://www.opengis.net/def/uom/UCUM/",
+                            type="http://www.opengis.net/def/uom/UCUM",
                         )
                     ),
                 )
@@ -301,7 +327,9 @@ def netcdf_to_covjson(
                     ranges[layer_name] = ndarray
 
                     unit_of_measurement = (
-                        variable.units if variable.units else "unknown"
+                        variable.getncattr("unit")
+                        if "unit" in variable.ncattrs()
+                        else "unknown"
                     )
 
                     # Add the parameter

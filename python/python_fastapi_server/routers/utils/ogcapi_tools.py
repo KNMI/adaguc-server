@@ -387,7 +387,7 @@ def feature_from_dat(dat, coll, url, add_links: bool = False):
                     result.append(val)
 
         feature_dims = {}
-        datname = dat["name"]
+        datname = dat["layername"]
         datpointcoords = dat["point"]["coords"]
         feature_id = f"{coll};{datname};{datpointcoords};"
         cnt = 0

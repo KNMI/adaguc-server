@@ -93,14 +93,14 @@ void CImgRenderStippling::render(CImageWarper *warper, CDataSource *dataSource, 
   this->drawImage = drawImage;
   this->dataSource = dataSource;
   this->warper = warper;
-  Settings settings;
+  CStipplingSettings settings;
   this->settings = &settings;
   styleConfiguration = dataSource->getStyle();
-  settings.dfNodataValue = dataSource->getDataObject(0)->dfNodataValue;
+  settings.dfNodataValue = dataSource->getFirstAvailableDataObject()->dfNodataValue;
   settings.legendValueRange = styleConfiguration->hasLegendValueRange;
   settings.legendLowerRange = styleConfiguration->legendLowerRange;
   settings.legendUpperRange = styleConfiguration->legendUpperRange;
-  settings.hasNodataValue = dataSource->getDataObject(0)->hasNodataValue;
+  settings.hasNodataValue = dataSource->getFirstAvailableDataObject()->hasNodataValue;
 
   if (!settings.hasNodataValue) {
     settings.hasNodataValue = true;
@@ -116,8 +116,8 @@ void CImgRenderStippling::render(CImageWarper *warper, CDataSource *dataSource, 
     }
   }
 
-  CDFType dataType = dataSource->getDataObject(0)->cdfVariable->getType();
-  sourceData = dataSource->getDataObject(0)->cdfVariable->data;
+  CDFType dataType = dataSource->getFirstAvailableDataObject()->cdfVariable->getType();
+  sourceData = dataSource->getFirstAvailableDataObject()->cdfVariable->data;
   CGeoParams sourceGeo;
 
   sourceGeo.dWidth = dataSource->dWidth;
@@ -208,35 +208,12 @@ void CImgRenderStippling::render(CImageWarper *warper, CDataSource *dataSource, 
   startY = (startY % (yDistance * 2)) - (yDistance * 2);
 
   GenericDataWarper genericDataWarper;
-  switch (dataType) {
-  case CDF_CHAR:
-    genericDataWarper.render<char>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &drawFunction);
-    break;
-  case CDF_BYTE:
-    genericDataWarper.render<char>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &drawFunction);
-    break;
-  case CDF_UBYTE:
-    genericDataWarper.render<unsigned char>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &drawFunction);
-    break;
-  case CDF_SHORT:
-    genericDataWarper.render<short>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &drawFunction);
-    break;
-  case CDF_USHORT:
-    genericDataWarper.render<ushort>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &drawFunction);
-    break;
-  case CDF_INT:
-    genericDataWarper.render<int>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &drawFunction);
-    break;
-  case CDF_UINT:
-    genericDataWarper.render<uint>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &drawFunction);
-    break;
-  case CDF_FLOAT:
-    genericDataWarper.render<float>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &drawFunction);
-    break;
-  case CDF_DOUBLE:
-    genericDataWarper.render<double>(warper, sourceData, &sourceGeo, drawImage->Geo, &settings, &drawFunction);
-    break;
-  }
+  GDWArgs args = {.warper = warper, .sourceData = sourceData, .sourceGeoParams = &sourceGeo, .destGeoParams = drawImage->Geo};
+
+#define ENUMERATE_CDFTYPE(CDFTYPE, CPPTYPE)                                                                                                                                                            \
+  if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction(x, y, val, warperState, settings); });
+  ENUMERATE_CDFTYPES
+#undef ENUMERATE_CDFTYPE
 
   for (int y = startY; y < (int)settings.height; y = y + yDistance) {
     int oddeven = 0;

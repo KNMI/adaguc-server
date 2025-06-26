@@ -121,14 +121,15 @@ public:
   void poly(float x[], float y[], int n, bool closePath, bool fill);
   void poly(float x[], float y[], int n, float lineWidth, bool closePath, bool fill);
   void drawText(int x, int y, double angle, const char *text);
-  void drawStrokedText(int x, int y, double angle, const char *text, float fontSize, float strokeWidth, CColor bgcolor, CColor fgcolor);
+  void drawStrokedText(int x, int y, double angle, const char *text, float fontSize, float strokeWidth, CColor bgcolor, CColor fgcolor, bool centerText = false);
 
   void writeToPng8Stream(FILE *fp, unsigned char alpha, bool use8bitpalAlpha);
   void writeToPng24Stream(FILE *fp, unsigned char alpha);
   void writeToPng32Stream(FILE *fp, unsigned char alpha);
   void writeToWebP32Stream(FILE *fp, unsigned char alpha, int quality);
   void setToSurface(cairo_surface_t *png);
-  void drawBarb(int x, int y, double direction, double strength, CColor color, CColor outlineColor, bool drawOutline, float lineWidth, bool toKnots, bool flip, bool drawText);
+  void drawBarb(int x, int y, double direction, double viewDirCorrection, double strength, CColor color, CColor outlineColor, bool drawOutline, float lineWidth, bool toKnots, bool flip,
+                bool drawText);
 };
 
 #endif /* CCAIROPLOTTER_H_ */

@@ -667,7 +667,7 @@ void CCairoPlotter::drawText(int x, int y, double angle, const char *text) {
   _drawFreeTypeText(x, y, w, h, angle, text, true);
 }
 
-void CCairoPlotter::drawStrokedText(int x, int y, double angle, const char *text, float fontSize, float strokeWidth, CColor bgcolor, CColor fgcolor) {
+void CCairoPlotter::drawStrokedText(int x, int y, double angle, const char *text, float fontSize, float strokeWidth, CColor bgcolor, CColor fgcolor, bool centerText) {
   if (library == NULL) {
     int status = initializeFreeType();
     if (status != 0) {
@@ -686,6 +686,13 @@ void CCairoPlotter::drawStrokedText(int x, int y, double angle, const char *text
 
   cairo_new_path(cr);
   cairo_set_dash(cr, 0, 0, 0);
+
+  if (centerText) {
+    cairo_text_extents_t te;
+    cairo_text_extents(cr, text, &te);
+    x = x - (te.x_bearing + te.width / 2);
+    y = y - (te.y_bearing + te.height / 2);
+  }
 
   cairo_move_to(cr, x, y);
   cairo_rotate(cr, angle);
@@ -1137,12 +1144,14 @@ static int drawBarbTriangle(cairo_t *cr, int x, int y, int nPennants, double dir
   return pos;
 }
 
-void CCairoPlotter::drawBarb(int x, int y, double direction, double strength, CColor barbColor, CColor outlineColor, bool drawOutline, float lineWidth, bool toKnots, bool flip, bool drawText) {
+void CCairoPlotter::drawBarb(int x, int y, double uncorrectedDirection, double viewDirCorrection, double strength, CColor barbColor, CColor outlineColor, bool drawOutline, float lineWidth,
+                             bool toKnots, bool flip, bool drawText) {
   // Barb settings
   float centerDiscRadius = 3;
   int shaftLength = 37;
   int barbLength = 12;
   int halfBarbLength = 6;
+  double direction = uncorrectedDirection + viewDirCorrection;
 
   // Preserve path
   cairo_save(cr);
@@ -1253,12 +1262,25 @@ void CCairoPlotter::drawBarb(int x, int y, double direction, double strength, CC
   cairo_append_path(cr, cp);
   cairo_path_destroy(cp);
   cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
-
-  CT::string text;
-  text.print("%d", strengthInKnots);
   if (drawText) {
-    // If speed is really low, draw the text below the circle
-    double textDirection = strengthInKnotsRoundedToFive <= 2 ? -M_PI / 2.1 : direction;
-    this->drawStrokedText(x - cos(textDirection + M_PI) * 15 - 5, y + sin(textDirection + M_PI) * 12 + 5, 0, text.c_str(), 12, 1 * drawOutline, outlineColor, barbColor);
+    bool showDirection = false;
+    if (showDirection == false) {
+      CT::string text;
+      text.print("%d", strengthInKnots);
+
+      // If speed is really low, draw the text below the circle
+      double textDirection = strengthInKnotsRoundedToFive <= 2 ? -M_PI / 2.1 : direction;
+      this->drawStrokedText(x - cos(textDirection + M_PI) * 15 - 5, y + sin(textDirection + M_PI) * 12 + 5, 0, text.c_str(), 12, 1 * drawOutline, outlineColor, barbColor);
+    } else {
+      double degrees = fmod(((270 - ((uncorrectedDirection) * (180 / M_PI)))), 360);
+      CT::string text;
+      text.print("%02d %03d°", strengthInKnots, int(round(degrees)));
+
+      // If speed is really low, draw the text below the circle
+      double textDirection = strengthInKnotsRoundedToFive <= 2 ? -M_PI / 2.1 : direction;
+      int tx = x - cos(textDirection + M_PI) * 15 - 5 - text.length();
+      int ty = y + sin(textDirection + M_PI) * 12 + 5;
+      this->drawStrokedText(tx, ty, 0, text.c_str(), 12, 1 * drawOutline, outlineColor, barbColor);
+    }
   }
 }

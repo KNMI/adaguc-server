@@ -167,14 +167,6 @@ public:
   void getCacheFileName(CT::string *cacheFileName);
 
   /**
-   * Get the directory used for XML and netcdf caching.
-   * The filename is automatically constructed or can be set by the user in the configuration file alternatively.
-   *
-   * @param cacheFileName The CT::string to be filled with the filename
-   */
-  void _getCacheDirectory(CT::string *cacheFileName);
-
-  /**
    * Function which checks whether remote resources should be cached or not
    * @return true if enablecache attribute in AutoResource is undefined or set to true
    */
@@ -302,7 +294,7 @@ public:
    * Creates a random string of specified length
    * @param len The length of the string
    */
-  static const CT::string randomString(const int len);
+  static std::string randomString(int length);
 
   /**
    * Parses the provided configuration file. Can be called consecutively to extend the internal configuration object.
@@ -317,7 +309,7 @@ public:
    * mode CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE is for urls which response might change often (shorter max-age)
    * mode CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE is fully specified urls
    */
-  CT::string getCacheControlHeader(int mode);
+  CT::string getResponseHeaders(int mode);
 
   void setCacheControlOption(int mode) { cacheControlOption = mode; }
   int getCacheControlOption() { return cacheControlOption; }

@@ -64,7 +64,7 @@ class TestCSV(unittest.TestCase):
         ]
 
         for date in dates:
-            filename = "test_CSV_timesupport" + date + ".png"
+            filename = ("test_CSV_timesupport" + date + ".png").replace(":","_")
             status, data, headers = AdagucTestTools().runADAGUCServer(
                 "&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=-180,-90,180,90&STYLES=windbarb&FORMAT=image/png&TRANSPARENT=TRUE&TIME="
                 + date,
@@ -170,8 +170,8 @@ class TestCSV(unittest.TestCase):
         for testcase in testcases:
             date = testcase["time"]
             DIM_reference_time = testcase["reference_time"]
-            filename = ("test_CSV_reference_timesupport" + date + "_" +
-                        DIM_reference_time + ".png")
+            filename = (("test_CSV_reference_timesupport" + date + "_" +
+                        DIM_reference_time + ".png").replace(":","_"))
             status, data, headers = AdagucTestTools().runADAGUCServer(
                 "&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=-180,-90,180,90&STYLES=windbarb&FORMAT=image/png&TRANSPARENT=TRUE&TIME="
                 + date + "&DIM_reference_time=" + DIM_reference_time,

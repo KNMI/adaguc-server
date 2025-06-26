@@ -124,6 +124,9 @@ class AdagucTestTools:
             return status, filetogenerate, headers
 
     def writetofile(self, filename, data):
+        chars = set(':+,@#$%^&*()\\')
+        if any((c in chars) for c in filename):
+            raise Exception("Filename %s contains invalid characters" % filename)
         with open(filename, "wb") as f:
             f.write(data)
 

@@ -39,15 +39,9 @@ CDataSource::DataObject::DataObject() {
   hasScaleOffset = false;
   cdfVariable = NULL;
   cdfObject = NULL;
-  overruledUnits = NULL;
   dfadd_offset = 0;
   dfscale_factor = 1;
-  std::vector<CPoint> points;
-}
-CDataSource::DataObject::~DataObject() {
-  for (size_t j = 0; j < statusFlagList.size(); j++) {
-    delete statusFlagList[j];
-  }
+  std::vector<f8point> points;
 }
 
 CDataSource::DataObject *CDataSource::DataObject::clone() {
@@ -59,14 +53,10 @@ CDataSource::DataObject *CDataSource::DataObject::clone() {
   nd->dfNodataValue = dfNodataValue;
   nd->dfscale_factor = dfscale_factor;
   nd->dfadd_offset = dfadd_offset;
-  nd->cdfVariable = cdfVariable;
   nd->cdfObject = cdfObject;
   nd->overruledUnits = overruledUnits;
   nd->variableName = variableName;
-
-  //   std::vector<StatusFlag*> statusFlagList;
-  //   std::vector<PointDVWithLatLon> points;
-  //   std::map<int,CFeature> features;
+  nd->cdfVariable = nullptr;
   return nd;
 }
 
@@ -78,6 +68,15 @@ CT::string CDataSource::DataObject::getUnits() {
     }
   }
   return overruledUnits;
+}
+
+CT::string CDataSource::DataObject::getStandardName() {
+  CT::string standard_name = variableName;
+  CDF::Attribute *standardNameAttr = cdfVariable->getAttributeNE("standard_name");
+  if (standardNameAttr != nullptr) {
+    standard_name = standardNameAttr->toString();
+  }
+  return standard_name;
 }
 
 void CDataSource::DataObject::setUnits(CT::string units) { overruledUnits = units; }
@@ -221,7 +220,7 @@ MinMax getMinMax(CDF::Variable *var) {
 int CDataSource::Statistics::calculate(CDataSource *dataSource) {
   // Get Min and Max
   // CDBDebug("calculate stat ");
-  CDataSource::DataObject *dataObject = dataSource->getDataObject(0);
+  CDataSource::DataObject *dataObject = dataSource->getFirstAvailableDataObject();
   if (dataObject->cdfVariable->data != NULL) {
     size_t size = dataObject->cdfVariable->getSize(); // dataSource->dWidth*dataSource->dHeight;
 
@@ -459,8 +458,7 @@ CCDFDims *CDataSource::getCDFDims() {
   return &timeSteps[currentAnimationStep]->dims;
 }
 
-void CDataSource::readStatusFlags(CDF::Variable *var, std::vector<CDataSource::StatusFlag *> *statusFlagList) {
-  for (size_t i = 0; i < statusFlagList->size(); i++) delete (*statusFlagList)[i];
+void CDataSource::readStatusFlags(CDF::Variable *var, std::vector<CDataSource::StatusFlag> *statusFlagList) {
   statusFlagList->clear();
   if (var != NULL) {
     CDF::Attribute *attr_flag_meanings = var->getAttributeNE("flag_meanings");
@@ -485,11 +483,7 @@ void CDataSource::readStatusFlags(CDF::Variable *var, std::vector<CDataSource::S
             double dfFlagValues[nrOfFlagMeanings + 1];
             attr_flag_values->getData(dfFlagValues, attr_flag_values->length);
             for (size_t j = 0; j < nrOfFlagMeanings; j++) {
-              CDataSource::StatusFlag *statusFlag = new CDataSource::StatusFlag;
-              statusFlagList->push_back(statusFlag);
-              statusFlag->meaning.copy(flagStrings[j].c_str());
-              // statusFlag->meaning.replaceSelf("_"," ");
-              statusFlag->value = dfFlagValues[j];
+              statusFlagList->push_back({.meaning = flagStrings[j], .value = dfFlagValues[j]});
             }
           } else {
             CDBError("ReadStatusFlags: nrOfFlagMeanings!=nrOfFlagValues, %d!=%d", nrOfFlagMeanings, nrOfFlagValues);
@@ -505,16 +499,16 @@ void CDataSource::readStatusFlags(CDF::Variable *var, std::vector<CDataSource::S
   }
 }
 
-const char *CDataSource::getFlagMeaning(std::vector<CDataSource::StatusFlag *> *statusFlagList, double value) {
+const char *CDataSource::getFlagMeaning(std::vector<CDataSource::StatusFlag> *statusFlagList, double value) {
   for (size_t j = 0; j < statusFlagList->size(); j++) {
-    if ((*statusFlagList)[j]->value == value) {
-      return (*statusFlagList)[j]->meaning.c_str();
+    if ((*statusFlagList)[j].value == value) {
+      return (*statusFlagList)[j].meaning.c_str();
     }
   }
   return "no_flag_meaning";
 }
 
-void CDataSource::getFlagMeaningHumanReadable(CT::string *flagMeaning, std::vector<CDataSource::StatusFlag *> *statusFlagList, double value) {
+void CDataSource::getFlagMeaningHumanReadable(CT::string *flagMeaning, std::vector<CDataSource::StatusFlag> *statusFlagList, double value) {
   flagMeaning->copy(getFlagMeaning(statusFlagList, value));
   flagMeaning->replaceSelf("_", " ");
 }
@@ -769,19 +763,7 @@ CT::PointerList<CT::string *> *CDataSource::getRenderMethodListForDataSource(CDa
   }
 
   CT::PointerList<CT::string *> *renderMethods = renderMethodList.splitToPointer(",");
-  //   if(dataSource!=NULL){
-  //     if(dataSource->getNumDataObjects()>0){
-  //       if(dataSource->getDataObject(0)->cdfObject!=NULL){
-  //
-  //         try{
-  //           if(dataSource->getDataObject(0)->cdfObject->getAttribute("featureType")->toString().equals("timeSeries")||dataSource->getDataObject(0)->cdfObject->getAttribute("featureType")->toString().equals("point")){
-  //             renderMethods->insert(renderMethods->begin(),1,new CT::string("pointnearest"));
-  //           }
-  //         }catch(int e){
-  //         }
-  //       }
-  //     }
-  //   }
+
   return renderMethods;
 }
 
@@ -1344,23 +1326,34 @@ double CDataSource::getContourScaling() {
   return 1;
 }
 
-CDataSource::DataObject *CDataSource::getDataObject(const char *name) {
+CDataSource::DataObject *CDataSource::getDataObjectByName(const char *name) {
   for (auto it = dataObjects.begin(); it != dataObjects.end(); ++it) {
     CDataSource::DataObject *dataObject = *it;
-    if (dataObject->cdfVariable->name.equals(name)) {
+
+    if (dataObject->dataObjectName.equals(name)) {
       return dataObject;
     }
+
     if (dataObject->variableName.equals(name)) {
       return dataObject;
     }
+
+    if (dataObject->cdfVariable->name.equals(name)) {
+      return dataObject;
+    }
   }
-  CT::string candidates;
-  for (auto it = dataObjects.begin(); it != dataObjects.end(); ++it) {
-    CDataSource::DataObject *dataObject = *it;
-    candidates.printconcat("%s,", dataObject->cdfVariable->name.c_str());
+  return nullptr;
+}
+
+CDataSource::DataObject *CDataSource::getFirstAvailableDataObject() {
+  for (size_t o = 0; o < this->getNumDataObjects(); o++) {
+    if (this->getDataObject(o)->filterFromOutput) {
+      continue;
+    }
+    return this->getDataObject(o);
   }
-  CDBError("DataObject %s not found. Canditates are %s", name, candidates.c_str());
-  throw(CEXCEPTION_NULLPOINTER);
+  CDBWarning("No dataobjects available");
+  return nullptr;
 }
 
 CDataSource::DataObject *CDataSource::getDataObject(int j) {

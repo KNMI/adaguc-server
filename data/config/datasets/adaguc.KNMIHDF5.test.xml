@@ -74,4 +74,29 @@
     <Scale>0</Scale>
     <Offset>1</Offset>
   </Layer>
+
+  <Style name="echotopsmax_outline">
+    <Legend fixedclasses="true" tickround="1">bluewhitered</Legend>
+    <Point pointstyle="point" textcolor="#800000" discradius="0" textoutlinecolor="#AAFFAA" fontsize="15" textformat="%.0f"/>
+    <Scale>0</Scale>
+    <Offset>0</Offset>
+    <RenderMethod>point</RenderMethod>
+  </Style>
+
+    <Style name="echotopsmax">
+    <Legend fixedclasses="true" tickround="1">bluewhitered</Legend>
+    <Point pointstyle="point" textcolor="#800000" discradius="0" fontsize="15" textformat="%.0f"/>
+    <Scale>0</Scale>
+    <Offset>0</Offset>
+    <RenderMethod>point</RenderMethod>
+  </Style>
+
+   <Layer type="database" hidden="false">
+    <Name>RAD_NL25_ETH_NA_TOPS_MAX</Name>
+    <Title>Echotops Maxima</Title>
+    <Variable>echotops</Variable>
+    <FilePath filter="^RAD_NL25_ETH_NA_.*\.h5$">{ADAGUC_PATH}/data/datasets/test/</FilePath>
+    <Dimension name="time" units="ISO8601" interval="PT5M" default="max">time</Dimension>
+    <Styles>echotopsmax,echotopsmax_outline</Styles>
+  </Layer>
 </Configuration>

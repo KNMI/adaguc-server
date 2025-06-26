@@ -6,7 +6,7 @@ USER root
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
-LABEL version="3.0.3"
+LABEL version="3.1.2"
 
 # Try to update image packages
 RUN apt-get -q -y update \
@@ -92,7 +92,6 @@ COPY requirements-dev.txt /adaguc/adaguc-server-master/requirements-dev.txt
 RUN pip install --no-cache-dir -r requirements-dev.txt
 
 COPY tests /adaguc/adaguc-server-master/tests
-COPY runtests.sh /adaguc/adaguc-server-master/runtests.sh
 COPY runtests_psql.sh /adaguc/adaguc-server-master/runtests_psql.sh
 
 # Determine if we're building in github actions or via a local docker build

@@ -45,6 +45,9 @@ private:
   int dConnected;
   void clearResult();
 
+  CDBStore::Store *_queryToStore(const char *pszQuery, bool throwException);
+  int _checkTable(const char *pszTableName, const char *pszColumns);
+
 public:
   const char *getError();
   CPGSQLDB();

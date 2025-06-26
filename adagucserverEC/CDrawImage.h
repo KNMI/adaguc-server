@@ -66,6 +66,8 @@ public:
   CT::string legendName;
 };
 
+static CColor drawPointTextOutlineColor = CColor(255, 255, 255, 0);
+
 class CDrawImage {
 public:
   /*
@@ -151,14 +153,14 @@ public:
   int create685Palette();
   int clonePalette(CDrawImage *drawImage);
 
-  void drawBarb(int x, int y, double direction, double strength, CColor color, float linewidth, bool toKnots, bool flip, bool drawText);
+  void drawBarb(int x, int y, double direction, double viewDirCorrection, double strength, CColor color, float linewidth, bool toKnots, bool flip, bool drawText);
   void drawText(int x, int y, float angle, const char *text, unsigned char colorIndex);
   void drawText(int x, int y, float angle, const char *text, CColor fgcolor);
   void drawText(int x, int y, const char *fontfile, float size, float angle, const char *text, unsigned char colorIndex);
   void drawText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor fgcolor);
   void drawText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor fgcolor, CColor bgcolor);
   void drawAnchoredText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color, int anchor);
-  void drawCenteredText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color);
+  void drawCenteredText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color, CColor textOutlineColor = drawPointTextOutlineColor);
   void drawCenteredTextNoOverlap(int x, int y, const char *fontfile, float size, float angle, int padding, const char *text, CColor color, bool noOverlap, std::vector<CRectangleText> &rects);
   int drawTextArea(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor fgcolor, CColor bgcolor);
 

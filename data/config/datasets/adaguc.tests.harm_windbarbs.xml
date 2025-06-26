@@ -53,7 +53,38 @@
     <Dimension name="time" units="ISO8601" default="min">time</Dimension>
     <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension>
     <Styles>Windbarbs,Windbarbwithnumbers,windbarbs_kts</Styles>
+    <DataPostProc algorithm="convert_uv_components"/>
   </Layer>
 
+  <!-- The following layer returns only the speed component in EDR and GetFeatureinfo -->
+  <Layer type="database">
+    <Name>wind_speed_at_10m</Name>
+    <Title>Wind speed 10m</Title>
+    <Variable>x_wind__at_10m</Variable>
+    <Variable>y_wind__at_10m</Variable>
+    <FilePath filter="">{ADAGUC_PATH}data/datasets/harmonie_wind_grid_30x30.nc</FilePath>
+    <DataPostProc algorithm="ax+b" a="1" b="0" units="m/s"/>
+    <Dimension name="time" units="ISO8601" default="min">time</Dimension>
+    <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension>
+    <Styles>Windbarbs,Windbarbwithnumbers,windbarbs_kts</Styles>
+    <DataPostProc algorithm="convert_uv_components"/>
+    <DataPostProc algorithm="filter_dataobjects" select="speed_component"/>
+  </Layer>
+
+
+  <!-- The following layer returns only the direction component in EDR and GetFeatureinfo -->
+  <Layer type="database">
+    <Name>wind_direction_at_10m</Name>
+    <Title>Wind direction 10m</Title>
+    <Variable>x_wind__at_10m</Variable>
+    <Variable>y_wind__at_10m</Variable>
+    <FilePath filter="">{ADAGUC_PATH}data/datasets/harmonie_wind_grid_30x30.nc</FilePath>
+    <DataPostProc algorithm="ax+b" a="1" b="0" units="m/s"/>
+    <Dimension name="time" units="ISO8601" default="min">time</Dimension>
+    <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension>
+    <Styles>Windbarbs,Windbarbwithnumbers,windbarbs_kts</Styles>
+    <DataPostProc algorithm="convert_uv_components"/>
+    <DataPostProc algorithm="filter_dataobjects" select="direction_component"/>
+  </Layer>
   <!-- End of configuration /-->
 </Configuration>

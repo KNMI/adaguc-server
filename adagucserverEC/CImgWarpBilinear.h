@@ -29,22 +29,6 @@
 #include "CFillTriangle.h"
 #include "CImageWarperRenderInterface.h"
 
-class CalculatedWindVector {
-public:
-  CalculatedWindVector() {}
-  CalculatedWindVector(int x, int y, double dir, double strength, bool convertToKnots, bool flip) {
-    this->x = x;
-    this->y = y;
-    this->dir = dir;
-    this->strength = strength;
-    this->convertToKnots = convertToKnots;
-    this->flip = flip;
-  }
-  int x, y;
-  double dir, strength;
-  bool convertToKnots, flip;
-};
-
 class ShadeDefinition {
 public:
   float min, max;
@@ -203,8 +187,8 @@ public:
   int getPixelIndexForValue(CDataSource *dataSource, float val) {
     bool isNodata = false;
 
-    if (dataSource->getDataObject(0)->hasNodataValue) {
-      if (val == float(dataSource->getDataObject(0)->dfNodataValue)) isNodata = true;
+    if (dataSource->getFirstAvailableDataObject()->hasNodataValue) {
+      if (val == float(dataSource->getFirstAvailableDataObject()->dfNodataValue)) isNodata = true;
       if (!(val == val)) isNodata = true;
     }
     if (!isNodata) {
@@ -231,8 +215,8 @@ public:
   static void setValuePixel(CDataSource *dataSource, CDrawImage *drawImage, int destX, int destY, float val) {
     bool isNodata = false;
 
-    if (dataSource->getDataObject(0)->hasNodataValue) {
-      if (val == float(dataSource->getDataObject(0)->dfNodataValue)) {
+    if (dataSource->getFirstAvailableDataObject()->hasNodataValue) {
+      if (val == float(dataSource->getFirstAvailableDataObject()->dfNodataValue)) {
         isNodata = true;
         return;
       }

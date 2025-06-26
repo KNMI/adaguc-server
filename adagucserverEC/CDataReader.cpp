@@ -43,6 +43,8 @@
 #include "CReporter.h"
 #include "CCDFHDF5IO.h"
 #include "CDBFileScanner.h"
+#include "CImgRenderFieldVectors.h"
+#include "CDataPostProcessors/CDataPostProcessor_UVComponents.h"
 const char *CDataReader::className = "CDataReader";
 
 // #define CDATAREADER_DEBUG
@@ -631,7 +633,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
   applyAxisScalingConversion(dataSource);
 
   // Calculate cellsize and BBOX based on read X,Y dims.
-  if (!calculateCellSizeAndBBox(dataSource, dataSourceVar)) {
+  if (!calculateCellSizeAndBBox(dataSource, dataSourceVar, singleCellMode, x, y)) {
     return 1;
   }
 
@@ -789,7 +791,7 @@ void CDataReader::determineDWidthAndDHeight(CDataSource *dataSource, const bool 
   }
 }
 
-bool CDataReader::calculateCellSizeAndBBox(CDataSource *dataSource, const CDF::Variable *dataSourceVar) const {
+bool CDataReader::calculateCellSizeAndBBox(CDataSource *dataSource, const CDF::Variable *dataSourceVar, bool singleCellMode, int x, int y) const {
 
   double *dfdim_X = (double *)dataSource->varX->data;
   double *dfdim_Y = (double *)dataSource->varY->data;
@@ -815,6 +817,15 @@ bool CDataReader::calculateCellSizeAndBBox(CDataSource *dataSource, const CDF::V
     dataSource->dfBBOX[1] = dfdim_Y[dataSource->dHeight - 1] + dataSource->dfCellSizeY / 2.0f;
     dataSource->dfBBOX[2] = dfdim_X[dataSource->dWidth - 1] + dataSource->dfCellSizeX / 2.0f;
     dataSource->dfBBOX[3] = dfdim_Y[0] - dataSource->dfCellSizeY / 2.0f;
+  }
+  if (singleCellMode) {
+    double orgX = dfdim_X[0] - dataSource->dfCellSizeX / 2.0f;
+    double orgY = dfdim_Y[0] - dataSource->dfCellSizeY / 2.0f;
+    dataSource->dfBBOX[0] = orgY + (x + 2) * dataSource->dfCellSizeX;
+    dataSource->dfBBOX[1] = orgX + (y + 2) * dataSource->dfCellSizeY;
+    dataSource->dfBBOX[2] = orgX + (x + 0) * dataSource->dfCellSizeX;
+    dataSource->dfBBOX[3] = orgY + (y + 0) * dataSource->dfCellSizeY;
+    // CDBDebug("%d %d %f %f %f %f %f %f ", x, y, dataSource->dfCellSizeX, dataSource->dfCellSizeY, dataSource->dfBBOX[0], dataSource->dfBBOX[1], dataSource->dfBBOX[2], dataSource->dfBBOX[3]);
   }
 
   dataSource->origBBOXLeft = dataSource->dfBBOX[0];
@@ -889,7 +900,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 
   for (size_t varNr = 0; varNr < dataSource->getNumDataObjects(); varNr++) {
     // Check if our variable has a statusflag
-    std::vector<CDataSource::StatusFlag *> *statusFlagList = &dataSource->getDataObject(varNr)->statusFlagList;
+    std::vector<CDataSource::StatusFlag> *statusFlagList = &dataSource->getDataObject(varNr)->statusFlagList;
     CDataSource::readStatusFlags(dataSource->getDataObject(varNr)->cdfVariable, statusFlagList);
     if (statusFlagList->size() > 0) {
       dataSource->getDataObject(varNr)->hasStatusFlag = true;
@@ -1024,6 +1035,26 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 #ifdef MEASURETIME
     StopWatch_Stop("/Finished Working on variable %s", dataSource->getDataObject(varNr)->cdfVariable->name.c_str());
 #endif
+  }
+
+  // TODO: For the time being we will auto enable the CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ID processor for backwards compatibility.
+  bool isVectorLike = false;
+  if (dataSource->getNumDataObjects() == 2) {
+    char u = dataSource->getDataObject(0)->getStandardName().charAt(0);
+    char v = dataSource->getDataObject(1)->getStandardName().charAt(0);
+    if (u == 'x' || u == 'u') {
+      if (v == 'y' || v == 'v') {
+        isVectorLike = true;
+      }
+    }
+  }
+
+  if (isVectorLike) {
+    CServerConfig::XMLE_DataPostProc *proc = new CServerConfig::XMLE_DataPostProc();
+    proc->attr.algorithm = CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ID;
+    CDBDebug("Adding Data postprocessor convert_uv_components (isVectorLike) ");
+    // TODO: Will not be enabled automatically in the future!
+    dataSource->cfgLayer->DataPostProc.insert(dataSource->cfgLayer->DataPostProc.begin(), proc);
   }
 
   if (enablePostProcessors) {

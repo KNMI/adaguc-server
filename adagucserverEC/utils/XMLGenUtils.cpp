@@ -97,7 +97,7 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
     }
 
     CDataReader reader;
-    status = reader.open(metadataLayer->dataSource, CNETCDFREADER_MODE_OPEN_DIMENSIONS);
+    status = reader.open(metadataLayer->dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
     if (status != 0) {
       CDBError("Could not open file: %s", metadataLayer->dataSource->getFileName());
       return 1;
@@ -117,6 +117,9 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
 
     auto v = metadataLayer->dataSource->getDataObjectsVector();
     for (auto d : (*v)) {
+      if (d->filterFromOutput) {
+        continue;
+      }
       CDF::Attribute *longName = d->cdfVariable->getAttributeNE("long_name");
       if (longName == nullptr) {
         longName = d->cdfVariable->getAttributeNE("standard_name");
@@ -167,55 +170,64 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
 }
 
 int checkDependenciesBetweenDims(MetadataLayer *mL) {
-  // mL->layerMetadata.dimList[0].defaultValue = "A";
-  auto &lmDims = mL->layerMetadata.dimList;           // Layer metadata dimensions, referenced by & so we can adjust the value in the object of the vector
+  if (mL->dataSource == nullptr) {
+    CDBError("No datasource defined");
+    return XMLGENUTILS_CHECKDEP_NODATASOURCE;
+  }
+  if (mL->dataSource->cfgLayer == nullptr) {
+    CDBError("No configuration defined for datasource");
+    return XMLGENUTILS_CHECKDEP_DATASOURCE_NOT_CONFIGURED;
+  }
+
   auto cfgDims = mL->dataSource->cfgLayer->Dimension; // Layer configuration dimensions
 
-  // Find time and reference_time dimensions in the layerMetadata dimList
+  // Find time dimension in Layer configuration dimensions
+  auto xmleDimTimeIt = std::find_if(cfgDims.begin(), cfgDims.end(), [](const CServerConfig::XMLE_Dimension *d) -> bool { return d->value.equals("time"); });
+  if (xmleDimTimeIt == cfgDims.end()) {
+    // There is no time dim. Do nothing, all OK.
+    return XMLGENUTILS_CHECKDEP_DATASOURCE_NO_TIME;
+  }
+  CServerConfig::XMLE_Dimension *layerCfgTimeDim = xmleDimTimeIt[0];
+  int hasIsoDuration = layerCfgTimeDim->attr.defaultV.indexOf("+");
+
+  if (hasIsoDuration == -1) {
+    // There is no iso time range defined. Do nothing, all OK.
+    return XMLGENUTILS_CHECKDEP_DATASOURCE_NO_ISO_DURATION;
+  }
+
+  // Find time dimensions in the layerMetadata dimList
+  auto &lmDims = mL->layerMetadata.dimList; // Layer metadata dimensions, referenced by & so we can adjust the value in the object of the vector
   auto lmDimTimeIt = std::find_if(lmDims.begin(), lmDims.end(), [](const LayerMetadataDim &d) -> bool { return d.serviceName.equals("time"); });
+  if (lmDimTimeIt == lmDims.end()) {
+    // There is no metadata dimension named time
+    return XMLGENUTILS_CHECKDEP_DATASOURCE_NO_DIMS_IN_LAYERMETADATA;
+  }
+  // Find reference_time dimensions in the layerMetadata dimList
   auto lmDimRefTimeIt =
       std::find_if(lmDims.begin(), lmDims.end(), [](const LayerMetadataDim &d) -> bool { return d.serviceName.equals("reference_time") || d.serviceName.equals("forecast_reference_time"); });
-  if (lmDimTimeIt == lmDims.end() || lmDimRefTimeIt == lmDims.end()) {
-    return 1;
-  }
-  // Find time and reference_time dimensions configuration options in the XMLE_DIMENSION list
-  auto xmleDimTimeIt = std::find_if(cfgDims.begin(), cfgDims.end(), [](const CServerConfig::XMLE_Dimension *d) -> bool { return d->value.equals("time"); });
-  auto xmleDimRefTimeIt =
-      std::find_if(cfgDims.begin(), cfgDims.end(), [](const CServerConfig::XMLE_Dimension *d) -> bool { return d->value.equals("reference_time") || d->value.equals("forecast_reference_time"); });
-  if (xmleDimTimeIt == cfgDims.end() || xmleDimRefTimeIt == cfgDims.end()) {
-    return 1;
+  if (lmDimRefTimeIt == lmDims.end()) {
+    lmDimTimeIt->defaultValue = "";
+    return XMLGENUTILS_CHECKDEP_DATASOURCE_NO_DIMS_IN_LAYERMETADATA;
   }
 
   LayerMetadataDim layerMetadataTimeDim = lmDimTimeIt[0];
   LayerMetadataDim layerMetadataRefTimeDim = lmDimRefTimeIt[0];
-  CServerConfig::XMLE_Dimension *layerCfgTimeDim = xmleDimTimeIt[0];
-  CServerConfig::XMLE_Dimension *layerCfgRefTimeDim = xmleDimRefTimeIt[0];
 
-  // Time dimension references the forecast reference time dimension
-  if (layerCfgTimeDim->attr.defaultV.startsWith(layerCfgRefTimeDim->attr.name)) {
-    // Check if a duration is added, if so, try to work with this
-    int hasIsoDuration = layerCfgTimeDim->attr.defaultV.indexOf("+");
-    if (hasIsoDuration > 0) {
-      CT::string isoDurationString = layerCfgTimeDim->attr.defaultV.substring(hasIsoDuration + 1, -1);
-      CDBDebug("Going to use isoduration [%s] to add to [%s]", isoDurationString.c_str(), layerMetadataRefTimeDim.defaultValue.c_str());
-      try {
-        CTime *time = CTime::GetCTimeInstance(mL->dataSource->getDataObject(0)->cdfObject->getVariable("time"));
-        CTime::Date refTimeDate = time->freeDateStringToDate(layerMetadataRefTimeDim.defaultValue.c_str());
-        CTime::Date refTimeWithAddedPeriod = time->addPeriodToDate(refTimeDate, isoDurationString);
-        // Assign the default value of the reference time dimension in the layer metadata to the default value of the the time dimension
-        lmDimTimeIt->defaultValue = time->dateToISOString(refTimeWithAddedPeriod);
-      } catch (int e) {
-        CDBWarning("Unable to parse given duration in default value of time dimension");
-      }
-    } else {
-      CDBDebug("Assigning default value of reference time to time: [%s]", layerCfgTimeDim->attr.defaultV.c_str());
-      // Assign the default value of the reference time dimension in the layer metadata to the default value of the the time dimension
-      lmDimTimeIt->defaultValue = layerMetadataRefTimeDim.defaultValue;
-    }
-    CDBDebug("New defaultvalue for time is [%s]", lmDimTimeIt->defaultValue.c_str());
+  CT::string isoDurationString = layerCfgTimeDim->attr.defaultV.substring(hasIsoDuration + 1, -1);
+  // CDBDebug("Going to use isoduration [%s] to add to [%s]", isoDurationString.c_str(), layerMetadataRefTimeDim.defaultValue.c_str());
+  try {
+    CTime *time = CTime::GetCTimeEpochInstance();
+    CTime::Date refTimeDate = time->freeDateStringToDate(layerMetadataRefTimeDim.defaultValue.c_str());
+    CTime::Date refTimeWithAddedPeriod = time->addPeriodToDate(refTimeDate, isoDurationString);
+    // Assign the default value of the reference time dimension in the layer metadata to the default value of the the time dimension
+    lmDimTimeIt->defaultValue = time->dateToISOString(refTimeWithAddedPeriod);
+    // CDBDebug("New defaultvalue for time is [%s]", lmDimTimeIt->defaultValue.c_str());
+    return 0; // OK!
+  } catch (int e) {
+    CDBWarning("Unable to parse given duration in default value of time dimension [%d]", e);
+    lmDimTimeIt->defaultValue = layerMetadataRefTimeDim.defaultValue;
+    return XMLGENUTILS_CHECKDEP_DATASOURCE_UNABLE_TO_PARSETIME;
   }
-
-  return 0;
 }
 
 int getDimsForLayer(MetadataLayer *metadataLayer) {

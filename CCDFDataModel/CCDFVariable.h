@@ -37,6 +37,8 @@ class CDFObject;
 namespace CDF {
 
   class Variable {
+  private:
+    int _readData(CDFType type, size_t *_start, size_t *_count, ptrdiff_t *_stride);
 
   public:
     CDFType nativeType;
@@ -57,6 +59,9 @@ namespace CDF {
       int dimIndex;
       CT::string dimValue;
     };
+
+    CDF::Variable *clone(CDFType newType, CT::string newName);
+    void copy(CDF::Variable *sourceVariable);
 
   private:
     std::vector<CDFObjectClass *> cdfObjectList;
@@ -238,7 +243,35 @@ namespace CDF {
         dimensionlinks.push_back(dims[j]);
       }
       isDimension = isCoordinateVariable;
-      // CDBDebug("done");
+    }
+    Variable(const char *name, CDFType type, std::vector<CDF::Dimension *> idimensionlinks, bool isCoordinateVariable) {
+      data = NULL;
+      currentSize = 0;
+      currentType = CDF_NONE;
+      nativeType = CDF_NONE;
+      cdfReaderPointer = NULL;
+      parentCDFObject = NULL;
+      _hasCustomReader = false;
+      _isString = false;
+      setName(name);
+      setType(type);
+      for (size_t j = 0; j < idimensionlinks.size(); j++) {
+        dimensionlinks.push_back(idimensionlinks[j]);
+      }
+      isDimension = isCoordinateVariable;
+    }
+    Variable(const char *name, CDFType type) {
+      data = NULL;
+      currentSize = 0;
+      currentType = CDF_NONE;
+      nativeType = CDF_NONE;
+      cdfReaderPointer = NULL;
+      parentCDFObject = NULL;
+      _hasCustomReader = false;
+      _isString = false;
+      setName(name);
+      setType(type);
+      isDimension = false;
     }
     Variable() {
       isDimension = false;

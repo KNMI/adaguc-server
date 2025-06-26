@@ -11,10 +11,10 @@ int CCreateHistogram::createHistogram(CDataSource *dataSource, CDrawImage *) {
   CT::string resultJSON;
   if (dataSource->srvParams->JSONP.length() == 0) {
     CDBDebug("CREATING JSON");
-    printf("%s%s%c%c\n", "Content-Type: application/json", dataSource->srvParams->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+    printf("%s%s%c%c\n", "Content-Type: application/json", dataSource->srvParams->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
   } else {
     CDBDebug("CREATING JSONP %s", dataSource->srvParams->JSONP.c_str());
-    printf("%s%s%c%c", "Content-Type: application/javascript", dataSource->srvParams->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+    printf("%s%s%c%c", "Content-Type: application/javascript", dataSource->srvParams->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
     printf("\n%s(", dataSource->srvParams->JSONP.c_str());
   }
 
@@ -89,7 +89,7 @@ int CCreateHistogram::addData(std::vector<CDataSource *> &dataSources) {
       void *sourceData = dataSource->getDataObject(0)->cdfVariable->data;
       CDFType dataType = dataSource->getDataObject(0)->cdfVariable->getType();
 
-      Settings settings;
+      CCreateHistogramSettings settings;
       settings.width = dataSource->srvParams->Geo->dWidth;
       settings.height = dataSource->srvParams->Geo->dHeight;
       settings.data = warpedData;
@@ -108,35 +108,12 @@ int CCreateHistogram::addData(std::vector<CDataSource *> &dataSources) {
 
       CDBDebug("Rendering %f,%f", sourceGeo.dfBBOX[0], sourceGeo.dfBBOX[1]);
       GenericDataWarper genericDataWarper;
-      switch (dataType) {
-      case CDF_CHAR:
-        genericDataWarper.render<char>(&warper, sourceData, &sourceGeo, dataSource->srvParams->Geo, &settings, &drawFunction);
-        break;
-      case CDF_BYTE:
-        genericDataWarper.render<char>(&warper, sourceData, &sourceGeo, dataSource->srvParams->Geo, &settings, &drawFunction);
-        break;
-      case CDF_UBYTE:
-        genericDataWarper.render<unsigned char>(&warper, sourceData, &sourceGeo, dataSource->srvParams->Geo, &settings, &drawFunction);
-        break;
-      case CDF_SHORT:
-        genericDataWarper.render<short>(&warper, sourceData, &sourceGeo, dataSource->srvParams->Geo, &settings, &drawFunction);
-        break;
-      case CDF_USHORT:
-        genericDataWarper.render<ushort>(&warper, sourceData, &sourceGeo, dataSource->srvParams->Geo, &settings, &drawFunction);
-        break;
-      case CDF_INT:
-        genericDataWarper.render<int>(&warper, sourceData, &sourceGeo, dataSource->srvParams->Geo, &settings, &drawFunction);
-        break;
-      case CDF_UINT:
-        genericDataWarper.render<uint>(&warper, sourceData, &sourceGeo, dataSource->srvParams->Geo, &settings, &drawFunction);
-        break;
-      case CDF_FLOAT:
-        genericDataWarper.render<float>(&warper, sourceData, &sourceGeo, dataSource->srvParams->Geo, &settings, &drawFunction);
-        break;
-      case CDF_DOUBLE:
-        genericDataWarper.render<double>(&warper, sourceData, &sourceGeo, dataSource->srvParams->Geo, &settings, &drawFunction);
-        break;
-      }
+      GDWArgs args = {.warper = &warper, .sourceData = sourceData, .sourceGeoParams = &sourceGeo, .destGeoParams = dataSource->srvParams->Geo};
+
+#define ENUMERATE_CDFTYPE(CDFTYPE, CPPTYPE)                                                                                                                                                            \
+  if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction(x, y, val, warperState, settings); });
+      ENUMERATE_CDFTYPES
+#undef ENUMERATE_CDFTYPE
     }
     reader.close();
     CDBDebug("Addata finished, data warped");
@@ -258,10 +235,10 @@ int CCreateHistogram::end() {
   CT::string resultJSON;
   if (baseDataSource->srvParams->JSONP.length() == 0) {
     CDBDebug("CREATING JSON");
-    printf("%s%s%c%c\n", "Content-Type: application/json", baseDataSource->srvParams->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+    printf("%s%s%c%c\n", "Content-Type: application/json", baseDataSource->srvParams->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
   } else {
     CDBDebug("CREATING JSONP %s", baseDataSource->srvParams->JSONP.c_str());
-    printf("%s%s%c%c", "Content-Type: application/javascript", baseDataSource->srvParams->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+    printf("%s%s%c%c", "Content-Type: application/javascript", baseDataSource->srvParams->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
     printf("\n%s(", baseDataSource->srvParams->JSONP.c_str());
   }
 

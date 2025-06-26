@@ -27,6 +27,7 @@
 #include "CCDFObject.h"
 #include "CCDFReader.h"
 #include "CTime.h"
+#include "traceTimings/traceTimings.h"
 const char *CDF::Variable::className = "Variable";
 
 extern CDF::Variable::CustomMemoryReader customMemoryReaderInstance;
@@ -139,6 +140,13 @@ int CDF::Variable::readData(CDFType readType, size_t *_start, size_t *_count, pt
 }
 
 int CDF::Variable::readData(CDFType type, size_t *_start, size_t *_count, ptrdiff_t *_stride) {
+  traceTimingsSpanStart(TraceTimingType::FSREADVAR);
+  int status = _readData(type, _start, _count, _stride);
+  traceTimingsSpanEnd(TraceTimingType::FSREADVAR);
+  return status;
+}
+
+int CDF::Variable::_readData(CDFType type, size_t *_start, size_t *_count, ptrdiff_t *_stride) {
 
 #ifdef CCDFDATAMODEL_DEBUG
   CDBDebug("reading variable %s", name.c_str());
@@ -613,4 +621,21 @@ void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimNam
        }*/
     }
   }
+}
+
+CDF::Variable *CDF::Variable::clone(CDFType newType, CT::string newName) {
+  CDF::Variable *newVariable = new CDF::Variable(newName.c_str(), newType, this->dimensionlinks, this->isDimension);
+
+  for (auto attribute : attributes) {
+    newVariable->addAttribute(new CDF::Attribute(attribute));
+  }
+  newVariable->parentCDFObject = parentCDFObject;
+  newVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
+  newVariable->data = nullptr;
+  return newVariable;
+}
+void CDF::Variable::copy(CDF::Variable *sourceVariable) {
+  size_t size = sourceVariable->getSize();
+  this->allocateData(size);
+  DataCopier::copy(this->data, this->currentType, sourceVariable->data, sourceVariable->currentType, 0, 0, size);
 }

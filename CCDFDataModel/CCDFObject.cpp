@@ -29,6 +29,7 @@
 #include "CCDFObject.h"
 #include "CCDFReader.h"
 #include "CTime.h"
+#include "traceTimings/traceTimings.h"
 
 const char *CDFObject::className = "CDFObject";
 
@@ -66,7 +67,10 @@ int CDFObject::open(const char *fileName) {
   }
   clear();
   currentFile.copy(fileName);
-  return r->open(fileName);
+  traceTimingsSpanStart(TraceTimingType::FSOPEN);
+  int status = r->open(fileName);
+  traceTimingsSpanEnd(TraceTimingType::FSOPEN);
+  return status;
 }
 
 int CDFObject::close() {

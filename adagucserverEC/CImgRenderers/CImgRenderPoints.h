@@ -68,6 +68,7 @@ private:
   CT::string drawPointTextFormat;
   CT::string drawPointPointStyle;
   CColor drawPointTextColor;
+  CColor drawPointTextOutlineColor;
   CColor drawPointFillColor;
   CColor drawPointLineColor;
   CColor defaultColor;

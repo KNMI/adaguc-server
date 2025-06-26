@@ -54,16 +54,30 @@ typedef int CDFType;
 #define CDF_INT64 12   /* signed 8 byte integer */
 #define CDF_UINT64 13  /* unsigned 8 byte integer */
 
+// This is a hack to automatically enumerate all template type mappings used in CDF
+#define ENUMERATE_CDFTYPES                                                                                                                                                                             \
+  ENUMERATE_CDFTYPE(CDF_CHAR, char)                                                                                                                                                                    \
+  ENUMERATE_CDFTYPE(CDF_BYTE, int8_t)                                                                                                                                                                  \
+  ENUMERATE_CDFTYPE(CDF_UBYTE, ubyte)                                                                                                                                                                  \
+  ENUMERATE_CDFTYPE(CDF_SHORT, short)                                                                                                                                                                  \
+  ENUMERATE_CDFTYPE(CDF_USHORT, ushort)                                                                                                                                                                \
+  ENUMERATE_CDFTYPE(CDF_INT, int)                                                                                                                                                                      \
+  ENUMERATE_CDFTYPE(CDF_UINT, uint)                                                                                                                                                                    \
+  ENUMERATE_CDFTYPE(CDF_INT64, long)                                                                                                                                                                   \
+  ENUMERATE_CDFTYPE(CDF_UINT64, ulong)                                                                                                                                                                 \
+  ENUMERATE_CDFTYPE(CDF_FLOAT, float)                                                                                                                                                                  \
+  ENUMERATE_CDFTYPE(CDF_DOUBLE, double)
+
 /* Possible error codes, thrown by CDF */
 typedef int CDFError;
-#define CDF_E_NONE 0        /* Unknown */
-#define CDF_E_ERROR 1       /* Unknown */
-#define CDF_E_VARNOTFOUND 2 /* Variable not found */
-#define CDF_E_DIMNOTFOUND 3 /* Dimension not found */
-#define CDF_E_ATTNOTFOUND 4 /* Attribute not found */
-#define CDF_E_NRDIMSNOTEQUAL 5
-#define CDF_E_VARHASNOPARENT 6 /*Variable has no parent CDFObject*/
-#define CDF_E_VARHASNODATA 7   /*Variable has no data*/
+#define CDF_E_NONE 1000        /* Unknown */
+#define CDF_E_ERROR 1001       /* Unknown */
+#define CDF_E_VARNOTFOUND 1002 /* Variable not found */
+#define CDF_E_DIMNOTFOUND 1003 /* Dimension not found */
+#define CDF_E_ATTNOTFOUND 1004 /* Attribute not found */
+#define CDF_E_NRDIMSNOTEQUAL 1005
+#define CDF_E_VARHASNOPARENT 1006 /*Variable has no parent CDFObject*/
+#define CDF_E_VARHASNODATA 1007   /*Variable has no data*/
 
 /*#define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)

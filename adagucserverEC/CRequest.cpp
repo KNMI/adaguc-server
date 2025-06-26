@@ -572,10 +572,10 @@ int CRequest::generateGetReferenceTimes(CDataSource *dataSource) {
     if (status == CXMLGEN_FATAL_ERROR_OCCURED) return 1;
   }
   if (srvParam->JSONP.length() == 0) {
-    printf("%s%s%c%c\n", "Content-Type: application/json ", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+    printf("%s%s%c%c\n", "Content-Type: application/json ", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
     printf("%s", XMLdocument.c_str());
   } else {
-    printf("%s%s%c%c\n", "Content-Type: application/javascript ", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+    printf("%s%s%c%c\n", "Content-Type: application/javascript ", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
     printf("%s(%s)", srvParam->JSONP.c_str(), XMLdocument.c_str());
   }
 
@@ -629,7 +629,7 @@ int CRequest::process_wms_getcap_request() {
   if (pszADAGUCWriteToFile != NULL) {
     CReadFile::write(pszADAGUCWriteToFile, XMLdocument.c_str(), XMLdocument.length());
   } else {
-    printf("%s%s%c%c\n", "Content-Type:text/xml", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+    printf("%s%s%c%c\n", "Content-Type:text/xml", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
     printf("%s", XMLdocument.c_str());
   }
 
@@ -771,13 +771,12 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
 #ifdef CREQUEST_DEBUG
                   CDBDebug("Got Time value [%s]", ogcDim->value.c_str());
 #endif
-                  CTime ctime;
-                  ctime.init("seconds since 1970", NULL);
+                  CTime *ctime = CTime::GetCTimeEpochInstance();
                   double currentTimeAsEpoch;
 
                   try {
-                    currentTimeAsEpoch = ctime.dateToOffset(ctime.freeDateStringToDate(ogcDim->value.c_str()));
-                    CT::string currentDateConverted = ctime.dateToISOString(ctime.getDate(currentTimeAsEpoch));
+                    currentTimeAsEpoch = ctime->dateToOffset(ctime->freeDateStringToDate(ogcDim->value.c_str()));
+                    CT::string currentDateConverted = ctime->dateToISOString(ctime->getDate(currentTimeAsEpoch));
                     ogcDim->value = currentDateConverted;
                   } catch (int e) {
                     CDBDebug("Unable to convert %s to epoch", ogcDim->value.c_str());
@@ -1472,7 +1471,7 @@ int CRequest::process_all_layers() {
       if (pszADAGUCWriteToFile != NULL) {
         CReadFile::write(pszADAGUCWriteToFile, XMLDocument.c_str(), XMLDocument.length());
       } else {
-        printf("%s%s%c%c\n", "Content-Type:text/xml", srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+        printf("%s%s%c%c\n", "Content-Type:text/xml", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
         printf("%s", XMLDocument.c_str());
       }
       return 0;
@@ -1561,7 +1560,6 @@ int CRequest::process_all_layers() {
 
       // WMS GetMetaData
       if (srvParam->requestType == REQUEST_WMS_GETMETADATA) {
-        printf("%s%c%c\n", "Content-Type:text/plain", 13, 10);
         CDataReader reader;
         status = reader.open(firstDataSource, CNETCDFREADER_MODE_OPEN_HEADER);
         if (status != 0) {
@@ -1569,6 +1567,8 @@ int CRequest::process_all_layers() {
           throw(__LINE__);
         }
         CT::string dumpString = CDF::dump(firstDataSource->getDataObject(0)->cdfObject);
+        CT::string cacheControl = srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_NOCACHE);
+        printf("%s%s%c%c\n", "Content-Type: text/plain", cacheControl.c_str(), 13, 10);
         printf("%s", dumpString.c_str());
         reader.close();
         return 0;
@@ -2574,7 +2574,7 @@ int CRequest::process_querystring() {
         return 1;
       }
       drawImage.crop(1);
-      const char *cacheControl = srvParam->getCacheControlHeader(CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE).c_str();
+      const char *cacheControl = srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_FULLYCACHEABLE).c_str();
       printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl, 13, 10);
       drawImage.printImagePng8(true);
       return 0;
@@ -3418,8 +3418,10 @@ int CRequest::handleGetCoverageRequest(CDataSource *firstDataSource) {
     }
     try {
       try {
-        status = wcsWriter->init(srvParam, firstDataSource, firstDataSource->getNumTimeSteps());
-        if (status != 0) throw(__LINE__);
+        for (size_t d = 0; d < dataSources.size(); d++) {
+          status = wcsWriter->init(srvParam, dataSources[d], firstDataSource->getNumTimeSteps());
+          if (status != 0) throw(__LINE__);
+        }
       } catch (int e) {
         CDBError("Exception code %d", e);
 
@@ -3431,8 +3433,10 @@ int CRequest::handleGetCoverageRequest(CDataSource *firstDataSource) {
         if (firstDataSource->cfgLayer->attr.hidden.equals("true")) {
           continue;
         }
-        firstDataSource->setTimeStep(k);
-        // CDBDebug("WCS dataset %d/ timestep %d of %d", 0, k, firstDataSource->getNumTimeSteps());
+
+        for (size_t d = 0; d < dataSources.size(); d++) {
+          dataSources[d]->setTimeStep(k);
+        }
 
         try {
           status = wcsWriter->addData(dataSources);
