@@ -310,7 +310,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
           for (size_t i = 0; i < minColumn.size(); ++i) {
             CDBDebug(" minColumn[%d]=%s", i, minColumn[i].c_str());
           }
-          // We only print min column values because, it would make no sense to print intervals when not every interval is printed.
+          // We only print min column values, because it would make no sense to print intervals when not every interval is printed.
           plotNumericLabels(legendImage, scaling, fontLocation, fontSize, angle, s, cbW, pLeft, textY, minColumn, {}, 0);
         }
       }
