@@ -232,8 +232,12 @@ public:
     TTFFontLocation = _TTFFontLocation;
     // TODO: Memory management
     if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-      // Always true color
-
+      // Delete old allocated cairo
+      if (cairo != nullptr) {
+        delete cairo;
+        cairo = nullptr;
+      }
+      // Allocate new cairo with the correct font
       if (_bEnableTransparency == false) {
         cairo = new CCairoPlotter(Geo->dWidth, Geo->dHeight, TTFFontSize, TTFFontLocation, BGColorR, BGColorG, BGColorB, 255);
       } else {
