@@ -1,5 +1,6 @@
 """Main file where FastAPI is defined and started"""
 
+import asyncio
 import logging
 import os
 import time
@@ -42,6 +43,9 @@ async def update_layermetadatatable():
         logger.info(
             "Logging for updateLayerMetadata is disabled, status was %d", status
         )
+def update_layermetadatatable_sync():
+    """Sync version"""     
+    asyncio.run(update_layermetadatatable())
 
 @asynccontextmanager
 async def lifespan(_fastapiapp: FastAPI):
@@ -51,7 +55,7 @@ async def lifespan(_fastapiapp: FastAPI):
     # start scheduler to refresh collections & docs every minute
     scheduler = AsyncIOScheduler()
     scheduler.add_job(
-        await update_layermetadatatable,
+        update_layermetadatatable,
         "cron",
         [],
         minute="*",
@@ -75,7 +79,7 @@ def update_metadata_scheduler_block():
     # start scheduler to refresh collections & docs every minute
     scheduler = BlockingScheduler()
     scheduler.add_job(
-        update_layermetadatatable,
+        update_layermetadatatable_sync,
         "cron",
         [],
         minute="*",
