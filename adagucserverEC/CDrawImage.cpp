@@ -875,7 +875,7 @@ void CDrawImage::setTextStroke(int x, int y, float angle, const char *text, cons
     if (bgcolor.a == 0) {
       drawText(x, y, fontFile, fontSize, angle, text, fgcolor);
     } else {
-      cairo->drawStrokedText(x, y, -angle, text, fontSize * 1.4, strokeWidth, bgcolor, fgcolor);
+      cairo->drawStrokedText(x, y, angle, text, fontSize, strokeWidth, bgcolor, fgcolor);
     }
   } else {
     int fgColorIndex = getClosestGDColor(fgcolor.r, fgcolor.g, fgcolor.b);
@@ -1898,3 +1898,17 @@ int CDrawImage::getWidth() { return Geo->dWidth; }
 const char *CDrawImage::getFontLocation() { return this->TTFFontLocation; }
 
 float CDrawImage::getFontSize() { return this->TTFFontSize; }
+
+// Note: This mainly works with cairo
+int CDrawImage::getTextWidth(CT::string text, const std::string &fontPath, int fontSize, int angle) {
+  constexpr double digit_width_factor = 0.6; // Not good even if we know the factor by font
+  size_t num_chars = text.length();
+  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
+    int w = 0, h = 0;
+    cairo->getTextSize(w, h, angle, text.c_str());
+    return w;
+  } else {
+    // This approximation is highly dependent on the type of font
+    return fontSize * digit_width_factor * num_chars;
+  }
+}

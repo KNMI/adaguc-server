@@ -182,6 +182,8 @@ add_library(
     CInspire.h
     CLegendRenderers/CCreateLegend.cpp
     CLegendRenderers/CCreateLegend.h
+    CLegendRenderers/numericutils.cpp
+    CLegendRenderers/numericutils.h
     CMakeEProfile.cpp
     CMakeEProfile.h
     CMakeJSONTimeSeries.cpp

@@ -78,7 +78,6 @@ private:
   static const cairo_format_t FORMAT = CAIRO_FORMAT_ARGB32;
   bool byteBufferPointerIsOwned;
   void _cairoPlotterInit(int width, int height, float fontSize, const char *fontLocation);
-  int _drawFreeTypeText(int x, int y, int &w, int &h, float angle, const char *text, bool render);
 
 public:
   bool isAlphaUsed;
