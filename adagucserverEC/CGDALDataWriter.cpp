@@ -293,10 +293,10 @@ int CGDALDataWriter::addData(std::vector<CDataSource *> &dataSources) {
   GenericDataWarper genericDataWarper;
   GDWArgs args = {.warper = &warper, .sourceData = sourceData, .sourceGeoParams = &sourceGeo, .destGeoParams = srvParam->Geo};
 
-#define ENUMERATE_CDFTYPE(CDFTYPE, CPPTYPE)                                                                                                                                                            \
+#define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                               \
   if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction(x, y, val, warperState, drawFunctionState); });
-  ENUMERATE_CDFTYPES
-#undef ENUMERATE_CDFTYPE
+ENUMERATE_OVER_CDFTYPES(RENDER)
+#undef RENDER
 
    CPLErr gdalStatus = GDALRasterIO(hSrcBand, GF_Write, 0, 0, srvParam->Geo->dWidth, srvParam->Geo->dHeight, warpedData, srvParam->Geo->dWidth, srvParam->Geo->dHeight, datatype, 0, 0);
   CDF::freeData(&warpedData);
