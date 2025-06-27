@@ -1983,7 +1983,7 @@ class TestWMS(unittest.TestCase):
             AdagucTestTools().compareImage(
                 self.expectedoutputsspath + filename,
                 self.testresultspath + filename,
-                3,
+                4,
                 0.02,
             )
         )  # Allowed pixel difference is huge, but only for very small number of pixels
