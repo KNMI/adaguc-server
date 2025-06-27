@@ -9,37 +9,85 @@ KNMI
 """
 
 import logging
+import os
+import json
+
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import RedirectResponse
 
-from .utils.edr_utils import location_list
+from .utils.edr_utils import get_metadata
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 logger.debug("Starting EDR")
 
+LOCATIONS = []
 
-@router.get("/collections/{_coll}/locations")
-@router.get("/collections/{_coll}/instances/{instance}/locations")
-@router.get("/collections/{_coll}/locations/{id}")
-@router.get("/collections/{_coll}/instances/{instance}/locations/{location_id}")
+
+def get_edr_locations():
+    global LOCATIONS
+    if len(LOCATIONS) > 0:
+        print("get_edr_locations() ALREADY READ")
+        return LOCATIONS
+
+    locations_file = os.environ.get("EDR_LOCATIONS_FILE")
+
+    if locations_file is not None:
+        locations_file_path = os.path.join(
+            os.environ.get("ADAGUC_DATASET_DIR"), locations_file
+        )
+    else:
+        locations_file_path = os.path.join(
+            os.environ.get("ADAGUC_PATH"),
+            "data/config/datasets/resources/locations/edr_locations.geojson",
+        )
+
+    print(f"Reading {locations_file_path}")
+    LOCATIONS = []
+    try:
+        with open(locations_file_path, "r", encoding="utf-8") as loc_f:
+            feature_collection = json.load(loc_f)
+            LOCATIONS = feature_collection["features"]
+    except OSError:
+        logger.error("failed opening: %s", locations_file_path)
+    except ValueError:
+        logger.error("failed parsing: %s", locations_file_path)
+    except KeyError:
+        logger.error("no features found: %s", locations_file_path)
+    return LOCATIONS
+
+
+async def get_locations_for_collection(coll: str):
+    metadata = await get_metadata(coll)
+
+    locations_for_coll = []
+    try:
+        bbox = metadata[coll][next(iter(metadata[coll]))]["layer"].get("latlonbox")
+        for location in get_edr_locations():
+            coords = location["geometry"]["coordinates"]
+            if coords[1] >= bbox[1] and coords[1] <= bbox[3]:
+                if coords[0] >= bbox[0] and coords[0] <= bbox[2]:
+                    locations_for_coll.append(location)
+        return locations_for_coll
+    except KeyError:
+        return LOCATIONS
+
+
+@router.get("/collections/{coll}/locations")
+@router.get("/collections/{coll}/instances/{instance}/locations")
+@router.get("/collections/{coll}/locations/{location_id}")
+@router.get("/collections/{coll}/instances/{instance}/locations/{location_id}")
 async def get_locations(
-    _coll: str, request: Request, instance: str = None, location_id: str = None
+    coll: str, request: Request, instance: str = None, location_id: str = None
 ):
     """
-    Returns locations where you could query data.
+    Returns locations where you could query data by id
     """
+
+    location_list = await get_locations_for_collection(coll)
+
     if location_id is None:
-        feature_list = [
-            {
-                "id": loc["id"],
-                "type": "Feature",
-                "geometry": {"coordinates": loc["coordinates"], "type": "Point"},
-                "properties": {"name": loc["name"]},
-            }
-            for loc in location_list
-        ]
-        return {"features": feature_list}
+        return {"features": location_list}
 
     # Redirect to /position call with coordinates filled in
     # in coords=POINT() argument if location id is known
@@ -56,7 +104,7 @@ async def get_locations(
             repl_url = (
                 repl_url
                 + ("?&" if "?" not in req_url else "&")
-                + f"coords=POINT({loc['coordinates'][0]} {loc['coordinates'][1]})"
+                + f"coords=POINT({loc['geometry']['coordinates'][0]} {loc['geometry']['coordinates'][1]})"
             )
             return RedirectResponse(repl_url, status_code=302)
 
