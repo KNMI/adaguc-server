@@ -224,6 +224,49 @@
                     51.44138717651367
                 ]
             }
+        },
+                {
+            "type": "Feature",
+            "id": "TNCB",
+            "properties": {
+                "name": "Bonaire"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -68.26850128173828,
+                    12.130999565124512
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "TNCS",
+            "properties": {
+                "name": "Saba"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -63.220001220703125,
+                    17.645000457763672
+
+                ]
+            }
+        },
+                {
+            "type": "Feature",
+            "id": "TNCE",
+            "properties": {
+                "name": "St. Eustatius"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -62.97944444444445,
+                    17.49638888888889
+                ]
+            }
         }
     ]
 }

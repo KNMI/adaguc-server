@@ -21,40 +21,31 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 logger.debug("Starting EDR")
 
-LOCATIONS = []
+GLOBAL_LOCATIONS = []
 
 
 def get_edr_locations():
-    global LOCATIONS
-    if len(LOCATIONS) > 0:
-        print("get_edr_locations() ALREADY READ")
-        return LOCATIONS
+    global GLOBAL_LOCATIONS
+    if len(GLOBAL_LOCATIONS) > 0:
+        return GLOBAL_LOCATIONS
 
-    locations_file = os.environ.get("EDR_LOCATIONS_FILE")
+    locations_file_path = os.path.join(
+        os.environ.get("ADAGUC_PATH"),
+        "data/resources/locations/default_edr_locations.geojson",
+    )
 
-    if locations_file is not None:
-        locations_file_path = os.path.join(
-            os.environ.get("ADAGUC_DATASET_DIR"), locations_file
-        )
-    else:
-        locations_file_path = os.path.join(
-            os.environ.get("ADAGUC_PATH"),
-            "data/config/datasets/resources/locations/edr_locations.geojson",
-        )
-
-    print(f"Reading {locations_file_path}")
-    LOCATIONS = []
+    GLOBAL_LOCATIONS = []
     try:
         with open(locations_file_path, "r", encoding="utf-8") as loc_f:
             feature_collection = json.load(loc_f)
-            LOCATIONS = feature_collection["features"]
+            GLOBAL_LOCATIONS = feature_collection["features"]
     except OSError:
         logger.error("failed opening: %s", locations_file_path)
     except ValueError:
         logger.error("failed parsing: %s", locations_file_path)
     except KeyError:
         logger.error("no features found: %s", locations_file_path)
-    return LOCATIONS
+    return GLOBAL_LOCATIONS
 
 
 async def get_locations_for_collection(coll: str):
@@ -70,7 +61,7 @@ async def get_locations_for_collection(coll: str):
                     locations_for_coll.append(location)
         return locations_for_coll
     except KeyError:
-        return LOCATIONS
+        return GLOBAL_LOCATIONS
 
 
 @router.get("/collections/{coll}/locations")
