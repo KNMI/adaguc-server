@@ -1,11 +1,14 @@
 """Main file where FastAPI is defined and started"""
 
+import asyncio
 import logging
 import os
 import time
+import sys
 from contextlib import asynccontextmanager
 from urllib.parse import urlsplit
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.schedulers.blocking import BlockingScheduler
 import uvicorn
 from brotli_asgi import BrotliMiddleware
 from fastapi import FastAPI, Request
@@ -27,6 +30,7 @@ configure_logging(logging)
 
 logger = logging.getLogger(__name__)
 
+ADAGUC_AUTOSYNCLAYERMETADATA = os.getenv("ADAGUC_AUTOSYNCLAYERMETADATA", "TRUE")
 
 async def update_layermetadatatable():
     """Update layermetadata table in adaguc for GetCapabilities caching"""
@@ -39,7 +43,9 @@ async def update_layermetadatatable():
         logger.info(
             "Logging for updateLayerMetadata is disabled, status was %d", status
         )
-
+def update_layermetadatatable_sync():
+    """Sync version"""     
+    asyncio.run(update_layermetadatatable())
 
 @asynccontextmanager
 async def lifespan(_fastapiapp: FastAPI):
@@ -65,7 +71,29 @@ async def lifespan(_fastapiapp: FastAPI):
     scheduler.shutdown()
 
 
-app = FastAPI(lifespan=lifespan)
+
+def update_metadata_scheduler_block():
+    """Starts scheduler for updating the metadata table as a service"""
+    testadaguc()
+    logger.info("=== Starting AsyncIO Blocking Scheduler ===")
+    # start scheduler to refresh collections & docs every minute
+    scheduler = BlockingScheduler()
+    scheduler.add_job(
+        update_layermetadatatable_sync,
+        "cron",
+        [],
+        minute="*",
+        jitter=0,
+        max_instances=1,
+        coalesce=True,
+    )
+    try:
+        scheduler.start()
+    except (KeyboardInterrupt, SystemExit):
+        pass
+
+app = FastAPI(lifespan=lifespan) if ADAGUC_AUTOSYNCLAYERMETADATA == "TRUE" else FastAPI()
+
 
 # Set uvicorn access log format using middleware
 ACCESS_LOG_FORMAT = (
@@ -137,5 +165,13 @@ app.include_router(autowms_router)
 app.include_router(opendapRouter)
 
 if __name__ == "__main__":
-    testadaguc()
-    uvicorn.run(app="main:app", host="0.0.0.0", port=8080, reload=True)
+    if len(sys.argv) == 1:
+        testadaguc()
+        uvicorn.run(app="main:app", host="0.0.0.0", port=8080, reload=True)
+    elif len(sys.argv) == 2:
+        if sys.argv[1] == "updatemetadatacron":
+            update_metadata_scheduler_block()
+            sys.exit(0)
+
+    sys.stderr.write("Unrecognized arguments\n")
+    sys.exit(1)

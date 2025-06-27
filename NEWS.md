@@ -1,6 +1,7 @@
 **Version ?.?.? - ?**
 
 - Added option ADAGUC_TRACE_TIMINGS to measure the amount spent on db access, file reading and image generation.
+- Added option ADAGUC_AUTOSYNCLAYERMETADATA to enable or disable automatic layermetadata table updates
 - GenericDataWarper has been refactored.
 - Prevent invalid filenames in tests
 
