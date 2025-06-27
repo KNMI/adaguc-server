@@ -292,165 +292,47 @@ int CCairoPlotter::initializeFreeType() {
   return 0;
 }
 
-// Aux function to support unicode characters (such as en dash)
-const char *decode_utf8_char(const char *p, uint32_t *out_char) {
-  unsigned char c = (unsigned char)*p;
-
-  if (c < 0x80) {
-    *out_char = c;
-    return p + 1;
-  } else if ((c & 0xE0) == 0xC0 && (p[1] & 0xC0) == 0x80) {
-    *out_char = ((c & 0x1F) << 6) | (p[1] & 0x3F);
-    return p + 2;
-  } else if ((c & 0xF0) == 0xE0 && (p[1] & 0xC0) == 0x80 && (p[2] & 0xC0) == 0x80) {
-    *out_char = ((c & 0x0F) << 12) | ((p[1] & 0x3F) << 6) | (p[2] & 0x3F);
-    return p + 3;
-  } else {
-    *out_char = '?';
-    return p + 1;
-  }
-}
-
-int CCairoPlotter::_drawFreeTypeText(int x, int y, int &w, int &h, float angle, const char *text, bool render) {
-  // Draw text :)
-
-  w = 0;
-  h = 0;
-  if (library == NULL) {
-    int status = initializeFreeType();
-    if (status != 0) {
-      return 1;
-    }
-  };
-  int error;
-  // CDBDebug("font: %s", this->fontLocation);
-
-  FT_GlyphSlot slot;
-  FT_Matrix matrix; /* transformation matrix */
-  FT_Vector pen;    /* untransformed origin */
-  int n;
-  int my_target_height = 8;
-  int num_chars = strlen(text);
-  slot = face->glyph; /* a small shortcut */
-  /* set up matrix */
-  matrix.xx = (FT_Fixed)(cos(angle) * 0x10000L);
-  matrix.xy = (FT_Fixed)(-sin(angle) * 0x10000L);
-  matrix.yx = (FT_Fixed)(sin(angle) * 0x10000L);
-  matrix.yy = (FT_Fixed)(cos(angle) * 0x10000L); /* the pen position in 26.6 cartesian space coordinates */
-
-  /* start at (300,200) */
-  pen.x = x * 64;
-  pen.y = (my_target_height - y) * 64;
-  bool c3seen = false;
-  /* Using UTF-8 standard */
-
-  const char *p = text;
-  while (*p) {
-    uint32_t codepoint;
-    const char *prev = p;
-    p = decode_utf8_char(p, &codepoint);
-    // CDBDebug("* Decoded char U+%04X from: %.*s", codepoint, (int)(p - prev), prev);
-
-    FT_Set_Transform(face, &matrix, &pen);
-    int glyphIndex = FT_Get_Char_Index(face, codepoint);
-    if (FT_Load_Glyph(face, glyphIndex, FT_LOAD_RENDER) == 0) {
-      if (render) {
-        renderFont(&slot->bitmap, slot->bitmap_left, my_target_height - slot->bitmap_top);
-      }
-      pen.x += slot->advance.x;
-      pen.y += slot->advance.y;
-      w += slot->advance.x / 64;
-      if ((int)slot->bitmap.rows > h) h = (int)slot->bitmap.rows;
-    }
-  }
-
+int CCairoPlotter::getTextSize(int &w, int &h, float angle, const char *text) {
+  cairo_text_extents_t te;
+  cairo_text_extents(cr, text, &te);
+  w = te.width;
+  h = te.height;
   return 0;
 }
 
-int CCairoPlotter::getTextSize(int &w, int &h, float angle, const char *text) { return _drawFreeTypeText(0, 0, w, h, angle, text, false); }
-
 int CCairoPlotter::drawAnchoredText(int x, int y, float angle, const char *text, int anchor) {
   int w = 0, h = 0;
-  getTextSize(w, h, angle, text);
-  //    CDBDebug("[w,h]=>[%d,%d] %s at [%d,%d] %d,%d\n", w, h, text, x, y, anchor, anchor % 4);
+  // getTextSize(w, h, angle, text);
+  // //    CDBDebug("[w,h]=>[%d,%d] %s at [%d,%d] %d,%d\n", w, h, text, x, y, anchor, anchor % 4);
   switch (anchor % 4) {
   case 0:
-    _drawFreeTypeText(x, y, w, h, angle, text, true);
+    drawText(x, y, angle, text);
     break;
   case 1:
-    _drawFreeTypeText(x, y + h, w, h, angle, text, true);
+    drawText(x, y + h, angle, text);
     break;
   case 2:
-    _drawFreeTypeText(x - w, y + h, w, h, angle, text, true);
+    drawText(x - w, y + h, angle, text);
     break;
   case 3:
-    _drawFreeTypeText(x - w, y, w, h, angle, text, true);
+    drawText(x - w, y, angle, text);
     break;
   }
   return 0;
 }
 
 int CCairoPlotter::drawCenteredText(int x, int y, float angle, const char *text) {
-  int w = 0, h = 0;
-  getTextSize(w, h, angle, text);
-  //    CDBDebug("[w,h]=>[%d,%d] at [%d,%d] (%d)\n", w, h, x, y, isAlphaUsed);
-  return _drawFreeTypeText(x - w / 2, y + h / 2, w, h, angle, text, true);
+  auto c = CColor(this->r, this->g, this->b, this->a);
+  drawStrokedText(x, y, angle, text, 14, 0, c, c, true);
+  return 0;
 }
 
 int CCairoPlotter::drawFilledText(int x, int y, float angle, const char *text) {
   if (text == NULL) return 0;
-  if (strlen(text) == 0) return 0;
-  if (initializationFailed == true) return 1;
-  if (library == NULL) {
-    int status = initializeFreeType();
-    if (status != 0) {
-      initializationFailed = true;
-      return 1;
-    }
-  };
 
-  FT_Matrix matrix; /* transformation matrix */
-  /* set up matrix */
-  matrix.xx = (FT_Fixed)(cos(angle) * 0x10000L);
-  matrix.xy = (FT_Fixed)(-sin(angle) * 0x10000L);
-  matrix.yx = (FT_Fixed)(sin(angle) * 0x10000L);
-  matrix.yy = (FT_Fixed)(cos(angle) * 0x10000L); /* the pen position in 26.6 cartesian space coordinates */
+  auto c = CColor(this->r, this->g, this->b, this->a);
+  this->drawStrokedText(x, y, angle, text, 14, 0, c, c);
 
-  // Draw text :)
-  int my_target_height = 8, error;
-  int num_chars = strlen(text);
-  int orgr = this->r;
-  int orgg = this->g;
-  int orgb = this->b;
-  int orga = int(this->a);
-
-  FT_Vector pen; /* untransformed origin */
-  pen.x = x * 64;
-  pen.y = (my_target_height - y) * 64;
-  setColor(255, 255, 255, 0);
-  filledRectangle(pen.x / 64 - 5, my_target_height - (pen.y) / 64 + 8, (pen.x) / 64, my_target_height - (pen.y) / 64 - int(fontSize) - 4);
-  for (int n = 0; n < num_chars; n++) {    /* set transformation */
-    FT_Set_Transform(face, &matrix, &pen); /* load glyph image into the  face->glyph (erase previous one) */
-    error = FT_Load_Char(face, text[n], FT_LOAD_RENDER);
-    if (error) {
-      CDBError("unable toFT_Load_Char");
-      return 1;
-    }
-    /* now, draw to our target surface (convert position) */
-
-    // setFillColor(255,255,255,100);
-
-    setColor(255, 255, 255, 0);
-    filledRectangle(pen.x / 64, my_target_height - (pen.y) / 64 + 5, (pen.x + face->glyph->advance.x) / 64, my_target_height - (pen.y) / 64 - int(fontSize) - 4);
-    setColor(orgr, orgg, orgb, orga);
-    renderFont(&face->glyph->bitmap, face->glyph->bitmap_left, my_target_height - face->glyph->bitmap_top);
-    /* increment pen position */
-    pen.x += face->glyph->advance.x;
-    pen.y += face->glyph->advance.y;
-  }
-  setColor(255, 255, 255, 0);
-  filledRectangle(pen.x / 64, my_target_height - (pen.y) / 64 + 5, (pen.x) / 64 + 5, my_target_height - (pen.y) / 64 - int(fontSize) - 4);
-  setColor(orgr, orgg, orgb, orga);
   return 0;
 }
 
@@ -663,8 +545,8 @@ void CCairoPlotter::poly(float x[], float y[], int n, float lineWidth, bool clos
 }
 
 void CCairoPlotter::drawText(int x, int y, double angle, const char *text) {
-  int w, h;
-  _drawFreeTypeText(x, y, w, h, angle, text, true);
+  auto c = CColor(this->r, this->g, this->b, this->a);
+  drawStrokedText(x, y, angle, text, 14, 0, c, c);
 }
 
 void CCairoPlotter::drawStrokedText(int x, int y, double angle, const char *text, float fontSize, float strokeWidth, CColor bgcolor, CColor fgcolor, bool centerText) {
