@@ -293,6 +293,9 @@ int CCairoPlotter::initializeFreeType() {
 }
 
 // Aux function to support unicode characters (such as en dash)
+// A character is represented by a variable number of bytes
+// From 1 to 4
+// First byte indicates the length
 const char *decode_utf8_char(const char *p, uint32_t *out_char) {
   unsigned char c = (unsigned char)*p;
 
