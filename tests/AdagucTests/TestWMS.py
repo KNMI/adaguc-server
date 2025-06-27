@@ -1860,7 +1860,7 @@ class TestWMS(unittest.TestCase):
 
         filename = "test_WMSGetLegendGraphic_NearestRenderWithShadeInterval.png"
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "DATASET=nearestshadeinterval&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetLegendGraphic&LAYER=testdata&WIDTH=100&HEIGHT=1000&STYLES=shadedstyleprecise%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&",
+            "DATASET=nearestshadeinterval&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetLegendGraphic&LAYER=testdata&WIDTH=150&HEIGHT=800&STYLES=shadedstyleprecise%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&",
             env=env,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
