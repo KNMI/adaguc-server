@@ -3,9 +3,11 @@
 import logging
 import os
 import time
+import sys
 from contextlib import asynccontextmanager
 from urllib.parse import urlsplit
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.schedulers.blocking import BlockingScheduler
 import uvicorn
 from brotli_asgi import BrotliMiddleware
 from fastapi import FastAPI, Request
@@ -41,7 +43,6 @@ async def update_layermetadatatable():
             "Logging for updateLayerMetadata is disabled, status was %d", status
         )
 
-
 @asynccontextmanager
 async def lifespan(_fastapiapp: FastAPI):
     """Captures FASTAPI Lifespan events to start the AsyncIOScheduler"""
@@ -65,6 +66,27 @@ async def lifespan(_fastapiapp: FastAPI):
     logger.info("=== Stopping AsyncIO Scheduler ===")
     scheduler.shutdown()
 
+
+
+def update_metadata_scheduler_block():
+    """Starts scheduler for updating the metadata table as a service"""
+    testadaguc()
+    logger.info("=== Starting AsyncIO Blocking Scheduler ===")
+    # start scheduler to refresh collections & docs every minute
+    scheduler = BlockingScheduler()
+    scheduler.add_job(
+        update_layermetadatatable,
+        "cron",
+        [],
+        minute="*",
+        jitter=0,
+        max_instances=1,
+        coalesce=True,
+    )
+    try:
+        scheduler.start()
+    except (KeyboardInterrupt, SystemExit):
+        pass
 
 app = FastAPI(lifespan=lifespan) if ADAGUC_AUTOSYNCLAYERMETADATA == "TRUE" else FastAPI()
 
@@ -139,5 +161,13 @@ app.include_router(autowms_router)
 app.include_router(opendapRouter)
 
 if __name__ == "__main__":
-    testadaguc()
-    uvicorn.run(app="main:app", host="0.0.0.0", port=8080, reload=True)
+    if len(sys.argv) == 1:
+        testadaguc()
+        uvicorn.run(app="main:app", host="0.0.0.0", port=8080, reload=True)
+    elif len(sys.argv) == 2:
+        if sys.argv[1] == "updatemetadatacron":
+            update_metadata_scheduler_block()
+            sys.exit(0)
+
+    sys.stderr.write("Unrecognized arguments\n")
+    sys.exit(1)
