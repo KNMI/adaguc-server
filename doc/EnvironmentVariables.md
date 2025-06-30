@@ -63,7 +63,7 @@ optional, specify the online resource in the CGI script itself, see [OnlineResou
 
 ## ADAGUC_AUTOSYNCLAYERMETADATA
 
-optional, when set to `TRUE` (default) the layermetadata table will be updated automatically every minute. When set to `FALSE`, it will not do update by itself. Useful for inspecting logs without interuptions.
+optional, when set to `TRUE` (default) the layermetadata table will be updated automatically every minute. When set to `FALSE`, it will not do update by itself. Useful for inspecting logs without interuptions. When set to false, you should run `python3 ./python/python_fastapi_server/main.py autosync` regularly.
 
 ## PGBOUNCER_ENABLE 	
 

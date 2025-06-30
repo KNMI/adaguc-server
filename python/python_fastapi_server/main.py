@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 ADAGUC_AUTOSYNCLAYERMETADATA = os.getenv("ADAGUC_AUTOSYNCLAYERMETADATA", "TRUE")
 
-async def update_layermetadatatable():
+async def async_autosync_layermetadata():
     """Update layermetadata table in adaguc for GetCapabilities caching"""
     adaguc = setup_adaguc(False)
     logger.info("Calling updateLayerMetadata")
@@ -43,9 +43,9 @@ async def update_layermetadatatable():
         logger.info(
             "Logging for updateLayerMetadata is disabled, status was %d", status
         )
-def update_layermetadatatable_sync():
+def sync_autosync_scheduler():
     """Sync version"""     
-    asyncio.run(update_layermetadatatable())
+    asyncio.run(async_autosync_layermetadata())
 
 @asynccontextmanager
 async def lifespan(_fastapiapp: FastAPI):
@@ -55,7 +55,7 @@ async def lifespan(_fastapiapp: FastAPI):
     # start scheduler to refresh collections & docs every minute
     scheduler = AsyncIOScheduler()
     scheduler.add_job(
-        update_layermetadatatable,
+        async_autosync_layermetadata,
         "cron",
         [],
         minute="*",
@@ -72,14 +72,14 @@ async def lifespan(_fastapiapp: FastAPI):
 
 
 
-def update_metadata_scheduler_block():
+def blocking_autosync_metadata():
     """Starts scheduler for updating the metadata table as a service"""
     testadaguc()
     logger.info("=== Starting AsyncIO Blocking Scheduler ===")
     # start scheduler to refresh collections & docs every minute
     scheduler = BlockingScheduler()
     scheduler.add_job(
-        update_layermetadatatable_sync,
+        sync_autosync_scheduler,
         "cron",
         [],
         minute="*",
@@ -170,7 +170,7 @@ if __name__ == "__main__":
         uvicorn.run(app="main:app", host="0.0.0.0", port=8080, reload=True)
     elif len(sys.argv) == 2:
         if sys.argv[1] == "autosync":
-            update_metadata_scheduler_block()
+            blocking_autosync_metadata()
             sys.exit(0)
 
     sys.stderr.write("Unrecognized arguments\n")
