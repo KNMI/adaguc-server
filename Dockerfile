@@ -129,7 +129,7 @@ COPY ./scripts/*.sh /adaguc/
 COPY ./Docker/pgbouncer/ /adaguc/pgbouncer/
 COPY ./Docker/supervisord/ /etc/supervisor/conf.d/
 COPY ./Docker/run_supervisord.sh /adaguc/run_supervisord.sh
-COPY ./Docker/start_updater.sh /adaguc/start_updater.sh
+COPY ./Docker/start_autosync.sh /adaguc/start_autosync.sh
 
 # Set permissions
 RUN  chmod +x /adaguc/*.sh && \

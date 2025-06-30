@@ -34,7 +34,7 @@ services:
         max-size: "200k"
         max-file: "10"
   adaguc-server:
-    image: openearth/adaguc-server
+    image: openearth/adaguc-server@sha256:6767eb9e93a32f11807b5ba1eed2d1f5fe58d6f71f0b0e6b811a095f74074c96
 #    build: ..
 #    deploy:
 #     resources:
@@ -73,17 +73,17 @@ services:
         max-size: "200k"
         max-file: "10"
   
-  adaguc-server-updater:
-    image: openearth/adaguc-server
+  adaguc-server-autosync:
+    image: openearth/adaguc-server@sha256:6767eb9e93a32f11807b5ba1eed2d1f5fe58d6f71f0b0e6b811a095f74074c96
 #    build: ..
 #    deploy:
 #     resources:
 #       limits:
 #         cpus: "2"
 #         memory: 2048M
-    container_name: my-adaguc-updater
-    hostname: my-adaguc-updater
-    entrypoint: /adaguc/start_updater.sh
+    container_name: my-adaguc-autosync
+    hostname: my-adaguc-autosync
+    entrypoint: /adaguc/start_autosync.sh
     volumes:
       - ${ADAGUC_DATASET_DIR}/:/data/adaguc-datasets
       - ${ADAGUC_AUTOWMS_DIR}/:/data/adaguc-autowms
@@ -99,6 +99,7 @@ services:
       - "ADAGUC_DATA_DIR=/data/adaguc-data"
       - "ADAGUC_DATASET_DIR=/data/adaguc-datasets"
       - "ADAGUC_REDIS=redis://adaguc-redis:6379"
+      - "ADAGUC_AUTOSYNCLAYERMETADATA=TRUE"
     env_file:
       - .env
     restart: unless-stopped

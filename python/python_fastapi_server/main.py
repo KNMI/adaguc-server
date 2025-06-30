@@ -169,7 +169,7 @@ if __name__ == "__main__":
         testadaguc()
         uvicorn.run(app="main:app", host="0.0.0.0", port=8080, reload=True)
     elif len(sys.argv) == 2:
-        if sys.argv[1] == "updatemetadatacron":
+        if sys.argv[1] == "autosync":
             update_metadata_scheduler_block()
             sys.exit(0)
 
