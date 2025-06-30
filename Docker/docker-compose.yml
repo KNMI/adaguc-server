@@ -34,7 +34,7 @@ services:
         max-size: "200k"
         max-file: "10"
   adaguc-server:
-    image: openearth/adaguc-server@sha256:6767eb9e93a32f11807b5ba1eed2d1f5fe58d6f71f0b0e6b811a095f74074c96
+    image: openearth/adaguc-server
 #    build: ..
 #    deploy:
 #     resources:
@@ -74,7 +74,7 @@ services:
         max-file: "10"
   
   adaguc-server-autosync:
-    image: openearth/adaguc-server@sha256:6767eb9e93a32f11807b5ba1eed2d1f5fe58d6f71f0b0e6b811a095f74074c96
+    image: openearth/adaguc-server
 #    build: ..
 #    deploy:
 #     resources:
