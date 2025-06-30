@@ -31,7 +31,7 @@ def get_edr_locations():
 
     locations_file_path = os.path.join(
         os.environ.get("ADAGUC_PATH"),
-        "data/resources/locations/default_edr_locations.geojson",
+        "data/resources/locations/global_edr_locations.geojson",
     )
 
     GLOBAL_LOCATIONS = []
