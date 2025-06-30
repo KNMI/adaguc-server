@@ -106,7 +106,6 @@ export ADAGUC_NUMPARALLELPROCESSES=4
 export ADAGUC_DB="user=adaguc password=adaguc host=localhost dbname=adaguc"
 export ADAGUC_ENABLELOGBUFFER=FALSE
 export ADAGUC_TRACE_TIMINGS=TRUE
-export ADAGUC_AUTOSYNCLAYERMETADATA=TRUE
 
 # To enable core dump generation, additionally do:
 #ulimit -c unlimited

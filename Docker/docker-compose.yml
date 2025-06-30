@@ -58,7 +58,6 @@ services:
       - "ADAGUC_DATA_DIR=/data/adaguc-data"
       - "ADAGUC_DATASET_DIR=/data/adaguc-datasets"
       - "ADAGUC_REDIS=redis://adaguc-redis:6379"
-      - "ADAGUC_AUTOSYNCLAYERMETADATA=FALSE"
     env_file:
       - .env
     restart: unless-stopped
@@ -99,7 +98,6 @@ services:
       - "ADAGUC_DATA_DIR=/data/adaguc-data"
       - "ADAGUC_DATASET_DIR=/data/adaguc-datasets"
       - "ADAGUC_REDIS=redis://adaguc-redis:6379"
-      - "ADAGUC_AUTOSYNCLAYERMETADATA=TRUE"
     env_file:
       - .env
     restart: unless-stopped
