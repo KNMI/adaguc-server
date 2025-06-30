@@ -1,7 +1,7 @@
-**Version ?.?.? - ?**
+**Version 4.?.? - ?**
 
+- Breaking change: added script (Docker/start_autosync.sh) to autosync layermetadata store. Docker compose starts related container.
 - Added option ADAGUC_TRACE_TIMINGS to measure the amount spent on db access, file reading and image generation.
-- Added script (Docker/start_autosync.sh) to autosync layermetadata store. Docker compose starts related container
 - GenericDataWarper has been refactored.
 - Prevent invalid filenames in tests
 
