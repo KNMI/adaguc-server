@@ -36,7 +36,7 @@ class TestWCS(unittest.TestCase):
     Check if WCS GetCapabilities for testdata.nc file is OK
     """
     AdagucTestTools().cleanTempDir()
-    filename = "test_WCSGetCapabilities_testdatanc"
+    filename = "test_WCSGetCapabilities_testdatanc.xml"
     status, data, headers = AdagucTestTools().runADAGUCServer(
         "source=testdata.nc&SERVICE=WCS&request=getcapabilities", env=self.env)
     AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
