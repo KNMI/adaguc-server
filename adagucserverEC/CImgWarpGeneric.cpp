@@ -74,10 +74,10 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
   GenericDataWarper genericDataWarper;
   GDWArgs args = {.warper = warper, .sourceData = sourceData, .sourceGeoParams = &sourceGeo, .destGeoParams = drawImage->Geo};
 
-#define ENUMERATE_CDFTYPE(CDFTYPE, CPPTYPE)                                                                                                                                                            \
+#define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                            \
   if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction(x, y, val, warperState, settings); });
-  ENUMERATE_CDFTYPES
-#undef ENUMERATE_CDFTYPE
+ENUMERATE_OVER_CDFTYPES(RENDER)
+#undef RENDER
 
   for (int y = 0; y < (int)settings.height; y = y + 1) {
     for (int x = 0; x < (int)settings.width; x = x + 1) {

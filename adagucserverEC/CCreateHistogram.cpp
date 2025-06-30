@@ -110,10 +110,10 @@ int CCreateHistogram::addData(std::vector<CDataSource *> &dataSources) {
       GenericDataWarper genericDataWarper;
       GDWArgs args = {.warper = &warper, .sourceData = sourceData, .sourceGeoParams = &sourceGeo, .destGeoParams = dataSource->srvParams->Geo};
 
-#define ENUMERATE_CDFTYPE(CDFTYPE, CPPTYPE)                                                                                                                                                            \
-  if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction(x, y, val, warperState, settings); });
-      ENUMERATE_CDFTYPES
-#undef ENUMERATE_CDFTYPE
+#define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                            \
+      if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction(x, y, val, warperState, settings); });
+ENUMERATE_OVER_CDFTYPES(RENDER)
+#undef RENDER
     }
     reader.close();
     CDBDebug("Addata finished, data warped");
