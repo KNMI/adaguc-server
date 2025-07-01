@@ -15,7 +15,7 @@
         <KeywordList>
             <Keyword>view</Keyword>
             <Keyword>infoMapAccessService</Keyword>
-            <Keyword>ADAGUCServer version 2.27.0, of Sep  6 2024 09:44:02 </Keyword>
+            <Keyword>ADAGUCServer version 3.1.2, of Jun 30 2025 11:29:01 </Keyword>
         </KeywordList>
         <OnlineResource xlink:type="simple" xlink:href="source=example_file_irregular_1Dlat1Dlon_grid%2Enc&amp;SERVICE=WMS&amp;"/>
         <ContactInformation>
@@ -64,6 +64,7 @@
 <CRS>EPSG:25831</CRS>
 <CRS>EPSG:25832</CRS>
 <CRS>EPSG:28992</CRS>
+<CRS>EPSG:3035</CRS>
 <CRS>EPSG:3067</CRS>
 <CRS>EPSG:32661</CRS>
 <CRS>EPSG:3411</CRS>
@@ -81,6 +82,7 @@
 <BoundingBox CRS="EPSG:25831" minx="-617472.866520" miny="5316302.374392" maxx="1171063.799865" maxy="6308105.878760" />
 <BoundingBox CRS="EPSG:25832" minx="-1062120.485288" miny="5316319.574920" maxx="723775.915399" maxy="6406966.575199" />
 <BoundingBox CRS="EPSG:28992" minx="-1136402.742573" miny="679.856932" maxx="648666.695131" maxy="1024615.234950" />
+<BoundingBox CRS="EPSG:3035" minx="2706198.583345" miny="2765166.476941" maxx="4470309.442165" maxy="3863994.473492" />
 <BoundingBox CRS="EPSG:3067" minx="-2368217.657676" miny="5426200.148164" maxx="-431413.447765" maxy="6912956.275031" />
 <BoundingBox CRS="EPSG:32661" minx="986381.559353" miny="-2875182.623640" maxx="3013618.440647" maxy="-1800251.543330" />
 <BoundingBox CRS="EPSG:3411" minx="2064656.256257" miny="-3989496.198511" maxx="3989496.198511" maxy="-2064656.256257" />
@@ -106,6 +108,7 @@
 <BoundingBox CRS="EPSG:25831" minx="-617472.866520" miny="5316302.374392" maxx="1171063.799865" maxy="6308105.878760" />
 <BoundingBox CRS="EPSG:25832" minx="-1062120.485288" miny="5316319.574920" maxx="723775.915399" maxy="6406966.575199" />
 <BoundingBox CRS="EPSG:28992" minx="-1136402.742573" miny="679.856932" maxx="648666.695131" maxy="1024615.234950" />
+<BoundingBox CRS="EPSG:3035" minx="2706198.583345" miny="2765166.476941" maxx="4470309.442165" maxy="3863994.473492" />
 <BoundingBox CRS="EPSG:3067" minx="-2368217.657676" miny="5426200.148164" maxx="-431413.447765" maxy="6912956.275031" />
 <BoundingBox CRS="EPSG:32661" minx="986381.559353" miny="-2875182.623640" maxx="3013618.440647" maxy="-1800251.543330" />
 <BoundingBox CRS="EPSG:3411" minx="2064656.256257" miny="-3989496.198511" maxx="3989496.198511" maxy="-2064656.256257" />

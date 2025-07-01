@@ -41,7 +41,7 @@ class TestWMS(unittest.TestCase):
 
     def test_WMSGetCapabilities_testdatanc(self):
         AdagucTestTools().cleanTempDir()
-        filename = "test_WMSGetCapabilities_testdatanc"
+        filename = "test_WMSGetCapabilities_testdatanc.xml"
         # pylint: disable=unused-variable
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "source=testdata.nc&SERVICE=WMS&request=getcapabilities", env=self.env
@@ -189,7 +189,7 @@ class TestWMS(unittest.TestCase):
 
     def test_WMSGetCapabilitiesGetMap_testdatanc(self):
         AdagucTestTools().cleanTempDir()
-        filename = "test_WMSGetCapabilities_testdatanc"
+        filename = "test_WMSGetCapabilitiesGetMap_testdatanc_WMSGetCapabilities_testdatanc.xml"
         # pylint: disable=unused-variable
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "source=testdata.nc&SERVICE=WMS&request=getcapabilities", env=self.env
@@ -227,7 +227,7 @@ class TestWMS(unittest.TestCase):
             data.getvalue(),
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
-        filename = "test_WMSGetCapabilities_testdatanc"
+        filename = "test_WMSGetMapGetCapabilities_testdatanc_WMSGetCapabilities_testdatanc.xml"
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "source=testdata.nc&SERVICE=WMS&request=getcapabilities", env=self.env
         )
@@ -333,7 +333,7 @@ class TestWMS(unittest.TestCase):
         )
         self.assertEqual(status, 0)
 
-        filename = "test_WMSGetCapabilities_timeseries_twofiles"
+        filename = "test_WMSCMDUpdateDB_WMSGetCapabilities_timeseries_twofiles.xml"
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "SERVICE=WMS&request=getcapabilities",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.timeseries.xml"},
@@ -363,7 +363,7 @@ class TestWMS(unittest.TestCase):
         )
         self.assertEqual(status, 0)
 
-        filename = "test_WMSGetCapabilities_timeseries_tailpath_netcdf_5dims_seq1"
+        filename = "test_WMSCMDUpdateDBTailPath_WMSGetCapabilities_timeseries_tailpath_netcdf_5dims_seq1.xml"
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "SERVICE=WMS&request=getcapabilities",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.timeseries.xml"},
@@ -390,7 +390,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
 
         filename = (
-            "test_WMSGetCapabilities_timeseries_tailpath_netcdf_5dims_seq1_and_seq2"
+            "test_WMSCMDUpdateDBTailPath_WMSGetCapabilities_timeseries_tailpath_netcdf_5dims_seq1_and_seq2.xml"
         )
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "SERVICE=WMS&request=getcapabilities",
@@ -423,7 +423,7 @@ class TestWMS(unittest.TestCase):
         )
         self.assertEqual(status, 0)
 
-        filename = "test_WMSGetCapabilities_timeseries_path_netcdf_5dims_seq1"
+        filename = "test_WMSGetCapabilities_timeseries_path_netcdf_5dims_seq1.xml"
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "SERVICE=WMS&request=getcapabilities",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.timeseries.xml"},
@@ -450,7 +450,7 @@ class TestWMS(unittest.TestCase):
         )
         self.assertEqual(status, 0)
 
-        filename = "test_WMSGetCapabilities_timeseries_path_netcdf_5dims_seq2"
+        filename = "test_WMSGetCapabilities_timeseries_path_netcdf_5dims_seq2.xml"
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "SERVICE=WMS&request=getcapabilities",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.timeseries.xml"},
@@ -477,7 +477,7 @@ class TestWMS(unittest.TestCase):
             data.getvalue(),
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
-        filename = "test_WMSGetCapabilities_testdatanc"
+        filename = "test_WMSGetFeatureInfo_forecastreferencetime_texthtml_TestDataGetCapabilities.xml"
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "source=testdata.nc&SERVICE=WMS&request=getcapabilities", env=self.env
         )
