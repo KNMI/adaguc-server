@@ -15,7 +15,7 @@
         <KeywordList>
             <Keyword>view</Keyword>
             <Keyword>infoMapAccessService</Keyword>
-            <Keyword>ADAGUCServer version 3.1.2, of Jun 27 2025 08:35:12 </Keyword>
+            <Keyword>ADAGUCServer version 3.1.2, of Jun 30 2025 11:29:01 </Keyword>
         </KeywordList>
         <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.testCSVReader_reference_time&amp;SERVICE=WMS&amp;"/>
         <ContactInformation>
@@ -64,6 +64,7 @@
 <CRS>EPSG:25831</CRS>
 <CRS>EPSG:25832</CRS>
 <CRS>EPSG:28992</CRS>
+<CRS>EPSG:3035</CRS>
 <CRS>EPSG:3067</CRS>
 <CRS>EPSG:32661</CRS>
 <CRS>EPSG:3411</CRS>
@@ -81,6 +82,7 @@
 <BoundingBox CRS="EPSG:25831" minx="295267.526825" miny="5331072.043142" maxx="295267.526825" maxy="5331074.043142" />
 <BoundingBox CRS="EPSG:25832" minx="-151168.761917" miny="5364559.671213" maxx="-151168.761917" maxy="5364561.671213" />
 <BoundingBox CRS="EPSG:28992" minx="-227870.303123" miny="24978.089268" maxx="-227870.303123" maxy="24980.089268" />
+<BoundingBox CRS="EPSG:3035" minx="3596861.700352" miny="2824165.391868" maxx="3596861.700352" maxy="2824167.391868" />
 <BoundingBox CRS="EPSG:3067" minx="-1481251.794314" miny="5683942.666186" maxx="-1481251.794314" maxy="5683944.666186" />
 <BoundingBox CRS="EPSG:32661" minx="2021216.860424" miny="-2862516.368656" maxx="2021216.860424" maxy="-2862514.368656" />
 <BoundingBox CRS="EPSG:3411" minx="3369518.975082" miny="-3340242.934311" maxx="3369518.975082" maxy="-3340240.934311" />
@@ -106,6 +108,7 @@
 <BoundingBox CRS="EPSG:25831" minx="295267.526825" miny="5331072.043142" maxx="295267.526825" maxy="5331074.043142" />
 <BoundingBox CRS="EPSG:25832" minx="-151168.761917" miny="5364559.671213" maxx="-151168.761917" maxy="5364561.671213" />
 <BoundingBox CRS="EPSG:28992" minx="-227870.303123" miny="24978.089268" maxx="-227870.303123" maxy="24980.089268" />
+<BoundingBox CRS="EPSG:3035" minx="3596861.700352" miny="2824165.391868" maxx="3596861.700352" maxy="2824167.391868" />
 <BoundingBox CRS="EPSG:3067" minx="-1481251.794314" miny="5683942.666186" maxx="-1481251.794314" maxy="5683944.666186" />
 <BoundingBox CRS="EPSG:32661" minx="2021216.860424" miny="-2862516.368656" maxx="2021216.860424" maxy="-2862514.368656" />
 <BoundingBox CRS="EPSG:3411" minx="3369518.975082" miny="-3340242.934311" maxx="3369518.975082" maxy="-3340240.934311" />
@@ -134,6 +137,7 @@
 <BoundingBox CRS="EPSG:25831" minx="295267.526825" miny="5331072.043142" maxx="295267.526825" maxy="5331074.043142" />
 <BoundingBox CRS="EPSG:25832" minx="-151168.761917" miny="5364559.671213" maxx="-151168.761917" maxy="5364561.671213" />
 <BoundingBox CRS="EPSG:28992" minx="-227870.303123" miny="24978.089268" maxx="-227870.303123" maxy="24980.089268" />
+<BoundingBox CRS="EPSG:3035" minx="3596861.700352" miny="2824165.391868" maxx="3596861.700352" maxy="2824167.391868" />
 <BoundingBox CRS="EPSG:3067" minx="-1481251.794314" miny="5683942.666186" maxx="-1481251.794314" maxy="5683944.666186" />
 <BoundingBox CRS="EPSG:32661" minx="2021216.860424" miny="-2862516.368656" maxx="2021216.860424" maxy="-2862514.368656" />
 <BoundingBox CRS="EPSG:3411" minx="3369518.975082" miny="-3340242.934311" maxx="3369518.975082" maxy="-3340240.934311" />
@@ -162,6 +166,7 @@
 <BoundingBox CRS="EPSG:25831" minx="295267.526825" miny="5331072.043142" maxx="295267.526825" maxy="5331074.043142" />
 <BoundingBox CRS="EPSG:25832" minx="-151168.761917" miny="5364559.671213" maxx="-151168.761917" maxy="5364561.671213" />
 <BoundingBox CRS="EPSG:28992" minx="-227870.303123" miny="24978.089268" maxx="-227870.303123" maxy="24980.089268" />
+<BoundingBox CRS="EPSG:3035" minx="3596861.700352" miny="2824165.391868" maxx="3596861.700352" maxy="2824167.391868" />
 <BoundingBox CRS="EPSG:3067" minx="-1481251.794314" miny="5683942.666186" maxx="-1481251.794314" maxy="5683944.666186" />
 <BoundingBox CRS="EPSG:32661" minx="2021216.860424" miny="-2862516.368656" maxx="2021216.860424" maxy="-2862514.368656" />
 <BoundingBox CRS="EPSG:3411" minx="3369518.975082" miny="-3340242.934311" maxx="3369518.975082" maxy="-3340240.934311" />
