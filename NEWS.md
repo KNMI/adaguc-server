@@ -5,6 +5,8 @@
 - GenericDataWarper has been refactored.
 - Prevent invalid filenames in tests
 - Added support for projection EPSG:3035
+- Legend font and contourline font has been changed, number alignments have been improved.
+- Echotoppen display can now have outlines
 
 **Version 3.1.1. 2025-06-05**
 
