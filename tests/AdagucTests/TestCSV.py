@@ -63,6 +63,7 @@ class TestCSV(unittest.TestCase):
             "2018-12-04T12:55:00Z",
         ]
 
+        outputs_differ = False
         for date in dates:
             filename = ("test_CSV_timesupport" + date + ".png").replace(":","_")
             status, data, headers = AdagucTestTools().runADAGUCServer(
@@ -73,11 +74,10 @@ class TestCSV(unittest.TestCase):
             AdagucTestTools().writetofile(self.testresultspath + filename,
                                           data.getvalue())
             self.assertEqual(status, 0)
-            self.assertEqual(
-                data.getvalue(),
-                AdagucTestTools().readfromfile(self.expectedoutputsspath +
-                                               filename),
-            )
+            if data.getvalue() != AdagucTestTools().readfromfile(self.expectedoutputsspath + filename):
+                outputs_differ = True
+
+        self.assertFalse(outputs_differ)
 
     def test_CSV_reference_time(self):
         AdagucTestTools().cleanTempDir()

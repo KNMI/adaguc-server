@@ -292,6 +292,58 @@ int CCairoPlotter::initializeFreeType() {
   return 0;
 }
 
+// Aux function to support unicode characters (such as en dash)
+// A character is represented by a variable number of bytes (1 to 4)
+// First byte indicates the length
+// The pattern is identified through massk
+//   - 1 byte (ASCII), top bit must be 0.
+//   - 2 bytes (mask: 0xE0, match 0xC0)
+//   - 3 bytes (mask: 0xF0, match 0xE0)
+//   - 4 bytes (not supported by this function)
+const char *decode_utf8_char(const char *p, const char *end, uint32_t *out_char) {
+  unsigned char c = (unsigned char)*p;
+
+  // Case where the pointer is not valid
+  if (p >= end) {
+    *out_char = '?';
+    return p;
+  }
+
+  if (c < 0x80) {
+    // 1 byte (ASCII)
+    *out_char = c;
+    return p + 1;
+  }
+
+  if ((c & 0xE0) == 0xC0 && (p[1] & 0xC0) == 0x80) {
+    // 2 bytes
+
+    if (p + 1 >= end) {
+      *out_char = '?';
+      return p + 1;
+    }
+
+    *out_char = ((c & 0x1F) << 6) | (p[1] & 0x3F);
+    return p + 2;
+  }
+
+  if ((c & 0xF0) == 0xE0 && (p[1] & 0xC0) == 0x80 && (p[2] & 0xC0) == 0x80) {
+    // 2 bytes
+
+    if (p + 2 >= end) {
+      *out_char = '?';
+      return p + 1;
+    }
+
+    *out_char = ((c & 0x0F) << 12) | ((p[1] & 0x3F) << 6) | (p[2] & 0x3F);
+    return p + 3;
+  }
+
+  // Default case (error or unsupported)
+  *out_char = '?';
+  return p + 1;
+}
+
 int CCairoPlotter::_drawFreeTypeText(int x, int y, int &w, int &h, float angle, const char *text, bool render) {
   // Draw text :)
 
@@ -323,42 +375,29 @@ int CCairoPlotter::_drawFreeTypeText(int x, int y, int &w, int &h, float angle, 
   pen.x = x * 64;
   pen.y = (my_target_height - y) * 64;
   bool c3seen = false;
-  /* Using the 8859-15 standard */
-  for (n = 0; n < num_chars; n++) { /* set transformation */
+  /* Using UTF-8 standard */
 
-    FT_Set_Transform(face, &matrix, &pen); /* load glyph image into the slot (erase previous one) */
+  const char *p = text;
+  const char *end = text + strlen(text);
+  while (*p) {
+    uint32_t codepoint;
+    const char *prev = p;
+    p = decode_utf8_char(p, end, &codepoint);
+    // CDBDebug("* Decoded char U+%04X from: %.*s", codepoint, (int)(p - prev), prev);
 
-    unsigned char characterToPrint = (unsigned char)text[n];
-    // Some tricks to handle UTF-8
-    if (characterToPrint == 194) continue;
-    if (c3seen) {
-      c3seen = false;
-      characterToPrint = characterToPrint + 0x40;
+    FT_Set_Transform(face, &matrix, &pen);
+    int glyphIndex = FT_Get_Char_Index(face, codepoint);
+    if (FT_Load_Glyph(face, glyphIndex, FT_LOAD_RENDER) == 0) {
+      if (render) {
+        renderFont(&slot->bitmap, slot->bitmap_left, my_target_height - slot->bitmap_top);
+      }
+      pen.x += slot->advance.x;
+      pen.y += slot->advance.y;
+      w += slot->advance.x / 64;
+      if ((int)slot->bitmap.rows > h) h = (int)slot->bitmap.rows;
     }
-    if (characterToPrint == 195) {
-      c3seen = true;
-      continue;
-    }
-
-    int glyphIndex = FT_Get_Char_Index(face, (characterToPrint));
-    error = FT_Load_Glyph(face, glyphIndex, FT_LOAD_RENDER);
-
-    if (error) {
-      // CDBError("unable toFT_Load_Char");
-      continue;
-    }
-    /* now, draw to our target surface (convert position) */
-    if (render) {
-      renderFont(&slot->bitmap, slot->bitmap_left, my_target_height - slot->bitmap_top);
-    }
-    /* increment pen position */
-
-    if (int(slot->bitmap.rows) > h) h = (int)slot->bitmap.rows;
-
-    pen.x += slot->advance.x;
-    pen.y += slot->advance.y;
-    w += slot->advance.x / 64;
   }
+
   return 0;
 }
 
