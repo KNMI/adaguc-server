@@ -1,12 +1,21 @@
-**Version 4.?.? - ?**
+**Version 4.0.0 - 2025-07-01**
 
-- Breaking change: added script (Docker/start_autosync.sh) to autosync layermetadata store. Docker compose starts related container.
-- Added option ADAGUC_TRACE_TIMINGS to measure the amount spent on db access, file reading and image generation.
-- GenericDataWarper has been refactored.
-- Prevent invalid filenames in tests
-- Added support for projection EPSG:3035
-- Legend font and contourline font has been changed, number alignments have been improved.
-- Echotoppen display can now have outlines
+* __Breaking change: added script (Docker/start_autosync.sh) to autosync layermetadata store. Docker compose starts related container @maartenplieger in https://github.com/KNMI/adaguc-server/pull/476__
+* Prevent invalid characters for filenames in tests by @maartenplieger in https://github.com/KNMI/adaguc-server/pull/466
+* Made filenames for volscan and wms tests unique by @maartenplieger in https://github.com/KNMI/adaguc-server/pull/468
+* Fix for memleak when using variable rename (and two other small ones) by @lukas-phaf in https://github.com/KNMI/adaguc-server/pull/470
+* Update dependabot/pip/urllib3-2.5.0 by @maartenplieger in https://github.com/KNMI/adaguc-server/pull/474
+* Point text outline by @loescornelis in https://github.com/KNMI/adaguc-server/pull/471
+* Added trace option which outputs into response header. by @maartenplieger in https://github.com/KNMI/adaguc-server/pull/469
+* Updated readme by @loescornelis in https://github.com/KNMI/adaguc-server/pull/472
+* Added test for jacobian transformations by @maartenplieger in https://github.com/KNMI/adaguc-server/pull/475
+* Refactored generic data warper by @maartenplieger in https://github.com/KNMI/adaguc-server/pull/467
+* Slightly clean up X-macro magic by @lukas-phaf in https://github.com/KNMI/adaguc-server/pull/480
+* Added support for projection EPSG:3035 by @maartenplieger in https://github.com/KNMI/adaguc-server/pull/481
+* More edr locations by @ernstdevreede in https://github.com/KNMI/adaguc-server/pull/483
+* Added tests for multiple dini points for jacobian transformation by @maartenplieger in https://github.com/KNMI/adaguc-server/pull/482
+* Number alignment and other legend improvements by @belentorrente in https://github.com/KNMI/adaguc-server/pull/477
+
 
 **Version 3.1.1. 2025-06-05**
 
