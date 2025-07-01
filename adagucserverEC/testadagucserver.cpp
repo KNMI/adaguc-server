@@ -4,6 +4,10 @@
 #include "CTString.h"
 #include "CImageWarper.h"
 #include "CImgRenderFieldVectors.h"
+#include "f8vector.h"
+
+// To test this file do in the ./bin folder of adaguc-server:
+// cmake --build . --config Debug --target testadagucserver -j 10 -- && ctest --verbose
 
 DEF_ERRORMAIN()
 
@@ -111,6 +115,7 @@ TEST(radians, CImageWarper) {
   CHECK(projStringOut == projStringIn);
 }
 
+// From DINI point to latlon
 TEST(CImgRenderFieldVectors, jacobianTransformUWCWDini) {
   CT::string crs = "+proj=ob_tran +o_proj=longlat +lon_0=-8.0 +o_lat_p=35.0 +o_lon_p=0.0 +a=6367470 +e=0 +no_defs";
 
@@ -145,14 +150,14 @@ TEST(CImgRenderFieldVectors, jacobianTransformUWCWDini) {
   DOUBLES_EQUAL(gridCoordLRtoLatLon.y, 56.432904, 0.001);
 
   f8component compGridRel = jacobianTransform(speedVector, gridCoordUL, gridCoordLR, &warper, true);
-  CDBDebug("compGridRel %f %f %f %f", compGridRel.u, compGridRel.v, compGridRel.magnitude(), compGridRel.direction());
+  // CDBDebug("compGridRel %f %f %f %f", compGridRel.u, compGridRel.v, compGridRel.magnitude(), compGridRel.direction());
   DOUBLES_EQUAL(compGridRel.u, -6.099962, 0.001);
   DOUBLES_EQUAL(compGridRel.v, 4.410759, 0.001);
   DOUBLES_EQUAL(compGridRel.magnitude(), 7.527571, 0.001);
   DOUBLES_EQUAL(compGridRel.direction(), 2.515544, 0.001);
 
   f8component compNoGridRel = jacobianTransform(speedVector, gridCoordUL, gridCoordLR, &warper, false);
-  CDBDebug("compNoGridRel %f %f %f %f", compNoGridRel.u, compNoGridRel.v, compNoGridRel.magnitude(), compNoGridRel.direction());
+  // CDBDebug("compNoGridRel %f %f %f %f", compNoGridRel.u, compNoGridRel.v, compNoGridRel.magnitude(), compNoGridRel.direction());
   DOUBLES_EQUAL(compNoGridRel.u, -6.222803, 0.001);
   DOUBLES_EQUAL(compNoGridRel.v, 4.235688, 0.001);
   DOUBLES_EQUAL(compNoGridRel.magnitude(), 7.527571, 0.001);
@@ -166,6 +171,7 @@ TEST(CImgRenderFieldVectors, jacobianTransformUWCWDini) {
   DOUBLES_EQUAL(speedVector.direction(), compNoGridRel.direction(), 0.001);
 }
 
+// From latlon to latlon
 TEST(CImgRenderFieldVectors, jacobianTransformLatLon) {
   CT::string crs = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs";
 
@@ -191,7 +197,6 @@ TEST(CImgRenderFieldVectors, jacobianTransformLatLon) {
   // Check if projection transformation from model to latlon works:
   f8point gridCoordULtoLatLon = gridCoordUL;
   warper.reprojModelToLatLon(gridCoordULtoLatLon);
-  CDBDebug("!");
   DOUBLES_EQUAL(gridCoordULtoLatLon.x, 1.1, 0.001);
   DOUBLES_EQUAL(gridCoordULtoLatLon.y, 1.4, 0.001);
 
@@ -201,14 +206,14 @@ TEST(CImgRenderFieldVectors, jacobianTransformLatLon) {
   DOUBLES_EQUAL(gridCoordLRtoLatLon.y, 1.45, 0.001);
 
   f8component compGridRel = jacobianTransform(speedVector, gridCoordUL, gridCoordLR, &warper, true);
-  CDBDebug("compGridRel %f %f %f %f", compGridRel.u, compGridRel.v, compGridRel.magnitude(), compGridRel.direction());
+  // CDBDebug("compGridRel %f %f %f %f", compGridRel.u, compGridRel.v, compGridRel.magnitude(), compGridRel.direction());
   DOUBLES_EQUAL(compGridRel.u, -6.224651, 0.001);
   DOUBLES_EQUAL(compGridRel.v, 4.232972, 0.001);
   DOUBLES_EQUAL(compGridRel.magnitude(), 7.527571, 0.001);
   DOUBLES_EQUAL(compGridRel.direction(), 2.544393, 0.001);
 
   f8component compNoGridRel = jacobianTransform(speedVector, gridCoordUL, gridCoordLR, &warper, false);
-  CDBDebug("compNoGridRel %f %f %f %f", compNoGridRel.u, compNoGridRel.v, compNoGridRel.magnitude(), compNoGridRel.direction());
+  // CDBDebug("compNoGridRel %f %f %f %f", compNoGridRel.u, compNoGridRel.v, compNoGridRel.magnitude(), compNoGridRel.direction());
   DOUBLES_EQUAL(compNoGridRel.u, -6.222803, 0.001);
   DOUBLES_EQUAL(compNoGridRel.v, 4.235688, 0.001);
   DOUBLES_EQUAL(compNoGridRel.magnitude(), 7.527571, 0.001);
@@ -220,4 +225,51 @@ TEST(CImgRenderFieldVectors, jacobianTransformLatLon) {
 
   // Direction for non grid rel should be the same
   DOUBLES_EQUAL(speedVector.direction(), compNoGridRel.direction(), 0.001);
+}
+
+f8component testDiniCoordinate(f8point pointToCheck, f8component speedVector) {
+  CT::string crs = "+proj=ob_tran +o_proj=longlat +lon_0=-8.0 +o_lat_p=35.0 +o_lon_p=0.0 +a=6367470 +e=0 +no_defs";
+
+  CGeoParams geo;
+  geo.CRS = crs;
+  std::vector<CServerConfig::XMLE_Projection *> v;
+
+  // Init warper
+  CImageWarper warper;
+  warper.initreproj(crs.c_str(), &geo, &v);
+
+  double cellSize = 0.05;
+  f8point gridCoordUL = {.x = pointToCheck.x, .y = pointToCheck.y};
+  f8point gridCoordLR = {.x = pointToCheck.x + cellSize, .y = pointToCheck.y + cellSize};
+
+  // Make speed vector
+
+  // Check if projection transformation from model to latlon works:
+  f8point gridCoordULtoLatLon = gridCoordUL;
+  warper.reprojModelToLatLon(gridCoordULtoLatLon);
+
+  f8point gridCoordLRtoLatLon = gridCoordLR;
+  warper.reprojModelToLatLon(gridCoordLRtoLatLon);
+
+  f8component compGridRel = jacobianTransform(speedVector, gridCoordUL, gridCoordLR, &warper, true);
+  return compGridRel;
+}
+
+// CHECK a more dini points
+TEST(CImgRenderFieldVectors, jacobianTransformUWCWDiniMultiplePoints) {
+  auto resultA = testDiniCoordinate({.x = 1.1, .y = 1.4}, {.u = -6.222803, .v = 4.235688});
+  DOUBLES_EQUAL(resultA.u, -6.099962, 0.001);
+  DOUBLES_EQUAL(resultA.v, 4.410759, 0.001);
+
+  auto resultB = testDiniCoordinate({.x = -13.5, .y = -13.6}, {.u = -6.222803, .v = 4.235688});
+  DOUBLES_EQUAL(resultB.u, -7.080669, 0.001);
+  DOUBLES_EQUAL(resultB.v, 2.555084, 0.001);
+
+  auto resultC = testDiniCoordinate({.x = -13.5, .y = 14.55}, {.u = -6.222803, .v = 4.235688});
+  DOUBLES_EQUAL(resultC.u, -7.487193, 0.001);
+  DOUBLES_EQUAL(resultC.v, 0.778638, 0.001);
+
+  auto resultD = testDiniCoordinate({.x = 20.25, .y = 14.55}, {.u = -6.222803, .v = 4.235688});
+  DOUBLES_EQUAL(resultD.u, -2.288372, 0.001);
+  DOUBLES_EQUAL(resultD.v, 7.171310, 0.001);
 }
