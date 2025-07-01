@@ -1,0 +1,272 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "id": "EDDF",
+            "properties": {
+                "name": "Frankfurt am Main Airport"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    8.570556,
+                    50.033333
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "EDDH",
+            "properties": {
+                "name": "Hamburg Airport"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    9.9882297515869,
+                    53.630401611328
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "EDDK",
+            "properties": {
+                "name": "Cologne Bonn Airport"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    7.1427397728,
+                    50.8658981323
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "EFHK",
+            "properties": {
+                "name": "Helsinki Vantaa Airport"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    24.963300704956,
+                    60.317199707031
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "EGLL",
+            "properties": {
+                "name": "London Heathrow Airport"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -0.461941,
+                    51.4706
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "EHAM",
+            "properties": {
+                "name": "Amsterdam Airport Schiphol"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    4.76389,
+                    52.308601
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "EHEH",
+            "properties": {
+                "name": "Eindhoven Airport"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    5.37452983856,
+                    51.4500999451
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "ENGM",
+            "properties": {
+                "name": "Oslo Gardermoen Airport"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    11.100399971008,
+                    60.193901062012
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "LFPG",
+            "properties": {
+                "name": "Charles de Gaulle International Airport"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    2.55,
+                    49.012798
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "EHBK",
+            "properties": {
+                "name": "Maastricht Aachen Airport"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    5.77014,
+                    50.911701
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "EHTW",
+            "properties": {
+                "name": "Twente Airport"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    6.889167,
+                    52.275833
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "EHGG",
+            "properties": {
+                "name": "Eelde Airport"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    6.57944011688,
+                    53.1197013855
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "EHKD",
+            "properties": {
+                "name": "De Kooy"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    4.781111240386963,
+                    52.926944732666016
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "EHDB",
+            "properties": {
+                "name": "De Bilt"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    5.179722309112549,
+                    52.0988883972168
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "EHLW",
+            "properties": {
+                "name": "Vliegbasis Leeuwarden"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    5.75166654586792,
+                    53.22305679321289
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "EHFS",
+            "properties": {
+                "name": "Vlissingen"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    3.5958333015441895,
+                    51.44138717651367
+                ]
+            }
+        },
+                {
+            "type": "Feature",
+            "id": "TNCB",
+            "properties": {
+                "name": "Bonaire"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -68.26850128173828,
+                    12.130999565124512
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "TNCS",
+            "properties": {
+                "name": "Saba"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -63.220001220703125,
+                    17.645000457763672
+
+                ]
+            }
+        },
+                {
+            "type": "Feature",
+            "id": "TNCE",
+            "properties": {
+                "name": "St. Eustatius"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -62.97944444444445,
+                    17.49638888888889
+                ]
+            }
+        }
+    ]
+}
