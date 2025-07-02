@@ -273,3 +273,25 @@ TEST(CImgRenderFieldVectors, jacobianTransformUWCWDiniMultiplePoints) {
   DOUBLES_EQUAL(resultD.u, -2.288372, 0.001);
   DOUBLES_EQUAL(resultD.v, 7.171310, 0.001);
 }
+
+TEST(CProj4ToCF, azimuthal_equidistant) {
+  CProj4ToCF proj4ToCF;
+  CDF::Variable var;
+  var.setName("azimuthal_equidistant");
+  var.setAttributeText("grid_mapping_name", "azimuthal_equidistant");
+  double longitude_of_projection_origin = 174.7;
+  double latitude_of_projection_origin = -41.2;
+  double earth_radius = 6370997.0;
+  double false_easting = 0.;
+  double false_northing = 0.;
+  var.setAttribute("longitude_of_projection_origin", CDF_DOUBLE, &longitude_of_projection_origin, 1);
+  var.setAttribute("latitude_of_projection_origin", CDF_DOUBLE, &latitude_of_projection_origin, 1);
+  var.setAttribute("earth_radius", CDF_DOUBLE, &earth_radius, 1);
+  var.setAttribute("false_easting", CDF_DOUBLE, &false_easting, 1);
+  var.setAttribute("false_northing", CDF_DOUBLE, &false_northing, 1);
+  CT::string projString = proj4ToCF.convertCFToProj(&var);
+  CDBDebug("projString [%s]", projString.c_str());
+
+  CT::string expected = "+proj=aeqd +lat_0=-41.200000 +lon_0=174.700000 +k_0=1.0 +x_0=0.000000 +y_0=0.000000 +a=6378140.000000 +b=6378140.000000 ";
+  CHECK(projString == expected);
+}

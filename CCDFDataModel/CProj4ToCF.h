@@ -65,6 +65,7 @@ private:
   void initTransverseMercator(CDF::Variable *projectionVariable, std::vector<CProj4ToCF::KVP *> projKVPList);
   void initLAEAPerspective(CDF::Variable *projectionVariable, std::vector<KVP *> projKVPList);
   void initGeosPerspective(CDF::Variable *projectionVariable, std::vector<KVP *> projKVPList);
+  void initAEQDPerspective(CDF::Variable *projectionVariable, std::vector<KVP *> projKVPList);
 
   int convertBackAndFort(const char *projString, CDF::Variable *projectionVariable);
 
@@ -87,10 +88,9 @@ public:
   /**
    * Converts a CF projection variable to a proj4 stringtring to CF mappings
    * @param projectionVariable The variable with CF projection attributes to convert to the proj4 string
-   * @param proj4String The proj4 string which will contain the new proj string after conversion is finished
-   * @return Zero on succes and nonzero on failure
+   * @return The proj4 string which will contain the new proj string after conversion is finished or empty if an error occured
    */
-  int convertCFToProj(CDF::Variable *projectionVariable, CT::string *proj4String);
+  CT::string convertCFToProj(CDF::Variable *projectionVariable);
 
   int __checkProjString(const char *name, const char *string);
   /**
