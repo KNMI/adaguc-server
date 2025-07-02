@@ -300,6 +300,58 @@ int CCairoPlotter::getTextSize(int &w, int &h, float angle, const char *text) {
   return 0;
 }
 
+// Aux function to support unicode characters (such as en dash)
+// A character is represented by a variable number of bytes (1 to 4)
+// First byte indicates the length
+// The pattern is identified through massk
+//   - 1 byte (ASCII), top bit must be 0.
+//   - 2 bytes (mask: 0xE0, match 0xC0)
+//   - 3 bytes (mask: 0xF0, match 0xE0)
+//   - 4 bytes (not supported by this function)
+const char *decode_utf8_char(const char *p, const char *end, uint32_t *out_char) {
+  unsigned char c = (unsigned char)*p;
+
+  // Case where the pointer is not valid
+  if (p >= end) {
+    *out_char = '?';
+    return p;
+  }
+
+  if (c < 0x80) {
+    // 1 byte (ASCII)
+    *out_char = c;
+    return p + 1;
+  }
+
+  if ((c & 0xE0) == 0xC0 && (p[1] & 0xC0) == 0x80) {
+    // 2 bytes
+
+    if (p + 1 >= end) {
+      *out_char = '?';
+      return p + 1;
+    }
+
+    *out_char = ((c & 0x1F) << 6) | (p[1] & 0x3F);
+    return p + 2;
+  }
+
+  if ((c & 0xF0) == 0xE0 && (p[1] & 0xC0) == 0x80 && (p[2] & 0xC0) == 0x80) {
+    // 2 bytes
+
+    if (p + 2 >= end) {
+      *out_char = '?';
+      return p + 1;
+    }
+
+    *out_char = ((c & 0x0F) << 12) | ((p[1] & 0x3F) << 6) | (p[2] & 0x3F);
+    return p + 3;
+  }
+
+  // Default case (error or unsupported)
+  *out_char = '?';
+  return p + 1;
+}
+
 int CCairoPlotter::drawAnchoredText(int x, int y, float angle, const char *text, int anchor) {
   int w = 0, h = 0;
   // getTextSize(w, h, angle, text);

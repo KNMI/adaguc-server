@@ -2,7 +2,7 @@
 <Configuration>
   <!-- Custom styles -->
   <Style name="shadedstylefast">
-    <ShadeInterval min="-8" max="-7" fillcolor="#08387b" bgcolor="#FF000080" />
+    <ShadeInterval min="-80" max="-7" fillcolor="#08387b" bgcolor="#FF000080" />
     <ShadeInterval min="-7" max="-6" fillcolor="#084584" />
     <ShadeInterval min="-6" max="-5" fillcolor="#105184" />
     <ShadeInterval min="-5" max="-4" fillcolor="#105D84" />
@@ -61,7 +61,7 @@
 
 
   <Style name="shadedstyleprecise">
-    <ShadeInterval min="-8" max="-7" fillcolor="#08387b" bgcolor="#FF000080" />
+    <ShadeInterval min="-80" max="-7" fillcolor="#08387b" bgcolor="#FF000080" />
     <ShadeInterval min="-7" max="-6" fillcolor="#084584" />
     <ShadeInterval min="-6" max="-5" fillcolor="#105184" />
     <ShadeInterval min="-5" max="-4" fillcolor="#105D84" />

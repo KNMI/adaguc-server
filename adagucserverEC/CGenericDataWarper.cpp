@@ -407,8 +407,8 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
   return 0;
 }
 
-#define ENUMERATE_CDFTYPE(CDFTYPE, CPPTYPE)                                                                                                                                                            \
+#define SPECIALIZE_TEMPLATE(CDFTYPE, CPPTYPE)                                                                                                                                                          \
   template int GenericDataWarper::render<CPPTYPE>(CImageWarper * warper, void *_sourceData, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams,                                                    \
                                                   const std::function<void(int, int, CPPTYPE, GDWState &warperState)> &drawFunction);
-ENUMERATE_CDFTYPES
-#undef ENUMERATE_CDFTYPE
+ENUMERATE_OVER_CDFTYPES(SPECIALIZE_TEMPLATE)
+#undef SPECIALIZE_TEMPLATE

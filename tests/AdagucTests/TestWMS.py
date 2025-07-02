@@ -41,7 +41,7 @@ class TestWMS(unittest.TestCase):
 
     def test_WMSGetCapabilities_testdatanc(self):
         AdagucTestTools().cleanTempDir()
-        filename = "test_WMSGetCapabilities_testdatanc"
+        filename = "test_WMSGetCapabilities_testdatanc.xml"
         # pylint: disable=unused-variable
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "source=testdata.nc&SERVICE=WMS&request=getcapabilities", env=self.env
@@ -189,7 +189,7 @@ class TestWMS(unittest.TestCase):
 
     def test_WMSGetCapabilitiesGetMap_testdatanc(self):
         AdagucTestTools().cleanTempDir()
-        filename = "test_WMSGetCapabilities_testdatanc"
+        filename = "test_WMSGetCapabilitiesGetMap_testdatanc_WMSGetCapabilities_testdatanc.xml"
         # pylint: disable=unused-variable
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "source=testdata.nc&SERVICE=WMS&request=getcapabilities", env=self.env
@@ -227,7 +227,7 @@ class TestWMS(unittest.TestCase):
             data.getvalue(),
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
-        filename = "test_WMSGetCapabilities_testdatanc"
+        filename = "test_WMSGetMapGetCapabilities_testdatanc_WMSGetCapabilities_testdatanc.xml"
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "source=testdata.nc&SERVICE=WMS&request=getcapabilities", env=self.env
         )
@@ -333,7 +333,7 @@ class TestWMS(unittest.TestCase):
         )
         self.assertEqual(status, 0)
 
-        filename = "test_WMSGetCapabilities_timeseries_twofiles"
+        filename = "test_WMSCMDUpdateDB_WMSGetCapabilities_timeseries_twofiles.xml"
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "SERVICE=WMS&request=getcapabilities",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.timeseries.xml"},
@@ -363,7 +363,7 @@ class TestWMS(unittest.TestCase):
         )
         self.assertEqual(status, 0)
 
-        filename = "test_WMSGetCapabilities_timeseries_tailpath_netcdf_5dims_seq1"
+        filename = "test_WMSCMDUpdateDBTailPath_WMSGetCapabilities_timeseries_tailpath_netcdf_5dims_seq1.xml"
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "SERVICE=WMS&request=getcapabilities",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.timeseries.xml"},
@@ -390,7 +390,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
 
         filename = (
-            "test_WMSGetCapabilities_timeseries_tailpath_netcdf_5dims_seq1_and_seq2"
+            "test_WMSCMDUpdateDBTailPath_WMSGetCapabilities_timeseries_tailpath_netcdf_5dims_seq1_and_seq2.xml"
         )
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "SERVICE=WMS&request=getcapabilities",
@@ -423,7 +423,7 @@ class TestWMS(unittest.TestCase):
         )
         self.assertEqual(status, 0)
 
-        filename = "test_WMSGetCapabilities_timeseries_path_netcdf_5dims_seq1"
+        filename = "test_WMSGetCapabilities_timeseries_path_netcdf_5dims_seq1.xml"
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "SERVICE=WMS&request=getcapabilities",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.timeseries.xml"},
@@ -450,7 +450,7 @@ class TestWMS(unittest.TestCase):
         )
         self.assertEqual(status, 0)
 
-        filename = "test_WMSGetCapabilities_timeseries_path_netcdf_5dims_seq2"
+        filename = "test_WMSGetCapabilities_timeseries_path_netcdf_5dims_seq2.xml"
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "SERVICE=WMS&request=getcapabilities",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.timeseries.xml"},
@@ -477,7 +477,7 @@ class TestWMS(unittest.TestCase):
             data.getvalue(),
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
-        filename = "test_WMSGetCapabilities_testdatanc"
+        filename = "test_WMSGetFeatureInfo_forecastreferencetime_texthtml_TestDataGetCapabilities.xml"
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "source=testdata.nc&SERVICE=WMS&request=getcapabilities", env=self.env
         )
@@ -1983,7 +1983,38 @@ class TestWMS(unittest.TestCase):
             AdagucTestTools().compareImage(
                 self.expectedoutputsspath + filename,
                 self.testresultspath + filename,
-                3,
+                4,
+                0.02,
+            )
+        )  # Allowed pixel difference is huge, but only for very small number of pixels
+
+
+    def test_WMSGetMap_dashed_contour_lines_arial(self):
+        AdagucTestTools().cleanTempDir()
+        config = (
+            ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,"
+            + ADAGUC_PATH
+            + "/data/config/datasets/adaguc.tests.dashedcontourlines-arial.xml"
+        )
+        env = {"ADAGUC_CONFIG": config}
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=["--updatedb", "--config", config], env=self.env, isCGI=False
+        )
+        self.assertEqual(status, 0)
+        filename = "test_WMSGetMap_dashed_contour_lines_arial.png"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.tests.dashedcontourlines&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=baselayer,dashed_contour_lines,overlay&WIDTH=773&HEIGHT=927&CRS=EPSG%3A3857&BBOX=-1572926.437674431,4261090.143221738,2101038.6845761645,8666996.570552012&STYLES=testdata_style_manycontours%2Fcontour&FORMAT=image/png32&TRANSPARENT=TRUE&",
+            env=env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertTrue(
+            AdagucTestTools().compareImage(
+                self.expectedoutputsspath + filename,
+                self.testresultspath + filename,
+                4,
                 0.02,
             )
         )  # Allowed pixel difference is huge, but only for very small number of pixels

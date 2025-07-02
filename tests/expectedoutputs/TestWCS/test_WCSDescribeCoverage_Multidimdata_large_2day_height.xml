@@ -39,6 +39,10 @@
           <gml:pos>-288940224.722197 -561625982.106351</gml:pos>
           <gml:pos>266207703.868375 1005853853.334681</gml:pos>
         </gml:Envelope>
+        <gml:Envelope srsName="EPSG:3035">
+          <gml:pos>-8372633.193470 -9376868.689841</gml:pos>
+          <gml:pos>17028983.298426 15670028.489115</gml:pos>
+        </gml:Envelope>
         <gml:Envelope srsName="EPSG:3067">
           <gml:pos>-15525733.593319 -19664133.594210</gml:pos>
           <gml:pos>17120498.212243 19885331.913357</gml:pos>
@@ -156,6 +160,7 @@
       <requestResponseCRSs>EPSG:25831</requestResponseCRSs>
       <requestResponseCRSs>EPSG:25832</requestResponseCRSs>
       <requestResponseCRSs>EPSG:28992</requestResponseCRSs>
+      <requestResponseCRSs>EPSG:3035</requestResponseCRSs>
       <requestResponseCRSs>EPSG:3067</requestResponseCRSs>
       <requestResponseCRSs>EPSG:32661</requestResponseCRSs>
       <requestResponseCRSs>EPSG:3411</requestResponseCRSs>

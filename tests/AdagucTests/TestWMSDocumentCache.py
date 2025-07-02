@@ -31,7 +31,7 @@ class TestWMSDocumentCache(unittest.TestCase):
         args=['--updatedb', '--config', config], env=self.env, isCGI=False)
     self.assertEqual(status, 0)
 
-    filename = "test_WMSGetCapabilities_timeseries_twofiles"
+    filename = "test_WMSGetCapabilities_timeseries_twofiles.xml"
     status, data, headers = AdagucTestTools().runADAGUCServer(
         "DATASET=adaguc.testtimeseriescached&SERVICE=WMS&request=getcapabilities", env=self.env)
     AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
@@ -53,7 +53,7 @@ class TestWMSDocumentCache(unittest.TestCase):
     self.assertEqual(status, 0)
 
     """ Check getcap """
-    filename = "test_WMSGetCapabilities_timeseries_tailpath_netcdf_5dims_seq1"
+    filename = "test_WMSGetCapabilities_timeseries_tailpath_netcdf_5dims_seq1.xml"
     status, data, headers = AdagucTestTools().runADAGUCServer(
         "DATASET=adaguc.testtimeseriescached&SERVICE=WMS&request=getcapabilities", env=self.env)
     AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
@@ -67,7 +67,7 @@ class TestWMSDocumentCache(unittest.TestCase):
     self.assertEqual(status, 0)
 
     """ And check if getcap was indeed updated """
-    filename = "test_WMSGetCapabilities_timeseries_tailpath_netcdf_5dims_seq1_and_seq2"
+    filename = "test_WMSGetCapabilities_timeseries_tailpath_netcdf_5dims_seq1_and_seq2.xml"
     status, data, headers = AdagucTestTools().runADAGUCServer(
         "DATASET=adaguc.testtimeseriescached&SERVICE=WMS&request=getcapabilities", env=self.env)
     AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())

@@ -889,22 +889,23 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         GDWArgs args = {.warper = &warper, .sourceData = sourceData, .sourceGeoParams = &sourceGeo, .destGeoParams = srvParam->Geo};
         auto dataType = variable->getType();
 
-#define ENUMERATE_CDFTYPE(CDFTYPE, CPPTYPE)                                                                                                                                                            \
-  if (dataType == CDFTYPE)                                                                                                                                                                             \
-    genericDataWarper.render<CPPTYPE>(args, [&settings](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction_nearest<CPPTYPE>(x, y, val, warperState, settings); });
-        ENUMERATE_CDFTYPES
-#undef ENUMERATE_CDFTYPE
+#define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                            \
+      if (dataType == CDFTYPE)                                                                                                                                                              \
+        genericDataWarper.render<CPPTYPE>(args, [&settings](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction_nearest<CPPTYPE>(x, y, val, warperState, settings); });
+ENUMERATE_OVER_CDFTYPES(RENDER)
+#undef RENDER
       }
 
       if (drawFunctionMode == CNetCDFDataWriter_AVG_RGB) {
         GenericDataWarper genericDataWarper;
         GDWArgs args = {.warper = &warper, .sourceData = sourceData, .sourceGeoParams = &sourceGeo, .destGeoParams = srvParam->Geo};
         auto dataType = variable->getType();
-#define ENUMERATE_CDFTYPE(CDFTYPE, CPPTYPE)                                                                                                                                                            \
-  if (dataType == CDFTYPE)                                                                                                                                                                             \
-    genericDataWarper.render<CPPTYPE>(args, [&settings](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction_avg_rgb<CPPTYPE>(x, y, val, warperState, settings); });
-        ENUMERATE_CDFTYPES
-#undef ENUMERATE_CDFTYPE
+
+#define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                            \
+      if (dataType == CDFTYPE)                                                                                                                                                              \
+        genericDataWarper.render<CPPTYPE>(args, [&settings](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction_avg_rgb<CPPTYPE>(x, y, val, warperState, settings); });
+ENUMERATE_OVER_CDFTYPES(RENDER)
+#undef RENDER
       }
 
       reader.close();

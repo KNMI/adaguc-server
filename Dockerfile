@@ -6,7 +6,7 @@ USER root
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
-LABEL version="3.1.2"
+LABEL version="4.0.0"
 
 # Try to update image packages
 RUN apt-get -q -y update \
@@ -129,6 +129,8 @@ COPY ./scripts/*.sh /adaguc/
 COPY ./Docker/pgbouncer/ /adaguc/pgbouncer/
 COPY ./Docker/supervisord/ /etc/supervisor/conf.d/
 COPY ./Docker/run_supervisord.sh /adaguc/run_supervisord.sh
+COPY ./Docker/start_autosync.sh /adaguc/start_autosync.sh
+
 # Set permissions
 RUN  chmod +x /adaguc/*.sh && \
     chmod +x /adaguc/adaguc-server-master/scripts/*.sh && \

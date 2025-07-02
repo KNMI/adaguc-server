@@ -96,7 +96,7 @@ class TestWMSTimeSeries(unittest.TestCase):
             data.getvalue(),
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
-        filename = "test_WMSGetCapabilities_testdatanc.xml"
+        filename = "test_WMSGetFeatureInfo_timeseries_forecastreferencetime_json_WMSGetCapabilities_testdatanc.xml"
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "source=testdata.nc&SERVICE=WMS&request=getcapabilities", env=self.env
         )

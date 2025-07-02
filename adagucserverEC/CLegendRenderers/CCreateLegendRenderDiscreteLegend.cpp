@@ -462,7 +462,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
 
         // Draw as 3 columns (min dash max)
         legendImage->drawText(textXMin, textY, fontLocation.c_str(), fontSize * scaling, 0, minText, 248);
-        legendImage->drawText(textXMax - 2 * numberWidth, textY, fontLocation.c_str(), fontSize * scaling, 0, "–", 248);
+        legendImage->drawText(columnXMax - 2 * numberWidth, textY, fontLocation.c_str(), fontSize * scaling, 0, "–", 248);
         legendImage->drawText(textXMax, textY, fontLocation.c_str(), fontSize * scaling, 0, maxText, 248);
       }
     }
