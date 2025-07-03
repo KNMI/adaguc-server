@@ -58,7 +58,7 @@ async def get_locations_for_collection(coll: str):
                     locations_for_coll.append(location)
         return locations_for_coll
     except KeyError:
-        logger.error("failed to get collection specific locations, returning all: %s")
+        logger.error("failed to get collection specific locations, returning all")
         return get_edr_locations()
 
 
