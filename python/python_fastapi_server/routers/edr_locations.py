@@ -7,7 +7,7 @@ Author: Ernst de Vreede, 2023-11-23
 
 KNMI
 """
-
+import functools
 import logging
 import os
 import json
@@ -21,31 +21,26 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 logger.debug("Starting EDR")
 
-GLOBAL_LOCATIONS = []
 
-
+@functools.lru_cache(maxsize=1)
 def get_edr_locations():
-    global GLOBAL_LOCATIONS
-    if len(GLOBAL_LOCATIONS) > 0:
-        return GLOBAL_LOCATIONS
-
     locations_file_path = os.path.join(
         os.environ.get("ADAGUC_PATH"),
         "data/resources/locations/global_edr_locations.geojson",
     )
 
-    GLOBAL_LOCATIONS = []
+    all_locations = []
     try:
         with open(locations_file_path, "r", encoding="utf-8") as loc_f:
             feature_collection = json.load(loc_f)
-            GLOBAL_LOCATIONS = feature_collection["features"]
+            all_locations = feature_collection["features"]
     except OSError:
         logger.error("failed opening: %s", locations_file_path)
     except ValueError:
         logger.error("failed parsing: %s", locations_file_path)
     except KeyError:
         logger.error("no features found: %s", locations_file_path)
-    return GLOBAL_LOCATIONS
+    return all_locations
 
 
 async def get_locations_for_collection(coll: str):
@@ -53,15 +48,18 @@ async def get_locations_for_collection(coll: str):
 
     locations_for_coll = []
     try:
-        bbox = metadata[coll][next(iter(metadata[coll]))]["layer"].get("latlonbox")
+        # We take the bbox from the first layer
+        bbox = next(iter(metadata[coll].values()))["layer"].get("latlonbox")
         for location in get_edr_locations():
             coords = location["geometry"]["coordinates"]
-            if coords[1] >= bbox[1] and coords[1] <= bbox[3]:
-                if coords[0] >= bbox[0] and coords[0] <= bbox[2]:
+            left, bottom, right, top = bbox
+            if bottom <= coords[1] <= top:
+                if left <= coords[0] <= right:
                     locations_for_coll.append(location)
         return locations_for_coll
     except KeyError:
-        return GLOBAL_LOCATIONS
+        logger.error("failed to get collection specific locations, returning all: %s")
+        return get_edr_locations()
 
 
 @router.get("/collections/{coll}/locations")
