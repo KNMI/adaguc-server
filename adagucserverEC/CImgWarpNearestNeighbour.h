@@ -163,30 +163,28 @@ private:
 
     bool shade = false;
     if (styleConfiguration != NULL) {
-      if (styleConfiguration->shadeIntervals != NULL) {
-        if (styleConfiguration->shadeIntervals->size() > 0) {
-          shade = true;
-        }
+      if (styleConfiguration->shadeIntervals.size() > 0) {
+        shade = true;
       }
     }
 
     if (shade) {
       /* TODO: make use of drawfunction as well, less code duplication */
-      int numShadeDefs = (int)styleConfiguration->shadeIntervals->size();
+      int numShadeDefs = (int)styleConfiguration->shadeIntervals.size();
       T shadeDefMin[numShadeDefs];
       T shadeDefMax[numShadeDefs];
       CColor fillColors[numShadeDefs];
       CColor bgColor;
       bool hasBgColor = false;
       for (int j = 0; j < numShadeDefs; j++) {
-        CServerConfig::XMLE_ShadeInterval *featureInterval = ((*styleConfiguration->shadeIntervals)[j]);
-        shadeDefMin[j] = (T)featureInterval->attr.min.toDouble();
-        shadeDefMax[j] = (T)featureInterval->attr.max.toDouble();
-        fillColors[j] = CColor(featureInterval->attr.fillcolor.c_str());
+        CServerConfig::XMLE_ShadeInterval *shadeInterval = ((styleConfiguration->shadeIntervals)[j]);
+        shadeDefMin[j] = (T)shadeInterval->attr.min.toDouble();
+        shadeDefMax[j] = (T)shadeInterval->attr.max.toDouble();
+        fillColors[j] = CColor(shadeInterval->attr.fillcolor.c_str());
         if (j == 0) {
-          if (featureInterval->attr.bgcolor.empty() == false) {
+          if (shadeInterval->attr.bgcolor.empty() == false) {
             hasBgColor = true;
-            bgColor = CColor(featureInterval->attr.bgcolor.c_str());
+            bgColor = CColor(shadeInterval->attr.bgcolor.c_str());
           }
         }
       }
@@ -371,9 +369,6 @@ private:
     if (renderSettings == 0 && dataSource->dWidth * dataSource->dHeight < 700 * 700) {
       usePrecise = true;
     }
-    if (styleConfiguration->renderMethod & RM_AVG_RGBA) {
-      usePrecise = true;
-    }
     if (dataSource->cfgLayer->TileSettings.size() == 1) {
       usePrecise = false;
     }
@@ -386,27 +381,6 @@ private:
     if (usePrecise) {
 
       CDrawFunctionSettings settings = getDrawFunctionSettings(dataSource, drawImage, styleConfiguration);
-
-      if (styleConfiguration->renderMethod & RM_AVG_RGBA) {
-
-        pthread_mutex_lock(&CImgWarpNearestNeighbour_render_lock);
-        settings.drawImage->trueColorAVG_RGBA = true;
-        size_t size = settings.drawImage->Geo->dWidth * settings.drawImage->Geo->dHeight;
-        if (settings.drawImage->rField == NULL) {
-          CDBDebug("Allocating fields");
-          settings.drawImage->rField = new float[size];
-          settings.drawImage->gField = new float[size];
-          settings.drawImage->bField = new float[size];
-          settings.drawImage->numField = new int[size];
-          for (size_t j = 0; j < size; j++) {
-            settings.drawImage->rField[j] = 0;
-            settings.drawImage->gField[j] = 0;
-            settings.drawImage->bField[j] = 0;
-            settings.drawImage->numField[j] = 0;
-          }
-        }
-        pthread_mutex_unlock(&CImgWarpNearestNeighbour_render_lock);
-      }
 
       CDFType dataType = dataSource->getFirstAvailableDataObject()->cdfVariable->getType();
       void *sourceData = dataSource->getFirstAvailableDataObject()->cdfVariable->data;
@@ -425,9 +399,9 @@ private:
       GenericDataWarper genericDataWarper;
       GDWArgs args = {.warper = warper, .sourceData = sourceData, .sourceGeoParams = &sourceGeo, .destGeoParams = drawImage->Geo};
 
-#define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                            \
-      if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction(x, y, val, warperState, settings); });
-ENUMERATE_OVER_CDFTYPES(RENDER)
+#define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
+  if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction(x, y, val, warperState, settings); });
+      ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
 
       return;

@@ -168,8 +168,8 @@ add_library(
     CImgWarpBilinear.h
     CImgWarpBoolean.cpp
     CImgWarpBoolean.h
-    CImgWarpGeneric.cpp
-    CImgWarpGeneric.h
+    CImgWarpGeneric/CImgWarpGeneric.cpp
+    CImgWarpGeneric/CImgWarpGeneric.h
     CImgWarpHillShaded.cpp
     CImgWarpHillShaded.h
     CImgWarpNearestNeighbour.cpp
