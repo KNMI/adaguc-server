@@ -92,12 +92,12 @@ CT::string CStyleConfiguration::dump() {
     a++;
   }
   a = 0;
-  for (auto symbolInterval : (*symbolIntervals)) {
+  for (auto symbolInterval : symbolIntervals) {
     data.printconcat("symbolInterval %d) =  [%s] [%s]\n", a, symbolInterval->attr.min.c_str(), symbolInterval->attr.max.c_str());
     a++;
   }
   a = 0;
-  for (auto featureInterval : (*featureIntervals)) {
+  for (auto featureInterval : featureIntervals) {
     data.printconcat("featureInterval %d) =  [%s] [%s]\n", a, featureInterval->attr.fillcolor.c_str(), featureInterval->attr.label.c_str());
     a++;
   }
@@ -140,8 +140,8 @@ void parseStyleInfo(CStyleConfiguration *styleConfig, CDataSource *dataSource, i
   styleConfig->contourLines.insert(styleConfig->contourLines.end(), style->ContourLine.begin(), style->ContourLine.end());
   styleConfig->renderSettings.insert(styleConfig->renderSettings.end(), style->RenderSettings.begin(), style->RenderSettings.end());
   styleConfig->shadeIntervals.insert(styleConfig->shadeIntervals.end(), style->ShadeInterval.begin(), style->ShadeInterval.end());
-  styleConfig->symbolIntervals = &style->SymbolInterval;
-  styleConfig->featureIntervals = &style->FeatureInterval;
+  styleConfig->symbolIntervals.insert(styleConfig->symbolIntervals.end(), style->SymbolInterval.begin(), style->SymbolInterval.end());
+  styleConfig->featureIntervals.insert(styleConfig->featureIntervals.end(), style->FeatureInterval.begin(), style->FeatureInterval.end());
 
   if (style->Legend.size() > 0) {
     if (style->Legend[0]->attr.tickinterval.empty() == false) {
@@ -231,7 +231,7 @@ int CStyleConfiguration::makeStyleConfig(CDataSource *dataSource) {
     this->shadeIntervals.assign(layer->ShadeInterval.begin(), layer->ShadeInterval.end());
   }
   if (layer->FeatureInterval.size() > 0) {
-    this->featureIntervals = &layer->FeatureInterval;
+    this->featureIntervals.assign(layer->FeatureInterval.begin(), layer->FeatureInterval.end());
   }
 
   if (layer->Legend.size() > 0) {

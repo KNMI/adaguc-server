@@ -1202,57 +1202,57 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
   auto renderMethod = styleConfiguration->renderMethod;
 
   /** Apply FeatureInterval config */
-  if (styleConfiguration->featureIntervals != NULL) {
-    if (styleConfiguration->featureIntervals->size() > 0) {
-      int numFeatures = 0;
-      try {
-        numFeatures = dataSource->getFirstAvailableDataObject()->cdfObject->getDimension("features")->getSize();
-      } catch (int e) {
+
+  if (styleConfiguration->featureIntervals.size() > 0) {
+    int numFeatures = 0;
+    try {
+      numFeatures = dataSource->getFirstAvailableDataObject()->cdfObject->getDimension("features")->getSize();
+    } catch (int e) {
 #ifdef CIMAGEDATAWRITER_DEBUG
-        CDBDebug("Note: While configuring featureInterval: Unable to find features variable");
+      CDBDebug("Note: While configuring featureInterval: Unable to find features variable");
 #endif
-      }
-      if (numFeatures > 0) {
-        CT::string attributeValues[numFeatures];
-        /* Loop through all configured FeatureInterval elements */
-        for (size_t j = 0; j < styleConfiguration->featureIntervals->size(); j++) {
-          CServerConfig::XMLE_FeatureInterval *featureInterval = ((*styleConfiguration->featureIntervals)[j]);
-          if (featureInterval->attr.match.empty() == false && featureInterval->attr.matchid.empty() == false) {
-            /* Get the matchid attribute for the feature */
-            CT::string attributeName = featureInterval->attr.matchid;
-            for (int featureNr = 0; featureNr < numFeatures; featureNr++) {
-              attributeValues[featureNr] = "";
-              std::map<int, CFeature>::iterator feature = dataSource->getFirstAvailableDataObject()->features.find(featureNr);
-              if (feature != dataSource->getFirstAvailableDataObject()->features.end()) {
-                std::map<std::string, std::string>::iterator attributeValueItr = feature->second.paramMap.find(attributeName.c_str());
-                if (attributeValueItr != feature->second.paramMap.end()) {
-                  attributeValues[featureNr] = attributeValueItr->second.c_str();
-                }
+    }
+    if (numFeatures > 0) {
+      CT::string attributeValues[numFeatures];
+      /* Loop through all configured FeatureInterval elements */
+      for (size_t j = 0; j < styleConfiguration->featureIntervals.size(); j++) {
+        CServerConfig::XMLE_FeatureInterval *featureInterval = styleConfiguration->featureIntervals[j];
+        if (featureInterval->attr.match.empty() == false && featureInterval->attr.matchid.empty() == false) {
+          /* Get the matchid attribute for the feature */
+          CT::string attributeName = featureInterval->attr.matchid;
+          for (int featureNr = 0; featureNr < numFeatures; featureNr++) {
+            attributeValues[featureNr] = "";
+            std::map<int, CFeature>::iterator feature = dataSource->getFirstAvailableDataObject()->features.find(featureNr);
+            if (feature != dataSource->getFirstAvailableDataObject()->features.end()) {
+              std::map<std::string, std::string>::iterator attributeValueItr = feature->second.paramMap.find(attributeName.c_str());
+              if (attributeValueItr != feature->second.paramMap.end()) {
+                attributeValues[featureNr] = attributeValueItr->second.c_str();
               }
             }
-            if (featureInterval->attr.fillcolor.empty() == false) {
-              /*
-                Make a shade interval configuration based on the match and matchid properties in the GeoJSON.
-                The datafield is already populated with the feature indices of the geojson polygon.
-                The shadeinterval configuration can style these indices of the polygons with colors.
-                Actual rendering of this is done in CImageNearestNeighbour with the _plot function
-              */
-              std::vector<CImageDataWriter::IndexRange> ranges = getIndexRangesForRegex(featureInterval->attr.match, attributeValues, numFeatures);
-              for (size_t i = 0; i < ranges.size(); i++) {
-                CServerConfig::XMLE_ShadeInterval *shadeInterval = new CServerConfig::XMLE_ShadeInterval();
-                styleConfiguration->shadeIntervals.push_back(shadeInterval);
-                shadeInterval->attr.min.print("%d", ranges[i].min);
-                shadeInterval->attr.max.print("%d", ranges[i].max);
-                shadeInterval->attr.fillcolor = featureInterval->attr.fillcolor;
-                shadeInterval->attr.bgcolor = featureInterval->attr.bgcolor;
-                shadeInterval->attr.label = featureInterval->attr.label;
-              }
+          }
+          if (featureInterval->attr.fillcolor.empty() == false) {
+            /*
+              Make a shade interval configuration based on the match and matchid properties in the GeoJSON.
+              The datafield is already populated with the feature indices of the geojson polygon.
+              The shadeinterval configuration can style these indices of the polygons with colors.
+              Actual rendering of this is done in CImageNearestNeighbour with the _plot function
+            */
+            std::vector<CImageDataWriter::IndexRange> ranges = getIndexRangesForRegex(featureInterval->attr.match, attributeValues, numFeatures);
+            for (size_t i = 0; i < ranges.size(); i++) {
+              CServerConfig::XMLE_ShadeInterval *shadeInterval = new CServerConfig::XMLE_ShadeInterval();
+              styleConfiguration->shadeIntervals.push_back(shadeInterval);
+              shadeInterval->attr.min.print("%d", ranges[i].min);
+              shadeInterval->attr.max.print("%d", ranges[i].max);
+              shadeInterval->attr.fillcolor = featureInterval->attr.fillcolor;
+              shadeInterval->attr.bgcolor = featureInterval->attr.bgcolor;
+              shadeInterval->attr.label = featureInterval->attr.label;
             }
           }
         }
       }
     }
   }
+
   // Initialize projection algorithm
 #ifdef CIMAGEDATAWRITER_DEBUG
   CDBDebug("Thread[%d]: initreproj %s", dataSource->threadNr, dataSource->nativeProj4.c_str());

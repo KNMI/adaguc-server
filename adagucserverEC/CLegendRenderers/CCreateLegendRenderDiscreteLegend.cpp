@@ -2,6 +2,7 @@
 #include "CDataReader.h"
 #include "CImageDataWriter.h"
 #include "numericutils.h"
+#include <cstring>
 
 #define MIN_SHADE_CLASS_BLOCK_SIZE 3
 #define MAX_SHADE_CLASS_BLOCK_SIZE 12
@@ -217,7 +218,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
     definedLegendOnShadeClasses = true;
   }
 
-  if (styleConfiguration->featureIntervals->size() > 0) {
+  if (styleConfiguration->featureIntervals.size() > 0) {
     definedLegendForFeatures = true;
   }
 
@@ -342,9 +343,8 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
 
   if (definedLegendForFeatures) {
 
-    for (size_t j = 0; j < styleConfiguration->featureIntervals->size(); j++) {
-      CServerConfig::XMLE_FeatureInterval *s = (*styleConfiguration->featureIntervals)[j];
-      //         if(s->attr.min.empty()==false&&s->attr.max.empty()==false){
+    for (size_t j = 0; j < styleConfiguration->featureIntervals.size(); j++) {
+      CServerConfig::XMLE_FeatureInterval *s = styleConfiguration->featureIntervals[j];
       int cY1 = int(cbH - (j * 12));
       int cY2 = int(cbH - (((j + 1) * 12) - 2));
       CColor color;
