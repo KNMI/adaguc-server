@@ -27,46 +27,37 @@ class CDataSource;
 typedef unsigned int RenderMethod;
 CT::string getRenderMethodAsString(RenderMethod renderMethod);
 RenderMethod getRenderMethodFromString(const char *_renderMethodString);
-class CStyleConfiguration {
-private:
-  void parseStyleInfo(CDataSource *dataSource, int styleIndex, int depth = 0);
-  void _reset();
-
-public:
-  bool minMaxSet;
-  bool hasLegendValueRange;
-  bool hasError;
-  bool legendHasFixedMinMax; // True to fix the classes in the legend, False to determine automatically which values occur.
-  int smoothingFilter;
-  int legendIndex;
-  int styleIndex;
-  float shadeInterval;
-  float contourIntervalL;
-  float contourIntervalH;
-  float legendScale;
-  float legendOffset;
-  float legendLog;
-  float legendLowerRange;
-  float legendUpperRange; // Values in which values are visible (ValueRange)
-  double legendTickInterval;
-  double legendTickRound;
-  double minValue;
-  double maxValue;
+struct CStyleConfiguration {
+  bool minMaxSet = false;
+  bool hasLegendValueRange = false;
+  bool hasError = false;
+  bool legendHasFixedMinMax = false; // True to fix the classes in the legend, False to determine automatically which values occur.
+  int smoothingFilter = 0;
+  int legendIndex = -1;
+  int styleIndex = -1;
+  float shadeInterval = 0;
+  float contourIntervalL = 0;
+  float contourIntervalH = 0;
+  float legendScale = 0;
+  float legendOffset = 0;
+  float legendLog = 0.0f;
+  float legendLowerRange = 0;
+  float legendUpperRange = 0; // Values in which values are visible (ValueRange)
+  double legendTickInterval = 0;
+  double legendTickRound = 0.0;
+  double minValue = 0;
+  double maxValue = 0;
   RenderMethod renderMethod;
   CT::string legendName;
   CT::string styleCompositionName;
   CT::string styleTitle;
   CT::string styleAbstract;
-
   std::vector<CServerConfig::XMLE_ContourLine *> contourLines;
   std::vector<CServerConfig::XMLE_RenderSettings *> renderSettings;
   std::vector<CServerConfig::XMLE_ShadeInterval *> shadeIntervals;
-  std::vector<CServerConfig::XMLE_SymbolInterval *> *symbolIntervals;
-  std::vector<CServerConfig::XMLE_FeatureInterval *> *featureIntervals;
-
-  CServerConfig::XMLE_Style *styleConfig;
-
-  CStyleConfiguration();
+  std::vector<CServerConfig::XMLE_SymbolInterval *> *symbolIntervals = nullptr;   // TODO
+  std::vector<CServerConfig::XMLE_FeatureInterval *> *featureIntervals = nullptr; // TODO
+  CServerConfig::XMLE_Style *styleConfig = nullptr;
 
   /**
    * Outputs styleConfiguration as string

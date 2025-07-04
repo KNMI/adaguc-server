@@ -105,95 +105,63 @@ CT::string CStyleConfiguration::dump() {
   return data;
 }
 
-CStyleConfiguration::CStyleConfiguration() { _reset(); }
-
-void CStyleConfiguration::_reset() {
-  shadeInterval = 0;
-  contourIntervalL = 0;
-  contourIntervalH = 0;
-  legendScale = 1;
-  legendOffset = 0;
-  legendLog = 0.0f;
-  legendLowerRange = 0;
-  legendUpperRange = 0;
-  smoothingFilter = 0;
-  hasLegendValueRange = false;
-  hasError = false;
-  legendHasFixedMinMax = false;
-  legendTickInterval = 0;
-  legendTickRound = 0.0;
-  legendIndex = -1;
-  styleIndex = -1;
-  contourLines.clear();
-  renderSettings.clear();
-  shadeIntervals.clear();
-  featureIntervals = NULL;
-  symbolIntervals = NULL;
-  styleCompositionName = "";
-  styleTitle = "";
-  styleAbstract = "";
-  styleConfig = NULL;
-  minValue = 0;
-  maxValue = 0;
-}
-
-void CStyleConfiguration::parseStyleInfo(CDataSource *dataSource, int styleIndex, int depth) {
+void parseStyleInfo(CStyleConfiguration *styleConfig, CDataSource *dataSource, int styleIndex, int depth) {
   // Get info from style
   CServerConfig::XMLE_Style *style = dataSource->cfg->Style[styleIndex];
-  this->styleConfig = style;
-  if (style->Scale.size() > 0) this->legendScale = parseFloat(style->Scale[0]->value.c_str());
-  if (style->Offset.size() > 0) this->legendOffset = parseFloat(style->Offset[0]->value.c_str());
-  if (style->Log.size() > 0) this->legendLog = parseFloat(style->Log[0]->value.c_str());
+  styleConfig->styleConfig = style;
+  if (style->Scale.size() > 0) styleConfig->legendScale = parseFloat(style->Scale[0]->value.c_str());
+  if (style->Offset.size() > 0) styleConfig->legendOffset = parseFloat(style->Offset[0]->value.c_str());
+  if (style->Log.size() > 0) styleConfig->legendLog = parseFloat(style->Log[0]->value.c_str());
 
   if (style->ContourIntervalL.size() > 0) {
-    this->contourIntervalL = parseFloat(style->ContourIntervalL[0]->value.c_str());
-    this->shadeInterval = this->contourIntervalL;
+    styleConfig->contourIntervalL = parseFloat(style->ContourIntervalL[0]->value.c_str());
+    styleConfig->shadeInterval = styleConfig->contourIntervalL;
   }
-  if (style->ContourIntervalH.size() > 0) this->contourIntervalH = parseFloat(style->ContourIntervalH[0]->value.c_str());
+  if (style->ContourIntervalH.size() > 0) styleConfig->contourIntervalH = parseFloat(style->ContourIntervalH[0]->value.c_str());
 
-  if (style->ShadeInterval.size() > 0) this->shadeInterval = parseFloat(style->ShadeInterval[0]->value.c_str());
-  if (style->SmoothingFilter.size() > 0) this->smoothingFilter = parseInt(style->SmoothingFilter[0]->value.c_str());
+  if (style->ShadeInterval.size() > 0) styleConfig->shadeInterval = parseFloat(style->ShadeInterval[0]->value.c_str());
+  if (style->SmoothingFilter.size() > 0) styleConfig->smoothingFilter = parseInt(style->SmoothingFilter[0]->value.c_str());
 
   if (style->ValueRange.size() > 0) {
-    this->hasLegendValueRange = true;
-    this->legendLowerRange = parseFloat(style->ValueRange[0]->attr.min.c_str());
-    this->legendUpperRange = parseFloat(style->ValueRange[0]->attr.max.c_str());
+    styleConfig->hasLegendValueRange = true;
+    styleConfig->legendLowerRange = parseFloat(style->ValueRange[0]->attr.min.c_str());
+    styleConfig->legendUpperRange = parseFloat(style->ValueRange[0]->attr.max.c_str());
   }
 
   if (style->Min.size() > 0) {
-    this->minValue = style->Min[0]->value.toDouble();
-    this->minMaxSet = true;
+    styleConfig->minValue = style->Min[0]->value.toDouble();
+    styleConfig->minMaxSet = true;
   }
   if (style->Max.size() > 0) {
-    this->maxValue = style->Max[0]->value.toDouble();
-    this->minMaxSet = true;
+    styleConfig->maxValue = style->Max[0]->value.toDouble();
+    styleConfig->minMaxSet = true;
   }
 
-  this->contourLines.insert(this->contourLines.end(), style->ContourLine.begin(), style->ContourLine.end());
-  this->renderSettings.insert(this->renderSettings.end(), style->RenderSettings.begin(), style->RenderSettings.end());
-  this->shadeIntervals.insert(this->shadeIntervals.end(), style->ShadeInterval.begin(), style->ShadeInterval.end());
-  this->symbolIntervals = &style->SymbolInterval;
-  this->featureIntervals = &style->FeatureInterval;
+  styleConfig->contourLines.insert(styleConfig->contourLines.end(), style->ContourLine.begin(), style->ContourLine.end());
+  styleConfig->renderSettings.insert(styleConfig->renderSettings.end(), style->RenderSettings.begin(), style->RenderSettings.end());
+  styleConfig->shadeIntervals.insert(styleConfig->shadeIntervals.end(), style->ShadeInterval.begin(), style->ShadeInterval.end());
+  styleConfig->symbolIntervals = &style->SymbolInterval;
+  styleConfig->featureIntervals = &style->FeatureInterval;
 
   if (style->Legend.size() > 0) {
     if (style->Legend[0]->attr.tickinterval.empty() == false) {
-      this->legendTickInterval = parseDouble(style->Legend[0]->attr.tickinterval.c_str());
+      styleConfig->legendTickInterval = parseDouble(style->Legend[0]->attr.tickinterval.c_str());
     }
     if (style->Legend[0]->attr.tickround.empty() == false) {
-      this->legendTickRound = parseDouble(style->Legend[0]->attr.tickround.c_str());
+      styleConfig->legendTickRound = parseDouble(style->Legend[0]->attr.tickround.c_str());
     }
     if (style->Legend[0]->attr.fixedclasses.equals("true")) {
-      this->legendHasFixedMinMax = true;
+      styleConfig->legendHasFixedMinMax = true;
     }
-    this->legendName = style->Legend[0]->value;
+    styleConfig->legendName = style->Legend[0]->value;
   }
 
   if (depth == 0) {
     if (!style->attr.abstract.empty()) {
-      this->styleAbstract = style->attr.abstract;
+      styleConfig->styleAbstract = style->attr.abstract;
     }
     if (!style->attr.title.empty()) {
-      this->styleTitle = style->attr.title;
+      styleConfig->styleTitle = style->attr.title;
     }
   }
 
@@ -203,7 +171,7 @@ void CStyleConfiguration::parseStyleInfo(CDataSource *dataSource, int styleIndex
   //   int extraStyle = dataSource->srvParams->getServerStyleIndexByName(includeStyle->attr.name);
   //   if (extraStyle >= 0) {
   //     CDBDebug("Now need to include style %d - %s", extraStyle, dataSource->cfg->Style[extraStyle]->attr.name.c_str());
-  //     this->parseStyleInfo(dataSource, extraStyle, depth + 1);
+  //     parseStyleInfo(dataSource, extraStyle, depth + 1);
   //   }
   // }
 }
@@ -226,7 +194,7 @@ int CStyleConfiguration::makeStyleConfig(CDataSource *dataSource) {
   // this->renderMethod = RM_UNDEFINED;
 
   if (this->styleIndex != -1) {
-    this->parseStyleInfo(dataSource, this->styleIndex);
+    parseStyleInfo(this, dataSource, this->styleIndex, 0);
   }
 
   // Legend settings can always be overriden in the layer itself!
