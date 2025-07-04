@@ -57,7 +57,8 @@ struct CStyleConfiguration {
   std::vector<CServerConfig::XMLE_ShadeInterval *> shadeIntervals;
   std::vector<CServerConfig::XMLE_SymbolInterval *> symbolIntervals;
   std::vector<CServerConfig::XMLE_FeatureInterval *> featureIntervals;
-  CServerConfig::XMLE_Style *styleConfig = nullptr;
+
+  CServerConfig::XMLE_Style *styleConfig = nullptr; // Direct entrance to styleConfig configuration
 
   /**
    * Outputs styleConfiguration as string
