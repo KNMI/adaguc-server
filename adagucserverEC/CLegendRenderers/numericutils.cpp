@@ -56,7 +56,7 @@ int maxDecimalWidth(std::vector<CT::string> column) {
   return maxDecimals;
 }
 
-int fieldWidthAsPixels(std::vector<CT::string> column, int dashWidth, int dotWidth, int numericGlyphWidth) {
+int fieldWidthAsPixels(std::vector<CT::string> column, int dashWidth, int, int numericGlyphWidth) {
   int intWidth = maxIntWidth(column);
   int decWidth = maxDecimalWidth(column);
   int hasDash = hasNeg(column);
@@ -68,13 +68,13 @@ int fieldWidthAsPixels(std::vector<CT::string> column, int dashWidth, int dotWid
   }
 }
 
-std::vector<CT::string> extractColumn(size_t drawIntervals, int minInterval, std::vector<CServerConfig::XMLE_ShadeInterval *> *shadeIntervals, bool isMin) {
+std::vector<CT::string> extractColumn(size_t drawIntervals, int minInterval, std::vector<CServerConfig::XMLE_ShadeInterval *> &shadeIntervals, bool isMin) {
   // We calculate the min column
   // Convert the min into an array of CT::string
   std::vector<CT::string> column;
   for (size_t j = 0; j < drawIntervals; j++) {
     size_t realj = minInterval + j;
-    CServerConfig::XMLE_ShadeInterval *s = (*shadeIntervals)[realj];
+    CServerConfig::XMLE_ShadeInterval *s = (shadeIntervals)[realj];
     if (!s->attr.min.empty() && !s->attr.max.empty()) {
       if (isMin) {
         column.push_back(s->attr.min.c_str());

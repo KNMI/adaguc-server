@@ -371,10 +371,6 @@ public:
   static CT::PointerList<CT::string *> *getStyleNames(std::vector<CServerConfig::XMLE_Styles *> Styles);
 
   static CT::PointerList<CT::string *> *getRenderMethodListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style *style);
-  static int getServerLegendIndexByName(const char *legendName, std::vector<CServerConfig::XMLE_Legend *> serverLegends);
-  static int getServerStyleIndexByName(const char *styleName, std::vector<CServerConfig::XMLE_Style *> serverStyles);
-  static int makeStyleConfig(CStyleConfiguration *styleConfig, CDataSource *dataSource); //,const char *styleName,const char *legendName,const char *renderMethod);
-  // static void getStyleConfigurationByName(const char *styleName,CDataSource *dataSource);
 
   /**
    * Sets the style by name, can be a character string.
