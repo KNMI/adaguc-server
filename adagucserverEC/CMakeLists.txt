@@ -76,6 +76,8 @@ add_library(
     CDBFileScannerCleanFiles.cpp
     CDFObjectStore.cpp
     CDFObjectStore.h
+    handleTileRequest.h
+    handleTileRequest.cpp
     utils/LayerMetadataStore.h
     utils/LayerMetadataStore.cpp
     utils/XMLGenUtils.h

@@ -406,6 +406,9 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
   for (const auto &dim : dims) {
     query.printconcat(", %s, dim%s", dim.c_str(), dim.c_str());
   }
+  if (dataSource->queryLevel == -1) {
+    query.printconcat(",adaguctilinglevel");
+  }
 
   int i = 0;
   for (const auto &m : mapping) {
@@ -420,8 +423,17 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
   // Filter on tiling bounding box (or not)
   query.concat("WHERE ");
   if (dataSource->queryBBOX) {
-    query.printconcat("t1.adaguctilinglevel = %d and minx >= %f and maxx <= %f and miny >= %f and maxy <= %f ", dataSource->queryLevel, dataSource->nativeViewPortBBOX[0],
-                      dataSource->nativeViewPortBBOX[2], dataSource->nativeViewPortBBOX[1], dataSource->nativeViewPortBBOX[3]);
+
+    if (dataSource->queryLevel != -1) {
+      query.printconcat("t1.adaguctilinglevel = %d and ", dataSource->queryLevel);
+    }
+
+    double xminB = std::min(dataSource->nativeViewPortBBOX[2], dataSource->nativeViewPortBBOX[0]);
+    double xmaxB = std::max(dataSource->nativeViewPortBBOX[2], dataSource->nativeViewPortBBOX[0]);
+    double yminB = std::min(dataSource->nativeViewPortBBOX[3], dataSource->nativeViewPortBBOX[1]);
+    double ymaxB = std::max(dataSource->nativeViewPortBBOX[3], dataSource->nativeViewPortBBOX[1]);
+    query.printconcat(" not (minx > %f or maxx < %f or miny > %f or maxy < %f)", xmaxB, xminB, ymaxB, yminB);
+
   } else {
     query.concat("t1.adaguctilinglevel != -1 ");
   }

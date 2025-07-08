@@ -47,6 +47,7 @@
 #include <json_adaguc.h>
 #include "utils/LayerMetadataToJson.h"
 #include "utils/CRequestUtils.h"
+#include "handleTileRequest.h"
 
 const char *CRequest::className = "CRequest";
 int CRequest::CGI = 0;
@@ -1055,55 +1056,6 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
 
   return 0;
 }
-
-int findExtent(const char *srcProj4Str, CServerParams *srvParam, double nativeViewPortBBOX[4]) {
-  CImageWarper warper;
-  int status = warper.initreproj(srcProj4Str, srvParam->Geo, &srvParam->cfg->Projection);
-  if (status != 0) {
-    warper.closereproj();
-    if (status != 0) {
-      warper.closereproj();
-      return 1;
-    }
-  }
-
-  double bbStepX = (nativeViewPortBBOX[2] - nativeViewPortBBOX[0]) / 100.;
-  double bbStepY = (nativeViewPortBBOX[3] - nativeViewPortBBOX[1]) / 100.;
-
-  double xLow, yLow;
-  double xHigh, yHigh;
-  xLow = nativeViewPortBBOX[0];
-  yLow = nativeViewPortBBOX[1];
-  xHigh = nativeViewPortBBOX[2];
-  yHigh = nativeViewPortBBOX[3];
-
-  bool first = false;
-  for (double y = yLow; y < yHigh; y += bbStepY) {
-    for (double x = xLow; x < xHigh; x += bbStepX) {
-
-      double x1 = x, y1 = y;
-      status = warper.reprojpoint(x1, y1);
-      if (status == 0) {
-        // CDBDebug("Testing %f %f" ,x,y);
-        if (first == false) {
-          nativeViewPortBBOX[0] = x1;
-          nativeViewPortBBOX[1] = y1;
-          nativeViewPortBBOX[2] = x1;
-          nativeViewPortBBOX[3] = y1;
-        } else {
-          if (nativeViewPortBBOX[0] > x1) nativeViewPortBBOX[0] = x1;
-          if (nativeViewPortBBOX[1] > y1) nativeViewPortBBOX[1] = y1;
-          if (nativeViewPortBBOX[2] < x1) nativeViewPortBBOX[2] = x1;
-          if (nativeViewPortBBOX[3] < y1) nativeViewPortBBOX[3] = y1;
-        }
-        first = true;
-      }
-    }
-  }
-  warper.closereproj();
-  return 0;
-}
-
 int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams *srvParam) {
 #ifdef CREQUEST_DEBUG
   CDBDebug("queryDimValuesForDataSource");
@@ -1130,201 +1082,15 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
     }
 
     if (dataSource->queryBBOX && dataSource->cfgLayer->TileSettings.size() == 1) {
-      bool tileSettingsDebug = false;
-      // CDBDebug("queryDimValuesForDataSource dataSource->queryBBOX %s for step
-      // %d/%d",dataSource->layerName.c_str(),dataSource->getCurrentTimeStep(),dataSource->getNumTimeSteps());
-      CT::string nativeProj4 = dataSource->cfgLayer->TileSettings[0]->attr.tileprojection.c_str();
-
-      nativeProj4 = dataSource->cfgLayer->TileSettings[0]->attr.tileprojection.c_str();
-
-      double nativeViewPortBBOX[4];
-      nativeViewPortBBOX[0] = srvParam->Geo->dfBBOX[0];
-      nativeViewPortBBOX[1] = srvParam->Geo->dfBBOX[1];
-      nativeViewPortBBOX[2] = srvParam->Geo->dfBBOX[2];
-      nativeViewPortBBOX[3] = srvParam->Geo->dfBBOX[3];
-
-      if (nativeViewPortBBOX[0] == nativeViewPortBBOX[2]) {
-        CDBDebug("View port BBOX is wrong: %f %f %f %f", nativeViewPortBBOX[0], nativeViewPortBBOX[1], nativeViewPortBBOX[2], nativeViewPortBBOX[3]);
-        nativeViewPortBBOX[0] = -180;
-        nativeViewPortBBOX[1] = -90;
-        nativeViewPortBBOX[2] = 180;
-        nativeViewPortBBOX[3] = 90;
+      store = handleTileRequest(dataSource);
+      if (store == nullptr || store->getSize() == 0) {
+        CDBDebug("Unable to handleTileRequest");
+        return 0;
       }
-      findExtent(nativeProj4.c_str(), srvParam, nativeViewPortBBOX);
-
-      int tilewidth = dataSource->cfgLayer->TileSettings[0]->attr.tilewidthpx.toInt();
-      int tileheight = dataSource->cfgLayer->TileSettings[0]->attr.tileheightpx.toInt();
-      double tilecellsizex = dataSource->cfgLayer->TileSettings[0]->attr.tilecellsizex.toDouble();
-      double tilecellsizey = dataSource->cfgLayer->TileSettings[0]->attr.tilecellsizey.toDouble();
-      double level1BBOXWidth = fabs(tilecellsizex * double(tilewidth));
-      double level1BBOXHeight = fabs(tilecellsizey * double(tileheight));
-      if (dataSource->cfgLayer->TileSettings[0]->attr.debug.equals("true")) {
-        tileSettingsDebug = true;
-      }
-      //       if(dataSource->cfgLayer->TileSettings[0]->attr.tilebboxwidth.empty()==false){
-      //         level1BBOXWidth = dataSource->cfgLayer->TileSettings[0]->attr.tilebboxwidth.toDouble();
-      //       }
-      //       if(dataSource->cfgLayer->TileSettings[0]->attr.tilebboxwidth.empty()==false){
-      //         level1BBOXHeight = dataSource->cfgLayer->TileSettings[0]->attr.tilebboxheight.toDouble();
-      //       }
-
-#ifdef CREQUEST_DEBUG
-      CDBDebug("level1BBOXHeight,level1BBOXHeight %f,%f", level1BBOXHeight, level1BBOXHeight);
-#endif
-
-      int maxlevel = dataSource->cfgLayer->TileSettings[0]->attr.maxlevel.toInt();
-      int minlevel = 1;
-      if (dataSource->cfgLayer->TileSettings[0]->attr.minlevel.empty() == false) {
-        minlevel = dataSource->cfgLayer->TileSettings[0]->attr.minlevel.toInt() - 1;
-        if (minlevel <= 1) minlevel = 1;
-      }
-
-      double screenCellSize = -1;
-      // if(!nativeProj4.equals(srvParam->Geo->CRS))
-
-      // Find cellsize at parts of window
-
-      double viewportCellsizeX = (srvParam->Geo->dfBBOX[2] - srvParam->Geo->dfBBOX[0]) / double(srvParam->Geo->dWidth);
-      double viewportCellsizeY = (srvParam->Geo->dfBBOX[3] - srvParam->Geo->dfBBOX[1]) / double(srvParam->Geo->dHeight);
-
-      CImageWarper warper;
-      int status = warper.initreproj(nativeProj4.c_str(), srvParam->Geo, &srvParam->cfg->Projection);
-      if (status != 0) {
-        warper.closereproj();
-        CDBError("Unable to initialize projection ");
-        return 1;
-      }
-
-      for (double wy = 0.2; wy < 0.8; wy += 0.1) {
-        for (double wx = 0.2; wx < 0.8; wx += 0.1) {
-          double viewPortMX = srvParam->Geo->dfBBOX[2] * (1 - wx) + srvParam->Geo->dfBBOX[0] * wx;
-          double viewPortMY = srvParam->Geo->dfBBOX[3] * (1 - wy) + srvParam->Geo->dfBBOX[1] * wy;
-          // CDBDebug("viewPortMX, viewPortMY at (%f %f) = (%f,%f)",wx, wy, viewPortMX,viewPortMY);
-          double x1 = viewPortMX;
-          double y1 = viewPortMY;
-          double x2 = viewPortMX + viewportCellsizeX;
-          double y2 = viewPortMY + viewportCellsizeY;
-          ;
-          status = 0;
-          status += warper.reprojpoint(x1, y1);
-          status += warper.reprojpoint(x2, y2);
-
-          //             CDBDebug("%f %f",x1,y1);
-          //             CDBDebug("%f %f",x2,y2);
-          if (status == 0) {
-            double calcCellsize = sqrt(((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1)));
-            if (screenCellSize < 0) {
-              screenCellSize = calcCellsize;
-            } else {
-              if (calcCellsize < screenCellSize) screenCellSize = calcCellsize;
-            }
-            // CDBDebug("screenCellSize (%f,%f)= %f",viewPortMX,viewPortMY,calcCellsize);
-          }
-        }
-      }
-
-#ifdef CREQUEST_DEBUG
-      CDBDebug("Cellsize screen %f", screenCellSize);
-      CDBDebug("Cellsize basetile %f", level1BBOXWidth / double(tilewidth));
-#endif
-
-      warper.closereproj();
-
-      dataSource->queryLevel = 0;
-      //       int numResults = 0;
-      store = NULL;
-
-      for (int queryLevel = minlevel; queryLevel < maxlevel; queryLevel++) {
-        double levelXBBOXWidth = level1BBOXWidth * pow(2, queryLevel) * 1;
-        double tileCellSize = levelXBBOXWidth / double(tilewidth);
-        if (tileCellSize < screenCellSize) {
-          dataSource->queryLevel = queryLevel;
-          // break;
-        }
-      }
-
-      CDBDebug("dataSource->queryLevel%d", dataSource->queryLevel);
-      // if(dataSource->queryLevel < minlevel ) {
-      //   dataSource->queryLevel = minlevel ;
-      // }
-
-      /*  while(((numResults*tilewidth*tileheight)/2>srvParam->Geo->dWidth*srvParam->Geo->dHeight&&numResults>3)||numResults==0||numResults>60)
-        {
-
-          if(dataSource->queryLevel>(maxlevel-1)){dataSource->queryLevel--;break;}
-       *///   delete store;store=NULL;
-      dataSource->queryLevel++;
-
-      if (maxlevel == 0) {
-        dataSource->queryLevel = 0;
-        dataSource->queryBBOX = false;
-      }
-
-      double levelXBBOXWidth = level1BBOXWidth * pow(2, dataSource->queryLevel - 1) * 1;
-      double levelXBBOXHeight = level1BBOXHeight * pow(2, dataSource->queryLevel - 1) * 1;
-      // CDBDebug("levelXBBOXWidth = %f, levelXBBOXHeight = %f
-      // queryLevel=%d",levelXBBOXWidth,levelXBBOXHeight,dataSource->queryLevel);
-      dataSource->nativeViewPortBBOX[0] = nativeViewPortBBOX[0] - levelXBBOXWidth;
-      dataSource->nativeViewPortBBOX[1] = nativeViewPortBBOX[1] - levelXBBOXHeight;
-      dataSource->nativeViewPortBBOX[2] = nativeViewPortBBOX[2] + levelXBBOXWidth;
-      dataSource->nativeViewPortBBOX[3] = nativeViewPortBBOX[3] + levelXBBOXHeight;
-
-      // CDBDebug(" dataSource->nativeViewPortBBOX: [%f,%f,%f,%f]", dataSource->nativeViewPortBBOX[0],
-      // dataSource->nativeViewPortBBOX[1], dataSource->nativeViewPortBBOX[2], dataSource->nativeViewPortBBOX[3]);
-      int maxTilesInImage = 300;
-      if (!dataSource->cfgLayer->TileSettings[0]->attr.maxtilesinimage.empty()) {
-        maxTilesInImage = dataSource->cfgLayer->TileSettings[0]->attr.maxtilesinimage.toInt();
-      }
-      store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource, maxTilesInImage, false);
-      if (store == NULL) {
-        CDBError("Unable to query bbox for tiles");
-        return 1;
-      }
-
-      if (store->getSize() == 0) {
-        CDBDebug("Found no tiles, trying level %d", maxlevel);
-        delete store;
-        dataSource->queryLevel = maxlevel;
-        dataSource->nativeViewPortBBOX[0] = -2000000;
-        dataSource->nativeViewPortBBOX[1] = -2000000;
-        dataSource->nativeViewPortBBOX[2] = 2000000;
-        dataSource->nativeViewPortBBOX[3] = 2000000;
-        dataSource->queryBBOX = true;
-        store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource, 1, false);
-        if (store == NULL) {
-          CDBError("Unable to query bbox for tiles");
-          return 1;
-        }
-      }
-
-      //         if(store!=NULL){
-      //           numResults=store->getSize();
-      //           CDBDebug("Found %d tiles",store->getSize());
-      //         }else {
-      //           numResults = 0;
-      //         }
-      //         double tileCellSize = levelXBBOXWidth/tilewidth;
-
-      //       }
-
-      double tileCellSize = levelXBBOXWidth / double(tilewidth);
-      // CDBDebug("level %d, tiles %0d cellsize %f",dataSource->queryLevel,store->getSize(),tileCellSize);
-      if (tileSettingsDebug) {
-        srvParam->mapTitle.print("level %d, tiles %d", dataSource->queryLevel, store->getSize());
-        srvParam->mapSubTitle.print("level %d, tiles %0d, tileCellSize %f, screenCellSize %f", dataSource->queryLevel, store->getSize(), tileCellSize, screenCellSize);
-      }
-
     } else {
       /* Do queries without tiling and boundingbox */
       dataSource->queryBBOX = false;
 
-      /*
-            dataSource->queryBBOX = true;
-            dataSource->nativeViewPortBBOX[0] =111615;
-            dataSource->nativeViewPortBBOX[1] = 9.19318e+06;
-            dataSource->nativeViewPortBBOX[2] = 666176;
-            dataSource->nativeViewPortBBOX[3] =  9.24119e+06;
-            dataSource->queryLevel = 0;*/
       int maxQueryResultLimit = 512;
 
       /* Get maxquerylimit from database configuration */
