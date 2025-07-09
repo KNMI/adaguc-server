@@ -5,6 +5,6 @@
 #include "CDataSource.h"
 
 CDBStore::Store *handleTileRequest(CDataSource *dataSource);
-int findExtentForTiles(const char *srcProj4Str, CServerParams *srvParam, double nativeViewPortBBOX[4]);
+f8box reprojectExtent(CT::string targetProjection, CServerParams *srvParam, f8box inputbox);
 
 #endif

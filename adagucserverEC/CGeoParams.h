@@ -97,6 +97,12 @@ public:
 
 struct f8box {
   double left, bottom, right, top;
+  void operator=(const double bbox[4]) {
+    left = bbox[0];
+    bottom = bbox[1];
+    right = bbox[2];
+    top = bbox[3];
+  }
 };
 
 struct f8point {

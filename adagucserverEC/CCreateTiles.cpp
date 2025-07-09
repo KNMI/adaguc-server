@@ -213,11 +213,11 @@ int CCreateTiles::createTilesForFile(CDataSource *dataSource, int, CT::string fi
   dataSource->queryLevel = 0;
   dataSource->queryBBOX = 1;
 
-  dataSource->nativeViewPortBBOX[0] = -1000000000;
-  dataSource->nativeViewPortBBOX[1] = -1000000000;
-  dataSource->nativeViewPortBBOX[2] = 1000000000;
+  dataSource->nativeViewPortBBOX.left = -1000000000;
+  dataSource->nativeViewPortBBOX.bottom = -1000000000;
+  dataSource->nativeViewPortBBOX.right = 1000000000;
   ;
-  dataSource->nativeViewPortBBOX[3] = 1000000000;
+  dataSource->nativeViewPortBBOX.top = 1000000000;
   ;
 
   if (dataSource->requiredDims[0]->name.equals("time")) {
@@ -356,10 +356,10 @@ int CCreateTiles::createTilesForFile(CDataSource *dataSource, int, CT::string fi
                 ds.srvParams->Geo->dfBBOX[2] = dfMaxX;
                 ds.srvParams->Geo->dfBBOX[3] = dfMaxY;
 
-                ds.nativeViewPortBBOX[0] = dfMinX;
-                ds.nativeViewPortBBOX[1] = dfMinY;
-                ds.nativeViewPortBBOX[2] = dfMaxX;
-                ds.nativeViewPortBBOX[3] = dfMaxY;
+                ds.nativeViewPortBBOX.left = dfMinX;
+                ds.nativeViewPortBBOX.bottom = dfMinY;
+                ds.nativeViewPortBBOX.right = dfMaxX;
+                ds.nativeViewPortBBOX.top = dfMaxY;
 
                 try {
 

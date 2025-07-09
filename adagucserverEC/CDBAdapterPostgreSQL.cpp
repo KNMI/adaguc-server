@@ -428,10 +428,10 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
       query.printconcat("t1.adaguctilinglevel = %d and ", dataSource->queryLevel);
     }
 
-    double xminB = std::min(dataSource->nativeViewPortBBOX[2], dataSource->nativeViewPortBBOX[0]);
-    double xmaxB = std::max(dataSource->nativeViewPortBBOX[2], dataSource->nativeViewPortBBOX[0]);
-    double yminB = std::min(dataSource->nativeViewPortBBOX[3], dataSource->nativeViewPortBBOX[1]);
-    double ymaxB = std::max(dataSource->nativeViewPortBBOX[3], dataSource->nativeViewPortBBOX[1]);
+    double xminB = std::min(dataSource->nativeViewPortBBOX.right, dataSource->nativeViewPortBBOX.left);
+    double xmaxB = std::max(dataSource->nativeViewPortBBOX.right, dataSource->nativeViewPortBBOX.left);
+    double yminB = std::min(dataSource->nativeViewPortBBOX.top, dataSource->nativeViewPortBBOX.bottom);
+    double ymaxB = std::max(dataSource->nativeViewPortBBOX.top, dataSource->nativeViewPortBBOX.bottom);
     query.printconcat(" not (minx > %f or maxx < %f or miny > %f or maxy < %f)", xmaxB, xminB, ymaxB, yminB);
 
   } else {

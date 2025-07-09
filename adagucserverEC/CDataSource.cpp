@@ -1266,8 +1266,8 @@ CDataSource *CDataSource::clone() {
 
   for (size_t j = 0; j < 4; j++) {
     d->dfBBOX[j] = dfBBOX[j];
-    d->nativeViewPortBBOX[j] = nativeViewPortBBOX[j];
   }
+  d->nativeViewPortBBOX = nativeViewPortBBOX;
 
   d->dfCellSizeX = dfCellSizeX;
   d->dfCellSizeY = dfCellSizeY;

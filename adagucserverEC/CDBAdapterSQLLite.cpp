@@ -625,8 +625,8 @@ CDBStore::Store *CDBAdapterSQLLite::getFilesAndIndicesForDimensions(CDataSource 
         subQuery.printconcat("and ");
       }
       if (dataSource->queryBBOX) {
-        subQuery.printconcat("adaguctilinglevel = %d and minx >= %f and maxx <= %f and miny >= %f and maxy <= %f ", dataSource->queryLevel, dataSource->nativeViewPortBBOX[0],
-                             dataSource->nativeViewPortBBOX[2], dataSource->nativeViewPortBBOX[1], dataSource->nativeViewPortBBOX[3]);
+        subQuery.printconcat("adaguctilinglevel = %d and minx >= %f and maxx <= %f and miny >= %f and maxy <= %f ", dataSource->queryLevel, dataSource->nativeViewPortBBOX.left,
+                             dataSource->nativeViewPortBBOX.right, dataSource->nativeViewPortBBOX.bottom, dataSource->nativeViewPortBBOX.top);
       } else {
         // subQuery.printconcat("adaguctilinglevel = %d ",dataSource->queryLevel);
         subQuery.printconcat("adaguctilinglevel != %d ", -1);
