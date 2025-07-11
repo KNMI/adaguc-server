@@ -9,21 +9,36 @@ CDBStore::Store *handleTileRequest(CDataSource *dataSource) {
   bool tileSettingsDebug = tileSettings->attr.debug.equals("true");
   int maxTilesInImage = !tileSettings->attr.maxtilesinimage.empty() ? tileSettings->attr.maxtilesinimage.toInt() : 300;
 
+  if (!srvParam->dFound_BBOX) {
+    try {
+      f8box box = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getExtent(dataSource);
+      srvParam->Geo->dfBBOX[0] = box.left;
+      srvParam->Geo->dfBBOX[1] = box.bottom;
+      srvParam->Geo->dfBBOX[2] = box.right;
+      srvParam->Geo->dfBBOX[3] = box.top;
+      srvParam->Geo->CRS = tileSettings->attr.tileprojection;
+    } catch (int e) {
+    }
+  }
   f8box inputbox;
   inputbox = srvParam->Geo->dfBBOX;
-  dataSource->nativeViewPortBBOX = reprojectExtent(tileSettings->attr.tileprojection, srvParam, inputbox);
-  dataSource->queryLevel = -1;
+  dataSource->nativeViewPortBBOX = reprojectExtent(tileSettings->attr.tileprojection, srvParam->Geo->CRS, srvParam, inputbox);
+  dataSource->queryLevel = -1; // All tiles
+  dataSource->queryBBOX = true;
 
   // Query for all possible tiles within given domain by nativeViewPortBBOX
   auto store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource, maxTilesInImage, false);
 
+  if (store->size() == 0) {
+    CDBError("No tiles found");
+    delete store;
+    return nullptr;
+  }
   // Put the results per tiling level into a map.
   std::map<int, int> levelMap;
-  for (size_t j = 0; j < store->size(); j++) {
-    auto record = store->getRecord(j);
-    levelMap[record->get("adaguctilinglevel")->toInt()]++;
+  for (auto record : store->records) {
+    levelMap[record.get("adaguctilinglevel")->toInt()]++;
   }
-  delete store;
 
   // Sort the map so that the closest targetNrOfTiles is first, this is the tiling level target
   using mypair = std::pair<int, int>;
@@ -34,12 +49,16 @@ CDBStore::Store *handleTileRequest(CDataSource *dataSource) {
 
   CDBDebug("using level %d", dataSource->queryLevel);
 
-  // Now do the query again with the target.
-  store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource, maxTilesInImage, false);
-  if (store == NULL) {
-    CDBError("Unable to query bbox for tiles");
-    return nullptr;
+  // Now filter out all the tiling levels
+  std::vector<CDBStore::Record> records;
+  for (auto record : store->records) {
+    if (record.get("adaguctilinglevel")->toInt() == dataSource->queryLevel) {
+      records.push_back(record);
+    }
   }
+
+  // Assign the filtered records
+  store->records = records;
 
   if (tileSettingsDebug) {
     srvParam->mapTitle.print("level %d, tiles %d", dataSource->queryLevel, store->getSize());
@@ -47,9 +66,9 @@ CDBStore::Store *handleTileRequest(CDataSource *dataSource) {
   return store;
 }
 
-f8box reprojectExtent(CT::string targetProjection, CServerParams *srvParam, f8box inputbox) {
+f8box reprojectExtent(CT::string targetProjection, CT::string sourceProjection, CServerParams *srvParam, f8box inputbox) {
   CImageWarper warper;
-  if (warper.initreproj(targetProjection.c_str(), srvParam->Geo, &srvParam->cfg->Projection) != 0) {
+  if (warper.init(targetProjection.c_str(), sourceProjection.c_str(), &srvParam->cfg->Projection) != 0) {
     CDBError("Unable to init projection");
     throw __LINE__;
   }

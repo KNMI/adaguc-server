@@ -7,11 +7,11 @@
 CT::string getBlob(CDBStore::Store *layerMetaDataStore, const char *datasetName, const char *layerName, const char *metadataKey) {
   auto records = layerMetaDataStore->getRecords();
   for (auto record : records) {
-    if (record->get("datasetname")->equals(datasetName) && record->get("layername")->equals(layerName) && record->get("metadatakey")->equals(metadataKey)) {
+    if (record.get("datasetname")->equals(datasetName) && record.get("layername")->equals(layerName) && record.get("metadatakey")->equals(metadataKey)) {
 #ifdef MEASURETIME
       StopWatch_Stop("<CDBAdapterPostgreSQL::getLayerMetadata");
 #endif
-      return record->get("blob");
+      return record.get("blob");
     }
   }
   return "";
@@ -27,8 +27,8 @@ int getLayerMetadataAsJson(CServerParams *srvParams, json &result) {
   auto records = layerMetaDataStore->getRecords();
   std::map<std::string, std::set<std::string>> datasetNames;
   for (auto record : records) {
-    CT::string *datasetName = record->get("datasetname");
-    CT::string *layerName = record->get("layername");
+    CT::string *datasetName = record.get("datasetname");
+    CT::string *layerName = record.get("layername");
     if (datasetName != nullptr && layerName != nullptr) {
       datasetNames[datasetName->c_str()].insert(layerName->c_str());
     }

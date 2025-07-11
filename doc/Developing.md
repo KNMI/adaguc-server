@@ -110,7 +110,8 @@ export ADAGUC_TRACE_TIMINGS=TRUE
 # To enable core dump generation, additionally do:
 #ulimit -c unlimited
 #sudo sysctl -w kernel.core_pattern=core-adagucserver #
-# Then you can use gdb ./bin/adagucserver core-adagucserver
+# Then you can use:
+# gdb ./bin/adagucserver `ls -Art core-adagucserver.* | tail -n 1`
 
 python3 ./python/python_fastapi_server/main.py
 ```

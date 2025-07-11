@@ -35,7 +35,7 @@ add_definitions("-DSOURCE_PATH_SIZE=${SOURCE_PATH_SIZE}")
 
 
 
-add_definitions(-DENABLE_CURL -DADAGUC_USE_GDAL -DADAGUC_USE_SQLITE -DADAGUC_USE_WEBP)
+add_definitions(-DENABLE_CURL -DADAGUC_USE_GDAL -DADAGUC_USE_WEBP)
 
 
 
@@ -44,7 +44,6 @@ add_subdirectory(CCDFDataModel)
 add_subdirectory(adagucserverEC)
 
 add_executable(adagucserver ./adagucserverEC/adagucserver.cpp)
-add_executable(maketiles ./adagucserverEC/maketiles.cpp)
 add_executable(h5ncdump ./adagucserverEC/h5ncdump.cpp)
 add_executable(aggregate_time ./adagucserverEC/aggregate_time.cpp)
 add_executable(geojsondump ./adagucserverEC/geojsondump.cpp)
@@ -54,7 +53,6 @@ add_test(testadagucserver adagucserverEC/testadagucserver)
 add_test(testtimeutils adagucserverEC/testtimeutils)
 
 target_link_libraries(adagucserver adagucserverEC hclasses CCDFDataModel)
-target_link_libraries(maketiles adagucserverEC hclasses CCDFDataModel)
 target_link_libraries(h5ncdump adagucserverEC hclasses CCDFDataModel)
 target_link_libraries(aggregate_time adagucserverEC hclasses CCDFDataModel)
 target_link_libraries(geojsondump adagucserverEC hclasses CCDFDataModel)

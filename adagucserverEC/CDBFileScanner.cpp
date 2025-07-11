@@ -81,6 +81,7 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
 
   CDFObject *cdfObject = NULL;
   try {
+    // Here the header of the file to scan is being read.
     cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource, dataSource->headerFileName.c_str());
     if (cdfObject == NULL) throw __LINE__;
   } catch (int e) {
@@ -858,7 +859,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
             CDBDebug("Comparing lists");
             filesToDeleteFromDB.clear();
             CDirReader::compareLists(oldList, newList, &handleFileFromDBIsMissing, &handleDirHasNewFile);
-            CDBDebug("Found %d files in DB which are missing", filesToDeleteFromDB.size());
+            CDBDebug("Found %d files in DB which are missing on FS", filesToDeleteFromDB.size());
             for (size_t j = 0; j < filesToDeleteFromDB.size(); j++) {
               CDBDebug("Deleting file %s from db", filesToDeleteFromDB[j].c_str());
               CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->removeFile(tableNames[d].c_str(), filesToDeleteFromDB[j].c_str());
@@ -998,23 +999,6 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
     CDBDebug("Going to scan %d files", fileList.size());
   }
 
-  // Include tiles: TODO this is a heavy routine!!
-  if (tailPath.length() == 0) {
-    if (dataSource->cfgLayer->TileSettings.size() == 1) {
-      CDBDebug("Start including TileSettings path [%s]. (Already found %d non tiled files)", dataSource->cfgLayer->TileSettings[0]->attr.tilepath.c_str(), fileList.size());
-      try {
-        std::vector<std::string> fileListForTiles = searchFileNames(dataSource->cfgLayer->TileSettings[0]->attr.tilepath.c_str(), "^.*\\.nc$", tailPath.c_str());
-        if (fileListForTiles.size() == 0) throw(__LINE__);
-        CDBDebug("Found %d tiles", fileListForTiles.size());
-        for (size_t j = 0; j < fileListForTiles.size(); j++) {
-          fileList.push_back(fileListForTiles[j].c_str());
-        }
-      } catch (int linenr) {
-        CDBDebug("No tiles found");
-      }
-    }
-  }
-
   if (fileList.size() == 0) {
     if (verbose) {
       CDBWarning("No files found for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
@@ -1031,7 +1015,6 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
     }
 
     if (status == 0) {
-
       // Loop Through all files
       status = DBLoopFiles(dataSource, removeNonExistingFiles, &fileList, scanFlags);
       if (status != 0) {
@@ -1060,23 +1043,21 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
   if (removeNonExistingFiles == 1) status = DB->query("COMMIT");
 #endif
 
+  if (scanFlags & CDBFILESCANNER_UPDATEDB) {
+    updateMetaDataTable(dataSource);
+  }
   /* Now Check autotile option */
   if (!(scanFlags & CDBFILESCANNER_DONOTTILE)) {
     if (dataSource->cfgLayer->TileSettings.size() == 1) {
       if (dataSource->cfgLayer->TileSettings[0]->attr.autotile.equals("true")) {
+        CDBDebug("Number of files = %d", fileList.size());
         for (size_t j = 0; j < fileList.size(); j++) {
-          if (!(fileList[j].rfind(dataSource->cfgLayer->TileSettings[0]->attr.tilepath.c_str(), 0) == 0)) {
-            CCreateTiles::createTilesForFile(dataSource, CDBFILESCANNER_CREATETILES + CDBFILESCANNER_UPDATEDB, fileList[j].c_str());
-          }
+          CDBDebug("Checking %s", fileList[j].c_str());
+          CCreateTiles::createTilesForFile(dataSource, CDBFILESCANNER_CREATETILES + CDBFILESCANNER_UPDATEDB, fileList[j].c_str());
         }
       }
     }
   }
-
-  if (scanFlags & CDBFILESCANNER_UPDATEDB) {
-    updateMetaDataTable(dataSource);
-  }
-
   CDBDebug("  ==> *** Finished update layer [%s] ***", dataSource->cfgLayer->Name[0]->value.c_str());
   return 0;
 }

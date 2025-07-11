@@ -25,6 +25,8 @@
 
 #ifndef CDBSTORE_H
 #define CDBSTORE_H
+#include <vector>
+#include "../hclasses/CTString.h"
 
 #define CDB_UNKNOWN_ERROR 0
 #define CDB_UNKNOWN_COLUMNNAME 1
@@ -42,84 +44,56 @@ public:
     if (e == CDB_INDEX_OUT_OF_BOUNDS) return "CDB_INDEX_OUT_OF_BOUNDS";
     return getErrorMessage(0);
   }
-  class ColumnModel {
-  private:
-    CT::string *columnNames;
-    size_t size;
-
-  public:
-    ColumnModel(size_t size) {
-      columnNames = new CT::string[size];
-      this->size = size;
-    }
-    ~ColumnModel() { delete[] columnNames; }
+  struct ColumnModel {
+    std::vector<CT::string> columnNames;
     size_t getIndex(const char *name) {
-      for (size_t j = 0; j < size; j++) {
+      for (size_t j = 0; j < columnNames.size(); j++) {
         if (columnNames[j].equals(name)) return j;
       }
       throw(CDB_UNKNOWN_COLUMNNAME);
     }
     const char *getName(size_t index) {
-      if (index >= size) throw(CDB_INDEX_OUT_OF_BOUNDS);
+      if (index >= columnNames.size()) throw(CDB_INDEX_OUT_OF_BOUNDS);
       return columnNames[index].c_str();
     }
-    void setColumn(size_t index, const char *name) {
-      if (index >= size) throw(CDB_INDEX_OUT_OF_BOUNDS);
-      columnNames[index].copy(name);
-    }
-    size_t getSize() { return size; }
+    void push(const char *name) { columnNames.emplace_back(name); }
+    size_t getSize() { return columnNames.size(); }
   };
 
-  class Record {
-  private:
-    CT::string *values;
+  struct Record {
+    std::vector<CT::string> values;
     ColumnModel *columnModel;
-    size_t size;
-
-  public:
-    ~Record() { delete[] values; }
-    Record(ColumnModel *columnModel) {
+    void setColumnModel(ColumnModel *columnModel) {
       this->columnModel = columnModel;
-      size = columnModel->getSize();
-      values = new CT::string[size];
+      values.reserve(columnModel->getSize());
     }
-    ColumnModel *getColumnModel() { return columnModel; }
-
     CT::string *get(int index) { return get((size_t)index); }
     CT::string *get(size_t index) {
-      if (index >= size) throw(CDB_INDEX_OUT_OF_BOUNDS);
+      if (index >= values.size()) throw(CDB_INDEX_OUT_OF_BOUNDS);
       return &(values[index]);
     }
     CT::string *get(const char *name) { return get(columnModel->getIndex(name)); }
-    void push(size_t index, const char *value) {
-      if (index >= size) throw(CDB_INDEX_OUT_OF_BOUNDS);
-      values[index].copy(value);
-    }
+    void push(const char *value) { values.emplace_back(value); }
   };
 
   class Store {
-  private:
-    std::vector<Record *> records;
+  public:
+    std::vector<Record> records;
     ColumnModel *columnModel;
 
-  public:
     Store(ColumnModel *columnModel) { this->columnModel = columnModel; }
     ~Store() {
-      for (size_t j = 0; j < records.size(); j++) {
-        delete records[j];
-      }
       records.clear();
       delete columnModel;
     }
     Record *getRecord(size_t rowNumber) {
       if (rowNumber >= records.size()) throw(CDB_INDEX_OUT_OF_BOUNDS);
-      return records[rowNumber];
+      return &records[rowNumber];
     }
     size_t getSize() { return records.size(); }
     size_t size() { return records.size(); }
-    void push(Record *record) { records.push_back(record); }
-    std::vector<Record *> getRecords() { return records; }
-    ColumnModel *getColumnModel() { return columnModel; }
+    void push(Record &record) { records.push_back(record); }
+    std::vector<Record> getRecords() { return records; }
   };
 };
 #endif

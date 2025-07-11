@@ -130,8 +130,10 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
     if (!srvParamBboxProj4Params.empty()) {
       serverWCSGeoParams.CRS = srvParamBboxProj4Params;
     }
+#ifdef CNetCDFDataWriter_DEBUG
     CDBDebug("Found srvParamBboxProj4Params [%s]", srvParamBboxProj4Params.c_str());
     CDBDebug("Found srvParamGridProj4Params [%s]", srvParamGridProj4Params.c_str());
+#endif
 
     if (srvParam->WCS_GoNative == 0) {
 #ifdef CNetCDFDataWriter_DEBUG
@@ -889,10 +891,10 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         GDWArgs args = {.warper = &warper, .sourceData = sourceData, .sourceGeoParams = &sourceGeo, .destGeoParams = srvParam->Geo};
         auto dataType = variable->getType();
 
-#define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                            \
-      if (dataType == CDFTYPE)                                                                                                                                                              \
-        genericDataWarper.render<CPPTYPE>(args, [&settings](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction_nearest<CPPTYPE>(x, y, val, warperState, settings); });
-ENUMERATE_OVER_CDFTYPES(RENDER)
+#define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
+  if (dataType == CDFTYPE)                                                                                                                                                                             \
+    genericDataWarper.render<CPPTYPE>(args, [&settings](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction_nearest<CPPTYPE>(x, y, val, warperState, settings); });
+        ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
       }
 
@@ -901,10 +903,10 @@ ENUMERATE_OVER_CDFTYPES(RENDER)
         GDWArgs args = {.warper = &warper, .sourceData = sourceData, .sourceGeoParams = &sourceGeo, .destGeoParams = srvParam->Geo};
         auto dataType = variable->getType();
 
-#define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                            \
-      if (dataType == CDFTYPE)                                                                                                                                                              \
-        genericDataWarper.render<CPPTYPE>(args, [&settings](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction_avg_rgb<CPPTYPE>(x, y, val, warperState, settings); });
-ENUMERATE_OVER_CDFTYPES(RENDER)
+#define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
+  if (dataType == CDFTYPE)                                                                                                                                                                             \
+    genericDataWarper.render<CPPTYPE>(args, [&settings](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction_avg_rgb<CPPTYPE>(x, y, val, warperState, settings); });
+        ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
       }
 

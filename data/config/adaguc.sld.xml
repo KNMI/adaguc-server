@@ -3,7 +3,7 @@
 
   <TempDir value="{ADAGUC_TMP}"/>
   <Path value="{ADAGUC_PATH}/data"/>
-  <DataBase parameters="{ADAGUC_TMP}/adaguc.testdata.db"/>
+  <DataBase parameters="{ADAGUC_DB}"/>
   
   <!-- WMS settings -->
   <WMS>

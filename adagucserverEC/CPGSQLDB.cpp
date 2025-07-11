@@ -181,18 +181,21 @@ CDBStore::Store *CPGSQLDB::_queryToStore(const char *pszQuery, bool throwExcepti
     }
     return NULL;
   }
-  CDBStore::ColumnModel *colModel = new CDBStore::ColumnModel(PQnfields(result));
+  CDBStore::ColumnModel *colModel = new CDBStore::ColumnModel();
   // colModel
 
   for (size_t colNumber = 0; colNumber < numCols; colNumber++) {
-    colModel->setColumn(colNumber, PQfname(result, colNumber));
+    colModel->push(PQfname(result, colNumber));
   }
 
   CDBStore::Store *store = new CDBStore::Store(colModel);
 
   for (size_t rowNumber = 0; rowNumber < numRows; rowNumber++) {
-    CDBStore::Record *record = new CDBStore::Record(colModel);
-    for (size_t colNumber = 0; colNumber < numCols; colNumber++) record->push(colNumber, PQgetvalue(result, rowNumber, colNumber));
+    CDBStore::Record record;
+    record.setColumnModel(colModel);
+    for (size_t colNumber = 0; colNumber < numCols; colNumber++) {
+      record.push(PQgetvalue(result, rowNumber, colNumber));
+    }
     store->push(record);
   }
 

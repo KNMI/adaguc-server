@@ -121,9 +121,24 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
 
   /* When geographical map projections are equal, just do a simple linear transformation */
   if (warper->isProjectionRequired() == false) {
-    for (int y = PXExtentBasedOnSource[1]; y < PXExtentBasedOnSource[3]; y++) {
-      for (int x = PXExtentBasedOnSource[0]; x < PXExtentBasedOnSource[2]; x++) {
 
+    // Obtain pixelextent to avoid looping over all source grid cells which will never be used in the destination grid
+    f4box pixelspan;
+    pixelspan = PXExtentBasedOnSource;
+    f8box source, dest;
+    source = sourceGeoParams->dfBBOX;
+    dest = destGeoParams->dfBBOX;
+    source.sort();
+    dest.sort();
+    f8point span = source.span();
+    f4point wh = {.x = sourceGeoParams->dWidth, .y = sourceGeoParams->dHeight};
+    f8box newbox = {
+        .left = (dest.left - source.left) / span.x, .bottom = (dest.bottom - source.bottom) / span.y, .right = (dest.right - source.left) / span.x, .top = (dest.top - source.bottom) / span.y};
+    pixelspan = {.left = (int)round(newbox.left * wh.x), .bottom = (int)round(newbox.bottom * wh.y), .right = (int)round(newbox.right * wh.x), .top = (int)round(newbox.top * wh.y)};
+    pixelspan.clip({.left = 0, .bottom = 0, .right = wh.x, .top = wh.y});
+
+    for (int y = pixelspan.bottom; y < pixelspan.top; y++) {
+      for (int x = pixelspan.left; x < pixelspan.right; x++) {
         double dfx = x;
         double dfy = y;
         int sx1 = roundedLinearTransform(dfx, dfSourceW, dfSourceExtW, dfSourceOrigX, dfDestOrigX, dfDestExtW, dfDestW);

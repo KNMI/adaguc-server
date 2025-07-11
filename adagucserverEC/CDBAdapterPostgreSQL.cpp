@@ -406,9 +406,8 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
   for (const auto &dim : dims) {
     query.printconcat(", %s, dim%s", dim.c_str(), dim.c_str());
   }
-  if (dataSource->queryLevel == -1) {
-    query.printconcat(",adaguctilinglevel");
-  }
+
+  query.printconcat(",t1.adaguctilinglevel");
 
   int i = 0;
   for (const auto &m : mapping) {
@@ -423,7 +422,10 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
   // Filter on tiling bounding box (or not)
   query.concat("WHERE ");
   if (dataSource->queryBBOX) {
+    // All tiled resilts
+    query.printconcat("t1.adaguctilinglevel != 0 and", dataSource->queryLevel);
 
+    // Specific tile level
     if (dataSource->queryLevel != -1) {
       query.printconcat("t1.adaguctilinglevel = %d and ", dataSource->queryLevel);
     }
@@ -433,9 +435,9 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     double yminB = std::min(dataSource->nativeViewPortBBOX.top, dataSource->nativeViewPortBBOX.bottom);
     double ymaxB = std::max(dataSource->nativeViewPortBBOX.top, dataSource->nativeViewPortBBOX.bottom);
     query.printconcat(" not (minx > %f or maxx < %f or miny > %f or maxy < %f)", xmaxB, xminB, ymaxB, yminB);
-
   } else {
-    query.concat("t1.adaguctilinglevel != -1 ");
+    // Only non tiled results
+    query.concat("t1.adaguctilinglevel = 0 ");
   }
 
   // Filter on the requested dimensions
@@ -493,7 +495,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
   try {
     store = DB->queryToStore(query.c_str(), true);
   } catch (int e) {
-    if ((CServerParams::checkDataRestriction() & SHOW_QUERYINFO) == false) query.copy("hidden");
+    // if ((CServerParams::checkDataRestriction() & SHOW_QUERYINFO) == false) query.copy("hidden");
     CDBDebug("Query failed with code %d (%s)", e, query.c_str());
     return NULL;
   }
@@ -781,6 +783,15 @@ std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAn
   return mapping;
 }
 
+CT::string CDBAdapterPostgreSQL::getTableNameForPathFilterAndDimension(CDataSource *dataSource) {
+  if (dataSource->cfgLayer->Dimension.size() == 0) {
+    CDBError("Unable to getTableNameForPathFilterAndDimension");
+    throw __LINE__;
+  }
+  const char *pszDimName = dataSource->cfgLayer->Dimension[0]->attr.name.c_str();
+  return getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), pszDimName, dataSource);
+}
+
 CT::string CDBAdapterPostgreSQL::getTableNameForPathFilterAndDimension(const char *path, const char *filter, const char *dimension, CDataSource *dataSource) {
   // This is now a wrapper which calls `getTableNamesForPathFilterAndDimensions` directly for a single dimension.
 
@@ -935,19 +946,6 @@ int CDBAdapterPostgreSQL::createDimTableOfType(const char *dimname, const char *
     if (status != 0) {
       CDBDebug("Warning: Unable to create index [%s]", query.c_str());
     }
-
-    //     /* Create index on filepath */
-    //     query.print("CREATE INDEX INDEXFOR%s on %s (%s)", "path", tablename, "path"); status = dataBaseConnection->query(query.c_str()); if(status!=0) { CDBError("Unable to create index [%s]",
-    //     query.c_str());throw(__LINE__); }
-    //
-    //     /* Create index on minx etc */
-    //     query.print("CREATE INDEX INDEXFOR%s on %s (%s)", "minx", tablename, "minx"); status = dataBaseConnection->query(query.c_str()); if(status!=0) { CDBError("Unable to create index [%s]",
-    //     query.c_str());throw(__LINE__); } query.print("CREATE INDEX INDEXFOR%s on %s (%s)", "miny", tablename, "miny"); status = dataBaseConnection->query(query.c_str()); if(status!=0) {
-    //     CDBError("Unable to create index [%s]", query.c_str());throw(__LINE__); } query.print("CREATE INDEX INDEXFOR%s on %s (%s)", "maxx", tablename, "maxx"); status =
-    //     dataBaseConnection->query(query.c_str()); if(status!=0) { CDBError("Unable to create index [%s]", query.c_str());throw(__LINE__); } query.print("CREATE INDEX INDEXFOR%s on %s (%s)", "maxy",
-    //     tablename, "maxy"); status = dataBaseConnection->query(query.c_str()); if(status!=0) { CDBError("Unable to create index [%s]", query.c_str());throw(__LINE__); } query.print("CREATE INDEX
-    //     INDEXFOR%s on %s (%s)", "adaguctilinglevel", tablename, "adaguctilinglevel"); status = dataBaseConnection->query(query.c_str()); if(status!=0) { CDBError("Unable to create index [%s]",
-    //     query.c_str());throw(__LINE__); }
   }
   return status;
 }
@@ -1252,4 +1250,17 @@ bool CDBAdapterPostgreSQL::advisoryUnLock(size_t key) {
   }
   delete store;
   return succesfullyunlocked;
+}
+
+f8box CDBAdapterPostgreSQL::getExtent(CDataSource *dataSource) {
+  auto tableName = getTableNameForPathFilterAndDimension(dataSource);
+  CT::string query;
+  query.print("select min(minx) as minx, min(miny) as miny, max(maxx) as maxx, max(maxy) as maxy from %s;", tableName.c_str());
+  auto store = dataBaseConnection->queryToStore(query.c_str());
+  if (store == NULL || store->size() == 0) {
+    CDBDebug("Unable to getExtent: No results from db");
+    throw __LINE__;
+  }
+  auto record = store->getRecord(0);
+  return {.left = record->get("minx")->toDouble(), .bottom = record->get("miny")->toDouble(), .right = record->get("maxx")->toDouble(), .top = record->get("maxy")->toDouble()};
 }

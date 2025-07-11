@@ -679,7 +679,9 @@ int CRequest::setDimValuesForDataSource(CDataSource *dataSource, CServerParams *
 #endif
   int status = fillDimValuesForDataSource(dataSource, srvParam);
   if (status != 0) return status;
-  return queryDimValuesForDataSource(dataSource, srvParam);
+
+  bool hasTileSettings = dataSource->cfgLayer->TileSettings.size() == 1;
+  return queryDimValuesForDataSource(dataSource, srvParam, hasTileSettings);
 };
 
 int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams *srvParam) {
@@ -1056,32 +1058,13 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
 
   return 0;
 }
-int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams *srvParam) {
-#ifdef CREQUEST_DEBUG
-  CDBDebug("queryDimValuesForDataSource");
-#endif
+int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams *srvParam, bool includeTiles) {
+
   try {
     CDBStore::Store *store = NULL;
 
-    // If query on bbox = enabled, set the current viewport bbox
-    dataSource->queryBBOX = false;
-    if (dataSource->cfgLayer->TileSettings.size() == 1) {
+    if (!srvParam->Geo->CRS.empty() && includeTiles) {
       dataSource->queryBBOX = true;
-    }
-
-    //     CDBDebug("queryDimValuesForDataSource dataSource->queryBBOX=%d %s for step
-    //     %d/%d",(int)dataSource->queryBBOX,dataSource->layerName.c_str(),dataSource->getCurrentTimeStep(),dataSource->getNumTimeSteps());
-    //     CDBDebug("queryDimValuesForDataSource cfgLayer->Name = %s",dataSource->cfgLayer->Name[0]->value.c_str());
-    //     CDBDebug("queryDimValuesForDataSource cfgLayer->Title = %s",dataSource->cfgLayer->Title[0]->value.c_str());
-    //     CDBDebug("queryDimValuesForDataSource cfgLayer->FilePath =
-    //     %s",dataSource->cfgLayer->FilePath[0]->value.c_str()); CDBDebug("queryDimValuesForDataSource
-    //     dataSource->cfgLayer->TileSettings.size()= %d",dataSource->cfgLayer->TileSettings.size());
-    //
-    if (srvParam->Geo->CRS.empty() == true) {
-      dataSource->queryBBOX = false;
-    }
-
-    if (dataSource->queryBBOX && dataSource->cfgLayer->TileSettings.size() == 1) {
       store = handleTileRequest(dataSource);
       if (store == nullptr || store->getSize() == 0) {
         CDBDebug("Unable to handleTileRequest");
@@ -1090,6 +1073,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
     } else {
       /* Do queries without tiling and boundingbox */
       dataSource->queryBBOX = false;
+      dataSource->queryLevel = 0;
 
       int maxQueryResultLimit = 512;
 
@@ -1143,14 +1127,8 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
         CDBDebug("  [%s][%d] = [%s]", dataSource->requiredDims[i]->netCDFDimName.c_str(), atoi(record->get(2 + i * 2)->c_str()), value.c_str());
 #endif
         dataSource->requiredDims[i]->addValue(value.c_str());
-        // dataSource->requiredDims[i]->allValues.push_back(sDims[l].c_str());
       }
     }
-
-    //     for(size_t i=0;i<dataSource->requiredDims.size();i++){
-    //       CDBDebug("%d There are %d values for dimension
-    //       %s",i,dataSource->requiredDims[i]->uniqueValues.size(),dataSource->requiredDims[i]->netCDFDimName.c_str());
-    //     }
 
     delete store;
   } catch (int i) {
