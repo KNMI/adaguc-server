@@ -422,8 +422,6 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
   // Filter on tiling bounding box (or not)
   query.concat("WHERE ");
   if (dataSource->queryBBOX) {
-    // All tiled resilts
-    query.printconcat("t1.adaguctilinglevel != 0 and", dataSource->queryLevel);
 
     // Specific tile level
     if (dataSource->queryLevel != -1) {
@@ -436,8 +434,12 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     double ymaxB = std::max(dataSource->nativeViewPortBBOX.top, dataSource->nativeViewPortBBOX.bottom);
     query.printconcat(" not (minx > %f or maxx < %f or miny > %f or maxy < %f)", xmaxB, xminB, ymaxB, yminB);
   } else {
-    // Only non tiled results
-    query.concat("t1.adaguctilinglevel = 0 ");
+    // All results
+    if (dataSource->queryLevel == -1) {
+      query.concat("t1.adaguctilinglevel = t1.adaguctilinglevel ");
+    } else {
+      query.concat("t1.adaguctilinglevel = %d ", dataSource->queryLevel);
+    }
   }
 
   // Filter on the requested dimensions
@@ -493,6 +495,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
   // Execute the query
   CDBStore::Store *store = NULL;
   try {
+    CDBDebug(" (%s)", query.c_str());
     store = DB->queryToStore(query.c_str(), true);
   } catch (int e) {
     // if ((CServerParams::checkDataRestriction() & SHOW_QUERYINFO) == false) query.copy("hidden");

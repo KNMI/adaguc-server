@@ -880,7 +880,9 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 
 #else
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
-    CDBDebug("Working on [%s]", dataSourceFilename.c_str());
+    if (silent == false) {
+      CDBDebug("Working on [%s]", dataSourceFilename.c_str());
+    }
   }
 #endif
   if (mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS || mode == CNETCDFREADER_MODE_OPEN_HEADER) {

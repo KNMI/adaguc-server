@@ -7,7 +7,8 @@ CDBStore::Store *handleTileRequest(CDataSource *dataSource) {
   auto srvParam = dataSource->srvParams;
   auto tileSettings = dataSource->cfgLayer->TileSettings[0];
   bool tileSettingsDebug = tileSettings->attr.debug.equals("true");
-  int maxTilesInImage = !tileSettings->attr.maxtilesinimage.empty() ? tileSettings->attr.maxtilesinimage.toInt() : 300;
+  int initialRequestLimit = 500;
+  size_t maxTilesInImage = !tileSettings->attr.maxtilesinimage.empty() ? tileSettings->attr.maxtilesinimage.toInt() : 16;
 
   if (!srvParam->dFound_BBOX) {
     try {
@@ -27,7 +28,7 @@ CDBStore::Store *handleTileRequest(CDataSource *dataSource) {
   dataSource->queryBBOX = true;
 
   // Query for all possible tiles within given domain by nativeViewPortBBOX
-  auto store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource, maxTilesInImage, false);
+  auto store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource, initialRequestLimit, false);
 
   if (store->size() == 0) {
     CDBError("No tiles found");
@@ -52,9 +53,13 @@ CDBStore::Store *handleTileRequest(CDataSource *dataSource) {
   // Now filter out all the tiling levels
   std::vector<CDBStore::Record> records;
   for (auto record : store->records) {
-    if (record.get("adaguctilinglevel")->toInt() == dataSource->queryLevel) {
-      records.push_back(record);
-    }
+    // Make sure that there are not too many tiles
+    if (records.size() < maxTilesInImage) {
+      if (record.get("adaguctilinglevel")->toInt() == dataSource->queryLevel) {
+        records.push_back(record);
+      }
+    } else
+      break;
   }
 
   // Assign the filtered records

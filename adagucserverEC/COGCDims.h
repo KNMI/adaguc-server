@@ -35,6 +35,17 @@ public:
     hasFixedValue = false;
     hidden = false;
   }
+
+  COGCDims(CT::string name, CT::string value) {
+    isATimeDimension = true;
+    hasFixedValue = false;
+    hidden = false;
+    this->name = name;
+    this->queryValue = value;
+    this->value = value;
+    this->netCDFDimName = name;
+    this->uniqueValues = {value};
+  }
   /**
    * OGC name
    */

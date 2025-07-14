@@ -84,6 +84,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
     std::string randomString = CServerParams::randomString(32);
     tempFileName.print("%s/%s.nc", srvParam->cfg->TempDir[0]->attr.value.c_str(), randomString.c_str());
     CDataReader reader;
+    reader.silent = this->silent;
     reader.enableReporting(false);
 
     int status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
@@ -429,6 +430,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
     if (dataSource->getDataObject(j)->cdfVariable == nullptr) {
       CDBError("dataSource->getDataObject(j)->cdfVariable==nullptr for variable [%s]", dataSource->getDataObject(j)->variableName.c_str());
       CDataReader reader;
+      reader.silent = this->silent;
       int status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
       if (status != 0) {
         CDBError("Could not open file: %s", dataSource->getFileName());
@@ -533,6 +535,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
   for (size_t i = 0; i < dataSources.size(); i++) {
     CDataSource *dataSource = dataSources[i];
     CDataReader reader;
+    reader.silent = this->silent;
     reader.enableReporting(verbose);
     //     render
 

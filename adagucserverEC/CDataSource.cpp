@@ -318,7 +318,7 @@ CDataSource::CDataSource() {
   _currentStyle = NULL;
 
   queryBBOX = false;
-  queryLevel = 0;
+  queryLevel = -1; // -1 Means query all. 0 means query all non tiled versions. Positive number means a tiled version.
   featureSet = NULL;
 }
 

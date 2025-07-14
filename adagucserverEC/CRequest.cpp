@@ -680,8 +680,7 @@ int CRequest::setDimValuesForDataSource(CDataSource *dataSource, CServerParams *
   int status = fillDimValuesForDataSource(dataSource, srvParam);
   if (status != 0) return status;
 
-  bool hasTileSettings = dataSource->cfgLayer->TileSettings.size() == 1;
-  return queryDimValuesForDataSource(dataSource, srvParam, hasTileSettings);
+  return queryDimValuesForDataSource(dataSource, srvParam);
 };
 
 int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams *srvParam) {
@@ -1058,22 +1057,25 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
 
   return 0;
 }
-int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams *srvParam, bool includeTiles) {
+int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams *srvParam) {
 
   try {
     CDBStore::Store *store = NULL;
 
-    if (!srvParam->Geo->CRS.empty() && includeTiles) {
-      dataSource->queryBBOX = true;
+    bool hasTileSettings = dataSource->cfgLayer->TileSettings.size() > 0;
+    if (!srvParam->Geo->CRS.empty() && hasTileSettings) {
       store = handleTileRequest(dataSource);
       if (store == nullptr || store->getSize() == 0) {
         CDBDebug("Unable to handleTileRequest");
         return 0;
       }
     } else {
-      /* Do queries without tiling and boundingbox */
+      /* Do queries without boundingbox
+         - If there are tilesettings configured, query all tiled and non tiled versions
+         - If there are tilesettings configured, do not include tiles when no querybbox is defined.
+      */
       dataSource->queryBBOX = false;
-      dataSource->queryLevel = 0;
+      dataSource->queryLevel = hasTileSettings ? 0 : -1;
 
       int maxQueryResultLimit = 512;
 

@@ -181,7 +181,7 @@ private:
 
 public:
   static int setDimValuesForDataSource(CDataSource *dataSource, CServerParams *srvParam);
-  static int queryDimValuesForDataSource(CDataSource *dataSource, CServerParams *srvParam, bool includeTiles = false);
+  static int queryDimValuesForDataSource(CDataSource *dataSource, CServerParams *srvParam);
   static int fillDimValuesForDataSource(CDataSource *dataSource, CServerParams *srvParam);
 
   CRequest() { srvParam = new CServerParams(); }

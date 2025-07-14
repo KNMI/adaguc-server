@@ -1049,10 +1049,8 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
   /* Now Check autotile option */
   if (!(scanFlags & CDBFILESCANNER_DONOTTILE)) {
     if (dataSource->cfgLayer->TileSettings.size() == 1) {
-      if (dataSource->cfgLayer->TileSettings[0]->attr.autotile.equals("true")) {
-        CDBDebug("Number of files = %d", fileList.size());
+      if (dataSource->cfgLayer->TileSettings[0]->attr.autotile.equals("true") || (dataSource->cfgLayer->TileSettings[0]->attr.autotile.equals("onlysinglescan") && fileList.size() == 1)) {
         for (size_t j = 0; j < fileList.size(); j++) {
-          CDBDebug("Checking %s", fileList[j].c_str());
           CCreateTiles::createTilesForFile(dataSource, CDBFILESCANNER_CREATETILES + CDBFILESCANNER_UPDATEDB, fileList[j].c_str());
         }
       }
@@ -1128,4 +1126,12 @@ std::vector<std::string> CDBFileScanner::searchFileNames(const char *path, CT::s
   }
 
   throw(__LINE__);
+}
+
+int CDBFileScanner::scanFile(CT::string fileToScan, CDataSource *dataSource, int scanFlags) {
+  std::vector<std::string> fileList = {fileToScan.c_str()};
+  auto dataSourceToScan = dataSource->clone();
+  int status = CDBFileScanner::DBLoopFiles(dataSourceToScan, 0, &fileList, scanFlags);
+  delete dataSourceToScan;
+  return status;
 }

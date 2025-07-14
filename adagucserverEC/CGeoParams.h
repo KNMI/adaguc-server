@@ -150,7 +150,7 @@ struct f8box {
     if (right > clip.right) right = clip.right;
     if (top > clip.top) top = clip.top;
   }
-  void toArray(int box[4]) {
+  void toArray(double box[4]) {
     box[0] = left;
     box[1] = bottom;
     box[2] = right;

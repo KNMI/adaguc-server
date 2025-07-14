@@ -55,7 +55,7 @@ int CCreateTiles::createTiles(CDataSource *dataSource, int scanFlags) {
 }
 struct DestinationGrids {
   int level, x, y;
-  double bbox[4];
+  f8box bbox;
 };
 
 std::vector<DestinationGrids> makeTileSet(CDataSource &dataSource) {
@@ -74,51 +74,60 @@ std::vector<DestinationGrids> makeTileSet(CDataSource &dataSource) {
     double newSpanX = desiredWidth * cellSizeX * inc;
     double newSpanY = desiredHeight * cellSizeY * inc;
 
-    for (double x = xminB; x < xmaxB; x += newSpanX) {
-      for (double y = yminB; y < ymaxB; y += newSpanY) {
+    for (double y = yminB; y < ymaxB; y += newSpanY) {
+      for (double x = xminB; x < xmaxB; x += newSpanX) {
         int dx = round((x - xminB) / newSpanX);
         int dy = round((y - yminB) / newSpanY);
-        destinationGrids.push_back({.level = level, .x = dx, .y = dy, .bbox = {x, y, x + newSpanX, y + newSpanY}});
+        destinationGrids.push_back({.level = level, .x = dx, .y = dy, .bbox = {.left = x, .bottom = y, .right = x + newSpanX, .top = y + newSpanY}});
       }
     }
   }
   return destinationGrids;
 }
 
-int CCreateTiles::createTilesForFile(CDataSource *dataSource, int, CT::string fileToTile) {
+int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::string fileToTile) {
   if (fileToTile.endsWith("tile.nc")) {
-    CDBDebug("Ends with a tile %s", fileToTile.c_str());
     return 0;
   }
-  auto dataSourceToTile = dataSource;
-  if (dataSourceToTile->cfgLayer->TileSettings.size() != 1) {
+  if (baseDataSource->cfgLayer->TileSettings.size() != 1) {
     CDBDebug("No tile settings");
     return 1;
   }
-  auto srvParam = dataSourceToTile->srvParams;
-  auto tileSettings = dataSourceToTile->cfgLayer->TileSettings[0];
-  CT::string dataSourceFileName = dataSourceToTile->getFileName();
-  if (dataSourceFileName.endsWith("tile.nc")) {
-    CDBDebug("Seems a tile %s", dataSourceFileName.c_str());
-    return 0;
-  }
-  // CDBDebug("%f %f %f %f %f %f %s", dataSourceToTile->dfBBOX[0], dataSourceToTile->dfBBOX[1], dataSourceToTile->dfBBOX[2], dataSourceToTile->dfBBOX[3], dataSourceToTile->dfCellSizeX,
-  //          dataSourceToTile->dfCellSizeY, dataSourceToTile->nativeProj4.c_str());
+  auto srvParam = baseDataSource->srvParams;
+  auto tileSettings = baseDataSource->cfgLayer->TileSettings[0];
+  auto db = CDBFactory::getDBAdapter(srvParam->cfg);
+  auto tableName = db->getTableNameForPathFilterAndDimension(baseDataSource);
 
-  CRequest::fillDimValuesForDataSource(dataSourceToTile, srvParam);
+  CDataSource *dataSourceToTile = new CDataSource();
+  dataSourceToTile->setCFGLayer(baseDataSource->srvParams, baseDataSource->cfg, baseDataSource->cfgLayer, baseDataSource->getLayerName(), 0);
 
-  dataSource->queryLevel = 0;
-  CRequest::queryDimValuesForDataSource(dataSourceToTile, srvParam, false);
-  dataSourceFileName = dataSourceToTile->getFileName();
-  if (dataSourceFileName.endsWith("tile.nc")) {
-    CDBDebug("Seems a tile %s", dataSourceFileName.c_str());
-    return 0;
+  CDataReader reader;
+  reader.silent = true;
+
+  if (dataSourceToTile->getNumTimeSteps() != 0) {
+    CDBError("dataSourceToTile->getNumTimeSteps() should be 0");
+    return 1;
   }
+
+  dataSourceToTile->addStep(fileToTile.c_str(), NULL);
+  dataSourceToTile->setTimeStep(0);
+
+  CDBDebug("Opening input file for tiles: %s", dataSourceToTile->getFileName());
+  reader.open(dataSourceToTile, CNETCDFREADER_MODE_OPEN_HEADER);
+
+  // Extract time and set it.
+  auto var = dataSourceToTile->getFirstAvailableDataObject()->cdfObject->getVariable("time");
+  double timeValue = var->getDataAt<double>(0);
+  auto adagucTime = CTime::GetCTimeInstance(var);
+  auto timeString = adagucTime->dateToISOString(adagucTime->getDate(timeValue));
+  dataSourceToTile->requiredDims.push_back(new COGCDims("time", timeString));
+  dataSourceToTile->getCDFDims()->addDimension("time", timeString, 0);
+
+  // Make the tileset
   std::vector<DestinationGrids> tileSet = makeTileSet(*dataSourceToTile);
 
   // Write tiles
-
-  CT::string basename = dataSourceFileName.basename();
+  CT::string basename = fileToTile.basename();
   basename.substring(0, basename.lastIndexOf("."));
   CT::string directory = dataSourceToTile->cfgLayer->FilePath[0]->value;
 
@@ -128,41 +137,38 @@ int CCreateTiles::createTilesForFile(CDataSource *dataSource, int, CT::string fi
   srvParam->Geo->dWidth = tileSettings->attr.tilewidthpx.toInt();
   srvParam->Geo->dHeight = tileSettings->attr.tileheightpx.toInt();
 
-  CDBDebug("Start making tiles %d", tileSet.size());
   int index = 0;
   for (auto destGrid : tileSet) {
-
+    index++;
     CT::string destFileName;
     destFileName.print("%s/%s-%0.3d_%0.3d_%0.3dtile.nc", directory.c_str(), basename.c_str(), destGrid.level, destGrid.y, destGrid.x);
 
-    index++;
-    if (CDirReader::isFile(destFileName.c_str())) {
-      CDBDebug("Already there %s", destFileName.c_str());
+    // Already done?
+    if (db->checkIfFileIsInTable(tableName, destFileName) == 0) {
       continue;
     }
-    CDBDebug("Doing tile %s %0.1f procent done", destFileName.basename().c_str(), (index / double(tileSet.size())) * 100.);
-    for (size_t b = 0; b < 4; b++) {
-      srvParam->Geo->dfBBOX[b] = destGrid.bbox[b];
+    // Only write if the file is not there already
+    if (!CDirReader::isFile(destFileName.c_str())) {
+      CDBDebug("Make  %s %0.1f done", destFileName.basename().c_str(), (index / double(tileSet.size())) * 100.);
+      destGrid.bbox.toArray(srvParam->Geo->dfBBOX);
+      CNetCDFDataWriter wcsWriter;
+      wcsWriter.silent = true;
+      wcsWriter.init(srvParam, dataSourceToTile, dataSourceToTile->getNumTimeSteps());
+      std::vector<CDataSource *> dataSourcesToTile = {dataSourceToTile};
+      wcsWriter.addData(dataSourcesToTile);
+      wcsWriter.writeFile(destFileName.c_str(), destGrid.level, true);
     }
-    CNetCDFDataWriter wcsWriter;
-    wcsWriter.init(srvParam, dataSourceToTile, dataSourceToTile->getNumTimeSteps());
-    std::vector<CDataSource *> dataSourcesToTile = {dataSourceToTile};
-    wcsWriter.addData(dataSourcesToTile);
-    wcsWriter.writeFile(destFileName.c_str(), destGrid.level, true);
-    CDBDebug("Starting updatedb from createTiles for "
-             "file %s",
-             destFileName.c_str());
 
-    std::vector<std::string> fileList = {destFileName.c_str()};
-    auto dataSourceToScan = dataSourceToTile->clone();
-    int status = CDBFileScanner::DBLoopFiles(dataSourceToScan, 0, &fileList, CDBFILESCANNER_DONTREMOVEDATAFROMDB | CDBFILESCANNER_UPDATEDB | CDBFILESCANNER_IGNOREFILTER | CDBFILESCANNER_DONOTTILE);
-    delete dataSourceToScan;
-    if (status != 0) {
-      CDBDebug("Something went wrong.");
-      throw(__LINE__);
-    }
+    // Scan the file, add it to the db
+    CDBFileScanner::scanFile(destFileName, dataSourceToTile, CDBFILESCANNER_DONTREMOVEDATAFROMDB | CDBFILESCANNER_UPDATEDB | CDBFILESCANNER_IGNOREFILTER | CDBFILESCANNER_DONOTTILE);
+
+    // Close the created tile cdfObject
+    CDFObjectStore::getCDFObjectStore()->deleteCDFObject(destFileName.c_str());
   }
-  // delete dataSourceToTile;
+  // Close the source data
+  reader.close();
+  delete dataSourceToTile;
+  CDFObjectStore::getCDFObjectStore()->deleteCDFObject(fileToTile.c_str());
 
   return 0;
 };
