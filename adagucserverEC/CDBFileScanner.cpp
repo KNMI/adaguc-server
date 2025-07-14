@@ -344,6 +344,9 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
     // CADAGUC_time *ADTime  = NULL;
     CTime *adagucTime;
 
+    // Sort the fileList alphabetically, which normally corresponds to time order
+    std::sort(fileList->begin(), fileList->end());
+
     CDFObject *cdfObjectOfFirstFile = NULL;
     try {
       cdfObjectOfFirstFile = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource, (*fileList)[0].c_str());
