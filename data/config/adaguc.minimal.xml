@@ -4,8 +4,7 @@
   <!-- General settings -->
   <Path value="/usr/people/plieger/adagucserver/data"/>
   <TempDir value="/tmp/"/>
-  <OnlineResource value="http://localhost:8080/cgi-bin/adaguc.minimal.cgi?"/>
-  <DataBase parameters="/tmp/adaguc.minimal.db"/>
+  <DataBase parameters="{ADAGUC_DB}"/>
 
   <!-- WMS settings -->
   <WMS>

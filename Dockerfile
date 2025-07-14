@@ -29,7 +29,6 @@ RUN apt-get -q -y update \
     libhdf5-dev \
     libproj-dev \
     libgdal-dev \
-    libsqlite3-dev \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
