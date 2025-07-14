@@ -26,3 +26,6 @@
 !tests/functional_test.py
 !tests/starttests.sh
 !tests/starttests_psql.sh
+**/*.pyc
+python/lib/env/
+python/lib/dist/
