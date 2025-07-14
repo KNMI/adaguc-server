@@ -128,14 +128,16 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
     f8box source, dest;
     source = sourceGeoParams->dfBBOX;
     dest = destGeoParams->dfBBOX;
-    source.sort();
-    dest.sort();
     f8point span = source.span();
     f4point wh = {.x = sourceGeoParams->dWidth, .y = sourceGeoParams->dHeight};
     f8box newbox = {
         .left = (dest.left - source.left) / span.x, .bottom = (dest.bottom - source.bottom) / span.y, .right = (dest.right - source.left) / span.x, .top = (dest.top - source.bottom) / span.y};
-    pixelspan = {.left = (int)round(newbox.left * wh.x), .bottom = (int)round(newbox.bottom * wh.y), .right = (int)round(newbox.right * wh.x), .top = (int)round(newbox.top * wh.y)};
-    pixelspan.clip({.left = 0, .bottom = 0, .right = wh.x, .top = wh.y});
+    f4box newpixelspan = {.left = (int)round(newbox.left * wh.x), .bottom = (int)round(newbox.bottom * wh.y), .right = (int)round(newbox.right * wh.x), .top = (int)round(newbox.top * wh.y)};
+    newpixelspan.clip({.left = 0, .bottom = 0, .right = wh.x, .top = wh.y});
+    newpixelspan.sort();
+    pixelspan = newpixelspan;
+    // CDBDebug("newpixelspan %d %d %d %d", pixelspan2.left, pixelspan2.bottom, pixelspan2.right, pixelspan2.top);
+    // CDBDebug("pixelspan %d %d %d %d", pixelspan.left, pixelspan.bottom, pixelspan.right, pixelspan.top);
 
     for (int y = pixelspan.bottom; y < pixelspan.top; y++) {
       for (int x = pixelspan.left; x < pixelspan.right; x++) {
@@ -148,7 +150,7 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
         bool skip = false;
         int sxw = floor(fabs(sx2 - sx1)) + 1;
         int syh = floor(fabs(sy2 - sy1)) + 1;
-        // CDBDebug("%d %d %d %d", sx1, sy1, sx2 ,sy2);
+        // CDBDebug("%d %d %d, %d %d %d %d", x, y, sx1, sy1, sx2, sy2);
         if (sx1 < -sxw && sx2 < -sxw) skip = true;
         if (sy1 < -syh && sy2 < -syh) skip = true;
         if (sx1 >= destGeoParams->dWidth + sxw && sx2 >= destGeoParams->dWidth + sxw) skip = true;
@@ -182,6 +184,7 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
               warperState.tileDx = (sjx - lx1) / double(lx2 - lx1);
               warperState.destX = sjx;
               warperState.destY = sjy;
+              // CDBDebug("%d %d %d %d  %f", sjx, sjy, warperState.sourceDataPX, warperState.sourceDataPY, value);
               drawFunction(sjx, sjy, value, warperState);
             }
           }

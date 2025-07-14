@@ -495,7 +495,6 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
   // Execute the query
   CDBStore::Store *store = NULL;
   try {
-    CDBDebug(" (%s)", query.c_str());
     store = DB->queryToStore(query.c_str(), true);
   } catch (int e) {
     // if ((CServerParams::checkDataRestriction() & SHOW_QUERYINFO) == false) query.copy("hidden");

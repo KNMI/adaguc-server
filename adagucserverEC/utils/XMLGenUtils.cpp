@@ -867,7 +867,7 @@ int getFileNameForLayer(MetadataLayer *metadataLayer) {
     }
 
     // Query one filename
-    CDBStore::Store *values = CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByValue("path", 1, true, tableName.c_str());
+    CDBStore::Store *values = CDBFactory::getDBAdapter(srvParam->cfg)->getUniqueValuesOrderedByValue("path", 1, false, tableName.c_str());
     bool databaseError = false;
 
     if (values == NULL) {

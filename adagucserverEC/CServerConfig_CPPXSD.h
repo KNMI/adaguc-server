@@ -1159,7 +1159,7 @@ public:
   public:
     class Cattr {
     public:
-      CT::string tilewidthpx = "1024", tileheightpx = "1024", tileprojection, minlevel, maxlevel, tilemode, debug, maxtilesinimage, threads, autotile, optimizeextent;
+      CT::string tilewidthpx = "1024", tileheightpx = "1024", tileprojection, minlevel, maxlevel, tilemode, debug, maxtilesinimage, threads, autotile, optimizeextent, tilepath;
     } attr;
     //           <TileSettings  tilewidth="600"
     //                    tileheight="600"
@@ -1203,6 +1203,9 @@ public:
         return;
       } else if (equals("optimizeextent", name)) {
         attr.optimizeextent.copy(value);
+        return;
+      } else if (equals("tilepath", name)) {
+        attr.tilepath.copy(value);
         return;
       }
     }

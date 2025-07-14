@@ -8,6 +8,7 @@ CDBStore::Store *handleTileRequest(CDataSource *dataSource) {
   auto tileSettings = dataSource->cfgLayer->TileSettings[0];
   bool tileSettingsDebug = tileSettings->attr.debug.equals("true");
   int initialRequestLimit = 500;
+  int targetNrOfTiles = 9;
   size_t maxTilesInImage = !tileSettings->attr.maxtilesinimage.empty() ? tileSettings->attr.maxtilesinimage.toInt() : 16;
 
   if (!srvParam->dFound_BBOX) {
@@ -44,7 +45,7 @@ CDBStore::Store *handleTileRequest(CDataSource *dataSource) {
   // Sort the map so that the closest targetNrOfTiles is first, this is the tiling level target
   using mypair = std::pair<int, int>;
   std::vector<mypair> v(std::begin(levelMap), std::end(levelMap));
-  int targetNrOfTiles = 9;
+
   sort(begin(v), end(v), [targetNrOfTiles](const mypair &a, const mypair &b) { return fabs(targetNrOfTiles - a.second) < fabs(targetNrOfTiles - b.second); });
   dataSource->queryLevel = v.at(0).first;
 

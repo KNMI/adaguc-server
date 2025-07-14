@@ -116,12 +116,25 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
   reader.open(dataSourceToTile, CNETCDFREADER_MODE_OPEN_HEADER);
 
   // Extract time and set it.
-  auto var = dataSourceToTile->getFirstAvailableDataObject()->cdfObject->getVariable("time");
-  double timeValue = var->getDataAt<double>(0);
-  auto adagucTime = CTime::GetCTimeInstance(var);
-  auto timeString = adagucTime->dateToISOString(adagucTime->getDate(timeValue));
-  dataSourceToTile->requiredDims.push_back(new COGCDims("time", timeString));
-  dataSourceToTile->getCDFDims()->addDimension("time", timeString, 0);
+  try {
+    auto var = dataSourceToTile->getFirstAvailableDataObject()->cdfObject->getVariable("time");
+    double timeValue = var->getDataAt<double>(0);
+    auto adagucTime = CTime::GetCTimeInstance(var);
+    auto timeString = adagucTime->dateToISOString(adagucTime->getDate(timeValue));
+    dataSourceToTile->requiredDims.push_back(new COGCDims("time", timeString));
+    dataSourceToTile->getCDFDims()->addDimension("time", timeString, 0);
+  } catch (int e) {
+    if (dataSourceToTile->requiredDims.size() == 0) {
+      COGCDims *ogcDim = new COGCDims();
+      dataSourceToTile->requiredDims.push_back(ogcDim);
+      ogcDim->name.copy("none");
+      ogcDim->value.copy("0");
+      ogcDim->netCDFDimName.copy("none");
+      ogcDim->hidden = true;
+      dataSourceToTile->getCDFDims()->addDimension("none", "0", 0);
+    }
+    // Source data has no time dimension.
+  }
 
   // Make the tileset
   std::vector<DestinationGrids> tileSet = makeTileSet(*dataSourceToTile);
@@ -129,7 +142,15 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
   // Write tiles
   CT::string basename = fileToTile.basename();
   basename.substring(0, basename.lastIndexOf("."));
-  CT::string directory = dataSourceToTile->cfgLayer->FilePath[0]->value;
+  CT::string tileBasePath = dataSourceToTile->cfgLayer->FilePath[0]->value;
+  if (tileSettings->attr.tilepath.empty() == false) {
+    tileBasePath = tileSettings->attr.tilepath;
+    tileBasePath = CDirReader::makeCleanPath(tileBasePath.c_str());
+    if (!CDirReader::isDir(tileBasePath)) {
+
+      CDirReader::makePublicDirectory(tileBasePath);
+    }
+  }
 
   srvParam->Geo->BBOX_CRS = tileSettings->attr.tileprojection;
   srvParam->Geo->CRS = srvParam->Geo->BBOX_CRS;
@@ -141,7 +162,7 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
   for (auto destGrid : tileSet) {
     index++;
     CT::string destFileName;
-    destFileName.print("%s/%s-%0.3d_%0.3d_%0.3dtile.nc", directory.c_str(), basename.c_str(), destGrid.level, destGrid.y, destGrid.x);
+    destFileName.print("%s/%s-%0.3d_%0.3d_%0.3dtile.nc", tileBasePath.c_str(), basename.c_str(), destGrid.level, destGrid.y, destGrid.x);
 
     // Already done?
     if (db->checkIfFileIsInTable(tableName, destFileName) == 0) {
