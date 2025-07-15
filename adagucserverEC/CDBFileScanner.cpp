@@ -412,7 +412,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
       }
     }
 
-    size_t numberOfFilesAddedToDbStore = 0;
+    size_t numberOfUpdatesToDbStore = 0;
     for (size_t j = 0; j < fileList->size(); j++) {
 // Loop through all configured dimensions.
 #ifdef CDBFILESCANNER_DEBUG
@@ -453,7 +453,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
           continue;
         }
         {
-          numberOfFilesAddedToDbStore += 1;
+          numberOfUpdatesToDbStore += 1;
           int fileExistsInDB = 0;
 
 // Delete files with non-matching creation date
@@ -832,7 +832,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
         }
       }
       // End of dimloop, start inserting our collected records in one statement
-      if (numberOfFilesAddedToDbStore % 50 == 0) dbAdapter->addFilesToDataBase();
+      if (numberOfUpdatesToDbStore % 50 == 0) dbAdapter->addFilesToDataBase();
     }
 
     // End of dimloop, start inserting our collected records in one statement
