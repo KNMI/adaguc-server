@@ -1,3 +1,12 @@
+**Version 4.0.2 - 2025-07-15**
+
+* Really send data to DB every 50 updates during scanning
+
+**Version 4.0.1 - 2025-07-14**
+
+* Small refactor of EDR locations code
+* Sort file in alphabetical order (which normally corresponds to time order) when scanning files
+
 **Version 4.0.0 - 2025-07-01**
 
 * __Breaking change: added script (Docker/start_autosync.sh) to autosync layermetadata store. Docker compose starts related container @maartenplieger in https://github.com/KNMI/adaguc-server/pull/476__
