@@ -1,3 +1,7 @@
+**Version 4.0.2 - 2025-07-15**
+
+* Really send data to DB every 50 updates during scanning
+
 **Version 4.0.1 - 2025-07-14**
 
 * Small refactor of EDR locations code

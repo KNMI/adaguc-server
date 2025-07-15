@@ -328,7 +328,6 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
     // CDBDebug("Checking files that are already in the database...");
     // char ISOTime[ISO8601TIME_LEN+1];
     CT::string isoString;
-    size_t numberOfFilesAddedFromDB = 0;
 
     // Setup variables like tableNames and timedims for each dimension
     size_t numDims = dataSource->cfgLayer->Dimension.size();
@@ -413,6 +412,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
       }
     }
 
+    size_t numberOfUpdatesToDbStore = 0;
     for (size_t j = 0; j < fileList->size(); j++) {
 // Loop through all configured dimensions.
 #ifdef CDBFILESCANNER_DEBUG
@@ -445,7 +445,6 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
           break;
         }
       }
-      size_t numberOfFilesAddedToDbStore = 0;
       for (size_t d = 0; d < dataSource->cfgLayer->Dimension.size(); d++) {
         if (skipDim[d] == true) {
 #ifdef CDBFILESCANNER_DEBUG
@@ -454,8 +453,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
           continue;
         }
         {
-          numberOfFilesAddedToDbStore += 1;
-          numberOfFilesAddedFromDB = 0;
+          numberOfUpdatesToDbStore += 1;
           int fileExistsInDB = 0;
 
 // Delete files with non-matching creation date
@@ -834,7 +832,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
         }
       }
       // End of dimloop, start inserting our collected records in one statement
-      if (numberOfFilesAddedToDbStore % 50 == 0) dbAdapter->addFilesToDataBase();
+      if (numberOfUpdatesToDbStore % 50 == 0) dbAdapter->addFilesToDataBase();
     }
 
     // End of dimloop, start inserting our collected records in one statement
@@ -871,10 +869,6 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
           delete values;
         }
       }
-    }
-
-    if (numberOfFilesAddedFromDB != 0) {
-      CDBDebug("%d file(s) were already in the database", numberOfFilesAddedFromDB);
     }
 
   } catch (int linenr) {
