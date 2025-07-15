@@ -1049,7 +1049,7 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
   /* Now Check autotile option */
   if (!(scanFlags & CDBFILESCANNER_DONOTTILE)) {
     if (dataSource->cfgLayer->TileSettings.size() == 1) {
-      if (dataSource->cfgLayer->TileSettings[0]->attr.autotile.equals("true") || (dataSource->cfgLayer->TileSettings[0]->attr.autotile.equals("onlysinglescan") && fileList.size() == 1)) {
+      if (dataSource->cfgLayer->TileSettings[0]->attr.autotile.equals("true") || (dataSource->cfgLayer->TileSettings[0]->attr.autotile.equals("file") && fileList.size() == 1)) {
         for (size_t j = 0; j < fileList.size(); j++) {
           CCreateTiles::createTilesForFile(dataSource, CDBFILESCANNER_CREATETILES + CDBFILESCANNER_UPDATEDB, fileList[j].c_str());
         }

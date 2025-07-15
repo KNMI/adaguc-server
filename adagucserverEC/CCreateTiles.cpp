@@ -63,17 +63,18 @@ std::vector<DestinationGrids> makeTileSet(CDataSource &dataSource) {
   auto tileSettings = dataSource.cfgLayer->TileSettings[0];
   int desiredWidth = tileSettings->attr.tilewidthpx.toInt();
   int desiredHeight = tileSettings->attr.tileheightpx.toInt();
+  int minLevel = tileSettings->attr.minlevel.empty() ? 1 : tileSettings->attr.minlevel.toInt();
+  int maxLevel = tileSettings->attr.maxlevel.empty() ? 3 : tileSettings->attr.maxlevel.toInt();
   double cellSizeX = fabs(dataSource.dfCellSizeX);
   double cellSizeY = fabs(dataSource.dfCellSizeY);
   double xminB = std::min(dataSource.dfBBOX[0], dataSource.dfBBOX[2]);
   double xmaxB = std::max(dataSource.dfBBOX[0], dataSource.dfBBOX[2]);
   double yminB = std::min(dataSource.dfBBOX[1], dataSource.dfBBOX[3]);
   double ymaxB = std::max(dataSource.dfBBOX[1], dataSource.dfBBOX[3]);
-  for (int level = 1; level < 3; level++) {
+  for (int level = minLevel; level < (maxLevel + 1); level++) {
     int inc = pow(2, level - 1);
     double newSpanX = desiredWidth * cellSizeX * inc;
     double newSpanY = desiredHeight * cellSizeY * inc;
-
     for (double y = yminB; y < ymaxB; y += newSpanY) {
       for (double x = xminB; x < xmaxB; x += newSpanX) {
         int dx = round((x - xminB) / newSpanX);
@@ -152,7 +153,7 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
     }
   }
 
-  srvParam->Geo->BBOX_CRS = tileSettings->attr.tileprojection;
+  srvParam->Geo->BBOX_CRS = baseDataSource->nativeProj4.c_str();
   srvParam->Geo->CRS = srvParam->Geo->BBOX_CRS;
   srvParam->WCS_GoNative = false;
   srvParam->Geo->dWidth = tileSettings->attr.tilewidthpx.toInt();
@@ -163,7 +164,6 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
     index++;
     CT::string destFileName;
     destFileName.print("%s/%s-%0.3d_%0.3d_%0.3dtile.nc", tileBasePath.c_str(), basename.c_str(), destGrid.level, destGrid.y, destGrid.x);
-
     // Already done?
     if (db->checkIfFileIsInTable(tableName, destFileName) == 0) {
       continue;

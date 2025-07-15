@@ -1159,17 +1159,8 @@ public:
   public:
     class Cattr {
     public:
-      CT::string tilewidthpx = "1024", tileheightpx = "1024", tileprojection, minlevel, maxlevel, tilemode, debug, maxtilesinimage, threads, autotile, optimizeextent, tilepath;
+      CT::string tilewidthpx = "1024", tileheightpx = "1024", minlevel, maxlevel, tilemode, debug, maxtilesinimage, threads, autotile, optimizeextent, tilepath;
     } attr;
-    //           <TileSettings  tilewidth="600"
-    //                    tileheight="600"
-    //                    tilebboxwidth="15000"
-    //                    tilebboxheight="15000"
-    //                    tileprojection="+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +units=m +no_defs"
-    //                    maxlevel="7"
-    //                    tilepath="/nobackup/users/plieger/data/clipc/tiles/"/>
-    //
-
     void addAttribute(const char *name, const char *value) {
       if (equals("tilemode", name)) {
         attr.tilemode.copy(value);
@@ -1182,9 +1173,6 @@ public:
         return;
       } else if (equals("tileheightpx", name)) {
         attr.tileheightpx.copy(value);
-        return;
-      } else if (equals("tileprojection", name)) {
-        attr.tileprojection.copy(value);
         return;
       } else if (equals("minlevel", name)) {
         attr.minlevel.copy(value);
