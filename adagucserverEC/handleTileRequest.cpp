@@ -5,7 +5,7 @@
 #include "Types/LayerMetadataType.h"
 #include "utils/LayerMetadataStore.h"
 
-#define DEFAULT_MAX_TILES_IN_IMAGE 12
+#define DEFAULT_MAX_TILES_IN_IMAGE 16
 #define DEFAULT_REQUEST_LIMIT 1000
 
 CT::string getProjStringFromDb(CDataSource *dataSource) {
@@ -23,10 +23,10 @@ int estimateNrOfTargetTiles(CDataSource *dataSource) {
   // Estimate number of needed target tiles to match number of grid cells in source and destination
   auto srvParam = dataSource->srvParams;
   auto tileSettings = dataSource->cfgLayer->TileSettings[0];
-  double numberOfPixelsInView = srvParam->Geo->dWidth * srvParam->Geo->dHeight;
-  double numberOfPixelsPerTile = tileSettings->attr.tilewidthpx.toInt() * tileSettings->attr.tileheightpx.toInt();
-  int targetNrOfTiles = ceil((numberOfPixelsInView / numberOfPixelsPerTile) + 0.5) * 3;
-  return targetNrOfTiles;
+  int targetNrOfTilesX = ceil((srvParam->Geo->dWidth / tileSettings->attr.tilewidthpx.toInt()) + 0.5) * 3;
+  int targetNrOfTilesY = ceil((srvParam->Geo->dHeight / tileSettings->attr.tileheightpx.toInt()) + 0.5) * 3;
+  CDBDebug("targetNrOfTilesX, targetNrOfTilesY: %d %d", targetNrOfTilesX, targetNrOfTilesY);
+  return std::max(targetNrOfTilesX, targetNrOfTilesY);
 }
 
 f8box reprojectExtent(CT::string targetProjection, CT::string sourceProjection, CServerParams *srvParam, f8box inputbox) {
