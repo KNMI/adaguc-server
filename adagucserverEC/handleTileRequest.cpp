@@ -25,7 +25,6 @@ int estimateNrOfTargetTiles(CDataSource *dataSource) {
   auto tileSettings = dataSource->cfgLayer->TileSettings[0];
   int targetNrOfTilesX = ceil((srvParam->Geo->dWidth / tileSettings->attr.tilewidthpx.toInt()) + 0.5) * 3;
   int targetNrOfTilesY = ceil((srvParam->Geo->dHeight / tileSettings->attr.tileheightpx.toInt()) + 0.5) * 3;
-  CDBDebug("targetNrOfTilesX, targetNrOfTilesY: %d %d", targetNrOfTilesX, targetNrOfTilesY);
   return std::max(targetNrOfTilesX, targetNrOfTilesY);
 }
 
