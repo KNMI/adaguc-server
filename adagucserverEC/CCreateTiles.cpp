@@ -63,6 +63,9 @@ std::vector<DestinationGrids> makeTileSet(CDataSource &dataSource) {
   auto tileSettings = dataSource.cfgLayer->TileSettings[0];
   int desiredWidth = tileSettings->attr.tilewidthpx.toInt();
   int desiredHeight = tileSettings->attr.tileheightpx.toInt();
+  // Level 0 means no tiles
+  // Level 1 is same resolution as source data
+  // Level 2 is half the resolution, etc...
   int minLevel = tileSettings->attr.minlevel.empty() ? 1 : tileSettings->attr.minlevel.toInt();
   int maxLevel = tileSettings->attr.maxlevel.empty() ? 3 : tileSettings->attr.maxlevel.toInt();
   double cellSizeX = fabs(dataSource.dfCellSizeX);
@@ -189,6 +192,8 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
   // Close the source data
   reader.close();
   delete dataSourceToTile;
+
+  // Should we really close the source data? For now we do.
   CDFObjectStore::getCDFObjectStore()->deleteCDFObject(fileToTile.c_str());
 
   return 0;

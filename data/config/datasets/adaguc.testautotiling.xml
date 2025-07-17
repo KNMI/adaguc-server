@@ -17,7 +17,6 @@
     <RenderMethod>nearest</RenderMethod>
     <TileSettings tilewidthpx="90" 
                   tileheightpx="90" 
-                  tileprojection="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
                   minlevel="1"
                   maxlevel="3"
                   debug="false"

@@ -23,9 +23,9 @@ int estimateNrOfTargetTiles(CDataSource *dataSource) {
   // Estimate number of needed target tiles to match number of grid cells in source and destination
   auto srvParam = dataSource->srvParams;
   auto tileSettings = dataSource->cfgLayer->TileSettings[0];
-  int targetNrOfTilesX = ceil((srvParam->Geo->dWidth / tileSettings->attr.tilewidthpx.toInt()) + 0.5) * 3;
-  int targetNrOfTilesY = ceil((srvParam->Geo->dHeight / tileSettings->attr.tileheightpx.toInt()) + 0.5) * 3;
-  return std::max(targetNrOfTilesX, targetNrOfTilesY);
+  int targetNrOfTilesX = floor((srvParam->Geo->dWidth / tileSettings->attr.tilewidthpx.toInt()) + 0.0) + 2;
+  int targetNrOfTilesY = floor((srvParam->Geo->dHeight / tileSettings->attr.tileheightpx.toInt()) + 0.0) + 2;
+  return targetNrOfTilesX * targetNrOfTilesY;
 }
 
 f8box reprojectExtent(CT::string targetProjection, CT::string sourceProjection, CServerParams *srvParam, f8box inputbox) {
@@ -117,24 +117,25 @@ CDBStore::Store *handleTileRequest(CDataSource *dataSource) {
   if (v.size() == 0) {
     dataSource->queryLevel = store->records.at(0).get("adaguctilinglevel")->toInt();
   } else {
-    sort(begin(v), end(v), [targetNrOfTiles](const mypair &a, const mypair &b) { return fabs(targetNrOfTiles - a.second) < fabs(targetNrOfTiles - b.second); });
+    // Find tiling level that has amount of tiles closest to targetNrOfTiles. If equal amount of tiles occur for tiling levels, the lowest tilinglevel is taken.
+    std::stable_sort(begin(v), end(v), [targetNrOfTiles](const mypair &a, const mypair &b) { return fabs(targetNrOfTiles - a.second) < fabs(targetNrOfTiles - b.second); });
     dataSource->queryLevel = v.at(0).first;
   }
 
   // Now filter out the unwanted tiling levels from the list
-  std::vector<CDBStore::Record> records;
+  std::vector<CDBStore::Record> filteredRecords;
   for (auto record : store->records) {
     // Make sure that there are not too many tiles
-    if (records.size() < maxTilesInImage) {
-      if (record.get("adaguctilinglevel")->toInt() == dataSource->queryLevel) {
-        records.push_back(record);
-      }
-    } else
+    if (filteredRecords.size() >= maxTilesInImage) {
       break;
+    }
+    if (record.get("adaguctilinglevel")->toInt() == dataSource->queryLevel) {
+      filteredRecords.push_back(record);
+    }
   }
 
   // Assign the filtered records
-  store->records = records;
+  store->records = filteredRecords;
 
   if (tileSettingsDebug) {
     srvParam->mapTitle.print("level %d, tiles %d targetNrOfTiles %d", dataSource->queryLevel, store->getSize(), targetNrOfTiles);

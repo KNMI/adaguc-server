@@ -1,6 +1,6 @@
 **Version 4.1.0 - 2025-07-16**
 
-- Revived the tiling functionality of adaguc-server to improve performance on huge high resolution MTG satellite imagery. The tiling functionality is simplified and is now easier to use. It is now possible to let the filescanner create tiles. The following config will make tiles for a given dataset. See [TileSettings.md](doc/configuration/TileSettings.md) for details.
+- Revived the tiling functionality of adaguc-server to improve performance on huge high resolution MTG satellite imagery. The tiling functionality is simplified and is now easier to use. It is now possible to let the filescanner create tiles. See [TileSettings.md](doc/configuration/TileSettings.md) for details.
 - Removed sqlite dependencies and code.
 - Refactored database Store class
 

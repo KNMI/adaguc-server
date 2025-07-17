@@ -123,18 +123,19 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
   if (warper->isProjectionRequired() == false) {
 
     // Obtain pixelextent to avoid looping over all source grid cells which will never be used in the destination grid
-    f4box pixelspan;
+    i4box pixelspan;
     pixelspan = PXExtentBasedOnSource;
     f8box source, dest;
     source = sourceGeoParams->dfBBOX;
     dest = destGeoParams->dfBBOX;
     f8point span = source.span();
-    f4point wh = {.x = sourceGeoParams->dWidth, .y = sourceGeoParams->dHeight};
+    i4point wh = {.x = sourceGeoParams->dWidth, .y = sourceGeoParams->dHeight};
     f8box newbox = {
         .left = (dest.left - source.left) / span.x, .bottom = (dest.bottom - source.bottom) / span.y, .right = (dest.right - source.left) / span.x, .top = (dest.top - source.bottom) / span.y};
-    f4box newpixelspan = {.left = (int)round(newbox.left * wh.x), .bottom = (int)round(newbox.bottom * wh.y), .right = (int)round(newbox.right * wh.x), .top = (int)round(newbox.top * wh.y)};
-    newpixelspan.clip({.left = 0, .bottom = 0, .right = wh.x, .top = wh.y});
+    i4box newpixelspan = {.left = (int)round(newbox.left * wh.x), .bottom = (int)round(newbox.bottom * wh.y), .right = (int)round(newbox.right * wh.x), .top = (int)round(newbox.top * wh.y)};
     newpixelspan.sort();
+    newpixelspan.clip({.left = 0, .bottom = 0, .right = wh.x, .top = wh.y});
+
     pixelspan = newpixelspan;
     // CDBDebug("newpixelspan %d %d %d %d", pixelspan2.left, pixelspan2.bottom, pixelspan2.right, pixelspan2.top);
     // CDBDebug("pixelspan %d %d %d %d", pixelspan.left, pixelspan.bottom, pixelspan.right, pixelspan.top);
