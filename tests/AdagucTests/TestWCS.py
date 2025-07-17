@@ -510,3 +510,55 @@ class TestWCS(unittest.TestCase):
                                                               env=self.env, args=["--report"])
     self.assertEqual(status, 422)
     
+    
+  def test_WCSGetCoverageNetCDF4_testdatanc_native_subset(self):
+    """
+    Check if WCS GetCoverage for specified settings returns correct grid spec
+    """
+    AdagucTestTools().cleanTempDir()
+    status, data, headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&service=wcs&version=1.1.1&request=getcoverage&format=NetCDF4&crs=EPSG:4326&coverage=testdata&bbox=5.5,52.5,6.5,53.5&time=2024-06-01T01:00:00Z&dim_reference_time=2024-06-01T00:00:00Z&DIM_height=40",
+                                                              env=self.env, args=["--report"])
+    self.assertEqual(status, 0)
+    self.assertEqual(data.getvalue()[0:6], b'\x89HDF\r\n')
+
+    ds = netCDF4.Dataset("filename.nc", memory=data.getvalue())
+
+    expectedgridspec="width=0&height=1&resx=inf&resy=1.000000&bbox=5.500000,52.500000,6.500000,53.500000&crs=EPSG:4326"
+    foundgridspec = ds.getncattr("adaguc_wcs_destgridspec")
+    self.assertEqual(foundgridspec, expectedgridspec)
+    projectionid = ds.variables["crs"].getncattr("id")
+    self.assertEqual("EPSG:4326", projectionid)
+    
+    
+  def test_WCSGetCoverageNetCDF4_dataset_testcollection_native_subset(self):
+    """
+    Check if WCS GetCoverage for specified settings returns correct grid spec
+    """
+    AdagucTestTools().cleanTempDir()
+
+    status, data, headers = AdagucTestTools().runADAGUCServer(
+      args=["--updatedb", "--config", ADAGUC_PATH+ "/data/config/adaguc.tests.dataset.xml,testcollection"], env=self.env, isCGI=False
+    )
+    self.assertEqual(status, 0)
+
+    env = {
+        "ADAGUC_CONFIG": ADAGUC_PATH
+        + "/data/config/adaguc.tests.dataset.xml,testcollection"
+
+    }
+
+    status, data, headers = AdagucTestTools().runADAGUCServer("dataset=testcollection&service=wcs&version=1.1.1&request=getcoverage&format=NetCDF4&crs=EPSG:4326&coverage=testdata&bbox=5.5,52.5,6.5,53.5&time=2024-06-01T01:00:00Z&dim_reference_time=2024-06-01T00:00:00Z&DIM_height=40",
+                                                              env={"ADAGUC_CONFIG": ADAGUC_PATH  + "/data/config/adaguc.tests.dataset.xml,testcollection" }, args=["--report"])
+    self.assertEqual(status, 0)
+    
+    self.assertEqual(data.getvalue()[0:6], b'\x89HDF\r\n')
+
+    ds = netCDF4.Dataset("filename.nc", memory=data.getvalue())
+
+    expectedgridspec="width=1&height=1&resx=1.000000&resy=1.000000&bbox=5.500000,52.500000,6.500000,53.500000&crs=EPSG:4326"
+    foundgridspec = ds.getncattr("adaguc_wcs_destgridspec")
+    self.assertEqual(foundgridspec, expectedgridspec)
+    projectionid = ds.variables["crs"].getncattr("id")
+    self.assertEqual("EPSG:4326", projectionid)
+        
+    

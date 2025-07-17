@@ -72,27 +72,29 @@
     "stop_token": "cpp",
     "ranges": "cpp"
   },
+  "editor.suggest.insertMode": "insert",
   "cmake.buildDirectory": "${workspaceFolder}/bin",
   "cmake.configureOnOpen": true,
   "clang-format.executable": "/usr/bin/clang-format",
   "[C++]": {
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "editor.suggest.insertMode": "insert"
   },
   "[cpp]": {
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "editor.suggest.insertMode": "insert"
   },
   "[python]": {
     "editor.formatOnSave": true,
     "editor.tabSize": 4,
     "editor.insertSpaces": true,
     "editor.detectIndentation": false,
-    "editor.defaultFormatter": "ms-python.black-formatter",
-
+    "editor.defaultFormatter": "ms-python.black-formatter"
   },
   "[XML]": {
     "editor.autoClosingBrackets": "never",
     "files.trimFinalNewlines": true,
     "editor.wordWrap": "off",
-    "editor.formatOnSave": false,
+    "editor.formatOnSave": false
   }
 }

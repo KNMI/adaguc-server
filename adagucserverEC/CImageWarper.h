@@ -45,7 +45,6 @@ private:
   int dMaxExtentDefined;
 
   DEF_ERRORFUNCTION();
-  CGeoParams *_geoDest;
   CT::string sourceCRSString;
   CT::string destinationCRS;
   //     int _decodeCRS(CT::string *CRS);
@@ -78,6 +77,7 @@ public:
   CT::string getDestProjString() { return destinationCRS; }
   int initreproj(CDataSource *dataSource, CGeoParams *GeoDest, std::vector<CServerConfig::XMLE_Projection *> *prj);
   int initreproj(const char *projString, CGeoParams *GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj);
+  int init(const char *destString, const char *fromProjString, std::vector<CServerConfig::XMLE_Projection *> *_prj);
 
   int closereproj();
   int reprojpoint(double &dfx, double &dfy);
@@ -89,7 +89,7 @@ public:
    * Same as reprojpoint_inv, but reprojects a point to screen pixel coordinates (WMS Map coordinates).
    * It uses the BBOX and WIDTH/HEIGHT for this.
    */
-  int reprojpoint_inv_topx(double &dfx, double &dfy);
+  int reprojpoint_inv_topx(double &dfx, double &dfy, CGeoParams *_geoDest);
   int reprojpoint_inv(f8point &p);
   int reprojModelToLatLon(double &dfx, double &dfy);
   int reprojModelFromLatLon(double &dfx, double &dfy);

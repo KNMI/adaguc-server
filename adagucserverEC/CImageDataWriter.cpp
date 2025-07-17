@@ -310,8 +310,8 @@ void CImageDataWriter::getFeatureInfoGetPointDataResults(CDataSource *dataSource
       if (status != 0) {
         CDBError("Unable to initialize projection");
       }
-      status = warper.reprojpoint_inv_topx(pointPX, pointPY);
-      status = warper.reprojpoint_inv_topx(gfiPX, gfiPY);
+      warper.reprojpoint_inv_topx(pointPX, pointPY, srvParam->Geo);
+      warper.reprojpoint_inv_topx(gfiPX, gfiPY, srvParam->Geo);
       float pixelDistance = hypot(pointPX - gfiPX, pointPY - gfiPY);
       warper.closereproj();
 

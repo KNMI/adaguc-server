@@ -318,7 +318,7 @@ CDataSource::CDataSource() {
   _currentStyle = NULL;
 
   queryBBOX = false;
-  queryLevel = 0;
+  queryLevel = 0; // -1 Means query all. 0 means query all non tiled versions. Positive number means a tiled version.
   featureSet = NULL;
 }
 
@@ -1266,8 +1266,8 @@ CDataSource *CDataSource::clone() {
 
   for (size_t j = 0; j < 4; j++) {
     d->dfBBOX[j] = dfBBOX[j];
-    d->nativeViewPortBBOX[j] = nativeViewPortBBOX[j];
   }
+  d->nativeViewPortBBOX = nativeViewPortBBOX;
 
   d->dfCellSizeX = dfCellSizeX;
   d->dfCellSizeY = dfCellSizeY;

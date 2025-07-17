@@ -95,7 +95,7 @@ public:
   */
 private:
   std::vector<CLegend *> legends;
-  CLegend *currentLegend;
+  CLegend *currentLegend = nullptr;
   int dImageCreated;
 
   DEF_ERRORFUNCTION();

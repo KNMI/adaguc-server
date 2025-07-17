@@ -3,49 +3,51 @@ TileSettings - Tiling functionality for high resolution datasets
 
 Back to [Configuration](./Configuration.md)
 
-See https://github.com/KNMI/adaguc-datasets/blob/master/adaguc.tiled.xml
-for example configuration
 
-Mandatory settings:
-
--   tilewidthpx="720
--   tileheightpx="720"
--   tilecellsizex="0.0125"
--   tilecellsizey="0.0125"
--   tileprojection="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
--   minlevel="1"
--   maxlevel="4"
--   debug="false"
--   optimizeextent="true" <-- Increases performance of tilecreation
-    with --createtiles command. It will detect which region from the
-    base grid is needed for creating a tile, the result is that only a
-    fraction of the big base netcdf file is read into memory.
-    Optimizeextent will also detect if the region has any data in it, if
-    not a tile will not be created.
--   maxtilesinimage="24" <!-- limit on how many tiles are allowed to
-    appear in a single getmap request or are used during a
-    getfeatureinfo request.
--   tilepath="/data/adaguc-autowms/tiles"
-
-Optional settings:
-
--   left="50" right="180" bottom="~~90" top="90" <-~~ Note these are
-    optional and when left out they will be calculated automatically.
--   tilemode="avg_rgba" or "rgba" <!-- only useful when using rgba
-    netcdf's, dont use if you have standard byte/short/int/float/double
-    data in your variable
--   threads="1" <!-- Optional, default is "1". Experimental setting
-    to render a GetMap request with multiple threads
+-   tilewidthpx - width of the tiles, defaults to 1024
+-   tileheightpx - height of the tiles, defaults to 1024
+-   minlevel - starting level, should always be 1, defaults to 1
+-   maxlevel - end level, defaults to 3.
+-   debug="false" - draw information in the GetMap request about what tiles are used. Defaults to false.
+-   maxtilesinimage="16" - defaults to 16.
+-   tilepath="/data/adaguc-autowms/tiles" - Defaults to the same place as the source data.
+-   autotile - Can be either `false`, `true` or `file`. `true` means that new tiles will be made for any type of scan, including full dataset scans. `file` means that tiles will only be made for files scanned specifically. 
 
 
-1.  To recreate all tiles, do:
-   ```
-    rm -rf /data/adaguc-autowm/tiles/\*
-    ./adagucserver --updatedb --config /config/tilesconfig.xml
-    --recreate
-    ./adagucserver --createtiles --config /config/tilesconfig.xml
-    ./adagucserver --updatedb --config /config/tilesconfig.xml
-  ```
+By using tiling, big satellite imagery datasets can be tiled on the server to increase response time of the GetMap request.
+The tiling option can be enabled via the `TileSettings` configuration element. When autotile is enabled, new tiles will be made when spefic files are added with the scan script. If no tiles are made (yet), the server will directly use the non-tiled data.
+
+For the client there is no difference. The server will stitch the tiles together to a single image. The tiles are stored in the netCDF file format with compression enabled. The suffix of the tiles is `<sourcefilename>tile.nc`.
+
+
+*Note*: The tiles are by default put in the same place as the source data. In this case, the filter in the FilePath element needs to be configured in such a way so it includes the tiles. E.g. use  `(\.png|tile\.nc)` in your filter.
+
+
+Example configuration for MTG-FCI-FD_eur_atlantic_1km_true_color product:
+
+```xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+  <WMS>
+    <WMSFormat name="image/png" format="image/webp;75" />
+  </WMS>
+  <Layer type="database">
+    <Group value="MTG FCI composites" />
+    <Name force="true">MTG-FCI-FD_eur_atlantic_1km_true_color</Name>
+    <Title>MTG True Colour RGB Atlantic day-only </Title>
+    <Variable>pngdata</Variable>
+    <FilePath filter="^MTG-FCI-FD_eur_atlantic_1km_true_color_.*(\.png|tile\.nc)$"
+       retentionperiod="{ADAGUCENV_RETENTIONPERIOD}"
+       retentiontype="datatime">/data/adaguc-data/MTG-FCI-FD_eur_atlantic_1km_true_color/</FilePath>
+    <Dimension name="time" interval="PT10M">time</Dimension>
+    <RenderMethod>rgba</RenderMethod>
+    <TileSettings debug="false" autotile="file" />
+  </Layer>
+</Configuration>
+
+```
+
 
 Some datasets in CLIPC are in such a high resolution that they cannot be
 stored in a single file. For example the flooding indicator from

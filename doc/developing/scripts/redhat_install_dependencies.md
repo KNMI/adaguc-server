@@ -15,8 +15,6 @@ yum update -y && yum install -y \
     netcdf-devel \
     proj \
     proj-devel \
-    sqlite \
-    sqlite-devel \
     udunits2 \
     udunits2-devel \
     make \

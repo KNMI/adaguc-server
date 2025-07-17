@@ -6,7 +6,7 @@ USER root
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
-LABEL version="4.0.2"
+LABEL version="4.1.0"
 
 # Try to update image packages
 RUN apt-get -q -y update \
@@ -29,7 +29,6 @@ RUN apt-get -q -y update \
     libhdf5-dev \
     libproj-dev \
     libgdal-dev \
-    libsqlite3-dev \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -143,7 +142,7 @@ ENV PYTHONPATH=${ADAGUC_PATH}/python/python_fastapi_server
 # Build and test adaguc python support
 WORKDIR /adaguc/adaguc-server-master/python/lib/
 RUN python3 setup.py install
-RUN bash -c "python3 /adaguc/adaguc-server-master/python/examples/runautowms/run.py && ls result.png"
+RUN bash -c "rm -f result.png && if [[ "${TEST_IN_CONTAINER}" == "github_build" ]]; then     db_host="localhost"; elif [[ "${TEST_IN_CONTAINER}" == "local_build" ]]; then     db_host="host.docker.internal"; else     db_host="localhost"; fi && export ADAGUC_DB="user=adaguc password=adaguc host=${db_host} dbname=postgres port=54321" && python3 /adaguc/adaguc-server-master/python/examples/runautowms/run.py && ls -lrtha result.png"
 
 WORKDIR /adaguc/adaguc-server-master
 

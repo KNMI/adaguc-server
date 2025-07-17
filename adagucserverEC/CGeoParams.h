@@ -95,13 +95,67 @@ public:
   }
 };
 
-struct f8box {
-  double left, bottom, right, top;
+struct i4point {
+  int x, y;
 };
 
 struct f8point {
   double x, y;
   f8point rad() { return {.x = (x * (M_PI / 180.)), .y = (y * (M_PI / 180.))}; }
+};
+
+struct i4box {
+  int left, bottom, right, top;
+  void operator=(const int bbox[4]) {
+    left = bbox[0];
+    bottom = bbox[1];
+    right = bbox[2];
+    top = bbox[3];
+  }
+  i4point span() { return {.x = right - left, .y = top - bottom}; };
+  void sort() {
+    if (left > right) std::swap(left, right);
+    if (bottom > top) std::swap(bottom, top);
+  }
+  void clip(i4box clip) {
+    if (left < clip.left) left = clip.left;
+    if (bottom < clip.bottom) bottom = clip.bottom;
+    if (right > clip.right) right = clip.right;
+    if (top > clip.top) top = clip.top;
+  }
+  void toArray(int box[4]) {
+    box[0] = left;
+    box[1] = bottom;
+    box[2] = right;
+    box[3] = top;
+  }
+};
+
+struct f8box {
+  double left, bottom, right, top;
+  void operator=(const double bbox[4]) {
+    left = bbox[0];
+    bottom = bbox[1];
+    right = bbox[2];
+    top = bbox[3];
+  }
+  f8point span() { return {.x = right - left, .y = top - bottom}; }
+  void sort() {
+    if (left > right) std::swap(left, right);
+    if (bottom > top) std::swap(bottom, top);
+  }
+  void clip(i4box clip) {
+    if (left < clip.left) left = clip.left;
+    if (bottom < clip.bottom) bottom = clip.bottom;
+    if (right > clip.right) right = clip.right;
+    if (top > clip.top) top = clip.top;
+  }
+  void toArray(double box[4]) {
+    box[0] = left;
+    box[1] = bottom;
+    box[2] = right;
+    box[3] = top;
+  }
 };
 
 struct f8component {

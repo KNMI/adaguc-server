@@ -11,7 +11,7 @@
 #include "CDebugger.h"
 
 /**
- * Interface for several database implementations. Currently for CDBAdapterPostgreSQL and CDBAdapterSQLLite
+ * Interface for several database implementations. Currently for CDBAdapterPostgreSQL
  */
 class CDBAdapter {
 public:
@@ -103,6 +103,9 @@ public:
 
   virtual bool tryAdvisoryLock(size_t key) = 0;
   virtual bool advisoryUnLock(size_t key) = 0;
+
+  virtual CT::string getTableNameForPathFilterAndDimension(CDataSource *dataSource) = 0;
+  virtual f8box getExtent(CDataSource *dataSource) = 0;
 };
 
 #endif

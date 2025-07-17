@@ -54,6 +54,7 @@ public:
   CDBStore::Store *getReferenceTime(const char *netcdfDimName, const char *netcdfTimeDimName, const char *timeValue, const char *timeTableName, const char *tableName);
   CDBStore::Store *getClosestDataTimeToSystemTime(const char *netcdfDimName, const char *tableName);
 
+  CT::string getTableNameForPathFilterAndDimension(CDataSource *dataSource);
   CT::string getTableNameForPathFilterAndDimension(const char *path, const char *filter, const char *dimension, CDataSource *dataSource);
   std::map<CT::string, DimInfo> getTableNamesForPathFilterAndDimensions(const char *path, const char *filter, std::vector<CT::string> dimensions, CDataSource *dataSource);
 
@@ -95,6 +96,7 @@ public:
   int dropLayerFromLayerMetadataStore(const char *datasetName, const char *layerName);
   bool tryAdvisoryLock(size_t);
   bool advisoryUnLock(size_t);
+  f8box getExtent(CDataSource *dataSource);
 };
 
 #endif
