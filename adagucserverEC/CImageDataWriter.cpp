@@ -36,7 +36,7 @@
 #include "CMakeEProfile.h"
 #include "CReporter.h"
 #include "CImgWarpHillShaded.h"
-#include "CImgWarpGeneric.h"
+#include "CImgWarpGeneric/CImgWarpGeneric.h"
 #include "CDataPostProcessors/CDataPostProcessor_UVComponents.h"
 #include "GenericDataWarper/gdwFindPixelExtent.h"
 #include "traceTimings/traceTimings.h"
@@ -1199,61 +1199,60 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
 
   CImageWarperRenderInterface *imageWarperRenderer;
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-  CStyleConfiguration::RenderMethod renderMethod = styleConfiguration->renderMethod;
+  auto renderMethod = styleConfiguration->renderMethod;
 
   /** Apply FeatureInterval config */
-  if (styleConfiguration->featureIntervals != NULL && styleConfiguration->shadeIntervals != NULL) {
-    if (styleConfiguration->featureIntervals->size() > 0) { //&&styleConfiguration->shadeIntervals->size()==0){
 
-      int numFeatures = 0;
-      try {
-        numFeatures = dataSource->getFirstAvailableDataObject()->cdfObject->getDimension("features")->getSize();
-      } catch (int e) {
+  if (styleConfiguration->featureIntervals.size() > 0) {
+    int numFeatures = 0;
+    try {
+      numFeatures = dataSource->getFirstAvailableDataObject()->cdfObject->getDimension("features")->getSize();
+    } catch (int e) {
 #ifdef CIMAGEDATAWRITER_DEBUG
-        CDBDebug("Note: While configuring featureInterval: Unable to find features variable");
+      CDBDebug("Note: While configuring featureInterval: Unable to find features variable");
 #endif
-      }
-      if (numFeatures > 0) {
-        CT::string attributeValues[numFeatures];
-        /* Loop through all configured FeatureInterval elements */
-        for (size_t j = 0; j < styleConfiguration->featureIntervals->size(); j++) {
-          CServerConfig::XMLE_FeatureInterval *featureInterval = ((*styleConfiguration->featureIntervals)[j]);
-          if (featureInterval->attr.match.empty() == false && featureInterval->attr.matchid.empty() == false) {
-            /* Get the matchid attribute for the feature */
-            CT::string attributeName = featureInterval->attr.matchid;
-            for (int featureNr = 0; featureNr < numFeatures; featureNr++) {
-              attributeValues[featureNr] = "";
-              std::map<int, CFeature>::iterator feature = dataSource->getFirstAvailableDataObject()->features.find(featureNr);
-              if (feature != dataSource->getFirstAvailableDataObject()->features.end()) {
-                std::map<std::string, std::string>::iterator attributeValueItr = feature->second.paramMap.find(attributeName.c_str());
-                if (attributeValueItr != feature->second.paramMap.end()) {
-                  attributeValues[featureNr] = attributeValueItr->second.c_str();
-                }
+    }
+    if (numFeatures > 0) {
+      CT::string attributeValues[numFeatures];
+      /* Loop through all configured FeatureInterval elements */
+      for (size_t j = 0; j < styleConfiguration->featureIntervals.size(); j++) {
+        CServerConfig::XMLE_FeatureInterval *featureInterval = styleConfiguration->featureIntervals[j];
+        if (featureInterval->attr.match.empty() == false && featureInterval->attr.matchid.empty() == false) {
+          /* Get the matchid attribute for the feature */
+          CT::string attributeName = featureInterval->attr.matchid;
+          for (int featureNr = 0; featureNr < numFeatures; featureNr++) {
+            attributeValues[featureNr] = "";
+            std::map<int, CFeature>::iterator feature = dataSource->getFirstAvailableDataObject()->features.find(featureNr);
+            if (feature != dataSource->getFirstAvailableDataObject()->features.end()) {
+              std::map<std::string, std::string>::iterator attributeValueItr = feature->second.paramMap.find(attributeName.c_str());
+              if (attributeValueItr != feature->second.paramMap.end()) {
+                attributeValues[featureNr] = attributeValueItr->second.c_str();
               }
             }
-            if (featureInterval->attr.fillcolor.empty() == false) {
-              /*
-                Make a shade interval configuration based on the match and matchid properties in the GeoJSON.
-                The datafield is already populated with the feature indices of the geojson polygon.
-                The shadeinterval configuration can style these indices of the polygons with colors.
-                Actual rendering of this is done in CImageNearestNeighbour with the _plot function
-              */
-              std::vector<CImageDataWriter::IndexRange> ranges = getIndexRangesForRegex(featureInterval->attr.match, attributeValues, numFeatures);
-              for (size_t i = 0; i < ranges.size(); i++) {
-                CServerConfig::XMLE_ShadeInterval *shadeInterval = new CServerConfig::XMLE_ShadeInterval();
-                styleConfiguration->shadeIntervals->push_back(shadeInterval);
-                shadeInterval->attr.min.print("%d", ranges[i].min);
-                shadeInterval->attr.max.print("%d", ranges[i].max);
-                shadeInterval->attr.fillcolor = featureInterval->attr.fillcolor;
-                shadeInterval->attr.bgcolor = featureInterval->attr.bgcolor;
-                shadeInterval->attr.label = featureInterval->attr.label;
-              }
+          }
+          if (featureInterval->attr.fillcolor.empty() == false) {
+            /*
+              Make a shade interval configuration based on the match and matchid properties in the GeoJSON.
+              The datafield is already populated with the feature indices of the geojson polygon.
+              The shadeinterval configuration can style these indices of the polygons with colors.
+              Actual rendering of this is done in CImageNearestNeighbour with the _plot function
+            */
+            std::vector<CImageDataWriter::IndexRange> ranges = getIndexRangesForRegex(featureInterval->attr.match, attributeValues, numFeatures);
+            for (size_t i = 0; i < ranges.size(); i++) {
+              CServerConfig::XMLE_ShadeInterval *shadeInterval = new CServerConfig::XMLE_ShadeInterval();
+              styleConfiguration->shadeIntervals.push_back(shadeInterval);
+              shadeInterval->attr.min.print("%d", ranges[i].min);
+              shadeInterval->attr.max.print("%d", ranges[i].max);
+              shadeInterval->attr.fillcolor = featureInterval->attr.fillcolor;
+              shadeInterval->attr.bgcolor = featureInterval->attr.bgcolor;
+              shadeInterval->attr.label = featureInterval->attr.label;
             }
           }
         }
       }
     }
   }
+
   // Initialize projection algorithm
 #ifdef CIMAGEDATAWRITER_DEBUG
   CDBDebug("Thread[%d]: initreproj %s", dataSource->threadNr, dataSource->nativeProj4.c_str());
@@ -1270,7 +1269,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
   /**
    * Use fast nearest neighbourrenderer
    */
-  if (renderMethod & RM_NEAREST || renderMethod & RM_AVG_RGBA || renderMethod & RM_POINT_LINEARINTERPOLATION) {
+  if (renderMethod & RM_NEAREST || renderMethod & RM_POINT_LINEARINTERPOLATION) {
 #ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("Using CImgWarpNearestNeighbour");
 #endif
@@ -1338,99 +1337,91 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
         bilinearSettings.printconcat("shadeInterval=%0.12f;contourBigInterval=%0.12f;contourSmallInterval=%0.12f;", styleConfiguration->shadeInterval, styleConfiguration->contourIntervalH,
                                      styleConfiguration->contourIntervalL);
 
-        if (styleConfiguration->shadeIntervals != NULL) {
-          for (size_t j = 0; j < styleConfiguration->shadeIntervals->size(); j++) {
-            CServerConfig::XMLE_ShadeInterval *shadeInterval = ((*styleConfiguration->shadeIntervals)[j]);
-            if (shadeInterval->attr.min.empty() == false && shadeInterval->attr.max.empty() == false) {
-              bilinearSettings.printconcat("shading=min(%s)$max(%s)$", shadeInterval->attr.min.c_str(), shadeInterval->attr.max.c_str());
-              if (shadeInterval->attr.fillcolor.empty() == false) {
-                bilinearSettings.printconcat("$fillcolor(%s)$", shadeInterval->attr.fillcolor.c_str());
-              }
-              if (!shadeInterval->attr.bgcolor.empty()) {
-                bilinearSettings.printconcat("$bgcolor(%s)$", shadeInterval->attr.bgcolor.c_str());
-              }
-              bilinearSettings.printconcat(";");
+        for (size_t j = 0; j < styleConfiguration->shadeIntervals.size(); j++) {
+          CServerConfig::XMLE_ShadeInterval *shadeInterval = styleConfiguration->shadeIntervals[j];
+          if (shadeInterval->attr.min.empty() == false && shadeInterval->attr.max.empty() == false) {
+            bilinearSettings.printconcat("shading=min(%s)$max(%s)$", shadeInterval->attr.min.c_str(), shadeInterval->attr.max.c_str());
+            if (shadeInterval->attr.fillcolor.empty() == false) {
+              bilinearSettings.printconcat("$fillcolor(%s)$", shadeInterval->attr.fillcolor.c_str());
             }
+            if (!shadeInterval->attr.bgcolor.empty()) {
+              bilinearSettings.printconcat("$bgcolor(%s)$", shadeInterval->attr.bgcolor.c_str());
+            }
+            bilinearSettings.printconcat(";");
           }
         }
       }
       if (drawContour == true) {
 
-        if (styleConfiguration->contourLines != NULL) {
-          for (size_t j = 0; j < styleConfiguration->contourLines->size(); j++) {
-            CServerConfig::XMLE_ContourLine *contourLine = ((*styleConfiguration->contourLines)[j]);
-            // Check if we have a interval contour line or a contourline with separate classes
-            if (contourLine->attr.interval.empty() == false) {
-              // ContourLine interval
-              bilinearSettings.printconcat("contourline=");
-              if (contourLine->attr.width.empty() == false) {
-                bilinearSettings.printconcat("width(%s)$", contourLine->attr.width.c_str());
-              }
-              if (contourLine->attr.linecolor.empty() == false) {
-                bilinearSettings.printconcat("linecolor(%s)$", contourLine->attr.linecolor.c_str());
-              }
-              if (contourLine->attr.textcolor.empty() == false) {
-                bilinearSettings.printconcat("textcolor(%s)$", contourLine->attr.textcolor.c_str());
-              }
-              if (contourLine->attr.textsize.empty() == false) {
-                bilinearSettings.printconcat("textsize(%s)$", contourLine->attr.textsize.c_str());
-              }
-              if (contourLine->attr.textstrokewidth.empty() == false) {
-                bilinearSettings.printconcat("textstrokewidth(%s)$", contourLine->attr.textstrokewidth.c_str());
-              }
+        for (size_t j = 0; j < styleConfiguration->contourLines.size(); j++) {
+          CServerConfig::XMLE_ContourLine *contourLine = styleConfiguration->contourLines[j];
+          // Check if we have a interval contour line or a contourline with separate classes
+          if (contourLine->attr.interval.empty() == false) {
+            // ContourLine interval
+            bilinearSettings.printconcat("contourline=");
+            if (contourLine->attr.width.empty() == false) {
+              bilinearSettings.printconcat("width(%s)$", contourLine->attr.width.c_str());
+            }
+            if (contourLine->attr.linecolor.empty() == false) {
+              bilinearSettings.printconcat("linecolor(%s)$", contourLine->attr.linecolor.c_str());
+            }
+            if (contourLine->attr.textcolor.empty() == false) {
+              bilinearSettings.printconcat("textcolor(%s)$", contourLine->attr.textcolor.c_str());
+            }
+            if (contourLine->attr.textsize.empty() == false) {
+              bilinearSettings.printconcat("textsize(%s)$", contourLine->attr.textsize.c_str());
+            }
+            if (contourLine->attr.textstrokewidth.empty() == false) {
+              bilinearSettings.printconcat("textstrokewidth(%s)$", contourLine->attr.textstrokewidth.c_str());
+            }
 
-              if (contourLine->attr.textstrokecolor.empty() == false) {
-                bilinearSettings.printconcat("textstrokecolor(%s)$", contourLine->attr.textstrokecolor.c_str());
-              }
-              if (contourLine->attr.interval.empty() == false) {
-                bilinearSettings.printconcat("interval(%s)$", contourLine->attr.interval.c_str());
-              }
-              if (contourLine->attr.textformatting.empty() == false) {
-                bilinearSettings.printconcat("textformatting(%s)$", contourLine->attr.textformatting.c_str());
-              }
-              if (contourLine->attr.dashing.empty() == false) {
-                bilinearSettings.printconcat("dashing(%s)$", contourLine->attr.dashing.c_str());
-              }
-              bilinearSettings.printconcat(";");
+            if (contourLine->attr.textstrokecolor.empty() == false) {
+              bilinearSettings.printconcat("textstrokecolor(%s)$", contourLine->attr.textstrokecolor.c_str());
+            }
+            if (contourLine->attr.interval.empty() == false) {
+              bilinearSettings.printconcat("interval(%s)$", contourLine->attr.interval.c_str());
+            }
+            if (contourLine->attr.textformatting.empty() == false) {
+              bilinearSettings.printconcat("textformatting(%s)$", contourLine->attr.textformatting.c_str());
+            }
+            if (contourLine->attr.dashing.empty() == false) {
+              bilinearSettings.printconcat("dashing(%s)$", contourLine->attr.dashing.c_str());
+            }
+            bilinearSettings.printconcat(";");
+          }
+          if (contourLine->attr.classes.empty() == false) {
+            // ContourLine classes
+            bilinearSettings.printconcat("contourline=");
+            if (contourLine->attr.width.empty() == false) {
+              bilinearSettings.printconcat("width(%s)$", contourLine->attr.width.c_str());
+            }
+            if (contourLine->attr.linecolor.empty() == false) {
+              bilinearSettings.printconcat("linecolor(%s)$", contourLine->attr.linecolor.c_str());
+            }
+            if (contourLine->attr.textcolor.empty() == false) {
+              bilinearSettings.printconcat("textcolor(%s)$", contourLine->attr.textcolor.c_str());
             }
             if (contourLine->attr.classes.empty() == false) {
-              // ContourLine classes
-              bilinearSettings.printconcat("contourline=");
-              if (contourLine->attr.width.empty() == false) {
-                bilinearSettings.printconcat("width(%s)$", contourLine->attr.width.c_str());
-              }
-              if (contourLine->attr.linecolor.empty() == false) {
-                bilinearSettings.printconcat("linecolor(%s)$", contourLine->attr.linecolor.c_str());
-              }
-              if (contourLine->attr.textcolor.empty() == false) {
-                bilinearSettings.printconcat("textcolor(%s)$", contourLine->attr.textcolor.c_str());
-              }
-              if (contourLine->attr.classes.empty() == false) {
-                bilinearSettings.printconcat("classes(%s)$", contourLine->attr.classes.c_str());
-              }
-              if (contourLine->attr.textsize.empty() == false) {
-                bilinearSettings.printconcat("textsize(%s)$", contourLine->attr.textsize.c_str());
-              }
-              if (contourLine->attr.textstrokewidth.empty() == false) {
-                bilinearSettings.printconcat("textstrokewidth(%s)$", contourLine->attr.textstrokewidth.c_str());
-              }
-              if (contourLine->attr.textstrokecolor.empty() == false) {
-                bilinearSettings.printconcat("textstrokecolor(%s)$", contourLine->attr.textstrokecolor.c_str());
-              }
-              if (contourLine->attr.textformatting.empty() == false) {
-                bilinearSettings.printconcat("textformatting(%s)$", contourLine->attr.textformatting.c_str());
-              }
-              if (contourLine->attr.dashing.empty() == false) {
-                bilinearSettings.printconcat("dashing(%s)$", contourLine->attr.dashing.c_str());
-              }
-              bilinearSettings.printconcat(";");
+              bilinearSettings.printconcat("classes(%s)$", contourLine->attr.classes.c_str());
             }
+            if (contourLine->attr.textsize.empty() == false) {
+              bilinearSettings.printconcat("textsize(%s)$", contourLine->attr.textsize.c_str());
+            }
+            if (contourLine->attr.textstrokewidth.empty() == false) {
+              bilinearSettings.printconcat("textstrokewidth(%s)$", contourLine->attr.textstrokewidth.c_str());
+            }
+            if (contourLine->attr.textstrokecolor.empty() == false) {
+              bilinearSettings.printconcat("textstrokecolor(%s)$", contourLine->attr.textstrokecolor.c_str());
+            }
+            if (contourLine->attr.textformatting.empty() == false) {
+              bilinearSettings.printconcat("textformatting(%s)$", contourLine->attr.textformatting.c_str());
+            }
+            if (contourLine->attr.dashing.empty() == false) {
+              bilinearSettings.printconcat("dashing(%s)$", contourLine->attr.dashing.c_str());
+            }
+            bilinearSettings.printconcat(";");
           }
-          // bilinearSettings.printconcat("%s","contourline=width(3.5)$color(#0000FF)$interval(6)$textformat(%f);");
-          // bilinearSettings.printconcat("%s","contourline=width(1.0)$color(#00FF00)classes(5.5,7.7)$textformat(%2.1f);");
         }
-
-        // bilinearSettings.printconcat("textScaleFactor=%f;textOffsetFactor=%f;",textScaleFactor,textOffsetFactor);
       }
 #ifdef CIMAGEDATAWRITER_DEBUG
       CDBDebug("bilinearSettings.c_str() %s", bilinearSettings.c_str());
@@ -1486,8 +1477,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
       CDBDebug("Using CImgRenderPoints");
 #endif
       imageWarperRenderer = new CImgRenderPoints();
-      CT::string renderMethodAsString;
-      CStyleConfiguration::getRenderMethodAsString(&renderMethodAsString, renderMethod);
+      CT::string renderMethodAsString = getRenderMethodAsString(renderMethod);
       imageWarperRenderer->set(renderMethodAsString.c_str());
       imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
       delete imageWarperRenderer;
@@ -1503,8 +1493,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
       CDBDebug("Using CImgRenderPolylines");
 #endif
       imageWarperRenderer = new CImgRenderPolylines();
-      CT::string renderMethodAsString;
-      CStyleConfiguration::getRenderMethodAsString(&renderMethodAsString, renderMethod);
+      CT::string renderMethodAsString = getRenderMethodAsString(renderMethod);
       imageWarperRenderer->set(renderMethodAsString.c_str());
       imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
       delete imageWarperRenderer;
@@ -3331,23 +3320,14 @@ CColor CImageDataWriter::getPixelColorForValue(CDataSource *dataSource, float va
   }
   if (!isNodata) {
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-    for (size_t j = 0; j < styleConfiguration->shadeIntervals->size(); j++) {
-      CServerConfig::XMLE_ShadeInterval *shadeInterval = ((*styleConfiguration->shadeIntervals)[j]);
+    for (size_t j = 0; j < styleConfiguration->shadeIntervals.size(); j++) {
+      CServerConfig::XMLE_ShadeInterval *shadeInterval = styleConfiguration->shadeIntervals[j];
       if (shadeInterval->attr.min.empty() == false && shadeInterval->attr.max.empty() == false) {
         if ((val >= atof(shadeInterval->attr.min.c_str())) && (val < atof(shadeInterval->attr.max.c_str()))) {
           return CColor(shadeInterval->attr.fillcolor.c_str());
         }
       }
     }
-    //     if(styleConfiguration->hasLegendValueRange==1)
-    //       if(val<styleConfiguration->legendLowerRange||val>styleConfiguration->legendUpperRange)isNodata=true;
-    //       if(!isNodata){
-    //         if(styleConfiguration->legendLog!=0)val=log10(val+.000001)/log10(styleConfiguration->legendLog);
-    //         val*=styleConfiguration->legendScale;
-    //         val+=styleConfiguration->legendOffset;
-    //         if(val>=239)val=239;else if(val<0)val=0;
-    //         return int(val);
-    //       }
   }
   return color;
 }
