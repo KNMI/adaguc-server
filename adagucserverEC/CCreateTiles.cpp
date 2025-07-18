@@ -145,8 +145,8 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
 
   // Write tiles
   CT::string basename = fileToTile.basename();
-  basename.substring(0, basename.lastIndexOf("."));
-  CT::string tileBasePath = dataSourceToTile->cfgLayer->FilePath[0]->value;
+  basename = basename.substring(0, basename.lastIndexOf("."));
+  CT::string tileBasePath = fileToTile.substring(0, fileToTile.lastIndexOf("/"));
   if (tileSettings->attr.tilepath.empty() == false) {
     tileBasePath = tileSettings->attr.tilepath;
     tileBasePath = CDirReader::makeCleanPath(tileBasePath.c_str());
