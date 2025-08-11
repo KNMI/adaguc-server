@@ -1,10 +1,13 @@
 """autoWmsRouter"""
+
+import asyncio
+from functools import partial
 import json
 import logging
 import os
 import urllib.parse
 
-from fastapi import APIRouter, Request, Response
+from fastapi import APIRouter, HTTPException, Request, Response
 
 from .setup_adaguc import setup_adaguc
 
@@ -13,205 +16,104 @@ autowms_router = APIRouter(responses={404: {"description": "Not found"}})
 logger = logging.getLogger(__name__)
 
 
-def handle_base_route():
-    datasets = []
-    datasets.append(
-        {"path": "/adaguc::datasets", "name": "adaguc::datasets", "leaf": False}
-    )
-    datasets.append({"path": "/adaguc::data", "name": "adaguc::data", "leaf": False})
+def handle_base_route() -> Response:
+    datasets = [
+        {"path": "/adaguc::datasets", "name": "adaguc::datasets", "leaf": False},
+        {"path": "/adaguc::data", "name": "adaguc::data", "leaf": False},
+        {"path": "/adaguc::autowms", "name": "adaguc::autowms", "leaf": False},
+    ]
 
-    datasets.append(
-        {"path": "/adaguc::autowms", "name": "adaguc::autowms", "leaf": False}
-    )
-
-    response = Response(
+    return Response(
         content=json.dumps({"result": datasets}),
         media_type="application/json",
         status_code=200,
     )
-    return response
 
 
-def handle_datasets_route(adaguc_dataset_dir, adaguc_online_resource):
-    dataset_files = [
-        f
-        for f in os.listdir(adaguc_dataset_dir)
-        if os.path.isfile(os.path.join(adaguc_dataset_dir, f)) and f.endswith(".xml")
-    ]
+def list_dataset_files(
+    adaguc_dataset_dir: str, adaguc_online_resource: str
+) -> list[dict]:
+    """Return a list of xml files (datasets) found in the adaguc dataset directory"""
+
     datasets = []
-    for dataset_file in sorted(dataset_files, key=lambda f: f.upper()):
-        datasets.append(
-            {
-                "path": "/adaguc::datasets/" + dataset_file,
-                "adaguc": adaguc_online_resource
-                + "/adagucserver?dataset="
-                + dataset_file.replace(".xml", "")
-                + "&",
-                "name": dataset_file.replace(".xml", ""),
-                "leaf": True,
-            }
-        )
+    with os.scandir(adaguc_dataset_dir) as entries:
+        for entry in entries:
+            if entry.is_file() and entry.name.lower().endswith(".xml"):
+                datasets.append(
+                    {
+                        "path": f"/adaguc::datasets/{entry.name}",
+                        "adaguc": f"{adaguc_online_resource}/adagucserver?dataset={entry.name.replace('.xml', '')}&",
+                        "name": entry.name.replace(".xml", ""),
+                        "leaf": True,
+                    }
+                )
 
-    response = Response(
-        content=json.dumps({"result": datasets}),
-        media_type="application/json",
-        status_code=200,
+    datasets.sort(key=lambda f: f["name"].upper())
+    return datasets
+
+
+def list_data_files(
+    data_dir: str, url_param_path: str, adaguc_online_resource: str, autowms_prefix: str
+) -> list[dict]:
+    """Return a list of (allowed) files and directories found in the requested data directory"""
+
+    ALLOWED_EXTENSIONS = (
+        ".nc",
+        ".nc4",
+        ".hdf5",
+        ".h5",
+        ".png",
+        ".json",
+        ".geojson",
+        ".csv",
     )
-    return response
 
-
-def is_file_allowed(file_name):
-    if file_name.endswith(".nc"):
-        return True
-    if file_name.endswith(".nc4"):
-        return True
-    if file_name.endswith(".hdf5"):
-        return True
-    if file_name.endswith(".h5"):
-        return True
-    if file_name.endswith(".png"):
-        return True
-    if file_name.endswith(".json"):
-        return True
-    if file_name.endswith(".geojson"):
-        return True
-    if file_name.endswith(".csv"):
-        return True
-    return False
-
-
-def handle_data_route(adaguc_data_dir, url_param_path, adaguc_online_resource):
-    sub_path = url_param_path.replace("/adaguc::data/", "")
-    sub_path = sub_path.replace("/adaguc::data", "")
-    logger.info("adagucDataDir [%s] and subPath [%s]", adaguc_data_dir, sub_path)
-    local_path_to_browse = os.path.realpath(os.path.join(adaguc_data_dir, sub_path))
-    logger.info("localPathToBrowse = [%s]", local_path_to_browse)
-
-    if not local_path_to_browse.startswith(adaguc_data_dir):
-        logger.error(
-            "Invalid path detected = constructed [%s] from [%s], "
-            "localPathToBrowse [%s] does not start with adagucDataDir [%s] ",
-            local_path_to_browse,
-            url_param_path,
-            local_path_to_browse,
-            adaguc_data_dir,
-        )
-        response = Response(
-            content="Invalid path detected",
-            media_type="application/json",
-            status_code=400,
-        )
-        return response
-
-    data_directories = [
-        f
-        for f in os.listdir(local_path_to_browse)
-        if os.path.isdir(os.path.join(local_path_to_browse, f))
-    ]
-    data_files = [
-        f
-        for f in os.listdir(local_path_to_browse)
-        if os.path.isfile(os.path.join(local_path_to_browse, f)) and is_file_allowed(f)
-    ]
-    data = []
-
-    for data_directory in sorted(data_directories, key=lambda f: f.upper()):
-        data.append(
-            {
-                "path": os.path.join("/adaguc::data", sub_path, data_directory),
-                "name": data_directory,
-                "leaf": False,
-            }
-        )
-
-    for data_file in sorted(data_files, key=lambda f: f.upper()):
-        data.append(
-            {
-                "path": os.path.join("/adaguc::data", sub_path, data_file),
-                "adaguc": adaguc_online_resource
-                + "/adagucserver?source="
-                + urllib.parse.quote_plus(sub_path + "/" + data_file)
-                + "&",
-                "name": data_file,
-                "leaf": True,
-            }
-        )
-
-    response = Response(
-        content=json.dumps({"result": data}),
-        media_type="application/json",
-        status_code=200,
-    )
-    return response
-
-
-def handle_autowmsdir_route(adaguc_autowms_dir, url_param_path, adaguc_online_resource):
-    sub_path = url_param_path.replace("/adaguc::autowms/", "")
-    sub_path = sub_path.replace("/adaguc::autowms", "")
+    sub_path = url_param_path.replace(f"{autowms_prefix}/", "")
+    sub_path = sub_path.replace(autowms_prefix, "")
     if len(sub_path) != 0:
         sub_path = sub_path + "/"
-    logger.info("adagucAutoWMSDir [%s] and subPath [%s]", adaguc_autowms_dir, sub_path)
-    local_path_to_browse = os.path.realpath(os.path.join(adaguc_autowms_dir, sub_path))
-    logger.info("localPathToBrowse = [%s]", local_path_to_browse)
 
-    if not local_path_to_browse.startswith(adaguc_autowms_dir):
+    browse_path = os.path.realpath(os.path.join(data_dir, sub_path))
+    logger.info(f"data_dir={data_dir}, sub_path={sub_path} browse_path={browse_path}")
+
+    # To protect from `../../` path traversals, check if we begin with data_dir
+    if not browse_path.startswith(data_dir):
         logger.error(
-            "Invalid path detected = constructed [%s] from [%s] %s",
-            local_path_to_browse,
-            url_param_path,
-            adaguc_autowms_dir,
+            f"Invalid path detected, used {url_param_path} to get {browse_path}, does not start with {data_dir}"
         )
-        response = Response(
-            content="Invalid path detected",
-            media_type="application/json",
-            status_code=400,
-        )
-        return response
+        raise HTTPException(status_code=400, detail="Invalid path detected")
 
-    data_directories = [
-        f
-        for f in os.listdir(local_path_to_browse)
-        if os.path.isdir(os.path.join(local_path_to_browse, f))
-    ]
-    data_files = [
-        f
-        for f in os.listdir(local_path_to_browse)
-        if os.path.isfile(os.path.join(local_path_to_browse, f)) and is_file_allowed(f)
-    ]
     data = []
+    with os.scandir(browse_path) as entries:
+        for entry in entries:
+            if entry.is_file() and entry.name.lower().endswith(ALLOWED_EXTENSIONS):
+                source = urllib.parse.quote_plus(f"{sub_path}{entry.name}")
+                data.append(
+                    {
+                        "path": os.path.join(autowms_prefix, sub_path, entry.name),
+                        "adaguc": f"{adaguc_online_resource}/adagucserver?source={source}&",
+                        "name": entry.name,
+                        "leaf": True,
+                    }
+                )
 
-    for data_directory in sorted(data_directories, key=lambda f: f.upper()):
-        data.append(
-            {
-                "path": os.path.join("/adaguc::autowms", sub_path, data_directory),
-                "name": data_directory,
-                "leaf": False,
-            }
-        )
+            elif entry.is_dir():
+                data.append(
+                    {
+                        "path": os.path.join(autowms_prefix, sub_path, entry.name),
+                        "name": entry.name,
+                        "leaf": False,
+                    }
+                )
 
-    for data_file in sorted(data_files, key=lambda f: f.upper()):
-        data.append(
-            {
-                "path": os.path.join("/adaguc::autowms", sub_path, data_file),
-                "adaguc": adaguc_online_resource
-                + "/adagucserver?source="
-                + urllib.parse.quote_plus(sub_path + data_file)
-                + "&",
-                "name": data_file,
-                "leaf": True,
-            }
-        )
-
-    response = Response(
-        content=json.dumps({"result": data}),
-        media_type="application/json",
-        status_code=200,
-    )
-    return response
+    data.sort(key=lambda f: (f["leaf"], f["name"].upper()))
+    return data
 
 
 @autowms_router.get("/autowms")
-async def handle_autowms(req: Request, request: str = None, path: str = None):
+async def handle_autowms(
+    req: Request, request: str | None = None, path: str | None = None
+) -> Response:
     adaguc_instance = setup_adaguc()
     adaguc_data_set_dir = adaguc_instance.ADAGUC_DATASET_DIR
     adaguc_data_dir = adaguc_instance.ADAGUC_DATA_DIR
@@ -219,34 +121,46 @@ async def handle_autowms(req: Request, request: str = None, path: str = None):
     url = req.url
     base_url = f"{url.scheme}://{url.hostname}:{url.port}"
     adaguc_online_resource = os.getenv("EXTERNALADDRESS", base_url)
+
     if request is None or path is None:
-        response = Response(
-            content="Mandatory parameters [request] and or [path] are missing",
+        raise HTTPException(
             status_code=400,
+            detail="Mandatory parameters [request] and or [path] are missing",
         )
-        return response
     if request != "getfiles":
-        response = Response(
-            content="Only request=getfiles is supported",
-            status_code=400,
+        raise HTTPException(
+            status_code=400, detail="Only request=getfiles is supported"
         )
-        return response
 
     if path == "":
         return handle_base_route()
 
     if path.startswith("/adaguc::datasets"):
-        return handle_datasets_route(adaguc_data_set_dir, adaguc_online_resource)
+        handler = partial(
+            list_dataset_files, adaguc_data_set_dir, adaguc_online_resource
+        )
+    elif path.startswith("/adaguc::data"):
+        handler = partial(
+            list_data_files,
+            adaguc_data_dir,
+            path,
+            adaguc_online_resource,
+            "/adaguc::data",
+        )
+    elif path.startswith("/adaguc::autowms"):
+        handler = partial(
+            list_data_files,
+            adaguc_autowms_dir,
+            path,
+            adaguc_online_resource,
+            "/adaguc::autowms",
+        )
+    else:
+        raise HTTPException(status_code=400, detail="Path parameter not understood")
 
-    if path.startswith("/adaguc::data"):
-        return handle_data_route(adaguc_data_dir, path, adaguc_online_resource)
-
-    if path.startswith("/adaguc::autowms"):
-        return handle_autowmsdir_route(adaguc_autowms_dir, path, adaguc_online_resource)
-
-    response = Response(
-        content="Path parameter not understood..",
+    data: list[dict] = await asyncio.to_thread(handler)
+    return Response(
+        content=json.dumps({"result": data}),
         media_type="application/json",
-        status_code=400,
+        status_code=200,
     )
-    return response
