@@ -28,7 +28,7 @@
 #include <stdlib.h>
 #include "f8vector.h"
 #include "CImageWarperRenderInterface.h"
-#include "CImgWarpGeneric.h"
+#include "CImgWarpGeneric/CImgWarpGeneric.h"
 #include "utils.h"
 
 static inline int mfast_mod(const int input, const int ceil) { return input >= ceil ? input % ceil : input; }
