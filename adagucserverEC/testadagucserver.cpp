@@ -129,8 +129,8 @@ TEST(CImgRenderFieldVectors, jacobianTransformUWCWDini) {
   CHECK(status == 0);
 
   // Grid cell to do the calculation for
-  f8point gridCoordUL = {.x = 1.1, .y = 1.4};
-  f8point gridCoordLR = {.x = 1.15, .y = 1.45};
+  f8point gridCoordLL = {.x = 1.1, .y = 1.4};
+  f8point gridCoordUR = {.x = 1.15, .y = 1.45};
 
   // Make speed vector
   f8component speedVector = {.u = -6.222803, .v = 4.235688};
@@ -139,24 +139,24 @@ TEST(CImgRenderFieldVectors, jacobianTransformUWCWDini) {
   DOUBLES_EQUAL(speedVector.direction(), 2.543957, 0.001);
 
   // Check if projection transformation from model to latlon works:
-  f8point gridCoordULtoLatLon = gridCoordUL;
-  warper.reprojModelToLatLon(gridCoordULtoLatLon);
-  DOUBLES_EQUAL(gridCoordULtoLatLon.x, -6.013390, 0.001);
-  DOUBLES_EQUAL(gridCoordULtoLatLon.y, 56.384378, 0.001);
+  f8point gridCoordLLtoLatLon = gridCoordLL;
+  warper.reprojModelToLatLon(gridCoordLLtoLatLon);
+  DOUBLES_EQUAL(gridCoordLLtoLatLon.x, -6.013390, 0.001);
+  DOUBLES_EQUAL(gridCoordLLtoLatLon.y, 56.384378, 0.001);
 
-  f8point gridCoordLRtoLatLon = gridCoordLR;
-  warper.reprojModelToLatLon(gridCoordLRtoLatLon);
-  DOUBLES_EQUAL(gridCoordLRtoLatLon.x, -5.920456, 0.001);
-  DOUBLES_EQUAL(gridCoordLRtoLatLon.y, 56.432904, 0.001);
+  f8point gridCoordURtoLatLon = gridCoordUR;
+  warper.reprojModelToLatLon(gridCoordURtoLatLon);
+  DOUBLES_EQUAL(gridCoordURtoLatLon.x, -5.920456, 0.001);
+  DOUBLES_EQUAL(gridCoordURtoLatLon.y, 56.432904, 0.001);
 
-  f8component compGridRel = jacobianTransform(speedVector, gridCoordUL, gridCoordLR, &warper, true);
+  f8component compGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR, &warper, true);
   // CDBDebug("compGridRel %f %f %f %f", compGridRel.u, compGridRel.v, compGridRel.magnitude(), compGridRel.direction());
   DOUBLES_EQUAL(compGridRel.u, -6.099962, 0.001);
   DOUBLES_EQUAL(compGridRel.v, 4.410759, 0.001);
   DOUBLES_EQUAL(compGridRel.magnitude(), 7.527571, 0.001);
   DOUBLES_EQUAL(compGridRel.direction(), 2.515544, 0.001);
 
-  f8component compNoGridRel = jacobianTransform(speedVector, gridCoordUL, gridCoordLR, &warper, false);
+  f8component compNoGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR, &warper, false);
   // CDBDebug("compNoGridRel %f %f %f %f", compNoGridRel.u, compNoGridRel.v, compNoGridRel.magnitude(), compNoGridRel.direction());
   DOUBLES_EQUAL(compNoGridRel.u, -6.222803, 0.001);
   DOUBLES_EQUAL(compNoGridRel.v, 4.235688, 0.001);
@@ -185,8 +185,8 @@ TEST(CImgRenderFieldVectors, jacobianTransformLatLon) {
   CHECK(status == 0);
 
   // Grid cell to do the calculation for
-  f8point gridCoordUL = {.x = 1.1, .y = 1.4};
-  f8point gridCoordLR = {.x = 1.15, .y = 1.45};
+  f8point gridCoordLL = {.x = 1.1, .y = 1.4};
+  f8point gridCoordUR = {.x = 1.15, .y = 1.45};
 
   // Make speed vector
   f8component speedVector = {.u = -6.222803, .v = 4.235688};
@@ -195,24 +195,24 @@ TEST(CImgRenderFieldVectors, jacobianTransformLatLon) {
   DOUBLES_EQUAL(speedVector.direction(), 2.543957, 0.001);
 
   // Check if projection transformation from model to latlon works:
-  f8point gridCoordULtoLatLon = gridCoordUL;
-  warper.reprojModelToLatLon(gridCoordULtoLatLon);
-  DOUBLES_EQUAL(gridCoordULtoLatLon.x, 1.1, 0.001);
-  DOUBLES_EQUAL(gridCoordULtoLatLon.y, 1.4, 0.001);
+  f8point gridCoordLLtoLatLon = gridCoordLL;
+  warper.reprojModelToLatLon(gridCoordLLtoLatLon);
+  DOUBLES_EQUAL(gridCoordLLtoLatLon.x, 1.1, 0.001);
+  DOUBLES_EQUAL(gridCoordLLtoLatLon.y, 1.4, 0.001);
 
-  f8point gridCoordLRtoLatLon = gridCoordLR;
-  warper.reprojModelToLatLon(gridCoordLRtoLatLon);
-  DOUBLES_EQUAL(gridCoordLRtoLatLon.x, 1.15, 0.001);
-  DOUBLES_EQUAL(gridCoordLRtoLatLon.y, 1.45, 0.001);
+  f8point gridCoordURtoLatLon = gridCoordUR;
+  warper.reprojModelToLatLon(gridCoordURtoLatLon);
+  DOUBLES_EQUAL(gridCoordURtoLatLon.x, 1.15, 0.001);
+  DOUBLES_EQUAL(gridCoordURtoLatLon.y, 1.45, 0.001);
 
-  f8component compGridRel = jacobianTransform(speedVector, gridCoordUL, gridCoordLR, &warper, true);
+  f8component compGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR, &warper, true);
   // CDBDebug("compGridRel %f %f %f %f", compGridRel.u, compGridRel.v, compGridRel.magnitude(), compGridRel.direction());
   DOUBLES_EQUAL(compGridRel.u, -6.224651, 0.001);
   DOUBLES_EQUAL(compGridRel.v, 4.232972, 0.001);
   DOUBLES_EQUAL(compGridRel.magnitude(), 7.527571, 0.001);
   DOUBLES_EQUAL(compGridRel.direction(), 2.544393, 0.001);
 
-  f8component compNoGridRel = jacobianTransform(speedVector, gridCoordUL, gridCoordLR, &warper, false);
+  f8component compNoGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR, &warper, false);
   // CDBDebug("compNoGridRel %f %f %f %f", compNoGridRel.u, compNoGridRel.v, compNoGridRel.magnitude(), compNoGridRel.direction());
   DOUBLES_EQUAL(compNoGridRel.u, -6.222803, 0.001);
   DOUBLES_EQUAL(compNoGridRel.v, 4.235688, 0.001);
@@ -239,19 +239,19 @@ f8component testDiniCoordinate(f8point pointToCheck, f8component speedVector) {
   warper.initreproj(crs.c_str(), &geo, &v);
 
   double cellSize = 0.05;
-  f8point gridCoordUL = {.x = pointToCheck.x, .y = pointToCheck.y};
-  f8point gridCoordLR = {.x = pointToCheck.x + cellSize, .y = pointToCheck.y + cellSize};
+  f8point gridCoordLL = {.x = pointToCheck.x, .y = pointToCheck.y};
+  f8point gridCoordUR = {.x = pointToCheck.x + cellSize, .y = pointToCheck.y + cellSize};
 
   // Make speed vector
 
   // Check if projection transformation from model to latlon works:
-  f8point gridCoordULtoLatLon = gridCoordUL;
-  warper.reprojModelToLatLon(gridCoordULtoLatLon);
+  f8point gridCoordLLtoLatLon = gridCoordLL;
+  warper.reprojModelToLatLon(gridCoordLLtoLatLon);
 
-  f8point gridCoordLRtoLatLon = gridCoordLR;
-  warper.reprojModelToLatLon(gridCoordLRtoLatLon);
+  f8point gridCoordURtoLatLon = gridCoordUR;
+  warper.reprojModelToLatLon(gridCoordURtoLatLon);
 
-  f8component compGridRel = jacobianTransform(speedVector, gridCoordUL, gridCoordLR, &warper, true);
+  f8component compGridRel = jacobianTransform(speedVector, gridCoordLL, gridCoordUR, &warper, true);
   return compGridRel;
 }
 
