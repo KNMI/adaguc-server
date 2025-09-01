@@ -59,7 +59,7 @@ int CDBFileScanner::cleanFiles(CDataSource *dataSource, int) {
   try {
     CRequest::fillDimValuesForDataSource(dataSource, dataSource->srvParams);
   } catch (ServiceExceptionCode e) {
-    CDBError("Exception in setDimValuesForDataSource");
+    CDBError("Exception in fillDimValuesForDataSource");
     return 1;
   }
 

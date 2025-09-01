@@ -74,6 +74,7 @@ private:
 public:
   CNetCDFDataWriter();
   ~CNetCDFDataWriter();
+  bool silent = false;
   // Virtual functions
   int init(CServerParams *srvParam, CDataSource *dataSource, int nrOfBands);
   int addData(std::vector<CDataSource *> &dataSources);

@@ -243,6 +243,14 @@ CReadPNG::CPNGRaster *CReadPNG::read_png_file(const char *file_name, bool pngRea
     }
   }
 
+  if (row_pointers) {
+    for (size_t y = 0; y < pngRaster->height; y++) {
+      free(row_pointers[y]);
+    }
+    free(row_pointers);
+    row_pointers = NULL;
+  }
+  png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
   fclose(fp);
 #ifdef CREADPNG_DEBUG
   CDBDebug("done");

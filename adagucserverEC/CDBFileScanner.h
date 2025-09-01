@@ -72,6 +72,7 @@ private:
   }
 
 public:
+  static int scanFile(CT::string fileToScan, CDataSource *dataSource, int scanFlags);
   static int DBLoopFiles(CDataSource *dataSource, int removeNonExistingFiles, std::vector<std::string> *fileList, int scanFlags);
   static bool isTableAlreadyScanned(CT::string *tableName);
   static void markTableDirty(CT::string *tableName);
