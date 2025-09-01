@@ -574,11 +574,8 @@ std::tuple<CT::string, double> CImageWarper::fixProjection(CT::string projection
         majorAttribute->setData<float>(CDF_FLOAT, semi_major_axis * scaling);
         minorAttribute->setData<float>(CDF_FLOAT, semi_minor_axis * scaling);
 
-        CT::string newProjectionString;
-        int status2 = trans.convertCFToProj(&var, &newProjectionString);
-        //        printf("%s\n", projectionString.c_str());
-        //        printf("%s\n\n", newProjectionString.c_str());
-        if (status2 == 0) return std::make_tuple(newProjectionString, scaling);
+        CT::string newProjectionString = trans.convertCFToProj(&var);
+        if (!newProjectionString.empty()) return std::make_tuple(newProjectionString, scaling);
       }
     }
   }
