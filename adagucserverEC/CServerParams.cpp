@@ -29,6 +29,7 @@
 #include "CServerParams.h"
 #include "CStopWatch.h"
 #include <traceTimings/traceTimings.h>
+#include <cstring>
 const char *CServerParams::className = "CServerParams";
 
 CServerParams::CServerParams() {
@@ -651,4 +652,27 @@ bool CServerParams::isEdrEnabled() {
     }
   }
   return true;
+}
+
+int CServerParams::getServerStyleIndexByName(const char *styleName) {
+  if (styleName == nullptr) {
+    CDBError("No style name provided");
+    return -1;
+  }
+  if (std::strcmp(styleName, "default") == 0) {
+    return -1;
+  }
+  CT::string sanitizedStyleName = styleName;
+  sanitizedStyleName.substringSelf(0, sanitizedStyleName.indexOf("/"));
+  auto comp = [sanitizedStyleName](CServerConfig::XMLE_Style *a) { return a->attr.name.equals(sanitizedStyleName); };
+  auto it = std::find_if(cfg->Style.begin(), cfg->Style.end(), comp);
+  int index = it == cfg->Style.end() ? -1 : it - cfg->Style.begin();
+
+  return index;
+}
+
+int CServerParams::getServerLegendIndexByName(const char *legendName) {
+  auto comp = [legendName](CServerConfig::XMLE_Legend *a) { return a->attr.name.equals(legendName); };
+  auto it = std::find_if(cfg->Legend.begin(), cfg->Legend.end(), comp);
+  return it == cfg->Legend.end() ? -1 : it - cfg->Legend.begin();
 }
