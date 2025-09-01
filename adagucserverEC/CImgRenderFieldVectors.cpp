@@ -103,10 +103,9 @@ int applyUVConversion(CImageWarper *warper, CDataSource *dataSource, int *dPixel
   bool gridRelative = isGridRelative(dataSource);
   for (int y = dPixelExtent[1]; y < dPixelExtent[3]; y = y + 1) {
     for (int x = dPixelExtent[0]; x < dPixelExtent[2]; x = x + 1) {
-      size_t p = size_t((x - (dPixelExtent[0])) + ((y - (dPixelExtent[1])) * (gridWidth)));
-      f8point gridCoordLL = {.x = dataSource->dfCellSizeX * double(x) + dataSource->dfBBOX[0], .y = dataSource->dfCellSizeY * double(y) + dataSource->dfBBOX[3]};
-      f8point gridCoordUR = {.x = dataSource->dfCellSizeX * x + fabs(dataSource->dfCellSizeX) + dataSource->dfBBOX[0],
-                             .y = dataSource->dfCellSizeY * y + fabs(dataSource->dfCellSizeY) + dataSource->dfBBOX[3]};
+      size_t p = size_t(x - dPixelExtent[0]) + ((y - dPixelExtent[1]) * gridWidth);
+      f8point gridCoordLL = {.x = dataSource->dfCellSizeX * x + dataSource->dfBBOX[0], .y = dataSource->dfCellSizeY * y + dataSource->dfBBOX[3]};
+      f8point gridCoordUR = {.x = gridCoordLL.x + fabs(dataSource->dfCellSizeX), .y = gridCoordLL.y + fabs(dataSource->dfCellSizeY)};
       f8component newSpeed = jacobianTransform({.u = uValues[p], .v = vValues[p]}, gridCoordLL, gridCoordUR, warper, gridRelative);
       uValues[p] = newSpeed.u;
       vValues[p] = newSpeed.v;
