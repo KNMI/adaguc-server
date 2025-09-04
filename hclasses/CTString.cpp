@@ -98,7 +98,7 @@ namespace CT {
 
   string &string::operator+=(string const &f) {
     if (this == &f) return *this;
-    concat(f.useStack ? f.stackValue : f.heapValue, f.privatelength);
+    concatlength(f.useStack ? f.stackValue : f.heapValue, f.privatelength);
     return *this;
   }
   string &string::operator+=(const char *const &f) {
@@ -219,7 +219,7 @@ namespace CT {
     value[privatelength] = '\0';
   }
 
-  void string::concat(const char *_value, size_t len) {
+  void string::concatlength(const char *_value, size_t len) {
     if (_value == NULL) return;
 
     if (len == 0) return;
@@ -618,14 +618,14 @@ namespace CT {
     }
   }
 
-  void string::concat(const CT::string *_string) { concat(_string->useStack ? _string->stackValue : _string->heapValue, _string->privatelength); }
+  void string::concat(const CT::string *_string) { concatlength(_string->useStack ? _string->stackValue : _string->heapValue, _string->privatelength); }
 
-  void string::concat(const CT::string _string) { concat(_string.useStack ? _string.stackValue : _string.heapValue, _string.privatelength); }
+  void string::concat(const CT::string _string) { concatlength(_string.useStack ? _string.stackValue : _string.heapValue, _string.privatelength); }
 
   void string::concat(const char *_value) {
     if (_value == NULL) return;
     const size_t length = strlen(_value);
-    concat(_value, length);
+    concatlength(_value, length);
   };
 
   int string::indexOf(const char *search) { return indexOf(search, strlen(search)); };

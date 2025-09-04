@@ -438,7 +438,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     if (dataSource->queryLevel == -1) {
       query.concat("TRUE ");
     } else {
-      query.concat("t1.adaguctilinglevel = %d ", dataSource->queryLevel);
+      query.printconcat("t1.adaguctilinglevel = %d ", dataSource->queryLevel);
     }
   }
 

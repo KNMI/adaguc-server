@@ -1,3 +1,12 @@
+**Version 4.2.0 - 2025-09-04**
+
+- AutoWMS is now async and does not block other requests
+- FIX bug ADAGUC makes invalid postgresql queries when no tilinglevel is provided [#496](https://github.com/KNMI/adaguc-server/issues/496)
+- Added support for azimuthal_equidistant projection 
+- Fixed argument names in jacobian U/V transformation code
+- Upgrade fastapi and starlette to latest 
+
+
 **Version 4.1.0 - 2025-07-16**
 
 - Revived the tiling functionality of adaguc-server to improve performance on huge high resolution MTG satellite imagery. The tiling functionality is simplified and is now easier to use. It is now possible to let the filescanner create tiles. See [TileSettings.md](doc/configuration/TileSettings.md) for details.

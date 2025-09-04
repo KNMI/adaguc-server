@@ -972,7 +972,7 @@ int CDFNetCDFWriter::_write(void (*progress)(const char *message, float percenta
       CDFType type = cdfObject->attributes[i]->getType();
       if (type == CDF_CHAR || type == CDF_UBYTE || type == CDF_BYTE) {
         CT::string out = "";
-        out.concat((const char *)data, length);
+        out.concatlength((const char *)data, length);
         NCCommands.printconcat("nc_put_att(root_id, NC_GLOBAL, \"%s\",%s,%d,\"%s\");\n", cdfObject->attributes[i]->name.c_str(), NCtypeConversionToString(type).c_str(),
                                cdfObject->attributes[i]->length, out.c_str());
       } else {
@@ -1217,7 +1217,7 @@ int CDFNetCDFWriter::_write(void (*progress)(const char *message, float percenta
                 size_t length = variable->attributes[i]->length;
                 if (type == CDF_CHAR || type == CDF_UBYTE || type == CDF_BYTE) {
                   CT::string out = "";
-                  out.concat((const char *)data, length);
+                  out.concatlength((const char *)data, length);
                   NCCommands.printconcat("nc_put_att(root_id, var_id_%d, \"%s\",%s,%d,\"%s\");\n", j, variable->attributes[i]->name.c_str(), NCtypeConversionToString(type).c_str(),
                                          variable->attributes[i]->length, out.c_str());
                 } else {

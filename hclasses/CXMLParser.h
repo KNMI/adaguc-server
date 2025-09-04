@@ -154,7 +154,7 @@ public:
         for (size_t j = 0; j < size(); j++) {
           if (j > 0) json += ",";
           CT::string subdata = get(j)->toJSON(mode);
-          json.concat((subdata.c_str() + 1), subdata.length() - 3);
+          json.concatlength((subdata.c_str() + 1), subdata.length() - 3);
         }
         json += "]";
         return json;
