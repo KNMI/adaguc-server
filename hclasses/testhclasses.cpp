@@ -76,6 +76,16 @@ TEST(string, concatenation) {
   CHECK(teststring.equals("teststringabc"));
 }
 
+TEST(string, concatenationlength) {
+  CT::string teststring = "teststring";
+  teststring.concatlength("abc", 0);
+  CHECK(teststring.equals("teststring"));
+  teststring.concatlength("abc", 1);
+  CHECK(teststring.equals("teststringa"));
+  teststring.concatlength("bc", 2);
+  CHECK(teststring.equals("teststringabc"));
+}
+
 // TEST(CDirReader, test_makeCleanPath) {
 //   CDirReader::test_makeCleanPath();
 //   CDirReader::test_compareLists();

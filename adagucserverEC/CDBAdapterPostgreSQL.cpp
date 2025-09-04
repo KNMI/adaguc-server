@@ -492,7 +492,6 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     query.printconcat(" LIMIT %d", limit);
   }
 
-  CDBDebug("QUERY: %s", query.c_str());
   // Execute the query
   CDBStore::Store *store = NULL;
   try {
