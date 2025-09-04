@@ -202,7 +202,7 @@ namespace CT {
      * @param value The character array to append
      * @param len The length of the character array
      */
-    void concat(const char *_value, size_t len);
+    void concatlength(const char *_value, size_t len);
 
     /**
      * Appends an array of characters terminated with a '\0' character.

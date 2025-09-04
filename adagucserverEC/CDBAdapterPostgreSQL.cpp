@@ -438,7 +438,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     if (dataSource->queryLevel == -1) {
       query.concat("TRUE ");
     } else {
-      query.concat("t1.adaguctilinglevel = %d ", dataSource->queryLevel);
+      query.printconcat("t1.adaguctilinglevel = %d ", dataSource->queryLevel);
     }
   }
 
@@ -492,6 +492,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     query.printconcat(" LIMIT %d", limit);
   }
 
+  CDBDebug("QUERY: %s", query.c_str());
   // Execute the query
   CDBStore::Store *store = NULL;
   try {

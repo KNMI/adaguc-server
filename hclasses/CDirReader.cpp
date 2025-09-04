@@ -59,7 +59,7 @@ std::vector<std::string> CDirReader::listDir(const char *directory, bool recursi
       // Deal with filesystems that don't provide d_type
       auto d_type = ent->d_type;
       if (d_type == DT_UNKNOWN) {
-        struct stat path_stat {};
+        struct stat path_stat{};
         int ret = stat(fullName.c_str(), &path_stat);
         if (ret == 0 && S_ISREG(path_stat.st_mode)) {
           d_type = DT_REG;
@@ -155,8 +155,8 @@ int CDirReader::_ReadDir(const char *directory, const char *ext_filter, int recu
       filename_len = strlen(ep->d_name);
       CT::string dirpath;
       dirpath.copy(directory, dir_len);
-      dirpath.concat("/", 1);
-      dirpath.concat(ep->d_name, filename_len);
+      dirpath.concatlength("/", 1);
+      dirpath.concatlength(ep->d_name, filename_len);
       bool isdir = isDir(dirpath.c_str());
       if (isdir == false) {
         if (testRegEx(ep->d_name, ext_filter) == 1) {
@@ -165,8 +165,8 @@ int CDirReader::_ReadDir(const char *directory, const char *ext_filter, int recu
           CT::string fullName;
           filename_len = strlen(ep->d_name);
           fullName.copy(directory, dir_len);
-          fullName.concat("/", 1);
-          fullName.concat(ep->d_name, filename_len);
+          fullName.concatlength("/", 1);
+          fullName.concatlength(ep->d_name, filename_len);
           fullName = makeCleanPath(fullName.c_str());
           fileList.push_back(fullName.c_str());
         }
