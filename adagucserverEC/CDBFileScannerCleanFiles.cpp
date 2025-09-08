@@ -8,17 +8,10 @@
 std::set<std::string> CDBFileScanner::filesDeletedFromFS;
 
 void CDBFileScanner::_removeFileFromTables(CT::string fileNamestr, CDataSource *dataSource) {
-  CDBAdapter *dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
-  for (size_t i = 0; i < dataSource->requiredDims.size(); i++) {
-    CT::string tableName;
-    CT::string colName = dataSource->requiredDims[i]->netCDFDimName;
-    try {
-      tableName =
-          dbAdapter->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), colName.c_str(), dataSource);
-    } catch (int e) {
-      CDBWarning("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), colName.c_str());
-    }
-    CDBDebug("DB: Removing from table %s and dimension %s file %s", tableName.c_str(), colName.c_str(), fileNamestr.c_str());
+  CDBAdapterPostgreSQL *dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
+  auto tableList = dbAdapter->getTableNames(dataSource);
+  for (auto tableName : tableList) {
+    CDBDebug("DB: Removing from table %s and file %s", tableName.c_str(), fileNamestr.c_str());
     dbAdapter->removeFile(tableName.c_str(), fileNamestr.c_str());
   }
 }
@@ -49,7 +42,7 @@ int CDBFileScanner::cleanFiles(CDataSource *dataSource, int) {
   if (enableCleanupIsInform) {
     CDBDebug("Note that mode is set to dryrun only, no actual deleting");
   }
-  CDBAdapter *dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
+  CDBAdapterPostgreSQL *dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
   if (dataSource->cfgLayer->Dimension.size() == 0) {
     if (CAutoConfigure::autoConfigureDimensions(dataSource) != 0) {
       CREPORT_ERROR_NODOC("Unable to configure dimensions automatically", CReportMessage::Categories::GENERAL);

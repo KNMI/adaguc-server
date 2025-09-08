@@ -24,13 +24,13 @@
  ******************************************************************************/
 
 #include "CDBFactory.h"
-#include "CDBAdapter.h"
+#include "CDBAdapterPostgreSQL.h"
 
 const char *CDBFactory::className = "CDBFactory";
 
-CDBAdapter *CDBFactory::staticCDBAdapter = NULL;
+CDBAdapterPostgreSQL *CDBFactory::staticCDBAdapter = NULL;
 
-CDBAdapter *CDBFactory::getDBAdapter(CServerConfig::XMLE_Configuration *cfg) {
+CDBAdapterPostgreSQL *CDBFactory::getDBAdapter(CServerConfig::XMLE_Configuration *cfg) {
   if (staticCDBAdapter == NULL) {
     if (cfg->DataBase.size() != 1) {
       CDBError("DataBase not properly configured");

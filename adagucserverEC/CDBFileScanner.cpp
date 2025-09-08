@@ -77,7 +77,7 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
   CT::string query;
   dataSource->headerFileName = (*fileList)[0].c_str();
 
-  CDBAdapter *dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
+  CDBAdapterPostgreSQL *dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
 
   CDFObject *cdfObject = NULL;
   try {
@@ -323,7 +323,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
   CDFObject *cdfObject = NULL;
   int status = 0;
 
-  CDBAdapter *dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
+  CDBAdapterPostgreSQL *dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
   try {
     // Loop dimensions and files
     // CDBDebug("Checking files that are already in the database...");
@@ -662,7 +662,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
 
                 bool requiresProjectionInfo = true;
 
-                CDBAdapter::GeoOptions geoOptions;
+                GeoOptions geoOptions;
                 geoOptions.level = -1;
                 geoOptions.proj4 = "EPSG:4236";
                 geoOptions.bbox[0] = -1000;

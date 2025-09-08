@@ -26,7 +26,7 @@
 #ifndef CDBFACTORY_H
 #define CDBFACTORY_H
 
-#include "CDBAdapter.h"
+#include "CDBAdapterPostgreSQL.h"
 #include "CDBAdapterPostgreSQL.h"
 
 class CDBFactory {
@@ -35,9 +35,9 @@ private:
   DEF_ERRORFUNCTION();
 
 public:
-  static CDBAdapter *staticCDBAdapter;
+  static CDBAdapterPostgreSQL *staticCDBAdapter;
 
-  static CDBAdapter *getDBAdapter(CServerConfig::XMLE_Configuration *cfg);
+  static CDBAdapterPostgreSQL *getDBAdapter(CServerConfig::XMLE_Configuration *cfg);
   static void clear();
 };
 

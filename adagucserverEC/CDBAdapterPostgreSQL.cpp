@@ -28,6 +28,7 @@
 #include <map>
 #include "CDebugger.h"
 #include "CServerError.h"
+#include "CGeoParams.h"
 
 const char *CDBAdapterPostgreSQL::className = "CDBAdapterPostgreSQL";
 #define CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP "pathfiltertablelookup_v2_0_23"
@@ -670,6 +671,41 @@ CT::string CDBAdapterPostgreSQL::generateRandomTableName() {
   return tableName;
 }
 
+std::vector<CT::string> CDBAdapterPostgreSQL::getTableNames(CDataSource *dataSource) {
+  std::vector<CT::string> dataSourceDimList;
+  // If config has a hardcoded db table name for layer, use it too
+  if (dataSource->cfgLayer->DataBaseTable.size() == 1) {
+    for (const auto &requiredDim : dataSource->requiredDims) {
+      CT::string dimString(requiredDim->netCDFDimName);
+      dimString.toLowerCaseSelf();
+      CT::string tableName = dataSource->cfgLayer->DataBaseTable[0]->value.c_str();
+      CT::string correctedTableName = dataSource->srvParams->makeCorrectTableName(tableName, dimString);
+      dataSourceDimList.push_back(correctedTableName);
+    }
+  }
+
+  // Otherwise query all possible tables from the lookup.
+  CPGSQLDB *DB = getDataBaseConnection();
+  if (DB == NULL) {
+    CDBError("Unable to connect to DB");
+    throw(1);
+  }
+  auto path = dataSource->cfgLayer->FilePath[0]->value;
+  auto filter = dataSource->cfgLayer->FilePath[0]->attr.filter;
+  CT::string query;
+  query.print("SELECT p.tablename FROM %s p WHERE path=E'P_%s' AND filter=E'F_%s' ", CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP, path.c_str(), filter.c_str());
+  CDBDebug("QUERY: %s", query.c_str());
+  CDBStore::Store *tableDimStore = DB->queryToStore(query.c_str());
+  if (tableDimStore != NULL) {
+    for (size_t i = 0; i < tableDimStore->size(); i++) {
+      dataSourceDimList.push_back(tableDimStore->getRecord(i)->get("tablename"));
+    }
+  }
+  delete tableDimStore;
+
+  return dataSourceDimList;
+}
+
 std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAndDimensions(const char *path, const char *filter, std::vector<CT::string> dimensions, CDataSource *dataSource) {
 #ifdef MEASURETIME
   StopWatch_Stop(">CDBAdapterPostgreSQL::getTableNamesForPathFilterAndDimensions");
@@ -999,9 +1035,13 @@ int CDBAdapterPostgreSQL::removeFile(const char *tablename, const char *file) {
   }
 
   CT::string query;
-  query.print("delete from %s where path = '%s'", tablename, file);
+  query.print("delete from %s where path = '%s';", tablename, file);
+  // CDBDebug("DELETEQUERY= [%s]", query.c_str());
   int status = dataBaseConnection->query(query.c_str());
-  if (status != 0) throw(__LINE__);
+  if (status != 0) {
+    CDBWarning("Note:removeFile failed");
+  }
+
 #ifdef MEASURETIME
   StopWatch_Stop("<CDBAdapterPostgreSQL::removeFile");
 #endif
