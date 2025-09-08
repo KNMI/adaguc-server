@@ -88,8 +88,6 @@ private:
   bool useDrawPointTextColor;
   bool isRadiusAndValue;
 
-  std::vector<CServerConfig::XMLE_SymbolInterval *> *symbolIntervals;
-
   void renderSinglePoints(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, CServerConfig::XMLE_Point *pointConfig);
   void renderVectorPoints(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration);
 
