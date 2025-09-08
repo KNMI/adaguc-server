@@ -1,5 +1,5 @@
 #include "CCreateTiles.h"
-#include "CDBAdapter.h"
+#include "CDBAdapterPostgreSQL.h"
 #include "CDBFactory.h"
 #include "CReporter.h"
 #include "CRequest.h"

@@ -1,3 +1,7 @@
+**Version 4.2.1 - 2025-09-08**
+
+- Fix bug BUG ADAGUC does not clean tables properly when used with files with multiple variables [#498](https://github.com/KNMI/adaguc-server/issues/498)
+
 **Version 4.2.0 - 2025-09-04**
 
 - AutoWMS is now async and does not block other requests

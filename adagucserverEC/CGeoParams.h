@@ -264,4 +264,13 @@ public:
 void CoordinatesXYtoScreenXY(double &x, double &y, CGeoParams *geoParam);
 void CoordinatesXYtoScreenXY(f8point &p, CGeoParams *geoParam);
 void CoordinatesXYtoScreenXY(f8box &b, CGeoParams *geoParam);
+
+class GeoOptions {
+public:
+  double bbox[4];
+  int indices[4];
+  CT::string proj4;
+  int level;
+};
+
 #endif
