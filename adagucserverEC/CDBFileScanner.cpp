@@ -999,6 +999,8 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
   if (fileList.size() == 0) {
     if (verbose) {
       CDBWarning("No files found for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
+      // Clean up if needed
+      cleanFiles(dataSource, scanFlags);
     }
     return CDBFILESCANNER_RETURN_FILEDOESNOTMATCH;
   }

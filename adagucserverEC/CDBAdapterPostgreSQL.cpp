@@ -672,15 +672,15 @@ CT::string CDBAdapterPostgreSQL::generateRandomTableName() {
 }
 
 std::vector<CT::string> CDBAdapterPostgreSQL::getTableNames(CDataSource *dataSource) {
-  std::vector<CT::string> dataSourceDimList;
+  std::vector<CT::string> tableList;
   // If config has a hardcoded db table name for layer, use it too
   if (dataSource->cfgLayer->DataBaseTable.size() == 1) {
-    for (const auto &requiredDim : dataSource->requiredDims) {
-      CT::string dimString(requiredDim->netCDFDimName);
-      dimString.toLowerCaseSelf();
-      CT::string tableName = dataSource->cfgLayer->DataBaseTable[0]->value.c_str();
+    CT::string tableName = dataSource->cfgLayer->DataBaseTable[0]->value.c_str();
+    for (const auto &cfgDimension : dataSource->cfgLayer->Dimension) {
+      CT::string dimString = cfgDimension->attr.name.toLowerCase();
       CT::string correctedTableName = dataSource->srvParams->makeCorrectTableName(tableName, dimString);
-      dataSourceDimList.push_back(correctedTableName);
+      tableList.push_back(correctedTableName);
+      CDBDebug("Adding custom table %s", correctedTableName.c_str());
     }
   }
 
@@ -694,16 +694,16 @@ std::vector<CT::string> CDBAdapterPostgreSQL::getTableNames(CDataSource *dataSou
   auto filter = dataSource->cfgLayer->FilePath[0]->attr.filter;
   CT::string query;
   query.print("SELECT p.tablename FROM %s p WHERE path=E'P_%s' AND filter=E'F_%s' ", CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP, path.c_str(), filter.c_str());
-  CDBDebug("QUERY: %s", query.c_str());
-  CDBStore::Store *tableDimStore = DB->queryToStore(query.c_str());
-  if (tableDimStore != NULL) {
-    for (size_t i = 0; i < tableDimStore->size(); i++) {
-      dataSourceDimList.push_back(tableDimStore->getRecord(i)->get("tablename"));
+  // CDBDebug("QUERY: %s", query.c_str());
+  CDBStore::Store *tableNameStore = DB->queryToStore(query.c_str());
+  if (tableNameStore != NULL) {
+    for (size_t i = 0; i < tableNameStore->size(); i++) {
+      tableList.push_back(tableNameStore->getRecord(i)->get("tablename"));
     }
   }
-  delete tableDimStore;
+  delete tableNameStore;
 
-  return dataSourceDimList;
+  return tableList;
 }
 
 std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAndDimensions(const char *path, const char *filter, std::vector<CT::string> dimensions, CDataSource *dataSource) {

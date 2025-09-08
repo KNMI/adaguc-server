@@ -988,11 +988,15 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
     }
     // Check and set value when the value is forced in the layer dimension configuration
     for (size_t i = 0; i < dataSource->cfgLayer->Dimension.size(); i++) {
+
       if (!dataSource->cfgLayer->Dimension[i]->attr.fixvalue.empty()) {
         CT::string dimName(dataSource->cfgLayer->Dimension[i]->value.c_str());
         CT::string fixedValue = dataSource->cfgLayer->Dimension[i]->attr.fixvalue;
+        CDBDebug("fixedValue --> %s", fixedValue.c_str());
+        fixedValue = "2024-09-07T12:00:00Z";
         dimName.toLowerCaseSelf();
         for (auto &requiredDim : dataSource->requiredDims) {
+          CDBDebug("VLAUE IS %s", requiredDim->value.c_str());
           if (requiredDim->name.equals(&dimName)) {
             CDBDebug("Forcing dimension %s from %s to %s", dimName.c_str(), requiredDim->value.c_str(), fixedValue.c_str());
             requiredDim->value = fixedValue;
