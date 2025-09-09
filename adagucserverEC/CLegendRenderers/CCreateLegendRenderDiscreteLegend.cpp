@@ -307,6 +307,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
         // This rectangle is borderless, and the resulting classes have no vertical blank space between them
         legendImage->rectangle(4 * scaling + pLeft, yTop + pTop, (int(cbW) + 7) * scaling + pLeft, yBottom + pTop, color, color);
 
+        // We print every label that's multiple of 5. Revisit later if something else needed.
         if ((int)std::abs(parseFloat(s->attr.min.c_str())) % 5 != 0) continue;
 
         int textY = yBottom + pTop - ((fontSize * scaling) / 4) + 3;
