@@ -488,7 +488,27 @@ class TestWCS(unittest.TestCase):
       "SERVICE=WCS&request=GetCoverage&coverage=data_with_fixed&crs=EPSG%3A4326&format=NetCDF4&bbox=0,50,10,60&width=100&height=100&time=2022-sdfsd-22T00:00:00Z/2022-07-23T00:00:00Z&elevation=2000",
       {"ADAGUC_CONFIG": config},
     )
+    self.assertEqual(status, 404)
+    
+  def test_WCSGetCoverage_no_error_on_correct_time(self):
+    AdagucTestTools().cleanTempDir()
+    config = (
+            ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,"
+            + ADAGUC_PATH
+            + "/data/config/datasets/adaguc.tests.cacheheader.xml"
+    )
+
+    status, data, headers = AdagucTestTools().runADAGUCServer(
+      args=["--updatedb", "--config", config], env=self.env, isCGI=False
+    )
     self.assertEqual(status, 0)
+
+    status, data, headers = AdagucTestTools().runADAGUCServer(
+      "SERVICE=WCS&request=GetCoverage&coverage=data_with_fixed&crs=EPSG%3A4326&format=NetCDF4&bbox=0,50,10,60&width=100&height=100&time=2017-01-01T00:00:00Z/2017-01-01T00:00:00Z&elevation=2000",
+      {"ADAGUC_CONFIG": config},
+    )
+    self.assertEqual(status, 0)    
 
 
   def test_WCSGetCoverage_error_on_wrong_service(self):

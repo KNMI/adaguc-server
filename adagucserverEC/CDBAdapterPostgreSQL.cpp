@@ -464,6 +464,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
 
         // If dimension value is a number, find closest value.
         if (dimDataType.equals("real")) {
+          // TODO 2025-09-09 Check if this does not trigger sequential table scans.
           whereStatement.printconcat("ABS(%s - %s) = (SELECT MIN(ABS(%s - %s)) FROM %s)", dimVal, dimName, dimVal, dimName, tableName);
         } else {
           whereStatement.printconcat("%s = '%s'", dimName, dimVal);
@@ -471,8 +472,12 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
       } else {
         // Find value within range of dimVals[0] and dimVals[1]
         // Get closest lowest value to this requested one, or if request value is way below get earliest value:
-        whereStatement.printconcat("%s >= (SELECT MAX(%s) FROM %s WHERE %s <= '%s' OR %s = (SELECT MIN(%s) FROM %s)) AND %s <= '%s'", dimName, dimName, tableName, dimName, dimVals[0].c_str(), dimName,
-                                   dimName, tableName, dimName, dimVals[1].c_str());
+        // whereStatement.printconcat("%s >= (SELECT MAX(%s) FROM %s WHERE %s <= '%s' OR %s = (SELECT MIN(%s) FROM %s)) AND %s <= '%s'", dimName, dimName, tableName, dimName, dimVals[0].c_str(),
+        // dimName, dimName, tableName, dimName, dimVals[1].c_str());
+
+        // Update 2025-09-09
+        // Find value within range of dimVals[0] and dimVals[1] using between statement.
+        whereStatement.printconcat("%s BETWEEN '%s' AND '%s' ", dimName, dimVals[0].c_str(), dimVals[1].c_str());
       }
     }
     if (!whereStatement.empty()) {
