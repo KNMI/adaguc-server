@@ -1,4 +1,4 @@
-**Version 4.2.1 - 2025-09-08**
+**Version 4.2.2 - 2025-09-09**
 
 - Fix bug BUG ADAGUC does not clean tables properly when used with files with multiple variables [#498](https://github.com/KNMI/adaguc-server/issues/498)
 

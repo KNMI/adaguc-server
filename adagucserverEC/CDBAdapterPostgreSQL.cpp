@@ -684,7 +684,7 @@ std::vector<CT::string> CDBAdapterPostgreSQL::getTableNames(CDataSource *dataSou
     }
   }
 
-  // Otherwise query all possible tables from the lookup.
+  // And include all other possible tables from the lookup.
   CPGSQLDB *DB = getDataBaseConnection();
   if (DB == NULL) {
     CDBError("Unable to connect to DB");
@@ -693,7 +693,9 @@ std::vector<CT::string> CDBAdapterPostgreSQL::getTableNames(CDataSource *dataSou
   auto path = dataSource->cfgLayer->FilePath[0]->value;
   auto filter = dataSource->cfgLayer->FilePath[0]->attr.filter;
   CT::string query;
-  query.print("SELECT p.tablename FROM %s p WHERE path=E'P_%s' AND filter=E'F_%s' ", CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP, path.c_str(), filter.c_str());
+  // Only select tables which really exist in the database by looking it up in pg_tables.
+  query.print("select p.tablename from pg_tables inner join %s as p on pg_tables.tablename = p.tablename where path=E'P_%s' AND filter=E'F_%s';", CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP,
+              path.c_str(), filter.c_str());
   // CDBDebug("QUERY: %s", query.c_str());
   CDBStore::Store *tableNameStore = DB->queryToStore(query.c_str());
   if (tableNameStore != NULL) {
