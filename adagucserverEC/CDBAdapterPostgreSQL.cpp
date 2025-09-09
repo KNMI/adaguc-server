@@ -684,7 +684,7 @@ std::vector<CT::string> CDBAdapterPostgreSQL::getTableNames(CDataSource *dataSou
     }
   }
 
-  // Otherwise query all possible tables from the lookup.
+  // And include all other possible tables from the lookup.
   CPGSQLDB *DB = getDataBaseConnection();
   if (DB == NULL) {
     CDBError("Unable to connect to DB");
