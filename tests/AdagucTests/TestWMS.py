@@ -2857,6 +2857,35 @@ class TestWMS(unittest.TestCase):
                                            filename),
         )
 
+
+    def test_WMSGetLegendGraphic_LongTempLegend_height260(self):
+        """Skip some labels when legend is too long, making sure the whole range is contained"""
+        """Corresponds to the special case for definedLegendOnShadeClasses case in CCreateLegendRenderDiscreteLegend """
+        AdagucTestTools().cleanTempDir()
+        config = (ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," +
+                  ADAGUC_PATH +
+                  "/data/config/datasets/test.uwcw_ha43_dini_5p5km_10x8.xml")
+        env = {"ADAGUC_CONFIG": config}
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=["--updatedb", "--config", config], env=self.env, isCGI=False)
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSGetLegendGraphic_LongTempLegend_height260.png"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "DATASET=test.uwcw_ha43_dini_5p5km_10x8&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetLegendGraphic&LAYER=air_temperature_pl&WIDTH=260&HEIGHT=260&STYLE=temperature%2Fshaded&FORMAT=image/png&TRANSPARENT=TRUE&",
+            env=env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename,
+                                      data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath +
+                                           filename),
+        )
+
+
     def test_WMSGetLegendGraphic_LongTempLegend_clipping(self):
         """Skip some labels when legend is too long and clip"""
         """Corresponds to the special case for definedLegendOnShadeClasses case in CCreateLegendRenderDiscreteLegend """
