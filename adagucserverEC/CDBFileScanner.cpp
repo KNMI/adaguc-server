@@ -164,7 +164,7 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
 
     int TABLETYPE_TIMESTAMP = 1;
     int TABLETYPE_INT = 2;
-    int TABLETYPE_REAL = 3;
+    int TABLETYPE_DOUBLE = 3;
     int TABLETYPE_STRING = 4;
 
     int tableType = 0;
@@ -222,7 +222,7 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
               switch (dimVar->getType()) {
               case CDF_FLOAT:
               case CDF_DOUBLE:
-                tableType = TABLETYPE_REAL;
+                tableType = TABLETYPE_DOUBLE;
                 break;
               case CDF_STRING:
                 tableType = TABLETYPE_STRING;
@@ -246,69 +246,15 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
       status = 1;
       if (tableType == TABLETYPE_TIMESTAMP) status = dbAdapter->createDimTableTimeStamp(dimName.c_str(), tableName.c_str());
       if (tableType == TABLETYPE_INT) status = dbAdapter->createDimTableInt(dimName.c_str(), tableName.c_str());
-      if (tableType == TABLETYPE_REAL) status = dbAdapter->createDimTableReal(dimName.c_str(), tableName.c_str());
+      if (tableType == TABLETYPE_DOUBLE) status = dbAdapter->createDimTableDoublePrecision(dimName.c_str(), tableName.c_str());
       if (tableType == TABLETYPE_STRING) status = dbAdapter->createDimTableString(dimName.c_str(), tableName.c_str());
 
-      // if(status == 0){CDBDebug("OK: Table is available");}
       if (status == 1) {
         CDBError("FAIL: Table %s could not be created", tableName.c_str());
         return 1;
       }
       if (status == 2) {
         removeNonExistingFiles = 0;
-        // removeExisting files can be set back to zero, because there are no files to remove (table is created)
-        // note the int &removeNonExistingFiles as parameter of this function!
-        //(Setting the value will have effect outside this function)
-        // CDBDebug("OK: Table %s created, (check for unavailable files is off);",tableName);
-        // if( addIndexToTable(DB,tableName.c_str(),dimName.c_str()) != 0)return 1;
-      }
-      // TODO set removeNonExistingFiles =0 when no records are in table
-
-      if (removeNonExistingFiles == 1) {
-        // The temporary table should always be dropped before filling.
-        // We will do a complete new update, so store everything in an new table
-        // Later we will rename this table
-        //         CT::string tableName_temp(&tableName);
-        //         if(removeNonExistingFiles==1){
-        //           tableName_temp.concat("_temp");
-        //         }
-        // CDBDebug("Making empty temporary table %s ... ",tableName_temp.c_str());
-        // CDBDebug("Check table %s ...\t",tableName.c_str());
-        /*
-                if(status==0){
-                  //Table already exists....
-                  CDBError("*** WARNING: Temporary table %s already exists. Is another process updating the database?
-           ***",tableName_temp.c_str());
-
-
-                  CDBDebug("*** DROPPING TEMPORARY TABLE: %s",query.c_str());
-                  if(dbAdapter->dropTable(tableName_temp.c_str())!=0){
-                    CDBError("Dropping table %s failed",tableName_temp.c_str());
-                    return 1;
-                  }
-
-                  CDBDebug("Check table %s ... ",tableName_temp.c_str());
-                  if(tableType == TABLETYPE_TIMESTAMP)status =
-           dbAdapter->createDimTableTimeStamp(dimName.c_str(),tableName_temp.c_str()); if(tableType == TABLETYPE_INT
-           )status = dbAdapter->createDimTableInt      (dimName.c_str(),tableName_temp.c_str()); if(tableType ==
-           TABLETYPE_REAL     )status = dbAdapter->createDimTableReal     (dimName.c_str(),tableName_temp.c_str());
-                  if(tableType == TABLETYPE_STRING   )status = dbAdapter->createDimTableString
-           (dimName.c_str(),tableName_temp.c_str());
-
-                  if(status == 0){CDBDebug("OK: Table is available");}
-                  if(status == 1){CDBError("\nFAIL: Table %s could not be created",tableName_temp.c_str()); return 1;  }
-                  if(status == 2){CDBDebug("OK: Table %s created",tableName_temp.c_str());
-                    //Create a index on these files:
-                    //if(addIndexToTable(DB,tableName_temp.c_str(),dimName.c_str())!= 0)return 1;
-                  }
-                }
-
-                if(status == 0 || status == 1){CDBError("\nFAIL: Table %s could not be created",tableName_temp.c_str());
-           return 1;  } if(status == 2){
-                  //OK, Table did not exist, is created.
-                  //Create a index on these files:
-                  //if(addIndexToTable(DB,tableName_temp.c_str(),dimName.c_str()) != 0)return 1;
-                }*/
       }
     }
   }

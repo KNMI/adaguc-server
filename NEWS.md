@@ -1,3 +1,7 @@
+**Version 4.3.0 - 2025-09-10**
+
+- Dimension querying is now exact, nearest rounding is not supported anymore.
+
 **Version 4.2.3 - 2025-09-09**
 
 - Fix bug BUG ADAGUC does not clean tables properly when used with files with multiple variables [#498](https://github.com/KNMI/adaguc-server/issues/498)
