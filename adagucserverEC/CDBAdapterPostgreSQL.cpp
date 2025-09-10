@@ -446,7 +446,6 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
   // Filter on the requested dimensions
   for (const auto &m : mapping) {
     const char *dimName = m.first.c_str();
-    const char *tableName = m.second.tableName.c_str();
     CT::string dimDataType = m.second.dataType;
     CT::string whereStatement;
     std::vector<CT::string> requestedDimVals = requestedDimMap[m.first];
@@ -460,22 +459,8 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
 
       std::vector<CT::string> dimVals = requestedDimVals[i].splitToStack("/");
       if (dimVals.size() == 1) {
-        const char *dimVal = dimVals[0].c_str();
-
-        // If dimension value is a number, find closest value.
-        if (dimDataType.equals("real")) {
-          // TODO 2025-09-09 Check if this does not trigger sequential table scans.
-          whereStatement.printconcat("ABS(%s - %s) = (SELECT MIN(ABS(%s - %s)) FROM %s)", dimVal, dimName, dimVal, dimName, tableName);
-        } else {
-          whereStatement.printconcat("%s = '%s'", dimName, dimVal);
-        }
+        whereStatement.printconcat("%s = '%s'", dimName, dimVals[0].c_str());
       } else {
-        // Find value within range of dimVals[0] and dimVals[1]
-        // Get closest lowest value to this requested one, or if request value is way below get earliest value:
-        // whereStatement.printconcat("%s >= (SELECT MAX(%s) FROM %s WHERE %s <= '%s' OR %s = (SELECT MIN(%s) FROM %s)) AND %s <= '%s'", dimName, dimName, tableName, dimName, dimVals[0].c_str(),
-        // dimName, dimName, tableName, dimName, dimVals[1].c_str());
-
-        // Update 2025-09-09
         // Find value within range of dimVals[0] and dimVals[1] using between statement.
         whereStatement.printconcat("%s BETWEEN '%s' AND '%s' ", dimName, dimVals[0].c_str(), dimVals[1].c_str());
       }
@@ -964,7 +949,7 @@ int CDBAdapterPostgreSQL::createDimTableOfType(const char *dimname, const char *
   // 0000-00-00T00:00:00Z
   if (type == 3) tableColumns.printconcat(", %s varchar (20), dim%s int", dimname, dimname);
   if (type == 2) tableColumns.printconcat(", %s varchar (64), dim%s int", dimname, dimname);
-  if (type == 1) tableColumns.printconcat(", %s real, dim%s int", dimname, dimname);
+  if (type == 1) tableColumns.printconcat(", %s double precision, dim%s int", dimname, dimname);
   if (type == 0) tableColumns.printconcat(", %s int, dim%s int", dimname, dimname);
   tableColumns.printconcat(", filedate timestamp");
 
@@ -976,7 +961,7 @@ int CDBAdapterPostgreSQL::createDimTableOfType(const char *dimname, const char *
 
   tableColumns.printconcat(", PRIMARY KEY (path, %s)", dimname);
 
-  // CDBDebug("tableColumns = %s",tableColumns.c_str());
+  // CDBDebug("tableColumns = %s", tableColumns.c_str());
   int status = dataBaseConnection->checkTable(tablename, tableColumns.c_str());
 #ifdef MEASURETIME
   StopWatch_Stop("<CDBAdapterPostgreSQL::createDimTableOfType");
@@ -997,7 +982,7 @@ int CDBAdapterPostgreSQL::createDimTableOfType(const char *dimname, const char *
 
 int CDBAdapterPostgreSQL::createDimTableInt(const char *dimname, const char *tablename) { return createDimTableOfType(dimname, tablename, 0); }
 
-int CDBAdapterPostgreSQL::createDimTableReal(const char *dimname, const char *tablename) { return createDimTableOfType(dimname, tablename, 1); }
+int CDBAdapterPostgreSQL::createDimTableDoublePrecision(const char *dimname, const char *tablename) { return createDimTableOfType(dimname, tablename, 1); }
 
 int CDBAdapterPostgreSQL::createDimTableString(const char *dimname, const char *tablename) { return createDimTableOfType(dimname, tablename, 2); }
 

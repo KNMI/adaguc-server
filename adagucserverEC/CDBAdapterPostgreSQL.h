@@ -118,7 +118,7 @@ public:
 
   int dropTable(const char *tablename);
   int createDimTableInt(const char *dimname, const char *tablename);
-  int createDimTableReal(const char *dimname, const char *tablename);
+  int createDimTableDoublePrecision(const char *dimname, const char *tablename);
   int createDimTableString(const char *dimname, const char *tablename);
   int createDimTableTimeStamp(const char *dimname, const char *tablename);
   int checkIfFileIsInTable(const char *tablename, const char *filename);
