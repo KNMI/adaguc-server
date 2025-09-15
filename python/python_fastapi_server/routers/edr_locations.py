@@ -17,14 +17,13 @@ from geojson_pydantic import Feature, FeatureCollection, Point
 from typing_extensions import Annotated
 
 from fastapi import APIRouter, HTTPException, Query, Request
-from fastapi.responses import RedirectResponse
 
 from routers.covjsonresponse import CovJSONResponse
 from routers.edr_position import handle_coll_inst_position
 
-from .utils.edr_utils import get_custom, get_metadata
-
 from covjson_pydantic.coverage import Coverage, CoverageCollection
+
+from .utils.edr_utils import get_custom, get_metadata
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -137,43 +136,5 @@ async def get_locations_(
                 parameter_name_par,
                 z_par,
             )
-
-    raise HTTPException(status_code=404, detail=f"location {location_id} not found")
-
-
-async def get_locations(
-    collection_name: str,
-    request: Request,
-    instance: str = None,
-    location_id: str = None,
-):
-    """
-    Returns locations where you could query data by id
-    """
-
-    location_list = await get_locations_for_collection(collection_name)
-
-    if location_id is None:
-        return FeatureCollection(features1=location_list)
-
-    # Redirect to /position call with coordinates filled in
-    # in coords=POINT() argument if location id is known
-    req_url = str(request.url)
-    for loc in location_list:
-        if loc.id == location_id:
-            if instance:
-                repl_url = req_url.replace(
-                    f"/instances/{instance}/locations/{location_id}",
-                    f"/instances/{instance}/position",
-                )
-            else:
-                repl_url = req_url.replace(f"/locations/{location_id}", "/position")
-            repl_url = (
-                repl_url
-                + ("?&" if "?" not in req_url else "&")
-                + f"coords=POINT({loc.geometry.coordinates[0]} {loc.geometry.coordinates[1]})"
-            )
-
-            return RedirectResponse(repl_url, status_code=302)
 
     raise HTTPException(status_code=404, detail=f"location {location_id} not found")
