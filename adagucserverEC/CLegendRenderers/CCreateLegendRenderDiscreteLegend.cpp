@@ -266,43 +266,52 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
 
     // With a small blockHeight, use the compact legend for better visibility
     if (initialBlockHeight <= MIN_SHADE_CLASS_BLOCK_SIZE + 1) {
-      // For right alignment of labels
-      int maxTextWidth = 0;
+      // No 3px minimum in this mode. We use the max height available
+      const size_t drawIntervals = maxInterval - minInterval;
+      if (drawIntervals == 0) return 0;
 
+      float blockHeight = std::max(1.0f, cbH / float(drawIntervals));
+
+      int maxTextWidth = 0;
+      // For right-alignment of labels
       for (size_t j = 0; j < drawIntervals; j++) {
         size_t realj = minInterval + j;
-        CServerConfig::XMLE_ShadeInterval *s = (*styleConfiguration->shadeIntervals)[realj];
+        auto *s = (*styleConfiguration->shadeIntervals)[realj];
         if (!s->attr.min.empty() && !s->attr.max.empty()) {
-          if ((int)(std::abs(parseFloat(s->attr.min.c_str()))) % 5 != 0) {
-            continue;
-          }
-          int textWidth = legendImage->getTextWidth(s->attr.min.c_str(), fontLocation.c_str(), fontSize * scaling, angle);
-          if (textWidth > maxTextWidth) maxTextWidth = textWidth;
+          if ((int)std::abs(parseFloat(s->attr.min.c_str())) % 5 != 0) continue;
+          int tw = legendImage->getTextWidth(s->attr.min.c_str(), fontLocation.c_str(), fontSize * scaling, angle);
+          if (tw > maxTextWidth) maxTextWidth = tw;
         }
       }
-      // Recalculate block size based on the final intervals to appear on the legend
-      float blockHeight = calculateShadeClassBlockHeight(legendImage->Geo->dHeight, drawIntervals - 1);
 
       for (size_t j = 0; j < drawIntervals; j++) {
         size_t realj = minInterval + j;
-        CServerConfig::XMLE_ShadeInterval *s = (*styleConfiguration->shadeIntervals)[realj];
-        if (s->attr.min.empty() == false && s->attr.max.empty() == false) {
-          int cY1 = int(cbH - ((j)*blockHeight) * scaling);
-          int cY2 = int(cbH - ((((j + 1) * blockHeight) - 2)) * scaling);
-          CColor color;
-          if (s->attr.fillcolor.empty() == false) {
-            color = CColor(s->attr.fillcolor.c_str());
-          } else {
-            color = legendImage->getColorForIndex(CImageDataWriter::getColorIndexForValue(dataSource, parseFloat(s->attr.min.c_str())));
-          }
-          // This rectangle is borderless, and the resulting classes have no vertical blank space between them
-          legendImage->rectangle(4 * scaling + pLeft, cY2 + pTop - 1, (int(cbW) + 7) * scaling + pLeft, cY1 + pTop + 1, color, color);
-          // We print every label containing a multiple of 5.
-          if ((int)(std::abs(parseFloat(s->attr.min.c_str()))) % 5 != 0) {
-            continue;
-          }
+        auto *s = (*styleConfiguration->shadeIntervals)[realj];
+        if (s->attr.min.empty() || s->attr.max.empty()) continue;
 
-          int textY = (cY1 + pTop) - ((fontSize * scaling) / 4) + 3;
+        int cY1 = (int)std::lround(cbH - (j * blockHeight));
+        int cY2 = (int)std::lround(cbH - ((j + 1) * blockHeight));
+
+        // Stop if overflowing
+        if (cY2 < 0) break;
+
+        // Clamp to [0, cbH]
+        int yTop = std::max(0, cY2);
+        int yBottom = std::min((int)cbH, cY1);
+
+        if (yBottom <= yTop) continue;
+
+        CColor color =
+            s->attr.fillcolor.empty() ? legendImage->getColorForIndex(CImageDataWriter::getColorIndexForValue(dataSource, parseFloat(s->attr.min.c_str()))) : CColor(s->attr.fillcolor.c_str());
+
+        // This rectangle is borderless, and the resulting classes have no vertical blank space between them
+        legendImage->rectangle(4 * scaling + pLeft, yTop + pTop, (int(cbW) + 7) * scaling + pLeft, yBottom + pTop, color, color);
+
+        // We print every label that's multiple of 5. Revisit later if something else needed.
+        if ((int)std::abs(parseFloat(s->attr.min.c_str())) % 5 != 0) continue;
+
+        int textY = yBottom + pTop - ((fontSize * scaling) / 4) + 3;
+        if (textY >= pTop) {
           // We only print min column values, because it would make no sense to print intervals when not every interval is printed.
           plotNumericLabels(legendImage, scaling, fontLocation, fontSize, angle, s, cbW, pLeft, textY, minColumn, {}, 0);
         }
