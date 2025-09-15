@@ -39,7 +39,6 @@ def get_edr_locations() -> list[Feature]:
     all_locations = []
     try:
         with open(locations_file_path, "r", encoding="utf-8") as loc_f:
-            # feature_collection = json.load(loc_f)
             feature_collection = FeatureCollection(**json.load(loc_f))
             all_locations = feature_collection.features
     except IOError:
