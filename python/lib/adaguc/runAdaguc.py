@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 from PIL import Image
 from io import BytesIO
@@ -16,13 +17,6 @@ from adaguc.CGIRunner import CGIRunner
 
 
 class runAdaguc:
-    ADAGUC_REDIS = os.getenv("ADAGUC_REDIS", "")
-    use_cache = False
-    redis_pool = None
-
-    if ADAGUC_REDIS.startswith("redis://") or ADAGUC_REDIS.startswith("rediss://"):
-        redis_pool = redis.ConnectionPool.from_url(ADAGUC_REDIS)
-        use_cache = True
 
     def __init__(self):
         """ADAGUC_LOGFILE is the location where logfiles are stored.
@@ -165,17 +159,6 @@ class runAdaguc:
         print(self.getLogFile())
         print("=== END ADAGUC LOGS ===")
 
-    def cache_wanted(self, url: str):
-        """determine if the results of this url request should be stored in
-        the Redis cache
-
-        Returns: boolean
-        """
-        if not runAdaguc.use_cache or not url:
-            return False
-        if "request=getcapabilities" in url.lower():
-            return True
-        return False
 
     async def runADAGUCServer(
         self,
@@ -187,7 +170,6 @@ class runAdaguc:
         showLogOnError=True,
         showLog=False,
     ):
-
         adagucenv = self.getAdagucEnv(env)
 
 
@@ -213,15 +195,6 @@ class runAdaguc:
         if args is not None:
             adagucargs = adagucargs + args
 
-        # Check cache for entry with keys of (url,adagucargs) if configured
-        if self.cache_wanted(url):
-            cache_key = str((url, adagucargs)).encode("utf-8")
-
-            age, headers, data = await get_cached_response(
-                runAdaguc.redis_pool, cache_key
-            )
-            if age is not None:
-                return 0, data, headers
 
         filetogenerate = BytesIO()
         status, headers, processErr = await CGIRunner().run(
@@ -254,11 +227,6 @@ class runAdaguc:
 
             print("--- END ADAGUC DEBUG INFO ---\n")
 
-        # Only cache if status==0
-        if self.cache_wanted(url) and status == 0:
-            await response_to_cache(
-                runAdaguc.redis_pool, cache_key, headers, filetogenerate
-            )
         return status, filetogenerate, headers
 
     def writetofile(self, filename, data):
@@ -284,56 +252,3 @@ class runAdaguc:
             os.makedirs(directory)
 
 
-headers_to_skip = ["x-process-time", "age"]
-
-
-async def response_to_cache(redis_pool, key, headers: str, data):
-    cacheable_headers = []
-    ttl = 0
-    for header in headers:
-        k, v = header.split(":")
-        if k not in headers_to_skip:
-            cacheable_headers.append(header)
-        if k.lower().startswith("cache-control"):
-            for term in v.split(";"):
-                if term.startswith("max-age"):
-                    try:
-                        ttl = int(term.split("=")[1])
-                    except:
-                        pass
-
-    if ttl > 0:
-        cacheable_headers_json = json.dumps(cacheable_headers).encode("utf-8")
-
-        entrytime = f"{calendar.timegm(datetime.utcnow().utctimetuple()):10d}".encode(
-            "utf-8"
-        )
-        redis_client = redis.Redis(connection_pool=redis_pool)
-        await redis_client.set(
-            key,
-            entrytime
-            + f"{len(cacheable_headers_json):06d}".encode("utf-8")
-            + cacheable_headers_json
-            + brotli.compress(data.getvalue(), quality=4),
-            ex=ttl,
-        )
-        await redis_client.aclose()
-
-
-async def get_cached_response(redis_pool, key):
-    redis_client = redis.Redis(connection_pool=redis_pool)
-    cached = await redis_client.get(key)
-    await redis_client.aclose()
-    if not cached:
-        return None, None, None
-
-    entrytime = int(cached[:10].decode("utf-8"))
-    currenttime = calendar.timegm(datetime.utcnow().utctimetuple())
-    age = currenttime - entrytime
-
-    headers_len = int(cached[10:16].decode("utf-8"))
-    headers = json.loads(cached[16 : 16 + headers_len].decode("utf-8"))
-    headers.append(f"age: {age}")
-
-    data = brotli.decompress(cached[16 + headers_len :])
-    return age, headers, BytesIO(data)

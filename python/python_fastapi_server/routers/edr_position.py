@@ -90,11 +90,14 @@ async def get_coll_inst_position(
         allowed_params,
     )
 
+    metadata = await get_metadata(collection_name)
+
     return await handle_coll_inst_position(
         collection_name,
         custom_dims,
         coords,
         response,
+        metadata,
         instance,
         datetime_par,
         parameter_name_par,
@@ -107,6 +110,7 @@ async def handle_coll_inst_position(
     custom_dims,
     coords: str,
     response: CovJSONResponse,
+    metadata: dict,
     instance: str = None,
     datetime_par: str = Query(default=None, alias="datetime"),
     parameter_name_par: Annotated[
@@ -114,8 +118,9 @@ async def handle_coll_inst_position(
     ] = None,
     z_par: Annotated[str, Query(alias="z", min_length=1)] = None,
 ) -> Coverage:
-
-    metadata = await get_metadata(collection_name)
+    """
+    Handle the EDR position endpoint call
+    """
 
     dataset_name = get_dataset_from_collection(metadata, collection_name)
     instance = get_instance(metadata, collection_name, instance)
