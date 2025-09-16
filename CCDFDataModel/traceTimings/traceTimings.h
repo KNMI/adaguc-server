@@ -6,7 +6,7 @@
 #include <chrono>
 #include "CTString.h"
 
-enum TraceTimingType { DBCONNECT, DBCLOSE, DBCHECKTABLE, DB, FSREADVAR, FSOPEN, APP, WARPIMAGERENDER, WARPIMAGE };
+enum TraceTimingType { DBCONNECT, DBCLOSE, DBCHECKTABLE, DB, FSREADVAR, FSOPEN, APP, WARPIMAGERENDER, WARPIMAGE, GETMETADATAJSON };
 
 struct TraceTimingsInfo {
   uint64_t total;

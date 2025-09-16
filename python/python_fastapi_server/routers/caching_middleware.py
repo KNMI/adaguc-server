@@ -1,5 +1,6 @@
 import calendar
 import json
+import logging
 import os
 from datetime import datetime
 from io import BytesIO
@@ -99,7 +100,6 @@ class CachingMiddleware(BaseHTTPMiddleware):
             )
 
         response: Response = await call_next(request)
-
         if response.status_code == 200:
             if "cache-control" not in response.headers:
                 response.headers["cache-control"] = "max-age=15"

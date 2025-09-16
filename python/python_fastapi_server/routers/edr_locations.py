@@ -31,6 +31,9 @@ logger = logging.getLogger(__name__)
 
 @functools.lru_cache(maxsize=1)
 def get_edr_locations() -> list[Feature]:
+    """
+    Returns a list of locations from the global_edr_locations.geojson
+    """
     locations_file_path = os.path.join(
         os.environ.get("ADAGUC_PATH"),
         "data/resources/locations/global_edr_locations.geojson",
@@ -50,9 +53,10 @@ def get_edr_locations() -> list[Feature]:
     return all_locations
 
 
-async def get_locations_for_collection(coll: str) -> list[Feature]:
-    metadata = await get_metadata(coll)
-
+async def get_locations_for_collection(coll: str, metadata) -> list[Feature]:
+    """ 
+    Make a list of locations which fit in the latlongbbox of the first layer
+    """
     locations_for_coll: list[Feature] = []
     try:
         # We take the bbox from the first layer
@@ -109,8 +113,8 @@ async def get_locations_(
     """
     Returns locations where you could query data by id
     """
-
-    location_list = await get_locations_for_collection(collection_name)
+    metadata = await get_metadata(collection_name)
+    location_list = await get_locations_for_collection(collection_name, metadata)
 
     if location_id is None:
         return FeatureCollection(type="FeatureCollection", features=location_list)
@@ -130,6 +134,7 @@ async def get_locations_(
                 custom_dims,
                 coords,
                 response,
+                metadata,
                 instance,
                 datetime_par,
                 parameter_name_par,

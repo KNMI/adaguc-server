@@ -355,15 +355,10 @@ int CCairoPlotter::_drawFreeTypeText(int x, int y, int &w, int &h, float angle, 
       return 1;
     }
   };
-  int error;
-  // CDBDebug("font: %s", this->fontLocation);
-
   FT_GlyphSlot slot;
   FT_Matrix matrix; /* transformation matrix */
   FT_Vector pen;    /* untransformed origin */
-  int n;
   int my_target_height = 8;
-  int num_chars = strlen(text);
   slot = face->glyph; /* a small shortcut */
   /* set up matrix */
   matrix.xx = (FT_Fixed)(cos(angle) * 0x10000L);
@@ -374,14 +369,13 @@ int CCairoPlotter::_drawFreeTypeText(int x, int y, int &w, int &h, float angle, 
   /* start at (300,200) */
   pen.x = x * 64;
   pen.y = (my_target_height - y) * 64;
-  bool c3seen = false;
+
   /* Using UTF-8 standard */
 
   const char *p = text;
   const char *end = text + strlen(text);
   while (*p) {
     uint32_t codepoint;
-    const char *prev = p;
     p = decode_utf8_char(p, end, &codepoint);
     // CDBDebug("* Decoded char U+%04X from: %.*s", codepoint, (int)(p - prev), prev);
 
