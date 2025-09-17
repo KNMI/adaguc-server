@@ -1280,6 +1280,18 @@ def test_locations(client: TestClient):
     assert stations == ["EHAM", "EHTW", "EHGG", "EHKD", "EHDB", "EHLW"]
 
 
+def test_position(client: TestClient):
+    """test a position call with the coordinates of EHAM"""
+    url = "/edr/collections/adaguc.tests.members.mycollection/instances/202503010000/position?coords=POINT(4.76389 52.308601)"
+    resp = client.get(url)
+    assert resp.status_code == 200
+    print(
+        "/position?coords=POINT(4.76389,52.308601):", json.dumps(resp.json(), indent=2)
+    )
+    covjson = resp.json()
+    assert covjson["ranges"]["mymemberdata"]["values"] == [152055950.0]
+
+
 def test_location(client: TestClient):
     url = "/edr/collections/adaguc.tests.members.mycollection/instances/202503010000/locations/EHAM"
     resp = client.get(url)
@@ -1287,3 +1299,12 @@ def test_location(client: TestClient):
     print("/location/EHAM:", json.dumps(resp.json(), indent=2))
     covjson = resp.json()
     assert covjson["ranges"]["mymemberdata"]["values"] == [152055950.0]
+
+
+def test_unknown_location(client: TestClient):
+    url = "/edr/collections/adaguc.tests.members.mycollection/instances/202503010000/locations/KJFK"
+    resp = client.get(url)
+    assert resp.status_code == 404
+    print("/location/KJFK:", json.dumps(resp.json(), indent=2))
+    covjson = resp.json()
+    assert covjson["detail"] == "location KJFK not found"

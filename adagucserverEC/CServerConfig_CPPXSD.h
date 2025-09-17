@@ -1169,18 +1169,8 @@ public:
   public:
     class Cattr {
     public:
-      CT::string tilewidthpx, tileheightpx, tilecellsizex, tilecellsizey, left, right, bottom, top, numtilesx, numtilesy, tileprojection, minlevel, maxlevel, tilepath, tilemode, threads, debug,
-          prefix, readonly, optimizeextent, maxtilesinimage, autotile;
+      CT::string tilewidthpx = "1024", tileheightpx = "1024", minlevel, maxlevel, tilemode, debug, maxtilesinimage, threads, autotile, optimizeextent, tilepath;
     } attr;
-    //           <TileSettings  tilewidth="600"
-    //                    tileheight="600"
-    //                    tilebboxwidth="15000"
-    //                    tilebboxheight="15000"
-    //                    tileprojection="+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +units=m +no_defs"
-    //                    maxlevel="7"
-    //                    tilepath="/nobackup/users/plieger/data/clipc/tiles/"/>
-    //
-
     void addAttribute(const char *name, const char *value) {
       if (equals("tilemode", name)) {
         attr.tilemode.copy(value);
@@ -1188,47 +1178,11 @@ public:
       } else if (equals("debug", name)) {
         attr.debug.copy(value);
         return;
-      } else if (equals("prefix", name)) {
-        attr.prefix.copy(value);
-        return;
-      } else if (equals("readonly", name)) {
-        attr.readonly.copy(value);
-        return;
-      } else if (equals("threads", name)) {
-        attr.threads.copy(value);
-        return;
       } else if (equals("tilewidthpx", name)) {
         attr.tilewidthpx.copy(value);
         return;
       } else if (equals("tileheightpx", name)) {
         attr.tileheightpx.copy(value);
-        return;
-      } else if (equals("tilecellsizex", name)) {
-        attr.tilecellsizex.copy(value);
-        return;
-      } else if (equals("tilecellsizey", name)) {
-        attr.tilecellsizey.copy(value);
-        return;
-      } else if (equals("left", name)) {
-        attr.left.copy(value);
-        return;
-      } else if (equals("bottom", name)) {
-        attr.bottom.copy(value);
-        return;
-      } else if (equals("right", name)) {
-        attr.right.copy(value);
-        return;
-      } else if (equals("top", name)) {
-        attr.top.copy(value);
-        return;
-      } else if (equals("numtilesx", name)) {
-        attr.numtilesx.copy(value);
-        return;
-      } else if (equals("numtilesy", name)) {
-        attr.numtilesy.copy(value);
-        return;
-      } else if (equals("tileprojection", name)) {
-        attr.tileprojection.copy(value);
         return;
       } else if (equals("minlevel", name)) {
         attr.minlevel.copy(value);
@@ -1236,17 +1190,20 @@ public:
       } else if (equals("maxlevel", name)) {
         attr.maxlevel.copy(value);
         return;
-      } else if (equals("tilepath", name)) {
-        attr.tilepath.copy(value);
+      } else if (equals("maxtilesinimage", name)) {
+        attr.maxtilesinimage.copy(value);
+        return;
+      } else if (equals("threads", name)) {
+        attr.threads.copy(value);
+        return;
+      } else if (equals("autotile", name)) {
+        attr.autotile.copy(value);
         return;
       } else if (equals("optimizeextent", name)) {
         attr.optimizeextent.copy(value);
         return;
-      } else if (equals("maxtilesinimage", name)) {
-        attr.maxtilesinimage.copy(value);
-        return;
-      } else if (equals("autotile", name)) {
-        attr.autotile.copy(value);
+      } else if (equals("tilepath", name)) {
+        attr.tilepath.copy(value);
         return;
       }
     }

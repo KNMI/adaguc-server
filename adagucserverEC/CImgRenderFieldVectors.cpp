@@ -4,12 +4,12 @@
 
 bool verboseLog = true;
 
-f8component jacobianTransform(f8component speedVector, f8point gridCoordUL, f8point gridCoordLR, CImageWarper *warper, bool gridRelative) {
+f8component jacobianTransform(f8component speedVector, f8point gridCoordLL, f8point gridCoordUR, CImageWarper *warper, bool gridRelative) {
   if (gridRelative) {
-    f8point pnt0 = {.x = gridCoordUL.x, .y = gridCoordUL.y};
+    f8point pnt0 = {.x = gridCoordLL.x, .y = gridCoordLL.y};
     warper->reprojModelToLatLon(pnt0);
     f8point pntRad0 = pnt0.rad();
-    f8point pntN = {.x = gridCoordUL.x, .y = gridCoordLR.y};
+    f8point pntN = {.x = gridCoordLL.x, .y = gridCoordUR.y};
     warper->reprojModelToLatLon(pntN);
     f8point pntRadN = pntN.rad();
 
@@ -103,11 +103,10 @@ int applyUVConversion(CImageWarper *warper, CDataSource *dataSource, int *dPixel
   bool gridRelative = isGridRelative(dataSource);
   for (int y = dPixelExtent[1]; y < dPixelExtent[3]; y = y + 1) {
     for (int x = dPixelExtent[0]; x < dPixelExtent[2]; x = x + 1) {
-      size_t p = size_t((x - (dPixelExtent[0])) + ((y - (dPixelExtent[1])) * (gridWidth)));
-      f8point gridCoordUL = {.x = dataSource->dfCellSizeX * double(x) + dataSource->dfBBOX[0], .y = dataSource->dfCellSizeY * double(y) + dataSource->dfBBOX[3]};
-      f8point gridCoordLR = {.x = dataSource->dfCellSizeX * x + fabs(dataSource->dfCellSizeX) + dataSource->dfBBOX[0],
-                             .y = dataSource->dfCellSizeY * y + fabs(dataSource->dfCellSizeY) + dataSource->dfBBOX[3]};
-      f8component newSpeed = jacobianTransform({.u = uValues[p], .v = vValues[p]}, gridCoordUL, gridCoordLR, warper, gridRelative);
+      size_t p = size_t(x - dPixelExtent[0]) + ((y - dPixelExtent[1]) * gridWidth);
+      f8point gridCoordLL = {.x = dataSource->dfCellSizeX * x + dataSource->dfBBOX[0], .y = dataSource->dfCellSizeY * y + dataSource->dfBBOX[3]};
+      f8point gridCoordUR = {.x = gridCoordLL.x + fabs(dataSource->dfCellSizeX), .y = gridCoordLL.y + fabs(dataSource->dfCellSizeY)};
+      f8component newSpeed = jacobianTransform({.u = uValues[p], .v = vValues[p]}, gridCoordLL, gridCoordUR, warper, gridRelative);
       uValues[p] = newSpeed.u;
       vValues[p] = newSpeed.v;
     }

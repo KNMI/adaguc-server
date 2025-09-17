@@ -320,10 +320,9 @@ bool CDataReader::copyCRSFromCFProjectionVariable(CDataSource *dataSource, CDF::
 
   CProj4ToCF proj4ToCF;
   proj4ToCF.debug = true;
-  CT::string projString;
-  int status = proj4ToCF.convertCFToProj(projVar, &projString);
+  CT::string projString = proj4ToCF.convertCFToProj(projVar);
 
-  if (status != 0) {
+  if (projString.empty()) {
     CREPORT_WARN_NODOC(CT::string("Unknown CF conventions projection."), CReportMessage::Categories::GENERAL);
     return false;
   }
@@ -880,7 +879,9 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 
 #else
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
-    CDBDebug("Working on [%s]", dataSourceFilename.c_str());
+    if (silent == false) {
+      CDBDebug("Working on [%s]", dataSourceFilename.c_str());
+    }
   }
 #endif
   if (mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS || mode == CNETCDFREADER_MODE_OPEN_HEADER) {

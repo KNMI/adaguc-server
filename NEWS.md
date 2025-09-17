@@ -1,3 +1,42 @@
+**Version 4.3.2 - 2025-09-15**
+
+- Add trace timings to getmetadata
+- The EDR /locations/ call is now implemented by internally handling a /position call for the coordinates of the requested location.
+- If an unknown location ID is used (not configured in data/resources/locations/global_edr_locations.geosjon), the /locations/ID call returns a 404.
+
+**Version 4.3.0 - 2025-09-10**
+
+- Dimension querying is now exact, nearest rounding is not supported anymore.
+
+**Version 4.2.3 - 2025-09-09**
+
+- Fix bug BUG ADAGUC does not clean tables properly when used with files with multiple variables [#498](https://github.com/KNMI/adaguc-server/issues/498)
+- Optimize queries with between
+
+**Version 4.2.0 - 2025-09-04**
+
+- AutoWMS is now async and does not block other requests
+- FIX bug ADAGUC makes invalid postgresql queries when no tilinglevel is provided [#496](https://github.com/KNMI/adaguc-server/issues/496)
+- Added support for azimuthal_equidistant projection 
+- Fixed argument names in jacobian U/V transformation code
+- Upgrade fastapi and starlette to latest 
+
+
+**Version 4.1.0 - 2025-07-16**
+
+- Revived the tiling functionality of adaguc-server to improve performance on huge high resolution MTG satellite imagery. The tiling functionality is simplified and is now easier to use. It is now possible to let the filescanner create tiles. See [TileSettings.md](doc/configuration/TileSettings.md) for details.
+- Removed sqlite dependencies and code.
+- Refactored database Store class
+
+**Version 4.0.2 - 2025-07-15**
+
+* Really send data to DB every 50 updates during scanning
+
+**Version 4.0.1 - 2025-07-14**
+
+* Small refactor of EDR locations code
+* Sort file in alphabetical order (which normally corresponds to time order) when scanning files
+
 **Version 4.0.0 - 2025-07-01**
 
 * __Breaking change: added script (Docker/start_autosync.sh) to autosync layermetadata store. Docker compose starts related container @maartenplieger in https://github.com/KNMI/adaguc-server/pull/476__

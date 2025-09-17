@@ -84,6 +84,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
     std::string randomString = CServerParams::randomString(32);
     tempFileName.print("%s/%s.nc", srvParam->cfg->TempDir[0]->attr.value.c_str(), randomString.c_str());
     CDataReader reader;
+    reader.silent = this->silent;
     reader.enableReporting(false);
 
     int status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
@@ -130,8 +131,10 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
     if (!srvParamBboxProj4Params.empty()) {
       serverWCSGeoParams.CRS = srvParamBboxProj4Params;
     }
+#ifdef CNetCDFDataWriter_DEBUG
     CDBDebug("Found srvParamBboxProj4Params [%s]", srvParamBboxProj4Params.c_str());
     CDBDebug("Found srvParamGridProj4Params [%s]", srvParamGridProj4Params.c_str());
+#endif
 
     if (srvParam->WCS_GoNative == 0) {
 #ifdef CNetCDFDataWriter_DEBUG
@@ -427,6 +430,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
     if (dataSource->getDataObject(j)->cdfVariable == nullptr) {
       CDBError("dataSource->getDataObject(j)->cdfVariable==nullptr for variable [%s]", dataSource->getDataObject(j)->variableName.c_str());
       CDataReader reader;
+      reader.silent = this->silent;
       int status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
       if (status != 0) {
         CDBError("Could not open file: %s", dataSource->getFileName());
@@ -531,6 +535,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
   for (size_t i = 0; i < dataSources.size(); i++) {
     CDataSource *dataSource = dataSources[i];
     CDataReader reader;
+    reader.silent = this->silent;
     reader.enableReporting(verbose);
     //     render
 
@@ -889,10 +894,10 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         GDWArgs args = {.warper = &warper, .sourceData = sourceData, .sourceGeoParams = &sourceGeo, .destGeoParams = srvParam->Geo};
         auto dataType = variable->getType();
 
-#define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                            \
-      if (dataType == CDFTYPE)                                                                                                                                                              \
-        genericDataWarper.render<CPPTYPE>(args, [&settings](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction_nearest<CPPTYPE>(x, y, val, warperState, settings); });
-ENUMERATE_OVER_CDFTYPES(RENDER)
+#define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
+  if (dataType == CDFTYPE)                                                                                                                                                                             \
+    genericDataWarper.render<CPPTYPE>(args, [&settings](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction_nearest<CPPTYPE>(x, y, val, warperState, settings); });
+        ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
       }
 
@@ -901,10 +906,10 @@ ENUMERATE_OVER_CDFTYPES(RENDER)
         GDWArgs args = {.warper = &warper, .sourceData = sourceData, .sourceGeoParams = &sourceGeo, .destGeoParams = srvParam->Geo};
         auto dataType = variable->getType();
 
-#define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                            \
-      if (dataType == CDFTYPE)                                                                                                                                                              \
-        genericDataWarper.render<CPPTYPE>(args, [&settings](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction_avg_rgb<CPPTYPE>(x, y, val, warperState, settings); });
-ENUMERATE_OVER_CDFTYPES(RENDER)
+#define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
+  if (dataType == CDFTYPE)                                                                                                                                                                             \
+    genericDataWarper.render<CPPTYPE>(args, [&settings](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction_avg_rgb<CPPTYPE>(x, y, val, warperState, settings); });
+        ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
       }
 

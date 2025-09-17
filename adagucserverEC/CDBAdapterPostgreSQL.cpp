@@ -28,6 +28,7 @@
 #include <map>
 #include "CDebugger.h"
 #include "CServerError.h"
+#include "CGeoParams.h"
 
 const char *CDBAdapterPostgreSQL::className = "CDBAdapterPostgreSQL";
 #define CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP "pathfiltertablelookup_v2_0_23"
@@ -407,6 +408,8 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
     query.printconcat(", %s, dim%s", dim.c_str(), dim.c_str());
   }
 
+  query.printconcat(",t1.adaguctilinglevel");
+
   int i = 0;
   for (const auto &m : mapping) {
     if (i == 0) {
@@ -420,16 +423,29 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
   // Filter on tiling bounding box (or not)
   query.concat("WHERE ");
   if (dataSource->queryBBOX) {
-    query.printconcat("t1.adaguctilinglevel = %d and minx >= %f and maxx <= %f and miny >= %f and maxy <= %f ", dataSource->queryLevel, dataSource->nativeViewPortBBOX[0],
-                      dataSource->nativeViewPortBBOX[2], dataSource->nativeViewPortBBOX[1], dataSource->nativeViewPortBBOX[3]);
+
+    // Specific tile level
+    if (dataSource->queryLevel != -1) {
+      query.printconcat("t1.adaguctilinglevel = %d and ", dataSource->queryLevel);
+    }
+
+    double xminB = std::min(dataSource->nativeViewPortBBOX.right, dataSource->nativeViewPortBBOX.left);
+    double xmaxB = std::max(dataSource->nativeViewPortBBOX.right, dataSource->nativeViewPortBBOX.left);
+    double yminB = std::min(dataSource->nativeViewPortBBOX.top, dataSource->nativeViewPortBBOX.bottom);
+    double ymaxB = std::max(dataSource->nativeViewPortBBOX.top, dataSource->nativeViewPortBBOX.bottom);
+    query.printconcat(" not (minx > %f or maxx < %f or miny > %f or maxy < %f)", xmaxB, xminB, ymaxB, yminB);
   } else {
-    query.concat("t1.adaguctilinglevel != -1 ");
+    // All results
+    if (dataSource->queryLevel == -1) {
+      query.concat("TRUE ");
+    } else {
+      query.printconcat("t1.adaguctilinglevel = %d ", dataSource->queryLevel);
+    }
   }
 
   // Filter on the requested dimensions
   for (const auto &m : mapping) {
     const char *dimName = m.first.c_str();
-    const char *tableName = m.second.tableName.c_str();
     CT::string dimDataType = m.second.dataType;
     CT::string whereStatement;
     std::vector<CT::string> requestedDimVals = requestedDimMap[m.first];
@@ -443,19 +459,10 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
 
       std::vector<CT::string> dimVals = requestedDimVals[i].splitToStack("/");
       if (dimVals.size() == 1) {
-        const char *dimVal = dimVals[0].c_str();
-
-        // If dimension value is a number, find closest value.
-        if (dimDataType.equals("real")) {
-          whereStatement.printconcat("ABS(%s - %s) = (SELECT MIN(ABS(%s - %s)) FROM %s)", dimVal, dimName, dimVal, dimName, tableName);
-        } else {
-          whereStatement.printconcat("%s = '%s'", dimName, dimVal);
-        }
+        whereStatement.printconcat("%s = '%s'", dimName, dimVals[0].c_str());
       } else {
-        // Find value within range of dimVals[0] and dimVals[1]
-        // Get closest lowest value to this requested one, or if request value is way below get earliest value:
-        whereStatement.printconcat("%s >= (SELECT MAX(%s) FROM %s WHERE %s <= '%s' OR %s = (SELECT MIN(%s) FROM %s)) AND %s <= '%s'", dimName, dimName, tableName, dimName, dimVals[0].c_str(), dimName,
-                                   dimName, tableName, dimName, dimVals[1].c_str());
+        // Find value within range of dimVals[0] and dimVals[1] using between statement.
+        whereStatement.printconcat("%s BETWEEN '%s' AND '%s' ", dimName, dimVals[0].c_str(), dimVals[1].c_str());
       }
     }
     if (!whereStatement.empty()) {
@@ -654,6 +661,43 @@ CT::string CDBAdapterPostgreSQL::generateRandomTableName() {
   return tableName;
 }
 
+std::vector<CT::string> CDBAdapterPostgreSQL::getTableNames(CDataSource *dataSource) {
+  std::vector<CT::string> tableList;
+  // If config has a hardcoded db table name for layer, use it too
+  if (dataSource->cfgLayer->DataBaseTable.size() == 1) {
+    CT::string tableName = dataSource->cfgLayer->DataBaseTable[0]->value.c_str();
+    for (const auto &cfgDimension : dataSource->cfgLayer->Dimension) {
+      CT::string dimString = cfgDimension->attr.name.toLowerCase();
+      CT::string correctedTableName = dataSource->srvParams->makeCorrectTableName(tableName, dimString);
+      tableList.push_back(correctedTableName);
+      CDBDebug("Adding custom table %s", correctedTableName.c_str());
+    }
+  }
+
+  // And include all other possible tables from the lookup.
+  CPGSQLDB *DB = getDataBaseConnection();
+  if (DB == NULL) {
+    CDBError("Unable to connect to DB");
+    throw(1);
+  }
+  auto path = dataSource->cfgLayer->FilePath[0]->value;
+  auto filter = dataSource->cfgLayer->FilePath[0]->attr.filter;
+  CT::string query;
+  // Only select tables which really exist in the database by looking it up in pg_tables.
+  query.print("select p.tablename from pg_tables inner join %s as p on pg_tables.tablename = p.tablename where path=E'P_%s' AND filter=E'F_%s';", CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP,
+              path.c_str(), filter.c_str());
+  // CDBDebug("QUERY: %s", query.c_str());
+  CDBStore::Store *tableNameStore = DB->queryToStore(query.c_str());
+  if (tableNameStore != NULL) {
+    for (size_t i = 0; i < tableNameStore->size(); i++) {
+      tableList.push_back(tableNameStore->getRecord(i)->get("tablename"));
+    }
+  }
+  delete tableNameStore;
+
+  return tableList;
+}
+
 std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAndDimensions(const char *path, const char *filter, std::vector<CT::string> dimensions, CDataSource *dataSource) {
 #ifdef MEASURETIME
   StopWatch_Stop(">CDBAdapterPostgreSQL::getTableNamesForPathFilterAndDimensions");
@@ -767,6 +811,15 @@ std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAn
   StopWatch_Stop("<CDBAdapterPostgreSQL::getTableNamesForPathFilterAndDimensions");
 #endif
   return mapping;
+}
+
+CT::string CDBAdapterPostgreSQL::getTableNameForPathFilterAndDimension(CDataSource *dataSource) {
+  if (dataSource->cfgLayer->Dimension.size() == 0) {
+    CDBError("Unable to getTableNameForPathFilterAndDimension");
+    throw __LINE__;
+  }
+  const char *pszDimName = dataSource->cfgLayer->Dimension[0]->attr.name.c_str();
+  return getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), pszDimName, dataSource);
 }
 
 CT::string CDBAdapterPostgreSQL::getTableNameForPathFilterAndDimension(const char *path, const char *filter, const char *dimension, CDataSource *dataSource) {
@@ -896,7 +949,7 @@ int CDBAdapterPostgreSQL::createDimTableOfType(const char *dimname, const char *
   // 0000-00-00T00:00:00Z
   if (type == 3) tableColumns.printconcat(", %s varchar (20), dim%s int", dimname, dimname);
   if (type == 2) tableColumns.printconcat(", %s varchar (64), dim%s int", dimname, dimname);
-  if (type == 1) tableColumns.printconcat(", %s real, dim%s int", dimname, dimname);
+  if (type == 1) tableColumns.printconcat(", %s double precision, dim%s int", dimname, dimname);
   if (type == 0) tableColumns.printconcat(", %s int, dim%s int", dimname, dimname);
   tableColumns.printconcat(", filedate timestamp");
 
@@ -908,7 +961,7 @@ int CDBAdapterPostgreSQL::createDimTableOfType(const char *dimname, const char *
 
   tableColumns.printconcat(", PRIMARY KEY (path, %s)", dimname);
 
-  // CDBDebug("tableColumns = %s",tableColumns.c_str());
+  // CDBDebug("tableColumns = %s", tableColumns.c_str());
   int status = dataBaseConnection->checkTable(tablename, tableColumns.c_str());
 #ifdef MEASURETIME
   StopWatch_Stop("<CDBAdapterPostgreSQL::createDimTableOfType");
@@ -923,26 +976,13 @@ int CDBAdapterPostgreSQL::createDimTableOfType(const char *dimname, const char *
     if (status != 0) {
       CDBDebug("Warning: Unable to create index [%s]", query.c_str());
     }
-
-    //     /* Create index on filepath */
-    //     query.print("CREATE INDEX INDEXFOR%s on %s (%s)", "path", tablename, "path"); status = dataBaseConnection->query(query.c_str()); if(status!=0) { CDBError("Unable to create index [%s]",
-    //     query.c_str());throw(__LINE__); }
-    //
-    //     /* Create index on minx etc */
-    //     query.print("CREATE INDEX INDEXFOR%s on %s (%s)", "minx", tablename, "minx"); status = dataBaseConnection->query(query.c_str()); if(status!=0) { CDBError("Unable to create index [%s]",
-    //     query.c_str());throw(__LINE__); } query.print("CREATE INDEX INDEXFOR%s on %s (%s)", "miny", tablename, "miny"); status = dataBaseConnection->query(query.c_str()); if(status!=0) {
-    //     CDBError("Unable to create index [%s]", query.c_str());throw(__LINE__); } query.print("CREATE INDEX INDEXFOR%s on %s (%s)", "maxx", tablename, "maxx"); status =
-    //     dataBaseConnection->query(query.c_str()); if(status!=0) { CDBError("Unable to create index [%s]", query.c_str());throw(__LINE__); } query.print("CREATE INDEX INDEXFOR%s on %s (%s)", "maxy",
-    //     tablename, "maxy"); status = dataBaseConnection->query(query.c_str()); if(status!=0) { CDBError("Unable to create index [%s]", query.c_str());throw(__LINE__); } query.print("CREATE INDEX
-    //     INDEXFOR%s on %s (%s)", "adaguctilinglevel", tablename, "adaguctilinglevel"); status = dataBaseConnection->query(query.c_str()); if(status!=0) { CDBError("Unable to create index [%s]",
-    //     query.c_str());throw(__LINE__); }
   }
   return status;
 }
 
 int CDBAdapterPostgreSQL::createDimTableInt(const char *dimname, const char *tablename) { return createDimTableOfType(dimname, tablename, 0); }
 
-int CDBAdapterPostgreSQL::createDimTableReal(const char *dimname, const char *tablename) { return createDimTableOfType(dimname, tablename, 1); }
+int CDBAdapterPostgreSQL::createDimTableDoublePrecision(const char *dimname, const char *tablename) { return createDimTableOfType(dimname, tablename, 1); }
 
 int CDBAdapterPostgreSQL::createDimTableString(const char *dimname, const char *tablename) { return createDimTableOfType(dimname, tablename, 2); }
 
@@ -987,9 +1027,13 @@ int CDBAdapterPostgreSQL::removeFile(const char *tablename, const char *file) {
   }
 
   CT::string query;
-  query.print("delete from %s where path = '%s'", tablename, file);
+  query.print("delete from %s where path = '%s';", tablename, file);
+  // CDBDebug("DELETEQUERY= [%s]", query.c_str());
   int status = dataBaseConnection->query(query.c_str());
-  if (status != 0) throw(__LINE__);
+  if (status != 0) {
+    CDBWarning("Note:removeFile failed");
+  }
+
 #ifdef MEASURETIME
   StopWatch_Stop("<CDBAdapterPostgreSQL::removeFile");
 #endif
@@ -1240,4 +1284,17 @@ bool CDBAdapterPostgreSQL::advisoryUnLock(size_t key) {
   }
   delete store;
   return succesfullyunlocked;
+}
+
+f8box CDBAdapterPostgreSQL::getExtent(CDataSource *dataSource) {
+  auto tableName = getTableNameForPathFilterAndDimension(dataSource);
+  CT::string query;
+  query.print("select min(minx) as minx, min(miny) as miny, max(maxx) as maxx, max(maxy) as maxy from %s;", tableName.c_str());
+  auto store = dataBaseConnection->queryToStore(query.c_str());
+  if (store == NULL || store->size() == 0) {
+    CDBDebug("Unable to getExtent: No results from db");
+    throw __LINE__;
+  }
+  auto record = store->getRecord(0);
+  return {.left = record->get("minx")->toDouble(), .bottom = record->get("miny")->toDouble(), .right = record->get("maxx")->toDouble(), .top = record->get("maxy")->toDouble()};
 }

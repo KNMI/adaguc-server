@@ -4,7 +4,7 @@
   <TempDir value="{ADAGUC_TMP}"/>
   <Path value="{ADAGUC_PATH}/data"/>
   <!--<DataBase parameters="host=localhost dbname=tiles"/>-->
-  <DataBase parameters="/tmp/tiles.db"/>
+  <DataBase parameters="{ADAGUC_DB}"/>
   
   <!-- WMS settings -->
   <WMS>

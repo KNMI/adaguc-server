@@ -781,9 +781,9 @@ CTime::Date CTime::freeDateStringToDate(const char *szTime) {
   if (len == 14) {
     if (szTime[8] != 'T') {
       CT::string date = "";
-      date.concat(szTime + 0, 8);
+      date.concatlength(szTime + 0, 8);
       date.concat("T");
-      date.concat(szTime + 8, 6);
+      date.concatlength(szTime + 8, 6);
       date.concat("Z");
       CDBDebug("Fixing time to [%s]", date.c_str());
       return stringToDate(date.c_str());
@@ -793,9 +793,9 @@ CTime::Date CTime::freeDateStringToDate(const char *szTime) {
   // 201002010900
   if (len == 12) {
     CT::string date = "";
-    date.concat(szTime + 0, 8);
+    date.concatlength(szTime + 0, 8);
     date.concat("T");
-    date.concat(szTime + 8, 4);
+    date.concatlength(szTime + 8, 4);
     date.concat("00Z");
     return stringToDate(date.c_str());
   }
@@ -809,17 +809,17 @@ CTime::Date CTime::freeDateStringToDate(const char *szTime) {
   // 012345678901234567890
   if (szTime[4] == '-' && szTime[7] == '-' && szTime[13] == ':' && szTime[16] == ':') {
     CT::string date = "";
-    date.concat(szTime + 0, 4);
+    date.concatlength(szTime + 0, 4);
     date.concat("-");
-    date.concat(szTime + 5, 2);
+    date.concatlength(szTime + 5, 2);
     date.concat("-");
-    date.concat(szTime + 8, 2);
+    date.concatlength(szTime + 8, 2);
     date.concat("T");
-    date.concat(szTime + 11, 2);
+    date.concatlength(szTime + 11, 2);
     date.concat(":");
-    date.concat(szTime + 14, 2);
+    date.concatlength(szTime + 14, 2);
     date.concat(":");
-    date.concat(szTime + 17, 2);
+    date.concatlength(szTime + 17, 2);
     date.concat("Z");
     try {
       return ISOStringToDate(date.c_str());
@@ -833,13 +833,13 @@ CTime::Date CTime::freeDateStringToDate(const char *szTime) {
   // 012345678901234567890
   if (szTime[8] == 'T' && szTime[11] == ':' && szTime[14] == ':') {
     CT::string date = "";
-    date.concat(szTime + 0, 8);
+    date.concatlength(szTime + 0, 8);
     date.concat("T");
-    date.concat(szTime + 9, 2);
+    date.concatlength(szTime + 9, 2);
 
-    date.concat(szTime + 12, 2);
+    date.concatlength(szTime + 12, 2);
 
-    date.concat(szTime + 15, 2);
+    date.concatlength(szTime + 15, 2);
     date.concat("Z");
     return stringToDate(date.c_str());
   }
@@ -848,9 +848,9 @@ CTime::Date CTime::freeDateStringToDate(const char *szTime) {
   // 012345678901234567890
   if (szTime[8] == 'T') {
     CT::string date = "";
-    date.concat(szTime + 0, 8);
+    date.concatlength(szTime + 0, 8);
     date.concat("T");
-    date.concat(szTime + 9, 6);
+    date.concatlength(szTime + 9, 6);
     date.concat("Z");
     return stringToDate(date.c_str());
   }
@@ -859,17 +859,17 @@ CTime::Date CTime::freeDateStringToDate(const char *szTime) {
   // 012345678901234567890
   if (szTime[4] == '-' && szTime[7] == '-' && szTime[10] == 'T' && szTime[13] == ':' && szTime[16] == 'Z') {
     CT::string date = "";
-    date.concat(szTime + 0, 4);
+    date.concatlength(szTime + 0, 4);
     date.concat("-");
-    date.concat(szTime + 5, 2);
+    date.concatlength(szTime + 5, 2);
     date.concat("-");
-    date.concat(szTime + 8, 2);
+    date.concatlength(szTime + 8, 2);
     date.concat("T");
-    date.concat(szTime + 11, 2);
+    date.concatlength(szTime + 11, 2);
     date.concat(":");
-    date.concat(szTime + 14, 2);
+    date.concatlength(szTime + 14, 2);
     date.concat(":");
-    date.concat("00", 2);
+    date.concatlength("00", 2);
     date.concat("Z");
     try {
       return ISOStringToDate(date.c_str());

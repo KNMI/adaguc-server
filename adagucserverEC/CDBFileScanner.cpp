@@ -77,10 +77,11 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
   CT::string query;
   dataSource->headerFileName = (*fileList)[0].c_str();
 
-  CDBAdapter *dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
+  CDBAdapterPostgreSQL *dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
 
   CDFObject *cdfObject = NULL;
   try {
+    // Here the header of the file to scan is being read.
     cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource, dataSource->headerFileName.c_str());
     if (cdfObject == NULL) throw __LINE__;
   } catch (int e) {
@@ -163,7 +164,7 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
 
     int TABLETYPE_TIMESTAMP = 1;
     int TABLETYPE_INT = 2;
-    int TABLETYPE_REAL = 3;
+    int TABLETYPE_DOUBLE = 3;
     int TABLETYPE_STRING = 4;
 
     int tableType = 0;
@@ -221,7 +222,7 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
               switch (dimVar->getType()) {
               case CDF_FLOAT:
               case CDF_DOUBLE:
-                tableType = TABLETYPE_REAL;
+                tableType = TABLETYPE_DOUBLE;
                 break;
               case CDF_STRING:
                 tableType = TABLETYPE_STRING;
@@ -245,69 +246,15 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
       status = 1;
       if (tableType == TABLETYPE_TIMESTAMP) status = dbAdapter->createDimTableTimeStamp(dimName.c_str(), tableName.c_str());
       if (tableType == TABLETYPE_INT) status = dbAdapter->createDimTableInt(dimName.c_str(), tableName.c_str());
-      if (tableType == TABLETYPE_REAL) status = dbAdapter->createDimTableReal(dimName.c_str(), tableName.c_str());
+      if (tableType == TABLETYPE_DOUBLE) status = dbAdapter->createDimTableDoublePrecision(dimName.c_str(), tableName.c_str());
       if (tableType == TABLETYPE_STRING) status = dbAdapter->createDimTableString(dimName.c_str(), tableName.c_str());
 
-      // if(status == 0){CDBDebug("OK: Table is available");}
       if (status == 1) {
         CDBError("FAIL: Table %s could not be created", tableName.c_str());
         return 1;
       }
       if (status == 2) {
         removeNonExistingFiles = 0;
-        // removeExisting files can be set back to zero, because there are no files to remove (table is created)
-        // note the int &removeNonExistingFiles as parameter of this function!
-        //(Setting the value will have effect outside this function)
-        // CDBDebug("OK: Table %s created, (check for unavailable files is off);",tableName);
-        // if( addIndexToTable(DB,tableName.c_str(),dimName.c_str()) != 0)return 1;
-      }
-      // TODO set removeNonExistingFiles =0 when no records are in table
-
-      if (removeNonExistingFiles == 1) {
-        // The temporary table should always be dropped before filling.
-        // We will do a complete new update, so store everything in an new table
-        // Later we will rename this table
-        //         CT::string tableName_temp(&tableName);
-        //         if(removeNonExistingFiles==1){
-        //           tableName_temp.concat("_temp");
-        //         }
-        // CDBDebug("Making empty temporary table %s ... ",tableName_temp.c_str());
-        // CDBDebug("Check table %s ...\t",tableName.c_str());
-        /*
-                if(status==0){
-                  //Table already exists....
-                  CDBError("*** WARNING: Temporary table %s already exists. Is another process updating the database?
-           ***",tableName_temp.c_str());
-
-
-                  CDBDebug("*** DROPPING TEMPORARY TABLE: %s",query.c_str());
-                  if(dbAdapter->dropTable(tableName_temp.c_str())!=0){
-                    CDBError("Dropping table %s failed",tableName_temp.c_str());
-                    return 1;
-                  }
-
-                  CDBDebug("Check table %s ... ",tableName_temp.c_str());
-                  if(tableType == TABLETYPE_TIMESTAMP)status =
-           dbAdapter->createDimTableTimeStamp(dimName.c_str(),tableName_temp.c_str()); if(tableType == TABLETYPE_INT
-           )status = dbAdapter->createDimTableInt      (dimName.c_str(),tableName_temp.c_str()); if(tableType ==
-           TABLETYPE_REAL     )status = dbAdapter->createDimTableReal     (dimName.c_str(),tableName_temp.c_str());
-                  if(tableType == TABLETYPE_STRING   )status = dbAdapter->createDimTableString
-           (dimName.c_str(),tableName_temp.c_str());
-
-                  if(status == 0){CDBDebug("OK: Table is available");}
-                  if(status == 1){CDBError("\nFAIL: Table %s could not be created",tableName_temp.c_str()); return 1;  }
-                  if(status == 2){CDBDebug("OK: Table %s created",tableName_temp.c_str());
-                    //Create a index on these files:
-                    //if(addIndexToTable(DB,tableName_temp.c_str(),dimName.c_str())!= 0)return 1;
-                  }
-                }
-
-                if(status == 0 || status == 1){CDBError("\nFAIL: Table %s could not be created",tableName_temp.c_str());
-           return 1;  } if(status == 2){
-                  //OK, Table did not exist, is created.
-                  //Create a index on these files:
-                  //if(addIndexToTable(DB,tableName_temp.c_str(),dimName.c_str()) != 0)return 1;
-                }*/
       }
     }
   }
@@ -322,13 +269,12 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
   CDFObject *cdfObject = NULL;
   int status = 0;
 
-  CDBAdapter *dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
+  CDBAdapterPostgreSQL *dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
   try {
     // Loop dimensions and files
     // CDBDebug("Checking files that are already in the database...");
     // char ISOTime[ISO8601TIME_LEN+1];
     CT::string isoString;
-    size_t numberOfFilesAddedFromDB = 0;
 
     // Setup variables like tableNames and timedims for each dimension
     size_t numDims = dataSource->cfgLayer->Dimension.size();
@@ -343,6 +289,9 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
     // CT::string VALUES;
     // CADAGUC_time *ADTime  = NULL;
     CTime *adagucTime;
+
+    // Sort the fileList alphabetically, which normally corresponds to time order
+    std::sort(fileList->begin(), fileList->end());
 
     CDFObject *cdfObjectOfFirstFile = NULL;
     try {
@@ -410,6 +359,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
       }
     }
 
+    size_t numberOfUpdatesToDbStore = 0;
     for (size_t j = 0; j < fileList->size(); j++) {
 // Loop through all configured dimensions.
 #ifdef CDBFILESCANNER_DEBUG
@@ -442,7 +392,6 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
           break;
         }
       }
-      size_t numberOfFilesAddedToDbStore = 0;
       for (size_t d = 0; d < dataSource->cfgLayer->Dimension.size(); d++) {
         if (skipDim[d] == true) {
 #ifdef CDBFILESCANNER_DEBUG
@@ -451,8 +400,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
           continue;
         }
         {
-          numberOfFilesAddedToDbStore += 1;
-          numberOfFilesAddedFromDB = 0;
+          numberOfUpdatesToDbStore += 1;
           int fileExistsInDB = 0;
 
 // Delete files with non-matching creation date
@@ -660,7 +608,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
 
                 bool requiresProjectionInfo = true;
 
-                CDBAdapter::GeoOptions geoOptions;
+                GeoOptions geoOptions;
                 geoOptions.level = -1;
                 geoOptions.proj4 = "EPSG:4236";
                 geoOptions.bbox[0] = -1000;
@@ -831,7 +779,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
         }
       }
       // End of dimloop, start inserting our collected records in one statement
-      if (numberOfFilesAddedToDbStore % 50 == 0) dbAdapter->addFilesToDataBase();
+      if (numberOfUpdatesToDbStore % 50 == 0) dbAdapter->addFilesToDataBase();
     }
 
     // End of dimloop, start inserting our collected records in one statement
@@ -858,7 +806,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
             CDBDebug("Comparing lists");
             filesToDeleteFromDB.clear();
             CDirReader::compareLists(oldList, newList, &handleFileFromDBIsMissing, &handleDirHasNewFile);
-            CDBDebug("Found %d files in DB which are missing", filesToDeleteFromDB.size());
+            CDBDebug("Found %d files in DB which are missing on filesystem.", filesToDeleteFromDB.size());
             for (size_t j = 0; j < filesToDeleteFromDB.size(); j++) {
               CDBDebug("Deleting file %s from db", filesToDeleteFromDB[j].c_str());
               CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->removeFile(tableNames[d].c_str(), filesToDeleteFromDB[j].c_str());
@@ -868,10 +816,6 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
           delete values;
         }
       }
-    }
-
-    if (numberOfFilesAddedFromDB != 0) {
-      CDBDebug("%d file(s) were already in the database", numberOfFilesAddedFromDB);
     }
 
   } catch (int linenr) {
@@ -998,27 +942,12 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
     CDBDebug("Going to scan %d files", fileList.size());
   }
 
-  // Include tiles: TODO this is a heavy routine!!
-  if (tailPath.length() == 0) {
-    if (dataSource->cfgLayer->TileSettings.size() == 1) {
-      CDBDebug("Start including TileSettings path [%s]. (Already found %d non tiled files)", dataSource->cfgLayer->TileSettings[0]->attr.tilepath.c_str(), fileList.size());
-      try {
-        std::vector<std::string> fileListForTiles = searchFileNames(dataSource->cfgLayer->TileSettings[0]->attr.tilepath.c_str(), "^.*\\.nc$", tailPath.c_str());
-        if (fileListForTiles.size() == 0) throw(__LINE__);
-        CDBDebug("Found %d tiles", fileListForTiles.size());
-        for (size_t j = 0; j < fileListForTiles.size(); j++) {
-          fileList.push_back(fileListForTiles[j].c_str());
-        }
-      } catch (int linenr) {
-        CDBDebug("No tiles found");
-      }
-    }
-  }
-
   if (fileList.size() == 0) {
     if (verbose) {
       CDBWarning("No files found for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
     }
+    // Clean up if needed
+    cleanFiles(dataSource, scanFlags);
     return CDBFILESCANNER_RETURN_FILEDOESNOTMATCH;
   }
 
@@ -1031,7 +960,6 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
     }
 
     if (status == 0) {
-
       // Loop Through all files
       status = DBLoopFiles(dataSource, removeNonExistingFiles, &fileList, scanFlags);
       if (status != 0) {
@@ -1060,23 +988,19 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
   if (removeNonExistingFiles == 1) status = DB->query("COMMIT");
 #endif
 
+  if (scanFlags & CDBFILESCANNER_UPDATEDB) {
+    updateMetaDataTable(dataSource);
+  }
   /* Now Check autotile option */
   if (!(scanFlags & CDBFILESCANNER_DONOTTILE)) {
     if (dataSource->cfgLayer->TileSettings.size() == 1) {
-      if (dataSource->cfgLayer->TileSettings[0]->attr.autotile.equals("true")) {
+      if (dataSource->cfgLayer->TileSettings[0]->attr.autotile.equals("true") || (dataSource->cfgLayer->TileSettings[0]->attr.autotile.equals("file") && fileList.size() == 1)) {
         for (size_t j = 0; j < fileList.size(); j++) {
-          if (!(fileList[j].rfind(dataSource->cfgLayer->TileSettings[0]->attr.tilepath.c_str(), 0) == 0)) {
-            CCreateTiles::createTilesForFile(dataSource, CDBFILESCANNER_CREATETILES + CDBFILESCANNER_UPDATEDB, fileList[j].c_str());
-          }
+          CCreateTiles::createTilesForFile(dataSource, CDBFILESCANNER_CREATETILES + CDBFILESCANNER_UPDATEDB, fileList[j].c_str());
         }
       }
     }
   }
-
-  if (scanFlags & CDBFILESCANNER_UPDATEDB) {
-    updateMetaDataTable(dataSource);
-  }
-
   CDBDebug("  ==> *** Finished update layer [%s] ***", dataSource->cfgLayer->Name[0]->value.c_str());
   return 0;
 }
@@ -1147,4 +1071,12 @@ std::vector<std::string> CDBFileScanner::searchFileNames(const char *path, CT::s
   }
 
   throw(__LINE__);
+}
+
+int CDBFileScanner::scanFile(CT::string fileToScan, CDataSource *dataSource, int scanFlags) {
+  std::vector<std::string> fileList = {fileToScan.c_str()};
+  auto dataSourceToScan = dataSource->clone();
+  int status = CDBFileScanner::DBLoopFiles(dataSourceToScan, 0, &fileList, scanFlags);
+  delete dataSourceToScan;
+  return status;
 }

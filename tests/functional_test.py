@@ -25,10 +25,12 @@ from AdagucTests.TestWMSPolylineLabel import TestWMSPolylineLabel
 from AdagucTests.TestDataPostProcessor import TestDataPostProcessor
 from AdagucTests.TestWMSTimeHeightProfiles import TestWMSTimeHeightProfiles
 from AdagucTests.TestConvertLatLonBnds import TestConvertLatLonBnds
+from AdagucTests.TestFileScanner import TestFileScanner
 
 
 suites = []
 TestLoader = unittest.TestLoader
+suites.append(TestLoader().loadTestsFromTestCase(TestFileScanner))
 suites.append(TestLoader().loadTestsFromTestCase(TestMetadataRequest))
 suites.append(TestLoader().loadTestsFromTestCase(TestWMSTimeSeries))
 suites.append(TestLoader().loadTestsFromTestCase(TestEWCLocalClimateInfo))

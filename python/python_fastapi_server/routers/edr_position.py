@@ -85,19 +85,48 @@ async def get_coll_inst_position(
     returns data for the EDR /position endpoint
     """
     allowed_params = ["coords", "datetime", "parameter-name", "z", "f", "crs"]
+    custom_dims = get_custom(
+        request.query_params,
+        allowed_params,
+    )
 
     metadata = await get_metadata(collection_name)
+
+    return await handle_coll_inst_position(
+        collection_name,
+        custom_dims,
+        coords,
+        response,
+        metadata,
+        instance,
+        datetime_par,
+        parameter_name_par,
+        z_par,
+    )
+
+
+async def handle_coll_inst_position(
+    collection_name: str,
+    custom_dims,
+    coords: str,
+    response: CovJSONResponse,
+    metadata: dict,
+    instance: str = None,
+    datetime_par: str = Query(default=None, alias="datetime"),
+    parameter_name_par: Annotated[
+        str, Query(alias="parameter-name", min_length=1)
+    ] = None,
+    z_par: Annotated[str, Query(alias="z", min_length=1)] = None,
+) -> Coverage:
+    """
+    Handle the EDR position endpoint call
+    """
 
     dataset_name = get_dataset_from_collection(metadata, collection_name)
     instance = get_instance(metadata, collection_name, instance)
     parameter_names = get_parameters(metadata, collection_name, parameter_name_par)
 
     _, vertical_dim = get_vertical(metadata, collection_name, parameter_names[0], z_par)
-
-    custom_dims = get_custom(
-        request.query_params,
-        allowed_params,
-    )
 
     try:
         latlons = wkt.loads(coords)

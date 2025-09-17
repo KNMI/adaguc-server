@@ -310,8 +310,8 @@ void CImageDataWriter::getFeatureInfoGetPointDataResults(CDataSource *dataSource
       if (status != 0) {
         CDBError("Unable to initialize projection");
       }
-      status = warper.reprojpoint_inv_topx(pointPX, pointPY);
-      status = warper.reprojpoint_inv_topx(gfiPX, gfiPY);
+      warper.reprojpoint_inv_topx(pointPX, pointPY, srvParam->Geo);
+      warper.reprojpoint_inv_topx(gfiPX, gfiPY, srvParam->Geo);
       float pixelDistance = hypot(pointPX - gfiPX, pointPY - gfiPY);
       warper.closereproj();
 
@@ -2138,10 +2138,10 @@ int CImageDataWriter::getTextForValue(CT::string *tv, float v, CStyleConfigurati
   if (textRounding <= 0) tv->print("%2.0f", v);
   if (textRounding == 1) tv->print("%2.1f", v);
   if (textRounding == 2) tv->print("%2.2f", v);
-  if (textRounding == 3) tv->print("%2.3", v);
+  if (textRounding == 3) tv->print("%2.3f", v);
   if (textRounding == 4) tv->print("%2.4f", v);
   if (textRounding == 5) tv->print("%2.5f", v);
-  if (textRounding == 5) tv->print("%2.6f", v);
+  if (textRounding == 6) tv->print("%2.6f", v);
   if (textRounding > 6) tv->print("%f", v);
   return 0;
 }

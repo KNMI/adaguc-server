@@ -917,6 +917,9 @@ void CDrawImage::drawText(int x, int y, float angle, const char *text, CColor fg
 }
 
 void CDrawImage::drawText(int x, int y, const char *fontfile, float size, float angle, const char *text, unsigned char colorIndex) {
+  if (!currentLegend) {
+    return;
+  }
   CColor color(currentLegend->CDIred[colorIndex], currentLegend->CDIgreen[colorIndex], currentLegend->CDIblue[colorIndex], 255);
   drawText(x, y, fontfile, size, angle, text, color);
 }

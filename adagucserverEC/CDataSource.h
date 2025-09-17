@@ -308,7 +308,7 @@ public:
 
   //
   bool queryBBOX; // True: query on viewport
-  double nativeViewPortBBOX[4];
+  f8box nativeViewPortBBOX;
   int queryLevel;
 
   // Current value index of the dim

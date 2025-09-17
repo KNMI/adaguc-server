@@ -74,8 +74,8 @@ int updateLayerMetadata(CRequest &request) {
   std::set<DatasetAndLayerPair> datasetNamesFromDB;
 
   for (auto record : records) {
-    CT::string *datasetName = record->get("datasetname");
-    CT::string *layerName = record->get("layername");
+    CT::string *datasetName = record.get("datasetname");
+    CT::string *layerName = record.get("layername");
     if (datasetName != nullptr && layerName != nullptr) {
       datasetNamesFromDB.insert(std::make_pair(datasetName->c_str(), layerName->c_str()));
     }

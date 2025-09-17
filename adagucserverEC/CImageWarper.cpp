@@ -155,7 +155,7 @@ int CImageWarper::reprojModelFromLatLon(double &dfx, double &dfy) {
   return 0;
 }
 
-int CImageWarper::reprojpoint_inv_topx(double &dfx, double &dfy) {
+int CImageWarper::reprojpoint_inv_topx(double &dfx, double &dfy, CGeoParams *_geoDest) {
   if (reprojpoint_inv(dfx, dfy) != 0) return 1;
   dfx = (dfx - _geoDest->dfBBOX[0]) / (_geoDest->dfBBOX[2] - _geoDest->dfBBOX[0]) * double(_geoDest->dWidth);
   dfy = (dfy - _geoDest->dfBBOX[3]) / (_geoDest->dfBBOX[1] - _geoDest->dfBBOX[3]) * double(_geoDest->dHeight);
@@ -244,6 +244,12 @@ int CImageWarper::decodeCRS(CT::string *outputCRS, CT::string *inputCRS, std::ve
 //     return 0;
 //   }
 
+int CImageWarper::init(const char *destString, const char *fromProjString, std::vector<CServerConfig::XMLE_Projection *> *_prj) {
+  CGeoParams geo;
+  geo.CRS = fromProjString;
+  return initreproj(destString, &geo, _prj);
+}
+
 int CImageWarper::initreproj(CDataSource *dataSource, CGeoParams *GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj) {
   if (dataSource == NULL || GeoDest == NULL) {
     CDBError("dataSource==%s||GeoDest==%s", dataSource == NULL ? "NULL" : "not-null", GeoDest == NULL ? "NULL" : "not-null");
@@ -263,7 +269,7 @@ int CImageWarper::initreproj(const char *projString, CGeoParams *GeoDest, std::v
   pthread_mutex_unlock(&CImageWarper_initreproj);
   return status;
 }
-int CImageWarper::_initreprojSynchronized(const char *projString, CGeoParams *GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj) {
+int CImageWarper::_initreprojSynchronized(const char *projString, CGeoParams *_GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj) {
 
   if (projString == NULL) {
     projString = LATLONPROJECTION;
@@ -274,7 +280,7 @@ int CImageWarper::_initreprojSynchronized(const char *projString, CGeoParams *Ge
     return 1;
   }
 
-  this->_geoDest = GeoDest;
+  CT::string sourceCRS = _GeoDest->CRS.c_str();
 
   CT::string sourceProjectionUndec = projString;
 
@@ -288,7 +294,7 @@ int CImageWarper::_initreprojSynchronized(const char *projString, CGeoParams *Ge
   //    CDBDebug("sourceProjectionUndec %s, sourceProjection %s",sourceProjection.c_str(),sourceProjectionUndec.c_str());
 
   dMaxExtentDefined = 0;
-  if (decodeCRS(&destinationCRS, &GeoDest->CRS, _prj) != 0) {
+  if (decodeCRS(&destinationCRS, &sourceCRS, _prj) != 0) {
     CDBError("decodeCRS failed");
     return 1;
   }
@@ -568,11 +574,8 @@ std::tuple<CT::string, double> CImageWarper::fixProjection(CT::string projection
         majorAttribute->setData<float>(CDF_FLOAT, semi_major_axis * scaling);
         minorAttribute->setData<float>(CDF_FLOAT, semi_minor_axis * scaling);
 
-        CT::string newProjectionString;
-        int status2 = trans.convertCFToProj(&var, &newProjectionString);
-        //        printf("%s\n", projectionString.c_str());
-        //        printf("%s\n\n", newProjectionString.c_str());
-        if (status2 == 0) return std::make_tuple(newProjectionString, scaling);
+        CT::string newProjectionString = trans.convertCFToProj(&var);
+        if (!newProjectionString.empty()) return std::make_tuple(newProjectionString, scaling);
       }
     }
   }
