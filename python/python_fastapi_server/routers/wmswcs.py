@@ -23,6 +23,9 @@ logger = logging.getLogger(__name__)
 async def handle_wms(
     req: Request,
 ):
+    """
+    Handle /wms endpoint 
+    """
     adaguc_instance = setup_adaguc()
     # logger.info("instance: %s", str(adaguc_instance))
     url = req.url

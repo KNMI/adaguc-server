@@ -48,6 +48,7 @@
 #include "utils/LayerMetadataToJson.h"
 #include "utils/CRequestUtils.h"
 #include "handleTileRequest.h"
+#include <traceTimings/traceTimings.h>
 
 const char *CRequest::className = "CRequest";
 int CRequest::CGI = 0;
@@ -2358,8 +2359,11 @@ int CRequest::process_querystring() {
       if (srvParam->Format.equals("application/json")) {
         // GetMetadata for specific dataset and layer
         json result;
+        traceTimingsSpanStart(TraceTimingType::GETMETADATAJSON);
         getLayerMetadataAsJson(srvParam, result);
-        printf("%s%c%c\n", "Content-Type:application/json", 13, 10);
+        traceTimingsSpanEnd(TraceTimingType::GETMETADATAJSON);
+        auto headers = srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE);
+        printf("%s%s%c%c\n", "Content-Type: application/json", headers.c_str(), 13, 10);
         printf("%s", result.dump().c_str());
         return 0;
       }

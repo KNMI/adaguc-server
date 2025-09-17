@@ -809,7 +809,7 @@ public:
   public:
     class Cattr {
     public:
-      CT::string settings, striding, renderer, scalewidth, scalecontours, renderhint, randomizefeatures, featuresoverlap, rendertextforvectors, cliplegend;
+      CT::string settings, striding, renderer, scalewidth, scalecontours, renderhint, randomizefeatures, featuresoverlap, rendertextforvectors, cliplegend, render;
     } attr;
     void addAttribute(const char *name, const char *value) {
       if (equals("settings", name)) {
@@ -841,6 +841,9 @@ public:
         return;
       } else if (equals("cliplegend", name)) {
         attr.cliplegend.copy(value);
+        return;
+      } else if (equals("render", name)) {
+        attr.render.copy(value);
         return;
       }
     }
@@ -947,7 +950,7 @@ public:
     }
     class Cattr {
     public:
-      CT::string name;
+      CT::string name, title, abstract;
     } attr;
     void addElement(CXMLObjectInterface *baseClass, int rc, const char *name, const char *value) {
       CXMLSerializerInterface *base = (CXMLSerializerInterface *)baseClass;
@@ -1021,6 +1024,13 @@ public:
     void addAttribute(const char *name, const char *value) {
       if (equals("name", name)) {
         attr.name.copy(value);
+        return;
+      } else if (equals("title", name)) {
+        attr.title.copy(value);
+        return;
+      }
+      if (equals("abstract", name)) {
+        attr.abstract.copy(value);
         return;
       }
     }

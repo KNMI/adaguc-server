@@ -1,4 +1,5 @@
 #include "CDataPostProcessor.h"
+#include <cstdint>
 
 #ifndef CDATAPOSTPROCESSOR_OPERATOR_H
 #define CDATAPOSTPROCESSOR_OPERATOR_H

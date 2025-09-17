@@ -76,6 +76,8 @@ CT::string typeToString(TraceTimingType typein) {
     return "FSOPEN";
   case TraceTimingType::APP:
     return "APP";
+  case TraceTimingType::GETMETADATAJSON:
+    return "GETMETADATAJSON";
   default:
     return "?";
   }

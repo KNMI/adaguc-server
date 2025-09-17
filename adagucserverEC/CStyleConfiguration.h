@@ -13,7 +13,6 @@
 #define RM_THIN 128
 #define RM_RGBA 256
 #define RM_STIPPLING 512
-#define RM_AVG_RGBA 1024
 #define RM_POLYLINE 2048
 #define RM_POINT_LINEARINTERPOLATION 4096
 #define RM_HILLSHADED 8192
@@ -22,83 +21,53 @@
 #include "CServerConfig_CPPXSD.h"
 #include "CXMLParser.h"
 #include "CDebugger.h"
-class CStyleConfiguration {
-public:
-  typedef unsigned int RenderMethod;
 
-  static RenderMethod getRenderMethodFromString(CT::string *renderMethodString);
-  static void getRenderMethodAsString(CT::string *renderMethodString, RenderMethod renderMethod);
-  void reset() {
-    shadeInterval = 0;
-    contourIntervalL = 0;
-    contourIntervalH = 0;
-    legendScale = 1;
-    legendOffset = 0;
-    legendLog = 0.0f;
-    legendLowerRange = 0;
-    legendUpperRange = 0;
-    smoothingFilter = 0;
-    hasLegendValueRange = false;
-    hasError = false;
-    legendHasFixedMinMax = false;
-    legendTickInterval = 0;
-    legendTickRound = 0.0;
-    legendIndex = -1;
-    styleIndex = -1;
-    contourLines = NULL;
-    shadeIntervals = NULL;
-    featureIntervals = NULL;
-    symbolIntervals = NULL;
-    styleCompositionName = "";
-    styleTitle = "";
-    styleAbstract = "";
-    styleConfig = NULL;
-  }
-  CStyleConfiguration() { reset(); }
-  float shadeInterval, contourIntervalL, contourIntervalH;
-  float legendScale, legendOffset, legendLog;
-  float legendLowerRange, legendUpperRange; // Values in which values are visible (ValueRange)
-  int smoothingFilter;
-  bool hasLegendValueRange;
-  bool hasError;
-  bool legendHasFixedMinMax; // True to fix the classes in the legend, False to determine automatically which values occur.
-  double legendTickInterval;
-  double legendTickRound;
-  bool minMaxSet;
-  int legendIndex;
-  int styleIndex;
+class CDataSource;
+
+typedef unsigned int RenderMethod;
+CT::string getRenderMethodAsString(RenderMethod renderMethod);
+RenderMethod getRenderMethodFromString(const char *_renderMethodString);
+struct CStyleConfiguration {
+  bool minMaxSet = false;
+  bool hasLegendValueRange = false;
+  bool hasError = false;
+  bool legendHasFixedMinMax = false; // True to fix the classes in the legend, False to determine automatically which values occur.
+  int smoothingFilter = 0;
+  int legendIndex = -1;
+  int styleIndex = -1;
+  float shadeInterval = 0;
+  float contourIntervalL = 0;
+  float contourIntervalH = 0;
+  float legendScale = 0;
+  float legendOffset = 0;
+  float legendLog = 0.0f;
+  float legendLowerRange = 0;
+  float legendUpperRange = 0; // Values in which values are visible (ValueRange)
+  double legendTickInterval = 0;
+  double legendTickRound = 0.0;
+  double minValue = 0;
+  double maxValue = 0;
   RenderMethod renderMethod;
-  std::vector<CServerConfig::XMLE_ContourLine *> *contourLines;
-  std::vector<CServerConfig::XMLE_ShadeInterval *> *shadeIntervals;
-  std::vector<CServerConfig::XMLE_SymbolInterval *> *symbolIntervals;
-  std::vector<CServerConfig::XMLE_FeatureInterval *> *featureIntervals;
-  CServerConfig::XMLE_Style *styleConfig;
+  CT::string legendName;
   CT::string styleCompositionName;
   CT::string styleTitle;
   CT::string styleAbstract;
+  std::vector<CServerConfig::XMLE_ContourLine *> contourLines;
+  std::vector<CServerConfig::XMLE_RenderSettings *> renderSettings;
+  std::vector<CServerConfig::XMLE_ShadeInterval *> shadeIntervals;
+  std::vector<CServerConfig::XMLE_SymbolInterval *> symbolIntervals;
+  std::vector<CServerConfig::XMLE_FeatureInterval *> featureIntervals;
 
-  CT::string c_str() {
-    CT::string data;
-    data.print("name = %s\n", styleCompositionName.c_str());
-    data.printconcat("shadeInterval = %f\n", shadeInterval);
-    data.printconcat("contourIntervalL = %f\n", contourIntervalL);
-    data.printconcat("contourIntervalH = %f\n", contourIntervalH);
-    data.printconcat("legendScale = %f\n", legendScale);
-    data.printconcat("legendOffset = %f\n", legendOffset);
-    data.printconcat("legendLog = %f\n", legendLog);
-    data.printconcat("hasLegendValueRange = %d\n", hasLegendValueRange);
-    data.printconcat("legendLowerRange = %f\n", legendLowerRange);
-    data.printconcat("legendUpperRange = %f\n", legendUpperRange);
-    data.printconcat("smoothingFilter = %d\n", smoothingFilter);
-    data.printconcat("legendTickRound = %f\n", legendTickRound);
-    data.printconcat("legendTickInterval = %f\n", legendTickInterval);
-    data.printconcat("legendIndex = %d\n", legendIndex);
-    data.printconcat("styleIndex = %d\n", styleIndex);
-    // TODO
-    CT::string rMethodString;
-    getRenderMethodAsString(&rMethodString, renderMethod);
-    data.printconcat("renderMethod = %s", rMethodString.c_str());
-    return data;
-  }
+  CServerConfig::XMLE_Style *styleConfig = nullptr; // Direct entrance to styleConfig configuration
+
+  /**
+   * Outputs styleConfiguration as string
+   */
+  CT::string dump();
+
+  /**
+   * Fills in the styleConfig object based on datasource,stylename, legendname and rendermethod
+   */
+  int makeStyleConfig(CDataSource *dataSource);
 };
 #endif

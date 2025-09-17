@@ -55,9 +55,9 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
     CDBError("No style configuration");
     return 1;
   }
-  CStyleConfiguration::RenderMethod renderMethod = styleConfiguration->renderMethod;
+  auto renderMethod = styleConfiguration->renderMethod;
 
-  if (renderMethod & RM_RGBA || renderMethod & RM_AVG_RGBA) {
+  if (renderMethod & RM_RGBA) {
 
     // legendImage->setText("",5,0,0,248,-1);
     legendImage->crop(4);
@@ -115,7 +115,7 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
   if (dataSource->getDataObject(0)->hasStatusFlag) {
     legendType = statusflag;
   } else if (renderMethod & RM_POINT) {
-    if ((styleConfiguration != NULL) && (styleConfiguration->shadeIntervals != NULL) && (styleConfiguration->shadeIntervals->size() > 0)) {
+    if (styleConfiguration != NULL && styleConfiguration->shadeIntervals.size() > 0) {
       legendType = discrete;
     } else {
       legendType = continous;
@@ -134,10 +134,8 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
     }
   }
 
-  if (styleConfiguration->featureIntervals != NULL) {
-    if (styleConfiguration->featureIntervals->size() > 0) {
-      legendType = discrete;
-    }
+  if (styleConfiguration->featureIntervals.size() > 0) {
+    legendType = discrete;
   }
 
   if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL && styleConfiguration->styleConfig->RenderSettings.size() == 1) {
@@ -164,7 +162,7 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
     float cbH = legendHeight - 13 - 13 - 30;
 
     bool useShadeIntervals = false;
-    if ((styleConfiguration != NULL) && (styleConfiguration->shadeIntervals != NULL) && (styleConfiguration->shadeIntervals->size() > 0)) {
+    if (styleConfiguration != NULL && styleConfiguration->shadeIntervals.size() > 0) {
       useShadeIntervals = true;
     }
 

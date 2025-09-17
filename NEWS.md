@@ -1,3 +1,9 @@
+**Version 4.3.2 - 2025-09-15**
+
+- Add trace timings to getmetadata
+- The EDR /locations/ call is now implemented by internally handling a /position call for the coordinates of the requested location.
+- If an unknown location ID is used (not configured in data/resources/locations/global_edr_locations.geosjon), the /locations/ID call returns a 404.
+
 **Version 4.3.0 - 2025-09-10**
 
 - Dimension querying is now exact, nearest rounding is not supported anymore.

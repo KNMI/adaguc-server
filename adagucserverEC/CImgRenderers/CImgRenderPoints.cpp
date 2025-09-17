@@ -213,70 +213,69 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
           int x = (*pts)[j].x;
           int y = dataSource->srvParams->Geo->dHeight - (*pts)[j].y;
 
-          bool minMaxSet = (symbolIntervals != NULL && (symbolIntervals->size() == 1) && !(*symbolIntervals)[0]->attr.min.empty() && !(*symbolIntervals)[0]->attr.max.empty());
+          bool minMaxSet = styleConfiguration->symbolIntervals.size() == 1 && !styleConfiguration->symbolIntervals[0]->attr.min.empty() && !styleConfiguration->symbolIntervals[0]->attr.max.empty();
           // Plot symbol if either valid v or Symbolinterval.min and max not set (to plot symbol for string data type)
           if ((v == v) || (((*pts)[j].paramList.size() > 0) && !minMaxSet)) { //
             float symbol_v = v;                                               // Local copy of value
             if (!(v == v)) {
               if ((*pts)[j].paramList.size() > 0) symbol_v = 0;
             }
-            if (symbolIntervals != NULL) {
 
-              for (size_t intv = 0; intv < symbolIntervals->size(); intv++) {
-                CServerConfig::XMLE_SymbolInterval *symbolInterval = ((*symbolIntervals)[intv]);
-                bool drawThisOne = false;
+            for (size_t intv = 0; intv < styleConfiguration->symbolIntervals.size(); intv++) {
+              CServerConfig::XMLE_SymbolInterval *symbolInterval = styleConfiguration->symbolIntervals[intv];
+              bool drawThisOne = false;
 
-                if (symbolInterval->attr.binary_and.empty() == false) {
-                  int b = parseInt(symbolInterval->attr.binary_and.c_str());
-                  if ((b & int(symbol_v)) == b) {
-                    drawThisOne = true;
-                    if (symbolInterval->attr.min.empty() == false && symbolInterval->attr.max.empty() == false) {
-                      if ((symbol_v >= parseFloat(symbolInterval->attr.min.c_str())) && (symbol_v < parseFloat(symbolInterval->attr.max.c_str())))
-                        ;
-                      else
-                        drawThisOne = false;
-                    }
-                  }
-
-                } else {
+              if (symbolInterval->attr.binary_and.empty() == false) {
+                int b = parseInt(symbolInterval->attr.binary_and.c_str());
+                if ((b & int(symbol_v)) == b) {
+                  drawThisOne = true;
                   if (symbolInterval->attr.min.empty() == false && symbolInterval->attr.max.empty() == false) {
-                    if ((symbol_v >= parseFloat(symbolInterval->attr.min.c_str())) && (symbol_v < parseFloat(symbolInterval->attr.max.c_str()))) {
-                      drawThisOne = true;
-                    }
-                  } else if (symbolInterval->attr.min.empty() && symbolInterval->attr.max.empty()) {
-                    drawThisOne = true;
+                    if ((symbol_v >= parseFloat(symbolInterval->attr.min.c_str())) && (symbol_v < parseFloat(symbolInterval->attr.max.c_str())))
+                      ;
+                    else
+                      drawThisOne = false;
                   }
                 }
 
-                if (drawThisOne) {
-                  std::string symbolFile = symbolInterval->attr.file.c_str();
-
-                  if (symbolFile.length() > 0) {
-                    CDrawImage *symbol = NULL;
-
-                    symbolCacheIter = symbolCache.find(symbolFile);
-                    if (symbolCacheIter == symbolCache.end()) {
-                      symbol = new CDrawImage();
-                      symbol->createImage(symbolFile.c_str());
-                      symbolCache[symbolFile] = symbol; // Remember in cache
-                    } else {
-                      symbol = (*symbolCacheIter).second;
-                    }
-                    int offsetX = 0;
-                    int offsetY = 0;
-                    if (!symbolInterval->attr.offsetX.empty()) offsetX = parseInt(symbolInterval->attr.offsetX.c_str());
-                    if (!symbolInterval->attr.offsetY.empty()) offsetY = parseInt(symbolInterval->attr.offsetY.c_str());
-                    drawImage->draw(x - symbol->Geo->dWidth / 2 + offsetX, y - symbol->Geo->dHeight / 2 + offsetY, 0, 0, symbol);
+              } else {
+                if (symbolInterval->attr.min.empty() == false && symbolInterval->attr.max.empty() == false) {
+                  if ((symbol_v >= parseFloat(symbolInterval->attr.min.c_str())) && (symbol_v < parseFloat(symbolInterval->attr.max.c_str()))) {
+                    drawThisOne = true;
                   }
-                  if (drawPointPlotStationId) {
-                    if ((*pts)[j].paramList.size() > 0) {
-                      CT::string stationid = (*pts)[j].paramList[0].value;
-                      drawImage->drawCenteredText(x, y - drawPointTextRadius - 3, drawPointFontFile, drawPointFontSize, 0, stationid.c_str(), drawPointTextColor);
-                    }
+                } else if (symbolInterval->attr.min.empty() && symbolInterval->attr.max.empty()) {
+                  drawThisOne = true;
+                }
+              }
+
+              if (drawThisOne) {
+                std::string symbolFile = symbolInterval->attr.file.c_str();
+
+                if (symbolFile.length() > 0) {
+                  CDrawImage *symbol = NULL;
+
+                  symbolCacheIter = symbolCache.find(symbolFile);
+                  if (symbolCacheIter == symbolCache.end()) {
+                    symbol = new CDrawImage();
+                    symbol->createImage(symbolFile.c_str());
+                    symbolCache[symbolFile] = symbol; // Remember in cache
+                  } else {
+                    symbol = (*symbolCacheIter).second;
+                  }
+                  int offsetX = 0;
+                  int offsetY = 0;
+                  if (!symbolInterval->attr.offsetX.empty()) offsetX = parseInt(symbolInterval->attr.offsetX.c_str());
+                  if (!symbolInterval->attr.offsetY.empty()) offsetY = parseInt(symbolInterval->attr.offsetY.c_str());
+                  drawImage->draw(x - symbol->Geo->dWidth / 2 + offsetX, y - symbol->Geo->dHeight / 2 + offsetY, 0, 0, symbol);
+                }
+                if (drawPointPlotStationId) {
+                  if ((*pts)[j].paramList.size() > 0) {
+                    CT::string stationid = (*pts)[j].paramList[0].value;
+                    drawImage->drawCenteredText(x, y - drawPointTextRadius - 3, drawPointFontFile, drawPointFontSize, 0, stationid.c_str(), drawPointTextColor);
                   }
                 }
               }
             }
+
             if (drawPointDot) drawImage->circle(x, y, 1, drawPointLineColor, 0.65);
           }
         }
@@ -321,7 +320,7 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
 
             if (!useDrawPointTextColor) {
               if (dataObjectIndex == 0) { // Only calculate color for 1st dataObject, rest gets defaultColor
-                if ((dataSource->getStyle() != NULL) && (dataSource->getStyle()->shadeIntervals != NULL) && (dataSource->getStyle()->shadeIntervals->size() > 0)) {
+                if ((dataSource->getStyle() != NULL) && dataSource->getStyle()->shadeIntervals.size() > 0) {
                   drawPointTextColor = getPixelColorForValue(drawImage, dataSource, v);
                 } else {
                   int pointColorIndex = getPixelIndexForValue(dataSource, v); // Use value of dataObject[0] for colour
@@ -339,7 +338,7 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
               }
             } else {                        // Text and disc
               if (!useDrawPointFillColor) { //(dataSource->getNumDataObjects()==1) {
-                if ((dataSource->getStyle() != NULL) && (dataSource->getStyle()->shadeIntervals != NULL) && (dataSource->getStyle()->shadeIntervals->size() > 0)) {
+                if ((dataSource->getStyle() != NULL) && dataSource->getStyle()->shadeIntervals.size() > 0) {
                   drawPointFillColor = getPixelColorForValue(drawImage, dataSource, v);
                 } else {
                   int pointColorIndex = getPixelIndexForValue(dataSource, v); // Use value of dataObject[0] for colour
@@ -413,7 +412,7 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
           // drawImage->circle(x,y, drawPointDiscRadius, 240,0.65);
 
           if (!useDrawPointTextColor) {
-            if ((dataSource->getStyle() != NULL) && (dataSource->getStyle()->shadeIntervals != NULL)) {
+            if ((dataSource->getStyle() != NULL) && (dataSource->getStyle()->shadeIntervals.size() > 0)) {
               drawPointTextColor = getPixelColorForValue(drawImage, dataSource, v);
             } else {
               int pointColorIndex = getPixelIndexForValue(dataSource, v); // Use value of dataObject[0] for colour
@@ -429,7 +428,7 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
               t.print(drawPointTextFormat.c_str(), v);
             }
             if (!useDrawPointFillColor) { //(dataSource->getNumDataObjects()==1) {
-              if ((dataSource->getStyle() != NULL) && (dataSource->getStyle()->shadeIntervals != NULL)) {
+              if ((dataSource->getStyle() != NULL) && (dataSource->getStyle()->shadeIntervals.size() > 0)) {
                 CColor col = getPixelColorForValue(drawImage, dataSource, v);
                 drawImage->setTextDisc(x, y, drawPointDiscRadius, t.c_str(), drawPointFontFile, drawPointFontSize, drawPointTextColor, col, drawPointLineColor);
               } else {
@@ -667,8 +666,6 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
   useDrawPointTextColor = false;
   isRadiusAndValue = false;
 
-  symbolIntervals = NULL;
-
   std::map<std::string, std::vector<Feature *>> featureStore = CConvertGeoJSON::featureStore;
   std::vector<Feature *> features;
   features = featureStore[dataSource->featureSet.c_str()];
@@ -766,11 +763,7 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
 
     // CStyleConfiguration *styleConfiguration = dataSource->getStyle();
     if (styleConfiguration != NULL) {
-      if (drawSymbol) {
-        if (styleConfiguration->symbolIntervals != NULL) {
-          symbolIntervals = styleConfiguration->symbolIntervals;
-        }
-      }
+
       if (styleConfiguration->styleConfig != NULL) {
         CServerConfig::XMLE_Style *s = styleConfiguration->styleConfig;
         if (s->FilterPoints.size() == 1) {
@@ -874,8 +867,8 @@ CColor CImgRenderPoints::getPixelColorForValue(CDrawImage *drawImage, CDataSourc
   }
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   if (!isNodata) {
-    for (size_t j = 0; j < styleConfiguration->shadeIntervals->size(); j++) {
-      CServerConfig::XMLE_ShadeInterval *shadeInterval = ((*styleConfiguration->shadeIntervals)[j]);
+    for (size_t j = 0; j < styleConfiguration->shadeIntervals.size(); j++) {
+      CServerConfig::XMLE_ShadeInterval *shadeInterval = styleConfiguration->shadeIntervals[j];
       if (shadeInterval->attr.min.empty() == false && shadeInterval->attr.max.empty() == false) {
         if ((val >= atof(shadeInterval->attr.min.c_str())) && (val < atof(shadeInterval->attr.max.c_str()))) {
           return CColor(shadeInterval->attr.fillcolor.c_str());

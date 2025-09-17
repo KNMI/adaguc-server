@@ -165,6 +165,50 @@ int CDDPUVComponents::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
       speedData[j] = sqrt(uValues[j] * uValues[j] + vValues[j] * vValues[j]);
       directionData[j] = ((atan2(uValues[j], vValues[j])) * (180 / M_PI) + 180);
     }
+    // TD:
+    // int gridWidth = dPixelExtent[2] - dPixelExtent[0];
+    // CDBDebug("%f %f %f %f", dataSource->dfBBOX[0], dataSource->dfBBOX[1], dataSource->dfBBOX[2], dataSource->dfBBOX[3]);
+    // for (int y = dPixelExtent[1]; y < dPixelExtent[3]; y = y + 1) {
+    //   for (int x = dPixelExtent[0]; x < dPixelExtent[2]; x = x + 1) {
+    //     size_t p = size_t(x - dPixelExtent[0]) + (((y)-dPixelExtent[1]) * gridWidth);
+    //     f8point gridCoordLL = {.x = dataSource->dfCellSizeX * x + dataSource->dfBBOX[0], .y = dataSource->dfCellSizeY * y + dataSource->dfBBOX[3]};
+    //     f8point latLonCoord = gridCoordLL;
+    //     warper.reprojModelToLatLon(latLonCoord.x, latLonCoord.y);
+    //     f8point screenCoord = latLonCoord;
+    //     warper.reprojfromLatLon(screenCoord.x, screenCoord.y);
+
+    //     f8point pixelCoord = screenCoord;
+
+    //     pixelCoord.x = ((pixelCoord.x - dataSource->srvParams->Geo->dfBBOX[0]) / (dataSource->srvParams->Geo->dfBBOX[2] - dataSource->srvParams->Geo->dfBBOX[0])) *
+    //     dataSource->srvParams->Geo->dWidth; pixelCoord.y = ((pixelCoord.y - dataSource->srvParams->Geo->dfBBOX[1]) / (dataSource->srvParams->Geo->dfBBOX[3] - dataSource->srvParams->Geo->dfBBOX[1]))
+    //     * dataSource->srvParams->Geo->dHeight;
+
+    //     // CDBDebug("%d %d %f %f - lalo %f %f - screen %f %f pixel %f %f", x, y, gridCoordLL.x, gridCoordLL.y, latLonCoord.x, latLonCoord.y, screenCoord.x, screenCoord.y, pixelCoord.x,
+    //     pixelCoord.y);
+
+    //     // if (imageWarper.reprojfromLatLon(projectedX, projectedY) != 0) {
+    //     float speed = speedData[p];
+    //     float direction = directionData[p];
+    //     int px = pixelCoord.x;
+    //     int py = pixelCoord.y;
+    //     auto speedPoint = PointDVWithLatLon(px, py, latLonCoord.x, latLonCoord.y, speed);
+    //     auto directionPoint = PointDVWithLatLon(px, py, latLonCoord.x, latLonCoord.y, direction);
+    //     // CDBDebug("%d %d", px, py);
+    //     speedObject->points.push_back(speedPoint);
+    //     speedObject->points.push_back(directionPoint);
+    //   }
+    // }
+
+    // for (int y = 0; y < dataSource->dHeight; y++) {
+    //   for (int x = 0; x < dataSource->dWidth; x++) {
+
+    //     double lon = 1;
+    //     double lat = 1;
+    //     float v = 0;
+    //     auto p = PointDVWithLatLon(x, y, lon, lat, v);
+    //     speedObject->points.push_back(p);
+    //   }
+    // }
   }
 
   return 0;

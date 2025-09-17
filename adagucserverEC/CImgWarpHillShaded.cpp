@@ -26,7 +26,7 @@
 #include "CImgWarpHillShaded.h"
 #include "CImageDataWriter.h"
 #include "CGenericDataWarper.h"
-#include "CImgWarpGeneric.h"
+#include "CImgWarpGeneric/CImgWarpGeneric.h"
 
 const char *CImgWarpHillShaded::className = "CImgWarpHillShaded";
 
@@ -71,9 +71,9 @@ void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, C
   GenericDataWarper genericDataWarper;
   GDWArgs args = {.warper = warper, .sourceData = sourceData, .sourceGeoParams = &sourceGeo, .destGeoParams = drawImage->Geo};
 
-#define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                               \
+#define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
   if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction(x, y, val, warperState, drawFunctionState); });
-ENUMERATE_OVER_CDFTYPES(RENDER)
+  ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
 
   for (int y = 0; y < (int)drawFunctionState.height; y = y + 1) {

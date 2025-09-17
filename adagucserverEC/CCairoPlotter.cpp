@@ -355,15 +355,10 @@ int CCairoPlotter::_drawFreeTypeText(int x, int y, int &w, int &h, float angle, 
       return 1;
     }
   };
-
-  // CDBDebug("font: %s", this->fontLocation);
-
   FT_GlyphSlot slot;
   FT_Matrix matrix; /* transformation matrix */
   FT_Vector pen;    /* untransformed origin */
-  // int n;
   int my_target_height = 8;
-
   slot = face->glyph; /* a small shortcut */
   /* set up matrix */
   matrix.xx = (FT_Fixed)(cos(angle) * 0x10000L);
