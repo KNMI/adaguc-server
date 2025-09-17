@@ -1,4 +1,4 @@
-Style (name)
+Style (name, abstract, title)
 ============
 
 Back to [Configuration](./Configuration.md)
@@ -16,6 +16,8 @@ This style is assigned to all layers and can be used for previewing the
 data with automatically detected min/max values.
 
 -   name, The name of the style to use within the service.
+-   abstract, The abstract of the style to use within the service. This overrides the NameMapping elements
+-   title, The title of the style to use within the service. This overrides the NameMapping elements
 
 ```
 

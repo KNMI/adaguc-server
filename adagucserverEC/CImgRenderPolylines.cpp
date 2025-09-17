@@ -218,7 +218,6 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
           // Draw the polygon holes
           if (true) {
             std::vector<PointArray> holes = itpoly->getHoles();
-            //            int h = 0;
             for (std::vector<PointArray>::iterator itholes = holes.begin(); itholes != holes.end(); ++itholes) {
               float *holeX = itholes->getLons();
               float *holeY = itholes->getLats();
@@ -243,7 +242,6 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
                 projectedHoleY[j] = height - dlat;
               }
               drawImage->poly(projectedHoleX, projectedHoleY, holeSize, drawPointLineWidth, drawPointLineColor2, drawPointLineColor2, true, false);
-              //              h++;
             }
           }
         }

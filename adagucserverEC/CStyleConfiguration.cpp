@@ -1,9 +1,8 @@
 #include "CStyleConfiguration.h"
 #include "CDataSource.h"
 
-RenderMethod getRenderMethodFromString(const char *_renderMethodString) {
+RenderMethod getRenderMethodFromString(CT::string renderMethodString) {
   RenderMethod renderMethod = RM_UNDEFINED;
-  CT::string renderMethodString = _renderMethodString;
   if (renderMethodString.indexOf("nearest") != -1) renderMethod |= RM_NEAREST;
   if (renderMethodString.indexOf("generic") != -1)
     renderMethod |= RM_GENERIC;
@@ -79,7 +78,7 @@ CT::string CStyleConfiguration::dump() {
   data.printconcat("styleAbstract %s\n", styleAbstract.c_str());
   int a = 0;
   for (auto renderSetting : renderSettings) {
-    data.printconcat("renderSetting %d) = [%s] [%s]\n", a, renderSetting->attr.render.c_str(), renderSetting->attr.renderhint.c_str());
+    data.printconcat("renderSetting %d) = [%s]\n", a, renderSetting->attr.renderhint.c_str());
     a++;
   }
   a = 0;
@@ -165,7 +164,7 @@ void parseStyleInfo(CStyleConfiguration *styleConfig, CDataSource *dataSource, i
     }
   }
 
-  // TODO NEXT STEP
+  // TODO: 2025-09-17: NEXT STEP allow to include styles into each other.
   // // Final INCLUDE
   // for (auto includeStyle : style->Include) {
   //   int extraStyle = dataSource->srvParams->getServerStyleIndexByName(includeStyle->attr.name);
@@ -262,7 +261,7 @@ int CStyleConfiguration::makeStyleConfig(CDataSource *dataSource) {
   int index = styleCompositionName.indexOf("/");
   if (index > 0) {
     CT::string renderMethodString = index > 0 ? styleCompositionName.substring(index, -1) : "";
-    this->renderMethod = getRenderMethodFromString(renderMethodString.c_str());
+    this->renderMethod = getRenderMethodFromString(renderMethodString);
   }
   if (this->renderMethod == RM_UNDEFINED) {
     this->renderMethod = RM_GENERIC;
@@ -288,7 +287,6 @@ int CStyleConfiguration::makeStyleConfig(CDataSource *dataSource) {
   }
 
   if (this->legendIndex == -1) {
-    // CDBWarning("No legend configured for style %s", this->styleCompositionName.c_str());
     if (dataSource->cfg->Legend.size() > 0) {
       this->legendIndex = 0;
       this->legendName = dataSource->cfg->Legend[0]->attr.name;
@@ -298,6 +296,5 @@ int CStyleConfiguration::makeStyleConfig(CDataSource *dataSource) {
     }
   }
 
-  // this->shadeInterval = 2.5;
   return 0;
 }

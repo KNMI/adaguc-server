@@ -26,7 +26,7 @@ class CDataSource;
 
 typedef unsigned int RenderMethod;
 CT::string getRenderMethodAsString(RenderMethod renderMethod);
-RenderMethod getRenderMethodFromString(const char *_renderMethodString);
+RenderMethod getRenderMethodFromString(CT::string renderMethodString);
 struct CStyleConfiguration {
   bool minMaxSet = false;
   bool hasLegendValueRange = false;
@@ -66,7 +66,7 @@ struct CStyleConfiguration {
   CT::string dump();
 
   /**
-   * Fills in the styleConfig object based on datasource,stylename, legendname and rendermethod
+   * Completes in the styleConfig object based on datasource which contains the stylename, legendname and rendermethod
    */
   int makeStyleConfig(CDataSource *dataSource);
 };

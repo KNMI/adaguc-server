@@ -76,9 +76,7 @@ Configuration
 
 <!-- -->
 
--   [Style](Style.md) - Style definitions used within layers.it Watch Lock
-    Rename Delete History
-    Configuration
+-   [Style](Style.md) (name, title, abstract) - Style definition for the layers
     -   [Legend](Legend.md) (tickinterval, tickround, fixed) `<value>` - Specifies which legend to use
     -   Min `<value>` - The minimum value of the image to display, corresponds with the first colors in the legend.
     -   Max `<value>` - The minimum value of the image to display, corresponds with the last colors in the legend.
