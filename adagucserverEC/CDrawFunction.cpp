@@ -29,10 +29,10 @@ CDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawImag
 
   /* Make a shorthand vector from the shadeInterval configuration*/
   if (settings.isUsingShadeIntervals) {
-    int numShadeDefs = (int)styleConfiguration->shadeIntervals->size();
+    int numShadeDefs = (int)styleConfiguration->shadeIntervals.size();
     settings.intervals.reserve(numShadeDefs);
     for (int j = 0; j < numShadeDefs; j++) {
-      CServerConfig::XMLE_ShadeInterval *shadeInterVal = ((*styleConfiguration->shadeIntervals)[j]);
+      CServerConfig::XMLE_ShadeInterval *shadeInterVal = styleConfiguration->shadeIntervals[j];
       settings.intervals.push_back(CDrawFunctionSettings::Interval(shadeInterVal->attr.min.toFloat(), shadeInterVal->attr.max.toFloat(), CColor(shadeInterVal->attr.fillcolor.c_str())));
       /* Check for bgcolor */
       if (j == 0) {

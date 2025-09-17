@@ -327,6 +327,20 @@ public:
   bool useMetadataTable();
 
   bool isEdrEnabled();
+
+  /**
+   * Retrieves the position of for the requested legend name in the servers configured legend elements.
+   * @param legendName The name of the legend to locate
+   * @return The legend index as integer, points to the position in the servers configured legends. Is -1 on failure.
+   */
+  int getServerLegendIndexByName(CT::string legendName);
+
+  /**
+   * Retrieves the position of for the requested style name in the servers configured style elements.
+   * @param styleName The name of the style to locate
+   * @return The style index as integer, points to the position in the servers configured styles. Is -1 on failure.
+   */
+  int getServerStyleIndexByName(CT::string styleName);
 };
 
 #endif

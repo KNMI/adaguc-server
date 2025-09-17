@@ -2635,13 +2635,9 @@ int CRequest::getDocumentCacheName(CT::string *documentName, CServerParams *srvP
 
 // pthread_mutex_t CImageDataWriter_addData_lock;
 void *CImageDataWriter_addData(void *arg) {
-
-  //   pthread_mutex_lock(&CImageDataWriter_addData_lock);
   CImageDataWriter_addData_args *imgdwArg = (CImageDataWriter_addData_args *)arg;
   imgdwArg->status = imgdwArg->imageDataWriter->addData(imgdwArg->dataSources);
-
   imgdwArg->finished = true;
-  //   pthread_mutex_unlock(&CImageDataWriter_addData_lock);
   imgdwArg->running = false;
   return NULL;
 }

@@ -100,8 +100,8 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
       int numFeatures = s->FeatureInterval.size();
       CT::string attributeValues[numFeatures];
       /* Loop through all configured FeatureInterval elements */
-      for (size_t j = 0; j < styleConfiguration->featureIntervals->size(); j++) {
-        CServerConfig::XMLE_FeatureInterval *featureInterval = ((*styleConfiguration->featureIntervals)[j]);
+      for (size_t j = 0; j < styleConfiguration->featureIntervals.size(); j++) {
+        CServerConfig::XMLE_FeatureInterval *featureInterval = styleConfiguration->featureIntervals[j];
         if (featureInterval->attr.match.empty() == false && featureInterval->attr.matchid.empty() == false) {
           /* Get the matchid attribute for the feature */
           CT::string attributeName = featureInterval->attr.matchid;
@@ -150,7 +150,7 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
     if (fileName == name.c_str()) {
       std::vector<CRectangleText> rects;
       size_t featureStoreSize = featureStore[fileName].size();
-      int featureRandomStart = 0;                       // For specifying a random polygon index to draw first
+      int featureRandomStart = 0; // For specifying a random polygon index to draw first
       if (randomStart) {
         featureRandomStart = rand() % featureStoreSize; // Random start for first feature to draw
       }
@@ -218,7 +218,6 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
           // Draw the polygon holes
           if (true) {
             std::vector<PointArray> holes = itpoly->getHoles();
-//            int h = 0;
             for (std::vector<PointArray>::iterator itholes = holes.begin(); itholes != holes.end(); ++itholes) {
               float *holeX = itholes->getLons();
               float *holeY = itholes->getLats();
@@ -243,7 +242,6 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
                 projectedHoleY[j] = height - dlat;
               }
               drawImage->poly(projectedHoleX, projectedHoleY, holeSize, drawPointLineWidth, drawPointLineColor2, drawPointLineColor2, true, false);
-//              h++;
             }
           }
         }
@@ -308,20 +306,19 @@ FeatureStyle CImgRenderPolylines::getAttributesForFeature(CFeature *feature, CT:
     fs.fontFile = fontLoc;
   }
 
-  for (size_t j = 0; j < styleConfig->featureIntervals->size(); j++) {
+  for (size_t j = 0; j < styleConfig->featureIntervals.size(); j++) {
     // Draw border if borderWidth>0
-    if ((*styleConfig->featureIntervals)[j]->attr.match.empty() == false) {
-      CT::string match = (*styleConfig->featureIntervals)[j]->attr.match;
+    if (styleConfig->featureIntervals[j]->attr.match.empty() == false) {
+      CT::string match = styleConfig->featureIntervals[j]->attr.match;
       CT::string matchString;
-      if ((*styleConfig->featureIntervals)[j]->attr.matchid.empty() == false) {
+      if (styleConfig->featureIntervals[j]->attr.matchid.empty() == false) {
         // match on matchid
         CT::string matchId;
-        matchId = ((*styleConfig->featureIntervals)[j]->attr.matchid);
+        matchId = styleConfig->featureIntervals[j]->attr.matchid;
         std::map<std::string, std::string>::iterator attributeValueItr = feature->paramMap.find(matchId.c_str());
         if (attributeValueItr != feature->paramMap.end()) {
           matchString = attributeValueItr->second.c_str();
         }
-
       } else {
         // match on id
         matchString = id;
@@ -330,7 +327,7 @@ FeatureStyle CImgRenderPolylines::getAttributesForFeature(CFeature *feature, CT:
       int ret = regcomp(&regex, match.c_str(), 0);
       if (!ret) {
         if (regexec(&regex, matchString.c_str(), 0, NULL, 0) == 0) {
-          CServerConfig::XMLE_FeatureInterval *fi = (*styleConfig->featureIntervals)[j];
+          CServerConfig::XMLE_FeatureInterval *fi = styleConfig->featureIntervals[j];
           // Matched
           if ((fi->attr.borderwidth.empty() == false) && ((fi->attr.borderwidth.toFloat()) > 0)) {
             fs.width = fi->attr.borderwidth.toFloat();
