@@ -424,43 +424,38 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
     }
 
     // Detect dd and ff for wind direction and wind speed
-    if (1 == 1) {
-      CDF::Variable *varSpeed = cdfObject->getVariableNE("ff");
-      CDF::Variable *varDirection = cdfObject->getVariableNE("dd");
-      if (varSpeed != NULL && varDirection != NULL) {
-        std::vector<CT::string> variableNames;
-        variableNames.push_back(varSpeed->name.c_str());
-        variableNames.push_back(varDirection->name.c_str());
-        addXMLLayerToConfig(srvParam, cdfObject, &variableNames, "derived", srvParam->internalAutoResourceLocation.c_str());
-        CREPORT_INFO_NODOC("Detected ff and dd wind variables.", CReportMessage::Categories::GENERAL);
-      }
+    CDF::Variable *varSpeed = cdfObject->getVariableNE("ff");
+    CDF::Variable *varDirection = cdfObject->getVariableNE("dd");
+    if (varSpeed != NULL && varDirection != NULL) {
+      std::vector<CT::string> variableNames;
+      variableNames.push_back(varSpeed->name.c_str());
+      variableNames.push_back(varDirection->name.c_str());
+      addXMLLayerToConfig(srvParam, cdfObject, &variableNames, "derived", srvParam->internalAutoResourceLocation.c_str());
+      CREPORT_INFO_NODOC("Detected ff and dd wind variables.", CReportMessage::Categories::GENERAL);
     }
 
     // Detect wind vectors based on standardnames
-    if (1 == 1) {
-
-      int varindex_x = -1, varindex_y = -1;
-      for (size_t j = 0; j < cdfObject->variables.size(); j++) {
-        try {
-          CT::string standard_name = cdfObject->variables[j]->getAttribute("standard_name")->getDataAsString();
-          if (standard_name.equals("eastward_wind") || standard_name.equals("x_wind")) {
-            varindex_x = j;
-          }
-          if (standard_name.equals("northward_wind") || standard_name.equals("y_wind")) {
-            varindex_y = j;
-          }
-        } catch (int e) {
+    int varindex_x = -1, varindex_y = -1;
+    for (size_t j = 0; j < cdfObject->variables.size(); j++) {
+      try {
+        CT::string standard_name = cdfObject->variables[j]->getAttribute("standard_name")->getDataAsString();
+        if (standard_name.equals("eastward_wind") || standard_name.equals("x_wind")) {
+          varindex_x = j;
         }
-
-        if (varindex_x != -1 && varindex_y != -1) {
-          std::vector<CT::string> variableNames;
-          variableNames.push_back(cdfObject->variables[varindex_x]->name.c_str());
-          variableNames.push_back(cdfObject->variables[varindex_y]->name.c_str());
-          CREPORT_INFO_NODOC("Detected standard name wind variables.", CReportMessage::Categories::GENERAL);
-          addXMLLayerToConfig(srvParam, cdfObject, &variableNames, "derived", srvParam->internalAutoResourceLocation.c_str());
-          varindex_x = -1;
-          varindex_y = -1;
+        if (standard_name.equals("northward_wind") || standard_name.equals("y_wind")) {
+          varindex_y = j;
         }
+      } catch (int e) {
+      }
+
+      if (varindex_x != -1 && varindex_y != -1) {
+        std::vector<CT::string> variableNames;
+        variableNames.push_back(cdfObject->variables[varindex_x]->name.c_str());
+        variableNames.push_back(cdfObject->variables[varindex_y]->name.c_str());
+        CREPORT_INFO_NODOC("Detected standard name wind variables.", CReportMessage::Categories::GENERAL);
+        addXMLLayerToConfig(srvParam, cdfObject, &variableNames, "derived", srvParam->internalAutoResourceLocation.c_str());
+        varindex_x = -1;
+        varindex_y = -1;
       }
     }
 

@@ -492,6 +492,10 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
   }
   //    CDBDebug("Vectors drawBarb=%d drawDiscs=%d drawVector=%d", drawBarb, drawDiscs, drawVector);
 
+  if (dataSource->getNumDataObjects() < 2) {
+    CDBError("Cannot draw barbs, not enough data objects");
+    throw __LINE__;
+  }
   CT::string varName1 = dataSource->getDataObject(0)->cdfVariable->name.c_str();
   CT::string varName2 = dataSource->getDataObject(1)->cdfVariable->name.c_str();
   std::vector<PointDVWithLatLon> *p1 = &dataSource->getDataObject(0)->points;
@@ -531,7 +535,7 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
     nrThinnedPoints = thinnedPointsIndex.size();
   }
   CDBDebug("Vector plotting %d elements %d %d", nrThinnedPoints, useFilter, usePoints.size());
-
+  drawBarb = true; // TODO: 2025-09-17, why!!!
   for (size_t pointNo = 0; pointNo < nrThinnedPoints; pointNo++) {
 
     size_t j = pointNo;
