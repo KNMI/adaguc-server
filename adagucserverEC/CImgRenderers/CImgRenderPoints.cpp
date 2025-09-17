@@ -188,7 +188,7 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
       if (!skipPoint) {
         if (drawVolume) {
           int x = (*pts)[j].x;
-          int y = dataSource->dHeight - (*pts)[j].y;
+          int y = dataSource->srvParams->Geo->dHeight - (*pts)[j].y;
           int rvol = drawPointFillColor.r;
           int gvol = drawPointFillColor.g;
           int bvol = drawPointFillColor.b;
@@ -211,7 +211,7 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
 
         if (drawSymbol) {
           int x = (*pts)[j].x;
-          int y = dataSource->dHeight - (*pts)[j].y;
+          int y = dataSource->srvParams->Geo->dHeight - (*pts)[j].y;
 
           bool minMaxSet = styleConfiguration->symbolIntervals.size() == 1 && !styleConfiguration->symbolIntervals[0]->attr.min.empty() && !styleConfiguration->symbolIntervals[0]->attr.max.empty();
           // Plot symbol if either valid v or Symbolinterval.min and max not set (to plot symbol for string data type)
@@ -282,7 +282,7 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
 
         if (drawPoints) {
           int x = (*pts)[j].x;
-          int y = dataSource->dHeight - (*pts)[j].y;
+          int y = dataSource->srvParams->Geo->dHeight - (*pts)[j].y;
 
           if (!drawZoomablePoints) {
             size_t doneMatrixPointer = 0;
@@ -408,7 +408,7 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
 
         if (drawDiscs) { // Filled disc with circle around it and value inside
           int x = (*pts)[j].x;
-          int y = dataSource->dHeight - (*pts)[j].y;
+          int y = dataSource->srvParams->Geo->dHeight - (*pts)[j].y;
           // drawImage->circle(x,y, drawPointDiscRadius, 240,0.65);
 
           if (!useDrawPointTextColor) {
@@ -492,6 +492,10 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
   }
   //    CDBDebug("Vectors drawBarb=%d drawDiscs=%d drawVector=%d", drawBarb, drawDiscs, drawVector);
 
+  if (dataSource->getNumDataObjects() < 2) {
+    CDBError("Cannot draw barbs, not enough data objects");
+    throw __LINE__;
+  }
   CT::string varName1 = dataSource->getDataObject(0)->cdfVariable->name.c_str();
   CT::string varName2 = dataSource->getDataObject(1)->cdfVariable->name.c_str();
   std::vector<PointDVWithLatLon> *p1 = &dataSource->getDataObject(0)->points;
@@ -531,7 +535,7 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
     nrThinnedPoints = thinnedPointsIndex.size();
   }
   CDBDebug("Vector plotting %d elements %d %d", nrThinnedPoints, useFilter, usePoints.size());
-
+  drawBarb = true; // TODO: 2025-09-17, why!!!
   for (size_t pointNo = 0; pointNo < nrThinnedPoints; pointNo++) {
 
     size_t j = pointNo;
@@ -560,7 +564,7 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
       }
     }
 
-    int y = dataSource->dHeight - (*p1)[j].y;
+    int y = dataSource->srvParams->Geo->dHeight - (*p1)[j].y;
 
     float strength = (*p1)[j].v;
     float direction = (*p2)[j].v;
@@ -616,7 +620,7 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
       if (drawDiscs) {
         // Draw a disc with the speed value in text and the dir. value as an arrow
         int x = (*p1)[j].x;
-        int y = dataSource->dHeight - (*p1)[j].y;
+        int y = dataSource->srvParams->Geo->dHeight - (*p1)[j].y;
         t.print(drawPointTextFormat.c_str(), strength);
         drawImage->setTextDisc(x, y, drawPointDiscRadius, t.c_str(), drawPointFontFile, drawPointFontSize, drawPointTextColor, drawPointFillColor, drawPointLineColor);
         drawImage->drawVector2(x, y, ((90 + direction) / 360.) * M_PI * 2, 10, drawPointDiscRadius, drawPointFillColor, drawVectorLineWidth);
@@ -807,7 +811,7 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
       }
     }
 
-    bool isVector = ((dataSource->getNumDataObjects() == 2) && (dataSource->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_GEOJSONPOINT") == NULL));
+    bool isVector = ((dataSource->getNumDataObjects() >= 2) && (dataSource->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_GEOJSONPOINT") == NULL));
     if (drawPointPointStyle.equals("radiusandvalue")) {
       isVector = false;
       isRadiusAndValue = true;

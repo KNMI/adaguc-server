@@ -690,10 +690,6 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
     StopWatch_Stop("finished findExtent");
 #endif
 
-#ifdef CXMLGEN_DEBUG
-    CDBDebug("PROJ=%s\tBBOX=(%f,%f,%f,%f)", myProjection.name.c_str(), myProjection.dfBBOX[0], myProjection.dfBBOX[1], myProjection.dfBBOX[2], myProjection.dfBBOX[3]);
-#endif
-
     // TODO!!! THIS IS DONE WAY TO OFTEN!
     // Calculate the latlonBBOX
     if (geo.CRS.equals("EPSG:4326")) {
