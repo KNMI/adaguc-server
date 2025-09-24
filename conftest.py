@@ -6,14 +6,14 @@ import sys
 
 import pytest
 
-ADAGUC_PATH = Path(__file__).parent.as_posix()
+ADAGUC_PATH = Path(__file__).parent.as_posix() + "/"
 environ["ADAGUC_PATH"] = ADAGUC_PATH
 environ["ADAGUC_DATASET_DIR"] = f"{ADAGUC_PATH}/data/config/datasets/"
 environ["ADAGUC_DATA_DIR"] = f"{ADAGUC_PATH}/data/datasets/"
 environ["ADAGUC_AUTOWMS_DIR"] = f"{ADAGUC_PATH}/data/datasets/"
-environ["ADAGUC_CONFIG"] = (
-    f"{ADAGUC_PATH}/python/lib/adaguc/adaguc-server-config-python-postgres.xml"
-)
+# environ["ADAGUC_CONFIG"] = (
+#     f"{ADAGUC_PATH}/python/lib/adaguc/adaguc-server-config-python-postgres.xml"
+# )
 # environ["ADAGUC_DB"] = "user=adaguc password=adaguc host=localhost dbname=adaguc_test"
 environ["ADAGUC_DB"] = (
     "user=adaguc password=adaguc host=host.docker.internal dbname=adaguc_test"

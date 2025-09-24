@@ -131,11 +131,14 @@ class AdagucTestTools:
         if any((c in chars) for c in filename):
             raise Exception("Filename %s contains invalid characters" % filename)
 
-        path = os.getenv("ADAGUC_PATH", "") + "/tests/"
-        if not os.path.exists(path):
-            os.makedirs(path)
+        # path = os.getenv("ADAGUC_PATH", "") + "/tests/"
+        # if not os.path.exists(path):
+        #     os.makedirs(path)
 
-        with open(os.getenv("ADAGUC_PATH", "") + "/tests/" + filename, "wb") as f:
+        # with open(os.getenv("ADAGUC_PATH", "") + "/tests/" + filename, "wb") as f:
+        #     f.write(data)
+
+        with open(filename, "wb") as f:
             f.write(data)
 
     def readfromfile(self, filename):
