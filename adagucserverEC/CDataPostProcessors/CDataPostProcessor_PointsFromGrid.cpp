@@ -64,38 +64,45 @@ int CDPPointsFromGrid::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSour
   warper.initreproj(dataSource, dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
 
   CDBDebug("%f %f %f %f", dataSource->dfBBOX[0], dataSource->dfBBOX[1], dataSource->dfBBOX[2], dataSource->dfBBOX[3]);
-  for (size_t y = 0; y < size_t(dataSource->dHeight); y = y + 1) {
-    for (size_t x = 0; x < size_t(dataSource->dWidth); x = x + 1) {
+
+  std::vector<f8point> pointListInModelCoords;
+  std::vector<size_t> pointers;
+  for (size_t y = 0; y < size_t(dataSource->dHeight); y = y + 10) {
+    for (size_t x = 0; x < size_t(dataSource->dWidth); x = x + 10) {
       size_t p = x + y * dataSource->dWidth;
-      double modelX = dataSource->dfCellSizeX * x + dataSource->dfBBOX[0];
-      double modelY = dataSource->dfCellSizeY * y + dataSource->dfBBOX[3];
-      double longitude = modelX;
-      double latitude = modelY;
-      warper.reprojModelToLatLon(longitude, latitude); // From model projection to lat/lon
-      double screenX = longitude;
-      double screenY = latitude;
-      warper.reprojfromLatLon(screenX, screenY); // From lat/lon to view projection (GetMap CRS)
-      // From View projection (GetMap CRS) to getmap pixel coordinate
-      f8point pixelCoord = {.x = screenX, .y = screenY};
+      double modelX = dataSource->dfCellSizeX * x + dataSource->dfBBOX[0] + dataSource->dfCellSizeX / 2;
+      double modelY = dataSource->dfCellSizeY * y + dataSource->dfBBOX[3] + dataSource->dfCellSizeY / 2;
+      pointListInModelCoords.push_back({.x = modelX, .y = modelY});
+      pointers.push_back(p);
+    }
+  }
+
+  auto pointsInLatLon = pointListInModelCoords;
+  warper.reprojModelToLatLon(pointsInLatLon);
+  auto pointsInScreen = pointsInLatLon;
+  warper.reprojfromLatLon(pointsInScreen);
+
+  int id = 0;
+  for (auto con : proc->attr.select.splitToStack(",")) {
+    for (size_t index = 0; index < pointListInModelCoords.size(); index++) {
+      auto pixelCoord = pointsInScreen[index];
       pixelCoord.x = ((pixelCoord.x - dataSource->srvParams->Geo->dfBBOX[0]) / (dataSource->srvParams->Geo->dfBBOX[2] - dataSource->srvParams->Geo->dfBBOX[0])) * dataSource->srvParams->Geo->dWidth;
       pixelCoord.y = ((pixelCoord.y - dataSource->srvParams->Geo->dfBBOX[1]) / (dataSource->srvParams->Geo->dfBBOX[3] - dataSource->srvParams->Geo->dfBBOX[1])) * dataSource->srvParams->Geo->dHeight;
 
-      int id = 0;
-      for (auto con : proc->attr.select.splitToStack(",")) {
-        auto ob = dataSource->getDataObjectByName(con.c_str());
-        auto destob = dataSource->getDataObject(id);
-        id++;
-        if (ob->cdfVariable->getType() != CDF_FLOAT) {
-          CDBError("Can only work with CDF_FLOAT");
-          throw __LINE__;
-        }
-        float *data = (float *)ob->cdfVariable->data;
-        int px = pixelCoord.x;
-        int py = pixelCoord.y;
-        auto newPoint = PointDVWithLatLon(px, py, longitude, latitude, data[p]);
-        destob->points.push_back(newPoint);
+      auto ob = dataSource->getDataObjectByName(con.c_str());
+      auto destob = dataSource->getDataObject(id);
+
+      if (ob->cdfVariable->getType() != CDF_FLOAT) {
+        CDBError("Can only work with CDF_FLOAT");
+        throw __LINE__;
       }
+      float *data = (float *)ob->cdfVariable->data;
+      int px = pixelCoord.x;
+      int py = pixelCoord.y;
+      auto newPoint = PointDVWithLatLon(px, py, pointsInLatLon[index].x, pointsInLatLon[index].y, data[pointers[index]]);
+      destob->points.push_back(newPoint);
     }
+    id++;
   }
 
   return 0;

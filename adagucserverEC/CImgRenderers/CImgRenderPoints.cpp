@@ -508,42 +508,48 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
     CDBError("Cannot draw barbs, lists for speed (%d) and direction (%d) don't have equal length ", numberOfPoints, p2->size());
     throw __LINE__;
   }
-  size_t nrThinnedPoints = numberOfPoints;
-  std::vector<size_t> thinnedPointIndexList;
 
   CT::string t;
-  if (doThinning) {
-    thinnedPointIndexList.push_back(0); // Always put in first element
-    for (size_t pointIndex = 1; pointIndex < numberOfPoints; pointIndex++) {
-      if ((useFilter && (*p1)[pointIndex].paramList.size() > 0 && usePoints.find((*p1)[pointIndex].paramList[0].value.c_str()) != usePoints.end()) || !useFilter) {
-        size_t thinnedPointNr = 0;
-        for (thinnedPointNr = 0; thinnedPointNr < nrThinnedPoints; thinnedPointNr++) {
-          auto thinnedPointIndex = thinnedPointIndexList[thinnedPointNr];
-          if (hypot((*p1)[thinnedPointIndex].x - (*p1)[pointIndex].x, (*p1)[thinnedPointIndex].y - (*p1)[pointIndex].y) < thinningRadius) break;
-        }
-        if (thinnedPointNr == nrThinnedPoints) thinnedPointIndexList.push_back(pointIndex);
-      }
-    }
-  } else if (useFilter) {
-    for (size_t j = 0; j < numberOfPoints; j++) {
-      if ((*p1)[j].paramList.size() > 0 && usePoints.find((*p1)[j].paramList[0].value.c_str()) != usePoints.end()) {
-        // if ((*p1)[j].paramList.size()>0 && usePoints.find((*p1)[j].paramList[0].value.c_str())!=usePoints.end()){
-        thinnedPointIndexList.push_back(j);
-        CDBDebug("pushed el %d: %s", j, (*p1)[j].paramList[0].value.c_str());
+
+  // TODO: maarten plieger 2025-09-24: Move thinning to single place and use in both point and vector functions.
+
+  std::vector<size_t> filteredPointIndices;
+  // Filter the points
+  if (useFilter) {
+    for (size_t pointIndex = 0; pointIndex < numberOfPoints; pointIndex++) {
+      if ((*p1)[pointIndex].paramList.size() > 0 && usePoints.find((*p1)[pointIndex].paramList[0].value.c_str()) != usePoints.end()) {
+        filteredPointIndices.push_back(pointIndex);
       }
     }
   } else {
-    // if no thinning: get all indexes
+    // Use all indices instead
     for (size_t pointIndex = 0; pointIndex < numberOfPoints; pointIndex++) {
-      thinnedPointIndexList.push_back(pointIndex);
+      filteredPointIndices.push_back(pointIndex);
     }
   }
+
+  std::vector<size_t> thinnedPointIndexList;
+
+  // Check for thinning as well.
+  if (doThinning) {
+    thinnedPointIndexList.push_back(0); // Always put in first element
+    for (size_t pointIndex = 1; pointIndex < filteredPointIndices.size(); pointIndex++) {
+      size_t thinnedPointNr = 0;
+      for (thinnedPointNr = 0; thinnedPointNr < thinnedPointIndexList.size(); thinnedPointNr++) {
+        auto thinnedPointIndex = thinnedPointIndexList[thinnedPointNr];
+        if (hypot((*p1)[thinnedPointIndex].x - (*p1)[pointIndex].x, (*p1)[thinnedPointIndex].y - (*p1)[pointIndex].y) < thinningRadius) break;
+      }
+      if (thinnedPointNr == thinnedPointIndexList.size()) thinnedPointIndexList.push_back(pointIndex);
+    }
+  } else {
+    thinnedPointIndexList = filteredPointIndices;
+  }
+
   float fillValueP1 = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
-  float fillValueP2 = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(1)->dfNodataValue : NAN;
-  CDBDebug("Vector plotting %d elements %d %d", nrThinnedPoints, useFilter, usePoints.size());
+  float fillValueP2 = dataSource->getDataObject(1)->hasNodataValue ? dataSource->getDataObject(1)->dfNodataValue : NAN;
+  CDBDebug("Vector plotting %d elements %d %d", thinnedPointIndexList.size(), useFilter, usePoints.size());
   CDBDebug("%f %f", fillValueP1, fillValueP2);
-  for (auto pointNo : thinnedPointIndexList) {
-    auto pointIndex = thinnedPointIndexList[pointNo];
+  for (auto pointIndex : thinnedPointIndexList) {
     float strength = (*p1)[pointIndex].v;
     float direction = (*p2)[pointIndex].v;
     if (strength != strength || strength == fillValueP1 || direction != direction || direction == fillValueP2) continue;
@@ -817,7 +823,7 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
       }
     }
 
-    bool isVector = ((dataSource->getNumDataObjects() == 2) && (dataSource->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_GEOJSONPOINT") == NULL));
+    bool isVector = ((dataSource->getNumDataObjects() >= 2) && (dataSource->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_GEOJSONPOINT") == NULL));
     if (drawPointPointStyle.equals("radiusandvalue")) {
       isVector = false;
       isRadiusAndValue = true;

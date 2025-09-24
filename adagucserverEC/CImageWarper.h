@@ -91,11 +91,17 @@ public:
    */
   int reprojpoint_inv_topx(double &dfx, double &dfy, CGeoParams *_geoDest);
   int reprojpoint_inv(f8point &p);
+
   int reprojModelToLatLon(double &dfx, double &dfy);
+  void reprojModelToLatLon(std::vector<f8point> &points);
+
   int reprojModelFromLatLon(double &dfx, double &dfy);
   int reprojModelToLatLon(f8point &point);
   void reprojBBOX(double *df4PixelExtent);
+
   int reprojfromLatLon(double &dfx, double &dfy);
+  void reprojfromLatLon(std::vector<f8point> &points);
+
   int reprojToLatLon(double &dfx, double &dfy);
   // int decodeCRS(CT::string *outputCRS, CT::string *inputCRS);
   int decodeCRS(CT::string *outputCRS, CT::string *inputCRS, std::vector<CServerConfig::XMLE_Projection *> *prj);
