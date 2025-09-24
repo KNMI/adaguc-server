@@ -52,9 +52,9 @@ class AdagucTestTools:
         adagucenv = os.environ.copy()
         adagucenv.update(env)
 
-        adagucenv['LD_LIBRARY_PATH'] = os.getenv('LD_LIBRARY_PATH', "")
+        adagucenv["LD_LIBRARY_PATH"] = os.getenv("LD_LIBRARY_PATH", "")
 
-        ADAGUC_LOGFILE = os.environ['ADAGUC_LOGFILE']
+        ADAGUC_LOGFILE = os.environ["ADAGUC_LOGFILE"]
 
         try:
             os.remove(ADAGUC_LOGFILE)
@@ -71,14 +71,16 @@ class AdagucTestTools:
         os.chdir(ADAGUC_PATH + "/tests")
 
         filetogenerate = BytesIO()
-        status, headers, processErr = asyncio.run(CGIRunner().run(
-            adagucargs,
-            url=url,
-            output=filetogenerate,
-            env=adagucenv,
-            path=path,
-            isCGI=isCGI,
-        ))
+        status, headers, processErr = asyncio.run(
+            CGIRunner().run(
+                adagucargs,
+                url=url,
+                output=filetogenerate,
+                env=adagucenv,
+                path=path,
+                isCGI=isCGI,
+            )
+        )
 
         # Convert HTTP status codes
         if status == 32:
@@ -120,20 +122,27 @@ class AdagucTestTools:
                 self.printLogFile()
                 print(
                     "[WARNING]: Adaguc-server writes too many lines to the logfile, size = %d kilobytes"
-                    % (logfileSize / 1024))
+                    % (logfileSize / 1024)
+                )
             return status, filetogenerate, headers
 
     def writetofile(self, filename, data):
-        chars = set(':+,@#$%^&*()\\')
+        chars = set(":+,@#$%^&*()\\")
         if any((c in chars) for c in filename):
             raise Exception("Filename %s contains invalid characters" % filename)
-        with open(filename, "wb") as f:
+
+        path = os.getenv("ADAGUC_PATH", "") + "/tests/"
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        with open(os.getenv("ADAGUC_PATH", "") + "/tests/" + filename, "wb") as f:
             f.write(data)
 
     def readfromfile(self, filename):
-        adagucpath = os.getenv("ADAGUC_PATH")
+        adagucpath = os.getenv("ADAGUC_PATH", "") + "/tests/"
         if adagucpath:
-            filename = filename.replace("{ADAGUC_PATH}/", adagucpath)
+            # filename = filename.replace("{ADAGUC_PATH}/", adagucpath)
+            filename = adagucpath + filename
         with open(filename, "rb") as f:
             return f.read()
 
@@ -167,12 +176,16 @@ class AdagucTestTools:
         if not os.path.exists(directory):
             os.makedirs(directory)
 
+        directory = ADAGUC_PATH + "/tests/" + directory
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
     def compareImage(
         self,
         expectedImagePath,
         returnedImagePath,
         maxAllowedColorDifference=1,
-        maxAllowedColorPercentage=0.01
+        maxAllowedColorPercentage=0.01,
     ):
         """Compare the pictures referred to by the arguments.
 
@@ -205,10 +218,18 @@ class AdagucTestTools:
             returned_palette_values = returned_image.getpalette()
             if returned_image.palette.mode == "RGB":
                 print(f"\tApplying palette translation for comparison...")
-                expected_palette = [tuple(expected_palette_values[i:i + 3]) for i in range(0, len(expected_palette_values), 3)]
-                returned_palette = [tuple(returned_palette_values[i:i + 3]) for i in range(0, len(returned_palette_values), 3)]
+                expected_palette = [
+                    tuple(expected_palette_values[i : i + 3])
+                    for i in range(0, len(expected_palette_values), 3)
+                ]
+                returned_palette = [
+                    tuple(returned_palette_values[i : i + 3])
+                    for i in range(0, len(returned_palette_values), 3)
+                ]
             else:
-                print(f"\nError: Palette mode {returned_image.palette.mode} not supported!")
+                print(
+                    f"\nError: Palette mode {returned_image.palette.mode} not supported!"
+                )
                 return False
 
         n_bands = len(expected_image.getbands())
@@ -228,10 +249,11 @@ class AdagucTestTools:
                         expected_color = expected_palette[expected_color]
                         returned_color = returned_palette[returned_color]
                     else:
-                        expected_color = (expected_color, )
-                        returned_color = (returned_color, )
+                        expected_color = (expected_color,)
+                        returned_color = (returned_color,)
                 diff_color = tuple(
-                    map(lambda e, g: e - g, expected_color, returned_color))
+                    map(lambda e, g: e - g, expected_color, returned_color)
+                )
 
                 if expected_color != returned_color:
                     print(
@@ -262,8 +284,10 @@ class AdagucTestTools:
             )
             return False
 
-        if (count_pixels_with_color_difference * 100.0 /
-            (width * height) > maxAllowedColorPercentage):
+        if (
+            count_pixels_with_color_difference * 100.0 / (width * height)
+            > maxAllowedColorPercentage
+        ):
             print(
                 f"Error, percentage of pixels with color difference is too large "
                 f"({count_pixels_with_color_difference*100.0/(width*height)} % > {maxAllowedColorPercentage} %)",
@@ -273,15 +297,16 @@ class AdagucTestTools:
 
         return True
 
-    def compareGetCapabilitiesXML(self, testresultFileLocation,
-                                  expectedOutputFileLocation):
+    def compareGetCapabilitiesXML(
+        self, testresultFileLocation, expectedOutputFileLocation
+    ):
         expectedxml = self.readfromfile(expectedOutputFileLocation)
         testxml = self.readfromfile(testresultFileLocation)
 
         obj1 = objectify.fromstring(
-            re.sub(b' xmlns="[^"]+"', b"", expectedxml, count=1))
-        obj2 = objectify.fromstring(
-            re.sub(b' xmlns="[^"]+"', b"", testxml, count=1))
+            re.sub(b' xmlns="[^"]+"', b"", expectedxml, count=1)
+        )
+        obj2 = objectify.fromstring(re.sub(b' xmlns="[^"]+"', b"", testxml, count=1))
 
         # Remove ADAGUC build date and version from keywordlists
         try:
@@ -331,7 +356,8 @@ class AdagucTestTools:
         def removeGmlEnvelope(root, epsg_code):
             xpath_query = f".//gml:Envelope[@srsName='EPSG:{epsg_code}']"
             envelopes = root.xpath(
-                xpath_query, namespaces={"gml": "http://www.opengis.net/gml"})
+                xpath_query, namespaces={"gml": "http://www.opengis.net/gml"}
+            )
             for envelope in envelopes:
                 for child in envelope.getchildren():
                     envelope.remove(child)
@@ -347,6 +373,7 @@ class AdagucTestTools:
         if (result == expect) is False:
             print(
                 '\nExpected XML is different, file \n"%s"\n should be equal to \n"%s"'
-                % (testresultFileLocation, expectedOutputFileLocation))
+                % (testresultFileLocation, expectedOutputFileLocation)
+            )
 
         return result == expect

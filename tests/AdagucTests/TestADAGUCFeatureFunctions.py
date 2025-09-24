@@ -12,20 +12,19 @@ from adaguc.ADAGUCFeatureFunctions import ADAGUCFeatureCombineNuts
 
 from adaguc.AdagucTestTools import AdagucTestTools
 
-ADAGUC_PATH = os.environ['ADAGUC_PATH']
+ADAGUC_PATH = os.environ["ADAGUC_PATH"]
 
 
 class TestADAGUCFeatureFunctions(unittest.TestCase):
     """
     Run test for ADAGUC Feature functions
     """
-    testresultspath = "{ADAGUC_PATH}/tests/testresults/TestADAGUCFeatureFunctions/"
-    expectedoutputsspath = "{ADAGUC_PATH}/tests/expectedoutputs/TestADAGUCFeatureFunctions/"
-    env = {'ADAGUC_CONFIG': ADAGUC_PATH +
-           "/data/config/adaguc.autoresource.xml"}
-    testresultspath = testresultspath.replace("{ADAGUC_PATH}/", ADAGUC_PATH)
-    expectedoutputsspath = expectedoutputsspath.replace(
-        "{ADAGUC_PATH}/", ADAGUC_PATH)
+
+    testresultspath = "testresults/TestADAGUCFeatureFunctions/"
+    expectedoutputsspath = "expectedoutputs/TestADAGUCFeatureFunctions/"
+    env = {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.autoresource.xml"}
+    # testresultspath = testresultspath.replace("{ADAGUC_PATH}/", ADAGUC_PATH)
+    # expectedoutputsspath = expectedoutputsspath.replace("{ADAGUC_PATH}/", ADAGUC_PATH)
 
     AdagucTestTools().mkdir_p(testresultspath)
 
