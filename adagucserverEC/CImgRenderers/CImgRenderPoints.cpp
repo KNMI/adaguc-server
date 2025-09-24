@@ -119,37 +119,37 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
     std::vector<PointDVWithLatLon> *p1 = &dataSource->getDataObject(dataObjectIndex)->points;
     size_t l = p1->size();
     size_t nrThinnedPoints = l;
-    std::vector<size_t> thinnedPointsIndex;
+    std::vector<size_t> thinnedPointIndexList;
 
     //      CDBDebug("Before thinning: %d (%d)", l, doThinning);
     if (doThinning) {
       for (size_t j = 0; j < l; j++) {
-        size_t nrThinnedPoints = thinnedPointsIndex.size();
+        size_t nrThinnedPoints = thinnedPointIndexList.size();
         size_t i;
         if ((useFilter && (*p1)[j].paramList.size() > 0 && usePoints.find((*p1)[j].paramList[0].value.c_str()) != usePoints.end()) || !useFilter) {
           for (i = 0; i < nrThinnedPoints; i++) {
             if (j == 0) break; // Always put in first element
-            if (hypot((*p1)[thinnedPointsIndex[i]].x - (*p1)[j].x, (*p1)[thinnedPointsIndex[i]].y - (*p1)[j].y) < thinningRadius) break;
+            if (hypot((*p1)[thinnedPointIndexList[i]].x - (*p1)[j].x, (*p1)[thinnedPointIndexList[i]].y - (*p1)[j].y) < thinningRadius) break;
           }
-          if (i == nrThinnedPoints) thinnedPointsIndex.push_back(j);
+          if (i == nrThinnedPoints) thinnedPointIndexList.push_back(j);
         }
       }
-      nrThinnedPoints = thinnedPointsIndex.size();
+      nrThinnedPoints = thinnedPointIndexList.size();
     } else if (useFilter) {
       for (size_t j = 0; j < l; j++) {
         if ((*p1)[j].paramList.size() > 0 && usePoints.find((*p1)[j].paramList[0].value.c_str()) != usePoints.end()) {
           // if ((*p1)[j].paramList.size()>0 && usePoints.find((*p1)[j].paramList[0].value.c_str())!=usePoints.end()){
-          thinnedPointsIndex.push_back(j);
+          thinnedPointIndexList.push_back(j);
           CDBDebug("pushed el %d: %s", j, (*p1)[j].paramList[0].value.c_str());
         }
       }
-      nrThinnedPoints = thinnedPointsIndex.size();
+      nrThinnedPoints = thinnedPointIndexList.size();
     } else {
       // if no thinning: get all indexes
       for (size_t pointIndex = 0; pointIndex < l; pointIndex++) {
-        thinnedPointsIndex.push_back(pointIndex);
+        thinnedPointIndexList.push_back(pointIndex);
       }
-      nrThinnedPoints = thinnedPointsIndex.size();
+      nrThinnedPoints = thinnedPointIndexList.size();
     }
 
     bool pointMinMaxSet = false;
@@ -162,10 +162,12 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
     }
 
     CT::string t;
+    float fillValueP1 = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
     for (size_t pointNo = 0; pointNo < nrThinnedPoints; pointNo++) {
       size_t j = pointNo;
-      j = thinnedPointsIndex[pointNo];
+      j = thinnedPointIndexList[pointNo];
       float v = (*pts)[j].v;
+      if (v != v || v == fillValueP1) continue;
 
       float perPointDrawPointDiscRadius = drawPointDiscRadius;
       bool skipPoint = false;
@@ -500,50 +502,56 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
   CT::string varName2 = dataSource->getDataObject(1)->cdfVariable->name.c_str();
   std::vector<PointDVWithLatLon> *p1 = &dataSource->getDataObject(0)->points;
   std::vector<PointDVWithLatLon> *p2 = &dataSource->getDataObject(1)->points;
-  size_t l = p1->size();
-  size_t nrThinnedPoints = l;
-  std::vector<size_t> thinnedPointsIndex;
+  size_t numberOfPoints = p1->size();
+
+  if (p2->size() != numberOfPoints) {
+    CDBError("Cannot draw barbs, lists for speed (%d) and direction (%d) don't have equal length ", numberOfPoints, p2->size());
+    throw __LINE__;
+  }
+  size_t nrThinnedPoints = numberOfPoints;
+  std::vector<size_t> thinnedPointIndexList;
 
   CT::string t;
   if (doThinning) {
-    for (size_t j = 0; j < l; j++) {
-      size_t nrThinnedPoints = thinnedPointsIndex.size();
-      size_t i;
-      if ((useFilter && (*p1)[j].paramList.size() > 0 && usePoints.find((*p1)[j].paramList[0].value.c_str()) != usePoints.end()) || !useFilter) {
-        for (i = 0; i < nrThinnedPoints; i++) {
-          if (j == 0) break; // Always put in first element
-          if (hypot((*p1)[thinnedPointsIndex[i]].x - (*p1)[j].x, (*p1)[thinnedPointsIndex[i]].y - (*p1)[j].y) < thinningRadius) break;
+    thinnedPointIndexList.push_back(0); // Always put in first element
+    for (size_t pointIndex = 1; pointIndex < numberOfPoints; pointIndex++) {
+      if ((useFilter && (*p1)[pointIndex].paramList.size() > 0 && usePoints.find((*p1)[pointIndex].paramList[0].value.c_str()) != usePoints.end()) || !useFilter) {
+        size_t thinnedPointNr = 0;
+        for (thinnedPointNr = 0; thinnedPointNr < nrThinnedPoints; thinnedPointNr++) {
+          auto thinnedPointIndex = thinnedPointIndexList[thinnedPointNr];
+          if (hypot((*p1)[thinnedPointIndex].x - (*p1)[pointIndex].x, (*p1)[thinnedPointIndex].y - (*p1)[pointIndex].y) < thinningRadius) break;
         }
-        if (i == nrThinnedPoints) thinnedPointsIndex.push_back(j);
+        if (thinnedPointNr == nrThinnedPoints) thinnedPointIndexList.push_back(pointIndex);
       }
     }
-    nrThinnedPoints = thinnedPointsIndex.size();
   } else if (useFilter) {
-    for (size_t j = 0; j < l; j++) {
+    for (size_t j = 0; j < numberOfPoints; j++) {
       if ((*p1)[j].paramList.size() > 0 && usePoints.find((*p1)[j].paramList[0].value.c_str()) != usePoints.end()) {
         // if ((*p1)[j].paramList.size()>0 && usePoints.find((*p1)[j].paramList[0].value.c_str())!=usePoints.end()){
-        thinnedPointsIndex.push_back(j);
+        thinnedPointIndexList.push_back(j);
         CDBDebug("pushed el %d: %s", j, (*p1)[j].paramList[0].value.c_str());
       }
     }
-    nrThinnedPoints = thinnedPointsIndex.size();
   } else {
     // if no thinning: get all indexes
-    for (size_t pointIndex = 0; pointIndex < l; pointIndex++) {
-      thinnedPointsIndex.push_back(pointIndex);
+    for (size_t pointIndex = 0; pointIndex < numberOfPoints; pointIndex++) {
+      thinnedPointIndexList.push_back(pointIndex);
     }
-    nrThinnedPoints = thinnedPointsIndex.size();
   }
+  float fillValueP1 = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
+  float fillValueP2 = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(1)->dfNodataValue : NAN;
   CDBDebug("Vector plotting %d elements %d %d", nrThinnedPoints, useFilter, usePoints.size());
-  drawBarb = true; // TODO: 2025-09-17, why!!!
-  for (size_t pointNo = 0; pointNo < nrThinnedPoints; pointNo++) {
+  CDBDebug("%f %f", fillValueP1, fillValueP2);
+  for (auto pointNo : thinnedPointIndexList) {
+    auto pointIndex = thinnedPointIndexList[pointNo];
+    float strength = (*p1)[pointIndex].v;
+    float direction = (*p2)[pointIndex].v;
+    if (strength != strength || strength == fillValueP1 || direction != direction || direction == fillValueP2) continue;
 
-    size_t j = pointNo;
-    j = thinnedPointsIndex[pointNo];
-    int x = (*p1)[j].x;
-    double lat = (*p1)[j].lat;
-    double lon = (*p1)[j].lon;
-    double rotation = (*p1)[j].rotation;
+    int x = (*p1)[pointIndex].x;
+    double lat = (*p1)[pointIndex].lat;
+    double lon = (*p1)[pointIndex].lon;
+    double rotation = (*p1)[pointIndex].rotation;
 
     if (rotation == 0) {
       double latForRot = lat;
@@ -564,10 +572,8 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
       }
     }
 
-    int y = dataSource->srvParams->Geo->dHeight - (*p1)[j].y;
+    int y = dataSource->srvParams->Geo->dHeight - (*p1)[pointIndex].y;
 
-    float strength = (*p1)[j].v;
-    float direction = (*p2)[j].v;
     if (direction == direction) direction += rotation; // Nan stays Nan
 
     if ((direction == direction) && (strength == strength)) { // Check for Nan
@@ -589,8 +595,8 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
       }
       // void drawBarb(int x,int y,double direction, double strength,int color,bool toKnots,bool flip);
       if (drawVectorPlotStationId) {
-        if ((*p1)[j].paramList.size() > 0) {
-          CT::string value = (*p1)[j].paramList[0].value;
+        if ((*p1)[pointIndex].paramList.size() > 0) {
+          CT::string value = (*p1)[pointIndex].paramList[0].value;
           if (drawBarb) {
             if ((direction >= 90) && (direction <= 270)) {
               drawImage->setText(value.c_str(), value.length(), x - value.length() * 3, y - 20, drawPointTextColor, 0);
@@ -619,8 +625,8 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
 
       if (drawDiscs) {
         // Draw a disc with the speed value in text and the dir. value as an arrow
-        int x = (*p1)[j].x;
-        int y = dataSource->srvParams->Geo->dHeight - (*p1)[j].y;
+        int x = (*p1)[pointIndex].x;
+        int y = dataSource->srvParams->Geo->dHeight - (*p1)[pointIndex].y;
         t.print(drawPointTextFormat.c_str(), strength);
         drawImage->setTextDisc(x, y, drawPointDiscRadius, t.c_str(), drawPointFontFile, drawPointFontSize, drawPointTextColor, drawPointFillColor, drawPointLineColor);
         drawImage->drawVector2(x, y, ((90 + direction) / 360.) * M_PI * 2, 10, drawPointDiscRadius, drawPointFillColor, drawVectorLineWidth);
@@ -811,7 +817,7 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
       }
     }
 
-    bool isVector = ((dataSource->getNumDataObjects() >= 2) && (dataSource->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_GEOJSONPOINT") == NULL));
+    bool isVector = ((dataSource->getNumDataObjects() == 2) && (dataSource->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_GEOJSONPOINT") == NULL));
     if (drawPointPointStyle.equals("radiusandvalue")) {
       isVector = false;
       isRadiusAndValue = true;
