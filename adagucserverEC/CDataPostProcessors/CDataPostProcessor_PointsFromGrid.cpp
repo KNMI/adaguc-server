@@ -47,6 +47,52 @@ int CDPPointsFromGrid::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSour
   return 1;
 }
 
+f8point getPixelCoordinateFromGetMapCoordinate(f8point in, CDataSource &dataSource) {
+  f8point pixelCoord;
+  pixelCoord.x = ((in.x - dataSource.srvParams->Geo->dfBBOX[0]) / (dataSource.srvParams->Geo->dfBBOX[2] - dataSource.srvParams->Geo->dfBBOX[0])) * dataSource.srvParams->Geo->dWidth;
+  pixelCoord.y = ((in.y - dataSource.srvParams->Geo->dfBBOX[1]) / (dataSource.srvParams->Geo->dfBBOX[3] - dataSource.srvParams->Geo->dfBBOX[1])) * dataSource.srvParams->Geo->dHeight;
+  return pixelCoord;
+}
+
+f8point getGetMapCoordinateFromPixelCoordinate(f8point in, CDataSource &dataSource) {
+  f8point getmapCoord;
+  getmapCoord.x = (in.x / dataSource.srvParams->Geo->dWidth) * (dataSource.srvParams->Geo->dfBBOX[2] - dataSource.srvParams->Geo->dfBBOX[0]) + dataSource.srvParams->Geo->dfBBOX[0];
+  getmapCoord.y = (in.y / dataSource.srvParams->Geo->dHeight) * (dataSource.srvParams->Geo->dfBBOX[3] - dataSource.srvParams->Geo->dfBBOX[1]) + dataSource.srvParams->Geo->dfBBOX[1];
+  return getmapCoord;
+}
+
+f8point getStrideFromGetMapLocation(CDataSource &dataSource, CImageWarper &warper) {
+  f8point pixelOffset = {.x = 50, .y = 50}; // TODO make configurable?
+
+  // Calculate center of modelgrid
+  f8point middlePointModelData = {.x = (dataSource.dfBBOX[0] + dataSource.dfBBOX[2]) / 2, .y = (dataSource.dfBBOX[1] + dataSource.dfBBOX[3]) / 2};
+  f8point middlePoint = middlePointModelData;
+
+  //  Convert to GetMap CRS coords
+  warper.reprojpoint_inv(middlePointModelData);
+
+  //  Convert to GetMap Pixel Coords
+  f8point middleBoxInPixelCoords = getPixelCoordinateFromGetMapCoordinate(middlePointModelData, dataSource);
+
+  f8point middleBoxInPixelCoordsX = middleBoxInPixelCoords;
+  f8point middleBoxInPixelCoordsY = middleBoxInPixelCoords;
+
+  // Add the desired pixel offset
+  middleBoxInPixelCoordsX.x += pixelOffset.x;
+  middleBoxInPixelCoordsY.y += pixelOffset.y;
+
+  // Back to GetMap CRS coords
+  auto getMapMiddleX = getGetMapCoordinateFromPixelCoordinate(middleBoxInPixelCoordsX, dataSource);
+  auto getMapMiddleY = getGetMapCoordinateFromPixelCoordinate(middleBoxInPixelCoordsY, dataSource);
+
+  // Back to model coords
+  warper.reprojpoint(getMapMiddleX);
+  warper.reprojpoint(getMapMiddleY);
+
+  // Substract from model center, make it absolute and round up.
+  return {.x = ceil(fabs((getMapMiddleX.x - middlePoint.x) / dataSource.dfCellSizeX)), .y = ceil(fabs((getMapMiddleY.y - middlePoint.y) / dataSource.dfCellSizeY))};
+}
+
 int CDPPointsFromGrid::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
   if (isApplicable(proc, dataSource, mode) == false) {
     return -1;
@@ -63,12 +109,16 @@ int CDPPointsFromGrid::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSour
   }
   warper.initreproj(dataSource, dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
 
-  CDBDebug("%f %f %f %f", dataSource->dfBBOX[0], dataSource->dfBBOX[1], dataSource->dfBBOX[2], dataSource->dfBBOX[3]);
-
   std::vector<f8point> pointListInModelCoords;
   std::vector<size_t> pointers;
-  for (size_t y = 0; y < size_t(dataSource->dHeight); y = y + 10) {
-    for (size_t x = 0; x < size_t(dataSource->dWidth); x = x + 10) {
+
+  auto striding = getStrideFromGetMapLocation((*dataSource), warper);
+  CDBDebug("striding %f %f", striding.x, striding.y);
+  size_t ystep = striding.x;
+  size_t xstep = striding.y;
+
+  for (size_t y = 0; y < size_t(dataSource->dHeight); y = y + ystep) {
+    for (size_t x = 0; x < size_t(dataSource->dWidth); x = x + xstep) {
       size_t p = x + y * dataSource->dWidth;
       double modelX = dataSource->dfCellSizeX * x + dataSource->dfBBOX[0] + dataSource->dfCellSizeX / 2;
       double modelY = dataSource->dfCellSizeY * y + dataSource->dfBBOX[3] + dataSource->dfCellSizeY / 2;
@@ -82,20 +132,16 @@ int CDPPointsFromGrid::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSour
   auto pointsInScreen = pointsInLatLon;
   warper.reprojfromLatLon(pointsInScreen);
 
-  int id = 0;
+  int id = 0; // TODO check if not grows besided number of availbe objects
   for (auto con : proc->attr.select.splitToStack(",")) {
+    auto ob = dataSource->getDataObjectByName(con.c_str());
+    auto destob = dataSource->getDataObject(id);
+    if (ob->cdfVariable->getType() != CDF_FLOAT) {
+      CDBError("Can only work with CDF_FLOAT");
+      throw __LINE__;
+    }
     for (size_t index = 0; index < pointListInModelCoords.size(); index++) {
-      auto pixelCoord = pointsInScreen[index];
-      pixelCoord.x = ((pixelCoord.x - dataSource->srvParams->Geo->dfBBOX[0]) / (dataSource->srvParams->Geo->dfBBOX[2] - dataSource->srvParams->Geo->dfBBOX[0])) * dataSource->srvParams->Geo->dWidth;
-      pixelCoord.y = ((pixelCoord.y - dataSource->srvParams->Geo->dfBBOX[1]) / (dataSource->srvParams->Geo->dfBBOX[3] - dataSource->srvParams->Geo->dfBBOX[1])) * dataSource->srvParams->Geo->dHeight;
-
-      auto ob = dataSource->getDataObjectByName(con.c_str());
-      auto destob = dataSource->getDataObject(id);
-
-      if (ob->cdfVariable->getType() != CDF_FLOAT) {
-        CDBError("Can only work with CDF_FLOAT");
-        throw __LINE__;
-      }
+      auto pixelCoord = getPixelCoordinateFromGetMapCoordinate(pointsInScreen[index], (*dataSource));
       float *data = (float *)ob->cdfVariable->data;
       int px = pixelCoord.x;
       int py = pixelCoord.y;

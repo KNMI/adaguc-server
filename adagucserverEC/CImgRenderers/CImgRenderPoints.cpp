@@ -548,7 +548,7 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
   float fillValueP1 = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
   float fillValueP2 = dataSource->getDataObject(1)->hasNodataValue ? dataSource->getDataObject(1)->dfNodataValue : NAN;
   CDBDebug("Vector plotting %d elements %d %d", thinnedPointIndexList.size(), useFilter, usePoints.size());
-  CDBDebug("%f %f", fillValueP1, fillValueP2);
+
   for (auto pointIndex : thinnedPointIndexList) {
     float strength = (*p1)[pointIndex].v;
     float direction = (*p2)[pointIndex].v;
