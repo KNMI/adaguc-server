@@ -1,5 +1,12 @@
 #!/bin/bash
 echo "Starting adaguc-server functional tests"
+
+# pytest \
+#     AdagucTests/ \
+#     -o "python_files=Test*.py" \
+#     -s -vv && \
+# bash ./test_server.sh
+
 pushd `dirname $0` > /dev/null
 SCRIPTPATH=`pwd`
 popd > /dev/null

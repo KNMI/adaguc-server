@@ -92,7 +92,7 @@ RUN pip install --no-cache-dir -r requirements-dev.txt
 
 COPY tests /adaguc/adaguc-server-master/tests
 COPY runtests_psql.sh /adaguc/adaguc-server-master/runtests_psql.sh
-COPY conftest.py /adaguc/adaguc-server-master/conftest.py
+# COPY tests/conftest.py /adaguc/adaguc-server-master/conftest.py
 
 # Determine if we're building in github actions or via a local docker build
 ARG TEST_IN_CONTAINER

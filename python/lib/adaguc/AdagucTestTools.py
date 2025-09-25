@@ -5,7 +5,6 @@ import shutil
 from .CGIRunner import CGIRunner
 import re
 from lxml import etree, objectify
-import urllib.request
 from PIL import Image
 import subprocess
 
@@ -131,21 +130,13 @@ class AdagucTestTools:
         if any((c in chars) for c in filename):
             raise Exception("Filename %s contains invalid characters" % filename)
 
-        # path = os.getenv("ADAGUC_PATH", "") + "/tests/"
-        # if not os.path.exists(path):
-        #     os.makedirs(path)
-
-        # with open(os.getenv("ADAGUC_PATH", "") + "/tests/" + filename, "wb") as f:
-        #     f.write(data)
-
         with open(filename, "wb") as f:
             f.write(data)
 
     def readfromfile(self, filename):
-        adagucpath = os.getenv("ADAGUC_PATH", "") + "/tests/"
+        adagucpath = os.getenv("ADAGUC_PATH")
         if adagucpath:
-            # filename = filename.replace("{ADAGUC_PATH}/", adagucpath)
-            filename = adagucpath + filename
+            filename = filename.replace("{ADAGUC_PATH}/", adagucpath)
         with open(filename, "rb") as f:
             return f.read()
 
@@ -176,10 +167,6 @@ class AdagucTestTools:
             )
 
     def mkdir_p(self, directory):
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-
-        directory = ADAGUC_PATH + "/tests/" + directory
         if not os.path.exists(directory):
             os.makedirs(directory)
 
