@@ -165,6 +165,8 @@ add_library(
     CImgRenderStippling.h
     CImgRenderers/CImgRenderPoints.cpp
     CImgRenderers/CImgRenderPoints.h
+    CImgRenderers/getVectorStyle.h
+    CImgRenderers/getVectorStyle.cpp
     CImgWarpBilinear.cpp
     CImgWarpBilinear.h
     CImgWarpBoolean.cpp

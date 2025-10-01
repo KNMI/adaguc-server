@@ -47,9 +47,7 @@ private:
 
   std::map<std::string, SimpleSymbol> SimpleSymbolMap;
 
-  bool drawVector;
   bool drawPoints;
-  bool drawBarb;
   bool drawDiscs;
   bool drawVolume;
   bool drawSymbol;
@@ -72,14 +70,6 @@ private:
   CColor drawPointFillColor;
   CColor drawPointLineColor;
   CColor defaultColor;
-
-  CColor drawVectorLineColor;
-  float drawVectorLineWidth;
-  bool drawVectorPlotStationId;
-  bool drawVectorPlotValue;
-  float drawVectorVectorScale;
-  CT::string drawVectorTextFormat;
-  CT::string drawVectorVectorStyle;
 
   std::set<std::string> usePoints;
   std::set<std::string> skipPoints;
