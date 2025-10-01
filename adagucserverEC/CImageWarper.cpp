@@ -611,3 +611,21 @@ std::tuple<CT::string, double> CImageWarper::fixProjection(CT::string projection
 
   return std::make_tuple(projectionString, 1.0);
 }
+
+double CImageWarper::getRotation(PointDVWithLatLon &point) {
+  if (!isnan(point.rotation)) {
+    return point.rotation;
+  }
+  // If rotation was not set during construction, we have to calculate it here.
+  double lat = point.lat;
+  double lon = point.lon;
+  double latForRot = lat;
+  double lonForRot = lon;
+  double latOffSetForRot = lat - 0.01;
+  double lonOffSetForRot = lon;
+  this->reprojfromLatLon(lonForRot, latForRot);
+  this->reprojfromLatLon(lonOffSetForRot, latOffSetForRot);
+  double dy = latForRot - latOffSetForRot;
+  double dx = lonForRot - lonOffSetForRot;
+  return -(atan2(dy, dx) / (M_PI)) * 180 + 90;
+}

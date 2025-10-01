@@ -491,6 +491,7 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
     delete (symbolCacheIter->second);
   }
 }
+
 void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration) {
 
   if (styleConfiguration == nullptr || styleConfiguration->styleConfig == nullptr) {
@@ -529,87 +530,65 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
   CDBDebug("Vector plotting %d elements %d %d", thinnedPointIndexList.size(), useFilter, usePoints.size());
 
   for (auto pointIndex : thinnedPointIndexList) {
-    float strength = (*p1)[pointIndex].v;
-    float direction = (*p2)[pointIndex].v;
-    if (strength != strength || strength == fillValueP1 || direction != direction || direction == fillValueP2) continue;
+    auto pointStrength = &(*p1)[pointIndex];
+    auto pointDirection = &(*p2)[pointIndex];
+    auto strength = pointStrength->v;
+    auto direction = pointDirection->v;
+    if (!(direction == direction) || !(strength == strength) || strength == fillValueP1 || direction == fillValueP2) continue;
 
-    int x = (*p1)[pointIndex].x;
-    double lat = (*p1)[pointIndex].lat;
-    double lon = (*p1)[pointIndex].lon;
-    double rotation = (*p1)[pointIndex].rotation;
+    int x = pointStrength->x;
+    int y = dataSource->srvParams->Geo->dHeight - pointStrength->y;
+    double lat = pointStrength->lat;
 
-    if (rotation == 0) {
-      double latForRot = lat;
-      double lonForRot = lon;
-      double latOffSetForRot = lat - 0.01;
-      double lonOffSetForRot = lon;
-      bool projectionRequired = true;
+    direction += warper->getRotation(*pointStrength);
 
-      if (projectionRequired) {
-        warper->reprojfromLatLon(lonForRot, latForRot);
-        warper->reprojfromLatLon(lonOffSetForRot, latOffSetForRot);
+    if (vectorStyle.drawBarb) {
+      CT::string units = dataSource->getDataObject(0)->getUnits();
+      bool toKnots = false;
+      if (!(units.equalsIgnoreCase("kt") || units.equalsIgnoreCase("kts") || units.equalsIgnoreCase("knot"))) {
+        toKnots = true;
       }
-
-      if (projectionRequired) {
-        double dy = latForRot - latOffSetForRot;
-        double dx = lonForRot - lonOffSetForRot;
-        rotation = -(atan2(dy, dx) / (M_PI)) * 180 + 90;
+      drawImage->drawBarb(x, y, ((270 - direction) / 360) * M_PI * 2, 0, strength, vectorStyle.lineColor, vectorStyle.lineWidth, toKnots, lat <= 0, vectorStyle.drawVectorPlotValue);
+    }
+    if (vectorStyle.drawVector) {
+      drawImage->drawVector(x, y, ((270 - direction) / 360) * M_PI * 2, strength * vectorStyle.symbolScaling, vectorStyle.lineColor, vectorStyle.lineWidth);
+    }
+    if (vectorStyle.drawVectorPlotStationId) {
+      if (pointStrength->paramList.size() > 0) {
+        CT::string value = pointStrength->paramList[0].value;
+        if (vectorStyle.drawBarb) {
+          if ((direction >= 90) && (direction <= 270)) {
+            drawImage->setText(value.c_str(), value.length(), x - value.length() * 3, y - 20, vectorStyle.textColor, 0);
+          } else {
+            drawImage->setText(value.c_str(), value.length(), x - value.length() * 3, y + 6, vectorStyle.textColor, 0);
+          }
+        } else {
+          if ((direction >= 90) && (direction <= 270)) {
+            drawImage->setText(value.c_str(), value.length(), x - value.length() * 3, y + 6, vectorStyle.textColor, 0);
+          } else {
+            drawImage->setText(value.c_str(), value.length(), x - value.length() * 3, y - 20, vectorStyle.textColor, 0);
+          }
+        }
+      }
+    }
+    if (vectorStyle.drawVectorPlotValue && !vectorStyle.drawBarb) {
+      if (!vectorStyle.drawDiscs) {
+        textValue.print(vectorStyle.drawVectorTextFormat.c_str(), strength);
+        if ((direction >= 90) && (direction <= 270)) {
+          drawImage->setText(textValue.c_str(), textValue.length(), x - textValue.length() * 3, y - 20, vectorStyle.textColor, 0);
+        } else {
+          drawImage->setText(textValue.c_str(), textValue.length(), x - textValue.length() * 3, y + 6, vectorStyle.textColor, 0);
+        }
       }
     }
 
-    int y = dataSource->srvParams->Geo->dHeight - (*p1)[pointIndex].y;
-
-    if (direction == direction) direction += rotation;
-
-    if ((direction == direction) && (strength == strength)) {
-      if (vectorStyle.drawBarb) {
-        CT::string units = dataSource->getDataObject(0)->getUnits();
-        bool toKnots = false;
-        if (!(units.equalsIgnoreCase("kt") || units.equalsIgnoreCase("kts") || units.equalsIgnoreCase("knot"))) {
-          toKnots = true;
-        }
-        drawImage->drawBarb(x, y, ((270 - direction) / 360) * M_PI * 2, 0, strength, vectorStyle.lineColor, vectorStyle.lineWidth, toKnots, lat <= 0, vectorStyle.drawVectorPlotValue);
-      }
-      if (vectorStyle.drawVector) {
-        drawImage->drawVector(x, y, ((270 - direction) / 360) * M_PI * 2, strength * vectorStyle.symbolScaling, vectorStyle.lineColor, vectorStyle.lineWidth);
-      }
-      if (vectorStyle.drawVectorPlotStationId) {
-        if ((*p1)[pointIndex].paramList.size() > 0) {
-          CT::string value = (*p1)[pointIndex].paramList[0].value;
-          if (vectorStyle.drawBarb) {
-            if ((direction >= 90) && (direction <= 270)) {
-              drawImage->setText(value.c_str(), value.length(), x - value.length() * 3, y - 20, vectorStyle.textColor, 0);
-            } else {
-              drawImage->setText(value.c_str(), value.length(), x - value.length() * 3, y + 6, vectorStyle.textColor, 0);
-            }
-          } else {
-            if ((direction >= 90) && (direction <= 270)) {
-              drawImage->setText(value.c_str(), value.length(), x - value.length() * 3, y + 6, vectorStyle.textColor, 0);
-            } else {
-              drawImage->setText(value.c_str(), value.length(), x - value.length() * 3, y - 20, vectorStyle.textColor, 0);
-            }
-          }
-        }
-      }
-      if (vectorStyle.drawVectorPlotValue && !vectorStyle.drawBarb) {
-        if (!vectorStyle.drawDiscs) {
-          textValue.print(vectorStyle.drawVectorTextFormat.c_str(), strength);
-          if ((direction >= 90) && (direction <= 270)) {
-            drawImage->setText(textValue.c_str(), textValue.length(), x - textValue.length() * 3, y - 20, vectorStyle.textColor, 0);
-          } else {
-            drawImage->setText(textValue.c_str(), textValue.length(), x - textValue.length() * 3, y + 6, vectorStyle.textColor, 0);
-          }
-        }
-      }
-
-      if (vectorStyle.drawDiscs) {
-        // Draw a disc with the speed value in text and the dir. value as an arrow
-        int x = (*p1)[pointIndex].x;
-        int y = dataSource->srvParams->Geo->dHeight - (*p1)[pointIndex].y;
-        textValue.print(vectorStyle.textColor.c_str(), strength);
-        drawImage->setTextDisc(x, y, drawPointDiscRadius, textValue.c_str(), drawPointFontFile, drawPointFontSize, drawPointTextColor, drawPointFillColor, drawPointLineColor);
-        drawImage->drawVector2(x, y, ((90 + direction) / 360.) * M_PI * 2, 10, drawPointDiscRadius, drawPointFillColor, vectorStyle.lineWidth);
-      }
+    if (vectorStyle.drawDiscs) {
+      // Draw a disc with the speed value in text and the dir. value as an arrow
+      int x = pointStrength->x;
+      int y = dataSource->srvParams->Geo->dHeight - pointStrength->y;
+      textValue.print(vectorStyle.textColor.c_str(), strength);
+      drawImage->setTextDisc(x, y, drawPointDiscRadius, textValue.c_str(), drawPointFontFile, drawPointFontSize, drawPointTextColor, drawPointFillColor, drawPointLineColor);
+      drawImage->drawVector2(x, y, ((90 + direction) / 360.) * M_PI * 2, 10, drawPointDiscRadius, drawPointFillColor, vectorStyle.lineWidth);
     }
   }
 }

@@ -121,6 +121,11 @@ public:
    * Needed for a conversion for KM to Meter for example
    */
   static std::tuple<CT::string, double> fixProjection(CT::string projectionString);
+
+  /**
+   * Get rotation for given point
+   */
+  double getRotation(PointDVWithLatLon &point);
 };
 
 #endif
