@@ -11,7 +11,7 @@ VectorStyle getVectorStyle(CServerConfig::XMLE_Vector *vectorCfg) {
       .outlinecolor = CColor(255, 255, 255, 255),
       .outlinewidth = vectorCfg->attr.outlinewidth,
       .textColor = CColor(0, 0, 0, 255),
-      .drawVectorTextFormat = "%0.f",
+      .drawVectorTextFormat = "%0.1f",
       .drawVectorPlotStationId = false,
       .drawVectorPlotValue = false,
       .drawBarb = false,

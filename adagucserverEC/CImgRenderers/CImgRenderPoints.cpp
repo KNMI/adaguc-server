@@ -29,6 +29,35 @@
 
 const char *CImgRenderPoints::className = "CImgRenderPoints";
 
+void drawTextsForVector(CDrawImage *drawImage, CDataSource *dataSource, VectorStyle &vectorStyle, PointDVWithLatLon *pointStrength, PointDVWithLatLon *pointDirection) {
+  // Draw station id
+  auto strength = pointStrength->v;
+  auto direction = pointDirection->v;
+  int x = pointStrength->x;
+  int y = dataSource->srvParams->Geo->dHeight - pointStrength->y;
+
+  if (vectorStyle.drawVectorPlotStationId && pointStrength->paramList.size() > 0) {
+    int newY = y;
+    if (vectorStyle.drawBarb) {
+      newY = ((direction >= 90) && (direction <= 270)) ? y - 20 : y + 6;
+    } else {
+      newY = ((direction >= 90) && (direction <= 270)) ? y + 6 : y - 20;
+    }
+    CT::string stationId = pointStrength->paramList[0].value;
+    drawImage->setText(stationId.c_str(), stationId.length(), x - stationId.length() * 3, newY, vectorStyle.textColor, 0);
+  }
+
+  // Draw value for vector or disc
+  if (vectorStyle.drawVectorPlotValue && !vectorStyle.drawBarb) {
+    if (!vectorStyle.drawDiscs) {
+      int newY = ((direction >= 90) && (direction <= 270)) ? y - 20 : y + 6;
+      CT::string textValue;
+      textValue.print(vectorStyle.drawVectorTextFormat.c_str(), strength);
+      drawImage->setText(textValue.c_str(), textValue.length(), x - textValue.length() * 3, newY, vectorStyle.textColor, 0);
+    }
+  }
+}
+
 std::vector<size_t> doThinningGetIndices(std::vector<PointDVWithLatLon> &p1, bool doThinning, double thinningRadius, std::set<std::string> usePoints, bool useFilter = false) {
 
   size_t numberOfPoints = p1.size();
@@ -516,8 +545,6 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
     throw __LINE__;
   }
 
-  auto vectorStyle = getVectorStyle(s->Vector[0]);
-
   CT::string varName1 = dataSource->getDataObject(0)->cdfVariable->name.c_str();
   CT::string varName2 = dataSource->getDataObject(1)->cdfVariable->name.c_str();
 
@@ -529,66 +556,44 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
   float fillValueP2 = dataSource->getDataObject(1)->hasNodataValue ? dataSource->getDataObject(1)->dfNodataValue : NAN;
   CDBDebug("Vector plotting %d elements %d %d", thinnedPointIndexList.size(), useFilter, usePoints.size());
 
+  CT::string units = dataSource->getDataObject(0)->getUnits();
+  bool toKnots = false;
+  if (!(units.equalsIgnoreCase("kt") || units.equalsIgnoreCase("kts") || units.equalsIgnoreCase("knot"))) {
+    toKnots = true;
+  }
+
   for (auto pointIndex : thinnedPointIndexList) {
     auto pointStrength = &(*p1)[pointIndex];
     auto pointDirection = &(*p2)[pointIndex];
     auto strength = pointStrength->v;
     auto direction = pointDirection->v;
     if (!(direction == direction) || !(strength == strength) || strength == fillValueP1 || direction == fillValueP2) continue;
-
     int x = pointStrength->x;
     int y = dataSource->srvParams->Geo->dHeight - pointStrength->y;
     double lat = pointStrength->lat;
-
+    // Adjust direction based on projection settings
     direction += warper->getRotation(*pointStrength);
 
-    if (vectorStyle.drawBarb) {
-      CT::string units = dataSource->getDataObject(0)->getUnits();
-      bool toKnots = false;
-      if (!(units.equalsIgnoreCase("kt") || units.equalsIgnoreCase("kts") || units.equalsIgnoreCase("knot"))) {
-        toKnots = true;
+    for (auto cfgVectorStyle : s->Vector) {
+      auto vectorStyle = getVectorStyle(cfgVectorStyle);
+      if (!(strength >= vectorStyle.min && strength < vectorStyle.max)) continue;
+      // Draw symbol barb, vector or disc.
+      if (vectorStyle.drawBarb) {
+        drawImage->drawBarb(x, y, ((270 - direction) / 360) * M_PI * 2, 0, strength, vectorStyle.lineColor, vectorStyle.lineWidth, toKnots, lat <= 0, vectorStyle.drawVectorPlotValue);
       }
-      drawImage->drawBarb(x, y, ((270 - direction) / 360) * M_PI * 2, 0, strength, vectorStyle.lineColor, vectorStyle.lineWidth, toKnots, lat <= 0, vectorStyle.drawVectorPlotValue);
-    }
-    if (vectorStyle.drawVector) {
-      drawImage->drawVector(x, y, ((270 - direction) / 360) * M_PI * 2, strength * vectorStyle.symbolScaling, vectorStyle.lineColor, vectorStyle.lineWidth);
-    }
-    if (vectorStyle.drawVectorPlotStationId) {
-      if (pointStrength->paramList.size() > 0) {
-        CT::string value = pointStrength->paramList[0].value;
-        if (vectorStyle.drawBarb) {
-          if ((direction >= 90) && (direction <= 270)) {
-            drawImage->setText(value.c_str(), value.length(), x - value.length() * 3, y - 20, vectorStyle.textColor, 0);
-          } else {
-            drawImage->setText(value.c_str(), value.length(), x - value.length() * 3, y + 6, vectorStyle.textColor, 0);
-          }
-        } else {
-          if ((direction >= 90) && (direction <= 270)) {
-            drawImage->setText(value.c_str(), value.length(), x - value.length() * 3, y + 6, vectorStyle.textColor, 0);
-          } else {
-            drawImage->setText(value.c_str(), value.length(), x - value.length() * 3, y - 20, vectorStyle.textColor, 0);
-          }
-        }
+      if (vectorStyle.drawVector) {
+        drawImage->drawVector(x, y, ((270 - direction) / 360) * M_PI * 2, strength * vectorStyle.symbolScaling, vectorStyle.lineColor, vectorStyle.lineWidth);
       }
-    }
-    if (vectorStyle.drawVectorPlotValue && !vectorStyle.drawBarb) {
-      if (!vectorStyle.drawDiscs) {
+      if (vectorStyle.drawDiscs) {
+        // Draw a disc with the speed value in text and the dir. value as an arrow
+        int x = pointStrength->x;
+        int y = dataSource->srvParams->Geo->dHeight - pointStrength->y;
         textValue.print(vectorStyle.drawVectorTextFormat.c_str(), strength);
-        if ((direction >= 90) && (direction <= 270)) {
-          drawImage->setText(textValue.c_str(), textValue.length(), x - textValue.length() * 3, y - 20, vectorStyle.textColor, 0);
-        } else {
-          drawImage->setText(textValue.c_str(), textValue.length(), x - textValue.length() * 3, y + 6, vectorStyle.textColor, 0);
-        }
+        drawImage->setTextDisc(x, y, drawPointDiscRadius, textValue.c_str(), drawPointFontFile, drawPointFontSize, drawPointTextColor, drawPointFillColor, drawPointLineColor);
+        drawImage->drawVector2(x, y, ((90 + direction) / 360.) * M_PI * 2, 10, drawPointDiscRadius, drawPointFillColor, vectorStyle.lineWidth);
       }
-    }
 
-    if (vectorStyle.drawDiscs) {
-      // Draw a disc with the speed value in text and the dir. value as an arrow
-      int x = pointStrength->x;
-      int y = dataSource->srvParams->Geo->dHeight - pointStrength->y;
-      textValue.print(vectorStyle.textColor.c_str(), strength);
-      drawImage->setTextDisc(x, y, drawPointDiscRadius, textValue.c_str(), drawPointFontFile, drawPointFontSize, drawPointTextColor, drawPointFillColor, drawPointLineColor);
-      drawImage->drawVector2(x, y, ((90 + direction) / 360.) * M_PI * 2, 10, drawPointDiscRadius, drawPointFillColor, vectorStyle.lineWidth);
+      drawTextsForVector(drawImage, dataSource, vectorStyle, pointStrength, pointDirection);
     }
   }
 }

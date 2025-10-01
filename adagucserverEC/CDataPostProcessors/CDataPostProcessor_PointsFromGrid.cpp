@@ -62,7 +62,7 @@ f8point getGetMapCoordinateFromPixelCoordinate(f8point in, CDataSource &dataSour
 }
 
 f8point getStrideFromGetMapLocation(CDataSource &dataSource, CImageWarper &warper) {
-  f8point pixelOffset = {.x = 50, .y = 50}; // TODO make configurable?
+  f8point pixelOffset = {.x = 80, .y = 80}; // TODO make configurable?
 
   // Calculate center of modelgrid
   f8point middlePointModelData = {.x = (dataSource.dfBBOX[0] + dataSource.dfBBOX[2]) / 2, .y = (dataSource.dfBBOX[1] + dataSource.dfBBOX[3]) / 2};
