@@ -260,6 +260,9 @@ namespace CDF {
       }
       isDimension = isCoordinateVariable;
     }
+
+    Variable(CDFObject *cdfObject, const char *name, CDFType type, std::vector<CDF::Dimension *> idimensionlinks, bool isCoordinateVariable);
+
     Variable(const char *name, CDFType type) {
       data = NULL;
       currentSize = 0;

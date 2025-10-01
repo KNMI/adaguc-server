@@ -31,7 +31,7 @@ private:
   DEF_ERRORFUNCTION();
 
 public:
-  static int convertUGRIDMeshHeader(CDFObject *cdfObject);
+  static int convertUGRIDMeshHeader(CDFObject *cdfObject, CServerParams *srvParams);
   static int convertUGRIDMeshData(CDataSource *dataSource, int mode);
 };
 #endif

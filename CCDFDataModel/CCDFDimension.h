@@ -23,41 +23,30 @@
  *
  ******************************************************************************/
 
+#include <cstddef>
+#include "CTString.h"
 #ifndef CCDFDIMENSION_H
 #define CCDFDIMENSION_H
 
+class CDFObject;
 namespace CDF {
-  class Dimension {
 
+  class Dimension {
   public:
-    Dimension() {
-      isIterative = false;
-      length = 0;
-      id = -1;
-    }
-    Dimension(const char *_name, size_t _length) {
-      isIterative = false;
-      length = _length;
-      name.copy(_name);
-      id = -1;
-    }
     CT::string name;
-    size_t length;
-    bool isIterative;
-    int id;
-    size_t getSize() { return length; }
-    void setSize(size_t _length) { length = _length; }
-    void setName(const char *value) { name.copy(value); }
-    CT::string getName() { return name; }
-    // Returns a new copy of this dimension
-    Dimension *clone() {
-      Dimension *newDim = new Dimension();
-      newDim->name = name.c_str();
-      newDim->length = length;
-      newDim->isIterative = isIterative;
-      newDim->id = id;
-      return newDim;
-    }
+    size_t length = 0;
+    bool isIterative = false;
+    int id = -1;
+
+    Dimension();
+    Dimension(const char *_name, size_t _length);
+    Dimension(CDFObject *cdfObject, const char *_name, size_t _length);
+
+    size_t getSize();
+    void setSize(size_t _length);
+    void setName(const char *value);
+    CT::string getName();
+    Dimension *clone();
   };
 } // namespace CDF
 

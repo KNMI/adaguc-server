@@ -19,6 +19,7 @@ add_library(CCDFDataModel
     CCDFHDF5IO.h
     CProj4ToCF.h
     CCDFVariable.h
+    CCDFDimension.h
     CCDFObject.h
     CCDFTypes.h
     CCDFStore.h
@@ -32,6 +33,7 @@ add_library(CCDFDataModel
     CCDFHDF5IO_ODIM.cpp
     CProj4ToCF.cpp
     CCDFVariable.cpp
+    CCDFDimension.cpp
     CCDFObject.cpp
     CCDFTypes.cpp
     CCDFStore.cpp

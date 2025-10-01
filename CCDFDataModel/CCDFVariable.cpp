@@ -639,3 +639,21 @@ void CDF::Variable::copy(CDF::Variable *sourceVariable) {
   this->allocateData(size);
   DataCopier::copy(this->data, this->currentType, sourceVariable->data, sourceVariable->currentType, 0, 0, size);
 }
+
+CDF::Variable::Variable(CDFObject *cdfObject, const char *name, CDFType type, std::vector<CDF::Dimension *> idimensionlinks, bool isCoordinateVariable) {
+  data = NULL;
+  currentSize = 0;
+  currentType = CDF_NONE;
+  nativeType = CDF_NONE;
+  cdfReaderPointer = NULL;
+  parentCDFObject = NULL;
+  _hasCustomReader = false;
+  _isString = false;
+  setName(name);
+  setType(type);
+  for (size_t j = 0; j < idimensionlinks.size(); j++) {
+    dimensionlinks.push_back(idimensionlinks[j]);
+  }
+  isDimension = isCoordinateVariable;
+  cdfObject->addVariable(this);
+}
