@@ -2993,10 +2993,11 @@ class TestWMS(unittest.TestCase):
 
 
         self.assertEqual(status_getcapabilities, 0)
-        self.assertEqual(
-            data_getcapabilities.getvalue(),
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename_getcapabilities),
-        )        
+        self.assertTrue(
+            AdagucTestTools().compareGetCapabilitiesXML(
+                self.testresultspath + filename_getcapabilities, self.expectedoutputsspath + filename_getcapabilities
+            )
+        )
 
         self.assertEqual(status_getmap, 0)
         self.assertEqual(
