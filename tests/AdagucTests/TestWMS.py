@@ -3004,3 +3004,29 @@ class TestWMS(unittest.TestCase):
             data_getmap.getvalue(),
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename_getmap),
         )        
+
+
+    def test_WMSGetMap_Barbs_Harmonie_newbarbstyleoptions(self):
+        AdagucTestTools().cleanTempDir()
+        config = (
+            ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,adaguc.tests.harmonienewbarbswithpostproc.xml"
+        )
+        env = {"ADAGUC_CONFIG": config}
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=["--updatedb", "--config", config], env=self.env, isCGI=False
+        )
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSGetMap_Barbs_Harmonie_newbarbstyleoptions.png"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.tests.harmonienewbarbswithpostproc.xml&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind__at_10m&WIDTH=1352&HEIGHT=1319&CRS=EPSG%3A3857&BBOX=-65800.30054674105,6226801.574078708,1326094.9902426978,7584723.089279351&STYLES=windbarbs_kts_shaded_withbarbs%2Fnearestpoint&FORMAT=image/png&TRANSPARENT=FALSE&BGCOLOR=0xA0F080&&time=2023-09-30T06%3A00%3A00Z&DIM_reference_time=2023-09-28T06%3A00%3A00Z&0.26085315983231405&showlegend=true&title=Wind%20barb%20style%20demo!&showscalebar=true",
+            env=env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )

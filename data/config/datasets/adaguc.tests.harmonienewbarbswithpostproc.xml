@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+  <Style name="windbarbs_kts_shaded_withbarbs">
+    <ShadeInterval min="0" max="0.3"     label=" 0  [  &lt; 0 kts] (&lt; 0.3 m/s)" fillcolor="#9600fe"/>
+    <ShadeInterval min="0.3" max="1.6"   label=" 1  [  1-3 kts  ] (0.3-1.6 m/s)" fillcolor="#9600fe"/>
+    <ShadeInterval min="1.6" max="3.4"   label=" 2  [  4-6 kts  ] (1.6-3.4 m/s)" fillcolor="#0064fe"/>
+    <ShadeInterval min="3.4" max="5.5"   label=" 3  [  7-10 kts ] (3.4-5.5 m/s)" fillcolor="#00c8fe"/>
+    <ShadeInterval min="5.5" max="8.0"   label=" 4  [ 11-16 kts ] (5.5-8.0 m/s)" fillcolor="#25c192"/>
+    <ShadeInterval min="8.0" max="10.8"  label=" 5  [ 17-21 kts ] (8.0-10.8 m/s)" fillcolor="#00e600"/>
+    <ShadeInterval min="10.8" max="13.9" label=" 6  [ 22-27 kts ] (10.8-13.9 m/s)" fillcolor="#00fa00"/>
+    <ShadeInterval min="13.9" max="17.2" label=" 7  [ 28-33 kts ] (13.9-17.2 m/s)" fillcolor="#feae00"/>
+    <ShadeInterval min="17.2" max="20.8" label=" 8  [ 34-40 kts ] (17.2-20.8 m/s)" fillcolor="#b40032"/>
+    <ShadeInterval min="20.8" max="24.5" label=" 9  [ 41-47 kts ] (20.8-24.5 m/s)" fillcolor="#fE0096"/>
+    <ShadeInterval min="24.5" max="200"  label="10 [  &gt;48 kts ] (&gt;24.5 m/s)" fillcolor="#420027"/>
+
+    <Vector  min="0" max="1"     vectorstyle="barb" linewidth="2" linecolor="#FFFFFF" plotvalue="false" outlinewidth="1.6" outlinecolor="#000000" />
+    <Vector min="1" max="3.4"      vectorstyle="barb" linewidth="0" linecolor="#000000" plotvalue="true" />
+    <Vector min="3.4" max="8"      vectorstyle="barb" linewidth="3" linecolor="#FFFF00" plotvalue="true" />
+    <Vector min="8" max="10.8"     vectorstyle="barb" linewidth="1.5" outlinewidth="4" fontsize="15" outlinecolor="#000000"  linecolor="#FFFFFF" plotvalue="true" textcolor="#FFFFFF" />
+    <Vector min="10.8" max="13.9"  vectorstyle="barb" linewidth="0" linecolor="#00FF00" plotvalue="true" textcolor="#111111"/>
+    <Vector min="13.9"             vectorstyle="barb" linewidth="0" linecolor="#00FF00" plotvalue="true" textcolor="#111111"/>
+
+    <RenderSettings renderhint="discreteclasses" />
+    <DataPostProc algorithm="pointsfromgrid" select="speed_component,direction_component" a="50"/>
+    <RenderMethod>nearestpoint</RenderMethod>
+  </Style>
+
+
+  <Layer type="database">
+    <Name>wind__at_10m</Name>
+    <Title>Wind 10m flags</Title>
+    <Variable>x_wind__at_10m</Variable>
+    <Variable>y_wind__at_10m</Variable>
+    <FilePath filter="">{ADAGUC_PATH}data/datasets/harmonie_wind_grid_30x30.nc</FilePath>
+    <Dimension name="time" units="ISO8601" default="min">time</Dimension>
+    <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension>
+    <Styles>windbarbs_kts_shaded_withbarbs</Styles>
+    <DataPostProc algorithm="convert_uv_components"/>
+  </Layer>
+
+  <!-- End of configuration /-->
+</Configuration>
