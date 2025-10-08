@@ -10,9 +10,12 @@ from lxml import objectify
 import re
 from adaguc.AdagucTestTools import AdagucTestTools
 
-ADAGUC_PATH = os.environ['ADAGUC_PATH']
+import pytest
+
+ADAGUC_PATH = os.environ["ADAGUC_PATH"]
 
 
+@pytest.mark.skip("These tests are never called")
 class TestGeoJSONFeatures(unittest.TestCase):
   testresultspath = "testresults/TestGeoJSONFeatures/"
   expectedoutputsspath = "expectedoutputs/TestGeoJSONFeatures/"
