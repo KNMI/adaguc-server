@@ -526,7 +526,7 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
   if (styleConfiguration == nullptr || styleConfiguration->styleConfig == nullptr) {
     return;
   }
-  CServerConfig::XMLE_Style *s = styleConfiguration->styleConfig;
+  auto s = styleConfiguration->styleConfig;
   if (s->Vector.size() == 0) {
     return;
   }
@@ -562,6 +562,12 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
     toKnots = true;
   }
 
+  // Make a list of vector style objects based on the configuration.
+  std::vector<VectorStyle> vectorStyles;
+  for (auto cfgVectorStyle : s->Vector) {
+    vectorStyles.push_back(getVectorStyle(cfgVectorStyle));
+  }
+
   for (auto pointIndex : thinnedPointIndexList) {
     auto pointStrength = &(*p1)[pointIndex];
     auto pointDirection = &(*p2)[pointIndex];
@@ -574,8 +580,7 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
     // Adjust direction based on projection settings
     direction += warper->getRotation(*pointStrength);
 
-    for (auto cfgVectorStyle : s->Vector) {
-      auto vectorStyle = getVectorStyle(cfgVectorStyle);
+    for (auto vectorStyle : vectorStyles) {
       if (!(strength >= vectorStyle.min && strength < vectorStyle.max)) continue;
       // Draw symbol barb, vector or disc.
       if (vectorStyle.drawBarb) {
