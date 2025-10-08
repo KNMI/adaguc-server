@@ -46,7 +46,7 @@ logger = logging.getLogger(__name__)
 DEFAULT_CRS = "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
 SUPPORTED_CRS_LIST = [DEFAULT_CRS]
 
-ogcApiApp = FastAPI(debug=False, openapi_url="/api")
+ogcApiApp = FastAPI(redirect_slashes=False, debug=False, openapi_url="/api")
 
 
 def custom_openapi():
