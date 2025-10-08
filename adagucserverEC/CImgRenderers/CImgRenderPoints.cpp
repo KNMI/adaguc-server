@@ -95,6 +95,90 @@ std::vector<size_t> doThinningGetIndices(std::vector<PointDVWithLatLon> &p1, boo
   return thinnedPointIndexList;
 }
 
+void renderVectorPoints(std::vector<size_t> thinnedPointIndexList, CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration) {
+
+  if (styleConfiguration == nullptr || styleConfiguration->styleConfig == nullptr) {
+    return;
+  }
+  auto s = styleConfiguration->styleConfig;
+  if (s->Vector.size() == 0) {
+    return;
+  }
+
+  if (dataSource->getNumDataObjects() < 2) {
+    CDBError("Cannot draw barbs, not enough data objects");
+    throw __LINE__;
+  }
+
+  std::vector<PointDVWithLatLon> *p1 = &dataSource->getDataObject(0)->points;
+  std::vector<PointDVWithLatLon> *p2 = &dataSource->getDataObject(1)->points;
+  size_t numberOfPoints = p1->size();
+
+  if (p2->size() != numberOfPoints) {
+    CDBError("Cannot draw barbs, lists for speed (%d) and direction (%d) don't have equal length ", numberOfPoints, p2->size());
+    throw __LINE__;
+  }
+
+  CT::string varName1 = dataSource->getDataObject(0)->cdfVariable->name.c_str();
+  CT::string varName2 = dataSource->getDataObject(1)->cdfVariable->name.c_str();
+
+  CT::string textValue;
+
+  float fillValueP1 = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
+  float fillValueP2 = dataSource->getDataObject(1)->hasNodataValue ? dataSource->getDataObject(1)->dfNodataValue : NAN;
+
+  CT::string units = dataSource->getDataObject(0)->getUnits();
+  bool toKnots = false;
+  if (!(units.equalsIgnoreCase("kt") || units.equalsIgnoreCase("kts") || units.equalsIgnoreCase("knot"))) {
+    toKnots = true;
+  }
+
+  // Make a list of vector style objects based on the configuration.
+  std::vector<VectorStyle> vectorStyles;
+  for (auto cfgVectorStyle : s->Vector) {
+    vectorStyles.push_back(getVectorStyle(cfgVectorStyle));
+  }
+
+  int vectorDiscRadius = 12;
+
+  auto drawPointFillColor = CColor(0, 0, 0, 128);
+  auto drawPointLineColor = CColor(0, 0, 0, 255);
+  auto drawPointFontFile = dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.location.c_str();
+  for (auto pointIndex : thinnedPointIndexList) {
+    auto pointStrength = &(*p1)[pointIndex];
+    auto pointDirection = &(*p2)[pointIndex];
+    auto strength = pointStrength->v;
+    auto direction = pointDirection->v;
+    if (!(direction == direction) || !(strength == strength) || strength == fillValueP1 || direction == fillValueP2) continue;
+    int x = pointStrength->x;
+    int y = dataSource->srvParams->Geo->dHeight - pointStrength->y;
+    double lat = pointStrength->lat;
+    // Adjust direction based on projection settings
+    direction += warper->getRotation(*pointStrength);
+
+    for (auto vectorStyle : vectorStyles) {
+      if (!(strength >= vectorStyle.min && strength < vectorStyle.max)) continue;
+      // Draw symbol barb, vector or disc.
+      if (vectorStyle.drawBarb) {
+        drawImage->drawBarb(x, y, ((270 - direction) / 360) * M_PI * 2, 0, strength, vectorStyle.lineColor, vectorStyle.lineWidth, toKnots, lat <= 0, vectorStyle.drawVectorPlotValue);
+      }
+      if (vectorStyle.drawVector) {
+        drawImage->drawVector(x, y, ((270 - direction) / 360) * M_PI * 2, strength * vectorStyle.symbolScaling, vectorStyle.lineColor, vectorStyle.lineWidth);
+      }
+      if (vectorStyle.drawDiscs) {
+        // Draw a disc with the speed value in text and the dir. value as an arrow
+        int x = pointStrength->x;
+        int y = dataSource->srvParams->Geo->dHeight - pointStrength->y;
+        textValue.print(vectorStyle.drawVectorTextFormat.c_str(), strength);
+        drawImage->setTextDisc(x, y, vectorDiscRadius, textValue.c_str(), drawPointFontFile, vectorStyle.fontSize, vectorStyle.textColor, drawPointFillColor, drawPointLineColor);
+        drawImage->drawVector2(x, y, ((90 + direction) / 360.) * M_PI * 2, 10, vectorDiscRadius, drawPointFillColor, vectorStyle.lineWidth);
+      }
+
+      drawTextsForVector(drawImage, dataSource, vectorStyle, pointStrength, pointDirection);
+    }
+  }
+}
+
 void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, CServerConfig::XMLE_Point *pointConfig) {
   SimpleSymbol *currentSymbol = NULL;
   if (pointConfig->attr.symbol.empty() == false) {
@@ -521,93 +605,6 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
   }
 }
 
-void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration) {
-
-  if (styleConfiguration == nullptr || styleConfiguration->styleConfig == nullptr) {
-    return;
-  }
-  auto s = styleConfiguration->styleConfig;
-  if (s->Vector.size() == 0) {
-    return;
-  }
-
-  if (dataSource->getNumDataObjects() < 2) {
-    CDBError("Cannot draw barbs, not enough data objects");
-    throw __LINE__;
-  }
-
-  std::vector<PointDVWithLatLon> *p1 = &dataSource->getDataObject(0)->points;
-  std::vector<PointDVWithLatLon> *p2 = &dataSource->getDataObject(1)->points;
-  size_t numberOfPoints = p1->size();
-
-  if (p2->size() != numberOfPoints) {
-    CDBError("Cannot draw barbs, lists for speed (%d) and direction (%d) don't have equal length ", numberOfPoints, p2->size());
-    throw __LINE__;
-  }
-
-  CT::string varName1 = dataSource->getDataObject(0)->cdfVariable->name.c_str();
-  CT::string varName2 = dataSource->getDataObject(1)->cdfVariable->name.c_str();
-
-  CT::string textValue;
-
-  auto thinnedPointIndexList = doThinningGetIndices(*p1, doThinning, thinningRadius, usePoints, useFilter);
-
-  float fillValueP1 = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
-  float fillValueP2 = dataSource->getDataObject(1)->hasNodataValue ? dataSource->getDataObject(1)->dfNodataValue : NAN;
-  CDBDebug("Vector plotting %d elements %d %d", thinnedPointIndexList.size(), useFilter, usePoints.size());
-
-  CT::string units = dataSource->getDataObject(0)->getUnits();
-  bool toKnots = false;
-  if (!(units.equalsIgnoreCase("kt") || units.equalsIgnoreCase("kts") || units.equalsIgnoreCase("knot"))) {
-    toKnots = true;
-  }
-
-  // Make a list of vector style objects based on the configuration.
-  std::vector<VectorStyle> vectorStyles;
-  for (auto cfgVectorStyle : s->Vector) {
-    vectorStyles.push_back(getVectorStyle(cfgVectorStyle));
-  }
-
-  int vectorDiscRadius = 12;
-
-  auto drawPointFillColor = CColor(0, 0, 0, 128);
-  auto drawPointLineColor = CColor(0, 0, 0, 255);
-  auto drawPointFontFile = dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.location.c_str();
-  for (auto pointIndex : thinnedPointIndexList) {
-    auto pointStrength = &(*p1)[pointIndex];
-    auto pointDirection = &(*p2)[pointIndex];
-    auto strength = pointStrength->v;
-    auto direction = pointDirection->v;
-    if (!(direction == direction) || !(strength == strength) || strength == fillValueP1 || direction == fillValueP2) continue;
-    int x = pointStrength->x;
-    int y = dataSource->srvParams->Geo->dHeight - pointStrength->y;
-    double lat = pointStrength->lat;
-    // Adjust direction based on projection settings
-    direction += warper->getRotation(*pointStrength);
-
-    for (auto vectorStyle : vectorStyles) {
-      if (!(strength >= vectorStyle.min && strength < vectorStyle.max)) continue;
-      // Draw symbol barb, vector or disc.
-      if (vectorStyle.drawBarb) {
-        drawImage->drawBarb(x, y, ((270 - direction) / 360) * M_PI * 2, 0, strength, vectorStyle.lineColor, vectorStyle.lineWidth, toKnots, lat <= 0, vectorStyle.drawVectorPlotValue);
-      }
-      if (vectorStyle.drawVector) {
-        drawImage->drawVector(x, y, ((270 - direction) / 360) * M_PI * 2, strength * vectorStyle.symbolScaling, vectorStyle.lineColor, vectorStyle.lineWidth);
-      }
-      if (vectorStyle.drawDiscs) {
-        // Draw a disc with the speed value in text and the dir. value as an arrow
-        int x = pointStrength->x;
-        int y = dataSource->srvParams->Geo->dHeight - pointStrength->y;
-        textValue.print(vectorStyle.drawVectorTextFormat.c_str(), strength);
-        drawImage->setTextDisc(x, y, vectorDiscRadius, textValue.c_str(), drawPointFontFile, vectorStyle.fontSize, vectorStyle.textColor, drawPointFillColor, drawPointLineColor);
-        drawImage->drawVector2(x, y, ((90 + direction) / 360.) * M_PI * 2, 10, vectorDiscRadius, drawPointFillColor, vectorStyle.lineWidth);
-      }
-
-      drawTextsForVector(drawImage, dataSource, vectorStyle, pointStrength, pointDirection);
-    }
-  }
-}
-
 void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage) {
   drawPoints = true;
   drawDiscs = false;
@@ -788,7 +785,10 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
 
   if (isVector) {
     CDBDebug("VECTOR");
-    renderVectorPoints(warper, dataSource, drawImage, styleConfiguration);
+    std::vector<PointDVWithLatLon> *p1 = &dataSource->getDataObject(0)->points;
+    auto thinnedPointIndexList = doThinningGetIndices(*p1, doThinning, thinningRadius, usePoints, useFilter);
+    CDBDebug("Vector plotting %d elements %d %d", thinnedPointIndexList.size(), useFilter, usePoints.size());
+    renderVectorPoints(thinnedPointIndexList, warper, dataSource, drawImage, styleConfiguration);
   }
 }
 

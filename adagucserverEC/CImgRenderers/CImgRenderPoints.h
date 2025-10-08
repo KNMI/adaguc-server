@@ -79,7 +79,6 @@ private:
   bool isRadiusAndValue;
 
   void renderSinglePoints(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, CServerConfig::XMLE_Point *pointConfig);
-  void renderVectorPoints(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration);
 
 public:
   void render(CImageWarper *, CDataSource *, CDrawImage *);
