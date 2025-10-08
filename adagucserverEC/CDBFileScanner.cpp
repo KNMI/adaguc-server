@@ -734,6 +734,10 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
                       if (dimVar->getType() == CDF_STRING) {
                         const char *str = ((char **)dimVar->data)[i];
                         uniqueKey.print("%s", str);
+                        uniqueKey.replaceSelf(" ", "_");
+                        uniqueKey.replaceSelf("<", "_lt_");
+                        uniqueKey.replaceSelf(">", "_gt_");
+                        uniqueKey.replaceSelf("=", "_eq_");
                         uniqueDimensionValueRet = uniqueDimensionValueSet.insert(uniqueKey.c_str());
                         if (uniqueDimensionValueRet.second == true) {
                           dbAdapter->setFileString(tableNames[d].c_str(), (*fileList)[j].c_str(), uniqueKey.c_str(), int(i), fileDate.c_str(), &geoOptions);
