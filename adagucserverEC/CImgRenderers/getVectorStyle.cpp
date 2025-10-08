@@ -29,6 +29,8 @@ VectorStyle getVectorStyle(CServerConfig::XMLE_Vector *vectorCfg) {
 
   if (!vectorCfg->attr.textcolor.empty()) {
     vectorStyle.textColor = CColor(vectorCfg->attr.textcolor.c_str());
+  } else {
+    vectorStyle.textColor = CColor(vectorCfg->attr.linecolor.c_str());
   }
 
   if (!vectorCfg->attr.outlinecolor.empty()) {

@@ -67,8 +67,7 @@ f8point getGetMapCoordinateFromPixelCoordinate(f8point in, CDataSource &dataSour
   return getmapCoord;
 }
 
-f8point getStrideFromGetMapLocation(CDataSource &dataSource, CImageWarper &warper) {
-  f8point pixelOffset = {.x = 80, .y = 80}; // TODO make configurable?
+f8point getStrideFromGetMapLocation(CDataSource &dataSource, CImageWarper &warper, f8point pixelOffset) {
 
   // Calculate center of modelgrid
   f8point middlePointModelData = {.x = (dataSource.dfBBOX[0] + dataSource.dfBBOX[2]) / 2, .y = (dataSource.dfBBOX[1] + dataSource.dfBBOX[3]) / 2};
@@ -118,7 +117,13 @@ int CDPPointsFromGrid::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSour
   std::vector<f8point> pointListInModelCoords;
   std::vector<size_t> pointers;
 
-  auto striding = getStrideFromGetMapLocation((*dataSource), warper);
+  f8point pixelOffset = {.x = 80, .y = 80};
+  if (!proc->attr.a.empty()) {
+    pixelOffset.x = proc->attr.a.toDouble();
+    pixelOffset.y = proc->attr.a.toDouble();
+  }
+
+  auto striding = getStrideFromGetMapLocation((*dataSource), warper, pixelOffset);
   CDBDebug("striding %f %f", striding.x, striding.y);
   size_t ystep = striding.x;
   size_t xstep = striding.y;

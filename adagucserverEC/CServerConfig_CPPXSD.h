@@ -187,9 +187,9 @@ public:
   public:
     XMLE_Vector() {
       attr.scale = 1.0;
-      attr.outlinewidth = 0.2;
+      attr.outlinewidth = 4.5;
       attr.linewidth = 1.0;
-      attr.fontSize = 8;
+      attr.fontSize = 12;
       attr.min = -DBL_MAX;
       attr.max = DBL_MAX;
     }
