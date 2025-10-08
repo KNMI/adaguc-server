@@ -568,6 +568,11 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
     vectorStyles.push_back(getVectorStyle(cfgVectorStyle));
   }
 
+  int vectorDiscRadius = 12;
+
+  auto drawPointFillColor = CColor(0, 0, 0, 128);
+  auto drawPointLineColor = CColor(0, 0, 0, 255);
+  auto drawPointFontFile = dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.location.c_str();
   for (auto pointIndex : thinnedPointIndexList) {
     auto pointStrength = &(*p1)[pointIndex];
     auto pointDirection = &(*p2)[pointIndex];
@@ -594,8 +599,8 @@ void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dat
         int x = pointStrength->x;
         int y = dataSource->srvParams->Geo->dHeight - pointStrength->y;
         textValue.print(vectorStyle.drawVectorTextFormat.c_str(), strength);
-        drawImage->setTextDisc(x, y, drawPointDiscRadius, textValue.c_str(), drawPointFontFile, drawPointFontSize, drawPointTextColor, drawPointFillColor, drawPointLineColor);
-        drawImage->drawVector2(x, y, ((90 + direction) / 360.) * M_PI * 2, 10, drawPointDiscRadius, drawPointFillColor, vectorStyle.lineWidth);
+        drawImage->setTextDisc(x, y, vectorDiscRadius, textValue.c_str(), drawPointFontFile, vectorStyle.fontSize, vectorStyle.textColor, drawPointFillColor, drawPointLineColor);
+        drawImage->drawVector2(x, y, ((90 + direction) / 360.) * M_PI * 2, 10, vectorDiscRadius, drawPointFillColor, vectorStyle.lineWidth);
       }
 
       drawTextsForVector(drawImage, dataSource, vectorStyle, pointStrength, pointDirection);
@@ -643,6 +648,7 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
     return;
   }
   CServerConfig::XMLE_Style *styleConfig = styleConfiguration->styleConfig;
+
   for (size_t pointDefinitionIndex = 0; pointDefinitionIndex < styleConfig->Point.size(); pointDefinitionIndex += 1) {
     CServerConfig::XMLE_Point *pointConfig = styleConfig->Point[pointDefinitionIndex];
 
@@ -699,34 +705,34 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
       drawDiscs = true;
       drawPoints = false;
       drawVolume = false;
-      //     drawText=true;
+
       drawSymbol = false;
     } else if (drawPointPointStyle.equalsIgnoreCase("volume")) {
       drawPoints = false;
       drawVolume = true;
       drawDiscs = false;
-      //     drawText=false;
       drawSymbol = false;
     } else if (drawPointPointStyle.equalsIgnoreCase("symbol")) {
       drawPoints = false;
       drawVolume = false;
       drawDiscs = false;
-      //     drawText=false;
       drawSymbol = true;
     } else if (drawPointPointStyle.equalsIgnoreCase("zoomablepoint")) {
       drawPoints = true;
       drawVolume = false;
       drawDiscs = false;
-      //     drawText=false;
       drawSymbol = false;
       drawZoomablePoints = true;
     } else {
       drawPoints = true;
       drawDiscs = false;
       drawVolume = false;
-      //     drawText=true;
       drawSymbol = false;
     }
+    if (drawPointPointStyle.equals("radiusandvalue")) {
+      isRadiusAndValue = true;
+    }
+
     //   CDBDebug("drawPoints=%d drawText=%d drawBarb=%d drawVector=%d drawVolume=%d drawSymbol=%d", drawPoints, drawText, drawBarb, drawVector, drawVolume, drawSymbol);
 
     // CStyleConfiguration *styleConfiguration = dataSource->getStyle();
@@ -775,19 +781,14 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
       }
     }
 
-    bool isVector = ((dataSource->getNumDataObjects() >= 2) && (dataSource->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_GEOJSONPOINT") == NULL));
-    if (drawPointPointStyle.equals("radiusandvalue")) {
-      isVector = false;
-      isRadiusAndValue = true;
-    }
-    if (!isVector) {
-      renderSinglePoints(warper, dataSource, drawImage, styleConfiguration, pointConfig);
-    }
+    renderSinglePoints(warper, dataSource, drawImage, styleConfiguration, pointConfig);
+  }
 
-    if (isVector) {
-      CDBDebug("VECTOR");
-      renderVectorPoints(warper, dataSource, drawImage, styleConfiguration);
-    }
+  bool isVector = ((dataSource->getNumDataObjects() >= 2) && (dataSource->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_GEOJSONPOINT") == NULL));
+
+  if (isVector) {
+    CDBDebug("VECTOR");
+    renderVectorPoints(warper, dataSource, drawImage, styleConfiguration);
   }
 }
 

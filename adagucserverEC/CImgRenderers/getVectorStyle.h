@@ -12,6 +12,7 @@ struct VectorStyle {
   double outlinewidth;
   CColor textColor;
   CT::string drawVectorTextFormat;
+  double fontSize;
   bool drawVectorPlotStationId;
   bool drawVectorPlotValue;
   bool drawBarb;

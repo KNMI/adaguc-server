@@ -6,7 +6,7 @@
     <Legend fixedclasses="true" tickinterval="2" tickround="1">no2</Legend>
     <Min>0.0</Min>
     <Max>10</Max>
-    <Point pointstyle="point" textcolor="#111111"/>
+    <!-- <Point pointstyle="point" textcolor="#111111"/> -->
     <Vector vectorstyle="barb" linecolor="#0000FF"  plotvalue="true" />
 
     <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#000000" borderwidth="2"/> <!-- Used in CImgRenderPolylines -->
@@ -17,7 +17,7 @@
     <Legend fixedclasses="true" tickinterval="2" tickround="1">no2</Legend>
     <Min>0.0</Min>
     <Max>10</Max>
-    <Point pointstyle="point" textcolor="#111111"/>
+    <!-- <Point pointstyle="point" textcolor="#111111"/> -->
     <Vector vectorstyle="vector" linecolor="#0000FF" />
     <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#000000" borderwidth="2"/> <!-- Used in CImgRenderPolylines -->
     <RenderMethod>point</RenderMethod>

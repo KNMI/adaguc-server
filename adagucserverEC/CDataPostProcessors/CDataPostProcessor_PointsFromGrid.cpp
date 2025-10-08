@@ -54,6 +54,12 @@ f8point getPixelCoordinateFromGetMapCoordinate(f8point in, CDataSource &dataSour
   return pixelCoord;
 }
 
+void getPixelCoordinateListFromGetMapCoordinateListInPlace(std::vector<f8point> &in, CDataSource &dataSource) {
+  for (auto &p : in) {
+    p = getPixelCoordinateFromGetMapCoordinate(p, dataSource);
+  }
+}
+
 f8point getGetMapCoordinateFromPixelCoordinate(f8point in, CDataSource &dataSource) {
   f8point getmapCoord;
   getmapCoord.x = (in.x / dataSource.srvParams->Geo->dWidth) * (dataSource.srvParams->Geo->dfBBOX[2] - dataSource.srvParams->Geo->dfBBOX[0]) + dataSource.srvParams->Geo->dfBBOX[0];
@@ -117,6 +123,7 @@ int CDPPointsFromGrid::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSour
   size_t ystep = striding.x;
   size_t xstep = striding.y;
 
+  // TODO: Calculate the start/end indices which are inside the getmap request. E.g. prevent looping the whole modelfield.
   for (size_t y = 0; y < size_t(dataSource->dHeight); y = y + ystep) {
     for (size_t x = 0; x < size_t(dataSource->dWidth); x = x + xstep) {
       size_t p = x + y * dataSource->dWidth;
@@ -127,12 +134,19 @@ int CDPPointsFromGrid::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSour
     }
   }
 
+  // From model coordinates to lat/lon coordinates
   auto pointsInLatLon = pointListInModelCoords;
   warper.reprojModelToLatLon(pointsInLatLon);
+
+  // From latlon coordinates to getmap projection coordinates
   auto pointsInScreen = pointsInLatLon;
   warper.reprojfromLatLon(pointsInScreen);
 
-  int id = 0; // TODO check if not grows besided number of availbe objects
+  // From getmap coordinates to pixel coordinates
+  auto pointsInPixel = pointsInScreen;
+  getPixelCoordinateListFromGetMapCoordinateListInPlace(pointsInPixel, (*dataSource));
+
+  int id = 0; // TODO check if not grows besided number of available objects
   for (auto con : proc->attr.select.splitToStack(",")) {
     auto ob = dataSource->getDataObjectByName(con.c_str());
     auto destob = dataSource->getDataObject(id);
@@ -140,11 +154,12 @@ int CDPPointsFromGrid::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSour
       CDBError("Can only work with CDF_FLOAT");
       throw __LINE__;
     }
-    for (size_t index = 0; index < pointListInModelCoords.size(); index++) {
-      auto pixelCoord = getPixelCoordinateFromGetMapCoordinate(pointsInScreen[index], (*dataSource));
+    for (size_t index = 0; index < pointsInPixel.size(); index++) {
+      auto pixelCoord = pointsInPixel[index];
       float *data = (float *)ob->cdfVariable->data;
       int px = pixelCoord.x;
       int py = pixelCoord.y;
+      if (px < 0 || py < 0 || px > dataSource->srvParams->Geo->dWidth || py > dataSource->srvParams->Geo->dHeight) continue;
       auto newPoint = PointDVWithLatLon(px, py, pointsInLatLon[index].x, pointsInLatLon[index].y, data[pointers[index]]);
       destob->points.push_back(newPoint);
     }

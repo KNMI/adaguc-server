@@ -7,11 +7,12 @@ VectorStyle getVectorStyle(CServerConfig::XMLE_Vector *vectorCfg) {
 
   VectorStyle vectorStyle = {
       .lineColor = CColor(0, 0, 128, 255),
-      .lineWidth = 1.0,
+      .lineWidth = vectorCfg->attr.linewidth,
       .outlinecolor = CColor(255, 255, 255, 255),
       .outlinewidth = vectorCfg->attr.outlinewidth,
       .textColor = CColor(0, 0, 0, 255),
       .drawVectorTextFormat = "%0.1f",
+      .fontSize = vectorCfg->attr.fontSize,
       .drawVectorPlotStationId = false,
       .drawVectorPlotValue = false,
       .drawBarb = false,
@@ -46,9 +47,6 @@ VectorStyle getVectorStyle(CServerConfig::XMLE_Vector *vectorCfg) {
     }
   }
 
-  if (vectorCfg->attr.linewidth.empty() == false) {
-    vectorStyle.lineWidth = vectorCfg->attr.linewidth.toFloat();
-  }
   if (vectorCfg->attr.plotstationid.empty() == false) {
     vectorStyle.drawVectorPlotStationId = vectorCfg->attr.plotstationid.equalsIgnoreCase("true");
   }
@@ -58,6 +56,7 @@ VectorStyle getVectorStyle(CServerConfig::XMLE_Vector *vectorCfg) {
   if (vectorCfg->attr.textformat.empty() == false) {
     vectorStyle.drawVectorTextFormat = vectorCfg->attr.textformat;
   }
+
   vectorStyle.symbolScaling = vectorCfg->attr.scale;
 
   return vectorStyle;
