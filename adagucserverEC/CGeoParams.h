@@ -99,6 +99,10 @@ struct i4point {
   int x, y;
 };
 
+struct f4point {
+  float x, y;
+};
+
 struct f8point {
   double x, y;
   f8point rad() { return {.x = (x * (M_PI / 180.)), .y = (y * (M_PI / 180.))}; }

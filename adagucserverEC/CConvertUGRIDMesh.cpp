@@ -26,10 +26,19 @@
 #include "CConvertUGRIDMesh.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
-//#define CCONVERTUGRIDMESH_DEBUG
+
 const char *CConvertUGRIDMesh::className = "CConvertUGRIDMesh";
 
 #define CCONVERTUGRIDMESH_NODATA -32000
+#define CCONVERTUGRIDMESH_MESH_VARIABLE "mesh2d"
+#define NEWGRID_VAR_X "x"
+#define NEWGRID_VAR_Y "y"
+#define ORIGGRID_SUFFIX "orig_ugrid_var"
+#define CCONVERTUGRIDMESH_NODE_COORDINATES_ATTRIBUTENAME "node_coordinates"
+#define CCONVERTUGRIDMESH_FACE_NODE_CONNECTIVITY_ATTRIBUTENAME "face_node_connectivity"
+#define CCONVERTUGRIDMESH_DEFAULT_MESH_NODE_NAME_X "mesh2d_node_x"
+#define CCONVERTUGRIDMESH_DEFAULT_MESH_NODE_NAME_Y "mesh2d_node_y"
+#define CCONVERTUGRIDMESH_DEFAULT_MESH_FACE_NODES_NAME "mesh2d_face_nodes"
 
 void line(float *imagedata, int w, int h, float x1, float y1, float x2, float y2, float value) {
   int xyIsSwapped = 0;
@@ -64,24 +73,39 @@ void line(float *imagedata, int w, int h, float x1, float y1, float x2, float y2
   }
 }
 
-void drawlines(float *imagedata, int w, int h, int polyCorners, float *polyX, float *polyY, float value) {
-  for (int j = 0; j < polyCorners - 1; j++) {
-    if ((polyX[j] >= 0 && polyY[j] >= 0 && polyX[j] < w && polyY[j] < h) || (polyX[j + 1] >= 0 && polyY[j + 1] >= 0 && polyX[j + 1] < w && polyY[j + 1] < h)) {
-      if (polyX[j] != CCONVERTUGRIDMESH_NODATA && polyX[j + 1] != CCONVERTUGRIDMESH_NODATA) {
-        line(imagedata, w, h, polyX[j], polyY[j], polyX[j + 1], polyY[j + 1], value);
+void drawlines(float *imagedata, int w, int h, std::vector<f8point> &polyCoords, float value) {
+  for (int j = 0; j < int(polyCoords.size()) - 1; j++) {
+    if ((polyCoords[j].x >= 0 && polyCoords[j].y >= 0 && polyCoords[j].x < w && polyCoords[j].y < h) ||
+        (polyCoords[j + 1].x >= 0 && polyCoords[j + 1].y >= 0 && polyCoords[j + 1].x < w && polyCoords[j + 1].y < h)) {
+      if (polyCoords[j].x != CCONVERTUGRIDMESH_NODATA && polyCoords[j + 1].x != CCONVERTUGRIDMESH_NODATA) {
+        line(imagedata, w, h, polyCoords[j].x, polyCoords[j].y, polyCoords[j + 1].x, polyCoords[j + 1].y, value);
       }
     }
   }
 }
 
-void drawpoly(float *imagedata, int w, int h, int polyCorners, float *polyX, float *polyY, float value) {
-  //  public-domain code by Darel Rex Finley, 2007
+void drawpoly(float *imagedata, int w, int h, std::vector<f8point> &polyCoords, float value) {
 
+  //  public-domain code by Darel Rex Finley, 2007
+  size_t polyCorners = polyCoords.size() - 1;
+  if (polyCorners < 2) return;
   int nodes, nodeX[polyCorners * 2 + 1], pixelY, i, j, swap;
-  int IMAGE_TOP = 0;
-  int IMAGE_BOT = h;
-  int IMAGE_LEFT = 0;
-  int IMAGE_RIGHT = w;
+
+  int minx = polyCoords[0].x;
+  int miny = polyCoords[0].y;
+  int maxx = polyCoords[0].x;
+  int maxy = polyCoords[0].y;
+  for (auto &polCoord : polyCoords) {
+    if (minx > polCoord.x) minx = polCoord.x;
+    if (miny > polCoord.y) miny = polCoord.y;
+    if (maxx < polCoord.x) maxx = polCoord.x;
+    if (maxy < polCoord.y) maxy = polCoord.y;
+  }
+
+  int IMAGE_TOP = std::max(miny - 1, 0);
+  int IMAGE_BOT = std::min(maxy + 1, h);
+  int IMAGE_LEFT = std::max(minx - 1, 0);
+  int IMAGE_RIGHT = std::min(maxx + 1, w);
 
   //  Loop through the rows of the image.
   for (pixelY = IMAGE_TOP; pixelY < IMAGE_BOT; pixelY++) {
@@ -89,9 +113,10 @@ void drawpoly(float *imagedata, int w, int h, int polyCorners, float *polyX, flo
     //  Build a list of nodes.
     nodes = 0;
     j = polyCorners - 1;
-    for (i = 0; i < polyCorners; i++) {
-      if ((polyY[i] < (double)pixelY && polyY[j] >= (double)pixelY) || (polyY[j] < (double)pixelY && polyY[i] >= (double)pixelY)) {
-        nodeX[nodes++] = (int)(polyX[i] + (pixelY - polyY[i]) / (polyY[j] - polyY[i]) * (polyX[j] - polyX[i]));
+
+    for (size_t i = 0; i < polyCorners; i++) {
+      if ((polyCoords[i].y < pixelY && polyCoords[j].y >= pixelY) || (polyCoords[j].y < pixelY && polyCoords[i].y >= pixelY)) {
+        nodeX[nodes++] = (int)(polyCoords[i].x + (pixelY - polyCoords[i].y) / (polyCoords[j].y - polyCoords[i].y) * (polyCoords[j].x - polyCoords[i].x));
       }
       j = i;
     }
@@ -123,150 +148,160 @@ void drawpoly(float *imagedata, int w, int h, int polyCorners, float *polyX, flo
   }
 }
 
-/**
- * This function adjusts the cdfObject by creating virtual 2D variables
- */
-int CConvertUGRIDMesh::convertUGRIDMeshHeader(CDFObject *cdfObject) {
-  // Check whether this is really an ugrid file
-  try {
-    cdfObject->getVariable("mesh");
-  } catch (int e) {
-    return 1;
-  }
+void setup2dGrid(CDFObject *cdfObject, double dfBBOX[4], int width = 2, int height = 2) {
+  // Add dims
+  CDF::Dimension *dimX = cdfObject->getDimensionNE(NEWGRID_VAR_X) != nullptr ? cdfObject->getDimensionNE(NEWGRID_VAR_X) : new CDF::Dimension(cdfObject, NEWGRID_VAR_X, width);
+  CDF::Dimension *dimY = cdfObject->getDimensionNE(NEWGRID_VAR_Y) != nullptr ? cdfObject->getDimensionNE(NEWGRID_VAR_Y) : new CDF::Dimension(cdfObject, NEWGRID_VAR_Y, height);
 
-  CDBDebug("Using CConvertUGRIDMesh.h");
+  // Add vars
+  CDF::Variable *varX = cdfObject->getVariableNE(NEWGRID_VAR_X) != nullptr ? cdfObject->getVariableNE(NEWGRID_VAR_X) : new CDF::Variable(cdfObject, NEWGRID_VAR_X, CDF_DOUBLE, {dimX}, true);
+  CDF::Variable *varY = cdfObject->getVariableNE(NEWGRID_VAR_Y) != nullptr ? cdfObject->getVariableNE(NEWGRID_VAR_Y) : new CDF::Variable(cdfObject, NEWGRID_VAR_Y, CDF_DOUBLE, {dimY}, true);
 
-  // Standard bounding box of adaguc data is worldwide
+  // Allocate data
+  dimX->setSize(width);
+  dimY->setSize(height);
+  CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
+  CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
 
-  // Standard bounding box of adaguc data is worldwide
-  CDF::Variable *pointLon;
-  CDF::Variable *pointLat;
-
-  try {
-    pointLon = cdfObject->getVariable("mesh_node_lon");
-    pointLat = cdfObject->getVariable("mesh_node_lat");
-  } catch (int e) {
-    CDBError("Mesh2_node_x or Mesh2_node_y variables not found");
-    return 1;
-  }
-
-#ifdef MEASURETIME
-  StopWatch_Stop("UGRID MESH DATA");
-#endif
-  pointLon->readData(CDF_FLOAT, true);
-  pointLat->readData(CDF_FLOAT, true);
-#ifdef MEASURETIME
-  StopWatch_Stop("DATA READ");
-#endif
-  MinMax lonMinMax = getMinMax(pointLon);
-  MinMax latMinMax = getMinMax(pointLat);
-#ifdef MEASURETIME
-  StopWatch_Stop("MIN/MAX Calculated");
-#endif
-  double dfBBOX[] = {lonMinMax.min, latMinMax.min, lonMinMax.max, latMinMax.max};
-
-  // Default size of adaguc 2dField is 2x2
-  int width = 2;
-  int height = 2;
-
+  // Calculate cellsize and offset
   double cellSizeX = (dfBBOX[2] - dfBBOX[0]) / double(width);
   double cellSizeY = (dfBBOX[3] - dfBBOX[1]) / double(height);
   double offsetX = dfBBOX[0];
   double offsetY = dfBBOX[1];
 
-  // Add geo variables, only if they are not there already
-  CDF::Dimension *dimX = cdfObject->getDimensionNE("x");
-  CDF::Dimension *dimY = cdfObject->getDimensionNE("y");
-  CDF::Variable *varX = cdfObject->getVariableNE("x");
-  CDF::Variable *varY = cdfObject->getVariableNE("y");
-  if (dimX == NULL || dimY == NULL || varX == NULL || varY == NULL) {
-    // If not available, create new dimensions and variables (X,Y,T)
-    // For x
-    dimX = new CDF::Dimension();
-    dimX->name = "x";
-    dimX->setSize(width);
-    cdfObject->addDimension(dimX);
-    varX = new CDF::Variable();
-    varX->setType(CDF_DOUBLE);
-    varX->name.copy("x");
-    varX->isDimension = true;
-    varX->dimensionlinks.push_back(dimX);
-    cdfObject->addVariable(varX);
-    CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
+  // Fill in the X and Y dimensions with the array of coordinates
+  for (size_t j = 0; j < dimX->length; j++) {
+    double x = offsetX + j * cellSizeX + cellSizeX / 2;
+    ((double *)varX->data)[j] = x;
+  }
+  for (size_t j = 0; j < dimY->length; j++) {
+    double y = offsetY + j * cellSizeY + cellSizeY / 2;
+    ((double *)varY->data)[j] = y;
+  }
+}
 
-    // For y
-    dimY = new CDF::Dimension();
-    dimY->name = "y";
-    dimY->setSize(height);
-    cdfObject->addDimension(dimY);
-    varY = new CDF::Variable();
-    varY->setType(CDF_DOUBLE);
-    varY->name.copy("y");
-    varY->isDimension = true;
-    varY->dimensionlinks.push_back(dimY);
-    cdfObject->addVariable(varY);
-    CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
+void setupVarsToConvert(CDFObject *cdfObject, CT::StackList<CT::string> varsToConvert) {
+  CDF::Dimension *dimX = cdfObject->getDimensionNE(NEWGRID_VAR_X);
+  CDF::Dimension *dimY = cdfObject->getDimensionNE(NEWGRID_VAR_Y);
+  // Create the new 2D field variables based on the mesh variables
+  for (size_t v = 0; v < varsToConvert.size(); v++) {
+    CDF::Variable *meshVar = cdfObject->getVariable(varsToConvert[v].c_str());
 
-    // Fill in the X and Y dimensions with the array of coordinates
-    for (size_t j = 0; j < dimX->length; j++) {
-      double x = offsetX + double(j) * cellSizeX + cellSizeX / 2;
-      ((double *)varX->data)[j] = x;
+    CDF::Variable *newStandardGridVar = new CDF::Variable();
+    cdfObject->addVariable(newStandardGridVar);
+
+    newStandardGridVar->dimensionlinks.push_back(dimY);
+    newStandardGridVar->dimensionlinks.push_back(dimX);
+
+    newStandardGridVar->setType(meshVar->getType());
+    newStandardGridVar->name = meshVar->name.c_str();
+
+    // Rename the original variable by appending a suffix
+    meshVar->name.concat(ORIGGRID_SUFFIX);
+
+    // Copy variable attributes
+    for (size_t j = 0; j < meshVar->attributes.size(); j++) {
+      CDF::Attribute *a = meshVar->attributes[j];
+      newStandardGridVar->setAttribute(a->name.c_str(), a->getType(), a->data, a->length);
+      newStandardGridVar->setAttributeText("UGRID_MESH", "true");
     }
-    for (size_t j = 0; j < dimY->length; j++) {
-      double y = offsetY + double(j) * cellSizeY + cellSizeY / 2;
-      ((double *)varY->data)[j] = y;
+
+    // Scale and offset are already applied
+    newStandardGridVar->removeAttribute("scale_factor");
+    newStandardGridVar->removeAttribute("add_offset");
+
+    newStandardGridVar->setType(CDF_FLOAT);
+    if (newStandardGridVar->getAttributeNE("_FillValue") == NULL) {
+      float f = NAN;
+      newStandardGridVar->setAttribute("_FillValue", CDF_FLOAT, &f, 1);
+    }
+    newStandardGridVar->removeAttribute("ADAGUC_SKIP");
+  }
+}
+
+bool isUGrid(CDFObject *cdfObject) { return (cdfObject->getVariableNE(CCONVERTUGRIDMESH_MESH_VARIABLE) != nullptr); }
+
+std::pair<CT::string, CT::string> getNodeCoordinateVariableNames(CDFObject *cdfObject) {
+  auto meshVar = cdfObject->getVariable(CCONVERTUGRIDMESH_MESH_VARIABLE);
+
+  auto nodeCoordinates = meshVar->getAttributeNE(CCONVERTUGRIDMESH_NODE_COORDINATES_ATTRIBUTENAME);
+  CT::string mesh2d_node_x = CCONVERTUGRIDMESH_DEFAULT_MESH_NODE_NAME_X;
+  CT::string mesh2d_node_y = CCONVERTUGRIDMESH_DEFAULT_MESH_NODE_NAME_Y;
+
+  if (nodeCoordinates != nullptr) {
+    auto list = nodeCoordinates->getDataAsString().splitToStack(" ");
+    if (list.size() == 2) {
+      mesh2d_node_x = list[0];
+      mesh2d_node_y = list[1];
     }
   }
+  return std::make_pair(mesh2d_node_x, mesh2d_node_y);
+}
+
+CT::string getMeshFaceNodeVariableName(CDFObject *cdfObject) {
+  auto meshVar = cdfObject->getVariable(CCONVERTUGRIDMESH_MESH_VARIABLE);
+  auto faceNodeConnectivityAttribute = meshVar->getAttributeNE(CCONVERTUGRIDMESH_FACE_NODE_CONNECTIVITY_ATTRIBUTENAME);
+  CT::string faceNodeVariableName = CCONVERTUGRIDMESH_DEFAULT_MESH_FACE_NODES_NAME;
+  if (faceNodeConnectivityAttribute != nullptr) {
+    faceNodeVariableName = faceNodeConnectivityAttribute->getDataAsString();
+  }
+  return faceNodeVariableName;
+}
+
+/**
+ * This function adjusts the cdfObject by creating virtual 2D variables
+ */
+int CConvertUGRIDMesh::convertUGRIDMeshHeader(CDFObject *cdfObject, CServerParams *srvParams) {
+  if (!isUGrid(cdfObject)) {
+    return 1;
+  }
+  CDBDebug("Using CConvertUGRIDMesh.h");
+
+  auto mesh2d_node_names = getNodeCoordinateVariableNames(cdfObject);
+  CDF::Variable *pointLon = cdfObject->getVariableNE(mesh2d_node_names.first);
+  if (pointLon == nullptr) {
+    CDBError("mesh_node_x missing");
+    return 1;
+  }
+  CDF::Variable *pointLat = cdfObject->getVariableNE(mesh2d_node_names.second);
+  if (pointLat == nullptr) {
+    CDBError("mesh_node_y missing");
+    return 1;
+  }
+  pointLon->readData(CDF_DOUBLE);
+  pointLat->readData(CDF_DOUBLE);
+
+  // Reproject coords
+  CImageWarper warper;
+  warper.init(LATLONPROJECTION,
+              "+proj=sterea +lat_0=52.15616055555555 +lon_0=5.38763888888889 +k=0.9999079 +x_0=155000 +y_0=463000 +ellps=bessel "
+              "+towgs84=565.4171,50.3319,465.5524,-0.398957388243134,0.343987817378283,-1.87740163998045,4.0725 +units=m +no_defs",
+              &srvParams->cfg->Projection);
+  double *lons = (double *)pointLon->data;
+  double *lats = (double *)pointLat->data;
+  for (size_t j = 0; j < pointLon->getSize(); j++) {
+    warper.reprojpoint(lons[j], lats[j]);
+  }
+  MinMax lonMinMax = getMinMax(pointLon);
+  MinMax latMinMax = getMinMax(pointLat);
+  double dfBBOX[] = {lonMinMax.min, latMinMax.min, lonMinMax.max, latMinMax.max};
 
   // Make a list of variables which will be available as 2D fields
   CT::StackList<CT::string> varsToConvert;
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
     if (var->isDimension == false) {
-      if (var->name.equals("mesh")) {
+      auto location = var->getAttributeNE("location");
+      if (location != nullptr && location->getDataAsString().equals("face")) {
         varsToConvert.add(CT::string(var->name.c_str()));
       }
-      // CDBDebug("%s",var->name.c_str());
       var->setAttributeText("ADAGUC_SKIP", "true");
     }
   }
 
-  // Create the new 2D field variables based on the mesh variables
-  for (size_t v = 0; v < varsToConvert.size(); v++) {
-    CDF::Variable *meshVar = cdfObject->getVariable(varsToConvert[v].c_str());
+  setup2dGrid(cdfObject, dfBBOX);
 
-#ifdef CCONVERTUGRIDMESH_DEBUG
-    CDBDebug("Converting %s", meshVar->name.c_str());
-#endif
-
-    CDF::Variable *new2DVar = new CDF::Variable();
-    cdfObject->addVariable(new2DVar);
-
-    new2DVar->dimensionlinks.push_back(dimY);
-    new2DVar->dimensionlinks.push_back(dimX);
-
-    new2DVar->setType(meshVar->getType());
-    new2DVar->name = meshVar->name.c_str();
-    meshVar->name.concat("_backup");
-
-    // Copy variable attributes
-    for (size_t j = 0; j < meshVar->attributes.size(); j++) {
-      CDF::Attribute *a = meshVar->attributes[j];
-      new2DVar->setAttribute(a->name.c_str(), a->getType(), a->data, a->length);
-      new2DVar->setAttributeText("UGRID_MESH", "true");
-    }
-
-    // Scale and offset are already applied
-    new2DVar->removeAttribute("scale_factor");
-    new2DVar->removeAttribute("add_offset");
-
-    new2DVar->setType(CDF_FLOAT);
-    if (new2DVar->getAttributeNE("_FillValue") == NULL) {
-      float f = NAN;
-      new2DVar->setAttribute("_FillValue", CDF_FLOAT, &f, 1);
-    }
-    new2DVar->removeAttribute("ADAGUC_SKIP");
-  }
+  setupVarsToConvert(cdfObject, varsToConvert);
 
   return 0;
 }
@@ -275,264 +310,150 @@ int CConvertUGRIDMesh::convertUGRIDMeshHeader(CDFObject *cdfObject) {
  * This function draws the virtual 2D variable into a new 2D field
  */
 int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
-  //   #ifdef CCONVERTUGRIDMESH_DEBUG
-  //   CDBDebug("convertUGRIDMeshData");
-  //   #endif
+
   CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
-  // Check whether this is really an ugrid file
-  try {
-    cdfObject->getVariable("mesh");
-  } catch (int e) {
-    return 1;
-  }
-  CDBDebug("THIS IS UGRID MESH DATA");
-  size_t nrDataObjects = dataSource->getNumDataObjects();
-  CDataSource::DataObject *dataObjects[nrDataObjects];
-  for (size_t d = 0; d < nrDataObjects; d++) {
-    dataObjects[d] = dataSource->getDataObject(d);
-  }
-  CDF::Variable *new2DVar;
-  new2DVar = dataObjects[0]->cdfVariable;
-
-  CDF::Variable *meshVar;
-  CT::string origMeshName = new2DVar->name.c_str();
-  origMeshName.concat("_backup");
-  meshVar = cdfObject->getVariableNE(origMeshName.c_str());
-  if (meshVar == NULL) {
-    CDBError("Unable to find orignal mesh variable with name %s", origMeshName.c_str());
-    return 1;
-  }
-  CDF::Variable *meshLon;
-  CDF::Variable *meshLat;
-
-  try {
-    meshLon = cdfObject->getVariable("mesh_node_lon");
-    meshLat = cdfObject->getVariable("mesh_node_lat");
-  } catch (int e) {
-    CDBError("lat or lon variables not found");
+  if (!isUGrid(cdfObject) || mode != CNETCDFREADER_MODE_OPEN_ALL) {
     return 1;
   }
 
-  // Read original data first
-  //   meshVar->readData(CDF_FLOAT,true);
-  meshLon->readData(CDF_FLOAT, true);
-  meshLat->readData(CDF_FLOAT, true);
+  CDF::Variable *newStandardGridVar = dataSource->getDataObject(0)->cdfVariable;
+
+  // Obtain the original mesh variable and read its data
+  CT::string originalUGridVarName = newStandardGridVar->name + ORIGGRID_SUFFIX;
+
+  auto originalUGridVar = cdfObject->getVariableNE(originalUGridVarName.c_str());
+  if (originalUGridVar == NULL) {
+    CDBError("Unable to find orignal mesh variable with name %s", originalUGridVarName.c_str());
+    return 1;
+  }
+  originalUGridVar->readData(CDF_DOUBLE, false);
 
   // Make the width and height of the new 2D adaguc field the same as the viewing window
-  dataSource->dWidth = dataSource->srvParams->Geo->dWidth;
-  dataSource->dHeight = dataSource->srvParams->Geo->dHeight;
+  dataSource->dWidth = std::max(dataSource->srvParams->Geo->dWidth, 2);
+  dataSource->dHeight = std::max(dataSource->srvParams->Geo->dHeight, 2);
 
-  if (dataSource->dWidth == 1 && dataSource->dHeight == 1) {
-    dataSource->srvParams->Geo->dfBBOX[0] = dataSource->srvParams->Geo->dfBBOX[0];
-    dataSource->srvParams->Geo->dfBBOX[1] = dataSource->srvParams->Geo->dfBBOX[1];
-    dataSource->srvParams->Geo->dfBBOX[2] = dataSource->srvParams->Geo->dfBBOX[2];
-    dataSource->srvParams->Geo->dfBBOX[3] = dataSource->srvParams->Geo->dfBBOX[3];
+  CDF::Attribute *fillValue = newStandardGridVar->getAttributeNE("_FillValue");
+  if (fillValue != NULL) {
+    dataSource->getDataObject(0)->hasNodataValue = true;
+    fillValue->getData(&dataSource->getDataObject(0)->dfNodataValue, 1);
   }
 
-  // Width needs to be at least 2 in this case.
-  if (dataSource->dWidth == 1) dataSource->dWidth = 2;
-  if (dataSource->dHeight == 1) dataSource->dHeight = 2;
   double cellSizeX = (dataSource->srvParams->Geo->dfBBOX[2] - dataSource->srvParams->Geo->dfBBOX[0]) / double(dataSource->dWidth);
   double cellSizeY = (dataSource->srvParams->Geo->dfBBOX[3] - dataSource->srvParams->Geo->dfBBOX[1]) / double(dataSource->dHeight);
   double offsetX = dataSource->srvParams->Geo->dfBBOX[0];
   double offsetY = dataSource->srvParams->Geo->dfBBOX[1];
 
-  CDF::Attribute *fillValue = new2DVar->getAttributeNE("_FillValue");
-  if (fillValue != NULL) {
-    dataObjects[0]->hasNodataValue = true;
-    fillValue->getData(&dataObjects[0]->dfNodataValue, 1);
-#ifdef CCONVERTADAGUCPOINT_DEBUG
-    CDBDebug("_FillValue = %f", dataObjects[0]->dfNodataValue);
-#endif
+  setup2dGrid(cdfObject, dataSource->srvParams->Geo->dfBBOX, dataSource->dWidth, dataSource->dHeight);
+
+  size_t fieldSize = dataSource->dWidth * dataSource->dHeight;
+  newStandardGridVar->setSize(fieldSize);
+  CDF::allocateData(newStandardGridVar->getType(), &(newStandardGridVar->data), fieldSize);
+  CDF::fill(newStandardGridVar->data, newStandardGridVar->getType(), dataSource->getDataObject(0)->dfNodataValue, fieldSize);
+
+  CImageWarper imageWarper;
+  int status = imageWarper.initreproj(dataSource, dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
+  if (status != 0) {
+    CDBError("Unable to init projection");
+    return 1;
   }
+  bool projectionRequired = imageWarper.isProjectionRequired();
 
-  if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
-#ifdef CCONVERTUGRIDMESH_DEBUG
-    CDBDebug("convertUGRIDMeshData OPEN ALL");
-#endif
+  float *sdata = ((float *)dataSource->getDataObject(0)->cdfVariable->data);
 
-#ifdef CCONVERTUGRIDMESH_DEBUG
-    CDBDebug("Drawing %s", new2DVar->name.c_str());
-#endif
+  auto mesh2d_node_names = getNodeCoordinateVariableNames(cdfObject);
+  auto mesh2dNodeVarX = cdfObject->getVariableNE(mesh2d_node_names.first);
+  auto mesh2dNodeVarY = cdfObject->getVariableNE(mesh2d_node_names.second);
 
-    CDF::Dimension *dimX;
-    CDF::Dimension *dimY;
-    CDF::Variable *varX;
-    CDF::Variable *varY;
+  auto faceNodesName = getMeshFaceNodeVariableName(cdfObject);
 
-    // Create new dimensions and variables (X,Y,T)
-    dimX = cdfObject->getDimension("x");
-    dimX->setSize(dataSource->dWidth);
+  CDF::Variable *faceNodesVar = cdfObject->getVariable(faceNodesName.c_str());
+  faceNodesVar->readData(CDF_INT, false);
+  int *faceNodesVarData = (int *)faceNodesVar->data;
+  int faceNodesVarData_Fill = -1;
 
-    dimY = cdfObject->getDimension("y");
-    dimY->setSize(dataSource->dHeight);
+  size_t numberOfFaces = faceNodesVar->dimensionlinks[0]->getSize();
+  size_t nodesPerFace = faceNodesVar->dimensionlinks[1]->getSize();
 
-    varX = cdfObject->getVariable("x");
-    varY = cdfObject->getVariable("y");
+  CDBDebug("Num faces: %d", faceNodesVar->dimensionlinks[0]->getSize());
+  CDBDebug("Max face size: %d", nodesPerFace);
 
-    CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
-    CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
-
-    // Fill in the X and Y dimensions with the array of coordinates
-    for (size_t j = 0; j < dimX->length; j++) {
-      double x = offsetX + double(j) * cellSizeX + cellSizeX / 2;
-      ((double *)varX->data)[j] = x;
-    }
-    for (size_t j = 0; j < dimY->length; j++) {
-      double y = offsetY + double(j) * cellSizeY + cellSizeY / 2;
-      ((double *)varY->data)[j] = y;
-    }
-
-    size_t fieldSize = dataSource->dWidth * dataSource->dHeight;
-    new2DVar->setSize(fieldSize);
-    CDF::allocateData(new2DVar->getType(), &(new2DVar->data), fieldSize);
-
-    // Draw data!
-
-    for (size_t j = 0; j < fieldSize; j++) {
-      ((float *)new2DVar->data)[j] = dataObjects[0]->dfNodataValue;
-    }
-
-    float *sdata = ((float *)dataObjects[0]->cdfVariable->data);
-
-    float *lonData = (float *)meshLon->data;
-    float *latData = (float *)meshLat->data;
-
-    size_t numMeshPoints = meshLon->getSize();
-
-    CImageWarper imageWarper;
-    //     bool projectionRequired=false;
-    //     if(dataSource->srvParams->Geo->CRS.length()>0){
-    //       projectionRequired=true;
-    //       new2DVar->setAttributeText("grid_mapping","customgridprojection");
-    //       if(cdfObject->getVariableNE("customgridprojection")==NULL){
-    //         CDF::Variable *projectionVar = new CDF::Variable();
-    //         projectionVar->name.copy("customgridprojection");
-    //         cdfObject->addVariable(projectionVar);
-    //         dataSource->nativeEPSG = dataSource->srvParams->Geo->CRS.c_str();
-    //         imageWarper.decodeCRS(&dataSource->nativeProj4,&dataSource->nativeEPSG,&dataSource->srvParams->cfg->Projection);
-    //         if(dataSource->nativeProj4.length()==0){
-    //           dataSource->nativeProj4=LATLONPROJECTION;
-    //           dataSource->nativeEPSG="EPSG:4326";
-    //           projectionRequired=false;
-    //         }
-    //         projectionVar->setAttributeText("proj4_params",dataSource->nativeProj4.c_str());
-    //       }
-    //     }
-    //
-
-#ifdef CCONVERTUGRIDMESH_DEBUG
-    CDBDebug("Datasource CRS = %s nativeproj4 = %s", dataSource->nativeEPSG.c_str(), dataSource->nativeProj4.c_str());
-    CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->Geo->dfBBOX[0], dataSource->srvParams->Geo->dfBBOX[1], dataSource->srvParams->Geo->dfBBOX[2], dataSource->srvParams->Geo->dfBBOX[3]);
-    CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
-#endif
-
-    // if(projectionRequired){
-    int status = imageWarper.initreproj(dataSource, dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
-    if (status != 0) {
-      CDBError("Unable to init projection");
-      return 1;
-    }
-    // }
-    bool projectionRequired = imageWarper.isProjectionRequired();
-    //     int polyCorners = 5;
-    float projectedX[numMeshPoints]; //={10,100,40,110,20,10};
-    float projectedY[numMeshPoints]; //={10,20,40,100,110,10};
-
-#ifdef MEASURETIME
-    StopWatch_Stop("Iterating lat/lon data");
-#endif
-
-    for (size_t j = 0; j < numMeshPoints; j++) {
-
-      double lon = double(lonData[j]), lat = double(latData[j]);
-      double tprojectedX = lon;
-      double tprojectedY = lat;
-      float v = j;
+  // Make a projectedX and projectedY list
+  size_t numMeshPoints = mesh2dNodeVarX->getSize();
+  double mesh2dNodeVarXProjected[numMeshPoints];
+  double mesh2dNodeVarYProjected[numMeshPoints];
+  double mesh2dNodeVarLon[numMeshPoints];
+  double mesh2dNodeVarLat[numMeshPoints];
+  for (size_t j = 0; j < numMeshPoints; j++) {
+    double lon = ((double *)mesh2dNodeVarX->data)[j];
+    double lat = ((double *)mesh2dNodeVarY->data)[j];
+    double tprojectedX = lon;
+    double tprojectedY = lat;
+    int dlon = CCONVERTUGRIDMESH_NODATA, dlat = CCONVERTUGRIDMESH_NODATA;
+    if (tprojectedX > -360 && tprojectedX < 360 && tprojectedY > -90 && tprojectedY < 90 && tprojectedX != NAN && tprojectedY != NAN && tprojectedX > -HUGE_VAL && tprojectedX < HUGE_VAL &&
+        tprojectedY > -HUGE_VAL && tprojectedY < HUGE_VAL) {
+      // float v = j;
       int status = 0;
       if (projectionRequired) status = imageWarper.reprojfromLatLon(tprojectedX, tprojectedY);
-      int dlon, dlat;
+
       if (!status) {
         dlon = int((tprojectedX - offsetX) / cellSizeX);
         dlat = int((tprojectedY - offsetY) / cellSizeY);
-      } else {
-        dlat = CCONVERTUGRIDMESH_NODATA;
-        dlon = CCONVERTUGRIDMESH_NODATA;
       }
-      dataObjects[0]->points.push_back(PointDVWithLatLon(dlon, dlat, lon, lat, v));
-      projectedX[j] = dlon;
-      projectedY[j] = dlat;
     }
-
-#ifdef MEASURETIME
-    StopWatch_Stop("Start reading face nodes");
-#endif
-
-    CDF::Variable *Mesh2_face_nodes = cdfObject->getVariable("mesh_face_nodes");
-    Mesh2_face_nodes->readData(CDF_INT, false);
-    int *Mesh2_face_nodesData = (int *)Mesh2_face_nodes->data;
-    int Mesh2_face_nodesData_Fill = -1;
-
-    try {
-      Mesh2_face_nodes->getAttribute("_FillValue")->getData(&Mesh2_face_nodesData_Fill, 1);
-      ;
-
-    } catch (int e) {
-      CDBWarning("Warning: FillValue not defined");
-    }
-
-    size_t nFaces = Mesh2_face_nodes->dimensionlinks[0]->getSize();
-    size_t MaxNumNodesPerFace = Mesh2_face_nodes->dimensionlinks[1]->getSize();
-
-    CDBDebug("Num faces: %d", Mesh2_face_nodes->dimensionlinks[0]->getSize());
-    CDBDebug("Max face size: %d", MaxNumNodesPerFace);
-
-    float polyX[MaxNumNodesPerFace + 1];
-    float polyY[MaxNumNodesPerFace + 1];
-
-    int numPoints = 0;
-    //     CDBDebug("drawpolys");
-    //     for(size_t f=0;f<nFaces;f++){
-    //       for(size_t j=0;j<MaxNumNodesPerFace;j++){
-    //         int p1 = Mesh2_face_nodesData[j+f*MaxNumNodesPerFace];
-    //         if(p1!=Mesh2_face_nodesData_Fill){
-    //           polyX[numPoints] = projectedX[p1];
-    //           polyY[numPoints++] = projectedY[p1];
-    //         }
-    //       }
-    //       polyX[numPoints] = polyX[0];
-    //       polyY[numPoints++] = polyY[0];
-    //       drawpoly(sdata,dataSource->dWidth,dataSource->dHeight,numPoints,polyX,polyY,f);
-    //       //drawlines(sdata,dataSource->dWidth,dataSource->dHeight,numPoints,polyX,polyY);
-    //       numPoints = 0;
-    //     }
-
-#ifdef MEASURETIME
-    StopWatch_Stop("drawlines");
-#endif
-    for (size_t f = 0; f < nFaces; f++) {
-      for (size_t j = 0; j < MaxNumNodesPerFace; j++) {
-        int p1 = Mesh2_face_nodesData[j + f * MaxNumNodesPerFace];
-
-        if (p1 != Mesh2_face_nodesData_Fill) {
-
-          polyX[numPoints] = projectedX[p1];
-          polyY[numPoints++] = projectedY[p1];
-        }
-      }
-      polyX[numPoints] = polyX[0];
-      polyY[numPoints++] = polyY[0];
-      // drawpoly(sdata,dataSource->dWidth,dataSource->dHeight,numPoints,polyX,polyY,f);
-      drawlines(sdata, dataSource->dWidth, dataSource->dHeight, numPoints, polyX, polyY, 0);
-      numPoints = 0;
-    }
-#ifdef MEASURETIME
-    StopWatch_Stop("drawlines done");
-#endif
-    imageWarper.closereproj();
+    mesh2dNodeVarXProjected[j] = dlon;
+    mesh2dNodeVarYProjected[j] = dlat;
+    mesh2dNodeVarLon[j] = lon;
+    mesh2dNodeVarLat[j] = lat;
   }
-#ifdef CCONVERTUGRIDMESH_DEBUG
-  CDBDebug("/convertUGRIDMeshData");
-#endif
+
+  try {
+    faceNodesVar->getAttribute("_FillValue")->getData(&faceNodesVarData_Fill, 1);
+  } catch (int e) {
+    CDBWarning("Warning: FillValue not defined");
+  }
+
+  // float polyX[nodesPerFace + 1];
+  // float polyY[nodesPerFace + 1];
+
+  struct polydef {
+    std::vector<f8point> poly;
+    float v;
+  };
+
+  // Assemble polys
+  std::vector<polydef> polys;
+  auto *points = &dataSource->getDataObject(0)->points;
+  for (size_t f = 0; f < numberOfFaces; f++) {
+    bool skip = false;
+    std::vector<f8point> poly;
+    for (size_t j = 0; j < nodesPerFace; j++) {
+      int p1 = faceNodesVarData[j + f * nodesPerFace] - 1;
+      if (p1 == faceNodesVarData_Fill) {
+        skip = true;
+        break;
+      }
+      poly.push_back({.x = mesh2dNodeVarXProjected[p1], .y = mesh2dNodeVarYProjected[p1]});
+    }
+    if (skip) {
+      continue;
+    }
+    poly.push_back(poly[0]);
+    float v = ((double *)originalUGridVar->data)[f];
+    polys.push_back({.poly = poly, .v = v});
+    int p1 = faceNodesVarData[0 + f * nodesPerFace] - 1;
+    int x = mesh2dNodeVarXProjected[p1];
+    int y = mesh2dNodeVarYProjected[p1];
+    points->push_back(PointDVWithLatLon(x, y, mesh2dNodeVarLon[p1], mesh2dNodeVarLat[p1], v));
+  }
+
+  for (auto &poly : polys) {
+    drawpoly(sdata, dataSource->dWidth, dataSource->dHeight, poly.poly, poly.v);
+  }
+
+  // TODO enable to show  lines of the polys
+  // for (auto poly : polys) {
+  //   drawlines(sdata, dataSource->dWidth, dataSource->dHeight, poly.poly, 0);
+  // }
+
   return 0;
 }

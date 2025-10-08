@@ -357,7 +357,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
     bool formatConverterActive = false;
 
     if (!formatConverterActive)
-      if (CConvertUGRIDMesh::convertUGRIDMeshHeader(cdfObject) == 0) {
+      if (CConvertUGRIDMesh::convertUGRIDMeshHeader(cdfObject, srvParams) == 0) {
         formatConverterActive = true;
       };
 
@@ -427,7 +427,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
 }
 CDFObjectStore *CDFObjectStore::getCDFObjectStore() { return &cdfObjectStore; };
 
-void CDFObjectStore::deleteCDFObject(const CT::string& fileName) {
+void CDFObjectStore::deleteCDFObject(const CT::string &fileName) {
   auto it = fileNames.begin();
   std::vector<ptrdiff_t> indicesToDelete;
   while ((it = std::find_if(it, fileNames.end(), [fileName](CT::string *x) { return x->equals(fileName); })) != fileNames.end()) {

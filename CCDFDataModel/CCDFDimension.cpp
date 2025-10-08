@@ -22,31 +22,40 @@
  * limitations under the License.
  *
  ******************************************************************************/
+#include <cstddef>
 
-#ifndef CCDFDATAMODEL_H
-#define CCDFDATAMODEL_H
-
-// #define CCDFDATAMODEL_DEBUG
-
-#define CCDFDATAMODEL_DUMP_STANDARD 0
-#define CCDFDATAMODEL_DUMP_JSON 1
-
-#include "CCDFTypes.h"
-#include "CCDFAttribute.h"
-#include "CCDFDimension.h"
-#include "CCDFVariable.h"
 #include "CCDFObject.h"
-#include "CCDFReader.h"
-#include "CCDFWarper.h"
-namespace CDF {
+#include "CCDFDimension.h"
 
-  void _dump(CDFObject *cdfObject, CT::string *dumpString, int returnType);
-  void _dump(CDF::Variable *cdfVariable, CT::string *dumpString, int returnType);
-  CT::string dump(CDFObject *cdfObject);
-  CT::string dump(CDF::Variable *cdfVariable);
-  CT::string dumpAsJSON(CDFObject *cdfObject);
-  void _dumpPrintAttributes(const char *variableName, std::vector<CDF::Attribute *> attributes, CT::string *dumpString, int returnType);
+CDF::Dimension::Dimension() {}
 
-}; // namespace CDF
+CDF::Dimension::Dimension(const char *_name, size_t _length) {
+  length = _length;
+  name.copy(_name);
+  id = -1;
+}
 
-#endif
+CDF::Dimension::Dimension(CDFObject *cdfObject, const char *_name, size_t _length) {
+  isIterative = false;
+  length = _length;
+  name.copy(_name);
+  id = -1;
+  cdfObject->addDimension(this);
+}
+
+CDF::Dimension *CDF::Dimension::clone() {
+  CDF::Dimension *newDim = new CDF::Dimension();
+  newDim->name = this->name.c_str();
+  newDim->length = this->length;
+  newDim->isIterative = this->isIterative;
+  newDim->id = this->id;
+  return newDim;
+}
+
+size_t CDF::Dimension::getSize() { return length; }
+
+void CDF::Dimension::setSize(size_t _length) { length = _length; }
+
+void CDF::Dimension::setName(const char *value) { name.copy(value); }
+
+CT::string CDF::Dimension::getName() { return name; }
