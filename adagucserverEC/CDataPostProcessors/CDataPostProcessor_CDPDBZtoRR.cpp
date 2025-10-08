@@ -8,7 +8,7 @@ const char *CDPDBZtoRR::className = "CDPDBZtoRR";
 
 const char *CDPDBZtoRR::getId() { return CDATAPOSTPROCESSOR_DBZtoRR_ID; }
 int CDPDBZtoRR::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int) {
-  if (proc->attr.algorithm.equals("dbztorr")) {
+  if (proc->attr.algorithm.equals(CDATAPOSTPROCESSOR_DBZtoRR_ID)) {
     return CDATAPOSTPROCESSOR_RUNAFTERREADING | CDATAPOSTPROCESSOR_RUNBEFOREREADING;
   }
   return CDATAPOSTPROCESSOR_NOTAPPLICABLE;

@@ -47,6 +47,7 @@ lon,lat,Name,ff,dd
 30,9,"Station",30,0
 31,9,"Station",100,0
 0,5,"Station",0,40
+0.5,5,"Station",0.5,40
 1,5,"Station",1,40
 2,5,"Station",2,40
 3,5,"Station",3,40
@@ -79,6 +80,7 @@ lon,lat,Name,ff,dd
 29,5,"Station",29,40
 30,5,"Station",30,40
 0,1,"Station",0,200
+0.5,1,"Station",0.5,200
 1,1,"Station",1,200
 2,1,"Station",2,200
 3,1,"Station",3,200
@@ -111,6 +113,7 @@ lon,lat,Name,ff,dd
 29,1,"Station",29,200
 30,1,"Station",30,200
 0,-9,"Station",0,0
+0.5,-9,"Station",0.5,0
 1,-9,"Station",1,0
 2,-9,"Station",2,0
 3,-9,"Station",3,0
@@ -143,6 +146,7 @@ lon,lat,Name,ff,dd
 29,-9,"Station",29,0
 30,-9,"Station",30,0
 0,-5,"Station",0,40
+0.5,-5,"Station",0.5,40
 1,-5,"Station",1,40
 2,-5,"Station",2,40
 3,-5,"Station",3,40
@@ -175,6 +179,7 @@ lon,lat,Name,ff,dd
 29,-5,"Station",29,40
 30,-5,"Station",30,40
 0,-1,"Station",0,200
+0.5,-1,"Station",0.5,200
 1,-1,"Station",1,200
 2,-1,"Station",2,200
 3,-1,"Station",3,200

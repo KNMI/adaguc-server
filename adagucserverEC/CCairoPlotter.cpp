@@ -1172,8 +1172,8 @@ static int drawBarbTriangle(cairo_t *cr, int x, int y, int nPennants, double dir
   return pos;
 }
 
-void CCairoPlotter::drawBarb(int x, int y, double uncorrectedDirection, double viewDirCorrection, double strength, CColor barbColor, CColor outlineColor, bool drawOutline, float lineWidth,
-                             bool toKnots, bool flip, bool drawText) {
+void CCairoPlotter::drawBarb(int x, int y, double uncorrectedDirection, double viewDirCorrection, double strength, CColor barbColor, CColor outlineColor, float lineWidth, bool toKnots, bool flip,
+                             bool drawText, double fontSize, CColor textColor, double outlineWidth) {
   // Barb settings
   float centerDiscRadius = 3;
   int shaftLength = 37;
@@ -1256,17 +1256,17 @@ void CCairoPlotter::drawBarb(int x, int y, double uncorrectedDirection, double v
   // No dash
   cairo_set_dash(cr, 0, 0, 0);
 
-  if (drawOutline) {
+  if (outlineWidth > 0) {
     cairo_set_antialias(cr, CAIRO_ANTIALIAS_DEFAULT);
     cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
     cairo_set_source_rgba(cr, outlineColor.r * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, outlineColor.g * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, outlineColor.b * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, .2);
-    cairo_set_line_width(cr, 5.5);
+    cairo_set_line_width(cr, 1.0 + outlineWidth);
     cairo_stroke_preserve(cr);
 
     cairo_set_antialias(cr, CAIRO_ANTIALIAS_DEFAULT);
     cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
     cairo_set_source_rgba(cr, outlineColor.r * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, outlineColor.g * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, outlineColor.b * CAIROPLOTTER_COLOR_BYTE_TO_NORMAL, 1);
-    cairo_set_line_width(cr, 4.5);
+    cairo_set_line_width(cr, outlineWidth);
     cairo_stroke_preserve(cr);
   }
 
@@ -1291,14 +1291,16 @@ void CCairoPlotter::drawBarb(int x, int y, double uncorrectedDirection, double v
   cairo_path_destroy(cp);
   cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
   if (drawText) {
+    CColor barbTextColor = textColor.a < 1 ? barbColor : textColor;
     bool showDirection = false;
+    bool drawOutline = outlineWidth > .01;
     if (showDirection == false) {
       CT::string text;
       text.print("%d", strengthInKnots);
 
       // If speed is really low, draw the text below the circle
       double textDirection = strengthInKnotsRoundedToFive <= 2 ? -M_PI / 2.1 : direction;
-      this->drawStrokedText(x - cos(textDirection + M_PI) * 15 - 5, y + sin(textDirection + M_PI) * 12 + 5, 0, text.c_str(), 12, 1 * drawOutline, outlineColor, barbColor);
+      this->drawStrokedText(x - cos(textDirection + M_PI) * 15 - 5, y + sin(textDirection + M_PI) * 12 + 5, 0, text.c_str(), fontSize, 1 * drawOutline, outlineColor, barbTextColor);
     } else {
       double degrees = fmod(((270 - ((uncorrectedDirection) * (180 / M_PI)))), 360);
       CT::string text;
@@ -1308,7 +1310,7 @@ void CCairoPlotter::drawBarb(int x, int y, double uncorrectedDirection, double v
       double textDirection = strengthInKnotsRoundedToFive <= 2 ? -M_PI / 2.1 : direction;
       int tx = x - cos(textDirection + M_PI) * 15 - 5 - text.length();
       int ty = y + sin(textDirection + M_PI) * 12 + 5;
-      this->drawStrokedText(tx, ty, 0, text.c_str(), 12, 1 * drawOutline, outlineColor, barbColor);
+      this->drawStrokedText(tx, ty, 0, text.c_str(), fontSize, 1 * drawOutline, outlineColor, barbTextColor);
     }
   }
 }
