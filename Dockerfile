@@ -86,13 +86,11 @@ COPY python /adaguc/adaguc-server-master/python
 ######### Third stage, test ############
 FROM base AS test
 
-
 COPY requirements-dev.txt /adaguc/adaguc-server-master/requirements-dev.txt
 RUN pip install --no-cache-dir -r requirements-dev.txt
 
 COPY tests /adaguc/adaguc-server-master/tests
 COPY runtests_psql.sh /adaguc/adaguc-server-master/runtests_psql.sh
-# COPY tests/conftest.py /adaguc/adaguc-server-master/conftest.py
 
 # Determine if we're building in github actions or via a local docker build
 ARG TEST_IN_CONTAINER
@@ -100,10 +98,7 @@ ENV TEST_IN_CONTAINER=${TEST_IN_CONTAINER:-local_build}
 
 # Run adaguc-server functional and regression tests. See also `./doc/developing/testing.md`
 
-# RUN cd ./python/lib/ && python3 setup.py develop
-# RUN pytest python/python_fastapi_server/ -o "python_files=test_*.py" -v
-# RUN pytest tests/AdagucTests/ -o "python_files=Test*.py" -vs
-
+RUN cd ./python/lib/ && python3 setup.py develop
 RUN bash runtests_psql.sh
 
 # Create a file indicating that the test succeeded. This file is used in the final stage

@@ -98,10 +98,7 @@
     "editor.formatOnSave": false,
   },
   "python.testing.pytestArgs": [
-    "../python/python_fastapi_server/", "../tests/AdagucTests/",
-    "-o", "python_files=test_*.py Test*.py",
-    "-s",
-    "-v",
+    "../python/python_fastapi_server/", "./AdagucTests/", "-o", "python_files=Test*.py test_*.py"
   ],
   "python.testing.unittestEnabled": false,
   "python.testing.pytestEnabled": true,
