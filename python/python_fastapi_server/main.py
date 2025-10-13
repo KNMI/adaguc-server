@@ -25,7 +25,7 @@ configure_logging(logging)
 logger = logging.getLogger(__name__)
 
 
-app = FastAPI()
+app = FastAPI(redirect_slashes=False)
 
 # Set uvicorn access log format using middleware
 ACCESS_LOG_FORMAT = (
