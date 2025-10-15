@@ -3135,3 +3135,83 @@ class TestWMS(unittest.TestCase):
         )
 
 
+    def test_WMSGetMap_KNMI_WebSite_AnimatedGifImagery_temperature_styledisc(self):
+        AdagucTestTools().cleanTempDir()
+        config = (
+            ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,adaguc.tests.pointrendering.xml"
+        )
+        env = {"ADAGUC_CONFIG": config}
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=["--updatedb", "--config", config], env=self.env, isCGI=False
+        )
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSGetMap_KNMI_WebSite_AnimatedGifImagery_temperature_styledisc.png"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.pointrendering&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=overlaymask,ta&WIDTH=512&HEIGHT=512&CRS=EPSG%3A3857&BBOX=288069.7108512885,6471755.331201249,894206.0083504317,7141909.376801726&STYLES=filledcountries%2Fnearest,discs&FORMAT=image/png&TRANSPARENT=TRUE&&0.8777664780631963",
+            env=env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
+
+
+    def test_WMSGetMap_KNMI_WebSite_AnimatedGifImagery_temperature_style_temperature(self):
+        AdagucTestTools().cleanTempDir()
+        config = (
+            ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,adaguc.tests.pointrendering.xml"
+        )
+        env = {"ADAGUC_CONFIG": config}
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=["--updatedb", "--config", config], env=self.env, isCGI=False
+        )
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSGetMap_KNMI_WebSite_AnimatedGifImagery_temperature_style_temperature.png"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.pointrendering&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=overlaymask,ta&WIDTH=512&HEIGHT=512&CRS=EPSG%3A3857&BBOX=288069.7108512885,6471755.331201249,894206.0083504317,7141909.376801726&STYLES=filledcountries%2Fnearest,temperature%2Fpoint&FORMAT=image/png&TRANSPARENT=TRUE&&0.8777664780631963",
+            env=env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
+
+
+
+    def test_WMSGetMap_KNMI_WebSite_AnimatedGifImagery_temperature_style_temperature_thinned(self):
+        AdagucTestTools().cleanTempDir()
+        config = (
+            ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,adaguc.tests.pointrendering.xml"
+        )
+        env = {"ADAGUC_CONFIG": config}
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=["--updatedb", "--config", config], env=self.env, isCGI=False
+        )
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSGetMap_KNMI_WebSite_AnimatedGifImagery_temperature_style_temperature_thinned.png"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.pointrendering&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=overlaymask,ta&WIDTH=512&HEIGHT=512&CRS=EPSG%3A3857&BBOX=288069.7108512885,6471755.331201249,894206.0083504317,7141909.376801726&STYLES=filledcountries%2Fnearest,temperature_thinned/pointthin&FORMAT=image/png&TRANSPARENT=TRUE&&0.8777664780631963",
+            env=env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
+
+
+

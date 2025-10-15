@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+    <Style name="filledcountries">
+        <Legend fixedclasses="true" tickinterval="1000" tickround="1">bluewhitered</Legend>
+        <Min>0.0</Min>
+        <Max>1000</Max>
+        <RenderMethod>nearest</RenderMethod>
+        <NameMapping name="polyline" title="Overlay countries" abstract="Overlay countries" />
+        <FeatureInterval match="0" matchid="Type" fillcolor="#D2FEFE" bgcolor="#00A000"/>
+        <FeatureInterval match="2" matchid="Type" fillcolor="#D1E1FC" />
+        <FeatureInterval match="3" matchid="Type" fillcolor="#D2D2D2" />
+        <FeatureInterval match="4" matchid="Type" fillcolor="#D2D2D2" />
+        <FeatureInterval match="5" matchid="Type" fillcolor="#D2D2D2" />
+        <FeatureInterval match="6" matchid="Type" fillcolor="#D2D2D2" />
+    </Style>
+    <Layer >
+        <Name>overlaymask</Name>
+        <Title>overlaymask</Title>
+        <FilePath>
+            {ADAGUC_PATH}/data/datasets/knmi/overlays/GSIE-NL-overlaymask.geojson</FilePath>
+        <Variable>features</Variable>
+        <Styles>filledcountries</Styles>
+    </Layer>
+
+<!-- Demo to plot unform coloured discs with temperature-->
+  <Legend name="wow.temperature" type="interval">
+    <palette index="0" color="#2E2E73"/>  <!-- -14 0 -->
+    <palette index="9" color="#282898"/>  <!-- -12 1 -->
+    <palette index="18" color="#201FBB"/> <!-- -10 2 -->
+    <palette index="27" color="#1A1ADC"/> <!-- -8  3 -->
+    <palette index="36" color="#3654DE"/> <!-- -6  4 -->
+    <palette index="45" color="#548EDC"/> <!-- -4  5 -->
+    <palette index="54" color="#72CADE"/> <!-- -2  6 -->
+    <palette index="63" color="#6DD8DF"/> <!-- 0   7 -->
+    <palette index="72" color="#55CDE2"/> <!-- 2   8 -->
+    <palette index="81" color="#38BBDC"/> <!-- 4   9 -->
+    <palette index="90" color="#20B0DC"/> <!-- 6   10 -->
+    <palette index="99" color="#19BAA6"/> <!-- 8   11 -->
+    <palette index="108" color="#1CCE6A"/> <!-- 10 12 -->
+    <palette index="117" color="#1BDF22"/> <!-- 12 13 -->
+    <palette index="126" color="#82C319"/> <!-- 14 14 -->
+    <palette index="135" color="#DCA819"/> <!-- 16 15 -->
+    <palette index="144" color="#DD921A"/> <!-- 18 16 -->
+    <palette index="153" color="#DE7C1A"/> <!-- 20 17 -->
+    <palette index="162" color="#DF671A"/> <!-- 22 18 -->
+    <palette index="171" color="#DE501A"/> <!-- 24 19 -->
+    <palette index="180" color="#DD3819"/> <!-- 26 20 -->
+    <palette index="189" color="#DD2319"/> <!-- 28 21 -->
+    <palette index="198" color="#D21A1E"/> <!-- 30 22 -->
+    <palette index="207" color="#C31927"/> <!-- 32 23 -->
+    <palette index="216" color="#AD1A30"/> <!-- 34 24 -->
+    <palette index="225" color="#9A1A3B"/> <!-- 36 25 -->
+    <palette index="234" color="#871A44"/> <!-- 38 26 -->
+    <palette index="240" color="#871A44"/> <!--  39,33 -->
+  </Legend>
+
+   <Style name="discs">
+    <RenderMethod>point</RenderMethod>
+    <Point pointstyle="disc" fillcolor="#00000060" textcolor="#FFFFFFFF" linecolor="#000000A0" discradius="18" dot="false" anglestart="0" anglestep="120" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="10" textformat="%0.1f"/>
+    <FilterPoints skip="" use="06235,06280,06260,06290,06310,06380"/>
+  </Style>
+
+  <Style name="temperature">
+    <Legend fixed="true" tickinterval="2">wow.temperature</Legend>
+    <RenderMethod>point</RenderMethod>
+    <Min>-14</Min>
+    <Max>39,33333333</Max> <!-- 39,33333333 = (240 / (234/(38 - -14))) - 14 -->
+    <Point plotstationid="false" pointstyle="point" discradius="15" textradius="0" dot="false" fontsize="8" textcolor="#000000" />
+  </Style>
+
+  <Style name="temperature_thinned">
+    <Legend fixed="true" tickinterval="2">wow.temperature</Legend>
+    <RenderMethod>pointthin</RenderMethod>
+    <Min>-14</Min>
+    <Max>39,33333333</Max> <!-- 39,33333333 = (240 / (234/(38 - -14))) - 14 -->
+    <Thinning radius="140"/>
+    <Point plotstationid="false" pointstyle="point" discradius="15" textradius="0" dot="false" fontsize="8" textcolor="#000000" />
+  </Style>
+  
+
+  <Layer type="database">
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
+    <Name>ta</Name>
+    <Title>temperatuur [C]</Title>
+    <Variable>ta</Variable>
+    <Abstract>luchttemperatuur 1 min. gemiddelde</Abstract>
+    <Styles>discs,temperature,temperature_thinned</Styles>
+  </Layer>
+
+
+
+  <!-- End of configuration /-->
+</Configuration>
