@@ -737,16 +737,14 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
       CDBDebug("styleConfiguration==NULL!!!!");
     }
 
-    if (settings.indexOf("thin") != -1) {
-      doThinning = true;
-      if (styleConfiguration != NULL) {
-        if (styleConfiguration->styleConfig != NULL) {
-          CServerConfig::XMLE_Style *s = styleConfiguration->styleConfig;
-          if (s->Thinning.size() == 1) {
-            if (s->Thinning[0]->attr.radius.empty() == false) {
-              thinningRadius = s->Thinning[0]->attr.radius.toInt();
-              // CDBDebug("Thinning radius = %d",s -> Thinning[0]->attr.radius.toInt());
-            }
+    if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL) {
+      // TODO: Currently thin needs to be mentioned in the rendermethod to allow thinning. We want to get rid of this. We need to adjust configs on geoservices and geoweb first.
+      if (settings.indexOf("thin") != -1) {
+        CServerConfig::XMLE_Style *s = styleConfiguration->styleConfig;
+        if (s->Thinning.size() == 1) {
+          if (s->Thinning[0]->attr.radius.empty() == false) {
+            doThinning = true;
+            thinningRadius = s->Thinning[0]->attr.radius.toInt();
           }
         }
       }
@@ -760,6 +758,17 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
   if (isVector) {
     CDBDebug("VECTOR");
     std::vector<PointDVWithLatLon> *p1 = &dataSource->getDataObject(0)->points;
+
+    if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL) {
+      CServerConfig::XMLE_Style *s = styleConfiguration->styleConfig;
+      if (s->Thinning.size() == 1) {
+        if (s->Thinning[0]->attr.radius.empty() == false) {
+          doThinning = true;
+          thinningRadius = s->Thinning[0]->attr.radius.toInt();
+        }
+      }
+    }
+
     auto thinnedPointIndexList = doThinningGetIndices(*p1, doThinning, thinningRadius, usePoints, useFilter);
     CDBDebug("Vector plotting %d elements %d %d", thinnedPointIndexList.size(), useFilter, usePoints.size());
     renderVectorPoints(thinnedPointIndexList, warper, dataSource, drawImage, styleConfiguration);

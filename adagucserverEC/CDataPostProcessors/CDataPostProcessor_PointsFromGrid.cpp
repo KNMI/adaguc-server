@@ -117,10 +117,12 @@ int CDPPointsFromGrid::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSour
   std::vector<f8point> pointListInModelCoords;
   std::vector<size_t> pointers;
 
-  f8point pixelOffset = {.x = 80, .y = 80};
+  f8point pixelOffset = {.x = 1, .y = 1};
   if (!proc->attr.a.empty()) {
-    pixelOffset.x = proc->attr.a.toDouble();
-    pixelOffset.y = proc->attr.a.toDouble();
+    auto value = proc->attr.a.toDouble();
+    if (value < 1) value = 1;
+    pixelOffset.x = value;
+    pixelOffset.y = value;
   }
 
   auto striding = getStrideFromGetMapLocation((*dataSource), warper, pixelOffset);
