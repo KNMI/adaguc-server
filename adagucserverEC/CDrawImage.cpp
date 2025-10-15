@@ -353,13 +353,15 @@ void CDrawImage::drawVector(int x, int y, double direction, double strength, CCo
   hx3 = wx1 + (cos(direction - 2.5) + cos(direction + 2.5)) / 2 * (strength / 2.8f);
   hy3 = wy1 - (sin(direction + 2.5) + sin(direction - 2.5)) / 2 * (strength / 2.8f);
 
-  // line(wx1,wy1,hx1,hy1,linewidth,color);
-  // line(wx1,wy1,hx2,hy2,linewidth,color);
+  // Render triangle
+  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
+    cairo->setColor(color.r, color.g, color.b, color.a);
+    cairo->setFillColor(color.r, color.g, color.b, color.a);
+  }
   poly(hx1, hy1, wx1, wy1, hx2, hy2, linewidth, color, false);
-  //  line(wx1,wy1,wx2,wy2,linewidth,color);
+
+  // Render shaft
   line(wx2, wy2, hx3, hy3, linewidth, color);
-  //  setPixelIndexed(x, y, 252);
-  // circle(x+1, y+1, 1, color);
 }
 
 #define xCor(l, d) ((int)(l * cos(d) + 0.5))

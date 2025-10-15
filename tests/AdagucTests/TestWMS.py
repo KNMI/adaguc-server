@@ -3005,12 +3005,11 @@ class TestWMS(unittest.TestCase):
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename_getmap),
         )        
 
-
-    def test_WMSGetMap_Barbs_Harmonie_newbarbstyleoptions(self):
+    def test_WMSGetMap_Barbs_example_windbarbs_from_pointdata_csv(self):
         AdagucTestTools().cleanTempDir()
         config = (
             ADAGUC_PATH
-            + "/data/config/adaguc.tests.dataset.xml,adaguc.tests.harmonienewbarbswithpostproc.xml"
+            + "/data/config/adaguc.tests.dataset.xml,adaguc.tests.vectorrendering.xml"
         )
         env = {"ADAGUC_CONFIG": config}
         # pylint: disable=unused-variable
@@ -3019,9 +3018,9 @@ class TestWMS(unittest.TestCase):
         )
         self.assertEqual(status, 0)
 
-        filename = "test_WMSGetMap_Barbs_Harmonie_newbarbstyleoptions.png"
+        filename = "test_WMSGetMap_Barbs_example_windbarbs_from_pointdata_csv.png"
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "dataset=adaguc.tests.harmonienewbarbswithpostproc.xml&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind__at_10m&WIDTH=1352&HEIGHT=1319&CRS=EPSG%3A3857&BBOX=-65800.30054674105,6226801.574078708,1326094.9902426978,7584723.089279351&STYLES=windbarbs_kts_shaded_withbarbs%2Fnearestpoint&FORMAT=image/png&TRANSPARENT=FALSE&BGCOLOR=0xA0F080&&time=2023-09-30T06%3A00%3A00Z&DIM_reference_time=2023-09-28T06%3A00%3A00Z&0.26085315983231405&showlegend=true&title=Wind%20barb%20style%20demo!&showscalebar=true",
+            "DATASET=adaguc.tests.vectorrendering&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=example_windbarbs_from_pointdata_csv&WIDTH=1024&HEIGHT=1024&CRS=EPSG%3A3857&BBOX=-577014.3843391966,-2101256.2330806395,4248210.613219857,2100649.425887959&STYLES=windbarbs_kts_shaded_withbarbs_for_points%2Fpoint&FORMAT=image/png&TRANSPARENT=FALSE&BGCOLOR=0xA0F080&&time=2018-12-04T12%3A00%3A00Z&title=How%20to%20render%20windbarbs%20from%20point%20data,%20like%20CSV,%20NetCDF%20or%20GeoJSON&showscalebar=true",
             env=env,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
@@ -3030,3 +3029,109 @@ class TestWMS(unittest.TestCase):
             data.getvalue(),
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
+
+    def test_WMSGetMap_Barbs_example_windbarbs_from_pointdata_csv_different_style_options(self):
+        AdagucTestTools().cleanTempDir()
+        config = (
+            ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,adaguc.tests.vectorrendering.xml"
+        )
+        env = {"ADAGUC_CONFIG": config}
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=["--updatedb", "--config", config], env=self.env, isCGI=False
+        )
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSGetMap_Barbs_example_windbarbs_from_pointdata_csv_different_style_options.png"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.vectorrendering&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=example_windbarbs_from_pointdata_csv&WIDTH=1024&HEIGHT=1024&CRS=EPSG%3A3857&BBOX=-577014.3843391966,-2101256.2330806395,4248210.613219857,2100649.425887959&STYLES=windbarbs_kts_shaded_withbarbs_for_points_differentoptions%2Fpoint&FORMAT=image/png&TRANSPARENT=FALSE&BGCOLOR=0xA0F080&&time=2018-12-04T12%3A00%3A00Z&title=How%20to%20render%20windbarbs%20from%20point%20data,%20like%20CSV,%20NetCDF%20or%20GeoJSON&showscalebar=true",
+            env=env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
+
+
+
+    def test_WMSGetMap_Barbs_example_windbarbs_on_gridded_netcdf(self):
+        AdagucTestTools().cleanTempDir()
+        config = (
+            ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,adaguc.tests.vectorrendering.xml"
+        )
+        env = {"ADAGUC_CONFIG": config}
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=["--updatedb", "--config", config], env=self.env, isCGI=False
+        )
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSGetMap_Barbs_example_windbarbs_on_gridded_netcdf.png"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.tests.vectorrendering.xml&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=example_windbarbs_on_gridded_netcdf&WIDTH=1352&HEIGHT=1319&CRS=EPSG%3A3857&BBOX=-65800.30054674105,6226801.574078708,1326094.9902426978,7584723.089279351&STYLES=windbarbs_kts_shaded_withbarbs_for_grids%2Fnearestpoint&FORMAT=image/png&TRANSPARENT=FALSE&BGCOLOR=0xA0F080&&time=2023-09-30T06%3A00%3A00Z&DIM_reference_time=2023-09-28T06%3A00%3A00Z&0.26085315983231405&showlegend=true&title=Wind%20barb%20style%20demo!&showscalebar=true",
+            env=env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
+
+
+    def test_WMSGetMap_Discs_example_windbarbs_on_gridded_netcdf(self):
+        AdagucTestTools().cleanTempDir()
+        config = (
+            ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,adaguc.tests.vectorrendering.xml"
+        )
+        env = {"ADAGUC_CONFIG": config}
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=["--updatedb", "--config", config], env=self.env, isCGI=False
+        )
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSGetMap_Discs_example_windbarbs_on_gridded_netcdf.png"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.tests.vectorrendering.xml&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=example_windbarbs_on_gridded_netcdf&WIDTH=1352&HEIGHT=1319&CRS=EPSG%3A3857&BBOX=-65800.30054674105,6226801.574078708,1326094.9902426978,7584723.089279351&STYLES=winddiscs_for_grids%2Fpoint&FORMAT=image/png&TRANSPARENT=FALSE&BGCOLOR=0xA0F080&&time=2023-09-30T06%3A00%3A00Z&DIM_reference_time=2023-09-28T06%3A00%3A00Z&0.26085315983231405&showlegend=false&title=Wind disc demo&showscalebar=true",
+            env=env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
+
+
+    def test_WMSGetMap_Arrows_example_windbarbs_on_gridded_netcdf(self):
+        AdagucTestTools().cleanTempDir()
+        config = (
+            ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,adaguc.tests.vectorrendering.xml"
+        )
+        env = {"ADAGUC_CONFIG": config}
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=["--updatedb", "--config", config], env=self.env, isCGI=False
+        )
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSGetMap_Arrows_example_windbarbs_on_gridded_netcdf.png"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.tests.vectorrendering.xml&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=example_windbarbs_on_gridded_netcdf&WIDTH=1352&HEIGHT=1319&CRS=EPSG%3A3857&BBOX=-65800.30054674105,6226801.574078708,1326094.9902426978,7584723.089279351&STYLES=windarrows_for_grids%2Fpoint&FORMAT=image/png&TRANSPARENT=FALSE&BGCOLOR=0x80F0F0&&time=2023-09-30T06%3A00%3A00Z&DIM_reference_time=2023-09-28T06%3A00%3A00Z&0.26085315983231405&showlegend=false&title=Wind arrows demo&showscalebar=true",
+            env=env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
+
+

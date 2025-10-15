@@ -283,7 +283,6 @@
     <Min>0</Min>
     <Max>75</Max>
     <NameMapping name="barb" title="Wind direction arrow" abstract="With an arrow on a disc."/>
-    <!-- <Point plotstationid="false" pointstyle="point" discradius="12" textradius="16" dot="true" fontsize="8" textcolor="#FFFFFF"/> -->
     <RenderMethod>barb</RenderMethod>
     <Vector vectorstyle="disc" linewidth="1.0" linecolor="#000000FF" textcolor="#FFFFFF" fontsize="8"  plotstationid="false"/>
   </Style>
@@ -293,7 +292,6 @@
     <Min>0</Min>
     <Max>75</Max>
     <NameMapping name="barb" title="Wind direction vector" abstract="As vector"/>
-    <!-- <Point plotstationid="false" pointstyle="point" discradius="12" textradius="16" dot="true" fontsize="8" textcolor="#FFFFFF"/> -->
     <RenderMethod>barb</RenderMethod>
     <Vector vectorstyle="vector" linewidth="1.0" linecolor="#000000FF" textcolor="#FFFFFF"/>
   </Style>
@@ -303,7 +301,6 @@
     <Min>0</Min>
     <Max>75</Max>
     <NameMapping name="barb" title="Wind direction barb no outline" abstract="As barb"/>
-    <!-- <Point plotstationid="false" pointstyle="point" discradius="12" textradius="16" dot="true" fontsize="8" textcolor="#FFFFFF"/> -->
     <RenderMethod>barb</RenderMethod>
     <Vector vectorstyle="barb" linewidth="0.0" linecolor="#0000FFFF" textcolor="#FFFFFF"/>
   </Style>
@@ -313,7 +310,6 @@
     <Min>0</Min>
     <Max>75</Max>
     <NameMapping name="barb" title="Wind direction barb" abstract="As barb"/>
-    <!-- <Point plotstationid="false" pointstyle="point" discradius="12" textradius="16" dot="true" fontsize="8" textcolor="#FFFFFF"/> -->
     <RenderMethod>barb</RenderMethod>
     <Vector vectorstyle="barb" linewidth="1.0" linecolor="#000000FF" textcolor="#FFFFFF"/>
   </Style>
