@@ -1,53 +1,13 @@
-Vector (linecolor, linewidth,scale,vectorstyle,plotstationid,plotvalue,textformat, min, max, fontsize, outlinewidth, outlinecolor, textcolor)
-==================================================================================
-
-Back to [Configuration](./Configuration.md)
-
-Configuration of rendering vector point data
---------------------------------------------
-
-Vector or windbarbs are rendered via adagucserverEC/CConvertADAGUCPoint.cpp
-
-### Vector attributes
-
-Purpose: holds configuration attributes for rendering vector/point (wind) symbols.
-
-| Attribute     | Type    | Default     | Description |
-|---------------|---------|-------------|-------------|
-| linecolor     | string  | ""          | Color used for the vector/barb/disc (hex like "#RRGGBB" or with alpha) |
-| linewidth     | double  | 1.0         | Line width for vector or barb |
-| scale         | float   | 1.0         | Only for vector style: scale factor to convert speed to drawn length |
-| vectorstyle   | string  | ""          | Required: Rendering style, e.g. "disc", "vector", "barb" |
-| plotstationid | string  | ""          | Show station id next to symbol (stored as string, e.g. "true"/"false") |
-| plotvalue     | string  | ""          | Show numeric value next to symbol (stored as string, e.g. "true"/"false") |
-| textformat    | string  | ""          | printf-style format used when plotvalue is enabled (e.g. "%1.0f") |
-| min           | double  | -DBL_MAX    | Minimum data range for rendering |
-| max           | double  | DBL_MAX     | Maximum data range for rendering |
-| fontsize      | double  | 12          | Font size used when rendering text |
-| outlinewidth  | double  | 4.5         | Outline stroke width around text/symbols |
-| outlinecolor  | string  | ""          | Outline color string |
-| textcolor     | string  | ""          | Text color string |
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
 
 
-Please check the examples in [data/config/datasets/adaguc.tests.vectorrendering.xml](../../data/config/datasets/adaguc.tests.vectorrendering.xml)
-
-## How to render windbarbs from point data, like CSV, NetCDF or GeoJSON
-
-Example with same style for all:
-
-```xml
+  <!-- How to render windbarbs from point data, like CSV, NetCDF or GeoJSON-->
   <Style name="windbarbs_kts_shaded_withbarbs_for_points">
     <Vector vectorstyle="barb" linecolor="#0000FF"  plotvalue="true" />
     <RenderMethod>point</RenderMethod>
   </Style>
-```
 
-<img src='../../tests/expectedoutputs/TestWMS/test_WMSGetMap_Barbs_example_windbarbs_from_pointdata_csv.png' width=400>
-
-
-Example with different styling options:
-
-```xml
   <Style name="windbarbs_kts_shaded_withbarbs_for_points_differentoptions">
     <Vector max="1" vectorstyle="barb" outlinewidth="5"  linewidth="2" outlinecolor="#000000ff" linecolor="#00FF00"  plotvalue="false" />
     <Vector min="1" max="10" vectorstyle="barb" linecolor="#0000FF"  plotvalue="true" />
@@ -56,23 +16,27 @@ Example with different styling options:
     <RenderMethod>point</RenderMethod>
   </Style>
   
-```
+  
+  <Style name="windvector">
+    <Legend fixedclasses="true" tickinterval="2" tickround="1">no2</Legend>
+    <Min>0.0</Min>
+    <Max>10</Max>
+    <Vector vectorstyle="vector" linecolor="#0000FF" />
+    <RenderMethod>point</RenderMethod>
+  </Style>
+  
+  <Layer type="database">
+    <FilePath filter="^.*\.csv$">{ADAGUC_PATH}/data/datasets/csv_wind/csvexample_windbarbs.csv</FilePath>
+    <Name>example_windbarbs_from_pointdata_csv</Name>
+    <Title>Wind barbs from point csv data</Title>
+    <Variable>ff</Variable>
+    <Variable>dd</Variable>
+    <Styles>windbarbs_kts_shaded_withbarbs_for_points,windbarbs_kts_shaded_withbarbs_for_points_differentoptions,windvector</Styles>
+  </Layer>
 
-<img src='../../tests/expectedoutputs/TestWMS/test_WMSGetMap_Barbs_example_windbarbs_from_pointdata_csv_different_style_options.png' width=400>
+  <!-- How to render windbarbs from grids, like gridded NetCDF data -->
 
-If points are close to each other, you can specify 
-
-```xml
-<Thinning radius="40"/>
-```
-in your style to reduce the overlapping points. A distance of 40 pixels will be used in this case.
-
-## How to render windbarbs from grids, like gridded NetCDF data
-
-Please check Also check the examples in [data/config/datasets/adaguc.tests.vectorrendering.xml](../../data/config/datasets/adaguc.tests.vectorrendering.xml)
-
-```xml
-<Style name="windbarbs_kts_shaded_withbarbs_for_grids">
+  <Style name="windbarbs_kts_shaded_withbarbs_for_grids">
     <ShadeInterval min="0" max="0.3"     label=" 0  [  &lt; 0 kts] (&lt; 0.3 m/s)" fillcolor="#9600fe"/>
     <ShadeInterval min="0.3" max="1.6"   label=" 1  [  1-3 kts  ] (0.3-1.6 m/s)" fillcolor="#9600fe"/>
     <ShadeInterval min="1.6" max="3.4"   label=" 2  [  4-6 kts  ] (1.6-3.4 m/s)" fillcolor="#0064fe"/>
@@ -108,30 +72,14 @@ Please check Also check the examples in [data/config/datasets/adaguc.tests.vecto
     -->
     <RenderMethod>nearestpoint</RenderMethod>
   </Style>
-```  
-
-<img src='../../tests/expectedoutputs/TestWMS/test_WMSGetMap_Barbs_example_windbarbs_on_gridded_netcdf.png' width=400>
 
 
-## Render wind discs
-
-
-For discs the options are currently limited to linewidth, textcolor and fontsize:
-
-```xml
   <Style name="winddiscs_for_grids">
     <Vector vectorstyle="disc" linewidth="1" textcolor="#FFFFFF" fontsize="9" />
     <DataPostProc algorithm="pointsfromgrid" select="speed_component,direction_component" a="50"/>
     <RenderMethod>point</RenderMethod>
   </Style>
 
-```
-
-<img src='../../tests/expectedoutputs/TestWMS/test_WMSGetMap_Discs_example_windbarbs_on_gridded_netcdf.png' width=400>
-
-## Render wind arrows
-
-```xml
   <Style name="windarrows_for_grids">
     <Vector max="5" vectorstyle="vector" linewidth="2"  linecolor="#FFFF00"  scale="7" plotvalue="true" textcolor="#000000"/>
     <Vector min="5" max="7" vectorstyle="vector" linewidth="3" linecolor="#ff7b00ff" scale="7"  plotvalue="true" textcolor="#000000" />
@@ -140,33 +88,26 @@ For discs the options are currently limited to linewidth, textcolor and fontsize
     <RenderMethod>point</RenderMethod>
   </Style>
 
-```
 
+  <Layer type="database">
+    <Name>example_windbarbs_on_gridded_netcdf</Name>
+    <Title>Wind barbs from gridded model data</Title>
+    <Variable>x_wind__at_10m</Variable>
+    <Variable>y_wind__at_10m</Variable>
+    <FilePath filter="">{ADAGUC_PATH}data/datasets/harmonie_wind_grid_30x30.nc</FilePath>
+    <Dimension name="time" units="ISO8601" default="min">time</Dimension>
+    <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension>
+    <Styles>windbarbs_kts_shaded_withbarbs_for_grids,winddiscs_for_grids,windarrows_for_grids</Styles>
+    <!-- 
+      convert_uv_components is a data postprocessor to transform grid relative x and y components of a vector to relative to north components. This uses a jacobian transformation.
+      This processor will add four more dataobjects to the datasource. The two original components are now last. The new one dataobjects are:
+      - `speed_component`: based on the magnitude of the eastward_wind and northward_wind components
+      - `direction_component`: based on the direction of the eastward_wind and northward_wind components
+      - `eastward_component`: based on the original x and y components. Corrected using jacobian transformation
+      - `northward_component`: based on the original x and y components. Corrected using jacobian transformation
+    -->
+    <DataPostProc algorithm="convert_uv_components"/>
+  </Layer>
 
-<img src='../../tests/expectedoutputs/TestWMS/test_WMSGetMap_Arrows_example_windbarbs_on_gridded_netcdf.png' width=400>
-
-## Other examples:
-
-```xml
- <Style name="bftalldiscvec">
-    <Legend fixed="true">bluewhitered</Legend>
-    <Min>0</Min>
-    <Max>10000</Max>
-    <Thinning radius="40"/>
-    <RenderMethod>barb,barbthin</RenderMethod>
-    <Point pointstyle="point" fillcolor="#00000060" textcolor="#FFFFFFFF" linecolor="#00000060" discradius="20" dot="true" anglestart="0" anglestep="120" fontsize="10" textformat="%1.0f"/>
-    <Vector vectorstyle="disc" linewidth="1.0" linecolor="#00FF00FF"/>
- </Style>
-```
-
-### Example of wind as an arrow:
-
-![](barbvector.png)
-
-### Example of wind as a barb:
-
-![](barb.png)
-
-### Example of wind as a disc:
-
-![](barbdisc.png)
+  <!-- End of configuration /-->
+</Configuration>
