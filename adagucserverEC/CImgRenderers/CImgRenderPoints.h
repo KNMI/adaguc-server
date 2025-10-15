@@ -27,25 +27,11 @@
 #define CIMGRENDERPOINTS_H
 #include "CImageWarperRenderInterface.h"
 #include <set>
+
 class CImgRenderPoints : public CImageWarperRenderInterface {
 private:
   DEF_ERRORFUNCTION();
   CT::string settings;
-
-  class SimpleSymbol {
-  public:
-    class Coordinate {
-    public:
-      Coordinate(float x, float y) {
-        this->x = x;
-        this->y = y;
-      }
-      float x, y;
-    };
-    std::vector<Coordinate> coordinates;
-  };
-
-  std::map<std::string, SimpleSymbol> SimpleSymbolMap;
 
   bool drawPoints;
   bool drawDiscs;
@@ -78,7 +64,8 @@ private:
   bool useDrawPointTextColor;
   bool isRadiusAndValue;
 
-  void renderSinglePoints(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, CServerConfig::XMLE_Point *pointConfig);
+  void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration,
+                          CServerConfig::XMLE_Point *pointConfig);
 
 public:
   void render(CImageWarper *, CDataSource *, CDrawImage *);

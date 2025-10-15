@@ -180,32 +180,42 @@ void renderVectorPoints(std::vector<size_t> thinnedPointIndexList, CImageWarper 
   }
 }
 
-void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, CServerConfig::XMLE_Point *pointConfig) {
-  SimpleSymbol *currentSymbol = NULL;
-  if (pointConfig->attr.symbol.empty() == false) {
-    CT::string symbolName = pointConfig->attr.symbol.c_str();
-    /* Lets see if the symbol is already in the map */
-    if (SimpleSymbolMap.find(symbolName.c_str()) == SimpleSymbolMap.end()) {
-      /* No Lets add it */
-      for (size_t j = 0; j < dataSource->cfg->Symbol.size(); j++) {
-        if (dataSource->cfg->Symbol[j]->attr.name.equals(symbolName)) {
-          CT::string coordinates = dataSource->cfg->Symbol[j]->attr.coordinates;
-          coordinates.replaceSelf("[", "");
-          coordinates.replaceSelf("]", "");
-          coordinates.replaceSelf(" ", "");
-          CT::StackList<CT::string> e = coordinates.splitToStack(",");
-          SimpleSymbol s;
-          for (size_t p = 0; p < e.size() && p < e.size() + 1; p += 2) {
-            s.coordinates.push_back(SimpleSymbol::Coordinate(e[p].toFloat(), e[p + 1].toFloat()));
-          }
-          SimpleSymbolMap[symbolName.c_str()] = s;
-        }
-      }
+typedef std::vector<f8point> SimpleSymbol;
+typedef std::map<std::string, SimpleSymbol> SimpleSymbolMap;
+SimpleSymbolMap simpleSymbolMapCache;
+
+SimpleSymbolMap makeSymbolMap(CServerConfig::XMLE_Configuration *cfg) {
+  SimpleSymbolMap simpleSymbolMap;
+  for (size_t j = 0; j < cfg->Symbol.size(); j++) {
+    auto symbolName = cfg->Symbol[j]->attr.name;
+    auto coordinates = cfg->Symbol[j]->attr.coordinates;
+    coordinates.replaceSelf("[", "");
+    coordinates.replaceSelf("]", "");
+    coordinates.replaceSelf(" ", "");
+    auto coordinateStrings = coordinates.splitToStack(",");
+    SimpleSymbol symbol;
+    for (size_t p = 0; p < coordinateStrings.size() && p < coordinateStrings.size() + 1; p += 2) {
+      symbol.push_back({.x = coordinateStrings[p].toDouble(), .y = coordinateStrings[p + 1].toDouble()});
     }
-    if (SimpleSymbolMap.find(symbolName.c_str()) != SimpleSymbolMap.end()) {
-      currentSymbol = &SimpleSymbolMap.find(symbolName.c_str())->second;
-    }
+    simpleSymbolMap[symbolName.c_str()] = symbol;
   }
+  return simpleSymbolMap;
+}
+
+SimpleSymbol getSymbol(CT::string symbolName, SimpleSymbolMap &simpleSymbolMap) {
+  auto findIt = simpleSymbolMap.find(symbolName.c_str());
+  if (findIt != simpleSymbolMap.end()) {
+    return findIt->second;
+  }
+  return {};
+}
+
+void CImgRenderPoints::renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CImageWarper *, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration,
+                                          CServerConfig::XMLE_Point *pointConfig) {
+  if (simpleSymbolMapCache.empty()) {
+    simpleSymbolMapCache = makeSymbolMap(dataSource->cfg);
+  }
+  auto currentSymbol = getSymbol(pointConfig->attr.symbol.c_str(), simpleSymbolMapCache);
 
   int doneMatrixH = 2;
   int doneMatrixW = 2;
@@ -247,7 +257,7 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
   }
 
   std::map<std::string, CDrawImage *> symbolCache;
-  //     CDBDebug("symbolCache created, size=%d", symbolCache.size());
+
   std::map<std::string, CDrawImage *>::iterator symbolCacheIter;
   for (size_t dataObjectIndex = 0; dataObjectIndex < dataSource->getNumDataObjects(); dataObjectIndex++) {
     std::vector<PointDVWithLatLon> *pts = &dataSource->getDataObject(dataObjectIndex)->points;
@@ -267,43 +277,6 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
       //       CDBDebug("angles[%d] %f %d %f %f", dataObject, useangle, kwadrant, usedx, usedy);
     }
 
-    // THINNING
-    std::vector<PointDVWithLatLon> *p1 = &dataSource->getDataObject(dataObjectIndex)->points;
-    size_t l = p1->size();
-    size_t nrThinnedPoints = l;
-    std::vector<size_t> thinnedPointIndexList;
-
-    //      CDBDebug("Before thinning: %d (%d)", l, doThinning);
-    if (doThinning) {
-      for (size_t j = 0; j < l; j++) {
-        size_t nrThinnedPoints = thinnedPointIndexList.size();
-        size_t i;
-        if ((useFilter && (*p1)[j].paramList.size() > 0 && usePoints.find((*p1)[j].paramList[0].value.c_str()) != usePoints.end()) || !useFilter) {
-          for (i = 0; i < nrThinnedPoints; i++) {
-            if (j == 0) break; // Always put in first element
-            if (hypot((*p1)[thinnedPointIndexList[i]].x - (*p1)[j].x, (*p1)[thinnedPointIndexList[i]].y - (*p1)[j].y) < thinningRadius) break;
-          }
-          if (i == nrThinnedPoints) thinnedPointIndexList.push_back(j);
-        }
-      }
-      nrThinnedPoints = thinnedPointIndexList.size();
-    } else if (useFilter) {
-      for (size_t j = 0; j < l; j++) {
-        if ((*p1)[j].paramList.size() > 0 && usePoints.find((*p1)[j].paramList[0].value.c_str()) != usePoints.end()) {
-          // if ((*p1)[j].paramList.size()>0 && usePoints.find((*p1)[j].paramList[0].value.c_str())!=usePoints.end()){
-          thinnedPointIndexList.push_back(j);
-          CDBDebug("pushed el %d: %s", j, (*p1)[j].paramList[0].value.c_str());
-        }
-      }
-      nrThinnedPoints = thinnedPointIndexList.size();
-    } else {
-      // if no thinning: get all indexes
-      for (size_t pointIndex = 0; pointIndex < l; pointIndex++) {
-        thinnedPointIndexList.push_back(pointIndex);
-      }
-      nrThinnedPoints = thinnedPointIndexList.size();
-    }
-
     bool pointMinMaxSet = false;
     float pointMin = 0;
     float pointMax = 0;
@@ -315,9 +288,9 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
 
     CT::string t;
     float fillValueP1 = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
-    for (size_t pointNo = 0; pointNo < nrThinnedPoints; pointNo++) {
-      size_t j = pointNo;
-      j = thinnedPointIndexList[pointNo];
+    for (auto pointIndex : thinnedPointIndexList) {
+
+      size_t j = pointIndex;
       float v = (*pts)[j].v;
       if (v != v || v == fillValueP1) continue;
 
@@ -501,17 +474,17 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
               }
               if (isRadiusAndValue) {
                 if (dataObjectIndex == 0) {
-                  if (currentSymbol != NULL) {
-                    float xPoly[currentSymbol->coordinates.size()];
-                    float yPoly[currentSymbol->coordinates.size()];
+                  if (currentSymbol.size() > 0) {
+                    float xPoly[currentSymbol.size()];
+                    float yPoly[currentSymbol.size()];
 
-                    xPoly[0] = x + currentSymbol->coordinates[0].x * perPointDrawPointDiscRadius;
-                    yPoly[0] = y - currentSymbol->coordinates[0].y * perPointDrawPointDiscRadius;
-                    for (size_t l = 1; l < currentSymbol->coordinates.size(); l++) {
-                      xPoly[l] = x + currentSymbol->coordinates[l].x * perPointDrawPointDiscRadius;
-                      yPoly[l] = y - currentSymbol->coordinates[l].y * perPointDrawPointDiscRadius;
+                    xPoly[0] = x + currentSymbol[0].x * perPointDrawPointDiscRadius;
+                    yPoly[0] = y - currentSymbol[0].y * perPointDrawPointDiscRadius;
+                    for (size_t l = 1; l < currentSymbol.size(); l++) {
+                      xPoly[l] = x + currentSymbol[l].x * perPointDrawPointDiscRadius;
+                      yPoly[l] = y - currentSymbol[l].y * perPointDrawPointDiscRadius;
                     }
-                    drawImage->poly(xPoly, yPoly, currentSymbol->coordinates.size(), 1, drawPointLineColor, drawPointFillColor, true, true);
+                    drawImage->poly(xPoly, yPoly, currentSymbol.size(), 1, drawPointLineColor, drawPointFillColor, true, true);
                   } else {
                     drawImage->setDisc(x, y, perPointDrawPointDiscRadius, drawPointFillColor, drawPointLineColor);
                   }
@@ -778,8 +751,8 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
         }
       }
     }
-
-    renderSinglePoints(warper, dataSource, drawImage, styleConfiguration, pointConfig);
+    auto thinnedPointIndexList = doThinningGetIndices(dataSource->getDataObject(0)->points, doThinning, thinningRadius, usePoints, useFilter);
+    renderSinglePoints(thinnedPointIndexList, warper, dataSource, drawImage, styleConfiguration, pointConfig);
   }
 
   bool isVector = ((dataSource->getNumDataObjects() >= 2) && (dataSource->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_GEOJSONPOINT") == NULL));
