@@ -26,6 +26,7 @@
 !tests/functional_test.py
 !tests/starttests.sh
 !tests/starttests_psql.sh
+!tests/conftest.py
 **/*.pyc
 **/__pycache__
 python/lib/env/

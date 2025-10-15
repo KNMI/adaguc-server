@@ -99,6 +99,12 @@
     "editor.autoClosingBrackets": "never",
     "files.trimFinalNewlines": true,
     "editor.wordWrap": "off",
-    "editor.formatOnSave": false
-  }
+    "editor.formatOnSave": false,
+  },
+  "python.testing.pytestArgs": [
+    "../python/python_fastapi_server/", "./AdagucTests/", "-o", "python_files=Test*.py test_*.py"
+  ],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true,
+  "python.testing.cwd": "${workspaceFolder}/tests"
 }
