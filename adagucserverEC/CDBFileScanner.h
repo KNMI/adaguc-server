@@ -101,7 +101,7 @@ public:
   /**
    *
    */
-  static int cleanFiles(CDataSource *dataSource, int scanFlags);
+  static std::pair<int, std::set<std::string>> cleanFiles(CDataSource *dataSource, int scanFlags);
 
 private:
   static void _removeFileFromTables(CT::string fileNamestr, CDataSource *dataSource);

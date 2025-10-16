@@ -1,3 +1,7 @@
+**Version 4.3.4 - 2025-10-16**
+
+- Files cleaned with CleanFiles will now not be used to make pyramid tiles.
+
 **Version 4.3.3 - 2025-10-08**
 
 - Disable FastAPI redirect on url's ending with `/`, as this exposes internal Adaguc hostname

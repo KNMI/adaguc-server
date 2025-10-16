@@ -70,7 +70,11 @@
     "concepts": "cpp",
     "semaphore": "cpp",
     "stop_token": "cpp",
-    "ranges": "cpp"
+    "ranges": "cpp",
+    "charconv": "cpp",
+    "source_location": "cpp",
+    "format": "cpp",
+    "span": "cpp"
   },
   "editor.suggest.insertMode": "insert",
   "cmake.buildDirectory": "${workspaceFolder}/bin",
