@@ -16,14 +16,14 @@ void CDBFileScanner::_removeFileFromTables(CT::string fileNamestr, CDataSource *
   }
 }
 
-int CDBFileScanner::cleanFiles(CDataSource *dataSource, int) {
+std::pair<int, std::set<std::string>> CDBFileScanner::cleanFiles(CDataSource *dataSource, int) {
   if (dataSource->cfgLayer->FilePath[0]->attr.retentiontype.empty() || dataSource->cfgLayer->FilePath[0]->attr.retentionperiod.empty()) {
-    return 0;
+    return std::make_pair(0, filesDeletedFromFS);
   }
 
   if (!dataSource->cfgLayer->FilePath[0]->attr.retentiontype.equals(CDBFILESCANNER_RETENTIONTYPE_DATATIME)) {
     CDBDebug("retentiontype is not set to \"%s\" but  to \"%s\", ignoring", CDBFILESCANNER_RETENTIONTYPE_DATATIME, dataSource->cfgLayer->FilePath[0]->attr.retentiontype.c_str());
-    return 0;
+    return std::make_pair(0, filesDeletedFromFS);
   }
   CT::string enableCleanupSystem = dataSource->cfg->Settings.size() == 1 ? dataSource->cfg->Settings[0]->attr.enablecleanupsystem : "false";
   bool enableCleanupIsTrue = enableCleanupSystem.equals("true");
@@ -32,7 +32,7 @@ int CDBFileScanner::cleanFiles(CDataSource *dataSource, int) {
                                                                                                                                    : CDBFILESCANNER_CLEANUP_DEFAULT_LIMIT;
   if (!enableCleanupIsTrue && !enableCleanupIsInform) {
     CDBWarning("Layer wants to autocleanup, but attribute enablecleanupsystem in Settings is not set to true or dryrun but to %s", enableCleanupSystem.c_str());
-    return 1;
+    return std::make_pair(1, filesDeletedFromFS);
   }
 
   CT::string retentiontype = dataSource->cfgLayer->FilePath[0]->attr.retentiontype;
@@ -46,14 +46,14 @@ int CDBFileScanner::cleanFiles(CDataSource *dataSource, int) {
   if (dataSource->cfgLayer->Dimension.size() == 0) {
     if (CAutoConfigure::autoConfigureDimensions(dataSource) != 0) {
       CREPORT_ERROR_NODOC("Unable to configure dimensions automatically", CReportMessage::Categories::GENERAL);
-      return 1;
+      return std::make_pair(1, filesDeletedFromFS);
     }
   }
   try {
     CRequest::fillDimValuesForDataSource(dataSource, dataSource->srvParams);
   } catch (ServiceExceptionCode e) {
     CDBError("Exception in fillDimValuesForDataSource");
-    return 1;
+    return std::make_pair(1, filesDeletedFromFS);
   }
 
   CT::string tableNameForTimeDimension;
@@ -74,7 +74,7 @@ int CDBFileScanner::cleanFiles(CDataSource *dataSource, int) {
         dbAdapter->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), colName.c_str(), dataSource);
   } catch (int e) {
     CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), colName.c_str());
-    return 1;
+    return std::make_pair(1, filesDeletedFromFS);
   }
 
   CTime *ctime = CTime::GetCTimeEpochInstance();
@@ -115,5 +115,6 @@ int CDBFileScanner::cleanFiles(CDataSource *dataSource, int) {
     CDBDebug("Nothing to clean");
   }
   delete store;
-  return 0;
+  CDBDebug("Succesfully finished cleaning files");
+  return std::make_pair(0, filesDeletedFromFS);
 }
