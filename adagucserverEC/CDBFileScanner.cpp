@@ -1006,8 +1006,8 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
 #endif
 
   if (fileList.size() == 0) {
-    CDBError("No files left to scan - stopping.");
-    return 1;
+    CDBWarning("No files left to scan - stopping.");
+    return 0;
   }
   if (scanFlags & CDBFILESCANNER_UPDATEDB) {
     int status = updateMetaDataTable(dataSource);
