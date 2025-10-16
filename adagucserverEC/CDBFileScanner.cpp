@@ -976,7 +976,7 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
       auto cleanFilesResult = cleanFiles(dataSource, scanFlags);
 
       // Remove the deleted files from the filelist.
-      if (cleanFilesResult.first == 0 && cleanFilesResult.second.size() > 0) {
+      if (cleanFilesResult.second.size() > 0) {
         CDBDebug("Cleanfiles deleted %d files.", cleanFilesResult.second.size());
         // Remove the deleted files from the fileList.
         for (auto item : cleanFilesResult.second) {
