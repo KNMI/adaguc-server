@@ -68,7 +68,8 @@ private:
 public:
   void render(CImageWarper *, CDataSource *, CDrawImage *);
   int set(const char *);
-  int getPixelIndexForValue(CDataSource *dataSource, float val);
-  CColor getPixelColorForValue(CDrawImage *drawImage, CDataSource *dataSource, float val);
 };
 #endif
+
+int getPixelIndexForValue(CDataSource *dataSource, float val);
+CColor getPixelColorForValue(CDrawImage *drawImage, CDataSource *dataSource, float val);

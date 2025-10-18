@@ -327,6 +327,14 @@ bool shouldDrawThisSymbol(CServerConfig::XMLE_SymbolInterval *symbolInterval, fl
   return drawThisOne;
 }
 
+CColor getDrawPointColor(CDataSource *dataSource, CDrawImage *drawImage, float value) {
+  if ((dataSource->getStyle() != NULL) && (dataSource->getStyle()->shadeIntervals.size() > 0)) {
+    return getPixelColorForValue(drawImage, dataSource, value);
+  }
+  int pointColorIndex = getPixelIndexForValue(dataSource, value); // Use value of dataObject[0] for colour
+  return drawImage->getColorForIndex(pointColorIndex);
+}
+
 void CImgRenderPoints::renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CImageWarper *, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration,
                                           CServerConfig::XMLE_Point *pointConfig) {
   if (simpleSymbolMapCache.empty()) {
@@ -592,15 +600,8 @@ void CImgRenderPoints::renderSinglePoints(std::vector<size_t> thinnedPointIndexL
       }
 
       if (drawDiscs) { // Filled disc with circle around it and value inside
-        // drawImage->circle(x,y, drawPointDiscRadius, 240,0.65);
-
         if (!useDrawPointTextColor) {
-          if ((dataSource->getStyle() != NULL) && (dataSource->getStyle()->shadeIntervals.size() > 0)) {
-            drawPointTextColor = getPixelColorForValue(drawImage, dataSource, value);
-          } else {
-            int pointColorIndex = getPixelIndexForValue(dataSource, value); // Use value of dataObject[0] for colour
-            drawPointTextColor = drawImage->getColorForIndex(pointColorIndex);
-          }
+          drawPointTextColor = getDrawPointColor(dataSource, drawImage, value);
         }
         if (dataSource->getDataObject(dataObjectIndex)->hasStatusFlag) {
           CT::string flagMeaning;
@@ -610,15 +611,7 @@ void CImgRenderPoints::renderSinglePoints(std::vector<size_t> thinnedPointIndexL
           t.print(drawPointTextFormat.c_str(), value);
         }
 
-        CColor col;
-        if (useDrawPointFillColor) {
-          col = drawPointFillColor;
-        } else if ((dataSource->getStyle() != NULL) && (dataSource->getStyle()->shadeIntervals.size() > 0)) {
-          col = getPixelColorForValue(drawImage, dataSource, value);
-        } else {
-          int pointColorIndex = getPixelIndexForValue(dataSource, value); // Use value of dataObject[0] for colour
-          col = drawImage->getColorForIndex(pointColorIndex);
-        }
+        CColor col = useDrawPointFillColor ? drawPointFillColor : getDrawPointColor(dataSource, drawImage, value);
         drawImage->setTextDisc(x, y, drawPointDiscRadius, t.c_str(), drawPointFontFile, drawPointFontSize, drawPointTextColor, col, drawPointLineColor);
 
         if (drawPointDot) drawImage->circle(x, y, 1, drawPointLineColor, 0.65);
@@ -809,7 +802,7 @@ int CImgRenderPoints::set(const char *values) {
   return 0;
 }
 
-int CImgRenderPoints::getPixelIndexForValue(CDataSource *dataSource, float val) {
+int getPixelIndexForValue(CDataSource *dataSource, float val) {
   bool isNodata = false;
 
   if (dataSource->getDataObject(0)->hasNodataValue) {
@@ -837,7 +830,7 @@ int CImgRenderPoints::getPixelIndexForValue(CDataSource *dataSource, float val) 
   return 0;
 }
 
-CColor CImgRenderPoints::getPixelColorForValue(CDrawImage *drawImage, CDataSource *dataSource, float val) {
+CColor getPixelColorForValue(CDrawImage *drawImage, CDataSource *dataSource, float val) {
   bool isNodata = false;
 
   CColor color;
