@@ -74,8 +74,16 @@
     "charconv": "cpp",
     "source_location": "cpp",
     "format": "cpp",
-    "span": "cpp"
-  },
+    "span": "cpp",
+    "hash_map": "cpp",
+    "hash_set": "cpp",
+    "any": "cpp",
+    "codecvt": "cpp",
+    "queue": "cpp",
+    "stack": "cpp",
+    "stdfloat": "cpp",
+    "text_encoding": "cpp"
+},
   "editor.suggest.insertMode": "insert",
   "cmake.buildDirectory": "${workspaceFolder}/bin",
   "cmake.configureOnOpen": true,

@@ -38,8 +38,6 @@ private:
   bool drawVolume;
   bool drawSymbol;
   bool drawZoomablePoints;
-  bool doThinning;
-  int thinningRadius;
   int drawPointFontSize;
   float drawPointDiscRadius;
   int drawPointTextRadius;
