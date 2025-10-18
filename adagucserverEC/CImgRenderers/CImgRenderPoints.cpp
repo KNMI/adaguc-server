@@ -511,16 +511,8 @@ void CImgRenderPoints::renderSinglePoints(std::vector<size_t> thinnedPointIndexL
           }
 
           if (!useDrawPointTextColor) {
-            if (dataObjectIndex == 0) { // Only calculate color for 1st dataObject, rest gets defaultColor
-              if ((dataSource->getStyle() != NULL) && dataSource->getStyle()->shadeIntervals.size() > 0) {
-                drawPointTextColor = getPixelColorForValue(drawImage, dataSource, value);
-              } else {
-                int pointColorIndex = getPixelIndexForValue(dataSource, value); // Use value of dataObject[0] for colour
-                drawPointTextColor = drawImage->getColorForIndex(pointColorIndex);
-              }
-            } else {
-              drawPointTextColor = defaultColor;
-            }
+            // Only calculate color for 1st dataObject, rest gets defaultColor
+            drawPointTextColor = dataObjectIndex == 0 ? getDrawPointColor(dataSource, drawImage, value) : defaultColor;
           }
           if (drawPointDiscRadius == 0) {
             if (drawPointPlotStationId) {
@@ -666,8 +658,7 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
   }
   CServerConfig::XMLE_Style *styleConfig = styleConfiguration->styleConfig;
 
-  for (size_t pointDefinitionIndex = 0; pointDefinitionIndex < styleConfig->Point.size(); pointDefinitionIndex += 1) {
-    CServerConfig::XMLE_Point *pointConfig = styleConfig->Point[pointDefinitionIndex];
+  for (auto pointConfig : styleConfig->Point) {
 
     if (pointConfig->attr.fillcolor.empty() == false) {
       drawPointFillColor.parse(pointConfig->attr.fillcolor.c_str());
@@ -840,8 +831,7 @@ CColor getPixelColorForValue(CDrawImage *drawImage, CDataSource *dataSource, flo
   }
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   if (!isNodata) {
-    for (size_t j = 0; j < styleConfiguration->shadeIntervals.size(); j++) {
-      CServerConfig::XMLE_ShadeInterval *shadeInterval = styleConfiguration->shadeIntervals[j];
+    for (auto shadeInterval : styleConfiguration->shadeIntervals) {
       if (shadeInterval->attr.min.empty() == false && shadeInterval->attr.max.empty() == false) {
         if ((val >= atof(shadeInterval->attr.min.c_str())) && (val < atof(shadeInterval->attr.max.c_str()))) {
           return CColor(shadeInterval->attr.fillcolor.c_str());
