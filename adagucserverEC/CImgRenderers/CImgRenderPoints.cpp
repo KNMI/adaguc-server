@@ -411,62 +411,37 @@ void CImgRenderPoints::renderSinglePoints(std::vector<size_t> thinnedPointIndexL
       if (drawSymbol) {
         bool minMaxSet = styleConfiguration->symbolIntervals.size() == 1 && !styleConfiguration->symbolIntervals[0]->attr.min.empty() && !styleConfiguration->symbolIntervals[0]->attr.max.empty();
         // Plot symbol if either valid v or Symbolinterval.min and max not set (to plot symbol for string data type)
-        if ((value == value) || ((pointValue->paramList.size() > 0) && !minMaxSet)) { //
-          float symbol_v = value;                                                     // Local copy of value
+        if ((value == value) || ((pointValue->paramList.size() > 0) && !minMaxSet)) {
+          float symbol_v = value; // Local copy of value
           if (!(value == value)) {
             if (pointValue->paramList.size() > 0) symbol_v = 0;
           }
 
           for (auto symbolInterval : styleConfiguration->symbolIntervals) {
-            bool drawThisOne = false;
+            if (!shouldDrawThisSymbol(symbolInterval, symbol_v)) continue;
 
-            if (symbolInterval->attr.binary_and.empty() == false) {
-              int b = parseInt(symbolInterval->attr.binary_and.c_str());
-              if ((b & int(symbol_v)) == b) {
-                drawThisOne = true;
-                if (symbolInterval->attr.min.empty() == false && symbolInterval->attr.max.empty() == false) {
-                  if ((symbol_v >= parseFloat(symbolInterval->attr.min.c_str())) && (symbol_v < parseFloat(symbolInterval->attr.max.c_str())))
-                    ;
-                  else
-                    drawThisOne = false;
-                }
-              }
+            std::string symbolFile = symbolInterval->attr.file.c_str();
+            if (symbolFile.length() > 0) {
+              CDrawImage *symbol = NULL;
 
-            } else {
-              if (symbolInterval->attr.min.empty() == false && symbolInterval->attr.max.empty() == false) {
-                if ((symbol_v >= parseFloat(symbolInterval->attr.min.c_str())) && (symbol_v < parseFloat(symbolInterval->attr.max.c_str()))) {
-                  drawThisOne = true;
-                }
-              } else if (symbolInterval->attr.min.empty() && symbolInterval->attr.max.empty()) {
-                drawThisOne = true;
+              symbolCacheIter = symbolCache.find(symbolFile);
+              if (symbolCacheIter == symbolCache.end()) {
+                symbol = new CDrawImage();
+                symbol->createImage(symbolFile.c_str());
+                symbolCache[symbolFile] = symbol; // Remember in cache
+              } else {
+                symbol = (*symbolCacheIter).second;
               }
+              int offsetX = 0;
+              int offsetY = 0;
+              if (!symbolInterval->attr.offsetX.empty()) offsetX = parseInt(symbolInterval->attr.offsetX.c_str());
+              if (!symbolInterval->attr.offsetY.empty()) offsetY = parseInt(symbolInterval->attr.offsetY.c_str());
+              drawImage->draw(x - symbol->Geo->dWidth / 2 + offsetX, y - symbol->Geo->dHeight / 2 + offsetY, 0, 0, symbol);
             }
-
-            if (drawThisOne) {
-              std::string symbolFile = symbolInterval->attr.file.c_str();
-
-              if (symbolFile.length() > 0) {
-                CDrawImage *symbol = NULL;
-
-                symbolCacheIter = symbolCache.find(symbolFile);
-                if (symbolCacheIter == symbolCache.end()) {
-                  symbol = new CDrawImage();
-                  symbol->createImage(symbolFile.c_str());
-                  symbolCache[symbolFile] = symbol; // Remember in cache
-                } else {
-                  symbol = (*symbolCacheIter).second;
-                }
-                int offsetX = 0;
-                int offsetY = 0;
-                if (!symbolInterval->attr.offsetX.empty()) offsetX = parseInt(symbolInterval->attr.offsetX.c_str());
-                if (!symbolInterval->attr.offsetY.empty()) offsetY = parseInt(symbolInterval->attr.offsetY.c_str());
-                drawImage->draw(x - symbol->Geo->dWidth / 2 + offsetX, y - symbol->Geo->dHeight / 2 + offsetY, 0, 0, symbol);
-              }
-              if (drawPointPlotStationId) {
-                if (pointValue->paramList.size() > 0) {
-                  CT::string stationid = pointValue->paramList[0].value;
-                  drawImage->drawCenteredText(x, y - drawPointTextRadius - 3, drawPointFontFile, drawPointFontSize, 0, stationid.c_str(), drawPointTextColor);
-                }
+            if (drawPointPlotStationId) {
+              if (pointValue->paramList.size() > 0) {
+                CT::string stationid = pointValue->paramList[0].value;
+                drawImage->drawCenteredText(x, y - drawPointTextRadius - 3, drawPointFontFile, drawPointFontSize, 0, stationid.c_str(), drawPointTextColor);
               }
             }
           }
