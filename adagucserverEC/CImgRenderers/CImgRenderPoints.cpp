@@ -251,13 +251,6 @@ std::vector<int> buildAlphaVector(int radius) {
   return alpha;
 }
 
-void drawStationIdForVolumePoint(CDrawImage *drawImage, PointDVWithLatLon *pointValue, int x, int y, CColor textColor) {
-  if (pointValue->paramList.size() > 0) {
-    CT::string stationId = pointValue->paramList[0].value;
-    drawImage->setText(stationId.c_str(), stationId.length(), x - stationId.length() * 3, y - 20, textColor, 0);
-  }
-}
-
 void drawVolumeForPoint(CDrawImage *drawImage, CColor drawPointFillColor, int x, int y, float radius, const std::vector<int> &alphaVec) {
   int rvol = drawPointFillColor.r;
   int gvol = drawPointFillColor.g;
@@ -309,31 +302,29 @@ bool shouldSkipPoint(CStyleConfiguration *styleConfiguration, float value, size_
   return skipPoint;
 }
 
-bool shouldDrawThisSymbol(CServerConfig::XMLE_SymbolInterval *symbolInterval, float symbol_v) {
-  bool drawThisOne = false;
-
-  if (symbolInterval->attr.binary_and.empty() == false) {
+bool shouldDrawSymbol(CServerConfig::XMLE_SymbolInterval *symbolInterval, float symbol_v) {
+  // Should not draw symbol if we want a binary match and it fails
+  if (!symbolInterval->attr.binary_and.empty()) {
     int b = parseInt(symbolInterval->attr.binary_and.c_str());
-    if ((b & int(symbol_v)) == b) {
-      drawThisOne = true;
-      if (symbolInterval->attr.min.empty() == false && symbolInterval->attr.max.empty() == false) {
-        if ((symbol_v >= parseFloat(symbolInterval->attr.min.c_str())) && (symbol_v < parseFloat(symbolInterval->attr.max.c_str())))
-          ;
-        else
-          drawThisOne = false;
-      }
-    }
-  } else {
-    if (symbolInterval->attr.min.empty() == false && symbolInterval->attr.max.empty() == false) {
-      if ((symbol_v >= parseFloat(symbolInterval->attr.min.c_str())) && (symbol_v < parseFloat(symbolInterval->attr.max.c_str()))) {
-        drawThisOne = true;
-      }
-    } else if (symbolInterval->attr.min.empty() && symbolInterval->attr.max.empty()) {
-      drawThisOne = true;
+    if ((b & int(symbol_v)) != b) {
+      return false;
     }
   }
 
-  return drawThisOne;
+  bool minSet = !symbolInterval->attr.min.empty();
+  bool maxSet = !symbolInterval->attr.max.empty();
+
+  // Should draw symbol if no min/max is set at all
+  if (!minSet && !maxSet) return true;
+
+  // Should draw if min/max is set, and value is within range
+  if (minSet && maxSet) {
+    float minVal = parseFloat(symbolInterval->attr.min.c_str());
+    float maxVal = parseFloat(symbolInterval->attr.max.c_str());
+    if (symbol_v >= minVal && symbol_v < maxVal) return true;
+  }
+
+  return false;
 }
 
 CColor getDrawPointColor(CDataSource *dataSource, CDrawImage *drawImage, float value) {
@@ -437,32 +428,26 @@ void CImgRenderPoints::renderSinglePoints(std::vector<size_t> thinnedPointIndexL
       float perPointDrawPointDiscRadius = drawPointDiscRadius;
       if (drawVolume) {
         drawVolumeForPoint(drawImage, drawPointFillColor, x, y, drawPointDiscRadius, alphaVec);
-        if (drawPointPlotStationId) {
-          drawStationIdForVolumePoint(drawImage, pointValue, x, y, drawPointTextColor);
+        if (drawPointPlotStationId && pointValue->paramList.size() > 0) {
+          CT::string stationId = pointValue->paramList[0].value;
+          drawImage->setText(stationId.c_str(), stationId.length(), x - stationId.length() * 3, y - 20, drawPointTextColor, 0);
         }
       }
 
       if (drawSymbol) {
-        bool minMaxSet = styleConfiguration->symbolIntervals.size() == 1 && !styleConfiguration->symbolIntervals[0]->attr.min.empty() && !styleConfiguration->symbolIntervals[0]->attr.max.empty();
-        // Plot symbol if either valid v or Symbolinterval.min and max not set (to plot symbol for string data type)
-        if ((value == value) || ((pointValue->paramList.size() > 0) && !minMaxSet)) {
-          float symbol_v = value; // Local copy of value
-          for (auto symbolInterval : styleConfiguration->symbolIntervals) {
-            if (!shouldDrawThisSymbol(symbolInterval, symbol_v)) continue;
+        for (auto symbolInterval : styleConfiguration->symbolIntervals) {
+          if (!shouldDrawSymbol(symbolInterval, value)) continue;
 
-            std::string symbolFile = symbolInterval->attr.file.c_str();
-            drawSymbolForPoint(drawImage, symbolCache, symbolFile, symbolInterval, x, y);
+          std::string symbolFile = symbolInterval->attr.file.c_str();
+          drawSymbolForPoint(drawImage, symbolCache, symbolFile, symbolInterval, x, y);
 
-            if (drawPointPlotStationId) {
-              if (pointValue->paramList.size() > 0) {
-                CT::string stationid = pointValue->paramList[0].value;
-                drawImage->drawCenteredText(x, y - drawPointTextRadius - 3, drawPointFontFile, drawPointFontSize, 0, stationid.c_str(), drawPointTextColor);
-              }
-            }
+          if (drawPointPlotStationId && pointValue->paramList.size() > 0) {
+            CT::string stationid = pointValue->paramList[0].value;
+            drawImage->drawCenteredText(x, y - drawPointTextRadius - 3, drawPointFontFile, drawPointFontSize, 0, stationid.c_str(), drawPointTextColor);
           }
-
-          if (drawPointDot) drawImage->circle(x, y, 1, drawPointLineColor, 0.65);
         }
+
+        if (drawPointDot) drawImage->circle(x, y, 1, drawPointLineColor, 0.65);
       }
 
       if (drawPoints) {
@@ -550,11 +535,9 @@ void CImgRenderPoints::renderSinglePoints(std::vector<size_t> thinnedPointIndexL
           }
           if (drawPointDot) drawImage->circle(x, y, 1, drawPointLineColor, 1);
         }
-        if (drawPointPlotStationId) {
-          if (pointValue->paramList.size() > 0) {
-            CT::string stationid = pointValue->paramList[0].value;
-            drawImage->drawCenteredText(x, y - drawPointTextRadius - 3, drawPointFontFile, drawPointFontSize, 0, stationid.c_str(), drawPointTextColor);
-          }
+        if (drawPointPlotStationId && pointValue->paramList.size() > 0) {
+          CT::string stationid = pointValue->paramList[0].value;
+          drawImage->drawCenteredText(x, y - drawPointTextRadius - 3, drawPointFontFile, drawPointFontSize, 0, stationid.c_str(), drawPointTextColor);
         }
         if (drawPointDot) drawImage->circle(x, y, 1, drawPointLineColor, 0.65);
       }
