@@ -242,16 +242,17 @@ std::vector<int> buildAlphaVector(int radius) {
   return alpha;
 }
 
-void drawVolumeForPoint(CDrawImage *drawImage, CColor drawPointFillColor, int x, int y, float radius, const int *alphaPtr, bool drawPointPlotStationId, CColor drawPointTextColor,
+void drawVolumeForPoint(CDrawImage *drawImage, CColor drawPointFillColor, int x, int y, float radius, const std::vector<int> &alphaVec, bool drawPointPlotStationId, CColor drawPointTextColor,
                         PointDVWithLatLon *pointValue) {
   int rvol = drawPointFillColor.r;
   int gvol = drawPointFillColor.g;
   int bvol = drawPointFillColor.b;
 
+  int idx = 0;
   drawImage->setPixelTrueColor(x, y, 0, 0, 0, 255);
   for (int y1 = -radius; y1 <= radius; y1++) {
     for (int x1 = -radius; x1 <= radius; x1++) {
-      drawImage->setPixelTrueColor(x + x1, y + y1, rvol, gvol, bvol, *alphaPtr++);
+      drawImage->setPixelTrueColor(x + x1, y + y1, rvol, gvol, bvol, alphaVec[idx++]);
     }
   }
 
@@ -356,10 +357,9 @@ void CImgRenderPoints::renderSinglePoints(std::vector<size_t> thinnedPointIndexL
   }
 
   // Preparation for volume draw
-  const int *alphaPtr = nullptr;
+  std::vector<int> alphaVec;
   if (drawVolume) {
-    std::vector<int> alphaVec = buildAlphaVector(int(drawPointDiscRadius));
-    alphaPtr = alphaVec.data();
+    alphaVec = buildAlphaVector(int(drawPointDiscRadius));
   }
 
   /* For thinning */
@@ -404,8 +404,8 @@ void CImgRenderPoints::renderSinglePoints(std::vector<size_t> thinnedPointIndexL
       int y = dataSource->srvParams->Geo->dHeight - pointValue->y;
 
       float perPointDrawPointDiscRadius = drawPointDiscRadius;
-      if (drawVolume && alphaPtr) {
-        drawVolumeForPoint(drawImage, drawPointFillColor, x, y, drawPointDiscRadius, alphaPtr, drawPointPlotStationId, drawPointTextColor, pointValue);
+      if (drawVolume) {
+        drawVolumeForPoint(drawImage, drawPointFillColor, x, y, drawPointDiscRadius, alphaVec, drawPointPlotStationId, drawPointTextColor, pointValue);
       }
 
       if (drawSymbol) {
@@ -716,7 +716,7 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
       isRadiusAndValue = true;
     }
 
-    //   CDBDebug("drawPoints=%d drawText=%d drawBarb=%d drawVector=%d drawVolume=%d drawSymbol=%d", drawPoints, drawText, drawBarb, drawVector, drawVolume, drawSymbol);
+    // CDBDebug("drawPoints=%d drawVolume=%d drawSymbol=%d drawDiscs=%d", drawPoints, drawVolume, drawSymbol, drawDiscs);
 
     if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL) {
       CServerConfig::XMLE_Style *s = styleConfiguration->styleConfig;
