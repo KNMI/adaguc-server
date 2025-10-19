@@ -23,6 +23,7 @@
  *
  ******************************************************************************/
 
+#include <unordered_set>
 #include "CImgRenderPoints.h"
 #include "CConvertGeoJSON.h"
 #include "getVectorStyle.h"
@@ -71,21 +72,34 @@ ThinningInfo getThinningInfo(CServerConfig::XMLE_Style *s, ThinningInfo &info) {
   return info;
 }
 
-std::vector<size_t> doThinningGetIndices(std::vector<PointDVWithLatLon> &p1, bool doThinning, double thinningRadius, std::set<std::string> usePoints, bool useFilter = false) {
-
+std::vector<size_t> doThinningGetIndices(std::vector<PointDVWithLatLon> &p1, bool doThinning, double thinningRadius, std::unordered_set<std::string> useSet, std::unordered_set<std::string> skipSet) {
   size_t numberOfPoints = p1.size();
   std::vector<size_t> filteredPointIndices;
-  // Filter the points
-  if (useFilter) {
-    for (size_t pointIndex = 0; pointIndex < numberOfPoints; pointIndex++) {
-      if (p1[pointIndex].paramList.size() > 0 && usePoints.find(p1[pointIndex].paramList[0].value.c_str()) != usePoints.end()) {
-        filteredPointIndices.push_back(pointIndex);
-      }
-    }
-  } else {
-    // Use all indices instead
+
+  // Filter points
+  if (useSet.empty() && skipSet.empty()) {
     for (size_t pointIndex = 0; pointIndex < numberOfPoints; pointIndex++) {
       filteredPointIndices.push_back(pointIndex);
+    }
+  } else if (!useSet.empty()) {
+    // USE ONLY these → whitelist
+    for (size_t i = 0; i < numberOfPoints; ++i) {
+      if (!p1[i].paramList.empty()) {
+        const auto &val = p1[i].paramList[0].value;
+        if (useSet.count(val.c_str())) {
+          filteredPointIndices.push_back(i);
+        }
+      }
+    }
+  } else if (!skipSet.empty()) {
+    for (size_t i = 0; i < numberOfPoints; ++i) {
+      if (!p1[i].paramList.empty()) {
+        const auto &val = p1[i].paramList[0].value;
+        if (skipSet.count(val.c_str())) {
+          continue;
+        }
+      }
+      filteredPointIndices.push_back(i);
     }
   }
 
@@ -568,6 +582,26 @@ void CImgRenderPoints::renderSinglePoints(std::vector<size_t> thinnedPointIndexL
   }
 }
 
+void shouldUseFilterPoints(CStyleConfiguration *styleConfiguration, std::unordered_set<std::string> &useSet, std::unordered_set<std::string> &skipSet) {
+  // TODO: no test uses `skip` and functionality wasn't implemented (but docs said it should work).
+  CServerConfig::XMLE_Style *s = styleConfiguration->styleConfig;
+  if (s->FilterPoints.size() == 0) return;
+  auto attr = s->FilterPoints[0]->attr;
+
+  if (!attr.use.empty()) {
+    CT::string useStr = attr.use.c_str();
+    for (const auto &token : useStr.splitToStack(",")) {
+      useSet.insert(token.c_str());
+    }
+  }
+  if (!attr.skip.empty()) {
+    CT::string skipStr = attr.skip.c_str();
+    for (const auto &token : skipStr.splitToStack(",")) {
+      skipSet.insert(token.c_str());
+    }
+  }
+}
+
 void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage) {
   drawPoints = true;
   drawDiscs = false;
@@ -592,7 +626,6 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
   drawPointLineColor = CColor(0, 0, 0, 255);
   defaultColor = CColor(0, 0, 0, 255);
 
-  useFilter = false;
   useDrawPointFillColor = false;
   useDrawPointTextColor = false;
   isRadiusAndValue = false;
@@ -607,8 +640,13 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
   if (styleConfiguration == NULL || styleConfiguration->styleConfig == NULL) {
     return;
   }
-  CServerConfig::XMLE_Style *styleConfig = styleConfiguration->styleConfig;
 
+  // Fill use/skip sets if FilterPoints was set
+  std::unordered_set<std::string> useSet;
+  std::unordered_set<std::string> skipSet;
+  shouldUseFilterPoints(styleConfiguration, useSet, skipSet);
+
+  CServerConfig::XMLE_Style *styleConfig = styleConfiguration->styleConfig;
   for (auto pointConfig : styleConfig->Point) {
 
     if (pointConfig->attr.fillcolor.empty() == false) {
@@ -694,33 +732,11 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
 
     // CDBDebug("drawPoints=%d drawVolume=%d drawSymbol=%d drawDiscs=%d", drawPoints, drawVolume, drawSymbol, drawDiscs);
 
-    if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL) {
-      CServerConfig::XMLE_Style *s = styleConfiguration->styleConfig;
-      if (s->FilterPoints.size() == 1) {
-        if (s->FilterPoints[0]->attr.use.empty() == false) {
-          CT::string filterPointsUse = s->FilterPoints[0]->attr.use.c_str();
-          std::vector<CT::string> use = filterPointsUse.splitToStack(",");
-          for (std::vector<CT::string>::iterator it = use.begin(); it != use.end(); ++it) {
-            //            CDBDebug("adding %s to usePoints", it->c_str());
-            usePoints.insert(it->c_str());
-          }
-          useFilter = true;
-        }
-        if (s->FilterPoints[0]->attr.skip.empty() == false) {
-          useFilter = true;
-        }
-      }
-    } else {
-      CDBDebug("styleConfiguration==NULL!!!!");
+    // TODO: Currently thin needs to be mentioned in the rendermethod to allow thinning. We want to get rid of this. We need to adjust configs on geoservices and geoweb first.
+    if (settings.indexOf("thin") != -1) {
+      getThinningInfo(styleConfiguration->styleConfig, thinningInfo);
     }
-
-    if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL) {
-      // TODO: Currently thin needs to be mentioned in the rendermethod to allow thinning. We want to get rid of this. We need to adjust configs on geoservices and geoweb first.
-      if (settings.indexOf("thin") != -1) {
-        getThinningInfo(styleConfiguration->styleConfig, thinningInfo);
-      }
-    }
-    auto thinnedPointIndexList = doThinningGetIndices(dataSource->getDataObject(0)->points, thinningInfo.doThinning, thinningInfo.thinningRadius, usePoints, useFilter);
+    auto thinnedPointIndexList = doThinningGetIndices(dataSource->getDataObject(0)->points, thinningInfo.doThinning, thinningInfo.thinningRadius, useSet, skipSet);
     renderSinglePoints(thinnedPointIndexList, warper, dataSource, drawImage, styleConfiguration, pointConfig);
   }
 
@@ -729,12 +745,9 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
     CDBDebug("VECTOR");
     std::vector<PointDVWithLatLon> *p1 = &dataSource->getDataObject(0)->points;
 
-    if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL) {
-      getThinningInfo(styleConfiguration->styleConfig, thinningInfo);
-    }
-
-    auto thinnedPointIndexList = doThinningGetIndices(*p1, thinningInfo.doThinning, thinningInfo.thinningRadius, usePoints, useFilter);
-    CDBDebug("Vector plotting %d elements %d %d", thinnedPointIndexList.size(), useFilter, usePoints.size());
+    getThinningInfo(styleConfiguration->styleConfig, thinningInfo);
+    auto thinnedPointIndexList = doThinningGetIndices(*p1, thinningInfo.doThinning, thinningInfo.thinningRadius, useSet, skipSet);
+    CDBDebug("Vector plotting %d elements %d (use=%d skip=%d)", thinnedPointIndexList.size(), useSet.size(), skipSet.size());
     renderVectorPoints(thinnedPointIndexList, warper, dataSource, drawImage, styleConfiguration);
   }
 }
