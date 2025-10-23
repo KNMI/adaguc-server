@@ -55,7 +55,6 @@ private:
   CColor drawPointLineColor;
   CColor defaultColor;
 
-  bool useFilter;
   bool useDrawPointFillColor;
   bool useDrawPointTextColor;
   bool isRadiusAndValue;

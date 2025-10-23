@@ -237,15 +237,6 @@ SimpleSymbol getSymbol(CT::string symbolName, SimpleSymbolMap &simpleSymbolMap) 
   return {};
 }
 
-void buildPolyVectors(const SimpleSymbol &symbol, float x, float y, float radius, std::vector<float> &outX, std::vector<float> &outY) {
-  outX.resize(symbol.size());
-  outY.resize(symbol.size());
-  for (size_t i = 0; i < symbol.size(); ++i) {
-    outX[i] = x + symbol[i].x * radius;
-    outY[i] = y - symbol[i].y * radius;
-  }
-}
-
 std::vector<int> buildAlphaVector(int radius) {
   int diameter = 2 * radius + 1;
   std::vector<int> alpha(diameter * diameter);
@@ -369,11 +360,34 @@ void drawSymbolForPoint(CDrawImage *drawImage, std::map<std::string, CDrawImage 
   drawImage->draw(x - symbol->Geo->dWidth / 2 + offsetX, y - symbol->Geo->dHeight / 2 + offsetY, 0, 0, symbol);
 }
 
+float getRadius(CDataSource *dataSource, size_t pointIndex, float drawPointDiscRadius) {
+  if (dataSource->getNumDataObjects() == 2) {
+    const auto &p2 = dataSource->getDataObject(1)->points;
+    if (pointIndex < p2.size()) {
+      return p2[pointIndex].v * drawPointDiscRadius;
+    }
+  }
+  return drawPointDiscRadius;
+}
+
+void drawRadiusAndValueForPoint(CDrawImage *drawImage, int x, int y, CColor drawPointLineColor, CColor drawPointFillColor, SimpleSymbol currentSymbol, float radius) {
+  if (currentSymbol.size() > 0) {
+    std::vector<float> xPoly(currentSymbol.size()), yPoly(currentSymbol.size());
+    for (size_t i = 0; i < currentSymbol.size(); ++i) {
+      xPoly[i] = x + currentSymbol[i].x * radius;
+      yPoly[i] = y - currentSymbol[i].y * radius;
+    }
+    drawImage->poly(xPoly.data(), yPoly.data(), currentSymbol.size(), 1, drawPointLineColor, drawPointFillColor, true, true);
+  } else {
+    drawImage->setDisc(x, y, radius, drawPointFillColor, drawPointLineColor);
+  }
+}
+
 void CImgRenderPoints::renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CImageWarper *, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration,
                                           CServerConfig::XMLE_Point *pointConfig) {
-  // Preparation for symbol drawing
+  // Preparation for symbol drawing, only used for radiusAndValue
   SimpleSymbol currentSymbol;
-  if (drawPoints) {
+  if (drawPoints && isRadiusAndValue) {
     if (simpleSymbolMapCache.empty()) {
       simpleSymbolMapCache = makeSymbolMap(dataSource->cfg);
     }
@@ -439,7 +453,6 @@ void CImgRenderPoints::renderSinglePoints(std::vector<size_t> thinnedPointIndexL
       int x = pointValue->x;
       int y = dataSource->srvParams->Geo->dHeight - pointValue->y;
 
-      float perPointDrawPointDiscRadius = drawPointDiscRadius;
       if (drawVolume) {
         drawVolumeForPoint(drawImage, drawPointFillColor, x, y, drawPointDiscRadius, alphaVec);
         if (drawPointPlotStationId && pointValue->paramList.size() > 0) {
@@ -491,13 +504,6 @@ void CImgRenderPoints::renderSinglePoints(std::vector<size_t> thinnedPointIndexL
           t.print(drawPointTextFormat.c_str(), value);
         }
 
-        if (isRadiusAndValue) {
-          if (dataSource->getNumDataObjects() == 2) {
-            std::vector<PointDVWithLatLon> *p2 = &dataSource->getDataObject(1)->points;
-            perPointDrawPointDiscRadius = std::vector<PointDVWithLatLon>(*p2)[pointIndex].v * drawPointDiscRadius;
-          }
-        }
-
         if (!useDrawPointTextColor) {
           // Only calculate color for 1st dataObject, rest gets defaultColor
           drawPointTextColor = dataObjectIndex == 0 ? getDrawPointColor(dataSource, drawImage, value) : defaultColor;
@@ -519,14 +525,8 @@ void CImgRenderPoints::renderSinglePoints(std::vector<size_t> thinnedPointIndexL
           }
           if (isRadiusAndValue) {
             if (dataObjectIndex == 0) {
-              if (currentSymbol.size() > 0) {
-
-                std::vector<float> xPoly, yPoly;
-                buildPolyVectors(currentSymbol, x, y, perPointDrawPointDiscRadius, xPoly, yPoly);
-                drawImage->poly(xPoly.data(), yPoly.data(), currentSymbol.size(), 1, drawPointLineColor, drawPointFillColor, true, true);
-              } else {
-                drawImage->setDisc(x, y, perPointDrawPointDiscRadius, drawPointFillColor, drawPointLineColor);
-              }
+              float radius = getRadius(dataSource, pointIndex, drawPointDiscRadius);
+              drawRadiusAndValueForPoint(drawImage, x, y, drawPointLineColor, drawPointFillColor, currentSymbol, radius);
             }
           } else {
             if (drawZoomablePoints) {
