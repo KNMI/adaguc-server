@@ -383,6 +383,19 @@ void drawRadiusAndValueForPoint(CDrawImage *drawImage, int x, int y, CColor draw
   }
 }
 
+CT::string prepareText(CDataSource *dataSource, size_t dataObjectIndex, float value, CT::string &drawPointTextFormat) {
+  // Determine text to plot for value
+  CT::string text;
+  if (dataSource->getDataObject(dataObjectIndex)->hasStatusFlag) {
+    CT::string flagMeaning;
+    CDataSource::getFlagMeaningHumanReadable(&flagMeaning, &dataSource->getDataObject(dataObjectIndex)->statusFlagList, value);
+    text.print("%s", flagMeaning.c_str());
+  } else {
+    text.print(drawPointTextFormat.c_str(), value);
+  }
+  return text;
+}
+
 void CImgRenderPoints::renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CImageWarper *, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration,
                                           CServerConfig::XMLE_Point *pointConfig) {
   // Preparation for symbol drawing, only used for radiusAndValue
@@ -440,7 +453,6 @@ void CImgRenderPoints::renderSinglePoints(std::vector<size_t> thinnedPointIndexL
       //       CDBDebug("angles[%d] %f %d %f %f", dataObject, useangle, kwadrant, usedx, usedy);
     }
 
-    CT::string t;
     float fillValueP1 = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
     for (auto pointIndex : thinnedPointIndexList) {
 
@@ -452,6 +464,8 @@ void CImgRenderPoints::renderSinglePoints(std::vector<size_t> thinnedPointIndexL
 
       int x = pointValue->x;
       int y = dataSource->srvParams->Geo->dHeight - pointValue->y;
+
+      if (drawPointDot) drawImage->circle(x, y, 1, drawPointLineColor, drawPointDiscRadius == 0 ? 0.65 : 1);
 
       if (drawVolume) {
         drawVolumeForPoint(drawImage, drawPointFillColor, x, y, drawPointDiscRadius, alphaVec);
@@ -473,8 +487,6 @@ void CImgRenderPoints::renderSinglePoints(std::vector<size_t> thinnedPointIndexL
             drawImage->drawCenteredText(x, y - drawPointTextRadius - 3, drawPointFontFile, drawPointFontSize, 0, stationid.c_str(), drawPointTextColor);
           }
         }
-
-        if (drawPointDot) drawImage->circle(x, y, 1, drawPointLineColor, 0.65);
       }
 
       if (drawPoints) {
@@ -492,17 +504,8 @@ void CImgRenderPoints::renderSinglePoints(std::vector<size_t> thinnedPointIndexL
           }
         }
 
-        // Determine text to plot for value
-        bool drawText = true;
-        if (dataSource->getDataObject(dataObjectIndex)->hasStatusFlag) {
-          CT::string flagMeaning;
-          CDataSource::getFlagMeaningHumanReadable(&flagMeaning, &dataSource->getDataObject(dataObjectIndex)->statusFlagList, value);
-          t.print("%s", flagMeaning.c_str());
-        } else if (drawPointTextFormat.length() < 2) {
-          drawText = false;
-        } else {
-          t.print(drawPointTextFormat.c_str(), value);
-        }
+        CT::string text = prepareText(dataSource, dataObjectIndex, value, drawPointTextFormat);
+        bool drawText = drawPointTextFormat.length() >= 2;
 
         if (!useDrawPointTextColor) {
           // Only calculate color for 1st dataObject, rest gets defaultColor
@@ -510,18 +513,13 @@ void CImgRenderPoints::renderSinglePoints(std::vector<size_t> thinnedPointIndexL
         }
         if (drawPointDiscRadius == 0) {
           if (drawPointPlotStationId) {
-            drawImage->drawCenteredText(x, y + drawPointTextRadius + 3, drawPointFontFile, drawPointFontSize, 0, t.c_str(), drawPointTextColor);
+            drawImage->drawCenteredText(x, y + drawPointTextRadius + 3, drawPointFontFile, drawPointFontSize, 0, text.c_str(), drawPointTextColor);
           } else {
-            drawImage->drawCenteredText(x, y, drawPointFontFile, drawPointFontSize, 0, t.c_str(), drawPointTextColor, drawPointTextOutlineColor);
+            drawImage->drawCenteredText(x, y, drawPointFontFile, drawPointFontSize, 0, text.c_str(), drawPointTextColor, drawPointTextOutlineColor);
           }
         } else {                        // Text and disc
           if (!useDrawPointFillColor) { //(dataSource->getNumDataObjects()==1) {
-            if ((dataSource->getStyle() != NULL) && dataSource->getStyle()->shadeIntervals.size() > 0) {
-              drawPointFillColor = getPixelColorForValue(drawImage, dataSource, value);
-            } else {
-              int pointColorIndex = getPixelIndexForValue(dataSource, value); // Use value of dataObject[0] for colour
-              drawPointFillColor = drawImage->getColorForIndex(pointColorIndex);
-            }
+            drawPointFillColor = getDrawPointColor(dataSource, drawImage, value);
           }
           if (isRadiusAndValue) {
             if (dataObjectIndex == 0) {
@@ -536,42 +534,28 @@ void CImgRenderPoints::renderSinglePoints(std::vector<size_t> thinnedPointIndexL
             }
           }
 
-          if (drawText) {
+          if (drawText && dataObjectIndex == 0) {
             if (useDrawPointAngles) {
-              if (dataObjectIndex == 0) {
-                drawImage->drawAnchoredText(x + usedx, y - usedy, drawPointFontFile, drawPointFontSize, 0, t.c_str(), drawPointTextColor, kwadrant);
-              }
+              drawImage->drawAnchoredText(x + usedx, y - usedy, drawPointFontFile, drawPointFontSize, 0, text.c_str(), drawPointTextColor, kwadrant);
             } else {
-              if (dataObjectIndex == 0) {
-                drawImage->drawCenteredText(x, y + drawPointTextRadius, drawPointFontFile, drawPointFontSize, 0, t.c_str(), drawPointTextColor);
-              }
+              drawImage->drawCenteredText(x, y + drawPointTextRadius, drawPointFontFile, drawPointFontSize, 0, text.c_str(), drawPointTextColor);
             }
           }
-          if (drawPointDot) drawImage->circle(x, y, 1, drawPointLineColor, 1);
         }
         if (drawPointPlotStationId && pointValue->paramList.size() > 0) {
           CT::string stationid = pointValue->paramList[0].value;
           drawImage->drawCenteredText(x, y - drawPointTextRadius - 3, drawPointFontFile, drawPointFontSize, 0, stationid.c_str(), drawPointTextColor);
         }
-        if (drawPointDot) drawImage->circle(x, y, 1, drawPointLineColor, 0.65);
       }
 
       if (drawDiscs) { // Filled disc with circle around it and value inside
         if (!useDrawPointTextColor) {
           drawPointTextColor = getDrawPointColor(dataSource, drawImage, value);
         }
-        if (dataSource->getDataObject(dataObjectIndex)->hasStatusFlag) {
-          CT::string flagMeaning;
-          CDataSource::getFlagMeaningHumanReadable(&flagMeaning, &dataSource->getDataObject(dataObjectIndex)->statusFlagList, value);
-          t.print("%s", flagMeaning.c_str());
-        } else {
-          t.print(drawPointTextFormat.c_str(), value);
-        }
 
+        CT::string text = prepareText(dataSource, dataObjectIndex, value, drawPointTextFormat);
         CColor col = useDrawPointFillColor ? drawPointFillColor : getDrawPointColor(dataSource, drawImage, value);
-        drawImage->setTextDisc(x, y, drawPointDiscRadius, t.c_str(), drawPointFontFile, drawPointFontSize, drawPointTextColor, col, drawPointLineColor);
-
-        if (drawPointDot) drawImage->circle(x, y, 1, drawPointLineColor, 0.65);
+        drawImage->setTextDisc(x, y, drawPointDiscRadius, text.c_str(), drawPointFontFile, drawPointFontSize, drawPointTextColor, col, drawPointLineColor);
       }
     }
   }
