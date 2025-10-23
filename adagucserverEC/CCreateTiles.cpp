@@ -117,7 +117,11 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
   dataSourceToTile->setTimeStep(0);
 
   CDBDebug("Opening input file for tiles: %s", dataSourceToTile->getFileName());
-  reader.open(dataSourceToTile, CNETCDFREADER_MODE_OPEN_HEADER);
+  int status = reader.open(dataSourceToTile, CNETCDFREADER_MODE_OPEN_HEADER);
+  if (status != 0) {
+    CDBError("Unable to open input file for tiles: %s", dataSourceToTile->getFileName());
+    return 1;
+  }
 
   // Extract time and set it.
   try {

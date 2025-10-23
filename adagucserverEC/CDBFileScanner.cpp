@@ -842,7 +842,7 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
   if (dataSource->dLayerType != CConfigReaderLayerTypeDataBase && dataSource->dLayerType != CConfigReaderLayerTypeBaseLayer) return 0;
 
   if (scanFlags & CDBFILESCANNER_CLEANFILES) {
-    return cleanFiles(dataSource, scanFlags);
+    return cleanFiles(dataSource, scanFlags).first;
   }
 
   /* We only need to update the provided path in layerPathToScan. We will simply ignore the other directories */
@@ -918,6 +918,7 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
         }
       } else {
         fileList = searchFileNames(dataSource->cfgLayer->FilePath[0]->value.c_str(), filter.c_str(), tailPath.c_str());
+        CDBDebug("SearchFileNames found %d files", fileList.size());
       }
 
     } catch (int linenr) {
@@ -972,7 +973,19 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
       }
 
       // Clean up if needed
-      cleanFiles(dataSource, scanFlags);
+      auto cleanFilesResult = cleanFiles(dataSource, scanFlags);
+
+      // Remove the deleted files from the filelist.
+      if (cleanFilesResult.second.size() > 0) {
+        CDBDebug("Cleanfiles deleted %d files.", cleanFilesResult.second.size());
+        // Remove the deleted files from the fileList.
+        for (auto item : cleanFilesResult.second) {
+          auto it = std::find(fileList.begin(), fileList.end(), item);
+          if (it != fileList.end()) {
+            fileList.erase(it);
+          }
+        }
+      }
     }
   } catch (int linenr) {
     CDBError("Exception in updatedb at line %d", linenr);
@@ -992,8 +1005,16 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
   if (removeNonExistingFiles == 1) status = DB->query("COMMIT");
 #endif
 
+  if (fileList.size() == 0) {
+    CDBWarning("No files left to scan - stopping.");
+    return 0;
+  }
   if (scanFlags & CDBFILESCANNER_UPDATEDB) {
-    updateMetaDataTable(dataSource);
+    int status = updateMetaDataTable(dataSource);
+    if (status != 0) {
+      CDBError("Unable to updateMetaDataTable");
+      return 1;
+    }
   }
   /* Now Check autotile option */
   if (!(scanFlags & CDBFILESCANNER_DONOTTILE)) {
