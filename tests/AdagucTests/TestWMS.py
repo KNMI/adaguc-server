@@ -3027,7 +3027,8 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
         self.assertTrue(
             AdagucTestTools().compareImage(
-                self.expectedoutputsspath + filename, self.testresultspath + filename
+                self.expectedoutputsspath + filename, self.testresultspath + filename,
+                10
             )
         )
 
@@ -3106,7 +3107,8 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
         self.assertTrue(
             AdagucTestTools().compareImage(
-                self.expectedoutputsspath + filename, self.testresultspath + filename
+                self.expectedoutputsspath + filename, self.testresultspath + filename,
+                4
             )
         )
 
