@@ -68,7 +68,6 @@ CPNGRaster *CReadPNG_read_png_file(const char *file_name, bool pngReadHeaderOnly
   if (!fp) {
     CDBError("[read_png_file] File %s could not be opened for reading", file_name);
     png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
-    fclose(fp);
     return NULL;
   }
   (void)!fread(header, 1, 8, fp);
