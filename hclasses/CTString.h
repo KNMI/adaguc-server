@@ -361,20 +361,6 @@ namespace CT {
     string trim();
 
     /**
-     * Function which returns an array of strings
-     * the count value is set in all string object, which indicates the length of the array
-     * @param _value The token to split the string on
-     */
-    string *splitToArray(const char *_value);
-
-    /**
-     * Function which returns a pointer of std::vector which holds a list of string pointers
-     * This function allocates new CT::strings, deleting the std::vector pointer will also delete the strings inside
-     * @param _value The token to split the string on
-     */
-    PointerList<CT::string *> *splitToPointer(const char *_value);
-
-    /**
      * Function which returns a std::vector on the stack with a list of strings allocated on the stack
      * This function links its data to string data, it does not allocate new data or copy the data
      * Resources are freed automatically

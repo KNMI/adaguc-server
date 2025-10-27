@@ -149,14 +149,13 @@ void ncmlHandleAttribute(xmlNode *cur_node, CT::string NCMLVarName, CDFObject *c
           } else {
             size_t attrLen = 0;
             CT::string t = pszAttributeValue;
-            CT::string *t2 = t.splitToArray(",");
-            attrLen = t2->count;
+            auto t2 = t.splitToStack(",");
+            attrLen = t2.size();
             double values[attrLen];
             for (size_t attrN = 0; attrN < attrLen; attrN++) {
               values[attrN] = atof(t2[attrN].c_str());
               // CDBDebug("%f",values[attrN]);
             }
-            delete[] t2;
             // if(attrLen==3)exit(2);
 
             // double value=atof(pszAttributeValue);

@@ -1,3 +1,7 @@
+**Version 4.3.6 - 2025-10-27**
+
+- Making tiles does not cause memory violations
+
 **Version 4.3.4 - 2025-10-16**
 
 - Files cleaned with CleanFiles will now not be used to make pyramid tiles.

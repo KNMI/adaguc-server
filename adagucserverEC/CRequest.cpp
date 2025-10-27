@@ -133,11 +133,11 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
     if (pszQueryString != NULL) {
       CT::string queryString(pszQueryString);
       queryString.decodeURLSelf();
-      CT::string *parameters = queryString.splitToArray("&");
-      for (size_t j = 0; j < parameters->count; j++) {
+      auto parameters = queryString.splitToStack("&");
+      for (size_t j = 0; j < parameters.size(); j++) {
         CT::string value0Cap;
         CT::string values[2];
-        int equalPos = parameters[j].indexOf("="); // splitToArray("=");
+        int equalPos = parameters[j].indexOf("="); // splitToStack("=");
         if (equalPos != -1) {
           values[0] = parameters[j].substring(0, equalPos);
           values[1] = parameters[j].c_str() + equalPos + 1;
@@ -184,7 +184,6 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
           }
         }
       }
-      delete[] parameters;
     }
 
     // Include additional config files given in the include statement of the config file
@@ -1470,11 +1469,12 @@ int CRequest::process_querystring() {
 
           if (dapPath.indexOf(defaultPath.c_str()) == 0) {
             // THIS is OPENDAP!
-            CT::string *items = dapPath.splitToArray("?");
-            COpenDAPHandler opendapHandler;
-            opendapHandler.handleOpenDAPRequest(items[0].c_str(), pszQueryString, srvParam);
-            delete[] items;
-            return 0;
+            auto items = dapPath.splitToStack("?");
+            if (items.size() > 0) {
+              COpenDAPHandler opendapHandler;
+              opendapHandler.handleOpenDAPRequest(items[0].c_str(), pszQueryString, srvParam);
+              return 0;
+            }
           }
         }
       }
@@ -1491,16 +1491,16 @@ int CRequest::process_querystring() {
 
   queryString.decodeURLSelf();
   // CDBDebug("QueryString: \"%s\"", queryString.c_str());
-  CT::string *parameters = queryString.splitToArray("&");
+  auto parameters = queryString.splitToStack("&");
 
 #ifdef CREQUEST_DEBUG
   CDBDebug("Parsing query string parameters");
 #endif
-  for (size_t j = 0; j < parameters->count; j++) {
+  for (size_t j = 0; j < parameters.size(); j++) {
     CT::string uriKeyUpperCase;
     CT::string uriValue;
 
-    int equalPos = parameters[j].indexOf("="); // splitToArray("=");
+    int equalPos = parameters[j].indexOf("="); // splitToStack("=");
 
     if (equalPos != -1) {
       uriKeyUpperCase = parameters[j].substring(0, equalPos);
@@ -1539,8 +1539,8 @@ int CRequest::process_querystring() {
     if (!uriValue.empty()) {
       // BBOX Parameters
       if (uriKeyUpperCase.equals("BBOX")) {
-        CT::string *bboxvalues = uriValue.replace("%2C", ",").splitToArray(",");
-        if (bboxvalues->count == 4) {
+        auto bboxvalues = uriValue.replace("%2C", ",").splitToStack(",");
+        if (bboxvalues.size() == 4) {
           for (int j = 0; j < 4; j++) {
             srvParam->Geo->dfBBOX[j] = atof(bboxvalues[j].c_str());
           }
@@ -1548,7 +1548,6 @@ int CRequest::process_querystring() {
           CDBError("ADAGUC Server: Invalid BBOX values");
           dErrorOccured = 1;
         }
-        delete[] bboxvalues;
         srvParam->dFound_BBOX = 1;
       }
       if (uriKeyUpperCase.equals("BBOXWIDTH")) {
@@ -1760,9 +1759,10 @@ int CRequest::process_querystring() {
       if (dFound_autoResourceLocation == 0) {
         if (uriKeyUpperCase.equals("SOURCE")) {
           if (srvParam->autoResourceLocation.empty()) {
-            CT::string *hashList = uriValue.splitToArray("#");
-            srvParam->autoResourceLocation.copy(hashList[0].c_str());
-            delete[] hashList;
+            auto hashList = uriValue.splitToStack("#");
+            if (hashList.size() > 0) {
+              srvParam->autoResourceLocation.copy(hashList[0].c_str());
+            }
           }
           dFound_autoResourceLocation = 1;
         }
@@ -1846,13 +1846,12 @@ int CRequest::process_querystring() {
         srvParam->wmsExtensions.opacity = uriValue.toDouble();
       }
       if (uriKeyUpperCase.equals("COLORSCALERANGE")) {
-        CT::string *valuesC = uriValue.splitToArray(",");
-        if (valuesC->count == 2) {
+        auto valuesC = uriValue.splitToStack(",");
+        if (valuesC.size() == 2) {
           srvParam->wmsExtensions.colorScaleRangeMin = valuesC[0].toDouble();
           srvParam->wmsExtensions.colorScaleRangeMax = valuesC[1].toDouble();
           srvParam->wmsExtensions.colorScaleRangeSet = true;
         }
-        delete[] valuesC;
       }
       if (uriKeyUpperCase.equals("NUMCOLORBANDS")) {
         srvParam->wmsExtensions.numColorBands = uriValue.toFloat();
@@ -1877,7 +1876,6 @@ int CRequest::process_querystring() {
       }
     }
   }
-  delete[] parameters;
 
   if (dFound_Width == 0 && dFound_Height == 0) {
     if (srvParam->dFound_BBOX && dFound_RESX && dFound_RESY) {

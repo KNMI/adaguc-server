@@ -367,10 +367,9 @@ public:
   CT::PointerList<CStyleConfiguration *> *getStyleListForDataSource(CDataSource *dataSource);
 
   static void calculateScaleAndOffsetFromMinMax(float &scale, float &offset, float min, float max, float log);
-  static CT::PointerList<CT::string *> *getLegendListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style *style);
-  static CT::PointerList<CT::string *> *getStyleNames(std::vector<CServerConfig::XMLE_Styles *> Styles);
-
-  static CT::PointerList<CT::string *> *getRenderMethodListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style *style);
+  static std::vector<CT::string> getLegendListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style *style);
+  static std::vector<CT::string> getStyleNames(std::vector<CServerConfig::XMLE_Styles *> Styles);
+  static std::vector<CT::string> getRenderMethodListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style *style);
 
   /**
    * Sets the style by name, can be a character string.

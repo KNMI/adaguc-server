@@ -393,21 +393,25 @@ int CProj4ToCF::convertProjToCF(CDF::Variable *projectionVariable, const char *p
   std::vector<CProj4ToCF::KVP *> projKVPList;
   CT::string proj4CTString;
   proj4CTString.copy(proj4String);
-  CT::string *projElements = proj4CTString.splitToArray(" +");
+  auto projElements = proj4CTString.splitToStack(" ");
 
-  if (projElements->count < 2) {
-    delete[] projElements;
+  if (projElements.size() < 2) {
     return 1;
   }
-  for (size_t j = 0; j < projElements->count; j++) {
+  for (auto &projElement : projElements) {
     KVP *option = new KVP();
-    CT::string *element = projElements[j].splitToArray("=");
-    option->name.copy(&element[0]);
-    option->value.copy(&element[1]);
-    projKVPList.push_back(option);
-    delete[] element;
+    auto element = projElement.splitToStack("=");
+    if (element.size() > 0) {
+      option->name.copy(element[0]);
+      if (element.size() > 1) {
+        option->value.copy(element[1]);
+      }
+      if (option->name.startsWith("+")) {
+        option->name.substringSelf(1, -1);
+      }
+      projKVPList.push_back(option);
+    }
   }
-  delete[] projElements;
   CT::string cmpStr;
   int foundProj = 0;
   try {
@@ -658,14 +662,13 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
 
       proj4String.print("+proj=lcc +lat_0=%f", latitude_of_projection_origin.toDouble());
 
-      CT::string *stpList = standard_parallel.splitToArray(" ");
-      if (stpList->count == 1) {
+      auto stpList = standard_parallel.splitToStack(" ");
+      if (stpList.size() == 1) {
         proj4String.printconcat(" +lat_1=%f", stpList[0].toDouble());
       }
-      if (stpList->count == 2) {
+      if (stpList.size() == 2) {
         proj4String.printconcat(" +lat_1=%f +lat_2=%f", stpList[0].toDouble(), stpList[1].toDouble());
       }
-      delete[] stpList;
 
       proj4String.printconcat(" +lon_0=%f +k_0=1.0 +x_0=%f +y_0=%f +a=%f +b=%f", longitude_of_central_meridian.toDouble(), false_easting.toDouble(), false_northing.toDouble(), dfsemi_major_axis,
                               dfsemi_minor_axis);
@@ -899,14 +902,13 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
 
       proj4String.print("+proj=merc +lat_0=%f", latitude_of_projection_origin.toDouble());
 
-      CT::string *stpList = standard_parallel.splitToArray(" ");
-      if (stpList->count == 1) {
+      auto stpList = standard_parallel.splitToStack(" ");
+      if (stpList.size() == 1) {
         proj4String.printconcat(" +lat_1=%f", stpList[0].toDouble());
       }
-      if (stpList->count == 2) {
+      if (stpList.size() == 2) {
         proj4String.printconcat(" +lat_1=%f +lat_2=%f", stpList[0].toDouble(), stpList[1].toDouble());
       }
-      delete[] stpList;
 
       proj4String.printconcat(" +lon_0=%f +k_0=1.0 +x_0=%f +y_0=%f +a=%f ", longitude_of_central_meridian.toDouble(), false_easting.toDouble(), false_northing.toDouble(), semi_major_axis.toDouble());
     } else if (grid_mapping_name.equals("transverse_mercator")) {

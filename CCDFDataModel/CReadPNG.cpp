@@ -30,7 +30,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
-
+#include <algorithm>
+#include <cfenv>
+#include <cmath>
 #define PNG_DEBUG 3
 #include <png.h>
 
@@ -43,7 +45,6 @@ CPNGRaster::~CPNGRaster() {
     delete[] data;
     data = NULL;
   }
-  CDBDebug("Destructed PNGRaster");
 }
 
 CPNGRaster *CReadPNG_read_png_file(const char *file_name, bool pngReadHeaderOnly) {
@@ -98,7 +99,6 @@ CPNGRaster *CReadPNG_read_png_file(const char *file_name, bool pngReadHeaderOnly
 
   png_read_info(png_ptr, info_ptr);
 
-  CDBDebug("New PNGRaster");
   CPNGRaster *pngRaster = new CPNGRaster();
 
   pngRaster->width = png_get_image_width(png_ptr, info_ptr);
@@ -168,9 +168,11 @@ CPNGRaster *CReadPNG_read_png_file(const char *file_name, bool pngReadHeaderOnly
   }
 
   pngRaster->data = new unsigned char[pngRaster->width * pngRaster->height * 4];
+  size_t c = std::ceil(pngRaster->width / pngwidthdivisor);
+  size_t calcWidth = std::min(pngRaster->width, c);
   for (size_t y = 0; y < pngRaster->height; y++) {
     unsigned char *line = row_pointers[y];
-    for (size_t x = 0; x < (pngRaster->width / pngwidthdivisor) + 1; x += 1) {
+    for (size_t x = 0; x < calcWidth; x += 1) {
 
       /*  Each pixel is a palette index, using PLTE */
       if (color_type == 3) {
@@ -237,7 +239,6 @@ CPNGRaster *CReadPNG_read_png_file(const char *file_name, bool pngReadHeaderOnly
             bbpo = 2;
           }
         }
-
         /* Red */
         pngRaster->data[x * 4 + 0 + (y * pngRaster->width * 4)] = line[x * bpp + 0];
 
