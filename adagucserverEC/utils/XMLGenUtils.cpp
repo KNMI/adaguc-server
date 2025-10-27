@@ -808,7 +808,6 @@ int getFileNameForLayer(MetadataLayer *metadataLayer) {
   CDBDebug("getFileNameForLayer");
 #endif
   if (!metadataLayer->fileName.empty()) {
-    CDBDebug("seems already done");
     return 0;
   }
   CServerParams *srvParam = metadataLayer->dataSource->srvParams;

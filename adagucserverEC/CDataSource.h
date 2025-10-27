@@ -89,12 +89,12 @@ private:
   DEF_ERRORFUNCTION();
 
 public:
+  CT::string headerFilename;
   struct StatusFlag {
     CT::string meaning;
     double value;
   };
   bool dimsAreAutoConfigured;
-  CT::string headerFileName;
 
 private:
   CT::PointerList<CStyleConfiguration *> *_styles;
@@ -334,6 +334,7 @@ public:
   int setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Configuration *_cfg, CServerConfig::XMLE_Layer *_cfgLayer, const char *_layerName, int layerIndex);
   void addStep(const char *fileName, CCDFDims *dims);
   const char *getFileName();
+  void setHeaderFilename(CT::string headerFileName);
 
   DataObject *getDataObjectByName(const char *name);
   DataObject *getDataObject(int j);

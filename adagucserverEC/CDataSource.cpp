@@ -386,7 +386,7 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Conf
   }
 
   if (!_srvParams->internalAutoResourceLocation.empty()) {
-    headerFileName = _srvParams->internalAutoResourceLocation.c_str();
+    headerFilename = _srvParams->internalAutoResourceLocation.c_str();
   }
 
   isConfigured = true;
@@ -402,6 +402,8 @@ void CDataSource::addStep(const char *fileName, CCDFDims *dims) {
     timeStep->dims.copy(dims);
   }
 }
+
+void CDataSource::setHeaderFilename(CT::string headerFilename) { this->headerFilename = headerFilename; }
 
 const char *CDataSource::getFileName() {
   if (currentAnimationStep < 0) return NULL;

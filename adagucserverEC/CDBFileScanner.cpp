@@ -75,24 +75,24 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
 #endif
   int status = 0;
   CT::string query;
-  dataSource->headerFileName = (*fileList)[0].c_str();
+  dataSource->headerFilename = (*fileList)[0].c_str();
 
   CDBAdapterPostgreSQL *dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
 
   CDFObject *cdfObject = NULL;
   try {
     // Here the header of the file to scan is being read.
-    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource, dataSource->headerFileName.c_str());
+    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource, dataSource->headerFilename.c_str());
     if (cdfObject == NULL) throw __LINE__;
   } catch (int e) {
-    CDBError("Unable to get CDFObject for file %s", dataSource->headerFileName.c_str());
+    CDBError("Unable to get CDFObject for file %s", dataSource->headerFilename.c_str());
     return 1;
   }
 
   // Check if variable is in this file:
 
   if (cdfObject->getVariableNE(dataSource->getDataObject(0)->variableName.c_str()) == NULL) {
-    CDBError("Variable %s does not exist in %s ", dataSource->getDataObject(0)->variableName.c_str(), dataSource->headerFileName.c_str());
+    CDBError("Variable %s does not exist in %s ", dataSource->getDataObject(0)->variableName.c_str(), dataSource->headerFilename.c_str());
     return 1;
   }
 
@@ -863,6 +863,9 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
       fileToUpdate = layerPathToScan;
     }
   }
+  if (fileToUpdate.empty() == false) {
+    dataSource->setHeaderFilename(fileToUpdate);
+  }
   // This variable enables the query to remove files that no longer exist in the filesystem
   int removeNonExistingFiles = 1;
 
@@ -1073,8 +1076,7 @@ std::vector<std::string> CDBFileScanner::searchFileNames(const char *path, CT::s
       if (expr.empty() == false) { // dataSource->cfgLayer->FilePath[0]->attr.filter.c_str()
         fileFilterExpr.copy(&expr);
       }
-      //      CDBDebug("Reading directory %s with filter %s", filePath.c_str(), fileFilterExpr.c_str());
-
+      CDBDebug("Reading directory %s with filter %s", filePath.c_str(), fileFilterExpr.c_str());
       CDirReader *dirReader = CCachedDirReader::getDirReader(filePath.c_str(), fileFilterExpr.c_str());
       dirReader->listDirRecursive(filePath.c_str(), fileFilterExpr.c_str());
       std::vector<std::string> fileList;

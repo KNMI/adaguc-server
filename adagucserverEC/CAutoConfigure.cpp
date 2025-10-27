@@ -471,7 +471,7 @@ int CAutoConfigure::getFileNameForDataSource(CDataSource *dataSource, std::strin
   CT::string foundFileName = dataSource->getFileName();
   if (foundFileName.empty()) {
     /* Use the file specified as header file */
-    foundFileName = dataSource->headerFileName.c_str();
+    foundFileName = dataSource->headerFilename.c_str();
   }
   if (foundFileName.empty()) {
 
@@ -555,10 +555,13 @@ int CAutoConfigure::justLoadAFileHeader(CDataSource *dataSource) {
   try {
     // CDBDebug("Loading header [%s]", foundFileName.c_str());
     CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams, foundFileName.c_str());
-    if (cdfObject == NULL) throw(__LINE__);
+    if (cdfObject == NULL) {
+      CDBError("Unable to getCDFObjectHeader for %s ", foundFileName.c_str());
+      throw(__LINE__);
+    }
     dataSource->attachCDFObject(cdfObject);
   } catch (int linenr) {
-    CDBError("Returning from line %d");
+    CDBError("Returning from line %d", linenr);
     dataSource->detachCDFObject();
     return 1;
   }
