@@ -358,7 +358,8 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType) {
       CDBDebug("Warning: reusing pngdata variable");
     } else {
       if (pngRaster != NULL && pngRaster->data) {
-        CDBDebug("Info: reusing pngRaster object with data.");
+        // Verbose logging:
+        // CDBDebug("Info: reusing pngRaster object with data.");
       } else {
         if (pngRaster != NULL) {
           CDBDebug("Info: reusing pngRaster object.");

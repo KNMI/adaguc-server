@@ -1,4 +1,4 @@
-**Version 4.3.6 - 2025-10-27**
+**Version 4.3.5 - 2025-10-27**
 
 - Making tiles does not cause memory violations
 
