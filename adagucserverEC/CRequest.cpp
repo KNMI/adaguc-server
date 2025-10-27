@@ -1009,9 +1009,9 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
       // FIXME: checkTimeFormat used to get called on every dim value, not just datetime. Check if this is required
       if (!dim->isATimeDimension) continue;
 
-      CT::string *dimValues = dim->value.splitToArray(",");
-      for (size_t i = 0; i < dimValues->count; i++) {
-        if (!CServerParams::checkTimeFormat(dimValues[i])) {
+      auto dimValues = dim->value.splitToStack(",");
+      for (auto &dimValue : dimValues) {
+        if (!CServerParams::checkTimeFormat(dimValue)) {
           CDBError("Queried dimension %s=%s failed datetime regex", dim->name.c_str(), dim->value.c_str());
           throw InvalidDimensionValue;
         }

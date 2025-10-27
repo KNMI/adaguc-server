@@ -27,34 +27,15 @@
 #define CREADPNG_H
 #include "CDebugger.h"
 #include "CKeyValuePair.h"
-// #define CREADPNG_DEBUG
-class CReadPNG {
-private:
-  DEF_ERRORFUNCTION();
 
-public:
-  class CPNGRaster {
-  private:
-    DEF_ERRORFUNCTION();
-
-  public:
-    CPNGRaster() {
-      data = NULL;
-      hasOnlyHeaders = true;
-    }
-    ~CPNGRaster() {
-      if (data != NULL) {
-        delete[] data;
-        data = NULL;
-      }
-    }
-    bool hasOnlyHeaders;
-    CKeyValuePairs headers;
-    unsigned char *data;
-    size_t width, height;
-  };
-
-  static CPNGRaster *read_png_file(const char *file_name, bool readHeaderOnly);
+struct CPNGRaster {
+  ~CPNGRaster();
+  bool hasOnlyHeaders = true;
+  CKeyValuePairs headers;
+  unsigned char *data = nullptr;
+  size_t width, height;
 };
+
+CPNGRaster *CReadPNG_read_png_file(const char *file_name, bool readHeaderOnly);
 
 #endif

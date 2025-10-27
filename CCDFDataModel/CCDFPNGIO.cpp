@@ -36,6 +36,31 @@ const char *CDFPNGReader::className = "PNGReader";
 
 // #define CCDFPNGIO_DEBUG
 
+#include <math.h>
+#include "../adagucserverEC/CGeoParams.h"
+
+f8point tileXYZtoMerc(int tile_x, int tile_y, int zoom) {
+  double tileSize = 256;
+  double initialResolution = 2 * M_PI * 6378137 / tileSize;
+  double originShift = 2 * M_PI * 6378137 / 2.0;
+  double tileRes = initialResolution / pow(2, zoom);
+  f8point p;
+  p.x = originShift - tile_x * tileRes;
+  p.y = originShift - tile_y * tileRes;
+  return p;
+}
+
+f8box getBounds(int tile_x, int tile_y, int zoom) {
+  f8point p1 = tileXYZtoMerc((tile_x - 1) * 256, (tile_y) * 256, zoom);
+  f8point p2 = tileXYZtoMerc((tile_x) * 256, (tile_y + 1) * 256, zoom);
+  f8box b;
+  b.left = p2.x;
+  b.right = p1.x;
+  b.bottom = p2.y;
+  b.top = p1.y;
+  return b;
+}
+
 int CDFPNGReader::open(const char *fileName) {
 
   if (cdfObject == NULL) {
@@ -106,8 +131,13 @@ int CDFPNGReader::open(const char *fileName) {
   }
 
   if (isSlippyMapFormat == false) {
-    if (pngRaster != NULL) delete pngRaster;
-    pngRaster = CReadPNG::read_png_file(this->fileName.c_str(), true);
+
+    if (pngRaster != NULL) {
+      delete pngRaster;
+      CDBWarning("PNGRaster was already defined");
+    }
+    CDBDebug("Reading PNG using CReadPNG_read_png_file");
+    pngRaster = CReadPNG_read_png_file(this->fileName.c_str(), true);
     if (pngRaster == NULL) {
       CDBError("Unable to open PNG check logs");
       return 1;
@@ -122,12 +152,12 @@ int CDFPNGReader::open(const char *fileName) {
       CDBDebug("HEADERS [%s]=[%s]", pngRaster->headers[j].name.c_str(), pngRaster->headers[j].value.c_str());
 #endif
       /* Proj4 params */
-      if (pngRaster->headers[j].name.equals("proj4_params")) {
+      if (pngRaster->headers[j].key.equals("proj4_params")) {
         CRS->setAttributeText("proj4", pngRaster->headers[j].value.c_str());
       }
 
       /* BBOX */
-      if (pngRaster->headers[j].name.equals("bbox")) {
+      if (pngRaster->headers[j].key.equals("bbox")) {
         CT::StackList<CT::string> bboxItems = pngRaster->headers[j].value.splitToStack(",");
         if (bboxItems.size() == 4) {
 
@@ -140,7 +170,7 @@ int CDFPNGReader::open(const char *fileName) {
       }
 
       /* Time dimension */
-      if (pngRaster->headers[j].name.equals("time")) {
+      if (pngRaster->headers[j].key.equals("time")) {
         CDF::Dimension *timeDimension = cdfObject->getDimensionNE("time");
         if (!timeDimension) {
           timeDimension = cdfObject->addDimension(new CDF::Dimension("time", 1));
@@ -160,7 +190,7 @@ int CDFPNGReader::open(const char *fileName) {
         ((double *)timeVariable->data)[0] = ctime->dateToOffset(ctime->freeDateStringToDate(pngRaster->headers[j].value));
       }
       /* Reference time dimension */
-      if (pngRaster->headers[j].name.equals("reference_time")) {
+      if (pngRaster->headers[j].key.equals("reference_time")) {
         CDF::Dimension *referenceTimeDimension = cdfObject->getDimensionNE("forecast_reference_time");
         if (!referenceTimeDimension) {
           referenceTimeDimension = cdfObject->addDimension(new CDF::Dimension("forecast_reference_time", 1));
@@ -243,42 +273,7 @@ int CDFPNGReader::open(const char *fileName) {
 
   return 0;
 }
-#include <math.h>
 
-class BoundingBox {
-public:
-  double north;
-  double south;
-  double east;
-  double west;
-};
-#define pi M_PI
-
-class P {
-public:
-  double x, y;
-};
-P tileXYZtoMerc(int tile_x, int tile_y, int zoom) {
-  double tileSize = 256;
-  double initialResolution = 2 * pi * 6378137 / tileSize;
-  double originShift = 2 * pi * 6378137 / 2.0;
-  double tileRes = initialResolution / pow(2, zoom);
-  P p;
-  p.x = originShift - tile_x * tileRes;
-  p.y = originShift - tile_y * tileRes;
-  return p;
-}
-
-BoundingBox getBounds(int tile_x, int tile_y, int zoom) {
-  P p1 = tileXYZtoMerc((tile_x - 1) * 256, (tile_y) * 256, zoom);
-  P p2 = tileXYZtoMerc((tile_x) * 256, (tile_y + 1) * 256, zoom);
-  BoundingBox b;
-  b.west = p2.x;
-  b.east = p1.x;
-  b.south = p2.y;
-  b.north = p1.y;
-  return b;
-}
 int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType) {
 
   bool isSingleImageWithCoordinates = true;
@@ -291,22 +286,22 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType) {
       int zoom = parts[parts->count - 3].toInt();
       int tile_y = parts[parts->count - 1].splitToStack(".")[0].toInt();
       int tile_x = parts[parts->count - 2].toInt();
-      BoundingBox bbox = getBounds(tile_x, tile_y, zoom);
+      auto bbox = getBounds(tile_x, tile_y, zoom);
 #ifdef CCDFPNGIO_DEBUG
       CDBDebug("%d %d %d", tile_x, tile_y, zoom);
 #endif
-      tilex1 = (bbox.west);
-      tiley1 = (bbox.south);
-      tilex2 = (bbox.east);
-      tiley2 = (bbox.north);
+      tilex1 = (bbox.left);
+      tiley1 = (bbox.bottom);
+      tilex2 = (bbox.right);
+      tiley2 = (bbox.top);
     }
     delete[] parts;
   }
-  BoundingBox bbox;
-  bbox.west = -180;
-  bbox.north = 90;
-  bbox.east = 180;
-  bbox.south = -90;
+  f8box bbox;
+  bbox.left = -180;
+  bbox.top = 90;
+  bbox.right = 180;
+  bbox.bottom = -90;
 
   CDF::Variable *CRS = cdfObject->getVariableNE("crs");
   if (CRS != NULL) {
@@ -314,10 +309,10 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType) {
     if (bboxAttr != NULL) {
       double bboxData[4];
       bboxAttr->getData(bboxData, 4);
-      bbox.west = bboxData[0];
-      bbox.north = bboxData[1];
-      bbox.east = bboxData[2];
-      bbox.south = bboxData[3];
+      bbox.left = bboxData[0];
+      bbox.top = bboxData[1];
+      bbox.right = bboxData[2];
+      bbox.bottom = bboxData[3];
     }
   }
 
@@ -330,8 +325,8 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType) {
 
     if (isSingleImageWithCoordinates) {
       for (size_t j = 0; j < xDim->getSize(); j++) {
-        float r = ((float(j) + 0.5) / float(xDim->getSize())) * (bbox.east - bbox.west);
-        ((double *)xVar->data)[j] = (r + bbox.west);
+        float r = ((float(j) + 0.5) / float(xDim->getSize())) * (bbox.right - bbox.left);
+        ((double *)xVar->data)[j] = (r + bbox.left);
       }
     }
     if (isSlippyMapFormat) {
@@ -350,9 +345,9 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType) {
     yVar->allocateData(yDim->getSize());
     if (isSingleImageWithCoordinates) {
       for (size_t j = 0; j < yDim->getSize(); j++) {
-        float r = ((float(j) + 0.5) / float(yDim->getSize())) * (bbox.north - bbox.south);
-        //((double*)yVar->data)[j]=(r + bbox.south);
-        ((double *)yVar->data)[j] = (bbox.north - r);
+        float r = ((float(j) + 0.5) / float(yDim->getSize())) * (bbox.top - bbox.bottom);
+        //((double*)yVar->data)[j]=(r + bbox.bottom);
+        ((double *)yVar->data)[j] = (bbox.top - r);
       }
     }
     if (isSlippyMapFormat) {
@@ -363,6 +358,7 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType) {
     }
   }
   if (var->name.equals("pngdata")) {
+    CDBDebug("Reading PNG data");
     if (var->data != NULL) {
       CDBDebug("Warning: reusing pngdata variable");
     } else {
@@ -372,7 +368,7 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType) {
         // delete pngRaster;
       } else {
         if (pngRaster != NULL) delete pngRaster;
-        pngRaster = CReadPNG::read_png_file(this->fileName.c_str(), false);
+        pngRaster = CReadPNG_read_png_file(this->fileName.c_str(), false);
       }
       var->allocateData(rasterWidth * rasterHeight);
       for (size_t y = 0; y < rasterHeight; y++) {
@@ -417,12 +413,13 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType type, size_t *st
     delete dummyVar;
   }
 
+  CDBDebug("!");
   if (var->name.equals("pngdata")) {
     if (pngRaster != NULL && pngRaster->data) {
       CDBDebug("Info: reusing pngdata with start/count");
     } else {
       if (pngRaster != NULL) delete pngRaster;
-      pngRaster = CReadPNG::read_png_file(this->fileName.c_str(), false);
+      pngRaster = CReadPNG_read_png_file(this->fileName.c_str(), false);
     }
     if (pngRaster == NULL) {
       CDBError("Unable to open PNG check logs");
@@ -445,9 +442,11 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType type, size_t *st
 }
 
 int CDFPNGReader::close() {
-  if (pngRaster != NULL) {
+  if (pngRaster != nullptr) {
     delete pngRaster;
-    pngRaster = NULL;
+    pngRaster = nullptr;
   }
   return 0;
 }
+
+CDFPNGReader::~CDFPNGReader() { close(); }
