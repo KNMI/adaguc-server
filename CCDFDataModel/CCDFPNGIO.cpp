@@ -136,7 +136,6 @@ int CDFPNGReader::open(const char *fileName) {
       delete pngRaster;
       CDBWarning("PNGRaster was already defined");
     }
-    CDBDebug("Reading PNG using CReadPNG_read_png_file");
     pngRaster = CReadPNG_read_png_file(this->fileName.c_str(), true);
     if (pngRaster == NULL) {
       CDBError("Unable to open PNG check logs");
@@ -344,7 +343,6 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType) {
     if (isSingleImageWithCoordinates) {
       for (size_t j = 0; j < yDim->getSize(); j++) {
         float r = ((float(j) + 0.5) / float(yDim->getSize())) * (bbox.top - bbox.bottom);
-        //((double*)yVar->data)[j]=(r + bbox.bottom);
         ((double *)yVar->data)[j] = (bbox.top - r);
       }
     }
@@ -360,23 +358,23 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType) {
       CDBDebug("Warning: reusing pngdata variable");
     } else {
       if (pngRaster != NULL && pngRaster->data) {
-        // CDBDebug("Info: reusing pngdata");
-        // return 0;
-        // delete pngRaster;
+        CDBDebug("Info: reusing pngRaster object with data.");
       } else {
-        if (pngRaster != NULL) delete pngRaster;
+        if (pngRaster != NULL) {
+          CDBDebug("Info: reusing pngRaster object.");
+          delete pngRaster;
+        }
         pngRaster = CReadPNG_read_png_file(this->fileName.c_str(), false);
       }
       var->allocateData(rasterWidth * rasterHeight);
+      // Copy PNG raster data into variable as unsigned it, representing RGBA as 4 bytes.
       for (size_t y = 0; y < rasterHeight; y++) {
         for (size_t x = 0; x < rasterWidth; x++) {
           size_t j = x + y * rasterWidth;
           ((unsigned int *)var->data)[x + y * rasterWidth] =
               pngRaster->data[j * 4 + 0] + pngRaster->data[j * 4 + 1] * 256 + pngRaster->data[j * 4 + 2] * 256 * 256 + pngRaster->data[j * 4 + 3] * (256 * 256 * 256);
-          // ((unsigned int*)var->data)[x+y*rasterWidth] = 255*256*256 + 255*(256*256*256);
         }
       }
-      // CDBDebug("Info: pngdata read");
     }
   }
   return 0;
@@ -410,7 +408,6 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType type, size_t *st
     delete dummyVar;
   }
 
-  CDBDebug("!");
   if (var->name.equals("pngdata")) {
     if (pngRaster != NULL && pngRaster->data) {
       CDBDebug("Info: reusing pngdata with start/count");
