@@ -72,7 +72,7 @@ int CConvertLatLonBnds::convertLatLonBndsData(CDataSource *dataSource, int mode)
       fillValue->getData(&dblFill, 1);
       dataObjects[d]->dfNodataValue = dblFill;
       fltFill = (float)dblFill;
-      destRegularGrid[d]->getAttribute("_FillValue")->setData(CDF_DOUBLE, &fltFill, 1);
+      destRegularGrid[d]->getAttribute("_FillValue")->setData(CDF_FLOAT, &fltFill, 1);
     } else {
       dataObjects[d]->hasNodataValue = false;
     }
