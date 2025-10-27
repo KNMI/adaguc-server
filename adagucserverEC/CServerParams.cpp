@@ -166,9 +166,10 @@ int CServerParams::makeLayerGroupName(CT::string *groupName, CServerConfig::XMLE
   if (cfgLayer->Group.size() == 1) {
     if (cfgLayer->Group[0]->attr.value.c_str() != NULL) {
       CT::string layerName(cfgLayer->Group[0]->attr.value.c_str());
-      CT::string *groupElements = layerName.splitToArray("/");
-      groupName->copy(groupElements[0].c_str());
-      delete[] groupElements;
+      auto groupElements = layerName.splitToStack("/");
+      if (groupElements.size() > 0) {
+        groupName->copy(groupElements[0].c_str());
+      }
     }
   }
 
@@ -387,23 +388,20 @@ bool CServerParams::checkBBOXXYOrder(const char *projName) {
  * @param Legend a XMLE_Legend object configured in a style or in a layer
  * @return Pointer to a new stringlist with all possible legend names, must be deleted with delete. Is NULL on failure.
  */
-CT::PointerList<CT::string *> *CServerParams::getLegendNames(std::vector<CServerConfig::XMLE_Legend *> Legend) {
+std::vector<CT::string> CServerParams::getLegendNames(std::vector<CServerConfig::XMLE_Legend *> Legend) {
   if (Legend.size() == 0) {
     CT::string *autoLegendName = new CT::string("rainbow");
-    CT::PointerList<CT::string *> *legendList = new CT::PointerList<CT::string *>();
-    legendList->push_back(autoLegendName);
+    std::vector<CT::string> legendList;
+    legendList.push_back(autoLegendName);
     return legendList;
   }
-  CT::PointerList<CT::string *> *stringList = new CT::PointerList<CT::string *>();
-
+  std::vector<CT::string> stringList;
   for (size_t j = 0; j < Legend.size(); j++) {
     CT::string legendValue = Legend[j]->value.c_str();
     CT::StackList<CT::string> l1 = legendValue.splitToStack(",");
-    for (size_t i = 0; i < l1.size(); i++) {
-      if (l1[i].length() > 0) {
-        CT::string *val = new CT::string();
-        stringList->push_back(val);
-        val->copy(&l1[i]);
+    for (auto li : l1) {
+      if (li.length() > 0) {
+        stringList.push_back(li);
       }
     }
   }

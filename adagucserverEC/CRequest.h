@@ -73,10 +73,10 @@ public:
       headerSize = a + 10;
       CT::string header;
       header.copy(cacheBuffer.c_str(), a - 1);
-      CT::string *lines = header.splitToArray("\n");
-      for (size_t j = 0; j < (size_t)lines->count; j++) {
-        CT::string *params = lines[j].splitToArray(",");
-        if (params->count == 4) {
+      auto lines = header.splitToStack("\n");
+      for (size_t j = 0; j < (size_t)lines.size(); j++) {
+        auto params = lines[j].splitToStack(",");
+        if (params.size() == 4) {
           if (params[0].equals("string")) {
 
             Attribute *attr = new Attribute();
@@ -86,10 +86,7 @@ public:
             attr->end = attr->start + atoi(params[3].c_str());
           }
         }
-        delete[] params;
       }
-
-      delete[] lines;
 
     } else {
       CDBError("no [/header] found");

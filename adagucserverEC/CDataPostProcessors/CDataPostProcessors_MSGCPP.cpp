@@ -61,12 +61,12 @@ int CDPPMSGCPPVisibleMask::execute(CServerConfig::XMLE_DataPostProc *proc, CData
     newDataObject->cdfVariable->removeAttribute("flag_meanings");
     short attrData[3];
     attrData[0] = -1;
-    newDataObject->cdfVariable->setAttribute("_FillValue", newDataObject->cdfVariable->getType(), attrData, 1);
+    newDataObject->cdfVariable->setAttribute("_FillValue", CDF_SHORT, attrData, 1);
 
     attrData[0] = 0;
     attrData[1] = 1;
-    newDataObject->cdfVariable->setAttribute("valid_range", newDataObject->cdfVariable->getType(), attrData, 2);
-    newDataObject->cdfVariable->setAttribute("flag_values", newDataObject->cdfVariable->getType(), attrData, 2);
+    newDataObject->cdfVariable->setAttribute("valid_range", CDF_SHORT, attrData, 2);
+    newDataObject->cdfVariable->setAttribute("flag_values", CDF_SHORT, attrData, 2);
     newDataObject->cdfVariable->setAttributeText("flag_meanings", "no yes");
 
     newDataObject->cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
@@ -162,12 +162,12 @@ int CDPPMSGCPPHIWCMask::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSou
     newDataObject->cdfVariable->removeAttribute("flag_meanings");
     short attrData[3];
     attrData[0] = -1;
-    newDataObject->cdfVariable->setAttribute("_FillValue", newDataObject->cdfVariable->getType(), attrData, 1);
+    newDataObject->cdfVariable->setAttribute("_FillValue", CDF_SHORT, attrData, 1);
 
     attrData[0] = 0;
     attrData[1] = 1;
-    newDataObject->cdfVariable->setAttribute("valid_range", newDataObject->cdfVariable->getType(), attrData, 2);
-    newDataObject->cdfVariable->setAttribute("flag_values", newDataObject->cdfVariable->getType(), attrData, 2);
+    newDataObject->cdfVariable->setAttribute("valid_range", CDF_SHORT, attrData, 2);
+    newDataObject->cdfVariable->setAttribute("flag_values", CDF_SHORT, attrData, 2);
     newDataObject->cdfVariable->setAttributeText("flag_meanings", "no yes");
 
     newDataObject->cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);

@@ -45,9 +45,9 @@ CDF::Variable *CDPPWFP::cloneVariable(CDF::Variable *varToClone, const char *nam
   var->setAttributeText("standard_name", name);
   var->setAttributeText("long_name", name);
   var->setAttributeText("units", "1");
-  float fill = -1;
+  float fill = -1.0;
 
-  var->setAttribute("_FillValue", var->getType(), &fill, 1);
+  var->setAttribute("_FillValue", CDF_FLOAT, &fill, 1);
   var->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
   return var;
 }

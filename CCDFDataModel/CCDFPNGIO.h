@@ -39,27 +39,13 @@
 class CDFPNGReader : public CDFReader {
 private:
   DEF_ERRORFUNCTION();
-  bool isSlippyMapFormat;
-  size_t rasterWidth;
-  size_t rasterHeight;
-  CReadPNG::CPNGRaster *pngRaster;
+  bool isSlippyMapFormat = false;
+  size_t rasterWidth = 0;
+  size_t rasterHeight = 0;
+  CPNGRaster *pngRaster = nullptr;
 
 public:
-  CDFPNGReader() : CDFReader() {
-#ifdef CCDFPNGIO_DEBUG
-    CDBDebug("CCDFPNGIO init");
-#endif
-    pngRaster = NULL;
-    isSlippyMapFormat = false;
-    rasterWidth = 0;
-    rasterHeight = 0;
-  }
-  ~CDFPNGReader() {
-#ifdef CCDFPNGIO_DEBUG
-    CDBDebug("CCDFPNGIO ~CDFPNGReader");
-#endif
-    close();
-  }
+  ~CDFPNGReader();
 
   int open(const char *fileName);
 

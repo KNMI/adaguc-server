@@ -89,12 +89,12 @@ private:
   DEF_ERRORFUNCTION();
 
 public:
+  CT::string headerFilename;
   struct StatusFlag {
     CT::string meaning;
     double value;
   };
   bool dimsAreAutoConfigured;
-  CT::string headerFileName;
 
 private:
   CT::PointerList<CStyleConfiguration *> *_styles;
@@ -334,6 +334,7 @@ public:
   int setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Configuration *_cfg, CServerConfig::XMLE_Layer *_cfgLayer, const char *_layerName, int layerIndex);
   void addStep(const char *fileName, CCDFDims *dims);
   const char *getFileName();
+  void setHeaderFilename(CT::string headerFileName);
 
   DataObject *getDataObjectByName(const char *name);
   DataObject *getDataObject(int j);
@@ -367,10 +368,9 @@ public:
   CT::PointerList<CStyleConfiguration *> *getStyleListForDataSource(CDataSource *dataSource);
 
   static void calculateScaleAndOffsetFromMinMax(float &scale, float &offset, float min, float max, float log);
-  static CT::PointerList<CT::string *> *getLegendListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style *style);
-  static CT::PointerList<CT::string *> *getStyleNames(std::vector<CServerConfig::XMLE_Styles *> Styles);
-
-  static CT::PointerList<CT::string *> *getRenderMethodListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style *style);
+  static std::vector<CT::string> getLegendListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style *style);
+  static std::vector<CT::string> getStyleNames(std::vector<CServerConfig::XMLE_Styles *> Styles);
+  static std::vector<CT::string> getRenderMethodListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style *style);
 
   /**
    * Sets the style by name, can be a character string.

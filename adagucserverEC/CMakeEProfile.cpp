@@ -559,15 +559,14 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
   }
 
   if (foundTimeDim != -1) {
-    CT::string *timeEntries = dataSource->srvParams->requestDims[foundTimeDim]->value.splitToArray("/");
-    if (timeEntries->count == 2) {
+    auto timeEntries = dataSource->srvParams->requestDims[foundTimeDim]->value.splitToStack("/");
+    if (timeEntries.size() == 2) {
 #ifdef CMakeEProfile_DEBUG
       CDBDebug("time=%s", dataSource->srvParams->requestDims[foundTimeDim]->value.c_str());
 #endif
       startGraphTime = adagucTime->dateToOffset(adagucTime->freeDateStringToDate(timeEntries[0].c_str()));
       stopGraphTime = adagucTime->dateToOffset(adagucTime->freeDateStringToDate(timeEntries[1].c_str()));
     }
-    delete[] timeEntries;
   }
 
   int foundElevationDim = -1;
@@ -579,8 +578,8 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
   }
 
   if (foundElevationDim != -1) {
-    CT::string *elevationEntries = dataSource->srvParams->requestDims[foundElevationDim]->value.splitToArray("/");
-    if (elevationEntries->count == 2) {
+    auto elevationEntries = dataSource->srvParams->requestDims[foundElevationDim]->value.splitToStack("/");
+    if (elevationEntries.size() == 2) {
 #ifdef CMakeEProfile_DEBUG
       CDBDebug("elevation=%s", dataSource->srvParams->requestDims[foundElevationDim]->value.c_str());
 #endif
@@ -589,7 +588,6 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
       stopGraphRange = elevationEntries[1].toDouble();
       ;
     }
-    delete[] elevationEntries;
   }
 
   if (dataSource->srvParams->InfoFormat.equals("application/json")) {
