@@ -734,7 +734,6 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
                       if (dimVar->getType() == CDF_STRING) {
                         const char *str = ((char **)dimVar->data)[i];
                         uniqueKey.print("%s", str);
-                        uniqueKey.replaceSelf(" ", "_");
                         uniqueKey.replaceSelf("<", "_lt_");
                         uniqueKey.replaceSelf(">", "_gt_");
                         uniqueKey.replaceSelf("=", "_eq_");
