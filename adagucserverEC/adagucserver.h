@@ -21,7 +21,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- ******************************************************************************/
+ ****************************************************************************pe**/
 
 #ifndef ADAGUCSERVER_H
 #define ADAGUCSERVER_H
@@ -32,6 +32,5 @@
 #include "CGetFileInfo.h"
 
 void writeLogFile(const char *msg);
-bool checkIfFileMatchesLayer(CT::string layerPathToScan, CServerConfig::XMLE_Layer *layer);
 
 #endif

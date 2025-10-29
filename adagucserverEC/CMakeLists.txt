@@ -90,6 +90,8 @@ add_library(
     utils/ConfigurationUtils.cpp    
     utils/CRequestUtils.h
     utils/CRequestUtils.cpp
+    utils/serverutils.h
+    utils/serverutils.cpp
     Types/LayerMetadataType.h
     GenericDataWarper/gdwDrawTriangle.h
     GenericDataWarper/gdwDrawTriangle.cpp

@@ -49,7 +49,7 @@
 #include "utils/CRequestUtils.h"
 #include "handleTileRequest.h"
 #include <traceTimings/traceTimings.h>
-#include "adagucserver.h"
+#include "utils/serverutils.h"
 
 const char *CRequest::className = "CRequest";
 int CRequest::CGI = 0;
