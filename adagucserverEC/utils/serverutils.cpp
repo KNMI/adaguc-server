@@ -13,7 +13,6 @@ bool checkIfFileMatchesLayer(CT::string layerPathToScan, CServerConfig::XMLE_Lay
       // Directories need to end with a /
       CT::string filePathWithTrailingSlash = filePath + "/";
       CT::string filter = layer->FilePath[0]->attr.filter;
-      // CDBDebug(" %s %s", directoryOfFileToScan.c_str(), directoryOfFileToScan.c_str());
       // When the FilePath in the Layer configuration is exactly the same as the file to scan, give a Match
       if (layerPathToScan.equals(filePath)) {
         return true;

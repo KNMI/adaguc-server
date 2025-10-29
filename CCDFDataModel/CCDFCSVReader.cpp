@@ -371,15 +371,10 @@ int CDFCSVReader::_readVariableData(CDF::Variable *varToRead, CDFType type) {
           size_t length = strlen(stringToAdd);
           char **stringDataArray = ((char **)varToRead->data);
           if (stringDataArray[varPointer] != nullptr) {
-            CDBDebug("!!!!!!!!!!!!! stringDataArray[varPointer]  Seems allocated");
-          }
-          if (stringDataArray[varPointer] != nullptr) {
-            CDBDebug("Free");
             free(stringDataArray[varPointer]);
             stringDataArray[varPointer] = nullptr;
           }
           ((char **)varToRead->data)[varPointer] = (char *)malloc(length + 1);
-
           snprintf(stringDataArray[varPointer], length + 1, "%s", stringToAdd);
         }
         if (var->currentType == CDF_INT) {
