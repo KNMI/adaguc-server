@@ -37,6 +37,11 @@
 #include "CGeoParams.h"
 #include "CPGSQLDB.h"
 
+#define TABLETYPE_TIMESTAMP 1
+#define TABLETYPE_INT 2
+#define TABLETYPE_DOUBLE 3
+#define TABLETYPE_STRING 4
+
 struct DimInfo {
   CT::string tableName;
   CT::string dataType;
@@ -51,13 +56,14 @@ private:
   CServerConfig::XMLE_Configuration *configurationObject;
   std::map<std::string, DimInfo> lookupTableNameCacheMap;
   std::map<std::string, std::vector<std::string>> fileListPerTable;
-  int createDimTableOfType(const char *dimname, const char *tablename, int type);
 
   CDBStore::Store *layerMetaDataStore = nullptr;
 
 public:
   CDBAdapterPostgreSQL();
   ~CDBAdapterPostgreSQL();
+
+  int createDimTableOfType(const char *dimname, const char *tablename, int type);
   int setConfig(CServerConfig::XMLE_Configuration *cfg);
 
   /**
@@ -117,10 +123,6 @@ public:
   int removeDimensionInfoForLayerTableAndLayerName(const char *layertable, const char *layername);
 
   int dropTable(const char *tablename);
-  int createDimTableInt(const char *dimname, const char *tablename);
-  int createDimTableDoublePrecision(const char *dimname, const char *tablename);
-  int createDimTableString(const char *dimname, const char *tablename);
-  int createDimTableTimeStamp(const char *dimname, const char *tablename);
   int checkIfFileIsInTable(const char *tablename, const char *filename);
 
   int removeFile(const char *tablename, const char *file);
