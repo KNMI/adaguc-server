@@ -32,5 +32,6 @@
 #include "CGetFileInfo.h"
 
 void writeLogFile(const char *msg);
+bool checkIfFileMatchesLayer(CT::string layerPathToScan, CServerConfig::XMLE_Layer *layer);
 
 #endif

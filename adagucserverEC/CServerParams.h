@@ -130,7 +130,6 @@ public:
   int requestType;
   int OGCVersion;
   int WCS_GoNative;
-  bool enableDocumentCache;
 
   CServerConfig *configObj;
   CServerConfig::XMLE_Configuration *cfg;
@@ -157,14 +156,6 @@ public:
    * @param the tableName with the characters to be tested. Same string is filled with the new name
    */
   void encodeTableName(CT::string *tableName);
-
-  /**
-   * Get the filename of the cachefile used for XML caching.
-   * The filename is automatically constructed or can be set by the user in the configuration file alternatively.
-   *
-   * @param cacheFileName The CT::string to be filled with the filename
-   */
-  void getCacheFileName(CT::string *cacheFileName);
 
   /**
    * Function which checks whether remote resources should be cached or not

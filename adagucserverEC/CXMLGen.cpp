@@ -1083,9 +1083,12 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam, CT::string *XMLDocumen
 
   for (size_t j = 0; j < metadataLayerList.size(); j++) {
     if (metadataLayerList[j]->hasError) errorsHaveOccured = true;
+    delete metadataLayerList[j]->dataSource;
+    metadataLayerList[j]->dataSource = nullptr;
     delete metadataLayerList[j];
     metadataLayerList[j] = NULL;
   }
+  metadataLayerList.clear();
 
   if (status != 0) {
     CDBError("XML geneneration failed, please check logs. ");

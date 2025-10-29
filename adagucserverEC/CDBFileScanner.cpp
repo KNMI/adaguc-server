@@ -836,7 +836,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
   return 0;
 }
 
-int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT::string *_layerPathToScan, int scanFlags) {
+int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string _tailPath, CT::string _layerPathToScan, int scanFlags) {
   bool verbose = dataSource->srvParams->verbose;
   if (dataSource->dLayerType != CConfigReaderLayerTypeDataBase && dataSource->dLayerType != CConfigReaderLayerTypeBaseLayer) return 0;
 
@@ -846,21 +846,20 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
 
   /* We only need to update the provided path in layerPathToScan. We will simply ignore the other directories */
   CT::string fileToUpdate;
-  if (_layerPathToScan != NULL) {
-    if (_layerPathToScan->length() != 0) {
-      CT::string layerPath, layerPathToScan;
-      layerPath.copy(dataSource->cfgLayer->FilePath[0]->value.c_str());
-      layerPathToScan.copy(_layerPathToScan);
-      layerPath = CDirReader::makeCleanPath(layerPath.c_str());
-      layerPathToScan = CDirReader::makeCleanPath(layerPathToScan.c_str());
 
-      /* If this is another directory we will simply ignore it. */
-      if (layerPathToScan.startsWith(layerPath) == false) {
-        // CDBDebug ("Skipping %s==%s\n",layerPath.c_str(),layerPathToScan.c_str());
-        return CDBFILESCANNER_RETURN_FILEDOESNOTMATCH;
-      }
-      fileToUpdate = layerPathToScan;
+  if (!_layerPathToScan.empty()) {
+    CT::string layerPath, layerPathToScan;
+    layerPath.copy(dataSource->cfgLayer->FilePath[0]->value.c_str());
+    layerPathToScan.copy(_layerPathToScan);
+    layerPath = CDirReader::makeCleanPath(layerPath.c_str());
+    layerPathToScan = CDirReader::makeCleanPath(layerPathToScan.c_str());
+
+    /* If this is another directory we will simply ignore it. */
+    if (layerPathToScan.startsWith(layerPath) == false) {
+      // CDBDebug ("Skipping %s==%s\n",layerPath.c_str(),layerPathToScan.c_str());
+      return CDBFILESCANNER_RETURN_FILEDOESNOTMATCH;
     }
+    fileToUpdate = layerPathToScan;
   }
   if (fileToUpdate.empty() == false) {
     dataSource->setHeaderFilename(fileToUpdate);

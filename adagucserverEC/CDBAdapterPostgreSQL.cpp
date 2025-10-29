@@ -123,8 +123,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getMax(const char *name, const char *tabl
   CDBStore::Store *maxStore = DB->queryToStore(query.c_str());
   if (maxStore == NULL) {
     setExceptionType(InvalidDimensionValue);
-    CDBError("Invalid dimension value for  %s", name);
-    CDBError("query failed");
+    CDBDebug("Unable to find latest timestep from table. Skipping...");
     return NULL;
   }
 #ifdef MEASURETIME
@@ -592,7 +591,7 @@ int CDBAdapterPostgreSQL::autoUpdateAndScanDimensionTables(CDataSource *dataSour
     if (srvParams->isAutoLocalFileResourceEnabled() == true) {
 
       CDBDebug("Updating database");
-      int status = CDBFileScanner::updatedb(dataSource, NULL, NULL, 0);
+      int status = CDBFileScanner::updatedb(dataSource, "", "", 0);
       if (status != 0) {
         CDBError("Could not update db for: %s", cfgLayer->Name[0]->value.c_str());
         return 2;

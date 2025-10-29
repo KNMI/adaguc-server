@@ -311,6 +311,7 @@ CDataSource::~CDataSource() {
     delete dataObjects[d];
     dataObjects[d] = NULL;
   }
+  dataObjects.clear();
 
   for (size_t j = 0; j < timeSteps.size(); j++) {
 
@@ -344,7 +345,7 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Conf
   for (size_t j = 0; j < cfgLayer->Variable.size(); j++) {
     DataObject *newDataObject = new DataObject();
     newDataObject->variableName.copy(cfgLayer->Variable[j]->value.c_str());
-    getDataObjectsVector()->push_back(newDataObject);
+    this->dataObjects.push_back(newDataObject);
   }
 
   // Set the layername

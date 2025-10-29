@@ -1,3 +1,7 @@
+**Version 4.3.7 - 2025-10-29**
+
+- Scan and clean only layers which match given files
+
 **Version 4.3.6 - 2025-10-28**
 
 - PATCH revert replacing all spaces with underscores in dimension values.

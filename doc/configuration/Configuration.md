@@ -18,8 +18,6 @@ Configuration
     the server, usually ends with a ? token.
 -   [DataBase](DataBase.md) (parameters) - Mandatory, parameters is the
     attribute where database settings can be configured.
--   CacheDocs (enabled) - Defaults to false. Set enabled to "true" to
-    enable caching of GetCapabilities documents.
 -   [AutoResource](AutoResource.md) (enableautoopendap,enablelocalfile,enablecache)
     -   [Dir](Dir.md) (basedir,prefix)
 -   [Dataset](Dataset.md) (enabled,location) - Allows to load additional

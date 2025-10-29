@@ -82,6 +82,33 @@ void serverWarningFunction(const char *msg) {
 
 void serverLogFunctionCMDLine(const char *msg) { printf("%s", msg); }
 
+bool checkIfFileMatchesLayer(CT::string layerPathToScan, CServerConfig::XMLE_Layer *layer) {
+  // Get the directory of the file to scan:
+  CT::string directoryOfFileToScan = layerPathToScan = CDirReader::makeCleanPath(layerPathToScan);
+  directoryOfFileToScan.substringSelf(0, directoryOfFileToScan.length() - directoryOfFileToScan.basename().length());
+  directoryOfFileToScan = CDirReader::makeCleanPath(directoryOfFileToScan) + "/";
+
+  if (layer->attr.type.empty() || layer->attr.type.equals("database")) {
+    if (layer->FilePath.size() > 0) {
+      CT::string filePath = CDirReader::makeCleanPath(layer->FilePath[0]->value);
+      // Directories need to end with a /
+      CT::string filePathWithTrailingSlash = filePath + "/";
+      CT::string filter = layer->FilePath[0]->attr.filter;
+      // CDBDebug(" %s %s", directoryOfFileToScan.c_str(), directoryOfFileToScan.c_str());
+      // When the FilePath in the Layer configuration is exactly the same as the file to scan, give a Match
+      if (layerPathToScan.equals(filePath)) {
+        return true;
+        // When the directory of the file to scan matches the FilePath and the filter matches, give a Match
+      } else if (directoryOfFileToScan.startsWith(filePathWithTrailingSlash)) {
+        if (CDirReader::testRegEx(layerPathToScan.basename(), filter.c_str()) == 1) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
 /**
  * @param layerPathToScan: the provided file to scan
  */
@@ -116,32 +143,10 @@ std::set<std::string> findDataSetsToScan(CT::string layerPathToScan, bool verbos
 
     if (configSrvParam && configSrvParam->cfg) {
       auto layers = configSrvParam->cfg->Layer;
-      for (size_t j = 0; j < layers.size(); j++) {
-        if (layers[j]->attr.type.empty() || layers[j]->attr.type.equals("database")) {
-          if (layers[j]->FilePath.size() > 0) {
-            CT::string filePath = CDirReader::makeCleanPath(layers[j]->FilePath[0]->value);
-            // Directories need to end with a /
-            CT::string filePathWithTrailingSlash = filePath + "/";
-            CT::string filter = layers[j]->FilePath[0]->attr.filter;
-            // CDBDebug(" %s %s", directoryOfFileToScan.c_str(), directoryOfFileToScan.c_str());
-            // When the FilePath in the Layer configuration is exactly the same as the file to scan, give a Match
-            if (layerPathToScan.equals(filePath)) {
-              if (verbose) {
-                CDBDebug("Exactly matching: %s", filePath.c_str());
-              }
-              datasetsToScan.insert(dataset.c_str());
-              break;
-              // When the directory of the file to scan matches the FilePath and the filter matches, give a Match
-            } else if (directoryOfFileToScan.startsWith(filePathWithTrailingSlash)) {
-              if (CDirReader::testRegEx(layerPathToScan.basename(), filter.c_str()) == 1) {
-                if (verbose) {
-                  CDBDebug("Directories Matching: %s / %s", filePath.c_str(), filter.c_str());
-                }
-                datasetsToScan.insert(dataset.c_str());
-                break;
-              }
-            }
-          }
+      for (auto layer : layers) {
+        if (checkIfFileMatchesLayer(layerPathToScan, layer)) {
+          datasetsToScan.insert(dataset.c_str());
+          break;
         }
       }
     }
@@ -296,7 +301,11 @@ int _main(int argc, char **argv, char **) {
 
     if (automaticallyFindMatchingDataset) {
       datasetsToScan = findDataSetsToScan(layerPathToScan, verbose);
-      CDBDebug("Datasets to scan: %d", datasetsToScan.size());
+      if (datasetsToScan.size() == 0) {
+        CDBDebug("Found no matching datasets.");
+      } else {
+        CDBDebug("Found matching datasets to scan: %d", datasetsToScan.size());
+      }
     } else {
       // Empty string to make for loop work.
       datasetsToScan.insert("");
