@@ -330,10 +330,7 @@ int CDFCSVReader::open(const char *fileName) {
   return 0;
 }
 
-int CDFCSVReader::close() {
-  CDBDebug("Closing CSV reader");
-  return 0;
-}
+int CDFCSVReader::close() { return 0; }
 
 int CDFCSVReader::_readVariableData(CDF::Variable *varToRead, CDFType type) {
   if (this->csvLines.size() < 2) {

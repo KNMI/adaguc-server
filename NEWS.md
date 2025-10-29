@@ -1,6 +1,8 @@
 **Version 4.3.7 - 2025-10-29**
 
 - Scan and clean only layers which match given files
+- Updated python packages
+- Removed unused document cache
 
 **Version 4.3.6 - 2025-10-28**
 

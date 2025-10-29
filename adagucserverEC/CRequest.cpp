@@ -2388,9 +2388,9 @@ int CRequest::updatedb(CT::string tailPath, CT::string layerPathToScan, int scan
     }
   }
   if (errorHasOccured) {
-    CDBDebug("***** Finished DB Update with %d errors *****", errorHasOccured);
+    CDBDebug("***** Finished DB Update with %d errors *****\n\n", errorHasOccured);
   } else {
-    CDBDebug("***** Finished DB Update *****");
+    CDBDebug("***** Finished DB Update *****\n\n");
   }
   // TODO: 2024-09-20: Probably not the right place to clear these
   CDFObjectStore::getCDFObjectStore()->clear();

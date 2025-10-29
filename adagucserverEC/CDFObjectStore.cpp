@@ -291,7 +291,10 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
   try {
     status = cdfObject->open(fileLocationToOpen);
   } catch (int e) {
-    CDBError("Exception thrown during opening of %s", fileLocationToOpen);
+    CDBError("File error: Unable to open file [%s]", fileLocationToOpen);
+    delete cdfObject;
+    delete cdfReader;
+    return NULL;
   }
 
   if (dataSource) {
@@ -427,7 +430,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
 }
 CDFObjectStore *CDFObjectStore::getCDFObjectStore() { return &cdfObjectStore; };
 
-void CDFObjectStore::deleteCDFObject(const CT::string& fileName) {
+void CDFObjectStore::deleteCDFObject(const CT::string &fileName) {
   auto it = fileNames.begin();
   std::vector<ptrdiff_t> indicesToDelete;
   while ((it = std::find_if(it, fileNames.end(), [fileName](CT::string *x) { return x->equals(fileName); })) != fileNames.end()) {
