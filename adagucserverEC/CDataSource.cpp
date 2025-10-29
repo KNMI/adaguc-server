@@ -307,10 +307,18 @@ CDataSource::CDataSource() {
 }
 
 CDataSource::~CDataSource() {
+
   for (size_t d = 0; d < dataObjects.size(); d++) {
+    if (dataSourceOwnsDataObject) {
+      delete (CDFReader *)dataObjects[d]->cdfObject->getCDFReader();
+      delete dataObjects[d]->cdfObject;
+      dataObjects[d]->cdfObject = nullptr;
+    }
     delete dataObjects[d];
     dataObjects[d] = NULL;
   }
+
+  dataSourceOwnsDataObject = false;
   dataObjects.clear();
 
   for (size_t j = 0; j < timeSteps.size(); j++) {
@@ -802,6 +810,7 @@ int CDataSource::setStyle(const char *styleName) {
 CDataSource *CDataSource::clone() {
 
   CDataSource *d = new CDataSource();
+  d->dataSourceOwnsDataObject = dataSourceOwnsDataObject;
   d->_currentStyle = _currentStyle;
   d->datasourceIndex = datasourceIndex;
   d->currentAnimationStep = currentAnimationStep;
@@ -942,7 +951,7 @@ CDataSource::DataObject *CDataSource::getDataObject(int j) {
   return d;
 }
 
-int CDataSource::attachCDFObject(CDFObject *cdfObject) {
+int CDataSource::attachCDFObject(CDFObject *cdfObject, bool dataSourceOwnsDataObject) {
   if (cdfObject == NULL) {
     CDBError("cdfObject==NULL");
     return 1;
@@ -967,6 +976,7 @@ int CDataSource::attachCDFObject(CDFObject *cdfObject) {
       return 1;
     }
   }
+  this->dataSourceOwnsDataObject = dataSourceOwnsDataObject;
   return 0;
 }
 void CDataSource::detachCDFObject() {

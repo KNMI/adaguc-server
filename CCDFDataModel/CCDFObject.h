@@ -90,39 +90,12 @@ public:
    * @param name The name of the dimension to look for
    * @return The variable pointer
    */
-  CDF::Variable *getVariable(const char *name) {
-    if (strncmp("NC_GLOBAL", name, 9) == 0) {
-      return this;
-    }
-    for (size_t j = 0; j < variables.size(); j++) {
-      if (variables[j]->name.equals(name)) {
-        return variables[j];
-      }
-    }
-    throw(CDF_E_VARNOTFOUND);
-    return NULL;
-  }
+  CDF::Variable *getVariable(const char *name);
 
-  CDF::Variable *getVariableIgnoreCase(const char *name) {
-    if (strncmp("NC_GLOBAL", name, 9) == 0) {
-      return this;
-    }
-    for (size_t j = 0; j < variables.size(); j++) {
-      if (variables[j]->name.equalsIgnoreCase(name)) {
-        return variables[j];
-      }
-    }
-    throw(CDF_E_VARNOTFOUND);
-    return NULL;
-  }
+  CDF::Variable *getVar(CT::string name);
 
-  CDF::Variable *getVariableNE(const char *name) {
-    try {
-      return getVariable(name);
-    } catch (int e) {
-      return NULL;
-    }
-  }
+  CDF::Variable *getVariableNE(const char *name);
+
   CDF::Variable *addVariable(CDF::Variable *var) {
     var->id = variables.size();
     var->setParentCDFObject(this);

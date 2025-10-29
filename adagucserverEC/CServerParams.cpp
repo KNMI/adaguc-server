@@ -350,9 +350,8 @@ bool CServerParams::checkBBOXXYOrder(const char *projName) {
  */
 std::vector<CT::string> CServerParams::getLegendNames(std::vector<CServerConfig::XMLE_Legend *> Legend) {
   if (Legend.size() == 0) {
-    CT::string *autoLegendName = new CT::string("rainbow");
     std::vector<CT::string> legendList;
-    legendList.push_back(autoLegendName);
+    legendList.push_back("rainbow");
     return legendList;
   }
   std::vector<CT::string> stringList;

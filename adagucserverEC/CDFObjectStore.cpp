@@ -282,6 +282,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
     if (dataSource != NULL) {
       CDBError("Unable to get a reader for source %s", dataSource->cfgLayer->Name[0]->value.c_str());
     }
+    delete cdfObject;
     throw(1);
   }
 
@@ -312,28 +313,34 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
         auto *cfgVar = dataSource->cfgLayer->Variable[0];
         // Rename variable, if requested
         if (!cfgVar->attr.orgname.empty()) {
-          CDF::Variable *var = cdfObject->getVariable(cfgVar->attr.orgname);
+          CDF::Variable *var = cdfObject->getVar(cfgVar->attr.orgname);
+          if (var == nullptr) {
+            CDBError("Variable specified with orgname named [%s] not found in file", cfgVar->attr.orgname.c_str());
+            delete cdfObject;
+            delete cdfReader;
+            return nullptr;
+          }
           var->name.copy(cfgVar->value);
           // HACK: We want it in the cache (so the store is responsible for cleaning it up), but we don't want it reused.
           uniqueIDForFile = uniqueIDForFile + "_" + CServerParams::randomString(10).c_str();
         }
+        CDF::Variable *var = cdfObject->getVar(cfgVar->value);
+        if (var != nullptr) {
 
-        // Set long_name
-        if (!cfgVar->attr.long_name.empty()) {
-          CDF::Variable *var = cdfObject->getVariable(cfgVar->value);
-          var->setAttributeText("long_name", cfgVar->attr.long_name);
-        }
+          // Set long_name
+          if (!cfgVar->attr.long_name.empty()) {
+            var->setAttributeText("long_name", cfgVar->attr.long_name);
+          }
 
-        // Set units
-        if (!cfgVar->attr.units.empty()) {
-          CDF::Variable *var = cdfObject->getVariable(cfgVar->value);
-          var->setAttributeText("units", cfgVar->attr.units);
-        }
+          // Set units
+          if (!cfgVar->attr.units.empty()) {
+            var->setAttributeText("units", cfgVar->attr.units);
+          }
 
-        // Set standard_name
-        if (!cfgVar->attr.standard_name.empty()) {
-          CDF::Variable *var = cdfObject->getVariable(cfgVar->value);
-          var->setAttributeText("standard_name", cfgVar->attr.standard_name);
+          // Set standard_name
+          if (!cfgVar->attr.standard_name.empty()) {
+            var->setAttributeText("standard_name", cfgVar->attr.standard_name);
+          }
         }
       }
     }

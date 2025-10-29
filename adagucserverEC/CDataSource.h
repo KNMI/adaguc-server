@@ -249,6 +249,7 @@ public:
   int dWidth, dHeight;
   CT::string nativeEPSG;
   CT::string nativeProj4;
+  bool dataSourceOwnsDataObject = false;
 
   // Used for scaling the legend to the palette range of 0-240
   /*float legendScale,legendOffset,legendLog,legendLowerRange,legendUpperRange;
@@ -358,7 +359,7 @@ public:
   const char *getLayerName();
   const char *getLayerTitle();
 
-  int attachCDFObject(CDFObject *cdfObject);
+  int attachCDFObject(CDFObject *cdfObject, bool dataSourceOwnsDataObject);
   void detachCDFObject();
   CDataSource *clone();
 
