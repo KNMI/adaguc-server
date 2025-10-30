@@ -810,7 +810,7 @@ int CDataSource::setStyle(const char *styleName) {
 CDataSource *CDataSource::clone() {
 
   CDataSource *d = new CDataSource();
-  d->dataSourceOwnsDataObject = dataSourceOwnsDataObject;
+  d->dataSourceOwnsDataObject = false; // cdfObject stays with source datasource.
   d->_currentStyle = _currentStyle;
   d->datasourceIndex = datasourceIndex;
   d->currentAnimationStep = currentAnimationStep;
