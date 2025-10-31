@@ -53,7 +53,7 @@ int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource
     dataSource->getDataObject(0)->cdfVariable->setAttributeText("ADAGUC_GEOJSONPOINT", "1");
 
     unsigned short sf = 65535u;
-    newDataObject->cdfVariable->setAttribute("_FillValue", newDataObject->cdfVariable->getType(), &sf, 1);
+    newDataObject->cdfVariable->setAttribute("_FillValue", CDF_USHORT, &sf, 1);
   }
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
     CDataSource featureDataSource;

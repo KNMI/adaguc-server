@@ -49,6 +49,7 @@
 #include "utils/CRequestUtils.h"
 #include "handleTileRequest.h"
 #include <traceTimings/traceTimings.h>
+#include "utils/serverutils.h"
 
 const char *CRequest::className = "CRequest";
 int CRequest::CGI = 0;
@@ -121,6 +122,7 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
         if (srvParam->verbose) {
           CDBDebug("Dataset name based on passed configfile is [%s]", srvParam->datasetLocation.c_str());
         }
+
         status = CAutoResource::configureDataset(srvParam, false);
         if (status != 0) {
           CDBError("ConfigureDataset failed for %s", configFileList[1].c_str());
@@ -133,11 +135,11 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
     if (pszQueryString != NULL) {
       CT::string queryString(pszQueryString);
       queryString.decodeURLSelf();
-      CT::string *parameters = queryString.splitToArray("&");
-      for (size_t j = 0; j < parameters->count; j++) {
+      auto parameters = queryString.splitToStack("&");
+      for (size_t j = 0; j < parameters.size(); j++) {
         CT::string value0Cap;
         CT::string values[2];
-        int equalPos = parameters[j].indexOf("="); // splitToArray("=");
+        int equalPos = parameters[j].indexOf("="); // splitToStack("=");
         if (equalPos != -1) {
           values[0] = parameters[j].substring(0, equalPos);
           values[1] = parameters[j].c_str() + equalPos + 1;
@@ -184,7 +186,6 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
           }
         }
       }
-      delete[] parameters;
     }
 
     // Include additional config files given in the include statement of the config file
@@ -200,14 +201,6 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
           CDBError("There is an error with include '%s'", srvParam->cfg->Include[index]->attr.location.c_str());
           return 1;
         }
-      }
-    }
-
-    if (srvParam->cfg->CacheDocs.size() == 1) {
-      if (srvParam->cfg->CacheDocs[0]->attr.enabled.equals("true")) {
-        srvParam->enableDocumentCache = true;
-      } else if (srvParam->cfg->CacheDocs[0]->attr.enabled.equals("false")) {
-        srvParam->enableDocumentCache = false;
       }
     }
 
@@ -423,119 +416,6 @@ int CRequest::process_wcs_getcoverage_request() {
   return process_all_layers();
 #endif
 }
-const char *CSimpleStore::className = "CSimpleStore";
-
-int CRequest::storeDocumentCache(CSimpleStore *simpleStore) {
-  // Store the store
-  CT::string cacheBuffer;
-  simpleStore->getBuffer(&cacheBuffer);
-  CT::string cacheFileName;
-  srvParam->getCacheFileName(&cacheFileName);
-  FILE *pFile = fopen(cacheFileName.c_str(), "wb");
-  if (pFile != NULL) {
-    fputs(cacheBuffer.c_str(), pFile);
-    fclose(pFile);
-    if (chmod(cacheFileName.c_str(), 0777) < 0) {
-      CDBError("Unable to change permissions of cachefile %s", cacheFileName.c_str());
-      return 1;
-    }
-  } else {
-    CDBError("Unable to write cachefile %s", cacheFileName.c_str());
-    return 1;
-  }
-  return 0;
-}
-
-int CRequest::getDocFromDocCache(CSimpleStore *simpleStore, CT::string *docName, CT::string *document) {
-  // If CacheDocs is true and the configuration is unmodified
-  // the XML can be retrieved from the disk
-  bool cacheNeedsRefresh = false;
-  // Check if the configuration file is modified
-  // Get configration file modification time
-  CT::string configModificationDate;
-  struct tm *clock;                                // create a time structure
-  struct stat attrib;                              // create a file attribute structure
-  stat(srvParam->configFileName.c_str(), &attrib); // get the attributes of afile.txt
-  clock = gmtime(&(attrib.st_mtime));              // Get the last modified time and put it into the time structure
-  char buffer[80];
-  // strftime (buffer,80,"%I:%M%p.",clock);
-  strftime(buffer, 80, "%Y-%m-%dT%H:%M:%SZ", clock);
-  configModificationDate.copy(buffer);
-
-  // Get a filename suited for diskstorage
-  CT::string cacheFileName;
-  srvParam->getCacheFileName(&cacheFileName);
-  // CDBDebug("cacheFileName: %s",cacheFileName.c_str());
-  // Check wether the cache file exists
-  struct stat stFileInfo;
-  int intStat;
-  intStat = stat(cacheFileName.c_str(), &stFileInfo);
-  CT::string cacheBuffer;
-  // If the file does not exist, the cache needs to be created
-  if (intStat != 0) {
-    CDBDebug("The cache file %s does not exist", cacheFileName.c_str());
-    cacheNeedsRefresh = true;
-  }
-  if (cacheNeedsRefresh == false) {
-    // Try to open the cache file for reading
-    FILE *cacheF = fopen(cacheFileName.c_str(), "r");
-    if (cacheF != NULL) {
-      // obtain file size:
-      fseek(cacheF, 0, SEEK_END);
-      size_t fileSize = ftell(cacheF);
-      rewind(cacheF);
-      char *pszCacheBuffer = new char[fileSize + 1];
-      // copy the file into the buffer:
-      size_t bytesRead = fread(pszCacheBuffer, 1, fileSize, cacheF);
-      if (bytesRead != fileSize) {
-        CDBError("Reading error of cache file %s", cacheFileName.c_str());
-        delete[] pszCacheBuffer;
-        return 1;
-      }
-      fclose(cacheF);
-      // Store the data in the CT::string object
-      cacheBuffer.copy(pszCacheBuffer);
-      delete[] pszCacheBuffer;
-    } else {
-      CDBDebug("Unable to open cachefile %s", cacheFileName.c_str());
-      cacheNeedsRefresh = true;
-    }
-  }
-  if (document == NULL || docName == NULL) return 0;
-  if (cacheNeedsRefresh == false) {
-    // Now compare compare file modification date from last known file modification date
-    CT::string oldConfigModificationDate;
-    simpleStore->parse(cacheBuffer.c_str());
-    if (simpleStore->getCTStringAttribute("configModificationDate", &oldConfigModificationDate) != 0) {
-      CDBDebug("configModificationDate not available in cachefile %s", cacheFileName.c_str());
-      // simpleStore->setStringAttribute("configModificationDate",configModificationDate.c_str());
-      cacheNeedsRefresh = true;
-    } else {
-      if (oldConfigModificationDate.equals(&configModificationDate)) {
-        // The modification date of the configuration file is the same as the stored one.
-        // CDBDebug("Cache needs no update");
-      } else {
-        CDBDebug("Cache needs update because %s!=%s", oldConfigModificationDate.c_str(), configModificationDate.c_str());
-        // simpleStore->setStringAttribute("configModificationDate",configModificationDate.c_str());
-        cacheNeedsRefresh = true;
-      }
-    }
-  }
-  if (cacheNeedsRefresh == false) {
-    // Read and Provide the xml document!
-    int status = simpleStore->getCTStringAttribute(docName->c_str(), document);
-    if (status != 0) {
-      // CDBDebug("Unable to get document %s from cache",docName->c_str());
-      cacheNeedsRefresh = true;
-    }
-  }
-  if (cacheNeedsRefresh == true) {
-    simpleStore->setStringAttribute("configModificationDate", configModificationDate.c_str());
-    // CDBDebug("cacheNeedsRefresh==true");
-    return 2;
-  }
-  return 0;
-}
 
 int CRequest::generateOGCGetCapabilities(CT::string *XMLdocument) {
   CXMLGen XMLGen;
@@ -544,35 +424,11 @@ int CRequest::generateOGCGetCapabilities(CT::string *XMLdocument) {
 
 int CRequest::generateGetReferenceTimes(CDataSource *dataSource) {
   CT::string XMLdocument;
-  if (srvParam->enableDocumentCache == true) {
-    CSimpleStore simpleStore;
-    CT::string documentName;
-    bool storeNeedsUpdate = false;
-    int status = getDocumentCacheName(&documentName, srvParam);
-    if (status != 0) return 1;
-    // Try to get the getcapabilities document from the store:
-    status = getDocFromDocCache(&simpleStore, &documentName, &XMLdocument);
-    if (status == 1) return 1;
-    // if(status==2, the store is ok, but not up to date
-    if (status == 2) storeNeedsUpdate = true;
-    if (storeNeedsUpdate) {
-      // CDBDebug("Generating a new document with name %s",documentName.c_str());
-      int status = generateGetReferenceTimesDoc(&XMLdocument, dataSource);
-      if (status == CXMLGEN_FATAL_ERROR_OCCURED) return 1;
-      // Store this document
-      if (status == 0) {
-        simpleStore.setStringAttribute(documentName.c_str(), XMLdocument.c_str());
-        if (storeDocumentCache(&simpleStore) != 0) return 1;
-      }
-    } else {
-      CDBDebug("Providing document from store with name %s", documentName.c_str());
-    }
-  } else {
-    // Do not use cache
-    int status = generateGetReferenceTimesDoc(&XMLdocument, dataSource);
-    ;
-    if (status == CXMLGEN_FATAL_ERROR_OCCURED) return 1;
-  }
+
+  int status = generateGetReferenceTimesDoc(&XMLdocument, dataSource);
+
+  if (status == CXMLGEN_FATAL_ERROR_OCCURED) return 1;
+
   if (srvParam->JSONP.length() == 0) {
     printf("%s%s%c%c\n", "Content-Type: application/json ", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
     printf("%s", XMLdocument.c_str());
@@ -596,37 +452,11 @@ int CRequest::process_wms_getcap_request() {
   CDBDebug("WMS GETCAPABILITIES [%s]", srvParam->datasetLocation.c_str());
 
   CT::string XMLdocument;
-  if (srvParam->enableDocumentCache == true) {
-    CSimpleStore simpleStore;
-    CT::string documentName;
-    bool storeNeedsUpdate = false;
-    int status = getDocumentCacheName(&documentName, srvParam);
-    if (status != 0) return 1;
-    // Try to get the getcapabilities document from the store:
-    status = getDocFromDocCache(&simpleStore, &documentName, &XMLdocument);
-    if (status == 1) return 1;
-    // if(status==2, the store is ok, but not up to date
-    if (status == 2) storeNeedsUpdate = true;
-    if (storeNeedsUpdate) {
-      // CDBDebug("Generating a new document with name %s",documentName.c_str());
-      int status = generateOGCGetCapabilities(&XMLdocument);
-      if (status == CXMLGEN_FATAL_ERROR_OCCURED) return 1;
-      // Store this document
-      if (status == 0) {
-        simpleStore.setStringAttribute(documentName.c_str(), XMLdocument.c_str());
-        if (storeDocumentCache(&simpleStore) != 0) return 1;
-      }
-    } else {
-      CT::string cacheFileName;
-      srvParam->getCacheFileName(&cacheFileName);
-      CDBDebug("Providing document from store '%s' with name '%s'", cacheFileName.c_str(), documentName.c_str());
-    }
-  } else {
-    // Do not use cache
-    int status = generateOGCGetCapabilities(&XMLdocument);
-    ;
-    if (status == CXMLGEN_FATAL_ERROR_OCCURED) return 1;
-  }
+
+  int status = generateOGCGetCapabilities(&XMLdocument);
+
+  if (status == CXMLGEN_FATAL_ERROR_OCCURED) return 1;
+
   const char *pszADAGUCWriteToFile = getenv("ADAGUC_WRITETOFILE");
   if (pszADAGUCWriteToFile != NULL) {
     CReadFile::write(pszADAGUCWriteToFile, XMLdocument.c_str(), XMLdocument.length());
@@ -955,12 +785,8 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
         }
 
         if (maxStore == NULL) {
-          CDBDebug("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
+          CDBDebug("No table with values for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
           throw InvalidDimensionValue;
-          //           setExceptionType(InvalidDimensionValue);
-          //           CDBError("Invalid dimension value for layer %s",dataSource->cfgLayer->Name[0]->value.c_str());
-          //           CDBError("query failed");
-          //           return 1;
         }
         ogcDim->value.copy(maxStore->getRecord(0)->get(0));
 
@@ -1009,9 +835,9 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
       // FIXME: checkTimeFormat used to get called on every dim value, not just datetime. Check if this is required
       if (!dim->isATimeDimension) continue;
 
-      CT::string *dimValues = dim->value.splitToArray(",");
-      for (size_t i = 0; i < dimValues->count; i++) {
-        if (!CServerParams::checkTimeFormat(dimValues[i])) {
+      auto dimValues = dim->value.splitToStack(",");
+      for (auto &dimValue : dimValues) {
+        if (!CServerParams::checkTimeFormat(dimValue)) {
           CDBError("Queried dimension %s=%s failed datetime regex", dim->name.c_str(), dim->value.c_str());
           throw InvalidDimensionValue;
         }
@@ -1470,11 +1296,12 @@ int CRequest::process_querystring() {
 
           if (dapPath.indexOf(defaultPath.c_str()) == 0) {
             // THIS is OPENDAP!
-            CT::string *items = dapPath.splitToArray("?");
-            COpenDAPHandler opendapHandler;
-            opendapHandler.handleOpenDAPRequest(items[0].c_str(), pszQueryString, srvParam);
-            delete[] items;
-            return 0;
+            auto items = dapPath.splitToStack("?");
+            if (items.size() > 0) {
+              COpenDAPHandler opendapHandler;
+              opendapHandler.handleOpenDAPRequest(items[0].c_str(), pszQueryString, srvParam);
+              return 0;
+            }
           }
         }
       }
@@ -1491,16 +1318,16 @@ int CRequest::process_querystring() {
 
   queryString.decodeURLSelf();
   // CDBDebug("QueryString: \"%s\"", queryString.c_str());
-  CT::string *parameters = queryString.splitToArray("&");
+  auto parameters = queryString.splitToStack("&");
 
 #ifdef CREQUEST_DEBUG
   CDBDebug("Parsing query string parameters");
 #endif
-  for (size_t j = 0; j < parameters->count; j++) {
+  for (size_t j = 0; j < parameters.size(); j++) {
     CT::string uriKeyUpperCase;
     CT::string uriValue;
 
-    int equalPos = parameters[j].indexOf("="); // splitToArray("=");
+    int equalPos = parameters[j].indexOf("="); // splitToStack("=");
 
     if (equalPos != -1) {
       uriKeyUpperCase = parameters[j].substring(0, equalPos);
@@ -1539,8 +1366,8 @@ int CRequest::process_querystring() {
     if (!uriValue.empty()) {
       // BBOX Parameters
       if (uriKeyUpperCase.equals("BBOX")) {
-        CT::string *bboxvalues = uriValue.replace("%2C", ",").splitToArray(",");
-        if (bboxvalues->count == 4) {
+        auto bboxvalues = uriValue.replace("%2C", ",").splitToStack(",");
+        if (bboxvalues.size() == 4) {
           for (int j = 0; j < 4; j++) {
             srvParam->Geo->dfBBOX[j] = atof(bboxvalues[j].c_str());
           }
@@ -1548,7 +1375,6 @@ int CRequest::process_querystring() {
           CDBError("ADAGUC Server: Invalid BBOX values");
           dErrorOccured = 1;
         }
-        delete[] bboxvalues;
         srvParam->dFound_BBOX = 1;
       }
       if (uriKeyUpperCase.equals("BBOXWIDTH")) {
@@ -1760,9 +1586,10 @@ int CRequest::process_querystring() {
       if (dFound_autoResourceLocation == 0) {
         if (uriKeyUpperCase.equals("SOURCE")) {
           if (srvParam->autoResourceLocation.empty()) {
-            CT::string *hashList = uriValue.splitToArray("#");
-            srvParam->autoResourceLocation.copy(hashList[0].c_str());
-            delete[] hashList;
+            auto hashList = uriValue.splitToStack("#");
+            if (hashList.size() > 0) {
+              srvParam->autoResourceLocation.copy(hashList[0].c_str());
+            }
           }
           dFound_autoResourceLocation = 1;
         }
@@ -1846,13 +1673,12 @@ int CRequest::process_querystring() {
         srvParam->wmsExtensions.opacity = uriValue.toDouble();
       }
       if (uriKeyUpperCase.equals("COLORSCALERANGE")) {
-        CT::string *valuesC = uriValue.splitToArray(",");
-        if (valuesC->count == 2) {
+        auto valuesC = uriValue.splitToStack(",");
+        if (valuesC.size() == 2) {
           srvParam->wmsExtensions.colorScaleRangeMin = valuesC[0].toDouble();
           srvParam->wmsExtensions.colorScaleRangeMax = valuesC[1].toDouble();
           srvParam->wmsExtensions.colorScaleRangeSet = true;
         }
-        delete[] valuesC;
       }
       if (uriKeyUpperCase.equals("NUMCOLORBANDS")) {
         srvParam->wmsExtensions.numColorBands = uriValue.toFloat();
@@ -1877,7 +1703,6 @@ int CRequest::process_querystring() {
       }
     }
   }
-  delete[] parameters;
 
   if (dFound_Width == 0 && dFound_Height == 0) {
     if (srvParam->dFound_BBOX && dFound_RESX && dFound_RESY) {
@@ -2509,13 +2334,18 @@ int CRequest::process_querystring() {
   return 0;
 }
 
-int CRequest::updatedb(CT::string *tailPath, CT::string *layerPathToScan, int scanFlags, CT::string layerName) {
+int CRequest::updatedb(CT::string tailPath, CT::string layerPathToScan, int scanFlags, CT::string layerName) {
   int errorHasOccured = 0;
   int status;
   // Fill in all data sources from the configuration object
   size_t numberOfLayers = srvParam->cfg->Layer.size();
 
   for (size_t layerNo = 0; layerNo < numberOfLayers; layerNo++) {
+    if (!layerPathToScan.empty()) {
+      if (!checkIfFileMatchesLayer(layerPathToScan, srvParam->cfg->Layer[layerNo])) {
+        continue;
+      }
+    }
     CDataSource *dataSource = new CDataSource();
     auto cfgLayer = srvParam->cfg->Layer[layerNo];
     if (dataSource->setCFGLayer(srvParam, srvParam->configObj->Configuration[0], cfgLayer, NULL, layerNo) != 0) {
@@ -2534,16 +2364,19 @@ int CRequest::updatedb(CT::string *tailPath, CT::string *layerPathToScan, int sc
     }
   }
 
+  if (dataSources.size() == 0) {
+    if (!layerPathToScan.empty()) {
+      CDBWarning("The specified file %s did not match to any of the layers", layerPathToScan.c_str());
+    } else {
+      CDBWarning("No layers found");
+    }
+  }
   srvParam->requestType = REQUEST_UPDATEDB;
-  bool file_was_added = false;
 
   for (size_t j = 0; j < dataSources.size(); j++) {
     if (dataSources[j]->dLayerType == CConfigReaderLayerTypeDataBase || dataSources[j]->dLayerType == CConfigReaderLayerTypeBaseLayer) {
       if (scanFlags & CDBFILESCANNER_UPDATEDB) {
         status = CDBFileScanner::updatedb(dataSources[j], tailPath, layerPathToScan, scanFlags);
-        if (status == 0) {
-          file_was_added = true;
-        }
       }
       if (scanFlags & CDBFILESCANNER_CREATETILES) {
         status = CCreateTiles::createTiles(dataSources[j], scanFlags);
@@ -2554,43 +2387,10 @@ int CRequest::updatedb(CT::string *tailPath, CT::string *layerPathToScan, int sc
       }
     }
   }
-  if (file_was_added == false && layerPathToScan->length() > 0) {
-    CDBWarning("The specified file %s did not match to any of the layers", layerPathToScan->c_str());
-  }
-  if (srvParam->enableDocumentCache) {
-    // invalidate cache
-    CT::string cacheFileName;
-    srvParam->getCacheFileName(&cacheFileName);
-
-    CDBDebug("Invalidating cache file [%s]", cacheFileName.c_str());
-    // Remove the cache file, but check first wether it exists or not.
-    struct stat stFileInfo;
-    int intStat;
-    intStat = stat(cacheFileName.c_str(), &stFileInfo);
-    CT::string cacheBuffer;
-
-    // The file exists, so remove it.
-    if (intStat == 0) {
-      CDBDebug("Removing cachefile %s ", cacheFileName.c_str());
-      if (cacheFileName.length() > 0) {
-        if (remove(cacheFileName.c_str()) != 0) {
-          CDBError("Unable to remove cachefile %s, please do it manually.", cacheFileName.c_str());
-          return 1;
-        }
-      }
-    } else {
-      CDBDebug("There is no cachefile");
-    }
-  }
-  /*
-  CSimpleStore simpleStore;
-  status = getDocFromDocCache(&simpleStore,NULL,NULL);
-  simpleStore.setStringAttribute("configModificationDate","needsupdate!");
-  if(storeDocumentCache(&simpleStore)!=0)return 1;*/
   if (errorHasOccured) {
-    CDBDebug("***** Finished DB Update with %d errors *****", errorHasOccured);
+    CDBDebug("***** Finished DB Update with %d errors *****\n\n", errorHasOccured);
   } else {
-    CDBDebug("***** Finished DB Update *****");
+    CDBDebug("***** Finished DB Update *****\n\n");
   }
   // TODO: 2024-09-20: Probably not the right place to clear these
   CDFObjectStore::getCDFObjectStore()->clear();
@@ -2598,39 +2398,6 @@ int CRequest::updatedb(CT::string *tailPath, CT::string *layerPathToScan, int sc
   CDFStore::clear();
 
   return errorHasOccured > 0;
-}
-
-int CRequest::getDocumentCacheName(CT::string *documentName, CServerParams *srvParam) {
-  documentName->copy("none");
-  if (srvParam->requestType == REQUEST_WMS_GETCAPABILITIES) {
-    if (srvParam->OGCVersion == WMS_VERSION_1_0_0) {
-      documentName->copy("WMS_1_0_0_GetCapabilities");
-    }
-    if (srvParam->OGCVersion == WMS_VERSION_1_1_1) {
-      documentName->copy("WMS_1_1_1_GetCapabilities");
-    }
-    if (srvParam->OGCVersion == WMS_VERSION_1_3_0) {
-      documentName->copy("WMS_1_3_0_GetCapabilities");
-    }
-  }
-  if (srvParam->requestType == REQUEST_WMS_GETREFERENCETIMES) {
-    documentName->copy("WMS_1_3_0_GetReferenceTimes");
-  }
-  if (srvParam->requestType == REQUEST_WCS_GETCAPABILITIES) {
-    if (srvParam->OGCVersion == WCS_VERSION_1_0) {
-      documentName->copy("WCS_1_0_GetCapabilities");
-    }
-  }
-  if (srvParam->requestType == REQUEST_WCS_DESCRIBECOVERAGE) {
-    if (srvParam->OGCVersion == WCS_VERSION_1_0) {
-      documentName->copy("WCS_1_0_DescribeCoverage");
-    }
-  }
-  if (documentName->equals("none")) {
-    CDBError("Unknown cache request...");
-    return 1;
-  }
-  return 0;
 }
 
 // pthread_mutex_t CImageDataWriter_addData_lock;

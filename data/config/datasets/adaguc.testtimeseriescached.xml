@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Configuration>
-  <CacheDocs enabled="true"/>
   <!-- Custom styles -->
   <Style name="testdata">
     <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>

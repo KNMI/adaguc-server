@@ -29,13 +29,8 @@
 #include <vector>
 #include <stdio.h>
 #include "CTypes.h"
-class CKeyValuePair {
-public:
-  CKeyValuePair(CT::string name, CT::string value) {
-    this->name = name;
-    this->value = value;
-  }
-  CT::string name;
+struct CKeyValuePair {
+  CT::string key;
   CT::string value;
 };
 typedef CT::StackList<CKeyValuePair> CKeyValuePairs;

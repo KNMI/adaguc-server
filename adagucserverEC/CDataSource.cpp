@@ -307,10 +307,19 @@ CDataSource::CDataSource() {
 }
 
 CDataSource::~CDataSource() {
+
   for (size_t d = 0; d < dataObjects.size(); d++) {
+    if (dataSourceOwnsDataObject) {
+      delete (CDFReader *)dataObjects[d]->cdfObject->getCDFReader();
+      delete dataObjects[d]->cdfObject;
+      dataObjects[d]->cdfObject = nullptr;
+    }
     delete dataObjects[d];
     dataObjects[d] = NULL;
   }
+
+  dataSourceOwnsDataObject = false;
+  dataObjects.clear();
 
   for (size_t j = 0; j < timeSteps.size(); j++) {
 
@@ -344,7 +353,7 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Conf
   for (size_t j = 0; j < cfgLayer->Variable.size(); j++) {
     DataObject *newDataObject = new DataObject();
     newDataObject->variableName.copy(cfgLayer->Variable[j]->value.c_str());
-    getDataObjectsVector()->push_back(newDataObject);
+    this->dataObjects.push_back(newDataObject);
   }
 
   // Set the layername
@@ -386,7 +395,7 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Conf
   }
 
   if (!_srvParams->internalAutoResourceLocation.empty()) {
-    headerFileName = _srvParams->internalAutoResourceLocation.c_str();
+    headerFilename = _srvParams->internalAutoResourceLocation.c_str();
   }
 
   isConfigured = true;
@@ -402,6 +411,8 @@ void CDataSource::addStep(const char *fileName, CCDFDims *dims) {
     timeStep->dims.copy(dims);
   }
 }
+
+void CDataSource::setHeaderFilename(CT::string headerFilename) { this->headerFilename = headerFilename; }
 
 const char *CDataSource::getFileName() {
   if (currentAnimationStep < 0) return NULL;
@@ -449,8 +460,8 @@ void CDataSource::readStatusFlags(CDF::Variable *var, std::vector<CDataSource::S
       if (attr_flag_values != NULL) {
         CT::string flag_meanings;
         attr_flag_meanings->getDataAsString(&flag_meanings);
-        CT::string *flagStrings = flag_meanings.splitToArray(" ");
-        size_t nrOfFlagMeanings = flagStrings->count;
+        auto flagStrings = flag_meanings.splitToStack(" ");
+        size_t nrOfFlagMeanings = flagStrings.size();
         if (nrOfFlagMeanings > 0) {
           size_t nrOfFlagValues = attr_flag_values->length;
           // Check we have an equal number of flagmeanings and flagvalues
@@ -466,7 +477,6 @@ void CDataSource::readStatusFlags(CDF::Variable *var, std::vector<CDataSource::S
         } else {
           CDBError("ReadStatusFlags: flag_meanings: nrOfFlagMeanings = 0");
         }
-        delete[] flagStrings;
       } else {
         CDBError("ReadStatusFlags: flag_meanings found, but no flag_values attribute found");
       }
@@ -497,7 +507,7 @@ CT::string CDataSource::getDimensionValueForNameAndStep(const char *dimName, int
  * @return stringlist with the list of available legends.
  */
 
-CT::PointerList<CT::string *> *CDataSource::getLegendListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style *style) {
+std::vector<CT::string> CDataSource::getLegendListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style *style) {
 #ifdef CDATASOURCE_DEBUG
   CDBDebug("getLegendListForDataSource");
 #endif
@@ -509,7 +519,7 @@ CT::PointerList<CT::string *> *CDataSource::getLegendListForDataSource(CDataSour
     }
   }
   //  CDBError("No legendlist for layer %s",dataSource->layerName.c_str());
-  return NULL;
+  return {};
 }
 
 /**
@@ -518,7 +528,7 @@ CT::PointerList<CT::string *> *CDataSource::getLegendListForDataSource(CDataSour
  * @param style pointer to the style to find the rendermethods for
  * @return stringlist with the list of available rendermethods.
  */
-CT::PointerList<CT::string *> *CDataSource::getRenderMethodListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style *style) {
+std::vector<CT::string> CDataSource::getRenderMethodListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style *style) {
   // List all the desired rendermethods
   CT::string renderMethodList;
 
@@ -544,9 +554,7 @@ CT::PointerList<CT::string *> *CDataSource::getRenderMethodListForDataSource(CDa
     renderMethodList.copy("nearest");
   }
 
-  CT::PointerList<CT::string *> *renderMethods = renderMethodList.splitToPointer(",");
-
-  return renderMethods;
+  return renderMethodList.splitToStack(",");
 }
 
 /**
@@ -564,33 +572,29 @@ CT::PointerList<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(C
 
   CServerConfig::XMLE_Configuration *serverCFG = dataSource->cfg;
 
-  CT::PointerList<CT::string *> *renderMethods = NULL;
-  CT::PointerList<CT::string *> *legendList = NULL;
+  std::vector<CT::string> renderMethods;
+  std::vector<CT::string> legendList;
 
   // Auto configure styles, if no legends or styles are defined
   if (dataSource->cfgLayer->Styles.size() == 0 && dataSource->cfgLayer->Legend.size() == 0) {
     renderMethods = getRenderMethodListForDataSource(dataSource, NULL);
-    if (renderMethods->size() > 0) {
+    if (renderMethods.size() > 0) {
       CAutoConfigure::autoConfigureStyles(dataSource);
     }
   }
-  delete renderMethods;
-  renderMethods = NULL;
 
-  CT::PointerList<CT::string *> *styleNames = getStyleNames(dataSource->cfgLayer->Styles);
+  std::vector<CT::string> styleNames = getStyleNames(dataSource->cfgLayer->Styles);
 
-  // We always skip the style "default" if there are more styles.
   size_t start = 0;
-  if (styleNames->size() > 1) start = 1;
-
+  if (styleNames.size() > 1) start = 1;
   // Loop over the styles.
   try {
     // CDBDebug("There are %d styles to check",styleNames->size());
-    for (size_t i = start; i < styleNames->size(); i++) {
+    for (size_t i = start; i < styleNames.size(); i++) {
 
       // Lookup the style index in the servers configuration
 
-      int dStyleIndex = dataSource->srvParams->getServerStyleIndexByName(styleNames->get(i));
+      int dStyleIndex = dataSource->srvParams->getServerStyleIndexByName(styleNames[i]);
 
 #ifdef CDATASOURCE_DEBUG
       CDBDebug("dStyleIndex = %d", dStyleIndex);
@@ -604,22 +608,20 @@ CT::PointerList<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(C
         renderMethods = getRenderMethodListForDataSource(dataSource, style);
         legendList = getLegendListForDataSource(dataSource, style);
 
-        if (legendList == NULL) {
+        if (legendList.size() == 0) {
           CDBDebug("No legends defined for layer %s, adding legend auto", dataSource->layerName.c_str());
-          CT::string *autoLegendName = new CT::string("rainbow");
-          legendList = new CT::PointerList<CT::string *>();
-          legendList->push_back(autoLegendName);
+          legendList.push_back("rainbow");
         }
 
         CT::string styleName;
-        for (size_t l = 0; l < legendList->size(); l++) {
-          for (size_t r = 0; r < renderMethods->size(); r++) {
-            if (renderMethods->get(r)->length() > 0) {
-              int dLegendIndex = dataSource->srvParams->getServerLegendIndexByName(legendList->get(l));
-              if (legendList->size() > 1) {
-                styleName.print("%s_%s/%s", styleNames->get(i)->c_str(), legendList->get(l)->c_str(), renderMethods->get(r)->c_str());
+        for (size_t l = 0; l < legendList.size(); l++) {
+          for (size_t r = 0; r < renderMethods.size(); r++) {
+            if (renderMethods[r].length() > 0) {
+              int dLegendIndex = dataSource->srvParams->getServerLegendIndexByName(legendList[l]);
+              if (legendList.size() > 1) {
+                styleName.print("%s_%s/%s", styleNames[i].c_str(), legendList[l].c_str(), renderMethods[r].c_str());
               } else {
-                styleName.print("%s/%s", styleNames->get(i)->c_str(), renderMethods->get(r)->c_str());
+                styleName.print("%s/%s", styleNames[i].c_str(), renderMethods[r].c_str());
               }
 
 #ifdef CDATASOURCE_DEBUG
@@ -632,18 +634,18 @@ CT::PointerList<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(C
               //  We found the correspondign legend/style and rendermethod corresponding with the requested stylename!
               //  Now fill in the CStyleConfiguration Object.
 
-              styleConfig->renderMethod = getRenderMethodFromString(renderMethods->get(r)->c_str());
+              styleConfig->renderMethod = getRenderMethodFromString(renderMethods[r].c_str());
               styleConfig->styleIndex = dStyleIndex;
 
               styleConfig->legendIndex = dLegendIndex;
 
               if (dLegendIndex == -1) {
-                CDBError("Legend %s not found", legendList->get(l)->c_str());
+                CDBError("Legend %s not found", legendList[l].c_str());
               }
 
               if (style != NULL) {
                 for (size_t j = 0; j < style->NameMapping.size(); j++) {
-                  if (renderMethods->get(r)->equals(style->NameMapping[j]->attr.name.c_str())) {
+                  if (renderMethods[r].equals(style->NameMapping[j]->attr.name.c_str())) {
                     styleConfig->styleTitle.copy(style->NameMapping[j]->attr.title.c_str());
                     styleConfig->styleAbstract.copy(style->NameMapping[j]->attr.abstract.c_str());
                     break;
@@ -661,21 +663,9 @@ CT::PointerList<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(C
           }
         }
       }
-
-      delete legendList;
-      legendList = NULL;
-      delete renderMethods;
-      renderMethods = NULL;
     }
-    delete styleNames;
-    styleNames = NULL;
-
     // We have been through the loop, but the styleConfig has not been created. This is an error.
   } catch (int e) {
-
-    delete legendList;
-    delete renderMethods;
-    delete styleNames;
   }
 
   if (styleConfigurationList->size() == 0) {
@@ -698,32 +688,17 @@ CT::PointerList<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(C
  * @param Style a pointer to XMLE_Style vector configured in a layer
  * @return Pointer to a new stringlist with all possible style names, must be deleted with delete. Is NULL on failure.
  */
-CT::PointerList<CT::string *> *CDataSource::getStyleNames(std::vector<CServerConfig::XMLE_Styles *> Styles) {
-#ifdef CDATASOURCE_DEBUG
-  CDBDebug("getStyleNames");
-#endif
-  CT::PointerList<CT::string *> *stringList = new CT::PointerList<CT::string *>();
-  CT::string *val = new CT::string();
-  stringList->push_back(val);
-  val->copy("default");
+std::vector<CT::string> CDataSource::getStyleNames(std::vector<CServerConfig::XMLE_Styles *> Styles) {
+  std::vector<CT::string> stringList = {"default"};
   for (size_t j = 0; j < Styles.size(); j++) {
-    if (Styles[j]->value.empty() == false) {
-      CT::string StyleValue = Styles[j]->value.c_str();
-      if (StyleValue.length() > 0) {
-        CT::StackList<CT::string> l1 = StyleValue.splitToStack(",");
-        for (size_t i = 0; i < l1.size(); i++) {
-          if (l1[i].length() > 0) {
-            CT::string *val = new CT::string();
-            stringList->push_back(val);
-            val->copy(&l1[i]);
-          }
-        }
+    if (Styles[j]->value.empty()) continue;
+    CT::StackList<CT::string> l1 = Styles[j]->value.splitToStack(",");
+    for (auto styleValue : l1) {
+      if (styleValue.length() > 0) {
+        stringList.push_back(styleValue);
       }
     }
   }
-#ifdef CDATASOURCE_DEBUG
-  CDBDebug("/getStyleNames");
-#endif
   return stringList;
 }
 
@@ -779,11 +754,10 @@ CStyleConfiguration *CDataSource::getStyle() {
       }
     }
     if (_currentStyle->legendIndex == -1) {
-      CT::PointerList<CT::string *> *legendList = getLegendListForDataSource(this, NULL);
-      if (legendList != NULL) {
-        _currentStyle->legendIndex = this->srvParams->getServerLegendIndexByName(legendList->get(0));
+      std::vector<CT::string> legendList = getLegendListForDataSource(this, NULL);
+      if (legendList.size() > 0) {
+        _currentStyle->legendIndex = this->srvParams->getServerLegendIndexByName(legendList[0]);
       }
-      delete legendList;
     }
   }
 
@@ -824,11 +798,10 @@ int CDataSource::setStyle(const char *styleName) {
     }
   }
   if (_currentStyle->legendIndex == -1) {
-    CT::PointerList<CT::string *> *legendList = getLegendListForDataSource(this, NULL);
-    if (legendList != NULL) {
-      _currentStyle->legendIndex = this->srvParams->getServerLegendIndexByName(legendList->get(0));
+    std::vector<CT::string> legendList = getLegendListForDataSource(this, NULL);
+    if (legendList.size() > 0) {
+      _currentStyle->legendIndex = this->srvParams->getServerLegendIndexByName(legendList[0]);
     }
-    delete legendList;
   }
   if (_currentStyle->hasError) return 1;
   return 0;
@@ -837,6 +810,7 @@ int CDataSource::setStyle(const char *styleName) {
 CDataSource *CDataSource::clone() {
 
   CDataSource *d = new CDataSource();
+  d->dataSourceOwnsDataObject = false; // cdfObject stays with source datasource.
   d->_currentStyle = _currentStyle;
   d->datasourceIndex = datasourceIndex;
   d->currentAnimationStep = currentAnimationStep;
@@ -977,7 +951,7 @@ CDataSource::DataObject *CDataSource::getDataObject(int j) {
   return d;
 }
 
-int CDataSource::attachCDFObject(CDFObject *cdfObject) {
+int CDataSource::attachCDFObject(CDFObject *cdfObject, bool dataSourceOwnsDataObject) {
   if (cdfObject == NULL) {
     CDBError("cdfObject==NULL");
     return 1;
@@ -1002,6 +976,7 @@ int CDataSource::attachCDFObject(CDFObject *cdfObject) {
       return 1;
     }
   }
+  this->dataSourceOwnsDataObject = dataSourceOwnsDataObject;
   return 0;
 }
 void CDataSource::detachCDFObject() {

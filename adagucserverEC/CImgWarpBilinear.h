@@ -92,11 +92,10 @@ public:
 
     if (_definedIntervals != NULL) {
       CT::string defIntervalString = _definedIntervals;
-      CT::string *defIntervalList = defIntervalString.splitToArray(",");
-      for (size_t j = 0; j < defIntervalList->count; j++) {
+      auto defIntervalList = defIntervalString.splitToStack(",");
+      for (size_t j = 0; j < defIntervalList.size(); j++) {
         definedIntervals.push_back(defIntervalList[j].toFloat());
       }
-      delete[] defIntervalList;
     }
 
     if (_textFormat != NULL) {

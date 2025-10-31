@@ -76,9 +76,9 @@ void printerrorImage(void *_drawImage) {
   int y = 1;
   size_t w = drawImage->Geo->dWidth / 6, characters = 0;
   for (size_t i = 0; i < errormsgs.size() - 1; i++) {
-    CT::string *sp = errormsgs[i].splitToArray(" ");
+    auto sp = errormsgs[i].splitToStack(" ");
     CT::string concat = "";
-    for (size_t k = 0; k < sp->count; k++) {
+    for (size_t k = 0; k < sp.size(); k++) {
       if (characters + sp[k].length() < w) {
         concat.concat(&sp[k]);
         concat.concat(" ");
@@ -91,7 +91,6 @@ void printerrorImage(void *_drawImage) {
         characters = concat.length();
       }
     }
-    delete[] sp;
     drawImage->setText(concat.c_str(), concat.length(), 12, 5 + y * 15, 240, -1);
     y++;
   }

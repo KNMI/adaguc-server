@@ -32,6 +32,7 @@
 #include <sys/stat.h>
 #include <CTypes.h>
 #include "CCDFDataModel.h"
+#include "CKeyValuePair.h"
 /*******************************/
 /*  CF functions               */
 /*******************************/
@@ -41,31 +42,26 @@
 class CProj4ToCF {
 private:
   DEF_ERRORFUNCTION();
-  class KVP {
-  public:
-    CT::string name;
-    CT::string value;
-  };
 
   static float convertToM(float fValue);
 
-  CT::string *getProj4Value(const char *proj4Key, std::vector<KVP *> projKVPList);
+  CT::string getProj4Value(const char *proj4Key, std::vector<CKeyValuePair> projKVPList);
 
-  float getProj4ValueF(const char *proj4Key, std::vector<KVP *> projKVPList, float defaultValue, float((*conversionfunction)(float)));
+  float getProj4ValueF(const char *proj4Key, std::vector<CKeyValuePair> projKVPList, float defaultValue, float((*conversionfunction)(float)));
 
-  float getProj4ValueF(const char *proj4Key, std::vector<KVP *> projKVPList, float defaultValue);
+  float getProj4ValueF(const char *proj4Key, std::vector<CKeyValuePair> projKVPList, float defaultValue);
 
-  void initMSGPerspective(CDF::Variable *projectionVariable, std::vector<KVP *> projKVPList);
-  void initStereoGraphic(CDF::Variable *projectionVariable, std::vector<KVP *> projKVPList);
-  void initLCCPerspective(CDF::Variable *projectionVariable, std::vector<KVP *> projKVPList);
-  void initRPPerspective(CDF::Variable *projectionVariable, std::vector<KVP *> projKVPList);
-  void initObliqueStereographicPerspective(CDF::Variable *projectionVariable, std::vector<KVP *> projKVPList);
-  void initLatitudeLongitude(CDF::Variable *projectionVariable, std::vector<CProj4ToCF::KVP *> projKVPList);
-  void initMercator(CDF::Variable *projectionVariable, std::vector<CProj4ToCF::KVP *> projKVPList);
-  void initTransverseMercator(CDF::Variable *projectionVariable, std::vector<CProj4ToCF::KVP *> projKVPList);
-  void initLAEAPerspective(CDF::Variable *projectionVariable, std::vector<KVP *> projKVPList);
-  void initGeosPerspective(CDF::Variable *projectionVariable, std::vector<KVP *> projKVPList);
-  void initAEQDPerspective(CDF::Variable *projectionVariable, std::vector<KVP *> projKVPList);
+  void initMSGPerspective(CDF::Variable *projectionVariable, std::vector<CKeyValuePair> projKVPList);
+  void initStereoGraphic(CDF::Variable *projectionVariable, std::vector<CKeyValuePair> projKVPList);
+  void initLCCPerspective(CDF::Variable *projectionVariable, std::vector<CKeyValuePair> projKVPList);
+  void initRPPerspective(CDF::Variable *projectionVariable, std::vector<CKeyValuePair> projKVPList);
+  void initObliqueStereographicPerspective(CDF::Variable *projectionVariable, std::vector<CKeyValuePair> projKVPList);
+  void initLatitudeLongitude(CDF::Variable *projectionVariable, std::vector<CKeyValuePair> projKVPList);
+  void initMercator(CDF::Variable *projectionVariable, std::vector<CKeyValuePair> projKVPList);
+  void initTransverseMercator(CDF::Variable *projectionVariable, std::vector<CKeyValuePair> projKVPList);
+  void initLAEAPerspective(CDF::Variable *projectionVariable, std::vector<CKeyValuePair> projKVPList);
+  void initGeosPerspective(CDF::Variable *projectionVariable, std::vector<CKeyValuePair> projKVPList);
+  void initAEQDPerspective(CDF::Variable *projectionVariable, std::vector<CKeyValuePair> projKVPList);
 
   int convertBackAndFort(const char *projString, CDF::Variable *projectionVariable);
 

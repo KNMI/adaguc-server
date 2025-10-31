@@ -46,7 +46,6 @@ int CAutoResource::configureDataset(CServerParams *srvParam, bool) {
       CDBError("Invalid dataset name. ");
       return 1;
     }
-
     CT::string internalDatasetLocation = srvParam->datasetLocation.c_str();
 
     internalDatasetLocation.replaceSelf(":", "_");
@@ -54,19 +53,13 @@ int CAutoResource::configureDataset(CServerParams *srvParam, bool) {
 
     CT::string datasetConfigFile = "";
     for (size_t j = 0; j < srvParam->cfg->Dataset.size(); j++) {
-
       CT::string testDataSet = srvParam->cfg->Dataset[j]->attr.location.c_str();
 
       testDataSet.printconcat("/%s.xml", internalDatasetLocation.c_str());
 
       // Check whether this config file exists.
       struct stat stFileInfo;
-      int intStat;
-      intStat = stat(testDataSet.c_str(), &stFileInfo);
-      CT::string cacheBuffer;
-      // The file exists, so remove it.
-      if (intStat != 0) {
-        CDBDebug("Dataset not found in [%s]", testDataSet.c_str());
+      if (stat(testDataSet.c_str(), &stFileInfo) != 0) {
         continue;
       } else {
         datasetConfigFile = testDataSet;
@@ -106,14 +99,6 @@ int CAutoResource::configureDataset(CServerParams *srvParam, bool) {
     stringToAdd.concat("&amp;");
     onlineResource.concat(stringToAdd.c_str());
     srvParam->setOnlineResource(onlineResource.c_str());
-
-    // Adjust unique cache file identifier for each dataset.
-    if (srvParam->cfg->CacheDocs.size() == 0) {
-      srvParam->cfg->CacheDocs.push_back(new CServerConfig::XMLE_CacheDocs());
-    }
-    CT::string validFileName;
-    validFileName.print("dataset_%s", internalDatasetLocation.c_str());
-    srvParam->cfg->CacheDocs[0]->attr.cachefile.copy(validFileName.c_str());
 
     // Disable autoResourceLocation
     srvParam->autoResourceLocation = "";
@@ -169,18 +154,6 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
   // This method does nothing if srvParam->autoResourceLocation is empty.
   if (srvParam->autoResourceLocation.empty() == false) {
     srvParam->internalAutoResourceLocation = srvParam->autoResourceLocation.c_str();
-
-    // Create unique CACHE identifier for this resource
-    // When an opendap source is added, we should add unique id to the cachefile
-    if (srvParam->cfg->CacheDocs.size() == 0) {
-      srvParam->cfg->CacheDocs.push_back(new CServerConfig::XMLE_CacheDocs());
-    }
-    CT::string validFileName(srvParam->internalAutoResourceLocation.c_str());
-    // Replace : and / by nothing, so we can use the string as a directory name for cache documents
-    validFileName.replaceSelf(":", "");
-    validFileName.replaceSelf("/", "");
-    validFileName.replaceSelf("\\", "");
-    srvParam->cfg->CacheDocs[0]->attr.cachefile.copy(validFileName.c_str());
 
     if (srvParam->isAutoResourceEnabled() == false) {
       CDBError("Automatic resource is not enabled");

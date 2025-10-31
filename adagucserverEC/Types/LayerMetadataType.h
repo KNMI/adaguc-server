@@ -58,17 +58,14 @@ struct LayerMetadata {
 };
 
 // TODO should rename this class
-class MetadataLayer {
-public:
+struct MetadataLayer {
   // TODO: Would be nice to get rid of these in this class
-  CServerConfig::XMLE_Layer *layer;
+  CServerConfig::XMLE_Layer *layer = nullptr;
   CDataSource *dataSource = nullptr;
-  CServerParams *srvParams;
+  CServerParams *srvParams = nullptr;
   CT::string fileName;
   bool readFromDb = false;
-
   int hasError = 0;
-
   LayerMetadata layerMetadata;
 };
 

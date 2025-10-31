@@ -132,3 +132,5 @@ hclasses/testhclasses
 *Makefile*
 *cmake_install.cmake*
 core-adagucserver*
+data/datasets/arcus_multivar/uwcw_ha43_dini_testfile_multivar_5x6_clean.nc
+tests/env_checker_report.txt

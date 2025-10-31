@@ -117,7 +117,11 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
   dataSourceToTile->setTimeStep(0);
 
   CDBDebug("Opening input file for tiles: %s", dataSourceToTile->getFileName());
-  reader.open(dataSourceToTile, CNETCDFREADER_MODE_OPEN_HEADER);
+  int status = reader.open(dataSourceToTile, CNETCDFREADER_MODE_OPEN_HEADER);
+  if (status != 0) {
+    CDBError("Unable to open input file for tiles: %s", dataSourceToTile->getFileName());
+    return 1;
+  }
 
   // Extract time and set it.
   try {
@@ -163,31 +167,34 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
   srvParam->Geo->dHeight = tileSettings->attr.tileheightpx.toInt();
 
   int index = 0;
+  CT::string suffix;
+  suffix.print("_tmp%d", getpid());
   for (auto destGrid : tileSet) {
     index++;
     CT::string destFileName;
     destFileName.print("%s/%s-%0.3d_%0.3d_%0.3dtile.nc", tileBasePath.c_str(), basename.c_str(), destGrid.level, destGrid.y, destGrid.x);
-    // Already done?
-    if (db->checkIfFileIsInTable(tableName, destFileName) == 0) {
+    CT::string tmpFile = destFileName;
+    tmpFile.concat(suffix);
+    // Only write if the file is not there already
+    if (CDirReader::isFile(destFileName.c_str())) {
       continue;
     }
-    // Only write if the file is not there already
-    if (!CDirReader::isFile(destFileName.c_str())) {
-      CDBDebug("Make  %s %0.1f done", destFileName.basename().c_str(), (index / double(tileSet.size())) * 100.);
-      destGrid.bbox.toArray(srvParam->Geo->dfBBOX);
-      CNetCDFDataWriter wcsWriter;
-      wcsWriter.silent = true;
-      wcsWriter.init(srvParam, dataSourceToTile, dataSourceToTile->getNumTimeSteps());
-      std::vector<CDataSource *> dataSourcesToTile = {dataSourceToTile};
-      wcsWriter.addData(dataSourcesToTile);
-      wcsWriter.writeFile(destFileName.c_str(), destGrid.level, true);
-    }
+    CDBDebug("Generating  %s %0.1f done", destFileName.basename().c_str(), (index / double(tileSet.size())) * 100.);
+    destGrid.bbox.toArray(srvParam->Geo->dfBBOX);
+    CNetCDFDataWriter wcsWriter;
+    wcsWriter.silent = true;
+    wcsWriter.init(srvParam, dataSourceToTile, dataSourceToTile->getNumTimeSteps());
+    std::vector<CDataSource *> dataSourcesToTile = {dataSourceToTile};
+    wcsWriter.addData(dataSourcesToTile);
+    wcsWriter.writeFile(tmpFile.c_str(), destGrid.level, true);
+
+    rename(tmpFile.c_str(), destFileName.c_str());
 
     // Scan the file, add it to the db
     CDBFileScanner::scanFile(destFileName, dataSourceToTile, CDBFILESCANNER_DONTREMOVEDATAFROMDB | CDBFILESCANNER_UPDATEDB | CDBFILESCANNER_IGNOREFILTER | CDBFILESCANNER_DONOTTILE);
-
     // Close the created tile cdfObject
     CDFObjectStore::getCDFObjectStore()->deleteCDFObject(destFileName.c_str());
+    CDFObjectStore::getCDFObjectStore()->deleteCDFObject(tmpFile.c_str());
   }
   // Close the source data
   reader.close();

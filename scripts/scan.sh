@@ -8,6 +8,7 @@ VERBOSE='--verboseoff'
 RESCAN=''
 RECREATETABLES=''
 NOCLEAN=''
+TIMEOUTOKILL="4m"
 
 usage () {
     echo "This script uses adaugc-server to scan files and datasets. It ingests indexing information into the database"
@@ -80,8 +81,12 @@ if [[ -n "${ADAGUC_DATASET}" &&  -n "${ADAGUC_DATAFILE}" ]]; then
   echo "Adding file [${ADAGUC_DATAFILE}] to dataset [${ADAGUC_DATASET}]:"
   command="${ADAGUC_PATH}/bin/adagucserver --updatedb ${NOCLEAN} ${VERBOSE} ${RESCAN} ${RECREATETABLES} --config ${ADAGUC_CONFIG},${ADAGUC_DATASET} --path ${ADAGUC_DATAFILE}"
   echo $command
-  $command
+  timeout $TIMEOUTOKILL $command
   OUT=$?
+  if [ ${OUT} -eq 124 ]; then
+    echo "[TIMEOUT] Scan single file was killed for ${command}"
+  fi
+
   if [ ${OUT} -ne 0 ]; then
     STATUSCODE=${OUT}
   fi
@@ -98,8 +103,12 @@ if [[ -n "${ADAGUC_DATAFILE}" ]]; then
   echo "Adding file [${ADAGUC_DATAFILE}] to dataset [${alldatasets}]:"
   command="${ADAGUC_PATH}/bin/adagucserver --updatedb --autofinddataset ${NOCLEAN} ${VERBOSE} ${RESCAN} ${RECREATETABLES} --config ${ADAGUC_CONFIG} --path ${ADAGUC_DATAFILE}"
   echo $command
-  $command
+  timeout $TIMEOUTOKILL $command
   OUT=$?
+   if [ ${OUT} -eq 124 ]; then
+    echo "[TIMEOUT] Scan single file was killed for ${command}"
+  fi
+
   if [ ${OUT} -ne 0 ]; then
     STATUSCODE=1
   fi

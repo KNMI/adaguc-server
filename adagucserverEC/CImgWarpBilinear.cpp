@@ -580,164 +580,158 @@ int CImgWarpBilinear::set(const char *pszSettings) {
   //"drawMap=false;drawContour=true;contourSmallInterval=1.0;contourBigInterval=10.0;"
 
   if (pszSettings == NULL) return 0;
-  if (strlen(pszSettings) == 0) return 0;
   contourDefinitions.clear();
   CT::string settings(pszSettings);
-  CT::string *nodes = settings.splitToArray(";");
-  for (size_t j = 0; j < nodes->count; j++) {
-    CT::string *values = nodes[j].splitToArray("=");
-    if (values->count == 2) {
-      if (values[0].equals("drawMap")) {
-        if (values[1].equals("true")) drawMap = true;
-        if (values[1].equals("false")) drawMap = false;
-      }
-      if (values[0].equals("drawContour")) {
-        if (values[1].equals("true")) enableContour = true;
-        if (values[1].equals("false")) enableContour = false;
-      }
-      if (values[0].equals("drawShaded")) {
-        if (values[1].equals("true")) enableShade = true;
-        if (values[1].equals("false")) enableShade = false;
-      }
-      if (values[0].equals("drawVector")) {
-        if (values[1].equals("true")) enableVector = true;
-        if (values[1].equals("false")) enableVector = false;
-      }
-      if (values[0].equals("drawBarb")) {
-        if (values[1].equals("true")) enableBarb = true;
-        if (values[1].equals("false")) enableBarb = false;
-      }
+  if (settings.empty()) return 0;
 
-      if (values[0].equals("shadeInterval")) {
-        shadeInterval = values[1].toFloat();
-        // if(shadeInterval==0.0f){CDBWarning("invalid value given for shadeInterval %s",pszSettings);}
-      }
-      if (values[0].equals("smoothingFilter")) {
-        smoothingFilter = values[1].toInt();
-        if (smoothingFilter < 0 || smoothingFilter > 20) {
-          CDBWarning("invalid value given for smoothingFilter %s", pszSettings);
-        }
-      }
+  auto nodes = settings.splitToStack(";");
+  for (auto &node : nodes) {
+    auto values = node.splitToStack("=");
+    if (values.size() < 2) continue;
 
-      if (values[0].equals("contourBigInterval")) {
-        float f = values[1].toFloat();
-        if (f > 0) {
-          contourDefinitions.push_back(ContourDefinition(1.4, CColor(0, 0, 0, 255), CColor(0, 0, 0, 255), CColor(0, 0, 0, 255), f, NULL, 0, 0, ""));
-        }
-      }
+    if (values[0].equals("drawMap")) {
+      if (values[1].equals("true")) drawMap = true;
+      if (values[1].equals("false")) drawMap = false;
+    }
+    if (values[0].equals("drawContour")) {
+      if (values[1].equals("true")) enableContour = true;
+      if (values[1].equals("false")) enableContour = false;
+    }
+    if (values[0].equals("drawShaded")) {
+      if (values[1].equals("true")) enableShade = true;
+      if (values[1].equals("false")) enableShade = false;
+    }
+    if (values[0].equals("drawVector")) {
+      if (values[1].equals("true")) enableVector = true;
+      if (values[1].equals("false")) enableVector = false;
+    }
+    if (values[0].equals("drawBarb")) {
+      if (values[1].equals("true")) enableBarb = true;
+      if (values[1].equals("false")) enableBarb = false;
+    }
 
-      if (values[0].equals("contourSmallInterval")) {
-        float f = values[1].toFloat();
-        if (f > 0) {
-          contourDefinitions.push_back(ContourDefinition(0.35, CColor(0, 0, 0, 255), CColor(0, 0, 0, 255), CColor(0, 0, 0, 255), f, NULL, 0, 0, ""));
-        }
-      }
-
-      if (values[0].equals("shading")) {
-        CColor fillcolor = CColor(0, 0, 0, 0);
-        CColor bgColor = CColor(0, 0, 0, 0);
-        float max, min;
-        bool foundColor = false;
-        bool hasBGColor = false;
-
-        CT::string *shadeSettings = values[1].splitToArray("$");
-        for (size_t l = 0; l < shadeSettings->count; l++) {
-          CT::string *kvp = shadeSettings[l].splitToArray("(");
-          if (kvp[0].equals("min")) min = kvp[1].toFloat();
-          if (kvp[0].equals("max")) max = kvp[1].toFloat();
-          // if(kvp[0].equals("fillcolor")){kvp[1].setSize(7);fillcolor=CColor(kvp[1].c_str());foundColor=true;}
-          if (kvp[0].equals("fillcolor")) {
-            kvp[1].setSize(kvp[1].length() - 1); // Remove trailing bracket (')')
-            fillcolor = CColor(kvp[1].c_str());
-            foundColor = true;
-          }
-          if (kvp[0].equals("bgcolor")) {
-            kvp[1].setSize(kvp[1].length() - 1); // Remove trailing bracket (')')
-            CDBDebug("Found bgcolor");
-            bgColor = CColor(kvp[1].c_str());
-            hasBGColor = true;
-          }
-          delete[] kvp;
-        }
-
-        shadeDefinitions.push_back(ShadeDefinition(min, max, fillcolor, foundColor, bgColor, hasBGColor));
-        delete[] shadeSettings;
-      }
-
-      if (values[0].equals("contourline")) {
-        float lineWidth = 1;
-        CColor linecolor = CColor(0, 0, 0, 255);
-        CColor textcolor = CColor(0, 0, 0, 255);
-        CColor textstrokecolor = CColor(0, 0, 0, 0);
-
-        float interval = 0;
-        float fontSize = 0;
-        float textStrokeWidth = 0;
-        CT::string textformat = "";
-        CT::string classes = "";
-        CT::string *lineSettings = values[1].splitToArray("$");
-        CT::string dashing = "";
-        for (size_t l = 0; l < lineSettings->count; l++) {
-          CT::string *kvp = lineSettings[l].splitToArray("(");
-          if (kvp->count == 2) {
-            int endOfKVP = kvp[1].lastIndexOf(")");
-            if (endOfKVP != -1) {
-              kvp[1].setSize(endOfKVP);
-            }
-
-            if (kvp[0].equals("width")) lineWidth = kvp[1].toFloat();
-            if (kvp[0].equals("interval")) {
-              interval = kvp[1].toFloat();
-            }
-            if (kvp[0].equals("classes")) {
-              classes.copy(kvp[1].c_str());
-            }
-            if (kvp[0].equals("linecolor")) {
-              kvp[1].setSize(7);
-              linecolor = CColor(kvp[1].c_str());
-            }
-            if (kvp[0].equals("textcolor")) {
-              kvp[1].setSize(7);
-              textcolor = CColor(kvp[1].c_str());
-            }
-            if (kvp[0].equals("textstrokecolor")) {
-              kvp[1].setSize(7);
-              textstrokecolor = CColor(kvp[1].c_str());
-            }
-            if (kvp[0].equals("textformatting")) {
-              textformat.copy(kvp[1].c_str(), kvp[1].length());
-            }
-            if (kvp[0].equals("dashing")) {
-              dashing.copy(kvp[1].c_str(), kvp[1].length());
-            }
-            if (kvp[0].equals("textsize")) {
-              fontSize = kvp[1].toFloat();
-            }
-            if (kvp[0].equals("textstrokewidth")) {
-              textStrokeWidth = kvp[1].toFloat();
-            }
-          }
-          delete[] kvp;
-        }
-
-        if (classes.length() > 0) {
-          contourDefinitions.push_back(ContourDefinition(lineWidth, linecolor, textcolor, textstrokecolor, classes.c_str(), textformat.c_str(), fontSize, textStrokeWidth, dashing));
-        } else {
-          if (interval > 0) {
-            contourDefinitions.push_back(ContourDefinition(lineWidth, linecolor, textcolor, textstrokecolor, interval, textformat.c_str(), fontSize, textStrokeWidth, dashing));
-          }
-        }
-
-        delete[] lineSettings;
-      }
-
-      if (values[0].equals("drawGridVectors")) {
-        drawGridVectors = values[1].equals("true");
+    if (values[0].equals("shadeInterval")) {
+      shadeInterval = values[1].toFloat();
+    }
+    if (values[0].equals("smoothingFilter")) {
+      smoothingFilter = values[1].toInt();
+      if (smoothingFilter < 0 || smoothingFilter > 20) {
+        CDBWarning("invalid value given for smoothingFilter %s", pszSettings);
       }
     }
-    delete[] values;
+
+    if (values[0].equals("contourBigInterval")) {
+      float f = values[1].toFloat();
+      if (f > 0) {
+        contourDefinitions.push_back(ContourDefinition(1.4, CColor(0, 0, 0, 255), CColor(0, 0, 0, 255), CColor(0, 0, 0, 255), f, NULL, 0, 0, ""));
+      }
+    }
+
+    if (values[0].equals("contourSmallInterval")) {
+      float f = values[1].toFloat();
+      if (f > 0) {
+        contourDefinitions.push_back(ContourDefinition(0.35, CColor(0, 0, 0, 255), CColor(0, 0, 0, 255), CColor(0, 0, 0, 255), f, NULL, 0, 0, ""));
+      }
+    }
+
+    if (values[0].equals("shading")) {
+      CColor fillcolor = CColor(0, 0, 0, 0);
+      CColor bgColor = CColor(0, 0, 0, 0);
+      float max, min;
+      bool foundColor = false;
+      bool hasBGColor = false;
+
+      auto shadeSettings = values[1].splitToStack("$");
+      for (auto &shadeSetting : shadeSettings) {
+        auto kvp = shadeSetting.splitToStack("(");
+        if (kvp.size() < 2) continue;
+        if (kvp[0].equals("min")) min = kvp[1].toFloat();
+        if (kvp[0].equals("max")) max = kvp[1].toFloat();
+
+        if (kvp[0].equals("fillcolor")) {
+          kvp[1].setSize(kvp[1].length() - 1); // Remove trailing bracket (')')
+          fillcolor = CColor(kvp[1].c_str());
+          foundColor = true;
+        }
+        if (kvp[0].equals("bgcolor")) {
+          kvp[1].setSize(kvp[1].length() - 1); // Remove trailing bracket (')')
+          CDBDebug("Found bgcolor");
+          bgColor = CColor(kvp[1].c_str());
+          hasBGColor = true;
+        }
+      }
+
+      shadeDefinitions.push_back(ShadeDefinition(min, max, fillcolor, foundColor, bgColor, hasBGColor));
+    }
+
+    if (values[0].equals("contourline")) {
+      float lineWidth = 1;
+      CColor linecolor = CColor(0, 0, 0, 255);
+      CColor textcolor = CColor(0, 0, 0, 255);
+      CColor textstrokecolor = CColor(0, 0, 0, 0);
+      float interval = 0;
+      float fontSize = 0;
+      float textStrokeWidth = 0;
+      CT::string textformat;
+      CT::string classes;
+      CT::string dashing;
+
+      auto lineSettings = values[1].splitToStack("$");
+      for (auto &lineSetting : lineSettings) {
+        auto kvp = lineSetting.splitToStack("(");
+        if (kvp.size() < 2) continue;
+
+        int endOfKVP = kvp[1].lastIndexOf(")");
+        if (endOfKVP != -1) {
+          kvp[1].setSize(endOfKVP);
+        }
+
+        if (kvp[0].equals("width")) lineWidth = kvp[1].toFloat();
+        if (kvp[0].equals("interval")) {
+          interval = kvp[1].toFloat();
+        }
+        if (kvp[0].equals("classes")) {
+          classes.copy(kvp[1].c_str());
+        }
+        if (kvp[0].equals("linecolor")) {
+          kvp[1].setSize(7);
+          linecolor = CColor(kvp[1].c_str());
+        }
+        if (kvp[0].equals("textcolor")) {
+          kvp[1].setSize(7);
+          textcolor = CColor(kvp[1].c_str());
+        }
+        if (kvp[0].equals("textstrokecolor")) {
+          kvp[1].setSize(7);
+          textstrokecolor = CColor(kvp[1].c_str());
+        }
+        if (kvp[0].equals("textformatting")) {
+          textformat.copy(kvp[1].c_str(), kvp[1].length());
+        }
+        if (kvp[0].equals("dashing")) {
+          dashing.copy(kvp[1].c_str(), kvp[1].length());
+        }
+        if (kvp[0].equals("textsize")) {
+          fontSize = kvp[1].toFloat();
+        }
+        if (kvp[0].equals("textstrokewidth")) {
+          textStrokeWidth = kvp[1].toFloat();
+        }
+      }
+
+      if (classes.length() > 0) {
+        contourDefinitions.push_back(ContourDefinition(lineWidth, linecolor, textcolor, textstrokecolor, classes.c_str(), textformat.c_str(), fontSize, textStrokeWidth, dashing));
+      } else {
+        if (interval > 0) {
+          contourDefinitions.push_back(ContourDefinition(lineWidth, linecolor, textcolor, textstrokecolor, interval, textformat.c_str(), fontSize, textStrokeWidth, dashing));
+        }
+      }
+    }
+
+    if (values[0].equals("drawGridVectors")) {
+      drawGridVectors = values[1].equals("true");
+    }
   }
-  delete[] nodes;
   return 0;
 }
 

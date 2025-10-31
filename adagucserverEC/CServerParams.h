@@ -130,7 +130,6 @@ public:
   int requestType;
   int OGCVersion;
   int WCS_GoNative;
-  bool enableDocumentCache;
 
   CServerConfig *configObj;
   CServerConfig::XMLE_Configuration *cfg;
@@ -157,14 +156,6 @@ public:
    * @param the tableName with the characters to be tested. Same string is filled with the new name
    */
   void encodeTableName(CT::string *tableName);
-
-  /**
-   * Get the filename of the cachefile used for XML caching.
-   * The filename is automatically constructed or can be set by the user in the configuration file alternatively.
-   *
-   * @param cacheFileName The CT::string to be filled with the filename
-   */
-  void getCacheFileName(CT::string *cacheFileName);
 
   /**
    * Function which checks whether remote resources should be cached or not
@@ -267,7 +258,7 @@ public:
    * @param Legend a XMLE_Legend object configured in a style or in a layer
    * @return Pointer to a new stringlist with all possible legend names, must be deleted with delete. Is NULL on failure.
    */
-  static CT::PointerList<CT::string *> *getLegendNames(std::vector<CServerConfig::XMLE_Legend *> Legend);
+  static std::vector<CT::string> getLegendNames(std::vector<CServerConfig::XMLE_Legend *> Legend);
 
   /**
    * Checks whether data is restricted or not based on the environment variable ADAGUC_DATARESTRICTION.

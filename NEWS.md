@@ -1,3 +1,24 @@
+**Version 4.3.7 - 2025-10-29**
+
+- Scan and clean only layers which match given files
+- Updated python packages
+- Removed unused document cache
+- Tiles are now checked if they are already on the filesystem and otherwise re-generated
+- Tiles are first written to a temporary file and then moved to its final destination.
+- Single file scans are killed after 4minutes.
+
+**Version 4.3.6 - 2025-10-28**
+
+- PATCH revert replacing all spaces with underscores in dimension values.
+
+**Version 4.3.5 - 2025-10-27**
+
+- Making tiles does not cause memory violations
+
+**Version 4.3.4 - 2025-10-16**
+
+- Files cleaned with CleanFiles will now not be used to make pyramid tiles.
+
 **Version 4.3.3 - 2025-10-08**
 
 - Disable FastAPI redirect on url's ending with `/`, as this exposes internal Adaguc hostname

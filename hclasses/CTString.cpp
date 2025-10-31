@@ -7,24 +7,6 @@ const char *CT::string::className = "CT::string";
 #endif
 
 namespace CT {
-  PointerList<CT::string *> *string::splitToPointer(const char *_value) {
-    PointerList<CT::string *> *stringList = new PointerList<CT::string *>();
-    const char *fo = strstr(useStack ? stackValue : heapValue, _value);
-    const char *prevFo = useStack ? stackValue : heapValue;
-    while (fo != NULL) {
-      CT::string *val = new CT::string();
-      stringList->push_back(val);
-      val->copy(prevFo, (fo - prevFo));
-      prevFo = fo + 1;
-      fo = strstr(fo + 1, _value);
-    }
-    if (strlen(prevFo) > 0) {
-      CT::string *val = new CT::string();
-      stringList->push_back(val);
-      val->copy(prevFo);
-    }
-    return stringList;
-  }
 
   StackList<CT::string> string::splitToStack(const char *_value) {
     StackList<CT::string> stringList;
@@ -119,28 +101,6 @@ namespace CT {
   }
 
   string::operator const char *() const { return this->c_str(); }
-
-  string *string::splitToArray(const char *_value) {
-    string str(useStack ? stackValue : heapValue, privatelength);
-    void *temp[8000];
-    char *pch;
-    int n = 0;
-    pch = strtok(str.useStack ? str.stackValue : str.heapValue, _value);
-    while (pch != NULL) {
-      string *token = new string(pch);
-      temp[n] = token;
-      pch = strtok(NULL, _value);
-      n++;
-    }
-    string *strings = new string[n + 1];
-    for (int j = 0; j < n; j++) {
-      string *token = (string *)temp[j];
-      strings[j].copy(token->useStack ? token->stackValue : token->heapValue, token->privatelength);
-      strings[j].count = n;
-      delete token;
-    }
-    return strings;
-  };
 
   void string::_Free() {
     if (allocated != 0) {

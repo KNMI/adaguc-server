@@ -639,3 +639,344 @@ void CDF::Variable::copy(CDF::Variable *sourceVariable) {
   this->allocateData(size);
   DataCopier::copy(this->data, this->currentType, sourceVariable->data, sourceVariable->currentType, 0, 0, size);
 }
+
+void CDF::Variable::setCustomReader(CustomReader *customReader) {
+  _hasCustomReader = true;
+  this->customReader = customReader;
+};
+CDF::Variable::CustomReader *CDF::Variable::getCustomReader() { return this->customReader; }
+
+bool CDF::Variable::hasCustomReader() { return _hasCustomReader; }
+
+void CDF::Variable::setCDFReaderPointer(void *cdfReaderPointer) { this->cdfReaderPointer = cdfReaderPointer; }
+
+void CDF::Variable::setParentCDFObject(CDFObject *parentCDFObject) { this->parentCDFObject = parentCDFObject; }
+CDFObject *CDF::Variable::getParentCDFObject() const {
+  if (parentCDFObject == NULL) {
+    throw(CDF_E_VARHASNOPARENT);
+  }
+  return parentCDFObject;
+}
+
+void *CDF::Variable::getCDFObjectClassPointer(size_t *start, size_t *count) {
+  if (cdfObjectList.size() == 0) {
+#ifdef CCDFDATAMODEL_DEBUG
+    CDBDebug("returning getParentCDFObject because cdfObjectList");
+#endif
+    return getParentCDFObject();
+  }
+  if (start == NULL || count == NULL) {
+    return getParentCDFObject();
+  }
+  // Return the correct cdfReader According the given dims.
+  auto iterator = std::find_if(dimensionlinks.begin(), dimensionlinks.end(), [](Dimension *d) { return d->isIterative; });
+  if (iterator == dimensionlinks.end()) {
+    CDBError("Did not find iterative dimension");
+    throw(CDF_E_ERROR);
+  }
+  size_t j = iterator - dimensionlinks.begin();
+  size_t iterativeDimIndex = start[j];
+  if (count[j] != 1) {
+    CDBError("Count %d instead of  1 is requested for iterative dimension %s", count[j], dimensionlinks[j]->name.c_str());
+    throw(CDF_E_ERROR);
+  }
+#ifdef CCDFDATAMODEL_DEBUG
+  CDBDebug("Aggregating %d == %d", cdfObjectList[iterativeDimIndex]->dimIndex, iterativeDimIndex);
+#endif
+  if (iterativeDimIndex >= cdfObjectList.size()) {
+    CDBError("Wrong index %d, list size is %d", iterativeDimIndex, cdfObjectList.size());
+  }
+  return cdfObjectList[iterativeDimIndex]; //->cdfObjectPointer;
+}
+
+void CDF::Variable::fill(double value) {
+  if (data == NULL) {
+    return;
+  };
+  CDF::fill(this->data, this->currentType, value, this->currentSize);
+}
+
+void CDF::Variable::allocateData(size_t size) {
+  freeData();
+  CDF::allocateData(currentType, &data, size);
+  setSize(size);
+}
+
+int CDF::Variable::getIterativeDimIndex() {
+  for (size_t j = 0; j < dimensionlinks.size(); j++) {
+    if (dimensionlinks[j]->isIterative) return j;
+  }
+  return -1;
+}
+
+CDF::Dimension *CDF::Variable::getIterativeDim() {
+  int i = getIterativeDimIndex();
+  if (i == -1) {
+    throw(CDF_E_DIMNOTFOUND);
+  }
+  return dimensionlinks[i];
+}
+
+CDF::Variable::Variable(const char *name, CDFType type, CDF::Dimension *dims[], int numdims, bool isCoordinateVariable) {
+  isDimension = false;
+  data = NULL;
+  currentSize = 0;
+  currentType = CDF_NONE;
+  nativeType = CDF_NONE;
+  cdfReaderPointer = NULL;
+  parentCDFObject = NULL;
+  _hasCustomReader = false;
+  _isString = false;
+  // CDBDebug("Variable");
+  setName(name);
+  setType(type);
+  // CDBDebug("Iterating dims[%d]",numdims);
+  for (int j = 0; j < numdims; j++) {
+    // CDBDebug("Iterating dims %s",dims[j]->getName().c_str());
+    dimensionlinks.push_back(dims[j]);
+  }
+  isDimension = isCoordinateVariable;
+}
+
+CDF::Variable::Variable(const char *name, CDFType type, std::vector<CDF::Dimension *> idimensionlinks, bool isCoordinateVariable) {
+  data = NULL;
+  currentSize = 0;
+  currentType = CDF_NONE;
+  nativeType = CDF_NONE;
+  cdfReaderPointer = NULL;
+  parentCDFObject = NULL;
+  _hasCustomReader = false;
+  _isString = false;
+  setName(name);
+  setType(type);
+  for (size_t j = 0; j < idimensionlinks.size(); j++) {
+    dimensionlinks.push_back(idimensionlinks[j]);
+  }
+  isDimension = isCoordinateVariable;
+}
+
+CDF::Variable::Variable(const char *name, CDFType type) {
+  data = NULL;
+  currentSize = 0;
+  currentType = CDF_NONE;
+  nativeType = CDF_NONE;
+  cdfReaderPointer = NULL;
+  parentCDFObject = NULL;
+  _hasCustomReader = false;
+  _isString = false;
+  setName(name);
+  setType(type);
+  isDimension = false;
+}
+
+CDF::Variable::Variable() {
+  isDimension = false;
+  data = NULL;
+  currentSize = 0;
+  currentType = CDF_NONE;
+  nativeType = CDF_NONE;
+  cdfReaderPointer = NULL;
+  parentCDFObject = NULL;
+  _hasCustomReader = false;
+  _isString = false;
+}
+
+CDF::Variable::~Variable() {
+  freeData();
+  for (size_t j = 0; j < attributes.size(); j++) {
+    if (attributes[j] != NULL) {
+      delete attributes[j];
+      attributes[j] = NULL;
+    }
+  }
+  attributes.clear();
+
+  for (size_t j = 0; j < cdfObjectList.size(); j++) {
+    if (cdfObjectList[j] != NULL) {
+      delete cdfObjectList[j];
+      cdfObjectList[j] = NULL;
+    }
+  }
+}
+
+void CDF::Variable::freeData() {
+  if (data != nullptr) {
+    if (currentType == CDF_STRING) {
+      char **vardata = (char **)this->data;
+      for (size_t j = 0; j < getSize(); j++) {
+        free(vardata[j]);
+        vardata[j] = nullptr;
+      }
+    }
+    CDF::freeData(&data);
+    data = nullptr;
+  }
+  setSize(0);
+}
+
+CDFType CDF::Variable::getType() { return currentType; };
+
+CDFType CDF::Variable::getNativeType() { return nativeType; };
+
+void CDF::Variable::setType(CDFType type) {
+  currentType = type;
+  if (nativeType == CDF_NONE) nativeType = type;
+};
+
+bool CDF::Variable::isString() { return _isString; }
+
+bool CDF::Variable::isString(bool isString) {
+  _isString = isString;
+  return _isString;
+}
+
+void CDF::Variable::setName(const char *value) {
+  name.copy(value);
+  // TODO Implement this correctly in readvariabledata....
+  if (orgName.length() == 0) orgName.copy(value);
+}
+
+void CDF::Variable::setSize(size_t size) { currentSize = size; }
+
+size_t CDF::Variable::getSize() { return currentSize; }
+
+CDF::Attribute *CDF::Variable::getAttribute(const char *name) const {
+  Attribute *a = getAttributeNE(name);
+  if (a == nullptr) {
+    throw(CDF_E_ATTNOTFOUND);
+  }
+  return a;
+}
+
+CDF::Attribute *CDF::Variable::getAttributeNE(const char *name) const {
+  for (size_t j = 0; j < attributes.size(); j++) {
+    if (attributes[j]->name.equals(name)) {
+      return attributes[j];
+    }
+  }
+  return nullptr;
+}
+
+/**
+ * Returns the dimension for given name. Throws error code  when something goes wrong
+ * @param name The name of the dimension to look for
+ * @return Pointer to the dimension
+ */
+CDF::Dimension *CDF::Variable::getDimension(const char *name) {
+  for (size_t j = 0; j < dimensionlinks.size(); j++) {
+    if (dimensionlinks[j]->name.equals(name)) {
+      return dimensionlinks[j];
+    }
+  }
+  throw(CDF_E_DIMNOTFOUND);
+  return NULL;
+}
+
+CDF::Dimension *CDF::Variable::getDimensionIgnoreCase(const char *name) {
+  for (size_t j = 0; j < dimensionlinks.size(); j++) {
+    if (dimensionlinks[j]->name.equalsIgnoreCase(name)) {
+      return dimensionlinks[j];
+    }
+  }
+  throw(CDF_E_DIMNOTFOUND);
+  return NULL;
+}
+
+CDF::Dimension *CDF::Variable::getDimensionNE(const char *name) {
+  try {
+    return getDimension(name);
+  } catch (int e) {
+    return NULL;
+  }
+}
+
+int CDF::Variable::getDimensionIndexNE(const char *name) {
+  try {
+    return getDimensionIndex(name);
+  } catch (int e) {
+  }
+  return -1;
+}
+
+int CDF::Variable::getDimensionIndex(const char *name) {
+  for (size_t j = 0; j < dimensionlinks.size(); j++) {
+    if (dimensionlinks[j]->name.equals(name)) {
+      return j;
+    }
+  }
+  throw(CDF_E_DIMNOTFOUND);
+}
+
+int CDF::Variable::addAttribute(Attribute *attr) {
+  attributes.push_back(attr);
+  return 0;
+}
+
+int CDF::Variable::removeAttribute(const char *name) {
+  for (size_t j = 0; j < attributes.size(); j++) {
+    if (attributes[j]->name.equals(name)) {
+      delete attributes[j];
+      attributes[j] = NULL;
+      attributes.erase(attributes.begin() + j);
+    }
+  }
+  return 0;
+}
+
+int CDF::Variable::removeAttributes() {
+  for (size_t j = 0; j < attributes.size(); j++) {
+    delete attributes[j];
+    attributes[j] = NULL;
+  }
+  attributes.clear();
+  return 0;
+}
+
+int CDF::Variable::setAttribute(const char *attrName, CDFType attrType, const void *attrData, size_t attrLen) {
+  Attribute *attr;
+  try {
+    attr = getAttribute(attrName);
+  } catch (...) {
+    attr = new Attribute();
+    attr->name.copy(attrName);
+    addAttribute(attr);
+  }
+  attr->type = attrType;
+  attr->setData(attrType, attrData, attrLen);
+  return 0;
+}
+
+int CDF::Variable::setAttributeText(const char *attrName, const char *attrString, size_t strLen) {
+  size_t attrLen = strLen + 1;
+  char *attrData = new char[attrLen];
+  memcpy(attrData, attrString, strLen);
+  attrData[strLen] = '\0';
+  int retStat = setAttribute(attrName, CDF_CHAR, attrData, attrLen);
+  delete[] attrData;
+  return retStat;
+}
+int CDF::Variable::setAttributeText(const char *attrName, const char *attrString) {
+  size_t attrLen = strlen(attrString);
+  char *attrData = new char[attrLen];
+  memcpy(attrData, attrString, attrLen);
+  int retStat = setAttribute(attrName, CDF_CHAR, attrData, attrLen);
+  delete[] attrData;
+  return retStat;
+}
+
+int CDF::Variable::setData(CDFType type, const void *dataToSet, size_t dataLength) {
+  freeData();
+  currentSize = dataLength;
+  this->currentType = type;
+  this->nativeType = type;
+  CDF::allocateData(type, &data, currentSize);
+  if (type == CDF_CHAR || type == CDF_UBYTE || type == CDF_BYTE) memcpy(data, dataToSet, currentSize);
+  if (type == CDF_SHORT || type == CDF_USHORT) memcpy(data, dataToSet, currentSize * sizeof(short));
+  if (type == CDF_INT || type == CDF_UINT) memcpy(data, dataToSet, currentSize * sizeof(int));
+  if (type == CDF_INT64 || type == CDF_UINT64) memcpy(data, dataToSet, currentSize * sizeof(long));
+  if (type == CDF_FLOAT) memcpy(data, dataToSet, currentSize * sizeof(float));
+  if (type == CDF_DOUBLE) {
+    memcpy(data, dataToSet, currentSize * sizeof(double));
+  }
+  return 0;
+}

@@ -403,8 +403,9 @@ int updateMetaDataTable(CDataSource *dataSource) {
   metadataLayer->layer = dataSource->cfgLayer;
   metadataLayer->srvParams = dataSource->srvParams;
   metadataLayer->dataSource = dataSource;
-  populateMetadataLayerStruct(metadataLayer, false);
-  storemetadataLayerIntoMetadataDb(metadataLayer);
+  metadataLayer->fileName = dataSource->headerFilename;
+  int statusA = populateMetadataLayerStruct(metadataLayer, false);
+  int statusB = storemetadataLayerIntoMetadataDb(metadataLayer);
   delete metadataLayer;
-  return 0;
+  return statusA == 0 && statusB == 0 ? 0 : 1;
 }

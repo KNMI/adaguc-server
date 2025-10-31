@@ -24,6 +24,7 @@
  ******************************************************************************/
 
 #include "CCDFTypes.h"
+#include <CDebugger.h>
 
 // DEF_ERRORMAIN()
 
@@ -58,6 +59,7 @@ int CDF::allocateData(CDFType type, void **p, size_t length) {
     // CDBError("In CDF::allocateData: Unknown type");
     return 1;
   }
+
   *p = malloc(length * typeSize);
 
   if (*p == NULL) {
@@ -66,10 +68,12 @@ int CDF::allocateData(CDFType type, void **p, size_t length) {
   }
 
   if (type == CDF_STRING) {
+    char **data = (char **)*p;
     for (size_t j = 0; j < length; j++) {
-      ((char **)*p)[j] = NULL;
+      data[j] = nullptr;
     }
   }
+
   return 0;
 }
 
