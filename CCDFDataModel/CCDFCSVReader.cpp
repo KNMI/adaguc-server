@@ -330,10 +330,7 @@ int CDFCSVReader::open(const char *fileName) {
   return 0;
 }
 
-int CDFCSVReader::close() {
-  CDBDebug("Closing CSV reader");
-  return 0;
-}
+int CDFCSVReader::close() { return 0; }
 
 int CDFCSVReader::_readVariableData(CDF::Variable *varToRead, CDFType type) {
   if (this->csvLines.size() < 2) {
@@ -348,7 +345,9 @@ int CDFCSVReader::_readVariableData(CDF::Variable *varToRead, CDFType type) {
   varToRead->currentType = type;
   varToRead->allocateData(varSize);
 
-  CDF::fill(varToRead->data, varToRead->currentType, NAN, varToRead->getSize());
+  if (varToRead->currentType != CDF_STRING) {
+    CDF::fill(varToRead->data, varToRead->currentType, NAN, varToRead->getSize());
+  }
 
   for (size_t j = (1 + this->headerStartsAtLine); j < this->csvLines.size(); j++) {
     size_t varPointer = j - (1 + this->headerStartsAtLine);
@@ -370,8 +369,13 @@ int CDFCSVReader::_readVariableData(CDF::Variable *varToRead, CDFType type) {
         if (var->currentType == CDF_STRING) {
           const char *stringToAdd = csvColumns[c].c_str();
           size_t length = strlen(stringToAdd);
-          ((char **)var->data)[varPointer] = (char *)malloc(length + 1); // Is never freed? Maybe use stack instead
-          snprintf(((char **)var->data)[varPointer], length + 1, "%s", stringToAdd);
+          char **stringDataArray = ((char **)varToRead->data);
+          if (stringDataArray[varPointer] != nullptr) {
+            free(stringDataArray[varPointer]);
+            stringDataArray[varPointer] = nullptr;
+          }
+          ((char **)varToRead->data)[varPointer] = (char *)malloc(length + 1);
+          snprintf(stringDataArray[varPointer], length + 1, "%s", stringToAdd);
         }
         if (var->currentType == CDF_INT) {
           ((int *)var->data)[varPointer] = CT::string(csvColumns[c].c_str()).toInt();

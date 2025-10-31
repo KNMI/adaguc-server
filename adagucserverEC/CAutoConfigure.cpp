@@ -559,7 +559,7 @@ int CAutoConfigure::justLoadAFileHeader(CDataSource *dataSource) {
       CDBError("Unable to getCDFObjectHeader for %s ", foundFileName.c_str());
       throw(__LINE__);
     }
-    dataSource->attachCDFObject(cdfObject);
+    dataSource->attachCDFObject(cdfObject, false);
   } catch (int linenr) {
     CDBError("Returning from line %d", linenr);
     dataSource->detachCDFObject();

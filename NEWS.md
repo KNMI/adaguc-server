@@ -1,3 +1,12 @@
+**Version 4.3.7 - 2025-10-29**
+
+- Scan and clean only layers which match given files
+- Updated python packages
+- Removed unused document cache
+- Tiles are now checked if they are already on the filesystem and otherwise re-generated
+- Tiles are first written to a temporary file and then moved to its final destination.
+- Single file scans are killed after 4minutes.
+
 **Version 4.3.6 - 2025-10-28**
 
 - PATCH revert replacing all spaces with underscores in dimension values.

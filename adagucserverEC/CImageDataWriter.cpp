@@ -3258,22 +3258,7 @@ int CImageDataWriter::end() {
   return status;
 }
 float CImageDataWriter::getValueForColorIndex(CDataSource *dataSource, int index) {
-  //   if(dataSource->stretchMinMax){
-  //     if(dataSource->stretchMinMaxDone == false){
-  //     if(dataSource->statistics==NULL){
-  //       dataSource->statistics = new CDataSource::Statistics();
-  //       dataSource->statistics->calculate(dataSource);
-  //     }
-  //     float minValue=(float)dataSource->statistics->getMinimum();
-  //     float maxValue=(float)dataSource->statistics->getMaximum();
-  //    // CDBDebug("%f %f",minValue,maxValue);
-  //     //maxValue+=10;
-  //     float ls=240/(maxValue-minValue);
-  //     float lo=-(minValue*ls);
-  //     styleConfiguration->legendScale=ls;
-  //     styleConfiguration->legendOffset=lo;
-  //
-  //     //Check for infinities
+
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   if (styleConfiguration->legendScale != styleConfiguration->legendScale || styleConfiguration->legendScale == INFINITY || styleConfiguration->legendScale == NAN ||
       styleConfiguration->legendScale == 0.0 || styleConfiguration->legendScale == -INFINITY || styleConfiguration->legendOffset != styleConfiguration->legendOffset ||
@@ -3281,10 +3266,7 @@ float CImageDataWriter::getValueForColorIndex(CDataSource *dataSource, int index
     styleConfiguration->legendScale = 240.0;
     styleConfiguration->legendOffset = 0;
   }
-  //     //CDBDebug("max=%f; min=%f",maxValue,minValue);
-  //     //CDBDebug("scale=%f; offset=%f",ls,lo);
-  //     }
-  //   }
+
   float v = index;
   v -= styleConfiguration->legendOffset;
   v /= styleConfiguration->legendScale;

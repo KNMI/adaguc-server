@@ -84,6 +84,24 @@ int CDFObject::close() {
   reader = NULL;
 }
 
+CDF::Variable *CDFObject::getVar(CT::string name) {
+  if (name.equals("NC_GLOBAL")) {
+    return this;
+  }
+  auto it = std::find_if(variables.begin(), variables.end(), [name](CDF::Variable *a) { return a->name.equals(name); });
+  return it != variables.end() ? *it : nullptr;
+}
+
+CDF::Variable *CDFObject::getVariableNE(const char *name) { return getVar(name); }
+
+CDF::Variable *CDFObject::getVariable(const char *name) {
+  auto var = getVar(name);
+  if (var == nullptr) {
+    throw(CDF_E_VARNOTFOUND);
+  }
+  return var;
+}
+
 /**
  * Fill in the data variable based on the value of a global attribute
  * 2019-09-24: for now it parses timestamps of Sun Sep 22 13:23:18 2019 to epoch time.

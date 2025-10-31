@@ -96,7 +96,7 @@ public:
    * updated always.
    * @param scanFlags Scan flags parameters, e.g. CDBFILESCANNER_RESCAN can be set as flag.
    */
-  static int updatedb(CDataSource *dataSource, CT::string *tailPath, CT::string *_layerPathToScan, int scanFlags);
+  static int updatedb(CDataSource *dataSource, CT::string tailPath, CT::string _layerPathToScan, int scanFlags);
 
   /**
    *
