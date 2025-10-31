@@ -571,14 +571,8 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataL
 
       for (size_t lnr = 0; lnr < metadataLayerList->size(); lnr++) {
         MetadataLayer *layer = (*metadataLayerList)[lnr];
-#ifdef CXMLGEN_DEBUG
-        CDBDebug("Comparing %s == %s", layer->group.c_str(), groupKeys[groupIndex].c_str());
-#endif
 
         if (layer->layerMetadata.wmsgroup.equals(groupKeys[groupIndex])) {
-#ifdef CXMLGEN_DEBUG
-          CDBDebug("layer %d %s", groupDepth, layer->name.c_str());
-#endif
 
           if (layer->hasError != 0) {
             addErrorInXMLForMisconfiguredLayer(XMLDoc, layer);
@@ -1029,18 +1023,6 @@ int CXMLGen::OGCGetCapabilities(CServerParams *_srvParam, CT::string *XMLDocumen
     metadataLayer->srvParams = srvParam;
     populateMetadataLayerStruct(metadataLayer, true);
   }
-
-#ifdef CXMLGEN_DEBUG
-  if (metadataLayerList.size() > 0) {
-    CT::string finalLayerList;
-    finalLayerList = metadataLayerList[0]->name.c_str();
-    for (size_t j = 1; j < metadataLayerList.size(); j++) {
-      finalLayerList.printconcat(",%s", metadataLayerList[j]->name.c_str());
-    }
-    CDBDebug("Final layerlist: \"%s\"", finalLayerList.c_str());
-  }
-
-#endif
 
   serviceInfo.print("ADAGUCServer version %s, of %s %s", ADAGUCSERVER_VERSION, __DATE__, __TIME__);
   // Generate an XML document on basis of the information gathered above.

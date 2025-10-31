@@ -135,6 +135,8 @@ add_library(
     CDataPostProcessors/CDataPostProcessor_FilterDataObjects.cpp
     CDataPostProcessors/CDataPostProcessor_MetadataVariable.h
     CDataPostProcessors/CDataPostProcessor_MetadataVariable.cpp    
+    CDataPostProcessors/CDataPostProcessor_PointsFromGrid.h
+    CDataPostProcessors/CDataPostProcessor_PointsFromGrid.cpp    
     CDataReader.cpp
     CDataReader.h
     CDataSource.cpp
@@ -165,6 +167,8 @@ add_library(
     CImgRenderStippling.h
     CImgRenderers/CImgRenderPoints.cpp
     CImgRenderers/CImgRenderPoints.h
+    CImgRenderers/getVectorStyle.h
+    CImgRenderers/getVectorStyle.cpp
     CImgWarpBilinear.cpp
     CImgWarpBilinear.h
     CImgWarpBoolean.cpp

@@ -218,7 +218,7 @@ public:
     this->v = v;
     this->lon = lon;
     this->lat = lat;
-    rotation = 0;
+    rotation = NAN;
   }
   /**
    * @brief Construct a new Point with a value. Both screenspace coordinates, lat/lon coordinates, rotation and radius need to be provided.

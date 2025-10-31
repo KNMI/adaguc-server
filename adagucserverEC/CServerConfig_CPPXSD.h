@@ -28,6 +28,7 @@
 #include "CXMLSerializerInterface.h"
 #include "CDirReader.h"
 #include "CColor.h"
+#include <cfloat>
 
 // f 102 >15
 // F 70 > 15
@@ -184,18 +185,26 @@ public:
 
   class XMLE_Vector : public CXMLObjectInterface {
   public:
-    XMLE_Vector() { attr.scale = 1.0; }
+    XMLE_Vector() {
+      attr.scale = 1.0;
+      attr.outlinewidth = 4.5;
+      attr.linewidth = 1.0;
+      attr.fontSize = 12;
+      attr.min = -DBL_MAX;
+      attr.max = DBL_MAX;
+    }
     class Cattr {
     public:
-      CT::string linecolor, linewidth, plotstationid, vectorstyle, textformat, plotvalue;
+      CT::string linecolor, plotstationid, vectorstyle, textformat, plotvalue, outlinecolor, textcolor;
       float scale;
+      double min, max, outlinewidth, fontSize, linewidth;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
       if (equals("linecolor", attrname)) {
         attr.linecolor.copy(attrvalue);
         return;
       } else if (equals("linewidth", attrname)) {
-        attr.linewidth.copy(attrvalue);
+        attr.linewidth = parseDouble(attrvalue);
         return;
       } else if (equals("scale", attrname)) {
         attr.scale = parseFloat(attrvalue);
@@ -211,6 +220,24 @@ public:
         return;
       } else if (equals("plotvalue", attrname)) {
         attr.plotvalue.copy(attrvalue);
+        return;
+      } else if (equals("min", attrname)) {
+        attr.min = parseDouble(attrvalue);
+        return;
+      } else if (equals("max", attrname)) {
+        attr.max = parseDouble(attrvalue);
+        return;
+      } else if (equals("fontsize", attrname)) {
+        attr.fontSize = parseDouble(attrvalue);
+        return;
+      } else if (equals("outlinewidth", attrname)) {
+        attr.outlinewidth = parseDouble(attrvalue);
+        return;
+      } else if (equals("outlinecolor", attrname)) {
+        attr.outlinecolor.copy(attrvalue);
+        return;
+      } else if (equals("textcolor", attrname)) {
+        attr.textcolor.copy(attrvalue);
         return;
       }
     }

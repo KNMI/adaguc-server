@@ -27,29 +27,13 @@
 #define CIMGRENDERPOINTS_H
 #include "CImageWarperRenderInterface.h"
 #include <set>
+
 class CImgRenderPoints : public CImageWarperRenderInterface {
 private:
   DEF_ERRORFUNCTION();
   CT::string settings;
 
-  class SimpleSymbol {
-  public:
-    class Coordinate {
-    public:
-      Coordinate(float x, float y) {
-        this->x = x;
-        this->y = y;
-      }
-      float x, y;
-    };
-    std::vector<Coordinate> coordinates;
-  };
-
-  std::map<std::string, SimpleSymbol> SimpleSymbolMap;
-
-  bool drawVector;
   bool drawPoints;
-  bool drawBarb;
   bool drawDiscs;
   bool drawVolume;
   bool drawSymbol;
@@ -73,14 +57,6 @@ private:
   CColor drawPointLineColor;
   CColor defaultColor;
 
-  CColor drawVectorLineColor;
-  float drawVectorLineWidth;
-  bool drawVectorPlotStationId;
-  bool drawVectorPlotValue;
-  float drawVectorVectorScale;
-  CT::string drawVectorTextFormat;
-  CT::string drawVectorVectorStyle;
-
   std::set<std::string> usePoints;
   std::set<std::string> skipPoints;
   bool useFilter;
@@ -88,8 +64,8 @@ private:
   bool useDrawPointTextColor;
   bool isRadiusAndValue;
 
-  void renderSinglePoints(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, CServerConfig::XMLE_Point *pointConfig);
-  void renderVectorPoints(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration);
+  void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration,
+                          CServerConfig::XMLE_Point *pointConfig);
 
 public:
   void render(CImageWarper *, CDataSource *, CDrawImage *);

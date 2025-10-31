@@ -333,7 +333,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
 
   CDFObject *cdfObject0 = dataSource->getDataObject(0)->cdfObject;
   if (CConvertADAGUCPoint::checkIfADAGUCPointFormat(cdfObject0) == 1) return 1;
-    // CDBDebug("THIS IS ADAGUC POINT DATA");
+  // CDBDebug("THIS IS ADAGUC POINT DATA");
 
 #ifdef MEASURETIME
   StopWatch_Stop("Reading data");
@@ -921,44 +921,36 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
 
             if (pointVar[d]->currentType == CDF_FLOAT) {
               float val = ((float *)pointVar[d]->data)[pPoint];
+              dataObjects[d]->points.push_back(PointDVWithLatLon(dlon, dlat, lon, lat, val, rotation, discRadiusX, discRadiusY)); //,id));
+              lastPoint = &(dataObjects[d]->points.back());
+              if (pointID != NULL) {
 
-              if (val != fill) {
-
-                // CDBDebug("P %d %d %f",dlon,dlat,val);
-
-                dataObjects[d]->points.push_back(PointDVWithLatLon(dlon, dlat, lon, lat, val, rotation, discRadiusX, discRadiusY)); //,id));
-                lastPoint = &(dataObjects[d]->points.back());
-                if (pointID != NULL) {
-
-                  const char *key = pointID->name.c_str();
-                  const char *description = key;
-                  try {
-                    description = (const char *)pointID->getAttribute("long_name")->data;
-                  } catch (int e) {
-                  }
-                  lastPoint->paramList.push_back(CKeyValue(key, description, ((const char **)pointID->data)[pGeo]));
+                const char *key = pointID->name.c_str();
+                const char *description = key;
+                try {
+                  description = (const char *)pointID->getAttribute("long_name")->data;
+                } catch (int e) {
                 }
-                if (doDrawCircle) {
-                  drawCircle(sdata, val, dataSource->dWidth, dataSource->dHeight, dlon - 1, dlat, int(discRadius));
-                }
-                if (doDrawLinearInterpolated && roadIdData != NULL) {
-                  if (hasPrevLatLon) {
-                    float roadId = roadIdData[pPoint];
-                    if (roadId == prevRoadId && val == val && prevVal == prevVal) {
-                      lineInterpolated(sdata, dataSource->dWidth, dataSource->dHeight, prevLon, prevLat, dlon, dlat, prevVal, val);
-                    }
-                    prevRoadId = roadId;
-                  }
-                }
-                prevLon = dlon;
-                prevLat = dlat;
-                ;
-                prevVal = val;
-
-                hasPrevLatLon = true;
-              } else {
-                hasPrevLatLon = false;
+                lastPoint->paramList.push_back(CKeyValue(key, description, ((const char **)pointID->data)[pGeo]));
               }
+              if (doDrawCircle) {
+                drawCircle(sdata, val, dataSource->dWidth, dataSource->dHeight, dlon - 1, dlat, int(discRadius));
+              }
+              if (doDrawLinearInterpolated && roadIdData != NULL) {
+                if (hasPrevLatLon) {
+                  float roadId = roadIdData[pPoint];
+                  if (roadId == prevRoadId && val == val && prevVal == prevVal) {
+                    lineInterpolated(sdata, dataSource->dWidth, dataSource->dHeight, prevLon, prevLat, dlon, dlat, prevVal, val);
+                  }
+                  prevRoadId = roadId;
+                }
+              }
+              prevLon = dlon;
+              prevLat = dlat;
+              ;
+              prevVal = val;
+
+              hasPrevLatLon = true;
             }
 
             if (hasTimeValuePerObs && lastPoint != NULL) {

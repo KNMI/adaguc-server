@@ -353,13 +353,15 @@ void CDrawImage::drawVector(int x, int y, double direction, double strength, CCo
   hx3 = wx1 + (cos(direction - 2.5) + cos(direction + 2.5)) / 2 * (strength / 2.8f);
   hy3 = wy1 - (sin(direction + 2.5) + sin(direction - 2.5)) / 2 * (strength / 2.8f);
 
-  // line(wx1,wy1,hx1,hy1,linewidth,color);
-  // line(wx1,wy1,hx2,hy2,linewidth,color);
+  // Render triangle
+  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
+    cairo->setColor(color.r, color.g, color.b, color.a);
+    cairo->setFillColor(color.r, color.g, color.b, color.a);
+  }
   poly(hx1, hy1, wx1, wy1, hx2, hy2, linewidth, color, false);
-  //  line(wx1,wy1,wx2,wy2,linewidth,color);
+
+  // Render shaft
   line(wx2, wy2, hx3, hy3, linewidth, color);
-  //  setPixelIndexed(x, y, 252);
-  // circle(x+1, y+1, 1, color);
 }
 
 #define xCor(l, d) ((int)(l * cos(d) + 0.5))
@@ -466,19 +468,22 @@ void CDrawImage::_drawBarbGd(int x, int y, double direction, double strength, CC
   line(wx1, wy1, wx2, wy2, lineWidth, color);
 }
 
-void CDrawImage::drawBarb(int x, int y, double direction, double viewDirCorrection, double strength, CColor color, float lineWidth, bool toKnots, bool flip, bool drawText) {
+void CDrawImage::drawBarb(int x, int y, double direction, double viewDirCorrection, double strength, CColor barbColor, float lineWidth, bool toKnots, bool flip, bool drawText, double fontSize,
+                          CColor textColor, CColor outlineColor, double outlineWidth) {
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
-    _drawBarbGd(x, y, direction + viewDirCorrection, strength, color, lineWidth, toKnots, flip);
+    _drawBarbGd(x, y, direction + viewDirCorrection, strength, barbColor, lineWidth, toKnots, flip);
     if (drawText) {
       // TODO: DRAW TEXT
     }
   }
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    CColor outLineColor = CColor(255, 255, 255, 255);
+
     // If no linewidth, no outline should be drawn, set inner barblineWidth to 0.8 to ensure we draw a barb
-    bool drawOutline = lineWidth == 0 ? false : true;
-    float barblineWidth = lineWidth == 0 ? 0.8 : lineWidth;
-    cairo->drawBarb(x, y, direction, viewDirCorrection, strength, color, outLineColor, drawOutline, barblineWidth, toKnots, flip, drawText);
+
+    double barblineWidth = lineWidth == 0 ? 0.8 : lineWidth;
+    double barbOutlineWidth = lineWidth == 0 ? 0 : outlineWidth;
+
+    cairo->drawBarb(x, y, direction, viewDirCorrection, strength, barbColor, outlineColor, barblineWidth, toKnots, flip, drawText, fontSize, textColor, barbOutlineWidth);
   }
 }
 

@@ -38,6 +38,7 @@ simple unit conversions from Kelvin to Celsius.
 16. *CDDPUVComponents*        `algorithm="convert_uv_components"`: Data postprocessor to transform grid relative x and y components of a vector to relative to north components. In addition windspeed and winddirection is derived. This uses a jacobian transformation.
 17. *CDDPFilterDataObjects*   `algorithm="filter_dataobjects"`: Filter out data objects from the GetMap and GetFeatureInfo responses. E.g. to hide components you do not want to show.
 18. *CDDPMetadataVariable*    `algorithm="metadata_variable"`: Add extra metadata to the CDF Data model.
+19.  *CDataPostProcessor_PointsFromGrid*  `algorithm="pointsfromgrid"`: Extracts point from a grid and makes them available for the point renderer
 
 
 
@@ -470,3 +471,16 @@ Usage:
 ```xml
 <DataPostProc algorithm="metadata_variable" variable="direction_component" name="wind_from_direction" units="degrees" standard_name="wind wind_from_direction" long_name="Wind direction" />
 ```
+
+
+## 19. *CDataPostProcessor_PointsFromGrid*   `algorithm="pointsfromgrid"`
+
+Extracts point from a grid and makes them available for the point renderer
+
+```xml
+<DataPostProc algorithm="pointsfromgrid" select="speed_component,direction_component" a="50"/>
+```
+
+Attributes:
+- select: Which data objects to sample from the Layer
+- a: Optionally apply thinning in pixels, points will be no closer than `a` pixels in the GetMap response.
