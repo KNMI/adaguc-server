@@ -99,6 +99,17 @@ class TestWMSPolylineRenderer(unittest.TestCase):
         self.assertEqual(data.getvalue(), AdagucTestTools(
         ).readfromfile(self.expectedoutputsspath + filename))
 
+    def test_WMSPointRenderer_usgs_earthquakes_geojson_GetFeatureInfoJSONOutsidePoint(self):
+        env = {'ADAGUC_CONFIG': ADAGUC_PATH +
+           "/data/config/adaguc.autoresource.xml"}
+
+        filename="test_WMSPointRenderer_usgs_earthquakes_geojson_GetFeatureInfoJSONOutsidePoint.json"
+        status, data, headers = AdagucTestTools().runADAGUCServer("source=usgs_earthquakes.geojson&&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=mag&QUERY_LAYERS=mag&CRS=EPSG%3A3857&BBOX=-15726290.605935914,1725196.0890940144,-10964171.442404782,6983730.098762937&WIDTH=825&HEIGHT=911&I=248&J=368&FORMAT=image/gif&INFO_FORMAT=application/json&STYLES=&", env=env)
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools(
+        ).readfromfile(self.expectedoutputsspath + filename))
+
 
     def test_WMSPointRenderer_usgs_earthquakes_geojson_auto_nearest_GetLegendGraphic(self):
         env = {'ADAGUC_CONFIG': ADAGUC_PATH +

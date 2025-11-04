@@ -769,8 +769,6 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
   }
 }
 
-int CImgRenderPoints::set(const char *values) { return 0; }
-
 int CImgRenderPoints::getPixelIndexForValue(CDataSource *dataSource, float val) {
   bool isNodata = false;
 

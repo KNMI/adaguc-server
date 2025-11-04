@@ -67,7 +67,7 @@ private:
 
 public:
   void render(CImageWarper *, CDataSource *, CDrawImage *);
-  int set(const char *);
+  int set(const char *) { return 0; }; // Deprecated.
   int getPixelIndexForValue(CDataSource *dataSource, float val);
   CColor getPixelColorForValue(CDrawImage *drawImage, CDataSource *dataSource, float val);
 };

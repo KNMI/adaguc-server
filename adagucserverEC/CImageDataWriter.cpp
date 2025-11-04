@@ -1017,7 +1017,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
 
                     if (pixelDistance > 30) {
                       hasData = false;
-                      element->value = "No data";
+                      element->value = "nodata";
                       return 0;
                     };
                   }
