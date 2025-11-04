@@ -101,30 +101,6 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
     ((double *)varY->data)[0] = dfBBOX[1];
     ((double *)varY->data)[1] = dfBBOX[3];
 
-    // For time dimension
-    CDF::Dimension *dimTime = new CDF::Dimension();
-    dimTime->name = "time";
-    dimTime->setSize(10); // 24 * 6); // Last day every 10 minutes
-    newDataObject->cdfObject->addDimension(dimTime);
-
-    // Define the Y variable using the X dimension
-    CDF::Variable *varTime = new CDF::Variable();
-    varTime->setType(CDF_DOUBLE);
-    varTime->name.copy("time");
-    varTime->isDimension = true;
-    varTime->dimensionlinks.push_back(dimTime);
-    newDataObject->cdfObject->addVariable(varTime);
-    varTime->setAttributeText("units", "seconds since 1970");
-    CTime *epochCTime = CTime::GetCTimeEpochInstance();
-    CDF::allocateData(CDF_DOUBLE, &varTime->data, dimTime->length);
-
-    for (int off = 0; off < 10; off++) {
-      // Every 10 minutes for a day
-      double timestep = epochCTime->quantizeTimeToISO8601(currentOffset - off * 60 * 10, "PT30M", "low");
-      ((double *)varTime->data)[off] = timestep; // timestep;
-    }
-
-    dataSource->getDataObject(0)->cdfVariable->dimensionlinks.push_back(dimTime);
     dataSource->formatConverterActive = true;
     // Define the Solar Terminator variable using the defined dimensions, and set the right attributes
     CDF::Variable *solTVar = new CDF::Variable();
