@@ -616,6 +616,7 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   if (styleConfiguration == NULL || styleConfiguration->styleConfig == NULL) {
+    CDBDebug("Note: No styleConfiguration. Skipping.");
     return;
   }
   CServerConfig::XMLE_Style *styleConfig = styleConfiguration->styleConfig;
@@ -704,30 +705,24 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
       isRadiusAndValue = true;
     }
 
-    //   CDBDebug("drawPoints=%d drawText=%d drawBarb=%d drawVector=%d drawVolume=%d drawSymbol=%d", drawPoints, drawText, drawBarb, drawVector, drawVolume, drawSymbol);
-
-    // CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-    if (styleConfiguration != NULL) {
-
-      if (styleConfiguration->styleConfig != NULL) {
-        CServerConfig::XMLE_Style *s = styleConfiguration->styleConfig;
-        if (s->FilterPoints.size() == 1) {
-          if (s->FilterPoints[0]->attr.use.empty() == false) {
-            CT::string filterPointsUse = s->FilterPoints[0]->attr.use.c_str();
-            std::vector<CT::string> use = filterPointsUse.splitToStack(",");
-            for (std::vector<CT::string>::iterator it = use.begin(); it != use.end(); ++it) {
-              //            CDBDebug("adding %s to usePoints", it->c_str());
-              usePoints.insert(it->c_str());
-            }
-            useFilter = true;
+    if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL) {
+      CServerConfig::XMLE_Style *s = styleConfiguration->styleConfig;
+      if (s->FilterPoints.size() == 1) {
+        if (s->FilterPoints[0]->attr.use.empty() == false) {
+          CT::string filterPointsUse = s->FilterPoints[0]->attr.use.c_str();
+          std::vector<CT::string> use = filterPointsUse.splitToStack(",");
+          for (std::vector<CT::string>::iterator it = use.begin(); it != use.end(); ++it) {
+            //            CDBDebug("adding %s to usePoints", it->c_str());
+            usePoints.insert(it->c_str());
           }
-          if (s->FilterPoints[0]->attr.skip.empty() == false) {
-            CT::string filterPointsSkip = s->FilterPoints[0]->attr.skip.c_str();
-            useFilter = true;
-            std::vector<CT::string> skip = filterPointsSkip.splitToStack(",");
-            for (std::vector<CT::string>::iterator it = skip.begin(); it != skip.end(); ++it) {
-              skipPoints.insert(it->c_str());
-            }
+          useFilter = true;
+        }
+        if (s->FilterPoints[0]->attr.skip.empty() == false) {
+          CT::string filterPointsSkip = s->FilterPoints[0]->attr.skip.c_str();
+          useFilter = true;
+          std::vector<CT::string> skip = filterPointsSkip.splitToStack(",");
+          for (std::vector<CT::string>::iterator it = skip.begin(); it != skip.end(); ++it) {
+            skipPoints.insert(it->c_str());
           }
         }
       }
@@ -739,17 +734,16 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
 
     if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL) {
       // TODO: Currently thin needs to be mentioned in the rendermethod to allow thinning. We want to get rid of this. We need to adjust configs on geoservices and geoweb first.
-      if (settings.indexOf("thin") != -1) {
-        CServerConfig::XMLE_Style *s = styleConfiguration->styleConfig;
-        if (s->Thinning.size() == 1) {
-          if (s->Thinning[0]->attr.radius.empty() == false) {
-            doThinning = true;
-            thinningRadius = s->Thinning[0]->attr.radius.toInt();
-          }
+      CServerConfig::XMLE_Style *s = styleConfiguration->styleConfig;
+      if (s->Thinning.size() == 1) {
+        if (s->Thinning[0]->attr.radius.empty() == false) {
+          doThinning = true;
+          thinningRadius = s->Thinning[0]->attr.radius.toInt();
         }
       }
     }
     auto thinnedPointIndexList = doThinningGetIndices(dataSource->getDataObject(0)->points, doThinning, thinningRadius, usePoints, useFilter);
+
     renderSinglePoints(thinnedPointIndexList, warper, dataSource, drawImage, styleConfiguration, pointConfig);
   }
 
@@ -775,11 +769,7 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
   }
 }
 
-int CImgRenderPoints::set(const char *values) {
-
-  settings.copy(values);
-  return 0;
-}
+int CImgRenderPoints::set(const char *values) { return 0; }
 
 int CImgRenderPoints::getPixelIndexForValue(CDataSource *dataSource, float val) {
   bool isNodata = false;

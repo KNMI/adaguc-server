@@ -31,8 +31,6 @@
 class CImgRenderPoints : public CImageWarperRenderInterface {
 private:
   DEF_ERRORFUNCTION();
-  CT::string settings;
-
   bool drawPoints;
   bool drawDiscs;
   bool drawVolume;

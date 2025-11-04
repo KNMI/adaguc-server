@@ -51,3 +51,17 @@ void CoordinatesXYtoScreenXY(f8box &b, CGeoParams *geoParam) {
   CoordinatesXYtoScreenXY(b.left, b.top, geoParam);
   CoordinatesXYtoScreenXY(b.right, b.bottom, geoParam);
 }
+
+int findClosestPoint(std::vector<PointDVWithLatLon> &points, double lon_coordinate, double lat_coordinate) {
+  float closestDistance = 0;
+  int closestIndex = -1;
+  for (size_t j = 0; j < points.size(); j++) {
+    PointDVWithLatLon &point = points[j];
+    float distance = hypot(point.lon - lon_coordinate, point.lat - lat_coordinate);
+    if (distance < closestDistance || j == 0) {
+      closestIndex = j;
+      closestDistance = distance;
+    }
+  }
+  return closestIndex;
+}

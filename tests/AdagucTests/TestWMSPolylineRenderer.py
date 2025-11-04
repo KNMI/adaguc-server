@@ -47,7 +47,7 @@ class TestWMSPolylineRenderer(unittest.TestCase):
            "/data/config/adaguc.autoresource.xml"}
 
         filename="test_WMSPointRenderer_usgs_earthquakes_geojson_auto_nearest_GetMap.png"
-        status, data, headers = AdagucTestTools().runADAGUCServer("source=usgs_earthquakes.geojson&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=baselayer,mag&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=-21270915.530506067,-12592019.023145191,-1311264.2622161265,17664837.49309645&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&", env=env)
+        status, data, headers = AdagucTestTools().runADAGUCServer("source=usgs_earthquakes.geojson&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=baselayer,mag&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=-21270915.530506067,-12592019.023145191,-1311264.2622161265,17664837.49309645&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&", env=env,  showLog=True)
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
         self.assertEqual(data.getvalue(), AdagucTestTools(

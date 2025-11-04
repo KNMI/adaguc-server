@@ -70,7 +70,6 @@
 
   <Style name="temperature_thinned">
     <Legend fixed="true" tickinterval="2">wow.temperature</Legend>
-    <RenderMethod>pointthin</RenderMethod>
     <Min>-14</Min>
     <Max>39,33333333</Max> <!-- 39,33333333 = (240 / (234/(38 - -14))) - 14 -->
     <Thinning radius="140"/>

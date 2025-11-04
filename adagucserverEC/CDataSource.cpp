@@ -746,6 +746,12 @@ CStyleConfiguration *CDataSource::getStyle() {
         break;
       }
     }
+    // If not found, check for the style without rendermethod instead using startsWith.
+
+    auto it = std::find_if(_styles->begin(), _styles->end(), [styleName](CStyleConfiguration *a) { return a->styleCompositionName.startsWith(styleName); });
+    if (it != _styles->end()) {
+      _currentStyle = (*it);
+    }
 
     if (_currentStyle->styleIndex == -1) {
       int status = _currentStyle->makeStyleConfig(this);

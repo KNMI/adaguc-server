@@ -813,7 +813,6 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
     bool hasPrevLatLon = false;
 
     bool doDrawLinearInterpolated = dataSource->getStyle()->renderMethod & RM_POINT_LINEARINTERPOLATION;
-    bool doDrawCircle = dataSource->getStyle()->renderMethod & RM_NEAREST;
 
     for (int stationNr = 0; stationNr < numStations; stationNr++) {
       int pPoint = stationNr + 0; // dateDimIndex;//*numStations;
@@ -883,8 +882,8 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
              * With string and char (text) data, the float value is set to NAN and character data is put in the paramlist
              */
             if (pointVar[d]->currentType == CDF_STRING) {
-              float v = NAN;
-              // CDBDebug("pushing stationNr %d dateDimIndex %d,pPoint DIM %d",stationNr,dateDimIndex,pPoint);
+              float v = 0;
+              // CDBDebug("pushing stationNr %d dataobject %d,pPoint DIM %d (%d %d %f %f)", stationNr, d, pPoint, dlon, dlat, lon, lat);
               dataObjects[d]->points.push_back(PointDVWithLatLon(dlon, dlat, lon, lat, v)); //,((const char**)pointVar[d]->data)[pPoint]));
               lastPoint = &(dataObjects[d]->points.back());
               const char *key = pointVar[d]->name.c_str();
@@ -897,8 +896,6 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
               /* Get the last pushed point from the array and push the character text data in the paramlist */
               const char *b = ((const char **)pointVar[d]->data)[pPoint];
               lastPoint->paramList.push_back(CKeyValue(key, description, b));
-              float a = 0;
-              drawCircle(sdata, a, dataSource->dWidth, dataSource->dHeight, dlon - 1, dlat, int(discRadius));
             }
 
             if (pointVar[d]->currentType == CDF_CHAR) {
@@ -915,8 +912,6 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
               }
               /* Get the last pushed point from the array and push the character text data in the paramlist */
               lastPoint->paramList.push_back(CKeyValue(key, description, ((const char **)pointVar[d]->data)[pPoint]));
-              float a = 0;
-              drawCircle(sdata, a, dataSource->dWidth, dataSource->dHeight, dlon - 1, dlat, int(discRadius));
             }
 
             if (pointVar[d]->currentType == CDF_FLOAT) {
@@ -932,9 +927,6 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
                 } catch (int e) {
                 }
                 lastPoint->paramList.push_back(CKeyValue(key, description, ((const char **)pointID->data)[pGeo]));
-              }
-              if (doDrawCircle) {
-                drawCircle(sdata, val, dataSource->dWidth, dataSource->dHeight, dlon - 1, dlat, int(discRadius));
               }
               if (doDrawLinearInterpolated && roadIdData != NULL) {
                 if (hasPrevLatLon) {
