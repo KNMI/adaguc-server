@@ -2786,7 +2786,7 @@ class TestWMS(unittest.TestCase):
         )
         self.assertEqual(status, 0)
 
-        filename = "test_WMSGetLegendGrahic_SolarTerminator.png"
+        filename = "test_WMSGetLegendGraphic_SolarTerminator.png"
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "DATASET=solarterminator&SERVICE=WMS&&version=1.3.0&service=WMS&request=GetLegendGraphic&layer=solarterminator&format=image/png&STYLE=auto/nearest&layers=solarterminator&&&transparent=true&",
             env=env,
