@@ -156,7 +156,7 @@ int layerTypeLiveUpdateRender(CDataSource *incomingDataSource, CServerParams *sr
     obj->cdfVariable = solTVar;
     obj->cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
     dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), obj);
-    dataSource->attachCDFObject(cdfObject);
+    dataSource->attachCDFObject(cdfObject, true);
     cdfObject->attachCDFReader(CDF::Variable::CustomMemoryReaderInstance);
 
     // Add dummy step
