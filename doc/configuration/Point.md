@@ -13,7 +13,7 @@ Configuration of rendering point data
 | `fillcolor`     | string  | ""          | Color used for filling the point (hex like "#RRGGBB" or with alpha) |
 | `linecolor`     | string  | ""          | Color used for the edge of the circle (hex like "#RRGGBB" or with alpha) |
 | `pointstyle`    | string  | ""          | Required: Rendering style, e.g. "point", "disc", "volume", "symbol" or "zoomablepoint" |
-| `plotstationid` | string  | ""          | Show station id next to symbol (stored as string, e.g. "true"/"false") |
+| `plotstationid` | string  | "false"     | Show station id next to symbol (stored as string, e.g. "true"/"false") |
 | `plotvalue`     | string  | ""          | Show numeric value next to symbol (stored as string, e.g. "true"/"false") |
 | `textformat`    | string  | ""          | printf-style format used when plotvalue is enabled (e.g. "%1.0f"). |
 | `min`           | double  | -DBL_MAX    | Minimum data range for rendering |
@@ -26,7 +26,7 @@ Configuration of rendering point data
 | `anglestep`     | float   | 180         | Plotted values for point are `anglestep` degrees apart from eachother
 | `textradius`    | float   | 16          | Distance of text from point location
 | `discradius`    | float   | 8           | Draw disc at location
-| `dot`           | string  | ""          | Draw a point at the point coordinates (stored as string, e.g. "true"/"false")
+| `dot`           | string  | "false"     | Draw a point at the point coordinates (stored as string, e.g. "true"/"false")
 
 The Point element defines the rendering of point data.
 
@@ -182,3 +182,33 @@ it multiplies the magnitude variable with the discradius value.
 ```
 
 ![](pointstyle_radiusandvalue.png)
+
+
+## How to render (gridded) data values as points
+
+
+Render the data values from a (gridded) NetCDF file as points. Note the usage of `DataPostProc` to select the correct variable and the `Point` elements with different ranges for styling:
+
+From [adaguc.tests.pointrendering.xml](data/config/datasets/adaguc.tests.pointrendering.xml)
+```xml
+  <Style name="temperature_selectpoint">
+    <Legend fixed="true" tickinterval="2">wow.temperature</Legend>
+    <RenderMethod>nearest</RenderMethod>
+    <Min>-14</Min>
+    <Max>39,33333333</Max>
+
+    <!-- Use different disc/volume styling per range -->
+    <Point min="-10" max="10" pointstyle="disc"   discradius="40" fillcolor="#ffff00" textformat=" "/>
+    <Point min="13"  max="20" pointstyle="volume" discradius="25" fillcolor="#00ffff" textformat=" "/>
+
+    <!-- Use different text color/sizes per range -->
+    <Point min="-10" max="10" pointstyle="point" fontsize="10" discradius="0" textcolor="#0000ff" textformat="%0.0f" />
+    <Point min="10"  max="12" pointstyle="point" fontsize="25" discradius="0" textcolor="#555555" textformat="%0.0f" />
+    <Point min="12"  max="20" pointstyle="point" fontsize="40" discradius="0" textcolor="#ff5555" textformat="%0.0f" />
+
+    <!-- Select variable air-temperature-hagl to show in points -->
+    <DataPostProc algorithm="pointsfromgrid" select="air-temperature-hagl" a="20"/>
+  </Style>
+```
+
+<img src='../../tests/expectedoutputs/TestWMS/test_WMSGetMap_select_temperature_as_point_from_grid.png' width=400>

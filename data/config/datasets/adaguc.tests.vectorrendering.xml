@@ -52,15 +52,15 @@
 
     <RenderSettings renderhint="discreteclasses" />
 
-    <!-- 
+    <!--
       Extracts point from a grid and makes them available for the point renderer
       - select: Which data objects to sample from the Layer
       - a: Optionally apply thinning in pixels, points will be no closer than a pixels in the GetMap response.
     -->
     <DataPostProc algorithm="pointsfromgrid" select="speed_component,direction_component" a="50"/>
 
-    <!-- 
-      Use combination of nearest renderer and point renderer to render the windbarbs 
+    <!--
+      Use combination of nearest renderer and point renderer to render the windbarbs
       - nearest will render the grid via adagucserverEC/CImgWarpNearestNeighbour
       - point will render the points via adagucserverEC/CImgRenderers/CImgRenderPoints
     -->

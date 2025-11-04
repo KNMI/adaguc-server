@@ -1,4 +1,4 @@
-Vector (linecolor, linewidth,scale,vectorstyle,plotstationid,plotvalue,textformat, min, max, fontsize, outlinewidth, outlinecolor, textcolor)
+Vector (linecolor, linewidth,scale,vectorstyle,plotstationid,plotvalue,textformat, min, max, fontsize, outlinewidth, outlinecolor, textcolor, dot)
 ==================================================================================
 
 Back to [Configuration](./Configuration.md)
@@ -14,19 +14,20 @@ Purpose: holds configuration attributes for rendering vector/point (wind) symbol
 
 | Attribute     | Type    | Default     | Description |
 |---------------|---------|-------------|-------------|
-| linecolor     | string  | ""          | Color used for the vector/barb/disc (hex like "#RRGGBB" or with alpha) |
-| linewidth     | double  | 1.0         | Line width for vector or barb |
-| scale         | float   | 1.0         | Only for vector style: scale factor to convert speed to drawn length |
-| vectorstyle   | string  | ""          | Required: Rendering style, e.g. "disc", "vector", "barb" |
-| plotstationid | string  | ""          | Show station id next to symbol (stored as string, e.g. "true"/"false") |
-| plotvalue     | string  | ""          | Show numeric value next to symbol (stored as string, e.g. "true"/"false") |
-| textformat    | string  | ""          | printf-style format used when plotvalue is enabled (e.g. "%1.0f") |
-| min           | double  | -DBL_MAX    | Minimum data range for rendering |
-| max           | double  | DBL_MAX     | Maximum data range for rendering |
-| fontsize      | double  | 12          | Font size used when rendering text |
-| outlinewidth  | double  | 4.5         | Outline stroke width around text/symbols |
-| outlinecolor  | string  | ""          | Outline color string |
-| textcolor     | string  | ""          | Text color string |
+| `linecolor`   | string  | ""          | Color used for the vector/barb/disc (hex like "#RRGGBB" or with alpha) |
+| `linewidth`   | double  | 1.0         | Line width for vector or barb |
+| `scale`       | float   | 1.0         | Only for vector style: scale factor to convert speed to drawn length |
+| `vectorstyle` | string  | ""          | Required: Rendering style, e.g. "disc", "vector", "barb" |
+| `plotstationid` | string| "false"     | Show station id next to symbol (stored as string, e.g. "true"/"false") |
+| `plotvalue`   | string  | ""          | Show numeric value next to symbol (stored as string, e.g. "true"/"false") |
+| `textformat`  | string  | ""          | printf-style format used when plotvalue is enabled (e.g. "%1.0f") |
+| `min`         | double  | -DBL_MAX    | Minimum data range for rendering |
+| `max`         | double  | DBL_MAX     | Maximum data range for rendering |
+| `fontsize`    | double  | 12          | Font size used when rendering text |
+| `outlinewidth`| double  | 4.5         | Outline stroke width around text/symbols |
+| `outlinecolor`| string  | ""          | Outline color string |
+| `textcolor`   | string  | ""          | Text color string |
+| `dot`         | string  | "false"     | Draw a point at the point coordinates (stored as string, e.g. "true"/"false")
 
 
 Please check the examples in [data/config/datasets/adaguc.tests.vectorrendering.xml](../../data/config/datasets/adaguc.tests.vectorrendering.xml)
@@ -50,10 +51,9 @@ Example with different styling options:
   <Style name="windbarbs_kts_shaded_withbarbs_for_points_differentoptions">
     <Vector max="1" vectorstyle="barb" outlinewidth="5"  linewidth="2" outlinecolor="#000000ff" linecolor="#00FF00"  plotvalue="false" />
     <Vector min="1" max="10" vectorstyle="barb" linecolor="#0000FF"  plotvalue="true" />
-    <Vector min="10" max="15" vectorstyle="barb" outlinewidth="0" linewidth="3" linecolor="#000000" plotvalue="true" textcolor="#111111"/>    
-    <Vector min="15" vectorstyle="barb" outlinewidth="15" outlinecolor="#FFFFFF" linewidth="1" linecolor="#FF1111" plotvalue="false" textcolor="#FF1111"/>    
+    <Vector min="10" max="15" vectorstyle="barb" outlinewidth="0" linewidth="3" linecolor="#000000" plotvalue="true" textcolor="#111111"/>
+    <Vector min="15" vectorstyle="barb" outlinewidth="15" outlinecolor="#FFFFFF" linewidth="1" linecolor="#FF1111" plotvalue="false" textcolor="#FF1111"/>
   </Style>
-  
 ```
 
 <img src='../../tests/expectedoutputs/TestWMS/test_WMSGetMap_Barbs_example_windbarbs_from_pointdata_csv_different_style_options.png' width=400>

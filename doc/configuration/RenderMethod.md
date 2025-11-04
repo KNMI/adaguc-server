@@ -4,13 +4,17 @@ RenderMethod <value>
 Back to [Configuration](./Configuration.md)
 
 Rendermethod defines the way the data is rendered inside the service.
-There are currently three mechanisms to render an image:
+There are currently five mechanisms to render an image:
 
--   nearestneighbour in class CImgWarpNearestNeighbour
--   bilinear in class CImgWarpBilinear
--   truecolor in class CImgWarpNearestRGBA
+-   nearest (nearest neighbour) in class [CImgWarpNearestNeighbour](/adagucserverEC/CImgWarpNearestNeighbour.cpp)
+-   bilinear in class [CImgWarpBilinear](/adagucserverEC/CImgWarpBilinear.cpp)
+-   rgba (truecolor) in class [CImgWarpNearestRGBA](/adagucserverEC/CImgWarpNearestRGBA.cpp)
+-   stippling in class [CImgRenderStippling](/adagucserverEC/CImgRenderStippling.cpp)
+-   generic in class [CImgWarpGeneric](/adagucserverEC/CImgWarpGeneric/CImgWarpGeneric.cpp)
+-   polyline (for geojson) in class [CImgRenderPolylines](/adagucserverEC/CImgRenderPolylines.cpp)
+-   hillshaded (for heightmaps) in class [CImgWarpHillShaded](/adagucserverEC/CImgWarpHillShaded.cpp)
 
-To draw points and vectors, see [Point.md](/doc/configuration/Point.md) and [Vector.md](/doc/configuration/Vector.md). To thin data, see [Thinning.md](/doc/configuration/Thinning.md).
+To draw points and vectors, see [Point.md](/doc/configuration/Point.md) and [Vector.md](/doc/configuration/Vector.md). To thin point data, see [Thinning.md](/doc/configuration/Thinning.md).
 
 CImgWarpNearestNeighbour
 ------------------------
@@ -72,3 +76,24 @@ Stippling distance and disc radius can be specified in [Stippling](Stippling.md)
     <StandardNames standard_name="uncertainty"/>
 </Style>
 ```
+
+CImgWarpGeneric
+---------------
+
+Choose with `generic`.
+
+...
+
+CImgRenderPolyLines
+-------------------
+
+Choose with `polyline`.
+
+...
+
+CImgWarpHillShaded
+-------------------
+
+Choose with `hillshaded`.
+
+...

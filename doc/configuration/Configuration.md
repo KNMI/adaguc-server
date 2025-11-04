@@ -89,7 +89,7 @@ Configuration
     -   [NameMapping](NameMapping.md) (name,title,abstract) - Optional, Provide detailed descriptions and human readable names for every style.
     -   [StandardNames](StandardNames.md) (standard_name, variable_name, units) - Optional, assigns this style to layers matching the standard_name and optionally the units.
     -   [Point](Point.md) (min,max,pointstyle,fillcolor,linecolor,textcolor,textoutlinecolor,textformat,fontfile,fontsize,discradius,textradius,dot,anglestart,anglestep,plotstationid) Configuration of rendering point data
-    -   [Vector](Vector.md) (linecolor, linewidth,scale,vectorstyle,plotstationid,plotvalue,textformat, min, max, fontsize, outlinewidth, outlinecolor, textcolor) Configuration of rendering point data as vector.
+    -   [Vector](Vector.md) (linecolor, linewidth,scale,vectorstyle,plotstationid,plotvalue,textformat, min, max, fontsize, outlinewidth, outlinecolor, textcolor, dot) Configuration of rendering point data as vector.
     -   [FilterPoints](FilterPoints.md) (skip, use) Definition of set of points to
         skip or to use
     -   [Thinning](Thinning.md) (radius) Thinning of points to make sure that

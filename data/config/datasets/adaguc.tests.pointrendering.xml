@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration>
-  <Style name="filledcountries">
+  <Style name="filledcountries" title="Overlay countries" abstract="Overlay countries">
     <Legend fixedclasses="true" tickinterval="1000" tickround="1">bluewhitered</Legend>
     <Min>0.0</Min>
     <Max>1000</Max>
     <RenderMethod>nearest</RenderMethod>
-    <NameMapping name="polyline" title="Overlay countries" abstract="Overlay countries" />
     <FeatureInterval match="0" matchid="Type" fillcolor="#D2FEFE" bgcolor="#00A000"/>
     <FeatureInterval match="2" matchid="Type" fillcolor="#D1E1FC" />
     <FeatureInterval match="3" matchid="Type" fillcolor="#D2D2D2" />
@@ -73,6 +72,25 @@
     <Point plotstationid="false" pointstyle="point" discradius="15" textradius="0" dot="false" fontsize="8" textcolor="#000000" />
   </Style>
 
+  <Style name="temperature_selectpoint">
+    <Legend fixed="true" tickinterval="2">wow.temperature</Legend>
+    <RenderMethod>nearest</RenderMethod>
+    <Min>-14</Min>
+    <Max>39,33333333</Max> <!-- 39,33333333 = (240 / (234/(38 - -14))) - 14 -->
+
+    <!-- Use different disc/volume styling per range -->
+    <Point min="-10" max="10" pointstyle="disc"   discradius="40" fillcolor="#ffff00" textformat=" "/>
+    <Point min="13"  max="20" pointstyle="volume" discradius="25" fillcolor="#00ffff" textformat=" "/>
+
+    <!-- Use different text color/sizes per range -->
+    <Point min="-10" max="10" pointstyle="point" fontsize="10" discradius="0" textcolor="#0000ff" textformat="%0.0f" />
+    <Point min="10"  max="12" pointstyle="point" fontsize="25" discradius="0" textcolor="#555555" textformat="%0.0f" />
+    <Point min="12"  max="20" pointstyle="point" fontsize="40" discradius="0" textcolor="#ff5555" textformat="%0.0f" />
+
+    <!-- Select variable air-temperature-hagl to show in points -->
+    <DataPostProc algorithm="pointsfromgrid" select="air-temperature-hagl" a="20"/>
+  </Style>
+
   <Layer type="database">
     <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
     <Name>ta</Name>
@@ -80,5 +98,17 @@
     <Variable>ta</Variable>
     <Abstract>luchttemperatuur 1 min. gemiddelde</Abstract>
     <Styles>discs,temperature,temperature_thinned</Styles>
+  </Layer>
+
+  <Layer type="database">
+    <Name>air_temperature_hagl</Name>
+    <Title>UWCW_HA43ENS(NL) Air temperature at 2 m</Title>
+    <Variable>air-temperature-hagl</Variable>
+    <FilePath filter="(uwcw_ha43ens_nl_2km_air-temperature-hagl_geoweb_nc_[0-9T]{11}\.nc)">{ADAGUC_PATH}/data/datasets/arcustest_uwcw/uwcw_ha43ens_nl_2km_air-temperature-hagl_geoweb_nc_20240523T00-small5x5.nc</FilePath>
+    <Styles>temperature_selectpoint</Styles>
+    <Dimension name="forecast_reference_time" units="ISO8601" hidden="false">reference_time</Dimension>
+    <Dimension name="time" units="ISO8601" default="min">time</Dimension>
+    <Dimension name="temp_at_hagl" units="m" default="min" hidden="true">height_above_ground_level_in_m</Dimension>
+    <Dimension name="member" units="" default="min" type="custom" hidden="false">member</Dimension>
   </Layer>
 </Configuration>

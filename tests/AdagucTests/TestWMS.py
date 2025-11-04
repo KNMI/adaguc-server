@@ -3217,5 +3217,26 @@ class TestWMS(unittest.TestCase):
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
 
+    def test_WMSGetMap_select_temperature_as_point_from_grid(self):
+        AdagucTestTools().cleanTempDir()
+        config = (
+            ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,adaguc.tests.pointrendering.xml"
+        )
+        env = {"ADAGUC_CONFIG": config}
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            args=["--updatedb", "--config", config], env=self.env, isCGI=False
+        )
+        self.assertEqual(status, 0)
 
-
+        filename = "test_WMSGetMap_select_temperature_as_point_from_grid.png"
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.pointrendering&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=air_temperature_hagl&WIDTH=654&HEIGHT=513&CRS=EPSG:3857&BBOX=-127880.43405139455,6311494.158487529,1447830.4566477134,7547487.563577196&STYLES=temperature_selectpoint%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&time=2024-05-23T01:00:00Z&DIM_reference_time=2024-05-23T00%3A00%3A00Z&DIM_member=1",
+            env=env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
