@@ -113,6 +113,42 @@ int layerTypeLiveUpdateRender(CDataSource *incomingDataSource, CServerParams *sr
     CDF::Variable::CustomMemoryReader *memoryReaderSolT = CDF::Variable::CustomMemoryReaderInstance;
     solTVar->setCustomReader(memoryReaderSolT);
 
+    // Projection (has no dimensions)
+    CDF::Variable *projVar = new CDF::Variable();
+    projVar->setType(CDF_SHORT);
+    projVar->name.copy("projection");
+    projVar->isDimension = false;
+
+    cdfObject->addVariable(projVar);
+
+    // String projection params
+    projVar->addAttribute(new CDF::Attribute("long_name", "projection"));
+    projVar->addAttribute(new CDF::Attribute("proj4_params", "+proj=sterea +lat_0=52.15616055555555 +lon_0=5.38763888888889 +k=0.9999079 "
+                                                             "+x_0=155000 +y_0=463000 +ellps=bessel "
+                                                             "+towgs84=565.417,50.3319,465.552,-0.398957,0.343988,-1.8774,4.0725 "
+                                                             "+units=m +no_defs"));
+    projVar->addAttribute(new CDF::Attribute("EPSG_code", "EPSG:28992"));
+    projVar->addAttribute(new CDF::Attribute("grid_mapping_name", "stereographic"));
+
+    // Numeric projection params
+    double lat0 = 52.15616;
+    double lon0 = 5.387639;
+    double scale0 = 0.999908;
+    double fe = 155000.0;
+    double fn = 463000.0;
+    double a = 6377397.0;
+    double b = 6356079.0;
+
+    projVar->addAttribute(new CDF::Attribute("latitude_of_projection_origin", CDF_DOUBLE, &lat0, 1));
+    projVar->addAttribute(new CDF::Attribute("longitude_of_projection_origin", CDF_DOUBLE, &lon0, 1));
+    projVar->addAttribute(new CDF::Attribute("scale_factor_at_projection_origin", CDF_DOUBLE, &scale0, 1));
+    projVar->addAttribute(new CDF::Attribute("false_easting", CDF_DOUBLE, &fe, 1));
+    projVar->addAttribute(new CDF::Attribute("false_northing", CDF_DOUBLE, &fn, 1));
+    projVar->addAttribute(new CDF::Attribute("semi_major_axis", CDF_DOUBLE, &a, 1));
+    projVar->addAttribute(new CDF::Attribute("semi_minor_axis", CDF_DOUBLE, &b, 1));
+
+    projVar->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
+
     // DataObject ref
     CDataSource::DataObject *obj = new CDataSource::DataObject();
     obj->variableName.copy("SolT");
