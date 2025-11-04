@@ -549,6 +549,8 @@ std::vector<CT::string> CDataSource::getRenderMethodListForDataSource(CDataSourc
       }
     }
   }
+
+  // FIXME: with pointdata and no rendermethod defined, the style in GetCapabilities will be called `bla/nearest`, which doesn't make sense for point data. Is this bad?
   // If still no list of rendermethods is found, use the default list
   if (renderMethodList.length() == 0) {
     renderMethodList.copy("nearest");
