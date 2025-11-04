@@ -1169,13 +1169,18 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
 
     status = reader.openExtent(dataSource, CNETCDFREADER_MODE_OPEN_EXTENT, PXExtentBasedOnSource);
   } else {
-    status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_ALL);
+    // If the filename is empty, we are dealing with a virtual dataset
+    // Example: solar terminator
+    if (dataSource->getFileName() == NULL || dataSource->getFileName()[0] == '\0') {
+      status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_VIRTUAL, -1, -1, NULL);
+    } else {
+      status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_ALL);
+    }
   }
 #ifdef MEASURETIME
   StopWatch_Stop("Thread[%d]: Opened grid", dataSource->threadNr);
 #endif
 
-  // return 0;
 #ifdef CIMAGEDATAWRITER_DEBUG
   CDBDebug("Thread[%d]: Has opened %s", dataSource->threadNr, dataSource->getFileName());
 #endif
