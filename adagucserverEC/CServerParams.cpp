@@ -40,7 +40,6 @@ CServerParams::CServerParams() {
   OGCVersion = -1;
 
   Transparent = false;
-  enableDocumentCache = false;
   cfg = NULL;
   configObj = new CServerConfig();
   Geo = new CGeoParams;
@@ -72,45 +71,6 @@ CServerParams::~CServerParams() {
     requestDims[j] = NULL;
   }
   requestDims.clear();
-}
-
-void CServerParams::getCacheFileName(CT::string *cacheFileName) {
-  CT::string cacheName("WMSCACHE");
-  bool useProvidedCacheFileName = false;
-  // Check wether a cachefile has been provided in the config
-  if (!cfg->CacheDocs.empty()) {
-    if (cfg->CacheDocs[0]->attr.cachefile.empty() == false) {
-      useProvidedCacheFileName = true;
-      cacheName.concat("_");
-      cacheName.concat(cfg->CacheDocs[0]->attr.cachefile.c_str());
-    }
-  }
-  if (useProvidedCacheFileName == false) {
-    // If no cache filename is provided, we will create a standard one
-
-    if (autoResourceLocation.empty() == false) {
-      cacheName.concat(&configFileName);
-      cacheName.concat(&autoResourceLocation);
-    } else {
-      // Based on the name of the configuration file
-      cacheName.concat(&configFileName);
-    }
-    for (size_t j = 0; j < cacheName.length(); j++) {
-      char c = cacheName.charAt(j);
-      if (c == '/') c = '_';
-      if (c == '\\') c = '_';
-      if (c == '.') c = '_';
-      cacheName.setChar(j, c);
-    }
-  }
-
-  // Insert the tmp dir in the beginning
-  cacheFileName->copy(cfg->TempDir[0]->attr.value.c_str());
-  cacheFileName->concat("/");
-  cacheFileName->concat(&cacheName);
-  //  CDBDebug("Make pub dir %s",cacheFileName->c_str());
-  CDirReader::makePublicDirectory(cacheFileName->c_str());
-  cacheFileName->concat("/simplecachestore.dat");
 }
 
 std::string CServerParams::randomString(const int length) {
@@ -166,9 +126,10 @@ int CServerParams::makeLayerGroupName(CT::string *groupName, CServerConfig::XMLE
   if (cfgLayer->Group.size() == 1) {
     if (cfgLayer->Group[0]->attr.value.c_str() != NULL) {
       CT::string layerName(cfgLayer->Group[0]->attr.value.c_str());
-      CT::string *groupElements = layerName.splitToArray("/");
-      groupName->copy(groupElements[0].c_str());
-      delete[] groupElements;
+      auto groupElements = layerName.splitToStack("/");
+      if (groupElements.size() > 0) {
+        groupName->copy(groupElements[0].c_str());
+      }
     }
   }
 
@@ -387,23 +348,19 @@ bool CServerParams::checkBBOXXYOrder(const char *projName) {
  * @param Legend a XMLE_Legend object configured in a style or in a layer
  * @return Pointer to a new stringlist with all possible legend names, must be deleted with delete. Is NULL on failure.
  */
-CT::PointerList<CT::string *> *CServerParams::getLegendNames(std::vector<CServerConfig::XMLE_Legend *> Legend) {
+std::vector<CT::string> CServerParams::getLegendNames(std::vector<CServerConfig::XMLE_Legend *> Legend) {
   if (Legend.size() == 0) {
-    CT::string *autoLegendName = new CT::string("rainbow");
-    CT::PointerList<CT::string *> *legendList = new CT::PointerList<CT::string *>();
-    legendList->push_back(autoLegendName);
+    std::vector<CT::string> legendList;
+    legendList.push_back("rainbow");
     return legendList;
   }
-  CT::PointerList<CT::string *> *stringList = new CT::PointerList<CT::string *>();
-
+  std::vector<CT::string> stringList;
   for (size_t j = 0; j < Legend.size(); j++) {
     CT::string legendValue = Legend[j]->value.c_str();
     CT::StackList<CT::string> l1 = legendValue.splitToStack(",");
-    for (size_t i = 0; i < l1.size(); i++) {
-      if (l1[i].length() > 0) {
-        CT::string *val = new CT::string();
-        stringList->push_back(val);
-        val->copy(&l1[i]);
+    for (auto li : l1) {
+      if (li.length() > 0) {
+        stringList.push_back(li);
       }
     }
   }

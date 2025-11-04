@@ -238,11 +238,11 @@ int CTime::init(const char *units, const char *calendar) {
     CT::string YYYYMMDDPart;
     CT::string HHMMSSPart;
 
-    CT::string *timeItems = currentUnit.splitToArray(" ");
+    auto timeItems = currentUnit.splitToStack(" ");
 
     bool hasError = false;
     try {
-      if (timeItems->count < 3) {
+      if (timeItems.size() < 3) {
         CDBError("timeItems length <3 for %s", currentUnit.c_str());
         throw(__LINE__);
       }
@@ -288,9 +288,9 @@ int CTime::init(const char *units, const char *calendar) {
       // Determince the since part, e.g. 1949-12-01 00:00:00
       YYYYMMDDPart = timeItems[2].c_str();
 
-      CT::string *YYYYMMDDPartSplitted = YYYYMMDDPart.splitToArray("-");
+      auto YYYYMMDDPartSplitted = YYYYMMDDPart.splitToStack("-");
 
-      if (YYYYMMDDPartSplitted->count != 3) {
+      if (YYYYMMDDPartSplitted.size() != 3) {
         CDBError("YYYYMMDD part is incorrect [%s]", YYYYMMDDPart.c_str());
         hasError = true;
       } else {
@@ -299,13 +299,10 @@ int CTime::init(const char *units, const char *calendar) {
         timeUnits.date.day = YYYYMMDDPartSplitted[2].toInt();
       }
 
-      delete[] YYYYMMDDPartSplitted;
-
-      if (timeItems->count > 3) {
+      if (timeItems.size() > 3) {
         HHMMSSPart = timeItems[3].c_str();
-
-        CT::string *HHMMSSPartSplited = HHMMSSPart.splitToArray(":");
-        if (HHMMSSPartSplited->count != 3) {
+        auto HHMMSSPartSplited = HHMMSSPart.splitToStack(":");
+        if (HHMMSSPartSplited.size() != 3) {
           CDBError("HHMMSS part is incorrect [%s]", HHMMSSPart.c_str());
           hasError = true;
         } else {
@@ -313,12 +310,10 @@ int CTime::init(const char *units, const char *calendar) {
           timeUnits.date.minute = HHMMSSPartSplited[1].toInt();
           timeUnits.date.second = (double)HHMMSSPartSplited[2].toInt();
         }
-        delete[] HHMMSSPartSplited;
       }
     } catch (int e) {
       hasError = true;
     }
-    delete[] timeItems;
 
     // Check limits
     if (!(timeUnits.date.year >= 0 && timeUnits.date.year < 10000)) {
@@ -910,13 +905,11 @@ double CTime::quantizeTimeToISO8601(double offsetOrig, CT::string period, CT::st
 
   if (period.indexOf("T") != -1) { // Contains HMS
 
-    CT::string *items = period.splitToArray("T");
-    if (items->count != 2) {
-      delete[] items;
+    auto items = period.splitToStack("T");
+    if (items.size() != 2) {
       throw(-1);
     }
     CT::string hmsPart = items[1];
-    delete[] items;
 
     // hmsPart contains 15M, 1M, 12S, 6H, etc...
     if (hmsPart.indexOf("H") != -1) { // 6H

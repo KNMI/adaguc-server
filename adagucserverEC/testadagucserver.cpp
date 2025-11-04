@@ -82,6 +82,7 @@ TEST(kilometerToMeter, CImageWarper) {
   CT::string projStringOut;
   double scaling;
   std::tie(projStringOut, scaling) = CImageWarper::fixProjection(projStringIn);
+  CDBDebug("projStringOut [%s]", projStringOut.c_str());
   CHECK(scaling == 1000.0);
   CHECK(projStringOut == projStringOutExpected);
 }

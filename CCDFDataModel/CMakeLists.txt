@@ -11,6 +11,8 @@ add_library(CCDFDataModel
     traceTimings/traceTimingsTests.cpp
     CCDFDataModel.h
     CCDFNetCDFIO.h
+    CCDFAttribute.h
+    CCDFAttribute.cpp
     CReadPNG.h
     CReadPNG.cpp
     CCDFPNGIO.h

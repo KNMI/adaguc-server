@@ -84,6 +84,24 @@ int CDFObject::close() {
   reader = NULL;
 }
 
+CDF::Variable *CDFObject::getVar(CT::string name) {
+  if (name.equals("NC_GLOBAL")) {
+    return this;
+  }
+  auto it = std::find_if(variables.begin(), variables.end(), [name](CDF::Variable *a) { return a->name.equals(name); });
+  return it != variables.end() ? *it : nullptr;
+}
+
+CDF::Variable *CDFObject::getVariableNE(const char *name) { return getVar(name); }
+
+CDF::Variable *CDFObject::getVariable(const char *name) {
+  auto var = getVar(name);
+  if (var == nullptr) {
+    throw(CDF_E_VARNOTFOUND);
+  }
+  return var;
+}
+
 /**
  * Fill in the data variable based on the value of a global attribute
  * 2019-09-24: for now it parses timestamps of Sun Sep 22 13:23:18 2019 to epoch time.
@@ -147,34 +165,28 @@ void ncmlHandleAttribute(xmlNode *cur_node, CT::string NCMLVarName, CDFObject *c
           if (strncmp("String", pszAttributeType, 6) == 0) {
             var->setAttribute(pszAttributeName, attrType, pszAttributeValue, strlen(pszAttributeValue));
           } else {
-            size_t attrLen = 0;
-            CT::string t = pszAttributeValue;
-            CT::string *t2 = t.splitToArray(",");
-            attrLen = t2->count;
-            double values[attrLen];
+            CT::string attributeValue = pszAttributeValue;
+            auto attributeValues = attributeValue.splitToStack(",");
+            auto attrLen = attributeValues.size();
+            double attributeValuesAsDouble[attrLen];
             for (size_t attrN = 0; attrN < attrLen; attrN++) {
-              values[attrN] = atof(t2[attrN].c_str());
-              // CDBDebug("%f",values[attrN]);
+              attributeValuesAsDouble[attrN] = atof(attributeValues[attrN].c_str());
             }
-            delete[] t2;
-            // if(attrLen==3)exit(2);
-
-            // double value=atof(pszAttributeValue);
             CDF::Attribute *attr = new CDF::Attribute();
             attr->name.copy(pszAttributeName);
             var->addAttribute(attr);
             attr->type = attrType;
             CDF::allocateData(attrType, &attr->data, attrLen);
             for (size_t attrN = 0; attrN < attrLen; attrN++) {
-              if (attrType == CDF_BYTE) ((char *)attr->data)[attrN] = (char)values[attrN];
-              if (attrType == CDF_UBYTE) ((unsigned char *)attr->data)[attrN] = (unsigned char)values[attrN];
-              if (attrType == CDF_CHAR) ((char *)attr->data)[attrN] = (char)values[attrN];
-              if (attrType == CDF_SHORT) ((short *)attr->data)[attrN] = (short)values[attrN];
-              if (attrType == CDF_USHORT) ((unsigned short *)attr->data)[attrN] = (unsigned short)values[attrN];
-              if (attrType == CDF_INT) ((int *)attr->data)[attrN] = (int)values[attrN];
-              if (attrType == CDF_UINT) ((unsigned int *)attr->data)[attrN] = (unsigned int)values[attrN];
-              if (attrType == CDF_FLOAT) ((float *)attr->data)[attrN] = (float)values[attrN];
-              if (attrType == CDF_DOUBLE) ((double *)attr->data)[attrN] = (double)values[attrN];
+              if (attrType == CDF_BYTE) ((char *)attr->data)[attrN] = (char)attributeValuesAsDouble[attrN];
+              if (attrType == CDF_UBYTE) ((unsigned char *)attr->data)[attrN] = (unsigned char)attributeValuesAsDouble[attrN];
+              if (attrType == CDF_CHAR) ((char *)attr->data)[attrN] = (char)attributeValuesAsDouble[attrN];
+              if (attrType == CDF_SHORT) ((short *)attr->data)[attrN] = (short)attributeValuesAsDouble[attrN];
+              if (attrType == CDF_USHORT) ((unsigned short *)attr->data)[attrN] = (unsigned short)attributeValuesAsDouble[attrN];
+              if (attrType == CDF_INT) ((int *)attr->data)[attrN] = (int)attributeValuesAsDouble[attrN];
+              if (attrType == CDF_UINT) ((unsigned int *)attr->data)[attrN] = (unsigned int)attributeValuesAsDouble[attrN];
+              if (attrType == CDF_FLOAT) ((float *)attr->data)[attrN] = (float)attributeValuesAsDouble[attrN];
+              if (attrType == CDF_DOUBLE) ((double *)attr->data)[attrN] = (double)attributeValuesAsDouble[attrN];
             }
             attr->length = attrLen;
           }

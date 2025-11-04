@@ -75,24 +75,24 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
 #endif
   int status = 0;
   CT::string query;
-  dataSource->headerFileName = (*fileList)[0].c_str();
+  dataSource->headerFilename = (*fileList)[0].c_str();
 
   CDBAdapterPostgreSQL *dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
 
   CDFObject *cdfObject = NULL;
   try {
     // Here the header of the file to scan is being read.
-    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource, dataSource->headerFileName.c_str());
+    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource, dataSource->headerFilename.c_str());
     if (cdfObject == NULL) throw __LINE__;
   } catch (int e) {
-    CDBError("Unable to get CDFObject for file %s", dataSource->headerFileName.c_str());
+    CDBError("Unable to get CDFObject for file %s", dataSource->headerFilename.c_str());
     return 1;
   }
 
   // Check if variable is in this file:
 
   if (cdfObject->getVariableNE(dataSource->getDataObject(0)->variableName.c_str()) == NULL) {
-    CDBError("Variable %s does not exist in %s ", dataSource->getDataObject(0)->variableName.c_str(), dataSource->headerFileName.c_str());
+    CDBError("Variable %s does not exist in %s ", dataSource->getDataObject(0)->variableName.c_str(), dataSource->headerFilename.c_str());
     return 1;
   }
 
@@ -734,6 +734,9 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
                       if (dimVar->getType() == CDF_STRING) {
                         const char *str = ((char **)dimVar->data)[i];
                         uniqueKey.print("%s", str);
+                        uniqueKey.replaceSelf("<", "_lt_");
+                        uniqueKey.replaceSelf(">", "_gt_");
+                        uniqueKey.replaceSelf("=", "_eq_");
                         uniqueDimensionValueRet = uniqueDimensionValueSet.insert(uniqueKey.c_str());
                         if (uniqueDimensionValueRet.second == true) {
                           dbAdapter->setFileString(tableNames[d].c_str(), (*fileList)[j].c_str(), uniqueKey.c_str(), int(i), fileDate.c_str(), &geoOptions);
@@ -833,31 +836,32 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
   return 0;
 }
 
-int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT::string *_layerPathToScan, int scanFlags) {
+int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string _tailPath, CT::string _layerPathToScan, int scanFlags) {
   bool verbose = dataSource->srvParams->verbose;
   if (dataSource->dLayerType != CConfigReaderLayerTypeDataBase && dataSource->dLayerType != CConfigReaderLayerTypeBaseLayer) return 0;
 
   if (scanFlags & CDBFILESCANNER_CLEANFILES) {
-    return cleanFiles(dataSource, scanFlags);
+    return cleanFiles(dataSource, scanFlags).first;
   }
 
   /* We only need to update the provided path in layerPathToScan. We will simply ignore the other directories */
   CT::string fileToUpdate;
-  if (_layerPathToScan != NULL) {
-    if (_layerPathToScan->length() != 0) {
-      CT::string layerPath, layerPathToScan;
-      layerPath.copy(dataSource->cfgLayer->FilePath[0]->value.c_str());
-      layerPathToScan.copy(_layerPathToScan);
-      layerPath = CDirReader::makeCleanPath(layerPath.c_str());
-      layerPathToScan = CDirReader::makeCleanPath(layerPathToScan.c_str());
 
-      /* If this is another directory we will simply ignore it. */
-      if (layerPathToScan.startsWith(layerPath) == false) {
-        // CDBDebug ("Skipping %s==%s\n",layerPath.c_str(),layerPathToScan.c_str());
-        return CDBFILESCANNER_RETURN_FILEDOESNOTMATCH;
-      }
-      fileToUpdate = layerPathToScan;
+  if (!_layerPathToScan.empty()) {
+    CT::string layerPath, layerPathToScan;
+    layerPath.copy(dataSource->cfgLayer->FilePath[0]->value.c_str());
+    layerPathToScan.copy(_layerPathToScan);
+    layerPath = CDirReader::makeCleanPath(layerPath.c_str());
+    layerPathToScan = CDirReader::makeCleanPath(layerPathToScan.c_str());
+
+    /* If this is another directory we will simply ignore it. */
+    if (layerPathToScan.startsWith(layerPath) == false) {
+      return CDBFILESCANNER_RETURN_FILEDOESNOTMATCH;
     }
+    fileToUpdate = layerPathToScan;
+  }
+  if (fileToUpdate.empty() == false) {
+    dataSource->setHeaderFilename(fileToUpdate);
   }
   // This variable enables the query to remove files that no longer exist in the filesystem
   int removeNonExistingFiles = 1;
@@ -914,6 +918,7 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
         }
       } else {
         fileList = searchFileNames(dataSource->cfgLayer->FilePath[0]->value.c_str(), filter.c_str(), tailPath.c_str());
+        CDBDebug("SearchFileNames found %d files", fileList.size());
       }
 
     } catch (int linenr) {
@@ -968,7 +973,19 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
       }
 
       // Clean up if needed
-      cleanFiles(dataSource, scanFlags);
+      auto cleanFilesResult = cleanFiles(dataSource, scanFlags);
+
+      // Remove the deleted files from the filelist.
+      if (cleanFilesResult.second.size() > 0) {
+        CDBDebug("Cleanfiles deleted %d files.", cleanFilesResult.second.size());
+        // Remove the deleted files from the fileList.
+        for (auto item : cleanFilesResult.second) {
+          auto it = std::find(fileList.begin(), fileList.end(), item);
+          if (it != fileList.end()) {
+            fileList.erase(it);
+          }
+        }
+      }
     }
   } catch (int linenr) {
     CDBError("Exception in updatedb at line %d", linenr);
@@ -988,8 +1005,16 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string *_tailPath, CT:
   if (removeNonExistingFiles == 1) status = DB->query("COMMIT");
 #endif
 
+  if (fileList.size() == 0) {
+    CDBWarning("No files left to scan - stopping.");
+    return 0;
+  }
   if (scanFlags & CDBFILESCANNER_UPDATEDB) {
-    updateMetaDataTable(dataSource);
+    int status = updateMetaDataTable(dataSource);
+    if (status != 0) {
+      CDBError("Unable to updateMetaDataTable");
+      return 1;
+    }
   }
   /* Now Check autotile option */
   if (!(scanFlags & CDBFILESCANNER_DONOTTILE)) {
@@ -1048,8 +1073,7 @@ std::vector<std::string> CDBFileScanner::searchFileNames(const char *path, CT::s
       if (expr.empty() == false) { // dataSource->cfgLayer->FilePath[0]->attr.filter.c_str()
         fileFilterExpr.copy(&expr);
       }
-      //      CDBDebug("Reading directory %s with filter %s", filePath.c_str(), fileFilterExpr.c_str());
-
+      CDBDebug("Reading directory %s with filter %s", filePath.c_str(), fileFilterExpr.c_str());
       CDirReader *dirReader = CCachedDirReader::getDirReader(filePath.c_str(), fileFilterExpr.c_str());
       dirReader->listDirRecursive(filePath.c_str(), fileFilterExpr.c_str());
       std::vector<std::string> fileList;

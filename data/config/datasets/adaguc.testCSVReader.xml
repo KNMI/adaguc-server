@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Configuration>
-  <CacheDocs enabled="false"/>
   <!-- Custom styles -->
   <Style name="windbarb">
     <Legend fixedclasses="true" tickinterval="2" tickround="1">no2</Legend>

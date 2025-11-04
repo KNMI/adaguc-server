@@ -1372,16 +1372,14 @@ int CDrawImage::createGDPalette(CServerConfig::XMLE_Legend *legend) {
         int offset = (int)(stops.get(j)->getAttrValue("offset").toFloat() * 2.4);
         CT::string color = stops.get(j)->getAttrValue("stop-color").c_str() + 4;
         color.setSize(color.length() - 1);
-        CT::string *colors = color.splitToArray(",");
-        if (colors->count != 3) {
-          delete[] colors;
+        auto colors = color.splitToStack(",");
+        if (colors.size() != 3) {
           CDBError("Number of specified colors is unequal to three");
           return 1;
         }
         unsigned char red = colors[0].toInt();
         unsigned char green = colors[1].toInt();
         unsigned char blue = colors[2].toInt();
-        delete[] colors;
         unsigned char alpha = (char)(stops.get(j)->getAttrValue("stop-opacity").toFloat() * 255);
         // CDBDebug("I%d R%d G%d B%d A%d",offset,red,green,blue,alpha);
         if (offset > 255)

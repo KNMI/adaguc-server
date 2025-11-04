@@ -1581,28 +1581,27 @@ int CImageDataWriter::calculateData(std::vector<CDataSource *> &dataSources) {
       float inputMapExprValuesLow[dataSources.size()];
       float inputMapExprValuesHigh[dataSources.size()];
 
-      CT::string *layerStyles = srvParam->Styles.splitToArray(",");
+      auto layerStyles = srvParam->Styles.splitToStack(",");
       CT::string style;
       //      bool errorOccured=false;
       for (size_t j = 0; j < dataSources.size(); j++) {
         size_t numberOfValues = 1;
-        CT::string *_style = layerStyles[j].splitToArray("|");
+        auto _style = layerStyles[j].splitToStack("|");
         style.copy(&_style[0]);
         CDBDebug("STYLE == %s", style.c_str());
         if (j == 0) {
           // Find the conditional expression for the first layer (the boolean map)
-          CT::string *conditionals = style.splitToArray("_");
-          if (!conditionals[0].equals("default") && conditionals->count != dataSources.size() - 2) {
-            CDBError("Incorrect number of conditional operators specified: %d  (expected %d)", conditionals->count, dataSources.size() - 2);
+          auto conditionals = style.splitToStack("_");
+          if (!conditionals[0].equals("default") && conditionals.size() != dataSources.size() - 2) {
+            CDBError("Incorrect number of conditional operators specified: %d  (expected %d)", conditionals.size(), dataSources.size() - 2);
             hasFailed = true;
           } else {
-            for (size_t i = 0; i < conditionals->count; i++) {
+            for (size_t i = 0; i < conditionals.size(); i++) {
               combineBooleanMapExpression[i] = myand;
               if (conditionals[i].equals("and")) combineBooleanMapExpression[i] = myand;
               if (conditionals[i].equals("or")) combineBooleanMapExpression[i] = myor;
             }
           }
-          delete[] conditionals;
         } else {
           inputMapExpression[j] = between;
           CT::string exprVal("0.0");
@@ -1627,8 +1626,8 @@ int CImageDataWriter::calculateData(std::vector<CDataSource *> &dataSources) {
             exprVal.copy(style.c_str() + 12);
             numberOfValues = 1;
           }
-          CT::string *LH = exprVal.splitToArray("_and_");
-          if (LH->count != numberOfValues) {
+          auto LH = exprVal.splitToStack("_and_");
+          if (LH.size() != numberOfValues) {
             CDBError("Invalid number of values in expression '%s'", style.c_str());
             hasFailed = true;
           } else {
@@ -1637,7 +1636,7 @@ int CImageDataWriter::calculateData(std::vector<CDataSource *> &dataSources) {
               inputMapExprValuesHigh[j] = LH[1].toFloat();
             }
           }
-          delete[] LH;
+
           if (numberOfValues == 1) {
             CDBDebug("'%f'", inputMapExprValuesLow[j]);
           }
@@ -1645,7 +1644,6 @@ int CImageDataWriter::calculateData(std::vector<CDataSource *> &dataSources) {
             CDBDebug("'%f' and '%f'", inputMapExprValuesLow[j], inputMapExprValuesHigh[j]);
           }
         }
-        delete[] _style;
       }
 
       CDBDebug("Start creating the boolean map");
@@ -1716,7 +1714,6 @@ int CImageDataWriter::calculateData(std::vector<CDataSource *> &dataSources) {
       imageWarperRenderer->render(&imageWarper, dataSource, &drawImage);
       delete imageWarperRenderer;
       imageWarper.closereproj();
-      delete[] layerStyles;
     }
     for (size_t j = 0; j < dataReaders.size(); j++) {
       if (dataReaders[j] != NULL) {
@@ -2623,9 +2620,9 @@ int CImageDataWriter::end() {
             CT::string key = dkit->first.c_str();
             CT::string value = dkit->second.c_str();
 
-            CT::string *dimValues = key.splitToArray(",");
+            auto dimValues = key.splitToStack(",");
             elP = &data;
-            for (size_t i = 0; i < dimValues->count; i++) {
+            for (size_t i = 0; i < dimValues.size(); i++) {
               try {
                 elP = elP->get(dimValues[i].c_str());
               } catch (int e) {
@@ -2633,7 +2630,6 @@ int CImageDataWriter::end() {
               }
             }
             elP->setValue(value.c_str());
-            delete[] dimValues;
           }
 
           paramElement.add(data);
@@ -3267,22 +3263,7 @@ int CImageDataWriter::end() {
   return status;
 }
 float CImageDataWriter::getValueForColorIndex(CDataSource *dataSource, int index) {
-  //   if(dataSource->stretchMinMax){
-  //     if(dataSource->stretchMinMaxDone == false){
-  //     if(dataSource->statistics==NULL){
-  //       dataSource->statistics = new CDataSource::Statistics();
-  //       dataSource->statistics->calculate(dataSource);
-  //     }
-  //     float minValue=(float)dataSource->statistics->getMinimum();
-  //     float maxValue=(float)dataSource->statistics->getMaximum();
-  //    // CDBDebug("%f %f",minValue,maxValue);
-  //     //maxValue+=10;
-  //     float ls=240/(maxValue-minValue);
-  //     float lo=-(minValue*ls);
-  //     styleConfiguration->legendScale=ls;
-  //     styleConfiguration->legendOffset=lo;
-  //
-  //     //Check for infinities
+
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   if (styleConfiguration->legendScale != styleConfiguration->legendScale || styleConfiguration->legendScale == INFINITY || styleConfiguration->legendScale == NAN ||
       styleConfiguration->legendScale == 0.0 || styleConfiguration->legendScale == -INFINITY || styleConfiguration->legendOffset != styleConfiguration->legendOffset ||
@@ -3290,10 +3271,7 @@ float CImageDataWriter::getValueForColorIndex(CDataSource *dataSource, int index
     styleConfiguration->legendScale = 240.0;
     styleConfiguration->legendOffset = 0;
   }
-  //     //CDBDebug("max=%f; min=%f",maxValue,minValue);
-  //     //CDBDebug("scale=%f; offset=%f",ls,lo);
-  //     }
-  //   }
+
   float v = index;
   v -= styleConfiguration->legendOffset;
   v /= styleConfiguration->legendScale;

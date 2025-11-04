@@ -41,7 +41,7 @@ from .utils.edr_utils import (
 logger = logging.getLogger(__name__)
 logger.debug("Starting EDR")
 
-edrApiApp = FastAPI(debug=False)
+edrApiApp = FastAPI(redirect_slashes=False, debug=False)
 edrApiApp.include_router(cube_router)
 edrApiApp.include_router(position_router)
 edrApiApp.include_router(locations_router)

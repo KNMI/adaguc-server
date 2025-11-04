@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WMS_Capabilities
+        version="1.3.0"
+        updateSequence="0"
+        xmlns="http://www.opengis.net/wms"
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.opengis.net/wms http://schemas.opengis.net/wms/1.3.0/capabilities_1_3_0.xsd"
+
+     >
+    <Service>
+        <Name>WMS</Name>
+        <Title>AutoResource NetCDF4_probabilities_greater_than_or_equal_to_36_1_0_12_2025-07-02T10_00_00Z_2025-07-02T00_00_00Z.nc</Title>
+        <Abstract>History: Created by ADAGUC WCS Server version 4.3.2, destination grid settings: width=5&amp;height=5&amp;resx=2.262000&amp;resy=1.404000&amp;bbox=-0.014500,48.991000,11.295500,56.011000&amp;crs=EPSG:4326. .!</Abstract>
+        <KeywordList>
+            <Keyword>view</Keyword>
+            <Keyword>infoMapAccessService</Keyword>
+            <Keyword>ADAGUCServer version 4.3.2, of Oct  2 2025 15:42:02 </Keyword>
+        </KeywordList>
+        <OnlineResource xlink:type="simple" xlink:href="source=pascal%2FNetCDF4_probabilities_greater_than_or_equal_to_36_1_0_12_2025%2D07%2D02T10_00_00Z_2025%2D07%2D02T00_00_00Z%2Enc&amp;SERVICE=WMS&amp;"/>
+        <ContactInformation>
+          
+        </ContactInformation>
+        <Fees>no conditions apply</Fees>
+        <AccessConstraints>None</AccessConstraints>
+        <MaxWidth>8192</MaxWidth>
+        <MaxHeight>8192</MaxHeight>
+    </Service>
+    <Capability>
+        <Request>
+            <GetCapabilities>
+                <Format>text/xml</Format>
+                <DCPType><HTTP><Get><OnlineResource xlink:type="simple" xlink:href="source=pascal%2FNetCDF4_probabilities_greater_than_or_equal_to_36_1_0_12_2025%2D07%2D02T10_00_00Z_2025%2D07%2D02T00_00_00Z%2Enc&amp;SERVICE=WMS&amp;"/></Get></HTTP></DCPType>
+            </GetCapabilities>
+            <GetMap>
+                <Format>image/png</Format>
+                <Format>image/png;mode=8bit</Format>
+                <Format>image/png;mode=8bit_noalpha</Format>
+                <Format>image/png;mode=24bit</Format>
+                <Format>image/png;mode=32bit</Format>
+                <Format>image/gif</Format>
+                <Format>image/jpeg</Format>
+                <!--<Format>image/webp</Format>-->
+                <DCPType><HTTP><Get><OnlineResource xlink:type="simple" xlink:href="source=pascal%2FNetCDF4_probabilities_greater_than_or_equal_to_36_1_0_12_2025%2D07%2D02T10_00_00Z_2025%2D07%2D02T00_00_00Z%2Enc&amp;SERVICE=WMS&amp;"/></Get></HTTP></DCPType>
+            </GetMap>
+            <GetFeatureInfo>
+                <Format>image/png</Format>
+                <Format>text/plain</Format>
+                <Format>text/html</Format>
+                <Format>text/xml</Format>
+                <Format>application/json</Format>
+                <DCPType><HTTP><Get><OnlineResource xlink:type="simple" xlink:href="source=pascal%2FNetCDF4_probabilities_greater_than_or_equal_to_36_1_0_12_2025%2D07%2D02T10_00_00Z_2025%2D07%2D02T00_00_00Z%2Enc&amp;SERVICE=WMS&amp;"/></Get></HTTP></DCPType>
+            </GetFeatureInfo>
+        </Request>
+        <Exception>
+            <Format>XML</Format>
+            <Format>INIMAGE</Format>
+            <Format>BLANK</Format>
+        </Exception>
+        <UserDefinedSymbolization SupportSLD="1" />
+<Layer>
+<Title>WMS of  AutoResource NetCDF4_probabilities_greater_than_or_equal_to_36_1_0_12_2025-07-02T10_00_00Z_2025-07-02T00_00_00Z.nc</Title>
+<CRS>CRS:84</CRS>
+<CRS>EPSG:25831</CRS>
+<CRS>EPSG:25832</CRS>
+<CRS>EPSG:28992</CRS>
+<CRS>EPSG:3035</CRS>
+<CRS>EPSG:3067</CRS>
+<CRS>EPSG:32661</CRS>
+<CRS>EPSG:3411</CRS>
+<CRS>EPSG:3412</CRS>
+<CRS>EPSG:3575</CRS>
+<CRS>EPSG:3857</CRS>
+<CRS>EPSG:40000</CRS>
+<CRS>EPSG:4258</CRS>
+<CRS>EPSG:4326</CRS>
+<CRS>EPSG:50001</CRS>
+<CRS>EPSG:54030</CRS>
+<CRS>EPSG:7399</CRS>
+<CRS>EPSG:900913</CRS>
+<CRS>PROJ4:%2Bproj%3Dlonglat%20%2Bellps%3DWGS84%20%2Bdatum%3DWGS84%20%2Bno_defs</CRS>
+<BoundingBox CRS="CRS:84" minx="48.991000" miny="-0.014500" maxx="56.011000" maxy="11.295500" />
+<BoundingBox CRS="EPSG:25831" minx="279486.181295" miny="5426455.295658" maxx="1106564.235337" maxy="6238397.008695" />
+<BoundingBox CRS="EPSG:25832" minx="-159076.876180" miny="5426455.835211" maxx="667922.720949" maxy="6244030.589292" />
+<BoundingBox CRS="EPSG:28992" minx="-240356.718422" miny="110966.965686" maxx="587386.577109" maxy="907716.266185" />
+<BoundingBox CRS="EPSG:3035" minx="3590473.522941" miny="2875312.852130" maxx="4415832.798743" maxy="3699811.756282" />
+<BoundingBox CRS="EPSG:3067" minx="-1463498.983078" miny="5546449.239554" maxx="-474452.673273" maxy="6541622.309508" />
+<BoundingBox CRS="EPSG:32661" minx="1998797.905458" miny="-2749996.025036" maxx="2930377.601350" maxy="-1808590.961851" />
+<BoundingBox CRS="EPSG:3411" minx="2678953.931008" miny="-3278077.377054" maxx="3855679.674073" maxy="-2102870.594756" />
+<BoundingBox CRS="EPSG:3412" minx="-10153.773965" miny="32170157.134147" maxx="7858652.989460" maxy="40121957.372894" />
+<BoundingBox CRS="EPSG:3575" minx="-778454.897448" miny="-4476517.292347" maxx="101208.769638" maxy="-3679953.333308" />
+<BoundingBox CRS="EPSG:3857" minx="-1614.132617" miny="6273334.420261" maxx="1257409.308255" maxy="7560605.756670" />
+<BoundingBox CRS="EPSG:40000" minx="-1209.350646" miny="-4778668.033236" maxx="935993.562727" maxy="-3831580.444518" />
+<BoundingBox CRS="EPSG:4258" minx="48.991000" miny="-0.014500" maxx="56.011000" maxy="11.295500" />
+<BoundingBox CRS="EPSG:4326" minx="48.991000" miny="-0.014500" maxx="56.011000" maxy="11.295500" />
+<BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
+<BoundingBox CRS="EPSG:54030" minx="-1197.220328" miny="5222308.942734" maxx="932634.635340" maxy="5940218.262293" />
+<BoundingBox CRS="EPSG:7399" minx="-1117.353231" miny="5767402.687526" maxx="870418.166689" maxy="6487641.412002" />
+<BoundingBox CRS="EPSG:900913" minx="-1614.132617" miny="6273334.420261" maxx="1257409.308255" maxy="7560605.756670" />
+<BoundingBox CRS="PROJ4:%2Bproj%3Dlonglat%20%2Bellps%3DWGS84%20%2Bdatum%3DWGS84%20%2Bno_defs" minx="-0.014500" miny="48.991000" maxx="11.295500" maxy="56.011000" />
+<Layer queryable="1" opaque="1" cascaded="0">
+<Name>probabilities</Name>
+<Title>probabilities</Title>
+<EX_GeographicBoundingBox>
+  <westBoundLongitude>-0.014500</westBoundLongitude>
+  <eastBoundLongitude>11.295500</eastBoundLongitude>
+  <southBoundLatitude>48.991000</southBoundLatitude>
+  <northBoundLatitude>56.011000</northBoundLatitude>
+</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="48.991000" miny="-0.014500" maxx="56.011000" maxy="11.295500" />
+<BoundingBox CRS="EPSG:25831" minx="279486.181295" miny="5426455.295658" maxx="1106564.235337" maxy="6238397.008695" />
+<BoundingBox CRS="EPSG:25832" minx="-159076.876180" miny="5426455.835211" maxx="667922.720949" maxy="6244030.589292" />
+<BoundingBox CRS="EPSG:28992" minx="-240356.718422" miny="110966.965686" maxx="587386.577109" maxy="907716.266185" />
+<BoundingBox CRS="EPSG:3035" minx="3590473.522941" miny="2875312.852130" maxx="4415832.798743" maxy="3699811.756282" />
+<BoundingBox CRS="EPSG:3067" minx="-1463498.983078" miny="5546449.239554" maxx="-474452.673273" maxy="6541622.309508" />
+<BoundingBox CRS="EPSG:32661" minx="1998797.905458" miny="-2749996.025036" maxx="2930377.601350" maxy="-1808590.961851" />
+<BoundingBox CRS="EPSG:3411" minx="2678953.931008" miny="-3278077.377054" maxx="3855679.674073" maxy="-2102870.594756" />
+<BoundingBox CRS="EPSG:3412" minx="-10153.773965" miny="32170157.134147" maxx="7858652.989460" maxy="40121957.372894" />
+<BoundingBox CRS="EPSG:3575" minx="-778454.897448" miny="-4476517.292347" maxx="101208.769638" maxy="-3679953.333308" />
+<BoundingBox CRS="EPSG:3857" minx="-1614.132617" miny="6273334.420261" maxx="1257409.308255" maxy="7560605.756670" />
+<BoundingBox CRS="EPSG:40000" minx="-1209.350646" miny="-4778668.033236" maxx="935993.562727" maxy="-3831580.444518" />
+<BoundingBox CRS="EPSG:4258" minx="48.991000" miny="-0.014500" maxx="56.011000" maxy="11.295500" />
+<BoundingBox CRS="EPSG:4326" minx="48.991000" miny="-0.014500" maxx="56.011000" maxy="11.295500" />
+<BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
+<BoundingBox CRS="EPSG:54030" minx="-1197.220328" miny="5222308.942734" maxx="932634.635340" maxy="5940218.262293" />
+<BoundingBox CRS="EPSG:7399" minx="-1117.353231" miny="5767402.687526" maxx="870418.166689" maxy="6487641.412002" />
+<BoundingBox CRS="EPSG:900913" minx="-1614.132617" miny="6273334.420261" maxx="1257409.308255" maxy="7560605.756670" />
+<BoundingBox CRS="PROJ4:%2Bproj%3Dlonglat%20%2Bellps%3DWGS84%20%2Bdatum%3DWGS84%20%2Bno_defs" minx="-0.014500" miny="48.991000" maxx="11.295500" maxy="56.011000" />
+<Dimension name="time_window" units="1" default="1" multipleValues="1" nearestValue="0" current="1">1</Dimension>
+<Dimension name="time" units="ISO8601" default="2025-07-02T10:00:00Z" multipleValues="1" nearestValue="0" current="1">2025-07-02T10:00:00Z</Dimension>
+<Dimension name="reference_time" units="seconds since 1970-01-01" default="2025-07-02T00:00:00Z" multipleValues="1" nearestValue="0" current="1">2025-07-02T00:00:00Z</Dimension>
+<Dimension name="radius" units="1" default="0.12" multipleValues="1" nearestValue="0" >0.12</Dimension>
+<Dimension name="condition" units="1" default="greater_than_or_equal_to_36" multipleValues="1" nearestValue="0" >greater_than_or_equal_to_36</Dimension>
+   <Style>    <Name>auto/nearest</Name>    <Title>auto/nearest</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=pascal%2FNetCDF4_probabilities_greater_than_or_equal_to_36_1_0_12_2025%2D07%2D02T10_00_00Z_2025%2D07%2D02T00_00_00Z%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=probabilities&amp;format=image/png&amp;STYLE=auto/nearest"/>    </LegendURL>  </Style>   <Style>    <Name>auto/bilinear</Name>    <Title>auto/bilinear</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=pascal%2FNetCDF4_probabilities_greater_than_or_equal_to_36_1_0_12_2025%2D07%2D02T10_00_00Z_2025%2D07%2D02T00_00_00Z%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=probabilities&amp;format=image/png&amp;STYLE=auto/bilinear"/>    </LegendURL>  </Style>   <Style>    <Name>auto/point</Name>    <Title>auto/point</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=pascal%2FNetCDF4_probabilities_greater_than_or_equal_to_36_1_0_12_2025%2D07%2D02T10_00_00Z_2025%2D07%2D02T00_00_00Z%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=probabilities&amp;format=image/png&amp;STYLE=auto/point"/>    </LegendURL>  </Style>   <Style>    <Name>auto/barb</Name>    <Title>auto/barb</Title>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="source=pascal%2FNetCDF4_probabilities_greater_than_or_equal_to_36_1_0_12_2025%2D07%2D02T10_00_00Z_2025%2D07%2D02T00_00_00Z%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=probabilities&amp;format=image/png&amp;STYLE=auto/barb"/>    </LegendURL>  </Style></Layer>
+    </Layer>
+  </Capability>
+</WMS_Capabilities>

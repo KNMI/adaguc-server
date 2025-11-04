@@ -394,15 +394,16 @@ hid_t CDFHDF5Reader::openH5GroupByName(char *varNameOut, size_t maxVarNameLen, c
   hid_t HDF5_group = H5F_file;
   hid_t newGroupID;
   CT::string varName(variableGroupName);
-  CT::string *paths = varName.splitToArray(CCDFHDF5IO_GROUPSEPARATOR);
-  for (size_t j = 0; j < paths->count - 1; j++) {
+  auto paths = varName.splitToStack(CCDFHDF5IO_GROUPSEPARATOR);
+  if (paths.size() == 0) {
+    return -1;
+  }
+  for (size_t j = 0; j < paths.size() - 1; j++) {
 
     newGroupID = H5Gopen2(HDF5_group, paths[j].c_str(), H5P_DEFAULT);
     // CDBDebug("Opened group %s with id %d from %d",paths[j].c_str(),newGroupID,HDF5_group);
     if (newGroupID < 0) {
       CDBError("group %s for variable %s not found", paths[j].c_str(), varName.c_str());
-      delete[] paths;
-      paths = NULL;
       return -1;
     }
 
@@ -410,15 +411,11 @@ hid_t CDFHDF5Reader::openH5GroupByName(char *varNameOut, size_t maxVarNameLen, c
     HDF5_group = newGroupID;
   }
 
-  if (maxVarNameLen < paths[paths->count - 1].length() + 1) {
+  if (maxVarNameLen < paths[paths.size() - 1].length() + 1) {
     CDBError("varName string size not large enough to hold variable name ");
-    delete[] paths;
-    paths = NULL;
     return -1;
   }
-  snprintf(varNameOut, maxVarNameLen, "%s", paths[paths->count - 1].c_str());
-  delete[] paths;
-  paths = NULL;
+  snprintf(varNameOut, maxVarNameLen, "%s", paths[paths.size() - 1].c_str());
   return HDF5_group;
 }
 void CDFHDF5Reader::closeH5GroupByName(const char *variableGroupName) {

@@ -484,23 +484,20 @@ int CDFNetCDFReader::readAttributes(int root_id, std::vector<CDF::Attribute *> &
 }
 
 int CDFNetCDFReader::_findNCGroupIdForCDFVariable(CT::string *varName) {
-  CT::string *paths = varName->splitToArray(CDFNetCDFGroupSeparator);
-  if (paths->count <= 1) {
-    delete[] paths;
+  auto paths = varName->splitToStack(CDFNetCDFGroupSeparator);
+  if (paths.size() <= 1) {
     return root_id;
   }
   int currentId = root_id;
-  for (size_t j = 0; j < paths->count - 1; j++) {
+  for (size_t j = 0; j < paths.size() - 1; j++) {
     int grp_ncid;
     status = nc_inq_ncid(currentId, paths[j].c_str(), &grp_ncid);
     if (status != NC_NOERR) {
       ncError(__LINE__, className, "nc_inq_ncid: ", status);
-      delete[] paths;
       return -1;
     }
     currentId = grp_ncid;
   }
-  delete[] paths;
   return currentId;
 };
 

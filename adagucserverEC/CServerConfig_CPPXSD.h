@@ -1986,7 +1986,6 @@ public:
     std::vector<XMLE_Projection *> Projection;
     std::vector<XMLE_Layer *> Layer;
     std::vector<XMLE_Style *> Style;
-    std::vector<XMLE_CacheDocs *> CacheDocs;
     std::vector<XMLE_AutoResource *> AutoResource;
     std::vector<XMLE_Dataset *> Dataset;
     std::vector<XMLE_Include *> Include;
@@ -2007,7 +2006,6 @@ public:
       XMLE_DELOBJ(Projection);
       XMLE_DELOBJ(Layer);
       XMLE_DELOBJ(Style);
-      XMLE_DELOBJ(CacheDocs);
       XMLE_DELOBJ(AutoResource);
       XMLE_DELOBJ(Dataset);
       XMLE_DELOBJ(Include);
@@ -2048,8 +2046,6 @@ public:
           XMLE_ADDOBJ(Layer);
         } else if (equals("Style", name)) {
           XMLE_ADDOBJ(Style);
-        } else if (equals("CacheDocs", name)) {
-          XMLE_ADDOBJ(CacheDocs);
         } else if (equals("AutoResource", name)) {
           XMLE_ADDOBJ(AutoResource);
         } else if (equals("Dataset", name)) {

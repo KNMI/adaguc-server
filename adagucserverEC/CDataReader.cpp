@@ -897,7 +897,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     CDBError("Unable to get CDFObject from store");
     return 1;
   }
-  if (dataSource->attachCDFObject(cdfObject) != 0) {
+  if (dataSource->attachCDFObject(cdfObject, !enableObjectCache) != 0) {
     CDBError("Unable to attach CDFObject");
     return 1;
   }
@@ -1403,6 +1403,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
       CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
     }
   }
+
 // pthread_mutex_unlock(&CDataReader_open_lock);
 #ifdef CDATAREADER_DEBUG
   CDBDebug("/Finished datareader now has %d dataobjects", dataSource->getNumDataObjects());

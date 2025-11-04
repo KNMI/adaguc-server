@@ -293,12 +293,12 @@ int CGDALDataWriter::addData(std::vector<CDataSource *> &dataSources) {
   GenericDataWarper genericDataWarper;
   GDWArgs args = {.warper = &warper, .sourceData = sourceData, .sourceGeoParams = &sourceGeo, .destGeoParams = srvParam->Geo};
 
-#define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                               \
+#define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
   if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction(x, y, val, warperState, drawFunctionState); });
-ENUMERATE_OVER_CDFTYPES(RENDER)
+  ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
 
-   CPLErr gdalStatus = GDALRasterIO(hSrcBand, GF_Write, 0, 0, srvParam->Geo->dWidth, srvParam->Geo->dHeight, warpedData, srvParam->Geo->dWidth, srvParam->Geo->dHeight, datatype, 0, 0);
+  CPLErr gdalStatus = GDALRasterIO(hSrcBand, GF_Write, 0, 0, srvParam->Geo->dWidth, srvParam->Geo->dHeight, warpedData, srvParam->Geo->dWidth, srvParam->Geo->dHeight, datatype, 0, 0);
   CDF::freeData(&warpedData);
 
   if (gdalStatus != CE_None) {
@@ -507,13 +507,11 @@ int CGDALDataWriter::end() {
   char **papszOptions = NULL;
 
   if (customOptions.length() > 2) {
-    CT::string *co = customOptions.splitToArray(",");
-    for (size_t j = 0; j < co->count; j++) {
-      CT::string *splittedco = customOptions.splitToArray("=");
+    auto co = customOptions.splitToStack(",");
+    for (size_t j = 0; j < co.size(); j++) {
+      auto splittedco = customOptions.splitToStack("=");
       papszOptions = CSLSetNameValue(papszOptions, splittedco[0].c_str(), splittedco[1].c_str());
-      delete[] splittedco;
     }
-    delete[] co;
   }
   if (driverName.equalsIgnoreCase("AAIGRID")) {
     // We allow the aagrid format writer to use a cellsize which does not have to be a square.

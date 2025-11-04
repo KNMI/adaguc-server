@@ -2967,3 +2967,40 @@ class TestWMS(unittest.TestCase):
             data.getvalue(),
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
+
+    def test_WMSGetMap_PASCAL_probabilities_manydims_timewindow(self):
+
+        AdagucTestTools().cleanTempDir()
+        filename_getcapabilities = "test_WMSGetCapabilities_PASCAL_probabilities_manydims_timewindow.xml"
+        filename_getmap = "test_WMSGetMap_PASCAL_probabilities_manydims_timewindow.png"
+
+        # pylint: disable=unused-variable
+        status_getcapabilities, data_getcapabilities, _headers = AdagucTestTools().runADAGUCServer(
+            "source=pascal/NetCDF4_probabilities_greater_than_or_equal_to_36_1_0_12_2025-07-02T10_00_00Z_2025-07-02T00_00_00Z%2Enc&SERVICE=WMS&&REQUEST=GetCapabilities&version=1.3.0",
+            env=self.env,
+            args=["--report"],
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename_getcapabilities, data_getcapabilities.getvalue())
+
+
+        # pylint: disable=unused-variable
+        status_getmap, data_getmap, _headers = AdagucTestTools().runADAGUCServer(
+            "source=pascal/NetCDF4_probabilities_greater_than_or_equal_to_36_1_0_12_2025-07-02T10_00_00Z_2025-07-02T00_00_00Z%2Enc&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=probabilities&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=-185283.26353977562,6054605.908001992,1548392.0145409694,7814973.6460993765&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&&DIM_time_window=1&time=2025-07-02T10%3A00%3A00Z&DIM_reference_time=2025-07-02T00%3A00%3A00Z&DIM_radius=0.12&DIM_condition=greater_than_or_equal_to_36&0.5572985210530884",
+            env=self.env,
+            args=["--report"],
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename_getmap, data_getmap.getvalue())
+
+
+        self.assertEqual(status_getcapabilities, 0)
+        self.assertTrue(
+            AdagucTestTools().compareGetCapabilitiesXML(
+                self.testresultspath + filename_getcapabilities, self.expectedoutputsspath + filename_getcapabilities
+            )
+        )
+
+        self.assertEqual(status_getmap, 0)
+        self.assertEqual(
+            data_getmap.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename_getmap),
+        )        

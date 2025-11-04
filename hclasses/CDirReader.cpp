@@ -274,11 +274,11 @@ void CDirReader::makePublicDirectory(const char *dirname) {
   int intStat = stat(dirname, &stFileInfo);
   if (intStat != 0) {
     CT::string directory = dirname;
-    CT::string *directorySplitted = directory.splitToArray("/");
+    auto directorySplitted = directory.splitToStack("/");
     directory = "";
-    for (size_t j = 0; j < directorySplitted->count; j++) {
+    for (auto &directoryPart : directorySplitted) {
       directory.concat("/");
-      directory.concat(directorySplitted[j].c_str());
+      directory.concat(directoryPart);
       const char *part = directory.c_str();
       int intStat = stat(part, &stFileInfo);
       if (intStat != 0) {
@@ -287,7 +287,6 @@ void CDirReader::makePublicDirectory(const char *dirname) {
         chmod(part, 0777);
       }
     }
-    delete[] directorySplitted;
   }
 }
 

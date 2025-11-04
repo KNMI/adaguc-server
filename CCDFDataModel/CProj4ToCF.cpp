@@ -26,6 +26,7 @@
 #include "CProj4ToCF.h"
 
 #include "CReporter.h"
+#include <CKeyValuePair.h>
 
 const char *CProj4ToCF::className = "CProj4ToCF";
 
@@ -34,19 +35,19 @@ float CProj4ToCF::CProj4ToCF::convertToM(float fValue) {
   return fValue;
 }
 
-CT::string *CProj4ToCF::getProj4Value(const char *proj4Key, std::vector<CProj4ToCF::KVP *> projKVPList) {
+CT::string CProj4ToCF::getProj4Value(const char *proj4Key, std::vector<CKeyValuePair> projKVPList) {
   for (size_t j = 0; j < projKVPList.size(); j++) {
-    if (projKVPList[j]->name.equals(proj4Key) == true) {
-      return &projKVPList[j]->value;
+    if (projKVPList[j].key.equals(proj4Key) == true) {
+      return projKVPList[j].value;
     }
   }
   throw(0);
 }
 
-float CProj4ToCF::getProj4ValueF(const char *proj4Key, std::vector<CProj4ToCF::KVP *> projKVPList, float defaultValue, float((*conversionfunction)(float))) {
+float CProj4ToCF::getProj4ValueF(const char *proj4Key, std::vector<CKeyValuePair> projKVPList, float defaultValue, float((*conversionfunction)(float))) {
   float value = defaultValue;
   try {
-    value = getProj4Value(proj4Key, projKVPList)->toFloat();
+    value = getProj4Value(proj4Key, projKVPList).toFloat();
   } catch (int e) {
     value = defaultValue;
   }
@@ -56,9 +57,9 @@ float CProj4ToCF::getProj4ValueF(const char *proj4Key, std::vector<CProj4ToCF::K
   return value;
 }
 
-float CProj4ToCF::getProj4ValueF(const char *proj4Key, std::vector<CProj4ToCF::KVP *> projKVPList, float defaultValue) { return getProj4ValueF(proj4Key, projKVPList, defaultValue, NULL); }
+float CProj4ToCF::getProj4ValueF(const char *proj4Key, std::vector<CKeyValuePair> projKVPList, float defaultValue) { return getProj4ValueF(proj4Key, projKVPList, defaultValue, NULL); }
 
-void CProj4ToCF::initMSGPerspective(CDF::Variable *projectionVariable, std::vector<CProj4ToCF::KVP *> projKVPList) {
+void CProj4ToCF::initMSGPerspective(CDF::Variable *projectionVariable, std::vector<CKeyValuePair> projKVPList) {
   //+proj=geos +lon_0=0.000000 +lat_0=0 +h=35807.414063 +a=6378.169 +b=6356.5838
   projectionVariable->removeAttributes();
   float v = 0;
@@ -111,7 +112,7 @@ void CProj4ToCF::initMSGPerspective(CDF::Variable *projectionVariable, std::vect
    */
 }
 
-void CProj4ToCF::initStereoGraphic(CDF::Variable *projectionVariable, std::vector<CProj4ToCF::KVP *> projKVPList) {
+void CProj4ToCF::initStereoGraphic(CDF::Variable *projectionVariable, std::vector<CKeyValuePair> projKVPList) {
   projectionVariable->removeAttributes();
   float v = 0;
   projectionVariable->addAttribute(new CDF::Attribute("grid_mapping_name", "polar_stereographic"));
@@ -144,7 +145,7 @@ void CProj4ToCF::initStereoGraphic(CDF::Variable *projectionVariable, std::vecto
   add("b","semi_major_axis",CDF_FLOAT,"6356.7523",CProj4ToCF::convertToM);*/
 }
 
-void CProj4ToCF::initLCCPerspective(CDF::Variable *projectionVariable, std::vector<CProj4ToCF::KVP *> projKVPList) {
+void CProj4ToCF::initLCCPerspective(CDF::Variable *projectionVariable, std::vector<CKeyValuePair> projKVPList) {
   //+proj=lcc +lat_0=46.8 +lat_1=45.89892 +lat_2=47.69601 +lon_0=2.337229 +k_0=1.00 +x_0=600000 +y_0=2200000");
   /*add("proj","grid_mapping_name",CDF_CHAR,"lambert_conformal_conic");
   add("lat_0","latitude_of_projection_origin",CDF_FLOAT,"46.8");
@@ -174,15 +175,15 @@ void CProj4ToCF::initLCCPerspective(CDF::Variable *projectionVariable, std::vect
   int numStandardParallels = 0;
   float standard_parallels[2];
   try {
-    CT::string *lat_1 = getProj4Value("lat_1", projKVPList);
-    standard_parallels[0] = lat_1->toFloat();
+    CT::string lat_1 = getProj4Value("lat_1", projKVPList);
+    standard_parallels[0] = lat_1.toFloat();
     numStandardParallels++;
   } catch (int e) {
   }
 
   try {
-    CT::string *lat_2 = getProj4Value("lat_2", projKVPList);
-    standard_parallels[1] = lat_2->toFloat();
+    CT::string lat_2 = getProj4Value("lat_2", projKVPList);
+    standard_parallels[1] = lat_2.toFloat();
     numStandardParallels++;
   } catch (int e) {
   }
@@ -191,7 +192,7 @@ void CProj4ToCF::initLCCPerspective(CDF::Variable *projectionVariable, std::vect
   }
 }
 
-void CProj4ToCF::initLAEAPerspective(CDF::Variable *projectionVariable, std::vector<CProj4ToCF::KVP *> projKVPList) {
+void CProj4ToCF::initLAEAPerspective(CDF::Variable *projectionVariable, std::vector<CKeyValuePair> projKVPList) {
   //+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0");
   /*add("proj","grid_mapping_name",CDF_CHAR,"lambert_azimuthal_equal_area");
   add("lat_0","latitude_of_projection_origin",CDF_FLOAT,"90.0");
@@ -219,7 +220,7 @@ void CProj4ToCF::initLAEAPerspective(CDF::Variable *projectionVariable, std::vec
   projectionVariable->addAttribute(new CDF::Attribute("longitude_of_prime_meridian", CDF_FLOAT, &v, 1));
 }
 
-void CProj4ToCF::initRPPerspective(CDF::Variable *projectionVariable, std::vector<CProj4ToCF::KVP *> projKVPList) {
+void CProj4ToCF::initRPPerspective(CDF::Variable *projectionVariable, std::vector<CKeyValuePair> projKVPList) {
   //+proj=ob_tran +o_proj=longlat +lon_0=15 +o_lat_p=47 +o_lon_p=0 +a=6378.140 +b=6356.750 +x_0=0 +y_0=0 +no_defs
   // try{projectionVariable->getAttribute("grid_north_pole_latitude")->getDataAsString(&grid_north_pole_latitude);}catch(int e){};
   // try{projectionVariable->getAttribute("grid_north_pole_longitude")->getDataAsString(&grid_north_pole_longitude);}catch(int e){};
@@ -249,15 +250,15 @@ void CProj4ToCF::initRPPerspective(CDF::Variable *projectionVariable, std::vecto
   int numStandardParallels = 0;
   float standard_parallels[2];
   try {
-    CT::string *lat_1 = getProj4Value("lat_1", projKVPList);
-    standard_parallels[0] = lat_1->toFloat();
+    CT::string lat_1 = getProj4Value("lat_1", projKVPList);
+    standard_parallels[0] = lat_1.toFloat();
     numStandardParallels++;
   } catch (int e) {
   }
 
   try {
-    CT::string *lat_2 = getProj4Value("lat_2", projKVPList);
-    standard_parallels[1] = lat_2->toFloat();
+    CT::string lat_2 = getProj4Value("lat_2", projKVPList);
+    standard_parallels[1] = lat_2.toFloat();
     numStandardParallels++;
   } catch (int e) {
   }
@@ -266,7 +267,7 @@ void CProj4ToCF::initRPPerspective(CDF::Variable *projectionVariable, std::vecto
   }
 }
 
-void CProj4ToCF::initObliqueStereographicPerspective(CDF::Variable *projectionVariable, std::vector<CProj4ToCF::KVP *> projKVPList) {
+void CProj4ToCF::initObliqueStereographicPerspective(CDF::Variable *projectionVariable, std::vector<CKeyValuePair> projKVPList) {
   //+proj=sterea +lat_0=52.15616055555555 +lon_0=5.38763888888889 +k=0.9999079 +x_0=155000 +y_0=463000 +ellps=bessel +no_defs
   // TODO ellps=bessel is not supported!
   projectionVariable->removeAttributes();
@@ -288,7 +289,7 @@ void CProj4ToCF::initObliqueStereographicPerspective(CDF::Variable *projectionVa
   projectionVariable->addAttribute(new CDF::Attribute("semi_minor_axis", CDF_FLOAT, &v, 1));
 }
 
-void CProj4ToCF::initLatitudeLongitude(CDF::Variable *projectionVariable, std::vector<CProj4ToCF::KVP *> projKVPList) {
+void CProj4ToCF::initLatitudeLongitude(CDF::Variable *projectionVariable, std::vector<CKeyValuePair> projKVPList) {
   //+proj=sterea +lat_0=52.15616055555555 +lon_0=5.38763888888889 +k=0.9999079 +x_0=155000 +y_0=463000 +ellps=bessel +no_defs
   // TODO ellps=bessel is not supported!
   projectionVariable->removeAttributes();
@@ -304,7 +305,7 @@ void CProj4ToCF::initLatitudeLongitude(CDF::Variable *projectionVariable, std::v
   projectionVariable->addAttribute(new CDF::Attribute("semi_minor_axis", CDF_FLOAT, &v, 1));
 }
 
-void CProj4ToCF::initMercator(CDF::Variable *projectionVariable, std::vector<CProj4ToCF::KVP *> projKVPList) {
+void CProj4ToCF::initMercator(CDF::Variable *projectionVariable, std::vector<CKeyValuePair> projKVPList) {
   CDBDebug("initMercator ");
   projectionVariable->removeAttributes();
   float v = 0;
@@ -319,7 +320,7 @@ void CProj4ToCF::initMercator(CDF::Variable *projectionVariable, std::vector<CPr
   projectionVariable->addAttribute(new CDF::Attribute("semi_minor_axis", CDF_FLOAT, &v, 1));
 }
 
-void CProj4ToCF::initTransverseMercator(CDF::Variable *projectionVariable, std::vector<CProj4ToCF::KVP *> projKVPList) {
+void CProj4ToCF::initTransverseMercator(CDF::Variable *projectionVariable, std::vector<CKeyValuePair> projKVPList) {
   CDBDebug("initTransverseMercator()");
   projectionVariable->removeAttributes();
   float v = 0;
@@ -340,7 +341,7 @@ void CProj4ToCF::initTransverseMercator(CDF::Variable *projectionVariable, std::
   projectionVariable->addAttribute(new CDF::Attribute("scale_factor_at_projection_origin", CDF_FLOAT, &v, 1));
 }
 
-void CProj4ToCF::initGeosPerspective(CDF::Variable *projectionVariable, std::vector<CProj4ToCF::KVP *> projKVPList) {
+void CProj4ToCF::initGeosPerspective(CDF::Variable *projectionVariable, std::vector<CKeyValuePair> projKVPList) {
   //+proj=geos +lon_0=0.000000 +lat_0=0 +h=35807.414063 +a=6378.169 +b=6356.5838
   projectionVariable->removeAttributes();
   float v = 0;
@@ -390,37 +391,42 @@ CProj4ToCF::~CProj4ToCF() {}
 int CProj4ToCF::convertProjToCF(CDF::Variable *projectionVariable, const char *proj4String) {
   // Create a list with key value pairs of projection options
 
-  std::vector<CProj4ToCF::KVP *> projKVPList;
+  std::vector<CKeyValuePair> projKVPList;
   CT::string proj4CTString;
   proj4CTString.copy(proj4String);
-  CT::string *projElements = proj4CTString.splitToArray(" +");
+  auto projElements = proj4CTString.splitToStack(" ");
 
-  if (projElements->count < 2) {
-    delete[] projElements;
+  if (projElements.size() < 2) {
     return 1;
   }
-  for (size_t j = 0; j < projElements->count; j++) {
-    KVP *option = new KVP();
-    CT::string *element = projElements[j].splitToArray("=");
-    option->name.copy(&element[0]);
-    option->value.copy(&element[1]);
-    projKVPList.push_back(option);
-    delete[] element;
+  for (auto &projElement : projElements) {
+
+    auto element = projElement.splitToStack("=");
+    if (element.size() > 0) {
+      CT::string name, value;
+      name.copy(element[0]);
+      if (element.size() > 1) {
+        value.copy(element[1]);
+      }
+      if (name.startsWith("+")) {
+        name.substringSelf(1, -1);
+      }
+      projKVPList.push_back({.key = name, .value = value});
+    }
   }
-  delete[] projElements;
   CT::string cmpStr;
   int foundProj = 0;
   try {
 
     for (size_t j = 0; j < projKVPList.size(); j++) {
-      if (projKVPList[j]->name.equals("proj")) {
-        if (projKVPList[j]->value.equals("stere")) {
+      if (projKVPList[j].key.equals("proj")) {
+        if (projKVPList[j].value.equals("stere")) {
           initStereoGraphic(projectionVariable, projKVPList);
           foundProj = 1;
         }
-        if (projKVPList[j]->value.equals("geos")) {
+        if (projKVPList[j].value.equals("geos")) {
           for (size_t j2 = 0; j2 < projKVPList.size(); j2++) {
-            if (projKVPList[j2]->name.equals("height_from_earth_center")) {
+            if (projKVPList[j2].key.equals("height_from_earth_center")) {
               initMSGPerspective(projectionVariable, projKVPList);
               foundProj = 1;
             }
@@ -430,35 +436,35 @@ int CProj4ToCF::convertProjToCF(CDF::Variable *projectionVariable, const char *p
             foundProj = 1;
           }
         }
-        if (projKVPList[j]->value.equals("lcc")) {
+        if (projKVPList[j].value.equals("lcc")) {
           initLCCPerspective(projectionVariable, projKVPList);
           foundProj = 1;
         }
-        if (projKVPList[j]->value.equals("ob_tran")) {
+        if (projKVPList[j].value.equals("ob_tran")) {
           initRPPerspective(projectionVariable, projKVPList);
           foundProj = 1;
         }
-        if (projKVPList[j]->value.equals("sterea")) {
+        if (projKVPList[j].value.equals("sterea")) {
           initObliqueStereographicPerspective(projectionVariable, projKVPList);
           foundProj = 1;
         }
-        if (projKVPList[j]->value.equals("latitude_longitude")) {
+        if (projKVPList[j].value.equals("latitude_longitude")) {
           initLatitudeLongitude(projectionVariable, projKVPList);
           foundProj = 1;
         }
-        if (projKVPList[j]->value.equals("merc")) {
+        if (projKVPList[j].value.equals("merc")) {
           initMercator(projectionVariable, projKVPList);
           foundProj = 1;
         }
-        if (projKVPList[j]->value.equals("tmerc")) {
+        if (projKVPList[j].value.equals("tmerc")) {
           initTransverseMercator(projectionVariable, projKVPList);
           foundProj = 1;
         }
-        if (projKVPList[j]->value.equals("laea")) {
+        if (projKVPList[j].value.equals("laea")) {
           initLAEAPerspective(projectionVariable, projKVPList);
           foundProj = 1;
         }
-        if (projKVPList[j]->value.equals("aeqd")) {
+        if (projKVPList[j].value.equals("aeqd")) {
           initAEQDPerspective(projectionVariable, projKVPList);
           foundProj = 1;
         }
@@ -469,12 +475,12 @@ int CProj4ToCF::convertProjToCF(CDF::Variable *projectionVariable, const char *p
     CT::string kvpProjString = "";
     for (size_t j = 0; j < projKVPList.size(); j++) {
 
-      if (projKVPList[j]->name.equals("proj") == false && projKVPList[j]->name.equals("units") == false) {
-        if (projKVPList[j]->value.empty() == false) {
-          kvpProjString.printconcat(" +%s=%f", projKVPList[j]->name.c_str(), projKVPList[j]->value.toDouble());
+      if (projKVPList[j].key.equals("proj") == false && projKVPList[j].key.equals("units") == false) {
+        if (projKVPList[j].value.empty() == false) {
+          kvpProjString.printconcat(" +%s=%f", projKVPList[j].key.c_str(), projKVPList[j].value.toDouble());
         }
       } else {
-        kvpProjString.printconcat(" +%s=%s", projKVPList[j]->name.c_str(), projKVPList[j]->value.c_str());
+        kvpProjString.printconcat(" +%s=%s", projKVPList[j].key.c_str(), projKVPList[j].value.c_str());
         kvpProjString.trimSelf();
       }
     }
@@ -483,9 +489,6 @@ int CProj4ToCF::convertProjToCF(CDF::Variable *projectionVariable, const char *p
     CDBError("Exception %d occured", e);
   }
 
-  for (size_t j = 0; j < projKVPList.size(); j++) {
-    delete projKVPList[j];
-  };
   projKVPList.clear();
   if (foundProj == 0) return 1;
 
@@ -658,14 +661,13 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
 
       proj4String.print("+proj=lcc +lat_0=%f", latitude_of_projection_origin.toDouble());
 
-      CT::string *stpList = standard_parallel.splitToArray(" ");
-      if (stpList->count == 1) {
+      auto stpList = standard_parallel.splitToStack(" ");
+      if (stpList.size() == 1) {
         proj4String.printconcat(" +lat_1=%f", stpList[0].toDouble());
       }
-      if (stpList->count == 2) {
+      if (stpList.size() == 2) {
         proj4String.printconcat(" +lat_1=%f +lat_2=%f", stpList[0].toDouble(), stpList[1].toDouble());
       }
-      delete[] stpList;
 
       proj4String.printconcat(" +lon_0=%f +k_0=1.0 +x_0=%f +y_0=%f +a=%f +b=%f", longitude_of_central_meridian.toDouble(), false_easting.toDouble(), false_northing.toDouble(), dfsemi_major_axis,
                               dfsemi_minor_axis);
@@ -899,14 +901,13 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
 
       proj4String.print("+proj=merc +lat_0=%f", latitude_of_projection_origin.toDouble());
 
-      CT::string *stpList = standard_parallel.splitToArray(" ");
-      if (stpList->count == 1) {
+      auto stpList = standard_parallel.splitToStack(" ");
+      if (stpList.size() == 1) {
         proj4String.printconcat(" +lat_1=%f", stpList[0].toDouble());
       }
-      if (stpList->count == 2) {
+      if (stpList.size() == 2) {
         proj4String.printconcat(" +lat_1=%f +lat_2=%f", stpList[0].toDouble(), stpList[1].toDouble());
       }
-      delete[] stpList;
 
       proj4String.printconcat(" +lon_0=%f +k_0=1.0 +x_0=%f +y_0=%f +a=%f ", longitude_of_central_meridian.toDouble(), false_easting.toDouble(), false_northing.toDouble(), semi_major_axis.toDouble());
     } else if (grid_mapping_name.equals("transverse_mercator")) {
@@ -1181,7 +1182,7 @@ int CProj4ToCF::unitTest() {
   return status;
 }
 
-void CProj4ToCF::initAEQDPerspective(CDF::Variable *projectionVariable, std::vector<CProj4ToCF::KVP *> projKVPList) {
+void CProj4ToCF::initAEQDPerspective(CDF::Variable *projectionVariable, std::vector<CKeyValuePair> projKVPList) {
   // "+proj=aeqd +lat_0=-41.2 +lon_0=174.7 +x_0=25000. +y_0=-100000. +a=6370997.0 +units=m +no_defs"
   //
   // azimuthal_equidistant:grid_mapping_name = "azimuthal_equidistant" ;

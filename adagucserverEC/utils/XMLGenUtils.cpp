@@ -311,10 +311,9 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
 
         /* Automatically scan the time dimension, two types are avaible, start/stop/resolution and individual values */
         // TODO try to detect automatically the time resolution of the layer.
-        CT::string varName = metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str();
-        // CDBDebug("VarName = [%s]",varName.c_str());
-        int ind = varName.indexOf("time");
-        if (ind >= 0) {
+        auto cfgDim = metadataLayer->dataSource->cfgLayer->Dimension[i];
+
+        if (cfgDim->attr.name.equals("time") || (cfgDim->attr.name.indexOf("time") >= 0 && cfgDim->attr.units.equals("ISO8601"))) {
           // CDBDebug("VarName = [%s] and this is a time dim at %d!",varName.c_str(),ind);
           CT::string units;
           isTimeDim = true;
@@ -809,7 +808,6 @@ int getFileNameForLayer(MetadataLayer *metadataLayer) {
   CDBDebug("getFileNameForLayer");
 #endif
   if (!metadataLayer->fileName.empty()) {
-    CDBDebug("seems already done");
     return 0;
   }
   CServerParams *srvParam = metadataLayer->dataSource->srvParams;

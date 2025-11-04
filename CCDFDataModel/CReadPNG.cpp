@@ -25,15 +25,14 @@
 
 #include "CReadPNG.h"
 
-const char *CReadPNG::className = "CReadPNG";
-const char *CReadPNG::CPNGRaster::className = "CPNGRaster";
-
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
-
+#include <algorithm>
+#include <cfenv>
+#include <cmath>
 #define PNG_DEBUG 3
 #include <png.h>
 
@@ -41,15 +40,26 @@ const char *CReadPNG::CPNGRaster::className = "CPNGRaster";
 
 // https://aiddata.rvo.nl/projects
 
-CReadPNG::CPNGRaster *CReadPNG::read_png_file(const char *file_name, bool pngReadHeaderOnly) {
-  CDBDebug("CReadPNG::open %s", file_name);
+CPNGRaster::~CPNGRaster() {
+  if (data != NULL) {
+    delete[] data;
+    data = NULL;
+  }
+}
+
+CPNGRaster *CReadPNG_read_png_file(const char *file_name, bool pngReadHeaderOnly) {
+  if (pngReadHeaderOnly) {
+    CDBDebug("open image %s", file_name);
+  } else {
+    CDBDebug("open only headers %s", file_name);
+  }
   png_byte color_type;
   png_byte bit_depth;
 
-  png_structp png_ptr;
-  png_infop info_ptr;
+  png_structp png_ptr = nullptr;
+  png_infop info_ptr = nullptr;
   //   int number_of_passes;
-  png_bytep *row_pointers;
+  png_bytep *row_pointers = nullptr;
 
   unsigned char header[8]; // 8 is the maximum size that can be checked
 
@@ -57,11 +67,14 @@ CReadPNG::CPNGRaster *CReadPNG::read_png_file(const char *file_name, bool pngRea
   FILE *fp = fopen(file_name, "rb");
   if (!fp) {
     CDBError("[read_png_file] File %s could not be opened for reading", file_name);
+    png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
     return NULL;
   }
   (void)!fread(header, 1, 8, fp);
   if (png_sig_cmp(header, 0, 8)) {
     CDBError("[read_png_file] File %s is not recognized as a PNG file", file_name);
+    png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+    fclose(fp);
     return NULL;
   }
 
@@ -70,17 +83,23 @@ CReadPNG::CPNGRaster *CReadPNG::read_png_file(const char *file_name, bool pngRea
 
   if (!png_ptr) {
     CDBError("[read_png_file] png_create_read_struct failed");
+    png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+    fclose(fp);
     return NULL;
   }
 
   info_ptr = png_create_info_struct(png_ptr);
   if (!info_ptr) {
     CDBError("[read_png_file] png_create_info_struct failed");
+    png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+    fclose(fp);
     return NULL;
   }
 
   if (setjmp(png_jmpbuf(png_ptr))) {
     CDBError("[read_png_file] Error during init_io");
+    png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+    fclose(fp);
     return NULL;
   }
 
@@ -89,11 +108,11 @@ CReadPNG::CPNGRaster *CReadPNG::read_png_file(const char *file_name, bool pngRea
 
   png_read_info(png_ptr, info_ptr);
 
-  CReadPNG::CPNGRaster *pngRaster = new CPNGRaster();
+  CPNGRaster *pngRaster = new CPNGRaster();
 
   pngRaster->width = png_get_image_width(png_ptr, info_ptr);
   pngRaster->height = png_get_image_height(png_ptr, info_ptr);
-  // CDBDebug("CReadPNG::open PNG of size [%dx%d]", pngRaster->width, pngRaster->height );
+  // CDBDebug("open PNG of size [%dx%d]", pngRaster->width, pngRaster->height );
   color_type = png_get_color_type(png_ptr, info_ptr);
   bit_depth = png_get_bit_depth(png_ptr, info_ptr);
 
@@ -103,12 +122,14 @@ CReadPNG::CPNGRaster *CReadPNG::read_png_file(const char *file_name, bool pngRea
   png_get_text(png_ptr, info_ptr, &text_ptr, &num_text);
 
   for (int j = 0; j < num_text; j++) {
-    pngRaster->headers.add(CKeyValuePair(text_ptr[j].key, text_ptr[j].text));
+    pngRaster->headers.add({.key = text_ptr[j].key, .value = text_ptr[j].text});
   }
 
   png_read_update_info(png_ptr, info_ptr);
 
   if (pngReadHeaderOnly == true) {
+    png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+    fclose(fp);
     return pngRaster;
   }
 
@@ -119,6 +140,8 @@ CReadPNG::CPNGRaster *CReadPNG::read_png_file(const char *file_name, bool pngRea
   /* read file */
   if (setjmp(png_jmpbuf(png_ptr))) {
     CDBError("[read_png_file] Error during read_image");
+    png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+    fclose(fp);
     return NULL;
   }
 
@@ -152,13 +175,17 @@ CReadPNG::CPNGRaster *CReadPNG::read_png_file(const char *file_name, bool pngRea
 
   if (pngRaster->data != NULL) {
     CDBDebug("pngRaster->data already defined, return");
+    png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+    fclose(fp);
     return pngRaster;
   }
 
   pngRaster->data = new unsigned char[pngRaster->width * pngRaster->height * 4];
+  size_t c = std::ceil((pngRaster->width / pngwidthdivisor) + 1.f);
+  size_t calcWidth = std::min(pngRaster->width, c);
   for (size_t y = 0; y < pngRaster->height; y++) {
     unsigned char *line = row_pointers[y];
-    for (size_t x = 0; x < (pngRaster->width / pngwidthdivisor) + 1; x += 1) {
+    for (size_t x = 0; x < calcWidth; x += 1) {
 
       /*  Each pixel is a palette index, using PLTE */
       if (color_type == 3) {
@@ -225,7 +252,6 @@ CReadPNG::CPNGRaster *CReadPNG::read_png_file(const char *file_name, bool pngRea
             bbpo = 2;
           }
         }
-
         /* Red */
         pngRaster->data[x * 4 + 0 + (y * pngRaster->width * 4)] = line[x * bpp + 0];
 
