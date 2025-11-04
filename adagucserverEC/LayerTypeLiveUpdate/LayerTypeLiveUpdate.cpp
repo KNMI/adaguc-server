@@ -106,7 +106,7 @@ int layerTypeLiveUpdateRender(CDataSource *incomingDataSource, CServerParams *sr
     solTVar->dimensionlinks.push_back(dimY);
     solTVar->dimensionlinks.push_back(dimX);
     solTVar->setType(CDF_FLOAT);
-    solTVar->name = "SolT";
+    solTVar->name = "solarterminator";
     solTVar->setAttributeText("units", "categories");
     solTVar->setAttributeText("grid_mapping", "projection");
     cdfObject->addVariable(solTVar);
@@ -151,7 +151,7 @@ int layerTypeLiveUpdateRender(CDataSource *incomingDataSource, CServerParams *sr
 
     // DataObject ref
     CDataSource::DataObject *obj = new CDataSource::DataObject();
-    obj->variableName.copy("SolT");
+    obj->variableName.copy("solarterminator");
     obj->cdfObject = cdfObject;
     obj->cdfVariable = solTVar;
     obj->cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
