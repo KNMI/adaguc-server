@@ -890,6 +890,9 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
   if (mode == CNETCDFREADER_MODE_OPEN_ALL || mode == CNETCDFREADER_MODE_GET_METADATA || mode == CNETCDFREADER_MODE_OPEN_EXTENT) {
     cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource, dataSourceFilename.c_str(), enableObjectCache);
   }
+  if (mode == CNETCDFREADER_MODE_OPEN_VIRTUAL) {
+    cdfObject = dataSource->getDataObject(0)->cdfObject;
+  }
   if (cdfObject == NULL) {
     CDBError("Unable to get CDFObject from store");
     return 1;
@@ -1060,6 +1063,10 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 
   if (enablePostProcessors) {
     CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
+  }
+
+  if (mode == CNETCDFREADER_MODE_OPEN_VIRTUAL) {
+    CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
   }
 
   if (mode == CNETCDFREADER_MODE_GET_METADATA) {

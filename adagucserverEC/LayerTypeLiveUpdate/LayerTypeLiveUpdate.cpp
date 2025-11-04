@@ -42,18 +42,93 @@ int layerTypeLiveUpdateConfigureDimensionsInDataSource(CDataSource *dataSource) 
   return 0;
 }
 
-int layerTypeLiveUpdateRender(CDataSource *dataSource, CServerParams *srvParam) {
-  CDBDebug("in special liveupdate case with timesteps %d", dataSource->getNumTimeSteps());
-
-  if (dataSource->cfgLayer->DataPostProc.empty()) {
+int layerTypeLiveUpdateRender(CDataSource *incomingDataSource, CServerParams *srvParam) {
+  if (incomingDataSource->cfgLayer->DataPostProc.empty()) {
     // Demo case: render the current time in an image for testing purposes / frontend development
     CDrawImage image;
     layerTypeLiveUpdateRenderIntoDrawImage(&image, srvParam);
     printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
-    CDBDebug("***Number of timesteps %d", dataSource->getNumTimeSteps());
+    CDBDebug("***Number of timesteps %d", incomingDataSource->getNumTimeSteps());
     return image.printImagePng8(true);
   } else {
-    // General case: Liveupdate with some data postprocessors
+    // Solar Terminator case (uses a data postprocessor)
+    CDataSource *dataSource = new CDataSource();
+    dataSource->srvParams = srvParam;
+    dataSource->isConfigured = true;
+    dataSource->currentAnimationStep = 0;
+    dataSource->layerName.copy("liveupdate_memory");
+    CDFObject *cdfObject = new CDFObject();
+
+    // Make x,y (why can this value be anything?)
+    int nx = 1, ny = 1;
+    CDF::Dimension *dimX = new CDF::Dimension();
+    dimX = new CDF::Dimension();
+    dimX->name = "x";
+    dimX->setSize(nx);
+
+    CDF::Dimension *dimY = new CDF::Dimension();
+    dimY = new CDF::Dimension();
+    dimY->name = "y";
+    dimY->setSize(ny);
+
+    cdfObject->addDimension(dimX);
+    cdfObject->addDimension(dimY);
+
+    // Corresponding variables for the dimensions
+    CDF::Variable *varX = new CDF::Variable();
+    varX->setType(CDF_DOUBLE);
+    varX->name.copy("x");
+    varX->isDimension = true;
+    varX->dimensionlinks.push_back(dimX);
+    cdfObject->addVariable(varX);
+    varX->addAttribute(new CDF::Attribute("long_name", "x coordinate of projection"));
+    varX->addAttribute(new CDF::Attribute("standard_name", "projection_x_coordinate"));
+    varX->addAttribute(new CDF::Attribute("units", "metre"));
+    CDF::Variable::CustomMemoryReader *memoryReaderX = CDF::Variable::CustomMemoryReaderInstance;
+    varX->setCustomReader(memoryReaderX);
+
+    CDF::Variable *varY = new CDF::Variable();
+    varY->setType(CDF_DOUBLE);
+    varY->name.copy("y");
+    varY->isDimension = true;
+    varY->dimensionlinks.push_back(dimY);
+    cdfObject->addVariable(varY);
+    varY->addAttribute(new CDF::Attribute("long_name", "y coordinate of projection"));
+    varY->addAttribute(new CDF::Attribute("standard_name", "projection_y_coordinate"));
+    varY->addAttribute(new CDF::Attribute("units", "metre"));
+    CDF::Variable::CustomMemoryReader *memoryReaderY = CDF::Variable::CustomMemoryReaderInstance;
+    varY->setCustomReader(memoryReaderY);
+
+    CDF::Variable *solTVar = new CDF::Variable();
+    solTVar->setType(CDF_FLOAT);
+    float fillValue[] = {-1};
+    solTVar->setAttribute("_FillValue", solTVar->getType(), fillValue, 1);
+    solTVar->dimensionlinks.push_back(dimY);
+    solTVar->dimensionlinks.push_back(dimX);
+    solTVar->setType(CDF_FLOAT);
+    solTVar->name = "SolT";
+    solTVar->setAttributeText("units", "categories");
+    solTVar->setAttributeText("grid_mapping", "projection");
+    cdfObject->addVariable(solTVar);
+    CDF::Variable::CustomMemoryReader *memoryReaderSolT = CDF::Variable::CustomMemoryReaderInstance;
+    solTVar->setCustomReader(memoryReaderSolT);
+
+    // DataObject ref
+    CDataSource::DataObject *obj = new CDataSource::DataObject();
+    obj->variableName.copy("SolT");
+    obj->cdfObject = cdfObject;
+    obj->cdfVariable = solTVar;
+    obj->cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
+    dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), obj);
+    dataSource->attachCDFObject(cdfObject);
+    cdfObject->attachCDFReader(CDF::Variable::CustomMemoryReaderInstance);
+
+    // Add dummy step
+    dataSource->addStep("", NULL);
+
+    // Set styles, among other things
+    dataSource->setCFGLayer(srvParam, srvParam->configObj->Configuration[0], srvParam->cfg->Layer[0], NULL, 0);
+
     return layerTypeLiveUpdateRenderIntoImageDataWriter(dataSource, srvParam);
   }
 }
@@ -118,7 +193,7 @@ int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(MetadataLayer *metada
   double epochTime = timeInstance.getEpochTimeFromDateString(CTime::currentDateTime());
   // CTime::Date cdate = timeInstance.getDate(epochTime);
   double startTimeOffset = timeInstance.quantizeTimeToISO8601(epochTime - 3600 * 24 * 365, timeResolution.c_str(), "low");
-  double stopTimeOffset = timeInstance.quantizeTimeToISO8601(epochTime, timeResolution.c_str(), "low");
+  double stopTimeOffset = timeInstance.quantizeTimeToISO8601(epochTime + 3600 * 24 * 365, timeResolution.c_str(), "low");
   CT::string startTime = timeInstance.dateToISOString(timeInstance.offsetToDate(startTimeOffset));
   CT::string stopTime = timeInstance.dateToISOString(timeInstance.offsetToDate(stopTimeOffset));
   LayerMetadataDim dim = {.serviceName = "time",

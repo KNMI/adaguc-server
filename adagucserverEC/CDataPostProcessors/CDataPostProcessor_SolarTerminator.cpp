@@ -44,12 +44,8 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
   }
 
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
-    CT::string newVariableName = "SolT";
-
-    CDataSource::DataObject *newDataObject = dataSource->getDataObject(0);
-    newDataObject->variableName.copy(newVariableName.c_str());
-
-    // Copy bounding box of screen (can this code be moved?)
+    // Copy bounding box of screen
+    // Moving this code to LayerTypeLiveUpdate::layerTypeLiveUpdateRender() does not work
     auto *geo = dataSource->srvParams->Geo;
     dataSource->nativeProj4 = geo->CRS;
     dataSource->dWidth = geo->dWidth;

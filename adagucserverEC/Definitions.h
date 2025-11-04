@@ -102,6 +102,7 @@
 #define CNETCDFREADER_MODE_GET_METADATA 3    /* Process only data needed for metadata */
 #define CNETCDFREADER_MODE_OPEN_DIMENSIONS 4 /* Open dimensions only, like used in the WMS GetCapabilities generation of CXMLGen.*/
 #define CNETCDFREADER_MODE_OPEN_EXTENT 5     /* Open a subset of the grid, read data for given extent (bbox) */
+#define CNETCDFREADER_MODE_OPEN_VIRTUAL 6    /* Like open all, but with a virtual file */
 
 // Web Coverage restriction and Get Feature Info restriction
 #define ALLOW_NONE 1
