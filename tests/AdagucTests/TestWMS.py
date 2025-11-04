@@ -1096,7 +1096,7 @@ class TestWMS(unittest.TestCase):
 
         filename = "test_WMSGetMap_KNMIHDF5_echotops_RAD_NL25_ETH_NA_TOPS.png"
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "dataset=adaguc.KNMIHDF5.test&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=RAD_NL25_ETH_NA_TOPS&WIDTH=300&HEIGHT=300&CRS=EPSG%3A3857&BBOX=180000,6300000,1000000,7200000&STYLES=auto%2Fpoint&FORMAT=image/png&TRANSPARENT=TRUE&time=2020-04-30T13%3A15%3A00Z&",
+            "dataset=adaguc.KNMIHDF5.test&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=RAD_NL25_ETH_NA_TOPS&WIDTH=300&HEIGHT=300&CRS=EPSG%3A3857&BBOX=180000,6300000,1000000,7200000&STYLES=auto&FORMAT=image/png&TRANSPARENT=TRUE&time=2020-04-30T13%3A15%3A00Z&",
             env=env,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
@@ -1108,7 +1108,7 @@ class TestWMS(unittest.TestCase):
 
         filename = "test_WMSGetMap_KNMIHDF5_echotops_RAD_NL25_ETH_NA_TOPS_MAX_TEXT.png"
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "dataset=adaguc.KNMIHDF5.test&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=RAD_NL25_ETH_NA_TOPS_MAX&WIDTH=300&HEIGHT=300&CRS=EPSG%3A3857&BBOX=180000,6300000,1000000,7200000&STYLES=auto%2Fpoint&FORMAT=image/png&TRANSPARENT=TRUE&time=2020-04-30T13%3A15%3A00Z&",
+            "dataset=adaguc.KNMIHDF5.test&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=RAD_NL25_ETH_NA_TOPS_MAX&WIDTH=300&HEIGHT=300&CRS=EPSG%3A3857&BBOX=180000,6300000,1000000,7200000&STYLES=auto&FORMAT=image/png&TRANSPARENT=TRUE&time=2020-04-30T13%3A15%3A00Z&",
             env=env,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
@@ -1121,7 +1121,7 @@ class TestWMS(unittest.TestCase):
         #Tops Outline
         filename = "test_WMSGetMap_KNMIHDF5_echotops_RAD_NL25_ETH_NA_TOPS_MAX_OUTLINE.png"
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "dataset=adaguc.KNMIHDF5.test&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=RAD_NL25_ETH_NA_TOPS_MAX&WIDTH=300&HEIGHT=300&CRS=EPSG%3A3857&BBOX=180000,6300000,1000000,7200000&STYLES=echotopsmax_outline%2Fpoint&FORMAT=image/png&TRANSPARENT=TRUE&time=2020-04-30T13%3A15%3A00Z&",
+            "dataset=adaguc.KNMIHDF5.test&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=RAD_NL25_ETH_NA_TOPS_MAX&WIDTH=300&HEIGHT=300&CRS=EPSG%3A3857&BBOX=180000,6300000,1000000,7200000&STYLES=echotopsmax_outline&FORMAT=image/png&TRANSPARENT=TRUE&time=2020-04-30T13%3A15%3A00Z&",
             env=env,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
@@ -1130,8 +1130,6 @@ class TestWMS(unittest.TestCase):
             data.getvalue(),
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
-        
-
 
     def test_WMSGetCapabilities_KMDS_PointNetCDF_pointstylepoint(self):
         AdagucTestTools().cleanTempDir()
@@ -1179,7 +1177,7 @@ class TestWMS(unittest.TestCase):
 
         filename = "test_WMSGetMap_KMDS_PointNetCDF_pointstylepoint.png"
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "dataset=adaguc.testKMDS_PointNetCDF.xml&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=ta&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=294179.7001580532,6411290.650918596,901204.9572071509,7199735.637765654&STYLES=temperature%2Fpoint&FORMAT=image/png&TRANSPARENT=TRUE",
+            "dataset=adaguc.testKMDS_PointNetCDF.xml&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=ta&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=294179.7001580532,6411290.650918596,901204.9572071509,7199735.637765654&STYLES=temperature&FORMAT=image/png&TRANSPARENT=TRUE",
             env=env,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
@@ -1234,7 +1232,7 @@ class TestWMS(unittest.TestCase):
         filename = "test_WMSGetMap_KMDS_PointNetCDF_ta_volume.png"
 
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "dataset=adaguc.testKMDS_PointNetCDF.xml&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=ta&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=294179.7001580532,6411290.650918596,901204.9572071509,7199735.637765654&STYLES=temperature-volume%2Fpoint&FORMAT=image/png32&TRANSPARENT=TRUE&",
+            "dataset=adaguc.testKMDS_PointNetCDF.xml&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=ta&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=294179.7001580532,6411290.650918596,901204.9572071509,7199735.637765654&STYLES=temperature-volume&FORMAT=image/png32&TRANSPARENT=TRUE&",
             env=env,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
@@ -1247,7 +1245,7 @@ class TestWMS(unittest.TestCase):
         filename = "test_WMSGetMap_KMDS_PointNetCDF_ta_disc.png"
 
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "dataset=adaguc.testKMDS_PointNetCDF.xml&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=ta&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=294179.7001580532,6411290.650918596,901204.9572071509,7199735.637765654&STYLES=temperature-disc%2Fpoint&FORMAT=image/png32&TRANSPARENT=TRUE&",
+            "dataset=adaguc.testKMDS_PointNetCDF.xml&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=ta&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=294179.7001580532,6411290.650918596,901204.9572071509,7199735.637765654&STYLES=temperature-disc&FORMAT=image/png32&TRANSPARENT=TRUE&",
             env=env,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
@@ -1988,7 +1986,6 @@ class TestWMS(unittest.TestCase):
             )
         )  # Allowed pixel difference is huge, but only for very small number of pixels
 
-
     def test_WMSGetMap_dashed_contour_lines_arial(self):
         AdagucTestTools().cleanTempDir()
         config = (
@@ -2176,7 +2173,7 @@ class TestWMS(unittest.TestCase):
                 0.1,
             )
         )
-        
+
     def test_WMSGetMapWithHarmShadedWindSpeed(self):
         AdagucTestTools().cleanTempDir()
         filename = "test_WMSGetMapWithHarmShadedWindSpeed.png"
@@ -2207,7 +2204,7 @@ class TestWMS(unittest.TestCase):
                 0.1,
             )
         )
-        
+
     def test_WMSGetMapWindComponentsAllNorthEuropeStereoGraphic(self):
         AdagucTestTools().cleanTempDir()
         filename = "test_WMSGetMapWindComponentsAllNorth.png"
@@ -2239,7 +2236,6 @@ class TestWMS(unittest.TestCase):
             )
         )
 
-
     def test_WMSGetMapWindComponentsAllNorthMercator(self):
         AdagucTestTools().cleanTempDir()
         filename = "test_WMSGetMapWindComponentsAllNorthMercator.png"
@@ -2270,7 +2266,7 @@ class TestWMS(unittest.TestCase):
                 0.1,
             )
         )
-        
+
     def test_WMSGetMap_EPSG3067(self):
         AdagucTestTools().cleanTempDir()
 
@@ -3003,7 +2999,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(
             data_getmap.getvalue(),
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename_getmap),
-        )        
+        )
 
     def test_WMSGetMap_Barbs_example_windbarbs_from_pointdata_csv(self):
         AdagucTestTools().cleanTempDir()
@@ -3012,14 +3008,13 @@ class TestWMS(unittest.TestCase):
             + "/data/config/adaguc.tests.dataset.xml,adaguc.tests.vectorrendering.xml"
         )
         env = {"ADAGUC_CONFIG": config}
-        # pylint: disable=unused-variable
-        status, data, headers = AdagucTestTools().runADAGUCServer(
+        status, data, _ = AdagucTestTools().runADAGUCServer(
             args=["--updatedb", "--config", config], env=self.env, isCGI=False
         )
         self.assertEqual(status, 0)
 
         filename = "test_WMSGetMap_Barbs_example_windbarbs_from_pointdata_csv.png"
-        status, data, headers = AdagucTestTools().runADAGUCServer(
+        status, data, _ = AdagucTestTools().runADAGUCServer(
             "DATASET=adaguc.tests.vectorrendering&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=example_windbarbs_from_pointdata_csv&WIDTH=1024&HEIGHT=1024&CRS=EPSG%3A3857&BBOX=-577014.3843391966,-2101256.2330806395,4248210.613219857,2100649.425887959&STYLES=windbarbs_kts_shaded_withbarbs_for_points%2Fpoint&FORMAT=image/png&TRANSPARENT=FALSE&BGCOLOR=0xA0F080&&time=2018-12-04T12%3A00%3A00Z&title=How%20to%20render%20windbarbs%20from%20point%20data,%20like%20CSV,%20NetCDF%20or%20GeoJSON&showscalebar=true",
             env=env,
         )
@@ -3040,14 +3035,13 @@ class TestWMS(unittest.TestCase):
             + "/data/config/adaguc.tests.dataset.xml,adaguc.tests.vectorrendering.xml"
         )
         env = {"ADAGUC_CONFIG": config}
-        # pylint: disable=unused-variable
-        status, data, headers = AdagucTestTools().runADAGUCServer(
+        status, data, _ = AdagucTestTools().runADAGUCServer(
             args=["--updatedb", "--config", config], env=self.env, isCGI=False
         )
         self.assertEqual(status, 0)
 
         filename = "test_WMSGetMap_Barbs_example_windbarbs_from_pointdata_csv_different_style_options.png"
-        status, data, headers = AdagucTestTools().runADAGUCServer(
+        status, data, _ = AdagucTestTools().runADAGUCServer(
             "DATASET=adaguc.tests.vectorrendering&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=example_windbarbs_from_pointdata_csv&WIDTH=1024&HEIGHT=1024&CRS=EPSG%3A3857&BBOX=-577014.3843391966,-2101256.2330806395,4248210.613219857,2100649.425887959&STYLES=windbarbs_kts_shaded_withbarbs_for_points_differentoptions%2Fpoint&FORMAT=image/png&TRANSPARENT=FALSE&BGCOLOR=0xA0F080&&time=2018-12-04T12%3A00%3A00Z&title=How%20to%20render%20windbarbs%20from%20point%20data,%20like%20CSV,%20NetCDF%20or%20GeoJSON&showscalebar=true",
             env=env,
         )
@@ -3058,8 +3052,6 @@ class TestWMS(unittest.TestCase):
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
 
-
-
     def test_WMSGetMap_Barbs_example_windbarbs_on_gridded_netcdf(self):
         AdagucTestTools().cleanTempDir()
         config = (
@@ -3067,14 +3059,13 @@ class TestWMS(unittest.TestCase):
             + "/data/config/adaguc.tests.dataset.xml,adaguc.tests.vectorrendering.xml"
         )
         env = {"ADAGUC_CONFIG": config}
-        # pylint: disable=unused-variable
-        status, data, headers = AdagucTestTools().runADAGUCServer(
+        status, data, _ = AdagucTestTools().runADAGUCServer(
             args=["--updatedb", "--config", config], env=self.env, isCGI=False
         )
         self.assertEqual(status, 0)
 
         filename = "test_WMSGetMap_Barbs_example_windbarbs_on_gridded_netcdf.png"
-        status, data, headers = AdagucTestTools().runADAGUCServer(
+        status, data, _ = AdagucTestTools().runADAGUCServer(
             "dataset=adaguc.tests.vectorrendering.xml&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=example_windbarbs_on_gridded_netcdf&WIDTH=1352&HEIGHT=1319&CRS=EPSG%3A3857&BBOX=-65800.30054674105,6226801.574078708,1326094.9902426978,7584723.089279351&STYLES=windbarbs_kts_shaded_withbarbs_for_grids%2Fnearestpoint&FORMAT=image/png&TRANSPARENT=FALSE&BGCOLOR=0xA0F080&&time=2023-09-30T06%3A00%3A00Z&DIM_reference_time=2023-09-28T06%3A00%3A00Z&0.26085315983231405&showlegend=true&title=Wind%20barb%20style%20demo!&showscalebar=true",
             env=env,
         )
@@ -3085,7 +3076,6 @@ class TestWMS(unittest.TestCase):
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
 
-
     def test_WMSGetMap_Discs_example_windbarbs_on_gridded_netcdf(self):
         AdagucTestTools().cleanTempDir()
         config = (
@@ -3093,15 +3083,14 @@ class TestWMS(unittest.TestCase):
             + "/data/config/adaguc.tests.dataset.xml,adaguc.tests.vectorrendering.xml"
         )
         env = {"ADAGUC_CONFIG": config}
-        # pylint: disable=unused-variable
-        status, data, headers = AdagucTestTools().runADAGUCServer(
+        status, data, _ = AdagucTestTools().runADAGUCServer(
             args=["--updatedb", "--config", config], env=self.env, isCGI=False
         )
         self.assertEqual(status, 0)
 
         filename = "test_WMSGetMap_Discs_example_windbarbs_on_gridded_netcdf.png"
-        status, data, headers = AdagucTestTools().runADAGUCServer(
-            "dataset=adaguc.tests.vectorrendering.xml&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=example_windbarbs_on_gridded_netcdf&WIDTH=1352&HEIGHT=1319&CRS=EPSG%3A3857&BBOX=-65800.30054674105,6226801.574078708,1326094.9902426978,7584723.089279351&STYLES=winddiscs_for_grids%2Fpoint&FORMAT=image/png&TRANSPARENT=FALSE&BGCOLOR=0xA0F080&&time=2023-09-30T06%3A00%3A00Z&DIM_reference_time=2023-09-28T06%3A00%3A00Z&0.26085315983231405&showlegend=false&title=Wind disc demo&showscalebar=true",
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.tests.vectorrendering.xml&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=example_windbarbs_on_gridded_netcdf&WIDTH=1352&HEIGHT=1319&CRS=EPSG%3A3857&BBOX=-65800.30054674105,6226801.574078708,1326094.9902426978,7584723.089279351&STYLES=winddiscs_for_grids&FORMAT=image/png&TRANSPARENT=FALSE&BGCOLOR=0xA0F080&&time=2023-09-30T06%3A00%3A00Z&DIM_reference_time=2023-09-28T06%3A00%3A00Z&0.26085315983231405&showlegend=false&title=Wind disc demo&showscalebar=true",
             env=env,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
@@ -3112,7 +3101,6 @@ class TestWMS(unittest.TestCase):
             )
         )
 
-
     def test_WMSGetMap_Arrows_example_windbarbs_on_gridded_netcdf(self):
         AdagucTestTools().cleanTempDir()
         config = (
@@ -3120,14 +3108,13 @@ class TestWMS(unittest.TestCase):
             + "/data/config/adaguc.tests.dataset.xml,adaguc.tests.vectorrendering.xml"
         )
         env = {"ADAGUC_CONFIG": config}
-        # pylint: disable=unused-variable
-        status, data, headers = AdagucTestTools().runADAGUCServer(
+        status, data, _ = AdagucTestTools().runADAGUCServer(
             args=["--updatedb", "--config", config], env=self.env, isCGI=False
         )
         self.assertEqual(status, 0)
 
         filename = "test_WMSGetMap_Arrows_example_windbarbs_on_gridded_netcdf.png"
-        status, data, headers = AdagucTestTools().runADAGUCServer(
+        status, data, _ = AdagucTestTools().runADAGUCServer(
             "dataset=adaguc.tests.vectorrendering.xml&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=example_windbarbs_on_gridded_netcdf&WIDTH=1352&HEIGHT=1319&CRS=EPSG%3A3857&BBOX=-65800.30054674105,6226801.574078708,1326094.9902426978,7584723.089279351&STYLES=windarrows_for_grids%2Fpoint&FORMAT=image/png&TRANSPARENT=FALSE&BGCOLOR=0x80F0F0&&time=2023-09-30T06%3A00%3A00Z&DIM_reference_time=2023-09-28T06%3A00%3A00Z&0.26085315983231405&showlegend=false&title=Wind arrows demo&showscalebar=true",
             env=env,
         )
@@ -3138,7 +3125,6 @@ class TestWMS(unittest.TestCase):
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
 
-
     def test_WMSGetMap_KNMI_WebSite_AnimatedGifImagery_temperature_styledisc(self):
         AdagucTestTools().cleanTempDir()
         config = (
@@ -3146,14 +3132,13 @@ class TestWMS(unittest.TestCase):
             + "/data/config/adaguc.tests.dataset.xml,adaguc.tests.pointrendering.xml"
         )
         env = {"ADAGUC_CONFIG": config}
-        # pylint: disable=unused-variable
-        status, data, headers = AdagucTestTools().runADAGUCServer(
+        status, data, _ = AdagucTestTools().runADAGUCServer(
             args=["--updatedb", "--config", config], env=self.env, isCGI=False
         )
         self.assertEqual(status, 0)
 
         filename = "test_WMSGetMap_KNMI_WebSite_AnimatedGifImagery_temperature_styledisc.png"
-        status, data, headers = AdagucTestTools().runADAGUCServer(
+        status, data, _ = AdagucTestTools().runADAGUCServer(
             "DATASET=adaguc.tests.pointrendering&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=overlaymask,ta&WIDTH=512&HEIGHT=512&CRS=EPSG%3A3857&BBOX=288069.7108512885,6471755.331201249,894206.0083504317,7141909.376801726&STYLES=filledcountries%2Fnearest,discs&FORMAT=image/png&TRANSPARENT=TRUE&&0.8777664780631963",
             env=env,
         )
@@ -3172,15 +3157,14 @@ class TestWMS(unittest.TestCase):
             + "/data/config/adaguc.tests.dataset.xml,adaguc.tests.pointrendering.xml"
         )
         env = {"ADAGUC_CONFIG": config}
-        # pylint: disable=unused-variable
-        status, data, headers = AdagucTestTools().runADAGUCServer(
+        status, data, _ = AdagucTestTools().runADAGUCServer(
             args=["--updatedb", "--config", config], env=self.env, isCGI=False
         )
         self.assertEqual(status, 0)
 
         filename = "test_WMSGetMap_KNMI_WebSite_AnimatedGifImagery_temperature_style_temperature.png"
-        status, data, headers = AdagucTestTools().runADAGUCServer(
-            "DATASET=adaguc.tests.pointrendering&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=overlaymask,ta&WIDTH=512&HEIGHT=512&CRS=EPSG%3A3857&BBOX=288069.7108512885,6471755.331201249,894206.0083504317,7141909.376801726&STYLES=filledcountries%2Fnearest,temperature%2Fpoint&FORMAT=image/png&TRANSPARENT=TRUE&&0.8777664780631963",
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.pointrendering&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=overlaymask,ta&WIDTH=512&HEIGHT=512&CRS=EPSG%3A3857&BBOX=288069.7108512885,6471755.331201249,894206.0083504317,7141909.376801726&STYLES=filledcountries%2Fnearest,temperature&FORMAT=image/png&TRANSPARENT=TRUE&&0.8777664780631963",
             env=env,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
@@ -3199,14 +3183,13 @@ class TestWMS(unittest.TestCase):
             + "/data/config/adaguc.tests.dataset.xml,adaguc.tests.pointrendering.xml"
         )
         env = {"ADAGUC_CONFIG": config}
-        # pylint: disable=unused-variable
-        status, data, headers = AdagucTestTools().runADAGUCServer(
+        status, data, _ = AdagucTestTools().runADAGUCServer(
             args=["--updatedb", "--config", config], env=self.env, isCGI=False
         )
         self.assertEqual(status, 0)
 
         filename = "test_WMSGetMap_KNMI_WebSite_AnimatedGifImagery_temperature_style_temperature_thinned.png"
-        status, data, headers = AdagucTestTools().runADAGUCServer(
+        status, data, _ = AdagucTestTools().runADAGUCServer(
             "DATASET=adaguc.tests.pointrendering&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=overlaymask,ta&WIDTH=512&HEIGHT=512&CRS=EPSG%3A3857&BBOX=288069.7108512885,6471755.331201249,894206.0083504317,7141909.376801726&STYLES=filledcountries%2Fnearest,temperature_thinned&FORMAT=image/png&TRANSPARENT=TRUE&&0.8777664780631963",
             env=env,
         )
