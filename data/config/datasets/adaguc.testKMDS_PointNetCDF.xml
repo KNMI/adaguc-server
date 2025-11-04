@@ -138,14 +138,12 @@
 
   <Style name="stretch">
     <Legend fixed="true" tickinterval="2">temperature</Legend>
-    <RenderMethod>point</RenderMethod>
     <Scale>0</Scale>
     <Point plotstationid="false" pointstyle="point" discradius="15" textradius="0" dot="false" fontsize="8" textcolor="#000000" />
   </Style>
 
   <Style name="temperature">
     <Legend fixed="true" tickinterval="2">temperature</Legend>
-    <RenderMethod>point</RenderMethod>
     <Min>-14</Min>
     <Max>39,33333333</Max>    <!-- 39,33333333 = (240 / (234/(38 - -14))) - 14 -->
     <NameMapping name="point" title="Temperature" abstract="Temperature"/>
@@ -154,7 +152,6 @@
 
   <Style name="temperature-volume">
     <Legend fixed="true" tickinterval="2">temperature</Legend>
-    <RenderMethod>point</RenderMethod>
     <Min>-14</Min>
     <Max>39,33333333</Max>    <!-- 39,33333333 = (240 / (234/(38 - -14))) - 14 -->
     <NameMapping name="point" title="Temperature" abstract="Temperature"/>
@@ -163,7 +160,6 @@
 
   <Style name="temperature-disc">
     <Legend fixed="true" tickinterval="2">temperature</Legend>
-    <RenderMethod>point</RenderMethod>
     <Min>-14</Min>
     <Max>39,33333333</Max>    <!-- 39,33333333 = (240 / (234/(38 - -14))) - 14 -->
     <NameMapping name="point" title="Temperature" abstract="Temperature"/>
@@ -172,7 +168,6 @@
 
   <Style name="zm">
     <Legend fixed="true" tickinterval="2">standard</Legend>
-    <RenderMethod>point</RenderMethod>
     <Min>0</Min>
     <Max>50000</Max>
     <NameMapping name="point" title="Meteorological Optical Range" abstract="Meteorological Optical Range"/>
@@ -181,7 +176,6 @@
 
   <Style name="precipitation">
     <Legend fixed="true" tickinterval="2">precipitation</Legend>
-    <RenderMethod>point</RenderMethod>
     <Min>0</Min>
     <Max>30</Max>
     <NameMapping name="point" title="precipitation" abstract="precipitation"/>
@@ -190,7 +184,6 @@
 
   <Style name="pressure">
     <Legend fixed="true" tickinterval="4">pressure</Legend>
-    <RenderMethod>point</RenderMethod>
     <Min>960</Min>
     <Max>1040</Max>
     <NameMapping name="point" title="pressure" abstract="pressure"/>
@@ -199,7 +192,6 @@
 
   <Style name="percentage">
     <Legend fixed="true" tickinterval="10">standard</Legend>
-    <RenderMethod>point</RenderMethod>
     <Min>0</Min>
     <Max>100</Max>
     <NameMapping name="point" title="Percentage" abstract="Percentage"/>
@@ -208,7 +200,6 @@
 
   <Style name="duration">
     <Legend fixed="true" tickinterval="10">standard</Legend>
-    <RenderMethod>point</RenderMethod>
     <Min>0</Min>
     <Max>60</Max>
     <NameMapping name="point" title="duration[min]" abstract="duration"/>
@@ -217,7 +208,6 @@
 
   <Style name="height">
     <Legend fixed="true" tickinterval="5">standard</Legend>
-    <RenderMethod>point</RenderMethod>
     <Min>-10</Min>
     <Max>70</Max>
     <NameMapping name="point" title="Richter magnitude scale" abstract="With discrete colors"/>
@@ -226,7 +216,6 @@
 
   <Style name="weercode">
     <Legend fixed="true" tickinterval="4">standard</Legend>
-    <RenderMethod>point</RenderMethod>
     <Min>100</Min>
     <Max>200</Max>
     <NameMapping name="point" title="weercode" abstract="weercode"/>
@@ -235,7 +224,6 @@
 
   <Style name="wolkenbasis">
     <Legend fixed="true" tickinterval="4">standard</Legend>
-    <RenderMethod>point</RenderMethod>
     <Min>0</Min>
     <Max>35000</Max>
     <NameMapping name="point" title="wolkenbasis" abstract="wolkenbasis"/>
@@ -244,7 +232,6 @@
 
   <Style name="bewolkingsgraad">
     <Legend fixed="true" tickinterval="4">standard</Legend>
-    <RenderMethod>point</RenderMethod>
     <Min>0</Min>
     <Max>8</Max>
     <NameMapping name="point" title="bewolkingsgraad[octa]" abstract="bewolkingsgraad"/>
@@ -253,7 +240,6 @@
 
   <Style name="stationname">
     <Legend fixed="true" tickinterval="5">standard</Legend>
-    <RenderMethod>point</RenderMethod>
     <Min>-10</Min>
     <Max>70</Max>
     <NameMapping name="point" title="Richter magnitude scale" abstract="With discrete colors"/>
@@ -262,7 +248,6 @@
 
   <Style name="wind_direction">
     <Legend fixed="true" tickinterval="5">standard</Legend>
-    <RenderMethod>point</RenderMethod>
     <Min>0</Min>
     <Max>360</Max>
     <NameMapping name="point" title="Wind direction" abstract="With discrete colors"/>
@@ -271,7 +256,6 @@
 
   <Style name="windspeed">
     <Legend fixed="true" tickinterval="5">standard</Legend>
-    <RenderMethod>point</RenderMethod>
     <Min>0</Min>
     <Max>75</Max>
     <NameMapping name="point" title="Wind direction" abstract="With discrete colors"/>

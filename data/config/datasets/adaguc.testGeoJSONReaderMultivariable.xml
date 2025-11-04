@@ -31,7 +31,6 @@
 	</Legend>
 	<Style name="age_magnitude_triangles">
 		<Legend fixed="true" tickinterval="100000">magnitude</Legend>
-		<RenderMethod>point</RenderMethod>
 		<Min>0</Min>
 		<Max>2000000</Max>
 		<NameMapping name="point" title="Seismic events with age and magnitude as triangles" abstract="The seismic events are colored according to age and the size of the disc is based on Magnitude using triangles" />

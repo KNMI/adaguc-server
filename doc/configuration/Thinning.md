@@ -15,7 +15,6 @@ There is no other way to prioritize the drawing order.
 <Style>
   <Point ..../>
   <Thinning radius="40"/>
-  <RenderMethod>pointthin</RenderMethod>
   ...
 <Style>
 ```
