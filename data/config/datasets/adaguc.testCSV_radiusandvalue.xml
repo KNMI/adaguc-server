@@ -30,7 +30,6 @@
   </Legend>
   <Style name="magnitude">
     <Legend fixed="true" tickinterval="100000">magnitude</Legend>
-    <RenderMethod>point</RenderMethod>
     <Min>0</Min>
     <Max>2000000</Max>
     <NameMapping name="point" title="Richter magnitude scale" abstract="Wth continuous colors" />
@@ -51,15 +50,11 @@
     <DataBaseTable>ok</DataBaseTable>
   </Layer>
 
-
-
-
   <Symbol name="triangle" coordinates="[[-1, -1], [1, -1], [0.0, 1], [-1, -1]]"/>
   <Symbol name="square" coordinates="[[-1, -1], [1, -1], [1, 1], [-1, 1], [-1, -1]]"/>
 
   <Style name="magnitude_withsymbol">
     <Legend fixed="true" tickinterval="100000">magnitude</Legend>
-    <RenderMethod>point</RenderMethod>
     <Min>0</Min>
     <Max>2000000</Max>
     <NameMapping name="point" title="Richter magnitude scale" abstract="Wth continuous colors" />

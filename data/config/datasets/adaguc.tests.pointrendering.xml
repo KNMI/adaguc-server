@@ -1,26 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration>
-    <Style name="filledcountries">
-        <Legend fixedclasses="true" tickinterval="1000" tickround="1">bluewhitered</Legend>
-        <Min>0.0</Min>
-        <Max>1000</Max>
-        <RenderMethod>nearest</RenderMethod>
-        <NameMapping name="polyline" title="Overlay countries" abstract="Overlay countries" />
-        <FeatureInterval match="0" matchid="Type" fillcolor="#D2FEFE" bgcolor="#00A000"/>
-        <FeatureInterval match="2" matchid="Type" fillcolor="#D1E1FC" />
-        <FeatureInterval match="3" matchid="Type" fillcolor="#D2D2D2" />
-        <FeatureInterval match="4" matchid="Type" fillcolor="#D2D2D2" />
-        <FeatureInterval match="5" matchid="Type" fillcolor="#D2D2D2" />
-        <FeatureInterval match="6" matchid="Type" fillcolor="#D2D2D2" />
-    </Style>
-    <Layer >
-        <Name>overlaymask</Name>
-        <Title>overlaymask</Title>
-        <FilePath>
-            {ADAGUC_PATH}/data/datasets/knmi/overlays/GSIE-NL-overlaymask.geojson</FilePath>
-        <Variable>features</Variable>
-        <Styles>filledcountries</Styles>
-    </Layer>
+  <Style name="filledcountries">
+    <Legend fixedclasses="true" tickinterval="1000" tickround="1">bluewhitered</Legend>
+    <Min>0.0</Min>
+    <Max>1000</Max>
+    <RenderMethod>nearest</RenderMethod>
+    <NameMapping name="polyline" title="Overlay countries" abstract="Overlay countries" />
+    <FeatureInterval match="0" matchid="Type" fillcolor="#D2FEFE" bgcolor="#00A000"/>
+    <FeatureInterval match="2" matchid="Type" fillcolor="#D1E1FC" />
+    <FeatureInterval match="3" matchid="Type" fillcolor="#D2D2D2" />
+    <FeatureInterval match="4" matchid="Type" fillcolor="#D2D2D2" />
+    <FeatureInterval match="5" matchid="Type" fillcolor="#D2D2D2" />
+    <FeatureInterval match="6" matchid="Type" fillcolor="#D2D2D2" />
+  </Style>
+  <Layer >
+    <Name>overlaymask</Name>
+    <Title>overlaymask</Title>
+    <FilePath>{ADAGUC_PATH}/data/datasets/knmi/overlays/GSIE-NL-overlaymask.geojson</FilePath>
+    <Variable>features</Variable>
+    <Styles>filledcountries</Styles>
+  </Layer>
 
 <!-- Demo to plot unform coloured discs with temperature-->
   <Legend name="wow.temperature" type="interval">
@@ -54,15 +53,13 @@
     <palette index="240" color="#871A44"/> <!--  39,33 -->
   </Legend>
 
-   <Style name="discs">
-    <RenderMethod>point</RenderMethod>
+  <Style name="discs">
     <Point pointstyle="disc" fillcolor="#00000060" textcolor="#FFFFFFFF" linecolor="#000000A0" discradius="18" dot="false" anglestart="0" anglestep="120" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="10" textformat="%0.1f"/>
     <FilterPoints skip="" use="06235,06280,06260,06290,06310,06380"/>
   </Style>
 
   <Style name="temperature">
     <Legend fixed="true" tickinterval="2">wow.temperature</Legend>
-    <RenderMethod>point</RenderMethod>
     <Min>-14</Min>
     <Max>39,33333333</Max> <!-- 39,33333333 = (240 / (234/(38 - -14))) - 14 -->
     <Point plotstationid="false" pointstyle="point" discradius="15" textradius="0" dot="false" fontsize="8" textcolor="#000000" />
@@ -75,7 +72,6 @@
     <Thinning radius="140"/>
     <Point plotstationid="false" pointstyle="point" discradius="15" textradius="0" dot="false" fontsize="8" textcolor="#000000" />
   </Style>
-  
 
   <Layer type="database">
     <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/</FilePath>
@@ -85,8 +81,4 @@
     <Abstract>luchttemperatuur 1 min. gemiddelde</Abstract>
     <Styles>discs,temperature,temperature_thinned</Styles>
   </Layer>
-
-
-
-  <!-- End of configuration /-->
 </Configuration>

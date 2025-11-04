@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration>
-
-
   <!-- How to render windbarbs from point data, like CSV, NetCDF or GeoJSON-->
   <Style name="windbarbs_kts_shaded_withbarbs_for_points">
     <Vector vectorstyle="barb" linecolor="#0000FF"  plotvalue="true" />
-    <RenderMethod>point</RenderMethod>
   </Style>
 
   <Style name="windbarbs_kts_shaded_withbarbs_for_points_differentoptions">
@@ -13,18 +10,15 @@
     <Vector min="1" max="10" vectorstyle="barb" linecolor="#0000FF"  plotvalue="true" />
     <Vector min="10" max="15" vectorstyle="barb" outlinewidth="0" linewidth="3" linecolor="#000000" plotvalue="true" textcolor="#111111"/>    
     <Vector min="15" vectorstyle="barb" outlinewidth="15" outlinecolor="#FFFFFF" linewidth="1" linecolor="#FF1111" plotvalue="false" textcolor="#FF1111"/>    
-    <RenderMethod>point</RenderMethod>
   </Style>
-  
-  
+
   <Style name="windvector">
     <Legend fixedclasses="true" tickinterval="2" tickround="1">no2</Legend>
     <Min>0.0</Min>
     <Max>10</Max>
     <Vector vectorstyle="vector" linecolor="#0000FF" />
-    <RenderMethod>point</RenderMethod>
   </Style>
-  
+
   <Layer type="database">
     <FilePath filter="^.*\.csv$">{ADAGUC_PATH}/data/datasets/csv_wind/csvexample_windbarbs.csv</FilePath>
     <Name>example_windbarbs_from_pointdata_csv</Name>
@@ -70,14 +64,13 @@
       - nearest will render the grid via adagucserverEC/CImgWarpNearestNeighbour
       - point will render the points via adagucserverEC/CImgRenderers/CImgRenderPoints
     -->
-    <RenderMethod>nearestpoint</RenderMethod>
+    <RenderMethod>nearest</RenderMethod>
   </Style>
 
 
   <Style name="winddiscs_for_grids">
     <Vector vectorstyle="disc" linewidth="1" textcolor="#FFFFFF" fontsize="9" />
     <DataPostProc algorithm="pointsfromgrid" select="speed_component,direction_component" a="50"/>
-    <RenderMethod>point</RenderMethod>
   </Style>
 
   <Style name="windarrows_for_grids">
@@ -85,7 +78,6 @@
     <Vector min="5" max="7" vectorstyle="vector" linewidth="3" linecolor="#ff7b00ff" scale="7"  plotvalue="true" textcolor="#000000" />
     <Vector min="7" vectorstyle="vector" linewidth="5" linecolor="#FF0000" scale="7" />
     <DataPostProc algorithm="pointsfromgrid" select="speed_component,direction_component" a="50"/>
-    <RenderMethod>point</RenderMethod>
   </Style>
 
 
@@ -98,7 +90,7 @@
     <Dimension name="time" units="ISO8601" default="min">time</Dimension>
     <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension>
     <Styles>windbarbs_kts_shaded_withbarbs_for_grids,winddiscs_for_grids,windarrows_for_grids</Styles>
-    <!-- 
+    <!--
       convert_uv_components is a data postprocessor to transform grid relative x and y components of a vector to relative to north components. This uses a jacobian transformation.
       This processor will add four more dataobjects to the datasource. The two original components are now last. The new one dataobjects are:
       - `speed_component`: based on the magnitude of the eastward_wind and northward_wind components
@@ -108,6 +100,4 @@
     -->
     <DataPostProc algorithm="convert_uv_components"/>
   </Layer>
-
-  <!-- End of configuration /-->
 </Configuration>

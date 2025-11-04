@@ -7,29 +7,25 @@
     <Max>10</Max>
     <Vector vectorstyle="barb" linecolor="#0000FF" textcolor="#111111" />
     <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#000000" borderwidth="2"/> <!-- Used in CImgRenderPolylines -->
-    <RenderMethod>point</RenderMethod>
   </Style>
-  
+
   <Style name="windvector">
     <Legend fixedclasses="true" tickinterval="2" tickround="1">no2</Legend>
     <Min>0.0</Min>
     <Max>10</Max>
-    
     <Vector vectorstyle="vector" linecolor="#0000FF" textcolor="#111111"/>
     <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#000000" borderwidth="2"/> <!-- Used in CImgRenderPolylines -->
-    <RenderMethod>point</RenderMethod>
   </Style>
-  
+
   <Style name="name">
     <Legend fixedclasses="true" tickinterval="2" tickround="1">no2</Legend>
     <Min>0.0</Min>
     <Max>10</Max>
     <Point pointstyle="point" textcolor="#111111"/>
     <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#000000" borderwidth="2"/> <!-- Used in CImgRenderPolylines -->
-    <RenderMethod>point</RenderMethod>
   </Style>
-  
-  
+
+
   <Layer type="database">
     <FilePath filter="^.*\.csv$">{ADAGUC_PATH}/data/datasets/csv_reference_timedim</FilePath>
     <Name>wind</Name>

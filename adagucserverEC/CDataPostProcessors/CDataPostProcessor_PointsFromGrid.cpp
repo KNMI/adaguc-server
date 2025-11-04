@@ -12,7 +12,7 @@ const char *CDPPointsFromGrid::className = "CDPPointsFromGrid";
   <Style name="windbarbs_kts_shaded_withbarbs">
     <Point symbol="adaguc_windbarb"  min="0" max="700" label="0-7 (&lt;3 bft)" fillcolor="#FFFFB4" outline="#FFFFFF"/>
     <DataPostProc algorithm="pointsfromgrid" select="speed_component,direction_component"/>
-    <RenderMethod>barbpoint</RenderMethod>
+    <RenderMethod>barb</RenderMethod>
   </Style>
 
 
@@ -27,8 +27,6 @@ const char *CDPPointsFromGrid::className = "CDPPointsFromGrid";
     <Styles>windbarbs_kts_shaded_withbarbs</Styles>
     <DataPostProc algorithm="convert_uv_components"/>
   </Layer>
-
-
  */
 
 const char *CDPPointsFromGrid::getId() { return CDATAPOSTPROCESSOR_PointsFromGrid_ID; }
