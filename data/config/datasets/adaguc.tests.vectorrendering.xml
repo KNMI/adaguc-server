@@ -3,6 +3,7 @@
   <!-- How to render windbarbs from point data, like CSV, NetCDF or GeoJSON-->
   <Style name="windbarbs_kts_shaded_withbarbs_for_points">
     <Vector vectorstyle="barb" linecolor="#0000FF"  plotvalue="true" />
+    <RenderMethod>point</RenderMethod>
   </Style>
 
   <Style name="windbarbs_kts_shaded_withbarbs_for_points_differentoptions">
@@ -10,6 +11,7 @@
     <Vector min="1" max="10" vectorstyle="barb" linecolor="#0000FF"  plotvalue="true" />
     <Vector min="10" max="15" vectorstyle="barb" outlinewidth="0" linewidth="3" linecolor="#000000" plotvalue="true" textcolor="#111111"/>    
     <Vector min="15" vectorstyle="barb" outlinewidth="15" outlinecolor="#FFFFFF" linewidth="1" linecolor="#FF1111" plotvalue="false" textcolor="#FF1111"/>    
+    <RenderMethod>point</RenderMethod>
   </Style>
 
   <Style name="windvector">
@@ -17,6 +19,7 @@
     <Min>0.0</Min>
     <Max>10</Max>
     <Vector vectorstyle="vector" linecolor="#0000FF" />
+    <RenderMethod>point</RenderMethod>
   </Style>
 
   <Layer type="database">
@@ -64,13 +67,14 @@
       - nearest will render the grid via adagucserverEC/CImgWarpNearestNeighbour
       - point will render the points via adagucserverEC/CImgRenderers/CImgRenderPoints
     -->
-    <RenderMethod>nearest</RenderMethod>
+    <RenderMethod>nearestpoint</RenderMethod>
   </Style>
 
 
   <Style name="winddiscs_for_grids">
     <Vector vectorstyle="disc" linewidth="1" textcolor="#FFFFFF" fontsize="9" />
     <DataPostProc algorithm="pointsfromgrid" select="speed_component,direction_component" a="50"/>
+    <RenderMethod>point</RenderMethod>
   </Style>
 
   <Style name="windarrows_for_grids">
@@ -78,6 +82,7 @@
     <Vector min="5" max="7" vectorstyle="vector" linewidth="3" linecolor="#ff7b00ff" scale="7"  plotvalue="true" textcolor="#000000" />
     <Vector min="7" vectorstyle="vector" linewidth="5" linecolor="#FF0000" scale="7" />
     <DataPostProc algorithm="pointsfromgrid" select="speed_component,direction_component" a="50"/>
+    <RenderMethod>point</RenderMethod>
   </Style>
 
 

@@ -3077,7 +3077,6 @@ class TestWMS(unittest.TestCase):
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
 
-    # FIXME: test fails because cell background is black without <RenderMethod>point</RenderMethod>
     def test_WMSGetMap_Discs_example_windbarbs_on_gridded_netcdf(self):
         AdagucTestTools().cleanTempDir()
         config = (
@@ -3092,7 +3091,7 @@ class TestWMS(unittest.TestCase):
 
         filename = "test_WMSGetMap_Discs_example_windbarbs_on_gridded_netcdf.png"
         status, data, _ = AdagucTestTools().runADAGUCServer(
-            "dataset=adaguc.tests.vectorrendering.xml&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=example_windbarbs_on_gridded_netcdf&WIDTH=1352&HEIGHT=1319&CRS=EPSG%3A3857&BBOX=-65800.30054674105,6226801.574078708,1326094.9902426978,7584723.089279351&STYLES=winddiscs_for_grids&FORMAT=image/png&TRANSPARENT=FALSE&BGCOLOR=0xA0F080&&time=2023-09-30T06%3A00%3A00Z&DIM_reference_time=2023-09-28T06%3A00%3A00Z&0.26085315983231405&showlegend=false&title=Wind disc demo&showscalebar=true",
+            "dataset=adaguc.tests.vectorrendering.xml&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=example_windbarbs_on_gridded_netcdf&WIDTH=1352&HEIGHT=1319&CRS=EPSG%3A3857&BBOX=-65800.30054674105,6226801.574078708,1326094.9902426978,7584723.089279351&STYLES=winddiscs_for_grids%2Fpoint&FORMAT=image/png&TRANSPARENT=FALSE&BGCOLOR=0xA0F080&&time=2023-09-30T06%3A00%3A00Z&DIM_reference_time=2023-09-28T06%3A00%3A00Z&0.26085315983231405&showlegend=false&title=Wind disc demo&showscalebar=true",
             env=env,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
@@ -3118,7 +3117,7 @@ class TestWMS(unittest.TestCase):
 
         filename = "test_WMSGetMap_Arrows_example_windbarbs_on_gridded_netcdf.png"
         status, data, _ = AdagucTestTools().runADAGUCServer(
-            "dataset=adaguc.tests.vectorrendering.xml&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=example_windbarbs_on_gridded_netcdf&WIDTH=1352&HEIGHT=1319&CRS=EPSG%3A3857&BBOX=-65800.30054674105,6226801.574078708,1326094.9902426978,7584723.089279351&STYLES=windarrows_for_grids&FORMAT=image/png&TRANSPARENT=FALSE&BGCOLOR=0x80F0F0&&time=2023-09-30T06%3A00%3A00Z&DIM_reference_time=2023-09-28T06%3A00%3A00Z&0.26085315983231405&showlegend=false&title=Wind arrows demo&showscalebar=true",
+            "dataset=adaguc.tests.vectorrendering.xml&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=example_windbarbs_on_gridded_netcdf&WIDTH=1352&HEIGHT=1319&CRS=EPSG%3A3857&BBOX=-65800.30054674105,6226801.574078708,1326094.9902426978,7584723.089279351&STYLES=windarrows_for_grids%2Fpoint&FORMAT=image/png&TRANSPARENT=FALSE&BGCOLOR=0x80F0F0&&time=2023-09-30T06%3A00%3A00Z&DIM_reference_time=2023-09-28T06%3A00%3A00Z&0.26085315983231405&showlegend=false&title=Wind arrows demo&showscalebar=true",
             env=env,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Configuration>
+  
   <WMS>
     <Title>RADNL_OPER_R___25PCPRR_L3_WMS</Title>
     <Abstract>Radar precipitation measurements above the Netherlands, on a 1.0x1.0 km grid, measurements are available in a five minute time interval. The intensity is in kg/m2/hour (mm/hour). The dataset is created from KNMI RAD_NL25_PCP_NA files. For interoperability, the original unit reflectivity in DBZ is converted to precipitation flux in kg/m2/h. The conversion from dbZ to kg/m2/h is applied with the formula R = 10^((PixelValue -109)/32).</Abstract>
@@ -69,6 +70,7 @@
     <!--               RAD_NL25_ETH_NA_202102170000.h5  -->
     <FilePath filter="^RAD_NL25_ETH_NA_.*\.h5$">{ADAGUC_PATH}/data/datasets/test/</FilePath>
     <Dimension name="time" units="ISO8601" interval="PT5M" default="max">time</Dimension>
+    <RenderMethod>point</RenderMethod>
     <Scale>0</Scale>
     <Offset>1</Offset>
   </Layer>
@@ -78,6 +80,7 @@
     <Point pointstyle="point" textcolor="#800000" discradius="0" textoutlinecolor="#AAFFAA" fontsize="15" textformat="%.0f"/>
     <Scale>0</Scale>
     <Offset>0</Offset>
+    <RenderMethod>point</RenderMethod>
   </Style>
 
     <Style name="echotopsmax">
@@ -85,6 +88,7 @@
     <Point pointstyle="point" textcolor="#800000" discradius="0" fontsize="15" textformat="%.0f"/>
     <Scale>0</Scale>
     <Offset>0</Offset>
+    <RenderMethod>point</RenderMethod>
   </Style>
 
    <Layer type="database" hidden="false">

@@ -7,6 +7,7 @@
     <Max>10</Max>
     <Vector vectorstyle="barb" linecolor="#0000FF" textcolor="#111111" />
     <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#000000" borderwidth="2"/> <!-- Used in CImgRenderPolylines -->
+    <RenderMethod>point</RenderMethod>
   </Style>
 
   <Style name="windvector">
@@ -15,6 +16,7 @@
     <Max>10</Max>
     <Vector vectorstyle="vector" linecolor="#0000FF" textcolor="#111111"/>
     <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#000000" borderwidth="2"/> <!-- Used in CImgRenderPolylines -->
+    <RenderMethod>point</RenderMethod>
   </Style>
 
   <Style name="name">
@@ -23,6 +25,7 @@
     <Max>10</Max>
     <Point pointstyle="point" textcolor="#111111"/>
     <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#000000" borderwidth="2"/> <!-- Used in CImgRenderPolylines -->
+    <RenderMethod>point</RenderMethod>
   </Style>
 
 
