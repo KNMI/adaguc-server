@@ -6,17 +6,7 @@
 
 Make sure adaguc-server is running, follow the instructions at [Starting the adaguc-server with docker](../Running.md)
 
-## Step 1: Copy a dummy file with timesteps into the adaguc-data folder
-
-Copy the file solt.nc into the adaguc-data folder:
-
-
-```
-cp ${ADAGUC_PATH}/data/datasets/solt.nc ${ADAGUC_DATA_DIR}
-```
-This file is available in the adaguc-server repository with location `data/datasets/solt.nc`
-
-## Step 2: Configure a dataset for this datafile
+## Step 1: Configure a dataset for this datafile
 
 Create the following file at the filepath `$ADAGUC_DATASET_DIR/solt.xml`
 
@@ -41,7 +31,6 @@ Create the following file at the filepath `$ADAGUC_DATASET_DIR/solt.xml`
   
   <Layer type="liveupdate">
     <Name>solarterminator</Name>
-    <FilePath filter="" gfi_openall="true">{ADAGUC_PATH}data/datasets/solt.nc</FilePath>
     <DataPostProc algorithm="solarterminator"/>
     <Variable>solarterminator</Variable>
     <Styles>soltstyle</Styles>
