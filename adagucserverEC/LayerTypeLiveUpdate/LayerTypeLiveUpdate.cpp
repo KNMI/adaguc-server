@@ -232,11 +232,13 @@ int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(MetadataLayer *metada
   double stopTimeOffset = timeInstance.quantizeTimeToISO8601(epochTime + 3600 * 24 * 365, timeResolution.c_str(), "low");
   CT::string startTime = timeInstance.dateToISOString(timeInstance.offsetToDate(startTimeOffset));
   CT::string stopTime = timeInstance.dateToISOString(timeInstance.offsetToDate(stopTimeOffset));
+  double defaultOffset = timeInstance.quantizeTimeToISO8601(epochTime, timeResolution.c_str(), "low");
+  CT::string defaultTime = timeInstance.dateToISOString(timeInstance.offsetToDate(defaultOffset));
   LayerMetadataDim dim = {.serviceName = "time",
                           .cdfName = "time",
                           .units = "ISO8601",
                           .values = startTime + "/" + stopTime + "/" + timeResolution,
-                          .defaultValue = stopTime,
+                          .defaultValue = defaultTime,
                           .type = "dimtype_time",
                           .hasMultipleValues = true,
                           .hidden = false};
