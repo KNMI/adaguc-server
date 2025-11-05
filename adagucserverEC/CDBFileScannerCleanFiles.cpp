@@ -21,10 +21,13 @@ std::pair<int, std::set<std::string>> CDBFileScanner::cleanFiles(CDataSource *da
     return std::make_pair(0, filesDeletedFromFS);
   }
 
-  if (!dataSource->cfgLayer->FilePath[0]->attr.retentiontype.equals(CDBFILESCANNER_RETENTIONTYPE_DATATIME)) {
-    CDBDebug("retentiontype is not set to \"%s\" but  to \"%s\", ignoring", CDBFILESCANNER_RETENTIONTYPE_DATATIME, dataSource->cfgLayer->FilePath[0]->attr.retentiontype.c_str());
+  std::set<std::string> retentionTypes = {CDBFILESCANNER_RETENTIONTYPE_DATATIME, CDBFILESCANNER_RETENTIONTYPE_CREATIONDATE};
+
+  if (retentionTypes.find(dataSource->cfgLayer->FilePath[0]->attr.retentiontype.c_str()) == retentionTypes.end()) {
+    CDBDebug("retentiontype is set to unknown value %s, no cleaning done", dataSource->cfgLayer->FilePath[0]->attr.retentiontype.c_str());
     return std::make_pair(0, filesDeletedFromFS);
   }
+
   CT::string enableCleanupSystem = dataSource->cfg->Settings.size() == 1 ? dataSource->cfg->Settings[0]->attr.enablecleanupsystem : "false";
   bool enableCleanupIsTrue = enableCleanupSystem.equals("true");
   bool enableCleanupIsInform = enableCleanupSystem.equals("dryrun");
@@ -76,6 +79,10 @@ std::pair<int, std::set<std::string>> CDBFileScanner::cleanFiles(CDataSource *da
     return std::make_pair(1, filesDeletedFromFS);
   }
 
+  if (retentiontype.equals(CDBFILESCANNER_RETENTIONTYPE_CREATIONDATE)) {
+    colName = "filedate";
+  }
+
   CTime *ctime = CTime::GetCTimeEpochInstance();
 
   CT::string currentTime = CTime::currentDateTime();
@@ -87,7 +94,7 @@ std::pair<int, std::set<std::string>> CDBFileScanner::cleanFiles(CDataSource *da
 
   // CDBDebug("dateMinusRetentionPeriod\t%s", dateMinusRetentionPeriod.c_str());
 
-  CDBStore::Store *store = dbAdapter->getBetween("0000-01-01T00:00:00Z", dateMinusRetentionPeriod.c_str(), colName.c_str(), tableNameForTimeDimension.c_str(), cleanupSystemLimit);
+  CDBStore::Store *store = dbAdapter->getBetween("0001-01-01T00:00:00Z", dateMinusRetentionPeriod.c_str(), colName.c_str(), tableNameForTimeDimension.c_str(), cleanupSystemLimit);
   if (store != NULL && store->getSize() > 0) {
     CDBDebug("Found (at least) %d files which are too old.", store->getSize());
     for (size_t j = 0; j < store->getSize(); j++) {
