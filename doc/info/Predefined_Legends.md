@@ -97,7 +97,6 @@ Climate and weather physical quantities
 
 <Style name="temperature">
 <Legend fixed="true" tickinterval="2">temperature</Legend>
-<RenderMethod>point</RenderMethod>
 <Min>-14</Min>
 <Max>39,33333333</Max> <!-- 39,33333333 = (240 / (234/(38
 - ~~14)))~~ 14 -->
@@ -110,7 +109,6 @@ textradius="0" dot="false" fontsize="8" textcolor="#000000" />
 <Style name="precipitation">
 <Legend fixed="true"
 tickinterval="2">precipitation</Legend>
-<RenderMethod>point</RenderMethod>
 <Min>0</Min>
 <Max>30</Max>
 <NameMapping name="point" title="precipitation"
@@ -121,7 +119,6 @@ textradius="0" dot="false" fontsize="8" textcolor="#000000" />
 
 <Style name="pressure">
 <Legend fixed="true" tickinterval="4">pressure</Legend>
-<RenderMethod>point</RenderMethod>
 <Min>960</Min>
 <Max>1040</Max>
 <NameMapping name="point" title="pressure" abstract="pressure"/>
@@ -134,123 +131,86 @@ textformat="%0.0f"/>
 Seismological data
 ------------------
 
-```
+```xml
 <Legend name="magnitude_int" type="interval">
-<palette index="0" color="#55005550"/> <!-- 0 Nothing -->
-<palette index="20" color="#66009980"/> <!-- 1 Insignificant
--->
-<palette index="40" color="#0099FF80"/> <!-- 2 Low -->
-<palette index="60" color="#00CC99B0"/> <!-- 3 Minor -->
-<palette index="80" color="#99CC66B0"/> <!-- 4 Moderate
--->
-<palette index="100" color="#99FF33B0"/> <!-- 5 Intermediate
--->
-<palette index="120" color="#FFFF33B0"/> <!-- 6 Noteworthy
--->
-<palette index="140" color="#FFCC66C0"/> <!-- 7 High -->
-<palette index="160" color="#FF9966D0"/> <!-- 8 Far-reaching
--->
-<palette index="180" color="#FF3300E0"/> <!-- 9 Outstanding
--->
-<palette index="200" color="#CC0000FF"/> <!-- 10 Extraordinary
--->
-<palette index="220" color="#880000FF"/> <!-- 11 ! -->
-<palette index="239" color="#000000FF"/> <!-- 12 !! -->
+  <palette index="0" color="#55005550"/> <!-- 0 Nothing -->
+  <palette index="20" color="#66009980"/> <!-- 1 Insignificant -->
+  <palette index="40" color="#0099FF80"/> <!-- 2 Low -->
+  <palette index="60" color="#00CC99B0"/> <!-- 3 Minor -->
+  <palette index="80" color="#99CC66B0"/> <!-- 4 Moderate -->
+  <palette index="100" color="#99FF33B0"/> <!-- 5 Intermediate -->
+  <palette index="120" color="#FFFF33B0"/> <!-- 6 Noteworthy -->
+  <palette index="140" color="#FFCC66C0"/> <!-- 7 High -->
+  <palette index="160" color="#FF9966D0"/> <!-- 8 Far-reaching -->
+  <palette index="180" color="#FF3300E0"/> <!-- 9 Outstanding -->
+  <palette index="200" color="#CC0000FF"/> <!-- 10 Extraordinary -->
+  <palette index="220" color="#880000FF"/> <!-- 11 ! -->
+  <palette index="239" color="#000000FF"/> <!-- 12 !! -->
 </Legend>
 
 <Legend name="magnitude_col" type="colorRange">
-<palette index="0" color="#55005550"/> <!-- 0 Nothing -->
-<palette index="20" color="#66009980"/> <!-- 1 Insignificant
--->
-<palette index="40" color="#0099FF80"/> <!-- 2 Low -->
-<palette index="60" color="#00CC99B0"/> <!-- 3 Minor -->
-<palette index="80" color="#99CC66B0"/> <!-- 4 Moderate
--->
-<palette index="100" color="#99FF33B0"/> <!-- 5 Intermediate
--->
-<palette index="120" color="#FFFF33B0"/> <!-- 6 Noteworthy
--->
-<palette index="140" color="#FFCC66C0"/> <!-- 7 High -->
-<palette index="160" color="#FF9966D0"/> <!-- 8 Far-reaching
--->
-<palette index="180" color="#FF3300E0"/> <!-- 9 Outstanding
--->
-<palette index="200" color="#CC0000FF"/> <!-- 10 Extraordinary
--->
-<palette index="220" color="#880000FF"/> <!-- 11 ! -->
-<palette index="239" color="#000000FF"/> <!-- 12 !! -->
+  <palette index="0" color="#55005550"/> <!-- 0 Nothing -->
+  <palette index="20" color="#66009980"/> <!-- 1 Insignificant -->
+  <palette index="40" color="#0099FF80"/> <!-- 2 Low -->
+  <palette index="60" color="#00CC99B0"/> <!-- 3 Minor -->
+  <palette index="80" color="#99CC66B0"/> <!-- 4 Moderate -->
+  <palette index="100" color="#99FF33B0"/> <!-- 5 Intermediate -->
+  <palette index="120" color="#FFFF33B0"/> <!-- 6 Noteworthy -->
+  <palette index="140" color="#FFCC66C0"/> <!-- 7 High -->
+  <palette index="160" color="#FF9966D0"/> <!-- 8 Far-reaching -->
+  <palette index="180" color="#FF3300E0"/> <!-- 9 Outstanding -->
+  <palette index="200" color="#CC0000FF"/> <!-- 10 Extraordinary -->
+  <palette index="220" color="#880000FF"/> <!-- 11 ! -->
+  <palette index="239" color="#000000FF"/> <!-- 12 !! -->
 </Legend>
 
 <Legend name="magnitude_noalpha" type="colorRange">
-<palette index="0" color="#550055"/> <!-- 0 Nothing -->
-<palette index="20" color="#660099"/> <!-- 1 Insignificant
--->
-<palette index="40" color="#0099FF"/> <!-- 2 Low -->
-<palette index="60" color="#00CC99"/> <!-- 3 Minor -->
-<palette index="80" color="#99CC66"/> <!-- 4 Moderate -->
-<palette index="100" color="#99FF33"/> <!-- 5 Intermediate
--->
-<palette index="120" color="#FFFF33"/> <!-- 6 Noteworthy
--->
-<palette index="140" color="#FFCC66"/> <!-- 7 High -->
-<palette index="160" color="#FF9966"/> <!-- 8 Far-reaching
--->
-<palette index="180" color="#FF3300"/> <!-- 9 Outstanding
--->
-<palette index="200" color="#CC0000"/> <!-- 10 Extraordinary
--->
-<palette index="220" color="#880000"/> <!-- 11 ! -->
-<palette index="239" color="#000000"/> <!-- 12 !! -->
+  <palette index="0" color="#550055"/> <!-- 0 Nothing -->
+  <palette index="20" color="#660099"/> <!-- 1 Insignificant -->
+  <palette index="40" color="#0099FF"/> <!-- 2 Low -->
+  <palette index="60" color="#00CC99"/> <!-- 3 Minor -->
+  <palette index="80" color="#99CC66"/> <!-- 4 Moderate -->
+  <palette index="100" color="#99FF33"/> <!-- 5 Intermediate -->
+  <palette index="120" color="#FFFF33"/> <!-- 6 Noteworthy -->
+  <palette index="140" color="#FFCC66"/> <!-- 7 High -->
+  <palette index="160" color="#FF9966"/> <!-- 8 Far-reaching -->
+  <palette index="180" color="#FF3300"/> <!-- 9 Outstanding -->
+  <palette index="200" color="#CC0000"/> <!-- 10 Extraordinary -->
+  <palette index="220" color="#880000"/> <!-- 11 ! -->
+  <palette index="239" color="#000000"/> <!-- 12 !! -->
 </Legend>
 
 <Style name="magnitude_int">
-<Legend fixed="true"
-tickinterval="1">magnitude_int</Legend>
-<RenderMethod>point</RenderMethod>
-<Min>0</Min>
-<Max>12</Max>
-<NameMapping name="point" title="Richter magnitude scale"
-abstract="With discrete colors"/>
-<Point plotstationid="false" pointstyle="point" discradius="20"
-textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF"/>
+  <Legend fixed="true" tickinterval="1">magnitude_int</Legend>
+  <Min>0</Min>
+  <Max>12</Max>
+  <NameMapping name="point" title="Richter magnitude scale" abstract="With discrete colors"/>
+  <Point plotstationid="false" pointstyle="point" discradius="20" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF"/>
 </Style>
 
 <Style name="magnitude_col">
-<Legend fixed="true"
-tickinterval="1">magnitude_col</Legend>
-<RenderMethod>point</RenderMethod>
-<Min>0</Min>
-<Max>12</Max>
-<NameMapping name="point" title="Richter magnitude scale"
-abstract="Wth continuous colors"/>
-<Point plotstationid="false" pointstyle="point" discradius="20"
-textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF"/>
+  <Legend fixed="true" tickinterval="1">magnitude_col</Legend>
+  <Min>0</Min>
+  <Max>12</Max>
+  <NameMapping name="point" title="Richter magnitude scale" abstract="Wth continuous colors"/>
+  <Point plotstationid="false" pointstyle="point" discradius="20" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF"/>
 </Style>
 
 <Style name="magnitude2">
-<Legend fixed="true"
-tickinterval="1">magnitude_int</Legend>
-<RenderMethod>point</RenderMethod>
-<Min>0</Min>
-<Max>12</Max>
-<NameMapping name="point" title="Richter magnitude scale >=2.0"
-abstract="magnitude"/>
-<Point plotstationid="false" pointstyle="point" discradius="20"
-textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF"/>
-<ValueRange min="2" max="1000"/>
+  <Legend fixed="true" tickinterval="1">magnitude_int</Legend>
+  <Min>0</Min>
+  <Max>12</Max>
+  <NameMapping name="point" title="Richter magnitude scale >=2.0" abstract="magnitude"/>
+  <Point plotstationid="false" pointstyle="point" discradius="20" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF"/>
+  <ValueRange min="2" max="1000"/>
 </Style>
 
 <Style name="magnitude3">
-<Legend fixed="true"
-tickinterval="1">magnitude_int</Legend>
-<RenderMethod>point</RenderMethod>
-<Min>0</Min>
-<Max>12</Max>
-<NameMapping name="point" title="Richter magnitude scale >=3.0"
-abstract="magnitude"/>
-<Point plotstationid="false" pointstyle="point" discradius="20"
-textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF"/>
-<ValueRange min="3" max="1000"/>
+  <Legend fixed="true" tickinterval="1">magnitude_int</Legend>
+  <Min>0</Min>
+  <Max>12</Max>
+  <NameMapping name="point" title="Richter magnitude scale >=3.0" abstract="magnitude"/>
+  <Point plotstationid="false" pointstyle="point" discradius="20" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF"/>
+  <ValueRange min="3" max="1000"/>
 </Style>
-
 ```

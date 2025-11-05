@@ -56,7 +56,6 @@
     <LegendGraphic value="{ADAGUC_PATH}/data/symbols/marker.png"/>
     <Scale>0</Scale>
     <Offset>0</Offset>
-    <RenderMethod>point</RenderMethod>
     <SymbolInterval file="{ADAGUC_PATH}/data/symbols/marker.png" offset_x="0" offset_y="-15"/>
     <Point pointstyle="symbol" textcolor="#00000000" discradius="30" dot="false" anglestart="0" anglestep="0" fontsize="9" textformat="%0.1f" plotstationid="true"/>
   </Style>

@@ -9,7 +9,7 @@
       <Abstract>stationnaam</Abstract>
       <Min>0</Min>
       <Max>1</Max>
-      <Legend fixedclasses="true" tickround="1">bluewhitered</Legend>
+<Legend fixedclasses="true" tickround="1">bluewhitered</Legend>
       <Dimension default="filetimedate">time</Dimension> 
     </Layer>
 

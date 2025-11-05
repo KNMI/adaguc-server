@@ -1310,17 +1310,10 @@ void CConvertGeoJSON::drawPoints(Feature *feature, unsigned short int featureInd
       }
       float f = isString ? NAN : pointValue.toFloat();
       dataObject->points.push_back(PointDVWithLatLon(dlon, dlat, pointLongitude, pointLatitude, f));
-      // Draw indices of the points, corresponding to the featureindex in the geojson
-      if (pointGridVariable->getType() == CDF_USHORT) {
-        drawDot(dlon, dlat, featureIndex, dataSource->dWidth, dataSource->dHeight, (unsigned short *)pointGridVariable->data);
-      }
-      // Draw values of the points
+
       if (pointGridVariable->getType() == CDF_FLOAT) {
         if (f < min || min != min) min = f;
         if (f > max || max != max) max = f;
-        if (pointGridVariable->data != nullptr) {
-          drawCircle((float *)pointGridVariable->data, f, dataSource->dWidth, dataSource->dHeight, dlon - 1, dlat, 10);
-        }
       }
       PointDVWithLatLon *lastPoint = &(dataObject->points.back());
       // Get the last pushed point from the array and push the character text data in the paramlist

@@ -289,18 +289,12 @@ void CImageDataWriter::getFeatureInfoGetPointDataResults(CDataSource *dataSource
   }
   if (dataSource->getDataObject(dataObjectNrInDataSource)->points.size() > 0 /*&&hasData==true*/) {
     if (dataSource->getDataObject(dataObjectNrInDataSource)->cdfVariable->getAttributeNE("ADAGUC_SKIP_POINTS") == NULL) {
-      float closestDistance = 0;
-      int closestIndex = 0;
+      CDBDebug("Unneeded findClosestPoint");
+      int closestIndex = findClosestPoint(dataSource->getDataObject(dataObjectNrInDataSource)->points, getFeatureInfoResult->lon_coordinate, getFeatureInfoResult->lat_coordinate);
 
-      for (size_t j = 0; j < dataSource->getDataObject(dataObjectNrInDataSource)->points.size(); j++) {
-        PointDVWithLatLon point = dataSource->getDataObject(dataObjectNrInDataSource)->points[j];
-        float distance = hypot(point.lon - getFeatureInfoResult->lon_coordinate, point.lat - getFeatureInfoResult->lat_coordinate);
-        if (distance < closestDistance || j == 0) {
-          closestIndex = j;
-          closestDistance = distance;
-        }
+      if (closestIndex == -1) {
+        return;
       }
-
       /* Now we have detected the closest point, check if it is in a certain distance in the map in pixel coordinates */
       double pointPX = dataSource->getDataObject(dataObjectNrInDataSource)->points[closestIndex].lon, pointPY = dataSource->getDataObject(dataObjectNrInDataSource)->points[closestIndex].lat;
       double gfiPX = getFeatureInfoResult->lon_coordinate, gfiPY = getFeatureInfoResult->lat_coordinate;
@@ -980,7 +974,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
               // Check whether this is a NoData value:
 
               if ((pixel != dataSource->getDataObject(o)->dfNodataValue && dataSource->getDataObject(o)->hasNodataValue == true && pixel == pixel && everythingIsInBBOX == true) ||
-                  dataSource->getDataObject(o)->hasNodataValue == false) {
+                  dataSource->getDataObject(o)->hasNodataValue == false || dataSource->getDataObject(o)->points.size() > 0) {
                 if (dataSource->getDataObject(o)->hasStatusFlag) {
                   // Add status flag
 
@@ -998,8 +992,38 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
                 dimensionKeyValueMap[dimkey.c_str()] = true;
                 hasData = true;
 
-                if (dataSource->getDataObject(o)->features.empty() == false && hasData == true) {
-                  std::map<int, CFeature>::iterator featureIt = dataSource->getDataObject(o)->features.find(pixel);
+                if (dataSource->getDataObject(o)->features.empty() == false) {
+                  int closestIndex = pixel;
+                  if (pixel == dataSource->getDataObject(o)->dfNodataValue) {
+                    // Find the clicked pixel. For geojson this is done by rendering the polygon on the grid with its index.
+                    // For points we will support finding the closest one in the list.
+                    CDBDebug("Do findClosestPoint");
+                    closestIndex = findClosestPoint(dataSource->getDataObject(o)->points, getFeatureInfoResult->lon_coordinate, getFeatureInfoResult->lat_coordinate);
+                    if (closestIndex == -1) {
+                      closestIndex = pixel;
+                    } else {
+                      // Calculate distance in pixels
+                      double pointPX = dataSource->getDataObject(o)->points[closestIndex].lon, pointPY = dataSource->getDataObject(o)->points[closestIndex].lat;
+                      double gfiPX = getFeatureInfoResult->lon_coordinate, gfiPY = getFeatureInfoResult->lat_coordinate;
+                      CImageWarper warper;
+                      /* We can always use LATLONPROJECTION, because getFeatureInfoResult->lon_coordinate and getFeatureInfoResult->lat_coordinate are always converted to latlon in CImageDataWriter */
+                      int status = warper.initreproj(LATLONPROJECTION, srvParam->Geo, &srvParam->cfg->Projection);
+                      if (status != 0) {
+                        CDBError("Unable to initialize projection");
+                      }
+                      warper.reprojpoint_inv_topx(pointPX, pointPY, srvParam->Geo);
+                      warper.reprojpoint_inv_topx(gfiPX, gfiPY, srvParam->Geo);
+                      float pixelDistance = hypot(pointPX - gfiPX, pointPY - gfiPY);
+                      warper.closereproj();
+
+                      if (pixelDistance > 30) {
+                        hasData = false;
+                        element->value = "nodata";
+                        return 0;
+                      };
+                    }
+                  }
+                  std::map<int, CFeature>::iterator featureIt = dataSource->getDataObject(o)->features.find(closestIndex);
                   if (featureIt != dataSource->getDataObject(o)->features.end()) {
                     CFeature *feature = &featureIt->second;
                     if (feature->paramMap.empty() == false) {
@@ -1471,17 +1495,12 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
   /**
    * Use point renderer
    */
-  if (renderMethod & RM_BARB || renderMethod & RM_VECTOR || renderMethod & RM_POINT) {
-    if (dataSource->getFirstAvailableDataObject()->points.size() != 0) {
+  if (dataSource->getFirstAvailableDataObject()->points.size() != 0) {
 #ifdef CIMAGEDATAWRITER_DEBUG
-      CDBDebug("Using CImgRenderPoints");
+    CDBDebug("Using CImgRenderPoints");
 #endif
-      imageWarperRenderer = new CImgRenderPoints();
-      CT::string renderMethodAsString = getRenderMethodAsString(renderMethod);
-      imageWarperRenderer->set(renderMethodAsString.c_str());
-      imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
-      delete imageWarperRenderer;
-    }
+    CImgRenderPoints imageWarperRenderer;
+    imageWarperRenderer.render(&imageWarper, dataSource, drawImage);
   }
 
   /**

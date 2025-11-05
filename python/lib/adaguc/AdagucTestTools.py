@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 from io import BytesIO
 import shutil
@@ -129,6 +130,15 @@ class AdagucTestTools:
             raise Exception("Filename %s contains invalid characters" % filename)
         with open(filename, "wb") as f:
             f.write(data)
+
+    def writetojson(self, filename, data):
+        chars = set(':+,@#$%^&*()\\')
+        if any((c in chars) for c in filename):
+            raise Exception("Filename %s contains invalid characters" % filename)
+        jsonobject = json.loads(data)
+        jsonstring = json.dumps(jsonobject, indent=2)
+        with open(filename, "w") as f:
+            f.write(jsonstring)
 
     def readfromfile(self, filename):
         adagucpath = os.getenv("ADAGUC_PATH")
@@ -350,3 +360,10 @@ class AdagucTestTools:
                 % (testresultFileLocation, expectedOutputFileLocation))
 
         return result == expect
+    
+    def compareFile(self, testresultFileLocation,
+                                  expectedOutputFileLocation):
+        a = AdagucTestTools().readfromfile(testresultFileLocation)
+        b = AdagucTestTools().readfromfile(expectedOutputFileLocation)
+        return a == b
+    

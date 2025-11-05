@@ -40,7 +40,7 @@
   <!-- Precipitation radar layer CM -->
   <Layer type="database" hidden="false">
     <Name>CAPPI</Name>
-    <Title>Precipitation Radar Curacau</Title>
+    <Title>Precipitation Radar Curacao</Title>
     <Variable>dataset1.data1.data</Variable>
     <FilePath filter="^RAD_CU21_PPZ_E05_.*\.h5$">{ADAGUC_PATH}/data/datasets/test/odim/</FilePath>
     <Dimension name="time" units="ISO8601" interval="PT10M" default="max">time</Dimension>

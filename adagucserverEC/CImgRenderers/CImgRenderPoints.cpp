@@ -25,35 +25,205 @@
 
 #include "CImgRenderPoints.h"
 #include "CConvertGeoJSON.h"
+#include "getVectorStyle.h"
 
 const char *CImgRenderPoints::className = "CImgRenderPoints";
 
-void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, CServerConfig::XMLE_Point *pointConfig) {
-  SimpleSymbol *currentSymbol = NULL;
-  if (pointConfig->attr.symbol.empty() == false) {
-    CT::string symbolName = pointConfig->attr.symbol.c_str();
-    /* Lets see if the symbol is already in the map */
-    if (SimpleSymbolMap.find(symbolName.c_str()) == SimpleSymbolMap.end()) {
-      /* No Lets add it */
-      for (size_t j = 0; j < dataSource->cfg->Symbol.size(); j++) {
-        if (dataSource->cfg->Symbol[j]->attr.name.equals(symbolName)) {
-          CT::string coordinates = dataSource->cfg->Symbol[j]->attr.coordinates;
-          coordinates.replaceSelf("[", "");
-          coordinates.replaceSelf("]", "");
-          coordinates.replaceSelf(" ", "");
-          CT::StackList<CT::string> e = coordinates.splitToStack(",");
-          SimpleSymbol s;
-          for (size_t p = 0; p < e.size() && p < e.size() + 1; p += 2) {
-            s.coordinates.push_back(SimpleSymbol::Coordinate(e[p].toFloat(), e[p + 1].toFloat()));
-          }
-          SimpleSymbolMap[symbolName.c_str()] = s;
-        }
-      }
+void drawTextsForVector(CDrawImage *drawImage, CDataSource *dataSource, VectorStyle &vectorStyle, PointDVWithLatLon *pointStrength, PointDVWithLatLon *pointDirection) {
+  // Draw station id
+  auto strength = pointStrength->v;
+  auto direction = pointDirection->v;
+  int x = pointStrength->x;
+  int y = dataSource->srvParams->Geo->dHeight - pointStrength->y;
+
+  if (vectorStyle.drawVectorPlotStationId && pointStrength->paramList.size() > 0) {
+    int newY = y;
+    if (vectorStyle.drawBarb) {
+      newY = ((direction >= 90) && (direction <= 270)) ? y - 20 : y + 6;
+    } else {
+      newY = ((direction >= 90) && (direction <= 270)) ? y + 6 : y - 20;
     }
-    if (SimpleSymbolMap.find(symbolName.c_str()) != SimpleSymbolMap.end()) {
-      currentSymbol = &SimpleSymbolMap.find(symbolName.c_str())->second;
+    CT::string stationId = pointStrength->paramList[0].value;
+    drawImage->setText(stationId.c_str(), stationId.length(), x - stationId.length() * 3, newY, vectorStyle.textColor, 0);
+  }
+
+  // Draw value for vector or disc
+  if (vectorStyle.drawVectorPlotValue && !vectorStyle.drawBarb) {
+    if (!vectorStyle.drawDiscs) {
+      int newY = ((direction >= 90) && (direction <= 270)) ? y - 20 : y + 6;
+      CT::string textValue;
+      textValue.print(vectorStyle.drawVectorTextFormat.c_str(), strength);
+      drawImage->setText(textValue.c_str(), textValue.length(), x - textValue.length() * 3, newY, vectorStyle.textColor, 0);
     }
   }
+}
+
+std::vector<size_t> doThinningGetIndices(std::vector<PointDVWithLatLon> &p1, bool doThinning, double thinningRadius, std::set<std::string> usePoints, bool useFilter = false) {
+
+  size_t numberOfPoints = p1.size();
+  std::vector<size_t> filteredPointIndices;
+  // Filter the points
+  if (useFilter) {
+    for (size_t pointIndex = 0; pointIndex < numberOfPoints; pointIndex++) {
+      if (p1[pointIndex].paramList.size() > 0 && usePoints.find(p1[pointIndex].paramList[0].value.c_str()) != usePoints.end()) {
+        filteredPointIndices.push_back(pointIndex);
+      }
+    }
+  } else {
+    // Use all indices instead
+    for (size_t pointIndex = 0; pointIndex < numberOfPoints; pointIndex++) {
+      filteredPointIndices.push_back(pointIndex);
+    }
+  }
+
+  std::vector<size_t> thinnedPointIndexList;
+
+  // Check for thinning as well.
+  if (doThinning) {
+    thinnedPointIndexList.push_back(0); // Always put in first element
+    for (size_t pointIndex = 1; pointIndex < filteredPointIndices.size(); pointIndex++) {
+      size_t thinnedPointNr = 0;
+      for (thinnedPointNr = 0; thinnedPointNr < thinnedPointIndexList.size(); thinnedPointNr++) {
+        auto thinnedPointIndex = thinnedPointIndexList[thinnedPointNr];
+        if (hypot(p1[thinnedPointIndex].x - p1[pointIndex].x, p1[thinnedPointIndex].y - p1[pointIndex].y) < thinningRadius) break;
+      }
+      if (thinnedPointNr == thinnedPointIndexList.size()) thinnedPointIndexList.push_back(pointIndex);
+    }
+  } else {
+    thinnedPointIndexList = filteredPointIndices;
+  }
+  return thinnedPointIndexList;
+}
+
+void renderVectorPoints(std::vector<size_t> thinnedPointIndexList, CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration) {
+
+  if (styleConfiguration == nullptr || styleConfiguration->styleConfig == nullptr) {
+    return;
+  }
+  auto s = styleConfiguration->styleConfig;
+  if (s->Vector.size() == 0) {
+    return;
+  }
+
+  if (dataSource->getNumDataObjects() < 2) {
+    CDBError("Cannot draw barbs, not enough data objects");
+    throw __LINE__;
+  }
+
+  std::vector<PointDVWithLatLon> *p1 = &dataSource->getDataObject(0)->points;
+  std::vector<PointDVWithLatLon> *p2 = &dataSource->getDataObject(1)->points;
+  size_t numberOfPoints = p1->size();
+
+  if (p2->size() != numberOfPoints) {
+    CDBError("Cannot draw barbs, lists for speed (%d) and direction (%d) don't have equal length ", numberOfPoints, p2->size());
+    throw __LINE__;
+  }
+
+  CT::string textValue;
+
+  float fillValueObjectOne = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
+  float fillValueObjectTwo = dataSource->getDataObject(1)->hasNodataValue ? dataSource->getDataObject(1)->dfNodataValue : NAN;
+
+  CT::string units = dataSource->getDataObject(0)->getUnits();
+  bool toKnots = false;
+  if (!(units.equalsIgnoreCase("kt") || units.equalsIgnoreCase("kts") || units.equalsIgnoreCase("knot"))) {
+    toKnots = true;
+  }
+
+  // Make a list of vector style objects based on the configuration.
+  std::vector<VectorStyle> vectorStyles;
+  for (auto cfgVectorStyle : s->Vector) {
+    vectorStyles.push_back(getVectorStyle(cfgVectorStyle));
+  }
+
+  int vectorDiscRadius = 12;
+
+  auto drawPointFillColor = CColor(0, 0, 0, 128);
+  auto drawPointLineColor = CColor(0, 0, 0, 255);
+  auto drawPointFontFile = dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.location.c_str();
+  for (auto pointIndex : thinnedPointIndexList) {
+    auto pointStrength = &(*p1)[pointIndex];
+    auto pointDirection = &(*p2)[pointIndex];
+    auto strength = pointStrength->v;
+    auto direction = pointDirection->v;
+    if (!(direction == direction) || !(strength == strength) || strength == fillValueObjectOne || direction == fillValueObjectTwo) continue;
+    int x = pointStrength->x;
+    int y = dataSource->srvParams->Geo->dHeight - pointStrength->y;
+    double lat = pointStrength->lat;
+    // Adjust direction based on projection settings
+    direction += warper->getRotation(*pointStrength);
+
+    for (auto vectorStyle : vectorStyles) {
+      if (!(strength >= vectorStyle.min && strength < vectorStyle.max)) continue;
+      // Draw symbol barb, vector or disc.
+      if (vectorStyle.drawBarb) {
+        drawImage->drawBarb(x, y, ((270 - direction) / 360) * M_PI * 2, 0, strength, vectorStyle.lineColor, vectorStyle.lineWidth, toKnots, lat <= 0, vectorStyle.drawVectorPlotValue,
+                            vectorStyle.fontSize, vectorStyle.textColor, vectorStyle.outlinecolor, vectorStyle.outlinewidth);
+      }
+      if (vectorStyle.drawVector) {
+        drawImage->drawVector(x, y, ((270 - direction) / 360) * M_PI * 2, strength * vectorStyle.symbolScaling, vectorStyle.lineColor, vectorStyle.lineWidth);
+      }
+      if (vectorStyle.drawDiscs) {
+        // Draw a disc with the speed value in text and the dir. value as an arrow
+        int x = pointStrength->x;
+        int y = dataSource->srvParams->Geo->dHeight - pointStrength->y;
+        textValue.print(vectorStyle.drawVectorTextFormat.c_str(), strength);
+        drawImage->setTextDisc(x, y, vectorDiscRadius, textValue.c_str(), drawPointFontFile, vectorStyle.fontSize, vectorStyle.textColor, drawPointFillColor, drawPointLineColor);
+        drawImage->drawVector2(x, y, ((90 + direction) / 360.) * M_PI * 2, 10, vectorDiscRadius, drawPointFillColor, vectorStyle.lineWidth);
+      }
+
+      drawTextsForVector(drawImage, dataSource, vectorStyle, pointStrength, pointDirection);
+    }
+  }
+}
+
+typedef std::vector<f8point> SimpleSymbol;
+typedef std::map<std::string, SimpleSymbol> SimpleSymbolMap;
+SimpleSymbolMap simpleSymbolMapCache;
+
+SimpleSymbolMap makeSymbolMap(CServerConfig::XMLE_Configuration *cfg) {
+  SimpleSymbolMap simpleSymbolMap;
+  /**
+   * Parse following coordinates into a symbol struct:
+   *
+   * <Symbol name="triangle" coordinates="[[-1, -1], [1, -1], [0.0, 1], [-1, -1]]"/>
+   * <Symbol name="square" coordinates="[[-1, -1], [1, -1], [1, 1], [-1, 1], [-1, -1]]"/>
+   *
+   */
+  for (size_t j = 0; j < cfg->Symbol.size(); j++) {
+    auto symbolName = cfg->Symbol[j]->attr.name;
+    auto coordinates = cfg->Symbol[j]->attr.coordinates;
+    // Make a single list of numbers
+    coordinates.replaceSelf("[", "");
+    coordinates.replaceSelf("]", "");
+    coordinates.replaceSelf(" ", "");
+    // Split on ","
+    auto coordinateStrings = coordinates.splitToStack(",");
+    SimpleSymbol symbol;
+
+    // Every pair is a coordinate.
+    for (size_t p = 0; p < coordinateStrings.size() && p < coordinateStrings.size() + 1; p += 2) {
+      symbol.push_back({.x = coordinateStrings[p].toDouble(), .y = coordinateStrings[p + 1].toDouble()});
+    }
+    simpleSymbolMap[symbolName.c_str()] = symbol;
+  }
+  return simpleSymbolMap;
+}
+
+SimpleSymbol getSymbol(CT::string symbolName, SimpleSymbolMap &simpleSymbolMap) {
+  auto findIt = simpleSymbolMap.find(symbolName.c_str());
+  if (findIt != simpleSymbolMap.end()) {
+    return findIt->second;
+  }
+  return {};
+}
+
+void CImgRenderPoints::renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CImageWarper *, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration,
+                                          CServerConfig::XMLE_Point *pointConfig) {
+  if (simpleSymbolMapCache.empty()) {
+    simpleSymbolMapCache = makeSymbolMap(dataSource->cfg);
+  }
+  auto currentSymbol = getSymbol(pointConfig->attr.symbol.c_str(), simpleSymbolMapCache);
 
   int doneMatrixH = 2;
   int doneMatrixW = 2;
@@ -95,7 +265,6 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
   }
 
   std::map<std::string, CDrawImage *> symbolCache;
-  //     CDBDebug("symbolCache created, size=%d", symbolCache.size());
   std::map<std::string, CDrawImage *>::iterator symbolCacheIter;
   for (size_t dataObjectIndex = 0; dataObjectIndex < dataSource->getNumDataObjects(); dataObjectIndex++) {
     std::vector<PointDVWithLatLon> *pts = &dataSource->getDataObject(dataObjectIndex)->points;
@@ -115,43 +284,6 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
       //       CDBDebug("angles[%d] %f %d %f %f", dataObject, useangle, kwadrant, usedx, usedy);
     }
 
-    // THINNING
-    std::vector<PointDVWithLatLon> *p1 = &dataSource->getDataObject(dataObjectIndex)->points;
-    size_t l = p1->size();
-    size_t nrThinnedPoints = l;
-    std::vector<size_t> thinnedPointsIndex;
-
-    //      CDBDebug("Before thinning: %d (%d)", l, doThinning);
-    if (doThinning) {
-      for (size_t j = 0; j < l; j++) {
-        size_t nrThinnedPoints = thinnedPointsIndex.size();
-        size_t i;
-        if ((useFilter && (*p1)[j].paramList.size() > 0 && usePoints.find((*p1)[j].paramList[0].value.c_str()) != usePoints.end()) || !useFilter) {
-          for (i = 0; i < nrThinnedPoints; i++) {
-            if (j == 0) break; // Always put in first element
-            if (hypot((*p1)[thinnedPointsIndex[i]].x - (*p1)[j].x, (*p1)[thinnedPointsIndex[i]].y - (*p1)[j].y) < thinningRadius) break;
-          }
-          if (i == nrThinnedPoints) thinnedPointsIndex.push_back(j);
-        }
-      }
-      nrThinnedPoints = thinnedPointsIndex.size();
-    } else if (useFilter) {
-      for (size_t j = 0; j < l; j++) {
-        if ((*p1)[j].paramList.size() > 0 && usePoints.find((*p1)[j].paramList[0].value.c_str()) != usePoints.end()) {
-          // if ((*p1)[j].paramList.size()>0 && usePoints.find((*p1)[j].paramList[0].value.c_str())!=usePoints.end()){
-          thinnedPointsIndex.push_back(j);
-          CDBDebug("pushed el %d: %s", j, (*p1)[j].paramList[0].value.c_str());
-        }
-      }
-      nrThinnedPoints = thinnedPointsIndex.size();
-    } else {
-      // if no thinning: get all indexes
-      for (size_t pointIndex = 0; pointIndex < l; pointIndex++) {
-        thinnedPointsIndex.push_back(pointIndex);
-      }
-      nrThinnedPoints = thinnedPointsIndex.size();
-    }
-
     bool pointMinMaxSet = false;
     float pointMin = 0;
     float pointMax = 0;
@@ -162,10 +294,12 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
     }
 
     CT::string t;
-    for (size_t pointNo = 0; pointNo < nrThinnedPoints; pointNo++) {
-      size_t j = pointNo;
-      j = thinnedPointsIndex[pointNo];
+    float fillValueObjectOne = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
+    for (auto pointIndex : thinnedPointIndexList) {
+
+      size_t j = pointIndex;
       float v = (*pts)[j].v;
+      if (v == fillValueObjectOne) continue;
 
       float perPointDrawPointDiscRadius = drawPointDiscRadius;
       bool skipPoint = false;
@@ -188,7 +322,7 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
       if (!skipPoint) {
         if (drawVolume) {
           int x = (*pts)[j].x;
-          int y = dataSource->dHeight - (*pts)[j].y;
+          int y = dataSource->srvParams->Geo->dHeight - (*pts)[j].y;
           int rvol = drawPointFillColor.r;
           int gvol = drawPointFillColor.g;
           int bvol = drawPointFillColor.b;
@@ -211,7 +345,7 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
 
         if (drawSymbol) {
           int x = (*pts)[j].x;
-          int y = dataSource->dHeight - (*pts)[j].y;
+          int y = dataSource->srvParams->Geo->dHeight - (*pts)[j].y;
 
           bool minMaxSet = styleConfiguration->symbolIntervals.size() == 1 && !styleConfiguration->symbolIntervals[0]->attr.min.empty() && !styleConfiguration->symbolIntervals[0]->attr.max.empty();
           // Plot symbol if either valid v or Symbolinterval.min and max not set (to plot symbol for string data type)
@@ -282,7 +416,7 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
 
         if (drawPoints) {
           int x = (*pts)[j].x;
-          int y = dataSource->dHeight - (*pts)[j].y;
+          int y = dataSource->srvParams->Geo->dHeight - (*pts)[j].y;
 
           if (!drawZoomablePoints) {
             size_t doneMatrixPointer = 0;
@@ -347,17 +481,17 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
               }
               if (isRadiusAndValue) {
                 if (dataObjectIndex == 0) {
-                  if (currentSymbol != NULL) {
-                    float xPoly[currentSymbol->coordinates.size()];
-                    float yPoly[currentSymbol->coordinates.size()];
+                  if (currentSymbol.size() > 0) {
+                    float xPoly[currentSymbol.size()];
+                    float yPoly[currentSymbol.size()];
 
-                    xPoly[0] = x + currentSymbol->coordinates[0].x * perPointDrawPointDiscRadius;
-                    yPoly[0] = y - currentSymbol->coordinates[0].y * perPointDrawPointDiscRadius;
-                    for (size_t l = 1; l < currentSymbol->coordinates.size(); l++) {
-                      xPoly[l] = x + currentSymbol->coordinates[l].x * perPointDrawPointDiscRadius;
-                      yPoly[l] = y - currentSymbol->coordinates[l].y * perPointDrawPointDiscRadius;
+                    xPoly[0] = x + currentSymbol[0].x * perPointDrawPointDiscRadius;
+                    yPoly[0] = y - currentSymbol[0].y * perPointDrawPointDiscRadius;
+                    for (size_t l = 1; l < currentSymbol.size(); l++) {
+                      xPoly[l] = x + currentSymbol[l].x * perPointDrawPointDiscRadius;
+                      yPoly[l] = y - currentSymbol[l].y * perPointDrawPointDiscRadius;
                     }
-                    drawImage->poly(xPoly, yPoly, currentSymbol->coordinates.size(), 1, drawPointLineColor, drawPointFillColor, true, true);
+                    drawImage->poly(xPoly, yPoly, currentSymbol.size(), 1, drawPointLineColor, drawPointFillColor, true, true);
                   } else {
                     drawImage->setDisc(x, y, perPointDrawPointDiscRadius, drawPointFillColor, drawPointLineColor);
                   }
@@ -408,7 +542,7 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
 
         if (drawDiscs) { // Filled disc with circle around it and value inside
           int x = (*pts)[j].x;
-          int y = dataSource->dHeight - (*pts)[j].y;
+          int y = dataSource->srvParams->Geo->dHeight - (*pts)[j].y;
           // drawImage->circle(x,y, drawPointDiscRadius, 240,0.65);
 
           if (!useDrawPointTextColor) {
@@ -452,183 +586,8 @@ void CImgRenderPoints::renderSinglePoints(CImageWarper *, CDataSource *dataSourc
   }
 }
 
-void CImgRenderPoints::renderVectorPoints(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration) {
-
-  if (styleConfiguration != NULL) {
-    if (styleConfiguration->styleConfig != NULL) {
-      CServerConfig::XMLE_Style *s = styleConfiguration->styleConfig;
-      if (s->Vector.size() == 1) {
-        if (s->Vector[0]->attr.linecolor.empty() == false) {
-          drawVectorLineColor.parse(s->Vector[0]->attr.linecolor.c_str());
-        }
-        if (s->Vector[0]->attr.vectorstyle.empty() == false) {
-          drawVectorVectorStyle = s->Vector[0]->attr.vectorstyle.c_str();
-          if (drawVectorVectorStyle.equalsIgnoreCase("barb")) {
-            drawBarb = true;
-          } else if (drawVectorVectorStyle.equalsIgnoreCase("disc")) {
-            drawDiscs = true;
-          } else if (drawVectorVectorStyle.equalsIgnoreCase("vector")) {
-            drawVector = true;
-          } else {
-            drawBarb = true;
-          }
-        }
-
-        if (s->Vector[0]->attr.linewidth.empty() == false) {
-          drawVectorLineWidth = s->Vector[0]->attr.linewidth.toFloat();
-        }
-        if (s->Vector[0]->attr.plotstationid.empty() == false) {
-          drawVectorPlotStationId = s->Vector[0]->attr.plotstationid.equalsIgnoreCase("true");
-        }
-        if (s->Vector[0]->attr.plotvalue.empty() == false) {
-          drawVectorPlotValue = s->Vector[0]->attr.plotvalue.equalsIgnoreCase("true");
-        }
-        if (s->Vector[0]->attr.textformat.empty() == false) {
-          drawVectorTextFormat = s->Vector[0]->attr.textformat;
-        }
-        drawVectorVectorScale = s->Vector[0]->attr.scale;
-      }
-    }
-  }
-  //    CDBDebug("Vectors drawBarb=%d drawDiscs=%d drawVector=%d", drawBarb, drawDiscs, drawVector);
-
-  CT::string varName1 = dataSource->getDataObject(0)->cdfVariable->name.c_str();
-  CT::string varName2 = dataSource->getDataObject(1)->cdfVariable->name.c_str();
-  std::vector<PointDVWithLatLon> *p1 = &dataSource->getDataObject(0)->points;
-  std::vector<PointDVWithLatLon> *p2 = &dataSource->getDataObject(1)->points;
-  size_t l = p1->size();
-  size_t nrThinnedPoints = l;
-  std::vector<size_t> thinnedPointsIndex;
-
-  CT::string t;
-  if (doThinning) {
-    for (size_t j = 0; j < l; j++) {
-      size_t nrThinnedPoints = thinnedPointsIndex.size();
-      size_t i;
-      if ((useFilter && (*p1)[j].paramList.size() > 0 && usePoints.find((*p1)[j].paramList[0].value.c_str()) != usePoints.end()) || !useFilter) {
-        for (i = 0; i < nrThinnedPoints; i++) {
-          if (j == 0) break; // Always put in first element
-          if (hypot((*p1)[thinnedPointsIndex[i]].x - (*p1)[j].x, (*p1)[thinnedPointsIndex[i]].y - (*p1)[j].y) < thinningRadius) break;
-        }
-        if (i == nrThinnedPoints) thinnedPointsIndex.push_back(j);
-      }
-    }
-    nrThinnedPoints = thinnedPointsIndex.size();
-  } else if (useFilter) {
-    for (size_t j = 0; j < l; j++) {
-      if ((*p1)[j].paramList.size() > 0 && usePoints.find((*p1)[j].paramList[0].value.c_str()) != usePoints.end()) {
-        // if ((*p1)[j].paramList.size()>0 && usePoints.find((*p1)[j].paramList[0].value.c_str())!=usePoints.end()){
-        thinnedPointsIndex.push_back(j);
-        CDBDebug("pushed el %d: %s", j, (*p1)[j].paramList[0].value.c_str());
-      }
-    }
-    nrThinnedPoints = thinnedPointsIndex.size();
-  } else {
-    // if no thinning: get all indexes
-    for (size_t pointIndex = 0; pointIndex < l; pointIndex++) {
-      thinnedPointsIndex.push_back(pointIndex);
-    }
-    nrThinnedPoints = thinnedPointsIndex.size();
-  }
-  CDBDebug("Vector plotting %d elements %d %d", nrThinnedPoints, useFilter, usePoints.size());
-
-  for (size_t pointNo = 0; pointNo < nrThinnedPoints; pointNo++) {
-
-    size_t j = pointNo;
-    j = thinnedPointsIndex[pointNo];
-    int x = (*p1)[j].x;
-    double lat = (*p1)[j].lat;
-    double lon = (*p1)[j].lon;
-    double rotation = (*p1)[j].rotation;
-
-    if (rotation == 0) {
-      double latForRot = lat;
-      double lonForRot = lon;
-      double latOffSetForRot = lat - 0.01;
-      double lonOffSetForRot = lon;
-      bool projectionRequired = true;
-
-      if (projectionRequired) {
-        warper->reprojfromLatLon(lonForRot, latForRot);
-        warper->reprojfromLatLon(lonOffSetForRot, latOffSetForRot);
-      }
-
-      if (projectionRequired) {
-        double dy = latForRot - latOffSetForRot;
-        double dx = lonForRot - lonOffSetForRot;
-        rotation = -(atan2(dy, dx) / (M_PI)) * 180 + 90;
-      }
-    }
-
-    int y = dataSource->dHeight - (*p1)[j].y;
-
-    float strength = (*p1)[j].v;
-    float direction = (*p2)[j].v;
-    if (direction == direction) direction += rotation; // Nan stays Nan
-
-    if ((direction == direction) && (strength == strength)) { // Check for Nan
-      //        CDBDebug("Drawing wind %f,%f for [%d,%d]", strength, direction, x, y);
-      if (drawBarb) {
-        CT::string units = dataSource->getDataObject(0)->getUnits();
-        bool toKnots = false;
-        if (!(units.equalsIgnoreCase("kt") || units.equalsIgnoreCase("kts") || units.equalsIgnoreCase("knot"))) {
-          toKnots = true;
-        }
-        if (lat > 0) {
-          drawImage->drawBarb(x, y, ((270 - direction) / 360) * M_PI * 2, 0, strength, drawVectorLineColor, drawVectorLineWidth, toKnots, false, drawVectorPlotValue);
-        } else {
-          drawImage->drawBarb(x, y, ((270 - direction) / 360) * M_PI * 2, 0, strength, drawVectorLineColor, drawVectorLineWidth, toKnots, true, drawVectorPlotValue);
-        }
-      }
-      if (drawVector) {
-        drawImage->drawVector(x, y, ((270 - direction) / 360) * M_PI * 2, strength * drawVectorVectorScale, drawVectorLineColor, drawVectorLineWidth);
-      }
-      // void drawBarb(int x,int y,double direction, double strength,int color,bool toKnots,bool flip);
-      if (drawVectorPlotStationId) {
-        if ((*p1)[j].paramList.size() > 0) {
-          CT::string value = (*p1)[j].paramList[0].value;
-          if (drawBarb) {
-            if ((direction >= 90) && (direction <= 270)) {
-              drawImage->setText(value.c_str(), value.length(), x - value.length() * 3, y - 20, drawPointTextColor, 0);
-            } else {
-              drawImage->setText(value.c_str(), value.length(), x - value.length() * 3, y + 6, drawPointTextColor, 0);
-            }
-          } else {
-            if ((direction >= 90) && (direction <= 270)) {
-              drawImage->setText(value.c_str(), value.length(), x - value.length() * 3, y + 6, drawPointTextColor, 0);
-            } else {
-              drawImage->setText(value.c_str(), value.length(), x - value.length() * 3, y - 20, drawPointTextColor, 0);
-            }
-          }
-        }
-      }
-      if (drawVectorPlotValue && !drawBarb) {
-        if (!drawDiscs) {
-          t.print(drawVectorTextFormat.c_str(), strength);
-          if ((direction >= 90) && (direction <= 270)) {
-            drawImage->setText(t.c_str(), t.length(), x - t.length() * 3, y - 20, drawPointTextColor, 0);
-          } else {
-            drawImage->setText(t.c_str(), t.length(), x - t.length() * 3, y + 6, drawPointTextColor, 0);
-          }
-        }
-      }
-
-      if (drawDiscs) {
-        // Draw a disc with the speed value in text and the dir. value as an arrow
-        int x = (*p1)[j].x;
-        int y = dataSource->dHeight - (*p1)[j].y;
-        t.print(drawPointTextFormat.c_str(), strength);
-        drawImage->setTextDisc(x, y, drawPointDiscRadius, t.c_str(), drawPointFontFile, drawPointFontSize, drawPointTextColor, drawPointFillColor, drawPointLineColor);
-        drawImage->drawVector2(x, y, ((90 + direction) / 360.) * M_PI * 2, 10, drawPointDiscRadius, drawPointFillColor, drawVectorLineWidth);
-      }
-    }
-  }
-}
-
 void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage) {
-  drawVector = false;
   drawPoints = true;
-  drawBarb = false;
   drawDiscs = false;
   drawVolume = false;
   drawSymbol = false;
@@ -653,14 +612,6 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
   drawPointLineColor = CColor(0, 0, 0, 255);
   defaultColor = CColor(0, 0, 0, 255);
 
-  drawVectorLineColor = CColor(0, 0, 128, 255);
-  drawVectorLineWidth = 1.0;
-  drawVectorPlotStationId = false;
-  drawVectorPlotValue = false;
-  drawVectorVectorScale = 1.0;
-  drawVectorTextFormat = "%0.1f";
-  drawVectorVectorStyle = "disc";
-
   useFilter = false;
   useDrawPointFillColor = false;
   useDrawPointTextColor = false;
@@ -672,9 +623,11 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   if (styleConfiguration == NULL || styleConfiguration->styleConfig == NULL) {
+    CDBDebug("Note: No styleConfiguration. Skipping.");
     return;
   }
   CServerConfig::XMLE_Style *styleConfig = styleConfiguration->styleConfig;
+
   for (size_t pointDefinitionIndex = 0; pointDefinitionIndex < styleConfig->Point.size(); pointDefinitionIndex += 1) {
     CServerConfig::XMLE_Point *pointConfig = styleConfig->Point[pointDefinitionIndex];
 
@@ -731,58 +684,52 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
       drawDiscs = true;
       drawPoints = false;
       drawVolume = false;
-      //     drawText=true;
+
       drawSymbol = false;
     } else if (drawPointPointStyle.equalsIgnoreCase("volume")) {
       drawPoints = false;
       drawVolume = true;
       drawDiscs = false;
-      //     drawText=false;
       drawSymbol = false;
     } else if (drawPointPointStyle.equalsIgnoreCase("symbol")) {
       drawPoints = false;
       drawVolume = false;
       drawDiscs = false;
-      //     drawText=false;
       drawSymbol = true;
     } else if (drawPointPointStyle.equalsIgnoreCase("zoomablepoint")) {
       drawPoints = true;
       drawVolume = false;
       drawDiscs = false;
-      //     drawText=false;
       drawSymbol = false;
       drawZoomablePoints = true;
     } else {
       drawPoints = true;
       drawDiscs = false;
       drawVolume = false;
-      //     drawText=true;
       drawSymbol = false;
     }
-    //   CDBDebug("drawPoints=%d drawText=%d drawBarb=%d drawVector=%d drawVolume=%d drawSymbol=%d", drawPoints, drawText, drawBarb, drawVector, drawVolume, drawSymbol);
+    if (drawPointPointStyle.equals("radiusandvalue")) {
+      isRadiusAndValue = true;
+    }
 
-    // CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-    if (styleConfiguration != NULL) {
-
-      if (styleConfiguration->styleConfig != NULL) {
-        CServerConfig::XMLE_Style *s = styleConfiguration->styleConfig;
-        if (s->FilterPoints.size() == 1) {
-          if (s->FilterPoints[0]->attr.use.empty() == false) {
-            CT::string filterPointsUse = s->FilterPoints[0]->attr.use.c_str();
-            std::vector<CT::string> use = filterPointsUse.splitToStack(",");
-            for (std::vector<CT::string>::iterator it = use.begin(); it != use.end(); ++it) {
-              //            CDBDebug("adding %s to usePoints", it->c_str());
-              usePoints.insert(it->c_str());
-            }
-            useFilter = true;
+    if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL) {
+      CServerConfig::XMLE_Style *s = styleConfiguration->styleConfig;
+      if (s->FilterPoints.size() == 1) {
+        if (s->FilterPoints[0]->attr.use.empty() == false) {
+          CT::string filterPointsUse = s->FilterPoints[0]->attr.use.c_str();
+          std::vector<CT::string> use = filterPointsUse.splitToStack(",");
+          for (std::vector<CT::string>::iterator it = use.begin(); it != use.end(); ++it) {
+            //            CDBDebug("adding %s to usePoints", it->c_str());
+            usePoints.insert(it->c_str());
           }
-          if (s->FilterPoints[0]->attr.skip.empty() == false) {
-            CT::string filterPointsSkip = s->FilterPoints[0]->attr.skip.c_str();
-            useFilter = true;
-            std::vector<CT::string> skip = filterPointsSkip.splitToStack(",");
-            for (std::vector<CT::string>::iterator it = skip.begin(); it != skip.end(); ++it) {
-              skipPoints.insert(it->c_str());
-            }
+          useFilter = true;
+        }
+        if (s->FilterPoints[0]->attr.skip.empty() == false) {
+          CT::string filterPointsSkip = s->FilterPoints[0]->attr.skip.c_str();
+          useFilter = true;
+          std::vector<CT::string> skip = filterPointsSkip.splitToStack(",");
+          for (std::vector<CT::string>::iterator it = skip.begin(); it != skip.end(); ++it) {
+            skipPoints.insert(it->c_str());
           }
         }
       }
@@ -792,41 +739,40 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
       CDBDebug("styleConfiguration==NULL!!!!");
     }
 
-    if (settings.indexOf("thin") != -1) {
-      doThinning = true;
-      if (styleConfiguration != NULL) {
-        if (styleConfiguration->styleConfig != NULL) {
-          CServerConfig::XMLE_Style *s = styleConfiguration->styleConfig;
-          if (s->Thinning.size() == 1) {
-            if (s->Thinning[0]->attr.radius.empty() == false) {
-              thinningRadius = s->Thinning[0]->attr.radius.toInt();
-              // CDBDebug("Thinning radius = %d",s -> Thinning[0]->attr.radius.toInt());
-            }
-          }
+    if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL) {
+      // TODO: Currently thin needs to be mentioned in the rendermethod to allow thinning. We want to get rid of this. We need to adjust configs on geoservices and geoweb first.
+      CServerConfig::XMLE_Style *s = styleConfiguration->styleConfig;
+      if (s->Thinning.size() == 1) {
+        if (s->Thinning[0]->attr.radius.empty() == false) {
+          doThinning = true;
+          thinningRadius = s->Thinning[0]->attr.radius.toInt();
+        }
+      }
+    }
+    auto thinnedPointIndexList = doThinningGetIndices(dataSource->getDataObject(0)->points, doThinning, thinningRadius, usePoints, useFilter);
+
+    renderSinglePoints(thinnedPointIndexList, warper, dataSource, drawImage, styleConfiguration, pointConfig);
+  }
+
+  bool isVector = ((dataSource->getNumDataObjects() >= 2) && (dataSource->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_GEOJSONPOINT") == NULL));
+
+  if (isVector) {
+    std::vector<PointDVWithLatLon> *p1 = &dataSource->getDataObject(0)->points;
+
+    if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL) {
+      CServerConfig::XMLE_Style *s = styleConfiguration->styleConfig;
+      if (s->Thinning.size() == 1) {
+        if (s->Thinning[0]->attr.radius.empty() == false) {
+          doThinning = true;
+          thinningRadius = s->Thinning[0]->attr.radius.toInt();
         }
       }
     }
 
-    bool isVector = ((dataSource->getNumDataObjects() == 2) && (dataSource->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_GEOJSONPOINT") == NULL));
-    if (drawPointPointStyle.equals("radiusandvalue")) {
-      isVector = false;
-      isRadiusAndValue = true;
-    }
-    if (!isVector) {
-      renderSinglePoints(warper, dataSource, drawImage, styleConfiguration, pointConfig);
-    }
-
-    if (isVector) {
-      CDBDebug("VECTOR");
-      renderVectorPoints(warper, dataSource, drawImage, styleConfiguration);
-    }
+    auto thinnedPointIndexList = doThinningGetIndices(*p1, doThinning, thinningRadius, usePoints, useFilter);
+    CDBDebug("Vector plotting %d elements %d %d", thinnedPointIndexList.size(), useFilter, usePoints.size());
+    renderVectorPoints(thinnedPointIndexList, warper, dataSource, drawImage, styleConfiguration);
   }
-}
-
-int CImgRenderPoints::set(const char *values) {
-
-  settings.copy(values);
-  return 0;
 }
 
 int CImgRenderPoints::getPixelIndexForValue(CDataSource *dataSource, float val) {

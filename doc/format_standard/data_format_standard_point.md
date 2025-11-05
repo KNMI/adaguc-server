@@ -63,7 +63,6 @@ The ADAGUC configuration for the Layer object looks like this:
 	</Legend>
 	<Style name="randompoint1">
 		<Legend fixed="true" tickinterval="10">bluewithred</Legend>
-		<RenderMethod>point</RenderMethod>
 		<Min>0</Min>
 		<Max>100</Max>
 		<NameMapping name="point" title="Points" abstract="Points"/>
@@ -181,7 +180,6 @@ The ADAGUC configuration looks like this:
 
 <Style name="temperature">
   <Legend fixed="true" tickinterval="2">temperature</Legend>
-  <RenderMethod>point</RenderMethod>
   <Min>-14</Min>
   <Max>39,33333333</Max> <!-- 39,33333333 = (240 / (234/(38 - -14)))- 14 -->
   <NameMapping name="point" title="Temperature"
@@ -280,7 +278,6 @@ The configuration in ADAGUC looks like this:
 </Legend>
 <Style name="magnitude">
   <Legend fixed="true" tickinterval="1">magnitude</Legend>
-  <RenderMethod>point</RenderMethod>
   <Min>0</Min>
   <Max>12</Max>
   <NameMapping name="point"        title="Richter magnitude scale" abstract="Wth continuous colors"/>
@@ -342,7 +339,6 @@ this dimension has an interval of 5 minutes:
 ```xml
 <Style name="btd">
   <Legend fixed="true">bluewhitered</Legend>
-  <RenderMethod>point</RenderMethod>
   <Min>0</Min>
   <Max>2</Max>
   <Point discradius="5" textformat=" " dot="false"/>

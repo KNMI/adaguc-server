@@ -327,7 +327,11 @@ public:
   int getServerLegendIndexByName(CT::string legendName);
 
   /**
-   * Retrieves the position of for the requested style name in the servers configured style elements.
+   * Retrieves the style index in the server configuration by stylename.
+   * Returns -1 in case of:
+   *  - empty name
+   *  - if the name ="default".
+   *  - If the style name is not found.
    * @param styleName The name of the style to locate
    * @return The style index as integer, points to the position in the servers configured styles. Is -1 on failure.
    */
