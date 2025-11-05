@@ -3,25 +3,56 @@
 
   <Style name="EHAM_Schiphol_onlyoutlines">
     <Legend fixedclasses="true" tickround="1">bluewhitered</Legend>
-    <Point pointstyle="point" textcolor="#111111"/>
     <Vector vectorstyle="barb" linecolor="#0000FF" />
     <Scale>0</Scale>
     <Offset>0</Offset>
-    <RenderMethod>nearest</RenderMethod>
+    <RenderMethod>polyline</RenderMethod>
     <StandardNames standard_name="*"/>
   </Style>
 
   <Style name="EHAM_Schiphol_filled">
     <Legend>bluewhitered</Legend>
-    <Min>0</Min>
-    <Max>10</Max>
+    <Min>2</Min>
+    <Max>5</Max>
     <RenderMethod>nearest</RenderMethod>
   </Style>
+
+
+  <Style name="EHAM_Schiphol_filledoutlines">
+    <Legend fixedclasses="true" tickround="1">bluewhitered</Legend>
+    <!-- <Point pointstyle="point" textcolor="#111111"/> -->
+    <Vector vectorstyle="barb" linecolor="#0000FF" />
+    <Scale>0</Scale>
+    <Offset>0</Offset>
+    <RenderMethod>nearestpolyline</RenderMethod>
+    <StandardNames standard_name="*"/>
+  </Style>
+
+    <Style name="EHAM_Schiphol_filledoutlines_and_points">
+    <Legend fixedclasses="true" tickround="1">bluewhitered</Legend>
+    <Point pointstyle="point" textcolor="#111111"/>
+    <Vector vectorstyle="barb" linecolor="#0000FF" />
+    <Scale>0</Scale>
+    <Offset>0</Offset>
+    <RenderMethod>nearestpolyline</RenderMethod>
+    <StandardNames standard_name="*"/>
+  </Style>
+
+  <Style name="EHAM_Schiphol_only_points">
+    <Legend fixedclasses="true" tickround="1">bluewhitered</Legend>
+    <Point pointstyle="point" textcolor="#111111"/>
+    <Scale>0</Scale>
+    <Offset>0</Offset>
+    <RenderMethod>point</RenderMethod>
+  </Style>
+
+
+
   <Layer type="database" hidden="false">
     <Name>EHAM_Schiphol_onlyoutlines</Name>
     <Title>EHAM_Schiphol_onlyoutlines</Title>
     <Variable>features</Variable>
     <FilePath>{ADAGUC_PATH}/data/datasets/geojsons/EHAM_Schiphol.geojson</FilePath>
-    <Styles>EHAM_Schiphol_onlyoutlines,EHAM_Schiphol_filled</Styles>
+    <Styles>EHAM_Schiphol_onlyoutlines,EHAM_Schiphol_filled,EHAM_Schiphol_filledoutlines,EHAM_Schiphol_filledoutlines_and_points,EHAM_Schiphol_only_points</Styles>
   </Layer>
 </Configuration>

@@ -40,5 +40,15 @@
   <OpenDAP enabled="true" path="opendap"/>
   
   <Dataset enabled="true" location="{ADAGUC_PATH}/data/config/datasets/"/>
+
+
+  <AutoResource enableautoopendap="true" enablelocalfile="true" enablecache="false">
+    <Dir basedir="{ADAGUC_PATH}data/datasets" prefix="{ADAGUC_PATH}data/datasets/"/>
+    <!-- Useful to test autowms on test results (Adaguc should be able to read and visualize its own generated files)-->
+    <Dir basedir="{ADAGUC_PATH}tests/testresults" prefix="{ADAGUC_PATH}tests/testresults/"/>
+    <ImageText attribute="source"></ImageText>
+  </AutoResource>
+
+
   <!-- End of configuration /-->
 </Configuration>

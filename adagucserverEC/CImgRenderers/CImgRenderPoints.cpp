@@ -119,9 +119,6 @@ void renderVectorPoints(std::vector<size_t> thinnedPointIndexList, CImageWarper 
     throw __LINE__;
   }
 
-  CT::string varName1 = dataSource->getDataObject(0)->cdfVariable->name.c_str();
-  CT::string varName2 = dataSource->getDataObject(1)->cdfVariable->name.c_str();
-
   CT::string textValue;
 
   float fillValueP1 = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
