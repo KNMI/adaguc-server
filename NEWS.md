@@ -1,3 +1,17 @@
+**Version 4.4.0 - 2025-11-05**
+
+***Support to configure windbarbs and points with graphical stylings for specific values like windspeeds***
+
+- Vectors and Points now support different styling options per value, e.g. colored windbarbs for specific values. See: [Vector.md](/doc/configuration/Vector.md) and [Point.md](/doc/configuration/Point.md).
+- If a `Point` is configured in the style, Points will be rendered regardless of rendermethod. If you only want to draw points (without underlying grid), you can still use the rendermethod point and select the `stylename/point` style.
+- Added datapostproc `pointsfromgrid`, which can select variables from a grid and draw as points. Can be used to draw windbarbs or temperature values on the grid cells. See [DataPostProc.md](/doc/configuration/DataPostProc.md)
+- To draw point data and vector data, you need to have at least one `<Point>` or `<Vector>` element in your style configuration. The `<RenderMethod>` needed to contain the string “vector” or “point”, in addition to a `<Point>` or `<Vector>` element in your style configuration. This is still supported but deprecated.
+- Thinning can be enabled by adding a `<Thinning>` element, see [Thinning.md](/doc/configuration/Thinning.md). The rendermethod element does not need to contain the string `thin` anymore.
+- Refactored point and vector rendering.
+- Adaguc does not draw points on a virtual grid anymore.
+- Upgraded from C++11 to C++17
+
+
 **Version 4.3.7 - 2025-10-29**
 
 - Scan and clean only layers which match given files

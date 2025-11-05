@@ -1314,7 +1314,7 @@ void CConvertGeoJSON::drawPoints(Feature *feature, unsigned short int featureInd
       if (pointGridVariable->getType() == CDF_FLOAT) {
         if (f < min || min != min) min = f;
         if (f > max || max != max) max = f;
-            }
+      }
       PointDVWithLatLon *lastPoint = &(dataObject->points.back());
       // Get the last pushed point from the array and push the character text data in the paramlist
       lastPoint->paramList.push_back(CKeyValue(pointName.c_str(), pointDescription.c_str(), pointValue.c_str()));

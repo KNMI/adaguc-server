@@ -340,7 +340,6 @@ void CImageDataWriter::getFeatureInfoGetPointDataResults(CDataSource *dataSource
           CT::string name = cdfDims->getDimensionName(j);
           pointID->cdfDims.addDimension(name.c_str(), value.c_str(), cdfDims->getDimensionIndex(j));
         }
-        CDBDebug("Pusing new");
         getFeatureInfoResult->elements.push_back(pointID);
         pointID->long_name = point.paramList[p].description;
         pointID->var_name = point.paramList[p].key;

@@ -306,7 +306,7 @@ void CProj4ToCF::initLatitudeLongitude(CDF::Variable *projectionVariable, std::v
 }
 
 void CProj4ToCF::initMercator(CDF::Variable *projectionVariable, std::vector<CKeyValuePair> projKVPList) {
-  // CDBDebug("initMercator ");
+  CDBDebug("initMercator ");
   projectionVariable->removeAttributes();
   float v = 0;
   projectionVariable->addAttribute(new CDF::Attribute("grid_mapping_name", "mercator"));

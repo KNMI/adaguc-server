@@ -254,7 +254,6 @@ void CImgRenderPoints::renderSinglePoints(std::vector<size_t> thinnedPointIndexL
   }
 
   std::map<std::string, CDrawImage *> symbolCache;
-
   std::map<std::string, CDrawImage *>::iterator symbolCacheIter;
   for (size_t dataObjectIndex = 0; dataObjectIndex < dataSource->getNumDataObjects(); dataObjectIndex++) {
     std::vector<PointDVWithLatLon> *pts = &dataSource->getDataObject(dataObjectIndex)->points;
@@ -747,7 +746,6 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
   bool isVector = ((dataSource->getNumDataObjects() >= 2) && (dataSource->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_GEOJSONPOINT") == NULL));
 
   if (isVector) {
-    CDBDebug("VECTOR");
     std::vector<PointDVWithLatLon> *p1 = &dataSource->getDataObject(0)->points;
 
     if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL) {
