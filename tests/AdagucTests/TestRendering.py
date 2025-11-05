@@ -121,7 +121,7 @@ class TestRendering(unittest.TestCase):
             args=['--updatedb', '--config', config], env={'ADAGUC_CONFIG': config}, isCGI=False, showLog=False)
         self.assertEqual(status, 0)
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "DATASET=adaguc.tests.CTRRendering&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=EHAM_Schiphol_onlyoutlines&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=480839.95441816666,6790323.698828231,596332.8754416516,6931740.434113708&STYLES=EHAM_Schiphol_filledoutlines_and_points%2Fnearestpolylines&FORMAT=image/png&TRANSPARENT=TRUE&&0.9458806689743082", env={'ADAGUC_CONFIG': config})        
+            "DATASET=adaguc.tests.CTRRendering&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=EHAM_Schiphol_onlyoutlines&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=480839.95441816666,6790323.698828231,596332.8754416516,6931740.434113708&STYLES=EHAM_Schiphol_filledoutlines_and_points%2Fnearestpolyline&FORMAT=image/png&TRANSPARENT=TRUE&&0.9458806689743082", env={'ADAGUC_CONFIG': config})        
         filename = "test_RenderingGeoJSON_CTR_EHAM_Schiphol_GetMapLinesPointsAndNearest.png"
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)

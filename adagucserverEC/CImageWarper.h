@@ -43,6 +43,7 @@ class CImageWarper {
 private:
   double dfMaxExtent[4];
   int dMaxExtentDefined;
+  bool sourceIsLatLonProjection = false;
 
   DEF_ERRORFUNCTION();
   CT::string sourceCRSString;

@@ -134,7 +134,10 @@ int CImageWarper::reprojfromLatLon(double &dfx, double &dfy) {
 
 void CImageWarper::reprojfromLatLon(std::vector<f8point> &points) {
   PJ_COORD *coord = new PJ_COORD[points.size()];
+
   for (size_t index = 0; index < points.size(); index++) {
+    coord[index].xyzt.z = 0;
+    coord[index].xyzt.t = 0;
     coord[index].xy.x = points[index].x;
     coord[index].xy.y = points[index].y;
   }
@@ -154,9 +157,13 @@ int CImageWarper::reprojModelToLatLon(double &dfx, double &dfy) {
 }
 
 void CImageWarper::reprojModelToLatLon(std::vector<f8point> &points) {
-
+  if (this->sourceIsLatLonProjection) {
+    return;
+  }
   PJ_COORD *coord = new PJ_COORD[points.size()];
   for (size_t index = 0; index < points.size(); index++) {
+    coord[index].xyzt.z = 0;
+    coord[index].xyzt.t = 0;
     coord[index].xy.x = points[index].x;
     coord[index].xy.y = points[index].y;
   }
@@ -315,10 +322,13 @@ int CImageWarper::_initreprojSynchronized(const char *projString, CGeoParams *_G
 
   std::tie(sourceProjectionUndec, std::ignore) = fixProjection(sourceProjectionUndec);
   CT::string sourceProjection = sourceProjectionUndec;
+  CT::string latLonProjection = LATLONPROJECTION;
   if (decodeCRS(&sourceProjection, &sourceProjectionUndec, _prj) != 0) {
     CDBError("decodeCRS failed");
     return 1;
   }
+
+  this->sourceIsLatLonProjection = latLonProjection.equals(sourceProjection);
 
   //    CDBDebug("sourceProjectionUndec %s, sourceProjection %s",sourceProjection.c_str(),sourceProjectionUndec.c_str());
 
@@ -334,7 +344,7 @@ int CImageWarper::_initreprojSynchronized(const char *projString, CGeoParams *_G
     return 1;
   }
 
-  projSourceToLatlon = proj_create_crs_to_crs_with_cache(sourceProjection, CT::string(LATLONPROJECTION), nullptr);
+  projSourceToLatlon = proj_create_crs_to_crs_with_cache(sourceProjection, latLonProjection, nullptr);
   if (projSourceToLatlon == nullptr) {
     CDBError("Invalid projection: from %s to %s", destinationCRS.c_str(), LATLONPROJECTION);
     return 1;
@@ -621,6 +631,7 @@ double CImageWarper::getRotation(PointDVWithLatLon &point) {
   double lon = point.lon;
   double latForRot = lat;
   double lonForRot = lon;
+  // Use an offset of 0.01 to the south. This new point can be used together with the original point to calculate the rotation between the points at the given coordinate .
   double latOffSetForRot = lat - 0.01;
   double lonOffSetForRot = lon;
   this->reprojfromLatLon(lonForRot, latForRot);

@@ -882,7 +882,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
              * With string and char (text) data, the float value is set to NAN and character data is put in the paramlist
              */
             if (pointVar[d]->currentType == CDF_STRING) {
-              float v = 0;
+              float v = NAN;
               // CDBDebug("pushing stationNr %d dataobject %d,pPoint DIM %d (%d %d %f %f)", stationNr, d, pPoint, dlon, dlat, lon, lat);
               dataObjects[d]->points.push_back(PointDVWithLatLon(dlon, dlat, lon, lat, v)); //,((const char**)pointVar[d]->data)[pPoint]));
               lastPoint = &(dataObjects[d]->points.back());
@@ -916,7 +916,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
 
             if (pointVar[d]->currentType == CDF_FLOAT) {
               float val = ((float *)pointVar[d]->data)[pPoint];
-              dataObjects[d]->points.push_back(PointDVWithLatLon(dlon, dlat, lon, lat, val, rotation, discRadiusX, discRadiusY)); //,id));
+              dataObjects[d]->points.push_back(PointDVWithLatLon(dlon, dlat, lon, lat, val, rotation, discRadiusX, discRadiusY));
               lastPoint = &(dataObjects[d]->points.back());
               if (pointID != NULL) {
 
@@ -939,9 +939,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
               }
               prevLon = dlon;
               prevLat = dlat;
-              ;
               prevVal = val;
-
               hasPrevLatLon = true;
             }
 

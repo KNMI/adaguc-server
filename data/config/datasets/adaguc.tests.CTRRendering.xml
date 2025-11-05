@@ -28,7 +28,7 @@
     <StandardNames standard_name="*"/>
   </Style>
 
-    <Style name="EHAM_Schiphol_filledoutlines_and_points">
+  <Style name="EHAM_Schiphol_filledoutlines_and_points">
     <Legend fixedclasses="true" tickround="1">bluewhitered</Legend>
     <Point pointstyle="point" textcolor="#111111"/>
     <Vector vectorstyle="barb" linecolor="#0000FF" />

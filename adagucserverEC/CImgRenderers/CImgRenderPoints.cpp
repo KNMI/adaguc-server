@@ -121,8 +121,8 @@ void renderVectorPoints(std::vector<size_t> thinnedPointIndexList, CImageWarper 
 
   CT::string textValue;
 
-  float fillValueP1 = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
-  float fillValueP2 = dataSource->getDataObject(1)->hasNodataValue ? dataSource->getDataObject(1)->dfNodataValue : NAN;
+  float fillValueObjectOne = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
+  float fillValueObjectTwo = dataSource->getDataObject(1)->hasNodataValue ? dataSource->getDataObject(1)->dfNodataValue : NAN;
 
   CT::string units = dataSource->getDataObject(0)->getUnits();
   bool toKnots = false;
@@ -146,7 +146,7 @@ void renderVectorPoints(std::vector<size_t> thinnedPointIndexList, CImageWarper 
     auto pointDirection = &(*p2)[pointIndex];
     auto strength = pointStrength->v;
     auto direction = pointDirection->v;
-    if (!(direction == direction) || !(strength == strength) || strength == fillValueP1 || direction == fillValueP2) continue;
+    if (!(direction == direction) || !(strength == strength) || strength == fillValueObjectOne || direction == fillValueObjectTwo) continue;
     int x = pointStrength->x;
     int y = dataSource->srvParams->Geo->dHeight - pointStrength->y;
     double lat = pointStrength->lat;
@@ -183,14 +183,25 @@ SimpleSymbolMap simpleSymbolMapCache;
 
 SimpleSymbolMap makeSymbolMap(CServerConfig::XMLE_Configuration *cfg) {
   SimpleSymbolMap simpleSymbolMap;
+  /**
+   * Parse following coordinates into a symbol struct:
+   *
+   * <Symbol name="triangle" coordinates="[[-1, -1], [1, -1], [0.0, 1], [-1, -1]]"/>
+   * <Symbol name="square" coordinates="[[-1, -1], [1, -1], [1, 1], [-1, 1], [-1, -1]]"/>
+   *
+   */
   for (size_t j = 0; j < cfg->Symbol.size(); j++) {
     auto symbolName = cfg->Symbol[j]->attr.name;
     auto coordinates = cfg->Symbol[j]->attr.coordinates;
+    // Make a single list of numbers
     coordinates.replaceSelf("[", "");
     coordinates.replaceSelf("]", "");
     coordinates.replaceSelf(" ", "");
+    // Split on ","
     auto coordinateStrings = coordinates.splitToStack(",");
     SimpleSymbol symbol;
+
+    // Every pair is a coordinate.
     for (size_t p = 0; p < coordinateStrings.size() && p < coordinateStrings.size() + 1; p += 2) {
       symbol.push_back({.x = coordinateStrings[p].toDouble(), .y = coordinateStrings[p + 1].toDouble()});
     }
@@ -283,12 +294,12 @@ void CImgRenderPoints::renderSinglePoints(std::vector<size_t> thinnedPointIndexL
     }
 
     CT::string t;
-    float fillValueP1 = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
+    float fillValueObjectOne = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
     for (auto pointIndex : thinnedPointIndexList) {
 
       size_t j = pointIndex;
       float v = (*pts)[j].v;
-      if (v != v || v == fillValueP1) continue;
+      if (v == fillValueObjectOne) continue;
 
       float perPointDrawPointDiscRadius = drawPointDiscRadius;
       bool skipPoint = false;

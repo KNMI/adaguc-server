@@ -838,7 +838,7 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
 
               // CDBDebug("P %d %d %f",dlon,dlat,val);
 
-              dataObjects[d]->points.push_back(PointDVWithLatLon(dlon, dlat, lon, lat, val)); //,id));
+              dataObjects[d]->points.push_back(PointDVWithLatLon(dlon, dlat, lon, lat, val));
               lastPoint = &(dataObjects[d]->points.back());
               if (pointID != NULL) {
 

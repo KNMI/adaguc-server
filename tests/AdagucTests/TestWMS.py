@@ -1290,7 +1290,7 @@ class TestWMS(unittest.TestCase):
         filename = "test_WMSGetCapabilities_KMDS_PointNetCDF_dimension_filetimedate.png"
 
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "dataset=adaguc.testKMDS_PointNetCDF_filetimedate.xml&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=stationname&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=294179.7001580532,6411290.650918596,901204.9572071509,7199735.637765654&STYLES=&FORMAT=image/png32&TRANSPARENT=TRUE&",
+            "dataset=adaguc.testKMDS_PointNetCDF_filetimedate&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=stationname&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=294179.7001580532,6411290.650918596,901204.9572071509,7199735.637765654&STYLES=&FORMAT=image/png32&TRANSPARENT=FALSE&BGCOLOR=0xFFFFA0",
             env=env,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
@@ -3217,7 +3217,7 @@ class TestWMS(unittest.TestCase):
         filename = "test_WMSGetMap_select_temperature_as_point_from_grid.png"
         status, data, _ = AdagucTestTools().runADAGUCServer(
             "DATASET=adaguc.tests.pointrendering&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=air_temperature_hagl&WIDTH=654&HEIGHT=513&CRS=EPSG:3857&BBOX=-127880.43405139455,6311494.158487529,1447830.4566477134,7547487.563577196&STYLES=temperature_selectpoint%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&time=2024-05-23T01:00:00Z&DIM_reference_time=2024-05-23T00%3A00%3A00Z&DIM_member=1",
-            env=env,
+            env=env,showLog=True
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)

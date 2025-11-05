@@ -4,7 +4,7 @@ RenderMethod <value>
 Back to [Configuration](./Configuration.md)
 
 Rendermethod defines the way the data is rendered inside the service.
-There are currently five mechanisms to render an image:
+There are currently seven mechanisms to render an image:
 
 -   nearest (nearest neighbour) in class [CImgWarpNearestNeighbour](/adagucserverEC/CImgWarpNearestNeighbour.cpp)
 -   bilinear in class [CImgWarpBilinear](/adagucserverEC/CImgWarpBilinear.cpp)
