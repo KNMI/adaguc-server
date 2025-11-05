@@ -88,7 +88,7 @@ bool isGridRelative(CDataSource *dataSource) {
       gridRelative = false;
     }
     if (verboseLog) {
-      CDBDebug("Grid propery gridRelative=%d", gridRelative);
+      CDBDebug("Grid property gridRelative=%d", gridRelative);
     }
   }
   return gridRelative;

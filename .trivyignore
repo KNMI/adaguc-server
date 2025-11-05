@@ -1,2 +1,5 @@
 # Ignore secrets
 private-key
+
+# Ignore while Brotli 1.2 unavailable in pypi
+CVE-2025-6176

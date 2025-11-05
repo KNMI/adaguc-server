@@ -549,6 +549,7 @@ std::vector<CT::string> CDataSource::getRenderMethodListForDataSource(CDataSourc
       }
     }
   }
+
   // If still no list of rendermethods is found, use the default list
   if (renderMethodList.length() == 0) {
     renderMethodList.copy("nearest");
@@ -745,6 +746,12 @@ CStyleConfiguration *CDataSource::getStyle() {
         _currentStyle = _styles->get(j);
         break;
       }
+    }
+    // If not found, check for the style without rendermethod instead using startsWith.
+
+    auto it = std::find_if(_styles->begin(), _styles->end(), [styleName](CStyleConfiguration *a) { return a->styleCompositionName.startsWith(styleName); });
+    if (it != _styles->end()) {
+      _currentStyle = (*it);
     }
 
     if (_currentStyle->styleIndex == -1) {

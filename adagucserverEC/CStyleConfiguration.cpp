@@ -191,10 +191,22 @@ int CStyleConfiguration::makeStyleConfig(CDataSource *dataSource) {
   this->maxValue = 0.0f;
   this->minMaxSet = false;
   // this->renderMethod = RM_UNDEFINED;
-
-  if (this->styleIndex != -1) {
-    parseStyleInfo(this, dataSource, this->styleIndex, 0);
+  if (dataSource->cfg->Style.size() == 0) {
+    CDBError("Server configuration has no styles at all.");
+    return 1;
   }
+
+  if (this->styleIndex == -1) {
+
+    int styleIndex = dataSource->srvParams->getServerStyleIndexByName("auto");
+    if (styleIndex < 0) {
+      styleIndex = 0;
+    }
+    this->styleIndex = styleIndex;
+    CDBWarning("No styles configured, taking style [%s]", dataSource->cfg->Style[this->styleIndex]->attr.name.c_str());
+  }
+
+  parseStyleInfo(this, dataSource, this->styleIndex, 0);
 
   // Legend settings can always be overriden in the layer itself!
   CServerConfig::XMLE_Layer *layer = dataSource->cfgLayer;

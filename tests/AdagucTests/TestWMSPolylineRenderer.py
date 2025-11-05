@@ -47,7 +47,7 @@ class TestWMSPolylineRenderer(unittest.TestCase):
            "/data/config/adaguc.autoresource.xml"}
 
         filename="test_WMSPointRenderer_usgs_earthquakes_geojson_auto_nearest_GetMap.png"
-        status, data, headers = AdagucTestTools().runADAGUCServer("source=usgs_earthquakes.geojson&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=baselayer,mag&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=-21270915.530506067,-12592019.023145191,-1311264.2622161265,17664837.49309645&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&", env=env)
+        status, data, headers = AdagucTestTools().runADAGUCServer("source=usgs_earthquakes.geojson&SERVICE=WMS&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=baselayer,mag&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=-21270915.530506067,-12592019.023145191,-1311264.2622161265,17664837.49309645&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&", env=env,  showLog=True)
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
         self.assertEqual(data.getvalue(), AdagucTestTools(
@@ -94,6 +94,17 @@ class TestWMSPolylineRenderer(unittest.TestCase):
 
         filename="test_WMSPointRenderer_usgs_earthquakes_geojson_GetFeatureInfoJSON.json"
         status, data, headers = AdagucTestTools().runADAGUCServer("source=usgs_earthquakes.geojson&&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=mag&QUERY_LAYERS=mag&CRS=EPSG%3A3857&BBOX=-23104664.410278287,-14378748.700871969,-3145013.1419883464,15878107.815369671&WIDTH=849&HEIGHT=1287&I=460&J=438&FORMAT=image/gif&INFO_FORMAT=application/json&", env=env)
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools(
+        ).readfromfile(self.expectedoutputsspath + filename))
+
+    def test_WMSPointRenderer_usgs_earthquakes_geojson_GetFeatureInfoJSONOutsidePoint(self):
+        env = {'ADAGUC_CONFIG': ADAGUC_PATH +
+           "/data/config/adaguc.autoresource.xml"}
+
+        filename="test_WMSPointRenderer_usgs_earthquakes_geojson_GetFeatureInfoJSONOutsidePoint.json"
+        status, data, headers = AdagucTestTools().runADAGUCServer("source=usgs_earthquakes.geojson&&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=mag&QUERY_LAYERS=mag&CRS=EPSG%3A3857&BBOX=-15726290.605935914,1725196.0890940144,-10964171.442404782,6983730.098762937&WIDTH=825&HEIGHT=911&I=248&J=368&FORMAT=image/gif&INFO_FORMAT=application/json&STYLES=&", env=env)
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
         self.assertEqual(data.getvalue(), AdagucTestTools(
