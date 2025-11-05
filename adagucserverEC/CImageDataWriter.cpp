@@ -994,32 +994,35 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
                 hasData = true;
 
                 if (dataSource->getDataObject(o)->features.empty() == false) {
-                  // Find the clicked pixel. For geojson this is done by rendering the polygon on the grid with its index.
-                  // For points we will support finding the closest one in the list.
-                  CDBDebug("Do findClosestPoint");
-                  int closestIndex = findClosestPoint(dataSource->getDataObject(o)->points, getFeatureInfoResult->lon_coordinate, getFeatureInfoResult->lat_coordinate);
-                  if (closestIndex == -1) {
-                    closestIndex = pixel;
-                  } else {
-                    // Calculate distance in pixels
-                    double pointPX = dataSource->getDataObject(o)->points[closestIndex].lon, pointPY = dataSource->getDataObject(o)->points[closestIndex].lat;
-                    double gfiPX = getFeatureInfoResult->lon_coordinate, gfiPY = getFeatureInfoResult->lat_coordinate;
-                    CImageWarper warper;
-                    /* We can always use LATLONPROJECTION, because getFeatureInfoResult->lon_coordinate and getFeatureInfoResult->lat_coordinate are always converted to latlon in CImageDataWriter */
-                    int status = warper.initreproj(LATLONPROJECTION, srvParam->Geo, &srvParam->cfg->Projection);
-                    if (status != 0) {
-                      CDBError("Unable to initialize projection");
-                    }
-                    warper.reprojpoint_inv_topx(pointPX, pointPY, srvParam->Geo);
-                    warper.reprojpoint_inv_topx(gfiPX, gfiPY, srvParam->Geo);
-                    float pixelDistance = hypot(pointPX - gfiPX, pointPY - gfiPY);
-                    warper.closereproj();
+                  int closestIndex = pixel;
+                  if (pixel == dataSource->getDataObject(o)->dfNodataValue) {
+                    // Find the clicked pixel. For geojson this is done by rendering the polygon on the grid with its index.
+                    // For points we will support finding the closest one in the list.
+                    CDBDebug("Do findClosestPoint");
+                    closestIndex = findClosestPoint(dataSource->getDataObject(o)->points, getFeatureInfoResult->lon_coordinate, getFeatureInfoResult->lat_coordinate);
+                    if (closestIndex == -1) {
+                      closestIndex = pixel;
+                    } else {
+                      // Calculate distance in pixels
+                      double pointPX = dataSource->getDataObject(o)->points[closestIndex].lon, pointPY = dataSource->getDataObject(o)->points[closestIndex].lat;
+                      double gfiPX = getFeatureInfoResult->lon_coordinate, gfiPY = getFeatureInfoResult->lat_coordinate;
+                      CImageWarper warper;
+                      /* We can always use LATLONPROJECTION, because getFeatureInfoResult->lon_coordinate and getFeatureInfoResult->lat_coordinate are always converted to latlon in CImageDataWriter */
+                      int status = warper.initreproj(LATLONPROJECTION, srvParam->Geo, &srvParam->cfg->Projection);
+                      if (status != 0) {
+                        CDBError("Unable to initialize projection");
+                      }
+                      warper.reprojpoint_inv_topx(pointPX, pointPY, srvParam->Geo);
+                      warper.reprojpoint_inv_topx(gfiPX, gfiPY, srvParam->Geo);
+                      float pixelDistance = hypot(pointPX - gfiPX, pointPY - gfiPY);
+                      warper.closereproj();
 
-                    if (pixelDistance > 30) {
-                      hasData = false;
-                      element->value = "nodata";
-                      return 0;
-                    };
+                      if (pixelDistance > 30) {
+                        hasData = false;
+                        element->value = "nodata";
+                        return 0;
+                      };
+                    }
                   }
                   std::map<int, CFeature>::iterator featureIt = dataSource->getDataObject(o)->features.find(closestIndex);
                   if (featureIt != dataSource->getDataObject(o)->features.end()) {

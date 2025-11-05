@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+
+  <Style name="EHAM_Schiphol_onlyoutlines">
+    <Legend fixedclasses="true" tickround="1">bluewhitered</Legend>
+    <Point pointstyle="point" textcolor="#111111"/>
+    <Vector vectorstyle="barb" linecolor="#0000FF" />
+    <Scale>0</Scale>
+    <Offset>0</Offset>
+    <RenderMethod>nearest</RenderMethod>
+    <StandardNames standard_name="*"/>
+  </Style>
+
+  <Style name="EHAM_Schiphol_filled">
+    <Legend>bluewhitered</Legend>
+    <Min>0</Min>
+    <Max>10</Max>
+    <RenderMethod>nearest</RenderMethod>
+  </Style>
+  <Layer type="database" hidden="false">
+    <Name>EHAM_Schiphol_onlyoutlines</Name>
+    <Title>EHAM_Schiphol_onlyoutlines</Title>
+    <Variable>features</Variable>
+    <FilePath>{ADAGUC_PATH}/data/datasets/geojsons/EHAM_Schiphol.geojson</FilePath>
+    <Styles>EHAM_Schiphol_onlyoutlines,EHAM_Schiphol_filled</Styles>
+  </Layer>
+</Configuration>

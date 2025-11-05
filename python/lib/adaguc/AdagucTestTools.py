@@ -350,3 +350,9 @@ class AdagucTestTools:
                 % (testresultFileLocation, expectedOutputFileLocation))
 
         return result == expect
+    
+    def compareFile(self, testresultFileLocation,
+                                  expectedOutputFileLocation):
+        a = AdagucTestTools().readfromfile(testresultFileLocation)
+        b = AdagucTestTools().readfromfile(expectedOutputFileLocation)
+        return a == b
