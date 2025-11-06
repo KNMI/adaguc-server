@@ -61,36 +61,38 @@ void drawTextsForVector(CDrawImage *drawImage, CDataSource *dataSource, VectorSt
 std::vector<size_t> doThinningGetIndices(std::vector<PointDVWithLatLon> &p1, bool doThinning, double thinningRadius, std::set<std::string> usePoints, bool useFilter = false) {
 
   size_t numberOfPoints = p1.size();
-  std::vector<size_t> filteredPointIndices;
+
   // Filter the points
   if (useFilter) {
+    std::vector<size_t> filteredPointIndices;
     for (size_t pointIndex = 0; pointIndex < numberOfPoints; pointIndex++) {
       if (p1[pointIndex].paramList.size() > 0 && usePoints.find(p1[pointIndex].paramList[0].value.c_str()) != usePoints.end()) {
         filteredPointIndices.push_back(pointIndex);
       }
     }
-  } else {
-    // Use all indices instead
-    for (size_t pointIndex = 0; pointIndex < numberOfPoints; pointIndex++) {
-      filteredPointIndices.push_back(pointIndex);
-    }
+    // Don't do extra thinning when use is set.
+    return filteredPointIndices;
   }
 
-  std::vector<size_t> thinnedPointIndexList;
+  std::vector<size_t> filteredPointIndices;
+  for (size_t pointIndex = 0; pointIndex < numberOfPoints; pointIndex++) {
+    filteredPointIndices.push_back(pointIndex);
+  }
+  if (!doThinning) {
+    // Use all indices instead
+    return filteredPointIndices;
+  }
 
-  // Check for thinning as well.
-  if (doThinning) {
-    thinnedPointIndexList.push_back(0); // Always put in first element
-    for (size_t pointIndex = 1; pointIndex < filteredPointIndices.size(); pointIndex++) {
-      size_t thinnedPointNr = 0;
-      for (thinnedPointNr = 0; thinnedPointNr < thinnedPointIndexList.size(); thinnedPointNr++) {
-        auto thinnedPointIndex = thinnedPointIndexList[thinnedPointNr];
-        if (hypot(p1[thinnedPointIndex].x - p1[pointIndex].x, p1[thinnedPointIndex].y - p1[pointIndex].y) < thinningRadius) break;
-      }
-      if (thinnedPointNr == thinnedPointIndexList.size()) thinnedPointIndexList.push_back(pointIndex);
+  // Check for thinning
+  std::vector<size_t> thinnedPointIndexList;
+  thinnedPointIndexList.push_back(0); // Always put in first element
+  for (size_t pointIndex = 1; pointIndex < filteredPointIndices.size(); pointIndex++) {
+    size_t thinnedPointNr = 0;
+    for (thinnedPointNr = 0; thinnedPointNr < thinnedPointIndexList.size(); thinnedPointNr++) {
+      auto thinnedPointIndex = thinnedPointIndexList[thinnedPointNr];
+      if (hypot(p1[thinnedPointIndex].x - p1[pointIndex].x, p1[thinnedPointIndex].y - p1[pointIndex].y) < thinningRadius) break;
     }
-  } else {
-    thinnedPointIndexList = filteredPointIndices;
+    if (thinnedPointNr == thinnedPointIndexList.size()) thinnedPointIndexList.push_back(pointIndex);
   }
   return thinnedPointIndexList;
 }
@@ -133,14 +135,9 @@ void renderVectorPoints(std::vector<size_t> thinnedPointIndexList, CImageWarper 
   // Make a list of vector style objects based on the configuration.
   std::vector<VectorStyle> vectorStyles;
   for (auto cfgVectorStyle : s->Vector) {
-    vectorStyles.push_back(getVectorStyle(cfgVectorStyle));
+    vectorStyles.push_back(getVectorStyle(cfgVectorStyle, dataSource->srvParams->cfg));
   }
 
-  int vectorDiscRadius = 12;
-
-  auto drawPointFillColor = CColor(0, 0, 0, 128);
-  auto drawPointLineColor = CColor(0, 0, 0, 255);
-  auto drawPointFontFile = dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.location.c_str();
   for (auto pointIndex : thinnedPointIndexList) {
     auto pointStrength = &(*p1)[pointIndex];
     auto pointDirection = &(*p2)[pointIndex];
@@ -168,8 +165,8 @@ void renderVectorPoints(std::vector<size_t> thinnedPointIndexList, CImageWarper 
         int x = pointStrength->x;
         int y = dataSource->srvParams->Geo->dHeight - pointStrength->y;
         textValue.print(vectorStyle.drawVectorTextFormat.c_str(), strength);
-        drawImage->setTextDisc(x, y, vectorDiscRadius, textValue.c_str(), drawPointFontFile, vectorStyle.fontSize, vectorStyle.textColor, drawPointFillColor, drawPointLineColor);
-        drawImage->drawVector2(x, y, ((90 + direction) / 360.) * M_PI * 2, 10, vectorDiscRadius, drawPointFillColor, vectorStyle.lineWidth);
+        drawImage->setTextDisc(x, y, vectorStyle.discRadius, textValue.c_str(), vectorStyle.fontFile, vectorStyle.fontSize, vectorStyle.textColor, vectorStyle.fillColor, vectorStyle.lineColor);
+        drawImage->drawVector2(x, y, ((90 + direction) / 360.) * M_PI * 2, 10, vectorStyle.discRadius, vectorStyle.fillColor, vectorStyle.lineWidth);
       }
 
       drawTextsForVector(drawImage, dataSource, vectorStyle, pointStrength, pointDirection);

@@ -1,0 +1,418 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  
+  <Style name="observation.pressure" title="Pressure" abstract="Pressure">
+    <Legend fixed="true" tickinterval="4">wow.pressure</Legend>
+    <RenderMethod>point</RenderMethod>
+    <Min>960</Min>
+    <Max>1040</Max>
+    <Point plotstationid="false" pointstyle="point" discradius="20" textradius="0" dot="false" fontsize="8" textcolor="#000000" textformat="%0.1f"/>
+  </Style>
+  
+  <Style name="observation.temperature"   title="Temperature" abstract="Temperature">
+    <Legend fixed="true" tickinterval="2">wow.temperature</Legend>
+    <RenderMethod>point</RenderMethod>
+    <Min>-14</Min>
+    <Max>39,33333333</Max> <!-- 39,33333333 = (240 / (234/(38 - -14))) - 14 -->
+    <Point plotstationid="false" pointstyle="point" discradius="15" textradius="0" dot="false" fontsize="8" textcolor="#000000" />
+  </Style>
+  
+  <Style name="observation.heightft" title="Height in feet" abstract="With discrete colors">
+    <Legend fixed="true" tickinterval="2500" tickround="1">height</Legend>
+    <RenderMethod>point</RenderMethod>
+    <Min>0</Min>
+    <Max>10000</Max>
+    <Point plotstationid="false" pointstyle="point" discradius="10" textradius="17"  dot="true" fontsize="8"  textcolor="#000000" textformat="%0.0f"/>
+  </Style>
+  
+  <Style name="observation.radiation" title="Height in feet" abstract="With discrete colors">
+    <Legend fixed="true" tickinterval="100" tickround="1">wow.temperature</Legend>
+    <RenderMethod>point</RenderMethod>
+    <Min>0</Min>
+    <Max>1333.333</Max> <!-- (240 / ( (240 / (216/(1200 - 0)))  -->
+    <Point plotstationid="false" pointstyle="point" discradius="10" textradius="17"  dot="true" fontsize="8"  textcolor="#000000" textformat="%0.1f"/>
+  </Style>
+  
+  <Style name="observation.precipitation" title="Precipitation" abstract="Precipitation">
+    <Legend fixed="true" tickinterval="2">wow.precipitation</Legend>
+    <RenderMethod>point</RenderMethod>
+    <Min>0</Min>
+    <Max>30</Max>
+    <Point plotstationid="false" pointstyle="point" discradius="15" textradius="0" dot="false" fontsize="8" textcolor="#000000" />
+  </Style>
+  
+   <Style name="observation.percentage"  title="Percentage" abstract="Percentage">
+    <Legend fixed="true" tickinterval="10">temperature</Legend>
+    <RenderMethod>point</RenderMethod>
+    <Min>0</Min>
+    <Max>100</Max> <!-- 39,33333333 = (240 / (234/(38 - -14))) - 14 -->
+    <Point plotstationid="false" pointstyle="point" discradius="15" textradius="0" dot="false" fontsize="8" textcolor="#FFFFFF" />
+  </Style>
+  
+   <Style name="observation.okta">
+      <Legend fixed="true">bluewhitered</Legend>
+      <RenderMethod>point</RenderMethod>
+      <Point pointstyle="symbol" fillcolor="#000000FF" textcolor="#FFFFFFFF" linecolor="#000000A0" discradius="16" 
+             dot="false" anglestart="0" anglestep="120" fontsize="12" textformat="%0.1f"/>
+      <SymbolInterval min="0" max="1" file="{ADAGUC_DATASET_DIR}/resources/symbols/okta/32px-Cloud_cover_0.svg.png"/>
+      <SymbolInterval min="1" max="2" file="{ADAGUC_DATASET_DIR}/resources/symbols/okta/32px-Cloud_cover_1.svg.png"/>
+      <SymbolInterval min="2" max="3" file="{ADAGUC_DATASET_DIR}/resources/symbols/okta/32px-Cloud_cover_2.svg.png"/>
+      <SymbolInterval min="3" max="4" file="{ADAGUC_DATASET_DIR}/resources/symbols/okta/32px-Cloud_cover_3.svg.png"/>
+      <SymbolInterval min="4" max="5" file="{ADAGUC_DATASET_DIR}/resources/symbols/okta/32px-Cloud_cover_4.svg.png"/>
+      <SymbolInterval min="5" max="6" file="{ADAGUC_DATASET_DIR}/resources/symbols/okta/32px-Cloud_cover_5.svg.png"/>
+      <SymbolInterval min="6" max="7" file="{ADAGUC_DATASET_DIR}/resources/symbols/okta/32px-Cloud_cover_6.svg.png"/>
+      <SymbolInterval min="7" max="8" file="{ADAGUC_DATASET_DIR}/resources/symbols/okta/32px-Cloud_cover_7.svg.png"/>
+      <SymbolInterval min="8" max="9" file="{ADAGUC_DATASET_DIR}/resources/symbols/okta/32px-Cloud_cover_8.svg.png"/>
+      <SymbolInterval min="9" max="10" file="{ADAGUC_DATASET_DIR}/resources/symbols/okta/32px-Cloud_cover_9.svg.png"/>
+      <LegendGraphic value="{ADAGUC_DATASET_DIR}/resources/symbols/okta/220px-Cloud_Cover_in_Oktas.svg.png"/>
+    </Style>
+  
+  
+  <Style name="barb" title="Wind barbs with stations id" abstract="Wind barbs with stations id">
+    <Legend fixed="true" tickinterval="1" textformatting="%0.1f">bluewhitered</Legend>
+    <Min>0</Min>
+    <Max>16</Max>
+    <RenderMethod>point</RenderMethod>
+    <Vector vectorstyle="barb" linewidth="2" linecolor="#0000FFFF" plotstationid="true" />
+    <FilterPoints skip="" use="06235,06280,06260,06290,06310,06380"/>
+  </Style>
+
+  <Style name="barbthinned" title="Wind barbs thinned" abstract="Wind barbs thinned">
+    <Legend fixed="true" tickinterval="1" textformatting="%0.1f">bluewhitered</Legend>
+    <Min>0</Min>
+    <Max>16</Max>
+    <Thinning radius="40"/>
+    <RenderMethod>point</RenderMethod>
+    <Vector vectorstyle="barb" linewidth="2" linecolor="#0000FFFF" plotstationid="false" plotvalue="true" textformat="%0.0f"/>
+  </Style>
+  
+  <Style name="barball" title="Wind barbs" abstract="Wind barbs unthinned">
+    <Legend fixed="true" tickinterval="1" textformatting="%0.1f">bluewhitered</Legend>
+    <Min>0</Min>
+    <Max>16</Max>
+    <RenderMethod>point</RenderMethod>
+    <Vector vectorstyle="barb" linewidth="2" linecolor="#0000FFFF" plotstationid="false" plotvalue="true" textformat="%0.0f"/>
+  </Style>
+ 
+  <Style name="barbdisc" title="Wind discs" abstract="Wind vectors plotted as discs unthinned">
+    <Legend fixed="true" tickinterval="1" textformatting="%0.1f">bluewhitered</Legend>
+    <Min>0</Min>
+    <Max>16</Max>
+    <RenderMethod>point</RenderMethod>
+    <Vector vectorstyle="disc" discradius="20" linewidth="1.0" linecolor="#00000060"  fillcolor="#00000060"  textcolor="#FFFFFFFF"  fontsize="10" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" />
+  </Style>
+  
+  <Style name="bftdisc">
+    <Legend fixed="true">bluewhitered</Legend>
+    <Min>0</Min>
+    <Max>30</Max>
+    <Thinning radius="40"/>
+    <RenderMethod>barb</RenderMethod>
+    <Vector vectorstyle="disc" textformat="%0.0f" discradius="20" linewidth="1.0" linecolor="#00000060"  fillcolor="#00000060"  textcolor="#FFFFFFFF"  fontsize="10" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" />
+    <FilterPoints skip="" use="06235,06280,06260,06290,06310,06380"/>
+  </Style>
+    
+  <Style name="bftalldisc">
+    <Legend fixed="true">bluewhitered</Legend>
+    <Min>0</Min>
+    <Max>10000</Max>
+    <RenderMethod>point</RenderMethod>
+    <Vector vectorstyle="disc" textformat="%0.0f" discradius="20" linewidth="1.0" linecolor="#00000060"  fillcolor="#00000060"  textcolor="#FFFFFFFF"  fontsize="10" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" />
+  </Style>
+  
+  <Style name="barbvector">
+    <Legend fixed="true">bluewhitered</Legend>
+    <Min>0</Min>
+    <Max>10000</Max>
+    <Thinning radius="40"/>
+    <RenderMethod>point</RenderMethod>
+    <Vector vectorstyle="vector" linewidth="2" linecolor="#0000FFFF" scale="5" plotstationid="true"/>
+    <FilterPoints skip="" use="06235,06280,06260,06290,06310,06380"/>
+  </Style>
+  
+  <Style name="barballvector">
+    <Legend fixed="true">bluewhitered</Legend>
+    <Min>0</Min>
+    <Max>10000</Max>
+    <Thinning radius="40"/>
+    <RenderMethod>point</RenderMethod>
+    <Vector vectorstyle="vector" linewidth="2" linecolor="#0000FFFF" scale="5" plotstationid="true"/>
+  </Style>
+
+  <!-- This one is used for the animated gif on the KNMI website -->
+  <Style name="temperaturedisc">
+    <Legend fixed="true" tickinterval="5" textformatting="%0.1f">bluewhitered</Legend>
+    <Min>-20</Min>
+    <Max>30</Max>
+    <RenderMethod>point</RenderMethod>
+    <Point pointstyle="disc" fillcolor="#00000060" textcolor="#FFFFFFFF" linecolor="#000000A0" discradius="18" dot="false" anglestart="0" anglestep="120" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="10" textformat="%0.1f"/>
+    <FilterPoints skip="" use="06235,06280,06260,06290,06310,06380"/>
+  </Style>
+  
+  <Style name="temperaturealldisc">
+    <Legend fixed="true">bluewhitered</Legend>
+    <Min>-10</Min>
+    <Max>30</Max>
+    <Thinning radius="40"/>
+    <RenderMethod>point</RenderMethod>
+    <Point pointstyle="disc" fillcolor="#00000060" textcolor="#FFFFFFFF" linecolor="#000000A0" discradius="18" dot="false" anglestart="0" anglestep="120" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="10" textformat="%0.1f"/>
+  </Style>
+  
+  <Style name="temperatureallpoint">
+    <Legend fixed="true">bluewhitered</Legend>
+    <Min>-10</Min>
+    <Max>30</Max>
+    <Thinning radius="40"/>
+    <RenderMethod>point</RenderMethod>
+    <Point pointstyle="point" fillcolor="#800000FF" textcolor="#000000FF" linecolor="#000000FF" discradius="8" textradius="14" dot="true" anglestart="0" anglestep="120" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="8" textformat="%0.1f" plotstationid="false"/>
+  </Style>
+  
+  <Style name="t2mtd2m">
+    <Legend fixed="true">bluewhitered</Legend>
+    <Min>-10</Min>
+    <Max>30</Max>
+    <Thinning radius="60"/>
+    <RenderMethod>point</RenderMethod>
+    <Point pointstyle="point" fillcolor="#80000000" textcolor="#000000FF" linecolor="#000000FF" discradius="8" textradius="6" dot="true" anglestart="0" anglestep="180" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="8" textformat="%0.1f" plotstationid="false"/>
+  </Style>
+  
+  <Style name="temperaturepoint">
+    <Legend fixed="true">bluewhitered</Legend>
+    <Min>-10</Min>
+    <Max>30</Max>
+    <RenderMethod>point</RenderMethod>
+    <Point pointstyle="disc" fillcolor="#800000FF" textcolor="#FFFFFFFF" linecolor="#000000FF" discradius="18" textradius="14" dot="false" anglestart="0" anglestep="120" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="8" textformat="%0.1f" plotstationid="true"/>
+    <FilterPoints skip="" use="06235,06280,06260,06290,06310,06380"/>
+  </Style>
+  
+  <Style name="cloudlayer">
+    <Legend fixed="true">bluewhitered</Legend>
+    <Thinning radius="40"/>
+    <RenderMethod>point</RenderMethod>
+    <Point pointstyle="point" fillcolor="#80000000" textcolor="#000000FF" linecolor="#000000FF" discradius="8" textradius="6" dot="true" anglestart="0" anglestep="180" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="8" textformat="%0.0f" plotstationid="false"/>
+  </Style>
+
+  <Style name="temperaturelabel">
+    <Legend fixed="true">bluewhitered</Legend>
+    <Min>-10</Min>
+    <Max>30</Max>
+    <Thinning radius="40"/>
+    <RenderMethod>point</RenderMethod>
+    <Point pointstyle="point" fillcolor="#800000FF" textcolor="#000000FF" linecolor="#000000FF" discradius="0" dot="true" anglestart="0" anglestep="120" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="8" textformat="%0.1f" plotstationid="true"/>
+    <FilterPoints skip="" use="06235,06280,06260,06290,06310,06380"/>
+  </Style>
+  
+  <Style name="temperaturealllabel">
+    <Legend fixed="true">bluewhitered</Legend>
+    <Min>-10</Min>
+    <Max>30</Max>
+    <RenderMethod>point</RenderMethod>
+    <Point pointstyle="point" fillcolor="#800000FF" textcolor="#000000FF" linecolor="#000000FF" discradius="0" dot="true" anglestart="0" anglestep="120" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="8" textformat="%0.1f" plotstationid="true"/>
+  </Style>
+  
+  <Style name="temperaturevolume">
+    <Legend fixed="true">bluewhitered</Legend>
+    <Min>-10</Min>
+    <Max>30</Max>
+    <Thinning radius="40"/>
+    <RenderMethod>point</RenderMethod>
+    <Point fillcolor="#0000ffff" textcolor="#000000FF" linecolor="#000000a0" pointstyle="volume" discradius="20" dot="true" textradius="20" anglestart="0" anglestep="120" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="8" textformat="%0.1f" plotstationid="true"/>
+    <FilterPoints skip="" use="06235,06280,06260,06290,06310,06380"/>
+  </Style>
+  
+  <Style name="temperatureallvolume">
+    <Legend fixed="true">bluewhitered</Legend>
+    <Min>-10</Min>
+    <Max>30</Max>
+    <RenderMethod>point</RenderMethod>
+    <Point fillcolor="#000000a0" textcolor="#FFFFFFFF" linecolor="#000000a0" pointstyle="volume" discradius="20" dot="true" anglestart="0" anglestep="120" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="8" textformat="%0.1f"/>
+  </Style>
+
+  <Style name="singlevalue">
+    <Legend fixed="true">bluewhitered</Legend>
+    <Min>-10</Min>
+    <Max>30</Max>
+    <RenderMethod>point</RenderMethod>
+    <Point pointstyle="point" fillcolor="#80000000" textcolor="#000000FF" linecolor="#000000FF" discradius="0" dot="false" anglestart="0" anglestep="0" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="8" textformat="%0.0f" plotstationid="false"/>
+  </Style>
+
+  <Style name="wwcode_transparent" title="Weather code transparent">
+    <Legend fixed="true">bluewhitered</Legend>
+    <RenderMethod>point</RenderMethod>
+    <Point pointstyle="symbol" fillcolor="#000000FF" textcolor="#FFFFFFFF" linecolor="#000000A0" discradius="16" 
+            dot="false" anglestart="0" anglestep="120" fontsize="12" textformat="%0.1f"/>
+    <SymbolInterval min="0" max="1" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W00.png"/>
+    <SymbolInterval min="1" max="2" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W01.png"/>
+    <SymbolInterval min="2" max="3" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W02.png"/>
+    <SymbolInterval min="3" max="4" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W03.png"/>
+    <SymbolInterval min="4" max="5" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W04heiig.png"/>
+    <SymbolInterval min="5" max="6" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W05heiig.png"/>
+    <SymbolInterval min="10" max="11" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W10nevel.png"/>
+    <SymbolInterval min="11" max="12" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W11ijsnaaldjes.png"/>
+    <SymbolInterval min="12" max="13" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W12weerlicht.png"/>
+    <SymbolInterval min="18" max="19" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W18Squall.png"/>
+    <SymbolInterval min="20" max="21" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W20mist.png"/>
+    <SymbolInterval min="21" max="22" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W21neerslag.png"/>
+    <SymbolInterval min="22" max="23" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W22motregen.png"/>
+    <SymbolInterval min="23" max="24" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W23Regen.png"/>
+    <SymbolInterval min="24" max="25" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W24sneeuw.png"/>
+    <SymbolInterval min="25" max="26" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W25onderkoeld.png"/>
+    <SymbolInterval min="26" max="27" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W26onweer.png"/>
+    <SymbolInterval min="27" max="28" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W27driftsneeuw.png"/>
+    <SymbolInterval min="28" max="29" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W28driftsneeuw.png"/>
+    <SymbolInterval min="29" max="30" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W29driftsneeuw.png"/>
+    <SymbolInterval min="30" max="31" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W30mist.png"/>
+    <SymbolInterval min="31" max="32" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W31mist.png"/>
+    <SymbolInterval min="32" max="33" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W32mist.png"/>
+    <SymbolInterval min="33" max="34" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W33mist.png"/>
+    <SymbolInterval min="34" max="35" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W34mist.png"/>
+    <SymbolInterval min="35" max="36" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W35mist.png"/>
+    <SymbolInterval min="40" max="41" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W40neerslag.png"/>
+    <SymbolInterval min="41" max="42" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W41neerslag.png"/>
+    <SymbolInterval min="42" max="43" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W42neerslag.png"/>
+    <SymbolInterval min="43" max="44" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W43neerslag.png"/>
+    <SymbolInterval min="44" max="45" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W44neerslag.png"/>
+    <SymbolInterval min="45" max="46" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W45neerslag.png"/>
+    <SymbolInterval min="46" max="47" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W46neerslag.png"/>
+    <SymbolInterval min="47" max="48" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W47onderkoeld.png"/>
+    <SymbolInterval min="48" max="49" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W48onderkoeld.png"/>
+    <SymbolInterval min="50" max="51" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W50motregen.png"/>
+    <SymbolInterval min="51" max="52" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W51motregen.png"/>
+    <SymbolInterval min="52" max="53" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W52motregen.png"/>
+    <SymbolInterval min="53" max="54" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W53motregen.png"/>
+    <SymbolInterval min="54" max="55" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W54motregen.png"/>
+    <SymbolInterval min="55" max="56" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W55motregen.png"/>
+    <SymbolInterval min="56" max="57" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W56motregen.png"/>
+    <SymbolInterval min="57" max="58" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W57MotregenRegen.png"/>
+    <SymbolInterval min="58" max="59" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W58MotregenRegen.png"/>
+    <SymbolInterval min="60" max="61" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W60regen.png"/>
+    <SymbolInterval min="61" max="62" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W61regen.png"/>
+    <SymbolInterval min="62" max="63" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W62regen.png"/>
+    <SymbolInterval min="63" max="64" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W63regen.png"/>
+    <SymbolInterval min="64" max="65" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W64regen.png"/>
+    <SymbolInterval min="65" max="66" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W65regen.png"/>
+    <SymbolInterval min="66" max="67" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W66regen.png"/>
+    <SymbolInterval min="67" max="68" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W67regen.png"/>
+    <SymbolInterval min="68" max="69" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W68regen.png"/>
+    <SymbolInterval min="70" max="71" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W70sneeuw.png"/>
+    <SymbolInterval min="71" max="72" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W71sneeuw.png"/>
+    <SymbolInterval min="72" max="73" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W72sneeuw.png"/>
+    <SymbolInterval min="73" max="74" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W73sneeuw.png"/>
+    <SymbolInterval min="74" max="75" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W74sneeuw.png"/>
+    <SymbolInterval min="75" max="76" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W75sneeuw.png"/>
+    <SymbolInterval min="76" max="77" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W76ijsregen.png"/>
+    <SymbolInterval min="77" max="78" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W77motsneeuw.png"/>
+    <SymbolInterval min="78" max="79" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W78IC.png"/>
+    <SymbolInterval min="78" max="79" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W78ijskristallen.png"/>
+    <SymbolInterval min="80" max="81" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W80buien.png"/>
+    <SymbolInterval min="81" max="82" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W81buien.png"/>
+    <SymbolInterval min="82" max="83" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W82buien.png"/>
+    <SymbolInterval min="83" max="84" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W83buien.png"/>
+    <SymbolInterval min="84" max="85" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W84buien.png"/>
+    <SymbolInterval min="85" max="86" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W85buien.png"/>
+    <SymbolInterval min="86" max="87" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W86sneeuwbui.png"/>
+    <SymbolInterval min="87" max="88" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W87sneeuwbui.png"/>
+    <SymbolInterval min="89" max="90" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W89hagel.png"/>
+    <SymbolInterval min="90" max="91" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W90onweer.png"/>
+    <SymbolInterval min="91" max="92" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W91onweer.png"/>
+    <SymbolInterval min="92" max="93" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W92onweer.png"/>
+    <SymbolInterval min="93" max="94" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W93onweer.png"/>
+    <SymbolInterval min="94" max="95" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W94onweer.png"/>
+    <SymbolInterval min="95" max="96" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W95onweer.png"/>
+    <SymbolInterval min="96" max="97" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W96onweer.png"/>
+    <SymbolInterval min="99" max="100" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W99tornado.png"/>
+    <LegendGraphic value="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/legend.png"/>
+  </Style>
+
+  <Style name="wwcode" title="Weather code">
+    <Legend fixed="true">bluewhitered</Legend>
+    <RenderMethod>point</RenderMethod>
+
+    <Point pointstyle="symbol" fillcolor="#000000FF" textcolor="#FFFFFFFF" linecolor="#000000A0" discradius="16" 
+            dot="false" anglestart="0" anglestep="120" fontsize="12" textformat="%0.1f"/>
+    <SymbolInterval min="0" max="1" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W00.png"/>
+    <SymbolInterval min="1" max="2" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W01.png"/>
+    <SymbolInterval min="2" max="3" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W02.png"/>
+    <SymbolInterval min="3" max="4" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W03.png"/>
+    <SymbolInterval min="4" max="5" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W04heiig.png"/>
+    <SymbolInterval min="5" max="6" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W05heiig.png"/>
+    <SymbolInterval min="10" max="11" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W10nevel.png"/>
+    <SymbolInterval min="11" max="12" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W11ijsnaaldjes.png"/>
+    <SymbolInterval min="12" max="13" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W12weerlicht.png"/>
+    <SymbolInterval min="18" max="19" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W18Squall.png"/>
+    <SymbolInterval min="20" max="21" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W20mist.png"/>
+    <SymbolInterval min="21" max="22" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W21neerslag.png"/>
+    <SymbolInterval min="22" max="23" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W22motregen.png"/>
+    <SymbolInterval min="23" max="24" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W23Regen.png"/>
+    <SymbolInterval min="24" max="25" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W24sneeuw.png"/>
+    <SymbolInterval min="25" max="26" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W25onderkoeld.png"/>
+    <SymbolInterval min="26" max="27" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W26onweer.png"/>
+    <SymbolInterval min="27" max="28" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W27driftsneeuw.png"/>
+    <SymbolInterval min="28" max="29" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W28driftsneeuw.png"/>
+    <SymbolInterval min="29" max="30" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W29driftsneeuw.png"/>
+    <SymbolInterval min="30" max="31" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W30mist.png"/>
+    <SymbolInterval min="31" max="32" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W31mist.png"/>
+    <SymbolInterval min="32" max="33" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W32mist.png"/>
+    <SymbolInterval min="33" max="34" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W33mist.png"/>
+    <SymbolInterval min="34" max="35" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W34mist.png"/>
+    <SymbolInterval min="35" max="36" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W35mist.png"/>
+    <SymbolInterval min="40" max="41" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W40neerslag.png"/>
+    <SymbolInterval min="41" max="42" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W41neerslag.png"/>
+    <SymbolInterval min="42" max="43" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W42neerslag.png"/>
+    <SymbolInterval min="43" max="44" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W43neerslag.png"/>
+    <SymbolInterval min="44" max="45" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W44neerslag.png"/>
+    <SymbolInterval min="45" max="46" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W45neerslag.png"/>
+    <SymbolInterval min="46" max="47" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W46neerslag.png"/>
+    <SymbolInterval min="47" max="48" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W47onderkoeld.png"/>
+    <SymbolInterval min="48" max="49" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W48onderkoeld.png"/>
+    <SymbolInterval min="50" max="51" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W50motregen.png"/>
+    <SymbolInterval min="51" max="52" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W51motregen.png"/>
+    <SymbolInterval min="52" max="53" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W52motregen.png"/>
+    <SymbolInterval min="53" max="54" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W53motregen.png"/>
+    <SymbolInterval min="54" max="55" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W54motregen.png"/>
+    <SymbolInterval min="55" max="56" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W55motregen.png"/>
+    <SymbolInterval min="56" max="57" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W56motregen.png"/>
+    <SymbolInterval min="57" max="58" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W57MotregenRegen.png"/>
+    <SymbolInterval min="58" max="59" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W58MotregenRegen.png"/>
+    <SymbolInterval min="60" max="61" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W60regen.png"/>
+    <SymbolInterval min="61" max="62" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W61regen.png"/>
+    <SymbolInterval min="62" max="63" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W62regen.png"/>
+    <SymbolInterval min="63" max="64" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W63regen.png"/>
+    <SymbolInterval min="64" max="65" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W64regen.png"/>
+    <SymbolInterval min="65" max="66" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W65regen.png"/>
+    <SymbolInterval min="66" max="67" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W66regen.png"/>
+    <SymbolInterval min="67" max="68" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W67regen.png"/>
+    <SymbolInterval min="68" max="69" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W68regen.png"/>
+    <SymbolInterval min="70" max="71" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W70sneeuw.png"/>
+    <SymbolInterval min="71" max="72" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W71sneeuw.png"/>
+    <SymbolInterval min="72" max="73" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W72sneeuw.png"/>
+    <SymbolInterval min="73" max="74" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W73sneeuw.png"/>
+    <SymbolInterval min="74" max="75" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W74sneeuw.png"/>
+    <SymbolInterval min="75" max="76" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W75sneeuw.png"/>
+    <SymbolInterval min="76" max="77" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W76ijsregen.png"/>
+    <SymbolInterval min="77" max="78" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W77motsneeuw.png"/>
+    <SymbolInterval min="78" max="79" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W78IC.png"/>
+    <SymbolInterval min="78" max="79" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W78ijskristallen.png"/>
+    <SymbolInterval min="80" max="81" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W80buien.png"/>
+    <SymbolInterval min="81" max="82" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W81buien.png"/>
+    <SymbolInterval min="82" max="83" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W82buien.png"/>
+    <SymbolInterval min="83" max="84" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W83buien.png"/>
+    <SymbolInterval min="84" max="85" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W84buien.png"/>
+    <SymbolInterval min="85" max="86" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W85buien.png"/>
+    <SymbolInterval min="86" max="87" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W86sneeuwbui.png"/>
+    <SymbolInterval min="87" max="88" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W87sneeuwbui.png"/>
+    <SymbolInterval min="89" max="90" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W89hagel.png"/>
+    <SymbolInterval min="90" max="91" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W90onweer.png"/>
+    <SymbolInterval min="91" max="92" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W91onweer.png"/>
+    <SymbolInterval min="92" max="93" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W92onweer.png"/>
+    <SymbolInterval min="93" max="94" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W93onweer.png"/>
+    <SymbolInterval min="94" max="95" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W94onweer.png"/>
+    <SymbolInterval min="95" max="96" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W95onweer.png"/>
+    <SymbolInterval min="96" max="97" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W96onweer.png"/>
+    <SymbolInterval min="99" max="100" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W99tornado.png"/>
+    <LegendGraphic value="{ADAGUC_DATASET_DIR}/resources/symbols/WW/legend.png"/>
+  </Style>
+
+  </Configuration>
+  
+  

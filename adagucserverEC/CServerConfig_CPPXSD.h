@@ -190,14 +190,15 @@ public:
       attr.outlinewidth = 4.5;
       attr.linewidth = 1.0;
       attr.fontSize = 12;
+      attr.discradius = 20;
       attr.min = -DBL_MAX;
       attr.max = DBL_MAX;
     }
     class Cattr {
     public:
-      CT::string linecolor, plotstationid, vectorstyle, textformat, plotvalue, outlinecolor, textcolor;
+      CT::string linecolor, plotstationid, vectorstyle, textformat, plotvalue, outlinecolor, textcolor, fillcolor, fontfile;
       float scale;
-      double min, max, outlinewidth, fontSize, linewidth;
+      double min, max, outlinewidth, fontSize, linewidth, discradius;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
       if (equals("linecolor", attrname)) {
@@ -208,6 +209,9 @@ public:
         return;
       } else if (equals("scale", attrname)) {
         attr.scale = parseFloat(attrvalue);
+        return;
+      } else if (equals("discradius", attrname)) {
+        attr.discradius = parseDouble(attrvalue);
         return;
       } else if (equals("vectorstyle", attrname)) {
         attr.vectorstyle.copy(attrvalue);
@@ -220,6 +224,9 @@ public:
         return;
       } else if (equals("plotvalue", attrname)) {
         attr.plotvalue.copy(attrvalue);
+        return;
+      } else if (equals("fontfile", attrname)) {
+        attr.fontfile.copy(attrvalue);
         return;
       } else if (equals("min", attrname)) {
         attr.min = parseDouble(attrvalue);
@@ -238,6 +245,9 @@ public:
         return;
       } else if (equals("textcolor", attrname)) {
         attr.textcolor.copy(attrvalue);
+        return;
+      } else if (equals("fillcolor", attrname)) {
+        attr.fillcolor.copy(attrvalue);
         return;
       }
     }

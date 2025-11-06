@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <Settings enable_edr="false"  cache_age_volatileresources="60" cache_age_cacheableresources="7200"/>
+
+  <Include location="{ADAGUC_DATASET_DIR}/includes/geoweb-legends.include.xml"/>
+  <Include location="{ADAGUC_DATASET_DIR}/includes/observation-styles.include.xml"/>
+
+  <Layer type="database" hidden="false">
+    <Group value="10M"/>
+    <Variable>hc</Variable>
+    <FilePath filter="^kmds_alle_stations_10001_.*\.nc$">{ADAGUC_PATH}/data/datasets/kmds/</FilePath>
+    <Dimension name="time" interval="PT10M">time</Dimension>
+    <Styles>observation.heightft</Styles>
+  </Layer>
+
+
+  <Layer type="database" hidden="false">
+    <Group value="10M"/>
+    <Variable>nc</Variable>
+    <FilePath filter="^kmds_alle_stations_10001_.*\.nc$">{ADAGUC_PATH}/data/datasets/kmds/</FilePath>
+    <Dimension name="time" interval="PT10M">time</Dimension>
+    <Styles>observation.okta</Styles>
+  </Layer>
+
+
+  <Layer type="database" hidden="false">
+    <Group value="10M"/>
+    <Variable>pg</Variable>
+    <FilePath filter="^kmds_alle_stations_10001_.*\.nc$">{ADAGUC_PATH}/data/datasets/kmds/</FilePath>
+    <Dimension name="time" interval="PT10M">time</Dimension>
+    <Styles>observation.precipitation</Styles>
+  </Layer>
+
+
+  <Layer type="database" hidden="false">
+    <Group value="10M"/>
+    <Variable>pp</Variable>
+    <FilePath filter="^kmds_alle_stations_10001_.*\.nc$">{ADAGUC_PATH}/data/datasets/kmds/</FilePath>
+    <Dimension name="time" interval="PT10M">time</Dimension>
+    <Styles>observation.pressure</Styles>
+  </Layer>
+
+
+  <Layer type="database" hidden="false">
+    <Group value="10M"/>
+    <Variable>qg</Variable>
+    <FilePath filter="^kmds_alle_stations_10001_.*\.nc$">{ADAGUC_PATH}/data/datasets/kmds/</FilePath>
+    <Dimension name="time" interval="PT10M">time</Dimension>
+    <Styles>observation.radiation</Styles>
+  </Layer>
+
+
+  <Layer type="database" hidden="false">
+    <Group value="10M"/>
+    <Variable>rg</Variable>
+    <FilePath filter="^kmds_alle_stations_10001_.*\.nc$">{ADAGUC_PATH}/data/datasets/kmds/</FilePath>
+    <Dimension name="time" interval="PT10M">time</Dimension>
+    <Styles>observation.precipitation</Styles>
+  </Layer>
+
+  <Layer type="database" hidden="false">
+    <Group value="10M"/>
+    <Variable>rh</Variable>
+    <FilePath filter="^kmds_alle_stations_10001_.*\.nc$">{ADAGUC_PATH}/data/datasets/kmds/</FilePath>
+    <Dimension name="time" interval="PT10M">time</Dimension>
+    <Styles>observation.percentage</Styles>
+  </Layer>
+
+  <Layer type="database" hidden="false">
+    <Group value="10M"/>
+    <Variable>ta</Variable>
+    <FilePath filter="^kmds_alle_stations_10001_.*\.nc$">{ADAGUC_PATH}/data/datasets/kmds/</FilePath>
+    <Dimension name="time" interval="PT10M">time</Dimension>
+    <Styles>observation.temperature,temperaturepoint,temperaturelabel,temperaturevolume,temperaturedisc,temperatureallpoint,temperaturealllabel,temperatureallvolume,temperaturealldisc</Styles>
+  </Layer>
+
+  <Layer type="database" hidden="false">
+    <Group value="10M"/>
+    <Variable>td</Variable>
+    <FilePath filter="^kmds_alle_stations_10001_.*\.nc$">{ADAGUC_PATH}/data/datasets/kmds/</FilePath>
+    <Dimension name="time" interval="PT10M">time</Dimension>
+    <Styles>observation.temperature</Styles>
+  </Layer>
+
+  <Layer type="database" hidden="false">
+    <Group value="10M"/>
+    <Name>weathercodesymbol</Name>
+    <Title>Weather code</Title>
+    <Variable>ww</Variable>
+    <FilePath filter="^kmds_alle_stations_10001_.*\.nc$">{ADAGUC_PATH}/data/datasets/kmds/</FilePath>
+    <Dimension name="time" interval="PT10M">time</Dimension>
+    <Styles>wwcode_transparent,wwcode</Styles>
+
+  </Layer>
+
+  <Layer type="database" hidden="false">
+    <Group value="10M"/>
+    <Title>Wind</Title>
+    <Name>wind</Name>
+    <Variable>ff</Variable>
+    <Variable>dd</Variable>
+    <FilePath filter="^kmds_alle_stations_10001_.*\.nc$">{ADAGUC_PATH}/data/datasets/kmds/</FilePath>
+    <DataPostProc algorithm="toknots" units="kts"/>
+    <Dimension name="time" interval="PT10M">time</Dimension>
+    <Styles>barball,barbthinned,barb,barbdisc,barbvector,barballvector</Styles>
+  </Layer>
+
+  <Layer type="database" hidden="false">
+    <Group value="10M"/>
+    <Title>Wind (m/s)</Title>
+    <Name>wind_mps</Name>
+    <Variable>ff</Variable>
+    <Variable>dd</Variable>
+    <FilePath filter="^kmds_alle_stations_10001_.*\.nc$">{ADAGUC_PATH}/data/datasets/kmds/</FilePath>
+    <Dimension name="time" interval="PT10M">time</Dimension>
+    <Styles>barball,barbthinned,barb,barbdisc</Styles>
+  </Layer>
+
+  <Layer type="database" hidden="false">
+    <Group value="10M"/>
+    <Title>Wind (bft)</Title>
+    <Name>wind_bft</Name>
+    <Variable>ff</Variable>
+    <Variable>dd</Variable>
+    <FilePath filter="^kmds_alle_stations_10001_.*\.nc$">{ADAGUC_PATH}/data/datasets/kmds/</FilePath>
+    <DataPostProc algorithm="beaufort" units="Bft"/>
+    <Dimension name="time" interval="PT10M">time</Dimension>
+    <Styles>bftalldisc,bftdisc</Styles>
+  </Layer>
+
+  <Layer type="database" hidden="false">
+    <Group value="10M"/>
+    <Title>Gust</Title>
+    <Name>gust</Name>
+    <Variable>gff</Variable>
+    <FilePath filter="^kmds_alle_stations_10001_.*\.nc$">{ADAGUC_PATH}/data/datasets/kmds/</FilePath>
+    <DataPostProc algorithm="toknots" units="kts"/>
+    <Dimension name="time" interval="PT10M">time</Dimension>
+    <Styles>singlevalue</Styles>
+  </Layer>
+
+  <Layer type="database" hidden="false">
+    <Group value="10M"/>
+    <Title>MOR</Title>
+    <Name>MOR</Name>
+    <Variable>zm</Variable>
+    <FilePath filter="^kmds_alle_stations_10001_.*\.nc$">{ADAGUC_PATH}/data/datasets/kmds/</FilePath>
+    <Dimension name="time" interval="PT10M">time</Dimension>
+    <Styles>singlevalue</Styles>
+  </Layer>
+
+  <Layer type="database" hidden="false">
+    <Group value="10M"/>
+    <Title>cloudlyr1</Title>
+    <Name>cloudlyr1</Name>
+    <Variable>nc1</Variable>
+    <Variable>hc1</Variable>
+    <Variable>nc1</Variable>
+    <FilePath filter="^kmds_alle_stations_10001_.*\.nc$">{ADAGUC_PATH}/data/datasets/kmds/</FilePath>
+    <Dimension name="time" interval="PT10M">time</Dimension>
+    <Styles>cloudlayer</Styles>
+  </Layer>
+
+  <Layer type="database" hidden="false">
+    <Group value="10M"/>
+    <Title>cloudlyr2</Title>
+    <Name>cloudlyr2</Name>
+    <Variable>nc2</Variable>
+    <Variable>hc2</Variable>
+    <Variable>nc2</Variable>
+    <FilePath filter="^kmds_alle_stations_10001_.*\.nc$">{ADAGUC_PATH}/data/datasets/kmds/</FilePath>
+    <Dimension name="time" interval="PT10M">time</Dimension>
+    <Styles>cloudlayer</Styles>
+  </Layer>
+
+  <Layer type="database" hidden="false">
+    <Group value="10M"/>
+    <Title>cloudlyr3</Title>
+    <Name>cloudlyr3</Name>
+    <Variable>nc3</Variable>
+    <Variable>hc3</Variable>
+    <Variable>nc3</Variable>
+    <FilePath filter="^kmds_alle_stations_10001_.*\.nc$">{ADAGUC_PATH}/data/datasets/kmds/</FilePath>
+    <Dimension name="time" interval="PT10M">time</Dimension>
+    <Styles>cloudlayer</Styles>
+  </Layer>
+
+  <Layer type="database" hidden="false">
+    <Group value="10M"/>
+    <Title>T2m_Td2m</Title>
+    <Name>T2m_Td2m</Name>
+    <Variable>ta</Variable>
+    <Variable>td</Variable>
+    <Variable>ta</Variable>
+    <FilePath filter="^kmds_alle_stations_10001_.*\.nc$">{ADAGUC_PATH}/data/datasets/kmds/</FilePath>
+    <Dimension name="time" interval="PT10M">time</Dimension>
+    <Styles>t2mtd2m</Styles>
+  </Layer>
+
+
+  <!-- End of configuration /-->
+</Configuration>

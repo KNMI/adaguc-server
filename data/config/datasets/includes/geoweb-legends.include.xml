@@ -1,0 +1,443 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <!-- Legends -->
+  <Legend name="not_used" type="colorRange">
+    <palette index="0"   red="0"   green="0"   blue="0"/>
+    <palette index="240" red="255" green="255"   blue="255"/>
+  </Legend>
+  
+  <Legend name="cloudcover" type="colorRange">
+    <palette index="0"   red="128"   green="128"   blue="200"/>
+    <palette index="230" red="240" green="240"   blue="240"/>
+    <palette index="240" red="255" green="255"   blue="255"/>
+  </Legend>
+  
+  <Legend name="cloudcover_trans" type="colorRange">
+    <palette index="0" red="255" green="255" blue="255" alpha="0"/>
+    <palette index="240" red="255" green="255" blue="255" alpha="255"/>
+  </Legend>
+  
+  <Legend name="highcloudcover" type="interval">
+    <!--<palette min="0" max="11" color="#FFFFFF"/> -->
+    <palette min="12" max="59" color="#E6E6FF"/>
+    <palette min="60" max="119" color="#B3B3FF"/>
+    <palette min="120" max="179" color="#8080FF"/>
+    <palette min="180" max="240" color="#4C4CFF"/>
+  </Legend>
+  
+  <Legend name="midcloudcover" type="interval">
+    <!--<palette min="0" max="11" color="#FFFFFF"/> -->
+    <palette min="12" max="59" color="#B3E6B3"/>
+    <palette min="60" max="119" color="#99FF99"/>
+    <palette min="120" max="179" color="#4CE64C"/>
+    <palette min="180" max="240" color="#00FF00"/>
+  </Legend>
+  
+  <Legend name="lowcloudcover" type="interval">
+    <!--<palette min="0" max="11" color="#FFFFFF"/> -->
+    <palette min="12" max="59" color="#FFE6E6"/>
+    <palette min="60" max="119" color="#FFB3B3"/>
+    <palette min="120" max="179" color="#FF8080"/>
+    <palette min="180" max="240" color="#FF4C4C"/>
+  </Legend>
+  
+  <Legend name="totalcloudcover" type="interval">
+    <!--<palette min="0" max="11" color="#FFFFFF"/> -->
+    <palette min="12" max="59" color="#D9D9D9"/>
+    <palette min="60" max="119" color="#A6A6A6"/>
+    <palette min="120" max="179" color="#737373"/>
+    <palette min="180" max="240" color="#4C4C4C"/>
+  </Legend>
+  
+  <Legend name="temperature2" type="colorRange">
+    <palette index="0"   red="255" green="255" blue="255"/>
+    <palette index="1"   red="255" green="255" blue="255"/>
+    <palette index="15"   red="64"   green="64"   blue="128"/>
+    <palette index="40"   red="0"   green="0"   blue="255"/>
+    <palette index="80"   red="0"   green="255"   blue="255"/>
+    <palette index="120" red="64"   green="255" blue="64"/>
+    <palette index="160" red="255"   green="255" blue="0"/>
+    <palette index="220" red="255"   green="0" blue="0"/>
+    <palette index="240" red="64"   green="0" blue="0"/>
+  </Legend>
+  
+  <Legend name="temperature-hi" type="interval">
+    <palette min="0" max="5" color="#FFFFFF"/>
+    <palette min="6" max="11" color="#C8C8C8"/>
+    <palette min="12" max="17" color="#969696"/>
+    <palette min="18" max="23" color="#646464"/>
+    <palette min="24" max="29" color="#323232"/>
+    <palette min="30" max="35" color="#320032"/>
+    <palette min="36" max="41" color="#640064"/>
+    <palette min="42" max="47" color="#960096"/>
+    <palette min="48" max="53" color="#C800C8"/>
+    <palette min="54" max="59" color="#FF00FF"/>
+    <palette min="60" max="65" color="#C800FF"/>
+    <palette min="66" max="71" color="#9600FF"/>
+    <palette min="72" max="77" color="#6400FF"/>
+    <palette min="78" max="83" color="#3200FF"/>
+    <palette min="84" max="89" color="#0032FF"/>
+    <palette min="90" max="95" color="#0064FF"/>
+    <palette min="96" max="101" color="#0096FF"/>
+    <palette min="102" max="107" color="#00C8FF"/>
+    <palette min="108" max="113" color="#00FFFF"/>
+    <palette min="114" max="119" color="#00FFC8"/>
+    <palette min="120" max="125" color="#00FF96"/>
+    <palette min="126" max="131" color="#00FF64"/>
+    <palette min="132" max="137" color="#00FF32"/>
+    <palette min="138" max="143" color="#00FF00"/>
+    <palette min="144" max="149" color="#FFFF00"/>
+    <palette min="150" max="155" color="#FFE100"/>
+    <palette min="156" max="161" color="#FFC800"/>
+    <palette min="162" max="167" color="#FFAF00"/>
+    <palette min="168" max="173" color="#FF9600"/>
+    <palette min="174" max="179" color="#FF7D00"/>
+    <palette min="180" max="185" color="#FF6400"/>
+    <palette min="186" max="191" color="#FF4B00"/>
+    <palette min="192" max="197" color="#FF3200"/>
+    <palette min="198" max="203" color="#FF1900"/>
+    <palette min="204" max="209" color="#FF0000"/>
+    <palette min="210" max="215" color="#FF0032"/>
+    <palette min="216" max="221" color="#FF0064"/>
+    <palette min="222" max="227" color="#FF0096"/>
+    <palette min="228" max="233" color="#FF00C8"/>
+    <palette min="234" max="240" color="#FF00E1"/>
+  </Legend>
+  
+  <Legend name="temperature-lo" type="interval">
+    <palette min="0" max="5" color="#FFFFFF"/>
+    <palette min="6" max="11" color="#C8C8C8"/>
+    <palette min="12" max="17" color="#969696"/>
+    <palette min="18" max="23" color="#646464"/>
+    <palette min="24" max="29" color="#323232"/>
+    <palette min="30" max="35" color="#320032"/>
+    <palette min="36" max="41" color="#640064"/>
+    <palette min="42" max="47" color="#960096"/>
+    <palette min="48" max="53" color="#C800C8"/>
+    <palette min="54" max="59" color="#FF00FF"/>
+    <palette min="60" max="65" color="#C800FF"/>
+    <palette min="66" max="71" color="#9600FF"/>
+    <palette min="72" max="77" color="#6400FF"/>
+    <palette min="78" max="83" color="#3200FF"/>
+    <palette min="84" max="89" color="#0032FF"/>
+    <palette min="90" max="95" color="#0064FF"/>
+    <palette min="96" max="101" color="#0096FF"/>
+    <palette min="102" max="107" color="#00C8FF"/>
+    <palette min="108" max="113" color="#00FFFF"/>
+    <palette min="114" max="119" color="#00FFC8"/>
+    <palette min="120" max="125" color="#00FF96"/>
+    <palette min="126" max="131" color="#00FF64"/>
+    <palette min="132" max="137" color="#00FF32"/>
+    <palette min="138" max="143" color="#00FF00"/>
+    <palette min="144" max="149" color="#FFFF00"/>
+    <palette min="150" max="155" color="#FFE100"/>
+    <palette min="156" max="161" color="#FFC800"/>
+    <palette min="162" max="167" color="#FFAF00"/>
+    <palette min="168" max="173" color="#FF9600"/>
+    <palette min="174" max="179" color="#FF7D00"/>
+    <palette min="180" max="185" color="#FF6400"/>
+    <palette min="186" max="191" color="#FF4B00"/>
+    <palette min="192" max="197" color="#FF3200"/>
+    <palette min="198" max="203" color="#FF1900"/>
+    <palette min="204" max="209" color="#FF0000"/>
+    <palette min="210" max="215" color="#FF0032"/>
+    <palette min="216" max="221" color="#FF0064"/>
+    <palette min="222" max="227" color="#FF0096"/>
+    <palette min="228" max="233" color="#FF00C8"/>
+    <palette min="234" max="240" color="#FF00E1"/>
+  </Legend>
+  
+  <Legend name="isoluminant" type="colorRange">
+    <palette index="0"   red="216"  green="15" blue="15"/>
+    <palette index="48"  red="134"  green="134"   blue="0"/>
+    <palette index="96"  red="0"    green="151"   blue="0"/>
+    <palette index="144"  red="0"    green="143"   blue="143"/>
+    <palette index="192" red="81"   green="253" blue="247"/>
+    <palette index="240" red="183"   green="0" blue="183"/>
+  </Legend>
+  
+  <Legend name="temperature" type="colorRange">
+    <palette index="0"   red="0"  green="60" blue="123"/>
+    <palette index="30"  red="0"  green="100"   blue="140"/>
+    <palette index="60"  red="8"    green="130"   blue="206"/>
+    <palette index="85"  red="132"    green="211"   blue="255"/>
+    <palette index="120" red="247"   green="247" blue="247"/>
+    <palette index="155" red="255"   green="195" blue="57"/>
+    <palette index="180" red="232"  green="28" blue="0"/>
+    <palette index="210" red="165"  green="0" blue="0"/>
+    <palette index="240" red="90"   green="0" blue="0"/>
+  </Legend>
+  
+  <Legend name="windspeed_cwk" type="interval">
+    <palette min="0" max="6" color="#FFFFB3"/>
+    <palette min="7" max="10" color="#FFFF00"/>
+    <palette min="11" max="15" color="#80FF00"/>
+    <palette min="16" max="20" color="#008C40"/>
+    <palette min="21" max="26" color="#00FFFF"/>
+    <palette min="27" max="33" color="#73A3FF"/>
+    <palette min="34" max="40" color="#0000FF"/>
+    <palette min="41" max="47" color="#FF51FF"/>
+    <palette min="48" max="55" color="#FF8000"/>
+    <palette min="56" max="63" color="#FF0000"/>
+    <palette min="64" max="240" color="#FFFF00"/>
+  </Legend>
+  
+  <Legend name="windspeed_hi" type="interval">
+    <palette min="40" max="50" color="#FFFFE6"/>
+    <palette min="50" max="60" color="#FFFF66"/>
+    <palette min="60" max="70" color="#FFFF00"/>
+    <palette min="70" max="80" color="#FFE6FF"/>
+    <palette min="80" max="90" color="#FFCC7F"/>
+    <palette min="90" max="100" color="#FF9C00"/>
+    <palette min="100" max="110" color="#FFE6E6"/>
+    <palette min="110" max="125" color="#FFB3B3"/>
+    <palette min="125" max="240" color="#FF7F7F"/>
+  </Legend>
+  
+  <Legend name="temperature_cwk" type="interval">
+    <palette min="0" max="2" color="#BFB1FF"/>
+    <palette min="3" max="5" color="#8E7EE4"/>
+    <palette min="6" max="8" color="#6450CC"/>
+    <palette min="9" max="11" color="#422BB1"/>
+    <palette min="12" max="14" color="#260E99"/>
+    <palette min="15" max="17" color="#B1E4FF"/>
+    <palette min="18" max="20" color="#7EC3E4"/>
+    <palette min="21" max="23" color="#50A3CC"/>
+    <palette min="24" max="26" color="#2B85B1"/>
+    <palette min="27" max="29" color="#0E6B99"/>
+    <palette min="30" max="32" color="#E4FFB1"/>
+    <palette min="33" max="35" color="#C3E47E"/>
+    <palette min="36" max="38" color="#A3CC50"/>
+    <palette min="39" max="41" color="#85B12B"/>
+    <palette min="42" max="44" color="#6B990E"/>
+    <palette min="45" max="47" color="#FFD8B1"/>
+    <palette min="48" max="50" color="#E4B17E"/>
+    <palette min="51" max="53" color="#CC8E50"/>
+    <palette min="54" max="56" color="#B16E2B"/>
+    <palette min="57" max="59" color="#99540E"/>
+    <palette min="60" max="62" color="#FFB1B1"/>
+    <palette min="63" max="65" color="#E47E7E"/>
+    <palette min="66" max="68" color="#CC5050"/>
+    <palette min="69" max="71" color="#B12B2B"/>
+    <palette min="72" max="74" color="#990E0E"/>
+    <palette min="75" max="77" color="#BFB1FF"/>
+    <palette min="78" max="80" color="#8E7EE4"/>
+    <palette min="81" max="83" color="#6450CC"/>
+    <palette min="84" max="86" color="#422BB1"/>
+    <palette min="87" max="89" color="#260E99"/>
+    <palette min="90" max="92" color="#B1E4FF"/>
+    <palette min="93" max="95" color="#7EC3E4"/>
+    <palette min="96" max="98" color="#50A3CC"/>
+    <palette min="99" max="101" color="#2B85B1"/>
+    <palette min="102" max="104" color="#0E6B99"/>
+    <palette min="105" max="107" color="#E4FFB1"/>
+    <palette min="108" max="110" color="#C3E47E"/>
+    <palette min="111" max="113" color="#A3CC50"/>
+    <palette min="114" max="116" color="#85B12B"/>
+    <palette min="117" max="119" color="#6B990E"/>
+    <palette min="120" max="122" color="#FFD8B1"/>
+    <palette min="123" max="125" color="#E4B17E"/>
+    <palette min="126" max="128" color="#CC8E50"/>
+    <palette min="129" max="131" color="#B16E2B"/>
+    <palette min="132" max="134" color="#99540E"/>
+    <palette min="135" max="137" color="#FFB1B1"/>
+    <palette min="138" max="140" color="#E47E7E"/>
+    <palette min="141" max="143" color="#CC5050"/>
+    <palette min="144" max="146" color="#B12B2B"/>
+    <palette min="147" max="149" color="#990E0E"/>
+    <palette min="150" max="152" color="#BFB1FF"/>
+    <palette min="153" max="155" color="#8E7EE4"/>
+    <palette min="156" max="158" color="#6450CC"/>
+    <palette min="159" max="161" color="#422BB1"/>
+    <palette min="162" max="164" color="#260E99"/>
+    <palette min="165" max="167" color="#B1E4FF"/>
+    <palette min="168" max="170" color="#7EC3E4"/>
+    <palette min="171" max="173" color="#50A3CC"/>
+    <palette min="174" max="176" color="#2B85B1"/>
+    <palette min="177" max="179" color="#0E6B99"/>
+    <palette min="180" max="182" color="#E4FFB1"/>
+    <palette min="183" max="185" color="#C3E47E"/>
+    <palette min="186" max="188" color="#A3CC50"/>
+    <palette min="189" max="191" color="#85B12B"/>
+    <palette min="192" max="194" color="#6B990E"/>
+    <palette min="195" max="197" color="#FFD8B1"/>
+    <palette min="198" max="200" color="#E4B17E"/>
+    <palette min="201" max="203" color="#CC8E50"/>
+    <palette min="204" max="206" color="#B16E2B"/>
+    <palette min="207" max="209" color="#99540E"/>
+    <palette min="210" max="212" color="#FFB1B1"/>
+    <palette min="213" max="215" color="#E47E7E"/>
+    <palette min="216" max="218" color="#CC5050"/>
+    <palette min="219" max="221" color="#B12B2B"/>
+    <palette min="222" max="240" color="#990E0E"/>
+  </Legend>
+  
+  <Legend name="cape" type="colorRange">
+    <palette index="0"   color="#9CFF9C"/>
+    <palette index="20"  color="#00FF00"/>
+    <palette index="40"  color="#9CFF00"/>
+    <palette index="60"  color="#CEFF00"/>
+    <palette index="80"  color="#FFFF00"/>
+    <palette index="100" color="#FFCF00"/>
+    <palette index="120" color="#FF9A00"/>
+    <palette index="140" color="#FF6500"/>
+    <palette index="160" color="#FF0000"/>
+    <palette index="180" color="#FF0063"/>
+    <palette index="200" color="#FF009C"/>
+    <palette index="220" color="#FF00CE"/>
+    <palette index="240" color="#0000FF"/>
+  </Legend>
+  
+  <Legend name="snow" type="interval">
+    <palette min="1"    max="37"   color="#80FF00"/>
+    <palette min="38"    max="55"  color="#00FF00"/>
+    <palette min="56"   max="79"  color="#008C40"/>
+    <palette min="80"   max="117"  color="#00FFFF"/>
+    <palette min="118"   max="135"  color="#0000FF"/>
+    <palette min="136"   max="159"  color="#FF00FF"/>
+    <palette min="160"   max="179" color="#FF0000"/>
+    <palette min="180"  max="207" color="#FFFF00"/>
+    <palette min="208"  max="240" color="#FF8000"/>
+  </Legend>
+  
+  <Legend name="precip_cwk" type="interval">
+    <palette min="1"    max="37"   color="#80FF00"/>
+    <palette min="38"    max="55"  color="#00FF00"/>
+    <palette min="56"   max="79"  color="#008C40"/>
+    <palette min="80"   max="117"  color="#00FFFF"/>
+    <palette min="118"   max="135"  color="#0000FF"/>
+    <palette min="136"   max="159"  color="#FF00FF"/>
+    <palette min="160"   max="179" color="#FF0000"/>
+    <palette min="180"  max="207" color="#FFFF00"/>
+    <palette min="208"  max="240" color="#FF8000"/>
+  </Legend>
+  
+  <Legend name="precip_cwk_6" type="interval">
+    <palette min="1"   max="79"  color="#008C40"/>
+    <palette min="80"   max="117"  color="#00FFFF"/>
+    <palette min="118"   max="135"  color="#0000FF"/>
+    <palette min="136"   max="159"  color="#FF00FF"/>
+    <palette min="160"   max="179" color="#FF0000"/>
+    <palette min="180"  max="207" color="#FFFF00"/>
+    <palette min="208"  max="240" color="#FF8000"/>
+  </Legend>
+  
+  <Legend name="precip_cwk_24" type="interval">
+    <palette min="1"    max="41"   color="#008C40"/>
+    <palette min="42"    max="59"  color="#00FFFF"/>
+    <palette min="60"   max="88"  color="#0000FF"/>
+    <palette min="89"   max="101"  color="#FF00FF"/>
+    <palette min="102"   max="119"  color="#FF0000"/>
+    <palette min="120"   max="137"  color="#FFFF00"/>
+    <palette min="138"   max="155" color="#FF8000"/>
+    <palette min="156"  max="179" color="#FFFF00"/>
+    <palette min="180"  max="197" color="#80FF00"/>
+    <palette min="198"    max="240"   color="#00FF00"/>
+  </Legend>
+  
+  <Legend name="fraction" type="interval">
+    <palette min="12"   max="24"  red="255" green="255" blue="255"/> -->
+    <palette min="25"   max="48"  red="128" green="255" blue="255"/>
+    <palette min="49"   max="72"  red="0" green="255" blue="255"/>
+    <palette min="73"   max="96"  red="0" green="0" blue="255"/>
+    <palette min="97"  max="120" red="64"   green="192" blue="128"/>
+    <palette min="121"  max="144" red="0"   green="255" blue="128"/>
+    <palette min="145"  max="168" red="0"   green="255" blue="0"/>
+    <palette min="169" max="192" red="255"   green="255" blue="0"/>
+    <palette min="193" max="216" red="255"   green="128" blue="0"/>
+    <palette min="217" max="240" red="255"   green="0"   blue="0"/>
+  </Legend>
+  
+  <Legend name="relhum" type="interval">
+    <palette min="0"   max="119"  red="255" green="255" blue="178"/> -->
+    <palette min="120"   max="167"  red="255" green="255" blue="0"/>
+    <palette min="168"   max="215"  red="127" green="255" blue="0"/>
+    <palette min="216"   max="227"  red="255" green="127" blue="0"/>
+    <palette min="228"  max="237" red="255"   green="0" blue="0"/>
+    <palette min="238"  max="240" red="0"   green="0" blue="0"/>
+  </Legend>
+  
+  <Legend name="wow.temperature" type="interval">
+    <palette index="0" color="#2E2E73"/>  <!-- -14 0 -->
+    <palette index="9" color="#282898"/>  <!-- -12 1 -->
+    <palette index="18" color="#201FBB"/> <!-- -10 2 -->
+    <palette index="27" color="#1A1ADC"/> <!-- -8  3 -->
+    <palette index="36" color="#3654DE"/> <!-- -6  4 -->
+    <palette index="45" color="#548EDC"/> <!-- -4  5 -->
+    <palette index="54" color="#72CADE"/> <!-- -2  6 -->
+    <palette index="63" color="#6DD8DF"/> <!-- 0   7 -->
+    <palette index="72" color="#55CDE2"/> <!-- 2   8 -->
+    <palette index="81" color="#38BBDC"/> <!-- 4   9 -->
+    <palette index="90" color="#20B0DC"/> <!-- 6   10 -->
+    <palette index="99" color="#19BAA6"/> <!-- 8   11 -->
+    <palette index="108" color="#1CCE6A"/> <!-- 10 12 -->
+    <palette index="117" color="#1BDF22"/> <!-- 12 13 -->
+    <palette index="126" color="#82C319"/> <!-- 14 14 -->
+    <palette index="135" color="#DCA819"/> <!-- 16 15 -->
+    <palette index="144" color="#DD921A"/> <!-- 18 16 -->
+    <palette index="153" color="#DE7C1A"/> <!-- 20 17 -->
+    <palette index="162" color="#DF671A"/> <!-- 22 18 -->
+    <palette index="171" color="#DE501A"/> <!-- 24 19 -->
+    <palette index="180" color="#DD3819"/> <!-- 26 20 -->
+    <palette index="189" color="#DD2319"/> <!-- 28 21 -->
+    <palette index="198" color="#D21A1E"/> <!-- 30 22 -->
+    <palette index="207" color="#C31927"/> <!-- 32 23 -->
+    <palette index="216" color="#AD1A30"/> <!-- 34 24 -->
+    <palette index="225" color="#9A1A3B"/> <!-- 36 25 -->
+    <palette index="234" color="#871A44"/> <!-- 38 26 -->
+    <palette index="240" color="#871A44"/> <!--  39,33 -->
+  </Legend>
+  
+  <Legend name="wow.precipitation" type="interval">
+    <palette index="0" color="#BACDCB"/>  <!-- 0 -->
+    <palette index="30" color="#A3C3C9"/>  <!-- 0.1 -->
+    <palette index="60" color="#8BBCC8"/> <!-- 0.2 -->
+    <palette index="90" color="#6AAEC1"/> <!-- 0.5 -->
+    <palette index="120" color="#42A1C0"/> <!-- 1 -->
+    <palette index="150" color="#377EAF"/> <!-- 2 -->
+    <palette index="180" color="#46669C"/> <!-- 5 -->
+    <palette index="210" color="#56528D"/> <!-- 10-->
+    <palette index="239" color="#86008D"/> <!-- 30-->
+  </Legend>
+  
+  <Legend name="wow.pressure" type="interval">
+    <palette index="0" color="#5C5797"/>  <!-- 960 -->
+    <palette index="12" color="#1D5791"/>  <!-- 964 -->
+    <palette index="24" color="#1E8BC5"/>  <!-- 968 -->
+    <palette index="36" color="#1EA6B9"/>  <!-- 972 -->
+    <palette index="48" color="#1A99A0"/>  <!-- 976 -->
+    <palette index="60" color="#1C7976"/>  <!-- 980 -->
+    <palette index="72" color="#1C7244"/>  <!-- 984 -->
+    <palette index="84" color="#72B060"/>  <!-- 988 -->
+    <palette index="96" color="#AFC560"/>  <!-- 992 -->
+    <palette index="108" color="#C9CF3C"/>  <!-- 996 -->
+    <palette index="120" color="#E3DA36"/>  <!-- 1000 -->
+    <palette index="132" color="#EFE686"/>  <!-- 1004 -->
+    <palette index="144" color="#EFE3BB"/>  <!-- 1008 -->
+    <palette index="156" color="#ECCB90"/>  <!-- 1012 -->
+    <palette index="168" color="#E7A34A"/>  <!-- 1016 -->
+    <palette index="180" color="#DE7222"/>  <!-- 1020 -->
+    <palette index="192" color="#D93531"/>  <!-- 1024 -->
+    <palette index="204" color="#C41F32"/>  <!-- 1028 -->
+    <palette index="216" color="#843537"/>  <!-- 1032 -->
+    <palette index="228" color="#5E3F3A"/>  <!-- 1036 -->
+    <palette index="239" color="#2E3F2A"/>  <!-- 1040 -->
+  </Legend>
+  
+  <Legend name="height" type="colorRange">
+    <palette index="0" red="0" green="0" blue="0" />
+    <palette index="1" red="0" green="0" blue="30" />
+    <palette index="24" red="0" green="0" blue="200" />
+    <palette index="48" red="70" green="70" blue="255" />
+    <palette index="72" red="110" green="110" blue="255" />
+    <palette index="96" red="140" green="140" blue="255" />
+    <palette index="120" red="175" green="175" blue="255" />
+    <palette index="144" red="205" green="205" blue="255" />
+    <palette index="168" red="227" green="227" blue="255" />
+    <palette index="192" red="240" green="240" blue="255" />
+    <palette index="216" red="255" green="255" blue="255" />
+    <palette index="240" red="255" green="255" blue="255" />
+  </Legend>
+
+  
+</Configuration>
