@@ -95,6 +95,8 @@ add_library(
     Types/LayerMetadataType.h
     GenericDataWarper/gdwDrawTriangle.h
     GenericDataWarper/gdwDrawTriangle.cpp
+    GenericDataWarper/gdwDrawFunction.h
+    GenericDataWarper/gdwDrawFunction.cpp   
     CGenericDataWarper.cpp
     CGenericDataWarper.h
     GenericDataWarper/gdwFindPixelExtent.cpp
@@ -236,6 +238,11 @@ add_library(
     testtimeutils.cpp
     timeutils.cpp
     timeutils.h
+    CImageOperators/smoothRasterField.h
+    CImageOperators/smoothRasterField.cpp
+    CImageOperators/drawContour.h
+    CImageOperators/drawContour.cpp
+    
 )
 
 target_include_directories(adagucserverEC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${Cairo_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIRS} ${PostgreSQL_INCLUDE_DIRS} ${GDAL_INCLUDE_DIRS} ${PROJ_INCLUDE_DIR})

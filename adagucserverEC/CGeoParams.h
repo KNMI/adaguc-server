@@ -28,8 +28,8 @@
 #include "CTypes.h"
 #include <math.h>
 #include <map>
-// static float  NegativeNaN = log(-1) ;
 
+class CDataSource;
 class CKeyValue {
 public:
   CT::string key;
@@ -54,6 +54,7 @@ public:
   double dfBBOX[4];
   double dfCellSizeX, dfCellSizeY;
   CT::string CRS, BBOX_CRS;
+  CGeoParams(CDataSource *dataSource);
   CGeoParams() {
     dWidth = 1;
     dHeight = 1;

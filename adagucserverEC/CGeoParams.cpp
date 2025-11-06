@@ -24,6 +24,7 @@
  ******************************************************************************/
 
 #include "CGeoParams.h"
+#include "CDataSource.h"
 
 void CoordinatesXYtoScreenXY(double &x, double &y, CGeoParams *geoParam) {
   x -= geoParam->dfBBOX[0];
@@ -64,4 +65,16 @@ int findClosestPoint(std::vector<PointDVWithLatLon> &points, double lon_coordina
     }
   }
   return closestIndex;
+}
+
+CGeoParams::CGeoParams(CDataSource *dataSource) {
+  this->dWidth = dataSource->dWidth;
+  this->dHeight = dataSource->dHeight;
+  this->dfBBOX[0] = dataSource->dfBBOX[0];
+  this->dfBBOX[1] = dataSource->dfBBOX[1];
+  this->dfBBOX[2] = dataSource->dfBBOX[2];
+  this->dfBBOX[3] = dataSource->dfBBOX[3];
+  this->dfCellSizeX = dataSource->dfCellSizeX;
+  this->dfCellSizeY = dataSource->dfCellSizeY;
+  this->CRS = dataSource->nativeProj4;
 }
