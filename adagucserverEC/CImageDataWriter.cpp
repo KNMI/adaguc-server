@@ -966,6 +966,11 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
               if (openAll) {
                 ptr = projCacheInfo.imx + projCacheInfo.imy * projCacheInfo.dWidth;
               }
+              // Recalculate the pointer if there is no associated file
+              // Case where calculations are based solely on postprocessors
+              if (dataSource->getFileName() == nullptr || *dataSource->getFileName() == '\0') {
+                ptr = projCacheInfo.imx + projCacheInfo.imy * projCacheInfo.dWidth;
+              }
 
 #ifdef CIMAGEDATAWRITER_DEBUG
               CDBDebug("ptr = %d Dataobject = %d Timestep = %d", ptr, o, dataSource->getCurrentTimeStep());
@@ -1169,13 +1174,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
 
     status = reader.openExtent(dataSource, CNETCDFREADER_MODE_OPEN_EXTENT, PXExtentBasedOnSource);
   } else {
-    // If the filename is empty, we are dealing with a virtual dataset
-    // Example: solar terminator
-    if (dataSource->getFileName() == NULL || dataSource->getFileName()[0] == '\0') {
-      status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_VIRTUAL, -1, -1, NULL);
-    } else {
-      status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_ALL);
-    }
+    status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_ALL);
   }
 #ifdef MEASURETIME
   StopWatch_Stop("Thread[%d]: Opened grid", dataSource->threadNr);

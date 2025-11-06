@@ -884,14 +884,15 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     }
   }
 #endif
-  if (mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS || mode == CNETCDFREADER_MODE_OPEN_HEADER) {
-    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams, dataSourceFilename.c_str(), enableObjectCache);
-  }
-  if (mode == CNETCDFREADER_MODE_OPEN_ALL || mode == CNETCDFREADER_MODE_GET_METADATA || mode == CNETCDFREADER_MODE_OPEN_EXTENT) {
-    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource, dataSourceFilename.c_str(), enableObjectCache);
-  }
-  if (mode == CNETCDFREADER_MODE_OPEN_VIRTUAL) {
+  if (dataSource->getFileName() == nullptr || *dataSource->getFileName() == '\0') {
     cdfObject = dataSource->getDataObject(0)->cdfObject;
+  } else {
+    if (mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS || mode == CNETCDFREADER_MODE_OPEN_HEADER) {
+      cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams, dataSourceFilename.c_str(), enableObjectCache);
+    }
+    if (mode == CNETCDFREADER_MODE_OPEN_ALL || mode == CNETCDFREADER_MODE_GET_METADATA || mode == CNETCDFREADER_MODE_OPEN_EXTENT) {
+      cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource, dataSourceFilename.c_str(), enableObjectCache);
+    }
   }
   if (cdfObject == NULL) {
     CDBError("Unable to get CDFObject from store");
@@ -1065,7 +1066,8 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
   }
 
-  if (mode == CNETCDFREADER_MODE_OPEN_VIRTUAL) {
+  // For datasets without files, such as the Solar Terminator
+  if (dataSource->getFileName() == NULL || dataSource->getFileName()[0] == '\0') {
     CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
   }
 

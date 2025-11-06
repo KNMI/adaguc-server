@@ -149,22 +149,14 @@ int layerTypeLiveUpdateRender(CDataSource *incomingDataSource, CServerParams *sr
 
     projVar->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
 
-    // DataObject ref
-    CDataSource::DataObject *obj = new CDataSource::DataObject();
-    obj->variableName.copy("solarterminator");
+    // Add dummy step
+    dataSource->addStep("", NULL);
+    // Set styles, and solarterminator variable, among other things
+    dataSource->setCFGLayer(srvParam, srvParam->configObj->Configuration[0], srvParam->cfg->Layer[0], NULL, 0);
+    auto *obj = dataSource->getDataObjectsVector()->at(0);
     obj->cdfObject = cdfObject;
     obj->cdfVariable = solTVar;
     obj->cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
-    dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), obj);
-    dataSource->attachCDFObject(cdfObject, true);
-    cdfObject->attachCDFReader(CDF::Variable::CustomMemoryReaderInstance);
-
-    // Add dummy step
-    dataSource->addStep("", NULL);
-
-    // Set styles, among other things
-    dataSource->setCFGLayer(srvParam, srvParam->configObj->Configuration[0], srvParam->cfg->Layer[0], NULL, 0);
-
     return layerTypeLiveUpdateRenderIntoImageDataWriter(dataSource, srvParam);
   }
 }
@@ -201,8 +193,13 @@ int layerTypeLiveUpdateRenderIntoImageDataWriter(CDataSource *dataSource, CServe
   }
 
   std::vector<CDataSource *> dataSourceRef = {dataSource->clone()};
-  status = imageDataWriter.addData(dataSourceRef);
-  CDBDebug("Adding data status was %d", status);
+
+  if (srvParam->requestType == REQUEST_WMS_GETFEATUREINFO) {
+    status = imageDataWriter.getFeatureInfo(dataSourceRef, 0, int(srvParam->dX), int(srvParam->dY));
+  }
+  if (srvParam->requestType == REQUEST_WMS_GETMAP) {
+    status = imageDataWriter.addData(dataSourceRef);
+  }
 
   status = imageDataWriter.end();
   CDBDebug("Ending image data writing with status %d", status);

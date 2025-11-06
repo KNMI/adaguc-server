@@ -1079,13 +1079,17 @@ int CRequest::process_all_layers() {
       }
 
       if (srvParam->requestType == REQUEST_WMS_GETFEATUREINFO) {
-        CImageDataWriter imageDataWriter;
-        status = imageDataWriter.init(srvParam, firstDataSource, firstDataSource->getNumTimeSteps());
-        if (status != 0) throw(__LINE__);
-        status = imageDataWriter.getFeatureInfo(dataSources, 0, int(srvParam->dX), int(srvParam->dY));
-        if (status != 0) throw(__LINE__);
-        status = imageDataWriter.end();
-        if (status != 0) throw(__LINE__);
+        if (firstDataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
+          layerTypeLiveUpdateRender(firstDataSource, srvParam);
+        } else {
+          CImageDataWriter imageDataWriter;
+          status = imageDataWriter.init(srvParam, firstDataSource, firstDataSource->getNumTimeSteps());
+          if (status != 0) throw(__LINE__);
+          status = imageDataWriter.getFeatureInfo(dataSources, 0, int(srvParam->dX), int(srvParam->dY));
+          if (status != 0) throw(__LINE__);
+          status = imageDataWriter.end();
+          if (status != 0) throw(__LINE__);
+        }
       }
 
       // WMS Getlegendgraphic
