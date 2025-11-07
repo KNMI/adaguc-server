@@ -74,7 +74,8 @@
     "charconv": "cpp",
     "source_location": "cpp",
     "format": "cpp",
-    "span": "cpp"
+    "span": "cpp",
+    "cfenv": "cpp"
   },
   "editor.suggest.insertMode": "insert",
   "cmake.buildDirectory": "${workspaceFolder}/bin",

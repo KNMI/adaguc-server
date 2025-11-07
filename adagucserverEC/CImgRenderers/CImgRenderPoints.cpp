@@ -58,12 +58,12 @@ void drawTextsForVector(CDrawImage *drawImage, CDataSource *dataSource, VectorSt
   }
 }
 
-std::vector<size_t> doThinningGetIndices(std::vector<PointDVWithLatLon> &p1, bool doThinning, double thinningRadius, std::set<std::string> usePoints, bool useFilter = false) {
+std::vector<size_t> doThinningGetIndices(std::vector<PointDVWithLatLon> &p1, bool doThinning, double thinningRadius, std::set<std::string> usePoints) {
 
   size_t numberOfPoints = p1.size();
 
   // Filter the points
-  if (useFilter) {
+  if (usePoints.size() > 0) {
     std::vector<size_t> filteredPointIndices;
     for (size_t pointIndex = 0; pointIndex < numberOfPoints; pointIndex++) {
       if (p1[pointIndex].paramList.size() > 0 && usePoints.find(p1[pointIndex].paramList[0].value.c_str()) != usePoints.end()) {
@@ -609,7 +609,6 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
   drawPointLineColor = CColor(0, 0, 0, 255);
   defaultColor = CColor(0, 0, 0, 255);
 
-  useFilter = false;
   useDrawPointFillColor = false;
   useDrawPointTextColor = false;
   isRadiusAndValue = false;
@@ -708,22 +707,22 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
     if (drawPointPointStyle.equals("radiusandvalue")) {
       isRadiusAndValue = true;
     }
+    CServerConfig::XMLE_Style *s = styleConfiguration->styleConfig;
 
+    std::set<std::string> usePoints;
+    std::set<std::string> skipPoints;
     if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL) {
-      CServerConfig::XMLE_Style *s = styleConfiguration->styleConfig;
+
       if (s->FilterPoints.size() == 1) {
         if (s->FilterPoints[0]->attr.use.empty() == false) {
           CT::string filterPointsUse = s->FilterPoints[0]->attr.use.c_str();
           std::vector<CT::string> use = filterPointsUse.splitToStack(",");
           for (std::vector<CT::string>::iterator it = use.begin(); it != use.end(); ++it) {
-            //            CDBDebug("adding %s to usePoints", it->c_str());
             usePoints.insert(it->c_str());
           }
-          useFilter = true;
         }
         if (s->FilterPoints[0]->attr.skip.empty() == false) {
           CT::string filterPointsSkip = s->FilterPoints[0]->attr.skip.c_str();
-          useFilter = true;
           std::vector<CT::string> skip = filterPointsSkip.splitToStack(",");
           for (std::vector<CT::string>::iterator it = skip.begin(); it != skip.end(); ++it) {
             skipPoints.insert(it->c_str());
@@ -746,7 +745,7 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
         }
       }
     }
-    auto thinnedPointIndexList = doThinningGetIndices(dataSource->getDataObject(0)->points, doThinning, thinningRadius, usePoints, useFilter);
+    auto thinnedPointIndexList = doThinningGetIndices(dataSource->getDataObject(0)->points, doThinning, thinningRadius, usePoints);
 
     renderSinglePoints(thinnedPointIndexList, warper, dataSource, drawImage, styleConfiguration, pointConfig);
   }
@@ -755,6 +754,8 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
 
   if (isVector) {
     std::vector<PointDVWithLatLon> *p1 = &dataSource->getDataObject(0)->points;
+    std::set<std::string> usePoints;
+    std::set<std::string> skipPoints;
 
     if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL) {
       CServerConfig::XMLE_Style *s = styleConfiguration->styleConfig;
@@ -764,10 +765,27 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
           thinningRadius = s->Thinning[0]->attr.radius.toInt();
         }
       }
+
+      if (s->FilterPoints.size() == 1) {
+        if (s->FilterPoints[0]->attr.use.empty() == false) {
+          CT::string filterPointsUse = s->FilterPoints[0]->attr.use.c_str();
+          std::vector<CT::string> use = filterPointsUse.splitToStack(",");
+          for (std::vector<CT::string>::iterator it = use.begin(); it != use.end(); ++it) {
+            usePoints.insert(it->c_str());
+          }
+        }
+        if (s->FilterPoints[0]->attr.skip.empty() == false) {
+          CT::string filterPointsSkip = s->FilterPoints[0]->attr.skip.c_str();
+          std::vector<CT::string> skip = filterPointsSkip.splitToStack(",");
+          for (std::vector<CT::string>::iterator it = skip.begin(); it != skip.end(); ++it) {
+            skipPoints.insert(it->c_str());
+          }
+        }
+      }
     }
 
-    auto thinnedPointIndexList = doThinningGetIndices(*p1, doThinning, thinningRadius, usePoints, useFilter);
-    CDBDebug("Vector plotting %d elements %d %d", thinnedPointIndexList.size(), useFilter, usePoints.size());
+    auto thinnedPointIndexList = doThinningGetIndices(*p1, doThinning, thinningRadius, usePoints);
+    CDBDebug("Vector plotting %d elements %d", thinnedPointIndexList.size(), usePoints.size());
     renderVectorPoints(thinnedPointIndexList, warper, dataSource, drawImage, styleConfiguration);
   }
 }

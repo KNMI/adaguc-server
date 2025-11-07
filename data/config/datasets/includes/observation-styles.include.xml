@@ -98,16 +98,16 @@
     <Legend fixed="true" tickinterval="1" textformatting="%0.1f">bluewhitered</Legend>
     <Min>0</Min>
     <Max>16</Max>
-    <RenderMethod>point</RenderMethod>
+    <RenderMethod>point,barb</RenderMethod><!-- barb is still used in animated gif-->
     <Vector vectorstyle="disc" discradius="20" linewidth="1.0" linecolor="#00000060"  fillcolor="#00000060"  textcolor="#FFFFFFFF"  fontsize="10" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" />
+    <FilterPoints skip="" use="06235,06280,06260,06290,06310,06380"/>
   </Style>
   
   <Style name="bftdisc">
     <Legend fixed="true">bluewhitered</Legend>
     <Min>0</Min>
     <Max>30</Max>
-    <Thinning radius="40"/>
-    <RenderMethod>barb</RenderMethod>
+    <RenderMethod>point,barb</RenderMethod><!-- barb is still used in animated gif-->
     <Vector vectorstyle="disc" textformat="%0.0f" discradius="20" linewidth="1.0" linecolor="#00000060"  fillcolor="#00000060"  textcolor="#FFFFFFFF"  fontsize="10" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" />
     <FilterPoints skip="" use="06235,06280,06260,06290,06310,06380"/>
   </Style>
@@ -134,7 +134,6 @@
     <Legend fixed="true">bluewhitered</Legend>
     <Min>0</Min>
     <Max>10000</Max>
-    <Thinning radius="40"/>
     <RenderMethod>point</RenderMethod>
     <Vector vectorstyle="vector" linewidth="2" linecolor="#0000FFFF" scale="5" plotstationid="true"/>
   </Style>

@@ -55,10 +55,7 @@ private:
   CColor drawPointLineColor;
   CColor defaultColor;
 
-  std::set<std::string> usePoints;
-  std::set<std::string> skipPoints;
-  bool useFilter;
-  bool useDrawPointFillColor;
+    bool useDrawPointFillColor;
   bool useDrawPointTextColor;
   bool isRadiusAndValue;
 
