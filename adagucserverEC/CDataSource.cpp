@@ -631,6 +631,7 @@ CT::PointerList<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(C
               CStyleConfiguration *styleConfig = new CStyleConfiguration();
               styleConfigurationList->push_back(styleConfig);
               styleConfig->styleCompositionName = styleName.c_str();
+              styleConfig->styleName = styleNames[i];
               styleConfig->styleTitle = styleName.c_str();
               //  We found the correspondign legend/style and rendermethod corresponding with the requested stylename!
               //  Now fill in the CStyleConfiguration Object.
@@ -748,10 +749,17 @@ CStyleConfiguration *CDataSource::getStyle() {
       }
     }
     // If not found, check for the style without rendermethod instead using startsWith.
-
-    auto it = std::find_if(_styles->begin(), _styles->end(), [styleName](CStyleConfiguration *a) { return a->styleCompositionName.startsWith(styleName); });
+    auto it = std::find_if(_styles->begin(), _styles->end(), [&styleName](CStyleConfiguration *a) { return a->styleCompositionName.startsWith(styleName); });
     if (it != _styles->end()) {
       _currentStyle = (*it);
+      CDBDebug("Selected style %s", _currentStyle->styleName.c_str());
+    } else {
+      CT::string styleNameWithoutRenderMethod = styleName.substring(0, styleName.indexOf("/"));
+      it = std::find_if(_styles->begin(), _styles->end(), [&styleNameWithoutRenderMethod](CStyleConfiguration *a) { return styleNameWithoutRenderMethod.equals(a->styleName); });
+      if (it != _styles->end()) {
+        _currentStyle = (*it);
+        CDBDebug("Selected style %s", _currentStyle->styleName.c_str());
+      }
     }
 
     if (_currentStyle->styleIndex == -1) {
