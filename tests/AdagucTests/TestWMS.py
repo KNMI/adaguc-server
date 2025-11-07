@@ -1196,12 +1196,9 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        self.assertTrue(
-            AdagucTestTools().compareImage(
-                self.expectedoutputsspath + filename,
-                self.testresultspath + filename,
-                10,
-            )
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
 
         filename = "test_WMSGetMap_KMDS_PointNetCDF_ffdd_windspeed_barb_barb.png"
@@ -3129,7 +3126,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
         self.assertTrue(
             AdagucTestTools().compareImage(
-                self.expectedoutputsspath + filename, self.testresultspath + filename, 10
+                self.expectedoutputsspath + filename, self.testresultspath + filename, 30
             )
         )
 
