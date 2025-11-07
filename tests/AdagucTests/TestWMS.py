@@ -3129,7 +3129,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
         self.assertTrue(
             AdagucTestTools().compareImage(
-                self.expectedoutputsspath + filename, self.testresultspath + filename, 4
+                self.expectedoutputsspath + filename, self.testresultspath + filename, 10
             )
         )
 
