@@ -78,17 +78,35 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
       // Transform EPG:3857 coordinates into latlon
       imageWarper.reprojToLatLon(geox, geoy);
       gfiValue = static_cast<float>(getDayTimeCategory(getSolarZenithAngle(geoy, geox, currentOffset)));
-    }
 
-    for (size_t j = 0; j < l; j++) {
-      int px = j % dataSource->dWidth;
-      int py = j / dataSource->dWidth;
+      // Calculate the only value required and assign it around the pixel in question (3x3 cell)
+      for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+          int px = dX + dx;
+          int py = dY + dy;
+          if (px < 0 || py < 0 || px >= dataSource->dWidth || py >= dataSource->dHeight) continue;
 
-      if (dataSource->srvParams->requestType == REQUEST_WMS_GETFEATUREINFO) {
+          size_t idx = static_cast<size_t>(py) * dataSource->dWidth + static_cast<size_t>(px);
+          result[idx] = gfiValue;
+        }
+      }
+      // Calculate the only value required and assign it around the pixel in question (3x3 cell)
+      for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+          int px = dX + dx;
+          int py = dY + dy;
+          if (px < 0 || py < 0 || px >= dataSource->dWidth || py >= dataSource->dHeight) continue;
 
-        // Select final value based on solar zenith angle
-        result[j] = gfiValue;
-      } else {
+          size_t idx = static_cast<size_t>(py) * dataSource->dWidth + static_cast<size_t>(px);
+          result[idx] = gfiValue;
+        }
+      }
+
+    } else { // Assuming REQUEST_WMS_GETMAP
+      for (size_t j = 0; j < l; j++) {
+        int px = j % dataSource->dWidth;
+        int py = j / dataSource->dWidth;
+
         // Projection coordinates (works in EPSG 4326)
         double geox = (lonRange / dataSource->dWidth) * px + dataSource->dfBBOX[0];
         double geoy = (latRange / dataSource->dHeight) * py + dataSource->dfBBOX[3];
