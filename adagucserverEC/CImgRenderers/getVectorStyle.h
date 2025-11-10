@@ -11,18 +11,21 @@ struct VectorStyle {
   CColor outlinecolor;
   double outlinewidth;
   CColor textColor;
+  CColor fillColor;
   CT::string drawVectorTextFormat;
+  CT::string fontFile;
   double fontSize;
   bool drawVectorPlotStationId;
   bool drawVectorPlotValue;
   bool drawBarb;
   bool drawDiscs;
   bool drawVector;
+  double discRadius;
   double symbolScaling;
   double min;
   double max;
 };
 
-VectorStyle getVectorStyle(CServerConfig::XMLE_Vector *vectorCfg);
+VectorStyle getVectorStyle(CServerConfig::XMLE_Vector *vectorCfg, CServerConfig::XMLE_Configuration *globalConfig);
 
 #endif

@@ -3,7 +3,7 @@
 #include <CServerConfig_CPPXSD.h>
 #include <cfloat>
 
-VectorStyle getVectorStyle(CServerConfig::XMLE_Vector *vectorCfg) {
+VectorStyle getVectorStyle(CServerConfig::XMLE_Vector *vectorCfg, CServerConfig::XMLE_Configuration *globalConfig) {
 
   VectorStyle vectorStyle = {
       .lineColor = CColor(0, 0, 128, 255),
@@ -11,17 +11,27 @@ VectorStyle getVectorStyle(CServerConfig::XMLE_Vector *vectorCfg) {
       .outlinecolor = CColor(255, 255, 255, 255),
       .outlinewidth = vectorCfg->attr.outlinewidth,
       .textColor = CColor(0, 0, 0, 255),
+      .fillColor = CColor(0, 0, 0, 128),
       .drawVectorTextFormat = "%0.1f",
+      .fontFile = "",
       .fontSize = vectorCfg->attr.fontSize,
       .drawVectorPlotStationId = false,
       .drawVectorPlotValue = false,
       .drawBarb = false,
       .drawDiscs = false,
       .drawVector = false,
+      .discRadius = 20,
       .symbolScaling = 1.0,
       .min = vectorCfg->attr.min,
       .max = vectorCfg->attr.max,
   };
+
+  if (!vectorCfg->attr.fontfile.empty()) {
+    vectorStyle.fontFile = vectorCfg->attr.fontfile.c_str();
+  } else {
+    // Try to get it from global WMS config
+    vectorStyle.fontFile = globalConfig->WMS[0]->ContourFont[0]->attr.location.c_str();
+  }
 
   if (!vectorCfg->attr.linecolor.empty()) {
     vectorStyle.lineColor = CColor(vectorCfg->attr.linecolor.c_str());
@@ -33,6 +43,9 @@ VectorStyle getVectorStyle(CServerConfig::XMLE_Vector *vectorCfg) {
     vectorStyle.textColor = CColor(vectorCfg->attr.linecolor.c_str());
   }
 
+  if (!vectorCfg->attr.fillcolor.empty()) {
+    vectorStyle.fillColor = CColor(vectorCfg->attr.fillcolor.c_str());
+  }
   if (!vectorCfg->attr.outlinecolor.empty()) {
     vectorStyle.outlinecolor = CColor(vectorCfg->attr.outlinecolor.c_str());
   }
@@ -60,6 +73,8 @@ VectorStyle getVectorStyle(CServerConfig::XMLE_Vector *vectorCfg) {
   }
 
   vectorStyle.symbolScaling = vectorCfg->attr.scale;
+
+  vectorStyle.discRadius = vectorCfg->attr.discradius;
 
   return vectorStyle;
 }
