@@ -47,12 +47,14 @@ class TestKMDS(unittest.TestCase):
                     {"filetocheck":"test_kmds_alle_stations_10001_10M_animgif_ta_temperaturedisc.png", "layers":"10M%2Fta", "styles":"temperaturedisc%2Fpoint"},  # Animated gif KDP_WWWRADARTEMP_loop
                     {"filetocheck":"test_kmds_alle_stations_10001_10M_animgif_windbft_bftdiscbarb.png", "layers":"10M%2Fwind_bft", "styles":"bftdisc%2Fbarb"}, # Animated gif KDP_WWWRADARBFT_loop, still uses rendermethod barb
                     {"filetocheck":"test_kmds_alle_stations_10001_10M_animgif_windmps_barbdiscbarb.png", "layers":"10M%2Fwind_mps", "styles":"barbdisc%2Fbarb"}, # Animated gif KDP_WWWRADARWIND_loop, still uses rendermethod barb
+                    {"filetocheck":"test_kmds_alle_stations_10001_10M_nc_symbolinterval_okta.png", "layers":"10M%2Fnc", "styles":"observation.okta"}, # <SymbolInterval
                     ]
         for test_case in test_cases:
             filename =test_case['filetocheck']
             status, data, headers = AdagucTestTools().runADAGUCServer(
                 f"LAYERS=baselayer,{test_case['layers']},overlay&STYLES=default,{test_case['styles']},default&DATASET=adaguc.test.kmds_alle_stations_10001&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&WIDTH=400&HEIGHT=600&CRS=EPSG%3A3857&BBOX=269422.313123934,6357145.5563671775,939865.5563671777,7457638.879961043&FORMAT=image/png32&TRANSPARENT=FALSE&&time=2025-11-06T09%3A20%3A00Z", env=env, showLog=False)
             AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+            
             self.assertEqual(status, 0)
             self.assertTrue(
                 AdagucTestTools().compareImage(
