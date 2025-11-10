@@ -45,15 +45,7 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
 
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
     // Copy bounding box of screen
-    // Moving this code to LayerTypeLiveUpdate::layerTypeLiveUpdateRender() does not work
-    auto *geo = dataSource->srvParams->Geo;
-    dataSource->nativeProj4 = geo->CRS;
-    dataSource->dWidth = geo->dWidth;
-    dataSource->dHeight = geo->dHeight;
-    dataSource->dfBBOX[0] = geo->dfBBOX[0];
-    dataSource->dfBBOX[1] = geo->dfBBOX[1];
-    dataSource->dfBBOX[2] = geo->dfBBOX[2];
-    dataSource->dfBBOX[3] = geo->dfBBOX[3];
+    dataSource->setGeo(dataSource->srvParams->Geo);
 
     // Width and height of the dataSource need to be at least 2 in this case.
     if (dataSource->dWidth < 2) dataSource->dWidth = 2;
