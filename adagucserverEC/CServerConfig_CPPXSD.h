@@ -255,10 +255,18 @@ public:
 
   class XMLE_Point : public CXMLObjectInterface {
   public:
+    XMLE_Point() {
+      attr.min = -DBL_MAX;
+      attr.max = DBL_MAX;
+
+      attr.maxpointspercell = -1;
+      attr.maxpointcellsize = -1;
+    }
     class Cattr {
     public:
-      CT::string fillcolor, linecolor, textcolor, textoutlinecolor, fontfile, fontsize, discradius, textradius, dot, anglestart, anglestep, textformat, plotstationid, pointstyle, min, max, symbol,
-          maxpointspercell, maxpointcellsize;
+      CT::string fillcolor, linecolor, textcolor, textoutlinecolor, fontfile, fontsize, discradius, textradius, dot, anglestart, anglestep, textformat, plotstationid, pointstyle, symbol;
+      double min, max;
+      int maxpointspercell, maxpointcellsize;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
       if (equals("fillcolor", attrname)) {
@@ -304,19 +312,19 @@ public:
         attr.pointstyle.copy(attrvalue);
         return;
       } else if (equals("min", attrname)) {
-        attr.min.copy(attrvalue);
+        attr.min = parseDouble(attrvalue);
         return;
       } else if (equals("max", attrname)) {
-        attr.max.copy(attrvalue);
+        attr.max = parseDouble(attrvalue);
         return;
       } else if (equals("symbol", attrname)) {
         attr.symbol.copy(attrvalue);
         return;
       } else if (equals("maxpointspercell", attrname)) {
-        attr.maxpointspercell.copy(attrvalue);
+        attr.maxpointspercell = parseInt(attrvalue);
         return;
       } else if (equals("maxpointcellsize", attrname)) {
-        attr.maxpointcellsize.copy(attrvalue);
+        attr.maxpointcellsize = parseInt(attrvalue);
         return;
       }
     }
