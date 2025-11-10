@@ -64,23 +64,41 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
       CDBError("Unable to init projection");
       return 1;
     }
+    CDBDebug("%f %f", dataSource->srvParams->dX, dataSource->srvParams->dY);
+    int dX = int(dataSource->srvParams->dX);
+    int dY = int(dataSource->srvParams->dY);
+    double lonRange = dataSource->dfBBOX[2] - dataSource->dfBBOX[0];
+    double latRange = dataSource->dfBBOX[1] - dataSource->dfBBOX[3];
+
+    float gfiValue;
+    if (dataSource->srvParams->requestType == REQUEST_WMS_GETFEATUREINFO) {
+      double geox = (lonRange / dataSource->dWidth) * dX + dataSource->dfBBOX[0];
+      double geoy = (latRange / dataSource->dHeight) * dY + dataSource->dfBBOX[3];
+
+      // Transform EPG:3857 coordinates into latlon
+      imageWarper.reprojToLatLon(geox, geoy);
+      gfiValue = static_cast<float>(getDayTimeCategory(getSolarZenithAngle(geoy, geox, currentOffset)));
+    }
 
     for (size_t j = 0; j < l; j++) {
       int px = j % dataSource->dWidth;
       int py = j / dataSource->dWidth;
 
-      double lonRange = dataSource->dfBBOX[2] - dataSource->dfBBOX[0];
-      double latRange = dataSource->dfBBOX[1] - dataSource->dfBBOX[3];
+      if (dataSource->srvParams->requestType == REQUEST_WMS_GETFEATUREINFO) {
 
-      // Projection coordinates (works in EPSG 4326)
-      double geox = (lonRange / dataSource->dWidth) * px + dataSource->dfBBOX[0];
-      double geoy = (latRange / dataSource->dHeight) * py + dataSource->dfBBOX[3];
+        // Select final value based on solar zenith angle
+        result[j] = gfiValue;
+      } else {
+        // Projection coordinates (works in EPSG 4326)
+        double geox = (lonRange / dataSource->dWidth) * px + dataSource->dfBBOX[0];
+        double geoy = (latRange / dataSource->dHeight) * py + dataSource->dfBBOX[3];
 
-      // Transform EPG:3857 coordinates into latlon
-      imageWarper.reprojToLatLon(geox, geoy);
+        // Transform EPG:3857 coordinates into latlon
+        imageWarper.reprojToLatLon(geox, geoy);
 
-      // Select final value based on solar zenith angle
-      result[j] = static_cast<float>(getDayTimeCategory(getSolarZenithAngle(geoy, geox, currentOffset)));
+        // Select final value based on solar zenith angle
+        result[j] = static_cast<float>(getDayTimeCategory(getSolarZenithAngle(geoy, geox, currentOffset)));
+      }
     }
   }
   return 0;
