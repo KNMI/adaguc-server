@@ -637,7 +637,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
         return 1;
       }
       //       CDBDebug("No file selected for datasource");
-      dataSource->addStep(fileList[0].c_str(), NULL);
+      dataSource->addStep(fileList[0].c_str());
       dataSource->getCDFDims()->addDimension("time", "0", 0);
     }
 
@@ -649,7 +649,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
     //
     //
     //
-    //       dataSource->addStep(fileList[0].c_str(),NULL);
+    //       dataSource->addStep(fileList[0].c_str());
     //       dataSource->getCDFDims()->addDimension("time","0",0);
     //     }
   }
