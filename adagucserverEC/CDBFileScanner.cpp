@@ -619,7 +619,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
                 if (requiresProjectionInfo) {
                   CDataReader reader;
                   // reader.enableReporting(false); //Functional tests fail if set to false
-                  dataSource->addStep((*fileList)[j].c_str(), NULL);
+                  dataSource->addStep((*fileList)[j].c_str());
                   reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
                   //                      CDBDebug("---> CRS:  [%s]",dataSource->nativeProj4.c_str());
                   //                      CDBDebug("---> BBOX: [%f %f %f

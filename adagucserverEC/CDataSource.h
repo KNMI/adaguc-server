@@ -333,9 +333,10 @@ public:
   // int autoCompleteDimensions(CPGSQLDB *dataBaseConnection);
 
   int setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Configuration *_cfg, CServerConfig::XMLE_Layer *_cfgLayer, const char *_layerName, int layerIndex);
-  void addStep(const char *fileName, CCDFDims *dims);
+  void addStep(const char *fileName);
   const char *getFileName();
   void setHeaderFilename(CT::string headerFileName);
+  void setGeo(CGeoParams *geo);
 
   DataObject *getDataObjectByName(const char *name);
   DataObject *getDataObject(int j);

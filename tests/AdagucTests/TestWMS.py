@@ -2679,7 +2679,6 @@ class TestWMS(unittest.TestCase):
             )
         )
 
-    @pytest.mark.skip(reason="Wait for solarterminator bug termination")
     def test_WMSGetMap_SolarTerminatorEquinox(self):
         # Testing the solar terminator on March 21, 2023
         AdagucTestTools().cleanTempDir()
@@ -2708,7 +2707,6 @@ class TestWMS(unittest.TestCase):
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
 
-    @pytest.mark.skip(reason="Wait for solarterminator bug termination")
     def test_WMSGetMap_SolarTerminatorSolstice(self):
         # Testing the solar terminator on December 21, 2022
         AdagucTestTools().cleanTempDir()
@@ -2737,7 +2735,6 @@ class TestWMS(unittest.TestCase):
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
 
-    @pytest.mark.skip(reason="Wait for solarterminator bug termination")
     def test_WMSGetMap_SolarTerminatorQuarterPoint(self):
         # Testing the solar terminator on August 7, 2000
         AdagucTestTools().cleanTempDir()
@@ -2766,7 +2763,6 @@ class TestWMS(unittest.TestCase):
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
 
-    @pytest.mark.skip(reason="Wait for solarterminator bug termination")
     def test_WMSGetLegendGraphic_SolarTerminator(self):
         # Testing the solar terminator legend
         AdagucTestTools().cleanTempDir()
@@ -2783,7 +2779,7 @@ class TestWMS(unittest.TestCase):
         )
         self.assertEqual(status, 0)
 
-        filename = "test_WMSGetLegendGrahic_SolarTerminator.png"
+        filename = "test_WMSGetLegendGraphic_SolarTerminator.png"
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "DATASET=solarterminator&SERVICE=WMS&&version=1.3.0&service=WMS&request=GetLegendGraphic&layer=solarterminator&format=image/png&STYLE=auto/nearest&layers=solarterminator&&&transparent=true&",
             env=env,
@@ -2793,6 +2789,31 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(
             data.getvalue(),
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
+
+    def test_WMSGetFeatureInfo_SolarTerminator(self):
+        # Testing the solar terminator feature info
+        AdagucTestTools().cleanTempDir()
+        config = (ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," +
+                  ADAGUC_PATH +
+                  "/data/config/datasets/adaguc.tests.solarterminator.xml")
+        env = {"ADAGUC_CONFIG": config}
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=["--updatedb", "--config", config], env=self.env, isCGI=False)
+
+        filename = "test_WMSGetFeatureInfo_SolarTerminator.html"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=solt&&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=solarterminator&QUERY_LAYERS=solarterminator&CRS=EPSG%3A3857&BBOX=-48040284.36018957,-50974535.88541803,-10040284.360189572,62500602.23612894&WIDTH=362&HEIGHT=1081&I=354&J=481&FORMAT=image/gif&INFO_FORMAT=text/html&STYLES=&&time=2026-01-05T16%3A40%3A00Z&",
+            env=env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename,
+                                      data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath +
+                                           filename),
         )
 
     def test_WMSGetCapabilities_403_default_time_referenced_to_forecast_time(self):
