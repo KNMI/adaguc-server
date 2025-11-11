@@ -597,7 +597,6 @@ CT::PointerList<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(C
   if (styleNames.size() > 1) start = 1;
   // Loop over the styles.
   try {
-    // CDBDebug("There are %d styles to check",styleNames->size());
     for (size_t i = start; i < styleNames.size(); i++) {
 
       // Lookup the style index in the servers configuration
@@ -996,6 +995,27 @@ int CDataSource::attachCDFObject(CDFObject *cdfObject, bool dataSourceOwnsDataOb
     if (getDataObject(varNr)->cdfVariable == NULL) {
       CDBError("attachCDFObject: variable nr %d \"%s\" does not exist", varNr, getDataObject(varNr)->variableName.c_str());
       return 1;
+    }
+  }
+  // Shorthand to variable configuration in the layer.
+  for (auto *cfgVar : cfgLayer->Variable) {
+    CDF::Variable *var = cdfObject->getVar(cfgVar->value);
+    if (var != nullptr) {
+
+      // Set long_name
+      if (!cfgVar->attr.long_name.empty()) {
+        var->setAttributeText("long_name", cfgVar->attr.long_name);
+      }
+
+      // Set units
+      if (!cfgVar->attr.units.empty()) {
+        var->setAttributeText("units", cfgVar->attr.units);
+      }
+
+      // Set standard_name
+      if (!cfgVar->attr.standard_name.empty()) {
+        var->setAttributeText("standard_name", cfgVar->attr.standard_name);
+      }
     }
   }
   this->dataSourceOwnsDataObject = dataSourceOwnsDataObject;

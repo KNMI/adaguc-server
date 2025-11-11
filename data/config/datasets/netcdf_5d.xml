@@ -39,7 +39,7 @@
     <Name>data_extra_metadata</Name>
     <Title>data extra metadata</Title>
     <FilePath filter="^nc_5D_.*\.nc$">{ADAGUC_PATH}/data/datasets/netcdf_5dims</FilePath>
-    <Variable standard_name="extra_metadata">data</Variable>
+    <Variable standard_name="extra_metadata" units="new_units">data</Variable>
     <Styles>testdata</Styles>
 
   </Layer>

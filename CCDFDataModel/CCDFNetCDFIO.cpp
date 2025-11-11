@@ -458,7 +458,7 @@ int CDFNetCDFReader::readAttributes(int root_id, std::vector<CDF::Attribute *> &
       if (attr->type == CDF_UNKNOWN) {
         CDBWarning("Unknown attribute type for attribute %s %d %d %d", name, type, attr->type, attr->length);
       }
-      // CDBDebug("%s %d %d %d",name,type,attr->type,attr->length);
+      // CDBDebug("%s %d %d %d", name, type, attr->type, attr->length);
       attr->length = length;
       CDF::allocateData(attr->getType(), &attr->data, attr->length + 1);
       if (type != NC_STRING) {
@@ -470,7 +470,6 @@ int CDFNetCDFReader::readAttributes(int root_id, std::vector<CDF::Attribute *> &
         }
       } else {
         status = nc_get_att_string(root_id, varID, name, (char **)attr->data);
-        if (type == NC_CHAR) ((char *)attr->data)[attr->length] = '\0';
         if (status != NC_NOERR) {
           ncError(__LINE__, className, "nc_get_att: ", status);
           return 1;

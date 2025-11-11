@@ -103,7 +103,10 @@ def test_collections(client: TestClient):
         "label": "data (data)",
         "description": "data (data)",
         "unit": {
-            "symbol": {"value": "km", "type": "http://www.opengis.net/def/uom/UCUM"}
+            "symbol": {
+                "value": "km",
+                "type": "http://www.opengis.net/def/uom/UCUM",
+            }
         },
         "observedProperty": {
             "id": "https://vocab.nerc.ac.uk/standard_name/data",
@@ -122,13 +125,13 @@ def test_collections(client: TestClient):
         "description": "data extra metadata",
         "unit": {
             "symbol": {
-                "value": "km",
+                "value": "new_units",
                 "type": "http://www.opengis.net/def/uom/UCUM",
             }
         },
         "observedProperty": {
-            "id": "https://vocab.nerc.ac.uk/standard_name/data",
-            "label": "data",
+            "id": "https://vocab.nerc.ac.uk/standard_name/extra_metadata",
+            "label": "extra_metadata",
         },
     }
 
