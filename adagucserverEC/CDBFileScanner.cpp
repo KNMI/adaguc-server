@@ -162,11 +162,6 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
     CDBDebug("Tablename = %s", tableName.c_str());
 #endif
 
-    int TABLETYPE_TIMESTAMP = 1;
-    int TABLETYPE_INT = 2;
-    int TABLETYPE_DOUBLE = 3;
-    int TABLETYPE_STRING = 4;
-
     int tableType = 0;
 
     // Check whether we already did this table in this scan
@@ -196,7 +191,7 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
             CDBDebug("dimensionlessmode");
 #endif
             dimensionlessmode = true;
-            status = dbAdapter->createDimTableInt(dimName.c_str(), tableName.c_str());
+            status = dbAdapter->createDimTableOfType(dimName.c_str(), tableName.c_str(), TABLETYPE_INT);
             tableType = TABLETYPE_INT;
           }
 
@@ -217,7 +212,7 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
             statusFlagList.clear();
             if (hasStatusFlag) {
               tableType = TABLETYPE_STRING;
-              status = dbAdapter->createDimTableString(dimName.c_str(), tableName.c_str());
+              status = dbAdapter->createDimTableOfType(dimName.c_str(), tableName.c_str(), TABLETYPE_STRING);
             } else {
               switch (dimVar->getType()) {
               case CDF_FLOAT:
@@ -243,11 +238,7 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
         return 1;
       }
 
-      status = 1;
-      if (tableType == TABLETYPE_TIMESTAMP) status = dbAdapter->createDimTableTimeStamp(dimName.c_str(), tableName.c_str());
-      if (tableType == TABLETYPE_INT) status = dbAdapter->createDimTableInt(dimName.c_str(), tableName.c_str());
-      if (tableType == TABLETYPE_DOUBLE) status = dbAdapter->createDimTableDoublePrecision(dimName.c_str(), tableName.c_str());
-      if (tableType == TABLETYPE_STRING) status = dbAdapter->createDimTableString(dimName.c_str(), tableName.c_str());
+      status = dbAdapter->createDimTableOfType(dimName.c_str(), tableName.c_str(), tableType);
 
       if (status == 1) {
         CDBError("FAIL: Table %s could not be created", tableName.c_str());
@@ -619,7 +610,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
                 if (requiresProjectionInfo) {
                   CDataReader reader;
                   // reader.enableReporting(false); //Functional tests fail if set to false
-                  dataSource->addStep((*fileList)[j].c_str(), NULL);
+                  dataSource->addStep((*fileList)[j].c_str());
                   reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
                   //                      CDBDebug("---> CRS:  [%s]",dataSource->nativeProj4.c_str());
                   //                      CDBDebug("---> BBOX: [%f %f %f

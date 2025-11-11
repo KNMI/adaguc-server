@@ -113,7 +113,7 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
     return 1;
   }
 
-  dataSourceToTile->addStep(fileToTile.c_str(), NULL);
+  dataSourceToTile->addStep(fileToTile.c_str());
   dataSourceToTile->setTimeStep(0);
 
   CDBDebug("Opening input file for tiles: %s", dataSourceToTile->getFileName());

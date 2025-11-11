@@ -402,17 +402,24 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Conf
   return 0;
 }
 
-void CDataSource::addStep(const char *fileName, CCDFDims *dims) {
+void CDataSource::addStep(const char *fileName) {
   TimeStep *timeStep = new TimeStep();
   timeSteps.push_back(timeStep);
   currentAnimationStep = timeSteps.size() - 1;
   timeStep->fileName.copy(fileName);
-  if (dims != NULL) {
-    timeStep->dims.copy(dims);
-  }
 }
 
 void CDataSource::setHeaderFilename(CT::string headerFilename) { this->headerFilename = headerFilename; }
+
+void CDataSource::setGeo(CGeoParams *geo) {
+  nativeProj4 = geo->CRS;
+  dWidth = geo->dWidth;
+  dHeight = geo->dHeight;
+  dfBBOX[0] = geo->dfBBOX[0];
+  dfBBOX[1] = geo->dfBBOX[1];
+  dfBBOX[2] = geo->dfBBOX[2];
+  dfBBOX[3] = geo->dfBBOX[3];
+}
 
 const char *CDataSource::getFileName() {
   if (currentAnimationStep < 0) return NULL;

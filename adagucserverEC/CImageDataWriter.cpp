@@ -960,6 +960,11 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
               if (openAll) {
                 ptr = projCacheInfo.imx + projCacheInfo.imy * projCacheInfo.dWidth;
               }
+              // Recalculate the pointer if there is no associated file
+              // Case where calculations are based solely on postprocessors
+              if (dataSource->getFileName() == nullptr || *dataSource->getFileName() == '\0') {
+                ptr = projCacheInfo.imx + projCacheInfo.imy * projCacheInfo.dWidth;
+              }
 
 #ifdef CIMAGEDATAWRITER_DEBUG
               CDBDebug("ptr = %d Dataobject = %d Timestep = %d", ptr, o, dataSource->getCurrentTimeStep());
@@ -1199,7 +1204,6 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
   StopWatch_Stop("Thread[%d]: Opened grid", dataSource->threadNr);
 #endif
 
-  // return 0;
 #ifdef CIMAGEDATAWRITER_DEBUG
   CDBDebug("Thread[%d]: Has opened %s", dataSource->threadNr, dataSource->getFileName());
 #endif

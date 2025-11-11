@@ -2,13 +2,14 @@
 <Configuration>
 
   <Environment name="ADAGUCENV_RETENTIONPERIOD" default="P1D"/>
+  <Environment name="ADAGUCENV_RETENTIONTYPE" default="datatime"/>
   <Environment name="ADAGUCENV_ENABLECLEANUP" default="false"/>
   <Settings enable_edr="true" enablecleanupsystem="{ADAGUCENV_ENABLECLEANUP}" cleanupsystemlimit="1000" cache_age_volatileresources="60" cache_age_cacheableresources="36000"/>
  
   <Layer type="database">
     <Name>air-pressure-ml</Name>
     <Variable>air-pressure-ml</Variable>
-    <FilePath maxquerylimit="2048" retentionperiod="{ADAGUCENV_RETENTIONPERIOD}" retentiontype="datatime" filter="uwcw_ha43_dini_testfile_multivar_5x6_clean.*\.nc$">{ADAGUC_PATH}/data/datasets/arcus_multivar/</FilePath>
+    <FilePath maxquerylimit="2048" retentionperiod="{ADAGUCENV_RETENTIONPERIOD}" retentiontype="{ADAGUCENV_RETENTIONTYPE}" filter="uwcw_ha43_dini_testfile_multivar_5x6_clean.*\.nc$">{ADAGUC_PATH}/data/datasets/arcus_multivar/</FilePath>
     <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension>
     <Dimension name="time" units="ISO8601" interval="PT1H" default="min" type="time">time</Dimension>
     <Dimension name="pml_at_ml" units="-" default="max" type="vertical">elevation</Dimension>
@@ -18,7 +19,7 @@
   <Layer type="database">
     <Name>air-temperature-ml</Name>
     <Variable>air-temperature-ml</Variable>
-    <FilePath maxquerylimit="2048" retentionperiod="{ADAGUCENV_RETENTIONPERIOD}" retentiontype="datatime" filter="uwcw_ha43_dini_testfile_multivar_5x6_clean.*\.nc$">{ADAGUC_PATH}/data/datasets/arcus_multivar/</FilePath>
+    <FilePath maxquerylimit="2048" retentionperiod="{ADAGUCENV_RETENTIONPERIOD}" retentiontype="{ADAGUCENV_RETENTIONTYPE}" filter="uwcw_ha43_dini_testfile_multivar_5x6_clean.*\.nc$">{ADAGUC_PATH}/data/datasets/arcus_multivar/</FilePath>
     <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension>
     <Dimension name="time" units="ISO8601" interval="PT1H" default="min" type="time">time</Dimension>
     <Dimension name="temp_at_ml" units="-" default="max" type="vertical">elevation</Dimension>
@@ -28,7 +29,7 @@
   <Layer type="database">
     <Name>dew-point-temperature-ml</Name>
     <Variable>dew-point-temperature-ml</Variable>
-    <FilePath maxquerylimit="2048" retentionperiod="{ADAGUCENV_RETENTIONPERIOD}" retentiontype="datatime" filter="uwcw_ha43_dini_testfile_multivar_5x6_clean.*\.nc$">{ADAGUC_PATH}/data/datasets/arcus_multivar/</FilePath>
+    <FilePath maxquerylimit="2048" retentionperiod="{ADAGUCENV_RETENTIONPERIOD}" retentiontype="{ADAGUCENV_RETENTIONTYPE}" filter="uwcw_ha43_dini_testfile_multivar_5x6_clean.*\.nc$">{ADAGUC_PATH}/data/datasets/arcus_multivar/</FilePath>
     <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension>
     <Dimension name="time" units="ISO8601" interval="PT1H" default="min" type="time">time</Dimension>
     <Dimension name="dewtemp_at_ml" units="-" default="max" type="vertical">elevation</Dimension>
@@ -37,7 +38,7 @@
   <Layer type="database">
     <Name>wind-from-direction-ml</Name>
     <Variable>wind-from-direction-ml</Variable>
-    <FilePath maxquerylimit="2048" retentionperiod="{ADAGUCENV_RETENTIONPERIOD}" retentiontype="datatime" filter="uwcw_ha43_dini_testfile_multivar_5x6_clean.*\.nc$">{ADAGUC_PATH}/data/datasets/arcus_multivar/</FilePath>
+    <FilePath maxquerylimit="2048" retentionperiod="{ADAGUCENV_RETENTIONPERIOD}" retentiontype="{ADAGUCENV_RETENTIONTYPE}" filter="uwcw_ha43_dini_testfile_multivar_5x6_clean.*\.nc$">{ADAGUC_PATH}/data/datasets/arcus_multivar/</FilePath>
     <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension>
     <Dimension name="time" units="ISO8601" interval="PT1H" default="min" type="time">time</Dimension>
     <Dimension name="winddir_at_ml" units="-" default="max" type="vertical">elevation</Dimension>
@@ -46,7 +47,7 @@
   <Layer type="database">
     <Name>wind-speed-ml</Name>
     <Variable>wind-speed-ml</Variable>
-    <FilePath maxquerylimit="2048" retentionperiod="{ADAGUCENV_RETENTIONPERIOD}" retentiontype="datatime" filter="uwcw_ha43_dini_testfile_multivar_5x6_clean.*\.nc$">{ADAGUC_PATH}/data/datasets/arcus_multivar/</FilePath>
+    <FilePath maxquerylimit="2048" retentionperiod="{ADAGUCENV_RETENTIONPERIOD}" retentiontype="{ADAGUCENV_RETENTIONTYPE}" filter="uwcw_ha43_dini_testfile_multivar_5x6_clean.*\.nc$">{ADAGUC_PATH}/data/datasets/arcus_multivar/</FilePath>
     <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension>
     <Dimension name="time" units="ISO8601" interval="PT1H" default="min" type="time">time</Dimension>
     <Dimension name="wind_at_ml" units="-" default="max" type="vertical">elevation</Dimension>
