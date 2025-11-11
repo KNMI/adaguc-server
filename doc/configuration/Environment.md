@@ -5,9 +5,9 @@ Back to [Configuration](./Configuration.md)
 
 Available since: 2.8.6
 
-Allows to substitute environment variables in a dataset configuration.
+Allows to substitute global system environment variables into a dataset configuration.
 
-- name The environment variable and the name inside the dataset configuration. Note that these should be prefixed with `ADAGUCENV`
+- name The global system environment variable and the name inside the dataset configuration. Note that these should be prefixed with `ADAGUCENV`
 - default The default value if no environment variable is set.
 
 

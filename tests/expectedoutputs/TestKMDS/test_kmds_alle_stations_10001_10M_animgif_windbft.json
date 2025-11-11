@@ -1,0 +1,50 @@
+[
+  {
+    "name": "ff",
+    "layername": "10M/wind_bft",
+    "variablename": "ff",
+    "standard_name": "wind_speed",
+    "feature_name": "wind_speed_0",
+    "units": "bft",
+    "point": {
+      "SRS": "EPSG:4326",
+      "coords": "5.196520,52.094574"
+    },
+    "dims": "time",
+    "data": {
+      "2025-11-06T09:20:00Z": "06260"
+    }
+  },
+  {
+    "name": "station",
+    "layername": "10M/wind_bft",
+    "variablename": "station",
+    "standard_name": "station",
+    "feature_name": "station",
+    "units": {},
+    "point": {
+      "SRS": "EPSG:4326",
+      "coords": "5.196520,52.094574"
+    },
+    "dims": "time",
+    "data": {
+      "2025-11-06T09:20:00Z": "06260"
+    }
+  },
+  {
+    "name": "dd",
+    "layername": "10M/wind_bft",
+    "variablename": "dd",
+    "standard_name": "wind_from_direction",
+    "feature_name": "wind_from_direction_1",
+    "units": "degree",
+    "point": {
+      "SRS": "EPSG:4326",
+      "coords": "5.196520,52.094574"
+    },
+    "dims": "time",
+    "data": {
+      "2025-11-06T09:20:00Z": "135.699997"
+    }
+  }
+]

@@ -50,6 +50,7 @@ struct CStyleConfiguration {
   RenderMethod renderMethod;
   CT::string legendName;
   CT::string styleCompositionName;
+  CT::string styleName;
   CT::string styleTitle;
   CT::string styleAbstract;
   std::vector<CServerConfig::XMLE_ContourLine *> contourLines;

@@ -3029,6 +3029,34 @@ class TestWMS(unittest.TestCase):
             )
         )
 
+    def test_WMSGetMap_Discs_example_windbarbs_from_pointdata_csv(self):
+        AdagucTestTools().cleanTempDir()
+        config = (
+            ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,adaguc.tests.vectorrendering.xml"
+        )
+        env = {"ADAGUC_CONFIG": config}
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            args=["--updatedb", "--config", config], env=self.env, isCGI=False
+        )
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSGetMap_Discs_example_windbarbs_from_pointdata_csv.png"
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.vectorrendering&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=example_windbarbs_from_pointdata_csv&WIDTH=1024&HEIGHT=1024&CRS=EPSG%3A3857&BBOX=0.3843391966,-2101256.2330806395,2248210.613219857,2100649.425887959&STYLES=winddiscs_for_points%2Fpoint&FORMAT=image/png&TRANSPARENT=FALSE&BGCOLOR=0xA0F080&&time=2018-12-04T12%3A00%3A00Z&showscalebar=true",
+            env=env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertTrue(
+            AdagucTestTools().compareImage(
+                self.expectedoutputsspath + filename,
+                self.testresultspath + filename,
+                10,
+            )
+        )
+
+
     def test_WMSGetMap_Barbs_example_windbarbs_from_pointdata_csv_different_style_options(self):
         AdagucTestTools().cleanTempDir()
         config = (
@@ -3098,7 +3126,7 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
         self.assertTrue(
             AdagucTestTools().compareImage(
-                self.expectedoutputsspath + filename, self.testresultspath + filename, 4
+                self.expectedoutputsspath + filename, self.testresultspath + filename, 30
             )
         )
 

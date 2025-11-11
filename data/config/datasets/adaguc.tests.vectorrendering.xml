@@ -14,6 +14,13 @@
     <RenderMethod>point</RenderMethod>
   </Style>
 
+
+  <Style name="winddiscs_for_points">
+    <Vector vectorstyle="disc" discradius="20" linewidth="1.0" linecolor="#00000060"  fillcolor="#00000060"  textcolor="#FFFFFFFF"  fontsize="10" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" />
+    <RenderMethod>point</RenderMethod>
+  </Style>
+
+
   <Style name="windvector">
     <Legend fixedclasses="true" tickinterval="2" tickround="1">no2</Legend>
     <Min>0.0</Min>
@@ -28,7 +35,7 @@
     <Title>Wind barbs from point csv data</Title>
     <Variable>ff</Variable>
     <Variable>dd</Variable>
-    <Styles>windbarbs_kts_shaded_withbarbs_for_points,windbarbs_kts_shaded_withbarbs_for_points_differentoptions,windvector</Styles>
+    <Styles>windbarbs_kts_shaded_withbarbs_for_points,windbarbs_kts_shaded_withbarbs_for_points_differentoptions,windvector,winddiscs_for_points</Styles>
   </Layer>
 
   <!-- How to render windbarbs from grids, like gridded NetCDF data -->
