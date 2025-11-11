@@ -150,7 +150,7 @@ int layerTypeLiveUpdateRender(CDataSource *incomingDataSource, CServerParams *sr
     projVar->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
 
     // Add dummy step
-    dataSource->addStep("", NULL);
+    dataSource->addStep("");
     // Set styles, and solarterminator variable, among other things
     dataSource->setCFGLayer(srvParam, srvParam->configObj->Configuration[0], srvParam->cfg->Layer[0], NULL, 0);
     auto *obj = dataSource->getDataObjectsVector()->at(0);
