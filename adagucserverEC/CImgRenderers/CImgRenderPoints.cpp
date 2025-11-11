@@ -263,19 +263,24 @@ void drawVolumeForPoint(CDrawImage *drawImage, CColor drawPointFillColor, int x,
   }
 }
 
-bool shouldSkipPoint(CStyleConfiguration *styleConfiguration, float value, size_t dataObjectIndex) {
+bool isPointOutsideLegendRange(CStyleConfiguration *styleConfiguration, float value) {
   bool skipPoint = false;
-  if (styleConfiguration != NULL) {
-    if (styleConfiguration->hasLegendValueRange) {
-      double legendLowerRange = styleConfiguration->legendLowerRange;
-      double legendUpperRange = styleConfiguration->legendUpperRange;
-      skipPoint = true;
-      if (value >= legendLowerRange && value < legendUpperRange) {
-        skipPoint = false;
-      }
+  if (styleConfiguration->hasLegendValueRange) {
+    double legendLowerRange = styleConfiguration->legendLowerRange;
+    double legendUpperRange = styleConfiguration->legendUpperRange;
+    skipPoint = true;
+    if (value >= legendLowerRange && value < legendUpperRange) {
+      skipPoint = false;
     }
   }
   return skipPoint;
+}
+
+bool shouldSkipPoint(CDataSource *dataSource, CStyleConfiguration *styleConfiguration, PointStyle pointStyle, float value, float fillValue) {
+  if (value == fillValue) return true;
+  if (pointStyle.isOutsideMinMax(value)) return true;
+  if (isPointOutsideLegendRange(styleConfiguration, value)) return true;
+  return false;
 }
 
 bool shouldDrawSymbol(CServerConfig::XMLE_SymbolInterval *symbolInterval, float symbol_v) {
@@ -401,6 +406,7 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
     doneMatrix[j] = 0;
   }
 
+  float fillValueObjectOne = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
   for (size_t dataObjectIndex = 0; dataObjectIndex < dataSource->getNumDataObjects(); dataObjectIndex++) {
     std::vector<PointDVWithLatLon> *pts = &dataSource->getDataObject(dataObjectIndex)->points;
 
@@ -419,14 +425,10 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
       // CDBDebug("angles[%d] %f %d %f %f", dataObject, useangle, kwadrant, usedx, usedy);
     }
 
-    float fillValueObjectOne = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
     for (auto pointIndex : thinnedPointIndexList) {
       auto pointValue = &(*pts)[pointIndex];
       float value = pointValue->v;
-
-      if (value == fillValueObjectOne) continue;
-      if (pointStyle.isOutsideMinMax(value)) continue;
-      if (shouldSkipPoint(styleConfiguration, value, dataObjectIndex)) continue;
+      if (shouldSkipPoint(dataSource, styleConfiguration, pointStyle, value, fillValueObjectOne)) continue;
 
       int x = pointValue->x;
       int y = dataSource->srvParams->Geo->dHeight - pointValue->y;
@@ -526,18 +528,15 @@ void shouldUseFilterPoints(CStyleConfiguration *styleConfiguration, std::unorder
 
 void renderSingleVolumes(std::vector<size_t> thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle) {
   std::vector<int> alphaVec = buildAlphaVector(int(pointStyle.discRadius));
+  float fillValueObjectOne = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
 
   for (size_t dataObjectIndex = 0; dataObjectIndex < dataSource->getNumDataObjects(); dataObjectIndex++) {
     std::vector<PointDVWithLatLon> *pts = &dataSource->getDataObject(dataObjectIndex)->points;
 
-    float fillValueObjectOne = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
     for (auto pointIndex : thinnedPointIndexList) {
       auto pointValue = &(*pts)[pointIndex];
       float value = pointValue->v;
-
-      if (value == fillValueObjectOne) continue;
-      if (pointStyle.isOutsideMinMax(value)) continue;
-      if (shouldSkipPoint(styleConfiguration, value, dataObjectIndex)) continue;
+      if (shouldSkipPoint(dataSource, styleConfiguration, pointStyle, value, fillValueObjectOne)) continue;
 
       int x = pointValue->x;
       int y = dataSource->srvParams->Geo->dHeight - pointValue->y;
@@ -553,15 +552,14 @@ void renderSingleVolumes(std::vector<size_t> thinnedPointIndexList, CDataSource 
 
 void renderSingleSymbols(std::vector<size_t> thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle) {
   std::map<std::string, CDrawImage *> symbolCache;
+  float fillValueObjectOne = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
+
   for (size_t dataObjectIndex = 0; dataObjectIndex < dataSource->getNumDataObjects(); dataObjectIndex++) {
     std::vector<PointDVWithLatLon> *pts = &dataSource->getDataObject(dataObjectIndex)->points;
 
-    float fillValueObjectOne = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
     for (auto pointIndex : thinnedPointIndexList) {
       auto pointValue = &(*pts)[pointIndex];
-      if (pointValue->v == fillValueObjectOne) continue;
-      if (pointStyle.isOutsideMinMax(pointValue->v)) continue;
-      if (shouldSkipPoint(styleConfiguration, pointValue->v, dataObjectIndex)) continue;
+      if (shouldSkipPoint(dataSource, styleConfiguration, pointStyle, pointValue->v, fillValueObjectOne)) continue;
 
       int x = pointValue->x;
       int y = dataSource->srvParams->Geo->dHeight - pointValue->y;
@@ -586,17 +584,15 @@ void renderSingleSymbols(std::vector<size_t> thinnedPointIndexList, CDataSource 
 }
 
 void renderSingleDiscs(std::vector<size_t> thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle) {
+  float fillValueObjectOne = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
+
   for (size_t dataObjectIndex = 0; dataObjectIndex < dataSource->getNumDataObjects(); dataObjectIndex++) {
     std::vector<PointDVWithLatLon> *pts = &dataSource->getDataObject(dataObjectIndex)->points;
 
-    float fillValueObjectOne = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
     for (auto pointIndex : thinnedPointIndexList) {
       auto pointValue = &(*pts)[pointIndex];
       float value = pointValue->v;
-
-      if (value == fillValueObjectOne) continue;
-      if (pointStyle.isOutsideMinMax(value)) continue;
-      if (shouldSkipPoint(styleConfiguration, value, dataObjectIndex)) continue;
+      if (shouldSkipPoint(dataSource, styleConfiguration, pointStyle, value, fillValueObjectOne)) continue;
 
       int x = pointValue->x;
       int y = dataSource->srvParams->Geo->dHeight - pointValue->y;
@@ -612,17 +608,15 @@ void renderSingleDiscs(std::vector<size_t> thinnedPointIndexList, CDataSource *d
 }
 
 void renderSingleDot(std::vector<size_t> thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle) {
+  float fillValueObjectOne = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
+
   for (size_t dataObjectIndex = 0; dataObjectIndex < dataSource->getNumDataObjects(); dataObjectIndex++) {
     std::vector<PointDVWithLatLon> *pts = &dataSource->getDataObject(dataObjectIndex)->points;
 
-    float fillValueObjectOne = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
     for (auto pointIndex : thinnedPointIndexList) {
       auto pointValue = &(*pts)[pointIndex];
       float value = pointValue->v;
-
-      if (value == fillValueObjectOne) continue;
-      if (pointStyle.isOutsideMinMax(value)) continue;
-      if (shouldSkipPoint(styleConfiguration, value, dataObjectIndex)) continue;
+      if (shouldSkipPoint(dataSource, styleConfiguration, pointStyle, value, fillValueObjectOne)) continue;
 
       int x = pointValue->x;
       int y = dataSource->srvParams->Geo->dHeight - pointValue->y;
