@@ -32,18 +32,6 @@
 class CImgRenderPoints : public CImageWarperRenderInterface {
 private:
   DEF_ERRORFUNCTION();
-  bool drawPoints;
-  bool drawZoomablePoints;
-  const char *drawPointFontFile;
-  CT::string drawPointPointStyle;
-  CColor defaultColor;
-  bool isRadiusAndValue;
-
-  void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle);
-  void renderSingleVolumes(std::vector<size_t> thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle);
-  void renderSingleSymbols(std::vector<size_t> thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle);
-  void renderSingleDiscs(std::vector<size_t> thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle);
-  void renderSingleDot(std::vector<size_t> thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle);
 
 public:
   void render(CImageWarper *, CDataSource *, CDrawImage *);

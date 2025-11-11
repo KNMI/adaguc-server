@@ -9,7 +9,7 @@
 # Tests must be ran from the ./tests dir
 FILTER_FILES=""
 if [ -n "$1" ]; then
-    FILTER_FILES="-s -k $1";
+    FILTER_FILES="-k $1";
 fi
 
 cd tests

@@ -72,7 +72,7 @@ ThinningInfo getThinningInfo(CServerConfig::XMLE_Style *s) {
   return info;
 }
 
-std::vector<size_t> doThinningGetIndices(std::vector<PointDVWithLatLon> &p1, bool doThinning, double thinningRadius, std::set<std::string> usePoints) {
+std::vector<size_t> doThinningGetIndices(std::vector<PointDVWithLatLon> &p1, bool doThinning, double thinningRadius, std::unordered_set<std::string> usePoints) {
   size_t numberOfPoints = p1.size();
 
   // Filter the points
@@ -367,10 +367,14 @@ CT::string prepareText(CDataSource *dataSource, size_t dataObjectIndex, float va
   return text;
 }
 
-void CImgRenderPoints::renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle) {
+void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle) {
+  CColor defaultColor = CColor(0, 0, 0, 255);
+  bool drawRadiusAndValue = pointStyle.style == "radiusandvalue";
+  bool drawZoomablePoint = pointStyle.style == "zoomablepoint";
+
   // Preparation for symbol drawing, only used for radiusAndValue
   SimpleSymbol currentSymbol;
-  if (drawPoints && isRadiusAndValue) {
+  if (drawRadiusAndValue) {
     if (simpleSymbolMapCache.empty()) {
       simpleSymbolMapCache = makeSymbolMap(dataSource->cfg);
     }
@@ -430,19 +434,19 @@ void CImgRenderPoints::renderSinglePoints(std::vector<size_t> thinnedPointIndexL
       if (std::isnan(value)) {
         // Try to draw something if value is NaN
         if (pointValue->paramList.size() > 0) {
-          CT::string value = pointValue->paramList[0].value;
+          CT::string textValue = pointValue->paramList[0].value;
           if (pointStyle.discRadius == 0) {
-            drawImage->drawCenteredText(x, y, pointStyle.fontFile.c_str(), pointStyle.fontSize, 0, value.c_str(), pointStyle.textColor);
+            drawImage->drawCenteredText(x, y, pointStyle.fontFile.c_str(), pointStyle.fontSize, 0, textValue.c_str(), pointStyle.textColor);
           } else {
             drawImage->circle(x, y, pointStyle.discRadius + 1, pointStyle.lineColor, 0.65);
-            drawImage->drawAnchoredText(x - int(float(value.length()) * 3.0f) - 2, y - pointStyle.textRadius, pointStyle.fontFile.c_str(), pointStyle.fontSize, 0, value.c_str(), pointStyle.textColor,
-                                        kwadrant);
+            drawImage->drawAnchoredText(x - int(float(textValue.length()) * 3.0f) - 2, y - pointStyle.textRadius, pointStyle.fontFile.c_str(), pointStyle.fontSize, 0, textValue.c_str(),
+                                        pointStyle.textColor, kwadrant);
           }
         }
         continue;
       }
 
-      if (!drawZoomablePoints) {
+      if (!drawZoomablePoint) {
         size_t doneMatrixPointer = 0;
         if (x >= 0 && y >= 0 && x < drawImage->Geo->dWidth && y < drawImage->Geo->dHeight) {
           doneMatrixPointer = int((float(x) / float(drawImage->Geo->dWidth)) * float(doneMatrixW)) + int((float(y) / float(drawImage->Geo->dHeight)) * float(doneMatrixH)) * doneMatrixH;
@@ -473,13 +477,13 @@ void CImgRenderPoints::renderSinglePoints(std::vector<size_t> thinnedPointIndexL
         if (!pointStyle.useFillColor) { //(dataSource->getNumDataObjects()==1) {
           pointStyle.fillColor = getDrawPointColor(dataSource, drawImage, value);
         }
-        if (isRadiusAndValue) {
+        if (drawRadiusAndValue) {
           if (dataObjectIndex == 0) {
             float radius = getRadius(dataSource, pointIndex, pointStyle.discRadius);
             drawRadiusAndValueForPoint(drawImage, x, y, pointStyle.lineColor, pointStyle.fillColor, currentSymbol, radius);
           }
         } else {
-          if (drawZoomablePoints) {
+          if (drawZoomablePoint) {
             drawImage->setEllipse(x, y, pointValue->radiusX, pointValue->radiusY, pointValue->rotation, pointStyle.fillColor, pointStyle.lineColor);
           } else {
             if (dataObjectIndex == 0) drawImage->setDisc(x, y, float(pointStyle.discRadius), pointStyle.fillColor, pointStyle.lineColor);
@@ -502,145 +506,25 @@ void CImgRenderPoints::renderSinglePoints(std::vector<size_t> thinnedPointIndexL
   }
 }
 
-void shouldUseFilterPoints(CStyleConfiguration *styleConfiguration, std::unordered_set<std::string> &useSet, std::unordered_set<std::string> &skipSet) {
-  // TODO: no test uses `skip` and functionality wasn't implemented (but docs said it should work).
+void shouldUseFilterPoints(CStyleConfiguration *styleConfiguration, std::unordered_set<std::string> &usePoints, std::unordered_set<std::string> &skipPoints) {
+  // TODO: skip is never used, and no test exists for this case
   CServerConfig::XMLE_Style *s = styleConfiguration->styleConfig;
   if (s->FilterPoints.size() == 0) return;
   auto attr = s->FilterPoints[0]->attr;
 
   if (!attr.use.empty()) {
-    CT::string useStr = attr.use.c_str();
-    for (const auto &token : useStr.splitToStack(",")) {
-      useSet.insert(token.c_str());
+    for (const auto &token : attr.use.splitToStack(",")) {
+      usePoints.insert(token.c_str());
     }
   }
   if (!attr.skip.empty()) {
-    CT::string skipStr = attr.skip.c_str();
-    for (const auto &token : skipStr.splitToStack(",")) {
-      skipSet.insert(token.c_str());
+    for (const auto &token : attr.skip.splitToStack(",")) {
+      skipPoints.insert(token.c_str());
     }
   }
 }
 
-void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage) {
-  drawPoints = true;
-  drawZoomablePoints = false;
-  defaultColor = CColor(0, 0, 0, 255);
-  isRadiusAndValue = false;
-
-  CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-  if (styleConfiguration == NULL || styleConfiguration->styleConfig == NULL) {
-    CDBDebug("Note: No styleConfiguration. Skipping.");
-    return;
-  }
-
-  // Fill use/skip sets if FilterPoints was set
-  std::unordered_set<std::string> useSet;
-  std::unordered_set<std::string> skipSet;
-  shouldUseFilterPoints(styleConfiguration, useSet, skipSet);
-
-  ThinningInfo thinningInfo = getThinningInfo(styleConfiguration->styleConfig);
-
-  CServerConfig::XMLE_Style *styleConfig = styleConfiguration->styleConfig;
-
-  // TODO: do we use linecolor for points? Only see it for Vector
-
-  for (auto pointConfig : styleConfig->Point) {
-    PointStyle pointStyle = getPointStyle(pointConfig, dataSource->srvParams->cfg);
-    // auto thinnedPointIndexList = doThinningGetIndices(dataSource->getDataObject(0)->points, thinningInfo.doThinning, thinningInfo.thinningRadius, useSet, skipSet);
-
-    // Pre-filter
-    CServerConfig::XMLE_Style *s = styleConfiguration->styleConfig;
-
-    std::set<std::string> usePoints;
-    std::set<std::string> skipPoints;
-    if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL) {
-
-      if (s->FilterPoints.size() == 1) {
-        if (s->FilterPoints[0]->attr.use.empty() == false) {
-          CT::string filterPointsUse = s->FilterPoints[0]->attr.use.c_str();
-          std::vector<CT::string> use = filterPointsUse.splitToStack(",");
-          for (std::vector<CT::string>::iterator it = use.begin(); it != use.end(); ++it) {
-            usePoints.insert(it->c_str());
-          }
-        }
-        if (s->FilterPoints[0]->attr.skip.empty() == false) {
-          CT::string filterPointsSkip = s->FilterPoints[0]->attr.skip.c_str();
-          std::vector<CT::string> skip = filterPointsSkip.splitToStack(",");
-          for (std::vector<CT::string>::iterator it = skip.begin(); it != skip.end(); ++it) {
-            skipPoints.insert(it->c_str());
-          }
-        }
-      }
-    } else {
-      CDBDebug("styleConfiguration==NULL!!!!");
-    }
-
-    auto thinnedPointIndexList = doThinningGetIndices(dataSource->getDataObject(0)->points, thinningInfo.doThinning, thinningInfo.thinningRadius, usePoints);
-
-    if (pointConfig->attr.dot.equalsIgnoreCase("true")) {
-      renderSingleDot(thinnedPointIndexList, dataSource, drawImage, styleConfiguration, pointStyle);
-    }
-
-    if (pointStyle.style == "disc") {
-      renderSingleDiscs(thinnedPointIndexList, dataSource, drawImage, styleConfiguration, pointStyle);
-    } else if (pointStyle.style == "volume") {
-      renderSingleVolumes(thinnedPointIndexList, dataSource, drawImage, styleConfiguration, pointStyle);
-    } else if (pointStyle.style == "symbol") {
-      renderSingleSymbols(thinnedPointIndexList, dataSource, drawImage, styleConfiguration, pointStyle);
-    } else if (pointStyle.style == "zoomablepoint") {
-      drawPoints = true;
-      drawZoomablePoints = true;
-      renderSinglePoints(thinnedPointIndexList, dataSource, drawImage, styleConfiguration, pointStyle);
-    } else if (pointStyle.style == "radiusandvalue") {
-      drawPoints = true;
-      isRadiusAndValue = true;
-      renderSinglePoints(thinnedPointIndexList, dataSource, drawImage, styleConfiguration, pointStyle);
-    } else {
-      drawPoints = true;
-      renderSinglePoints(thinnedPointIndexList, dataSource, drawImage, styleConfiguration, pointStyle);
-    }
-  }
-
-  bool isVector = ((dataSource->getNumDataObjects() >= 2) && (dataSource->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_GEOJSONPOINT") == NULL));
-  if (isVector) {
-    std::vector<PointDVWithLatLon> *p1 = &dataSource->getDataObject(0)->points;
-    std::set<std::string> usePoints;
-    std::set<std::string> skipPoints;
-
-    if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL) {
-      CServerConfig::XMLE_Style *s = styleConfiguration->styleConfig;
-
-      if (s->FilterPoints.size() == 1) {
-        if (s->FilterPoints[0]->attr.use.empty() == false) {
-          CT::string filterPointsUse = s->FilterPoints[0]->attr.use.c_str();
-          std::vector<CT::string> use = filterPointsUse.splitToStack(",");
-          for (std::vector<CT::string>::iterator it = use.begin(); it != use.end(); ++it) {
-            usePoints.insert(it->c_str());
-          }
-        }
-        if (s->FilterPoints[0]->attr.skip.empty() == false) {
-          CT::string filterPointsSkip = s->FilterPoints[0]->attr.skip.c_str();
-          std::vector<CT::string> skip = filterPointsSkip.splitToStack(",");
-          for (std::vector<CT::string>::iterator it = skip.begin(); it != skip.end(); ++it) {
-            skipPoints.insert(it->c_str());
-          }
-        }
-      }
-    }
-
-    auto thinnedPointIndexList = doThinningGetIndices(*p1, thinningInfo.doThinning, thinningInfo.thinningRadius, usePoints);
-    CDBDebug("Vector plotting %d elements %d", thinnedPointIndexList.size(), usePoints.size());
-    // =======
-    //     getThinningInfo(styleConfiguration->styleConfig, thinningInfo);
-    //     auto thinnedPointIndexList = doThinningGetIndices(*p1, thinningInfo.doThinning, thinningInfo.thinningRadius, useSet, skipSet);
-    //     CDBDebug("Vector plotting %d elements %d (use=%d skip=%d)", thinnedPointIndexList.size(), useSet.size(), skipSet.size());
-    // >>>>>>> 32d7ece1 (Refactor pt1)
-    renderVectorPoints(thinnedPointIndexList, warper, dataSource, drawImage, styleConfiguration);
-  }
-}
-
-void CImgRenderPoints::renderSingleVolumes(std::vector<size_t> thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle) {
+void renderSingleVolumes(std::vector<size_t> thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle) {
   std::vector<int> alphaVec = buildAlphaVector(int(pointStyle.discRadius));
 
   for (size_t dataObjectIndex = 0; dataObjectIndex < dataSource->getNumDataObjects(); dataObjectIndex++) {
@@ -667,7 +551,7 @@ void CImgRenderPoints::renderSingleVolumes(std::vector<size_t> thinnedPointIndex
   }
 }
 
-void CImgRenderPoints::renderSingleSymbols(std::vector<size_t> thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle) {
+void renderSingleSymbols(std::vector<size_t> thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle) {
   std::map<std::string, CDrawImage *> symbolCache;
   for (size_t dataObjectIndex = 0; dataObjectIndex < dataSource->getNumDataObjects(); dataObjectIndex++) {
     std::vector<PointDVWithLatLon> *pts = &dataSource->getDataObject(dataObjectIndex)->points;
@@ -701,7 +585,7 @@ void CImgRenderPoints::renderSingleSymbols(std::vector<size_t> thinnedPointIndex
   }
 }
 
-void CImgRenderPoints::renderSingleDiscs(std::vector<size_t> thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle) {
+void renderSingleDiscs(std::vector<size_t> thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle) {
   for (size_t dataObjectIndex = 0; dataObjectIndex < dataSource->getNumDataObjects(); dataObjectIndex++) {
     std::vector<PointDVWithLatLon> *pts = &dataSource->getDataObject(dataObjectIndex)->points;
 
@@ -727,7 +611,7 @@ void CImgRenderPoints::renderSingleDiscs(std::vector<size_t> thinnedPointIndexLi
   }
 }
 
-void CImgRenderPoints::renderSingleDot(std::vector<size_t> thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle) {
+void renderSingleDot(std::vector<size_t> thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle) {
   for (size_t dataObjectIndex = 0; dataObjectIndex < dataSource->getNumDataObjects(); dataObjectIndex++) {
     std::vector<PointDVWithLatLon> *pts = &dataSource->getDataObject(dataObjectIndex)->points;
 
@@ -745,6 +629,54 @@ void CImgRenderPoints::renderSingleDot(std::vector<size_t> thinnedPointIndexList
 
       drawImage->circle(x, y, 1, pointStyle.lineColor, pointStyle.discRadius == 0 ? 0.65 : 1);
     }
+  }
+}
+
+void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage) {
+  CStyleConfiguration *styleConfiguration = dataSource->getStyle();
+  if (styleConfiguration == NULL || styleConfiguration->styleConfig == NULL) {
+    CDBDebug("Note: No styleConfiguration. Skipping.");
+    return;
+  }
+
+  CServerConfig::XMLE_Style *styleConfig = styleConfiguration->styleConfig;
+  if (styleConfig == NULL) {
+    CDBError("styleConfiguration==NULL!");
+  }
+
+  // Fill use/skip sets if FilterPoints was set
+  std::unordered_set<std::string> usePoints;
+  std::unordered_set<std::string> skipPoints;
+  shouldUseFilterPoints(styleConfiguration, usePoints, skipPoints);
+
+  ThinningInfo thinningInfo = getThinningInfo(styleConfiguration->styleConfig);
+
+  for (auto pointConfig : styleConfig->Point) {
+    PointStyle pointStyle = getPointStyle(pointConfig, dataSource->srvParams->cfg);
+    auto thinnedPointIndexList = doThinningGetIndices(dataSource->getDataObject(0)->points, thinningInfo.doThinning, thinningInfo.thinningRadius, usePoints);
+
+    if (pointConfig->attr.dot.equalsIgnoreCase("true")) {
+      renderSingleDot(thinnedPointIndexList, dataSource, drawImage, styleConfiguration, pointStyle);
+    }
+
+    if (pointStyle.style == "disc") {
+      renderSingleDiscs(thinnedPointIndexList, dataSource, drawImage, styleConfiguration, pointStyle);
+    } else if (pointStyle.style == "volume") {
+      renderSingleVolumes(thinnedPointIndexList, dataSource, drawImage, styleConfiguration, pointStyle);
+    } else if (pointStyle.style == "symbol") {
+      renderSingleSymbols(thinnedPointIndexList, dataSource, drawImage, styleConfiguration, pointStyle);
+    } else { // regular points, zoomablepoint and radiusandvalue points
+      renderSinglePoints(thinnedPointIndexList, dataSource, drawImage, styleConfiguration, pointStyle);
+    }
+  }
+
+  bool isVector = ((dataSource->getNumDataObjects() >= 2) && (dataSource->getDataObject(0)->cdfVariable->getAttributeNE("ADAGUC_GEOJSONPOINT") == NULL));
+  if (isVector) {
+    std::vector<PointDVWithLatLon> *p1 = &dataSource->getDataObject(0)->points;
+
+    auto thinnedPointIndexList = doThinningGetIndices(*p1, thinningInfo.doThinning, thinningInfo.thinningRadius, usePoints);
+    CDBDebug("Vector plotting %d elements %d", thinnedPointIndexList.size(), usePoints.size());
+    renderVectorPoints(thinnedPointIndexList, warper, dataSource, drawImage, styleConfiguration);
   }
 }
 
