@@ -33,7 +33,6 @@ struct PointStyle {
   // symbol used for radiusandvalue
   std::string symbol;
 
-  //
   int maxPointCellSize;
   int maxPointsPerCell;
 

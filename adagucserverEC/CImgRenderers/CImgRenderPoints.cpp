@@ -63,9 +63,8 @@ struct ThinningInfo {
   int thinningRadius = 25;
 };
 
-// TODO: does vector scale still work? Are the docs correct?
-
-ThinningInfo getThinningInfo(CServerConfig::XMLE_Style *s, ThinningInfo &info) {
+ThinningInfo getThinningInfo(CServerConfig::XMLE_Style *s) {
+  ThinningInfo info;
   if (s->Thinning.size() == 1 && !s->Thinning[0]->attr.radius.empty()) {
     info.doThinning = true;
     info.thinningRadius = s->Thinning[0]->attr.radius.toInt();
@@ -217,6 +216,7 @@ SimpleSymbolMap makeSymbolMap(CServerConfig::XMLE_Configuration *cfg) {
       symbol.push_back({.x = coordinateStrings[p].toDouble(), .y = coordinateStrings[p + 1].toDouble()});
     }
     simpleSymbolMap[symbolName.c_str()] = symbol;
+    CDBDebug("Created simpleSymbol %s", symbolName.c_str());
   }
   return simpleSymbolMap;
 }
@@ -539,8 +539,7 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
   std::unordered_set<std::string> skipSet;
   shouldUseFilterPoints(styleConfiguration, useSet, skipSet);
 
-  ThinningInfo thinningInfo;
-  getThinningInfo(styleConfiguration->styleConfig, thinningInfo);
+  ThinningInfo thinningInfo = getThinningInfo(styleConfiguration->styleConfig);
 
   CServerConfig::XMLE_Style *styleConfig = styleConfiguration->styleConfig;
 
@@ -573,9 +572,7 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
           }
         }
       }
-
     } else {
-
       CDBDebug("styleConfiguration==NULL!!!!");
     }
 
@@ -584,8 +581,6 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
     if (pointConfig->attr.dot.equalsIgnoreCase("true")) {
       renderSingleDot(thinnedPointIndexList, dataSource, drawImage, styleConfiguration, pointStyle);
     }
-
-    CDBDebug("@ got here, %s", pointStyle.style.c_str());
 
     if (pointStyle.style == "disc") {
       renderSingleDiscs(thinnedPointIndexList, dataSource, drawImage, styleConfiguration, pointStyle);
@@ -598,7 +593,6 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
       drawZoomablePoints = true;
       renderSinglePoints(thinnedPointIndexList, dataSource, drawImage, styleConfiguration, pointStyle);
     } else if (pointStyle.style == "radiusandvalue") {
-      CDBDebug("radius and value, %f", pointStyle.discRadius);
       drawPoints = true;
       isRadiusAndValue = true;
       renderSinglePoints(thinnedPointIndexList, dataSource, drawImage, styleConfiguration, pointStyle);

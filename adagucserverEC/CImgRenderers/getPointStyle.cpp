@@ -10,7 +10,7 @@ PointStyle getPointStyle(CServerConfig::XMLE_Point *pointCfg, CServerConfig::XML
       .style = "point",
 
       .fillColor = CColor(0, 0, 0, 128),
-      .lineColor = CColor(0, 0, 128, 255),
+      .lineColor = CColor(0, 0, 0, 255),
       .textOutlineColor = CColor(255, 255, 255, 0),
       .textColor = CColor(0, 0, 0, 255),
 
@@ -85,15 +85,13 @@ PointStyle getPointStyle(CServerConfig::XMLE_Point *pointCfg, CServerConfig::XML
     pointStyle.textFormat = attr.textformat.c_str();
   }
 
-  // if (attr.pointstyle.empty() == false) {
-  //   drawPointPointStyle = attr.pointstyle.c_str();
-  // }
-
   if (attr.plotstationid.empty() == false) {
     pointStyle.plotStationId = attr.plotstationid.equalsIgnoreCase("true");
   }
 
-  // symbol?
+  if (attr.symbol.empty() == false) {
+    pointStyle.symbol = attr.symbol.c_str();
+  }
 
   return pointStyle;
 }

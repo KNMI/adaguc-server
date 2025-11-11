@@ -6,7 +6,7 @@
 VectorStyle getVectorStyle(CServerConfig::XMLE_Vector *vectorCfg, CServerConfig::XMLE_Configuration *globalConfig) {
 
   VectorStyle vectorStyle = {
-      .lineColor = CColor(0, 0, 128, 255),
+      .lineColor = CColor(0, 0, 0, 255),
       .lineWidth = vectorCfg->attr.linewidth,
       .outlinecolor = CColor(255, 255, 255, 255),
       .outlinewidth = vectorCfg->attr.outlinewidth,
