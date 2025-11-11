@@ -26,8 +26,6 @@
 #ifndef CIMGRENDERPOINTS_H
 #define CIMGRENDERPOINTS_H
 #include "CImageWarperRenderInterface.h"
-#include "getPointStyle.h"
-#include <set>
 
 class CImgRenderPoints : public CImageWarperRenderInterface {
 private:

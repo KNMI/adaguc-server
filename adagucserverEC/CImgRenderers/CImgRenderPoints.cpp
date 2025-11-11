@@ -25,6 +25,7 @@
 
 #include <unordered_set>
 #include "CImgRenderPoints.h"
+#include "getPointStyle.h"
 #include "getVectorStyle.h"
 
 const char *CImgRenderPoints::className = "CImgRenderPoints";
