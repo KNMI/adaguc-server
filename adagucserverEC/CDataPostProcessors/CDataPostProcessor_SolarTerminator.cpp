@@ -90,17 +90,6 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
           result[idx] = gfiValue;
         }
       }
-      // Calculate the only value required and assign it around the pixel in question (3x3 cell)
-      for (int dy = -1; dy <= 1; dy++) {
-        for (int dx = -1; dx <= 1; dx++) {
-          int px = dX + dx;
-          int py = dY + dy;
-          if (px < 0 || py < 0 || px >= dataSource->dWidth || py >= dataSource->dHeight) continue;
-
-          size_t idx = static_cast<size_t>(py) * dataSource->dWidth + static_cast<size_t>(px);
-          result[idx] = gfiValue;
-        }
-      }
 
     } else { // Assuming REQUEST_WMS_GETMAP
       for (size_t j = 0; j < l; j++) {
