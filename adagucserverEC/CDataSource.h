@@ -336,6 +336,7 @@ public:
   void addStep(const char *fileName);
   const char *getFileName();
   void setHeaderFilename(CT::string headerFileName);
+  void setGeo(CGeoParams *geo);
 
   DataObject *getDataObjectByName(const char *name);
   DataObject *getDataObject(int j);

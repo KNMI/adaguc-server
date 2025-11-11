@@ -855,6 +855,9 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 #endif
 
   bool singleCellMode = false;
+  // If there are no files associated with the dataSource, we treat it as a virtual one
+  // Example: solar terminator
+  int isVirtual = dataSource->getFileName() == NULL || dataSource->getFileName()[0] == '\0';
 
   if (x != -1 && y != -1) {
     singleCellMode = true;
@@ -884,11 +887,15 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     }
   }
 #endif
-  if (mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS || mode == CNETCDFREADER_MODE_OPEN_HEADER) {
-    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams, dataSourceFilename.c_str(), enableObjectCache);
-  }
-  if (mode == CNETCDFREADER_MODE_OPEN_ALL || mode == CNETCDFREADER_MODE_GET_METADATA || mode == CNETCDFREADER_MODE_OPEN_EXTENT) {
-    cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource, dataSourceFilename.c_str(), enableObjectCache);
+  if (isVirtual) {
+    cdfObject = dataSource->getDataObject(0)->cdfObject;
+  } else {
+    if (mode == CNETCDFREADER_MODE_OPEN_DIMENSIONS || mode == CNETCDFREADER_MODE_OPEN_HEADER) {
+      cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(dataSource, dataSource->srvParams, dataSourceFilename.c_str(), enableObjectCache);
+    }
+    if (mode == CNETCDFREADER_MODE_OPEN_ALL || mode == CNETCDFREADER_MODE_GET_METADATA || mode == CNETCDFREADER_MODE_OPEN_EXTENT) {
+      cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(dataSource, dataSourceFilename.c_str(), enableObjectCache);
+    }
   }
   if (cdfObject == NULL) {
     CDBError("Unable to get CDFObject from store");
@@ -1060,6 +1067,11 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 
   if (enablePostProcessors) {
     CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
+  }
+
+  // For datasets without files, such as the Solar Terminator
+  if (isVirtual) {
+    CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
   }
 
   if (mode == CNETCDFREADER_MODE_GET_METADATA) {
