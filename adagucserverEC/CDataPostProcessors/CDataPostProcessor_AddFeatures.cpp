@@ -60,7 +60,7 @@ int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource
     if (featureDataSource.setCFGLayer(dataSource->srvParams, dataSource->srvParams->configObj->Configuration[0], dataSource->srvParams->cfg->Layer[0], NULL, 0) != 0) {
       return 1;
     }
-    featureDataSource.addStep(proc->attr.a.c_str(), NULL); // Set filename
+    featureDataSource.addStep(proc->attr.a.c_str()); // Set filename
     CDataReader reader;
     CDBDebug("Opening %s", featureDataSource.getFileName());
     int status = reader.open(&featureDataSource, CNETCDFREADER_MODE_OPEN_ALL);

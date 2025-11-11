@@ -402,14 +402,11 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Conf
   return 0;
 }
 
-void CDataSource::addStep(const char *fileName, CCDFDims *dims) {
+void CDataSource::addStep(const char *fileName) {
   TimeStep *timeStep = new TimeStep();
   timeSteps.push_back(timeStep);
   currentAnimationStep = timeSteps.size() - 1;
   timeStep->fileName.copy(fileName);
-  if (dims != NULL) {
-    timeStep->dims.copy(dims);
-  }
 }
 
 void CDataSource::setHeaderFilename(CT::string headerFilename) { this->headerFilename = headerFilename; }

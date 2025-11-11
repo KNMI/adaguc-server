@@ -943,7 +943,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
     for (size_t k = 0; k < store->getSize(); k++) {
       CDBStore::Record *record = store->getRecord(k);
       // CDBDebug("Addstep");
-      dataSource->addStep(record->get(0)->c_str(), NULL);
+      dataSource->addStep(record->get(0)->c_str());
 #ifdef CREQUEST_DEBUG
       CDBDebug("Step %d: [%s]", k, record->get(0)->c_str());
 #endif
@@ -2472,7 +2472,7 @@ int CRequest::determineTypesForDataSources() {
         }
 
         CDBDebug("Addstep");
-        dataSources[j]->addStep(fileList[0].c_str(), NULL);
+        dataSources[j]->addStep(fileList[0].c_str());
         // dataSources[j]->getCDFDims()->addDimension("none","0",0);
       }
     }
@@ -2480,7 +2480,7 @@ int CRequest::determineTypesForDataSources() {
     if (dataSources[j]->dLayerType == CConfigReaderLayerTypeCascaded) {
       // This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.
       CDBDebug("Addstep");
-      dataSources[j]->addStep("", NULL);
+      dataSources[j]->addStep("");
       // dataSources[j]->getCDFDims()->addDimension("none","0",0);
     }
     if (dataSources[j]->dLayerType == CConfigReaderLayerTypeLiveUpdate) {

@@ -18,7 +18,7 @@ int layerTypeLiveUpdateConfigureDimensionsInDataSource(CDataSource *dataSource) 
   // Basic case of liveupdate layer
   if (dataSource->cfgLayer->DataPostProc.empty()) {
     // // Add step to empty file
-    dataSource->addStep("", NULL);
+    dataSource->addStep("");
     dataSource->getCDFDims()->addDimension("none", "0", 0);
   } else {
     // Case of liveupdate layers with data post processors (such as solar terminator)
@@ -36,7 +36,7 @@ int layerTypeLiveUpdateConfigureDimensionsInDataSource(CDataSource *dataSource) 
         CDBError("fileList.size()==0");
         return 1;
       }
-      dataSource->addStep(fileList[0].c_str(), NULL);
+      dataSource->addStep(fileList[0].c_str());
     }
   }
   return 0;
