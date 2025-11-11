@@ -35,7 +35,7 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
   void *sourceData;
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-  CImgWarpGenericDrawFunctionState settings;
+  GDWDrawFunctionSettings settings;
   settings.dfNodataValue = dataSource->getFirstAvailableDataObject()->dfNodataValue;
   settings.legendValueRange = (bool)styleConfiguration->hasLegendValueRange;
   settings.legendLowerRange = styleConfiguration->legendLowerRange;
@@ -46,15 +46,22 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
     settings.hasNodataValue = true;
     settings.dfNodataValue = -100000.f;
   }
-  settings.width = drawImage->Geo->dWidth;
-  settings.height = drawImage->Geo->dHeight;
 
-  settings.dataField = new float[settings.width * settings.height];
-  for (int y = 0; y < settings.height; y++) {
-    for (int x = 0; x < settings.width; x++) {
-      settings.dataField[x + y * settings.width] = (float)settings.dfNodataValue;
-    }
-  }
+  int destDataWidth = drawImage->Geo->dWidth;
+  int destDataHeight = drawImage->Geo->dHeight;
+  size_t numGridElements = destDataWidth * destDataHeight;
+  CDF::allocateData(CDF_FLOAT, &settings.destinationGrid, numGridElements);
+  CDF::fill(settings.destinationGrid, CDF_FLOAT, settings.dfNodataValue, numGridElements);
+
+  // settings.destDataWidth = drawImage->Geo->dWidth;
+  // settings.destDataHeight = drawImage->Geo->dHeight;
+
+  // settings.destinationGrid = new float[settings.destDataWidth * settings.destDataHeight];
+  // for (int y = 0; y < settings.destDataHeight; y++) {
+  //   for (int x = 0; x < settings.destDataWidth; x++) {
+  //     ((float *)settings.destinationGrid)[x + y * settings.destDataWidth] = (float)settings.dfNodataValue;
+  //   }
+  // }
 
   CDFType dataType = dataSource->getFirstAvailableDataObject()->cdfVariable->getType();
   sourceData = dataSource->getFirstAvailableDataObject()->cdfVariable->data;
@@ -68,7 +75,6 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
   sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
   sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
   sourceGeo.CRS = dataSource->nativeProj4;
-  settings.useHalfCellOffset = true;
 
   GenericDataWarper genericDataWarper;
   GDWArgs args = {.warper = warper, .sourceData = sourceData, .sourceGeoParams = &sourceGeo, .destGeoParams = drawImage->Geo};
@@ -78,9 +84,9 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
   ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
 
-  for (int y = 0; y < (int)settings.height; y = y + 1) {
-    for (int x = 0; x < (int)settings.width; x = x + 1) {
-      float val = settings.dataField[x + y * settings.width];
+  for (int y = 0; y < (int)destDataHeight; y = y + 1) {
+    for (int x = 0; x < (int)destDataWidth; x = x + 1) {
+      float val = ((float *)settings.destinationGrid)[x + y * destDataWidth];
       if (val != (float)settings.dfNodataValue && val == val) {
         if (styleConfiguration->legendLog != 0) val = log10(val + .000001) / log10(styleConfiguration->legendLog);
         val *= styleConfiguration->legendScale;
@@ -93,15 +99,15 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
       }
     }
   }
-  delete[] settings.dataField;
+  delete[] (float *)settings.destinationGrid;
 
   return;
 }
 
 int CImgWarpGeneric::set(const char *) { return 0; }
 
-template <typename T> void imgWarpGenericDrawFunction(int x, int y, T val, GDWState &warperState, CImgWarpGenericDrawFunctionState &settings) {
-  if (x < 0 || y < 0 || x > settings.width || y > settings.height) return;
+template <typename T> void imgWarpGenericDrawFunction(int x, int y, T val, GDWState &warperState, GDWDrawFunctionSettings &settings) {
+  if (x < 0 || y < 0 || x > warperState.destDataWidth || y > warperState.destDataHeight) return;
 
   if (settings.hasNodataValue) {
     if ((val) == (T)settings.dfNodataValue) return;
@@ -126,25 +132,25 @@ template <typename T> void imgWarpGenericDrawFunction(int x, int y, T val, GDWSt
   values[0][1] += ((T *)sourceData)[nfast_mod(sourceDataPX + 0, sourceDataWidth) + nfast_mod(sourceDataPY + 1, sourceDataHeight) * sourceDataWidth];
   values[1][1] += ((T *)sourceData)[nfast_mod(sourceDataPX + 1, sourceDataWidth) + nfast_mod(sourceDataPY + 1, sourceDataHeight) * sourceDataWidth];
 
-  if (x >= 0 && y >= 0 && x < (int)settings.width && y < (int)settings.height) {
+  if (x >= 0 && y >= 0 && x < (int)warperState.destDataWidth && y < (int)warperState.destDataHeight) {
     float dx = warperState.tileDx;
     float dy = warperState.tileDy;
     float gx1 = (1 - dx) * values[0][0] + dx * values[1][0];
     float gx2 = (1 - dx) * values[0][1] + dx * values[1][1];
     float bilValue = (1 - dy) * gx1 + dy * gx2;
-    settings.dataField[x + y * settings.width] = bilValue;
+    ((float *)settings.destinationGrid)[x + y * warperState.destDataWidth] = bilValue;
   }
 };
 
 // Indicate which template specializations are needed, also allows code to be compiled faster as changes are done only in the CPP file.
-template void imgWarpGenericDrawFunction<char>(int x, int y, char val, GDWState &warperState, CImgWarpGenericDrawFunctionState &settings);
-template void imgWarpGenericDrawFunction<int8_t>(int x, int y, int8_t val, GDWState &warperState, CImgWarpGenericDrawFunctionState &settings);
-template void imgWarpGenericDrawFunction<uchar>(int x, int y, uchar val, GDWState &warperState, CImgWarpGenericDrawFunctionState &settings);
-template void imgWarpGenericDrawFunction<short>(int x, int y, short val, GDWState &warperState, CImgWarpGenericDrawFunctionState &settings);
-template void imgWarpGenericDrawFunction<ushort>(int x, int y, ushort val, GDWState &warperState, CImgWarpGenericDrawFunctionState &settings);
-template void imgWarpGenericDrawFunction<int>(int x, int y, int val, GDWState &warperState, CImgWarpGenericDrawFunctionState &settings);
-template void imgWarpGenericDrawFunction<uint>(int x, int y, uint val, GDWState &warperState, CImgWarpGenericDrawFunctionState &settings);
-template void imgWarpGenericDrawFunction<long>(int x, int y, long val, GDWState &warperState, CImgWarpGenericDrawFunctionState &settings);
-template void imgWarpGenericDrawFunction<ulong>(int x, int y, ulong val, GDWState &warperState, CImgWarpGenericDrawFunctionState &settings);
-template void imgWarpGenericDrawFunction<float>(int x, int y, float val, GDWState &warperState, CImgWarpGenericDrawFunctionState &settings);
-template void imgWarpGenericDrawFunction<double>(int x, int y, double val, GDWState &warperState, CImgWarpGenericDrawFunctionState &settings);
+template void imgWarpGenericDrawFunction<char>(int x, int y, char val, GDWState &warperState, GDWDrawFunctionSettings &settings);
+template void imgWarpGenericDrawFunction<int8_t>(int x, int y, int8_t val, GDWState &warperState, GDWDrawFunctionSettings &settings);
+template void imgWarpGenericDrawFunction<uchar>(int x, int y, uchar val, GDWState &warperState, GDWDrawFunctionSettings &settings);
+template void imgWarpGenericDrawFunction<short>(int x, int y, short val, GDWState &warperState, GDWDrawFunctionSettings &settings);
+template void imgWarpGenericDrawFunction<ushort>(int x, int y, ushort val, GDWState &warperState, GDWDrawFunctionSettings &settings);
+template void imgWarpGenericDrawFunction<int>(int x, int y, int val, GDWState &warperState, GDWDrawFunctionSettings &settings);
+template void imgWarpGenericDrawFunction<uint>(int x, int y, uint val, GDWState &warperState, GDWDrawFunctionSettings &settings);
+template void imgWarpGenericDrawFunction<long>(int x, int y, long val, GDWState &warperState, GDWDrawFunctionSettings &settings);
+template void imgWarpGenericDrawFunction<ulong>(int x, int y, ulong val, GDWState &warperState, GDWDrawFunctionSettings &settings);
+template void imgWarpGenericDrawFunction<float>(int x, int y, float val, GDWState &warperState, GDWDrawFunctionSettings &settings);
+template void imgWarpGenericDrawFunction<double>(int x, int y, double val, GDWState &warperState, GDWDrawFunctionSettings &settings);

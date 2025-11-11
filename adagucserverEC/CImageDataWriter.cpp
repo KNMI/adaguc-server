@@ -661,7 +661,7 @@ void CImageDataWriter::setValue(CDFType type, void *data, size_t ptr, double pix
   if (type == CDF_DOUBLE) ((double *)data)[ptr] = (double)pixel;
 }
 
-int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int dataSourceIndex, int dX, int dY) {
+int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> &dataSources, int dataSourceIndex, int dX, int dY) {
   CImageWarper imageWarper;
 #ifdef MEASURETIME
   StopWatch_Stop("getFeatureInfo");

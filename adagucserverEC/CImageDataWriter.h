@@ -166,7 +166,7 @@ public:
 
   static int createScaleBar(CGeoParams *geoParams, CDrawImage *scaleBarImage, float scaling);
 
-  int getFeatureInfo(std::vector<CDataSource *> dataSources, int dataSourceIndex, int dX, int dY);
+  int getFeatureInfo(std::vector<CDataSource *> &dataSources, int dataSourceIndex, int dX, int dY);
   int createAnimation();
   void setDate(const char *date);
   int calculateData(std::vector<CDataSource *> &dataSources);

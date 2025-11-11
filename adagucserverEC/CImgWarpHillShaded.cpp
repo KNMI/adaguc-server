@@ -27,7 +27,6 @@
 #include "CImageDataWriter.h"
 #include "CGenericDataWarper.h"
 #include "f8vector.h"
-#include "GenericDataWarper/gdwDrawFunction.h"
 #include <CCDFTypes.h>
 #include "CImgWarpGeneric/CImgWarpGeneric.h"
 
@@ -41,11 +40,11 @@ template <typename T> double getGridValueFromFloat(int x, int y, GDWState &drawS
 
 static inline int mfast_mod(const int input, const int ceil) { return input >= ceil ? input % ceil : input; }
 
-template <class T> void hillShadedDrawFunction(int x, int y, T val, GDWState &warperState, CImgWarpGenericDrawFunctionState &drawFunctionState) {
-  if (x < 0 || y < 0 || x > drawFunctionState.width || y > drawFunctionState.height) return;
+template <class T> void hillShadedDrawFunction(int x, int y, T val, GDWState &warperState, GDWDrawFunctionSettings &drawFunctionState) {
+  if (x < 0 || y < 0 || x > warperState.destDataWidth || y > warperState.destDataHeight) return;
   bool isNodata = false;
-  if (warperState.hasNodataValue) {
-    if ((val) == (T)warperState.dfNodataValue) isNodata = true;
+  if (drawFunctionState.hasNodataValue) {
+    if ((val) == (T)drawFunctionState.dfNodataValue) isNodata = true;
   }
   if (!(val == val)) isNodata = true;
   if (!isNodata)
@@ -87,7 +86,7 @@ template <class T> void hillShadedDrawFunction(int x, int y, T val, GDWState &wa
     f8vector v02 = f8vector({.x = sourceDataPX + 0., .y = sourceDataPY + 2., .z = values[0][2]});
     f8vector v12 = f8vector({.x = sourceDataPX + 1., .y = sourceDataPY + 2., .z = values[1][2]});
 
-    if (x >= 0 && y >= 0 && x < (int)drawFunctionState.width && y < (int)drawFunctionState.height) {
+    if (x >= 0 && y >= 0 && x < (int)warperState.destDataWidth && y < (int)warperState.destDataHeight) {
       f8vector normal00 = cross(v10 - v00, v01 - v00).norm();
       f8vector normal10 = cross(v20 - v10, v11 - v10).norm();
       f8vector normal01 = cross(v11 - v01, v02 - v01).norm();
@@ -102,7 +101,7 @@ template <class T> void hillShadedDrawFunction(int x, int y, T val, GDWState &wa
       float gx1 = (1 - dx) * c00 + dx * c10;
       float gx2 = (1 - dx) * c01 + dx * c11;
       float bilValue = (1 - dy) * gx1 + dy * gx2;
-      drawFunctionState.dataField[x + y * drawFunctionState.width] = (bilValue + 1) / 1.816486;
+      ((float *)drawFunctionState.destinationGrid)[x + y * warperState.destDataWidth] = (bilValue + 1) / 1.816486;
     }
   }
 }
@@ -113,7 +112,7 @@ void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, C
   CDBDebug("Hill");
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-  CImgWarpGenericDrawFunctionState settings;
+  GDWDrawFunctionSettings settings;
   settings.dfNodataValue = dataSource->getFirstAvailableDataObject()->dfNodataValue;
   settings.legendValueRange = (bool)styleConfiguration->hasLegendValueRange;
   settings.legendLowerRange = styleConfiguration->legendLowerRange;
@@ -124,15 +123,12 @@ void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, C
     settings.hasNodataValue = true;
     settings.dfNodataValue = -100000.f;
   }
-  settings.width = drawImage->Geo->dWidth;
-  settings.height = drawImage->Geo->dHeight;
+  int destDataWidth = drawImage->Geo->dWidth;
+  int destDataHeight = drawImage->Geo->dHeight;
+  size_t numGridElements = destDataWidth * destDataHeight;
+  CDF::allocateData(CDF_FLOAT, &settings.destinationGrid, numGridElements);
+  CDF::fill(settings.destinationGrid, CDF_FLOAT, settings.dfNodataValue, numGridElements);
 
-  settings.dataField = new float[settings.width * settings.height];
-  for (int y = 0; y < settings.height; y++) {
-    for (int x = 0; x < settings.width; x++) {
-      settings.dataField[x + y * settings.width] = (float)settings.dfNodataValue;
-    }
-  }
   CDFType dataType = dataSource->getDataObject(0)->cdfVariable->getType();
   sourceData = dataSource->getDataObject(0)->cdfVariable->data;
   CGeoParams sourceGeo(dataSource);
@@ -147,9 +143,9 @@ void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, C
   ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
 
-  for (int y = 0; y < settings.height; y = y + 1) {
-    for (int x = 0; x < settings.width; x = x + 1) {
-      float val = ((float *)settings.dataField)[x + y * settings.width];
+  for (int y = 0; y < destDataHeight; y = y + 1) {
+    for (int x = 0; x < destDataWidth; x = x + 1) {
+      float val = ((float *)settings.destinationGrid)[x + y * destDataWidth];
       if (val != (double)settings.dfNodataValue && val == val) {
         if (styleConfiguration->legendLog != 0) val = log10(val + .000001) / log10(styleConfiguration->legendLog);
         val *= styleConfiguration->legendScale;
@@ -162,7 +158,7 @@ void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, C
       }
     }
   }
-  delete[] ((float *)settings.dataField);
+  delete[] ((float *)settings.destinationGrid);
   // CDBDebug("render done");
   return;
 }

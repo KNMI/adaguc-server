@@ -22,10 +22,8 @@ struct GDWState {
   double tileDx, tileDy;
   double dfNodataValue;
   bool hasNodataValue;
-  bool useHalfCellOffset = false;
-  int destDataWidth, destDataHeight, destX, destY;
-  CDFType destinationDataType;
-  void *destinationGrid = nullptr;
+  int destDataWidth, destDataHeight;
+  int destX, destY;
 };
 
 struct GDWArgs {

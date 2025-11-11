@@ -23,7 +23,7 @@ public:
   }
 };
 
-struct GDWDrawFunctionSettings : GDWState {
+struct GDWDrawFunctionSettings {
   double dfNodataValue;
   double legendValueRange;
   double legendLowerRange;
@@ -43,6 +43,11 @@ struct GDWDrawFunctionSettings : GDWState {
   std::vector<Interval> intervals;
   float *smoothingDistanceMatrix = nullptr;
   CDrawImage *drawImage;
+
+  // int destDataHeight;
+  // int destDataWidth;
+  CDFType destinationDataType;
+  void *destinationGrid = nullptr;
 };
 
 void gdwDrawFunction(GDWState *_drawSettings);

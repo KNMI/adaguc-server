@@ -62,85 +62,86 @@ double gdwGetValueFromSourceFunction(int x, int y, GDWDrawFunctionSettings *draw
 };
 
 void gdwDrawFunction(GDWState *_drawSettings) {
-  GDWDrawFunctionSettings *drawSettings = (GDWDrawFunctionSettings *)_drawSettings;
-  int x = drawSettings->destX;
-  int y = drawSettings->destY;
-  if (x < 0 || y < 0 || x >= drawSettings->destDataWidth || y >= drawSettings->destDataHeight) return;
+  // GDWDrawFunctionSettings *drawSettings = (GDWDrawFunctionSettings *)_drawSettings;
+  // int x = drawSettings->destX;
+  // int y = drawSettings->destY;
+  // if (x < 0 || y < 0 || x >= drawSettings->destDataWidth || y >= drawSettings->destDataHeight) return;
 
-  double val = gdwGetValueFromSourceFunction(drawSettings->sourceDataPX, drawSettings->sourceDataPY, drawSettings);
-  bool isNodata = false;
-  if (drawSettings->hasNodataValue) {
-    if (val == drawSettings->dfNodataValue) isNodata = true;
-  }
-  if (!(val == val)) isNodata = true;
-  if (!isNodata) {
-    int sourceDataPX = drawSettings->sourceDataPX;
-    int sourceDataPY = drawSettings->sourceDataPY;
-    int sourceDataWidth = drawSettings->sourceDataWidth;
-    int sourceDataHeight = drawSettings->sourceDataHeight;
+  // double val = gdwGetValueFromSourceFunction(drawSettings->sourceDataPX, drawSettings->sourceDataPY, drawSettings);
+  // bool isNodata = false;
+  // if (drawSettings->hasNodataValue) {
+  //   if (val == drawSettings->dfNodataValue) isNodata = true;
+  // }
+  // if (!(val == val)) isNodata = true;
+  // if (!isNodata) {
+  //   int sourceDataPX = drawSettings->sourceDataPX;
+  //   int sourceDataPY = drawSettings->sourceDataPY;
+  //   int sourceDataWidth = drawSettings->sourceDataWidth;
+  //   int sourceDataHeight = drawSettings->sourceDataHeight;
 
-    if (sourceDataPX < 0 || sourceDataPY < 0 || sourceDataPY > sourceDataHeight - 1 || sourceDataPX > sourceDataWidth - 1) return;
+  //   if (sourceDataPX < 0 || sourceDataPY < 0 || sourceDataPY > sourceDataHeight - 1 || sourceDataPX > sourceDataWidth - 1) return;
 
-    bool bilinear = drawSettings->drawInImage == DrawInImageBilinear || drawSettings->drawInDataGrid == DrawInDataGridBilinear;
-    bool nearest = drawSettings->drawInImage == DrawInImageNearest || drawSettings->drawInDataGrid == DrawInDataGridNearest;
+  //   bool bilinear = drawSettings->drawInImage == DrawInImageBilinear || drawSettings->drawInDataGrid == DrawInDataGridBilinear;
+  //   bool nearest = drawSettings->drawInImage == DrawInImageNearest || drawSettings->drawInDataGrid == DrawInDataGridNearest;
 
-    if (drawSettings->smoothingFiter == 0) {
+  //   if (drawSettings->smoothingFiter == 0) {
 
-      // Bilinear
-      if (bilinear && sourceDataPY <= sourceDataHeight - 2 && sourceDataPX <= sourceDataWidth - 2) {
-        int xL = (sourceDataPX + 0);
-        int yT = (sourceDataPY + 0);
-        int xR = (sourceDataPX + 1);
-        int yB = (sourceDataPY + 1);
-        double values[2][2];
-        values[0][0] = gdwGetValueFromSourceFunction(xL, yT, drawSettings);
-        values[1][0] = gdwGetValueFromSourceFunction(xR, yT, drawSettings);
-        values[0][1] = gdwGetValueFromSourceFunction(xL, yB, drawSettings);
-        values[1][1] = gdwGetValueFromSourceFunction(xR, yB, drawSettings);
+  //     // Bilinear
+  //     if (bilinear && sourceDataPY <= sourceDataHeight - 2 && sourceDataPX <= sourceDataWidth - 2) {
+  //       int xL = (sourceDataPX + 0);
+  //       int yT = (sourceDataPY + 0);
+  //       int xR = (sourceDataPX + 1);
+  //       int yB = (sourceDataPY + 1);
+  //       double values[2][2];
+  //       values[0][0] = gdwGetValueFromSourceFunction(xL, yT, drawSettings);
+  //       values[1][0] = gdwGetValueFromSourceFunction(xR, yT, drawSettings);
+  //       values[0][1] = gdwGetValueFromSourceFunction(xL, yB, drawSettings);
+  //       values[1][1] = gdwGetValueFromSourceFunction(xR, yB, drawSettings);
 
-        double dx = drawSettings->tileDx;
-        double dy = drawSettings->tileDy;
-        double gx1 = (1 - dx) * values[0][0] + dx * values[1][0];
-        double gx2 = (1 - dx) * values[0][1] + dx * values[1][1];
-        double billValue = (1 - dy) * gx1 + dy * gx2;
-        // Draw in drawImage pixels, interpolated with bilinear method
-        if (drawSettings->drawInImage == DrawInImageBilinear) {
-          setPixelInDrawImage(x, y, billValue, drawSettings);
-        }
+  //       double dx = drawSettings->tileDx;
+  //       double dy = drawSettings->tileDy;
+  //       double gx1 = (1 - dx) * values[0][0] + dx * values[1][0];
+  //       double gx2 = (1 - dx) * values[0][1] + dx * values[1][1];
+  //       double billValue = (1 - dy) * gx1 + dy * gx2;
+  //       // Draw in drawImage pixels, interpolated with bilinear method
+  //       if (drawSettings->drawInImage == DrawInImageBilinear) {
+  //         setPixelInDrawImage(x, y, billValue, drawSettings);
+  //       }
 
-        if (drawSettings->drawInDataGrid == DrawInDataGridBilinear && drawSettings->destinationGrid != nullptr) {
-          ((double *)drawSettings->destinationGrid)[x + y * drawSettings->drawImage->Geo->dWidth] = billValue;
-        }
-      }
+  //       if (drawSettings->drawInDataGrid == DrawInDataGridBilinear && drawSettings->destinationGrid != nullptr) {
+  //         ((double *)drawSettings->destinationGrid)[x + y * drawSettings->drawImage->Geo->dWidth] = billValue;
+  //       }
+  //     }
 
-      // Nearest
-      if (nearest) {
-        int xL = (sourceDataPX + 0);
-        int yT = (sourceDataPY + 0);
+  //     // Nearest
+  //     if (nearest) {
+  //       int xL = (sourceDataPX + 0);
+  //       int yT = (sourceDataPY + 0);
 
-        double value = gdwGetValueFromSourceFunction(xL, yT, drawSettings);
+  //       double value = gdwGetValueFromSourceFunction(xL, yT, drawSettings);
 
-        // Draw in drawImage pixels, interpolated with nearest method
-        if (drawSettings->drawInImage == DrawInImageNearest) {
-          setPixelInDrawImage(x, y, value, drawSettings);
-        }
+  //       // Draw in drawImage pixels, interpolated with nearest method
+  //       if (drawSettings->drawInImage == DrawInImageNearest) {
+  //         setPixelInDrawImage(x, y, value, drawSettings);
+  //       }
 
-        if (drawSettings->drawInDataGrid == DrawInDataGridNearest && drawSettings->destinationGrid != nullptr) {
-          ((double *)drawSettings->destinationGrid)[x + y * drawSettings->drawImage->Geo->dWidth] = value; // TODO
-        }
-      }
+  //       if (drawSettings->drawInDataGrid == DrawInDataGridNearest && drawSettings->destinationGrid != nullptr) {
+  //         ((double *)drawSettings->destinationGrid)[x + y * drawSettings->drawImage->Geo->dWidth] = value; // TODO
+  //       }
+  //     }
 
-    } else {
-      // values[0][0] = smoothingAtLocation((float *)sourceData, drawSettings->smoothingDistanceMatrix, drawSettings->smoothingFiter, (float)drawSettings->dfNodataValue, sourceDataPX, sourceDataPY,
-      //                                    sourceDataWidth, sourceDataHeight);
-      // values[1][0] = smoothingAtLocation((float *)sourceData, drawSettings->smoothingDistanceMatrix, drawSettings->smoothingFiter, (float)drawSettings->dfNodataValue, sourceDataPX + 1,
-      // sourceDataPY,
-      //                                    sourceDataWidth, sourceDataHeight);
-      // values[0][1] = smoothingAtLocation((float *)sourceData, drawSettings->smoothingDistanceMatrix, drawSettings->smoothingFiter, (float)drawSettings->dfNodataValue, sourceDataPX, sourceDataPY +
-      // 1,
-      //                                    sourceDataWidth, sourceDataHeight);
-      // values[1][1] = smoothingAtLocation((float *)sourceData, drawSettings->smoothingDistanceMatrix, drawSettings->smoothingFiter, (float)drawSettings->dfNodataValue, sourceDataPX + 1,
-      //                                    sourceDataPY + 1, sourceDataWidth, sourceDataHeight);
-    }
-  }
+  //   } else {
+  //     // values[0][0] = smoothingAtLocation((float *)sourceData, drawSettings->smoothingDistanceMatrix, drawSettings->smoothingFiter, (float)drawSettings->dfNodataValue, sourceDataPX, sourceDataPY,
+  //     //                                    sourceDataWidth, sourceDataHeight);
+  //     // values[1][0] = smoothingAtLocation((float *)sourceData, drawSettings->smoothingDistanceMatrix, drawSettings->smoothingFiter, (float)drawSettings->dfNodataValue, sourceDataPX + 1,
+  //     // sourceDataPY,
+  //     //                                    sourceDataWidth, sourceDataHeight);
+  //     // values[0][1] = smoothingAtLocation((float *)sourceData, drawSettings->smoothingDistanceMatrix, drawSettings->smoothingFiter, (float)drawSettings->dfNodataValue, sourceDataPX, sourceDataPY
+  //     +
+  //     // 1,
+  //     //                                    sourceDataWidth, sourceDataHeight);
+  //     // values[1][1] = smoothingAtLocation((float *)sourceData, drawSettings->smoothingDistanceMatrix, drawSettings->smoothingFiter, (float)drawSettings->dfNodataValue, sourceDataPX + 1,
+  //     //                                    sourceDataPY + 1, sourceDataWidth, sourceDataHeight);
+  //   }
+  // }
 };
