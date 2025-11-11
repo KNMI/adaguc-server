@@ -597,7 +597,6 @@ CT::PointerList<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(C
   if (styleNames.size() > 1) start = 1;
   // Loop over the styles.
   try {
-    // CDBDebug("There are %d styles to check",styleNames->size());
     for (size_t i = start; i < styleNames.size(); i++) {
 
       // Lookup the style index in the servers configuration
@@ -1010,7 +1009,6 @@ int CDataSource::attachCDFObject(CDFObject *cdfObject, bool dataSourceOwnsDataOb
 
       // Set units
       if (!cfgVar->attr.units.empty()) {
-        CDBDebug("Trying to set unit %s", cfgVar->attr.units.c_str());
         var->setAttributeText("units", cfgVar->attr.units);
       }
 
