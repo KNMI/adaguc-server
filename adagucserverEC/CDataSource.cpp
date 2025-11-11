@@ -991,6 +991,28 @@ int CDataSource::attachCDFObject(CDFObject *cdfObject, bool dataSourceOwnsDataOb
       return 1;
     }
   }
+  // Shorthand to variable configuration in the layer.
+  for (auto *cfgVar : cfgLayer->Variable) {
+    CDF::Variable *var = cdfObject->getVar(cfgVar->value);
+    if (var != nullptr) {
+
+      // Set long_name
+      if (!cfgVar->attr.long_name.empty()) {
+        var->setAttributeText("long_name", cfgVar->attr.long_name);
+      }
+
+      // Set units
+      if (!cfgVar->attr.units.empty()) {
+        CDBDebug("Trying to set unit %s", cfgVar->attr.units.c_str());
+        var->setAttributeText("units", cfgVar->attr.units);
+      }
+
+      // Set standard_name
+      if (!cfgVar->attr.standard_name.empty()) {
+        var->setAttributeText("standard_name", cfgVar->attr.standard_name);
+      }
+    }
+  }
   this->dataSourceOwnsDataObject = dataSourceOwnsDataObject;
   return 0;
 }
