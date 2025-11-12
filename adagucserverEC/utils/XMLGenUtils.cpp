@@ -653,7 +653,7 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
   CServerParams *srvParam = metadataLayer->dataSource->srvParams;
 
   for (size_t p = 0; p < srvParam->cfg->Projection.size(); p++) {
-    CGeoParams geo;
+    GeoParameters geo;
     geo.crs.copy(srvParam->cfg->Projection[p]->attr.id.c_str());
 
 #ifdef MEASURETIME

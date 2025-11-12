@@ -131,7 +131,7 @@ int CDrawImage::createImage(int _dW, int _dH) {
   return createImage(geoParams);
 }
 
-int CDrawImage::createImage(CGeoParams &_Geo) {
+int CDrawImage::createImage(GeoParameters &_Geo) {
   // CDBDebug("CreateImage from GeoParams");
 #ifdef MEASURETIME
   StopWatch_Stop("start createImage of size %d %d, truecolor=[%d], transparency = [%d], currentGraphicsRenderer [%d]", _Geo.dWidth, _Geo.dHeight, _bEnableTrueColor, _bEnableTransparency,

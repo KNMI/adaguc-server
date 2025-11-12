@@ -31,7 +31,7 @@
 // #define GenericDataWarper_DEBUG
 
 template <typename T>
-int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParams &sourceGeoParams, CGeoParams &destGeoParams,
+int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, GeoParameters &sourceGeoParams, GeoParameters &destGeoParams,
                               const std::function<void(int, int, T, GDWState &warperState)> &drawFunction) {
 
   warperState.sourceData = _sourceData;
@@ -427,7 +427,7 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
 }
 
 #define SPECIALIZE_TEMPLATE(CDFTYPE, CPPTYPE)                                                                                                                                                          \
-  template int GenericDataWarper::render<CPPTYPE>(CImageWarper * warper, void *_sourceData, CGeoParams &sourceGeoParams, CGeoParams &destGeoParams,                                                    \
+  template int GenericDataWarper::render<CPPTYPE>(CImageWarper * warper, void *_sourceData, GeoParameters &sourceGeoParams, GeoParameters &destGeoParams,                                              \
                                                   const std::function<void(int, int, CPPTYPE, GDWState &warperState)> &drawFunction);
 ENUMERATE_OVER_CDFTYPES(SPECIALIZE_TEMPLATE)
 #undef SPECIALIZE_TEMPLATE

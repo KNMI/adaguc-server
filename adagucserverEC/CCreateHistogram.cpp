@@ -94,7 +94,7 @@ int CCreateHistogram::addData(std::vector<CDataSource *> &dataSources) {
       settings.height = dataSource->srvParams->geoParams.height;
       settings.data = warpedData;
 
-      CGeoParams sourceGeo;
+      GeoParameters sourceGeo;
 
       sourceGeo.width = dataSource->dWidth;
       sourceGeo.height = dataSource->dHeight;

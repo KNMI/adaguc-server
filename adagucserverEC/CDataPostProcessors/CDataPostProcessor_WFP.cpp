@@ -145,7 +145,7 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
 
     float *windSectorDataField = (float *)windSpeedDifferenceVariable->data; // Array / grid to read FROM
 
-    CGeoParams sourceGeo;
+    GeoParameters sourceGeo;
 
     sourceGeo.width = windSpeedDifferenceVariable->getDimension("x")->length;
     sourceGeo.height = windSpeedDifferenceVariable->getDimension("y")->length;
@@ -157,7 +157,7 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
     sourceGeo.cellsizeY = (sourceGeo.bbox.bottom - sourceGeo.bbox.top) / sourceGeo.height;
     sourceGeo.crs = "+proj=lcc +lat_1=52.500000 +lat_2=52.500000 +lat_0=52.500000 +lon_0=.000000 +k_0=1.0 +x_0=-92962.569890 +y_0=230385.198586 +a=6371229.000000 +b=6371229.000000"; // TODO
 
-    CGeoParams destGeo;
+    GeoParameters destGeo;
     destGeo.width = dataSource->dWidth;
     destGeo.height = dataSource->dHeight;
     destGeo.bbox = dataSource->dfBBOX;

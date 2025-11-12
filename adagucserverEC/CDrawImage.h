@@ -37,7 +37,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "CGeoParams.h"
+#include "Types/GeoParameters.h"
 #include "CServerError.h"
 #include "CServerConfig_CPPXSD.h"
 #include <math.h>
@@ -104,13 +104,13 @@ public:
   gdImagePtr image;
 
   int colors[256];
-  CGeoParams geoParams;
+  GeoParameters geoParams;
   CDrawImage();
   ~CDrawImage();
 
 public:
   int createImage(int _dW, int _dH);
-  int createImage(CGeoParams &_Geo);
+  int createImage(GeoParameters &_Geo);
   int createImage(const char *fn);
   int createImage(CDrawImage *image, int width, int height);
   int printImagePng8(bool useBitAlpha);

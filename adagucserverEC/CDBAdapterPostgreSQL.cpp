@@ -28,7 +28,7 @@
 #include <map>
 #include "CDebugger.h"
 #include "CServerError.h"
-#include "CGeoParams.h"
+#include "Types/GeoParameters.h"
 
 const char *CDBAdapterPostgreSQL::className = "CDBAdapterPostgreSQL";
 #define CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP "pathfiltertablelookup_v2_0_23"

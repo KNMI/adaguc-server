@@ -7,7 +7,7 @@
 #include <proj.h>
 #include <math.h>
 #include <cfloat>
-#include "CGeoParams.h"
+#include "Types/GeoParameters.h"
 #include "CImageWarper.h"
 #include "CDebugger.h"
 #include "CGenericDataWarperTools.h"
@@ -29,8 +29,8 @@ struct GDWState {
 struct GDWArgs {
   CImageWarper *warper;
   void *sourceData;
-  CGeoParams sourceGeoParams;
-  CGeoParams destGeoParams;
+  GeoParameters sourceGeoParams;
+  GeoParameters destGeoParams;
 };
 
 class GenericDataWarper {
@@ -40,7 +40,7 @@ private:
 
 public:
   template <typename T>
-  int render(CImageWarper *warper, void *_sourceData, CGeoParams &sourceGeoParams, CGeoParams &destGeoParams, const std::function<void(int, int, T, GDWState &warperState)> &drawFunction);
+  int render(CImageWarper *warper, void *_sourceData, GeoParameters &sourceGeoParams, GeoParameters &destGeoParams, const std::function<void(int, int, T, GDWState &warperState)> &drawFunction);
 
   template <typename T> int render(GDWArgs &args, const std::function<void(int, int, T, GDWState &warperState)> &drawFunction) {
     return render(args.warper, args.sourceData, args.sourceGeoParams, args.destGeoParams, drawFunction);

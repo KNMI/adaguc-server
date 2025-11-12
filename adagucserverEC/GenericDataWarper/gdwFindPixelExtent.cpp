@@ -1,8 +1,8 @@
 #include <array>
 #include <limits>
-#include <CGeoParams.h>
+#include <Types/GeoParameters.h>
 #include <CImageWarper.h>
-int gdwFindPixelExtent(int *PXExtentBasedOnSource, CGeoParams &sourceGeoParams, CGeoParams &destGeoParams, CImageWarper *warper) {
+int gdwFindPixelExtent(int *PXExtentBasedOnSource, GeoParameters &sourceGeoParams, GeoParameters &destGeoParams, CImageWarper *warper) {
   int sourceDataWidth = sourceGeoParams.width;
   int sourceDataHeight = sourceGeoParams.height;
 

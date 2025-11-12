@@ -411,7 +411,7 @@ void CDataSource::addStep(const char *fileName) {
 
 void CDataSource::setHeaderFilename(CT::string headerFilename) { this->headerFilename = headerFilename; }
 
-void CDataSource::setGeo(CGeoParams &geo) {
+void CDataSource::setGeo(GeoParameters &geo) {
   nativeProj4 = geo.crs;
   dWidth = geo.width;
   dHeight = geo.height;
@@ -1055,8 +1055,8 @@ int CDataSource::readVariableDataForCDFDims(CDF::Variable *variableToRead, CDFTy
 
 std::string CDataSource::getDataSetName() { return std::string(this->srvParams->datasetLocation.c_str()); }
 
-CGeoParams CDataSource::makeGeoParams() {
-  CGeoParams geoParams;
+GeoParameters CDataSource::makeGeoParams() {
+  GeoParameters geoParams;
   geoParams.width = this->dWidth;
   geoParams.height = this->dHeight;
   geoParams.bbox = this->dfBBOX;

@@ -333,8 +333,8 @@ public:
   void addStep(const char *fileName);
   const char *getFileName();
   void setHeaderFilename(CT::string headerFileName);
-  void setGeo(CGeoParams &geo);
-  CGeoParams getGeo();
+  void setGeo(GeoParameters &geo);
+  GeoParameters getGeo();
 
   DataObject *getDataObjectByName(const char *name);
   DataObject *getDataObject(int j);
@@ -399,7 +399,7 @@ public:
 
   std::string getDataSetName();
 
-  CGeoParams makeGeoParams();
+  GeoParameters makeGeoParams();
 };
 
 #endif

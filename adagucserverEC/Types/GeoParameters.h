@@ -29,6 +29,7 @@
 #include <math.h>
 #include <map>
 #include <CKeyValuePair.h>
+#include <cstddef>
 
 struct i4point {
   int x, y;
@@ -66,7 +67,7 @@ struct f8component {
   double angledeg();
 };
 
-struct CGeoParams {
+struct GeoParameters {
   int width = 1;
   int height = 1;
   f8box bbox;

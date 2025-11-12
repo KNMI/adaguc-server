@@ -34,7 +34,7 @@
 #include "CDBStore.h"
 #include "CDebugger.h"
 
-#include "CGeoParams.h"
+#include "Types/GeoParameters.h"
 #include "CPGSQLDB.h"
 
 #define TABLETYPE_TIMESTAMP 1

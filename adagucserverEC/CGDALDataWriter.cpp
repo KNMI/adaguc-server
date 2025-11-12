@@ -267,7 +267,7 @@ int CGDALDataWriter::addData(std::vector<CDataSource *> &dataSources) {
     CDBError("Unable to initialize projection");
     return 1;
   }
-  CGeoParams sourceGeo;
+  GeoParameters sourceGeo;
 
   sourceGeo.width = dataSource->dWidth;
   sourceGeo.height = dataSource->dHeight;

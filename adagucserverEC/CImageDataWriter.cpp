@@ -1182,7 +1182,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
       return 1;
     }
 
-    CGeoParams sourceGeo;
+    GeoParameters sourceGeo;
 
     sourceGeo.width = dataSource->dWidth;
     sourceGeo.height = dataSource->dHeight;
@@ -3339,4 +3339,4 @@ int CImageDataWriter::drawText(int x, int y, const char *fontlocation, float siz
   return 0;
 }
 
-int CImageDataWriter::createScaleBar(CGeoParams &geoParams, CDrawImage *scaleBarImage, float scaling) { return CCreateScaleBar::createScaleBar(scaleBarImage, geoParams, scaling); }
+int CImageDataWriter::createScaleBar(GeoParameters &geoParams, CDrawImage *scaleBarImage, float scaling) { return CCreateScaleBar::createScaleBar(scaleBarImage, geoParams, scaling); }

@@ -91,7 +91,7 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
 
   CDFType dataType = dataSource->getFirstAvailableDataObject()->cdfVariable->getType();
   sourceData = dataSource->getFirstAvailableDataObject()->cdfVariable->data;
-  CGeoParams sourceGeo;
+  GeoParameters sourceGeo;
   sourceGeo.width = dataSource->dWidth;
   sourceGeo.height = dataSource->dHeight;
   sourceGeo.bbox = dataSource->dfBBOX;

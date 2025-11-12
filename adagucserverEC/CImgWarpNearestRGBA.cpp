@@ -232,7 +232,7 @@ void *CImgWarpNearestRGBA::drawTiles(void *arg) {
   return arg;
 }
 
-int CImgWarpNearestRGBA::reproj(CImageWarper *warper, CDataSource *, CGeoParams &GeoDest, double dfx, double dfy, double x_div, double y_div) {
+int CImgWarpNearestRGBA::reproj(CImageWarper *warper, CDataSource *, GeoParameters &GeoDest, double dfx, double dfy, double x_div, double y_div) {
   double psx[4];
   double psy[4];
   double dfTiledBBOX[4];
@@ -309,7 +309,7 @@ void CImgWarpNearestRGBA::render(CImageWarper *warper, CDataSource *dataSource, 
   int internalHeight = tile_height * y_div;
 
   // New geo location needs to be extended based on new width and height
-  CGeoParams internalGeo = drawImage->geoParams;
+  GeoParameters internalGeo = drawImage->geoParams;
 
   internalGeo.bbox.right = ((drawImage->geoParams.bbox.right - drawImage->geoParams.bbox.left) / double(drawImage->geoParams.width)) * double(internalWidth) + drawImage->geoParams.bbox.left;
   internalGeo.bbox.bottom = ((drawImage->geoParams.bbox.bottom - drawImage->geoParams.bbox.top) / double(drawImage->geoParams.height)) * double(internalHeight) + drawImage->geoParams.bbox.top;

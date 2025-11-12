@@ -23,7 +23,8 @@
  *
  ******************************************************************************/
 
-#include "CGeoParams.h"
+#include "Types/GeoParameters.h"
+#include <cstddef>
 
 f8point f8point::rad() { return {.x = (x * (M_PI / 180.)), .y = (y * (M_PI / 180.))}; }
 

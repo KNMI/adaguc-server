@@ -91,7 +91,7 @@ private:
   // Reproject the corners of the tiles
   double y_corners[4], x_corners[4];
   double dfMaskBBOX[4];
-  int reproj(CImageWarper *warper, CDataSource *, CGeoParams &GeoDest, double dfx, double dfy, double x_div, double y_div) {
+  int reproj(CImageWarper *warper, CDataSource *, GeoParameters &GeoDest, double dfx, double dfy, double x_div, double y_div) {
     double psx[4];
     double psy[4];
     double dfTiledBBOX[4];
@@ -385,7 +385,7 @@ private:
 
       CDFType dataType = dataSource->getFirstAvailableDataObject()->cdfVariable->getType();
       void *sourceData = dataSource->getFirstAvailableDataObject()->cdfVariable->data;
-      CGeoParams sourceGeo;
+      GeoParameters sourceGeo;
       sourceGeo.width = dataSource->dWidth;
       sourceGeo.height = dataSource->dHeight;
       sourceGeo.bbox = dataSource->dfBBOX;
@@ -430,7 +430,7 @@ private:
     internalHeight = tile_height * y_div;
 
     // New geo location needs to be extended based on new width and height
-    CGeoParams internalGeo = drawImage->geoParams;
+    GeoParameters internalGeo = drawImage->geoParams;
 
     internalGeo.bbox.right = ((drawImage->geoParams.bbox.right - drawImage->geoParams.bbox.left) / double(drawImage->geoParams.width)) * double(internalWidth) + drawImage->geoParams.bbox.left;
     internalGeo.bbox.bottom = ((drawImage->geoParams.bbox.bottom - drawImage->geoParams.bbox.top) / double(drawImage->geoParams.height)) * double(internalHeight) + drawImage->geoParams.bbox.top;

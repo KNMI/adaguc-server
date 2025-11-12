@@ -123,7 +123,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
 
     CT::string srvParamBboxProj4Params = CImageWarper::getProj4FromId(dataSource, srvParam->responceCrs);
     CT::string srvParamGridProj4Params = CImageWarper::getProj4FromId(dataSource, srvParam->geoParams.crs);
-    CGeoParams serverWCSGeoParams = this->srvParam->geoParams;
+    GeoParameters serverWCSGeoParams = this->srvParam->geoParams;
     if (!srvParamBboxProj4Params.empty()) {
       serverWCSGeoParams.crs = srvParamBboxProj4Params;
     }
@@ -546,7 +546,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
     dataSource->srvParams = this->srvParam;
 
     CT::string srvParamGridProj4Params = CImageWarper::getProj4FromId(dataSource, srvParam->geoParams.crs);
-    CGeoParams clonedSrvGeoParams;
+    GeoParameters clonedSrvGeoParams;
     clonedSrvGeoParams = srvParam->geoParams;
     clonedSrvGeoParams.crs = srvParamGridProj4Params;
 
@@ -555,7 +555,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       CDBError("Unable to initialize projection");
       return 1;
     }
-    CGeoParams sourceGeo;
+    GeoParameters sourceGeo;
 
     bool usePixelExtent = false;
     bool optimizeExtentForTiles = false;

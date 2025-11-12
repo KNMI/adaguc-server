@@ -213,7 +213,7 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
       settings.data = (void *)varToWriteTo->data;  // To write TO
       void *sourceData = (void *)varToClone->data; // To read FROM
 
-      CGeoParams sourceGeo;
+      GeoParameters sourceGeo;
       sourceGeo.width = dataSourceToInclude->dWidth;
       sourceGeo.height = dataSourceToInclude->dHeight;
       sourceGeo.bbox = dataSourceToInclude->dfBBOX;
@@ -221,7 +221,7 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
       sourceGeo.cellsizeY = dataSourceToInclude->dfCellSizeY;
       sourceGeo.crs = dataSourceToInclude->nativeProj4;
 
-      CGeoParams destGeo;
+      GeoParameters destGeo;
       destGeo.width = dataSource->dWidth;
       destGeo.height = dataSource->dHeight;
       destGeo.bbox = dataSource->dfBBOX;

@@ -191,7 +191,7 @@ int CImageWarper::reprojModelFromLatLon(double &dfx, double &dfy) {
   return 0;
 }
 
-int CImageWarper::reprojpoint_inv_topx(double &dfx, double &dfy, CGeoParams &_geoDest) {
+int CImageWarper::reprojpoint_inv_topx(double &dfx, double &dfy, GeoParameters &_geoDest) {
   if (reprojpoint_inv(dfx, dfy) != 0) return 1;
   dfx = (dfx - _geoDest.bbox.left) / (_geoDest.bbox.right - _geoDest.bbox.left) * double(_geoDest.width);
   dfy = (dfy - _geoDest.bbox.top) / (_geoDest.bbox.bottom - _geoDest.bbox.top) * double(_geoDest.height);
@@ -254,12 +254,12 @@ int CImageWarper::decodeCRS(CT::string *outputCRS, CT::string *inputCRS, std::ve
 }
 
 int CImageWarper::init(const char *destString, const char *fromProjString, std::vector<CServerConfig::XMLE_Projection *> *_prj) {
-  CGeoParams geo;
+  GeoParameters geo;
   geo.crs = fromProjString;
   return initreproj(destString, geo, _prj);
 }
 
-int CImageWarper::initreproj(CDataSource *dataSource, CGeoParams &GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj) {
+int CImageWarper::initreproj(CDataSource *dataSource, GeoParameters &GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj) {
   if (dataSource == NULL) {
     CDBError("dataSource==%s", dataSource == NULL ? "NULL" : "not-null");
     return 1;
@@ -272,13 +272,13 @@ int CImageWarper::initreproj(CDataSource *dataSource, CGeoParams &GeoDest, std::
 }
 
 pthread_mutex_t CImageWarper_initreproj;
-int CImageWarper::initreproj(const char *projString, CGeoParams &GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj) {
+int CImageWarper::initreproj(const char *projString, GeoParameters &GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj) {
   pthread_mutex_lock(&CImageWarper_initreproj);
   int status = _initreprojSynchronized(projString, GeoDest, _prj);
   pthread_mutex_unlock(&CImageWarper_initreproj);
   return status;
 }
-int CImageWarper::_initreprojSynchronized(const char *projString, CGeoParams &_GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj) {
+int CImageWarper::_initreprojSynchronized(const char *projString, GeoParameters &_GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj) {
 
   if (projString == NULL) {
     projString = LATLONPROJECTION;

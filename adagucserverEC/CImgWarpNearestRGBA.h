@@ -90,7 +90,7 @@ private:
   // Reproject the corners of the tiles
   double y_corners[4], x_corners[4];
   double dfMaskBBOX[4];
-  int reproj(CImageWarper *warper, CDataSource *dataSource, CGeoParams &GeoDest, double dfx, double dfy, double x_div, double y_div);
+  int reproj(CImageWarper *warper, CDataSource *dataSource, GeoParameters &GeoDest, double dfx, double dfy, double x_div, double y_div);
 
   // Setup projection and all other settings for the tiles to draw
   void render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage);

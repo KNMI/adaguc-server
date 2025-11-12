@@ -156,8 +156,6 @@ add_library(
     CGDALDataWriter.h
     CGeoJSONData.cpp
     CGeoJSONData.h
-    CGeoParams.cpp
-    CGeoParams.h
     CGetFileInfo.cpp
     CGetFileInfo.h
     CHandleMetadata.cpp
@@ -235,6 +233,8 @@ add_library(
     json.h
     LayerTypeLiveUpdate/LayerTypeLiveUpdate.cpp
     LayerTypeLiveUpdate/LayerTypeLiveUpdate.h
+    Types/GeoParameters.cpp
+    Types/GeoParameters.h
     Types/BBOX.h
     Types/BBOX.cpp
     Types/ProjectionStore.h

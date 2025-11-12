@@ -2,7 +2,7 @@
 #include "projectionUtils.h"
 #include <Types/CPointTypes.h>
 
-void CoordinatesXYtoScreenXY(double &x, double &y, CGeoParams &geoParam) {
+void CoordinatesXYtoScreenXY(double &x, double &y, GeoParameters &geoParam) {
   x -= geoParam.bbox.left;
   y -= geoParam.bbox.top;
   double bboxW = geoParam.bbox.right - geoParam.bbox.left;
@@ -13,7 +13,7 @@ void CoordinatesXYtoScreenXY(double &x, double &y, CGeoParams &geoParam) {
   y *= double(geoParam.height);
 }
 
-void CoordinatesXYtoScreenXY(f8point &p, CGeoParams &geoParam) {
+void CoordinatesXYtoScreenXY(f8point &p, GeoParameters &geoParam) {
   p.x -= geoParam.bbox.left;
   p.y -= geoParam.bbox.top;
   double bboxW = geoParam.bbox.right - geoParam.bbox.left;
@@ -24,7 +24,7 @@ void CoordinatesXYtoScreenXY(f8point &p, CGeoParams &geoParam) {
   p.y *= double(geoParam.height);
 }
 
-void CoordinatesXYtoScreenXY(f8box &b, CGeoParams &geoParam) {
+void CoordinatesXYtoScreenXY(f8box &b, GeoParameters &geoParam) {
   CoordinatesXYtoScreenXY(b.left, b.top, geoParam);
   CoordinatesXYtoScreenXY(b.right, b.bottom, geoParam);
 }
