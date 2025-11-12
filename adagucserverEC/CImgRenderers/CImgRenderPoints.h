@@ -26,46 +26,16 @@
 #ifndef CIMGRENDERPOINTS_H
 #define CIMGRENDERPOINTS_H
 #include "CImageWarperRenderInterface.h"
-#include <set>
 
 class CImgRenderPoints : public CImageWarperRenderInterface {
 private:
   DEF_ERRORFUNCTION();
-  bool drawPoints;
-  bool drawDiscs;
-  bool drawVolume;
-  bool drawSymbol;
-  bool drawZoomablePoints;
-  bool doThinning;
-  int thinningRadius;
-  int drawPointFontSize;
-  float drawPointDiscRadius;
-  int drawPointTextRadius;
-  bool drawPointDot;
-  float drawPointAngleStart;
-  float drawPointAngleStep;
-  bool useDrawPointAngles;
-  bool drawPointPlotStationId;
-  const char *drawPointFontFile;
-  CT::string drawPointTextFormat;
-  CT::string drawPointPointStyle;
-  CColor drawPointTextColor;
-  CColor drawPointTextOutlineColor;
-  CColor drawPointFillColor;
-  CColor drawPointLineColor;
-  CColor defaultColor;
-
-    bool useDrawPointFillColor;
-  bool useDrawPointTextColor;
-  bool isRadiusAndValue;
-
-  void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration,
-                          CServerConfig::XMLE_Point *pointConfig);
 
 public:
   void render(CImageWarper *, CDataSource *, CDrawImage *);
   int set(const char *) { return 0; }; // Deprecated.
-  int getPixelIndexForValue(CDataSource *dataSource, float val);
-  CColor getPixelColorForValue(CDrawImage *drawImage, CDataSource *dataSource, float val);
 };
 #endif
+
+int getPixelIndexForValue(CDataSource *dataSource, float val);
+CColor getPixelColorForValue(CDrawImage *drawImage, CDataSource *dataSource, float val);

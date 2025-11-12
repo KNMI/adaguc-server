@@ -14,6 +14,7 @@ Purpose: holds configuration attributes for rendering vector/point (wind) symbol
 
 | Attribute     | Type    | Default     | Description |
 |---------------|---------|-------------|-------------|
+| `fillcolor`   | string  | ""          | Color used for filling the point (hex like "#RRGGBB" or with alpha) |
 | `linecolor`   | string  | ""          | Color used for the vector/barb/disc (hex like "#RRGGBB" or with alpha) |
 | `linewidth`   | double  | 1.0         | Line width for vector or barb |
 | `scale`       | float   | 1.0         | Only for vector style: scale factor to convert speed to drawn length |
@@ -23,10 +24,12 @@ Purpose: holds configuration attributes for rendering vector/point (wind) symbol
 | `textformat`  | string  | ""          | printf-style format used when plotvalue is enabled (e.g. "%1.0f") |
 | `min`         | double  | -DBL_MAX    | Minimum data range for rendering |
 | `max`         | double  | DBL_MAX     | Maximum data range for rendering |
+| `fontfile`    | string  | ""          | Font file |
 | `fontsize`    | double  | 12          | Font size used when rendering text |
 | `outlinewidth`| double  | 4.5         | Outline stroke width around text/symbols |
 | `outlinecolor`| string  | ""          | Outline color string |
 | `textcolor`   | string  | ""          | Text color string |
+| `discradius`  | double  | 20          | Draw disc at location
 | `dot`         | string  | "false"     | Draw a point at the point coordinates (stored as string, e.g. "true"/"false")
 
 
