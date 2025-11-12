@@ -56,7 +56,7 @@ public:
   static int convertKNMIH5EchoToppenHeader(CDFObject *cdfObject);
 
   /**
-   * @brief Set the data for the variable in screenspace coordinates as defined in dataSource->srvParams->Geo. Wheter all data is read or only the CDM structure depends on the mode.
+   * @brief Set the data for the variable in screenspace coordinates as defined in dataSource->srvParams->geoParams. Wheter all data is read or only the CDM structure depends on the mode.
    *
    * @param dataSource
    * @param mode CNETCDFREADER_MODE_OPEN_HEADER or CNETCDFREADER_MODE_OPEN_ALL

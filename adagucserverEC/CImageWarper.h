@@ -32,6 +32,7 @@
 #include <math.h>
 #include "CDebugger.h"
 #include "CStopWatch.h"
+#include "Types/CPointTypes.h"
 
 #define LATLONPROJECTION "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
 void floatToString(char *string, size_t maxlen, float number);

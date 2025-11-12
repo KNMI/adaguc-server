@@ -126,9 +126,9 @@ int CDrawImage::createImage(const char *fn) {
 
 int CDrawImage::createImage(int _dW, int _dH) {
   // CDBDebug("CreateImage from WH");
-  Geo.dWidth = _dW;
-  Geo.dHeight = _dH;
-  return createImage(Geo);
+  geoParams.dWidth = _dW;
+  geoParams.dHeight = _dH;
+  return createImage(geoParams);
 }
 
 int CDrawImage::createImage(CGeoParams &_Geo) {
@@ -146,19 +146,19 @@ int CDrawImage::createImage(CGeoParams &_Geo) {
     return 1;
   }
 
-  Geo = _Geo;
+  geoParams = _Geo;
   // CDBDebug("BLA %d",_bEnableTrueColor);
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
     // Always true color
 
     if (_bEnableTransparency == false) {
-      cairo = new CCairoPlotter(Geo.dWidth, Geo.dHeight, TTFFontSize, TTFFontLocation, BGColorR, BGColorG, BGColorB, 255);
+      cairo = new CCairoPlotter(geoParams.dWidth, geoParams.dHeight, TTFFontSize, TTFFontLocation, BGColorR, BGColorG, BGColorB, 255);
     } else {
-      cairo = new CCairoPlotter(Geo.dWidth, Geo.dHeight, TTFFontSize, TTFFontLocation, 0, 0, 0, 0);
+      cairo = new CCairoPlotter(geoParams.dWidth, geoParams.dHeight, TTFFontSize, TTFFontLocation, 0, 0, 0, 0);
     }
   }
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
-    image = gdImageCreate(Geo.dWidth, Geo.dHeight);
+    image = gdImageCreate(geoParams.dWidth, geoParams.dHeight);
     gdFTUseFontConfig(1);
   }
   dImageCreated = 1;
@@ -930,9 +930,9 @@ int CDrawImage::drawTextArea(int x, int y, const char *fontfile, float size, flo
   int offset = 0;
   CT::string title = _text;
   int length = title.length();
-  CCairoPlotter *ftTitle = new CCairoPlotter(Geo.dWidth, Geo.dHeight, (cairo->getByteBuffer()), size, fontfile);
+  CCairoPlotter *ftTitle = new CCairoPlotter(geoParams.dWidth, geoParams.dHeight, (cairo->getByteBuffer()), size, fontfile);
   float textY = 0;
-  int width = Geo.dWidth - x;
+  int width = geoParams.dWidth - x;
   int widthOfText, heightOfText;
   //
   do {
@@ -971,7 +971,7 @@ int CDrawImage::drawTextArea(int x, int y, const char *fontfile, float size, flo
 
 void CDrawImage::drawText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor fgcolor, CColor bgcolor) {
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    CCairoPlotter *freeType = this->getCairoPlotter(fontfile, size, Geo.dWidth, Geo.dHeight, cairo->getByteBuffer());
+    CCairoPlotter *freeType = this->getCairoPlotter(fontfile, size, geoParams.dWidth, geoParams.dHeight, cairo->getByteBuffer());
     freeType->setColor(fgcolor.r, fgcolor.g, fgcolor.b, fgcolor.a);
     freeType->setFillColor(bgcolor.r, bgcolor.g, bgcolor.b, bgcolor.a);
     freeType->drawFilledText(x, y, angle, text);
@@ -1059,7 +1059,7 @@ void CDrawImage::setTextDisc(int x, int y, int discRadius, const char *text, con
 
 void CDrawImage::drawAnchoredText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color, int anchor) {
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    CCairoPlotter *freeType = this->getCairoPlotter(fontfile, size, Geo.dWidth, Geo.dHeight, cairo->getByteBuffer());
+    CCairoPlotter *freeType = this->getCairoPlotter(fontfile, size, geoParams.dWidth, geoParams.dHeight, cairo->getByteBuffer());
     freeType->setColor(color.r, color.g, color.b, color.a);
     freeType->drawAnchoredText(x, y, angle, text, anchor);
     cairo->isAlphaUsed |= freeType->isAlphaUsed; // remember freetype's isAlphaUsed flag
@@ -1091,7 +1091,7 @@ CCairoPlotter *CDrawImage::getCairoPlotter(const char *fontfile, float size, int
 void CDrawImage::drawCenteredText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color, CColor textOutlineColor) {
 
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    CCairoPlotter *freeType = this->getCairoPlotter(fontfile, size, Geo.dWidth, Geo.dHeight, cairo->getByteBuffer());
+    CCairoPlotter *freeType = this->getCairoPlotter(fontfile, size, geoParams.dWidth, geoParams.dHeight, cairo->getByteBuffer());
     freeType->setColor(color.r, color.g, color.b, color.a);
     if (textOutlineColor.a == 0) {
       freeType->drawCenteredText(x, y, angle, text);
@@ -1125,7 +1125,7 @@ void CDrawImage::drawCenteredTextNoOverlap(int x, int y, const char *fontFile, f
   float radAngle = angle * M_PI / 180;
   CRectangleText rect;
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    CCairoPlotter *freeType = this->getCairoPlotter(fontFile, size, Geo.dWidth, Geo.dHeight, cairo->getByteBuffer());
+    CCairoPlotter *freeType = this->getCairoPlotter(fontFile, size, geoParams.dWidth, geoParams.dHeight, cairo->getByteBuffer());
     freeType->setColor(color.r, color.g, color.b, color.a);
     freeType->getTextSize(w, h, radAngle, text);
     rect.init(x, y, (x + w), (y + h), angle, padding, text, fontFile, size, color);
@@ -1154,7 +1154,7 @@ void CDrawImage::drawCenteredTextNoOverlap(int x, int y, const char *fontFile, f
 void CDrawImage::drawText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color) {
 
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    CCairoPlotter *freeType = this->getCairoPlotter(fontfile, size, Geo.dWidth, Geo.dHeight, cairo->getByteBuffer());
+    CCairoPlotter *freeType = this->getCairoPlotter(fontfile, size, geoParams.dWidth, geoParams.dHeight, cairo->getByteBuffer());
     freeType->setColor(color.r, color.g, color.b, color.a);
     freeType->drawText(x, y, angle, text);
     cairo->isAlphaUsed |= freeType->isAlphaUsed; // remember freetype's isAlphaUsed flag
@@ -1548,9 +1548,9 @@ int CDrawImage::addImage(int delay) {
 
     // Make sure a new image is available for drawing
     if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
-      image = gdImageCreate(Geo.dWidth, Geo.dHeight);
+      image = gdImageCreate(geoParams.dWidth, geoParams.dHeight);
     } else {
-      image = gdImageCreateTrueColor(Geo.dWidth, Geo.dHeight);
+      image = gdImageCreateTrueColor(geoParams.dWidth, geoParams.dHeight);
       gdImageSaveAlpha(image, true);
     }
     dImageCreated = 1;
@@ -1632,9 +1632,9 @@ bool CDrawImage::isColorTransparent(int &color) {
 
 void CDrawImage::getCanvasSize(int &x1, int &y1, int &w, int &h) {
   w = 0;
-  x1 = Geo.dWidth;
-  for (int y = 0; y < Geo.dHeight; y++) {
-    for (int x = w; x < Geo.dWidth; x++)
+  x1 = geoParams.dWidth;
+  for (int y = 0; y < geoParams.dHeight; y++) {
+    for (int x = w; x < geoParams.dWidth; x++)
       if (!isPixelTransparent(x, y)) w = x;
     for (int x = 0; x < x1; x++)
       if (!isPixelTransparent(x, y)) x1 = x;
@@ -1643,10 +1643,10 @@ void CDrawImage::getCanvasSize(int &x1, int &y1, int &w, int &h) {
   w = w - x1 + 1;
 
   h = 0;
-  y1 = Geo.dHeight;
+  y1 = geoParams.dHeight;
 
   for (int x = x1; x < w; x++) {
-    for (int y = h; y < Geo.dHeight; y++)
+    for (int y = h; y < geoParams.dHeight; y++)
       if (!isPixelTransparent(x, y)) h = y;
     for (int y = 0; y < y1; y++)
       if (!isPixelTransparent(x, y)) y1 = y;
@@ -1723,13 +1723,13 @@ int CDrawImage::draw(int destx, int desty, int sourcex, int sourcey, CDrawImage 
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
     dTranspColor = gdImageGetTransparent(simage->image);
   }
-  for (int y = 0; y < simage->Geo.dHeight; y++) {
-    for (int x = 0; x < simage->Geo.dWidth; x++) {
+  for (int y = 0; y < simage->geoParams.dHeight; y++) {
+    for (int x = 0; x < simage->geoParams.dWidth; x++) {
       int sx = x + sourcex;
       int sy = y + sourcey;
       int dx = x + destx;
       int dy = y + desty;
-      if (sx >= 0 && sy >= 0 && dx >= 0 && dy >= 0 && sx < simage->Geo.dWidth && sy < simage->Geo.dHeight && dx < Geo.dWidth && dy < Geo.dHeight) {
+      if (sx >= 0 && sy >= 0 && dx >= 0 && dy >= 0 && sx < simage->geoParams.dWidth && sy < simage->geoParams.dHeight && dx < geoParams.dWidth && dy < geoParams.dHeight) {
         // Get source r,g,b,a
         if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
           simage->cairo->getPixel(sx, sy, r, g, b, a);
@@ -1762,13 +1762,13 @@ int CDrawImage::drawrotated(int destx, int desty, int sourcex, int sourcey, CDra
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
     dTranspColor = gdImageGetTransparent(simage->image);
   }
-  for (int y = 0; y < simage->Geo.dHeight; y++) {
-    for (int x = 0; x < simage->Geo.dWidth; x++) {
+  for (int y = 0; y < simage->geoParams.dHeight; y++) {
+    for (int x = 0; x < simage->geoParams.dWidth; x++) {
       int sx = x + sourcex;
       int sy = y + sourcey;
-      int dx = simage->Geo.dHeight - y - desty;
+      int dx = simage->geoParams.dHeight - y - desty;
       int dy = x + destx;
-      if (sx >= 0 && sy >= 0 && dx >= 0 && dy >= 0 && sx < simage->Geo.dWidth && sy < simage->Geo.dHeight && dx < Geo.dWidth && dy < Geo.dHeight) {
+      if (sx >= 0 && sy >= 0 && dx >= 0 && dy >= 0 && sx < simage->geoParams.dWidth && sy < simage->geoParams.dHeight && dx < geoParams.dWidth && dy < geoParams.dHeight) {
         // Get source r,g,b,a
         if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
           simage->cairo->getPixel(sx, sy, r, g, b, a);
@@ -1815,22 +1815,22 @@ void CDrawImage::crop(int paddingW, int paddingH) {
   if (y1 < 0) {
     y1 = 0;
   }
-  if (x1 > Geo.dWidth) {
-    x1 = Geo.dWidth;
+  if (x1 > geoParams.dWidth) {
+    x1 = geoParams.dWidth;
   };
-  if (y1 > Geo.dHeight) {
-    y1 = Geo.dHeight;
+  if (y1 > geoParams.dHeight) {
+    y1 = geoParams.dHeight;
   }
   if (paddingW < 0) {
     x1 = 0;
-    w1 = Geo.dWidth;
+    w1 = geoParams.dWidth;
   }
   if (paddingH < 0) {
     y1 = 0;
-    h1 = Geo.dHeight;
+    h1 = geoParams.dHeight;
   }
-  if (h1 > Geo.dHeight - y1) h1 = Geo.dHeight - y1;
-  if (w1 > Geo.dWidth - x1) w1 = Geo.dWidth - x1;
+  if (h1 > geoParams.dHeight - y1) h1 = geoParams.dHeight - y1;
+  if (w1 > geoParams.dWidth - x1) w1 = geoParams.dWidth - x1;
 
   setCanvasSize(x1, y1, w1, h1);
 }
@@ -1842,16 +1842,9 @@ void CDrawImage::crop(int paddingW, int paddingH) {
 void CDrawImage::crop(int padding) { crop(padding, padding); }
 
 void CDrawImage::rotate() {
-  int w = Geo.dWidth;
-  int h = Geo.dHeight;
-  //   if(this->Geo.dWidth!=1)w=srvParam->Geo.dWidth;
-  //   if(srvParam->Geo.dHeight!=1)h=srvParam->Geo.dHeight;
-  //   if (requestedWidth>requestedHeight) {
-  //     int x,y,w,h;
-  //     getCanvasSize(x,y,w,h);
-  //     // rotate image 90 degrees counter clockwise
-  //
-  //   }
+  int w = geoParams.dWidth;
+  int h = geoParams.dHeight;
+
   CDrawImage temp;
   temp.createImage(this, w, h);
 
@@ -1893,9 +1886,9 @@ int CDrawImage::getRenderer() { return currentGraphicsRenderer; }
 
 void CDrawImage::setRenderer(int type) { currentGraphicsRenderer = type; }
 
-int CDrawImage::getHeight() { return Geo.dHeight; }
+int CDrawImage::getHeight() { return geoParams.dHeight; }
 
-int CDrawImage::getWidth() { return Geo.dWidth; }
+int CDrawImage::getWidth() { return geoParams.dWidth; }
 
 const char *CDrawImage::getFontLocation() { return this->TTFFontLocation; }
 

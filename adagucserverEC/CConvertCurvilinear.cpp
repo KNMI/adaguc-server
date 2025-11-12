@@ -226,9 +226,9 @@ int CConvertCurvilinear::convertCurvilinearHeader(CDFObject *cdfObject, CServerP
     CDBError("srvParams is not set");
     return 1;
   }
-  if (srvParams->Geo.dWidth > 1 && srvParams->Geo.dHeight > 1) {
-    width = srvParams->Geo.dWidth;
-    height = srvParams->Geo.dHeight;
+  if (srvParams->geoParams.dWidth > 1 && srvParams->geoParams.dHeight > 1) {
+    width = srvParams->geoParams.dWidth;
+    height = srvParams->geoParams.dHeight;
   }
 
 #ifdef CCONVERTCURVILINEAR_DEBUG
@@ -495,23 +495,23 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mod
   }
 
   // Make the width and height of the new 2D adaguc field the same as the viewing window
-  dataSource->dWidth = dataSource->srvParams->Geo.dWidth;
-  dataSource->dHeight = dataSource->srvParams->Geo.dHeight;
+  dataSource->dWidth = dataSource->srvParams->geoParams.dWidth;
+  dataSource->dHeight = dataSource->srvParams->geoParams.dHeight;
 
   /*if(dataSource->dWidth == 1 && dataSource->dHeight == 1){
-    dataSource->srvParams->Geo.bbox.left=dataSource->srvParams->Geo.bbox.left;
-    dataSource->srvParams->Geo.bbox.bottom=dataSource->srvParams->Geo.bbox.bottom;
-    dataSource->srvParams->Geo.bbox.right=dataSource->srvParams->Geo.bbox.right;
-    dataSource->srvParams->Geo.bbox.top=dataSource->srvParams->Geo.bbox.top;
+    dataSource->srvParams->geoParams.bbox.left=dataSource->srvParams->geoParams.bbox.left;
+    dataSource->srvParams->geoParams.bbox.bottom=dataSource->srvParams->geoParams.bbox.bottom;
+    dataSource->srvParams->geoParams.bbox.right=dataSource->srvParams->geoParams.bbox.right;
+    dataSource->srvParams->geoParams.bbox.top=dataSource->srvParams->geoParams.bbox.top;
   }*/
 
   // Width needs to be at least 2, the bounding box is calculated from these.
   if (dataSource->dWidth == 1) dataSource->dWidth = 2;
   if (dataSource->dHeight == 1) dataSource->dHeight = 2;
-  double cellSizeX = (dataSource->srvParams->Geo.bbox.right - dataSource->srvParams->Geo.bbox.left) / double(dataSource->dWidth);
-  double cellSizeY = (dataSource->srvParams->Geo.bbox.top - dataSource->srvParams->Geo.bbox.bottom) / double(dataSource->dHeight);
-  double offsetX = dataSource->srvParams->Geo.bbox.left;
-  double offsetY = dataSource->srvParams->Geo.bbox.bottom;
+  double cellSizeX = (dataSource->srvParams->geoParams.bbox.right - dataSource->srvParams->geoParams.bbox.left) / double(dataSource->dWidth);
+  double cellSizeY = (dataSource->srvParams->geoParams.bbox.top - dataSource->srvParams->geoParams.bbox.bottom) / double(dataSource->dHeight);
+  double offsetX = dataSource->srvParams->geoParams.bbox.left;
+  double offsetY = dataSource->srvParams->geoParams.bbox.bottom;
 
 #ifdef CCONVERTCURVILINEAR_DEBUG
   CDBDebug("Drawing %s with WH = [%d,%d]", new2DVar->name.c_str(), dataSource->dWidth, dataSource->dHeight);
@@ -551,8 +551,8 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mod
 
   CImageWarper imageWarper;
   bool projectionRequired = false;
-  CDBDebug("dataSource->srvParams->Geo.CRS = %s", dataSource->srvParams->Geo.CRS.c_str());
-  if (dataSource->srvParams->Geo.CRS.length() > 0) {
+  CDBDebug("dataSource->srvParams->geoParams.CRS = %s", dataSource->srvParams->geoParams.CRS.c_str());
+  if (dataSource->srvParams->geoParams.CRS.length() > 0) {
     projectionRequired = true;
     new2DVar->setAttributeText("grid_mapping", "customgridprojection");
     // Apply once
@@ -561,7 +561,7 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mod
       CDF::Variable *projectionVar = new CDF::Variable();
       projectionVar->name.copy("customgridprojection");
       cdfObject->addVariable(projectionVar);
-      dataSource->nativeEPSG = dataSource->srvParams->Geo.CRS.c_str();
+      dataSource->nativeEPSG = dataSource->srvParams->geoParams.CRS.c_str();
       imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
       CDBDebug("dataSource->nativeProj4 %s", dataSource->nativeProj4.c_str());
       if (dataSource->nativeProj4.length() == 0) {
@@ -579,7 +579,8 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mod
 
 #ifdef CCONVERTCURVILINEAR_DEBUG
   CDBDebug("Datasource CRS = %s nativeproj4 = %s", dataSource->nativeEPSG.c_str(), dataSource->nativeProj4.c_str());
-  CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->Geo.bbox.left, dataSource->srvParams->Geo.bbox.bottom, dataSource->srvParams->Geo.bbox.right, dataSource->srvParams->Geo.bbox.top);
+  CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->geoParams.bbox.left, dataSource->srvParams->geoParams.bbox.bottom, dataSource->srvParams->geoParams.bbox.right,
+           dataSource->srvParams->geoParams.bbox.top);
   CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
 #endif
 
@@ -603,7 +604,7 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mod
     float *sdata = ((float *)dataObjects[0]->cdfVariable->data);
 
     if (projectionRequired) {
-      int status = imageWarper.initreproj(dataSource, dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
+      int status = imageWarper.initreproj(dataSource, dataSource->srvParams->geoParams, &dataSource->srvParams->cfg->Projection);
       if (status != 0) {
         CDBError("Unable to init projection");
         return 1;

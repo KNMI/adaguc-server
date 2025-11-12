@@ -907,7 +907,7 @@ double CDataSource::getScaling() {
     if (this->getStyle()->styleConfig->RenderSettings.size() > 0) {
       if (!this->getStyle()->styleConfig->RenderSettings[0]->attr.scalewidth.empty()) {
         double scaleWidth = this->getStyle()->styleConfig->RenderSettings[0]->attr.scalewidth.toDouble();
-        double imageWidth = (double)this->srvParams->Geo.dWidth;
+        double imageWidth = (double)this->srvParams->geoParams.dWidth;
         return imageWidth / scaleWidth;
       }
     }
@@ -1054,3 +1054,14 @@ int CDataSource::readVariableDataForCDFDims(CDF::Variable *variableToRead, CDFTy
 }
 
 std::string CDataSource::getDataSetName() { return std::string(this->srvParams->datasetLocation.c_str()); }
+
+CGeoParams CDataSource::makeGeoParams() {
+  CGeoParams geoParams;
+  geoParams.dWidth = this->dWidth;
+  geoParams.dHeight = this->dHeight;
+  geoParams.bbox = this->dfBBOX;
+  geoParams.dfCellSizeX = this->dfCellSizeX;
+  geoParams.dfCellSizeY = this->dfCellSizeY;
+  geoParams.CRS = this->nativeProj4;
+  return geoParams;
+}

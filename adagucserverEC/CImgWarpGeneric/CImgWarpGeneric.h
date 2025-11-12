@@ -29,7 +29,7 @@
 
 #include "CImageWarperRenderInterface.h"
 #include "CGenericDataWarper.h"
-#include "./GenericDataWarper/gdwDrawFunction.h"
+#include "./GenericDataWarper/GDWDrawFunctionSettings.h"
 
 static inline int nfast_mod(const int input, const int ceil) { return input >= ceil ? input % ceil : input; }
 

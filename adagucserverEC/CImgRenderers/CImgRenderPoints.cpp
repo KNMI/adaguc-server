@@ -44,7 +44,7 @@ void drawTextsForVector(CDrawImage *drawImage, CDataSource *dataSource, VectorSt
   auto strength = pointStrength->v;
   auto direction = pointDirection->v;
   int x = pointStrength->x;
-  int y = dataSource->srvParams->Geo.dHeight - pointStrength->y;
+  int y = dataSource->srvParams->geoParams.dHeight - pointStrength->y;
 
   if (vectorStyle.drawVectorPlotStationId && pointStrength->paramList.size() > 0) {
     int newY = y;
@@ -163,7 +163,7 @@ void renderVectorPoints(std::vector<size_t> thinnedPointIndexList, CImageWarper 
     auto direction = pointDirection->v;
     if (!(direction == direction) || !(strength == strength) || strength == fillValueObjectOne || direction == fillValueObjectTwo) continue;
     int x = pointStrength->x;
-    int y = dataSource->srvParams->Geo.dHeight - pointStrength->y;
+    int y = dataSource->srvParams->geoParams.dHeight - pointStrength->y;
     double lat = pointStrength->lat;
     // Adjust direction based on projection settings
     direction += warper->getRotation(*pointStrength);
@@ -181,7 +181,7 @@ void renderVectorPoints(std::vector<size_t> thinnedPointIndexList, CImageWarper 
       if (vectorStyle.drawDiscs) {
         // Draw a disc with the speed value in text and the dir. value as an arrow
         int x = pointStrength->x;
-        int y = dataSource->srvParams->Geo.dHeight - pointStrength->y;
+        int y = dataSource->srvParams->geoParams.dHeight - pointStrength->y;
         textValue.print(vectorStyle.drawVectorTextFormat.c_str(), strength);
         drawImage->setTextDisc(x, y, vectorStyle.discRadius, textValue.c_str(), vectorStyle.fontFile, vectorStyle.fontSize, vectorStyle.textColor, vectorStyle.fillColor, vectorStyle.lineColor);
         drawImage->drawVector2(x, y, ((90 + direction) / 360.) * M_PI * 2, 10, vectorStyle.discRadius, vectorStyle.fillColor, vectorStyle.lineWidth);
@@ -277,7 +277,7 @@ bool isPointOutsideLegendRange(CStyleConfiguration *styleConfiguration, float va
   return skipPoint;
 }
 
-bool shouldSkipPoint(CDataSource *dataSource, CStyleConfiguration *styleConfiguration, PointStyle pointStyle, float value, float fillValue) {
+bool shouldSkipPoint(CStyleConfiguration *styleConfiguration, PointStyle pointStyle, float value, float fillValue) {
   if (value == fillValue) return true;
   if (pointStyle.isOutsideMinMax(value)) return true;
   if (isPointOutsideLegendRange(styleConfiguration, value)) return true;
@@ -334,7 +334,7 @@ void drawSymbolForPoint(CDrawImage *drawImage, std::map<std::string, CDrawImage 
   if (!symbolInterval->attr.offsetX.empty()) offsetX = parseInt(symbolInterval->attr.offsetX.c_str());
   if (!symbolInterval->attr.offsetY.empty()) offsetY = parseInt(symbolInterval->attr.offsetY.c_str());
 
-  drawImage->draw(x - symbol->Geo.dWidth / 2 + offsetX, y - symbol->Geo.dHeight / 2 + offsetY, 0, 0, symbol);
+  drawImage->draw(x - symbol->geoParams.dWidth / 2 + offsetX, y - symbol->geoParams.dHeight / 2 + offsetY, 0, 0, symbol);
 }
 
 float getRadius(CDataSource *dataSource, size_t pointIndex, float discRadius) {
@@ -428,10 +428,10 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
     for (auto pointIndex : thinnedPointIndexList) {
       auto pointValue = &(*pts)[pointIndex];
       float value = pointValue->v;
-      if (shouldSkipPoint(dataSource, styleConfiguration, pointStyle, value, fillValueObjectOne)) continue;
+      if (shouldSkipPoint(styleConfiguration, pointStyle, value, fillValueObjectOne)) continue;
 
       int x = pointValue->x;
-      int y = dataSource->srvParams->Geo.dHeight - pointValue->y;
+      int y = dataSource->srvParams->geoParams.dHeight - pointValue->y;
 
       if (std::isnan(value)) {
         // Try to draw something if value is NaN
@@ -450,8 +450,8 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
 
       if (!drawZoomablePoint) {
         size_t doneMatrixPointer = 0;
-        if (x >= 0 && y >= 0 && x < drawImage->Geo.dWidth && y < drawImage->Geo.dHeight) {
-          doneMatrixPointer = int((float(x) / float(drawImage->Geo.dWidth)) * float(doneMatrixW)) + int((float(y) / float(drawImage->Geo.dHeight)) * float(doneMatrixH)) * doneMatrixH;
+        if (x >= 0 && y >= 0 && x < drawImage->geoParams.dWidth && y < drawImage->geoParams.dHeight) {
+          doneMatrixPointer = int((float(x) / float(drawImage->geoParams.dWidth)) * float(doneMatrixW)) + int((float(y) / float(drawImage->geoParams.dHeight)) * float(doneMatrixH)) * doneMatrixH;
           if (int(doneMatrix[doneMatrixPointer]) < 200) {
             doneMatrix[doneMatrixPointer]++;
           }
@@ -533,10 +533,10 @@ void renderSingleVolumes(std::vector<size_t> thinnedPointIndexList, CDataSource 
     for (auto pointIndex : thinnedPointIndexList) {
       auto pointValue = &(*pts)[pointIndex];
       float value = pointValue->v;
-      if (shouldSkipPoint(dataSource, styleConfiguration, pointStyle, value, fillValueObjectOne)) continue;
+      if (shouldSkipPoint(styleConfiguration, pointStyle, value, fillValueObjectOne)) continue;
 
       int x = pointValue->x;
-      int y = dataSource->srvParams->Geo.dHeight - pointValue->y;
+      int y = dataSource->srvParams->geoParams.dHeight - pointValue->y;
 
       drawVolumeForPoint(drawImage, pointStyle.fillColor, x, y, pointStyle.discRadius, alphaVec);
       if (pointStyle.plotStationId && pointValue->paramList.size() > 0) {
@@ -557,10 +557,10 @@ void renderSingleSymbols(std::vector<size_t> thinnedPointIndexList, CDataSource 
     for (auto pointIndex : thinnedPointIndexList) {
       auto pointValue = &(*pts)[pointIndex];
       float value = pointValue->v;
-      if (shouldSkipPoint(dataSource, styleConfiguration, pointStyle, value, fillValueObjectOne)) continue;
+      if (shouldSkipPoint(styleConfiguration, pointStyle, value, fillValueObjectOne)) continue;
 
       int x = pointValue->x;
-      int y = dataSource->srvParams->Geo.dHeight - pointValue->y;
+      int y = dataSource->srvParams->geoParams.dHeight - pointValue->y;
 
       for (auto symbolInterval : styleConfiguration->symbolIntervals) {
         if (!shouldDrawSymbol(symbolInterval, value)) continue;
@@ -590,10 +590,10 @@ void renderSingleDiscs(std::vector<size_t> thinnedPointIndexList, CDataSource *d
     for (auto pointIndex : thinnedPointIndexList) {
       auto pointValue = &(*pts)[pointIndex];
       float value = pointValue->v;
-      if (shouldSkipPoint(dataSource, styleConfiguration, pointStyle, value, fillValueObjectOne)) continue;
+      if (shouldSkipPoint(styleConfiguration, pointStyle, value, fillValueObjectOne)) continue;
 
       int x = pointValue->x;
-      int y = dataSource->srvParams->Geo.dHeight - pointValue->y;
+      int y = dataSource->srvParams->geoParams.dHeight - pointValue->y;
       if (!pointStyle.useTextColor) {
         pointStyle.textColor = getDrawPointColor(dataSource, drawImage, value);
       }
@@ -614,10 +614,10 @@ void renderSingleDot(std::vector<size_t> thinnedPointIndexList, CDataSource *dat
     for (auto pointIndex : thinnedPointIndexList) {
       auto pointValue = &(*pts)[pointIndex];
       float value = pointValue->v;
-      if (shouldSkipPoint(dataSource, styleConfiguration, pointStyle, value, fillValueObjectOne)) continue;
+      if (shouldSkipPoint(styleConfiguration, pointStyle, value, fillValueObjectOne)) continue;
 
       int x = pointValue->x;
-      int y = dataSource->srvParams->Geo.dHeight - pointValue->y;
+      int y = dataSource->srvParams->geoParams.dHeight - pointValue->y;
 
       drawImage->circle(x, y, 1, pointStyle.lineColor, pointStyle.discRadius == 0 ? 0.65 : 1);
     }

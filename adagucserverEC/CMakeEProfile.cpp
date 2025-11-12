@@ -231,7 +231,7 @@ public:
     reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
 
     int status = 0;
-    status = drawImage->createImage(dataSource->srvParams->Geo);
+    status = drawImage->createImage(dataSource->srvParams->geoParams);
 
     if (status != 0) {
       CDBError("Unable to create image ");
@@ -468,8 +468,8 @@ int EProfileUniqueRequests::plotHeightRetrieval(CDrawImage *drawImage, CDFObject
     }
   }
   if (plotHeightRetrievalVariable != NULL) {
-    double imageWidth = drawImage->Geo.dWidth;
-    double imageHeight = drawImage->Geo.dHeight;
+    double imageWidth = drawImage->geoParams.dWidth;
+    double imageHeight = drawImage->geoParams.dHeight;
     CDF::Variable *varTime = cdfObject->getVariableNE("time_obs");
     if (plotHeightRetrievalVariable->data != NULL) {
       size_t numLayers = 1;
@@ -690,8 +690,8 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
   double graphWidth = stopGraphTime - startGraphTime;
   double graphHeight = stopGraphRange - startGraphRange;
 
-  double imageWidth = drawImage->Geo.dWidth;
-  double imageHeight = drawImage->Geo.dHeight;
+  double imageWidth = drawImage->geoParams.dWidth;
+  double imageHeight = drawImage->geoParams.dHeight;
 
   if (graphWidth <= 0) {
     graphWidth = imageWidth;

@@ -74,7 +74,7 @@ void printerrorImage(void *_drawImage) {
   drawImage->setText(exceptionText, strlen(exceptionText), 12, 5, 241, 0);
 
   int y = 1;
-  size_t w = drawImage->Geo.dWidth / 6, characters = 0;
+  size_t w = drawImage->geoParams.dWidth / 6, characters = 0;
   for (size_t i = 0; i < errormsgs.size() - 1; i++) {
     auto sp = errormsgs[i].splitToStack(" ");
     CT::string concat = "";

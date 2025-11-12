@@ -92,11 +92,14 @@ add_library(
     utils/CRequestUtils.cpp
     utils/serverutils.h
     utils/serverutils.cpp
+    utils/projectionUtils.h
+    utils/projectionUtils.cpp
     Types/LayerMetadataType.h
+    Types/CPointTypes.h
     GenericDataWarper/gdwDrawTriangle.h
     GenericDataWarper/gdwDrawTriangle.cpp
-    GenericDataWarper/gdwDrawFunction.h
-    GenericDataWarper/gdwDrawFunction.cpp   
+    GenericDataWarper/GDWDrawFunctionSettings.h
+    GenericDataWarper/GDWDrawFunctionSettings.cpp   
     CGenericDataWarper.cpp
     CGenericDataWarper.h
     GenericDataWarper/gdwFindPixelExtent.cpp

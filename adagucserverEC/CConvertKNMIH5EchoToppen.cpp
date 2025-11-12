@@ -166,8 +166,8 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
 
     /* Make the width and height of the new 2D adaguc field the same as the viewing window */
-    dataSource->dWidth = dataSource->srvParams->Geo.dWidth;
-    dataSource->dHeight = dataSource->srvParams->Geo.dHeight;
+    dataSource->dWidth = dataSource->srvParams->geoParams.dWidth;
+    dataSource->dHeight = dataSource->srvParams->geoParams.dHeight;
 
     /* Width and height of the dataSource need to be at least 2 in this case. */
     if (dataSource->dWidth < 2) dataSource->dWidth = 2;
@@ -199,10 +199,10 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
     CDF::fill(echoToppenVar->data, echoToppenVar->getType(), fillValue, fieldSize);
 
     /* Calculate cellsize and offset of the echo toppen (ET) 2D virtual grid, using the same grid as the screenspace*/
-    double cellSizeETX = (dataSource->srvParams->Geo.bbox.right - dataSource->srvParams->Geo.bbox.left) / double(dataSource->dWidth);
-    double cellSizeETY = (dataSource->srvParams->Geo.bbox.top - dataSource->srvParams->Geo.bbox.bottom) / double(dataSource->dHeight);
-    double offsetETX = dataSource->srvParams->Geo.bbox.left;
-    double offsetETY = dataSource->srvParams->Geo.bbox.bottom;
+    double cellSizeETX = (dataSource->srvParams->geoParams.bbox.right - dataSource->srvParams->geoParams.bbox.left) / double(dataSource->dWidth);
+    double cellSizeETY = (dataSource->srvParams->geoParams.bbox.top - dataSource->srvParams->geoParams.bbox.bottom) / double(dataSource->dHeight);
+    double offsetETX = dataSource->srvParams->geoParams.bbox.left;
+    double offsetETY = dataSource->srvParams->geoParams.bbox.bottom;
 
     /* Fill in the X and Y dimensions with the array of coordinates */
     for (size_t j = 0; j < dimX->length; j++) {
@@ -241,7 +241,7 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
     CImageWarper imageWarperEchoToppen;
     CT::string projectionString = cdfObject0->getVariable("projection")->getAttribute("proj4_params")->toString();
 
-    imageWarperEchoToppen.initreproj(projectionString.c_str(), dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
+    imageWarperEchoToppen.initreproj(projectionString.c_str(), dataSource->srvParams->geoParams, &dataSource->srvParams->cfg->Projection);
     double axisScaling;
     std::tie(std::ignore, axisScaling) = imageWarperEchoToppen.fixProjection(projectionString);
 

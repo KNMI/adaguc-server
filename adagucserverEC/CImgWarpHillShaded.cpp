@@ -123,21 +123,20 @@ void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, C
     settings.hasNodataValue = true;
     settings.dfNodataValue = -100000.f;
   }
-  int destDataWidth = drawImage->Geo.dWidth;
-  int destDataHeight = drawImage->Geo.dHeight;
+  int destDataWidth = drawImage->geoParams.dWidth;
+  int destDataHeight = drawImage->geoParams.dHeight;
   size_t numGridElements = destDataWidth * destDataHeight;
   CDF::allocateData(CDF_FLOAT, &settings.destinationGrid, numGridElements);
   CDF::fill(settings.destinationGrid, CDF_FLOAT, settings.dfNodataValue, numGridElements);
 
   CDFType dataType = dataSource->getDataObject(0)->cdfVariable->getType();
   sourceData = dataSource->getDataObject(0)->cdfVariable->data;
-  CGeoParams sourceGeo;
-  sourceGeo.copy(dataSource);
+  CGeoParams sourceGeo = dataSource->makeGeoParams();
 
   // GenericDataWarper dw;
   // dw.render(warper, sourceData, dataType, &sourceGeo, drawImage->Geo, &hillShadedDrawFunction);
   GenericDataWarper genericDataWarper;
-  GDWArgs args = {.warper = warper, .sourceData = sourceData, .sourceGeoParams = sourceGeo, .destGeoParams = dataSource->srvParams->Geo};
+  GDWArgs args = {.warper = warper, .sourceData = sourceData, .sourceGeoParams = sourceGeo, .destGeoParams = dataSource->srvParams->geoParams};
   CDBDebug("Start render");
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
   if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { hillShadedDrawFunction(x, y, val, warperState, settings); });

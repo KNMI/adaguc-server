@@ -8,7 +8,7 @@
 #include "CDrawImage.h"
 #include "CGenericDataWarper.h"
 #include "CStyleConfiguration.h"
-#include "GenericDataWarper/gdwDrawFunction.h"
+#include "GenericDataWarper/GDWDrawFunctionSettings.h"
 
 template <class T> void setPixelInDrawImage(int x, int y, T val, GDWDrawFunctionSettings *settings) {
   bool isNodata = false;

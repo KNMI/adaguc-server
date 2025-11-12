@@ -26,6 +26,7 @@
 #include "CGenericDataWarper.h"
 #include "GenericDataWarper/gdwDrawTriangle.h"
 #include "GenericDataWarper/gdwFindPixelExtent.h"
+#include "utils/projectionUtils.h"
 
 // #define GenericDataWarper_DEBUG
 

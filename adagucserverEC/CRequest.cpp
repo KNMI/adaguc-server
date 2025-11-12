@@ -890,7 +890,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
     CDBStore::Store *store = NULL;
 
     bool hasTileSettings = dataSource->cfgLayer->TileSettings.size() > 0;
-    if (!srvParam->Geo.CRS.empty() && hasTileSettings) {
+    if (!srvParam->geoParams.CRS.empty() && hasTileSettings) {
       store = handleTileRequest(dataSource);
       if (store == nullptr || store->getSize() == 0) {
         CDBDebug("Unable to handleTileRequest");
@@ -1025,11 +1025,11 @@ int CRequest::process_all_layers() {
 
   int status;
   if (srvParam->serviceType == SERVICE_WMS) {
-    if (srvParam->Geo.dWidth > MAX_IMAGE_WIDTH) {
+    if (srvParam->geoParams.dWidth > MAX_IMAGE_WIDTH) {
       CDBError("Parameter WIDTH must be smaller than %d", MAX_IMAGE_WIDTH);
       return 1;
     }
-    if (srvParam->Geo.dHeight > MAX_IMAGE_HEIGHT) {
+    if (srvParam->geoParams.dHeight > MAX_IMAGE_HEIGHT) {
       CDBError("Parameter HEIGHT must be smaller than %d", MAX_IMAGE_HEIGHT);
       return 1;
     }
@@ -1097,8 +1097,8 @@ int CRequest::process_all_layers() {
         CImageDataWriter imageDataWriter;
         status = imageDataWriter.init(srvParam, firstDataSource, 1);
         if (status != 0) throw(__LINE__);
-        bool rotate = srvParam->Geo.dWidth > srvParam->Geo.dHeight;
-        CDBDebug("creatinglegend %dx%d %d", srvParam->Geo.dWidth, srvParam->Geo.dHeight, rotate);
+        bool rotate = srvParam->geoParams.dWidth > srvParam->geoParams.dHeight;
+        CDBDebug("creatinglegend %dx%d %d", srvParam->geoParams.dWidth, srvParam->geoParams.dHeight, rotate);
         status = imageDataWriter.createLegend(firstDataSource, &imageDataWriter.drawImage, rotate);
         if (status != 0) throw(__LINE__);
         status = imageDataWriter.end();
@@ -1372,10 +1372,10 @@ int CRequest::process_querystring() {
       if (uriKeyUpperCase.equals("BBOX")) {
         auto bboxvalues = uriValue.replace("%2C", ",").splitToStack(",");
         if (bboxvalues.size() == 4) {
-          srvParam->Geo.bbox.left = atof(bboxvalues[0].c_str());
-          srvParam->Geo.bbox.bottom = atof(bboxvalues[1].c_str());
-          srvParam->Geo.bbox.right = atof(bboxvalues[2].c_str());
-          srvParam->Geo.bbox.top = atof(bboxvalues[3].c_str());
+          srvParam->geoParams.bbox.left = atof(bboxvalues[0].c_str());
+          srvParam->geoParams.bbox.bottom = atof(bboxvalues[1].c_str());
+          srvParam->geoParams.bbox.right = atof(bboxvalues[2].c_str());
+          srvParam->geoParams.bbox.top = atof(bboxvalues[3].c_str());
 
         } else {
           CDBError("ADAGUC Server: Invalid BBOX values");
@@ -1385,10 +1385,10 @@ int CRequest::process_querystring() {
       }
       if (uriKeyUpperCase.equals("BBOXWIDTH")) {
 
-        srvParam->Geo.bbox.left = 0;
-        srvParam->Geo.bbox.bottom = 0;
-        srvParam->Geo.bbox.right = uriValue.toDouble();
-        srvParam->Geo.bbox.top = uriValue.toDouble();
+        srvParam->geoParams.bbox.left = 0;
+        srvParam->geoParams.bbox.bottom = 0;
+        srvParam->geoParams.bbox.right = uriValue.toDouble();
+        srvParam->geoParams.bbox.top = uriValue.toDouble();
 
         srvParam->dFound_BBOX = 1;
       }
@@ -1404,8 +1404,8 @@ int CRequest::process_querystring() {
 
       // Width Parameters
       if (uriKeyUpperCase.equals("WIDTH")) {
-        srvParam->Geo.dWidth = atoi(uriValue.c_str());
-        if (srvParam->Geo.dWidth < 1) {
+        srvParam->geoParams.dWidth = atoi(uriValue.c_str());
+        if (srvParam->geoParams.dWidth < 1) {
           CDBError("ADAGUC Server: Parameter Width should be at least 1");
           dErrorOccured = 1;
         }
@@ -1413,8 +1413,8 @@ int CRequest::process_querystring() {
       }
       // Height Parameters
       if (uriKeyUpperCase.equals("HEIGHT")) {
-        srvParam->Geo.dHeight = atoi(uriValue.c_str());
-        if (srvParam->Geo.dHeight < 1) {
+        srvParam->geoParams.dHeight = atoi(uriValue.c_str());
+        if (srvParam->geoParams.dHeight < 1) {
           CDBError("ADAGUC Server: Parameter Height should be at least 1");
           dErrorOccured = 1;
         }
@@ -1461,21 +1461,21 @@ int CRequest::process_querystring() {
       // SRS / CRS Parameters
       if (uriKeyUpperCase.equals("SRS")) {
         if (uriValue.length() > 2) {
-          srvParam->Geo.CRS.copy(uriValue);
-          // srvParam->Geo.CRS.decodeURLSelf();
+          srvParam->geoParams.CRS.copy(uriValue);
+          // srvParam->geoParams.CRS.decodeURLSelf();
           dFound_SRS = 1;
         }
       }
       if (uriKeyUpperCase.equals("CRS")) {
         if (uriValue.length() > 2) {
-          srvParam->Geo.CRS.copy(uriValue);
+          srvParam->geoParams.CRS.copy(uriValue);
           dFound_CRS = 1;
         }
       }
 
       if (uriKeyUpperCase.equals("RESPONSE_CRS")) {
         if (uriValue.length() > 2) {
-          srvParam->Geo.BBOX_CRS.copy(uriValue);
+          srvParam->geoParams.BBOX_CRS.copy(uriValue);
           dFound_RESPONSE_CRS = 1;
         }
       }
@@ -1712,11 +1712,11 @@ int CRequest::process_querystring() {
 
   if (dFound_Width == 0 && dFound_Height == 0) {
     if (srvParam->dFound_BBOX && dFound_RESX && dFound_RESY) {
-      srvParam->Geo.dWidth = int(((srvParam->Geo.bbox.right - srvParam->Geo.bbox.left) / srvParam->dfResX));
-      srvParam->Geo.dHeight = int(((srvParam->Geo.bbox.bottom - srvParam->Geo.bbox.top) / srvParam->dfResY));
-      srvParam->Geo.dHeight = abs(srvParam->Geo.dHeight);
+      srvParam->geoParams.dWidth = int(((srvParam->geoParams.bbox.right - srvParam->geoParams.bbox.left) / srvParam->dfResX));
+      srvParam->geoParams.dHeight = int(((srvParam->geoParams.bbox.bottom - srvParam->geoParams.bbox.top) / srvParam->dfResY));
+      srvParam->geoParams.dHeight = abs(srvParam->geoParams.dHeight);
 #ifdef CREQUEST_DEBUG
-      CDBDebug("Calculated width height based on resx resy %d,%d", srvParam->Geo.dWidth, srvParam->Geo.dHeight);
+      CDBDebug("Calculated width height based on resx resy %d,%d", srvParam->geoParams.dWidth, srvParam->geoParams.dHeight);
 #endif
     }
   }
@@ -1842,7 +1842,7 @@ int CRequest::process_querystring() {
       }
 
       if (srvParam->checkBBOXXYOrder(NULL) == true) {
-        srvParam->Geo.bbox = srvParam->Geo.bbox.swapXY();
+        srvParam->geoParams.bbox = srvParam->geoParams.bbox.swapXY();
       }
     }
 
@@ -1982,12 +1982,12 @@ int CRequest::process_querystring() {
         dFound_WMSLAYERS = 1;
         dFound_Width = 1;
         dFound_Height = 1;
-        srvParam->Geo.bbox.left = srvParam->dX;
-        srvParam->Geo.bbox.bottom = srvParam->dY;
-        srvParam->Geo.bbox.right = srvParam->Geo.bbox.left;
-        srvParam->Geo.bbox.top = srvParam->Geo.bbox.bottom;
-        srvParam->Geo.dWidth = 1;
-        srvParam->Geo.dHeight = 1;
+        srvParam->geoParams.bbox.left = srvParam->dX;
+        srvParam->geoParams.bbox.bottom = srvParam->dY;
+        srvParam->geoParams.bbox.right = srvParam->geoParams.bbox.left;
+        srvParam->geoParams.bbox.top = srvParam->geoParams.bbox.bottom;
+        srvParam->geoParams.dWidth = 1;
+        srvParam->geoParams.dHeight = 1;
         srvParam->dX = 0;
         srvParam->dY = 0;
         srvParam->requestType = REQUEST_WMS_GETFEATUREINFO;
@@ -2008,38 +2008,38 @@ int CRequest::process_querystring() {
       }
 
       if (dFound_Width == 0) {
-        if (srvParam->Geo.bbox.right != srvParam->Geo.bbox.left) {
-          float r = fabs(srvParam->Geo.bbox.top - srvParam->Geo.bbox.bottom) / fabs(srvParam->Geo.bbox.right - srvParam->Geo.bbox.left);
-          srvParam->Geo.dWidth = int(float(srvParam->Geo.dHeight) / r);
-          if (srvParam->Geo.dWidth > MAX_IMAGE_WIDTH) {
-            srvParam->Geo.dWidth = srvParam->Geo.dHeight;
+        if (srvParam->geoParams.bbox.right != srvParam->geoParams.bbox.left) {
+          float r = fabs(srvParam->geoParams.bbox.top - srvParam->geoParams.bbox.bottom) / fabs(srvParam->geoParams.bbox.right - srvParam->geoParams.bbox.left);
+          srvParam->geoParams.dWidth = int(float(srvParam->geoParams.dHeight) / r);
+          if (srvParam->geoParams.dWidth > MAX_IMAGE_WIDTH) {
+            srvParam->geoParams.dWidth = srvParam->geoParams.dHeight;
           }
         } else {
-          srvParam->Geo.dWidth = srvParam->Geo.dHeight;
+          srvParam->geoParams.dWidth = srvParam->geoParams.dHeight;
         }
       }
 
       if (dFound_Height == 0) {
-        if (srvParam->Geo.bbox.right != srvParam->Geo.bbox.left) {
-          float r = fabs(srvParam->Geo.bbox.top - srvParam->Geo.bbox.bottom) / fabs(srvParam->Geo.bbox.right - srvParam->Geo.bbox.left);
-          CDBDebug("NNOX = %f, %f, %f, %f", srvParam->Geo.bbox.left, srvParam->Geo.bbox.bottom, srvParam->Geo.bbox.right, srvParam->Geo.bbox.top);
+        if (srvParam->geoParams.bbox.right != srvParam->geoParams.bbox.left) {
+          float r = fabs(srvParam->geoParams.bbox.top - srvParam->geoParams.bbox.bottom) / fabs(srvParam->geoParams.bbox.right - srvParam->geoParams.bbox.left);
+          CDBDebug("NNOX = %f, %f, %f, %f", srvParam->geoParams.bbox.left, srvParam->geoParams.bbox.bottom, srvParam->geoParams.bbox.right, srvParam->geoParams.bbox.top);
           CDBDebug("R = %f", r);
-          srvParam->Geo.dHeight = int(float(srvParam->Geo.dWidth) * r);
-          if (srvParam->Geo.dHeight > MAX_IMAGE_HEIGHT) {
-            srvParam->Geo.dHeight = srvParam->Geo.dWidth;
+          srvParam->geoParams.dHeight = int(float(srvParam->geoParams.dWidth) * r);
+          if (srvParam->geoParams.dHeight > MAX_IMAGE_HEIGHT) {
+            srvParam->geoParams.dHeight = srvParam->geoParams.dWidth;
           }
         } else {
-          srvParam->Geo.dHeight = srvParam->Geo.dWidth;
+          srvParam->geoParams.dHeight = srvParam->geoParams.dWidth;
         }
-        CDBDebug("Calculated height: %d", srvParam->Geo.dHeight);
-        CDBDebug("dWidth: %d", srvParam->Geo.dWidth);
+        CDBDebug("Calculated height: %d", srvParam->geoParams.dHeight);
+        CDBDebug("dWidth: %d", srvParam->geoParams.dWidth);
       }
 
-      if (srvParam->Geo.dWidth < 0) srvParam->Geo.dWidth = 1;
-      if (srvParam->Geo.dHeight < 0) srvParam->Geo.dHeight = 1;
+      if (srvParam->geoParams.dWidth < 0) srvParam->geoParams.dWidth = 1;
+      if (srvParam->geoParams.dHeight < 0) srvParam->geoParams.dHeight = 1;
 
       // When error is image, utilize full image size
-      setErrorImageSize(srvParam->Geo.dWidth, srvParam->Geo.dHeight, srvParam->imageFormat, srvParam->Transparent);
+      setErrorImageSize(srvParam->geoParams.dWidth, srvParam->geoParams.dHeight, srvParam->imageFormat, srvParam->Transparent);
 
       if (srvParam->OGCVersion == WMS_VERSION_1_0_0 || srvParam->OGCVersion == WMS_VERSION_1_1_1) {
         if (dFound_SRS == 0) {
@@ -2138,7 +2138,7 @@ int CRequest::process_querystring() {
       drawImage.createImage(300, 30);
       drawImage.create685Palette();
       try {
-        CCreateScaleBar::createScaleBar(&drawImage, srvParam->Geo, 1);
+        CCreateScaleBar::createScaleBar(&drawImage, srvParam->geoParams, 1);
       } catch (int e) {
         CDBError("Exception %d", e);
         return 1;
@@ -2253,12 +2253,12 @@ int CRequest::process_querystring() {
         srvParam->WCS_GoNative = 1;
       else {
         if (dFound_CRS == 1 && dFound_RESPONSE_CRS == 1) {
-          CT::string CRS = srvParam->Geo.BBOX_CRS;
-          CT::string RESPONSE_CRS = srvParam->Geo.CRS;
-          srvParam->Geo.CRS = CRS;
-          srvParam->Geo.BBOX_CRS = RESPONSE_CRS;
+          CT::string CRS = srvParam->geoParams.BBOX_CRS;
+          CT::string RESPONSE_CRS = srvParam->geoParams.CRS;
+          srvParam->geoParams.CRS = CRS;
+          srvParam->geoParams.BBOX_CRS = RESPONSE_CRS;
         } else {
-          srvParam->Geo.BBOX_CRS = srvParam->Geo.CRS;
+          srvParam->geoParams.BBOX_CRS = srvParam->geoParams.CRS;
         }
         srvParam->WCS_GoNative = 0;
         if (srvParam->dFound_BBOX == 0) {
@@ -2413,7 +2413,7 @@ void CRequest::autoDetectBBOX() {
     f8box bbox;
     std::tie(found, bbox) = findBBoxForDataSource(dataSources);
     if (found == 0) {
-      srvParam->Geo.bbox = bbox;
+      srvParam->geoParams.bbox = bbox;
       srvParam->dFound_BBOX = 1;
     }
   }
@@ -2844,7 +2844,7 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
             int legendWidth = LEGEND_WIDTH * scaling;
             if (legendWidth < minimumLegendWidth) legendWidth = minimumLegendWidth;
             imageDataWriter.drawImage.enableTransparency(true);
-            legendImage.createImage(&imageDataWriter.drawImage, legendWidth, (imageDataWriter.drawImage.Geo.dHeight / 3) - padding * 2 + 2);
+            legendImage.createImage(&imageDataWriter.drawImage, legendWidth, (imageDataWriter.drawImage.geoParams.dHeight / 3) - padding * 2 + 2);
 
             CStyleConfiguration *styleConfiguration = dataSources[d]->getStyle();
             if (styleConfiguration != NULL && styleConfiguration->legendIndex != -1) {
@@ -2854,13 +2854,13 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
             status = imageDataWriter.createLegend(dataSources[d], &legendImage);
             if (status != 0) throw(__LINE__);
             // legendImage.rectangle(0,0,10000,10000,240);
-            int posX = imageDataWriter.drawImage.Geo.dWidth - (legendImage.Geo.dWidth + padding) - legendOffsetX;
+            int posX = imageDataWriter.drawImage.geoParams.dWidth - (legendImage.geoParams.dWidth + padding) - legendOffsetX;
             // int posY=imageDataWriter.drawImage.Geo.dHeight-(legendImage.Geo.dHeight+padding);
             // int posX=padding*scaling;//imageDataWriter.drawImage.Geo.dWidth-(scaleBarImage.Geo->dWidth+padding);
-            int posY = imageDataWriter.drawImage.Geo.dHeight - (legendImage.Geo.dHeight + padding * scaling);
+            int posY = imageDataWriter.drawImage.geoParams.dHeight - (legendImage.geoParams.dHeight + padding * scaling);
             imageDataWriter.drawImage.draw(posX, posY, 0, 0, &legendImage);
             //                numberOfLegendsDrawn++;
-            legendOffsetX += legendImage.Geo.dWidth + padding;
+            legendOffsetX += legendImage.geoParams.dWidth + padding;
           }
         }
       }
@@ -2879,10 +2879,10 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
       scaleBarImage.createImage(&imageDataWriter.drawImage, 200 * scaling, 30 * scaling);
 
       // scaleBarImage.rectangle(0,0,scaleBarImage.Geo->dWidth,scaleBarImage.Geo->dHeight,CColor(0,0,0,0),CColor(0,0,0,255));
-      status = imageDataWriter.createScaleBar(dataSources[0]->srvParams->Geo, &scaleBarImage, scaling);
+      status = imageDataWriter.createScaleBar(dataSources[0]->srvParams->geoParams, &scaleBarImage, scaling);
       if (status != 0) throw(__LINE__);
       int posX = padding * scaling; // imageDataWriter.drawImage.Geo.dWidth-(scaleBarImage.Geo->dWidth+padding);
-      int posY = imageDataWriter.drawImage.Geo.dHeight - (scaleBarImage.Geo.dHeight + padding * scaling);
+      int posY = imageDataWriter.drawImage.geoParams.dHeight - (scaleBarImage.geoParams.dHeight + padding * scaling);
       // posY-=50;
       // imageDataWriter.drawImage.rectangle(posX,posY,scaleBarImage.Geo->dWidth+posX+1,scaleBarImage.Geo->dHeight+posY+1,CColor(255,255,255,180),CColor(255,255,255,0));
       imageDataWriter.drawImage.draw(posX, posY, 0, 0, &scaleBarImage);

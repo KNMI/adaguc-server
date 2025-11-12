@@ -35,6 +35,7 @@
 #include "CCDFDataModel.h"
 #include "COGCDims.h"
 #include "CStopWatch.h"
+#include "Types/CPointTypes.h"
 
 #include "CStyleConfiguration.h"
 
@@ -397,6 +398,8 @@ public:
   int readVariableDataForCDFDims(CDF::Variable *variableToRead, CDFType dataTypeToReturnData);
 
   std::string getDataSetName();
+
+  CGeoParams makeGeoParams();
 };
 
 #endif

@@ -26,6 +26,7 @@
 #ifndef CIMGRENDERPOLYLINES_H
 #define CIMGRENDERPOLYLINES_H
 #include "CImageWarperRenderInterface.h"
+#include "Types/CPointTypes.h"
 
 typedef struct _FeatureStyle {
   float width;

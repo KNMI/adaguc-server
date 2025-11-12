@@ -59,7 +59,7 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
   }
   CDBDebug("TextFormatting=%s", textformatting.c_str());
   double scaling = dataSource->getScaling();
-  float legendHeight = legendImage->Geo.dHeight;
+  float legendHeight = legendImage->geoParams.dHeight;
   float cbH = legendHeight - 13 - 13 * scaling;
   float lineWidth = 0.8 * scaling;
 
@@ -93,7 +93,7 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
   int maxColor = 0;
 
   int pLeft = 4;
-  int pTop = (int)(legendImage->Geo.dHeight - legendHeight);
+  int pTop = (int)(legendImage->geoParams.dHeight - legendHeight);
   for (int j = 0; j < cbH; j++) {
     int c = int((float(cbH - (j + 1)) / cbH) * 240.0f + 0.5);
     for (int x = pLeft; x < pLeft + ((int)cbW + 1) * scaling; x++) {

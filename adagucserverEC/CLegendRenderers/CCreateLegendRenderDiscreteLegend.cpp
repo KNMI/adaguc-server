@@ -112,11 +112,11 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
 #endif
   double scaling = dataSource->getScaling();
   float cbW = 20; // legendWidth/8;
-  float legendHeight = legendImage->Geo.dHeight;
+  float legendHeight = legendImage->geoParams.dHeight;
   float cbH = legendHeight - 13 - 13 * scaling;
 
   int pLeft = 4;
-  int pTop = (int)(legendImage->Geo.dHeight - legendHeight);
+  int pTop = (int)(legendImage->geoParams.dHeight - legendHeight);
 
   float fontSize;
   std::string fontLocation;
@@ -241,7 +241,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
     // - If the cliplegend render option is set, only classes with the min and the max data value will be added
 
     // Initial estimation of block height
-    float initialBlockHeight = calculateShadeClassBlockHeight(legendImage->Geo.dHeight, styleConfiguration->shadeIntervals.size());
+    float initialBlockHeight = calculateShadeClassBlockHeight(legendImage->geoParams.dHeight, styleConfiguration->shadeIntervals.size());
 
     // Based on the render settings, we can clip the values on the legend to only include the values
     // present in the data
@@ -318,7 +318,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
     } else {
       // General case for this type of legend, where we draw every label and print every class interval
       // We can also clip this type of legend
-      float blockHeight = calculateShadeClassBlockHeight(legendImage->Geo.dHeight, drawIntervals);
+      float blockHeight = calculateShadeClassBlockHeight(legendImage->geoParams.dHeight, drawIntervals);
       int maxTextWidthMax = fieldWidthAsPixels(maxColumn, dashWidth, dotWidth, numberWidth);
 
       for (size_t j = 0; j < drawIntervals; j++) {

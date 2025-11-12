@@ -47,8 +47,10 @@ int CDPPointsFromGrid::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSour
 
 f8point getPixelCoordinateFromGetMapCoordinate(f8point in, CDataSource &dataSource) {
   f8point pixelCoord;
-  pixelCoord.x = ((in.x - dataSource.srvParams->Geo.bbox.left) / (dataSource.srvParams->Geo.bbox.right - dataSource.srvParams->Geo.bbox.left)) * dataSource.srvParams->Geo.dWidth;
-  pixelCoord.y = ((in.y - dataSource.srvParams->Geo.bbox.bottom) / (dataSource.srvParams->Geo.bbox.top - dataSource.srvParams->Geo.bbox.bottom)) * dataSource.srvParams->Geo.dHeight;
+  pixelCoord.x =
+      ((in.x - dataSource.srvParams->geoParams.bbox.left) / (dataSource.srvParams->geoParams.bbox.right - dataSource.srvParams->geoParams.bbox.left)) * dataSource.srvParams->geoParams.dWidth;
+  pixelCoord.y =
+      ((in.y - dataSource.srvParams->geoParams.bbox.bottom) / (dataSource.srvParams->geoParams.bbox.top - dataSource.srvParams->geoParams.bbox.bottom)) * dataSource.srvParams->geoParams.dHeight;
   return pixelCoord;
 }
 
@@ -60,8 +62,10 @@ void getPixelCoordinateListFromGetMapCoordinateListInPlace(std::vector<f8point> 
 
 f8point getGetMapCoordinateFromPixelCoordinate(f8point in, CDataSource &dataSource) {
   f8point getmapCoord;
-  getmapCoord.x = (in.x / dataSource.srvParams->Geo.dWidth) * (dataSource.srvParams->Geo.bbox.right - dataSource.srvParams->Geo.bbox.left) + dataSource.srvParams->Geo.bbox.left;
-  getmapCoord.y = (in.y / dataSource.srvParams->Geo.dHeight) * (dataSource.srvParams->Geo.bbox.top - dataSource.srvParams->Geo.bbox.bottom) + dataSource.srvParams->Geo.bbox.bottom;
+  getmapCoord.x =
+      (in.x / dataSource.srvParams->geoParams.dWidth) * (dataSource.srvParams->geoParams.bbox.right - dataSource.srvParams->geoParams.bbox.left) + dataSource.srvParams->geoParams.bbox.left;
+  getmapCoord.y =
+      (in.y / dataSource.srvParams->geoParams.dHeight) * (dataSource.srvParams->geoParams.bbox.top - dataSource.srvParams->geoParams.bbox.bottom) + dataSource.srvParams->geoParams.bbox.bottom;
   return getmapCoord;
 }
 
@@ -107,10 +111,10 @@ int CDPPointsFromGrid::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSour
   CDBDebug(CDATAPOSTPROCESSOR_PointsFromGrid_ID);
 
   CImageWarper warper;
-  if (dataSource->srvParams->Geo.CRS.empty()) {
-    dataSource->srvParams->Geo.CRS = "EPSG:4236";
+  if (dataSource->srvParams->geoParams.CRS.empty()) {
+    dataSource->srvParams->geoParams.CRS = "EPSG:4236";
   }
-  warper.initreproj(dataSource, dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
+  warper.initreproj(dataSource, dataSource->srvParams->geoParams, &dataSource->srvParams->cfg->Projection);
 
   std::vector<f8point> pointListInModelCoords;
   std::vector<size_t> pointers;
@@ -164,7 +168,7 @@ int CDPPointsFromGrid::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSour
       float *data = (float *)ob->cdfVariable->data;
       int px = pixelCoord.x;
       int py = pixelCoord.y;
-      if (px < 0 || py < 0 || px > dataSource->srvParams->Geo.dWidth || py > dataSource->srvParams->Geo.dHeight) continue;
+      if (px < 0 || py < 0 || px > dataSource->srvParams->geoParams.dWidth || py > dataSource->srvParams->geoParams.dHeight) continue;
       auto newPoint = PointDVWithLatLon(px, py, pointsInLatLon[index].x, pointsInLatLon[index].y, data[pointers[index]]);
       destob->points.push_back(newPoint);
     }

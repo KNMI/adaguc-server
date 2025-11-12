@@ -31,7 +31,7 @@
 #include "CDrawImage.h"
 #include "CDrawFunction.h"
 #include <stdio.h>
-#include "GenericDataWarper/gdwDrawFunction.h"
+#include "GenericDataWarper/GDWDrawFunctionSettings.h"
 
 class CAreaMapper {
 private:

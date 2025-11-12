@@ -61,16 +61,16 @@ int CCreateHistogram::addData(std::vector<CDataSource *> &dataSources) {
       dfNoData = dataSource->getDataObject(0)->dfNodataValue;
     }
 
-    CDF::allocateData(CDF_FLOAT, &warpedData, dataSource->srvParams->Geo.dWidth * dataSource->srvParams->Geo.dHeight);
+    CDF::allocateData(CDF_FLOAT, &warpedData, dataSource->srvParams->geoParams.dWidth * dataSource->srvParams->geoParams.dHeight);
 
-    if (CDF::fill(warpedData, CDF_FLOAT, dfNoData, dataSource->srvParams->Geo.dWidth * dataSource->srvParams->Geo.dHeight) != 0) {
+    if (CDF::fill(warpedData, CDF_FLOAT, dfNoData, dataSource->srvParams->geoParams.dWidth * dataSource->srvParams->geoParams.dHeight) != 0) {
       CDBError("Unable to initialize data field to nodata value");
       return 1;
     }
 
     CImageWarper warper;
 
-    status = warper.initreproj(dataSource, dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
+    status = warper.initreproj(dataSource, dataSource->srvParams->geoParams, &dataSource->srvParams->cfg->Projection);
     if (status != 0) {
       CDBError("Unable to initialize projection");
       return 1;
@@ -90,8 +90,8 @@ int CCreateHistogram::addData(std::vector<CDataSource *> &dataSources) {
       CDFType dataType = dataSource->getDataObject(0)->cdfVariable->getType();
 
       CCreateHistogramSettings settings;
-      settings.width = dataSource->srvParams->Geo.dWidth;
-      settings.height = dataSource->srvParams->Geo.dHeight;
+      settings.width = dataSource->srvParams->geoParams.dWidth;
+      settings.height = dataSource->srvParams->geoParams.dHeight;
       settings.data = warpedData;
 
       CGeoParams sourceGeo;
@@ -105,7 +105,7 @@ int CCreateHistogram::addData(std::vector<CDataSource *> &dataSources) {
 
       CDBDebug("Rendering %f,%f", sourceGeo.bbox.left, sourceGeo.bbox.bottom);
       GenericDataWarper genericDataWarper;
-      GDWArgs args = {.warper = &warper, .sourceData = sourceData, .sourceGeoParams = sourceGeo, .destGeoParams = dataSource->srvParams->Geo};
+      GDWArgs args = {.warper = &warper, .sourceData = sourceData, .sourceGeoParams = sourceGeo, .destGeoParams = dataSource->srvParams->geoParams};
 
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
   if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction(x, y, val, warperState, settings); });
@@ -118,7 +118,7 @@ int CCreateHistogram::addData(std::vector<CDataSource *> &dataSources) {
     if (dataSource->statistics == NULL) {
       dataSource->statistics = new CDataSource::Statistics();
       dataSource->statistics->calculate(dataSource);
-      dataSource->statistics->calculate(dataSource->srvParams->Geo.dWidth * dataSource->srvParams->Geo.dHeight, (float *)warpedData, CDF_FLOAT, dataSource->getDataObject(0)->dfNodataValue,
+      dataSource->statistics->calculate(dataSource->srvParams->geoParams.dWidth * dataSource->srvParams->geoParams.dHeight, (float *)warpedData, CDF_FLOAT, dataSource->getDataObject(0)->dfNodataValue,
                                         dataSource->getDataObject(0)->hasNodataValue);
     }
     float fieldMin = (float)dataSource->statistics->getMinimum();
@@ -145,7 +145,7 @@ int CCreateHistogram::addData(std::vector<CDataSource *> &dataSources) {
     max = ceil(max / roundFactor) * roundFactor;
     CDBDebug("binSize = %f min=%f max=%f", binSize, min, max);
 
-    size_t gridSize = dataSource->srvParams->Geo.dWidth * dataSource->srvParams->Geo.dHeight;
+    size_t gridSize = dataSource->srvParams->geoParams.dWidth * dataSource->srvParams->geoParams.dHeight;
     for (size_t j = 0; j < gridSize; j++) {
       float val = ((float *)warpedData)[j];
       if (val != (float)dfNoData) {

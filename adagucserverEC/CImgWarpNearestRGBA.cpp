@@ -73,8 +73,8 @@ int CDrawTileObjBGRA::drawTile(double *x_corners, double *y_corners, int &dDestX
 #ifndef CIMGWARPNEARESTRGBA_USEDRAWIMAGE
   uint *imageData = (uint *)drawImage->getCanvasMemory();
 #endif
-  int imageWidth = drawImage->Geo.dWidth;
-  int imageHeight = drawImage->Geo.dHeight;
+  int imageWidth = drawImage->geoParams.dWidth;
+  int imageHeight = drawImage->geoParams.dHeight;
 #ifdef CIMGWARPNEARESTRGBA_DEBUG
   CDBDebug("myDrawRawTile %f, %f, %f, %f, %f, %f %f %f", dfSourceBBOX[0], dfSourceBBOX[1], dfSourceBBOX[2], dfSourceBBOX[3], width, height, dfTileWidth, dfTileHeight);
 #endif
@@ -284,16 +284,6 @@ int CImgWarpNearestRGBA::reproj(CImageWarper *warper, CDataSource *, CGeoParams 
 }
 
 void CImgWarpNearestRGBA::render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage) {
-  /*for(int y=0;y<drawImage->Geo.dHeight;y++){
-    for(int x=0;x<drawImage->Geo.dWidth;x++){
-      drawImage->setPixelIndexed(x,y,10);
-    }
-  }*/
-  /*uint *imageData = (uint*)drawImage->getCanvasMemory();
-  for(size_t j=0;j<drawImage->Geo.dHeight*drawImage->Geo.dWidth;j++){
-    imageData[j]=0;
-  }*/
-  // CDBDebug("Render");
   // This enables if tiles are divided allong threads.
   int numThreads = 4;
   // Threading is not needed when only one thread is specified.
@@ -307,22 +297,22 @@ void CImgWarpNearestRGBA::render(CImageWarper *warper, CDataSource *dataSource, 
   int y_div = 1;
   if (warper->isProjectionRequired() == false) {
     // CDBDebug("No reprojection required");
-    tile_height = drawImage->Geo.dHeight;
-    tile_width = drawImage->Geo.dWidth;
+    tile_height = drawImage->geoParams.dHeight;
+    tile_width = drawImage->geoParams.dWidth;
     // When we are drawing just one tile, threading is not needed
     useThreading = false;
   } else {
-    x_div = int((float(drawImage->Geo.dWidth) / tile_width)) + 1;
-    y_div = int((float(drawImage->Geo.dHeight) / tile_height)) + 1;
+    x_div = int((float(drawImage->geoParams.dWidth) / tile_width)) + 1;
+    y_div = int((float(drawImage->geoParams.dHeight) / tile_height)) + 1;
   }
   int internalWidth = tile_width * x_div;
   int internalHeight = tile_height * y_div;
 
   // New geo location needs to be extended based on new width and height
-  CGeoParams internalGeo = drawImage->Geo;
+  CGeoParams internalGeo = drawImage->geoParams;
 
-  internalGeo.bbox.right = ((drawImage->Geo.bbox.right - drawImage->Geo.bbox.left) / double(drawImage->Geo.dWidth)) * double(internalWidth) + drawImage->Geo.bbox.left;
-  internalGeo.bbox.bottom = ((drawImage->Geo.bbox.bottom - drawImage->Geo.bbox.top) / double(drawImage->Geo.dHeight)) * double(internalHeight) + drawImage->Geo.bbox.top;
+  internalGeo.bbox.right = ((drawImage->geoParams.bbox.right - drawImage->geoParams.bbox.left) / double(drawImage->geoParams.dWidth)) * double(internalWidth) + drawImage->geoParams.bbox.left;
+  internalGeo.bbox.bottom = ((drawImage->geoParams.bbox.bottom - drawImage->geoParams.bbox.top) / double(drawImage->geoParams.dHeight)) * double(internalHeight) + drawImage->geoParams.bbox.top;
 
   // Setup the renderer to draw the tiles with.We do not keep the calculated results for CDF_CHAR (faster)
   CDrawTileObjBGRA *drawTileClass = NULL;

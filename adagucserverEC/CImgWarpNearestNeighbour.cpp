@@ -33,8 +33,8 @@ const char *CImgWarpNearestNeighbour::className = "CImgWarpNearestNeighbour";
 void CImgWarpNearestNeighbour::drawTriangleBil(CDrawImage *drawImage, float *destField, int *xP, int *yP, float *values) {
 
   // Sort the vertices in Y direction
-  int W = drawImage->Geo.dWidth;
-  int H = drawImage->Geo.dHeight;
+  int W = drawImage->geoParams.dWidth;
+  int H = drawImage->geoParams.dHeight;
   if (xP[0] < 0 && xP[1] < 0 && xP[2] < 0) return;
   if (xP[0] >= W && xP[1] >= W && xP[2] >= W) return;
   if (yP[0] < 0 && yP[1] < 0 && yP[2] < 0) return;
@@ -180,8 +180,8 @@ void CImgWarpNearestNeighbour::drawTriangleBil(CDrawImage *drawImage, float *des
 
 void CImgWarpNearestNeighbour::drawTriangle(CDrawImage *drawImage, int *xP, int *yP, int &value) {
   // Sort the vertices in Y direction
-  int W = drawImage->Geo.dWidth;
-  int H = drawImage->Geo.dHeight;
+  int W = drawImage->geoParams.dWidth;
+  int H = drawImage->geoParams.dHeight;
   if (xP[0] < 0 && xP[1] < 0 && xP[2] < 0) return;
   if (xP[0] >= W && xP[1] >= W && xP[2] >= W) return;
   if (yP[0] < 0 && yP[1] < 0 && yP[2] < 0) return;

@@ -616,20 +616,20 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
 #endif
 
   // Make the width and height of the new 2D adaguc field the same as the viewing window
-  dataSource->dWidth = dataSource->srvParams->Geo.dWidth;
-  dataSource->dHeight = dataSource->srvParams->Geo.dHeight;
+  dataSource->dWidth = dataSource->srvParams->geoParams.dWidth;
+  dataSource->dHeight = dataSource->srvParams->geoParams.dHeight;
 
   if (dataSource->dWidth == 1 && dataSource->dHeight == 1) {
-    dataSource->srvParams->Geo.bbox = dataSource->srvParams->Geo.bbox;
+    dataSource->srvParams->geoParams.bbox = dataSource->srvParams->geoParams.bbox;
   }
 
   // Width needs to be at least 2 in this case.
   if (dataSource->dWidth == 1) dataSource->dWidth = 2;
   if (dataSource->dHeight == 1) dataSource->dHeight = 2;
-  double cellSizeX = (dataSource->srvParams->Geo.bbox.right - dataSource->srvParams->Geo.bbox.left) / double(dataSource->dWidth);
-  double cellSizeY = (dataSource->srvParams->Geo.bbox.top - dataSource->srvParams->Geo.bbox.bottom) / double(dataSource->dHeight);
-  double offsetX = dataSource->srvParams->Geo.bbox.left;
-  double offsetY = dataSource->srvParams->Geo.bbox.bottom;
+  double cellSizeX = (dataSource->srvParams->geoParams.bbox.right - dataSource->srvParams->geoParams.bbox.left) / double(dataSource->dWidth);
+  double cellSizeY = (dataSource->srvParams->geoParams.bbox.top - dataSource->srvParams->geoParams.bbox.bottom) / double(dataSource->dHeight);
+  double offsetX = dataSource->srvParams->geoParams.bbox.left;
+  double offsetY = dataSource->srvParams->geoParams.bbox.bottom;
 
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
 
@@ -698,7 +698,7 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
 
     CImageWarper imageWarper;
     bool projectionRequired = false;
-    if (dataSource->srvParams->Geo.CRS.length() > 0) {
+    if (dataSource->srvParams->geoParams.CRS.length() > 0) {
       projectionRequired = true;
       for (size_t d = 0; d < nrDataObjects; d++) {
         new2DVar[d]->setAttributeText("grid_mapping", "customgridprojection");
@@ -707,7 +707,7 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
         CDF::Variable *projectionVar = new CDF::Variable();
         projectionVar->name.copy("customgridprojection");
         cdfObject0->addVariable(projectionVar);
-        dataSource->nativeEPSG = dataSource->srvParams->Geo.CRS.c_str();
+        dataSource->nativeEPSG = dataSource->srvParams->geoParams.CRS.c_str();
         imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
         if (dataSource->nativeProj4.length() == 0) {
           dataSource->nativeProj4 = LATLONPROJECTION;
@@ -720,12 +720,13 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
 
 #ifdef CCONVERTEPROFILE_DEBUG
     CDBDebug("Datasource CRS = %s nativeproj4 = %s", dataSource->nativeEPSG.c_str(), dataSource->nativeProj4.c_str());
-    CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->Geo.bbox.left, dataSource->srvParams->Geo.bbox.bottom, dataSource->srvParams->Geo.bbox.right, dataSource->srvParams->Geo.bbox.top);
+    CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->geoParams.bbox.left, dataSource->srvParams->geoParams.bbox.bottom, dataSource->srvParams->geoParams.bbox.right,
+             dataSource->srvParams->geoParams.bbox.top);
     CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
 #endif
 
     if (projectionRequired) {
-      int status = imageWarper.initreproj(dataSource, dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
+      int status = imageWarper.initreproj(dataSource, dataSource->srvParams->geoParams, &dataSource->srvParams->cfg->Projection);
       if (status != 0) {
         CDBError("Unable to init projection");
         return 1;
@@ -805,7 +806,7 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
             }
             /* Get the last pushed point from the array and push the character text data in the paramlist */
             const char *b = ((const char **)pointVar[d]->data)[pPoint];
-            lastPoint->paramList.push_back(CKeyValue(key, description, b));
+            lastPoint->paramList.push_back({.key = key, .description = description, .value = b});
             float a = 0;
             drawCircle(sdata, a, dataSource->dWidth, dataSource->dHeight, dlon - 1, dlat, 8);
           }
@@ -823,7 +824,7 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
             } catch (int e) {
             }
             /* Get the last pushed point from the array and push the character text data in the paramlist */
-            lastPoint->paramList.push_back(CKeyValue(key, description, ((const char **)pointVar[d]->data)[pPoint]));
+            lastPoint->paramList.push_back({.key = key, .description = description, .value = ((const char **)pointVar[d]->data)[pPoint]});
             float a = 0;
             drawCircle(sdata, a, dataSource->dWidth, dataSource->dHeight, dlon - 1, dlat, 8);
           }
@@ -845,25 +846,11 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
                   description = (const char *)pointID->getAttribute("long_name")->data;
                 } catch (int e) {
                 }
-                lastPoint->paramList.push_back(CKeyValue(key, description, ((const char **)pointID->data)[pGeo]));
+                lastPoint->paramList.push_back({.key = key, .description = description, .value = ((const char **)pointID->data)[pGeo]});
               }
               drawCircle(sdata, val, dataSource->dWidth, dataSource->dHeight, dlon - 1, dlat, 8);
             }
           }
-
-          //           if(hasTimeValuePerObs&& lastPoint!=NULL){
-          //
-          //             const char * key = timeVarPerObs->name.c_str();
-          //             const char * description = key;
-          //             try{
-          //               description = (const char*)timeVarPerObs->getAttribute("long_name")->data;
-          //             }catch(int e){
-          //             }
-          //             //obsTimeData
-          //
-          //             lastPoint->paramList.push_back(CKeyValue(key,description ,obsTime.dateToISOString(obsTime.getDate(obsTimeData[pPoint])).c_str()));
-          //
-          //           }
         }
       }
     }

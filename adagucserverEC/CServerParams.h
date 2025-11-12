@@ -102,7 +102,7 @@ public:
   int figWidth, figHeight;
   CT::string BGColor;
   bool Transparent;
-  CGeoParams Geo;
+  CGeoParams geoParams;
   CT::string Styles;
   CT::string Style;
 

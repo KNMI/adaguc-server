@@ -38,8 +38,8 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
 #ifdef CImgWarpBilinear_DEBUG
   CDBDebug("Render");
 #endif
-  int dImageWidth = drawImage->Geo.dWidth + 1;
-  int dImageHeight = drawImage->Geo.dHeight + 1;
+  int dImageWidth = drawImage->geoParams.dWidth + 1;
+  int dImageHeight = drawImage->geoParams.dHeight + 1;
 
   double dfSourceExtW = (sourceImage->dfBBOX[2] - sourceImage->dfBBOX[0]);
   double dfSourceExtH = (sourceImage->dfBBOX[1] - sourceImage->dfBBOX[3]);
@@ -50,10 +50,10 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
   double dfSourceOrigX = sourceImage->dfBBOX[0];
   double dfSourceOrigY = sourceImage->dfBBOX[3];
 
-  double dfDestExtW = drawImage->Geo.bbox.right - drawImage->Geo.bbox.left;
-  double dfDestExtH = drawImage->Geo.bbox.bottom - drawImage->Geo.bbox.top;
-  double dfDestOrigX = drawImage->Geo.bbox.left;
-  double dfDestOrigY = drawImage->Geo.bbox.top;
+  double dfDestExtW = drawImage->geoParams.bbox.right - drawImage->geoParams.bbox.left;
+  double dfDestExtH = drawImage->geoParams.bbox.bottom - drawImage->geoParams.bbox.top;
+  double dfDestOrigX = drawImage->geoParams.bbox.left;
+  double dfDestOrigY = drawImage->geoParams.bbox.top;
   double dfDestW = double(dImageWidth);
   double dfDestH = double(dImageHeight);
   double hCellSizeX = (dfSourceExtW / dfSourceW) / 2.0f;
@@ -65,7 +65,7 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
   //  CDBDebug("enableBarb=%d enableVectors=%d drawGridVectors=%d", enableBarb, enableVector, drawGridVectors);
   if (tryToOptimizeExtent) {
     // Reproject the boundingbox from the destination bbox:
-    drawImage->Geo.bbox.toArray(dfPixelExtent);
+    drawImage->geoParams.bbox.toArray(dfPixelExtent);
 #ifdef CImgWarpBilinear_DEBUG
     for (int j = 0; j < 4; j++) {
       CDBDebug("dfPixelExtent: %d %f", j, dfPixelExtent[j]);
@@ -964,8 +964,8 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
   // float currentTextValue = 0;
   // int contourDefinitionIndex = -1;
 
-  int dImageWidth = drawImage->Geo.dWidth + 1;
-  int dImageHeight = drawImage->Geo.dHeight + 1;
+  int dImageWidth = drawImage->geoParams.dWidth + 1;
+  int dImageHeight = drawImage->geoParams.dHeight + 1;
 
   size_t imageSize = (dImageHeight + 0) * (dImageWidth + 1);
 #ifdef CImgWarpBilinear_DEBUG
