@@ -27,17 +27,17 @@
 #define PROJECTIONSTORE_H
 #include <tuple>
 #include "CTString.h"
-#include "BBOX.h"
+#include "GeoParameters.h"
 
 struct ProjectionMapKey {
   CT::string sourceCRS;
   CT::string destCRS;
-  BBOX extent;
+  f8box extent;
 };
 
-std::tuple<bool, BBOX> getBBOXProjection(ProjectionMapKey key);
+std::tuple<bool, f8box> getBBOXProjection(ProjectionMapKey key);
 
-void addBBOXProjection(ProjectionMapKey key, BBOX bbox);
+void addBBOXProjection(ProjectionMapKey key, f8box bbox);
 
 void BBOXProjectionClearCache();
 

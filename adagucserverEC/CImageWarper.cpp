@@ -381,9 +381,10 @@ int CImageWarper::findExtentUnSynchronized(CDataSource *dataSource, double *dfBB
   }
 
   // CDBDebug("findExtent for %s and %f %f %f %f", destinationCRS.c_str(), dfBBOX[0], dfBBOX[1], dfBBOX[2], dfBBOX[3]);
-  ProjectionMapKey key = {sourceCRSString, destinationCRS, makeBBOX(dfBBOX)};
+
+  ProjectionMapKey key = {sourceCRSString, destinationCRS, makef8box(dfBBOX)};
   bool found;
-  BBOX bbox{};
+  f8box bbox{};
   std::tie(found, bbox) = getBBOXProjection(key);
 
   if (found) {
@@ -391,9 +392,8 @@ int CImageWarper::findExtentUnSynchronized(CDataSource *dataSource, double *dfBB
     CDBDebug("FOUND AND REUSING!!! %s %s (%0.3f, %0.3f, %0.3f, %0.3f) to  (%0.3f, %0.3f, %0.3f, %0.3f)", key.sourceCRS.c_str(), key.destCRS.c_str(), key.extent.bbox[0], key.extent.bbox[1],
              key.extent.bbox[2], key.extent.bbox[3], bbox.bbox[0], bbox.bbox[1], bbox.bbox[2], bbox.bbox[3]);
 #endif
-    for (size_t j = 0; j < 4; j++) {
-      dfBBOX[j] = bbox.bbox[j];
-    }
+
+    bbox.toArray(dfBBOX);
     return 0;
   }
 
@@ -508,7 +508,7 @@ int CImageWarper::findExtentUnSynchronized(CDataSource *dataSource, double *dfBB
   CDBDebug("INSERTING!!! %s %s (%0.3f, %0.3f, %0.3f, %0.3f) to  (%0.3f, %0.3f, %0.3f, %0.3f)", key.sourceCRS.c_str(), key.destCRS.c_str(), key.extent.bbox[0], key.extent.bbox[1], key.extent.bbox[2],
            key.extent.bbox[3], dfBBOX[0], dfBBOX[1], dfBBOX[2], dfBBOX[3]);
 #endif
-  addBBOXProjection(key, makeBBOX(dfBBOX));
+  addBBOXProjection(key, makef8box(dfBBOX));
   return 0;
 };
 

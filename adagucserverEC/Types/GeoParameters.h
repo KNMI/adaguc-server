@@ -28,7 +28,6 @@
 #include "CTypes.h"
 #include <math.h>
 #include <map>
-#include <CKeyValuePair.h>
 #include <cstddef>
 
 struct i4point {
@@ -59,6 +58,14 @@ struct f8box {
   f8box swapXY();
   double get(size_t index);
 };
+/**
+ * Custom comparison operator for the BBOX
+ */
+bool operator<(f8box a, f8box b);
+/**
+ * Makes a BBOX from a array of doubles
+ */
+f8box makef8box(double *dfBBOX);
 
 struct f8component {
   double u, v;

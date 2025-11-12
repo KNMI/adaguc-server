@@ -339,8 +339,8 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
     // Width needs to be at least 2, the bounding box is calculated from these.
     if (dataSource->dWidth == 1) dataSource->dWidth = 2;
     if (dataSource->dHeight == 1) dataSource->dHeight = 2;
-    double cellSizeX = (dataSource->srvParams->geoParams.bbox.right - dataSource->srvParams->geoParams.bbox.left) / double(dataSource->dWidth);
-    double cellSizeY = (dataSource->srvParams->geoParams.bbox.top - dataSource->srvParams->geoParams.bbox.bottom) / double(dataSource->dHeight);
+    double cellSizeX = dataSource->srvParams->geoParams.bbox.span().x / dataSource->dWidth;
+    double cellSizeY = dataSource->srvParams->geoParams.bbox.span().y / dataSource->dHeight;
     double offsetX = dataSource->srvParams->geoParams.bbox.left;
     double offsetY = dataSource->srvParams->geoParams.bbox.bottom;
 
