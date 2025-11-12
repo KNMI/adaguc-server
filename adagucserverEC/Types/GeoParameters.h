@@ -33,6 +33,7 @@
 
 struct i4point {
   int x, y;
+  double distance(i4point point);
 };
 
 struct f8point {

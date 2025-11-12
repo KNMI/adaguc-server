@@ -252,11 +252,6 @@ public:
   CT::string nativeProj4;
   bool dataSourceOwnsDataObject = false;
 
-  // Used for scaling the legend to the palette range of 0-240
-  /*float legendScale,legendOffset,legendLog,legendLowerRange,legendUpperRange;
-  bool legendValueRange;
-  CT::string styleName;*/
-
   // TODO KVP and metaDataItems can be moved out to GDAL datawriter
   class KVP {
   public:

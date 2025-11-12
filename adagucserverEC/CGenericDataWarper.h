@@ -39,6 +39,8 @@ private:
   GDWState warperState;
 
 public:
+  GenericDataWarper() { CDBDebug("NEW GenericDataWarper"); }
+  bool debug = false;
   template <typename T>
   int render(CImageWarper *warper, void *_sourceData, GeoParameters &sourceGeoParams, GeoParameters &destGeoParams, const std::function<void(int, int, T, GDWState &warperState)> &drawFunction);
 

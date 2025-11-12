@@ -32,7 +32,7 @@ struct GDWDrawFunctionSettings {
   double legendOffset;
   CColor bgColor;
   bool hasNodataValue;
-  DrawInImage drawInImage = DrawInImageNone;
+  DrawInImage drawInImage = DrawInImageNearest;
   DrawInDataGrid drawInDataGrid = DrawInDataGridNone;
   std::vector<Interval> intervals;
   float *smoothingDistanceMatrix = nullptr;

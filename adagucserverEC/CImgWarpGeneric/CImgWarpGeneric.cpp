@@ -26,8 +26,15 @@
 #include "CImgWarpGeneric.h"
 #include "CImageDataWriter.h"
 #include "CGenericDataWarper.h"
+#include <CImageOperators/drawContour.h>
 
 const char *CImgWarpGeneric::className = "CImgWarpGeneric";
+
+template <typename T> void warpImageNearestFunction(int x, int y, T value, GDWState &wState, GDWDrawFunctionSettings &settings) {
+  if (x < 0 || y < 0 || x >= wState.destDataWidth || y >= wState.destDataHeight) return;
+  if ((settings.hasNodataValue && ((value) == (T)settings.dfNodataValue)) || !(value == value)) return;
+  ((float *)settings.destinationGrid)[x + y * wState.destDataWidth] = value;
+};
 
 template <typename T> void warpImageBilinearFunction(int x, int y, T val, GDWState &warperState, GDWDrawFunctionSettings &settings) {
   if (x < 0 || y < 0 || x > warperState.destDataWidth || y > warperState.destDataHeight) return;
@@ -71,17 +78,8 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
   void *sourceData;
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-  GDWDrawFunctionSettings settings;
-  settings.dfNodataValue = dataSource->getFirstAvailableDataObject()->dfNodataValue;
-  settings.legendValueRange = (bool)styleConfiguration->hasLegendValueRange;
-  settings.legendLowerRange = styleConfiguration->legendLowerRange;
-  settings.legendUpperRange = styleConfiguration->legendUpperRange;
-  settings.hasNodataValue = dataSource->getFirstAvailableDataObject()->hasNodataValue;
 
-  if (!settings.hasNodataValue) {
-    settings.hasNodataValue = true;
-    settings.dfNodataValue = -100000.f;
-  }
+  GDWDrawFunctionSettings settings = getDrawFunctionSettings(dataSource, drawImage, styleConfiguration);
 
   int destDataWidth = drawImage->geoParams.width;
   int destDataHeight = drawImage->geoParams.height;
@@ -102,26 +100,27 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
   GenericDataWarper genericDataWarper;
   GDWArgs args = {.warper = warper, .sourceData = sourceData, .sourceGeoParams = sourceGeo, .destGeoParams = drawImage->geoParams};
 
+  if (settings.drawInImage == DrawInImageNearest) {
+#define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
+  if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return warpImageNearestFunction(x, y, val, warperState, settings); });
+    ENUMERATE_OVER_CDFTYPES(RENDER)
+#undef RENDER
+  }
+  if (settings.drawInImage == DrawInImageBilinear || settings.drawInImage == DrawInImageNone) {
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
   if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return warpImageBilinearFunction(x, y, val, warperState, settings); });
-  ENUMERATE_OVER_CDFTYPES(RENDER)
+    ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
-
-  for (int y = 0; y < (int)destDataHeight; y = y + 1) {
-    for (int x = 0; x < (int)destDataWidth; x = x + 1) {
-      float val = ((float *)settings.destinationGrid)[x + y * destDataWidth];
-      if (val != (float)settings.dfNodataValue && val == val) {
-        if (styleConfiguration->legendLog != 0) val = log10(val + .000001) / log10(styleConfiguration->legendLog);
-        val *= styleConfiguration->legendScale;
-        val += styleConfiguration->legendOffset;
-        if (val >= 239)
-          val = 239;
-        else if (val < 0)
-          val = 0;
-        drawImage->setPixelIndexed(x, y, (unsigned char)val);
+  }
+  if (settings.drawInImage == DrawInImageBilinear || settings.drawInImage == DrawInImageNearest) {
+    for (int y = 0; y < (int)destDataHeight; y = y + 1) {
+      for (int x = 0; x < (int)destDataWidth; x = x + 1) {
+        float val = ((float *)settings.destinationGrid)[x + y * destDataWidth];
+        setPixelInDrawImage(x, y, val, &settings);
       }
     }
   }
+  drawContour((float *)settings.destinationGrid, dataSource, drawImage);
   delete[] (float *)settings.destinationGrid;
 
   return;

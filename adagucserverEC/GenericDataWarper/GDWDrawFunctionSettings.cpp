@@ -21,9 +21,22 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
   settings.drawImage = drawImage;
 
   /* Check the if we want to use discrete type */
-  if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL && styleConfiguration->styleConfig->RenderSettings.size() == 1) {
-    CT::string renderHint = styleConfiguration->styleConfig->RenderSettings[0]->attr.renderhint;
-    if (renderHint.equals(RENDERHINT_DISCRETECLASSES)) {
+  if (styleConfiguration->styleConfig != nullptr) {
+    if (styleConfiguration->styleConfig->RenderSettings.size() == 1) {
+      auto renderSettings = styleConfiguration->styleConfig->RenderSettings[0];
+      if (renderSettings->attr.renderhint.equals(RENDERHINT_DISCRETECLASSES)) {
+        settings.isUsingShadeIntervals = true;
+      }
+      if (renderSettings->attr.interpolationmethod.equals("nearest")) {
+        settings.drawInImage = DrawInImageNearest;
+      } else if (renderSettings->attr.interpolationmethod.equals("bilinear")) {
+        settings.drawInImage = DrawInImageBilinear;
+      } else if (renderSettings->attr.interpolationmethod.equals("none")) {
+        settings.drawInImage = DrawInImageNone;
+      }
+    }
+    // With rendermethod generic icm shadeintervals, also use shading.
+    if (settings.isUsingShadeIntervals == false && styleConfiguration->shadeIntervals.size() > 0 && styleConfiguration->styleConfig->RenderMethod[0]->value.equals("generic")) {
       settings.isUsingShadeIntervals = true;
     }
   }

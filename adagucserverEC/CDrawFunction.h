@@ -22,7 +22,7 @@ template <class T> void setPixelInDrawImage(int x, int y, T val, GDWDrawFunction
     if (val == noDataValue) isNodata = true;
   }
 
-  if (std::isnan(val)) isNodata = true;
+  if (std::isnan(val)) return;
 
   if (!isNodata)
     if (settings->legendValueRange)

@@ -40,9 +40,9 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, GeoParame
   warperState.sourceDataWidth = sourceGeoParams.width;
   warperState.sourceDataHeight = sourceGeoParams.height;
 
-#ifdef GenericDataWarper_DEBUG
-  CDBDebug("render");
-#endif
+  if (debug) {
+    CDBDebug("render");
+  }
 
   int imageHeight = destGeoParams.height;
   int imageWidth = destGeoParams.width;
@@ -53,10 +53,10 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, GeoParame
   double x1 = sourceGeoParams.bbox.left;
   double x2 = sourceGeoParams.bbox.right;
 
-#ifdef GenericDataWarper_DEBUG
-  CDBDebug("sourceGeoParams.dfBBOX %f, %f, %f, %f", sourceGeoParams.bbox.left, sourceGeoParams.bbox.bottom, sourceGeoParams.bbox.right, sourceGeoParams.bbox.top);
-  CDBDebug("destGeoParams.dfBBOX %f, %f, %f, %f", destGeoParams.bbox.left, destGeoParams.bbox.bottom, destGeoParams.bbox.right, destGeoParams.bbox.top);
-#endif
+  if (debug) {
+    CDBDebug("sourceGeoParams.dfBBOX %f, %f, %f, %f", sourceGeoParams.bbox.left, sourceGeoParams.bbox.bottom, sourceGeoParams.bbox.right, sourceGeoParams.bbox.top);
+    CDBDebug("destGeoParams.dfBBOX %f, %f, %f, %f", destGeoParams.bbox.left, destGeoParams.bbox.bottom, destGeoParams.bbox.right, destGeoParams.bbox.top);
+  }
   if (y2 < y1) {
     if (y1 > -360 && y2 < 360 && x1 > -720 && x2 < 720) {
       if (isLonLatProjection(&sourceGeoParams.crs) == false) {
@@ -101,9 +101,9 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, GeoParame
   double dfDestOrigY = destGeoParams.bbox.top;  //+0.5/multiDestY;;;
 
   // Determine source BBOX of based on destination grid
-#ifdef GenericDataWarper_DEBUG
-  CDBDebug("Creating px extent");
-#endif
+  if (debug) {
+    CDBDebug("Creating px extent");
+  }
 
   warperState.sourceDataWidth = sourceGeoParams.width;
   warperState.sourceDataHeight = sourceGeoParams.height;
@@ -194,9 +194,9 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, GeoParame
     }
     return 0;
   }
-#ifdef GenericDataWarper_DEBUG
-  CDBDebug("warp is required");
-#endif
+  if (debug) {
+    CDBDebug("warp is required");
+  }
 
   bool useStridingProjection = false;
   int projStrideFactor = 16;
@@ -208,7 +208,7 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, GeoParame
 
   double *px = new double[dataSize];
   double *py = new double[dataSize];
-  char *skip = new char[dataSize];
+  bool *skip = new bool[dataSize];
 
   if (!useStridingProjection) {
     for (int y = 0; y < dataHeight + 1; y++) {
@@ -279,9 +279,9 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, GeoParame
     delete[] pyStrided;
     delete[] pxStrided;
   }
-#ifdef GenericDataWarper_DEBUG
-  CDBDebug("Reprojection done");
-#endif
+  if (debug) {
+    CDBDebug("Reprojection done");
+  }
 
   for (size_t j = 0; j < dataSize; j++) {
     if (!(px[j] > -DBL_MAX && px[j] < DBL_MAX)) skip[j] = true;
@@ -289,140 +289,116 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, GeoParame
 
   double avgDX = 0;
   double avgDY = 0;
-  // double prevpx1,prevpx2;
+  // double prevquadX[0],prevquadX[1];
 
   double pLengthD = 0;
 
+  bool isMercator = isMercatorProjection(&destGeoParams.crs);
+  bool isLonLatOrMercatorProjection = isLonLatProjection(&destGeoParams.crs) == true || isMercator;
+
+  double sphereWidth = 360;
+  if (isMercator) {
+    sphereWidth = 40000000;
+  }
+
+  // dataWidth should be +1 because we use a 1 pixel larger grid for the interpolation.
+  int offs1 = 0;
+  int offs2 = 1;
+  int offs3 = dataWidth + 1 + 1;
+  int offs4 = dataWidth + 1 + 0;
+
+  CDBDebug("start looping");
   for (int y = 0; y < dataHeight; y = y + 1) {
     for (int x = 0; x < dataWidth; x = x + 1) {
       size_t p = x + y * (dataWidth + 1);
-      if (skip[p] == false && skip[p + 1] == false && skip[p + dataWidth + 1] == false && skip[p + dataWidth + 2] == false) {
+      if (skip[p + offs1] == false && skip[p + offs2] == false && skip[p + offs3] == false && skip[p + offs4] == false) {
         bool doDraw = true;
         // Order for the quad corners is:
-        //  px1 -- px2
+        //  quadX[0] -- quadX[1]
         //   |      |
-        //  px4 -- px3
+        //  quadX[3] -- quadX[2]
 
-        double px1 = px[p];
-        double px2 = px[p + 1];
-        double px3 = px[p + dataWidth + 2];
-        double px4 = px[p + dataWidth + 1];
+        double quadX[4] = {px[p + offs1], px[p + offs2], px[p + offs3], px[p + offs4]};
+        double quadY[4] = {py[p + offs1], py[p + offs2], py[p + offs3], py[p + offs4]};
 
-        double py1 = py[p];
-        double py2 = py[p + 1];
-        double py3 = py[p + dataWidth + 2];
-        double py4 = py[p + dataWidth + 1];
-
-        // CDBDebug("destGeoParams = %s",destGeoParams.CRS.c_str());
-        if (isLonLatProjection(&destGeoParams.crs) == true || isMercatorProjection(&destGeoParams.crs) == true) {
-          double lons[4];
-          lons[0] = px1;
-          lons[1] = px2;
-          lons[2] = px3;
-          lons[3] = px4;
-
-          double lonMin, lonMax, lonMiddle = 0;
-          for (int j = 0; j < 4; j++) {
-            double lon = lons[j];
-            if (j == 0) {
-              lonMin = lon;
-              lonMax = lon;
-            } else {
-              if (lon < lonMin) lonMin = lon;
-              if (lon > lonMax) lonMax = lon;
-            }
-            lonMiddle += lon;
-            if (lon == INFINITY || lon == -INFINITY || !(lon == lon)) {
-              doDraw = false;
-              break;
-            }
-          }
-          lonMiddle /= 4;
-          double sphereWidth = 360;
-          if (isMercatorProjection(&destGeoParams.crs)) {
-            sphereWidth = 40000000;
-          }
-
+        if (isLonLatOrMercatorProjection) {
+          double lonMin = std::min(quadX[0], std::min(quadX[1], std::min(quadX[2], quadX[3])));
+          double lonMax = std::max(quadX[0], std::max(quadX[1], std::max(quadX[2], quadX[3])));
           if (lonMax - lonMin >= sphereWidth * 0.9) {
+            double lonMiddle = (lonMin + lonMax) / 2.0;
             if (lonMiddle > 0) {
-              for (int j = 0; j < 4; j++)
-                if (lons[j] < lonMiddle) lons[j] += sphereWidth;
+              quadX[0] += sphereWidth;
+              quadX[1] += sphereWidth;
+              quadX[2] += sphereWidth;
+              quadX[3] += sphereWidth;
             } else {
-              for (int j = 0; j < 4; j++)
-                if (lons[j] > lonMiddle) lons[j] -= sphereWidth;
+              quadX[0] -= sphereWidth;
+              quadX[1] -= sphereWidth;
+              quadX[2] -= sphereWidth;
+              quadX[3] -= sphereWidth;
             }
           }
-          px1 = lons[0];
-          px2 = lons[1];
-          px3 = lons[2];
-          px4 = lons[3];
         }
 
-        px1 = (px1 - dfDestOrigX) * multiDestX;
-        px2 = (px2 - dfDestOrigX) * multiDestX;
-        px3 = (px3 - dfDestOrigX) * multiDestX;
-        px4 = (px4 - dfDestOrigX) * multiDestX;
+        quadX[0] = (quadX[0] - dfDestOrigX) * multiDestX;
+        quadX[1] = (quadX[1] - dfDestOrigX) * multiDestX;
+        quadX[2] = (quadX[2] - dfDestOrigX) * multiDestX;
+        quadX[3] = (quadX[3] - dfDestOrigX) * multiDestX;
 
-        py1 = (py1 - dfDestOrigY) * multiDestY;
-        py2 = (py2 - dfDestOrigY) * multiDestY;
-        py3 = (py3 - dfDestOrigY) * multiDestY;
-        py4 = (py4 - dfDestOrigY) * multiDestY;
+        quadY[0] = (quadY[0] - dfDestOrigY) * multiDestY;
+        quadY[1] = (quadY[1] - dfDestOrigY) * multiDestY;
+        quadY[2] = (quadY[2] - dfDestOrigY) * multiDestY;
+        quadY[3] = (quadY[3] - dfDestOrigY) * multiDestY;
 
-        if (x == 0) avgDX = px2;
-        if (y == 0) avgDY = py4;
-
+            // If suddenly the length of the quad is 10 times bigger, we probably have an anomaly and we should not draw it.
         // Calculate the diagonal length of the quad.
-        double lengthD = (px3 - px1) * (px3 - px1) + (py3 - py1) * (py3 - py1);
-
+        double lengthD = (quadX[2] - quadX[0]) * (quadX[2] - quadX[0]) + (quadY[2] - quadY[0]) * (quadY[2] - quadY[0]);
         if (x == 0 && y == 0) {
           pLengthD = lengthD;
         }
-
-        // If suddenly the length of the quad is 10 times bigger, we probably have an anomaly and we should not draw it.
         if (lengthD > pLengthD * 10) {
           doDraw = false;
         }
+        pLengthD = lengthD;
 
+        // Check the right side of the grid
+        if (x == 0) avgDX = quadX[1];
+        if (y == 0) avgDY = quadY[3];
         if (x == dataWidth - 1) {
-          if (fabs(avgDX - px1) < fabs(px1 - px2) / 2) {
+          if (fabs(avgDX - quadX[0]) < fabs(quadX[0] - quadX[1]) / 2) {
             doDraw = false;
           }
-          if (fabs(avgDX - px2) < fabs(px1 - px2) / 2) {
+          if (fabs(avgDX - quadX[1]) < fabs(quadX[0] - quadX[1]) / 2) {
             doDraw = false;
           }
         }
+        // Check the bottom side of the grid
         if (y == dataHeight - 1) {
-          if (fabs(avgDY - py1) < fabs(py1 - py4) / 2) {
+          if (fabs(avgDY - quadY[0]) < fabs(quadY[0] - quadY[3]) / 2) {
             doDraw = false;
           }
         }
 
         if (doDraw) {
-          int sourceGridX = x + PXExtentBasedOnSource[0];
-          int sourceGridY = y + PXExtentBasedOnSource[1];
-          warperState.sourceDataPX = sourceGridX;
-          warperState.sourceDataPY = (warperState.sourceDataHeight - 1 - sourceGridY);
+          warperState.sourceDataPX = x + PXExtentBasedOnSource[0];
+          warperState.sourceDataPY = (warperState.sourceDataHeight - 1 - (y + PXExtentBasedOnSource[1]));
           T value = ((T *)warperState.sourceData)[this->warperState.sourceDataPX + this->warperState.sourceDataPY * warperState.sourceDataWidth];
-
-          double xCornersA[3] = {px1, px2, px3};
-          double yCornersA[3] = {py1, py2, py3};
-
-          double xCornersB[3] = {px3, px1, px4};
-          double yCornersB[3] = {py3, py1, py4};
-
+          double xCornersA[3] = {quadX[0], quadX[1], quadX[2]};
+          double yCornersA[3] = {quadY[0], quadY[1], quadY[2]};
+          double xCornersB[3] = {quadX[2], quadX[0], quadX[3]};
+          double yCornersB[3] = {quadY[2], quadY[0], quadY[3]};
           gdwDrawTriangle(xCornersA, yCornersA, value, false, warperState, drawFunction);
           gdwDrawTriangle(xCornersB, yCornersB, value, true, warperState, drawFunction);
         }
-        pLengthD = lengthD;
       }
     }
   }
   delete[] px;
   delete[] py;
   delete[] skip;
-#ifdef GenericDataWarper_DEBUG
-  CDBDebug("render done");
-#endif
+  if (debug) {
+    CDBDebug("render done");
+  }
   return 0;
 }
 
