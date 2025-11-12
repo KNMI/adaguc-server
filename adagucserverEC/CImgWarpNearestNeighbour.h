@@ -255,7 +255,7 @@ private:
     }
   }
 
-  template <class T> static void drawFunction(int x, int y, T val, GDWState &, CDrawFunctionSettings &settings) {
+  template <class T> static void drawFunction(int x, int y, T val, GDWState &, GDWDrawFunctionSettings &settings) {
     /*
      Please note that this is part of the precise renderer. Changes to this routine should also be implemented in:
 
@@ -380,7 +380,7 @@ private:
     }
     if (usePrecise) {
 
-      CDrawFunctionSettings settings = getDrawFunctionSettings(dataSource, drawImage, styleConfiguration);
+      GDWDrawFunctionSettings settings = getDrawFunctionSettings(dataSource, drawImage, styleConfiguration);
 
       CDFType dataType = dataSource->getFirstAvailableDataObject()->cdfVariable->getType();
       void *sourceData = dataSource->getFirstAvailableDataObject()->cdfVariable->data;

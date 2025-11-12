@@ -50,6 +50,8 @@ struct GDWDrawFunctionSettings {
   void *destinationGrid = nullptr;
 };
 
+GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawImage *drawImage, const CStyleConfiguration *styleConfiguration);
+
 void gdwDrawFunction(GDWState *_drawSettings);
 
 double gdwGetValueFromSourceFunction(int x, int y, GDWDrawFunctionSettings *drawSettings);
