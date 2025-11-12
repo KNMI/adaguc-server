@@ -42,17 +42,17 @@ int layerTypeLiveUpdateConfigureDimensionsInDataSource(CDataSource *dataSource) 
   return 0;
 }
 
-int layerTypeLiveUpdateRender(CDataSource *incomingDataSource, CServerParams *srvParam) {
-  if (incomingDataSource->cfgLayer->DataPostProc.empty()) {
+int layerTypeLiveUpdateRender(CDataSource *dataSource, CServerParams *srvParam) {
+  CDBDebug("Data has been populated");
+  if (dataSource->cfgLayer->DataPostProc.empty()) {
     // Demo case: render the current time in an image for testing purposes / frontend development
     CDrawImage image;
     layerTypeLiveUpdateRenderIntoDrawImage(&image, srvParam);
     printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
-    CDBDebug("***Number of timesteps %d", incomingDataSource->getNumTimeSteps());
+    CDBDebug("***Number of timesteps %d", dataSource->getNumTimeSteps());
     return image.printImagePng8(true);
   } else {
     // Solar Terminator case (uses a data postprocessor)
-    CDataSource *dataSource = new CDataSource();
     dataSource->srvParams = srvParam;
     dataSource->isConfigured = true;
     dataSource->currentAnimationStep = 0;
@@ -192,7 +192,7 @@ int layerTypeLiveUpdateRenderIntoImageDataWriter(CDataSource *dataSource, CServe
     CDBDebug("Status from create animation was %d", imageDataWriter.createAnimation());
   }
 
-  std::vector<CDataSource *> dataSourceRef = {dataSource->clone()};
+  std::vector<CDataSource *> dataSourceRef = {dataSource};
 
   if (srvParam->requestType == REQUEST_WMS_GETFEATUREINFO) {
     status = imageDataWriter.getFeatureInfo(dataSourceRef, 0, int(srvParam->dX), int(srvParam->dY));
