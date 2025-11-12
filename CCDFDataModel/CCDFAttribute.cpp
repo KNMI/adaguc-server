@@ -62,17 +62,15 @@ int CDF::Attribute::setData(Attribute *attribute) {
   return 0;
 }
 int CDF::Attribute::setData(CDFType type, const void *dataToSet, size_t dataLength) {
-  if (data != NULL) {
-    freeData(&data);
-  };
-  data = NULL;
+
+  freeData();
 
   length = dataLength;
   this->type = type;
   if (dataLength == 0) {
     return 0;
   }
-  allocateData(type, &data, length);
+  allocateData(length);
   if (type == CDF_CHAR || type == CDF_UBYTE || type == CDF_BYTE) memcpy(data, dataToSet, length);
   if (type == CDF_SHORT || type == CDF_USHORT) memcpy(data, dataToSet, length * sizeof(short));
   if (type == CDF_INT || type == CDF_UINT) memcpy(data, dataToSet, length * sizeof(int));
@@ -81,17 +79,22 @@ int CDF::Attribute::setData(CDFType type, const void *dataToSet, size_t dataLeng
   if (type == CDF_DOUBLE) {
     memcpy(data, dataToSet, length * sizeof(double));
   }
+  if (type == CDF_STRING) {
+    for (size_t j = 0; j < dataLength; j += 1) {
+      const char *sourceStr = ((char **)dataToSet)[j];
+      size_t length = strlen(sourceStr) + 1;
+      ((char **)data)[j] = (char *)malloc(length * sizeof(char));
+      strncpy(((char **)data)[j], ((char **)dataToSet)[j], length);
+    }
+  }
   return 0;
 }
 
 int CDF::Attribute::setData(const char *dataToSet) {
-  if (data != NULL) {
-    freeData(&data);
-  };
-  data = NULL;
+  freeData();
   length = strlen(dataToSet);
   this->type = CDF_CHAR;
-  allocateData(type, &data, length + 1);
+  allocateData(length + 1);
   if (type == CDF_CHAR) {
     memcpy(data, dataToSet, length); // TODO support other data types as well
     ((char *)data)[length] = '\0';
@@ -179,9 +182,25 @@ CT::string CDF::Attribute::getDataAsString() { return toString(); }
 
 size_t CDF::Attribute::size() { return length; }
 
-CDF::Attribute::~Attribute() {
-  if (data != NULL) {
-    freeData(&data);
-  };
-  data = NULL;
+CDF::Attribute::~Attribute() { freeData(); }
+
+void CDF::Attribute::freeData() {
+  if (data != nullptr) {
+    if (type == CDF_STRING) {
+      char **vardata = (char **)this->data;
+      for (size_t j = 0; j < length; j++) {
+        free(vardata[j]);
+        vardata[j] = nullptr;
+      }
+    }
+    CDF::freeData(&data);
+    data = nullptr;
+  }
+  length = 0;
+}
+
+void CDF::Attribute::allocateData(size_t size) {
+  freeData();
+  CDF::allocateData(type, &data, size);
+  length = size;
 }

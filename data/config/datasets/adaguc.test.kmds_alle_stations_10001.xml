@@ -107,6 +107,17 @@
 
   <Layer type="database" hidden="false">
     <Group value="10M"/>
+    <Title>Wind adjusted</Title>
+    <Name>wind_adjust</Name>
+    <Variable units="mym s -1">ff</Variable>
+    <Variable units="mydegrees">dd</Variable>
+    <FilePath filter="^kmds_alle_stations_10001_.*\.nc$">{ADAGUC_PATH}/data/datasets/kmds/</FilePath>
+    <Dimension name="time" interval="PT10M">time</Dimension>
+    <Styles>barball,barbthinned,barb,barbdisc,barbvector,barballvector</Styles>
+  </Layer>
+
+  <Layer type="database" hidden="false">
+    <Group value="10M"/>
     <Title>Wind (m/s)</Title>
     <Name>wind_mps</Name>
     <Variable>ff</Variable>

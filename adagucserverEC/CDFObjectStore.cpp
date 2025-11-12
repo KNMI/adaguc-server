@@ -310,36 +310,20 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
       }
       if (dataSource->cfgLayer->Variable.size() > 0) {
         // Shorthand to variable configuration in the layer.
-        auto *cfgVar = dataSource->cfgLayer->Variable[0];
-        // Rename variable, if requested
-        if (!cfgVar->attr.orgname.empty()) {
-          CDF::Variable *var = cdfObject->getVar(cfgVar->attr.orgname);
-          if (var == nullptr) {
-            CDBError("Variable specified with orgname named [%s] not found in file", cfgVar->attr.orgname.c_str());
-            delete cdfObject;
-            delete cdfReader;
-            return nullptr;
-          }
-          var->name.copy(cfgVar->value);
-          // HACK: We want it in the cache (so the store is responsible for cleaning it up), but we don't want it reused.
-          uniqueIDForFile = uniqueIDForFile + "_" + CServerParams::randomString(10).c_str();
-        }
-        CDF::Variable *var = cdfObject->getVar(cfgVar->value);
-        if (var != nullptr) {
-
-          // Set long_name
-          if (!cfgVar->attr.long_name.empty()) {
-            var->setAttributeText("long_name", cfgVar->attr.long_name);
-          }
-
-          // Set units
-          if (!cfgVar->attr.units.empty()) {
-            var->setAttributeText("units", cfgVar->attr.units);
-          }
-
-          // Set standard_name
-          if (!cfgVar->attr.standard_name.empty()) {
-            var->setAttributeText("standard_name", cfgVar->attr.standard_name);
+        for (auto *cfgVar : dataSource->cfgLayer->Variable) {
+          CDBDebug("Checking variable %s", cfgVar->value.c_str());
+          // Rename variable, if requested
+          if (!cfgVar->attr.orgname.empty()) {
+            CDF::Variable *var = cdfObject->getVar(cfgVar->attr.orgname);
+            if (var == nullptr) {
+              CDBError("Variable specified with orgname named [%s] not found in file", cfgVar->attr.orgname.c_str());
+              delete cdfObject;
+              delete cdfReader;
+              return nullptr;
+            }
+            var->name.copy(cfgVar->value);
+            // HACK: We want it in the cache (so the store is responsible for cleaning it up), but we don't want it reused.
+            uniqueIDForFile = uniqueIDForFile + "_" + CServerParams::randomString(10).c_str();
           }
         }
       }
