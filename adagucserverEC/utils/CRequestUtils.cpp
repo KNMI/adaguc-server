@@ -37,7 +37,7 @@ std::tuple<int, f8box> findBBoxForDataSource(std::vector<CDataSource *> dataSour
       }
       warper.findExtent(dataSources[d], dfBBOX);
       warper.closereproj();
-      CDBDebug("Found bbox %s %f %f %f %f", dataSources[0]->srvParams->geoParams.CRS.c_str(), dfBBOX[0], dfBBOX[1], dfBBOX[2], dfBBOX[3]);
+      CDBDebug("Found bbox %s %f %f %f %f", dataSources[0]->srvParams->geoParams.crs.c_str(), dfBBOX[0], dfBBOX[1], dfBBOX[2], dfBBOX[3]);
       f8box box = {dfBBOX[0], dfBBOX[1], dfBBOX[2], dfBBOX[3]};
       return std::make_tuple(0, box);
     }

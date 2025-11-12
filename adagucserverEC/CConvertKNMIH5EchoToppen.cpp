@@ -166,8 +166,8 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
 
     /* Make the width and height of the new 2D adaguc field the same as the viewing window */
-    dataSource->dWidth = dataSource->srvParams->geoParams.dWidth;
-    dataSource->dHeight = dataSource->srvParams->geoParams.dHeight;
+    dataSource->dWidth = dataSource->srvParams->geoParams.width;
+    dataSource->dHeight = dataSource->srvParams->geoParams.height;
 
     /* Width and height of the dataSource need to be at least 2 in this case. */
     if (dataSource->dWidth < 2) dataSource->dWidth = 2;

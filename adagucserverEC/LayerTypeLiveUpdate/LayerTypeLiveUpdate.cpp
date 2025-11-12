@@ -166,7 +166,7 @@ int layerTypeLiveUpdateRenderIntoDrawImage(CDrawImage *image, CServerParams *srv
   image->setTrueColor(true);
   image->createImage(srvParam->geoParams);
   image->create685Palette();
-  image->rectangle(0, 0, srvParam->geoParams.dWidth, srvParam->geoParams.dHeight, CColor(255, 255, 255, 0), CColor(255, 255, 255, 255));
+  image->rectangle(0, 0, srvParam->geoParams.width, srvParam->geoParams.height, CColor(255, 255, 255, 0), CColor(255, 255, 255, 255));
   const char *fontFile = image->getFontLocation();
   CT::string timeValue = "No time dimension specified";
   if (srvParam->requestDims.size() == 1) {

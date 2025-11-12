@@ -965,8 +965,8 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
   dataSource->featureSet = geojsonkey.c_str();
 
   // Make the width and height of the new 2D adaguc field the same as the viewing window
-  dataSource->dWidth = dataSource->srvParams->geoParams.dWidth;
-  dataSource->dHeight = dataSource->srvParams->geoParams.dHeight;
+  dataSource->dWidth = dataSource->srvParams->geoParams.width;
+  dataSource->dHeight = dataSource->srvParams->geoParams.height;
 
   // Set statistics
   if (dataSource->stretchMinMax) {
@@ -1047,7 +1047,7 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
       }
       bool projectionRequired = false;
       CImageWarper imageWarper;
-      if (dataSource->srvParams->geoParams.CRS.length() > 0) {
+      if (dataSource->srvParams->geoParams.crs.length() > 0) {
         projectionRequired = true;
         //            for(size_t d=0;d<nrDataObjects;d++){
         polygonIndexVar->setAttributeText("grid_mapping", "customgridprojection");
@@ -1056,7 +1056,7 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
           CDF::Variable *projectionVar = new CDF::Variable();
           projectionVar->name.copy("customgridprojection");
           cdfObject->addVariable(projectionVar);
-          dataSource->nativeEPSG = dataSource->srvParams->geoParams.CRS.c_str();
+          dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs.c_str();
           imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
           if (dataSource->nativeProj4.length() == 0) {
             dataSource->nativeProj4 = LATLONPROJECTION;

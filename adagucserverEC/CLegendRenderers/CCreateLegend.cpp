@@ -37,10 +37,10 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
   LegendType legendType = undefined;
   bool estimateMinMax = false;
 
-  float legendHeight = legendImage->geoParams.dHeight;
+  float legendHeight = legendImage->geoParams.height;
 
   int pLeft = 4;
-  int pTop = (int)(legendImage->geoParams.dHeight - legendHeight);
+  int pTop = (int)(legendImage->geoParams.height - legendHeight);
 
   if (dataSource->dLayerType == CConfigReaderLayerTypeCascaded) {
     legendType = cascaded;

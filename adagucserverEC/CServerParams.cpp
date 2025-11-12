@@ -323,7 +323,7 @@ bool CServerParams::checkBBOXXYOrder(const char *projName) {
   if (OGCVersion == WMS_VERSION_1_3_0) {
     CT::string projNameString;
     if (projName == NULL) {
-      projNameString = geoParams.CRS.c_str();
+      projNameString = geoParams.crs.c_str();
     } else {
       projNameString = projName;
     }

@@ -226,9 +226,9 @@ int CConvertCurvilinear::convertCurvilinearHeader(CDFObject *cdfObject, CServerP
     CDBError("srvParams is not set");
     return 1;
   }
-  if (srvParams->geoParams.dWidth > 1 && srvParams->geoParams.dHeight > 1) {
-    width = srvParams->geoParams.dWidth;
-    height = srvParams->geoParams.dHeight;
+  if (srvParams->geoParams.width > 1 && srvParams->geoParams.height > 1) {
+    width = srvParams->geoParams.width;
+    height = srvParams->geoParams.height;
   }
 
 #ifdef CCONVERTCURVILINEAR_DEBUG
@@ -495,8 +495,8 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mod
   }
 
   // Make the width and height of the new 2D adaguc field the same as the viewing window
-  dataSource->dWidth = dataSource->srvParams->geoParams.dWidth;
-  dataSource->dHeight = dataSource->srvParams->geoParams.dHeight;
+  dataSource->dWidth = dataSource->srvParams->geoParams.width;
+  dataSource->dHeight = dataSource->srvParams->geoParams.height;
 
   /*if(dataSource->dWidth == 1 && dataSource->dHeight == 1){
     dataSource->srvParams->geoParams.bbox.left=dataSource->srvParams->geoParams.bbox.left;
@@ -551,8 +551,8 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mod
 
   CImageWarper imageWarper;
   bool projectionRequired = false;
-  CDBDebug("dataSource->srvParams->geoParams.CRS = %s", dataSource->srvParams->geoParams.CRS.c_str());
-  if (dataSource->srvParams->geoParams.CRS.length() > 0) {
+  CDBDebug("dataSource->srvParams->geoParams.CRS = %s", dataSource->srvParams->geoParams.crs.c_str());
+  if (dataSource->srvParams->geoParams.crs.length() > 0) {
     projectionRequired = true;
     new2DVar->setAttributeText("grid_mapping", "customgridprojection");
     // Apply once
@@ -561,7 +561,7 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mod
       CDF::Variable *projectionVar = new CDF::Variable();
       projectionVar->name.copy("customgridprojection");
       cdfObject->addVariable(projectionVar);
-      dataSource->nativeEPSG = dataSource->srvParams->geoParams.CRS.c_str();
+      dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs.c_str();
       imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
       CDBDebug("dataSource->nativeProj4 %s", dataSource->nativeProj4.c_str());
       if (dataSource->nativeProj4.length() == 0) {

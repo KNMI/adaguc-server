@@ -121,7 +121,7 @@ TEST(CImgRenderFieldVectors, jacobianTransformUWCWDini) {
   CT::string crs = "+proj=ob_tran +o_proj=longlat +lon_0=-8.0 +o_lat_p=35.0 +o_lon_p=0.0 +a=6367470 +e=0 +no_defs";
 
   CGeoParams geo;
-  geo.CRS = crs;
+  geo.crs = crs;
   std::vector<CServerConfig::XMLE_Projection *> v;
 
   // Init warper
@@ -177,7 +177,7 @@ TEST(CImgRenderFieldVectors, jacobianTransformLatLon) {
   CT::string crs = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs";
 
   CGeoParams geo;
-  geo.CRS = crs;
+  geo.crs = crs;
   std::vector<CServerConfig::XMLE_Projection *> v;
 
   // Init warper
@@ -232,7 +232,7 @@ f8component testDiniCoordinate(f8point pointToCheck, f8component speedVector) {
   CT::string crs = "+proj=ob_tran +o_proj=longlat +lon_0=-8.0 +o_lat_p=35.0 +o_lon_p=0.0 +a=6367470 +e=0 +no_defs";
 
   CGeoParams geo;
-  geo.CRS = crs;
+  geo.crs = crs;
   std::vector<CServerConfig::XMLE_Projection *> v;
 
   // Init warper

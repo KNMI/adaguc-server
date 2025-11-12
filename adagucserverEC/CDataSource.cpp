@@ -412,9 +412,9 @@ void CDataSource::addStep(const char *fileName) {
 void CDataSource::setHeaderFilename(CT::string headerFilename) { this->headerFilename = headerFilename; }
 
 void CDataSource::setGeo(CGeoParams &geo) {
-  nativeProj4 = geo.CRS;
-  dWidth = geo.dWidth;
-  dHeight = geo.dHeight;
+  nativeProj4 = geo.crs;
+  dWidth = geo.width;
+  dHeight = geo.height;
   geo.bbox.toArray(dfBBOX);
 }
 
@@ -907,7 +907,7 @@ double CDataSource::getScaling() {
     if (this->getStyle()->styleConfig->RenderSettings.size() > 0) {
       if (!this->getStyle()->styleConfig->RenderSettings[0]->attr.scalewidth.empty()) {
         double scaleWidth = this->getStyle()->styleConfig->RenderSettings[0]->attr.scalewidth.toDouble();
-        double imageWidth = (double)this->srvParams->geoParams.dWidth;
+        double imageWidth = (double)this->srvParams->geoParams.width;
         return imageWidth / scaleWidth;
       }
     }
@@ -1057,11 +1057,11 @@ std::string CDataSource::getDataSetName() { return std::string(this->srvParams->
 
 CGeoParams CDataSource::makeGeoParams() {
   CGeoParams geoParams;
-  geoParams.dWidth = this->dWidth;
-  geoParams.dHeight = this->dHeight;
+  geoParams.width = this->dWidth;
+  geoParams.height = this->dHeight;
   geoParams.bbox = this->dfBBOX;
-  geoParams.dfCellSizeX = this->dfCellSizeX;
-  geoParams.dfCellSizeY = this->dfCellSizeY;
-  geoParams.CRS = this->nativeProj4;
+  geoParams.cellsizeX = this->dfCellSizeX;
+  geoParams.cellsizeY = this->dfCellSizeY;
+  geoParams.crs = this->nativeProj4;
   return geoParams;
 }

@@ -193,8 +193,8 @@ int CImageWarper::reprojModelFromLatLon(double &dfx, double &dfy) {
 
 int CImageWarper::reprojpoint_inv_topx(double &dfx, double &dfy, CGeoParams &_geoDest) {
   if (reprojpoint_inv(dfx, dfy) != 0) return 1;
-  dfx = (dfx - _geoDest.bbox.left) / (_geoDest.bbox.right - _geoDest.bbox.left) * double(_geoDest.dWidth);
-  dfy = (dfy - _geoDest.bbox.top) / (_geoDest.bbox.bottom - _geoDest.bbox.top) * double(_geoDest.dHeight);
+  dfx = (dfx - _geoDest.bbox.left) / (_geoDest.bbox.right - _geoDest.bbox.left) * double(_geoDest.width);
+  dfy = (dfy - _geoDest.bbox.top) / (_geoDest.bbox.bottom - _geoDest.bbox.top) * double(_geoDest.height);
   return 0;
 }
 
@@ -255,7 +255,7 @@ int CImageWarper::decodeCRS(CT::string *outputCRS, CT::string *inputCRS, std::ve
 
 int CImageWarper::init(const char *destString, const char *fromProjString, std::vector<CServerConfig::XMLE_Projection *> *_prj) {
   CGeoParams geo;
-  geo.CRS = fromProjString;
+  geo.crs = fromProjString;
   return initreproj(destString, geo, _prj);
 }
 
@@ -289,7 +289,7 @@ int CImageWarper::_initreprojSynchronized(const char *projString, CGeoParams &_G
     return 1;
   }
 
-  CT::string sourceCRS = _GeoDest.CRS.c_str();
+  CT::string sourceCRS = _GeoDest.crs.c_str();
 
   CT::string sourceProjectionUndec = projString;
 

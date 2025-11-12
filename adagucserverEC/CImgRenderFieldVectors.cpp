@@ -122,8 +122,8 @@ std::vector<CalculatedWindVector> calculateBarbsAndVectorsAndSpeedFromUVComponen
   units = dataSource->getDataObject(0)->getUnits();
 
   // Wind VECTOR
-  int dImageWidth = drawImage->geoParams.dWidth + 1;
-  int dImageHeight = drawImage->geoParams.dHeight + 1;
+  int dImageWidth = drawImage->geoParams.width + 1;
+  int dImageHeight = drawImage->geoParams.height + 1;
   int dPixelDestW = dPixelExtent[2] - dPixelExtent[0];
   int dPixelDestH = dPixelExtent[3] - dPixelExtent[1];
   size_t numDestPixels = (dPixelDestW + 1) * (dPixelDestH + 1);

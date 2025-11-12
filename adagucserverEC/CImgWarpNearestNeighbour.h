@@ -190,9 +190,9 @@ private:
         }
       }
 
-      for (int y = 0; y < drawImage->geoParams.dHeight; y++) {
-        for (int x = 0; x < drawImage->geoParams.dWidth; x++) {
-          T val = data[x + y * drawImage->geoParams.dWidth];
+      for (int y = 0; y < drawImage->geoParams.height; y++) {
+        for (int x = 0; x < drawImage->geoParams.width; x++) {
+          T val = data[x + y * drawImage->geoParams.width];
           bool drawnPixel = false;
           bool isNodata = false;
           if (hasNodataValue) {
@@ -206,9 +206,9 @@ private:
             for (int snr = numShadeDefs - 1; snr >= 0; snr--) {
               if (val >= shadeDefMin[snr] && val < shadeDefMax[snr]) {
                 if (fillColors[snr].a == 0) { // When a fully transparent color is deliberately set, force this color in the image
-                  drawImage->setPixelTrueColorOverWrite(x, (drawImage->geoParams.dHeight - 1) - y, fillColors[snr].r, fillColors[snr].g, fillColors[snr].b, fillColors[snr].a);
+                  drawImage->setPixelTrueColorOverWrite(x, (drawImage->geoParams.height - 1) - y, fillColors[snr].r, fillColors[snr].g, fillColors[snr].b, fillColors[snr].a);
                 } else {
-                  drawImage->setPixelTrueColor(x, (drawImage->geoParams.dHeight - 1) - y, fillColors[snr].r, fillColors[snr].g, fillColors[snr].b, fillColors[snr].a);
+                  drawImage->setPixelTrueColor(x, (drawImage->geoParams.height - 1) - y, fillColors[snr].r, fillColors[snr].g, fillColors[snr].b, fillColors[snr].a);
                 }
                 drawnPixel = true;
                 break;
@@ -216,16 +216,16 @@ private:
             }
           }
           if (hasBgColor && !drawnPixel) {
-            drawImage->setPixelTrueColor(x, (drawImage->geoParams.dHeight - 1) - y, bgColor.r, bgColor.g, bgColor.b, bgColor.a);
+            drawImage->setPixelTrueColor(x, (drawImage->geoParams.height - 1) - y, bgColor.r, bgColor.g, bgColor.b, bgColor.a);
           }
         }
       }
     }
 
     if (shade == false) {
-      for (int y = 0; y < drawImage->geoParams.dHeight; y++) {
-        for (int x = 0; x < drawImage->geoParams.dWidth; x++) {
-          T val = data[x + y * drawImage->geoParams.dWidth];
+      for (int y = 0; y < drawImage->geoParams.height; y++) {
+        for (int x = 0; x < drawImage->geoParams.width; x++) {
+          T val = data[x + y * drawImage->geoParams.width];
 
           bool isNodata = false;
           if (hasNodataValue) {
@@ -249,7 +249,7 @@ private:
             else if (pcolorind <= 0)
               pcolorind = 0;
 
-            drawImage->setPixelIndexed(x, (drawImage->geoParams.dHeight - 1) - y, pcolorind);
+            drawImage->setPixelIndexed(x, (drawImage->geoParams.height - 1) - y, pcolorind);
           }
         }
       }
@@ -269,8 +269,8 @@ private:
       /* Using the precise renderer with a legend */
       setPixelInDrawImage(x, y, val, &settings);
     } else {
-      if (x >= 0 && y >= 0 && x < settings.drawImage->geoParams.dWidth && y < settings.drawImage->geoParams.dHeight) {
-        size_t p = x + y * settings.drawImage->geoParams.dWidth;
+      if (x >= 0 && y >= 0 && x < settings.drawImage->geoParams.width && y < settings.drawImage->geoParams.height) {
+        size_t p = x + y * settings.drawImage->geoParams.width;
         uint v = val;
         unsigned char a = ((unsigned char)(v >> 24));
         if (a == 255) {
@@ -308,10 +308,10 @@ private:
     if ((float)dataSource->dfBBOX[3] != (float)drawImage->geoParams.bbox.bottom) {
       fieldsAreIdentical = false;
     }
-    if ((int)dataSource->dWidth != (int)drawImage->geoParams.dWidth) {
+    if ((int)dataSource->dWidth != (int)drawImage->geoParams.width) {
       fieldsAreIdentical = false;
     }
-    if ((int)dataSource->dHeight != (int)drawImage->geoParams.dHeight) {
+    if ((int)dataSource->dHeight != (int)drawImage->geoParams.height) {
       fieldsAreIdentical = false;
     }
 
@@ -386,12 +386,12 @@ private:
       CDFType dataType = dataSource->getFirstAvailableDataObject()->cdfVariable->getType();
       void *sourceData = dataSource->getFirstAvailableDataObject()->cdfVariable->data;
       CGeoParams sourceGeo;
-      sourceGeo.dWidth = dataSource->dWidth;
-      sourceGeo.dHeight = dataSource->dHeight;
+      sourceGeo.width = dataSource->dWidth;
+      sourceGeo.height = dataSource->dHeight;
       sourceGeo.bbox = dataSource->dfBBOX;
-      sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
-      sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
-      sourceGeo.CRS = dataSource->nativeProj4;
+      sourceGeo.cellsizeX = dataSource->dfCellSizeX;
+      sourceGeo.cellsizeY = dataSource->dfCellSizeY;
+      sourceGeo.crs = dataSource->nativeProj4;
 
       GenericDataWarper genericDataWarper;
       GDWArgs args = {.warper = warper, .sourceData = sourceData, .sourceGeoParams = sourceGeo, .destGeoParams = drawImage->geoParams};
@@ -418,13 +418,13 @@ private:
     int y_div = 1;
     if (warper->isProjectionRequired() == false) {
       // CDBDebug("No reprojection required");
-      tile_height = drawImage->geoParams.dHeight;
-      tile_width = drawImage->geoParams.dWidth;
+      tile_height = drawImage->geoParams.height;
+      tile_width = drawImage->geoParams.width;
       // When we are drawing just one tile, threading is not needed
       useThreading = false;
     } else {
-      x_div = int((float(drawImage->geoParams.dWidth) / tile_width)) + 1;
-      y_div = int((float(drawImage->geoParams.dHeight) / tile_height)) + 1;
+      x_div = int((float(drawImage->geoParams.width) / tile_width)) + 1;
+      y_div = int((float(drawImage->geoParams.height) / tile_height)) + 1;
     }
     internalWidth = tile_width * x_div;
     internalHeight = tile_height * y_div;
@@ -432,8 +432,8 @@ private:
     // New geo location needs to be extended based on new width and height
     CGeoParams internalGeo = drawImage->geoParams;
 
-    internalGeo.bbox.right = ((drawImage->geoParams.bbox.right - drawImage->geoParams.bbox.left) / double(drawImage->geoParams.dWidth)) * double(internalWidth) + drawImage->geoParams.bbox.left;
-    internalGeo.bbox.bottom = ((drawImage->geoParams.bbox.bottom - drawImage->geoParams.bbox.top) / double(drawImage->geoParams.dHeight)) * double(internalHeight) + drawImage->geoParams.bbox.top;
+    internalGeo.bbox.right = ((drawImage->geoParams.bbox.right - drawImage->geoParams.bbox.left) / double(drawImage->geoParams.width)) * double(internalWidth) + drawImage->geoParams.bbox.left;
+    internalGeo.bbox.bottom = ((drawImage->geoParams.bbox.bottom - drawImage->geoParams.bbox.top) / double(drawImage->geoParams.height)) * double(internalHeight) + drawImage->geoParams.bbox.top;
 
     // Setup the renderer to draw the tiles with.We do not keep the calculated results for CDF_CHAR (faster)
     CAreaMapper *drawTileClass = new CAreaMapper();

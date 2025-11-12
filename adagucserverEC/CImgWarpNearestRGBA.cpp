@@ -73,8 +73,8 @@ int CDrawTileObjBGRA::drawTile(double *x_corners, double *y_corners, int &dDestX
 #ifndef CIMGWARPNEARESTRGBA_USEDRAWIMAGE
   uint *imageData = (uint *)drawImage->getCanvasMemory();
 #endif
-  int imageWidth = drawImage->geoParams.dWidth;
-  int imageHeight = drawImage->geoParams.dHeight;
+  int imageWidth = drawImage->geoParams.width;
+  int imageHeight = drawImage->geoParams.height;
 #ifdef CIMGWARPNEARESTRGBA_DEBUG
   CDBDebug("myDrawRawTile %f, %f, %f, %f, %f, %f %f %f", dfSourceBBOX[0], dfSourceBBOX[1], dfSourceBBOX[2], dfSourceBBOX[3], width, height, dfTileWidth, dfTileHeight);
 #endif
@@ -297,13 +297,13 @@ void CImgWarpNearestRGBA::render(CImageWarper *warper, CDataSource *dataSource, 
   int y_div = 1;
   if (warper->isProjectionRequired() == false) {
     // CDBDebug("No reprojection required");
-    tile_height = drawImage->geoParams.dHeight;
-    tile_width = drawImage->geoParams.dWidth;
+    tile_height = drawImage->geoParams.height;
+    tile_width = drawImage->geoParams.width;
     // When we are drawing just one tile, threading is not needed
     useThreading = false;
   } else {
-    x_div = int((float(drawImage->geoParams.dWidth) / tile_width)) + 1;
-    y_div = int((float(drawImage->geoParams.dHeight) / tile_height)) + 1;
+    x_div = int((float(drawImage->geoParams.width) / tile_width)) + 1;
+    y_div = int((float(drawImage->geoParams.height) / tile_height)) + 1;
   }
   int internalWidth = tile_width * x_div;
   int internalHeight = tile_height * y_div;
@@ -311,8 +311,8 @@ void CImgWarpNearestRGBA::render(CImageWarper *warper, CDataSource *dataSource, 
   // New geo location needs to be extended based on new width and height
   CGeoParams internalGeo = drawImage->geoParams;
 
-  internalGeo.bbox.right = ((drawImage->geoParams.bbox.right - drawImage->geoParams.bbox.left) / double(drawImage->geoParams.dWidth)) * double(internalWidth) + drawImage->geoParams.bbox.left;
-  internalGeo.bbox.bottom = ((drawImage->geoParams.bbox.bottom - drawImage->geoParams.bbox.top) / double(drawImage->geoParams.dHeight)) * double(internalHeight) + drawImage->geoParams.bbox.top;
+  internalGeo.bbox.right = ((drawImage->geoParams.bbox.right - drawImage->geoParams.bbox.left) / double(drawImage->geoParams.width)) * double(internalWidth) + drawImage->geoParams.bbox.left;
+  internalGeo.bbox.bottom = ((drawImage->geoParams.bbox.bottom - drawImage->geoParams.bbox.top) / double(drawImage->geoParams.height)) * double(internalHeight) + drawImage->geoParams.bbox.top;
 
   // Setup the renderer to draw the tiles with.We do not keep the calculated results for CDF_CHAR (faster)
   CDrawTileObjBGRA *drawTileClass = NULL;

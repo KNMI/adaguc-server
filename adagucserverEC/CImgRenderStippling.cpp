@@ -71,11 +71,11 @@ template <class T> void CImgRenderStippling::_stippleMiddleOfPoints() {
       warper->reprojpoint_inv(cx, cy);
       cx -= dataSource->srvParams->geoParams.bbox.left;
       cx /= bboxWidth;
-      cx *= double(dataSource->srvParams->geoParams.dWidth);
+      cx *= double(dataSource->srvParams->geoParams.width);
       cy -= dataSource->srvParams->geoParams.bbox.bottom;
       cy /= bboxHeight;
       cy = 1 - cy;
-      cy *= double(dataSource->srvParams->geoParams.dHeight);
+      cy *= double(dataSource->srvParams->geoParams.height);
       int dx = cx, dy = cy;
       T val = ((T *)sourceData)[x + y * dataSource->dWidth];
       CDBDebug("%f", (float)val);
@@ -106,8 +106,8 @@ void CImgRenderStippling::render(CImageWarper *warper, CDataSource *dataSource, 
     settings.hasNodataValue = true;
     settings.dfNodataValue = -100000.f;
   }
-  settings.width = drawImage->geoParams.dWidth;
-  settings.height = drawImage->geoParams.dHeight;
+  settings.width = drawImage->geoParams.width;
+  settings.height = drawImage->geoParams.height;
 
   settings.dataField = new float[settings.width * settings.height];
   for (size_t y = 0; y < settings.height; y++) {
@@ -120,12 +120,12 @@ void CImgRenderStippling::render(CImageWarper *warper, CDataSource *dataSource, 
   sourceData = dataSource->getFirstAvailableDataObject()->cdfVariable->data;
   CGeoParams sourceGeo;
 
-  sourceGeo.dWidth = dataSource->dWidth;
-  sourceGeo.dHeight = dataSource->dHeight;
+  sourceGeo.width = dataSource->dWidth;
+  sourceGeo.height = dataSource->dHeight;
   sourceGeo.bbox = dataSource->dfBBOX;
-  sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
-  sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
-  sourceGeo.CRS = dataSource->nativeProj4;
+  sourceGeo.cellsizeX = dataSource->dfCellSizeX;
+  sourceGeo.cellsizeY = dataSource->dfCellSizeY;
+  sourceGeo.crs = dataSource->nativeProj4;
 
   xDistance = 22;
   yDistance = 22;
@@ -199,9 +199,9 @@ void CImgRenderStippling::render(CImageWarper *warper, CDataSource *dataSource, 
    * Warp the data to a new grid and plot hatching in screencoordinates.
    */
 
-  int startX = int(((-dataSource->srvParams->geoParams.bbox.left) / bboxWidth) * dataSource->srvParams->geoParams.dWidth);
+  int startX = int(((-dataSource->srvParams->geoParams.bbox.left) / bboxWidth) * dataSource->srvParams->geoParams.width);
   startX = (startX % (xDistance * 2)) - (xDistance * 2);
-  int startY = int(((dataSource->srvParams->geoParams.bbox.bottom) / bboxHeight) * dataSource->srvParams->geoParams.dHeight);
+  int startY = int(((dataSource->srvParams->geoParams.bbox.bottom) / bboxHeight) * dataSource->srvParams->geoParams.height);
   startY = (startY % (yDistance * 2)) - (yDistance * 2);
 
   GenericDataWarper genericDataWarper;

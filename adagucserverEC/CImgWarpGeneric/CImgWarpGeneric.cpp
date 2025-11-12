@@ -83,8 +83,8 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
     settings.dfNodataValue = -100000.f;
   }
 
-  int destDataWidth = drawImage->geoParams.dWidth;
-  int destDataHeight = drawImage->geoParams.dHeight;
+  int destDataWidth = drawImage->geoParams.width;
+  int destDataHeight = drawImage->geoParams.height;
   size_t numGridElements = destDataWidth * destDataHeight;
   CDF::allocateData(CDF_FLOAT, &settings.destinationGrid, numGridElements);
   CDF::fill(settings.destinationGrid, CDF_FLOAT, settings.dfNodataValue, numGridElements);
@@ -92,12 +92,12 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
   CDFType dataType = dataSource->getFirstAvailableDataObject()->cdfVariable->getType();
   sourceData = dataSource->getFirstAvailableDataObject()->cdfVariable->data;
   CGeoParams sourceGeo;
-  sourceGeo.dWidth = dataSource->dWidth;
-  sourceGeo.dHeight = dataSource->dHeight;
+  sourceGeo.width = dataSource->dWidth;
+  sourceGeo.height = dataSource->dHeight;
   sourceGeo.bbox = dataSource->dfBBOX;
-  sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
-  sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
-  sourceGeo.CRS = dataSource->nativeProj4;
+  sourceGeo.cellsizeX = dataSource->dfCellSizeX;
+  sourceGeo.cellsizeY = dataSource->dfCellSizeY;
+  sourceGeo.crs = dataSource->nativeProj4;
 
   GenericDataWarper genericDataWarper;
   GDWArgs args = {.warper = warper, .sourceData = sourceData, .sourceGeoParams = sourceGeo, .destGeoParams = drawImage->geoParams};

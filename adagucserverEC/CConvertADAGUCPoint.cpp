@@ -609,8 +609,8 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
 #endif
 
   // Make the width and height of the new 2D adaguc field the same as the viewing window
-  dataSource->dWidth = dataSource->srvParams->geoParams.dWidth;
-  dataSource->dHeight = dataSource->srvParams->geoParams.dHeight;
+  dataSource->dWidth = dataSource->srvParams->geoParams.width;
+  dataSource->dHeight = dataSource->srvParams->geoParams.height;
 
   if (dataSource->dWidth == 1 && dataSource->dHeight == 1) {
     dataSource->srvParams->geoParams.bbox = dataSource->srvParams->geoParams.bbox;
@@ -694,7 +694,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
 
     CImageWarper imageWarper;
     bool projectionRequired = false;
-    if (dataSource->srvParams->geoParams.CRS.length() > 0) {
+    if (dataSource->srvParams->geoParams.crs.length() > 0) {
       projectionRequired = true;
       for (size_t d = 0; d < nrDataObjects; d++) {
         if (pointVar[d] != NULL) {
@@ -705,7 +705,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
         CDF::Variable *projectionVar = new CDF::Variable();
         projectionVar->name.copy("customgridprojection");
         cdfObject0->addVariable(projectionVar);
-        dataSource->nativeEPSG = dataSource->srvParams->geoParams.CRS.c_str();
+        dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs.c_str();
         imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
         if (dataSource->nativeProj4.length() == 0) {
           dataSource->nativeProj4 = LATLONPROJECTION;
@@ -856,13 +856,13 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
       if (hasZoomableDiscRadius) {
         float yDistanceProjected = projectedYOffsetY - projectedY;
         // CDBDebug("yDistanceProjected = %f", yDistanceProjected);
-        discRadius = ((dataSource->srvParams->geoParams.bbox.top - dataSource->srvParams->geoParams.bbox.bottom) / yDistanceProjected) / float(dataSource->srvParams->geoParams.dWidth);
+        discRadius = ((dataSource->srvParams->geoParams.bbox.top - dataSource->srvParams->geoParams.bbox.bottom) / yDistanceProjected) / float(dataSource->srvParams->geoParams.width);
         discRadius = (discSize / 5) / discRadius;
         if (discRadius < 0.1) discRadius = 0.1;
         discRadiusY = discRadius;
 
         float xDistanceProjected = projectedXOffsetX - projectedX;
-        discRadiusX = ((dataSource->srvParams->geoParams.bbox.right - dataSource->srvParams->geoParams.bbox.left) / xDistanceProjected) / float(dataSource->srvParams->geoParams.dWidth);
+        discRadiusX = ((dataSource->srvParams->geoParams.bbox.right - dataSource->srvParams->geoParams.bbox.left) / xDistanceProjected) / float(dataSource->srvParams->geoParams.width);
         discRadiusX = (discSize / 5) / discRadiusX;
         if (discRadiusX < 0.1) discRadiusX = 0.1;
       }

@@ -160,11 +160,11 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
     }
   }
 
-  srvParam->geoParams.BBOX_CRS = baseDataSource->nativeProj4.c_str();
-  srvParam->geoParams.CRS = srvParam->geoParams.BBOX_CRS;
+  srvParam->responceCrs = baseDataSource->nativeProj4.c_str();
+  srvParam->geoParams.crs = srvParam->responceCrs;
   srvParam->WCS_GoNative = false;
-  srvParam->geoParams.dWidth = tileSettings->attr.tilewidthpx.toInt();
-  srvParam->geoParams.dHeight = tileSettings->attr.tileheightpx.toInt();
+  srvParam->geoParams.width = tileSettings->attr.tilewidthpx.toInt();
+  srvParam->geoParams.height = tileSettings->attr.tileheightpx.toInt();
 
   int index = 0;
   CT::string suffix;

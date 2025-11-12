@@ -123,7 +123,7 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
   CT::string name = dataSource->featureSet;
 
   bool projectionRequired = false;
-  if (dataSource->srvParams->geoParams.CRS.length() > 0) {
+  if (dataSource->srvParams->geoParams.crs.length() > 0) {
     projectionRequired = true;
   }
 

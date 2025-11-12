@@ -22,7 +22,7 @@ int CCreateScaleBar::createScaleBar(CDrawImage *scaleBarImage, CGeoParams &geoPa
 
   // Draw text
   CT::string units = "";
-  CT::string projection = geoParams.CRS.c_str();
+  CT::string projection = geoParams.crs.c_str();
   if (projection.equals("EPSG:3411")) units = "meter";
   if (projection.equals("EPSG:3412")) units = "meter";
   if (projection.equals("EPSG:3575")) units = "meter";
@@ -63,7 +63,7 @@ CCreateScaleBar::Props CCreateScaleBar::getScaleBarProperties(CGeoParams &geoPar
   double numMapUnits = 1. / 10000000.;
 
   double boxWidth = geoParams.bbox.span().x;
-  double pixelsPerUnit = double(geoParams.dWidth) / boxWidth;
+  double pixelsPerUnit = double(geoParams.width) / boxWidth;
   if (pixelsPerUnit <= 0) {
     throw(__LINE__);
   }

@@ -36,96 +36,43 @@ struct i4point {
 
 struct f8point {
   double x, y;
-  f8point rad() { return {.x = (x * (M_PI / 180.)), .y = (y * (M_PI / 180.))}; }
+  f8point rad();
 };
 
 struct i4box {
   int left, bottom, right, top;
-  void operator=(const int bbox[4]) {
-    left = bbox[0];
-    bottom = bbox[1];
-    right = bbox[2];
-    top = bbox[3];
-  }
-  i4point span() { return {.x = right - left, .y = top - bottom}; };
-  void sort() {
-    if (left > right) std::swap(left, right);
-    if (bottom > top) std::swap(bottom, top);
-  }
-  void clip(i4box clip) {
-    if (left < clip.left) left = clip.left;
-    if (bottom < clip.bottom) bottom = clip.bottom;
-    if (right > clip.right) right = clip.right;
-    if (top > clip.top) top = clip.top;
-  }
-  void toArray(int box[4]) {
-    box[0] = left;
-    box[1] = bottom;
-    box[2] = right;
-    box[3] = top;
-  }
+  void operator=(const int bbox[4]);
+  i4point span();
+  void sort();
+  void clip(i4box clip);
+  void toArray(int box[4]);
 };
 
 struct f8box {
   double left, bottom, right, top;
-  void operator=(const double bbox[4]) {
-    left = bbox[0];
-    bottom = bbox[1];
-    right = bbox[2];
-    top = bbox[3];
-  }
-  f8point span() { return {.x = right - left, .y = top - bottom}; }
-
-  void sort() {
-    if (left > right) std::swap(left, right);
-    if (bottom > top) std::swap(bottom, top);
-  }
-  void clip(i4box clip) {
-    if (left < clip.left) left = clip.left;
-    if (bottom < clip.bottom) bottom = clip.bottom;
-    if (right > clip.right) right = clip.right;
-    if (top > clip.top) top = clip.top;
-  }
-  void toArray(double box[4]) {
-    box[0] = left;
-    box[1] = bottom;
-    box[2] = right;
-    box[3] = top;
-  }
-
-  f8box swapXY() { return {.left = bottom, .bottom = left, .right = top, .top = right}; }
-
-  double get(size_t index) {
-    switch (index) {
-    case 0:
-      return left;
-    case 1:
-      return bottom;
-    case 2:
-      return right;
-    case 3:
-      return top;
-    default:
-      return NAN;
-    }
-  }
+  void operator=(const double bbox[4]);
+  f8point span();
+  void sort();
+  void clip(i4box clip);
+  void toArray(double box[4]);
+  f8box swapXY();
+  double get(size_t index);
 };
 
 struct f8component {
   double u, v;
-  double magnitude() { return hypot(u, v); }
-  double direction() { return atan2(v, u); }
-  double angledeg() { return ((atan2(u, v) * (180 / M_PI) + 180)); }
+  double magnitude();
+  double direction();
+  double angledeg();
 };
 
 struct CGeoParams {
-  int dWidth = 1;
-  int dHeight = 1;
+  int width = 1;
+  int height = 1;
   f8box bbox;
-  double dfCellSizeX = 0;
-  double dfCellSizeY = 0;
-  CT::string CRS;
-  CT::string BBOX_CRS;
+  double cellsizeX = 0;
+  double cellsizeY = 0;
+  CT::string crs;
 };
 
 #endif

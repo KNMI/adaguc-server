@@ -164,9 +164,9 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
     CDBError("srvParams is not set");
     return 1;
   }
-  if (srvParams->geoParams.dWidth > 1 && srvParams->geoParams.dHeight > 1) {
-    width = srvParams->geoParams.dWidth;
-    height = srvParams->geoParams.dHeight;
+  if (srvParams->geoParams.width > 1 && srvParams->geoParams.height > 1) {
+    width = srvParams->geoParams.width;
+    height = srvParams->geoParams.height;
   }
 
 #ifdef CCONVERTH5VOLSCAN_DEBUG
@@ -333,8 +333,8 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
     bool doHeight = (new2DVar->name.equals("Height"));
 
     // Make the width and height of the new 2D adaguc field the same as the viewing window
-    dataSource->dWidth = dataSource->srvParams->geoParams.dWidth;
-    dataSource->dHeight = dataSource->srvParams->geoParams.dHeight;
+    dataSource->dWidth = dataSource->srvParams->geoParams.width;
+    dataSource->dHeight = dataSource->srvParams->geoParams.height;
 
     // Width needs to be at least 2, the bounding box is calculated from these.
     if (dataSource->dWidth == 1) dataSource->dWidth = 2;
@@ -385,7 +385,7 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
 
     CImageWarper imageWarper;
     bool projectionRequired = false;
-    if (dataSource->srvParams->geoParams.CRS.length() > 0) {
+    if (dataSource->srvParams->geoParams.crs.length() > 0) {
       projectionRequired = true;
       new2DVar->setAttributeText("grid_mapping", "customgridprojection");
       // Apply once
@@ -394,7 +394,7 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
         CDF::Variable *projectionVar = new CDF::Variable();
         projectionVar->name.copy("customgridprojection");
         cdfObject->addVariable(projectionVar);
-        dataSource->nativeEPSG = dataSource->srvParams->geoParams.CRS.c_str();
+        dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs.c_str();
         imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
         if (dataSource->nativeProj4.length() == 0) {
           dataSource->nativeProj4 = LATLONPROJECTION;

@@ -147,27 +147,27 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
 
     CGeoParams sourceGeo;
 
-    sourceGeo.dWidth = windSpeedDifferenceVariable->getDimension("x")->length;
-    sourceGeo.dHeight = windSpeedDifferenceVariable->getDimension("y")->length;
+    sourceGeo.width = windSpeedDifferenceVariable->getDimension("x")->length;
+    sourceGeo.height = windSpeedDifferenceVariable->getDimension("y")->length;
     sourceGeo.bbox.left = windSectorXData[0];
     sourceGeo.bbox.top = windSectorYData[0];
-    sourceGeo.bbox.right = windSectorXData[sourceGeo.dWidth - 1];
-    sourceGeo.bbox.bottom = windSectorYData[sourceGeo.dHeight - 1];
-    sourceGeo.dfCellSizeX = (sourceGeo.bbox.right - sourceGeo.bbox.left) / sourceGeo.dWidth;
-    sourceGeo.dfCellSizeY = (sourceGeo.bbox.bottom - sourceGeo.bbox.top) / sourceGeo.dHeight;
-    sourceGeo.CRS = "+proj=lcc +lat_1=52.500000 +lat_2=52.500000 +lat_0=52.500000 +lon_0=.000000 +k_0=1.0 +x_0=-92962.569890 +y_0=230385.198586 +a=6371229.000000 +b=6371229.000000"; // TODO
+    sourceGeo.bbox.right = windSectorXData[sourceGeo.width - 1];
+    sourceGeo.bbox.bottom = windSectorYData[sourceGeo.height - 1];
+    sourceGeo.cellsizeX = (sourceGeo.bbox.right - sourceGeo.bbox.left) / sourceGeo.width;
+    sourceGeo.cellsizeY = (sourceGeo.bbox.bottom - sourceGeo.bbox.top) / sourceGeo.height;
+    sourceGeo.crs = "+proj=lcc +lat_1=52.500000 +lat_2=52.500000 +lat_0=52.500000 +lon_0=.000000 +k_0=1.0 +x_0=-92962.569890 +y_0=230385.198586 +a=6371229.000000 +b=6371229.000000"; // TODO
 
     CGeoParams destGeo;
-    destGeo.dWidth = dataSource->dWidth;
-    destGeo.dHeight = dataSource->dHeight;
+    destGeo.width = dataSource->dWidth;
+    destGeo.height = dataSource->dHeight;
     destGeo.bbox = dataSource->dfBBOX;
-    destGeo.dfCellSizeX = dataSource->dfCellSizeX;
-    destGeo.dfCellSizeY = dataSource->dfCellSizeY;
-    destGeo.CRS = dataSource->nativeProj4;
+    destGeo.cellsizeX = dataSource->dfCellSizeX;
+    destGeo.cellsizeY = dataSource->dfCellSizeY;
+    destGeo.crs = dataSource->nativeProj4;
 
     CImageWarper warper;
 
-    status = warper.initreproj(sourceGeo.CRS, destGeo, &dataSource->srvParams->cfg->Projection);
+    status = warper.initreproj(sourceGeo.crs, destGeo, &dataSource->srvParams->cfg->Projection);
     if (status != 0) {
       CDBError("Unable to initialize projection");
       return 1;

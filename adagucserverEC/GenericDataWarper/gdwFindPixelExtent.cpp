@@ -3,8 +3,8 @@
 #include <CGeoParams.h>
 #include <CImageWarper.h>
 int gdwFindPixelExtent(int *PXExtentBasedOnSource, CGeoParams &sourceGeoParams, CGeoParams &destGeoParams, CImageWarper *warper) {
-  int sourceDataWidth = sourceGeoParams.dWidth;
-  int sourceDataHeight = sourceGeoParams.dHeight;
+  int sourceDataWidth = sourceGeoParams.width;
+  int sourceDataHeight = sourceGeoParams.height;
 
   PXExtentBasedOnSource[0] = 0;
   PXExtentBasedOnSource[1] = 0;
@@ -16,13 +16,13 @@ int gdwFindPixelExtent(int *PXExtentBasedOnSource, CGeoParams &sourceGeoParams, 
   PXExtentBasedOnSource[2] = -1;
   PXExtentBasedOnSource[3] = -1;
 
-  double dfSourceW = double(sourceGeoParams.dWidth);
-  double dfSourceH = double(sourceGeoParams.dHeight);
+  double dfSourceW = double(sourceGeoParams.width);
+  double dfSourceH = double(sourceGeoParams.height);
 
-  int imageHeight = destGeoParams.dHeight;
-  int imageWidth = destGeoParams.dWidth;
-  double dfDestW = double(destGeoParams.dWidth);
-  double dfDestH = double(destGeoParams.dHeight);
+  int imageHeight = destGeoParams.height;
+  int imageWidth = destGeoParams.width;
+  double dfDestW = double(destGeoParams.width);
+  double dfDestH = double(destGeoParams.height);
 
   int lowerIndex = 1, higherIndex = 3;
 

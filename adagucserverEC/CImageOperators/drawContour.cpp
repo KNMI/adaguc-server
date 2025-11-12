@@ -204,8 +204,8 @@ void drawContour(double *sourceGrid, CDataSource *dataSource, CDrawImage *drawIm
   double scaling = dataSource->getContourScaling();
   const char *fontLocation = dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.location.c_str();
 
-  int dImageWidth = drawImage->geoParams.dWidth;
-  int dImageHeight = drawImage->geoParams.dHeight;
+  int dImageWidth = drawImage->geoParams.width;
+  int dImageHeight = drawImage->geoParams.height;
   size_t imageSize = (dImageHeight + 0) * (dImageWidth + 1);
 
   // Create a distance field, this is where the line information will be put in.

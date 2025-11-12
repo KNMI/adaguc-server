@@ -123,8 +123,8 @@ void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, C
     settings.hasNodataValue = true;
     settings.dfNodataValue = -100000.f;
   }
-  int destDataWidth = drawImage->geoParams.dWidth;
-  int destDataHeight = drawImage->geoParams.dHeight;
+  int destDataWidth = drawImage->geoParams.width;
+  int destDataHeight = drawImage->geoParams.height;
   size_t numGridElements = destDataWidth * destDataHeight;
   CDF::allocateData(CDF_FLOAT, &settings.destinationGrid, numGridElements);
   CDF::fill(settings.destinationGrid, CDF_FLOAT, settings.dfNodataValue, numGridElements);

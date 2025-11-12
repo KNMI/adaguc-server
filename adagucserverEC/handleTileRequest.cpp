@@ -23,8 +23,8 @@ int estimateNrOfTargetTiles(CDataSource *dataSource) {
   // Estimate number of needed target tiles to match number of grid cells in source and destination
   auto srvParam = dataSource->srvParams;
   auto tileSettings = dataSource->cfgLayer->TileSettings[0];
-  int targetNrOfTilesX = floor((srvParam->geoParams.dWidth / tileSettings->attr.tilewidthpx.toInt()) + 0.0) + 2;
-  int targetNrOfTilesY = floor((srvParam->geoParams.dHeight / tileSettings->attr.tileheightpx.toInt()) + 0.0) + 2;
+  int targetNrOfTilesX = floor((srvParam->geoParams.width / tileSettings->attr.tilewidthpx.toInt()) + 0.0) + 2;
+  int targetNrOfTilesY = floor((srvParam->geoParams.height / tileSettings->attr.tileheightpx.toInt()) + 0.0) + 2;
   return targetNrOfTilesX * targetNrOfTilesY;
 }
 
@@ -82,7 +82,7 @@ CDBStore::Store *handleTileRequest(CDataSource *dataSource) {
     try {
       inputbox = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getExtent(dataSource);
       srvParam->geoParams.bbox = inputbox;
-      srvParam->geoParams.CRS = tileprojection;
+      srvParam->geoParams.crs = tileprojection;
     } catch (int e) {
     }
   } else {
@@ -90,7 +90,7 @@ CDBStore::Store *handleTileRequest(CDataSource *dataSource) {
   }
 
   // Query for all possible tiles within given domain by nativeViewPortBBOX
-  dataSource->nativeViewPortBBOX = reprojectExtent(tileprojection, srvParam->geoParams.CRS, srvParam, inputbox);
+  dataSource->nativeViewPortBBOX = reprojectExtent(tileprojection, srvParam->geoParams.crs, srvParam, inputbox);
   dataSource->queryLevel = -1; // All tiles
   dataSource->queryBBOX = true;
   auto store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource, initialRequestLimit, false);

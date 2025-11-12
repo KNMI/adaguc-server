@@ -84,8 +84,8 @@ CImageDataWriter::ProjCacheInfo CImageDataWriter::GetProjInfo(CT::string ckey, C
     sx = dX;
     sy = dY;
 
-    x = double(sx) / double(drawImage->geoParams.dWidth);
-    y = double(sy) / double(drawImage->geoParams.dHeight);
+    x = double(sx) / double(drawImage->geoParams.width);
+    y = double(sy) / double(drawImage->geoParams.height);
     x *= (drawImage->geoParams.bbox.right - drawImage->geoParams.bbox.left);
     y *= (drawImage->geoParams.bbox.bottom - drawImage->geoParams.bbox.top);
     x += drawImage->geoParams.bbox.left;
@@ -378,10 +378,10 @@ int CImageDataWriter::drawCascadedWMS(CDataSource *dataSource, const char *servi
     url.printconcat("&BGCOLOR=");
     url.printconcat(bgcolor);
   }
-  url.printconcat("&WIDTH=%d", drawImage.geoParams.dWidth);
-  url.printconcat("&HEIGHT=%d", drawImage.geoParams.dHeight);
+  url.printconcat("&WIDTH=%d", drawImage.geoParams.width);
+  url.printconcat("&HEIGHT=%d", drawImage.geoParams.height);
   url.printconcat("&BBOX=%0.4f,%0.4f,%0.4f,%0.4f", drawImage.geoParams.bbox.left, drawImage.geoParams.bbox.bottom, drawImage.geoParams.bbox.right, drawImage.geoParams.bbox.top);
-  url.printconcat("&SRS=%s", drawImage.geoParams.CRS.c_str());
+  url.printconcat("&SRS=%s", drawImage.geoParams.crs.c_str());
   url.printconcat("&LAYERS=%s", layers);
   if ((styles != NULL) && (strlen(styles) > 0)) {
     url.printconcat("&STYLES=%s", styles);
@@ -405,8 +405,8 @@ int CImageDataWriter::drawCascadedWMS(CDataSource *dataSource, const char *servi
       int offsety = 0;
       if (dataSource->cfgLayer->Position.size() > 0) {
         CServerConfig::XMLE_Position *pos = dataSource->cfgLayer->Position[0];
-        if (pos->attr.right.empty() == false) offsetx = (drawImage.geoParams.dWidth - w) - parseInt(pos->attr.right.c_str());
-        if (pos->attr.bottom.empty() == false) offsety = (drawImage.geoParams.dHeight - h) - parseInt(pos->attr.bottom.c_str());
+        if (pos->attr.right.empty() == false) offsetx = (drawImage.geoParams.width - w) - parseInt(pos->attr.right.c_str());
+        if (pos->attr.bottom.empty() == false) offsety = (drawImage.geoParams.height - h) - parseInt(pos->attr.bottom.c_str());
         if (pos->attr.left.empty() == false) offsetx = parseInt(pos->attr.left.c_str());
         if (pos->attr.top.empty() == false) offsety = parseInt(pos->attr.top.c_str());
       }
@@ -418,8 +418,8 @@ int CImageDataWriter::drawCascadedWMS(CDataSource *dataSource, const char *servi
       }*/
 
       int transpColor = gdImageGetTransparent(gdImage);
-      for (int y = 0; y < drawImage.geoParams.dHeight && y < h; y++) {
-        for (int x = 0; x < drawImage.geoParams.dWidth && x < w; x++) {
+      for (int y = 0; y < drawImage.geoParams.height && y < h; y++) {
+        for (int x = 0; x < drawImage.geoParams.width && x < w; x++) {
           int color = gdImageGetPixel(gdImage, x, y);
           if (color != transpColor && 127 != gdImageAlpha(gdImage, color)) {
             if (transparent) {
@@ -568,8 +568,8 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
 
     int w = LEGEND_WIDTH;
     int h = LEGEND_HEIGHT;
-    if (srvParam->geoParams.dWidth != 1) w = srvParam->geoParams.dWidth;
-    if (srvParam->geoParams.dHeight != 1) h = srvParam->geoParams.dHeight;
+    if (srvParam->geoParams.width != 1) w = srvParam->geoParams.width;
+    if (srvParam->geoParams.height != 1) h = srvParam->geoParams.height;
 
     if (w > h) {
       status = drawImage.createImage(h, w);
@@ -1109,7 +1109,7 @@ int CImageDataWriter::createAnimation() {
   return 0;
 }
 
-void CImageDataWriter::setDate(const char *szTemp) { drawImage.setTextStroke(drawImage.geoParams.dWidth - 170, 5, 0, szTemp, NULL, 12.0, 0.75, CColor(0, 0, 0, 255), CColor(255, 255, 255, 255)); }
+void CImageDataWriter::setDate(const char *szTemp) { drawImage.setTextStroke(drawImage.geoParams.width - 170, 5, 0, szTemp, NULL, 12.0, 0.75, CColor(0, 0, 0, 255), CColor(255, 255, 255, 255)); }
 
 CImageDataWriter::IndexRange::IndexRange() {
   min = 0;
@@ -1184,12 +1184,12 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
 
     CGeoParams sourceGeo;
 
-    sourceGeo.dWidth = dataSource->dWidth;
-    sourceGeo.dHeight = dataSource->dHeight;
+    sourceGeo.width = dataSource->dWidth;
+    sourceGeo.height = dataSource->dHeight;
     sourceGeo.bbox = dataSource->dfBBOX;
-    sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
-    sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
-    sourceGeo.CRS = dataSource->nativeProj4;
+    sourceGeo.cellsizeX = dataSource->dfCellSizeX;
+    sourceGeo.cellsizeY = dataSource->dfCellSizeY;
+    sourceGeo.crs = dataSource->nativeProj4;
     int PXExtentBasedOnSource[4];
     gdwFindPixelExtent(PXExtentBasedOnSource, sourceGeo, srvParam->geoParams, &warper);
 
@@ -1747,7 +1747,7 @@ int CImageDataWriter::calculateData(std::vector<CDataSource *> &dataSources) {
 
       if (dataSource->cfgLayer->ImageText.size() > 0) {
         if (dataSource->cfgLayer->ImageText[0]->value.empty() == false) {
-          drawImage.setTextStroke(drawImage.geoParams.dWidth - 170, 5, 0, dataSource->cfgLayer->ImageText[0]->value.c_str(), NULL, 12.0, 0.75, CColor(0, 0, 0, 255), CColor(255, 255, 255, 255));
+          drawImage.setTextStroke(drawImage.geoParams.width - 170, 5, 0, dataSource->cfgLayer->ImageText[0]->value.c_str(), NULL, 12.0, 0.75, CColor(0, 0, 0, 255), CColor(255, 255, 255, 255));
         }
       }
     }
@@ -1866,7 +1866,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
               fontSize = parseFloat(srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.size.c_str());
               fontSize = fontSize * scaling;
             }
-            drawImage.drawText(int(drawImage.geoParams.dWidth / 2 - len * 3), drawImage.geoParams.dHeight - 2 * fontSize, srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(), fontSize, 0,
+            drawImage.drawText(int(drawImage.geoParams.width / 2 - len * 3), drawImage.geoParams.height - 2 * fontSize, srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(), fontSize, 0,
                                imageText.c_str(), CColor(0, 0, 0, 255));
           }
         }
@@ -1892,7 +1892,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
 
       bool useProjection = true;
 
-      if (srvParam->geoParams.CRS.equals("EPSG:4326")) {
+      if (srvParam->geoParams.crs.equals("EPSG:4326")) {
         // CDBDebug("Not using projection");
         useProjection = false;
       }
@@ -2006,7 +2006,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
           if (p < numPoints) {
             drawImage.line(gridP[p].x, gridP[p].y, gridP[p + 1].x, gridP[p + 1].y, lineWidth, lineColor);
             if (drawnTextRight == false) {
-              if (gridP[p].x > srvParam->geoParams.dWidth && gridP[p].y > 0) {
+              if (gridP[p].x > srvParam->geoParams.width && gridP[p].y > 0) {
                 drawnTextRight = true;
                 double gy = latLonBBOX.top + precision * double(y);
                 message.print("%2.1f", gy);
@@ -2015,7 +2015,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
                 if (ty < 8) {
                   ty = 8;
                 }
-                if (tx > srvParam->geoParams.dWidth - 30) tx = srvParam->geoParams.dWidth - 1;
+                if (tx > srvParam->geoParams.width - 30) tx = srvParam->geoParams.width - 1;
                 tx -= 17;
 
                 if (drawText) drawImage.drawText(tx, ty - 2, fontLoc, fontSize, 0, message.c_str(), textColor);
@@ -2052,14 +2052,14 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
             drawImage.line(gridP[p].x, gridP[p].y, gridP[p + numPointsX].x, gridP[p + numPointsX].y, lineWidth, lineColor);
 
             if (drawnTextBottom == false) {
-              if (gridP[p].x > 0 && gridP[p].y > srvParam->geoParams.dHeight) {
+              if (gridP[p].x > 0 && gridP[p].y > srvParam->geoParams.height) {
                 drawnTextBottom = true;
                 double gx = latLonBBOX.left + precision * double(x);
                 message.print("%2.1f", gx);
                 int ty = int(gridP[p].y);
                 if (ty < 15) ty = 0;
-                if (ty > srvParam->geoParams.dHeight) {
-                  ty = srvParam->geoParams.dHeight;
+                if (ty > srvParam->geoParams.height) {
+                  ty = srvParam->geoParams.height;
                 }
                 ty -= 2;
                 int tx = int((gridP[p]).x + 2);
@@ -2402,8 +2402,8 @@ int CImageDataWriter::end() {
             resultXML.printconcat("          <gml:pos>%f,%f</gml:pos>\n", g->lon_coordinate, g->lat_coordinate);
             resultXML.printconcat("        </gml:Point>\n");
 
-            if (!srvParam->geoParams.CRS.equals("EPSG:4326")) {
-              resultXML.printconcat("        <gml:Point srsName=\"%s\">\n", srvParam->geoParams.CRS.c_str());
+            if (!srvParam->geoParams.crs.equals("EPSG:4326")) {
+              resultXML.printconcat("        <gml:Point srsName=\"%s\">\n", srvParam->geoParams.crs.c_str());
               resultXML.printconcat("          <gml:pos>%f %f</gml:pos>\n", g->x_imageCoordinate, g->y_imageCoordinate);
               resultXML.printconcat("        </gml:Point>\n");
             }
@@ -2480,8 +2480,8 @@ int CImageDataWriter::end() {
             resultXML.printconcat("          <gml:pos>%f,%f</gml:pos>\n", g->lon_coordinate, g->lat_coordinate);
             resultXML.printconcat("        </gml:Point>\n");
 
-            if (!srvParam->geoParams.CRS.equals("EPSG:4326")) {
-              resultXML.printconcat("        <gml:Point srsName=\"%s\">\n", srvParam->geoParams.CRS.c_str());
+            if (!srvParam->geoParams.crs.equals("EPSG:4326")) {
+              resultXML.printconcat("        <gml:Point srsName=\"%s\">\n", srvParam->geoParams.crs.c_str());
               resultXML.printconcat("          <gml:pos>%f %f</gml:pos>\n", g->x_imageCoordinate, g->y_imageCoordinate);
               resultXML.printconcat("        </gml:Point>\n");
             }
@@ -2694,7 +2694,7 @@ int CImageDataWriter::end() {
 #ifdef CIMAGEDATAWRITER_DEBUG
       CDBDebug("GetFeatureInfo Format image/png");
 #endif
-      float width = srvParam->geoParams.dWidth, height = srvParam->geoParams.dHeight;
+      float width = srvParam->geoParams.width, height = srvParam->geoParams.height;
       if (srvParam->figWidth > 1) width = srvParam->figWidth;
       if (srvParam->figHeight > 1) height = srvParam->figHeight;
 

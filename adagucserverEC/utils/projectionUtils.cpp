@@ -9,8 +9,8 @@ void CoordinatesXYtoScreenXY(double &x, double &y, CGeoParams &geoParam) {
   double bboxH = geoParam.bbox.bottom - geoParam.bbox.top;
   x /= bboxW;
   y /= bboxH;
-  x *= double(geoParam.dWidth);
-  y *= double(geoParam.dHeight);
+  x *= double(geoParam.width);
+  y *= double(geoParam.height);
 }
 
 void CoordinatesXYtoScreenXY(f8point &p, CGeoParams &geoParam) {
@@ -20,8 +20,8 @@ void CoordinatesXYtoScreenXY(f8point &p, CGeoParams &geoParam) {
   double bboxH = geoParam.bbox.bottom - geoParam.bbox.top;
   p.x /= bboxW;
   p.y /= bboxH;
-  p.x *= double(geoParam.dWidth);
-  p.y *= double(geoParam.dHeight);
+  p.x *= double(geoParam.width);
+  p.y *= double(geoParam.height);
 }
 
 void CoordinatesXYtoScreenXY(f8box &b, CGeoParams &geoParam) {

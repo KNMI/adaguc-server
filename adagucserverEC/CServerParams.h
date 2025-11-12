@@ -103,6 +103,7 @@ public:
   CT::string BGColor;
   bool Transparent;
   CGeoParams geoParams;
+  CT::string responceCrs;
   CT::string Styles;
   CT::string Style;
 

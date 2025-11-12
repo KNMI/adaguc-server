@@ -38,8 +38,8 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
 #ifdef CImgWarpBilinear_DEBUG
   CDBDebug("Render");
 #endif
-  int dImageWidth = drawImage->geoParams.dWidth + 1;
-  int dImageHeight = drawImage->geoParams.dHeight + 1;
+  int dImageWidth = drawImage->geoParams.width + 1;
+  int dImageHeight = drawImage->geoParams.height + 1;
 
   double dfSourceExtW = (sourceImage->dfBBOX[2] - sourceImage->dfBBOX[0]);
   double dfSourceExtH = (sourceImage->dfBBOX[1] - sourceImage->dfBBOX[3]);
@@ -964,8 +964,8 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
   // float currentTextValue = 0;
   // int contourDefinitionIndex = -1;
 
-  int dImageWidth = drawImage->geoParams.dWidth + 1;
-  int dImageHeight = drawImage->geoParams.dHeight + 1;
+  int dImageWidth = drawImage->geoParams.width + 1;
+  int dImageHeight = drawImage->geoParams.height + 1;
 
   size_t imageSize = (dImageHeight + 0) * (dImageWidth + 1);
 #ifdef CImgWarpBilinear_DEBUG

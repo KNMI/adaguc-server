@@ -40,9 +40,9 @@ int CGDALDataWriter::init(CServerParams *_srvParam, CDataSource *dataSource, int
   int status;
   _dataSource = dataSource;
   // Init projections
-  if (srvParam->geoParams.CRS.indexOf("PROJ4:") == 0) {
-    CT::string temp(srvParam->geoParams.CRS.c_str() + 6);
-    srvParam->geoParams.CRS.copy(&temp);
+  if (srvParam->geoParams.crs.indexOf("PROJ4:") == 0) {
+    CT::string temp(srvParam->geoParams.crs.c_str() + 6);
+    srvParam->geoParams.crs.copy(&temp);
   }
   // Load metadata from the dataSource
 #ifdef CGDALDATAWRITER_DEBUG
@@ -86,16 +86,16 @@ int CGDALDataWriter::init(CServerParams *_srvParam, CDataSource *dataSource, int
     dfDstBBOX[2] = dfSrcBBOX[2];
     dfDstBBOX[3] = dfSrcBBOX[3];
     srvParam->geoParams.bbox = dfSrcBBOX;
-    srvParam->geoParams.dWidth = dataSource->dWidth;
-    srvParam->geoParams.dHeight = dataSource->dHeight;
-    srvParam->geoParams.CRS.copy(&dataSource->nativeProj4);
+    srvParam->geoParams.width = dataSource->dWidth;
+    srvParam->geoParams.height = dataSource->dHeight;
+    srvParam->geoParams.crs.copy(&dataSource->nativeProj4);
     if (srvParam->Format.length() == 0) srvParam->Format.copy("NetCDF4");
   } else {
     // Non native projection units
     for (int j = 0; j < 4; j++) dfSrcBBOX[j] = dataSource->dfBBOX[j];
     srvParam->geoParams.bbox.toArray(dfDstBBOX);
     /* CRS is provided, but not RESX+RESY or HEIGHT+WIDTH, calculate here */
-    if (srvParam->dfResX == 0 && srvParam->dfResY == 0 && srvParam->geoParams.dWidth == 1 && srvParam->geoParams.dHeight == 1) {
+    if (srvParam->dfResX == 0 && srvParam->dfResY == 0 && srvParam->geoParams.width == 1 && srvParam->geoParams.height == 1) {
       CImageWarper warper;
       dataSource->srvParams = this->srvParam;
       status = warper.initreproj(dataSource, this->srvParam->geoParams, &srvParam->cfg->Projection);
@@ -114,11 +114,11 @@ int CGDALDataWriter::init(CServerParams *_srvParam, CDataSource *dataSource, int
 
     // dfResX and dfResY are in the CRS ore ResponseCRS
     if (srvParam->dfResX != 0 && srvParam->dfResY != 0) {
-      srvParam->geoParams.dWidth = int(((dfDstBBOX[2] - dfDstBBOX[0]) / srvParam->dfResX));
-      srvParam->geoParams.dHeight = int(((dfDstBBOX[1] - dfDstBBOX[3]) / srvParam->dfResY));
-      srvParam->geoParams.dHeight = abs(srvParam->geoParams.dHeight);
+      srvParam->geoParams.width = int(((dfDstBBOX[2] - dfDstBBOX[0]) / srvParam->dfResX));
+      srvParam->geoParams.height = int(((dfDstBBOX[1] - dfDstBBOX[3]) / srvParam->dfResY));
+      srvParam->geoParams.height = abs(srvParam->geoParams.height);
     }
-    if (srvParam->geoParams.dWidth > 20000 || srvParam->geoParams.dHeight > 20000) {
+    if (srvParam->geoParams.width > 20000 || srvParam->geoParams.height > 20000) {
       CDBError("Requested Width or Height is larger than 20000 pixels. Aborting request.");
       return 1;
     }
@@ -126,11 +126,11 @@ int CGDALDataWriter::init(CServerParams *_srvParam, CDataSource *dataSource, int
 
   // Setup Destination geotransform
   adfDstGeoTransform[0] = dfDstBBOX[0];
-  adfDstGeoTransform[1] = (dfDstBBOX[2] - dfDstBBOX[0]) / double(srvParam->geoParams.dWidth);
+  adfDstGeoTransform[1] = (dfDstBBOX[2] - dfDstBBOX[0]) / double(srvParam->geoParams.width);
   adfDstGeoTransform[2] = 0;
   adfDstGeoTransform[3] = dfDstBBOX[3];
   adfDstGeoTransform[4] = 0;
-  adfDstGeoTransform[5] = (dfDstBBOX[1] - dfDstBBOX[3]) / double(srvParam->geoParams.dHeight);
+  adfDstGeoTransform[5] = (dfDstBBOX[1] - dfDstBBOX[3]) / double(srvParam->geoParams.height);
 
   // Retrieve output format
   for (size_t j = 0; j < srvParam->cfg->WCS[0]->WCSFormat.size(); j++) {
@@ -196,7 +196,7 @@ int CGDALDataWriter::init(CServerParams *_srvParam, CDataSource *dataSource, int
   CDBDebug("Dataset datatype = %s WH = [%d,%d], NrOfBands = [%d]", dataTypeName, dataSource->dWidth, dataSource->dHeight, NrOfBands);
 #endif
 
-  destinationGDALDataSet = GDALCreate(hMemDriver2, "memory_dataset_2", srvParam->geoParams.dWidth, srvParam->geoParams.dHeight, NrOfBands, datatype, NULL);
+  destinationGDALDataSet = GDALCreate(hMemDriver2, "memory_dataset_2", srvParam->geoParams.width, srvParam->geoParams.height, NrOfBands, datatype, NULL);
   if (destinationGDALDataSet == NULL) {
     CDBError("Failed to create GDAL MEM dataset.");
     reader.close();
@@ -206,8 +206,8 @@ int CGDALDataWriter::init(CServerParams *_srvParam, CDataSource *dataSource, int
   OGRSpatialReference oDSTSRS;
 
   char *pszSRS_WKT = NULL;
-  if (oDSTSRS.SetFromUserInput(srvParam->geoParams.CRS.c_str()) != OGRERR_NONE) {
-    CDBError("WCS: Invalid source projection: [%s]", srvParam->geoParams.CRS.c_str());
+  if (oDSTSRS.SetFromUserInput(srvParam->geoParams.crs.c_str()) != OGRERR_NONE) {
+    CDBError("WCS: Invalid source projection: [%s]", srvParam->geoParams.crs.c_str());
     return 1;
   }
   oDSTSRS.exportToWkt(&pszSRS_WKT);
@@ -253,9 +253,9 @@ int CGDALDataWriter::addData(std::vector<CDataSource *> &dataSources) {
 
   // Warp
   void *warpedData = NULL;
-  CDF::allocateData(dataSource->getDataObject(0)->cdfVariable->getType(), &warpedData, srvParam->geoParams.dWidth * srvParam->geoParams.dHeight);
+  CDF::allocateData(dataSource->getDataObject(0)->cdfVariable->getType(), &warpedData, srvParam->geoParams.width * srvParam->geoParams.height);
 
-  if (CDF::fill(warpedData, dataSource->getDataObject(0)->cdfVariable->getType(), dfNoData, srvParam->geoParams.dWidth * srvParam->geoParams.dHeight) != 0) {
+  if (CDF::fill(warpedData, dataSource->getDataObject(0)->cdfVariable->getType(), dfNoData, srvParam->geoParams.width * srvParam->geoParams.height) != 0) {
     CDBError("Unable to initialize data field to nodata value");
     return 1;
   }
@@ -269,20 +269,20 @@ int CGDALDataWriter::addData(std::vector<CDataSource *> &dataSources) {
   }
   CGeoParams sourceGeo;
 
-  sourceGeo.dWidth = dataSource->dWidth;
-  sourceGeo.dHeight = dataSource->dHeight;
+  sourceGeo.width = dataSource->dWidth;
+  sourceGeo.height = dataSource->dHeight;
   sourceGeo.bbox = dataSource->dfBBOX;
 
-  sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
-  sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
-  sourceGeo.CRS = dataSource->nativeProj4;
+  sourceGeo.cellsizeX = dataSource->dfCellSizeX;
+  sourceGeo.cellsizeY = dataSource->dfCellSizeY;
+  sourceGeo.crs = dataSource->nativeProj4;
 
   CDFType dataType = dataSource->getDataObject(0)->cdfVariable->getType();
   void *sourceData = dataSource->getDataObject(0)->cdfVariable->data;
 
   GdalDrawFunctionState drawFunctionState;
-  drawFunctionState.width = srvParam->geoParams.dWidth;
-  drawFunctionState.height = srvParam->geoParams.dHeight;
+  drawFunctionState.width = srvParam->geoParams.width;
+  drawFunctionState.height = srvParam->geoParams.height;
   drawFunctionState.data = warpedData;
 
   GenericDataWarper genericDataWarper;
@@ -293,8 +293,7 @@ int CGDALDataWriter::addData(std::vector<CDataSource *> &dataSources) {
   ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
 
-  CPLErr gdalStatus =
-      GDALRasterIO(hSrcBand, GF_Write, 0, 0, srvParam->geoParams.dWidth, srvParam->geoParams.dHeight, warpedData, srvParam->geoParams.dWidth, srvParam->geoParams.dHeight, datatype, 0, 0);
+  CPLErr gdalStatus = GDALRasterIO(hSrcBand, GF_Write, 0, 0, srvParam->geoParams.width, srvParam->geoParams.height, warpedData, srvParam->geoParams.width, srvParam->geoParams.height, datatype, 0, 0);
   CDF::freeData(&warpedData);
 
   if (gdalStatus != CE_None) {
@@ -374,7 +373,7 @@ int CGDALDataWriter::end() {
   }
   OGRSpatialReference oSRS;
   CImageWarper imageWarper;
-  CT::string destinationCRS(&srvParam->geoParams.CRS);
+  CT::string destinationCRS(&srvParam->geoParams.crs);
   if (oSRS.SetFromUserInput(destinationCRS.c_str()) != OGRERR_NONE) {
     CDBError("WCS: Invalid destination projection: [%s]", destinationCRS.c_str());
     return 1;
@@ -704,13 +703,13 @@ void CGDALDataWriter::generateUniqueGetCoverageFileName(char *pszTempFileName) {
   // CDBDebug("generateUniqueGetCoverageFileName");
   // Width
   offset = 50;
-  snprintf(szTemp, MAX_STR_LEN, "%d", srvParam->geoParams.dWidth);
+  snprintf(szTemp, MAX_STR_LEN, "%d", srvParam->geoParams.width);
   strncpy(pszTempFileName + offset, szTemp, 5);
   len = strlen(szTemp);
   for (int j = len + offset; j < offset + 5; j++) pszTempFileName[j] = '_';
   // Height
   offset = 56;
-  snprintf(szTemp, MAX_STR_LEN, "%d", srvParam->geoParams.dHeight);
+  snprintf(szTemp, MAX_STR_LEN, "%d", srvParam->geoParams.height);
   strncpy(pszTempFileName + offset, szTemp, 5);
   len = strlen(szTemp);
   for (int j = len + offset; j < offset + 5; j++) pszTempFileName[j] = '_';
@@ -745,7 +744,7 @@ void CGDALDataWriter::generateUniqueGetCoverageFileName(char *pszTempFileName) {
   // Projection
   // CDBDebug("generateUniqueGetCoverageFileName");
   offset = 102;
-  snprintf(szTemp, MAX_STR_LEN, "%s", srvParam->geoParams.CRS.c_str());
+  snprintf(szTemp, MAX_STR_LEN, "%s", srvParam->geoParams.crs.c_str());
   strncpy(pszTempFileName + offset, szTemp, 10);
   len = strlen(szTemp);
   for (int j = len + offset; j < offset + 10; j++) pszTempFileName[j] = '_';

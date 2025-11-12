@@ -214,20 +214,20 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
       void *sourceData = (void *)varToClone->data; // To read FROM
 
       CGeoParams sourceGeo;
-      sourceGeo.dWidth = dataSourceToInclude->dWidth;
-      sourceGeo.dHeight = dataSourceToInclude->dHeight;
+      sourceGeo.width = dataSourceToInclude->dWidth;
+      sourceGeo.height = dataSourceToInclude->dHeight;
       sourceGeo.bbox = dataSourceToInclude->dfBBOX;
-      sourceGeo.dfCellSizeX = dataSourceToInclude->dfCellSizeX;
-      sourceGeo.dfCellSizeY = dataSourceToInclude->dfCellSizeY;
-      sourceGeo.CRS = dataSourceToInclude->nativeProj4;
+      sourceGeo.cellsizeX = dataSourceToInclude->dfCellSizeX;
+      sourceGeo.cellsizeY = dataSourceToInclude->dfCellSizeY;
+      sourceGeo.crs = dataSourceToInclude->nativeProj4;
 
       CGeoParams destGeo;
-      destGeo.dWidth = dataSource->dWidth;
-      destGeo.dHeight = dataSource->dHeight;
+      destGeo.width = dataSource->dWidth;
+      destGeo.height = dataSource->dHeight;
       destGeo.bbox = dataSource->dfBBOX;
-      destGeo.dfCellSizeX = dataSource->dfCellSizeX;
-      destGeo.dfCellSizeY = dataSource->dfCellSizeY;
-      destGeo.CRS = dataSource->nativeProj4;
+      destGeo.cellsizeX = dataSource->dfCellSizeX;
+      destGeo.cellsizeY = dataSource->dfCellSizeY;
+      destGeo.crs = dataSource->nativeProj4;
 
       CImageWarper warper;
 

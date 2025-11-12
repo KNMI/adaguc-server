@@ -35,17 +35,17 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
                               const std::function<void(int, int, T, GDWState &warperState)> &drawFunction) {
 
   warperState.sourceData = _sourceData;
-  warperState.destDataWidth = destGeoParams.dWidth;
-  warperState.destDataHeight = destGeoParams.dHeight;
-  warperState.sourceDataWidth = sourceGeoParams.dWidth;
-  warperState.sourceDataHeight = sourceGeoParams.dHeight;
+  warperState.destDataWidth = destGeoParams.width;
+  warperState.destDataHeight = destGeoParams.height;
+  warperState.sourceDataWidth = sourceGeoParams.width;
+  warperState.sourceDataHeight = sourceGeoParams.height;
 
 #ifdef GenericDataWarper_DEBUG
   CDBDebug("render");
 #endif
 
-  int imageHeight = destGeoParams.dHeight;
-  int imageWidth = destGeoParams.dWidth;
+  int imageHeight = destGeoParams.height;
+  int imageWidth = destGeoParams.width;
 
   // Reproj back and forth sourceGeoParams boundingbox
   double y1 = sourceGeoParams.bbox.bottom;
@@ -59,7 +59,7 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
 #endif
   if (y2 < y1) {
     if (y1 > -360 && y2 < 360 && x1 > -720 && x2 < 720) {
-      if (isLonLatProjection(&sourceGeoParams.CRS) == false) {
+      if (isLonLatProjection(&sourceGeoParams.crs) == false) {
         double checkBBOX[4];
         sourceGeoParams.bbox.toArray(checkBBOX);
 
@@ -80,11 +80,11 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
 
   double dfSourceExtW = (sourceGeoParams.bbox.right - sourceGeoParams.bbox.left);
   double dfSourceExtH = (sourceGeoParams.bbox.top - sourceGeoParams.bbox.bottom);
-  double dfSourceW = double(sourceGeoParams.dWidth);
-  double dfSourceH = double(sourceGeoParams.dHeight);
+  double dfSourceW = double(sourceGeoParams.width);
+  double dfSourceH = double(sourceGeoParams.height);
 
-  double dfDestW = double(destGeoParams.dWidth);
-  double dfDestH = double(destGeoParams.dHeight);
+  double dfDestW = double(destGeoParams.width);
+  double dfDestH = double(destGeoParams.height);
 
   double dfSourcedExtW = dfSourceExtW / (dfSourceW);
   double dfSourcedExtH = dfSourceExtH / (dfSourceH);
@@ -105,8 +105,8 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
   CDBDebug("Creating px extent");
 #endif
 
-  warperState.sourceDataWidth = sourceGeoParams.dWidth;
-  warperState.sourceDataHeight = sourceGeoParams.dHeight;
+  warperState.sourceDataWidth = sourceGeoParams.width;
+  warperState.sourceDataHeight = sourceGeoParams.height;
 
   int PXExtentBasedOnSource[4];
 
@@ -129,7 +129,7 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
     auto source = sourceGeoParams.bbox;
     auto dest = destGeoParams.bbox;
     f8point span = source.span();
-    i4point wh = {.x = sourceGeoParams.dWidth, .y = sourceGeoParams.dHeight};
+    i4point wh = {.x = sourceGeoParams.width, .y = sourceGeoParams.height};
     f8box newbox = {
         .left = (dest.left - source.left) / span.x, .bottom = (dest.bottom - source.bottom) / span.y, .right = (dest.right - source.left) / span.x, .top = (dest.top - source.bottom) / span.y};
     i4box newpixelspan = {.left = (int)round(newbox.left * wh.x), .bottom = (int)round(newbox.bottom * wh.y), .right = (int)round(newbox.right * wh.x), .top = (int)round(newbox.top * wh.y)};
@@ -154,14 +154,14 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
         // CDBDebug("%d %d %d, %d %d %d %d", x, y, sx1, sy1, sx2, sy2);
         if (sx1 < -sxw && sx2 < -sxw) skip = true;
         if (sy1 < -syh && sy2 < -syh) skip = true;
-        if (sx1 >= destGeoParams.dWidth + sxw && sx2 >= destGeoParams.dWidth + sxw) skip = true;
-        if (sy1 >= destGeoParams.dHeight + syh && sy2 >= destGeoParams.dHeight + syh) skip = true;
+        if (sx1 >= destGeoParams.width + sxw && sx2 >= destGeoParams.width + sxw) skip = true;
+        if (sy1 >= destGeoParams.height + syh && sy2 >= destGeoParams.height + syh) skip = true;
         //
 
         if (!skip) {
           warperState.sourceDataPX = x;
-          warperState.sourceDataPY = sourceGeoParams.dHeight - 1 - y;
-          T value = ((T *)warperState.sourceData)[warperState.sourceDataPX + (warperState.sourceDataPY) * sourceGeoParams.dWidth];
+          warperState.sourceDataPY = sourceGeoParams.height - 1 - y;
+          T value = ((T *)warperState.sourceData)[warperState.sourceDataPX + (warperState.sourceDataPY) * sourceGeoParams.width];
           int lx1, lx2, ly1, ly2;
           if (sx1 > sx2) {
             lx2 = sx1;
@@ -314,7 +314,7 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
         double py4 = py[p + dataWidth + 1];
 
         // CDBDebug("destGeoParams = %s",destGeoParams.CRS.c_str());
-        if (isLonLatProjection(&destGeoParams.CRS) == true || isMercatorProjection(&destGeoParams.CRS) == true) {
+        if (isLonLatProjection(&destGeoParams.crs) == true || isMercatorProjection(&destGeoParams.crs) == true) {
           double lons[4];
           lons[0] = px1;
           lons[1] = px2;
@@ -339,7 +339,7 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
           }
           lonMiddle /= 4;
           double sphereWidth = 360;
-          if (isMercatorProjection(&destGeoParams.CRS)) {
+          if (isMercatorProjection(&destGeoParams.crs)) {
             sphereWidth = 40000000;
           }
 

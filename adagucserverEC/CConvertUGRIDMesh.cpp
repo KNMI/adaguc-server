@@ -319,8 +319,8 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
   meshLat->readData(CDF_FLOAT, true);
 
   // Make the width and height of the new 2D adaguc field the same as the viewing window
-  dataSource->dWidth = dataSource->srvParams->geoParams.dWidth;
-  dataSource->dHeight = dataSource->srvParams->geoParams.dHeight;
+  dataSource->dWidth = dataSource->srvParams->geoParams.width;
+  dataSource->dHeight = dataSource->srvParams->geoParams.height;
 
   if (dataSource->dWidth == 1 && dataSource->dHeight == 1) {
     dataSource->srvParams->geoParams.bbox = dataSource->srvParams->geoParams.bbox;
