@@ -235,8 +235,6 @@ add_library(
     LayerTypeLiveUpdate/LayerTypeLiveUpdate.h
     Types/GeoParameters.cpp
     Types/GeoParameters.h
-    Types/BBOX.h
-    Types/BBOX.cpp
     Types/ProjectionStore.h
     Types/ProjectionStore.cpp
     testadagucserver.cpp

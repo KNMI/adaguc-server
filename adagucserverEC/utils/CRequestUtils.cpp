@@ -17,18 +17,8 @@ std::tuple<int, f8box> findBBoxForDataSource(std::vector<CDataSource *> dataSour
       CImageWarper warper;
       CDataReader reader;
       int status = reader.open(dataSources[d], CNETCDFREADER_MODE_OPEN_HEADER);
-      // TODO Nice solution, but tests do differ.
-      // auto srvParam = dataSources[0]->srvParams;
-      // if (!srvParam->dFound_BBOX) {
-      //   try {
-      //     // Check if we can simply read it from the db.
-      //     f8box box = CDBFactory::getDBAdapter(srvParam->cfg)->getExtent(dataSources[d]);
-      //     auto newbox = reprojectExtent(srvParam->geoParams.CRS.c_str(), dataSources[d]->nativeProj4, srvParam, box);
-      //     std::array<double, 4> outbox = {newbox.left, newbox.bottom, newbox.right, newbox.top};
-      //     return std::make_tuple(0, outbox);
-      //   } catch (int e) {
-      //   }
-      // }
+      // TODO https://github.com/KNMI/adaguc-server/issues/570
+
       reader.close();
       status = warper.initreproj(dataSources[d], dataSources[0]->srvParams->geoParams, &dataSources[0]->srvParams->cfg->Projection);
       if (status != 0) {

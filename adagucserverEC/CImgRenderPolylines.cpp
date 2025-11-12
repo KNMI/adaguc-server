@@ -129,8 +129,8 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
 
   int height = drawImage->getHeight();
 
-  double cellSizeX = (dataSource->srvParams->geoParams.bbox.right - dataSource->srvParams->geoParams.bbox.left) / double(dataSource->dWidth);
-  double cellSizeY = (dataSource->srvParams->geoParams.bbox.top - dataSource->srvParams->geoParams.bbox.bottom) / double(dataSource->dHeight);
+  double cellSizeX = dataSource->srvParams->geoParams.bbox.span().x / dataSource->dWidth;
+  double cellSizeY = dataSource->srvParams->geoParams.bbox.span().y / dataSource->dHeight;
   double offsetX = dataSource->srvParams->geoParams.bbox.left + cellSizeX / 2;
   double offsetY = dataSource->srvParams->geoParams.bbox.bottom + cellSizeY / 2;
 

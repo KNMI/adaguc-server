@@ -63,6 +63,11 @@ void f8box::operator=(const double bbox[4]) {
   right = bbox[2];
   top = bbox[3];
 }
+
+bool operator<(f8box a, f8box b) { return std::make_tuple(a.left, a.bottom, a.right, a.top) < std::make_tuple(b.left, b.bottom, b.right, b.top); }
+
+f8box makef8box(double *dfBBOX) { return {.left = dfBBOX[0], .bottom = dfBBOX[1], .right = dfBBOX[2], .top = dfBBOX[3]}; }
+
 f8point f8box::span() { return {.x = right - left, .y = top - bottom}; }
 
 void f8box::sort() {
