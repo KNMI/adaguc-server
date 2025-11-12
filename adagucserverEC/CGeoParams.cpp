@@ -27,10 +27,10 @@
 #include "CDataSource.h"
 
 void CoordinatesXYtoScreenXY(double &x, double &y, CGeoParams *geoParam) {
-  x -= geoParam->dfBBOX[0];
-  y -= geoParam->dfBBOX[3];
-  double bboxW = geoParam->dfBBOX[2] - geoParam->dfBBOX[0];
-  double bboxH = geoParam->dfBBOX[1] - geoParam->dfBBOX[3];
+  x -= geoParam->bbox.left;
+  y -= geoParam->bbox.top;
+  double bboxW = geoParam->bbox.right - geoParam->bbox.left;
+  double bboxH = geoParam->bbox.bottom - geoParam->bbox.top;
   x /= bboxW;
   y /= bboxH;
   x *= double(geoParam->dWidth);
@@ -38,10 +38,10 @@ void CoordinatesXYtoScreenXY(double &x, double &y, CGeoParams *geoParam) {
 }
 
 void CoordinatesXYtoScreenXY(f8point &p, CGeoParams *geoParam) {
-  p.x -= geoParam->dfBBOX[0];
-  p.y -= geoParam->dfBBOX[3];
-  double bboxW = geoParam->dfBBOX[2] - geoParam->dfBBOX[0];
-  double bboxH = geoParam->dfBBOX[1] - geoParam->dfBBOX[3];
+  p.x -= geoParam->bbox.left;
+  p.y -= geoParam->bbox.top;
+  double bboxW = geoParam->bbox.right - geoParam->bbox.left;
+  double bboxH = geoParam->bbox.bottom - geoParam->bbox.top;
   p.x /= bboxW;
   p.y /= bboxH;
   p.x *= double(geoParam->dWidth);
@@ -93,16 +93,13 @@ void CGeoParams::copy(CGeoParams &sourceGeo) {
   dfCellSizeY = sourceGeo.dfCellSizeY;
   CRS = sourceGeo.CRS;
   BBOX_CRS = sourceGeo.BBOX_CRS;
-  for (int j = 0; j < 4; j++) dfBBOX[j] = sourceGeo.dfBBOX[j];
+  bbox = sourceGeo.bbox;
 }
 
 void CGeoParams::copy(CDataSource *dataSource) {
   this->dWidth = dataSource->dWidth;
   this->dHeight = dataSource->dHeight;
-  this->dfBBOX[0] = dataSource->dfBBOX[0];
-  this->dfBBOX[1] = dataSource->dfBBOX[1];
-  this->dfBBOX[2] = dataSource->dfBBOX[2];
-  this->dfBBOX[3] = dataSource->dfBBOX[3];
+  this->bbox = dataSource->dfBBOX;
   this->dfCellSizeX = dataSource->dfCellSizeX;
   this->dfCellSizeY = dataSource->dfCellSizeY;
   this->CRS = dataSource->nativeProj4;

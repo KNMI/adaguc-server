@@ -98,21 +98,18 @@ int CCreateHistogram::addData(std::vector<CDataSource *> &dataSources) {
 
       sourceGeo.dWidth = dataSource->dWidth;
       sourceGeo.dHeight = dataSource->dHeight;
-      sourceGeo.dfBBOX[0] = dataSource->dfBBOX[0];
-      sourceGeo.dfBBOX[1] = dataSource->dfBBOX[1];
-      sourceGeo.dfBBOX[2] = dataSource->dfBBOX[2];
-      sourceGeo.dfBBOX[3] = dataSource->dfBBOX[3];
+      sourceGeo.bbox = dataSource->dfBBOX;
       sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
       sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
       sourceGeo.CRS = dataSource->nativeProj4;
 
-      CDBDebug("Rendering %f,%f", sourceGeo.dfBBOX[0], sourceGeo.dfBBOX[1]);
+      CDBDebug("Rendering %f,%f", sourceGeo.bbox.left, sourceGeo.bbox.bottom);
       GenericDataWarper genericDataWarper;
       GDWArgs args = {.warper = &warper, .sourceData = sourceData, .sourceGeoParams = &sourceGeo, .destGeoParams = dataSource->srvParams->Geo};
 
-#define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                            \
-      if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction(x, y, val, warperState, settings); });
-ENUMERATE_OVER_CDFTYPES(RENDER)
+#define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
+  if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction(x, y, val, warperState, settings); });
+      ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
     }
     reader.close();

@@ -51,18 +51,6 @@ public:
 bool isLonLatProjection(CT::string *projectionName);
 bool isMercatorProjection(CT::string *projectionName);
 
-struct CGeoParams {
-  int dWidth = 1;
-  int dHeight = 1;
-  double dfBBOX[4] = {0, 0, 0, 0}; // left, bottom, top, right.
-  double dfCellSizeX = 0;
-  double dfCellSizeY = 0;
-  CT::string CRS;
-  CT::string BBOX_CRS;
-  void copy(CGeoParams &_geo);
-  void copy(CDataSource *dataSource);
-};
-
 struct i4point {
   int x, y;
 };
@@ -108,6 +96,7 @@ struct f8box {
     top = bbox[3];
   }
   f8point span() { return {.x = right - left, .y = top - bottom}; }
+
   void sort() {
     if (left > right) std::swap(left, right);
     if (bottom > top) std::swap(bottom, top);
@@ -123,6 +112,22 @@ struct f8box {
     box[1] = bottom;
     box[2] = right;
     box[3] = top;
+  }
+
+  f8box swapXY() { return {.left = bottom, .bottom = left, .right = top, .top = right}; }
+  double get(size_t index) {
+    switch (index) {
+    case 0:
+      return left;
+    case 1:
+      return bottom;
+    case 2:
+      return right;
+    case 3:
+      return top;
+    default:
+      return NAN;
+    }
   }
 };
 
@@ -227,6 +232,19 @@ public:
   void addProperty(const char *propertyName, const char *propertyValue) { paramMap[propertyName] = propertyValue; }
   int id = -1;
   std::map<std::string, std::string> paramMap;
+};
+
+struct CGeoParams {
+  int dWidth = 1;
+  int dHeight = 1;
+  f8box bbox;
+  double dfCellSizeX = 0;
+  double dfCellSizeY = 0;
+  CT::string CRS;
+  CT::string BBOX_CRS;
+  void copy(CGeoParams &_geo);
+  void copy(CDataSource *dataSource);
+  f8box swapXY();
 };
 
 void CoordinatesXYtoScreenXY(double &x, double &y, CGeoParams *geoParam);

@@ -1372,9 +1372,11 @@ int CRequest::process_querystring() {
       if (uriKeyUpperCase.equals("BBOX")) {
         auto bboxvalues = uriValue.replace("%2C", ",").splitToStack(",");
         if (bboxvalues.size() == 4) {
-          for (int j = 0; j < 4; j++) {
-            srvParam->Geo->dfBBOX[j] = atof(bboxvalues[j].c_str());
-          }
+          srvParam->Geo->bbox.left = atof(bboxvalues[0].c_str());
+          srvParam->Geo->bbox.bottom = atof(bboxvalues[1].c_str());
+          srvParam->Geo->bbox.right = atof(bboxvalues[2].c_str());
+          srvParam->Geo->bbox.top = atof(bboxvalues[3].c_str());
+
         } else {
           CDBError("ADAGUC Server: Invalid BBOX values");
           dErrorOccured = 1;
@@ -1383,10 +1385,10 @@ int CRequest::process_querystring() {
       }
       if (uriKeyUpperCase.equals("BBOXWIDTH")) {
 
-        srvParam->Geo->dfBBOX[0] = 0;
-        srvParam->Geo->dfBBOX[1] = 0;
-        srvParam->Geo->dfBBOX[2] = uriValue.toDouble();
-        srvParam->Geo->dfBBOX[3] = uriValue.toDouble();
+        srvParam->Geo->bbox.left = 0;
+        srvParam->Geo->bbox.bottom = 0;
+        srvParam->Geo->bbox.right = uriValue.toDouble();
+        srvParam->Geo->bbox.top = uriValue.toDouble();
 
         srvParam->dFound_BBOX = 1;
       }
@@ -1710,8 +1712,8 @@ int CRequest::process_querystring() {
 
   if (dFound_Width == 0 && dFound_Height == 0) {
     if (srvParam->dFound_BBOX && dFound_RESX && dFound_RESY) {
-      srvParam->Geo->dWidth = int(((srvParam->Geo->dfBBOX[2] - srvParam->Geo->dfBBOX[0]) / srvParam->dfResX));
-      srvParam->Geo->dHeight = int(((srvParam->Geo->dfBBOX[1] - srvParam->Geo->dfBBOX[3]) / srvParam->dfResY));
+      srvParam->Geo->dWidth = int(((srvParam->Geo->bbox.right - srvParam->Geo->bbox.left) / srvParam->dfResX));
+      srvParam->Geo->dHeight = int(((srvParam->Geo->bbox.bottom - srvParam->Geo->bbox.top) / srvParam->dfResY));
       srvParam->Geo->dHeight = abs(srvParam->Geo->dHeight);
 #ifdef CREQUEST_DEBUG
       CDBDebug("Calculated width height based on resx resy %d,%d", srvParam->Geo->dWidth, srvParam->Geo->dHeight);
@@ -1840,15 +1842,7 @@ int CRequest::process_querystring() {
       }
 
       if (srvParam->checkBBOXXYOrder(NULL) == true) {
-        // BBOX swap
-        double dfBBOX[4];
-        for (int j = 0; j < 4; j++) {
-          dfBBOX[j] = srvParam->Geo->dfBBOX[j];
-        }
-        srvParam->Geo->dfBBOX[0] = dfBBOX[1];
-        srvParam->Geo->dfBBOX[1] = dfBBOX[0];
-        srvParam->Geo->dfBBOX[2] = dfBBOX[3];
-        srvParam->Geo->dfBBOX[3] = dfBBOX[2];
+        srvParam->Geo->bbox = srvParam->Geo->bbox.swapXY();
       }
     }
 
@@ -1988,10 +1982,10 @@ int CRequest::process_querystring() {
         dFound_WMSLAYERS = 1;
         dFound_Width = 1;
         dFound_Height = 1;
-        srvParam->Geo->dfBBOX[0] = srvParam->dX;
-        srvParam->Geo->dfBBOX[1] = srvParam->dY;
-        srvParam->Geo->dfBBOX[2] = srvParam->Geo->dfBBOX[0];
-        srvParam->Geo->dfBBOX[3] = srvParam->Geo->dfBBOX[1];
+        srvParam->Geo->bbox.left = srvParam->dX;
+        srvParam->Geo->bbox.bottom = srvParam->dY;
+        srvParam->Geo->bbox.right = srvParam->Geo->bbox.left;
+        srvParam->Geo->bbox.top = srvParam->Geo->bbox.bottom;
         srvParam->Geo->dWidth = 1;
         srvParam->Geo->dHeight = 1;
         srvParam->dX = 0;
@@ -2014,8 +2008,8 @@ int CRequest::process_querystring() {
       }
 
       if (dFound_Width == 0) {
-        if (srvParam->Geo->dfBBOX[2] != srvParam->Geo->dfBBOX[0]) {
-          float r = fabs(srvParam->Geo->dfBBOX[3] - srvParam->Geo->dfBBOX[1]) / fabs(srvParam->Geo->dfBBOX[2] - srvParam->Geo->dfBBOX[0]);
+        if (srvParam->Geo->bbox.right != srvParam->Geo->bbox.left) {
+          float r = fabs(srvParam->Geo->bbox.top - srvParam->Geo->bbox.bottom) / fabs(srvParam->Geo->bbox.right - srvParam->Geo->bbox.left);
           srvParam->Geo->dWidth = int(float(srvParam->Geo->dHeight) / r);
           if (srvParam->Geo->dWidth > MAX_IMAGE_WIDTH) {
             srvParam->Geo->dWidth = srvParam->Geo->dHeight;
@@ -2026,9 +2020,9 @@ int CRequest::process_querystring() {
       }
 
       if (dFound_Height == 0) {
-        if (srvParam->Geo->dfBBOX[2] != srvParam->Geo->dfBBOX[0]) {
-          float r = fabs(srvParam->Geo->dfBBOX[3] - srvParam->Geo->dfBBOX[1]) / fabs(srvParam->Geo->dfBBOX[2] - srvParam->Geo->dfBBOX[0]);
-          CDBDebug("NNOX = %f, %f, %f, %f", srvParam->Geo->dfBBOX[0], srvParam->Geo->dfBBOX[1], srvParam->Geo->dfBBOX[2], srvParam->Geo->dfBBOX[3]);
+        if (srvParam->Geo->bbox.right != srvParam->Geo->bbox.left) {
+          float r = fabs(srvParam->Geo->bbox.top - srvParam->Geo->bbox.bottom) / fabs(srvParam->Geo->bbox.right - srvParam->Geo->bbox.left);
+          CDBDebug("NNOX = %f, %f, %f, %f", srvParam->Geo->bbox.left, srvParam->Geo->bbox.bottom, srvParam->Geo->bbox.right, srvParam->Geo->bbox.top);
           CDBDebug("R = %f", r);
           srvParam->Geo->dHeight = int(float(srvParam->Geo->dWidth) * r);
           if (srvParam->Geo->dHeight > MAX_IMAGE_HEIGHT) {
@@ -2416,12 +2410,10 @@ void *CImageDataWriter_addData(void *arg) {
 void CRequest::autoDetectBBOX() {
   if (srvParam->requestType == REQUEST_WMS_GETMAP && srvParam->dFound_BBOX == 0) {
     int found;
-    std::array<double, 4> bbox;
+    f8box bbox;
     std::tie(found, bbox) = findBBoxForDataSource(dataSources);
     if (found == 0) {
-      for (size_t i = 0; i < 4; i++) {
-        srvParam->Geo->dfBBOX[i] = bbox[i];
-      }
+      srvParam->Geo->bbox = bbox;
       srvParam->dFound_BBOX = 1;
     }
   }

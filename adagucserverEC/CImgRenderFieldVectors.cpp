@@ -135,8 +135,8 @@ std::vector<CalculatedWindVector> calculateBarbsAndVectorsAndSpeedFromUVComponen
   int firstXPos = 0;
   int firstYPos = 0;
 
-  double tx = ((-drawImage->Geo->dfBBOX[0]) / (drawImage->Geo->dfBBOX[2] - drawImage->Geo->dfBBOX[0])) * double(dImageWidth);
-  double ty = dImageHeight - ((-drawImage->Geo->dfBBOX[1]) / (drawImage->Geo->dfBBOX[3] - drawImage->Geo->dfBBOX[1])) * double(dImageHeight);
+  double tx = ((-drawImage->Geo->bbox.left) / (drawImage->Geo->bbox.right - drawImage->Geo->bbox.left)) * double(dImageWidth);
+  double ty = dImageHeight - ((-drawImage->Geo->bbox.bottom) / (drawImage->Geo->bbox.top - drawImage->Geo->bbox.bottom)) * double(dImageHeight);
 
   // Are u/v values in m/s? (Should we convert for wind barb drawing?)
   // Depends on value units
@@ -171,8 +171,8 @@ std::vector<CalculatedWindVector> calculateBarbsAndVectorsAndSpeedFromUVComponen
 
             if ((int(x - firstXPos) % vectorDensityPy == 0 && (y - firstYPos) % vectorDensityPx == 0) || (enableContour == false && enableShade == false)) {
               // Calculate coordinates from requested coordinate system
-              double projectedCoordX = ((double(x) / double(dImageWidth)) * (drawImage->Geo->dfBBOX[2] - drawImage->Geo->dfBBOX[0])) + drawImage->Geo->dfBBOX[0];
-              double projectedCoordY = ((double(dImageHeight - y) / double(dImageHeight)) * (drawImage->Geo->dfBBOX[3] - drawImage->Geo->dfBBOX[1])) + drawImage->Geo->dfBBOX[1];
+              double projectedCoordX = ((double(x) / double(dImageWidth)) * (drawImage->Geo->bbox.right - drawImage->Geo->bbox.left)) + drawImage->Geo->bbox.left;
+              double projectedCoordY = ((double(dImageHeight - y) / double(dImageHeight)) * (drawImage->Geo->bbox.top - drawImage->Geo->bbox.bottom)) + drawImage->Geo->bbox.bottom;
 
               // Transform view point on screen to lat/lon
               double coordLon = projectedCoordX;

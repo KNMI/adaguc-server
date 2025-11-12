@@ -236,11 +236,11 @@ int CImgWarpNearestRGBA::reproj(CImageWarper *warper, CDataSource *, CGeoParams 
   double psx[4];
   double psy[4];
   double dfTiledBBOX[4];
-  double dfTileW = (GeoDest->dfBBOX[2] - GeoDest->dfBBOX[0]) / double(x_div);
-  double dfTileH = (GeoDest->dfBBOX[3] - GeoDest->dfBBOX[1]) / double(y_div);
+  double dfTileW = GeoDest->bbox.span().x / double(x_div);
+  double dfTileH = GeoDest->bbox.span().y / double(y_div);
 
-  dfTiledBBOX[0] = GeoDest->dfBBOX[0] + dfTileW * dfx;
-  dfTiledBBOX[1] = GeoDest->dfBBOX[1] + dfTileH * dfy;
+  dfTiledBBOX[0] = GeoDest->bbox.left + dfTileW * dfx;
+  dfTiledBBOX[1] = GeoDest->bbox.bottom + dfTileH * dfy;
   dfTiledBBOX[2] = dfTiledBBOX[0] + (dfTileW);
   dfTiledBBOX[3] = dfTiledBBOX[1] + (dfTileH);
   double dfSourceBBOX[4];
@@ -322,8 +322,8 @@ void CImgWarpNearestRGBA::render(CImageWarper *warper, CDataSource *dataSource, 
   CGeoParams internalGeo;
   internalGeo.copy(*drawImage->Geo);
 
-  internalGeo.dfBBOX[2] = ((drawImage->Geo->dfBBOX[2] - drawImage->Geo->dfBBOX[0]) / double(drawImage->Geo->dWidth)) * double(internalWidth) + drawImage->Geo->dfBBOX[0];
-  internalGeo.dfBBOX[1] = ((drawImage->Geo->dfBBOX[1] - drawImage->Geo->dfBBOX[3]) / double(drawImage->Geo->dHeight)) * double(internalHeight) + drawImage->Geo->dfBBOX[3];
+  internalGeo.bbox.right = ((drawImage->Geo->bbox.right - drawImage->Geo->bbox.left) / double(drawImage->Geo->dWidth)) * double(internalWidth) + drawImage->Geo->bbox.left;
+  internalGeo.bbox.bottom = ((drawImage->Geo->bbox.bottom - drawImage->Geo->bbox.top) / double(drawImage->Geo->dHeight)) * double(internalHeight) + drawImage->Geo->bbox.top;
 
   // Setup the renderer to draw the tiles with.We do not keep the calculated results for CDF_CHAR (faster)
   CDrawTileObjBGRA *drawTileClass = NULL;
@@ -341,8 +341,8 @@ void CImgWarpNearestRGBA::render(CImageWarper *warper, CDataSource *dataSource, 
 
 #ifdef CIMGWARPNEARESTRGBA_DEBUG
   CDBDebug("x_div, y_div:  %d %d", x_div, y_div);
-  CDBDebug("datasource:  %f %f %f %f", dataSource->dfBBOX[0], dataSource->dfBBOX[1], dataSource->dfBBOX[2], dataSource->dfBBOX[3]);
-  CDBDebug("destination: %f %f %f %f", internalGeo.dfBBOX[0], internalGeo.dfBBOX[1], internalGeo.dfBBOX[2], internalGeo.dfBBOX[3]);
+  CDBDebug("datasource:  %f %f %f %f", dataSource->bbox.left, dataSource->bbox.bottom, dataSource->bbox.right, dataSource->bbox.top);
+  CDBDebug("destination: %f %f %f %f", internalGeo.bbox.left, internalGeo.bbox.bottom, internalGeo.bbox.right, internalGeo.bbox.top);
 #endif
   int numberOfTiles = x_div * y_div;
   DrawTileSettings *drawTileSettings = new DrawTileSettings[numberOfTiles];
@@ -368,14 +368,14 @@ void CImgWarpNearestRGBA::render(CImageWarper *warper, CDataSource *dataSource, 
       }
       // Some safety checks when odd files come out of the projection algorithm
       if ((x_corners[0] >= DBL_MAX || x_corners[0] <= -DBL_MAX) && x_div == 1 && x_div == 1) {
-        curTileSettings->x_corners[0] = internalGeo.dfBBOX[2];
-        curTileSettings->x_corners[1] = internalGeo.dfBBOX[2];
-        curTileSettings->x_corners[2] = internalGeo.dfBBOX[0];
-        curTileSettings->x_corners[3] = internalGeo.dfBBOX[0];
-        curTileSettings->y_corners[0] = internalGeo.dfBBOX[3];
-        curTileSettings->y_corners[1] = internalGeo.dfBBOX[1];
-        curTileSettings->y_corners[2] = internalGeo.dfBBOX[1];
-        curTileSettings->y_corners[3] = internalGeo.dfBBOX[3];
+        curTileSettings->x_corners[0] = internalGeo.bbox.right;
+        curTileSettings->x_corners[1] = internalGeo.bbox.right;
+        curTileSettings->x_corners[2] = internalGeo.bbox.left;
+        curTileSettings->x_corners[3] = internalGeo.bbox.left;
+        curTileSettings->y_corners[0] = internalGeo.bbox.top;
+        curTileSettings->y_corners[1] = internalGeo.bbox.bottom;
+        curTileSettings->y_corners[2] = internalGeo.bbox.bottom;
+        curTileSettings->y_corners[3] = internalGeo.bbox.top;
       }
       curTileSettings->tile_offset_x = int(x * tile_width);
       curTileSettings->tile_offset_y = int(y * tile_height);

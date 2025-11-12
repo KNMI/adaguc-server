@@ -26,15 +26,16 @@ int gdwFindPixelExtent(int *PXExtentBasedOnSource, CGeoParams *sourceGeoParams, 
 
   int lowerIndex = 1, higherIndex = 3;
 
-  double dfSourceExtW = (sourceGeoParams->dfBBOX[2] - sourceGeoParams->dfBBOX[0]);
-  double dfSourceOrigX = sourceGeoParams->dfBBOX[0];
-  double dfSourceExtH = (sourceGeoParams->dfBBOX[lowerIndex] - sourceGeoParams->dfBBOX[higherIndex]);
-  double dfSourceOrigY = sourceGeoParams->dfBBOX[higherIndex];
+  double dfSourceExtW = sourceGeoParams->bbox.span().x;
+  ;
+  double dfSourceOrigX = sourceGeoParams->bbox.left;
+  double dfSourceExtH = (sourceGeoParams->bbox.get(lowerIndex) - sourceGeoParams->bbox.get(higherIndex));
+  double dfSourceOrigY = sourceGeoParams->bbox.get(higherIndex);
 
-  double dfDestExtW = destGeoParams->dfBBOX[2] - destGeoParams->dfBBOX[0];
-  double dfDestExtH = destGeoParams->dfBBOX[1] - destGeoParams->dfBBOX[3];
-  double dfDestOrigX = destGeoParams->dfBBOX[0];
-  double dfDestOrigY = destGeoParams->dfBBOX[3];
+  double dfDestExtW = destGeoParams->bbox.right - destGeoParams->bbox.left;
+  double dfDestExtH = destGeoParams->bbox.bottom - destGeoParams->bbox.top;
+  double dfDestOrigX = destGeoParams->bbox.left;
+  double dfDestOrigY = destGeoParams->bbox.top;
 
   int startX = 0;
   int startY = 0;

@@ -113,10 +113,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
       dfDstBBOX[1] = dfSrcBBOX[1];
       dfDstBBOX[2] = dfSrcBBOX[2];
       dfDstBBOX[3] = dfSrcBBOX[3];
-      srvParam->Geo->dfBBOX[0] = dfSrcBBOX[0];
-      srvParam->Geo->dfBBOX[1] = dfSrcBBOX[1];
-      srvParam->Geo->dfBBOX[2] = dfSrcBBOX[2];
-      srvParam->Geo->dfBBOX[3] = dfSrcBBOX[3];
+      srvParam->Geo->bbox = dfSrcBBOX;
       srvParam->Geo->dWidth = dataSource->dWidth;
       srvParam->Geo->dHeight = dataSource->dHeight;
       srvParam->Geo->CRS.copy(&dataSource->nativeProj4);
@@ -143,7 +140,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
 
       // Non native projection units
       for (int j = 0; j < 4; j++) dfSrcBBOX[j] = dataSource->dfBBOX[j];
-      for (int j = 0; j < 4; j++) dfDstBBOX[j] = srvParam->Geo->dfBBOX[j];
+      srvParam->Geo->bbox.toArray(dfDstBBOX);
 
       /* BBOX_CRS is set, that means that we have to recalculate the BBOX and the RESX/RESY from the BBOX_CRS coordinate to the CRS coordinates */
       if (srvParam->Geo->BBOX_CRS.empty() == false && srvParam->Geo->BBOX_CRS.equals(srvParam->Geo->CRS) == false) {
@@ -157,15 +154,15 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
           return 1;
         }
         double dfBBOX[4];
-        for (int j = 0; j < 4; j++) dfBBOX[j] = srvParam->Geo->dfBBOX[j];
+        srvParam->Geo->bbox.toArray(dfBBOX);
 
         CDBDebug("(%f, %f) (%d, %d) %f %f %f %f", srvParam->dfResX, srvParam->dfResY, srvParam->Geo->dWidth, srvParam->Geo->dHeight, dfBBOX[0], dfBBOX[1], dfBBOX[2], dfBBOX[3]);
 
         warper.reprojBBOX(dfBBOX);
+        srvParam->Geo->bbox = dfBBOX;
+        serverWCSGeoParams.bbox = dfBBOX;
         for (int j = 0; j < 4; j++) {
-          srvParam->Geo->dfBBOX[j] = dfBBOX[j];
           dfDstBBOX[j] = dfBBOX[j];
-          serverWCSGeoParams.dfBBOX[j] = dfBBOX[j];
         }
 
         /* If resolution is set, recalculate it */
@@ -576,10 +573,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
     if (usePixelExtent) {
       sourceGeo.dWidth = dataSource->dWidth;
       sourceGeo.dHeight = dataSource->dHeight;
-      sourceGeo.dfBBOX[0] = dataSource->dfBBOX[0];
-      sourceGeo.dfBBOX[1] = dataSource->dfBBOX[1];
-      sourceGeo.dfBBOX[2] = dataSource->dfBBOX[2];
-      sourceGeo.dfBBOX[3] = dataSource->dfBBOX[3];
+      sourceGeo.bbox = dataSource->dfBBOX;
       sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
       sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
       sourceGeo.CRS = dataSource->nativeProj4;
@@ -622,10 +616,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
     }
     sourceGeo.dWidth = dataSource->dWidth;
     sourceGeo.dHeight = dataSource->dHeight;
-    sourceGeo.dfBBOX[0] = dataSource->dfBBOX[0];
-    sourceGeo.dfBBOX[1] = dataSource->dfBBOX[1];
-    sourceGeo.dfBBOX[2] = dataSource->dfBBOX[2];
-    sourceGeo.dfBBOX[3] = dataSource->dfBBOX[3];
+    sourceGeo.bbox = dataSource->dfBBOX;
     sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
     sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
     sourceGeo.CRS = dataSource->nativeProj4;

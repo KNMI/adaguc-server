@@ -50,10 +50,10 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
   double dfSourceOrigX = sourceImage->dfBBOX[0];
   double dfSourceOrigY = sourceImage->dfBBOX[3];
 
-  double dfDestExtW = drawImage->Geo->dfBBOX[2] - drawImage->Geo->dfBBOX[0];
-  double dfDestExtH = drawImage->Geo->dfBBOX[1] - drawImage->Geo->dfBBOX[3];
-  double dfDestOrigX = drawImage->Geo->dfBBOX[0];
-  double dfDestOrigY = drawImage->Geo->dfBBOX[3];
+  double dfDestExtW = drawImage->Geo->bbox.right - drawImage->Geo->bbox.left;
+  double dfDestExtH = drawImage->Geo->bbox.bottom - drawImage->Geo->bbox.top;
+  double dfDestOrigX = drawImage->Geo->bbox.left;
+  double dfDestOrigY = drawImage->Geo->bbox.top;
   double dfDestW = double(dImageWidth);
   double dfDestH = double(dImageHeight);
   double hCellSizeX = (dfSourceExtW / dfSourceW) / 2.0f;
@@ -65,7 +65,7 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
   //  CDBDebug("enableBarb=%d enableVectors=%d drawGridVectors=%d", enableBarb, enableVector, drawGridVectors);
   if (tryToOptimizeExtent) {
     // Reproject the boundingbox from the destination bbox:
-    for (int j = 0; j < 4; j++) dfPixelExtent[j] = drawImage->Geo->dfBBOX[j];
+    drawImage->Geo->bbox.toArray(dfPixelExtent);
 #ifdef CImgWarpBilinear_DEBUG
     for (int j = 0; j < 4; j++) {
       CDBDebug("dfPixelExtent: %d %f", j, dfPixelExtent[j]);

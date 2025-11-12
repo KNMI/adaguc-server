@@ -86,10 +86,10 @@ CImageDataWriter::ProjCacheInfo CImageDataWriter::GetProjInfo(CT::string ckey, C
 
     x = double(sx) / double(drawImage->Geo->dWidth);
     y = double(sy) / double(drawImage->Geo->dHeight);
-    x *= (drawImage->Geo->dfBBOX[2] - drawImage->Geo->dfBBOX[0]);
-    y *= (drawImage->Geo->dfBBOX[1] - drawImage->Geo->dfBBOX[3]);
-    x += drawImage->Geo->dfBBOX[0];
-    y += drawImage->Geo->dfBBOX[3];
+    x *= (drawImage->Geo->bbox.right - drawImage->Geo->bbox.left);
+    y *= (drawImage->Geo->bbox.bottom - drawImage->Geo->bbox.top);
+    x += drawImage->Geo->bbox.left;
+    y += drawImage->Geo->bbox.top;
 
     projCacheInfo.isOutsideBBOX = false;
     // projInvertedFirst = false;
@@ -380,7 +380,7 @@ int CImageDataWriter::drawCascadedWMS(CDataSource *dataSource, const char *servi
   }
   url.printconcat("&WIDTH=%d", drawImage.Geo->dWidth);
   url.printconcat("&HEIGHT=%d", drawImage.Geo->dHeight);
-  url.printconcat("&BBOX=%0.4f,%0.4f,%0.4f,%0.4f", drawImage.Geo->dfBBOX[0], drawImage.Geo->dfBBOX[1], drawImage.Geo->dfBBOX[2], drawImage.Geo->dfBBOX[3]);
+  url.printconcat("&BBOX=%0.4f,%0.4f,%0.4f,%0.4f", drawImage.Geo->bbox.left, drawImage.Geo->bbox.bottom, drawImage.Geo->bbox.right, drawImage.Geo->bbox.top);
   url.printconcat("&SRS=%s", drawImage.Geo->CRS.c_str());
   url.printconcat("&LAYERS=%s", layers);
   if ((styles != NULL) && (strlen(styles) > 0)) {
@@ -1186,10 +1186,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
 
     sourceGeo.dWidth = dataSource->dWidth;
     sourceGeo.dHeight = dataSource->dHeight;
-    sourceGeo.dfBBOX[0] = dataSource->dfBBOX[0];
-    sourceGeo.dfBBOX[1] = dataSource->dfBBOX[1];
-    sourceGeo.dfBBOX[2] = dataSource->dfBBOX[2];
-    sourceGeo.dfBBOX[3] = dataSource->dfBBOX[3];
+    sourceGeo.bbox = dataSource->dfBBOX;
     sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
     sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
     sourceGeo.CRS = dataSource->nativeProj4;
@@ -1914,9 +1911,9 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       f8point topLeft;
       f8box latLonBBOX;
       // Find lat lon BBox;
-      topLeft.x = srvParam->Geo->dfBBOX[0];
+      topLeft.x = srvParam->Geo->bbox.left;
 
-      topLeft.y = srvParam->Geo->dfBBOX[1];
+      topLeft.y = srvParam->Geo->bbox.bottom;
       if (useProjection) {
         imageWarper.reprojpoint(topLeft);
       }
@@ -1926,13 +1923,13 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       latLonBBOX.top = topLeft.y;
       latLonBBOX.bottom = topLeft.y;
 
-      double numStepsX = (srvParam->Geo->dfBBOX[2] - srvParam->Geo->dfBBOX[0]) / numTestSteps;
-      double numStepsY = (srvParam->Geo->dfBBOX[3] - srvParam->Geo->dfBBOX[1]) / numTestSteps;
+      double numStepsX = (srvParam->Geo->bbox.right - srvParam->Geo->bbox.left) / numTestSteps;
+      double numStepsY = (srvParam->Geo->bbox.top - srvParam->Geo->bbox.bottom) / numTestSteps;
 #ifdef CIMAGEDATAWRITER_DEBUG
-      CDBDebug("dfBBOX: %f, %f, %f, %f", srvParam->Geo->dfBBOX[0], srvParam->Geo->dfBBOX[1], srvParam->Geo->dfBBOX[2], srvParam->Geo->dfBBOX[3]);
+      CDBDebug("dfBBOX: %f, %f, %f, %f", srvParam->Geo->bbox.left, srvParam->Geo->bbox.bottom, srvParam->Geo->bbox.right, srvParam->Geo->bbox.top);
 #endif
-      for (double y = srvParam->Geo->dfBBOX[1]; y < srvParam->Geo->dfBBOX[3] + numStepsY; y = y + numStepsY) {
-        for (double x = srvParam->Geo->dfBBOX[0]; x < srvParam->Geo->dfBBOX[2] + numStepsX; x = x + numStepsX) {
+      for (double y = srvParam->Geo->bbox.bottom; y < srvParam->Geo->bbox.top + numStepsY; y = y + numStepsY) {
+        for (double x = srvParam->Geo->bbox.left; x < srvParam->Geo->bbox.right + numStepsX; x = x + numStepsX) {
 #ifdef CIMAGEDATAWRITER_DEBUG
           CDBDebug("xy: %f, %f", x, y);
 #endif

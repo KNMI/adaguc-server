@@ -85,10 +85,7 @@ int CGDALDataWriter::init(CServerParams *_srvParam, CDataSource *dataSource, int
     dfDstBBOX[1] = dfSrcBBOX[1];
     dfDstBBOX[2] = dfSrcBBOX[2];
     dfDstBBOX[3] = dfSrcBBOX[3];
-    srvParam->Geo->dfBBOX[0] = dfSrcBBOX[0];
-    srvParam->Geo->dfBBOX[1] = dfSrcBBOX[1];
-    srvParam->Geo->dfBBOX[2] = dfSrcBBOX[2];
-    srvParam->Geo->dfBBOX[3] = dfSrcBBOX[3];
+    srvParam->Geo->bbox = dfSrcBBOX;
     srvParam->Geo->dWidth = dataSource->dWidth;
     srvParam->Geo->dHeight = dataSource->dHeight;
     srvParam->Geo->CRS.copy(&dataSource->nativeProj4);
@@ -96,8 +93,7 @@ int CGDALDataWriter::init(CServerParams *_srvParam, CDataSource *dataSource, int
   } else {
     // Non native projection units
     for (int j = 0; j < 4; j++) dfSrcBBOX[j] = dataSource->dfBBOX[j];
-    for (int j = 0; j < 4; j++) dfDstBBOX[j] = srvParam->Geo->dfBBOX[j];
-
+    srvParam->Geo->bbox.toArray(dfDstBBOX);
     /* CRS is provided, but not RESX+RESY or HEIGHT+WIDTH, calculate here */
     if (srvParam->dfResX == 0 && srvParam->dfResY == 0 && srvParam->Geo->dWidth == 1 && srvParam->Geo->dHeight == 1) {
       CImageWarper warper;
@@ -274,10 +270,8 @@ int CGDALDataWriter::addData(std::vector<CDataSource *> &dataSources) {
 
   sourceGeo.dWidth = dataSource->dWidth;
   sourceGeo.dHeight = dataSource->dHeight;
-  sourceGeo.dfBBOX[0] = dataSource->dfBBOX[0];
-  sourceGeo.dfBBOX[1] = dataSource->dfBBOX[1];
-  sourceGeo.dfBBOX[2] = dataSource->dfBBOX[2];
-  sourceGeo.dfBBOX[3] = dataSource->dfBBOX[3];
+  sourceGeo.bbox = dataSource->dfBBOX;
+
   sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
   sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
   sourceGeo.CRS = dataSource->nativeProj4;
@@ -686,22 +680,22 @@ void CGDALDataWriter::generateUniqueGetCoverageFileName(char *pszTempFileName) {
   for (int j = varNameLength + offset; j < offset + 10; j++) pszTempFileName[j] = '_';
   // BBOX
   offset = 22;
-  snprintf(szTemp, MAX_STR_LEN, "%f", srvParam->Geo->dfBBOX[0]);
+  snprintf(szTemp, MAX_STR_LEN, "%f", srvParam->Geo->bbox.left);
   strncpy(pszTempFileName + offset, szTemp, 6);
   len = strlen(szTemp);
   for (int j = len + offset; j < offset + 6; j++) pszTempFileName[j] = '_';
   offset = 29;
-  snprintf(szTemp, MAX_STR_LEN, "%f", srvParam->Geo->dfBBOX[1]);
+  snprintf(szTemp, MAX_STR_LEN, "%f", srvParam->Geo->bbox.bottom);
   strncpy(pszTempFileName + offset, szTemp, 6);
   len = strlen(szTemp);
   for (int j = len + offset; j < offset + 6; j++) pszTempFileName[j] = '_';
   offset = 36;
-  snprintf(szTemp, MAX_STR_LEN, "%f", srvParam->Geo->dfBBOX[2]);
+  snprintf(szTemp, MAX_STR_LEN, "%f", srvParam->Geo->bbox.right);
   strncpy(pszTempFileName + offset, szTemp, 6);
   len = strlen(szTemp);
   for (int j = len + offset; j < offset + 6; j++) pszTempFileName[j] = '_';
   offset = 43;
-  snprintf(szTemp, MAX_STR_LEN, "%f", srvParam->Geo->dfBBOX[3]);
+  snprintf(szTemp, MAX_STR_LEN, "%f", srvParam->Geo->bbox.top);
   strncpy(pszTempFileName + offset, szTemp, 6);
   len = strlen(szTemp);
   for (int j = len + offset; j < offset + 6; j++) pszTempFileName[j] = '_';

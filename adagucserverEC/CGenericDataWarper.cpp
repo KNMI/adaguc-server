@@ -47,22 +47,22 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
   int imageWidth = destGeoParams->dWidth;
 
   // Reproj back and forth sourceGeoParams boundingbox
-  double y1 = sourceGeoParams->dfBBOX[1];
-  double y2 = sourceGeoParams->dfBBOX[3];
-  double x1 = sourceGeoParams->dfBBOX[0];
-  double x2 = sourceGeoParams->dfBBOX[2];
+  double y1 = sourceGeoParams->bbox.bottom;
+  double y2 = sourceGeoParams->bbox.top;
+  double x1 = sourceGeoParams->bbox.left;
+  double x2 = sourceGeoParams->bbox.right;
 
 #ifdef GenericDataWarper_DEBUG
-  CDBDebug("sourceGeoParams->dfBBOX %f, %f, %f, %f", sourceGeoParams->dfBBOX[0], sourceGeoParams->dfBBOX[1], sourceGeoParams->dfBBOX[2], sourceGeoParams->dfBBOX[3]);
-  CDBDebug("destGeoParams->dfBBOX %f, %f, %f, %f", destGeoParams->dfBBOX[0], destGeoParams->dfBBOX[1], destGeoParams->dfBBOX[2], destGeoParams->dfBBOX[3]);
+  CDBDebug("sourceGeoParams->dfBBOX %f, %f, %f, %f", sourceGeoParams->bbox.left, sourceGeoParams->bbox.bottom, sourceGeoParams->bbox.right, sourceGeoParams->bbox.top);
+  CDBDebug("destGeoParams->dfBBOX %f, %f, %f, %f", destGeoParams->bbox.left, destGeoParams->bbox.bottom, destGeoParams->bbox.right, destGeoParams->bbox.top);
 #endif
   if (y2 < y1) {
     if (y1 > -360 && y2 < 360 && x1 > -720 && x2 < 720) {
       if (isLonLatProjection(&sourceGeoParams->CRS) == false) {
         double checkBBOX[4];
-        for (int j = 0; j < 4; j++) checkBBOX[j] = sourceGeoParams->dfBBOX[j];
+        sourceGeoParams->bbox.toArray(checkBBOX);
 
-        // CDBDebug("Current BBOX:  %f %f %f %f",sourceGeoParams->dfBBOX[0],sourceGeoParams->dfBBOX[1],sourceGeoParams->dfBBOX[2],sourceGeoParams->dfBBOX[3]);
+        // CDBDebug("Current BBOX:  %f %f %f %f",sourceGeoParams->bbox.left,sourceGeoParams->bbox.bottom,sourceGeoParams->bbox.right,sourceGeoParams->bbox.top);
         bool hasError = false;
         if (warper->reprojpoint_inv(checkBBOX[0], checkBBOX[1]) != 0) hasError = true;
         if (warper->reprojpoint(checkBBOX[0], checkBBOX[1]) != 0) hasError = true;
@@ -71,14 +71,14 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
         if (warper->reprojpoint(checkBBOX[2], checkBBOX[3]) != 0) hasError = true;
 
         if (hasError == false) {
-          for (int j = 0; j < 4; j++) sourceGeoParams->dfBBOX[j] = checkBBOX[j];
+          sourceGeoParams->bbox = checkBBOX;
         }
       }
     }
   }
 
-  double dfSourceExtW = (sourceGeoParams->dfBBOX[2] - sourceGeoParams->dfBBOX[0]);
-  double dfSourceExtH = (sourceGeoParams->dfBBOX[3] - sourceGeoParams->dfBBOX[1]);
+  double dfSourceExtW = (sourceGeoParams->bbox.right - sourceGeoParams->bbox.left);
+  double dfSourceExtH = (sourceGeoParams->bbox.top - sourceGeoParams->bbox.bottom);
   double dfSourceW = double(sourceGeoParams->dWidth);
   double dfSourceH = double(sourceGeoParams->dHeight);
 
@@ -87,17 +87,17 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
 
   double dfSourcedExtW = dfSourceExtW / (dfSourceW);
   double dfSourcedExtH = dfSourceExtH / (dfSourceH);
-  double dfSourceOrigX = sourceGeoParams->dfBBOX[0];
-  double dfSourceOrigY = sourceGeoParams->dfBBOX[1];
+  double dfSourceOrigX = sourceGeoParams->bbox.left;
+  double dfSourceOrigY = sourceGeoParams->bbox.bottom;
 
-  double dfDestExtW = destGeoParams->dfBBOX[2] - destGeoParams->dfBBOX[0];
-  double dfDestExtH = destGeoParams->dfBBOX[1] - destGeoParams->dfBBOX[3];
+  double dfDestExtW = destGeoParams->bbox.right - destGeoParams->bbox.left;
+  double dfDestExtH = destGeoParams->bbox.bottom - destGeoParams->bbox.top;
   double multiDestX = double(imageWidth) / dfDestExtW;
 
   double multiDestY = double(imageHeight) / dfDestExtH;
 
-  double dfDestOrigX = destGeoParams->dfBBOX[0]; //-0.5/multiDestX;;
-  double dfDestOrigY = destGeoParams->dfBBOX[3]; //+0.5/multiDestY;;;
+  double dfDestOrigX = destGeoParams->bbox.left; //-0.5/multiDestX;;
+  double dfDestOrigY = destGeoParams->bbox.top;  //+0.5/multiDestY;;;
 
   // Determine source BBOX of based on destination grid
 #ifdef GenericDataWarper_DEBUG
@@ -125,9 +125,8 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
     // Obtain pixelextent to avoid looping over all source grid cells which will never be used in the destination grid
     i4box pixelspan;
     pixelspan = PXExtentBasedOnSource;
-    f8box source, dest;
-    source = sourceGeoParams->dfBBOX;
-    dest = destGeoParams->dfBBOX;
+    auto source = sourceGeoParams->bbox;
+    auto dest = destGeoParams->bbox;
     f8point span = source.span();
     i4point wh = {.x = sourceGeoParams->dWidth, .y = sourceGeoParams->dHeight};
     f8box newbox = {

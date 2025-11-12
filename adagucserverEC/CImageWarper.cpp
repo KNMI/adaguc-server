@@ -193,8 +193,8 @@ int CImageWarper::reprojModelFromLatLon(double &dfx, double &dfy) {
 
 int CImageWarper::reprojpoint_inv_topx(double &dfx, double &dfy, CGeoParams *_geoDest) {
   if (reprojpoint_inv(dfx, dfy) != 0) return 1;
-  dfx = (dfx - _geoDest->dfBBOX[0]) / (_geoDest->dfBBOX[2] - _geoDest->dfBBOX[0]) * double(_geoDest->dWidth);
-  dfy = (dfy - _geoDest->dfBBOX[3]) / (_geoDest->dfBBOX[1] - _geoDest->dfBBOX[3]) * double(_geoDest->dHeight);
+  dfx = (dfx - _geoDest->bbox.left) / (_geoDest->bbox.right - _geoDest->bbox.left) * double(_geoDest->dWidth);
+  dfy = (dfy - _geoDest->bbox.top) / (_geoDest->bbox.bottom - _geoDest->bbox.top) * double(_geoDest->dHeight);
   return 0;
 }
 
@@ -252,33 +252,6 @@ int CImageWarper::decodeCRS(CT::string *outputCRS, CT::string *inputCRS, std::ve
   }
   return 0;
 }
-
-//   int CImageWarper::_decodeCRS(CT::string *CRS){
-//     destinationCRS.copy(CRS);
-//     dMaxExtentDefined=0;
-//     //destinationCRS.decodeURL();
-//     for(size_t j=0;j<(*prj).size();j++){
-//       if(destinationCRS.equals((*prj)[j]->attr.id.c_str())){
-//         destinationCRS.copy((*prj)[j]->attr.proj4.c_str());
-//         if((*prj)[j]->LatLonBox.size()==1){
-//           //if(getMaxExtentBBOX!=NULL)
-//           {
-//             dMaxExtentDefined=1;
-//             dfMaxExtent[0]=(*prj)[j]->LatLonBox[0]->attr.minx;
-//             dfMaxExtent[1]=(*prj)[j]->LatLonBox[0]->attr.miny;
-//             dfMaxExtent[2]=(*prj)[j]->LatLonBox[0]->attr.maxx;
-//             dfMaxExtent[3]=(*prj)[j]->LatLonBox[0]->attr.maxy;
-//           }
-//         }
-//         break;
-//       }
-//     }
-//     if(destinationCRS.indexOf("PROJ4:")==0){
-//       CT::string temp(destinationCRS.c_str()+6);
-//       destinationCRS.copy(&temp);
-//     }
-//     return 0;
-//   }
 
 int CImageWarper::init(const char *destString, const char *fromProjString, std::vector<CServerConfig::XMLE_Projection *> *_prj) {
   CGeoParams geo;

@@ -61,18 +61,18 @@ void CImgRenderStippling::_setStippling(int screenX, int screenY, float val) {
 }
 
 template <class T> void CImgRenderStippling::_stippleMiddleOfPoints() {
-  double bboxWidth = (dataSource->srvParams->Geo->dfBBOX[2] - dataSource->srvParams->Geo->dfBBOX[0]);
-  double bboxHeight = (dataSource->srvParams->Geo->dfBBOX[3] - dataSource->srvParams->Geo->dfBBOX[1]);
+  double bboxWidth = (dataSource->srvParams->Geo->bbox.right - dataSource->srvParams->Geo->bbox.left);
+  double bboxHeight = (dataSource->srvParams->Geo->bbox.top - dataSource->srvParams->Geo->bbox.bottom);
 
   for (int y = 0; y < dataSource->dHeight; y++) {
     for (int x = 0; x < dataSource->dWidth; x++) {
       double cx = dataSource->dfBBOX[0] + dataSource->dfCellSizeX * double(x) + dataSource->dfCellSizeX / 2;
       double cy = dataSource->dfBBOX[3] + dataSource->dfCellSizeY * double(y) + dataSource->dfCellSizeY / 2;
       warper->reprojpoint_inv(cx, cy);
-      cx -= dataSource->srvParams->Geo->dfBBOX[0];
+      cx -= dataSource->srvParams->Geo->bbox.left;
       cx /= bboxWidth;
       cx *= double(dataSource->srvParams->Geo->dWidth);
-      cy -= dataSource->srvParams->Geo->dfBBOX[1];
+      cy -= dataSource->srvParams->Geo->bbox.bottom;
       cy /= bboxHeight;
       cy = 1 - cy;
       cy *= double(dataSource->srvParams->Geo->dHeight);
@@ -122,10 +122,7 @@ void CImgRenderStippling::render(CImageWarper *warper, CDataSource *dataSource, 
 
   sourceGeo.dWidth = dataSource->dWidth;
   sourceGeo.dHeight = dataSource->dHeight;
-  sourceGeo.dfBBOX[0] = dataSource->dfBBOX[0];
-  sourceGeo.dfBBOX[1] = dataSource->dfBBOX[1];
-  sourceGeo.dfBBOX[2] = dataSource->dfBBOX[2];
-  sourceGeo.dfBBOX[3] = dataSource->dfBBOX[3];
+  sourceGeo.bbox = dataSource->dfBBOX;
   sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
   sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
   sourceGeo.CRS = dataSource->nativeProj4;
@@ -158,8 +155,8 @@ void CImgRenderStippling::render(CImageWarper *warper, CDataSource *dataSource, 
     }
   }
 
-  double bboxWidth = (dataSource->srvParams->Geo->dfBBOX[2] - dataSource->srvParams->Geo->dfBBOX[0]);
-  double bboxHeight = (dataSource->srvParams->Geo->dfBBOX[3] - dataSource->srvParams->Geo->dfBBOX[1]);
+  double bboxWidth = (dataSource->srvParams->Geo->bbox.right - dataSource->srvParams->Geo->bbox.left);
+  double bboxHeight = (dataSource->srvParams->Geo->bbox.top - dataSource->srvParams->Geo->bbox.bottom);
 
   /*
    * Set stippling exactly in the middle of grid points
@@ -202,17 +199,17 @@ void CImgRenderStippling::render(CImageWarper *warper, CDataSource *dataSource, 
    * Warp the data to a new grid and plot hatching in screencoordinates.
    */
 
-  int startX = int(((-dataSource->srvParams->Geo->dfBBOX[0]) / bboxWidth) * dataSource->srvParams->Geo->dWidth);
+  int startX = int(((-dataSource->srvParams->Geo->bbox.left) / bboxWidth) * dataSource->srvParams->Geo->dWidth);
   startX = (startX % (xDistance * 2)) - (xDistance * 2);
-  int startY = int(((dataSource->srvParams->Geo->dfBBOX[1]) / bboxHeight) * dataSource->srvParams->Geo->dHeight);
+  int startY = int(((dataSource->srvParams->Geo->bbox.bottom) / bboxHeight) * dataSource->srvParams->Geo->dHeight);
   startY = (startY % (yDistance * 2)) - (yDistance * 2);
 
   GenericDataWarper genericDataWarper;
   GDWArgs args = {.warper = warper, .sourceData = sourceData, .sourceGeoParams = &sourceGeo, .destGeoParams = drawImage->Geo};
 
-#define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                            \
+#define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
   if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction(x, y, val, warperState, settings); });
-ENUMERATE_OVER_CDFTYPES(RENDER)
+  ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
 
   for (int y = startY; y < (int)settings.height; y = y + yDistance) {

@@ -613,18 +613,15 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
   dataSource->dHeight = dataSource->srvParams->Geo->dHeight;
 
   if (dataSource->dWidth == 1 && dataSource->dHeight == 1) {
-    dataSource->srvParams->Geo->dfBBOX[0] = dataSource->srvParams->Geo->dfBBOX[0];
-    dataSource->srvParams->Geo->dfBBOX[1] = dataSource->srvParams->Geo->dfBBOX[1];
-    dataSource->srvParams->Geo->dfBBOX[2] = dataSource->srvParams->Geo->dfBBOX[2];
-    dataSource->srvParams->Geo->dfBBOX[3] = dataSource->srvParams->Geo->dfBBOX[3];
+    dataSource->srvParams->Geo->bbox = dataSource->srvParams->Geo->bbox;
   }
   // Width needs to be at least 2 in this case.
   if (dataSource->dWidth == 1) dataSource->dWidth = 2;
   if (dataSource->dHeight == 1) dataSource->dHeight = 2;
-  double cellSizeX = (dataSource->srvParams->Geo->dfBBOX[2] - dataSource->srvParams->Geo->dfBBOX[0]) / double(dataSource->dWidth);
-  double cellSizeY = (dataSource->srvParams->Geo->dfBBOX[3] - dataSource->srvParams->Geo->dfBBOX[1]) / double(dataSource->dHeight);
-  double offsetX = dataSource->srvParams->Geo->dfBBOX[0];
-  double offsetY = dataSource->srvParams->Geo->dfBBOX[1];
+  double cellSizeX = (dataSource->srvParams->Geo->bbox.right - dataSource->srvParams->Geo->bbox.left) / double(dataSource->dWidth);
+  double cellSizeY = (dataSource->srvParams->Geo->bbox.top - dataSource->srvParams->Geo->bbox.bottom) / double(dataSource->dHeight);
+  double offsetX = dataSource->srvParams->Geo->bbox.left;
+  double offsetY = dataSource->srvParams->Geo->bbox.bottom;
 
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
 
@@ -721,7 +718,8 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
 
 #ifdef CCONVERTADAGUCPOINT_DEBUG
     CDBDebug("Datasource CRS = %s nativeproj4 = %s", dataSource->nativeEPSG.c_str(), dataSource->nativeProj4.c_str());
-    CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->Geo->dfBBOX[0], dataSource->srvParams->Geo->dfBBOX[1], dataSource->srvParams->Geo->dfBBOX[2], dataSource->srvParams->Geo->dfBBOX[3]);
+    CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->Geo->bbox.left, dataSource->srvParams->Geo->bbox.bottom, dataSource->srvParams->Geo->bbox.right,
+             dataSource->srvParams->Geo->bbox.top);
     CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
 #endif
 
@@ -858,13 +856,13 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
       if (hasZoomableDiscRadius) {
         float yDistanceProjected = projectedYOffsetY - projectedY;
         // CDBDebug("yDistanceProjected = %f", yDistanceProjected);
-        discRadius = ((dataSource->srvParams->Geo->dfBBOX[3] - dataSource->srvParams->Geo->dfBBOX[1]) / yDistanceProjected) / float(dataSource->srvParams->Geo->dWidth);
+        discRadius = ((dataSource->srvParams->Geo->bbox.top - dataSource->srvParams->Geo->bbox.bottom) / yDistanceProjected) / float(dataSource->srvParams->Geo->dWidth);
         discRadius = (discSize / 5) / discRadius;
         if (discRadius < 0.1) discRadius = 0.1;
         discRadiusY = discRadius;
 
         float xDistanceProjected = projectedXOffsetX - projectedX;
-        discRadiusX = ((dataSource->srvParams->Geo->dfBBOX[2] - dataSource->srvParams->Geo->dfBBOX[0]) / xDistanceProjected) / float(dataSource->srvParams->Geo->dWidth);
+        discRadiusX = ((dataSource->srvParams->Geo->bbox.right - dataSource->srvParams->Geo->bbox.left) / xDistanceProjected) / float(dataSource->srvParams->Geo->dWidth);
         discRadiusX = (discSize / 5) / discRadiusX;
         if (discRadiusX < 0.1) discRadiusX = 0.1;
       }

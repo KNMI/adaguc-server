@@ -9,7 +9,7 @@
 #include <CDBFactory.h>
 #include <handleTileRequest.h>
 
-std::tuple<int, std::array<double, 4>> findBBoxForDataSource(std::vector<CDataSource *> dataSources) {
+std::tuple<int, f8box> findBBoxForDataSource(std::vector<CDataSource *> dataSources) {
   double dfBBOX[4] = {-180, -90, 180, 90};
   for (size_t d = 0; d < dataSources.size(); d++) {
     if (dataSources[d]->dLayerType != CConfigReaderLayerTypeCascaded && dataSources[d]->dLayerType != CConfigReaderLayerTypeBaseLayer &&
@@ -38,12 +38,12 @@ std::tuple<int, std::array<double, 4>> findBBoxForDataSource(std::vector<CDataSo
       warper.findExtent(dataSources[d], dfBBOX);
       warper.closereproj();
       CDBDebug("Found bbox %s %f %f %f %f", dataSources[0]->srvParams->Geo->CRS.c_str(), dfBBOX[0], dfBBOX[1], dfBBOX[2], dfBBOX[3]);
-      std::array<double, 4> box = {dfBBOX[0], dfBBOX[1], dfBBOX[2], dfBBOX[3]};
+      f8box box = {dfBBOX[0], dfBBOX[1], dfBBOX[2], dfBBOX[3]};
       return std::make_tuple(0, box);
     }
   }
 
-  std::array<double, 4> box = {dfBBOX[0], dfBBOX[1], dfBBOX[2], dfBBOX[3]};
+  f8box box = {dfBBOX[0], dfBBOX[1], dfBBOX[2], dfBBOX[3]};
   return std::make_tuple(-1, box);
 }
 

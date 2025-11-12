@@ -180,7 +180,7 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
       continue;
     }
     CDBDebug("Generating  %s %0.1f done", destFileName.basename().c_str(), (index / double(tileSet.size())) * 100.);
-    destGrid.bbox.toArray(srvParam->Geo->dfBBOX);
+    srvParam->Geo->bbox = destGrid.bbox;
     CNetCDFDataWriter wcsWriter;
     wcsWriter.silent = true;
     wcsWriter.init(srvParam, dataSourceToTile, dataSourceToTile->getNumTimeSteps());

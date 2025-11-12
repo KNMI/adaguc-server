@@ -415,10 +415,7 @@ void CDataSource::setGeo(CGeoParams *geo) {
   nativeProj4 = geo->CRS;
   dWidth = geo->dWidth;
   dHeight = geo->dHeight;
-  dfBBOX[0] = geo->dfBBOX[0];
-  dfBBOX[1] = geo->dfBBOX[1];
-  dfBBOX[2] = geo->dfBBOX[2];
-  dfBBOX[3] = geo->dfBBOX[3];
+  geo->bbox.toArray(dfBBOX);
 }
 
 const char *CDataSource::getFileName() {

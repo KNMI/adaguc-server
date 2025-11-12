@@ -62,7 +62,7 @@ CCreateScaleBar::Props CCreateScaleBar::getScaleBarProperties(CGeoParams *geoPar
   double realWidth = 0;
   double numMapUnits = 1. / 10000000.;
 
-  double boxWidth = geoParams->dfBBOX[2] - geoParams->dfBBOX[0];
+  double boxWidth = geoParams->bbox.span().x;
   double pixelsPerUnit = double(geoParams->dWidth) / boxWidth;
   if (pixelsPerUnit <= 0) {
     throw(__LINE__);

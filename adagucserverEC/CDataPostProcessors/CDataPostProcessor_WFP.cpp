@@ -149,21 +149,18 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
 
     sourceGeo.dWidth = windSpeedDifferenceVariable->getDimension("x")->length;
     sourceGeo.dHeight = windSpeedDifferenceVariable->getDimension("y")->length;
-    sourceGeo.dfBBOX[0] = windSectorXData[0];
-    sourceGeo.dfBBOX[3] = windSectorYData[0];
-    sourceGeo.dfBBOX[2] = windSectorXData[sourceGeo.dWidth - 1];
-    sourceGeo.dfBBOX[1] = windSectorYData[sourceGeo.dHeight - 1];
-    sourceGeo.dfCellSizeX = (sourceGeo.dfBBOX[2] - sourceGeo.dfBBOX[0]) / sourceGeo.dWidth;
-    sourceGeo.dfCellSizeY = (sourceGeo.dfBBOX[1] - sourceGeo.dfBBOX[3]) / sourceGeo.dHeight;
+    sourceGeo.bbox.left = windSectorXData[0];
+    sourceGeo.bbox.top = windSectorYData[0];
+    sourceGeo.bbox.right = windSectorXData[sourceGeo.dWidth - 1];
+    sourceGeo.bbox.bottom = windSectorYData[sourceGeo.dHeight - 1];
+    sourceGeo.dfCellSizeX = (sourceGeo.bbox.right - sourceGeo.bbox.left) / sourceGeo.dWidth;
+    sourceGeo.dfCellSizeY = (sourceGeo.bbox.bottom - sourceGeo.bbox.top) / sourceGeo.dHeight;
     sourceGeo.CRS = "+proj=lcc +lat_1=52.500000 +lat_2=52.500000 +lat_0=52.500000 +lon_0=.000000 +k_0=1.0 +x_0=-92962.569890 +y_0=230385.198586 +a=6371229.000000 +b=6371229.000000"; // TODO
 
     CGeoParams destGeo;
     destGeo.dWidth = dataSource->dWidth;
     destGeo.dHeight = dataSource->dHeight;
-    destGeo.dfBBOX[0] = dataSource->dfBBOX[0];
-    destGeo.dfBBOX[1] = dataSource->dfBBOX[1];
-    destGeo.dfBBOX[2] = dataSource->dfBBOX[2];
-    destGeo.dfBBOX[3] = dataSource->dfBBOX[3];
+    destGeo.bbox = dataSource->dfBBOX;
     destGeo.dfCellSizeX = dataSource->dfCellSizeX;
     destGeo.dfCellSizeY = dataSource->dfCellSizeY;
     destGeo.CRS = dataSource->nativeProj4;

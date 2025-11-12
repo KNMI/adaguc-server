@@ -199,10 +199,10 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
     CDF::fill(echoToppenVar->data, echoToppenVar->getType(), fillValue, fieldSize);
 
     /* Calculate cellsize and offset of the echo toppen (ET) 2D virtual grid, using the same grid as the screenspace*/
-    double cellSizeETX = (dataSource->srvParams->Geo->dfBBOX[2] - dataSource->srvParams->Geo->dfBBOX[0]) / double(dataSource->dWidth);
-    double cellSizeETY = (dataSource->srvParams->Geo->dfBBOX[3] - dataSource->srvParams->Geo->dfBBOX[1]) / double(dataSource->dHeight);
-    double offsetETX = dataSource->srvParams->Geo->dfBBOX[0];
-    double offsetETY = dataSource->srvParams->Geo->dfBBOX[1];
+    double cellSizeETX = (dataSource->srvParams->Geo->bbox.right - dataSource->srvParams->Geo->bbox.left) / double(dataSource->dWidth);
+    double cellSizeETY = (dataSource->srvParams->Geo->bbox.top - dataSource->srvParams->Geo->bbox.bottom) / double(dataSource->dHeight);
+    double offsetETX = dataSource->srvParams->Geo->bbox.left;
+    double offsetETY = dataSource->srvParams->Geo->bbox.bottom;
 
     /* Fill in the X and Y dimensions with the array of coordinates */
     for (size_t j = 0; j < dimX->length; j++) {

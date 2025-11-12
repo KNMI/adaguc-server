@@ -6,7 +6,7 @@
 #ifndef CREQUESTUTILS_H
 #define CREQUESTUTILS_H
 
-std::tuple<int, std::array<double, 4>> findBBoxForDataSource(std::vector<CDataSource *> dataSources);
+std::tuple<int, f8box> findBBoxForDataSource(std::vector<CDataSource *> dataSources);
 
 CServerConfig::XMLE_Layer *findLayerConfigForRequestedLayer(CServerParams *serverParameters, CT::string requestedLayerName);
 

@@ -47,8 +47,8 @@ int CDPPointsFromGrid::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSour
 
 f8point getPixelCoordinateFromGetMapCoordinate(f8point in, CDataSource &dataSource) {
   f8point pixelCoord;
-  pixelCoord.x = ((in.x - dataSource.srvParams->Geo->dfBBOX[0]) / (dataSource.srvParams->Geo->dfBBOX[2] - dataSource.srvParams->Geo->dfBBOX[0])) * dataSource.srvParams->Geo->dWidth;
-  pixelCoord.y = ((in.y - dataSource.srvParams->Geo->dfBBOX[1]) / (dataSource.srvParams->Geo->dfBBOX[3] - dataSource.srvParams->Geo->dfBBOX[1])) * dataSource.srvParams->Geo->dHeight;
+  pixelCoord.x = ((in.x - dataSource.srvParams->Geo->bbox.left) / (dataSource.srvParams->Geo->bbox.right - dataSource.srvParams->Geo->bbox.left)) * dataSource.srvParams->Geo->dWidth;
+  pixelCoord.y = ((in.y - dataSource.srvParams->Geo->bbox.bottom) / (dataSource.srvParams->Geo->bbox.top - dataSource.srvParams->Geo->bbox.bottom)) * dataSource.srvParams->Geo->dHeight;
   return pixelCoord;
 }
 
@@ -60,8 +60,8 @@ void getPixelCoordinateListFromGetMapCoordinateListInPlace(std::vector<f8point> 
 
 f8point getGetMapCoordinateFromPixelCoordinate(f8point in, CDataSource &dataSource) {
   f8point getmapCoord;
-  getmapCoord.x = (in.x / dataSource.srvParams->Geo->dWidth) * (dataSource.srvParams->Geo->dfBBOX[2] - dataSource.srvParams->Geo->dfBBOX[0]) + dataSource.srvParams->Geo->dfBBOX[0];
-  getmapCoord.y = (in.y / dataSource.srvParams->Geo->dHeight) * (dataSource.srvParams->Geo->dfBBOX[3] - dataSource.srvParams->Geo->dfBBOX[1]) + dataSource.srvParams->Geo->dfBBOX[1];
+  getmapCoord.x = (in.x / dataSource.srvParams->Geo->dWidth) * (dataSource.srvParams->Geo->bbox.right - dataSource.srvParams->Geo->bbox.left) + dataSource.srvParams->Geo->bbox.left;
+  getmapCoord.y = (in.y / dataSource.srvParams->Geo->dHeight) * (dataSource.srvParams->Geo->bbox.top - dataSource.srvParams->Geo->bbox.bottom) + dataSource.srvParams->Geo->bbox.bottom;
   return getmapCoord;
 }
 

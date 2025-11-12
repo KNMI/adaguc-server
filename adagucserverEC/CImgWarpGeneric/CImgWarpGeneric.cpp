@@ -94,10 +94,7 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
   CGeoParams sourceGeo;
   sourceGeo.dWidth = dataSource->dWidth;
   sourceGeo.dHeight = dataSource->dHeight;
-  sourceGeo.dfBBOX[0] = dataSource->dfBBOX[0];
-  sourceGeo.dfBBOX[1] = dataSource->dfBBOX[1];
-  sourceGeo.dfBBOX[2] = dataSource->dfBBOX[2];
-  sourceGeo.dfBBOX[3] = dataSource->dfBBOX[3];
+  sourceGeo.bbox = dataSource->dfBBOX;
   sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
   sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
   sourceGeo.CRS = dataSource->nativeProj4;

@@ -81,12 +81,12 @@ CDBStore::Store *handleTileRequest(CDataSource *dataSource) {
     // If no serverbbox was given, set a default based on tileinfo from the db.
     try {
       inputbox = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getExtent(dataSource);
-      inputbox.toArray(srvParam->Geo->dfBBOX);
+      srvParam->Geo->bbox = inputbox;
       srvParam->Geo->CRS = tileprojection;
     } catch (int e) {
     }
   } else {
-    inputbox = srvParam->Geo->dfBBOX;
+    inputbox = srvParam->Geo->bbox;
   }
 
   // Query for all possible tiles within given domain by nativeViewPortBBOX
