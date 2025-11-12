@@ -150,7 +150,7 @@ int CDrawImage::createImage(CGeoParams *_Geo) {
     return 1;
   }
 
-  Geo->copy(_Geo);
+  Geo->copy(*_Geo);
   // CDBDebug("BLA %d",_bEnableTrueColor);
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
     // Always true color

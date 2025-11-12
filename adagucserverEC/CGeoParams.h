@@ -48,52 +48,19 @@ public:
   }
 };
 
-class CGeoParams {
-public:
-  int dWidth, dHeight;
-  double dfBBOX[4];
-  double dfCellSizeX, dfCellSizeY;
-  CT::string CRS, BBOX_CRS;
-  CGeoParams(CDataSource *dataSource);
-  CGeoParams() {
-    dWidth = 1;
-    dHeight = 1;
-    dfBBOX[0] = 0;
-    dfBBOX[1] = 0;
-    dfBBOX[2] = 0;
-    dfBBOX[3] = 0;
-    dfCellSizeX = 0;
-    dfCellSizeY = 0;
-  }
-  int copy(CGeoParams *_Geo) {
-    if (_Geo == NULL) return 1;
-    dWidth = _Geo->dWidth;
-    dHeight = _Geo->dHeight;
-    dfCellSizeX = _Geo->dfCellSizeX;
-    dfCellSizeY = _Geo->dfCellSizeY;
-    CRS.copy(&_Geo->CRS);
-    BBOX_CRS.copy(&_Geo->BBOX_CRS);
-    for (int j = 0; j < 4; j++) dfBBOX[j] = _Geo->dfBBOX[j];
-    return 0;
-  }
-  static bool isLonLatProjection(CT::string *projectionName) {
-    if (projectionName->indexOf("+proj=longlat") == 0) {
-      return true;
-    }
-    if (projectionName->equals("EPSG:4326")) {
-      return true;
-    }
-    return false;
-  }
-  static bool isMercatorProjection(CT::string *projectionName) {
-    if (projectionName->indexOf("+proj=merc") == 0) {
-      return true;
-    }
-    if (projectionName->equals("EPSG:3857") || projectionName->equals("EPSG:900913")) {
-      return true;
-    }
-    return false;
-  }
+bool isLonLatProjection(CT::string *projectionName);
+bool isMercatorProjection(CT::string *projectionName);
+
+struct CGeoParams {
+  int dWidth = 1;
+  int dHeight = 1;
+  double dfBBOX[4] = {0, 0, 0, 0}; // left, bottom, top, right.
+  double dfCellSizeX = 0;
+  double dfCellSizeY = 0;
+  CT::string CRS;
+  CT::string BBOX_CRS;
+  void copy(CGeoParams &_geo);
+  void copy(CDataSource *dataSource);
 };
 
 struct i4point {

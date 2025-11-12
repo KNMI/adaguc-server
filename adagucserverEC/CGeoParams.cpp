@@ -67,7 +67,36 @@ int findClosestPoint(std::vector<PointDVWithLatLon> &points, double lon_coordina
   return closestIndex;
 }
 
-CGeoParams::CGeoParams(CDataSource *dataSource) {
+bool isLonLatProjection(CT::string *projectionName) {
+  if (projectionName->indexOf("+proj=longlat") == 0) {
+    return true;
+  }
+  if (projectionName->equals("EPSG:4326")) {
+    return true;
+  }
+  return false;
+}
+bool isMercatorProjection(CT::string *projectionName) {
+  if (projectionName->indexOf("+proj=merc") == 0) {
+    return true;
+  }
+  if (projectionName->equals("EPSG:3857") || projectionName->equals("EPSG:900913")) {
+    return true;
+  }
+  return false;
+}
+
+void CGeoParams::copy(CGeoParams &sourceGeo) {
+  dWidth = sourceGeo.dWidth;
+  dHeight = sourceGeo.dHeight;
+  dfCellSizeX = sourceGeo.dfCellSizeX;
+  dfCellSizeY = sourceGeo.dfCellSizeY;
+  CRS = sourceGeo.CRS;
+  BBOX_CRS = sourceGeo.BBOX_CRS;
+  for (int j = 0; j < 4; j++) dfBBOX[j] = sourceGeo.dfBBOX[j];
+}
+
+void CGeoParams::copy(CDataSource *dataSource) {
   this->dWidth = dataSource->dWidth;
   this->dHeight = dataSource->dHeight;
   this->dfBBOX[0] = dataSource->dfBBOX[0];

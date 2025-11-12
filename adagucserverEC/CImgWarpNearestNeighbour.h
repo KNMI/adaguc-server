@@ -434,7 +434,7 @@ private:
 
     // New geo location needs to be extended based on new width and height
     CGeoParams internalGeo;
-    internalGeo.copy(drawImage->Geo);
+    internalGeo.copy(*drawImage->Geo);
 
     internalGeo.dfBBOX[2] = ((drawImage->Geo->dfBBOX[2] - drawImage->Geo->dfBBOX[0]) / double(drawImage->Geo->dWidth)) * double(internalWidth) + drawImage->Geo->dfBBOX[0];
     internalGeo.dfBBOX[1] = ((drawImage->Geo->dfBBOX[1] - drawImage->Geo->dfBBOX[3]) / double(drawImage->Geo->dHeight)) * double(internalHeight) + drawImage->Geo->dfBBOX[3];
@@ -450,7 +450,7 @@ private:
 
     if (y2 < y1) {
       if (y1 > -360 && y2 < 360 && x1 > -720 && x2 < 720) {
-        if (CGeoParams::isLonLatProjection(&dataSource->nativeProj4) == false) {
+        if (isLonLatProjection(&dataSource->nativeProj4) == false) {
           double checkBBOX[4];
           for (int j = 0; j < 4; j++) checkBBOX[j] = dataSource->dfBBOX[j];
 

@@ -58,7 +58,7 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
 #endif
   if (y2 < y1) {
     if (y1 > -360 && y2 < 360 && x1 > -720 && x2 < 720) {
-      if (CGeoParams::isLonLatProjection(&sourceGeoParams->CRS) == false) {
+      if (isLonLatProjection(&sourceGeoParams->CRS) == false) {
         double checkBBOX[4];
         for (int j = 0; j < 4; j++) checkBBOX[j] = sourceGeoParams->dfBBOX[j];
 
@@ -314,7 +314,7 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
         double py4 = py[p + dataWidth + 1];
 
         // CDBDebug("destGeoParams = %s",destGeoParams->CRS.c_str());
-        if (CGeoParams::isLonLatProjection(&destGeoParams->CRS) == true || CGeoParams::isMercatorProjection(&destGeoParams->CRS) == true) {
+        if (isLonLatProjection(&destGeoParams->CRS) == true || isMercatorProjection(&destGeoParams->CRS) == true) {
           double lons[4];
           lons[0] = px1;
           lons[1] = px2;
@@ -339,7 +339,7 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, CGeoParam
           }
           lonMiddle /= 4;
           double sphereWidth = 360;
-          if (CGeoParams::isMercatorProjection(&destGeoParams->CRS)) {
+          if (isMercatorProjection(&destGeoParams->CRS)) {
             sphereWidth = 40000000;
           }
 

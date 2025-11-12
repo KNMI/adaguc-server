@@ -11,16 +11,10 @@ enum DrawInImage { DrawInImageNone, DrawInImageNearest, DrawInImageBilinear };
 enum DrawInDataGrid { DrawInDataGridNone, DrawInDataGridNearest, DrawInDataGridBilinear };
 enum LegendMode { LegendModeContinuous, LegendModeDiscrete };
 
-class Interval { // TODO Struct
-public:
+struct Interval {
   float min;
   float max;
   CColor color;
-  Interval(float min, float max, CColor color) {
-    this->min = min;
-    this->max = max;
-    this->color = color;
-  }
 };
 
 struct GDWDrawFunctionSettings {
@@ -43,9 +37,6 @@ struct GDWDrawFunctionSettings {
   std::vector<Interval> intervals;
   float *smoothingDistanceMatrix = nullptr;
   CDrawImage *drawImage;
-
-  // int destDataHeight;
-  // int destDataWidth;
   CDFType destinationDataType;
   void *destinationGrid = nullptr;
 };

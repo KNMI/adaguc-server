@@ -131,7 +131,8 @@ void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, C
 
   CDFType dataType = dataSource->getDataObject(0)->cdfVariable->getType();
   sourceData = dataSource->getDataObject(0)->cdfVariable->data;
-  CGeoParams sourceGeo(dataSource);
+  CGeoParams sourceGeo;
+  sourceGeo.copy(dataSource);
 
   // GenericDataWarper dw;
   // dw.render(warper, sourceData, dataType, &sourceGeo, drawImage->Geo, &hillShadedDrawFunction);

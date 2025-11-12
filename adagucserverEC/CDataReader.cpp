@@ -659,7 +659,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
 
   if (dataSource->formatConverterActive == false && dataSource->dfCellSizeX > 0) {
 
-    if (CGeoParams::isLonLatProjection(&dataSource->nativeProj4)) {
+    if (isLonLatProjection(&dataSource->nativeProj4)) {
       // If the lon variable name contains an X, it is probably not longitude.
       if (dataSource->varX->name.indexOf("x") == -1 && dataSource->varX->name.indexOf("X") == -1) {
         size_t j = 0;

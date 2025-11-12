@@ -179,7 +179,7 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
     settings.intervals.reserve(numShadeDefs);
     for (int j = 0; j < numShadeDefs; j++) {
       CServerConfig::XMLE_ShadeInterval *shadeInterVal = styleConfiguration->shadeIntervals[j];
-      settings.intervals.push_back(Interval(shadeInterVal->attr.min.toFloat(), shadeInterVal->attr.max.toFloat(), CColor(shadeInterVal->attr.fillcolor.c_str())));
+      settings.intervals.push_back(Interval({.min = shadeInterVal->attr.min.toFloat(), .max = shadeInterVal->attr.max.toFloat(), .color = CColor(shadeInterVal->attr.fillcolor.c_str())}));
       /* Check for bgcolor */
       if (j == 0) {
         if (shadeInterVal->attr.bgcolor.empty() == false) {

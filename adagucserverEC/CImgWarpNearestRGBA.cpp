@@ -23,7 +23,7 @@
  *
  ******************************************************************************/
 
-//#define CIMGWARPNEARESTRGBA_DEBUG
+// #define CIMGWARPNEARESTRGBA_DEBUG
 #include "CImgWarpNearestRGBA.h"
 const char *CImgWarpNearestRGBA::className = "CImgWarpNearestRGBA";
 const char *CDrawTileObjBGRA::className = "CDrawTileObjBGRA";
@@ -320,7 +320,7 @@ void CImgWarpNearestRGBA::render(CImageWarper *warper, CDataSource *dataSource, 
 
   // New geo location needs to be extended based on new width and height
   CGeoParams internalGeo;
-  internalGeo.copy(drawImage->Geo);
+  internalGeo.copy(*drawImage->Geo);
 
   internalGeo.dfBBOX[2] = ((drawImage->Geo->dfBBOX[2] - drawImage->Geo->dfBBOX[0]) / double(drawImage->Geo->dWidth)) * double(internalWidth) + drawImage->Geo->dfBBOX[0];
   internalGeo.dfBBOX[1] = ((drawImage->Geo->dfBBOX[1] - drawImage->Geo->dfBBOX[3]) / double(drawImage->Geo->dHeight)) * double(internalHeight) + drawImage->Geo->dfBBOX[3];

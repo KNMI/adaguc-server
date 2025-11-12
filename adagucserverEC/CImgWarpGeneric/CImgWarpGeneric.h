@@ -33,8 +33,6 @@
 
 static inline int nfast_mod(const int input, const int ceil) { return input >= ceil ? input % ceil : input; }
 
-template <typename T> void imgWarpGenericDrawFunction(int x, int y, T val, GDWState &warperState, GDWDrawFunctionSettings &settings);
-
 class CImgWarpGeneric : public CImageWarperRenderInterface {
 private:
   DEF_ERRORFUNCTION();

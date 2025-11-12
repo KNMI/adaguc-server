@@ -127,7 +127,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
     CT::string srvParamBboxProj4Params = CImageWarper::getProj4FromId(dataSource, srvParam->Geo->BBOX_CRS);
     CT::string srvParamGridProj4Params = CImageWarper::getProj4FromId(dataSource, srvParam->Geo->CRS);
     CGeoParams serverWCSGeoParams;
-    serverWCSGeoParams.copy(this->srvParam->Geo);
+    serverWCSGeoParams.copy(*this->srvParam->Geo);
     if (!srvParamBboxProj4Params.empty()) {
       serverWCSGeoParams.CRS = srvParamBboxProj4Params;
     }
@@ -551,7 +551,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
 
     CT::string srvParamGridProj4Params = CImageWarper::getProj4FromId(dataSource, srvParam->Geo->CRS);
     CGeoParams clonedSrvGeoParams;
-    clonedSrvGeoParams.copy(srvParam->Geo);
+    clonedSrvGeoParams.copy(*srvParam->Geo);
     clonedSrvGeoParams.CRS = srvParamGridProj4Params;
 
     status = warper.initreproj(dataSource, &clonedSrvGeoParams, &srvParam->cfg->Projection);

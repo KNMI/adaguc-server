@@ -133,7 +133,7 @@ CImageDataWriter::ProjCacheInfo CImageDataWriter::GetProjInfo(CT::string ckey, C
     //     CDBDebug("X is : %f Y is: %f",x,y);
 
     imageWarper->reprojpoint(x, y);
-    if (CGeoParams::isLonLatProjection(&dataSource->nativeProj4)) {
+    if (isLonLatProjection(&dataSource->nativeProj4)) {
       //       CDBDebug("Is latlon %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[2]);
       // if(dataSource->dfBBOX[2]>180||dataSource->dfBBOX[0]<-180){
       //         CDBDebug("X is : %f %d %d Y is: %f",x,x>=-180,x<180,y);
@@ -583,7 +583,7 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
   }
   if (srvParam->requestType == REQUEST_WMS_GETFEATUREINFO || srvParam->requestType == REQUEST_WMS_GETHISTOGRAM) {
     // status = drawImage.createImage(2,2);
-    drawImage.Geo->copy(srvParam->Geo);
+    drawImage.Geo->copy(*srvParam->Geo);
 
 #ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("/init");
