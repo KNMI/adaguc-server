@@ -411,11 +411,11 @@ void CDataSource::addStep(const char *fileName) {
 
 void CDataSource::setHeaderFilename(CT::string headerFilename) { this->headerFilename = headerFilename; }
 
-void CDataSource::setGeo(CGeoParams *geo) {
-  nativeProj4 = geo->CRS;
-  dWidth = geo->dWidth;
-  dHeight = geo->dHeight;
-  geo->bbox.toArray(dfBBOX);
+void CDataSource::setGeo(CGeoParams &geo) {
+  nativeProj4 = geo.CRS;
+  dWidth = geo.dWidth;
+  dHeight = geo.dHeight;
+  geo.bbox.toArray(dfBBOX);
 }
 
 const char *CDataSource::getFileName() {
@@ -907,7 +907,7 @@ double CDataSource::getScaling() {
     if (this->getStyle()->styleConfig->RenderSettings.size() > 0) {
       if (!this->getStyle()->styleConfig->RenderSettings[0]->attr.scalewidth.empty()) {
         double scaleWidth = this->getStyle()->styleConfig->RenderSettings[0]->attr.scalewidth.toDouble();
-        double imageWidth = (double)this->srvParams->Geo->dWidth;
+        double imageWidth = (double)this->srvParams->Geo.dWidth;
         return imageWidth / scaleWidth;
       }
     }

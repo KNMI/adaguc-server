@@ -344,23 +344,23 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource, int mode) {
   }
 
   // Make the width and height of the new 2D ascat field the same as the viewing window
-  dataSource->dWidth = dataSource->srvParams->Geo->dWidth;
-  dataSource->dHeight = dataSource->srvParams->Geo->dHeight;
+  dataSource->dWidth = dataSource->srvParams->Geo.dWidth;
+  dataSource->dHeight = dataSource->srvParams->Geo.dHeight;
 
   if (dataSource->dWidth == 1 && dataSource->dHeight == 1) {
-    dataSource->srvParams->Geo->bbox = dataSource->srvParams->Geo->bbox;
+    dataSource->srvParams->Geo.bbox = dataSource->srvParams->Geo.bbox;
   }
 
   // Width needs to be at least 2 in this case.
   if (dataSource->dWidth == 1) dataSource->dWidth = 2;
   if (dataSource->dHeight == 1) dataSource->dHeight = 2;
-  double cellSizeX = (dataSource->srvParams->Geo->bbox.right - dataSource->srvParams->Geo->bbox.left) / double(dataSource->dWidth);
-  double cellSizeY = (dataSource->srvParams->Geo->bbox.top - dataSource->srvParams->Geo->bbox.bottom) / double(dataSource->dHeight);
-  double offsetX = dataSource->srvParams->Geo->bbox.left;
-  double offsetY = dataSource->srvParams->Geo->bbox.bottom;
+  double cellSizeX = (dataSource->srvParams->Geo.bbox.right - dataSource->srvParams->Geo.bbox.left) / double(dataSource->dWidth);
+  double cellSizeY = (dataSource->srvParams->Geo.bbox.top - dataSource->srvParams->Geo.bbox.bottom) / double(dataSource->dHeight);
+  double offsetX = dataSource->srvParams->Geo.bbox.left;
+  double offsetY = dataSource->srvParams->Geo.bbox.bottom;
 
 #ifdef CCONVERTASCAT_DEBUG
-  CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->Geo->bbox.left, dataSource->srvParams->Geo->bbox.bottom, dataSource->srvParams->Geo->bbox.right, dataSource->srvParams->Geo->bbox.top);
+  CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->Geo.bbox.left, dataSource->srvParams->Geo.bbox.bottom, dataSource->srvParams->Geo.bbox.right, dataSource->srvParams->Geo.bbox.top);
   CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
   CDBDebug("L2 %d %d", dataSource->dWidth, dataSource->dHeight);
 #endif
@@ -420,7 +420,7 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource, int mode) {
 
     CImageWarper imageWarper;
     bool projectionRequired = false;
-    if (dataSource->srvParams->Geo->CRS.length() > 0) {
+    if (dataSource->srvParams->Geo.CRS.length() > 0) {
       projectionRequired = true;
       for (size_t d = 0; d < nrDataObjects; d++) {
         new2DVar[d]->setAttributeText("grid_mapping", "customgridprojection");
@@ -429,7 +429,7 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource, int mode) {
         CDF::Variable *projectionVar = new CDF::Variable();
         projectionVar->name.copy("customgridprojection");
         cdfObject->addVariable(projectionVar);
-        dataSource->nativeEPSG = dataSource->srvParams->Geo->CRS.c_str();
+        dataSource->nativeEPSG = dataSource->srvParams->Geo.CRS.c_str();
         imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
         if (dataSource->nativeProj4.length() == 0) {
           dataSource->nativeProj4 = LATLONPROJECTION;

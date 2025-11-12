@@ -123,16 +123,16 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
   CT::string name = dataSource->featureSet;
 
   bool projectionRequired = false;
-  if (dataSource->srvParams->Geo->CRS.length() > 0) {
+  if (dataSource->srvParams->Geo.CRS.length() > 0) {
     projectionRequired = true;
   }
 
   int height = drawImage->getHeight();
 
-  double cellSizeX = (dataSource->srvParams->Geo->bbox.right - dataSource->srvParams->Geo->bbox.left) / double(dataSource->dWidth);
-  double cellSizeY = (dataSource->srvParams->Geo->bbox.top - dataSource->srvParams->Geo->bbox.bottom) / double(dataSource->dHeight);
-  double offsetX = dataSource->srvParams->Geo->bbox.left + cellSizeX / 2;
-  double offsetY = dataSource->srvParams->Geo->bbox.bottom + cellSizeY / 2;
+  double cellSizeX = (dataSource->srvParams->Geo.bbox.right - dataSource->srvParams->Geo.bbox.left) / double(dataSource->dWidth);
+  double cellSizeY = (dataSource->srvParams->Geo.bbox.top - dataSource->srvParams->Geo.bbox.bottom) / double(dataSource->dHeight);
+  double offsetX = dataSource->srvParams->Geo.bbox.left + cellSizeX / 2;
+  double offsetY = dataSource->srvParams->Geo.bbox.bottom + cellSizeY / 2;
 
   std::map<std::string, std::vector<Feature *>> featureStore = CConvertGeoJSON::featureStore;
 

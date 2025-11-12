@@ -83,8 +83,8 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
     settings.dfNodataValue = -100000.f;
   }
 
-  int destDataWidth = drawImage->Geo->dWidth;
-  int destDataHeight = drawImage->Geo->dHeight;
+  int destDataWidth = drawImage->Geo.dWidth;
+  int destDataHeight = drawImage->Geo.dHeight;
   size_t numGridElements = destDataWidth * destDataHeight;
   CDF::allocateData(CDF_FLOAT, &settings.destinationGrid, numGridElements);
   CDF::fill(settings.destinationGrid, CDF_FLOAT, settings.dfNodataValue, numGridElements);
@@ -100,7 +100,7 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
   sourceGeo.CRS = dataSource->nativeProj4;
 
   GenericDataWarper genericDataWarper;
-  GDWArgs args = {.warper = warper, .sourceData = sourceData, .sourceGeoParams = &sourceGeo, .destGeoParams = drawImage->Geo};
+  GDWArgs args = {.warper = warper, .sourceData = sourceData, .sourceGeoParams = sourceGeo, .destGeoParams = drawImage->Geo};
 
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
   if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return warpImageBilinearFunction(x, y, val, warperState, settings); });

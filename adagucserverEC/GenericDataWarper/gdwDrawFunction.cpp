@@ -109,7 +109,7 @@ void gdwDrawFunction(GDWState *_drawSettings) {
   //       }
 
   //       if (drawSettings->drawInDataGrid == DrawInDataGridBilinear && drawSettings->destinationGrid != nullptr) {
-  //         ((double *)drawSettings->destinationGrid)[x + y * drawSettings->drawImage->Geo->dWidth] = billValue;
+  //         ((double *)drawSettings->destinationGrid)[x + y * drawSettings->drawImage->Geo.dWidth] = billValue;
   //       }
   //     }
 
@@ -126,7 +126,7 @@ void gdwDrawFunction(GDWState *_drawSettings) {
   //       }
 
   //       if (drawSettings->drawInDataGrid == DrawInDataGridNearest && drawSettings->destinationGrid != nullptr) {
-  //         ((double *)drawSettings->destinationGrid)[x + y * drawSettings->drawImage->Geo->dWidth] = value; // TODO
+  //         ((double *)drawSettings->destinationGrid)[x + y * drawSettings->drawImage->Geo.dWidth] = value; // TODO
   //       }
   //     }
 

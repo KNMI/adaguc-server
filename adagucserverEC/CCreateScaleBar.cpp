@@ -1,5 +1,5 @@
 #include "CCreateScaleBar.h"
-int CCreateScaleBar::createScaleBar(CDrawImage *scaleBarImage, CGeoParams *geoParams, float scaling) {
+int CCreateScaleBar::createScaleBar(CDrawImage *scaleBarImage, CGeoParams &geoParams, float scaling) {
 
   CCreateScaleBar::Props p = CCreateScaleBar::getScaleBarProperties(geoParams, scaling);
 
@@ -22,7 +22,7 @@ int CCreateScaleBar::createScaleBar(CDrawImage *scaleBarImage, CGeoParams *geoPa
 
   // Draw text
   CT::string units = "";
-  CT::string projection = geoParams->CRS.c_str();
+  CT::string projection = geoParams.CRS.c_str();
   if (projection.equals("EPSG:3411")) units = "meter";
   if (projection.equals("EPSG:3412")) units = "meter";
   if (projection.equals("EPSG:3575")) units = "meter";
@@ -57,13 +57,13 @@ int CCreateScaleBar::createScaleBar(CDrawImage *scaleBarImage, CGeoParams *geoPa
   return 0;
 }
 
-CCreateScaleBar::Props CCreateScaleBar::getScaleBarProperties(CGeoParams *geoParams, float scaling) {
+CCreateScaleBar::Props CCreateScaleBar::getScaleBarProperties(CGeoParams &geoParams, float scaling) {
   double desiredWidth = 25 * scaling;
   double realWidth = 0;
   double numMapUnits = 1. / 10000000.;
 
-  double boxWidth = geoParams->bbox.span().x;
-  double pixelsPerUnit = double(geoParams->dWidth) / boxWidth;
+  double boxWidth = geoParams.bbox.span().x;
+  double pixelsPerUnit = double(geoParams.dWidth) / boxWidth;
   if (pixelsPerUnit <= 0) {
     throw(__LINE__);
   }

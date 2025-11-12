@@ -167,14 +167,14 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
 
     CImageWarper warper;
 
-    status = warper.initreproj(sourceGeo.CRS, &destGeo, &dataSource->srvParams->cfg->Projection);
+    status = warper.initreproj(sourceGeo.CRS, destGeo, &dataSource->srvParams->cfg->Projection);
     if (status != 0) {
       CDBError("Unable to initialize projection");
       return 1;
     }
     GenericDataWarper genericDataWarper;
     auto f = [drawFunctionState](int x, int y, float val, GDWState &warperState) { return drawFunction(x, y, val, warperState, drawFunctionState); };
-    genericDataWarper.render<float>(&warper, windSectorDataField, &sourceGeo, &destGeo, f);
+    genericDataWarper.render<float>(&warper, windSectorDataField, sourceGeo, destGeo, f);
   }
 
   return 0;

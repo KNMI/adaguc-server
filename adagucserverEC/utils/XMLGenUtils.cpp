@@ -660,7 +660,7 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
     StopWatch_Stop("start initreproj %s", geo.CRS.c_str());
 #endif
     CImageWarper warper;
-    int status = warper.initreproj(metadataLayer->dataSource, &geo, &srvParam->cfg->Projection);
+    int status = warper.initreproj(metadataLayer->dataSource, geo, &srvParam->cfg->Projection);
     if (status != 0) {
       warper.closereproj();
       return 1;

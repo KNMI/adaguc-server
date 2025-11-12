@@ -3,6 +3,6 @@
 
 #include "CGeoParams.h"
 
-int gdwFindPixelExtent(int *PXExtentBasedOnSource, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, CImageWarper *warper);
+int gdwFindPixelExtent(int *PXExtentBasedOnSource, CGeoParams &sourceGeoParams, CGeoParams &destGeoParams, CImageWarper *warper);
 
 #endif

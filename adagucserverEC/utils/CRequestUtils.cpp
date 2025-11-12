@@ -23,7 +23,7 @@ std::tuple<int, f8box> findBBoxForDataSource(std::vector<CDataSource *> dataSour
       //   try {
       //     // Check if we can simply read it from the db.
       //     f8box box = CDBFactory::getDBAdapter(srvParam->cfg)->getExtent(dataSources[d]);
-      //     auto newbox = reprojectExtent(srvParam->Geo->CRS.c_str(), dataSources[d]->nativeProj4, srvParam, box);
+      //     auto newbox = reprojectExtent(srvParam->Geo.CRS.c_str(), dataSources[d]->nativeProj4, srvParam, box);
       //     std::array<double, 4> outbox = {newbox.left, newbox.bottom, newbox.right, newbox.top};
       //     return std::make_tuple(0, outbox);
       //   } catch (int e) {
@@ -37,7 +37,7 @@ std::tuple<int, f8box> findBBoxForDataSource(std::vector<CDataSource *> dataSour
       }
       warper.findExtent(dataSources[d], dfBBOX);
       warper.closereproj();
-      CDBDebug("Found bbox %s %f %f %f %f", dataSources[0]->srvParams->Geo->CRS.c_str(), dfBBOX[0], dfBBOX[1], dfBBOX[2], dfBBOX[3]);
+      CDBDebug("Found bbox %s %f %f %f %f", dataSources[0]->srvParams->Geo.CRS.c_str(), dfBBOX[0], dfBBOX[1], dfBBOX[2], dfBBOX[3]);
       f8box box = {dfBBOX[0], dfBBOX[1], dfBBOX[2], dfBBOX[3]};
       return std::make_tuple(0, box);
     }

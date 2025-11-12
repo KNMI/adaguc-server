@@ -90,15 +90,15 @@ private:
   // Reproject the corners of the tiles
   double y_corners[4], x_corners[4];
   double dfMaskBBOX[4];
-  int reproj(CImageWarper *warper, CDataSource *, CGeoParams *GeoDest, double dfx, double dfy, double x_div, double y_div) {
+  int reproj(CImageWarper *warper, CDataSource *, CGeoParams &GeoDest, double dfx, double dfy, double x_div, double y_div) {
     double psx[4];
     double psy[4];
     double dfTiledBBOX[4];
-    double dfTileW = GeoDest->bbox.span().x / double(x_div);
-    double dfTileH = GeoDest->bbox.span().y / double(y_div);
+    double dfTileW = GeoDest.bbox.span().x / double(x_div);
+    double dfTileH = GeoDest.bbox.span().y / double(y_div);
 
-    dfTiledBBOX[0] = GeoDest->bbox.left + dfTileW * dfx;
-    dfTiledBBOX[1] = GeoDest->bbox.bottom + dfTileH * dfy;
+    dfTiledBBOX[0] = GeoDest.bbox.left + dfTileW * dfx;
+    dfTiledBBOX[1] = GeoDest.bbox.bottom + dfTileH * dfy;
     dfTiledBBOX[2] = dfTiledBBOX[0] + (dfTileW);
     dfTiledBBOX[3] = dfTiledBBOX[1] + (dfTileH);
     double dfSourceBBOX[4];
@@ -189,9 +189,9 @@ private:
         }
       }
 
-      for (int y = 0; y < drawImage->Geo->dHeight; y++) {
-        for (int x = 0; x < drawImage->Geo->dWidth; x++) {
-          T val = data[x + y * drawImage->Geo->dWidth];
+      for (int y = 0; y < drawImage->Geo.dHeight; y++) {
+        for (int x = 0; x < drawImage->Geo.dWidth; x++) {
+          T val = data[x + y * drawImage->Geo.dWidth];
           bool drawnPixel = false;
           bool isNodata = false;
           if (hasNodataValue) {
@@ -205,9 +205,9 @@ private:
             for (int snr = numShadeDefs - 1; snr >= 0; snr--) {
               if (val >= shadeDefMin[snr] && val < shadeDefMax[snr]) {
                 if (fillColors[snr].a == 0) { // When a fully transparent color is deliberately set, force this color in the image
-                  drawImage->setPixelTrueColorOverWrite(x, (drawImage->Geo->dHeight - 1) - y, fillColors[snr].r, fillColors[snr].g, fillColors[snr].b, fillColors[snr].a);
+                  drawImage->setPixelTrueColorOverWrite(x, (drawImage->Geo.dHeight - 1) - y, fillColors[snr].r, fillColors[snr].g, fillColors[snr].b, fillColors[snr].a);
                 } else {
-                  drawImage->setPixelTrueColor(x, (drawImage->Geo->dHeight - 1) - y, fillColors[snr].r, fillColors[snr].g, fillColors[snr].b, fillColors[snr].a);
+                  drawImage->setPixelTrueColor(x, (drawImage->Geo.dHeight - 1) - y, fillColors[snr].r, fillColors[snr].g, fillColors[snr].b, fillColors[snr].a);
                 }
                 drawnPixel = true;
                 break;
@@ -215,16 +215,16 @@ private:
             }
           }
           if (hasBgColor && !drawnPixel) {
-            drawImage->setPixelTrueColor(x, (drawImage->Geo->dHeight - 1) - y, bgColor.r, bgColor.g, bgColor.b, bgColor.a);
+            drawImage->setPixelTrueColor(x, (drawImage->Geo.dHeight - 1) - y, bgColor.r, bgColor.g, bgColor.b, bgColor.a);
           }
         }
       }
     }
 
     if (shade == false) {
-      for (int y = 0; y < drawImage->Geo->dHeight; y++) {
-        for (int x = 0; x < drawImage->Geo->dWidth; x++) {
-          T val = data[x + y * drawImage->Geo->dWidth];
+      for (int y = 0; y < drawImage->Geo.dHeight; y++) {
+        for (int x = 0; x < drawImage->Geo.dWidth; x++) {
+          T val = data[x + y * drawImage->Geo.dWidth];
 
           bool isNodata = false;
           if (hasNodataValue) {
@@ -248,7 +248,7 @@ private:
             else if (pcolorind <= 0)
               pcolorind = 0;
 
-            drawImage->setPixelIndexed(x, (drawImage->Geo->dHeight - 1) - y, pcolorind);
+            drawImage->setPixelIndexed(x, (drawImage->Geo.dHeight - 1) - y, pcolorind);
           }
         }
       }
@@ -268,8 +268,8 @@ private:
       /* Using the precise renderer with a legend */
       setPixelInDrawImage(x, y, val, &settings);
     } else {
-      if (x >= 0 && y >= 0 && x < settings.drawImage->Geo->dWidth && y < settings.drawImage->Geo->dHeight) {
-        size_t p = x + y * settings.drawImage->Geo->dWidth;
+      if (x >= 0 && y >= 0 && x < settings.drawImage->Geo.dWidth && y < settings.drawImage->Geo.dHeight) {
+        size_t p = x + y * settings.drawImage->Geo.dWidth;
         uint v = val;
         unsigned char a = ((unsigned char)(v >> 24));
         if (a == 255) {
@@ -295,22 +295,22 @@ private:
 #endif
 
     bool fieldsAreIdentical = true;
-    if ((float)dataSource->dfBBOX[0] != (float)drawImage->Geo->bbox.left) {
+    if ((float)dataSource->dfBBOX[0] != (float)drawImage->Geo.bbox.left) {
       fieldsAreIdentical = false;
     }
-    if ((float)dataSource->dfBBOX[1] != (float)drawImage->Geo->bbox.top) {
+    if ((float)dataSource->dfBBOX[1] != (float)drawImage->Geo.bbox.top) {
       fieldsAreIdentical = false;
     }
-    if ((float)dataSource->dfBBOX[2] != (float)drawImage->Geo->bbox.right) {
+    if ((float)dataSource->dfBBOX[2] != (float)drawImage->Geo.bbox.right) {
       fieldsAreIdentical = false;
     }
-    if ((float)dataSource->dfBBOX[3] != (float)drawImage->Geo->bbox.bottom) {
+    if ((float)dataSource->dfBBOX[3] != (float)drawImage->Geo.bbox.bottom) {
       fieldsAreIdentical = false;
     }
-    if ((int)dataSource->dWidth != (int)drawImage->Geo->dWidth) {
+    if ((int)dataSource->dWidth != (int)drawImage->Geo.dWidth) {
       fieldsAreIdentical = false;
     }
-    if ((int)dataSource->dHeight != (int)drawImage->Geo->dHeight) {
+    if ((int)dataSource->dHeight != (int)drawImage->Geo.dHeight) {
       fieldsAreIdentical = false;
     }
 
@@ -393,7 +393,7 @@ private:
       sourceGeo.CRS = dataSource->nativeProj4;
 
       GenericDataWarper genericDataWarper;
-      GDWArgs args = {.warper = warper, .sourceData = sourceData, .sourceGeoParams = &sourceGeo, .destGeoParams = drawImage->Geo};
+      GDWArgs args = {.warper = warper, .sourceData = sourceData, .sourceGeoParams = sourceGeo, .destGeoParams = drawImage->Geo};
 
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
   if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction(x, y, val, warperState, settings); });
@@ -417,22 +417,22 @@ private:
     int y_div = 1;
     if (warper->isProjectionRequired() == false) {
       // CDBDebug("No reprojection required");
-      tile_height = drawImage->Geo->dHeight;
-      tile_width = drawImage->Geo->dWidth;
+      tile_height = drawImage->Geo.dHeight;
+      tile_width = drawImage->Geo.dWidth;
       // When we are drawing just one tile, threading is not needed
       useThreading = false;
     } else {
-      x_div = int((float(drawImage->Geo->dWidth) / tile_width)) + 1;
-      y_div = int((float(drawImage->Geo->dHeight) / tile_height)) + 1;
+      x_div = int((float(drawImage->Geo.dWidth) / tile_width)) + 1;
+      y_div = int((float(drawImage->Geo.dHeight) / tile_height)) + 1;
     }
     internalWidth = tile_width * x_div;
     internalHeight = tile_height * y_div;
 
     // New geo location needs to be extended based on new width and height
-    CGeoParams internalGeo = *drawImage->Geo;
+    CGeoParams internalGeo = drawImage->Geo;
 
-    internalGeo.bbox.right = ((drawImage->Geo->bbox.right - drawImage->Geo->bbox.left) / double(drawImage->Geo->dWidth)) * double(internalWidth) + drawImage->Geo->bbox.left;
-    internalGeo.bbox.bottom = ((drawImage->Geo->bbox.bottom - drawImage->Geo->bbox.top) / double(drawImage->Geo->dHeight)) * double(internalHeight) + drawImage->Geo->bbox.top;
+    internalGeo.bbox.right = ((drawImage->Geo.bbox.right - drawImage->Geo.bbox.left) / double(drawImage->Geo.dWidth)) * double(internalWidth) + drawImage->Geo.bbox.left;
+    internalGeo.bbox.bottom = ((drawImage->Geo.bbox.bottom - drawImage->Geo.bbox.top) / double(drawImage->Geo.dHeight)) * double(internalHeight) + drawImage->Geo.bbox.top;
 
     // Setup the renderer to draw the tiles with.We do not keep the calculated results for CDF_CHAR (faster)
     CAreaMapper *drawTileClass = new CAreaMapper();
@@ -482,7 +482,7 @@ private:
     DrawTileSettings *curTileSettings;
     for (int x = 0; x < x_div; x++) {
       for (int y = 0; y < y_div; y++) {
-        status = reproj(warper, dataSource, &internalGeo, x, (y_div - 1) - y, x_div, y_div);
+        status = reproj(warper, dataSource, internalGeo, x, (y_div - 1) - y, x_div, y_div);
         int tileId = x + y * x_div;
         curTileSettings = &drawTileSettings[tileId];
         curTileSettings->id = tileId;

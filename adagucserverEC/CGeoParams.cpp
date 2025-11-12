@@ -26,29 +26,29 @@
 #include "CGeoParams.h"
 #include "CDataSource.h"
 
-void CoordinatesXYtoScreenXY(double &x, double &y, CGeoParams *geoParam) {
-  x -= geoParam->bbox.left;
-  y -= geoParam->bbox.top;
-  double bboxW = geoParam->bbox.right - geoParam->bbox.left;
-  double bboxH = geoParam->bbox.bottom - geoParam->bbox.top;
+void CoordinatesXYtoScreenXY(double &x, double &y, CGeoParams &geoParam) {
+  x -= geoParam.bbox.left;
+  y -= geoParam.bbox.top;
+  double bboxW = geoParam.bbox.right - geoParam.bbox.left;
+  double bboxH = geoParam.bbox.bottom - geoParam.bbox.top;
   x /= bboxW;
   y /= bboxH;
-  x *= double(geoParam->dWidth);
-  y *= double(geoParam->dHeight);
+  x *= double(geoParam.dWidth);
+  y *= double(geoParam.dHeight);
 }
 
-void CoordinatesXYtoScreenXY(f8point &p, CGeoParams *geoParam) {
-  p.x -= geoParam->bbox.left;
-  p.y -= geoParam->bbox.top;
-  double bboxW = geoParam->bbox.right - geoParam->bbox.left;
-  double bboxH = geoParam->bbox.bottom - geoParam->bbox.top;
+void CoordinatesXYtoScreenXY(f8point &p, CGeoParams &geoParam) {
+  p.x -= geoParam.bbox.left;
+  p.y -= geoParam.bbox.top;
+  double bboxW = geoParam.bbox.right - geoParam.bbox.left;
+  double bboxH = geoParam.bbox.bottom - geoParam.bbox.top;
   p.x /= bboxW;
   p.y /= bboxH;
-  p.x *= double(geoParam->dWidth);
-  p.y *= double(geoParam->dHeight);
+  p.x *= double(geoParam.dWidth);
+  p.y *= double(geoParam.dHeight);
 }
 
-void CoordinatesXYtoScreenXY(f8box &b, CGeoParams *geoParam) {
+void CoordinatesXYtoScreenXY(f8box &b, CGeoParams &geoParam) {
   CoordinatesXYtoScreenXY(b.left, b.top, geoParam);
   CoordinatesXYtoScreenXY(b.right, b.bottom, geoParam);
 }

@@ -965,8 +965,8 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
   dataSource->featureSet = geojsonkey.c_str();
 
   // Make the width and height of the new 2D adaguc field the same as the viewing window
-  dataSource->dWidth = dataSource->srvParams->Geo->dWidth;
-  dataSource->dHeight = dataSource->srvParams->Geo->dHeight;
+  dataSource->dWidth = dataSource->srvParams->Geo.dWidth;
+  dataSource->dHeight = dataSource->srvParams->Geo.dHeight;
 
   // Set statistics
   if (dataSource->stretchMinMax) {
@@ -988,7 +988,7 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
   if (dataSource->srvParams->requestType == REQUEST_WMS_GETLEGENDGRAPHIC || (dataSource->dWidth == 1 && dataSource->dHeight == 1)) {
     if (dataSource->stretchMinMax == false || (nrDataObjects > 0 && dataSource->getDataObject(0)->variableName.equals("features") == true)) {
       // CDBDebug("Returning because of REQUEST_WMS_GETLEGENDGRAPHIC and  dataSource->stretchMinMax is set to false or variable name is features");
-      dataSource->srvParams->Geo->bbox.toArray(dataSource->dfBBOX);
+      dataSource->srvParams->Geo.bbox.toArray(dataSource->dfBBOX);
       return 0;
     }
   }
@@ -1013,10 +1013,10 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
       // Width needs to be at least 2 in this case.
       if (dataSource->dWidth == 1) dataSource->dWidth = 2;
       if (dataSource->dHeight == 1) dataSource->dHeight = 2;
-      double cellSizeX = (dataSource->srvParams->Geo->bbox.right - dataSource->srvParams->Geo->bbox.left) / double(dataSource->dWidth);
-      double cellSizeY = (dataSource->srvParams->Geo->bbox.top - dataSource->srvParams->Geo->bbox.bottom) / double(dataSource->dHeight);
-      double offsetX = dataSource->srvParams->Geo->bbox.left + cellSizeX / 2;
-      double offsetY = dataSource->srvParams->Geo->bbox.bottom + cellSizeY / 2;
+      double cellSizeX = (dataSource->srvParams->Geo.bbox.right - dataSource->srvParams->Geo.bbox.left) / double(dataSource->dWidth);
+      double cellSizeY = (dataSource->srvParams->Geo.bbox.top - dataSource->srvParams->Geo.bbox.bottom) / double(dataSource->dHeight);
+      double offsetX = dataSource->srvParams->Geo.bbox.left + cellSizeX / 2;
+      double offsetY = dataSource->srvParams->Geo.bbox.bottom + cellSizeY / 2;
 
       CDF::Dimension *dimX;
       CDF::Dimension *dimY;
@@ -1047,7 +1047,7 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
       }
       bool projectionRequired = false;
       CImageWarper imageWarper;
-      if (dataSource->srvParams->Geo->CRS.length() > 0) {
+      if (dataSource->srvParams->Geo.CRS.length() > 0) {
         projectionRequired = true;
         //            for(size_t d=0;d<nrDataObjects;d++){
         polygonIndexVar->setAttributeText("grid_mapping", "customgridprojection");
@@ -1056,7 +1056,7 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
           CDF::Variable *projectionVar = new CDF::Variable();
           projectionVar->name.copy("customgridprojection");
           cdfObject->addVariable(projectionVar);
-          dataSource->nativeEPSG = dataSource->srvParams->Geo->CRS.c_str();
+          dataSource->nativeEPSG = dataSource->srvParams->Geo.CRS.c_str();
           imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
           if (dataSource->nativeProj4.length() == 0) {
             dataSource->nativeProj4 = LATLONPROJECTION;
@@ -1098,8 +1098,7 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
 
 #ifdef CCONVERTGEOJSON_DEBUG
       CDBDebug("Datasource CRS = %s nativeproj4 = %s", dataSource->nativeEPSG.c_str(), dataSource->nativeProj4.c_str());
-      CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->Geo->bbox.left, dataSource->srvParams->Geo->bbox.bottom, dataSource->srvParams->Geo->bbox.right,
-               dataSource->srvParams->Geo->bbox.top);
+      CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->Geo.bbox.left, dataSource->srvParams->Geo.bbox.bottom, dataSource->srvParams->Geo.bbox.right, dataSource->srvParams->Geo.bbox.top);
       CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
 #endif
 

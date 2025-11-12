@@ -129,8 +129,8 @@ int CDDPUVComponents::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
     CDBDebug("Applying CDDPUVComponents after reading");
 
     CImageWarper warper;
-    if (dataSource->srvParams->Geo->CRS.empty()) {
-      dataSource->srvParams->Geo->CRS = "EPSG:4236";
+    if (dataSource->srvParams->Geo.CRS.empty()) {
+      dataSource->srvParams->Geo.CRS = "EPSG:4236";
     }
     warper.initreproj(dataSource, dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
 

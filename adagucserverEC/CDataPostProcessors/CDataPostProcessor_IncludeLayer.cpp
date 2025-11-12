@@ -231,7 +231,7 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
 
       CImageWarper warper;
 
-      status = warper.initreproj(dataSourceToInclude, &destGeo, &dataSource->srvParams->cfg->Projection);
+      status = warper.initreproj(dataSourceToInclude, destGeo, &dataSource->srvParams->cfg->Projection);
       if (status != 0) {
         CDBError("Unable to initialize projection");
         return 1;
@@ -240,7 +240,7 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
       auto dataType = varToWriteTo->getType();
 
       GenericDataWarper genericDataWarper;
-      GDWArgs args = {.warper = &warper, .sourceData = sourceData, .sourceGeoParams = &sourceGeo, .destGeoParams = &destGeo};
+      GDWArgs args = {.warper = &warper, .sourceData = sourceData, .sourceGeoParams = sourceGeo, .destGeoParams = destGeo};
 
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
   if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction(x, y, val, warperState, settings); });

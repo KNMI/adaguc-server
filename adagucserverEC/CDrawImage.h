@@ -135,13 +135,13 @@ public:
   gdImagePtr image;
 
   int colors[256];
-  CGeoParams *Geo;
+  CGeoParams Geo;
   CDrawImage();
   ~CDrawImage();
 
 public:
   int createImage(int _dW, int _dH);
-  int createImage(CGeoParams *_Geo);
+  int createImage(CGeoParams &_Geo);
   int createImage(const char *fn);
   int createImage(CDrawImage *image, int width, int height);
   int printImagePng8(bool useBitAlpha);

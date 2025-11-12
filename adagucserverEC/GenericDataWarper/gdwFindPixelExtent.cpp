@@ -2,9 +2,9 @@
 #include <limits>
 #include <CGeoParams.h>
 #include <CImageWarper.h>
-int gdwFindPixelExtent(int *PXExtentBasedOnSource, CGeoParams *sourceGeoParams, CGeoParams *destGeoParams, CImageWarper *warper) {
-  int sourceDataWidth = sourceGeoParams->dWidth;
-  int sourceDataHeight = sourceGeoParams->dHeight;
+int gdwFindPixelExtent(int *PXExtentBasedOnSource, CGeoParams &sourceGeoParams, CGeoParams &destGeoParams, CImageWarper *warper) {
+  int sourceDataWidth = sourceGeoParams.dWidth;
+  int sourceDataHeight = sourceGeoParams.dHeight;
 
   PXExtentBasedOnSource[0] = 0;
   PXExtentBasedOnSource[1] = 0;
@@ -16,26 +16,26 @@ int gdwFindPixelExtent(int *PXExtentBasedOnSource, CGeoParams *sourceGeoParams, 
   PXExtentBasedOnSource[2] = -1;
   PXExtentBasedOnSource[3] = -1;
 
-  double dfSourceW = double(sourceGeoParams->dWidth);
-  double dfSourceH = double(sourceGeoParams->dHeight);
+  double dfSourceW = double(sourceGeoParams.dWidth);
+  double dfSourceH = double(sourceGeoParams.dHeight);
 
-  int imageHeight = destGeoParams->dHeight;
-  int imageWidth = destGeoParams->dWidth;
-  double dfDestW = double(destGeoParams->dWidth);
-  double dfDestH = double(destGeoParams->dHeight);
+  int imageHeight = destGeoParams.dHeight;
+  int imageWidth = destGeoParams.dWidth;
+  double dfDestW = double(destGeoParams.dWidth);
+  double dfDestH = double(destGeoParams.dHeight);
 
   int lowerIndex = 1, higherIndex = 3;
 
-  double dfSourceExtW = sourceGeoParams->bbox.span().x;
+  double dfSourceExtW = sourceGeoParams.bbox.span().x;
   ;
-  double dfSourceOrigX = sourceGeoParams->bbox.left;
-  double dfSourceExtH = (sourceGeoParams->bbox.get(lowerIndex) - sourceGeoParams->bbox.get(higherIndex));
-  double dfSourceOrigY = sourceGeoParams->bbox.get(higherIndex);
+  double dfSourceOrigX = sourceGeoParams.bbox.left;
+  double dfSourceExtH = (sourceGeoParams.bbox.get(lowerIndex) - sourceGeoParams.bbox.get(higherIndex));
+  double dfSourceOrigY = sourceGeoParams.bbox.get(higherIndex);
 
-  double dfDestExtW = destGeoParams->bbox.right - destGeoParams->bbox.left;
-  double dfDestExtH = destGeoParams->bbox.bottom - destGeoParams->bbox.top;
-  double dfDestOrigX = destGeoParams->bbox.left;
-  double dfDestOrigY = destGeoParams->bbox.top;
+  double dfDestExtW = destGeoParams.bbox.right - destGeoParams.bbox.left;
+  double dfDestExtH = destGeoParams.bbox.bottom - destGeoParams.bbox.top;
+  double dfDestOrigX = destGeoParams.bbox.left;
+  double dfDestOrigY = destGeoParams.bbox.top;
 
   int startX = 0;
   int startY = 0;

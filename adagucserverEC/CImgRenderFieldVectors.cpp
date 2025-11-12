@@ -122,8 +122,8 @@ std::vector<CalculatedWindVector> calculateBarbsAndVectorsAndSpeedFromUVComponen
   units = dataSource->getDataObject(0)->getUnits();
 
   // Wind VECTOR
-  int dImageWidth = drawImage->Geo->dWidth + 1;
-  int dImageHeight = drawImage->Geo->dHeight + 1;
+  int dImageWidth = drawImage->Geo.dWidth + 1;
+  int dImageHeight = drawImage->Geo.dHeight + 1;
   int dPixelDestW = dPixelExtent[2] - dPixelExtent[0];
   int dPixelDestH = dPixelExtent[3] - dPixelExtent[1];
   size_t numDestPixels = (dPixelDestW + 1) * (dPixelDestH + 1);
@@ -135,8 +135,8 @@ std::vector<CalculatedWindVector> calculateBarbsAndVectorsAndSpeedFromUVComponen
   int firstXPos = 0;
   int firstYPos = 0;
 
-  double tx = ((-drawImage->Geo->bbox.left) / (drawImage->Geo->bbox.right - drawImage->Geo->bbox.left)) * double(dImageWidth);
-  double ty = dImageHeight - ((-drawImage->Geo->bbox.bottom) / (drawImage->Geo->bbox.top - drawImage->Geo->bbox.bottom)) * double(dImageHeight);
+  double tx = ((-drawImage->Geo.bbox.left) / (drawImage->Geo.bbox.right - drawImage->Geo.bbox.left)) * double(dImageWidth);
+  double ty = dImageHeight - ((-drawImage->Geo.bbox.bottom) / (drawImage->Geo.bbox.top - drawImage->Geo.bbox.bottom)) * double(dImageHeight);
 
   // Are u/v values in m/s? (Should we convert for wind barb drawing?)
   // Depends on value units
@@ -171,8 +171,8 @@ std::vector<CalculatedWindVector> calculateBarbsAndVectorsAndSpeedFromUVComponen
 
             if ((int(x - firstXPos) % vectorDensityPy == 0 && (y - firstYPos) % vectorDensityPx == 0) || (enableContour == false && enableShade == false)) {
               // Calculate coordinates from requested coordinate system
-              double projectedCoordX = ((double(x) / double(dImageWidth)) * (drawImage->Geo->bbox.right - drawImage->Geo->bbox.left)) + drawImage->Geo->bbox.left;
-              double projectedCoordY = ((double(dImageHeight - y) / double(dImageHeight)) * (drawImage->Geo->bbox.top - drawImage->Geo->bbox.bottom)) + drawImage->Geo->bbox.bottom;
+              double projectedCoordX = ((double(x) / double(dImageWidth)) * (drawImage->Geo.bbox.right - drawImage->Geo.bbox.left)) + drawImage->Geo.bbox.left;
+              double projectedCoordY = ((double(dImageHeight - y) / double(dImageHeight)) * (drawImage->Geo.bbox.top - drawImage->Geo.bbox.bottom)) + drawImage->Geo.bbox.bottom;
 
               // Transform view point on screen to lat/lon
               double coordLon = projectedCoordX;

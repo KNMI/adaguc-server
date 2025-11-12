@@ -61,21 +61,21 @@ void CImgRenderStippling::_setStippling(int screenX, int screenY, float val) {
 }
 
 template <class T> void CImgRenderStippling::_stippleMiddleOfPoints() {
-  double bboxWidth = (dataSource->srvParams->Geo->bbox.right - dataSource->srvParams->Geo->bbox.left);
-  double bboxHeight = (dataSource->srvParams->Geo->bbox.top - dataSource->srvParams->Geo->bbox.bottom);
+  double bboxWidth = (dataSource->srvParams->Geo.bbox.right - dataSource->srvParams->Geo.bbox.left);
+  double bboxHeight = (dataSource->srvParams->Geo.bbox.top - dataSource->srvParams->Geo.bbox.bottom);
 
   for (int y = 0; y < dataSource->dHeight; y++) {
     for (int x = 0; x < dataSource->dWidth; x++) {
       double cx = dataSource->dfBBOX[0] + dataSource->dfCellSizeX * double(x) + dataSource->dfCellSizeX / 2;
       double cy = dataSource->dfBBOX[3] + dataSource->dfCellSizeY * double(y) + dataSource->dfCellSizeY / 2;
       warper->reprojpoint_inv(cx, cy);
-      cx -= dataSource->srvParams->Geo->bbox.left;
+      cx -= dataSource->srvParams->Geo.bbox.left;
       cx /= bboxWidth;
-      cx *= double(dataSource->srvParams->Geo->dWidth);
-      cy -= dataSource->srvParams->Geo->bbox.bottom;
+      cx *= double(dataSource->srvParams->Geo.dWidth);
+      cy -= dataSource->srvParams->Geo.bbox.bottom;
       cy /= bboxHeight;
       cy = 1 - cy;
-      cy *= double(dataSource->srvParams->Geo->dHeight);
+      cy *= double(dataSource->srvParams->Geo.dHeight);
       int dx = cx, dy = cy;
       T val = ((T *)sourceData)[x + y * dataSource->dWidth];
       CDBDebug("%f", (float)val);
@@ -106,8 +106,8 @@ void CImgRenderStippling::render(CImageWarper *warper, CDataSource *dataSource, 
     settings.hasNodataValue = true;
     settings.dfNodataValue = -100000.f;
   }
-  settings.width = drawImage->Geo->dWidth;
-  settings.height = drawImage->Geo->dHeight;
+  settings.width = drawImage->Geo.dWidth;
+  settings.height = drawImage->Geo.dHeight;
 
   settings.dataField = new float[settings.width * settings.height];
   for (size_t y = 0; y < settings.height; y++) {
@@ -155,8 +155,8 @@ void CImgRenderStippling::render(CImageWarper *warper, CDataSource *dataSource, 
     }
   }
 
-  double bboxWidth = (dataSource->srvParams->Geo->bbox.right - dataSource->srvParams->Geo->bbox.left);
-  double bboxHeight = (dataSource->srvParams->Geo->bbox.top - dataSource->srvParams->Geo->bbox.bottom);
+  double bboxWidth = (dataSource->srvParams->Geo.bbox.right - dataSource->srvParams->Geo.bbox.left);
+  double bboxHeight = (dataSource->srvParams->Geo.bbox.top - dataSource->srvParams->Geo.bbox.bottom);
 
   /*
    * Set stippling exactly in the middle of grid points
@@ -199,13 +199,13 @@ void CImgRenderStippling::render(CImageWarper *warper, CDataSource *dataSource, 
    * Warp the data to a new grid and plot hatching in screencoordinates.
    */
 
-  int startX = int(((-dataSource->srvParams->Geo->bbox.left) / bboxWidth) * dataSource->srvParams->Geo->dWidth);
+  int startX = int(((-dataSource->srvParams->Geo.bbox.left) / bboxWidth) * dataSource->srvParams->Geo.dWidth);
   startX = (startX % (xDistance * 2)) - (xDistance * 2);
-  int startY = int(((dataSource->srvParams->Geo->bbox.bottom) / bboxHeight) * dataSource->srvParams->Geo->dHeight);
+  int startY = int(((dataSource->srvParams->Geo.bbox.bottom) / bboxHeight) * dataSource->srvParams->Geo.dHeight);
   startY = (startY % (yDistance * 2)) - (yDistance * 2);
 
   GenericDataWarper genericDataWarper;
-  GDWArgs args = {.warper = warper, .sourceData = sourceData, .sourceGeoParams = &sourceGeo, .destGeoParams = drawImage->Geo};
+  GDWArgs args = {.warper = warper, .sourceData = sourceData, .sourceGeoParams = sourceGeo, .destGeoParams = drawImage->Geo};
 
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
   if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction(x, y, val, warperState, settings); });

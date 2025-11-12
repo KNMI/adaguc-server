@@ -126,7 +126,7 @@ TEST(CImgRenderFieldVectors, jacobianTransformUWCWDini) {
 
   // Init warper
   CImageWarper warper;
-  int status = warper.initreproj(crs.c_str(), &geo, &v);
+  int status = warper.initreproj(crs.c_str(), geo, &v);
   CHECK(status == 0);
 
   // Grid cell to do the calculation for
@@ -182,7 +182,7 @@ TEST(CImgRenderFieldVectors, jacobianTransformLatLon) {
 
   // Init warper
   CImageWarper warper;
-  int status = warper.initreproj(crs.c_str(), &geo, &v);
+  int status = warper.initreproj(crs.c_str(), geo, &v);
   CHECK(status == 0);
 
   // Grid cell to do the calculation for
@@ -237,7 +237,7 @@ f8component testDiniCoordinate(f8point pointToCheck, f8component speedVector) {
 
   // Init warper
   CImageWarper warper;
-  warper.initreproj(crs.c_str(), &geo, &v);
+  warper.initreproj(crs.c_str(), geo, &v);
 
   double cellSize = 0.05;
   f8point gridCoordLL = {.x = pointToCheck.x, .y = pointToCheck.y};
