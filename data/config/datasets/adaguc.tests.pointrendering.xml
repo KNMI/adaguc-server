@@ -54,7 +54,7 @@
 
   <Style name="discs">
     <Point pointstyle="disc" fillcolor="#00000060" textcolor="#FFFFFFFF" linecolor="#000000A0" discradius="18" dot="false" anglestart="0" anglestep="120" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="10" textformat="%0.1f"/>
-    <FilterPoints skip="" use="06235,06280,06260,06290,06310,06380"/>
+    <FilterPoints use="06235,06280,06260,06290,06310,06380"/>
   </Style>
 
   <Style name="temperature">
