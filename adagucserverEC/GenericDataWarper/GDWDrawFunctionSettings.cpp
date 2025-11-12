@@ -1,5 +1,4 @@
 #include "GenericDataWarper/GDWDrawFunctionSettings.h"
-#include "CImageOperators/smoothRasterField.h"
 #include <sys/types.h>
 
 GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawImage *drawImage, const CStyleConfiguration *styleConfiguration) {
