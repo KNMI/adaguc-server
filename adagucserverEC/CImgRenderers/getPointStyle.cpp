@@ -77,7 +77,7 @@ PointStyle getPointStyle(CServerConfig::XMLE_Point *pointCfg, CServerConfig::XML
   }
   if (attr.anglestep.empty() == false) {
     pointStyle.angleStep = attr.anglestep.toDouble();
-    pointStyle.useAngles = true; // TODO: wasn't here before, but seems logical?
+    pointStyle.useAngles = true;
   }
 
   if (attr.textformat.empty() == false) {

@@ -26,7 +26,6 @@ struct PointStyle {
   double angleStep;
   bool useAngles;
 
-  // TODO: can this be a std::string already?
   CT::string textFormat;
   bool plotStationId;
 

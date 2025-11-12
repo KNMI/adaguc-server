@@ -153,13 +153,10 @@ public:
   public:
     class Cattr {
     public:
-      CT::string skip, use;
+      CT::string use;
     } attr;
     void addAttribute(const char *attrname, const char *attrvalue) {
-      if (equals("skip", attrname)) {
-        attr.skip.copy(attrvalue);
-        return;
-      } else if (equals("use", attrname)) {
+      if (equals("use", attrname)) {
         attr.use.copy(attrvalue);
         return;
       }

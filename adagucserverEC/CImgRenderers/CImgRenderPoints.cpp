@@ -30,6 +30,15 @@
 
 const char *CImgRenderPoints::className = "CImgRenderPoints";
 
+struct ThinningInfo {
+  bool doThinning = false;
+  int thinningRadius = 25;
+};
+
+typedef std::vector<f8point> SimpleSymbol;
+typedef std::map<std::string, SimpleSymbol> SimpleSymbolMap;
+SimpleSymbolMap simpleSymbolMapCache;
+
 void drawTextsForVector(CDrawImage *drawImage, CDataSource *dataSource, VectorStyle &vectorStyle, PointDVWithLatLon *pointStrength, PointDVWithLatLon *pointDirection) {
   // Draw station id
   auto strength = pointStrength->v;
@@ -58,11 +67,6 @@ void drawTextsForVector(CDrawImage *drawImage, CDataSource *dataSource, VectorSt
     }
   }
 }
-
-struct ThinningInfo {
-  bool doThinning = false;
-  int thinningRadius = 25;
-};
 
 ThinningInfo getThinningInfo(CServerConfig::XMLE_Style *s) {
   ThinningInfo info;
@@ -187,10 +191,6 @@ void renderVectorPoints(std::vector<size_t> thinnedPointIndexList, CImageWarper 
     }
   }
 }
-
-typedef std::vector<f8point> SimpleSymbol;
-typedef std::map<std::string, SimpleSymbol> SimpleSymbolMap;
-SimpleSymbolMap simpleSymbolMapCache;
 
 SimpleSymbolMap makeSymbolMap(CServerConfig::XMLE_Configuration *cfg) {
   SimpleSymbolMap simpleSymbolMap;
@@ -392,7 +392,6 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
   int doneMatrixW = 2;
   int doneMatrixMaxPerSector = -1;
 
-  // TODO: write docs and tests for maxpointspercell and maxpointcellsize
   if (pointStyle.maxPointCellSize != -1) {
     doneMatrixH = pointStyle.maxPointCellSize;
     doneMatrixW = pointStyle.maxPointCellSize;
@@ -509,10 +508,11 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
   }
 }
 
-void shouldUseFilterPoints(CStyleConfiguration *styleConfiguration, std::unordered_set<std::string> &usePoints, std::unordered_set<std::string> &skipPoints) {
-  // TODO: skip is never used, and no test exists for this case
+std::unordered_set<std::string> shouldUseFilterPoints(CStyleConfiguration *styleConfiguration) {
+  std::unordered_set<std::string> usePoints;
+
   CServerConfig::XMLE_Style *s = styleConfiguration->styleConfig;
-  if (s->FilterPoints.size() == 0) return;
+  if (s->FilterPoints.size() == 0) return usePoints;
   auto attr = s->FilterPoints[0]->attr;
 
   if (!attr.use.empty()) {
@@ -520,11 +520,7 @@ void shouldUseFilterPoints(CStyleConfiguration *styleConfiguration, std::unorder
       usePoints.insert(token.c_str());
     }
   }
-  if (!attr.skip.empty()) {
-    for (const auto &token : attr.skip.splitToStack(",")) {
-      skipPoints.insert(token.c_str());
-    }
-  }
+  return usePoints;
 }
 
 void renderSingleVolumes(std::vector<size_t> thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle) {
@@ -560,13 +556,14 @@ void renderSingleSymbols(std::vector<size_t> thinnedPointIndexList, CDataSource 
 
     for (auto pointIndex : thinnedPointIndexList) {
       auto pointValue = &(*pts)[pointIndex];
-      if (shouldSkipPoint(dataSource, styleConfiguration, pointStyle, pointValue->v, fillValueObjectOne)) continue;
+      float value = pointValue->v;
+      if (shouldSkipPoint(dataSource, styleConfiguration, pointStyle, value, fillValueObjectOne)) continue;
 
       int x = pointValue->x;
       int y = dataSource->srvParams->Geo->dHeight - pointValue->y;
 
       for (auto symbolInterval : styleConfiguration->symbolIntervals) {
-        if (!shouldDrawSymbol(symbolInterval, pointValue->v)) continue;
+        if (!shouldDrawSymbol(symbolInterval, value)) continue;
 
         std::string symbolFile = symbolInterval->attr.file.c_str();
         drawSymbolForPoint(drawImage, symbolCache, symbolFile, symbolInterval, x, y);
@@ -639,16 +636,13 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
     CDBError("styleConfiguration==NULL!");
   }
 
-  // Fill use/skip sets if FilterPoints was set
-  std::unordered_set<std::string> usePoints;
-  std::unordered_set<std::string> skipPoints;
-  shouldUseFilterPoints(styleConfiguration, usePoints, skipPoints);
-
+  std::unordered_set<std::string> usePoints = shouldUseFilterPoints(styleConfiguration);
   ThinningInfo thinningInfo = getThinningInfo(styleConfiguration->styleConfig);
 
   for (auto pointConfig : styleConfig->Point) {
     PointStyle pointStyle = getPointStyle(pointConfig, dataSource->srvParams->cfg);
     auto thinnedPointIndexList = doThinningGetIndices(dataSource->getDataObject(0)->points, thinningInfo.doThinning, thinningInfo.thinningRadius, usePoints);
+    CDBDebug("Point plotting %d elements %d", thinnedPointIndexList.size(), usePoints.size());
 
     if (pointConfig->attr.dot.equalsIgnoreCase("true")) {
       renderSingleDot(thinnedPointIndexList, dataSource, drawImage, styleConfiguration, pointStyle);

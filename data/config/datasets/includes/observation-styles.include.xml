@@ -74,7 +74,7 @@
     <Max>16</Max>
     <RenderMethod>point</RenderMethod>
     <Vector vectorstyle="barb" linewidth="2" linecolor="#0000FFFF" plotstationid="true" />
-    <FilterPoints skip="" use="06235,06280,06260,06290,06310,06380"/>
+    <FilterPoints use="06235,06280,06260,06290,06310,06380"/>
   </Style>
 
   <Style name="barbthinned" title="Wind barbs thinned" abstract="Wind barbs thinned">
@@ -100,7 +100,7 @@
     <Max>16</Max>
     <RenderMethod>point</RenderMethod>
     <Vector vectorstyle="disc" discradius="20" linewidth="1.0" linecolor="#00000060"  fillcolor="#00000060"  textcolor="#FFFFFFFF"  fontsize="10" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" />
-    <FilterPoints skip="" use="06235,06280,06260,06290,06310,06380"/>
+    <FilterPoints use="06235,06280,06260,06290,06310,06380"/>
   </Style>
   
   <Style name="bftdisc">
@@ -109,7 +109,7 @@
     <Max>30</Max>
     <RenderMethod>point</RenderMethod>
     <Vector vectorstyle="disc" textformat="%0.0f" discradius="20" linewidth="1.0" linecolor="#00000060"  fillcolor="#00000060"  textcolor="#FFFFFFFF"  fontsize="10" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" />
-    <FilterPoints skip="" use="06235,06280,06260,06290,06310,06380"/>
+    <FilterPoints use="06235,06280,06260,06290,06310,06380"/>
   </Style>
     
   <Style name="bftalldisc">
@@ -127,7 +127,7 @@
     <Thinning radius="40"/>
     <RenderMethod>point</RenderMethod>
     <Vector vectorstyle="vector" linewidth="2" linecolor="#0000FFFF" scale="5" plotstationid="true"/>
-    <FilterPoints skip="" use="06235,06280,06260,06290,06310,06380"/>
+    <FilterPoints use="06235,06280,06260,06290,06310,06380"/>
   </Style>
   
   <Style name="barballvector">
@@ -145,7 +145,7 @@
     <Max>30</Max>
     <RenderMethod>point</RenderMethod>
     <Point pointstyle="disc" fillcolor="#00000060" textcolor="#FFFFFFFF" linecolor="#000000A0" discradius="18" dot="false" anglestart="0" anglestep="120" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="10" textformat="%0.1f"/>
-    <FilterPoints skip="" use="06235,06280,06260,06290,06310,06380"/>
+    <FilterPoints use="06235,06280,06260,06290,06310,06380"/>
   </Style>
   
   <Style name="temperaturealldisc">
@@ -181,7 +181,7 @@
     <Max>30</Max>
     <RenderMethod>point</RenderMethod>
     <Point pointstyle="disc" fillcolor="#800000FF" textcolor="#FFFFFFFF" linecolor="#000000FF" discradius="18" textradius="14" dot="false" anglestart="0" anglestep="120" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="8" textformat="%0.1f" plotstationid="true"/>
-    <FilterPoints skip="" use="06235,06280,06260,06290,06310,06380"/>
+    <FilterPoints use="06235,06280,06260,06290,06310,06380"/>
   </Style>
   
   <Style name="cloudlayer">
@@ -198,7 +198,7 @@
     <Thinning radius="40"/>
     <RenderMethod>point</RenderMethod>
     <Point pointstyle="point" fillcolor="#800000FF" textcolor="#000000FF" linecolor="#000000FF" discradius="0" dot="true" anglestart="0" anglestep="120" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="8" textformat="%0.1f" plotstationid="true"/>
-    <FilterPoints skip="" use="06235,06280,06260,06290,06310,06380"/>
+    <FilterPoints use="06235,06280,06260,06290,06310,06380"/>
   </Style>
   
   <Style name="temperaturealllabel">
@@ -216,7 +216,7 @@
     <Thinning radius="40"/>
     <RenderMethod>point</RenderMethod>
     <Point fillcolor="#0000ffff" textcolor="#000000FF" linecolor="#000000a0" pointstyle="volume" discradius="20" dot="true" textradius="20" anglestart="0" anglestep="120" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="8" textformat="%0.1f" plotstationid="true"/>
-    <FilterPoints skip="" use="06235,06280,06260,06290,06310,06380"/>
+    <FilterPoints use="06235,06280,06260,06290,06310,06380"/>
   </Style>
   
   <Style name="temperatureallvolume">

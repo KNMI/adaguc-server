@@ -27,6 +27,8 @@ Configuration of rendering point data
 | `textradius`    | float   | 16          | Distance of text from point location
 | `discradius`    | double  | 20          | Draw disc at location
 | `dot`           | string  | "false"     | Draw a point at the point coordinates (stored as string, e.g. "true"/"false")
+| `maxpointspercell` | int  | -1          | Filter number of points per cell. Use with `maxpointcellsize`.
+| `maxpointcellsize` | int  | -1          | Filter number of poitns per cell. Use with `maxpointspercell`.
 
 The Point element defines the rendering of point data.
 
