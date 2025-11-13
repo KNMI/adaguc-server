@@ -107,7 +107,9 @@ int layerTypeLiveUpdateRender(CDataSource *dataSource, CServerParams *srvParam) 
     solTVar->dimensionlinks.push_back(dimX);
     solTVar->setType(CDF_FLOAT);
     solTVar->name = "solarterminator";
-    solTVar->setAttributeText("units", "categories");
+    solTVar->setAttributeText("standard_name", "solarterminator");
+    solTVar->setAttributeText("long_name", "solar terminator");
+    solTVar->setAttributeText("units", "light phase");
     solTVar->setAttributeText("grid_mapping", "projection");
     cdfObject->addVariable(solTVar);
     CDF::Variable::CustomMemoryReader *memoryReaderSolT = CDF::Variable::CustomMemoryReaderInstance;
@@ -195,7 +197,7 @@ int layerTypeLiveUpdateRenderIntoImageDataWriter(CDataSource *dataSource, CServe
   std::vector<CDataSource *> dataSourceRef = {dataSource};
 
   if (srvParam->requestType == REQUEST_WMS_GETFEATUREINFO) {
-    status = imageDataWriter.getFeatureInfo(dataSourceRef, 0, int(srvParam->dX), int(srvParam->dY));
+    status = imageDataWriter.getFeatureInfoVirtual(dataSourceRef, 0, int(srvParam->dX), int(srvParam->dY), srvParam);
   }
   if (srvParam->requestType == REQUEST_WMS_GETMAP) {
     status = imageDataWriter.addData(dataSourceRef);
@@ -242,4 +244,24 @@ int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(MetadataLayer *metada
   metadataLayer->layerMetadata.dimList.push_back(dim);
 
   return 0;
+}
+
+LiveUpdateTimeRange calculateLiveUpdateTimeRange(const char *interval, double offsetSeconds) {
+  LiveUpdateTimeRange range;
+  range.interval = interval;
+
+  CTime timeInstance;
+  timeInstance.init("seconds since 1970", "standard");
+
+  double epochTime = timeInstance.getEpochTimeFromDateString(CTime::currentDateTime());
+
+  double startTimeOffset = timeInstance.quantizeTimeToISO8601(epochTime - offsetSeconds, interval, "low");
+  double stopTimeOffset = timeInstance.quantizeTimeToISO8601(epochTime + offsetSeconds, interval, "low");
+  double defaultOffset = timeInstance.quantizeTimeToISO8601(epochTime, interval, "low");
+
+  range.startTime = timeInstance.dateToISOString(timeInstance.offsetToDate(startTimeOffset));
+  range.stopTime = timeInstance.dateToISOString(timeInstance.offsetToDate(stopTimeOffset));
+  range.defaultTime = timeInstance.dateToISOString(timeInstance.offsetToDate(defaultOffset));
+
+  return range;
 }

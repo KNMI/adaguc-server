@@ -6,6 +6,18 @@
 
 #ifndef LAYERTYPELIVEUPDATE_H
 
+#define LIVEUPDATE_DEFAULT_INTERVAL "PT10M"
+#define LIVEUPDATE_DEFAULT_OFFSET_SECONDS (3600 * 24 * 365) // one year
+/**
+ * Config for the time dimension (not backed by the DataSource info)
+ */
+struct LiveUpdateTimeRange {
+  CT::string startTime;
+  CT::string stopTime;
+  CT::string defaultTime;
+  CT::string interval;
+};
+
 /**
  * Configures a datasource with a fake time dimension
  */
@@ -30,5 +42,10 @@ int layerTypeLiveUpdateRenderIntoImageDataWriter(CDataSource *dataSource, CServe
  * Configures an actual time range in a WMSLayer object. This is used for generating the Layer element in the WMS GetCapabilities file
  */
 int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(MetadataLayer *metadataLayer);
+
+/**
+ * Configures the corresponding time range
+ */
+LiveUpdateTimeRange calculateLiveUpdateTimeRange(const char *interval = LIVEUPDATE_DEFAULT_INTERVAL, double offsetSeconds = LIVEUPDATE_DEFAULT_OFFSET_SECONDS);
 
 #endif // !LAYERTYPELIVEUPDATE_H
