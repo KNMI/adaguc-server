@@ -33,5 +33,14 @@ struct CKeyValuePair {
   CT::string key;
   CT::string value;
 };
-typedef CT::StackList<CKeyValuePair> CKeyValuePairs;
+typedef std::vector<CKeyValuePair> CKeyValuePairs;
+
+struct CKeyValueDescriptionPair {
+  CT::string key;
+  CT::string description;
+  CT::string value;
+};
+
+typedef std::vector<CKeyValueDescriptionPair> CKeyValueDescriptionPairs;
+
 #endif

@@ -128,7 +128,7 @@ int CImageWarper::reprojfromLatLon(double &dfx, double &dfy) {
     dfy = 0;
     return 1;
   }
-  // if(status!=0)CDBDebug("DestPJ: %s",GeoDest->CRS.c_str());
+  // if(status!=0)CDBDebug("DestPJ: %s",GeoDest.CRS.c_str());
   return 0;
 }
 
@@ -187,14 +187,14 @@ int CImageWarper::reprojModelFromLatLon(double &dfx, double &dfy) {
   if (proj_trans_generic(projSourceToLatlon, PJ_INV, &dfx, sizeof(double), 1, &dfy, sizeof(double), 1, nullptr, 0, 0, nullptr, 0, 0) != 1) {
     return 1;
   }
-  // if(status!=0)CDBDebug("DestPJ: %s",GeoDest->CRS.c_str());
+  // if(status!=0)CDBDebug("DestPJ: %s",GeoDest.CRS.c_str());
   return 0;
 }
 
-int CImageWarper::reprojpoint_inv_topx(double &dfx, double &dfy, CGeoParams *_geoDest) {
+int CImageWarper::reprojpoint_inv_topx(double &dfx, double &dfy, GeoParameters &_geoDest) {
   if (reprojpoint_inv(dfx, dfy) != 0) return 1;
-  dfx = (dfx - _geoDest->dfBBOX[0]) / (_geoDest->dfBBOX[2] - _geoDest->dfBBOX[0]) * double(_geoDest->dWidth);
-  dfy = (dfy - _geoDest->dfBBOX[3]) / (_geoDest->dfBBOX[1] - _geoDest->dfBBOX[3]) * double(_geoDest->dHeight);
+  dfx = (dfx - _geoDest.bbox.left) / (_geoDest.bbox.right - _geoDest.bbox.left) * double(_geoDest.width);
+  dfy = (dfy - _geoDest.bbox.top) / (_geoDest.bbox.bottom - _geoDest.bbox.top) * double(_geoDest.height);
   return 0;
 }
 
@@ -253,42 +253,15 @@ int CImageWarper::decodeCRS(CT::string *outputCRS, CT::string *inputCRS, std::ve
   return 0;
 }
 
-//   int CImageWarper::_decodeCRS(CT::string *CRS){
-//     destinationCRS.copy(CRS);
-//     dMaxExtentDefined=0;
-//     //destinationCRS.decodeURL();
-//     for(size_t j=0;j<(*prj).size();j++){
-//       if(destinationCRS.equals((*prj)[j]->attr.id.c_str())){
-//         destinationCRS.copy((*prj)[j]->attr.proj4.c_str());
-//         if((*prj)[j]->LatLonBox.size()==1){
-//           //if(getMaxExtentBBOX!=NULL)
-//           {
-//             dMaxExtentDefined=1;
-//             dfMaxExtent[0]=(*prj)[j]->LatLonBox[0]->attr.minx;
-//             dfMaxExtent[1]=(*prj)[j]->LatLonBox[0]->attr.miny;
-//             dfMaxExtent[2]=(*prj)[j]->LatLonBox[0]->attr.maxx;
-//             dfMaxExtent[3]=(*prj)[j]->LatLonBox[0]->attr.maxy;
-//           }
-//         }
-//         break;
-//       }
-//     }
-//     if(destinationCRS.indexOf("PROJ4:")==0){
-//       CT::string temp(destinationCRS.c_str()+6);
-//       destinationCRS.copy(&temp);
-//     }
-//     return 0;
-//   }
-
 int CImageWarper::init(const char *destString, const char *fromProjString, std::vector<CServerConfig::XMLE_Projection *> *_prj) {
-  CGeoParams geo;
-  geo.CRS = fromProjString;
-  return initreproj(destString, &geo, _prj);
+  GeoParameters geo;
+  geo.crs = fromProjString;
+  return initreproj(destString, geo, _prj);
 }
 
-int CImageWarper::initreproj(CDataSource *dataSource, CGeoParams *GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj) {
-  if (dataSource == NULL || GeoDest == NULL) {
-    CDBError("dataSource==%s||GeoDest==%s", dataSource == NULL ? "NULL" : "not-null", GeoDest == NULL ? "NULL" : "not-null");
+int CImageWarper::initreproj(CDataSource *dataSource, GeoParameters &GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj) {
+  if (dataSource == NULL) {
+    CDBError("dataSource==%s", dataSource == NULL ? "NULL" : "not-null");
     return 1;
   }
   if (dataSource->nativeProj4.empty()) {
@@ -299,13 +272,13 @@ int CImageWarper::initreproj(CDataSource *dataSource, CGeoParams *GeoDest, std::
 }
 
 pthread_mutex_t CImageWarper_initreproj;
-int CImageWarper::initreproj(const char *projString, CGeoParams *GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj) {
+int CImageWarper::initreproj(const char *projString, GeoParameters &GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj) {
   pthread_mutex_lock(&CImageWarper_initreproj);
   int status = _initreprojSynchronized(projString, GeoDest, _prj);
   pthread_mutex_unlock(&CImageWarper_initreproj);
   return status;
 }
-int CImageWarper::_initreprojSynchronized(const char *projString, CGeoParams *_GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj) {
+int CImageWarper::_initreprojSynchronized(const char *projString, GeoParameters &_GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj) {
 
   if (projString == NULL) {
     projString = LATLONPROJECTION;
@@ -316,7 +289,7 @@ int CImageWarper::_initreprojSynchronized(const char *projString, CGeoParams *_G
     return 1;
   }
 
-  CT::string sourceCRS = _GeoDest->CRS.c_str();
+  CT::string sourceCRS = _GeoDest.crs.c_str();
 
   CT::string sourceProjectionUndec = projString;
 
@@ -408,9 +381,10 @@ int CImageWarper::findExtentUnSynchronized(CDataSource *dataSource, double *dfBB
   }
 
   // CDBDebug("findExtent for %s and %f %f %f %f", destinationCRS.c_str(), dfBBOX[0], dfBBOX[1], dfBBOX[2], dfBBOX[3]);
-  ProjectionMapKey key = {sourceCRSString, destinationCRS, makeBBOX(dfBBOX)};
+
+  ProjectionMapKey key = {sourceCRSString, destinationCRS, makef8box(dfBBOX)};
   bool found;
-  BBOX bbox{};
+  f8box bbox{};
   std::tie(found, bbox) = getBBOXProjection(key);
 
   if (found) {
@@ -418,9 +392,8 @@ int CImageWarper::findExtentUnSynchronized(CDataSource *dataSource, double *dfBB
     CDBDebug("FOUND AND REUSING!!! %s %s (%0.3f, %0.3f, %0.3f, %0.3f) to  (%0.3f, %0.3f, %0.3f, %0.3f)", key.sourceCRS.c_str(), key.destCRS.c_str(), key.extent.bbox[0], key.extent.bbox[1],
              key.extent.bbox[2], key.extent.bbox[3], bbox.bbox[0], bbox.bbox[1], bbox.bbox[2], bbox.bbox[3]);
 #endif
-    for (size_t j = 0; j < 4; j++) {
-      dfBBOX[j] = bbox.bbox[j];
-    }
+
+    bbox.toArray(dfBBOX);
     return 0;
   }
 
@@ -535,7 +508,7 @@ int CImageWarper::findExtentUnSynchronized(CDataSource *dataSource, double *dfBB
   CDBDebug("INSERTING!!! %s %s (%0.3f, %0.3f, %0.3f, %0.3f) to  (%0.3f, %0.3f, %0.3f, %0.3f)", key.sourceCRS.c_str(), key.destCRS.c_str(), key.extent.bbox[0], key.extent.bbox[1], key.extent.bbox[2],
            key.extent.bbox[3], dfBBOX[0], dfBBOX[1], dfBBOX[2], dfBBOX[3]);
 #endif
-  addBBOXProjection(key, makeBBOX(dfBBOX));
+  addBBOXProjection(key, makef8box(dfBBOX));
   return 0;
 };
 

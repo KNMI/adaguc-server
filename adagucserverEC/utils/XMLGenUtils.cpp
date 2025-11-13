@@ -653,14 +653,14 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
   CServerParams *srvParam = metadataLayer->dataSource->srvParams;
 
   for (size_t p = 0; p < srvParam->cfg->Projection.size(); p++) {
-    CGeoParams geo;
-    geo.CRS.copy(srvParam->cfg->Projection[p]->attr.id.c_str());
+    GeoParameters geo;
+    geo.crs.copy(srvParam->cfg->Projection[p]->attr.id.c_str());
 
 #ifdef MEASURETIME
     StopWatch_Stop("start initreproj %s", geo.CRS.c_str());
 #endif
     CImageWarper warper;
-    int status = warper.initreproj(metadataLayer->dataSource, &geo, &srvParam->cfg->Projection);
+    int status = warper.initreproj(metadataLayer->dataSource, geo, &srvParam->cfg->Projection);
     if (status != 0) {
       warper.closereproj();
       return 1;
@@ -683,7 +683,7 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
 
     double bboxToFind[4];
     warper.findExtent(metadataLayer->dataSource, bboxToFind);
-    metadataLayer->layerMetadata.projectionList.push_back(LayerMetadataProjection(geo.CRS.c_str(), bboxToFind));
+    metadataLayer->layerMetadata.projectionList.push_back(LayerMetadataProjection(geo.crs.c_str(), bboxToFind));
 
 #ifdef MEASURETIME
     StopWatch_Stop("finished findExtent");
@@ -691,7 +691,7 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
 
     // TODO!!! THIS IS DONE WAY TO OFTEN!
     // Calculate the latlonBBOX
-    if (geo.CRS.equals("EPSG:4326")) {
+    if (geo.crs.equals("EPSG:4326")) {
       for (int k = 0; k < 4; k++) metadataLayer->layerMetadata.dfLatLonBBOX[k] = bboxToFind[k];
     }
 

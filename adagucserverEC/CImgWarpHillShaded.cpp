@@ -26,60 +26,127 @@
 #include "CImgWarpHillShaded.h"
 #include "CImageDataWriter.h"
 #include "CGenericDataWarper.h"
+#include "f8vector.h"
+#include <CCDFTypes.h>
 #include "CImgWarpGeneric/CImgWarpGeneric.h"
 
 const char *CImgWarpHillShaded::className = "CImgWarpHillShaded";
+/**
+ * Lightsource
+ */
+const f8vector lightSource = (f8vector({.x = -1, .y = -1, .z = -1})).norm();
+
+template <typename T> double getGridValueFromFloat(int x, int y, GDWState &drawSettings) { return ((T *)drawSettings.sourceData)[x + y * drawSettings.sourceDataWidth]; }
+
+static inline int mfast_mod(const int input, const int ceil) { return input >= ceil ? input % ceil : input; }
+
+template <class T> void hillShadedDrawFunction(int x, int y, T val, GDWState &warperState, GDWDrawFunctionSettings &drawFunctionState) {
+  if (x < 0 || y < 0 || x > warperState.destDataWidth || y > warperState.destDataHeight) return;
+  bool isNodata = false;
+  if (drawFunctionState.hasNodataValue) {
+    if ((val) == (T)drawFunctionState.dfNodataValue) isNodata = true;
+  }
+  if (!(val == val)) isNodata = true;
+  if (!isNodata)
+    if (drawFunctionState.legendValueRange)
+      if (val < drawFunctionState.legendLowerRange || val > drawFunctionState.legendUpperRange) isNodata = true;
+  if (!isNodata) {
+    T *sourceData = (T *)warperState.sourceData;
+    size_t sourceDataPX = warperState.sourceDataPX;
+    size_t sourceDataPY = warperState.sourceDataPY;
+    size_t sourceDataWidth = warperState.sourceDataWidth;
+    size_t sourceDataHeight = warperState.sourceDataHeight;
+
+    if (sourceDataPY > sourceDataHeight - 1) return;
+    if (sourceDataPX > sourceDataWidth - 1) return;
+
+    float values[3][3] = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
+
+    /* TODO make window size configurable */
+    for (int wy = -1; wy < 2; wy++) {
+      for (int wx = -1; wx < 2; wx++) {
+        values[0][0] += (double)((T *)sourceData)[mfast_mod(sourceDataPX + 0 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 0, sourceDataHeight) * sourceDataWidth];
+        values[1][0] += (double)((T *)sourceData)[mfast_mod(sourceDataPX + 1 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 0, sourceDataHeight) * sourceDataWidth];
+        values[2][0] += (double)((T *)sourceData)[mfast_mod(sourceDataPX + 2 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 0, sourceDataHeight) * sourceDataWidth];
+        values[0][1] += (double)((T *)sourceData)[mfast_mod(sourceDataPX + 0 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 1, sourceDataHeight) * sourceDataWidth];
+        values[1][1] += (double)((T *)sourceData)[mfast_mod(sourceDataPX + 1 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 1, sourceDataHeight) * sourceDataWidth];
+        values[2][1] += (double)((T *)sourceData)[mfast_mod(sourceDataPX + 2 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 1, sourceDataHeight) * sourceDataWidth];
+        values[0][2] += (double)((T *)sourceData)[mfast_mod(sourceDataPX + 0 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 2, sourceDataHeight) * sourceDataWidth];
+        values[1][2] += (double)((T *)sourceData)[mfast_mod(sourceDataPX + 1 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 2, sourceDataHeight) * sourceDataWidth];
+        values[2][2] += (double)((T *)sourceData)[mfast_mod(sourceDataPX + 2 + wx, sourceDataWidth) + mfast_mod(sourceDataPY + wy + 2, sourceDataHeight) * sourceDataWidth];
+      }
+    }
+
+    f8vector v00 = f8vector({.x = sourceDataPX + 0., .y = sourceDataPY + 0., .z = values[0][0]});
+    f8vector v10 = f8vector({.x = sourceDataPX + 1., .y = sourceDataPY + 0., .z = values[1][0]});
+    f8vector v20 = f8vector({.x = sourceDataPX + 2., .y = sourceDataPY + 0., .z = values[2][0]});
+    f8vector v01 = f8vector({.x = sourceDataPX + 0., .y = sourceDataPY + 1., .z = values[0][1]});
+    f8vector v11 = f8vector({.x = sourceDataPX + 1., .y = sourceDataPY + 1., .z = values[1][1]});
+    f8vector v21 = f8vector({.x = sourceDataPX + 2., .y = sourceDataPY + 1., .z = values[2][1]});
+    f8vector v02 = f8vector({.x = sourceDataPX + 0., .y = sourceDataPY + 2., .z = values[0][2]});
+    f8vector v12 = f8vector({.x = sourceDataPX + 1., .y = sourceDataPY + 2., .z = values[1][2]});
+
+    if (x >= 0 && y >= 0 && x < (int)warperState.destDataWidth && y < (int)warperState.destDataHeight) {
+      f8vector normal00 = cross(v10 - v00, v01 - v00).norm();
+      f8vector normal10 = cross(v20 - v10, v11 - v10).norm();
+      f8vector normal01 = cross(v11 - v01, v02 - v01).norm();
+      f8vector normal11 = cross(v21 - v11, v12 - v11).norm();
+      f8vector lightSource = (f8vector({.x = -1., .y = -1., .z = -1.})).norm(); /* TODO make light source configurable */
+      float c00 = dot(lightSource, normal00);
+      float c10 = dot(lightSource, normal10);
+      float c01 = dot(lightSource, normal01);
+      float c11 = dot(lightSource, normal11);
+      float dx = warperState.tileDx;
+      float dy = warperState.tileDy;
+      float gx1 = (1 - dx) * c00 + dx * c10;
+      float gx2 = (1 - dx) * c01 + dx * c11;
+      float bilValue = (1 - dy) * gx1 + dy * gx2;
+      ((float *)drawFunctionState.destinationGrid)[x + y * warperState.destDataWidth] = (bilValue + 1) / 1.816486;
+    }
+  }
+}
 
 void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage) {
   CT::string color;
+  void *sourceData;
+  CDBDebug("Hill");
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-  CImgWarpGenericDrawFunctionState drawFunctionState;
-  drawFunctionState.dfNodataValue = dataSource->getDataObject(0)->dfNodataValue;
-  drawFunctionState.legendValueRange = (bool)styleConfiguration->hasLegendValueRange;
-  drawFunctionState.legendLowerRange = styleConfiguration->legendLowerRange;
-  drawFunctionState.legendUpperRange = styleConfiguration->legendUpperRange;
-  drawFunctionState.hasNodataValue = dataSource->getDataObject(0)->hasNodataValue;
+  GDWDrawFunctionSettings settings;
+  settings.dfNodataValue = dataSource->getFirstAvailableDataObject()->dfNodataValue;
+  settings.legendValueRange = (bool)styleConfiguration->hasLegendValueRange;
+  settings.legendLowerRange = styleConfiguration->legendLowerRange;
+  settings.legendUpperRange = styleConfiguration->legendUpperRange;
+  settings.hasNodataValue = dataSource->getFirstAvailableDataObject()->hasNodataValue;
 
-  if (!drawFunctionState.hasNodataValue) {
-    drawFunctionState.hasNodataValue = true;
-    drawFunctionState.dfNodataValue = -100000.f;
+  if (!settings.hasNodataValue) {
+    settings.hasNodataValue = true;
+    settings.dfNodataValue = -100000.f;
   }
-  drawFunctionState.width = drawImage->Geo->dWidth;
-  drawFunctionState.height = drawImage->Geo->dHeight;
-
-  drawFunctionState.dataField = new float[drawFunctionState.width * drawFunctionState.height];
-  for (int y = 0; y < drawFunctionState.height; y++) {
-    for (int x = 0; x < drawFunctionState.width; x++) {
-      drawFunctionState.dataField[x + y * drawFunctionState.width] = (float)drawFunctionState.dfNodataValue;
-    }
-  }
+  int destDataWidth = drawImage->geoParams.width;
+  int destDataHeight = drawImage->geoParams.height;
+  size_t numGridElements = destDataWidth * destDataHeight;
+  CDF::allocateData(CDF_FLOAT, &settings.destinationGrid, numGridElements);
+  CDF::fill(settings.destinationGrid, CDF_FLOAT, settings.dfNodataValue, numGridElements);
 
   CDFType dataType = dataSource->getDataObject(0)->cdfVariable->getType();
-  void *sourceData = dataSource->getDataObject(0)->cdfVariable->data;
-  CGeoParams sourceGeo;
-  sourceGeo.dWidth = dataSource->dWidth;
-  sourceGeo.dHeight = dataSource->dHeight;
-  sourceGeo.dfBBOX[0] = dataSource->dfBBOX[0];
-  sourceGeo.dfBBOX[1] = dataSource->dfBBOX[1];
-  sourceGeo.dfBBOX[2] = dataSource->dfBBOX[2];
-  sourceGeo.dfBBOX[3] = dataSource->dfBBOX[3];
-  sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
-  sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
-  sourceGeo.CRS = dataSource->nativeProj4;
+  sourceData = dataSource->getDataObject(0)->cdfVariable->data;
+  GeoParameters sourceGeo = dataSource->makeGeoParams();
 
+  // GenericDataWarper dw;
+  // dw.render(warper, sourceData, dataType, &sourceGeo, drawImage->Geo, &hillShadedDrawFunction);
   GenericDataWarper genericDataWarper;
-  GDWArgs args = {.warper = warper, .sourceData = sourceData, .sourceGeoParams = &sourceGeo, .destGeoParams = drawImage->Geo};
-
+  GDWArgs args = {.warper = warper, .sourceData = sourceData, .sourceGeoParams = sourceGeo, .destGeoParams = dataSource->srvParams->geoParams};
+  CDBDebug("Start render");
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
-  if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction(x, y, val, warperState, drawFunctionState); });
+  if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { hillShadedDrawFunction(x, y, val, warperState, settings); });
   ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
 
-  for (int y = 0; y < (int)drawFunctionState.height; y = y + 1) {
-    for (int x = 0; x < (int)drawFunctionState.width; x = x + 1) {
-      float val = drawFunctionState.dataField[x + y * drawFunctionState.width];
-      if (val != (float)drawFunctionState.dfNodataValue && val == val) {
+  for (int y = 0; y < destDataHeight; y = y + 1) {
+    for (int x = 0; x < destDataWidth; x = x + 1) {
+      float val = ((float *)settings.destinationGrid)[x + y * destDataWidth];
+      if (val != (double)settings.dfNodataValue && val == val) {
         if (styleConfiguration->legendLog != 0) val = log10(val + .000001) / log10(styleConfiguration->legendLog);
         val *= styleConfiguration->legendScale;
         val += styleConfiguration->legendOffset;
@@ -91,7 +158,7 @@ void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, C
       }
     }
   }
-  delete[] drawFunctionState.dataField;
+  delete[] ((float *)settings.destinationGrid);
   // CDBDebug("render done");
   return;
 }

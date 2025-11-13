@@ -45,7 +45,7 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
 
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
     // Copy bounding box of screen
-    dataSource->setGeo(dataSource->srvParams->Geo);
+    dataSource->setGeo(dataSource->srvParams->geoParams);
 
     // Width and height of the dataSource need to be at least 2 in this case.
     if (dataSource->dWidth < 2) dataSource->dWidth = 2;
@@ -59,7 +59,7 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
     float *result = (float *)dataSource->getDataObject(0)->cdfVariable->data;
 
     CImageWarper imageWarper;
-    int status = imageWarper.initreproj(dataSource, dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
+    int status = imageWarper.initreproj(dataSource, dataSource->srvParams->geoParams, &dataSource->srvParams->cfg->Projection);
     if (status != 0) {
       CDBError("Unable to init projection");
       return 1;

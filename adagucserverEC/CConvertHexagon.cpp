@@ -27,7 +27,7 @@
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
 
-//#define CCONVERTHEXAGON_DEBUG
+// #define CCONVERTHEXAGON_DEBUG
 const char *CConvertHexagon::className = "CConvertHexagon";
 
 void line2(float *imagedata, int w, int h, float x1, float y1, float x2, float y2, float value) {
@@ -258,9 +258,9 @@ int CConvertHexagon::convertHexagonHeader(CDFObject *cdfObject, CServerParams *s
   int width = 2;
   int height = 2;
 
-  if (srvParams->Geo->dWidth > 1 && srvParams->Geo->dHeight > 1) {
-    width = srvParams->Geo->dWidth;
-    height = srvParams->Geo->dHeight;
+  if (srvParams->geoParams.width > 1 && srvParams->geoParams.height > 1) {
+    width = srvParams->geoParams.width;
+    height = srvParams->geoParams.height;
   }
 
   double cellSizeX = (dfBBOX[2] - dfBBOX[0]) / double(width);
@@ -541,23 +541,23 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
   }
 
   // Make the width and height of the new 2D adaguc field the same as the viewing window
-  dataSource->dWidth = dataSource->srvParams->Geo->dWidth;
-  dataSource->dHeight = dataSource->srvParams->Geo->dHeight;
+  dataSource->dWidth = dataSource->srvParams->geoParams.width;
+  dataSource->dHeight = dataSource->srvParams->geoParams.height;
 
   /*if(dataSource->dWidth == 1 && dataSource->dHeight == 1){
-    dataSource->srvParams->Geo->dfBBOX[0]=dataSource->srvParams->Geo->dfBBOX[0];
-    dataSource->srvParams->Geo->dfBBOX[1]=dataSource->srvParams->Geo->dfBBOX[1];
-    dataSource->srvParams->Geo->dfBBOX[2]=dataSource->srvParams->Geo->dfBBOX[2];
-    dataSource->srvParams->Geo->dfBBOX[3]=dataSource->srvParams->Geo->dfBBOX[3];
+    dataSource->srvParams->geoParams.bbox.left=dataSource->srvParams->geoParams.bbox.left;
+    dataSource->srvParams->geoParams.bbox.bottom=dataSource->srvParams->geoParams.bbox.bottom;
+    dataSource->srvParams->geoParams.bbox.right=dataSource->srvParams->geoParams.bbox.right;
+    dataSource->srvParams->geoParams.bbox.top=dataSource->srvParams->geoParams.bbox.top;
   }*/
 
   // Width needs to be at least 2 in this case.
   if (dataSource->dWidth == 1) dataSource->dWidth = 2;
   if (dataSource->dHeight == 1) dataSource->dHeight = 2;
-  double cellSizeX = (dataSource->srvParams->Geo->dfBBOX[2] - dataSource->srvParams->Geo->dfBBOX[0]) / double(dataSource->dWidth);
-  double cellSizeY = (dataSource->srvParams->Geo->dfBBOX[3] - dataSource->srvParams->Geo->dfBBOX[1]) / double(dataSource->dHeight);
-  double offsetX = dataSource->srvParams->Geo->dfBBOX[0];
-  double offsetY = dataSource->srvParams->Geo->dfBBOX[1];
+  double cellSizeX = dataSource->srvParams->geoParams.bbox.span().x / dataSource->dWidth;
+  double cellSizeY = dataSource->srvParams->geoParams.bbox.span().y / dataSource->dHeight;
+  double offsetX = dataSource->srvParams->geoParams.bbox.left;
+  double offsetY = dataSource->srvParams->geoParams.bbox.bottom;
 
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
 
@@ -616,7 +616,7 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
 
     CImageWarper imageWarper;
     bool projectionRequired = false;
-    if (dataSource->srvParams->Geo->CRS.length() > 0) {
+    if (dataSource->srvParams->geoParams.crs.length() > 0) {
       projectionRequired = true;
       new2DVar->setAttributeText("grid_mapping", "customgridprojection");
       // Apply once
@@ -624,7 +624,7 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
         CDF::Variable *projectionVar = new CDF::Variable();
         projectionVar->name.copy("customgridprojection");
         cdfObject->addVariable(projectionVar);
-        dataSource->nativeEPSG = dataSource->srvParams->Geo->CRS.c_str();
+        dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs.c_str();
         imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
         if (dataSource->nativeProj4.length() == 0) {
           dataSource->nativeProj4 = LATLONPROJECTION;
@@ -637,12 +637,13 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
 
 #ifdef CCONVERTHEXAGON_DEBUG
     CDBDebug("Datasource CRS = %s nativeproj4 = %s", dataSource->nativeEPSG.c_str(), dataSource->nativeProj4.c_str());
-    CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->Geo->dfBBOX[0], dataSource->srvParams->Geo->dfBBOX[1], dataSource->srvParams->Geo->dfBBOX[2], dataSource->srvParams->Geo->dfBBOX[3]);
+    CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->geoParams.bbox.left, dataSource->srvParams->geoParams.bbox.bottom, dataSource->srvParams->geoParams.bbox.right,
+             dataSource->srvParams->geoParams.bbox.top);
     CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
 #endif
 
     if (projectionRequired) {
-      int status = imageWarper.initreproj(dataSource, dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
+      int status = imageWarper.initreproj(dataSource, dataSource->srvParams->geoParams, &dataSource->srvParams->cfg->Projection);
       if (status != 0) {
         CDBError("Unable to init projection");
         return 1;

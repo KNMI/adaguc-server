@@ -32,6 +32,7 @@
 #include "CGenericDataWarper.h"
 #include "CAreaMapper.h"
 #include "CDrawFunction.h"
+#include "utils/projectionUtils.h"
 
 /**
  *  This is the main class of this file. It renders the sourcedata on the destination image using nearest neighbour interpolation.
@@ -90,15 +91,15 @@ private:
   // Reproject the corners of the tiles
   double y_corners[4], x_corners[4];
   double dfMaskBBOX[4];
-  int reproj(CImageWarper *warper, CDataSource *, CGeoParams *GeoDest, double dfx, double dfy, double x_div, double y_div) {
+  int reproj(CImageWarper *warper, CDataSource *, GeoParameters &GeoDest, double dfx, double dfy, double x_div, double y_div) {
     double psx[4];
     double psy[4];
     double dfTiledBBOX[4];
-    double dfTileW = (GeoDest->dfBBOX[2] - GeoDest->dfBBOX[0]) / double(x_div);
-    double dfTileH = (GeoDest->dfBBOX[3] - GeoDest->dfBBOX[1]) / double(y_div);
+    double dfTileW = GeoDest.bbox.span().x / double(x_div);
+    double dfTileH = GeoDest.bbox.span().y / double(y_div);
 
-    dfTiledBBOX[0] = GeoDest->dfBBOX[0] + dfTileW * dfx;
-    dfTiledBBOX[1] = GeoDest->dfBBOX[1] + dfTileH * dfy;
+    dfTiledBBOX[0] = GeoDest.bbox.left + dfTileW * dfx;
+    dfTiledBBOX[1] = GeoDest.bbox.bottom + dfTileH * dfy;
     dfTiledBBOX[2] = dfTiledBBOX[0] + (dfTileW);
     dfTiledBBOX[3] = dfTiledBBOX[1] + (dfTileH);
     double dfSourceBBOX[4];
@@ -189,9 +190,9 @@ private:
         }
       }
 
-      for (int y = 0; y < drawImage->Geo->dHeight; y++) {
-        for (int x = 0; x < drawImage->Geo->dWidth; x++) {
-          T val = data[x + y * drawImage->Geo->dWidth];
+      for (int y = 0; y < drawImage->geoParams.height; y++) {
+        for (int x = 0; x < drawImage->geoParams.width; x++) {
+          T val = data[x + y * drawImage->geoParams.width];
           bool drawnPixel = false;
           bool isNodata = false;
           if (hasNodataValue) {
@@ -205,9 +206,9 @@ private:
             for (int snr = numShadeDefs - 1; snr >= 0; snr--) {
               if (val >= shadeDefMin[snr] && val < shadeDefMax[snr]) {
                 if (fillColors[snr].a == 0) { // When a fully transparent color is deliberately set, force this color in the image
-                  drawImage->setPixelTrueColorOverWrite(x, (drawImage->Geo->dHeight - 1) - y, fillColors[snr].r, fillColors[snr].g, fillColors[snr].b, fillColors[snr].a);
+                  drawImage->setPixelTrueColorOverWrite(x, (drawImage->geoParams.height - 1) - y, fillColors[snr].r, fillColors[snr].g, fillColors[snr].b, fillColors[snr].a);
                 } else {
-                  drawImage->setPixelTrueColor(x, (drawImage->Geo->dHeight - 1) - y, fillColors[snr].r, fillColors[snr].g, fillColors[snr].b, fillColors[snr].a);
+                  drawImage->setPixelTrueColor(x, (drawImage->geoParams.height - 1) - y, fillColors[snr].r, fillColors[snr].g, fillColors[snr].b, fillColors[snr].a);
                 }
                 drawnPixel = true;
                 break;
@@ -215,16 +216,16 @@ private:
             }
           }
           if (hasBgColor && !drawnPixel) {
-            drawImage->setPixelTrueColor(x, (drawImage->Geo->dHeight - 1) - y, bgColor.r, bgColor.g, bgColor.b, bgColor.a);
+            drawImage->setPixelTrueColor(x, (drawImage->geoParams.height - 1) - y, bgColor.r, bgColor.g, bgColor.b, bgColor.a);
           }
         }
       }
     }
 
     if (shade == false) {
-      for (int y = 0; y < drawImage->Geo->dHeight; y++) {
-        for (int x = 0; x < drawImage->Geo->dWidth; x++) {
-          T val = data[x + y * drawImage->Geo->dWidth];
+      for (int y = 0; y < drawImage->geoParams.height; y++) {
+        for (int x = 0; x < drawImage->geoParams.width; x++) {
+          T val = data[x + y * drawImage->geoParams.width];
 
           bool isNodata = false;
           if (hasNodataValue) {
@@ -248,14 +249,14 @@ private:
             else if (pcolorind <= 0)
               pcolorind = 0;
 
-            drawImage->setPixelIndexed(x, (drawImage->Geo->dHeight - 1) - y, pcolorind);
+            drawImage->setPixelIndexed(x, (drawImage->geoParams.height - 1) - y, pcolorind);
           }
         }
       }
     }
   }
 
-  template <class T> static void drawFunction(int x, int y, T val, GDWState &, CDrawFunctionSettings &settings) {
+  template <class T> static void drawFunction(int x, int y, T val, GDWState &, GDWDrawFunctionSettings &settings) {
     /*
      Please note that this is part of the precise renderer. Changes to this routine should also be implemented in:
 
@@ -268,8 +269,8 @@ private:
       /* Using the precise renderer with a legend */
       setPixelInDrawImage(x, y, val, &settings);
     } else {
-      if (x >= 0 && y >= 0 && x < settings.drawImage->Geo->dWidth && y < settings.drawImage->Geo->dHeight) {
-        size_t p = x + y * settings.drawImage->Geo->dWidth;
+      if (x >= 0 && y >= 0 && x < settings.drawImage->geoParams.width && y < settings.drawImage->geoParams.height) {
+        size_t p = x + y * settings.drawImage->geoParams.width;
         uint v = val;
         unsigned char a = ((unsigned char)(v >> 24));
         if (a == 255) {
@@ -295,22 +296,22 @@ private:
 #endif
 
     bool fieldsAreIdentical = true;
-    if ((float)dataSource->dfBBOX[0] != (float)drawImage->Geo->dfBBOX[0]) {
+    if ((float)dataSource->dfBBOX[0] != (float)drawImage->geoParams.bbox.left) {
       fieldsAreIdentical = false;
     }
-    if ((float)dataSource->dfBBOX[1] != (float)drawImage->Geo->dfBBOX[3]) {
+    if ((float)dataSource->dfBBOX[1] != (float)drawImage->geoParams.bbox.top) {
       fieldsAreIdentical = false;
     }
-    if ((float)dataSource->dfBBOX[2] != (float)drawImage->Geo->dfBBOX[2]) {
+    if ((float)dataSource->dfBBOX[2] != (float)drawImage->geoParams.bbox.right) {
       fieldsAreIdentical = false;
     }
-    if ((float)dataSource->dfBBOX[3] != (float)drawImage->Geo->dfBBOX[1]) {
+    if ((float)dataSource->dfBBOX[3] != (float)drawImage->geoParams.bbox.bottom) {
       fieldsAreIdentical = false;
     }
-    if ((int)dataSource->dWidth != (int)drawImage->Geo->dWidth) {
+    if ((int)dataSource->dWidth != (int)drawImage->geoParams.width) {
       fieldsAreIdentical = false;
     }
-    if ((int)dataSource->dHeight != (int)drawImage->Geo->dHeight) {
+    if ((int)dataSource->dHeight != (int)drawImage->geoParams.height) {
       fieldsAreIdentical = false;
     }
 
@@ -380,24 +381,20 @@ private:
     }
     if (usePrecise) {
 
-      CDrawFunctionSettings settings = getDrawFunctionSettings(dataSource, drawImage, styleConfiguration);
+      GDWDrawFunctionSettings settings = getDrawFunctionSettings(dataSource, drawImage, styleConfiguration);
 
       CDFType dataType = dataSource->getFirstAvailableDataObject()->cdfVariable->getType();
       void *sourceData = dataSource->getFirstAvailableDataObject()->cdfVariable->data;
-      CGeoParams sourceGeo;
-
-      sourceGeo.dWidth = dataSource->dWidth;
-      sourceGeo.dHeight = dataSource->dHeight;
-      sourceGeo.dfBBOX[0] = dataSource->dfBBOX[0];
-      sourceGeo.dfBBOX[1] = dataSource->dfBBOX[1];
-      sourceGeo.dfBBOX[2] = dataSource->dfBBOX[2];
-      sourceGeo.dfBBOX[3] = dataSource->dfBBOX[3];
-      sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
-      sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
-      sourceGeo.CRS = dataSource->nativeProj4;
+      GeoParameters sourceGeo;
+      sourceGeo.width = dataSource->dWidth;
+      sourceGeo.height = dataSource->dHeight;
+      sourceGeo.bbox = dataSource->dfBBOX;
+      sourceGeo.cellsizeX = dataSource->dfCellSizeX;
+      sourceGeo.cellsizeY = dataSource->dfCellSizeY;
+      sourceGeo.crs = dataSource->nativeProj4;
 
       GenericDataWarper genericDataWarper;
-      GDWArgs args = {.warper = warper, .sourceData = sourceData, .sourceGeoParams = &sourceGeo, .destGeoParams = drawImage->Geo};
+      GDWArgs args = {.warper = warper, .sourceData = sourceData, .sourceGeoParams = sourceGeo, .destGeoParams = drawImage->geoParams};
 
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
   if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction(x, y, val, warperState, settings); });
@@ -421,23 +418,22 @@ private:
     int y_div = 1;
     if (warper->isProjectionRequired() == false) {
       // CDBDebug("No reprojection required");
-      tile_height = drawImage->Geo->dHeight;
-      tile_width = drawImage->Geo->dWidth;
+      tile_height = drawImage->geoParams.height;
+      tile_width = drawImage->geoParams.width;
       // When we are drawing just one tile, threading is not needed
       useThreading = false;
     } else {
-      x_div = int((float(drawImage->Geo->dWidth) / tile_width)) + 1;
-      y_div = int((float(drawImage->Geo->dHeight) / tile_height)) + 1;
+      x_div = int((float(drawImage->geoParams.width) / tile_width)) + 1;
+      y_div = int((float(drawImage->geoParams.height) / tile_height)) + 1;
     }
     internalWidth = tile_width * x_div;
     internalHeight = tile_height * y_div;
 
     // New geo location needs to be extended based on new width and height
-    CGeoParams internalGeo;
-    internalGeo.copy(drawImage->Geo);
+    GeoParameters internalGeo = drawImage->geoParams;
 
-    internalGeo.dfBBOX[2] = ((drawImage->Geo->dfBBOX[2] - drawImage->Geo->dfBBOX[0]) / double(drawImage->Geo->dWidth)) * double(internalWidth) + drawImage->Geo->dfBBOX[0];
-    internalGeo.dfBBOX[1] = ((drawImage->Geo->dfBBOX[1] - drawImage->Geo->dfBBOX[3]) / double(drawImage->Geo->dHeight)) * double(internalHeight) + drawImage->Geo->dfBBOX[3];
+    internalGeo.bbox.right = ((drawImage->geoParams.bbox.right - drawImage->geoParams.bbox.left) / double(drawImage->geoParams.width)) * double(internalWidth) + drawImage->geoParams.bbox.left;
+    internalGeo.bbox.bottom = ((drawImage->geoParams.bbox.bottom - drawImage->geoParams.bbox.top) / double(drawImage->geoParams.height)) * double(internalHeight) + drawImage->geoParams.bbox.top;
 
     // Setup the renderer to draw the tiles with.We do not keep the calculated results for CDF_CHAR (faster)
     CAreaMapper *drawTileClass = new CAreaMapper();
@@ -450,7 +446,7 @@ private:
 
     if (y2 < y1) {
       if (y1 > -360 && y2 < 360 && x1 > -720 && x2 < 720) {
-        if (CGeoParams::isLonLatProjection(&dataSource->nativeProj4) == false) {
+        if (isLonLatProjection(&dataSource->nativeProj4) == false) {
           double checkBBOX[4];
           for (int j = 0; j < 4; j++) checkBBOX[j] = dataSource->dfBBOX[j];
 
@@ -487,7 +483,7 @@ private:
     DrawTileSettings *curTileSettings;
     for (int x = 0; x < x_div; x++) {
       for (int y = 0; y < y_div; y++) {
-        status = reproj(warper, dataSource, &internalGeo, x, (y_div - 1) - y, x_div, y_div);
+        status = reproj(warper, dataSource, internalGeo, x, (y_div - 1) - y, x_div, y_div);
         int tileId = x + y * x_div;
         curTileSettings = &drawTileSettings[tileId];
         curTileSettings->id = tileId;
@@ -498,14 +494,14 @@ private:
         }
         // Some safety checks when odd files come out of the projection algorithm
         if ((x_corners[0] >= DBL_MAX || x_corners[0] <= -DBL_MAX) && x_div == 1 && x_div == 1) {
-          curTileSettings->x_corners[0] = internalGeo.dfBBOX[2];
-          curTileSettings->x_corners[1] = internalGeo.dfBBOX[2];
-          curTileSettings->x_corners[2] = internalGeo.dfBBOX[0];
-          curTileSettings->x_corners[3] = internalGeo.dfBBOX[0];
-          curTileSettings->y_corners[0] = internalGeo.dfBBOX[3];
-          curTileSettings->y_corners[1] = internalGeo.dfBBOX[1];
-          curTileSettings->y_corners[2] = internalGeo.dfBBOX[1];
-          curTileSettings->y_corners[3] = internalGeo.dfBBOX[3];
+          curTileSettings->x_corners[0] = internalGeo.bbox.right;
+          curTileSettings->x_corners[1] = internalGeo.bbox.right;
+          curTileSettings->x_corners[2] = internalGeo.bbox.left;
+          curTileSettings->x_corners[3] = internalGeo.bbox.left;
+          curTileSettings->y_corners[0] = internalGeo.bbox.top;
+          curTileSettings->y_corners[1] = internalGeo.bbox.bottom;
+          curTileSettings->y_corners[2] = internalGeo.bbox.bottom;
+          curTileSettings->y_corners[3] = internalGeo.bbox.top;
         }
         curTileSettings->tile_offset_x = int(x * tile_width);
         curTileSettings->tile_offset_y = int(y * tile_height);

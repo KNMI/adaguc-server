@@ -32,6 +32,7 @@
 #include <math.h>
 #include "CDebugger.h"
 #include "CStopWatch.h"
+#include "Types/CPointTypes.h"
 
 #define LATLONPROJECTION "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
 void floatToString(char *string, size_t maxlen, float number);
@@ -52,7 +53,7 @@ private:
   std::vector<CServerConfig::XMLE_Projection *> *prj;
   bool initialized;
 
-  int _initreprojSynchronized(const char *projString, CGeoParams *GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj);
+  int _initreprojSynchronized(const char *projString, GeoParameters &GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj);
   int findExtentUnSynchronized(CDataSource *dataSource, double *dfBBOX);
 
 public:
@@ -76,8 +77,8 @@ public:
   }
   PJ *projSourceToDest, *projSourceToLatlon, *projLatlonToDest;
   CT::string getDestProjString() { return destinationCRS; }
-  int initreproj(CDataSource *dataSource, CGeoParams *GeoDest, std::vector<CServerConfig::XMLE_Projection *> *prj);
-  int initreproj(const char *projString, CGeoParams *GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj);
+  int initreproj(CDataSource *dataSource, GeoParameters &GeoDest, std::vector<CServerConfig::XMLE_Projection *> *prj);
+  int initreproj(const char *projString, GeoParameters &GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj);
   int init(const char *destString, const char *fromProjString, std::vector<CServerConfig::XMLE_Projection *> *_prj);
 
   int closereproj();
@@ -90,7 +91,7 @@ public:
    * Same as reprojpoint_inv, but reprojects a point to screen pixel coordinates (WMS Map coordinates).
    * It uses the BBOX and WIDTH/HEIGHT for this.
    */
-  int reprojpoint_inv_topx(double &dfx, double &dfy, CGeoParams *_geoDest);
+  int reprojpoint_inv_topx(double &dfx, double &dfy, GeoParameters &_geoDest);
   int reprojpoint_inv(f8point &p);
 
   int reprojModelToLatLon(double &dfx, double &dfy);

@@ -23,7 +23,7 @@
  *
  ******************************************************************************/
 
-//#define CIMGWARPNEARESTRGBA_DEBUG
+// #define CIMGWARPNEARESTRGBA_DEBUG
 #include "CImgWarpNearestRGBA.h"
 const char *CImgWarpNearestRGBA::className = "CImgWarpNearestRGBA";
 const char *CDrawTileObjBGRA::className = "CDrawTileObjBGRA";
@@ -73,8 +73,8 @@ int CDrawTileObjBGRA::drawTile(double *x_corners, double *y_corners, int &dDestX
 #ifndef CIMGWARPNEARESTRGBA_USEDRAWIMAGE
   uint *imageData = (uint *)drawImage->getCanvasMemory();
 #endif
-  int imageWidth = drawImage->Geo->dWidth;
-  int imageHeight = drawImage->Geo->dHeight;
+  int imageWidth = drawImage->geoParams.width;
+  int imageHeight = drawImage->geoParams.height;
 #ifdef CIMGWARPNEARESTRGBA_DEBUG
   CDBDebug("myDrawRawTile %f, %f, %f, %f, %f, %f %f %f", dfSourceBBOX[0], dfSourceBBOX[1], dfSourceBBOX[2], dfSourceBBOX[3], width, height, dfTileWidth, dfTileHeight);
 #endif
@@ -232,15 +232,15 @@ void *CImgWarpNearestRGBA::drawTiles(void *arg) {
   return arg;
 }
 
-int CImgWarpNearestRGBA::reproj(CImageWarper *warper, CDataSource *, CGeoParams *GeoDest, double dfx, double dfy, double x_div, double y_div) {
+int CImgWarpNearestRGBA::reproj(CImageWarper *warper, CDataSource *, GeoParameters &GeoDest, double dfx, double dfy, double x_div, double y_div) {
   double psx[4];
   double psy[4];
   double dfTiledBBOX[4];
-  double dfTileW = (GeoDest->dfBBOX[2] - GeoDest->dfBBOX[0]) / double(x_div);
-  double dfTileH = (GeoDest->dfBBOX[3] - GeoDest->dfBBOX[1]) / double(y_div);
+  double dfTileW = GeoDest.bbox.span().x / double(x_div);
+  double dfTileH = GeoDest.bbox.span().y / double(y_div);
 
-  dfTiledBBOX[0] = GeoDest->dfBBOX[0] + dfTileW * dfx;
-  dfTiledBBOX[1] = GeoDest->dfBBOX[1] + dfTileH * dfy;
+  dfTiledBBOX[0] = GeoDest.bbox.left + dfTileW * dfx;
+  dfTiledBBOX[1] = GeoDest.bbox.bottom + dfTileH * dfy;
   dfTiledBBOX[2] = dfTiledBBOX[0] + (dfTileW);
   dfTiledBBOX[3] = dfTiledBBOX[1] + (dfTileH);
   double dfSourceBBOX[4];
@@ -264,7 +264,7 @@ int CImgWarpNearestRGBA::reproj(CImageWarper *warper, CDataSource *, CGeoParams 
   psy[3] = dfTiledBBOX[1];
   if (warper->isProjectionRequired()) {
     //     CT::string destinationCRS;
-    //     warper->decodeCRS(&destinationCRS,&GeoDest->CRS);
+    //     warper->decodeCRS(&destinationCRS,&GeoDest.CRS);
     if (proj_trans_generic(warper->projSourceToDest, PJ_INV, psx, sizeof(double), 4, psy, sizeof(double), 4, nullptr, 0, 0, nullptr, 0, 0) != 4) {
       // TODO: No error handling in original code
     }
@@ -284,16 +284,6 @@ int CImgWarpNearestRGBA::reproj(CImageWarper *warper, CDataSource *, CGeoParams 
 }
 
 void CImgWarpNearestRGBA::render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage) {
-  /*for(int y=0;y<drawImage->Geo->dHeight;y++){
-    for(int x=0;x<drawImage->Geo->dWidth;x++){
-      drawImage->setPixelIndexed(x,y,10);
-    }
-  }*/
-  /*uint *imageData = (uint*)drawImage->getCanvasMemory();
-  for(size_t j=0;j<drawImage->Geo->dHeight*drawImage->Geo->dWidth;j++){
-    imageData[j]=0;
-  }*/
-  // CDBDebug("Render");
   // This enables if tiles are divided allong threads.
   int numThreads = 4;
   // Threading is not needed when only one thread is specified.
@@ -307,23 +297,22 @@ void CImgWarpNearestRGBA::render(CImageWarper *warper, CDataSource *dataSource, 
   int y_div = 1;
   if (warper->isProjectionRequired() == false) {
     // CDBDebug("No reprojection required");
-    tile_height = drawImage->Geo->dHeight;
-    tile_width = drawImage->Geo->dWidth;
+    tile_height = drawImage->geoParams.height;
+    tile_width = drawImage->geoParams.width;
     // When we are drawing just one tile, threading is not needed
     useThreading = false;
   } else {
-    x_div = int((float(drawImage->Geo->dWidth) / tile_width)) + 1;
-    y_div = int((float(drawImage->Geo->dHeight) / tile_height)) + 1;
+    x_div = int((float(drawImage->geoParams.width) / tile_width)) + 1;
+    y_div = int((float(drawImage->geoParams.height) / tile_height)) + 1;
   }
   int internalWidth = tile_width * x_div;
   int internalHeight = tile_height * y_div;
 
   // New geo location needs to be extended based on new width and height
-  CGeoParams internalGeo;
-  internalGeo.copy(drawImage->Geo);
+  GeoParameters internalGeo = drawImage->geoParams;
 
-  internalGeo.dfBBOX[2] = ((drawImage->Geo->dfBBOX[2] - drawImage->Geo->dfBBOX[0]) / double(drawImage->Geo->dWidth)) * double(internalWidth) + drawImage->Geo->dfBBOX[0];
-  internalGeo.dfBBOX[1] = ((drawImage->Geo->dfBBOX[1] - drawImage->Geo->dfBBOX[3]) / double(drawImage->Geo->dHeight)) * double(internalHeight) + drawImage->Geo->dfBBOX[3];
+  internalGeo.bbox.right = ((drawImage->geoParams.bbox.right - drawImage->geoParams.bbox.left) / double(drawImage->geoParams.width)) * double(internalWidth) + drawImage->geoParams.bbox.left;
+  internalGeo.bbox.bottom = ((drawImage->geoParams.bbox.bottom - drawImage->geoParams.bbox.top) / double(drawImage->geoParams.height)) * double(internalHeight) + drawImage->geoParams.bbox.top;
 
   // Setup the renderer to draw the tiles with.We do not keep the calculated results for CDF_CHAR (faster)
   CDrawTileObjBGRA *drawTileClass = NULL;
@@ -341,8 +330,8 @@ void CImgWarpNearestRGBA::render(CImageWarper *warper, CDataSource *dataSource, 
 
 #ifdef CIMGWARPNEARESTRGBA_DEBUG
   CDBDebug("x_div, y_div:  %d %d", x_div, y_div);
-  CDBDebug("datasource:  %f %f %f %f", dataSource->dfBBOX[0], dataSource->dfBBOX[1], dataSource->dfBBOX[2], dataSource->dfBBOX[3]);
-  CDBDebug("destination: %f %f %f %f", internalGeo.dfBBOX[0], internalGeo.dfBBOX[1], internalGeo.dfBBOX[2], internalGeo.dfBBOX[3]);
+  CDBDebug("datasource:  %f %f %f %f", dataSource->bbox.left, dataSource->bbox.bottom, dataSource->bbox.right, dataSource->bbox.top);
+  CDBDebug("destination: %f %f %f %f", internalGeo.bbox.left, internalGeo.bbox.bottom, internalGeo.bbox.right, internalGeo.bbox.top);
 #endif
   int numberOfTiles = x_div * y_div;
   DrawTileSettings *drawTileSettings = new DrawTileSettings[numberOfTiles];
@@ -356,7 +345,7 @@ void CImgWarpNearestRGBA::render(CImageWarper *warper, CDataSource *dataSource, 
   DrawTileSettings *curTileSettings;
   for (int x = 0; x < x_div; x++) {
     for (int y = 0; y < y_div; y++) {
-      status = reproj(warper, dataSource, &internalGeo, x, (y_div - 1) - y, x_div, y_div);
+      status = reproj(warper, dataSource, internalGeo, x, (y_div - 1) - y, x_div, y_div);
       int tileId = x + y * x_div;
       curTileSettings = &drawTileSettings[tileId];
       curTileSettings->debug = debug;
@@ -368,14 +357,14 @@ void CImgWarpNearestRGBA::render(CImageWarper *warper, CDataSource *dataSource, 
       }
       // Some safety checks when odd files come out of the projection algorithm
       if ((x_corners[0] >= DBL_MAX || x_corners[0] <= -DBL_MAX) && x_div == 1 && x_div == 1) {
-        curTileSettings->x_corners[0] = internalGeo.dfBBOX[2];
-        curTileSettings->x_corners[1] = internalGeo.dfBBOX[2];
-        curTileSettings->x_corners[2] = internalGeo.dfBBOX[0];
-        curTileSettings->x_corners[3] = internalGeo.dfBBOX[0];
-        curTileSettings->y_corners[0] = internalGeo.dfBBOX[3];
-        curTileSettings->y_corners[1] = internalGeo.dfBBOX[1];
-        curTileSettings->y_corners[2] = internalGeo.dfBBOX[1];
-        curTileSettings->y_corners[3] = internalGeo.dfBBOX[3];
+        curTileSettings->x_corners[0] = internalGeo.bbox.right;
+        curTileSettings->x_corners[1] = internalGeo.bbox.right;
+        curTileSettings->x_corners[2] = internalGeo.bbox.left;
+        curTileSettings->x_corners[3] = internalGeo.bbox.left;
+        curTileSettings->y_corners[0] = internalGeo.bbox.top;
+        curTileSettings->y_corners[1] = internalGeo.bbox.bottom;
+        curTileSettings->y_corners[2] = internalGeo.bbox.bottom;
+        curTileSettings->y_corners[3] = internalGeo.bbox.top;
       }
       curTileSettings->tile_offset_x = int(x * tile_width);
       curTileSettings->tile_offset_y = int(y * tile_height);

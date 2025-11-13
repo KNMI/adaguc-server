@@ -61,16 +61,16 @@ int CCreateHistogram::addData(std::vector<CDataSource *> &dataSources) {
       dfNoData = dataSource->getDataObject(0)->dfNodataValue;
     }
 
-    CDF::allocateData(CDF_FLOAT, &warpedData, dataSource->srvParams->Geo->dWidth * dataSource->srvParams->Geo->dHeight);
+    CDF::allocateData(CDF_FLOAT, &warpedData, dataSource->srvParams->geoParams.width * dataSource->srvParams->geoParams.height);
 
-    if (CDF::fill(warpedData, CDF_FLOAT, dfNoData, dataSource->srvParams->Geo->dWidth * dataSource->srvParams->Geo->dHeight) != 0) {
+    if (CDF::fill(warpedData, CDF_FLOAT, dfNoData, dataSource->srvParams->geoParams.width * dataSource->srvParams->geoParams.height) != 0) {
       CDBError("Unable to initialize data field to nodata value");
       return 1;
     }
 
     CImageWarper warper;
 
-    status = warper.initreproj(dataSource, dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
+    status = warper.initreproj(dataSource, dataSource->srvParams->geoParams, &dataSource->srvParams->cfg->Projection);
     if (status != 0) {
       CDBError("Unable to initialize projection");
       return 1;
@@ -90,29 +90,26 @@ int CCreateHistogram::addData(std::vector<CDataSource *> &dataSources) {
       CDFType dataType = dataSource->getDataObject(0)->cdfVariable->getType();
 
       CCreateHistogramSettings settings;
-      settings.width = dataSource->srvParams->Geo->dWidth;
-      settings.height = dataSource->srvParams->Geo->dHeight;
+      settings.width = dataSource->srvParams->geoParams.width;
+      settings.height = dataSource->srvParams->geoParams.height;
       settings.data = warpedData;
 
-      CGeoParams sourceGeo;
+      GeoParameters sourceGeo;
 
-      sourceGeo.dWidth = dataSource->dWidth;
-      sourceGeo.dHeight = dataSource->dHeight;
-      sourceGeo.dfBBOX[0] = dataSource->dfBBOX[0];
-      sourceGeo.dfBBOX[1] = dataSource->dfBBOX[1];
-      sourceGeo.dfBBOX[2] = dataSource->dfBBOX[2];
-      sourceGeo.dfBBOX[3] = dataSource->dfBBOX[3];
-      sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
-      sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
-      sourceGeo.CRS = dataSource->nativeProj4;
+      sourceGeo.width = dataSource->dWidth;
+      sourceGeo.height = dataSource->dHeight;
+      sourceGeo.bbox = dataSource->dfBBOX;
+      sourceGeo.cellsizeX = dataSource->dfCellSizeX;
+      sourceGeo.cellsizeY = dataSource->dfCellSizeY;
+      sourceGeo.crs = dataSource->nativeProj4;
 
-      CDBDebug("Rendering %f,%f", sourceGeo.dfBBOX[0], sourceGeo.dfBBOX[1]);
+      CDBDebug("Rendering %f,%f", sourceGeo.bbox.left, sourceGeo.bbox.bottom);
       GenericDataWarper genericDataWarper;
-      GDWArgs args = {.warper = &warper, .sourceData = sourceData, .sourceGeoParams = &sourceGeo, .destGeoParams = dataSource->srvParams->Geo};
+      GDWArgs args = {.warper = &warper, .sourceData = sourceData, .sourceGeoParams = sourceGeo, .destGeoParams = dataSource->srvParams->geoParams};
 
-#define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                            \
-      if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction(x, y, val, warperState, settings); });
-ENUMERATE_OVER_CDFTYPES(RENDER)
+#define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
+  if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction(x, y, val, warperState, settings); });
+      ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
     }
     reader.close();
@@ -121,7 +118,7 @@ ENUMERATE_OVER_CDFTYPES(RENDER)
     if (dataSource->statistics == NULL) {
       dataSource->statistics = new CDataSource::Statistics();
       dataSource->statistics->calculate(dataSource);
-      dataSource->statistics->calculate(dataSource->srvParams->Geo->dWidth * dataSource->srvParams->Geo->dHeight, (float *)warpedData, CDF_FLOAT, dataSource->getDataObject(0)->dfNodataValue,
+      dataSource->statistics->calculate(dataSource->srvParams->geoParams.width * dataSource->srvParams->geoParams.height, (float *)warpedData, CDF_FLOAT, dataSource->getDataObject(0)->dfNodataValue,
                                         dataSource->getDataObject(0)->hasNodataValue);
     }
     float fieldMin = (float)dataSource->statistics->getMinimum();
@@ -148,7 +145,7 @@ ENUMERATE_OVER_CDFTYPES(RENDER)
     max = ceil(max / roundFactor) * roundFactor;
     CDBDebug("binSize = %f min=%f max=%f", binSize, min, max);
 
-    size_t gridSize = dataSource->srvParams->Geo->dWidth * dataSource->srvParams->Geo->dHeight;
+    size_t gridSize = dataSource->srvParams->geoParams.width * dataSource->srvParams->geoParams.height;
     for (size_t j = 0; j < gridSize; j++) {
       float val = ((float *)warpedData)[j];
       if (val != (float)dfNoData) {

@@ -17,7 +17,7 @@ public:
    * @param scaling The scaling of the scalebar, 1.0 is natural, 2.0 is twice as big.
    * @return 0 on success nonzero on failure.
    */
-  static int createScaleBar(CDrawImage *scaleBarImage, CGeoParams *geoParams, float scaling);
+  static int createScaleBar(CDrawImage *scaleBarImage, GeoParameters &geoParams, float scaling);
 
 private:
   class Props {
@@ -26,6 +26,6 @@ private:
     double mapunits;
   };
 
-  static Props getScaleBarProperties(CGeoParams *geoParams, float scaling);
+  static Props getScaleBarProperties(GeoParameters &geoParams, float scaling);
 };
 #endif

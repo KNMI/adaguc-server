@@ -26,7 +26,7 @@
 #include "CConvertUGRIDMesh.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
-//#define CCONVERTUGRIDMESH_DEBUG
+// #define CCONVERTUGRIDMESH_DEBUG
 const char *CConvertUGRIDMesh::className = "CConvertUGRIDMesh";
 
 #define CCONVERTUGRIDMESH_NODATA -32000
@@ -319,23 +319,20 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
   meshLat->readData(CDF_FLOAT, true);
 
   // Make the width and height of the new 2D adaguc field the same as the viewing window
-  dataSource->dWidth = dataSource->srvParams->Geo->dWidth;
-  dataSource->dHeight = dataSource->srvParams->Geo->dHeight;
+  dataSource->dWidth = dataSource->srvParams->geoParams.width;
+  dataSource->dHeight = dataSource->srvParams->geoParams.height;
 
   if (dataSource->dWidth == 1 && dataSource->dHeight == 1) {
-    dataSource->srvParams->Geo->dfBBOX[0] = dataSource->srvParams->Geo->dfBBOX[0];
-    dataSource->srvParams->Geo->dfBBOX[1] = dataSource->srvParams->Geo->dfBBOX[1];
-    dataSource->srvParams->Geo->dfBBOX[2] = dataSource->srvParams->Geo->dfBBOX[2];
-    dataSource->srvParams->Geo->dfBBOX[3] = dataSource->srvParams->Geo->dfBBOX[3];
+    dataSource->srvParams->geoParams.bbox = dataSource->srvParams->geoParams.bbox;
   }
 
   // Width needs to be at least 2 in this case.
   if (dataSource->dWidth == 1) dataSource->dWidth = 2;
   if (dataSource->dHeight == 1) dataSource->dHeight = 2;
-  double cellSizeX = (dataSource->srvParams->Geo->dfBBOX[2] - dataSource->srvParams->Geo->dfBBOX[0]) / double(dataSource->dWidth);
-  double cellSizeY = (dataSource->srvParams->Geo->dfBBOX[3] - dataSource->srvParams->Geo->dfBBOX[1]) / double(dataSource->dHeight);
-  double offsetX = dataSource->srvParams->Geo->dfBBOX[0];
-  double offsetY = dataSource->srvParams->Geo->dfBBOX[1];
+  double cellSizeX = dataSource->srvParams->geoParams.bbox.span().x / dataSource->dWidth;
+  double cellSizeY = dataSource->srvParams->geoParams.bbox.span().y / dataSource->dHeight;
+  double offsetX = dataSource->srvParams->geoParams.bbox.left;
+  double offsetY = dataSource->srvParams->geoParams.bbox.bottom;
 
   CDF::Attribute *fillValue = new2DVar->getAttributeNE("_FillValue");
   if (fillValue != NULL) {
@@ -402,14 +399,14 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
 
     CImageWarper imageWarper;
     //     bool projectionRequired=false;
-    //     if(dataSource->srvParams->Geo->CRS.length()>0){
+    //     if(dataSource->srvParams->geoParams.CRS.length()>0){
     //       projectionRequired=true;
     //       new2DVar->setAttributeText("grid_mapping","customgridprojection");
     //       if(cdfObject->getVariableNE("customgridprojection")==NULL){
     //         CDF::Variable *projectionVar = new CDF::Variable();
     //         projectionVar->name.copy("customgridprojection");
     //         cdfObject->addVariable(projectionVar);
-    //         dataSource->nativeEPSG = dataSource->srvParams->Geo->CRS.c_str();
+    //         dataSource->nativeEPSG = dataSource->srvParams->geoParams.CRS.c_str();
     //         imageWarper.decodeCRS(&dataSource->nativeProj4,&dataSource->nativeEPSG,&dataSource->srvParams->cfg->Projection);
     //         if(dataSource->nativeProj4.length()==0){
     //           dataSource->nativeProj4=LATLONPROJECTION;
@@ -423,12 +420,13 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
 
 #ifdef CCONVERTUGRIDMESH_DEBUG
     CDBDebug("Datasource CRS = %s nativeproj4 = %s", dataSource->nativeEPSG.c_str(), dataSource->nativeProj4.c_str());
-    CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->Geo->dfBBOX[0], dataSource->srvParams->Geo->dfBBOX[1], dataSource->srvParams->Geo->dfBBOX[2], dataSource->srvParams->Geo->dfBBOX[3]);
+    CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->geoParams.bbox.left, dataSource->srvParams->geoParams.bbox.bottom, dataSource->srvParams->geoParams.bbox.right,
+             dataSource->srvParams->geoParams.bbox.top);
     CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
 #endif
 
     // if(projectionRequired){
-    int status = imageWarper.initreproj(dataSource, dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
+    int status = imageWarper.initreproj(dataSource, dataSource->srvParams->geoParams, &dataSource->srvParams->cfg->Projection);
     if (status != 0) {
       CDBError("Unable to init projection");
       return 1;

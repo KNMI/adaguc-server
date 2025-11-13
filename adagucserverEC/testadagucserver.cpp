@@ -120,13 +120,13 @@ TEST(radians, CImageWarper) {
 TEST(CImgRenderFieldVectors, jacobianTransformUWCWDini) {
   CT::string crs = "+proj=ob_tran +o_proj=longlat +lon_0=-8.0 +o_lat_p=35.0 +o_lon_p=0.0 +a=6367470 +e=0 +no_defs";
 
-  CGeoParams geo;
-  geo.CRS = crs;
+  GeoParameters geo;
+  geo.crs = crs;
   std::vector<CServerConfig::XMLE_Projection *> v;
 
   // Init warper
   CImageWarper warper;
-  int status = warper.initreproj(crs.c_str(), &geo, &v);
+  int status = warper.initreproj(crs.c_str(), geo, &v);
   CHECK(status == 0);
 
   // Grid cell to do the calculation for
@@ -176,13 +176,13 @@ TEST(CImgRenderFieldVectors, jacobianTransformUWCWDini) {
 TEST(CImgRenderFieldVectors, jacobianTransformLatLon) {
   CT::string crs = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs";
 
-  CGeoParams geo;
-  geo.CRS = crs;
+  GeoParameters geo;
+  geo.crs = crs;
   std::vector<CServerConfig::XMLE_Projection *> v;
 
   // Init warper
   CImageWarper warper;
-  int status = warper.initreproj(crs.c_str(), &geo, &v);
+  int status = warper.initreproj(crs.c_str(), geo, &v);
   CHECK(status == 0);
 
   // Grid cell to do the calculation for
@@ -231,13 +231,13 @@ TEST(CImgRenderFieldVectors, jacobianTransformLatLon) {
 f8component testDiniCoordinate(f8point pointToCheck, f8component speedVector) {
   CT::string crs = "+proj=ob_tran +o_proj=longlat +lon_0=-8.0 +o_lat_p=35.0 +o_lon_p=0.0 +a=6367470 +e=0 +no_defs";
 
-  CGeoParams geo;
-  geo.CRS = crs;
+  GeoParameters geo;
+  geo.crs = crs;
   std::vector<CServerConfig::XMLE_Projection *> v;
 
   // Init warper
   CImageWarper warper;
-  warper.initreproj(crs.c_str(), &geo, &v);
+  warper.initreproj(crs.c_str(), geo, &v);
 
   double cellSize = 0.05;
   f8point gridCoordLL = {.x = pointToCheck.x, .y = pointToCheck.y};

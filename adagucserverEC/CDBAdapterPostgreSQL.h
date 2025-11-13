@@ -34,7 +34,7 @@
 #include "CDBStore.h"
 #include "CDebugger.h"
 
-#include "CGeoParams.h"
+#include "Types/GeoParameters.h"
 #include "CPGSQLDB.h"
 
 #define TABLETYPE_TIMESTAMP 1
@@ -47,6 +47,13 @@ struct DimInfo {
   CT::string dataType;
 };
 typedef struct DimInfo DimInfo;
+
+struct GeoOptions {
+  double bbox[4];
+  int indices[4];
+  CT::string proj4;
+  int level;
+};
 
 class CDBAdapterPostgreSQL {
 private:

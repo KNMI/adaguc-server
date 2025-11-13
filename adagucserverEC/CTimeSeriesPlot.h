@@ -74,7 +74,7 @@ public:
 #ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("GetFeatureInfo Format image/png");
 #endif
-    float width = srvParam->Geo->dWidth, height = srvParam->Geo->dHeight;
+    float width = srvParam->geoParams.dWidth, height = srvParam->geoParams.dHeight;
     if (srvParam->figWidth > 1) width = srvParam->figWidth;
     if (srvParam->figHeight > 1) height = srvParam->figHeight;
 
