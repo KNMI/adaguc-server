@@ -39,11 +39,10 @@ int getLayerMetadataAsJson(CServerParams *srvParams, json &result) {
     layerNameInRequest = srvParams->requestedLayerNames[0].c_str();
   }
 
-  for (auto dataset : datasetNames) {
-    auto dataSetName = dataset.first;
+  for (auto [dataSetName, layers] : datasetNames) {
     if (srvParams->datasetLocation.empty() || srvParams->datasetLocation.equals(dataSetName)) {
       json datasetJSON;
-      for (auto layerName : dataset.second) {
+      for (auto layerName : layers) {
         if (layerNameInRequest.empty() || layerNameInRequest.equals(layerName.c_str())) {
           try {
             json layer;
@@ -53,9 +52,7 @@ int getLayerMetadataAsJson(CServerParams *srvParams, json &result) {
             // layer["styles"] = a.parse(getBlob(layerMetaDataStore, dataSetName.c_str(), layerName.c_str(), "stylelist").c_str());
             // layer["projected_extents"] = a.parse(getBlob(layerMetaDataStore, dataSetName.c_str(), layerName.c_str(), "projected_extents").c_str());
 
-            if (layer["layer"]["hidden"].get<bool>() == false) {
-              datasetJSON[layerName.c_str()] = layer;
-            }
+            datasetJSON[layerName.c_str()] = layer;
 
           } catch (json::exception &e) {
             CDBWarning("Unable to parse json for layer %s", layerName.c_str());

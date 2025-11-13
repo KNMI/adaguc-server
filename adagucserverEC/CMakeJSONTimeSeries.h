@@ -17,7 +17,7 @@ class CMakeJSONTimeSeries {
 public:
   DEF_ERRORFUNCTION();
 
-  static int MakeJSONTimeSeries(CDrawImage *drawImage, CImageWarper *imageWarper, std::vector<CDataSource *> dataSources, int dataSourceIndex, int dX, int dY, CXMLParser::XMLElement *gfiStructure);
+  static int MakeJSONTimeSeries(CDrawImage *drawImage, CImageWarper *imageWarper, CDataSource *dataSources, int dX, int dY, CXMLParser::XMLElement *gfiStructure);
 };
 
 #endif

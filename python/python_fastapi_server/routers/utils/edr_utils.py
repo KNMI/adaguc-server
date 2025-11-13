@@ -164,8 +164,6 @@ def get_extent_from_md(metadata: dict, parameter: str):
 
     # if ref_times is None or len(ref_times) == 0:
     (interval, time_values) = get_times_for_collection(metadata, parameter)
-    if interval is None:
-        return None
     # else:
     # if instance is None:
     #     instance = max(ref_times)  # Default instance is latest instance
@@ -187,11 +185,13 @@ def get_extent_from_md(metadata: dict, parameter: str):
     if vertical_dim is not None:
         vertical = Vertical(**vertical_dim)
 
-    temporal = Temporal(
-        interval=interval,  # [["2022-06-30T09:00:00Z", "2022-07-02T06:00:00Z"]],
-        trs='TIMECRS["DateTime",TDATUM["Gregorian Calendar"],CS[TemporalDateTime,1],AXIS["Time (T)",future]',
-        values=time_values,  # ["R49/2022-06-30T06:00:00/PT60M"],
-    )
+    temporal = None
+    if interval:
+        temporal = Temporal(
+            interval=interval,  # [["2022-06-30T09:00:00Z", "2022-07-02T06:00:00Z"]],
+            trs='TIMECRS["DateTime",TDATUM["Gregorian Calendar"],CS[TemporalDateTime,1],AXIS["Time (T)",future]',
+            values=time_values,  # ["R49/2022-06-30T06:00:00/PT60M"],
+        )
     # logger.info("TEMPORAL [%s]: %s, %s", parameter, interval, time_values)
 
     extent = Extent(

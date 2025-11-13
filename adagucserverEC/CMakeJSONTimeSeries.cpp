@@ -8,9 +8,7 @@ const char *CMakeJSONTimeSeries::className = "CMakeJSONTimeSeries";
 
 // #define CMakeJSONTimeSeries_DEBUG
 
-int CMakeJSONTimeSeries::MakeJSONTimeSeries(CDrawImage *drawImage, CImageWarper *imageWarper, std::vector<CDataSource *> dataSources, int dataSourceIndex, int dX, int dY,
-                                            CXMLParser::XMLElement *gfiStructure) {
-  CDataSource *dataSource = dataSources[dataSourceIndex];
+int CMakeJSONTimeSeries::MakeJSONTimeSeries(CDrawImage *drawImage, CImageWarper *imageWarper, CDataSource *dataSource, int dX, int dY, CXMLParser::XMLElement *gfiStructure) {
   CURUniqueRequests uniqueRequest;
   /**
    * DataPostProc: Here our datapostprocessor comes into action!

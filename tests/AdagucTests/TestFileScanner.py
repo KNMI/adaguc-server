@@ -25,9 +25,6 @@ class TestFileScanner(unittest.TestCase):
     AdagucTestTools().mkdir_p(testresultspath)
 
     def test_FileScanner_MultiVarCleanup(self):
-        if os.getenv("ADAGUC_DB").endswith(".db"):
-            print("SKIP: Only PSQL")
-            return
         AdagucTestTools().cleanTempDir()
         AdagucTestTools().cleanPostgres()
         config = ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"
@@ -84,9 +81,6 @@ class TestFileScanner(unittest.TestCase):
         assert os.path.exists(filetoclean) is False
 
     def test_FileScanner_MultiVarCleanupFiledate(self):
-        if os.getenv("ADAGUC_DB").endswith(".db"):
-            print("SKIP: Only PSQL")
-            return
         AdagucTestTools().cleanTempDir()
         AdagucTestTools().cleanPostgres()
         config = ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"
