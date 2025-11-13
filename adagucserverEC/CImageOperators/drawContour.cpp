@@ -6,6 +6,20 @@
 #define CONTOURDEFINITIONLOOKUPLENGTH 32
 #define DISTANCEFIELDTYPE unsigned int
 
+/*
+Search window for xdir and ydir:
+      -1  0  1  (x)
+  -1   6  5  4
+   0   7  X  3
+   1   0  1  2
+  (y)
+            0  1  2  3  4  5  6  7 */
+const int xdir[8] = {-1, 0, 1, 1, 1, 0, -1, -1};
+const int ydir[8] = {1, 1, 1, 0, -1, -1, -1, 0};
+/*                0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15 */
+const int xdirOuter[16] = {-2, -1, 0, 1, 2, 2, 2, 2, 2, 1, 0, -1, -2, -2, -2, -2};
+const int ydirOuter[16] = {2, 2, 2, 2, 2, 1, 0, -1, -2, -2, -2, -2, -2, -1, 0, 1};
+
 struct ContourLineStructure {
   std::vector<double> classes;
   double interval = 0;
@@ -30,8 +44,7 @@ bool IsTextTooClose(std::vector<i4point> &textLocations, int x, int y) {
   return false;
 }
 
-void drawTextForContourLines(CDrawImage *drawImage, ContourLineStructure &contourDefinition, int lineX, int lineY, int endX, int endY, std::vector<i4point> &, float value, const char *fontLocation,
-                             float scaling) {
+void drawTextForContourLines(CDrawImage *drawImage, ContourLineStructure &contourDefinition, int lineX, int lineY, int endX, int endY, float value, const char *fontLocation, float scaling) {
 
   /* Draw text */
   CT::string text;
@@ -59,6 +72,7 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
   int maxLineDistance = 5;                /* Maximum length of each line segment */
   int currentLineDistance = maxLineDistance;
   std::vector<i4point> lineSegments;
+  lineSegments.reserve(500);
 
   size_t numDashes = contourDefinition.dashes.size();
   double *dashes = &contourDefinition.dashes[0];
@@ -66,8 +80,8 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
   /* Push the beginning of this line*/
   lineSegments.push_back({.x = lineX, .y = lineY});
 
-  float lineSegmentsValue = valueField[p];
-  float binnedLineSegmentsValue;
+  double lineSegmentsValue = valueField[p];
+  double binnedLineSegmentsValue;
 
   if (!contourDefinition.classes.size() == 0) {
     float closestValue;
@@ -88,7 +102,11 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
     binnedLineSegmentsValue = contourDefinition.classes[definedIntervalIndex];
   } else {
     double interval = contourDefinition.interval;
-    binnedLineSegmentsValue = convertValueToClass(lineSegmentsValue + interval / 2, interval);
+    binnedLineSegmentsValue = ceil(lineSegmentsValue / interval) * interval;
+    // Avoid printing -0;
+    if (binnedLineSegmentsValue > -interval / 2 && binnedLineSegmentsValue < interval / 2) {
+      binnedLineSegmentsValue = 0;
+    }
   }
 
   /* Use the distance field and walk the line */
@@ -124,8 +142,9 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
             nextLineX = tx;
             nextLineY = ty;
             foundLine = true;
-            break;
+            // break;
           }
+          distance[p] &= ~lineMask; /* Indicate found, set to false */
         }
       }
     }
@@ -157,37 +176,41 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
   bool textSkip = false;
   bool textOn = false;
 
-  int drawTextAtEveryNPixels = 50 * int(scaling);
-  int drawTextAngleNSteps = 0;
-  int drawTextAngleNSteps5 = 5 * int(scaling) * (contourDefinition.fontSize / 8);
+  int drawTextAtEveryNPixels = 60 * int(scaling);
+  int startAtStep = 0; // drawTextAtEveryNPixels / 2;
+  int spaceForTextNr = 5 * int(scaling) * (contourDefinition.fontSize / 8);
 
   float scaledLineWidth = contourDefinition.lineWidth * scaling;
-  int j = -1;
-  for (auto &lineSegment : lineSegments) {
-    j++;
-    if (doDrawText) {
-      if (j % drawTextAtEveryNPixels == drawTextAngleNSteps) {
+  int numLineSegments = (int)lineSegments.size();
+  if (doDrawText && numLineSegments > 20) {
+    for (int j = 0; j < numLineSegments; j++) {
+      auto &lineSegment = lineSegments[j];
+      int matchModulo = j % drawTextAtEveryNPixels;
+      bool startText = matchModulo == startAtStep;
+      if (startText && j + spaceForTextNr < numLineSegments) {
         textOn = false;
-        if (IsTextTooClose(textLocations, lineSegment.x, lineSegment.y) == false) {
+        if (IsTextTooClose(textLocations, lineSegment.x, lineSegment.y) == false && j + spaceForTextNr < numLineSegments) {
           textSkip = false;
           textLocations.push_back(lineSegment);
 
-          float endX = lineSegments[j + drawTextAngleNSteps5].x;
-          float endY = lineSegments[j + drawTextAngleNSteps5].y;
-          drawTextForContourLines(drawImage, contourDefinition, lineSegment.x, lineSegment.y, endX, endY, textLocations, binnedLineSegmentsValue, fontLocation, scaling);
-
+          int endX = lineSegments[j + spaceForTextNr].x;
+          int endY = lineSegments[j + spaceForTextNr].y;
+          drawTextForContourLines(drawImage, contourDefinition, lineSegment.x, lineSegment.y, endX, endY, binnedLineSegmentsValue, fontLocation, scaling);
           textOn = true;
         } else {
           textSkip = true;
         }
       }
-      if (j % drawTextAtEveryNPixels == drawTextAngleNSteps && textOn && !textSkip) {
+      if (startText && textOn && !textSkip) {
         drawImage->endLine(dashes, numDashes);
       }
-      if (j % drawTextAtEveryNPixels > drawTextAngleNSteps5 || textSkip) {
+      if (matchModulo > spaceForTextNr || textSkip) {
         drawImage->lineTo(lineSegment.x, lineSegment.y, scaledLineWidth, contourDefinition.lineColor);
       }
-    } else {
+    }
+
+  } else {
+    for (auto &lineSegment : lineSegments) {
       drawImage->lineTo(lineSegment.x, lineSegment.y, scaledLineWidth, contourDefinition.lineColor);
     }
   }
@@ -195,8 +218,11 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
   drawImage->endLine(dashes, numDashes);
 }
 
-void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawImage) {
-  CStyleConfiguration *styleConfiguration = dataSource->getStyle();
+void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration) {
+
+  if (styleConfiguration->contourLines.size() == 0) {
+    return;
+  }
   CDBDebug("drawContour");
   double scaling = dataSource->getContourScaling();
   const char *fontLocation = dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.location.c_str();
@@ -253,6 +279,7 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
   }
 
   float fNodataValue = dataSource->getDataObject(0)->dfNodataValue;
+  CDBDebug("step 1");
   for (int y = 0; y < dImageHeight - 1; y++) {
     for (int x = 0; x < dImageWidth - 1; x++) {
       size_t p1 = size_t(x + y * dImageWidth);
@@ -260,11 +287,11 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
       // Check if all pixels have values...
       if (val[0] != fNodataValue && val[1] != fNodataValue && val[2] != fNodataValue && val[3] != fNodataValue && val[0] == val[0] && val[1] == val[1] && val[2] == val[2] && val[3] == val[3]) {
         int mask = 1;
-        for (auto contourLine : contourlineList) {
+        for (auto &contourLine : contourlineList) {
           // Check for lines at specified classes
-
           float min = std::min(val[0], std::min(val[1], std::min(val[2], val[3])));
           float max = std::max(val[0], std::max(val[1], std::max(val[2], val[3])));
+
           for (double cc : contourLine.classes) {
             if (cc >= min && cc < max) {
               distance[p1] |= mask;
@@ -289,14 +316,17 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
 
   DISTANCEFIELDTYPE lineMask = 1;
 
+  CDBDebug("step 2");
+
   // CDBDebug("B %d", styleConfiguration->contourLines.size());
-  for (auto contourLine : contourlineList) {
+  for (auto &contourLine : contourlineList) {
 
     /* Everywhere */
     for (int y = 0; y < dImageHeight; y++) {
       for (int x = 0; x < dImageWidth; x++) {
         size_t p = x + y * dImageWidth;
         if (distance[p] & lineMask) {
+          // drawImage->setPixel(x, y, defaultLineColor);
           traverseLine(drawImage, distance, sourceGrid, x, y, dImageWidth, dImageHeight, contourLine, lineMask, textLocations, scaling, fontLocation);
         }
       }
@@ -310,6 +340,7 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
 
   delete[] distance;
 
+  CDBDebug("ready");
 #ifdef CImgWarpBilinear_DEBUG
   CDBDebug("Finished drawing lines and text");
 #endif

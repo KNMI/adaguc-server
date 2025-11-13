@@ -30,6 +30,9 @@
 
 const char *CImgWarpGeneric::className = "CImgWarpGeneric";
 
+CColor cblack = CColor(0, 0, 0, 255);
+CColor cblue = CColor(0, 0, 255, 255);
+
 template <typename T> void warpImageNearestFunction(int x, int y, T value, GDWState &wState, GDWDrawFunctionSettings &settings) {
   if (x < 0 || y < 0 || x >= wState.destDataWidth || y >= wState.destDataHeight) return;
   if ((settings.hasNodataValue && ((value) == (T)settings.dfNodataValue)) || !(value == value)) return;
@@ -72,6 +75,37 @@ template <typename T> void warpImageBilinearFunction(int x, int y, T val, GDWSta
   }
 };
 
+template <typename T> void warpImageRenderBorders(int x, int y, T val, GDWState &warperState, GDWDrawFunctionSettings &settings) {
+  if (x < 0 || y < 0 || x > warperState.destDataWidth || y > warperState.destDataHeight) return;
+
+  if (settings.hasNodataValue) {
+    if ((val) == (T)settings.dfNodataValue) return;
+  }
+
+  // Check for NaN
+  if (!(val == val)) return;
+
+  size_t sourceDataPX = warperState.sourceDataPX;
+  size_t sourceDataPY = warperState.sourceDataPY;
+  size_t sourceDataWidth = warperState.sourceDataWidth;
+  size_t sourceDataHeight = warperState.sourceDataHeight;
+
+  if (sourceDataPY > sourceDataHeight - 1) return;
+  if (sourceDataPX > sourceDataWidth - 1) return;
+  if (warperState.sourceDataPX == 0 || warperState.sourceDataPX == 0 || warperState.sourceDataPX == (int)warperState.sourceDataWidth - 1 ||
+      warperState.sourceDataPY == (int)warperState.sourceDataHeight - 1) {
+    settings.drawImage->setPixel(x, y, cblue);
+  }
+  if (x >= 0 && y >= 0 && x < (int)warperState.destDataWidth && y < (int)warperState.destDataHeight) {
+    float dx = warperState.tileDx;
+    float dy = warperState.tileDy;
+
+    if (dx <= .02 || dy <= .02 || dx >= 0.98 || dy >= 0.98) {
+      settings.drawImage->setPixel(x, y, cblack);
+    }
+  }
+};
+
 void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage) {
 
   CT::string color;
@@ -80,6 +114,7 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
 
   GDWDrawFunctionSettings settings = getDrawFunctionSettings(dataSource, drawImage, styleConfiguration);
+  CDBDebug("%f %d", settings.shadeInterval, settings.isUsingShadeIntervals);
 
   int destDataWidth = drawImage->geoParams.width;
   int destDataHeight = drawImage->geoParams.height;
@@ -107,11 +142,14 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
 #undef RENDER
   }
   if (settings.drawInImage == DrawInImageBilinear || settings.drawInImage == DrawInImageNone) {
+    genericDataWarper.useHalfCellOffset = true;
+
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
   if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return warpImageBilinearFunction(x, y, val, warperState, settings); });
     ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
   }
+
   if (settings.drawInImage == DrawInImageBilinear || settings.drawInImage == DrawInImageNearest) {
     for (int y = 0; y < (int)destDataHeight; y = y + 1) {
       for (int x = 0; x < (int)destDataWidth; x = x + 1) {
@@ -120,7 +158,19 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
       }
     }
   }
-  drawContour((float *)settings.destinationGrid, dataSource, drawImage);
+  drawContour((float *)settings.destinationGrid, dataSource, drawImage, styleConfiguration);
+
+  // Draw grid
+  if (1 == 12) {
+    genericDataWarper.useHalfCellOffset = true;
+
+#define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
+  if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return warpImageRenderBorders(x, y, val, warperState, settings); });
+    ENUMERATE_OVER_CDFTYPES(RENDER)
+#undef RENDER
+  }
+
+  CDBDebug("done");
   delete[] (float *)settings.destinationGrid;
 
   return;

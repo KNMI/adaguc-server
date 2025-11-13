@@ -39,7 +39,7 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, GeoParame
   warperState.destDataHeight = destGeoParams.height;
   warperState.sourceDataWidth = sourceGeoParams.width;
   warperState.sourceDataHeight = sourceGeoParams.height;
-
+  double halfCell = useHalfCellOffset ? 0.5 : 0;
   if (debug) {
     CDBDebug("render");
   }
@@ -142,8 +142,8 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, GeoParame
 
     for (int y = pixelspan.bottom; y < pixelspan.top; y++) {
       for (int x = pixelspan.left; x < pixelspan.right; x++) {
-        double dfx = x;
-        double dfy = y;
+        double dfx = x + halfCell;
+        double dfy = y - halfCell;
         int sx1 = roundedLinearTransform(dfx, dfSourceW, dfSourceExtW, dfSourceOrigX, dfDestOrigX, dfDestExtW, dfDestW);
         int sx2 = roundedLinearTransform(dfx + 1, dfSourceW, dfSourceExtW, dfSourceOrigX, dfDestOrigX, dfDestExtW, dfDestW);
         int sy1 = roundedLinearTransform(dfy, dfSourceH, dfSourceExtH, dfSourceOrigY, dfDestOrigY, dfDestExtH, dfDestH);
@@ -181,7 +181,7 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, GeoParame
           if (lx2 == lx1) lx2++;
           for (int sjy = ly1; sjy < ly2; sjy++) {
             for (int sjx = lx1; sjx < lx2; sjx++) {
-              warperState.tileDy = (sjy - ly1) / double(ly2 - ly1);
+              warperState.tileDy = 1 - (sjy - ly1) / double(ly2 - ly1);
               warperState.tileDx = (sjx - lx1) / double(lx2 - lx1);
               warperState.destX = sjx;
               warperState.destY = sjy;
@@ -204,6 +204,7 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, GeoParame
     useStridingProjection = true;
   }
 
+  useStridingProjection = false;
   size_t dataSize = (dataWidth + 1) * (dataHeight + 1);
 
   double *px = new double[dataSize];
@@ -214,8 +215,8 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, GeoParame
     for (int y = 0; y < dataHeight + 1; y++) {
       for (int x = 0; x < dataWidth + 1; x++) {
         size_t p = x + y * (dataWidth + 1);
-        double valX = dfSourcedExtW * (x + PXExtentBasedOnSource[0]) + dfSourceOrigX;
-        double valY = dfSourcedExtH * (y + PXExtentBasedOnSource[1]) + dfSourceOrigY;
+        double valX = dfSourcedExtW * (x + halfCell + PXExtentBasedOnSource[0]) + dfSourceOrigX;
+        double valY = dfSourcedExtH * (y - halfCell + PXExtentBasedOnSource[1]) + dfSourceOrigY;
         px[p] = valX;
         py[p] = valY;
         skip[p] = false;
@@ -350,7 +351,7 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, GeoParame
         quadY[2] = (quadY[2] - dfDestOrigY) * multiDestY;
         quadY[3] = (quadY[3] - dfDestOrigY) * multiDestY;
 
-            // If suddenly the length of the quad is 10 times bigger, we probably have an anomaly and we should not draw it.
+        // If suddenly the length of the quad is 10 times bigger, we probably have an anomaly and we should not draw it.
         // Calculate the diagonal length of the quad.
         double lengthD = (quadX[2] - quadX[0]) * (quadX[2] - quadX[0]) + (quadY[2] - quadY[0]) * (quadY[2] - quadY[0]);
         if (x == 0 && y == 0) {
