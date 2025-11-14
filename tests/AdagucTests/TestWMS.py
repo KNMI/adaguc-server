@@ -2816,6 +2816,31 @@ class TestWMS(unittest.TestCase):
                                            filename),
         )
 
+    def test_WMSGetFeatureInfo_timeseries_SolarTerminator(self):
+        # Testing the solar terminator feature info
+        AdagucTestTools().cleanTempDir()
+        config = (ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," +
+                  ADAGUC_PATH +
+                  "/data/config/datasets/adaguc.tests.solarterminator.xml")
+        env = {"ADAGUC_CONFIG": config}
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=["--updatedb", "--config", config], env=self.env, isCGI=False)
+
+        filename = "test_WMSGetFeatureInfo_timeseries_SolarTerminator.html"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=solt&service=WMS&request=GetFeatureInfo&version=1.3.0&layers=solarterminator&query_layers=solarterminator&crs=EPSG%3A3857&bbox=-19000000%2C-78286307.05394192%2C19000000%2C78286307.05394192&width=241&height=993&i=180&j=366&format=image%2Fgif&info_format=application%2Fjson&time=2025-10-01T00%3A00%3A00Z%2F2025-10-02T00%3A00%3A00Z&",
+            env=env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename,
+                                      data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath +
+                                           filename),
+        )
+
     def test_WMSGetCapabilities_403_default_time_referenced_to_forecast_time(self):
         """
         See https://github.com/KNMI/adaguc-server/issues/403
