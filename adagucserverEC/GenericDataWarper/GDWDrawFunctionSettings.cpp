@@ -44,7 +44,6 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
       }
     }
     // For the generic renderer and when shadeinterval is set, always apply shading.
-    CDBDebug("%d %d", settings.isUsingShadeIntervals, styleConfiguration->shadeIntervals.size());
     if (settings.isUsingShadeIntervals == false && styleConfiguration->shadeIntervals.size() > 0) {
       size_t numRenderSettings = styleConfiguration->styleConfig->RenderMethod.size();
       if (numRenderSettings > 0 && styleConfiguration->renderMethod == RM_GENERIC) {

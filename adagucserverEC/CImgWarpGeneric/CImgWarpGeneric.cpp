@@ -138,12 +138,15 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
   GDWArgs args = {.warper = warper, .sourceData = sourceData, .sourceGeoParams = sourceGeo, .destGeoParams = drawImage->geoParams};
 
   if (settings.drawInImage == DrawInImageNearest) {
+    CDBDebug("Render nearest");
+    genericDataWarper.useHalfCellOffset = false;
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
   if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return warpImageNearestFunction(x, y, val, warperState, settings); });
     ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
   }
   if (settings.drawInImage == DrawInImageBilinear || settings.drawInImage == DrawInImageNone) {
+    CDBDebug("Render bilinear");
     genericDataWarper.useHalfCellOffset = true;
 
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
