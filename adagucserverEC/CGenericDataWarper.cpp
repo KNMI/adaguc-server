@@ -389,16 +389,16 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, GeoParame
   // This structure is passed to drawfunctions and contains info about the current state of the warper.
   // The drawfunction will be called numerous times for each destination pixel.
   GDWState warperState = {.sourceData = _sourceData,                  // The source datagrid, has the same datatype as the template T
+                          .hasNodataValue = 0,                        // Wether the source data grid has a nodata value
+                          .dfNodataValue = 0,                         // No data value of the source grid, in double type. Can be casted to T
                           .sourceDataPX = 0,                          // Which X index is sampled from the source grid
                           .sourceDataPY = 0,                          // Which Y index is sampled for the source grid.
                           .sourceDataWidth = sourceGeoParams.width,   // The width of the sourcedata grid
                           .sourceDataHeight = sourceGeoParams.height, // The height of the source data grid
-                          .tileDx = 0,                                // The relative X sample position from the source grid cell from 0 to 1. Can be used for bilinear interpolation
-                          .tileDy = 0,                                // The relative y sample position
-                          .dfNodataValue = 0,                         // No data value of the source grid, in double type. Can be casted to T
-                          .hasNodataValue = 0,                        // Wether the source data grid has a nodata value
                           .destDataWidth = destGeoParams.width,       // The width of the destination grid
                           .destDataHeight = destGeoParams.height,     // The height of the destination grid
+                          .tileDx = 0,                                // The relative X sample position from the source grid cell from 0 to 1. Can be used for bilinear interpolation
+                          .tileDy = 0,                                // The relative y sample position
                           .destX = 0,                                 // The target X index in the target grid
                           .destY = 0};                                // The target Y index in the target grid.
 
