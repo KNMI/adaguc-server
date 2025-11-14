@@ -82,6 +82,7 @@ ProjectionGrid *makeProjection(double halfCell, CImageWarper *warper, i4box &pix
 template <typename T>
 void linearTransformGrid(GDWState &warperState, bool useHalfCellOffset, CImageWarper *warper, void *_sourceData, GeoParameters &sourceGeoParams, GeoParameters &destGeoParams,
                          const std::function<void(int, int, T, GDWState &warperState)> &drawFunction) {
+  CDBDebug("linearTransformGrid");
   double halfCell = useHalfCellOffset ? 0.5 : 0;
   double dfSourceExtW = sourceGeoParams.bbox.span().x;
   double dfSourceExtH = sourceGeoParams.bbox.span().y;
@@ -123,43 +124,33 @@ void linearTransformGrid(GDWState &warperState, bool useHalfCellOffset, CImageWa
       int sx2 = roundedLinearTransform(dfx + 1, dfSourceW, dfSourceExtW, dfSourceOrigX, dfDestOrigX, dfDestExtW, dfDestW);
       int sy1 = roundedLinearTransform(dfy, dfSourceH, dfSourceExtH, dfSourceOrigY, dfDestOrigY, dfDestExtH, dfDestH);
       int sy2 = roundedLinearTransform(dfy + 1, dfSourceH, dfSourceExtH, dfSourceOrigY, dfDestOrigY, dfDestExtH, dfDestH);
-      bool skip = false;
       int sxw = floor(fabs(sx2 - sx1)) + 1;
       int syh = floor(fabs(sy2 - sy1)) + 1;
-      if (sx1 < -sxw && sx2 < -sxw) skip = true;
-      if (sy1 < -syh && sy2 < -syh) skip = true;
-      if (sx1 >= destGeoParams.width + sxw && sx2 >= destGeoParams.width + sxw) skip = true;
-      if (sy1 >= destGeoParams.height + syh && sy2 >= destGeoParams.height + syh) skip = true;
+      if ((sx1 < -sxw && sx2 < -sxw) || (sy1 < -syh && sy2 < -syh) || (sx1 >= destGeoParams.width + sxw && sx2 >= destGeoParams.width + sxw) ||
+          (sy1 >= destGeoParams.height + syh && sy2 >= destGeoParams.height + syh)) {
+        continue;
+      }
 
-      if (!skip) {
-        warperState.sourceIndexX = x;
-        warperState.sourceIndexY = sourceGeoParams.height - 1 - y;
-        T value = ((T *)warperState.sourceGrid)[warperState.sourceIndexX + (warperState.sourceIndexY) * sourceGeoParams.width];
-        int lx1, lx2, ly1, ly2;
-        if (sx1 > sx2) {
-          lx2 = sx1;
-          lx1 = sx2;
-        } else {
-          lx2 = sx2;
-          lx1 = sx1;
-        }
-        if (sy1 > sy2) {
-          ly2 = sy1;
-          ly1 = sy2;
-        } else {
-          ly2 = sy2;
-          ly1 = sy1;
-        }
-        if (ly2 == ly1) ly2++;
-        if (lx2 == lx1) lx2++;
-        for (int sjy = ly1; sjy < ly2; sjy++) {
-          for (int sjx = lx1; sjx < lx2; sjx++) {
-            warperState.sourceTileDy = 1 - (sjy - ly1) / double(ly2 - ly1);
-            warperState.sourceTileDx = (sjx - lx1) / double(lx2 - lx1);
-            warperState.destIndexX = sjx;
-            warperState.destIndexY = sjy;
-            drawFunction(sjx, sjy, value, warperState);
-          }
+      warperState.sourceIndexX = x;
+      warperState.sourceIndexY = sourceGeoParams.height - 1 - y;
+      T value = ((T *)warperState.sourceGrid)[warperState.sourceIndexX + (warperState.sourceIndexY) * sourceGeoParams.width];
+      if (sx1 > sx2) {
+        std::swap(sx1, sx2);
+      }
+      if (sy1 > sy2) {
+        std::swap(sy1, sy2);
+      }
+      if (sy2 == sy1) sy2++;
+      if (sx2 == sx1) sx2++;
+      double h = double(sy2 - sy1);
+      double w = double(sx2 - sx1);
+      for (int sjy = sy1; sjy < sy2; sjy++) {
+        for (int sjx = sx1; sjx < sx2; sjx++) {
+          warperState.sourceTileDy = 1 - (sjy - sy1) / h; // TODO: Check why sourceTileDy is upside down.
+          warperState.sourceTileDx = (sjx - sx1) / w;
+          warperState.destIndexX = sjx;
+          warperState.destIndexY = sjy;
+          drawFunction(sjx, sjy, value, warperState);
         }
       }
     }
