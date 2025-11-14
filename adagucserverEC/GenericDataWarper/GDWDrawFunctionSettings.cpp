@@ -26,18 +26,24 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
     CDBDebug("numRenderSettings %d", numRenderSettings);
     if (numRenderSettings > 0) {
       auto renderSettings = styleConfiguration->styleConfig->RenderSettings[numRenderSettings - 1];
-      if (renderSettings->attr.renderhint.equals(RENDERHINT_DISCRETECLASSES)) {
+      auto &renderSettingsAttr = renderSettings->attr;
+      if (renderSettingsAttr.renderhint.equals(RENDERHINT_DISCRETECLASSES)) {
         settings.isUsingShadeIntervals = true;
       }
-      if (renderSettings->attr.interpolationmethod.equals("nearest")) {
+      // Obtain interpolationmethod
+      if (renderSettingsAttr.interpolationmethod.equals("nearest")) {
         settings.drawInImage = DrawInImageNearest;
-      } else if (renderSettings->attr.interpolationmethod.equals("bilinear")) {
+      } else if (renderSettingsAttr.interpolationmethod.equals("bilinear")) {
         settings.drawInImage = DrawInImageBilinear;
-      } else if (renderSettings->attr.interpolationmethod.equals("none")) {
+      } else if (renderSettingsAttr.interpolationmethod.equals("none")) {
         settings.drawInImage = DrawInImageNone;
       }
+
+      if (renderSettingsAttr.drawgridboxoutline.equals("true")) {
+        settings.drawgridboxoutline = true;
+      }
     }
-    // With rendermethod generic icm shadeintervals, also use shading.
+    // For the generic renderer and when shadeinterval is set, always apply shading.
     CDBDebug("%d %d", settings.isUsingShadeIntervals, styleConfiguration->shadeIntervals.size());
     if (settings.isUsingShadeIntervals == false && styleConfiguration->shadeIntervals.size() > 0) {
       size_t numRenderSettings = styleConfiguration->styleConfig->RenderMethod.size();

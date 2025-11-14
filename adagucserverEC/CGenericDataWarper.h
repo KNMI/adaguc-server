@@ -16,7 +16,6 @@ typedef unsigned char uchar;
 typedef unsigned char ubyte;
 
 struct GDWState {
-  CDFType sourceDataType;
   void *sourceData;
   int sourceDataPX, sourceDataPY, sourceDataWidth, sourceDataHeight;
   double tileDx, tileDy;
@@ -33,17 +32,39 @@ struct GDWArgs {
   GeoParameters destGeoParams;
 };
 
+class ProjectionGrid {
+public:
+  double *px = nullptr;
+  double *py = nullptr;
+  bool *skip = nullptr;
+  void initSize(size_t dataSize) {
+    px = new double[dataSize];
+    py = new double[dataSize];
+    skip = new bool[dataSize];
+  }
+  ~ProjectionGrid() {
+    CDBDebug("Destructed ProjectionGrid");
+    delete[] px;
+    delete[] py;
+    delete[] skip;
+  }
+};
+
 class GenericDataWarper {
 private:
   DEF_ERRORFUNCTION();
-  GDWState warperState;
+  ProjectionGrid *projectionGrid = nullptr;
 
 public:
   GenericDataWarper() { CDBDebug("NEW GenericDataWarper"); }
-  bool debug = true;
+  ~GenericDataWarper() {
+    CDBDebug("Destruct GenericDataWarper");
+    delete projectionGrid;
+    projectionGrid = nullptr;
+  };
   bool useHalfCellOffset = false;
   template <typename T>
-  int render(CImageWarper *warper, void *_sourceData, GeoParameters &sourceGeoParams, GeoParameters &destGeoParams, const std::function<void(int, int, T, GDWState &warperState)> &drawFunction);
+  int render(CImageWarper *warper, void *_sourceData, GeoParameters sourceGeoParams, GeoParameters destGeoParams, const std::function<void(int, int, T, GDWState &warperState)> &drawFunction);
 
   template <typename T> int render(GDWArgs &args, const std::function<void(int, int, T, GDWState &warperState)> &drawFunction) {
     return render(args.warper, args.sourceData, args.sourceGeoParams, args.destGeoParams, drawFunction);

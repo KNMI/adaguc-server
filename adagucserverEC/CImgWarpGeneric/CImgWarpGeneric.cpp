@@ -37,6 +37,7 @@ template <typename T> void warpImageNearestFunction(int x, int y, T value, GDWSt
   if (x < 0 || y < 0 || x >= wState.destDataWidth || y >= wState.destDataHeight) return;
   if ((settings.hasNodataValue && ((value) == (T)settings.dfNodataValue)) || !(value == value)) return;
   ((float *)settings.destinationGrid)[x + y * wState.destDataWidth] = value;
+  setPixelInDrawImage(x, y, value, &settings);
 };
 
 template <typename T> void warpImageBilinearFunction(int x, int y, T val, GDWState &warperState, GDWDrawFunctionSettings &settings) {
@@ -72,6 +73,7 @@ template <typename T> void warpImageBilinearFunction(int x, int y, T val, GDWSta
     float gx2 = (1 - dx) * values[0][1] + dx * values[1][1];
     float bilValue = (1 - dy) * gx1 + dy * gx2;
     ((float *)settings.destinationGrid)[x + y * warperState.destDataWidth] = bilValue;
+    setPixelInDrawImage(x, y, bilValue, &settings);
   }
 };
 
@@ -150,19 +152,13 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
 #undef RENDER
   }
 
-  if (settings.drawInImage == DrawInImageBilinear || settings.drawInImage == DrawInImageNearest) {
-    for (int y = 0; y < (int)destDataHeight; y = y + 1) {
-      for (int x = 0; x < (int)destDataWidth; x = x + 1) {
-        float val = ((float *)settings.destinationGrid)[x + y * destDataWidth];
-        setPixelInDrawImage(x, y, val, &settings);
-      }
-    }
+  if (styleConfiguration->contourLines.size() > 0) {
+    drawContour((float *)settings.destinationGrid, dataSource, drawImage, styleConfiguration);
   }
-  drawContour((float *)settings.destinationGrid, dataSource, drawImage, styleConfiguration);
 
-  // Draw grid
-  if (1 == 12) {
-    genericDataWarper.useHalfCellOffset = true;
+  // Draw grid outlines
+  if (settings.drawgridboxoutline) {
+    genericDataWarper.useHalfCellOffset = false;
 
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
   if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return warpImageRenderBorders(x, y, val, warperState, settings); });

@@ -102,7 +102,7 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
     binnedLineSegmentsValue = contourDefinition.classes[definedIntervalIndex];
   } else {
     double interval = contourDefinition.interval;
-    binnedLineSegmentsValue = ceil(lineSegmentsValue / interval) * interval;
+    binnedLineSegmentsValue = round(lineSegmentsValue / interval) * interval;
     // Avoid printing -0;
     if (binnedLineSegmentsValue > -interval / 2 && binnedLineSegmentsValue < interval / 2) {
       binnedLineSegmentsValue = 0;
@@ -126,7 +126,7 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
           nextLineY = ty;
           foundLine = true;
         }
-        distance[p] &= ~lineMask; /* Indicate found, set to false */
+        distance[p] = 0; //&= ~lineMask; /* Indicate found, set to false */
       }
     }
 
@@ -144,7 +144,7 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
             foundLine = true;
             // break;
           }
-          distance[p] &= ~lineMask; /* Indicate found, set to false */
+          distance[p] = 0; //~lineMask; /* Indicate found, set to false */
         }
       }
     }

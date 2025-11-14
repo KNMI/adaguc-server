@@ -8,7 +8,6 @@
 #include "CDrawImage.h"
 
 enum DrawInImage { DrawInImageNone, DrawInImageNearest, DrawInImageBilinear };
-enum DrawInDataGrid { DrawInDataGridNone, DrawInDataGridNearest, DrawInDataGridBilinear };
 enum LegendMode { LegendModeContinuous, LegendModeDiscrete };
 
 struct Interval {
@@ -32,8 +31,8 @@ struct GDWDrawFunctionSettings {
   double legendOffset;
   CColor bgColor;
   bool hasNodataValue;
+  bool drawgridboxoutline = false;
   DrawInImage drawInImage = DrawInImageNearest;
-  DrawInDataGrid drawInDataGrid = DrawInDataGridNone;
   std::vector<Interval> intervals;
   float *smoothingDistanceMatrix = nullptr;
   CDrawImage *drawImage;
