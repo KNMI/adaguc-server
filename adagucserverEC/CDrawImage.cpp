@@ -725,7 +725,9 @@ void CDrawImage::setPixelIndexed(int x, int y, int color) {
       //       }
     }
   } else {
-    gdImageSetPixel(image, x, y, colors[color]);
+    if (color >= 0 && color < 256 && dPaletteCreated == 1) {
+      gdImageSetPixel(image, x, y, colors[color]);
+    }
   }
 }
 

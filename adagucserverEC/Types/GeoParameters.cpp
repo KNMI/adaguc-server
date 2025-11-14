@@ -26,6 +26,12 @@
 #include "Types/GeoParameters.h"
 #include <cstddef>
 
+double i4point::distance(i4point point) {
+  int dx = point.x - x;
+  int dy = point.y - y;
+  return sqrt(dx * dx + dy * dy);
+}
+
 f8point f8point::rad() { return {.x = (x * (M_PI / 180.)), .y = (y * (M_PI / 180.))}; }
 
 void i4box::operator=(const int bbox[4]) {

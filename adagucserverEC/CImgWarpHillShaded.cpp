@@ -36,12 +36,12 @@ const char *CImgWarpHillShaded::className = "CImgWarpHillShaded";
  */
 const f8vector lightSource = (f8vector({.x = -1, .y = -1, .z = -1})).norm();
 
-template <typename T> double getGridValueFromFloat(int x, int y, GDWState &drawSettings) { return ((T *)drawSettings.sourceData)[x + y * drawSettings.sourceDataWidth]; }
+template <typename T> double getGridValueFromFloat(int x, int y, GDWState &drawSettings) { return ((T *)drawSettings.sourceGrid)[x + y * drawSettings.sourceGridWidth]; }
 
 static inline int mfast_mod(const int input, const int ceil) { return input >= ceil ? input % ceil : input; }
 
 template <class T> void hillShadedDrawFunction(int x, int y, T val, GDWState &warperState, GDWDrawFunctionSettings &drawFunctionState) {
-  if (x < 0 || y < 0 || x > warperState.destDataWidth || y > warperState.destDataHeight) return;
+  if (x < 0 || y < 0 || x > warperState.destGridWidth || y > warperState.destGridHeight) return;
   bool isNodata = false;
   if (drawFunctionState.hasNodataValue) {
     if ((val) == (T)drawFunctionState.dfNodataValue) isNodata = true;
@@ -51,11 +51,11 @@ template <class T> void hillShadedDrawFunction(int x, int y, T val, GDWState &wa
     if (drawFunctionState.legendValueRange)
       if (val < drawFunctionState.legendLowerRange || val > drawFunctionState.legendUpperRange) isNodata = true;
   if (!isNodata) {
-    T *sourceData = (T *)warperState.sourceData;
-    size_t sourceDataPX = warperState.sourceDataPX;
-    size_t sourceDataPY = warperState.sourceDataPY;
-    size_t sourceDataWidth = warperState.sourceDataWidth;
-    size_t sourceDataHeight = warperState.sourceDataHeight;
+    T *sourceData = (T *)warperState.sourceGrid;
+    size_t sourceDataPX = warperState.sourceIndexX;
+    size_t sourceDataPY = warperState.sourceIndexY;
+    size_t sourceDataWidth = warperState.sourceGridWidth;
+    size_t sourceDataHeight = warperState.sourceGridHeight;
 
     if (sourceDataPY > sourceDataHeight - 1) return;
     if (sourceDataPX > sourceDataWidth - 1) return;
@@ -86,7 +86,7 @@ template <class T> void hillShadedDrawFunction(int x, int y, T val, GDWState &wa
     f8vector v02 = f8vector({.x = sourceDataPX + 0., .y = sourceDataPY + 2., .z = values[0][2]});
     f8vector v12 = f8vector({.x = sourceDataPX + 1., .y = sourceDataPY + 2., .z = values[1][2]});
 
-    if (x >= 0 && y >= 0 && x < (int)warperState.destDataWidth && y < (int)warperState.destDataHeight) {
+    if (x >= 0 && y >= 0 && x < (int)warperState.destGridWidth && y < (int)warperState.destGridHeight) {
       f8vector normal00 = cross(v10 - v00, v01 - v00).norm();
       f8vector normal10 = cross(v20 - v10, v11 - v10).norm();
       f8vector normal01 = cross(v11 - v01, v02 - v01).norm();
@@ -96,12 +96,12 @@ template <class T> void hillShadedDrawFunction(int x, int y, T val, GDWState &wa
       float c10 = dot(lightSource, normal10);
       float c01 = dot(lightSource, normal01);
       float c11 = dot(lightSource, normal11);
-      float dx = warperState.tileDx;
-      float dy = warperState.tileDy;
+      float dx = warperState.sourceTileDx;
+      float dy = warperState.sourceTileDy;
       float gx1 = (1 - dx) * c00 + dx * c10;
       float gx2 = (1 - dx) * c01 + dx * c11;
       float bilValue = (1 - dy) * gx1 + dy * gx2;
-      ((float *)drawFunctionState.destinationGrid)[x + y * warperState.destDataWidth] = (bilValue + 1) / 1.816486;
+      ((float *)drawFunctionState.destinationGrid)[x + y * warperState.destGridWidth] = (bilValue + 1) / 1.816486;
     }
   }
 }

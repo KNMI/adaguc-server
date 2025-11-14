@@ -457,7 +457,7 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
     styles.concat(styleList[j].c_str());
   }
 
-  if (styles.length() == 0) styles = "auto";
+  if (styles.length() == 0) styles = "auto,autobilinear";
 
   xmleStyle->value.copy(styles.c_str());
 #ifdef CAUTOCONFIGURE_DEBUG

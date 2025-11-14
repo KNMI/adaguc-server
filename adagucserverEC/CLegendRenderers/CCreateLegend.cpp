@@ -134,6 +134,10 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
     }
   }
 
+  if (styleConfiguration->renderMethod == RM_GENERIC && styleConfiguration->shadeIntervals.size() > 0) {
+    legendType = discrete;
+  }
+
   if (styleConfiguration->featureIntervals.size() > 0) {
     legendType = discrete;
   }
