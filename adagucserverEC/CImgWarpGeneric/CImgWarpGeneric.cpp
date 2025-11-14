@@ -41,7 +41,7 @@ template <typename T> void warpImageNearestFunction(int x, int y, T value, GDWSt
 };
 
 template <typename T> void warpImageBilinearFunction(int x, int y, T val, GDWState &warperState, GDWDrawFunctionSettings &settings) {
-  if (x < 0 || y < 0 || x > warperState.destGridWidth || y > warperState.destGridHeight) return;
+  if (x < 0 || y < 0 || x >= warperState.destGridWidth || y >= warperState.destGridHeight) return;
 
   if (settings.hasNodataValue) {
     if ((val) == (T)settings.dfNodataValue) return;
@@ -56,8 +56,8 @@ template <typename T> void warpImageBilinearFunction(int x, int y, T val, GDWSta
   size_t sourceDataWidth = warperState.sourceGridWidth;
   size_t sourceDataHeight = warperState.sourceGridHeight;
 
-  if (sourceDataPY > sourceDataHeight - 1) return;
-  if (sourceDataPX > sourceDataWidth - 1) return;
+  if (sourceDataPY >= sourceDataHeight - 1) return;
+  if (sourceDataPX >= sourceDataWidth - 1) return;
 
   T values[2][2] = {{0, 0}, {0, 0}};
 
