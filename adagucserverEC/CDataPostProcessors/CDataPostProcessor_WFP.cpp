@@ -209,8 +209,8 @@ void CDPPWFP::drawFunction(int x, int y, float, GDWState &warperState, PostProcD
 
     size_t selectedQ = 1; // Second quantile, which is currently 0.95
     size_t selectedH = 0; // Currently only the first (10 meter)
-    size_t selectedX = warperState.sourceDataPX;
-    size_t selectedY = warperState.sourceDataPY;
+    size_t selectedX = warperState.sourceIndexX;
+    size_t selectedY = warperState.sourceIndexY;
     size_t gridLocationPointer = selectedX + selectedY * numX;
     size_t windHeightPointer = selectedH * numY * numX;
     size_t windQuantilePointer = selectedQ * numZ * numY * numX;

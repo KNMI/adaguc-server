@@ -58,8 +58,8 @@ ProjectionGrid *makeProjection(double halfCell, CImageWarper *warper, i4box &pix
   ProjectionGrid *projGrid = new ProjectionGrid();
   projGrid->initSize(dataSize);
 
-  double dfSourcedExtW = sourceGeoParams.bbox.span().x / double(warperState.sourceDataWidth);
-  double dfSourcedExtH = sourceGeoParams.bbox.span().y / double(warperState.sourceDataHeight);
+  double dfSourcedExtW = sourceGeoParams.bbox.span().x / double(warperState.sourceGridWidth);
+  double dfSourcedExtH = sourceGeoParams.bbox.span().y / double(warperState.sourceGridHeight);
   for (int y = 0; y < dataHeight + 1; y++) {
     for (int x = 0; x < dataWidth + 1; x++) {
       size_t p = x + y * (dataWidth + 1);
@@ -85,17 +85,17 @@ void linearTransformGrid(GDWState &warperState, bool useHalfCellOffset, CImageWa
   double halfCell = useHalfCellOffset ? 0.5 : 0;
   double dfSourceExtW = sourceGeoParams.bbox.span().x;
   double dfSourceExtH = sourceGeoParams.bbox.span().y;
-  double dfSourceW = warperState.sourceDataWidth;
-  double dfSourceH = warperState.sourceDataHeight;
-  double dfDestW = warperState.destDataWidth;
-  double dfDestH = warperState.destDataHeight;
+  double dfSourceW = warperState.sourceGridWidth;
+  double dfSourceH = warperState.sourceGridHeight;
+  double dfDestW = warperState.destGridWidth;
+  double dfDestH = warperState.destGridHeight;
   double dfSourceOrigX = sourceGeoParams.bbox.left;
   double dfSourceOrigY = sourceGeoParams.bbox.bottom;
   double dfDestExtW = destGeoParams.bbox.span().x;
   double dfDestExtH = -destGeoParams.bbox.span().y;
   double dfDestOrigX = destGeoParams.bbox.left;
   double dfDestOrigY = destGeoParams.bbox.top;
-  int PXExtentBasedOnSource[4] = {0, 0, warperState.sourceDataWidth, warperState.sourceDataHeight};
+  int PXExtentBasedOnSource[4] = {0, 0, warperState.sourceGridWidth, warperState.sourceGridHeight};
 
   if (PXExtentBasedOnSource[2] - PXExtentBasedOnSource[0] <= 0) return;
   if (PXExtentBasedOnSource[3] - PXExtentBasedOnSource[1] <= 0) return;
@@ -132,9 +132,9 @@ void linearTransformGrid(GDWState &warperState, bool useHalfCellOffset, CImageWa
       if (sy1 >= destGeoParams.height + syh && sy2 >= destGeoParams.height + syh) skip = true;
 
       if (!skip) {
-        warperState.sourceDataPX = x;
-        warperState.sourceDataPY = sourceGeoParams.height - 1 - y;
-        T value = ((T *)warperState.sourceData)[warperState.sourceDataPX + (warperState.sourceDataPY) * sourceGeoParams.width];
+        warperState.sourceIndexX = x;
+        warperState.sourceIndexY = sourceGeoParams.height - 1 - y;
+        T value = ((T *)warperState.sourceGrid)[warperState.sourceIndexX + (warperState.sourceIndexY) * sourceGeoParams.width];
         int lx1, lx2, ly1, ly2;
         if (sx1 > sx2) {
           lx2 = sx1;
@@ -154,10 +154,10 @@ void linearTransformGrid(GDWState &warperState, bool useHalfCellOffset, CImageWa
         if (lx2 == lx1) lx2++;
         for (int sjy = ly1; sjy < ly2; sjy++) {
           for (int sjx = lx1; sjx < lx2; sjx++) {
-            warperState.tileDy = 1 - (sjy - ly1) / double(ly2 - ly1);
-            warperState.tileDx = (sjx - lx1) / double(lx2 - lx1);
-            warperState.destX = sjx;
-            warperState.destY = sjy;
+            warperState.sourceTileDy = 1 - (sjy - ly1) / double(ly2 - ly1);
+            warperState.sourceTileDx = (sjx - lx1) / double(lx2 - lx1);
+            warperState.destIndexX = sjx;
+            warperState.destIndexY = sjy;
             drawFunction(sjx, sjy, value, warperState);
           }
         }
@@ -172,8 +172,8 @@ ProjectionGrid *makeStridedProjection(double halfCell, CImageWarper *warper, i4b
   int dataHeight = pixelExtentBox.span().y;
   ProjectionGrid *projGrid = new ProjectionGrid();
   projGrid->initSize((dataWidth + 1) * (dataHeight + 1));
-  double dfSourcedExtW = sourceGeoParams.bbox.span().x / double(warperState.sourceDataWidth);
-  double dfSourcedExtH = sourceGeoParams.bbox.span().y / double(warperState.sourceDataHeight);
+  double dfSourcedExtW = sourceGeoParams.bbox.span().x / double(warperState.sourceGridWidth);
+  double dfSourcedExtH = sourceGeoParams.bbox.span().y / double(warperState.sourceGridHeight);
   size_t dataWidthStrided = dataWidth / projStrideFactor + projStrideFactor;
   size_t dataHeightStrided = dataHeight / projStrideFactor + projStrideFactor;
   size_t dataSizeStrided = (dataWidthStrided) * (dataHeightStrided);
@@ -232,15 +232,15 @@ void warpTransformGrid(GDWState &warperState, ProjectionGrid *projectionGrid, bo
   bool debug = false;
   double halfCell = useHalfCellOffset ? 0.5 : 0;
 
-  double dfDestW = warperState.destDataWidth;
-  double dfDestH = warperState.destDataHeight;
+  double dfDestW = warperState.destGridWidth;
+  double dfDestH = warperState.destGridHeight;
   double dfDestExtW = destGeoParams.bbox.span().x;
   double dfDestExtH = -destGeoParams.bbox.span().y;
   double multiDestX = dfDestW / dfDestExtW;
   double multiDestY = dfDestH / dfDestExtH;
   double dfDestOrigX = destGeoParams.bbox.left;
   double dfDestOrigY = destGeoParams.bbox.top;
-  i4box pixelExtentBox = {0, 0, warperState.sourceDataWidth, warperState.sourceDataHeight};
+  i4box pixelExtentBox = {0, 0, warperState.sourceGridWidth, warperState.sourceGridHeight};
 
   if (pixelExtentBox.span().x <= 0 || pixelExtentBox.span().y <= 0) return;
 
@@ -363,9 +363,9 @@ void warpTransformGrid(GDWState &warperState, ProjectionGrid *projectionGrid, bo
         }
 
         if (doDraw) {
-          warperState.sourceDataPX = x + pixelExtentBox.left;
-          warperState.sourceDataPY = (warperState.sourceDataHeight - 1 - (y + pixelExtentBox.bottom));
-          T value = ((T *)warperState.sourceData)[warperState.sourceDataPX + warperState.sourceDataPY * warperState.sourceDataWidth];
+          warperState.sourceIndexX = x + pixelExtentBox.left;
+          warperState.sourceIndexY = (warperState.sourceGridHeight - 1 - (y + pixelExtentBox.bottom));
+          T value = ((T *)warperState.sourceGrid)[warperState.sourceIndexX + warperState.sourceIndexY * warperState.sourceGridWidth];
           double xCornersA[3] = {quadX[0], quadX[1], quadX[2]};
           double yCornersA[3] = {quadY[0], quadY[1], quadY[2]};
           double xCornersB[3] = {quadX[2], quadX[0], quadX[3]};
@@ -388,19 +388,19 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, GeoParame
 
   // This structure is passed to drawfunctions and contains info about the current state of the warper.
   // The drawfunction will be called numerous times for each destination pixel.
-  GDWState warperState = {.sourceData = _sourceData,                  // The source datagrid, has the same datatype as the template T
+  GDWState warperState = {.sourceGrid = _sourceData,                  // The source datagrid, has the same datatype as the template T
                           .hasNodataValue = 0,                        // Wether the source data grid has a nodata value
                           .dfNodataValue = 0,                         // No data value of the source grid, in double type. Can be casted to T
-                          .sourceDataPX = 0,                          // Which X index is sampled from the source grid
-                          .sourceDataPY = 0,                          // Which Y index is sampled for the source grid.
-                          .sourceDataWidth = sourceGeoParams.width,   // The width of the sourcedata grid
-                          .sourceDataHeight = sourceGeoParams.height, // The height of the source data grid
-                          .destDataWidth = destGeoParams.width,       // The width of the destination grid
-                          .destDataHeight = destGeoParams.height,     // The height of the destination grid
-                          .tileDx = 0,                                // The relative X sample position from the source grid cell from 0 to 1. Can be used for bilinear interpolation
-                          .tileDy = 0,                                // The relative y sample position
-                          .destX = 0,                                 // The target X index in the target grid
-                          .destY = 0};                                // The target Y index in the target grid.
+                          .sourceIndexX = 0,                          // Which X index is sampled from the source grid
+                          .sourceIndexY = 0,                          // Which Y index is sampled for the source grid.
+                          .sourceGridWidth = sourceGeoParams.width,   // The width of the sourcedata grid
+                          .sourceGridHeight = sourceGeoParams.height, // The height of the source data grid
+                          .destGridWidth = destGeoParams.width,       // The width of the destination grid
+                          .destGridHeight = destGeoParams.height,     // The height of the destination grid
+                          .sourceTileDx = 0,                          // The relative X sample position from the source grid cell from 0 to 1. Can be used for bilinear interpolation
+                          .sourceTileDy = 0,                          // The relative y sample position
+                          .destIndexX = 0,                            // The target X index in the target grid
+                          .destIndexY = 0};                           // The target Y index in the target grid.
 
   sourceGeoParams.bbox = reprojBBox(sourceGeoParams, warper);
 

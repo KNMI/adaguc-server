@@ -34,14 +34,14 @@ CColor cblack = CColor(0, 0, 0, 255);
 CColor cblue = CColor(0, 0, 255, 255);
 
 template <typename T> void warpImageNearestFunction(int x, int y, T value, GDWState &wState, GDWDrawFunctionSettings &settings) {
-  if (x < 0 || y < 0 || x >= wState.destDataWidth || y >= wState.destDataHeight) return;
+  if (x < 0 || y < 0 || x >= wState.destGridWidth || y >= wState.destGridHeight) return;
   if ((settings.hasNodataValue && ((value) == (T)settings.dfNodataValue)) || !(value == value)) return;
-  ((float *)settings.destinationGrid)[x + y * wState.destDataWidth] = value;
+  ((float *)settings.destinationGrid)[x + y * wState.destGridWidth] = value;
   setPixelInDrawImage(x, y, value, &settings);
 };
 
 template <typename T> void warpImageBilinearFunction(int x, int y, T val, GDWState &warperState, GDWDrawFunctionSettings &settings) {
-  if (x < 0 || y < 0 || x > warperState.destDataWidth || y > warperState.destDataHeight) return;
+  if (x < 0 || y < 0 || x > warperState.destGridWidth || y > warperState.destGridHeight) return;
 
   if (settings.hasNodataValue) {
     if ((val) == (T)settings.dfNodataValue) return;
@@ -50,11 +50,11 @@ template <typename T> void warpImageBilinearFunction(int x, int y, T val, GDWSta
   // Check for NaN
   if (!(val == val)) return;
 
-  T *sourceData = (T *)warperState.sourceData;
-  size_t sourceDataPX = warperState.sourceDataPX;
-  size_t sourceDataPY = warperState.sourceDataPY;
-  size_t sourceDataWidth = warperState.sourceDataWidth;
-  size_t sourceDataHeight = warperState.sourceDataHeight;
+  T *sourceData = (T *)warperState.sourceGrid;
+  size_t sourceDataPX = warperState.sourceIndexX;
+  size_t sourceDataPY = warperState.sourceIndexY;
+  size_t sourceDataWidth = warperState.sourceGridWidth;
+  size_t sourceDataHeight = warperState.sourceGridHeight;
 
   if (sourceDataPY > sourceDataHeight - 1) return;
   if (sourceDataPX > sourceDataWidth - 1) return;
@@ -66,19 +66,19 @@ template <typename T> void warpImageBilinearFunction(int x, int y, T val, GDWSta
   values[0][1] += ((T *)sourceData)[nfast_mod(sourceDataPX + 0, sourceDataWidth) + nfast_mod(sourceDataPY + 1, sourceDataHeight) * sourceDataWidth];
   values[1][1] += ((T *)sourceData)[nfast_mod(sourceDataPX + 1, sourceDataWidth) + nfast_mod(sourceDataPY + 1, sourceDataHeight) * sourceDataWidth];
 
-  if (x >= 0 && y >= 0 && x < (int)warperState.destDataWidth && y < (int)warperState.destDataHeight) {
-    float dx = warperState.tileDx;
-    float dy = warperState.tileDy;
+  if (x >= 0 && y >= 0 && x < (int)warperState.destGridWidth && y < (int)warperState.destGridHeight) {
+    float dx = warperState.sourceTileDx;
+    float dy = warperState.sourceTileDy;
     float gx1 = (1 - dx) * values[0][0] + dx * values[1][0];
     float gx2 = (1 - dx) * values[0][1] + dx * values[1][1];
     float bilValue = (1 - dy) * gx1 + dy * gx2;
-    ((float *)settings.destinationGrid)[x + y * warperState.destDataWidth] = bilValue;
+    ((float *)settings.destinationGrid)[x + y * warperState.destGridWidth] = bilValue;
     setPixelInDrawImage(x, y, bilValue, &settings);
   }
 };
 
 template <typename T> void warpImageRenderBorders(int x, int y, T val, GDWState &warperState, GDWDrawFunctionSettings &settings) {
-  if (x < 0 || y < 0 || x > warperState.destDataWidth || y > warperState.destDataHeight) return;
+  if (x < 0 || y < 0 || x > warperState.destGridWidth || y > warperState.destGridHeight) return;
 
   if (settings.hasNodataValue) {
     if ((val) == (T)settings.dfNodataValue) return;
@@ -87,20 +87,20 @@ template <typename T> void warpImageRenderBorders(int x, int y, T val, GDWState 
   // Check for NaN
   if (!(val == val)) return;
 
-  size_t sourceDataPX = warperState.sourceDataPX;
-  size_t sourceDataPY = warperState.sourceDataPY;
-  size_t sourceDataWidth = warperState.sourceDataWidth;
-  size_t sourceDataHeight = warperState.sourceDataHeight;
+  size_t sourceDataPX = warperState.sourceIndexX;
+  size_t sourceDataPY = warperState.sourceIndexY;
+  size_t sourceDataWidth = warperState.sourceGridWidth;
+  size_t sourceDataHeight = warperState.sourceGridHeight;
 
   if (sourceDataPY > sourceDataHeight - 1) return;
   if (sourceDataPX > sourceDataWidth - 1) return;
-  if (warperState.sourceDataPX == 0 || warperState.sourceDataPX == 0 || warperState.sourceDataPX == (int)warperState.sourceDataWidth - 1 ||
-      warperState.sourceDataPY == (int)warperState.sourceDataHeight - 1) {
+  if (warperState.sourceIndexX == 0 || warperState.sourceIndexX == 0 || warperState.sourceIndexX == (int)warperState.sourceGridWidth - 1 ||
+      warperState.sourceIndexY == (int)warperState.sourceGridHeight - 1) {
     settings.drawImage->setPixel(x, y, cblue);
   }
-  if (x >= 0 && y >= 0 && x < (int)warperState.destDataWidth && y < (int)warperState.destDataHeight) {
-    float dx = warperState.tileDx;
-    float dy = warperState.tileDy;
+  if (x >= 0 && y >= 0 && x < (int)warperState.destGridWidth && y < (int)warperState.destGridHeight) {
+    float dx = warperState.sourceTileDx;
+    float dy = warperState.sourceTileDy;
 
     if (dx <= .02 || dy <= .02 || dx >= 0.98 || dy >= 0.98) {
       settings.drawImage->setPixel(x, y, cblack);

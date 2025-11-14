@@ -15,19 +15,19 @@
 typedef unsigned char uchar;
 typedef unsigned char ubyte;
 struct GDWState {
-  void *sourceData;     // The source datagrid, has the same datatype as the template T
+  void *sourceGrid;     // Pointer to the source datagrid, has the same datatype as the template T
   bool hasNodataValue;  // Wether the source data grid has a nodata value
   double dfNodataValue; // No data value of the source grid, in double type. Can be casted to T
-  int sourceDataPX;     // Which source X index is sampled from the source grid
-  int sourceDataPY;     // Which source Y index is sampled for the source grid.
-  int sourceDataWidth;  // The width of the sourcedata grid
-  int sourceDataHeight; // The height of the source data grid
-  int destDataWidth;    // The width of the destination grid
-  int destDataHeight;   // The height of the destination grid
-  double tileDx;        // The relative X sample position from the source grid cell from 0 to 1. Can be used for bilinear interpolation
-  double tileDy;        // The relative y sample position
-  int destX;            // The target X index in the target grid
-  int destY;            // The target Y index in the target grid.
+  int sourceIndexX;     // Which source X index is sampled from the source grid
+  int sourceIndexY;     // Which source Y index is sampled for the source grid.
+  int sourceGridWidth;  // The width of the sourcedata grid
+  int sourceGridHeight; // The height of the source data grid
+  int destGridWidth;    // The width of the destination grid
+  int destGridHeight;   // The height of the destination grid
+  double sourceTileDx;  // The relative X sample position from the source grid cell from 0 to 1. Can be used for bilinear interpolation
+  double sourceTileDy;  // The relative y sample position
+  int destIndexX;       // The target X index in the target grid
+  int destIndexY;       // The target Y index in the target grid.
 };
 
 struct GDWArgs {
