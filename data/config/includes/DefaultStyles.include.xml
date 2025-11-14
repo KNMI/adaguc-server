@@ -134,17 +134,21 @@
   </Style>
 
     <!--Styles -->
+
+
   <Style name="auto">
     <Legend fixedclasses="true" tickround="1">bluewhitered</Legend>
     <Point pointstyle="point" textcolor="#111111"/>
     <Vector vectorstyle="barb" linecolor="#0000FF" />
     <Scale>0</Scale>
     <Offset>0</Offset>
-    <RenderMethod>nearest,bilinear,point,barb</RenderMethod>
+    <RenderSettings interpolationmethod="nearest"/>
+    <RenderMethod>generic,nearest,bilinear</RenderMethod>
     <StandardNames standard_name="*"/>
   </Style>
 
-  <!-- <Style name="genericnearest">
+
+  <Style name="autobilinear">
     <Legend fixedclasses="true" tickround="1">bluewhitered</Legend>
     <Point pointstyle="point" textcolor="#111111"/>
     <Vector vectorstyle="barb" linecolor="#0000FF" />
@@ -155,18 +159,6 @@
     <StandardNames standard_name="*"/>
   </Style>
 
-
-  <Style name="genericbilinear">
-    <Legend fixedclasses="true" tickround="1">bluewhitered</Legend>
-    <Point pointstyle="point" textcolor="#111111"/>
-    <Vector vectorstyle="barb" linecolor="#0000FF" />
-    <Scale>0</Scale>
-    <Offset>0</Offset>
-    <RenderSettings interpolationmethod="bilinear"/>
-    <RenderMethod>generic</RenderMethod>
-    <StandardNames standard_name="*"/>
-  </Style>
- -->
 
   <Style name="autofeatures">
     <Legend fixedclasses="true" tickround="1">elevation</Legend>
