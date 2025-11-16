@@ -46,6 +46,7 @@ public:
 class CDataPostProcessor {
 public:
   static CDPPExecutor *getCDPPExecutor();
+  static int findDataPostProcIndex(const std::vector<CServerConfig::XMLE_DataPostProc *> &vec, const CT::string &postProcName);
 };
 
 #endif

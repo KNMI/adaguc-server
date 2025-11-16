@@ -22,6 +22,11 @@
 extern CDPPExecutor cdppExecutorInstance;
 CDPPExecutor cdppExecutorInstance;
 CDPPExecutor *CDataPostProcessor::getCDPPExecutor() { return &cdppExecutorInstance; }
+int CDataPostProcessor::findDataPostProcIndex(const std::vector<CServerConfig::XMLE_DataPostProc *> &vec, const CT::string &postProcName) {
+  auto it = std::find_if(vec.begin(), vec.end(), [&](const CServerConfig::XMLE_DataPostProc *p) { return p != nullptr && p->attr.algorithm.equals(postProcName); });
+
+  return (it == vec.end()) ? -1 : int(it - vec.begin());
+}
 
 /*CPDPPExecutor*/
 const char *CDPPExecutor::className = "CDPPExecutor";
