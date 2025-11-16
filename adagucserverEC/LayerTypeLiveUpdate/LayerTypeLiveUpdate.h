@@ -7,7 +7,7 @@
 #ifndef LAYERTYPELIVEUPDATE_H
 
 #define LIVEUPDATE_DEFAULT_INTERVAL "PT10M"
-#define LIVEUPDATE_DEFAULT_OFFSET_SECONDS (3600 * 24 * 365) // one year
+#define LIVEUPDATE_DEFAULT_OFFSET "P1Y"
 /**
  * Config for the time dimension (not backed by the DataSource info)
  */
@@ -46,6 +46,6 @@ int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(MetadataLayer *metada
 /**
  * Configures the corresponding time range
  */
-LiveUpdateTimeRange calculateLiveUpdateTimeRange(const char *interval = LIVEUPDATE_DEFAULT_INTERVAL, double offsetSeconds = LIVEUPDATE_DEFAULT_OFFSET_SECONDS);
+LiveUpdateTimeRange calculateLiveUpdateTimeRange(const char *interval = LIVEUPDATE_DEFAULT_INTERVAL, const char *offset = LIVEUPDATE_DEFAULT_OFFSET);
 
 #endif // !LAYERTYPELIVEUPDATE_H

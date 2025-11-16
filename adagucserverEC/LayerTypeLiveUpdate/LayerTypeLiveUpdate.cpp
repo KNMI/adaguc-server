@@ -1,5 +1,6 @@
 #include "LayerTypeLiveUpdate.h"
 #include "CServerParams.h"
+#include "CDataPostProcessors/CDataPostProcessor.h"
 
 int layerTypeLiveUpdateConfigureDimensionsInDataSource(CDataSource *dataSource) {
   // This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.
@@ -43,7 +44,6 @@ int layerTypeLiveUpdateConfigureDimensionsInDataSource(CDataSource *dataSource) 
 }
 
 int layerTypeLiveUpdateRender(CDataSource *dataSource, CServerParams *srvParam) {
-  CDBDebug("Data has been populated");
   if (dataSource->cfgLayer->DataPostProc.empty()) {
     // Demo case: render the current time in an image for testing purposes / frontend development
     CDrawImage image;
@@ -216,8 +216,20 @@ int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(MetadataLayer *metada
   }
   CTime timeInstance;
 
-  CT::string timeResolution = "PT10M";
+  CT::string timeResolution = LIVEUPDATE_DEFAULT_INTERVAL;
+  CT::string offset = LIVEUPDATE_DEFAULT_OFFSET;
 
+  CServerConfig::XMLE_DataPostProc *soltConfig =
+      metadataLayer->dataSource->cfgLayer->DataPostProc[CDataPostProcessor::findDataPostProcIndex(metadataLayer->dataSource->cfgLayer->DataPostProc, "solarterminator")];
+  if (soltConfig != nullptr) {
+    // Calculate the offset based on said parameter
+    if (soltConfig->attr.offset.c_str() != nullptr && !soltConfig->attr.offset.empty()) offset.copy(soltConfig->attr.offset.c_str());
+    CDBDebug("Offset string is %s", soltConfig->attr.offset.c_str());
+  }
+
+  // Translate offset to seconds
+  CTime::Date offsetDate = CTime::periodToDate(offset.c_str());
+  double offsetSeconds = offsetDate.second + offsetDate.minute * 60 + offsetDate.hour * 3600 + offsetDate.day * 86400;
   for (auto dim : metadataLayer->layer->Dimension) {
     if (dim->value.equals("time") && !dim->attr.interval.empty()) {
       timeResolution = dim->attr.interval;
@@ -227,8 +239,8 @@ int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(MetadataLayer *metada
   timeInstance.init("seconds since 1970", "standard");
   double epochTime = timeInstance.getEpochTimeFromDateString(CTime::currentDateTime());
   // CTime::Date cdate = timeInstance.getDate(epochTime);
-  double startTimeOffset = timeInstance.quantizeTimeToISO8601(epochTime - 3600 * 24 * 365, timeResolution.c_str(), "low");
-  double stopTimeOffset = timeInstance.quantizeTimeToISO8601(epochTime + 3600 * 24 * 365, timeResolution.c_str(), "low");
+  double startTimeOffset = timeInstance.quantizeTimeToISO8601(epochTime - offsetSeconds, timeResolution.c_str(), "low");
+  double stopTimeOffset = timeInstance.quantizeTimeToISO8601(epochTime + offsetSeconds, timeResolution.c_str(), "low");
   CT::string startTime = timeInstance.dateToISOString(timeInstance.offsetToDate(startTimeOffset));
   CT::string stopTime = timeInstance.dateToISOString(timeInstance.offsetToDate(stopTimeOffset));
   double defaultOffset = timeInstance.quantizeTimeToISO8601(epochTime, timeResolution.c_str(), "low");
@@ -246,12 +258,17 @@ int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(MetadataLayer *metada
   return 0;
 }
 
-LiveUpdateTimeRange calculateLiveUpdateTimeRange(const char *interval, double offsetSeconds) {
+LiveUpdateTimeRange calculateLiveUpdateTimeRange(const char *interval, const char *offset) {
   LiveUpdateTimeRange range;
   range.interval = interval;
 
   CTime timeInstance;
   timeInstance.init("seconds since 1970", "standard");
+
+  CTime::Date delta = CTime::periodToDate(offset);
+
+  int offsetSeconds = delta.second + delta.minute * 60 + delta.hour * 3600 + delta.day * 86400;
+  CDBDebug("liveupdate offset is: %f", offsetSeconds);
 
   double epochTime = timeInstance.getEpochTimeFromDateString(CTime::currentDateTime());
 
