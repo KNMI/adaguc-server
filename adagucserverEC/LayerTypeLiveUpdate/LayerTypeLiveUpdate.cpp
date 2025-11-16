@@ -225,31 +225,20 @@ int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(MetadataLayer *metada
     // Calculate the offset based on said parameter
     if (soltConfig->attr.offset.c_str() != nullptr && !soltConfig->attr.offset.empty()) offset.copy(soltConfig->attr.offset.c_str());
     CDBDebug("Offset string is %s", soltConfig->attr.offset.c_str());
+    CDBDebug("Assigned offset is %s", offset.c_str());
   }
 
-  // Translate offset to seconds
-  CTime::Date offsetDate = CTime::periodToDate(offset.c_str());
-  double offsetSeconds = offsetDate.second + offsetDate.minute * 60 + offsetDate.hour * 3600 + offsetDate.day * 86400;
-  for (auto dim : metadataLayer->layer->Dimension) {
-    if (dim->value.equals("time") && !dim->attr.interval.empty()) {
-      timeResolution = dim->attr.interval;
-    }
-  }
+  LiveUpdateTimeRange range = calculateLiveUpdateTimeRange(timeResolution.c_str(), offset.c_str());
 
   timeInstance.init("seconds since 1970", "standard");
   double epochTime = timeInstance.getEpochTimeFromDateString(CTime::currentDateTime());
-  // CTime::Date cdate = timeInstance.getDate(epochTime);
-  double startTimeOffset = timeInstance.quantizeTimeToISO8601(epochTime - offsetSeconds, timeResolution.c_str(), "low");
-  double stopTimeOffset = timeInstance.quantizeTimeToISO8601(epochTime + offsetSeconds, timeResolution.c_str(), "low");
-  CT::string startTime = timeInstance.dateToISOString(timeInstance.offsetToDate(startTimeOffset));
-  CT::string stopTime = timeInstance.dateToISOString(timeInstance.offsetToDate(stopTimeOffset));
   double defaultOffset = timeInstance.quantizeTimeToISO8601(epochTime, timeResolution.c_str(), "low");
   CT::string defaultTime = timeInstance.dateToISOString(timeInstance.offsetToDate(defaultOffset));
   LayerMetadataDim dim = {.serviceName = "time",
                           .cdfName = "time",
                           .units = "ISO8601",
-                          .values = startTime + "/" + stopTime + "/" + timeResolution,
-                          .defaultValue = defaultTime,
+                          .values = range.startTime + "/" + range.stopTime + "/" + range.interval,
+                          .defaultValue = range.defaultTime,
                           .type = "dimtype_time",
                           .hasMultipleValues = true,
                           .hidden = false};
@@ -266,9 +255,8 @@ LiveUpdateTimeRange calculateLiveUpdateTimeRange(const char *interval, const cha
   timeInstance.init("seconds since 1970", "standard");
 
   CTime::Date delta = CTime::periodToDate(offset);
-
-  int offsetSeconds = delta.second + delta.minute * 60 + delta.hour * 3600 + delta.day * 86400;
-  CDBDebug("liveupdate offset is: %f", offsetSeconds);
+  // Note: timeToOffset does not work in the case of an interval (only for full dates)
+  int offsetSeconds = delta.second + delta.minute * 60 + delta.hour * 3600 + delta.day * 86400 + delta.month * 30 * 86400 + delta.year * 365 * 86400;
 
   double epochTime = timeInstance.getEpochTimeFromDateString(CTime::currentDateTime());
 
