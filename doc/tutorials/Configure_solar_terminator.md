@@ -31,7 +31,7 @@ Create the following file at the filepath `$ADAGUC_DATASET_DIR/solt.xml`
   
   <Layer type="liveupdate">
     <Name>solarterminator</Name>
-    <DataPostProc algorithm="solarterminator"/>
+    <DataPostProc algorithm="solarterminator" offset="P1Y"/>
     <Variable>solarterminator</Variable>
     <Styles>soltstyle</Styles>
     <Dimension interval="PT10M">time</Dimension>
@@ -43,6 +43,8 @@ Create the following file at the filepath `$ADAGUC_DATASET_DIR/solt.xml`
 ```
 
 Feel free to customize the style to your preference, such as adding a fill color with transparency. However, keep in mind that the solar terminator calculation returns fixed categories rather than precise solar zenith angle values.
+
+The `offset` attribute is optional, with the default being one year. The time range that will be made available is `(now-offset, now+offset)`.
 
 ## Step 3: Scan the new data
 
