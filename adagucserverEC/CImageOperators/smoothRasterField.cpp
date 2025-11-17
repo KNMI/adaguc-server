@@ -1,67 +1,76 @@
 #include "smoothRasterField.h"
 #include <cstddef>
 #include <math.h>
+#include <CGenericDataWarper.h>
+#include <GenericDataWarper/GDWDrawFunctionSettings.h>
 
-float *smoothingMakeDistanceMatrix(int smoothWindowSize) {
+#define MEMO_NODATAVALUE -99999999999999.f
+
+void smoothingMakeDistanceMatrix(GDWDrawFunctionSettings &settings) {
+
+  int smoothWindowSize = settings.smoothingFiter;
   if (smoothWindowSize == 0) {
-    return nullptr;
+    return;
   }
-  float *distanceMatrix = new float((smoothWindowSize + 1) * 2 * (smoothWindowSize + 1) * 2);
-  float distanceAmmount = 0;
+  settings.smoothingDistanceMatrix = new double[(smoothWindowSize + 1) * 2 * (smoothWindowSize + 1) * 2];
+
+  double distanceAmmount = 0;
   int dWinP = 0;
   for (int y1 = -smoothWindowSize; y1 < smoothWindowSize + 1; y1++) {
     for (int x1 = -smoothWindowSize; x1 < smoothWindowSize + 1; x1++) {
-      float d = sqrt(x1 * x1 + y1 * y1);
+      double d = sqrt(x1 * x1 + y1 * y1);
       d = 1 / (d + 1);
-      distanceMatrix[dWinP++] = d;
+      settings.smoothingDistanceMatrix[dWinP++] = d;
       distanceAmmount += d;
     }
   }
-  return distanceMatrix;
 }
 
-float smoothingAtLocation(float *inputGrid, float *distanceMatrix, int smoothWindowSize, float fNodataValue, int gridLocationX, int gridLocationY, int gridWidth, int gridHeight) {
-  if (smoothWindowSize == 0 || distanceMatrix == nullptr) {
-    return fNodataValue;
+template <typename T> T smoothingAtLocation(int sourceX, int sourceY, T *sourceGrid, GDWState &warperState, GDWDrawFunctionSettings &settings) {
+  if (settings.smoothingFiter == 0 || settings.smoothingDistanceMatrix == nullptr) {
+    return (T)settings.dfNodataValue;
   }
-  size_t p = size_t(gridLocationX + gridLocationY * gridWidth);
-  if (inputGrid[p] == fNodataValue) {
-    return fNodataValue;
+  if (sourceX < 0 || sourceY < 0 || sourceX >= warperState.sourceGridWidth || sourceY >= warperState.sourceGridHeight) return (T)settings.dfNodataValue;
+
+  size_t p = sourceX + sourceY * warperState.sourceGridWidth;
+
+  if (settings.smoothingMemo != nullptr && settings.smoothingMemo[p] != MEMO_NODATAVALUE) {
+    return (T)settings.smoothingMemo[p];
   }
-  float distanceAmmount = 0;
-  int dWinP = 0;
-  float resultValue = 0;
+
+  if (settings.smoothingMemo == nullptr) {
+    settings.smoothingMemo = new double[warperState.sourceGridWidth * warperState.sourceGridHeight];
+    CDF::fill(settings.smoothingMemo, CDF_DOUBLE, MEMO_NODATAVALUE, warperState.sourceGridWidth * warperState.sourceGridHeight);
+  }
+
+  double distanceAmmount = 0;
+  double resultValue = 0;
+  int smoothWindowSize = settings.smoothingFiter;
+  size_t dWinP = -1;
+
   for (int y1 = -smoothWindowSize; y1 < smoothWindowSize + 1; y1++) {
-    size_t yp = y1 * gridWidth;
     for (int x1 = -smoothWindowSize; x1 < smoothWindowSize + 1; x1++) {
-      if (x1 + gridLocationX < gridWidth && y1 + gridLocationY < gridHeight && x1 + gridLocationX >= 0 && y1 + gridLocationY >= 0) {
-        float val = inputGrid[p + x1 + yp];
-        if (val != fNodataValue) {
-          float d = distanceMatrix[dWinP];
-          distanceAmmount += d;
-          resultValue += val * d;
-        }
-      }
       dWinP++;
+      auto sx = x1 + sourceX;
+      auto sy = y1 + sourceY;
+      if (sx < warperState.sourceGridWidth && sy < warperState.sourceGridHeight && sx >= 0 && sy >= 0) {
+        double value = (double)(sourceGrid[(sx) + (sy)*warperState.sourceGridWidth]);
+        if ((settings.hasNodataValue && ((value) == (T)settings.dfNodataValue)) || !(value == value)) continue;
+        double d = 1; // settings.smoothingDistanceMatrix[dWinP];
+        distanceAmmount += d;
+        resultValue += value * d;
+      }
     }
   }
-  if (distanceAmmount > 0) resultValue /= distanceAmmount;
-  return resultValue;
+  double value = (T)settings.dfNodataValue;
+  if (distanceAmmount > 0) {
+    value = (resultValue /= distanceAmmount);
+  }
+  settings.smoothingMemo[p] = value;
+  return (T)value;
 }
 
-void smoothRasterField(float *inputGrid, float fNodataValue, int smoothWindowSize, int W, int H) {
-  if (smoothWindowSize == 0) return; // No smoothing.
-  size_t drawImageSize = W * H;
-  float *resultGrid = new float[W * H];
-  float *distanceMatrix = smoothingMakeDistanceMatrix(smoothWindowSize);
-  for (int y = 0; y < H; y++) {
-    for (int x = 0; x < W; x++) {
-      resultGrid[x + y * W] = smoothingAtLocation(inputGrid, distanceMatrix, smoothWindowSize, fNodataValue, x, y, W, H);
-    }
-  }
-  for (size_t p = 0; p < drawImageSize; p++) {
-    inputGrid[p] = resultGrid[p];
-  }
-  delete[] distanceMatrix;
-  delete[] resultGrid;
-}
+#define SPECIALIZE_TEMPLATE(CDFTYPE, CPPTYPE) template CPPTYPE smoothingAtLocation<CPPTYPE>(int sourceX, int sourceY, CPPTYPE *inputGrid, GDWState &warperState, GDWDrawFunctionSettings &settings);
+ENUMERATE_OVER_CDFTYPES(SPECIALIZE_TEMPLATE)
+
+#undef SPECIALIZE_TEMPLATE

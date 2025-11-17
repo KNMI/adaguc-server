@@ -78,6 +78,80 @@ ProjectionGrid *makeProjection(double halfCell, CImageWarper *warper, i4box &pix
   return projGrid;
 }
 
+ProjectionGrid *makeStridedProjection(double halfCell, CImageWarper *warper, i4box &pixelExtentBox, GeoParameters &sourceGeoParams, GeoParameters &, GDWState &warperState) {
+  int projStrideFactor = 20;
+  int dataWidth = pixelExtentBox.span().x;
+  int dataHeight = pixelExtentBox.span().y;
+  ProjectionGrid *projGrid = new ProjectionGrid();
+  projGrid->initSize((dataWidth + 1) * (dataHeight + 1));
+  double dfSourcedExtW = sourceGeoParams.bbox.span().x / double(warperState.sourceGridWidth);
+  double dfSourcedExtH = sourceGeoParams.bbox.span().y / double(warperState.sourceGridHeight);
+  size_t dataWidthStrided = ceil(double(dataWidth) / projStrideFactor);
+  size_t dataHeightStrided = ceil(double(dataHeight) / projStrideFactor);
+  size_t dataSizeStrided = (dataWidthStrided + 1) * (dataHeightStrided + 1);
+
+  double *pxStrided = new double[dataSizeStrided];
+  double *pyStrided = new double[dataSizeStrided];
+
+  /* TODO faster init */
+  for (int y = 0; y < dataHeight + 1; y++) {
+    for (int x = 0; x < dataWidth + 1; x++) {
+      size_t p = x + y * (dataWidth + 1);
+      projGrid->px[p] = NAN;
+      projGrid->py[p] = NAN;
+      projGrid->skip[p] = true;
+    }
+  }
+  for (size_t y = 0; y < dataHeightStrided; y++) {
+    for (size_t x = 0; x < dataWidthStrided; x++) {
+      size_t pS = x + y * dataWidthStrided;
+
+      double valX = dfSourcedExtW * (x * projStrideFactor + halfCell + pixelExtentBox.left) + sourceGeoParams.bbox.left;
+      double valY = dfSourcedExtH * (y * projStrideFactor - halfCell + pixelExtentBox.bottom) + sourceGeoParams.bbox.bottom;
+      pxStrided[pS] = valX;
+      pyStrided[pS] = valY;
+    }
+  }
+
+  if (proj_trans_generic(warper->projSourceToDest, PJ_FWD, pxStrided, sizeof(double), dataSizeStrided, pyStrided, sizeof(double), dataSizeStrided, nullptr, 0, 0, nullptr, 0, 0) != dataSizeStrided) {
+    CDBDebug("Unable to do pj_transform");
+  }
+
+  // CDBDebug("destGeoParams.bbox.bottom %f %f", destGeoParams.bbox.bottom, destGeoParams.bbox.top);
+  for (int y = 0; y < dataHeight + 1; y++) {
+    for (int x = 0; x < dataWidth + 1; x++) {
+      size_t p = x + y * (dataWidth + 1);
+      size_t pS = (x / projStrideFactor) + (y / projStrideFactor) * (dataWidthStrided);
+      if (pS >= dataSizeStrided) continue;
+      size_t p0 = pS;
+      size_t p1 = pS + 1;
+      size_t p2 = pS + dataWidthStrided;
+      size_t p3 = pS + 1 + dataWidthStrided;
+
+      double sX = double(x % projStrideFactor) / double(projStrideFactor);
+      double sY = double(y % projStrideFactor) / double(projStrideFactor);
+      double x1 = pxStrided[p0] * (1 - sX) + pxStrided[p1] * sX;
+      double x2 = pxStrided[p2] * (1 - sX) + pxStrided[p3] * sX;
+      projGrid->px[p] = x1 * (1 - sY) + x2 * sY;
+      double y1 = pyStrided[p0] * (1 - sY) + pyStrided[p2] * sY;
+      double y2 = pyStrided[p1] * (1 - sY) + pyStrided[p3] * sY;
+      projGrid->py[p] = y1 * (1 - sX) + y2 * sX;
+      projGrid->skip[p] = false;
+      if (x < projStrideFactor || y < projStrideFactor || x >= dataWidth - projStrideFactor || y >= dataHeight - projStrideFactor) {
+        projGrid->px[p] = dfSourcedExtW * (x + halfCell + pixelExtentBox.left) + sourceGeoParams.bbox.left;
+        projGrid->py[p] = dfSourcedExtH * (y - halfCell + pixelExtentBox.bottom) + sourceGeoParams.bbox.bottom;
+        projGrid->skip[p] = false;
+        if (proj_trans_generic(warper->projSourceToDest, PJ_FWD, &projGrid->px[p], sizeof(double), 1, &projGrid->py[p], sizeof(double), 1, nullptr, 0, 0, nullptr, 0, 0) != 1) {
+          projGrid->skip[p] = true;
+        }
+      }
+    }
+  }
+  delete[] pyStrided;
+  delete[] pxStrided;
+  return projGrid;
+}
+
 // Transform the grid linearly. This is used in case projection are the same and is much efficienter then warping the grid.
 template <typename T>
 void linearTransformGrid(GDWState &warperState, bool useHalfCellOffset, CImageWarper *, void *, GeoParameters &sourceGeoParams, GeoParameters &destGeoParams,
@@ -164,80 +238,6 @@ void linearTransformGrid(GDWState &warperState, bool useHalfCellOffset, CImageWa
       }
     }
   }
-}
-
-ProjectionGrid *makeStridedProjection(double halfCell, CImageWarper *warper, i4box &pixelExtentBox, GeoParameters &sourceGeoParams, GeoParameters &, GDWState &warperState) {
-  int projStrideFactor = 20;
-  int dataWidth = pixelExtentBox.span().x;
-  int dataHeight = pixelExtentBox.span().y;
-  ProjectionGrid *projGrid = new ProjectionGrid();
-  projGrid->initSize((dataWidth + 1) * (dataHeight + 1));
-  double dfSourcedExtW = sourceGeoParams.bbox.span().x / double(warperState.sourceGridWidth);
-  double dfSourcedExtH = sourceGeoParams.bbox.span().y / double(warperState.sourceGridHeight);
-  size_t dataWidthStrided = ceil(double(dataWidth) / projStrideFactor);
-  size_t dataHeightStrided = ceil(double(dataHeight) / projStrideFactor);
-  size_t dataSizeStrided = (dataWidthStrided + 1) * (dataHeightStrided + 1);
-
-  double *pxStrided = new double[dataSizeStrided];
-  double *pyStrided = new double[dataSizeStrided];
-
-  /* TODO faster init */
-  for (int y = 0; y < dataHeight + 1; y++) {
-    for (int x = 0; x < dataWidth + 1; x++) {
-      size_t p = x + y * (dataWidth + 1);
-      projGrid->px[p] = NAN;
-      projGrid->py[p] = NAN;
-      projGrid->skip[p] = true;
-    }
-  }
-  for (size_t y = 0; y < dataHeightStrided; y++) {
-    for (size_t x = 0; x < dataWidthStrided; x++) {
-      size_t pS = x + y * dataWidthStrided;
-
-      double valX = dfSourcedExtW * (x * projStrideFactor + pixelExtentBox.left) + sourceGeoParams.bbox.left;
-      double valY = dfSourcedExtH * (y * projStrideFactor + pixelExtentBox.bottom) + sourceGeoParams.bbox.bottom;
-      pxStrided[pS] = valX;
-      pyStrided[pS] = valY;
-    }
-  }
-
-  if (proj_trans_generic(warper->projSourceToDest, PJ_FWD, pxStrided, sizeof(double), dataSizeStrided, pyStrided, sizeof(double), dataSizeStrided, nullptr, 0, 0, nullptr, 0, 0) != dataSizeStrided) {
-    CDBDebug("Unable to do pj_transform");
-  }
-
-  // CDBDebug("destGeoParams.bbox.bottom %f %f", destGeoParams.bbox.bottom, destGeoParams.bbox.top);
-  for (int y = 0; y < dataHeight + 1; y++) {
-    for (int x = 0; x < dataWidth + 1; x++) {
-      size_t p = x + y * (dataWidth + 1);
-      size_t pS = (x / projStrideFactor) + (y / projStrideFactor) * (dataWidthStrided);
-      if (pS >= dataSizeStrided) continue;
-      size_t p0 = pS;
-      size_t p1 = pS + 1;
-      size_t p2 = pS + dataWidthStrided;
-      size_t p3 = pS + 1 + dataWidthStrided;
-
-      double sX = double(x % projStrideFactor) / double(projStrideFactor);
-      double sY = double(y % projStrideFactor) / double(projStrideFactor);
-      double x1 = pxStrided[p0] * (1 - sX) + pxStrided[p1] * sX;
-      double x2 = pxStrided[p2] * (1 - sX) + pxStrided[p3] * sX;
-      projGrid->px[p] = x1 * (1 - sY) + x2 * sY;
-      double y1 = pyStrided[p0] * (1 - sY) + pyStrided[p2] * sY;
-      double y2 = pyStrided[p1] * (1 - sY) + pyStrided[p3] * sY;
-      projGrid->py[p] = y1 * (1 - sX) + y2 * sX;
-      projGrid->skip[p] = false;
-      if (x < projStrideFactor || y < projStrideFactor || x >= dataWidth - projStrideFactor || y >= dataHeight - projStrideFactor) {
-        projGrid->px[p] = dfSourcedExtW * (x + halfCell + pixelExtentBox.left) + sourceGeoParams.bbox.left;
-        projGrid->py[p] = dfSourcedExtH * (y - halfCell + pixelExtentBox.bottom) + sourceGeoParams.bbox.bottom;
-        projGrid->skip[p] = false;
-        if (proj_trans_generic(warper->projSourceToDest, PJ_FWD, &projGrid->px[p], sizeof(double), 1, &projGrid->py[p], sizeof(double), 1, nullptr, 0, 0, nullptr, 0, 0) != 1) {
-          projGrid->skip[p] = true;
-        }
-      }
-    }
-  }
-  delete[] pyStrided;
-  delete[] pxStrided;
-  return projGrid;
 }
 
 // Warp the grid from the source projection to the destination projection.

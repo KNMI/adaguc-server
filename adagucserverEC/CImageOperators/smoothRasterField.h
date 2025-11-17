@@ -1,8 +1,9 @@
 
 #ifndef SMOOTHRASTERFIELD_H
 
-float *smoothingMakeDistanceMatrix(int smoothWindowSize);
-float smoothingAtLocation(float *inputGrid, float *distanceMatrix, int smoothWindowSize, float fNodataValue, int gridLocationX, int gridLocationY, int gridWidth, int gridHeight);
-void smoothRasterField(float *valueData, float fNodataValue, int smoothWindow, int W, int H);
+#include "GenericDataWarper/GDWDrawFunctionSettings.h"
+#include "./CGenericDataWarper.h"
+void smoothingMakeDistanceMatrix(GDWDrawFunctionSettings &settings);
+template <typename T> T smoothingAtLocation(int gridLocationX, int gridLocationY, T *inputGrid, GDWState &warperState, GDWDrawFunctionSettings &settings);
 
 #endif // !SMOOTHRASTERFIELD_H

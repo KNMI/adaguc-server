@@ -470,6 +470,9 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
 
       varSize *= d->getSize();
     }
+    if (dataSource->swapXYDimensions) {
+      std::swap(destVar->dimensionlinks[0], destVar->dimensionlinks[1]);
+    }
 
 #ifdef CNetCDFDataWriter_DEBUG
     // CDBDebug("Name = %s, type = %d",sourceVar->name.c_str(),sourceVar->getType());

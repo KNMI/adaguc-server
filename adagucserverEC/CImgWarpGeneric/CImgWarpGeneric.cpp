@@ -27,16 +27,21 @@
 #include "CImageDataWriter.h"
 #include "CGenericDataWarper.h"
 #include <CImageOperators/drawContour.h>
+#include <CImageOperators/smoothRasterField.h>
 
 const char *CImgWarpGeneric::className = "CImgWarpGeneric";
 
 CColor cblack = CColor(0, 0, 0, 255);
 CColor cblue = CColor(0, 0, 255, 255);
 
-template <typename T> void warpImageNearestFunction(int x, int y, T value, GDWState &wState, GDWDrawFunctionSettings &settings) {
-  if (x < 0 || y < 0 || x >= wState.destGridWidth || y >= wState.destGridHeight) return;
+template <typename T> void warpImageNearestFunction(int x, int y, T value, GDWState &warperState, GDWDrawFunctionSettings &settings) {
+  if (x < 0 || y < 0 || x >= warperState.destGridWidth || y >= warperState.destGridHeight) return;
   if ((settings.hasNodataValue && ((value) == (T)settings.dfNodataValue)) || !(value == value)) return;
-  ((float *)settings.destinationGrid)[x + y * wState.destGridWidth] = value;
+
+  if (settings.smoothingFiter > 0) {
+    value = smoothingAtLocation(warperState.sourceIndexX, warperState.sourceIndexY, (T *)warperState.sourceGrid, warperState, settings);
+  }
+  ((float *)settings.destinationGrid)[x + y * warperState.destGridWidth] = value;
   setPixelInDrawImage(x, y, value, &settings);
 };
 
@@ -51,6 +56,7 @@ template <typename T> void warpImageBilinearFunction(int x, int y, T val, GDWSta
   if (!(val == val)) return;
 
   T *sourceData = (T *)warperState.sourceGrid;
+
   size_t sourceDataPX = warperState.sourceIndexX;
   size_t sourceDataPY = warperState.sourceIndexY;
   size_t sourceDataWidth = warperState.sourceGridWidth;
@@ -61,20 +67,30 @@ template <typename T> void warpImageBilinearFunction(int x, int y, T val, GDWSta
 
   T values[2][2] = {{0, 0}, {0, 0}};
 
-  values[0][0] += ((T *)sourceData)[nfast_mod(sourceDataPX + 0, sourceDataWidth) + nfast_mod(sourceDataPY + 0, sourceDataHeight) * sourceDataWidth];
-  values[1][0] += ((T *)sourceData)[nfast_mod(sourceDataPX + 1, sourceDataWidth) + nfast_mod(sourceDataPY + 0, sourceDataHeight) * sourceDataWidth];
-  values[0][1] += ((T *)sourceData)[nfast_mod(sourceDataPX + 0, sourceDataWidth) + nfast_mod(sourceDataPY + 1, sourceDataHeight) * sourceDataWidth];
-  values[1][1] += ((T *)sourceData)[nfast_mod(sourceDataPX + 1, sourceDataWidth) + nfast_mod(sourceDataPY + 1, sourceDataHeight) * sourceDataWidth];
+  auto x0 = nfast_mod(sourceDataPX + 0, sourceDataWidth);
+  auto x1 = nfast_mod(sourceDataPX + 1, sourceDataWidth);
+  auto y0 = nfast_mod(sourceDataPY + 0, sourceDataHeight);
+  auto y1 = nfast_mod(sourceDataPY + 1, sourceDataHeight);
 
-  if (x >= 0 && y >= 0 && x < (int)warperState.destGridWidth && y < (int)warperState.destGridHeight) {
-    float dx = warperState.sourceTileDx;
-    float dy = warperState.sourceTileDy;
-    float gx1 = (1 - dx) * values[0][0] + dx * values[1][0];
-    float gx2 = (1 - dx) * values[0][1] + dx * values[1][1];
-    float bilValue = (1 - dy) * gx1 + dy * gx2;
-    ((float *)settings.destinationGrid)[x + y * warperState.destGridWidth] = bilValue;
-    setPixelInDrawImage(x, y, bilValue, &settings);
+  if (settings.smoothingFiter > 0) {
+    values[0][0] = smoothingAtLocation(x0, y0, sourceData, warperState, settings);
+    values[1][0] = smoothingAtLocation(x1, y0, sourceData, warperState, settings);
+    values[0][1] = smoothingAtLocation(x0, y1, sourceData, warperState, settings);
+    values[1][1] = smoothingAtLocation(x1, y1, sourceData, warperState, settings);
+  } else {
+    values[0][0] = sourceData[x0 + y0 * sourceDataWidth];
+    values[1][0] = sourceData[x1 + y0 * sourceDataWidth];
+    values[0][1] = sourceData[x0 + y1 * sourceDataWidth];
+    values[1][1] = sourceData[x1 + y1 * sourceDataWidth];
   }
+
+  float dx = warperState.sourceTileDx;
+  float dy = warperState.sourceTileDy;
+  float gx1 = (1 - dx) * values[0][0] + dx * values[1][0];
+  float gx2 = (1 - dx) * values[0][1] + dx * values[1][1];
+  float bilValue = (1 - dy) * gx1 + dy * gx2;
+  ((float *)settings.destinationGrid)[x + y * warperState.destGridWidth] = bilValue;
+  setPixelInDrawImage(x, y, bilValue, &settings);
 };
 
 template <typename T> void warpImageRenderBorders(int x, int y, T val, GDWState &warperState, GDWDrawFunctionSettings &settings) {

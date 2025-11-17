@@ -1,5 +1,6 @@
 #include "GenericDataWarper/GDWDrawFunctionSettings.h"
 #include <sys/types.h>
+#include <CImageOperators/smoothRasterField.h>
 
 GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawImage *drawImage, const CStyleConfiguration *styleConfiguration) {
   GDWDrawFunctionSettings settings;
@@ -50,8 +51,16 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
         settings.isUsingShadeIntervals = true;
       }
     }
-  } else {
-    CDBWarning("No style configuration");
+
+    // Smoothingfilter:
+    auto numSmoothingFilterConfigs = styleConfiguration->styleConfig->SmoothingFilter.size();
+    if (numSmoothingFilterConfigs > 0 && settings.smoothingDistanceMatrix == nullptr) {
+      auto smoothConfig = styleConfiguration->styleConfig->SmoothingFilter[numSmoothingFilterConfigs - 1];
+      if (!smoothConfig->value.empty()) {
+        settings.smoothingFiter = smoothConfig->value.toDouble();
+        smoothingMakeDistanceMatrix(settings);
+      }
+    }
   }
 
   /* Make a shorthand vector from the shadeInterval configuration*/
@@ -74,5 +83,6 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
       }
     }
   }
+
   return settings;
 }

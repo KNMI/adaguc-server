@@ -21,7 +21,6 @@ struct GDWDrawFunctionSettings {
   double legendValueRange;
   double legendLowerRange;
   double legendUpperRange;
-  double smoothingFiter = 0;
   bool isUsingShadeIntervals = false;
   bool bgColorDefined = false;
   double shadeInterval = 0;
@@ -34,10 +33,12 @@ struct GDWDrawFunctionSettings {
   bool drawgridboxoutline = false;
   DrawInImage drawInImage = DrawInImageNearest;
   std::vector<Interval> intervals;
-  float *smoothingDistanceMatrix = nullptr;
   CDrawImage *drawImage;
   CDFType destinationDataType;
   void *destinationGrid = nullptr;
+  double smoothingFiter = 0;
+  double *smoothingDistanceMatrix = nullptr;
+  double *smoothingMemo = nullptr;
 };
 
 GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawImage *drawImage, const CStyleConfiguration *styleConfiguration);
