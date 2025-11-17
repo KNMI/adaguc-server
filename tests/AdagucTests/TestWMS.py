@@ -1042,7 +1042,7 @@ class TestWMS(unittest.TestCase):
         filename = "test_WMSGetMapWithBilinearRendering_gsie-klimaatatlas2020-ev4-resampled.nc.png"
         # pylint: disable=unused-variable
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "source=gsie-klimaatatlas2020-ev4-resampled.nc&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=interpolatedObs&WIDTH=350&HEIGHT=400&CRS=EPSG%3A3857&BBOX=310273.981651517,6517666.437519898,896694.2006277166,7153301.592131215&STYLES=auto%2Fbilinear&FORMAT=image/png&TRANSPARENT=TRUE&&time=2020-01-01T00%3A00%3A00Z",
+            "source=gsie-klimaatatlas2020-ev4-resampled.nc&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=interpolatedObs&WIDTH=350&HEIGHT=400&CRS=EPSG%3A3857&BBOX=310273.981651517,6517666.437519898,896694.2006277166,7153301.592131215&STYLES=autobilinear&FORMAT=image/png&TRANSPARENT=TRUE&&time=2020-01-01T00%3A00%3A00Z",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.autostyle.xml"},
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())

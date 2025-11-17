@@ -110,18 +110,31 @@ template <typename T> void warpImageRenderBorders(int x, int y, T val, GDWState 
 
   if (sourceDataPY > sourceDataHeight - 1) return;
   if (sourceDataPX > sourceDataWidth - 1) return;
-  if (warperState.sourceIndexX == 0 || warperState.sourceIndexX == 0 || warperState.sourceIndexX == (int)warperState.sourceGridWidth - 1 ||
-      warperState.sourceIndexY == (int)warperState.sourceGridHeight - 1) {
-    settings.drawImage->setPixel(x, y, cblue);
+  float value = 0;
+
+  if (warperState.sourceIndexX == 0) {
+    value = 2;
   }
+  if (warperState.sourceIndexY == 0) {
+    value = 3;
+  }
+  if (warperState.sourceIndexX == (int)warperState.sourceGridWidth - 1) {
+    value = 4;
+  }
+  if (warperState.sourceIndexY == (int)warperState.sourceGridHeight - 1) {
+    value = 5;
+  }
+
   if (x >= 0 && y >= 0 && x < (int)warperState.destGridWidth && y < (int)warperState.destGridHeight) {
     float dx = warperState.sourceTileDx;
     float dy = warperState.sourceTileDy;
-
     if (dx <= .02 || dy <= .02 || dx >= 0.98 || dy >= 0.98) {
-      settings.drawImage->setPixel(x, y, cblack);
+      value = 1;
     }
   }
+
+  ((float *)settings.destinationGrid)[x + y * warperState.destGridWidth] = value;
+  setPixelInDrawImage(x, y, value, &settings);
 };
 
 void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage) {
@@ -132,7 +145,6 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
 
   GDWDrawFunctionSettings settings = getDrawFunctionSettings(dataSource, drawImage, styleConfiguration);
-  CDBDebug("%f %d", settings.shadeInterval, settings.isUsingShadeIntervals);
 
   int destDataWidth = drawImage->geoParams.width;
   int destDataHeight = drawImage->geoParams.height;

@@ -61,9 +61,8 @@ private:
   ProjectionGrid *projectionGrid = nullptr;
 
 public:
-  GenericDataWarper() { CDBDebug("NEW GenericDataWarper"); }
+  GenericDataWarper() {}
   ~GenericDataWarper() {
-    CDBDebug("Destruct GenericDataWarper");
     delete projectionGrid;
     projectionGrid = nullptr;
   };

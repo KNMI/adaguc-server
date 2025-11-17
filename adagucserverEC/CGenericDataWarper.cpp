@@ -245,7 +245,7 @@ template <typename T>
 void warpTransformGrid(GDWState &warperState, ProjectionGrid *projectionGrid, bool useHalfCellOffset, CImageWarper *warper, void *, GeoParameters &sourceGeoParams, GeoParameters &destGeoParams,
                        const std::function<void(int, int, T, GDWState &warperState)> &drawFunction) {
   CDBDebug("warpTransformGrid");
-  bool debug = true;
+  bool debug = false;
   double halfCell = useHalfCellOffset ? 0.5 : 0;
 
   double dfDestW = warperState.destGridWidth;
@@ -310,7 +310,9 @@ void warpTransformGrid(GDWState &warperState, ProjectionGrid *projectionGrid, bo
   int offs3 = dataWidth + 1 + 1;
   int offs4 = dataWidth + 1 + 0;
 
-  CDBDebug("start looping");
+  if (debug) {
+    CDBDebug("start looping");
+  }
 
   for (int y = 0; y < dataHeight; y = y + 1) {
     for (int x = 0; x < dataWidth; x = x + 1) {

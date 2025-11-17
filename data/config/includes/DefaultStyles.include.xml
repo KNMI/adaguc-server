@@ -101,6 +101,15 @@
   </Legend>
 
 
+  <Legend name="transparent" type="colorRange">
+    <palette index="0"   red="0"  green="60" blue="123" alpha="0"/>
+    <palette index="240" red="90"   green="0" blue="0" alpha="0"/>
+  </Legend>
+
+
+  
+
+
   <!-- Style configuration -->
   <Style name="rainbow">
     <Legend fixedclasses="true" tickinterval="500" tickround="1">rainbow</Legend>
@@ -136,19 +145,18 @@
     <!--Styles -->
 
 
-  <Style name="auto">
+  <Style name="auto" title="Auto style blue-white-red" abstract="Nearest neighbour interpolation using the generic renderer">
     <Legend fixedclasses="true" tickround="1">bluewhitered</Legend>
     <Point pointstyle="point" textcolor="#111111"/>
     <Vector vectorstyle="barb" linecolor="#0000FF" />
     <Scale>0</Scale>
     <Offset>0</Offset>
     <RenderSettings interpolationmethod="nearest"/>
-    <RenderMethod>generic,nearest,bilinear</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
     <StandardNames standard_name="*"/>
   </Style>
 
-
-  <Style name="autobilinear">
+  <Style name="autobilinear" title="Auto style bilnear blue-white-red" abstract="Bilinear neighbour interpolation using the generic renderer">
     <Legend fixedclasses="true" tickround="1">bluewhitered</Legend>
     <Point pointstyle="point" textcolor="#111111"/>
     <Vector vectorstyle="barb" linecolor="#0000FF" />
@@ -156,6 +164,45 @@
     <Offset>0</Offset>
     <RenderSettings interpolationmethod="bilinear"/>
     <RenderMethod>generic</RenderMethod>
+    <StandardNames standard_name="*"/>
+  </Style>
+
+  <Style name="autoboxoutline" title="Grid boxes" abstract="Render grid boxes if applicable">
+    <Min>0</Min>
+    <Max>2</Max>
+    <ShadeInterval min="0.00" max="1"    label="Base grid"    fillcolor="#808080"/>
+    <ShadeInterval min="1" max="2"    label="Grid box borders"    fillcolor="#000000"/>
+    <ShadeInterval min="2" max="3"    label="Field border left"    fillcolor="#8080FF"/>
+    <ShadeInterval min="3" max="4"    label="Field border bottom"    fillcolor="#10BF10"/>
+    <ShadeInterval min="4" max="5"    label="Field border right"    fillcolor="#FF0000"/>
+    <ShadeInterval min="5" max="6"    label="Field border top"    fillcolor="#FFFF00"/>
+
+    <RenderSettings interpolationmethod="nearest" drawgridboxoutline="true"/>
+    <RenderMethod>generic</RenderMethod>
+    <StandardNames standard_name="*"/>
+  </Style>
+
+
+  <Style name="autonearest_deprecated">
+    <Legend fixedclasses="true" tickround="1">bluewhitered</Legend>
+    <Point pointstyle="point" textcolor="#111111"/>
+    <Vector vectorstyle="barb" linecolor="#0000FF" />
+    <Scale>0</Scale>
+    <Offset>0</Offset>
+    <RenderSettings interpolationmethod="bilinear"/>
+    <RenderMethod>nearest</RenderMethod>
+    <StandardNames standard_name="*"/>
+  </Style>
+
+
+  <Style name="autobilinear_deprecated">
+    <Legend fixedclasses="true" tickround="1">bluewhitered</Legend>
+    <Point pointstyle="point" textcolor="#111111"/>
+    <Vector vectorstyle="barb" linecolor="#0000FF" />
+    <Scale>0</Scale>
+    <Offset>0</Offset>
+    <RenderSettings interpolationmethod="bilinear"/>
+    <RenderMethod>bilinear</RenderMethod>
     <StandardNames standard_name="*"/>
   </Style>
 
@@ -180,7 +227,7 @@
         /> <!-- Used in CImgRenderPolylines -->
     <Scale>0</Scale>
     <Offset>0</Offset>
-    <RenderMethod>nearest,bilinear,point,barb</RenderMethod>
+    <RenderMethod>generic</RenderMethod>
     <StandardNames standard_name="features"/>
     <RenderSettings featuresoverlap="true" randomizefeatures="false"/>
   </Style>

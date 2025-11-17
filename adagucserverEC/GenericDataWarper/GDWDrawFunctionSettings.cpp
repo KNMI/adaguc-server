@@ -24,7 +24,6 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
   /* Check the if we want to use discrete type */
   if (styleConfiguration->styleConfig != nullptr) {
     auto numRenderSettings = styleConfiguration->styleConfig->RenderSettings.size();
-    CDBDebug("numRenderSettings %d", numRenderSettings);
     if (numRenderSettings > 0) {
       auto renderSettings = styleConfiguration->styleConfig->RenderSettings[numRenderSettings - 1];
       auto &renderSettingsAttr = renderSettings->attr;

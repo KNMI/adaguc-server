@@ -244,14 +244,7 @@ bool CServerParams::checkResolvePath(const char *path, CT::string *resolvedPath)
         pathToCheck.print("%s/%s", dirPrefix, path);
         // Make a realpath
         char szResolvedPath[PATH_MAX];
-        if (realpath(pathToCheck.c_str(), szResolvedPath) == NULL) {
-          // CDBDebug("basedir='%s', prefix='%s', inputpath='%s', absolutepath='%s'",baseDir,dirPrefix,path,pathToCheck.c_str());
-          CDBDebug("LOCALFILEACCESS: Invalid path '%s'", pathToCheck.c_str());
-        } else {
-          // Check if the resolved path is within the basedir
-          // CDBDebug("basedir='%s', prefix='%s', inputpath='%s', absolutepath='%s'",baseDir,dirPrefix,path,pathToCheck.c_str());
-          CDBDebug("szResolvedPath: %s", szResolvedPath);
-          CDBDebug("baseDir       : %s", baseDir);
+        if (realpath(pathToCheck.c_str(), szResolvedPath) != NULL) {
           CT::string resolvedPathStr = szResolvedPath;
           if (resolvedPathStr.indexOf(baseDir) == 0) {
             resolvedPath->copy(szResolvedPath);
