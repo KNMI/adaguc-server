@@ -122,7 +122,7 @@ CPNGRaster *CReadPNG_read_png_file(const char *file_name, bool pngReadHeaderOnly
   png_get_text(png_ptr, info_ptr, &text_ptr, &num_text);
 
   for (int j = 0; j < num_text; j++) {
-    pngRaster->headers.add({.key = text_ptr[j].key, .value = text_ptr[j].text});
+    pngRaster->headers.push_back({.key = text_ptr[j].key, .value = text_ptr[j].text});
   }
 
   png_read_update_info(png_ptr, info_ptr);

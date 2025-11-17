@@ -8,39 +8,9 @@
 #include "CDrawImage.h"
 #include "CGenericDataWarper.h"
 #include "CStyleConfiguration.h"
+#include "GenericDataWarper/GDWDrawFunctionSettings.h"
 
-class CDrawFunctionSettings {
-public:
-  class Interval {
-  public:
-    float min;
-    float max;
-    CColor color;
-    Interval(float min, float max, CColor color) {
-      this->min = min;
-      this->max = max;
-      this->color = color;
-    }
-  };
-  bool isUsingShadeIntervals = false;
-  std::vector<Interval> intervals;
-  CColor bgColor;
-  bool bgColorDefined = false;
-  double dfNodataValue;
-  double legendValueRange;
-  double legendLowerRange;
-  double legendUpperRange;
-  bool hasNodataValue;
-  float legendLog;
-  float legendLogAsLog;
-  float legendScale;
-  float legendOffset;
-  CDrawImage *drawImage;
-};
-
-CDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawImage *drawImage, const CStyleConfiguration *styleConfiguration);
-
-template <class T> void setPixelInDrawImage(int x, int y, T val, CDrawFunctionSettings *settings) {
+template <class T> void setPixelInDrawImage(int x, int y, T val, GDWDrawFunctionSettings *settings) {
   bool isNodata = false;
 
   if (settings->hasNodataValue) {

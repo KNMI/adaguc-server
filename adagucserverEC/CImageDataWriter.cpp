@@ -74,7 +74,7 @@ CImageDataWriter::ProjCacheInfo CImageDataWriter::GetProjInfo(CT::string ckey, C
 #ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("initreproj with proj string '%s'", dataSource->nativeProj4.c_str());
 #endif
-    int status = imageWarper->initreproj(dataSource, drawImage->Geo, &srvParam->cfg->Projection);
+    int status = imageWarper->initreproj(dataSource, drawImage->geoParams, &srvParam->cfg->Projection);
     if (status != 0) {
       CDBError("initreproj failed");
       throw(1);
@@ -85,12 +85,12 @@ CImageDataWriter::ProjCacheInfo CImageDataWriter::GetProjInfo(CT::string ckey, C
     sx = dX;
     sy = dY;
 
-    x = double(sx) / double(drawImage->Geo->dWidth);
-    y = double(sy) / double(drawImage->Geo->dHeight);
-    x *= (drawImage->Geo->dfBBOX[2] - drawImage->Geo->dfBBOX[0]);
-    y *= (drawImage->Geo->dfBBOX[1] - drawImage->Geo->dfBBOX[3]);
-    x += drawImage->Geo->dfBBOX[0];
-    y += drawImage->Geo->dfBBOX[3];
+    x = double(sx) / double(drawImage->geoParams.width);
+    y = double(sy) / double(drawImage->geoParams.height);
+    x *= (drawImage->geoParams.bbox.right - drawImage->geoParams.bbox.left);
+    y *= (drawImage->geoParams.bbox.bottom - drawImage->geoParams.bbox.top);
+    x += drawImage->geoParams.bbox.left;
+    y += drawImage->geoParams.bbox.top;
 
     projCacheInfo.isOutsideBBOX = false;
     // projInvertedFirst = false;
@@ -134,7 +134,7 @@ CImageDataWriter::ProjCacheInfo CImageDataWriter::GetProjInfo(CT::string ckey, C
     //     CDBDebug("X is : %f Y is: %f",x,y);
 
     imageWarper->reprojpoint(x, y);
-    if (CGeoParams::isLonLatProjection(&dataSource->nativeProj4)) {
+    if (isLonLatProjection(&dataSource->nativeProj4)) {
       //       CDBDebug("Is latlon %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[2]);
       // if(dataSource->dfBBOX[2]>180||dataSource->dfBBOX[0]<-180){
       //         CDBDebug("X is : %f %d %d Y is: %f",x,x>=-180,x<180,y);
@@ -249,7 +249,7 @@ CImageDataWriter::CImageDataWriter() {
 
 int CImageDataWriter::_setTransparencyAndBGColor(CServerParams *srvParam, CDrawImage *drawImage) {
   //  CDBDebug("_setTransparencyAndBGColor");
-  // drawImage->setTrueColor(true);
+  // drawImage.setTrueColor(true);
   // Set transparency
   if (srvParam->Transparent == true) {
     drawImage->enableTransparency(true);
@@ -301,12 +301,12 @@ void CImageDataWriter::getFeatureInfoGetPointDataResults(CDataSource *dataSource
       double gfiPX = getFeatureInfoResult->lon_coordinate, gfiPY = getFeatureInfoResult->lat_coordinate;
       CImageWarper warper;
       /* We can always use LATLONPROJECTION, because getFeatureInfoResult->lon_coordinate and getFeatureInfoResult->lat_coordinate are always converted to latlon in CImageDataWriter */
-      int status = warper.initreproj(LATLONPROJECTION, srvParam->Geo, &srvParam->cfg->Projection);
+      int status = warper.initreproj(LATLONPROJECTION, srvParam->geoParams, &srvParam->cfg->Projection);
       if (status != 0) {
         CDBError("Unable to initialize projection");
       }
-      warper.reprojpoint_inv_topx(pointPX, pointPY, srvParam->Geo);
-      warper.reprojpoint_inv_topx(gfiPX, gfiPY, srvParam->Geo);
+      warper.reprojpoint_inv_topx(pointPX, pointPY, srvParam->geoParams);
+      warper.reprojpoint_inv_topx(gfiPX, gfiPY, srvParam->geoParams);
       float pixelDistance = hypot(pointPX - gfiPX, pointPY - gfiPY);
       warper.closereproj();
 
@@ -379,10 +379,10 @@ int CImageDataWriter::drawCascadedWMS(CDataSource *dataSource, const char *servi
     url.printconcat("&BGCOLOR=");
     url.printconcat(bgcolor);
   }
-  url.printconcat("&WIDTH=%d", drawImage.Geo->dWidth);
-  url.printconcat("&HEIGHT=%d", drawImage.Geo->dHeight);
-  url.printconcat("&BBOX=%0.4f,%0.4f,%0.4f,%0.4f", drawImage.Geo->dfBBOX[0], drawImage.Geo->dfBBOX[1], drawImage.Geo->dfBBOX[2], drawImage.Geo->dfBBOX[3]);
-  url.printconcat("&SRS=%s", drawImage.Geo->CRS.c_str());
+  url.printconcat("&WIDTH=%d", drawImage.geoParams.width);
+  url.printconcat("&HEIGHT=%d", drawImage.geoParams.height);
+  url.printconcat("&BBOX=%0.4f,%0.4f,%0.4f,%0.4f", drawImage.geoParams.bbox.left, drawImage.geoParams.bbox.bottom, drawImage.geoParams.bbox.right, drawImage.geoParams.bbox.top);
+  url.printconcat("&SRS=%s", drawImage.geoParams.crs.c_str());
   url.printconcat("&LAYERS=%s", layers);
   if ((styles != NULL) && (strlen(styles) > 0)) {
     url.printconcat("&STYLES=%s", styles);
@@ -406,21 +406,21 @@ int CImageDataWriter::drawCascadedWMS(CDataSource *dataSource, const char *servi
       int offsety = 0;
       if (dataSource->cfgLayer->Position.size() > 0) {
         CServerConfig::XMLE_Position *pos = dataSource->cfgLayer->Position[0];
-        if (pos->attr.right.empty() == false) offsetx = (drawImage.Geo->dWidth - w) - parseInt(pos->attr.right.c_str());
-        if (pos->attr.bottom.empty() == false) offsety = (drawImage.Geo->dHeight - h) - parseInt(pos->attr.bottom.c_str());
+        if (pos->attr.right.empty() == false) offsetx = (drawImage.geoParams.width - w) - parseInt(pos->attr.right.c_str());
+        if (pos->attr.bottom.empty() == false) offsety = (drawImage.geoParams.height - h) - parseInt(pos->attr.bottom.c_str());
         if (pos->attr.left.empty() == false) offsetx = parseInt(pos->attr.left.c_str());
         if (pos->attr.top.empty() == false) offsety = parseInt(pos->attr.top.c_str());
       }
 
-      /*if(drawImage.Geo->dHeight!=h||drawImage.Geo->dWidth!=w){
+      /*if(drawImage.Geo.dHeight!=h||drawImage.Geo.dWidth!=w){
         gdImageDestroy(gdImage);
         CDBError("Returned cascaded WMS image size is not the same as requested image size");
         return 1;
       }*/
 
       int transpColor = gdImageGetTransparent(gdImage);
-      for (int y = 0; y < drawImage.Geo->dHeight && y < h; y++) {
-        for (int x = 0; x < drawImage.Geo->dWidth && x < w; x++) {
+      for (int y = 0; y < drawImage.geoParams.height && y < h; y++) {
+        for (int x = 0; x < drawImage.geoParams.width && x < w; x++) {
           int color = gdImageGetPixel(gdImage, x, y);
           if (color != transpColor && 127 != gdImageAlpha(gdImage, color)) {
             if (transparent) {
@@ -559,7 +559,7 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
 
   if (srvParam->requestType == REQUEST_WMS_GETMAP) {
     //  CDBDebug("CREATING IMAGE FOR WMS GETMAP ---------------------------------------");
-    status = drawImage.createImage(srvParam->Geo);
+    status = drawImage.createImage(srvParam->geoParams);
 
     if (status != 0) return 1;
   }
@@ -569,8 +569,8 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
 
     int w = LEGEND_WIDTH;
     int h = LEGEND_HEIGHT;
-    if (srvParam->Geo->dWidth != 1) w = srvParam->Geo->dWidth;
-    if (srvParam->Geo->dHeight != 1) h = srvParam->Geo->dHeight;
+    if (srvParam->geoParams.width != 1) w = srvParam->geoParams.width;
+    if (srvParam->geoParams.height != 1) h = srvParam->geoParams.height;
 
     if (w > h) {
       status = drawImage.createImage(h, w);
@@ -584,7 +584,7 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
   }
   if (srvParam->requestType == REQUEST_WMS_GETFEATUREINFO || srvParam->requestType == REQUEST_WMS_GETHISTOGRAM) {
     // status = drawImage.createImage(2,2);
-    drawImage.Geo->copy(srvParam->Geo);
+    drawImage.geoParams = srvParam->geoParams;
 
 #ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("/init");
@@ -1013,12 +1013,12 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
                       double gfiPX = getFeatureInfoResult->lon_coordinate, gfiPY = getFeatureInfoResult->lat_coordinate;
                       CImageWarper warper;
                       /* We can always use LATLONPROJECTION, because getFeatureInfoResult->lon_coordinate and getFeatureInfoResult->lat_coordinate are always converted to latlon in CImageDataWriter */
-                      int status = warper.initreproj(LATLONPROJECTION, srvParam->Geo, &srvParam->cfg->Projection);
+                      int status = warper.initreproj(LATLONPROJECTION, srvParam->geoParams, &srvParam->cfg->Projection);
                       if (status != 0) {
                         CDBError("Unable to initialize projection");
                       }
-                      warper.reprojpoint_inv_topx(pointPX, pointPY, srvParam->Geo);
-                      warper.reprojpoint_inv_topx(gfiPX, gfiPY, srvParam->Geo);
+                      warper.reprojpoint_inv_topx(pointPX, pointPY, srvParam->geoParams);
+                      warper.reprojpoint_inv_topx(gfiPX, gfiPY, srvParam->geoParams);
                       float pixelDistance = hypot(pointPX - gfiPX, pointPY - gfiPY);
                       warper.closereproj();
 
@@ -1110,7 +1110,7 @@ int CImageDataWriter::createAnimation() {
   return 0;
 }
 
-void CImageDataWriter::setDate(const char *szTemp) { drawImage.setTextStroke(drawImage.Geo->dWidth - 170, 5, 0, szTemp, NULL, 12.0, 0.75, CColor(0, 0, 0, 255), CColor(255, 255, 255, 255)); }
+void CImageDataWriter::setDate(const char *szTemp) { drawImage.setTextStroke(drawImage.geoParams.width - 170, 5, 0, szTemp, NULL, 12.0, 0.75, CColor(0, 0, 0, 255), CColor(255, 255, 255, 255)); }
 
 CImageDataWriter::IndexRange::IndexRange() {
   min = 0;
@@ -1318,25 +1318,22 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
     status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
     CImageWarper warper;
 
-    status = warper.initreproj(dataSource, srvParam->Geo, &srvParam->cfg->Projection);
+    status = warper.initreproj(dataSource, srvParam->geoParams, &srvParam->cfg->Projection);
     if (status != 0) {
       CDBError("Unable to initialize projection");
       return 1;
     }
 
-    CGeoParams sourceGeo;
+    GeoParameters sourceGeo;
 
-    sourceGeo.dWidth = dataSource->dWidth;
-    sourceGeo.dHeight = dataSource->dHeight;
-    sourceGeo.dfBBOX[0] = dataSource->dfBBOX[0];
-    sourceGeo.dfBBOX[1] = dataSource->dfBBOX[1];
-    sourceGeo.dfBBOX[2] = dataSource->dfBBOX[2];
-    sourceGeo.dfBBOX[3] = dataSource->dfBBOX[3];
-    sourceGeo.dfCellSizeX = dataSource->dfCellSizeX;
-    sourceGeo.dfCellSizeY = dataSource->dfCellSizeY;
-    sourceGeo.CRS = dataSource->nativeProj4;
+    sourceGeo.width = dataSource->dWidth;
+    sourceGeo.height = dataSource->dHeight;
+    sourceGeo.bbox = dataSource->dfBBOX;
+    sourceGeo.cellsizeX = dataSource->dfCellSizeX;
+    sourceGeo.cellsizeY = dataSource->dfCellSizeY;
+    sourceGeo.crs = dataSource->nativeProj4;
     int PXExtentBasedOnSource[4];
-    gdwFindPixelExtent(PXExtentBasedOnSource, &sourceGeo, srvParam->Geo, &warper);
+    gdwFindPixelExtent(PXExtentBasedOnSource, sourceGeo, srvParam->geoParams, &warper);
 
     status = reader.openExtent(dataSource, CNETCDFREADER_MODE_OPEN_EXTENT, PXExtentBasedOnSource);
   } else {
@@ -1428,7 +1425,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
   CDBDebug("Thread[%d]: initreproj %s", dataSource->threadNr, dataSource->nativeProj4.c_str());
 #endif
   CImageWarper imageWarper;
-  status = imageWarper.initreproj(dataSource, drawImage->Geo, &srvParam->cfg->Projection);
+  status = imageWarper.initreproj(dataSource, drawImage->geoParams, &srvParam->cfg->Projection);
   if (status != 0) {
     CDBError("initreproj failed");
     reader.close();
@@ -1725,7 +1722,7 @@ int CImageDataWriter::calculateData(std::vector<CDataSource *> &dataSources) {
 #ifdef CIMAGEDATAWRITER_DEBUG
       CDBDebug("initreproj %s", dataSource->nativeProj4.c_str());
 #endif
-      status = imageWarper.initreproj(dataSource, drawImage.Geo, &srvParam->cfg->Projection);
+      status = imageWarper.initreproj(dataSource, drawImage.geoParams, &srvParam->cfg->Projection);
       if (status != 0) {
         CDBError("initreproj failed");
         hasFailed = true;
@@ -1892,7 +1889,7 @@ int CImageDataWriter::calculateData(std::vector<CDataSource *> &dataSources) {
 
       if (dataSource->cfgLayer->ImageText.size() > 0) {
         if (dataSource->cfgLayer->ImageText[0]->value.empty() == false) {
-          drawImage.setTextStroke(drawImage.Geo->dWidth - 170, 5, 0, dataSource->cfgLayer->ImageText[0]->value.c_str(), NULL, 12.0, 0.75, CColor(0, 0, 0, 255), CColor(255, 255, 255, 255));
+          drawImage.setTextStroke(drawImage.geoParams.width - 170, 5, 0, dataSource->cfgLayer->ImageText[0]->value.c_str(), NULL, 12.0, 0.75, CColor(0, 0, 0, 255), CColor(255, 255, 255, 255));
         }
       }
     }
@@ -2011,7 +2008,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
               fontSize = parseFloat(srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.size.c_str());
               fontSize = fontSize * scaling;
             }
-            drawImage.drawText(int(drawImage.Geo->dWidth / 2 - len * 3), drawImage.Geo->dHeight - 2 * fontSize, srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(), fontSize, 0,
+            drawImage.drawText(int(drawImage.geoParams.width / 2 - len * 3), drawImage.geoParams.height - 2 * fontSize, srvParam->cfg->WMS[0]->SubTitleFont[0]->attr.location.c_str(), fontSize, 0,
                                imageText.c_str(), CColor(0, 0, 0, 255));
           }
         }
@@ -2037,7 +2034,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
 
       bool useProjection = true;
 
-      if (srvParam->Geo->CRS.equals("EPSG:4326")) {
+      if (srvParam->geoParams.crs.equals("EPSG:4326")) {
         // CDBDebug("Not using projection");
         useProjection = false;
       }
@@ -2046,7 +2043,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
 #ifdef CIMAGEDATAWRITER_DEBUG
         CDBDebug("initreproj latlon");
 #endif
-        int status = imageWarper.initreproj(LATLONPROJECTION, drawImage.Geo, &srvParam->cfg->Projection);
+        int status = imageWarper.initreproj(LATLONPROJECTION, drawImage.geoParams, &srvParam->cfg->Projection);
         if (status != 0) {
           CDBError("initreproj failed");
           return 1;
@@ -2056,9 +2053,9 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       f8point topLeft;
       f8box latLonBBOX;
       // Find lat lon BBox;
-      topLeft.x = srvParam->Geo->dfBBOX[0];
+      topLeft.x = srvParam->geoParams.bbox.left;
 
-      topLeft.y = srvParam->Geo->dfBBOX[1];
+      topLeft.y = srvParam->geoParams.bbox.bottom;
       if (useProjection) {
         imageWarper.reprojpoint(topLeft);
       }
@@ -2068,13 +2065,13 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       latLonBBOX.top = topLeft.y;
       latLonBBOX.bottom = topLeft.y;
 
-      double numStepsX = (srvParam->Geo->dfBBOX[2] - srvParam->Geo->dfBBOX[0]) / numTestSteps;
-      double numStepsY = (srvParam->Geo->dfBBOX[3] - srvParam->Geo->dfBBOX[1]) / numTestSteps;
+      double numStepsX = (srvParam->geoParams.bbox.right - srvParam->geoParams.bbox.left) / numTestSteps;
+      double numStepsY = (srvParam->geoParams.bbox.top - srvParam->geoParams.bbox.bottom) / numTestSteps;
 #ifdef CIMAGEDATAWRITER_DEBUG
-      CDBDebug("dfBBOX: %f, %f, %f, %f", srvParam->Geo->dfBBOX[0], srvParam->Geo->dfBBOX[1], srvParam->Geo->dfBBOX[2], srvParam->Geo->dfBBOX[3]);
+      CDBDebug("dfBBOX: %f, %f, %f, %f", srvParam->geoParams.bbox.left, srvParam->geoParams.bbox.bottom, srvParam->geoParams.bbox.right, srvParam->geoParams.bbox.top);
 #endif
-      for (double y = srvParam->Geo->dfBBOX[1]; y < srvParam->Geo->dfBBOX[3] + numStepsY; y = y + numStepsY) {
-        for (double x = srvParam->Geo->dfBBOX[0]; x < srvParam->Geo->dfBBOX[2] + numStepsX; x = x + numStepsX) {
+      for (double y = srvParam->geoParams.bbox.bottom; y < srvParam->geoParams.bbox.top + numStepsY; y = y + numStepsY) {
+        for (double x = srvParam->geoParams.bbox.left; x < srvParam->geoParams.bbox.right + numStepsX; x = x + numStepsX) {
 #ifdef CIMAGEDATAWRITER_DEBUG
           CDBDebug("xy: %f, %f", x, y);
 #endif
@@ -2122,7 +2119,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
           if (useProjection) {
             imageWarper.reprojpoint_inv(gridP[p]);
           }
-          CoordinatesXYtoScreenXY(gridP[p], srvParam->Geo);
+          CoordinatesXYtoScreenXY(gridP[p], srvParam->geoParams);
         }
       }
 
@@ -2151,7 +2148,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
           if (p < numPoints) {
             drawImage.line(gridP[p].x, gridP[p].y, gridP[p + 1].x, gridP[p + 1].y, lineWidth, lineColor);
             if (drawnTextRight == false) {
-              if (gridP[p].x > srvParam->Geo->dWidth && gridP[p].y > 0) {
+              if (gridP[p].x > srvParam->geoParams.width && gridP[p].y > 0) {
                 drawnTextRight = true;
                 double gy = latLonBBOX.top + precision * double(y);
                 message.print("%2.1f", gy);
@@ -2160,7 +2157,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
                 if (ty < 8) {
                   ty = 8;
                 }
-                if (tx > srvParam->Geo->dWidth - 30) tx = srvParam->Geo->dWidth - 1;
+                if (tx > srvParam->geoParams.width - 30) tx = srvParam->geoParams.width - 1;
                 tx -= 17;
 
                 if (drawText) drawImage.drawText(tx, ty - 2, fontLoc, fontSize, 0, message.c_str(), textColor);
@@ -2197,14 +2194,14 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
             drawImage.line(gridP[p].x, gridP[p].y, gridP[p + numPointsX].x, gridP[p + numPointsX].y, lineWidth, lineColor);
 
             if (drawnTextBottom == false) {
-              if (gridP[p].x > 0 && gridP[p].y > srvParam->Geo->dHeight) {
+              if (gridP[p].x > 0 && gridP[p].y > srvParam->geoParams.height) {
                 drawnTextBottom = true;
                 double gx = latLonBBOX.left + precision * double(x);
                 message.print("%2.1f", gx);
                 int ty = int(gridP[p].y);
                 if (ty < 15) ty = 0;
-                if (ty > srvParam->Geo->dHeight) {
-                  ty = srvParam->Geo->dHeight;
+                if (ty > srvParam->geoParams.height) {
+                  ty = srvParam->geoParams.height;
                 }
                 ty -= 2;
                 int tx = int((gridP[p]).x + 2);
@@ -2547,8 +2544,8 @@ int CImageDataWriter::end() {
             resultXML.printconcat("          <gml:pos>%f,%f</gml:pos>\n", g->lon_coordinate, g->lat_coordinate);
             resultXML.printconcat("        </gml:Point>\n");
 
-            if (!srvParam->Geo->CRS.equals("EPSG:4326")) {
-              resultXML.printconcat("        <gml:Point srsName=\"%s\">\n", srvParam->Geo->CRS.c_str());
+            if (!srvParam->geoParams.crs.equals("EPSG:4326")) {
+              resultXML.printconcat("        <gml:Point srsName=\"%s\">\n", srvParam->geoParams.crs.c_str());
               resultXML.printconcat("          <gml:pos>%f %f</gml:pos>\n", g->x_imageCoordinate, g->y_imageCoordinate);
               resultXML.printconcat("        </gml:Point>\n");
             }
@@ -2625,8 +2622,8 @@ int CImageDataWriter::end() {
             resultXML.printconcat("          <gml:pos>%f,%f</gml:pos>\n", g->lon_coordinate, g->lat_coordinate);
             resultXML.printconcat("        </gml:Point>\n");
 
-            if (!srvParam->Geo->CRS.equals("EPSG:4326")) {
-              resultXML.printconcat("        <gml:Point srsName=\"%s\">\n", srvParam->Geo->CRS.c_str());
+            if (!srvParam->geoParams.crs.equals("EPSG:4326")) {
+              resultXML.printconcat("        <gml:Point srsName=\"%s\">\n", srvParam->geoParams.crs.c_str());
               resultXML.printconcat("          <gml:pos>%f %f</gml:pos>\n", g->x_imageCoordinate, g->y_imageCoordinate);
               resultXML.printconcat("        </gml:Point>\n");
             }
@@ -2839,7 +2836,7 @@ int CImageDataWriter::end() {
 #ifdef CIMAGEDATAWRITER_DEBUG
       CDBDebug("GetFeatureInfo Format image/png");
 #endif
-      float width = srvParam->Geo->dWidth, height = srvParam->Geo->dHeight;
+      float width = srvParam->geoParams.width, height = srvParam->geoParams.height;
       if (srvParam->figWidth > 1) width = srvParam->figWidth;
       if (srvParam->figHeight > 1) height = srvParam->figHeight;
 
@@ -3484,4 +3481,4 @@ int CImageDataWriter::drawText(int x, int y, const char *fontlocation, float siz
   return 0;
 }
 
-int CImageDataWriter::createScaleBar(CGeoParams *geoParams, CDrawImage *scaleBarImage, float scaling) { return CCreateScaleBar::createScaleBar(scaleBarImage, geoParams, scaling); }
+int CImageDataWriter::createScaleBar(GeoParameters &geoParams, CDrawImage *scaleBarImage, float scaling) { return CCreateScaleBar::createScaleBar(scaleBarImage, geoParams, scaling); }

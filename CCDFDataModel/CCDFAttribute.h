@@ -29,6 +29,11 @@
 #include "CCDFTypes.h"
 namespace CDF {
   class Attribute {
+  private:
+    void allocateData(size_t size);
+
+    void freeData();
+
   public:
     void setName(const char *value);
     Attribute();

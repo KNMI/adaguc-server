@@ -164,9 +164,9 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
     CDBError("srvParams is not set");
     return 1;
   }
-  if (srvParams->Geo->dWidth > 1 && srvParams->Geo->dHeight > 1) {
-    width = srvParams->Geo->dWidth;
-    height = srvParams->Geo->dHeight;
+  if (srvParams->geoParams.width > 1 && srvParams->geoParams.height > 1) {
+    width = srvParams->geoParams.width;
+    height = srvParams->geoParams.height;
   }
 
 #ifdef CCONVERTH5VOLSCAN_DEBUG
@@ -333,16 +333,16 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
     bool doHeight = (new2DVar->name.equals("Height"));
 
     // Make the width and height of the new 2D adaguc field the same as the viewing window
-    dataSource->dWidth = dataSource->srvParams->Geo->dWidth;
-    dataSource->dHeight = dataSource->srvParams->Geo->dHeight;
+    dataSource->dWidth = dataSource->srvParams->geoParams.width;
+    dataSource->dHeight = dataSource->srvParams->geoParams.height;
 
     // Width needs to be at least 2, the bounding box is calculated from these.
     if (dataSource->dWidth == 1) dataSource->dWidth = 2;
     if (dataSource->dHeight == 1) dataSource->dHeight = 2;
-    double cellSizeX = (dataSource->srvParams->Geo->dfBBOX[2] - dataSource->srvParams->Geo->dfBBOX[0]) / double(dataSource->dWidth);
-    double cellSizeY = (dataSource->srvParams->Geo->dfBBOX[3] - dataSource->srvParams->Geo->dfBBOX[1]) / double(dataSource->dHeight);
-    double offsetX = dataSource->srvParams->Geo->dfBBOX[0];
-    double offsetY = dataSource->srvParams->Geo->dfBBOX[1];
+    double cellSizeX = dataSource->srvParams->geoParams.bbox.span().x / dataSource->dWidth;
+    double cellSizeY = dataSource->srvParams->geoParams.bbox.span().y / dataSource->dHeight;
+    double offsetX = dataSource->srvParams->geoParams.bbox.left;
+    double offsetY = dataSource->srvParams->geoParams.bbox.bottom;
 
 #ifdef CCONVERTH5VOLSCAN_DEBUG
     CDBDebug("Drawing %s with WH = [%d,%d]", new2DVar->name.c_str(), dataSource->dWidth, dataSource->dHeight);
@@ -385,7 +385,7 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
 
     CImageWarper imageWarper;
     bool projectionRequired = false;
-    if (dataSource->srvParams->Geo->CRS.length() > 0) {
+    if (dataSource->srvParams->geoParams.crs.length() > 0) {
       projectionRequired = true;
       new2DVar->setAttributeText("grid_mapping", "customgridprojection");
       // Apply once
@@ -394,7 +394,7 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
         CDF::Variable *projectionVar = new CDF::Variable();
         projectionVar->name.copy("customgridprojection");
         cdfObject->addVariable(projectionVar);
-        dataSource->nativeEPSG = dataSource->srvParams->Geo->CRS.c_str();
+        dataSource->nativeEPSG = dataSource->srvParams->geoParams.crs.c_str();
         imageWarper.decodeCRS(&dataSource->nativeProj4, &dataSource->nativeEPSG, &dataSource->srvParams->cfg->Projection);
         if (dataSource->nativeProj4.length() == 0) {
           dataSource->nativeProj4 = LATLONPROJECTION;
@@ -411,7 +411,8 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
 
 #ifdef CCONVERTH5VOLSCAN_DEBUG
     CDBDebug("Datasource CRS = %s nativeproj4 = %s", dataSource->nativeEPSG.c_str(), dataSource->nativeProj4.c_str());
-    CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->Geo->dfBBOX[0], dataSource->srvParams->Geo->dfBBOX[1], dataSource->srvParams->Geo->dfBBOX[2], dataSource->srvParams->Geo->dfBBOX[3]);
+    CDBDebug("Datasource bbox:%f %f %f %f", dataSource->srvParams->geoParams.bbox.left, dataSource->srvParams->geoParams.bbox.bottom, dataSource->srvParams->geoParams.bbox.right,
+             dataSource->srvParams->geoParams.bbox.top);
     CDBDebug("Datasource width height %d %d", dataSource->dWidth, dataSource->dHeight);
 #endif
 
@@ -489,7 +490,7 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
     CT::string scanProj4;
     scanProj4.print("+proj=aeqd +a=6378.137 +b=6356.752 +R_A +lat_0=%.3f +lon_0=%.3f +x_0=0 +y_0=0", radarLat, radarLon);
     CImageWarper radarProj;
-    radarProj.initreproj(scanProj4.c_str(), dataSource->srvParams->Geo, &dataSource->srvParams->cfg->Projection);
+    radarProj.initreproj(scanProj4.c_str(), dataSource->srvParams->geoParams, &dataSource->srvParams->cfg->Projection);
 
     double x, y, ground_range;
     double range, azim, ground_height;

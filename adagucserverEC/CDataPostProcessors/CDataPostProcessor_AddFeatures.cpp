@@ -97,14 +97,11 @@ int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource
         bool found = false;
         for (size_t p = 0; p < nrPoints && !found; p++) {
           for (size_t c = 0; c < dataSource->getDataObject(0)->points[p].paramList.size() && !found; c++) {
-            CKeyValue ckv = dataSource->getDataObject(0)->points[p].paramList[c];
-            //            CDBDebug("ckv: %s %s", ckv.key.c_str(), ckv.value.c_str());
+            auto ckv = dataSource->getDataObject(0)->points[p].paramList[c];
             if (ckv.key.equals("station")) {
               CT::string station = ckv.value;
-              //              CDBDebug("  comparing %s %s", station.c_str(), name);
               if (strcmp(station.c_str(), name) == 0) {
                 valueForFeatureNr[f] = dataSource->getDataObject(0)->points[p].v;
-                //                CDBDebug("Found %s as %d (%f)", name, f, valueForFeatureNr[f]);
                 found = true;
               }
             }

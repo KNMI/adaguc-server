@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include "CFillTriangle.h"
 #include "CImageWarperRenderInterface.h"
+#include "Types/CPointTypes.h"
 
 class ShadeDefinition {
 public:

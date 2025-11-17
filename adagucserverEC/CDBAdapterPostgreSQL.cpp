@@ -28,7 +28,7 @@
 #include <map>
 #include "CDebugger.h"
 #include "CServerError.h"
-#include "CGeoParams.h"
+#include "Types/GeoParameters.h"
 
 const char *CDBAdapterPostgreSQL::className = "CDBAdapterPostgreSQL";
 #define CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP "pathfiltertablelookup_v2_0_23"
@@ -946,10 +946,11 @@ int CDBAdapterPostgreSQL::createDimTableOfType(const char *dimname, const char *
   CT::string tableColumns("path varchar (511)");
   // 12345678901234567890
   // 0000-00-00T00:00:00Z
-  if (type == 3) tableColumns.printconcat(", %s varchar (20), dim%s int", dimname, dimname);
-  if (type == 2) tableColumns.printconcat(", %s varchar (64), dim%s int", dimname, dimname);
-  if (type == 1) tableColumns.printconcat(", %s double precision, dim%s int", dimname, dimname);
-  if (type == 0) tableColumns.printconcat(", %s int, dim%s int", dimname, dimname);
+
+  if (type == TABLETYPE_TIMESTAMP) tableColumns.printconcat(", %s varchar (20), dim%s int", dimname, dimname);
+  if (type == TABLETYPE_STRING) tableColumns.printconcat(", %s varchar (64), dim%s int", dimname, dimname);
+  if (type == TABLETYPE_DOUBLE) tableColumns.printconcat(", %s double precision, dim%s int", dimname, dimname);
+  if (type == TABLETYPE_INT) tableColumns.printconcat(", %s int, dim%s int", dimname, dimname);
   tableColumns.printconcat(", filedate timestamp");
 
   // New since 2016-02-15 projection information and level
@@ -978,14 +979,6 @@ int CDBAdapterPostgreSQL::createDimTableOfType(const char *dimname, const char *
   }
   return status;
 }
-
-int CDBAdapterPostgreSQL::createDimTableInt(const char *dimname, const char *tablename) { return createDimTableOfType(dimname, tablename, 0); }
-
-int CDBAdapterPostgreSQL::createDimTableDoublePrecision(const char *dimname, const char *tablename) { return createDimTableOfType(dimname, tablename, 1); }
-
-int CDBAdapterPostgreSQL::createDimTableString(const char *dimname, const char *tablename) { return createDimTableOfType(dimname, tablename, 2); }
-
-int CDBAdapterPostgreSQL::createDimTableTimeStamp(const char *dimname, const char *tablename) { return createDimTableOfType(dimname, tablename, 3); }
 
 int CDBAdapterPostgreSQL::checkIfFileIsInTable(const char *tablename, const char *filename) {
 #ifdef MEASURETIME

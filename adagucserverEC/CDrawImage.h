@@ -37,7 +37,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "CGeoParams.h"
+#include "Types/GeoParameters.h"
 #include "CServerError.h"
 #include "CServerConfig_CPPXSD.h"
 #include <math.h>
@@ -69,51 +69,21 @@ public:
 static CColor drawPointTextOutlineColor = CColor(255, 255, 255, 0);
 
 class CDrawImage {
-public:
-  /*
-  #define CGRAPHICSIMAGE_IMAGETYPEINDEXED
-  #define CGRAPHICSIMAGE_IMAGETYPEARGB
-
-  class CGraphicsImage{
-  public:
-    CGraphicsImage();
-    ~CGraphicsImage();
-    int imageType;
-    int width,height,stride;
-    unsigned char* byteBuffer;
-    int byteBufferPointerIsOwned;
-  };
-
-  class CPNGWriter{
-  public:
-    class {
-      unsigned char    r,g,b,a;
-    } RGBAType;
-    int writeToPng8Stream(FILE *fp, CGraphicsImage* image);
-    int writeToPng32Stream(FILE *fp, CGraphicsImage* image);
-  };
-  */
 private:
   std::vector<CLegend *> legends;
   CLegend *currentLegend = nullptr;
   int dImageCreated;
-
   DEF_ERRORFUNCTION();
   int _createStandard();
-
   int dPaletteCreated;
-
   unsigned char BGColorR, BGColorG, BGColorB;
   bool _bEnableTransparency;
   bool _bEnableTrueColor;
   unsigned char backgroundAlpha;
-  // bool _bAntiAliased;
   int brect[8];
   CCairoPlotter *cairo;
   const char *TTFFontLocation;
   float TTFFontSize;
-  // char *fontConfig ;
-
   std::map<int, int> myColorMap;
   std::map<int, int>::iterator myColorIter;
   std::map<CT::string, CCairoPlotter *> myCCairoPlotterMap;
@@ -123,7 +93,6 @@ private:
   float lineMoveToX, lineMoveToY;
   int numImagesAdded;
   int currentGraphicsRenderer;
-
   void _drawBarbGd(int x, int y, double direction, double strength, CColor color, float lineWidth, bool toKnots, bool flip);
 
 public:
@@ -135,13 +104,13 @@ public:
   gdImagePtr image;
 
   int colors[256];
-  CGeoParams *Geo;
+  GeoParameters geoParams;
   CDrawImage();
   ~CDrawImage();
 
 public:
   int createImage(int _dW, int _dH);
-  int createImage(CGeoParams *_Geo);
+  int createImage(GeoParameters &_Geo);
   int createImage(const char *fn);
   int createImage(CDrawImage *image, int width, int height);
   int printImagePng8(bool useBitAlpha);

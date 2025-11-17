@@ -42,7 +42,6 @@ CServerParams::CServerParams() {
   Transparent = false;
   cfg = NULL;
   configObj = new CServerConfig();
-  Geo = new CGeoParams;
   imageFormat = IMAGEFORMAT_IMAGEPNG8;
   imageMode = SERVERIMAGEMODE_8BIT;
   autoOpenDAPEnabled = -1;
@@ -61,10 +60,6 @@ CServerParams::~CServerParams() {
   if (configObj != NULL) {
     delete configObj;
     configObj = NULL;
-  }
-  if (Geo != NULL) {
-    delete Geo;
-    Geo = NULL;
   }
   for (size_t j = 0; j < requestDims.size(); j++) {
     delete requestDims[j];
@@ -328,7 +323,7 @@ bool CServerParams::checkBBOXXYOrder(const char *projName) {
   if (OGCVersion == WMS_VERSION_1_3_0) {
     CT::string projNameString;
     if (projName == NULL) {
-      projNameString = Geo->CRS.c_str();
+      projNameString = geoParams.crs.c_str();
     } else {
       projNameString = projName;
     }

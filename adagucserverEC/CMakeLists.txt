@@ -92,9 +92,14 @@ add_library(
     utils/CRequestUtils.cpp
     utils/serverutils.h
     utils/serverutils.cpp
+    utils/projectionUtils.h
+    utils/projectionUtils.cpp
     Types/LayerMetadataType.h
+    Types/CPointTypes.h
     GenericDataWarper/gdwDrawTriangle.h
     GenericDataWarper/gdwDrawTriangle.cpp
+    GenericDataWarper/GDWDrawFunctionSettings.h
+    GenericDataWarper/GDWDrawFunctionSettings.cpp   
     CGenericDataWarper.cpp
     CGenericDataWarper.h
     GenericDataWarper/gdwFindPixelExtent.cpp
@@ -151,8 +156,6 @@ add_library(
     CGDALDataWriter.h
     CGeoJSONData.cpp
     CGeoJSONData.h
-    CGeoParams.cpp
-    CGeoParams.h
     CGetFileInfo.cpp
     CGetFileInfo.h
     CHandleMetadata.cpp
@@ -167,6 +170,8 @@ add_library(
     CImgRenderStippling.h
     CImgRenderers/CImgRenderPoints.cpp
     CImgRenderers/CImgRenderPoints.h
+    CImgRenderers/getPointStyle.h
+    CImgRenderers/getPointStyle.cpp
     CImgRenderers/getVectorStyle.h
     CImgRenderers/getVectorStyle.cpp
     CImgWarpBilinear.cpp
@@ -228,14 +233,15 @@ add_library(
     json.h
     LayerTypeLiveUpdate/LayerTypeLiveUpdate.cpp
     LayerTypeLiveUpdate/LayerTypeLiveUpdate.h
-    Types/BBOX.h
-    Types/BBOX.cpp
+    Types/GeoParameters.cpp
+    Types/GeoParameters.h
     Types/ProjectionStore.h
     Types/ProjectionStore.cpp
     testadagucserver.cpp
     testtimeutils.cpp
     timeutils.cpp
     timeutils.h
+
 )
 
 target_include_directories(adagucserverEC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${Cairo_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIRS} ${PostgreSQL_INCLUDE_DIRS} ${GDAL_INCLUDE_DIRS} ${PROJ_INCLUDE_DIR})

@@ -213,31 +213,25 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
       settings.data = (void *)varToWriteTo->data;  // To write TO
       void *sourceData = (void *)varToClone->data; // To read FROM
 
-      CGeoParams sourceGeo;
-      sourceGeo.dWidth = dataSourceToInclude->dWidth;
-      sourceGeo.dHeight = dataSourceToInclude->dHeight;
-      sourceGeo.dfBBOX[0] = dataSourceToInclude->dfBBOX[0];
-      sourceGeo.dfBBOX[1] = dataSourceToInclude->dfBBOX[1];
-      sourceGeo.dfBBOX[2] = dataSourceToInclude->dfBBOX[2];
-      sourceGeo.dfBBOX[3] = dataSourceToInclude->dfBBOX[3];
-      sourceGeo.dfCellSizeX = dataSourceToInclude->dfCellSizeX;
-      sourceGeo.dfCellSizeY = dataSourceToInclude->dfCellSizeY;
-      sourceGeo.CRS = dataSourceToInclude->nativeProj4;
+      GeoParameters sourceGeo;
+      sourceGeo.width = dataSourceToInclude->dWidth;
+      sourceGeo.height = dataSourceToInclude->dHeight;
+      sourceGeo.bbox = dataSourceToInclude->dfBBOX;
+      sourceGeo.cellsizeX = dataSourceToInclude->dfCellSizeX;
+      sourceGeo.cellsizeY = dataSourceToInclude->dfCellSizeY;
+      sourceGeo.crs = dataSourceToInclude->nativeProj4;
 
-      CGeoParams destGeo;
-      destGeo.dWidth = dataSource->dWidth;
-      destGeo.dHeight = dataSource->dHeight;
-      destGeo.dfBBOX[0] = dataSource->dfBBOX[0];
-      destGeo.dfBBOX[1] = dataSource->dfBBOX[1];
-      destGeo.dfBBOX[2] = dataSource->dfBBOX[2];
-      destGeo.dfBBOX[3] = dataSource->dfBBOX[3];
-      destGeo.dfCellSizeX = dataSource->dfCellSizeX;
-      destGeo.dfCellSizeY = dataSource->dfCellSizeY;
-      destGeo.CRS = dataSource->nativeProj4;
+      GeoParameters destGeo;
+      destGeo.width = dataSource->dWidth;
+      destGeo.height = dataSource->dHeight;
+      destGeo.bbox = dataSource->dfBBOX;
+      destGeo.cellsizeX = dataSource->dfCellSizeX;
+      destGeo.cellsizeY = dataSource->dfCellSizeY;
+      destGeo.crs = dataSource->nativeProj4;
 
       CImageWarper warper;
 
-      status = warper.initreproj(dataSourceToInclude, &destGeo, &dataSource->srvParams->cfg->Projection);
+      status = warper.initreproj(dataSourceToInclude, destGeo, &dataSource->srvParams->cfg->Projection);
       if (status != 0) {
         CDBError("Unable to initialize projection");
         return 1;
@@ -246,11 +240,11 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
       auto dataType = varToWriteTo->getType();
 
       GenericDataWarper genericDataWarper;
-      GDWArgs args = {.warper = &warper, .sourceData = sourceData, .sourceGeoParams = &sourceGeo, .destGeoParams = &destGeo};
+      GDWArgs args = {.warper = &warper, .sourceData = sourceData, .sourceGeoParams = sourceGeo, .destGeoParams = destGeo};
 
-#define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                            \
-      if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction(x, y, val, warperState, settings); });
-ENUMERATE_OVER_CDFTYPES(RENDER)
+#define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
+  if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return drawFunction(x, y, val, warperState, settings); });
+      ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
     }
 

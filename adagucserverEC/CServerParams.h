@@ -33,7 +33,7 @@
 #include "Definitions.h"
 #include "CServerConfig_CPPXSD.h"
 #include "COGCDims.h"
-#include "CGeoParams.h"
+#include "./Types/GeoParameters.h"
 #include <map>
 #include <tuple>
 #include <string>
@@ -102,7 +102,8 @@ public:
   int figWidth, figHeight;
   CT::string BGColor;
   bool Transparent;
-  CGeoParams *Geo;
+  GeoParameters geoParams;
+  CT::string responceCrs;
   CT::string Styles;
   CT::string Style;
 

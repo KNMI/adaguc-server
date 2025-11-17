@@ -160,11 +160,11 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
     }
   }
 
-  srvParam->Geo->BBOX_CRS = baseDataSource->nativeProj4.c_str();
-  srvParam->Geo->CRS = srvParam->Geo->BBOX_CRS;
+  srvParam->responceCrs = baseDataSource->nativeProj4.c_str();
+  srvParam->geoParams.crs = srvParam->responceCrs;
   srvParam->WCS_GoNative = false;
-  srvParam->Geo->dWidth = tileSettings->attr.tilewidthpx.toInt();
-  srvParam->Geo->dHeight = tileSettings->attr.tileheightpx.toInt();
+  srvParam->geoParams.width = tileSettings->attr.tilewidthpx.toInt();
+  srvParam->geoParams.height = tileSettings->attr.tileheightpx.toInt();
 
   int index = 0;
   CT::string suffix;
@@ -180,7 +180,7 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
       continue;
     }
     CDBDebug("Generating  %s %0.1f done", destFileName.basename().c_str(), (index / double(tileSet.size())) * 100.);
-    destGrid.bbox.toArray(srvParam->Geo->dfBBOX);
+    srvParam->geoParams.bbox = destGrid.bbox;
     CNetCDFDataWriter wcsWriter;
     wcsWriter.silent = true;
     wcsWriter.init(srvParam, dataSourceToTile, dataSourceToTile->getNumTimeSteps());

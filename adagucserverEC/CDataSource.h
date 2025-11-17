@@ -35,6 +35,7 @@
 #include "CCDFDataModel.h"
 #include "COGCDims.h"
 #include "CStopWatch.h"
+#include "Types/CPointTypes.h"
 
 #include "CStyleConfiguration.h"
 
@@ -322,21 +323,18 @@ public:
   CServerConfig::XMLE_Configuration *cfg;
 
   CT::string featureSet;
-
-  // Link to the root CDFObject, is owned by the datareader.
-
   CDataSource();
   ~CDataSource();
   static void readStatusFlags(CDF::Variable *var, std::vector<CDataSource::StatusFlag> *statusFlagList);
   static const char *getFlagMeaning(std::vector<CDataSource::StatusFlag> *statusFlagList, double value);
   static void getFlagMeaningHumanReadable(CT::string *flagMeaning, std::vector<CDataSource::StatusFlag> *statusFlagList, double value);
-  // int autoCompleteDimensions(CPGSQLDB *dataBaseConnection);
 
   int setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Configuration *_cfg, CServerConfig::XMLE_Layer *_cfgLayer, const char *_layerName, int layerIndex);
   void addStep(const char *fileName);
   const char *getFileName();
   void setHeaderFilename(CT::string headerFileName);
-  void setGeo(CGeoParams *geo);
+  void setGeo(GeoParameters &geo);
+  GeoParameters getGeo();
 
   DataObject *getDataObjectByName(const char *name);
   DataObject *getDataObject(int j);
@@ -400,6 +398,8 @@ public:
   int readVariableDataForCDFDims(CDF::Variable *variableToRead, CDFType dataTypeToReturnData);
 
   std::string getDataSetName();
+
+  GeoParameters makeGeoParams();
 };
 
 #endif

@@ -411,14 +411,11 @@ void CDataSource::addStep(const char *fileName) {
 
 void CDataSource::setHeaderFilename(CT::string headerFilename) { this->headerFilename = headerFilename; }
 
-void CDataSource::setGeo(CGeoParams *geo) {
-  nativeProj4 = geo->CRS;
-  dWidth = geo->dWidth;
-  dHeight = geo->dHeight;
-  dfBBOX[0] = geo->dfBBOX[0];
-  dfBBOX[1] = geo->dfBBOX[1];
-  dfBBOX[2] = geo->dfBBOX[2];
-  dfBBOX[3] = geo->dfBBOX[3];
+void CDataSource::setGeo(GeoParameters &geo) {
+  nativeProj4 = geo.crs;
+  dWidth = geo.width;
+  dHeight = geo.height;
+  geo.bbox.toArray(dfBBOX);
 }
 
 const char *CDataSource::getFileName() {
@@ -597,7 +594,6 @@ CT::PointerList<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(C
   if (styleNames.size() > 1) start = 1;
   // Loop over the styles.
   try {
-    // CDBDebug("There are %d styles to check",styleNames->size());
     for (size_t i = start; i < styleNames.size(); i++) {
 
       // Lookup the style index in the servers configuration
@@ -911,7 +907,7 @@ double CDataSource::getScaling() {
     if (this->getStyle()->styleConfig->RenderSettings.size() > 0) {
       if (!this->getStyle()->styleConfig->RenderSettings[0]->attr.scalewidth.empty()) {
         double scaleWidth = this->getStyle()->styleConfig->RenderSettings[0]->attr.scalewidth.toDouble();
-        double imageWidth = (double)this->srvParams->Geo->dWidth;
+        double imageWidth = (double)this->srvParams->geoParams.width;
         return imageWidth / scaleWidth;
       }
     }
@@ -998,6 +994,27 @@ int CDataSource::attachCDFObject(CDFObject *cdfObject, bool dataSourceOwnsDataOb
       return 1;
     }
   }
+  // Shorthand to variable configuration in the layer.
+  for (auto *cfgVar : cfgLayer->Variable) {
+    CDF::Variable *var = cdfObject->getVar(cfgVar->value);
+    if (var != nullptr) {
+
+      // Set long_name
+      if (!cfgVar->attr.long_name.empty()) {
+        var->setAttributeText("long_name", cfgVar->attr.long_name);
+      }
+
+      // Set units
+      if (!cfgVar->attr.units.empty()) {
+        var->setAttributeText("units", cfgVar->attr.units);
+      }
+
+      // Set standard_name
+      if (!cfgVar->attr.standard_name.empty()) {
+        var->setAttributeText("standard_name", cfgVar->attr.standard_name);
+      }
+    }
+  }
   this->dataSourceOwnsDataObject = dataSourceOwnsDataObject;
   return 0;
 }
@@ -1037,3 +1054,14 @@ int CDataSource::readVariableDataForCDFDims(CDF::Variable *variableToRead, CDFTy
 }
 
 std::string CDataSource::getDataSetName() { return std::string(this->srvParams->datasetLocation.c_str()); }
+
+GeoParameters CDataSource::makeGeoParams() {
+  GeoParameters geoParams;
+  geoParams.width = this->dWidth;
+  geoParams.height = this->dHeight;
+  geoParams.bbox = this->dfBBOX;
+  geoParams.cellsizeX = this->dfCellSizeX;
+  geoParams.cellsizeY = this->dfCellSizeY;
+  geoParams.crs = this->nativeProj4;
+  return geoParams;
+}

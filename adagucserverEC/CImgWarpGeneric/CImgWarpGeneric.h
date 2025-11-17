@@ -29,21 +29,9 @@
 
 #include "CImageWarperRenderInterface.h"
 #include "CGenericDataWarper.h"
+#include "./GenericDataWarper/GDWDrawFunctionSettings.h"
 
 static inline int nfast_mod(const int input, const int ceil) { return input >= ceil ? input % ceil : input; }
-
-struct CImgWarpGenericDrawFunctionState {
-  double dfNodataValue;
-  double legendValueRange;
-  double legendLowerRange;
-  double legendUpperRange;
-  bool hasNodataValue;
-  float *dataField;
-  int width, height;
-  bool useHalfCellOffset;
-};
-
-template <typename T> void imgWarpGenericDrawFunction(int x, int y, T val, GDWState &warperState, CImgWarpGenericDrawFunctionState &settings);
 
 class CImgWarpGeneric : public CImageWarperRenderInterface {
 private:

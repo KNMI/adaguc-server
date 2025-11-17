@@ -164,7 +164,7 @@ public:
   static int createLegend(CDataSource *sourceImage, CDrawImage *legendImage);
   static int createLegend(CDataSource *sourceImage, CDrawImage *legendImage, bool rotate);
 
-  static int createScaleBar(CGeoParams *geoParams, CDrawImage *scaleBarImage, float scaling);
+  static int createScaleBar(GeoParameters &geoParams, CDrawImage *scaleBarImage, float scaling);
 
   int getFeatureInfo(std::vector<CDataSource *> dataSources, int dataSourceIndex, int dX, int dY);
   int getFeatureInfoVirtual(std::vector<CDataSource *> dataSources, int dataSourceIndex, int dX, int dY, CServerParams *srvParams);
