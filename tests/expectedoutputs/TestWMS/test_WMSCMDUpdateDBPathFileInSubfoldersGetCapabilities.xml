@@ -11,11 +11,11 @@
     <Service>
         <Name>WMS</Name>
         <Title>adaguc.testScanPathSubfolder</Title>
-        <Abstract>This service demonstrates how the ADAGUC server can be used to create OGC services.</Abstract>
+        <Abstract>Radar precipitation measurements above the Netherlands, on a 1.0x1.0 km grid, measurements are available in a five minute time interval. The intensity is in kg/m2/hour (mm/hour). The dataset is created from KNMI RAD_NL25_PCP_NA files. For interoperability, the original unit reflectivity in DBZ is converted to precipitation flux in kg/m2/h. The conversion from dbZ to kg/m2/h is applied with the formula R = 10^((PixelValue -109)/32).</Abstract>
         <KeywordList>
             <Keyword>view</Keyword>
             <Keyword>infoMapAccessService</Keyword>
-            <Keyword>ADAGUCServer version 3.1.2, of Jun 30 2025 11:29:01 </Keyword>
+            <Keyword>ADAGUCServer version 6.0.0, of Nov 18 2025 12:39:18 </Keyword>
         </KeywordList>
         <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.testScanPathSubfolder&amp;SERVICE=WMS&amp;"/>
         <ContactInformation>

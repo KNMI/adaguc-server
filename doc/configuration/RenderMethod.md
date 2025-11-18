@@ -6,6 +6,7 @@ Back to [Configuration](./Configuration.md)
 Rendermethod defines the way the data is rendered inside the service.
 There are currently seven mechanisms to render an image:
 
+-   generic - Uses the generic datawarper. This is the default rendermethod and can handle most of the other rendermethods mentioned below.
 -   nearest (nearest neighbour) in class [CImgWarpNearestNeighbour](/adagucserverEC/CImgWarpNearestNeighbour.cpp)
 -   bilinear in class [CImgWarpBilinear](/adagucserverEC/CImgWarpBilinear.cpp)
 -   rgba (truecolor) in class [CImgWarpNearestRGBA](/adagucserverEC/CImgWarpNearestRGBA.cpp)

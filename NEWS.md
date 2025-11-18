@@ -1,3 +1,7 @@
+**Version 6.0.0 - 2025-11-18**
+
+- Implemented Generic data warper
+
 **Version 5.0.1 - 2025-11-05**
 
 ***Support to configure windbarbs and points with graphical stylings for specific values like windspeeds***

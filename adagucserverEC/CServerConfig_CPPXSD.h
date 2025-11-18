@@ -1637,17 +1637,17 @@ public:
       } else if (equals("WMSExceptions", name)) {
         XMLE_ADDOBJ(WMSExceptions);
       } else if (equals("TitleFont", name)) {
-        XMLE_SETOBJ(TitleFont);
+        XMLE_ADDOBJ(TitleFont);
       } else if (equals("ContourFont", name)) {
-        XMLE_SETOBJ(ContourFont);
+        XMLE_ADDOBJ(ContourFont);
       } else if (equals("LegendFont", name)) {
         XMLE_SETOBJ(LegendFont);
       } else if (equals("SubTitleFont", name)) {
-        XMLE_SETOBJ(SubTitleFont);
+        XMLE_ADDOBJ(SubTitleFont);
       } else if (equals("DimensionFont", name)) {
-        XMLE_SETOBJ(DimensionFont);
+        XMLE_ADDOBJ(DimensionFont);
       } else if (equals("Inspire", name)) {
-        XMLE_SETOBJ(Inspire);
+        XMLE_ADDOBJ(Inspire);
       }
       return nullptr;
     }
