@@ -69,12 +69,11 @@ void parse_element_names(void *_a_node, CXMLObjectInterface *object) {
   for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
     if (cur_node->type == XML_ELEMENT_NODE) {
       char *content = cur_node->children != NULL && cur_node->children->content != NULL && cur_node->children->type == XML_TEXT_NODE ? (char *)cur_node->children->content : nullptr;
-      addedElement = object->addElement((char *)cur_node->name, content);
+      addedElement = object->addElement((char *)cur_node->name);
       if (addedElement != nullptr) {
-        if (addedElement->value.empty()) {
-          addedElement->value = content;
-          addedElement->value.trimSelf(true);
-        }
+        addedElement->value = content;
+        addedElement->value.trimSelf(true);
+        addedElement->handleValue();
         if (cur_node->properties != NULL) {
           std::vector<attribute> attributes;
           parse_element_attributes(cur_node->properties, attributes);

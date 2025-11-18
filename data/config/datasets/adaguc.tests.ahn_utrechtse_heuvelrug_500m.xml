@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+   <WMS>
+    <Abstract>WMS demo displaying digital elevation models with various stylings</Abstract>
+    <WMSFormat name="image/png" format="image/png32"/> <!-- FOR TESTING AND IMAGE COMPARISON -->
+  </WMS>
+
+  <Legend name="legend_for_hillshading_transparent" type="colorRange">
+    <palette index="0" red="0" green="0" blue="0" alpha="60" />
+    <palette index="50" red="0" green="0" blue="0" alpha="90" />
+    <palette index="120" red="128" green="128" blue="128" alpha="0" />
+    <palette index="190" red="192" green="192" blue="192" alpha="80" />
+    <palette index="240" red="255" green="255" blue="255" alpha="70" />
+  </Legend>
+
+  <Legend name="legend_for_hillshading_opaque" type="colorRange">
+    <palette index="0" red="0" green="0" blue="0"  />
+    <palette index="120" red="128" green="128" blue="128" />
+    <palette index="240" red="255" green="255" blue="255" />
+  </Legend>
+
+  <Legend name="legend_elevation" type="colorRange">
+    <palette index="0" red="70" green="80" blue="140" />
+    <palette index="2" red="70" green="100" blue="170" />
+    <palette index="5" red="30" green="150" blue="191" />
+    <palette index="6" red="0" green="191" blue="191" />
+    <palette index="48" red="0" green="255" blue="0" />
+    <palette index="96" red="255" green="255" blue="0" />
+    <palette index="144" red="255" green="127" blue="0" />
+    <palette index="192" red="191" green="127" blue="63" />
+    <palette index="240" red="20" green="20" blue="20" />
+  </Legend>
+
+  <Style name="style_shaded_elevation">
+    <ShadeInterval min="-80" max="-7" fillcolor="#08387b" bgcolor="#FF000080" />
+    <ShadeInterval min="-7" max="-6" fillcolor="#084584" />
+    <ShadeInterval min="-6" max="-5" fillcolor="#105184" />
+    <ShadeInterval min="-5" max="-4" fillcolor="#105D84" />
+    <ShadeInterval min="-4" max="-3" fillcolor="#10698C" />
+    <ShadeInterval min="-3" max="-2.5" fillcolor="#18758C" />
+    <ShadeInterval min="-2.5" max="-2" fillcolor="#18828C" />
+    <ShadeInterval min="-2" max="-1.5" fillcolor="#189294" />
+    <ShadeInterval min="-1.5" max="-1" fillcolor="#219694" />
+    <ShadeInterval min="-1" max="-0.5" fillcolor="#219E8C" />
+    <ShadeInterval min="-0.5" max="0" fillcolor="#18A284" />
+    <ShadeInterval min="0" max="0.5" fillcolor="#18AA7B" />
+    <ShadeInterval min="0.5" max="1" fillcolor="#18B26B" />
+    <ShadeInterval min="1" max="1.5" fillcolor="#10BA63" />
+    <ShadeInterval min="1.5" max="2" fillcolor="#10BE52" />
+    <ShadeInterval min="2" max="2.5" fillcolor="#08C742" />
+    <ShadeInterval min="2.5" max="3" fillcolor="#08CF31" />
+    <ShadeInterval min="3" max="3.5" fillcolor="#08CF31" />
+    <ShadeInterval min="3.5" max="4" fillcolor="#00DB00" />
+    <ShadeInterval min="4" max="4.5" fillcolor="#10DF00" />
+    <ShadeInterval min="4.5" max="5" fillcolor="#29E300" />
+    <ShadeInterval min="5" max="6" fillcolor="#42E700" />
+    <ShadeInterval min="6" max="7" fillcolor="#63EB00" />
+    <ShadeInterval min="7" max="8" fillcolor="#7BEF00" />
+    <ShadeInterval min="8" max="9" fillcolor="#94F300" />
+    <ShadeInterval min="9" max="10" fillcolor="#B5F700" />
+    <ShadeInterval min="10" max="12" fillcolor="#CEF700" />
+    <ShadeInterval min="12" max="14" fillcolor="#EFFF00" />
+    <ShadeInterval min="14" max="16" fillcolor="#FFFB00" />
+    <ShadeInterval min="16" max="18" fillcolor="#FFF300" />
+    <ShadeInterval min="18" max="20" fillcolor="#FFE700" />
+    <ShadeInterval min="20" max="25" fillcolor="#F7D700" />
+    <ShadeInterval min="25" max="30" fillcolor="#F7CF08" />
+    <ShadeInterval min="30" max="35" fillcolor="#F7C708" />
+    <ShadeInterval min="35" max="40" fillcolor="#F7BE08" />
+    <ShadeInterval min="40" max="45" fillcolor="#F7B610" />
+    <ShadeInterval min="45" max="50" fillcolor="#EFA610" />
+    <ShadeInterval min="50" max="60" fillcolor="#EFA210" />
+    <ShadeInterval min="60" max="70" fillcolor="#EF9A10" />
+    <ShadeInterval min="70" max="80" fillcolor="#E78E18" />
+    <ShadeInterval min="80" max="90" fillcolor="#E78621" />
+    <ShadeInterval min="90" max="100" fillcolor="#DE7921" />
+    <ShadeInterval min="100" max="125" fillcolor="#D66D29" />
+    <ShadeInterval min="125" max="150" fillcolor="#D66929" />
+    <ShadeInterval min="150" max="175" fillcolor="#CE6131" />
+    <ShadeInterval min="175" max="200" fillcolor="#CE5931" />
+    <ShadeInterval min="200" max="250" fillcolor="#C67739" />
+    <ShadeInterval min="250" max="300" fillcolor="#C65139" />
+  </Style>
+
+  <Style name="style_colormapped_nearest_elevation" title="Elevation - continuous legend - nearest" abstract="Elevation plotted with a colormap and nearest neighbour interpolation">
+    <Legend fixed="true" tickinterval="10">legend_elevation</Legend>
+    <Min>-5</Min>
+    <Max>115</Max>
+  </Style>
+
+  <Style name="style_colormapped_bilinear_elevation" title="Elevation - continuous legend - bilinear" abstract="Elevation plotted with a colormap and bilinear interpolation">
+    <Legend fixed="true" tickinterval="10">legend_elevation</Legend>
+    <Min>-5</Min>
+    <Max>115</Max>
+    <RenderSettings interpolationmethod="bilinear"/>
+  </Style>
+
+  <Style name="style_shaded_nearest_elevation" title="Elevation - discrete classes - nearest" abstract="Elevation with defined classes and colors with nearest neighbour interpolation">
+    <IncludeStyle name="style_shaded_elevation"/>
+    <RenderSettings interpolationmethod="nearest"/>
+  </Style>
+
+  <Style name="style_shaded_bilinear_elevation" title="Elevation - discrete classes - bilinear" abstract="Elevation with defined classes and colors with bilinear interpolation">
+    <IncludeStyle name="style_shaded_elevation"/>
+    <RenderSettings interpolationmethod="bilinear"/>
+  </Style>
+
+  <Style name="style_colormapped_bilinear_multicolor"  title="Multicolor legend - bilinear" abstract="Plotted with a multicolor colormap and bilinear interpolation">
+    <Legend fixed="true" tickinterval="5">multicolor</Legend>
+    <Min>-5</Min>
+    <Max>115</Max>
+    <RenderSettings interpolationmethod="bilinear"/>
+  </Style>
+
+  <Style name="style_colormapped_bilinear_multicolor_contours"  title="Multicolor legend - and contouring" abstract="Plotted with a multicolor colormap and bilinear interpolation with contour lines at every 10">
+    <IncludeStyle name="style_colormapped_bilinear_multicolor"/>
+    <SmoothingFilter>2</SmoothingFilter>
+    <ContourLine width="1.8" linecolor="#000000" textcolor="#000000" textformatting="" interval="10"/>
+  </Style>
+
+
+  <Style name="style_colormapped_bilinear_multicolor_contours_extrasmooth" title="Smoothed contours with a multicolor legend" abstract="Plotted with a multicolor colormap and bilinear interpolation with contour lines at every 10, extra smoothing applied.">
+    <IncludeStyle name="style_colormapped_bilinear_multicolor"/>
+    <SmoothingFilter>6</SmoothingFilter>
+    <ContourLine width="1.8" linecolor="#000000" textcolor="#000000" textformatting="" interval="10"/>
+  </Style>
+
+  <Style name="style_colormapped_bilinear_multicolor_contours_extrasmooth_discretized" title="Smoothed and discretized every 5 units" abstract="Plotted with a multicolor colormap and bilinear interpolation with contour lines at every 10, extra smoothing applied. Descretized every 5.s">
+    <IncludeStyle name="style_colormapped_bilinear_multicolor_contours_extrasmooth"/>
+    <ShadeInterval>5</ShadeInterval>
+  </Style>
+
+
+  <Style name="style_hillshaded_opaque" title="Hillshaded opaque" abstract="Hillshaded opaque">
+    <Legend fixedclasses="true">legend_for_hillshading_opaque</Legend>
+    <RenderMethod>hillshaded</RenderMethod>
+    <Min>0</Min>
+    <Max>1</Max>
+  </Style>
+
+  <Style name="style_hillshaded_transparent" title="Hillshaded tranparent" abstract="Hillshaded tranparent">
+    <Legend fixedclasses="true">legend_for_hillshading_transparent</Legend>
+    <RenderMethod>hillshaded</RenderMethod>
+    <Min>0</Min>
+    <Max>1</Max>
+  </Style>
+
+  <Style name="style_dutch_mountains" title="Dutch mountains" abstract="Style with only three classes, lakes, land and mountains">
+    <SmoothingFilter>2</SmoothingFilter>
+    <ContourLine width="1.8" linecolor="#000000" textcolor="#000000" textformatting="" interval="10"/>
+    <ShadeInterval min="-100" max="0.0"    label="Lakes"    fillcolor="#0000FF"/>
+    <ShadeInterval min="0" max="80"    label="Lands"    fillcolor="#70FF80"/>
+    <ShadeInterval min="80" max="180"    label="Mountains"    fillcolor="#FF0000"/>
+    <RenderSettings interpolationmethod="bilinear"/>
+  </Style>
+
+  <Layer type="database">
+    <Name>ahn_utrechtseheuvelrug_500m</Name>
+    <Title>AHN Utrechtse Heuvelrug 500m</Title>
+    <Abstract>Algemeen hoogte bestand Nederland op 500 meter resolutie boven de Utrechtse Heuvelrug</Abstract>
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/ahn_utrechtse_heuvelrug_500m.nc</FilePath>
+    <Variable>depth</Variable>
+    <Styles>style_colormapped_nearest_elevation</Styles>
+    <Styles>style_colormapped_bilinear_elevation</Styles>
+    <Styles>style_shaded_nearest_elevation</Styles>
+    <Styles>style_shaded_bilinear_elevation</Styles>
+    <Styles>style_colormapped_bilinear_multicolor</Styles>
+    <Styles>style_colormapped_bilinear_multicolor_contours</Styles>
+    <Styles>style_colormapped_bilinear_multicolor_contours_extrasmooth</Styles>
+    <Styles>style_colormapped_bilinear_multicolor_contours_extrasmooth_discretized</Styles>    
+    <Styles>style_hillshaded_opaque</Styles>
+    <Styles>style_hillshaded_transparent</Styles>
+  </Layer>
+
+  <Layer type="database">
+    <Name>ahn_utrechtseheuvelrug_500m_hillshaded</Name>
+    <Title>AHN Utrechtse Heuvelrug 500m hillshaded</Title>
+    <AdditionalLayer replace="false" style="style_hillshaded_transparent/hillshaded">ahn_utrechtseheuvelrug_500m</AdditionalLayer>
+    <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/ahn_utrechtse_heuvelrug_500m.nc</FilePath>
+    <Variable>depth</Variable>
+    <Styles>style_colormapped_bilinear_elevation,style_colormapped_bilinear_multicolor_contours,style_dutch_mountains</Styles>
+  </Layer>
+
+</Configuration>

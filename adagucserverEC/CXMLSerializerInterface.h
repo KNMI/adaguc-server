@@ -69,7 +69,8 @@ public:
   CT::string value;
   virtual ~CXMLObjectInterface() {}
 
-  virtual CXMLObjectInterface *addElement(const char *, const char *) { return nullptr; };
+  virtual CXMLObjectInterface *addElement(const char *) { return nullptr; };
+  virtual void handleValue() {};
   virtual bool addAttribute(const char *, const char *) { return false; }
 };
 

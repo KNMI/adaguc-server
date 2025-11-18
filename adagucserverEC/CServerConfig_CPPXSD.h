@@ -340,7 +340,7 @@ public:
     public:
       CT::string name, type, tickround, tickinterval, fixedclasses, file, textformatting;
     } attr;
-    CXMLObjectInterface *addElement(const char *name, const char *) {
+    CXMLObjectInterface *addElement(const char *name) {
       if (equals("palette", name)) {
         XMLE_ADDOBJ(palette);
       }
@@ -362,7 +362,7 @@ public:
       } else if (equals("tickinterval", name)) {
         attr.tickinterval.copy(value);
         return true;
-      } else if (equals("fixedclasses", name)) {
+      } else if (equals("fixedclasses", name) || equals("fixed", name)) {
         attr.fixedclasses.copy(value);
         return true;
       } else if (equals("textformatting", name)) {
@@ -690,7 +690,7 @@ public:
       CT::string enableautoopendap, enablelocalfile, enablecache;
     } attr;
 
-    CXMLObjectInterface *addElement(const char *name, const char *) {
+    CXMLObjectInterface *addElement(const char *name) {
       if (equals("Dir", name)) {
         XMLE_ADDOBJ(Dir);
       } else if (equals("ImageText", name)) {
@@ -1022,7 +1022,7 @@ public:
     public:
       CT::string name, title, abstract;
     } attr;
-    CXMLObjectInterface *addElement(const char *name, const char *) {
+    CXMLObjectInterface *addElement(const char *name) {
       if (equals("Thinning", name)) {
         XMLE_ADDOBJ(Thinning);
       } else if (equals("Point", name)) {
@@ -1196,12 +1196,7 @@ public:
     public:
       CT::string filter, gfi_openall, ncml, maxquerylimit, retentionperiod, retentiontype;
     } attr;
-    CXMLObjectInterface *addElement(const char *, const char *value) {
-      if (value != NULL) {
-        this->value.copy(CDirReader::makeCleanPath(value));
-      }
-      return nullptr;
-    }
+    void handleValue() { this->value = CDirReader::makeCleanPath(this->value); }
 
     bool addAttribute(const char *name, const char *value) {
       if (equals("filter", name)) {
@@ -1494,7 +1489,7 @@ public:
       }
       return false;
     }
-    CXMLObjectInterface *addElement(const char *name, const char *) {
+    CXMLObjectInterface *addElement(const char *name) {
       if (equals("LatLonBox", name)) {
         XMLE_ADDOBJ(LatLonBox);
       }
@@ -1555,13 +1550,13 @@ public:
       XMLE_DELOBJ(Title);
       XMLE_DELOBJ(Abstract);
     }
-    CXMLObjectInterface *addElement(const char *name, const char *) {
+    CXMLObjectInterface *addElement(const char *name) {
       if (equals("Name", name)) {
-        XMLE_ADDOBJ(Name);
+        XMLE_SETOBJ(Name);
       } else if (equals("Title", name)) {
-        XMLE_ADDOBJ(Title);
+        XMLE_SETOBJ(Title);
       } else if (equals("Abstract", name)) {
-        XMLE_ADDOBJ(Abstract);
+        XMLE_SETOBJ(Abstract);
       }
       return nullptr;
     }
@@ -1583,7 +1578,7 @@ public:
       XMLE_DELOBJ(Identifier);
     }
 
-    CXMLObjectInterface *addElement(const char *name, const char *) {
+    CXMLObjectInterface *addElement(const char *name) {
       if (equals("ViewServiceCSW", name)) {
         XMLE_ADDOBJ(ViewServiceCSW);
       } else if (equals("DatasetCSW", name)) {
@@ -1628,29 +1623,29 @@ public:
 
       XMLE_DELOBJ(Inspire);
     }
-    CXMLObjectInterface *addElement(const char *name, const char *) {
+    CXMLObjectInterface *addElement(const char *name) {
       if (equals("Title", name)) {
-        XMLE_ADDOBJ(Title);
+        XMLE_SETOBJ(Title);
       } else if (equals("GridFont", name)) {
-        XMLE_ADDOBJ(GridFont);
+        XMLE_SETOBJ(GridFont);
       } else if (equals("Abstract", name)) {
-        XMLE_ADDOBJ(Abstract);
+        XMLE_SETOBJ(Abstract);
       } else if (equals("RootLayer", name)) {
-        XMLE_ADDOBJ(RootLayer);
+        XMLE_SETOBJ(RootLayer);
       } else if (equals("WMSFormat", name)) {
         XMLE_ADDOBJ(WMSFormat);
       } else if (equals("WMSExceptions", name)) {
         XMLE_ADDOBJ(WMSExceptions);
       } else if (equals("TitleFont", name)) {
-        XMLE_ADDOBJ(TitleFont);
+        XMLE_SETOBJ(TitleFont);
       } else if (equals("ContourFont", name)) {
-        XMLE_ADDOBJ(ContourFont);
+        XMLE_SETOBJ(ContourFont);
       } else if (equals("LegendFont", name)) {
-        XMLE_ADDOBJ(LegendFont);
+        XMLE_SETOBJ(LegendFont);
       } else if (equals("SubTitleFont", name)) {
-        XMLE_ADDOBJ(SubTitleFont);
+        XMLE_SETOBJ(SubTitleFont);
       } else if (equals("DimensionFont", name)) {
-        XMLE_ADDOBJ(DimensionFont);
+        XMLE_SETOBJ(DimensionFont);
       } else if (equals("Inspire", name)) {
         XMLE_SETOBJ(Inspire);
       }
@@ -1688,7 +1683,7 @@ public:
       XMLE_DELOBJ(Abstract);
       XMLE_DELOBJ(WCSFormat);
     }
-    CXMLObjectInterface *addElement(const char *name, const char *) {
+    CXMLObjectInterface *addElement(const char *name) {
       if (equals("Name", name)) {
         XMLE_ADDOBJ(Name);
       } else if (equals("Title", name)) {
@@ -1900,7 +1895,7 @@ public:
       XMLE_DELOBJ(AdditionalLayer);
       XMLE_DELOBJ(FeatureInterval);
     }
-    CXMLObjectInterface *addElement(const char *name, const char *) {
+    CXMLObjectInterface *addElement(const char *name) {
       if (equals("Name", name)) {
         XMLE_ADDOBJ(Name);
       } else if (equals("Group", name)) {
@@ -2033,7 +2028,7 @@ public:
       XMLE_DELOBJ(Environment);
     }
 
-    CXMLObjectInterface *addElement(const char *name, const char *) {
+    CXMLObjectInterface *addElement(const char *name) {
       if (equals("Legend", name)) {
         XMLE_ADDOBJ(Legend);
       } else if (equals("WMS", name)) {
@@ -2077,7 +2072,7 @@ public:
 
   std::vector<XMLE_Configuration *> Configuration;
 
-  CXMLObjectInterface *addElement(const char *name, const char *) {
+  CXMLObjectInterface *addElement(const char *name) {
     if (equals("Configuration", name)) {
       XMLE_SETOBJ(Configuration);
     }
