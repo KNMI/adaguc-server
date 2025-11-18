@@ -25,19 +25,6 @@
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 #include "CXMLSerializerInterface.h"
-const char *CXMLSerializerInterface::className = "CXMLSerializerInterface";
-
-CXMLObjectInterface::CXMLObjectInterface() { pt2Class = NULL; }
-
-void CXMLObjectInterface::addElement(CXMLObjectInterface *baseClass, int rc, const char *, const char *value) {
-  CXMLSerializerInterface *base = (CXMLSerializerInterface *)baseClass;
-  base->currentNode = (CXMLObjectInterface *)this;
-  if (rc == 0)
-    if (value != NULL) {
-      this->value.copy(value);
-      this->value.trimSelf(true);
-    }
-}
 
 int parseInt(const char *pszValue) {
   if (pszValue == NULL) return 0;
@@ -62,47 +49,56 @@ bool parseBool(const char *pszValue) {
   return CT::string(pszValue).equalsIgnoreCase("true");
 }
 
-CXMLSerializerInterface::CXMLSerializerInterface() {
-  pt2Class = this;
-  baseClass = this;
-  currentNode = NULL;
-}
-
-void CXMLSerializerInterface::parse_element_attributes(void *_a_node) {
+void parse_element_attributes(void *_a_node, std::vector<attribute> &attributes) {
   xmlAttr *a_node = (xmlAttr *)_a_node;
   char *content = NULL;
   char *name = NULL;
   name = (char *)a_node->name;
   if (a_node->children != NULL) content = (char *)a_node->children->content;
-  if (content != NULL) addAttributeEntry(name, content);
+  if (content != NULL) {
+    attributes.push_back({.name = name, .value = content});
+  }
   a_node = a_node->next;
-  if (a_node != NULL) parse_element_attributes(a_node);
+  if (a_node != NULL) parse_element_attributes(a_node, attributes);
 }
 
-void CXMLSerializerInterface::parse_element_names(void *_a_node) {
+void parse_element_names(void *_a_node, CXMLObjectInterface *object) {
   xmlNode *a_node = (xmlNode *)_a_node;
   xmlNode *cur_node = NULL;
+  CXMLObjectInterface *addedElement = nullptr;
   for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
     if (cur_node->type == XML_ELEMENT_NODE) {
-      char *content = NULL;
-      if (cur_node->children != NULL)
-        if (cur_node->children->content != NULL)
-          if (cur_node->children->type == XML_TEXT_NODE) content = (char *)cur_node->children->content;
-      addElementEntry(recursiveDepth, (char *)cur_node->name, content);
-      if (cur_node->properties != NULL) parse_element_attributes(cur_node->properties);
+      char *content = cur_node->children != NULL && cur_node->children->content != NULL && cur_node->children->type == XML_TEXT_NODE ? (char *)cur_node->children->content : nullptr;
+      addedElement = object->addElement((char *)cur_node->name, content);
+      if (addedElement != nullptr) {
+        if (addedElement->value.empty()) {
+          addedElement->value = content;
+          addedElement->value.trimSelf(true);
+        }
+        if (cur_node->properties != NULL) {
+          std::vector<attribute> attributes;
+          parse_element_attributes(cur_node->properties, attributes);
+          for (auto &attribute : attributes) {
+            if (addedElement->addAttribute(attribute.name.c_str(), attribute.value.c_str()) == false) {
+              CDBWarning("No matches for attribute [%s] in Element [%s]", attribute.name.c_str(), (char *)cur_node->name);
+            }
+          }
+        }
+      } else {
+        CDBWarning("No matches for Element [%s]", (char *)cur_node->name);
+      }
     }
-    recursiveDepth++;
-    parse_element_names(cur_node->children);
-    recursiveDepth--;
+    if (addedElement != nullptr) {
+      parse_element_names(cur_node->children, addedElement);
+    }
   }
 }
 
-int CXMLSerializerInterface::parse(const char *xmlData, size_t xmlSize) {
-  recursiveDepth = 0;
+int parseConfig(CXMLObjectInterface *object, CT::string &xmlData) {
   LIBXML_TEST_VERSION
   xmlDoc *doc = NULL;
   xmlNode *root_element = NULL;
-  doc = xmlParseMemory(xmlData, xmlSize);
+  doc = xmlParseMemory(xmlData.c_str(), xmlData.length());
   if (doc == NULL) {
     CDBError("error: could not parse xmldata %s", xmlData);
     xmlFreeDoc(doc);
@@ -110,28 +106,10 @@ int CXMLSerializerInterface::parse(const char *xmlData, size_t xmlSize) {
     return 1;
   }
   root_element = xmlDocGetRootElement(doc);
-  parse_element_names(root_element);
-  xmlFreeDoc(doc);
-  xmlCleanupParser();
-  return 0;
-}
-int CXMLSerializerInterface::parseFile(const char *xmlFile) {
-  recursiveDepth = 0;
-  LIBXML_TEST_VERSION
-  xmlDoc *doc = NULL;
-  xmlNode *root_element = NULL;
-  doc = xmlParseFile(xmlFile);
-  if (doc == NULL) {
-    CDBError("error: could not parse xmlFile %s", xmlFile);
-    xmlFreeDoc(doc);
-    xmlCleanupParser();
-    return 1;
-  }
-  root_element = xmlDocGetRootElement(doc);
-  parse_element_names(root_element);
+  parse_element_names(root_element, object);
   xmlFreeDoc(doc);
   xmlCleanupParser();
   return 0;
 }
 
-bool CXMLSerializerInterface::equals(const char *val1, const char *val2) { return strcmp(val1, val2) == 0; }
+bool equals(const char *val1, const char *val2) { return strcmp(val1, val2) == 0; }

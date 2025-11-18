@@ -21,42 +21,42 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
   settings.legendOffset = styleConfiguration->legendOffset;
   settings.drawImage = drawImage;
 
+  if (styleConfiguration->renderSettings.size() > 0) {
+    auto renderSetting = styleConfiguration->renderSettings.back();
+    auto &renderSettingsAttr = renderSetting->attr;
+    if (renderSettingsAttr.renderhint.equals(RENDERHINT_DISCRETECLASSES)) {
+      settings.isUsingShadeIntervals = true;
+    }
+    // Obtain interpolationmethod
+    if (renderSettingsAttr.interpolationmethod.equals("nearest")) {
+      settings.drawInImage = DrawInImageNearest;
+    } else if (renderSettingsAttr.interpolationmethod.equals("bilinear")) {
+      settings.drawInImage = DrawInImageBilinear;
+    } else if (renderSettingsAttr.interpolationmethod.equals("none")) {
+      settings.drawInImage = DrawInImageNone;
+    }
+
+    if (renderSettingsAttr.drawgridboxoutline.equals("true")) {
+      settings.drawgridboxoutline = true;
+    }
+  }
   /* Check the if we want to use discrete type */
   if (styleConfiguration->styleConfig != nullptr) {
-    auto numRenderSettings = styleConfiguration->styleConfig->RenderSettings.size();
-    if (numRenderSettings > 0) {
-      auto renderSettings = styleConfiguration->styleConfig->RenderSettings[numRenderSettings - 1];
-      auto &renderSettingsAttr = renderSettings->attr;
-      if (renderSettingsAttr.renderhint.equals(RENDERHINT_DISCRETECLASSES)) {
-        settings.isUsingShadeIntervals = true;
-      }
-      // Obtain interpolationmethod
-      if (renderSettingsAttr.interpolationmethod.equals("nearest")) {
-        settings.drawInImage = DrawInImageNearest;
-      } else if (renderSettingsAttr.interpolationmethod.equals("bilinear")) {
-        settings.drawInImage = DrawInImageBilinear;
-      } else if (renderSettingsAttr.interpolationmethod.equals("none")) {
-        settings.drawInImage = DrawInImageNone;
-      }
-
-      if (renderSettingsAttr.drawgridboxoutline.equals("true")) {
-        settings.drawgridboxoutline = true;
-      }
-    }
     // For the generic renderer and when shadeinterval is set, always apply shading.
     if (settings.isUsingShadeIntervals == false && styleConfiguration->shadeIntervals.size() > 0) {
       size_t numRenderSettings = styleConfiguration->styleConfig->RenderMethod.size();
-      if (numRenderSettings > 0 && styleConfiguration->renderMethod == RM_GENERIC) {
+      if (numRenderSettings == 0 || (numRenderSettings > 0 && styleConfiguration->renderMethod == RM_GENERIC)) {
         settings.isUsingShadeIntervals = true;
       }
     }
+  }
 
-    // Smoothingfilter:
-    auto numSmoothingFilterConfigs = styleConfiguration->styleConfig->SmoothingFilter.size();
-    if (numSmoothingFilterConfigs > 0 && settings.smoothingDistanceMatrix == nullptr) {
-      auto smoothConfig = styleConfiguration->styleConfig->SmoothingFilter[numSmoothingFilterConfigs - 1];
-      if (!smoothConfig->value.empty()) {
-        settings.smoothingFiter = smoothConfig->value.toDouble();
+  // Smoothingfilter:
+  if (styleConfiguration->smoothingFilterVector.size() > 0) {
+    auto smoothingFilter = styleConfiguration->smoothingFilterVector.back();
+    if (settings.smoothingDistanceMatrix == nullptr) {
+      if (!smoothingFilter->value.empty()) {
+        settings.smoothingFiter = smoothingFilter->value.toDouble();
         smoothingMakeDistanceMatrix(settings);
       }
     }

@@ -25,7 +25,7 @@
   <!-- WCS settings -->
   <WCS>
     <Title>BTD_DATA</Title>
-    <Label>wcsLabel</Label>
+    
     <WCSFormat name="netcdf" driver="NetCDF" mimetype="Content-Type:application/netcdf" options="WRITE_GDAL_TAGS=FALSE,WRITE_LONLAT=FALSE,WRITE_BOTTOMUP=FALSE,ZLEVEL=2,FORMAT=NC4C"/>
     <WCSFormat name="aaigrid" driver="AAIGrid" mimetype="Content-Type:text/plain" />
     <WCSFormat name="geotiff" driver="GTiff" mimetype="Content-Type:text/plain" />

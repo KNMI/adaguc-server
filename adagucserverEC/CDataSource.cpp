@@ -551,6 +551,8 @@ std::vector<CT::string> CDataSource::getRenderMethodListForDataSource(CDataSourc
         if (renderMethodList.length() > 0) renderMethodList.concat(",");
         renderMethodList.concat(style->RenderMethod[j]->value.c_str());
       }
+    } else {
+      return {"generic"};
     }
   }
 

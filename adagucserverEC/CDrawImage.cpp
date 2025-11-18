@@ -217,7 +217,6 @@ int CDrawImage::printImagePng8(bool useBitAlpha) {
   }
 
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    CDBDebug("printImagePng8 CAIRO");
     cairo->writeToPng8Stream(stdout, backgroundAlpha, useBitAlpha);
   } else if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
     CDBDebug("printImagePng8 GF");
