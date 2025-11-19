@@ -1,7 +1,17 @@
-RenderSettings (settings, striding, renderer, scalewidth, scalecontours, renderhint, rendertextforvectors)
+RenderSettings (settings, striding, renderer, scalewidth, scalecontours, renderhint, rendertextforvectors, interpolationmethod, drawgridboxoutline)
 =============================================
 
 Back to [Configuration](./Configuration.md)
+
+# interpolationmethod
+
+- interpolationmethod: `nearest` / `bilinear`
+
+In case of the generic renderer (RenderMethod generic) you can specify nearest, or bilinear.
+
+# drawgridboxoutline
+
+- drawgridboxoutline: `false` / `true`. Draw gridbox outlines.
 
 # settings
 

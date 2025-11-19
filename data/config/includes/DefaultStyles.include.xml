@@ -180,7 +180,7 @@
   <Style name="autoboxoutline" title="Grid boxes" abstract="Render grid boxes if applicable">
     <Min>0</Min>
     <Max>2</Max>
-    <ShadeInterval min="0.00" max="1"    label="Base grid"    fillcolor="#808080"/>
+    <!-- <ShadeInterval min="0.00" max="1"    label="Base grid"    fillcolor="#80808080"/> -->
     <ShadeInterval min="1" max="2"    label="Grid box borders"    fillcolor="#000000"/>
     <ShadeInterval min="2" max="3"    label="Field border left"    fillcolor="#8080FF"/>
     <ShadeInterval min="3" max="4"    label="Field border bottom"    fillcolor="#10BF10"/>

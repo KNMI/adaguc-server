@@ -79,7 +79,7 @@ ProjectionGrid *makeProjection(double halfCell, CImageWarper *warper, i4box &pix
 }
 
 ProjectionGrid *makeStridedProjection(double halfCell, CImageWarper *warper, i4box &pixelExtentBox, GeoParameters &sourceGeoParams, GeoParameters &, GDWState &warperState) {
-  int projStrideFactor = 20;
+  int projStrideFactor = 8;
   int dataWidth = pixelExtentBox.span().x;
   int dataHeight = pixelExtentBox.span().y;
   ProjectionGrid *projGrid = new ProjectionGrid();
@@ -215,6 +215,9 @@ void linearTransformGrid(GDWState &warperState, bool useHalfCellOffset, CImageWa
 
       warperState.sourceIndexX = x;
       warperState.sourceIndexY = sourceGeoParams.height - 1 - y;
+      if (warperState.sourceIndexX < 0 || warperState.sourceIndexY < 0 || warperState.sourceIndexX >= warperState.sourceGridWidth || warperState.sourceIndexY >= warperState.sourceGridHeight) {
+        continue;
+      }
       if (sx1 > sx2) {
         std::swap(sx1, sx2);
       }
@@ -223,17 +226,20 @@ void linearTransformGrid(GDWState &warperState, bool useHalfCellOffset, CImageWa
       }
       if (sy2 == sy1) sy2++;
       if (sx2 == sx1) sx2++;
+
       double h = double(sy2 - sy1);
       double w = double(sx2 - sx1);
       T value = ((T *)warperState.sourceGrid)[warperState.sourceIndexX + (warperState.sourceIndexY) * sourceGeoParams.width];
 
       for (int sjy = sy1; sjy < sy2; sjy++) {
         for (int sjx = sx1; sjx < sx2; sjx++) {
-          warperState.sourceTileDy = (sjy - sy1) / h; // TODO: Check why sourceTileDy is upside down.
-          warperState.sourceTileDx = (sjx - sx1) / w;
-          warperState.destIndexX = sjx;
-          warperState.destIndexY = sjy;
-          drawFunction(sjx, sjy, value, warperState);
+          if (sjx >= 0 && sjy >= 0 && sjx < warperState.destGridWidth && sjy < warperState.destGridHeight) {
+            warperState.sourceTileDy = (sjy - sy1) / h; // TODO: Check why sourceTileDy is upside down.
+            warperState.sourceTileDx = (sjx - sx1) / w;
+            warperState.destIndexX = sjx;
+            warperState.destIndexY = sjy;
+            drawFunction(sjx, sjy, value, warperState);
+          }
         }
       }
     }

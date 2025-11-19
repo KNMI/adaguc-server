@@ -165,26 +165,28 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
   GenericDataWarper genericDataWarper;
   GDWArgs args = {.warper = warper, .sourceData = sourceData, .sourceGeoParams = sourceGeo, .destGeoParams = drawImage->geoParams};
 
-  if (settings.drawInImage == DrawInImageNearest) {
-    CDBDebug("Render nearest");
-    genericDataWarper.useHalfCellOffset = false;
+  if (!settings.drawgridboxoutline) {
+    if (settings.drawInImage == DrawInImageNearest) {
+      CDBDebug("Render nearest");
+      genericDataWarper.useHalfCellOffset = false;
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
   if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return warpImageNearestFunction(x, y, val, warperState, settings); });
-    ENUMERATE_OVER_CDFTYPES(RENDER)
+      ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
-  }
-  if (settings.drawInImage == DrawInImageBilinear || settings.drawInImage == DrawInImageNone) {
-    CDBDebug("Render bilinear");
-    genericDataWarper.useHalfCellOffset = true;
+    }
+    if (settings.drawInImage == DrawInImageBilinear || settings.drawInImage == DrawInImageNone) {
+      CDBDebug("Render bilinear");
+      genericDataWarper.useHalfCellOffset = true;
 
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
   if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return warpImageBilinearFunction(x, y, val, warperState, settings); });
-    ENUMERATE_OVER_CDFTYPES(RENDER)
+      ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
-  }
+    }
 
-  if (styleConfiguration->contourLines.size() > 0) {
-    drawContour((float *)settings.destinationGrid, dataSource, drawImage, styleConfiguration);
+    if (styleConfiguration->contourLines.size() > 0) {
+      drawContour((float *)settings.destinationGrid, dataSource, drawImage, styleConfiguration);
+    }
   }
 
   // Draw grid outlines
