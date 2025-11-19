@@ -143,9 +143,19 @@
   </Style>
 
     <!--Styles -->
+  <Style name="auto" title="Auto style blue-white-red" abstract="Fast nearest neighbour interpolation using the nearest neighbour renderer">
+    <Legend fixedclasses="true" tickround="1">bluewhitered</Legend>
+    <Point pointstyle="point" textcolor="#111111"/>
+    <Vector vectorstyle="barb" linecolor="#0000FF" />
+    <Scale>0</Scale>
+    <Offset>0</Offset>
+    <RenderSettings interpolationmethod="bilinear"/>
+    <RenderMethod>nearest</RenderMethod>
+    <StandardNames standard_name="*"/>
+  </Style>
 
 
-  <Style name="auto" title="Auto style blue-white-red" abstract="Nearest neighbour interpolation using the generic renderer">
+  <Style name="autogeneric" title="Auto style blue-white-red" abstract="Nearest neighbour interpolation using the generic renderer">
     <Legend fixedclasses="true" tickround="1">bluewhitered</Legend>
     <Point pointstyle="point" textcolor="#111111"/>
     <Vector vectorstyle="barb" linecolor="#0000FF" />
@@ -183,18 +193,6 @@
   </Style>
 
 
-  <Style name="autonearest_deprecated">
-    <Legend fixedclasses="true" tickround="1">bluewhitered</Legend>
-    <Point pointstyle="point" textcolor="#111111"/>
-    <Vector vectorstyle="barb" linecolor="#0000FF" />
-    <Scale>0</Scale>
-    <Offset>0</Offset>
-    <RenderSettings interpolationmethod="bilinear"/>
-    <RenderMethod>nearest</RenderMethod>
-    <StandardNames standard_name="*"/>
-  </Style>
-
-
   <Style name="autobilinear_deprecated">
     <Legend fixedclasses="true" tickround="1">bluewhitered</Legend>
     <Point pointstyle="point" textcolor="#111111"/>
@@ -205,7 +203,6 @@
     <RenderMethod>bilinear</RenderMethod>
     <StandardNames standard_name="*"/>
   </Style>
-
 
   <Style name="autofeatures">
     <Legend fixedclasses="true" tickround="1">elevation</Legend>

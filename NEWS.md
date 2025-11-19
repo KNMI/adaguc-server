@@ -1,6 +1,9 @@
 **Version 6.0.0 - 2025-11-18**
 
-- Implemented Generic data warper
+- Implemented generic image warper, available via RenderMethod 'generic'. This warper uses the already existing generic data warper and combines functionality of the nearest and bilinear renderer.
+- If no RenderMethod is given in the Style configuration, 'generic' is used by default
+- Styles can be included into each other via the `IncludeStyle` option: See example at [adaguc.tests.ahn_utrechtse_heuvelrug_500m.xml](./data/config/datasets/adaguc.tests.ahn_utrechtse_heuvelrug_500m.xml)
+- The WCS server now handle swapped x/y dimension axes properly.
 
 **Version 5.0.1 - 2025-11-05**
 
