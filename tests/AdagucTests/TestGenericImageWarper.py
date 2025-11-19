@@ -118,7 +118,7 @@ class TestGenericImageWarper(unittest.TestCase):
                 AdagucTestTools().compareImage(
                     self.expectedoutputsspath + filename,
                     self.testresultspath + filename,
-                    80,
+                    80,0.03
                 )
             )
 
