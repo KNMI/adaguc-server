@@ -31,6 +31,8 @@ const char *CDataSource::className = "CDataSource";
 
 // #define CDATASOURCE_DEBUG
 
+bool nameMappingWarningSet = false;
+
 CDataSource::DataObject::DataObject() {
   hasStatusFlag = false;
   appliedScaleOffset = false;
@@ -664,7 +666,10 @@ CT::PointerList<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(C
                   CDBError("Legend %s not found", legendList[l].c_str());
                 }
                 if (style != nullptr && style->NameMapping.size() > 0) {
-                  CDBWarning("Deprecated to have NameMapping configs in the style. Use title and abstracts instead.");
+                  if (nameMappingWarningSet == false) {
+                    CDBWarning("Deprecated to have NameMapping configs in the style. Use title and abstracts instead.");
+                    nameMappingWarningSet = true;
+                  }
                   for (size_t j = 0; j < style->NameMapping.size(); j++) {
                     if (renderMethods[r].equals(style->NameMapping[j]->attr.name.c_str())) {
                       styleConfig->styleTitle.copy(style->NameMapping[j]->attr.title.c_str());
