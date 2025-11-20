@@ -320,6 +320,25 @@ void warpTransformGrid(GDWState &warperState, ProjectionGrid *projectionGrid, bo
     CDBDebug("start looping");
   }
 
+  // Check if left is same as right
+  size_t numElements = dataHeight * dataWidth;
+  warperState.hasSharedBoundaryLR = false;
+  size_t offsetY = (dataWidth + 1) * (dataHeight / 2);
+  size_t indexLeftXMiddleY = 0 + offsetY;
+  size_t indexRightXMiddleY = dataWidth + offsetY;
+  size_t indexLeftPlusOneXMiddleY = 1 + offsetY;
+  size_t indexLeftPluTwoXMiddleY = 2 + offsetY;
+  if (indexLeftXMiddleY < numElements && indexRightXMiddleY < numElements && indexLeftPlusOneXMiddleY < numElements && indexLeftPluTwoXMiddleY < numElements) {
+
+    double fracClosestLeftRight = fabs(px[indexLeftXMiddleY] - px[indexRightXMiddleY]) / fabs(px[indexLeftPlusOneXMiddleY] - px[indexLeftPluTwoXMiddleY]);
+    if (debug) {
+      CDBDebug("%f %f %f", fabs(px[indexLeftXMiddleY] - px[indexRightXMiddleY]), fabs(px[indexLeftPlusOneXMiddleY] - px[indexLeftPluTwoXMiddleY]), fracClosestLeftRight);
+    }
+    if (fracClosestLeftRight < 0.01) {
+      warperState.hasSharedBoundaryLR = true;
+    }
+  }
+
   for (int y = 0; y < dataHeight; y = y + 1) {
     for (int x = 0; x < dataWidth; x = x + 1) {
       size_t p = x + y * (dataWidth + 1);

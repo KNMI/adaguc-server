@@ -62,8 +62,11 @@ template <typename T> void warpImageBilinearFunction(int x, int y, T val, GDWSta
   size_t sourceDataWidth = warperState.sourceGridWidth;
   size_t sourceDataHeight = warperState.sourceGridHeight;
 
+  if (warperState.hasSharedBoundaryLR == false) {
+    if (sourceDataPX >= sourceDataWidth - 1) return;
+  }
+
   if (sourceDataPY >= sourceDataHeight - 1) return;
-  if (sourceDataPX >= sourceDataWidth - 1) return;
 
   T values[2][2] = {{0, 0}, {0, 0}};
 

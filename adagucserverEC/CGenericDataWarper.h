@@ -15,19 +15,20 @@
 typedef unsigned char uchar;
 typedef unsigned char ubyte;
 struct GDWState {
-  void *sourceGrid;     // Pointer to the source datagrid, has the same datatype as the template T
-  bool hasNodataValue;  // Wether the source data grid has a nodata value
-  double dfNodataValue; // No data value of the source grid, in double type. Can be casted to T
-  int sourceIndexX;     // Which source X index is sampled from the source grid
-  int sourceIndexY;     // Which source Y index is sampled for the source grid.
-  int sourceGridWidth;  // The width of the sourcedata grid
-  int sourceGridHeight; // The height of the source data grid
-  int destGridWidth;    // The width of the destination grid
-  int destGridHeight;   // The height of the destination grid
-  double sourceTileDx;  // The relative X sample position from the source grid cell from 0 to 1. Can be used for bilinear interpolation
-  double sourceTileDy;  // The relative y sample position
-  int destIndexX;       // The target X index in the target grid
-  int destIndexY;       // The target Y index in the target grid.
+  void *sourceGrid;                 // Pointer to the source datagrid, has the same datatype as the template T
+  bool hasNodataValue;              // Wether the source data grid has a nodata value
+  double dfNodataValue;             // No data value of the source grid, in double type. Can be casted to T
+  int sourceIndexX;                 // Which source X index is sampled from the source grid
+  int sourceIndexY;                 // Which source Y index is sampled for the source grid.
+  int sourceGridWidth;              // The width of the sourcedata grid
+  int sourceGridHeight;             // The height of the source data grid
+  int destGridWidth;                // The width of the destination grid
+  int destGridHeight;               // The height of the destination grid
+  double sourceTileDx;              // The relative X sample position from the source grid cell from 0 to 1. Can be used for bilinear interpolation
+  double sourceTileDy;              // The relative y sample position
+  int destIndexX;                   // The target X index in the target grid
+  int destIndexY;                   // The target Y index in the target grid.
+  bool hasSharedBoundaryLR = false; // Left is connected to the right
 };
 
 struct GDWArgs {
