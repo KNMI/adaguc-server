@@ -1163,7 +1163,12 @@ int CRequest::process_all_layers() {
       return 1;
     }
   } else if (firstDataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
-    layerTypeLiveUpdateRender(firstDataSource, srvParam);
+    try {
+      layerTypeLiveUpdateRender(firstDataSource, srvParam);
+    } catch (int e) {
+      CDBError("Exception in layerTypeLiveUpdateRender %d", e);
+      return 1;
+    }
   } else {
     CDBError("Unknown layer type");
   }

@@ -152,7 +152,7 @@ int layerTypeLiveUpdateRender(CDataSource *incomingDataSource, CServerParams *sr
     // Add dummy step
     dataSource->addStep("");
     // Set styles, and solarterminator variable, among other things
-    dataSource->setCFGLayer(srvParam, srvParam->configObj->Configuration[0], srvParam->cfg->Layer[0], NULL, 0);
+    dataSource->setCFGLayer(srvParam, srvParam->configObj->Configuration[0], incomingDataSource->cfgLayer, NULL, 0);
     auto *obj = dataSource->getDataObjectsVector()->at(0);
     obj->cdfObject = cdfObject;
     obj->cdfVariable = solTVar;

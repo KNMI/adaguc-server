@@ -1435,6 +1435,7 @@ public:
         return true;
       } else if (equals("enable_edr", attrname)) {
         attr.enable_edr.copy(attrvalue);
+        return true;
       }
       return false;
     }
