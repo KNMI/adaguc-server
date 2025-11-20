@@ -872,7 +872,8 @@ public:
   public:
     class Cattr {
     public:
-      CT::string settings, striding, renderer, scalewidth, scalecontours, renderhint, randomizefeatures, featuresoverlap, rendertextforvectors, cliplegend, interpolationmethod, drawgridboxoutline;
+      CT::string settings, striding, renderer, scalewidth, scalecontours, renderhint, randomizefeatures, featuresoverlap, rendertextforvectors, cliplegend, interpolationmethod, drawgridboxoutline,
+          drawgrid;
     } attr;
     bool addAttribute(const char *name, const char *value) {
       if (equals("settings", name)) {
@@ -902,14 +903,17 @@ public:
       } else if (equals("rendertextforvectors", name)) {
         attr.rendertextforvectors.copy(value);
         return true;
-      } else if (equals("interpolationmethod", name)) {
-        attr.interpolationmethod.copy(value);
-        return true;
       } else if (equals("cliplegend", name)) {
         attr.cliplegend.copy(value);
         return true;
+      } else if (equals("interpolationmethod", name)) {
+        attr.interpolationmethod.copy(value);
+        return true;
       } else if (equals("drawgridboxoutline", name)) {
         attr.drawgridboxoutline.copy(value);
+        return true;
+      } else if (equals("drawgrid", name)) {
+        attr.drawgrid.copy(value);
         return true;
       }
       return false;

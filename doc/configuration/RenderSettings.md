@@ -1,4 +1,4 @@
-RenderSettings (settings, striding, renderer, scalewidth, scalecontours, renderhint, rendertextforvectors, interpolationmethod, drawgridboxoutline)
+RenderSettings (settings, striding, renderer, scalewidth, scalecontours, renderhint, rendertextforvectors, interpolationmethod, drawgridboxoutline, drawgrid)
 =============================================
 
 Back to [Configuration](./Configuration.md)
@@ -12,6 +12,10 @@ In case of the generic renderer (RenderMethod generic) you can specify nearest, 
 # drawgridboxoutline
 
 - drawgridboxoutline: `false` / `true`. Draw gridbox outlines.
+
+# drawgrid
+
+- Draw pixels or not (true or false)
 
 # settings
 

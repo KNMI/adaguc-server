@@ -7,7 +7,7 @@
 #include "CColor.h"
 #include "CDrawImage.h"
 
-enum DrawInImage { DrawInImageNone, DrawInImageNearest, DrawInImageBilinear };
+enum InterpolationMethod { InterpolationMethodNearest, InterpolationMethodBilinear };
 enum LegendMode { LegendModeContinuous, LegendModeDiscrete };
 
 struct Interval {
@@ -31,7 +31,8 @@ struct GDWDrawFunctionSettings {
   CColor bgColor;
   bool hasNodataValue;
   bool drawgridboxoutline = false;
-  DrawInImage drawInImage = DrawInImageNearest;
+  bool drawgrid = true;
+  InterpolationMethod interpolationMethod = InterpolationMethodNearest;
   std::vector<Interval> intervals;
   CDrawImage *drawImage;
   CDFType destinationDataType;

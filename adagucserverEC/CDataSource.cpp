@@ -764,22 +764,22 @@ CStyleConfiguration *CDataSource::getStyle() {
 
     _currentStyle = _styles->get(0);
 
-    for (size_t j = 0; j < _styles->size(); j++) {
-      if (_styles->get(j)->styleCompositionName.equals(styleName)) {
-        _currentStyle = _styles->get(j);
-        break;
-      }
-    }
-    // If not found, check for the style without rendermethod instead using startsWith.
-    auto it = std::find_if(_styles->begin(), _styles->end(), [&styleName](CStyleConfiguration *a) { return a->styleCompositionName.startsWith(styleName); });
+    auto it = std::find_if(_styles->begin(), _styles->end(), [&styleName](CStyleConfiguration *a) { return styleName.equals(a->styleName); });
     if (it != _styles->end()) {
       _currentStyle = (*it);
     } else {
-      CT::string styleNameWithoutRenderMethod = styleName.substring(0, styleName.indexOf("/"));
-      it = std::find_if(_styles->begin(), _styles->end(), [&styleNameWithoutRenderMethod](CStyleConfiguration *a) { return styleNameWithoutRenderMethod.equals(a->styleName); });
+      // If not found, check for the style without rendermethod instead using startsWith.
+      it = std::find_if(_styles->begin(), _styles->end(), [&styleName](CStyleConfiguration *a) { return a->styleCompositionName.startsWith(styleName); });
       if (it != _styles->end()) {
         _currentStyle = (*it);
-        CDBDebug("Selected style %s", _currentStyle->styleName.c_str());
+      } else {
+        // Try without rendermethod
+        CT::string styleNameWithoutRenderMethod = styleName.substring(0, styleName.indexOf("/"));
+        it = std::find_if(_styles->begin(), _styles->end(), [&styleNameWithoutRenderMethod](CStyleConfiguration *a) { return styleNameWithoutRenderMethod.equals(a->styleName); });
+        if (it != _styles->end()) {
+          _currentStyle = (*it);
+          CDBDebug("Selected style %s", _currentStyle->styleName.c_str());
+        }
       }
     }
 

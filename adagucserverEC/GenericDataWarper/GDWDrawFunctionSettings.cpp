@@ -29,11 +29,14 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
     }
     // Obtain interpolationmethod
     if (renderSettingsAttr.interpolationmethod.equals("nearest")) {
-      settings.drawInImage = DrawInImageNearest;
+      settings.interpolationMethod = InterpolationMethodNearest;
     } else if (renderSettingsAttr.interpolationmethod.equals("bilinear")) {
-      settings.drawInImage = DrawInImageBilinear;
-    } else if (renderSettingsAttr.interpolationmethod.equals("none")) {
-      settings.drawInImage = DrawInImageNone;
+      settings.interpolationMethod = InterpolationMethodBilinear;
+    }
+    if (renderSettingsAttr.drawgrid.equals("false")) {
+      settings.drawgrid = false;
+    } else if (renderSettingsAttr.drawgrid.equals("true")) {
+      settings.drawgrid = true;
     }
 
     if (renderSettingsAttr.drawgridboxoutline.equals("true")) {

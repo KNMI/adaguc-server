@@ -98,7 +98,7 @@ Configuration
         with custom image
     -   [Stippling](Stippling.md) (distancex, distancey, discradius)
         Configuration of stippling renderer.
-    -   [RenderSettings](RenderSettings.md) (settings, striding, renderer, scalewidth, scalecontours, renderhint, rendertextforvectors) Configuration of
+    -   [RenderSettings](RenderSettings.md) (settings, striding, renderer, scalewidth, scalecontours, renderhint, rendertextforvectors, interpolationmethod, drawgridboxoutline, drawgrid) Configuration of
         renderers
     -   [IncludeStyle] (name) - Include another style. See [adaguc.tests.ahn_utrechtse_heuvelrug_500m.xml](../../data/config/datasets/adaguc.tests.ahn_utrechtse_heuvelrug_500m.xml)
 

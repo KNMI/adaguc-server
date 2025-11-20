@@ -42,7 +42,9 @@ template <typename T> void warpImageNearestFunction(int x, int y, T value, GDWSt
     value = smoothingAtLocation(warperState.sourceIndexX, warperState.sourceIndexY, (T *)warperState.sourceGrid, warperState, settings);
   }
   ((float *)settings.destinationGrid)[x + y * warperState.destGridWidth] = value;
-  setPixelInDrawImage(x, y, value, &settings);
+  if (settings.drawgrid) {
+    setPixelInDrawImage(x, y, value, &settings);
+  }
 };
 
 template <typename T> void warpImageBilinearFunction(int x, int y, T val, GDWState &warperState, GDWDrawFunctionSettings &settings) {
@@ -93,7 +95,9 @@ template <typename T> void warpImageBilinearFunction(int x, int y, T val, GDWSta
   float gx2 = (1 - dx) * values[0][1] + dx * values[1][1];
   float bilValue = (1 - dy) * gx1 + dy * gx2;
   ((float *)settings.destinationGrid)[x + y * warperState.destGridWidth] = bilValue;
-  setPixelInDrawImage(x, y, bilValue, &settings);
+  if (settings.drawgrid) {
+    setPixelInDrawImage(x, y, bilValue, &settings);
+  }
 };
 
 template <typename T> void warpImageRenderBorders(int x, int y, T val, GDWState &warperState, GDWDrawFunctionSettings &settings) {
@@ -169,7 +173,7 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
   GDWArgs args = {.warper = warper, .sourceData = sourceData, .sourceGeoParams = sourceGeo, .destGeoParams = drawImage->geoParams};
 
   if (!settings.drawgridboxoutline) {
-    if (settings.drawInImage == DrawInImageNearest) {
+    if (settings.interpolationMethod == InterpolationMethodNearest) {
       CDBDebug("Render nearest");
       genericDataWarper.useHalfCellOffset = false;
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
@@ -177,7 +181,7 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
       ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
     }
-    if (settings.drawInImage == DrawInImageBilinear || settings.drawInImage == DrawInImageNone) {
+    if (settings.interpolationMethod == InterpolationMethodBilinear) {
       CDBDebug("Render bilinear");
       genericDataWarper.useHalfCellOffset = true;
 
