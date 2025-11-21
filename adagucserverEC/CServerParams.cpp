@@ -244,14 +244,7 @@ bool CServerParams::checkResolvePath(const char *path, CT::string *resolvedPath)
         pathToCheck.print("%s/%s", dirPrefix, path);
         // Make a realpath
         char szResolvedPath[PATH_MAX];
-        if (realpath(pathToCheck.c_str(), szResolvedPath) == NULL) {
-          // CDBDebug("basedir='%s', prefix='%s', inputpath='%s', absolutepath='%s'",baseDir,dirPrefix,path,pathToCheck.c_str());
-          CDBDebug("LOCALFILEACCESS: Invalid path '%s'", pathToCheck.c_str());
-        } else {
-          // Check if the resolved path is within the basedir
-          // CDBDebug("basedir='%s', prefix='%s', inputpath='%s', absolutepath='%s'",baseDir,dirPrefix,path,pathToCheck.c_str());
-          CDBDebug("szResolvedPath: %s", szResolvedPath);
-          CDBDebug("baseDir       : %s", baseDir);
+        if (realpath(pathToCheck.c_str(), szResolvedPath) != NULL) {
           CT::string resolvedPathStr = szResolvedPath;
           if (resolvedPathStr.indexOf(baseDir) == 0) {
             resolvedPath->copy(szResolvedPath);
@@ -513,7 +506,7 @@ int CServerParams::_parseConfigFile(CT::string &pszConfigFile, std::vector<CServ
     CDBError("Exception %d in substituting", e);
   }
 
-  int status = configObj->parse(configFileData.c_str(), configFileData.length());
+  int status = parseConfig(configObj, configFileData);
 
   if (status == 0 && configObj->Configuration.size() == 1) {
     return 0;

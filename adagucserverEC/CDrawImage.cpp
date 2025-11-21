@@ -217,7 +217,6 @@ int CDrawImage::printImagePng8(bool useBitAlpha) {
   }
 
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    CDBDebug("printImagePng8 CAIRO");
     cairo->writeToPng8Stream(stdout, backgroundAlpha, useBitAlpha);
   } else if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
     CDBDebug("printImagePng8 GF");
@@ -725,7 +724,9 @@ void CDrawImage::setPixelIndexed(int x, int y, int color) {
       //       }
     }
   } else {
-    gdImageSetPixel(image, x, y, colors[color]);
+    if (color >= 0 && color < 256 && dPaletteCreated == 1) {
+      gdImageSetPixel(image, x, y, colors[color]);
+    }
   }
 }
 

@@ -111,7 +111,7 @@ size="5"/>
 <!-- WCS settings -->
 <WCS>
 <Title>BTD_DATA</Title>
-<Label>wcsLabel</Label>
+
 <WCSFormat name="netcdf" driver="NetCDF"
 mimetype="Content-Type:application/netcdf"
 options="WRITE_GDAL_TAGS=FALSE,WRITE_LONLAT=FALSE,WRITE_BOTTOMUP=FALSE,ZLEVEL=2,FORMAT=NC4C"/>

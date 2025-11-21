@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import os
 from io import BytesIO
 import shutil
@@ -9,6 +10,7 @@ from lxml import etree, objectify
 import urllib.request
 from PIL import Image
 import subprocess
+logging.getLogger('PIL').setLevel(logging.WARNING)
 
 ADAGUC_PATH = os.getenv("ADAGUC_PATH", " ")
 
@@ -195,6 +197,7 @@ class AdagucTestTools:
         Returns:
             bool: True if the difference is "small enough"
         """
+
         expected_image = Image.open(expectedImagePath)
         returned_image = Image.open(returnedImagePath)
         if expected_image.size != returned_image.size:

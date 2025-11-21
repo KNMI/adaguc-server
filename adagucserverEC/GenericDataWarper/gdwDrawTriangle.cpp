@@ -2,8 +2,8 @@
 
 template <typename T>
 int gdwDrawTriangle(double triangleXCoords[3], double triangleYCoords[3], T value, bool tUp, GDWState &warperState, const std::function<void(int, int, T, GDWState &warperState)> &drawFunction) {
-  int W = warperState.destDataWidth;
-  int H = warperState.destDataHeight;
+  int W = warperState.destGridWidth;
+  int H = warperState.destGridHeight;
   if (triangleXCoords[0] < 0 && triangleXCoords[1] < 0 && triangleXCoords[2] < 0) return 0;
   if (triangleXCoords[0] >= W && triangleXCoords[1] >= W && triangleXCoords[2] >= W) return 0;
   if (triangleYCoords[0] < 0 && triangleYCoords[1] < 0 && triangleYCoords[2] < 0) return 0;
@@ -106,10 +106,10 @@ int gdwDrawTriangle(double triangleXCoords[3], double triangleYCoords[3], T valu
       double WV1 = ((yv2 - yv3) * (x - xv3) + (xv3 - xv2) * (y - yv3)) / dn;
       double WV2 = ((yv3 - yv1) * (x - xv3) + (xv1 - xv3) * (y - yv3)) / dn;
       double WV3 = 1 - WV1 - WV2;
-      warperState.tileDx = WV1 * tUp + WV2 * tDown + WV3 * tDown;
-      warperState.tileDy = WV1 * tDown + WV2 * 1 + WV3 * 0;
-      warperState.destX = x;
-      warperState.destY = y;
+      warperState.sourceTileDx = WV1 * tUp + WV2 * tDown + WV3 * tDown;
+      warperState.sourceTileDy = WV1 * tDown + WV2 * 1 + WV3 * 0;
+      warperState.destIndexX = x;
+      warperState.destIndexY = y;
       drawFunction(x, y, value, warperState);
     }
   }

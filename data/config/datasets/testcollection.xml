@@ -12,7 +12,7 @@
     <Name>testdata</Name>
     <FilePath>{ADAGUC_PATH}/data/datasets/multi_dim.nc</FilePath>
     <Variable standard_name="st_testdata">testdata</Variable>
-    <Styles>auto</Styles>
+    <Styles>auto,autobilinear</Styles>
     <Dimension name="time" units="ISO8601" interval="PT1H" default="min">time</Dimension>
     <Dimension name="height" units="m" type="vertical">height</Dimension>
     <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension> 
@@ -24,7 +24,7 @@
     <Name>testdata2</Name>
     <FilePath>{ADAGUC_PATH}/data/datasets/multi_dim.nc</FilePath>
     <Variable standard_name="st_testdata2">testdata2</Variable>
-    <Styles>auto</Styles>
+    <Styles>auto,autobilinear</Styles>
     <Dimension name="time" units="ISO8601" interval="PT1H" default="min">time</Dimension>
     <Dimension name="height2" units="m" type="vertical">height</Dimension>
     <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension> 

@@ -78,17 +78,16 @@ CT::string CStyleConfiguration::dump() {
   data.printconcat("styleAbstract %s\n", styleAbstract.c_str());
   int a = 0;
   for (auto renderSetting : renderSettings) {
-    data.printconcat("renderSetting %d) = [%s]\n", a, renderSetting->attr.renderhint.c_str());
+    data.printconcat("renderSetting %d) = [%s] [%s]\n", a, renderSetting->attr.renderhint.c_str(), renderSetting->attr.interpolationmethod.c_str());
     a++;
   }
   a = 0;
   for (auto shadeInterval : shadeIntervals) {
-    data.printconcat("shadeInterval %d) =  [%s] [%s]\n", a, shadeInterval->attr.label.c_str(), shadeInterval->attr.label.c_str());
+    data.printconcat("shadeInterval %d) =  [%s] [%s]\n", a++, shadeInterval->attr.label.c_str(), shadeInterval->attr.label.c_str());
   }
   a = 0;
   for (auto contourLine : contourLines) {
-    data.printconcat("contourLine %d) =  [%s] [%s] [%s]\n", a, contourLine->attr.linecolor.c_str(), contourLine->attr.interval.c_str(), contourLine->attr.classes.c_str());
-    a++;
+    data.printconcat("contourLine %d) =  [%s] [%s] [%s]\n", a++, contourLine->attr.linecolor.c_str(), contourLine->attr.interval.c_str(), contourLine->attr.classes.c_str());
   }
   a = 0;
   for (auto symbolInterval : symbolIntervals) {
@@ -108,6 +107,16 @@ void parseStyleInfo(CStyleConfiguration *styleConfig, CDataSource *dataSource, i
   // Get info from style
   CServerConfig::XMLE_Style *style = dataSource->cfg->Style[styleIndex];
   styleConfig->styleConfig = style;
+
+  //  INCLUDE other styles
+  for (auto includeStyle : style->IncludeStyle) {
+    int extraStyle = dataSource->srvParams->getServerStyleIndexByName(includeStyle->attr.name);
+    if (extraStyle >= 0) {
+      // CDBDebug("Include style %d - %s", extraStyle, dataSource->cfg->Style[extraStyle]->attr.name.c_str());
+      parseStyleInfo(styleConfig, dataSource, extraStyle, depth + 1);
+    }
+  }
+
   if (style->Scale.size() > 0) styleConfig->legendScale = parseFloat(style->Scale[0]->value.c_str());
   if (style->Offset.size() > 0) styleConfig->legendOffset = parseFloat(style->Offset[0]->value.c_str());
   if (style->Log.size() > 0) styleConfig->legendLog = parseFloat(style->Log[0]->value.c_str());
@@ -138,6 +147,7 @@ void parseStyleInfo(CStyleConfiguration *styleConfig, CDataSource *dataSource, i
 
   styleConfig->contourLines.insert(styleConfig->contourLines.end(), style->ContourLine.begin(), style->ContourLine.end());
   styleConfig->renderSettings.insert(styleConfig->renderSettings.end(), style->RenderSettings.begin(), style->RenderSettings.end());
+  styleConfig->smoothingFilterVector.insert(styleConfig->smoothingFilterVector.end(), style->SmoothingFilter.begin(), style->SmoothingFilter.end());
   styleConfig->shadeIntervals.insert(styleConfig->shadeIntervals.end(), style->ShadeInterval.begin(), style->ShadeInterval.end());
   styleConfig->symbolIntervals.insert(styleConfig->symbolIntervals.end(), style->SymbolInterval.begin(), style->SymbolInterval.end());
   styleConfig->featureIntervals.insert(styleConfig->featureIntervals.end(), style->FeatureInterval.begin(), style->FeatureInterval.end());
@@ -149,8 +159,11 @@ void parseStyleInfo(CStyleConfiguration *styleConfig, CDataSource *dataSource, i
     if (style->Legend[0]->attr.tickround.empty() == false) {
       styleConfig->legendTickRound = parseDouble(style->Legend[0]->attr.tickround.c_str());
     }
+
     if (style->Legend[0]->attr.fixedclasses.equals("true")) {
       styleConfig->legendHasFixedMinMax = true;
+    } else if (style->Legend[0]->attr.fixedclasses.equals("false")) {
+      styleConfig->legendHasFixedMinMax = false;
     }
     styleConfig->legendName = style->Legend[0]->value;
   }
@@ -163,16 +176,6 @@ void parseStyleInfo(CStyleConfiguration *styleConfig, CDataSource *dataSource, i
       styleConfig->styleTitle = style->attr.title;
     }
   }
-
-  // TODO: 2025-09-17: NEXT STEP allow to include styles into each other.
-  // // Final INCLUDE
-  // for (auto includeStyle : style->Include) {
-  //   int extraStyle = dataSource->srvParams->getServerStyleIndexByName(includeStyle->attr.name);
-  //   if (extraStyle >= 0) {
-  //     CDBDebug("Now need to include style %d - %s", extraStyle, dataSource->cfg->Style[extraStyle]->attr.name.c_str());
-  //     parseStyleInfo(dataSource, extraStyle, depth + 1);
-  //   }
-  // }
 }
 
 int CStyleConfiguration::makeStyleConfig(CDataSource *dataSource) {
@@ -254,6 +257,8 @@ int CStyleConfiguration::makeStyleConfig(CDataSource *dataSource) {
     }
     if (layer->Legend[0]->attr.fixedclasses.equals("true")) {
       this->legendHasFixedMinMax = true;
+    } else if (layer->Legend[0]->attr.fixedclasses.equals("false")) {
+      this->legendHasFixedMinMax = false;
     }
     this->legendName = layer->Legend[0]->value;
   }

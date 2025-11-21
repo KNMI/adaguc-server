@@ -31,7 +31,7 @@ struct CStyleConfiguration {
   bool minMaxSet = false;
   bool hasLegendValueRange = false;
   bool hasError = false;
-  bool legendHasFixedMinMax = false; // True to fix the classes in the legend, False to determine automatically which values occur.
+  bool legendHasFixedMinMax = true; // True to fix the classes in the legend, False to determine automatically which values occur.
   int smoothingFilter = 0;
   int legendIndex = -1;
   int styleIndex = -1;
@@ -47,7 +47,7 @@ struct CStyleConfiguration {
   double legendTickRound = 0.0;
   double minValue = 0;
   double maxValue = 0;
-  RenderMethod renderMethod;
+  RenderMethod renderMethod = RM_GENERIC;
   CT::string legendName;
   CT::string styleCompositionName;
   CT::string styleName;
@@ -55,6 +55,7 @@ struct CStyleConfiguration {
   CT::string styleAbstract;
   std::vector<CServerConfig::XMLE_ContourLine *> contourLines;
   std::vector<CServerConfig::XMLE_RenderSettings *> renderSettings;
+  std::vector<CServerConfig::XMLE_SmoothingFilter *> smoothingFilterVector;
   std::vector<CServerConfig::XMLE_ShadeInterval *> shadeIntervals;
   std::vector<CServerConfig::XMLE_SymbolInterval *> symbolIntervals;
   std::vector<CServerConfig::XMLE_FeatureInterval *> featureIntervals;

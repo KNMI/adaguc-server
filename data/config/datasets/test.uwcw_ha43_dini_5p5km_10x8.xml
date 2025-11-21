@@ -36,7 +36,7 @@
   </Legend>
 
   <Style name="temperature_wow">
-    <Legend fixed="true" tickinterval="5">temperature_wow</Legend>
+    <Legend fixed="false" tickinterval="5">temperature_wow</Legend>
     <Min>-14</Min>
     <Max>39,33333333</Max>
     <ShadeInterval>2</ShadeInterval>

@@ -47,7 +47,7 @@ size="5"/>
 <!-- WCS settings -->
 <WCS>
 <Title>DEMO_SERVICE</Title>
-<Label>wcsLabel</Label>
+
 <WCSFormat name="NetCDF3" driver="ADAGUC"
 mimetype="Content-Type:text/plain" options="FORCENC3=TRUE"/>
 <WCSFormat name="NetCDF4" driver="ADAGUC"
