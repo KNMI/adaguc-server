@@ -4,6 +4,7 @@
 - If no RenderMethod is given in the Style configuration, 'generic' is used by default
 - Styles can be included into each other via the `IncludeStyle` option: See example at [adaguc.tests.ahn_utrechtse_heuvelrug_500m.xml](./data/config/datasets/adaguc.tests.ahn_utrechtse_heuvelrug_500m.xml)
 - The WCS server now handles swapped x/y dimension axes properly.
+- Data postprocessor convert_uv_components (isVectorLike) is not added by default anymore.
 
 **Version 5.0.1 - 2025-11-05**
 

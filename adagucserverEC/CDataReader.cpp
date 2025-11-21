@@ -1045,26 +1045,6 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 #endif
   }
 
-  // TODO: For the time being we will auto enable the CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ID processor for backwards compatibility.
-  bool isVectorLike = false;
-  if (dataSource->getNumDataObjects() == 2) {
-    char u = dataSource->getDataObject(0)->getStandardName().charAt(0);
-    char v = dataSource->getDataObject(1)->getStandardName().charAt(0);
-    if (u == 'x' || u == 'u') {
-      if (v == 'y' || v == 'v') {
-        isVectorLike = true;
-      }
-    }
-  }
-
-  if (isVectorLike) {
-    CServerConfig::XMLE_DataPostProc *proc = new CServerConfig::XMLE_DataPostProc();
-    proc->attr.algorithm = CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ID;
-    CDBDebug("Adding Data postprocessor convert_uv_components (isVectorLike) ");
-    // TODO: Will not be enabled automatically in the future!
-    dataSource->cfgLayer->DataPostProc.insert(dataSource->cfgLayer->DataPostProc.begin(), proc);
-  }
-
   if (enablePostProcessors) {
     CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
   }
