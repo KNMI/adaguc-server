@@ -159,8 +159,11 @@ void parseStyleInfo(CStyleConfiguration *styleConfig, CDataSource *dataSource, i
     if (style->Legend[0]->attr.tickround.empty() == false) {
       styleConfig->legendTickRound = parseDouble(style->Legend[0]->attr.tickround.c_str());
     }
+
     if (style->Legend[0]->attr.fixedclasses.equals("true")) {
       styleConfig->legendHasFixedMinMax = true;
+    } else if (style->Legend[0]->attr.fixedclasses.equals("false")) {
+      styleConfig->legendHasFixedMinMax = false;
     }
     styleConfig->legendName = style->Legend[0]->value;
   }
@@ -254,6 +257,8 @@ int CStyleConfiguration::makeStyleConfig(CDataSource *dataSource) {
     }
     if (layer->Legend[0]->attr.fixedclasses.equals("true")) {
       this->legendHasFixedMinMax = true;
+    } else if (layer->Legend[0]->attr.fixedclasses.equals("false")) {
+      this->legendHasFixedMinMax = false;
     }
     this->legendName = layer->Legend[0]->value;
   }

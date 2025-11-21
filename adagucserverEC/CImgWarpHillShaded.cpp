@@ -25,7 +25,6 @@
 
 #include "CImgWarpHillShaded.h"
 #include "CImageDataWriter.h"
-#include "CGenericDataWarper.h"
 #include "f8vector.h"
 #include <CCDFTypes.h>
 #include "CImgWarpGeneric/CImgWarpGeneric.h"
@@ -91,7 +90,7 @@ template <class T> void hillShadedDrawFunction(int x, int y, T val, GDWState &wa
       f8vector normal10 = cross(v20 - v10, v11 - v10).norm();
       f8vector normal01 = cross(v11 - v01, v02 - v01).norm();
       f8vector normal11 = cross(v21 - v11, v12 - v11).norm();
-      f8vector lightSource = (f8vector({.x = -1., .y = -1., .z = -1.})).norm(); /* TODO make light source configurable */
+
       float c00 = dot(lightSource, normal00);
       float c10 = dot(lightSource, normal10);
       float c01 = dot(lightSource, normal01);
@@ -109,7 +108,6 @@ template <class T> void hillShadedDrawFunction(int x, int y, T val, GDWState &wa
 void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage) {
   CT::string color;
   void *sourceData;
-  CDBDebug("Hill");
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   GDWDrawFunctionSettings settings;
@@ -133,11 +131,9 @@ void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, C
   sourceData = dataSource->getDataObject(0)->cdfVariable->data;
   GeoParameters sourceGeo = dataSource->makeGeoParams();
 
-  // GenericDataWarper dw;
-  // dw.render(warper, sourceData, dataType, &sourceGeo, drawImage->Geo, &hillShadedDrawFunction);
   GenericDataWarper genericDataWarper;
   GDWArgs args = {.warper = warper, .sourceData = sourceData, .sourceGeoParams = sourceGeo, .destGeoParams = dataSource->srvParams->geoParams};
-  CDBDebug("Start render");
+
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
   if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { hillShadedDrawFunction(x, y, val, warperState, settings); });
   ENUMERATE_OVER_CDFTYPES(RENDER)

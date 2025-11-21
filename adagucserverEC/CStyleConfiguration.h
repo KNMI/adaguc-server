@@ -31,7 +31,7 @@ struct CStyleConfiguration {
   bool minMaxSet = false;
   bool hasLegendValueRange = false;
   bool hasError = false;
-  bool legendHasFixedMinMax = false; // True to fix the classes in the legend, False to determine automatically which values occur.
+  bool legendHasFixedMinMax = true; // True to fix the classes in the legend, False to determine automatically which values occur.
   int smoothingFilter = 0;
   int legendIndex = -1;
   int styleIndex = -1;

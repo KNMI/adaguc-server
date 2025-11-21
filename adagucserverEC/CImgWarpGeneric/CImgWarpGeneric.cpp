@@ -148,6 +148,7 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
 
   CT::string color;
   void *sourceData;
+  bool debug = false;
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
 
@@ -174,7 +175,9 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
 
   if (!settings.drawgridboxoutline) {
     if (settings.interpolationMethod == InterpolationMethodNearest) {
-      CDBDebug("Render nearest");
+      if (debug) {
+        CDBDebug("Render nearest");
+      }
       genericDataWarper.useHalfCellOffset = false;
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
   if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { return warpImageNearestFunction(x, y, val, warperState, settings); });
@@ -182,7 +185,9 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
 #undef RENDER
     }
     if (settings.interpolationMethod == InterpolationMethodBilinear) {
-      CDBDebug("Render bilinear");
+      if (debug) {
+        CDBDebug("Render bilinear");
+      }
       genericDataWarper.useHalfCellOffset = true;
 
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
@@ -205,8 +210,9 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
     ENUMERATE_OVER_CDFTYPES(RENDER)
 #undef RENDER
   }
-
-  CDBDebug("done");
+  if (debug) {
+    CDBDebug("done");
+  }
   delete[] (float *)settings.destinationGrid;
 
   return;

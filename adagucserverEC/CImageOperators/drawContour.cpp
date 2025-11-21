@@ -223,7 +223,7 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
   if (styleConfiguration->contourLines.size() == 0) {
     return;
   }
-  CDBDebug("drawContour");
+
   double scaling = dataSource->getContourScaling();
   const char *fontLocation = dataSource->srvParams->cfg->WMS[0]->ContourFont[0]->attr.location.c_str();
 
@@ -279,7 +279,6 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
   }
 
   float fNodataValue = dataSource->getDataObject(0)->dfNodataValue;
-  CDBDebug("step 1");
   for (int y = 0; y < dImageHeight - 1; y++) {
     for (int x = 0; x < dImageWidth - 1; x++) {
       size_t p1 = size_t(x + y * dImageWidth);
@@ -316,8 +315,6 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
 
   DISTANCEFIELDTYPE lineMask = 1;
 
-  CDBDebug("step 2");
-
   // CDBDebug("B %d", styleConfiguration->contourLines.size());
   for (auto &contourLine : contourlineList) {
 
@@ -340,7 +337,6 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
 
   delete[] distance;
 
-  CDBDebug("ready");
 #ifdef CImgWarpBilinear_DEBUG
   CDBDebug("Finished drawing lines and text");
 #endif
