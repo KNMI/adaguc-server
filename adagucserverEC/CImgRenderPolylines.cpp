@@ -32,19 +32,102 @@
 
 //   #define MEASURETIME
 
-#define MAX(a, b) (((a) > (b)) ? (a) : (b))
-#define MIN(a, b) (((a) < (b)) ? (a) : (b))
-#define CCONVERTUGRIDMESH_NODATA -32000
+#define POLY_NODATA -32000
 
-const char *CImgRenderPolylines::className = "CImgRenderPolylines";
-
-struct Point2D {
-  double x;
-  double y;
+struct FeatureStyle {
+  float width;
+  CT::string color;
+  CT::string fontFile;
+  float fontSize;
+  CT::string fontColor;
+  CT::string propertyName;
+  CT::string propertyFormat;
+  float angle;
+  int padding;
 };
 
-Point2D compute2DPolygonCentroid(const Point2D *vertices, int vertexCount) {
-  Point2D centroid = {0, 0};
+const char *CImgRenderPolylines::className = "CImgRenderPolylines";
+FeatureStyle getAttributesForFeature(CFeature *feature, CT::string id, CStyleConfiguration *styleConfig) {
+  FeatureStyle fs;
+  fs.color = "#008000FF";
+  fs.width = 3;
+  fs.fontSize = 0;
+  fs.propertyFormat = "%s";
+  fs.padding = 3;
+  fs.angle = 0;
+  fs.fontColor = "#000000FF";
+  const char *fontLoc = getenv("ADAGUC_FONT");
+  if (fontLoc != NULL) {
+    fs.fontFile = fontLoc;
+  }
+
+  for (size_t j = 0; j < styleConfig->featureIntervals.size(); j++) {
+    // Draw border if borderWidth>0
+    if (styleConfig->featureIntervals[j]->attr.match.empty() == false) {
+      CT::string match = styleConfig->featureIntervals[j]->attr.match;
+      CT::string matchString;
+      if (styleConfig->featureIntervals[j]->attr.matchid.empty() == false) {
+        // match on matchid
+        CT::string matchId;
+        matchId = styleConfig->featureIntervals[j]->attr.matchid;
+        std::map<std::string, std::string>::iterator attributeValueItr = feature->paramMap.find(matchId.c_str());
+        if (attributeValueItr != feature->paramMap.end()) {
+          matchString = attributeValueItr->second.c_str();
+        }
+      } else {
+        // match on id
+        matchString = id;
+      }
+      regex_t regex;
+      int ret = regcomp(&regex, match.c_str(), 0);
+      if (!ret) {
+        if (regexec(&regex, matchString.c_str(), 0, NULL, 0) == 0) {
+          CServerConfig::XMLE_FeatureInterval *fi = styleConfig->featureIntervals[j];
+          // Matched
+          if ((fi->attr.borderwidth.empty() == false) && ((fi->attr.borderwidth.toFloat()) > 0)) {
+            fs.width = fi->attr.borderwidth.toFloat();
+            // A border should be drawn
+            if (fi->attr.bordercolor.empty() == false) {
+              fs.color = fi->attr.bordercolor;
+            } else {
+              // Use default color
+              fs.color = CT::string("#00AA22FF");
+            }
+          } else {
+            // Draw no border
+            fs.width = 0;
+          }
+          if ((fi->attr.labelfontsize.empty() == false) && (fi->attr.labelfontsize.toFloat() > 0)) {
+            fs.fontSize = fi->attr.labelfontsize.toFloat();
+          }
+          if (fi->attr.labelfontfile.empty() == false) {
+            fs.fontFile = fi->attr.labelfontfile;
+          }
+          if (fi->attr.labelcolor.empty() == false) {
+            fs.fontColor = fi->attr.labelcolor;
+          }
+          if (fi->attr.labelpropertyname.empty() == false) {
+            fs.propertyName = fi->attr.labelpropertyname;
+          }
+          if (fi->attr.labelpropertyformat.empty() == false) {
+            fs.propertyFormat = fi->attr.labelpropertyformat;
+          }
+          if ((fi->attr.labelangle.empty() == false) && (fi->attr.labelangle.isNumeric())) {
+            fs.angle = fi->attr.labelangle.toFloat() * M_PI / 180;
+          }
+          if ((fi->attr.labelpadding.empty() == false) && (fi->attr.labelpadding.isInt())) {
+            fs.padding = fi->attr.labelpadding.toInt();
+          }
+          return fs;
+        }
+      }
+    }
+  }
+  return fs;
+}
+
+f8point compute2DPolygonCentroid(const f8point *vertices, int vertexCount) {
+  f8point centroid = {0, 0};
   double signedArea = 0.0;
   double x0 = 0.0; // Current vertex X
   double y0 = 0.0; // Current vertex Y
@@ -53,8 +136,8 @@ Point2D compute2DPolygonCentroid(const Point2D *vertices, int vertexCount) {
   double a = 0.0;  // Partial signed area
 
   int lastdex = vertexCount - 1;
-  const Point2D *prev = &(vertices[lastdex]);
-  const Point2D *next;
+  const f8point *prev = &(vertices[lastdex]);
+  const f8point *next;
 
   // For all vertices in a loop
   for (int i = 0; i < vertexCount; ++i) {
@@ -77,8 +160,8 @@ Point2D compute2DPolygonCentroid(const Point2D *vertices, int vertexCount) {
   return centroid;
 }
 
-Point2D getCentroid(const float *polyX, const float *polyY, const int numPoints) {
-  Point2D vertices[numPoints];
+f8point getCentroid(const float *polyX, const float *polyY, const int numPoints) {
+  f8point vertices[numPoints];
   for (int i = 0; i < numPoints; i++) {
     vertices[i].x = polyX[i];
     vertices[i].y = polyY[i];
@@ -160,7 +243,7 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
         Feature *feature = featureStore[fileName][featureIndex];
         // FindAttributes for this feature
         FeatureStyle featureStyle = getAttributesForFeature(&(dataSource->getDataObject(0)->features[featureIndex]), feature->getId(), styleConfiguration);
-        CColor drawPointLineColor2(featureStyle.color.c_str());
+        CColor polyFillColor(featureStyle.color.c_str());
         float drawPointLineWidth = featureStyle.width;
         // if(featureIndex!=0)break;
         std::vector<Polygon> *polygons = feature->getPolygons();
@@ -189,10 +272,10 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
             }
           }
 
-          drawImage->poly(projectedX, projectedY, cnt, drawPointLineWidth, drawPointLineColor2, drawPointLineColor2, true, false);
+          drawImage->poly(projectedX, projectedY, cnt, drawPointLineWidth, polyFillColor, polyFillColor, true, true);
           // Determine centroid for first polygon.
           if (firstPolygon) {
-            Point2D centroid = getCentroid(polyX, polyY, numPoints);
+            f8point centroid = getCentroid(polyX, polyY, numPoints);
             double centroidX = centroid.x;
             double centroidY = centroid.y;
             int status = 0;
@@ -235,13 +318,13 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
                   dlon = int((tprojectedX - offsetX) / cellSizeX) + 1;
                   dlat = int((tprojectedY - offsetY) / cellSizeY);
                 } else {
-                  dlat = CCONVERTUGRIDMESH_NODATA;
-                  dlon = CCONVERTUGRIDMESH_NODATA;
+                  dlat = POLY_NODATA;
+                  dlon = POLY_NODATA;
                 }
                 projectedHoleX[j] = dlon;
                 projectedHoleY[j] = height - dlat;
               }
-              drawImage->poly(projectedHoleX, projectedHoleY, holeSize, drawPointLineWidth, drawPointLineColor2, drawPointLineColor2, true, false);
+              drawImage->poly(projectedHoleX, projectedHoleY, holeSize, drawPointLineWidth, polyFillColor, polyFillColor, true, true);
             }
           }
         }
@@ -271,7 +354,7 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
             }
           }
 
-          drawImage->poly(projectedX, projectedY, cnt, drawPointLineWidth, drawPointLineColor2, drawPointLineColor2, false, false);
+          drawImage->poly(projectedX, projectedY, cnt, drawPointLineWidth, polyFillColor, polyFillColor, false, true);
         }
 #ifdef MEASURETIME
         StopWatch_Stop("Feature drawn %d", featureIndex);
@@ -290,83 +373,4 @@ int CImgRenderPolylines::set(const char *values) {
 
   settings.copy(values);
   return 0;
-}
-
-FeatureStyle CImgRenderPolylines::getAttributesForFeature(CFeature *feature, CT::string id, CStyleConfiguration *styleConfig) {
-  FeatureStyle fs;
-  fs.color = "#008000FF";
-  fs.width = 3;
-  fs.fontSize = 0;
-  fs.propertyFormat = "%s";
-  fs.padding = 3;
-  fs.angle = 0;
-  fs.fontColor = "#000000FF";
-  const char *fontLoc = getenv("ADAGUC_FONT");
-  if (fontLoc != NULL) {
-    fs.fontFile = fontLoc;
-  }
-
-  for (size_t j = 0; j < styleConfig->featureIntervals.size(); j++) {
-    // Draw border if borderWidth>0
-    if (styleConfig->featureIntervals[j]->attr.match.empty() == false) {
-      CT::string match = styleConfig->featureIntervals[j]->attr.match;
-      CT::string matchString;
-      if (styleConfig->featureIntervals[j]->attr.matchid.empty() == false) {
-        // match on matchid
-        CT::string matchId;
-        matchId = styleConfig->featureIntervals[j]->attr.matchid;
-        std::map<std::string, std::string>::iterator attributeValueItr = feature->paramMap.find(matchId.c_str());
-        if (attributeValueItr != feature->paramMap.end()) {
-          matchString = attributeValueItr->second.c_str();
-        }
-      } else {
-        // match on id
-        matchString = id;
-      }
-      regex_t regex;
-      int ret = regcomp(&regex, match.c_str(), 0);
-      if (!ret) {
-        if (regexec(&regex, matchString.c_str(), 0, NULL, 0) == 0) {
-          CServerConfig::XMLE_FeatureInterval *fi = styleConfig->featureIntervals[j];
-          // Matched
-          if ((fi->attr.borderwidth.empty() == false) && ((fi->attr.borderwidth.toFloat()) > 0)) {
-            fs.width = fi->attr.borderwidth.toFloat();
-            // A border should be drawn
-            if (fi->attr.bordercolor.empty() == false) {
-              fs.color = fi->attr.bordercolor;
-            } else {
-              // Use default color
-              fs.color = CT::string("#00AA22FF");
-            }
-          } else {
-            // Draw no border
-            fs.width = 0;
-          }
-          if ((fi->attr.labelfontsize.empty() == false) && (fi->attr.labelfontsize.toFloat() > 0)) {
-            fs.fontSize = fi->attr.labelfontsize.toFloat();
-          }
-          if (fi->attr.labelfontfile.empty() == false) {
-            fs.fontFile = fi->attr.labelfontfile;
-          }
-          if (fi->attr.labelcolor.empty() == false) {
-            fs.fontColor = fi->attr.labelcolor;
-          }
-          if (fi->attr.labelpropertyname.empty() == false) {
-            fs.propertyName = fi->attr.labelpropertyname;
-          }
-          if (fi->attr.labelpropertyformat.empty() == false) {
-            fs.propertyFormat = fi->attr.labelpropertyformat;
-          }
-          if ((fi->attr.labelangle.empty() == false) && (fi->attr.labelangle.isNumeric())) {
-            fs.angle = fi->attr.labelangle.toFloat() * M_PI / 180;
-          }
-          if ((fi->attr.labelpadding.empty() == false) && (fi->attr.labelpadding.isInt())) {
-            fs.padding = fi->attr.labelpadding.toInt();
-          }
-          return fs;
-        }
-      }
-    }
-  }
-  return fs;
 }
