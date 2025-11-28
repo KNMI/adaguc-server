@@ -28,23 +28,10 @@
 #include "CImageWarperRenderInterface.h"
 #include "Types/CPointTypes.h"
 
-typedef struct _FeatureStyle {
-  float width;
-  CT::string color;
-  CT::string fontFile;
-  float fontSize;
-  CT::string fontColor;
-  CT::string propertyName;
-  CT::string propertyFormat;
-  float angle;
-  int padding;
-} FeatureStyle;
-
 class CImgRenderPolylines : public CImageWarperRenderInterface {
 private:
   DEF_ERRORFUNCTION();
   CT::string settings;
-  FeatureStyle getAttributesForFeature(CFeature *feature, CT::string id, CStyleConfiguration *styleConfig);
 
 public:
   void render(CImageWarper *, CDataSource *, CDrawImage *);
