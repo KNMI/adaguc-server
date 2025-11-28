@@ -42,6 +42,23 @@ class TestWMSPolylineRenderer(unittest.TestCase):
             self.assertEqual(status, 0)
             self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, maxAllowedColorDifference=2, maxAllowedColorPercentage=0.025))
 
+
+    def test_WMSPolylineRenderer_cellwarn_fillpolysalpha(self):
+        AdagucTestTools().cleanTempDir()
+
+        config = ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml,' + \
+            ADAGUC_PATH + '/data/config/datasets/adaguc.testwmspolylinerenderer.xml'
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=['--updatedb', '--config', config], env=self.env, isCGI=False)
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSPolylineRenderer_cellwarn_fillpolysalpha.png"
+        status, data, headers = AdagucTestTools().runADAGUCServer("DATASET=adaguc.testwmspolylinerenderer&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=cellwarn_hail_combined&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=540000,6600000,850000,6750000&STYLES=polygon_innerparts_coloured&FORMAT=image/png&TRANSPARENT=TRUE&", env=self.env)
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, maxAllowedColorDifference=2, maxAllowedColorPercentage=0.025))
+
+
     def test_WMSPointRenderer_usgs_earthquakes_geojson_auto_nearest_GetMap(self):
         env = {'ADAGUC_CONFIG': ADAGUC_PATH +
            "/data/config/adaguc.autoresource.xml"}
