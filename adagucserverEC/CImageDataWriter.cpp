@@ -333,7 +333,6 @@ void CImageDataWriter::getFeatureInfoGetPointDataResults(CDataSource *dataSource
       for (size_t p = 0; p < point.paramList.size(); p++) {
         GetFeatureInfoResult::Element *pointID = new GetFeatureInfoResult::Element();
         pointID->dataSource = dataSource;
-        // pointID->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
         for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
           CCDFDims *cdfDims = dataSource->getCDFDims();
           CT::string value = cdfDims->getDimensionValue(j);
@@ -673,10 +672,12 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> &dataSources, in
   // Create a new getFeatureInfoResult object and push it into the vector.
   int status = 0;
   isProfileData = false;
-  for (size_t d = 0; d < dataSources.size(); d++) {
-    if (dataSources[d]->cfgLayer->attr.hidden.equals("true")) {
-      continue;
+  for (auto dataSource : dataSources) {
+    if (dataSource == NULL) {
+      CDBError("dataSource == NULL");
+      return 1;
     }
+
     GetFeatureInfoResult *getFeatureInfoResult = new GetFeatureInfoResult();
     getFeatureInfoResultList.push_back(getFeatureInfoResult);
     bool headerIsAvailable = false;
@@ -686,84 +687,78 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> &dataSources, in
     bool everythingIsInBBOX = true;
 
     CDataReader reader;
-    reader.open(dataSources[d], CNETCDFREADER_MODE_OPEN_HEADER);
-    if (dataSources[d]->getNumDataObjects() > 0) {
-      if (dataSources[d]->getFirstAvailableDataObject()->cdfVariable != NULL) {
-        if (dataSources[d]->isConfigured) {
-          if (dataSources[d]->nativeProj4.length() > 0) {
+    reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
+    if (dataSource->getNumDataObjects() > 0) {
+      if (dataSource->getFirstAvailableDataObject()->cdfVariable != NULL) {
+        if (dataSource->isConfigured) {
+          if (dataSource->nativeProj4.length() > 0) {
             headerIsAvailable = true;
           }
         }
-        if (dataSources[d]->getFirstAvailableDataObject()->cdfVariable->getAttributeNE("ADAGUC_VECTOR") != NULL) {
+        if (dataSource->getFirstAvailableDataObject()->cdfVariable->getAttributeNE("ADAGUC_VECTOR") != NULL) {
           openAll = true;
         }
 
-        if (dataSources[d]->getFirstAvailableDataObject()->cdfVariable->getAttributeNE("ADAGUC_POINT") != NULL) {
+        if (dataSource->getFirstAvailableDataObject()->cdfVariable->getAttributeNE("ADAGUC_POINT") != NULL) {
           openAll = true;
         }
 
-        if (dataSources[d]->getFirstAvailableDataObject()->cdfVariable->getAttributeNE("UGRID_MESH") != NULL) {
+        if (dataSource->getFirstAvailableDataObject()->cdfVariable->getAttributeNE("UGRID_MESH") != NULL) {
           openAll = true;
         }
-        if (dataSources[d]->getFirstAvailableDataObject()->cdfVariable->getAttributeNE("ADAGUC_PROFILE") != NULL) {
+        if (dataSource->getFirstAvailableDataObject()->cdfVariable->getAttributeNE("ADAGUC_PROFILE") != NULL) {
           isProfileData = true;
         }
-        if (dataSources[d]->getFirstAvailableDataObject()->cdfObject->getAttributeNE("ADAGUC_GEOJSON") != NULL) {
+        if (dataSource->getFirstAvailableDataObject()->cdfObject->getAttributeNE("ADAGUC_GEOJSON") != NULL) {
           openAll = true;
         }
 
-        if (dataSources[d]->getFirstAvailableDataObject()->cdfObject->getAttributeNE("USE_ADAGUC_LATLONBNDS_CONVERTER") != NULL) {
+        if (dataSource->getFirstAvailableDataObject()->cdfObject->getAttributeNE("USE_ADAGUC_LATLONBNDS_CONVERTER") != NULL) {
           openAll = true;
         }
 
-        if (dataSources[d]->getFirstAvailableDataObject()->cdfObject->getAttributeNE(CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ID) != NULL) {
+        if (dataSource->getFirstAvailableDataObject()->cdfObject->getAttributeNE(CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ID) != NULL) {
           sameHeaderForAll = true;
         }
 
-        if (dataSources[d]->cfgLayer->FilePath.size() == 1 && dataSources[d]->cfgLayer->FilePath[0]->attr.gfi_openall.equals("true")) {
+        if (dataSource->cfgLayer->FilePath.size() == 1 && dataSource->cfgLayer->FilePath[0]->attr.gfi_openall.equals("true")) {
           openAll = true;
         }
-        if (dataSources[d]->cfgLayer->FilePath.size() == 1 && dataSources[d]->cfgLayer->FilePath[0]->attr.gfi_openall.equals("headers")) {
+        if (dataSource->cfgLayer->FilePath.size() == 1 && dataSource->cfgLayer->FilePath[0]->attr.gfi_openall.equals("headers")) {
           sameHeaderForAll = true;
         }
       }
     }
-    // CDBDebug("gfi_openall: %d %d",dataSources[d]->cfgLayer->FilePath.size(),openAll);
+    // CDBDebug("gfi_openall: %d %d",dataSource->cfgLayer->FilePath.size(),openAll);
 
-    if (dataSources[d]->cfgLayer->TileSettings.size() == 1) {
+    if (dataSource->cfgLayer->TileSettings.size() == 1) {
       openAll = true;
-    }
-
-    CDataSource *dataSource = dataSources[d];
-    if (dataSource == NULL) {
-      CDBError("dataSource == NULL");
-      return 1;
     }
 #ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("isProfileData:[%d] openAll:[%d] sameHeaderForAll:[%d] infoFormat:[%s]", isProfileData, openAll, sameHeaderForAll, srvParam->InfoFormat.c_str());
 #endif
     if (isProfileData) {
-      int status = CMakeEProfile::MakeEProfile(&drawImage, &imageWarper, dataSources, d, dX, dY, &eProfileJson);
+      int status = CMakeEProfile::MakeEProfile(&drawImage, &imageWarper, dataSource, dX, dY, &eProfileJson);
       if (status != 0) {
         CDBError("CMakeEProfile::MakeEProfile failed");
         return status;
       }
     } else if (sameHeaderForAll == false && openAll == false && srvParam->InfoFormat.equals("application/json")) {
-      int status = CMakeJSONTimeSeries::MakeJSONTimeSeries(&drawImage, &imageWarper, dataSources, d, dX, dY, &gfiStructure);
+      int status = CMakeJSONTimeSeries::MakeJSONTimeSeries(&drawImage, &imageWarper, dataSource, dX, dY, &gfiStructure);
       if (status != 0) {
         CDBError("CMakeJSONTimeSeries::MakeJSONTimeSeries failed");
         return status;
       }
     } else {
       // return 1;
-      CDBDebug("Num time steps for datasource %d", dataSources[d]->getNumTimeSteps());
+      CDBDebug("Num time steps for dataSource %d", dataSource->getNumTimeSteps());
 
       std::map<std::string, bool> dimensionKeyValueMap; // A map for every dimensionvalue linked to a value
 
-      for (int step = 0; step < dataSources[d]->getNumTimeSteps(); step++) {
-        dataSources[d]->setTimeStep(step);
+      for (int step = 0; step < dataSource->getNumTimeSteps(); step++) {
+        dataSource->setTimeStep(step);
 
-        CCDFDims *cdfDims = dataSources[d]->getCDFDims();
+        CCDFDims *cdfDims = dataSource->getCDFDims();
 
         // Copy layer name
         getFeatureInfoResult->layerName.copy(&dataSource->layerName);
@@ -772,8 +767,8 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> &dataSources, in
         getFeatureInfoResult->dataSourceIndex = dataSourceIndex;
 
 #ifdef CIMAGEDATAWRITER_DEBUG
-        CDBDebug("Processing dataSource %d with result %d of %d results (%d) %f", d, step, dataSources[d]->getNumTimeSteps(), dataSources[d]->getFirstAvailableDataObject()->hasNodataValue,
-                 dataSources[d]->getFirstAvailableDataObject()->dfNodataValue);
+        CDBDebug("Processing dataSource %s with result %d of %d results (%d) %f", dataSource->getLayerName(), step, dataSource->getNumTimeSteps(),
+                 dataSource->getFirstAvailableDataObject()->hasNodataValue, dataSource->getFirstAvailableDataObject()->dfNodataValue);
 #endif
 
         CDataReader reader;
@@ -784,7 +779,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> &dataSources, in
 #ifdef CIMAGEDATAWRITER_DEBUG
             CDBDebug("OPEN ALL");
 #endif
-            status = reader.open(dataSources[d], CNETCDFREADER_MODE_OPEN_ALL);
+            status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_ALL);
           } else {
 // CDBDebug("OPEN HEADER");
 #ifdef CIMAGEDATAWRITER_DEBUG
@@ -792,7 +787,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> &dataSources, in
 #endif
             if (!headerIsAvailable || sameHeaderForAll == true) {
               headerIsAvailable = true;
-              status = reader.open(dataSources[d], CNETCDFREADER_MODE_OPEN_HEADER);
+              status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
             }
           }
 
@@ -838,10 +833,10 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> &dataSources, in
           if (!openAll) {
 
 #ifdef CIMAGEDATAWRITER_DEBUG
-            CDBDebug("Reading datasource %d for %d,%d", d, projCacheInfo.imx, projCacheInfo.imy);
+            CDBDebug("Reading dataSource %s for %d,%d", dataSource->getLayerName(), projCacheInfo.imx, projCacheInfo.imy);
 #endif
 
-            status = reader.open(dataSources[d], CNETCDFREADER_MODE_OPEN_ALL, projCacheInfo.imx, projCacheInfo.imy);
+            status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_ALL, projCacheInfo.imx, projCacheInfo.imy);
 
 #ifdef CIMAGEDATAWRITER_DEBUG
             CDBDebug("Done");
@@ -873,7 +868,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> &dataSources, in
             }
 
             CT::string dimkey = "";
-            for (size_t j = 0; j < dataSources[d]->requiredDims.size(); j++) {
+            for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
               dimkey.printconcat("[%s=%s]", cdfDims->getDimensionValue(j).c_str(), cdfDims->getDimensionName(j));
             }
             dimkey.printconcat("[dataobject=%d]", o);
@@ -895,19 +890,18 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> &dataSources, in
 
             element->dataSource = dataSource;
             // Get variable name
-            element->var_name.copy(&dataSources[d]->getDataObject(o)->variableName);
+            element->var_name.copy(&dataSource->getDataObject(o)->variableName);
             // Get variable units
-            CT::string units = dataSources[d]->getDataObject(o)->getUnits();
+            CT::string units = dataSource->getDataObject(o)->getUnits();
             element->units.copy(&units);
 
             // Get variable standard name
-            CDF::Attribute *attr_standard_name = dataSources[d]->getDataObject(o)->cdfVariable->getAttributeNE("standard_name");
+            CDF::Attribute *attr_standard_name = dataSource->getDataObject(o)->cdfVariable->getAttributeNE("standard_name");
             if (attr_standard_name != NULL) {
               CT::string standardName;
               attr_standard_name->getDataAsString(&standardName);
               element->standard_name.copy(&standardName);
               // Make a more clean standard name.
-              // standardName.replaceSelf("_"," ");standardName.replaceSelf(" status flag","");
               element->feature_name.print("%s_%d", standardName.c_str(), o);
             }
             if (element->standard_name.empty()) {
@@ -917,30 +911,21 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> &dataSources, in
             }
 
             // Get variable long name
-            CDF::Attribute *attr_long_name = dataSources[d]->getDataObject(o)->cdfVariable->getAttributeNE("long_name");
+            CDF::Attribute *attr_long_name = dataSource->getDataObject(o)->cdfVariable->getAttributeNE("long_name");
             if (attr_long_name != NULL) {
               attr_long_name->getDataAsString(&element->long_name);
             } else
               element->long_name.copy(&element->var_name);
 
             // Assign CDF::Variable Pointer
-            element->variable = dataSources[d]->getDataObject(o)->cdfVariable;
+            element->variable = dataSource->getDataObject(o)->cdfVariable;
             element->value = "nodata";
 
-            // element->time=dataSources[d]->getDimensionValueForNameAndStep("time",dataSources[d]->getCurrentTimeStep());
-
-            CCDFDims *cdfDims = dataSources[d]->getCDFDims();
+            CCDFDims *cdfDims = dataSource->getCDFDims();
             CT::string value, name;
-            for (size_t j = 0; j < dataSources[d]->requiredDims.size(); j++) {
-
+            for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
               value = cdfDims->getDimensionValue(j);
-
               name = cdfDims->getDimensionName(j);
-
-              //         if(name.indexOf("time")==0){
-              //           value=element->cdfDims.getDimensionValue("time").c_str();
-              //         }
-              //           CDBDebug("%d) %s == %s == %d",j,name.c_str(),value.c_str(),cdfDims->getDimensionIndex(j));
               element->cdfDims.addDimension(name.c_str(), value.c_str(), cdfDims->getDimensionIndex(j));
             }
 
@@ -953,9 +938,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> &dataSources, in
             //       #endif
             bool hasData = false;
             if (projCacheInfo.imx >= 0 && projCacheInfo.imy >= 0 && projCacheInfo.imx < projCacheInfo.dWidth && projCacheInfo.imy < projCacheInfo.dHeight) {
-
-              // GetFeatureInfoResult::Element * element=getFeatureInfoResult->elements[j];
-
               size_t ptr = 0;
               if (openAll) {
                 ptr = projCacheInfo.imx + projCacheInfo.imy * projCacheInfo.dWidth;
@@ -982,7 +964,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> &dataSources, in
                   dataSource->getDataObject(o)->hasNodataValue == false || dataSource->getDataObject(o)->points.size() > 0) {
                 if (dataSource->getDataObject(o)->hasStatusFlag) {
                   // Add status flag
-
                   CT::string flagMeaning;
                   CDataSource::getFlagMeaningHumanReadable(&flagMeaning, &dataSource->getDataObject(o)->statusFlagList, pixel);
                   element->value.print("%s (%d)", flagMeaning.c_str(), (int)pixel);
@@ -1032,21 +1013,20 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> &dataSources, in
                   if (featureIt != dataSource->getDataObject(o)->features.end()) {
                     CFeature *feature = &featureIt->second;
                     if (feature->paramMap.empty() == false) {
-                      std::map<std::string, std::string>::iterator paramItemIt;
-                      for (paramItemIt = feature->paramMap.begin(); paramItemIt != feature->paramMap.end(); ++paramItemIt) {
+                      for (auto [propertyName, propertyValue] : feature->paramMap) {
                         GetFeatureInfoResult::Element *featureParam = new GetFeatureInfoResult::Element();
                         featureParam->dataSource = dataSource;
-                        for (size_t j = 0; j < dataSources[d]->requiredDims.size(); j++) {
+                        for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
                           value = cdfDims->getDimensionValue(j);
                           name = cdfDims->getDimensionName(j);
                           featureParam->cdfDims.addDimension(name.c_str(), value.c_str(), cdfDims->getDimensionIndex(j));
                         }
                         getFeatureInfoResult->elements.push_back(featureParam);
-                        featureParam->long_name = paramItemIt->first.c_str();
-                        featureParam->var_name = paramItemIt->first.c_str();
-                        featureParam->standard_name = paramItemIt->first.c_str();
-                        featureParam->feature_name = paramItemIt->first.c_str();
-                        featureParam->value = paramItemIt->second.c_str();
+                        featureParam->long_name = propertyName.c_str();
+                        featureParam->var_name = propertyName.c_str();
+                        featureParam->standard_name = propertyName.c_str();
+                        featureParam->feature_name = propertyName.c_str();
+                        featureParam->value = propertyValue.c_str();
                         featureParam->units = "";
                       }
                     }
@@ -1083,9 +1063,9 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> &dataSources, in
     }
   }
 
-  for (size_t j = 0; j < getFeatureInfoResultList.size(); j++) {
-    if (getFeatureInfoResultList[j]->elements.size() > 0) {
-      getFeatureInfoResultList[j]->layerTitle = getFeatureInfoResultList[j]->elements[0]->long_name;
+  for (auto gfiResult : getFeatureInfoResultList) {
+    if (gfiResult->elements.size() > 0) {
+      gfiResult->layerTitle = gfiResult->elements[0]->long_name;
     }
   }
 #ifdef CIMAGEDATAWRITER_DEBUG

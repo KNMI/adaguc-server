@@ -2906,77 +2906,75 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
 int CRequest::handleGetCoverageRequest(CDataSource *firstDataSource) {
   int status = 0;
 
-  if (srvParam->requestType == REQUEST_WCS_GETCOVERAGE) {
-    CBaseDataWriterInterface *wcsWriter = NULL;
-    CT::string driverName = "ADAGUCNetCDF";
-    setDimValuesForDataSource(firstDataSource, srvParam);
+  if (srvParam->requestType != REQUEST_WCS_GETCOVERAGE) {
+    return status;
+  }
 
-    for (size_t i = 0; i < srvParam->cfg->WCS[0]->WCSFormat.size(); i++) {
-      if (srvParam->Format.equals(srvParam->cfg->WCS[0]->WCSFormat[i]->attr.name.c_str())) {
-        driverName.copy(srvParam->cfg->WCS[0]->WCSFormat[i]->attr.driver.c_str());
-        break;
-      }
+  CBaseDataWriterInterface *wcsWriter = NULL;
+  CT::string driverName = "ADAGUCNetCDF";
+  setDimValuesForDataSource(firstDataSource, srvParam);
+
+  for (const auto &WCSFormat : srvParam->cfg->WCS[0]->WCSFormat) {
+    if (srvParam->Format.equals(WCSFormat->attr.name.c_str())) {
+      driverName.copy(WCSFormat->attr.driver.c_str());
+      break;
     }
-    if (driverName.equals("ADAGUCNetCDF")) {
-      // CDBDebug("Creating CNetCDFDataWriter");
-      wcsWriter = new CNetCDFDataWriter();
-    }
+  }
+
+  if (driverName.equals("ADAGUCNetCDF")) {
+    CDBDebug("Creating CNetCDFDataWriter");
+    wcsWriter = new CNetCDFDataWriter();
+  }
 
 #ifdef ADAGUC_USE_GDAL
-    if (wcsWriter == NULL) {
-      wcsWriter = new CGDALDataWriter();
-    }
+  if (wcsWriter == NULL) {
+    wcsWriter = new CGDALDataWriter();
+  }
 #endif
-    if (wcsWriter == NULL) {
-      CDBError("No WCS Writer found");
-      return 1;
-    }
+  if (wcsWriter == NULL) {
+    CDBError("No WCS Writer found");
+    return 1;
+  }
+  try {
     try {
-      try {
-        for (size_t d = 0; d < dataSources.size(); d++) {
-          status = wcsWriter->init(srvParam, dataSources[d], firstDataSource->getNumTimeSteps());
-          if (status != 0) throw(__LINE__);
-        }
-      } catch (int e) {
-        CDBError("Exception code %d", e);
-
-        throw(__LINE__);
-      }
-
-      for (int k = 0; k < firstDataSource->getNumTimeSteps(); k++) {
-        // Do not add hidden layers to the output
-        if (firstDataSource->cfgLayer->attr.hidden.equals("true")) {
-          continue;
-        }
-
-        for (size_t d = 0; d < dataSources.size(); d++) {
-          dataSources[d]->setTimeStep(k);
-        }
-
-        try {
-          status = wcsWriter->addData(dataSources);
-        } catch (int e) {
-          CDBError("Exception code %d", e);
-          throw(__LINE__);
-        }
+      for (auto dataSource : dataSources) {
+        status = wcsWriter->init(srvParam, dataSource, firstDataSource->getNumTimeSteps());
         if (status != 0) throw(__LINE__);
       }
-      try {
-        status = wcsWriter->end();
-        if (status != 0) throw(__LINE__);
-      } catch (int e) {
-        CDBError("Exception code %d", e);
-        throw(__LINE__);
-      }
-    } catch (int line) {
-      CDBDebug("%d", line);
-      delete wcsWriter;
-      wcsWriter = NULL;
+    } catch (int e) {
+      CDBError("Exception code %d", e);
+
       throw(__LINE__);
     }
 
+    for (int k = 0; k < firstDataSource->getNumTimeSteps(); k++) {
+      for (auto dataSource : dataSources) {
+        dataSource->setTimeStep(k);
+      }
+
+      try {
+        status = wcsWriter->addData(dataSources);
+      } catch (int e) {
+        CDBError("Exception code %d", e);
+        throw(__LINE__);
+      }
+      if (status != 0) throw(__LINE__);
+    }
+    try {
+      status = wcsWriter->end();
+      if (status != 0) throw(__LINE__);
+    } catch (int e) {
+      CDBError("Exception code %d", e);
+      throw(__LINE__);
+    }
+  } catch (int line) {
+    CDBDebug("%d", line);
     delete wcsWriter;
     wcsWriter = NULL;
+    throw(__LINE__);
   }
+
+  delete wcsWriter;
+  wcsWriter = NULL;
   return status;
 }
