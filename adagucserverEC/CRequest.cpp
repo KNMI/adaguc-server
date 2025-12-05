@@ -143,11 +143,9 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
         if (equalPos != -1) {
           values[0] = parameters[j].substring(0, equalPos);
           values[1] = parameters[j].c_str() + equalPos + 1;
-          values[0].count = 2;
         } else {
           values[0] = parameters[j].c_str();
           values[1] = "";
-          values[0].count = 1;
         }
         value0Cap.copy(&values[0]);
         value0Cap.toUpperCaseSelf();

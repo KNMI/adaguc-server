@@ -525,9 +525,9 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
           CT::string defaultV;
           if (pszDefaultV != NULL) defaultV = pszDefaultV;
 
-          if (defaultV.length() == 0 || defaultV.equals("max", 3)) {
+          if (defaultV.length() == 0 || defaultV.equals("max")) {
             dim.defaultValue.copy(values->getRecord(values->getSize() - 1)->get(0)->c_str());
-          } else if (defaultV.equals("min", 3)) {
+          } else if (defaultV.equals("min")) {
             dim.defaultValue.copy(values->getRecord(0)->get(0)->c_str());
           } else {
             dim.defaultValue.copy(&defaultV);
@@ -586,9 +586,9 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
         const char *pszDefaultV = metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.defaultV.c_str();
         CT::string defaultV;
         if (pszDefaultV != NULL) defaultV = pszDefaultV;
-        if (defaultV.length() == 0 || defaultV.equals("max", 3)) {
+        if (defaultV.length() == 0 || defaultV.equals("max")) {
           dim.defaultValue.copy(szMaxTime);
-        } else if (defaultV.equals("min", 3)) {
+        } else if (defaultV.equals("min")) {
           dim.defaultValue.copy(szMinTime);
         } else {
           dim.defaultValue.copy(&defaultV);

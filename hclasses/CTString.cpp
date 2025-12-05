@@ -10,8 +10,8 @@ namespace CT {
 
   StackList<CT::string> string::splitToStack(const char *_value) {
     StackList<CT::string> stringList;
-    const char *fo = strstr(useStack ? stackValue : heapValue, _value);
-    const char *prevFo = useStack ? stackValue : heapValue;
+    const char *fo = strstr(standardString.c_str(), _value);
+    const char *prevFo = standardString.c_str();
     while (fo != NULL) {
       stringList.push_back(CT::string(prevFo, (fo - prevFo)));
       prevFo = fo + 1;
@@ -23,66 +23,39 @@ namespace CT {
     return stringList;
   }
 
-  string::string() {
-#ifdef CTYPES_DEBUG
-    printf("string();\n");
-#endif
-    init();
-  }
+  string::string() {}
 
   string::string(const char *_value) {
-#ifdef CTYPES_DEBUG
-    printf("string(const char * _value == %s)\n", _value);
-#endif
-    init();
     if (_value != NULL) copy(_value, strlen(_value));
   }
 
-  string::string(string const &f) {
-#ifdef CTYPES_DEBUG
-    printf("string(string const &f);\n");
-#endif
+  string::string(string const &f) { this->copy(f.standardString.c_str(), f.standardString.length()); }
 
-    init();
-    copy(f.useStack ? f.stackValue : f.heapValue, f.privatelength);
-  }
+  string::string(CT::string *_string) { copy(_string); }
 
-  string::string(CT::string *_string) {
-    init();
-    copy(_string);
-  }
-
-  string::string(const char *_value, size_t _length) {
-    init();
-    copy(_value, _length);
-  }
+  string::string(const char *_value, size_t _length) { copy(_value, _length); }
 
   string &string::operator=(string const &f) {
-#ifdef CTYPES_DEBUG
-    printf("string::operator= (string const& f);\n");
-#endif
     if (this == &f) return *this;
-    _Free();
-    init();
-    copy(f.useStack ? f.stackValue : f.heapValue, f.privatelength);
+    this->standardString = f.standardString;
     return *this;
   }
 
   string &string::operator=(const char *const &f) {
-#ifdef CTYPES_DEBUG
-    printf("string::operator= (const char*const &f)\n");
-#endif
-    _Free();
-    init();
-    this->copy(f);
+    if (f == nullptr) {
+      this->standardString = "";
+    } else {
+      this->standardString = f;
+    }
     return *this;
   }
 
   string &string::operator+=(string const &f) {
     if (this == &f) return *this;
-    concatlength(f.useStack ? f.stackValue : f.heapValue, f.privatelength);
+    this->standardString += f;
     return *this;
   }
+
   string &string::operator+=(const char *const &f) {
     this->concat(f);
     return *this;
@@ -102,31 +75,6 @@ namespace CT {
 
   string::operator const char *() const { return this->c_str(); }
 
-  void string::_Free() {
-    if (allocated != 0) {
-      delete[] heapValue;
-    }
-    heapValue = NULL;
-    stackValue[0] = 0;
-    useStack = CTYPES_USESTACK;
-    privatelength = 0;
-    bufferlength = CTSTRINGSTACKLENGTH;
-    allocated = 0;
-  }
-
-  void string::_Allocate(int _length) {
-    _Free();
-    if (_length > CTSTRINGSTACKLENGTH - 1) {
-      useStack = false;
-
-      heapValue = new char[_length + 1];
-    } else {
-
-      useStack = CTYPES_USESTACK;
-    }
-    allocated = 1;
-  }
-
   const char *string::strrstr(const char *x, const char *y) {
     const char *prev = NULL;
     const char *next;
@@ -139,15 +87,15 @@ namespace CT {
   }
 
   char string::charAt(size_t n) {
-    if (n > privatelength) return 0;
-    return (useStack ? stackValue : heapValue)[n];
+    if (n > length()) return 0;
+    return (standardString.c_str())[n];
   }
 
   int string::indexOf(const char *search, size_t _length) {
     if (_length == 0) return -1;
-    if (privatelength == 0) return -1;
-    if (allocated == 0) return -1;
-    const char *value = useStack ? stackValue : heapValue;
+    if (length() == 0) return -1;
+
+    const char *value = standardString.c_str();
     const char *pi = strstr(value, search);
     if (pi == NULL) return -1;
     int c = pi - value;
@@ -157,9 +105,9 @@ namespace CT {
 
   int string::lastIndexOf(const char *search, size_t _length) {
     if (_length == 0) return -1;
-    if (privatelength == 0) return -1;
-    if (allocated == 0) return -1;
-    const char *value = useStack ? stackValue : heapValue;
+    if (length() == 0) return -1;
+
+    const char *value = standardString.c_str();
     const char *pi = strrstr(value, search);
     if (pi == NULL) return -1;
     int c = pi - value;
@@ -169,51 +117,11 @@ namespace CT {
 
   void string::copy(const char *_value, size_t _length) {
     if (_value == NULL) {
-      _Free();
+      this->standardString = "";
       return;
     }
-    _Allocate(_length);
-    privatelength = _length;
-    char *value = useStack ? stackValue : heapValue;
-    strncpy(value, _value, privatelength);
-    value[privatelength] = '\0';
-  }
-
-  void string::concatlength(const char *_value, size_t len) {
-    if (_value == NULL) return;
-
-    if (len == 0) return;
-    /* Destination is still clean, this is just a copy. */
-    if (allocated == 0) {
-      copy(_value, len);
-      return;
-    }
-
-    /* Check if the source fits in the destination buffer. */
-    size_t total_len = privatelength + len;
-    if (total_len < bufferlength) {
-      char *value = useStack ? stackValue : heapValue;
-      memcpy(value + privatelength, _value, len);
-      value[total_len] = '\0';
-      privatelength = total_len;
-      return;
-    }
-
-    /* Source buffer is too small, reallocate and copy to bigger buffer. */
-    bufferlength = total_len + privatelength * 2; /* 8192*4-1; */
-
-    char *temp = new char[bufferlength + 1];
-
-    strncpy(temp, useStack ? stackValue : heapValue, privatelength);
-    temp[privatelength] = '\0';
-    strncpy(temp + privatelength, _value, len);
-    temp[total_len] = '\0';
-    privatelength = total_len;
-    if (useStack == false) {
-      delete[] heapValue;
-    }
-    heapValue = temp;
-    useStack = false;
+    this->standardString = _value;
+    this->standardString.resize(_length);
   }
 
   char string::_tohex(char in) {
@@ -232,28 +140,19 @@ namespace CT {
   }
 
   void string::toLowerCaseSelf() {
-    char szChar;
-    char *value = useStack ? stackValue : heapValue;
-    for (unsigned int j = 0; j < privatelength; j++) {
-      szChar = value[j];
-      if (szChar >= 'A' && szChar <= 'Z') value[j] += 32;
-    }
+    std::transform(standardString.begin(), standardString.end(), standardString.begin(), [](unsigned char c) { return std::tolower(c); });
   }
 
   void string::toUpperCaseSelf() {
-    char szChar;
-    char *value = useStack ? stackValue : heapValue;
-    for (unsigned int j = 0; j < privatelength; j++) {
-      szChar = value[j];
-      if (szChar >= 'a' && szChar <= 'z') value[j] -= 32;
-    }
+    std::transform(standardString.begin(), standardString.end(), standardString.begin(), [](unsigned char c) { return std::toupper(c); });
   }
+
   void string::encodeURLSelf() {
-    char *pszEncode = new char[privatelength * 6 + 1];
+    char *pszEncode = new char[standardString.length() * 6 + 1];
     int p = 0;
     unsigned char szChar;
-    char *value = useStack ? stackValue : heapValue;
-    for (unsigned int j = 0; j < privatelength; j++) {
+    const char *value = standardString.c_str();
+    for (unsigned int j = 0; j < standardString.length(); j++) {
       szChar = value[j];
       if (szChar < 48 || (szChar > 59 && szChar < 63)) {
         pszEncode[p++] = '%';
@@ -267,12 +166,12 @@ namespace CT {
     delete[] pszEncode;
   }
   void string::decodeURLSelf() {
-    char *pszDecode = new char[privatelength * 6 + 1];
+    char *pszDecode = new char[standardString.length() * 6 + 1];
     int p = 0;
     unsigned char szChar, d1, d2;
     replaceSelf("+", " ");
-    char *value = useStack ? stackValue : heapValue;
-    for (unsigned int j = 0; j < privatelength; j++) {
+    const char *value = standardString.c_str();
+    for (unsigned int j = 0; j < standardString.length(); j++) {
       szChar = value[j];
       if (szChar == '%') {
         d1 = _fromhex(value[j + 1]);
@@ -287,28 +186,7 @@ namespace CT {
 
     delete[] pszDecode;
   }
-  void string::toUnicodeSelf() {
-    char *pszUnicode = new char[privatelength * 6 + 1];
 
-    int p = 0;
-    unsigned char szChar;
-    char *value = useStack ? stackValue : heapValue;
-    for (unsigned int j = 0; j < privatelength; j++) {
-      szChar = value[j];
-      if (szChar > 127) {
-        pszUnicode[p++] = '\\';
-        pszUnicode[p++] = 'u';
-        pszUnicode[p++] = '0';
-        pszUnicode[p++] = '0';
-        pszUnicode[p++] = _tohex(szChar / 16);
-        pszUnicode[p++] = _tohex(szChar % 16);
-      } else {
-        pszUnicode[p++] = szChar;
-      }
-    }
-    copy(pszUnicode, p);
-    delete[] pszUnicode;
-  }
   void string::print(const char *a, ...) {
     va_list ap;
     char szTemp[8192 + 1];
@@ -328,66 +206,7 @@ namespace CT {
     concat(szTemp);
   }
 
-  const char *string::c_str() const {
-    if (useStack == true) {
-      if (allocated == 0) return "";
-      return stackValue;
-    } else {
-      if (heapValue == NULL) {
-        return "";
-      }
-      return heapValue;
-    }
-  }
-
-  int CT::string::replaceSelf(const char *substr, size_t substrl, const char *newString, size_t newStringl) {
-    if (this->empty()) return 0;
-    CT::string thisString;
-    const char *value = c_str();
-    thisString.copy(value, privatelength);
-    const char *thisStringValue = thisString.c_str();
-    std::vector<int> occurences;
-
-    const char *tempVal = value;
-    const char *search = substr;
-    int c = 0;
-    size_t oc = 0;
-    do {
-      tempVal = value + oc;
-      const char *pi = strstr(tempVal, search);
-      if (pi != NULL) {
-        c = pi - tempVal;
-      } else {
-        c = -1;
-      }
-      if (c >= 0) {
-        oc += c;
-        occurences.push_back(oc);
-        oc += substrl;
-      }
-
-    } while (c >= 0 && oc < thisString.privatelength);
-    size_t newSize = privatelength + occurences.size() * (newStringl - substrl);
-    _Allocate(newSize);
-    char *newvalue = getValuePointer();
-    size_t pt = 0, ps = 0, j = 0;
-    do {
-      if (j < occurences.size()) {
-        while (ps == (unsigned)occurences[j] && j < occurences.size()) {
-          for (size_t i = 0; i < newStringl; i++) {
-            newvalue[pt++] = newString[i];
-          }
-          ps += substrl;
-          j++;
-          if (j >= occurences.size()) break;
-        }
-      }
-      newvalue[pt++] = thisStringValue[ps++];
-    } while (pt < newSize);
-    newvalue[newSize] = '\0';
-    privatelength = newSize;
-    return 0;
-  }
+  const char *string::c_str() const { return standardString.c_str(); }
 
   CT::string string::encodeXML(CT::string stringToEncode) {
     stringToEncode.encodeXMLSelf();
@@ -412,32 +231,22 @@ namespace CT {
   }
 
   void string::trimSelf(bool trimWhiteSpace) {
-    int s = -1, e = privatelength;
-    const char *value = useStack ? stackValue : heapValue;
-    for (size_t j = 0; j < privatelength; j++) {
+    auto plength = this->standardString.length();
+    int s = -1, e = plength;
+    const char *value = this->standardString.c_str();
+    for (size_t j = 0; j < plength; j++) {
       if (trimWhiteSpace ? value[j] != ' ' && value[j] != '\n' && value[j] != '\r' : value[j] != ' ') {
         s = j;
         break;
       }
     }
-    for (size_t j = privatelength - 1; j > 0; j--) {
+    for (size_t j = plength - 1; j > 0; j--) {
       if (trimWhiteSpace ? value[j] != ' ' && value[j] != '\n' && value[j] != '\r' : value[j] != ' ') {
         e = j;
         break;
       }
     }
     substringSelf(s, e + 1);
-  }
-
-  int string::substringSelf(CT::string *string, size_t start, size_t end) {
-    if (start >= string->privatelength || end - start <= 0) {
-      copy("");
-      return 0;
-    }
-    if (end > string->privatelength) end = string->privatelength;
-    CT::string temp((string->useStack ? string->stackValue : string->heapValue) + start, end - start);
-    copy(&temp);
-    return 0;
   }
 
   bool string::testRegEx(const char *pattern) {
@@ -447,7 +256,7 @@ namespace CT {
     if (regcomp(&re, pattern, REG_EXTENDED | REG_NOSUB) != 0) {
       return false;
     }
-    status = regexec(&re, useStack ? stackValue : heapValue, (size_t)0, NULL, 0);
+    status = regexec(&re, standardString.c_str(), (size_t)0, NULL, 0);
     regfree(&re);
     if (status != 0) {
       return false;
@@ -456,47 +265,30 @@ namespace CT {
   }
 
   void string::setChar(size_t location, const char character) {
-    if (location < privatelength) {
-      (useStack ? stackValue : heapValue)[location] = character;
-      if (character == '\0') privatelength = location;
+    if (location < length()) {
+      standardString.at(location) = character;
+      if (character == '\0') standardString.resize(location);
     }
-  }
-
-  bool string::equals(const char *_value, size_t _length) const {
-    if (_value == NULL) return false;
-    if (allocated == 0) return false;
-    if (privatelength != _length) return false;
-    if (privatelength == 0) return true;
-    if (strncmp(useStack ? stackValue : heapValue, _value, _length) == 0) return true;
-    return false;
   }
 
   bool string::equals(const char *_value) const {
     if (_value == NULL) return false;
-    return equals(_value, strlen(_value));
+    return (standardString == _value);
   }
 
   bool string::equals(CT::string *_string) const {
     if (_string == NULL) return false;
-    return equals(_string->useStack ? _string->stackValue : _string->heapValue, _string->privatelength);
+    return (standardString == _string->standardString);
   }
 
-  bool string::equals(CT::string _string) const {
-    if (allocated == 0) return false;
-    return equals(_string.useStack ? _string.stackValue : _string.heapValue, _string.privatelength);
-  }
+  bool string::equals(CT::string &_string) const { return (standardString == _string.standardString); }
 
-  bool string::equals(std::string const &_string) const {
-    if (allocated == 0) return false;
-    return equals(_string.c_str(), _string.length());
-  }
+  bool string::equals(std::string const &_string) const { return (standardString == _string); }
 
   bool string::equalsIgnoreCase(const char *_value, size_t _length) {
     if (_value == NULL) return false;
-    if (allocated == 0) return false;
-    if (privatelength != _length) return false;
-    if (privatelength == 0) return true;
-    CT::string selfLowerCase = useStack ? stackValue : heapValue;
+    if (length() != _length) return false;
+    CT::string selfLowerCase = standardString.c_str();
     CT::string testValueLowerCase = _value;
     selfLowerCase.toLowerCaseSelf();
     testValueLowerCase.toLowerCaseSelf();
@@ -511,122 +303,201 @@ namespace CT {
 
   bool string::equalsIgnoreCase(CT::string *_string) {
     if (_string == NULL) return false;
-    return equalsIgnoreCase(_string->useStack ? _string->stackValue : _string->heapValue, _string->privatelength);
+    return equalsIgnoreCase(_string->c_str(), _string->length());
   }
 
-  bool string::equalsIgnoreCase(CT::string _string) {
-    if (allocated == 0) return false;
-    return equalsIgnoreCase(_string.useStack ? _string.stackValue : _string.heapValue, _string.privatelength);
-  }
+  bool string::equalsIgnoreCase(CT::string _string) { return equalsIgnoreCase(_string.c_str(), _string.length()); }
 
   void string::copy(const CT::string *_string) {
     if (_string == NULL) {
-      _Free();
+      this->standardString = "";
       return;
     }
-    copy(_string->useStack ? _string->stackValue : _string->heapValue, _string->privatelength);
+    this->standardString = _string->standardString;
   };
 
-  void string::copy(const CT::string _string) {
-    if (_string.privatelength == 0) {
-      _Free();
-      return;
-    }
-    copy(_string.useStack ? _string.stackValue : _string.heapValue, _string.privatelength);
-  };
+  void string::copy(const CT::string _string) { this->standardString = _string.standardString; };
 
   void string::copy(const char *_value) {
     if (_value == NULL) {
-      _Free();
+      this->standardString = "";
       return;
     }
-    copy(_value, strlen(_value));
+    this->standardString = _value;
   };
 
   CT::string string::toLowerCase() {
     CT::string t;
-    t.copy(c_str(), privatelength);
+    t.copy(c_str(), length());
     t.toLowerCaseSelf();
     return t;
   }
 
   CT::string string::toUpperCase() {
     CT::string t;
-    t.copy(c_str(), privatelength);
+    t.copy(c_str(), length());
     t.toUpperCaseSelf();
     return t;
   }
 
-  bool string::empty() {
-    if (privatelength == 0) {
-      return true;
-    }
-    if (useStack == false) {
-      if (heapValue == NULL) return true;
-    }
-    return false;
-  }
+  bool string::empty() { return standardString.size() == 0; }
 
-  void string::setSize(int size) {
-    if (size < 0) {
-      copy("", 0);
-      return;
-    }
-    if (size < int(privatelength)) {
-      getValuePointer()[size] = '\0';
-      privatelength = size;
-    }
-  }
+  void string::setSize(int size) { standardString.resize(size); }
 
-  void string::concat(const CT::string *_string) { concatlength(_string->useStack ? _string->stackValue : _string->heapValue, _string->privatelength); }
+  void string::concat(const CT::string *_string) { this->standardString += _string->standardString; }
 
-  void string::concat(const CT::string _string) { concatlength(_string.useStack ? _string.stackValue : _string.heapValue, _string.privatelength); }
+  void string::concat(const CT::string &_string) { this->standardString += _string.standardString; }
 
   void string::concat(const char *_value) {
     if (_value == NULL) return;
-    const size_t length = strlen(_value);
-    concatlength(_value, length);
+    this->standardString += _value;
   };
 
   int string::indexOf(const char *search) { return indexOf(search, strlen(search)); };
 
   int string::lastIndexOf(const char *search) { return lastIndexOf(search, strlen(search)); };
 
-  int string::endsWith(const char *search) { return (lastIndexOf(search) == int(privatelength - strlen(search))); };
+  int string::endsWith(const char *search) { return (lastIndexOf(search) == int(length() - strlen(search))); };
 
   int string::startsWith(const char *search) { return (indexOf(search) == 0); };
 
   string string::trim() {
-    CT::string r;
-    r.copy(c_str(), privatelength);
+    CT::string r = standardString.c_str();
     r.trimSelf();
     return r;
   }
 
-  int string::replaceSelf(CT::string *substr, CT::string *newString) { return replaceSelf(substr->c_str(), substr->privatelength, newString->c_str(), newString->privatelength); }
+  //  int CT::string::replaceSelf(const char *substr, size_t substrl, const char *newString, size_t newStringl) {
+  //   if (this->empty()) return 0;
+  //   CT::string thisString = this;
 
-  int string::replaceSelf(const char *substr, CT::string *newString) { return replaceSelf(substr, strlen(substr), newString->c_str(), newString->privatelength); }
+  //   std::vector<int> occurences;
+  //   const char *thisStringValue = thisString.standardString.c_str();
+  //   const char *value = this->standardString.c_str();
+  //   const char *tempVal = value;
+  //   const char *search = substr;
+  //   int c = 0;
+  //   size_t oc = 0;
+  //   do {
+  //     tempVal = value + oc;
+  //     const char *pi = strstr(tempVal, search);
+  //     if (pi != NULL) {
+  //       c = pi - tempVal;
+  //     } else {
+  //       c = -1;
+  //     }
+  //     if (c >= 0) {
+  //       oc += c;
+  //       occurences.push_back(oc);
+  //       oc += substrl;
+  //     }
 
-  int string::replaceSelf(CT::string *substr, const char *newString) { return replaceSelf(substr->c_str(), substr->privatelength, newString, strlen(newString)); }
+  //   } while (c >= 0 && oc < thisString.length());
+  //   size_t newSize = length() + occurences.size() * (newStringl - substrl);
+
+  //   char newvalue[newSize + 1];
+  //   size_t pt = 0, ps = 0, j = 0;
+  //   do {
+  //     if (j < occurences.size()) {
+  //       while (ps == (unsigned)occurences[j] && j < occurences.size()) {
+  //         for (size_t i = 0; i < newStringl; i++) {
+  //           newvalue[pt++] = newString[i];
+  //         }
+  //         ps += substrl;
+  //         j++;
+  //         if (j >= occurences.size()) break;
+  //       }
+  //     }
+  //     newvalue[pt++] = thisStringValue[ps++];
+  //   } while (pt < newSize);
+  //   newvalue[newSize] = '\0';
+  //   this->standardString.assign(newvalue);
+  //   return 0;
+  // }
+
+  int string::replaceSelf(const char *substr, size_t, const char *newString, size_t) {
+    std::string from = substr;
+    std::string to = newString;
+    std::string &str = this->standardString;
+    if (from.empty()) {
+      return 0;
+    }
+    size_t start_pos = 0;
+    while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
+      str.replace(start_pos, from.length(), to);
+      start_pos += to.length(); // Handles case where 'to' is a substring of 'from'
+    }
+    return 0;
+  }
+
+  void string::replaceSelf(std::string &from, std::string &to) {
+    std::string &str = this->standardString;
+    if (from.empty()) {
+      return;
+    }
+    size_t start_pos = 0;
+    while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
+      str.replace(start_pos, from.length(), to);
+      start_pos += to.length(); // Handles case where 'to' is a substring of 'from'
+    }
+  }
+
+  void replaceSelf(const char *ssubstr, std::string &newString) { replaceSelf(ssubstr, newString); }
+  void replaceSelf(std::string &substr, const char *snewString) { replaceSelf(substr, snewString); }
+
+  string string::replaceAll(std::string &from, std::string &to) {
+    CT::string str;
+    str.standardString = this->standardString;
+    if (from.empty()) {
+      return this;
+    }
+    size_t start_pos = 0;
+    while ((start_pos = str.standardString.find(from, start_pos)) != std::string::npos) {
+      str.standardString.replace(start_pos, from.length(), to);
+      start_pos += to.length(); // Handles case where 'to' is a substring of 'from'
+    }
+    return str;
+  }
+
+  int string::replaceSelf(CT::string *substr, CT::string *newString) { return replaceSelf(substr->c_str(), substr->length(), newString->c_str(), newString->length()); }
+
+  int string::replaceSelf(const char *substr, CT::string *newString) { return replaceSelf(substr, strlen(substr), newString->c_str(), newString->length()); }
+
+  int string::replaceSelf(CT::string *substr, const char *newString) { return replaceSelf(substr->c_str(), substr->length(), newString, strlen(newString)); }
 
   int string::replaceSelf(const char *substr, const char *newString) { return replaceSelf(substr, strlen(substr), newString, strlen(newString)); }
 
   CT::string string::replace(const char *old, const char *newstr) {
-    string r;
-    r.copy(c_str(), privatelength);
-    r.replaceSelf(old, newstr);
-    return r;
+    std::string from = old;
+    std::string to = newstr;
+    return replaceAll(from, to);
   }
 
+  CT::string string::replaceAll(const char *substr, std::string &newString) {
+    std::string from = substr;
+    return replaceAll(from, newString);
+  };
+
+  CT::string string::replaceAll(std::string &substr, const char *newString) {
+    std::string to = newString;
+    return replaceAll(substr, to);
+  };
+
   int string::substringSelf(size_t start, size_t end) {
-    substringSelf(this, start, end);
+    if (start >= standardString.length() || end - start <= 0) {
+      standardString = "";
+      return 0;
+    }
+    if (end > standardString.length()) end = standardString.length();
+    standardString = standardString.c_str() + start;
+    standardString.resize(end - start);
     return 0;
   }
 
   CT::string string::substring(size_t start, size_t end) {
-    CT::string r;
-    r.substringSelf(this, start, end);
-    return r;
+    CT::string test = this->standardString.c_str();
+    test.substringSelf(start, end);
+    return test;
   }
 
   float string::toFloat() {
@@ -652,23 +523,6 @@ namespace CT {
       fileBaseName.copy(this);
     }
     return fileBaseName;
-  }
-
-  CT::StackList<CT::stringref> string::splitToStackReferences(const char *_value) {
-    StackList<CT::stringref> stringList;
-    const char *fo = strstr(useStack ? stackValue : heapValue, _value);
-    const char *prevFo = useStack ? stackValue : heapValue;
-    size_t keyLength = strlen(_value);
-    while (fo != NULL) {
-      stringList.push_back(CT::stringref(prevFo, (fo - prevFo)));
-      prevFo = fo + keyLength;
-      fo = strstr(fo + keyLength, _value);
-    }
-    size_t prevFoLength = strlen(prevFo);
-    if (prevFoLength > 0) {
-      stringList.push_back(CT::stringref(prevFo, prevFoLength));
-    }
-    return stringList;
   }
 
   bool is_digit(const char value) { return std::isdigit(value); }
@@ -753,6 +607,29 @@ namespace CT {
     unsigned int value = this->toInt();
     result.print("%s%s%s", getHex(value % 256).c_str(), getHex((value >> 8) % 256).c_str(), getHex((value >> 16) % 256).c_str());
     return result;
+  }
+
+  void string::concatlength(const char *_value, size_t len) {
+    std::string newString = _value;
+    newString.resize(len);
+    this->standardString.append(newString);
+  }
+
+  CT::StackList<CT::stringref> string::splitToStackReferences(const char *_value) {
+    StackList<CT::stringref> stringList;
+    const char *fo = strstr(this->standardString.c_str(), _value);
+    const char *prevFo = this->standardString.c_str();
+    size_t keyLength = strlen(_value);
+    while (fo != NULL) {
+      stringList.push_back(CT::stringref(prevFo, (fo - prevFo)));
+      prevFo = fo + keyLength;
+      fo = strstr(fo + keyLength, _value);
+    }
+    size_t prevFoLength = strlen(prevFo);
+    if (prevFoLength > 0) {
+      stringList.push_back(CT::stringref(prevFo, prevFoLength));
+    }
+    return stringList;
   }
 
 } /* namespace CT */

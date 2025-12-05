@@ -28,39 +28,18 @@
 
 #include "CTypes.h"
 #include "CTStringRef.h"
-
 #define CT_MAX_NUM_CHARACTERS_FOR_FLOAT 18
 #define CT_MAX_NUM_CHARACTERS_FOR_INT 12
 #define CT_MAX_NUM_CHARACTERS_FOR_NUMERIC 39
 namespace CT {
 
   class string {
-  public:
-    size_t count;
 
   private:
-    char stackValue[CTSTRINGSTACKLENGTH + 1];
-    int allocated;
-    size_t privatelength; // Length of string
-    size_t bufferlength;  // Length of buffer
-    void _Free();
-    void _Allocate(int _length);
     const char *strrstr(const char *x, const char *y);
     char _tohex(char in);
     char _fromhex(char in);
-
-    bool useStack;
-    char *heapValue;
-    inline void init() {
-      useStack = CTYPES_USESTACK;
-      heapValue = NULL;
-      stackValue[0] = 0;
-      count = 0;
-      allocated = 0;
-      privatelength = 0;
-      bufferlength = CTSTRINGSTACKLENGTH;
-    }
-    inline char *getValuePointer() { return useStack ? stackValue : heapValue; }
+    std::string standardString;
 
   public:
     /**
@@ -144,21 +123,13 @@ namespace CT {
     bool operator!=(const string &str) const { return !this->equals(str); }
 
     /**
-     * Destructor
-     */
-    virtual ~string() { _Free(); }
-
-    /**
      * returns length of the string
      * @return length
      */
-    inline size_t length() { return privatelength; }
-
-    /**
-     * returns the internal bufferlength of the string
-     * @return internal bufferlength
-     */
-    inline size_t getbufferlength() { return bufferlength; }
+    size_t length() {
+      size_t l = this->standardString.size();
+      return l;
+    }
 
     /**
      * Copy a character array into the string
@@ -195,20 +166,19 @@ namespace CT {
      * Appends a string object to this string object
      * @param string The string to append
      */
-    void concat(const CT::string _string);
-
-    /**
-     * Appends an array of characters with specified length to this string object
-     * @param value The character array to append
-     * @param len The length of the character array
-     */
-    void concatlength(const char *_value, size_t len);
+    void concat(const CT::string &_string);
 
     /**
      * Appends an array of characters terminated with a '\0' character.
      * @param value The 0-terminated character array to append
      */
     void concat(const char *_value);
+    /**
+     * Appends an array of characters with specified length to this string object
+     * @param value The character array to append
+     * @param len The length of the character array
+     */
+    void concatlength(const char *_value, size_t len);
 
     /**
      * Returns the char value at the specified index.
@@ -222,13 +192,6 @@ namespace CT {
      * @param character The character to set
      */
     void setChar(size_t location, const char character);
-
-    /**
-     * Compares this string to the specified object. The result is true if the given argument is not null and representing the same sequence of characters as this object.
-     * @param value The character array to compare
-     * @param length The length of the character array to compare
-     */
-    bool equals(const char *value, size_t length) const;
 
     /**
      * Compares this string to the specified object. The result is true if the given argument is not null and representing the same sequence of characters as this object.
@@ -246,7 +209,7 @@ namespace CT {
      * Compares this string to the specified object. The result is true if the given argument is not null and representing the same sequence of characters as this object.
      * @param string Copy of the string object to compare
      */
-    bool equals(CT::string string) const;
+    bool equals(CT::string &string) const;
 
     bool equals(std::string const &string) const;
 
@@ -362,14 +325,6 @@ namespace CT {
 
     /**
      * Function which returns a std::vector on the stack with a list of strings allocated on the stack
-     * This function links its data to string data, it does not allocate new data or copy the data
-     * Resources are freed automatically
-     * @param _value The token to split the string on
-     */
-    StackList<CT::stringref> splitToStackReferences(const char *_value);
-
-    /**
-     * Function which returns a std::vector on the stack with a list of strings allocated on the stack
      * Data is automatically freed
      * @param _value The token to split the string on
      */
@@ -436,15 +391,6 @@ namespace CT {
      * @return the subsetted string
      */
     CT::string replace(const char *old, const char *newstr);
-
-    /**
-     * Subset the string from start till end
-     * @param string Te input string to subset
-     * @param start Where to subset from
-     * @param end Where to subset to (-1 means till the end of the string)
-     * @return Zero on success
-     */
-    int substringSelf(CT::string *string, size_t start, size_t end);
 
     /**
      * Subset the string from start till end
@@ -526,6 +472,35 @@ namespace CT {
      * Converts to hex8
      */
     static CT::string getHex(unsigned int number);
+
+    /**
+     * Function which returns a std::vector on the stack with a list of strings allocated on the stack
+     * This function links its data to string data, it does not allocate new data or copy the data
+     * Resources are freed automatically
+     * @param _value The token to split the string on
+     */
+    StackList<CT::stringref> splitToStackReferences(const char *_value);
+
+    /** Replace all strings with another string
+     * @param substr the string to replace
+     * @param newString the new stringto replace with
+     */
+    void replaceSelf(std::string &substr, std::string &newString);
+
+    void replaceSelf(const char *ssubstr, std::string &newString);
+
+    void replaceSelf(std::string &substr, const char *snewString);
+
+    /** Replace all strings with another string
+     * @param substr the string to replace
+     * @param newString the new stringto replace with
+     * @returns new string
+     */
+    CT::string replaceAll(std::string &substr, std::string &newString);
+
+    CT::string replaceAll(const char *substr, std::string &newString);
+
+    CT::string replaceAll(std::string &substr, const char *newString);
   };
 }; /* namespace CT */
 
