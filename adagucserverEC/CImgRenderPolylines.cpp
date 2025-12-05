@@ -36,6 +36,7 @@
 const char *fontLoc = getenv("ADAGUC_FONT");
 
 struct FeatureStyle {
+  CColor backgroundColor;
   CColor borderColor;
   double borderWidth; // 0 means no border
   CColor fillColor;
@@ -53,8 +54,12 @@ const char *CImgRenderPolylines::className = "CImgRenderPolylines";
 
 FeatureStyle getAttributesForFeature(CFeature *feature, CT::string id, CStyleConfiguration *styleConfig) {
 
+  CColor backgroundColor = CColor(0, 0, 0, 0);
   for (auto featureIntervalCfg : styleConfig->featureIntervals) {
     auto &featureAttr = featureIntervalCfg->attr;
+    if (styleConfig->renderMethod == RM_POLYGON && !featureAttr.bgcolor.empty()) {
+      backgroundColor = featureAttr.bgcolor.c_str();
+    }
     if (featureAttr.match.empty()) continue;
 
     CT::string matchString = id;
@@ -73,10 +78,11 @@ FeatureStyle getAttributesForFeature(CFeature *feature, CT::string id, CStyleCon
     int ret = regcomp(&regex, featureAttr.match.c_str(), 0);
     if (ret) continue;
     if (regexec(&regex, matchString.c_str(), 0, NULL, 0) != 0) continue;
-    return {.borderColor = featureAttr.bordercolor.empty() ? "#008000FF" : featureAttr.bordercolor.c_str(),
+    return {.backgroundColor = backgroundColor,
+            .borderColor = featureAttr.bordercolor.empty() ? "#008000FF" : featureAttr.bordercolor.c_str(),
             .borderWidth = ((featureAttr.borderwidth.empty() == false) && ((featureAttr.borderwidth.toDouble()) > 0)) ? featureAttr.borderwidth.toDouble() : 0,
             .fillColor = featureAttr.fillcolor.empty() ? "#6060FFFF" : featureAttr.fillcolor.c_str(),
-            .hasFill = !featureAttr.fillcolor.empty(),
+            .hasFill = styleConfig->renderMethod == RM_POLYGON && !featureAttr.fillcolor.empty(),
             .fontFile = featureAttr.labelfontfile.empty() ? fontLoc : featureAttr.labelfontfile.c_str(),
             .fontSize = ((featureAttr.labelfontsize.empty() == false) && (featureAttr.labelfontsize.toDouble() > 0)) ? featureAttr.labelfontsize.toDouble() : 0,
             .fontColor = featureAttr.labelcolor.empty() ? "#000000FF" : featureAttr.labelcolor.c_str(),
@@ -86,7 +92,8 @@ FeatureStyle getAttributesForFeature(CFeature *feature, CT::string id, CStyleCon
             .padding = ((featureAttr.labelpadding.empty() == false) && (featureAttr.labelpadding.isInt())) ? featureAttr.labelpadding.toInt() : 3};
   }
 
-  return {.borderColor = "#008000FF",
+  return {.backgroundColor = backgroundColor,
+          .borderColor = "#008000FF",
           .borderWidth = 3,
           .fillColor = "#6060FFFF",
           .hasFill = false,
@@ -183,6 +190,7 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
     projectionRequired = true;
   }
 
+  int width = drawImage->getWidth();
   int height = drawImage->getHeight();
 
   double cellSizeX = dataSource->srvParams->geoParams.bbox.span().x / dataSource->dWidth;
@@ -200,6 +208,7 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
   if (styleConfiguration->styleConfig->RenderSettings.size() == 1) {
     randomStart = styleConfiguration->styleConfig->RenderSettings[0]->attr.randomizefeatures.equals("false");
   }
+  bool backgroundDrawn = false;
   srand(time(NULL));
   for (std::map<std::string, std::vector<Feature *>>::iterator itf = featureStore.begin(); itf != featureStore.end(); ++itf) {
     std::string fileName = itf->first.c_str();
@@ -216,7 +225,12 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
         Feature *feature = featureStore[fileName][featureIndex];
         // FindAttributes for this feature
         FeatureStyle featureStyle = getAttributesForFeature(&(dataSource->getDataObject(0)->features[featureIndex]), feature->getId(), styleConfiguration);
-        // if(featureIndex!=0)break;
+
+        if (backgroundDrawn == false && featureStyle.backgroundColor.a > 0) {
+          backgroundDrawn = true;
+          drawImage->rectangle(0, 0, width, height, featureStyle.backgroundColor, featureStyle.backgroundColor);
+        }
+
         std::vector<Polygon> *polygons = feature->getPolygons();
         CT::string id = feature->getId();
         for (std::vector<Polygon>::iterator itpoly = polygons->begin(); itpoly != polygons->end(); ++itpoly) {

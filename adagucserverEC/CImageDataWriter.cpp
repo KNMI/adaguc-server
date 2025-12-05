@@ -1507,7 +1507,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
   /**
    * Use polyline renderer
    */
-  if (renderMethod & RM_POLYLINE) {
+  if (renderMethod & RM_POLYLINE || renderMethod & RM_POLYGON) {
     if (dataSource->featureSet.length() != 0) {
 #ifdef CIMAGEDATAWRITER_DEBUG
       CDBDebug("Using CImgRenderPolylines");

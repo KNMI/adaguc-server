@@ -6,7 +6,7 @@
   -->
   
   <Style name="polygon_innerparts_coloured">
-    <RenderMethod>polyline</RenderMethod>
+    <RenderMethod>polygon</RenderMethod>
     <FeatureInterval match="1" matchid="warning_code"  fillcolor="#CCCCCCFF"/>
     <FeatureInterval match="2_15" matchid="warning_code_leadtime"  fillcolor="#FFFF0080"/>
     <FeatureInterval match="2_30" matchid="warning_code_leadtime"  fillcolor="#FFFF8080"/>
