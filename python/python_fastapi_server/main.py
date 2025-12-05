@@ -29,7 +29,7 @@ app = FastAPI(redirect_slashes=False)
 
 # Set uvicorn access log format using middleware
 ACCESS_LOG_FORMAT = (
-    'accesslog %(h)s ; %(t)s ; %(H)s ; %(m)s ; %(U)s ; %(q)s ; %(s)s ; %(M)s ; "%(a)s"'
+    'accesslog %(h)s ; %(t)s ; %(H)s ; %(m)s ; %(U)s ; %(q)s ; %(s)s ; %(M)s"'
 )
 logging.getLogger("uvicorn.access").handlers.clear()
 app.add_middleware(AccessLoggerMiddleware, format=ACCESS_LOG_FORMAT)

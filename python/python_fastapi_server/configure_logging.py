@@ -6,10 +6,11 @@ import sys
 def configure_logging(logging):
     """Configures logging for the adaguc-server python wrapper"""
     logging.getLogger().handlers.clear()
+    level =logging.WARN
     root = logging.getLogger()
-    root.setLevel(logging.DEBUG)
+    root.setLevel(level)
     handler = logging.StreamHandler(sys.stdout)
-    handler.setLevel(logging.DEBUG)
+    handler.setLevel(level)
     formatter = logging.Formatter(
         "applicationlog" + " %(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )

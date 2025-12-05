@@ -1090,7 +1090,7 @@ int CNetCDFDataWriter::end() {
   }
   // Remove temporary file
   remove(tempFileName.c_str());
-  CDBDebug("Done");
+  // CDBDebug("Done");
   if (returnCode != 0) return 1;
   return status;
 }

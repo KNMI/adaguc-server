@@ -50,8 +50,8 @@ def setup_adaguc(displaylogging=True):
         )
         sys.exit(1)
 
-    if displaylogging is True:
-        logger.info("Using config file %s", adaguc_server_config)
+    # if displaylogging is True:
+    #     logger.info("Using config file %s", adaguc_server_config)
 
     adaguc_instance = runAdaguc()
     adaguc_instance.setAdagucPath(adaguc_server_home)

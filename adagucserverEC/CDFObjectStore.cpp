@@ -311,7 +311,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
       if (dataSource->cfgLayer->Variable.size() > 0) {
         // Shorthand to variable configuration in the layer.
         for (auto *cfgVar : dataSource->cfgLayer->Variable) {
-          CDBDebug("Checking variable %s", cfgVar->value.c_str());
+          // CDBDebug("Checking variable %s", cfgVar->value.c_str());
           // Rename variable, if requested
           if (!cfgVar->attr.orgname.empty()) {
             CDF::Variable *var = cdfObject->getVar(cfgVar->attr.orgname);

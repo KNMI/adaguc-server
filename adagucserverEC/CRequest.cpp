@@ -449,7 +449,9 @@ int CRequest::generateOGCDescribeCoverage(CT::string *XMLdocument) {
 }
 
 int CRequest::process_wms_getcap_request() {
+#ifdef CREQUEST_DEBUG
   CDBDebug("WMS GETCAPABILITIES [%s]", srvParam->datasetLocation.c_str());
+#endif
 
   CT::string XMLdocument;
 
@@ -481,14 +483,14 @@ int CRequest::process_wcs_getcap_request() {
 int CRequest::process_wcs_describecov_request() { return process_all_layers(); }
 
 int CRequest::process_wms_getmap_request() {
-
+#ifdef CREQUEST_DEBUG
   CT::string message = "WMS GETMAP ";
   for (size_t j = 0; j < srvParam->requestedLayerNames.size(); j++) {
     if (j > 0) message.concat(",");
     message.printconcat("(%d) %s", j, srvParam->requestedLayerNames[j].c_str());
   }
   CDBDebug(message.c_str());
-
+#endif
   return process_all_layers();
 }
 
@@ -2252,7 +2254,6 @@ int CRequest::process_querystring() {
       return 0;
     }
     if (dErrorOccured == 0 && srvParam->requestType == REQUEST_WCS_GETCOVERAGE) {
-      CDBDebug("WCS");
 
       if (dFound_Width == 0 && dFound_Height == 0 && dFound_RESX == 0 && dFound_RESY == 0 && srvParam->dFound_BBOX == 0 && dFound_CRS == 0)
         srvParam->WCS_GoNative = 1;
@@ -2917,7 +2918,7 @@ int CRequest::handleGetCoverageRequest(CDataSource *firstDataSource) {
       }
     }
     if (driverName.equals("ADAGUCNetCDF")) {
-      CDBDebug("Creating CNetCDFDataWriter");
+      // CDBDebug("Creating CNetCDFDataWriter");
       wcsWriter = new CNetCDFDataWriter();
     }
 

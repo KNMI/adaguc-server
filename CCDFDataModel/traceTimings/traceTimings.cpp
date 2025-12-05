@@ -99,7 +99,6 @@ CT::string traceTimingsGetReport() {
 
   auto tracingTotal = micros() - tracingStart;
   summary.printconcat(",[total %0.1fms]", tracingTotal / 1000.);
-  CDBDebug("Tracing summary: %s", summary.c_str());
   return summary;
 }
 

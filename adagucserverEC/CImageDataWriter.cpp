@@ -739,9 +739,9 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> &dataSources, in
       CDBError("dataSource == NULL");
       return 1;
     }
-
+#ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("isProfileData:[%d] openAll:[%d] sameHeaderForAll:[%d] infoFormat:[%s]", isProfileData, openAll, sameHeaderForAll, srvParam->InfoFormat.c_str());
-
+#endif
     if (isProfileData) {
       int status = CMakeEProfile::MakeEProfile(&drawImage, &imageWarper, dataSources, d, dX, dY, &eProfileJson);
       if (status != 0) {
@@ -2206,7 +2206,9 @@ int CImageDataWriter::end() {
 
       try {
         if (gfiStructure.get("root") != NULL) {
+#ifdef CIMAGEDATAWRITER_DEBUG
           CDBDebug("Building JSON");
+#endif
           CT::string data = gfiStructure.getList("root").toJSON(CXMLPARSER_JSONMODE_STANDARD);
           CT::string resultJSON;
           if (srvParam->JSONP.length() == 0) {
@@ -3227,23 +3229,33 @@ int CImageDataWriter::end() {
 
   CT::string cacheControl = srvParam->getResponseHeaders(srvParam->getCacheControlOption());
   if (srvParam->imageFormat == IMAGEFORMAT_IMAGEPNG8) {
+#ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("Creating 8 bit png with alpha");
+#endif
     printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl.c_str(), 13, 10);
     status = drawImage.printImagePng8(true);
   } else if (srvParam->imageFormat == IMAGEFORMAT_IMAGEPNG8_NOALPHA) {
+#ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("Creating 8 bit png without alpha");
+#endif
     printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl.c_str(), 13, 10);
     status = drawImage.printImagePng8(false);
   } else if (srvParam->imageFormat == IMAGEFORMAT_IMAGEPNG24) {
+#ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("Creating 24 bit png");
+#endif
     printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl.c_str(), 13, 10);
     status = drawImage.printImagePng24();
   } else if (srvParam->imageFormat == IMAGEFORMAT_IMAGEPNG32) {
+#ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("Creating 32 bit png");
+#endif
     printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl.c_str(), 13, 10);
     status = drawImage.printImagePng32();
   } else if (srvParam->imageFormat == IMAGEFORMAT_IMAGEWEBP) {
+#ifdef CIMAGEDATAWRITER_DEBUG
     printf("%s%s%c%c\n", "Content-Type:image/webp", cacheControl.c_str(), 13, 10);
+#endif
     int webPQuality = srvParam->imageQuality;
     if (!srvParam->Format.empty()) {
       /* Support setting quality via wms format parameter, e.g. format=image/webp;90& */

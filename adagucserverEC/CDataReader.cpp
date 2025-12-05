@@ -328,7 +328,7 @@ bool CDataReader::copyCRSFromCFProjectionVariable(CDataSource *dataSource, CDF::
   }
 
   // Projection string was created, set it in the datasource.
-  CREPORT_INFO_NODOC(CT::string("Determined the projection string using the CF conventions: ") + projString, CReportMessage::Categories::GENERAL);
+  // CREPORT_INFO_NODOC(CT::string("Determined the projection string using the CF conventions: ") + projString, CReportMessage::Categories::GENERAL);
   dataSource->nativeProj4.copy(projString.c_str());
   projVar->setAttributeText("autogen_proj", projString.c_str());
 
