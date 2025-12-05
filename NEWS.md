@@ -1,3 +1,7 @@
+**Version 6.1.0 - 2025-11-28**
+
+- Polyline renderer can now render filled polygons and overlay them using alpha transparency and rendermethod `polygon`.
+
 **Version 6.0.0 - 2025-11-18**
 
 - Implemented generic image warper, available via RenderMethod 'generic'. This warper uses the already existing generic data warper and combines functionality of the nearest and bilinear renderer.

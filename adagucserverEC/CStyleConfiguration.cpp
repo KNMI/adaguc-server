@@ -21,6 +21,7 @@ RenderMethod getRenderMethodFromString(CT::string renderMethodString) {
   if (renderMethodString.indexOf("rgba") != -1) renderMethod |= RM_RGBA;
   if (renderMethodString.indexOf("stippling") != -1) renderMethod |= RM_STIPPLING;
   if (renderMethodString.indexOf("polyline") != -1) renderMethod |= RM_POLYLINE;
+  if (renderMethodString.indexOf("polygon") != -1) renderMethod |= RM_POLYGON;
 
   return renderMethod;
 }
@@ -43,6 +44,7 @@ CT::string getRenderMethodAsString(RenderMethod renderMethod) {
   if (renderMethod & RM_RGBA) renderMethodString.concat("rgba");
   if (renderMethod & RM_STIPPLING) renderMethodString.concat("stippling");
   if (renderMethod & RM_POLYLINE) renderMethodString.concat("polyline");
+  if (renderMethod & RM_POLYGON) renderMethodString.concat("polygon");
   if (renderMethod & RM_POINT_LINEARINTERPOLATION) renderMethodString.concat("linearinterpolation");
   if (renderMethod & RM_HILLSHADED) renderMethodString.concat("hillshaded");
   if (renderMethod & RM_GENERIC) renderMethodString.concat("generic");
