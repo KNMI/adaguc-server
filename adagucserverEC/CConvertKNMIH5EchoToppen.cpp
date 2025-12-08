@@ -62,7 +62,7 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenHeader(CDFObject *cdfObject
 
   /* Deterine product corners based on file metadata: */
   CT::string geo_product_corners = cdfObject->getVariable("geographic")->getAttribute("geo_product_corners")->getDataAsString();
-  std::vector<CT::stringref> cell_max = geo_product_corners.splitAsStringReferences(" ");
+  std::vector<CT::stringref> cell_max = geo_product_corners.splitToStackReferences(" ");
 
   /* Figure out outer biggest bbox based on the 4 coordinate values */
   double minX = 1000, maxX = -1000, minY = 1000, maxY = -1000;
@@ -233,9 +233,9 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
     CT::string stat_cell_max = cdfObject0->getVariable("image1.statistics")->getAttribute("stat_cell_max")->getDataAsString();
 
     /* Split based on whitespace character */
-    std::vector<CT::stringref> cell_max = stat_cell_max.splitAsStringReferences(" ");
-    std::vector<CT::stringref> cell_column = stat_cell_column.splitAsStringReferences(" ");
-    std::vector<CT::stringref> cell_row = stat_cell_row.splitAsStringReferences(" ");
+    std::vector<CT::stringref> cell_max = stat_cell_max.splitToStackReferences(" ");
+    std::vector<CT::stringref> cell_column = stat_cell_column.splitToStackReferences(" ");
+    std::vector<CT::stringref> cell_row = stat_cell_row.splitToStackReferences(" ");
 
     /* Time to instantiate the imagewarper. This is needed to project from HDF5 projection space (polar sterographic) to screenspace and latlon coordinate space*/
     CImageWarper imageWarperEchoToppen;

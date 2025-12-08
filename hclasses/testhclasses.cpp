@@ -91,9 +91,9 @@ TEST(string, concatenationlength) {
 //   CDirReader::test_compareLists();
 // }
 
-TEST(string, splitAsStringReferences) {
+TEST(string, splitToStackReferences) {
   CT::string stringToSplit = "abc,def,,ghi";
-  std::vector<CT::stringref> splittedRefs = stringToSplit.splitAsStringReferences(",");
+  std::vector<CT::stringref> splittedRefs = stringToSplit.splitToStackReferences(",");
   CHECK(splittedRefs.size() == 4);
   CHECK_EQUAL(std::string(splittedRefs[0].c_str()), "abc");
   CHECK_EQUAL(std::string(splittedRefs[1].c_str()), "def");
@@ -101,9 +101,9 @@ TEST(string, splitAsStringReferences) {
   CHECK_EQUAL(std::string(splittedRefs[3].c_str()), "ghi");
 }
 
-TEST(string, splitAsStringReferencesMultiComma) {
+TEST(string, splitToStackReferencesMultiComma) {
   CT::string stringToSplit = "abc,def,,,ghi";
-  std::vector<CT::stringref> splittedRefs = stringToSplit.splitAsStringReferences(",");
+  std::vector<CT::stringref> splittedRefs = stringToSplit.splitToStackReferences(",");
   CHECK(splittedRefs.size() == 5);
   CHECK_EQUAL(std::string(splittedRefs[0].c_str()), "abc");
   CHECK_EQUAL(std::string(splittedRefs[1].c_str()), "def");
@@ -112,62 +112,62 @@ TEST(string, splitAsStringReferencesMultiComma) {
   CHECK_EQUAL(std::string(splittedRefs[4].c_str()), "ghi");
 }
 
-TEST(string, splitAsStringReferencesLinesAndComma) {
+TEST(string, splitToStackReferencesLinesAndComma) {
   CT::string linesToSplit = "A1,B1,C1,D1,E1\nA2,B2,,D2,E2\n\nA,B,C,D,E\n,,,,\nG1\n,,,,TEST";
-  std::vector<CT::stringref> lines = linesToSplit.splitAsStringReferences("\n");
+  std::vector<CT::stringref> lines = linesToSplit.splitToStackReferences("\n");
   LONGS_EQUAL(7, lines.size());
 
-  std::vector<CT::stringref> splittedRefs0 = lines[0].splitAsStringReferences(",");
+  std::vector<CT::stringref> splittedRefs0 = lines[0].splitToStackReferences(",");
   LONGS_EQUAL(5, splittedRefs0.size());
   CHECK_EQUAL("A1", std::string(splittedRefs0[0].c_str()));
   CHECK_EQUAL("B1", std::string(splittedRefs0[1].c_str()));
   CHECK_EQUAL("C1", std::string(splittedRefs0[2].c_str()));
   CHECK_EQUAL("D1", std::string(splittedRefs0[3].c_str()));
   CHECK_EQUAL("E1", std::string(splittedRefs0[4].c_str()));
-  std::vector<CT::stringref> splittedRefs1 = lines[1].splitAsStringReferences(",");
+  std::vector<CT::stringref> splittedRefs1 = lines[1].splitToStackReferences(",");
   LONGS_EQUAL(5, splittedRefs1.size());
   CHECK_EQUAL("A2", std::string(splittedRefs1[0].c_str()));
   CHECK_EQUAL("B2", std::string(splittedRefs1[1].c_str()));
   CHECK_EQUAL(std::string(""), std::string(splittedRefs1[2].c_str()));
   CHECK_EQUAL("D2", std::string(splittedRefs1[3].c_str()));
   CHECK_EQUAL("E2", std::string(splittedRefs1[4].c_str()));
-  std::vector<CT::stringref> splittedRefs3 = lines[3].splitAsStringReferences(",");
+  std::vector<CT::stringref> splittedRefs3 = lines[3].splitToStackReferences(",");
   LONGS_EQUAL(5, splittedRefs3.size());
-  std::vector<CT::stringref> splittedRefs4 = lines[4].splitAsStringReferences(",");
+  std::vector<CT::stringref> splittedRefs4 = lines[4].splitToStackReferences(",");
   LONGS_EQUAL(5, splittedRefs4.size());
-  std::vector<CT::stringref> splittedRefs5 = lines[5].splitAsStringReferences(",");
+  std::vector<CT::stringref> splittedRefs5 = lines[5].splitToStackReferences(",");
   LONGS_EQUAL(1, splittedRefs5.size());
-  std::vector<CT::stringref> splittedRefs6 = lines[6].splitAsStringReferences(",");
+  std::vector<CT::stringref> splittedRefs6 = lines[6].splitToStackReferences(",");
   LONGS_EQUAL(5, splittedRefs6.size());
   CHECK_EQUAL("TEST", std::string(splittedRefs6[4].c_str()));
 }
 
-TEST(string, splitAsStringReferencesLinesAndCommaDoubleSplit) {
+TEST(string, splitToStackReferencesLinesAndCommaDoubleSplit) {
   CT::string linesToSplit = "A1,B1,C1,D1,E1\n\rA2,B2,,D2,E2\n\r\n\rA,B,C,D,E\n\r,,,,\n\rG1\n\r,,,,TEST";
-  std::vector<CT::stringref> lines = linesToSplit.splitAsStringReferences("\n\r");
+  std::vector<CT::stringref> lines = linesToSplit.splitToStackReferences("\n\r");
   LONGS_EQUAL(7, lines.size());
 
-  std::vector<CT::stringref> splittedRefs0 = lines[0].splitAsStringReferences(",");
+  std::vector<CT::stringref> splittedRefs0 = lines[0].splitToStackReferences(",");
   LONGS_EQUAL(5, splittedRefs0.size());
   CHECK_EQUAL("A1", std::string(splittedRefs0[0].c_str()));
   CHECK_EQUAL("B1", std::string(splittedRefs0[1].c_str()));
   CHECK_EQUAL("C1", std::string(splittedRefs0[2].c_str()));
   CHECK_EQUAL("D1", std::string(splittedRefs0[3].c_str()));
   CHECK_EQUAL("E1", std::string(splittedRefs0[4].c_str()));
-  std::vector<CT::stringref> splittedRefs1 = lines[1].splitAsStringReferences(",");
+  std::vector<CT::stringref> splittedRefs1 = lines[1].splitToStackReferences(",");
   LONGS_EQUAL(5, splittedRefs1.size());
   CHECK_EQUAL("A2", std::string(splittedRefs1[0].c_str()));
   CHECK_EQUAL("B2", std::string(splittedRefs1[1].c_str()));
   CHECK_EQUAL(std::string(""), std::string(splittedRefs1[2].c_str()));
   CHECK_EQUAL("D2", std::string(splittedRefs1[3].c_str()));
   CHECK_EQUAL("E2", std::string(splittedRefs1[4].c_str()));
-  std::vector<CT::stringref> splittedRefs3 = lines[3].splitAsStringReferences(",");
+  std::vector<CT::stringref> splittedRefs3 = lines[3].splitToStackReferences(",");
   LONGS_EQUAL(5, splittedRefs3.size());
-  std::vector<CT::stringref> splittedRefs4 = lines[4].splitAsStringReferences(",");
+  std::vector<CT::stringref> splittedRefs4 = lines[4].splitToStackReferences(",");
   LONGS_EQUAL(5, splittedRefs4.size());
-  std::vector<CT::stringref> splittedRefs5 = lines[5].splitAsStringReferences(",");
+  std::vector<CT::stringref> splittedRefs5 = lines[5].splitToStackReferences(",");
   LONGS_EQUAL(1, splittedRefs5.size());
-  std::vector<CT::stringref> splittedRefs6 = lines[6].splitAsStringReferences(",");
+  std::vector<CT::stringref> splittedRefs6 = lines[6].splitToStackReferences(",");
   LONGS_EQUAL(5, splittedRefs6.size());
   CHECK_EQUAL("TEST", std::string(splittedRefs6[4].c_str()));
 }

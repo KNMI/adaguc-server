@@ -84,11 +84,11 @@ int CDFCSVReader::open(const char *fileName) {
   this->csvData = CReadFile::open(fileName);
 
   /* Detect variables from header */
-  this->csvLines = csvData.splitAsStringReferences("\r\n");
+  this->csvLines = csvData.splitToStackReferences("\r\n");
   if (this->csvLines.size() < 2) {
-    this->csvLines = csvData.splitAsStringReferences("\n");
+    this->csvLines = csvData.splitToStackReferences("\n");
     if (this->csvLines.size() < 2) {
-      this->csvLines = csvData.splitAsStringReferences("\r");
+      this->csvLines = csvData.splitToStackReferences("\r");
     }
   }
 #ifdef CCDFCSVREADER_DEBUG
@@ -116,7 +116,7 @@ int CDFCSVReader::open(const char *fileName) {
   for (size_t c = 0; c < header.size(); c++) {
     header[c].replaceSelf("\r", "");
   }
-  std::vector<CT::stringref> firstLine = this->csvLines[this->headerStartsAtLine + 1].splitAsStringReferences(",");
+  std::vector<CT::stringref> firstLine = this->csvLines[this->headerStartsAtLine + 1].splitToStackReferences(",");
 
   if (header.size() < 3) {
     CDBError("No CSV data found, less than 3 columns detected");
@@ -355,7 +355,7 @@ int CDFCSVReader::_readVariableData(CDF::Variable *varToRead, CDFType type) {
       CDBWarning("Found empty CSV line at line %d", j);
       continue;
     }
-    std::vector<CT::stringref> csvColumns = this->csvLines[j].splitAsStringReferences(",");
+    std::vector<CT::stringref> csvColumns = this->csvLines[j].splitToStackReferences(",");
 
     if (csvColumns.size() != this->variableIndexer.size()) {
       CDBWarning("CSV Columns at line %d have unexpected size of %d, expected %d", j, csvColumns.size(), this->variableIndexer.size());

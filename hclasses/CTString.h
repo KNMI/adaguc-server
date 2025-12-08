@@ -490,7 +490,7 @@ namespace CT {
      * Resources are freed automatically
      * @param _value The token to split the string on
      */
-    std::vector<CT::stringref> splitAsStringReferences(const char *_value);
+    std::vector<CT::stringref> splitToStackReferences(const char *_value);
 
     /** Replace all strings with another string
      * @param substr the string to replace
