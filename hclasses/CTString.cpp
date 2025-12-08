@@ -6,7 +6,7 @@
 const char *CT::string::className = "CT::string";
 #endif
 #include "CDebugger.h"
-
+#define CT_STRING_PRINT_BUFFER_SIZE 16
 namespace CT {
 
   std::vector<CT::string> string::split(const char *_value) {
@@ -189,50 +189,34 @@ namespace CT {
   }
 
   void string::print(const char *a, ...) {
-
-    std::vector<char> buf(8192 + 1);
+    std::vector<char> buf(CT_STRING_PRINT_BUFFER_SIZE + 1);
     va_list ap;
     va_start(ap, a);
-    vsnprintf(&buf[0], buf.size(), a, ap);
+    int numWritten = vsnprintf(&buf[0], buf.size(), a, ap);
     va_end(ap);
-
+    if (numWritten > CT_STRING_PRINT_BUFFER_SIZE) {
+      buf.resize(numWritten + 1);
+      va_list ap;
+      va_start(ap, a);
+      int numWritten = vsnprintf(&buf[0], buf.size(), a, ap);
+      va_end(ap);
+    }
     this->stdstring = std::string(buf.begin(), buf.end()).c_str();
-
-    // va_list ap;
-    // va_start(ap, a);
-    // auto num = vsnprintf(nullptr, 0, a, ap);
-    // va_end(ap);
-    // if (num <= 0) {
-    //   this->stdstring = "";
-    //   return;
-    // }
-    // std::vector<char> buf(num + 1);
-    // va_start(ap, a);
-    // vsnprintf(&buf[0], buf.size(), a, ap);
-    // va_end(ap);
-    // this->stdstring = std::string(buf.begin(), buf.end()).c_str();
   }
   void string::printconcat(const char *a, ...) {
-    std::vector<char> buf(8192 + 1);
+    std::vector<char> buf(CT_STRING_PRINT_BUFFER_SIZE + 1);
     va_list ap;
     va_start(ap, a);
-    vsnprintf(&buf[0], buf.size(), a, ap);
+    int numWritten = vsnprintf(&buf[0], buf.size(), a, ap);
     va_end(ap);
-
+    if (numWritten > CT_STRING_PRINT_BUFFER_SIZE) {
+      buf.resize(numWritten + 1);
+      va_list ap;
+      va_start(ap, a);
+      int numWritten = vsnprintf(&buf[0], buf.size(), a, ap);
+      va_end(ap);
+    }
     this->stdstring += std::string(buf.begin(), buf.end()).c_str();
-
-    // va_list ap;
-    // va_start(ap, a);
-    // auto num = vsnprintf(nullptr, 0, a, ap);
-    // va_end(ap);
-    // if (num <= 0) {
-    //   return;
-    // }
-    // std::vector<char> buf(num + 1);
-    // va_start(ap, a);
-    // vsnprintf(&buf[0], buf.size(), a, ap);
-    // va_end(ap);
-    // this->stdstring += std::string(buf.begin(), buf.end()).c_str();
   }
 
   const char *string::c_str() const { return stdstring.c_str(); }
