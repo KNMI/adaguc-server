@@ -1576,17 +1576,17 @@ int CImageDataWriter::calculateData(std::vector<CDataSource *> &dataSources) {
       float inputMapExprValuesLow[dataSources.size()];
       float inputMapExprValuesHigh[dataSources.size()];
 
-      auto layerStyles = srvParam->Styles.splitToStack(",");
+      auto layerStyles = srvParam->Styles.split(",");
       CT::string style;
       //      bool errorOccured=false;
       for (size_t j = 0; j < dataSources.size(); j++) {
         size_t numberOfValues = 1;
-        auto _style = layerStyles[j].splitToStack("|");
+        auto _style = layerStyles[j].split("|");
         style.copy(&_style[0]);
         CDBDebug("STYLE == %s", style.c_str());
         if (j == 0) {
           // Find the conditional expression for the first layer (the boolean map)
-          auto conditionals = style.splitToStack("_");
+          auto conditionals = style.split("_");
           if (!conditionals[0].equals("default") && conditionals.size() != dataSources.size() - 2) {
             CDBError("Incorrect number of conditional operators specified: %d  (expected %d)", conditionals.size(), dataSources.size() - 2);
             hasFailed = true;
@@ -1621,7 +1621,7 @@ int CImageDataWriter::calculateData(std::vector<CDataSource *> &dataSources) {
             exprVal.copy(style.c_str() + 12);
             numberOfValues = 1;
           }
-          auto LH = exprVal.splitToStack("_and_");
+          auto LH = exprVal.split("_and_");
           if (LH.size() != numberOfValues) {
             CDBError("Invalid number of values in expression '%s'", style.c_str());
             hasFailed = true;
@@ -2617,7 +2617,7 @@ int CImageDataWriter::end() {
             CT::string key = dkit->first.c_str();
             CT::string value = dkit->second.c_str();
 
-            auto dimValues = key.splitToStack(",");
+            auto dimValues = key.split(",");
             elP = &data;
             for (size_t i = 0; i < dimValues.size(); i++) {
               try {
@@ -3241,7 +3241,7 @@ int CImageDataWriter::end() {
     int webPQuality = srvParam->imageQuality;
     if (!srvParam->Format.empty()) {
       /* Support setting quality via wms format parameter, e.g. format=image/webp;90& */
-      auto s = srvParam->Format.splitToStack(";");
+      auto s = srvParam->Format.split(";");
       if (s.size() > 1) {
         int q = s[1].toInt();
         if (q >= 0 && q <= 100) {

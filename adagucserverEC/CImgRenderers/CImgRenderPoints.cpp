@@ -209,7 +209,7 @@ SimpleSymbolMap makeSymbolMap(CServerConfig::XMLE_Configuration *cfg) {
     coordinates.replaceSelf("]", "");
     coordinates.replaceSelf(" ", "");
     // Split on ","
-    auto coordinateStrings = coordinates.splitToStack(",");
+    auto coordinateStrings = coordinates.split(",");
     SimpleSymbol symbol;
 
     // Every pair is a coordinate.
@@ -516,7 +516,7 @@ std::unordered_set<std::string> shouldUseFilterPoints(CStyleConfiguration *style
   auto attr = s->FilterPoints[0]->attr;
 
   if (!attr.use.empty()) {
-    for (const auto &token : attr.use.splitToStack(",")) {
+    for (const auto &token : attr.use.split(",")) {
       usePoints.insert(token.c_str());
     }
   }

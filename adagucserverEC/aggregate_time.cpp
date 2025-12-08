@@ -92,7 +92,7 @@ int main(int argc, const char *argv[]) {
   std::vector<CT::string> variablesToAddTimeTo;
   if (argc == 4) {
     CT::string variableList = argv[3];
-    variablesToAddTimeTo = variableList.splitToStack(",");
+    variablesToAddTimeTo = variableList.split(",");
   }
 
   /* Create a vector which holds information for all the inputfiles. */

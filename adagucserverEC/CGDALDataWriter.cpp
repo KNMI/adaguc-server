@@ -502,9 +502,9 @@ int CGDALDataWriter::end() {
   char **papszOptions = NULL;
 
   if (customOptions.length() > 2) {
-    auto co = customOptions.splitToStack(",");
+    auto co = customOptions.split(",");
     for (size_t j = 0; j < co.size(); j++) {
-      auto splittedco = customOptions.splitToStack("=");
+      auto splittedco = customOptions.split("=");
       papszOptions = CSLSetNameValue(papszOptions, splittedco[0].c_str(), splittedco[1].c_str());
     }
   }

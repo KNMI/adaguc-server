@@ -8,7 +8,7 @@ const char *CT::string::className = "CT::string";
 
 namespace CT {
 
-  std::vector<CT::string> string::splitToStack(const char *_value) {
+  std::vector<CT::string> string::split(const char *_value) {
     std::vector<CT::string> stringList;
     const char *fo = strstr(stdstring.c_str(), _value);
     const char *prevFo = stdstring.c_str();
@@ -609,7 +609,7 @@ namespace CT {
     this->stdstring.append(newString);
   }
 
-  std::vector<CT::stringref> string::splitToStackReferences(const char *_value) {
+  std::vector<CT::stringref> string::splitAsStringReferences(const char *_value) {
     std::vector<CT::stringref> stringList;
     const char *fo = strstr(this->stdstring.c_str(), _value);
     const char *prevFo = this->stdstring.c_str();

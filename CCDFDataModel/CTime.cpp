@@ -214,7 +214,7 @@ int CTime::init(const char *units, const char *calendar) {
     CT::string YYYYMMDDPart;
     CT::string HHMMSSPart;
 
-    auto timeItems = currentUnit.splitToStack(" ");
+    auto timeItems = currentUnit.split(" ");
 
     bool hasError = false;
     try {
@@ -264,7 +264,7 @@ int CTime::init(const char *units, const char *calendar) {
       // Determince the since part, e.g. 1949-12-01 00:00:00
       YYYYMMDDPart = timeItems[2].c_str();
 
-      auto YYYYMMDDPartSplitted = YYYYMMDDPart.splitToStack("-");
+      auto YYYYMMDDPartSplitted = YYYYMMDDPart.split("-");
 
       if (YYYYMMDDPartSplitted.size() != 3) {
         CDBError("YYYYMMDD part is incorrect [%s]", YYYYMMDDPart.c_str());
@@ -277,7 +277,7 @@ int CTime::init(const char *units, const char *calendar) {
 
       if (timeItems.size() > 3) {
         HHMMSSPart = timeItems[3].c_str();
-        auto HHMMSSPartSplited = HHMMSSPart.splitToStack(":");
+        auto HHMMSSPartSplited = HHMMSSPart.split(":");
         if (HHMMSSPartSplited.size() != 3) {
           CDBError("HHMMSS part is incorrect [%s]", HHMMSSPart.c_str());
           hasError = true;
@@ -897,7 +897,7 @@ double CTime::quantizeTimeToISO8601(double offsetOrig, CT::string period, CT::st
 
   if (period.indexOf("T") != -1) { // Contains HMS
 
-    auto items = period.splitToStack("T");
+    auto items = period.split("T");
     if (items.size() != 2) {
       throw(-1);
     }
@@ -1120,7 +1120,7 @@ CT::string CTime::dateToPeriod(CTime::Date date) {
 }
 
 CTime::Date CTime::periodToDate(CT::string period) {
-  std::vector<CT::string> p = period.splitToStack("T");
+  std::vector<CT::string> p = period.split("T");
   if (p.size() < 1 || !p[0].startsWith("P")) {
     CDBError("Invalid time period %s", period.c_str());
     throw(__LINE__);

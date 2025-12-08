@@ -76,7 +76,7 @@ void printerrorImage(void *_drawImage) {
   int y = 1;
   size_t w = drawImage->geoParams.width / 6, characters = 0;
   for (size_t i = 0; i < errormsgs.size() - 1; i++) {
-    auto sp = errormsgs[i].splitToStack(" ");
+    auto sp = errormsgs[i].split(" ");
     CT::string concat = "";
     for (size_t k = 0; k < sp.size(); k++) {
       if (characters + sp[k].length() < w) {

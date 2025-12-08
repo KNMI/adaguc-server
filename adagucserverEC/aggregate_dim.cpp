@@ -73,7 +73,7 @@ void applyChangesToCDFObject(const char *_fileName, CDFObject *cdfObject, std::v
 
 #ifdef CLIPC_ENSEMBLES_GERICS
   CT::string fileName = _fileName;
-  std::vector<CT::string> parts = fileName.splitToStack("_");
+  std::vector<CT::string> parts = fileName.split("_");
   memberValue = parts[3];
   memberValue.concat("_with_");
   memberValue += parts[6];
@@ -149,7 +149,7 @@ int main(int argc, const char *argv[]) {
   std::vector<CT::string> variablesToAddDimTo;
   if (argc == 4) {
     CT::string variableList = argv[3];
-    variablesToAddDimTo = variableList.splitToStack(",");
+    variablesToAddDimTo = variableList.split(",");
   }
 
   /* Create a vector which holds information for all the inputfiles. */

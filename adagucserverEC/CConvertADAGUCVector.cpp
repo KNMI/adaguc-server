@@ -367,7 +367,7 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
           }
         }
         CDBDebug("timeStringFromURL = %s", timeStringFromURL.c_str());
-        std::vector<CT::string> timeStrings = timeStringFromURL.splitToStack("/");
+        std::vector<CT::string> timeStrings = timeStringFromURL.split("/");
         if (timeStrings.size() == 2) {
           timeNotLowerThan = obsTime->dateToOffset(obsTime->freeDateStringToDate(timeStrings[0].c_str()));
           timeNotMoreThan = obsTime->dateToOffset(obsTime->freeDateStringToDate(timeStrings[1].c_str()));

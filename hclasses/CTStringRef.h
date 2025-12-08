@@ -87,7 +87,7 @@ namespace CT {
      * Resources are freed automatically
      * @param _value The token to split the string on
      */
-    std::vector<CT::stringref> splitToStackReferences(const char *_value);
+    std::vector<CT::stringref> splitAsStringReferences(const char *_value);
 
     /**
      * Returns the index within this string of the first occurrence of the specified character.

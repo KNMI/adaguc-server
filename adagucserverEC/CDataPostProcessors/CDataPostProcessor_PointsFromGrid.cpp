@@ -155,7 +155,7 @@ int CDPPointsFromGrid::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSour
   getPixelCoordinateListFromGetMapCoordinateListInPlace(pointsInPixel, (*dataSource));
 
   int id = 0; // TODO check if not grows besided number of available objects
-  for (auto con : proc->attr.select.splitToStack(",")) {
+  for (auto con : proc->attr.select.split(",")) {
     auto ob = dataSource->getDataObjectByName(con.c_str());
     auto destob = dataSource->getDataObject(id);
     if (ob->cdfVariable->getType() != CDF_FLOAT) {

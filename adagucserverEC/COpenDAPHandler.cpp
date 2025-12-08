@@ -708,14 +708,14 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
       // Parsing dim queries per variable (e.g. precip[0][0:3] == x,y)
       //       CDBDebug("query = %s", query.c_str());
       if (!query.empty()) {
-        std::vector<CT::string> items = query.splitToStack(",");
+        std::vector<CT::string> items = query.split(",");
         for (size_t j = 0; j < items.size(); j++) {
 #ifdef COPENDAPHANDLER_DEBUG
           CDBDebug("Selected variable = \"%s\"", items[j].c_str());
 #endif
 
           // Split on every [ token, gives sequences precip, 0] and 0:3]
-          std::vector<CT::string> varsettings = items[j].splitToStack("[");
+          std::vector<CT::string> varsettings = items[j].split("[");
           varsettings[0].decodeURLSelf();
 
 // Push the variable
@@ -734,7 +734,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
               varsettings[d].replaceSelf("]", ""); // gives sequences precip, 0 and 0:3
 
               // Now split on :
-              std::vector<CT::string> startCountStrideItems = varsettings[d].splitToStack(":");
+              std::vector<CT::string> startCountStrideItems = varsettings[d].split(":");
               size_t start = 0;
               size_t count = 1;
               size_t stride = 1;

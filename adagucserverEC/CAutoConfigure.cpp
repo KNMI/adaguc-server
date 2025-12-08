@@ -397,7 +397,7 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
           if (standard_name.charAt(0) == '^') {
             standardNameList.push_back(standard_name);
           } else {
-            standardNameList = standard_name.splitToStack(",");
+            standardNameList = standard_name.split(",");
           }
 
           for (size_t n = 0; n < standardNameList.size(); n++) {

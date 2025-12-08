@@ -98,7 +98,7 @@ int CDFPNGReader::open(const char *fileName) {
     CT::string infoFile = fileName;
     infoFile.concat(".info");
     CT::string infoData = CReadFile::open(infoFile);
-    std::vector<CT::string> lines = infoData.splitToStack("\n");
+    std::vector<CT::string> lines = infoData.split("\n");
 
     for (size_t l = 0; l < lines.size(); l++) {
       CDBDebug("Info file line %s", lines[l].c_str());
@@ -111,7 +111,7 @@ int CDFPNGReader::open(const char *fileName) {
       if (lines[l].startsWith("bbox=")) {
         CT::string bbox = lines[l];
         bbox.substringSelf(5, -1);
-        std::vector<CT::string> bboxItems = bbox.splitToStack(",");
+        std::vector<CT::string> bboxItems = bbox.split(",");
         if (bboxItems.size() == 4) {
           double d[4];
           d[0] = bboxItems[0].trim().toDouble();
@@ -157,7 +157,7 @@ int CDFPNGReader::open(const char *fileName) {
 
       /* BBOX */
       if (pngRaster->headers[j].key.equals("bbox")) {
-        std::vector<CT::string> bboxItems = pngRaster->headers[j].value.splitToStack(",");
+        std::vector<CT::string> bboxItems = pngRaster->headers[j].value.split(",");
         if (bboxItems.size() == 4) {
 
           bbox[0] = bboxItems[0].trim().toDouble();
@@ -254,7 +254,7 @@ int CDFPNGReader::open(const char *fileName) {
   PNGData->setAttributeText("standard_name", "rgba");
 
   if (isSlippyMapFormat == true) {
-    auto parts = this->fileName.splitToStack("/");
+    auto parts = this->fileName.split("/");
 
     if (parts.size() > 3) {
       int zoom = parts[parts.size() - 3].toInt();
@@ -278,11 +278,11 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType) {
 
   double tilex1, tilex2, tiley1, tiley2;
   if (isSlippyMapFormat) {
-    auto parts = this->fileName.splitToStack("/");
+    auto parts = this->fileName.split("/");
 
     if (parts.size() > 3) {
       int zoom = parts[parts.size() - 3].toInt();
-      int tile_y = parts[parts.size() - 1].splitToStack(".")[0].toInt();
+      int tile_y = parts[parts.size() - 1].split(".")[0].toInt();
       int tile_x = parts[parts.size() - 2].toInt();
       auto bbox = getBounds(tile_x, tile_y, zoom);
 #ifdef CCDFPNGIO_DEBUG

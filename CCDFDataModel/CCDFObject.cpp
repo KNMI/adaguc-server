@@ -166,7 +166,7 @@ void ncmlHandleAttribute(xmlNode *cur_node, CT::string NCMLVarName, CDFObject *c
             var->setAttribute(pszAttributeName, attrType, pszAttributeValue, strlen(pszAttributeValue));
           } else {
             CT::string attributeValue = pszAttributeValue;
-            auto attributeValues = attributeValue.splitToStack(",");
+            auto attributeValues = attributeValue.split(",");
             auto attrLen = attributeValues.size();
             double attributeValuesAsDouble[attrLen];
             for (size_t attrN = 0; attrN < attrLen; attrN++) {
@@ -236,7 +236,7 @@ CT::string ncmlHandleVariable(xmlNode *cur_node, CDFObject *cdfObject) {
         }
         /* set shape */
         if (!shape.empty()) {
-          std::vector<CT::string> dims = shape.splitToStack(" ");
+          std::vector<CT::string> dims = shape.split(" ");
           var->dimensionlinks.clear();
           for (size_t d = 0; d < dims.size(); d++) {
             try {

@@ -124,7 +124,7 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
 
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
-    auto terms = var->name.splitToStack(".");
+    auto terms = var->name.split(".");
     if (terms.size() > 1) {
       if (terms[0].startsWith("scan") && terms[1].startsWith("scan_") && terms[1].endsWith("_data")) {
         var->setAttributeText("ADAGUC_SKIP", "TRUE");
