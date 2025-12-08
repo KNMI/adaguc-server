@@ -2,7 +2,7 @@
 #define CGeoJSONData_H
 #include <vector>
 #include <map>
-#include "CTypes.h"
+#include "CTString.h"
 #include "CDebugger.h"
 
 class GeoPoint {

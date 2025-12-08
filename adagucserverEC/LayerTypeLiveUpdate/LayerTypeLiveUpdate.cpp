@@ -222,7 +222,7 @@ int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(MetadataLayer *metada
     }
   }
 
-  timeInstance.init("seconds since 1970", "standard");
+  timeInstance.init("seconds since 1970-01-01", "standard");
   double epochTime = timeInstance.getEpochTimeFromDateString(CTime::currentDateTime());
   // CTime::Date cdate = timeInstance.getDate(epochTime);
   double startTimeOffset = timeInstance.quantizeTimeToISO8601(epochTime - 3600 * 24 * 365, timeResolution.c_str(), "low");

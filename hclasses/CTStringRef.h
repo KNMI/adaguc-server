@@ -26,7 +26,7 @@
 #ifndef CTSTRINGREF_H
 #define CTSTRINGREF_H
 
-#include "CTypes.h"
+#include "CTString.h"
 #include "CTString.h"
 #define CTSTRINGREFSTACKLENGTH 15
 namespace CT {
@@ -87,7 +87,7 @@ namespace CT {
      * Resources are freed automatically
      * @param _value The token to split the string on
      */
-    StackList<CT::stringref> splitToStackReferences(const char *_value);
+    std::vector<CT::stringref> splitToStackReferences(const char *_value);
 
     /**
      * Returns the index within this string of the first occurrence of the specified character.

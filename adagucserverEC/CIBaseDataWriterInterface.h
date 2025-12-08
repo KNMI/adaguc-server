@@ -28,11 +28,11 @@
 #include "CServerParams.h"
 #include "CDataSource.h"
 #include "CImageWarper.h"
-#include "CTypes.h"
+#include "CTString.h"
 
 class CBaseDataWriterInterface {
 public:
-  virtual ~CBaseDataWriterInterface(){};
+  virtual ~CBaseDataWriterInterface() {};
   CBaseDataWriterInterface() {}
   virtual int init(CServerParams *srvParam, CDataSource *dataSource, int NrOfBands) = 0;
   virtual int addData(std::vector<CDataSource *> &dataSources) = 0;

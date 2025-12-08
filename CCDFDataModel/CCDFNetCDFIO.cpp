@@ -483,7 +483,7 @@ int CDFNetCDFReader::readAttributes(int root_id, std::vector<CDF::Attribute *> &
 }
 
 int CDFNetCDFReader::_findNCGroupIdForCDFVariable(CT::string *varName) {
-  auto paths = varName->splitToStack(CDFNetCDFGroupSeparator);
+  auto paths = varName->split(CDFNetCDFGroupSeparator);
   if (paths.size() <= 1) {
     return root_id;
   }
