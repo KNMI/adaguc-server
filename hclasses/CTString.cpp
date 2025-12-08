@@ -6,7 +6,7 @@
 const char *CT::string::className = "CT::string";
 #endif
 #include "CDebugger.h"
-#define CT_STRING_PRINT_BUFFER_SIZE 16
+#define CT_STRING_PRINT_BUFFER_SIZE 64
 namespace CT {
 
   std::vector<CT::string> string::split(const char *_value) {
