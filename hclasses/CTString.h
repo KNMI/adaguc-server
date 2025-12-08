@@ -39,9 +39,13 @@ namespace CT {
     const char *strrstr(const char *x, const char *y);
     char _tohex(char in);
     char _fromhex(char in);
-    std::string standardString;
 
   public:
+    /**
+     * std::string containing the string
+     */
+    std::string stdstring;
+
     /**
      * Default constructor
      */
@@ -127,7 +131,7 @@ namespace CT {
      * @return length
      */
     size_t length() {
-      size_t l = this->standardString.size();
+      size_t l = this->stdstring.size();
       return l;
     }
 

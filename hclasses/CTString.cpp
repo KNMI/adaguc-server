@@ -10,8 +10,8 @@ namespace CT {
 
   StackList<CT::string> string::splitToStack(const char *_value) {
     StackList<CT::string> stringList;
-    const char *fo = strstr(standardString.c_str(), _value);
-    const char *prevFo = standardString.c_str();
+    const char *fo = strstr(stdstring.c_str(), _value);
+    const char *prevFo = stdstring.c_str();
     while (fo != NULL) {
       stringList.push_back(CT::string(prevFo, (fo - prevFo)));
       prevFo = fo + 1;
@@ -29,7 +29,7 @@ namespace CT {
     if (_value != NULL) copy(_value, strlen(_value));
   }
 
-  string::string(string const &f) { this->copy(f.standardString.c_str(), f.standardString.length()); }
+  string::string(string const &f) { this->copy(f.stdstring.c_str(), f.stdstring.length()); }
 
   string::string(CT::string *_string) { copy(_string); }
 
@@ -37,22 +37,22 @@ namespace CT {
 
   string &string::operator=(string const &f) {
     if (this == &f) return *this;
-    this->standardString = f.standardString;
+    this->stdstring = f.stdstring;
     return *this;
   }
 
   string &string::operator=(const char *const &f) {
     if (f == nullptr) {
-      this->standardString = "";
+      this->stdstring = "";
     } else {
-      this->standardString = f;
+      this->stdstring = f;
     }
     return *this;
   }
 
   string &string::operator+=(string const &f) {
     if (this == &f) return *this;
-    this->standardString += f;
+    this->stdstring += f;
     return *this;
   }
 
@@ -88,14 +88,14 @@ namespace CT {
 
   char string::charAt(size_t n) {
     if (n > length()) return 0;
-    return (standardString.c_str())[n];
+    return (stdstring.c_str())[n];
   }
 
   int string::indexOf(const char *search, size_t _length) {
     if (_length == 0) return -1;
     if (length() == 0) return -1;
 
-    const char *value = standardString.c_str();
+    const char *value = stdstring.c_str();
     const char *pi = strstr(value, search);
     if (pi == NULL) return -1;
     int c = pi - value;
@@ -107,7 +107,7 @@ namespace CT {
     if (_length == 0) return -1;
     if (length() == 0) return -1;
 
-    const char *value = standardString.c_str();
+    const char *value = stdstring.c_str();
     const char *pi = strrstr(value, search);
     if (pi == NULL) return -1;
     int c = pi - value;
@@ -117,11 +117,11 @@ namespace CT {
 
   void string::copy(const char *_value, size_t _length) {
     if (_value == NULL) {
-      this->standardString = "";
+      this->stdstring = "";
       return;
     }
-    this->standardString = _value;
-    this->standardString.resize(_length);
+    this->stdstring = _value;
+    this->stdstring.resize(_length);
   }
 
   char string::_tohex(char in) {
@@ -140,19 +140,19 @@ namespace CT {
   }
 
   void string::toLowerCaseSelf() {
-    std::transform(standardString.begin(), standardString.end(), standardString.begin(), [](unsigned char c) { return std::tolower(c); });
+    std::transform(stdstring.begin(), stdstring.end(), stdstring.begin(), [](unsigned char c) { return std::tolower(c); });
   }
 
   void string::toUpperCaseSelf() {
-    std::transform(standardString.begin(), standardString.end(), standardString.begin(), [](unsigned char c) { return std::toupper(c); });
+    std::transform(stdstring.begin(), stdstring.end(), stdstring.begin(), [](unsigned char c) { return std::toupper(c); });
   }
 
   void string::encodeURLSelf() {
-    char *pszEncode = new char[standardString.length() * 6 + 1];
+    char *pszEncode = new char[stdstring.length() * 6 + 1];
     int p = 0;
     unsigned char szChar;
-    const char *value = standardString.c_str();
-    for (unsigned int j = 0; j < standardString.length(); j++) {
+    const char *value = stdstring.c_str();
+    for (unsigned int j = 0; j < stdstring.length(); j++) {
       szChar = value[j];
       if (szChar < 48 || (szChar > 59 && szChar < 63)) {
         pszEncode[p++] = '%';
@@ -166,12 +166,12 @@ namespace CT {
     delete[] pszEncode;
   }
   void string::decodeURLSelf() {
-    char *pszDecode = new char[standardString.length() * 6 + 1];
+    char *pszDecode = new char[stdstring.length() * 6 + 1];
     int p = 0;
     unsigned char szChar, d1, d2;
     replaceSelf("+", " ");
-    const char *value = standardString.c_str();
-    for (unsigned int j = 0; j < standardString.length(); j++) {
+    const char *value = stdstring.c_str();
+    for (unsigned int j = 0; j < stdstring.length(); j++) {
       szChar = value[j];
       if (szChar == '%') {
         d1 = _fromhex(value[j + 1]);
@@ -206,7 +206,7 @@ namespace CT {
     concat(szTemp);
   }
 
-  const char *string::c_str() const { return standardString.c_str(); }
+  const char *string::c_str() const { return stdstring.c_str(); }
 
   CT::string string::encodeXML(CT::string stringToEncode) {
     stringToEncode.encodeXMLSelf();
@@ -231,9 +231,9 @@ namespace CT {
   }
 
   void string::trimSelf(bool trimWhiteSpace) {
-    auto plength = this->standardString.length();
+    auto plength = this->stdstring.length();
     int s = -1, e = plength;
-    const char *value = this->standardString.c_str();
+    const char *value = this->stdstring.c_str();
     for (size_t j = 0; j < plength; j++) {
       if (trimWhiteSpace ? value[j] != ' ' && value[j] != '\n' && value[j] != '\r' : value[j] != ' ') {
         s = j;
@@ -256,7 +256,7 @@ namespace CT {
     if (regcomp(&re, pattern, REG_EXTENDED | REG_NOSUB) != 0) {
       return false;
     }
-    status = regexec(&re, standardString.c_str(), (size_t)0, NULL, 0);
+    status = regexec(&re, stdstring.c_str(), (size_t)0, NULL, 0);
     regfree(&re);
     if (status != 0) {
       return false;
@@ -266,36 +266,36 @@ namespace CT {
 
   void string::setChar(size_t location, const char character) {
     if (location < length()) {
-      standardString.at(location) = character;
-      if (character == '\0') standardString.resize(location);
+      stdstring.at(location) = character;
+      if (character == '\0') stdstring.resize(location);
     }
   }
 
   bool string::equals(const char *_value) const {
     if (_value == NULL) return false;
-    return (standardString == _value);
+    return (stdstring == _value);
   }
 
   bool string::equals(CT::string *_string) const {
     if (_string == NULL) return false;
-    return (standardString == _string->standardString);
+    return (stdstring == _string->stdstring);
   }
 
-  bool string::equals(CT::string &_string) const { return (standardString == _string.standardString); }
+  bool string::equals(CT::string &_string) const { return (stdstring == _string.stdstring); }
 
-  bool string::equals(std::string const &_string) const { return (standardString == _string); }
+  bool string::equals(std::string const &_string) const { return (stdstring == _string); }
 
   bool string::equals(const char *_value, size_t _length) const {
     if (_value == NULL) return false;
-    if (this->standardString.length() != _length) return false;
-    if (strncmp(standardString.c_str(), _value, _length) == 0) return true;
+    if (this->stdstring.length() != _length) return false;
+    if (strncmp(stdstring.c_str(), _value, _length) == 0) return true;
     return false;
   }
 
   bool string::equalsIgnoreCase(const char *_value, size_t _length) {
     if (_value == NULL) return false;
     if (length() != _length) return false;
-    CT::string selfLowerCase = standardString.c_str();
+    CT::string selfLowerCase = stdstring.c_str();
     CT::string testValueLowerCase = _value;
     selfLowerCase.toLowerCaseSelf();
     testValueLowerCase.toLowerCaseSelf();
@@ -317,20 +317,20 @@ namespace CT {
 
   void string::copy(const CT::string *_string) {
     if (_string == NULL) {
-      this->standardString = "";
+      this->stdstring = "";
       return;
     }
-    this->standardString = _string->standardString;
+    this->stdstring = _string->stdstring;
   };
 
-  void string::copy(const CT::string _string) { this->standardString = _string.standardString; };
+  void string::copy(const CT::string _string) { this->stdstring = _string.stdstring; };
 
   void string::copy(const char *_value) {
     if (_value == NULL) {
-      this->standardString = "";
+      this->stdstring = "";
       return;
     }
-    this->standardString = _value;
+    this->stdstring = _value;
   };
 
   CT::string string::toLowerCase() {
@@ -347,17 +347,17 @@ namespace CT {
     return t;
   }
 
-  bool string::empty() { return standardString.size() == 0; }
+  bool string::empty() { return stdstring.size() == 0; }
 
-  void string::setSize(int size) { standardString.resize(size); }
+  void string::setSize(int size) { stdstring.resize(size); }
 
-  void string::concat(const CT::string *_string) { this->standardString += _string->standardString; }
+  void string::concat(const CT::string *_string) { this->stdstring += _string->stdstring; }
 
-  void string::concat(const CT::string &_string) { this->standardString += _string.standardString; }
+  void string::concat(const CT::string &_string) { this->stdstring += _string.stdstring; }
 
   void string::concat(const char *_value) {
     if (_value == NULL) return;
-    this->standardString += _value;
+    this->stdstring += _value;
   };
 
   int string::indexOf(const char *search) { return indexOf(search, strlen(search)); };
@@ -369,7 +369,7 @@ namespace CT {
   int string::startsWith(const char *search) { return (indexOf(search) == 0); };
 
   string string::trim() {
-    CT::string r = standardString.c_str();
+    CT::string r = stdstring.c_str();
     r.trimSelf();
     return r;
   }
@@ -425,7 +425,7 @@ namespace CT {
   int string::replaceSelf(const char *substr, size_t, const char *newString, size_t) {
     std::string from = substr;
     std::string to = newString;
-    std::string &str = this->standardString;
+    std::string &str = this->stdstring;
     if (from.empty()) {
       return 0;
     }
@@ -438,7 +438,7 @@ namespace CT {
   }
 
   void string::replaceSelf(std::string &from, std::string &to) {
-    std::string &str = this->standardString;
+    std::string &str = this->stdstring;
     if (from.empty()) {
       return;
     }
@@ -451,13 +451,13 @@ namespace CT {
 
   string string::replaceAll(std::string &from, std::string &to) {
     CT::string str;
-    str.standardString = this->standardString;
+    str.stdstring = this->stdstring;
     if (from.empty()) {
       return this;
     }
     size_t start_pos = 0;
-    while ((start_pos = str.standardString.find(from, start_pos)) != std::string::npos) {
-      str.standardString.replace(start_pos, from.length(), to);
+    while ((start_pos = str.stdstring.find(from, start_pos)) != std::string::npos) {
+      str.stdstring.replace(start_pos, from.length(), to);
       start_pos += to.length(); // Handles case where 'to' is a substring of 'from'
     }
     return str;
@@ -478,18 +478,18 @@ namespace CT {
   }
 
   int string::substringSelf(size_t start, size_t end) {
-    if (start >= standardString.length() || end - start <= 0) {
-      standardString = "";
+    if (start >= stdstring.length() || end - start <= 0) {
+      stdstring = "";
       return 0;
     }
-    if (end > standardString.length()) end = standardString.length();
-    standardString = standardString.c_str() + start;
-    standardString.resize(end - start);
+    if (end > stdstring.length()) end = stdstring.length();
+    stdstring = stdstring.c_str() + start;
+    stdstring.resize(end - start);
     return 0;
   }
 
   CT::string string::substring(size_t start, size_t end) {
-    CT::string test = this->standardString.c_str();
+    CT::string test = this->stdstring.c_str();
     test.substringSelf(start, end);
     return test;
   }
@@ -606,13 +606,13 @@ namespace CT {
   void string::concatlength(const char *_value, size_t len) {
     std::string newString = _value;
     newString.resize(len);
-    this->standardString.append(newString);
+    this->stdstring.append(newString);
   }
 
   CT::StackList<CT::stringref> string::splitToStackReferences(const char *_value) {
     StackList<CT::stringref> stringList;
-    const char *fo = strstr(this->standardString.c_str(), _value);
-    const char *prevFo = this->standardString.c_str();
+    const char *fo = strstr(this->stdstring.c_str(), _value);
+    const char *prevFo = this->stdstring.c_str();
     size_t keyLength = strlen(_value);
     while (fo != NULL) {
       stringList.push_back(CT::stringref(prevFo, (fo - prevFo)));
