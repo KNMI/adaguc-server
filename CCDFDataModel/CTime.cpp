@@ -645,7 +645,7 @@ double CTime::dateToOffset(Date date) {
   if (mode == CTIME_MODE_UTCALENDAR) {
     double offset;
     if (utInvCalendar(date.year, date.month, date.day, date.hour, date.minute, (int)date.second, &dataunits, &offset) != 0) {
-      CDBError("dateToOffset: Internal error: utInvCalendar with args %s", dateToString(date).c_str());
+      CDBError("dateToOffset: Internal error: utInvCalendar with args '%s'", dateToString(date).c_str());
       throw CTIME_CONVERSION_ERROR;
     }
     return offset;
@@ -687,9 +687,7 @@ CTime::Date CTime::stringToDate(const char *szTime) {
   }
   Date checkDate = getDate(date.offset);
   CT::string checkStr = dateToString(checkDate);
-  std::string timeTocheck = szTime;
-  timeTocheck.resize(15);
-  if (!checkStr.equals(timeTocheck)) {
+  if (!checkStr.equals(szTime, 15)) {
     CDBError("stringToDate internal error: intime is different from outtime:  \"%s\" != \"%s\"", szTime, checkStr.c_str());
     throw CTIME_CONVERSION_ERROR;
   }
@@ -701,6 +699,11 @@ CTime::Date CTime::stringToDate(const char *szTime) {
 }
 
 CTime::Date CTime::ISOStringToDate(const char *szTime) {
+  if (strlen(szTime) < 19) {
+
+    CDBError("ISOStringToDate internal error: intime is too short: '%s'", szTime);
+    throw CTIME_CONVERSION_ERROR;
+  }
   Date date;
   char szTemp[64];
   safestrcpy(szTemp, szTime, 4);
@@ -714,11 +717,13 @@ CTime::Date CTime::ISOStringToDate(const char *szTime) {
   safestrcpy(szTemp, szTime + 14, 2);
   date.minute = atoi(szTemp);
   safestrcpy(szTemp, szTime + 17, 2);
+  szTemp[19] = 'Z';
+  szTemp[20] = '0';
   date.second = (float)atoi(szTemp);
   try {
     date.offset = dateToOffset(date);
   } catch (int e) {
-    CDBError("ISOStringToDate: input %s", szTime);
+    CDBError("ISOStringToDate: input '%s'", szTime);
     throw e;
   }
   // CDBDebug("date.offset %f",date.offset);

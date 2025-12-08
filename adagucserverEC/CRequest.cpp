@@ -612,7 +612,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
                     CT::string currentDateConverted = ctime->dateToISOString(ctime->getDate(currentTimeAsEpoch));
                     ogcDim->value = currentDateConverted;
                   } catch (int e) {
-                    CDBDebug("Unable to convert %s to epoch", ogcDim->value.c_str());
+                    CDBDebug("Unable to convert '%s' to epoch", ogcDim->value.c_str());
                   }
 #ifdef CREQUEST_DEBUG
                   CDBDebug("Converted to Time value [%s]", ogcDim->value.c_str());

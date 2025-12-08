@@ -285,6 +285,13 @@ namespace CT {
 
   bool string::equals(std::string const &_string) const { return (standardString == _string); }
 
+  bool string::equals(const char *_value, size_t _length) const {
+    if (_value == NULL) return false;
+    if (this->standardString.length() != _length) return false;
+    if (strncmp(standardString.c_str(), _value, _length) == 0) return true;
+    return false;
+  }
+
   bool string::equalsIgnoreCase(const char *_value, size_t _length) {
     if (_value == NULL) return false;
     if (length() != _length) return false;
@@ -442,9 +449,6 @@ namespace CT {
     }
   }
 
-  void replaceSelf(const char *ssubstr, std::string &newString) { replaceSelf(ssubstr, newString); }
-  void replaceSelf(std::string &substr, const char *snewString) { replaceSelf(substr, snewString); }
-
   string string::replaceAll(std::string &from, std::string &to) {
     CT::string str;
     str.standardString = this->standardString;
@@ -472,16 +476,6 @@ namespace CT {
     std::string to = newstr;
     return replaceAll(from, to);
   }
-
-  CT::string string::replaceAll(const char *substr, std::string &newString) {
-    std::string from = substr;
-    return replaceAll(from, newString);
-  };
-
-  CT::string string::replaceAll(std::string &substr, const char *newString) {
-    std::string to = newString;
-    return replaceAll(substr, to);
-  };
 
   int string::substringSelf(size_t start, size_t end) {
     if (start >= standardString.length() || end - start <= 0) {

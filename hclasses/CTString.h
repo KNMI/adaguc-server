@@ -201,6 +201,13 @@ namespace CT {
 
     /**
      * Compares this string to the specified object. The result is true if the given argument is not null and representing the same sequence of characters as this object.
+     * @param value The character array to compare
+     * @param length The length of the character array to compare
+     */
+    bool equals(const char *value, size_t length) const;
+
+    /**
+     * Compares this string to the specified object. The result is true if the given argument is not null and representing the same sequence of characters as this object.
      * @param string*  Pointer to the string object to compare
      */
     bool equals(CT::string *string) const;
@@ -487,20 +494,12 @@ namespace CT {
      */
     void replaceSelf(std::string &substr, std::string &newString);
 
-    void replaceSelf(const char *ssubstr, std::string &newString);
-
-    void replaceSelf(std::string &substr, const char *snewString);
-
     /** Replace all strings with another string
      * @param substr the string to replace
      * @param newString the new stringto replace with
      * @returns new string
      */
     CT::string replaceAll(std::string &substr, std::string &newString);
-
-    CT::string replaceAll(const char *substr, std::string &newString);
-
-    CT::string replaceAll(std::string &substr, const char *newString);
   };
 }; /* namespace CT */
 
