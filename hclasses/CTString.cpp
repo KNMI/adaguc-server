@@ -1,11 +1,7 @@
 #include "CTString.h"
-#include <iostream>
-#include <regex>
-#include <algorithm>
-#ifdef CTYPES_DEBUG
-const char *CT::string::className = "CT::string";
-#endif
+
 #include "CDebugger.h"
+#include <regex>
 #define CT_STRING_PRINT_BUFFER_SIZE 64
 namespace CT {
 

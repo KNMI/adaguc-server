@@ -31,7 +31,7 @@
 #include "CServerConfig_CPPXSD.h"
 #include "CDebugger.h"
 #include "Definitions.h"
-#include "CTypes.h"
+#include "CTString.h"
 #include "CCDFDataModel.h"
 #include "COGCDims.h"
 #include "CStopWatch.h"

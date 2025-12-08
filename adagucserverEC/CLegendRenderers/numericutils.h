@@ -2,7 +2,7 @@
 #define numericutils_H
 
 #include <vector>
-#include "CTypes.h"
+#include "CTString.h"
 #include <CServerConfig_CPPXSD.h>
 
 // Field width takes into consideration:

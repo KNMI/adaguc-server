@@ -28,7 +28,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include "CDebugger.h"
-#include "CTypes.h"
+#include "CTString.h"
 #include "CDirReader.h"
 #include "Definitions.h"
 #include "CServerConfig_CPPXSD.h"

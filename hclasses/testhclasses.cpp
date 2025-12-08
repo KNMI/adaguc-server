@@ -1,4 +1,5 @@
 #include "CDirReader.h"
+#include "CTString.h"
 #include "CppUnitLite/TestHarness.h"
 
 // To test this file do in the ./bin folder of adaguc-server:

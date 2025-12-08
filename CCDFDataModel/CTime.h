@@ -27,7 +27,7 @@
 #define CTIME_H
 #include <udunits.h>
 
-#include "CTypes.h"
+#include "CTString.h"
 #include "CCDFVariable.h"
 #include <time.h>
 #include <sys/types.h>

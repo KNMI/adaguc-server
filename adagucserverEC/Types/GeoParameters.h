@@ -25,7 +25,7 @@
 
 #ifndef CGeoParams_H
 #define CGeoParams_H
-#include "CTypes.h"
+#include "CTString.h"
 #include <math.h>
 #include <map>
 #include <cstddef>

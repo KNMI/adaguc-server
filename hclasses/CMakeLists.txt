@@ -1,8 +1,7 @@
 find_package(LibXml2 REQUIRED)
 
 add_library(hclasses
-    CTypes.h
-    CTString.h
+CTString.h
     CTStringRef.h
     CXMLParser.h
     CDebugger.h
@@ -15,7 +14,6 @@ add_library(hclasses
     CReportWriter.h
     json_adaguc.h
     CKeyValuePair.h
-    CTypes.cpp
     CTString.cpp
     CTStringRef.cpp
     CXMLParser.cpp

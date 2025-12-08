@@ -41,7 +41,7 @@
 #include <ogr_spatialref.h>
 #include <ctype.h>
 #include "CDebugger.h"
-#include "CTypes.h"
+#include "CTString.h"
 #include "CServerError.h"
 #include "CDrawImage.h"
 

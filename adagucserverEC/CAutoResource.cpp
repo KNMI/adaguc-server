@@ -1,5 +1,5 @@
 #include "CAutoResource.h"
-#include "CTypes.h"
+#include "CTString.h"
 #include "CServerError.h"
 #include "CDFObjectStore.h"
 #include "CReporter.h"

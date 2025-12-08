@@ -26,7 +26,7 @@
 #ifndef CTSTRINGREF_H
 #define CTSTRINGREF_H
 
-#include "CTypes.h"
+#include "CTString.h"
 #include "CTString.h"
 #define CTSTRINGREFSTACKLENGTH 15
 namespace CT {

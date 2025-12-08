@@ -25,8 +25,16 @@
 
 #ifndef CTSTRING_H
 #define CTSTRING_H
+#include <stdio.h>
+#include <stdarg.h>
+#include <string.h>
+#include <iostream>
+#include <typeinfo>
+#include <exception>
+#include <stdlib.h>
+#include <regex.h>
+#include <vector>
 
-#include "CTypes.h"
 #include "CTStringRef.h"
 #define CT_MAX_NUM_CHARACTERS_FOR_FLOAT 18
 #define CT_MAX_NUM_CHARACTERS_FOR_INT 12

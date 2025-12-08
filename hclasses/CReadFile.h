@@ -1,6 +1,6 @@
 #ifndef CREADFILE_H
 #define CREADFILE_H
-#include "CTypes.h"
+#include "CTString.h"
 #define CREADFILE_OK 0
 #define CREADFILE_FILENOTFOUND 1
 #define CREADFILE_FILENOTREAD 2

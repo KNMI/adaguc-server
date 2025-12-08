@@ -30,7 +30,7 @@
 #include <vector>
 #include <iostream>
 #include <sys/stat.h>
-#include "CTypes.h"
+#include "CTString.h"
 #include "CDirReader.h"
 #include "CCDFObject.h"
 #include "CCDFReader.h"

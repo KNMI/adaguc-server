@@ -33,7 +33,7 @@ unsigned int logMessageNumber = 0;
 extern unsigned long logProcessIdentifier;
 unsigned long logProcessIdentifier = getpid();
 
-#include "CTypes.h"
+#include "CTString.h"
 /*
  * If these prototypes are changed, also change the extern
  * declarations in CReporter.cpp that are referring to the
