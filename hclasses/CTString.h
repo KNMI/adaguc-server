@@ -91,6 +91,11 @@ namespace CT {
      * addition assignment operator
      * @param f The input string
      */
+    string &operator+=(std::string const &f);
+    /**
+     * addition assignment operator
+     * @param f The input string
+     */
     string &operator+=(string const &f);
 
     /**
@@ -339,7 +344,7 @@ namespace CT {
      * Data is automatically freed
      * @param _value The token to split the string on
      */
-    std::vector<CT::string> split(const char *_value);
+    std::vector<CT::string> split(const char *_value) const;
 
     /**
      * Print like printf to this string
@@ -505,6 +510,14 @@ namespace CT {
      */
     CT::string replaceAll(std::string &substr, std::string &newString);
   };
+
+  // Example  on how new implementation can help with moving towards fully using std::string instead of CT::String
+  /** Joins vector of strings into a new string
+   * @param items Items to join
+   * @param separator optional separator, defaults to ","
+   * @returns new string containing all items.
+   */
+  string join(const std::vector<string> &items, string separator = ",");
 }; /* namespace CT */
 
 #endif

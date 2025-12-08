@@ -9,7 +9,7 @@ const char *CT::string::className = "CT::string";
 #define CT_STRING_PRINT_BUFFER_SIZE 64
 namespace CT {
 
-  std::vector<CT::string> string::split(const char *_value) {
+  std::vector<CT::string> string::split(const char *_value) const {
     std::vector<CT::string> stringList;
     const char *fo = strstr(stdstring.c_str(), _value);
     const char *prevFo = stdstring.c_str();
@@ -48,6 +48,11 @@ namespace CT {
     } else {
       this->stdstring = f;
     }
+    return *this;
+  }
+
+  string &string::operator+=(std::string const &f) {
+    this->stdstring += f;
     return *this;
   }
 
@@ -198,7 +203,7 @@ namespace CT {
       buf.resize(numWritten + 1);
       va_list ap;
       va_start(ap, a);
-      int numWritten = vsnprintf(&buf[0], buf.size(), a, ap);
+      vsnprintf(&buf[0], buf.size(), a, ap);
       va_end(ap);
     }
     this->stdstring = std::string(buf.begin(), buf.end()).c_str();
@@ -213,7 +218,7 @@ namespace CT {
       buf.resize(numWritten + 1);
       va_list ap;
       va_start(ap, a);
-      int numWritten = vsnprintf(&buf[0], buf.size(), a, ap);
+      vsnprintf(&buf[0], buf.size(), a, ap);
       va_end(ap);
     }
     this->stdstring += std::string(buf.begin(), buf.end()).c_str();
@@ -637,6 +642,15 @@ namespace CT {
       stringList.push_back(CT::stringref(prevFo, prevFoLength));
     }
     return stringList;
+  }
+
+  CT::string join(const std::vector<string> &items, CT::string separator) {
+    CT::string newString;
+    for (auto &item : items) {
+      newString += item.stdstring;
+      newString += separator;
+    }
+    return newString;
   }
 
 } /* namespace CT */

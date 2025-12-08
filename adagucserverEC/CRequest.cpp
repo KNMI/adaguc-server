@@ -2042,8 +2042,6 @@ int CRequest::process_querystring() {
         } else {
           srvParam->geoParams.height = srvParam->geoParams.width;
         }
-        CDBDebug("Calculated height: %d", srvParam->geoParams.height);
-        CDBDebug("dWidth: %d", srvParam->geoParams.width);
       }
 
       if (srvParam->geoParams.width < 0) srvParam->geoParams.width = 1;

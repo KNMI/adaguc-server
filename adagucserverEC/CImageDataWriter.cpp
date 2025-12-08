@@ -2192,10 +2192,14 @@ int CImageDataWriter::end() {
           CT::string data = gfiStructure.getList("root").toJSON(CXMLPARSER_JSONMODE_STANDARD);
           CT::string resultJSON;
           if (srvParam->JSONP.length() == 0) {
+#ifdef CIMAGEDATAWRITER_DEBUG
             CDBDebug("CREATING JSON");
+#endif
             printf("%s%s%c%c\n", "Content-Type: application/json", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
           } else {
+#ifdef CIMAGEDATAWRITER_DEBUG
             CDBDebug("CREATING JSONP %s", srvParam->JSONP.c_str());
+#endif
             printf("%s%s%c%c", "Content-Type: application/javascript", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
             printf("\n%s(", srvParam->JSONP.c_str());
           }
