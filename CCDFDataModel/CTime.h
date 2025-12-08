@@ -50,7 +50,7 @@
 
 #define CTIME_GETINSTANCE_ERROR_MESSAGE "Unable to obtain ctime instance from variable"
 
-#define CTIME_EPOCH_UNITS "seconds since 1970"
+#define CTIME_EPOCH_UNITS "seconds since 1970-01-01 0:0:0"
 
 // #define CTIME_CALENDARTYPE_365day  1
 
@@ -59,6 +59,7 @@ class CTime {
 private:
   CT::string currentUnit;
   CT::string currentCalendar;
+  std::string scanUnits;
   void safestrcpy(char *s1, const char *s2, size_t size_s1);
   static int CTIME_CALENDARTYPE_360day_Months[];
   static int CTIME_CALENDARTYPE_360day_MonthsCumul[];
@@ -222,7 +223,6 @@ public:
   static CTime *GetCTimeEpochInstance();
   static void cleanInstances();
   static std::map<CT::string, CTime *> CTimeInstances;
-  static void *currentInitializedVar;
 
   static time_t getEpochTimeFromDateString(CT::string dateString);
 

@@ -94,7 +94,7 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
 #endif
 
   CT::string configFile = pszConfigFile;
-  CT::StackList<CT::string> configFileList = configFile.splitToStack(",");
+  std::vector<CT::string> configFileList = configFile.splitToStack(",");
 
   // Parse the main configuration file
   int status = srvParam->parseConfigFile(configFileList[0]);
@@ -604,15 +604,21 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
 #ifdef CREQUEST_DEBUG
                   CDBDebug("Got Time value [%s]", ogcDim->value.c_str());
 #endif
-                  CTime *ctime = CTime::GetCTimeEpochInstance();
-                  double currentTimeAsEpoch;
 
                   try {
-                    currentTimeAsEpoch = ctime->dateToOffset(ctime->freeDateStringToDate(ogcDim->value.c_str()));
-                    CT::string currentDateConverted = ctime->dateToISOString(ctime->getDate(currentTimeAsEpoch));
+                    CTime *ctime = CTime::GetCTimeEpochInstance();
+                    if (ctime == nullptr) {
+                      CDBError("Unable to get time instance");
+                      return 1;
+                    }
+                    auto date = ctime->freeDateStringToDate(ogcDim->value.c_str());
+                    auto currentTimeAsEpoch = ctime->dateToOffset(date);
+                    auto secondDate = ctime->getDate(currentTimeAsEpoch);
+                    auto currentDateConverted = ctime->dateToISOString(secondDate);
                     ogcDim->value = currentDateConverted;
                   } catch (int e) {
                     CDBDebug("Unable to convert '%s' to epoch", ogcDim->value.c_str());
+                    return 1;
                   }
 #ifdef CREQUEST_DEBUG
                   CDBDebug("Converted to Time value [%s]", ogcDim->value.c_str());
@@ -2820,7 +2826,7 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
       bool drawAllLegends = srvParam->showLegendInImage.equals("true");
 
       /* List of specified legends */
-      CT::StackList<CT::string> legendLayerList = srvParam->showLegendInImage.splitToStack(",");
+      std::vector<CT::string> legendLayerList = srvParam->showLegendInImage.splitToStack(",");
 
       //          int numberOfLegendsDrawn = 0;
       int legendOffsetX = 0;

@@ -184,7 +184,9 @@ void CURUniqueRequests::createStructure(std::vector<CURResult> results, CDataSou
   }
 
   std::sort(results.begin(), results.end(), compareFunctionCurResult());
-  // CDBDebug("Found %d elements", results.size());
+#ifdef CCUniqueRequests_DEBUG
+  CDBDebug("Found %d elements", results.size());
+#endif
 
   for (size_t j = 0; j < results.size(); j++) {
     recurDataStructure(dataStructure, &results[j], 0, dimOrdering, dimIndicesToSkip);

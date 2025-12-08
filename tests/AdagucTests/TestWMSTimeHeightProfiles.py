@@ -49,7 +49,7 @@ class TestWMSTimeHeightProfiles(unittest.TestCase):
         AdagucTestTools().cleanTempDir()
         filename = "test_WMSGetMap_TimeHeightProfiles_4326_beta_raw.png"
         wms_arg = "source=test/ceilonet/ceilonet_chm15k_backsct_la1_t12s_v1.0_06310_A20231202_extracted_small.nc&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=beta_raw&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=259793.6688373399,6178346.966712794,1082625.1470173844,7357680.642536524&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&&time=2023-12-02T06%3A40%3A00Z"
-        status, data, _ = AdagucTestTools().runADAGUCServer(wms_arg, env=self.env)
+        status, data, _ = AdagucTestTools().runADAGUCServer(wms_arg, env=self.env, showLog=True)
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
         self.assertEqual(

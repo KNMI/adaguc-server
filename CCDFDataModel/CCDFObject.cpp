@@ -236,7 +236,7 @@ CT::string ncmlHandleVariable(xmlNode *cur_node, CDFObject *cdfObject) {
         }
         /* set shape */
         if (!shape.empty()) {
-          CT::StackList<CT::string> dims = shape.splitToStack(" ");
+          std::vector<CT::string> dims = shape.splitToStack(" ");
           var->dimensionlinks.clear();
           for (size_t d = 0; d < dims.size(); d++) {
             try {

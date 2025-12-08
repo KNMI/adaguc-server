@@ -13,7 +13,7 @@ CT::string CGetFileInfo::getLayersForFile(const char *filename) {
       CDBError("Unable to open file %s", filename);
       throw(__LINE__);
     }
-    CT::StackList<CT::string> variableList = CDFObjectStore::getListOfVisualizableVariables(cdfObject);
+    std::vector<CT::string> variableList = CDFObjectStore::getListOfVisualizableVariables(cdfObject);
 
     fileInfo += "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n";
     fileInfo += "<Configuration>\n";

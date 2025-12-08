@@ -24,7 +24,7 @@
  ******************************************************************************/
 #define CTYPES_USESTACK true
 #define CTSTRINGSTACKLENGTH 126
-//#define CTSTRINGSTACKLENGTH 0
+// #define CTSTRINGSTACKLENGTH 0
 
 #ifndef CTypes_H
 #define CTypes_H
@@ -43,7 +43,6 @@
 
 #endif
 
-#include "CTBaseType.h"
 #include "CTString.h"
 
 #endif

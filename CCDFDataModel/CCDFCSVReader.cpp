@@ -112,11 +112,11 @@ int CDFCSVReader::open(const char *fileName) {
 
   size_t numLines = this->csvLines.size() - (1 + this->headerStartsAtLine); /* Minus header */
 
-  CT::StackList<CT::string> header = CT::string(this->csvLines[this->headerStartsAtLine + 0].c_str()).splitToStack(",");
+  std::vector<CT::string> header = CT::string(this->csvLines[this->headerStartsAtLine + 0].c_str()).splitToStack(",");
   for (size_t c = 0; c < header.size(); c++) {
     header[c].replaceSelf("\r", "");
   }
-  CT::StackList<CT::stringref> firstLine = this->csvLines[this->headerStartsAtLine + 1].splitToStackReferences(",");
+  std::vector<CT::stringref> firstLine = this->csvLines[this->headerStartsAtLine + 1].splitToStackReferences(",");
 
   if (header.size() < 3) {
     CDBError("No CSV data found, less than 3 columns detected");
@@ -177,7 +177,7 @@ int CDFCSVReader::open(const char *fileName) {
       if (timeEnd == -1) timeEnd = timeMetadataString.indexOf(";");
       if (timeEnd == -1) timeEnd = timeMetadataString.length();
       timeMetadataString.setSize(timeEnd);
-      CT::StackList<CT::string> kvp = timeMetadataString.splitToStack("=");
+      std::vector<CT::string> kvp = timeMetadataString.splitToStack("=");
       if (kvp.size() == 2 && kvp[1].length() > 5) {
         timeString = kvp[1].c_str();
       }
@@ -195,7 +195,7 @@ int CDFCSVReader::open(const char *fileName) {
       if (referenceTimeEnd == -1) referenceTimeEnd = referenceTimeMetadataString.indexOf(";");
       if (referenceTimeEnd == -1) referenceTimeEnd = referenceTimeMetadataString.length();
       referenceTimeMetadataString.setSize(referenceTimeEnd);
-      CT::StackList<CT::string> kvp = referenceTimeMetadataString.splitToStack("=");
+      std::vector<CT::string> kvp = referenceTimeMetadataString.splitToStack("=");
       if (kvp.size() == 2 && kvp[1].length() > 5) {
         referenceTimeString = kvp[1].c_str();
       }
@@ -355,7 +355,7 @@ int CDFCSVReader::_readVariableData(CDF::Variable *varToRead, CDFType type) {
       CDBWarning("Found empty CSV line at line %d", j);
       continue;
     }
-    CT::StackList<CT::stringref> csvColumns = this->csvLines[j].splitToStackReferences(",");
+    std::vector<CT::stringref> csvColumns = this->csvLines[j].splitToStackReferences(",");
 
     if (csvColumns.size() != this->variableIndexer.size()) {
       CDBWarning("CSV Columns at line %d have unexpected size of %d, expected %d", j, csvColumns.size(), this->variableIndexer.size());

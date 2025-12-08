@@ -311,7 +311,9 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
       if (dataSource->cfgLayer->Variable.size() > 0) {
         // Shorthand to variable configuration in the layer.
         for (auto *cfgVar : dataSource->cfgLayer->Variable) {
-          // CDBDebug("Checking variable %s", cfgVar->value.c_str());
+#ifdef CDFOBJECTSTORE_DEBUG
+          CDBDebug("Checking variable %s", cfgVar->value.c_str());
+#endif
           // Rename variable, if requested
           if (!cfgVar->attr.orgname.empty()) {
             CDF::Variable *var = cdfObject->getVar(cfgVar->attr.orgname);
@@ -461,8 +463,8 @@ void CDFObjectStore::clear() {
   cdfObjects.clear();
 }
 
-CT::StackList<CT::string> CDFObjectStore::getListOfVisualizableVariables(CDFObject *cdfObject) {
-  CT::StackList<CT::string> variableList;
+std::vector<CT::string> CDFObjectStore::getListOfVisualizableVariables(CDFObject *cdfObject) {
+  std::vector<CT::string> variableList;
 
   if (cdfObject != NULL) {
     for (size_t j = 0; j < cdfObject->variables.size(); j++) {

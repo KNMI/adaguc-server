@@ -20,9 +20,9 @@ IF (CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "arm64" OR CMAKE_HOST_SYSTEM_PROCESSOR 
   # leaks --quiet -atExit -- adagucserver
   set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffp-contract=off")
 ELSE()
-  set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -Wall -Wextra -g3")
-  #set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -Wall -Wextra -g3 -fsanitize=address") # <= Use to find memory issues
-  set(CMAKE_CXX_FLAGS_RELEASE "-O2")
+  # set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -Wall -Wextra -g3")
+  set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -Wall -Wextra -g3 -fsanitize=address") # <= Use to find memory issues
+  set(CMAKE_CXX_FLAGS_RELEASE "-O3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse")
 ENDIF()
 MESSAGE(STATUS "CMAKE_CXX_FLAGS_DEBUG: ${CMAKE_CXX_FLAGS_DEBUG}")
 MESSAGE(STATUS "CMAKE_CXX_FLAGS_RELEASE: ${CMAKE_CXX_FLAGS_RELEASE}")

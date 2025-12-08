@@ -30,74 +30,48 @@
 #include <algorithm>
 
 const char *CTime::className = "CTime";
-void *CTime::currentInitializedVar = NULL;
 
 std::map<CT::string, CTime *> CTime::CTimeInstances;
 
 CTime *CTime::GetCTimeInstance(CDF::Variable *timeVariable) {
-  if (timeVariable == NULL) {
-    CDBError("CTime::init: Given timeVariable == NULL");
-    return NULL;
+  if (timeVariable == nullptr) {
+    CDBError("CTime::init: Given timeVariable == nullptr");
+    return nullptr;
   }
-  CT::string units, calendar;
-
   CDF::Attribute *unitsAttr = timeVariable->getAttributeNE("units");
-  CDF::Attribute *calendarAttr = timeVariable->getAttributeNE("calendar");
-
-  if (unitsAttr == NULL) {
+  if (unitsAttr == nullptr || unitsAttr->data == nullptr) {
     CDBError("No time units available for dimension %s", timeVariable->name.c_str());
-    return NULL;
+    return nullptr;
   }
-
-  if (unitsAttr->data == NULL) {
-    CDBError("No units data available for dimension %s", timeVariable->name.c_str());
-    return NULL;
-  }
-
-  units = unitsAttr->getDataAsString();
-
+  CT::string units = unitsAttr->getDataAsString();
   if (units.length() == 0) {
     CDBError("No units data available for dimension %s", timeVariable->name.c_str());
     return NULL;
   }
-
-  if (calendarAttr != NULL) {
-    if (calendarAttr->data != NULL) {
-      calendar = calendarAttr->getDataAsString();
-    }
+  CT::string calendar;
+  auto calendarAttr = timeVariable->getAttributeNE("calendar");
+  if (calendarAttr != nullptr && calendarAttr->data != nullptr) {
+    calendar = calendarAttr->getDataAsString();
   }
   CT::string key = units + CT::string("_") + calendar;
 
-  CTime *ctime = NULL;
   std::map<CT::string, CTime *>::iterator it = CTimeInstances.find(key);
   if (it != CTimeInstances.end()) {
-    ctime = it->second;
-    /* TODO ASK UNITDATA WHY MULTIPLE INSTANCES OF UDUNITS is not allowed */
-    if (currentInitializedVar != timeVariable) {
-      currentInitializedVar = timeVariable;
-      ctime->reset();
-      if (ctime->init(timeVariable) != 0) {
-        CDBError("Unable to initialize CTime");
-        return NULL;
-      }
-    }
+    return it->second;
   } else {
-    ctime = new CTime();
-    currentInitializedVar = timeVariable;
+    auto ctime = new CTime();
     if (ctime->init(timeVariable) != 0) {
       CDBError("Unable to initialize CTime");
       return NULL;
     }
     CTimeInstances.insert(std::pair<CT::string, CTime *>(key, ctime));
-    // CDBDebug("Inserting new CTime with key %s and pointer %d", key.c_str(), ctime);
+    return ctime;
   }
-  return ctime;
 }
 
 CTime *CTime::GetCTimeEpochInstance() {
   CT::string timeUnits = CTIME_EPOCH_UNITS;
-  CT::string key = timeUnits;
-  std::map<CT::string, CTime *>::iterator it = CTimeInstances.find(key);
+  std::map<CT::string, CTime *>::iterator it = CTimeInstances.find(timeUnits);
   if (it != CTimeInstances.end()) {
     return it->second;
   }
@@ -106,7 +80,7 @@ CTime *CTime::GetCTimeEpochInstance() {
     CDBError("Unable to initialize CTime");
     return NULL;
   }
-  CTimeInstances.insert(std::pair<CT::string, CTime *>(key, ctime));
+  CTimeInstances.insert(std::pair<CT::string, CTime *>(timeUnits, ctime));
   return ctime;
 }
 
@@ -130,6 +104,8 @@ void CTime::safestrcpy(char *s1, const char *s2, size_t size_s1) {
 
 CTime::CTime() {
   isInitialized = false;
+  currentUnit = "";
+  scanUnits = "";
   mode = CTIME_MODE_UTCALENDAR;
 }
 CTime::~CTime() { reset(); }
@@ -451,9 +427,10 @@ int CTime::init(const char *units, const char *calendar) {
     if (szUnits[j] == 'C') szUnits[j] = 32;
     if (szUnits[j] == 'Z') szUnits[j] = 32;
   }
+  scanUnits = szUnits;
 
-  if (utScan(szUnits, &dataunits) != 0) {
-    CDBError("internal error: udu_fmt_time can't parse data unit string: %s", szUnits);
+  if (utScan(scanUnits.c_str(), &dataunits) != 0) {
+    CDBError("internal error: udu_fmt_time can't parse data unit string: %s", scanUnits.c_str());
     return 1;
   }
   mode = CTIME_MODE_UTCALENDAR;
@@ -599,7 +576,7 @@ CTime::Date CTime::getDate(double offset) {
   }
 
   if (mode == CTIME_MODE_UTCALENDAR) {
-    float s;
+    float s = 0;
     int status = utCalendar(date.offset, &dataunits, &date.year, &date.month, &date.day, &date.hour, &date.minute, &s);
     if (status != 0) {
       //       CDBError("dataunits: %d", dataunits);
@@ -643,9 +620,17 @@ double CTime::dateToOffset(Date date) {
   }
 
   if (mode == CTIME_MODE_UTCALENDAR) {
-    double offset;
-    if (utInvCalendar(date.year, date.month, date.day, date.hour, date.minute, (int)date.second, &dataunits, &offset) != 0) {
-      CDBError("dateToOffset: Internal error: utInvCalendar with args '%s'", dateToString(date).c_str());
+    double offset = 0;
+    int status = utInvCalendar(date.year, date.month, date.day, date.hour, date.minute, (int)date.second, &dataunits, &offset);
+    if (status != 0) {
+      if (status == UT_ENOINIT) {
+        CDBError("dateToOffset: UT_ENOINIT");
+      } else if (status == UT_EINVALID) {
+
+        CDBError("dateToOffset: %d UT_EINVALID utInvCalendar with args '%s' and units '%s'", this, dateToString(date).c_str(), currentUnit.c_str());
+      } else {
+        CDBError("dateToOffset: Internal error: utInvCalendar with args '%s'", dateToString(date).c_str());
+      }
       throw CTIME_CONVERSION_ERROR;
     }
     return offset;
@@ -826,7 +811,7 @@ CTime::Date CTime::freeDateStringToDate(const char *szTime) {
     try {
       return ISOStringToDate(date.c_str());
     } catch (int e) {
-      CDBError("freeDateStringToDate exception");
+      CDBError("freeDateStringToDate exception on '%s'", szTime);
       throw e;
     }
   }
@@ -1050,7 +1035,7 @@ CT::string CTime::quantizeTimeToISO8601(CT::string value, CT::string period, CT:
 
 time_t CTime::getEpochTimeFromDateString(CT::string dateString) {
   struct tm result;
-  CT::StackList<CT::string> formats;
+  std::vector<CT::string> formats;
   formats.push_back("%a %b %d %H:%M:%S %Y"); /* 'Sun Sep 22 13:23:18 2019' string  */
   formats.push_back("%Y-%m-%dT%H:%M:%S");    /* 'yyyy-mm-ddTHH:MM:SS' string  */
 
@@ -1135,7 +1120,7 @@ CT::string CTime::dateToPeriod(CTime::Date date) {
 }
 
 CTime::Date CTime::periodToDate(CT::string period) {
-  CT::StackList<CT::string> p = period.splitToStack("T");
+  std::vector<CT::string> p = period.splitToStack("T");
   if (p.size() < 1 || !p[0].startsWith("P")) {
     CDBError("Invalid time period %s", period.c_str());
     throw(__LINE__);

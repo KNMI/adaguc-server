@@ -48,7 +48,7 @@ void progress(const char *message, float percentage) { printf("{\"message\":%s,\
 
 void progresswrite(const char *message, float percentage) { progress(message, percentage / 2. + 50); }
 
-void applyChangesToCDFObject(CDFObject *cdfObject, CT::StackList<CT::string> variablesToDo) {
+void applyChangesToCDFObject(CDFObject *cdfObject, std::vector<CT::string> variablesToDo) {
   for (size_t j = 0; j < variablesToDo.size(); j++) {
     CDF::Variable *varWithoutTime = cdfObject->getVariableNE(variablesToDo[j].c_str());
     if (varWithoutTime != NULL) {
@@ -89,7 +89,7 @@ int main(int argc, const char *argv[]) {
     }
   }
 
-  CT::StackList<CT::string> variablesToAddTimeTo;
+  std::vector<CT::string> variablesToAddTimeTo;
   if (argc == 4) {
     CT::string variableList = argv[3];
     variablesToAddTimeTo = variableList.splitToStack(",");

@@ -345,7 +345,7 @@ std::vector<CT::string> CServerParams::getLegendNames(std::vector<CServerConfig:
   std::vector<CT::string> stringList;
   for (size_t j = 0; j < Legend.size(); j++) {
     CT::string legendValue = Legend[j]->value.c_str();
-    CT::StackList<CT::string> l1 = legendValue.splitToStack(",");
+    std::vector<CT::string> l1 = legendValue.splitToStack(",");
     for (auto li : l1) {
       if (li.length() > 0) {
         stringList.push_back(li);
@@ -373,7 +373,7 @@ int CServerParams::checkDataRestriction() {
       dr = ALLOW_WCS | ALLOW_GFI | ALLOW_METADATA;
     }
     // Decompose into stringlist and check each item
-    CT::StackList<CT::string> items = temp.splitToStack("|");
+    std::vector<CT::string> items = temp.splitToStack("|");
     for (size_t j = 0; j < items.size(); j++) {
       items[j].replaceSelf("\"", "");
       if (items[j].equals("ALLOW_GFI")) dr |= ALLOW_GFI;

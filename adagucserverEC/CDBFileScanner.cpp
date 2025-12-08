@@ -906,7 +906,9 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string _tailPath, CT::
         }
       } else {
         fileList = searchFileNames(dataSource->cfgLayer->FilePath[0]->value.c_str(), filter.c_str(), tailPath.c_str());
-        // CDBDebug("SearchFileNames found %d files", fileList.size());
+        if (verbose) {
+          CDBDebug("SearchFileNames found %d files", fileList.size());
+        }
       }
 
     } catch (int linenr) {

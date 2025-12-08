@@ -392,7 +392,7 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
         CDBDebug("Searching StandardNames \"%s\"", standard_name.c_str());
 #endif
         if (standard_name.length() > 0) {
-          CT::StackList<CT::string> standardNameList;
+          std::vector<CT::string> standardNameList;
 
           if (standard_name.charAt(0) == '^') {
             standardNameList.push_back(standard_name);

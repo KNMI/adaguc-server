@@ -642,7 +642,9 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
   for (auto pointConfig : styleConfig->Point) {
     PointStyle pointStyle = getPointStyle(pointConfig, dataSource->srvParams->cfg);
     auto thinnedPointIndexList = doThinningGetIndices(dataSource->getDataObject(0)->points, thinningInfo.doThinning, thinningInfo.thinningRadius, usePoints);
-    CDBDebug("Point plotting %d elements %d", thinnedPointIndexList.size(), usePoints.size());
+    if (dataSource->debug) {
+      CDBDebug("Point plotting %d elements %d", thinnedPointIndexList.size(), usePoints.size());
+    }
 
     if (pointConfig->attr.dot.equalsIgnoreCase("true")) {
       renderSingleDot(thinnedPointIndexList, dataSource, drawImage, styleConfiguration, pointStyle);

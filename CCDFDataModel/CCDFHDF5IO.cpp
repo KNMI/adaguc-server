@@ -1357,7 +1357,7 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
 
     CT::string productCornerString = (char *)geo->getAttribute("geo_product_corners")->toString().c_str();
 
-    CT::StackList<CT::string> coords = productCornerString.trim().splitToStack(" ");
+    std::vector<CT::string> coords = productCornerString.trim().splitToStack(" ");
 
     if (coords.size() > 6) {
       iso_dataset->addAttribute(new CDF::Attribute("min-x", coords[0].c_str()));

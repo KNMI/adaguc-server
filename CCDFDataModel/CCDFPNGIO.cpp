@@ -98,7 +98,7 @@ int CDFPNGReader::open(const char *fileName) {
     CT::string infoFile = fileName;
     infoFile.concat(".info");
     CT::string infoData = CReadFile::open(infoFile);
-    CT::StackList<CT::string> lines = infoData.splitToStack("\n");
+    std::vector<CT::string> lines = infoData.splitToStack("\n");
 
     for (size_t l = 0; l < lines.size(); l++) {
       CDBDebug("Info file line %s", lines[l].c_str());
@@ -111,7 +111,7 @@ int CDFPNGReader::open(const char *fileName) {
       if (lines[l].startsWith("bbox=")) {
         CT::string bbox = lines[l];
         bbox.substringSelf(5, -1);
-        CT::StackList<CT::string> bboxItems = bbox.splitToStack(",");
+        std::vector<CT::string> bboxItems = bbox.splitToStack(",");
         if (bboxItems.size() == 4) {
           double d[4];
           d[0] = bboxItems[0].trim().toDouble();
@@ -157,7 +157,7 @@ int CDFPNGReader::open(const char *fileName) {
 
       /* BBOX */
       if (pngRaster->headers[j].key.equals("bbox")) {
-        CT::StackList<CT::string> bboxItems = pngRaster->headers[j].value.splitToStack(",");
+        std::vector<CT::string> bboxItems = pngRaster->headers[j].value.splitToStack(",");
         if (bboxItems.size() == 4) {
 
           bbox[0] = bboxItems[0].trim().toDouble();

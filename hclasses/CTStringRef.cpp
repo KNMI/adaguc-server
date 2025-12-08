@@ -87,8 +87,8 @@ namespace CT {
 
   size_t CT::stringref::length() { return _length; }
 
-  CT::StackList<CT::stringref> CT::stringref::splitToStackReferences(const char *_value) {
-    StackList<CT::stringref> stringList;
+  std::vector<CT::stringref> CT::stringref::splitToStackReferences(const char *_value) {
+    std::vector<CT::stringref> stringList;
     stringref str(this->constdata, this->_length);
     int a = this->indexOf(_value);
     size_t rel = 0;

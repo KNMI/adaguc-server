@@ -734,13 +734,13 @@ int getStylesForLayer(MetadataLayer *metadataLayer) {
     }
   }
 
-  CT::PointerList<CStyleConfiguration *> *styleListFromDataSource = metadataLayer->dataSource->getStyleListForDataSource(metadataLayer->dataSource);
+  std::vector<CStyleConfiguration *> *styleListFromDataSource = metadataLayer->dataSource->getStyleListForDataSource(metadataLayer->dataSource);
 
   if (styleListFromDataSource == NULL) return 1;
 
   for (size_t j = 0; j < styleListFromDataSource->size(); j++) {
     LayerMetadataStyle style = {
-        .name = styleListFromDataSource->get(j)->styleCompositionName, .title = styleListFromDataSource->get(j)->styleTitle, .abstract = styleListFromDataSource->get(j)->styleAbstract};
+        .name = styleListFromDataSource->at(j)->styleCompositionName, .title = styleListFromDataSource->at(j)->styleTitle, .abstract = styleListFromDataSource->at(j)->styleAbstract};
     metadataLayer->layerMetadata.styleList.push_back(style);
   }
 

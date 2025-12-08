@@ -3234,8 +3234,10 @@ int CImageDataWriter::end() {
     status = drawImage.printImagePng32();
   } else if (srvParam->imageFormat == IMAGEFORMAT_IMAGEWEBP) {
 #ifdef CIMAGEDATAWRITER_DEBUG
-    printf("%s%s%c%c\n", "Content-Type:image/webp", cacheControl.c_str(), 13, 10);
+    CDBDebug("Creating webp");
 #endif
+    printf("%s%s%c%c\n", "Content-Type:image/webp", cacheControl.c_str(), 13, 10);
+
     int webPQuality = srvParam->imageQuality;
     if (!srvParam->Format.empty()) {
       /* Support setting quality via wms format parameter, e.g. format=image/webp;90& */

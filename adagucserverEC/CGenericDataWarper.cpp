@@ -156,7 +156,6 @@ ProjectionGrid *makeStridedProjection(double halfCell, CImageWarper *warper, i4b
 template <typename T>
 void linearTransformGrid(GDWState &warperState, bool useHalfCellOffset, CImageWarper *, void *, GeoParameters &sourceGeoParams, GeoParameters &destGeoParams,
                          const std::function<void(int, int, T, GDWState &warperState)> &drawFunction) {
-  // CDBDebug("linearTransformGrid");
   double halfCell = useHalfCellOffset ? 0.5 : 0;
   double dfSourceExtW = sourceGeoParams.bbox.span().x;
   double dfSourceExtH = sourceGeoParams.bbox.span().y;

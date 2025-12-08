@@ -8,8 +8,8 @@ const char *CT::string::className = "CT::string";
 
 namespace CT {
 
-  StackList<CT::string> string::splitToStack(const char *_value) {
-    StackList<CT::string> stringList;
+  std::vector<CT::string> string::splitToStack(const char *_value) {
+    std::vector<CT::string> stringList;
     const char *fo = strstr(stdstring.c_str(), _value);
     const char *prevFo = stdstring.c_str();
     while (fo != NULL) {
@@ -609,8 +609,8 @@ namespace CT {
     this->stdstring.append(newString);
   }
 
-  CT::StackList<CT::stringref> string::splitToStackReferences(const char *_value) {
-    StackList<CT::stringref> stringList;
+  std::vector<CT::stringref> string::splitToStackReferences(const char *_value) {
+    std::vector<CT::stringref> stringList;
     const char *fo = strstr(this->stdstring.c_str(), _value);
     const char *prevFo = this->stdstring.c_str();
     size_t keyLength = strlen(_value);

@@ -48,7 +48,7 @@ void progress(const char *message, float percentage) { printf("{\"message\":%s,\
 
 void progresswrite(const char *message, float percentage) { progress(message, percentage / 2. + 50); }
 int memberNo = 1;
-void applyChangesToCDFObject(const char *_fileName, CDFObject *cdfObject, CT::StackList<CT::string> variablesToDo, const char *dimNameToAggregate) {
+void applyChangesToCDFObject(const char *_fileName, CDFObject *cdfObject, std::vector<CT::string> variablesToDo, const char *dimNameToAggregate) {
 
   CT::string memberValue;
 #define CLIPC_ENSEMBLES_GERICS
@@ -73,7 +73,7 @@ void applyChangesToCDFObject(const char *_fileName, CDFObject *cdfObject, CT::St
 
 #ifdef CLIPC_ENSEMBLES_GERICS
   CT::string fileName = _fileName;
-  CT::StackList<CT::string> parts = fileName.splitToStack("_");
+  std::vector<CT::string> parts = fileName.splitToStack("_");
   memberValue = parts[3];
   memberValue.concat("_with_");
   memberValue += parts[6];
@@ -146,7 +146,7 @@ int main(int argc, const char *argv[]) {
     }
   }
 
-  CT::StackList<CT::string> variablesToAddDimTo;
+  std::vector<CT::string> variablesToAddDimTo;
   if (argc == 4) {
     CT::string variableList = argv[3];
     variablesToAddDimTo = variableList.splitToStack(",");
