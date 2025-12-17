@@ -3,20 +3,19 @@
 #include "CDebugger.h"
 #include <regex>
 #define CT_STRING_PRINT_BUFFER_SIZE 64
+
 namespace CT {
 
   std::vector<CT::string> string::split(const char *_value) const {
     std::vector<CT::string> stringList;
     const char *fo = strstr(stdstring.c_str(), _value);
     const char *prevFo = stdstring.c_str();
-    while (fo != NULL) {
+    while (fo != nullptr) {
       stringList.push_back(CT::string(prevFo, (fo - prevFo)));
       prevFo = fo + 1;
-      fo = strstr(fo + 1, _value);
+      fo = strstr(prevFo, _value);
     }
-    if (strlen(prevFo) > 0) {
-      stringList.push_back(CT::string(prevFo));
-    }
+    stringList.push_back(CT::string(prevFo));
     return stringList;
   }
 
@@ -623,19 +622,19 @@ namespace CT {
     this->stdstring.append(newString);
   }
 
-  std::vector<CT::stringref> string::splitToStackReferences(const char *_value) {
-    std::vector<CT::stringref> stringList;
+  std::vector<CT::string> string::split(const char *_value) {
+    std::vector<CT::string> stringList;
     const char *fo = strstr(this->stdstring.c_str(), _value);
     const char *prevFo = this->stdstring.c_str();
     size_t keyLength = strlen(_value);
     while (fo != NULL) {
-      stringList.push_back(CT::stringref(prevFo, (fo - prevFo)));
+      stringList.push_back(CT::string(prevFo, (fo - prevFo)));
       prevFo = fo + keyLength;
       fo = strstr(fo + keyLength, _value);
     }
     size_t prevFoLength = strlen(prevFo);
     if (prevFoLength > 0) {
-      stringList.push_back(CT::stringref(prevFo, prevFoLength));
+      stringList.push_back(CT::string(prevFo, prevFoLength));
     }
     return stringList;
   }

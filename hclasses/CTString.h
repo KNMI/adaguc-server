@@ -35,7 +35,6 @@
 #include <regex.h>
 #include <vector>
 
-#include "CTStringRef.h"
 #define CT_MAX_NUM_CHARACTERS_FOR_FLOAT 18
 #define CT_MAX_NUM_CHARACTERS_FOR_INT 12
 #define CT_MAX_NUM_CHARACTERS_FOR_NUMERIC 39
@@ -47,13 +46,12 @@ namespace CT {
     const char *strrstr(const char *x, const char *y);
     char _tohex(char in);
     char _fromhex(char in);
-
-  public:
     /**
      * std::string containing the string
      */
     std::string stdstring;
 
+  public:
     /**
      * Default constructor
      */
@@ -503,7 +501,7 @@ namespace CT {
      * Resources are freed automatically
      * @param _value The token to split the string on
      */
-    std::vector<CT::stringref> splitToStackReferences(const char *_value);
+    std::vector<CT::string> split(const char *_value);
 
     /** Replace all strings with another string
      * @param substr the string to replace
@@ -517,6 +515,8 @@ namespace CT {
      * @returns new string
      */
     CT::string replaceAll(std::string &substr, std::string &newString);
+
+    friend CT::string join(const std::vector<string> &items, CT::string separator);
   };
 
   // Example  on how new implementation can help with moving towards fully using std::string instead of CT::String
