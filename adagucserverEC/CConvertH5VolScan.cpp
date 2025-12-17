@@ -43,7 +43,7 @@ bool sortFunction(CT::string one, CT::string other) {
     other = other.substring(0, other.lastIndexOf("l"));
     if (one.equals(other)) return false;
   }
-  return (std::atof(one) < std::atof(other));
+  return (std::atof(one.c_str()) < std::atof(other.c_str()));
 }
 
 int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParams *srvParams) {
@@ -249,7 +249,7 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
     CT::string szStartTime = getRadarStartTime(cdfObject);
     // Set adaguc time
     CTime ctime;
-    if (ctime.init(time_units, NULL) != 0) {
+    if (ctime.init(time_units, "") != 0) {
       CDBError("Could not initialize CTIME: %s", time_units.c_str());
       return 1;
     }

@@ -74,8 +74,6 @@ namespace CT {
     return n;
   }
 
-  string::operator const char *() const { return this->c_str(); }
-
   const char *string::strrstr(const char *x, const char *y) {
     const char *prev = NULL;
     const char *next;
@@ -380,6 +378,8 @@ namespace CT {
   int string::endsWith(const char *search) { return (lastIndexOf(search) == int(length() - strlen(search))); };
 
   int string::startsWith(const char *search) { return (indexOf(search) == 0); };
+
+  int string::startsWith(std::string search) { return (indexOf(search.c_str()) == 0); };
 
   string string::trim() {
     CT::string r = stdstring.c_str();

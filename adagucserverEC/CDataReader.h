@@ -166,7 +166,7 @@ public:
    * @param ncname the name dimension to check
    * @return DimensionType
    */
-  static CDataReader::DimensionType getDimensionType(CDFObject *cdfObject, const char *ncname);
+  static CDataReader::DimensionType getDimensionType(CDFObject *cdfObject, std::string ncname);
 
   /**
    * Get the dimension type (time, elevation, member) by CDF Variable

@@ -210,7 +210,7 @@ int CDFCSVReader::open(const char *fileName) {
 
   CDF::Variable *stationVar = new CDF::Variable();
   cdfObject->addVariable(stationVar);
-  stationVar->setName(stationDim->getName());
+  stationVar->setName(stationDim->getName().c_str());
   stationVar->currentType = CDF_STRING;
   stationVar->nativeType = CDF_STRING;
   stationVar->setType(CDF_STRING);
@@ -230,7 +230,7 @@ int CDFCSVReader::open(const char *fileName) {
 
     CDF::Variable *timeVar = new CDF::Variable();
     cdfObject->addVariable(timeVar);
-    timeVar->setName(timeDim->getName());
+    timeVar->setName(timeDim->getName().c_str());
     timeVar->currentType = CDF_DOUBLE;
     timeVar->nativeType = CDF_DOUBLE;
     timeVar->setType(CDF_DOUBLE);
@@ -266,7 +266,7 @@ int CDFCSVReader::open(const char *fileName) {
 
     CDF::Variable *referenceTimeVar = new CDF::Variable();
     cdfObject->addVariable(referenceTimeVar);
-    referenceTimeVar->setName(referenceTimeDim->getName());
+    referenceTimeVar->setName(referenceTimeDim->getName().c_str());
     referenceTimeVar->currentType = CDF_DOUBLE;
     referenceTimeVar->nativeType = CDF_DOUBLE;
     referenceTimeVar->setType(CDF_DOUBLE);

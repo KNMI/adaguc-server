@@ -173,3 +173,18 @@ TEST(string, splitLinesAndCommaDoubleSplit) {
   LONGS_EQUAL(5, splittedRefs6.size());
   CHECK_EQUAL("TEST", std::string(splittedRefs6[4].c_str()));
 }
+
+TEST(string, splitOnString) {
+  CT::string linesToSplit = "Line1<SEP>Line2<SEP>Line3<SEP>Line4<SEP>Line5<SEP>Line6<SEP>Line7";
+  std::vector<CT::string> lines = linesToSplit.split("<SEP>");
+  LONGS_EQUAL(7, lines.size());
+  CHECK_EQUAL("Line1", std::string(lines[0].c_str()));
+  CHECK_EQUAL("Line7", std::string(lines[6].c_str()));
+}
+
+TEST(string, splitOnKeyWhichRepeats) {
+  CT::string linesToSplit = "aaaaaaaaaaaaaaaaaaaaaaaaa";
+  // For now this behavior is to be expected
+  std::vector<CT::string> lines = linesToSplit.split("aaa");
+  LONGS_EQUAL(9, lines.size());
+}

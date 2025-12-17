@@ -97,7 +97,7 @@ int CDFPNGReader::open(const char *fileName) {
   try {
     CT::string infoFile = fileName;
     infoFile.concat(".info");
-    CT::string infoData = CReadFile::open(infoFile);
+    CT::string infoData = CReadFile::open(infoFile.c_str());
     std::vector<CT::string> lines = infoData.split("\n");
 
     for (size_t l = 0; l < lines.size(); l++) {
@@ -186,7 +186,7 @@ int CDFPNGReader::open(const char *fileName) {
           CDBDebug(CTIME_GETINSTANCE_ERROR_MESSAGE);
           return 1;
         }
-        ((double *)timeVariable->data)[0] = ctime->dateToOffset(ctime->freeDateStringToDate(pngRaster->headers[j].value));
+        ((double *)timeVariable->data)[0] = ctime->dateToOffset(ctime->freeDateStringToDate(pngRaster->headers[j].value.c_str()));
       }
       /* Reference time dimension */
       if (pngRaster->headers[j].key.equals("reference_time")) {
@@ -206,7 +206,7 @@ int CDFPNGReader::open(const char *fileName) {
           CDBDebug(CTIME_GETINSTANCE_ERROR_MESSAGE);
           return 1;
         }
-        ((double *)referenceTimeVariable->data)[0] = ctime->dateToOffset(ctime->freeDateStringToDate(pngRaster->headers[j].value));
+        ((double *)referenceTimeVariable->data)[0] = ctime->dateToOffset(ctime->freeDateStringToDate(pngRaster->headers[j].value.c_str()));
       }
     }
 

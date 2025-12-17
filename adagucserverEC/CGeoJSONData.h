@@ -98,6 +98,7 @@ public:
 
   CT::string toString();
   CT::string toString(const char *fmt);
+  CT::string toString(std::string fmt);
 };
 
 // class FeatureProperties {

@@ -207,7 +207,7 @@ int main(int argc, const char *argv[]) {
         time.init(aggregationDim);
         CTime::Date date = time.getDate(value);
         CTime epochCTime;
-        epochCTime.init("seconds since 1970-01-01 0:0:0", NULL);
+        epochCTime.init("seconds since 1970-01-01 0:0:0", "");
         CT::string a;
         a.print("%f", epochCTime.dateToOffset(date));
         fileObject->dimAggregationValue = a.c_str();

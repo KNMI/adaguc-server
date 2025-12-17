@@ -1505,7 +1505,7 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
 #endif
   // Set adaguc time
   CTime ctime;
-  if (ctime.init((char *)time_units->data, NULL) != 0) {
+  if (ctime.init((char *)time_units->data, "") != 0) {
     CDBError("Could not initialize CTIME: %s", (char *)time_units->data);
     return 1;
   }

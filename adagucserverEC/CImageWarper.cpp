@@ -573,7 +573,7 @@ CT::string CImageWarper::getProj4FromId(CDataSource *dataSource, CT::string proj
 std::tuple<CT::string, double> CImageWarper::fixProjection(CT::string projectionString) {
   CProj4ToCF trans;
   CDF::Variable var;
-  int status = trans.convertProjToCF(&var, projectionString);
+  int status = trans.convertProjToCF(&var, projectionString.c_str());
   if (status == 0) {
     CDF::Attribute *majorAttribute = var.getAttributeNE("semi_major_axis");
     CDF::Attribute *minorAttribute = var.getAttributeNE("semi_minor_axis");

@@ -769,7 +769,7 @@ CStyleConfiguration *CDataSource::getStyle() {
       _currentStyle = (*it);
     } else {
       // If not found, check for the style without rendermethod instead using startsWith.
-      it = std::find_if(_styles->begin(), _styles->end(), [&styleName](CStyleConfiguration *a) { return a->styleCompositionName.startsWith(styleName); });
+      it = std::find_if(_styles->begin(), _styles->end(), [&styleName](CStyleConfiguration *a) { return a->styleCompositionName.startsWith(styleName.c_str()); });
       if (it != _styles->end()) {
         _currentStyle = (*it);
       } else {
@@ -945,6 +945,7 @@ double CDataSource::getContourScaling() {
   return 1;
 }
 
+CDataSource::DataObject *CDataSource::getDataObjectByName(std::string name) { return getDataObjectByName(name.c_str()); }
 CDataSource::DataObject *CDataSource::getDataObjectByName(const char *name) {
   for (auto it = dataObjects.begin(); it != dataObjects.end(); ++it) {
     CDataSource::DataObject *dataObject = *it;

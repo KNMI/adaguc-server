@@ -94,7 +94,17 @@ CDF::Variable *CDFObject::getVar(CT::string name) {
 
 CDF::Variable *CDFObject::getVariableNE(const char *name) { return getVar(name); }
 
+CDF::Variable *CDFObject::getVariableNE(std::string name) { return getVar(name.c_str()); }
+
 CDF::Variable *CDFObject::getVariable(const char *name) {
+  auto var = getVar(name);
+  if (var == nullptr) {
+    throw(CDF_E_VARNOTFOUND);
+  }
+  return var;
+}
+
+CDF::Variable *CDFObject::getVariable(std::string name) {
   auto var = getVar(name);
   if (var == nullptr) {
     throw(CDF_E_VARNOTFOUND);

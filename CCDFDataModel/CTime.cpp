@@ -76,7 +76,7 @@ CTime *CTime::GetCTimeEpochInstance() {
     return it->second;
   }
   auto ctime = new CTime();
-  if (ctime->init(timeUnits, NULL) != 0) {
+  if (ctime->init(timeUnits.c_str(), "") != 0) {
     CDBError("Unable to initialize CTime");
     return NULL;
   }
@@ -162,7 +162,7 @@ int CTime::init(CDF::Variable *timeVariable) {
   return init(units.c_str(), calendar.c_str());
 }
 
-int CTime::init(const char *units, const char *calendar) {
+int CTime::init(std::string units, std::string calendar) {
   if (isInitialized) {
     if (!currentUnit.equals(units)) {
       if (mode == CTIME_MODE_360day) {
@@ -187,10 +187,9 @@ int CTime::init(const char *units, const char *calendar) {
   currentUnit = units;
 
   currentCalendar = "";
-  if (calendar != NULL) {
-    if (strlen(calendar) > 0) {
-      currentCalendar = calendar;
-    }
+
+  if (!calendar.empty()) {
+    currentCalendar = calendar;
   }
 
   bool parseTimeUnitsMySelf = false;
@@ -417,7 +416,7 @@ int CTime::init(const char *units, const char *calendar) {
     return 1;
   }
 
-  size_t l = strlen(units);
+  size_t l = units.length();
   char szUnits[l + 1];
   szUnits[l] = '\0';
   for (size_t j = 0; j < l; j++) {
@@ -1021,7 +1020,7 @@ CT::string CTime::quantizeTimeToISO8601(CT::string value, CT::string period, CT:
   // CDBDebug("quantizetime with for value %s with period %s and method %s", value.c_str(), period.c_str(), method.c_str());
   try {
     CTime time;
-    time.init("seconds since 0000-01-01T00:00:00Z", NULL);
+    time.init("seconds since 0000-01-01T00:00:00Z", "");
     double offsetOrig = time.dateToOffset(time.freeDateStringToDate(value.c_str()));
     double quantizedOffset = time.quantizeTimeToISO8601(offsetOrig, &period, &method);
     newDateString = time.dateToISOString(time.getDate(quantizedOffset));

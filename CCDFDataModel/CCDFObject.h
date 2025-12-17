@@ -61,6 +61,8 @@ public:
     throw(CDF_E_VARNOTFOUND);
   }
 
+  CDF::Variable *getVariable(std::string name);
+
   int getVariableIndexNE(const char *name) {
     try {
       return getVariableIndex(name);
@@ -95,6 +97,8 @@ public:
   CDF::Variable *getVar(CT::string name);
 
   CDF::Variable *getVariableNE(const char *name);
+
+  CDF::Variable *getVariableNE(std::string name);
 
   CDF::Variable *addVariable(CDF::Variable *var) {
     var->id = variables.size();
@@ -134,6 +138,15 @@ public:
       }
     }
     throw(CDF_E_DIMNOTFOUND);
+    return NULL;
+  }
+
+  CDF::Dimension *getDimensionNE(std::string name) {
+    for (size_t j = 0; j < dimensions.size(); j++) {
+      if (dimensions[j]->name.equals(name)) {
+        return dimensions[j];
+      }
+    }
     return NULL;
   }
 

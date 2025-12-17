@@ -1224,7 +1224,7 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
 
     double *dashes = NULL;
     int numDashes = 0;
-    if (contourDefinitions[j].dashing) {
+    if (contourDefinitions[j].dashing.length() > 0) {
       auto stringDashes = contourDefinitions[j].dashing.split(",");
       numDashes = stringDashes.size();
       dashes = new double[numDashes];

@@ -183,7 +183,8 @@ void renderVectorPoints(std::vector<size_t> thinnedPointIndexList, CImageWarper 
         int x = pointStrength->x;
         int y = dataSource->srvParams->geoParams.height - pointStrength->y;
         textValue.print(vectorStyle.drawVectorTextFormat.c_str(), strength);
-        drawImage->setTextDisc(x, y, vectorStyle.discRadius, textValue.c_str(), vectorStyle.fontFile, vectorStyle.fontSize, vectorStyle.textColor, vectorStyle.fillColor, vectorStyle.lineColor);
+        drawImage->setTextDisc(x, y, vectorStyle.discRadius, textValue.c_str(), vectorStyle.fontFile.c_str(), vectorStyle.fontSize, vectorStyle.textColor, vectorStyle.fillColor,
+                               vectorStyle.lineColor);
         drawImage->drawVector2(x, y, ((90 + direction) / 360.) * M_PI * 2, 10, vectorStyle.discRadius, vectorStyle.fillColor, vectorStyle.lineWidth);
       }
 

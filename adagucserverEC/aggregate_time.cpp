@@ -133,7 +133,7 @@ int main(int argc, const char *argv[]) {
       CTime *time = CTime::GetCTimeInstance(timeVar);
       CTime::Date date = time->getDate(value);
       CTime epochCTime;
-      epochCTime.init("seconds since 1970-01-01 0:0:0", NULL);
+      epochCTime.init("seconds since 1970-01-01 0:0:0", "");
 
       fileObject->timeValue = epochCTime.dateToOffset(date);
 

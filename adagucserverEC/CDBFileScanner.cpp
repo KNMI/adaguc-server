@@ -921,7 +921,7 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string _tailPath, CT::
       CDBDebug("Checking specified fileToUpdate %s with filter %s", fileToUpdate.c_str(), filter.c_str());
     }
     CT::string fileToCheckAgainstRegexp = fileToUpdate.basename();
-    if (fileToUpdate.equals(dataSource->cfgLayer->FilePath[0]->value) || CDirReader::testRegEx(fileToCheckAgainstRegexp, filter.c_str()) == 1) {
+    if (fileToUpdate.equals(dataSource->cfgLayer->FilePath[0]->value) || CDirReader::testRegEx(fileToCheckAgainstRegexp.c_str(), filter.c_str()) == 1) {
       if (verbose) {
         CDBDebug("Add specified file %s with filter %s for scanning", fileToCheckAgainstRegexp.c_str(), filter.c_str());
       }

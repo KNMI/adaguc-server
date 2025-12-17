@@ -333,6 +333,7 @@ public:
   GeoParameters getGeo();
 
   DataObject *getDataObjectByName(const char *name);
+  DataObject *getDataObjectByName(std::string name);
   DataObject *getDataObject(int j);
 
   DataObject *getFirstAvailableDataObject();

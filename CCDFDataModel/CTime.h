@@ -137,7 +137,7 @@ public:
    * @param calendar CF time calendar
    * @return 0 on success 1 on failure.
    */
-  int init(const char *units, const char *calendar);
+  int init(std::string units, std::string calendar);
 
   /**
    * Turns double value into a date object

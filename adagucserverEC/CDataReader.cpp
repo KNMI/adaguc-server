@@ -1434,7 +1434,7 @@ CDF::Variable *CDataReader::addBlankDimVariable(CDFObject *cdfObject, const char
   }
   return dimVar;
 }
-CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *cdfObject, const char *ncname) {
+CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *cdfObject, std::string ncname) {
   CDF::Dimension *dimension = cdfObject->getDimensionNE(ncname);
   if (dimension != NULL) {
     return getDimensionType(cdfObject, dimension);

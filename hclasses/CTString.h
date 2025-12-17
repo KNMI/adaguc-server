@@ -122,11 +122,9 @@ namespace CT {
      */
     string operator+(const char *const &f);
 
-    /**
-     * const char* conversion operator
-     * Now it is not necessary to call c_str when a const char* is expected.
-     */
-    operator const char *() const;
+    // Conversion from and to std::string
+    string(std::string &s) : string(s.c_str()) {}                                 // Implicit conversion allowed
+    operator std::string() const { return std::string(this->stdstring.c_str()); } // Implicit conversion allowed
 
     /**
      * Compare operator
@@ -291,6 +289,7 @@ namespace CT {
      * The startsWith() method determines whether a string begins with the characters of another string, returning true or false as appropriate.
      */
     int startsWith(const char *search);
+    int startsWith(std::string search);
 
     /**
      * String to unicode
