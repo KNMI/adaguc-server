@@ -25,7 +25,7 @@
 #ifndef CRectangleText_H
 #define CRectangleText_H
 #include "CDebugger.h"
-#include "CTypes.h"
+#include "CTString.h"
 
 #include "Definitions.h"
 #include "CColor.h"

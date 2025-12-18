@@ -46,6 +46,8 @@ struct CColor {
   }
   CColor(const char *color) { parse(color); }
 
+  CColor(std::string color) { parse(color.c_str()); }
+
   CColor &operator=(const char *color) {
     this->parse(color);
     return *this;

@@ -1374,7 +1374,7 @@ int CDrawImage::createGDPalette(CServerConfig::XMLE_Legend *legend) {
         int offset = (int)(stops.get(j)->getAttrValue("offset").toFloat() * 2.4);
         CT::string color = stops.get(j)->getAttrValue("stop-color").c_str() + 4;
         color.setSize(color.length() - 1);
-        auto colors = color.splitToStack(",");
+        auto colors = color.split(",");
         if (colors.size() != 3) {
           CDBError("Number of specified colors is unequal to three");
           return 1;

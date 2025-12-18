@@ -29,7 +29,7 @@
 #include <vector>
 #include <stdio.h>
 
-#include "CTypes.h"
+#include "CTString.h"
 
 #define CXMLPARSER_ATTR_NOT_FOUND 1
 #define CXMLPARSER_ELEMENT_NOT_FOUND 2

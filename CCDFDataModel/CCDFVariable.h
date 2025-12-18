@@ -200,6 +200,9 @@ namespace CDF {
     }
     int setAttributeText(const char *attrName, const char *attrString, size_t strLen);
     int setAttributeText(const char *attrName, const char *attrString);
+
+    int setAttributeText(std::string attrName, std::string attrString);
+
     void *getCDFObjectClassPointer(size_t *start, size_t *count);
     int setData(CDFType type, const void *dataToSet, size_t dataLength);
   };

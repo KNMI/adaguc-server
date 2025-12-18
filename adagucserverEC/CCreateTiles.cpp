@@ -130,7 +130,7 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
     auto adagucTime = CTime::GetCTimeInstance(var);
     auto timeString = adagucTime->dateToISOString(adagucTime->getDate(timeValue));
     dataSourceToTile->requiredDims.push_back(new COGCDims("time", timeString));
-    dataSourceToTile->getCDFDims()->addDimension("time", timeString, 0);
+    dataSourceToTile->getCDFDims()->addDimension("time", timeString.c_str(), 0);
   } catch (int e) {
     if (dataSourceToTile->requiredDims.size() == 0) {
       COGCDims *ogcDim = new COGCDims();
@@ -154,9 +154,9 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
   if (tileSettings->attr.tilepath.empty() == false) {
     tileBasePath = tileSettings->attr.tilepath;
     tileBasePath = CDirReader::makeCleanPath(tileBasePath.c_str());
-    if (!CDirReader::isDir(tileBasePath)) {
+    if (!CDirReader::isDir(tileBasePath.c_str())) {
 
-      CDirReader::makePublicDirectory(tileBasePath);
+      CDirReader::makePublicDirectory(tileBasePath.c_str());
     }
   }
 

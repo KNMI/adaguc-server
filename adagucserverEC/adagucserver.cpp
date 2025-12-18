@@ -97,9 +97,9 @@ std::set<std::string> findDataSetsToScan(CT::string layerPathToScan, bool verbos
   auto srvParam = baseRequest.getServerParams();
 
   // Get the directory of the file to scan:
-  CT::string directoryOfFileToScan = layerPathToScan = CDirReader::makeCleanPath(layerPathToScan);
+  CT::string directoryOfFileToScan = layerPathToScan = CDirReader::makeCleanPath(layerPathToScan.c_str());
   directoryOfFileToScan.substringSelf(0, directoryOfFileToScan.length() - directoryOfFileToScan.basename().length());
-  directoryOfFileToScan = CDirReader::makeCleanPath(directoryOfFileToScan) + "/";
+  directoryOfFileToScan = CDirReader::makeCleanPath(directoryOfFileToScan.c_str()) + "/";
   if (verbose) {
     CDBDebug("directoryOfFileToScan = [%s]", directoryOfFileToScan.c_str());
   }

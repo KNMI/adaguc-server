@@ -58,6 +58,8 @@ CT::string FeatureProperty::toString(const char *fmt) {
   return s;
 };
 
+CT::string FeatureProperty::toString(std::string fmt) { return toString(fmt.c_str()); }
+
 GeoPoint::GeoPoint(float lon, float lat) {
   this->lat = lat;
   this->lon = lon;

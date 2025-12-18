@@ -734,9 +734,9 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> &dataSources, in
     if (dataSource->cfgLayer->TileSettings.size() == 1) {
       openAll = true;
     }
-
+#ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("isProfileData:[%d] openAll:[%d] sameHeaderForAll:[%d] infoFormat:[%s]", isProfileData, openAll, sameHeaderForAll, srvParam->InfoFormat.c_str());
-
+#endif
     if (isProfileData) {
       int status = CMakeEProfile::MakeEProfile(&drawImage, &imageWarper, dataSource, dX, dY, &eProfileJson);
       if (status != 0) {
@@ -1576,17 +1576,17 @@ int CImageDataWriter::calculateData(std::vector<CDataSource *> &dataSources) {
       float inputMapExprValuesLow[dataSources.size()];
       float inputMapExprValuesHigh[dataSources.size()];
 
-      auto layerStyles = srvParam->Styles.splitToStack(",");
+      auto layerStyles = srvParam->Styles.split(",");
       CT::string style;
       //      bool errorOccured=false;
       for (size_t j = 0; j < dataSources.size(); j++) {
         size_t numberOfValues = 1;
-        auto _style = layerStyles[j].splitToStack("|");
+        auto _style = layerStyles[j].split("|");
         style.copy(&_style[0]);
         CDBDebug("STYLE == %s", style.c_str());
         if (j == 0) {
           // Find the conditional expression for the first layer (the boolean map)
-          auto conditionals = style.splitToStack("_");
+          auto conditionals = style.split("_");
           if (!conditionals[0].equals("default") && conditionals.size() != dataSources.size() - 2) {
             CDBError("Incorrect number of conditional operators specified: %d  (expected %d)", conditionals.size(), dataSources.size() - 2);
             hasFailed = true;
@@ -1621,7 +1621,7 @@ int CImageDataWriter::calculateData(std::vector<CDataSource *> &dataSources) {
             exprVal.copy(style.c_str() + 12);
             numberOfValues = 1;
           }
-          auto LH = exprVal.splitToStack("_and_");
+          auto LH = exprVal.split("_and_");
           if (LH.size() != numberOfValues) {
             CDBError("Invalid number of values in expression '%s'", style.c_str());
             hasFailed = true;
@@ -2186,14 +2186,20 @@ int CImageDataWriter::end() {
 
       try {
         if (gfiStructure.get("root") != NULL) {
+#ifdef CIMAGEDATAWRITER_DEBUG
           CDBDebug("Building JSON");
+#endif
           CT::string data = gfiStructure.getList("root").toJSON(CXMLPARSER_JSONMODE_STANDARD);
           CT::string resultJSON;
           if (srvParam->JSONP.length() == 0) {
+#ifdef CIMAGEDATAWRITER_DEBUG
             CDBDebug("CREATING JSON");
+#endif
             printf("%s%s%c%c\n", "Content-Type: application/json", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
           } else {
+#ifdef CIMAGEDATAWRITER_DEBUG
             CDBDebug("CREATING JSONP %s", srvParam->JSONP.c_str());
+#endif
             printf("%s%s%c%c", "Content-Type: application/javascript", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
             printf("\n%s(", srvParam->JSONP.c_str());
           }
@@ -2615,7 +2621,7 @@ int CImageDataWriter::end() {
             CT::string key = dkit->first.c_str();
             CT::string value = dkit->second.c_str();
 
-            auto dimValues = key.splitToStack(",");
+            auto dimValues = key.split(",");
             elP = &data;
             for (size_t i = 0; i < dimValues.size(); i++) {
               try {
@@ -3207,27 +3213,39 @@ int CImageDataWriter::end() {
 
   CT::string cacheControl = srvParam->getResponseHeaders(srvParam->getCacheControlOption());
   if (srvParam->imageFormat == IMAGEFORMAT_IMAGEPNG8) {
+#ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("Creating 8 bit png with alpha");
+#endif
     printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl.c_str(), 13, 10);
     status = drawImage.printImagePng8(true);
   } else if (srvParam->imageFormat == IMAGEFORMAT_IMAGEPNG8_NOALPHA) {
+#ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("Creating 8 bit png without alpha");
+#endif
     printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl.c_str(), 13, 10);
     status = drawImage.printImagePng8(false);
   } else if (srvParam->imageFormat == IMAGEFORMAT_IMAGEPNG24) {
+#ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("Creating 24 bit png");
+#endif
     printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl.c_str(), 13, 10);
     status = drawImage.printImagePng24();
   } else if (srvParam->imageFormat == IMAGEFORMAT_IMAGEPNG32) {
+#ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("Creating 32 bit png");
+#endif
     printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl.c_str(), 13, 10);
     status = drawImage.printImagePng32();
   } else if (srvParam->imageFormat == IMAGEFORMAT_IMAGEWEBP) {
+#ifdef CIMAGEDATAWRITER_DEBUG
+    CDBDebug("Creating webp");
+#endif
     printf("%s%s%c%c\n", "Content-Type:image/webp", cacheControl.c_str(), 13, 10);
+
     int webPQuality = srvParam->imageQuality;
     if (!srvParam->Format.empty()) {
       /* Support setting quality via wms format parameter, e.g. format=image/webp;90& */
-      auto s = srvParam->Format.splitToStack(";");
+      auto s = srvParam->Format.split(";");
       if (s.size() > 1) {
         int q = s[1].toInt();
         if (q >= 0 && q <= 100) {

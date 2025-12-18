@@ -119,7 +119,7 @@ CT::string getLayerMetadataFromDb(MetadataLayer *metadataLayer, CT::string metad
     // CDBDebug("Not a dataset");
     return "";
   }
-  CDBStore::Store *layerMetaDataStore = CDBFactory::getDBAdapter(metadataLayer->dataSource->srvParams->cfg)->getLayerMetadataStore(datasetName);
+  CDBStore::Store *layerMetaDataStore = CDBFactory::getDBAdapter(metadataLayer->dataSource->srvParams->cfg)->getLayerMetadataStore(datasetName.c_str());
   if (layerMetaDataStore == nullptr) {
     return "";
   }
@@ -149,7 +149,7 @@ int storeLayerMetadataInDb(MetadataLayer *metadataLayer, CT::string metadataKey,
     }
     CT::string layerName = metadataLayer->dataSource->getLayerName();
 
-    return CDBFactory::getDBAdapter(metadataLayer->dataSource->srvParams->cfg)->storeLayerMetadata(datasetName, layerName, metadataKey, metadataBlob.c_str());
+    return CDBFactory::getDBAdapter(metadataLayer->dataSource->srvParams->cfg)->storeLayerMetadata(datasetName.c_str(), layerName.c_str(), metadataKey.c_str(), metadataBlob.c_str());
   } catch (int e) {
     return e;
   }

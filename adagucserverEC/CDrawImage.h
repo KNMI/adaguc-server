@@ -29,7 +29,7 @@
 #include <map>
 #include <iostream>
 #include "CDebugger.h"
-#include "CTypes.h"
+#include "CTString.h"
 #include "CColor.h"
 #include "Definitions.h"
 #include "CStopWatch.h"

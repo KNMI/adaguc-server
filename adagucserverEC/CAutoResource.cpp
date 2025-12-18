@@ -1,5 +1,5 @@
 #include "CAutoResource.h"
-#include "CTypes.h"
+#include "CTString.h"
 #include "CServerError.h"
 #include "CDFObjectStore.h"
 #include "CReporter.h"
@@ -363,7 +363,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
     }
 
     // Generate layers based on the OpenDAP variables
-    CT::StackList<CT::string> variables = srvParam->autoResourceVariable.splitToStack(",");
+    std::vector<CT::string> variables = srvParam->autoResourceVariable.split(",");
     for (size_t j = 0; j < variables.size(); j++) {
       std::vector<CT::string> variableNames;
       variableNames.push_back(variables[j].c_str());

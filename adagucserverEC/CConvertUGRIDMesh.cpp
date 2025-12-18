@@ -219,12 +219,12 @@ int CConvertUGRIDMesh::convertUGRIDMeshHeader(CDFObject *cdfObject) {
   }
 
   // Make a list of variables which will be available as 2D fields
-  CT::StackList<CT::string> varsToConvert;
+  std::vector<CT::string> varsToConvert;
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
     if (var->isDimension == false) {
       if (var->name.equals("mesh")) {
-        varsToConvert.add(CT::string(var->name.c_str()));
+        varsToConvert.push_back(CT::string(var->name.c_str()));
       }
       // CDBDebug("%s",var->name.c_str());
       var->setAttributeText("ADAGUC_SKIP", "true");

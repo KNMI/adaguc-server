@@ -328,7 +328,9 @@ bool CDataReader::copyCRSFromCFProjectionVariable(CDataSource *dataSource, CDF::
   }
 
   // Projection string was created, set it in the datasource.
-  CREPORT_INFO_NODOC(CT::string("Determined the projection string using the CF conventions: ") + projString, CReportMessage::Categories::GENERAL);
+  if (verbose) {
+    CREPORT_INFO_NODOC(CT::string("Determined the projection string using the CF conventions: ") + projString, CReportMessage::Categories::GENERAL);
+  }
   dataSource->nativeProj4.copy(projString.c_str());
   projVar->setAttributeText("autogen_proj", projString.c_str());
 
@@ -1432,7 +1434,7 @@ CDF::Variable *CDataReader::addBlankDimVariable(CDFObject *cdfObject, const char
   }
   return dimVar;
 }
-CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *cdfObject, const char *ncname) {
+CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *cdfObject, std::string ncname) {
   CDF::Dimension *dimension = cdfObject->getDimensionNE(ncname);
   if (dimension != NULL) {
     return getDimensionType(cdfObject, dimension);
