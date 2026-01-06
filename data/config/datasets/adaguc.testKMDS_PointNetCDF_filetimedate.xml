@@ -2,7 +2,7 @@
   <Configuration>
   
     <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/Actuele10mindataKNMIstations_20201220123000.nc</FilePath>
+      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/Actuele10mindataKNMIstations_20201220123000.nc</FilePath> -->
       <Name>stationname</Name>
       <Title>stationsnaam</Title>
       <Variable>stationname</Variable>

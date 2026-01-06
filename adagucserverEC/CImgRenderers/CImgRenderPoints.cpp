@@ -278,7 +278,7 @@ bool isPointOutsideLegendRange(CStyleConfiguration *styleConfiguration, float va
 }
 
 bool shouldSkipPoint(CStyleConfiguration *styleConfiguration, PointStyle pointStyle, float value, float fillValue) {
-  if (value == fillValue) return true;
+  if (value == fillValue || (std::isnan(value) && std::isnan(fillValue))) return true;
   if (pointStyle.isOutsideMinMax(value)) return true;
   if (isPointOutsideLegendRange(styleConfiguration, value)) return true;
   return false;
