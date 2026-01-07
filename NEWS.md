@@ -1,3 +1,7 @@
+**Version 6.1.1 - 2026-01-07**
+
+- CT::string now uses std::string as internals.
+
 **Version 6.1.0 - 2025-11-28**
 
 - Polyline renderer can now render filled polygons and overlay them using alpha transparency and rendermethod `polygon`.
