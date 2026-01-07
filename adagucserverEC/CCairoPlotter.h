@@ -45,7 +45,7 @@
 #include <freetype/fttrigon.h>
 #include FT_FREETYPE_H
 #include <stdio.h>
-#include <math.h>
+#include <cmath>
 #include <cstdint>
 #include "CColor.h"
 

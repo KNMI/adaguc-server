@@ -25,7 +25,7 @@
 
 #ifndef CDATASOURCE_H
 #define CDATASOURCE_H
-#include <math.h>
+#include <cmath>
 #include "CXMLSerializerInterface.h"
 #include "CServerParams.h"
 #include "CServerConfig_CPPXSD.h"

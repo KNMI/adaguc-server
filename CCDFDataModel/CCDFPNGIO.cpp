@@ -36,7 +36,7 @@ const char *CDFPNGReader::className = "PNGReader";
 
 // #define CCDFPNGIO_DEBUG
 
-#include <math.h>
+#include <cmath>
 #include "../adagucserverEC/Types/GeoParameters.h"
 
 f8point tileXYZtoMerc(int tile_x, int tile_y, int zoom) {

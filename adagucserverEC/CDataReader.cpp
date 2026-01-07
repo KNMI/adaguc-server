@@ -24,7 +24,7 @@
  ******************************************************************************/
 
 #include "CDataReader.h"
-#include <math.h>
+#include <cmath>
 #include <float.h>
 #include "CConvertASCAT.h"
 #include "CConvertUGRIDMesh.h"

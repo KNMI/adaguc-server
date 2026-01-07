@@ -25,7 +25,7 @@
 
 #ifndef CDataReader_H
 #define CDataReader_H
-#include <math.h>
+#include <cmath>
 #include "CDebugger.h"
 #include "CDataSource.h"
 #include "CServerError.h"

@@ -25,7 +25,7 @@
 
 #ifndef CAUTOCONFIGURE_H
 #define CAUTOCONFIGURE_H
-#include <math.h>
+#include <cmath>
 #include "CDebugger.h"
 #include "CDataSource.h"
 #include "CServerError.h"

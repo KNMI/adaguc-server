@@ -80,7 +80,7 @@ int CImageWarper::reprojpoint(double &dfx, double &dfy) {
     return 1;
     // CDBError("ReprojException");
   }
-  if (isnan(dfx) || isnan(dfy)) {
+  if (std::isnan(dfx) || std::isnan(dfy)) {
     dfx = 0;
     dfy = 0;
     return 1;
@@ -118,7 +118,7 @@ int CImageWarper::reprojfromLatLon(double &dfx, double &dfy) {
     dfy = 0;
     return 1;
   }
-  if (isnan(dfx) || isnan(dfy)) {
+  if (std::isnan(dfx) || std::isnan(dfy)) {
     dfx = 0;
     dfy = 0;
     return 1;
@@ -596,7 +596,7 @@ std::tuple<CT::string, double> CImageWarper::fixProjection(CT::string projection
 }
 
 double CImageWarper::getRotation(PointDVWithLatLon &point) {
-  if (!isnan(point.rotation)) {
+  if (!std::isnan(point.rotation)) {
     return point.rotation;
   }
   // If rotation was not set during construction, we have to calculate it here.

@@ -26,7 +26,7 @@
 #include "CTime.h"
 #include <ctime>
 #include <sys/time.h>
-#include <math.h>
+#include <cmath>
 #include <algorithm>
 
 const char *CTime::className = "CTime";
