@@ -374,70 +374,7 @@ namespace CT {
     return r;
   }
 
-  //  int CT::string::replaceSelf(const char *substr, size_t substrl, const char *newString, size_t newStringl) {
-  //   if (this->empty()) return 0;
-  //   CT::string thisString = this;
-
-  //   std::vector<int> occurences;
-  //   const char *thisStringValue = thisString.standardString.c_str();
-  //   const char *value = this->standardString.c_str();
-  //   const char *tempVal = value;
-  //   const char *search = substr;
-  //   int c = 0;
-  //   size_t oc = 0;
-  //   do {
-  //     tempVal = value + oc;
-  //     const char *pi = strstr(tempVal, search);
-  //     if (pi != NULL) {
-  //       c = pi - tempVal;
-  //     } else {
-  //       c = -1;
-  //     }
-  //     if (c >= 0) {
-  //       oc += c;
-  //       occurences.push_back(oc);
-  //       oc += substrl;
-  //     }
-
-  //   } while (c >= 0 && oc < thisString.length());
-  //   size_t newSize = length() + occurences.size() * (newStringl - substrl);
-
-  //   char newvalue[newSize + 1];
-  //   size_t pt = 0, ps = 0, j = 0;
-  //   do {
-  //     if (j < occurences.size()) {
-  //       while (ps == (unsigned)occurences[j] && j < occurences.size()) {
-  //         for (size_t i = 0; i < newStringl; i++) {
-  //           newvalue[pt++] = newString[i];
-  //         }
-  //         ps += substrl;
-  //         j++;
-  //         if (j >= occurences.size()) break;
-  //       }
-  //     }
-  //     newvalue[pt++] = thisStringValue[ps++];
-  //   } while (pt < newSize);
-  //   newvalue[newSize] = '\0';
-  //   this->standardString.assign(newvalue);
-  //   return 0;
-  // }
-
-  int string::replaceSelf(const char *substr, size_t, const char *newString, size_t) {
-    std::string from = substr;
-    std::string to = newString;
-    std::string &str = this->stdstring;
-    if (from.empty()) {
-      return 0;
-    }
-    size_t start_pos = 0;
-    while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
-      str.replace(start_pos, from.length(), to);
-      start_pos += to.length(); // Handles case where 'to' is a substring of 'from'
-    }
-    return 0;
-  }
-
-  void string::replaceSelf(std::string &from, std::string &to) {
+  void string::replaceSelf(CT::string from, CT::string to) {
     std::string &str = this->stdstring;
     if (from.empty()) {
       return;
@@ -449,7 +386,7 @@ namespace CT {
     }
   }
 
-  string string::replaceAll(std::string &from, std::string &to) {
+  string string::replaceAll(CT::string from, CT::string to) {
     CT::string str;
     str.stdstring = this->stdstring;
     if (from.empty()) {
@@ -462,14 +399,6 @@ namespace CT {
     }
     return str;
   }
-
-  int string::replaceSelf(CT::string *substr, CT::string *newString) { return replaceSelf(substr->c_str(), substr->length(), newString->c_str(), newString->length()); }
-
-  int string::replaceSelf(const char *substr, CT::string *newString) { return replaceSelf(substr, strlen(substr), newString->c_str(), newString->length()); }
-
-  int string::replaceSelf(CT::string *substr, const char *newString) { return replaceSelf(substr->c_str(), substr->length(), newString, strlen(newString)); }
-
-  int string::replaceSelf(const char *substr, const char *newString) { return replaceSelf(substr, strlen(substr), newString, strlen(newString)); }
 
   CT::string string::replace(const char *old, const char *newstr) {
     std::string from = old;

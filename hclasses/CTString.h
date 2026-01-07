@@ -366,43 +366,6 @@ namespace CT {
      */
     const char *c_str() const;
 
-    /** Replace all strings with another string
-     * @param substr the character array to replace
-     * @param substrl the length of the character array to replace
-     * @param newString the new character array to replace with
-     * @param newStringl The length of the character array to replace with
-     * @return Zero on success
-     */
-    int replaceSelf(const char *substr, size_t substrl, const char *newString, size_t newStringl);
-
-    /** Replace all strings with another string
-     * @param substr the string to replace
-     * @param newString the new stringto replace with
-     * @return Zero on success
-     */
-    int replaceSelf(CT::string *substr, CT::string *newString);
-
-    /** Replace all strings with another string
-     * @param substr the character array to replace
-     * @param newString the new string to replace with
-     * @return Zero on success
-     */
-    int replaceSelf(const char *substr, CT::string *newString);
-
-    /** Replace all strings with another string
-     * @param substr the string to replace
-     * @param newString the new character array to replace with
-     * @return Zero on success
-     */
-    int replaceSelf(CT::string *substr, const char *newString);
-
-    /** Replace all strings with another string
-     * @param substr the character array to replace
-     * @param newString the new character array to replace with
-     * @return Zero on success
-     */
-    int replaceSelf(const char *substr, const char *newString);
-
     /** Replace all strings with another string and returns the new string
      * @param substr the character array to replace
      * @param newString the new character array to replace with
@@ -495,14 +458,14 @@ namespace CT {
      * @param substr the string to replace
      * @param newString the new stringto replace with
      */
-    void replaceSelf(std::string &substr, std::string &newString);
+    void replaceSelf(CT::string substr, CT::string newString);
 
     /** Replace all strings with another string
      * @param substr the string to replace
      * @param newString the new stringto replace with
      * @returns new string
      */
-    CT::string replaceAll(std::string &substr, std::string &newString);
+    CT::string replaceAll(CT::string substr, CT::string newString);
 
     friend CT::string join(const std::vector<string> &items, CT::string separator);
   };
