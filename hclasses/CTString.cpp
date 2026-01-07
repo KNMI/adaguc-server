@@ -6,19 +6,6 @@
 
 namespace CT {
 
-  std::vector<CT::string> string::split(const char *_value) const {
-    std::vector<CT::string> stringList;
-    const char *fo = strstr(stdstring.c_str(), _value);
-    const char *prevFo = stdstring.c_str();
-    while (fo != nullptr) {
-      stringList.push_back(CT::string(prevFo, (fo - prevFo)));
-      prevFo = fo + 1;
-      fo = strstr(prevFo, _value);
-    }
-    stringList.push_back(CT::string(prevFo));
-    return stringList;
-  }
-
   string::string() {}
 
   string::string(const char *_value) {
@@ -294,7 +281,7 @@ namespace CT {
 
   bool string::equals(CT::string &_string) const { return (stdstring == _string.stdstring); }
 
-  bool string::equals(std::string const &_string) const { return (stdstring == _string); }
+  bool string::equals(const std::string &_string) const { return (stdstring == _string); }
 
   bool string::equals(const char *_value, size_t _length) const {
     if (_value == NULL) return false;
@@ -379,7 +366,7 @@ namespace CT {
 
   int string::startsWith(const char *search) { return (indexOf(search) == 0); };
 
-  int string::startsWith(std::string search) { return (indexOf(search.c_str()) == 0); };
+  int string::startsWith(const std::string search) { return (indexOf(search.c_str()) == 0); };
 
   string string::trim() {
     CT::string r = stdstring.c_str();

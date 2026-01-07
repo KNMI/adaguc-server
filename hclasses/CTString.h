@@ -123,8 +123,8 @@ namespace CT {
     string operator+(const char *const &f);
 
     // Conversion from and to std::string
-    string(std::string &s) : string(s.c_str()) {}                                 // Implicit conversion allowed
-    operator std::string() const { return std::string(this->stdstring.c_str()); } // Implicit conversion allowed
+    string(std::string s) { this->stdstring = std::move(s); }  // Implicit conversion allowed
+    operator std::string() const { return {this->stdstring}; } // Implicit conversion allowed
 
     /**
      * Compare operator
@@ -139,10 +139,7 @@ namespace CT {
      * returns length of the string
      * @return length
      */
-    size_t length() {
-      size_t l = this->stdstring.size();
-      return l;
-    }
+    size_t length() { return this->stdstring.size(); }
 
     /**
      * Copy a character array into the string
@@ -231,7 +228,7 @@ namespace CT {
      */
     bool equals(CT::string &string) const;
 
-    bool equals(std::string const &string) const;
+    bool equals(const std::string &string) const;
 
     bool equalsIgnoreCase(const char *_value, size_t _length);
 
@@ -289,7 +286,7 @@ namespace CT {
      * The startsWith() method determines whether a string begins with the characters of another string, returning true or false as appropriate.
      */
     int startsWith(const char *search);
-    int startsWith(std::string search);
+    int startsWith(const std::string search);
 
     /**
      * String to unicode
@@ -349,7 +346,7 @@ namespace CT {
      * Data is automatically freed
      * @param _value The token to split the string on
      */
-    std::vector<CT::string> split(const char *_value) const;
+    std::vector<CT::string> split(const char *_value);
 
     /**
      * Print like printf to this string
@@ -493,14 +490,6 @@ namespace CT {
      * Converts to hex8
      */
     static CT::string getHex(unsigned int number);
-
-    /**
-     * Function which returns a std::vector on the stack with a list of strings allocated on the stack
-     * This function links its data to string data, it does not allocate new data or copy the data
-     * Resources are freed automatically
-     * @param _value The token to split the string on
-     */
-    std::vector<CT::string> split(const char *_value);
 
     /** Replace all strings with another string
      * @param substr the string to replace
