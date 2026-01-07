@@ -4,32 +4,32 @@
 #include <regex>
 #define CT_STRING_PRINT_BUFFER_SIZE 64
 
+const char *strrstr(const char *x, const char *y) {
+  const char *prev = nullptr;
+  const char *next;
+  if (*y == '\0') return strchr(x, '\0');
+  while ((next = strstr(x, y)) != nullptr) {
+    prev = next;
+    x = next + 1;
+  }
+  return prev;
+}
 namespace CT {
 
-  string::string() {}
+  string::string() = default;
+  string &string::operator=(string const &f) = default;
+  string::string(string const &f) = default;
 
-  string::string(const char *_value) {
-    if (_value != NULL) copy(_value, strlen(_value));
+  string::string(const char *value) {
+    if (value != nullptr) stdstring = value;
   }
 
-  string::string(string const &f) { this->copy(f.stdstring.c_str(), f.stdstring.length()); }
-
-  string::string(CT::string *_string) { copy(_string); }
+  string::string(CT::string *_string) { stdstring = *_string; }
 
   string::string(const char *_value, size_t _length) { copy(_value, _length); }
 
-  string &string::operator=(string const &f) {
-    if (this == &f) return *this;
-    this->stdstring = f.stdstring;
-    return *this;
-  }
-
   string &string::operator=(const char *const &f) {
-    if (f == nullptr) {
-      this->stdstring = "";
-    } else {
-      this->stdstring = f;
-    }
+    this->stdstring = f == nullptr ? "" : f;
     return *this;
   }
 
@@ -38,38 +38,10 @@ namespace CT {
     return *this;
   }
 
-  string &string::operator+=(string const &f) {
-    if (this == &f) return *this;
-    this->stdstring += f;
-    return *this;
-  }
-
-  string &string::operator+=(const char *const &f) {
-    this->concat(f);
-    return *this;
-  }
-
-  string string::operator+(string const &f) {
+  string string::operator+(std::string const &f) {
     CT::string n(*this);
-    n.concat(f);
+    n += f;
     return n;
-  }
-
-  string string::operator+(const char *const &f) {
-    CT::string n(*this);
-    n.concat(f);
-    return n;
-  }
-
-  const char *string::strrstr(const char *x, const char *y) {
-    const char *prev = NULL;
-    const char *next;
-    if (*y == '\0') return strchr(x, '\0');
-    while ((next = strstr(x, y)) != NULL) {
-      prev = next;
-      x = next + 1;
-    }
-    return prev;
   }
 
   char string::charAt(size_t n) {
@@ -80,29 +52,28 @@ namespace CT {
   int string::indexOf(const char *search, size_t _length) {
     if (_length == 0) return -1;
     if (length() == 0) return -1;
-
-    const char *value = stdstring.c_str();
-    const char *pi = strstr(value, search);
-    if (pi == NULL) return -1;
-    int c = pi - value;
+    auto value = stdstring.c_str();
+    auto pi = strstr(value, search);
+    if (pi == nullptr) return -1;
+    auto c = pi - value;
     if (c < 0) c = -1;
     return c;
   }
 
-  int string::lastIndexOf(const char *search, size_t _length) {
+  int string::lastIndexOf(const char *search) {
+    auto _length = strlen(search);
     if (_length == 0) return -1;
     if (length() == 0) return -1;
-
-    const char *value = stdstring.c_str();
-    const char *pi = strrstr(value, search);
-    if (pi == NULL) return -1;
-    int c = pi - value;
+    auto value = stdstring.c_str();
+    auto pi = strrstr(value, search);
+    if (pi == nullptr) return -1;
+    auto c = pi - value;
     if (c < 0) c = -1;
     return c;
   }
 
   void string::copy(const char *_value, size_t _length) {
-    if (_value == NULL) {
+    if (_value == nullptr) {
       this->stdstring = "";
       return;
     }
@@ -254,7 +225,7 @@ namespace CT {
     if (regcomp(&re, pattern, REG_EXTENDED | REG_NOSUB) != 0) {
       return false;
     }
-    status = regexec(&re, stdstring.c_str(), (size_t)0, NULL, 0);
+    status = regexec(&re, stdstring.c_str(), (size_t)0, nullptr, 0);
     regfree(&re);
     if (status != 0) {
       return false;
@@ -270,12 +241,12 @@ namespace CT {
   }
 
   bool string::equals(const char *_value) const {
-    if (_value == NULL) return false;
+    if (_value == nullptr) return false;
     return (stdstring == _value);
   }
 
   bool string::equals(CT::string *_string) const {
-    if (_string == NULL) return false;
+    if (_string == nullptr) return false;
     return (stdstring == _string->stdstring);
   }
 
@@ -284,14 +255,14 @@ namespace CT {
   bool string::equals(const std::string &_string) const { return (stdstring == _string); }
 
   bool string::equals(const char *_value, size_t _length) const {
-    if (_value == NULL) return false;
+    if (_value == nullptr) return false;
     if (this->stdstring.length() != _length) return false;
     if (strncmp(stdstring.c_str(), _value, _length) == 0) return true;
     return false;
   }
 
   bool string::equalsIgnoreCase(const char *_value, size_t _length) {
-    if (_value == NULL) return false;
+    if (_value == nullptr) return false;
     if (length() != _length) return false;
     CT::string selfLowerCase = stdstring.c_str();
     CT::string testValueLowerCase = _value;
@@ -302,19 +273,19 @@ namespace CT {
   }
 
   bool string::equalsIgnoreCase(const char *_value) {
-    if (_value == NULL) return false;
+    if (_value == nullptr) return false;
     return equalsIgnoreCase(_value, strlen(_value));
   }
 
   bool string::equalsIgnoreCase(CT::string *_string) {
-    if (_string == NULL) return false;
+    if (_string == nullptr) return false;
     return equalsIgnoreCase(_string->c_str(), _string->length());
   }
 
   bool string::equalsIgnoreCase(CT::string _string) { return equalsIgnoreCase(_string.c_str(), _string.length()); }
 
   void string::copy(const CT::string *_string) {
-    if (_string == NULL) {
+    if (_string == nullptr) {
       this->stdstring = "";
       return;
     }
@@ -324,7 +295,7 @@ namespace CT {
   void string::copy(const CT::string _string) { this->stdstring = _string.stdstring; };
 
   void string::copy(const char *_value) {
-    if (_value == NULL) {
+    if (_value == nullptr) {
       this->stdstring = "";
       return;
     }
@@ -354,13 +325,11 @@ namespace CT {
   void string::concat(const CT::string &_string) { this->stdstring += _string.stdstring; }
 
   void string::concat(const char *_value) {
-    if (_value == NULL) return;
+    if (_value == nullptr) return;
     this->stdstring.append(_value);
   };
 
   int string::indexOf(const char *search) { return indexOf(search, strlen(search)); };
-
-  int string::lastIndexOf(const char *search) { return lastIndexOf(search, strlen(search)); };
 
   int string::endsWith(const char *search) { return (lastIndexOf(search) == int(length() - strlen(search))); };
 
@@ -440,7 +409,7 @@ namespace CT {
   CT::string string::basename() {
     const char *last = rindex(this->c_str(), '/');
     CT::string fileBaseName;
-    if ((last != NULL) && (*last)) {
+    if ((last != nullptr) && (*last)) {
       fileBaseName.copy(last + 1);
     } else {
       fileBaseName.copy(this);
@@ -543,7 +512,7 @@ namespace CT {
     const char *fo = strstr(this->stdstring.c_str(), _value);
     const char *prevFo = this->stdstring.c_str();
     size_t keyLength = strlen(_value);
-    while (fo != NULL) {
+    while (fo != nullptr) {
       stringList.push_back(CT::string(prevFo, (fo - prevFo)));
       prevFo = fo + keyLength;
       fo = strstr(fo + keyLength, _value);

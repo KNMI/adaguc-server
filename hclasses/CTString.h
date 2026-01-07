@@ -43,7 +43,6 @@ namespace CT {
   class string {
 
   private:
-    const char *strrstr(const char *x, const char *y);
     char _tohex(char in);
     char _fromhex(char in);
     /**
@@ -98,29 +97,12 @@ namespace CT {
      * @param f The input string
      */
     string &operator+=(std::string const &f);
-    /**
-     * addition assignment operator
-     * @param f The input string
-     */
-    string &operator+=(string const &f);
-
-    /**
-     * addition assignment operator
-     * @param f The input character array
-     */
-    string &operator+=(const char *const &f);
 
     /**
      * addition operator
      * @param f The input string
      */
-    string operator+(string const &f);
-
-    /**
-     * addition operator
-     * @param f The input character array
-     */
-    string operator+(const char *const &f);
+    string operator+(std::string const &f);
 
     // Conversion from and to std::string
     string(std::string s) { this->stdstring = std::move(s); }  // Implicit conversion allowed
@@ -260,14 +242,6 @@ namespace CT {
      * @return -1 if not found, otherwise the index of the character sequence in this string object
      */
     int indexOf(const char *search);
-
-    /**
-     * Returns the index within this string of the last occurrence of the specified character
-     * @param search The character array to look for
-     * @param length The length of the character array
-     * @return -1 if not found, otherwise the last index of the character sequence in this string object
-     */
-    int lastIndexOf(const char *search, size_t _length);
 
     /**
      * Returns the index within this string of the last occurrence of the specified character
@@ -470,7 +444,7 @@ namespace CT {
     friend CT::string join(const std::vector<string> &items, CT::string separator);
   };
 
-  // Example  on how new implementation can help with moving towards fully using std::string instead of CT::String
+  // Example on how new implementation can help with moving towards fully using std::string instead of CT::String
   /** Joins vector of strings into a new string
    * @param items Items to join
    * @param separator optional separator, defaults to ","
