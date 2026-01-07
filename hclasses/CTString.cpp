@@ -14,6 +14,25 @@ const char *strrstr(const char *x, const char *y) {
   }
   return prev;
 }
+
+/**
+ * Converts 0-15 to 0-F
+ */
+char tohex(char in) {
+  in += 48;
+  if (in > 57) in += 7;
+  return in;
+}
+
+char fromhex(char in) {
+  /* From lowercase to uppercase */
+  if (in > 96) in -= 32;
+  /* From number character to numeric value */
+  in -= 48;
+  /* When numeric value is more than 16 (eg ABCDEF) substract 7 to get numeric value 10,11,12,etc... */
+  if (in > 16) in -= 7;
+  return in;
+}
 namespace CT {
 
   string::string() = default;
@@ -78,23 +97,7 @@ namespace CT {
       this->stdstring = "";
       return;
     }
-    this->stdstring = _value;
-    this->stdstring.resize(_length);
-  }
-
-  char string::_tohex(char in) {
-    in += 48;
-    if (in > 57) in += 7;
-    return in;
-  }
-  char string::_fromhex(char in) {
-    /* From lowercase to uppercase */
-    if (in > 96) in -= 32;
-    /* From number character to numeric value */
-    in -= 48;
-    /* When numeric value is more than 16 (eg ABCDEF) substract 7 to get numeric value 10,11,12,etc... */
-    if (in > 16) in -= 7;
-    return in;
+    this->stdstring.assign(_value, _length);
   }
 
   void string::toLowerCaseSelf() {
@@ -114,8 +117,8 @@ namespace CT {
       szChar = value[j];
       if (szChar < 48 || (szChar > 59 && szChar < 63)) {
         pszEncode[p++] = '%';
-        pszEncode[p++] = _tohex(szChar / 16);
-        pszEncode[p++] = _tohex(szChar % 16);
+        pszEncode[p++] = tohex(szChar / 16);
+        pszEncode[p++] = tohex(szChar % 16);
       } else {
         pszEncode[p++] = szChar;
       }
@@ -123,6 +126,7 @@ namespace CT {
     copy(pszEncode, p);
     delete[] pszEncode;
   }
+
   void string::decodeURLSelf() {
     char *pszDecode = new char[stdstring.length() * 6 + 1];
     int p = 0;
@@ -132,8 +136,8 @@ namespace CT {
     for (unsigned int j = 0; j < stdstring.length(); j++) {
       szChar = value[j];
       if (szChar == '%') {
-        d1 = _fromhex(value[j + 1]);
-        d2 = _fromhex(value[j + 2]);
+        d1 = fromhex(value[j + 1]);
+        d2 = fromhex(value[j + 2]);
         pszDecode[p++] = d1 * 16 + d2;
         j = j + 2;
       } else {
@@ -160,6 +164,7 @@ namespace CT {
     }
     this->stdstring = std::string(buf.begin(), buf.end()).c_str();
   }
+
   void string::printconcat(const char *a, ...) {
     std::vector<char> buf(CT_STRING_PRINT_BUFFER_SIZE + 1);
     va_list ap;

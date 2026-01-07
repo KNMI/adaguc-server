@@ -43,8 +43,6 @@ namespace CT {
   class string {
 
   private:
-    char _tohex(char in);
-    char _fromhex(char in);
     /**
      * std::string containing the string
      */
@@ -237,7 +235,6 @@ namespace CT {
     /**
      * Returns the index within this string of the last occurrence of the specified character
      * @param search The character array to look for
-     * @param search The 0-terminated character array to look for
      * @return -1 if not found, otherwise the last index of the character sequence in this string object
      */
     int lastIndexOf(const char *search);
