@@ -183,11 +183,6 @@ namespace CT {
 
   const char *string::c_str() const { return stdstring.c_str(); }
 
-  CT::string string::encodeXML(CT::string stringToEncode) {
-    stringToEncode.encodeXMLSelf();
-    return stringToEncode;
-  }
-
   CT::string string::encodeXML() {
     CT::string str = this->c_str();
     str.encodeXMLSelf();
@@ -248,17 +243,17 @@ namespace CT {
 
   bool string::equals(const char *_value) const {
     if (_value == nullptr) return false;
-    return (stdstring == _value);
+    return stdstring == _value;
   }
 
   bool string::equals(CT::string *_string) const {
     if (_string == nullptr) return false;
-    return (stdstring == _string->stdstring);
+    return stdstring == _string->stdstring;
   }
 
-  bool string::equals(CT::string &_string) const { return (stdstring == _string.stdstring); }
+  bool string::equals(CT::string &_string) const { return stdstring == _string.stdstring; }
 
-  bool string::equals(const std::string &_string) const { return (stdstring == _string); }
+  bool string::equals(const std::string &_string) const { return stdstring == _string; }
 
   bool string::equals(const char *_value, size_t _length) const {
     if (_value == nullptr) return false;
