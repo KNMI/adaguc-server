@@ -374,7 +374,11 @@ namespace CT {
     return 0;
   }
 
-  CT::string string::substring(size_t start, size_t end) { return this->stdstring.substr(start, end); }
+  CT::string string::substring(size_t start, size_t end) {
+    CT::string test = this->stdstring.c_str();
+    test.substringSelf(start, end);
+    return test;
+  }
 
   float string::toFloat() {
     float fValue = (float)atof(trim().c_str());
