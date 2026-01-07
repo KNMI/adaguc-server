@@ -354,9 +354,9 @@ private:
 
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
     int renderSettings = 0; // auto
-    if (styleConfiguration->styleConfig != NULL && styleConfiguration->styleConfig->RenderSettings.size() == 1) {
-      if (!styleConfiguration->styleConfig->RenderSettings[0]->attr.settings.empty()) {
-        CT::string renderSettingsAttr = styleConfiguration->styleConfig->RenderSettings[0]->attr.settings;
+    for (auto renderSetting : styleConfiguration->renderSettings) {
+      if (!renderSetting->attr.settings.empty()) {
+        CT::string renderSettingsAttr = renderSetting->attr.settings;
         if (renderSettingsAttr.equals("fast")) {
           renderSettings = 1; // fast
         }

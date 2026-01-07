@@ -1,3 +1,7 @@
+**Version 6.1.1 - 2026-01-07**
+
+- Include style now works in combination with vectors (WIK request)
+
 **Version 6.1.0 - 2025-11-28**
 
 - Polyline renderer can now render filled polygons and overlay them using alpha transparency and rendermethod `polygon`.

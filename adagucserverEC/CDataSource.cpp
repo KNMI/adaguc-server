@@ -921,10 +921,11 @@ CDataSource *CDataSource::clone() {
 }
 
 double CDataSource::getScaling() {
-  if (this->getStyle() != NULL && this->getStyle()->styleConfig != NULL) {
-    if (this->getStyle()->styleConfig->RenderSettings.size() > 0) {
-      if (!this->getStyle()->styleConfig->RenderSettings[0]->attr.scalewidth.empty()) {
-        double scaleWidth = this->getStyle()->styleConfig->RenderSettings[0]->attr.scalewidth.toDouble();
+  auto styleConfiguration = this->getStyle();
+  if (styleConfiguration != nullptr) {
+    for (auto renderSetting : styleConfiguration->renderSettings) {
+      if (!renderSetting->attr.scalewidth.empty()) {
+        double scaleWidth = renderSetting->attr.scalewidth.toDouble();
         double imageWidth = (double)this->srvParams->geoParams.width;
         return imageWidth / scaleWidth;
       }
@@ -934,10 +935,11 @@ double CDataSource::getScaling() {
 }
 
 double CDataSource::getContourScaling() {
-  if (this->getStyle() != NULL && this->getStyle()->styleConfig != NULL) {
-    if (this->getStyle()->styleConfig->RenderSettings.size() > 0) {
-      if (!this->getStyle()->styleConfig->RenderSettings[0]->attr.scalecontours.empty()) {
-        double scalecontours = this->getStyle()->styleConfig->RenderSettings[0]->attr.scalecontours.toDouble();
+  auto styleConfiguration = this->getStyle();
+  if (styleConfiguration != nullptr) {
+    for (auto renderSetting : styleConfiguration->renderSettings) {
+      if (!renderSetting->attr.scalecontours.empty()) {
+        double scalecontours = renderSetting->attr.scalecontours.toDouble();
         return scalecontours;
       }
     }
