@@ -176,7 +176,7 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc, std::vector<MetadataL
           int removeGroups = 0;
           for (size_t j = 0; j < subGroups.size() && j < prevSubGroups.size(); j++) {
             // CDBError("CC %d",j);
-            if (subGroups[j].equals(&prevSubGroups[j]) == false || removeGroups == 1) {
+            if (subGroups[j].equals(prevSubGroups[j]) == false || removeGroups == 1) {
               removeGroups = 1;
               // CDBError("!=%d %s!=%s",j,subGroups[j].c_str(),prevSubGroups[j].c_str());
               // CDBError("<");
@@ -538,7 +538,7 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataL
           int removeGroups = 0;
           for (size_t j = 0; j < subGroups.size() && j < prevSubGroups.size(); j++) {
             // CDBError("CC %d",j);
-            if (subGroups[j].equals(&prevSubGroups[j]) == false || removeGroups == 1) {
+            if (subGroups[j].equals(prevSubGroups[j]) == false || removeGroups == 1) {
               removeGroups = 1;
               // CDBError("!=%d %s!=%s",j,subGroups[j].c_str(),prevSubGroups[j].c_str());
               // CDBError("<");

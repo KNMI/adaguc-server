@@ -1108,7 +1108,7 @@ int CDFNetCDFWriter::_write(void (*progress)(const char *message, float percenta
           variableInfo.concat("\t(");
           for (int i = 0; i < numDims; i++) {
             for (size_t k = 0; k < dimensions.size(); k++) {
-              if (dimensions[k]->name.equals(&variable->dimensionlinks[i]->name)) {
+              if (dimensions[k]->name.equals(variable->dimensionlinks[i]->name)) {
                 dimIDS[i] = dimensions[k]->id;
                 NCCommandID[i] = k;
                 if (totalVariableSize == 0) totalVariableSize = 1;

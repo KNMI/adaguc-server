@@ -241,26 +241,7 @@ namespace CT {
     }
   }
 
-  bool string::equals(const char *_value) const {
-    if (_value == nullptr) return false;
-    return stdstring == _value;
-  }
-
-  bool string::equals(CT::string *_string) const {
-    if (_string == nullptr) return false;
-    return stdstring == _string->stdstring;
-  }
-
-  bool string::equals(CT::string &_string) const { return stdstring == _string.stdstring; }
-
   bool string::equals(const std::string &_string) const { return stdstring == _string; }
-
-  bool string::equals(const char *_value, size_t _length) const {
-    if (_value == nullptr) return false;
-    if (this->stdstring.length() != _length) return false;
-    if (strncmp(stdstring.c_str(), _value, _length) == 0) return true;
-    return false;
-  }
 
   bool string::equalsIgnoreCase(const char *_value, size_t _length) {
     if (_value == nullptr) return false;
@@ -374,7 +355,15 @@ namespace CT {
     return replaceAll(from, to);
   }
 
+  // int string::substringSelf(size_t start, size_t end) {
+  //   this->stdstring = substring(start, end);
+  //   return 0;
+  // }
+
+  // CT::string string::substring(size_t start, size_t end) { return this->stdstring.substr(start, end < 0 ? std::string::npos : end - start + 1); }
+
   int string::substringSelf(size_t start, size_t end) {
+    // TODO: Use substr.
     if (start >= stdstring.length() || end - start <= 0) {
       stdstring = "";
       return 0;
@@ -385,11 +374,7 @@ namespace CT {
     return 0;
   }
 
-  CT::string string::substring(size_t start, size_t end) {
-    CT::string test = this->stdstring.c_str();
-    test.substringSelf(start, end);
-    return test;
-  }
+  CT::string string::substring(size_t start, size_t end) { return this->stdstring.substr(start, end); }
 
   float string::toFloat() {
     float fValue = (float)atof(trim().c_str());

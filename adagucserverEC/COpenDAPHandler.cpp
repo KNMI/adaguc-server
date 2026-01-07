@@ -138,7 +138,7 @@ CT::string COpenDAPHandler::createDDSHeader(CT::string layerName, CDFObject *cdf
       CDF::Variable *v = cdfObject->variables[j];
       CDFType type = (CDFType)v->getType();
 
-      if (selectedVariables[i].name.equals(&v->name)) {
+      if (selectedVariables[i].name.equals(v->name)) {
         if (jsonWriter) {
           if (j > 0) {
             output.concat(",\n");
@@ -856,7 +856,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
             CDF::Variable *v = cdfObject->variables[j];
             CDFType type = (CDFType)v->getType();
 
-            if (selectedVariables[i].name.equals(&v->name)) {
+            if (selectedVariables[i].name.equals(v->name)) {
               if (jsonWriter && varHasBeenWritten) {
                 fprintf(opendapoutstream, ",\n");
               }

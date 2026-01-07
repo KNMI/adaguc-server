@@ -671,7 +671,8 @@ CTime::Date CTime::stringToDate(const char *szTime) {
   }
   Date checkDate = getDate(date.offset);
   CT::string checkStr = dateToString(checkDate);
-  if (!checkStr.equals(szTime, 15)) {
+  std::string strTime = szTime;
+  if (!checkStr.equals(strTime.substr(0, 15))) {
     CDBError("stringToDate internal error: intime is different from outtime:  \"%s\" != \"%s\"", szTime, checkStr.c_str());
     throw CTIME_CONVERSION_ERROR;
   }

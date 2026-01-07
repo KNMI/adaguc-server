@@ -425,7 +425,7 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
               if (dataSourceUnits.length() != 0 && units.length() != 0) {
                 unitsMatch = false;
                 /* Test for same units */
-                if (dataSourceUnits.equals(&units))
+                if (dataSourceUnits.equals(units))
                   unitsMatch = true;
                 else {
                   /* Test for regexp */

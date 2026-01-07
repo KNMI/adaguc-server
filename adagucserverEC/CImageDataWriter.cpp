@@ -2535,7 +2535,7 @@ int CImageDataWriter::end() {
           GetFeatureInfoResult::Element *element = g->elements[elNr];
           bool featureNameFound = false;
           for (size_t jj = 0; jj < features.size(); jj++) {
-            if (features[jj].equals(&element->feature_name)) {
+            if (features[jj].equals(element->feature_name)) {
               featureNameFound = true;
               break;
             }
@@ -2710,7 +2710,7 @@ int CImageDataWriter::end() {
           GetFeatureInfoResult::Element *element = getFeatureInfoResultList[layerNr]->elements[elNr];
           bool featureNameFound = false;
           for (size_t j = 0; j < features[layerNr].size(); j++) {
-            if (features[layerNr][j].equals(&element->feature_name)) {
+            if (features[layerNr][j].equals(element->feature_name)) {
               featureNameFound = true;
               break;
             }

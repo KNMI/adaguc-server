@@ -567,7 +567,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
       }
 
       for (size_t l = 0; l < dataSource->requiredDims.size(); l++) {
-        if (dataSource->requiredDims[l]->name.equals(&dimName)) {
+        if (dataSource->requiredDims[l]->name.equals(dimName)) {
           alreadyAdded = true;
           break;
         }
@@ -578,7 +578,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
 #endif
       if (alreadyAdded == false) {
         for (size_t k = 0; k < srvParam->requestDims.size(); k++) {
-          if (srvParam->requestDims[k]->name.equals(&dimName)) {
+          if (srvParam->requestDims[k]->name.equals(dimName)) {
 #ifdef CREQUEST_DEBUG
             CDBDebug("DIM COMPARE: %s==%s", srvParam->requestDims[k]->name.c_str(), dimName.c_str());
 #endif
@@ -713,7 +713,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
       bool alreadyAdded = false;
 
       for (size_t k = 0; k < dataSource->requiredDims.size(); k++) {
-        if (dataSource->requiredDims[k]->name.equals(&dimName)) {
+        if (dataSource->requiredDims[k]->name.equals(dimName)) {
           alreadyAdded = true;
           break;
         }
@@ -826,7 +826,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
         CT::string fixedValue = dataSource->cfgLayer->Dimension[i]->attr.fixvalue;
         dimName.toLowerCaseSelf();
         for (auto &requiredDim : dataSource->requiredDims) {
-          if (requiredDim->name.equals(&dimName)) {
+          if (requiredDim->name.equals(dimName)) {
             CDBDebug("Forcing dimension %s from %s to %s", dimName.c_str(), requiredDim->value.c_str(), fixedValue.c_str());
             requiredDim->value = fixedValue;
             requiredDim->hasFixedValue = true;
