@@ -293,7 +293,7 @@ CT::string CServerParams::getOnlineResource() {
   CT::string onlineResource = cfg->OnlineResource[0]->attr.value.c_str();
 
   // A full path is given in the configuration
-  if (onlineResource.indexOf("http", 4) == 0) {
+  if (onlineResource.indexOf("http") == 0) {
     _onlineResource = onlineResource;
     return onlineResource;
   }

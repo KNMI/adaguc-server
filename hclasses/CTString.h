@@ -229,15 +229,6 @@ namespace CT {
     /**
      * Returns the index within this string of the first occurrence of the specified character.
      * If a character with value ch occurs in the character sequence represented by this String object, then the index of the first such occurrence is returned
-     * @param search The character array to look for
-     * @param length The length of the character array
-     * @return -1 if not found, otherwise the index of the character sequence in this string object
-     */
-    int indexOf(const char *search, size_t length);
-
-    /**
-     * Returns the index within this string of the first occurrence of the specified character.
-     * If a character with value ch occurs in the character sequence represented by this String object, then the index of the first such occurrence is returned
      * @param search The 0-terminated character array to look for
      * @return -1 if not found, otherwise the index of the character sequence in this string object
      */

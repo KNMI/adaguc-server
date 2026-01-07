@@ -49,7 +49,8 @@ namespace CT {
     return (stdstring.c_str())[n];
   }
 
-  int string::indexOf(const char *search, size_t _length) {
+  int string::indexOf(const char *search) {
+    auto _length = strlen(search);
     if (_length == 0) return -1;
     if (length() == 0) return -1;
     auto value = stdstring.c_str();
@@ -328,8 +329,6 @@ namespace CT {
     if (_value == nullptr) return;
     this->stdstring.append(_value);
   };
-
-  int string::indexOf(const char *search) { return indexOf(search, strlen(search)); };
 
   int string::endsWith(const char *search) { return (lastIndexOf(search) == int(length() - strlen(search))); };
 
