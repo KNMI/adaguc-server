@@ -128,9 +128,8 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
   CT::string textformatting;
 
   /* Take the textformatting from the Style->Legend configuration */
-  if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL && styleConfiguration->styleConfig->Legend.size() > 0 &&
-      !styleConfiguration->styleConfig->Legend[0]->attr.textformatting.empty()) {
-    textformatting = styleConfiguration->styleConfig->Legend[0]->attr.textformatting;
+  if (styleConfiguration != nullptr && styleConfiguration->legend.attr.textformatting.empty()) {
+    textformatting = styleConfiguration->legend.attr.textformatting;
   }
 
   // CDBDebug("styleTitle = [%s]", styleConfiguration->styleTitle.c_str());
@@ -249,9 +248,12 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
     int maxInterval = styleConfiguration->shadeIntervals.size();
     int angle = 0; // Text angle (in radians)
 
-    if (styleConfiguration->styleConfig != NULL && styleConfiguration->styleConfig->RenderSettings.size() == 1 && styleConfiguration->styleConfig->RenderSettings[0]->attr.cliplegend.equals("true")) {
-      std::tie(minInterval, maxInterval) = calculateShadedClassLegendClipping(minValue, maxValue, styleConfiguration);
+    for (auto renderSetting : styleConfiguration->renderSettings) {
+      if (renderSetting->attr.cliplegend.equals("true")) {
+        std::tie(minInterval, maxInterval) = calculateShadedClassLegendClipping(minValue, maxValue, styleConfiguration);
+      }
     }
+
     // Only a subset of intervals to appear on screen to save space
     size_t drawIntervals = maxInterval - minInterval;
 

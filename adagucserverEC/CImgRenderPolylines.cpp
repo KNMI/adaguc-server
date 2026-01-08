@@ -158,24 +158,21 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   if (styleConfiguration != NULL) {
-    if (styleConfiguration->styleConfig != NULL) {
-      CServerConfig::XMLE_Style *s = styleConfiguration->styleConfig;
-      int numFeatures = s->FeatureInterval.size();
-      CT::string attributeValues[numFeatures];
-      /* Loop through all configured FeatureInterval elements */
-      for (size_t j = 0; j < styleConfiguration->featureIntervals.size(); j++) {
-        CServerConfig::XMLE_FeatureInterval *featureInterval = styleConfiguration->featureIntervals[j];
-        if (featureInterval->attr.match.empty() == false && featureInterval->attr.matchid.empty() == false) {
-          /* Get the matchid attribute for the feature */
-          CT::string attributeName = featureInterval->attr.matchid;
-          for (int featureNr = 0; featureNr < numFeatures; featureNr++) {
-            attributeValues[featureNr] = "";
-            std::map<int, CFeature>::iterator feature = dataSource->getDataObject(0)->features.find(featureNr);
-            if (feature != dataSource->getDataObject(0)->features.end()) {
-              std::map<std::string, std::string>::iterator attributeValueItr = feature->second.paramMap.find(attributeName.c_str());
-              if (attributeValueItr != feature->second.paramMap.end()) {
-                attributeValues[featureNr] = attributeValueItr->second.c_str();
-              }
+    int numFeatures = styleConfiguration->featureIntervals.size();
+    CT::string attributeValues[numFeatures];
+    /* Loop through all configured FeatureInterval elements */
+    for (size_t j = 0; j < styleConfiguration->featureIntervals.size(); j++) {
+      CServerConfig::XMLE_FeatureInterval *featureInterval = styleConfiguration->featureIntervals[j];
+      if (featureInterval->attr.match.empty() == false && featureInterval->attr.matchid.empty() == false) {
+        /* Get the matchid attribute for the feature */
+        CT::string attributeName = featureInterval->attr.matchid;
+        for (int featureNr = 0; featureNr < numFeatures; featureNr++) {
+          attributeValues[featureNr] = "";
+          std::map<int, CFeature>::iterator feature = dataSource->getDataObject(0)->features.find(featureNr);
+          if (feature != dataSource->getDataObject(0)->features.end()) {
+            std::map<std::string, std::string>::iterator attributeValueItr = feature->second.paramMap.find(attributeName.c_str());
+            if (attributeValueItr != feature->second.paramMap.end()) {
+              attributeValues[featureNr] = attributeValueItr->second.c_str();
             }
           }
         }
@@ -201,13 +198,16 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
   std::map<std::string, std::vector<Feature *>> featureStore = CConvertGeoJSON::featureStore;
 
   bool noOverlap = true;
-  if (styleConfiguration->styleConfig->RenderSettings.size() == 1) {
-    noOverlap = !styleConfiguration->styleConfig->RenderSettings[0]->attr.featuresoverlap.equals("true");
-  }
   bool randomStart = false;
-  if (styleConfiguration->styleConfig->RenderSettings.size() == 1) {
-    randomStart = styleConfiguration->styleConfig->RenderSettings[0]->attr.randomizefeatures.equals("false");
+  for (auto renderSetting : styleConfiguration->renderSettings) {
+    if (!renderSetting->attr.featuresoverlap.empty()) {
+      noOverlap = !renderSetting->attr.featuresoverlap.equals("true");
+    }
+    if (!renderSetting->attr.randomizefeatures.empty()) {
+      randomStart = renderSetting->attr.randomizefeatures.equals("true"); // TODO: Ask Ernst if this is correct?
+    }
   }
+
   bool backgroundDrawn = false;
   srand(time(NULL));
   for (std::map<std::string, std::vector<Feature *>>::iterator itf = featureStore.begin(); itf != featureStore.end(); ++itf) {

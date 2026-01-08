@@ -60,8 +60,14 @@ struct CStyleConfiguration {
   std::vector<CServerConfig::XMLE_ShadeInterval *> shadeIntervals;
   std::vector<CServerConfig::XMLE_SymbolInterval *> symbolIntervals;
   std::vector<CServerConfig::XMLE_FeatureInterval *> featureIntervals;
-
-  CServerConfig::XMLE_Style *styleConfig = nullptr; // Direct entrance to styleConfig configuration
+  std::vector<CServerConfig::XMLE_Point *> pointIntervals;
+  std::vector<CServerConfig::XMLE_Vector *> vectorIntervals;
+  std::vector<CServerConfig::XMLE_DataPostProc *> dataPostProcessors;
+  std::vector<CServerConfig::XMLE_Stippling *> stipplingList;
+  std::vector<CServerConfig::XMLE_FilterPoints *> filterPointList;
+  std::vector<CServerConfig::XMLE_Thinning *> thinningList;
+  CServerConfig::XMLE_Legend legend;
+  CServerConfig::XMLE_LegendGraphic legendGraphic;
 
   /**
    * Outputs styleConfiguration as string

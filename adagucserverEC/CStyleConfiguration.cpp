@@ -108,13 +108,12 @@ CT::string CStyleConfiguration::dump() {
 void parseStyleInfo(CStyleConfiguration *styleConfig, CDataSource *dataSource, int styleIndex, int depth) {
   // Get info from style
   CServerConfig::XMLE_Style *style = dataSource->cfg->Style[styleIndex];
-  styleConfig->styleConfig = style;
 
   //  INCLUDE other styles
   for (auto includeStyle : style->IncludeStyle) {
     int extraStyle = dataSource->srvParams->getServerStyleIndexByName(includeStyle->attr.name);
     if (extraStyle >= 0) {
-      // CDBDebug("Include style %d - %s", extraStyle, dataSource->cfg->Style[extraStyle]->attr.name.c_str());
+      CDBDebug("Include style %d - %s", extraStyle, dataSource->cfg->Style[extraStyle]->attr.name.c_str());
       parseStyleInfo(styleConfig, dataSource, extraStyle, depth + 1);
     }
   }
@@ -153,6 +152,19 @@ void parseStyleInfo(CStyleConfiguration *styleConfig, CDataSource *dataSource, i
   styleConfig->shadeIntervals.insert(styleConfig->shadeIntervals.end(), style->ShadeInterval.begin(), style->ShadeInterval.end());
   styleConfig->symbolIntervals.insert(styleConfig->symbolIntervals.end(), style->SymbolInterval.begin(), style->SymbolInterval.end());
   styleConfig->featureIntervals.insert(styleConfig->featureIntervals.end(), style->FeatureInterval.begin(), style->FeatureInterval.end());
+  styleConfig->pointIntervals.insert(styleConfig->pointIntervals.end(), style->Point.begin(), style->Point.end());
+  styleConfig->vectorIntervals.insert(styleConfig->vectorIntervals.end(), style->Vector.begin(), style->Vector.end());
+  styleConfig->dataPostProcessors.insert(styleConfig->dataPostProcessors.end(), style->DataPostProc.begin(), style->DataPostProc.end());
+  styleConfig->stipplingList.insert(styleConfig->stipplingList.end(), style->Stippling.begin(), style->Stippling.end());
+  styleConfig->filterPointList.insert(styleConfig->filterPointList.end(), style->FilterPoints.begin(), style->FilterPoints.end());
+  styleConfig->thinningList.insert(styleConfig->thinningList.end(), style->Thinning.begin(), style->Thinning.end());
+
+  if (style->Legend.size() > 0) {
+    styleConfig->legend = (*style->Legend[0]);
+  }
+  if (style->LegendGraphic.size() > 0) {
+    styleConfig->legendGraphic = (*style->LegendGraphic[0]);
+  }
 
   if (style->Legend.size() > 0) {
     if (style->Legend[0]->attr.tickinterval.empty() == false) {
