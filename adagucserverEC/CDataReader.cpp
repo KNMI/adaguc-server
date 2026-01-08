@@ -737,12 +737,11 @@ void CDataReader::determineStride2DMap(CDataSource *dataSource) const {
   }
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-  if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL) {
-    if (styleConfiguration->styleConfig->RenderSettings.size() == 1) {
-      if ((styleConfiguration->styleConfig->RenderSettings[0])->attr.striding.empty() == false) {
-        dataSource->stride2DMap = styleConfiguration->styleConfig->RenderSettings[0]->attr.striding.toInt();
-        CREPORT_INFO_NODOC(CT::string("Determined a stride of ") + styleConfiguration->styleConfig->RenderSettings[0]->attr.striding + CT::string(" based on RenderSettings."),
-                           CReportMessage::Categories::GENERAL);
+  if (styleConfiguration != nullptr) {
+    for (auto renderSetting : styleConfiguration->renderSettings) {
+      if (renderSetting->attr.striding.empty() == false) {
+        dataSource->stride2DMap = renderSetting->attr.striding.toInt();
+        CREPORT_INFO_NODOC(CT::string("Determined a stride of ") + renderSetting->attr.striding + CT::string(" based on RenderSettings."), CReportMessage::Categories::GENERAL);
         return;
       }
     }

@@ -468,10 +468,12 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
 
   bool forceGDRenderer = false;
 
-  if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL && styleConfiguration->styleConfig->RenderSettings.size() == 1) {
+  if (styleConfiguration != NULL) {
     // XMLE_RenderSettings
-    if (styleConfiguration->styleConfig->RenderSettings[0]->attr.renderer.equals("gd")) {
-      forceGDRenderer = true;
+    for (auto renderSetting : styleConfiguration->renderSettings) {
+      if (renderSetting->attr.renderer.equals("gd")) {
+        forceGDRenderer = true;
+      }
     }
   }
 
@@ -1323,11 +1325,13 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
         Check the if we want to use discrete type with the bilinear rendermethod.
         The bilinear Rendermethod can shade using ShadeInterval if renderhint in RenderSettings is set to RENDERHINT_DISCRETECLASSES
       */
-      if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL && styleConfiguration->styleConfig->RenderSettings.size() == 1) {
-        CT::string renderHint = styleConfiguration->styleConfig->RenderSettings[0]->attr.renderhint;
-        if (renderHint.equals(RENDERHINT_DISCRETECLASSES)) {
-          drawMap = false;   // Don't use continous legends with the bilinear renderer
-          drawShaded = true; // Use discrete legends defined by ShadeInterval with the bilinear renderer
+      if (styleConfiguration != nullptr) {
+        for (auto renderSetting : styleConfiguration->renderSettings) {
+          CT::string renderHint = renderSetting->attr.renderhint;
+          if (renderHint.equals(RENDERHINT_DISCRETECLASSES)) {
+            drawMap = false;   // Don't use continous legends with the bilinear renderer
+            drawShaded = true; // Use discrete legends defined by ShadeInterval with the bilinear renderer
+          }
         }
       }
 
