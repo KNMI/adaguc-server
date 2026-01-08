@@ -68,11 +68,15 @@ void drawTextsForVector(CDrawImage *drawImage, CDataSource *dataSource, VectorSt
   }
 }
 
-ThinningInfo getThinningInfo(CServerConfig::XMLE_Style *s) {
+ThinningInfo getThinningInfo(CStyleConfiguration *styleConfiguration) {
   ThinningInfo info;
-  if (s->Thinning.size() == 1 && !s->Thinning[0]->attr.radius.empty()) {
-    info.doThinning = true;
-    info.thinningRadius = s->Thinning[0]->attr.radius.toInt();
+  if (styleConfiguration != nullptr) {
+    for (auto thinning : styleConfiguration->thinningList) {
+      if (!thinning->attr.radius.empty()) {
+        info.doThinning = true;
+        info.thinningRadius = thinning->attr.radius.toInt();
+      }
+    }
   }
   return info;
 }
@@ -116,12 +120,7 @@ std::vector<size_t> doThinningGetIndices(std::vector<PointDVWithLatLon> &p1, boo
 }
 
 void renderVectorPoints(std::vector<size_t> thinnedPointIndexList, CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration) {
-
-  if (styleConfiguration == nullptr || styleConfiguration->styleConfig == nullptr) {
-    return;
-  }
-  auto s = styleConfiguration->styleConfig;
-  if (s->Vector.size() == 0) {
+  if (styleConfiguration == nullptr || styleConfiguration->vectorIntervals.size() == 0) {
     return;
   }
 
@@ -152,7 +151,7 @@ void renderVectorPoints(std::vector<size_t> thinnedPointIndexList, CImageWarper 
 
   // Make a list of vector style objects based on the configuration.
   std::vector<VectorStyle> vectorStyles;
-  for (auto cfgVectorStyle : s->Vector) {
+  for (auto cfgVectorStyle : styleConfiguration->vectorIntervals) {
     vectorStyles.push_back(getVectorStyle(cfgVectorStyle, dataSource->srvParams->cfg));
   }
 
@@ -278,7 +277,7 @@ bool isPointOutsideLegendRange(CStyleConfiguration *styleConfiguration, float va
 }
 
 bool shouldSkipPoint(CStyleConfiguration *styleConfiguration, PointStyle pointStyle, float value, float fillValue) {
-  if (value == fillValue || (std::isnan(value) && std::isnan(fillValue))) return true;
+  if (value == fillValue) return true;
   if (pointStyle.isOutsideMinMax(value)) return true;
   if (isPointOutsideLegendRange(styleConfiguration, value)) return true;
   return false;
@@ -408,7 +407,11 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
 
   float fillValueObjectOne = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
   for (size_t dataObjectIndex = 0; dataObjectIndex < dataSource->getNumDataObjects(); dataObjectIndex++) {
-    std::vector<PointDVWithLatLon> *pts = &dataSource->getDataObject(dataObjectIndex)->points;
+    auto dataObject = dataSource->getDataObject(dataObjectIndex);
+    auto pointTypeAttr = dataObject->cdfVariable->getAttributeNE("ADAGUC_ORGPOINT_TYPE");
+    auto dataType = pointTypeAttr != nullptr ? pointTypeAttr->getDataAt<int>(0) : CDF_FLOAT;
+
+    std::vector<PointDVWithLatLon> *pts = &dataObject->points;
 
     float usedx = 0;
     float usedy = 0;
@@ -428,12 +431,11 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
     for (auto pointIndex : thinnedPointIndexList) {
       auto pointValue = &(*pts)[pointIndex];
       float value = pointValue->v;
-      if (shouldSkipPoint(styleConfiguration, pointStyle, value, fillValueObjectOne)) continue;
 
       int x = pointValue->x;
       int y = dataSource->srvParams->geoParams.height - pointValue->y;
 
-      if (std::isnan(value)) {
+      if (dataType == CDF_STRING) {
         // Try to draw something if value is NaN
         if (pointValue->paramList.size() > 0) {
           CT::string textValue = pointValue->paramList[0].value;
@@ -447,6 +449,8 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
         }
         continue;
       }
+
+      if (shouldSkipPoint(styleConfiguration, pointStyle, value, fillValueObjectOne)) continue;
 
       if (!drawZoomablePoint) {
         size_t doneMatrixPointer = 0;
@@ -511,13 +515,12 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
 std::unordered_set<std::string> shouldUseFilterPoints(CStyleConfiguration *styleConfiguration) {
   std::unordered_set<std::string> usePoints;
 
-  CServerConfig::XMLE_Style *s = styleConfiguration->styleConfig;
-  if (s->FilterPoints.size() == 0) return usePoints;
-  auto attr = s->FilterPoints[0]->attr;
-
-  if (!attr.use.empty()) {
-    for (const auto &token : attr.use.splitToStack(",")) {
-      usePoints.insert(token.c_str());
+  if (styleConfiguration->filterPointList.size() == 0) return usePoints;
+  for (auto filterPoint : styleConfiguration->filterPointList) {
+    if (!filterPoint->attr.use.empty()) {
+      for (const auto &token : filterPoint->attr.use.splitToStack(",")) {
+        usePoints.insert(token.c_str());
+      }
     }
   }
   return usePoints;
@@ -626,20 +629,15 @@ void renderSingleDot(std::vector<size_t> thinnedPointIndexList, CDataSource *dat
 
 void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage) {
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-  if (styleConfiguration == NULL || styleConfiguration->styleConfig == NULL) {
+  if (styleConfiguration == NULL) {
     CDBDebug("Note: No styleConfiguration. Skipping.");
     return;
   }
 
-  CServerConfig::XMLE_Style *styleConfig = styleConfiguration->styleConfig;
-  if (styleConfig == NULL) {
-    CDBError("styleConfiguration==NULL!");
-  }
-
   std::unordered_set<std::string> usePoints = shouldUseFilterPoints(styleConfiguration);
-  ThinningInfo thinningInfo = getThinningInfo(styleConfiguration->styleConfig);
+  ThinningInfo thinningInfo = getThinningInfo(styleConfiguration);
 
-  for (auto pointConfig : styleConfig->Point) {
+  for (auto pointConfig : styleConfiguration->pointIntervals) {
     PointStyle pointStyle = getPointStyle(pointConfig, dataSource->srvParams->cfg);
     auto thinnedPointIndexList = doThinningGetIndices(dataSource->getDataObject(0)->points, thinningInfo.doThinning, thinningInfo.thinningRadius, usePoints);
     CDBDebug("Point plotting %d elements %d", thinnedPointIndexList.size(), usePoints.size());
