@@ -791,6 +791,8 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
     /**
      * The following code is for
      * https://github.com/KNMI/adaguc-server/blob/master/doc/configuration/Point.md#pointstyle-zoomablepoint
+     *
+     * TODO: https://github.com/KNMI/adaguc-server/issues/586
      */
     float discRadius = 8;
     float discRadiusX = discRadius;
