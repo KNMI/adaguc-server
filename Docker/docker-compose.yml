@@ -133,7 +133,7 @@ services:
         max-size: "200k"
         max-file: "10"
   adaguc-db:
-    image: postgres:13
+    image: postgres:17
     container_name: adaguc-db
     hostname: adaguc-db
     # Ensures containers running in the adaguc-network docker network can connect to the database, provided they use the
@@ -141,7 +141,7 @@ services:
     networks:
       - adaguc-network
     volumes:
-      - adaguc-server-compose-adagucdb:/var/lib/postgresql/data
+      - adaguc-server-compose-adagucdb-pg17:/var/lib/postgresql/data
     environment:
       - "POSTGRES_USER=adaguc"
       - "POSTGRES_PASSWORD=adaguc"
@@ -160,7 +160,7 @@ services:
     networks:
       - adaguc-network
 volumes:
-  adaguc-server-compose-adagucdb:
+  adaguc-server-compose-adagucdb-pg17:
 networks:
   adaguc-network:
 #Run
