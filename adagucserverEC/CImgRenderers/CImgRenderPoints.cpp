@@ -277,6 +277,7 @@ bool isPointOutsideLegendRange(CStyleConfiguration *styleConfiguration, float va
 }
 
 bool shouldSkipPoint(CStyleConfiguration *styleConfiguration, PointStyle pointStyle, float value, float fillValue) {
+  if (isnan(value)) return true;
   if (value == fillValue) return true;
   if (pointStyle.isOutsideMinMax(value)) return true;
   if (isPointOutsideLegendRange(styleConfiguration, value)) return true;
@@ -436,15 +437,15 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
       int y = dataSource->srvParams->geoParams.height - pointValue->y;
 
       if (dataType == CDF_STRING) {
-        // Try to draw something if value is NaN
+        // Draw the string value
         if (pointValue->paramList.size() > 0) {
           CT::string textValue = pointValue->paramList[0].value;
           if (pointStyle.discRadius == 0) {
             drawImage->drawCenteredText(x, y, pointStyle.fontFile.c_str(), pointStyle.fontSize, 0, textValue.c_str(), pointStyle.textColor);
           } else {
             drawImage->circle(x, y, pointStyle.discRadius + 1, pointStyle.lineColor, 0.65);
-            drawImage->drawAnchoredText(x - int(float(textValue.length()) * 3.0f) - 2, y - pointStyle.textRadius, pointStyle.fontFile.c_str(), pointStyle.fontSize, 0, textValue.c_str(),
-                                        pointStyle.textColor, kwadrant);
+            drawImage->drawAnchoredText(x - int(float(textValue.length()) * 3.0f) - 2, y - pointStyle.textRadius + dataObjectIndex * pointStyle.textRadius, pointStyle.fontFile.c_str(),
+                                        pointStyle.fontSize, 0, textValue.c_str(), pointStyle.textColor, kwadrant);
           }
         }
         continue;

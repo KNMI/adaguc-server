@@ -226,6 +226,11 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
 
   // Make a list of variables which will be available as 2D fields
   CT::StackList<CT::string> varsToConvert;
+  // Add station (dimension) variable
+  CDF::Variable *pointID = cdfObject->getVariableNE("station");
+  if (pointID != nullptr) {
+    varsToConvert.add(pointID->name.c_str());
+  }
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
     if (var->isDimension == false) {
