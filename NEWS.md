@@ -1,6 +1,6 @@
 **Version 6.2.0 - 2026-01-12**
 
-- Move from postgres 13 towards 17.
+- Move from postgres 13 to 17.
 
 **Version 6.1.1 - 2026-01-07**
 
