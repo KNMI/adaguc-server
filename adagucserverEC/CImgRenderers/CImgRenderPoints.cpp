@@ -407,8 +407,11 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
 
   float fillValueObjectOne = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
   for (size_t dataObjectIndex = 0; dataObjectIndex < dataSource->getNumDataObjects(); dataObjectIndex++) {
-    std::vector<PointDVWithLatLon> *pts = &dataSource->getDataObject(dataObjectIndex)->points;
-
+    auto dataObject = dataSource->getDataObject(dataObjectIndex);
+    if (dataObject == nullptr) continue;
+    std::vector<PointDVWithLatLon> *pts = &dataObject->points;
+    if (pts == nullptr) continue;
+    size_t numPoints = pts->size();
     float usedx = 0;
     float usedy = 0;
     int kwadrant = 0;
@@ -425,6 +428,7 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
     }
 
     for (auto pointIndex : thinnedPointIndexList) {
+      if (pointIndex >= numPoints) continue;
       auto pointValue = &(*pts)[pointIndex];
       float value = pointValue->v;
       if (shouldSkipPoint(styleConfiguration, pointStyle, value, fillValueObjectOne)) continue;

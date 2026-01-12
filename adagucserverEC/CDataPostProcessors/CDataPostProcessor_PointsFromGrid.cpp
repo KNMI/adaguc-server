@@ -157,6 +157,14 @@ int CDPPointsFromGrid::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSour
   int id = 0; // TODO check if not grows besided number of available objects
   for (auto con : proc->attr.select.splitToStack(",")) {
     auto ob = dataSource->getDataObjectByName(con.c_str());
+    if (ob == NULL) {
+      CDBError("Could not find dataobject with name %s", con.c_str());
+      throw __LINE__;
+    }
+    if (ob->cdfVariable == NULL) {
+      CDBError("Dataobject %s has no variable", con.c_str());
+      throw __LINE__;
+    }
     auto destob = dataSource->getDataObject(id);
     if (ob->cdfVariable->getType() != CDF_FLOAT) {
       CDBError("Can only work with CDF_FLOAT");
