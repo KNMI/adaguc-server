@@ -1,3 +1,7 @@
+**Version 6.2.1 - 2026-01-12**
+
+- pointsfromgrid can now also be used to plot text values on windspeed and winddirection components
+
 **Version 6.2.0 - 2026-01-12**
 
 - Move from postgres 13 to 17.
