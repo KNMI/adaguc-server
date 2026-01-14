@@ -63,8 +63,8 @@ std::vector<CServerConfig::XMLE_DataPostProc *> getProcessorList(CDataSource *da
     dataProcessorList.push_back(dp);
   }
 
-  if (dataSource->getStyle() != nullptr && dataSource->getStyle()->styleConfig != nullptr) {
-    for (auto dp : dataSource->getStyle()->styleConfig->DataPostProc) {
+  if (dataSource->getStyle() != nullptr) {
+    for (auto dp : dataSource->getStyle()->dataPostProcessors) {
       dataProcessorList.push_back(dp);
     }
   }

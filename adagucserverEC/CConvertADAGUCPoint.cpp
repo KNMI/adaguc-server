@@ -788,6 +788,12 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
     CDBDebug("Date numStations = %d", numStations);
 #endif
 
+    /**
+     * The following code is for
+     * https://github.com/KNMI/adaguc-server/blob/master/doc/configuration/Point.md#pointstyle-zoomablepoint
+     *
+     * TODO: https://github.com/KNMI/adaguc-server/issues/586
+     */
     float discRadius = 8;
     float discRadiusX = discRadius;
     float discRadiusY = discRadius;
@@ -795,12 +801,11 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
     float discSize = 1;
     if (dataSource != NULL) {
       CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-      if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL) {
-        if (styleConfiguration->styleConfig->Point.size() == 1) {
-
-          if (!styleConfiguration->styleConfig->Point[0]->attr.discradius.empty()) {
+      if (styleConfiguration != NULL) {
+        for (auto pointInterval : styleConfiguration->pointIntervals) {
+          if (!pointInterval->attr.discradius.empty()) {
             hasZoomableDiscRadius = true;
-            discSize = styleConfiguration->styleConfig->Point[0]->attr.discradius.toFloat();
+            discSize = pointInterval->attr.discradius.toFloat();
           }
         }
       }

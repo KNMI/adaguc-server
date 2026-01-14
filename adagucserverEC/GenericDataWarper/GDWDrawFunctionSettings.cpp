@@ -44,13 +44,11 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
     }
   }
   /* Check the if we want to use discrete type */
-  if (styleConfiguration->styleConfig != nullptr) {
-    // For the generic renderer and when shadeinterval is set, always apply shading.
-    if (settings.isUsingShadeIntervals == false && styleConfiguration->shadeIntervals.size() > 0) {
-      size_t numRenderSettings = styleConfiguration->styleConfig->RenderMethod.size();
-      if (numRenderSettings == 0 || (numRenderSettings > 0 && styleConfiguration->renderMethod == RM_GENERIC)) {
-        settings.isUsingShadeIntervals = true;
-      }
+
+  // For the generic renderer and when shadeinterval is set, always apply shading.
+  if (settings.isUsingShadeIntervals == false && styleConfiguration->shadeIntervals.size() > 0) {
+    if (styleConfiguration->renderMethod == RM_GENERIC) {
+      settings.isUsingShadeIntervals = true;
     }
   }
 

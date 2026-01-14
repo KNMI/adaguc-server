@@ -37,7 +37,7 @@ docker run --rm -d \
     -e POSTGRES_PASSWORD=adaguc \
     -e POSTGRES_DB=adaguc \
     -p 5432:5432 \
-    postgres:13.4
+    postgres:17.4
 ```
 
 When started, the database is available via username adaguc, databasename adaguc, password adaguc, and localhost. You can use the following to inspect the database:

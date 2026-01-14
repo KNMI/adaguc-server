@@ -53,9 +53,8 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
   CT::string textformatting;
 
   /* Take the textformatting from the Style->Legend configuration */
-  if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL && styleConfiguration->styleConfig->Legend.size() > 0 &&
-      !styleConfiguration->styleConfig->Legend[0]->attr.textformatting.empty()) {
-    textformatting = styleConfiguration->styleConfig->Legend[0]->attr.textformatting;
+  if (styleConfiguration != nullptr && !styleConfiguration->legend.attr.textformatting.empty()) {
+    textformatting = styleConfiguration->legend.attr.textformatting;
   }
   CDBDebug("TextFormatting=%s", textformatting.c_str());
   double scaling = dataSource->getScaling();

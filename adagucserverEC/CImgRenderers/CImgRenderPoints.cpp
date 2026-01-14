@@ -68,11 +68,15 @@ void drawTextsForVector(CDrawImage *drawImage, CDataSource *dataSource, VectorSt
   }
 }
 
-ThinningInfo getThinningInfo(CServerConfig::XMLE_Style *s) {
+ThinningInfo getThinningInfo(CStyleConfiguration *styleConfiguration) {
   ThinningInfo info;
-  if (s->Thinning.size() == 1 && !s->Thinning[0]->attr.radius.empty()) {
-    info.doThinning = true;
-    info.thinningRadius = s->Thinning[0]->attr.radius.toInt();
+  if (styleConfiguration != nullptr) {
+    for (auto thinning : styleConfiguration->thinningList) {
+      if (!thinning->attr.radius.empty()) {
+        info.doThinning = true;
+        info.thinningRadius = thinning->attr.radius.toInt();
+      }
+    }
   }
   return info;
 }
@@ -116,12 +120,7 @@ std::vector<size_t> doThinningGetIndices(std::vector<PointDVWithLatLon> &p1, boo
 }
 
 void renderVectorPoints(std::vector<size_t> thinnedPointIndexList, CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration) {
-
-  if (styleConfiguration == nullptr || styleConfiguration->styleConfig == nullptr) {
-    return;
-  }
-  auto s = styleConfiguration->styleConfig;
-  if (s->Vector.size() == 0) {
+  if (styleConfiguration == nullptr || styleConfiguration->vectorIntervals.size() == 0) {
     return;
   }
 
@@ -152,7 +151,7 @@ void renderVectorPoints(std::vector<size_t> thinnedPointIndexList, CImageWarper 
 
   // Make a list of vector style objects based on the configuration.
   std::vector<VectorStyle> vectorStyles;
-  for (auto cfgVectorStyle : s->Vector) {
+  for (auto cfgVectorStyle : styleConfiguration->vectorIntervals) {
     vectorStyles.push_back(getVectorStyle(cfgVectorStyle, dataSource->srvParams->cfg));
   }
 
@@ -512,13 +511,12 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
 std::unordered_set<std::string> shouldUseFilterPoints(CStyleConfiguration *styleConfiguration) {
   std::unordered_set<std::string> usePoints;
 
-  CServerConfig::XMLE_Style *s = styleConfiguration->styleConfig;
-  if (s->FilterPoints.size() == 0) return usePoints;
-  auto attr = s->FilterPoints[0]->attr;
-
-  if (!attr.use.empty()) {
-    for (const auto &token : attr.use.split(",")) {
-      usePoints.insert(token.c_str());
+  if (styleConfiguration->filterPointList.size() == 0) return usePoints;
+  for (auto filterPoint : styleConfiguration->filterPointList) {
+    if (!filterPoint->attr.use.empty()) {
+      for (const auto &token : filterPoint->attr.use.split(",")) {
+        usePoints.insert(token.c_str());
+      }
     }
   }
   return usePoints;
@@ -627,20 +625,15 @@ void renderSingleDot(std::vector<size_t> thinnedPointIndexList, CDataSource *dat
 
 void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage) {
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-  if (styleConfiguration == NULL || styleConfiguration->styleConfig == NULL) {
+  if (styleConfiguration == NULL) {
     CDBDebug("Note: No styleConfiguration. Skipping.");
     return;
   }
 
-  CServerConfig::XMLE_Style *styleConfig = styleConfiguration->styleConfig;
-  if (styleConfig == NULL) {
-    CDBError("styleConfiguration==NULL!");
-  }
-
   std::unordered_set<std::string> usePoints = shouldUseFilterPoints(styleConfiguration);
-  ThinningInfo thinningInfo = getThinningInfo(styleConfiguration->styleConfig);
+  ThinningInfo thinningInfo = getThinningInfo(styleConfiguration);
 
-  for (auto pointConfig : styleConfig->Point) {
+  for (auto pointConfig : styleConfiguration->pointIntervals) {
     PointStyle pointStyle = getPointStyle(pointConfig, dataSource->srvParams->cfg);
     auto thinnedPointIndexList = doThinningGetIndices(dataSource->getDataObject(0)->points, thinningInfo.doThinning, thinningInfo.thinningRadius, usePoints);
     if (dataSource->debug) {

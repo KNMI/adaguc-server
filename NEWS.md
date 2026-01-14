@@ -1,6 +1,14 @@
-**Version 6.1.1 - 2026-01-07**
+**Version 6.2.1 - 2026-01-14**
 
 - CT::string now uses std::string as internals.
+
+**Version 6.2.0 - 2026-01-12**
+
+- Move from postgres 13 to 17.
+
+**Version 6.1.1 - 2026-01-07**
+
+- Include style now works in combination with vectors (WIK request)
 
 **Version 6.1.0 - 2025-11-28**
 

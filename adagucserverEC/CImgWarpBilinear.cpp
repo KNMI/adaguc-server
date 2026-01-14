@@ -406,8 +406,14 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
       }
     }
     if (enableBarb) {
-      bool rendertextforvectors = styleConfiguration != nullptr && styleConfiguration->styleConfig != nullptr && styleConfiguration->styleConfig->RenderSettings.size() > 0 &&
-                                  styleConfiguration->styleConfig->RenderSettings[0]->attr.rendertextforvectors.equals("true");
+      bool rendertextforvectors = false;
+      if (styleConfiguration != nullptr) {
+        for (auto r : styleConfiguration->renderSettings) {
+          if (r->attr.rendertextforvectors.equals("true")) {
+            rendertextforvectors = true;
+          }
+        }
+      }
       for (size_t sz = 0; sz < windVectors.size(); sz++) {
         CalculatedWindVector wv = windVectors[sz];
         float outlineWidth = 0;

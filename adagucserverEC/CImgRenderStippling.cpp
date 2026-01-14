@@ -132,25 +132,25 @@ void CImgRenderStippling::render(CImageWarper *warper, CDataSource *dataSource, 
   discSize = 6;
   mode = CImgRenderStipplingModeDefault; // Mode 0 is standard stippling
 
-  if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL) {
-    if (styleConfiguration->styleConfig->Stippling.size() == 1) {
-      if (!styleConfiguration->styleConfig->Stippling[0]->attr.distancex.empty()) {
-        xDistance = styleConfiguration->styleConfig->Stippling[0]->attr.distancex.toInt();
+  if (styleConfiguration != nullptr) {
+    for (auto stippling : styleConfiguration->stipplingList) {
+      if (!stippling->attr.distancex.empty()) {
+        xDistance = stippling->attr.distancex.toInt();
       }
-      if (!styleConfiguration->styleConfig->Stippling[0]->attr.distancey.empty()) {
-        yDistance = styleConfiguration->styleConfig->Stippling[0]->attr.distancey.toInt();
+      if (!stippling->attr.distancey.empty()) {
+        yDistance = stippling->attr.distancey.toInt();
       }
-      if (!styleConfiguration->styleConfig->Stippling[0]->attr.discradius.empty()) {
-        discSize = styleConfiguration->styleConfig->Stippling[0]->attr.discradius.toInt();
+      if (!stippling->attr.discradius.empty()) {
+        discSize = stippling->attr.discradius.toInt();
       }
-      if (!styleConfiguration->styleConfig->Stippling[0]->attr.mode.empty()) {
-        CT::string smode = styleConfiguration->styleConfig->Stippling[0]->attr.mode;
+      if (!stippling->attr.mode.empty()) {
+        CT::string smode = stippling->attr.mode;
         if (smode.equals("threshold")) {
           mode = CImgRenderStipplingModeThreshold;
         }
       }
-      if (!styleConfiguration->styleConfig->Stippling[0]->attr.color.empty()) {
-        color = styleConfiguration->styleConfig->Stippling[0]->attr.color;
+      if (!stippling->attr.color.empty()) {
+        color = stippling->attr.color;
       }
     }
   }
