@@ -453,9 +453,7 @@ namespace CT {
     return result;
   }
 
-  string string::toHex8() { return getHex(this->toInt()); }
-
-  string string::toHex24() {
+    string string::toHex24() {
     string result;
     unsigned int value = this->toInt();
     result.print("%s%s%s", getHex(value % 256).c_str(), getHex((value >> 8) % 256).c_str(), getHex((value >> 16) % 256).c_str());
