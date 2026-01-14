@@ -42,7 +42,7 @@ function clean {
 
 function build {
 
-  clean
+  # clean
   cd $CURRENTDIR/bin
   cmake .. &&  cmake  --build . --parallel 4
 

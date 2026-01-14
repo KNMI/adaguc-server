@@ -102,10 +102,11 @@ int main(int argc, const char *argv[]) {
   /* Loop through all files and gather information */
   try {
     for (size_t j = 0; j < dirReader.fileList.size(); j++) {
-      NCFileObject *fileObject = new NCFileObject(CT::string(dirReader.fileList[j].c_str()).basename().c_str());
+      auto basename = CT::string(CT::basename(dirReader.fileList[j].c_str()));
+      NCFileObject *fileObject = new NCFileObject(basename.c_str());
       fileObjects.push_back(fileObject);
       fileObject->fullName = dirReader.fileList[j].c_str();
-      fileObject->baseName = CT::string(dirReader.fileList[j].c_str()).basename().c_str();
+      fileObject->baseName = basename;
 
       status = fileObject->cdfObject->open(fileObject->fullName.c_str());
 

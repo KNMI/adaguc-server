@@ -355,64 +355,37 @@ namespace CT {
     return replaceAll(from, to);
   }
 
-  // int string::substringSelf(size_t start, size_t end) {
-  //   this->stdstring = substring(start, end);
-  //   return 0;
-  // }
-
-  // CT::string string::substring(size_t start, size_t end) { return this->stdstring.substr(start, end < 0 ? std::string::npos : end - start + 1); }
-
-  int string::substringSelf(size_t start, size_t end) {
-    // TODO: Use substr.
-    if (start >= stdstring.length() || end - start <= 0) {
-      stdstring = "";
-      return 0;
+  CT::string string::substring(int start, int end) {
+    // Negative start means empty string
+    if (start < 0) {
+      return "";
     }
-    if (end > stdstring.length()) end = stdstring.length();
-    stdstring = stdstring.c_str() + start;
-    stdstring.resize(end - start);
+    // When end is negative, return till the end of the string
+    if (end < 0) {
+      return this->stdstring.substr(start);
+    }
+    // If end is less than start, return empty string
+    if (end <= start) {
+      return "";
+    }
+    return this->stdstring.substr(start, end - start);
+  }
+
+  int string::substringSelf(int start, int end) {
+    this->stdstring = substring(start, end);
     return 0;
   }
 
-  CT::string string::substring(size_t start, size_t end) {
-    CT::string test = this->stdstring.c_str();
-    test.substringSelf(start, end);
-    return test;
-  }
+  float string::toFloat() { return static_cast<float>(atof(trim().c_str())); }
 
-  float string::toFloat() {
-    float fValue = (float)atof(trim().c_str());
-    return fValue;
-  }
-
-  double string::toDouble() {
-    double fValue = (double)atof(c_str());
-    return fValue;
-  }
+  // TODO: When strings like "longlat are passed the function currently silently returns 0. Would be better to throw an exception"
+  double string::toDouble() { return atof(trim().c_str()); }
 
   int string::toInt() { return atoi(c_str()); }
 
   long string::toLong() { return atol(c_str()); }
 
-  CT::string string::basename() {
-    const char *last = rindex(this->c_str(), '/');
-    CT::string fileBaseName;
-    if ((last != nullptr) && (*last)) {
-      fileBaseName.copy(last + 1);
-    } else {
-      fileBaseName.copy(this);
-    }
-    return fileBaseName;
-  }
-
   bool is_digit(const char value) { return std::isdigit(value); }
-
-  bool includesFunction(const char *inputStr, size_t inputLength, const char testChar) {
-    for (size_t intputCounter = 0; intputCounter < inputLength; intputCounter++) {
-      if (testChar == inputStr[intputCounter]) return true;
-    }
-    return false;
-  }
 
   /* These need to be initialized once, this is a costly function */
   std::regex isNumericRegex = std::regex("[+-]?([0-9]*[.])?[0-9]+");
@@ -521,4 +494,5 @@ namespace CT {
     return newString;
   }
 
+  std::string basename(std::string input) { return input.substr(input.find_last_of("/\\") + 1); }
 } /* namespace CT */

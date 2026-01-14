@@ -188,3 +188,34 @@ TEST(string, splitOnKeyWhichRepeats) {
   std::vector<CT::string> lines = linesToSplit.split("aaa");
   LONGS_EQUAL(9, lines.size());
 }
+
+TEST(string, substring) {
+  CT::string stringToSubstitute = "We think in generalities, but we live in details.";
+  CT::string sub1 = stringToSubstitute.substring(3, 8);
+  CHECK_EQUAL("think", std::string(sub1.c_str()));
+  CT::string sub2 = stringToSubstitute.substring(0, 2);
+  CHECK_EQUAL("We", std::string(sub2.c_str()));
+  CT::string sub3 = stringToSubstitute.substring(12, 13);
+  CHECK_EQUAL("g", std::string(sub3.c_str()));
+  CT::string sub4 = stringToSubstitute.substring(41, -1);
+  CHECK_EQUAL("details.", std::string(sub4.c_str()));
+  CT::string sub5 = stringToSubstitute.substring(41, 101);
+  CHECK_EQUAL("details.", std::string(sub5.c_str()));
+  CT::string sub6 = stringToSubstitute.substring(12, 12);
+  CHECK_EQUAL("", std::string(sub6.c_str()));
+  CT::string sub7 = stringToSubstitute.substring(12, 11);
+  CHECK_EQUAL("", std::string(sub7.c_str()));
+  CT::string sub8 = stringToSubstitute.substring(12, -11);
+  CHECK_EQUAL("generalities, but we live in details.", std::string(sub8.c_str()));
+  CT::string sub9 = stringToSubstitute.substring(-1, 5);
+  CHECK_EQUAL("", std::string(sub9.c_str()));
+}
+
+TEST(string, basename) {
+  CHECK_EQUAL(CT::basename("/hoallo/test.nc"), "test.nc");
+  CHECK_EQUAL(CT::basename("\\hoall\\test.nc"), "test.nc");
+  CHECK_EQUAL(CT::basename("test.nc"), "test.nc");
+  CHECK_EQUAL(CT::basename(""), "");
+  CHECK_EQUAL(CT::basename("/a/b/c/d/e/f"), "f");
+  CHECK_EQUAL(CT::basename("/a/b\\/c/d\\/e/f"), "f");
+}

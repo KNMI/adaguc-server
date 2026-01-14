@@ -4,7 +4,7 @@
 bool checkIfFileMatchesLayer(CT::string layerPathToScan, CServerConfig::XMLE_Layer *layer) {
   // Get the directory of the file to scan:
   CT::string directoryOfFileToScan = layerPathToScan = CDirReader::makeCleanPath(layerPathToScan.c_str());
-  directoryOfFileToScan.substringSelf(0, directoryOfFileToScan.length() - directoryOfFileToScan.basename().length());
+  directoryOfFileToScan.substringSelf(0, directoryOfFileToScan.length() - CT::basename(directoryOfFileToScan).length());
   directoryOfFileToScan = CDirReader::makeCleanPath(directoryOfFileToScan.c_str()) + "/";
 
   if (layer->attr.type.empty() || layer->attr.type.equals("database")) {
@@ -18,7 +18,7 @@ bool checkIfFileMatchesLayer(CT::string layerPathToScan, CServerConfig::XMLE_Lay
         return true;
         // When the directory of the file to scan matches the FilePath and the filter matches, give a Match
       } else if (directoryOfFileToScan.startsWith(filePathWithTrailingSlash.c_str())) {
-        if (CDirReader::testRegEx(layerPathToScan.basename().c_str(), filter.c_str()) == 1) {
+        if (CDirReader::testRegEx(CT::basename(layerPathToScan).c_str(), filter.c_str()) == 1) {
           return true;
         }
       }

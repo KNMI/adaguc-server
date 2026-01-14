@@ -117,7 +117,7 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
 
       // The last configration file is considered the dataset one, strip path and extension and give it to configurer
       if (configFileList.size() > 1) {
-        srvParam->datasetLocation.copy(configFileList[configFileList.size() - 1].basename().c_str());
+        srvParam->datasetLocation.copy(CT::basename(configFileList[configFileList.size() - 1]).c_str());
         srvParam->datasetLocation.substringSelf(0, srvParam->datasetLocation.lastIndexOf("."));
         if (srvParam->verbose) {
           CDBDebug("Dataset name based on passed configfile is [%s]", srvParam->datasetLocation.c_str());

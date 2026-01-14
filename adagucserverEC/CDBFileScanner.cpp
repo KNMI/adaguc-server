@@ -920,7 +920,7 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string _tailPath, CT::
     if (verbose) {
       CDBDebug("Checking specified fileToUpdate %s with filter %s", fileToUpdate.c_str(), filter.c_str());
     }
-    CT::string fileToCheckAgainstRegexp = fileToUpdate.basename();
+    CT::string fileToCheckAgainstRegexp = CT::basename(fileToUpdate);
     if (fileToUpdate.equals(dataSource->cfgLayer->FilePath[0]->value) || CDirReader::testRegEx(fileToCheckAgainstRegexp.c_str(), filter.c_str()) == 1) {
       if (verbose) {
         CDBDebug("Add specified file %s with filter %s for scanning", fileToCheckAgainstRegexp.c_str(), filter.c_str());
@@ -1070,7 +1070,7 @@ std::vector<std::string> CDBFileScanner::searchFileNames(const char *path, CT::s
 
       // Delete all files that start with a "." from the filelist.
       for (size_t j = 0; j < dirReader->fileList.size(); j++) {
-        if (CT::string(dirReader->fileList[j].c_str()).basename().c_str()[0] != '.') {
+        if (CT::basename(dirReader->fileList[j])[0] != '.') {
           fileList.push_back(dirReader->fileList[j].c_str());
         }
       }

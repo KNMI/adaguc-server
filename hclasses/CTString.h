@@ -315,18 +315,18 @@ namespace CT {
     /**
      * Subset the string from start till end
      * @param start Where to subset from
-     * @param end Where to subset to (-1 means till the end of the string)
-     * @return Zero on success
+     * @param end Where to subset to (-1 means till the end of the string). If end is less than start, an empty string is returned.
+     * @return Always zero
      */
-    int substringSelf(size_t start, size_t end);
+    int substringSelf(int start, int end);
 
     /**
      * Returns a subsetted string from start till end
      * @param start Where to subset from
-     * @param end Where to subset to (-1 means till the end of the string)
+     * @param end Where to subset to (-1 means till the end of the string). If end is less than start, an empty string is returned.
      * @return string with the subsetted string
      */
-    CT::string substring(size_t start, size_t end);
+    CT::string substring(int start, int end);
 
     /**
      * Adjusts the size of the string
@@ -340,6 +340,7 @@ namespace CT {
 
     /**
      * Converts the string to a double number
+     * // TODO: When strings like "longlat are passed the function currently silently returns 0. Would be better to throw an exception"
      */
     double toDouble();
 
@@ -357,11 +358,6 @@ namespace CT {
      * Test whether string is empty or not
      */
     bool empty();
-
-    /**
-     * Returns posix basename of path
-     */
-    CT::string basename();
 
     /**
      * Checks if this string represents a numeric value
@@ -407,6 +403,8 @@ namespace CT {
     CT::string replaceAll(CT::string substr, CT::string newString);
 
     friend CT::string join(const std::vector<string> &items, CT::string separator);
+
+    friend std::string basename(std::string input);
   };
 
   // Example on how new implementation can help with moving towards fully using std::string instead of CT::String
@@ -416,6 +414,13 @@ namespace CT {
    * @returns new string containing all items.
    */
   string join(const std::vector<string> &items, string separator = ",");
+
+  /**
+   * Returns posix basename of path
+   * @param input The input path
+   * @returns The basename of the path
+   */
+  std::string basename(std::string input);
 }; /* namespace CT */
 
 #endif

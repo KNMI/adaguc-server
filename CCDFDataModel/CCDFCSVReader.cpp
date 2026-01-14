@@ -60,7 +60,7 @@ int CDFCSVReader::open(const char *fileName) {
   }
   this->fileName = fileName;
 
-  CT::string fileBaseName = CT::string(fileName).basename();
+  CT::string fileBaseName = CT::basename(fileName);
 
   /* Is this really csv */
   if (fileBaseName.endsWith(".csv") == false) {
