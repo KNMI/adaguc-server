@@ -12,7 +12,6 @@ function quit {
 function clean {
   rm -rf $CURRENTDIR/bin
   mkdir -p $CURRENTDIR/bin
-
   cd $CURRENTDIR/hclasses
   rm -f *.o
   rm -f *.a
@@ -43,6 +42,7 @@ function clean {
 function build {
 
   # clean
+  mkdir -p $CURRENTDIR/bin
   cd $CURRENTDIR/bin
   cmake .. &&  cmake  --build . --parallel 4
 
