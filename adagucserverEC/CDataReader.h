@@ -25,7 +25,7 @@
 
 #ifndef CDataReader_H
 #define CDataReader_H
-#include <math.h>
+#include <cmath>
 #include "CDebugger.h"
 #include "CDataSource.h"
 #include "CServerError.h"
@@ -45,8 +45,8 @@
 class CDataReader {
 private:
   DEF_ERRORFUNCTION();
-  bool _enableReporting;
-
+  bool _enableReporting = false;
+  bool verbose = false;
   /**
    * Copies CRS info from the config when the "Projection" tag is present in the ADAGUC config.
    * If either of the id or the proj4 string is not defined, default values are copied.
@@ -166,7 +166,7 @@ public:
    * @param ncname the name dimension to check
    * @return DimensionType
    */
-  static CDataReader::DimensionType getDimensionType(CDFObject *cdfObject, const char *ncname);
+  static CDataReader::DimensionType getDimensionType(CDFObject *cdfObject, std::string ncname);
 
   /**
    * Get the dimension type (time, elevation, member) by CDF Variable

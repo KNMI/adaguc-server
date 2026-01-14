@@ -251,7 +251,7 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
     std::vector<double> classes;
     double interval = 0;
     if (attr.classes.empty() == false) {
-      auto classesString = attr.classes.splitToStack(",");
+      auto classesString = attr.classes.split(",");
       for (auto classString : classesString) {
         classes.push_back(classString.toDouble());
       }
@@ -259,7 +259,7 @@ void drawContour(float *sourceGrid, CDataSource *dataSource, CDrawImage *drawIma
       interval = attr.interval.toDouble();
     }
     std::vector<double> dashes;
-    auto dashesStrings = attr.dashing.splitToStack(",");
+    auto dashesStrings = attr.dashing.split(",");
     for (auto dashString : dashesStrings) {
       dashes.push_back(dashString.toDouble());
     }

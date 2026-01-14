@@ -30,7 +30,7 @@
 #include <vector>
 #include <iostream>
 #include <netcdf.h>
-#include <math.h>
+#include <cmath>
 #include <strings.h>
 #include "CCDFDataModel.h"
 #include "CCDFReader.h"
@@ -43,7 +43,7 @@ class CDFCSVReader : public CDFReader {
 private:
   DEF_ERRORFUNCTION();
   std::vector<CDF::Variable *> variableIndexer;
-  CT::StackList<CT::stringref> csvLines;
+  std::vector<CT::string> csvLines;
   CT::string csvData;
   size_t headerStartsAtLine;
 

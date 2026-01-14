@@ -394,7 +394,7 @@ hid_t CDFHDF5Reader::openH5GroupByName(char *varNameOut, size_t maxVarNameLen, c
   hid_t HDF5_group = H5F_file;
   hid_t newGroupID;
   CT::string varName(variableGroupName);
-  auto paths = varName.splitToStack(CCDFHDF5IO_GROUPSEPARATOR);
+  auto paths = varName.split(CCDFHDF5IO_GROUPSEPARATOR);
   if (paths.size() == 0) {
     return -1;
   }
@@ -1357,7 +1357,7 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
 
     CT::string productCornerString = (char *)geo->getAttribute("geo_product_corners")->toString().c_str();
 
-    CT::StackList<CT::string> coords = productCornerString.trim().splitToStack(" ");
+    std::vector<CT::string> coords = productCornerString.trim().split(" ");
 
     if (coords.size() > 6) {
       iso_dataset->addAttribute(new CDF::Attribute("min-x", coords[0].c_str()));
@@ -1505,7 +1505,7 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
 #endif
   // Set adaguc time
   CTime ctime;
-  if (ctime.init((char *)time_units->data, NULL) != 0) {
+  if (ctime.init((char *)time_units->data, "") != 0) {
     CDBError("Could not initialize CTIME: %s", (char *)time_units->data);
     return 1;
   }

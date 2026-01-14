@@ -466,7 +466,7 @@ void CDataSource::readStatusFlags(CDF::Variable *var, std::vector<CDataSource::S
       if (attr_flag_values != NULL) {
         CT::string flag_meanings;
         attr_flag_meanings->getDataAsString(&flag_meanings);
-        auto flagStrings = flag_meanings.splitToStack(" ");
+        auto flagStrings = flag_meanings.split(" ");
         size_t nrOfFlagMeanings = flagStrings.size();
         if (nrOfFlagMeanings > 0) {
           size_t nrOfFlagValues = attr_flag_values->length;
@@ -563,7 +563,7 @@ std::vector<CT::string> CDataSource::getRenderMethodListForDataSource(CDataSourc
     renderMethodList.copy("nearest");
   }
 
-  return renderMethodList.splitToStack(",");
+  return renderMethodList.split(",");
 }
 
 /**
@@ -571,13 +571,13 @@ std::vector<CT::string> CDataSource::getRenderMethodListForDataSource(CDataSourc
  * @param dataSource pointer to the datasource to find the stylelist for
  * @return vector with all possible CStyleConfigurations
  */
-CT::PointerList<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(CDataSource *dataSource) {
+std::vector<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(CDataSource *dataSource) {
 
 #ifdef CDATASOURCE_DEBUG
   CDBDebug("getStyleListForDataSource %s", dataSource->layerName.c_str());
 #endif
 
-  CT::PointerList<CStyleConfiguration *> *styleConfigurationList = new CT::PointerList<CStyleConfiguration *>();
+  std::vector<CStyleConfiguration *> *styleConfigurationList = new std::vector<CStyleConfiguration *>();
 
   CServerConfig::XMLE_Configuration *serverCFG = dataSource->cfg;
 
@@ -716,7 +716,7 @@ std::vector<CT::string> CDataSource::getStyleNames(std::vector<CServerConfig::XM
   std::vector<CT::string> stringList = {"default"};
   for (size_t j = 0; j < Styles.size(); j++) {
     if (Styles[j]->value.empty()) continue;
-    CT::StackList<CT::string> l1 = Styles[j]->value.splitToStack(",");
+    std::vector<CT::string> l1 = Styles[j]->value.split(",");
     for (auto styleValue : l1) {
       if (styleValue.length() > 0) {
         stringList.push_back(styleValue);
@@ -750,7 +750,7 @@ CStyleConfiguration *CDataSource::getStyle() {
     CT::string styles(srvParams->Styles.c_str());
 
     // TODO CHECK CDBDebug("Server Styles=%s",srvParam->Styles.c_str());
-    CT::StackList<CT::string> layerstyles = styles.splitToStack(",");
+    std::vector<CT::string> layerstyles = styles.split(",");
     int layerIndex = datasourceIndex;
     if (layerstyles.size() != 0) {
       // Make sure default layer index is within the right bounds.
@@ -762,14 +762,14 @@ CStyleConfiguration *CDataSource::getStyle() {
       }
     }
 
-    _currentStyle = _styles->get(0);
+    _currentStyle = _styles->at(0);
 
     auto it = std::find_if(_styles->begin(), _styles->end(), [&styleName](CStyleConfiguration *a) { return styleName.equals(a->styleName); });
     if (it != _styles->end()) {
       _currentStyle = (*it);
     } else {
       // If not found, check for the style without rendermethod instead using startsWith.
-      it = std::find_if(_styles->begin(), _styles->end(), [&styleName](CStyleConfiguration *a) { return a->styleCompositionName.startsWith(styleName); });
+      it = std::find_if(_styles->begin(), _styles->end(), [&styleName](CStyleConfiguration *a) { return a->styleCompositionName.startsWith(styleName.c_str()); });
       if (it != _styles->end()) {
         _currentStyle = (*it);
       } else {
@@ -809,12 +809,12 @@ int CDataSource::setStyle(const char *styleName) {
     return 1;
   }
 
-  _currentStyle = _styles->get(0);
+  _currentStyle = _styles->at(0);
   bool foundStyle = false;
   for (size_t j = 0; j < _styles->size(); j++) {
-    if (_styles->get(j)->styleCompositionName.equals(styleName)) {
+    if (_styles->at(j)->styleCompositionName.equals(styleName)) {
 
-      _currentStyle = _styles->get(j);
+      _currentStyle = _styles->at(j);
       foundStyle = true;
       break;
     }
@@ -823,7 +823,7 @@ int CDataSource::setStyle(const char *styleName) {
   if (foundStyle == false) {
     CDBWarning("Unable to find style %s. Available styles:", styleName);
     for (size_t j = 0; j < _styles->size(); j++) {
-      CDBWarning("  -%s", _styles->get(j)->styleCompositionName.c_str());
+      CDBWarning("  -%s", _styles->at(j)->styleCompositionName.c_str());
     }
   }
 
@@ -947,6 +947,7 @@ double CDataSource::getContourScaling() {
   return 1;
 }
 
+CDataSource::DataObject *CDataSource::getDataObjectByName(std::string name) { return getDataObjectByName(name.c_str()); }
 CDataSource::DataObject *CDataSource::getDataObjectByName(const char *name) {
   for (auto it = dataObjects.begin(); it != dataObjects.end(); ++it) {
     CDataSource::DataObject *dataObject = *it;

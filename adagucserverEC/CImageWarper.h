@@ -29,7 +29,7 @@
 #include "CDataReader.h"
 #include "CDrawImage.h"
 #include <proj.h>
-#include <math.h>
+#include <cmath>
 #include "CDebugger.h"
 #include "CStopWatch.h"
 #include "Types/CPointTypes.h"

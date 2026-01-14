@@ -30,7 +30,7 @@
 #include <vector>
 #include <iostream>
 #include <netcdf.h>
-#include <math.h>
+#include <cmath>
 #include <strings.h>
 #include "CCDFDataModel.h"
 #include "CCDFReader.h"

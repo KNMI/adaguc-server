@@ -225,7 +225,7 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
 #endif
 
   // Make a list of variables which will be available as 2D fields
-  CT::StackList<CT::string> varsToConvert;
+  std::vector<CT::string> varsToConvert;
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
     if (var->isDimension == false) {
@@ -234,7 +234,7 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
         if (!var->name.equals("time2D") && !var->name.equals("time") && !var->name.equals("lon") && !var->name.equals("lat") && !var->name.equals("x") && !var->name.equals("y") &&
             !var->name.equals("lat_bnds") && !var->name.equals("lon_bnds") && !var->name.equals("custom") && !var->name.equals("projection") && !var->name.equals("product") &&
             !var->name.equals("iso_dataset") && !var->name.equals("tile_properties") && !var->name.equals("forecast_reference_time")) {
-          varsToConvert.add(CT::string(var->name.c_str()));
+          varsToConvert.push_back(CT::string(var->name.c_str()));
         }
         if (var->name.equals("projection")) {
           var->setAttributeText("ADAGUC_SKIP", "true");

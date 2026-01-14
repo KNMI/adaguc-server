@@ -964,6 +964,8 @@ int CDF::Variable::setAttributeText(const char *attrName, const char *attrString
   return retStat;
 }
 
+int CDF::Variable::setAttributeText(std::string attrName, std::string attrString) { return setAttributeText(attrName.c_str(), attrString.c_str()); }
+
 int CDF::Variable::setData(CDFType type, const void *dataToSet, size_t dataLength) {
   freeData();
   currentSize = dataLength;

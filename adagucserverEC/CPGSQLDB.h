@@ -29,7 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "libpq-fe.h" /* libpq header file */
-#include "CTypes.h"
+#include "CTString.h"
 #include "CDebugger.h"
 #include "CDBStore.h"
 #define CPGSQLDB_MAX_STR_LEN 8191

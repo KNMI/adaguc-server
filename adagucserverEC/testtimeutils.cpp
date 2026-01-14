@@ -72,7 +72,7 @@ TEST(EstimateISO8601Duration, TimeUtils) {
   std::vector<CT::string> timestamps = {"2024-07-29T15:30:45Z", "2024-07-29T16:30:45Z", "2024-07-29T17:30:45Z", "2024-07-29T18:30:45Z"};
   CT::string expected("PT1H");
   CT::string result = estimateISO8601Duration(timestamps);
-  std::cout << "Result: " << result << "\n";
+  std::cout << "Result: " << result.c_str() << "\n";
   CHECK(result == expected);
 
   // Case with one timestep missing

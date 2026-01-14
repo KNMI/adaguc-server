@@ -1,7 +1,8 @@
 #include "CGenericDataWarper.h"
 
 template <typename T>
-int gdwDrawTriangle(double triangleXCoords[3], double triangleYCoords[3], T value, bool tUp, GDWState &warperState, const std::function<void(int, int, T, GDWState &warperState)> &drawFunction) {
+int gdwDrawTriangle(const double triangleXCoords[3], const double triangleYCoords[3], const T &value, bool tUp, GDWState &warperState,
+                    const std::function<void(int, int, T, GDWState &warperState)> &drawFunction) {
   int W = warperState.destGridWidth;
   int H = warperState.destGridHeight;
   if (triangleXCoords[0] < 0 && triangleXCoords[1] < 0 && triangleXCoords[2] < 0) return 0;
@@ -13,8 +14,8 @@ int gdwDrawTriangle(double triangleXCoords[3], double triangleYCoords[3], T valu
   int middle = -1;
   int upper = -1;
 
-  double xP[3] = {round(triangleXCoords[0]), round(triangleXCoords[1]), round(triangleXCoords[2])};
-  double yP[3] = {round(triangleYCoords[0]), round(triangleYCoords[1]), round(triangleYCoords[2])};
+  const double xP[3] = {std::round(triangleXCoords[0]), std::round(triangleXCoords[1]), std::round(triangleXCoords[2])};
+  const double yP[3] = {std::round(triangleYCoords[0]), std::round(triangleYCoords[1]), std::round(triangleYCoords[2])};
 
   /*Sort the vertices in Y direction*/
   if (yP[0] < yP[1]) {
@@ -102,7 +103,9 @@ int gdwDrawTriangle(double triangleXCoords[3], double triangleYCoords[3], T valu
     double ex = y < Y2 ? (r_upper * (y - Y1) + X1) : (r_lower * (y - Y2) + X2);
     double minx = sx > ex ? ex : sx;
     double maxx = sx > ex ? sx : ex;
-    for (double x = minx < 0 ? 0 : minx; x < maxx && x < screenW; x++) {
+    double startX = minx < 0 ? 0 : minx;
+    double endX = maxx > screenW ? screenW : maxx;
+    for (double x = startX; x < endX; x++) {
       double WV1 = ((yv2 - yv3) * (x - xv3) + (xv3 - xv2) * (y - yv3)) / dn;
       double WV2 = ((yv3 - yv1) * (x - xv3) + (xv1 - xv3) * (y - yv3)) / dn;
       double WV3 = 1 - WV1 - WV2;
@@ -117,14 +120,25 @@ int gdwDrawTriangle(double triangleXCoords[3], double triangleYCoords[3], T valu
 }
 
 // Indicate which template specializations are needed, also allows code to be compiled faster as changes are done only in the CPP file.
-template int gdwDrawTriangle<char>(double x[3], double y[3], char value, bool tUp, GDWState &warperState, const std::function<void(int, int, char, GDWState &warperState)> &drawFunction);
-template int gdwDrawTriangle<int8_t>(double x[3], double y[3], int8_t value, bool tUp, GDWState &warperState, const std::function<void(int, int, int8_t, GDWState &warperState)> &drawFunction);
-template int gdwDrawTriangle<uchar>(double x[3], double y[3], uchar value, bool tUp, GDWState &warperState, const std::function<void(int, int, uchar, GDWState &warperState)> &drawFunction);
-template int gdwDrawTriangle<short>(double x[3], double y[3], short value, bool tUp, GDWState &warperState, const std::function<void(int, int, short, GDWState &warperState)> &drawFunction);
-template int gdwDrawTriangle<ushort>(double x[3], double y[3], ushort value, bool tUp, GDWState &warperState, const std::function<void(int, int, ushort, GDWState &warperState)> &drawFunction);
-template int gdwDrawTriangle<int>(double x[3], double y[3], int value, bool tUp, GDWState &warperState, const std::function<void(int, int, int, GDWState &warperState)> &drawFunction);
-template int gdwDrawTriangle<uint>(double x[3], double y[3], uint value, bool tUp, GDWState &warperState, const std::function<void(int, int, uint, GDWState &warperState)> &drawFunction);
-template int gdwDrawTriangle<long>(double x[3], double y[3], long value, bool tUp, GDWState &warperState, const std::function<void(int, int, long, GDWState &warperState)> &drawFunction);
-template int gdwDrawTriangle<ulong>(double x[3], double y[3], ulong value, bool tUp, GDWState &warperState, const std::function<void(int, int, ulong, GDWState &warperState)> &drawFunction);
-template int gdwDrawTriangle<float>(double x[3], double y[3], float value, bool tUp, GDWState &warperState, const std::function<void(int, int, float, GDWState &warperState)> &drawFunction);
-template int gdwDrawTriangle<double>(double x[3], double y[3], double value, bool tUp, GDWState &warperState, const std::function<void(int, int, double, GDWState &warperState)> &drawFunction);
+template int gdwDrawTriangle<char>(const double x[3], const double y[3], const char &value, bool tUp, GDWState &warperState,
+                                   const std::function<void(int, int, char, GDWState &warperState)> &drawFunction);
+template int gdwDrawTriangle<int8_t>(const double x[3], const double y[3], const int8_t &value, bool tUp, GDWState &warperState,
+                                     const std::function<void(int, int, int8_t, GDWState &warperState)> &drawFunction);
+template int gdwDrawTriangle<uchar>(const double x[3], const double y[3], const uchar &value, bool tUp, GDWState &warperState,
+                                    const std::function<void(int, int, uchar, GDWState &warperState)> &drawFunction);
+template int gdwDrawTriangle<short>(const double x[3], const double y[3], const short &value, bool tUp, GDWState &warperState,
+                                    const std::function<void(int, int, short, GDWState &warperState)> &drawFunction);
+template int gdwDrawTriangle<ushort>(const double x[3], const double y[3], const ushort &value, bool tUp, GDWState &warperState,
+                                     const std::function<void(int, int, ushort, GDWState &warperState)> &drawFunction);
+template int gdwDrawTriangle<int>(const double x[3], const double y[3], const int &value, bool tUp, GDWState &warperState,
+                                  const std::function<void(int, int, int, GDWState &warperState)> &drawFunction);
+template int gdwDrawTriangle<uint>(const double x[3], const double y[3], const uint &value, bool tUp, GDWState &warperState,
+                                   const std::function<void(int, int, uint, GDWState &warperState)> &drawFunction);
+template int gdwDrawTriangle<long>(const double x[3], const double y[3], const long &value, bool tUp, GDWState &warperState,
+                                   const std::function<void(int, int, long, GDWState &warperState)> &drawFunction);
+template int gdwDrawTriangle<ulong>(const double x[3], const double y[3], const ulong &value, bool tUp, GDWState &warperState,
+                                    const std::function<void(int, int, ulong, GDWState &warperState)> &drawFunction);
+template int gdwDrawTriangle<float>(const double x[3], const double y[3], const float &value, bool tUp, GDWState &warperState,
+                                    const std::function<void(int, int, float, GDWState &warperState)> &drawFunction);
+template int gdwDrawTriangle<double>(const double x[3], const double y[3], const double &value, bool tUp, GDWState &warperState,
+                                     const std::function<void(int, int, double, GDWState &warperState)> &drawFunction);

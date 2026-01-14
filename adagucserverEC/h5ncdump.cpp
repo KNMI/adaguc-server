@@ -26,7 +26,8 @@
 #include <stdio.h>
 #include <vector>
 #include <iostream>
-#include <CTypes.h>
+#include <iostream>
+#include <CTString.h>
 #include "CDebugger.h"
 #include "CCDFDataModel.h"
 #include "CCDFNetCDFIO.h"

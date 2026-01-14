@@ -213,7 +213,7 @@ CT::string CXMLParser::XMLElement::toJSON(XMLElement el, int depth, int mode) {
           if (subdata.length() > 0) {
             if (i > 0) data += ",";
             data += "{";
-            data += &subdata;
+            data += subdata;
             data += "}";
           }
           if (value.length() > 0) {
