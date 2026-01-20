@@ -226,15 +226,9 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
 
   // Make a list of variables which will be available as 2D fields
   CT::StackList<CT::string> varsToConvert;
-  // Add station (dimension) variable
-  CDF::Variable *pointID = cdfObject->getVariableNE("station");
-  if (pointID != nullptr) {
-    varsToConvert.add(pointID->name.c_str());
-  }
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
     if (var->isDimension == false) {
-      // if(var->getType()!=CDF_STRING)
       {
         if (!var->name.equals("time2D") && !var->name.equals("time") && !var->name.equals("lon") && !var->name.equals("lat") && !var->name.equals("x") && !var->name.equals("y") &&
             !var->name.equals("lat_bnds") && !var->name.equals("lon_bnds") && !var->name.equals("custom") && !var->name.equals("projection") && !var->name.equals("product") &&
@@ -373,7 +367,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
     if (pointVar[d] == NULL) {
       CDBWarning("Unable to find orignal swath variable with name %s", origSwathName.c_str());
 
-      // return 1;
+      return 1;
     }
   }
 

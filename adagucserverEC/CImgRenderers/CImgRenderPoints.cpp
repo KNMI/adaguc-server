@@ -423,7 +423,7 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
       int numDataObjects = dataSource->getNumDataObjects();
       int y;
       if (numDataObjects == 1) {
-        y = station_y + (-0.5 * (pointStyle.fontSize + 3));
+        y = station_y;
       } else if ((numDataObjects % 2) == 0) {
         y = station_y + (-0.5 + dataObjectIndex) * (pointStyle.fontSize + 3);
       } else {
@@ -436,10 +436,15 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
             drawImage->circle(x, station_y, pointStyle.discRadius + 1, pointStyle.lineColor, 0.65);
           }
         }
-        // Draw the string value
         if (pointValue->paramList.size() > 0) {
           CT::string textValue = pointValue->paramList[0].value;
-          drawImage->drawCenteredText(x, y, pointStyle.fontFile.c_str(), pointStyle.fontSize, 0, textValue.c_str(), pointStyle.textColor);
+          // Draw the string value
+          if (numDataObjects == 1) {
+            drawImage->drawAnchoredText(x - int(float(textValue.length()) * 3.0f) - 2, y - pointStyle.textRadius, pointStyle.fontFile.c_str(), pointStyle.fontSize, 0, textValue.c_str(),
+                                        pointStyle.textColor, 0);
+          } else {
+            drawImage->drawCenteredText(x, y, pointStyle.fontFile.c_str(), pointStyle.fontSize, 0, textValue.c_str(), pointStyle.textColor);
+          }
         }
         continue; // If type is string, then no other draw options have to be considered.
       }
@@ -462,18 +467,13 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
 
       CT::string text = prepareText(dataSource, dataObjectIndex, value, pointStyle.textFormat);
       bool drawText = pointStyle.textFormat.length() >= 2;
-      CDBDebug(">>%d %s  %d", dataObjectIndex, text.c_str(), drawText);
 
       if (!pointStyle.useTextColor) {
         // Only calculate color for 1st dataObject, rest gets defaultColor
         pointStyle.textColor = dataObjectIndex == 0 ? getDrawPointColor(dataSource, drawImage, value) : defaultColor;
       }
       if (pointStyle.discRadius == 0) {
-        if (pointStyle.plotStationId) {
-          drawImage->drawCenteredText(x, y + pointStyle.textRadius + 3, pointStyle.fontFile.c_str(), pointStyle.fontSize, 0, text.c_str(), pointStyle.textColor);
-        } else {
-          drawImage->drawCenteredText(x, y + pointStyle.textRadius + 3, pointStyle.fontFile.c_str(), pointStyle.fontSize, 0, text.c_str(), pointStyle.textColor, pointStyle.textOutlineColor);
-        }
+        drawImage->drawCenteredText(x, y, pointStyle.fontFile.c_str(), pointStyle.fontSize, 0, text.c_str(), pointStyle.textColor, pointStyle.textOutlineColor);
       } else { // Text and disc
         if (!pointStyle.useFillColor) {
           pointStyle.fillColor = getDrawPointColor(dataSource, drawImage, value);
@@ -483,21 +483,20 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
             float radius = getRadius(dataSource, pointIndex, pointStyle.discRadius);
             drawRadiusAndValueForPoint(drawImage, x, station_y, pointStyle.lineColor, pointStyle.fillColor, currentSymbol, radius);
           }
+        } else if (drawZoomablePoint) {
+          drawImage->setEllipse(x, station_y, pointValue->radiusX, pointValue->radiusY, pointValue->rotation, pointStyle.fillColor, pointStyle.lineColor);
         } else {
-          if (drawZoomablePoint) {
-            drawImage->setEllipse(x, station_y, pointValue->radiusX, pointValue->radiusY, pointValue->rotation, pointStyle.fillColor, pointStyle.lineColor);
-          } else {
-            if (dataObjectIndex == 0) drawImage->setDisc(x, station_y, float(pointStyle.discRadius), pointStyle.fillColor, pointStyle.lineColor);
-          }
+          if (dataObjectIndex == 0) drawImage->setDisc(x, station_y, float(pointStyle.discRadius), pointStyle.fillColor, pointStyle.lineColor);
         }
 
         if (drawText) {
           drawImage->drawCenteredText(x, y + pointStyle.textRadius, pointStyle.fontFile.c_str(), pointStyle.fontSize, 0, text.c_str(), pointStyle.textColor);
         }
       }
-      if (pointStyle.plotStationId && pointValue->paramList.size() > 0) {
+      if (pointStyle.plotStationId && (pointValue->paramList.size() > 0) && (dataObjectIndex == 0)) {
         CT::string stationid = pointValue->paramList[0].value;
-        drawImage->drawCenteredText(x, y, pointStyle.fontFile.c_str(), pointStyle.fontSize, 0, stationid.c_str(), pointStyle.textColor);
+        CDBDebug(">>> %d, %d => %d,%d", x, y, x, y - pointStyle.textRadius - 3);
+        drawImage->drawCenteredText(x, y - pointStyle.textRadius - 3, pointStyle.fontFile.c_str(), pointStyle.fontSize, 0, stationid.c_str(), pointStyle.textColor);
       }
     }
   }
@@ -599,16 +598,16 @@ void renderSingleDiscs(std::vector<size_t> thinnedPointIndexList, CDataSource *d
   }
 }
 
-void renderSingleDot(std::vector<size_t> thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, PointStyle pointStyle) {
-  // float fillValueObjectOne = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
+void renderSingleDot(std::vector<size_t> thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle) {
+  float fillValueObjectOne = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
 
   for (size_t dataObjectIndex = 0; dataObjectIndex < dataSource->getNumDataObjects(); dataObjectIndex++) {
     std::vector<PointDVWithLatLon> *pts = &dataSource->getDataObject(dataObjectIndex)->points;
 
     for (auto pointIndex : thinnedPointIndexList) {
       auto pointValue = &(*pts)[pointIndex];
-      // float value = pointValue->v;
-      // if (shouldSkipPoint(styleConfiguration, pointStyle, value, fillValueObjectOne)) continue;
+      float value = pointValue->v;
+      if (shouldSkipPoint(styleConfiguration, pointStyle, value, fillValueObjectOne)) continue;
 
       int x = pointValue->x;
       int y = dataSource->srvParams->geoParams.height - pointValue->y;
@@ -633,8 +632,7 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
     CDBDebug("Point plotting %d elements %d", thinnedPointIndexList.size(), usePoints.size());
 
     if (pointStyle.dot) {
-      CDBDebug("dot");
-      renderSingleDot(thinnedPointIndexList, dataSource, drawImage, pointStyle);
+      renderSingleDot(thinnedPointIndexList, dataSource, drawImage, styleConfiguration, pointStyle);
     }
 
     if (pointStyle.style == "disc") {
