@@ -38,6 +38,13 @@
 #include "CDBFactory.h"
 #include "CConvertGeoJSON.h"
 #include "utils/serverutils.h"
+#include "fork_server.h"
+
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <stdio.h>
+#include <signal.h>
+#include <unistd.h>
 
 DEF_ERRORMAIN();
 
@@ -140,14 +147,14 @@ int runRequest() {
   return request.runRequest();
 }
 
-int _main(int argc, char **argv, char **) {
+int _main(int argc, char **argv, char **, bool is_forked) {
 
   /* Initialize error functions */
   seterrormode(EXCEPTIONS_PLAINTEXT);
   setStatusCode(HTTP_STATUSCODE_200_OK);
-  setErrorFunction(serverLogFunctionCMDLine);
-  setWarningFunction(serverLogFunctionCMDLine);
-  setDebugFunction(serverLogFunctionCMDLine);
+  // setErrorFunction(serverLogFunctionCMDLine);
+  // setWarningFunction(serverLogFunctionCMDLine);
+  // setDebugFunction(serverLogFunctionCMDLine);
 
   int opt;
   int scanFlags = 0;
@@ -361,9 +368,9 @@ int _main(int argc, char **argv, char **) {
   }
 
   /* Process the OGC request */
-  setErrorFunction(serverErrorFunction);
-  setWarningFunction(serverWarningFunction);
-  setDebugFunction(serverDebugFunction);
+  // setErrorFunction(serverErrorFunction);
+  // setWarningFunction(serverWarningFunction);
+  // setDebugFunction(serverDebugFunction);
 
   traceTimingsCheckEnabled();
 
@@ -381,7 +388,7 @@ int _main(int argc, char **argv, char **) {
   return getStatusCode();
 }
 
-int main(int argc, char **argv, char **envp) {
+int run_adaguc_once(int argc, char **argv, char **envp, bool is_forked) {
   /* Check if ADAGUC_LOGFILE is set */
   const char *ADAGUC_LOGFILE = getenv("ADAGUC_LOGFILE");
   if (ADAGUC_LOGFILE != NULL) {
@@ -433,7 +440,7 @@ int main(int argc, char **argv, char **envp) {
     CDBDebug("ADAGUC_TMP environment variable is not set, setting to : [%s]", ADAGUC_TMP);
   }
 
-  int status = _main(argc, argv, envp);
+  int status = _main(argc, argv, envp, is_forked);
 
   /* Print the check report formatted as JSON. */
   CReportWriter::writeJSONReportToFile();
@@ -453,6 +460,23 @@ int main(int argc, char **argv, char **envp) {
     fclose(pLogDebugFile);
     pLogDebugFile = NULL;
   }
+  close(1);
+  close(2);
 
   return status;
+}
+
+int main(int argc, char **argv, char **envp) {
+  // If these lines are commented out, the calls the /edr/collections/instances/<my-instance> fail to return data
+  // because the call to `request=getreferencetimes` does not contain useful output
+  setvbuf(stdout, NULL, _IONBF, 0); // turn off buffering
+  setvbuf(stderr, NULL, _IONBF, 0); // turn off buffering
+
+  const char *ADAGUC_FORK = getenv("ADAGUC_FORK");
+  if (ADAGUC_FORK != NULL) {
+    return run_as_fork_service(run_adaguc_once, argc, argv, envp);
+  } else {
+    // normal flow without unix socket server/fork
+    return run_adaguc_once(argc, argv, envp, false);
+  }
 }
