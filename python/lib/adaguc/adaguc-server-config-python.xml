@@ -2,7 +2,7 @@
 <Configuration>
 <TempDir value="{ADAGUC_TMP}"/>
   <Path value="{ADAGUC_PATH}/data"/>
-  <DataBase parameters="{ADAGUC_DB}"/>
+  <DataBase parameters="{ADAGUC_DB}" maxquerylimit="3000"/>
   
   <!-- WMS settings -->
   <WMS>
