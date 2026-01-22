@@ -269,14 +269,15 @@ int _main(int argc, char **argv, char **) {
 
     if (!layerPathToScan.empty() && !CDirReader::isFile(layerPathToScan.c_str())) {
       CDBError("Provided file does not exist [%s].", layerPathToScan.c_str());
-      return 1;
+      return SCAN_EXITCODE_FILENOEXIST;
     }
     std::set<std::string> datasetsToScan;
 
     if (automaticallyFindMatchingDataset) {
       datasetsToScan = findDataSetsToScan(layerPathToScan, verbose);
       if (datasetsToScan.size() == 0) {
-        CDBDebug("Found no matching datasets.");
+        CDBWarning("Found no matching datasets.");
+        return SCAN_EXITCODE_FILENOMATCH;
       } else {
         CDBDebug("Found matching datasets to scan: %d", datasetsToScan.size());
       }
@@ -293,7 +294,7 @@ int _main(int argc, char **argv, char **) {
       status = setCRequestConfigFromEnvironment(&request, dataset.c_str());
       if (status != 0) {
         CDBError("Unable to read configuration file");
-        return 1;
+        return SCAN_EXITCODE_CONFIGERROR;
       }
       if (logMode == LogBufferMode_FALSE) {
         // Set line buffering on stdout
@@ -302,6 +303,7 @@ int _main(int argc, char **argv, char **) {
       status = request.updatedb(&tailPath, &layerPathToScan, scanFlags, layerName);
       if (status != 0) {
         CDBError("Error occured in updating the database");
+        return SCAN_EXITCODE_SCANERROR;
       }
     }
     readyerror();

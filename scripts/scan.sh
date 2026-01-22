@@ -110,7 +110,7 @@ if [[ -n "${ADAGUC_DATAFILE}" ]]; then
   fi
 
   if [ ${OUT} -ne 0 ]; then
-    STATUSCODE=1
+    STATUSCODE=${OUT}
   fi
   exit ${STATUSCODE} 
 fi
@@ -124,7 +124,7 @@ if [[ -n "${ADAGUC_DATASET}" ]] && [ "${ADAGUC_DATASET}" != "*" ]; then
   $command
   OUT=$?
   if [ ${OUT} -ne 0 ]; then
-    STATUSCODE=1
+    STATUSCODE=${OUT}
   fi
   exit ${STATUSCODE} 
 fi

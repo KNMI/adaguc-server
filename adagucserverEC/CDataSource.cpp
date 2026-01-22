@@ -31,7 +31,7 @@ const char *CDataSource::className = "CDataSource";
 
 // #define CDATASOURCE_DEBUG
 
-bool nameMappingWarningSet = false;
+bool configWarningSet = false;
 
 CDataSource::DataObject::DataObject() {
   hasStatusFlag = false;
@@ -665,10 +665,17 @@ std::vector<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(CData
                 if (styleConfig->legendIndex == -1) {
                   CDBError("Legend %s not found", legendList[l].c_str());
                 }
+
+                if (style != nullptr && style->RenderMethod.size() > 0) {
+                  if (configWarningSet == false) {
+                    CDBWarning("Deprecated to have RenderMethod configs in the style.");
+                    configWarningSet = true;
+                  }
+                }
                 if (style != nullptr && style->NameMapping.size() > 0) {
-                  if (nameMappingWarningSet == false) {
+                  if (configWarningSet == false) {
                     CDBWarning("Deprecated to have NameMapping configs in the style. Use title and abstracts instead.");
-                    nameMappingWarningSet = true;
+                    configWarningSet = true;
                   }
                   for (size_t j = 0; j < style->NameMapping.size(); j++) {
                     if (renderMethods[r].equals(style->NameMapping[j]->attr.name.c_str())) {
