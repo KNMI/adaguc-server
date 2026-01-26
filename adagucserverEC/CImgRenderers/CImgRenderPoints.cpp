@@ -423,11 +423,11 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
       int numDataObjects = dataSource->getNumDataObjects();
       int y;
       if (numDataObjects == 1) {
-        y = station_y;
+        y = station_y + pointStyle.textRadius;
       } else if ((numDataObjects % 2) == 0) {
-        y = station_y + (-0.5 + dataObjectIndex) * (pointStyle.fontSize + 3);
+        y = station_y + (-0.5 + dataObjectIndex) * (pointStyle.textRadius);
       } else {
-        y = int(station_y + (-numDataObjects / 2.0 + dataObjectIndex + 0.5) * (pointStyle.fontSize + 3));
+        y = int(station_y + (-numDataObjects / 2.0 + dataObjectIndex + 0.5) * pointStyle.textRadius);
       }
 
       if (dataType == CDF_STRING) {
@@ -439,12 +439,7 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
         if (pointValue->paramList.size() > 0) {
           CT::string textValue = pointValue->paramList[0].value;
           // Draw the string value
-          if (numDataObjects == 1) {
-            drawImage->drawAnchoredText(x - int(float(textValue.length()) * 3.0f) - 2, y - pointStyle.textRadius, pointStyle.fontFile.c_str(), pointStyle.fontSize, 0, textValue.c_str(),
-                                        pointStyle.textColor, 0);
-          } else {
-            drawImage->drawCenteredText(x, y, pointStyle.fontFile.c_str(), pointStyle.fontSize, 0, textValue.c_str(), pointStyle.textColor);
-          }
+          drawImage->drawCenteredText(x, y, pointStyle.fontFile.c_str(), pointStyle.fontSize, 0, textValue.c_str(), pointStyle.textColor, pointStyle.textOutlineColor);
         }
         continue; // If type is string, then no other draw options have to be considered.
       }
@@ -467,7 +462,6 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
 
       CT::string text = prepareText(dataSource, dataObjectIndex, value, pointStyle.textFormat);
       bool drawText = pointStyle.textFormat.length() >= 2;
-
       if (!pointStyle.useTextColor) {
         // Only calculate color for 1st dataObject, rest gets defaultColor
         pointStyle.textColor = dataObjectIndex == 0 ? getDrawPointColor(dataSource, drawImage, value) : defaultColor;
@@ -490,13 +484,12 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
         }
 
         if (drawText) {
-          drawImage->drawCenteredText(x, y + pointStyle.textRadius, pointStyle.fontFile.c_str(), pointStyle.fontSize, 0, text.c_str(), pointStyle.textColor);
+          drawImage->drawCenteredText(x, y, pointStyle.fontFile.c_str(), pointStyle.fontSize, 0, text.c_str(), pointStyle.textColor, pointStyle.textOutlineColor);
         }
       }
       if (pointStyle.plotStationId && (pointValue->paramList.size() > 0) && (dataObjectIndex == 0)) {
         CT::string stationid = pointValue->paramList[0].value;
-        CDBDebug(">>> %d, %d => %d,%d", x, y, x, y - pointStyle.textRadius - 3);
-        drawImage->drawCenteredText(x, y - pointStyle.textRadius - 3, pointStyle.fontFile.c_str(), pointStyle.fontSize, 0, stationid.c_str(), pointStyle.textColor);
+        drawImage->drawCenteredText(x, station_y - pointStyle.textRadius, pointStyle.fontFile.c_str(), pointStyle.fontSize, 0, stationid.c_str(), pointStyle.textColor, pointStyle.textOutlineColor);
       }
     }
   }
@@ -631,10 +624,6 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
     auto thinnedPointIndexList = doThinningGetIndices(dataSource->getDataObject(0)->points, thinningInfo.doThinning, thinningInfo.thinningRadius, usePoints);
     CDBDebug("Point plotting %d elements %d", thinnedPointIndexList.size(), usePoints.size());
 
-    if (pointStyle.dot) {
-      renderSingleDot(thinnedPointIndexList, dataSource, drawImage, styleConfiguration, pointStyle);
-    }
-
     if (pointStyle.style == "disc") {
       renderSingleDiscs(thinnedPointIndexList, dataSource, drawImage, styleConfiguration, pointStyle);
     } else if (pointStyle.style == "volume") {
@@ -643,6 +632,9 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
       renderSingleSymbols(thinnedPointIndexList, dataSource, drawImage, styleConfiguration, pointStyle);
     } else { // regular points, zoomablepoint and radiusandvalue points
       renderSinglePoints(thinnedPointIndexList, dataSource, drawImage, styleConfiguration, pointStyle);
+    }
+    if (pointStyle.dot) {
+      renderSingleDot(thinnedPointIndexList, dataSource, drawImage, styleConfiguration, pointStyle);
     }
   }
 
