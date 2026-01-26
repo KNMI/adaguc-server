@@ -1,4 +1,4 @@
-**Version 6.2.1 - 2026-01-12**
+**Version 6.2.1 - 2026-01-26**
 
 - pointsfromgrid can now also be used to plot text values on windspeed and winddirection components
 
