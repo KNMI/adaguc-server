@@ -1,3 +1,7 @@
+**Version 6.2.0 - 2026-01-12**
+
+- Move from postgres 13 to 17.
+
 **Version 6.1.1 - 2026-01-07**
 
 - Include style now works in combination with vectors (WIK request)
