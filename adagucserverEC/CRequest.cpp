@@ -611,10 +611,8 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
                       CDBError("Unable to get time instance");
                       return 1;
                     }
-                    auto date = ctime->freeDateStringToDate(ogcDim->value.c_str());
-                    auto currentTimeAsEpoch = ctime->dateToOffset(date);
-                    auto secondDate = ctime->getDate(currentTimeAsEpoch);
-                    auto currentDateConverted = ctime->dateToISOString(secondDate);
+                    double currentTimeAsEpoch = ctime->dateToOffset(ctime->freeDateStringToDate(ogcDim->value.c_str()));
+                    auto currentDateConverted = ctime->dateToISOString(ctime->getDate(currentTimeAsEpoch));
                     ogcDim->value = currentDateConverted;
                   } catch (int e) {
                     CDBDebug("Unable to convert '%s' to epoch", ogcDim->value.c_str());
