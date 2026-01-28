@@ -5,6 +5,7 @@
 
 -c requirements.txt
 black~=24.3
+deepdiff~=8.6.1
 isort~=5.12
 pylint~=2.17
 pytest~=7.4

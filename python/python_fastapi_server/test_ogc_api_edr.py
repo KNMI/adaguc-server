@@ -815,10 +815,7 @@ def test_adaguc_tests_uwcwdini_windcomponents_position(client: TestClient):
     filename = "test_adaguc_tests_uwcwdini_windcomponents_position.json"
     AdagucTestTools().writetojson(f"{testresultspath}{filename}", json.dumps(covjson))
 
-    assert AdagucTestTools().compareFile(
-        expectedoutputspath + filename,
-        testresultspath + filename,
-    )
+    assert AdagucTestTools().compareJson(expectedoutputspath + filename, testresultspath + filename)
 
 
 def test_no_parameters(client: TestClient):

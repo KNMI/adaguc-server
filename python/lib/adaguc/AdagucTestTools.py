@@ -10,6 +10,8 @@ from lxml import etree, objectify
 import urllib.request
 from PIL import Image
 import subprocess
+from deepdiff import DeepDiff
+
 logging.getLogger('PIL').setLevel(logging.WARNING)
 
 ADAGUC_PATH = os.getenv("ADAGUC_PATH", " ")
@@ -363,10 +365,17 @@ class AdagucTestTools:
                 % (testresultFileLocation, expectedOutputFileLocation))
 
         return result == expect
-    
+
     def compareFile(self, testresultFileLocation,
                                   expectedOutputFileLocation):
         a = AdagucTestTools().readfromfile(testresultFileLocation)
         b = AdagucTestTools().readfromfile(expectedOutputFileLocation)
         return a == b
-    
+
+    def compareJson(self, testresultFileLocation: str, expectedOutputFileLocation: str) -> bool:
+        with open(expectedOutputFileLocation, "r") as fp:
+            expected = json.load(fp)
+        with open(testresultFileLocation, "r") as fp:
+            result = json.load(fp)
+
+        return DeepDiff(expected, result, significant_digits=4) == {}
