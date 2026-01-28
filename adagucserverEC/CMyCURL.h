@@ -26,16 +26,18 @@
 #ifdef ENABLE_CURL
 #ifndef CMYCURL_H
 #define CMYCURL_H
-//#include "Definitions.h"
+// #include "Definitions.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <curl/curl.h>
-//#include <curl/types.h>
-//#include <curl/easy.h>
+// #include <curl/types.h>
+// #include <curl/easy.h>
 
 #include <gd.h>
+
+// TODO: can this be removed?
 
 class MyCURL {
 public:
