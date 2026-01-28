@@ -159,6 +159,10 @@ int CDPPointsFromGrid::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSour
       CDBWarning("Cannot select variable %s in datapostproc %s, skipping point rendering", con.c_str(), CDPPointsFromGrid::className);
       continue;
     }
+    if (ob->cdfVariable == NULL) {
+      CDBError("Dataobject %s has no variable", con.c_str());
+      throw __LINE__;
+    }
 
     auto destob = dataSource->getDataObject(id);
     if (ob->cdfVariable->getType() != CDF_FLOAT) {
