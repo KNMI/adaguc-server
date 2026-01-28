@@ -7,7 +7,6 @@ import shutil
 from .CGIRunner import CGIRunner
 import re
 from lxml import etree, objectify
-import urllib.request
 from PIL import Image
 import subprocess
 logging.getLogger('PIL').setLevel(logging.WARNING)
