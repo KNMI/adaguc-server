@@ -3274,3 +3274,27 @@ class TestWMS(unittest.TestCase):
             data.getvalue(),
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
+
+    def test_WMSGetMap_windbarbs_on_gridded_netcdf_striding_offset(self):
+        AdagucTestTools().cleanTempDir()
+        config = (
+            ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,adaguc.tests.vectorrendering.xml"
+        )
+        env = {"ADAGUC_CONFIG": config}
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            args=["--updatedb", "--config", config], env=self.env, isCGI=False
+        )
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSGetMap_windbarbs_on_gridded_netcdf_striding_offset.png"
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.tests.vectorrendering&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=example_windbarbs_on_gridded_netcdf&WIDTH=443&HEIGHT=493&CRS=EPSG%3A3857&BBOX=-327757.8031974508,5679892.056878187,1599560.8554856647,7824741.038211767&STYLES=vectors_with_striding%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&&time=2023-09-30T06%3A00%3A00Z&DIM_reference_time=2023-09-28T06%3A00%3A00Z",
+            env=env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
