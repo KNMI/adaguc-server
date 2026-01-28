@@ -167,9 +167,6 @@ void readyerror() {
   }
   if (cerror_mode == WMS_EXCEPTIONS_IMAGE || cerror_mode == WMS_EXCEPTIONS_BLANKIMAGE) { // Image
     CDrawImage drawImage;
-    if (errImageFormat == IMAGEFORMAT_IMAGEPNG24 || errImageFormat == IMAGEFORMAT_IMAGEPNG32) {
-      drawImage.setRenderer(CDRAWIMAGERENDERER_CAIRO);
-    }
     drawImage.setBGColor(255, 255, 255);
 
     drawImage.enableTransparency(enableTransparency);
@@ -187,11 +184,9 @@ void readyerror() {
       printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
       drawImage.printImagePng8(true);
     } else if (errImageFormat == IMAGEFORMAT_IMAGEPNG24) {
-      drawImage.setRenderer(CDRAWIMAGERENDERER_CAIRO);
       printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
       drawImage.printImagePng24();
     } else if (errImageFormat == IMAGEFORMAT_IMAGEPNG32) {
-      drawImage.setRenderer(CDRAWIMAGERENDERER_CAIRO);
       printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
       drawImage.printImagePng32();
     } else if (errImageFormat == IMAGEFORMAT_IMAGEGIF) {

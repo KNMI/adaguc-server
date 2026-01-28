@@ -41,11 +41,6 @@
 #include "CServerError.h"
 #include "CServerConfig_CPPXSD.h"
 #include <cmath>
-// #include <png.h>
-#include <gd.h>
-#include "gdfontl.h"
-#include "gdfonts.h"
-#include "gdfontmb.h"
 #include "CCairoPlotter.h"
 #include "CColor.h"
 #include "CRectangleText.h"
@@ -54,9 +49,6 @@ float convertValueToClass(float val, float interval);
 
 #define CDRAWIMAGE_COLORTYPE_INDEXED 1
 #define CDRAWIMAGE_COLORTYPE_ARGB 2
-
-#define CDRAWIMAGERENDERER_GD 1
-#define CDRAWIMAGERENDERER_CAIRO 2
 
 class CLegend {
 public:
@@ -88,20 +80,14 @@ private:
   std::map<int, int>::iterator myColorIter;
   std::map<CT::string, CCairoPlotter *> myCCairoPlotterMap;
   CCairoPlotter *getCairoPlotter(const char *fontfile, float size, int w, int h, unsigned char *b);
-  int getClosestGDColor(unsigned char r, unsigned char g, unsigned char b);
-  int gdTranspColor;
   float lineMoveToX, lineMoveToY;
   int numImagesAdded;
-  int currentGraphicsRenderer;
-  void _drawBarbGd(int x, int y, double direction, double strength, CColor color, float lineWidth, bool toKnots, bool flip);
 
 public:
   float *rField, *gField, *bField;
   int *numField;
   bool trueColorAVG_RGBA;
-  int getRenderer();
   int _colors[256];
-  gdImagePtr image;
 
   int colors[256];
   GeoParameters geoParams;
@@ -170,7 +156,6 @@ public:
   int getWidth();
   int getHeight();
 
-  // int getClosestColorIndex(CColor color);
   void getHexColorForColorIndex(CT::string *hexValue, int colorIndex);
   void setText(const char *text, size_t length, int x, int y, int color, int fontSize);
   void setText(const char *text, size_t length, int x, int y, CColor color, int fontSize);
@@ -235,12 +220,7 @@ public:
   void setCanvasColorType(int colorType);
 
   /**
-   * Set renderer type, CDRAWIMAGERENDERER_CAIRO or CDRAWIMAGERENDERER_GD
-   */
-  void setRenderer(int renderer);
-
-  /**
-   * Get renderer width of the given text, supports CDRAWIMAGERENDERER_CAIRO and otherwise an approximation
+   * Get renderer width of the given text
    */
   int getTextWidth(CT::string text, const std::string &fontPath, int fontSize, int angle);
 };

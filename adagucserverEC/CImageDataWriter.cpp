@@ -351,6 +351,7 @@ void CImageDataWriter::getFeatureInfoGetPointDataResults(CDataSource *dataSource
   }
 }
 
+// TODO: can this go?
 int CImageDataWriter::drawCascadedWMS(CDataSource *dataSource, const char *service, const char *layers, const char *styles, bool transparent, const char *bgcolor) {
 
 #ifndef ENABLE_CURL
@@ -395,6 +396,7 @@ int CImageDataWriter::drawCascadedWMS(CDataSource *dataSource, const char *servi
 
   MyCURL myCURL;
   int status = myCURL.getGDImageField(url.c_str(), gdImage);
+  // TODO: can this all go?
   if (status == 0) {
     if (gdImage) {
       int w = gdImageSX(gdImage);
@@ -409,12 +411,6 @@ int CImageDataWriter::drawCascadedWMS(CDataSource *dataSource, const char *servi
         if (pos->attr.left.empty() == false) offsetx = parseInt(pos->attr.left.c_str());
         if (pos->attr.top.empty() == false) offsety = parseInt(pos->attr.top.c_str());
       }
-
-      /*if(drawImage.Geo.dHeight!=h||drawImage.Geo.dWidth!=w){
-        gdImageDestroy(gdImage);
-        CDBError("Returned cascaded WMS image size is not the same as requested image size");
-        return 1;
-      }*/
 
       int transpColor = gdImageGetTransparent(gdImage);
       for (int y = 0; y < drawImage.geoParams.height && y < h; y++) {
@@ -466,31 +462,8 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
     styleConfiguration = dataSource->getStyle();
   }
 
-  bool forceGDRenderer = false;
-
-  if (styleConfiguration != NULL) {
-    // XMLE_RenderSettings
-    for (auto renderSetting : styleConfiguration->renderSettings) {
-      if (renderSetting->attr.renderer.equals("gd")) {
-        forceGDRenderer = true;
-      }
-    }
-  }
-
-  if (!forceGDRenderer) {
-    if (srvParam->imageFormat == IMAGEFORMAT_IMAGEPNG8 || srvParam->imageFormat == IMAGEFORMAT_IMAGEPNG24 || srvParam->imageFormat == IMAGEFORMAT_IMAGEPNG32) {
-      drawImage.setRenderer(CDRAWIMAGERENDERER_CAIRO);
-    } else {
-      drawImage.setRenderer(CDRAWIMAGERENDERER_GD);
-    }
-  } else {
-    CDBDebug("Forcing renderer to GD");
-    drawImage.setRenderer(CDRAWIMAGERENDERER_GD);
-  }
-
   if (srvParam->imageMode == SERVERIMAGEMODE_RGBA || srvParam->Styles.indexOf("HQ") > 0) {
     drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-    drawImage.setRenderer(CDRAWIMAGERENDERER_CAIRO);
   }
 
   if (styleConfiguration != NULL) {
@@ -1080,9 +1053,6 @@ int CImageDataWriter::createAnimation() {
 #ifdef CIMAGEDATAWRITER_DEBUG
   CDBDebug("[createAnimation]");
 #endif
-  if (drawImage.getRenderer() == CDRAWIMAGERENDERER_GD) {
-    printf("%s%c%c\n", "Content-Type:image/gif", 13, 10);
-  }
   drawImage.beginAnimation();
   animation = 1;
 #ifdef CIMAGEDATAWRITER_DEBUG

@@ -61,24 +61,11 @@ CDrawImage::CDrawImage() {
   backgroundAlpha = 255;
 
   numImagesAdded = 0;
-  currentGraphicsRenderer = CDRAWIMAGERENDERER_GD;
   // CDBDebug("TTFFontLocation = %s",TTFFontLocation);
 }
 void CDrawImage::destroyImage() {
   // CDBDebug("[destroy] CDrawImage");
 
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
-    if (dPaletteCreated == 1) {
-      for (int j = 0; j < 256; j++)
-        if (_colors[j] != -1) gdImageColorDeallocate(image, _colors[j]);
-    }
-    dPaletteCreated = 0;
-  }
-  if (dImageCreated == 1) {
-    if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
-      gdImageDestroy(image);
-    };
-  }
   dImageCreated = 0;
 
   for (size_t j = 0; j < legends.size(); j++) {
@@ -117,7 +104,6 @@ int CDrawImage::createImage(const char *fn) {
   _bEnableTransparency = true;
 
   cairo_surface_t *surface = cairo_image_surface_create_from_png(fn);
-  currentGraphicsRenderer = CDRAWIMAGERENDERER_CAIRO;
   createImage(cairo_image_surface_get_width(surface), cairo_image_surface_get_height(surface));
   cairo->setToSurface(surface);
   cairo_surface_destroy(surface);
@@ -137,29 +123,18 @@ int CDrawImage::createImage(GeoParameters &_Geo) {
   StopWatch_Stop("start createImage of size %d %d, truecolor=[%d], transparency = [%d], currentGraphicsRenderer [%d]", _Geo.dWidth, _Geo.dHeight, _bEnableTrueColor, _bEnableTransparency,
                  currentGraphicsRenderer);
 #endif
-  if (currentGraphicsRenderer == -1) {
-    CDBError("currentGraphicsRenderer not set.");
-    return 1;
-  }
   if (dImageCreated == 1) {
     CDBError("createImage: image already created");
     return 1;
   }
 
   geoParams = _Geo;
-  // CDBDebug("BLA %d",_bEnableTrueColor);
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    // Always true color
+  // Always true color
 
-    if (_bEnableTransparency == false) {
-      cairo = new CCairoPlotter(geoParams.width, geoParams.height, TTFFontSize, TTFFontLocation, BGColorR, BGColorG, BGColorB, 255);
-    } else {
-      cairo = new CCairoPlotter(geoParams.width, geoParams.height, TTFFontSize, TTFFontLocation, 0, 0, 0, 0);
-    }
-  }
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
-    image = gdImageCreate(geoParams.width, geoParams.height);
-    gdFTUseFontConfig(1);
+  if (_bEnableTransparency == false) {
+    cairo = new CCairoPlotter(geoParams.width, geoParams.height, TTFFontSize, TTFFontLocation, BGColorR, BGColorG, BGColorB, 255);
+  } else {
+    cairo = new CCairoPlotter(geoParams.width, geoParams.height, TTFFontSize, TTFFontLocation, 0, 0, 0, 0);
   }
   dImageCreated = 1;
 #ifdef MEASURETIME
@@ -169,62 +144,13 @@ int CDrawImage::createImage(GeoParameters &_Geo) {
   return 0;
 }
 
-int CDrawImage::getClosestGDColor(unsigned char r, unsigned char g, unsigned char b) {
-  int key = r + g * 256 + b * 65536;
-  int color;
-  myColorIter = myColorMap.find(key);
-  if (myColorIter == myColorMap.end()) {
-
-    int transparentColor = gdImageGetTransparent(image);
-    float closestD = -1;
-    int closestI = -1;
-    ;
-    // CDBDebug("Transparent color = %d",transparentColor);
-    for (int j = 255; j >= 0; j--) {
-      if (j != transparentColor) {
-        int ri = gdImageRed(image, j);
-        int gi = gdImageGreen(image, j);
-        int bi = gdImageBlue(image, j);
-
-        float d = sqrt((ri - r) * (ri - r)) + sqrt((gi - g) * (gi - g)) + sqrt((bi - b) * (bi - b));
-        // CDBDebug("%d %d %d %d %f",j,ri,gi,bi,d);
-        if (closestI == -1) {
-          closestD = d;
-          closestI = j;
-        } else {
-          if (d < closestD) {
-            closestD = d;
-            closestI = j;
-          }
-        }
-      }
-    }
-
-    // CDBDebug("Found %d",closestI);
-
-    color = closestI; // gdImageColorClosest(image,r,g,b);
-    myColorMap[key] = color;
-  } else {
-    color = (*myColorIter).second;
-  }
-  return color;
-}
-
 int CDrawImage::printImagePng8(bool useBitAlpha) {
   if (dImageCreated == 0) {
     CDBError("print: image not created");
     return 1;
   }
 
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    cairo->writeToPng8Stream(stdout, backgroundAlpha, useBitAlpha);
-  } else if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
-    CDBDebug("printImagePng8 GF");
-    gdImagePng(image, stdout);
-  } else {
-    CDBDebug("No graphics renderer!!!");
-    return 1;
-  }
+  cairo->writeToPng8Stream(stdout, backgroundAlpha, useBitAlpha);
   return 0;
 }
 
@@ -234,14 +160,7 @@ int CDrawImage::printImagePng24() {
     return 1;
   }
 
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    cairo->writeToPng24Stream(stdout, backgroundAlpha);
-  }
-
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
-    CDBError("gdImagePNG does not support 24 bit");
-    return 1;
-  }
+  cairo->writeToPng24Stream(stdout, backgroundAlpha);
   return 0;
 }
 
@@ -251,14 +170,7 @@ int CDrawImage::printImagePng32() {
     return 1;
   }
 
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    cairo->writeToPng32Stream(stdout, backgroundAlpha);
-  }
-
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
-    CDBError("gdImagePNG does not support 32 bit");
-    return 1;
-  }
+  cairo->writeToPng32Stream(stdout, backgroundAlpha);
   return 0;
 }
 int CDrawImage::printImageWebP32(int quality) {
@@ -267,38 +179,13 @@ int CDrawImage::printImageWebP32(int quality) {
     return 1;
   }
 
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    cairo->writeToWebP32Stream(stdout, backgroundAlpha, quality);
-  }
-
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
-    CDBError("gdImagePNG does not support webp");
-    return 1;
-  }
+  cairo->writeToWebP32Stream(stdout, backgroundAlpha, quality);
   return 0;
 }
 
 int CDrawImage::printImageGif() {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
-    if (dImageCreated == 0) {
-      CDBError("print: image not created");
-      return 1;
-    }
-    if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-      CDBError("TrueColor with gif images is not supported");
-      return 1;
-    }
-    if (numImagesAdded == 0) {
-      gdImageGif(image, stdout);
-    } else {
-      gdImageGifAnimEnd(stdout);
-    }
-  }
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    CDBError("Cairo supports no GIF output");
-    return 1;
-  }
-  return 0;
+  CDBError("Cairo supports no GIF output");
+  return 1;
 }
 
 void CDrawImage::drawVector(int x, int y, double direction, double strength, int color) {
@@ -349,10 +236,8 @@ void CDrawImage::drawVector(int x, int y, double direction, double strength, CCo
   hy3 = wy1 - (sin(direction + 2.5) + sin(direction - 2.5)) / 2 * (strength / 2.8f);
 
   // Render triangle
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    cairo->setColor(color.r, color.g, color.b, color.a);
-    cairo->setFillColor(color.r, color.g, color.b, color.a);
-  }
+  cairo->setColor(color.r, color.g, color.b, color.a);
+  cairo->setFillColor(color.r, color.g, color.b, color.a);
   poly(hx1, hy1, wx1, wy1, hx2, hy2, linewidth, color, false);
 
   // Render shaft
@@ -389,116 +274,24 @@ void CDrawImage::drawVector2(int x, int y, double direction, double strength, in
 
 #define round(x) (int(x + 0.5)) // Only for positive values!!!
 
-void CDrawImage::_drawBarbGd(int x, int y, double direction, double strength, CColor color, float lineWidth, bool toKnots, bool flip) {
-  double wx1, wy1, wx2, wy2, dx1, dy1;
-  int strengthInKnots = round(strength);
-  if (toKnots) {
-    strengthInKnots = round(strength * 3600 / 1852.);
-  }
-
-  if (strengthInKnots <= 2) {
-    // draw a circle
-    circle(x, y, 6, color, lineWidth);
-    return;
-  }
-
-  int shaftLength = 30;
-
-  // Rounded to the nearest 5 kts
-  int strengthInKnotsRoundedToFive = round((strengthInKnots + 2) / 5) * 5;
-
-  int nPennants = strengthInKnotsRoundedToFive / 50;
-  int nBarbs = (strengthInKnotsRoundedToFive % 50) / 10 + 0.5;
-  bool hasHalfBarb = strengthInKnotsRoundedToFive % 10 >= 5;
-
-  float flipFactor = flip ? -1 : 1;
-  int barbLength = int(-10 * flipFactor);
-
-  dx1 = cos(direction) * (shaftLength);
-  dy1 = sin(direction) * (shaftLength);
-
-  /*  wx1=double(x);wy1=double(y);  //wind barb top (flag side)
-    wx2=double(x)+dx1;wy2=double(y)-dy1;  //wind barb root*/
-  wx1 = double(x) - dx1;
-  wy1 = double(y) + dy1; // wind barb top (flag side)
-  wx2 = double(x);
-  wy2 = double(y); // wind barb root
-
-  circle(int(wx2), int(wy2), 2, color, lineWidth);
-  int nrPos = 10;
-
-  int pos = 0;
-  for (int i = 0; i < nPennants; i++) {
-    double wx3 = wx1 + pos * dx1 / nrPos;
-    double wy3 = wy1 - pos * dy1 / nrPos;
-    pos++;
-    double hx3 = wx1 + pos * dx1 / nrPos + cos(M_PI + direction + M_PI / 2) * barbLength;
-    double hy3 = wy1 - pos * dy1 / nrPos - sin(M_PI + direction + M_PI / 2) * barbLength;
-    pos++;
-    double wx4 = wx1 + pos * dx1 / nrPos;
-    double wy4 = wy1 - pos * dy1 / nrPos;
-    poly(wx3, wy3, hx3, hy3, wx4, wy4, color, true);
-  }
-  if (nPennants > 0) pos++;
-  for (int i = 0; i < nBarbs; i++) {
-    double wx3 = wx1 + pos * dx1 / nrPos;
-    double wy3 = wy1 - pos * dy1 / nrPos;
-    double hx3 = wx3 - cos(M_PI / 2 - direction + (2 - float(flipFactor) * 0.1) * M_PI / 2) * barbLength; // was: +cos
-    double hy3 = wy3 - sin(M_PI / 2 - direction + (2 - float(flipFactor) * 0.1) * M_PI / 2) * barbLength; // was: -sin
-
-    line(wx3, wy3, hx3, hy3, lineWidth, color);
-    pos++;
-  }
-
-  if ((nPennants + nBarbs) == 0) pos++;
-  if (hasHalfBarb) {
-    double wx3 = wx1 + pos * dx1 / nrPos;
-    double wy3 = wy1 - pos * dy1 / nrPos;
-    double hx3 = wx3 - cos(M_PI / 2 - direction + (2 - float(flipFactor) * 0.1) * M_PI / 2) * barbLength / 2;
-    double hy3 = wy3 - sin(M_PI / 2 - direction + (2 - float(flipFactor) * 0.1) * M_PI / 2) * barbLength / 2;
-    line(wx3, wy3, hx3, hy3, lineWidth, color);
-    pos++;
-  }
-
-  line(wx1, wy1, wx2, wy2, lineWidth, color);
-}
-
 void CDrawImage::drawBarb(int x, int y, double direction, double viewDirCorrection, double strength, CColor barbColor, float lineWidth, bool toKnots, bool flip, bool drawText, double fontSize,
                           CColor textColor, CColor outlineColor, double outlineWidth) {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
-    _drawBarbGd(x, y, direction + viewDirCorrection, strength, barbColor, lineWidth, toKnots, flip);
-    if (drawText) {
-      // TODO: DRAW TEXT
-    }
-  }
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
+  // If no linewidth, no outline should be drawn, set inner barblineWidth to 0.8 to ensure we draw a barb
 
-    // If no linewidth, no outline should be drawn, set inner barblineWidth to 0.8 to ensure we draw a barb
+  double barblineWidth = lineWidth == 0 ? 0.8 : lineWidth;
+  double barbOutlineWidth = lineWidth == 0 ? 0 : outlineWidth;
 
-    double barblineWidth = lineWidth == 0 ? 0.8 : lineWidth;
-    double barbOutlineWidth = lineWidth == 0 ? 0 : outlineWidth;
-
-    cairo->drawBarb(x, y, direction, viewDirCorrection, strength, barbColor, outlineColor, barblineWidth, toKnots, flip, drawText, fontSize, textColor, barbOutlineWidth);
-  }
+  cairo->drawBarb(x, y, direction, viewDirCorrection, strength, barbColor, outlineColor, barblineWidth, toKnots, flip, drawText, fontSize, textColor, barbOutlineWidth);
 }
 
 void CDrawImage::circle(int x, int y, int r, int color, float lineWidth) {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    cairo->setColor(currentLegend->CDIred[color], currentLegend->CDIgreen[color], currentLegend->CDIblue[color], 255);
-    cairo->circle(x, y, r, lineWidth);
-  } else {
-    gdImageArc(image, x - 1, y - 1, r * 2 + 1, r * 2 + 1, 0, 360, _colors[color]);
-  }
+  cairo->setColor(currentLegend->CDIred[color], currentLegend->CDIgreen[color], currentLegend->CDIblue[color], 255);
+  cairo->circle(x, y, r, lineWidth);
 }
 
 void CDrawImage::circle(int x, int y, int r, CColor color, float lineWidth) {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    cairo->setColor(color.r, color.g, color.b, color.a);
-    cairo->circle(x, y, r, lineWidth);
-  } else {
-    int gdcolor = getClosestGDColor(color.r, color.g, color.b);
-    gdImageArc(image, x - 1, y - 1, r * 2 + 1, r * 2 + 1, 0, 360, gdcolor);
-  }
+  cairo->setColor(color.r, color.g, color.b, color.a);
+  cairo->circle(x, y, r, lineWidth);
 }
 
 void CDrawImage::circle(int x, int y, int r, int color) { circle(x, y, r, color, 1.0); }
@@ -511,166 +304,65 @@ void CDrawImage::poly(float x1, float y1, float x2, float y2, float x3, float y3
 }
 
 void CDrawImage::poly(float x1, float y1, float x2, float y2, float x3, float y3, CColor color, bool fill) {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    float ptx[3] = {x1, x2, x3};
-    float pty[3] = {y1, y2, y3};
-    cairo->setFillColor(color.r, color.g, color.b, color.a);
-    //    currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],255);
-    cairo->poly(ptx, pty, 3, true, fill);
-  } else {
-    int colorIndex = getClosestGDColor(color.r, color.g, color.b);
-    gdPoint pt[4];
-    pt[0].x = int(x1);
-    pt[1].x = int(x2);
-    pt[2].x = int(x3);
-    pt[3].x = int(x1);
-    pt[0].y = int(y1);
-    pt[1].y = int(y2);
-    pt[2].y = int(y3);
-    pt[3].y = int(y1);
-    if (fill) {
-      gdImageFilledPolygon(image, pt, 4, _colors[colorIndex]);
-    } else {
-      gdImagePolygon(image, pt, 4, _colors[colorIndex]);
-    }
-  }
+  float ptx[3] = {x1, x2, x3};
+  float pty[3] = {y1, y2, y3};
+  cairo->setFillColor(color.r, color.g, color.b, color.a);
+  cairo->poly(ptx, pty, 3, true, fill);
 }
 
 void CDrawImage::poly(float x1, float y1, float x2, float y2, float x3, float y3, float lineWidth, CColor color, bool fill) {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    float ptx[3] = {x1, x2, x3};
-    float pty[3] = {y1, y2, y3};
-    cairo->setFillColor(color.r, color.g, color.b, color.a);
-    //    currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],255);
-    cairo->poly(ptx, pty, 3, lineWidth, true, fill);
-  } else {
-    int colorIndex = getClosestGDColor(color.r, color.g, color.b);
-    gdPoint pt[4];
-    pt[0].x = int(x1);
-    pt[1].x = int(x2);
-    pt[2].x = int(x3);
-    pt[3].x = int(x1);
-    pt[0].y = int(y1);
-    pt[1].y = int(y2);
-    pt[2].y = int(y3);
-    pt[3].y = int(y1);
-    if (fill) {
-      gdImageFilledPolygon(image, pt, 4, _colors[colorIndex]);
-    } else {
-      gdImagePolygon(image, pt, 4, _colors[colorIndex]);
-    }
-  }
+  float ptx[3] = {x1, x2, x3};
+  float pty[3] = {y1, y2, y3};
+  cairo->setFillColor(color.r, color.g, color.b, color.a);
+  cairo->poly(ptx, pty, 3, lineWidth, true, fill);
 }
 
 void CDrawImage::poly(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, float lineWidth, CColor color, bool fill) {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    float ptx[4] = {x1, x2, x3, x4};
-    float pty[4] = {y1, y2, y3, y4};
-    cairo->setFillColor(color.r, color.g, color.b, color.a);
-    //    currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],255);
-    cairo->poly(ptx, pty, 4, lineWidth, true, fill);
-  } else {
-    int colorIndex = getClosestGDColor(color.r, color.g, color.b);
-    gdPoint pt[5];
-    pt[0].x = int(x1);
-    pt[1].x = int(x2);
-    pt[2].x = int(x3);
-    pt[3].x = int(x4);
-    pt[4].x = int(x1);
-    pt[0].y = int(y1);
-    pt[1].y = int(y2);
-    pt[2].y = int(y3);
-    pt[3].y = int(y4);
-    pt[4].y = int(y1);
-    if (fill) {
-      gdImageFilledPolygon(image, pt, 5, _colors[colorIndex]);
-    } else {
-      gdImagePolygon(image, pt, 5, _colors[colorIndex]);
-    }
-  }
+  float ptx[4] = {x1, x2, x3, x4};
+  float pty[4] = {y1, y2, y3, y4};
+  cairo->setFillColor(color.r, color.g, color.b, color.a);
+  cairo->poly(ptx, pty, 4, lineWidth, true, fill);
 }
 
 void CDrawImage::poly(float *x, float *y, int n, float lineWidth, CColor lineColor, CColor fillColor, bool close, bool fill) {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    cairo->setColor(lineColor.r, lineColor.g, lineColor.b, lineColor.a);
-    cairo->setFillColor(fillColor.r, fillColor.g, fillColor.b, fillColor.a);
-    //    currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color],255);
-    cairo->poly(x, y, n, lineWidth, close, fill);
-  } else {
-    int colorIndex = getClosestGDColor(fillColor.r, fillColor.g, fillColor.b);
-    gdPoint pt[n];
-    for (int i = 0; i < n; i++) {
-      pt[i].x = int(x[i]);
-      pt[i].y = int(y[i]);
-    }
-    if (fill) {
-      gdImageFilledPolygon(image, pt, 5, _colors[colorIndex]);
-    } else {
-      gdImagePolygon(image, pt, 5, _colors[colorIndex]);
-    }
-  }
+  cairo->setColor(lineColor.r, lineColor.g, lineColor.b, lineColor.a);
+  cairo->setFillColor(fillColor.r, fillColor.g, fillColor.b, fillColor.a);
+  cairo->poly(x, y, n, lineWidth, close, fill);
 }
 
 void CDrawImage::line(float x1, float y1, float x2, float y2, int color) {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    if (currentLegend == NULL) return;
-    if (color >= 0 && color < 256) {
-      cairo->setColor(currentLegend->CDIred[color], currentLegend->CDIgreen[color], currentLegend->CDIblue[color], 255);
-      cairo->line(x1, y1, x2, y2);
-    }
-  } else {
-    gdImageLine(image, int(x1), int(y1), int(x2), int(y2), _colors[color]);
+  if (currentLegend == NULL) return;
+  if (color >= 0 && color < 256) {
+    cairo->setColor(currentLegend->CDIred[color], currentLegend->CDIgreen[color], currentLegend->CDIblue[color], 255);
+    cairo->line(x1, y1, x2, y2);
   }
 }
 
 void CDrawImage::line(float x1, float y1, float x2, float y2, CColor ccolor) {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    if (currentLegend == NULL) return;
-    cairo->setColor(ccolor.r, ccolor.g, ccolor.b, ccolor.a);
-    cairo->line(x1, y1, x2, y2);
-  } else {
-    int gdcolor = getClosestGDColor(ccolor.r, ccolor.g, ccolor.b);
-    gdImageLine(image, int(x1), int(y1), int(x2), int(y2), gdcolor);
-  }
+  if (currentLegend == NULL) return;
+  cairo->setColor(ccolor.r, ccolor.g, ccolor.b, ccolor.a);
+  cairo->line(x1, y1, x2, y2);
 }
 
 void CDrawImage::moveTo(float x1, float y1) {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    if (currentLegend == NULL) return;
-    cairo->moveTo(x1, y1);
-  } else {
-    lineMoveToX = x1;
-    lineMoveToY = y1;
-  }
+  if (currentLegend == NULL) return;
+  cairo->moveTo(x1, y1);
 }
 
 void CDrawImage::lineTo(float x2, float y2, float w, CColor ccolor) {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    if (currentLegend == NULL) return;
-    cairo->setColor(ccolor.r, ccolor.g, ccolor.b, ccolor.a);
-    cairo->lineTo(x2, y2, w);
-  } else {
-    int gdcolor = getClosestGDColor(ccolor.r, ccolor.g, ccolor.b);
-    gdImageLine(image, int(lineMoveToX), int(lineMoveToY), int(x2), int(y2), gdcolor);
-    lineMoveToX = x2;
-    lineMoveToY = y2;
-  }
+  if (currentLegend == NULL) return;
+  cairo->setColor(ccolor.r, ccolor.g, ccolor.b, ccolor.a);
+  cairo->lineTo(x2, y2, w);
 }
 
 void CDrawImage::endLine() {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    if (currentLegend == NULL) return;
-    cairo->endLine();
-  } else {
-  }
+  if (currentLegend == NULL) return;
+  cairo->endLine();
 }
 
 void CDrawImage::endLine(const double *dashes, int num_dashes) {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    if (currentLegend == NULL) return;
-    cairo->endLine(dashes, num_dashes);
-  } else {
-  }
+  if (currentLegend == NULL) return;
+  cairo->endLine(dashes, num_dashes);
 }
 
 CColor CDrawImage::getColorForIndex(int colorIndex) {
@@ -683,79 +375,33 @@ CColor CDrawImage::getColorForIndex(int colorIndex) {
 }
 
 void CDrawImage::line(float x1, float y1, float x2, float y2, float w, CColor ccolor) {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    if (currentLegend == NULL) return;
-    cairo->setColor(ccolor.r, ccolor.g, ccolor.b, ccolor.a);
-    cairo->line(x1, y1, x2, y2, w);
-  } else {
-    gdImageSetThickness(image, int(w) * 1);
-    int gdcolor = getClosestGDColor(ccolor.r, ccolor.g, ccolor.b);
-    gdImageLine(image, int(x1), int(y1), int(x2), int(y2), gdcolor);
-  }
+  if (currentLegend == NULL) return;
+  cairo->setColor(ccolor.r, ccolor.g, ccolor.b, ccolor.a);
+  cairo->line(x1, y1, x2, y2, w);
 }
 
 void CDrawImage::line(float x1, float y1, float x2, float y2, float w, int color) {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    if (currentLegend == NULL) return;
-    if (color >= 0 && color < 256) {
-      cairo->setColor(currentLegend->CDIred[color], currentLegend->CDIgreen[color], currentLegend->CDIblue[color], 255);
-      cairo->line(x1, y1, x2, y2, w);
-    }
-  } else {
-    gdImageSetThickness(image, int(w) * 1);
-    gdImageLine(image, int(x1), int(y1), int(x2), int(y2), _colors[color]);
+  if (currentLegend == NULL) return;
+  if (color >= 0 && color < 256) {
+    cairo->setColor(currentLegend->CDIred[color], currentLegend->CDIgreen[color], currentLegend->CDIblue[color], 255);
+    cairo->line(x1, y1, x2, y2, w);
   }
 }
 
 void CDrawImage::setPixelIndexed(int x, int y, int color) {
-
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    if (currentLegend == NULL) return;
-    if (color >= 0 && color < 256) {
-      //       if(currentLegend->CDIalpha[color]==255){
-      //     cairo-> pixel(x,y,currentLegend->CDIred[color],currentLegend->CDIgreen[color],currentLegend->CDIblue[color]);
-      //       }else{
-
-      if (currentLegend->CDIalpha[color] > 0) {
-        cairo->pixel_blend(x, y, currentLegend->CDIred[color], currentLegend->CDIgreen[color], currentLegend->CDIblue[color], currentLegend->CDIalpha[color]);
-      } else if (currentLegend->CDIalpha[color] < 0) {
-        cairo->pixel_overwrite(x, y, currentLegend->CDIred[color], currentLegend->CDIgreen[color], currentLegend->CDIblue[color], -(currentLegend->CDIalpha[color] + 1));
-      }
-      //       }
-    }
-  } else {
-    if (color >= 0 && color < 256 && dPaletteCreated == 1) {
-      gdImageSetPixel(image, x, y, colors[color]);
+  if (currentLegend == NULL) return;
+  if (color >= 0 && color < 256) {
+    if (currentLegend->CDIalpha[color] > 0) {
+      cairo->pixel_blend(x, y, currentLegend->CDIred[color], currentLegend->CDIgreen[color], currentLegend->CDIblue[color], currentLegend->CDIalpha[color]);
+    } else if (currentLegend->CDIalpha[color] < 0) {
+      cairo->pixel_overwrite(x, y, currentLegend->CDIred[color], currentLegend->CDIgreen[color], currentLegend->CDIblue[color], -(currentLegend->CDIalpha[color] + 1));
     }
   }
 }
 
-void CDrawImage::getPixelTrueColor(int x, int y, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a) {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    cairo->getPixel(x, y, r, g, b, a);
-  } else {
-    int dTranspColor = -1;
-    if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
-      dTranspColor = gdImageGetTransparent(image);
-    }
-    int color = gdImageGetPixel(image, x, y);
-    r = gdImageRed(image, color);
-    g = gdImageGreen(image, color);
-    b = gdImageBlue(image, color);
-    a = 255 - gdImageAlpha(image, color) * 2;
-    if (color == dTranspColor) {
-      a = 0;
-    }
-  }
-}
+void CDrawImage::getPixelTrueColor(int x, int y, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a) { cairo->getPixel(x, y, r, g, b, a); }
 
-void CDrawImage::setPixelTrueColor(int x, int y, unsigned int color) {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    cairo->pixel_blend(x, y, color, color / 256, color / (256 * 256), 255);
-  } else {
-    gdImageSetPixel(image, x, y, color);
-  }
-}
+void CDrawImage::setPixelTrueColor(int x, int y, unsigned int color) { cairo->pixel_blend(x, y, color, color / 256, color / (256 * 256), 255); }
 
 const char *toHex8(char *data, unsigned char hex) {
   unsigned char a = hex / 16;
@@ -772,130 +418,30 @@ void CDrawImage::getHexColorForColorIndex(CT::string *hexValue, int color) {
   hexValue->print("#%s%s%s", toHex8(data, currentLegend->CDIred[color]), toHex8(data, currentLegend->CDIgreen[color]), toHex8(data, currentLegend->CDIblue[color]));
 }
 
-void CDrawImage::setPixelTrueColor(int x, int y, unsigned char r, unsigned char g, unsigned char b) {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    cairo->pixel_blend(x, y, r, g, b, 255);
-  } else {
-    if (_bEnableTrueColor) {
-      gdImageSetPixel(image, x, y, r + g * 256 + b * 65536);
-    } else {
-      gdImageSetPixel(image, x, y, getClosestGDColor(r, g, b));
-    }
-  }
-}
+void CDrawImage::setPixelTrueColor(int x, int y, unsigned char r, unsigned char g, unsigned char b) { cairo->pixel_blend(x, y, r, g, b, 255); }
 
-void CDrawImage::setPixel(int x, int y, CColor &color) {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    cairo->pixel_blend(x, y, color.r, color.g, color.b, color.a);
-  } else {
-    int key = color.r + color.g * 256 + color.b * 65536;
-    int icolor;
-    myColorIter = myColorMap.find(key);
-    if (myColorIter == myColorMap.end()) {
-      icolor = gdImageColorClosest(image, color.r, color.g, color.b);
-      myColorMap[key] = icolor;
-    } else {
-      icolor = (*myColorIter).second;
-    }
-    gdImageSetPixel(image, x, y, icolor);
-  }
-}
+void CDrawImage::setPixel(int x, int y, CColor &color) { cairo->pixel_blend(x, y, color.r, color.g, color.b, color.a); }
 
-/*(int CDrawImage::getClosestColorIndex(CColor color){
-  return  gdImageColorClosest(image,color.r,color.g,color.b);
-  int key = color.r+color.g*256+color.b*65536;
-  int icolor;
-  myColorIter=myColorMap.find(key);
-  if(myColorIter==myColorMap.end()){
-    icolor = gdImageColorClosest(image,color.r,color.g,color.b);
-    myColorMap[key]=icolor;
-  }else{
-    icolor=(*myColorIter).second;
-  }
-  return icolor;
-}*/
+void CDrawImage::setPixelTrueColorOverWrite(int x, int y, unsigned char r, unsigned char g, unsigned char b, unsigned char a) { cairo->pixel_overwrite(x, y, r, g, b, a); }
 
-void CDrawImage::setPixelTrueColorOverWrite(int x, int y, unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    cairo->pixel_overwrite(x, y, r, g, b, a);
-  } else {
-    int key = r + g * 256 + b * 65536;
-    int color;
-    myColorIter = myColorMap.find(key);
-    if (myColorIter == myColorMap.end()) {
-      color = gdImageColorClosest(image, r, g, b);
-      myColorMap[key] = color;
-    } else {
-      color = (*myColorIter).second;
-    }
-    gdImageSetPixel(image, x, y, color);
-  }
-}
-
-void CDrawImage::setPixelTrueColor(int x, int y, unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    cairo->pixel_blend(x, y, r, g, b, a);
-  } else {
-    int key = r + g * 256 + b * 65536;
-    int color;
-    myColorIter = myColorMap.find(key);
-    if (myColorIter == myColorMap.end()) {
-      color = gdImageColorClosest(image, r, g, b);
-      myColorMap[key] = color;
-    } else {
-      color = (*myColorIter).second;
-    }
-    gdImageSetPixel(image, x, y, color);
-  }
-}
+void CDrawImage::setPixelTrueColor(int x, int y, unsigned char r, unsigned char g, unsigned char b, unsigned char a) { cairo->pixel_blend(x, y, r, g, b, a); }
 
 void CDrawImage::setText(const char *text, size_t length, int x, int y, int color, int fontSize) {
   CColor col = getColorForIndex(color);
   setText(text, length, x, y, col, fontSize);
-  // gdImageString (image, gdFontSmall, x,  y, (unsigned char *)text,_colors[color]);
 }
 
 void CDrawImage::setText(const char *text, size_t length, int x, int y, CColor color, int fontSize) {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    if (currentLegend == NULL) return;
-    cairo->setColor(color.r, color.g, color.b, color.a);
-    cairo->drawText(x, y + 10, 0, text);
-  } else {
-    int colorIndex = getClosestGDColor(color.r, color.g, color.b);
-    char *pszText = new char[length + 1];
-    strncpy(pszText, text, length);
-    pszText[length] = '\0';
-    if (fontSize == -1) gdImageString(image, gdFontSmall, x, y, (unsigned char *)pszText, colorIndex);
-    if (fontSize == 0) gdImageString(image, gdFontMediumBold, x, y, (unsigned char *)pszText, colorIndex);
-    if (fontSize == 1) gdImageString(image, gdFontLarge, x, y, (unsigned char *)pszText, colorIndex);
-    delete[] pszText;
-  }
+  if (currentLegend == NULL) return;
+  cairo->setColor(color.r, color.g, color.b, color.a);
+  cairo->drawText(x, y + 10, 0, text);
 }
 
 void CDrawImage::setTextStroke(int x, int y, float angle, const char *text, const char *fontFile, float fontSize, float strokeWidth, CColor bgcolor, CColor fgcolor) {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    if (bgcolor.a == 0) {
-      drawText(x, y, fontFile, fontSize, angle, text, fgcolor);
-    } else {
-      cairo->drawStrokedText(x, y, -angle, text, fontSize * 1.4, strokeWidth, bgcolor, fgcolor);
-    }
+  if (bgcolor.a == 0) {
+    drawText(x, y, fontFile, fontSize, angle, text, fgcolor);
   } else {
-    int fgColorIndex = getClosestGDColor(fgcolor.r, fgcolor.g, fgcolor.b);
-    int bgColorIndex = getClosestGDColor(bgcolor.r, bgcolor.g, bgcolor.b);
-    size_t length = strlen(text);
-    char *pszText = new char[length + 1];
-    strncpy(pszText, text, length);
-    pszText[length] = '\0';
-
-    for (int dy = -1; dy < 2; dy = dy + 1) {
-      for (int dx = -1; dx < 2; dx = dx + 1) {
-        if (!(dx == 0 && dy == 0)) {
-          gdImageStringFT(image, &brect[0], bgColorIndex, (char *)TTFFontLocation, fontSize, angle, x + dx, y + dy, (char *)pszText);
-        }
-      }
-    }
-    gdImageStringFT(image, &brect[0], fgColorIndex, (char *)TTFFontLocation, fontSize, angle, x, y, (char *)pszText);
-    delete[] pszText;
+    cairo->drawStrokedText(x, y, -angle, text, fontSize * 1.4, strokeWidth, bgcolor, fgcolor);
   }
 }
 
@@ -904,18 +450,8 @@ void CDrawImage::drawText(int x, int y, float angle, const char *text, unsigned 
 }
 
 void CDrawImage::drawText(int x, int y, float angle, const char *text, CColor fgcolor) {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    cairo->setColor(fgcolor.r, fgcolor.g, fgcolor.b, fgcolor.a);
-    cairo->drawText(x, y, angle, text);
-  } else {
-    char *_text = new char[strlen(text) + 1];
-    memcpy(_text, text, strlen(text) + 1);
-    int tcolor = getClosestGDColor(fgcolor.r, fgcolor.g, fgcolor.b);
-
-    gdImageStringFT(image, &brect[0], tcolor, (char *)TTFFontLocation, 8.0f, angle, x, y, (char *)_text);
-    delete[] _text;
-    // drawTextAngle(text, strlen(text),angle, x, y, 240,8);
-  }
+  cairo->setColor(fgcolor.r, fgcolor.g, fgcolor.b, fgcolor.a);
+  cairo->drawText(x, y, angle, text);
 }
 
 void CDrawImage::drawText(int x, int y, const char *fontfile, float size, float angle, const char *text, unsigned char colorIndex) {
@@ -971,114 +507,60 @@ int CDrawImage::drawTextArea(int x, int y, const char *fontfile, float size, flo
 }
 
 void CDrawImage::drawText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor fgcolor, CColor bgcolor) {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    CCairoPlotter *freeType = this->getCairoPlotter(fontfile, size, geoParams.width, geoParams.height, cairo->getByteBuffer());
-    freeType->setColor(fgcolor.r, fgcolor.g, fgcolor.b, fgcolor.a);
-    freeType->setFillColor(bgcolor.r, bgcolor.g, bgcolor.b, bgcolor.a);
-    freeType->drawFilledText(x, y, angle, text);
-    cairo->isAlphaUsed |= freeType->isAlphaUsed; // remember freetype's isAlphaUsed flag
-  } else {
-    char *_text = new char[strlen(text) + 1];
-    memcpy(_text, text, strlen(text) + 1);
-    int tcolor = getClosestGDColor(fgcolor.r, fgcolor.g, fgcolor.b);
-    if (_bEnableTrueColor) tcolor = -tcolor;
-    gdImageStringFT(image, &brect[0], tcolor, (char *)TTFFontLocation, size, angle, x, y, (char *)_text);
-    delete[] _text;
-  }
+  CCairoPlotter *freeType = this->getCairoPlotter(fontfile, size, geoParams.width, geoParams.height, cairo->getByteBuffer());
+  freeType->setColor(fgcolor.r, fgcolor.g, fgcolor.b, fgcolor.a);
+  freeType->setFillColor(bgcolor.r, bgcolor.g, bgcolor.b, bgcolor.a);
+  freeType->drawFilledText(x, y, angle, text);
+  cairo->isAlphaUsed |= freeType->isAlphaUsed; // remember freetype's isAlphaUsed flag
 }
 void CDrawImage::setDisc(int x, int y, int discRadius, int fillCol, int lineCol) {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    if (currentLegend == NULL) return;
-    cairo->setFillColor(currentLegend->CDIred[fillCol], currentLegend->CDIgreen[fillCol], currentLegend->CDIblue[fillCol], currentLegend->CDIalpha[fillCol]);
-    cairo->setColor(currentLegend->CDIred[lineCol], currentLegend->CDIgreen[lineCol], currentLegend->CDIblue[lineCol], currentLegend->CDIalpha[fillCol]);
-    cairo->filledcircle(x, y, discRadius);
-    // cairo->setColor(textcolor.r,textcolor.g,textcolor.b,textcolor.a);
-    cairo->circle(x, y, discRadius, 1);
-    //    circle( x,  y,  discRadius,lineCol,1);
-  } else {
-    gdImageFilledEllipse(image, x, y, discRadius * 2, discRadius * 2, fillCol);
-    circle(x, y, discRadius, lineCol, 1);
-  }
+  if (currentLegend == NULL) return;
+  cairo->setFillColor(currentLegend->CDIred[fillCol], currentLegend->CDIgreen[fillCol], currentLegend->CDIblue[fillCol], currentLegend->CDIalpha[fillCol]);
+  cairo->setColor(currentLegend->CDIred[lineCol], currentLegend->CDIgreen[lineCol], currentLegend->CDIblue[lineCol], currentLegend->CDIalpha[fillCol]);
+  cairo->filledcircle(x, y, discRadius);
+  cairo->circle(x, y, discRadius, 1);
 }
 
 void CDrawImage::setDisc(int x, int y, int discRadius, CColor fillColor, CColor lineColor) {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    if (currentLegend == NULL) return;
-    cairo->setFillColor(fillColor.r, fillColor.g, fillColor.b, fillColor.a);
-    cairo->setColor(lineColor.r, lineColor.g, lineColor.b, lineColor.a);
-    cairo->filledcircle(x, y, discRadius);
-    //    circle( x,  y,  discRadius,lineColor,1);
-  } else {
-    int fillCol = getClosestGDColor(fillColor.r, fillColor.g, fillColor.b);
-    gdImageFilledEllipse(image, x, y, discRadius * 2, discRadius * 2, fillCol);
-    circle(x, y, discRadius, lineColor, 1);
-  }
+  if (currentLegend == NULL) return;
+  cairo->setFillColor(fillColor.r, fillColor.g, fillColor.b, fillColor.a);
+  cairo->setColor(lineColor.r, lineColor.g, lineColor.b, lineColor.a);
+  cairo->filledcircle(x, y, discRadius);
 }
 
 void CDrawImage::setEllipse(int x, int y, float discRadiusX, float discRadiusY, float rotation, CColor fillColor, CColor lineColor) {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    if (currentLegend == NULL) return;
-    cairo->setFillColor(fillColor.r, fillColor.g, fillColor.b, fillColor.a);
-    cairo->setColor(lineColor.r, lineColor.g, lineColor.b, lineColor.a);
-    cairo->filledEllipse(x, y, discRadiusX, discRadiusY, rotation);
-
-    //    circle( x,  y,  discRadius,lineColor,1);
-  }
+  if (currentLegend == NULL) return;
+  cairo->setFillColor(fillColor.r, fillColor.g, fillColor.b, fillColor.a);
+  cairo->setColor(lineColor.r, lineColor.g, lineColor.b, lineColor.a);
+  cairo->filledEllipse(x, y, discRadiusX, discRadiusY, rotation);
 }
 
 void CDrawImage::setDisc(int x, int y, float discRadius, CColor fillColor, CColor lineColor) {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    if (currentLegend == NULL) return;
-    cairo->setFillColor(fillColor.r, fillColor.g, fillColor.b, fillColor.a);
-    cairo->setColor(lineColor.r, lineColor.g, lineColor.b, lineColor.a);
-    cairo->filledcircle(x, y, discRadius);
-    //    circle( x,  y,  discRadius,lineColor,1);
-  } else {
-    int fillCol = getClosestGDColor(fillColor.r, fillColor.g, fillColor.b);
-    gdImageFilledEllipse(image, x, y, discRadius * 2, discRadius * 2, fillCol);
-    circle(x, y, discRadius, lineColor, 1);
-  }
+  if (currentLegend == NULL) return;
+  cairo->setFillColor(fillColor.r, fillColor.g, fillColor.b, fillColor.a);
+  cairo->setColor(lineColor.r, lineColor.g, lineColor.b, lineColor.a);
+  cairo->filledcircle(x, y, discRadius);
 }
 
 void CDrawImage::setTextDisc(int x, int y, int discRadius, const char *text, const char *fontfile, float fontsize, CColor textcolor, CColor fillcolor, CColor lineColor) {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    if (currentLegend == NULL) return;
-    cairo->setFillColor(fillcolor.r, fillcolor.g, fillcolor.b, fillcolor.a);
-    cairo->setColor(lineColor.r, lineColor.g, lineColor.b, lineColor.a);
-    cairo->filledcircle(x, y, discRadius);
-    // cairo->setColor(textcolor.r,textcolor.g,textcolor.b,textcolor.a);
-
-    //    circle( x,  y,  discRadius,lineColor,1);
-    drawCenteredText(x, y, fontfile, fontsize, 0, text, textcolor);
-  } else {
-    int fillCol = getClosestGDColor(fillcolor.r, fillcolor.g, fillcolor.b);
-    gdImageFilledEllipse(image, x, y, discRadius * 2, discRadius * 2, fillCol);
-    circle(x, y, discRadius, lineColor, 1);
-    drawCenteredText(x, y, fontfile, fontsize, 0, text, textcolor);
-  }
+  if (currentLegend == NULL) return;
+  cairo->setFillColor(fillcolor.r, fillcolor.g, fillcolor.b, fillcolor.a);
+  cairo->setColor(lineColor.r, lineColor.g, lineColor.b, lineColor.a);
+  cairo->filledcircle(x, y, discRadius);
+  drawCenteredText(x, y, fontfile, fontsize, 0, text, textcolor);
 }
 
 void CDrawImage::drawAnchoredText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color, int anchor) {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    CCairoPlotter *freeType = this->getCairoPlotter(fontfile, size, geoParams.width, geoParams.height, cairo->getByteBuffer());
-    freeType->setColor(color.r, color.g, color.b, color.a);
-    freeType->drawAnchoredText(x, y, angle, text, anchor);
-    cairo->isAlphaUsed |= freeType->isAlphaUsed; // remember freetype's isAlphaUsed flag
-  } else {
-    // TODO GD renderer does not center text yet
-    char *_text = new char[strlen(text) + 1];
-    memcpy(_text, text, strlen(text) + 1);
-    int tcolor = getClosestGDColor(color.r, color.g, color.b);
-    if (_bEnableTrueColor) tcolor = -tcolor;
-    gdImageStringFT(image, &brect[0], tcolor, (char *)fontfile, size, angle, x, y, (char *)_text);
-    delete[] _text;
-  }
+  CCairoPlotter *freeType = this->getCairoPlotter(fontfile, size, geoParams.width, geoParams.height, cairo->getByteBuffer());
+  freeType->setColor(color.r, color.g, color.b, color.a);
+  freeType->drawAnchoredText(x, y, angle, text, anchor);
+  cairo->isAlphaUsed |= freeType->isAlphaUsed; // remember freetype's isAlphaUsed flag
 }
 
 CCairoPlotter *CDrawImage::getCairoPlotter(const char *fontfile, float size, int w, int h, unsigned char *b) {
   CT::string _key;
   _key.print("%s_%f_%d_%d", fontfile, size, w, h);
-  // std::string key = _key.c_str();
+
   std::map<CT::string, CCairoPlotter *>::iterator myCCairoPlotterIter = myCCairoPlotterMap.find(_key);
   if (myCCairoPlotterIter == myCCairoPlotterMap.end()) {
     CCairoPlotter *cairoPlotter = new CCairoPlotter(w, h, b, size, fontfile);
@@ -1090,30 +572,15 @@ CCairoPlotter *CDrawImage::getCairoPlotter(const char *fontfile, float size, int
 }
 
 void CDrawImage::drawCenteredText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color, CColor textOutlineColor) {
-
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    CCairoPlotter *freeType = this->getCairoPlotter(fontfile, size, geoParams.width, geoParams.height, cairo->getByteBuffer());
-    freeType->setColor(color.r, color.g, color.b, color.a);
-    if (textOutlineColor.a == 0) {
-      freeType->drawCenteredText(x, y, angle, text);
-    } else {
-      freeType->drawStrokedText(x, y, angle, text, size * 1.4, 1, textOutlineColor, color, true);
-    }
-
-    cairo->isAlphaUsed |= freeType->isAlphaUsed; // remember freetype's isAlphaUsed flag
+  CCairoPlotter *freeType = this->getCairoPlotter(fontfile, size, geoParams.width, geoParams.height, cairo->getByteBuffer());
+  freeType->setColor(color.r, color.g, color.b, color.a);
+  if (textOutlineColor.a == 0) {
+    freeType->drawCenteredText(x, y, angle, text);
   } else {
-    // TODO GD renderer does not center text yet
-    char *_text = new char[strlen(text) + 1];
-    memcpy(_text, text, strlen(text) + 1);
-    int tcolor = getClosestGDColor(color.r, color.g, color.b);
-    if (_bEnableTrueColor) tcolor = -tcolor;
-    gdImageStringFT(NULL, &brect[0], tcolor, (char *)TTFFontLocation, 8.0f, angle, x, y, (char *)_text);
-
-    int sw = brect[2] - brect[0];
-    int sh = brect[5] - brect[3];
-    gdImageStringFT(image, &brect[0], tcolor, (char *)fontfile, size, angle, x - sw / 2, y - sh / 2, (char *)_text);
-    delete[] _text;
+    freeType->drawStrokedText(x, y, angle, text, size * 1.4, 1, textOutlineColor, color, true);
   }
+
+  cairo->isAlphaUsed |= freeType->isAlphaUsed; // remember freetype's isAlphaUsed flag
 }
 
 void CDrawImage::drawCenteredTextNoOverlap(int x, int y, const char *fontFile, float size, float angle, int padding, const char *text, CColor color, bool noOverlap,
@@ -1125,23 +592,12 @@ void CDrawImage::drawCenteredTextNoOverlap(int x, int y, const char *fontFile, f
   int w, h;
   float radAngle = angle * M_PI / 180;
   CRectangleText rect;
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    CCairoPlotter *freeType = this->getCairoPlotter(fontFile, size, geoParams.width, geoParams.height, cairo->getByteBuffer());
-    freeType->setColor(color.r, color.g, color.b, color.a);
-    freeType->getTextSize(w, h, radAngle, text);
-    rect.init(x, y, (x + w), (y + h), angle, padding, text, fontFile, size, color);
 
-  } else {
-    // TODO GD renderer does not center text yet
-    char *_text = new char[strlen(text) + 1];
-    memcpy(_text, text, strlen(text) + 1);
-    int tcolor = getClosestGDColor(color.r, color.g, color.b);
-    if (_bEnableTrueColor) tcolor = -tcolor;
-    // Use the text size for angle 0 for detecting overlaps
-    gdImageStringFT(NULL, &brect[0], tcolor, (char *)fontFile, size, radAngle, x, y, (char *)_text);
-    rect.init(brect[0], brect[5], brect[4], brect[1], angle, padding, text, fontFile, size, color);
-    delete[] _text;
-  }
+  CCairoPlotter *freeType = this->getCairoPlotter(fontFile, size, geoParams.width, geoParams.height, cairo->getByteBuffer());
+  freeType->setColor(color.r, color.g, color.b, color.a);
+  freeType->getTextSize(w, h, radAngle, text);
+  rect.init(x, y, (x + w), (y + h), angle, padding, text, fontFile, size, color);
+
   if (noOverlap) {
     for (size_t j = 0; j < rects.size(); j++) {
       if (rects[j].overlaps(rect)) {
@@ -1153,20 +609,10 @@ void CDrawImage::drawCenteredTextNoOverlap(int x, int y, const char *fontFile, f
 }
 
 void CDrawImage::drawText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color) {
-
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    CCairoPlotter *freeType = this->getCairoPlotter(fontfile, size, geoParams.width, geoParams.height, cairo->getByteBuffer());
-    freeType->setColor(color.r, color.g, color.b, color.a);
-    freeType->drawText(x, y, angle, text);
-    cairo->isAlphaUsed |= freeType->isAlphaUsed; // remember freetype's isAlphaUsed flag
-  } else {
-    char *_text = new char[strlen(text) + 1];
-    memcpy(_text, text, strlen(text) + 1);
-    int tcolor = getClosestGDColor(color.r, color.g, color.b);
-    if (_bEnableTrueColor) tcolor = -tcolor;
-    gdImageStringFT(image, &brect[0], tcolor, (char *)fontfile, size, angle, x, y, (char *)_text);
-    delete[] _text;
-  }
+  CCairoPlotter *freeType = this->getCairoPlotter(fontfile, size, geoParams.width, geoParams.height, cairo->getByteBuffer());
+  freeType->setColor(color.r, color.g, color.b, color.a);
+  freeType->drawText(x, y, angle, text);
+  cairo->isAlphaUsed |= freeType->isAlphaUsed; // remember freetype's isAlphaUsed flag
 }
 
 int CDrawImage::create685Palette() {
@@ -1435,56 +881,25 @@ int CDrawImage::createGDPalette(CServerConfig::XMLE_Legend *legend) {
 }
 
 void CDrawImage::rectangle(int x1, int y1, int x2, int y2, CColor innercolor, CColor outercolor) {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    cairo->setFillColor(innercolor.r, innercolor.g, innercolor.b, innercolor.a);
-    cairo->setColor(outercolor.r, outercolor.g, outercolor.b, outercolor.a);
-    cairo->filledRectangle(x1, y1, x2, y2);
-  } else {
-    int gdinnercolor = getClosestGDColor(innercolor.r, innercolor.g, innercolor.b);
-    int gdoutercolor = getClosestGDColor(outercolor.r, outercolor.g, outercolor.b);
-    if (innercolor.a == 255) {
-      gdImageFilledRectangle(image, x1 + 1, y1 + 1, x2 - 1, y2 - 1, gdinnercolor);
-    }
-    gdImageRectangle(image, x1, y1, x2, y2, gdoutercolor);
-  }
+  cairo->setFillColor(innercolor.r, innercolor.g, innercolor.b, innercolor.a);
+  cairo->setColor(outercolor.r, outercolor.g, outercolor.b, outercolor.a);
+  cairo->filledRectangle(x1, y1, x2, y2);
 }
 
 void CDrawImage::rectangle(int x1, int y1, int x2, int y2, int innercolor, int outercolor) {
   if (currentLegend == NULL) return;
   if (innercolor >= 0 && innercolor < 255 && outercolor >= 0 && outercolor < 255) {
-    if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-      cairo->setColor(currentLegend->CDIred[outercolor], currentLegend->CDIgreen[outercolor], currentLegend->CDIblue[outercolor], 255);
-      cairo->setFillColor(currentLegend->CDIred[innercolor], currentLegend->CDIgreen[innercolor], currentLegend->CDIblue[innercolor], 255);
-      cairo->filledRectangle(x1, y1, x2, y2);
-    } else {
-      // Check for transparency
-      if (isColorTransparent(innercolor)) {
-        // In case of transparency, draw a checkerboard
-        for (int x = x1; x < x2; x = x + 6) {
-          for (int y = y1; y < y2; y = y + 3) {
-            int tx = x + ((y % 6) / 3) * 3;
-            if (tx + 2 > x2) tx = x2 - 2;
-            gdImageFilledRectangle(image, tx, y, tx + 2, y + 2, getClosestGDColor(64, 64, 64));
-          }
-        }
-      } else {
-        gdImageFilledRectangle(image, x1 + 1, y1 + 1, x2 - 1, y2 - 1, colors[innercolor]);
-      }
-      // gdImageFilledRectangle (image,x1+1,y1+1,x2-1,y2-1, _colors[239]);
-      gdImageRectangle(image, x1, y1, x2, y2, colors[outercolor]);
-    }
+    cairo->setColor(currentLegend->CDIred[outercolor], currentLegend->CDIgreen[outercolor], currentLegend->CDIblue[outercolor], 255);
+    cairo->setFillColor(currentLegend->CDIred[innercolor], currentLegend->CDIgreen[innercolor], currentLegend->CDIblue[innercolor], 255);
+    cairo->filledRectangle(x1, y1, x2, y2);
   }
 }
 
 void CDrawImage::rectangle(int x1, int y1, int x2, int y2, int outercolor) {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    line(x1, y1, x2, y1, 1, outercolor);
-    line(x2, y1, x2, y2, 1, outercolor);
-    line(x2, y2, x1, y2, 1, outercolor);
-    line(x1, y2, x1, y1, 1, outercolor);
-  } else {
-    gdImageRectangle(image, x1, y1, x2, y2, colors[outercolor]);
-  }
+  line(x1, y1, x2, y1, 1, outercolor);
+  line(x2, y1, x2, y2, 1, outercolor);
+  line(x2, y2, x1, y2, 1, outercolor);
+  line(x1, y2, x1, y1, 1, outercolor);
 }
 
 int CDrawImage::addColor(int Color, unsigned char R, unsigned char G, unsigned char B) {
@@ -1497,22 +912,6 @@ int CDrawImage::addColor(int Color, unsigned char R, unsigned char G, unsigned c
 }
 
 int CDrawImage::copyPalette() {
-
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
-
-    // Only one legend is supported for palette based images.
-    if (dPaletteCreated == 0) {
-      _colors[255] = gdImageColorAllocate(image, BGColorR, BGColorG, BGColorB);
-      if (_bEnableTransparency) {
-        gdImageColorTransparent(image, _colors[255]);
-      }
-      // CDBDebug("CopyPalette");
-      for (int j = 0; j < 255; j++) {
-        _colors[j] = gdImageColorAllocate(image, currentLegend->CDIred[j], currentLegend->CDIgreen[j], currentLegend->CDIblue[j]);
-      }
-      gdTranspColor = gdImageGetTransparent(image);
-    }
-  }
   for (int j = 0; j < 256; j++) {
     if (dPaletteCreated == 0) {
       colors[j] = _colors[j];
@@ -1537,39 +936,12 @@ int s = 0;
  */
 
 int CDrawImage::addImage(int delay) {
-
-  // CDBDebug("Render: %d",currentGraphicsRenderer);
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
-    // Add the current active image:
-    gdImageGifAnimAdd(image, stdout, 0, 0, 0, delay, gdDisposalRestorePrevious, NULL);
-
-    // This image is added to the GIF container, it should now be destroyed.
-    // Immediately make a new image for next round.
-    destroyImage();
-
-    // Make sure a new image is available for drawing
-    if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
-      image = gdImageCreate(geoParams.width, geoParams.height);
-    } else {
-      image = gdImageCreateTrueColor(geoParams.width, geoParams.height);
-      gdImageSaveAlpha(image, true);
-    }
-    dImageCreated = 1;
-    currentLegend = legends[0];
-    copyPalette();
-  }
   numImagesAdded++;
-
   return 0;
 }
 
 int CDrawImage::beginAnimation() {
   numImagesAdded = 0;
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
-    if (_bEnableTrueColor == false) {
-      gdImageGifAnimBegin(image, stdout, 1, 0);
-    }
-  }
   return 0;
 }
 
@@ -1582,42 +954,25 @@ void CDrawImage::setBGColor(unsigned char R, unsigned char G, unsigned char B) {
   BGColorB = B;
 }
 
-void CDrawImage::setTrueColor(bool enable) {
-  _bEnableTrueColor = enable;
-  if (enable) {
-    setRenderer(CDRAWIMAGERENDERER_CAIRO);
-  } else {
-    setRenderer(CDRAWIMAGERENDERER_GD);
-  }
-}
+void CDrawImage::setTrueColor(bool enable) { _bEnableTrueColor = enable; }
 
 bool CDrawImage::isPixelTransparent(int &x, int &y) {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
-    int color = gdImageGetPixel(image, x, y);
-    if (color != gdTranspColor || 127 != gdImageAlpha(image, color)) {
-      return false;
-    }
+  unsigned char r, g, b, a;
+  cairo->getPixel(x, y, r, g, b, a);
+
+  if (a == 0)
     return true;
-  } else {
-
-    unsigned char r, g, b, a;
-    cairo->getPixel(x, y, r, g, b, a);
-
-    if (a == 0)
+  else {
+    if (r == BGColorR && g == BGColorG && b == BGColorB && 1 == 2) {
       return true;
-    else {
-      if (r == BGColorR && g == BGColorG && b == BGColorB && 1 == 2) {
-        return true;
-      } else {
-        return false;
-      }
+    } else {
+      return false;
     }
   }
   return false;
 }
 
 bool CDrawImage::isColorTransparent(int &color) {
-
   if (currentLegend == NULL) {
     return true;
   }
@@ -1694,26 +1049,18 @@ int CDrawImage::createImage(CDrawImage *image, int width, int height) {
 #ifdef MEASURETIME
   CDBDebug("createImage(CDrawImage *image,int width,int height)");
 #endif
-  // setTrueColor(image->getTrueColor());
-  //  CDBDebug("Creating image");
   enableTransparency(image->_bEnableTransparency);
-  currentGraphicsRenderer = image->currentGraphicsRenderer;
-  // colorType = image->colorType;
   setTTFFontLocation(image->TTFFontLocation);
 
   setTTFFontSize(image->TTFFontSize);
-  //  CDBDebug("Creating image 2");
   createImage(width, height);
-  //  CDBDebug("Creating image palette");
   clonePalette(image);
-  //  CDBDebug("New image created");
   return 0;
 }
 
 int CDrawImage::setCanvasSize(int x, int y, int width, int height) {
   CDrawImage temp;
   temp.createImage(this, width, height);
-
   temp.draw(0, 0, x, y, this);
 
   destroyImage();
@@ -1726,10 +1073,6 @@ int CDrawImage::setCanvasSize(int x, int y, int width, int height) {
 
 int CDrawImage::draw(int destx, int desty, int sourcex, int sourcey, CDrawImage *simage) {
   unsigned char r, g, b, a;
-  int dTranspColor;
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
-    dTranspColor = gdImageGetTransparent(simage->image);
-  }
   for (int y = 0; y < simage->geoParams.height; y++) {
     for (int x = 0; x < simage->geoParams.width; x++) {
       int sx = x + sourcex;
@@ -1738,37 +1081,17 @@ int CDrawImage::draw(int destx, int desty, int sourcex, int sourcey, CDrawImage 
       int dy = y + desty;
       if (sx >= 0 && sy >= 0 && dx >= 0 && dy >= 0 && sx < simage->geoParams.width && sy < simage->geoParams.height && dx < geoParams.width && dy < geoParams.height) {
         // Get source r,g,b,a
-        if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-          simage->cairo->getPixel(sx, sy, r, g, b, a);
-        } else {
-          int color = gdImageGetPixel(simage->image, x + sourcex, y + sourcey);
-          r = gdImageRed(simage->image, color);
-          g = gdImageGreen(simage->image, color);
-          b = gdImageBlue(simage->image, color);
-          a = 255 - gdImageAlpha(simage->image, color) * 2;
-          if (color == dTranspColor) {
-            a = 0;
-          }
-        }
+        simage->cairo->getPixel(sx, sy, r, g, b, a);
         // Set r,g,b,a to dest
-        if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-          cairo->pixel_blend(dx, dy, r, g, b, a);
-        } else {
-          if (a > 128) {
-            gdImageSetPixel(image, x + destx, y + desty, getClosestGDColor(r, g, b));
-          }
-        }
+        cairo->pixel_blend(dx, dy, r, g, b, a);
       }
     }
   }
   return 0;
 }
+
 int CDrawImage::drawrotated(int destx, int desty, int sourcex, int sourcey, CDrawImage *simage) {
   unsigned char r, g, b, a;
-  int dTranspColor;
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
-    dTranspColor = gdImageGetTransparent(simage->image);
-  }
   for (int y = 0; y < simage->geoParams.height; y++) {
     for (int x = 0; x < simage->geoParams.width; x++) {
       int sx = x + sourcex;
@@ -1777,31 +1100,15 @@ int CDrawImage::drawrotated(int destx, int desty, int sourcex, int sourcey, CDra
       int dy = x + destx;
       if (sx >= 0 && sy >= 0 && dx >= 0 && dy >= 0 && sx < simage->geoParams.width && sy < simage->geoParams.height && dx < geoParams.width && dy < geoParams.height) {
         // Get source r,g,b,a
-        if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-          simage->cairo->getPixel(sx, sy, r, g, b, a);
-        } else {
-          int color = gdImageGetPixel(simage->image, x + sourcex, y + sourcey);
-          r = gdImageRed(simage->image, color);
-          g = gdImageGreen(simage->image, color);
-          b = gdImageBlue(simage->image, color);
-          a = 255 - gdImageAlpha(simage->image, color) * 2;
-          if (color == dTranspColor) {
-            a = 0;
-          }
-        }
+        simage->cairo->getPixel(sx, sy, r, g, b, a);
         // Set r,g,b,a to dest
-        if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-          cairo->pixel_blend(dx, dy, r, g, b, a);
-        } else {
-          if (a > 128) {
-            gdImageSetPixel(image, dx, dy, getClosestGDColor(r, g, b));
-          }
-        }
+        cairo->pixel_blend(dx, dy, r, g, b, a);
       }
     }
   }
   return 0;
 }
+
 /**
  * Crops image
  * @param int paddingW the padding to keep in pixels in width. Set to -1 if no crop in width is desired
@@ -1865,33 +1172,15 @@ void CDrawImage::rotate() {
   //  return 0;
 }
 
-unsigned char *CDrawImage::getCanvasMemory() const {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
-    CDBError("Unable to return canvas memory for indexed colors");
-    return NULL;
-  }
-  return cairo->getByteBuffer();
-}
+unsigned char *CDrawImage::getCanvasMemory() const { return cairo->getByteBuffer(); }
 
 void CDrawImage::setCanvasColorType(int colorType) {
   if (colorType == CDRAWIMAGE_COLORTYPE_ARGB) {
-    setRenderer(CDRAWIMAGERENDERER_CAIRO);
     _bEnableTrueColor = true;
-  } else {
-    setRenderer(CDRAWIMAGERENDERER_GD);
   }
 }
 
-int CDrawImage::getCanvasColorType() {
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
-    return CDRAWIMAGE_COLORTYPE_INDEXED;
-  }
-  return CDRAWIMAGE_COLORTYPE_ARGB;
-}
-
-int CDrawImage::getRenderer() { return currentGraphicsRenderer; }
-
-void CDrawImage::setRenderer(int type) { currentGraphicsRenderer = type; }
+int CDrawImage::getCanvasColorType() { return CDRAWIMAGE_COLORTYPE_ARGB; }
 
 int CDrawImage::getHeight() { return geoParams.height; }
 
@@ -1901,16 +1190,10 @@ const char *CDrawImage::getFontLocation() { return this->TTFFontLocation; }
 
 float CDrawImage::getFontSize() { return this->TTFFontSize; }
 
-// Note: This mainly works with cairo
 int CDrawImage::getTextWidth(CT::string text, const std::string &, int fontSize, int angle) {
   constexpr double digit_width_factor = 0.6; // Not good even if we know the factor by font
   size_t num_chars = text.length();
-  if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    int w = 0, h = 0;
-    cairo->getTextSize(w, h, angle, text.c_str());
-    return w;
-  } else {
-    // This approximation is highly dependent on the type of font
-    return fontSize * digit_width_factor * num_chars;
-  }
+  int w = 0, h = 0;
+  cairo->getTextSize(w, h, angle, text.c_str());
+  return w;
 }
