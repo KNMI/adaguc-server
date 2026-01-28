@@ -2126,7 +2126,6 @@ int CRequest::process_querystring() {
       CDrawImage drawImage;
 
       drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-      drawImage.setRenderer(CDRAWIMAGERENDERER_CAIRO);
       drawImage.enableTransparency(true);
 
       // Set font location

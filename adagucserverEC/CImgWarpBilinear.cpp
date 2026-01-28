@@ -26,7 +26,6 @@
 #include "CImgWarpBilinear.h"
 #include "CImageDataWriter.h"
 
-#include <gd.h>
 #include <set>
 
 #include "CImgRenderFieldVectors.h"
