@@ -3361,3 +3361,27 @@ class TestWMS(unittest.TestCase):
             data.getvalue(),
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
+
+    def test_WMSGetMap_wave_direction_vector(self):
+        AdagucTestTools().cleanTempDir()
+        config = (
+            ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,adaguc.tests.vectorrendering.xml"
+        )
+        env = {"ADAGUC_CONFIG": config}
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            args=["--updatedb", "--config", config], env=self.env, isCGI=False
+        )
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSGetMap_wave_direction_vector.png"
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.vectorrendering&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind_wave_from_direction_mean_msl&WIDTH=1151&HEIGHT=1135&CRS=EPSG%3A3857&BBOX=-61120.32818755589,6253361.75474204,1285634.726913556,7581395.62749596&STYLES=wave_direction&FORMAT=image/png&TRANSPARENT=TRUE&&time=2026-01-27T03%3A00%3A00Z&DIM_reference_time=2026-01-26T06%3A00%3A00Z",
+            env=env,showLog=True
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
