@@ -1,4 +1,4 @@
-**Version 6.3.1 - 2026-01-28**
+**Version 6.3.0 - 2026-01-28**
 
 - CT::string now uses std::string as internals.
 - pointsfromgrid can now also be used to plot text values on windspeed and winddirection components
