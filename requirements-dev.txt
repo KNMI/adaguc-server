@@ -13,6 +13,8 @@ click==8.1.8
     # via
     #   -c requirements.txt
     #   black
+deepdiff==8.6.1
+    # via -r requirements-dev.in
 dill==0.4.1
     # via pylint
 exceptiongroup==1.3.1
@@ -31,12 +33,14 @@ mccabe==0.7.0
     # via pylint
 mypy-extensions==1.1.0
     # via black
-packaging==26.0
+orderly-set==5.5.0
+    # via deepdiff
+packaging==25.0
     # via
     #   -c requirements.txt
     #   black
     #   pytest
-pathspec==1.0.3
+pathspec==1.0.4
     # via black
 platformdirs==4.5.1
     # via
