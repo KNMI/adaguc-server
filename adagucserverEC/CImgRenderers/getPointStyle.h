@@ -21,10 +21,7 @@ struct PointStyle {
 
   double discRadius;
   double textRadius;
-
-  double angleStart;
-  double angleStep;
-  bool useAngles;
+  bool dot;
 
   CT::string textFormat;
   bool plotStationId;

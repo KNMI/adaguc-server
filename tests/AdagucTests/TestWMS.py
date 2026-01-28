@@ -189,7 +189,9 @@ class TestWMS(unittest.TestCase):
 
     def test_WMSGetCapabilitiesGetMap_testdatanc(self):
         AdagucTestTools().cleanTempDir()
-        filename = "test_WMSGetCapabilitiesGetMap_testdatanc_WMSGetCapabilities_testdatanc.xml"
+        filename = (
+            "test_WMSGetCapabilitiesGetMap_testdatanc_WMSGetCapabilities_testdatanc.xml"
+        )
         # pylint: disable=unused-variable
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "source=testdata.nc&SERVICE=WMS&request=getcapabilities", env=self.env
@@ -227,7 +229,9 @@ class TestWMS(unittest.TestCase):
             data.getvalue(),
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
-        filename = "test_WMSGetMapGetCapabilities_testdatanc_WMSGetCapabilities_testdatanc.xml"
+        filename = (
+            "test_WMSGetMapGetCapabilities_testdatanc_WMSGetCapabilities_testdatanc.xml"
+        )
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "source=testdata.nc&SERVICE=WMS&request=getcapabilities", env=self.env
         )
@@ -389,9 +393,7 @@ class TestWMS(unittest.TestCase):
         )
         self.assertEqual(status, 0)
 
-        filename = (
-            "test_WMSCMDUpdateDBTailPath_WMSGetCapabilities_timeseries_tailpath_netcdf_5dims_seq1_and_seq2.xml"
-        )
+        filename = "test_WMSCMDUpdateDBTailPath_WMSGetCapabilities_timeseries_tailpath_netcdf_5dims_seq1_and_seq2.xml"
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "SERVICE=WMS&request=getcapabilities",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.timeseries.xml"},
@@ -1119,8 +1121,10 @@ class TestWMS(unittest.TestCase):
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
 
-        #Tops Outline
-        filename = "test_WMSGetMap_KNMIHDF5_echotops_RAD_NL25_ETH_NA_TOPS_MAX_OUTLINE.png"
+        # Tops Outline
+        filename = (
+            "test_WMSGetMap_KNMIHDF5_echotops_RAD_NL25_ETH_NA_TOPS_MAX_OUTLINE.png"
+        )
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "dataset=adaguc.KNMIHDF5.test&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=RAD_NL25_ETH_NA_TOPS_MAX&WIDTH=300&HEIGHT=300&CRS=EPSG%3A3857&BBOX=180000,6300000,1000000,7200000&STYLES=echotopsmax_outline&FORMAT=image/png&TRANSPARENT=TRUE&time=2020-04-30T13%3A15%3A00Z&",
             env=env,
@@ -2794,26 +2798,28 @@ class TestWMS(unittest.TestCase):
     def test_WMSGetFeatureInfo_SolarTerminator(self):
         # Testing the solar terminator feature info
         AdagucTestTools().cleanTempDir()
-        config = (ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," +
-                  ADAGUC_PATH +
-                  "/data/config/datasets/adaguc.tests.solarterminator.xml")
+        config = (
+            ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,"
+            + ADAGUC_PATH
+            + "/data/config/datasets/adaguc.tests.solarterminator.xml"
+        )
         env = {"ADAGUC_CONFIG": config}
         # pylint: disable=unused-variable
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            args=["--updatedb", "--config", config], env=self.env, isCGI=False)
+            args=["--updatedb", "--config", config], env=self.env, isCGI=False
+        )
 
         filename = "test_WMSGetFeatureInfo_SolarTerminator.html"
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "dataset=solt&&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=solarterminator&QUERY_LAYERS=solarterminator&CRS=EPSG%3A3857&BBOX=-48040284.36018957,-50974535.88541803,-10040284.360189572,62500602.23612894&WIDTH=362&HEIGHT=1081&I=354&J=481&FORMAT=image/gif&INFO_FORMAT=text/html&STYLES=&&time=2026-01-05T16%3A40%3A00Z&",
             env=env,
         )
-        AdagucTestTools().writetofile(self.testresultspath + filename,
-                                      data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
         self.assertEqual(
             data.getvalue(),
-            AdagucTestTools().readfromfile(self.expectedoutputsspath +
-                                           filename),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
 
     def test_WMSGetCapabilities_403_default_time_referenced_to_forecast_time(self):
@@ -2844,21 +2850,27 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(
-            self.testresultspath + filename,
-            self.expectedoutputsspath + filename))
+        self.assertTrue(
+            AdagucTestTools().compareGetCapabilitiesXML(
+                self.testresultspath + filename, self.expectedoutputsspath + filename
+            )
+        )
 
     def test_WMSGetLegendGraphic_LongTempLegend(self):
         """Skip some labels when legend is too long"""
         """Corresponds to the special case for definedLegendOnShadeClasses case in CCreateLegendRenderDiscreteLegend """
         AdagucTestTools().cleanTempDir()
-        config = (ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," +
-                  ADAGUC_PATH +
-                  "/data/config/datasets/test.uwcw_ha43_dini_5p5km_10x8.xml")
+        config = (
+            ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,"
+            + ADAGUC_PATH
+            + "/data/config/datasets/test.uwcw_ha43_dini_5p5km_10x8.xml"
+        )
         env = {"ADAGUC_CONFIG": config}
         # pylint: disable=unused-variable
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            args=["--updatedb", "--config", config], env=self.env, isCGI=False)
+            args=["--updatedb", "--config", config], env=self.env, isCGI=False
+        )
         self.assertEqual(status, 0)
 
         filename = "test_WMSGetLegendGraphic_LongTempLegend.png"
@@ -2866,27 +2878,28 @@ class TestWMS(unittest.TestCase):
             "DATASET=test.uwcw_ha43_dini_5p5km_10x8&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetLegendGraphic&LAYER=air_temperature_pl&WIDTH=100&HEIGHT=400&STYLE=temperature%2Fshaded&FORMAT=image/png&TRANSPARENT=TRUE&",
             env=env,
         )
-        AdagucTestTools().writetofile(self.testresultspath + filename,
-                                      data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
         self.assertEqual(
             data.getvalue(),
-            AdagucTestTools().readfromfile(self.expectedoutputsspath +
-                                           filename),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
-
 
     def test_WMSGetLegendGraphic_LongTempLegend_height260(self):
         """Skip some labels when legend is too long, making sure the whole range is contained"""
         """Corresponds to the special case for definedLegendOnShadeClasses case in CCreateLegendRenderDiscreteLegend """
         AdagucTestTools().cleanTempDir()
-        config = (ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," +
-                  ADAGUC_PATH +
-                  "/data/config/datasets/test.uwcw_ha43_dini_5p5km_10x8.xml")
+        config = (
+            ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,"
+            + ADAGUC_PATH
+            + "/data/config/datasets/test.uwcw_ha43_dini_5p5km_10x8.xml"
+        )
         env = {"ADAGUC_CONFIG": config}
         # pylint: disable=unused-variable
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            args=["--updatedb", "--config", config], env=self.env, isCGI=False)
+            args=["--updatedb", "--config", config], env=self.env, isCGI=False
+        )
         self.assertEqual(status, 0)
 
         filename = "test_WMSGetLegendGraphic_LongTempLegend_height260.png"
@@ -2894,27 +2907,28 @@ class TestWMS(unittest.TestCase):
             "DATASET=test.uwcw_ha43_dini_5p5km_10x8&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetLegendGraphic&LAYER=air_temperature_pl&WIDTH=260&HEIGHT=260&STYLE=temperature%2Fshaded&FORMAT=image/png&TRANSPARENT=TRUE&",
             env=env,
         )
-        AdagucTestTools().writetofile(self.testresultspath + filename,
-                                      data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
         self.assertEqual(
             data.getvalue(),
-            AdagucTestTools().readfromfile(self.expectedoutputsspath +
-                                           filename),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
-
 
     def test_WMSGetLegendGraphic_LongTempLegend_clipping(self):
         """Skip some labels when legend is too long and clip"""
         """Corresponds to the special case for definedLegendOnShadeClasses case in CCreateLegendRenderDiscreteLegend """
         AdagucTestTools().cleanTempDir()
-        config = (ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," +
-                  ADAGUC_PATH +
-                  "/data/config/datasets/test.uwcw_ha43_dini_5p5km_10x8.xml")
+        config = (
+            ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,"
+            + ADAGUC_PATH
+            + "/data/config/datasets/test.uwcw_ha43_dini_5p5km_10x8.xml"
+        )
         env = {"ADAGUC_CONFIG": config}
         # pylint: disable=unused-variable
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            args=["--updatedb", "--config", config], env=self.env, isCGI=False)
+            args=["--updatedb", "--config", config], env=self.env, isCGI=False
+        )
         self.assertEqual(status, 0)
 
         filename = "test_WMSGetLegendGraphic_LongTempLegend_clipping.png"
@@ -2922,26 +2936,28 @@ class TestWMS(unittest.TestCase):
             "DATASET=test.uwcw_ha43_dini_5p5km_10x8&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetLegendGraphic&LAYER=air_temperature_pl&WIDTH=100&HEIGHT=400&STYLE=temperature_clip%2Fshaded&FORMAT=image/png&TRANSPARENT=TRUE&",
             env=env,
         )
-        AdagucTestTools().writetofile(self.testresultspath + filename,
-                                      data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
         self.assertEqual(
             data.getvalue(),
-            AdagucTestTools().readfromfile(self.expectedoutputsspath +
-                                           filename),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
 
     def test_WMSGetLegendGraphic_LongTempLegend2(self):
         """Another test showing another type of legend that skips classes without data"""
         """Corresponds to the discreteLegendOnInterval case in CCreateLegendRenderDiscreteLegend """
         AdagucTestTools().cleanTempDir()
-        config = (ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," +
-                  ADAGUC_PATH +
-                  "/data/config/datasets/test.uwcw_ha43_dini_5p5km_10x8.xml")
+        config = (
+            ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,"
+            + ADAGUC_PATH
+            + "/data/config/datasets/test.uwcw_ha43_dini_5p5km_10x8.xml"
+        )
         env = {"ADAGUC_CONFIG": config}
         # pylint: disable=unused-variable
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            args=["--updatedb", "--config", config], env=self.env, isCGI=False)
+            args=["--updatedb", "--config", config], env=self.env, isCGI=False
+        )
         self.assertEqual(status, 0)
 
         filename = "test_WMSGetLegendGraphic_LongTempLegend2.png"
@@ -2949,13 +2965,11 @@ class TestWMS(unittest.TestCase):
             "DATASET=test.uwcw_ha43_dini_5p5km_10x8&SERVICE=WMS&&version=1.3.0&service=WMS&request=GetLegendGraphic&layer=air_temperature_pl&format=image/png&STYLE=temperature_wow/shaded&TRANSPARENT=TRUE&",
             env=env,
         )
-        AdagucTestTools().writetofile(self.testresultspath + filename,
-                                      data.getvalue())
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
         self.assertEqual(
             data.getvalue(),
-            AdagucTestTools().readfromfile(self.expectedoutputsspath +
-                                           filename),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
 
     def test_WMS_MultiDim_PreconfiguredDataBaseTable(self):
@@ -2989,17 +3003,25 @@ class TestWMS(unittest.TestCase):
     def test_WMSGetMap_PASCAL_probabilities_manydims_timewindow(self):
 
         AdagucTestTools().cleanTempDir()
-        filename_getcapabilities = "test_WMSGetCapabilities_PASCAL_probabilities_manydims_timewindow.xml"
+        filename_getcapabilities = (
+            "test_WMSGetCapabilities_PASCAL_probabilities_manydims_timewindow.xml"
+        )
         filename_getmap = "test_WMSGetMap_PASCAL_probabilities_manydims_timewindow.png"
 
         # pylint: disable=unused-variable
-        status_getcapabilities, data_getcapabilities, _headers = AdagucTestTools().runADAGUCServer(
+        (
+            status_getcapabilities,
+            data_getcapabilities,
+            _headers,
+        ) = AdagucTestTools().runADAGUCServer(
             "source=pascal/NetCDF4_probabilities_greater_than_or_equal_to_36_1_0_12_2025-07-02T10_00_00Z_2025-07-02T00_00_00Z%2Enc&SERVICE=WMS&&REQUEST=GetCapabilities&version=1.3.0",
             env=self.env,
             args=["--report"],
         )
-        AdagucTestTools().writetofile(self.testresultspath + filename_getcapabilities, data_getcapabilities.getvalue())
-
+        AdagucTestTools().writetofile(
+            self.testresultspath + filename_getcapabilities,
+            data_getcapabilities.getvalue(),
+        )
 
         # pylint: disable=unused-variable
         status_getmap, data_getmap, _headers = AdagucTestTools().runADAGUCServer(
@@ -3007,13 +3029,15 @@ class TestWMS(unittest.TestCase):
             env=self.env,
             args=["--report"],
         )
-        AdagucTestTools().writetofile(self.testresultspath + filename_getmap, data_getmap.getvalue())
-
+        AdagucTestTools().writetofile(
+            self.testresultspath + filename_getmap, data_getmap.getvalue()
+        )
 
         self.assertEqual(status_getcapabilities, 0)
         self.assertTrue(
             AdagucTestTools().compareGetCapabilitiesXML(
-                self.testresultspath + filename_getcapabilities, self.expectedoutputsspath + filename_getcapabilities
+                self.testresultspath + filename_getcapabilities,
+                self.expectedoutputsspath + filename_getcapabilities,
             )
         )
 
@@ -3077,8 +3101,9 @@ class TestWMS(unittest.TestCase):
             )
         )
 
-
-    def test_WMSGetMap_Barbs_example_windbarbs_from_pointdata_csv_different_style_options(self):
+    def test_WMSGetMap_Barbs_example_windbarbs_from_pointdata_csv_different_style_options(
+        self,
+    ):
         AdagucTestTools().cleanTempDir()
         config = (
             ADAGUC_PATH
@@ -3147,7 +3172,9 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(status, 0)
         self.assertTrue(
             AdagucTestTools().compareImage(
-                self.expectedoutputsspath + filename, self.testresultspath + filename, 30
+                self.expectedoutputsspath + filename,
+                self.testresultspath + filename,
+                30,
             )
         )
 
@@ -3188,7 +3215,9 @@ class TestWMS(unittest.TestCase):
         )
         self.assertEqual(status, 0)
 
-        filename = "test_WMSGetMap_KNMI_WebSite_AnimatedGifImagery_temperature_styledisc.png"
+        filename = (
+            "test_WMSGetMap_KNMI_WebSite_AnimatedGifImagery_temperature_styledisc.png"
+        )
         status, data, _ = AdagucTestTools().runADAGUCServer(
             "DATASET=adaguc.tests.pointrendering&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=overlaymask,ta&WIDTH=512&HEIGHT=512&CRS=EPSG%3A3857&BBOX=288069.7108512885,6471755.331201249,894206.0083504317,7141909.376801726&STYLES=filledcountries%2Fnearest,discs&FORMAT=image/png&TRANSPARENT=TRUE&&0.8777664780631963",
             env=env,
@@ -3200,8 +3229,9 @@ class TestWMS(unittest.TestCase):
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
 
-
-    def test_WMSGetMap_KNMI_WebSite_AnimatedGifImagery_temperature_style_temperature(self):
+    def test_WMSGetMap_KNMI_WebSite_AnimatedGifImagery_temperature_style_temperature(
+        self,
+    ):
         AdagucTestTools().cleanTempDir()
         config = (
             ADAGUC_PATH
@@ -3225,9 +3255,9 @@ class TestWMS(unittest.TestCase):
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
 
-
-
-    def test_WMSGetMap_KNMI_WebSite_AnimatedGifImagery_temperature_style_temperature_thinned(self):
+    def test_WMSGetMap_KNMI_WebSite_AnimatedGifImagery_temperature_style_temperature_thinned(
+        self,
+    ):
         AdagucTestTools().cleanTempDir()
         config = (
             ADAGUC_PATH
@@ -3266,7 +3296,8 @@ class TestWMS(unittest.TestCase):
         filename = "test_WMSGetMap_select_temperature_as_point_from_grid.png"
         status, data, _ = AdagucTestTools().runADAGUCServer(
             "DATASET=adaguc.tests.pointrendering&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=air_temperature_hagl&WIDTH=654&HEIGHT=513&CRS=EPSG:3857&BBOX=-127880.43405139455,6311494.158487529,1447830.4566477134,7547487.563577196&STYLES=temperature_selectpoint%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&time=2024-05-23T01:00:00Z&DIM_reference_time=2024-05-23T00%3A00%3A00Z&DIM_member=1",
-            env=env,showLog=True
+            env=env,
+            showLog=True,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)

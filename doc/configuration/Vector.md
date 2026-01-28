@@ -150,7 +150,7 @@ For discs the options are currently limited to linewidth, textcolor and fontsize
     <Max>10000</Max>
     <Thinning radius="40"/>
     <RenderMethod>barb,barbthin</RenderMethod>
-    <Point pointstyle="point" fillcolor="#00000060" textcolor="#FFFFFFFF" linecolor="#00000060" discradius="20" dot="true" anglestart="0" anglestep="120" fontsize="10" textformat="%1.0f"/>
+    <Point pointstyle="point" fillcolor="#00000060" textcolor="#FFFFFFFF" linecolor="#00000060" discradius="20" dot="true" fontsize="10" textformat="%1.0f"/>
     <Vector vectorstyle="disc" linewidth="1.0" linecolor="#00FF00FF"/>
  </Style>
 ```
