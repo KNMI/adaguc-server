@@ -4,6 +4,7 @@
 #
 #    pip-compile --no-emit-index-url requirements-dev.in
 #
+# Upgrade via: pip-compile --upgrade --no-emit-index-url
 astroid==2.15.8
     # via pylint
 black==24.10.0
