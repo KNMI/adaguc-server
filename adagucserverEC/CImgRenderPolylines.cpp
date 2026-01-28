@@ -273,12 +273,12 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
               CT::string featureId;
               it = feature->getFp()->find(std::string(featureStyle.propertyName.c_str()));
               if (it != feature->getFp()->end()) {
-                featureId.print(it->second->toString(featureStyle.propertyFormat));
+                featureId.print(it->second->toString(featureStyle.propertyFormat).c_str());
               } else {
                 featureId = feature->getId();
               }
               CColor labelColor(featureStyle.fontColor);
-              drawImage->drawCenteredTextNoOverlap(dlon, height - dlat, featureStyle.fontFile.c_str(), featureStyle.fontSize, featureStyle.angle, featureStyle.padding, featureId, labelColor,
+              drawImage->drawCenteredTextNoOverlap(dlon, height - dlat, featureStyle.fontFile.c_str(), featureStyle.fontSize, featureStyle.angle, featureStyle.padding, featureId.c_str(), labelColor,
                                                    noOverlap, rects);
             }
             firstPolygon = false;

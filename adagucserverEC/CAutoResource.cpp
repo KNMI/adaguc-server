@@ -1,5 +1,5 @@
 #include "CAutoResource.h"
-#include "CTypes.h"
+#include "CTString.h"
 #include "CServerError.h"
 #include "CDFObjectStore.h"
 #include "CReporter.h"
@@ -87,7 +87,7 @@ int CAutoResource::configureDataset(CServerParams *srvParam, bool) {
     // Set server title based on dataset
     CT::string serverTitle = "";
     if (serverTitle.empty() && srvParam->datasetLocation.empty() == false) {
-      serverTitle = srvParam->datasetLocation.basename();
+      serverTitle = CT::basename(srvParam->datasetLocation);
     }
     setServerTitle(srvParam, serverTitle);
 
@@ -268,7 +268,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
 
     // If no title is set in the global NetCDF attributes, use the source= value
     if (serverTitle.empty() && srvParam->autoResourceLocation.empty() == false) {
-      serverTitle = CT::string("AutoResource ") + srvParam->autoResourceLocation.basename();
+      serverTitle = CT::string("AutoResource ") + CT::basename(srvParam->autoResourceLocation);
     }
 
     setServerTitle(srvParam, serverTitle);
@@ -363,7 +363,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
     }
 
     // Generate layers based on the OpenDAP variables
-    CT::StackList<CT::string> variables = srvParam->autoResourceVariable.splitToStack(",");
+    std::vector<CT::string> variables = srvParam->autoResourceVariable.split(",");
     for (size_t j = 0; j < variables.size(); j++) {
       std::vector<CT::string> variableNames;
       variableNames.push_back(variables[j].c_str());

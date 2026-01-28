@@ -26,7 +26,7 @@
 #ifndef CDirReader_H
 #define CDirReader_H
 
-#include "CTypes.h"
+#include "CTString.h"
 #include "CDebugger.h"
 #include <string>
 #include <map>

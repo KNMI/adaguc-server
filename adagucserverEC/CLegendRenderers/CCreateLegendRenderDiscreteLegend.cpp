@@ -29,8 +29,8 @@ void plotNumericLabels(CDrawImage *legendImage, double scaling, std::string font
 
   CT::string tempText;
   tempText.print(floatFormatMin.c_str(), numericMinVal);
-  const char *dotPos = strchr(tempText, '.');
-  int leftCharsMin = dotPos ? (dotPos - tempText) : strlen(tempText); // chars before dot
+  const char *dotPos = strchr(tempText.c_str(), '.');
+  int leftCharsMin = dotPos ? (dotPos - tempText.c_str()) : tempText.length(); // chars before dot
 
   // Positioning (leaving space for the class rectangle)
   int textXMin = columnCenterMin - (leftCharsMin * numberWidth);
@@ -39,7 +39,7 @@ void plotNumericLabels(CDrawImage *legendImage, double scaling, std::string font
     textXMin -= minusWidth - numberWidth;
   }
 
-  legendImage->drawText(textXMin, textY, fontLocation.c_str(), fontSize * scaling, angle, tempText, 248);
+  legendImage->drawText(textXMin, textY, fontLocation.c_str(), fontSize * scaling, angle, tempText.c_str(), 248);
 
   // If no maxColumn, stop
   if (maxColumn.empty()) {
@@ -61,8 +61,8 @@ void plotNumericLabels(CDrawImage *legendImage, double scaling, std::string font
   floatFormatMax.print("%%.%df", maxDecimalWidth(maxColumn));
   tempText.print(floatFormatMax.c_str(), numericMaxVal);
 
-  const char *dotPosMax = strchr(tempText, '.');
-  int leftCharsMax = dotPosMax ? (dotPosMax - tempText) : strlen(tempText);
+  const char *dotPosMax = strchr(tempText.c_str(), '.');
+  int leftCharsMax = dotPosMax ? (dotPosMax - tempText.c_str()) : tempText.length(); // chars before dot
 
   // Align max string so that the dot falls on the column center
   int textXMax = columnCenterMax - (leftCharsMax * numberWidth);
@@ -72,7 +72,7 @@ void plotNumericLabels(CDrawImage *legendImage, double scaling, std::string font
   // Apply overall left offset plus some spacing
   textXMax += ((int)cbW + pLeft) * scaling + (maxDecimalWidth(maxColumn) + 1) * numberWidth; // Think of the 15 number
 
-  legendImage->drawText(textXMax, textY, fontLocation.c_str(), fontSize * scaling, angle, tempText, 248);
+  legendImage->drawText(textXMax, textY, fontLocation.c_str(), fontSize * scaling, angle, tempText.c_str(), 248);
 }
 
 // Aux function to calculate block height based on total height and number
@@ -470,9 +470,9 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
         int textXMax = columnXMax + (maxWidthMax - currentWidthMax);
 
         // Draw as 3 columns (min dash max)
-        legendImage->drawText(textXMin, textY, fontLocation.c_str(), fontSize * scaling, 0, minText, 248);
+        legendImage->drawText(textXMin, textY, fontLocation.c_str(), fontSize * scaling, 0, minText.c_str(), 248);
         legendImage->drawText(columnXMax - 2 * numberWidth, textY, fontLocation.c_str(), fontSize * scaling, 0, "–", 248);
-        legendImage->drawText(textXMax, textY, fontLocation.c_str(), fontSize * scaling, 0, maxText, 248);
+        legendImage->drawText(textXMax, textY, fontLocation.c_str(), fontSize * scaling, 0, maxText.c_str(), 248);
       }
     }
   }

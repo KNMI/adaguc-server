@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "CTypes.h"
+#include "CTString.h"
 #include "CDebugger.h"
 
 #define XMLE_ADDOBJ(variableName)                                                                                                                                                                      \

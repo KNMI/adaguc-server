@@ -2,7 +2,7 @@
 #define CGeoJSONData_H
 #include <vector>
 #include <map>
-#include "CTypes.h"
+#include "CTString.h"
 #include "CDebugger.h"
 
 class GeoPoint {
@@ -98,6 +98,7 @@ public:
 
   CT::string toString();
   CT::string toString(const char *fmt);
+  CT::string toString(std::string fmt);
 };
 
 // class FeatureProperties {

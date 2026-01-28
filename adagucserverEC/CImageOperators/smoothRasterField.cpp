@@ -1,6 +1,6 @@
 #include "smoothRasterField.h"
 #include <cstddef>
-#include <math.h>
+#include <cmath>
 #include <CGenericDataWarper.h>
 #include <GenericDataWarper/GDWDrawFunctionSettings.h>
 

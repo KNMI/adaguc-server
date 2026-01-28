@@ -182,7 +182,8 @@ void renderVectorPoints(std::vector<size_t> thinnedPointIndexList, CImageWarper 
         int x = pointStrength->x;
         int y = dataSource->srvParams->geoParams.height - pointStrength->y;
         textValue.print(vectorStyle.drawVectorTextFormat.c_str(), strength);
-        drawImage->setTextDisc(x, y, vectorStyle.discRadius, textValue.c_str(), vectorStyle.fontFile, vectorStyle.fontSize, vectorStyle.textColor, vectorStyle.fillColor, vectorStyle.lineColor);
+        drawImage->setTextDisc(x, y, vectorStyle.discRadius, textValue.c_str(), vectorStyle.fontFile.c_str(), vectorStyle.fontSize, vectorStyle.textColor, vectorStyle.fillColor,
+                               vectorStyle.lineColor);
         drawImage->drawVector2(x, y, ((90 + direction) / 360.) * M_PI * 2, 10, vectorStyle.discRadius, vectorStyle.fillColor, vectorStyle.lineWidth);
       }
 
@@ -208,7 +209,7 @@ SimpleSymbolMap makeSymbolMap(CServerConfig::XMLE_Configuration *cfg) {
     coordinates.replaceSelf("]", "");
     coordinates.replaceSelf(" ", "");
     // Split on ","
-    auto coordinateStrings = coordinates.splitToStack(",");
+    auto coordinateStrings = coordinates.split(",");
     SimpleSymbol symbol;
 
     // Every pair is a coordinate.
@@ -517,7 +518,7 @@ std::unordered_set<std::string> shouldUseFilterPoints(CStyleConfiguration *style
   if (styleConfiguration->filterPointList.size() == 0) return usePoints;
   for (auto filterPoint : styleConfiguration->filterPointList) {
     if (!filterPoint->attr.use.empty()) {
-      for (const auto &token : filterPoint->attr.use.splitToStack(",")) {
+      for (const auto &token : filterPoint->attr.use.split(",")) {
         usePoints.insert(token.c_str());
       }
     }
@@ -646,7 +647,9 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
   for (auto pointConfig : styleConfiguration->pointIntervals) {
     PointStyle pointStyle = getPointStyle(pointConfig, dataSource->srvParams->cfg);
     auto thinnedPointIndexList = doThinningGetIndices(dataSource->getDataObject(0)->points, thinningInfo.doThinning, thinningInfo.thinningRadius, usePoints);
-    CDBDebug("Point plotting %d elements %d", thinnedPointIndexList.size(), usePoints.size());
+    if (dataSource->debug) {
+      CDBDebug("Point plotting %d elements %d", thinnedPointIndexList.size(), usePoints.size());
+    }
 
     if (pointConfig->attr.dot.equalsIgnoreCase("true")) {
       renderSingleDot(thinnedPointIndexList, dataSource, drawImage, styleConfiguration, pointStyle);

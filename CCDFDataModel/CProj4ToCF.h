@@ -30,7 +30,7 @@
 #include <iostream>
 #include <vector>
 #include <sys/stat.h>
-#include <CTypes.h>
+#include <CTString.h>
 #include "CCDFDataModel.h"
 #include "CKeyValuePair.h"
 /*******************************/

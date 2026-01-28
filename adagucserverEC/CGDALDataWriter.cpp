@@ -502,9 +502,9 @@ int CGDALDataWriter::end() {
   char **papszOptions = NULL;
 
   if (customOptions.length() > 2) {
-    auto co = customOptions.splitToStack(",");
+    auto co = customOptions.split(",");
     for (size_t j = 0; j < co.size(); j++) {
-      auto splittedco = customOptions.splitToStack("=");
+      auto splittedco = customOptions.split("=");
       papszOptions = CSLSetNameValue(papszOptions, splittedco[0].c_str(), splittedco[1].c_str());
     }
   }
@@ -769,7 +769,7 @@ CT::string CGDALDataWriter::getDimensionValue(int d, CCDFDims *dims) {
     CTime adagucTime;
     try {
       value = "0";
-      adagucTime.init(TimeUnit.c_str(), NULL); // TODO replace with var
+      adagucTime.init(TimeUnit.c_str(), ""); // TODO replace with var
       double offset = adagucTime.dateToOffset(adagucTime.ISOStringToDate(dims->getDimensionValue(d).c_str()));
       value.print("%f", offset);
     } catch (int e) {

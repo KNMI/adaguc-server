@@ -24,7 +24,7 @@ int updateLayerMetadata(CRequest &request) {
 
   for (auto &dataset : datasetList) {
     CT::string datasetAsCTString = dataset.c_str();
-    CT::string baseDataSetNameCT = datasetAsCTString.basename();
+    CT::string baseDataSetNameCT = CT::basename(datasetAsCTString);
     baseDataSetNameCT.replaceSelf(".xml", "");
     std::string datasetBaseName = baseDataSetNameCT.c_str();
 

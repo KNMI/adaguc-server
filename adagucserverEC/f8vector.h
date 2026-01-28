@@ -25,7 +25,7 @@
 
 #ifndef F8_VECTOR_H
 #define F8_VECTOR_H
-#include <math.h>
+#include <cmath>
 /*Usage:
 
     #include "f8vector.h"

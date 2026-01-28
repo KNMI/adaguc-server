@@ -557,7 +557,7 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
   }
 
   if (foundTimeDim != -1) {
-    auto timeEntries = dataSource->srvParams->requestDims[foundTimeDim]->value.splitToStack("/");
+    auto timeEntries = dataSource->srvParams->requestDims[foundTimeDim]->value.split("/");
     if (timeEntries.size() == 2) {
 #ifdef CMakeEProfile_DEBUG
       CDBDebug("time=%s", dataSource->srvParams->requestDims[foundTimeDim]->value.c_str());
@@ -576,7 +576,7 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
   }
 
   if (foundElevationDim != -1) {
-    auto elevationEntries = dataSource->srvParams->requestDims[foundElevationDim]->value.splitToStack("/");
+    auto elevationEntries = dataSource->srvParams->requestDims[foundElevationDim]->value.split("/");
     if (elevationEntries.size() == 2) {
 #ifdef CMakeEProfile_DEBUG
       CDBDebug("elevation=%s", dataSource->srvParams->requestDims[foundElevationDim]->value.c_str());

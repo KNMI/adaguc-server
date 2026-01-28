@@ -158,12 +158,12 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc, std::vector<MetadataL
       // if(groupKeys[groupIndex].size()>0)
       {
         CT::string key = groupKeys[groupIndex].c_str();
-        auto subGroups = key.splitToStack("/");
+        auto subGroups = key.split("/");
         groupDepth = subGroups.size();
 
         if (groupIndex > 0) {
           CT::string prevKey = groupKeys[groupIndex - 1].c_str();
-          auto prevSubGroups = prevKey.splitToStack("/");
+          auto prevSubGroups = prevKey.split("/");
 
           for (size_t j = subGroups.size(); j < prevSubGroups.size(); j++) {
             // CDBError("<");
@@ -176,7 +176,7 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc, std::vector<MetadataL
           int removeGroups = 0;
           for (size_t j = 0; j < subGroups.size() && j < prevSubGroups.size(); j++) {
             // CDBError("CC %d",j);
-            if (subGroups[j].equals(&prevSubGroups[j]) == false || removeGroups == 1) {
+            if (subGroups[j].equals(prevSubGroups[j]) == false || removeGroups == 1) {
               removeGroups = 1;
               // CDBError("!=%d %s!=%s",j,subGroups[j].c_str(),prevSubGroups[j].c_str());
               // CDBError("<");
@@ -520,12 +520,12 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataL
       // if(groupKeys[groupIndex].size()>0)
       {
         CT::string key = groupKeys[groupIndex].c_str();
-        auto subGroups = key.splitToStack("/");
+        auto subGroups = key.split("/");
         groupDepth = subGroups.size();
 
         if (groupIndex > 0) {
           CT::string prevKey = groupKeys[groupIndex - 1].c_str();
-          auto prevSubGroups = prevKey.splitToStack("/");
+          auto prevSubGroups = prevKey.split("/");
 
           for (size_t j = subGroups.size(); j < prevSubGroups.size(); j++) {
             // CDBError("<");
@@ -538,7 +538,7 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataL
           int removeGroups = 0;
           for (size_t j = 0; j < subGroups.size() && j < prevSubGroups.size(); j++) {
             // CDBError("CC %d",j);
-            if (subGroups[j].equals(&prevSubGroups[j]) == false || removeGroups == 1) {
+            if (subGroups[j].equals(prevSubGroups[j]) == false || removeGroups == 1) {
               removeGroups = 1;
               // CDBError("!=%d %s!=%s",j,subGroups[j].c_str(),prevSubGroups[j].c_str());
               // CDBError("<");
@@ -791,7 +791,7 @@ void generateWCSRangeSet(CT::string *XMLDoc, MetadataLayer *layer) {
     std::vector<CT::string> valuesVector;
 
     // Case of min/max(/duration), for time dimension
-    auto valueSplit = dim->values.splitToStack("/");
+    auto valueSplit = dim->values.split("/");
     if (valueSplit.size() >= 2) {
       min = valueSplit[0];
       max = valueSplit[1];
@@ -801,7 +801,7 @@ void generateWCSRangeSet(CT::string *XMLDoc, MetadataLayer *layer) {
       }
     } else {
       // General case of a list of values (of any type)
-      valueSplit = dim->values.splitToStack(",");
+      valueSplit = dim->values.split(",");
       valuesVector = valueSplit;
       std::sort(valuesVector.begin(), valuesVector.end(), multiTypeSort);
       min = valuesVector[0];
@@ -892,7 +892,7 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc, std::vector<Metad
 
               if (timeDimIndex >= 0) {
                 // For information about this, visit http://www.galdosinc.com/archives/151
-                auto timeDimSplit = layer->layerMetadata.dimList[timeDimIndex].values.splitToStack("/");
+                auto timeDimSplit = layer->layerMetadata.dimList[timeDimIndex].values.split("/");
                 if (timeDimSplit.size() == 3) {
                   XMLDoc->concat("        <gml:TimePeriod>\n");
                   XMLDoc->printconcat("          <gml:begin>%s</gml:begin>\n", timeDimSplit[0].c_str());
@@ -947,7 +947,7 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc, std::vector<Metad
               if (timeDimIndex >= 0) {
                 XMLDoc->concat("      <temporalDomain>\n");
                 if (layer->layerMetadata.dimList[timeDimIndex].hasMultipleValues == 0) {
-                  auto timeDimSplit = layer->layerMetadata.dimList[timeDimIndex].values.splitToStack("/");
+                  auto timeDimSplit = layer->layerMetadata.dimList[timeDimIndex].values.split("/");
                   if (timeDimSplit.size() == 3) {
                     XMLDoc->concat("        <gml:TimePeriod>\n");
                     XMLDoc->printconcat("          <gml:begin>%s</gml:begin>\n", timeDimSplit[0].c_str());
@@ -957,7 +957,7 @@ int CXMLGen::getWCS_1_0_0_DescribeCoverage(CT::string *XMLDoc, std::vector<Metad
                   }
                 } else {
 
-                  auto positions = layer->layerMetadata.dimList[timeDimIndex].values.splitToStack(",");
+                  auto positions = layer->layerMetadata.dimList[timeDimIndex].values.split(",");
                   for (size_t p = 0; p < positions.size(); p++) {
                     XMLDoc->printconcat("        <gml:timePosition>%s</gml:timePosition>\n", (positions[p]).c_str());
                   }
