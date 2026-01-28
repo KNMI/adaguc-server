@@ -363,7 +363,7 @@ void drawRadiusAndValueForPoint(CDrawImage *drawImage, int x, int y, CColor draw
 CT::string prepareText(CDataSource *dataSource, size_t dataObjectIndex, float value, CT::string &drawPointTextFormat) {
   // Determine text to plot for value
   CT::string text;
-  if (dataSource->getDataObject(dataObjectIndex)->hasStatusFlag) {
+  if (dataSource->getDataObject(dataObjectIndex) != nullptr && dataSource->getDataObject(dataObjectIndex)->hasStatusFlag) {
     CT::string flagMeaning;
     CDataSource::getFlagMeaningHumanReadable(&flagMeaning, &dataSource->getDataObject(dataObjectIndex)->statusFlagList, value);
     text.print("%s", flagMeaning.c_str());
@@ -408,8 +408,11 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
 
   float fillValueObjectOne = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
   for (size_t dataObjectIndex = 0; dataObjectIndex < dataSource->getNumDataObjects(); dataObjectIndex++) {
-    std::vector<PointDVWithLatLon> *pts = &dataSource->getDataObject(dataObjectIndex)->points;
-
+    auto dataObject = dataSource->getDataObject(dataObjectIndex);
+    if (dataObject == nullptr) continue;
+    std::vector<PointDVWithLatLon> *pts = &dataObject->points;
+    if (pts == nullptr) continue;
+    size_t numPoints = pts->size();
     float usedx = 0;
     float usedy = 0;
     int kwadrant = 0;
@@ -426,6 +429,7 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
     }
 
     for (auto pointIndex : thinnedPointIndexList) {
+      if (pointIndex >= numPoints) continue;
       auto pointValue = &(*pts)[pointIndex];
       float value = pointValue->v;
       if (shouldSkipPoint(styleConfiguration, pointStyle, value, fillValueObjectOne)) continue;
@@ -527,7 +531,9 @@ void renderSingleVolumes(std::vector<size_t> thinnedPointIndexList, CDataSource 
   float fillValueObjectOne = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
 
   for (size_t dataObjectIndex = 0; dataObjectIndex < dataSource->getNumDataObjects(); dataObjectIndex++) {
-    std::vector<PointDVWithLatLon> *pts = &dataSource->getDataObject(dataObjectIndex)->points;
+    auto dataObject = dataSource->getDataObject(dataObjectIndex);
+    if (dataObject == nullptr) continue;
+    std::vector<PointDVWithLatLon> *pts = &dataObject->points;
 
     for (auto pointIndex : thinnedPointIndexList) {
       auto pointValue = &(*pts)[pointIndex];
@@ -551,8 +557,9 @@ void renderSingleSymbols(std::vector<size_t> thinnedPointIndexList, CDataSource 
   float fillValueObjectOne = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
 
   for (size_t dataObjectIndex = 0; dataObjectIndex < dataSource->getNumDataObjects(); dataObjectIndex++) {
-    std::vector<PointDVWithLatLon> *pts = &dataSource->getDataObject(dataObjectIndex)->points;
-
+    auto dataObject = dataSource->getDataObject(dataObjectIndex);
+    if (dataObject == nullptr) continue;
+    std::vector<PointDVWithLatLon> *pts = &dataObject->points;
     for (auto pointIndex : thinnedPointIndexList) {
       auto pointValue = &(*pts)[pointIndex];
       float value = pointValue->v;
@@ -584,7 +591,9 @@ void renderSingleDiscs(std::vector<size_t> thinnedPointIndexList, CDataSource *d
   float fillValueObjectOne = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
 
   for (size_t dataObjectIndex = 0; dataObjectIndex < dataSource->getNumDataObjects(); dataObjectIndex++) {
-    std::vector<PointDVWithLatLon> *pts = &dataSource->getDataObject(dataObjectIndex)->points;
+    auto dataObject = dataSource->getDataObject(dataObjectIndex);
+    if (dataObject == nullptr) continue;
+    std::vector<PointDVWithLatLon> *pts = &dataObject->points;
 
     for (auto pointIndex : thinnedPointIndexList) {
       auto pointValue = &(*pts)[pointIndex];
@@ -608,7 +617,9 @@ void renderSingleDot(std::vector<size_t> thinnedPointIndexList, CDataSource *dat
   float fillValueObjectOne = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
 
   for (size_t dataObjectIndex = 0; dataObjectIndex < dataSource->getNumDataObjects(); dataObjectIndex++) {
-    std::vector<PointDVWithLatLon> *pts = &dataSource->getDataObject(dataObjectIndex)->points;
+    auto dataObject = dataSource->getDataObject(dataObjectIndex);
+    if (dataObject == nullptr) continue;
+    std::vector<PointDVWithLatLon> *pts = &dataObject->points;
 
     for (auto pointIndex : thinnedPointIndexList) {
       auto pointValue = &(*pts)[pointIndex];
