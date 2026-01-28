@@ -829,12 +829,21 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
 
 int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string _tailPath, CT::string _layerPathToScan, int scanFlags) {
   bool verbose = dataSource->srvParams->verbose;
-  if (dataSource->dLayerType != CConfigReaderLayerTypeDataBase && dataSource->dLayerType != CConfigReaderLayerTypeBaseLayer) return 0;
+  if (dataSource->dLayerType != CConfigReaderLayerTypeDataBase && dataSource->dLayerType != CConfigReaderLayerTypeBaseLayer && dataSource->dLayerType != CConfigReaderLayerTypeLiveUpdate) return 0;
 
   if (scanFlags & CDBFILESCANNER_CLEANFILES) {
     return cleanFiles(dataSource, scanFlags).first;
   }
 
+  if (dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
+    CDBDebug("Entering special case for LiveUpdate updatedb");
+    int status = updateMetaDataTableLiveUpdate(dataSource);
+    if (status != 0) {
+      CDBError("Unable to updateMetaDataTable");
+      return 1;
+    }
+    return 0;
+  }
   /* We only need to update the provided path in layerPathToScan. We will simply ignore the other directories */
   CT::string fileToUpdate;
 

@@ -64,20 +64,44 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
       CDBError("Unable to init projection");
       return 1;
     }
-    CDBDebug("%f %f", dataSource->srvParams->dX, dataSource->srvParams->dY);
     int dX = int(dataSource->srvParams->dX);
     int dY = int(dataSource->srvParams->dY);
+
     double lonRange = dataSource->dfBBOX[2] - dataSource->dfBBOX[0];
     double latRange = dataSource->dfBBOX[1] - dataSource->dfBBOX[3];
 
+    bool singlePointRequest = (lonRange == 0);
+
     float gfiValue;
+
+    if (singlePointRequest) {
+      CDBDebug("IN SINGLE POINT REQUEST CASE");
+      CDF::allocateData(CDF_FLOAT, &dataSource->getDataObject(0)->cdfVariable->data, l);
+
+      // Compute for one point (with lat/lon)
+      double geox, geoy;
+      geox = dataSource->srvParams->dX;
+      geoy = dataSource->srvParams->dY;
+
+      float gfiValue = static_cast<float>(getSolarZenithAngle(geoy, geox, currentOffset));
+      CDBDebug("CURRENT OFFSET for solar terminator is: %f", currentOffset);
+
+      // CDBDebug("dWidth=%d dHeight=%d l=%zu sizeofAllocated=%zu", dataSource->dWidth, dataSource->dHeight, l, dataSource->getDataObject(0)->cdfVariable->getSize());
+
+      // fill the (possibly 1x1) raster
+      for (size_t j = 0; j < l; j++) {
+        result[j] = gfiValue;
+      }
+      return 0;
+    }
+
     if (dataSource->srvParams->requestType == REQUEST_WMS_GETFEATUREINFO) {
       double geox = (lonRange / dataSource->dWidth) * dX + dataSource->dfBBOX[0];
       double geoy = (latRange / dataSource->dHeight) * dY + dataSource->dfBBOX[3];
 
-      // Transform EPG:3857 coordinates into latlon
+      // Transform EPSG:3857 coordinates into latlon (only if this is latlon!)
       imageWarper.reprojToLatLon(geox, geoy);
-      gfiValue = static_cast<float>(getDayTimeCategory(getSolarZenithAngle(geoy, geox, currentOffset)));
+      gfiValue = static_cast<float>(getSolarZenithAngle(geoy, geox, currentOffset));
 
       // Calculate the only value required and assign it around the pixel in question (3x3 cell)
       for (int dy = -1; dy <= 1; dy++) {
@@ -104,7 +128,7 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
         imageWarper.reprojToLatLon(geox, geoy);
 
         // Select final value based on solar zenith angle
-        result[j] = static_cast<float>(getDayTimeCategory(getSolarZenithAngle(geoy, geox, currentOffset)));
+        result[j] = static_cast<float>(getSolarZenithAngle(geoy, geox, currentOffset));
       }
     }
   }

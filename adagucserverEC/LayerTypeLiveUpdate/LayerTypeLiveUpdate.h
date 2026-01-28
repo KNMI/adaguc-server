@@ -48,4 +48,9 @@ int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(MetadataLayer *metada
  */
 LiveUpdateTimeRange calculateLiveUpdateTimeRange(const char *interval = LIVEUPDATE_DEFAULT_INTERVAL, const char *offset = LIVEUPDATE_DEFAULT_OFFSET);
 
+/**
+ * Populates a DataSource that is not tied to a file
+ */
+void layerTypeLiveUpdatePopulateDataSource(CDataSource *dataSource, CServerParams *srvParam);
+
 #endif // !LAYERTYPELIVEUPDATE_H

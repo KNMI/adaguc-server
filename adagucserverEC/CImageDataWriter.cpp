@@ -1165,6 +1165,18 @@ std::vector<CImageDataWriter::IndexRange> CImageDataWriter::getIndexRangesForReg
 int CImageDataWriter::getFeatureInfoVirtual(std::vector<CDataSource *> dataSources, int dataSourceIndex, int dX, int dY, CServerParams *srvParams) {
   // Question: When is this true?
   isProfileData = false;
+  // Determine available range
+  LiveUpdateTimeRange timeRange = calculateLiveUpdateTimeRange();
+
+  // Before parsing time, make sure at lease one timestamp (default) requested
+  if (srvParams->requestDims.size() == 0) {
+    // We put a time request for the current time
+    COGCDims *timeDim = new COGCDims();
+    timeDim->name.copy("TIME");
+    // CT::string timeVal = timeRange.defaultTime + "/" + timeRange.defaultTime;
+    timeDim->value.copy(timeRange.defaultTime);
+    srvParam->requestDims.push_back(timeDim);
+  }
 
   // Parse time
   CT::string requestedTime, startTime, stopTime;
@@ -1186,8 +1198,7 @@ int CImageDataWriter::getFeatureInfoVirtual(std::vector<CDataSource *> dataSourc
     startTime = requestedTime;
     stopTime = requestedTime;
   }
-  // Determine available range
-  LiveUpdateTimeRange timeRange = calculateLiveUpdateTimeRange();
+
   if (timeRange.interval.empty()) timeRange.interval = LIVEUPDATE_DEFAULT_INTERVAL;
 
   // Determine overlap ((sub)range of the server time param)
@@ -1265,12 +1276,21 @@ int CImageDataWriter::getFeatureInfoVirtual(std::vector<CDataSource *> dataSourc
   result->lon_coordinate = projInfo.lonX;
   result->lat_coordinate = projInfo.lonY;
 
-  // Calculate pointer to results
-  size_t ptr = projInfo.imx + projInfo.imy * projInfo.dWidth;
+  // Special case when there are no server coords
+  // Happens when we have a point instead of a bbox
+  size_t ptr = 0;
+  if (dataSource->srvParams->dX == -1 && dataSource->srvParams->dY == -1) {
+    dataSource->srvParams->dX = projInfo.lonX;
+    dataSource->srvParams->dY = projInfo.lonY;
+    ptr = 0;
+  } else {
+    // Calculate pointer to results
+    ptr = projInfo.imx + projInfo.imy * projInfo.dWidth;
+  }
 
 #ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("Preparing result with name %s, lat %d, lon %d", result->layerName.c_str(), result->lon_coordinate, result->lat_coordinate);
-  CDBDebug("lon_coordinate: %f, lar_coordinate: %f", result->lon_coordinate, result->lat_coordinate);
+  CDBDebug("Preparing result with name %s", result->layerName.c_str());
+  CDBDebug("lon_coordinate: %f, lat_coordinate: %f", result->lon_coordinate, result->lat_coordinate);
   CDBDebug("Preparing result with imx %d, imy %d, dWidth %d", projInfo.imx, projInfo.imy, projInfo.dWidth);
   CDBDebug("Number of timestamps is %d", generatedTimestamps.size());
 #endif
@@ -1285,7 +1305,11 @@ int CImageDataWriter::getFeatureInfoVirtual(std::vector<CDataSource *> dataSourc
     element->units.copy(dataSource->getDataObject(0)->cdfVariable->getAttributeNE("units")->toString());
 
     // Update dataSource timestamp and apply postprocessors
-    dataSource->srvParams->requestDims[timeIdx]->value.copy(generatedTimestamps[i].c_str());
+    if (!dataSource->srvParams->requestDims.empty()) {
+      // Note: Check what to do when the requested dims are empty
+      dataSource->srvParams->requestDims[timeIdx]->value.copy(generatedTimestamps[i].c_str());
+    }
+
     CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
     float *vals = (float *)dataSource->getDataObject(0)->cdfVariable->data;
     element->value.print("%f", vals[ptr]);

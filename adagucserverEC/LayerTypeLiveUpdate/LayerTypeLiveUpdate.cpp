@@ -43,122 +43,133 @@ int layerTypeLiveUpdateConfigureDimensionsInDataSource(CDataSource *dataSource) 
   return 0;
 }
 
+void layerTypeLiveUpdatePopulateDataSource(CDataSource *dataSource, CServerParams *srvParam) {
+  // Solar Terminator case (uses a data postprocessor)
+  dataSource->srvParams = srvParam;
+  dataSource->isConfigured = true;
+  dataSource->currentAnimationStep = 0;
+  dataSource->layerName.copy("liveupdate_memory");
+  CDFObject *cdfObject = new CDFObject();
+
+  // Make x,y (why can this value be anything?)
+  int nx = 1, ny = 1;
+  CDF::Dimension *dimX = new CDF::Dimension();
+  dimX = new CDF::Dimension();
+  dimX->name = "x";
+  dimX->setSize(nx);
+
+  CDF::Dimension *dimY = new CDF::Dimension();
+  dimY = new CDF::Dimension();
+  dimY->name = "y";
+  dimY->setSize(ny);
+
+  cdfObject->addDimension(dimX);
+  cdfObject->addDimension(dimY);
+
+  // Corresponding variables for the dimensions
+  CDF::Variable *varX = new CDF::Variable();
+  varX->setType(CDF_DOUBLE);
+  varX->name.copy("x");
+  varX->isDimension = true;
+  varX->dimensionlinks.push_back(dimX);
+  cdfObject->addVariable(varX);
+  varX->addAttribute(new CDF::Attribute("long_name", "x coordinate of projection"));
+  varX->addAttribute(new CDF::Attribute("standard_name", "projection_x_coordinate"));
+  varX->addAttribute(new CDF::Attribute("units", "metre"));
+  CDF::Variable::CustomMemoryReader *memoryReaderX = CDF::Variable::CustomMemoryReaderInstance;
+  varX->setCustomReader(memoryReaderX);
+
+  CDF::Variable *varY = new CDF::Variable();
+  varY->setType(CDF_DOUBLE);
+  varY->name.copy("y");
+  varY->isDimension = true;
+  varY->dimensionlinks.push_back(dimY);
+  cdfObject->addVariable(varY);
+  varY->addAttribute(new CDF::Attribute("long_name", "y coordinate of projection"));
+  varY->addAttribute(new CDF::Attribute("standard_name", "projection_y_coordinate"));
+  varY->addAttribute(new CDF::Attribute("units", "metre"));
+  CDF::Variable::CustomMemoryReader *memoryReaderY = CDF::Variable::CustomMemoryReaderInstance;
+  varY->setCustomReader(memoryReaderY);
+
+  CDF::Variable *solTVar = new CDF::Variable();
+  solTVar->setType(CDF_FLOAT);
+  float fillValue[] = {-1};
+  solTVar->setAttribute("_FillValue", solTVar->getType(), fillValue, 1);
+  solTVar->dimensionlinks.push_back(dimY);
+  solTVar->dimensionlinks.push_back(dimX);
+  solTVar->setType(CDF_FLOAT);
+  solTVar->name = "solarterminator";
+  solTVar->setAttributeText("standard_name", "solarterminator");
+  solTVar->setAttributeText("long_name", "solar terminator");
+  solTVar->setAttributeText("units", "light phase");
+  solTVar->setAttributeText("grid_mapping", "projection");
+  cdfObject->addVariable(solTVar);
+  CDF::Variable::CustomMemoryReader *memoryReaderSolT = CDF::Variable::CustomMemoryReaderInstance;
+  solTVar->setCustomReader(memoryReaderSolT);
+
+  // Projection (has no dimensions)
+  CDF::Variable *projVar = new CDF::Variable();
+  projVar->setType(CDF_SHORT);
+  projVar->name.copy("projection");
+  projVar->isDimension = false;
+
+  cdfObject->addVariable(projVar);
+
+  // String projection params
+  projVar->addAttribute(new CDF::Attribute("long_name", "projection"));
+  projVar->addAttribute(new CDF::Attribute("proj4_params", "+proj=sterea +lat_0=52.15616055555555 +lon_0=5.38763888888889 +k=0.9999079 "
+                                                           "+x_0=155000 +y_0=463000 +ellps=bessel "
+                                                           "+towgs84=565.417,50.3319,465.552,-0.398957,0.343988,-1.8774,4.0725 "
+                                                           "+units=m +no_defs"));
+  projVar->addAttribute(new CDF::Attribute("EPSG_code", "EPSG:28992"));
+  // Test what this is???
+  // dataSource->srvParams->geoParams.crs.copy("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
+  projVar->addAttribute(new CDF::Attribute("grid_mapping_name", "stereographic"));
+
+  // Numeric projection params
+  double lat0 = 52.15616;
+  double lon0 = 5.387639;
+  double scale0 = 0.999908;
+  double fe = 155000.0;
+  double fn = 463000.0;
+  double a = 6377397.0;
+  double b = 6356079.0;
+
+  projVar->addAttribute(new CDF::Attribute("latitude_of_projection_origin", CDF_DOUBLE, &lat0, 1));
+  projVar->addAttribute(new CDF::Attribute("longitude_of_projection_origin", CDF_DOUBLE, &lon0, 1));
+  projVar->addAttribute(new CDF::Attribute("scale_factor_at_projection_origin", CDF_DOUBLE, &scale0, 1));
+  projVar->addAttribute(new CDF::Attribute("false_easting", CDF_DOUBLE, &fe, 1));
+  projVar->addAttribute(new CDF::Attribute("false_northing", CDF_DOUBLE, &fn, 1));
+  projVar->addAttribute(new CDF::Attribute("semi_major_axis", CDF_DOUBLE, &a, 1));
+  projVar->addAttribute(new CDF::Attribute("semi_minor_axis", CDF_DOUBLE, &b, 1));
+
+  projVar->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
+
+  // Add dummy step
+  dataSource->addStep("");
+  // Set styles, and solarterminator variable, among other things
+  dataSource->setCFGLayer(srvParam, srvParam->configObj->Configuration[0], srvParam->cfg->Layer[0], NULL, 0);
+  auto *obj = dataSource->getDataObjectsVector()->at(0);
+  obj->cdfObject = cdfObject;
+  obj->cdfVariable = solTVar;
+  obj->cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
+}
+
 int layerTypeLiveUpdateRender(CDataSource *dataSource, CServerParams *srvParam) {
+  // Do we need something like this?
+  // if (dataSource->dWidth == 1) dataSource->dWidth = 2;
+  // if (dataSource->dHeight == 1) dataSource->dHeight = 2;
+
   if (dataSource->cfgLayer->DataPostProc.empty()) {
     // Demo case: render the current time in an image for testing purposes / frontend development
+    CDBDebug("LAYER TYPE LIVE UPDATE RENDER");
     CDrawImage image;
     layerTypeLiveUpdateRenderIntoDrawImage(&image, srvParam);
     printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
     CDBDebug("***Number of timesteps %d", dataSource->getNumTimeSteps());
     return image.printImagePng8(true);
   } else {
-    // Solar Terminator case (uses a data postprocessor)
-    dataSource->srvParams = srvParam;
-    dataSource->isConfigured = true;
-    dataSource->currentAnimationStep = 0;
-    dataSource->layerName.copy("liveupdate_memory");
-    CDFObject *cdfObject = new CDFObject();
-
-    // Make x,y (why can this value be anything?)
-    int nx = 1, ny = 1;
-    CDF::Dimension *dimX = new CDF::Dimension();
-    dimX = new CDF::Dimension();
-    dimX->name = "x";
-    dimX->setSize(nx);
-
-    CDF::Dimension *dimY = new CDF::Dimension();
-    dimY = new CDF::Dimension();
-    dimY->name = "y";
-    dimY->setSize(ny);
-
-    cdfObject->addDimension(dimX);
-    cdfObject->addDimension(dimY);
-
-    // Corresponding variables for the dimensions
-    CDF::Variable *varX = new CDF::Variable();
-    varX->setType(CDF_DOUBLE);
-    varX->name.copy("x");
-    varX->isDimension = true;
-    varX->dimensionlinks.push_back(dimX);
-    cdfObject->addVariable(varX);
-    varX->addAttribute(new CDF::Attribute("long_name", "x coordinate of projection"));
-    varX->addAttribute(new CDF::Attribute("standard_name", "projection_x_coordinate"));
-    varX->addAttribute(new CDF::Attribute("units", "metre"));
-    CDF::Variable::CustomMemoryReader *memoryReaderX = CDF::Variable::CustomMemoryReaderInstance;
-    varX->setCustomReader(memoryReaderX);
-
-    CDF::Variable *varY = new CDF::Variable();
-    varY->setType(CDF_DOUBLE);
-    varY->name.copy("y");
-    varY->isDimension = true;
-    varY->dimensionlinks.push_back(dimY);
-    cdfObject->addVariable(varY);
-    varY->addAttribute(new CDF::Attribute("long_name", "y coordinate of projection"));
-    varY->addAttribute(new CDF::Attribute("standard_name", "projection_y_coordinate"));
-    varY->addAttribute(new CDF::Attribute("units", "metre"));
-    CDF::Variable::CustomMemoryReader *memoryReaderY = CDF::Variable::CustomMemoryReaderInstance;
-    varY->setCustomReader(memoryReaderY);
-
-    CDF::Variable *solTVar = new CDF::Variable();
-    solTVar->setType(CDF_FLOAT);
-    float fillValue[] = {-1};
-    solTVar->setAttribute("_FillValue", solTVar->getType(), fillValue, 1);
-    solTVar->dimensionlinks.push_back(dimY);
-    solTVar->dimensionlinks.push_back(dimX);
-    solTVar->setType(CDF_FLOAT);
-    solTVar->name = "solarterminator";
-    solTVar->setAttributeText("standard_name", "solarterminator");
-    solTVar->setAttributeText("long_name", "solar terminator");
-    solTVar->setAttributeText("units", "light phase");
-    solTVar->setAttributeText("grid_mapping", "projection");
-    cdfObject->addVariable(solTVar);
-    CDF::Variable::CustomMemoryReader *memoryReaderSolT = CDF::Variable::CustomMemoryReaderInstance;
-    solTVar->setCustomReader(memoryReaderSolT);
-
-    // Projection (has no dimensions)
-    CDF::Variable *projVar = new CDF::Variable();
-    projVar->setType(CDF_SHORT);
-    projVar->name.copy("projection");
-    projVar->isDimension = false;
-
-    cdfObject->addVariable(projVar);
-
-    // String projection params
-    projVar->addAttribute(new CDF::Attribute("long_name", "projection"));
-    projVar->addAttribute(new CDF::Attribute("proj4_params", "+proj=sterea +lat_0=52.15616055555555 +lon_0=5.38763888888889 +k=0.9999079 "
-                                                             "+x_0=155000 +y_0=463000 +ellps=bessel "
-                                                             "+towgs84=565.417,50.3319,465.552,-0.398957,0.343988,-1.8774,4.0725 "
-                                                             "+units=m +no_defs"));
-    projVar->addAttribute(new CDF::Attribute("EPSG_code", "EPSG:28992"));
-    projVar->addAttribute(new CDF::Attribute("grid_mapping_name", "stereographic"));
-
-    // Numeric projection params
-    double lat0 = 52.15616;
-    double lon0 = 5.387639;
-    double scale0 = 0.999908;
-    double fe = 155000.0;
-    double fn = 463000.0;
-    double a = 6377397.0;
-    double b = 6356079.0;
-
-    projVar->addAttribute(new CDF::Attribute("latitude_of_projection_origin", CDF_DOUBLE, &lat0, 1));
-    projVar->addAttribute(new CDF::Attribute("longitude_of_projection_origin", CDF_DOUBLE, &lon0, 1));
-    projVar->addAttribute(new CDF::Attribute("scale_factor_at_projection_origin", CDF_DOUBLE, &scale0, 1));
-    projVar->addAttribute(new CDF::Attribute("false_easting", CDF_DOUBLE, &fe, 1));
-    projVar->addAttribute(new CDF::Attribute("false_northing", CDF_DOUBLE, &fn, 1));
-    projVar->addAttribute(new CDF::Attribute("semi_major_axis", CDF_DOUBLE, &a, 1));
-    projVar->addAttribute(new CDF::Attribute("semi_minor_axis", CDF_DOUBLE, &b, 1));
-
-    projVar->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
-
-    // Add dummy step
-    dataSource->addStep("");
-    // Set styles, and solarterminator variable, among other things
-    dataSource->setCFGLayer(srvParam, srvParam->configObj->Configuration[0], srvParam->cfg->Layer[0], NULL, 0);
-    auto *obj = dataSource->getDataObjectsVector()->at(0);
-    obj->cdfObject = cdfObject;
-    obj->cdfVariable = solTVar;
-    obj->cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
+    layerTypeLiveUpdatePopulateDataSource(dataSource, srvParam);
     return layerTypeLiveUpdateRenderIntoImageDataWriter(dataSource, srvParam);
   }
 }
@@ -262,7 +273,6 @@ LiveUpdateTimeRange calculateLiveUpdateTimeRange(const char *interval, const cha
   CTime::Date delta = CTime::periodToDate(offset);
   // Note: timeToOffset does not work in the case of an interval (only for full dates)
   int offsetSeconds = delta.second + delta.minute * 60 + delta.hour * 3600 + delta.day * 86400 + delta.month * 30 * 86400 + delta.year * 365 * 86400;
-
   double epochTime = timeInstance.getEpochTimeFromDateString(CTime::currentDateTime());
 
   double startTimeOffset = timeInstance.quantizeTimeToISO8601(epochTime - offsetSeconds, interval, "low");
@@ -272,6 +282,5 @@ LiveUpdateTimeRange calculateLiveUpdateTimeRange(const char *interval, const cha
   range.startTime = timeInstance.dateToISOString(timeInstance.offsetToDate(startTimeOffset));
   range.stopTime = timeInstance.dateToISOString(timeInstance.offsetToDate(stopTimeOffset));
   range.defaultTime = timeInstance.dateToISOString(timeInstance.offsetToDate(defaultOffset));
-
   return range;
 }
