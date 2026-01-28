@@ -7,7 +7,6 @@ import shutil
 from .CGIRunner import CGIRunner
 import re
 from lxml import etree, objectify
-import urllib.request
 from PIL import Image
 import subprocess
 from deepdiff import DeepDiff
@@ -372,10 +371,10 @@ class AdagucTestTools:
         b = AdagucTestTools().readfromfile(expectedOutputFileLocation)
         return a == b
 
-    def compareJson(self, testresultFileLocation: str, expectedOutputFileLocation: str) -> bool:
+    def compareJson(self, testresultFileLocation: str, expectedOutputFileLocation: str, significantDigits=6) -> bool:
         with open(expectedOutputFileLocation, "r") as fp:
             expected = json.load(fp)
         with open(testresultFileLocation, "r") as fp:
             result = json.load(fp)
 
-        return DeepDiff(expected, result, significant_digits=4) == {}
+        return DeepDiff(expected, result, significant_digits=significantDigits, number_format_notation="e") == {}
