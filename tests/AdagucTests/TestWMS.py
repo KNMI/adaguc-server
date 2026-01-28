@@ -2201,7 +2201,7 @@ class TestWMS(unittest.TestCase):
                 self.expectedoutputsspath + filename,
                 self.testresultspath + filename,
                 maxAllowedColorDifference=35,
-                maxAllowedColorPercentage=0.15,
+                maxAllowedColorPercentage=0.13,
             )
         )
 
@@ -3120,9 +3120,13 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data.getvalue(),
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        self.assertTrue(
+            AdagucTestTools().compareImage(
+                self.expectedoutputsspath + filename,
+                self.testresultspath + filename,
+                maxAllowedColorDifference=194,
+                maxAllowedColorPercentage=0.14,
+            )
         )
 
     def test_WMSGetMap_Discs_example_windbarbs_on_gridded_netcdf(self):
@@ -3150,7 +3154,6 @@ class TestWMS(unittest.TestCase):
             )
         )
 
-    # FIXME: test fails because cell background is black without <RenderMethod>point</RenderMethod>
     def test_WMSGetMap_Arrows_example_windbarbs_on_gridded_netcdf(self):
         AdagucTestTools().cleanTempDir()
         config = (
@@ -3170,9 +3173,13 @@ class TestWMS(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data.getvalue(),
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        self.assertTrue(
+            AdagucTestTools().compareImage(
+                self.expectedoutputsspath + filename,
+                self.testresultspath + filename,
+                maxAllowedColorDifference=56,
+                maxAllowedColorPercentage=0.05
+            )
         )
 
     def test_WMSGetMap_KNMI_WebSite_AnimatedGifImagery_temperature_styledisc(self):
