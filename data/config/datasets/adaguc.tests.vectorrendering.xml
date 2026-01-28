@@ -118,4 +118,40 @@
     <RenderSettings drawgrid="false" />
     <DataPostProc algorithm="pointsfromgrid" select="speed_component,direction_component" a="150"/>
   </Style>
+
+  <!-- wave plotting -->
+  <Style name="wave_direction">
+    <DataPostProc algorithm="include_layer" name="wind_wave_height_significant_msl" mode="prepend"/>
+    <DataPostProc algorithm="pointsfromgrid" select="wind-wave-height-significant-msl,wind-wave-from-direction-mean-msl" a="50"/>
+
+    <ShadeInterval min="0" max="1" label="0-1" fillcolor="#ffff00"/>
+    <ShadeInterval min="1" max="2" label="1-2" fillcolor="#ff8000"/>
+    <ShadeInterval min="2" max="3" label="2-3" fillcolor="#ff0000"/>
+
+    <Vector vectorstyle="vector" fontsize="14" plotvalue="true" textcolor="#55555" linecolor="#000000" linewidth="2.0" scale="20.0" />
+    <RenderSettings renderhint="discreteclasses" />
+  </Style>
+
+  <Layer type="database">
+    <Group collection="msl"/>
+    <Name>wind_wave_from_direction_mean_msl</Name>
+    <Title>Wind wave direction at mean sea level</Title>
+    <Variable>wind-wave-from-direction-mean-msl</Variable>
+    <FilePath gfi_openall="true" filter="(wind-wave-from-direction-mean-msl_[0-9T]{11}\.nc)">{ADAGUC_PATH}/data/datasets/wave_data/wind-wave-from-direction-mean-msl_20260126T06.nc</FilePath>
+    <Styles>wave_direction</Styles>
+    <Dimension name="forecast_reference_time" units="ISO8601" type="reference_time">reference_time</Dimension>
+    <Dimension name="time" units="ISO8601" interval="PT1H" default="forecast_reference_time+PT1H" type="time">time</Dimension>
+    <Dimension name="msl" units=" " default="min" type="vertical" hidden="true">mean_sea_level</Dimension>
+  </Layer>
+  <Layer type="database">
+    <Group collection="msl"/>
+    <Name>wind_wave_height_significant_msl</Name>
+    <Title>Wind wave height significant at mean sea level</Title>
+    <Variable>wind-wave-height-significant-msl</Variable>
+    <FilePath gfi_openall="true" filter="(wind-wave-from-height-significant-msl_[0-9T]{11}\.nc)">{ADAGUC_PATH}/data/datasets/wave_data/wind-wave-height-significant-msl_20260126T06.nc</FilePath>
+    <Styles>wave_direction_shade</Styles>
+    <Dimension name="forecast_reference_time" units="ISO8601" type="reference_time">reference_time</Dimension>
+    <Dimension name="time" units="ISO8601" interval="PT1H" default="forecast_reference_time+PT1H" type="time">time</Dimension>
+    <Dimension name="msl" units=" " default="min" type="vertical" hidden="true">mean_sea_level</Dimension>
+  </Layer>
 </Configuration>
