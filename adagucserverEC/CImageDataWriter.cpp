@@ -351,98 +351,6 @@ void CImageDataWriter::getFeatureInfoGetPointDataResults(CDataSource *dataSource
   }
 }
 
-// TODO: can this go?
-int CImageDataWriter::drawCascadedWMS(CDataSource *dataSource, const char *service, const char *layers, const char *styles, bool transparent, const char *bgcolor) {
-
-#ifndef ENABLE_CURL
-  CDBError("CURL not enabled");
-  return 1;
-#endif
-
-#ifdef ENABLE_CURL
-  bool trueColor = drawImage.getTrueColor();
-  // transparent=true;
-  CT::string url = service;
-  url.concat("SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&");
-  if (trueColor == false)
-    url.concat("FORMAT=image/gif");
-  else
-    url.concat("FORMAT=image/png");
-  //&BBOX=50.943396226415075,-4.545656817372752,118.8679245283019,57.6116945532218
-  if (transparent) {
-    url.printconcat("&TRANSPARENT=TRUE");
-  } else {
-    url.printconcat("&TRANSPARENT=FALSE");
-  }
-  if (strlen(bgcolor) > 0) {
-    url.printconcat("&BGCOLOR=");
-    url.printconcat(bgcolor);
-  }
-  url.printconcat("&WIDTH=%d", drawImage.geoParams.width);
-  url.printconcat("&HEIGHT=%d", drawImage.geoParams.height);
-  url.printconcat("&BBOX=%0.4f,%0.4f,%0.4f,%0.4f", drawImage.geoParams.bbox.left, drawImage.geoParams.bbox.bottom, drawImage.geoParams.bbox.right, drawImage.geoParams.bbox.top);
-  url.printconcat("&SRS=%s", drawImage.geoParams.crs.c_str());
-  url.printconcat("&LAYERS=%s", layers);
-  if ((styles != NULL) && (strlen(styles) > 0)) {
-    url.printconcat("&STYLES=%s", styles);
-  } else {
-    url.printconcat("&STYLES=");
-  }
-  for (size_t k = 0; k < srvParam->requestDims.size(); k++) {
-    url.printconcat("&%s=%s", srvParam->requestDims[k]->name.c_str(), srvParam->requestDims[k]->value.c_str());
-  }
-  CDBDebug(url.c_str());
-  gdImagePtr gdImage;
-
-  MyCURL myCURL;
-  int status = myCURL.getGDImageField(url.c_str(), gdImage);
-  // TODO: can this all go?
-  if (status == 0) {
-    if (gdImage) {
-      int w = gdImageSX(gdImage);
-      int h = gdImageSY(gdImage);
-
-      int offsetx = 0;
-      int offsety = 0;
-      if (dataSource->cfgLayer->Position.size() > 0) {
-        CServerConfig::XMLE_Position *pos = dataSource->cfgLayer->Position[0];
-        if (pos->attr.right.empty() == false) offsetx = (drawImage.geoParams.width - w) - parseInt(pos->attr.right.c_str());
-        if (pos->attr.bottom.empty() == false) offsety = (drawImage.geoParams.height - h) - parseInt(pos->attr.bottom.c_str());
-        if (pos->attr.left.empty() == false) offsetx = parseInt(pos->attr.left.c_str());
-        if (pos->attr.top.empty() == false) offsety = parseInt(pos->attr.top.c_str());
-      }
-
-      int transpColor = gdImageGetTransparent(gdImage);
-      for (int y = 0; y < drawImage.geoParams.height && y < h; y++) {
-        for (int x = 0; x < drawImage.geoParams.width && x < w; x++) {
-          int color = gdImageGetPixel(gdImage, x, y);
-          if (color != transpColor && 127 != gdImageAlpha(gdImage, color)) {
-            if (transparent) {
-              drawImage.setPixelTrueColor(x + offsetx, y + offsety, gdImageRed(gdImage, color), gdImageGreen(gdImage, color), gdImageBlue(gdImage, color), 255 - gdImageAlpha(gdImage, color) * 2);
-            } else
-              drawImage.setPixelTrueColor(x + offsetx, y + offsety, gdImageRed(gdImage, color), gdImageGreen(gdImage, color), gdImageBlue(gdImage, color));
-          }
-        }
-      }
-      gdImageDestroy(gdImage);
-    } else {
-      CT::string u = url.c_str();
-      u.encodeURLSelf();
-      CDBError("Invalid image %s", u.c_str());
-      return 1;
-    }
-  } else {
-    CT::string u = url.c_str();
-    u.encodeURLSelf();
-    CDBError("Unable to get image %s", u.c_str());
-    return 1;
-  }
-  return 0;
-#endif
-
-  return 0;
-}
-
 int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int) {
   int status = 0;
 #ifdef CIMAGEDATAWRITER_DEBUG
@@ -528,7 +436,6 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
 
   writerStatus = initialized;
   animation = 0;
-  nrImagesAdded = 0;
 
   if (srvParam->requestType == REQUEST_WMS_GETMAP) {
     //  CDBDebug("CREATING IMAGE FOR WMS GETMAP ---------------------------------------");
@@ -537,7 +444,6 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
     if (status != 0) return 1;
   }
   if (srvParam->requestType == REQUEST_WMS_GETLEGENDGRAPHIC) {
-    // drawImage.setAntiAliased(false);
     // drawImage.setTrueColor(false);
 
     int w = LEGEND_WIDTH;
@@ -566,19 +472,6 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
   }
 
   if (dataSource != NULL) {
-    // Create 6-8-5 palette for cascaded layer
-    if (dataSource->dLayerType == CConfigReaderLayerTypeCascaded) {
-
-#ifdef CIMAGEDATAWRITER_DEBUG
-      CDBDebug("create685Palette");
-#endif
-      status = drawImage.create685Palette();
-      if (status != 0) {
-        CDBError("Unable to create standard 6-8-5 palette");
-        return 1;
-      }
-    }
-
     if (styleConfiguration != NULL) {
       if (styleConfiguration->legendIndex != -1) {
         // Create palette for internal WNS layer
@@ -1049,18 +942,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> &dataSources, in
   return 0;
 }
 
-int CImageDataWriter::createAnimation() {
-#ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("[createAnimation]");
-#endif
-  drawImage.beginAnimation();
-  animation = 1;
-#ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("[/createAnimation]");
-#endif
-  return 0;
-}
-
 void CImageDataWriter::setDate(const char *szTemp) { drawImage.setTextStroke(drawImage.geoParams.width - 170, 5, 0, szTemp, NULL, 12.0, 0.75, CColor(0, 0, 0, 255), CColor(255, 255, 255, 255)); }
 
 CImageDataWriter::IndexRange::IndexRange() {
@@ -1502,10 +1383,6 @@ int CImageDataWriter::calculateData(std::vector<CDataSource *> &dataSources) {
   CImageWarper imageWarper;
   CDBDebug("calculateData");
 
-  if (animation == 1 && nrImagesAdded > 1) {
-    drawImage.addImage(30);
-  }
-  nrImagesAdded++;
   // draw the Image
   // for(size_t j=1;j<dataSources.size();j++)
   {
@@ -1710,20 +1587,13 @@ int CImageDataWriter::calculateData(std::vector<CDataSource *> &dataSources) {
 }
 
 int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
-
 #ifdef CIMAGEDATAWRITER_DEBUG
   CDBDebug("addData");
 #endif
-  // if(dataSource->getCurrentTimeStep()>dataSource->getCurrentTimeStep()
   int status = 0;
 
-  if (animation == 1 && nrImagesAdded > 0) {
-    drawImage.addImage(25);
-  }
-  // CDBDebug("Draw Data");
-  nrImagesAdded++;
-  // draw the Image
-  // drawCascadedWMS("http://geoservices.knmi.nl/cgi-bin/restricted/MODIS_Netherlands.cgi?","modis_250m_netherlands_8bit",true);
+  CDBDebug("CImageDataWriter::addData");
+
 #ifdef CIMAGEDATAWRITER_DEBUG
   CDBDebug("Draw data. dataSources.size() =  %d", dataSources.size());
 #endif
@@ -1731,19 +1601,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
   for (size_t j = 0; j < dataSources.size(); j++) {
     CDataSource *dataSource = dataSources[j];
 
-    /* Cascaded WMS */
-    if (dataSource->dLayerType == CConfigReaderLayerTypeCascaded) {
-      // CDBDebug("Drawing cascaded WMS (grid/logo/external");
-      if (dataSource->cfgLayer->WMSLayer.size() == 1) {
-        status = drawCascadedWMS(dataSource, dataSource->cfgLayer->WMSLayer[0]->attr.service.c_str(), dataSource->cfgLayer->WMSLayer[0]->attr.layer.c_str(),
-                                 dataSource->cfgLayer->WMSLayer[0]->attr.style.c_str(), dataSource->cfgLayer->WMSLayer[0]->attr.transparent, dataSource->cfgLayer->WMSLayer[0]->attr.bgcolor.c_str());
-        if (status != 0) {
-          CDBError("drawCascadedWMS for layer %s failed", dataSource->layerName.c_str());
-        }
-      }
-    }
-
-    /* DataBase layers*/
+    /* DataBase layers */
     if (dataSource->dLayerType != CConfigReaderLayerTypeCascaded) {
 #ifdef CIMAGEDATAWRITER_DEBUG
       CDBDebug("Drawingnormal legend");
@@ -2044,8 +1902,6 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       delete[] gridP;
     }
   }
-
-  // drawCascadedWMS("http://bhlbontw.knmi.nl/rcc/download/ensembles/cgi-bin/basemaps.cgi?","country_lines",true);
   return status;
 }
 
@@ -3168,13 +3024,6 @@ int CImageDataWriter::end() {
   if (errorsOccured()) {
     CREPORT_ERROR_NODOC(CT::string("Error occured during image data writing"), CReportMessage::Categories::GENERAL);
     return 1;
-  }
-
-  // Animation image:
-  if (animation == 1) {
-    drawImage.addImage(100);
-    // drawImage.endAnimation();
-    // return 0;
   }
 
 #ifdef MEASURETIME

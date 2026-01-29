@@ -72,21 +72,16 @@ private:
   bool _bEnableTransparency;
   bool _bEnableTrueColor;
   unsigned char backgroundAlpha;
-  int brect[8];
   CCairoPlotter *cairo;
   const char *TTFFontLocation;
   float TTFFontSize;
-  std::map<int, int> myColorMap;
-  std::map<int, int>::iterator myColorIter;
   std::map<CT::string, CCairoPlotter *> myCCairoPlotterMap;
   CCairoPlotter *getCairoPlotter(const char *fontfile, float size, int w, int h, unsigned char *b);
-  float lineMoveToX, lineMoveToY;
-  int numImagesAdded;
 
 public:
   float *rField, *gField, *bField;
   int *numField;
-  bool trueColorAVG_RGBA;
+  bool trueColorAVG_RGBA; // TODO: is always false?
   int _colors[256];
 
   int colors[256];
@@ -103,8 +98,8 @@ public:
   int printImagePng24();
   int printImagePng32();
   int printImageWebP32(int quality);
-  int printImageGif();
-  int createGDPalette(CServerConfig::XMLE_Legend *palette);
+  int printImageGif();                                      // TODO: to be removed?
+  int createGDPalette(CServerConfig::XMLE_Legend *palette); // TODO: to be removed?
   int create685Palette();
   int clonePalette(CDrawImage *drawImage);
 
@@ -171,17 +166,11 @@ public:
   void rectangle(int x1, int y1, int x2, int y2, CColor innercolor, CColor outercolor);
   CColor getColorForIndex(int index);
   int copyPalette();
-  int addImage(int delay);
-  int beginAnimation();
-  int endAnimation();
   int addColor(int Color, unsigned char R, unsigned char G, unsigned char B);
   void enableTransparency(bool enable);
   void setBGColor(unsigned char R, unsigned char G, unsigned char B);
   void setTrueColor(bool enable);
   bool getTrueColor() { return _bEnableTrueColor; }
-
-  // void setAntiAliased(bool enable){      _bAntiAliased=enable;   };
-  // bool getAntialiased(){return _bAntiAliased;}
 
   void setTTFFontLocation(const char *_TTFFontLocation) { TTFFontLocation = _TTFFontLocation; }
   void setTTFFontSize(float _TTFFontSize) { TTFFontSize = _TTFFontSize; }

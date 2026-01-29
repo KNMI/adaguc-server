@@ -2653,9 +2653,6 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
       StopWatch_Stop("Start imagewarper");
     }
     if (useThreading) {
-
-      // When we have multiple timesteps, we will create an animation.
-      if (dataSources[dataSourceToUse]->getNumTimeSteps() > 1) imageDataWriter.createAnimation();
       size_t numTimeSteps = (size_t)dataSources[dataSourceToUse]->getNumTimeSteps();
 
       int errcode;

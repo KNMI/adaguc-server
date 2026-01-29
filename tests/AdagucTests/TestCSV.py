@@ -272,34 +272,6 @@ class TestCSV(unittest.TestCase):
                                            filename),
         )
 
-    # def test_CSV_windbarbs_GD_gif(self):
-    #     AdagucTestTools().cleanTempDir()
-
-    #     config = (ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," +
-    #               ADAGUC_PATH +
-    #               "/data/config/datasets/adaguc.testCSVReader.xml")
-    #     status, data, headers = AdagucTestTools().runADAGUCServer(
-    #         args=["--updatedb", "--config", config],
-    #         env=self.env,
-    #         isCGI=False,
-    #         showLog=False,
-    #     )
-    #     self.assertEqual(status, 0)
-
-    #     filename = "test_CSV_windbarbs.gif"
-    #     status, data, headers = AdagucTestTools().runADAGUCServer(
-    #         "&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=windallspeeds&width=600&height=300&CRS=EPSG:4326&STYLES=&EXCEPTIONS=INIMAGE&showlegend=false&0.817264530295692&bbox=-2,-1,11,32&transparent=true&FORMAT=image/gif&",
-    #         env=self.env,
-    #     )
-    #     AdagucTestTools().writetofile(self.testresultspath + filename,
-    #                                   data.getvalue())
-    #     self.assertEqual(status, 0)
-    #     self.assertEqual(
-    #         data.getvalue(),
-    #         AdagucTestTools().readfromfile(self.expectedoutputsspath +
-    #                                        filename),
-    #     )
-
     def test_CSV_windbarbs_Cairo_png(self):
         AdagucTestTools().cleanTempDir()
 

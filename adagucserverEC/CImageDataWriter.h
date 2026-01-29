@@ -76,8 +76,7 @@ private:
   // CDataSource *currentDataSource;
   // int requestType;
   // int status;
-  int animation;
-  int nrImagesAdded;
+  int animation; // TODO: is this needed?
   CT::string eProfileJson;
 
 public:
@@ -140,8 +139,6 @@ private:
   void setValue(CDFType type, void *data, size_t ptr, double pixel);
   int _setTransparencyAndBGColor(CServerParams *srvParam, CDrawImage *drawImage);
 
-  int drawCascadedWMS(CDataSource *dataSource, const char *service, const char *layers, const char *styles, bool transparent, const char *bgcolor);
-
   bool isProfileData;
 
   /* Loops over the points, calculates the closest points, then calculates if point is within specified range in pixels */
@@ -167,7 +164,6 @@ public:
   static int createScaleBar(GeoParameters &geoParams, CDrawImage *scaleBarImage, float scaling);
 
   int getFeatureInfo(std::vector<CDataSource *> &dataSources, int dataSourceIndex, int dX, int dY);
-  int createAnimation();
   void setDate(const char *date);
   int calculateData(std::vector<CDataSource *> &dataSources);
 

@@ -17,7 +17,6 @@ RUN apt-get -q -y update \
     libcurl4-openssl-dev \
     libcairo2-dev \
     libxml2-dev \
-    libgd-dev \
     postgresql-server-dev-all \
     postgresql-client \
     libudunits2-dev \
@@ -62,7 +61,6 @@ RUN apt-get -q -y update \
     libcairo2 \
     libgdal-dev \
     libcurl4-openssl-dev \
-    libgd-dev \
     libproj-dev \
     time \
     supervisor \

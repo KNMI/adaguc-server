@@ -160,7 +160,6 @@ Create a dataset configuration file named $ADAGUCHOME/adaguc-datasets/sat.xml :
     <Min>0</Min>
     <Max>30000</Max>
     <RenderMethod>nearest</RenderMethod>
-    <RenderSettings renderer="gd"/>
     <NameMapping name="nearest"        title="Albedo 0-30000" abstract="Albedo values from satellite imagery"/>
   </Style>
   <Style name="hrvis_0till30000_transparent">
@@ -168,7 +167,6 @@ Create a dataset configuration file named $ADAGUCHOME/adaguc-datasets/sat.xml :
     <Min>0</Min>
     <Max>30000</Max>
     <RenderMethod>nearest</RenderMethod>
-    <RenderSettings renderer="cairo"/>
     <NameMapping name="nearest"        title="Albedo 0-30000 transparent" abstract="Albedo values from satellite imagery with the lower values made transparent"/>
   </Style>
   <!-- Layers -->

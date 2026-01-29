@@ -46,9 +46,9 @@ CDrawImage::CDrawImage() {
   gField = NULL;
   bField = NULL;
   numField = NULL;
-  trueColorAVG_RGBA = false;
+  trueColorAVG_RGBA = false; // TODO: this is never set... still needed?
 
-  TTFFontLocation = "/usr/X11R6/lib/X11/fonts/truetype/verdana.ttf";
+  TTFFontLocation = "/usr/X11R6/lib/X11/fonts/truetype/verdana.ttf"; // TODO: this location does not exist in the docker container
   const char *fontLoc = getenv("ADAGUC_FONT");
   if (fontLoc != NULL) {
     TTFFontLocation = strdup(fontLoc);
@@ -59,10 +59,8 @@ CDrawImage::CDrawImage() {
   BGColorG = 0;
   BGColorB = 0;
   backgroundAlpha = 255;
-
-  numImagesAdded = 0;
-  // CDBDebug("TTFFontLocation = %s",TTFFontLocation);
 }
+
 void CDrawImage::destroyImage() {
   // CDBDebug("[destroy] CDrawImage");
 
@@ -693,7 +691,9 @@ int CDrawImage::_createStandard() {
   return 0;
 }
 
+// TODO: createGDPalette, is this GD specific or not?
 int CDrawImage::createGDPalette(CServerConfig::XMLE_Legend *legend) {
+  CDBDebug("@ createGDPalette");
 
   currentLegend = NULL;
   if (legend != NULL) {
@@ -930,22 +930,6 @@ int CDrawImage::copyPalette() {
   return 0;
 }
 int s = 0;
-/**
- * Add image is only called when an image is added to an existing image (EG. only for animations).
- *
- */
-
-int CDrawImage::addImage(int delay) {
-  numImagesAdded++;
-  return 0;
-}
-
-int CDrawImage::beginAnimation() {
-  numImagesAdded = 0;
-  return 0;
-}
-
-int CDrawImage::endAnimation() { return 0; }
 
 void CDrawImage::enableTransparency(bool enable) { _bEnableTransparency = enable; }
 void CDrawImage::setBGColor(unsigned char R, unsigned char G, unsigned char B) {

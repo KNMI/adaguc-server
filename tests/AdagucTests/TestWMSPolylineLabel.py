@@ -67,12 +67,3 @@ class TestWMSPolylineLabel(unittest.TestCase):
 
     def test_WMSPolyLineLabelColor(self):
         self.dotest("polyline_with_label_color")
-
-    # GD font handling is apparantly very libgd version dependent
-    # GD tests switched off gor the moment
-    #
-    # def test_WMSPolyLineLabelRoboto_gd(self):
-    #     self.dotest("polyline_with_label_roboto_gd")
-
-    # def test_WMSPolyLineLabel_gd(self):
-    #     self.dotest("polyline_with_label_gd")
