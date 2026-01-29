@@ -2,14 +2,14 @@
   <Configuration>
   
     <Layer type="database">
-      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/Actuele10mindataKNMIstations_20201220123000.nc</FilePath> -->
+      <FilePath filter=".*\.nc$">{ADAGUC_PATH}/data/datasets/test/netcdfpointtimeseries/Actuele10mindataKNMIstations_20201220123000.nc</FilePath>
       <Name>stationname</Name>
       <Title>stationsnaam</Title>
       <Variable>stationname</Variable>
       <Abstract>stationnaam</Abstract>
       <Min>0</Min>
       <Max>1</Max>
-<Legend fixedclasses="true" tickround="1">bluewhitered</Legend>
+      <Legend fixedclasses="true" tickround="1">bluewhitered</Legend>
       <Dimension default="filetimedate">time</Dimension> 
     </Layer>
 

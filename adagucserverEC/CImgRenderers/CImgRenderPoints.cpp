@@ -374,6 +374,19 @@ CT::string prepareText(CDataSource *dataSource, size_t dataObjectIndex, float va
   return text;
 }
 
+int calculateYForDataobject(CDataSource *dataSource, int station_y, float textRadius, int dataObjectIndex) {
+  int numDataObjects = dataSource->getNumDataObjects();
+  int y;
+  if (numDataObjects == 1) {
+    y = station_y + textRadius;
+  } else if ((numDataObjects % 2) == 0) {
+    y = station_y + (-0.5 + dataObjectIndex) * (textRadius);
+  } else {
+    y = int(station_y + (-numDataObjects / 2.0 + dataObjectIndex + 0.5) * textRadius);
+  }
+  return y;
+}
+
 void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *dataSource, CDrawImage *drawImage, CStyleConfiguration *styleConfiguration, PointStyle pointStyle) {
   CColor defaultColor = CColor(0, 0, 0, 255);
   bool drawRadiusAndValue = pointStyle.style == "radiusandvalue";
@@ -426,15 +439,9 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
 
       int x = pointValue->x;
       int station_y = dataSource->srvParams->geoParams.height - pointValue->y;
-      int numDataObjects = dataSource->getNumDataObjects();
+
       int y;
-      if (numDataObjects == 1) {
-        y = station_y + pointStyle.textRadius;
-      } else if ((numDataObjects % 2) == 0) {
-        y = station_y + (-0.5 + dataObjectIndex) * (pointStyle.textRadius);
-      } else {
-        y = int(station_y + (-numDataObjects / 2.0 + dataObjectIndex + 0.5) * pointStyle.textRadius);
-      }
+      y = calculateYForDataobject(dataSource, pointValue->y, pointStyle.textRadius, dataObjectIndex);
 
       if (dataType == CDF_STRING) {
         if (dataObjectIndex == 0) {
