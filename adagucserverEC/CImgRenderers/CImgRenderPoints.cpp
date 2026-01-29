@@ -440,8 +440,7 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
       int x = pointValue->x;
       int station_y = dataSource->srvParams->geoParams.height - pointValue->y;
 
-      int y;
-      y = calculateYForDataobject(dataSource, pointValue->y, pointStyle.textRadius, dataObjectIndex);
+      int y = calculateYForDataobject(dataSource, pointValue->y, pointStyle.textRadius, dataObjectIndex);
 
       if (dataType == CDF_STRING) {
         if (dataObjectIndex == 0) {
