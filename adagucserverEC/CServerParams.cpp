@@ -121,7 +121,7 @@ int CServerParams::makeLayerGroupName(CT::string *groupName, CServerConfig::XMLE
   if (cfgLayer->Group.size() == 1) {
     if (cfgLayer->Group[0]->attr.value.c_str() != NULL) {
       CT::string layerName(cfgLayer->Group[0]->attr.value.c_str());
-      auto groupElements = layerName.splitToStack("/");
+      auto groupElements = layerName.split("/");
       if (groupElements.size() > 0) {
         groupName->copy(groupElements[0].c_str());
       }
@@ -293,7 +293,7 @@ CT::string CServerParams::getOnlineResource() {
   CT::string onlineResource = cfg->OnlineResource[0]->attr.value.c_str();
 
   // A full path is given in the configuration
-  if (onlineResource.indexOf("http", 4) == 0) {
+  if (onlineResource.indexOf("http") == 0) {
     _onlineResource = onlineResource;
     return onlineResource;
   }
@@ -345,7 +345,7 @@ std::vector<CT::string> CServerParams::getLegendNames(std::vector<CServerConfig:
   std::vector<CT::string> stringList;
   for (size_t j = 0; j < Legend.size(); j++) {
     CT::string legendValue = Legend[j]->value.c_str();
-    CT::StackList<CT::string> l1 = legendValue.splitToStack(",");
+    std::vector<CT::string> l1 = legendValue.split(",");
     for (auto li : l1) {
       if (li.length() > 0) {
         stringList.push_back(li);
@@ -373,7 +373,7 @@ int CServerParams::checkDataRestriction() {
       dr = ALLOW_WCS | ALLOW_GFI | ALLOW_METADATA;
     }
     // Decompose into stringlist and check each item
-    CT::StackList<CT::string> items = temp.splitToStack("|");
+    std::vector<CT::string> items = temp.split("|");
     for (size_t j = 0; j < items.size(); j++) {
       items[j].replaceSelf("\"", "");
       if (items[j].equals("ALLOW_GFI")) dr |= ALLOW_GFI;

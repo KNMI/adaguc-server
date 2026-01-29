@@ -398,7 +398,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
   // Create a mapping for filtering where key=dimension name, value=requested dimension value(s)
   std::map<CT::string, std::vector<CT::string>> requestedDimMap;
   for (const auto &dim : dataSource->requiredDims) {
-    requestedDimMap[dim->netCDFDimName.c_str()] = (&dim->value)->splitToStack(",");
+    requestedDimMap[dim->netCDFDimName.c_str()] = (&dim->value)->split(",");
   }
 
   CT::string query;
@@ -456,7 +456,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
         whereStatement.printconcat(" OR ");
       }
 
-      std::vector<CT::string> dimVals = requestedDimVals[i].splitToStack("/");
+      std::vector<CT::string> dimVals = requestedDimVals[i].split("/");
       if (dimVals.size() == 1) {
         whereStatement.printconcat("%s = '%s'", dimName, dimVals[0].c_str());
       } else {

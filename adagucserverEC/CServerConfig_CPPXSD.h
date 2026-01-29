@@ -1194,7 +1194,7 @@ public:
     public:
       CT::string filter, gfi_openall, ncml, maxquerylimit, retentionperiod, retentiontype;
     } attr;
-    void handleValue() { this->value = CDirReader::makeCleanPath(this->value); }
+    void handleValue() { this->value = CDirReader::makeCleanPath(this->value.c_str()); }
 
     bool addAttribute(const char *name, const char *value) {
       if (equals("filter", name)) {

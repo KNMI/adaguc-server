@@ -25,7 +25,7 @@
 
 #ifndef CFILLTRIANGLE_H
 #define CFILLTRIANGLE_H
-#include <math.h>
+#include <cmath>
 #include <stdlib.h>
 /**
  * Fills a triangle in a Gouraud way

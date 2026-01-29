@@ -7,7 +7,7 @@
 
 #ifdef ENABLE_INSPIRE
 #include <stdio.h>
-#include "CTypes.h"
+#include "CTString.h"
 #include "CXMLParser.h"
 #include "CHTTPTools.h"
 #include "CDebugger.h"

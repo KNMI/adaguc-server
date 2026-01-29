@@ -111,4 +111,52 @@
     <Dimension name="temp_at_hagl" units="m" default="min" hidden="true">height_above_ground_level_in_m</Dimension>
     <Dimension name="member" units="" default="min" type="custom" hidden="false">member</Dimension>
   </Layer>
+
+  <Style name="windbarbs_kts_selectpoint_for_grids">
+    <ShadeInterval min="0" max="0.3"     label=" 0  [  &lt; 0 kts] (&lt; 0.3 m/s)" fillcolor="#9600fe"/>
+    <ShadeInterval min="0.3" max="1.6"   label=" 1  [  1-3 kts  ] (0.3-1.6 m/s)" fillcolor="#9600fe"/>
+    <ShadeInterval min="1.6" max="3.4"   label=" 2  [  4-6 kts  ] (1.6-3.4 m/s)" fillcolor="#0064fe"/>
+    <ShadeInterval min="3.4" max="5.5"   label=" 3  [  7-10 kts ] (3.4-5.5 m/s)" fillcolor="#00c8fe"/>
+    <ShadeInterval min="5.5" max="8.0"   label=" 4  [ 11-16 kts ] (5.5-8.0 m/s)" fillcolor="#25c192"/>
+    <ShadeInterval min="8.0" max="10.8"  label=" 5  [ 17-21 kts ] (8.0-10.8 m/s)" fillcolor="#00e600"/>
+    <ShadeInterval min="10.8" max="13.9" label=" 6  [ 22-27 kts ] (10.8-13.9 m/s)" fillcolor="#00fa00"/>
+    <ShadeInterval min="13.9" max="17.2" label=" 7  [ 28-33 kts ] (13.9-17.2 m/s)" fillcolor="#feae00"/>
+    <ShadeInterval min="17.2" max="20.8" label=" 8  [ 34-40 kts ] (17.2-20.8 m/s)" fillcolor="#b40032"/>
+    <ShadeInterval min="20.8" max="24.5" label=" 9  [ 41-47 kts ] (20.8-24.5 m/s)" fillcolor="#fE0096"/>
+    <ShadeInterval min="24.5" max="200"  label="10 [  &gt;48 kts ] (&gt;24.5 m/s)" fillcolor="#420027"/>
+
+    <Point pointstyle="point" fontsize="10" discradius="0" textcolor="#ffffff" textoutlinecolor="#000000"  textformat="%0.1f" />
+
+    <RenderSettings renderhint="discreteclasses" />
+
+    <!--
+      Extracts point from a grid and makes them available for the point renderer
+      - select: Which data objects to sample from the Layer
+      - a: Optionally apply thinning in pixels, points will be no closer than a pixels in the GetMap response.
+    -->
+    <DataPostProc algorithm="pointsfromgrid" select="speed_component" a="50"/>
+
+    <RenderMethod>nearest</RenderMethod>
+  </Style>
+
+  <Layer type="database">
+    <Name>windbarbs_kts_selectpoint_for_grids</Name>
+    <Title>Wind speed values from gridded model data</Title>
+    <Variable>x_wind__at_10m</Variable>
+    <Variable>y_wind__at_10m</Variable>
+    <FilePath filter="">{ADAGUC_PATH}data/datasets/harmonie_wind_grid_30x30.nc</FilePath>
+    <Dimension name="time" units="ISO8601" default="min">time</Dimension>
+    <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension>
+    <Styles>windbarbs_kts_selectpoint_for_grids</Styles>
+    <!--
+      convert_uv_components is a data postprocessor to transform grid relative x and y components of a vector to relative to north components. This uses a jacobian transformation.
+      This processor will add four more dataobjects to the datasource. The two original components are now last. The new one dataobjects are:
+      - `speed_component`: based on the magnitude of the eastward_wind and northward_wind components
+      - `direction_component`: based on the direction of the eastward_wind and northward_wind components
+      - `eastward_component`: based on the original x and y components. Corrected using jacobian transformation
+      - `northward_component`: based on the original x and y components. Corrected using jacobian transformation
+    -->
+    <DataPostProc algorithm="convert_uv_components"/>
+  </Layer>
 </Configuration>
+ 

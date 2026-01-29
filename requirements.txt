@@ -10,11 +10,11 @@ annotated-doc==0.0.4
     # via fastapi
 annotated-types==0.7.0
     # via pydantic
-anyio==4.12.0
+anyio==4.12.1
     # via
     #   httpx
     #   starlette
-apscheduler==3.11.1
+apscheduler==3.11.2
     # via -r requirements.in
 asgi-logger==0.1.0
     # via -r requirements.in
@@ -26,11 +26,11 @@ brotli==1.2.0
     # via
     #   -r requirements.in
     #   brotli-asgi
-brotli-asgi==1.5.0
+brotli-asgi==1.6.0
     # via -r requirements.in
 cachetools==5.5.2
     # via -r requirements.in
-certifi==2025.11.12
+certifi==2026.1.4
     # via
     #   httpcore
     #   httpx
@@ -86,7 +86,7 @@ lxml==4.9.4
     #   owslib
 markupsafe==3.0.3
     # via jinja2
-netcdf4==1.7.3
+netcdf4==1.7.4
     # via -r requirements.in
 numpy==1.26.4
     # via
@@ -95,7 +95,7 @@ numpy==1.26.4
     #   netcdf4
 owslib==0.29.3
     # via -r requirements.in
-packaging==25.0
+packaging==26.0
     # via gunicorn
 pillow==10.4.0
     # via -r requirements.in

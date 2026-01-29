@@ -35,10 +35,10 @@ private:
   DEF_ERRORFUNCTION();
 
 public:
-  CT::PointerList<CDPPInterface *> *dataPostProcessorList;
+  std::vector<CDPPInterface *> *dataPostProcessorList;
   CDPPExecutor();
   ~CDPPExecutor();
-  const CT::PointerList<CDPPInterface *> *getPossibleProcessors();
+  const std::vector<CDPPInterface *> *getPossibleProcessors();
   int executeProcessors(CDataSource *dataSource, int mode);
   int executeProcessors(CDataSource *dataSource, int mode, double *data, size_t numItems);
 };

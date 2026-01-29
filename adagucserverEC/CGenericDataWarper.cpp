@@ -88,7 +88,7 @@ ProjectionGrid *makeStridedProjection(double halfCell, CImageWarper *warper, i4b
   double dfSourcedExtH = sourceGeoParams.bbox.span().y / double(warperState.sourceGridHeight);
   size_t dataWidthStrided = ceil(double(dataWidth) / projStrideFactor);
   size_t dataHeightStrided = ceil(double(dataHeight) / projStrideFactor);
-  size_t dataSizeStrided = (dataWidthStrided + 1) * (dataHeightStrided + 1);
+  size_t dataSizeStrided = (dataWidthStrided + 2) * (dataHeightStrided + 2);
 
   double *pxStrided = new double[dataSizeStrided];
   double *pyStrided = new double[dataSizeStrided];
@@ -122,7 +122,6 @@ ProjectionGrid *makeStridedProjection(double halfCell, CImageWarper *warper, i4b
     for (int x = 0; x < dataWidth + 1; x++) {
       size_t p = x + y * (dataWidth + 1);
       size_t pS = (x / projStrideFactor) + (y / projStrideFactor) * (dataWidthStrided);
-      if (pS >= dataSizeStrided) continue;
       size_t p0 = pS;
       size_t p1 = pS + 1;
       size_t p2 = pS + dataWidthStrided;
@@ -156,7 +155,6 @@ ProjectionGrid *makeStridedProjection(double halfCell, CImageWarper *warper, i4b
 template <typename T>
 void linearTransformGrid(GDWState &warperState, bool useHalfCellOffset, CImageWarper *, void *, GeoParameters &sourceGeoParams, GeoParameters &destGeoParams,
                          const std::function<void(int, int, T, GDWState &warperState)> &drawFunction) {
-  CDBDebug("linearTransformGrid");
   double halfCell = useHalfCellOffset ? 0.5 : 0;
   double dfSourceExtW = sourceGeoParams.bbox.span().x;
   double dfSourceExtH = sourceGeoParams.bbox.span().y;
@@ -417,10 +415,10 @@ void warpTransformGrid(GDWState &warperState, ProjectionGrid *projectionGrid, bo
           warperState.sourceIndexX = x + pixelExtentBox.left;
           warperState.sourceIndexY = (warperState.sourceGridHeight - 1 - (y + pixelExtentBox.bottom));
           T value = ((T *)warperState.sourceGrid)[warperState.sourceIndexX + warperState.sourceIndexY * warperState.sourceGridWidth];
-          double xCornersA[3] = {quadX[0], quadX[1], quadX[2]};
-          double yCornersA[3] = {quadY[0], quadY[1], quadY[2]};
-          double xCornersB[3] = {quadX[2], quadX[0], quadX[3]};
-          double yCornersB[3] = {quadY[2], quadY[0], quadY[3]};
+          const double xCornersA[3] = {quadX[0], quadX[1], quadX[2]};
+          const double yCornersA[3] = {quadY[0], quadY[1], quadY[2]};
+          const double xCornersB[3] = {quadX[2], quadX[0], quadX[3]};
+          const double yCornersB[3] = {quadY[2], quadY[0], quadY[3]};
           gdwDrawTriangle(xCornersA, yCornersA, value, false, warperState, drawFunction);
           gdwDrawTriangle(xCornersB, yCornersB, value, true, warperState, drawFunction);
         }

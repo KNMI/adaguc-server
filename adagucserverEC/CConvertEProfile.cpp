@@ -272,7 +272,7 @@ int CConvertEProfile::convertEProfileHeader(CDFObject *cdfObject, CServerParams 
 #endif
 
   // Make a list of variables which will be available as 2D fields
-  CT::StackList<CT::string> varsToConvert;
+  std::vector<CT::string> varsToConvert;
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
     if (var->isDimension == false) {
@@ -284,7 +284,7 @@ int CConvertEProfile::convertEProfileHeader(CDFObject *cdfObject, CServerParams 
           if (var->dimensionlinks.size() == 2) {
             // Check if this is a profile variable which we added.
             if (var->dimensionlinks[0]->name.equals("time_obs") && var->dimensionlinks[1]->name.equals("range")) {
-              varsToConvert.add(CT::string(var->name.c_str()));
+              varsToConvert.push_back(CT::string(var->name.c_str()));
               added = true;
             }
           }
@@ -745,7 +745,6 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
     // Read dates for obs
     //     bool hasTimeValuePerObs = false;
 
-    CDBDebug("CTIME");
     //     double *obsTimeData = NULL;
     CDF::Variable *timeVarPerObs = cdfObject0->getVariableNE("time");
     if (timeVarPerObs != NULL) {
