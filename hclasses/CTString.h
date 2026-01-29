@@ -418,4 +418,6 @@ namespace CT {
   std::string basename(std::string input);
 }; /* namespace CT */
 
+bool equalsIgnoreCase(std::string str1, std::string str2);
+
 #endif

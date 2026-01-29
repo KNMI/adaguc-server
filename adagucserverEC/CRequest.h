@@ -26,20 +26,10 @@
 #ifndef CRequest_H
 #define CRequest_H
 
-#include <sys/stat.h>
-#include <set>
+#include "CDataSource.h"
 #include "CImageDataWriter.h"
 #include "CServerParams.h"
-#include "CDataSource.h"
-#include "CStopWatch.h"
-#include "CXMLGen.h"
-#ifdef ADAGUC_USE_GDAL
-#include "CGDALDataWriter.h"
-#endif
-#include "CCreateHistogram.h"
-#include "CDFObjectStore.h"
-#include "CCDFStore.h"
-#include "CDebugger.h"
+#include "CServerConfig_CPPXSD.h"
 
 class CRequest {
 private:

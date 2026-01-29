@@ -9,8 +9,6 @@
 // To test this file do in the ./bin folder of adaguc-server:
 // cmake --build . --config Debug --target testadagucserver -j 10 -- && ctest --verbose
 
-DEF_ERRORMAIN()
-
 int main() {
   double dfSourceW = 1000;
   double dfSourceExtW = 360;

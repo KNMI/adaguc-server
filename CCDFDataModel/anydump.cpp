@@ -35,8 +35,6 @@
 #include "CCDFCSVReader.h"
 #include "utils.h"
 
-DEF_ERRORMAIN();
-
 int main(int argCount, char **argVars) {
   CDFReader *cdfReader = NULL;
   CDFObject *cdfObject = NULL;

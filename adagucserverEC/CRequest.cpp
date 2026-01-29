@@ -50,6 +50,10 @@
 #include "handleTileRequest.h"
 #include <traceTimings/traceTimings.h>
 #include "utils/serverutils.h"
+#include "CCreateHistogram.h"
+#ifdef ADAGUC_USE_GDAL
+#include "CGDALDataWriter.h"
+#endif
 
 const char *CRequest::className = "CRequest";
 int CRequest::CGI = 0;

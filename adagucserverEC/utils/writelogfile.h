@@ -23,7 +23,17 @@
  *
  ******************************************************************************/
 
-#ifndef ADAGUCSERVER_H
-#define ADAGUCSERVER_H
+#ifndef WRITELOGFILE_H
+#define WRITELOGFILE_H
+
+void writeLogFile(const char *msg);
+void writeErrorFile(const char *msg);
+void checkLogSettings();
+void closeLogFile();
+void logBufferCheckMode();
+void serverDebugFunction(const char *msg);
+void serverErrorFunction(const char *msg);
+void serverWarningFunction(const char *msg);
+void serverLogFunctionCMDLine(const char *msg);
 
 #endif

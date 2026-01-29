@@ -453,7 +453,7 @@ namespace CT {
     return result;
   }
 
-    string string::toHex24() {
+  string string::toHex24() {
     string result;
     unsigned int value = this->toInt();
     result.print("%s%s%s", getHex(value % 256).c_str(), getHex((value >> 8) % 256).c_str(), getHex((value >> 16) % 256).c_str());
@@ -494,3 +494,11 @@ namespace CT {
 
   std::string basename(std::string input) { return input.substr(input.find_last_of("/\\") + 1); }
 } /* namespace CT */
+
+bool equalsIgnoreCase(std::string str1, std::string str2) {
+  if (str1.length() != str2.length()) return false;
+  for (size_t i = 0; i < str1.length(); ++i) {
+    if (tolower(str1[i]) != tolower(str2[i])) return false;
+  }
+  return true;
+}

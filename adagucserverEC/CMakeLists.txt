@@ -94,6 +94,10 @@ add_library(
     utils/serverutils.cpp
     utils/projectionUtils.h
     utils/projectionUtils.cpp
+    utils/writelogfile.h
+    utils/writelogfile.cpp
+    utils/processCMDArgs.h
+    utils/processCMDArgs.cpp
     Types/LayerMetadataType.h
     Types/CPointTypes.h
     GenericDataWarper/gdwDrawTriangle.h
