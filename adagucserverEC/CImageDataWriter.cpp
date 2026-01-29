@@ -471,10 +471,19 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
   }
 
   if (dataSource != NULL) {
+    // Create 6-8-5 palette for cascaded layer
+    if (dataSource->dLayerType == CConfigReaderLayerTypeGraticule) {
+      status = drawImage.create685Palette();
+      if (status != 0) {
+        CDBError("Unable to create standard 6-8-5 palette");
+        return 1;
+      }
+    }
+
     if (styleConfiguration != NULL) {
       if (styleConfiguration->legendIndex != -1) {
         // Create palette for internal WNS layer
-        if (dataSource->dLayerType != CConfigReaderLayerTypeCascaded) {
+        if (dataSource->dLayerType != CConfigReaderLayerTypeGraticule) {
           status = drawImage.createPalette(srvParam->cfg->Legend[styleConfiguration->legendIndex]);
           if (status != 0) {
             CDBError("Unknown palette type for %s", srvParam->cfg->Legend[styleConfiguration->legendIndex]->attr.name.c_str());
@@ -1364,227 +1373,6 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
   return 0;
 }
 
-// Virtual functions
-int CImageDataWriter::calculateData(std::vector<CDataSource *> &dataSources) {
-
-  /**
-  This style has a special *custom* non WMS syntax:
-  First style: represents how the boolean results must be combined
-  Keywords: "and","or"
-  Example: "and" for two layers, "and_and" for three layers
-  Second and N+2 style: represents how the boolean map is created and which time is required
-  Keywords: "and","between","notbetween","lessthan","greaterthan","time","|"
-  Example: between_10.0_and_20.0|time_1990-01-01T00:00:00Z
-  Note: after "|" always a time is specified with time_
-  */
-
-  //  int status;
-  CImageWarper imageWarper;
-  CDBDebug("calculateData");
-
-  // draw the Image
-  // for(size_t j=1;j<dataSources.size();j++)
-  {
-    CDataSource *dataSource;
-
-    /**************************************************/
-    int status;
-    bool hasFailed = false;
-    // Open the corresponding data of this dataSource, with the datareader
-    std::vector<CDataReader *> dataReaders;
-    for (size_t i = 0; i < dataSources.size(); i++) {
-      dataSource = dataSources[i];
-      CDataReader *reader = new CDataReader();
-      dataReaders.push_back(reader);
-      status = reader->open(dataSource, CNETCDFREADER_MODE_OPEN_ALL);
-      CDBDebug("Opening %s", dataSource->getFileName());
-      if (status != 0) {
-        CDBError("Could not open file: %s", dataSource->getFileName());
-        hasFailed = true;
-      }
-    }
-    // Initialize projection algorithm
-    dataSource = dataSources[0];
-
-    if (hasFailed == false) {
-#ifdef CIMAGEDATAWRITER_DEBUG
-      CDBDebug("initreproj %s", dataSource->nativeProj4.c_str());
-#endif
-      status = imageWarper.initreproj(dataSource, drawImage.geoParams, &srvParam->cfg->Projection);
-      if (status != 0) {
-        CDBError("initreproj failed");
-        hasFailed = true;
-      }
-    }
-    if (hasFailed == false) {
-      // Start modifying the data using the specific style
-
-      enum ConditionalOperator { myand, myor, between, notbetween, lessthan, greaterthan };
-
-      ConditionalOperator combineBooleanMapExpression[dataSources.size() - 1];
-      ConditionalOperator inputMapExpression[dataSources.size()];
-      float inputMapExprValuesLow[dataSources.size()];
-      float inputMapExprValuesHigh[dataSources.size()];
-
-      auto layerStyles = srvParam->Styles.split(",");
-      CT::string style;
-      //      bool errorOccured=false;
-      for (size_t j = 0; j < dataSources.size(); j++) {
-        size_t numberOfValues = 1;
-        auto _style = layerStyles[j].split("|");
-        style.copy(&_style[0]);
-        CDBDebug("STYLE == %s", style.c_str());
-        if (j == 0) {
-          // Find the conditional expression for the first layer (the boolean map)
-          auto conditionals = style.split("_");
-          if (!conditionals[0].equals("default") && conditionals.size() != dataSources.size() - 2) {
-            CDBError("Incorrect number of conditional operators specified: %d  (expected %d)", conditionals.size(), dataSources.size() - 2);
-            hasFailed = true;
-          } else {
-            for (size_t i = 0; i < conditionals.size(); i++) {
-              combineBooleanMapExpression[i] = myand;
-              if (conditionals[i].equals("and")) combineBooleanMapExpression[i] = myand;
-              if (conditionals[i].equals("or")) combineBooleanMapExpression[i] = myor;
-            }
-          }
-        } else {
-          inputMapExpression[j] = between;
-          CT::string exprVal("0.0");
-          // Find the expressin types:
-          if (style.indexOf("between_") == 0) {
-            inputMapExpression[j] = between;
-            exprVal.copy(style.c_str() + 8);
-            numberOfValues = 2;
-          }
-          if (style.indexOf("notbetween_") == 0) {
-            inputMapExpression[j] = notbetween;
-            exprVal.copy(style.c_str() + 11);
-            numberOfValues = 2;
-          }
-          if (style.indexOf("lessthan_") == 0) {
-            inputMapExpression[j] = lessthan;
-            exprVal.copy(style.c_str() + 9);
-            numberOfValues = 1;
-          }
-          if (style.indexOf("greaterthan_") == 0) {
-            inputMapExpression[j] = greaterthan;
-            exprVal.copy(style.c_str() + 12);
-            numberOfValues = 1;
-          }
-          auto LH = exprVal.split("_and_");
-          if (LH.size() != numberOfValues) {
-            CDBError("Invalid number of values in expression '%s'", style.c_str());
-            hasFailed = true;
-          } else {
-            inputMapExprValuesLow[j] = LH[0].toFloat();
-            if (numberOfValues == 2) {
-              inputMapExprValuesHigh[j] = LH[1].toFloat();
-            }
-          }
-
-          if (numberOfValues == 1) {
-            CDBDebug("'%f'", inputMapExprValuesLow[j]);
-          }
-          if (numberOfValues == 2) {
-            CDBDebug("'%f' and '%f'", inputMapExprValuesLow[j], inputMapExprValuesHigh[j]);
-          }
-        }
-      }
-
-      CDBDebug("Start creating the boolean map");
-      double pixel[dataSources.size()];
-      bool conditialMap[dataSources.size()];
-      for (int y = 0; y < dataSource->dHeight; y++) {
-        for (int x = 0; x < dataSource->dWidth; x++) {
-          size_t ptr = x + y * dataSource->dWidth;
-          for (size_t j = 1; j < dataSources.size(); j++) {
-            CDataSource *dsj = dataSources[j];
-            int xj = int((float(x) / float(dataSource->dWidth)) * float(dsj->dWidth));
-            int yj = int((float(y) / float(dataSource->dHeight)) * float(dsj->dHeight));
-            if (dsj->dfBBOX[1] > dsj->dfBBOX[3]) yj = dsj->dHeight - yj - 1;
-            size_t ptrj = xj + yj * dsj->dWidth;
-
-            pixel[j] = convertValue(dsj->getFirstAvailableDataObject()->cdfVariable->getType(), dsj->getFirstAvailableDataObject()->cdfVariable->data, ptrj);
-
-            if (inputMapExpression[j] == between) {
-              if (pixel[j] >= inputMapExprValuesLow[j] && pixel[j] <= inputMapExprValuesHigh[j])
-                conditialMap[j] = true;
-              else
-                conditialMap[j] = false;
-            }
-            if (inputMapExpression[j] == notbetween) {
-              if (pixel[j] < inputMapExprValuesLow[j] || pixel[j] > inputMapExprValuesHigh[j])
-                conditialMap[j] = true;
-              else
-                conditialMap[j] = false;
-            }
-            if (inputMapExpression[j] == lessthan) {
-              if (pixel[j] < inputMapExprValuesLow[j])
-                conditialMap[j] = true;
-              else
-                conditialMap[j] = false;
-            }
-            if (inputMapExpression[j] == greaterthan) {
-              if (pixel[j] > inputMapExprValuesLow[j])
-                conditialMap[j] = true;
-              else
-                conditialMap[j] = false;
-            }
-          }
-          bool result = conditialMap[1];
-          for (size_t j = 2; j < dataSources.size(); j++) {
-            if (combineBooleanMapExpression[j - 2] == myand) {
-              if (result == true && conditialMap[j] == true)
-                result = true;
-              else
-                result = false;
-            }
-            if (combineBooleanMapExpression[j - 2] == myor) {
-              if (result == true || conditialMap[j] == true)
-                result = true;
-              else
-                result = false;
-            }
-          }
-          if (result == true)
-            pixel[0] = 1;
-          else
-            pixel[0] = 0;
-          setValue(dataSources[0]->getFirstAvailableDataObject()->cdfVariable->getType(), dataSources[0]->getFirstAvailableDataObject()->cdfVariable->data, ptr, pixel[0]);
-        }
-      }
-      CDBDebug("Warping with style %s", srvParam->Styles.c_str());
-      CImageWarperRenderInterface *imageWarperRenderer;
-      imageWarperRenderer = new CImgWarpNearestNeighbour();
-      imageWarperRenderer->render(&imageWarper, dataSource, &drawImage);
-      delete imageWarperRenderer;
-      imageWarper.closereproj();
-    }
-    for (size_t j = 0; j < dataReaders.size(); j++) {
-      if (dataReaders[j] != NULL) {
-        dataReaders[j]->close();
-        delete dataReaders[j];
-        dataReaders[j] = NULL;
-      }
-    }
-    if (hasFailed == true) return 1;
-    return 0;
-    /**************************************************/
-
-    if (status != 0) return status;
-
-    if (status == 0) {
-
-      if (dataSource->cfgLayer->ImageText.size() > 0) {
-        if (dataSource->cfgLayer->ImageText[0]->value.empty() == false) {
-          drawImage.setTextStroke(drawImage.geoParams.width - 170, 5, 0, dataSource->cfgLayer->ImageText[0]->value.c_str(), NULL, 12.0, 0.75, CColor(0, 0, 0, 255), CColor(255, 255, 255, 255));
-        }
-      }
-    }
-  }
-  return 0;
-}
-
 int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
 #ifdef CIMAGEDATAWRITER_DEBUG
   CDBDebug("addData");
@@ -1601,7 +1389,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
     CDataSource *dataSource = dataSources[j];
 
     /* DataBase layers */
-    if (dataSource->dLayerType != CConfigReaderLayerTypeCascaded) {
+    if (dataSource->dLayerType != CConfigReaderLayerTypeGraticule) {
 #ifdef CIMAGEDATAWRITER_DEBUG
       CDBDebug("Drawingnormal legend");
 #endif

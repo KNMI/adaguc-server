@@ -44,23 +44,6 @@
       <Styles>overlay</Styles>
   </Layer>
 
-
-  <Layer type="cascaded" hidden="true">
-    <Group value="baselayers"/>
-    <Name force="true">cascadedoverlay</Name>
-    <Title>cascaded overlay</Title>
-    <WMSLayer service="https://geoservices.knmi.nl/wms?DATASET=baselayers&amp;" layer="countryborders"/>
-    <LatLonBox minx="-180"  miny="-90" maxx="180" maxy="90"/>
-  </Layer>
-  
-  <Layer type="cascaded" hidden="true">
-    <Group value="baselayers"/>
-    <Name force="true">cascaded sbaselayer</Name>
-    <Title>cascaded baselayer</Title>
-    <WMSLayer service="https://geoservices.knmi.nl/wms?DATASET=baselayers&amp;" layer="countryfilled"/>
-    <LatLonBox minx="-180"  miny="-90" maxx="180" maxy="90"/>
-  </Layer>
-  
   <Layer type="grid" hidden="true">
     <Group value="baselayers"/>
     <Name force="true">grid1</Name>

@@ -160,7 +160,6 @@ public:
 
   int getFeatureInfo(std::vector<CDataSource *> &dataSources, int dataSourceIndex, int dX, int dY);
   void setDate(const char *date);
-  int calculateData(std::vector<CDataSource *> &dataSources);
 
   // Virtual functions
   int init(CServerParams *srvParam, CDataSource *dataSource, int nrOfBands);

@@ -33,8 +33,7 @@
 // CConfigReaderLayerType
 #define CConfigReaderLayerTypeUnknown 0
 #define CConfigReaderLayerTypeDataBase 1
-#define CConfigReaderLayerTypeStyled 2
-#define CConfigReaderLayerTypeCascaded 3
+#define CConfigReaderLayerTypeGraticule 3
 #define CConfigReaderLayerTypeBaseLayer 4
 #define CConfigReaderLayerTypeLiveUpdate 6
 

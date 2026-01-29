@@ -1071,7 +1071,7 @@ int CRequest::process_all_layers() {
   /**************************************/
   /* Handle WMS Getmap database request */
   /**************************************/
-  if (firstDataSource->dLayerType == CConfigReaderLayerTypeDataBase || firstDataSource->dLayerType == CConfigReaderLayerTypeStyled || firstDataSource->dLayerType == CConfigReaderLayerTypeCascaded ||
+  if (firstDataSource->dLayerType == CConfigReaderLayerTypeDataBase || firstDataSource->dLayerType == CConfigReaderLayerTypeGraticule ||
       firstDataSource->dLayerType == CConfigReaderLayerTypeBaseLayer || (firstDataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate && srvParam->requestType != REQUEST_WMS_GETMAP)) {
     try {
       for (size_t d = 0; d < dataSources.size(); d++) {
@@ -2436,7 +2436,7 @@ int CRequest::determineTypesForDataSources() {
     /***************************/
     /* Type = Database layer   */
     /***************************/
-    if (dataSources[j]->dLayerType == CConfigReaderLayerTypeDataBase || dataSources[j]->dLayerType == CConfigReaderLayerTypeStyled || dataSources[j]->dLayerType == CConfigReaderLayerTypeBaseLayer) {
+    if (dataSources[j]->dLayerType == CConfigReaderLayerTypeDataBase || dataSources[j]->dLayerType == CConfigReaderLayerTypeBaseLayer) {
 
       if (dataSources[j]->cfgLayer->Dimension.size() == 0) {
 
@@ -2479,7 +2479,7 @@ int CRequest::determineTypesForDataSources() {
       }
     }
 
-    if (dataSources[j]->dLayerType == CConfigReaderLayerTypeCascaded) {
+    if (dataSources[j]->dLayerType == CConfigReaderLayerTypeGraticule) {
       // This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.
       CDBDebug("Addstep");
       dataSources[j]->addStep("");
@@ -2615,7 +2615,7 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
     bool imageDataWriterIsInitialized = false;
     int dataSourceToUse = 0;
     for (size_t d = 0; d < dataSources.size() && imageDataWriterIsInitialized == false; d++) {
-      if (dataSources[d]->dLayerType != CConfigReaderLayerTypeCascaded) {
+      if (dataSources[d]->dLayerType != CConfigReaderLayerTypeGraticule) {
         // CDBDebug("INIT");
         status = imageDataWriter.init(srvParam, dataSources[d], dataSources[d]->getNumTimeSteps());
         if (status != 0) throw(__LINE__);
@@ -2670,7 +2670,7 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
 
       for (size_t k = 0; k < numTimeSteps; k = k + 1) {
 
-        if (firstDataSource->dLayerType == CConfigReaderLayerTypeDataBase || firstDataSource->dLayerType == CConfigReaderLayerTypeCascaded ||
+        if (firstDataSource->dLayerType == CConfigReaderLayerTypeDataBase || firstDataSource->dLayerType == CConfigReaderLayerTypeGraticule ||
             firstDataSource->dLayerType == CConfigReaderLayerTypeBaseLayer) {
           bool OK = false;
           while (OK == false) {
@@ -2734,7 +2734,7 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
         for (size_t d = 0; d < dataSources.size(); d++) {
           dataSources[d]->setTimeStep(k);
         }
-        if (firstDataSource->dLayerType == CConfigReaderLayerTypeDataBase || firstDataSource->dLayerType == CConfigReaderLayerTypeCascaded ||
+        if (firstDataSource->dLayerType == CConfigReaderLayerTypeDataBase || firstDataSource->dLayerType == CConfigReaderLayerTypeGraticule ||
             firstDataSource->dLayerType == CConfigReaderLayerTypeBaseLayer) {
 
           status = imageDataWriter.addData(dataSources);
@@ -2753,11 +2753,6 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
               CDBError("Unable to load datasource %s at line %d", dataSources[dataSourceToUse]->getDataObject(0)->variableName.c_str(), __LINE__);
             }
           }
-        }
-        if (firstDataSource->dLayerType == CConfigReaderLayerTypeStyled) {
-          // Special styled layer for GEOMON project
-          status = imageDataWriter.calculateData(dataSources);
-          if (status != 0) throw(__LINE__);
         }
         if (dataSources[dataSourceToUse]->getNumTimeSteps() > 1 && dataSources[dataSourceToUse]->queryBBOX == false) {
           // Print the animation data into the image
@@ -2824,7 +2819,7 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
       //          int numberOfLegendsDrawn = 0;
       int legendOffsetX = 0;
       for (size_t d = 0; d < dataSources.size(); d++) {
-        if (dataSources[d]->dLayerType != CConfigReaderLayerTypeCascaded) {
+        if (dataSources[d]->dLayerType != CConfigReaderLayerTypeGraticule) {
           bool drawThisLegend = false;
 
           if (!drawAllLegends) {

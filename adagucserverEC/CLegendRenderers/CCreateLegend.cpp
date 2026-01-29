@@ -44,7 +44,7 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
   int pLeft = 4;
   int pTop = (int)(legendImage->geoParams.height - legendHeight);
 
-  if (dataSource->dLayerType == CConfigReaderLayerTypeCascaded) {
+  if (dataSource->dLayerType == CConfigReaderLayerTypeGraticule) {
     legendType = cascaded;
     CDBDebug("GetLegendGraphic for cascaded WMS is not yet supported");
     legendImage->crop(4);

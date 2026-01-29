@@ -181,20 +181,6 @@ Create a dataset configuration file named $ADAGUCHOME/adaguc-datasets/sat.xml :
     <Dimension name="time" interval="PT15M">time</Dimension>
     <Styles>hrvis_0till30000,hrvis_0till30000_transparent</Styles>
   </Layer>
-  <Layer type="cascaded" hidden="false">
-    <Name force="true">baselayer</Name>
-    <Title>NPS - Natural Earth II</Title>
-    <WMSLayer service="http://geoservices.knmi.nl/cgi-bin/bgmaps.cgi?" layer="naturalearth2"/>
-    <LatLonBox minx="-180"  miny="-90" maxx="180" maxy="90"/>
-  </Layer>
-  <!-- Layer with name overlay from geoservices.knmi.nl -->
-  <Layer type="cascaded" hidden="false">
-    <Name force="true">overlay</Name>
-    <Title>NPS - Natural Earth II</Title>
-    <WMSLayer service="http://geoservices.knmi.nl/cgi-bin/worldmaps.cgi?" layer="world_line_thick"/>
-    <LatLonBox minx="-180"  miny="-90" maxx="180" maxy="90"/>
-    <WMSFormat name="image/png32"/>
-  </Layer>
   <!-- Layer with name grid10 from geoservices.knmi.nl -->
   <Layer type="grid">
     <Name force="true">grid10</Name>
@@ -236,20 +222,6 @@ You can use this URL for example in http://geoservices.knmi.nl/viewer2.0/ or loc
     <RenderMethod>nearest,contour,nearestcontour</RenderMethod>
     <NameMapping name="nearest" title="IVT 0-1500" abstract="IVT" />
   </Style>
-  <!-- Layer with name baselayer from geoservices.knmi.nl -->
-  <Layer type="cascaded" hidden="false">
-    <Name force="true">baselayer</Name>
-    <Title>NPS - Natural Earth II</Title>
-    <WMSLayer service="http://geoservices.knmi.nl/cgi-bin/bgmaps.cgi?" layer="naturalearth2" />
-    <LatLonBox minx="-180" miny="-90" maxx="180" maxy="90" />
-  </Layer>
-  <!-- Layer with name overlay from geoservices.knmi.nl -->
-  <Layer type="cascaded" hidden="false">
-    <Name force="true">overlay</Name>
-    <Title>NPS - Natural Earth II</Title>
-    <WMSLayer service="http://geoservices.knmi.nl/cgi-bin/worldmaps.cgi?" layer="world_line_thick" />
-    <LatLonBox minx="-180" miny="-90" maxx="180" maxy="90" />
-  </Layer>
   <!-- Layer with name grid10 from geoservices.knmi.nl -->
   <Layer type="grid">
     <Name force="true">grid10</Name>
