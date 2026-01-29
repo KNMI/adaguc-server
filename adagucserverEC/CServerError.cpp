@@ -189,9 +189,6 @@ void readyerror() {
     } else if (errImageFormat == IMAGEFORMAT_IMAGEPNG32) {
       printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
       drawImage.printImagePng32();
-    } else if (errImageFormat == IMAGEFORMAT_IMAGEGIF) {
-      printf("%s%c%c\n", "Content-Type:image/gif", 13, 10);
-      drawImage.printImageGif();
     } else {
       printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
       drawImage.printImagePng8(true);

@@ -98,7 +98,6 @@ public:
   int printImagePng24();
   int printImagePng32();
   int printImageWebP32(int quality);
-  int printImageGif();                                      // TODO: to be removed?
   int createGDPalette(CServerConfig::XMLE_Legend *palette); // TODO: to be removed?
   int create685Palette();
   int clonePalette(CDrawImage *drawImage);

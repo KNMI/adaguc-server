@@ -1988,13 +1988,12 @@ int CImageDataWriter::end() {
 #ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("end, number of GF results: %d", getFeatureInfoResultList.size());
 #endif
-    enum ResultFormats { textplain, texthtml, textxml, applicationvndogcgml, imagepng, imagegif, json, imagepng_eprofile };
+    enum ResultFormats { textplain, texthtml, textxml, applicationvndogcgml, imagepng, json, imagepng_eprofile };
     ResultFormats resultFormat = texthtml;
 
     if (srvParam->InfoFormat.equals("text/plain")) resultFormat = textplain;
     if (srvParam->InfoFormat.equals("text/xml")) resultFormat = textxml;
     if (srvParam->InfoFormat.equals("image/png")) resultFormat = imagepng;
-    if (srvParam->InfoFormat.equals("image/gif")) resultFormat = imagegif;
 
     if (srvParam->InfoFormat.equals("application/vnd.ogc.gml")) resultFormat = applicationvndogcgml;
 
@@ -2497,7 +2496,7 @@ int CImageDataWriter::end() {
     /* image/png image/png image/png image/png image/png image/png image/png image/png image/png image/png image/png image/png image/png */
     /*************************************************************************************************************************************/
 
-    if (resultFormat == imagepng || resultFormat == imagegif) {
+    if (resultFormat == imagepng) {
 #ifdef MEASURETIME
       StopWatch_Stop("Start creating image");
 #endif
@@ -2801,12 +2800,6 @@ int CImageDataWriter::end() {
           return -1;
         }
       }
-      if (resultFormat == imagegif) {
-        plotCanvas.setTrueColor(false);
-        plotCanvas.setBGColor(255, 255, 255);
-        lineCanvas.setTrueColor(false);
-        lineCanvas.enableTransparency(true);
-      }
       plotCanvas.createImage(int(width), int(height));
       plotCanvas.create685Palette();
       lineCanvas.createImage(int(plotWidth), int(plotHeight));
@@ -2997,10 +2990,6 @@ int CImageDataWriter::end() {
         printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
         plotCanvas.printImagePng8(true);
       }
-      if (resultFormat == imagegif) {
-        printf("%s%c%c\n", "Content-Type:image/gif", 13, 10);
-        plotCanvas.printImageGif();
-      }
 #ifdef MEASURETIME
       StopWatch_Stop("/Start creating image");
 #endif
@@ -3078,12 +3067,6 @@ int CImageDataWriter::end() {
     }
     CDBDebug("Creating 32 bit webp quality = %d", webPQuality);
     status = drawImage.printImageWebP32(webPQuality);
-  } else if (srvParam->imageFormat == IMAGEFORMAT_IMAGEGIF) {
-    // CDBDebug("LegendGraphic GIF");
-    if (animation == 0) {
-      printf("%s%s%c%c\n", "Content-Type:image/gif", cacheControl.c_str(), 13, 10);
-    }
-    status = drawImage.printImageGif();
   } else {
     // CDBDebug("LegendGraphic PNG");
     printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl.c_str(), 13, 10);

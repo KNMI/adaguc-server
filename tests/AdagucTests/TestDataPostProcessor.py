@@ -145,7 +145,7 @@ class TestDataPostProcessor(unittest.TestCase):
         self.assertEqual(status, 0)
         filename = "test_DataPostProcessor_WindShear_GetFeatureInfo.json"
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "dataset=adaguc.tests.datapostproc-windshear&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=output&QUERY_LAYERS=output&CRS=EPSG%3A3857&BBOX=-1084594.00339733,5299085.702520586,2054668.3733940602,8244166.9013661165&WIDTH=1358&HEIGHT=1274&I=626&J=578&FORMAT=image/gif&INFO_FORMAT=application/json&STYLES=&&time=2019-01-01T22%3A00%3A00Z",
+            "dataset=adaguc.tests.datapostproc-windshear&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=output&QUERY_LAYERS=output&CRS=EPSG%3A3857&BBOX=-1084594.00339733,5299085.702520586,2054668.3733940602,8244166.9013661165&WIDTH=1358&HEIGHT=1274&I=626&J=578&INFO_FORMAT=application/json&STYLES=&&time=2019-01-01T22%3A00%3A00Z",
             {
                 'ADAGUC_CONFIG':
                 ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml'
@@ -172,7 +172,7 @@ class TestDataPostProcessor(unittest.TestCase):
         self.assertEqual(status, 0)
         filename = "test_DataPostProcessor_WindShear_GetTimeSeries.json"
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "dataset=adaguc.tests.datapostproc-windshear&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=output&QUERY_LAYERS=output&CRS=EPSG%3A3857&BBOX=-1084594.00339733,5299085.702520586,2054668.3733940602,8244166.9013661165&WIDTH=1358&HEIGHT=1274&I=626&J=578&FORMAT=image/gif&INFO_FORMAT=application/json&STYLES=&&time=*",
+            "dataset=adaguc.tests.datapostproc-windshear&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=output&QUERY_LAYERS=output&CRS=EPSG%3A3857&BBOX=-1084594.00339733,5299085.702520586,2054668.3733940602,8244166.9013661165&WIDTH=1358&HEIGHT=1274&I=626&J=578&INFO_FORMAT=application/json&STYLES=&&time=*",
             {
                 'ADAGUC_CONFIG':
                 ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml'

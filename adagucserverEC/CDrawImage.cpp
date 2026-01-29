@@ -181,11 +181,6 @@ int CDrawImage::printImageWebP32(int quality) {
   return 0;
 }
 
-int CDrawImage::printImageGif() {
-  CDBError("Cairo supports no GIF output");
-  return 1;
-}
-
 void CDrawImage::drawVector(int x, int y, double direction, double strength, int color) {
   CColor col = getColorForIndex(color);
   drawVector(x, y, direction, strength, col, 1.0);

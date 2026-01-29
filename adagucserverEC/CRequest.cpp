@@ -1957,9 +1957,6 @@ int CRequest::process_querystring() {
         } else if (outputFormat.indexOf("8") > 0) {
           srvParam->imageFormat = IMAGEFORMAT_IMAGEPNG8;
           srvParam->imageMode = SERVERIMAGEMODE_RGBA;
-        } else if (outputFormat.indexOf("gif") > 0) {
-          srvParam->imageFormat = IMAGEFORMAT_IMAGEGIF;
-          srvParam->imageMode = SERVERIMAGEMODE_8BIT;
         }
       }
     }

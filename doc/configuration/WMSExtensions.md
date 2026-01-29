@@ -21,7 +21,7 @@ New request parameters:
 
 Extended request parameters:
 
--   INFO_FORMAT=<FORMAT> _which can be image/gif, image/png,
+-   INFO_FORMAT=<FORMAT> _which can be image/png,
     text/plain, application/xml, text/html, application/json
 
 ### JSON format
@@ -30,7 +30,7 @@ The URL
 http://bvmlab-218-41.knmi.nl/cgi-bin/ECMD_EUR.cgi?&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.1.1
 &SRS=EPSG%3A4326&LAYERS=201306130000%2FLS_precipitation&QUERY_LAYERS=201306130000%2FLS_precipitation
 &BBOX=-180,-131.06076210092687,180,131.06076210092687&WIDTH=971&HEIGHT=707&X=482&Y=224
-&FORMAT=image/gif&INFO_FORMAT=application/json&STYLES=&&time=2013-06-13T00:00:00Z/2013-06-16T03:00:00Z
+&INFO_FORMAT=application/json&STYLES=&&time=2013-06-13T00:00:00Z/2013-06-16T03:00:00Z
 
 gives the following result:
 ```<code class="json">

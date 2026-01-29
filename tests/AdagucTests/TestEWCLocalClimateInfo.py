@@ -56,7 +56,7 @@ class TestEWCLocalClimateInfo(unittest.TestCase):
         self.scan_this_dataset()
         filename = "test_EWCLocalClimateInfo_GetFeatureInfo_Two_Scenarios.json"
         status, data, _ = AdagucTestTools().runADAGUCServer(
-            "dataset=adaguc_ewclocalclimateinfo_test&service=WMS&request=GetFeatureInfo&version=1.3.0&layers=jaarlijks%2Ftas_mean_2050&query_layers=jaarlijks%2Ftas_mean_2050&crs=EPSG%3A3857&bbox=468851.3452508886%2C6508030.983054844%2C778490.0636045887%2C7004884.352286632&width=822&height=1319&i=409&j=500&format=image%2Fgif&info_format=application%2Fjson&time=*&dim_scenario=*",
+            "dataset=adaguc_ewclocalclimateinfo_test&service=WMS&request=GetFeatureInfo&version=1.3.0&layers=jaarlijks%2Ftas_mean_2050&query_layers=jaarlijks%2Ftas_mean_2050&crs=EPSG%3A3857&bbox=468851.3452508886%2C6508030.983054844%2C778490.0636045887%2C7004884.352286632&width=822&height=1319&i=409&j=500&info_format=application%2Fjson&time=*&dim_scenario=*",
             env=self.env,
         )
         self.assertEqual(status, 0)

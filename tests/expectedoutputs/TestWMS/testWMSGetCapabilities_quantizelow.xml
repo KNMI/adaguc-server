@@ -38,7 +38,6 @@
                 <Format>image/png;mode=8bit_noalpha</Format>
                 <Format>image/png;mode=24bit</Format>
                 <Format>image/png;mode=32bit</Format>
-                <Format>image/gif</Format>
                 <Format>image/jpeg</Format>
                 <!--<Format>image/webp</Format>-->
                 <DCPType><HTTP><Get><OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.quantizelow&amp;SERVICE=WMS&amp;"/></Get></HTTP></DCPType>
