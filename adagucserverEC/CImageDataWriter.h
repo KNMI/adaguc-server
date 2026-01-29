@@ -72,11 +72,6 @@ public:
   static ProjCacheInfo GetProjInfo(CT::string ckey, CDrawImage *drawImage, CDataSource *dataSource, CImageWarper *imageWarper, CServerParams *srvParam, int dX, int dY);
 
 private:
-  // CImageWarper imageWarper;
-  // CDataSource *currentDataSource;
-  // int requestType;
-  // int status;
-  int animation; // TODO: is this needed?
   CT::string eProfileJson;
 
 public:

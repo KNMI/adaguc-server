@@ -3,7 +3,7 @@ Layer (type,hidden)
 
 Back to [Configuration](./Configuration.md)
 
--   type - The type of layer, can be either database,grid, liveupdate or cascaded
+-   type - The type of layer, can be either database, grid, liveupdate or cascaded
 -   hidden - When set to true, the Layer is not advertised in the
     GetCapabilities document, but is accessible with GetMap requests.
 

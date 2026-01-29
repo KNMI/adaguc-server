@@ -46,7 +46,7 @@ CDrawImage::CDrawImage() {
   gField = NULL;
   bField = NULL;
   numField = NULL;
-  trueColorAVG_RGBA = false; // TODO: this is never set... still needed?
+  trueColorAVG_RGBA = false; // TODO: This is always false. Do we still need this?
 
   TTFFontLocation = "/usr/X11R6/lib/X11/fonts/truetype/verdana.ttf"; // TODO: this location does not exist in the docker container
   const char *fontLoc = getenv("ADAGUC_FONT");
@@ -629,7 +629,7 @@ int CDrawImage::create685Palette() {
   }
 
   if (dImageCreated == 0) {
-    CDBError("createGDPalette: image not created");
+    CDBError("createPalette: image not created");
     return 1;
   }
 
@@ -686,10 +686,7 @@ int CDrawImage::_createStandard() {
   return 0;
 }
 
-// TODO: createGDPalette, is this GD specific or not?
-int CDrawImage::createGDPalette(CServerConfig::XMLE_Legend *legend) {
-  CDBDebug("@ createGDPalette");
-
+int CDrawImage::createPalette(CServerConfig::XMLE_Legend *legend) {
   currentLegend = NULL;
   if (legend != NULL) {
     for (size_t j = 0; j < legends.size(); j++) {
@@ -708,7 +705,7 @@ int CDrawImage::createGDPalette(CServerConfig::XMLE_Legend *legend) {
   }
 
   if (dImageCreated == 0) {
-    CDBError("createGDPalette: image not created");
+    CDBError("createPalette: image not created");
     return 1;
   }
 

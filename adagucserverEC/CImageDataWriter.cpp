@@ -435,7 +435,6 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
   }
 
   writerStatus = initialized;
-  animation = 0;
 
   if (srvParam->requestType == REQUEST_WMS_GETMAP) {
     //  CDBDebug("CREATING IMAGE FOR WMS GETMAP ---------------------------------------");
@@ -476,7 +475,7 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
       if (styleConfiguration->legendIndex != -1) {
         // Create palette for internal WNS layer
         if (dataSource->dLayerType != CConfigReaderLayerTypeCascaded) {
-          status = drawImage.createGDPalette(srvParam->cfg->Legend[styleConfiguration->legendIndex]);
+          status = drawImage.createPalette(srvParam->cfg->Legend[styleConfiguration->legendIndex]);
           if (status != 0) {
             CDBError("Unknown palette type for %s", srvParam->cfg->Legend[styleConfiguration->legendIndex]->attr.name.c_str());
             return 1;
@@ -1617,7 +1616,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
 
         CStyleConfiguration *styleConfiguration = dataSource->getStyle();
         if (styleConfiguration->legendIndex != -1) {
-          status = drawImage.createGDPalette(srvParam->cfg->Legend[styleConfiguration->legendIndex]);
+          status = drawImage.createPalette(srvParam->cfg->Legend[styleConfiguration->legendIndex]);
           if (status != 0) {
             CDBError("Unknown palette type for %s", srvParam->cfg->Legend[styleConfiguration->legendIndex]->attr.name.c_str());
             return 1;

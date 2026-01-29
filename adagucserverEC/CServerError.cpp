@@ -174,8 +174,6 @@ void readyerror() {
     drawImage.createImage(errImageWidth, errImageHeight);
 
     drawImage.create685Palette();
-    // palette.createStandard();
-    //    drawImage.createGDPalette(&palette);
     if (cerror_mode == WMS_EXCEPTIONS_IMAGE) {
       printerrorImage(&drawImage);
     }

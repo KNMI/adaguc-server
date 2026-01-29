@@ -2851,7 +2851,7 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
 
             CStyleConfiguration *styleConfiguration = dataSources[d]->getStyle();
             if (styleConfiguration != NULL && styleConfiguration->legendIndex != -1) {
-              legendImage.createGDPalette(srvParam->cfg->Legend[styleConfiguration->legendIndex]);
+              legendImage.createPalette(srvParam->cfg->Legend[styleConfiguration->legendIndex]);
             }
 
             status = imageDataWriter.createLegend(dataSources[d], &legendImage);

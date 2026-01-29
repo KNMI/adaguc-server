@@ -81,7 +81,7 @@ private:
 public:
   float *rField, *gField, *bField;
   int *numField;
-  bool trueColorAVG_RGBA; // TODO: is always false?
+  bool trueColorAVG_RGBA;
   int _colors[256];
 
   int colors[256];
@@ -98,7 +98,7 @@ public:
   int printImagePng24();
   int printImagePng32();
   int printImageWebP32(int quality);
-  int createGDPalette(CServerConfig::XMLE_Legend *palette); // TODO: to be removed?
+  int createPalette(CServerConfig::XMLE_Legend *palette);
   int create685Palette();
   int clonePalette(CDrawImage *drawImage);
 

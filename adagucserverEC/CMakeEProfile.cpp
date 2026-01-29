@@ -240,7 +240,7 @@ public:
 
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
     if (styleConfiguration->legendIndex != -1) {
-      status = drawImage->createGDPalette(dataSource->srvParams->cfg->Legend[styleConfiguration->legendIndex]);
+      status = drawImage->createPalette(dataSource->srvParams->cfg->Legend[styleConfiguration->legendIndex]);
       if (status != 0) {
         CDBError("Unknown palette type for %s", dataSource->srvParams->cfg->Legend[styleConfiguration->legendIndex]->attr.name.c_str());
         return;
