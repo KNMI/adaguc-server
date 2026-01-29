@@ -121,6 +121,26 @@
 
   <!-- wave plotting -->
   <Style name="wave_direction">
+    <DataPostProc algorithm="add_dataobject" name="fake-strength" a="1" />
+    <DataPostProc algorithm="pointsfromgrid" select="fake-strength,wind-wave-from-direction-mean-msl" a="50"/>
+
+    <RenderSettings drawgrid="false" />
+    <Vector vectorstyle="vector" linecolor="#000000" linewidth="2.0" scale="50.0" />
+  </Style>
+
+  <Layer type="database">
+    <Group collection="msl"/>
+    <Name>fake_wave</Name>
+    <Title>Fake wave</Title>
+    <Variable>wind-wave-from-direction-mean-msl</Variable>
+    <FilePath gfi_openall="true" filter="(wind-wave-from-direction-mean-msl_[0-9T]{11}\.nc)">{ADAGUC_PATH}/data/datasets/wave_data/wind-wave-from-direction-mean-msl_20260126T06.nc</FilePath>
+    <Styles>wave_direction</Styles>
+    <Dimension name="forecast_reference_time" units="ISO8601" type="reference_time">reference_time</Dimension>
+    <Dimension name="time" units="ISO8601" interval="PT1H" default="forecast_reference_time+PT1H" type="time">time</Dimension>
+    <Dimension name="msl" units=" " default="min" type="vertical" hidden="true">mean_sea_level</Dimension>
+  </Layer>
+
+  <Style name="wave_direction_and_wave_height">
     <DataPostProc algorithm="include_layer" name="wind_wave_height_significant_msl" mode="prepend"/>
     <DataPostProc algorithm="pointsfromgrid" select="wind-wave-height-significant-msl,wind-wave-from-direction-mean-msl" a="50"/>
 
@@ -138,7 +158,7 @@
     <Title>Wind wave direction at mean sea level</Title>
     <Variable>wind-wave-from-direction-mean-msl</Variable>
     <FilePath gfi_openall="true" filter="(wind-wave-from-direction-mean-msl_[0-9T]{11}\.nc)">{ADAGUC_PATH}/data/datasets/wave_data/wind-wave-from-direction-mean-msl_20260126T06.nc</FilePath>
-    <Styles>wave_direction</Styles>
+    <Styles>wave_direction_and_wave_height</Styles>
     <Dimension name="forecast_reference_time" units="ISO8601" type="reference_time">reference_time</Dimension>
     <Dimension name="time" units="ISO8601" interval="PT1H" default="forecast_reference_time+PT1H" type="time">time</Dimension>
     <Dimension name="msl" units=" " default="min" type="vertical" hidden="true">mean_sea_level</Dimension>
