@@ -210,7 +210,7 @@ namespace CT {
         break;
       }
     }
-    for (size_t j = plength - 1; j > 0; j--) {
+    for (int j = plength - 1; j >= 0; j--) {
       if (trimWhiteSpace ? value[j] != ' ' && value[j] != '\n' && value[j] != '\r' : value[j] != ' ') {
         e = j;
         break;
