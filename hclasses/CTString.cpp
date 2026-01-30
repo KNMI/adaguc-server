@@ -495,7 +495,7 @@ namespace CT {
   std::string basename(std::string input) { return input.substr(input.find_last_of("/\\") + 1); }
 } /* namespace CT */
 
-bool equalsIgnoreCase(std::string str1, std::string str2) {
+bool equalsIgnoreCase(const std::string str1, const std::string str2) {
   if (str1.length() != str2.length()) return false;
   for (size_t i = 0; i < str1.length(); ++i) {
     if (tolower(str1[i]) != tolower(str2[i])) return false;

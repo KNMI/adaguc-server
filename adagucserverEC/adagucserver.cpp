@@ -73,8 +73,6 @@ int main(int argc, char **argv, char **envp) {
   proj_clear_cache();
   BBOXProjectionClearCache();
 
-  CDBDebug("%s", traceTimingsGetReport().c_str());
-
   closeLogFile();
 
   return status;
