@@ -21,10 +21,7 @@ PointStyle getPointStyle(CServerConfig::XMLE_Point *pointCfg, CServerConfig::XML
 
       .discRadius = 8,
       .textRadius = 16,
-
-      .angleStart = -90,
-      .angleStep = 180,
-      .useAngles = false,
+      .dot = false,
 
       .textFormat = "%0.1f",
       .plotStationId = false,
@@ -71,13 +68,11 @@ PointStyle getPointStyle(CServerConfig::XMLE_Point *pointCfg, CServerConfig::XML
   if (attr.textradius.empty() == false) {
     pointStyle.textRadius = attr.textradius.toDouble();
   }
-  if (attr.anglestart.empty() == false) {
-    pointStyle.angleStart = attr.anglestart.toDouble();
-    pointStyle.useAngles = true;
-  }
-  if (attr.anglestep.empty() == false) {
-    pointStyle.angleStep = attr.anglestep.toDouble();
-    pointStyle.useAngles = true;
+
+  if (attr.dot.empty() == false) {
+    if (attr.dot.equalsIgnoreCase("true")) {
+      pointStyle.dot = true;
+    }
   }
 
   if (attr.textformat.empty() == false) {

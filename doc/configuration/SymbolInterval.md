@@ -32,7 +32,7 @@ Configuration:
   <SymbolInterval min="3" max="4" file="/home/vreedede/nob/web/WWWRADAR/bolt1_orange.png"/>
   <SymbolInterval min="4" max="5" file="/home/vreedede/nob/web/WWWRADAR/bolt2_orange.png"/>
   <Point pointstyle="symbol" fillcolor="#000000FF" textcolor="#FFFFFFFF" linecolor="#000000A0" discradius="16" 
-      dot="false" anglestart="0" anglestep="120" fontsize="12" textformat="%0.1f"/>
+      dot="false" fontsize="12" textformat="%0.1f"/>
 </Style>
 ```
 
@@ -55,7 +55,7 @@ Binary_and example: Combines images based on binary operator &
     <SymbolInterval binary_and="16" file="/ssd1/adaguc/btd300/symbols/btdsensor/16.png"/>
     <SymbolInterval binary_and="32" file="/ssd1/adaguc/btd300/symbols/btdsensor/32.png"/>
     <Point pointstyle="symbol" fillcolor="#000000FF" textcolor="#FFFFFFFF" linecolor="#000000A0" discradius="16" 
-         dot="false" anglestart="0" anglestep="120" fontsize="12" textformat="%0.1f"/>
+         dot="false" fontsize="12" textformat="%0.1f"/>
     <NameMapping name="point"   title="Sensor warning indicator" abstract="Draw status of BTD sensor with flash detections"/>
     <LegendGraphic value="/ssd1/adaguc/btd300/symbols/btd300legend.png"/>
   </Style>
@@ -86,6 +86,6 @@ This would look like:
   <Legend>bluewhitered</Legend>
   <SymbolInterval file="/home/vreedede/adaguc/marker.png" offset_x="0" offset_y="-8"/>
   <Point pointstyle="symbol" fillcolor="#000000FF" textcolor="#FFFFFFFF" linecolor="#000000A0" discradius="16" 
-      dot="false" anglestart="0" anglestep="120" fontsize="12" textformat="%0.1f" plotstationid="true" />
+      dot="false" fontsize="12" textformat="%0.1f" plotstationid="true" />
 </Style>
 ```

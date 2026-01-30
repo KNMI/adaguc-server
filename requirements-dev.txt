@@ -35,7 +35,7 @@ mypy-extensions==1.1.0
     # via black
 orderly-set==5.5.0
     # via deepdiff
-packaging==25.0
+packaging==26.0
     # via
     #   -c requirements.txt
     #   black
