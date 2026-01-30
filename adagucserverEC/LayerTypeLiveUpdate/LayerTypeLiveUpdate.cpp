@@ -60,7 +60,7 @@ int layerTypeLiveUpdateRender(CDataSource *incomingDataSource, CServerParams *sr
     CDFObject *cdfObject = new CDFObject();
 
     // Make x,y (why can this value be anything?)
-    int nx = 1, ny = 1;
+    int nx = 2, ny = 2;
     CDF::Dimension *dimX = new CDF::Dimension();
     dimX = new CDF::Dimension();
     dimX->name = "x";

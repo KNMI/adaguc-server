@@ -347,7 +347,7 @@ void CDataReader::copyEPSGCodeFromProjectionVariable(CDataSource *dataSource, co
     if (this->_enableReporting) {
       CREPORT_INFO_NODOC(CT::string("Using EPSG_code defined in projection variable ") + projVar->name, CReportMessage::Categories::GENERAL);
     }
-    dataSource->nativeEPSG.copy((char *)epsgAttr->data);
+    dataSource->nativeEPSG = epsgAttr->getDataAsString();
   } else {
     // Make a projection code based on PROJ4: namespace
     if (this->_enableReporting) {
@@ -974,8 +974,8 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
   }
 
   if (singleCellMode) {
-    dataSource->dWidth = 2;
-    dataSource->dHeight = 2;
+    dataSource->dWidth = 1;
+    dataSource->dHeight = 1;
     start[dataSource->dimXIndex] = x;
     start[dataSource->dimYIndex] = y;
     count[dataSource->dimXIndex] = 1;

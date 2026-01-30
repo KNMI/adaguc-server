@@ -85,7 +85,7 @@ private:
 
 public:
   double dfResX, dfResY;
-  int dFound_BBOX;
+  int dFound_BBOX = 0;
   double dX, dY;
   bool verbose = false;
   std::vector<CT::string> requestedLayerNames;
