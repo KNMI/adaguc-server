@@ -23,7 +23,7 @@
   <!-- WCS settings -->
   <WCS>
     <Title>ADAGUC WCS Service</Title>
-    <Label>wcsLabel</Label>
+    
   </WCS>
 
   <!-- WCSFormat -->

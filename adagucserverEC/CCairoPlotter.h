@@ -37,7 +37,7 @@
 #include <png.h>
 #include <cairo.h>
 #include "CDebugger.h"
-#include "CTypes.h"
+#include "CTString.h"
 #include <ft2build.h>
 #include <freetype/freetype.h>
 #include <freetype/ftglyph.h>
@@ -45,7 +45,7 @@
 #include <freetype/fttrigon.h>
 #include FT_FREETYPE_H
 #include <stdio.h>
-#include <math.h>
+#include <cmath>
 #include <cstdint>
 #include "CColor.h"
 

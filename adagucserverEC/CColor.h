@@ -29,8 +29,8 @@
 
 #ifndef CCOLOR_H
 #define CCOLOR_H
-class CColor {
-public:
+struct CColor {
+
   unsigned char r, g, b, a;
   CColor() {
     r = 0;
@@ -45,6 +45,14 @@ public:
     this->a = a;
   }
   CColor(const char *color) { parse(color); }
+
+  CColor(std::string color) { parse(color.c_str()); }
+
+  CColor &operator=(const char *color) {
+    this->parse(color);
+    return *this;
+  }
+
   CT::string c_str() {
     CT::string r;
     r.print("#%s%s%s%s", CT::string::getHex(this->r).c_str(), CT::string::getHex(this->g).c_str(), CT::string::getHex(this->b).c_str(), CT::string::getHex(this->a).c_str());

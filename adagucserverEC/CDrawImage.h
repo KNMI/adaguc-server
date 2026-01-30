@@ -29,7 +29,7 @@
 #include <map>
 #include <iostream>
 #include "CDebugger.h"
-#include "CTypes.h"
+#include "CTString.h"
 #include "CColor.h"
 #include "Definitions.h"
 #include "CStopWatch.h"
@@ -40,7 +40,7 @@
 #include "Types/GeoParameters.h"
 #include "CServerError.h"
 #include "CServerConfig_CPPXSD.h"
-#include <math.h>
+#include <cmath>
 // #include <png.h>
 #include <gd.h>
 #include "gdfontl.h"

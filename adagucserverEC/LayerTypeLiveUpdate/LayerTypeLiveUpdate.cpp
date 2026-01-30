@@ -52,7 +52,7 @@ void layerTypeLiveUpdatePopulateDataSource(CDataSource *dataSource, CServerParam
   CDFObject *cdfObject = new CDFObject();
 
   // Make x,y (why can this value be anything?)
-  int nx = 1, ny = 1;
+  int nx = 2, ny = 2;
   CDF::Dimension *dimX = new CDF::Dimension();
   dimX = new CDF::Dimension();
   dimX->name = "x";
@@ -246,7 +246,7 @@ int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(MetadataLayer *metada
 
   LiveUpdateTimeRange range = calculateLiveUpdateTimeRange(timeResolution.c_str(), offset.c_str());
 
-  timeInstance.init("seconds since 1970", "standard");
+  timeInstance.init("seconds since 1970-01-01", "standard");
   double epochTime = timeInstance.getEpochTimeFromDateString(CTime::currentDateTime());
   double defaultOffset = timeInstance.quantizeTimeToISO8601(epochTime, timeResolution.c_str(), "low");
   CT::string defaultTime = timeInstance.dateToISOString(timeInstance.offsetToDate(defaultOffset));

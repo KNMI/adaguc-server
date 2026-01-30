@@ -283,8 +283,8 @@ public:
 
             variable->freeData();
 
-            size_t start[variable->dimensionlinks.size() + 2], count[variable->dimensionlinks.size() + 2];
-            ptrdiff_t stride[variable->dimensionlinks.size() + 2];
+            size_t start[variable->dimensionlinks.size()], count[variable->dimensionlinks.size()];
+            ptrdiff_t stride[variable->dimensionlinks.size()];
 
             for (size_t j = 0; j < variable->dimensionlinks.size(); j++) {
               start[j] = 0;
@@ -294,26 +294,6 @@ public:
             /*       start[dataSource->dimXIndex] = projCacheInfo.imx;
                    start[dataSource->dimYIndex] = projCacheInfo.imy;
                */
-
-            for (int i = 0; i < request->numDims; i++) {
-              CT::string varname = request->dimensions[i]->name;
-              int netcdfDimIndex = -1;
-              try {
-
-                if (varname.equals("time")) {
-                  varname = "time_obs";
-                }
-                variable->getDimensionIndex(varname.c_str());
-              } catch (int e) {
-                CDBError("Unable to find dimension [%s]", varname.c_str());
-                throw(__LINE__);
-              }
-              start[netcdfDimIndex] = request->dimensions[i]->start;
-              count[netcdfDimIndex] = request->dimensions[i]->values.size();
-#ifdef CMakeEProfile_DEBUG
-              CDBDebug(">  %d %s %d %d", i, varname.c_str(), request->dimensions[i]->start, request->dimensions[i]->values.size());
-#endif
-            }
 
 #ifdef CMakeEProfile_DEBUG
             for (size_t i = 0; i < variable->dimensionlinks.size(); i++) {
@@ -403,9 +383,7 @@ public:
 };
 const char *EProfileUniqueRequests::className = "EProfileUniqueRequests";
 
-int CMakeEProfile::MakeEProfile(CDrawImage *drawImage, CImageWarper *imageWarper, std::vector<CDataSource *> dataSources, int dataSourceIndex, int dX, int dY, CT::string *eProfileJson) {
-  CDataSource *dataSource = dataSources[dataSourceIndex];
-
+int CMakeEProfile::MakeEProfile(CDrawImage *drawImage, CImageWarper *imageWarper, CDataSource *dataSource, int dX, int dY, CT::string *eProfileJson) {
   EProfileUniqueRequests uniqueRequest;
   /**
    * DataPostProc: Here our datapostprocessor comes into action!
@@ -559,7 +537,7 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
   }
 
   if (foundTimeDim != -1) {
-    auto timeEntries = dataSource->srvParams->requestDims[foundTimeDim]->value.splitToStack("/");
+    auto timeEntries = dataSource->srvParams->requestDims[foundTimeDim]->value.split("/");
     if (timeEntries.size() == 2) {
 #ifdef CMakeEProfile_DEBUG
       CDBDebug("time=%s", dataSource->srvParams->requestDims[foundTimeDim]->value.c_str());
@@ -578,7 +556,7 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
   }
 
   if (foundElevationDim != -1) {
-    auto elevationEntries = dataSource->srvParams->requestDims[foundElevationDim]->value.splitToStack("/");
+    auto elevationEntries = dataSource->srvParams->requestDims[foundElevationDim]->value.split("/");
     if (elevationEntries.size() == 2) {
 #ifdef CMakeEProfile_DEBUG
       CDBDebug("elevation=%s", dataSource->srvParams->requestDims[foundElevationDim]->value.c_str());

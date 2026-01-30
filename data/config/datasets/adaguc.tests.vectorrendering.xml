@@ -96,7 +96,7 @@
     <FilePath filter="">{ADAGUC_PATH}data/datasets/harmonie_wind_grid_30x30.nc</FilePath>
     <Dimension name="time" units="ISO8601" default="min">time</Dimension>
     <Dimension name="forecast_reference_time" units="ISO8601">reference_time</Dimension>
-    <Styles>windbarbs_kts_shaded_withbarbs_for_grids,winddiscs_for_grids,windarrows_for_grids</Styles>
+    <Styles>windbarbs_kts_shaded_withbarbs_for_grids,winddiscs_for_grids,windarrows_for_grids,vectors_with_striding</Styles>
     <!--
       convert_uv_components is a data postprocessor to transform grid relative x and y components of a vector to relative to north components. This uses a jacobian transformation.
       This processor will add four more dataobjects to the datasource. The two original components are now last. The new one dataobjects are:
@@ -107,4 +107,15 @@
     -->
     <DataPostProc algorithm="convert_uv_components"/>
   </Layer>
+
+  <Style name="vectors_with_striding">
+    <!-- The test "test_WMSGetMap_windbarbs_on_gridded_netcdf_striding_offset" request this style.
+    The a="150" causes a striding with different x and y steps. -->
+
+    <Vector min="0" max="8"   vectorstyle="barb" linewidth="0" linecolor="#000000" plotvalue="true" />
+    <Vector min="8" max="10.8"  vectorstyle="barb" linewidth="1.5" outlinewidth="4" fontsize="15" outlinecolor="#000000"  linecolor="#FFFFFF" plotvalue="true" textcolor="#FFFFFF" />
+    <Vector min="10.8"          vectorstyle="barb" linewidth="0" linecolor="#00FF00" plotvalue="true" textcolor="#111111"/>
+    <RenderSettings drawgrid="false" />
+    <DataPostProc algorithm="pointsfromgrid" select="speed_component,direction_component" a="150"/>
+  </Style>
 </Configuration>

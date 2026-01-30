@@ -1,15 +1,18 @@
 import asyncio
 import datetime
 import json
+import logging
 import os
 from io import BytesIO
 import shutil
 from .CGIRunner import CGIRunner
 import re
 from lxml import etree, objectify
-import urllib.request
 from PIL import Image
 import subprocess
+from deepdiff import DeepDiff
+
+logging.getLogger('PIL').setLevel(logging.WARNING)
 
 ADAGUC_PATH = os.getenv("ADAGUC_PATH", " ")
 
@@ -196,6 +199,7 @@ class AdagucTestTools:
         Returns:
             bool: True if the difference is "small enough"
         """
+
         expected_image = Image.open(expectedImagePath)
         returned_image = Image.open(returnedImagePath)
         if expected_image.size != returned_image.size:
@@ -361,7 +365,7 @@ class AdagucTestTools:
                 % (testresultFileLocation, expectedOutputFileLocation))
 
         return result == expect
-    
+
     def compareFile(self, testresultFileLocation,
                                   expectedOutputFileLocation):
         a = AdagucTestTools().readfromfile(testresultFileLocation)

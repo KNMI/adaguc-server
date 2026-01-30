@@ -25,13 +25,13 @@
 
 #ifndef CDATASOURCE_H
 #define CDATASOURCE_H
-#include <math.h>
+#include <cmath>
 #include "CXMLSerializerInterface.h"
 #include "CServerParams.h"
 #include "CServerConfig_CPPXSD.h"
 #include "CDebugger.h"
 #include "Definitions.h"
-#include "CTypes.h"
+#include "CTString.h"
 #include "CCDFDataModel.h"
 #include "COGCDims.h"
 #include "CStopWatch.h"
@@ -90,6 +90,7 @@ private:
   DEF_ERRORFUNCTION();
 
 public:
+  bool debug = false;
   CT::string headerFilename;
   struct StatusFlag {
     CT::string meaning;
@@ -98,7 +99,7 @@ public:
   bool dimsAreAutoConfigured;
 
 private:
-  CT::PointerList<CStyleConfiguration *> *_styles;
+  std::vector<CStyleConfiguration *> *_styles;
   CStyleConfiguration *_currentStyle;
 
 public:
@@ -252,11 +253,6 @@ public:
   CT::string nativeProj4;
   bool dataSourceOwnsDataObject = false;
 
-  // Used for scaling the legend to the palette range of 0-240
-  /*float legendScale,legendOffset,legendLog,legendLowerRange,legendUpperRange;
-  bool legendValueRange;
-  CT::string styleName;*/
-
   // TODO KVP and metaDataItems can be moved out to GDAL datawriter
   class KVP {
   public:
@@ -337,6 +333,7 @@ public:
   GeoParameters getGeo();
 
   DataObject *getDataObjectByName(const char *name);
+  DataObject *getDataObjectByName(std::string name);
   DataObject *getDataObject(int j);
 
   DataObject *getFirstAvailableDataObject();
@@ -365,7 +362,7 @@ public:
   /**
    * IMPORTANT
    */
-  CT::PointerList<CStyleConfiguration *> *getStyleListForDataSource(CDataSource *dataSource);
+  std::vector<CStyleConfiguration *> *getStyleListForDataSource(CDataSource *dataSource);
 
   static void calculateScaleAndOffsetFromMinMax(float &scale, float &offset, float min, float max, float log);
   static std::vector<CT::string> getLegendListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style *style);

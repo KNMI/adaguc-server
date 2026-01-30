@@ -225,16 +225,15 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
 #endif
 
   // Make a list of variables which will be available as 2D fields
-  CT::StackList<CT::string> varsToConvert;
+  std::vector<CT::string> varsToConvert;
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
     if (var->isDimension == false) {
-      // if(var->getType()!=CDF_STRING)
       {
         if (!var->name.equals("time2D") && !var->name.equals("time") && !var->name.equals("lon") && !var->name.equals("lat") && !var->name.equals("x") && !var->name.equals("y") &&
             !var->name.equals("lat_bnds") && !var->name.equals("lon_bnds") && !var->name.equals("custom") && !var->name.equals("projection") && !var->name.equals("product") &&
             !var->name.equals("iso_dataset") && !var->name.equals("tile_properties") && !var->name.equals("forecast_reference_time")) {
-          varsToConvert.add(CT::string(var->name.c_str()));
+          varsToConvert.push_back(CT::string(var->name.c_str()));
         }
         if (var->name.equals("projection")) {
           var->setAttributeText("ADAGUC_SKIP", "true");
@@ -300,17 +299,18 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
     }
     new2DVar->setAttributeText("ADAGUC_POINT", "true");
 
-    // if(new2DVar->getType()!=CDF_STRING){
-    if (new2DVar->getAttributeNE("_FillValue") == NULL) {
-      float f = -9999999;
-      new2DVar->setAttribute("_FillValue", CDF_FLOAT, &f, 1);
-    }
-    //}
+    int typeId = pointVar->getType();
+    new2DVar->setAttribute("ADAGUC_ORGPOINT_TYPE", CDF_INT, &typeId, 1);
+    new2DVar->setAttributeText("ADAGUC_ORGPOINT_VARNAME", pointVar->name);
 
     // The swath variable is not directly plotable, so skip it
     pointVar->setAttributeText("ADAGUC_SKIP", "true");
     pointVar->setAttributeText("ADAGUC_ORGPOINT", "true");
 
+    if (new2DVar->getAttributeNE("_FillValue") == NULL) {
+      float f = -9999999;
+      new2DVar->setAttribute("_FillValue", CDF_FLOAT, &f, 1);
+    }
     // Scale and offset are already applied
     new2DVar->removeAttribute("scale_factor");
     new2DVar->removeAttribute("add_offset");
@@ -367,7 +367,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
     if (pointVar[d] == NULL) {
       CDBWarning("Unable to find orignal swath variable with name %s", origSwathName.c_str());
 
-      // return 1;
+      return 1;
     }
   }
 
@@ -788,6 +788,12 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
     CDBDebug("Date numStations = %d", numStations);
 #endif
 
+    /**
+     * The following code is for
+     * https://github.com/KNMI/adaguc-server/blob/master/doc/configuration/Point.md#pointstyle-zoomablepoint
+     *
+     * TODO: https://github.com/KNMI/adaguc-server/issues/586
+     */
     float discRadius = 8;
     float discRadiusX = discRadius;
     float discRadiusY = discRadius;
@@ -795,12 +801,11 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
     float discSize = 1;
     if (dataSource != NULL) {
       CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-      if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL) {
-        if (styleConfiguration->styleConfig->Point.size() == 1) {
-
-          if (!styleConfiguration->styleConfig->Point[0]->attr.discradius.empty()) {
+      if (styleConfiguration != NULL) {
+        for (auto pointInterval : styleConfiguration->pointIntervals) {
+          if (!pointInterval->attr.discradius.empty()) {
             hasZoomableDiscRadius = true;
-            discSize = styleConfiguration->styleConfig->Point[0]->attr.discradius.toFloat();
+            discSize = pointInterval->attr.discradius.toFloat();
           }
         }
       }

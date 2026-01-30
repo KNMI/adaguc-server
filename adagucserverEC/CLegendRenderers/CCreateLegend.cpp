@@ -19,15 +19,17 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
   if (dataSource->cfgLayer != NULL) {
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
     if (styleConfiguration != NULL) {
-      if (styleConfiguration->styleConfig != NULL) {
-        if (styleConfiguration->styleConfig->LegendGraphic.size() == 1) {
-          if (styleConfiguration->styleConfig->LegendGraphic[0]->attr.value.empty() == false) {
-            const char *fileName = styleConfiguration->styleConfig->LegendGraphic[0]->attr.value.c_str();
-            legendImage->destroyImage();
-            legendImage->createImage(fileName);
-            return 0;
-          }
-        }
+
+      auto drawSettings = getDrawFunctionSettings(dataSource, legendImage, styleConfiguration);
+      if (drawSettings.drawgrid == false) {
+        legendImage->crop(4);
+        return 0;
+      }
+      if (styleConfiguration->legendGraphic.attr.value.empty() == false) {
+        const char *fileName = styleConfiguration->legendGraphic.attr.value.c_str();
+        legendImage->destroyImage();
+        legendImage->createImage(fileName);
+        return 0;
       }
     }
   }
@@ -72,7 +74,7 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
     legendImage->crop(4);
     return 0;
   }
-
+  // If no min or mas is set, detect it. Also detect it if the legend has no fixed/min/max
   if (styleConfiguration->legendScale == 0.0f || styleConfiguration->legendHasFixedMinMax == false) {
     estimateMinMax = true;
   } else {
@@ -134,14 +136,17 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
     }
   }
 
+  if (styleConfiguration->renderMethod == RM_GENERIC && styleConfiguration->shadeIntervals.size() > 0) {
+    legendType = discrete;
+  }
+
   if (styleConfiguration->featureIntervals.size() > 0) {
     legendType = discrete;
   }
 
-  if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL && styleConfiguration->styleConfig->RenderSettings.size() == 1) {
-    CT::string renderHint = styleConfiguration->styleConfig->RenderSettings[0]->attr.renderhint;
+  for (auto renderSetting : styleConfiguration->renderSettings) {
     /* When using the nearest or bilinear rendermethod, discrete classes defined by ShadeInterval can be used if the renderhint is set to RENDERHINT_DISCRETECLASSES */
-    if (renderHint.equals(RENDERHINT_DISCRETECLASSES)) {
+    if (renderSetting->attr.renderhint.equals(RENDERHINT_DISCRETECLASSES)) {
       legendType = discrete;
     }
   }

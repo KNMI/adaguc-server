@@ -93,7 +93,7 @@ public:
 
     if (_definedIntervals != NULL) {
       CT::string defIntervalString = _definedIntervals;
-      auto defIntervalList = defIntervalString.splitToStack(",");
+      auto defIntervalList = defIntervalString.split(",");
       for (size_t j = 0; j < defIntervalList.size(); j++) {
         definedIntervals.push_back(defIntervalList[j].toFloat());
       }

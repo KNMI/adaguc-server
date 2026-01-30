@@ -167,7 +167,7 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
 
     CImageWarper warper;
 
-    status = warper.initreproj(sourceGeo.crs, destGeo, &dataSource->srvParams->cfg->Projection);
+    status = warper.initreproj(sourceGeo.crs.c_str(), destGeo, &dataSource->srvParams->cfg->Projection);
     if (status != 0) {
       CDBError("Unable to initialize projection");
       return 1;
@@ -209,8 +209,8 @@ void CDPPWFP::drawFunction(int x, int y, float, GDWState &warperState, PostProcD
 
     size_t selectedQ = 1; // Second quantile, which is currently 0.95
     size_t selectedH = 0; // Currently only the first (10 meter)
-    size_t selectedX = warperState.sourceDataPX;
-    size_t selectedY = warperState.sourceDataPY;
+    size_t selectedX = warperState.sourceIndexX;
+    size_t selectedY = warperState.sourceIndexY;
     size_t gridLocationPointer = selectedX + selectedY * numX;
     size_t windHeightPointer = selectedH * numY * numX;
     size_t windQuantilePointer = selectedQ * numZ * numY * numX;

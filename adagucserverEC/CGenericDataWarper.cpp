@@ -28,260 +28,279 @@
 #include "GenericDataWarper/gdwFindPixelExtent.h"
 #include "utils/projectionUtils.h"
 
-// #define GenericDataWarper_DEBUG
-
-template <typename T>
-int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, GeoParameters &sourceGeoParams, GeoParameters &destGeoParams,
-                              const std::function<void(int, int, T, GDWState &warperState)> &drawFunction) {
-
-  warperState.sourceData = _sourceData;
-  warperState.destDataWidth = destGeoParams.width;
-  warperState.destDataHeight = destGeoParams.height;
-  warperState.sourceDataWidth = sourceGeoParams.width;
-  warperState.sourceDataHeight = sourceGeoParams.height;
-
-#ifdef GenericDataWarper_DEBUG
-  CDBDebug("render");
-#endif
-
-  int imageHeight = destGeoParams.height;
-  int imageWidth = destGeoParams.width;
-
-  // Reproj back and forth sourceGeoParams boundingbox
-  double y1 = sourceGeoParams.bbox.bottom;
-  double y2 = sourceGeoParams.bbox.top;
-  double x1 = sourceGeoParams.bbox.left;
-  double x2 = sourceGeoParams.bbox.right;
-
-#ifdef GenericDataWarper_DEBUG
-  CDBDebug("sourceGeoParams.dfBBOX %f, %f, %f, %f", sourceGeoParams.bbox.left, sourceGeoParams.bbox.bottom, sourceGeoParams.bbox.right, sourceGeoParams.bbox.top);
-  CDBDebug("destGeoParams.dfBBOX %f, %f, %f, %f", destGeoParams.bbox.left, destGeoParams.bbox.bottom, destGeoParams.bbox.right, destGeoParams.bbox.top);
-#endif
-  if (y2 < y1) {
-    if (y1 > -360 && y2 < 360 && x1 > -720 && x2 < 720) {
-      if (isLonLatProjection(&sourceGeoParams.crs) == false) {
+// Reproj back and forth boundingbox in GeoParameters to make valid proj coordinates which always have the same range.
+f8box reprojBBox(GeoParameters &input, CImageWarper *warper) {
+  f8box output = input.bbox;
+  if (input.bbox.top < input.bbox.bottom) {
+    if (input.bbox.bottom > -360 && input.bbox.top < 360 && input.bbox.left > -720 && input.bbox.right < 720) {
+      if (isLonLatProjection(&input.crs) == false) {
         double checkBBOX[4];
-        sourceGeoParams.bbox.toArray(checkBBOX);
-
-        // CDBDebug("Current BBOX:  %f %f %f %f",sourceGeoParams.bbox.left,sourceGeoParams.bbox.bottom,sourceGeoParams.bbox.right,sourceGeoParams.bbox.top);
+        input.bbox.toArray(checkBBOX);
         bool hasError = false;
         if (warper->reprojpoint_inv(checkBBOX[0], checkBBOX[1]) != 0) hasError = true;
         if (warper->reprojpoint(checkBBOX[0], checkBBOX[1]) != 0) hasError = true;
-
         if (warper->reprojpoint_inv(checkBBOX[2], checkBBOX[3]) != 0) hasError = true;
         if (warper->reprojpoint(checkBBOX[2], checkBBOX[3]) != 0) hasError = true;
-
         if (hasError == false) {
-          sourceGeoParams.bbox = checkBBOX;
+          output = checkBBOX;
         }
       }
     }
   }
+  return output;
+}
 
-  double dfSourceExtW = (sourceGeoParams.bbox.right - sourceGeoParams.bbox.left);
-  double dfSourceExtH = (sourceGeoParams.bbox.top - sourceGeoParams.bbox.bottom);
-  double dfSourceW = double(sourceGeoParams.width);
-  double dfSourceH = double(sourceGeoParams.height);
+// Make a projection grid. The coordinates are all converted at once from source to destination
+ProjectionGrid *makeProjection(double halfCell, CImageWarper *warper, i4box &pixelExtentBox, GeoParameters &sourceGeoParams, GeoParameters &, GDWState &warperState) {
+  int dataWidth = pixelExtentBox.span().x;
+  int dataHeight = pixelExtentBox.span().y;
+  size_t dataSize = (dataWidth + 1) * (dataHeight + 1);
+  ProjectionGrid *projGrid = new ProjectionGrid();
+  projGrid->initSize(dataSize);
 
-  double dfDestW = double(destGeoParams.width);
-  double dfDestH = double(destGeoParams.height);
+  double dfSourcedExtW = sourceGeoParams.bbox.span().x / double(warperState.sourceGridWidth);
+  double dfSourcedExtH = sourceGeoParams.bbox.span().y / double(warperState.sourceGridHeight);
+  for (int y = 0; y < dataHeight + 1; y++) {
+    for (int x = 0; x < dataWidth + 1; x++) {
+      size_t p = x + y * (dataWidth + 1);
+      double valX = dfSourcedExtW * (x + halfCell + pixelExtentBox.left) + sourceGeoParams.bbox.left;
+      double valY = dfSourcedExtH * (y - halfCell + pixelExtentBox.bottom) + sourceGeoParams.bbox.bottom;
+      projGrid->px[p] = valX;
+      projGrid->py[p] = valY;
+      projGrid->skip[p] = false;
+    }
+  }
+  if (warper->isProjectionRequired()) {
+    if (proj_trans_generic(warper->projSourceToDest, PJ_FWD, projGrid->px, sizeof(double), dataSize, projGrid->py, sizeof(double), dataSize, nullptr, 0, 0, nullptr, 0, 0) != dataSize) {
+      CDBDebug("Unable to do pj_transform");
+    }
+  }
+  return projGrid;
+}
 
-  double dfSourcedExtW = dfSourceExtW / (dfSourceW);
-  double dfSourcedExtH = dfSourceExtH / (dfSourceH);
+ProjectionGrid *makeStridedProjection(double halfCell, CImageWarper *warper, i4box &pixelExtentBox, GeoParameters &sourceGeoParams, GeoParameters &, GDWState &warperState) {
+  int projStrideFactor = 8;
+  int dataWidth = pixelExtentBox.span().x;
+  int dataHeight = pixelExtentBox.span().y;
+  ProjectionGrid *projGrid = new ProjectionGrid();
+  projGrid->initSize((dataWidth + 1) * (dataHeight + 1));
+  double dfSourcedExtW = sourceGeoParams.bbox.span().x / double(warperState.sourceGridWidth);
+  double dfSourcedExtH = sourceGeoParams.bbox.span().y / double(warperState.sourceGridHeight);
+  size_t dataWidthStrided = ceil(double(dataWidth) / projStrideFactor);
+  size_t dataHeightStrided = ceil(double(dataHeight) / projStrideFactor);
+  size_t dataSizeStrided = (dataWidthStrided + 2) * (dataHeightStrided + 2);
+
+  double *pxStrided = new double[dataSizeStrided];
+  double *pyStrided = new double[dataSizeStrided];
+
+  /* TODO faster init */
+  for (int y = 0; y < dataHeight + 1; y++) {
+    for (int x = 0; x < dataWidth + 1; x++) {
+      size_t p = x + y * (dataWidth + 1);
+      projGrid->px[p] = NAN;
+      projGrid->py[p] = NAN;
+      projGrid->skip[p] = true;
+    }
+  }
+  for (size_t y = 0; y < dataHeightStrided; y++) {
+    for (size_t x = 0; x < dataWidthStrided; x++) {
+      size_t pS = x + y * dataWidthStrided;
+
+      double valX = dfSourcedExtW * (x * projStrideFactor + halfCell + pixelExtentBox.left) + sourceGeoParams.bbox.left;
+      double valY = dfSourcedExtH * (y * projStrideFactor - halfCell + pixelExtentBox.bottom) + sourceGeoParams.bbox.bottom;
+      pxStrided[pS] = valX;
+      pyStrided[pS] = valY;
+    }
+  }
+
+  if (proj_trans_generic(warper->projSourceToDest, PJ_FWD, pxStrided, sizeof(double), dataSizeStrided, pyStrided, sizeof(double), dataSizeStrided, nullptr, 0, 0, nullptr, 0, 0) != dataSizeStrided) {
+    CDBDebug("Unable to do pj_transform");
+  }
+
+  // CDBDebug("destGeoParams.bbox.bottom %f %f", destGeoParams.bbox.bottom, destGeoParams.bbox.top);
+  for (int y = 0; y < dataHeight + 1; y++) {
+    for (int x = 0; x < dataWidth + 1; x++) {
+      size_t p = x + y * (dataWidth + 1);
+      size_t pS = (x / projStrideFactor) + (y / projStrideFactor) * (dataWidthStrided);
+      size_t p0 = pS;
+      size_t p1 = pS + 1;
+      size_t p2 = pS + dataWidthStrided;
+      size_t p3 = pS + 1 + dataWidthStrided;
+
+      double sX = double(x % projStrideFactor) / double(projStrideFactor);
+      double sY = double(y % projStrideFactor) / double(projStrideFactor);
+      double x1 = pxStrided[p0] * (1 - sX) + pxStrided[p1] * sX;
+      double x2 = pxStrided[p2] * (1 - sX) + pxStrided[p3] * sX;
+      projGrid->px[p] = x1 * (1 - sY) + x2 * sY;
+      double y1 = pyStrided[p0] * (1 - sY) + pyStrided[p2] * sY;
+      double y2 = pyStrided[p1] * (1 - sY) + pyStrided[p3] * sY;
+      projGrid->py[p] = y1 * (1 - sX) + y2 * sX;
+      projGrid->skip[p] = false;
+      if (x < projStrideFactor || y < projStrideFactor || x >= dataWidth - projStrideFactor || y >= dataHeight - projStrideFactor) {
+        projGrid->px[p] = dfSourcedExtW * (x + halfCell + pixelExtentBox.left) + sourceGeoParams.bbox.left;
+        projGrid->py[p] = dfSourcedExtH * (y - halfCell + pixelExtentBox.bottom) + sourceGeoParams.bbox.bottom;
+        projGrid->skip[p] = false;
+        if (proj_trans_generic(warper->projSourceToDest, PJ_FWD, &projGrid->px[p], sizeof(double), 1, &projGrid->py[p], sizeof(double), 1, nullptr, 0, 0, nullptr, 0, 0) != 1) {
+          projGrid->skip[p] = true;
+        }
+      }
+    }
+  }
+  delete[] pyStrided;
+  delete[] pxStrided;
+  return projGrid;
+}
+
+// Transform the grid linearly. This is used in case projection are the same and is much efficienter then warping the grid.
+template <typename T>
+void linearTransformGrid(GDWState &warperState, bool useHalfCellOffset, CImageWarper *, void *, GeoParameters &sourceGeoParams, GeoParameters &destGeoParams,
+                         const std::function<void(int, int, T, GDWState &warperState)> &drawFunction) {
+  double halfCell = useHalfCellOffset ? 0.5 : 0;
+  double dfSourceExtW = sourceGeoParams.bbox.span().x;
+  double dfSourceExtH = sourceGeoParams.bbox.span().y;
+  double dfSourceW = warperState.sourceGridWidth;
+  double dfSourceH = warperState.sourceGridHeight;
+  double dfDestW = warperState.destGridWidth;
+  double dfDestH = warperState.destGridHeight;
   double dfSourceOrigX = sourceGeoParams.bbox.left;
   double dfSourceOrigY = sourceGeoParams.bbox.bottom;
+  double dfDestExtW = destGeoParams.bbox.span().x;
+  double dfDestExtH = -destGeoParams.bbox.span().y;
+  double dfDestOrigX = destGeoParams.bbox.left;
+  double dfDestOrigY = destGeoParams.bbox.top;
+  int PXExtentBasedOnSource[4] = {0, 0, warperState.sourceGridWidth, warperState.sourceGridHeight};
 
-  double dfDestExtW = destGeoParams.bbox.right - destGeoParams.bbox.left;
-  double dfDestExtH = destGeoParams.bbox.bottom - destGeoParams.bbox.top;
-  double multiDestX = double(imageWidth) / dfDestExtW;
+  if (PXExtentBasedOnSource[2] - PXExtentBasedOnSource[0] <= 0) return;
+  if (PXExtentBasedOnSource[3] - PXExtentBasedOnSource[1] <= 0) return;
 
-  double multiDestY = double(imageHeight) / dfDestExtH;
+  // Obtain pixelextent to avoid looping over all source grid cells which will never be used in the destination grid
+  i4box pixelspan;
+  pixelspan = PXExtentBasedOnSource;
+  auto source = sourceGeoParams.bbox;
+  auto dest = destGeoParams.bbox;
 
-  double dfDestOrigX = destGeoParams.bbox.left; //-0.5/multiDestX;;
-  double dfDestOrigY = destGeoParams.bbox.top;  //+0.5/multiDestY;;;
+  f8point span = source.span();
+  i4point wh = {.x = sourceGeoParams.width, .y = sourceGeoParams.height};
+  f8box newbox = {
+      .left = (dest.left - source.left) / span.x, .bottom = (dest.bottom - source.bottom) / span.y, .right = (dest.right - source.left) / span.x, .top = (dest.top - source.bottom) / span.y};
+  i4box newpixelspan = {.left = (int)floor(newbox.left * wh.x), .bottom = (int)floor(newbox.bottom * wh.y), .right = (int)ceil(newbox.right * wh.x), .top = (int)ceil(newbox.top * wh.y)};
+  newpixelspan.sort();
+  newpixelspan = {
+      .left = newpixelspan.left - 1,
+      .bottom = newpixelspan.bottom - 1,
+      .right = newpixelspan.right + 1,
+      .top = newpixelspan.top + 1,
 
-  // Determine source BBOX of based on destination grid
-#ifdef GenericDataWarper_DEBUG
-  CDBDebug("Creating px extent");
-#endif
+  };
+  newpixelspan.clip({.left = 0, .bottom = 0, .right = wh.x, .top = wh.y});
 
-  warperState.sourceDataWidth = sourceGeoParams.width;
-  warperState.sourceDataHeight = sourceGeoParams.height;
+  pixelspan = newpixelspan;
 
-  int PXExtentBasedOnSource[4];
+  for (int y = pixelspan.bottom; y < pixelspan.top; y++) {
+    for (int x = pixelspan.left; x < pixelspan.right; x++) {
+      double dfx = x + halfCell;
+      double dfy = y - halfCell; // Y is inverted
+      int sx1 = roundedLinearTransform(dfx, dfSourceW, dfSourceExtW, dfSourceOrigX, dfDestOrigX, dfDestExtW, dfDestW);
+      int sx2 = roundedLinearTransform(dfx + 1, dfSourceW, dfSourceExtW, dfSourceOrigX, dfDestOrigX, dfDestExtW, dfDestW);
+      int sy1 = roundedLinearTransform(dfy, dfSourceH, dfSourceExtH, dfSourceOrigY, dfDestOrigY, dfDestExtH, dfDestH);
+      int sy2 = roundedLinearTransform(dfy + 1, dfSourceH, dfSourceExtH, dfSourceOrigY, dfDestOrigY, dfDestExtH, dfDestH);
+      int sxw = floor(fabs(sx2 - sx1)) + 1;
+      int syh = floor(fabs(sy2 - sy1)) + 1;
+      if ((sx1 < -sxw && sx2 < -sxw) || (sy1 < -syh && sy2 < -syh) || (sx1 >= destGeoParams.width + sxw && sx2 >= destGeoParams.width + sxw) ||
+          (sy1 >= destGeoParams.height + syh && sy2 >= destGeoParams.height + syh)) {
+        continue;
+      }
 
-  PXExtentBasedOnSource[0] = 0;
-  PXExtentBasedOnSource[1] = 0;
-  PXExtentBasedOnSource[2] = warperState.sourceDataWidth;
-  PXExtentBasedOnSource[3] = warperState.sourceDataHeight;
+      warperState.sourceIndexX = x;
+      warperState.sourceIndexY = sourceGeoParams.height - 1 - y;
+      if (warperState.sourceIndexX < 0 || warperState.sourceIndexY < 0 || warperState.sourceIndexX >= warperState.sourceGridWidth || warperState.sourceIndexY >= warperState.sourceGridHeight) {
+        continue;
+      }
+      if (sx1 > sx2) {
+        std::swap(sx1, sx2);
+      }
+      if (sy1 > sy2) {
+        std::swap(sy1, sy2);
+      }
+      if (sy2 == sy1) sy2++;
+      if (sx2 == sx1) sx2++;
 
-  if (PXExtentBasedOnSource[2] - PXExtentBasedOnSource[0] <= 0) return 0;
-  if (PXExtentBasedOnSource[3] - PXExtentBasedOnSource[1] <= 0) return 0;
-  int dataWidth = PXExtentBasedOnSource[2] - PXExtentBasedOnSource[0];
-  int dataHeight = PXExtentBasedOnSource[3] - PXExtentBasedOnSource[1];
+      double h = double(sy2 - sy1);
+      double w = double(sx2 - sx1);
+      T value = ((T *)warperState.sourceGrid)[warperState.sourceIndexX + (warperState.sourceIndexY) * sourceGeoParams.width];
 
-  /* When geographical map projections are equal, just do a simple linear transformation */
-  if (warper->isProjectionRequired() == false) {
-
-    // Obtain pixelextent to avoid looping over all source grid cells which will never be used in the destination grid
-    i4box pixelspan;
-    pixelspan = PXExtentBasedOnSource;
-    auto source = sourceGeoParams.bbox;
-    auto dest = destGeoParams.bbox;
-    f8point span = source.span();
-    i4point wh = {.x = sourceGeoParams.width, .y = sourceGeoParams.height};
-    f8box newbox = {
-        .left = (dest.left - source.left) / span.x, .bottom = (dest.bottom - source.bottom) / span.y, .right = (dest.right - source.left) / span.x, .top = (dest.top - source.bottom) / span.y};
-    i4box newpixelspan = {.left = (int)round(newbox.left * wh.x), .bottom = (int)round(newbox.bottom * wh.y), .right = (int)round(newbox.right * wh.x), .top = (int)round(newbox.top * wh.y)};
-    newpixelspan.sort();
-    newpixelspan.clip({.left = 0, .bottom = 0, .right = wh.x, .top = wh.y});
-
-    pixelspan = newpixelspan;
-    // CDBDebug("newpixelspan %d %d %d %d", pixelspan2.left, pixelspan2.bottom, pixelspan2.right, pixelspan2.top);
-    // CDBDebug("pixelspan %d %d %d %d", pixelspan.left, pixelspan.bottom, pixelspan.right, pixelspan.top);
-
-    for (int y = pixelspan.bottom; y < pixelspan.top; y++) {
-      for (int x = pixelspan.left; x < pixelspan.right; x++) {
-        double dfx = x;
-        double dfy = y;
-        int sx1 = roundedLinearTransform(dfx, dfSourceW, dfSourceExtW, dfSourceOrigX, dfDestOrigX, dfDestExtW, dfDestW);
-        int sx2 = roundedLinearTransform(dfx + 1, dfSourceW, dfSourceExtW, dfSourceOrigX, dfDestOrigX, dfDestExtW, dfDestW);
-        int sy1 = roundedLinearTransform(dfy, dfSourceH, dfSourceExtH, dfSourceOrigY, dfDestOrigY, dfDestExtH, dfDestH);
-        int sy2 = roundedLinearTransform(dfy + 1, dfSourceH, dfSourceExtH, dfSourceOrigY, dfDestOrigY, dfDestExtH, dfDestH);
-        bool skip = false;
-        int sxw = floor(fabs(sx2 - sx1)) + 1;
-        int syh = floor(fabs(sy2 - sy1)) + 1;
-        // CDBDebug("%d %d %d, %d %d %d %d", x, y, sx1, sy1, sx2, sy2);
-        if (sx1 < -sxw && sx2 < -sxw) skip = true;
-        if (sy1 < -syh && sy2 < -syh) skip = true;
-        if (sx1 >= destGeoParams.width + sxw && sx2 >= destGeoParams.width + sxw) skip = true;
-        if (sy1 >= destGeoParams.height + syh && sy2 >= destGeoParams.height + syh) skip = true;
-        //
-
-        if (!skip) {
-          warperState.sourceDataPX = x;
-          warperState.sourceDataPY = sourceGeoParams.height - 1 - y;
-          T value = ((T *)warperState.sourceData)[warperState.sourceDataPX + (warperState.sourceDataPY) * sourceGeoParams.width];
-          int lx1, lx2, ly1, ly2;
-          if (sx1 > sx2) {
-            lx2 = sx1;
-            lx1 = sx2;
-          } else {
-            lx2 = sx2;
-            lx1 = sx1;
-          }
-          if (sy1 > sy2) {
-            ly2 = sy1;
-            ly1 = sy2;
-          } else {
-            ly2 = sy2;
-            ly1 = sy1;
-          }
-          if (ly2 == ly1) ly2++;
-          if (lx2 == lx1) lx2++;
-          for (int sjy = ly1; sjy < ly2; sjy++) {
-            for (int sjx = lx1; sjx < lx2; sjx++) {
-              warperState.tileDy = (sjy - ly1) / double(ly2 - ly1);
-              warperState.tileDx = (sjx - lx1) / double(lx2 - lx1);
-              warperState.destX = sjx;
-              warperState.destY = sjy;
-              // CDBDebug("%d %d %d %d  %f", sjx, sjy, warperState.sourceDataPX, warperState.sourceDataPY, value);
-              drawFunction(sjx, sjy, value, warperState);
-            }
+      for (int sjy = sy1; sjy < sy2; sjy++) {
+        for (int sjx = sx1; sjx < sx2; sjx++) {
+          if (sjx >= 0 && sjy >= 0 && sjx < warperState.destGridWidth && sjy < warperState.destGridHeight) {
+            warperState.sourceTileDy = (sjy - sy1) / h; // TODO: Check why sourceTileDy is upside down.
+            warperState.sourceTileDx = (sjx - sx1) / w;
+            warperState.destIndexX = sjx;
+            warperState.destIndexY = sjy;
+            drawFunction(sjx, sjy, value, warperState);
           }
         }
       }
     }
-    return 0;
   }
-#ifdef GenericDataWarper_DEBUG
-  CDBDebug("warp is required");
-#endif
+}
 
-  bool useStridingProjection = false;
-  int projStrideFactor = 16;
-  if (dataWidth * dataHeight > 1000 * 1000) {
-    useStridingProjection = true;
+// Warp the grid from the source projection to the destination projection.
+template <typename T>
+void warpTransformGrid(GDWState &warperState, ProjectionGrid *projectionGrid, bool useHalfCellOffset, CImageWarper *warper, void *, GeoParameters &sourceGeoParams, GeoParameters &destGeoParams,
+                       const std::function<void(int, int, T, GDWState &warperState)> &drawFunction) {
+
+  bool debug = false;
+  if (debug) {
+    CDBDebug("warpTransformGrid");
+  }
+  double halfCell = useHalfCellOffset ? 0.5 : 0;
+
+  double dfDestW = warperState.destGridWidth;
+  double dfDestH = warperState.destGridHeight;
+  double dfDestExtW = destGeoParams.bbox.span().x;
+  double dfDestExtH = -destGeoParams.bbox.span().y;
+  double multiDestX = dfDestW / dfDestExtW;
+  double multiDestY = dfDestH / dfDestExtH;
+  double dfDestOrigX = destGeoParams.bbox.left;
+  double dfDestOrigY = destGeoParams.bbox.top;
+  i4box pixelExtentBox = {0, 0, warperState.sourceGridWidth, warperState.sourceGridHeight};
+
+  if (pixelExtentBox.span().x <= 0 || pixelExtentBox.span().y <= 0) return;
+
+  int dataWidth = pixelExtentBox.span().x;
+  int dataHeight = pixelExtentBox.span().y;
+
+  if (debug) {
+    CDBDebug("warp is required");
   }
 
   size_t dataSize = (dataWidth + 1) * (dataHeight + 1);
 
-  double *px = new double[dataSize];
-  double *py = new double[dataSize];
-  char *skip = new char[dataSize];
-
-  if (!useStridingProjection) {
-    for (int y = 0; y < dataHeight + 1; y++) {
-      for (int x = 0; x < dataWidth + 1; x++) {
-        size_t p = x + y * (dataWidth + 1);
-        double valX = dfSourcedExtW * (x + PXExtentBasedOnSource[0]) + dfSourceOrigX;
-        double valY = dfSourcedExtH * (y + PXExtentBasedOnSource[1]) + dfSourceOrigY;
-        px[p] = valX;
-        py[p] = valY;
-        skip[p] = false;
-      }
-    }
-    if (warper->isProjectionRequired()) {
-      if (proj_trans_generic(warper->projSourceToDest, PJ_FWD, px, sizeof(double), dataSize, py, sizeof(double), dataSize, nullptr, 0, 0, nullptr, 0, 0) != dataSize) {
-        CDBDebug("Unable to do pj_transform");
-      }
+  if (projectionGrid == nullptr) {
+    // TODO: Make strided projection work in all cases
+    bool useStridingProjection = false;
+    if (dataWidth * dataHeight > 1000 * 1000) {
+      useStridingProjection = true;
     }
 
-  } else {
-
-    size_t dataWidthStrided = dataWidth / projStrideFactor + projStrideFactor;
-    size_t dataHeightStrided = dataHeight / projStrideFactor + projStrideFactor;
-    size_t dataSizeStrided = (dataWidthStrided) * (dataHeightStrided);
-
-    double *pxStrided = new double[dataSizeStrided];
-    double *pyStrided = new double[dataSizeStrided];
-
-    /* TODO faster init */
-    for (int y = 0; y < dataHeight + 1; y++) {
-      for (int x = 0; x < dataWidth + 1; x++) {
-        size_t p = x + y * (dataWidth + 1);
-        px[p] = DBL_MAX;
-        py[p] = DBL_MAX;
-        skip[p] = false;
+    if (!useStridingProjection) {
+      if (debug) {
+        CDBDebug("makeProjection");
       }
-    }
-    for (size_t y = 0; y < dataHeightStrided; y++) {
-      for (size_t x = 0; x < dataWidthStrided; x++) {
-        size_t pS = x + y * dataWidthStrided;
-
-        double valX = dfSourcedExtW * (x * projStrideFactor + PXExtentBasedOnSource[0]) + dfSourceOrigX;
-        double valY = dfSourcedExtH * (y * projStrideFactor + PXExtentBasedOnSource[1]) + dfSourceOrigY;
-        pxStrided[pS] = valX;
-        pyStrided[pS] = valY;
+      projectionGrid = makeProjection(halfCell, warper, pixelExtentBox, sourceGeoParams, destGeoParams, warperState);
+    } else {
+      if (debug) {
+        CDBDebug("makeStridedProjection");
       }
+      projectionGrid = makeStridedProjection(halfCell, warper, pixelExtentBox, sourceGeoParams, destGeoParams, warperState);
     }
-
-    if (warper->isProjectionRequired()) {
-      if (proj_trans_generic(warper->projSourceToDest, PJ_FWD, pxStrided, sizeof(double), dataSizeStrided, pyStrided, sizeof(double), dataSizeStrided, nullptr, 0, 0, nullptr, 0, 0) !=
-          dataSizeStrided) {
-        CDBDebug("Unable to do pj_transform");
-      }
-    }
-    for (int y = 0; y < dataHeight + 1; y++) {
-      for (int x = 0; x < dataWidth + 1; x++) {
-        size_t p = x + y * (dataWidth + 1);
-        size_t pS = (x / projStrideFactor) + (y / projStrideFactor) * (dataWidthStrided);
-        double sX = double(x % projStrideFactor) / double(projStrideFactor);
-        double sY = double(y % projStrideFactor) / double(projStrideFactor);
-        double x1 = pxStrided[pS] * (1 - sX) + pxStrided[pS + 1] * sX;
-        double x2 = pxStrided[pS + dataWidthStrided] * (1 - sX) + pxStrided[pS + 1 + dataWidthStrided] * sX;
-        px[p] = x1 * (1 - sY) + x2 * sY;
-        double y1 = pyStrided[pS] * (1 - sY) + pyStrided[pS + dataWidthStrided] * sY;
-        double y2 = pyStrided[pS + 1] * (1 - sY) + pyStrided[pS + dataWidthStrided + 1] * sY;
-        py[p] = y1 * (1 - sX) + y2 * sX;
-      }
-    }
-    delete[] pyStrided;
-    delete[] pxStrided;
   }
-#ifdef GenericDataWarper_DEBUG
-  CDBDebug("Reprojection done");
-#endif
+  auto px = projectionGrid->px;
+  auto py = projectionGrid->py;
+  auto skip = projectionGrid->skip;
+  if (debug) {
+    CDBDebug("Reprojection done");
+  }
 
   for (size_t j = 0; j < dataSize; j++) {
     if (!(px[j] > -DBL_MAX && px[j] < DBL_MAX)) skip[j] = true;
@@ -289,145 +308,164 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, GeoParame
 
   double avgDX = 0;
   double avgDY = 0;
-  // double prevpx1,prevpx2;
-
   double pLengthD = 0;
+  bool isMercator = isMercatorProjection(&destGeoParams.crs);
+  bool isLonLatOrMercatorProjection = isLonLatProjection(&destGeoParams.crs) == true || isMercator;
+  double sphereWidth = isMercator ? 40000000 : 360;
+  int offs1 = 0;
+  int offs2 = 1;
+  int offs3 = dataWidth + 1 + 1;
+  int offs4 = dataWidth + 1 + 0;
+
+  if (debug) {
+    CDBDebug("start looping");
+  }
+
+  // Check if left is same as right
+  size_t numElements = dataHeight * dataWidth;
+  warperState.hasSharedBoundaryLR = false;
+  size_t offsetY = (dataWidth + 1) * (dataHeight / 2);
+  size_t indexLeftXMiddleY = 0 + offsetY;
+  size_t indexRightXMiddleY = dataWidth + offsetY;
+  size_t indexLeftPlusOneXMiddleY = 1 + offsetY;
+  size_t indexLeftPluTwoXMiddleY = 2 + offsetY;
+  if (indexLeftXMiddleY < numElements && indexRightXMiddleY < numElements && indexLeftPlusOneXMiddleY < numElements && indexLeftPluTwoXMiddleY < numElements) {
+
+    double fracClosestLeftRight = fabs(px[indexLeftXMiddleY] - px[indexRightXMiddleY]) / fabs(px[indexLeftPlusOneXMiddleY] - px[indexLeftPluTwoXMiddleY]);
+    if (debug) {
+      CDBDebug("%f %f %f", fabs(px[indexLeftXMiddleY] - px[indexRightXMiddleY]), fabs(px[indexLeftPlusOneXMiddleY] - px[indexLeftPluTwoXMiddleY]), fracClosestLeftRight);
+    }
+    if (fracClosestLeftRight < 0.01) {
+      warperState.hasSharedBoundaryLR = true;
+    }
+  }
 
   for (int y = 0; y < dataHeight; y = y + 1) {
     for (int x = 0; x < dataWidth; x = x + 1) {
       size_t p = x + y * (dataWidth + 1);
-      if (skip[p] == false && skip[p + 1] == false && skip[p + dataWidth + 1] == false && skip[p + dataWidth + 2] == false) {
+      if (skip[p + offs1] == false && skip[p + offs2] == false && skip[p + offs3] == false && skip[p + offs4] == false) {
         bool doDraw = true;
         // Order for the quad corners is:
-        //  px1 -- px2
+        //  quadX[0] -- quadX[1]
         //   |      |
-        //  px4 -- px3
+        //  quadX[3] -- quadX[2]
 
-        double px1 = px[p];
-        double px2 = px[p + 1];
-        double px3 = px[p + dataWidth + 2];
-        double px4 = px[p + dataWidth + 1];
+        double quadX[4] = {px[p + offs1], px[p + offs2], px[p + offs3], px[p + offs4]};
+        double quadY[4] = {py[p + offs1], py[p + offs2], py[p + offs3], py[p + offs4]};
 
-        double py1 = py[p];
-        double py2 = py[p + 1];
-        double py3 = py[p + dataWidth + 2];
-        double py4 = py[p + dataWidth + 1];
-
-        // CDBDebug("destGeoParams = %s",destGeoParams.CRS.c_str());
-        if (isLonLatProjection(&destGeoParams.crs) == true || isMercatorProjection(&destGeoParams.crs) == true) {
-          double lons[4];
-          lons[0] = px1;
-          lons[1] = px2;
-          lons[2] = px3;
-          lons[3] = px4;
-
-          double lonMin, lonMax, lonMiddle = 0;
-          for (int j = 0; j < 4; j++) {
-            double lon = lons[j];
-            if (j == 0) {
-              lonMin = lon;
-              lonMax = lon;
-            } else {
-              if (lon < lonMin) lonMin = lon;
-              if (lon > lonMax) lonMax = lon;
-            }
-            lonMiddle += lon;
-            if (lon == INFINITY || lon == -INFINITY || !(lon == lon)) {
-              doDraw = false;
-              break;
-            }
-          }
-          lonMiddle /= 4;
-          double sphereWidth = 360;
-          if (isMercatorProjection(&destGeoParams.crs)) {
-            sphereWidth = 40000000;
-          }
-
+        if (isLonLatOrMercatorProjection) {
+          double lonMin = std::min(quadX[0], std::min(quadX[1], std::min(quadX[2], quadX[3])));
+          double lonMax = std::max(quadX[0], std::max(quadX[1], std::max(quadX[2], quadX[3])));
           if (lonMax - lonMin >= sphereWidth * 0.9) {
+            double lonMiddle = (lonMin + lonMax) / 2.0;
             if (lonMiddle > 0) {
-              for (int j = 0; j < 4; j++)
-                if (lons[j] < lonMiddle) lons[j] += sphereWidth;
+              quadX[0] += sphereWidth;
+              quadX[1] += sphereWidth;
+              quadX[2] += sphereWidth;
+              quadX[3] += sphereWidth;
             } else {
-              for (int j = 0; j < 4; j++)
-                if (lons[j] > lonMiddle) lons[j] -= sphereWidth;
+              quadX[0] -= sphereWidth;
+              quadX[1] -= sphereWidth;
+              quadX[2] -= sphereWidth;
+              quadX[3] -= sphereWidth;
             }
           }
-          px1 = lons[0];
-          px2 = lons[1];
-          px3 = lons[2];
-          px4 = lons[3];
         }
 
-        px1 = (px1 - dfDestOrigX) * multiDestX;
-        px2 = (px2 - dfDestOrigX) * multiDestX;
-        px3 = (px3 - dfDestOrigX) * multiDestX;
-        px4 = (px4 - dfDestOrigX) * multiDestX;
+        quadX[0] = (quadX[0] - dfDestOrigX) * multiDestX;
+        quadX[1] = (quadX[1] - dfDestOrigX) * multiDestX;
+        quadX[2] = (quadX[2] - dfDestOrigX) * multiDestX;
+        quadX[3] = (quadX[3] - dfDestOrigX) * multiDestX;
 
-        py1 = (py1 - dfDestOrigY) * multiDestY;
-        py2 = (py2 - dfDestOrigY) * multiDestY;
-        py3 = (py3 - dfDestOrigY) * multiDestY;
-        py4 = (py4 - dfDestOrigY) * multiDestY;
+        quadY[0] = (quadY[0] - dfDestOrigY) * multiDestY;
+        quadY[1] = (quadY[1] - dfDestOrigY) * multiDestY;
+        quadY[2] = (quadY[2] - dfDestOrigY) * multiDestY;
+        quadY[3] = (quadY[3] - dfDestOrigY) * multiDestY;
 
-        if (x == 0) avgDX = px2;
-        if (y == 0) avgDY = py4;
-
+        // If suddenly the length of the quad is 10 times bigger, we probably have an anomaly and we should not draw it.
         // Calculate the diagonal length of the quad.
-        double lengthD = (px3 - px1) * (px3 - px1) + (py3 - py1) * (py3 - py1);
-
+        double lengthD = (quadX[2] - quadX[0]) * (quadX[2] - quadX[0]) + (quadY[2] - quadY[0]) * (quadY[2] - quadY[0]);
         if (x == 0 && y == 0) {
           pLengthD = lengthD;
         }
-
-        // If suddenly the length of the quad is 10 times bigger, we probably have an anomaly and we should not draw it.
         if (lengthD > pLengthD * 10) {
           doDraw = false;
         }
+        pLengthD = lengthD;
 
+        // Check the right side of the grid
+        if (x == 0) avgDX = quadX[1];
+        if (y == 0) avgDY = quadY[3];
         if (x == dataWidth - 1) {
-          if (fabs(avgDX - px1) < fabs(px1 - px2) / 2) {
+          if (fabs(avgDX - quadX[0]) < fabs(quadX[0] - quadX[1]) / 2) {
             doDraw = false;
           }
-          if (fabs(avgDX - px2) < fabs(px1 - px2) / 2) {
+          if (fabs(avgDX - quadX[1]) < fabs(quadX[0] - quadX[1]) / 2) {
             doDraw = false;
           }
         }
+        // Check the bottom side of the grid
         if (y == dataHeight - 1) {
-          if (fabs(avgDY - py1) < fabs(py1 - py4) / 2) {
+          if (fabs(avgDY - quadY[0]) < fabs(quadY[0] - quadY[3]) / 2) {
             doDraw = false;
           }
         }
 
         if (doDraw) {
-          int sourceGridX = x + PXExtentBasedOnSource[0];
-          int sourceGridY = y + PXExtentBasedOnSource[1];
-          warperState.sourceDataPX = sourceGridX;
-          warperState.sourceDataPY = (warperState.sourceDataHeight - 1 - sourceGridY);
-          T value = ((T *)warperState.sourceData)[this->warperState.sourceDataPX + this->warperState.sourceDataPY * warperState.sourceDataWidth];
-
-          double xCornersA[3] = {px1, px2, px3};
-          double yCornersA[3] = {py1, py2, py3};
-
-          double xCornersB[3] = {px3, px1, px4};
-          double yCornersB[3] = {py3, py1, py4};
-
+          warperState.sourceIndexX = x + pixelExtentBox.left;
+          warperState.sourceIndexY = (warperState.sourceGridHeight - 1 - (y + pixelExtentBox.bottom));
+          T value = ((T *)warperState.sourceGrid)[warperState.sourceIndexX + warperState.sourceIndexY * warperState.sourceGridWidth];
+          const double xCornersA[3] = {quadX[0], quadX[1], quadX[2]};
+          const double yCornersA[3] = {quadY[0], quadY[1], quadY[2]};
+          const double xCornersB[3] = {quadX[2], quadX[0], quadX[3]};
+          const double yCornersB[3] = {quadY[2], quadY[0], quadY[3]};
           gdwDrawTriangle(xCornersA, yCornersA, value, false, warperState, drawFunction);
           gdwDrawTriangle(xCornersB, yCornersB, value, true, warperState, drawFunction);
         }
-        pLengthD = lengthD;
       }
     }
   }
-  delete[] px;
-  delete[] py;
-  delete[] skip;
-#ifdef GenericDataWarper_DEBUG
-  CDBDebug("render done");
-#endif
+
+  if (debug) {
+    CDBDebug("render done");
+  }
+}
+
+template <typename T>
+int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, GeoParameters sourceGeoParams, GeoParameters destGeoParams,
+                              const std::function<void(int, int, T, GDWState &warperState)> &drawFunction) {
+
+  // This structure is passed to drawfunctions and contains info about the current state of the warper.
+  // The drawfunction will be called numerous times for each destination pixel.
+  GDWState warperState = {.sourceGrid = _sourceData,                  // The source datagrid, has the same datatype as the template T
+                          .hasNodataValue = 0,                        // Wether the source data grid has a nodata value
+                          .dfNodataValue = 0,                         // No data value of the source grid, in double type. Can be casted to T
+                          .sourceIndexX = 0,                          // Which X index is sampled from the source grid
+                          .sourceIndexY = 0,                          // Which Y index is sampled for the source grid.
+                          .sourceGridWidth = sourceGeoParams.width,   // The width of the sourcedata grid
+                          .sourceGridHeight = sourceGeoParams.height, // The height of the source data grid
+                          .destGridWidth = destGeoParams.width,       // The width of the destination grid
+                          .destGridHeight = destGeoParams.height,     // The height of the destination grid
+                          .sourceTileDx = 0,                          // The relative X sample position from the source grid cell from 0 to 1. Can be used for bilinear interpolation
+                          .sourceTileDy = 0,                          // The relative y sample position
+                          .destIndexX = 0,                            // The target X index in the target grid
+                          .destIndexY = 0};                           // The target Y index in the target grid.
+
+  sourceGeoParams.bbox = reprojBBox(sourceGeoParams, warper);
+
+  /* When geographical map projections are equal, just do a simple linear transformation */
+  if (warper->isProjectionRequired() == false) {
+    linearTransformGrid(warperState, useHalfCellOffset, warper, _sourceData, sourceGeoParams, destGeoParams, drawFunction);
+  } else {
+    /* If geographical map projection is different, we have to transform the grid */
+    warpTransformGrid(warperState, projectionGrid, useHalfCellOffset, warper, _sourceData, sourceGeoParams, destGeoParams, drawFunction);
+  }
+
   return 0;
 }
 
 #define SPECIALIZE_TEMPLATE(CDFTYPE, CPPTYPE)                                                                                                                                                          \
-  template int GenericDataWarper::render<CPPTYPE>(CImageWarper * warper, void *_sourceData, GeoParameters &sourceGeoParams, GeoParameters &destGeoParams,                                              \
+  template int GenericDataWarper::render<CPPTYPE>(CImageWarper * warper, void *_sourceData, GeoParameters sourceGeoParams, GeoParameters destGeoParams,                                                \
                                                   const std::function<void(int, int, CPPTYPE, GDWState &warperState)> &drawFunction);
 ENUMERATE_OVER_CDFTYPES(SPECIALIZE_TEMPLATE)
 #undef SPECIALIZE_TEMPLATE

@@ -28,7 +28,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include "CDebugger.h"
-#include "CTypes.h"
+#include "CTString.h"
 #include "CDirReader.h"
 #include "Definitions.h"
 #include "CServerConfig_CPPXSD.h"
@@ -85,7 +85,7 @@ private:
 
 public:
   double dfResX, dfResY;
-  int dFound_BBOX;
+  int dFound_BBOX = 0;
   double dX, dY;
   bool verbose = false;
   std::vector<CT::string> requestedLayerNames;

@@ -406,8 +406,14 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
       }
     }
     if (enableBarb) {
-      bool rendertextforvectors = styleConfiguration != nullptr && styleConfiguration->styleConfig != nullptr && styleConfiguration->styleConfig->RenderSettings.size() > 0 &&
-                                  styleConfiguration->styleConfig->RenderSettings[0]->attr.rendertextforvectors.equals("true");
+      bool rendertextforvectors = false;
+      if (styleConfiguration != nullptr) {
+        for (auto r : styleConfiguration->renderSettings) {
+          if (r->attr.rendertextforvectors.equals("true")) {
+            rendertextforvectors = true;
+          }
+        }
+      }
       for (size_t sz = 0; sz < windVectors.size(); sz++) {
         CalculatedWindVector wv = windVectors[sz];
         float outlineWidth = 0;
@@ -584,9 +590,9 @@ int CImgWarpBilinear::set(const char *pszSettings) {
   CT::string settings(pszSettings);
   if (settings.empty()) return 0;
 
-  auto nodes = settings.splitToStack(";");
+  auto nodes = settings.split(";");
   for (auto &node : nodes) {
-    auto values = node.splitToStack("=");
+    auto values = node.split("=");
     if (values.size() < 2) continue;
 
     if (values[0].equals("drawMap")) {
@@ -641,9 +647,9 @@ int CImgWarpBilinear::set(const char *pszSettings) {
       bool foundColor = false;
       bool hasBGColor = false;
 
-      auto shadeSettings = values[1].splitToStack("$");
+      auto shadeSettings = values[1].split("$");
       for (auto &shadeSetting : shadeSettings) {
-        auto kvp = shadeSetting.splitToStack("(");
+        auto kvp = shadeSetting.split("(");
         if (kvp.size() < 2) continue;
         if (kvp[0].equals("min")) min = kvp[1].toFloat();
         if (kvp[0].equals("max")) max = kvp[1].toFloat();
@@ -676,9 +682,9 @@ int CImgWarpBilinear::set(const char *pszSettings) {
       CT::string classes;
       CT::string dashing;
 
-      auto lineSettings = values[1].splitToStack("$");
+      auto lineSettings = values[1].split("$");
       for (auto &lineSetting : lineSettings) {
-        auto kvp = lineSetting.splitToStack("(");
+        auto kvp = lineSetting.split("(");
         if (kvp.size() < 2) continue;
 
         int endOfKVP = kvp[1].lastIndexOf(")");
@@ -1224,8 +1230,8 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
 
     double *dashes = NULL;
     int numDashes = 0;
-    if (contourDefinitions[j].dashing) {
-      auto stringDashes = contourDefinitions[j].dashing.splitToStack(",");
+    if (contourDefinitions[j].dashing.length() > 0) {
+      auto stringDashes = contourDefinitions[j].dashing.split(",");
       numDashes = stringDashes.size();
       dashes = new double[numDashes];
       for (int j = 0; j < numDashes; j++) {

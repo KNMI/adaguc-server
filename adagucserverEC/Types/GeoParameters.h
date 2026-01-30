@@ -25,13 +25,14 @@
 
 #ifndef CGeoParams_H
 #define CGeoParams_H
-#include "CTypes.h"
-#include <math.h>
+#include "CTString.h"
+#include <cmath>
 #include <map>
 #include <cstddef>
 
 struct i4point {
   int x, y;
+  double distance(i4point point);
 };
 
 struct f8point {

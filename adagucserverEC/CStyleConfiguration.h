@@ -17,6 +17,7 @@
 #define RM_POINT_LINEARINTERPOLATION 4096
 #define RM_HILLSHADED 8192
 #define RM_GENERIC 16384
+#define RM_POLYGON 32768
 
 #include "CServerConfig_CPPXSD.h"
 #include "CXMLParser.h"
@@ -31,7 +32,7 @@ struct CStyleConfiguration {
   bool minMaxSet = false;
   bool hasLegendValueRange = false;
   bool hasError = false;
-  bool legendHasFixedMinMax = false; // True to fix the classes in the legend, False to determine automatically which values occur.
+  bool legendHasFixedMinMax = true; // True to fix the classes in the legend, False to determine automatically which values occur.
   int smoothingFilter = 0;
   int legendIndex = -1;
   int styleIndex = -1;
@@ -47,7 +48,7 @@ struct CStyleConfiguration {
   double legendTickRound = 0.0;
   double minValue = 0;
   double maxValue = 0;
-  RenderMethod renderMethod;
+  RenderMethod renderMethod = RM_GENERIC;
   CT::string legendName;
   CT::string styleCompositionName;
   CT::string styleName;
@@ -55,11 +56,18 @@ struct CStyleConfiguration {
   CT::string styleAbstract;
   std::vector<CServerConfig::XMLE_ContourLine *> contourLines;
   std::vector<CServerConfig::XMLE_RenderSettings *> renderSettings;
+  std::vector<CServerConfig::XMLE_SmoothingFilter *> smoothingFilterVector;
   std::vector<CServerConfig::XMLE_ShadeInterval *> shadeIntervals;
   std::vector<CServerConfig::XMLE_SymbolInterval *> symbolIntervals;
   std::vector<CServerConfig::XMLE_FeatureInterval *> featureIntervals;
-
-  CServerConfig::XMLE_Style *styleConfig = nullptr; // Direct entrance to styleConfig configuration
+  std::vector<CServerConfig::XMLE_Point *> pointIntervals;
+  std::vector<CServerConfig::XMLE_Vector *> vectorIntervals;
+  std::vector<CServerConfig::XMLE_DataPostProc *> dataPostProcessors;
+  std::vector<CServerConfig::XMLE_Stippling *> stipplingList;
+  std::vector<CServerConfig::XMLE_FilterPoints *> filterPointList;
+  std::vector<CServerConfig::XMLE_Thinning *> thinningList;
+  CServerConfig::XMLE_Legend legend;
+  CServerConfig::XMLE_LegendGraphic legendGraphic;
 
   /**
    * Outputs styleConfiguration as string

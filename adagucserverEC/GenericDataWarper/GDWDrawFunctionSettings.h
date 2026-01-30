@@ -7,8 +7,7 @@
 #include "CColor.h"
 #include "CDrawImage.h"
 
-enum DrawInImage { DrawInImageNone, DrawInImageNearest, DrawInImageBilinear };
-enum DrawInDataGrid { DrawInDataGridNone, DrawInDataGridNearest, DrawInDataGridBilinear };
+enum InterpolationMethod { InterpolationMethodNearest, InterpolationMethodBilinear };
 enum LegendMode { LegendModeContinuous, LegendModeDiscrete };
 
 struct Interval {
@@ -22,7 +21,6 @@ struct GDWDrawFunctionSettings {
   double legendValueRange;
   double legendLowerRange;
   double legendUpperRange;
-  double smoothingFiter = 0;
   bool isUsingShadeIntervals = false;
   bool bgColorDefined = false;
   double shadeInterval = 0;
@@ -32,13 +30,16 @@ struct GDWDrawFunctionSettings {
   double legendOffset;
   CColor bgColor;
   bool hasNodataValue;
-  DrawInImage drawInImage = DrawInImageNone;
-  DrawInDataGrid drawInDataGrid = DrawInDataGridNone;
+  bool drawgridboxoutline = false;
+  bool drawgrid = true;
+  InterpolationMethod interpolationMethod = InterpolationMethodNearest;
   std::vector<Interval> intervals;
-  float *smoothingDistanceMatrix = nullptr;
   CDrawImage *drawImage;
   CDFType destinationDataType;
   void *destinationGrid = nullptr;
+  double smoothingFiter = 0;
+  double *smoothingDistanceMatrix = nullptr;
+  double *smoothingMemo = nullptr;
 };
 
 GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawImage *drawImage, const CStyleConfiguration *styleConfiguration);

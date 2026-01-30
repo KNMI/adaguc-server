@@ -217,7 +217,6 @@ int CDrawImage::printImagePng8(bool useBitAlpha) {
   }
 
   if (currentGraphicsRenderer == CDRAWIMAGERENDERER_CAIRO) {
-    CDBDebug("printImagePng8 CAIRO");
     cairo->writeToPng8Stream(stdout, backgroundAlpha, useBitAlpha);
   } else if (currentGraphicsRenderer == CDRAWIMAGERENDERER_GD) {
     CDBDebug("printImagePng8 GF");
@@ -725,7 +724,9 @@ void CDrawImage::setPixelIndexed(int x, int y, int color) {
       //       }
     }
   } else {
-    gdImageSetPixel(image, x, y, colors[color]);
+    if (color >= 0 && color < 256 && dPaletteCreated == 1) {
+      gdImageSetPixel(image, x, y, colors[color]);
+    }
   }
 }
 
@@ -1373,7 +1374,7 @@ int CDrawImage::createGDPalette(CServerConfig::XMLE_Legend *legend) {
         int offset = (int)(stops.get(j)->getAttrValue("offset").toFloat() * 2.4);
         CT::string color = stops.get(j)->getAttrValue("stop-color").c_str() + 4;
         color.setSize(color.length() - 1);
-        auto colors = color.splitToStack(",");
+        auto colors = color.split(",");
         if (colors.size() != 3) {
           CDBError("Number of specified colors is unequal to three");
           return 1;

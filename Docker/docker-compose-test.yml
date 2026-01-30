@@ -1,6 +1,6 @@
 services:
   adaguc-test-db:
-    image: postgres:13
+    image: postgres:17
     container_name: adaguc-test-db
     hostname: adaguc-test-db
     environment:

@@ -92,12 +92,12 @@ int CDF::Attribute::setData(CDFType type, const void *dataToSet, size_t dataLeng
 
 int CDF::Attribute::setData(const char *dataToSet) {
   freeData();
-  length = strlen(dataToSet);
+  auto data_length = strlen(dataToSet);
   this->type = CDF_CHAR;
-  allocateData(length + 1);
+  allocateData(data_length + 1);
   if (type == CDF_CHAR) {
-    memcpy(data, dataToSet, length); // TODO support other data types as well
-    ((char *)data)[length] = '\0';
+    memcpy(data, dataToSet, data_length); // TODO support other data types as well
+    ((char *)data)[data_length] = '\0';
   }
   return 0;
 }

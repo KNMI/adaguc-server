@@ -6,12 +6,13 @@ Back to [Configuration](./Configuration.md)
 Rendermethod defines the way the data is rendered inside the service.
 There are currently seven mechanisms to render an image:
 
+-   generic - Uses the generic datawarper. This is the default rendermethod and can handle most of the other rendermethods mentioned below.
 -   nearest (nearest neighbour) in class [CImgWarpNearestNeighbour](/adagucserverEC/CImgWarpNearestNeighbour.cpp)
 -   bilinear in class [CImgWarpBilinear](/adagucserverEC/CImgWarpBilinear.cpp)
 -   rgba (truecolor) in class [CImgWarpNearestRGBA](/adagucserverEC/CImgWarpNearestRGBA.cpp)
 -   stippling in class [CImgRenderStippling](/adagucserverEC/CImgRenderStippling.cpp)
 -   generic in class [CImgWarpGeneric](/adagucserverEC/CImgWarpGeneric/CImgWarpGeneric.cpp)
--   polyline (for geojson) in class [CImgRenderPolylines](/adagucserverEC/CImgRenderPolylines.cpp)
+-   polyline / polygon (for geojson) in class [CImgRenderPolylines](/adagucserverEC/CImgRenderPolylines.cpp)
 -   hillshaded (for heightmaps) in class [CImgWarpHillShaded](/adagucserverEC/CImgWarpHillShaded.cpp)
 
 To draw points and vectors, see [Point.md](/doc/configuration/Point.md) and [Vector.md](/doc/configuration/Vector.md). To thin point data, see [Thinning.md](/doc/configuration/Thinning.md).
@@ -87,7 +88,7 @@ Choose with `generic`.
 CImgRenderPolyLines
 -------------------
 
-Choose with `polyline`.
+Choose with `polyline` or `polygon`.
 
 ...
 

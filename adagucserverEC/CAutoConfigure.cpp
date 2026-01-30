@@ -392,12 +392,12 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
         CDBDebug("Searching StandardNames \"%s\"", standard_name.c_str());
 #endif
         if (standard_name.length() > 0) {
-          CT::StackList<CT::string> standardNameList;
+          std::vector<CT::string> standardNameList;
 
           if (standard_name.charAt(0) == '^') {
             standardNameList.push_back(standard_name);
           } else {
-            standardNameList = standard_name.splitToStack(",");
+            standardNameList = standard_name.split(",");
           }
 
           for (size_t n = 0; n < standardNameList.size(); n++) {
@@ -425,7 +425,7 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
               if (dataSourceUnits.length() != 0 && units.length() != 0) {
                 unitsMatch = false;
                 /* Test for same units */
-                if (dataSourceUnits.equals(&units))
+                if (dataSourceUnits.equals(units))
                   unitsMatch = true;
                 else {
                   /* Test for regexp */
@@ -457,7 +457,7 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
     styles.concat(styleList[j].c_str());
   }
 
-  if (styles.length() == 0) styles = "auto";
+  if (styles.length() == 0) styles = "auto,autogeneric,autobilinear,autobilinear_deprecated";
 
   xmleStyle->value.copy(styles.c_str());
 #ifdef CAUTOCONFIGURE_DEBUG

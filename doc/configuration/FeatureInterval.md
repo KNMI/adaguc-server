@@ -38,7 +38,7 @@ The drawing of overlapping labels can be enabled or disabled with a [RenderSetti
     <FeatureInterval match="^Asia$" matchid="continent" fillcolor="#808080"  label="Asia"/>
     <FeatureInterval match="^India$" matchid="abbrev" fillcolor="#80FF80"  label="India"/>
     <NameMapping name="nearest"   title="Mask NL"/>
-    <RenderMethod>nearest</RenderMethod>
+    <RenderMethod>polygon</RenderMethod>
   </Style>
 
   <Layer type="database">
@@ -71,11 +71,10 @@ visual mask overlay.
   This file can be included by using the adaguc.dataset.cgi?service=wms&DATASET=testdata& key value pair in the URL
   -->
 
- <Style name="polyline_with_label_color">
+ <Style name="polyline_with_label_color"  title="border 0.5px blue" abstract="border 0.5px blue">
     <RenderMethod>polyline</RenderMethod>
     <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
     <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF" bordercolor="#FF0000FF" label="area" borderwidth="0.5" labelpropertyname="name" labelfontsize="18" labelangle="0" labelfontfile="{ADAGUC_PATH}/data/fonts/Roboto-MediumItalic.ttf" labelcolor="#00A000FF"/>
-    <NameMapping name="polyline+label+color"   title="border 0.5px blue" abstract="border 0.5px blue"/>
     <RenderSettings featuresoverlap="true"/>
  </Style>
 

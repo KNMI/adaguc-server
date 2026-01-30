@@ -33,7 +33,7 @@ const char *CDPPExecutor::className = "CDPPExecutor";
 
 CDPPExecutor::CDPPExecutor() {
   // CDBDebug("CDPPExecutor");
-  dataPostProcessorList = new CT::PointerList<CDPPInterface *>();
+  dataPostProcessorList = new std::vector<CDPPInterface *>();
   dataPostProcessorList->push_back(new CDPPIncludeLayer());
   dataPostProcessorList->push_back(new CDPPAXplusB());
   dataPostProcessorList->push_back(new CDPPDATAMASK);
@@ -60,7 +60,7 @@ CDPPExecutor::~CDPPExecutor() {
   delete dataPostProcessorList;
 }
 
-const CT::PointerList<CDPPInterface *> *CDPPExecutor::getPossibleProcessors() { return dataPostProcessorList; }
+const std::vector<CDPPInterface *> *CDPPExecutor::getPossibleProcessors() { return dataPostProcessorList; }
 
 std::vector<CServerConfig::XMLE_DataPostProc *> getProcessorList(CDataSource *dataSource) {
   std::vector<CServerConfig::XMLE_DataPostProc *> dataProcessorList;
@@ -68,8 +68,8 @@ std::vector<CServerConfig::XMLE_DataPostProc *> getProcessorList(CDataSource *da
     dataProcessorList.push_back(dp);
   }
 
-  if (dataSource->getStyle() != nullptr && dataSource->getStyle()->styleConfig != nullptr) {
-    for (auto dp : dataSource->getStyle()->styleConfig->DataPostProc) {
+  if (dataSource->getStyle() != nullptr) {
+    for (auto dp : dataSource->getStyle()->dataPostProcessors) {
       dataProcessorList.push_back(dp);
     }
   }
@@ -80,23 +80,23 @@ int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode) {
   std::vector<CServerConfig::XMLE_DataPostProc *> dataProcessorList = getProcessorList(dataSource);
   for (auto proc : dataProcessorList) {
     for (size_t procId = 0; procId < dataPostProcessorList->size(); procId++) {
-      int code = dataPostProcessorList->get(procId)->isApplicable(proc, dataSource, mode);
+      int code = dataPostProcessorList->at(procId)->isApplicable(proc, dataSource, mode);
 
       if (code == CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET) {
-        CDBError("Constraints for DPP %s are not met", dataPostProcessorList->get(procId)->getId());
+        CDBError("Constraints for DPP %s are not met", dataPostProcessorList->at(procId)->getId());
       }
 
       /*Will be runned when datasource metadata been loaded */
       if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
         if (code & CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
           try {
-            // CDBDebug("Applying beforereading processor %s", dataPostProcessorList->get(procId)->getId());
-            int status = dataPostProcessorList->get(procId)->execute(proc, dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
+            // CDBDebug("Applying beforereading processor %s", dataPostProcessorList->at(procId)->getId());
+            int status = dataPostProcessorList->at(procId)->execute(proc, dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
             if (status != 0) {
-              CDBError("Processor %s failed RUNBEFOREREADING, statuscode %d", dataPostProcessorList->get(procId)->getId(), status);
+              CDBError("Processor %s failed RUNBEFOREREADING, statuscode %d", dataPostProcessorList->at(procId)->getId(), status);
             }
           } catch (int e) {
-            CDBError("Exception in Processor %s failed RUNBEFOREREADING, exceptioncode %d", dataPostProcessorList->get(procId)->getId(), e);
+            CDBError("Exception in Processor %s failed RUNBEFOREREADING, exceptioncode %d", dataPostProcessorList->at(procId)->getId(), e);
           }
         }
       }
@@ -104,13 +104,13 @@ int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode) {
       if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
         if (code & CDATAPOSTPROCESSOR_RUNAFTERREADING) {
           try {
-            // CDBDebug("Applying afterreading processor %s", dataPostProcessorList->get(procId)->getId());
-            int status = dataPostProcessorList->get(procId)->execute(proc, dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
+            // CDBDebug("Applying afterreading processor %s", dataPostProcessorList->at(procId)->getId());
+            int status = dataPostProcessorList->at(procId)->execute(proc, dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
             if (status != 0) {
-              CDBError("Processor %s failed RUNAFTERREADING, statuscode %d", dataPostProcessorList->get(procId)->getId(), status);
+              CDBError("Processor %s failed RUNAFTERREADING, statuscode %d", dataPostProcessorList->at(procId)->getId(), status);
             }
           } catch (int e) {
-            CDBError("Exception in Processor %s failed RUNAFTERREADING, exceptioncode %d", dataPostProcessorList->get(procId)->getId(), e);
+            CDBError("Exception in Processor %s failed RUNAFTERREADING, exceptioncode %d", dataPostProcessorList->at(procId)->getId(), e);
           }
         }
       }
@@ -123,22 +123,22 @@ int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode, double *d
   std::vector<CServerConfig::XMLE_DataPostProc *> dataProcessorList = getProcessorList(dataSource);
   for (auto proc : dataProcessorList) {
     for (size_t procId = 0; procId < dataPostProcessorList->size(); procId++) {
-      int code = dataPostProcessorList->get(procId)->isApplicable(proc, dataSource, mode);
+      int code = dataPostProcessorList->at(procId)->isApplicable(proc, dataSource, mode);
 
       if (code == CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET) {
-        CDBError("Constraints for DPP %s are not met", dataPostProcessorList->get(procId)->getId());
+        CDBError("Constraints for DPP %s are not met", dataPostProcessorList->at(procId)->getId());
       }
 
       /*Will be runned when datasource metadata been loaded */
       if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
         if (code & CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
           try {
-            int status = dataPostProcessorList->get(procId)->execute(proc, dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING, NULL, 0);
+            int status = dataPostProcessorList->at(procId)->execute(proc, dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING, NULL, 0);
             if (status != 0) {
-              CDBError("Processor %s failed RUNBEFOREREADING, statuscode %d", dataPostProcessorList->get(procId)->getId(), status);
+              CDBError("Processor %s failed RUNBEFOREREADING, statuscode %d", dataPostProcessorList->at(procId)->getId(), status);
             }
           } catch (int e) {
-            CDBError("Exception in Processor %s failed RUNBEFOREREADING, exceptioncode %d", dataPostProcessorList->get(procId)->getId(), e);
+            CDBError("Exception in Processor %s failed RUNBEFOREREADING, exceptioncode %d", dataPostProcessorList->at(procId)->getId(), e);
           }
         }
       }
@@ -147,12 +147,12 @@ int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode, double *d
       if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
         if (code & CDATAPOSTPROCESSOR_RUNAFTERREADING) {
           try {
-            int status = dataPostProcessorList->get(procId)->execute(proc, dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING, data, numItems);
+            int status = dataPostProcessorList->at(procId)->execute(proc, dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING, data, numItems);
             if (status != 0) {
-              CDBError("Processor %s failed RUNAFTERREADING, statuscode %d", dataPostProcessorList->get(procId)->getId(), status);
+              CDBError("Processor %s failed RUNAFTERREADING, statuscode %d", dataPostProcessorList->at(procId)->getId(), status);
             }
           } catch (int e) {
-            CDBError("Exception in Processor %s failed RUNAFTERREADING, exceptioncode %d", dataPostProcessorList->get(procId)->getId(), e);
+            CDBError("Exception in Processor %s failed RUNAFTERREADING, exceptioncode %d", dataPostProcessorList->at(procId)->getId(), e);
           }
         }
       }

@@ -25,7 +25,6 @@
 
 #include "CImgWarpHillShaded.h"
 #include "CImageDataWriter.h"
-#include "CGenericDataWarper.h"
 #include "f8vector.h"
 #include <CCDFTypes.h>
 #include "CImgWarpGeneric/CImgWarpGeneric.h"
@@ -36,12 +35,20 @@ const char *CImgWarpHillShaded::className = "CImgWarpHillShaded";
  */
 const f8vector lightSource = (f8vector({.x = -1, .y = -1, .z = -1})).norm();
 
-template <typename T> double getGridValueFromFloat(int x, int y, GDWState &drawSettings) { return ((T *)drawSettings.sourceData)[x + y * drawSettings.sourceDataWidth]; }
+template <typename T> double getGridValueFromFloat(int x, int y, GDWState &drawSettings) { return ((T *)drawSettings.sourceGrid)[x + y * drawSettings.sourceGridWidth]; }
 
-static inline int mfast_mod(const int input, const int ceil) { return input >= ceil ? input % ceil : input; }
+static inline int mfast_mod(const int input, const int ceil) {
+  if (0 <= input && input < ceil)
+    return input;
+  int mod = input % ceil;
+  if (mod < 0) {
+    mod += ceil;
+  }
+  return mod;
+}
 
 template <class T> void hillShadedDrawFunction(int x, int y, T val, GDWState &warperState, GDWDrawFunctionSettings &drawFunctionState) {
-  if (x < 0 || y < 0 || x > warperState.destDataWidth || y > warperState.destDataHeight) return;
+  if (x < 0 || y < 0 || x > warperState.destGridWidth || y > warperState.destGridHeight) return;
   bool isNodata = false;
   if (drawFunctionState.hasNodataValue) {
     if ((val) == (T)drawFunctionState.dfNodataValue) isNodata = true;
@@ -51,11 +58,11 @@ template <class T> void hillShadedDrawFunction(int x, int y, T val, GDWState &wa
     if (drawFunctionState.legendValueRange)
       if (val < drawFunctionState.legendLowerRange || val > drawFunctionState.legendUpperRange) isNodata = true;
   if (!isNodata) {
-    T *sourceData = (T *)warperState.sourceData;
-    size_t sourceDataPX = warperState.sourceDataPX;
-    size_t sourceDataPY = warperState.sourceDataPY;
-    size_t sourceDataWidth = warperState.sourceDataWidth;
-    size_t sourceDataHeight = warperState.sourceDataHeight;
+    T *sourceData = (T *)warperState.sourceGrid;
+    size_t sourceDataPX = warperState.sourceIndexX;
+    size_t sourceDataPY = warperState.sourceIndexY;
+    size_t sourceDataWidth = warperState.sourceGridWidth;
+    size_t sourceDataHeight = warperState.sourceGridHeight;
 
     if (sourceDataPY > sourceDataHeight - 1) return;
     if (sourceDataPX > sourceDataWidth - 1) return;
@@ -86,22 +93,22 @@ template <class T> void hillShadedDrawFunction(int x, int y, T val, GDWState &wa
     f8vector v02 = f8vector({.x = sourceDataPX + 0., .y = sourceDataPY + 2., .z = values[0][2]});
     f8vector v12 = f8vector({.x = sourceDataPX + 1., .y = sourceDataPY + 2., .z = values[1][2]});
 
-    if (x >= 0 && y >= 0 && x < (int)warperState.destDataWidth && y < (int)warperState.destDataHeight) {
+    if (x >= 0 && y >= 0 && x < (int)warperState.destGridWidth && y < (int)warperState.destGridHeight) {
       f8vector normal00 = cross(v10 - v00, v01 - v00).norm();
       f8vector normal10 = cross(v20 - v10, v11 - v10).norm();
       f8vector normal01 = cross(v11 - v01, v02 - v01).norm();
       f8vector normal11 = cross(v21 - v11, v12 - v11).norm();
-      f8vector lightSource = (f8vector({.x = -1., .y = -1., .z = -1.})).norm(); /* TODO make light source configurable */
+
       float c00 = dot(lightSource, normal00);
       float c10 = dot(lightSource, normal10);
       float c01 = dot(lightSource, normal01);
       float c11 = dot(lightSource, normal11);
-      float dx = warperState.tileDx;
-      float dy = warperState.tileDy;
+      float dx = warperState.sourceTileDx;
+      float dy = warperState.sourceTileDy;
       float gx1 = (1 - dx) * c00 + dx * c10;
       float gx2 = (1 - dx) * c01 + dx * c11;
       float bilValue = (1 - dy) * gx1 + dy * gx2;
-      ((float *)drawFunctionState.destinationGrid)[x + y * warperState.destDataWidth] = (bilValue + 1) / 1.816486;
+      ((float *)drawFunctionState.destinationGrid)[x + y * warperState.destGridWidth] = (bilValue + 1) / 1.816486;
     }
   }
 }
@@ -109,7 +116,6 @@ template <class T> void hillShadedDrawFunction(int x, int y, T val, GDWState &wa
 void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage) {
   CT::string color;
   void *sourceData;
-  CDBDebug("Hill");
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   GDWDrawFunctionSettings settings;
@@ -133,11 +139,9 @@ void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, C
   sourceData = dataSource->getDataObject(0)->cdfVariable->data;
   GeoParameters sourceGeo = dataSource->makeGeoParams();
 
-  // GenericDataWarper dw;
-  // dw.render(warper, sourceData, dataType, &sourceGeo, drawImage->Geo, &hillShadedDrawFunction);
   GenericDataWarper genericDataWarper;
   GDWArgs args = {.warper = warper, .sourceData = sourceData, .sourceGeoParams = sourceGeo, .destGeoParams = dataSource->srvParams->geoParams};
-  CDBDebug("Start render");
+
 #define RENDER(CDFTYPE, CPPTYPE)                                                                                                                                                                       \
   if (dataType == CDFTYPE) genericDataWarper.render<CPPTYPE>(args, [&](int x, int y, CPPTYPE val, GDWState &warperState) { hillShadedDrawFunction(x, y, val, warperState, settings); });
   ENUMERATE_OVER_CDFTYPES(RENDER)

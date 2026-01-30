@@ -1,3 +1,30 @@
+**Version 6.3.0 - 2026-01-28**
+
+- CT::string now uses std::string as internals.
+- pointsfromgrid can now also be used to plot text values on windspeed and winddirection components
+- Striding x/y was swapped: fixes https://github.com/KNMI/adaguc-server/issues/602
+- Adaguc crashes if you select a parameter that doesn't exist. Now skips this parameter: Fixes https://github.com/KNMI/adaguc-server/issues/603
+
+**Version 6.2.0 - 2026-01-12**
+
+- Move from postgres 13 to 17.
+
+**Version 6.1.1 - 2026-01-07**
+
+- Include style now works in combination with vectors (WIK request)
+
+**Version 6.1.0 - 2025-11-28**
+
+- Polyline renderer can now render filled polygons and overlay them using alpha transparency and rendermethod `polygon`.
+
+**Version 6.0.0 - 2025-11-18**
+
+- Implemented generic image warper, available via RenderMethod 'generic'. This warper uses the already existing generic data warper and combines functionality of the nearest and bilinear renderer.
+- If no RenderMethod is given in the Style configuration, 'generic' is used by default
+- Styles can be included into each other via the `IncludeStyle` option: See example at [adaguc.tests.ahn_utrechtse_heuvelrug_500m.xml](./data/config/datasets/adaguc.tests.ahn_utrechtse_heuvelrug_500m.xml)
+- The WCS server now handles swapped x/y dimension axes properly.
+- Data postprocessor convert_uv_components (isVectorLike) is not added by default anymore.
+
 **Version 5.0.1 - 2025-11-05**
 
 ***Support to configure windbarbs and points with graphical stylings for specific values like windspeeds***

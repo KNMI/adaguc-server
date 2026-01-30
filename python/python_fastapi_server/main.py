@@ -29,7 +29,7 @@ app = FastAPI(redirect_slashes=False)
 
 # Set uvicorn access log format using middleware
 ACCESS_LOG_FORMAT = (
-    'accesslog %(h)s ; %(t)s ; %(H)s ; %(m)s ; %(U)s ; %(q)s ; %(s)s ; %(M)s ; "%(a)s"'
+    'accesslog %(h)s ; %(t)s ; %(H)s ; %(m)s ; %(U)s ; %(q)s ; %(s)s ; %(M)s"'
 )
 logging.getLogger("uvicorn.access").handlers.clear()
 app.add_middleware(AccessLoggerMiddleware, format=ACCESS_LOG_FORMAT)
@@ -65,6 +65,9 @@ async def add_process_time_header(request: Request, call_next):
     """Middle ware to at X-Process-Time to each request"""
     start_time = time.time()
     response = await call_next(request)
+    # Log the X-Trace-Timings so we can monitor timings of the server
+    if "X-Trace-Timings" in response.headers:
+        logger.log(35, str(request.query_params)+ response.headers["X-Trace-Timings"])
     process_time = time.time() - start_time
     response.headers["X-Process-Time"] = str(process_time)
     return response

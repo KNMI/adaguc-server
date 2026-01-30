@@ -24,7 +24,7 @@
  ******************************************************************************/
 
 #include "CDataReader.h"
-#include <math.h>
+#include <cmath>
 #include <float.h>
 #include "CConvertASCAT.h"
 #include "CConvertUGRIDMesh.h"
@@ -328,7 +328,9 @@ bool CDataReader::copyCRSFromCFProjectionVariable(CDataSource *dataSource, CDF::
   }
 
   // Projection string was created, set it in the datasource.
-  CREPORT_INFO_NODOC(CT::string("Determined the projection string using the CF conventions: ") + projString, CReportMessage::Categories::GENERAL);
+  if (verbose) {
+    CREPORT_INFO_NODOC(CT::string("Determined the projection string using the CF conventions: ") + projString, CReportMessage::Categories::GENERAL);
+  }
   dataSource->nativeProj4.copy(projString.c_str());
   projVar->setAttributeText("autogen_proj", projString.c_str());
 
@@ -345,7 +347,7 @@ void CDataReader::copyEPSGCodeFromProjectionVariable(CDataSource *dataSource, co
     if (this->_enableReporting) {
       CREPORT_INFO_NODOC(CT::string("Using EPSG_code defined in projection variable ") + projVar->name, CReportMessage::Categories::GENERAL);
     }
-    dataSource->nativeEPSG.copy((char *)epsgAttr->data);
+    dataSource->nativeEPSG = epsgAttr->getDataAsString();
   } else {
     // Make a projection code based on PROJ4: namespace
     if (this->_enableReporting) {
@@ -737,12 +739,11 @@ void CDataReader::determineStride2DMap(CDataSource *dataSource) const {
   }
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-  if (styleConfiguration != NULL && styleConfiguration->styleConfig != NULL) {
-    if (styleConfiguration->styleConfig->RenderSettings.size() == 1) {
-      if ((styleConfiguration->styleConfig->RenderSettings[0])->attr.striding.empty() == false) {
-        dataSource->stride2DMap = styleConfiguration->styleConfig->RenderSettings[0]->attr.striding.toInt();
-        CREPORT_INFO_NODOC(CT::string("Determined a stride of ") + styleConfiguration->styleConfig->RenderSettings[0]->attr.striding + CT::string(" based on RenderSettings."),
-                           CReportMessage::Categories::GENERAL);
+  if (styleConfiguration != nullptr) {
+    for (auto renderSetting : styleConfiguration->renderSettings) {
+      if (renderSetting->attr.striding.empty() == false) {
+        dataSource->stride2DMap = renderSetting->attr.striding.toInt();
+        CREPORT_INFO_NODOC(CT::string("Determined a stride of ") + renderSetting->attr.striding + CT::string(" based on RenderSettings."), CReportMessage::Categories::GENERAL);
         return;
       }
     }
@@ -973,8 +974,8 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
   }
 
   if (singleCellMode) {
-    dataSource->dWidth = 2;
-    dataSource->dHeight = 2;
+    dataSource->dWidth = 1;
+    dataSource->dHeight = 1;
     start[dataSource->dimXIndex] = x;
     start[dataSource->dimYIndex] = y;
     count[dataSource->dimXIndex] = 1;
@@ -1043,26 +1044,6 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 #ifdef MEASURETIME
     StopWatch_Stop("/Finished Working on variable %s", dataSource->getDataObject(varNr)->cdfVariable->name.c_str());
 #endif
-  }
-
-  // TODO: For the time being we will auto enable the CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ID processor for backwards compatibility.
-  bool isVectorLike = false;
-  if (dataSource->getNumDataObjects() == 2) {
-    char u = dataSource->getDataObject(0)->getStandardName().charAt(0);
-    char v = dataSource->getDataObject(1)->getStandardName().charAt(0);
-    if (u == 'x' || u == 'u') {
-      if (v == 'y' || v == 'v') {
-        isVectorLike = true;
-      }
-    }
-  }
-
-  if (isVectorLike) {
-    CServerConfig::XMLE_DataPostProc *proc = new CServerConfig::XMLE_DataPostProc();
-    proc->attr.algorithm = CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ID;
-    CDBDebug("Adding Data postprocessor convert_uv_components (isVectorLike) ");
-    // TODO: Will not be enabled automatically in the future!
-    dataSource->cfgLayer->DataPostProc.insert(dataSource->cfgLayer->DataPostProc.begin(), proc);
   }
 
   if (enablePostProcessors) {
@@ -1452,7 +1433,7 @@ CDF::Variable *CDataReader::addBlankDimVariable(CDFObject *cdfObject, const char
   }
   return dimVar;
 }
-CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *cdfObject, const char *ncname) {
+CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *cdfObject, std::string ncname) {
   CDF::Dimension *dimension = cdfObject->getDimensionNE(ncname);
   if (dimension != NULL) {
     return getDimensionType(cdfObject, dimension);

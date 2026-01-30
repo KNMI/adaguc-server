@@ -80,7 +80,7 @@ Configuration
     -   Max `<value>` - The minimum value of the image to display, corresponds with the last colors in the legend.
     -   Log `<value>` - Scale the colors using log transformation
     -   [ValueRange](ValueRange.md) (min,max) - Values between min and max are visible, outside this range is transparent
-    -   [RenderMethod](RenderMethod.md) `<value>` - The way to render the image, e.g. contour, nearest or bilinear.
+    -   [RenderMethod](RenderMethod.md) `<value>` - Optional - The way to render the image, e.g. generic, nearest, bilinear, hillshaded or rgba. Defaults to generic.
     -   [ContourLine](ContourLine.md) (width,linecolor,textcolor,textformatting,interval,classes) - Draw contourlines in the images, if the appropriate [RenderMethod](RenderMethod.md) is selected.
     -   [ShadeInterval](ShadeInterval.md) (min,max,label,bgcolor, fillcolor) - Draw the image using shading.
     -   [FeatureInterval](FeatureInterval.md) (match, matchid, label, bgcolor, fillcolor) - Draw GeoJSON features and select features based on regular expressions.
@@ -88,7 +88,7 @@ Configuration
     -   SmoothingFilter `<value>` - Optional, defaults to 1. The filter to smooth the image when using contour lines and shading.
     -   [NameMapping](NameMapping.md) (name,title,abstract) - Optional, Provide detailed descriptions and human readable names for every style.
     -   [StandardNames](StandardNames.md) (standard_name, variable_name, units) - Optional, assigns this style to layers matching the standard_name and optionally the units.
-    -   [Point](Point.md) (min,max,pointstyle,fillcolor,linecolor,textcolor,textoutlinecolor,textformat,fontfile,fontsize,discradius,textradius,dot,anglestart,anglestep,plotstationid) Configuration of rendering point data
+    -   [Point](Point.md) (min,max,pointstyle,fillcolor,linecolor,textcolor,textoutlinecolor,textformat,fontfile,fontsize,discradius,textradius,dot,plotstationid) Configuration of rendering point data
     -   [Vector](Vector.md) (linecolor, linewidth,scale,vectorstyle,plotstationid,plotvalue,textformat, min, max, fontsize, outlinewidth, outlinecolor, textcolor, dot) Configuration of rendering point data as vector.
     -   [FilterPoints](FilterPoints.md) (skip, use) Definition of set of points to
         skip or to use
@@ -98,8 +98,9 @@ Configuration
         with custom image
     -   [Stippling](Stippling.md) (distancex, distancey, discradius)
         Configuration of stippling renderer.
-    -   [RenderSettings](RenderSettings.md) (settings, striding, renderer, scalewidth, scalecontours, renderhint, rendertextforvectors) Configuration of
+    -   [RenderSettings](RenderSettings.md) (settings, striding, renderer, scalewidth, scalecontours, renderhint, rendertextforvectors, interpolationmethod, drawgridboxoutline, drawgrid) Configuration of
         renderers
+    -   [IncludeStyle] (name) - Include another style. See [adaguc.tests.ahn_utrechtse_heuvelrug_500m.xml](../../data/config/datasets/adaguc.tests.ahn_utrechtse_heuvelrug_500m.xml)
 
 <!-- -->
 

@@ -915,7 +915,6 @@ int CCairoPlotter::writeARGBPng(int width, int height, unsigned char *ARGBByteBu
       RGBType table[256];
       MakePaletteTable(tree, table, &numColors);
       if (numColors > 255) numColors = 255;
-      CDBDebug("Number of quantized colors: %d", numColors);
       int numAlphaColors = 0;
       palette[0].red = 0;
       palette[0].green = 0;
@@ -929,14 +928,12 @@ int CCairoPlotter::writeARGBPng(int width, int height, unsigned char *ARGBByteBu
         numAlphaColors++;
       }
       png_set_PLTE(png_ptr, info_ptr, palette, numColors);
-      CDBDebug("Num alpha colors: %d", numAlphaColors);
       png_set_tRNS(png_ptr, info_ptr, a, numAlphaColors, trans_values);
     } else {
       int numColors = 0;
       RGBType table[256];
       MakePaletteTable(tree, table, &numColors);
       if (numColors > 254) numColors = 254;
-      CDBDebug("Number of quantized colors: %d", numColors);
       palette[0].red = 0;
       palette[0].green = 0;
       palette[0].blue = 0;

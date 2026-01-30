@@ -61,7 +61,7 @@ int CDPPOperator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
     newDataObject->cdfVariable->setAttributeText("long_name", newDataObjectName.c_str());
     newDataObject->cdfVariable->setAttributeText("units", "1");
     if (!proc->attr.units.empty()) {
-      newDataObject->cdfVariable->setAttributeText("units", proc->attr.units);
+      newDataObject->cdfVariable->setAttributeText("units", proc->attr.units.c_str());
     }
 
     double attrData[1];
