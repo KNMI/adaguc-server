@@ -1171,7 +1171,7 @@ int CImageDataWriter::getFeatureInfoVirtual(std::vector<CDataSource *> dataSourc
     }
   }
 
-  std::vector<CT::string> timeRangeStrings = requestedTime.splitToStack("/");
+  std::vector<CT::string> timeRangeStrings = requestedTime.split("/");
   if (timeRangeStrings.size() == 2) {
     startTime = timeRangeStrings[0];
     stopTime = timeRangeStrings[1];
