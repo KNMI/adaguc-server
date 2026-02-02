@@ -93,6 +93,8 @@ TEST(EstimateISO8601Duration, TimeUtils) {
   CT::string expected_complex_interval("P5DT10H");
   CT::string result_complex_interval = estimateISO8601Duration(complex_interval_timestamps);
   CHECK(result_complex_interval == expected_complex_interval);
+
+  CTime::cleanInstances();
 }
 
 TEST(checkDependenciesBetweenDims, TimeUtils) {
@@ -175,6 +177,10 @@ TEST(checkDependenciesBetweenDims, TimeUtils) {
   result = checkDependenciesBetweenDims(&ml);
   CHECK(result == 0)
   CHECK(ml.layerMetadata.dimList[0].defaultValue.equals("2025-05-10T18:00:00Z") == true)
+
+  delete ml.dataSource->cfgLayer;
+  delete ml.dataSource;
+  CTime::cleanInstances();
 }
 
 int main() {

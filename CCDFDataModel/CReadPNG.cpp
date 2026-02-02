@@ -181,7 +181,7 @@ CPNGRaster *CReadPNG_read_png_file(const char *file_name, bool pngReadHeaderOnly
   }
 
   pngRaster->data = new unsigned char[pngRaster->width * pngRaster->height * 4];
-  size_t c = std::ceil((pngRaster->width / pngwidthdivisor) + 1.f);
+  size_t c = std::ceil(static_cast<double>(pngRaster->width) / pngwidthdivisor);
   size_t calcWidth = std::min(pngRaster->width, c);
   for (size_t y = 0; y < pngRaster->height; y++) {
     unsigned char *line = row_pointers[y];

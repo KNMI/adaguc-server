@@ -5,6 +5,7 @@
 #include "CImageWarper.h"
 #include "CImgRenderFieldVectors.h"
 #include "f8vector.h"
+#include "ProjCache.h"
 
 // To test this file do in the ./bin folder of adaguc-server:
 // cmake --build . --config Debug --target testadagucserver -j 10 -- && ctest --verbose
@@ -59,6 +60,9 @@ int main() {
 
   TestResult tr;
   TestRegistry::runAllTests(tr);
+
+  proj_clear_cache();
+
   if (tr.failureCount != 0) {
     return 1;
   }

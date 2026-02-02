@@ -54,6 +54,9 @@ CDPPExecutor::CDPPExecutor() {
 
 CDPPExecutor::~CDPPExecutor() {
   // CDBDebug("~CDPPExecutor");
+  for(auto pp: *dataPostProcessorList) {
+    delete pp;
+  }
   delete dataPostProcessorList;
 }
 
