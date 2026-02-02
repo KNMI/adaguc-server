@@ -120,56 +120,68 @@
   </Style>
 
   <!-- wave plotting -->
-  <Style name="wave_direction">
-    <DataPostProc algorithm="add_dataobject" name="fake-strength" a="1" />
-    <DataPostProc algorithm="pointsfromgrid" select="fake-strength,wind-wave-from-direction-mean-msl" a="50"/>
+  <Style name="wind_wave_direction">
+    <!-- Draw only vectors without a single variable indicating rotation in degrees.
+    Use add_dataobject datapostproc to create a "dummy strength" variable, required to draw vector. -->
+
+    <DataPostProc algorithm="add_dataobject" name="dummy-magnitude" a="1" />
+    <DataPostProc algorithm="pointsfromgrid" select="dummy-magnitude,wind-wave-from-direction-mean-msl" a="50"/>
 
     <RenderSettings drawgrid="false" />
-    <Vector vectorstyle="vector" linecolor="#000000" linewidth="2.0" scale="50.0" />
+    <Vector vectorstyle="vector" linecolor="#000000" linewidth="2.0" scale="40.0" />
   </Style>
 
-  <Layer type="database">
-    <Group collection="msl"/>
-    <Name>fake_wave</Name>
-    <Title>Fake wave</Title>
-    <Variable>wind-wave-from-direction-mean-msl</Variable>
-    <FilePath gfi_openall="true" filter="(wind-wave-from-direction-mean-msl_[0-9T]{11}\.nc)">{ADAGUC_PATH}/data/datasets/wave_data/wind-wave-from-direction-mean-msl_20260126T06.nc</FilePath>
-    <Styles>wave_direction</Styles>
-    <Dimension name="forecast_reference_time" units="ISO8601" type="reference_time">reference_time</Dimension>
-    <Dimension name="time" units="ISO8601" interval="PT1H" default="forecast_reference_time+PT1H" type="time">time</Dimension>
-    <Dimension name="msl" units=" " default="min" type="vertical" hidden="true">mean_sea_level</Dimension>
-  </Layer>
+  <Style name="wind_wave_direction_and_height">
+    <!-- Draw vectors, use "include_layer" datapostproc to include wave height from a different layer.
+    "wave_height" is used as the "vector strength" and as shade interval. -->
 
-  <Style name="wave_direction_and_wave_height">
-    <DataPostProc algorithm="include_layer" name="wind_wave_height_significant_msl" mode="prepend"/>
+    <DataPostProc algorithm="include_layer" name="wind_wave_height" mode="prepend"/>
     <DataPostProc algorithm="pointsfromgrid" select="wind-wave-height-significant-msl,wind-wave-from-direction-mean-msl" a="50"/>
 
+    <IncludeStyle name="_wind_wave_height_discete" />
+    <Vector vectorstyle="vector" fontsize="14" plotvalue="true" textcolor="#55555" linecolor="#000000" linewidth="2.0" scale="20.0" />
+  </Style>
+
+  <Style name="wind_wave_height">
+    <IncludeStyle name="_wind_wave_height_discete" />
+  </Style>
+
+  <Style name="_wind_wave_height_discete">
     <ShadeInterval min="0" max="1" label="0-1" fillcolor="#ffff00"/>
     <ShadeInterval min="1" max="2" label="1-2" fillcolor="#ff8000"/>
     <ShadeInterval min="2" max="3" label="2-3" fillcolor="#ff0000"/>
-
-    <Vector vectorstyle="vector" fontsize="14" plotvalue="true" textcolor="#55555" linecolor="#000000" linewidth="2.0" scale="20.0" />
     <RenderSettings renderhint="discreteclasses" />
   </Style>
 
   <Layer type="database">
     <Group collection="msl"/>
-    <Name>wind_wave_from_direction_mean_msl</Name>
-    <Title>Wind wave direction at mean sea level</Title>
+    <Name>wind_wave_direction_and_height</Name>
+    <Title>Wind wave direction and significant height</Title>
     <Variable>wind-wave-from-direction-mean-msl</Variable>
     <FilePath gfi_openall="true" filter="(wind-wave-from-direction-mean-msl_[0-9T]{11}\.nc)">{ADAGUC_PATH}/data/datasets/wave_data/wind-wave-from-direction-mean-msl_20260126T06.nc</FilePath>
-    <Styles>wave_direction_and_wave_height</Styles>
+    <Styles>wind_wave_direction_and_height</Styles>
     <Dimension name="forecast_reference_time" units="ISO8601" type="reference_time">reference_time</Dimension>
     <Dimension name="time" units="ISO8601" interval="PT1H" default="forecast_reference_time+PT1H" type="time">time</Dimension>
     <Dimension name="msl" units=" " default="min" type="vertical" hidden="true">mean_sea_level</Dimension>
   </Layer>
   <Layer type="database">
     <Group collection="msl"/>
-    <Name>wind_wave_height_significant_msl</Name>
-    <Title>Wind wave height significant at mean sea level</Title>
+    <Name>wind_wave_height</Name>
+    <Title>Wind wave height significant</Title>
     <Variable>wind-wave-height-significant-msl</Variable>
     <FilePath gfi_openall="true" filter="(wind-wave-from-height-significant-msl_[0-9T]{11}\.nc)">{ADAGUC_PATH}/data/datasets/wave_data/wind-wave-height-significant-msl_20260126T06.nc</FilePath>
-    <Styles>wave_direction_shade</Styles>
+    <Styles>wind_wave_height</Styles>
+    <Dimension name="forecast_reference_time" units="ISO8601" type="reference_time">reference_time</Dimension>
+    <Dimension name="time" units="ISO8601" interval="PT1H" default="forecast_reference_time+PT1H" type="time">time</Dimension>
+    <Dimension name="msl" units=" " default="min" type="vertical" hidden="true">mean_sea_level</Dimension>
+  </Layer>
+  <Layer type="database">
+    <Group collection="msl"/>
+    <Name>wind_wave_direction</Name>
+    <Title>Wind wave direction</Title>
+    <Variable>wind-wave-from-direction-mean-msl</Variable>
+    <FilePath gfi_openall="true" filter="(wind-wave-from-direction-mean-msl_[0-9T]{11}\.nc)">{ADAGUC_PATH}/data/datasets/wave_data/wind-wave-from-direction-mean-msl_20260126T06.nc</FilePath>
+    <Styles>wind_wave_direction</Styles>
     <Dimension name="forecast_reference_time" units="ISO8601" type="reference_time">reference_time</Dimension>
     <Dimension name="time" units="ISO8601" interval="PT1H" default="forecast_reference_time+PT1H" type="time">time</Dimension>
     <Dimension name="msl" units=" " default="min" type="vertical" hidden="true">mean_sea_level</Dimension>

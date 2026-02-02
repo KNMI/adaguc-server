@@ -39,10 +39,8 @@ simple unit conversions from Kelvin to Celsius.
 17. *CDDPFilterDataObjects*   `algorithm="filter_dataobjects"`: Filter out data objects from the GetMap and GetFeatureInfo responses. E.g. to hide components you do not want to show.
 18. *CDDPMetadataVariable*    `algorithm="metadata_variable"`: Add extra metadata to the CDF Data model.
 19.  *CDataPostProcessor_PointsFromGrid*  `algorithm="pointsfromgrid"`: Extracts point from a grid and makes them available for the point renderer
+20.  *CDataPostProcessor_AddDataObject*  `algorithm="add_dataobject"`: Adds a new data object (variable) to the layer with a given value
 
-
-
-        
 New datapost processors can be implemented via
 [CDataPostProcessor.cpp](../../adagucserverEC/CDataPostProcessors/CDataPostProcessor.cpp)
 
@@ -484,3 +482,43 @@ Extracts point from a grid and makes them available for the point renderer
 Attributes:
 - select: Which data objects to sample from the Layer
 - a: Optionally apply thinning in pixels, points will be no closer than `a` pixels in the GetMap response.
+
+
+## 20. *CDataPostProcessor_AddDataObject*  `algorithm="add_dataobject"`
+
+Attributes:
+- `name`: The name of the data object you want to create
+- `a`: The value of the new data object
+
+Adds a new data object (variable) to the layer with a given value. This can be used to draw a vector with only a direction component. The strength component can be created by this data postproc.
+
+Example image:
+
+<img border="1" src="../../tests/expectedoutputs/TestWMS/test_WMSGetMap_wave_direction_vector_with_add_dataobject.png" width="500">
+
+Can be created with this dataset configuration. Note the usage of "dummy-magnitude":
+```xml
+  <!-- Style uses "add_dataobject" postproc to create a strength variable with value 1-->
+  <Style name="wind_wave_direction">
+    <DataPostProc algorithm="add_dataobject" name="dummy-magnitude" a="1" />
+    <DataPostProc algorithm="pointsfromgrid" select="dummy-magnitude,wind-wave-from-direction-mean-msl" a="50"/>
+
+    <RenderSettings drawgrid="false" />
+    <Vector vectorstyle="vector" linecolor="#000000" linewidth="2.0" scale="40.0" />
+  </Style>
+
+  <!-- Dataset layer with a single variable. Value is wind direction in degrees. -->
+  <Layer type="database">
+    <Group collection="msl"/>
+    <Name>wind_wave_direction</Name>
+    <Title>Wind wave direction</Title>
+    <Variable>wind-wave-from-direction-mean-msl</Variable>
+    <FilePath gfi_openall="true" filter="(wind-wave-from-direction-mean-msl_[0-9T]{11}\.nc)">{ADAGUC_PATH}/data/datasets/wave_data/wind-wave-from-direction-mean-msl_20260126T06.nc</FilePath>
+    <Styles>wind_wave_direction</Styles>
+    <Dimension name="forecast_reference_time" units="ISO8601" type="reference_time">reference_time</Dimension>
+    <Dimension name="time" units="ISO8601" interval="PT1H" default="forecast_reference_time+PT1H" type="time">time</Dimension>
+    <Dimension name="msl" units=" " default="min" type="vertical" hidden="true">mean_sea_level</Dimension>
+  </Layer>
+```
+
+See also the test case `test_WMSGetMap_wave_direction_vector_with_add_dataobject` in [TestWMS.py](/tests/AdagucTests/TestWMS.py) and a tutorial [here](/doc/tutorials/Styling_of_vector_with_rotation_and_add_dataobject_datapostproc.md).
