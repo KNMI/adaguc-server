@@ -49,6 +49,14 @@ function build {
 
   mkdir -p $CURRENTDIR/bin
   cd $CURRENTDIR/bin
+
+  if [ "$*" = "--debug" ]; then
+    echo "Making Debug build"
+    cmake -DCMAKE_BUILD_TYPE=Debug  ..
+    else
+    echo "Making Release build"
+    cmake -DCMAKE_BUILD_TYPE=Release ..
+  fi
   cmake  --build . --parallel 4
 
   if [ -f adagucserver ]
@@ -77,11 +85,7 @@ if [ "$*" = "--clean" ]; then
   echo "Cleaning"
   clean
   elif [ "$*" = "--debug" ]; then
-  echo "Making Debug build"
-  cmake -DCMAKE_BUILD_TYPE=Debug ./bin
-  build
+  build --debug
   else
-  echo "Making Release build"
-  cmake -DCMAKE_BUILD_TYPE=Release ./bin
   build
 fi
