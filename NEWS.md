@@ -4,6 +4,7 @@
 - pointsfromgrid can now also be used to plot text values on windspeed and winddirection components
 - Striding x/y was swapped: fixes https://github.com/KNMI/adaguc-server/issues/602
 - Adaguc crashes if you select a parameter that doesn't exist. Now skips this parameter: Fixes https://github.com/KNMI/adaguc-server/issues/603
+- Refactored adagucserver.cpp file and added equalsIgnoreCase method.
 
 **Version 6.2.0 - 2026-01-12**
 

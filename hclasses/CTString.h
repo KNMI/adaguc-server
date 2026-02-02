@@ -418,4 +418,13 @@ namespace CT {
   std::string basename(std::string input);
 }; /* namespace CT */
 
+/**
+ * The equalsIgnoreCase() method compares two strings, ignoring lower case and upper case differences.
+ * This method returns true if the strings are equal, and false if not.
+ * @param str1 - compare str1 against str2
+ * @param str2 -
+ * @return true if equal
+ */
+bool equalsIgnoreCase(const std::string str1, const std::string str2);
+
 #endif

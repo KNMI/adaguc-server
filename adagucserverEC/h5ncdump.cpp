@@ -32,7 +32,6 @@
 #include "CCDFDataModel.h"
 #include "CCDFNetCDFIO.h"
 #include "CCDFHDF5IO.h"
-DEF_ERRORMAIN();
 
 int main(int argCount, char **argVars) {
   CDFHDF5Reader *hdf5Reader = NULL;

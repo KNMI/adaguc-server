@@ -26,8 +26,6 @@
 #include "CCDFTypes.h"
 #include <CDebugger.h>
 
-// DEF_ERRORMAIN()
-
 int CDF::getTypeSize(CDFType type) {
   if (type == CDF_CHAR || type == CDF_UBYTE || type == CDF_BYTE) return 1;
   if (type == CDF_SHORT || type == CDF_USHORT) return 2;

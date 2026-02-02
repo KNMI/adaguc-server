@@ -36,8 +36,6 @@
 #include "CCDFHDF5IO.h"
 #include "utils.h"
 
-DEF_ERRORMAIN();
-
 int testCTimeInit(CDF::Variable *testVar, const char *testDate) {
   CTime *testTime = CTime::GetCTimeInstance(testVar);
   if (testTime == NULL) {

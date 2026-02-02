@@ -5,6 +5,7 @@
 #include "adagucserver.h"
 #include "CNetCDFDataWriter.h"
 #include <set>
+#include "CRequest.h"
 std::set<std::string> CDBFileScanner::filesDeletedFromFS;
 
 void CDBFileScanner::_removeFileFromTables(CT::string fileNamestr, CDataSource *dataSource) {
