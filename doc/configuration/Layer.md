@@ -87,11 +87,11 @@ More information on how to configure this type of layer can be found [here](../t
     <Min>0</Min>
     <Max>180</Max>
   
-    <ShadeInterval min="0" max="90.0"    label="Day"    fillcolor="#FFFFFF"/>
-    <ShadeInterval min="90.00" max="96.00"    label="Civil Twilight"    fillcolor="#999999"/>
-    <ShadeInterval min="96.00" max="102.00"    label="Nautical Twilight"    fillcolor="#666666"/>
-    <ShadeInterval min="102.00" max="108.00"    label="Astronomical Twilight"    fillcolor="#333333"/>
-    <ShadeInterval min="108.00" max="180.00"    label="Night"    fillcolor="#000000"/>
+    <ShadeInterval min="0" max="90.0" label="Day (0–90°)" fillcolor="#FFFFFF"/>
+    <ShadeInterval min="90.00" max="96.00" label="Civil Twilight (90–96°)" fillcolor="#999999"/>
+    <ShadeInterval min="96.00" max="102.00" label="Nautical Twilight (96–102°)" fillcolor="#666666"/>
+    <ShadeInterval min="102.00" max="108.00" label="Astronomical Twilight (102–108°)" fillcolor="#333333"/>
+    <ShadeInterval min="108.00" max="180.00" label="Night (108–180°)" fillcolor="#000000"/>
 
     <NameMapping name="shadedcontour"   title="Shaded categories" abstract="Displays different phases of twilight and day using shades of gray, with black for night and white for day."/>
     <RenderMethod>shadedcontour</RenderMethod>

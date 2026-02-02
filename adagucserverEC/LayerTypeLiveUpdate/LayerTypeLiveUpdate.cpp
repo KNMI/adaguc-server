@@ -101,7 +101,7 @@ void layerTypeLiveUpdatePopulateDataSource(CDataSource *dataSource, CServerParam
   solTVar->name = "solarterminator";
   solTVar->setAttributeText("standard_name", "solarterminator");
   solTVar->setAttributeText("long_name", "solar terminator");
-  solTVar->setAttributeText("units", "light phase");
+  solTVar->setAttributeText("units", "sza");
   solTVar->setAttributeText("grid_mapping", "projection");
   cdfObject->addVariable(solTVar);
   CDF::Variable::CustomMemoryReader *memoryReaderSolT = CDF::Variable::CustomMemoryReaderInstance;
