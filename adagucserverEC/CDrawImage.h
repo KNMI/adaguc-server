@@ -81,7 +81,6 @@ private:
 public:
   float *rField, *gField, *bField;
   int *numField;
-  bool trueColorAVG_RGBA;
   int _colors[256];
 
   int colors[256];
@@ -151,8 +150,8 @@ public:
   int getHeight();
 
   void getHexColorForColorIndex(CT::string *hexValue, int colorIndex);
-  void setText(const char *text, size_t length, int x, int y, int color, int fontSize);
-  void setText(const char *text, size_t length, int x, int y, CColor color, int fontSize);
+  void setText(const char *text, int x, int y, int color);
+  void setText(const char *text, int x, int y, CColor color);
   // void setTextDisc(const char *text, size_t length, int x, int y, int r, CColor color, const char *fontfile,int fontSize);
   void setDisc(int x, int y, int discRadius, CColor fillColor, CColor lineColor);
   void setDisc(int x, int y, int discRadius, int fillCol, int lineCol);
@@ -210,7 +209,7 @@ public:
   /**
    * Get renderer width of the given text
    */
-  int getTextWidth(CT::string text, const std::string &fontPath, int fontSize, int angle);
+  int getTextWidth(CT::string text, const std::string &fontPath, int angle);
 };
 
 #endif

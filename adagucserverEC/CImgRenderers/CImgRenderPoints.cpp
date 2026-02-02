@@ -54,7 +54,7 @@ void drawTextsForVector(CDrawImage *drawImage, CDataSource *dataSource, VectorSt
       newY = ((direction >= 90) && (direction <= 270)) ? y + 6 : y - 20;
     }
     CT::string stationId = pointStrength->paramList[0].value;
-    drawImage->setText(stationId.c_str(), stationId.length(), x - stationId.length() * 3, newY, vectorStyle.textColor, 0);
+    drawImage->setText(stationId.c_str(), x - stationId.length() * 3, newY, vectorStyle.textColor);
   }
 
   // Draw value for vector or disc
@@ -63,7 +63,7 @@ void drawTextsForVector(CDrawImage *drawImage, CDataSource *dataSource, VectorSt
       int newY = ((direction >= 90) && (direction <= 270)) ? y - 20 : y + 6;
       CT::string textValue;
       textValue.print(vectorStyle.drawVectorTextFormat.c_str(), strength);
-      drawImage->setText(textValue.c_str(), textValue.length(), x - textValue.length() * 3, newY, vectorStyle.textColor, 0);
+      drawImage->setText(textValue.c_str(), x - textValue.length() * 3, newY, vectorStyle.textColor);
     }
   }
 }
@@ -541,7 +541,7 @@ void renderSingleVolumes(std::vector<size_t> thinnedPointIndexList, CDataSource 
       drawVolumeForPoint(drawImage, pointStyle.fillColor, x, y, pointStyle.discRadius, alphaVec);
       if (pointStyle.plotStationId && pointValue->paramList.size() > 0) {
         CT::string stationId = pointValue->paramList[0].value;
-        drawImage->setText(stationId.c_str(), stationId.length(), x - stationId.length() * 3, y - 20, pointStyle.textColor, 0);
+        drawImage->setText(stationId.c_str(), x - stationId.length() * 3, y - 20, pointStyle.textColor);
       }
     }
   }

@@ -71,7 +71,7 @@ void printerrorImage(void *_drawImage) {
   CDrawImage *drawImage = (CDrawImage *)_drawImage;
 
   const char *exceptionText = "OGC inimage Exception";
-  drawImage->setText(exceptionText, strlen(exceptionText), 12, 5, 241, 0);
+  drawImage->setText(exceptionText, 12, 5, 241);
 
   int y = 1;
   size_t w = drawImage->geoParams.width / 6, characters = 0;
@@ -84,14 +84,14 @@ void printerrorImage(void *_drawImage) {
         concat.concat(" ");
         characters = concat.length();
       } else {
-        drawImage->setText(concat.c_str(), concat.length(), 12, 5 + y * 15, 240, -1);
+        drawImage->setText(concat.c_str(), 12, 5 + y * 15, 240);
         y++;
         concat.copy(&sp[k]);
         concat.concat(" ");
         characters = concat.length();
       }
     }
-    drawImage->setText(concat.c_str(), concat.length(), 12, 5 + y * 15, 240, -1);
+    drawImage->setText(concat.c_str(), 12, 5 + y * 15, 240);
     y++;
   }
   y = (y - 1) * 15 + 26;

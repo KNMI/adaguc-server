@@ -46,7 +46,6 @@ CDrawImage::CDrawImage() {
   gField = NULL;
   bField = NULL;
   numField = NULL;
-  trueColorAVG_RGBA = false; // TODO: This is always false. Do we still need this?
 
   TTFFontLocation = "/usr/X11R6/lib/X11/fonts/truetype/verdana.ttf"; // TODO: this location does not exist in the docker container
   const char *fontLoc = getenv("ADAGUC_FONT");
@@ -419,12 +418,12 @@ void CDrawImage::setPixelTrueColorOverWrite(int x, int y, unsigned char r, unsig
 
 void CDrawImage::setPixelTrueColor(int x, int y, unsigned char r, unsigned char g, unsigned char b, unsigned char a) { cairo->pixel_blend(x, y, r, g, b, a); }
 
-void CDrawImage::setText(const char *text, size_t length, int x, int y, int color, int fontSize) {
+void CDrawImage::setText(const char *text, int x, int y, int color) {
   CColor col = getColorForIndex(color);
-  setText(text, length, x, y, col, fontSize);
+  setText(text, x, y, col);
 }
 
-void CDrawImage::setText(const char *text, size_t length, int x, int y, CColor color, int fontSize) {
+void CDrawImage::setText(const char *text, int x, int y, CColor color) {
   if (currentLegend == NULL) return;
   cairo->setColor(color.r, color.g, color.b, color.a);
   cairo->drawText(x, y + 10, 0, text);
@@ -1166,9 +1165,7 @@ const char *CDrawImage::getFontLocation() { return this->TTFFontLocation; }
 
 float CDrawImage::getFontSize() { return this->TTFFontSize; }
 
-int CDrawImage::getTextWidth(CT::string text, const std::string &, int fontSize, int angle) {
-  constexpr double digit_width_factor = 0.6; // Not good even if we know the factor by font
-  size_t num_chars = text.length();
+int CDrawImage::getTextWidth(CT::string text, const std::string &, int angle) {
   int w = 0, h = 0;
   cairo->getTextSize(w, h, angle, text.c_str());
   return w;
