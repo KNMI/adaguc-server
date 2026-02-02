@@ -417,3 +417,11 @@ class AdagucTestTools:
             print(f"Time dimension OK: {diff_days:.2f} days, interval={interval}")
 
         return ok_days and ok_interval
+
+    def compareJson(self, testresultFileLocation: str, expectedOutputFileLocation: str, significantDigits=6) -> bool:
+        with open(expectedOutputFileLocation, "r") as fp:
+            expected = json.load(fp)
+        with open(testresultFileLocation, "r") as fp:
+            result = json.load(fp)
+
+        return DeepDiff(expected, result, significant_digits=significantDigits, number_format_notation="e") == {}

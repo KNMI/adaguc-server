@@ -2738,6 +2738,36 @@ class TestWMS(unittest.TestCase):
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
 
+
+    def test_WMSGetMap_SolarTerminatorSolstice_continuous(self):
+        # Testing the solar terminator on December 21, 2022 with continuous colours
+        AdagucTestTools().cleanTempDir()
+        config = (
+            ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,"
+            + ADAGUC_PATH
+            + "/data/config/datasets/adaguc.tests.solarterminator.xml"
+        )
+        env = {"ADAGUC_CONFIG": config}
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=["--updatedb", "--config", config], env=self.env, isCGI=False
+        )
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSGetMap_SolarTerminatorSolstice_continuous.png"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "DATASET=solarterminator&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=solarterminator&WIDTH=200&HEIGHT=200&CRS=EPSG%3A3857&BBOX=-27591378.677139122,-15819675.465716192,24482445.32432534,23920874.430138264&STYLES=solt_continuous&FORMAT=image/png&TRANSPARENT=TRUE&&time=2022-12-21T00%3A00%3A00Z&",
+            env=env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
+
+
     def test_WMSGetMap_SolarTerminatorQuarterPoint(self):
         # Testing the solar terminator on August 7, 2000
         AdagucTestTools().cleanTempDir()
