@@ -1247,7 +1247,7 @@ int CRequest::process_querystring() {
      }
    }
    */
-  if (srvParam->cfg->WMS.size() != 1) {
+  if (srvParam == nullptr || srvParam->cfg == nullptr || srvParam->cfg->WMS.size() != 1) {
     CDBError("WMS element has not been configured");
     return 1;
   }

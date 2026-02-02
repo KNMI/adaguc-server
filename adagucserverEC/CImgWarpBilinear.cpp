@@ -1051,82 +1051,71 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
     }
   }
 
-  int snr = 0;
-  int numShadeDefs = (int)shadeDefinitionsExpanded.size();
-  float shadeDefMin[numShadeDefs];
-  float shadeDefMax[numShadeDefs];
-  unsigned char shadeColorR[numShadeDefs];
-  unsigned char shadeColorG[numShadeDefs];
-  unsigned char shadeColorB[numShadeDefs];
-  unsigned char shadeColorA[numShadeDefs];
-  for (snr = 0; snr < numShadeDefs; snr++) {
-    shadeDefMin[snr] = shadeDefinitionsExpanded[snr].min;
-    shadeDefMax[snr] = shadeDefinitionsExpanded[snr].max;
+  if (shadeDefinitionsExpanded.size() > 0) {
 
-    if (shadeDefinitionsExpanded[snr].foundColor) {
-      shadeColorR[snr] = shadeDefinitionsExpanded[snr].fillColor.r;
-      shadeColorG[snr] = shadeDefinitionsExpanded[snr].fillColor.g;
-      shadeColorB[snr] = shadeDefinitionsExpanded[snr].fillColor.b;
-      shadeColorA[snr] = shadeDefinitionsExpanded[snr].fillColor.a;
-    } else {
-      CColor color = drawImage->getColorForIndex(getPixelIndexForValue(dataSource, shadeDefMin[snr]));
-      shadeColorR[snr] = color.r;
-      shadeColorG[snr] = color.g;
-      shadeColorB[snr] = color.b;
-      shadeColorA[snr] = color.a;
+    int snr = 0;
+    int numShadeDefs = (int)shadeDefinitionsExpanded.size();
+    float shadeDefMin[numShadeDefs];
+    float shadeDefMax[numShadeDefs];
+    unsigned char shadeColorR[numShadeDefs];
+    unsigned char shadeColorG[numShadeDefs];
+    unsigned char shadeColorB[numShadeDefs];
+    unsigned char shadeColorA[numShadeDefs];
+    for (snr = 0; snr < numShadeDefs; snr++) {
+      shadeDefMin[snr] = shadeDefinitionsExpanded[snr].min;
+      shadeDefMax[snr] = shadeDefinitionsExpanded[snr].max;
+
+      if (shadeDefinitionsExpanded[snr].foundColor) {
+        shadeColorR[snr] = shadeDefinitionsExpanded[snr].fillColor.r;
+        shadeColorG[snr] = shadeDefinitionsExpanded[snr].fillColor.g;
+        shadeColorB[snr] = shadeDefinitionsExpanded[snr].fillColor.b;
+        shadeColorA[snr] = shadeDefinitionsExpanded[snr].fillColor.a;
+      } else {
+        CColor color = drawImage->getColorForIndex(getPixelIndexForValue(dataSource, shadeDefMin[snr]));
+        shadeColorR[snr] = color.r;
+        shadeColorG[snr] = color.g;
+        shadeColorB[snr] = color.b;
+        shadeColorA[snr] = color.a;
+      }
     }
-  }
-  int lastShadeDef = 0;
+    int lastShadeDef = 0;
 
-  // float minValue = CImageDataWriter::getValueForColorIndex(dataSource,0);;
-  // float maxValue = CImageDataWriter::getValueForColorIndex(dataSource,240);;
-  //     for(int y=0;y<dImageHeight-1;y++){
-  //      for(int x=0;x<dImageWidth-1;x++){
-  //
-  //        float v = valueData[x+y*dImageWidth];
-  //        if(v>maxValue)valueData[x+y*dImageWidth]=maxValue;
-  //        if(v<minValue)valueData[x+y*dImageWidth]=minValue;
-  //      }
-  //     }
-  // Shade
-  for (int y = 0; y < dImageHeight - 1; y++) {
-    for (int x = 0; x < dImageWidth - 1; x++) {
-      size_t p1 = size_t(x + y * dImageWidth);
-      val[0] = valueData[p1];
-      val[1] = valueData[p1 + 1];
-      val[2] = valueData[p1 + dImageWidth];
-      val[3] = valueData[p1 + dImageWidth + 1];
+    // Shade
+    for (int y = 0; y < dImageHeight - 1; y++) {
+      for (int x = 0; x < dImageWidth - 1; x++) {
+        size_t p1 = size_t(x + y * dImageWidth);
+        val[0] = valueData[p1];
+        val[1] = valueData[p1 + 1];
+        val[2] = valueData[p1 + dImageWidth];
+        val[3] = valueData[p1 + dImageWidth + 1];
 
-      // Check if all pixels have values...
-      if (val[0] != fNodataValue && val[1] != fNodataValue && val[2] != fNodataValue && val[3] != fNodataValue && val[0] == val[0] && val[1] == val[1] && val[2] == val[2] && val[3] == val[3]) {
-        //         for(int i=0;i<4;i++){
-        //           if(val[i]<minValue)val[i]=minValue;else if(val[i]>maxValue)val[i]=maxValue;
-        //         }
-        //
+        // Check if all pixels have values...
+        if (val[0] != fNodataValue && val[1] != fNodataValue && val[2] != fNodataValue && val[3] != fNodataValue && val[0] == val[0] && val[1] == val[1] && val[2] == val[2] && val[3] == val[3]) {
 
-        // Draw shading
-        if (drawShade) {
-          if (interval != 0) {
-            setValuePixel(dataSource, drawImage, x, y, convertValueToClass(val[0], interval));
-          } else {
-            int done = numShadeDefs;
-            if (val[0] >= shadeDefMin[lastShadeDef] && val[0] < shadeDefMax[lastShadeDef]) {
-              done = -1;
+          // Draw shading
+          if (drawShade) {
+            if (interval != 0) {
+              setValuePixel(dataSource, drawImage, x, y, convertValueToClass(val[0], interval));
             } else {
-              do {
-                lastShadeDef++;
-                if (lastShadeDef > numShadeDefs - 1) lastShadeDef = 0;
-                done--;
-                if (val[0] >= shadeDefMin[lastShadeDef] && val[0] < shadeDefMax[lastShadeDef]) {
-                  done = -1;
-                }
-              } while (done > 0);
-            }
-            if (done == -1) {
-              if (shadeColorA[lastShadeDef] == 0) { // When a fully transparent color is deliberately set, force this color in the image
-                drawImage->setPixelTrueColorOverWrite(x, y, shadeColorR[lastShadeDef], shadeColorG[lastShadeDef], shadeColorB[lastShadeDef], shadeColorA[lastShadeDef]);
+              int done = numShadeDefs;
+              if (val[0] >= shadeDefMin[lastShadeDef] && val[0] < shadeDefMax[lastShadeDef]) {
+                done = -1;
               } else {
-                drawImage->setPixelTrueColor(x, y, shadeColorR[lastShadeDef], shadeColorG[lastShadeDef], shadeColorB[lastShadeDef], shadeColorA[lastShadeDef]);
+                do {
+                  lastShadeDef++;
+                  if (lastShadeDef > numShadeDefs - 1) lastShadeDef = 0;
+                  done--;
+                  if (val[0] >= shadeDefMin[lastShadeDef] && val[0] < shadeDefMax[lastShadeDef]) {
+                    done = -1;
+                  }
+                } while (done > 0);
+              }
+              if (done == -1) {
+                if (shadeColorA[lastShadeDef] == 0) { // When a fully transparent color is deliberately set, force this color in the image
+                  drawImage->setPixelTrueColorOverWrite(x, y, shadeColorR[lastShadeDef], shadeColorG[lastShadeDef], shadeColorB[lastShadeDef], shadeColorA[lastShadeDef]);
+                } else {
+                  drawImage->setPixelTrueColor(x, y, shadeColorR[lastShadeDef], shadeColorG[lastShadeDef], shadeColorB[lastShadeDef], shadeColorA[lastShadeDef]);
+                }
               }
             }
           }
