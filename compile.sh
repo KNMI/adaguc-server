@@ -53,7 +53,10 @@ function build {
   if [ "$*" = "--debug" ]; then
     echo "Making Debug build"
     cmake -DCMAKE_BUILD_TYPE=Debug  ..
-    else
+  elif [ "$*" = "--profile" ]; then
+    echo "Making profile build"
+    cmake -DCMAKE_BUILD_TYPE=Profile ..
+  else
     echo "Making Release build"
     cmake -DCMAKE_BUILD_TYPE=Release ..
   fi
@@ -84,8 +87,10 @@ function build {
 if [ "$*" = "--clean" ]; then
   echo "Cleaning"
   clean
-  elif [ "$*" = "--debug" ]; then
+elif [ "$*" = "--debug" ]; then
   build --debug
-  else
+elif [ "$*" = "--profile" ]; then
+  build --profile
+else
   build
 fi
