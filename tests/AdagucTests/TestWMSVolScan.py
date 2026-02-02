@@ -1,19 +1,13 @@
-import datetime
-import json
 import os
 import os.path
-import re
-import shutil
-import subprocess
 import unittest
-from io import BytesIO
 
 from adaguc.AdagucTestTools import AdagucTestTools
-from lxml import etree, objectify
 
 ADAGUC_PATH = os.environ["ADAGUC_PATH"]
 
 
+# TODO: Parametrize
 class TestWMSVolScan(unittest.TestCase):
     testresultspath = "testresults/TestWMSVolScan/"
     expectedoutputsspath = "expectedoutputs/TestWMSVolScan/"

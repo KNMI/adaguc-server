@@ -13,6 +13,7 @@ from adaguc.AdagucTestTools import AdagucTestTools
 ADAGUC_PATH = os.environ['ADAGUC_PATH']
 
 
+# TODO: Parametrize
 class TestWMSPolylineRenderer(unittest.TestCase):
     testresultspath = "testresults/TestWMSPolylineRenderer/"
     expectedoutputsspath = "expectedoutputs/TestWMSPolylineRenderer/"
