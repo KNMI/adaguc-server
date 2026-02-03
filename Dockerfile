@@ -90,6 +90,7 @@ COPY requirements-dev.txt /adaguc/adaguc-server-master/requirements-dev.txt
 RUN pip install --no-cache-dir -r requirements-dev.txt
 
 COPY tests /adaguc/adaguc-server-master/tests
+COPY scripts /adaguc/adaguc-server-master/scripts
 COPY runtests_psql.sh /adaguc/adaguc-server-master/runtests_psql.sh
 
 # Determine if we're building in github actions or via a local docker build
