@@ -176,6 +176,7 @@ const char *WMS_1_1_1_GetCapabilities_Header =
     <GetLegendGraphic>
       <Format>image/png</Format>
       <Format>image/png32</Format>
+      <Format>image/webp</Format>
       <DCPType>
         <HTTP>
           <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="[SERVICEONLINERESOURCE]"/></Get>
@@ -240,7 +241,6 @@ const char *WMS_1_3_0_GetCapabilities_Header = R""""(<?xml version="1.0" encodin
                 <Format>image/png;mode=8bit_noalpha</Format>
                 <Format>image/png;mode=24bit</Format>
                 <Format>image/png;mode=32bit</Format>
-                <Format>image/jpeg</Format>
                 <Format>image/webp</Format>
                 <DCPType><HTTP><Get><OnlineResource xlink:type="simple" xlink:href="[SERVICEONLINERESOURCE]"/></Get></HTTP></DCPType>
             </GetMap>

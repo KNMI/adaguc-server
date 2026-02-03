@@ -38,7 +38,6 @@
                 <Format>image/png;mode=8bit_noalpha</Format>
                 <Format>image/png;mode=24bit</Format>
                 <Format>image/png;mode=32bit</Format>
-                <Format>image/jpeg</Format>
                 <Format>image/webp</Format>
                 <DCPType><HTTP><Get><OnlineResource xlink:type="simple" xlink:href="source=test%2Fvolscan%2FODIM_RAD_NL62_VOL_NA_202106181850%2Eh5&amp;SERVICE=WMS&amp;"/></Get></HTTP></DCPType>
             </GetMap>
