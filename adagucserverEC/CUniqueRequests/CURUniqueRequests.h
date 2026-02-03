@@ -16,7 +16,6 @@
 class CURUniqueRequests {
 
 private:
-  DEF_ERRORFUNCTION();
   std::map<std::string, CURFileInfo> fileInfoMap;
   int dimOrdering[CCUniqueRequests_MAX_DIMS];
   CURAggregatedDimension aggregatedDimensions[CCUniqueRequests_MAX_DIMS];

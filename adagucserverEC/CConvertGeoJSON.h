@@ -41,7 +41,6 @@ public:
   } BBOX;
 
 private:
-  DEF_ERRORFUNCTION();
   static void buildNodeList(int pixelY, int &nodes, int nodeX[], int polyCorners, float *polyXY);
   static void bubbleSort(int nodes, int nodeX[]);
   static void getBBOX(CDFObject *cdfObject, BBOX &bbox, json_value &json, std::vector<Feature *> &features);

@@ -19,8 +19,6 @@
 
 class CInspire {
 private:
-  DEF_ERRORFUNCTION();
-
 public:
   /**
    * INSPIRE metadata structure

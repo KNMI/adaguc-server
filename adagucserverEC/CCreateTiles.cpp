@@ -5,8 +5,6 @@
 #include "CRequest.h"
 #include "CNetCDFDataWriter.h"
 
-const char *CCreateTiles::className = "CCreateTiles";
-
 int CCreateTiles::createTiles(CDataSource *dataSource, int scanFlags) {
   if (dataSource->isConfigured == false) {
     CDBError("Error! dataSource->isConfigured == false");

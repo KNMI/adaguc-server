@@ -33,8 +33,7 @@
 // CConfigReaderLayerType
 #define CConfigReaderLayerTypeUnknown 0
 #define CConfigReaderLayerTypeDataBase 1
-#define CConfigReaderLayerTypeStyled 2
-#define CConfigReaderLayerTypeCascaded 3
+#define CConfigReaderLayerTypeGraticule 3
 #define CConfigReaderLayerTypeBaseLayer 4
 #define CConfigReaderLayerTypeLiveUpdate 6
 
@@ -82,7 +81,6 @@
 
 // Image formats
 #define IMAGEFORMAT_IMAGEPNG8 0
-#define IMAGEFORMAT_IMAGEGIF 1
 #define IMAGEFORMAT_IMAGEPNG24 2
 #define IMAGEFORMAT_IMAGEPNG32 3
 #define IMAGEFORMAT_IMAGEWEBP 4

@@ -39,7 +39,6 @@
 class CHTTPTools {
 
 private:
-  DEF_ERRORFUNCTION();
   struct MemoryStruct {
     char *memory;
     size_t size;

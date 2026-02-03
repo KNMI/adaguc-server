@@ -37,7 +37,7 @@
 //
 // class CCDFWarper{
 //   private:
-//   DEF_ERRORFUNCTION();
+//
 //   bool lonWarpNeeded;size_t lonWarpStartIndex;
 //
 //   public:

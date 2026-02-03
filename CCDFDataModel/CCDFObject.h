@@ -39,7 +39,6 @@ private:
   void *reader;
 
 public:
-  DEF_ERRORFUNCTION();
   CDFObject() {
     name.copy("NC_GLOBAL");
     reader = NULL;

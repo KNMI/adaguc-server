@@ -28,7 +28,6 @@
 #include "CCDFReader.h"
 #include "CTime.h"
 #include "traceTimings/traceTimings.h"
-const char *CDF::Variable::className = "Variable";
 
 extern CDF::Variable::CustomMemoryReader customMemoryReaderInstance;
 CDF::Variable::CustomMemoryReader customMemoryReaderInstance;

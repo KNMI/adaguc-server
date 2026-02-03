@@ -27,7 +27,6 @@
 #include "CDBFileScanner.h"
 #include "CConvertGeoJSON.h"
 #include "utils/LayerUtils.h"
-const char *CDataSource::className = "CDataSource";
 
 // #define CDATASOURCE_DEBUG
 
@@ -370,14 +369,8 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Conf
   dLayerType = CConfigReaderLayerTypeDataBase;
   if (cfgLayer->attr.type.equals("database")) {
     dLayerType = CConfigReaderLayerTypeDataBase;
-  } else if (cfgLayer->attr.type.equals("styled")) {
-    dLayerType = CConfigReaderLayerTypeStyled;
-  } else if (cfgLayer->attr.type.equals("cascaded")) {
-    dLayerType = CConfigReaderLayerTypeCascaded;
-  } else if (cfgLayer->attr.type.equals("image")) {
-    dLayerType = CConfigReaderLayerTypeCascaded;
   } else if (cfgLayer->attr.type.equals("grid")) {
-    dLayerType = CConfigReaderLayerTypeCascaded;
+    dLayerType = CConfigReaderLayerTypeGraticule;
   } else if (cfgLayer->attr.type.equals("autoscan")) {
     dLayerType = CConfigReaderLayerTypeUnknown;
   } else if (cfgLayer->attr.type.equals("baselayer")) {

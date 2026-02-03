@@ -3,7 +3,6 @@
 /************************/
 /*      CDPPToKnots     */
 /************************/
-const char *CDPPToKnots::className = "CDPPToToKnots";
 
 const char *CDPPToKnots::getId() { return "toknots"; }
 int CDPPToKnots::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int) {

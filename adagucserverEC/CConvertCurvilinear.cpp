@@ -26,8 +26,6 @@
 #include "CConvertCurvilinear.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
-// #define CCONVERTCURVILINEAR_DEBUG
-const char *CConvertCurvilinear::className = "CConvertCurvilinear";
 
 int CConvertCurvilinear::checkIfIsCurvilinear(CDFObject *cdfObject, CServerParams *, bool &hasLatLonBounds) {
   // Check whether this is really a curvilinear file

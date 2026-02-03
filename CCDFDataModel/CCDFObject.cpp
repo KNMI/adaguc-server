@@ -31,8 +31,6 @@
 #include "CTime.h"
 #include "traceTimings/traceTimings.h"
 
-const char *CDFObject::className = "CDFObject";
-
 CDFObject::~CDFObject() { clear(); }
 
 int CDFObject::attachCDFReader(void *reader) {

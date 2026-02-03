@@ -29,8 +29,6 @@
 
 // #define CGDALDATAWRITER_DEBUG
 
-const char *CGDALDataWriter::className = "CGDALDataWriter";
-
 int CGDALDataWriter::init(CServerParams *_srvParam, CDataSource *dataSource, int _NrOfBands) {
 #ifdef CGDALDATAWRITER_DEBUG
   CDBDebug("INIT");
@@ -648,9 +646,6 @@ CT::string CGDALDataWriter::generateGetCoverageFileName() {
   }
   if (formatUpperCase.indexOf("IMAGE/BMP") != -1) {
     extension = ".bmp";
-  }
-  if (formatUpperCase.indexOf("IMAGE/GIF") != -1) {
-    extension = ".gif";
   }
   if (formatUpperCase.indexOf("IMAGE/JPG") != -1) {
     extension = ".jpg";

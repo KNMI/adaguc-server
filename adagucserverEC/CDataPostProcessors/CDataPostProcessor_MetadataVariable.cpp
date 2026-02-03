@@ -7,7 +7,6 @@
 /************************/
 /*      CDDPMETADATA_VARIABLE  */
 /************************/
-const char *CDDPMetadataVariable::className = "CDDPMETADATA_VARIABLE";
 
 const char *CDDPMetadataVariable::getId() { return CDATAPOSTPROCESSOR_CDDPMETADATA_VARIABLE_ID; }
 

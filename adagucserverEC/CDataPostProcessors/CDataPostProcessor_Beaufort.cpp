@@ -1,8 +1,6 @@
 
 #include "CDataPostProcessor_Beaufort.h"
 
-const char *CDPPBeaufort::className = "CDPPBeaufort";
-
 const char *CDPPBeaufort::getId() { return "beaufort"; }
 int CDPPBeaufort::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
   if (proc->attr.algorithm.equals("beaufort")) {

@@ -28,7 +28,6 @@
 #include "CImgWarpNearestNeighbour.h"
 #include <limits>
 #include "CFillTriangle.h"
-const char *CImgWarpNearestNeighbour::className = "CImgWarpNearestNeighbour";
 
 void CImgWarpNearestNeighbour::drawTriangleBil(CDrawImage *drawImage, float *destField, int *xP, int *yP, float *values) {
 

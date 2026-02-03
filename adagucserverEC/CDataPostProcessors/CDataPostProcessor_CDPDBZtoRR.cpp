@@ -4,7 +4,6 @@
 /************************/
 /*      CDPDBZtoRR     */
 /************************/
-const char *CDPDBZtoRR::className = "CDPDBZtoRR";
 
 const char *CDPDBZtoRR::getId() { return CDATAPOSTPROCESSOR_DBZtoRR_ID; }
 int CDPDBZtoRR::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int) {

@@ -35,8 +35,6 @@
  */
 class CCreateTiles {
 private:
-  DEF_ERRORFUNCTION();
-
 public:
   /**
    * @brief Create tiles for all files.

@@ -26,8 +26,6 @@
 #include "CConvertUGRIDMesh.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
-// #define CCONVERTUGRIDMESH_DEBUG
-const char *CConvertUGRIDMesh::className = "CConvertUGRIDMesh";
 
 #define CCONVERTUGRIDMESH_NODATA -32000
 

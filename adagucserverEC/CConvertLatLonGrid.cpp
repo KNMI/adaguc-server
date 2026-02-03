@@ -27,10 +27,6 @@
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
 
-// #define CConvertLatLonGrid_DEBUG
-
-const char *CConvertLatLonGrid::className = "CConvertLatLonGrid";
-
 static const char *const lonNamesToCheck[] = {"lon", "longitude"};
 static const char *const latNamesToCheck[] = {"lat", "latitude"};
 

@@ -29,8 +29,6 @@
 #include <cmath>
 #include <algorithm>
 
-const char *CTime::className = "CTime";
-
 std::map<CT::string, CTime *> CTime::CTimeInstances;
 
 CTime *CTime::GetCTimeInstance(CDF::Variable *timeVariable) {

@@ -51,8 +51,6 @@ private:
 
   hid_t cdfTypeToHDFType(CDFType type);
 
-  DEF_ERRORFUNCTION();
-
   int readDimensions() { return 0; }
   int readAttributes(std::vector<CDF::Attribute *> &, int, int) { return 0; }
   int readVariables() { return 0; }

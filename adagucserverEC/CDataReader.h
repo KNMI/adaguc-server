@@ -44,7 +44,6 @@
 #include "CAutoConfigure.h"
 class CDataReader {
 private:
-  DEF_ERRORFUNCTION();
   bool _enableReporting = false;
   bool verbose = false;
   /**

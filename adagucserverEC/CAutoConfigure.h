@@ -44,14 +44,12 @@
 
 class CAutoConfigure {
 private:
-  DEF_ERRORFUNCTION();
   /**
    * Load a generic file header into the datasource. Usually the most recent file from a series is taken. The file header can for example be used to determine automatically the available dimensions.
    * @param dataSource
    * @return Zero on success.
    */
   static int justLoadAFileHeader(CDataSource *dataSource);
-  static int checkCascadedDimensions(const CDataSource *dataSource);
 
 public:
   static int autoConfigureDimensions(CDataSource *dataSource);

@@ -28,8 +28,6 @@
 #include "CDataSource.h"
 class CConvertUGRIDMesh {
 private:
-  DEF_ERRORFUNCTION();
-
 public:
   static int convertUGRIDMeshHeader(CDFObject *cdfObject);
   static int convertUGRIDMeshData(CDataSource *dataSource, int mode);

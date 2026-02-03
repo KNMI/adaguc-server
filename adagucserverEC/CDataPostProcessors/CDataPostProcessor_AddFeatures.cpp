@@ -4,7 +4,6 @@
 /************************/
 /*      CDPPAddFeatures     */
 /************************/
-const char *CDPPAddFeatures::className = "CDPPAddFeatures";
 
 const char *CDPPAddFeatures::getId() { return CDATAPOSTPROCESSOR_ADDFEATURES_ID; }
 int CDPPAddFeatures::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int) {

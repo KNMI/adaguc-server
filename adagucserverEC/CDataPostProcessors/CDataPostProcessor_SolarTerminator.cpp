@@ -16,7 +16,6 @@
 /************************/
 /*      CDPPSolarTerminator  */
 /************************/
-const char *CDPPSolarTerminator::className = "CDPPSolarTerminator";
 
 const char *CDPPSolarTerminator::getId() { return "solarterminator"; }
 

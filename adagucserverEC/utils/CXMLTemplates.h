@@ -81,7 +81,7 @@ const char *WMS_1_0_0_GetCapabilities_Header =
 <Capability>
   <Request>
     <Map>
-      <Format><GIF /><PNG /><JPEG /><WBMP /><SVG /></Format>
+      <Format><PNG /><WEBP /></Format>
       <DCPType>
         <HTTP>
           <Get onlineResource="[SERVICEONLINERESOURCE]" />
@@ -146,8 +146,8 @@ const char *WMS_1_1_1_GetCapabilities_Header =
     </GetCapabilities>
     <GetMap>
       <Format>image/png</Format>
-      <Format>image/gif</Format>
       <Format>image/png32</Format>
+      <Format>image/webp</Format>
       <DCPType>
         <HTTP>
           <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="[SERVICEONLINERESOURCE]"/></Get>
@@ -175,8 +175,8 @@ const char *WMS_1_1_1_GetCapabilities_Header =
     </DescribeLayer>
     <GetLegendGraphic>
       <Format>image/png</Format>
-      <Format>image/gif</Format>
       <Format>image/png32</Format>
+      <Format>image/webp</Format>
       <DCPType>
         <HTTP>
           <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="[SERVICEONLINERESOURCE]"/></Get>
@@ -241,9 +241,7 @@ const char *WMS_1_3_0_GetCapabilities_Header = R""""(<?xml version="1.0" encodin
                 <Format>image/png;mode=8bit_noalpha</Format>
                 <Format>image/png;mode=24bit</Format>
                 <Format>image/png;mode=32bit</Format>
-                <Format>image/gif</Format>
-                <Format>image/jpeg</Format>
-                <!--<Format>image/webp</Format>-->
+                <Format>image/webp</Format>
                 <DCPType><HTTP><Get><OnlineResource xlink:type="simple" xlink:href="[SERVICEONLINERESOURCE]"/></Get></HTTP></DCPType>
             </GetMap>
             <GetFeatureInfo>

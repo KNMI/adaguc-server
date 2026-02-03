@@ -57,7 +57,6 @@ public:
 
 class GenericDataWarper {
 private:
-  DEF_ERRORFUNCTION();
   ProjectionGrid *projectionGrid = nullptr;
 
 public:

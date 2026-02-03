@@ -34,8 +34,6 @@
 #include "CTime.h"
 #include <CReadFile.h>
 
-const char *CDFCSVReader::className = "CSVReader";
-
 // #define CCDFCSVREADER_DEBUG
 
 CDFCSVReader::CDFCSVReader() : CDFReader() {

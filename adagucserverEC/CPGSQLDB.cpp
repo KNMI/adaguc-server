@@ -26,7 +26,7 @@
 #include "CPGSQLDB.h"
 #include "traceTimings/traceTimings.h"
 // #define CPGSQLDB_DEBUG_H
-const char *CPGSQLDB::className = "CPGSQLDB";
+
 void CPGSQLDB::clearResult() {
   if (result != NULL) PQclear(result);
   result = NULL;

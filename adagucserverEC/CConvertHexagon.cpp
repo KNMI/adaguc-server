@@ -27,9 +27,6 @@
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
 
-// #define CCONVERTHEXAGON_DEBUG
-const char *CConvertHexagon::className = "CConvertHexagon";
-
 void line2(float *imagedata, int w, int h, float x1, float y1, float x2, float y2, float value) {
   int xyIsSwapped = 0;
   float dx = x2 - x1;

@@ -26,9 +26,6 @@
 #include "CConvertADAGUCVector.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
-// #define CCONVERTADAGUCVECTOR_DEBUG
-
-const char *CConvertADAGUCVector::className = "CConvertADAGUCVector";
 
 /**
  * Checks if the format of this file corresponds to the ADAGUC Vector format.

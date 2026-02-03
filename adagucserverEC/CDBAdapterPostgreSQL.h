@@ -57,7 +57,6 @@ struct GeoOptions {
 
 class CDBAdapterPostgreSQL {
 private:
-  DEF_ERRORFUNCTION();
   CPGSQLDB *dataBaseConnection;
   CPGSQLDB *getDataBaseConnection();
   CServerConfig::XMLE_Configuration *configurationObject;

@@ -9,7 +9,6 @@
 
 class CCreateLegend {
 private:
-  DEF_ERRORFUNCTION();
   static int renderDiscreteLegend(CDataSource *dataSource, CDrawImage *legendImage, CStyleConfiguration *styleConfiguration, bool rotate, bool estimateMinMax);
   static int renderContinuousLegend(CDataSource *dataSource, CDrawImage *legendImage, CStyleConfiguration *styleConfiguration, bool rotate, bool estimateMinMax);
   static double nextTick(double prev);

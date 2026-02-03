@@ -77,6 +77,5 @@ void _printError(const char *pszMessage, ...);
 #define CDBEnterFunction(name)                                                                                                                                                                         \
   const char *functionName = name;                                                                                                                                                                     \
   _printDebugLine("D %s, %d class %s: Entering function '%s'", __FILENAME__, __LINE__, className, functionName);
-#define DEF_ERRORFUNCTION() static const char *className;
 
 #endif

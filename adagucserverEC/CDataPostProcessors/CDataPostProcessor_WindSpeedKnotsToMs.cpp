@@ -1,7 +1,5 @@
 #include "CDataPostProcessor_WindSpeedKnotsToMs.h"
 
-const char *CDPPWindSpeedKnotsToMs::className = "CDPPWindSpeedKnotsToMs";
-
 const char *CDPPWindSpeedKnotsToMs::getId() { return CDATAPOSTPROCESSOR_WINDSPEEDKTSTOMS_ID; }
 
 int CDPPWindSpeedKnotsToMs::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int) {

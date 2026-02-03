@@ -3,7 +3,6 @@
 /************************/
 /*CDPPMSGCPPVisibleMask */
 /************************/
-const char *CDPPMSGCPPVisibleMask::className = "CDPPMSGCPPVisibleMask";
 
 const char *CDPPMSGCPPVisibleMask::getId() { return "MSGCPP_VISIBLEMASK"; }
 int CDPPMSGCPPVisibleMask::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
@@ -104,7 +103,6 @@ int CDPPMSGCPPVisibleMask::execute(CServerConfig::XMLE_DataPostProc *proc, CData
 /************************/
 /*CDPPMSGCPPHIWCMask */
 /************************/
-const char *CDPPMSGCPPHIWCMask::className = "CDPPMSGCPPHIWCMask";
 
 const char *CDPPMSGCPPHIWCMask::getId() { return "MSGCPP_HIWCMASK"; }
 
@@ -206,7 +204,6 @@ int CDPPMSGCPPHIWCMask::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSou
 /************************/
 /*CDPPDATAMASK */
 /************************/
-const char *CDPPDATAMASK::className = "CDPPDATAMASK";
 
 const char *CDPPDATAMASK::getId() { return "datamask"; }
 int CDPPDATAMASK::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {

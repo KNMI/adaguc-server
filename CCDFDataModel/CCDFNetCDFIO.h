@@ -41,12 +41,12 @@
 
 class CDFNetCDFReader : public CDFReader {
 private:
-  static void ncError(int line, const char *className, const char *msg, int e);
+  static void ncError(int line, const char *msg, int e);
 
   // CCDFWarper warper;
   static CDFType _typeConversionVar(nc_type type, bool isUnsigned);
   static CDFType _typeConversionAtt(nc_type type);
-  DEF_ERRORFUNCTION();
+
   int status, root_id;
   bool keepFileOpen;
   int readDimensions(int groupId, CT::string *groupName);
@@ -70,7 +70,7 @@ public:
 
 class CDFNetCDFWriter {
 private:
-  static void ncError(int line, const char *className, const char *msg, int e);
+  static void ncError(int line, const char *msg, int e);
   bool writeData;
   bool readData;
   bool listNCCommands;
@@ -81,7 +81,7 @@ private:
   int deflate_level;
   std::vector<CDF::Dimension *> dimensions;
   CDFObject *cdfObject;
-  DEF_ERRORFUNCTION();
+
   int root_id, status;
   int netcdfMode;
   int _write(void (*progress)(const char *message, float percentage));

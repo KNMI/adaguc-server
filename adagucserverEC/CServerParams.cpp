@@ -31,8 +31,6 @@
 #include <traceTimings/traceTimings.h>
 #include <cstring>
 
-const char *CServerParams::className = "CServerParams";
-
 CServerParams::CServerParams() {
 
   serviceType = -1;

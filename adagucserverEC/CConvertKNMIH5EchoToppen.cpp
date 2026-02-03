@@ -29,8 +29,6 @@
 #include "CConvertADAGUCPoint.h"
 #define CConvertKNMIH5EchoToppen_DEBUG
 
-const char *CConvertKNMIH5EchoToppen::className = "CConvertKNMIH5EchoToppen";
-
 #define CConvertKNMIH5EchoToppen_FillValue -1
 #define CConvertKNMIH5EchoToppen_EchoToppenVar "echotops"
 

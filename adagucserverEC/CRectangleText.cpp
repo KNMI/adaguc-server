@@ -23,7 +23,6 @@
  *
  ******************************************************************************/
 #include "CRectangleText.h"
-const char *CRectangleText::className = "CRectangleText";
 
 bool CRectangleText::overlaps(CRectangleText &r2) {
   if ((this->ury + padding < r2.lly) || (this->lly - padding > r2.ury)) return false;

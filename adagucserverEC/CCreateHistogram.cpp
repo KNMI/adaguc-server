@@ -1,7 +1,6 @@
 #include "CCreateHistogram.h"
 #include "CGenericDataWarper.h"
 #include "CImageDataWriter.h"
-const char *CCreateHistogram::className = "CCreateHistogram";
 
 int CCreateHistogram::createHistogram(CDataSource *dataSource, CDrawImage *) {
 

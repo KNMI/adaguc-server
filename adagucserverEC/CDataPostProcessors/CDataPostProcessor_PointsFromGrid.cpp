@@ -5,7 +5,6 @@
 /************************/
 /*      CDPPointsFromGrid     */
 /************************/
-const char *CDPPointsFromGrid::className = "CDPPointsFromGrid";
 
 /**Example:
  *
@@ -156,7 +155,7 @@ int CDPPointsFromGrid::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSour
   for (auto con : proc->attr.select.split(",")) {
     auto ob = dataSource->getDataObjectByName(con.c_str());
     if (ob == nullptr) {
-      CDBWarning("Cannot select variable %s in datapostproc %s, skipping point rendering", con.c_str(), CDPPointsFromGrid::className);
+      CDBWarning("Cannot select variable %s in datapostproc PointsFromGrid, skipping point rendering", con.c_str());
       continue;
     }
     if (ob->cdfVariable == NULL) {

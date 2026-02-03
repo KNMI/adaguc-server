@@ -1,6 +1,6 @@
 #include "CNetCDFDataWriter.h"
 #include "CGenericDataWarper.h"
-const char *CNetCDFDataWriter::className = "CNetCDFDataWriter";
+
 #include "CRequest.h"
 #include "GenericDataWarper/gdwFindPixelExtent.h"
 // #define CNetCDFDataWriter_DEBUG

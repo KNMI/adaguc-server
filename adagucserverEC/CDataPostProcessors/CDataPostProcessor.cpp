@@ -20,12 +20,15 @@
 #include "CDataPostProcessor_AddFeatures.h"
 #include "CDataPostProcessor_SolarTerminator.h"
 
-extern CDPPExecutor cdppExecutorInstance;
-CDPPExecutor cdppExecutorInstance;
-CDPPExecutor *CDataPostProcessor::getCDPPExecutor() { return &cdppExecutorInstance; }
+CDPPExecutor *cdppExecutorInstance = nullptr;
+CDPPExecutor *CDataPostProcessor::getCDPPExecutor() {
+  if (cdppExecutorInstance == nullptr) {
+    cdppExecutorInstance = new CDPPExecutor();
+  };
+  return cdppExecutorInstance;
+}
 
 /*CPDPPExecutor*/
-const char *CDPPExecutor::className = "CDPPExecutor";
 
 CDPPExecutor::CDPPExecutor() {
   // CDBDebug("CDPPExecutor");
@@ -54,6 +57,9 @@ CDPPExecutor::CDPPExecutor() {
 
 CDPPExecutor::~CDPPExecutor() {
   // CDBDebug("~CDPPExecutor");
+  for(auto pp: *dataPostProcessorList) {
+    delete pp;
+  }
   delete dataPostProcessorList;
 }
 

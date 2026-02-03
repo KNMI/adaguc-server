@@ -11,8 +11,6 @@
 
 class CDDPMetadataVariable : public CDPPInterface {
 private:
-  DEF_ERRORFUNCTION();
-
 public:
   virtual const char *getId();
   virtual int isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode);

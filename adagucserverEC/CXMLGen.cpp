@@ -37,10 +37,6 @@
 #include "utils/CXMLTemplates.h"
 #include "utils/LayerUtils.h"
 
-// #define CXMLGEN_DEBUG
-// #define MEASURE_TIME
-
-const char *CXMLGen::className = "CXMLGen";
 int CXMLGen::WCSDescribeCoverage(CServerParams *srvParam, CT::string *XMLDocument) { return OGCGetCapabilities(srvParam, XMLDocument); }
 
 const MetadataLayer *getFirstLayerWithoutError(std::vector<MetadataLayer *> *metadataLayerList) {
@@ -216,7 +212,7 @@ int CXMLGen::getWMS_1_1_1_Capabilities(CT::string *XMLDoc, std::vector<MetadataL
           }
           if (layer->hasError == 0) {
             XMLDoc->printconcat("<Layer queryable=\"%d\" opaque=\"1\" cascaded=\"%d\">\n", layer->layerMetadata.isQueryable,
-                                layer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded && layer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate ? 1 : 0);
+                                layer->dataSource->dLayerType == CConfigReaderLayerTypeGraticule && layer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate ? 1 : 0);
             XMLDoc->concat("<Name>");
             XMLDoc->concat(&layer->layerMetadata.name);
             XMLDoc->concat("</Name>\n");
@@ -579,7 +575,7 @@ int CXMLGen::getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataL
           }
           if (layer->hasError == 0) {
             XMLDoc->printconcat("<Layer queryable=\"%d\" opaque=\"1\" cascaded=\"%d\">\n", layer->layerMetadata.isQueryable,
-                                layer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded && layer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate ? 1 : 0);
+                                layer->dataSource->dLayerType == CConfigReaderLayerTypeGraticule && layer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate ? 1 : 0);
             XMLDoc->concat("<Name>");
             XMLDoc->concat(&layer->layerMetadata.name);
             XMLDoc->concat("</Name>\n");

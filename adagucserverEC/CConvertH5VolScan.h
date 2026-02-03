@@ -32,8 +32,6 @@
 
 class CConvertH5VolScan {
 private:
-  DEF_ERRORFUNCTION();
-
 public:
   static int convertH5VolScanHeader(CDFObject *cdfObject, CServerParams *srvParams);
   static int convertH5VolScanData(CDataSource *dataSource, int mode);

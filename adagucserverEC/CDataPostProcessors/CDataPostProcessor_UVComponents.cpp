@@ -7,7 +7,6 @@
 /************************/
 /*      CDDPUVComponents  */
 /************************/
-const char *CDDPUVComponents::className = "CDDPUVComponents";
 
 const char *CDDPUVComponents::getId() { return CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ID; }
 

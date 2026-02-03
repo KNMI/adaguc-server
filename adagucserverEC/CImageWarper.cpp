@@ -29,7 +29,6 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
-const char *CImageWarper::className = "CImageWarper";
 
 void floatToString(char *string, size_t maxlen, int numdigits, float number) {
   // snprintf(string,maxlen,"%0.2f",number);

@@ -32,8 +32,6 @@
 
 class CDPPExecutor {
 private:
-  DEF_ERRORFUNCTION();
-
 public:
   std::vector<CDPPInterface *> *dataPostProcessorList;
   CDPPExecutor();

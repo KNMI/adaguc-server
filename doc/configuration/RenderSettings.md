@@ -50,14 +50,6 @@ Controls how many grid cells are skipped. E.g. if set to 2, every other
 <RenderSettings striding="1"/>
 ```
 
-# renderer
-
-At the moment GD can be forced
-
-```xml
-<RenderSettings renderer="gd" />
-```
-
 # renderhint
 
 The renderhint provides a hint to the renderer on what type of styling to use to generate the image. Can be `discreteclasses` to use ShadeInterval configuration.

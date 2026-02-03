@@ -3,7 +3,6 @@
 /************************/
 /*      CDPPOperator  */
 /************************/
-const char *CDPPOperator::className = "CDPPOperator";
 
 const char *CDPPOperator::getId() { return "operator"; }
 

@@ -75,7 +75,7 @@ class TestConvertLatLonBnds(unittest.TestCase):
         )
         # pylint: disable=unused-variable
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "source=example_file_latlonbnds.nc&&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=probability&QUERY_LAYERS=probability&CRS=EPSG:4326&BBOX=51,3,53,7&WIDTH=100&HEIGHT=100&I=45&J=65&FORMAT=image/gif&INFO_FORMAT=application/json&STYLES=&&time=2024-06-01T02:00:00Z&DIM_THRESHOLD=40",
+            "source=example_file_latlonbnds.nc&&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=probability&QUERY_LAYERS=probability&CRS=EPSG:4326&BBOX=51,3,53,7&WIDTH=100&HEIGHT=100&I=45&J=65&INFO_FORMAT=application/json&STYLES=&&time=2024-06-01T02:00:00Z&DIM_THRESHOLD=40",
             env=self.env,
             args=["--report"],
         )

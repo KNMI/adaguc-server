@@ -29,7 +29,6 @@
 
 #include <cairo-ft.h>
 #include "CStopWatch.h"
-const char *CCairoPlotter::className = "CCairoPlotter";
 
 cairo_status_t writerFunc(void *closure, const unsigned char *data, unsigned int length) {
   FILE *fp = (FILE *)closure;

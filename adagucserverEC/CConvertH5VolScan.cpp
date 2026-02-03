@@ -31,9 +31,6 @@
 #include "COGCDims.h"
 #include "CCDFHDF5IO.h"
 
-// #define CCONVERTH5VOLSCAN_DEBUG
-const char *CConvertH5VolScan::className = "CConvertH5VolScan";
-
 bool sortFunction(CT::string one, CT::string other) {
   if (one.endsWith("l")) {
     one = one.substring(0, one.lastIndexOf("l"));

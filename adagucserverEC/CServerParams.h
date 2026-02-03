@@ -72,7 +72,6 @@ public:
  * Global server settings, initialized at the start, accesible from almost everywhere
  */
 class CServerParams {
-  DEF_ERRORFUNCTION();
 
 private:
   int autoOpenDAPEnabled, autoLocalFileResourceEnabled;

@@ -30,7 +30,6 @@
 #include "CServerError.h"
 #include "Types/GeoParameters.h"
 
-const char *CDBAdapterPostgreSQL::className = "CDBAdapterPostgreSQL";
 #define CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP "pathfiltertablelookup_v2_0_23"
 // #define CDBAdapterPostgreSQL_DEBUG
 // #define MEASURETIME

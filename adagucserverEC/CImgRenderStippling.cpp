@@ -27,8 +27,6 @@
 #include "CGenericDataWarper.h"
 int CImgRenderStippling::set(const char *) { return 0; }
 
-const char *CImgRenderStippling::className = "CImgRenderStippling";
-
 void CImgRenderStippling::_setStippling(int screenX, int screenY, float val) {
   if (val != (float)settings->dfNodataValue && (val == val)) {
     if (styleConfiguration->legendLog != 0) {

@@ -28,7 +28,6 @@
 #include "CDataSource.h"
 class CConvertKNMIH5EchoToppen {
 private:
-  DEF_ERRORFUNCTION();
   /**
    * @brief Quickly checks if the format is suitable for this converter
    *

@@ -4,10 +4,6 @@
 #include "CImageDataWriter.h"
 #include "CURUniqueRequests.h"
 
-// #define CCUniqueRequests_DEBUG
-// #define CCUniqueRequests_DEBUG_HIGH
-const char *CURUniqueRequests::className = "CURUniqueRequests";
-
 int *CURUniqueRequests::__getDimOrder() { return dimOrdering; }
 
 void CURUniqueRequests::addDimensionRangeRequest(const char *filename, const char *dimName, size_t dimIndex, std::string dimValue) {

@@ -27,10 +27,6 @@
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
 
-// #define CCONVERTASCAT_DEBUG
-
-const char *CConvertASCAT::className = "CConvertASCAT";
-
 /**
  * This function adjusts the cdfObject by creating virtual 2D variables
  */

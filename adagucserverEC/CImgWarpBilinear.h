@@ -160,7 +160,7 @@ private:
 
   std::vector<PointD *> minimaPoints;
   std::vector<PointD *> maximaPoints;
-  DEF_ERRORFUNCTION();
+
   void drawTextForContourLines(CDrawImage *drawImage, ContourDefinition *contourDefinition, int lineX, int lineY, int endX, int endY, std::vector<Point> *textLocations, float value, CColor textColor,
                                CColor textStrokeColor, const char *fontLocation, float fontSize, float textStrokeWidth);
   void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *valueField, int lineX, int lineY, int dImageWidth, int dImageHeight, float lineWidth, CColor lineColor, CColor textColor,

@@ -45,7 +45,7 @@ private:
 
   // CCDFWarper warper;
   static CDFType typeConversion(nc_type type);
-  DEF_ERRORFUNCTION();
+
   int status = 0, root_id = 0;
   int nDims = 0, nVars = 0, nRootAttributes = 0, unlimDimIdP = 0;
   bool keepFileOpen = -1;

@@ -4,8 +4,6 @@
 #include "CImageDataWriter.h"
 #include "CUniqueRequests/CURUniqueRequests.h"
 
-const char *CMakeJSONTimeSeries::className = "CMakeJSONTimeSeries";
-
 // #define CMakeJSONTimeSeries_DEBUG
 
 int CMakeJSONTimeSeries::MakeJSONTimeSeries(CDrawImage *drawImage, CImageWarper *imageWarper, CDataSource *dataSource, int dX, int dY, CXMLParser::XMLElement *gfiStructure) {

@@ -27,8 +27,6 @@
 
 #include <cmath>
 
-const char *CDFHDF5Reader::className = "CDFHDF5Reader";
-
 int CDFHDF5Reader::CustomForecastReader::readData(CDF::Variable *thisVar, size_t *start, size_t *count, ptrdiff_t *stride) {
 #ifdef CCDFHDF5IO_DEBUG
   CDBDebug("READ data for %s called", thisVar->name.c_str());
@@ -1211,6 +1209,7 @@ int CDFHDF5Reader::readAttributes(std::vector<CDF::Attribute *> &attributes, hid
           }
           memcpy((char *)attr->data, rdata[0], strlen(rdata[0]));
           H5Dvlen_reclaim(HDF5_attr_type, space, H5P_DEFAULT, rdata);
+          free(rdata);
         }
         H5Sclose(space);
       }

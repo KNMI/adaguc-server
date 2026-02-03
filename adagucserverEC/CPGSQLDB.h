@@ -37,7 +37,6 @@
 class CPGSQLDB {
   // This class must be used within the same thread!
 private:
-  DEF_ERRORFUNCTION();
   PGconn *connection;
   PGresult *result;
   char szTemp[CPGSQLDB_MAX_STR_LEN + 1];

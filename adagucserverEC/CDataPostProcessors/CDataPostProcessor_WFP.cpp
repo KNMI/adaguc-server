@@ -6,7 +6,6 @@
 /************************/
 /*      CDPPWFP  */
 /************************/
-const char *CDPPWFP::className = "CDPPWFP";
 
 const char *CDPPWFP::getId() { return "WFP"; }
 int CDPPWFP::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {

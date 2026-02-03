@@ -43,7 +43,6 @@ public:
   float fontSize;
   CColor color;
 
-  DEF_ERRORFUNCTION();
   CRectangleText() {}
 
   void init(int llx, int lly, int urx, int ury, float angle, int padding, const char *text, const char *fontFile, float fontSize, CColor color) {

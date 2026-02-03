@@ -27,8 +27,6 @@
 #include <CReadFile.h>
 // #define CCDFGEOJSONIO_DEBUG
 
-const char *CDFGeoJSONReader::className = "GeoJSONReader";
-
 CDFGeoJSONReader::CDFGeoJSONReader() : CDFReader() {
 #ifdef CCDFGEOJSONIO_DEBUG
   CDBDebug("New CDFGeoJSONReader");

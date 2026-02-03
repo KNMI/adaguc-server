@@ -45,7 +45,6 @@
 #include "CDBFileScanner.h"
 #include "CImgRenderFieldVectors.h"
 #include "CDataPostProcessors/CDataPostProcessor_UVComponents.h"
-const char *CDataReader::className = "CDataReader";
 
 // #define CDATAREADER_DEBUG
 // #define MEASURETIME
@@ -55,7 +54,6 @@ const char *CDataReader::className = "CDataReader";
 
 class Proc {
 public:
-  DEF_ERRORFUNCTION();
   static int swapPixelsAtLocation(CDataSource *dataSource, CDF::Variable *variable, int mode) {
     if (dataSource->useLonTransformation == -1) return 0;
     switch (variable->getType()) {
@@ -180,8 +178,6 @@ private:
     dataSource->lonTransformDone = true;
   }
 };
-
-const char *Proc::className = "Proc";
 
 int CDataReader::open(CDataSource *dataSource, int mode) { return open(dataSource, mode, -1, -1); }
 int CDataReader::open(CDataSource *dataSource, int x, int y) { return open(dataSource, CNETCDFREADER_MODE_OPEN_ALL, x, y); }

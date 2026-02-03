@@ -28,8 +28,6 @@
 #include "CDataSource.h"
 class CConvertEProfile {
 private:
-  DEF_ERRORFUNCTION();
-
 public:
   static int convertEProfileHeader(CDFObject *cdfObject, CServerParams *srvParams);
   static int convertEProfileData(CDataSource *dataSource, int mode);
