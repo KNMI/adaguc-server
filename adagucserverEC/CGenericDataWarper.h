@@ -5,7 +5,6 @@
 #include <cmath>
 #include <stdlib.h>
 #include <proj.h>
-#include <cmath>
 #include <cfloat>
 #include "Types/GeoParameters.h"
 #include "CImageWarper.h"

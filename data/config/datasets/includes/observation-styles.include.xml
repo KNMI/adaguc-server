@@ -53,7 +53,7 @@
       <Legend fixed="true">bluewhitered</Legend>
       <RenderMethod>point</RenderMethod>
       <Point pointstyle="symbol" fillcolor="#000000FF" textcolor="#FFFFFFFF" linecolor="#000000A0" discradius="16" 
-             dot="false" anglestart="0" anglestep="120" fontsize="12" textformat="%0.1f"/>
+             dot="false" fontsize="12" textformat="%0.1f"/>
       <SymbolInterval min="0" max="1" file="{ADAGUC_DATASET_DIR}/resources/symbols/okta/32px-Cloud_cover_0.svg.png"/>
       <SymbolInterval min="1" max="2" file="{ADAGUC_DATASET_DIR}/resources/symbols/okta/32px-Cloud_cover_1.svg.png"/>
       <SymbolInterval min="2" max="3" file="{ADAGUC_DATASET_DIR}/resources/symbols/okta/32px-Cloud_cover_2.svg.png"/>
@@ -144,7 +144,7 @@
     <Min>-20</Min>
     <Max>30</Max>
     <RenderMethod>point</RenderMethod>
-    <Point pointstyle="disc" fillcolor="#00000060" textcolor="#FFFFFFFF" linecolor="#000000A0" discradius="18" dot="false" anglestart="0" anglestep="120" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="10" textformat="%0.1f"/>
+    <Point pointstyle="disc" fillcolor="#00000060" textcolor="#FFFFFFFF" linecolor="#000000A0" discradius="18" dot="false" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="10" textformat="%0.1f"/>
     <FilterPoints use="06235,06280,06260,06290,06310,06380"/>
   </Style>
   
@@ -154,7 +154,7 @@
     <Max>30</Max>
     <Thinning radius="40"/>
     <RenderMethod>point</RenderMethod>
-    <Point pointstyle="disc" fillcolor="#00000060" textcolor="#FFFFFFFF" linecolor="#000000A0" discradius="18" dot="false" anglestart="0" anglestep="120" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="10" textformat="%0.1f"/>
+    <Point pointstyle="disc" fillcolor="#00000060" textcolor="#FFFFFFFF" linecolor="#000000A0" discradius="18" dot="false" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="10" textformat="%0.1f"/>
   </Style>
   
   <Style name="temperatureallpoint">
@@ -163,7 +163,7 @@
     <Max>30</Max>
     <Thinning radius="40"/>
     <RenderMethod>point</RenderMethod>
-    <Point pointstyle="point" fillcolor="#800000FF" textcolor="#000000FF" linecolor="#000000FF" discradius="8" textradius="14" dot="true" anglestart="0" anglestep="120" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="8" textformat="%0.1f" plotstationid="false"/>
+    <Point pointstyle="point" fillcolor="#800000FF" textcolor="#000000FF" linecolor="#000000FF" discradius="8" textradius="14" dot="true" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="8" textformat="%0.1f" plotstationid="false"/>
   </Style>
   
   <Style name="t2mtd2m">
@@ -172,7 +172,7 @@
     <Max>30</Max>
     <Thinning radius="60"/>
     <RenderMethod>point</RenderMethod>
-    <Point pointstyle="point" fillcolor="#80000000" textcolor="#000000FF" linecolor="#000000FF" discradius="8" textradius="6" dot="true" anglestart="0" anglestep="180" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="8" textformat="%0.1f" plotstationid="false"/>
+    <Point pointstyle="point" fillcolor="#80000000" textcolor="#000000FF" linecolor="#000000FF" discradius="8" textradius="6" dot="true" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="8" textformat="%0.1f" plotstationid="false"/>
   </Style>
   
   <Style name="temperaturepoint">
@@ -180,7 +180,7 @@
     <Min>-10</Min>
     <Max>30</Max>
     <RenderMethod>point</RenderMethod>
-    <Point pointstyle="disc" fillcolor="#800000FF" textcolor="#FFFFFFFF" linecolor="#000000FF" discradius="18" textradius="14" dot="false" anglestart="0" anglestep="120" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="8" textformat="%0.1f" plotstationid="true"/>
+    <Point pointstyle="disc" fillcolor="#800000FF" textcolor="#FFFFFFFF" linecolor="#000000FF" discradius="18" textradius="14" dot="false" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="8" textformat="%0.1f" plotstationid="true"/>
     <FilterPoints use="06235,06280,06260,06290,06310,06380"/>
   </Style>
   
@@ -188,7 +188,7 @@
     <Legend fixed="true">bluewhitered</Legend>
     <Thinning radius="40"/>
     <RenderMethod>point</RenderMethod>
-    <Point pointstyle="point" fillcolor="#80000000" textcolor="#000000FF" linecolor="#000000FF" discradius="8" textradius="6" dot="true" anglestart="0" anglestep="180" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="8" textformat="%0.0f" plotstationid="false"/>
+    <Point pointstyle="point" fillcolor="#80000000" textcolor="#000000FF" linecolor="#000000FF" discradius="8" textradius="6" dot="true" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="8" textformat="%0.0f" plotstationid="false"/>
   </Style>
 
   <Style name="temperaturelabel">
@@ -197,7 +197,7 @@
     <Max>30</Max>
     <Thinning radius="40"/>
     <RenderMethod>point</RenderMethod>
-    <Point pointstyle="point" fillcolor="#800000FF" textcolor="#000000FF" linecolor="#000000FF" discradius="0" dot="true" anglestart="0" anglestep="120" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="8" textformat="%0.1f" plotstationid="true"/>
+    <Point pointstyle="point" fillcolor="#800000FF" textcolor="#000000FF" linecolor="#000000FF" discradius="0" dot="true" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="8" textformat="%0.1f" plotstationid="true"/>
     <FilterPoints use="06235,06280,06260,06290,06310,06380"/>
   </Style>
   
@@ -206,7 +206,7 @@
     <Min>-10</Min>
     <Max>30</Max>
     <RenderMethod>point</RenderMethod>
-    <Point pointstyle="point" fillcolor="#800000FF" textcolor="#000000FF" linecolor="#000000FF" discradius="0" dot="true" anglestart="0" anglestep="120" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="8" textformat="%0.1f" plotstationid="true"/>
+    <Point pointstyle="point" fillcolor="#800000FF" textcolor="#000000FF" linecolor="#000000FF" discradius="0" dot="true" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="8" textformat="%0.1f" plotstationid="true"/>
   </Style>
   
   <Style name="temperaturevolume">
@@ -215,7 +215,7 @@
     <Max>30</Max>
     <Thinning radius="40"/>
     <RenderMethod>point</RenderMethod>
-    <Point fillcolor="#0000ffff" textcolor="#000000FF" linecolor="#000000a0" pointstyle="volume" discradius="20" dot="true" textradius="20" anglestart="0" anglestep="120" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="8" textformat="%0.1f" plotstationid="true"/>
+    <Point fillcolor="#0000ffff" textcolor="#000000FF" linecolor="#000000a0" pointstyle="volume" discradius="20" dot="true" textradius="20" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="8" textformat="%0.1f" plotstationid="true"/>
     <FilterPoints use="06235,06280,06260,06290,06310,06380"/>
   </Style>
   
@@ -224,7 +224,7 @@
     <Min>-10</Min>
     <Max>30</Max>
     <RenderMethod>point</RenderMethod>
-    <Point fillcolor="#000000a0" textcolor="#FFFFFFFF" linecolor="#000000a0" pointstyle="volume" discradius="20" dot="true" anglestart="0" anglestep="120" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="8" textformat="%0.1f"/>
+    <Point fillcolor="#000000a0" textcolor="#FFFFFFFF" linecolor="#000000a0" pointstyle="volume" discradius="20" dot="true" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="8" textformat="%0.1f"/>
   </Style>
 
   <Style name="singlevalue">
@@ -232,14 +232,14 @@
     <Min>-10</Min>
     <Max>30</Max>
     <RenderMethod>point</RenderMethod>
-    <Point pointstyle="point" fillcolor="#80000000" textcolor="#000000FF" linecolor="#000000FF" discradius="0" dot="false" anglestart="0" anglestep="0" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="8" textformat="%0.0f" plotstationid="false"/>
+    <Point pointstyle="point" fillcolor="#80000000" textcolor="#000000FF" linecolor="#000000FF" discradius="0" dot="false" fontfile="{ADAGUC_PATH}/data/fonts/FreeSans.ttf" fontsize="8" textformat="%0.0f" plotstationid="false"/>
   </Style>
 
   <Style name="wwcode_transparent" title="Weather code transparent">
     <Legend fixed="true">bluewhitered</Legend>
     <RenderMethod>point</RenderMethod>
     <Point pointstyle="symbol" fillcolor="#000000FF" textcolor="#FFFFFFFF" linecolor="#000000A0" discradius="16" 
-            dot="false" anglestart="0" anglestep="120" fontsize="12" textformat="%0.1f"/>
+            dot="false" fontsize="12" textformat="%0.1f"/>
     <SymbolInterval min="0" max="1" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W00.png"/>
     <SymbolInterval min="1" max="2" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W01.png"/>
     <SymbolInterval min="2" max="3" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW-transparent/W02.png"/>
@@ -328,7 +328,7 @@
     <RenderMethod>point</RenderMethod>
 
     <Point pointstyle="symbol" fillcolor="#000000FF" textcolor="#FFFFFFFF" linecolor="#000000A0" discradius="16" 
-            dot="false" anglestart="0" anglestep="120" fontsize="12" textformat="%0.1f"/>
+            dot="false" fontsize="12" textformat="%0.1f"/>
     <SymbolInterval min="0" max="1" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W00.png"/>
     <SymbolInterval min="1" max="2" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W01.png"/>
     <SymbolInterval min="2" max="3" file="{ADAGUC_DATASET_DIR}/resources/symbols/WW/W02.png"/>

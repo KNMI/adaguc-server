@@ -11,8 +11,6 @@
 
 #define VERSION "ADAGUC aggregator 1.6"
 
-DEF_ERRORMAIN()
-
 class NCFileObject {
 public:
   NCFileObject(const char *filename) {

@@ -1195,7 +1195,7 @@ int CDFHDF5Reader::readAttributes(std::vector<CDF::Attribute *> &attributes, hid
           throw(__LINE__);
         }
         status = H5Aread(HDF5_attribute, HDF5_attr_type, attr->data);
-        size_t stringLength = strlen((char *)attr->data);
+        size_t stringLength = strlen(attr->getDataAsString().c_str());
         if (attr->length > stringLength) attr->length = stringLength + 1;
         ((char *)attr->data)[attr->length] = '\0';
       } else {
@@ -1211,6 +1211,7 @@ int CDFHDF5Reader::readAttributes(std::vector<CDF::Attribute *> &attributes, hid
           }
           memcpy((char *)attr->data, rdata[0], strlen(rdata[0]));
           H5Dvlen_reclaim(HDF5_attr_type, space, H5P_DEFAULT, rdata);
+          free(rdata);
         }
         H5Sclose(space);
       }

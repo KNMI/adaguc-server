@@ -210,7 +210,7 @@ namespace CT {
         break;
       }
     }
-    for (size_t j = plength - 1; j > 0; j--) {
+    for (int j = plength - 1; j >= 0; j--) {
       if (trimWhiteSpace ? value[j] != ' ' && value[j] != '\n' && value[j] != '\r' : value[j] != ' ') {
         e = j;
         break;
@@ -453,7 +453,7 @@ namespace CT {
     return result;
   }
 
-    string string::toHex24() {
+  string string::toHex24() {
     string result;
     unsigned int value = this->toInt();
     result.print("%s%s%s", getHex(value % 256).c_str(), getHex((value >> 8) % 256).c_str(), getHex((value >> 16) % 256).c_str());
@@ -494,3 +494,11 @@ namespace CT {
 
   std::string basename(std::string input) { return input.substr(input.find_last_of("/\\") + 1); }
 } /* namespace CT */
+
+bool equalsIgnoreCase(const std::string str1, const std::string str2) {
+  if (str1.length() != str2.length()) return false;
+  for (size_t i = 0; i < str1.length(); ++i) {
+    if (tolower(str1[i]) != tolower(str2[i])) return false;
+  }
+  return true;
+}

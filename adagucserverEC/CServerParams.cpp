@@ -447,7 +447,7 @@ int CServerParams::_parseConfigFile(CT::string &pszConfigFile, std::vector<CServ
 
     /* Substitute ADAGUC_TMP */
     const char *pszADAGUC_TMP = getenv("ADAGUC_TMP");
-    if (pszADAGUC_TMP != NULL) configFileData.replaceSelf("{ADAGUC_TMP}", pszADAGUC_TMP);
+    configFileData.replaceSelf("{ADAGUC_TMP}", pszADAGUC_TMP == NULL ? "/tmp/" : pszADAGUC_TMP);
 
     /* Substitute ADAGUC_DB */
     const char *pszADAGUC_DB = getenv("ADAGUC_DB");

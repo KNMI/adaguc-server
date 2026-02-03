@@ -26,11 +26,4 @@
 #ifndef ADAGUCSERVER_H
 #define ADAGUCSERVER_H
 
-#include "CRequest.h"
-#include "CServerError.h"
-#include "Definitions.h"
-#include "CGetFileInfo.h"
-
-void writeLogFile(const char *msg);
-
 #endif

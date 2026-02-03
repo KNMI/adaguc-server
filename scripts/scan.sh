@@ -89,6 +89,7 @@ if [[ -n "${ADAGUC_DATASET}" &&  -n "${ADAGUC_DATAFILE}" ]]; then
 
   if [ ${OUT} -ne 0 ]; then
     STATUSCODE=${OUT}
+    echo "[WARN] Scan exit with status ${STATUSCODE}"
   fi
   exit ${STATUSCODE}
 fi
@@ -111,6 +112,7 @@ if [[ -n "${ADAGUC_DATAFILE}" ]]; then
 
   if [ ${OUT} -ne 0 ]; then
     STATUSCODE=${OUT}
+    echo "[WARN] Scan exit with status ${STATUSCODE}"
   fi
   exit ${STATUSCODE} 
 fi
@@ -125,6 +127,7 @@ if [[ -n "${ADAGUC_DATASET}" ]] && [ "${ADAGUC_DATASET}" != "*" ]; then
   OUT=$?
   if [ ${OUT} -ne 0 ]; then
     STATUSCODE=${OUT}
+    echo "[WARN] Scan exit with status ${STATUSCODE}"
   fi
   exit ${STATUSCODE} 
 fi
@@ -143,6 +146,9 @@ if [[ -n "${ADAGUC_DATASET}" ]] && [ "${ADAGUC_DATASET}" == "*" ]; then
       STATUSCODE=${OUT}
     fi
   done
+  if [ ${STATUSCODE} -ne 0 ]; then
+    echo "[WARN] Scan exit with status ${STATUSCODE}"
+  fi
   exit ${STATUSCODE} 
 fi
 

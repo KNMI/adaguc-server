@@ -1684,6 +1684,12 @@ int CDrawImage::clonePalette(CDrawImage *drawImage) {
  * Creates a new image with the same settings but with different size as the source image
  */
 int CDrawImage::createImage(CDrawImage *image, int width, int height) {
+  if (height < 0) {
+    height = 0;
+  }
+  if (width < 0) {
+    width = 0;
+  }
 // CDBDebug("CreateImage from image");
 #ifdef MEASURETIME
   CDBDebug("createImage(CDrawImage *image,int width,int height)");

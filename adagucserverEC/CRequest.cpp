@@ -50,6 +50,10 @@
 #include "handleTileRequest.h"
 #include <traceTimings/traceTimings.h>
 #include "utils/serverutils.h"
+#include "CCreateHistogram.h"
+#ifdef ADAGUC_USE_GDAL
+#include "CGDALDataWriter.h"
+#endif
 
 const char *CRequest::className = "CRequest";
 int CRequest::CGI = 0;
@@ -611,10 +615,8 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
                       CDBError("Unable to get time instance");
                       return 1;
                     }
-                    auto date = ctime->freeDateStringToDate(ogcDim->value.c_str());
-                    auto currentTimeAsEpoch = ctime->dateToOffset(date);
-                    auto secondDate = ctime->getDate(currentTimeAsEpoch);
-                    auto currentDateConverted = ctime->dateToISOString(secondDate);
+                    double currentTimeAsEpoch = ctime->dateToOffset(ctime->freeDateStringToDate(ogcDim->value.c_str()));
+                    auto currentDateConverted = ctime->dateToISOString(ctime->getDate(currentTimeAsEpoch));
                     ogcDim->value = currentDateConverted;
                   } catch (int e) {
                     CDBDebug("Unable to convert '%s' to epoch", ogcDim->value.c_str());
@@ -1245,7 +1247,7 @@ int CRequest::process_querystring() {
      }
    }
    */
-  if (srvParam->cfg->WMS.size() != 1) {
+  if (srvParam == nullptr || srvParam->cfg == nullptr || srvParam->cfg->WMS.size() != 1) {
     CDBError("WMS element has not been configured");
     return 1;
   }

@@ -28,7 +28,7 @@
 #ifndef Definitions_H
 #define Definitions_H
 
-#define ADAGUCSERVER_VERSION "6.2.1" // Please also update in the Dockerfile to the same version
+#define ADAGUCSERVER_VERSION "6.3.0" // Please also update in the Dockerfile to the same version
 
 // CConfigReaderLayerType
 #define CConfigReaderLayerTypeUnknown 0
@@ -189,10 +189,10 @@
 #define HTTP_STATUSCODE_404_NOT_FOUND 32
 #define HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY 33
 
-#define SCAN_EXITCODE_FILENOMATCH 10
-#define SCAN_EXITCODE_CONFIGERROR 11
-#define SCAN_EXITCODE_SCANERROR 12
-#define SCAN_EXITCODE_FILENOEXIST 13
+#define SCAN_EXITCODE_FILENOMATCH 64
+#define SCAN_EXITCODE_CONFIGERROR 65
+#define SCAN_EXITCODE_SCANERROR 66
+#define SCAN_EXITCODE_FILENOEXIST 67
 
 #define LOCK_METADATATABLE_ID 1
 

@@ -265,7 +265,7 @@ public:
     }
     class Cattr {
     public:
-      CT::string fillcolor, linecolor, textcolor, textoutlinecolor, fontfile, fontsize, discradius, textradius, dot, anglestart, anglestep, textformat, plotstationid, pointstyle, symbol;
+      CT::string fillcolor, linecolor, textcolor, textoutlinecolor, fontfile, fontsize, discradius, textradius, dot, textformat, plotstationid, pointstyle, symbol;
       double min, max;
       int maxpointspercell, maxpointcellsize;
     } attr;
@@ -296,12 +296,6 @@ public:
         return true;
       } else if (equals("dot", attrname)) {
         attr.dot.copy(attrvalue);
-        return true;
-      } else if (equals("anglestart", attrname)) {
-        attr.anglestart.copy(attrvalue);
-        return true;
-      } else if (equals("anglestep", attrname)) {
-        attr.anglestep.copy(attrvalue);
         return true;
       } else if (equals("textformat", attrname)) {
         attr.textformat.copy(attrvalue);

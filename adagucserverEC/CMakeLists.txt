@@ -94,6 +94,10 @@ add_library(
     utils/serverutils.cpp
     utils/projectionUtils.h
     utils/projectionUtils.cpp
+    utils/writelogfile.h
+    utils/writelogfile.cpp
+    utils/processCMDArgs.h
+    utils/processCMDArgs.cpp
     Types/LayerMetadataType.h
     Types/CPointTypes.h
     GenericDataWarper/gdwDrawTriangle.h
@@ -139,9 +143,11 @@ add_library(
     CDataPostProcessors/CDataPostProcessor_FilterDataObjects.h
     CDataPostProcessors/CDataPostProcessor_FilterDataObjects.cpp
     CDataPostProcessors/CDataPostProcessor_MetadataVariable.h
-    CDataPostProcessors/CDataPostProcessor_MetadataVariable.cpp    
+    CDataPostProcessors/CDataPostProcessor_MetadataVariable.cpp
     CDataPostProcessors/CDataPostProcessor_PointsFromGrid.h
-    CDataPostProcessors/CDataPostProcessor_PointsFromGrid.cpp    
+    CDataPostProcessors/CDataPostProcessor_PointsFromGrid.cpp
+    CDataPostProcessors/CDataPostProcessor_AddDataObject.h
+    CDataPostProcessors/CDataPostProcessor_AddDataObject.cpp
     CDataReader.cpp
     CDataReader.h
     CDataSource.cpp

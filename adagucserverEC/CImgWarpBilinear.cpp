@@ -1051,43 +1051,23 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
     }
   }
 
-  int snr = 0;
   int numShadeDefs = (int)shadeDefinitionsExpanded.size();
-  float shadeDefMin[numShadeDefs];
-  float shadeDefMax[numShadeDefs];
-  unsigned char shadeColorR[numShadeDefs];
-  unsigned char shadeColorG[numShadeDefs];
-  unsigned char shadeColorB[numShadeDefs];
-  unsigned char shadeColorA[numShadeDefs];
-  for (snr = 0; snr < numShadeDefs; snr++) {
-    shadeDefMin[snr] = shadeDefinitionsExpanded[snr].min;
-    shadeDefMax[snr] = shadeDefinitionsExpanded[snr].max;
 
+  std::vector<CColor> shadeColors;
+  std::vector<float> shadeDefMin;
+  std::vector<float> shadeDefMax;
+
+  for (int snr = 0; snr < numShadeDefs; snr++) {
+    shadeDefMin.push_back(shadeDefinitionsExpanded[snr].min);
+    shadeDefMax.push_back(shadeDefinitionsExpanded[snr].max);
     if (shadeDefinitionsExpanded[snr].foundColor) {
-      shadeColorR[snr] = shadeDefinitionsExpanded[snr].fillColor.r;
-      shadeColorG[snr] = shadeDefinitionsExpanded[snr].fillColor.g;
-      shadeColorB[snr] = shadeDefinitionsExpanded[snr].fillColor.b;
-      shadeColorA[snr] = shadeDefinitionsExpanded[snr].fillColor.a;
+      shadeColors.push_back(shadeDefinitionsExpanded[snr].fillColor);
     } else {
-      CColor color = drawImage->getColorForIndex(getPixelIndexForValue(dataSource, shadeDefMin[snr]));
-      shadeColorR[snr] = color.r;
-      shadeColorG[snr] = color.g;
-      shadeColorB[snr] = color.b;
-      shadeColorA[snr] = color.a;
+      shadeColors.push_back(drawImage->getColorForIndex(getPixelIndexForValue(dataSource, shadeDefMin[snr])));
     }
   }
   int lastShadeDef = 0;
 
-  // float minValue = CImageDataWriter::getValueForColorIndex(dataSource,0);;
-  // float maxValue = CImageDataWriter::getValueForColorIndex(dataSource,240);;
-  //     for(int y=0;y<dImageHeight-1;y++){
-  //      for(int x=0;x<dImageWidth-1;x++){
-  //
-  //        float v = valueData[x+y*dImageWidth];
-  //        if(v>maxValue)valueData[x+y*dImageWidth]=maxValue;
-  //        if(v<minValue)valueData[x+y*dImageWidth]=minValue;
-  //      }
-  //     }
   // Shade
   for (int y = 0; y < dImageHeight - 1; y++) {
     for (int x = 0; x < dImageWidth - 1; x++) {
@@ -1099,16 +1079,12 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
 
       // Check if all pixels have values...
       if (val[0] != fNodataValue && val[1] != fNodataValue && val[2] != fNodataValue && val[3] != fNodataValue && val[0] == val[0] && val[1] == val[1] && val[2] == val[2] && val[3] == val[3]) {
-        //         for(int i=0;i<4;i++){
-        //           if(val[i]<minValue)val[i]=minValue;else if(val[i]>maxValue)val[i]=maxValue;
-        //         }
-        //
 
         // Draw shading
         if (drawShade) {
           if (interval != 0) {
             setValuePixel(dataSource, drawImage, x, y, convertValueToClass(val[0], interval));
-          } else {
+          } else if (numShadeDefs > 0) {
             int done = numShadeDefs;
             if (val[0] >= shadeDefMin[lastShadeDef] && val[0] < shadeDefMax[lastShadeDef]) {
               done = -1;
@@ -1123,10 +1099,10 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
               } while (done > 0);
             }
             if (done == -1) {
-              if (shadeColorA[lastShadeDef] == 0) { // When a fully transparent color is deliberately set, force this color in the image
-                drawImage->setPixelTrueColorOverWrite(x, y, shadeColorR[lastShadeDef], shadeColorG[lastShadeDef], shadeColorB[lastShadeDef], shadeColorA[lastShadeDef]);
+              if (shadeColors[lastShadeDef].a == 0) { // When a fully transparent color is deliberately set, force this color in the image
+                drawImage->setPixelTrueColorOverWrite(x, y, shadeColors[lastShadeDef].r, shadeColors[lastShadeDef].g, shadeColors[lastShadeDef].b, shadeColors[lastShadeDef].a);
               } else {
-                drawImage->setPixelTrueColor(x, y, shadeColorR[lastShadeDef], shadeColorG[lastShadeDef], shadeColorB[lastShadeDef], shadeColorA[lastShadeDef]);
+                drawImage->setPixelTrueColor(x, y, shadeColors[lastShadeDef].r, shadeColors[lastShadeDef].g, shadeColors[lastShadeDef].b, shadeColors[lastShadeDef].a);
               }
             }
           }

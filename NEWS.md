@@ -1,6 +1,12 @@
-**Version 6.2.1 - 2026-01-14**
+**Version 6.3.0 - 2026-01-28**
 
 - CT::string now uses std::string as internals.
+- pointsfromgrid can now also be used to plot text values on windspeed and winddirection components
+- Striding x/y was swapped: fixes https://github.com/KNMI/adaguc-server/issues/602
+- Adaguc crashes if you select a parameter that doesn't exist. Now skips this parameter: Fixes https://github.com/KNMI/adaguc-server/issues/603
+- Refactored adagucserver.cpp file and added equalsIgnoreCase method.
+- Added `add_dataobject` datapostproc, creates a data object (variable) with a given value. Can be used to draw vectors with only a direction component. A tutorial can be found [here](/doc/tutorials/Styling_of_vector_with_rotation_and_add_dataobject_datapostproc.md).
+- Scantask has now exit codes indicating if files are recognized by the datasets.
 
 **Version 6.2.0 - 2026-01-12**
 

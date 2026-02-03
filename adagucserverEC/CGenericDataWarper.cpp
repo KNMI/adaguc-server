@@ -88,7 +88,7 @@ ProjectionGrid *makeStridedProjection(double halfCell, CImageWarper *warper, i4b
   double dfSourcedExtH = sourceGeoParams.bbox.span().y / double(warperState.sourceGridHeight);
   size_t dataWidthStrided = ceil(double(dataWidth) / projStrideFactor);
   size_t dataHeightStrided = ceil(double(dataHeight) / projStrideFactor);
-  size_t dataSizeStrided = (dataWidthStrided + 1) * (dataHeightStrided + 1);
+  size_t dataSizeStrided = (dataWidthStrided + 2) * (dataHeightStrided + 2);
 
   double *pxStrided = new double[dataSizeStrided];
   double *pyStrided = new double[dataSizeStrided];
@@ -122,7 +122,6 @@ ProjectionGrid *makeStridedProjection(double halfCell, CImageWarper *warper, i4b
     for (int x = 0; x < dataWidth + 1; x++) {
       size_t p = x + y * (dataWidth + 1);
       size_t pS = (x / projStrideFactor) + (y / projStrideFactor) * (dataWidthStrided);
-      if (pS >= dataSizeStrided) continue;
       size_t p0 = pS;
       size_t p1 = pS + 1;
       size_t p2 = pS + dataWidthStrided;

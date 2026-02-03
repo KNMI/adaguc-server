@@ -18,7 +18,7 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
   // Make the layer name
   metadataLayer->layerMetadata.name = makeUniqueLayerName(metadataLayer->layer);
 
-  // Create and datasource
+  // Create new datasource
   if (metadataLayer->dataSource == NULL) {
     metadataLayer->dataSource = new CDataSource();
     if (metadataLayer->dataSource->setCFGLayer(metadataLayer->srvParams, metadataLayer->srvParams->configObj->Configuration[0], metadataLayer->layer, metadataLayer->layerMetadata.name.c_str(), -1) !=
