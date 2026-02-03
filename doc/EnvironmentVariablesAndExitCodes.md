@@ -1,3 +1,26 @@
+# Exit Codes
+
+The following exit codes are supported:
+
+## When in server mode:
+
+| Id | Code | Description |
+| -------- | ------- | ------- | 
+| HTTP_STATUSCODE_200_OK | 0 | All OK |
+| HTTP_STATUSCODE_404_NOT_FOUND | 32 | Triggers when something is not found, also when the timerange is not found |
+| HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY | 33 | The client requested something unprocessable and the server encountered an error handling the request |
+
+## When in command mode when scanning files or datasets:
+
+| Id | Code | Description |
+| -------- | ------- | ------- | 
+|SCAN_EXITCODE_FILENOMATCH|64| File is available but does not match any of the available datasets |
+|SCAN_EXITCODE_DATASETERROR|65| There is an error with the dataset file or it does not exist |
+|SCAN_EXITCODE_SCANERROR|66|  An error occured during scanning |
+|SCAN_EXITCODE_FILENOEXIST|67| The file does not exist on the file system |
+
+
+
 # Environment variables
 
 List and overview of environment variables.

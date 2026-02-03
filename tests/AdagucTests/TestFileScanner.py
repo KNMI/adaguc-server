@@ -13,7 +13,7 @@ from adaguc.AdagucTestTools import AdagucTestTools
 ADAGUC_PATH = os.environ["ADAGUC_PATH"]
 
 SCAN_EXITCODE_FILENOMATCH = 64
-SCAN_EXITCODE_CONFIGERROR = 65
+SCAN_EXITCODE_DATASETERROR = 65
 SCAN_EXITCODE_SCANERROR = 66
 SCAN_EXITCODE_FILENOEXIST = 67
 
@@ -156,7 +156,7 @@ class TestFileScanner(unittest.TestCase):
     def test_FileScanner_ExitCode_FileDoesNotExist(self):
         """
         Description: Exit code of scan process should return exit code SCAN_EXITCODE_FILENOEXIST
-        The reason for this status code that the file is not on the filesystem.
+        The reason for this status code is that the file is not on the filesystem.
         """
         my_env = os.environ.copy()
         my_env[
@@ -171,8 +171,8 @@ class TestFileScanner(unittest.TestCase):
 
     def test_FileScanner_ExitCode_ConfigError(self):
         """
-        Description: Exit code of scan process should return exit code SCAN_EXITCODE_CONFIGERROR
-        The reason for this status code that the dataset configuration file does not exist
+        Description: Exit code of scan process should return exit code SCAN_EXITCODE_DATASETERROR
+        The reason for this status code is that the dataset configuration file does not exist or has an error.
         """
         my_env = os.environ.copy()
         my_env[
@@ -183,12 +183,12 @@ class TestFileScanner(unittest.TestCase):
             text=True,
             check=False,
             env=my_env)
-        assert proc.returncode == SCAN_EXITCODE_CONFIGERROR
+        assert proc.returncode == SCAN_EXITCODE_DATASETERROR
 
     def test_FileScanner_ExitCode_ScanError(self):
         """
         Description: Exit code of scan process should return exit code SCAN_EXITCODE_SCANERROR
-        The reason for this status code that the dataset configuration file contains errors and the scan process cannot continue.
+        The reason for this status code is that the dataset configuration file contains errors and the scan process cannot continue.
         """
         my_env = os.environ.copy()
         my_env[

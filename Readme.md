@@ -19,7 +19,7 @@ Graphical representations of the data can be made using contour lines, shading, 
 * [Tutorials](./doc/tutorials/Readme.md)
 * [For developers - installing dependencies](./doc/Developing.md)
 * [Configuration](./doc/configuration/Configuration.md)
-* [Environment variables](./doc/EnvironmentVariables.md)
+* [Environment variables and exit codes](./doc/EnvironmentVariablesAndExitCodes.md)
 * [Format standard](./doc/format_standard/README.md)
 * [Glossary](./doc/GLOSSARY.md)
 * [Quick Tips](./doc/overview/QuickTips.md)
