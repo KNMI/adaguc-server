@@ -1,6 +1,7 @@
 import os
 import pytest
 from adaguc.AdagucTestTools import AdagucTestTools
+from conftest import make_adaguc_env, update_db
 
 ADAGUC_PATH = os.environ["ADAGUC_PATH"]
 
@@ -27,19 +28,13 @@ class TestGeoJSON:
 
     def test_GeoJSON_time_GetCapabilities(self):
         AdagucTestTools().cleanTempDir()
-        config = (
-            ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," + ADAGUC_PATH + "/data/config/datasets/adaguc.testGeoJSONReader_time.xml"
-        )
-        status, data, _ = AdagucTestTools().runADAGUCServer(
-            args=["--updatedb", "--config", config], env={"ADAGUC_CONFIG": config}, isCGI=False, showLog=False
-        )
 
-        assert status == 0
+        env = make_adaguc_env("{ADAGUC_PATH}/data/config/datasets/adaguc.testGeoJSONReader_time.xml")
+        update_db(env)
+
         # Test GetCapabilities
         filename = "test_GeoJSON_time_GetCapabilities.xml"
-        status, data, _ = AdagucTestTools().runADAGUCServer(
-            "&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities", env={"ADAGUC_CONFIG": config}
-        )
+        status, data, _ = AdagucTestTools().runADAGUCServer("&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities", env=env)
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
 
         assert status == 0
@@ -55,20 +50,16 @@ class TestGeoJSON:
     )
     def test_GeoJSON_3timesteps(self, date: str):
         AdagucTestTools().cleanTempDir()
-        config = (
-            ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," + ADAGUC_PATH + "/data/config/datasets/adaguc.testGeoJSONReader_time.xml"
-        )
-        status, data, _ = AdagucTestTools().runADAGUCServer(
-            args=["--updatedb", "--config", config], env={"ADAGUC_CONFIG": config}, isCGI=False, showLog=False
-        )
-        assert status == 0
+
+        env = make_adaguc_env("{ADAGUC_PATH}/data/config/datasets/adaguc.testGeoJSONReader_time.xml")
+        update_db(env)
 
         filename = f"test_GeoJSON_timesupport{date}.png".replace(":", "_")
 
         status, data, _ = AdagucTestTools().runADAGUCServer(
             "&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=features&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=40,-10,60,40&STYLES=features&FORMAT=image/png&TRANSPARENT=TRUE&TIME="
             + date,
-            env={"ADAGUC_CONFIG": config},
+            env=env,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
 

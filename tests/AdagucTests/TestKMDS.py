@@ -3,18 +3,14 @@ import os
 import pytest
 from adaguc.AdagucTestTools import AdagucTestTools
 
+from conftest import make_adaguc_env, update_db
+
 ADAGUC_PATH = os.environ["ADAGUC_PATH"]
 
 
 class TestKMDS:
     testresultspath = "testresults/TestKMDS/"
     expectedoutputsspath = "expectedoutputs/TestKMDS/"
-    env = {
-        "ADAGUC_CONFIG": ADAGUC_PATH
-        + "/data/config/adaguc.tests.dataset.xml,"
-        + ADAGUC_PATH
-        + "/data/config/datasets/adaguc.testGeoJSONReader_time.xml"
-    }
 
     AdagucTestTools().mkdir_p(testresultspath)
 
@@ -43,10 +39,8 @@ class TestKMDS:
     def test_kmds_alle_stations_10001_getmap_requests(self, filename: str, layers: str, styles: str):
         AdagucTestTools().cleanTempDir()
 
-        config = ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml,adaguc.test.kmds_alle_stations_10001.xml"
-        env = {"ADAGUC_CONFIG": config}
-        status, data, _ = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", config], env=self.env, isCGI=False)
-        assert status == 0
+        env = make_adaguc_env("adaguc.test.kmds_alle_stations_10001.xml")
+        update_db(env)
 
         status, data, _ = AdagucTestTools().runADAGUCServer(
             f"LAYERS=baselayer,{layers},overlay&STYLES=default,{styles},default&DATASET=adaguc.test.kmds_alle_stations_10001&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&WIDTH=400&HEIGHT=600&CRS=EPSG%3A3857&BBOX=269422.313123934,6357145.5563671775,939865.5563671777,7457638.879961043&FORMAT=image/png32&TRANSPARENT=FALSE&&time=2025-11-06T09%3A20%3A00Z",
@@ -70,10 +64,8 @@ class TestKMDS:
     def test_kmds_alle_stations_10001_getfeatureinfo_requests(self, filename: str, layers: str, units: str):
         AdagucTestTools().cleanTempDir()
 
-        config = ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml,adaguc.test.kmds_alle_stations_10001.xml"
-        env = {"ADAGUC_CONFIG": config}
-        status, data, _ = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", config], env=self.env, isCGI=False)
-        assert status == 0
+        env = make_adaguc_env("adaguc.test.kmds_alle_stations_10001.xml")
+        update_db(env)
 
         status, data, _ = AdagucTestTools().runADAGUCServer(
             f"dataset=adaguc.test.kmds_alle_stations_10001&&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS={layers}&QUERY_LAYERS={layers}&CRS=EPSG%3A3857&BBOX=-141702.05839427316,6126251.383284947,1317478.0003938763,7367966.542989185&WIDTH=1550&HEIGHT=1319&I=765&J=585&INFO_FORMAT=application/json&STYLES=&&time=2025-11-06T09%3A20%3A00Z",
@@ -89,10 +81,8 @@ class TestKMDS:
     def test_kmds_alle_stations_10001_getmetadata_adjusted_units(self):
         AdagucTestTools().cleanTempDir()
 
-        config = ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml,adaguc.test.kmds_alle_stations_10001.xml"
-        env = {"ADAGUC_CONFIG": config}
-        status, data, _ = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", config], env=self.env, isCGI=False)
-        assert status == 0
+        env = make_adaguc_env("adaguc.test.kmds_alle_stations_10001.xml")
+        update_db(env)
 
         status, data, _ = AdagucTestTools().runADAGUCServer(
             "dataset=adaguc.test.kmds_alle_stations_10001&&service=WMS&request=getmetadata&format=application/json&layers=10M/wind_adjust",

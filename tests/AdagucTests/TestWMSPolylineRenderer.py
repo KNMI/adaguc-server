@@ -1,6 +1,7 @@
 import os
 import pytest
 from adaguc.AdagucTestTools import AdagucTestTools
+from conftest import make_adaguc_env, update_db
 
 ADAGUC_PATH = os.environ["ADAGUC_PATH"]
 
@@ -8,7 +9,6 @@ ADAGUC_PATH = os.environ["ADAGUC_PATH"]
 class TestWMSPolylineRenderer:
     testresultspath = "testresults/TestWMSPolylineRenderer/"
     expectedoutputsspath = "expectedoutputs/TestWMSPolylineRenderer/"
-    env = {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml"}
 
     AdagucTestTools().mkdir_p(testresultspath)
 
@@ -26,21 +26,15 @@ class TestWMSPolylineRenderer:
     def test_WMSPolylineRenderer_borderwidth_1px(self, stylename: str):
         AdagucTestTools().cleanTempDir()
 
-        config = (
-            ADAGUC_PATH
-            + "/data/config/adaguc.tests.dataset.xml,"
-            + ADAGUC_PATH
-            + "/data/config/datasets/adaguc.testwmspolylinerenderer.xml"
-        )
-        status, data, _ = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", config], env=self.env, isCGI=False)
-        assert status == 0
+        env = make_adaguc_env("{ADAGUC_PATH}/data/config/datasets/adaguc.testwmspolylinerenderer.xml")
+        update_db(env)
 
         filename = "test_WMSPolylineRenderer_" + stylename + ".png"
         status, data, _ = AdagucTestTools().runADAGUCServer(
             "DATASET=adaguc.testwmspolylinerenderer&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=neddis&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=51.05009024158416,2.254746,54.44300975841584,7.054254&STYLES="
             + stylename
             + "%2Fpolyline&FORMAT=image/png&TRANSPARENT=TRUE&",
-            env=self.env,
+            env=env,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         assert status == 0
@@ -54,19 +48,13 @@ class TestWMSPolylineRenderer:
     def test_WMSPolylineRenderer_cellwarn_fillpolysalpha(self):
         AdagucTestTools().cleanTempDir()
 
-        config = (
-            ADAGUC_PATH
-            + "/data/config/adaguc.tests.dataset.xml,"
-            + ADAGUC_PATH
-            + "/data/config/datasets/adaguc.testwmspolylinerenderer.xml"
-        )
-        status, data, _ = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", config], env=self.env, isCGI=False)
-        assert status == 0
+        env = make_adaguc_env("{ADAGUC_PATH}/data/config/datasets/adaguc.testwmspolylinerenderer.xml")
+        update_db(env)
 
         filename = "test_WMSPolylineRenderer_cellwarn_fillpolysalpha.png"
         status, data, _ = AdagucTestTools().runADAGUCServer(
             "DATASET=adaguc.testwmspolylinerenderer&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=cellwarn_hail_combined&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=540000,6600000,850000,6750000&STYLES=polygon_innerparts_coloured&FORMAT=image/png&TRANSPARENT=TRUE&",
-            env=self.env,
+            env=env,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         assert status == 0
@@ -171,19 +159,13 @@ class TestWMSPolylineRenderer:
     def test_WMSPointRenderer_usgs_earthquakes_geojson_GetMap_MultiVar(self):
         AdagucTestTools().cleanTempDir()
 
-        config = (
-            ADAGUC_PATH
-            + "/data/config/adaguc.tests.dataset.xml,"
-            + ADAGUC_PATH
-            + "/data/config/datasets/adaguc.testGeoJSONReaderMultivariable.xml"
-        )
-        status, data, _ = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", config], env=self.env, isCGI=False)
-        assert status == 0
+        env = make_adaguc_env("{ADAGUC_PATH}/data/config/datasets/adaguc.testGeoJSONReaderMultivariable.xml")
+        update_db(env)
 
         filename = "test_WMSPointRenderer_usgs_earthquakes_geojson_GetMap_MultiVar.png"
         status, data, _ = AdagucTestTools().runADAGUCServer(
             "DATASET=adaguc.testGeoJSONReaderMultivariable&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=usgs_earthquakes_age_magnitude_geojson&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=500571.08859811374,5790835.942920016,1024650.2598764997,7187305.365464885&STYLES=age_magnitude_triangles%2Fpoint&FORMAT=image/png&TRANSPARENT=TRUE&&time=2022-09-22T07%3A25%3A20Z&",
-            env=self.env,
+            env=env,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         assert status == 0
