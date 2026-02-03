@@ -27,9 +27,9 @@
 #define CXMLSerializerInterface_H
 #include <iostream>
 #include <vector>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
 #include "CTString.h"
 #include "CDebugger.h"

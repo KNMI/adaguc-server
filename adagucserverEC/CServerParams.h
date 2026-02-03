@@ -25,8 +25,8 @@
 
 #ifndef CServerParams_H
 #define CServerParams_H
-#include <limits.h>
-#include <stdlib.h>
+#include <climits>
+#include <cstdlib>
 #include "CDebugger.h"
 #include "CTString.h"
 #include "CDirReader.h"

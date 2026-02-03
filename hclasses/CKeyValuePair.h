@@ -27,7 +27,7 @@
 #define CKEYVALUEPAIR_H
 #include <iostream>
 #include <vector>
-#include <stdio.h>
+#include <cstdio>
 #include "CTString.h"
 struct CKeyValuePair {
   CT::string key;

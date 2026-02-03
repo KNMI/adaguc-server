@@ -27,7 +27,7 @@
 #define CXMLPARSER_H
 #include <iostream>
 #include <vector>
-#include <stdio.h>
+#include <cstdio>
 
 #include "CTString.h"
 

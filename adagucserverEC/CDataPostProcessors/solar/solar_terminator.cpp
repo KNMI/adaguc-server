@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cmath>
 #include <cmath>
-#include <time.h>
+#include <ctime>
 
 int getDayTimeCategory(double zenithAngle) {
   if (zenithAngle < 90)

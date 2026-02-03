@@ -1,4 +1,4 @@
-#include <stdio.h>
+#include <cstdio>
 
 #include "Test.h"
 #include "TestResult.h"
