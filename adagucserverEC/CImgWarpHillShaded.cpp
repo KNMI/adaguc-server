@@ -162,9 +162,8 @@ void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, C
       }
     }
   }
-  delete[] ((float *)settings.destinationGrid);
+  free(settings.destinationGrid);
   // CDBDebug("render done");
-  return;
 }
 
 int CImgWarpHillShaded::set(const char *) { return 0; }
