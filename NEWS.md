@@ -1,5 +1,8 @@
 **Version 6.3.0 - 2026-01-28**
 
+- Removed support for gd renderer
+- Removed support for image/gif and animations
+- Removed support for cascading layers.
 - CT::string now uses std::string as internals.
 - pointsfromgrid can now also be used to plot text values on windspeed and winddirection components
 - Striding x/y was swapped: fixes https://github.com/KNMI/adaguc-server/issues/602

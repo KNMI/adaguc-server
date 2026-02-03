@@ -35,7 +35,7 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
   }
 
   int status = 0;
-  enum LegendType { undefined, continous, discrete, statusflag, cascaded };
+  enum LegendType { undefined, continous, discrete, statusflag, custom };
   LegendType legendType = undefined;
   bool estimateMinMax = false;
 
@@ -44,9 +44,9 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
   int pLeft = 4;
   int pTop = (int)(legendImage->geoParams.height - legendHeight);
 
-  if (dataSource->dLayerType == CConfigReaderLayerTypeCascaded) {
-    legendType = cascaded;
-    CDBDebug("GetLegendGraphic for cascaded WMS is not yet supported");
+  if (dataSource->dLayerType == CConfigReaderLayerTypeGraticule) {
+    legendType = custom;
+    CDBDebug("GetLegendGraphic for custom WMS is not yet supported");
     legendImage->crop(4);
     return 0;
   }
@@ -61,16 +61,11 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
 
   if (renderMethod & RM_RGBA) {
 
-    // legendImage->setText("",5,0,0,248,-1);
     legendImage->crop(4);
     return 0;
   }
-  // legendImage->enableTransparency(true);
-  // legendImage->rectangle(0,0,20,20,CColor(255,255,255,255),CColor(255,255,255,255));
-  // legendImage->setText("RGBA",5,0,0,255,-1);
-  // legendImage->crop(40,40);
-  // return 0;
-  if (legendType == cascaded) {
+
+  if (legendType == custom) {
     legendImage->crop(4);
     return 0;
   }
@@ -129,7 +124,7 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
       if (renderMethod & RM_NEAREST || renderMethod & RM_BILINEAR) {
         legendType = continous;
       } else {
-        legendType = cascaded;
+        legendType = custom;
       }
     } else {
       legendType = discrete;
@@ -199,11 +194,8 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
       CDataSource::getFlagMeaningHumanReadable(&flagMeaning, &dataSource->getDataObject(0)->statusFlagList, value);
       CT::string legendMessage;
       legendMessage.print("%d) %s", (int)value, flagMeaning.c_str());
-      legendImage->setText(legendMessage.c_str(), legendMessage.length(), (int)cbW + 15 + pLeft, (int)y + dH + 2 + pTop, 248, -1);
+      legendImage->setText(legendMessage.c_str(), (int)cbW + 15 + pLeft, (int)y + dH + 2 + pTop, 248);
     }
-    //     CT::string units="status flag";
-    //     legendImage->setText(units.c_str(),units.length(),2+pLeft,int(legendHeight)-14+pTop,248,-1);
-    // legendImage->crop(4,4);
   }
 
   if (legendType == continous) {

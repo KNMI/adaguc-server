@@ -71,7 +71,7 @@ void printerrorImage(void *_drawImage) {
   CDrawImage *drawImage = (CDrawImage *)_drawImage;
 
   const char *exceptionText = "OGC inimage Exception";
-  drawImage->setText(exceptionText, strlen(exceptionText), 12, 5, 241, 0);
+  drawImage->setText(exceptionText, 12, 5, 241);
 
   int y = 1;
   size_t w = drawImage->geoParams.width / 6, characters = 0;
@@ -84,14 +84,14 @@ void printerrorImage(void *_drawImage) {
         concat.concat(" ");
         characters = concat.length();
       } else {
-        drawImage->setText(concat.c_str(), concat.length(), 12, 5 + y * 15, 240, -1);
+        drawImage->setText(concat.c_str(), 12, 5 + y * 15, 240);
         y++;
         concat.copy(&sp[k]);
         concat.concat(" ");
         characters = concat.length();
       }
     }
-    drawImage->setText(concat.c_str(), concat.length(), 12, 5 + y * 15, 240, -1);
+    drawImage->setText(concat.c_str(), 12, 5 + y * 15, 240);
     y++;
   }
   y = (y - 1) * 15 + 26;
@@ -167,9 +167,6 @@ void readyerror() {
   }
   if (cerror_mode == WMS_EXCEPTIONS_IMAGE || cerror_mode == WMS_EXCEPTIONS_BLANKIMAGE) { // Image
     CDrawImage drawImage;
-    if (errImageFormat == IMAGEFORMAT_IMAGEPNG24 || errImageFormat == IMAGEFORMAT_IMAGEPNG32) {
-      drawImage.setRenderer(CDRAWIMAGERENDERER_CAIRO);
-    }
     drawImage.setBGColor(255, 255, 255);
 
     drawImage.enableTransparency(enableTransparency);
@@ -177,8 +174,6 @@ void readyerror() {
     drawImage.createImage(errImageWidth, errImageHeight);
 
     drawImage.create685Palette();
-    // palette.createStandard();
-    //    drawImage.createGDPalette(&palette);
     if (cerror_mode == WMS_EXCEPTIONS_IMAGE) {
       printerrorImage(&drawImage);
     }
@@ -187,16 +182,11 @@ void readyerror() {
       printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
       drawImage.printImagePng8(true);
     } else if (errImageFormat == IMAGEFORMAT_IMAGEPNG24) {
-      drawImage.setRenderer(CDRAWIMAGERENDERER_CAIRO);
       printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
       drawImage.printImagePng24();
     } else if (errImageFormat == IMAGEFORMAT_IMAGEPNG32) {
-      drawImage.setRenderer(CDRAWIMAGERENDERER_CAIRO);
       printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
       drawImage.printImagePng32();
-    } else if (errImageFormat == IMAGEFORMAT_IMAGEGIF) {
-      printf("%s%c%c\n", "Content-Type:image/gif", 13, 10);
-      drawImage.printImageGif();
     } else {
       printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
       drawImage.printImagePng8(true);
