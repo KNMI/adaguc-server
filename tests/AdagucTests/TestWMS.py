@@ -470,7 +470,7 @@ class TestWMS(unittest.TestCase):
         filename = "test_WMSGetFeatureInfo_forecastreferencetime.html"
         # pylint: disable=unused-variable
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "source=forecast_reference_time%2FHARM_N25_20171215090000_dimx16_dimy16_dimtime49_dimforecastreferencetime1_varairtemperatureat2m.nc&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=air_temperature__at_2m&QUERY_LAYERS=air_temperature__at_2m&CRS=EPSG%3A4326&BBOX=49.55171074378079,1.4162628389784275,54.80328142582087,9.526486675156528&WIDTH=1515&HEIGHT=981&I=832&J=484&FORMAT=image/gif&INFO_FORMAT=text/html&STYLES=&&time=2017-12-17T09%3A00%3A00Z&DIM_reference_time=2017-12-15T09%3A00%3A00Z",
+            "source=forecast_reference_time%2FHARM_N25_20171215090000_dimx16_dimy16_dimtime49_dimforecastreferencetime1_varairtemperatureat2m.nc&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=air_temperature__at_2m&QUERY_LAYERS=air_temperature__at_2m&CRS=EPSG%3A4326&BBOX=49.55171074378079,1.4162628389784275,54.80328142582087,9.526486675156528&WIDTH=1515&HEIGHT=981&I=832&J=484&INFO_FORMAT=text/html&STYLES=&&time=2017-12-17T09%3A00%3A00Z&DIM_reference_time=2017-12-15T09%3A00%3A00Z",
             env=self.env,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
@@ -1029,7 +1029,7 @@ class TestWMS(unittest.TestCase):
 
         filename = "test_WMSGetFeatureInfo_timeseries_KNMIHDF5_json.json"
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "dataset=adaguc.KNMIHDF5.test&service=WMS&request=GetFeatureInfo&version=1.3.0&layers=RAD_NL25_PCP_CM&query_layers=RAD_NL25_PCP_CM&crs=EPSG%3A3857&bbox=467411.5837657447%2C5796421.971094566%2C889884.3758374067%2C7834481.671540775&width=199&height=960&i=103&j=501&format=image%2Fgif&info_format=application%2Fjson&time=1000-01-01T00%3A00%3A00Z%2F3000-01-01T00%3A00%3A00Z&",
+            "dataset=adaguc.KNMIHDF5.test&service=WMS&request=GetFeatureInfo&version=1.3.0&layers=RAD_NL25_PCP_CM&query_layers=RAD_NL25_PCP_CM&crs=EPSG%3A3857&bbox=467411.5837657447%2C5796421.971094566%2C889884.3758374067%2C7834481.671540775&width=199&height=960&i=103&j=501&info_format=application%2Fjson&time=1000-01-01T00%3A00%3A00Z%2F3000-01-01T00%3A00%3A00Z&",
             env=env,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
@@ -2811,7 +2811,7 @@ class TestWMS(unittest.TestCase):
 
         filename = "test_WMSGetFeatureInfo_SolarTerminator.html"
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "dataset=solt&&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=solarterminator&QUERY_LAYERS=solarterminator&CRS=EPSG%3A3857&BBOX=-48040284.36018957,-50974535.88541803,-10040284.360189572,62500602.23612894&WIDTH=362&HEIGHT=1081&I=354&J=481&FORMAT=image/gif&INFO_FORMAT=text/html&STYLES=&&time=2026-01-05T16%3A40%3A00Z&",
+            "dataset=solt&&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=solarterminator&QUERY_LAYERS=solarterminator&CRS=EPSG%3A3857&BBOX=-48040284.36018957,-50974535.88541803,-10040284.360189572,62500602.23612894&WIDTH=362&HEIGHT=1081&I=354&J=481&INFO_FORMAT=text/html&STYLES=&&time=2026-01-05T16%3A40%3A00Z&",
             env=env,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())

@@ -64,7 +64,7 @@ class TestWMSTimeHeightProfiles(unittest.TestCase):
         """
         AdagucTestTools().cleanTempDir()
         filename = "test_WMSGetFeatureInfoAsPng_TimeHeightProfiles.png"
-        wms_arg = "source=test/ceilonet/ceilonet_chm15k_backsct_la1_t12s_v1.0_06310_A20231202_extracted_small.nc&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=beta_raw&QUERY_LAYERS=beta_raw&BBOX=29109.947643979103,6500000,1190890.052356021,7200000&CRS=EPSG%3A3857&WIDTH=128&HEIGHT=512&I=707&J=557&FORMAT=image/gif&INFO_FORMAT=image/png&STYLES=&time=2023-12-02T06:40:00Z/2023-12-02T06:45:00Z&elevation=0/2500"
+        wms_arg = "source=test/ceilonet/ceilonet_chm15k_backsct_la1_t12s_v1.0_06310_A20231202_extracted_small.nc&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=beta_raw&QUERY_LAYERS=beta_raw&BBOX=29109.947643979103,6500000,1190890.052356021,7200000&CRS=EPSG%3A3857&WIDTH=128&HEIGHT=512&I=707&J=557&INFO_FORMAT=image/png&STYLES=&time=2023-12-02T06:40:00Z/2023-12-02T06:45:00Z&elevation=0/2500"
         # TODO: Check why we first need to do a getcapabilities call?
         status, data, _ = AdagucTestTools().runADAGUCServer(
             "source=test/ceilonet/ceilonet_chm15k_backsct_la1_t12s_v1.0_06310_A20231202_extracted_small.nc&SERVICE=WMS&request=getcapabilities",
@@ -113,7 +113,7 @@ class TestWMSTimeHeightProfiles(unittest.TestCase):
 
         # Check getfeatureinfo as PNG on dataset configuration
         filename = "test_wmsgetfeatureinfo_png_timeheightprofiles_as_dataset.png"
-        wms_arg = "dataset=adaguc.tests.timeheightprofiles.xml&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=beta_raw&QUERY_LAYERS=beta_raw&BBOX=29109.947643979103,6500000,1190890.052356021,7200000&CRS=EPSG%3A3857&WIDTH=128&HEIGHT=512&I=707&J=557&FORMAT=image/gif&INFO_FORMAT=image/png&STYLES=&time=2023-12-02T06:40:00Z/2023-12-02T06:45:00Z&elevation=0/2500"
+        wms_arg = "dataset=adaguc.tests.timeheightprofiles.xml&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=beta_raw&QUERY_LAYERS=beta_raw&BBOX=29109.947643979103,6500000,1190890.052356021,7200000&CRS=EPSG%3A3857&WIDTH=128&HEIGHT=512&I=707&J=557&INFO_FORMAT=image/png&STYLES=&time=2023-12-02T06:40:00Z/2023-12-02T06:45:00Z&elevation=0/2500"
         status, data, _ = AdagucTestTools().runADAGUCServer(
             wms_arg,
             {"ADAGUC_CONFIG": config},
@@ -163,7 +163,7 @@ class TestWMSTimeHeightProfiles(unittest.TestCase):
 
         # Check getfeatureinfo as PNG on dataset configuration
         filename = "test_wmsgetfeatureinfo_json_timeheightprofiles_as_dataset.json"
-        wms_arg = "dataset=adaguc.tests.timeheightprofiles.xml&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=beta_raw&QUERY_LAYERS=beta_raw&BBOX=29109.947643979103,6500000,1190890.052356021,7200000&CRS=EPSG%3A3857&WIDTH=128&HEIGHT=512&I=707&J=557&FORMAT=image/gif&INFO_FORMAT=application/json&STYLES=&time=2023-12-02T06:40:00Z"
+        wms_arg = "dataset=adaguc.tests.timeheightprofiles.xml&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=beta_raw&QUERY_LAYERS=beta_raw&BBOX=29109.947643979103,6500000,1190890.052356021,7200000&CRS=EPSG%3A3857&WIDTH=128&HEIGHT=512&I=707&J=557&INFO_FORMAT=application/json&STYLES=&time=2023-12-02T06:40:00Z"
         status, data, _ = AdagucTestTools().runADAGUCServer(
             wms_arg,
             {"ADAGUC_CONFIG": config},

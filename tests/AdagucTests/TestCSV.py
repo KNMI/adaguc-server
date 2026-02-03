@@ -1,13 +1,5 @@
 import os
-from io import BytesIO
-from adaguc.CGIRunner import CGIRunner
 import unittest
-import shutil
-import sys
-import subprocess
-from lxml import etree
-from lxml import objectify
-import re
 from adaguc.AdagucTestTools import AdagucTestTools
 
 ADAGUC_PATH = os.environ["ADAGUC_PATH"]
@@ -29,7 +21,7 @@ class TestCSV(unittest.TestCase):
     # AdagucTestTools().cleanTempDir()
     # filename="test_CSV_csvexample_autowms.gif"
     # env={'ADAGUC_CONFIG' : ADAGUC_PATH + "/data/config/adaguc.autoresource.xml", 'ADAGUC_FONT': ADAGUC_PATH + "/data/fonts/FreeSans.ttf"}
-    # status,data,headers = AdagucTestTools().runADAGUCServer("source=csvexample.csv&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=Index&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=-180,-90,180,90&STYLES=nearest&FORMAT=image/gif&TRANSPARENT=TRUE", env = env,showLog = False)
+    # status,data,headers = AdagucTestTools().runADAGUCServer("source=csvexample.csv&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=Index&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=-180,-90,180,90&STYLES=nearest&TRANSPARENT=TRUE", env = env,showLog = False)
     # AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
     # self.assertEqual(status, 0)
     # self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
@@ -270,34 +262,6 @@ class TestCSV(unittest.TestCase):
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=radiusandvalue_and_symbol&WIDTH=256&HEIGHT=512&CRS=EPSG%3A3857&BBOX=-8003558.6330057755,1638420.481402514,-7346556.700484946,2491778.5155690867&STYLES=magnitude&FORMAT=image/png&TRANSPARENT=TRUE&showlegend=true",
             env=env,
-        )
-        AdagucTestTools().writetofile(self.testresultspath + filename,
-                                      data.getvalue())
-        self.assertEqual(status, 0)
-        self.assertEqual(
-            data.getvalue(),
-            AdagucTestTools().readfromfile(self.expectedoutputsspath +
-                                           filename),
-        )
-
-    def test_CSV_windbarbs_GD_gif(self):
-        AdagucTestTools().cleanTempDir()
-
-        config = (ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," +
-                  ADAGUC_PATH +
-                  "/data/config/datasets/adaguc.testCSVReader.xml")
-        status, data, headers = AdagucTestTools().runADAGUCServer(
-            args=["--updatedb", "--config", config],
-            env=self.env,
-            isCGI=False,
-            showLog=False,
-        )
-        self.assertEqual(status, 0)
-
-        filename = "test_CSV_windbarbs.gif"
-        status, data, headers = AdagucTestTools().runADAGUCServer(
-            "&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=windallspeeds&width=600&height=300&CRS=EPSG:4326&STYLES=&EXCEPTIONS=INIMAGE&showlegend=false&0.817264530295692&bbox=-2,-1,11,32&transparent=true&FORMAT=image/gif&",
-            env=self.env,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename,
                                       data.getvalue())

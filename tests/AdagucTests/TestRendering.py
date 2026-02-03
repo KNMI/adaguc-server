@@ -150,7 +150,7 @@ class TestRendering(unittest.TestCase):
             args=['--updatedb', '--config', config], env={'ADAGUC_CONFIG': config}, isCGI=False, showLog=False)
         self.assertEqual(status, 0)
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "dataset=adaguc.tests.CTRRendering&&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=EHAM_Schiphol_onlyoutlines&QUERY_LAYERS=EHAM_Schiphol_onlyoutlines&CRS=EPSG%3A3857&BBOX=463835.69270030205,6790367.198023051,579328.613723787,6905987.034344364&WIDTH=910&HEIGHT=911&I=493&J=439&FORMAT=image/gif&INFO_FORMAT=application/json&STYLES=&", env={'ADAGUC_CONFIG': config})        
+            "dataset=adaguc.tests.CTRRendering&&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=EHAM_Schiphol_onlyoutlines&QUERY_LAYERS=EHAM_Schiphol_onlyoutlines&CRS=EPSG%3A3857&BBOX=463835.69270030205,6790367.198023051,579328.613723787,6905987.034344364&WIDTH=910&HEIGHT=911&I=493&J=439&INFO_FORMAT=application/json&STYLES=&", env={'ADAGUC_CONFIG': config})
         filename = "test_RenderingGeoJSON_CTR_EHAM_Schiphol_GetFeatureInfoNoPoints.json"
         AdagucTestTools().writetojson(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
@@ -170,7 +170,7 @@ class TestRendering(unittest.TestCase):
             args=['--updatedb', '--config', config], env={'ADAGUC_CONFIG': config}, isCGI=False, showLog=False)
         self.assertEqual(status, 0)
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "dataset=adaguc.tests.CTRRendering&&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=EHAM_Schiphol_onlyoutlines&QUERY_LAYERS=EHAM_Schiphol_onlyoutlines&CRS=EPSG%3A3857&BBOX=444505.27315159835,6795686.027258951,579300.9326094447,6930629.813815102&WIDTH=910&HEIGHT=911&I=571&J=489&FORMAT=image/gif&INFO_FORMAT=application/jsonl&STYLES=&", env={'ADAGUC_CONFIG': config})        
+            "dataset=adaguc.tests.CTRRendering&&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=EHAM_Schiphol_onlyoutlines&QUERY_LAYERS=EHAM_Schiphol_onlyoutlines&CRS=EPSG%3A3857&BBOX=444505.27315159835,6795686.027258951,579300.9326094447,6930629.813815102&WIDTH=910&HEIGHT=911&I=571&J=489&INFO_FORMAT=application/jsonl&STYLES=&", env={'ADAGUC_CONFIG': config})
         filename = "test_RenderingGeoJSON_CTR_EHAM_Schiphol_GetFeatureInfoExactlyOnPoint.json"
         AdagucTestTools().writetojson(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)

@@ -866,15 +866,11 @@ public:
   public:
     class Cattr {
     public:
-      CT::string settings, striding, renderer, scalewidth, scalecontours, renderhint, randomizefeatures, featuresoverlap, rendertextforvectors, cliplegend, interpolationmethod, drawgridboxoutline,
-          drawgrid;
+      CT::string settings, striding, scalewidth, scalecontours, renderhint, randomizefeatures, featuresoverlap, rendertextforvectors, cliplegend, interpolationmethod, drawgridboxoutline, drawgrid;
     } attr;
     bool addAttribute(const char *name, const char *value) {
       if (equals("settings", name)) {
         attr.settings.copy(value);
-        return true;
-      } else if (equals("renderer", name)) {
-        attr.renderer.copy(value);
         return true;
       } else if (equals("striding", name)) {
         attr.striding.copy(value);

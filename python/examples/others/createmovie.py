@@ -12,20 +12,6 @@ import ssl
 
   You can also add overlays or baselayers if you configure these as layers in your service:
 
-  <!-- Layer with name baselayer from geoservices.knmi.nl -->
-  <Layer type="cascaded" hidden="false">
-    <Name force="true">baselayer</Name>
-    <Title>NPS - Natural Earth II</Title>
-    <WMSLayer service="http://geoservices.knmi.nl/cgi-bin/bgmaps.cgi?" layer="naturalearth2"/>
-    <LatLonBox minx="-180"  miny="-90" maxx="180" maxy="90"/>
-  </Layer>
-  <!-- Layer with name overlay from geoservices.knmi.nl -->
-  <Layer type="cascaded" hidden="false">
-    <Name force="true">overlay</Name>
-    <Title>NPS - Natural Earth II</Title>
-    <WMSLayer service="http://geoservices.knmi.nl/cgi-bin/worldmaps.cgi?" layer="world_line_thick"/>
-    <LatLonBox minx="-180"  miny="-90" maxx="180" maxy="90"/>
-  </Layer>
   <!-- Layer with name grid10 from geoservices.knmi.nl -->
   <Layer type="grid">
     <Name force="true">grid10</Name>

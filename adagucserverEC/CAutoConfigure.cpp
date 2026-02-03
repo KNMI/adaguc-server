@@ -8,27 +8,13 @@ const char *CAutoConfigure::className = "CAutoConfigure";
 
 // #define CAUTOCONFIGURE_DEBUG
 
-int CAutoConfigure::checkCascadedDimensions(const CDataSource *dataSource) {
-  if (dataSource != NULL && dataSource->dLayerType == CConfigReaderLayerTypeCascaded) {
-#ifdef CAUTOCONFIGURE_DEBUG
-    CDBDebug("Cascaded layers cannot have dimensions at the moment");
-#endif
-
-    CREPORT_ERROR_NODOC(CT::string("Cascaded layer cannot have dimensions at the moment"), CReportMessage::Categories::GENERAL);
-
-    return 0;
-  }
-
-  return 1;
-}
-
 int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
 
 #ifdef CAUTOCONFIGURE_DEBUG
   CDBDebug("[autoConfigureDimensions]");
 #endif
 
-  if (!checkCascadedDimensions(dataSource)) {
+  if (dataSource != NULL && dataSource->dLayerType == CConfigReaderLayerTypeGraticule) {
     return 0;
   }
 
@@ -276,7 +262,7 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
 
 int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
 
-  if (dataSource->dLayerType == CConfigReaderLayerTypeCascaded) {
+  if (dataSource->dLayerType == CConfigReaderLayerTypeGraticule) {
 #ifdef CAUTOCONFIGURE_DEBUG
     CDBDebug("Cascaded layers cannot have styles at the moment");
 #endif
