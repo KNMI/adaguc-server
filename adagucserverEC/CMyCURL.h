@@ -26,10 +26,10 @@
 #ifdef ENABLE_CURL
 #ifndef CMYCURL_H
 #define CMYCURL_H
-// #include "Definitions.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+//#include "Definitions.h"
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
 #include <curl/curl.h>
 

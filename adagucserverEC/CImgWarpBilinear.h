@@ -25,7 +25,7 @@
 
 #ifndef CImgWarpBilinear_H
 #define CImgWarpBilinear_H
-#include <stdlib.h>
+#include <cstdlib>
 #include "CFillTriangle.h"
 #include "CImageWarperRenderInterface.h"
 #include "Types/CPointTypes.h"

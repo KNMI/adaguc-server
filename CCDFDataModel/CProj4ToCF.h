@@ -26,7 +26,7 @@
 #ifndef CPROJ4TOCF_H
 #define CPROJ4TOCF_H
 
-#include <stdio.h>
+#include <cstdio>
 #include <iostream>
 #include <vector>
 #include <sys/stat.h>

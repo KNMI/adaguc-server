@@ -28,10 +28,10 @@
 const char *CDFPNGReader::className = "PNGReader";
 
 #include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdarg.h>
+#include <cstdlib>
+#include <cstdio>
+#include <cstring>
+#include <cstdarg>
 #include <CReadFile.h>
 
 // #define CCDFPNGIO_DEBUG

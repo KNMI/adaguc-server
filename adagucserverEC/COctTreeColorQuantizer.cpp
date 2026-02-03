@@ -2,8 +2,8 @@
 // oct1.c -- Color octree routines.
 // Dean Clark
 //
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 
 #define COLORBITS 8
 #define TREEDEPTH 6

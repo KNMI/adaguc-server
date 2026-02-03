@@ -25,7 +25,7 @@
 
 #ifndef CImgWarpBoolean_H
 #define CImgWarpBoolean_H
-#include <stdlib.h>
+#include <cstdlib>
 #include "CImageWarperRenderInterface.h"
 
 #endif

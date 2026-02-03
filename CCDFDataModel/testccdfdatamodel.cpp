@@ -23,7 +23,7 @@
  *
  ******************************************************************************/
 
-#include <stdio.h>
+#include <cstdio>
 #include <vector>
 #include <iostream>
 #include <CTString.h>
