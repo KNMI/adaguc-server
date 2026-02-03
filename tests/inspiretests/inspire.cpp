@@ -1,4 +1,4 @@
-#include <stdio.h>
+#include <cstdio>
 #include "CTString.h"
 #include "../adagucserverEC/CInspire.h"
 

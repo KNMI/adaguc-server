@@ -3,7 +3,7 @@
 #include <functional>
 #include <iostream>
 #include <cmath>
-#include <stdlib.h>
+#include <cstdlib>
 #include <proj.h>
 #include <cfloat>
 #include "Types/GeoParameters.h"

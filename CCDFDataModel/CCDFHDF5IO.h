@@ -27,7 +27,7 @@
 #define CCDFHDF5IO_H
 
 #include "CCDFDataModel.h"
-#include <stdio.h>
+#include <cstdio>
 #include <cfloat>
 #include <vector>
 #include <iostream>

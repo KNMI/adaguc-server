@@ -1,7 +1,7 @@
 #include "SimpleString.h"
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstring>
+#include <cstdio>
+#include <cstdlib>
 
 
 static const int DEFAULT_SIZE = 20;

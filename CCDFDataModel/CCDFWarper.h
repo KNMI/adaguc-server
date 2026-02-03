@@ -27,7 +27,7 @@
 // #define CCDFWARPER_H
 //
 //
-// #include <stdio.h>
+// #include <cstdio>
 // #include <vector>
 // #include <iostream>
 // #include <netcdf.h>

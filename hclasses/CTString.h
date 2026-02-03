@@ -25,13 +25,13 @@
 
 #ifndef CTSTRING_H
 #define CTSTRING_H
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdarg>
+#include <cstring>
 #include <iostream>
 #include <typeinfo>
 #include <exception>
-#include <stdlib.h>
+#include <cstdlib>
 #include <regex.h>
 #include <vector>
 
