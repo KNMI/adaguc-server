@@ -34,8 +34,8 @@ services:
         max-size: "200k"
         max-file: "10"
   adaguc-server:
-#     image: openearth/adaguc-server
-    build: ..
+    image: openearth/adaguc-server
+#    build: ..
 #    deploy:
 #     resources:
 #       limits:
@@ -53,7 +53,7 @@ services:
       - "PGBOUNCER_DISABLE_SSL=true"
       - "PGBOUNCER_ENABLE=true"
       - "ADAGUC_DB=host=adaguc-db port=5432 user=adaguc password=adaguc dbname=adaguc"
-      - "ADAGUC_ENABLELOGBUFFER=FALSE"
+      - "ADAGUC_ENABLELOGBUFFER=TRUE"
       - "ADAGUC_AUTOWMS_DIR=/data/adaguc-autowms"
       - "ADAGUC_DATA_DIR=/data/adaguc-data"
       - "ADAGUC_DATASET_DIR=/data/adaguc-datasets"
