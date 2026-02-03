@@ -199,6 +199,12 @@ class AdagucTestTools:
             bool: True if the difference is "small enough"
         """
 
+        # First check if they are binary the same
+        expected_output_data = AdagucTestTools().readfromfile(expectedImagePath)
+        returned_output_data = AdagucTestTools().readfromfile(returnedImagePath)
+        if expected_output_data == returned_output_data:
+            return True
+
         expected_image = Image.open(expectedImagePath)
         returned_image = Image.open(returnedImagePath)
         if expected_image.size != returned_image.size:
