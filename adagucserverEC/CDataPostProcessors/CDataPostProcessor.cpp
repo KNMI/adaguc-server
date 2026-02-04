@@ -21,17 +21,14 @@
 #include "CDataPostProcessor_SolarTerminator.h"
 
 static CDPPExecutor *cdppExecutorInstance = nullptr;
-CDPPExecutor *CDataPostProcessor::getCDPPExecutor() {
+CDPPExecutor *getCDPPExecutor() {
   if (cdppExecutorInstance == nullptr) {
     cdppExecutorInstance = new CDPPExecutor();
   };
   return cdppExecutorInstance;
 }
 
-/*CPDPPExecutor*/
-
 CDPPExecutor::CDPPExecutor() {
-  // CDBDebug("CDPPExecutor");
   dataPostProcessorList = new std::vector<CDPPInterface *>();
   dataPostProcessorList->push_back(new CDPPIncludeLayer());
   dataPostProcessorList->push_back(new CDPPAXplusB());

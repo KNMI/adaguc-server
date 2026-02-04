@@ -1043,12 +1043,12 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
   }
 
   if (enablePostProcessors) {
-    CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
+    getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
   }
 
   // For datasets without files, such as the Solar Terminator
   if (isVirtual) {
-    CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
+    getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
   }
 
   if (mode == CNETCDFREADER_MODE_GET_METADATA) {
@@ -1382,7 +1382,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 #endif
 
     if (enablePostProcessors) {
-      CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
+      getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
     }
   }
 
