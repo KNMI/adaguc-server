@@ -20,7 +20,7 @@
 #include "CDataPostProcessor_AddFeatures.h"
 #include "CDataPostProcessor_SolarTerminator.h"
 
-CDPPExecutor *cdppExecutorInstance = nullptr;
+static CDPPExecutor *cdppExecutorInstance = nullptr;
 CDPPExecutor *CDataPostProcessor::getCDPPExecutor() {
   if (cdppExecutorInstance == nullptr) {
     cdppExecutorInstance = new CDPPExecutor();
@@ -57,7 +57,7 @@ CDPPExecutor::CDPPExecutor() {
 
 CDPPExecutor::~CDPPExecutor() {
   // CDBDebug("~CDPPExecutor");
-  for(auto pp: *dataPostProcessorList) {
+  for (auto pp : *dataPostProcessorList) {
     delete pp;
   }
   delete dataPostProcessorList;

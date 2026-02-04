@@ -29,7 +29,6 @@
 #include "CTime.h"
 #include "traceTimings/traceTimings.h"
 
-extern CDF::Variable::CustomMemoryReader customMemoryReaderInstance;
 CDF::Variable::CustomMemoryReader customMemoryReaderInstance;
 CDF::Variable::CustomMemoryReader *CDF::Variable::CustomMemoryReaderInstance = &customMemoryReaderInstance;
 

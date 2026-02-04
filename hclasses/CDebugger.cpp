@@ -27,10 +27,8 @@
 #include <iostream>
 #include <unistd.h>
 
-extern unsigned int logMessageNumber;
 unsigned int logMessageNumber = 0;
 
-extern unsigned long logProcessIdentifier;
 unsigned long logProcessIdentifier = getpid();
 
 #include "CTString.h"
