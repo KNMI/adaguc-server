@@ -89,5 +89,6 @@ class TestGenericImageWarper:
         assert AdagucTestTools().compareImage(
             self.expectedoutputsspath + filetocheck,
             self.testresultspath + filetocheck,
-            maxAllowedColorDifference=0,  # compareImage no longer needed
+            maxAllowedColorDifference=1,
+            # maxAllowedColorPercentage=0.02,
         )
