@@ -8,8 +8,10 @@
 struct VectorStyle {
   CColor lineColor;
   double lineWidth;
-  CColor outlinecolor;
-  double outlinewidth;
+  CColor outlineColor;
+  double outlineWidth;
+  CColor textOutlineColor;
+  double textOutlineWidth;
   CColor textColor;
   CColor fillColor;
   CT::string drawVectorTextFormat;

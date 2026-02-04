@@ -50,6 +50,7 @@
 #include "CColor.h"
 
 #include "COctTreeColorQuantizer.h"
+#include "CImgRenderers/getVectorStyle.h"
 
 #define CAIROPLOTTER_COLOR_BYTE_TO_NORMAL 1 / 255.0
 
@@ -121,15 +122,16 @@ public:
   void poly(float x[], float y[], int n, bool closePath, bool fill);
   void poly(float x[], float y[], int n, float lineWidth, bool closePath, bool fill);
   void drawText(int x, int y, double angle, const char *text);
-  void drawStrokedText(int x, int y, double angle, const char *text, float fontSize, float strokeWidth, CColor bgcolor, CColor fgcolor, bool centerText = false);
+  void drawStrokedText(int x, int y, double angle, const char *text, VectorStyle vectorStyle);
 
   void writeToPng8Stream(FILE *fp, unsigned char alpha, bool use8bitpalAlpha);
   void writeToPng24Stream(FILE *fp, unsigned char alpha);
   void writeToPng32Stream(FILE *fp, unsigned char alpha);
   void writeToWebP32Stream(FILE *fp, unsigned char alpha, int quality);
   void setToSurface(cairo_surface_t *png);
-  void drawBarb(int x, int y, double direction, double viewDirCorrection, double strength, CColor color, CColor outlineColor, float lineWidth, bool toKnots, bool flip, bool drawText,
-                double fontSize = 12, CColor textColor = CColor(255, 255, 255, 0), double outlineWidth = 1.0);
+  // void drawBarb(int x, int y, double direction, double viewDirCorrection, double strength, CColor color, CColor outlineColor, float lineWidth, bool toKnots, bool flip, bool drawText,
+  //               double fontSize = 12, CColor textColor = CColor(255, 255, 255, 0), double outlineWidth = 1.0);
+  void drawBarb(int x, int y, double direction, double viewDirCorrection, double strength, bool toKnots, bool flip, VectorStyle vectorStyle);
 };
 
 #endif /* CCAIROPLOTTER_H_ */

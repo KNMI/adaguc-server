@@ -265,14 +265,25 @@ void CDrawImage::drawVector2(int x, int y, double direction, double strength, in
 
 #define round(x) (int(x + 0.5)) // Only for positive values!!!
 
-void CDrawImage::drawBarb(int x, int y, double direction, double viewDirCorrection, double strength, CColor barbColor, float lineWidth, bool toKnots, bool flip, bool drawText, double fontSize,
-                          CColor textColor, CColor outlineColor, double outlineWidth) {
+// void CDrawImage::drawBarb(int x, int y, double direction, double viewDirCorrection, double strength, CColor barbColor, float lineWidth, bool toKnots, bool flip, bool drawText, double fontSize,
+//                           CColor textColor, CColor outlineColor, double outlineWidth) {
+//   // If no linewidth, no outline should be drawn, set inner barblineWidth to 0.8 to ensure we draw a barb
+
+//   double barblineWidth = lineWidth == 0 ? 0.8 : lineWidth;
+//   double barbOutlineWidth = lineWidth == 0 ? 0 : outlineWidth;
+
+//   cairo->drawBarb(x, y, direction, viewDirCorrection, strength, barbColor, outlineColor, barblineWidth, toKnots, flip, drawText, fontSize, textColor, barbOutlineWidth);
+// }
+
+void CDrawImage::drawBarb(int x, int y, double direction, double viewDirCorrection, double strength, bool toKnots, bool flip, VectorStyle vectorStyle) {
   // If no linewidth, no outline should be drawn, set inner barblineWidth to 0.8 to ensure we draw a barb
 
-  double barblineWidth = lineWidth == 0 ? 0.8 : lineWidth;
-  double barbOutlineWidth = lineWidth == 0 ? 0 : outlineWidth;
+  // double barblineWidth = lineWidth == 0 ? 0.8 : lineWidth;
+  // double barbOutlineWidth = lineWidth == 0 ? 0 : outlineWidth;
+  vectorStyle.lineWidth = vectorStyle.lineWidth == 0 ? 0.8 : vectorStyle.lineWidth;
+  vectorStyle.outlineWidth = vectorStyle.lineWidth == 0 ? 0 : vectorStyle.outlineWidth;
 
-  cairo->drawBarb(x, y, direction, viewDirCorrection, strength, barbColor, outlineColor, barblineWidth, toKnots, flip, drawText, fontSize, textColor, barbOutlineWidth);
+  cairo->drawBarb(x, y, direction, viewDirCorrection, strength, toKnots, flip, vectorStyle);
 }
 
 void CDrawImage::circle(int x, int y, int r, int color, float lineWidth) {
@@ -430,7 +441,9 @@ void CDrawImage::setText(const char *text, int x, int y, CColor color) {
 
 void CDrawImage::setTextStroke(int x, int y, float angle, const char *text, const char *fontFile, float fontSize, float strokeWidth, CColor bgcolor, CColor fgcolor) {
   if (bgcolor.a == 0) {
-    drawText(x, y, fontFile, fontSize, angle, text, fgcolor);
+    // drawText(x, y, fontFile, fontSize, angle, text, fgcolor);
+    cairo->setColor(fgcolor.r, fgcolor.g, fgcolor.b, fgcolor.a);
+    cairo->drawText(x, y + 10, 0, text);
   } else {
     cairo->drawStrokedText(x, y, -angle, text, fontSize * 1.4, strokeWidth, bgcolor, fgcolor);
   }
@@ -568,7 +581,7 @@ void CDrawImage::drawCenteredText(int x, int y, const char *fontfile, float size
   if (textOutlineColor.a == 0) {
     freeType->drawCenteredText(x, y, angle, text);
   } else {
-    freeType->drawStrokedText(x, y, angle, text, size * 1.4, 1, textOutlineColor, color, true);
+    freeType->drawStrokedText(x, y, angle, text, size * 1.4, 10, textOutlineColor, color, true);
   }
 
   cairo->isAlphaUsed |= freeType->isAlphaUsed; // remember freetype's isAlphaUsed flag
@@ -599,11 +612,11 @@ void CDrawImage::drawCenteredTextNoOverlap(int x, int y, const char *fontFile, f
   rects.push_back(rect);
 }
 
-void CDrawImage::drawText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color) {
-  CCairoPlotter *freeType = this->getCairoPlotter(fontfile, size, geoParams.width, geoParams.height, cairo->getByteBuffer());
-  freeType->setColor(color.r, color.g, color.b, color.a);
-  freeType->drawText(x, y, angle, text);
-  cairo->isAlphaUsed |= freeType->isAlphaUsed; // remember freetype's isAlphaUsed flag
+// void CDrawImage::drawText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color) {
+CCairoPlotter *freeType = this->getCairoPlotter(fontfile, size, geoParams.width, geoParams.height, cairo->getByteBuffer());
+freeType->setColor(color.r, color.g, color.b, color.a);
+freeType->drawText(x, y, angle, text);
+cairo->isAlphaUsed |= freeType->isAlphaUsed; // remember freetype's isAlphaUsed flag
 }
 
 int CDrawImage::create685Palette() {

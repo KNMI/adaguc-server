@@ -188,18 +188,23 @@
   </Layer>
 
   <!-- Inconsistent outline -->
+  <Style name="wtf">
+    <Point min="4.5" max="20" fontsize="20" pointstyle="point" discradius="0" textcolor="#ffff00" outlinewidth="5" textoutlinecolor="#00ffff" textformat="%0.0f" />
+  </Style>
+
   <Style name="windbarbs_outline" title="Wind barbs with outlines" abstract="Rendered with barbs">
     <DataPostProc algorithm="pointsfromgrid" select="speed_component,direction_component" a="40"/>
-    <Vector fontsize="20" vectorstyle="barb" linewidth="2" linecolor="#000000" plotvalue="true" outlinewidth="10" outlinecolor="#00ffff" textformat="%0.0f" />
+    <Vector min="0" max="1.5" fontsize="20" vectorstyle="barb" linewidth="2" linecolor="#ff0000" plotvalue="true" outlinewidth="5" outlinecolor="#00ffff" textformat="%0.0f" />
+    <Vector min="1.5" max="3.0" fontsize="40" vectorstyle="barb" linewidth="2" linecolor="#ff0000" plotvalue="true" outlinewidth="1" outlinecolor="#00ffff" textformat="%0.0f" />
+    <Vector min="3.0" max="4.5" fontsize="20" vectorstyle="barb" linewidth="2" linecolor="#ff0000" plotvalue="true" outlinewidth="10" outlinecolor="#00ffff" textformat="%0.0f" />
 
     <!-- <Vector  min="0" max="34"     fontsize="20" vectorstyle="barb" linewidth="2" linecolor="#000000" plotvalue="true" outlinewidth="10" outlinecolor="#00ffff" />
     <Vector  min="34" max="41"     fontsize="20" vectorstyle="barb" linewidth="2" linecolor="#FFFFFF" plotvalue="true" outlinewidth="0" outlinecolor="#000000" />
     <Vector  min="41" max="100"     fontsize="20" vectorstyle="barb" linewidth="2" linecolor="#000000" plotvalue="true" outlinewidth="0" outlinecolor="#ffffff" /> -->
 
-  <!-- <IncludeStyle name="windbarbs_kts_ShadeInterval"/> -->
+  <IncludeStyle name="wtf"/>
   <!-- <RenderSettings renderhint="discreteclasses" settings="auto" interpolationmethod="bilinear" /> -->
 
     <!-- <DataPostProc algorithm="pointsfromgrid" select="speed_component" a="40"/> -->
-    <Point fontsize="20" pointstyle="point" linewidth="2" discradius="0" textcolor="#ff0000" textformat="%0.0f" />
   </Style>
 </Configuration>

@@ -196,9 +196,9 @@ public:
     }
     class Cattr {
     public:
-      CT::string linecolor, plotstationid, vectorstyle, textformat, plotvalue, outlinecolor, textcolor, fillcolor, fontfile;
+      CT::string linecolor, plotstationid, vectorstyle, textformat, plotvalue, outlinecolor, textcolor, textoutlinecolor, fillcolor, fontfile;
       float scale;
-      double min, max, outlinewidth, fontSize, linewidth, discradius;
+      double min, max, outlinewidth, textoutlinewidth, fontSize, linewidth, discradius;
     } attr;
     bool addAttribute(const char *attrname, const char *attrvalue) {
       if (equals("linecolor", attrname)) {
@@ -240,11 +240,17 @@ public:
       } else if (equals("outlinewidth", attrname)) {
         attr.outlinewidth = parseDouble(attrvalue);
         return true;
+      } else if (equals("textoutlinewidth", attrname)) {
+        attr.textoutlinewidth = parseDouble(attrvalue);
+        return true;
       } else if (equals("outlinecolor", attrname)) {
         attr.outlinecolor.copy(attrvalue);
         return true;
       } else if (equals("textcolor", attrname)) {
         attr.textcolor.copy(attrvalue);
+        return true;
+      } else if (equals("textoutlinecolor", attrname)) {
+        attr.textoutlinecolor.copy(attrvalue);
         return true;
       } else if (equals("fillcolor", attrname)) {
         attr.fillcolor.copy(attrvalue);
