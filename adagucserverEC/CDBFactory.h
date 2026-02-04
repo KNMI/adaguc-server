@@ -30,7 +30,6 @@
 
 class CDBFactory {
 private:
-private:
 public:
   static CDBAdapterPostgreSQL *staticCDBAdapter;
 

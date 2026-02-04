@@ -31,7 +31,6 @@
 #include "COGCDims.h"
 
 class CConvertH5VolScan {
-private:
 public:
   static int convertH5VolScanHeader(CDFObject *cdfObject, CServerParams *srvParams);
   static int convertH5VolScanData(CDataSource *dataSource, int mode);

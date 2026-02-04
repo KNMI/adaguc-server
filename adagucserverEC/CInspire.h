@@ -18,7 +18,6 @@
 // Zie http://kademo.nl/gs2/inspire/ows?SERVICE=WMS&REQUEST=GetCapabilities
 
 class CInspire {
-private:
 public:
   /**
    * INSPIRE metadata structure

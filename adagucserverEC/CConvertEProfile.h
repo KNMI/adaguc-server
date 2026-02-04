@@ -27,7 +27,6 @@
 #define CCONVERTEPROFILE_H
 #include "CDataSource.h"
 class CConvertEProfile {
-private:
 public:
   static int convertEProfileHeader(CDFObject *cdfObject, CServerParams *srvParams);
   static int convertEProfileData(CDataSource *dataSource, int mode);

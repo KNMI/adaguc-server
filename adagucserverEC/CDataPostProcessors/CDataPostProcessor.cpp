@@ -21,6 +21,10 @@
 #include "CDataPostProcessor_SolarTerminator.h"
 
 static CDPPExecutor *cdppExecutorInstance = nullptr;
+
+/**
+ * Get global CDPPExecutor instance once (not thread safe!)
+ */
 CDPPExecutor *getCDPPExecutor() {
   if (cdppExecutorInstance == nullptr) {
     cdppExecutorInstance = new CDPPExecutor();

@@ -4,7 +4,6 @@
 #include "CServerParams.h"
 
 class CHandleMetadata {
-private:
 public:
   int process(CServerParams *srvParam);
 };

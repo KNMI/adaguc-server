@@ -34,7 +34,6 @@
  *  This class is very fast for large datasets, with low zoom levels (zoomed out completely)
  */
 class CDrawTileObjBGRA {
-private:
 public:
   double dfTileWidth, dfTileHeight;
   double dfSourceBBOX[4];

@@ -34,7 +34,6 @@
  *
  */
 class CCreateTiles {
-private:
 public:
   /**
    * @brief Create tiles for all files.

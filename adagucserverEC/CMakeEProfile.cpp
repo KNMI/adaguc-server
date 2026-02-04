@@ -19,7 +19,6 @@ std::string encodeJSON(CT::string input) {
 }
 
 class EProfileUniqueRequests {
-private:
 public:
   bool readDataAsCDFDouble;
 

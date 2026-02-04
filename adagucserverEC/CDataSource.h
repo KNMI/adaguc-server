@@ -82,7 +82,6 @@ MinMax getMinMax(CDF::Variable *var);
  * This class is used for both image drawing (WMS) and data output (WCS)
  */
 class CDataSource {
-private:
 public:
   bool debug = false;
   CT::string headerFilename;

@@ -48,7 +48,6 @@ public:
 *
 */
 class CDPPMSGCPPVisibleMask : public CDPPInterface {
-private:
 public:
   virtual const char *getId();
   virtual int isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode);
@@ -87,7 +86,6 @@ public:
  *
  */
 class CDPPMSGCPPHIWCMask : public CDPPInterface {
-private:
 public:
   virtual const char *getId();
   virtual int isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode);

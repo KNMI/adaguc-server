@@ -27,7 +27,6 @@
 #define CCONVERTASCAT_H
 #include "CDataSource.h"
 class CConvertASCAT {
-private:
 public:
   static int convertASCATHeader(CDFObject *cdfObject);
   static int convertASCATData(CDataSource *dataSource, int mode);

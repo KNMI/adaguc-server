@@ -27,7 +27,6 @@
 #define CCONVERTUGRIDMESH_H
 #include "CDataSource.h"
 class CConvertUGRIDMesh {
-private:
 public:
   static int convertUGRIDMeshHeader(CDFObject *cdfObject);
   static int convertUGRIDMeshData(CDataSource *dataSource, int mode);
