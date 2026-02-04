@@ -90,16 +90,18 @@ def make_adaguc_env(dataset: str = "") -> dict:
     return {"ADAGUC_CONFIG": config}
 
 
-def update_db(adaguc_env: dict):
+def update_db(adaguc_env: dict, force_update: bool = False):
     """
-    Runs `--updatedb` if it hasn't been ran before. When executed multiple times with the same env, no extra calls will take place.
+    Run `--updatedb` if it has not been run before for the given environment. When executed multiple times
+    with the same environment, no additional `--updatedb` calls will be made, unless `force_update` is enabled.
 
-    Expects an `adaguc_env`, which is a dictionary with `ADAGUC_CONFIG` as key.
+    - `adaguc_env`: Environment configuration with `ADAGUC_CONFIG` as key.
+    - `force_update`: Always execute `force_update`, even if it has run before.
     """
 
     adaguc_config = adaguc_env.get("ADAGUC_CONFIG")
 
-    if adaguc_config in DATASETS_LOADED:
+    if not force_update and adaguc_config in DATASETS_LOADED:
         return
 
     from adaguc.AdagucTestTools import AdagucTestTools
