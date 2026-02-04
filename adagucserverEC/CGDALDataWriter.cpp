@@ -649,9 +649,6 @@ CT::string CGDALDataWriter::generateGetCoverageFileName() {
   if (formatUpperCase.indexOf("IMAGE/BMP") != -1) {
     extension = ".bmp";
   }
-  if (formatUpperCase.indexOf("IMAGE/GIF") != -1) {
-    extension = ".gif";
-  }
   if (formatUpperCase.indexOf("IMAGE/JPG") != -1) {
     extension = ".jpg";
   }

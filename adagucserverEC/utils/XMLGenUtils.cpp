@@ -18,7 +18,7 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
   // Make the layer name
   metadataLayer->layerMetadata.name = makeUniqueLayerName(metadataLayer->layer);
 
-  // Create and datasource
+  // Create new datasource
   if (metadataLayer->dataSource == NULL) {
     metadataLayer->dataSource = new CDataSource();
     if (metadataLayer->dataSource->setCFGLayer(metadataLayer->srvParams, metadataLayer->srvParams->configObj->Configuration[0], metadataLayer->layer, metadataLayer->layerMetadata.name.c_str(), -1) !=
@@ -243,7 +243,7 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
   char szMinTime[32];
 
   // Dimensions
-  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeDataBase || metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeStyled) {
+  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeDataBase) {
     if (loadLayerDimensionListFromMetadataDb(metadataLayer) == 0) {
       // CDBDebug("LayerMetadata: dimensionList information fetched!");
       return 0;
@@ -632,7 +632,7 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
 #ifdef CXMLGEN_DEBUG
   CDBDebug("getProjectionInformationForLayer");
 #endif
-  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded || metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
+  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeGraticule || metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
     if (metadataLayer->dataSource->cfgLayer->LatLonBox.size() == 0) {
       return 0;
     }
@@ -707,7 +707,7 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
 }
 
 int getStylesForLayer(MetadataLayer *metadataLayer) {
-  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded ||
+  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeGraticule ||
       (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate && metadataLayer->dataSource->cfgLayer->DataPostProc.empty())) {
     // Ignore styling in default case of the demo liveupdate layer, but not if there are data postprocessors
     return 0;
@@ -720,7 +720,7 @@ int getStylesForLayer(MetadataLayer *metadataLayer) {
   // Auto configure styles
   if (metadataLayer->hasError == false) {
     if (metadataLayer->dataSource->cfgLayer->Styles.size() == 0) {
-      if (metadataLayer->dataSource->dLayerType != CConfigReaderLayerTypeCascaded && metadataLayer->dataSource->dLayerType != CConfigReaderLayerTypeLiveUpdate) {
+      if (metadataLayer->dataSource->dLayerType != CConfigReaderLayerTypeGraticule && metadataLayer->dataSource->dLayerType != CConfigReaderLayerTypeLiveUpdate) {
 #ifdef CXMLGEN_DEBUG
         CDBDebug("cfgLayer->attr.type  %d", metadataLayer->dataSource->dLayerType);
 #endif
@@ -759,7 +759,7 @@ int getTitleForLayer(MetadataLayer *metadataLayer) {
   CDBDebug("getTitleForLayer");
 #endif
   // Is this a cascaded WMS server?
-  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded) {
+  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeGraticule) {
     return 0;
   }
   // This a liveupdate layer
@@ -814,7 +814,7 @@ int getFileNameForLayer(MetadataLayer *metadataLayer) {
     layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(metadataLayer);
     return 0;
   }
-  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeDataBase || metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeStyled) {
+  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeDataBase) {
     if (metadataLayer->dataSource->cfgLayer->Dimension.size() == 0) {
       metadataLayer->fileName.copy(metadataLayer->dataSource->cfgLayer->FilePath[0]->value.c_str());
       if (CAutoConfigure::autoConfigureDimensions(metadataLayer->dataSource) != 0) {

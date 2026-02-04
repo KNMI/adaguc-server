@@ -23,7 +23,7 @@
  *
  ******************************************************************************/
 
-#include <stdio.h>
+#include <cstdio>
 #include <vector>
 #include <iostream>
 #include <CTString.h>
@@ -34,8 +34,6 @@
 #include "CCDFGeoJSONIO.h"
 #include "CCDFCSVReader.h"
 #include "utils.h"
-
-DEF_ERRORMAIN();
 
 int main(int argCount, char **argVars) {
   CDFReader *cdfReader = NULL;

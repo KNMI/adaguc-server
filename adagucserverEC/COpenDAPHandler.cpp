@@ -608,7 +608,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
 #ifdef COPENDAPHANDLER_DEBUG
   CDBDebug("Found layer %s", layerName.c_str());
 #endif
-  if (dataSource->dLayerType == CConfigReaderLayerTypeDataBase || dataSource->dLayerType == CConfigReaderLayerTypeStyled) {
+  if (dataSource->dLayerType == CConfigReaderLayerTypeDataBase) {
     // When this layer has no dimensions, we do not need to query
     //  When there are no dims, we can get the filename from the config
     if (dataSource->cfgLayer->Dimension.size() == 0) {

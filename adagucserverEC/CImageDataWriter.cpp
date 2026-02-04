@@ -352,102 +352,6 @@ void CImageDataWriter::getFeatureInfoGetPointDataResults(CDataSource *dataSource
   }
 }
 
-int CImageDataWriter::drawCascadedWMS(CDataSource *dataSource, const char *service, const char *layers, const char *styles, bool transparent, const char *bgcolor) {
-
-#ifndef ENABLE_CURL
-  CDBError("CURL not enabled");
-  return 1;
-#endif
-
-#ifdef ENABLE_CURL
-  bool trueColor = drawImage.getTrueColor();
-  // transparent=true;
-  CT::string url = service;
-  url.concat("SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&");
-  if (trueColor == false)
-    url.concat("FORMAT=image/gif");
-  else
-    url.concat("FORMAT=image/png");
-  //&BBOX=50.943396226415075,-4.545656817372752,118.8679245283019,57.6116945532218
-  if (transparent) {
-    url.printconcat("&TRANSPARENT=TRUE");
-  } else {
-    url.printconcat("&TRANSPARENT=FALSE");
-  }
-  if (strlen(bgcolor) > 0) {
-    url.printconcat("&BGCOLOR=");
-    url.printconcat(bgcolor);
-  }
-  url.printconcat("&WIDTH=%d", drawImage.geoParams.width);
-  url.printconcat("&HEIGHT=%d", drawImage.geoParams.height);
-  url.printconcat("&BBOX=%0.4f,%0.4f,%0.4f,%0.4f", drawImage.geoParams.bbox.left, drawImage.geoParams.bbox.bottom, drawImage.geoParams.bbox.right, drawImage.geoParams.bbox.top);
-  url.printconcat("&SRS=%s", drawImage.geoParams.crs.c_str());
-  url.printconcat("&LAYERS=%s", layers);
-  if ((styles != NULL) && (strlen(styles) > 0)) {
-    url.printconcat("&STYLES=%s", styles);
-  } else {
-    url.printconcat("&STYLES=");
-  }
-  for (size_t k = 0; k < srvParam->requestDims.size(); k++) {
-    url.printconcat("&%s=%s", srvParam->requestDims[k]->name.c_str(), srvParam->requestDims[k]->value.c_str());
-  }
-  CDBDebug(url.c_str());
-  gdImagePtr gdImage;
-
-  MyCURL myCURL;
-  int status = myCURL.getGDImageField(url.c_str(), gdImage);
-  if (status == 0) {
-    if (gdImage) {
-      int w = gdImageSX(gdImage);
-      int h = gdImageSY(gdImage);
-
-      int offsetx = 0;
-      int offsety = 0;
-      if (dataSource->cfgLayer->Position.size() > 0) {
-        CServerConfig::XMLE_Position *pos = dataSource->cfgLayer->Position[0];
-        if (pos->attr.right.empty() == false) offsetx = (drawImage.geoParams.width - w) - parseInt(pos->attr.right.c_str());
-        if (pos->attr.bottom.empty() == false) offsety = (drawImage.geoParams.height - h) - parseInt(pos->attr.bottom.c_str());
-        if (pos->attr.left.empty() == false) offsetx = parseInt(pos->attr.left.c_str());
-        if (pos->attr.top.empty() == false) offsety = parseInt(pos->attr.top.c_str());
-      }
-
-      /*if(drawImage.Geo.dHeight!=h||drawImage.Geo.dWidth!=w){
-        gdImageDestroy(gdImage);
-        CDBError("Returned cascaded WMS image size is not the same as requested image size");
-        return 1;
-      }*/
-
-      int transpColor = gdImageGetTransparent(gdImage);
-      for (int y = 0; y < drawImage.geoParams.height && y < h; y++) {
-        for (int x = 0; x < drawImage.geoParams.width && x < w; x++) {
-          int color = gdImageGetPixel(gdImage, x, y);
-          if (color != transpColor && 127 != gdImageAlpha(gdImage, color)) {
-            if (transparent) {
-              drawImage.setPixelTrueColor(x + offsetx, y + offsety, gdImageRed(gdImage, color), gdImageGreen(gdImage, color), gdImageBlue(gdImage, color), 255 - gdImageAlpha(gdImage, color) * 2);
-            } else
-              drawImage.setPixelTrueColor(x + offsetx, y + offsety, gdImageRed(gdImage, color), gdImageGreen(gdImage, color), gdImageBlue(gdImage, color));
-          }
-        }
-      }
-      gdImageDestroy(gdImage);
-    } else {
-      CT::string u = url.c_str();
-      u.encodeURLSelf();
-      CDBError("Invalid image %s", u.c_str());
-      return 1;
-    }
-  } else {
-    CT::string u = url.c_str();
-    u.encodeURLSelf();
-    CDBError("Unable to get image %s", u.c_str());
-    return 1;
-  }
-  return 0;
-#endif
-
-  return 0;
-}
-
 int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int) {
   int status = 0;
 #ifdef CIMAGEDATAWRITER_DEBUG
@@ -467,31 +371,8 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
     styleConfiguration = dataSource->getStyle();
   }
 
-  bool forceGDRenderer = false;
-
-  if (styleConfiguration != NULL) {
-    // XMLE_RenderSettings
-    for (auto renderSetting : styleConfiguration->renderSettings) {
-      if (renderSetting->attr.renderer.equals("gd")) {
-        forceGDRenderer = true;
-      }
-    }
-  }
-
-  if (!forceGDRenderer) {
-    if (srvParam->imageFormat == IMAGEFORMAT_IMAGEPNG8 || srvParam->imageFormat == IMAGEFORMAT_IMAGEPNG24 || srvParam->imageFormat == IMAGEFORMAT_IMAGEPNG32) {
-      drawImage.setRenderer(CDRAWIMAGERENDERER_CAIRO);
-    } else {
-      drawImage.setRenderer(CDRAWIMAGERENDERER_GD);
-    }
-  } else {
-    CDBDebug("Forcing renderer to GD");
-    drawImage.setRenderer(CDRAWIMAGERENDERER_GD);
-  }
-
   if (srvParam->imageMode == SERVERIMAGEMODE_RGBA || srvParam->Styles.indexOf("HQ") > 0) {
     drawImage.setCanvasColorType(CDRAWIMAGE_COLORTYPE_ARGB);
-    drawImage.setRenderer(CDRAWIMAGERENDERER_CAIRO);
   }
 
   if (styleConfiguration != NULL) {
@@ -555,8 +436,6 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
   }
 
   writerStatus = initialized;
-  animation = 0;
-  nrImagesAdded = 0;
 
   if (srvParam->requestType == REQUEST_WMS_GETMAP) {
     //  CDBDebug("CREATING IMAGE FOR WMS GETMAP ---------------------------------------");
@@ -565,7 +444,6 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
     if (status != 0) return 1;
   }
   if (srvParam->requestType == REQUEST_WMS_GETLEGENDGRAPHIC) {
-    // drawImage.setAntiAliased(false);
     // drawImage.setTrueColor(false);
 
     int w = LEGEND_WIDTH;
@@ -595,11 +473,7 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
 
   if (dataSource != NULL) {
     // Create 6-8-5 palette for cascaded layer
-    if (dataSource->dLayerType == CConfigReaderLayerTypeCascaded) {
-
-#ifdef CIMAGEDATAWRITER_DEBUG
-      CDBDebug("create685Palette");
-#endif
+    if (dataSource->dLayerType == CConfigReaderLayerTypeGraticule) {
       status = drawImage.create685Palette();
       if (status != 0) {
         CDBError("Unable to create standard 6-8-5 palette");
@@ -610,8 +484,8 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
     if (styleConfiguration != NULL) {
       if (styleConfiguration->legendIndex != -1) {
         // Create palette for internal WNS layer
-        if (dataSource->dLayerType != CConfigReaderLayerTypeCascaded) {
-          status = drawImage.createGDPalette(srvParam->cfg->Legend[styleConfiguration->legendIndex]);
+        if (dataSource->dLayerType != CConfigReaderLayerTypeGraticule) {
+          status = drawImage.createPalette(srvParam->cfg->Legend[styleConfiguration->legendIndex]);
           if (status != 0) {
             CDBError("Unknown palette type for %s", srvParam->cfg->Legend[styleConfiguration->legendIndex]->attr.name.c_str());
             return 1;
@@ -1073,21 +947,6 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
   }
 #ifdef CIMAGEDATAWRITER_DEBUG
   CDBDebug("[/getFeatureInfo %d]", getFeatureInfoResultList.size());
-#endif
-  return 0;
-}
-
-int CImageDataWriter::createAnimation() {
-#ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("[createAnimation]");
-#endif
-  if (drawImage.getRenderer() == CDRAWIMAGERENDERER_GD) {
-    printf("%s%c%c\n", "Content-Type:image/gif", 13, 10);
-  }
-  drawImage.beginAnimation();
-  animation = 1;
-#ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("[/createAnimation]");
 #endif
   return 0;
 }
@@ -1680,246 +1539,14 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
   return 0;
 }
 
-// Virtual functions
-int CImageDataWriter::calculateData(std::vector<CDataSource *> &dataSources) {
-
-  /**
-  This style has a special *custom* non WMS syntax:
-  First style: represents how the boolean results must be combined
-  Keywords: "and","or"
-  Example: "and" for two layers, "and_and" for three layers
-  Second and N+2 style: represents how the boolean map is created and which time is required
-  Keywords: "and","between","notbetween","lessthan","greaterthan","time","|"
-  Example: between_10.0_and_20.0|time_1990-01-01T00:00:00Z
-  Note: after "|" always a time is specified with time_
-  */
-
-  //  int status;
-  CImageWarper imageWarper;
-  CDBDebug("calculateData");
-
-  if (animation == 1 && nrImagesAdded > 1) {
-    drawImage.addImage(30);
-  }
-  nrImagesAdded++;
-  // draw the Image
-  // for(size_t j=1;j<dataSources.size();j++)
-  {
-    CDataSource *dataSource;
-
-    /**************************************************/
-    int status;
-    bool hasFailed = false;
-    // Open the corresponding data of this dataSource, with the datareader
-    std::vector<CDataReader *> dataReaders;
-    for (size_t i = 0; i < dataSources.size(); i++) {
-      dataSource = dataSources[i];
-      CDataReader *reader = new CDataReader();
-      dataReaders.push_back(reader);
-      status = reader->open(dataSource, CNETCDFREADER_MODE_OPEN_ALL);
-      CDBDebug("Opening %s", dataSource->getFileName());
-      if (status != 0) {
-        CDBError("Could not open file: %s", dataSource->getFileName());
-        hasFailed = true;
-      }
-    }
-    // Initialize projection algorithm
-    dataSource = dataSources[0];
-
-    if (hasFailed == false) {
-#ifdef CIMAGEDATAWRITER_DEBUG
-      CDBDebug("initreproj %s", dataSource->nativeProj4.c_str());
-#endif
-      status = imageWarper.initreproj(dataSource, drawImage.geoParams, &srvParam->cfg->Projection);
-      if (status != 0) {
-        CDBError("initreproj failed");
-        hasFailed = true;
-      }
-    }
-    if (hasFailed == false) {
-      // Start modifying the data using the specific style
-
-      enum ConditionalOperator { myand, myor, between, notbetween, lessthan, greaterthan };
-
-      ConditionalOperator combineBooleanMapExpression[dataSources.size() - 1];
-      ConditionalOperator inputMapExpression[dataSources.size()];
-      float inputMapExprValuesLow[dataSources.size()];
-      float inputMapExprValuesHigh[dataSources.size()];
-
-      auto layerStyles = srvParam->Styles.split(",");
-      CT::string style;
-      //      bool errorOccured=false;
-      for (size_t j = 0; j < dataSources.size(); j++) {
-        size_t numberOfValues = 1;
-        auto _style = layerStyles[j].split("|");
-        style.copy(&_style[0]);
-        CDBDebug("STYLE == %s", style.c_str());
-        if (j == 0) {
-          // Find the conditional expression for the first layer (the boolean map)
-          auto conditionals = style.split("_");
-          if (!conditionals[0].equals("default") && conditionals.size() != dataSources.size() - 2) {
-            CDBError("Incorrect number of conditional operators specified: %d  (expected %d)", conditionals.size(), dataSources.size() - 2);
-            hasFailed = true;
-          } else {
-            for (size_t i = 0; i < conditionals.size(); i++) {
-              combineBooleanMapExpression[i] = myand;
-              if (conditionals[i].equals("and")) combineBooleanMapExpression[i] = myand;
-              if (conditionals[i].equals("or")) combineBooleanMapExpression[i] = myor;
-            }
-          }
-        } else {
-          inputMapExpression[j] = between;
-          CT::string exprVal("0.0");
-          // Find the expressin types:
-          if (style.indexOf("between_") == 0) {
-            inputMapExpression[j] = between;
-            exprVal.copy(style.c_str() + 8);
-            numberOfValues = 2;
-          }
-          if (style.indexOf("notbetween_") == 0) {
-            inputMapExpression[j] = notbetween;
-            exprVal.copy(style.c_str() + 11);
-            numberOfValues = 2;
-          }
-          if (style.indexOf("lessthan_") == 0) {
-            inputMapExpression[j] = lessthan;
-            exprVal.copy(style.c_str() + 9);
-            numberOfValues = 1;
-          }
-          if (style.indexOf("greaterthan_") == 0) {
-            inputMapExpression[j] = greaterthan;
-            exprVal.copy(style.c_str() + 12);
-            numberOfValues = 1;
-          }
-          auto LH = exprVal.split("_and_");
-          if (LH.size() != numberOfValues) {
-            CDBError("Invalid number of values in expression '%s'", style.c_str());
-            hasFailed = true;
-          } else {
-            inputMapExprValuesLow[j] = LH[0].toFloat();
-            if (numberOfValues == 2) {
-              inputMapExprValuesHigh[j] = LH[1].toFloat();
-            }
-          }
-
-          if (numberOfValues == 1) {
-            CDBDebug("'%f'", inputMapExprValuesLow[j]);
-          }
-          if (numberOfValues == 2) {
-            CDBDebug("'%f' and '%f'", inputMapExprValuesLow[j], inputMapExprValuesHigh[j]);
-          }
-        }
-      }
-
-      CDBDebug("Start creating the boolean map");
-      double pixel[dataSources.size()];
-      bool conditialMap[dataSources.size()];
-      for (int y = 0; y < dataSource->dHeight; y++) {
-        for (int x = 0; x < dataSource->dWidth; x++) {
-          size_t ptr = x + y * dataSource->dWidth;
-          for (size_t j = 1; j < dataSources.size(); j++) {
-            CDataSource *dsj = dataSources[j];
-            int xj = int((float(x) / float(dataSource->dWidth)) * float(dsj->dWidth));
-            int yj = int((float(y) / float(dataSource->dHeight)) * float(dsj->dHeight));
-            if (dsj->dfBBOX[1] > dsj->dfBBOX[3]) yj = dsj->dHeight - yj - 1;
-            size_t ptrj = xj + yj * dsj->dWidth;
-
-            pixel[j] = convertValue(dsj->getFirstAvailableDataObject()->cdfVariable->getType(), dsj->getFirstAvailableDataObject()->cdfVariable->data, ptrj);
-
-            if (inputMapExpression[j] == between) {
-              if (pixel[j] >= inputMapExprValuesLow[j] && pixel[j] <= inputMapExprValuesHigh[j])
-                conditialMap[j] = true;
-              else
-                conditialMap[j] = false;
-            }
-            if (inputMapExpression[j] == notbetween) {
-              if (pixel[j] < inputMapExprValuesLow[j] || pixel[j] > inputMapExprValuesHigh[j])
-                conditialMap[j] = true;
-              else
-                conditialMap[j] = false;
-            }
-            if (inputMapExpression[j] == lessthan) {
-              if (pixel[j] < inputMapExprValuesLow[j])
-                conditialMap[j] = true;
-              else
-                conditialMap[j] = false;
-            }
-            if (inputMapExpression[j] == greaterthan) {
-              if (pixel[j] > inputMapExprValuesLow[j])
-                conditialMap[j] = true;
-              else
-                conditialMap[j] = false;
-            }
-          }
-          bool result = conditialMap[1];
-          for (size_t j = 2; j < dataSources.size(); j++) {
-            if (combineBooleanMapExpression[j - 2] == myand) {
-              if (result == true && conditialMap[j] == true)
-                result = true;
-              else
-                result = false;
-            }
-            if (combineBooleanMapExpression[j - 2] == myor) {
-              if (result == true || conditialMap[j] == true)
-                result = true;
-              else
-                result = false;
-            }
-          }
-          if (result == true)
-            pixel[0] = 1;
-          else
-            pixel[0] = 0;
-          setValue(dataSources[0]->getFirstAvailableDataObject()->cdfVariable->getType(), dataSources[0]->getFirstAvailableDataObject()->cdfVariable->data, ptr, pixel[0]);
-        }
-      }
-      CDBDebug("Warping with style %s", srvParam->Styles.c_str());
-      CImageWarperRenderInterface *imageWarperRenderer;
-      imageWarperRenderer = new CImgWarpNearestNeighbour();
-      imageWarperRenderer->render(&imageWarper, dataSource, &drawImage);
-      delete imageWarperRenderer;
-      imageWarper.closereproj();
-    }
-    for (size_t j = 0; j < dataReaders.size(); j++) {
-      if (dataReaders[j] != NULL) {
-        dataReaders[j]->close();
-        delete dataReaders[j];
-        dataReaders[j] = NULL;
-      }
-    }
-    if (hasFailed == true) return 1;
-    return 0;
-    /**************************************************/
-
-    if (status != 0) return status;
-
-    if (status == 0) {
-
-      if (dataSource->cfgLayer->ImageText.size() > 0) {
-        if (dataSource->cfgLayer->ImageText[0]->value.empty() == false) {
-          drawImage.setTextStroke(drawImage.geoParams.width - 170, 5, 0, dataSource->cfgLayer->ImageText[0]->value.c_str(), NULL, 12.0, 0.75, CColor(0, 0, 0, 255), CColor(255, 255, 255, 255));
-        }
-      }
-    }
-  }
-  return 0;
-}
-
 int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
-
 #ifdef CIMAGEDATAWRITER_DEBUG
   CDBDebug("addData");
 #endif
-  // if(dataSource->getCurrentTimeStep()>dataSource->getCurrentTimeStep()
   int status = 0;
 
-  if (animation == 1 && nrImagesAdded > 0) {
-    drawImage.addImage(25);
-  }
-  // CDBDebug("Draw Data");
-  nrImagesAdded++;
-  // draw the Image
-  // drawCascadedWMS("http://geoservices.knmi.nl/cgi-bin/restricted/MODIS_Netherlands.cgi?","modis_250m_netherlands_8bit",true);
+  CDBDebug("CImageDataWriter::addData");
+
 #ifdef CIMAGEDATAWRITER_DEBUG
   CDBDebug("Draw data. dataSources.size() =  %d", dataSources.size());
 #endif
@@ -1927,20 +1554,8 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
   for (size_t j = 0; j < dataSources.size(); j++) {
     CDataSource *dataSource = dataSources[j];
 
-    /* Cascaded WMS */
-    if (dataSource->dLayerType == CConfigReaderLayerTypeCascaded) {
-      // CDBDebug("Drawing cascaded WMS (grid/logo/external");
-      if (dataSource->cfgLayer->WMSLayer.size() == 1) {
-        status = drawCascadedWMS(dataSource, dataSource->cfgLayer->WMSLayer[0]->attr.service.c_str(), dataSource->cfgLayer->WMSLayer[0]->attr.layer.c_str(),
-                                 dataSource->cfgLayer->WMSLayer[0]->attr.style.c_str(), dataSource->cfgLayer->WMSLayer[0]->attr.transparent, dataSource->cfgLayer->WMSLayer[0]->attr.bgcolor.c_str());
-        if (status != 0) {
-          CDBError("drawCascadedWMS for layer %s failed", dataSource->layerName.c_str());
-        }
-      }
-    }
-
-    /* DataBase layers*/
-    if (dataSource->dLayerType != CConfigReaderLayerTypeCascaded) {
+    /* DataBase layers */
+    if (dataSource->dLayerType != CConfigReaderLayerTypeGraticule) {
 #ifdef CIMAGEDATAWRITER_DEBUG
       CDBDebug("Drawingnormal legend");
 #endif
@@ -1955,7 +1570,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
 
         CStyleConfiguration *styleConfiguration = dataSource->getStyle();
         if (styleConfiguration->legendIndex != -1) {
-          status = drawImage.createGDPalette(srvParam->cfg->Legend[styleConfiguration->legendIndex]);
+          status = drawImage.createPalette(srvParam->cfg->Legend[styleConfiguration->legendIndex]);
           if (status != 0) {
             CDBError("Unknown palette type for %s", srvParam->cfg->Legend[styleConfiguration->legendIndex]->attr.name.c_str());
             return 1;
@@ -2240,8 +1855,6 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       delete[] gridP;
     }
   }
-
-  // drawCascadedWMS("http://bhlbontw.knmi.nl/rcc/download/ensembles/cgi-bin/basemaps.cgi?","country_lines",true);
   return status;
 }
 
@@ -2328,13 +1941,12 @@ int CImageDataWriter::end() {
 #ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("end, number of GF results: %d", getFeatureInfoResultList.size());
 #endif
-    enum ResultFormats { textplain, texthtml, textxml, applicationvndogcgml, imagepng, imagegif, json, imagepng_eprofile };
+    enum ResultFormats { textplain, texthtml, textxml, applicationvndogcgml, imagepng, json, imagepng_eprofile };
     ResultFormats resultFormat = texthtml;
 
     if (srvParam->InfoFormat.equals("text/plain")) resultFormat = textplain;
     if (srvParam->InfoFormat.equals("text/xml")) resultFormat = textxml;
     if (srvParam->InfoFormat.equals("image/png")) resultFormat = imagepng;
-    if (srvParam->InfoFormat.equals("image/gif")) resultFormat = imagegif;
 
     if (srvParam->InfoFormat.equals("application/vnd.ogc.gml")) resultFormat = applicationvndogcgml;
 
@@ -2837,7 +2449,7 @@ int CImageDataWriter::end() {
     /* image/png image/png image/png image/png image/png image/png image/png image/png image/png image/png image/png image/png image/png */
     /*************************************************************************************************************************************/
 
-    if (resultFormat == imagepng || resultFormat == imagegif) {
+    if (resultFormat == imagepng) {
 #ifdef MEASURETIME
       StopWatch_Stop("Start creating image");
 #endif
@@ -3141,12 +2753,6 @@ int CImageDataWriter::end() {
           return -1;
         }
       }
-      if (resultFormat == imagegif) {
-        plotCanvas.setTrueColor(false);
-        plotCanvas.setBGColor(255, 255, 255);
-        lineCanvas.setTrueColor(false);
-        lineCanvas.enableTransparency(true);
-      }
       plotCanvas.createImage(int(width), int(height));
       plotCanvas.create685Palette();
       lineCanvas.createImage(int(plotWidth), int(plotHeight));
@@ -3337,10 +2943,6 @@ int CImageDataWriter::end() {
         printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
         plotCanvas.printImagePng8(true);
       }
-      if (resultFormat == imagegif) {
-        printf("%s%c%c\n", "Content-Type:image/gif", 13, 10);
-        plotCanvas.printImageGif();
-      }
 #ifdef MEASURETIME
       StopWatch_Stop("/Start creating image");
 #endif
@@ -3364,13 +2966,6 @@ int CImageDataWriter::end() {
   if (errorsOccured()) {
     CREPORT_ERROR_NODOC(CT::string("Error occured during image data writing"), CReportMessage::Categories::GENERAL);
     return 1;
-  }
-
-  // Animation image:
-  if (animation == 1) {
-    drawImage.addImage(100);
-    // drawImage.endAnimation();
-    // return 0;
   }
 
 #ifdef MEASURETIME
@@ -3425,12 +3020,6 @@ int CImageDataWriter::end() {
     }
     CDBDebug("Creating 32 bit webp quality = %d", webPQuality);
     status = drawImage.printImageWebP32(webPQuality);
-  } else if (srvParam->imageFormat == IMAGEFORMAT_IMAGEGIF) {
-    // CDBDebug("LegendGraphic GIF");
-    if (animation == 0) {
-      printf("%s%s%c%c\n", "Content-Type:image/gif", cacheControl.c_str(), 13, 10);
-    }
-    status = drawImage.printImageGif();
   } else {
     // CDBDebug("LegendGraphic PNG");
     printf("%s%s%c%c\n", "Content-Type:image/png", cacheControl.c_str(), 13, 10);

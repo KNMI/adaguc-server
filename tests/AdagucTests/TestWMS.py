@@ -26,19 +26,6 @@ class TestWMS(unittest.TestCase):
 
     AdagucTestTools().mkdir_p(testresultspath)
 
-    def checkreport(self, report_filename="", expected_report_filename=""):
-        """
-        Tests file check reporting functionality
-        """
-        self.assertTrue(os.path.exists(report_filename))
-        self.assertEqual(
-            AdagucTestTools().readfromfile(report_filename),
-            AdagucTestTools().readfromfile(
-                self.expectedoutputsspath + expected_report_filename
-            ),
-        )
-        os.remove(report_filename)
-
     def test_WMSGetCapabilities_testdatanc(self):
         AdagucTestTools().cleanTempDir()
         filename = "test_WMSGetCapabilities_testdatanc.xml"
@@ -470,7 +457,7 @@ class TestWMS(unittest.TestCase):
         filename = "test_WMSGetFeatureInfo_forecastreferencetime.html"
         # pylint: disable=unused-variable
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "source=forecast_reference_time%2FHARM_N25_20171215090000_dimx16_dimy16_dimtime49_dimforecastreferencetime1_varairtemperatureat2m.nc&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=air_temperature__at_2m&QUERY_LAYERS=air_temperature__at_2m&CRS=EPSG%3A4326&BBOX=49.55171074378079,1.4162628389784275,54.80328142582087,9.526486675156528&WIDTH=1515&HEIGHT=981&I=832&J=484&FORMAT=image/gif&INFO_FORMAT=text/html&STYLES=&&time=2017-12-17T09%3A00%3A00Z&DIM_reference_time=2017-12-15T09%3A00%3A00Z",
+            "source=forecast_reference_time%2FHARM_N25_20171215090000_dimx16_dimy16_dimtime49_dimforecastreferencetime1_varairtemperatureat2m.nc&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=air_temperature__at_2m&QUERY_LAYERS=air_temperature__at_2m&CRS=EPSG%3A4326&BBOX=49.55171074378079,1.4162628389784275,54.80328142582087,9.526486675156528&WIDTH=1515&HEIGHT=981&I=832&J=484&INFO_FORMAT=text/html&STYLES=&&time=2017-12-17T09%3A00%3A00Z&DIM_reference_time=2017-12-15T09%3A00%3A00Z",
             env=self.env,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
@@ -1029,7 +1016,7 @@ class TestWMS(unittest.TestCase):
 
         filename = "test_WMSGetFeatureInfo_timeseries_KNMIHDF5_json.json"
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "dataset=adaguc.KNMIHDF5.test&service=WMS&request=GetFeatureInfo&version=1.3.0&layers=RAD_NL25_PCP_CM&query_layers=RAD_NL25_PCP_CM&crs=EPSG%3A3857&bbox=467411.5837657447%2C5796421.971094566%2C889884.3758374067%2C7834481.671540775&width=199&height=960&i=103&j=501&format=image%2Fgif&info_format=application%2Fjson&time=1000-01-01T00%3A00%3A00Z%2F3000-01-01T00%3A00%3A00Z&",
+            "dataset=adaguc.KNMIHDF5.test&service=WMS&request=GetFeatureInfo&version=1.3.0&layers=RAD_NL25_PCP_CM&query_layers=RAD_NL25_PCP_CM&crs=EPSG%3A3857&bbox=467411.5837657447%2C5796421.971094566%2C889884.3758374067%2C7834481.671540775&width=199&height=960&i=103&j=501&info_format=application%2Fjson&time=1000-01-01T00%3A00%3A00Z%2F3000-01-01T00%3A00%3A00Z&",
             env=env,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
@@ -2665,7 +2652,7 @@ class TestWMS(unittest.TestCase):
             env=self.env,
             isCGI=False,
         )
-        self.assertEqual(status, 1)
+        self.assertEqual(status, 66)
 
         filename = "test_WMSGetCapabilities_no_error_on_existing_dataset_misconfigured_layer.xml"
 
@@ -2871,7 +2858,7 @@ class TestWMS(unittest.TestCase):
 
         filename = "test_WMSGetFeatureInfo_SolarTerminator.html"
         status, data, headers = AdagucTestTools().runADAGUCServer(
-            "dataset=solt&&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=solarterminator&QUERY_LAYERS=solarterminator&CRS=EPSG%3A3857&BBOX=-48040284.36018957,-50974535.88541803,-10040284.360189572,62500602.23612894&WIDTH=362&HEIGHT=1081&I=354&J=481&FORMAT=image/gif&INFO_FORMAT=text/html&STYLES=&&time=2026-01-05T16%3A40%3A00Z&",
+            "dataset=solt&&SERVICE=WMS&REQUEST=GetFeatureInfo&VERSION=1.3.0&LAYERS=solarterminator&QUERY_LAYERS=solarterminator&CRS=EPSG%3A3857&BBOX=-48040284.36018957,-50974535.88541803,-10040284.360189572,62500602.23612894&WIDTH=362&HEIGHT=1081&I=354&J=481&INFO_FORMAT=text/html&STYLES=&&time=2026-01-05T16%3A40%3A00Z&",
             env=env,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
@@ -3039,9 +3026,7 @@ class TestWMS(unittest.TestCase):
         )
         env = {"ADAGUC_CONFIG": config}
         # pylint: disable=unused-variable
-        status, data, headers = AdagucTestTools().runADAGUCServer(
-            args=["--updatedb", "--config", config], env=self.env, isCGI=False
-        )
+        status, data, headers = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", config], env=self.env, isCGI=False)
         self.assertEqual(status, 0)
 
         filename = "test_WMSGetLegendGraphic_LongTempLegend_clipping.png"
@@ -3468,6 +3453,46 @@ class TestWMS(unittest.TestCase):
         status, data, _ = AdagucTestTools().runADAGUCServer(
             "DATASET=adaguc.tests.pointrendering&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=windbarbs_kts_selectpoint_for_grids&WIDTH=654&HEIGHT=513&CRS=EPSG:3857&BBOX=-127880.43405139455,6311494.158487529,1447830.4566477134,7547487.563577196&STYLES=windbarbs_kts_selectpoint_for_grids&FORMAT=image/png&TRANSPARENT=TRUE&time=2023-09-30T06:00:00Z&DIM_reference_time=2023-09-28T06:00:00Z",
             env=env,showLog=True
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
+
+    def test_WMSGetMap_wave_direction_vector_with_add_dataobject(self):
+        AdagucTestTools().cleanTempDir()
+        config = ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml,adaguc.tests.vectorrendering.xml"
+        env = {"ADAGUC_CONFIG": config}
+        status, data, _ = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", config], env=self.env, isCGI=False)
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSGetMap_wave_direction_vector_with_add_dataobject.png"
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.vectorrendering&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind_wave_direction&WIDTH=1151&HEIGHT=1135&CRS=EPSG%3A3857&BBOX=-61120.32818755589,6253361.75474204,1285634.726913556,7581395.62749596&STYLES=wave_direction&FORMAT=image/png&TRANSPARENT=TRUE&&time=2026-01-27T03%3A00%3A00Z&DIM_reference_time=2026-01-26T06%3A00%3A00Z&0.7000352259544694",
+            env=env,
+            showLog=True,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
+
+    def test_WMSGetMap_wave_direction_vector(self):
+        AdagucTestTools().cleanTempDir()
+        config = ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml,adaguc.tests.vectorrendering.xml"
+        env = {"ADAGUC_CONFIG": config}
+        status, data, _ = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", config], env=self.env, isCGI=False)
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSGetMap_wave_direction_vector.png"
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.vectorrendering&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind_wave_direction_and_height&WIDTH=1151&HEIGHT=1135&CRS=EPSG%3A3857&BBOX=-61120.32818755589,6253361.75474204,1285634.726913556,7581395.62749596&STYLES=wave_direction&FORMAT=image/png&TRANSPARENT=TRUE&&time=2026-01-27T03%3A00%3A00Z&DIM_reference_time=2026-01-26T06%3A00%3A00Z",
+            env=env,
+            showLog=True,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)

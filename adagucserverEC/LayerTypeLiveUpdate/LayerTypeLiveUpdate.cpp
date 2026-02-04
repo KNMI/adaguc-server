@@ -201,11 +201,7 @@ int layerTypeLiveUpdateRenderIntoImageDataWriter(CDataSource *dataSource, CServe
   int status = imageDataWriter.init(srvParam, dataSource, dataSource->getNumTimeSteps());
   CDBDebug("Init imageDataWriter status %d", status);
 
-  if (dataSource->getNumTimeSteps() > 1) {
-    CDBDebug("Status from create animation was %d", imageDataWriter.createAnimation());
-  }
-
-  std::vector<CDataSource *> dataSourceRef = {dataSource};
+  std::vector<CDataSource *> dataSourceRef = {dataSource->clone()};
 
   if (srvParam->requestType == REQUEST_WMS_GETFEATUREINFO) {
     status = imageDataWriter.getFeatureInfoVirtual(dataSourceRef, 0, int(srvParam->dX), int(srvParam->dY), srvParam);

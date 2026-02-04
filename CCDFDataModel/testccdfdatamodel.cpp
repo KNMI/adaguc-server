@@ -23,7 +23,7 @@
  *
  ******************************************************************************/
 
-#include <stdio.h>
+#include <cstdio>
 #include <vector>
 #include <iostream>
 #include <CTString.h>
@@ -35,8 +35,6 @@
 #include "CCDFDataModel.h"
 #include "CCDFHDF5IO.h"
 #include "utils.h"
-
-DEF_ERRORMAIN();
 
 int testCTimeInit(CDF::Variable *testVar, const char *testDate) {
   CTime *testTime = CTime::GetCTimeInstance(testVar);

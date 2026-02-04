@@ -169,7 +169,7 @@ int storeLayerMetadataStructIntoMetadataDb(MetadataLayer *metadataLayer) {
 }
 
 int loadLayerMetadataStructFromMetadataDb(MetadataLayer *metadataLayer) {
-  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded || (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate)) {
+  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeGraticule || (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate)) {
     layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(metadataLayer);
     return 0;
   }
@@ -295,7 +295,7 @@ int storeLayerStyleListIntoMetadataDb(MetadataLayer *metadataLayer) {
 }
 
 int loadLayerStyleListFromMetadataDb(MetadataLayer *metadataLayer) {
-  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded) {
+  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeGraticule) {
     return 0;
   }
 

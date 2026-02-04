@@ -12,7 +12,7 @@
 std::tuple<int, f8box> findBBoxForDataSource(std::vector<CDataSource *> dataSources) {
   double dfBBOX[4] = {-180, -90, 180, 90};
   for (size_t d = 0; d < dataSources.size(); d++) {
-    if (dataSources[d]->dLayerType != CConfigReaderLayerTypeCascaded && dataSources[d]->dLayerType != CConfigReaderLayerTypeBaseLayer &&
+    if (dataSources[d]->dLayerType != CConfigReaderLayerTypeGraticule && dataSources[d]->dLayerType != CConfigReaderLayerTypeBaseLayer &&
         dataSources[d]->dLayerType != CConfigReaderLayerTypeLiveUpdate) {
       CImageWarper warper;
       CDataReader reader;

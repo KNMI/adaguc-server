@@ -25,10 +25,10 @@
 #include <iostream>
 #include <vector>
 #include <map>
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 #include <regex.h>
-#include <stddef.h>
+#include <cstddef>
 #include <sys/types.h>
 #include <dirent.h>
 #include <sys/stat.h>

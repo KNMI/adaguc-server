@@ -134,3 +134,9 @@ hclasses/testhclasses
 core-adagucserver*
 data/datasets/arcus_multivar/uwcw_ha43_dini_testfile_multivar_5x6_clean.nc
 tests/env_checker_report.txt
+pgbouncer.log
+pgbouncer.pid
+info.c
+perf.data
+perf.out.old
+perf.svg

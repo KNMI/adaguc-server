@@ -26,7 +26,7 @@
 #ifndef CCDFGEOJSONIO_H
 #define CCDFGEOJSONIO_H
 
-#include <stdio.h>
+#include <cstdio>
 #include <vector>
 #include <iostream>
 #include <netcdf.h>

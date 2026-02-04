@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cmath>
 #include <cmath>
-#include <time.h>
+#include <ctime>
 
 const double DEG_TO_RAD = M_PI / 180.0;
 const double RAD_TO_DEG = 180.0 / M_PI;

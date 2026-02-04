@@ -51,7 +51,6 @@ private:
    * @return Zero on success.
    */
   static int justLoadAFileHeader(CDataSource *dataSource);
-  static int checkCascadedDimensions(const CDataSource *dataSource);
 
 public:
   static int autoConfigureDimensions(CDataSource *dataSource);

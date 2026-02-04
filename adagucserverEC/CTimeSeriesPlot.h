@@ -105,12 +105,6 @@ public:
       plotCanvas.setTrueColor(true);
       lineCanvas.setTrueColor(true);
     }
-    if (resultFormat == imagegif) {
-      plotCanvas.setTrueColor(false);
-      plotCanvas.setBGColor(255, 255, 255);
-      lineCanvas.setTrueColor(false);
-      lineCanvas.enableTransparency(true);
-    }
     plotCanvas.createImage(int(width), int(height));
     plotCanvas.create685Palette();
     lineCanvas.createImage(plotWidth, plotHeight);
@@ -438,10 +432,6 @@ public:
     if (resultFormat == imagepng) {
       printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
       plotCanvas.printImagePng();
-    }
-    if (resultFormat == imagegif) {
-      printf("%s%c%c\n", "Content-Type:image/gif", 13, 10);
-      plotCanvas.printImageGif();
     }
 #ifdef MEASURETIME
     StopWatch_Stop("/Start creating image");

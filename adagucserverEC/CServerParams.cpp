@@ -447,7 +447,7 @@ int CServerParams::_parseConfigFile(CT::string &pszConfigFile, std::vector<CServ
 
     /* Substitute ADAGUC_TMP */
     const char *pszADAGUC_TMP = getenv("ADAGUC_TMP");
-    if (pszADAGUC_TMP != NULL) configFileData.replaceSelf("{ADAGUC_TMP}", pszADAGUC_TMP);
+    configFileData.replaceSelf("{ADAGUC_TMP}", pszADAGUC_TMP == NULL ? "/tmp/" : pszADAGUC_TMP);
 
     /* Substitute ADAGUC_DB */
     const char *pszADAGUC_DB = getenv("ADAGUC_DB");
@@ -506,7 +506,8 @@ int CServerParams::_parseConfigFile(CT::string &pszConfigFile, std::vector<CServ
     CDBError("Exception %d in substituting", e);
   }
 
-  int status = parseConfig(configObj, configFileData);
+  std::string datasetName = basename(pszConfigFile.c_str());
+  int status = parseConfig(configObj, configFileData, datasetName);
 
   if (status == 0 && configObj->Configuration.size() == 1) {
     return 0;

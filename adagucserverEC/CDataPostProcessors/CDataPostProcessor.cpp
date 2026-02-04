@@ -9,6 +9,7 @@
 #include "CDataPostProcessor_FilterDataObjects.h"
 #include "CDataPostProcessor_MetadataVariable.h"
 #include "CDataPostProcessor_PointsFromGrid.h"
+#include "CDataPostProcessor_AddDataObject.h"
 
 #include "CDataPostProcessor_ToKnots.h"
 #include "CDataPostProcessor_WindSpeedKnotsToMs.h"
@@ -53,10 +54,14 @@ CDPPExecutor::CDPPExecutor() {
   dataPostProcessorList->push_back(new CDDPFilterDataObjects());
   dataPostProcessorList->push_back(new CDDPMetadataVariable());
   dataPostProcessorList->push_back(new CDPPointsFromGrid());
+  dataPostProcessorList->push_back(new CDPPAddDataObject());
 }
 
 CDPPExecutor::~CDPPExecutor() {
   // CDBDebug("~CDPPExecutor");
+  for(auto pp: *dataPostProcessorList) {
+    delete pp;
+  }
   delete dataPostProcessorList;
 }
 

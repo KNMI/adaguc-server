@@ -1,7 +1,7 @@
 #include <vector>
 #include <iterator>
 #include <algorithm>
-#include <stdio.h>
+#include <cstdio>
 #include <netcdf.h>
 #include "CCDFDataModel.h"
 #include "CCDFNetCDFIO.h"
@@ -10,8 +10,6 @@
 #include "CTime.h"
 
 #define VERSION "ADAGUC aggregator 1.6"
-
-DEF_ERRORMAIN()
 
 class NCFileObject {
 public:
