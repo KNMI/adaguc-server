@@ -189,7 +189,7 @@ public:
           } catch (int e) {
             char msg[255];
             CDF::getErrorMessage(msg, 254, e);
-            CDBError(msg);
+            CDBError("%s", msg);
             throw(__LINE__);
           }
         } catch (int e) {

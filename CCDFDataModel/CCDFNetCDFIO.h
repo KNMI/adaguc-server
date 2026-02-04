@@ -49,12 +49,12 @@ private:
 
   int status, root_id;
   bool keepFileOpen;
-  int readDimensions(int groupId, CT::string *groupName);
+  int readDimensions(int groupId, std::string &groupName);
   int readAttributes(int root_id, std::vector<CDF::Attribute *> &attributes, int varID, int natt);
   /**
    * @param mode, mode = 0: read dims, 1: read variables
    */
-  int readVariables(int groupId, CT::string *groupName, int mode);
+  int readVariables(int groupId, std::string &groupName, int mode);
   int _readVariableData(CDF::Variable *var, CDFType type);
   int _readVariableData(CDF::Variable *var, CDFType type, size_t *start, size_t *count, ptrdiff_t *stride);
 

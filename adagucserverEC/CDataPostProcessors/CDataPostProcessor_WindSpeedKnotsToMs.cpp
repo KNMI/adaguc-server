@@ -6,7 +6,7 @@ int CDPPWindSpeedKnotsToMs::isApplicable(CServerConfig::XMLE_DataPostProc *proc,
   if (proc->attr.algorithm.equals(CDATAPOSTPROCESSOR_WINDSPEEDKTSTOMS_ID)) {
     if (CDATAPOSTPROCESSOR_RUNAFTERREADING) {
       if (dataSource->getNumDataObjects() != 1) {
-        CDBError("1 variables is needed for %s, found %d", CDATAPOSTPROCESSOR_WINDSPEEDKTSTOMS_ID, dataSource->getNumDataObjects());
+        CDBError("1 variables is needed for %s, found %lu", CDATAPOSTPROCESSOR_WINDSPEEDKTSTOMS_ID, dataSource->getNumDataObjects());
         return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
       }
       CT::string units = dataSource->getDataObject(0)->getUnits().c_str();

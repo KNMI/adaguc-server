@@ -10,7 +10,7 @@ int CDPPOperator::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSour
   if (proc->attr.algorithm.equals("operator")) {
     if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
       if (dataSource->getNumDataObjects() < 2 && mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
-        CDBError("2 variables are needed for operator, found %d", dataSource->getNumDataObjects());
+        CDBError("2 variables are needed for operator, found %lu", dataSource->getNumDataObjects());
         return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
       }
       return CDATAPOSTPROCESSOR_RUNBEFOREREADING;

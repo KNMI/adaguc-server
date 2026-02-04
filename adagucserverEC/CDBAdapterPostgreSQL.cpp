@@ -626,7 +626,7 @@ void CDBAdapterPostgreSQL::assertLookupTableExists() {
   int status = DB->checkTable(CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP, tableColumns.c_str());
   if (status == 1) {
     CDBError("FAIL: Table %s could not be created: %s", CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP, tableColumns.c_str());
-    CDBError("Error: %s", DB->getError());
+    CDBError("Error: %s", DB->getError().c_str());
     throw(1);
   }
 }
@@ -751,7 +751,7 @@ std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAn
   CPGSQLDB *DB = getDataBaseConnection();
   if (DB == NULL) {
     CDBError("Unable to connect to DB");
-    throw(1);
+    exit(1);
   }
 
   // Query the lookup table once for the requested dimension(s)
@@ -768,7 +768,9 @@ std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAn
               "b.relname=p.tablename and a.attname=p.dimension and a.attstattarget=-1) FROM %s p WHERE path=E'P_%s' AND filter=E'F_%s' AND dimension IN (%s)",
               CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP, path, filter, dimList.c_str());
   CDBStore::Store *tableDimStore = DB->queryToStore(query.c_str());
-
+  if (tableDimStore == nullptr) {
+    throw __LINE__;
+  }
   for (size_t i = 0; i < tableDimStore->size(); i++) {
     CT::string dim = tableDimStore->getRecord(i)->get("dimension");
 
@@ -1124,7 +1126,7 @@ int CDBAdapterPostgreSQL::addFilesToDataBase() {
         // CDBDebug("Inserting %d bytes ",multiInsert.length());
         int status = dataBaseConnection->query(multiInsert.c_str());
         if (status != 0) {
-          CDBError("Query failed [%s]:", dataBaseConnection->getError());
+          CDBError("Query failed [%s]:", dataBaseConnection->getError().c_str());
           throw(__LINE__);
         }
       } while (rowNumber < it->second.size());
@@ -1239,7 +1241,7 @@ bool CDBAdapterPostgreSQL::tryAdvisoryLock(size_t key) {
   query.print("SELECT pg_try_advisory_lock(%d) as \"result\";", key);
   auto *store = dataBaseConnection->queryToStore(query.c_str());
   if (store == nullptr || store->getSize() != 1) {
-    CDBError("Query failed [%s]:", dataBaseConnection->getError());
+    CDBError("Query failed [%s]:", dataBaseConnection->getError().c_str());
     return false;
   }
   auto result = store->getRecord(0)->get("result");
@@ -1263,7 +1265,7 @@ bool CDBAdapterPostgreSQL::advisoryUnLock(size_t key) {
   query.print("SELECT pg_advisory_unlock(%d) as \"result\";", key);
   auto store = dataBaseConnection->queryToStore(query.c_str());
   if (store == nullptr || store->getSize() != 1) {
-    CDBError("Query failed [%s]:", dataBaseConnection->getError());
+    CDBError("Query failed [%s]:", dataBaseConnection->getError().c_str());
     return false;
   }
   auto result = store->getRecord(0)->get("result");

@@ -462,7 +462,7 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
     } else {
       start[dimInd] = dataSource->getDimensionIndex(dimName.c_str());
     }
-    CDBDebug("%s = %d %d", dimName.c_str(), start[dimInd], count[dimInd]);
+    CDBDebug("%s = %lu %lu", dimName.c_str(), start[dimInd], count[dimInd]);
   }
 
   hexagonVar->readData(CDF_FLOAT, start, count, stride, true);

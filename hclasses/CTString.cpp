@@ -502,3 +502,20 @@ bool equalsIgnoreCase(const std::string str1, const std::string str2) {
   }
   return true;
 }
+
+std::string ctprintf(const char *a, ...) {
+  std::vector<char> buf(CT_STRING_PRINT_BUFFER_SIZE + 1);
+  va_list ap;
+  va_start(ap, a);
+  int numWritten = vsnprintf(&buf[0], buf.size(), a, ap);
+  va_end(ap);
+  if (numWritten > CT_STRING_PRINT_BUFFER_SIZE) {
+    buf.resize(numWritten + 1);
+    va_list ap;
+    va_start(ap, a);
+    vsnprintf(&buf[0], buf.size(), a, ap);
+    va_end(ap);
+  }
+  std::string stdstring = std::string(buf.begin(), buf.end()).c_str();
+  return stdstring;
+}

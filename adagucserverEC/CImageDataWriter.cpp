@@ -734,7 +734,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> &dataSources, in
           // Retrieve variable names
           for (size_t o = 0; o < dataSource->getNumDataObjects(); o++) {
             if (dataSource->getDataObject(o)->cdfVariable->data == nullptr) {
-              CDBWarning("No variable defined for dataObject %d for [%s]", o, dataSource->getDataObject(o)->cdfVariable->name.c_str());
+              CDBWarning("No variable defined for dataObject %lu for [%s]", o, dataSource->getDataObject(o)->cdfVariable->name.c_str());
               continue;
             }
             if (dataSource->getDataObject(o)->filterFromOutput) {
@@ -1983,7 +1983,7 @@ int CImageDataWriter::end() {
 
           // resultXML.printconcat("  <%s_layer>\n",layerName.c_str());
           resultXML.printconcat("  <gml:featureMember>\n", layerName.c_str());
-          CDBDebug("GFI[%d of %d] %d\n", j, getFeatureInfoResultList.size(), g->elements.size());
+          CDBDebug("GFI[%lu of %lu] %lu\n", j, getFeatureInfoResultList.size(), g->elements.size());
           for (size_t elNR = 0; elNR < g->elements.size(); elNR++) {
             GetFeatureInfoResult::Element *e = g->elements[elNR];
             CT::string featureName = e->feature_name.c_str();
@@ -2068,7 +2068,7 @@ int CImageDataWriter::end() {
           layerName.replaceSelf(":", "-");
 
           resultXML.printconcat("  <%s_layer>\n", layerName.c_str());
-          CDBDebug("GFI[%d of %d] %d\n", j, getFeatureInfoResultList.size(), g->elements.size());
+          CDBDebug("GFI[%lu of %lu] %lu\n", j, getFeatureInfoResultList.size(), g->elements.size());
           for (size_t elNR = 0; elNR < g->elements.size(); elNR++) {
             GetFeatureInfoResult::Element *e = g->elements[elNR];
             CT::string featureName = e->feature_name.c_str();

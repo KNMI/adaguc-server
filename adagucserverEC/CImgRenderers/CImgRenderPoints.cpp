@@ -132,7 +132,7 @@ void renderVectorPoints(std::vector<size_t> thinnedPointIndexList, CImageWarper 
   size_t numberOfPoints = p1->size();
 
   if (p2->size() != numberOfPoints) {
-    CDBError("Cannot draw barbs, lists for speed (%d) and direction (%d) don't have equal length ", numberOfPoints, p2->size());
+    CDBError("Cannot draw barbs, lists for speed (%lu) and direction (%lu) don't have equal length ", numberOfPoints, p2->size());
     throw __LINE__;
   }
 
@@ -640,7 +640,7 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
     PointStyle pointStyle = getPointStyle(pointConfig, dataSource->srvParams->cfg);
     auto thinnedPointIndexList = doThinningGetIndices(dataSource->getDataObject(0)->points, thinningInfo.doThinning, thinningInfo.thinningRadius, usePoints);
     if (dataSource->debug) {
-      CDBDebug("Point plotting %d elements %d", thinnedPointIndexList.size(), usePoints.size());
+      CDBDebug("Point plotting %lu elements %lu", thinnedPointIndexList.size(), usePoints.size());
     }
 
     if (pointStyle.style == "disc") {
@@ -662,7 +662,7 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
     std::vector<PointDVWithLatLon> *p1 = &dataSource->getDataObject(0)->points;
 
     auto thinnedPointIndexList = doThinningGetIndices(*p1, thinningInfo.doThinning, thinningInfo.thinningRadius, usePoints);
-    CDBDebug("Vector plotting %d elements %d", thinnedPointIndexList.size(), usePoints.size());
+    CDBDebug("Vector plotting %lu elements %lu", thinnedPointIndexList.size(), usePoints.size());
     renderVectorPoints(thinnedPointIndexList, warper, dataSource, drawImage, styleConfiguration);
   }
 }

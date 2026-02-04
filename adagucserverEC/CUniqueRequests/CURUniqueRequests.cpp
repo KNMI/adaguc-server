@@ -289,7 +289,7 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
             CDataReader::DimensionType dtype = CDataReader::getDimensionType(cdfObject, request[i].name.c_str());
             if (dtype != CDataReader::dtype_reference_time) {
               if (dtype == CDataReader::dtype_none) {
-                CDBWarning("dtype_none for %s", dtype, request[i].name.c_str());
+                CDBWarning("dtype_none for %d with name %s", dtype, request[i].name.c_str());
               }
               try {
                 /* CHECK */

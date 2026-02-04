@@ -32,6 +32,8 @@
 
 #define CDEBUGGER_FILE_LINENUMBER_WIDTH 80
 
+#define PRINTF_FORMAT_CHECK(format_index, args_index) __attribute__((__format__(printf, format_index, args_index)))
+
 #define __FILENAME__ (&__FILE__[SOURCE_PATH_SIZE])
 
 #include <cstdio>
@@ -56,13 +58,13 @@ void setDebugFunction(void (*function)(const char *));
 void setWarningFunction(void (*function)(const char *));
 void setErrorFunction(void (*function)(const char *));
 
-void _printDebugLine(const char *pszMessage, ...);
-void _printWarningLine(const char *pszMessage, ...);
-void _printErrorLine(const char *pszMessage, ...);
+void _printDebugLine(const char *pszMessage, ...) PRINTF_FORMAT_CHECK(1, 2);
+void _printWarningLine(const char *pszMessage, ...) PRINTF_FORMAT_CHECK(1, 2);
+void _printErrorLine(const char *pszMessage, ...) PRINTF_FORMAT_CHECK(1, 2);
 
-void _printDebug(const char *pszMessage, ...);
-void _printWarning(const char *pszMessage, ...);
-void _printError(const char *pszMessage, ...);
+void _printDebug(const char *pszMessage, ...) PRINTF_FORMAT_CHECK(1, 2);
+void _printWarning(const char *pszMessage, ...) PRINTF_FORMAT_CHECK(1, 2);
+void _printError(const char *pszMessage, ...) PRINTF_FORMAT_CHECK(1, 2);
 
 #define CDBWarning                                                                                                                                                                                     \
   _printWarning("[W:%03d:pid%lu: %s:%d] ", logMessageNumber, logProcessIdentifier, __FILENAME__, __LINE__);                                                                                            \
@@ -74,6 +76,7 @@ void _printError(const char *pszMessage, ...);
 #define CDBDebug                                                                                                                                                                                       \
   _printDebug("[D:%03d:pid%lu: %s:%d] ", logMessageNumber, logProcessIdentifier, __FILENAME__, __LINE__);                                                                                              \
   _printDebugLine
+
 #define CDBEnterFunction(name)                                                                                                                                                                         \
   const char *functionName = name;                                                                                                                                                                     \
   _printDebugLine("D %s, %d class %s: Entering function '%s'", __FILENAME__, __LINE__, className, functionName);

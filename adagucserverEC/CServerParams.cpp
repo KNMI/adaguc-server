@@ -232,7 +232,7 @@ bool CServerParams::checkResolvePath(const char *path, CT::string *resolvedPath)
 
       char baseDir[PATH_MAX];
       if (realpath(_baseDir, baseDir) == NULL) {
-        CDBError("Skipping AutoResource[0]->Dir[%d]->basedir: Configured value is not a valid realpath", d);
+        CDBError("Skipping AutoResource[0]->Dir[%lu]->basedir: Configured value is not a valid realpath", d);
         continue;
       }
 

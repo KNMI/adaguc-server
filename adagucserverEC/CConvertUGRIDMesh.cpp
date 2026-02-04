@@ -480,8 +480,8 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
     size_t nFaces = Mesh2_face_nodes->dimensionlinks[0]->getSize();
     size_t MaxNumNodesPerFace = Mesh2_face_nodes->dimensionlinks[1]->getSize();
 
-    CDBDebug("Num faces: %d", Mesh2_face_nodes->dimensionlinks[0]->getSize());
-    CDBDebug("Max face size: %d", MaxNumNodesPerFace);
+    CDBDebug("Num faces: %lu", Mesh2_face_nodes->dimensionlinks[0]->getSize());
+    CDBDebug("Max face size: %lu", MaxNumNodesPerFace);
 
     float polyX[MaxNumNodesPerFace + 1];
     float polyY[MaxNumNodesPerFace + 1];

@@ -34,6 +34,7 @@
 #include <cstdlib>
 #include <regex.h>
 #include <vector>
+#include "CDebugger.h"
 
 #define CT_MAX_NUM_CHARACTERS_FOR_FLOAT 18
 #define CT_MAX_NUM_CHARACTERS_FOR_INT 12
@@ -427,4 +428,11 @@ namespace CT {
  */
 bool equalsIgnoreCase(const std::string str1, const std::string str2);
 
+/**
+ * Print like printf but returns a stdstring;
+ * @param a The string to print
+ * @returns std::string
+ */
+
+std::string ctprintf(const char *a, ...) PRINTF_FORMAT_CHECK(1, 2);
 #endif

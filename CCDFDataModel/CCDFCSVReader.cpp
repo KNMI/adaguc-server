@@ -350,13 +350,13 @@ int CDFCSVReader::_readVariableData(CDF::Variable *varToRead, CDFType type) {
   for (size_t j = (1 + this->headerStartsAtLine); j < this->csvLines.size(); j++) {
     size_t varPointer = j - (1 + this->headerStartsAtLine);
     if (this->csvLines[j].length() == 0) {
-      CDBWarning("Found empty CSV line at line %d", j);
+      CDBWarning("Found empty CSV line at line %lu", j);
       continue;
     }
     std::vector<CT::string> csvColumns = this->csvLines[j].split(",");
 
     if (csvColumns.size() != this->variableIndexer.size()) {
-      CDBWarning("CSV Columns at line %d have unexpected size of %d, expected %d", j, csvColumns.size(), this->variableIndexer.size());
+      CDBWarning("CSV Columns at line %lu have unexpected size of %lu, expected %lu", j, csvColumns.size(), this->variableIndexer.size());
       continue;
     }
     bool foundVar = false;

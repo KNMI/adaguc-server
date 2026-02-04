@@ -12,7 +12,7 @@ int CDPPWFP::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
   if (proc->attr.algorithm.equals("WFP")) {
     if (dataSource->getNumDataObjects() == 1 && mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
       // if (dataSource->getNumDataObjects() != 2 && dataSource->getNumDataObjects() != 3 && dataSource->getNumDataObjects() != 4 && dataSource->getNumDataObjects() != 5) {
-      CDBError("2 variables are needed for WFP, found %d", dataSource->getNumDataObjects());
+      CDBError("2 variables are needed for WFP, found %lu", dataSource->getNumDataObjects());
       return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
     }
     return CDATAPOSTPROCESSOR_RUNAFTERREADING | CDATAPOSTPROCESSOR_RUNBEFOREREADING;

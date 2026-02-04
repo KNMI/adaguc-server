@@ -9,7 +9,7 @@ int CDPPMSGCPPVisibleMask::isApplicable(CServerConfig::XMLE_DataPostProc *proc, 
   if (proc->attr.algorithm.equals("msgcppvisiblemask")) {
     if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
       if (dataSource->getNumDataObjects() != 2 && dataSource->getNumDataObjects() != 3) {
-        CDBError("2 or 3 variables are needed for msgcppvisiblemask, found %d", dataSource->getNumDataObjects());
+        CDBError("2 or 3 variables are needed for msgcppvisiblemask, found %lu", dataSource->getNumDataObjects());
         return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
       }
       return CDATAPOSTPROCESSOR_RUNBEFOREREADING;
@@ -110,7 +110,7 @@ int CDPPMSGCPPHIWCMask::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDa
   if (proc->attr.algorithm.equals("msgcpphiwcmask")) {
     if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
       if (dataSource->getNumDataObjects() != 4 && dataSource->getNumDataObjects() != 5) {
-        CDBError("4 or 5 variables are needed for msgcpphiwcmask, found %d", dataSource->getNumDataObjects());
+        CDBError("4 or 5 variables are needed for msgcpphiwcmask, found %lu", dataSource->getNumDataObjects());
         return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
       }
       return CDATAPOSTPROCESSOR_RUNBEFOREREADING;
@@ -210,7 +210,7 @@ int CDPPDATAMASK::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSour
   if (proc->attr.algorithm.equals("datamask")) {
     if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
       if (dataSource->getNumDataObjects() != 2 && dataSource->getNumDataObjects() != 3) {
-        CDBError("2 or 3 variables are needed for datamask, found %d", dataSource->getNumDataObjects());
+        CDBError("2 or 3 variables are needed for datamask, found %lu", dataSource->getNumDataObjects());
         return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
       }
       return CDATAPOSTPROCESSOR_RUNBEFOREREADING;

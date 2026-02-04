@@ -6,7 +6,7 @@ int CDPPBeaufort::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSour
   if (proc->attr.algorithm.equals("beaufort")) {
     if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
       if (dataSource->getNumDataObjects() != 1 && dataSource->getNumDataObjects() != 2) {
-        CDBError("1 or 2 variables are needed for beaufort, found %d", dataSource->getNumDataObjects());
+        CDBError("1 or 2 variables are needed for beaufort, found %lu", dataSource->getNumDataObjects());
         return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
       }
       return CDATAPOSTPROCESSOR_RUNAFTERREADING;
@@ -75,7 +75,7 @@ int CDPPBeaufort::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
       }
       // Convert point data if needed
       size_t nrPoints = dataSource->getDataObject(0)->points.size();
-      CDBDebug("(1): %d points", nrPoints);
+      CDBDebug("(1): %lu points", nrPoints);
 
       for (size_t pointNo = 0; pointNo < nrPoints; pointNo++) {
         float speed = (float)dataSource->getDataObject(0)->points[pointNo].v;
@@ -105,7 +105,7 @@ int CDPPBeaufort::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
         }
         // Convert point data if needed
         size_t nrPoints = dataSource->getDataObject(0)->points.size();
-        CDBDebug("(2): %d points", nrPoints);
+        CDBDebug("(2): %lu points", nrPoints);
         for (size_t pointNo = 0; pointNo < nrPoints; pointNo++) {
           float speed = dataSource->getDataObject(0)->points[pointNo].v;
           if (speed == speed) {
@@ -143,7 +143,7 @@ int CDPPBeaufort::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
         }
         // Convert point data if needed
         size_t nrPoints = dataSource->getDataObject(0)->points.size();
-        CDBDebug("(2): %d points", nrPoints);
+        CDBDebug("(2): %lu points", nrPoints);
         for (size_t pointNo = 0; pointNo < nrPoints; pointNo++) {
           speedu = dataSource->getDataObject(0)->points[pointNo].v;
           speedv = dataSource->getDataObject(1)->points[pointNo].v;

@@ -52,7 +52,7 @@ void applyChangesToCDFObject(CDFObject *cdfObject, std::vector<CT::string> varia
     if (varWithoutTime != NULL) {
       varWithoutTime->dimensionlinks.insert(varWithoutTime->dimensionlinks.begin(), cdfObject->getDimension("time"));
     } else {
-      CDBWarning("Variable %s not found");
+      CDBWarning("Variable not found");
     }
   }
 }

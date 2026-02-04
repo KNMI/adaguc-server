@@ -219,11 +219,11 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
   for (size_t j = 0; j < srvParam->cfg->Layer.size(); j++) {
     if (srvParam->cfg->Layer[j]->attr.type.equals("database")) {
       if (srvParam->cfg->Layer[j]->Variable.size() == 0) {
-        CDBError("Configuration error at layer %d: <Variable> not defined", j);
+        CDBError("Configuration error at layer %lu: <Variable> not defined", j);
         return 1;
       }
       if (srvParam->cfg->Layer[j]->FilePath.size() == 0) {
-        CDBError("Configuration error at layer %d: <FilePath> not defined", j);
+        CDBError("Configuration error at layer %lu: <FilePath> not defined", j);
         return 1;
       }
     }
@@ -233,7 +233,7 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
     if (srvParam->cfg->Layer[j]->attr.type.equals("autoscan")) {
 
       if (srvParam->cfg->Layer[j]->FilePath.size() == 0) {
-        CDBError("Configuration error at layer %d: <FilePath> not defined", j);
+        CDBError("Configuration error at layer %lu: <FilePath> not defined", j);
         return 1;
       }
       try {
@@ -299,7 +299,7 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
           }
         }
         if (nrOfFileErrors != 0) {
-          CDBError("%d files are not readable", nrOfFileErrors);
+          CDBError("%lu files are not readable", nrOfFileErrors);
         }
 
       } catch (int line) {
@@ -502,7 +502,7 @@ int CRequest::process_wms_gethistogram_request() {
     if (j > 0) message.concat(",");
     message.printconcat("(%d) %s", j, srvParam->requestedLayerNames[j].c_str());
   }
-  CDBDebug(message.c_str());
+  CDBDebug("%s", message.c_str());
 
   return process_all_layers();
 }
@@ -938,7 +938,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
         // with missing area.
         CDBDebug("No tiles found can mean that we are outside an area. TODO check whether this has to to with wrong "
                  "dims or with missing area.");
-        CDBDebug("dataSource->requiredDims.size() %d", dataSource->requiredDims.size());
+        CDBDebug("dataSource->requiredDims.size() %lu", dataSource->requiredDims.size());
         for (size_t i = 0; i < dataSource->requiredDims.size(); i++) {
           CDBDebug("  [%s] = [%s]", dataSource->requiredDims[i]->netCDFDimName.c_str(), dataSource->requiredDims[i]->value.c_str());
         }
@@ -1022,7 +1022,7 @@ int CRequest::process_all_layers() {
         CT::string layerName = makeUniqueLayerName(cfgLayer);
         if (layerName.equals(requestedLayerName.c_str())) {
           if (this->addDataSources(cfgLayer, layerIndex) != 0) {
-            CDBError("Unable to create datasources for %d", layerName.c_str());
+            CDBError("Unable to create datasources for %s", layerName.c_str());
             return 1;
           }
         }

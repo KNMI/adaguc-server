@@ -471,7 +471,7 @@ void CDataSource::readStatusFlags(CDF::Variable *var, std::vector<CDataSource::S
               statusFlagList->push_back({.meaning = flagStrings[j], .value = dfFlagValues[j]});
             }
           } else {
-            CDBError("ReadStatusFlags: nrOfFlagMeanings!=nrOfFlagValues, %d!=%d", nrOfFlagMeanings, nrOfFlagValues);
+            CDBError("ReadStatusFlags: nrOfFlagMeanings!=nrOfFlagValues, %lu!=%lu", nrOfFlagMeanings, nrOfFlagValues);
           }
         } else {
           CDBError("ReadStatusFlags: flag_meanings: nrOfFlagMeanings = 0");
@@ -981,7 +981,7 @@ CDataSource::DataObject *CDataSource::getFirstAvailableDataObject() {
 CDataSource::DataObject *CDataSource::getDataObject(int j) {
 
   if (int(dataObjects.size()) <= j) {
-    CDBError("No Data object witn nr %d (total %d) for animation step %d (total steps %d)", j, currentAnimationStep, dataObjects.size(), timeSteps.size());
+    CDBError("No Data object witn nr %d (total %d) for animation step %lu (total steps %lu)", j, currentAnimationStep, dataObjects.size(), timeSteps.size());
     throw(CEXCEPTION_NULLPOINTER);
   }
 
@@ -1011,7 +1011,7 @@ int CDataSource::attachCDFObject(CDFObject *cdfObject, bool dataSourceOwnsDataOb
     getDataObject(varNr)->cdfObject = cdfObject;
     getDataObject(varNr)->cdfVariable = cdfObject->getVariableNE(getDataObject(varNr)->variableName.c_str());
     if (getDataObject(varNr)->cdfVariable == NULL) {
-      CDBError("attachCDFObject: variable nr %d \"%s\" does not exist", varNr, getDataObject(varNr)->variableName.c_str());
+      CDBError("attachCDFObject: variable nr %lu \"%s\" does not exist", varNr, getDataObject(varNr)->variableName.c_str());
       return 1;
     }
   }
