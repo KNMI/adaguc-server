@@ -33,22 +33,6 @@
 #include "CDBFactory.h"
 #include "ProjCache.h"
 #include "Types/ProjectionStore.h"
-#include <cmath>
-#include "CXMLSerializerInterface.h"
-#include "CServerParams.h"
-#include "CServerConfig_CPPXSD.h"
-#include "CDebugger.h"
-#include "Definitions.h"
-#include "CTString.h"
-#include "CCDFDataModel.h"
-#include "COGCDims.h"
-#include "CStopWatch.h"
-#include "Types/CPointTypes.h"
-
-#include "CStyleConfiguration.h"
-
-#include "CGeoJSONData.h"
-#include <proj.h>
 
 int processQueryStringRequest() {
   /* Process the OGC request */
@@ -86,6 +70,7 @@ int main(int argc, char **argv, char **envp) {
 
   CDBFactory::clear();
 
+  proj_clear_cache();
   BBOXProjectionClearCache();
 
   closeLogFile();

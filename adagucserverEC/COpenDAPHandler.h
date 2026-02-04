@@ -51,8 +51,6 @@ private:
   bool jsonValuesWritten;
 
 public:
-  //   COpenDAPHandler();
-  //   ~COpenDAPHandler();
   int handleOpenDAPRequest(const char *path, const char *query, CServerParams *srvParams);
 };
 
