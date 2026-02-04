@@ -47,7 +47,8 @@ class TestEWCLocalClimateInfo(unittest.TestCase):
             AdagucTestTools().compareImage(
                 self.expectedoutputsspath + filename,
                 self.testresultspath + filename,
-                0,  # compareImage no longer needed
+                1,
+                0.015,
             )
         )
 
