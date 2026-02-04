@@ -15,9 +15,11 @@ The following exit codes are supported:
 | Id | Code | Description |
 | -------- | ------- | ------- | 
 |SCAN_EXITCODE_FILENOMATCH|64| File is available but does not match any of the available datasets |
-|SCAN_EXITCODE_DATASETERROR|65| There is an error with the dataset file or it does not exist |
+|SCAN_EXITCODE_DATASETNOEXIST|65| The dataset configuration file does not exist. |
 |SCAN_EXITCODE_SCANERROR|66|  An error occured during scanning |
 |SCAN_EXITCODE_FILENOEXIST|67| The file does not exist on the file system |
+|SCAN_EXITCODE_TIMEOUT|124| The scan process timed out |
+
 
 
 

@@ -169,7 +169,7 @@ int processCMDArgs(int argc, char **argv, char **) {
       status = setCRequestConfigFromEnvironment(&request, dataset.c_str());
       if (status != 0) {
         CDBError("Unable to read configuration file");
-        return SCAN_EXITCODE_DATASETERROR;
+        return SCAN_EXITCODE_DATASETNOEXIST;
       }
       logBufferCheckMode();
       status = request.updatedb(&tailPath, &layerPathToScan, scanFlags, layerName);
