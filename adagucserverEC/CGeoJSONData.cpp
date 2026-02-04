@@ -26,7 +26,7 @@
 #include "CGeoJSONData.h"
 #include <iostream>
 
-#include <stdio.h>
+#include <cstdio>
 
 CT::string FeatureProperty::toString() {
   CT::string s;

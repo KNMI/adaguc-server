@@ -26,7 +26,7 @@
 #ifndef CCDFCSVREADER_H
 #define CCDFCSVREADER_H
 
-#include <stdio.h>
+#include <cstdio>
 #include <vector>
 #include <iostream>
 #include <netcdf.h>

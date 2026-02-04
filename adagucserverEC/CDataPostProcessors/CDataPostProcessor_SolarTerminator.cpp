@@ -6,12 +6,12 @@
 #include "CImageWarper.h"
 
 #include <execinfo.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <cxxabi.h>
 #include <dlfcn.h>
 
-#include <time.h>
+#include <ctime>
 
 /************************/
 /*      CDPPSolarTerminator  */

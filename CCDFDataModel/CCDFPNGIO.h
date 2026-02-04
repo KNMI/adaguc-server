@@ -27,7 +27,7 @@
 #define CCDFPNGIO_H
 #include "CDebugger.h"
 #include "CCDFDataModel.h"
-#include <stdio.h>
+#include <cstdio>
 #include <vector>
 #include <iostream>
 #include "CDebugger.h"

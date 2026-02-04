@@ -33,9 +33,9 @@
 #include "CColor.h"
 #include "Definitions.h"
 #include "CStopWatch.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <unistd.h>
 #include "Types/GeoParameters.h"
 #include "CServerError.h"

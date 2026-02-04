@@ -1,7 +1,7 @@
 #include "Failure.h"
 
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 
 
 Failure::Failure (const SimpleString& theTestName,

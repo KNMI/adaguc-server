@@ -137,3 +137,6 @@ tests/env_checker_report.txt
 pgbouncer.log
 pgbouncer.pid
 info.c
+perf.data
+perf.out.old
+perf.svg

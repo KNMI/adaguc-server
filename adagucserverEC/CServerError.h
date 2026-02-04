@@ -25,7 +25,7 @@
 
 #ifndef MY_ERROR_H
 #define MY_ERROR_H
-#include <stdio.h>
+#include <cstdio>
 #include <CDebugger.h>
 
 enum ServiceExceptionCode { OperationNotSupported, InvalidDimensionValue, UnprocessableEntity }; // OGC WMS Exceptions

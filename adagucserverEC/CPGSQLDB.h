@@ -25,9 +25,9 @@
 
 #ifndef CPGSQLDB_H
 #define CPGSQLDB_H
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include "libpq-fe.h" /* libpq header file */
 #include "CTString.h"
 #include "CDebugger.h"

@@ -26,7 +26,7 @@
 #ifndef CCDFNETCDFIO_H
 #define CCDFNETCDFIO_H
 
-#include <stdio.h>
+#include <cstdio>
 #include <vector>
 #include <iostream>
 #include <netcdf.h>

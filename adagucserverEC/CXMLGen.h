@@ -26,8 +26,8 @@
 #ifndef CXMLGen_H
 #define CXMLGen_H
 #include "CServerParams.h"
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 
 #include "CInspire.h"
 

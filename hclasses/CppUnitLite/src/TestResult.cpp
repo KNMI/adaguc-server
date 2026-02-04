@@ -2,7 +2,7 @@
 #include "TestResult.h"
 #include "Failure.h"
 
-#include <stdio.h>
+#include <cstdio>
 
 
 TestResult::TestResult ()

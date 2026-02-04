@@ -26,7 +26,7 @@
 #ifndef CCDFSTORE_H
 #define CCDFSTORE_H
 
-#include <stdio.h>
+#include <cstdio>
 #include <vector>
 #include <iostream>
 #include <sys/stat.h>

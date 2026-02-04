@@ -10,6 +10,25 @@ RECREATETABLES=''
 NOCLEAN=''
 TIMEOUTOKILL="4m"
 
+SCAN_EXITCODE_FILENOMATCH=64  #  File is available but does not match any of the available datasets
+SCAN_EXITCODE_DATASETNOEXIST=65  # The reason for this status code is that the dataset configuration file does not exist.
+SCAN_EXITCODE_SCANERROR=66  #  An error occured during scanning
+SCAN_EXITCODE_FILENOEXIST=67  # The file does not exist on the file system
+SCAN_EXITCODE_TIMEOUT=124  # The process timed out
+
+translateerrorcode () {
+  case $STATUSCODE in
+  ${SCAN_EXITCODE_FILENOMATCH}) echo "No matching datasets" ;;
+  ${SCAN_EXITCODE_DATASETNOEXIST}) echo "Config not found" ;;
+  ${SCAN_EXITCODE_SCANERROR}) echo "Scan error" ;;
+  ${SCAN_EXITCODE_FILENOEXIST}) echo "File not found" ;;
+  1) echo "Generic scan error" ;;
+  ${SCAN_EXITCODE_TIMEOUT}) echo "Command timed out" ;;
+  *) ;;
+  esac
+}
+
+
 usage () {
     echo "This script uses adaugc-server to scan files and datasets. It ingests indexing information into the database"
     echo "  [-f] <file to add> [-d] <datasetname>             [Scan a single file for specified dataset]"
@@ -83,12 +102,9 @@ if [[ -n "${ADAGUC_DATASET}" &&  -n "${ADAGUC_DATAFILE}" ]]; then
   echo $command
   timeout $TIMEOUTOKILL $command
   OUT=$?
-  if [ ${OUT} -eq 124 ]; then
-    echo "[TIMEOUT] Scan single file was killed for ${command}"
-  fi
-
   if [ ${OUT} -ne 0 ]; then
     STATUSCODE=${OUT}
+    echo "[WARN] Code ${STATUSCODE}: $(translateerrorcode ${STATUSCODE}). Command: [${command}]"
   fi
   exit ${STATUSCODE}
 fi
@@ -105,12 +121,9 @@ if [[ -n "${ADAGUC_DATAFILE}" ]]; then
   echo $command
   timeout $TIMEOUTOKILL $command
   OUT=$?
-   if [ ${OUT} -eq 124 ]; then
-    echo "[TIMEOUT] Scan single file was killed for ${command}"
-  fi
-
   if [ ${OUT} -ne 0 ]; then
-    STATUSCODE=1
+    STATUSCODE=${OUT}
+    echo "[WARN] Code ${STATUSCODE}: $(translateerrorcode ${STATUSCODE}). Command: [${command}]"
   fi
   exit ${STATUSCODE} 
 fi
@@ -124,7 +137,8 @@ if [[ -n "${ADAGUC_DATASET}" ]] && [ "${ADAGUC_DATASET}" != "*" ]; then
   $command
   OUT=$?
   if [ ${OUT} -ne 0 ]; then
-    STATUSCODE=1
+    STATUSCODE=${OUT}
+    echo "[WARN] Code ${STATUSCODE}: $(translateerrorcode ${STATUSCODE}). Command: [${command}]"
   fi
   exit ${STATUSCODE} 
 fi
@@ -143,6 +157,9 @@ if [[ -n "${ADAGUC_DATASET}" ]] && [ "${ADAGUC_DATASET}" == "*" ]; then
       STATUSCODE=${OUT}
     fi
   done
+  if [ ${STATUSCODE} -ne 0 ]; then
+    echo "[WARN] Code ${STATUSCODE}: $(translateerrorcode ${STATUSCODE})."
+  fi
   exit ${STATUSCODE} 
 fi
 

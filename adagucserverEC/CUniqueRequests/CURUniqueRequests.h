@@ -1,7 +1,7 @@
 #ifndef CURUNIQUEREQUESTS_H
 #define CURUNIQUEREQUESTS_H
 
-#include <stdio.h>
+#include <cstdio>
 #include <map>
 #include "CTString.h"
 #include "CDebugger.h"

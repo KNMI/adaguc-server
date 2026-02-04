@@ -26,16 +26,6 @@ class TestWMSSLD(unittest.TestCase):
 
     AdagucTestTools().mkdir_p(testresultspath)
 
-    def checkReport(self, reportFilename="", expectedReportFilename=""):
-        self.assertTrue(os.path.exists(reportFilename))
-        self.assertEqual(
-            AdagucTestTools().readfromfile(reportFilename),
-            AdagucTestTools().readfromfile(
-                self.expectedoutputsspath + expectedReportFilename
-            ),
-        )
-        os.remove(reportFilename)
-
     def test_WMSGetMap_testdatanc_NOSLD(self):
         AdagucTestTools().cleanTempDir()
         filename = "test_WMSGetMap_testdatanc_NOSLD.png"

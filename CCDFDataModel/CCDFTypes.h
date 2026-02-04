@@ -26,11 +26,11 @@
 #ifndef CCDFTYPES_DEBUG
 #define CCDFTYPES_DEBUG
 
-#include <stdio.h>
-#include <stddef.h>
+#include <cstdio>
+#include <cstddef>
 #include <vector>
 #include <iostream>
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "CTString.h"
 

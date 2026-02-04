@@ -25,7 +25,7 @@
 
 #ifndef COGCDIMS_H
 #define COGCDIMS_H
-#include <stdio.h>
+#include <cstdio>
 #include "CTString.h"
 #include "CDebugger.h"
 class COGCDims {

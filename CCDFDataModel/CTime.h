@@ -29,9 +29,9 @@
 
 #include "CTString.h"
 #include "CCDFVariable.h"
-#include <time.h>
+#include <ctime>
 #include <sys/types.h>
-#include <stdlib.h>
+#include <cstdlib>
 #include <map>
 #define CTIME_CONVERSION_ERROR 1
 

@@ -26,19 +26,6 @@ class TestWMS(unittest.TestCase):
 
     AdagucTestTools().mkdir_p(testresultspath)
 
-    def checkreport(self, report_filename="", expected_report_filename=""):
-        """
-        Tests file check reporting functionality
-        """
-        self.assertTrue(os.path.exists(report_filename))
-        self.assertEqual(
-            AdagucTestTools().readfromfile(report_filename),
-            AdagucTestTools().readfromfile(
-                self.expectedoutputsspath + expected_report_filename
-            ),
-        )
-        os.remove(report_filename)
-
     def test_WMSGetCapabilities_testdatanc(self):
         AdagucTestTools().cleanTempDir()
         filename = "test_WMSGetCapabilities_testdatanc.xml"
@@ -2665,7 +2652,7 @@ class TestWMS(unittest.TestCase):
             env=self.env,
             isCGI=False,
         )
-        self.assertEqual(status, 1)
+        self.assertEqual(status, 66)
 
         filename = "test_WMSGetCapabilities_no_error_on_existing_dataset_misconfigured_layer.xml"
 

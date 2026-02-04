@@ -504,7 +504,8 @@ int CServerParams::_parseConfigFile(CT::string &pszConfigFile, std::vector<CServ
     CDBError("Exception %d in substituting", e);
   }
 
-  int status = parseConfig(configObj, configFileData);
+  std::string datasetName = basename(pszConfigFile.c_str());
+  int status = parseConfig(configObj, configFileData, datasetName);
 
   if (status == 0 && configObj->Configuration.size() == 1) {
     return 0;

@@ -25,7 +25,7 @@
 #ifndef CDBADAPTERPOSTGRESQL_H
 #define CDBADAPTERPOSTGRESQL_H
 
-#include <stdlib.h>
+#include <cstdlib>
 #include "CImageDataWriter.h"
 #include "CServerParams.h"
 #include "CDataSource.h"
