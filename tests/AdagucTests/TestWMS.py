@@ -2665,7 +2665,7 @@ class TestWMS(unittest.TestCase):
             env=self.env,
             isCGI=False,
         )
-        self.assertEqual(status, 1)
+        self.assertEqual(status, 66)
 
         filename = "test_WMSGetCapabilities_no_error_on_existing_dataset_misconfigured_layer.xml"
 

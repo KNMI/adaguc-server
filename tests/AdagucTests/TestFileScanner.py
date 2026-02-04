@@ -6,7 +6,8 @@ import os
 import shutil
 import time
 import unittest
-
+import subprocess
+from adaguc.CGIRunner import SCAN_EXITCODE_DATASETNOEXIST, SCAN_EXITCODE_FILENOEXIST, SCAN_EXITCODE_FILENOMATCH, SCAN_EXITCODE_SCANERROR
 import psycopg2
 from adaguc.AdagucTestTools import AdagucTestTools
 
@@ -81,6 +82,7 @@ class TestFileScanner(unittest.TestCase):
         assert os.path.exists(filetoclean) is False
 
     def test_FileScanner_MultiVarCleanupFiledate(self):
+
         AdagucTestTools().cleanTempDir()
         AdagucTestTools().cleanPostgres()
         config = ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"
@@ -144,3 +146,59 @@ class TestFileScanner(unittest.TestCase):
             assert len(rows) is 0
         # In addition the file should be removed
         assert os.path.exists(filetoclean) is False
+
+    def test_FileScanner_ExitCode_FileDoesNotExist(self):
+        """
+        Description: Exit code of scan process should return exit code SCAN_EXITCODE_FILENOEXIST
+        The reason for this status code is that the file is not on the filesystem.
+        """
+        my_env = os.environ.copy()
+        my_env["ADAGUC_CONFIG"] = ADAGUC_PATH + "/data/config/adaguc.autoresource.xml"
+        proc = subprocess.run(
+            [ADAGUC_PATH + "/scripts/scan.sh", "-f", "doesnotexist"], capture_output=True, text=True, check=False, env=my_env
+        )
+        assert proc.returncode == SCAN_EXITCODE_FILENOEXIST
+
+    def test_FileScanner_ExitCode_ConfigError(self):
+        """
+        Description: Exit code of scan process should return exit code SCAN_EXITCODE_DATASETNOEXIST
+        The reason for this status code is that the dataset configuration file does not exist.
+        """
+        my_env = os.environ.copy()
+        my_env["ADAGUC_CONFIG"] = ADAGUC_PATH + "/data/config/adaguc.autoresource.xml"
+        proc = subprocess.run(
+            [ADAGUC_PATH + "/scripts/scan.sh", "-d", "not_existing_odataset"], capture_output=True, text=True, check=False, env=my_env
+        )
+        assert proc.returncode == SCAN_EXITCODE_DATASETNOEXIST
+
+    def test_FileScanner_ExitCode_ScanError(self):
+        """
+        Description: Exit code of scan process should return exit code SCAN_EXITCODE_SCANERROR
+        The reason for this status code is that the dataset configuration file contains errors and the scan process cannot continue.
+        """
+        my_env = os.environ.copy()
+        my_env["ADAGUC_CONFIG"] = ADAGUC_PATH + "/data/config/adaguc.dataset.xml"
+        proc = subprocess.run(
+            [ADAGUC_PATH + "/scripts/scan.sh", "-d", "adaguc.tests.unknownlayertype.xml"],
+            capture_output=True,
+            text=True,
+            check=False,
+            env=my_env,
+        )
+        assert proc.returncode == SCAN_EXITCODE_SCANERROR
+
+    def test_FileScanner_ExitCode_FileDoesExist(self):
+        """
+        Description: Exit code of scan process should return exit code SCAN_EXITCODE_FILENOMATCH
+        The reason for this status code is that the file does not match any of the available datasets.
+        """
+        my_env = os.environ.copy()
+        my_env["ADAGUC_CONFIG"] = ADAGUC_PATH + "/data/config/adaguc.autoresource.xml"
+        proc = subprocess.run(
+            [ADAGUC_PATH + "/scripts/scan.sh", "-f", ADAGUC_PATH + "data/datasets/members.nc"],
+            capture_output=True,
+            text=True,
+            check=False,
+            env=my_env,
+        )
+        assert proc.returncode == SCAN_EXITCODE_FILENOMATCH

@@ -79,7 +79,7 @@ public:
  * Inherits the CXMLObjectInterface base object
  */
 
-int parseConfig(CXMLObjectInterface *object, CT::string &xmlData);
+int parseConfig(CXMLObjectInterface *object, CT::string &xmlData, std::string datasetName);
 
 /**
  * parses a character string to int
