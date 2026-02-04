@@ -44,6 +44,7 @@
 #include "CCairoPlotter.h"
 #include "CColor.h"
 #include "CRectangleText.h"
+#include "CImgRenderers/getVectorStyle.h"
 
 float convertValueToClass(float val, float interval);
 
@@ -101,8 +102,9 @@ public:
   int create685Palette();
   int clonePalette(CDrawImage *drawImage);
 
-  void drawBarb(int x, int y, double direction, double viewDirCorrection, double strength, CColor barbColor, float linewidth, bool toKnots, bool flip, bool drawText, double fontSize = 12,
-                CColor textColor = CColor(255, 255, 255, 0), CColor outlineColor = CColor(255, 255, 255, 255), double outlineWidth = 1.0);
+  // void drawBarb(int x, int y, double direction, double viewDirCorrection, double strength, CColor barbColor, float linewidth, bool toKnots, bool flip, bool drawText, double fontSize = 12,
+  //               CColor textColor = CColor(255, 255, 255, 0), CColor outlineColor = CColor(255, 255, 255, 255), double outlineWidth = 1.0);
+  void drawBarb(int x, int y, double direction, double viewDirCorrection, double strength, bool toKnots, bool flip, bool drawVectorPlotValue, LineStyle lineStyle, TextStyle textStyle);
   void drawText(int x, int y, float angle, const char *text, unsigned char colorIndex);
   void drawText(int x, int y, float angle, const char *text, CColor fgcolor);
   void drawText(int x, int y, const char *fontfile, float size, float angle, const char *text, unsigned char colorIndex);
@@ -116,7 +118,7 @@ public:
   // void drawTextAngle(const char * text, size_t length,double angle,int x,int y,int color,int fontSize);
   void drawVector(int x, int y, double direction, double strength, int color);
   void drawVector(int x, int y, double direction, double strength, int color, float linewidth);
-  void drawVector(int x, int y, double direction, double strength, CColor color, float linewidth);
+  void drawVector(int x, int y, double direction, double strength, LineStyle lineStyle);
   void drawVector2(int x, int y, double direction, double strength, int radius, CColor color, float linewidth);
   void destroyImage();
   void line(float x1, float y1, float x2, float y2, int color);
@@ -213,3 +215,12 @@ public:
 };
 
 #endif
+
+/*
+  void drawBarb(CColor barbColor, float linewidth, bool toKnots, bool flip, bool drawText, double fontSize = 12,
+                CColor textColor = CColor(255, 255, 255, 0), CColor outlineColor = CColor(255, 255, 255, 255), double outlineWidth = 1.0);
+  void drawVector(CColor color, float linewidth);
+
+  void setTextDisc(CColor textcolor, CColor fillcolor, CColor lineColor);
+  void drawVector2(CColor color, float linewidth);
+*/

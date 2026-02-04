@@ -202,7 +202,8 @@ public:
     }
     class Cattr {
     public:
-      CT::string linecolor, plotstationid, vectorstyle, textformat, plotvalue, outlinecolor, textcolor, fillcolor, fontfile;
+      CT::string linecolor, plotstationid, vectorstyle, textformat, plotvalue, outlinecolor, textcolor, textoutlinecolor, fillcolor, fontfile;
+      CT::string textoutlinewidth; // TODO Due to backwards compatibility, we need to support...
       float scale;
       double min, max, outlinewidth, fontSize, linewidth, discradius;
     } attr;
@@ -246,11 +247,17 @@ public:
       } else if (equals("outlinewidth", attrname)) {
         attr.outlinewidth = parseDouble(attrvalue);
         return true;
+      } else if (equals("textoutlinewidth", attrname)) {
+        attr.textoutlinewidth.copy(attrvalue);
+        return true;
       } else if (equals("outlinecolor", attrname)) {
         attr.outlinecolor.copy(attrvalue);
         return true;
       } else if (equals("textcolor", attrname)) {
         attr.textcolor.copy(attrvalue);
+        return true;
+      } else if (equals("textoutlinecolor", attrname)) {
+        attr.textoutlinecolor.copy(attrvalue);
         return true;
       } else if (equals("fillcolor", attrname)) {
         attr.fillcolor.copy(attrvalue);

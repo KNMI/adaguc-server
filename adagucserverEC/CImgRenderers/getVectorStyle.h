@@ -5,16 +5,28 @@
 #include "CColor.h"
 #include <CServerConfig_CPPXSD.h>
 
-struct VectorStyle {
+struct TextStyle {
+  CColor textColor;
+  double fontSize;
+
+  CColor textOutlineColor;
+  double textOutlineWidth;
+};
+
+struct LineStyle {
   CColor lineColor;
   double lineWidth;
-  CColor outlinecolor;
-  double outlinewidth;
-  CColor textColor;
+
+  CColor lineOutlineColor;
+  double lineOutlineWidth;
+};
+
+struct VectorStyle {
+  LineStyle lineStyle;
+  TextStyle textStyle;
   CColor fillColor;
   CT::string drawVectorTextFormat;
   CT::string fontFile;
-  double fontSize;
   bool drawVectorPlotStationId;
   bool drawVectorPlotValue;
   bool drawBarb;

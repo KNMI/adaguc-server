@@ -180,19 +180,31 @@ int CDrawImage::printImageWebP32(int quality) {
 }
 
 void CDrawImage::drawVector(int x, int y, double direction, double strength, int color) {
-  CColor col = getColorForIndex(color);
-  drawVector(x, y, direction, strength, col, 1.0);
+  LineStyle lineStyle = {
+    .lineWidth = 1.0,
+    .lineColor = getColorForIndex(color),
+    .lineOutlineColor = CColor(255, 255, 255, 255),
+    .lineOutlineWidth = 0,
+  };
+  drawVector(x, y, direction, strength, lineStyle);
 }
 
 void CDrawImage::drawVector(int x, int y, double direction, double strength, int color, float linewidth) {
-  CColor col = getColorForIndex(color);
-  drawVector(x, y, direction, strength, col, linewidth);
+  LineStyle lineStyle = {
+    .lineWidth = linewidth,
+    .lineColor = getColorForIndex(color),
+    .lineOutlineColor = CColor(255, 255, 255, 255),
+    .lineOutlineWidth = 0,
+  };
+  drawVector(x, y, direction, strength, lineStyle);
 }
 
-void CDrawImage::drawVector(int x, int y, double direction, double strength, CColor color, float linewidth) {
+void CDrawImage::drawVector(int x, int y, double direction, double strength, LineStyle lineStyle) {
+  // TODO: Support setting outline
+
   double wx1, wy1, wx2, wy2, dx1, dy1;
   if (fabs(strength) < 1) {
-    setPixel(x, y, color);
+    setPixel(x, y, lineStyle.lineColor);
     return;
   }
 
@@ -227,12 +239,15 @@ void CDrawImage::drawVector(int x, int y, double direction, double strength, CCo
   hy3 = wy1 - (sin(direction + 2.5) + sin(direction - 2.5)) / 2 * (strength / 2.8f);
 
   // Render triangle
+  CColor color = lineStyle.lineColor;
   cairo->setColor(color.r, color.g, color.b, color.a);
   cairo->setFillColor(color.r, color.g, color.b, color.a);
-  poly(hx1, hy1, wx1, wy1, hx2, hy2, linewidth, color, false);
+  poly(hx1, hy1, wx1, wy1, hx2, hy2, lineStyle.lineWidth, color, false);
 
   // Render shaft
-  line(wx2, wy2, hx3, hy3, linewidth, color);
+  line(wx2, wy2, hx3, hy3, lineStyle.lineWidth, color);
+
+  // TODO: should `poly` and `line` also accept `LineStyle` structs?
 }
 
 #define xCor(l, d) ((int)(l * cos(d) + 0.5))
@@ -265,14 +280,14 @@ void CDrawImage::drawVector2(int x, int y, double direction, double strength, in
 
 #define round(x) (int(x + 0.5)) // Only for positive values!!!
 
-void CDrawImage::drawBarb(int x, int y, double direction, double viewDirCorrection, double strength, CColor barbColor, float lineWidth, bool toKnots, bool flip, bool drawText, double fontSize,
-                          CColor textColor, CColor outlineColor, double outlineWidth) {
+void CDrawImage::drawBarb(int x, int y, double direction, double viewDirCorrection, double strength, bool toKnots, bool flip, bool drawVectorPlotValue, LineStyle lineStyle, TextStyle textStyle) {
   // If no linewidth, no outline should be drawn, set inner barblineWidth to 0.8 to ensure we draw a barb
+  if (lineStyle.lineWidth == 0) {
+    lineStyle.lineWidth = 0.8;
+    lineStyle.lineOutlineWidth = 0;
+  }
 
-  double barblineWidth = lineWidth == 0 ? 0.8 : lineWidth;
-  double barbOutlineWidth = lineWidth == 0 ? 0 : outlineWidth;
-
-  cairo->drawBarb(x, y, direction, viewDirCorrection, strength, barbColor, outlineColor, barblineWidth, toKnots, flip, drawText, fontSize, textColor, barbOutlineWidth);
+  cairo->drawBarb(x, y, direction, viewDirCorrection, strength, toKnots, flip, drawVectorPlotValue, lineStyle, textStyle);
 }
 
 void CDrawImage::circle(int x, int y, int r, int color, float lineWidth) {
@@ -429,10 +444,13 @@ void CDrawImage::setText(const char *text, int x, int y, CColor color) {
 }
 
 void CDrawImage::setTextStroke(int x, int y, float angle, const char *text, const char *fontFile, float fontSize, float strokeWidth, CColor bgcolor, CColor fgcolor) {
+  // TODO: this should receive a TextStyle struct
+
   if (bgcolor.a == 0) {
     drawText(x, y, fontFile, fontSize, angle, text, fgcolor);
   } else {
-    cairo->drawStrokedText(x, y, -angle, text, fontSize * 1.4, strokeWidth, bgcolor, fgcolor);
+    TextStyle textStyle = { .textColor = fgcolor, .fontSize=fontSize * 1.4, .textOutlineColor = bgcolor, .textOutlineWidth = strokeWidth};
+    cairo->drawStrokedText(x, y, -angle, text, textStyle);
   }
 }
 
@@ -568,7 +586,8 @@ void CDrawImage::drawCenteredText(int x, int y, const char *fontfile, float size
   if (textOutlineColor.a == 0) {
     freeType->drawCenteredText(x, y, angle, text);
   } else {
-    freeType->drawStrokedText(x, y, angle, text, size * 1.4, 1, textOutlineColor, color, true);
+    TextStyle textStyle = { .textColor = color, .fontSize=size * 1.4, .textOutlineColor = textOutlineColor, .textOutlineWidth = 1 };
+    freeType->drawStrokedText(x, y, angle, text, textStyle, true);
   }
 
   cairo->isAlphaUsed |= freeType->isAlphaUsed; // remember freetype's isAlphaUsed flag

@@ -53,7 +53,7 @@ void drawTextsForVector(CDrawImage *drawImage, CDataSource *dataSource, VectorSt
       newY = ((direction >= 90) && (direction <= 270)) ? y + 6 : y - 20;
     }
     CT::string stationId = pointStrength->paramList[0].value;
-    drawImage->setText(stationId.c_str(), x - stationId.length() * 3, newY, vectorStyle.textColor);
+    drawImage->setText(stationId.c_str(), x - stationId.length() * 3, newY, vectorStyle.textStyle.textColor);
   }
 
   // Draw value for vector or disc
@@ -62,7 +62,7 @@ void drawTextsForVector(CDrawImage *drawImage, CDataSource *dataSource, VectorSt
       int newY = ((direction >= 90) && (direction <= 270)) ? y - 20 : y + 6;
       CT::string textValue;
       textValue.print(vectorStyle.drawVectorTextFormat.c_str(), strength);
-      drawImage->setText(textValue.c_str(), x - textValue.length() * 3, newY, vectorStyle.textColor);
+      drawImage->setText(textValue.c_str(), x - textValue.length() * 3, newY, vectorStyle.textStyle.textColor);
     }
   }
 }
@@ -165,22 +165,27 @@ void renderVectorPoints(std::vector<size_t> thinnedPointIndexList, CImageWarper 
 
     for (auto vectorStyle: vectorStyles) {
       if (!(strength >= vectorStyle.min && strength < vectorStyle.max)) continue;
+
+      // line color, line width
+      // text color, font size
+      // outline color, outline width
+      // text outline color, text outline width
+
       // Draw symbol barb, vector or disc.
       if (vectorStyle.drawBarb) {
-        drawImage->drawBarb(x, y, ((270 - direction) / 360) * M_PI * 2, 0, strength, vectorStyle.lineColor, vectorStyle.lineWidth, toKnots, lat <= 0, vectorStyle.drawVectorPlotValue,
-                            vectorStyle.fontSize, vectorStyle.textColor, vectorStyle.outlinecolor, vectorStyle.outlinewidth);
+        drawImage->drawBarb(x, y, ((270 - direction) / 360) * M_PI * 2, 0, strength, toKnots, lat <= 0, vectorStyle.drawVectorPlotValue, vectorStyle.lineStyle, vectorStyle.textStyle);
       }
       if (vectorStyle.drawVector) {
-        drawImage->drawVector(x, y, ((270 - direction) / 360) * M_PI * 2, strength * vectorStyle.symbolScaling, vectorStyle.lineColor, vectorStyle.lineWidth);
+        drawImage->drawVector(x, y, ((270 - direction) / 360) * M_PI * 2, strength * vectorStyle.symbolScaling, vectorStyle.lineStyle);
       }
       if (vectorStyle.drawDiscs) {
         // Draw a disc with the speed value in text and the dir. value as an arrow
         int x = pointStrength->x;
         int y = dataSource->srvParams->geoParams.height - pointStrength->y;
         textValue.print(vectorStyle.drawVectorTextFormat.c_str(), strength);
-        drawImage->setTextDisc(x, y, vectorStyle.discRadius, textValue.c_str(), vectorStyle.fontFile.c_str(), vectorStyle.fontSize, vectorStyle.textColor, vectorStyle.fillColor,
-                               vectorStyle.lineColor);
-        drawImage->drawVector2(x, y, ((90 + direction) / 360.) * M_PI * 2, 10, vectorStyle.discRadius, vectorStyle.fillColor, vectorStyle.lineWidth);
+        drawImage->setTextDisc(x, y, vectorStyle.discRadius, textValue.c_str(), vectorStyle.fontFile.c_str(), vectorStyle.textStyle.fontSize, vectorStyle.textStyle.textColor, vectorStyle.fillColor,
+                               vectorStyle.lineStyle.lineColor);
+        drawImage->drawVector2(x, y, ((90 + direction) / 360.) * M_PI * 2, 10, vectorStyle.discRadius, vectorStyle.fillColor, vectorStyle.lineStyle.lineWidth);
       }
 
       drawTextsForVector(drawImage, dataSource, vectorStyle, pointStrength, pointDirection);
