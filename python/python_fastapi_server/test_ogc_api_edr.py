@@ -32,6 +32,7 @@ def setup_test_data():
         "adaguc.tests.members.xml",
         "adaguc_ewclocalclimateinfo_test.xml",
         "adaguc_tests_uwcwdini_windcomponents.xml",
+        "adaguc.tests.solarterminator.xml",
     ):
         status, _, _ = AdagucTestTools().runADAGUCServer(
             args=[
@@ -73,7 +74,7 @@ def test_root(client: TestClient):
 def test_collections(client: TestClient):
     resp = client.get("/edr/collections")
     colls = resp.json()
-    assert len(colls["collections"]) == 6
+    assert len(colls["collections"]) == 7
     first_collection = colls["collections"][0]
     assert first_collection.get("id") == "adaguc.tests.arcus_uwcw.hagl_member"
 
@@ -865,3 +866,8 @@ def test_unknown_location(client: TestClient):
     print("/location/KJFK:", json.dumps(resp.json(), indent=2))
     covjson = resp.json()
     assert covjson["detail"] == "location KJFK not found"
+
+def test_solt_instanceless_position(client: TestClient):
+    url = "/edr/collections/adaguc.tests.solarterminator/position?coords=POINT(5.0 52.0)&datetime=2026-06-01T01:00:00Z/2026-06-01T02:00:00Z&parameter-name=solarterminator"
+    resp = client.get(url)
+    assert resp.status_code == 200
