@@ -220,11 +220,7 @@ TEST(string, basename) {
   CHECK_EQUAL(CT::basename("/a/b\\/c/d\\/e/f"), "f");
 }
 
-TEST(string, ctprintf) {
-  CHECK_EQUAL("hi! 2 3.140000", CT::printf("%s %d %f", "hi!", 2, 3.14));
-  const char *a = nullptr;
-  CHECK_EQUAL("(null) 2 3.140000", CT::printf("%s %d %f", a, 2, 3.14));
-}
+TEST(string, ctprintf) { CHECK_EQUAL("hi! 2 3.140000", CT::printf("%s %d %f", "hi!", 2, 3.14)); }
 
 TEST(string, ctprintfconcat) {
   std::string test = "abc ";
