@@ -41,8 +41,6 @@
 
 class CDFGeoJSONReader : public CDFReader {
 private:
-  static void ncError(int line, const char *className, const char *msg, int e);
-
   // CCDFWarper warper;
   static CDFType typeConversion(nc_type type);
 

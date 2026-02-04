@@ -31,15 +31,14 @@
 #endif
 
 #define CDEBUGGER_FILE_LINENUMBER_WIDTH 80
-
-#define PRINTF_FORMAT_CHECK(format_index, args_index) __attribute__((__format__(printf, format_index, args_index)))
+#define CDEBUGGER_PRINT_BUFFER_SIZE 200
 
 #define __FILENAME__ (&__FILE__[SOURCE_PATH_SIZE])
 
 #include <cstdio>
 #include <iostream>
 #include <vector>
-
+#include "printfCheckMacro.h"
 // Used to silence -Wunused-parameter warnings
 template <class T> void ignoreParameter(const T &) {}
 

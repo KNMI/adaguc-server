@@ -142,7 +142,7 @@ namespace CDF {
 
     Dimension *getIterativeDim();
 
-      Variable(const char *name, CDFType type, CDF::Dimension *dims[], int numdims, bool isCoordinateVariable);
+    Variable(const char *name, CDFType type, CDF::Dimension *dims[], int numdims, bool isCoordinateVariable);
     Variable(const char *name, CDFType type, std::vector<CDF::Dimension *> idimensionlinks, bool isCoordinateVariable);
     Variable(const char *name, CDFType type);
     Variable();

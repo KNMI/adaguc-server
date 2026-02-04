@@ -41,8 +41,6 @@
 
 class CDFNetCDFReader : public CDFReader {
 private:
-  static void ncError(int line, const char *msg, int e);
-
   // CCDFWarper warper;
   static CDFType _typeConversionVar(nc_type type, bool isUnsigned);
   static CDFType _typeConversionAtt(nc_type type);
@@ -70,7 +68,6 @@ public:
 
 class CDFNetCDFWriter {
 private:
-  static void ncError(int line, const char *msg, int e);
   bool writeData;
   bool readData;
   bool listNCCommands;

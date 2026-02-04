@@ -25,6 +25,7 @@ CTString.h
     CReportWriter.cpp
     json_adaguc.cpp
     testhclasses.cpp
+    printfCheckMacro.h
 )
 
 

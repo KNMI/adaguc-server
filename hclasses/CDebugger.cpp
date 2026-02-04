@@ -49,76 +49,121 @@ void _printErrorStream(const char *pszMessage) { fprintf(stderr, "%s", pszMessag
 void _printWarningStream(const char *pszMessage) { fprintf(stderr, "%s", pszMessage); }
 void _printDebugStream(const char *pszMessage) { printf("%s", pszMessage); }
 
-void _printDebugLine(const char *pszMessage, ...) {
+void _printDebugLine(const char *a, ...) {
   logMessageNumber++;
-  char szTemp[2048];
+  std::string buf(CDEBUGGER_PRINT_BUFFER_SIZE + 1, '\0');
   va_list ap;
-  va_start(ap, pszMessage);
-  vsnprintf(szTemp, 2047, pszMessage, ap);
-  printDebugStream(szTemp);
+  va_start(ap, a);
+  int numWritten = vsnprintf(buf.data(), buf.size(), a, ap);
   va_end(ap);
-  printDebugStream("\n");
+  if (numWritten > CDEBUGGER_PRINT_BUFFER_SIZE) {
+    buf.resize(numWritten + 1);
+    va_list ap;
+    va_start(ap, a);
+    numWritten = vsnprintf(buf.data(), buf.size(), a, ap);
+    va_end(ap);
+  }
+  buf.resize(numWritten);
+  buf += "\n";
+  printDebugStream(buf.c_str());
 }
 
-void _printWarningLine(const char *pszMessage, ...) {
+void _printWarningLine(const char *a, ...) {
   logMessageNumber++;
-  char szTemp[2048];
+  std::string buf(CDEBUGGER_PRINT_BUFFER_SIZE + 1, '\0');
   va_list ap;
-  va_start(ap, pszMessage);
-  vsnprintf(szTemp, 2047, pszMessage, ap);
-  printWarningStream(szTemp);
+  va_start(ap, a);
+  int numWritten = vsnprintf(buf.data(), buf.size(), a, ap);
   va_end(ap);
-  printWarningStream("\n");
+  if (numWritten > CDEBUGGER_PRINT_BUFFER_SIZE) {
+    buf.resize(numWritten + 1);
+    va_list ap;
+    va_start(ap, a);
+    numWritten = vsnprintf(buf.data(), buf.size(), a, ap);
+    va_end(ap);
+  }
+  buf.resize(numWritten);
+  buf += "\n";
+  printWarningStream(buf.c_str());
 }
 
-void _printErrorLine(const char *pszMessage, ...) {
+void _printErrorLine(const char *a, ...) {
   logMessageNumber++;
-  char szTemp[2048];
+  std::string buf(CDEBUGGER_PRINT_BUFFER_SIZE + 1, '\0');
   va_list ap;
-  va_start(ap, pszMessage);
-  vsnprintf(szTemp, 2047, pszMessage, ap);
-  printErrorStream(szTemp);
+  va_start(ap, a);
+  int numWritten = vsnprintf(buf.data(), buf.size(), a, ap);
   va_end(ap);
-  printErrorStream("\n");
+  if (numWritten > CDEBUGGER_PRINT_BUFFER_SIZE) {
+    buf.resize(numWritten + 1);
+    va_list ap;
+    va_start(ap, a);
+    numWritten = vsnprintf(buf.data(), buf.size(), a, ap);
+    va_end(ap);
+  }
+  buf.resize(numWritten);
+  buf += "\n";
+  printErrorStream(buf.c_str());
 }
 
-void makeEqualWidth(CT::string *t1) {
-  size_t i = t1->length();
+void makeEqualWidth(std::string &t1) {
+  size_t i = t1.length();
   for (int j = i; j < CDEBUGGER_FILE_LINENUMBER_WIDTH; j++) {
-    t1->concat(" ");
+    t1 += (" ");
   }
 }
-void _printDebug(const char *pszMessage, ...) {
-  char szTemp[2048];
+void _printDebug(const char *a, ...) {
+  std::string buf(CDEBUGGER_PRINT_BUFFER_SIZE + 1, '\0');
   va_list ap;
-  va_start(ap, pszMessage);
-  vsnprintf(szTemp, 2047, pszMessage, ap);
-  CT::string t1 = szTemp;
-  makeEqualWidth(&t1);
-  printDebugStream(t1.c_str());
+  va_start(ap, a);
+  int numWritten = vsnprintf(buf.data(), buf.size(), a, ap);
   va_end(ap);
+  if (numWritten > CDEBUGGER_PRINT_BUFFER_SIZE) {
+    buf.resize(numWritten + 1);
+    va_list ap;
+    va_start(ap, a);
+    numWritten = vsnprintf(buf.data(), buf.size(), a, ap);
+    va_end(ap);
+  }
+  buf.resize(numWritten);
+  makeEqualWidth(buf);
+  printDebugStream(buf.c_str());
 }
 
-void _printWarning(const char *pszMessage, ...) {
-  char szTemp[2048];
+void _printWarning(const char *a, ...) {
+  std::string buf(CDEBUGGER_PRINT_BUFFER_SIZE + 1, '\0');
   va_list ap;
-  va_start(ap, pszMessage);
-  vsnprintf(szTemp, 2047, pszMessage, ap);
-  CT::string t1 = szTemp;
-  makeEqualWidth(&t1);
-  printWarningStream(t1.c_str());
+  va_start(ap, a);
+  int numWritten = vsnprintf(buf.data(), buf.size(), a, ap);
   va_end(ap);
+  if (numWritten > CDEBUGGER_PRINT_BUFFER_SIZE) {
+    buf.resize(numWritten + 1);
+    va_list ap;
+    va_start(ap, a);
+    numWritten = vsnprintf(buf.data(), buf.size(), a, ap);
+    va_end(ap);
+  }
+  buf.resize(numWritten);
+  makeEqualWidth(buf);
+  printWarningStream(buf.c_str());
 }
 
-void _printError(const char *pszMessage, ...) {
-  char szTemp[2048];
+void _printError(const char *a, ...) {
+  std::string buf(CDEBUGGER_PRINT_BUFFER_SIZE + 1, '\0');
   va_list ap;
-  va_start(ap, pszMessage);
-  vsnprintf(szTemp, 2047, pszMessage, ap);
-  CT::string t1 = szTemp;
-  makeEqualWidth(&t1);
-  printErrorStream(t1.c_str());
+  va_start(ap, a);
+  int numWritten = vsnprintf(buf.data(), buf.size(), a, ap);
   va_end(ap);
+  if (numWritten > CDEBUGGER_PRINT_BUFFER_SIZE) {
+    buf.resize(numWritten + 1);
+    va_list ap;
+    va_start(ap, a);
+    numWritten = vsnprintf(buf.data(), buf.size(), a, ap);
+    va_end(ap);
+  }
+  buf.resize(numWritten);
+  makeEqualWidth(buf);
+  printErrorStream(buf.c_str());
 }
 
 void setDebugFunction(void (*function)(const char *)) { _printDebugStreamPointer = function; }
