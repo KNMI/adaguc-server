@@ -2676,7 +2676,7 @@ class TestWMS(unittest.TestCase):
             ADAGUC_PATH
             + "/data/config/adaguc.tests.dataset.xml,"
             + ADAGUC_PATH
-            + "/data/config/datasets/adaguc.tests.solarterminator.xml"
+            + "/data/config/datasets/adaguc_tests_solarterminator.xml"
         )
         env = {"ADAGUC_CONFIG": config}
         # pylint: disable=unused-variable
@@ -2704,7 +2704,7 @@ class TestWMS(unittest.TestCase):
             ADAGUC_PATH
             + "/data/config/adaguc.tests.dataset.xml,"
             + ADAGUC_PATH
-            + "/data/config/datasets/adaguc.tests.solarterminator.xml"
+            + "/data/config/datasets/adaguc_tests_solarterminator.xml"
         )
         env = {"ADAGUC_CONFIG": config}
         # pylint: disable=unused-variable
@@ -2733,7 +2733,7 @@ class TestWMS(unittest.TestCase):
             ADAGUC_PATH
             + "/data/config/adaguc.tests.dataset.xml,"
             + ADAGUC_PATH
-            + "/data/config/datasets/adaguc.tests.solarterminator.xml"
+            + "/data/config/datasets/adaguc_tests_solarterminator.xml"
         )
         env = {"ADAGUC_CONFIG": config}
         # pylint: disable=unused-variable
@@ -2762,7 +2762,7 @@ class TestWMS(unittest.TestCase):
             ADAGUC_PATH
             + "/data/config/adaguc.tests.dataset.xml,"
             + ADAGUC_PATH
-            + "/data/config/datasets/adaguc.tests.solarterminator.xml"
+            + "/data/config/datasets/adaguc_tests_solarterminator.xml"
         )
         env = {"ADAGUC_CONFIG": config}
         # pylint: disable=unused-variable
@@ -2790,7 +2790,7 @@ class TestWMS(unittest.TestCase):
             ADAGUC_PATH
             + "/data/config/adaguc.tests.dataset.xml,"
             + ADAGUC_PATH
-            + "/data/config/datasets/adaguc.tests.solarterminator.xml"
+            + "/data/config/datasets/adaguc_tests_solarterminator.xml"
         )
         env = {"ADAGUC_CONFIG": config}
         # pylint: disable=unused-variable
@@ -2819,7 +2819,7 @@ class TestWMS(unittest.TestCase):
             ADAGUC_PATH
             + "/data/config/adaguc.tests.dataset.xml,"
             + ADAGUC_PATH
-            + "/data/config/datasets/adaguc.tests.solarterminator.xml"
+            + "/data/config/datasets/adaguc_tests_solarterminator.xml"
         )
         env = {"ADAGUC_CONFIG": config}
         # pylint: disable=unused-variable
@@ -2848,7 +2848,7 @@ class TestWMS(unittest.TestCase):
             ADAGUC_PATH
             + "/data/config/adaguc.tests.dataset.xml,"
             + ADAGUC_PATH
-            + "/data/config/datasets/adaguc.tests.solarterminator.xml"
+            + "/data/config/datasets/adaguc_tests_solarterminator.xml"
         )
         env = {"ADAGUC_CONFIG": config}
         # pylint: disable=unused-variable
@@ -2873,7 +2873,7 @@ class TestWMS(unittest.TestCase):
         AdagucTestTools().cleanTempDir()
         config = (ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," +
                   ADAGUC_PATH +
-                  "/data/config/datasets/adaguc.tests.solarterminator.xml")
+                  "/data/config/datasets/adaguc_tests_solarterminator.xml")
         env = {"ADAGUC_CONFIG": config}
         # pylint: disable=unused-variable
         status, data, headers = AdagucTestTools().runADAGUCServer(
