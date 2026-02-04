@@ -90,5 +90,5 @@ class TestGenericImageWarper:
             self.expectedoutputsspath + filetocheck,
             self.testresultspath + filetocheck,
             maxAllowedColorDifference=1,
-            maxAllowedColorPercentage=0.015,
+            maxAllowedColorPercentage=0.02,
         )

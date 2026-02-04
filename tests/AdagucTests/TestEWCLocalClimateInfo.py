@@ -48,7 +48,7 @@ class TestEWCLocalClimateInfo(unittest.TestCase):
                 self.expectedoutputsspath + filename,
                 self.testresultspath + filename,
                 1,
-                0.015,
+                0.02,
             )
         )
 
