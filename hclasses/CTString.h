@@ -417,24 +417,24 @@ namespace CT {
    * @returns The basename of the path
    */
   std::string basename(std::string input);
+
+  /**
+   * The equalsIgnoreCase() method compares two strings, ignoring lower case and upper case differences.
+   * This method returns true if the strings are equal, and false if not.
+   * @param str1 - compare str1 against str2
+   * @param str2 -
+   * @return true if equal
+   */
+  bool equalsIgnoreCase(const std::string str1, const std::string str2);
+
+  /**
+   * Print like printf but returns a stdstring;
+   * @param a The string to print
+   * @returns std::string
+   */
+
+  std::string printf(const char *a, ...) PRINTF_FORMAT_CHECK(1, 2);
+
+  void printfconcat(std::string &appendString, const char *a, ...) PRINTF_FORMAT_CHECK(2, 3);
 }; /* namespace CT */
-
-/**
- * The equalsIgnoreCase() method compares two strings, ignoring lower case and upper case differences.
- * This method returns true if the strings are equal, and false if not.
- * @param str1 - compare str1 against str2
- * @param str2 -
- * @return true if equal
- */
-bool equalsIgnoreCase(const std::string str1, const std::string str2);
-
-/**
- * Print like printf but returns a stdstring;
- * @param a The string to print
- * @returns std::string
- */
-
-std::string ctprintf(const char *a, ...) PRINTF_FORMAT_CHECK(1, 2);
-
-void ctappendprintf(std::string &appendString, const char *a, ...) PRINTF_FORMAT_CHECK(2, 3);
 #endif

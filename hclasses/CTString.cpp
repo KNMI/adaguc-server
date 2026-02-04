@@ -493,46 +493,47 @@ namespace CT {
   }
 
   std::string basename(std::string input) { return input.substr(input.find_last_of("/\\") + 1); }
+
+  bool equalsIgnoreCase(const std::string str1, const std::string str2) {
+    if (str1.length() != str2.length()) return false;
+    for (size_t i = 0; i < str1.length(); ++i) {
+      if (tolower(str1[i]) != tolower(str2[i])) return false;
+    }
+    return true;
+  }
+
+  std::string printf(const char *a, ...) {
+    std::string buf(CT_STRING_PRINT_BUFFER_SIZE + 1, '\0');
+    va_list ap;
+    va_start(ap, a);
+    int numWritten = vsnprintf(buf.data(), buf.size(), a, ap);
+    va_end(ap);
+    if (numWritten > CT_STRING_PRINT_BUFFER_SIZE) {
+      buf.resize(numWritten + 1);
+      va_list ap;
+      va_start(ap, a);
+      numWritten = vsnprintf(buf.data(), buf.size(), a, ap);
+      va_end(ap);
+    }
+    buf.resize(numWritten);
+    return buf;
+  }
+
+  void printfconcat(std::string &appendString, const char *a, ...) {
+    std::string buf(CT_STRING_PRINT_BUFFER_SIZE + 1, '\0');
+    va_list ap;
+    va_start(ap, a);
+    int numWritten = vsnprintf(buf.data(), buf.size(), a, ap);
+    va_end(ap);
+    if (numWritten > CT_STRING_PRINT_BUFFER_SIZE) {
+      buf.resize(numWritten + 1);
+      va_list ap;
+      va_start(ap, a);
+      numWritten = vsnprintf(buf.data(), buf.size(), a, ap);
+      va_end(ap);
+    }
+    buf.resize(numWritten);
+    appendString += buf;
+  }
+
 } /* namespace CT */
-
-bool equalsIgnoreCase(const std::string str1, const std::string str2) {
-  if (str1.length() != str2.length()) return false;
-  for (size_t i = 0; i < str1.length(); ++i) {
-    if (tolower(str1[i]) != tolower(str2[i])) return false;
-  }
-  return true;
-}
-
-std::string ctprintf(const char *a, ...) {
-  std::vector<char> buf(CT_STRING_PRINT_BUFFER_SIZE + 1);
-  va_list ap;
-  va_start(ap, a);
-  int numWritten = vsnprintf(&buf[0], buf.size(), a, ap);
-  va_end(ap);
-  if (numWritten > CT_STRING_PRINT_BUFFER_SIZE) {
-    buf.resize(numWritten + 1);
-    va_list ap;
-    va_start(ap, a);
-    vsnprintf(&buf[0], buf.size(), a, ap);
-    va_end(ap);
-  }
-  std::string stdstring = std::string(buf.begin(), buf.end()).c_str();
-  return stdstring;
-}
-
-void ctappendprintf(std::string &appendString, const char *a, ...) {
-  std::vector<char> buf(CT_STRING_PRINT_BUFFER_SIZE + 1);
-  va_list ap;
-  va_start(ap, a);
-  int numWritten = vsnprintf(&buf[0], buf.size(), a, ap);
-  va_end(ap);
-  if (numWritten > CT_STRING_PRINT_BUFFER_SIZE) {
-    buf.resize(numWritten + 1);
-    va_list ap;
-    va_start(ap, a);
-    vsnprintf(&buf[0], buf.size(), a, ap);
-    va_end(ap);
-  }
-  std::string stdstring = std::string(buf.begin(), buf.end()).c_str();
-  appendString += stdstring;
-}

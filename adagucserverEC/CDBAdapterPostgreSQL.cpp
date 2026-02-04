@@ -619,7 +619,7 @@ void CDBAdapterPostgreSQL::assertLookupTableExists() {
   CPGSQLDB *DB = getDataBaseConnection();
   if (DB == NULL) {
     CDBError("Unable to connect to DB");
-    throw(1);
+    throw 1;
   }
 
   CT::string tableColumns("path varchar (511), filter varchar (511), dimension varchar (511), tablename varchar (63), UNIQUE (path,filter,dimension) ");
@@ -769,7 +769,7 @@ std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAn
               CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP, path, filter, dimList.c_str());
   CDBStore::Store *tableDimStore = DB->queryToStore(query.c_str());
   if (tableDimStore == nullptr) {
-    throw __LINE__;
+    throw 1;
   }
   for (size_t i = 0; i < tableDimStore->size(); i++) {
     CT::string dim = tableDimStore->getRecord(i)->get("dimension");

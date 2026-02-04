@@ -524,9 +524,9 @@ int CDFNetCDFReader::readVariables(int groupId, std::string &groupName, int mode
       }
       std::string newGroupName;
       if (groupName.length() > 0) {
-        newGroupName = ctprintf("%s%s%s", groupName.c_str(), foundGroupName, CDFNetCDFGroupSeparator);
+        newGroupName = CT::printf("%s%s%s", groupName.c_str(), foundGroupName, CDFNetCDFGroupSeparator);
       } else {
-        newGroupName = ctprintf("%s%s", foundGroupName, CDFNetCDFGroupSeparator);
+        newGroupName = CT::printf("%s%s", foundGroupName, CDFNetCDFGroupSeparator);
       }
       status = readVariables(groupIds[g], newGroupName, mode);
       if (status != 0) {

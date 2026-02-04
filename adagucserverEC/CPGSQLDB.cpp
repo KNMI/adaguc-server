@@ -109,7 +109,7 @@ int CPGSQLDB::_checkTable(const char *pszTableName, const char *pszColumns) {
   if (PQresultStatus(result) != PGRES_COMMAND_OK)   /* did the query fail? */
   {
 
-    LastErrorMsg = ctprintf("%s: %s (%s)", PQresStatus(PQresultStatus(result)), PQresultErrorMessage(result), queryString.c_str());
+    LastErrorMsg = CT::printf("%s: %s (%s)", PQresStatus(PQresultStatus(result)), PQresultErrorMessage(result), queryString.c_str());
 
     clearResult();
     return 1;
@@ -133,7 +133,7 @@ int CPGSQLDB::query(const char *pszQuery) {
   traceTimingsSpanEnd(TraceTimingType::DB);
   if (PQresultStatus(result) != PGRES_COMMAND_OK) /* did the query fail? */
   {
-    LastErrorMsg = ctprintf("%s: %s (%s)", PQresStatus(PQresultStatus(result)), PQresultErrorMessage(result), pszQuery);
+    LastErrorMsg = CT::printf("%s: %s (%s)", PQresStatus(PQresultStatus(result)), PQresultErrorMessage(result), pszQuery);
     clearResult();
     return 1;
   }

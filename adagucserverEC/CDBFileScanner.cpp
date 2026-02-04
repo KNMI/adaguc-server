@@ -79,7 +79,7 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
 
   CDBAdapterPostgreSQL *dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
   if (dbAdapter == nullptr) {
-    CDBDebug("Unable to connect to database");
+    CDBError("Unable to connect to database");
     return 1;
   }
 

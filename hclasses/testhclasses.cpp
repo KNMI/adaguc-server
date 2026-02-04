@@ -221,15 +221,15 @@ TEST(string, basename) {
 }
 
 TEST(string, ctprintf) {
-  CHECK_EQUAL("hi! 2 3.140000", ctprintf("%s %d %f", "hi!", 2, 3.14));
+  CHECK_EQUAL("hi! 2 3.140000", CT::printf("%s %d %f", "hi!", 2, 3.14));
   const char *a = nullptr;
-  CHECK_EQUAL("(null) 2 3.140000", ctprintf("%s %d %f", a, 2, 3.14));
+  CHECK_EQUAL("(null) 2 3.140000", CT::printf("%s %d %f", a, 2, 3.14));
 }
 
-TEST(string, ctappendprintf) {
+TEST(string, ctprintfconcat) {
   std::string test = "abc ";
-  ctappendprintf(test, "%s %d %f", "hi!", 2, 3.14);
+  CT::printfconcat(test, "%s %d %f", "hi!", 2, 3.14);
   CHECK_EQUAL("abc hi! 2 3.140000", test);
-  ctappendprintf(test, " MORESTUFF");
+  CT::printfconcat(test, " MORESTUFF");
   CHECK_EQUAL("abc hi! 2 3.140000 MORESTUFF", test);
 }

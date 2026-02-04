@@ -606,7 +606,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       }
       if (dataSource->statistics != NULL) {
         if (verbose) {
-          CDBDebug("min %f, max %f samples %lud", dataSource->statistics->getMinimum(), dataSource->statistics->getMaximum(), dataSource->statistics->getNumSamples());
+          CDBDebug("min %f, max %f samples %lu", dataSource->statistics->getMinimum(), dataSource->statistics->getMaximum(), dataSource->statistics->getNumSamples());
         }
         if (dataSource->statistics->getNumSamples() == 0) return 1;
       }
