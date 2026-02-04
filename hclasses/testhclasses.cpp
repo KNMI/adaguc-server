@@ -219,3 +219,17 @@ TEST(string, basename) {
   CHECK_EQUAL(CT::basename("/a/b/c/d/e/f"), "f");
   CHECK_EQUAL(CT::basename("/a/b\\/c/d\\/e/f"), "f");
 }
+
+TEST(string, ctprintf) {
+  CHECK_EQUAL("hi! 2 3.140000", ctprintf("%s %d %f", "hi!", 2, 3.14));
+  const char *a = nullptr;
+  CHECK_EQUAL("(null) 2 3.140000", ctprintf("%s %d %f", a, 2, 3.14));
+}
+
+TEST(string, ctappendprintf) {
+  std::string test = "abc ";
+  ctappendprintf(test, "%s %d %f", "hi!", 2, 3.14);
+  CHECK_EQUAL("abc hi! 2 3.140000", test);
+  ctappendprintf(test, " MORESTUFF");
+  CHECK_EQUAL("abc hi! 2 3.140000 MORESTUFF", test);
+}

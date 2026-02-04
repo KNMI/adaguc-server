@@ -435,4 +435,6 @@ bool equalsIgnoreCase(const std::string str1, const std::string str2);
  */
 
 std::string ctprintf(const char *a, ...) PRINTF_FORMAT_CHECK(1, 2);
+
+void ctappendprintf(std::string &appendString, const char *a, ...) PRINTF_FORMAT_CHECK(2, 3);
 #endif

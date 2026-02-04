@@ -519,3 +519,20 @@ std::string ctprintf(const char *a, ...) {
   std::string stdstring = std::string(buf.begin(), buf.end()).c_str();
   return stdstring;
 }
+
+void ctappendprintf(std::string &appendString, const char *a, ...) {
+  std::vector<char> buf(CT_STRING_PRINT_BUFFER_SIZE + 1);
+  va_list ap;
+  va_start(ap, a);
+  int numWritten = vsnprintf(&buf[0], buf.size(), a, ap);
+  va_end(ap);
+  if (numWritten > CT_STRING_PRINT_BUFFER_SIZE) {
+    buf.resize(numWritten + 1);
+    va_list ap;
+    va_start(ap, a);
+    vsnprintf(&buf[0], buf.size(), a, ap);
+    va_end(ap);
+  }
+  std::string stdstring = std::string(buf.begin(), buf.end()).c_str();
+  appendString += stdstring;
+}
