@@ -30,7 +30,6 @@
 
 class CImgRenderPolylines : public CImageWarperRenderInterface {
 private:
-  DEF_ERRORFUNCTION();
   CT::string settings;
 
 public:

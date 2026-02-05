@@ -7,14 +7,13 @@
 /************************/
 /*      CDDPUVComponents  */
 /************************/
-const char *CDDPUVComponents::className = "CDDPUVComponents";
 
 const char *CDDPUVComponents::getId() { return CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ID; }
 
 int CDDPUVComponents::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
   if (proc->attr.algorithm.equals(getId())) {
     if (dataSource->getNumDataObjects() == 1 && mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
-      CDBError("2 variables are needed for convert_uv_components, found %d", dataSource->getNumDataObjects());
+      CDBError("2 variables are needed for convert_uv_components, found %lu", dataSource->getNumDataObjects());
       return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
     }
     return CDATAPOSTPROCESSOR_RUNAFTERREADING | CDATAPOSTPROCESSOR_RUNBEFOREREADING;
@@ -149,7 +148,7 @@ int CDDPUVComponents::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
     vgridabsolute->cdfVariable->copy(dataSource->getDataObjectByName(CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ORG_V_COMPONENT)->cdfVariable);
 
     size_t size = speedObject->cdfVariable->getSize();
-    CDBDebug("Size %d", size);
+    CDBDebug("Size %lu", size);
 
     directionObject->cdfVariable->allocateData(size);
     speedObject->cdfVariable->allocateData(size);

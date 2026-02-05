@@ -10,8 +10,6 @@
  */
 
 class CDPPAddDataObject : public CDPPInterface {
-private:
-  DEF_ERRORFUNCTION();
 
 public:
   virtual const char *getId();

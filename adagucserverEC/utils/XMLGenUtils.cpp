@@ -250,7 +250,7 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
     }
 
     if (verboseLog) {
-      CDBDebug("Start looping dimensions. Number of dimensions is %d", metadataLayer->dataSource->cfgLayer->Dimension.size());
+      CDBDebug("Start looping dimensions. Number of dimensions is %lu", metadataLayer->dataSource->cfgLayer->Dimension.size());
     }
     /// Auto configure dimensions
     for (size_t i = 0; i < metadataLayer->dataSource->cfgLayer->Dimension.size(); i++) {
@@ -272,7 +272,7 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
         break;
       }
       if (verboseLog) {
-        CDBDebug("%d = %s / %s", i, metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str(), metadataLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
+        CDBDebug("%lu = %s / %s", i, metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str(), metadataLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
       }
       if (i == 0 && metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.name.equals("none")) break;
       // Shorthand dimName
@@ -403,7 +403,7 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
                         if (verboseLog) {
                           CDBDebug("day irregular");
                           for (size_t j = 0; j < nrTimes; j++) {
-                            CDBDebug("Day %d = %d", j, tms[j].tm_mday);
+                            CDBDebug("Day %lu = %d", j, tms[j].tm_mday);
                           }
                         }
                       }
@@ -426,7 +426,7 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
                         if (sd != d) {
                           isConst = false;
                           if (verboseLog) {
-                            CDBDebug("hour/min/sec is irregular %d ", j);
+                            CDBDebug("hour/min/sec is irregular %lu ", j);
                           }
                         }
                       }
@@ -568,7 +568,7 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
 
         if (metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.empty()) {
           // TODO
-          CDBError("Dimension interval '%d' not defined", i);
+          CDBError("Dimension interval '%lu' not defined", i);
           return 1;
         }
 

@@ -30,9 +30,6 @@
 
 class CDBFactory {
 private:
-private:
-  DEF_ERRORFUNCTION();
-
 public:
   static CDBAdapterPostgreSQL *staticCDBAdapter;
 

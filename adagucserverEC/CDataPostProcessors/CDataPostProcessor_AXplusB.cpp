@@ -1,7 +1,5 @@
 #include "CDataPostProcessor_AXplusB.h"
 
-const char *CDPPAXplusB::className = "CDPPAXplusB";
-
 const char *CDPPAXplusB::getId() { return CDATAPOSTPROCESSOR_AXPLUSB_ID; }
 
 int CDPPAXplusB::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int) {

@@ -4,8 +4,6 @@
 #include "CImageDataWriter.h"
 #include "CUniqueRequests/CURTypes.h"
 
-const char *CMakeEProfile::className = "CMakeEProfile";
-
 // #define CMakeEProfile_DEBUG
 
 #define CMakeEProfile_MAX_DIMS 255
@@ -21,9 +19,6 @@ std::string encodeJSON(CT::string input) {
 }
 
 class EProfileUniqueRequests {
-private:
-  DEF_ERRORFUNCTION();
-
 public:
   bool readDataAsCDFDouble;
 
@@ -381,7 +376,6 @@ public:
     return NULL;
   }
 };
-const char *EProfileUniqueRequests::className = "EProfileUniqueRequests";
 
 int CMakeEProfile::MakeEProfile(CDrawImage *drawImage, CImageWarper *imageWarper, CDataSource *dataSource, int dX, int dY, CT::string *eProfileJson) {
   EProfileUniqueRequests uniqueRequest;
@@ -513,7 +507,7 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
   }
   varTime->readData(CDF_DOUBLE);
   if (varTime->getSize() != count[0]) {
-    CDBError("varTime->getSize()!=count[0] : %d!=%d", varTime->getSize(), count[0]);
+    CDBError("varTime->getSize()!=count[0] : %lu!=%lu", varTime->getSize(), count[0]);
     return 1;
   }
 
@@ -593,7 +587,7 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
     eProfileJson->printconcat("\"numValues\":%d,", varRange->getSize());
     eProfileJson->printconcat("\"name\":\"%s\",", encodeJSON(variable->name.replace("_backup", "")).c_str());
 
-    CDBDebug("%d", variable->getSize());
+    CDBDebug("%lu", variable->getSize());
 
     size_t colOffset = varRange->getSize() * 0;
     if (count[0] > 1) {
@@ -607,7 +601,7 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
       }
     }
 
-    CDBDebug("Querying for time index %d and file %s", colOffset, dataSource->getFileName());
+    CDBDebug("Querying for time index %lu and file %s", colOffset, dataSource->getFileName());
 
     // Make profile object
     eProfileJson->concat("\"profile\":{");

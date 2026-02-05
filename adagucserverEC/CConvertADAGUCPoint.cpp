@@ -27,9 +27,6 @@
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
 #include "CConvertADAGUCPoint_convert_BIRA_IASB_NETCDF.cpp"
-// #define CCONVERTADAGUCPOINT_DEBUG
-// #define MEASURETIME
-const char *CConvertADAGUCPoint::className = "CConvertADAGUCPoint";
 
 void CConvertADAGUCPoint::drawDot(int px, int py, int v, int W, int H, float *grid) {
   for (int x = -4; x < 6; x++) {

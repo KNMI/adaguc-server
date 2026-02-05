@@ -24,7 +24,6 @@
  ******************************************************************************/
 
 #include "COGCDims.h"
-const char *CCDFDims::className = "CCDFDims";
 
 void COGCDims::addValue(const char *value) {
   for (size_t j = 0; j < uniqueValues.size(); j++) {

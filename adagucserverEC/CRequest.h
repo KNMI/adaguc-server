@@ -38,7 +38,7 @@ private:
   CT::string Exceptions;
   CServerParams *srvParam;
   std::vector<CT::string *> queryDims;
-  DEF_ERRORFUNCTION();
+
   int generateOGCGetCapabilities(CT::string *XMLdocument);
   int generateGetReferenceTimes(CDataSource *dataSource);
   int generateGetReferenceTimesDoc(CT::string *result, CDataSource *dataSource);

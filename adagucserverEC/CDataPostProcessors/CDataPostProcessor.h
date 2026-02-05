@@ -31,9 +31,6 @@
 #include "CDPPInterface.h"
 
 class CDPPExecutor {
-private:
-  DEF_ERRORFUNCTION();
-
 public:
   std::vector<CDPPInterface *> *dataPostProcessorList;
   CDPPExecutor();
@@ -43,9 +40,5 @@ public:
   int executeProcessors(CDataSource *dataSource, int mode, double *data, size_t numItems);
 };
 
-class CDataPostProcessor {
-public:
-  static CDPPExecutor *getCDPPExecutor();
-};
-
+CDPPExecutor *getCDPPExecutor();
 #endif

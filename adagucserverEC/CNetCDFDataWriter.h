@@ -14,7 +14,7 @@
 class CNetCDFDataWriter : public CBaseDataWriterInterface {
 private:
   CT::string JSONdata;
-  DEF_ERRORFUNCTION();
+
   class Settings {
   public:
     size_t width;

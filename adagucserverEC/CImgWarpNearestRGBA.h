@@ -34,9 +34,6 @@
  *  This class is very fast for large datasets, with low zoom levels (zoomed out completely)
  */
 class CDrawTileObjBGRA {
-private:
-  DEF_ERRORFUNCTION();
-
 public:
   double dfTileWidth, dfTileHeight;
   double dfSourceBBOX[4];
@@ -64,7 +61,6 @@ public:
  */
 class CImgWarpNearestRGBA : public CImageWarperRenderInterface {
 private:
-  DEF_ERRORFUNCTION();
   int set(const char *) { return 0; }
   int status;
 

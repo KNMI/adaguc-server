@@ -4,7 +4,6 @@
 /************************/
 /*      CDPPFixGOES16     */
 /************************/
-const char *CDPPGoes16Metadata::className = "CDPPGoes16Metadata";
 
 const char *CDPPGoes16Metadata::getId() {
   CDBDebug("getId");

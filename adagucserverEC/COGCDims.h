@@ -83,7 +83,6 @@ public:
 
 class CCDFDims {
 private:
-  DEF_ERRORFUNCTION();
   class NetCDFDim {
   public:
     CT::string name;

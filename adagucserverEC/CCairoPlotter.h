@@ -56,7 +56,6 @@
 cairo_status_t writerFunc(void *closure, const unsigned char *data, unsigned int length);
 class CCairoPlotter {
 private:
-  DEF_ERRORFUNCTION();
   unsigned char *ARGBByteBuffer;
   float rr, rg, rb, ra;
   unsigned char fr, fg, fb;

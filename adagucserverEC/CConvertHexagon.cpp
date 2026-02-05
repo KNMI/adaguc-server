@@ -27,9 +27,6 @@
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
 
-// #define CCONVERTHEXAGON_DEBUG
-const char *CConvertHexagon::className = "CConvertHexagon";
-
 void line2(float *imagedata, int w, int h, float x1, float y1, float x2, float y2, float value) {
   int xyIsSwapped = 0;
   float dx = x2 - x1;
@@ -465,7 +462,7 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
     } else {
       start[dimInd] = dataSource->getDimensionIndex(dimName.c_str());
     }
-    CDBDebug("%s = %d %d", dimName.c_str(), start[dimInd], count[dimInd]);
+    CDBDebug("%s = %lu %lu", dimName.c_str(), start[dimInd], count[dimInd]);
   }
 
   hexagonVar->readData(CDF_FLOAT, start, count, stride, true);

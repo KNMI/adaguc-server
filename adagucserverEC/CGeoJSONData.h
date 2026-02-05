@@ -63,7 +63,6 @@ private:
   CT::string pstr;
   int64_t intVal;
   double dblVal;
-  DEF_ERRORFUNCTION();
 
 public:
   FeatureProperty(int64_t i) {
@@ -111,7 +110,6 @@ class Feature {
   std::map<std::string, FeatureProperty *> fp;
   std::vector<Polyline> polylines;
   std::vector<GeoPoint> points;
-  DEF_ERRORFUNCTION();
 
 public:
   Feature();

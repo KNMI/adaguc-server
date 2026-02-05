@@ -5,8 +5,6 @@
 #include "CRequest.h"
 #include "CNetCDFDataWriter.h"
 
-const char *CCreateTiles::className = "CCreateTiles";
-
 int CCreateTiles::createTiles(CDataSource *dataSource, int scanFlags) {
   if (dataSource->isConfigured == false) {
     CDBError("Error! dataSource->isConfigured == false");
@@ -38,7 +36,7 @@ int CCreateTiles::createTiles(CDataSource *dataSource, int scanFlags) {
   try {
     fileList = CDBFileScanner::searchFileNames(dataSource->cfgLayer->FilePath[0]->value.c_str(), filter.c_str(), tailPath.c_str());
   } catch (int linenr) {
-    CDBError("Exception in searchFileNames [%s] [%s]", dataSource->cfgLayer->FilePath[0]->value.c_str(), filter.c_str(), tailPath.c_str());
+    CDBError("Exception in searchFileNames [%s] [%s] [%s]", dataSource->cfgLayer->FilePath[0]->value.c_str(), filter.c_str(), tailPath.c_str());
     return 1;
   }
   if (fileList.size() == 0) {
@@ -46,7 +44,7 @@ int CCreateTiles::createTiles(CDataSource *dataSource, int scanFlags) {
     return 1;
   }
 
-  CDBDebug("Found %d files", fileList.size());
+  CDBDebug("Found %lu files", fileList.size());
   for (size_t j = 0; j < fileList.size(); j++) {
     CCreateTiles::createTilesForFile(dataSource, scanFlags, fileList[j].c_str());
   }

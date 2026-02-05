@@ -37,10 +37,6 @@
 #include "utils/CXMLTemplates.h"
 #include "utils/LayerUtils.h"
 
-// #define CXMLGEN_DEBUG
-// #define MEASURE_TIME
-
-const char *CXMLGen::className = "CXMLGen";
 int CXMLGen::WCSDescribeCoverage(CServerParams *srvParam, CT::string *XMLDocument) { return OGCGetCapabilities(srvParam, XMLDocument); }
 
 const MetadataLayer *getFirstLayerWithoutError(std::vector<MetadataLayer *> *metadataLayerList) {

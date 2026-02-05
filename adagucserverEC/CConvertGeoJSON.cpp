@@ -32,9 +32,6 @@
 #include "CImageWarper.h"
 #include "CFillTriangle.h"
 
-// #define CCONVERTGEOJSON_DEBUG
-const char *CConvertGeoJSON::className = "CConvertGeoJSON";
-
 #define CCONVERTGEOJSONCOORDS_NODATA -32000
 #define CCONVERTGEOJSON_FILL 65535u
 

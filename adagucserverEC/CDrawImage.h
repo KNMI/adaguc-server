@@ -65,7 +65,7 @@ private:
   std::vector<CLegend *> legends;
   CLegend *currentLegend = nullptr;
   int dImageCreated;
-  DEF_ERRORFUNCTION();
+
   int _createStandard();
   int dPaletteCreated;
   unsigned char BGColorR, BGColorG, BGColorB;

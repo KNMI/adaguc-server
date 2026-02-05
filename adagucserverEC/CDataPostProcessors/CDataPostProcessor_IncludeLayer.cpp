@@ -5,7 +5,6 @@
 /************************/
 /*CDPPIncludeLayer */
 /************************/
-const char *CDPPIncludeLayer::className = "CDPPIncludeLayer";
 
 const char *CDPPIncludeLayer::getId() { return "include_layer"; }
 int CDPPIncludeLayer::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int) {

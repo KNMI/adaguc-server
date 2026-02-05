@@ -26,8 +26,6 @@
 #include "CDBFactory.h"
 #include "CDBAdapterPostgreSQL.h"
 
-const char *CDBFactory::className = "CDBFactory";
-
 CDBAdapterPostgreSQL *CDBFactory::staticCDBAdapter = NULL;
 
 CDBAdapterPostgreSQL *CDBFactory::getDBAdapter(CServerConfig::XMLE_Configuration *cfg) {

@@ -45,7 +45,6 @@
 #include "CDBFileScanner.h"
 #include "CImgRenderFieldVectors.h"
 #include "CDataPostProcessors/CDataPostProcessor_UVComponents.h"
-const char *CDataReader::className = "CDataReader";
 
 // #define CDATAREADER_DEBUG
 // #define MEASURETIME
@@ -55,7 +54,6 @@ const char *CDataReader::className = "CDataReader";
 
 class Proc {
 public:
-  DEF_ERRORFUNCTION();
   static int swapPixelsAtLocation(CDataSource *dataSource, CDF::Variable *variable, int mode) {
     if (dataSource->useLonTransformation == -1) return 0;
     switch (variable->getType()) {
@@ -180,8 +178,6 @@ private:
     dataSource->lonTransformDone = true;
   }
 };
-
-const char *Proc::className = "Proc";
 
 int CDataReader::open(CDataSource *dataSource, int mode) { return open(dataSource, mode, -1, -1); }
 int CDataReader::open(CDataSource *dataSource, int x, int y) { return open(dataSource, CNETCDFREADER_MODE_OPEN_ALL, x, y); }
@@ -504,8 +500,8 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
     if (statusY != 0) {
       CREPORT_ERROR_NODOC(CT::string("Not possible to read data for dimension ") + dataSource->varY->name, CReportMessage::Categories::GENERAL);
       for (size_t j = 0; j < dataSource->varY->dimensionlinks.size(); j++) {
-        CDBDebug("For var %s, reading dim %s of size %d (%d %d %d)", dataSource->varY->name.c_str(), dataSource->varY->dimensionlinks[j]->name.c_str(), dataSource->varY->dimensionlinks[j]->getSize(),
-                 sta[j], sto[j], str[j]);
+        CDBDebug("For var %s, reading dim %s of size %lu (%lu %lu %lu)", dataSource->varY->name.c_str(), dataSource->varY->dimensionlinks[j]->name.c_str(),
+                 dataSource->varY->dimensionlinks[j]->getSize(), sta[j], sto[j], str[j]);
       }
       return 1;
     }
@@ -1047,12 +1043,12 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
   }
 
   if (enablePostProcessors) {
-    CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
+    getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
   }
 
   // For datasets without files, such as the Solar Terminator
   if (isVirtual) {
-    CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
+    getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
   }
 
   if (mode == CNETCDFREADER_MODE_GET_METADATA) {
@@ -1133,7 +1129,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
           CDBError("Unable to read data for variable %s in file %s", dataSource->getDataObject(varNr)->cdfVariable->name.c_str(), dataSource->getFileName());
 
           for (size_t j = 0; j < dataSource->getDataObject(varNr)->cdfVariable->dimensionlinks.size(); j++) {
-            CDBDebug("%s %d %d %d", dataSource->getDataObject(varNr)->cdfVariable->dimensionlinks[j]->name.c_str(), start[j], count[j], stride[j]);
+            CDBDebug("%s %lu %lu %lu", dataSource->getDataObject(varNr)->cdfVariable->dimensionlinks[j]->name.c_str(), start[j], count[j], stride[j]);
           }
 
           return 1;
@@ -1386,7 +1382,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 #endif
 
     if (enablePostProcessors) {
-      CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
+      getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
     }
   }
 

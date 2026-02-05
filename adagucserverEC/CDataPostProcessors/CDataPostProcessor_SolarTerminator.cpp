@@ -16,14 +16,13 @@
 /************************/
 /*      CDPPSolarTerminator  */
 /************************/
-const char *CDPPSolarTerminator::className = "CDPPSolarTerminator";
 
 const char *CDPPSolarTerminator::getId() { return "solarterminator"; }
 
 int CDPPSolarTerminator::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
   if (proc->attr.algorithm.equals("solarterminator")) {
     if (dataSource->getNumDataObjects() < 1 && mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
-      CDBError("1 variable is needed for solarterminator, found %d", dataSource->getNumDataObjects());
+      CDBError("1 variable is needed for solarterminator, found %lu", dataSource->getNumDataObjects());
       return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
     }
     return CDATAPOSTPROCESSOR_RUNAFTERREADING | CDATAPOSTPROCESSOR_RUNBEFOREREADING;

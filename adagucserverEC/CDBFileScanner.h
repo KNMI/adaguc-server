@@ -57,7 +57,6 @@
  */
 class CDBFileScanner {
 private:
-  DEF_ERRORFUNCTION();
   static int createDBUpdateTables(CDataSource *dataSource, int &removeNonExistingFiles, std::vector<std::string> *fileList, bool recreateTable);
 
   static std::vector<CT::string> tableNamesDone;

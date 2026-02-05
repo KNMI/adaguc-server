@@ -45,7 +45,7 @@ int updateLayerMetadata(CRequest &request) {
       CDBWarning("Found no layers in dataset %s", dataset.c_str());
       continue;
     } else {
-      CDBDebug("Found %d layer(s) in dataset %s", requestPerDataset.getServerParams()->cfg->Layer.size(), dataset.c_str());
+      CDBDebug("Found %lu layer(s) in dataset %s", requestPerDataset.getServerParams()->cfg->Layer.size(), dataset.c_str());
     }
     for (auto layer : requestPerDataset.getServerParams()->cfg->Layer) {
       dataSetConfigsWithLayers.insert(std::make_pair(datasetBaseName, makeUniqueLayerName(layer).c_str()));
@@ -59,7 +59,7 @@ int updateLayerMetadata(CRequest &request) {
     }
   }
 
-  CDBDebug("Found %d layers in total over all datasets in this instance", dataSetConfigsWithLayers.size());
+  CDBDebug("Found %lu layers in total over all datasets in this instance", dataSetConfigsWithLayers.size());
 
   // Check for datasets and or layers which are not configured anymore.
   json dataset;

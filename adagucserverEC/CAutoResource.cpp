@@ -4,8 +4,6 @@
 #include "CDFObjectStore.h"
 #include "CReporter.h"
 
-const char *CAutoResource::className = "CAutoResource";
-
 int CAutoResource::configure(CServerParams *srvParam, bool plain) {
   int status;
   // Dataset configuration is done in CREQUEST BEFORE INCLUDES are parsed

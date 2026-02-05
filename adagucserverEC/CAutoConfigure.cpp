@@ -4,7 +4,6 @@
 #include "CDataReader.h"
 #include "CReporter.h"
 #include "CRequest.h"
-const char *CAutoConfigure::className = "CAutoConfigure";
 
 // #define CAUTOCONFIGURE_DEBUG
 

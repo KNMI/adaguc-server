@@ -7,7 +7,6 @@
 /************************/
 /*      CDDPFILTERDATAOBJECTS  */
 /************************/
-const char *CDDPFilterDataObjects::className = "CDDPFILTERDATAOBJECTS";
 
 const char *CDDPFilterDataObjects::getId() { return CDATAPOSTPROCESSOR_CDDPFILTERDATAOBJECTS_ID; }
 

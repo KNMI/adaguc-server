@@ -14,7 +14,6 @@
  */
 class CDPPWindSpeedKnotsToMs : public CDPPInterface {
 private:
-  DEF_ERRORFUNCTION();
   float getBeaufort(float speed);
 
 public:

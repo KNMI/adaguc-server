@@ -35,8 +35,6 @@
 
 class CAreaMapper {
 private:
-  DEF_ERRORFUNCTION();
-
   GDWDrawFunctionSettings settings;
 
   double dfTileWidth, dfTileHeight;

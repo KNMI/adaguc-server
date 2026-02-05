@@ -219,3 +219,13 @@ TEST(string, basename) {
   CHECK_EQUAL(CT::basename("/a/b/c/d/e/f"), "f");
   CHECK_EQUAL(CT::basename("/a/b\\/c/d\\/e/f"), "f");
 }
+
+TEST(string, ctprintf) { CHECK_EQUAL("hi! 2 3.140000", CT::printf("%s %d %f", "hi!", 2, 3.14)); }
+
+TEST(string, ctprintfconcat) {
+  std::string test = "abc ";
+  CT::printfconcat(test, "%s %d %f", "hi!", 2, 3.14);
+  CHECK_EQUAL("abc hi! 2 3.140000", test);
+  CT::printfconcat(test, " MORESTUFF");
+  CHECK_EQUAL("abc hi! 2 3.140000 MORESTUFF", test);
+}

@@ -25,21 +25,17 @@
 
 #ifndef CDATASOURCE_H
 #define CDATASOURCE_H
-#include <cmath>
-#include "CXMLSerializerInterface.h"
-#include "CServerParams.h"
-#include "CServerConfig_CPPXSD.h"
-#include "CDebugger.h"
-#include "Definitions.h"
-#include "CTString.h"
-#include "CCDFDataModel.h"
-#include "COGCDims.h"
-#include "CStopWatch.h"
-#include "Types/CPointTypes.h"
 
+#include <cstddef>
+#include "CCDFObject.h"
 #include "CStyleConfiguration.h"
+#include "Types/CPointTypes.h"
+#include "COGCDims.h"
+#include "Types/GeoParameters.h"
+#include "CServerParams.h"
 
-#include "CGeoJSONData.h"
+// Forward declaration
+struct CStyleConfiguration;
 
 /**
  * Class which holds min and max values.
@@ -86,9 +82,6 @@ MinMax getMinMax(CDF::Variable *var);
  * This class is used for both image drawing (WMS) and data output (WCS)
  */
 class CDataSource {
-private:
-  DEF_ERRORFUNCTION();
-
 public:
   bool debug = false;
   CT::string headerFilename;

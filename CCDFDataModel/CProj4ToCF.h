@@ -41,8 +41,6 @@
 
 class CProj4ToCF {
 private:
-  DEF_ERRORFUNCTION();
-
   static float convertToM(float fValue);
 
   CT::string getProj4Value(const char *proj4Key, std::vector<CKeyValuePair> projKVPList);

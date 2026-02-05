@@ -41,17 +41,17 @@ void CReporter::writeMessageToLog(const CT::string message, CReportMessage::Seve
 
   if (severity == Severities::INFO) {
     _printDebug("[D:%03d:pid%lu: %s:%d %s] ", logMessageNumber, logProcessIdentifier, file, line, className);
-    _printDebugLine(message.c_str());
+    _printDebugLine("%s", message.c_str());
   }
 
   if (severity == Severities::WARNING) {
     _printWarning("[W:%03d:pid%lu: %s:%d %s] ", logMessageNumber, logProcessIdentifier, file, line, className);
-    _printWarningLine(message.c_str());
+    _printWarningLine("%s", message.c_str());
   }
 
   if (severity == Severities::ERROR) {
     _printError("[E:%03d:pid%lu: %s:%d %s] ", logMessageNumber, logProcessIdentifier, file, line, className);
-    _printErrorLine(message.c_str());
+    _printErrorLine("%s", message.c_str());
   }
 }
 

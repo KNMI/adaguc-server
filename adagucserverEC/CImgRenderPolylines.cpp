@@ -50,8 +50,6 @@ struct FeatureStyle {
   int padding;
 };
 
-const char *CImgRenderPolylines::className = "CImgRenderPolylines";
-
 FeatureStyle getAttributesForFeature(CFeature *feature, CT::string id, CStyleConfiguration *styleConfig) {
 
   CColor backgroundColor = CColor(0, 0, 0, 0);

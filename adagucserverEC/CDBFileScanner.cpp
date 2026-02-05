@@ -33,7 +33,7 @@
 #include <set>
 #include "utils/LayerMetadataStore.h"
 #include "utils/ConfigurationUtils.h"
-const char *CDBFileScanner::className = "CDBFileScanner";
+
 std::vector<CT::string> CDBFileScanner::tableNamesDone;
 // #define CDBFILESCANNER_DEBUG
 #define ISO8601TIME_LEN 32
@@ -50,11 +50,11 @@ bool CDBFileScanner::isTableAlreadyScanned(CT::string *tableName) {
   return false;
 }
 void CDBFileScanner::markTableDirty(CT::string *tableName) {
-  CDBDebug("Marking table dirty: %d %s", tableNamesDone.size(), tableName->c_str());
+  CDBDebug("Marking table dirty: %lu %s", tableNamesDone.size(), tableName->c_str());
   for (size_t t = 0; t < tableNamesDone.size(); t++) {
     if (tableNamesDone[t].equals(tableName->c_str())) {
       tableNamesDone.erase(tableNamesDone.begin() + t);
-      CDBDebug("Table marked dirty %d %s", tableNamesDone.size(), tableName->c_str());
+      CDBDebug("Table marked dirty %lu %s", tableNamesDone.size(), tableName->c_str());
       return;
     }
   }
@@ -78,6 +78,10 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
   dataSource->headerFilename = (*fileList)[0].c_str();
 
   CDBAdapterPostgreSQL *dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
+  if (dbAdapter == nullptr) {
+    CDBError("Unable to connect to database");
+    return 1;
+  }
 
   CDFObject *cdfObject = NULL;
   try {
@@ -309,14 +313,14 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
       CDataReader::DimensionType dtype = CDataReader::getDimensionType(cdfObjectOfFirstFile, dimNames[d].c_str());
 
       if (dtype == CDataReader::dtype_none) {
-        CDBWarning("dtype_none for %s", dtype, dimNames[d].c_str());
+        CDBWarning("dtype_none for %s", dimNames[d].c_str());
       }
       dimNames[d].toLowerCaseSelf();
       if (dtype == CDataReader::dtype_time || dtype == CDataReader::dtype_reference_time) {
         isTimeDim[d] = true;
       }
       if (verbose) {
-        CDBDebug("Found dimension %d with name %s of type %d, istimedim: [%d]", d, dimNames[d].c_str(), dtype, isTimeDim[d]);
+        CDBDebug("Found dimension %lu with name %s of type %d, istimedim: [%d]", d, dimNames[d].c_str(), dtype, isTimeDim[d]);
       }
 
       try {
@@ -797,7 +801,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
             }
             filesToDeleteFromDB.clear();
             CDirReader::compareLists(oldList, newList, &handleFileFromDBIsMissing, &handleDirHasNewFile);
-            CDBDebug("The database contains %d files, found %d files in DB which are missing on filesystem.", values->getSize(), filesToDeleteFromDB.size());
+            CDBDebug("The database contains %lu files, found %lu files in DB which are missing on filesystem.", values->getSize(), filesToDeleteFromDB.size());
             for (size_t j = 0; j < filesToDeleteFromDB.size(); j++) {
               CDBDebug("Deleting file %s from db", filesToDeleteFromDB[j].c_str());
               CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->removeFile(tableNames[d].c_str(), filesToDeleteFromDB[j].c_str());
@@ -907,12 +911,12 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string _tailPath, CT::
       } else {
         fileList = searchFileNames(dataSource->cfgLayer->FilePath[0]->value.c_str(), filter.c_str(), tailPath.c_str());
         if (verbose) {
-          CDBDebug("SearchFileNames found %d files", fileList.size());
+          CDBDebug("SearchFileNames found %lu files", fileList.size());
         }
       }
 
     } catch (int linenr) {
-      CDBDebug("Exception in searchFileNames [%s] [%s]", dataSource->cfgLayer->FilePath[0]->value.c_str(), filter.c_str(), tailPath.c_str());
+      CDBDebug("Exception in searchFileNames [%s] [%s] [%s]", dataSource->cfgLayer->FilePath[0]->value.c_str(), filter.c_str(), tailPath.c_str());
       return 0;
     }
   } else {
@@ -934,7 +938,7 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string _tailPath, CT::
     }
   }
   if (verbose) {
-    CDBDebug("Going to scan %d files", fileList.size());
+    CDBDebug("Going to scan %lu files", fileList.size());
   }
 
   if (fileList.size() == 0) {
@@ -967,7 +971,7 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string _tailPath, CT::
 
       // Remove the deleted files from the filelist.
       if (cleanFilesResult.second.size() > 0) {
-        CDBDebug("Cleanfiles deleted %d files.", cleanFilesResult.second.size());
+        CDBDebug("Cleanfiles deleted %lu files.", cleanFilesResult.second.size());
         // Remove the deleted files from the fileList.
         for (auto item : cleanFilesResult.second) {
           auto it = std::find(fileList.begin(), fileList.end(), item);

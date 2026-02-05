@@ -37,11 +37,9 @@
 class CPGSQLDB {
   // This class must be used within the same thread!
 private:
-  DEF_ERRORFUNCTION();
   PGconn *connection;
   PGresult *result;
-  char szTemp[CPGSQLDB_MAX_STR_LEN + 1];
-  char LastErrorMsg[CPGSQLDB_MAX_STR_LEN + 1];
+  std::string LastErrorMsg;
   int dConnected;
   void clearResult();
 
@@ -49,7 +47,7 @@ private:
   int _checkTable(const char *pszTableName, const char *pszColumns);
 
 public:
-  const char *getError();
+  std::string getError();
   CPGSQLDB();
   ~CPGSQLDB();
   int close2();

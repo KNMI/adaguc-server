@@ -1,10 +1,8 @@
 #include "CDataPostProcessor_AddDataObject.h"
 
-const char *CDPPAddDataObject::className = "CDPPAddDataObject";
-
 const char *CDPPAddDataObject::getId() { return CDATAPOSTPROCESSOR_AddDataObject_ID; }
 
-int CDPPAddDataObject::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
+int CDPPAddDataObject::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int) {
   if (proc->attr.algorithm.equals(CDATAPOSTPROCESSOR_AddDataObject_ID)) {
     if (proc->attr.name.empty() || proc->attr.a.empty()) {
       CDBError("Fill in attributes name (got: %s) and a (got: %s)", proc->attr.name.c_str(), proc->attr.a.c_str());

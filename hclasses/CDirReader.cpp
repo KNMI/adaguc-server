@@ -36,7 +36,6 @@
 #include <regex>
 #include "CDirReader.h"
 
-const char *CDirReader::className = "CDirReader";
 CDirReader::CDirReader() {}
 
 CDirReader::~CDirReader() { fileList.clear(); }
@@ -432,5 +431,3 @@ void CCachedDirReader::free() {
   }
   dirReaderMap.clear();
 }
-
-const char *CCachedDirReader::className = "CCachedDirReader";
