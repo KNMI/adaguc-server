@@ -3,7 +3,7 @@
 
 
 
-  <Style name="windbarbs_kts">
+  <Style name="windbarbs_kts" title="Wind barbs + filled wind speed contours" abstract="Rendered with barbs">
     <ShadeInterval min="0" max="7" label="0-7 (&lt;3 bft)" fillcolor="#FFFFB4"/>
     <ShadeInterval min="7" max="11" label="7-11 (3 bft)" fillcolor="#FFFF00"/>
     <ShadeInterval min="11" max="16" label="11-16 (4 bft)" fillcolor="#81FF00"/>
@@ -20,12 +20,6 @@
     <ShadeInterval min="100" max="200" label="100-200 (sshws 3-5)" fillcolor="#3E3E3E"/>
     <ContourLine width="1" linecolor="#444444" textcolor="#444444" textformatting="%2.0f" classes="7,11,16,21,27,34,41,48,56,64,74,84,100,200"/>
     <RenderMethod>barbshaded,barbshadedcontour,vectorshaded,vectorshadedcontour,barb</RenderMethod>
-    <NameMapping name="barbshaded" title="Wind barbs + filled wind speed contours" abstract="Rendered with barbs"/>
-    <NameMapping name="barbshadedcontour" title="Wind barbs + filled wind speed contours and lines" abstract="Rendered with barbs"/>
-    <NameMapping name="vectorshaded" title="Wind vectors + filled wind speed contours" abstract="Rendered with vectors"/>
-    <NameMapping name="vectorshadedcontour" title="Wind vectors + filled wind speed contours and lines" abstract="Rendered with vectors"/>
-    <NameMapping name="barb" title="Wind barbs" abstract="Rendered with barbs"/>
-
   </Style>
 
   <Layer type="database">

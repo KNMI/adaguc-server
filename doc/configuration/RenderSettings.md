@@ -61,14 +61,11 @@ The renderhint provides a hint to the renderer on what type of styling to use to
 For example to use discrete legend classes with the nearest neighbour or bilinear renderer do:
 
 ```xml
- <Style name="elevation_nl">
+ <Style name="elevation_nl" title="Height map nearest neighbour" abstract="Height map for AHN using nearest neighbour rendering">
 
     <RenderSettings renderhint="discreteclasses"/>
 
     <RenderMethod>nearest,bilinear</RenderMethod>
-
-    <NameMapping name="nearest" title="Height map nearest neighbour" abstract="Height map for AHN using nearest neighbour rendering" />
-    <NameMapping name="bilinear" title="Height map bilinear" abstract="Height map for AHN using bilinear rendering" />
 
     <ShadeInterval min="-80" max="-7" fillcolor="#08387b" bgcolor="#FF000080" />
     <ShadeInterval min="-7" max="-6" fillcolor="#084584" />

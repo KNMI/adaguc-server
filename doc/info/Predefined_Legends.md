@@ -95,33 +95,30 @@ Climate and weather physical quantities
 <palette index="239" color="#2E3F2A"/> <!-- 1040 -->
 </Legend>
 
-<Style name="temperature">
+<Style name="temperature" title="Temperature"
+abstract="Temperature">
 <Legend fixed="true" tickinterval="2">temperature</Legend>
 <Min>-14</Min>
 <Max>39,33333333</Max> <!-- 39,33333333 = (240 / (234/(38
 - ~~14)))~~ 14 -->
-<NameMapping name="point" title="Temperature"
-abstract="Temperature"/>
 <Point plotstationid="false" pointstyle="point" discradius="15"
 textradius="0" dot="false" fontsize="8" textcolor="#000000" />
 </Style>
 
-<Style name="precipitation">
+<Style name="precipitation" title="precipitation"
+abstract="precipitation">
 <Legend fixed="true"
 tickinterval="2">precipitation</Legend>
 <Min>0</Min>
 <Max>30</Max>
-<NameMapping name="point" title="precipitation"
-abstract="precipitation"/>
 <Point plotstationid="false" pointstyle="point" discradius="15"
 textradius="0" dot="false" fontsize="8" textcolor="#000000" />
 </Style>
 
-<Style name="pressure">
+<Style name="pressure" title="pressure" abstract="pressure">
 <Legend fixed="true" tickinterval="4">pressure</Legend>
 <Min>960</Min>
 <Max>1040</Max>
-<NameMapping name="point" title="pressure" abstract="pressure"/>
 <Point plotstationid="false" pointstyle="point" discradius="15"
 textradius="0" dot="false" fontsize="8" textcolor="#000000"
 textformat="%0.0f"/>
@@ -180,36 +177,32 @@ Seismological data
   <palette index="239" color="#000000"/> <!-- 12 !! -->
 </Legend>
 
-<Style name="magnitude_int">
+<Style name="magnitude_int" title="Richter magnitude scale" abstract="With discrete colors">
   <Legend fixed="true" tickinterval="1">magnitude_int</Legend>
   <Min>0</Min>
   <Max>12</Max>
-  <NameMapping name="point" title="Richter magnitude scale" abstract="With discrete colors"/>
   <Point plotstationid="false" pointstyle="point" discradius="20" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF"/>
 </Style>
 
-<Style name="magnitude_col">
+<Style name="magnitude_col" title="Richter magnitude scale" abstract="Wth continuous colors">
   <Legend fixed="true" tickinterval="1">magnitude_col</Legend>
   <Min>0</Min>
   <Max>12</Max>
-  <NameMapping name="point" title="Richter magnitude scale" abstract="Wth continuous colors"/>
   <Point plotstationid="false" pointstyle="point" discradius="20" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF"/>
 </Style>
 
-<Style name="magnitude2">
+<Style name="magnitude2" title="Richter magnitude scale >=2.0" abstract="magnitude">
   <Legend fixed="true" tickinterval="1">magnitude_int</Legend>
   <Min>0</Min>
   <Max>12</Max>
-  <NameMapping name="point" title="Richter magnitude scale >=2.0" abstract="magnitude"/>
   <Point plotstationid="false" pointstyle="point" discradius="20" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF"/>
   <ValueRange min="2" max="1000"/>
 </Style>
 
-<Style name="magnitude3">
+<Style name="magnitude3" title="Richter magnitude scale >=3.0" abstract="magnitude">
   <Legend fixed="true" tickinterval="1">magnitude_int</Legend>
   <Min>0</Min>
   <Max>12</Max>
-  <NameMapping name="point" title="Richter magnitude scale >=3.0" abstract="magnitude"/>
   <Point plotstationid="false" pointstyle="point" discradius="20" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF"/>
   <ValueRange min="3" max="1000"/>
 </Style>

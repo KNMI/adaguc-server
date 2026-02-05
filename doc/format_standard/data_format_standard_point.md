@@ -61,11 +61,10 @@ The ADAGUC configuration for the Layer object looks like this:
 		<palette index="210" red="165" green="0" blue="0"/>
 		<palette index="240" red="90" green="0" blue="0"/>
 	</Legend>
-	<Style name="randompoint1">
+	<Style name="randompoint1" title="Points" abstract="Points">
 		<Legend fixed="true" tickinterval="10">bluewithred</Legend>
 		<Min>0</Min>
 		<Max>100</Max>
-		<NameMapping name="point" title="Points" abstract="Points"/>
 		<Point plotstationid="false" pointstyle="point" discradius="8"
   textradius="0" dot="true" fontsize="14" textcolor="#FFFFFF"
   textformat=" "/>
@@ -178,12 +177,10 @@ The ADAGUC configuration looks like this:
   <palette index="240" color="#871A44"/> <!-- 39,33 -->
 </Legend>
 
-<Style name="temperature">
+<Style name="temperature" title="Temperature" abstract="Temperature">
   <Legend fixed="true" tickinterval="2">temperature</Legend>
   <Min>-14</Min>
   <Max>39,33333333</Max> <!-- 39,33333333 = (240 / (234/(38 - -14)))- 14 -->
-  <NameMapping name="point" title="Temperature"
-  abstract="Temperature"/>
   <Point plotstationid="false" pointstyle="point" discradius="15" textradius="0" dot="false" fontsize="8" textcolor="#000000" />
 </Style>
 
@@ -276,11 +273,10 @@ The configuration in ADAGUC looks like this:
   <palette index="220" color="#880000FF"/> <!-- 11 ! -->
   <palette index="239" color="#000000FF"/> <!-- 12 !! -->
 </Legend>
-<Style name="magnitude">
+<Style name="magnitude" title="Richter magnitude scale" abstract="Wth continuous colors">
   <Legend fixed="true" tickinterval="1">magnitude</Legend>
   <Min>0</Min>
   <Max>12</Max>
-  <NameMapping name="point"        title="Richter magnitude scale" abstract="Wth continuous colors"/>
   <Point plotstationid="false" pointstyle="point" discradius="20" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF"/>
 </Style>
 

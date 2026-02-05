@@ -30,14 +30,13 @@ The drawing of overlapping labels can be enabled or disabled with a [RenderSetti
 ## Example of feature drawing:
 
 ```xml
-<Style name="countries_nlmask">
+<Style name="countries_nlmask" name="nearest"   title="Mask NL">
     <Legend fixed="true">bluewhitered</Legend>
     <FeatureInterval match=".*" matchid="abbrev" bgcolor="#CCCCFF" fillcolor="#CCFFCCFF" label="Other"/>
     <FeatureInterval match="NLD.*" matchid="adm0_a3" fillcolor="#DFFFDF00" label="The Netherlands"/>
     <FeatureInterval match="^Luxembourg$" matchid="brk_name" fillcolor="#0000FF"  label="Luxembourg"/>
     <FeatureInterval match="^Asia$" matchid="continent" fillcolor="#808080"  label="Asia"/>
     <FeatureInterval match="^India$" matchid="abbrev" fillcolor="#80FF80"  label="India"/>
-    <NameMapping name="nearest"   title="Mask NL"/>
     <RenderMethod>polygon</RenderMethod>
   </Style>
 

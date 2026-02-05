@@ -28,11 +28,10 @@
     <palette index="239" color="#000000FF" />
     <!-- 12 !! -->
   </Legend>
-  <Style name="magnitude">
+  <Style name="magnitude"  title="Richter magnitude scale" abstract="Wth continuous colors">
     <Legend fixed="true" tickinterval="100000">magnitude</Legend>
     <Min>0</Min>
     <Max>2000000</Max>
-    <NameMapping name="point" title="Richter magnitude scale" abstract="Wth continuous colors" />
     <Point min="2592000" max="1000000000000" pointstyle="radiusandvalue" textformat=" " plotstationid="false" fillcolor="#CCCCCC" discradius="2.2" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF" />
     <Point min="604800" max="2592000" pointstyle="radiusandvalue" textformat=" " plotstationid="false" fillcolor="#FFFFFFFF" discradius="2.2" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF" />
     <Point min="86400" max="604800" pointstyle="radiusandvalue" textformat=" " plotstationid="false" fillcolor="#FFFF00FF" discradius="2.2" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF" />
@@ -53,11 +52,10 @@
   <Symbol name="triangle" coordinates="[[-1, -1], [1, -1], [0.0, 1], [-1, -1]]"/>
   <Symbol name="square" coordinates="[[-1, -1], [1, -1], [1, 1], [-1, 1], [-1, -1]]"/>
 
-  <Style name="magnitude_withsymbol">
+  <Style name="magnitude_withsymbol" title="Richter magnitude scale" abstract="Wth continuous colors">
     <Legend fixed="true" tickinterval="100000">magnitude</Legend>
     <Min>0</Min>
     <Max>2000000</Max>
-    <NameMapping name="point" title="Richter magnitude scale" abstract="Wth continuous colors" />
     <Point min="2592000" max="1000000000000" pointstyle="radiusandvalue" symbol="triangle" textformat=" " plotstationid="false" fillcolor="#CCCCCC" discradius="2.2" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF" />
     <Point min="604800" max="2592000" pointstyle="radiusandvalue" symbol="square" textformat=" " plotstationid="false" fillcolor="#FFFFFFFF" discradius="2.2" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF" />
     <Point min="86400" max="604800" pointstyle="radiusandvalue" textformat=" " plotstationid="false" fillcolor="#FFFF00FF" discradius="2.2" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF" />

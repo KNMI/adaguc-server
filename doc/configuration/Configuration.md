@@ -86,7 +86,6 @@ Configuration
     -   [FeatureInterval](FeatureInterval.md) (match, matchid, label, bgcolor, fillcolor) - Draw GeoJSON features and select features based on regular expressions.
     -   [SymbolInterval](SymbolInterval.md) (min, max, binary_and, file, offset_x, offset_y) - Draw symbols according to point value
     -   SmoothingFilter `<value>` - Optional, defaults to 1. The filter to smooth the image when using contour lines and shading.
-    -   [NameMapping](NameMapping.md) (name,title,abstract) - Optional, Provide detailed descriptions and human readable names for every style.
     -   [StandardNames](StandardNames.md) (standard_name, variable_name, units) - Optional, assigns this style to layers matching the standard_name and optionally the units.
     -   [Point](Point.md) (min,max,pointstyle,fillcolor,linecolor,textcolor,textoutlinecolor,textformat,fontfile,fontsize,discradius,textradius,dot,plotstationid) Configuration of rendering point data
     -   [Vector](Vector.md) (linecolor, linewidth,scale,vectorstyle,plotstationid,plotvalue,textformat, min, max, fontsize, outlinewidth, outlinecolor, textcolor, dot) Configuration of rendering point data as vector.

@@ -39,30 +39,27 @@
   <Include location="{ADAGUC_PATH}/data/config/includes/DefaultLayers.include.xml"/>
   
   <!-- Custom styles -->
-  <Style name="countries_coloured">
+  <Style name="countries_coloured" title="All countries" abstract="All countries">
     <Legend fixedclasses="true" tickinterval="10" tickround=".01">multicolor</Legend>
     <Min>0</Min>
     <Max>170</Max>
-    <NameMapping name="nearest"   title="All countries" abstract="All countries"/>
     <RenderMethod>nearest</RenderMethod>
   </Style>
   
-  <Style name="countries_nlmask">
+  <Style name="countries_nlmask" title="Mask NL">
     <Legend fixed="true">bluewhitered</Legend>
     <FeatureInterval match=".*" matchid="abbrev" bgcolor="#CCCCFF" fillcolor="#CCFFCCFF" label="Other"/>
     <FeatureInterval match="NLD.*" matchid="adm0_a3" fillcolor="#DFFFDF00" label="The Netherlands"/>
     <FeatureInterval match="^Luxembourg$" matchid="brk_name" fillcolor="#0000FF"  label="Luxembourg"/>
     <FeatureInterval match="^Asia$" matchid="continent" fillcolor="#808080"  label="Asia"/>
     <FeatureInterval match="^India$" matchid="abbrev" fillcolor="#80FF80"  label="India"/>
-    <NameMapping name="nearest"   title="Mask NL"/>
     <RenderMethod>nearest</RenderMethod>
   </Style>
   
     
-  <Style name="landseamask">
+  <Style name="landseamask" title="Land sea mask">
     <Legend fixed="true">bluewhitered</Legend>
     <FeatureInterval match=".*" matchid="abbrev" bgcolor="#CCCCFF" fillcolor="#CCFFCCFF"/>
-    <NameMapping name="nearest"   title="Land sea mask"/>
     <RenderMethod>nearest</RenderMethod>
   </Style>
   
@@ -108,11 +105,10 @@
     <palette index="240" red="0"  green="0"  blue="0" alpha="-1"/>
   </Legend>
   
-  <Style name="black">
+  <Style name="black" title="Masked" abstract="Masked">
     <Legend fixedclasses="true" tickinterval="1">black</Legend>
     <Min>0</Min>
     <Max>1</Max>
-    <NameMapping name="nearest"   title="Masked" abstract="Masked"/>
     <RenderMethod>nearest</RenderMethod>
   </Style><!--
   

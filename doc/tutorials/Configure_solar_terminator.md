@@ -13,7 +13,7 @@ Create the following file at the filepath `$ADAGUC_DATASET_DIR/solt.xml`
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
 <Configuration>
-  <Style name="soltstyle">
+  <Style name="soltstyle" title="Shaded categories" abstract="Displays different phases of twilight and day using shades of gray, with black for night and white for day.">
     <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
     <Min>0</Min>
     <Max>4</Max>
@@ -23,8 +23,7 @@ Create the following file at the filepath `$ADAGUC_DATASET_DIR/solt.xml`
     <ShadeInterval min="2.00" max="3.00"    label="Nautical Twilight"    fillcolor="#666666"/>
     <ShadeInterval min="3.00" max="4.00"    label="Civil Twilight"    fillcolor="#999999"/>
     <ShadeInterval min="4.00" max="5.00"    label="Day"    fillcolor="#FFFFFF"/>
-
-    <NameMapping name="shadedcontour"   title="Shaded categories" abstract="Displays different phases of twilight and day using shades of gray, with black for night and white for day."/>
+    
     <RenderMethod>shadedcontour</RenderMethod>
 
   </Style>

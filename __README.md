@@ -155,19 +155,17 @@ Create a dataset configuration file named $ADAGUCHOME/adaguc-datasets/sat.xml :
     <palette index="0"   red="0"   green="0"   blue="0" alpha="0"/>
     <palette index="240" red="255" green="255"   blue="255"/>
   </Legend>
-  <Style name="hrvis_0till30000">
+  <Style name="hrvis_0till30000" title="Albedo 0-30000" abstract="Albedo values from satellite imagery">
     <Legend fixed="true">gray</Legend>
     <Min>0</Min>
     <Max>30000</Max>
-    <RenderMethod>nearest</RenderMethod>
-    <NameMapping name="nearest"        title="Albedo 0-30000" abstract="Albedo values from satellite imagery"/>
+    <RenderMethod>nearest</RenderMethod>      
   </Style>
-  <Style name="hrvis_0till30000_transparent">
+  <Style name="hrvis_0till30000_transparent" title="Albedo 0-30000 transparent" abstract="Albedo values from satellite imagery with the lower values made transparent">
     <Legend fixed="true">gray-trans</Legend>
     <Min>0</Min>
     <Max>30000</Max>
     <RenderMethod>nearest</RenderMethod>
-    <NameMapping name="nearest"        title="Albedo 0-30000 transparent" abstract="Albedo values from satellite imagery with the lower values made transparent"/>
   </Style>
   <!-- Layers -->
   <Layer type="database">
@@ -212,7 +210,7 @@ You can use this URL for example in http://geoservices.knmi.nl/viewer2.0/ or loc
     <palette index="160" red="255" green="255" blue="0" />
     <palette index="240" red="255" green="0" blue="0" />
   </Legend>
-  <Style name="era5_style">
+  <Style name="era5_style" title="IVT 0-1500" abstract="IVT">
     <Legend fixed="true">ColorPalette</Legend>
     <ContourLine width="3" linecolor="#ff0000" textcolor="#ff0000" textformatting="%2.0f" classes="300" />
     <ContourLine width="0.3" linecolor="#444444" textcolor="#444444" textformatting="%2.0f" interval="100" />
@@ -220,7 +218,6 @@ You can use this URL for example in http://geoservices.knmi.nl/viewer2.0/ or loc
     <Max>1500</Max>
     <ValueRange min="350" max="10000000" />
     <RenderMethod>nearest,contour,nearestcontour</RenderMethod>
-    <NameMapping name="nearest" title="IVT 0-1500" abstract="IVT" />
   </Style>
   <!-- Layer with name grid10 from geoservices.knmi.nl -->
   <Layer type="grid">

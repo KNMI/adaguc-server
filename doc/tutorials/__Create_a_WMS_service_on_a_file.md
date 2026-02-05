@@ -216,25 +216,20 @@ mimetype="Content-Type:text/plain" />
 </Legend>
 
 <!-- Style configuration -->
-<Style name="rainbow">
+<Style name="rainbow" title="Rainbow colors" abstract="Drawing
+images with rainbow colors">
 <Legend fixedclasses="true" tickinterval="500"
 tickround="1">rainbow</Legend>
 <Min>0.0</Min>
 <Max>3500</Max>
-<NameMapping name="nearest" title="Rainbow colors" abstract="Drawing
-images with rainbow colors"/>
 </Style>
-<Style name="no2">
+<Style name="no2" title="NO2 colors" abstract="Drawing
+images with NO2 colors">
 <Legend fixedclasses="true" tickinterval="500"
 tickround="1">no2</Legend>
 <Min>0.0</Min>
 <Max>3500</Max>
 <RenderMethod>nearest,bilinear</RenderMethod>
-<NameMapping name="nearest" title="NO2 colors" abstract="Drawing
-images with NO2 colors"/>
-<NameMapping name="bilinear" title="NO2 colors smooth"
-abstract="Drawing images with NO2 colors and bilinear
-interpolation"/>
 </Style>
 
 <!-- Layer configuration -->

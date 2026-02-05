@@ -99,12 +99,11 @@ with configuration:
     <Dimension name="time" interval="PT10M">time</Dimension>
     <Styles>observation.ta</Styles>
    </Layer>
-    <Style name="observation.ta">
+    <Style name="observation.ta" title="Temperature" abstract="Temperature">
     <Legend fixed="true" tickinterval="2">wow.temperature</Legend>
     <RenderMethod>point</RenderMethod>
     <Min>-14</Min>
     <Max>39.33333333</Max> <!-- 39,33333333 = (240 / (234/(38 - -14))) - 14 -->
-    <NameMapping name="point"        title="Temperature" abstract="Temperature"/>
     <Point plotstationid="true" pointstyle="point" discradius="8" textradius="16" dot="true" fontsize="8" textcolor="#000000" />
   </Style> 
 ```
@@ -115,12 +114,11 @@ Multiple variable layer example:
 
 with configuration:
 ```xml
-  <Style name="observation.tatd">
+  <Style name="observation.tatd" title="Temperature" abstract="Temperature">
     <Legend fixed="true" tickinterval="2">wow.temperature</Legend>
     <RenderMethod>point</RenderMethod>
     <Min>-14</Min>
     <Max>39.33333333</Max> <!-- 39,33333333 = (240 / (234/(38 - -14))) - 14 -->
-    <NameMapping name="point" title="Temperature" abstract="Temperature"/>
     <Point plotstationid="false" pointstyle="point" discradius="8" textradius="24" dot="false" fontsize="8" textcolor="#000000" />
   </Style>
    <Layer type="database" hidden="false">
@@ -142,12 +140,11 @@ Text only with a **textoutlinecolor** example:
 ![](point4.png)
 with configuration:
 ```xml
-  <Style name="observation.outline">
+  <Style name="observation.outline" title="Temperature outline" abstract="Temperature">
     <Legend fixed="true" tickinterval="2">wow.temperature</Legend>
     <RenderMethod>point</RenderMethod>
     <Min>-14</Min>
     <Max>39.33333333</Max> <!-- 39,33333333 = (240 / (234/(38 - -14))) - 14 -->
-    <NameMapping name="point" title="Temperature outline" abstract="Temperature"/>
     <Point plotstationid="false" pointstyle="point" discradius="0" textradius="16" dot="false" fontsize="12" textcolor="#a00000" textoutlinecolor="#00800080" />
   </Style> 
   <Layer type="database" hidden="false">
@@ -179,12 +176,11 @@ Example with temperature data:
 
 with configuration:
 ```xml
-  <Style name="observation.disc">
+  <Style name="observation.disc" title="Temperature outline" abstract="Temperature">
     <Legend fixed="true" tickinterval="2">wow.temperature</Legend>
     <RenderMethod>point</RenderMethod>
     <Min>-14</Min>
     <Max>39.33333333</Max> <!-- 39,33333333 = (240 / (234/(38 - -14))) - 14 -->
-    <NameMapping name="point" title="Temperature outline" abstract="Temperature"/>
     <Point plotstationid="false" pointstyle="disc" discradius="24" textradius="16" dot="false" fillcolor="#b0b0b0" fontsize="12" textcolor="#000000"/>
   </Style>
   <Layer type="database" hidden="false">
@@ -227,11 +223,10 @@ When set to "zoomablepoint", the point keeps the same size across
 zooming and reprojections. This is used to plot IASI satellite imagery:
 
 ```xml
-  <Style name="IASI">
+  <Style name="IASI" title="IASI" abstract="IASI">
     <Legend fixed="true" tickinterval=".1">temperature</Legend>
     <Min>0</Min>
     <Max>1</Max>
-    <NameMapping name="point" title="IASI" abstract="IASI" />
     <Point plotstationid="false" pointstyle="zoomablepoint" textformat=" " discradius="10" textradius="0" dot="false" fontsize="8" textcolor="#000000" />
   </Style>
 
@@ -247,11 +242,10 @@ depends on age. The radius can be adjusted with the discradius property,
 it multiplies the magnitude variable with the discradius value.
 
 ```xml
-<Style name="magnitude">
+<Style name="magnitude" title="Richter magnitude scale" abstract="Wth continuous colors">
   <Legend fixed="true" tickinterval="100000">magnitude</Legend>
   <Min>0</Min>
   <Max>2000000</Max>
-  <NameMapping name="point" title="Richter magnitude scale" abstract="Wth continuous colors" />
   <Point min="2592000" max="1000000000000" pointstyle="radiusandvalue" textformat=" " plotstationid="false" fillcolor="#CCCCCC" discradius="2.2" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF" />
   <Point min="604800" max="2592000" pointstyle="radiusandvalue" textformat=" " plotstationid="false" fillcolor="#FFFFFFFF" discradius="2.2" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF" />
   <Point min="86400" max="604800" pointstyle="radiusandvalue" textformat=" " plotstationid="false" fillcolor="#FFFF00FF" discradius="2.2" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF" />
