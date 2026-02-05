@@ -14,6 +14,7 @@ Create the following file at the filepath `$ADAGUC_DATASET_DIR/solt.xml`
 <?xml version="1.0" encoding="UTF-8" ?>
 <Configuration>
 <?xml version="1.0" encoding="UTF-8" ?>
+  <!-- Shaded categories -->
   <Style name="solt_twilight">
     <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
     <Min>0</Min>
@@ -25,12 +26,14 @@ Create the following file at the filepath `$ADAGUC_DATASET_DIR/solt.xml`
     <ShadeInterval min="102.00" max="108.00" label="Astronomical Twilight (102–108°)" fillcolor="#333333"/>
     <ShadeInterval min="108.00" max="180.00" label="Night (108–180°)" fillcolor="#000000"/>
 
-    <NameMapping name="shadedcontour"   title="Shaded categories" abstract="Displays different phases of twilight and day using shades of gray, with black for night and white for day."/>
     <RenderMethod>shadedcontour</RenderMethod>
 
   </Style>
 
   <Layer type="liveupdate">
+    <Title>Solar Zenith Angle (SZA)</Title>
+    <Abstract>Displays the solar zenith angle (SZA). The SZA ranges from 0 to 90 degrees during the day, and from 90 and up to 180 degrees at night.</Abstract>
+
     <Name>solarterminator</Name>
     <DataPostProc algorithm="solarterminator"/>
     <Variable>solarterminator</Variable>

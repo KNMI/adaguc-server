@@ -54,7 +54,7 @@
       "type": "Parameter",
       "id": "solarterminator",
       "label": {
-        "en:": "solarterminator"
+        "en:": "Solar Zenith Angle (SZA)"
       },
       "observedProperty": {
         "id": "https://vocab.nerc.ac.uk/standard_name/solarterminator",
