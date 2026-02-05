@@ -47,10 +47,11 @@ namespace CDF {
     CT::string orgName;
     std::vector<Attribute *> attributes;
     std::vector<Dimension *> dimensionlinks;
-    int id;
-    size_t currentSize;
-    void *data;
-    bool isDimension;
+    int id = -1;
+    size_t currentSize = 0;
+    void *data = nullptr;
+    bool isDimension = false;
+    bool enableCache = false;
 
     // Currently, aggregation along just 1 dimension is supported.
     struct CDFObjectClass {

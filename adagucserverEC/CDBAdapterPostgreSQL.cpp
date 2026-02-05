@@ -1170,7 +1170,7 @@ int CDBAdapterPostgreSQL::storeLayerMetadata(const char *datasetName, const char
 
   status = dataBaseConnection->query(query.c_str());
   if (status != 0) {
-    CDBError("Unable to insert records: \"%s\"", query.c_str());
+    CDBError("Unable to insert records: \"%s\", error %s", query.c_str(), dataBaseConnection->getError().c_str());
     throw(__LINE__);
   }
 #ifdef MEASURETIME
