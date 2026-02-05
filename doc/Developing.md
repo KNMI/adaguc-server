@@ -142,7 +142,7 @@ Copy a test netcdf file and display:
 
 # 7. Run tests
 
-First start the docker used for testing: 
+First start the docker used for testing:
 
 ```
 docker compose -f Docker/docker-compose-test.yml up -Vd
@@ -153,6 +153,32 @@ Then run the tests by doing:
 ```
 bash runtests_psql.sh
 ```
+
+# 8. Setup pre-commit hooks for formatting
+
+You need to do the steps _once_ to setup the pre-commit hooks:
+
+1. Install the python dependencies:
+```bash
+pip-sync requirements.txt requirements-dev.txt
+cd ./python/lib/ && python3 setup.py develop && cd ../../
+```
+
+2. Setup pre-commit hooks
+```bash
+git init
+pre-commit install
+```
+
+From then, `git commit` will automatically run the python formatting tools.
+
+To skip the pre-commit hook, run `git commit -m "A message" --no-verify`.
+
+To manually execute the pre-commit hooks on all files, run: `pre-commit run --all-files`.
+
+Important files:
+- `pyproject.toml` for configuration of python formatting
+- `.pre-commit-config.yaml` for pre-commit configuration
 
 ## To scan datasets
 
