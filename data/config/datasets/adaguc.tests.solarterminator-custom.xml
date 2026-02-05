@@ -15,7 +15,7 @@
 
   </Style>
 
-  <Legend name="solt_continuous" type="colorRange">
+  <Legend name="solt_continuous" type="colorRange" tickinterval="30">
     <!-- Sun at zenith / subsolar point (maximum daylight) -->
     <palette index="0" color="#FF0000FF" />
     <!-- Strong daylight (high solar elevation) -->
