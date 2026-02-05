@@ -833,7 +833,6 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string _tailPath, CT::
   }
 
   if (dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
-    CDBDebug("Entering special case for LiveUpdate updatedb");
     int status = updateMetaDataTableLiveUpdate(dataSource);
     if (status != 0) {
       CDBError("Unable to updateMetaDataTable");

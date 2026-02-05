@@ -2392,9 +2392,7 @@ int CRequest::updatedb(CT::string tailPath, CT::string layerPathToScan, int scan
       }
     }
     if (dataSources[j]->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
-      CDBDebug("Scanning layer of type LIVE UPDATE");
       status = CDBFileScanner::updatedb(dataSources[j], tailPath, layerPathToScan, scanFlags);
-      CDBDebug("Scan status was %d", status);
     }
   }
   if (errorHasOccured) {

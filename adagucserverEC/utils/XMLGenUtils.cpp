@@ -808,12 +808,6 @@ int getFileNameForLayer(MetadataLayer *metadataLayer) {
   }
   CServerParams *srvParam = metadataLayer->dataSource->srvParams;
 
-  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
-    // Enrich with a time dimension
-    CDBDebug("Enriching metadata for liveupdate");
-    layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(metadataLayer);
-    return 0;
-  }
   if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeDataBase) {
     if (metadataLayer->dataSource->cfgLayer->Dimension.size() == 0) {
       metadataLayer->fileName.copy(metadataLayer->dataSource->cfgLayer->FilePath[0]->value.c_str());

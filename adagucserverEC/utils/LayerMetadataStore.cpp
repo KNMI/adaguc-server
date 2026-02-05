@@ -410,6 +410,8 @@ int updateMetaDataTable(CDataSource *dataSource) {
   return statusA == 0 && statusB == 0 ? 0 : 1;
 }
 
+// When generating the data required by EDR, the metadata table is used
+// For this reason, we need to populate it here.
 int updateMetaDataTableLiveUpdate(CDataSource *dataSource) {
   CDBDebug("updateMetaDataTableLiveUpdate");
   layerTypeLiveUpdatePopulateDataSource(dataSource, dataSource->srvParams);
