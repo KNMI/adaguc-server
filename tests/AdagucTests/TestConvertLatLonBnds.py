@@ -2,6 +2,7 @@
 """
 This class contains tests to test the adaguc-server binary executable file. This is similar to black box testing, it tests the behaviour of the server software. It configures the server and checks if the response is OK.
 """
+
 import os
 import os.path
 import unittest
@@ -36,11 +37,7 @@ class TestConvertLatLonBnds(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        self.assertTrue(
-            AdagucTestTools().compareGetCapabilitiesXML(
-                self.testresultspath + filename, self.expectedoutputsspath + filename
-            )
-        )
+        self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename))
 
     def test_ConvertLatLonBnds_getMap(self):
         AdagucTestTools().cleanTempDir()
@@ -59,11 +56,7 @@ class TestConvertLatLonBnds(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        self.assertTrue(
-            AdagucTestTools().compareImage(
-                self.expectedoutputsspath + filename, self.testresultspath + filename, 8
-            )
-        )
+        self.assertTrue(AdagucTestTools().compareImage(self.expectedoutputsspath + filename, self.testresultspath + filename, 8))
 
     def test_ConvertLatLonBnds_getFeatureInfo(self):
         AdagucTestTools().cleanTempDir()
@@ -83,7 +76,5 @@ class TestConvertLatLonBnds(unittest.TestCase):
         self.assertEqual(status, 0)
         self.assertEqual(
             json.loads(data.getvalue()),
-            json.loads(
-                AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)
-            ),
+            json.loads(AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)),
         )
