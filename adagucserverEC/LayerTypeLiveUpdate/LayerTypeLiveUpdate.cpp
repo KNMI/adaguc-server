@@ -53,25 +53,14 @@ void layerTypeLiveUpdatePopulateDataSource(CDataSource *dataSource, CServerParam
 
   // Make x,y (why can this value be anything?)
   int nx = 2, ny = 2;
-  CDF::Dimension *dimX = new CDF::Dimension();
-  dimX = new CDF::Dimension();
-  dimX->name = "x";
-  dimX->setSize(nx);
-
-  CDF::Dimension *dimY = new CDF::Dimension();
-  dimY = new CDF::Dimension();
-  dimY->name = "y";
-  dimY->setSize(ny);
+  auto dimX = new CDF::Dimension("x", nx);
+  auto dimY = new CDF::Dimension("y", ny);
 
   cdfObject->addDimension(dimX);
   cdfObject->addDimension(dimY);
 
   // Corresponding variables for the dimensions
-  CDF::Variable *varX = new CDF::Variable();
-  varX->setType(CDF_DOUBLE);
-  varX->name.copy("x");
-  varX->isDimension = true;
-  varX->dimensionlinks.push_back(dimX);
+  auto varX = new CDF::Variable("x", CDF_DOUBLE, {dimX}, true);
   cdfObject->addVariable(varX);
   varX->addAttribute(new CDF::Attribute("long_name", "x coordinate of projection"));
   varX->addAttribute(new CDF::Attribute("standard_name", "projection_x_coordinate"));
@@ -79,11 +68,7 @@ void layerTypeLiveUpdatePopulateDataSource(CDataSource *dataSource, CServerParam
   CDF::Variable::CustomMemoryReader *memoryReaderX = CDF::Variable::CustomMemoryReaderInstance;
   varX->setCustomReader(memoryReaderX);
 
-  CDF::Variable *varY = new CDF::Variable();
-  varY->setType(CDF_DOUBLE);
-  varY->name.copy("y");
-  varY->isDimension = true;
-  varY->dimensionlinks.push_back(dimY);
+  auto varY = new CDF::Variable("y", CDF_DOUBLE, {dimY}, true);
   cdfObject->addVariable(varY);
   varY->addAttribute(new CDF::Attribute("long_name", "y coordinate of projection"));
   varY->addAttribute(new CDF::Attribute("standard_name", "projection_y_coordinate"));
@@ -91,14 +76,9 @@ void layerTypeLiveUpdatePopulateDataSource(CDataSource *dataSource, CServerParam
   CDF::Variable::CustomMemoryReader *memoryReaderY = CDF::Variable::CustomMemoryReaderInstance;
   varY->setCustomReader(memoryReaderY);
 
-  CDF::Variable *solTVar = new CDF::Variable();
-  solTVar->setType(CDF_FLOAT);
+  auto solTVar = new CDF::Variable("solarterminator", CDF_FLOAT, {dimY, dimX}, false);
   float fillValue[] = {-1};
   solTVar->setAttribute("_FillValue", solTVar->getType(), fillValue, 1);
-  solTVar->dimensionlinks.push_back(dimY);
-  solTVar->dimensionlinks.push_back(dimX);
-  solTVar->setType(CDF_FLOAT);
-  solTVar->name = "solarterminator";
   solTVar->setAttributeText("standard_name", "solarterminator");
   solTVar->setAttributeText("long_name", "solar terminator");
   solTVar->setAttributeText("units", "sza");
@@ -156,17 +136,11 @@ void layerTypeLiveUpdatePopulateDataSource(CDataSource *dataSource, CServerParam
 }
 
 int layerTypeLiveUpdateRender(CDataSource *dataSource, CServerParams *srvParam) {
-  // Do we need something like this?
-  // if (dataSource->dWidth == 1) dataSource->dWidth = 2;
-  // if (dataSource->dHeight == 1) dataSource->dHeight = 2;
-
   if (dataSource->cfgLayer->DataPostProc.empty()) {
     // Demo case: render the current time in an image for testing purposes / frontend development
-    CDBDebug("LAYER TYPE LIVE UPDATE RENDER");
     CDrawImage image;
     layerTypeLiveUpdateRenderIntoDrawImage(&image, srvParam);
     printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
-    CDBDebug("***Number of timesteps %d", dataSource->getNumTimeSteps());
     return image.printImagePng8(true);
   } else {
     layerTypeLiveUpdatePopulateDataSource(dataSource, srvParam);
@@ -236,8 +210,6 @@ int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(MetadataLayer *metada
   if (soltConfig != nullptr) {
     // Calculate the offset based on said parameter
     if (soltConfig->attr.offset.c_str() != nullptr && !soltConfig->attr.offset.empty()) offset.copy(soltConfig->attr.offset.c_str());
-    CDBDebug("Offset string is %s", soltConfig->attr.offset.c_str());
-    CDBDebug("Assigned offset is %s", offset.c_str());
   }
 
   LiveUpdateTimeRange range = calculateLiveUpdateTimeRange(timeResolution.c_str(), offset.c_str());
