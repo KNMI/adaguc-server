@@ -54,7 +54,7 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
     CDBDebug("CDATAPOSTPROCESSOR_RUNAFTERREADING::Applying SOLARTERMINATOR");
     size_t l = (size_t)dataSource->dHeight * (size_t)dataSource->dWidth;
-    CDF::allocateData(dataSource->getDataObject(0)->cdfVariable->getType(), &dataSource->getDataObject(0)->cdfVariable->data, l);
+    dataSource->getDataObject(0)->cdfVariable->allocateData(l);
 
     float *result = (float *)dataSource->getDataObject(0)->cdfVariable->data;
 
@@ -75,18 +75,12 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
     float gfiValue;
 
     if (singlePointRequest) {
-      CDBDebug("IN SINGLE POINT REQUEST CASE");
-      CDF::allocateData(CDF_FLOAT, &dataSource->getDataObject(0)->cdfVariable->data, l);
-
       // Compute for one point (with lat/lon)
       double geox, geoy;
       geox = dataSource->srvParams->dX;
       geoy = dataSource->srvParams->dY;
 
       float gfiValue = static_cast<float>(getSolarZenithAngle(geoy, geox, currentOffset));
-      CDBDebug("CURRENT OFFSET for solar terminator is: %f", currentOffset);
-
-      // CDBDebug("dWidth=%d dHeight=%d l=%zu sizeofAllocated=%zu", dataSource->dWidth, dataSource->dHeight, l, dataSource->getDataObject(0)->cdfVariable->getSize());
 
       // fill the (possibly 1x1) raster
       for (size_t j = 0; j < l; j++) {
