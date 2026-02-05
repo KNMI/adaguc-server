@@ -156,7 +156,7 @@ bash runtests_psql.sh
 
 # 8. Setup pre-commit hooks for formatting
 
-You need to do the steps _once_ to setup the pre-commit hooks:
+You need to do these steps _once_ to setup the pre-commit hooks:
 
 1. Install the python dependencies:
 ```bash
