@@ -265,24 +265,12 @@ void CDrawImage::drawVector2(int x, int y, double direction, double strength, in
 
 #define round(x) (int(x + 0.5)) // Only for positive values!!!
 
-// void CDrawImage::drawBarb(int x, int y, double direction, double viewDirCorrection, double strength, CColor barbColor, float lineWidth, bool toKnots, bool flip, bool drawText, double fontSize,
-//                           CColor textColor, CColor outlineColor, double outlineWidth) {
-//   // If no linewidth, no outline should be drawn, set inner barblineWidth to 0.8 to ensure we draw a barb
-
-//   double barblineWidth = lineWidth == 0 ? 0.8 : lineWidth;
-//   double barbOutlineWidth = lineWidth == 0 ? 0 : outlineWidth;
-
-//   cairo->drawBarb(x, y, direction, viewDirCorrection, strength, barbColor, outlineColor, barblineWidth, toKnots, flip, drawText, fontSize, textColor, barbOutlineWidth);
-// }
-
 void CDrawImage::drawBarb(int x, int y, double direction, double viewDirCorrection, double strength, bool toKnots, bool flip, bool drawVectorPlotValue, LineStyle lineStyle, TextStyle textStyle) {
   // If no linewidth, no outline should be drawn, set inner barblineWidth to 0.8 to ensure we draw a barb
-
-  // double barblineWidth = lineWidth == 0 ? 0.8 : lineWidth;
-  // double barbOutlineWidth = lineWidth == 0 ? 0 : outlineWidth;
-
-  lineStyle.lineWidth = lineStyle.lineWidth == 0 ? 0.8 : lineStyle.lineWidth;
-  lineStyle.lineOutlineWidth = lineStyle.lineOutlineWidth == 0 ? 0 : lineStyle.lineOutlineWidth;
+  if (lineStyle.lineWidth == 0) {
+    lineStyle.lineWidth = 0.8;
+    lineStyle.lineOutlineWidth = 0;
+  }
 
   cairo->drawBarb(x, y, direction, viewDirCorrection, strength, toKnots, flip, drawVectorPlotValue, lineStyle, textStyle);
 }
@@ -441,10 +429,10 @@ void CDrawImage::setText(const char *text, int x, int y, CColor color) {
 }
 
 void CDrawImage::setTextStroke(int x, int y, float angle, const char *text, const char *fontFile, float fontSize, float strokeWidth, CColor bgcolor, CColor fgcolor) {
+  // TODO: this should receive a TextStyle struct
+
   if (bgcolor.a == 0) {
-    // drawText(x, y, fontFile, fontSize, angle, text, fgcolor);
-    cairo->setColor(fgcolor.r, fgcolor.g, fgcolor.b, fgcolor.a);
-    cairo->drawText(x, y + 10, 0, text);
+    drawText(x, y, fontFile, fontSize, angle, text, fgcolor);
   } else {
     TextStyle textStyle = { .textColor = fgcolor, .fontSize=fontSize * 1.4, .textOutlineColor = bgcolor, .textOutlineWidth = strokeWidth};
     cairo->drawStrokedText(x, y, -angle, text, textStyle);
@@ -578,15 +566,12 @@ CCairoPlotter *CDrawImage::getCairoPlotter(const char *fontfile, float size, int
 }
 
 void CDrawImage::drawCenteredText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color, CColor textOutlineColor) {
-  CDBDebug("@@@ drawCenteredText");
-
   CCairoPlotter *freeType = this->getCairoPlotter(fontfile, size, geoParams.width, geoParams.height, cairo->getByteBuffer());
   freeType->setColor(color.r, color.g, color.b, color.a);
   if (textOutlineColor.a == 0) {
     freeType->drawCenteredText(x, y, angle, text);
   } else {
-    TextStyle textStyle = { .textColor = color, .fontSize=size * 1.4, .textOutlineColor = textOutlineColor, .textOutlineWidth = 10};
-    // freeType->drawStrokedText(x, y, angle, text, size * 1.4, 10, textOutlineColor, color, true);
+    TextStyle textStyle = { .textColor = color, .fontSize=size * 1.4, .textOutlineColor = textOutlineColor, .textOutlineWidth = 1 };
     freeType->drawStrokedText(x, y, angle, text, textStyle, true);
   }
 

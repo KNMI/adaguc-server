@@ -430,7 +430,7 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
           .textColor = CColor(255, 255, 255, 0),
           .fontSize = 12,
           .textOutlineColor = CColor(255, 255, 255, 0),
-          .textOutlineWidth = 2.0,
+          .textOutlineWidth = 0.0,
         };
 
         CDBDebug("@@@ bilinear magic?");

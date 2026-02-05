@@ -44,6 +44,10 @@ VectorStyle getVectorStyle(CServerConfig::XMLE_Vector *vectorCfg, CServerConfig:
     vectorStyle.textStyle.textOutlineWidth = parseDouble(vectorCfg->attr.textoutlinewidth.c_str());
   } else {
     vectorStyle.textStyle.textOutlineWidth = vectorStyle.lineStyle.lineOutlineWidth;
+
+    if (vectorStyle.lineStyle.lineWidth == 0) {
+      vectorStyle.textStyle.textOutlineWidth = 0;
+    }
   }
 
   if (vectorStyle.lineStyle.lineOutlineWidth <= vectorStyle.lineStyle.lineWidth) {
@@ -76,6 +80,10 @@ VectorStyle getVectorStyle(CServerConfig::XMLE_Vector *vectorCfg, CServerConfig:
 
   if (!vectorCfg->attr.textoutlinecolor.empty()) {
     vectorStyle.textStyle.textOutlineColor = CColor(vectorCfg->attr.textoutlinecolor.c_str());
+  } else {
+    if (!vectorCfg->attr.linecolor.empty()) {
+      vectorStyle.textStyle.textOutlineColor = vectorStyle.lineStyle.lineOutlineColor;
+    }
   }
 
   if (vectorCfg->attr.vectorstyle.empty() == false) {
