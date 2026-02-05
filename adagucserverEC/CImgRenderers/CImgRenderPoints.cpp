@@ -175,12 +175,10 @@ void renderVectorPoints(std::vector<size_t> thinnedPointIndexList, CImageWarper 
 
       // Draw symbol barb, vector or disc.
       if (vectorStyle.drawBarb) {
-        // drawImage->drawBarb(x, y, ((270 - direction) / 360) * M_PI * 2, 0, strength, vectorStyle.lineColor, vectorStyle.lineWidth, toKnots, lat <= 0, vectorStyle.drawVectorPlotValue,
-        //                     vectorStyle.fontSize, vectorStyle.textColor, vectorStyle.outlinecolor, vectorStyle.outlinewidth);
         drawImage->drawBarb(x, y, ((270 - direction) / 360) * M_PI * 2, 0, strength, toKnots, lat <= 0, vectorStyle.drawVectorPlotValue, vectorStyle.lineStyle, vectorStyle.textStyle);
       }
       if (vectorStyle.drawVector) {
-        drawImage->drawVector(x, y, ((270 - direction) / 360) * M_PI * 2, strength * vectorStyle.symbolScaling, vectorStyle.lineStyle.lineColor, vectorStyle.lineStyle.lineWidth);
+        drawImage->drawVector(x, y, ((270 - direction) / 360) * M_PI * 2, strength * vectorStyle.symbolScaling, vectorStyle.lineStyle);
       }
       if (vectorStyle.drawDiscs) {
         // Draw a disc with the speed value in text and the dir. value as an arrow

@@ -180,19 +180,31 @@ int CDrawImage::printImageWebP32(int quality) {
 }
 
 void CDrawImage::drawVector(int x, int y, double direction, double strength, int color) {
-  CColor col = getColorForIndex(color);
-  drawVector(x, y, direction, strength, col, 1.0);
+  LineStyle lineStyle = {
+    .lineWidth = 1.0,
+    .lineColor = getColorForIndex(color),
+    .lineOutlineColor = CColor(255, 255, 255, 255),
+    .lineOutlineWidth = 0,
+  };
+  drawVector(x, y, direction, strength, lineStyle);
 }
 
 void CDrawImage::drawVector(int x, int y, double direction, double strength, int color, float linewidth) {
-  CColor col = getColorForIndex(color);
-  drawVector(x, y, direction, strength, col, linewidth);
+  LineStyle lineStyle = {
+    .lineWidth = linewidth,
+    .lineColor = getColorForIndex(color),
+    .lineOutlineColor = CColor(255, 255, 255, 255),
+    .lineOutlineWidth = 0,
+  };
+  drawVector(x, y, direction, strength, lineStyle);
 }
 
-void CDrawImage::drawVector(int x, int y, double direction, double strength, CColor color, float linewidth) {
+void CDrawImage::drawVector(int x, int y, double direction, double strength, LineStyle lineStyle) {
+  // TODO: Support setting outline
+
   double wx1, wy1, wx2, wy2, dx1, dy1;
   if (fabs(strength) < 1) {
-    setPixel(x, y, color);
+    setPixel(x, y, lineStyle.lineColor);
     return;
   }
 
@@ -227,12 +239,15 @@ void CDrawImage::drawVector(int x, int y, double direction, double strength, CCo
   hy3 = wy1 - (sin(direction + 2.5) + sin(direction - 2.5)) / 2 * (strength / 2.8f);
 
   // Render triangle
+  CColor color = lineStyle.lineColor;
   cairo->setColor(color.r, color.g, color.b, color.a);
   cairo->setFillColor(color.r, color.g, color.b, color.a);
-  poly(hx1, hy1, wx1, wy1, hx2, hy2, linewidth, color, false);
+  poly(hx1, hy1, wx1, wy1, hx2, hy2, lineStyle.lineWidth, color, false);
 
   // Render shaft
-  line(wx2, wy2, hx3, hy3, linewidth, color);
+  line(wx2, wy2, hx3, hy3, lineStyle.lineWidth, color);
+
+  // TODO: should `poly` and `line` also accept `LineStyle` structs?
 }
 
 #define xCor(l, d) ((int)(l * cos(d) + 0.5))

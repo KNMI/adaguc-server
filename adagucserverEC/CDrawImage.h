@@ -118,7 +118,7 @@ public:
   // void drawTextAngle(const char * text, size_t length,double angle,int x,int y,int color,int fontSize);
   void drawVector(int x, int y, double direction, double strength, int color);
   void drawVector(int x, int y, double direction, double strength, int color, float linewidth);
-  void drawVector(int x, int y, double direction, double strength, CColor color, float linewidth);
+  void drawVector(int x, int y, double direction, double strength, LineStyle lineStyle);
   void drawVector2(int x, int y, double direction, double strength, int radius, CColor color, float linewidth);
   void destroyImage();
   void line(float x1, float y1, float x2, float y2, int color);

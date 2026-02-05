@@ -22,17 +22,11 @@ struct LineStyle {
 };
 
 struct VectorStyle {
-
   LineStyle lineStyle;
   TextStyle textStyle;
-
-  // CColor textOutlineColor;
-  // double textOutlineWidth;
-  // CColor textColor;
   CColor fillColor;
   CT::string drawVectorTextFormat;
   CT::string fontFile;
-  // double fontSize;
   bool drawVectorPlotStationId;
   bool drawVectorPlotValue;
   bool drawBarb;

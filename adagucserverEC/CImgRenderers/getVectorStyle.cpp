@@ -12,22 +12,15 @@ VectorStyle getVectorStyle(CServerConfig::XMLE_Vector *vectorCfg, CServerConfig:
         .lineOutlineColor = CColor(255, 255, 255, 255),
         .lineOutlineWidth = vectorCfg->attr.outlinewidth,
       },
-
       .textStyle = {
         .textColor = CColor(0, 0, 0, 255),
         .fontSize = vectorCfg->attr.fontSize,
-
         .textOutlineColor = CColor(255, 255, 255, 255),
         .textOutlineWidth = 0,
       },
-
-      // .textOutlineColor = CColor(255, 255, 255, 255),
-      // .textOutlineWidth = vectorCfg->attr.textoutlinewidth,
-      // .textColor = CColor(0, 0, 0, 255),
       .fillColor = CColor(0, 0, 0, 128),
       .drawVectorTextFormat = "%0.1f",
       .fontFile = "",
-      // .fontSize = vectorCfg->attr.fontSize,
       .drawVectorPlotStationId = false,
       .drawVectorPlotValue = false,
       .drawBarb = false,
