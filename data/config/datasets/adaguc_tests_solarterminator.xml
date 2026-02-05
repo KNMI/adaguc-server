@@ -42,7 +42,7 @@
 
   <!-- SZA gradient  -->
   <Style name="solt_continuous" title="SZA gradient" abstract="Continuous color gradient for solar zenith angle, to represent progression from daylight through twilight to deep night.">
-    <Legend fixed="true" tickinterval="100000">solt_continuous</Legend>
+    <Legend fixed="true" tickinterval="30">solt_continuous</Legend>
     <Min>0</Min>
     <Max>180</Max>
   </Style>
