@@ -334,6 +334,9 @@ CDataSource::~CDataSource() {
   statistics = NULL;
 
   if (_styles != NULL) {
+    for(auto s: *_styles) {
+      delete s;
+    }
     delete _styles;
     _styles = NULL;
   }

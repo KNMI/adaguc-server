@@ -211,9 +211,7 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
   if (debug) {
     CDBDebug("done");
   }
-  delete[] (float *)settings.destinationGrid;
-
-  return;
+  free(settings.destinationGrid);
 }
 
 int CImgWarpGeneric::set(const char *) { return 0; }

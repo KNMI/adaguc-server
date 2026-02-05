@@ -73,7 +73,7 @@ private:
   bool _bEnableTrueColor;
   unsigned char backgroundAlpha;
   CCairoPlotter *cairo;
-  const char *TTFFontLocation;
+  std::string TTFFontLocation;
   float TTFFontSize;
   std::map<CT::string, CCairoPlotter *> myCCairoPlotterMap;
   CCairoPlotter *getCairoPlotter(const char *fontfile, float size, int w, int h, unsigned char *b);
@@ -170,9 +170,9 @@ public:
   void setTrueColor(bool enable);
   bool getTrueColor() { return _bEnableTrueColor; }
 
-  void setTTFFontLocation(const char *_TTFFontLocation) { TTFFontLocation = _TTFFontLocation; }
+  void setTTFFontLocation(std::string _TTFFontLocation) { TTFFontLocation = _TTFFontLocation; }
   void setTTFFontSize(float _TTFFontSize) { TTFFontSize = _TTFFontSize; }
-  const char *getFontLocation();
+  std::string getFontLocation();
   float getFontSize();
 
   bool isPixelTransparent(int &x, int &y);
@@ -209,7 +209,7 @@ public:
   /**
    * Get renderer width of the given text
    */
-  int getTextWidth(CT::string text, const std::string &fontPath, int angle);
+  int getTextWidth(CT::string text, const std::string &fontPath, float size, int angle);
 };
 
 #endif
