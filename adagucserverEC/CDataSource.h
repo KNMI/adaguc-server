@@ -35,7 +35,7 @@
 #include "CServerParams.h"
 
 // Forward declaration
-class CStyleConfiguration;
+struct CStyleConfiguration;
 
 /**
  * Class which holds min and max values.
