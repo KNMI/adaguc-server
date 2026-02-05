@@ -1086,7 +1086,7 @@ int CImageDataWriter::getFeatureInfoVirtual(std::vector<CDataSource *> dataSourc
 
   CDataSource *dataSource = dataSources[dataSourceIndex];
   // Set Geo (bbox)
-  CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
+  getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
 
 #ifdef CIMAGEDATAWRITER_DEBUG
   CDBDebug("Current dataSource index is %d", dataSourceIndex);
@@ -1149,7 +1149,7 @@ int CImageDataWriter::getFeatureInfoVirtual(std::vector<CDataSource *> dataSourc
       dataSource->srvParams->requestDims[timeIdx]->value.copy(generatedTimestamps[i].c_str());
     }
 
-    CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
+    getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
     float *vals = (float *)dataSource->getDataObject(0)->cdfVariable->data;
     element->value.print("%f", vals[ptr]);
 

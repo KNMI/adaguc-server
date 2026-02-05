@@ -189,6 +189,13 @@ int layerTypeLiveUpdateRenderIntoImageDataWriter(CDataSource *dataSource, CServe
   return status;
 }
 
+static int findDataPostProcIndex(const std::vector<CServerConfig::XMLE_DataPostProc *> &vec, const CT::string &postProcName) {
+
+  auto it = std::find_if(vec.begin(), vec.end(), [&](const CServerConfig::XMLE_DataPostProc *p) { return p != nullptr && p->attr.algorithm.equals(postProcName); });
+
+  return (it == vec.end()) ? -1 : int(it - vec.begin());
+}
+
 int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(MetadataLayer *metadataLayer) {
   if (metadataLayer->dataSource->cfgLayer->Title.size() != 0) {
     metadataLayer->layerMetadata.title.copy(metadataLayer->dataSource->cfgLayer->Title[0]->value.c_str());
@@ -205,8 +212,13 @@ int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(MetadataLayer *metada
       timeResolution = dim->attr.interval;
     }
   }
-  CServerConfig::XMLE_DataPostProc *soltConfig =
-      metadataLayer->dataSource->cfgLayer->DataPostProc[CDataPostProcessor::findDataPostProcIndex(metadataLayer->dataSource->cfgLayer->DataPostProc, "solarterminator")];
+
+  const auto &postProcs = metadataLayer->dataSource->cfgLayer->DataPostProc;
+
+  int idx = findDataPostProcIndex(postProcs, "solarterminator");
+
+  CServerConfig::XMLE_DataPostProc *soltConfig = (idx >= 0) ? postProcs[idx] : nullptr;
+
   if (soltConfig != nullptr) {
     // Calculate the offset based on said parameter
     if (soltConfig->attr.offset.c_str() != nullptr && !soltConfig->attr.offset.empty()) offset.copy(soltConfig->attr.offset.c_str());
