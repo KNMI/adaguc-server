@@ -15,7 +15,7 @@ Create the following file at the filepath `$ADAGUC_DATASET_DIR/solt.xml`
 <Configuration>
 <?xml version="1.0" encoding="UTF-8" ?>
   <!-- Shaded categories -->
-  <Style name="solt_twilight">
+  <Style name="solt_twilight" title="Twilight categories" abstract="Displays different phases of twilight and day using shades of gray, with black for night and white for day.">
     <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
     <Min>0</Min>
     <Max>180</Max>

@@ -2,7 +2,7 @@
 <Configuration>
 
   <!-- Shaded categories -->
-  <Style name="solt_twilight">
+  <Style name="solt_twilight" title="Twilight categories" abstract="Displays different phases of twilight and day using shades of gray, with black for night and white for day.">
     <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
     <Min>0</Min>
     <Max>180</Max>
@@ -41,7 +41,7 @@
   </Legend>
 
   <!-- SZA gradient  -->
-  <Style name="solt_continuous">
+  <Style name="solt_continuous" title="SZA gradient" abstract="Continuous color gradient for solar zenith angle, to represent progression from daylight through twilight to deep night.">
     <Legend fixed="true" tickinterval="100000">solt_continuous</Legend>
     <Min>0</Min>
     <Max>180</Max>

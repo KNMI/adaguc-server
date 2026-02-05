@@ -64,7 +64,7 @@ More information on how to configure this type of layer can be found [here](../t
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
   <!-- Shaded categories -->
-  <Style name="solt_twilight">
+  <Style name="solt_twilight" title="Twilight categories" abstract="Displays different phases of twilight and day using shades of gray, with black for night and white for day.">
     <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
     <Min>0</Min>
     <Max>180</Max>
