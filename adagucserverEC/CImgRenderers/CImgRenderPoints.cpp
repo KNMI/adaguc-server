@@ -52,7 +52,7 @@ void drawTextsForVector(CDrawImage *drawImage, CDataSource *dataSource, VectorSt
       newY = ((direction >= 90) && (direction <= 270)) ? y + 6 : y - 20;
     }
     CT::string stationId = pointStrength->paramList[0].value;
-    drawImage->setText(stationId.c_str(), x - stationId.length() * 3, newY, vectorStyle.textColor);
+    drawImage->setText(stationId.c_str(), x - stationId.length() * 3, newY, vectorStyle.textStyle.textColor);
   }
 
   // Draw value for vector or disc
@@ -61,7 +61,7 @@ void drawTextsForVector(CDrawImage *drawImage, CDataSource *dataSource, VectorSt
       int newY = ((direction >= 90) && (direction <= 270)) ? y - 20 : y + 6;
       CT::string textValue;
       textValue.print(vectorStyle.drawVectorTextFormat.c_str(), strength);
-      drawImage->setText(textValue.c_str(), x - textValue.length() * 3, newY, vectorStyle.textColor);
+      drawImage->setText(textValue.c_str(), x - textValue.length() * 3, newY, vectorStyle.textStyle.textColor);
     }
   }
 }
@@ -187,7 +187,7 @@ void renderVectorPoints(std::vector<size_t> thinnedPointIndexList, CImageWarper 
         int x = pointStrength->x;
         int y = dataSource->srvParams->geoParams.height - pointStrength->y;
         textValue.print(vectorStyle.drawVectorTextFormat.c_str(), strength);
-        drawImage->setTextDisc(x, y, vectorStyle.discRadius, textValue.c_str(), vectorStyle.fontFile.c_str(), vectorStyle.fontSize, vectorStyle.textColor, vectorStyle.fillColor,
+        drawImage->setTextDisc(x, y, vectorStyle.discRadius, textValue.c_str(), vectorStyle.fontFile.c_str(), vectorStyle.textStyle.fontSize, vectorStyle.textStyle.textColor, vectorStyle.fillColor,
                                vectorStyle.lineColor);
         drawImage->drawVector2(x, y, ((90 + direction) / 360.) * M_PI * 2, 10, vectorStyle.discRadius, vectorStyle.fillColor, vectorStyle.lineWidth);
       }

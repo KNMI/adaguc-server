@@ -445,6 +445,7 @@ void CDrawImage::setTextStroke(int x, int y, float angle, const char *text, cons
     cairo->setColor(fgcolor.r, fgcolor.g, fgcolor.b, fgcolor.a);
     cairo->drawText(x, y + 10, 0, text);
   } else {
+    TextStyle textStyle = { .textColor = fgcolor, .fontSize=fontSize * 1.4, .textOutlineColor = bgcolor, .textOutlineWidth = strokeWidth};
     cairo->drawStrokedText(x, y, -angle, text, fontSize * 1.4, strokeWidth, bgcolor, fgcolor);
   }
 }
