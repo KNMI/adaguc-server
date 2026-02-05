@@ -2391,6 +2391,7 @@ int CRequest::updatedb(CT::string tailPath, CT::string layerPathToScan, int scan
         errorHasOccured++;
       }
     }
+    // We need to populate the metadata to be able to use EDR with live update datasets
     if (dataSources[j]->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
       status = CDBFileScanner::updatedb(dataSources[j], tailPath, layerPathToScan, scanFlags);
     }
