@@ -415,7 +415,34 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
       for (size_t sz = 0; sz < windVectors.size(); sz++) {
         CalculatedWindVector wv = windVectors[sz];
         float outlineWidth = 0;
-        drawImage->drawBarb(wv.x, wv.y, wv.dir, wv.viewDirCorrection, wv.strength, CColor(0, 0, 255, 255), outlineWidth, wv.convertToKnots, wv.flip, rendertextforvectors);
+        // drawImage->drawBarb(wv.x, wv.y, wv.dir, wv.viewDirCorrection, wv.strength, CColor(0, 0, 255, 255), outlineWidth, wv.convertToKnots, wv.flip, rendertextforvectors);
+
+        // TODO: defaults to blue barbs at lineWidth 0, which gets corrected in CDrawImage to lineWidth 0.8?
+        LineStyle lineStyle = {
+          .lineWidth = 0,
+          .lineColor = CColor(0, 0, 255, 255),
+          .lineOutlineColor = CColor(255, 255, 255, 255),
+          .lineOutlineWidth = 0,
+        };
+
+        // TODO: defaults to no text outline
+        TextStyle textStyle = {
+          .textColor = CColor(255, 255, 255, 0),
+          .fontSize = 12,
+          .textOutlineColor = CColor(255, 255, 255, 0),
+          .textOutlineWidth = 2.0,
+        };
+
+        CDBDebug("@@@ bilinear magic?");
+
+        drawImage->drawBarb(wv.x, wv.y, wv.dir, wv.viewDirCorrection, wv.strength, wv.convertToKnots, wv.flip, rendertextforvectors, lineStyle, textStyle);
+
+        // OLD:
+        // drawImage->drawBarb(wv.x, wv.y, wv.dir, wv.viewDirCorrection, wv.strength, CColor(0, 0, 255, 255), outlineWidth, wv.convertToKnots, wv.flip, rendertextforvectors);
+
+        // void drawBarb(CColor barbColor, float linewidth, bool toKnots, bool flip, bool drawText, double fontSize = 12,
+        //               CColor textColor = CColor(255, 255, 255, 0), CColor outlineColor = CColor(255, 255, 255, 255), double outlineWidth = 1.0);
+        // void drawBarb(int x, int y, double direction, double viewDirCorrection, double strength, bool toKnots, bool flip, VectorStyle vectorStyle);
       }
     }
   }

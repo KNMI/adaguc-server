@@ -13,12 +13,17 @@ struct TextStyle {
   double textOutlineWidth;
 };
 
-struct VectorStyle {
+struct LineStyle {
   CColor lineColor;
   double lineWidth;
-  CColor outlineColor;
-  double outlineWidth;
 
+  CColor lineOutlineColor;
+  double lineOutlineWidth;
+};
+
+struct VectorStyle {
+
+  LineStyle lineStyle;
   TextStyle textStyle;
 
   // CColor textOutlineColor;

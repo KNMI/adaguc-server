@@ -177,10 +177,10 @@ void renderVectorPoints(std::vector<size_t> thinnedPointIndexList, CImageWarper 
       if (vectorStyle.drawBarb) {
         // drawImage->drawBarb(x, y, ((270 - direction) / 360) * M_PI * 2, 0, strength, vectorStyle.lineColor, vectorStyle.lineWidth, toKnots, lat <= 0, vectorStyle.drawVectorPlotValue,
         //                     vectorStyle.fontSize, vectorStyle.textColor, vectorStyle.outlinecolor, vectorStyle.outlinewidth);
-        drawImage->drawBarb(x, y, ((270 - direction) / 360) * M_PI * 2, 0, strength, toKnots, lat <= 0, vectorStyle);
+        drawImage->drawBarb(x, y, ((270 - direction) / 360) * M_PI * 2, 0, strength, toKnots, lat <= 0, vectorStyle.drawVectorPlotValue, vectorStyle.lineStyle, vectorStyle.textStyle);
       }
       if (vectorStyle.drawVector) {
-        drawImage->drawVector(x, y, ((270 - direction) / 360) * M_PI * 2, strength * vectorStyle.symbolScaling, vectorStyle.lineColor, vectorStyle.lineWidth);
+        drawImage->drawVector(x, y, ((270 - direction) / 360) * M_PI * 2, strength * vectorStyle.symbolScaling, vectorStyle.lineStyle.lineColor, vectorStyle.lineStyle.lineWidth);
       }
       if (vectorStyle.drawDiscs) {
         // Draw a disc with the speed value in text and the dir. value as an arrow
@@ -188,8 +188,8 @@ void renderVectorPoints(std::vector<size_t> thinnedPointIndexList, CImageWarper 
         int y = dataSource->srvParams->geoParams.height - pointStrength->y;
         textValue.print(vectorStyle.drawVectorTextFormat.c_str(), strength);
         drawImage->setTextDisc(x, y, vectorStyle.discRadius, textValue.c_str(), vectorStyle.fontFile.c_str(), vectorStyle.textStyle.fontSize, vectorStyle.textStyle.textColor, vectorStyle.fillColor,
-                               vectorStyle.lineColor);
-        drawImage->drawVector2(x, y, ((90 + direction) / 360.) * M_PI * 2, 10, vectorStyle.discRadius, vectorStyle.fillColor, vectorStyle.lineWidth);
+                               vectorStyle.lineStyle.lineColor);
+        drawImage->drawVector2(x, y, ((90 + direction) / 360.) * M_PI * 2, 10, vectorStyle.discRadius, vectorStyle.fillColor, vectorStyle.lineStyle.lineWidth);
       }
 
       drawTextsForVector(drawImage, dataSource, vectorStyle, pointStrength, pointDirection);

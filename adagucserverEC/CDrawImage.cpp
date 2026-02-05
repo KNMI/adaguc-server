@@ -275,15 +275,16 @@ void CDrawImage::drawVector2(int x, int y, double direction, double strength, in
 //   cairo->drawBarb(x, y, direction, viewDirCorrection, strength, barbColor, outlineColor, barblineWidth, toKnots, flip, drawText, fontSize, textColor, barbOutlineWidth);
 // }
 
-void CDrawImage::drawBarb(int x, int y, double direction, double viewDirCorrection, double strength, bool toKnots, bool flip, VectorStyle vectorStyle) {
+void CDrawImage::drawBarb(int x, int y, double direction, double viewDirCorrection, double strength, bool toKnots, bool flip, bool drawVectorPlotValue, LineStyle lineStyle, TextStyle textStyle) {
   // If no linewidth, no outline should be drawn, set inner barblineWidth to 0.8 to ensure we draw a barb
 
   // double barblineWidth = lineWidth == 0 ? 0.8 : lineWidth;
   // double barbOutlineWidth = lineWidth == 0 ? 0 : outlineWidth;
-  vectorStyle.lineWidth = vectorStyle.lineWidth == 0 ? 0.8 : vectorStyle.lineWidth;
-  vectorStyle.outlineWidth = vectorStyle.lineWidth == 0 ? 0 : vectorStyle.outlineWidth;
 
-  cairo->drawBarb(x, y, direction, viewDirCorrection, strength, toKnots, flip, vectorStyle);
+  lineStyle.lineWidth = lineStyle.lineWidth == 0 ? 0.8 : lineStyle.lineWidth;
+  lineStyle.lineOutlineWidth = lineStyle.lineOutlineWidth == 0 ? 0 : lineStyle.lineOutlineWidth;
+
+  cairo->drawBarb(x, y, direction, viewDirCorrection, strength, toKnots, flip, drawVectorPlotValue, lineStyle, textStyle);
 }
 
 void CDrawImage::circle(int x, int y, int r, int color, float lineWidth) {
@@ -446,7 +447,7 @@ void CDrawImage::setTextStroke(int x, int y, float angle, const char *text, cons
     cairo->drawText(x, y + 10, 0, text);
   } else {
     TextStyle textStyle = { .textColor = fgcolor, .fontSize=fontSize * 1.4, .textOutlineColor = bgcolor, .textOutlineWidth = strokeWidth};
-    cairo->drawStrokedText(x, y, -angle, text, fontSize * 1.4, strokeWidth, bgcolor, fgcolor);
+    cairo->drawStrokedText(x, y, -angle, text, textStyle);
   }
 }
 
@@ -577,12 +578,16 @@ CCairoPlotter *CDrawImage::getCairoPlotter(const char *fontfile, float size, int
 }
 
 void CDrawImage::drawCenteredText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color, CColor textOutlineColor) {
+  CDBDebug("@@@ drawCenteredText");
+
   CCairoPlotter *freeType = this->getCairoPlotter(fontfile, size, geoParams.width, geoParams.height, cairo->getByteBuffer());
   freeType->setColor(color.r, color.g, color.b, color.a);
   if (textOutlineColor.a == 0) {
     freeType->drawCenteredText(x, y, angle, text);
   } else {
-    freeType->drawStrokedText(x, y, angle, text, size * 1.4, 10, textOutlineColor, color, true);
+    TextStyle textStyle = { .textColor = color, .fontSize=size * 1.4, .textOutlineColor = textOutlineColor, .textOutlineWidth = 10};
+    // freeType->drawStrokedText(x, y, angle, text, size * 1.4, 10, textOutlineColor, color, true);
+    freeType->drawStrokedText(x, y, angle, text, textStyle, true);
   }
 
   cairo->isAlphaUsed |= freeType->isAlphaUsed; // remember freetype's isAlphaUsed flag
@@ -613,11 +618,11 @@ void CDrawImage::drawCenteredTextNoOverlap(int x, int y, const char *fontFile, f
   rects.push_back(rect);
 }
 
-// void CDrawImage::drawText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color) {
-CCairoPlotter *freeType = this->getCairoPlotter(fontfile, size, geoParams.width, geoParams.height, cairo->getByteBuffer());
-freeType->setColor(color.r, color.g, color.b, color.a);
-freeType->drawText(x, y, angle, text);
-cairo->isAlphaUsed |= freeType->isAlphaUsed; // remember freetype's isAlphaUsed flag
+void CDrawImage::drawText(int x, int y, const char *fontfile, float size, float angle, const char *text, CColor color) {
+  CCairoPlotter *freeType = this->getCairoPlotter(fontfile, size, geoParams.width, geoParams.height, cairo->getByteBuffer());
+  freeType->setColor(color.r, color.g, color.b, color.a);
+  freeType->drawText(x, y, angle, text);
+  cairo->isAlphaUsed |= freeType->isAlphaUsed; // remember freetype's isAlphaUsed flag
 }
 
 int CDrawImage::create685Palette() {
