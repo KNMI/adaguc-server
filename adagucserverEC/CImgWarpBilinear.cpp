@@ -31,7 +31,6 @@
 #include "CImgRenderFieldVectors.h"
 #include "CDataPostProcessors/CDataPostProcessor_UVComponents.h"
 
-const char *CImgWarpBilinear::className = "CImgWarpBilinear";
 void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CDrawImage *drawImage) {
   CStyleConfiguration *styleConfiguration = sourceImage->getStyle();
 #ifdef CImgWarpBilinear_DEBUG

@@ -29,8 +29,6 @@
 #include <cmath>
 #include <algorithm>
 
-const char *CTime::className = "CTime";
-
 std::map<CT::string, CTime *> CTime::CTimeInstances;
 
 CTime *CTime::GetCTimeInstance(CDF::Variable *timeVariable) {
@@ -626,7 +624,7 @@ double CTime::dateToOffset(Date date) {
         CDBError("dateToOffset: UT_ENOINIT");
       } else if (status == UT_EINVALID) {
 
-        CDBError("dateToOffset: %d UT_EINVALID utInvCalendar with args '%s' and units '%s'", this, dateToString(date).c_str(), currentUnit.c_str());
+        CDBError("dateToOffset:UT_EINVALID utInvCalendar with args '%s' and units '%s'", dateToString(date).c_str(), currentUnit.c_str());
       } else {
         CDBError("dateToOffset: Internal error: utInvCalendar with args '%s'", dateToString(date).c_str());
       }
@@ -788,7 +786,7 @@ CTime::Date CTime::freeDateStringToDate(const char *szTime) {
   }
 
   if (len < 14) {
-    CDBError("freeDateStringToDate: datestring %s has invalid length %d", szTime, len);
+    CDBError("freeDateStringToDate: datestring %s has invalid length %lu", szTime, len);
     throw CTIME_CONVERSION_ERROR;
   }
   // 2010-01-01T00:00:00.000000

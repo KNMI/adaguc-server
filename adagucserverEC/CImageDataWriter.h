@@ -112,7 +112,6 @@ private:
   static int getTextForValue(CT::string *tv, float v, CStyleConfiguration *styleConfiguration);
   std::vector<GetFeatureInfoResult *> getFeatureInfoResultList;
   CXMLParser::XMLElement gfiStructure;
-  DEF_ERRORFUNCTION();
 
   int warpImage(CDataSource *sourceImage, CDrawImage *drawImage);
 

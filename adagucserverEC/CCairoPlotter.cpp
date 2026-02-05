@@ -29,7 +29,6 @@
 
 #include <cairo-ft.h>
 #include "CStopWatch.h"
-const char *CCairoPlotter::className = "CCairoPlotter";
 
 cairo_status_t writerFunc(void *closure, const unsigned char *data, unsigned int length) {
   FILE *fp = (FILE *)closure;
@@ -52,7 +51,7 @@ void CCairoPlotter::_swap(int &x, int &y) {
   y = a;
 }
 
-void CCairoPlotter::_cairoPlotterInit(int width, int height, float fontSize, const char *fontLocation) {
+void CCairoPlotter::_cairoPlotterInit(int width, int height, float fontSize, std::string fontLocation) {
   this->width = width;
   this->height = height;
   this->fontSize = fontSize;
@@ -175,7 +174,7 @@ void CCairoPlotter::pixel_blend(int x, int y, unsigned char r, unsigned char g, 
   }
 }
 
-CCairoPlotter::CCairoPlotter(int width, int height, float fontSize, const char *fontLocation, unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
+CCairoPlotter::CCairoPlotter(int width, int height, float fontSize, std::string fontLocation, unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
   byteBufferPointerIsOwned = true;
   stride = cairo_format_stride_for_width(FORMAT, width);
   size_t bufferSize = size_t(height) * stride;
@@ -192,15 +191,15 @@ CCairoPlotter::CCairoPlotter(int width, int height, float fontSize, const char *
       ARGBByteBuffer[j * 4 + 0] = b;
     }
   }
-  _cairoPlotterInit(width, height, fontSize, fontLocation);
+  _cairoPlotterInit(width, height, fontSize, std::move(fontLocation));
 }
 
-CCairoPlotter::CCairoPlotter(int width, int height, unsigned char *_ARGBByteBuffer, float fontSize, const char *fontLocation) {
+CCairoPlotter::CCairoPlotter(int width, int height, unsigned char *_ARGBByteBuffer, float fontSize, std::string fontLocation) {
   byteBufferPointerIsOwned = false;
   this->width = width;
   this->height = height;
   this->fontSize = fontSize;
-  this->fontLocation = fontLocation;
+  this->fontLocation = std::move(fontLocation);
   stride = cairo_format_stride_for_width(FORMAT, width);
   this->ARGBByteBuffer = (_ARGBByteBuffer);
   surface = cairo_image_surface_create_for_data(ARGBByteBuffer, CCairoPlotter::FORMAT, width, height, stride);
@@ -246,7 +245,6 @@ int CCairoPlotter::initializeFreeType() {
     return 1;
   };
   int error = FT_Init_FreeType(&library);
-  const char *fontLocation = this->fontLocation;
   if (error) {
     CDBError("an error occurred during freetype library initialization");
     if (library != NULL) {
@@ -256,9 +254,9 @@ int CCairoPlotter::initializeFreeType() {
     }
     return 1;
   }
-  error = FT_New_Face(library, fontLocation, 0, &face);
+  error = FT_New_Face(library, fontLocation.c_str(), 0, &face);
   if (error == FT_Err_Unknown_File_Format) {
-    CDBError("the font file could be opened and read, but it appears that its font format is unsupported %s", fontLocation);
+    CDBError("the font file could be opened and read, but it appears that its font format is unsupported %s", fontLocation.c_str());
     if (library != NULL) {
       FT_Done_FreeType(library);
       library = NULL;
@@ -266,7 +264,7 @@ int CCairoPlotter::initializeFreeType() {
     }
     return 1;
   } else if (error) {
-    CDBError("Unable to initialize freetype: Could not read fontfile %s", fontLocation);
+    CDBError("Unable to initialize freetype: Could not read fontfile %s", fontLocation.c_str());
     if (library != NULL) {
       FT_Done_FreeType(library);
       library = NULL;

@@ -20,20 +20,19 @@
 #include "CDataPostProcessor_AddFeatures.h"
 #include "CDataPostProcessor_SolarTerminator.h"
 
-extern CDPPExecutor cdppExecutorInstance;
-CDPPExecutor cdppExecutorInstance;
-CDPPExecutor *CDataPostProcessor::getCDPPExecutor() { return &cdppExecutorInstance; }
-int CDataPostProcessor::findDataPostProcIndex(const std::vector<CServerConfig::XMLE_DataPostProc *> &vec, const CT::string &postProcName) {
-  auto it = std::find_if(vec.begin(), vec.end(), [&](const CServerConfig::XMLE_DataPostProc *p) { return p != nullptr && p->attr.algorithm.equals(postProcName); });
+static CDPPExecutor *cdppExecutorInstance = nullptr;
 
-  return (it == vec.end()) ? -1 : int(it - vec.begin());
+/**
+ * Get global CDPPExecutor instance once (not thread safe!)
+ */
+CDPPExecutor *getCDPPExecutor() {
+  if (cdppExecutorInstance == nullptr) {
+    cdppExecutorInstance = new CDPPExecutor();
+  };
+  return cdppExecutorInstance;
 }
 
-/*CPDPPExecutor*/
-const char *CDPPExecutor::className = "CDPPExecutor";
-
 CDPPExecutor::CDPPExecutor() {
-  // CDBDebug("CDPPExecutor");
   dataPostProcessorList = new std::vector<CDPPInterface *>();
   dataPostProcessorList->push_back(new CDPPIncludeLayer());
   dataPostProcessorList->push_back(new CDPPAXplusB());
@@ -59,7 +58,7 @@ CDPPExecutor::CDPPExecutor() {
 
 CDPPExecutor::~CDPPExecutor() {
   // CDBDebug("~CDPPExecutor");
-  for(auto pp: *dataPostProcessorList) {
+  for (auto pp : *dataPostProcessorList) {
     delete pp;
   }
   delete dataPostProcessorList;

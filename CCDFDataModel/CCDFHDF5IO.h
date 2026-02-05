@@ -42,7 +42,6 @@
 
 #define KNMI_VOLSCAN_PROJ4 "+proj=stere +lat_0=90 +lon_0=0 +lat_ts=60 +a=6378.14 +b=6356.75 +x_0=0 y_0=0 +unit=km"
 
-void ncError(int line, const char *className, const char *msg, int e);
 class CDFHDF5Reader : public CDFReader {
 private:
   CT::string fileName;
@@ -50,8 +49,6 @@ private:
   CDFType typeConversion(hid_t type);
 
   hid_t cdfTypeToHDFType(CDFType type);
-
-  DEF_ERRORFUNCTION();
 
   int readDimensions() { return 0; }
   int readAttributes(std::vector<CDF::Attribute *> &, int, int) { return 0; }

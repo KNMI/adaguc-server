@@ -41,8 +41,6 @@
  */
 class CImgWarpNearestNeighbour : public CImageWarperRenderInterface {
 private:
-  DEF_ERRORFUNCTION();
-
   static void drawTriangle(CDrawImage *drawImage, int *xP, int *yP, int &value);
   static void drawTriangleBil(CDrawImage *drawImage, float *destField, int *xP, int *yP, float *values);
 

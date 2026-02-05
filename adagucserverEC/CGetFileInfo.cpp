@@ -1,8 +1,6 @@
 #include "CGetFileInfo.h"
 #include "CDFObjectStore.h"
 
-const char *CGetFileInfo::className = "CGetFileInfo";
-
 CT::string CGetFileInfo::getLayersForFile(const char *filename) {
   CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObject(NULL, filename);
 

@@ -41,18 +41,18 @@ int CCreateScaleBar::createScaleBar(CDrawImage *scaleBarImage, GeoParameters &ge
   }
 
   CT::string valueStr;
-  const char *fontFile = scaleBarImage->getFontLocation();
-  ;
+  std::string fontFile = scaleBarImage->getFontLocation();
+
   float fontSize = scaleBarImage->getFontSize() * scaling;
-  scaleBarImage->drawText(offsetX - 2.5 * scaling, scaleBarHeight - 11.0f * scaling, fontFile, fontSize * .7, 0, "0", 240);
+  scaleBarImage->drawText(offsetX - 2.5 * scaling, scaleBarHeight - 11.0f * scaling, fontFile.c_str(), fontSize * .7, 0, "0", 240);
 
   valueStr.print("%g", (p.mapunits));
-  scaleBarImage->drawText(offsetX + p.width * 1.0f - valueStr.length() * (2.0 * scaling) + 0, scaleBarHeight - 11.0f * scaling, fontFile, fontSize * .7, 0, valueStr.c_str(), 240);
+  scaleBarImage->drawText(offsetX + p.width * 1.0f - valueStr.length() * (2.0 * scaling) + 0, scaleBarHeight - 11.0f * scaling, fontFile.c_str(), fontSize * .7, 0, valueStr.c_str(), 240);
 
   valueStr.print("%g", (p.mapunits * 2));
-  scaleBarImage->drawText(offsetX + p.width * 2.0f - valueStr.length() * (2.0 * scaling) + 0, scaleBarHeight - 11.0f * scaling, fontFile, fontSize * .7, 0, valueStr.c_str(), 240);
+  scaleBarImage->drawText(offsetX + p.width * 2.0f - valueStr.length() * (2.0 * scaling) + 0, scaleBarHeight - 11.0f * scaling, fontFile.c_str(), fontSize * .7, 0, valueStr.c_str(), 240);
 
-  scaleBarImage->drawText(offsetX + p.width * 2.0f + 10, scaleBarHeight - (3.0f * scaling), fontFile, fontSize * .7, 0, units.c_str(), 240);
+  scaleBarImage->drawText(offsetX + p.width * 2.0f + 10, scaleBarHeight - (3.0f * scaling), fontFile.c_str(), fontSize * .7, 0, units.c_str(), 240);
   scaleBarImage->crop(4 * scaling);
   return 0;
 }

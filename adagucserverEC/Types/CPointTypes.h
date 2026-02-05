@@ -1,4 +1,5 @@
 #include <CKeyValuePair.h>
+#include <cmath>
 #ifndef CPOINT_TYPES_H
 #define CPOINT_TYPES_H
 

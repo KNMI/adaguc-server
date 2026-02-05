@@ -28,8 +28,6 @@
 
 #include <cstdio>
 
-const char *Feature::className = "Feature";
-
 CT::string FeatureProperty::toString() {
   CT::string s;
   if (type == typeInt) {

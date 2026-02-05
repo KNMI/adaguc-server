@@ -28,8 +28,6 @@
 #include "CReporter.h"
 #include <CKeyValuePair.h>
 
-const char *CProj4ToCF::className = "CProj4ToCF";
-
 float CProj4ToCF::CProj4ToCF::convertToM(float fValue) {
   if (fValue < 50000) fValue *= 1000;
   return fValue;

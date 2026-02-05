@@ -31,8 +31,6 @@
 #include <traceTimings/traceTimings.h>
 #include <cstring>
 
-const char *CServerParams::className = "CServerParams";
-
 CServerParams::CServerParams() {
 
   serviceType = -1;
@@ -234,7 +232,7 @@ bool CServerParams::checkResolvePath(const char *path, CT::string *resolvedPath)
 
       char baseDir[PATH_MAX];
       if (realpath(_baseDir, baseDir) == NULL) {
-        CDBError("Skipping AutoResource[0]->Dir[%d]->basedir: Configured value is not a valid realpath", d);
+        CDBError("Skipping AutoResource[0]->Dir[%lu]->basedir: Configured value is not a valid realpath", d);
         continue;
       }
 
@@ -506,7 +504,7 @@ int CServerParams::_parseConfigFile(CT::string &pszConfigFile, std::vector<CServ
     CDBError("Exception %d in substituting", e);
   }
 
-  std::string datasetName = basename(pszConfigFile.c_str());
+  std::string datasetName = CT::basename(pszConfigFile.c_str());
   int status = parseConfig(configObj, configFileData, datasetName);
 
   if (status == 0 && configObj->Configuration.size() == 1) {

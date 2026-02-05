@@ -34,15 +34,12 @@
 
 #define REPORT_DEFAULT_FILE "./checker_report.txt"
 
-#define CREPORT_INFO(message, category, documentationLink)                                                                                                                                             \
-  CReporter::getInstance()->addMessage(message, CReportMessage::Severities::INFO, category, documentationLink, __FILENAME__, __LINE__, className)
-#define CREPORT_INFO_NODOC(message, category) CReporter::getInstance()->addMessage(message, CReportMessage::Severities::INFO, category, "", __FILENAME__, __LINE__, className)
-#define CREPORT_WARN(message, category, documentationLink)                                                                                                                                             \
-  CReporter::getInstance()->addMessage(message, CReportMessage::Severities::WARNING, category, documentationLink, __FILENAME__, __LINE__, className)
-#define CREPORT_WARN_NODOC(message, category) CReporter::getInstance()->addMessage(message, CReportMessage::Severities::WARNING, category, "", __FILENAME__, __LINE__, className)
-#define CREPORT_ERROR(message, category, documentationLink)                                                                                                                                            \
-  CReporter::getInstance()->addMessage(message, CReportMessage::Severities::ERROR, category, documentationLink, __FILENAME__, __LINE__, className)
-#define CREPORT_ERROR_NODOC(message, category) CReporter::getInstance()->addMessage(message, CReportMessage::Severities::ERROR, category, "", __FILENAME__, __LINE__, className)
+#define CREPORT_INFO(message, category, documentationLink) CReporter::getInstance()->addMessage(message, CReportMessage::Severities::INFO, category, documentationLink, __FILENAME__, __LINE__)
+#define CREPORT_INFO_NODOC(message, category) CReporter::getInstance()->addMessage(message, CReportMessage::Severities::INFO, category, "", __FILENAME__, __LINE__)
+#define CREPORT_WARN(message, category, documentationLink) CReporter::getInstance()->addMessage(message, CReportMessage::Severities::WARNING, category, documentationLink, __FILENAME__, __LINE__)
+#define CREPORT_WARN_NODOC(message, category) CReporter::getInstance()->addMessage(message, CReportMessage::Severities::WARNING, category, "", __FILENAME__, __LINE__)
+#define CREPORT_ERROR(message, category, documentationLink) CReporter::getInstance()->addMessage(message, CReportMessage::Severities::ERROR, category, documentationLink, __FILENAME__, __LINE__)
+#define CREPORT_ERROR_NODOC(message, category) CReporter::getInstance()->addMessage(message, CReportMessage::Severities::ERROR, category, "", __FILENAME__, __LINE__)
 
 class CReporter {
 

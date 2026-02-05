@@ -28,9 +28,6 @@
 #include "CImageWarperRenderInterface.h"
 
 class CImgRenderPoints : public CImageWarperRenderInterface {
-private:
-  DEF_ERRORFUNCTION();
-
 public:
   void render(CImageWarper *, CDataSource *, CDrawImage *);
   int set(const char *) { return 0; }; // Deprecated.

@@ -27,9 +27,6 @@
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
 #include <set>
-// #define CCONVERTEPROFILE_DEBUG
-// #define CCONVERTEPROFILE_DEBUG
-const char *CConvertEProfile::className = "CConvertEProfile";
 
 /**
  * Checks if the format of this file corresponds to the ADAGUC Profile format.

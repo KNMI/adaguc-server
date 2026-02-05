@@ -31,9 +31,6 @@
 #include "utils.h"
 
 class CImgWarpHillShaded : public CImageWarperRenderInterface {
-private:
-  DEF_ERRORFUNCTION();
-
 public:
   CImgWarpHillShaded() {}
   ~CImgWarpHillShaded() {}

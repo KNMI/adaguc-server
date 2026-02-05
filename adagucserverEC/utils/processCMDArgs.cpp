@@ -154,7 +154,7 @@ int processCMDArgs(int argc, char **argv, char **) {
         CDBWarning("Found no matching datasets.");
         return SCAN_EXITCODE_FILENOMATCH;
       } else {
-        CDBDebug("Found matching datasets to scan: %d", datasetsToScan.size());
+        CDBDebug("Found matching datasets to scan: %lu", datasetsToScan.size());
       }
     } else {
       // Empty string to make for loop work.

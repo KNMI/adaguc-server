@@ -18,9 +18,6 @@
 // Zie http://kademo.nl/gs2/inspire/ows?SERVICE=WMS&REQUEST=GetCapabilities
 
 class CInspire {
-private:
-  DEF_ERRORFUNCTION();
-
 public:
   /**
    * INSPIRE metadata structure

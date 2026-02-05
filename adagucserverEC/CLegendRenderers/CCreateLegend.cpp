@@ -4,8 +4,6 @@
 #include "CDataReader.h"
 #include "CImageDataWriter.h"
 
-const char *CCreateLegend::className = "CCreateLegend";
-
 int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage) {
   createLegend(dataSource, legendImage, false);
   return 0;

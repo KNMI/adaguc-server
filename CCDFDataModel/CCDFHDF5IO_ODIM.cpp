@@ -141,7 +141,7 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
     /* Check for the what variable */
     CDF::Variable *whatVarCheck = getWhatVar(cdfObject, datasetCounter, dataCounter);
     if (whatVarCheck == nullptr) {
-      CDBDebug("Looks like ODIM, but unable to find what variable for dataset %d", datasetCounter);
+      CDBDebug("Looks like ODIM, but unable to find what variable for dataset %lu", datasetCounter);
       return 2;
     }
 
@@ -308,7 +308,7 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
       }
 
     } else {
-      CDBWarning("Data variable has only [%d] dimensions", dataVar->dimensionlinks.size());
+      CDBWarning("Data variable has only [%lu] dimensions", dataVar->dimensionlinks.size());
     }
   }
   return 0;

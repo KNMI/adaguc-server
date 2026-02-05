@@ -85,7 +85,7 @@ private:
   CT::string *InputProducts;
   CT::string TimeUnit;
   double dfNoData;
-  DEF_ERRORFUNCTION();
+
   CDataSource *_dataSource;
   void generateUniqueGetCoverageFileName(char *pszTempFileName);
   CT::string generateGetCoverageFileName();

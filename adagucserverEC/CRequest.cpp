@@ -55,7 +55,6 @@
 #include "CGDALDataWriter.h"
 #endif
 
-const char *CRequest::className = "CRequest";
 int CRequest::CGI = 0;
 
 // Entry point for all runs
@@ -220,11 +219,11 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
   for (size_t j = 0; j < srvParam->cfg->Layer.size(); j++) {
     if (srvParam->cfg->Layer[j]->attr.type.equals("database")) {
       if (srvParam->cfg->Layer[j]->Variable.size() == 0) {
-        CDBError("Configuration error at layer %d: <Variable> not defined", j);
+        CDBError("Configuration error at layer %lu: <Variable> not defined", j);
         return 1;
       }
       if (srvParam->cfg->Layer[j]->FilePath.size() == 0) {
-        CDBError("Configuration error at layer %d: <FilePath> not defined", j);
+        CDBError("Configuration error at layer %lu: <FilePath> not defined", j);
         return 1;
       }
     }
@@ -234,7 +233,7 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
     if (srvParam->cfg->Layer[j]->attr.type.equals("autoscan")) {
 
       if (srvParam->cfg->Layer[j]->FilePath.size() == 0) {
-        CDBError("Configuration error at layer %d: <FilePath> not defined", j);
+        CDBError("Configuration error at layer %lu: <FilePath> not defined", j);
         return 1;
       }
       try {
@@ -300,7 +299,7 @@ int CRequest::setConfigFile(const char *pszConfigFile) {
           }
         }
         if (nrOfFileErrors != 0) {
-          CDBError("%d files are not readable", nrOfFileErrors);
+          CDBError("%lu files are not readable", nrOfFileErrors);
         }
 
       } catch (int line) {
@@ -503,7 +502,7 @@ int CRequest::process_wms_gethistogram_request() {
     if (j > 0) message.concat(",");
     message.printconcat("(%d) %s", j, srvParam->requestedLayerNames[j].c_str());
   }
-  CDBDebug(message.c_str());
+  CDBDebug("%s", message.c_str());
 
   return process_all_layers();
 }
@@ -939,7 +938,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
         // with missing area.
         CDBDebug("No tiles found can mean that we are outside an area. TODO check whether this has to to with wrong "
                  "dims or with missing area.");
-        CDBDebug("dataSource->requiredDims.size() %d", dataSource->requiredDims.size());
+        CDBDebug("dataSource->requiredDims.size() %lu", dataSource->requiredDims.size());
         for (size_t i = 0; i < dataSource->requiredDims.size(); i++) {
           CDBDebug("  [%s] = [%s]", dataSource->requiredDims[i]->netCDFDimName.c_str(), dataSource->requiredDims[i]->value.c_str());
         }
@@ -1023,7 +1022,7 @@ int CRequest::process_all_layers() {
         CT::string layerName = makeUniqueLayerName(cfgLayer);
         if (layerName.equals(requestedLayerName.c_str())) {
           if (this->addDataSources(cfgLayer, layerIndex) != 0) {
-            CDBError("Unable to create datasources for %d", layerName.c_str());
+            CDBError("Unable to create datasources for %s", layerName.c_str());
             return 1;
           }
         }
@@ -1188,66 +1187,10 @@ int CRequest::process_all_layers() {
 
 int CRequest::process_querystring() {
 
-  /**
-   * START Implementation of POST request.
-   */
-  //  char * method = getenv("REQUEST_METHOD");
-  //
-  //  //strcmp returns 0, means they are equal.
-  //  if (!strcmp(method, "POST")) {
-  //
-  //    CT::string * post_body;
-  //    long body_length = atoi(getenv("CONTENT_LENGTH"));
-  //
-  //    //Buffer size in memory
-  //    char *buffer = (char*) malloc (sizeof(char)*body_length);
-  //
-  //    //Copy the content_body into the buffer:
-  //    fread(buffer, body_length, 1, stdin);
-  //    buffer[body_length] = 0;
-  //
-  //    //Copy Buffer to CT::string
-  //    post_body->copy(buffer);
-  //
-  //    //Clear buffer
-  //    free(buffer);
-  //
-  //    int status = CSLDPostRequest::startProcessing(post_body);
-  //
-  //    if(status != 0){
-  //      CDBError("Something went wrong processing Post request");
-  //    } else {
-  //      #ifdef CSLD_POST_REQUEST_DEBUG
-  //        CDBDebug("POST request is succesfully processed!");
-  //      #endif
-  //    }
-  //  }
-  /**
-   * END Implementation of POST request.
-   */
-
 #ifdef MEASURETIME
   StopWatch_Stop("Start processing query string");
 #endif
-  //  StopWatch_Time("render()");
-  // First try to find all possible dimensions
-  // std::vector
-  /* for(size_t j=0;j<srvParam->cfg->Layer.size();j++){
-     for(size_t d=0;d<srvParam->cfg->Layer[j]->Dimension.size();d++){
-       CT::string *dim = new CT::string(srvParam->cfg->Layer[j]->Dimension[d]->value.c_str());
 
-       dim->toUpperCaseSelf();
-
-       bool foundDim=false;
-       for(size_t i=0;i<queryDims.size();i++){
-         if(dim->equals(queryDims[i])){foundDim=true;break;}
-       }
-       if(foundDim==false){
-         queryDims.push_back(dim);
-       }else delete dim;
-     }
-   }
-   */
   if (srvParam == nullptr || srvParam->cfg == nullptr || srvParam->cfg->WMS.size() != 1) {
     CDBError("WMS element has not been configured");
     return 1;

@@ -47,7 +47,6 @@
 
 class CXMLGen {
 private:
-  DEF_ERRORFUNCTION();
   int getWMS_1_0_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataLayer *> *metadataLayerList);
   int getWMS_1_1_1_Capabilities(CT::string *XMLDoc, std::vector<MetadataLayer *> *metadataLayerList);
   int getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataLayer *> *metadataLayerList);

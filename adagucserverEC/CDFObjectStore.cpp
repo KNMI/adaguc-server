@@ -24,7 +24,7 @@
  ******************************************************************************/
 
 #include "CDFObjectStore.h"
-const char *CDFObjectStore::className = "CDFObjectStore";
+
 #include <algorithm>
 #include "CConvertASCAT.h"
 #include "CConvertUGRIDMesh.h"
@@ -43,8 +43,8 @@ const char *CDFObjectStore::className = "CDFObjectStore";
 #include "CCDFCSVReader.h"
 // #define CDFOBJECTSTORE_DEBUG
 #define MAX_OPEN_FILES 500
-extern CDFObjectStore cdfObjectStore;
-CDFObjectStore cdfObjectStore;
+
+CDFObjectStore *_cdfObjectStore = nullptr;
 bool EXTRACT_HDF_NC_VERBOSE = false;
 
 /**
@@ -421,7 +421,12 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
 
   return cdfObject;
 }
-CDFObjectStore *CDFObjectStore::getCDFObjectStore() { return &cdfObjectStore; };
+CDFObjectStore *CDFObjectStore::getCDFObjectStore() {
+  if (_cdfObjectStore == nullptr) {
+    _cdfObjectStore = new CDFObjectStore();
+  }
+  return _cdfObjectStore;
+};
 
 void CDFObjectStore::deleteCDFObject(const CT::string &fileName) {
   auto it = fileNames.begin();

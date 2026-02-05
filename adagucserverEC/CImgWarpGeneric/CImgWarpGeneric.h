@@ -34,9 +34,6 @@
 static inline int nfast_mod(const int input, const int ceil) { return input >= ceil ? input % ceil : input; }
 
 class CImgWarpGeneric : public CImageWarperRenderInterface {
-private:
-  DEF_ERRORFUNCTION();
-
 public:
   CImgWarpGeneric() {}
   ~CImgWarpGeneric() {}

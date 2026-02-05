@@ -25,7 +25,6 @@
 
 #include "CDrawImage.h"
 #include "CXMLParser.h"
-const char *CDrawImage::className = "CDrawImage";
 
 float convertValueToClass(float val, float interval) {
   float f = int(val / interval);
@@ -50,7 +49,7 @@ CDrawImage::CDrawImage() {
   TTFFontLocation = "/usr/X11R6/lib/X11/fonts/truetype/verdana.ttf"; // TODO: this location does not exist in the docker container
   const char *fontLoc = getenv("ADAGUC_FONT");
   if (fontLoc != NULL) {
-    TTFFontLocation = strdup(fontLoc);
+    TTFFontLocation = fontLoc;
   }
   TTFFontSize = 9;
 
@@ -1161,12 +1160,13 @@ int CDrawImage::getHeight() { return geoParams.height; }
 
 int CDrawImage::getWidth() { return geoParams.width; }
 
-const char *CDrawImage::getFontLocation() { return this->TTFFontLocation; }
+std::string CDrawImage::getFontLocation() { return this->TTFFontLocation; }
 
 float CDrawImage::getFontSize() { return this->TTFFontSize; }
 
-int CDrawImage::getTextWidth(CT::string text, const std::string &, int angle) {
+int CDrawImage::getTextWidth(CT::string text, const std::string &fontfile, float size, int angle) {
+  auto freeType = this->getCairoPlotter(fontfile.c_str(), size, geoParams.width, geoParams.height, cairo->getByteBuffer());
   int w = 0, h = 0;
-  cairo->getTextSize(w, h, angle, text.c_str());
+  freeType->getTextSize(w, h, angle, text.c_str());
   return w;
 }

@@ -73,10 +73,10 @@ void checkLogSettings() {
   const char *ADAGUC_ENABLELOGBUFFER = getenv("ADAGUC_ENABLELOGBUFFER");
   if (ADAGUC_ENABLELOGBUFFER != NULL) {
     std::string check = ADAGUC_ENABLELOGBUFFER;
-    if (equalsIgnoreCase(check, "true")) {
+    if (CT::equalsIgnoreCase(check, "true")) {
       logMode = LogBufferMode::LogBufferMode_TRUE;
     }
-    if (equalsIgnoreCase(check, "DISABLELOGGING")) {
+    if (CT::equalsIgnoreCase(check, "DISABLELOGGING")) {
       logMode = LogBufferMode::LogBufferMode_DISABLELOGGING;
     }
   }

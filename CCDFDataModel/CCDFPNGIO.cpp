@@ -25,8 +25,6 @@
 
 #include "CCDFPNGIO.h"
 
-const char *CDFPNGReader::className = "PNGReader";
-
 #include <unistd.h>
 #include <cstdlib>
 #include <cstdio>

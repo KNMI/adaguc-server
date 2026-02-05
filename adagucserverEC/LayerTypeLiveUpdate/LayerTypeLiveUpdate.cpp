@@ -154,7 +154,7 @@ int layerTypeLiveUpdateRenderIntoDrawImage(CDrawImage *image, CServerParams *srv
   image->createImage(srvParam->geoParams);
   image->create685Palette();
   image->rectangle(0, 0, srvParam->geoParams.width, srvParam->geoParams.height, CColor(255, 255, 255, 0), CColor(255, 255, 255, 255));
-  const char *fontFile = image->getFontLocation();
+  std::string fontFile = image->getFontLocation();
   CT::string timeValue = "No time dimension specified";
   if (srvParam->requestDims.size() == 1) {
     timeValue = srvParam->requestDims[0]->value.c_str();
@@ -162,7 +162,7 @@ int layerTypeLiveUpdateRenderIntoDrawImage(CDrawImage *image, CServerParams *srv
   int stepY = 100;
   for (int y = 0; y < image->getHeight(); y = y + stepY) {
     for (int x = 0; x < image->getWidth(); x = x + 300) {
-      image->drawText(x + (((y % (stepY * 2)) / stepY) * 150), y, fontFile, 15, 0.1, timeValue.c_str(), CColor(0, 0, 0, 255));
+      image->drawText(x + (((y % (stepY * 2)) / stepY) * 150), y, fontFile.c_str(), 15, 0.1, timeValue.c_str(), CColor(0, 0, 0, 255));
     }
   }
   return 0;

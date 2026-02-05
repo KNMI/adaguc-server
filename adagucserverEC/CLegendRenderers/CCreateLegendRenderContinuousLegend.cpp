@@ -198,8 +198,8 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
     tickValues.push_back(max);
 
     // Calculate widths
-    int numberWidth = legendImage->getTextWidth("0", fontLocation.c_str(), 0);
-    int minusWidth = legendImage->getTextWidth("-", fontLocation.c_str(), 0);
+    int numberWidth = legendImage->getTextWidth("0", fontLocation, fontSize, 0);
+    int minusWidth = legendImage->getTextWidth("-", fontLocation, fontSize, 0);
     int intWidth = maxIntWidth(logLabels);
 
     // Calculate center (either last decimal digit or decimal dot)
@@ -265,8 +265,8 @@ int CCreateLegend::renderContinuousLegend(CDataSource *dataSource, CDrawImage *l
     }
 
     // Calculate widths
-    int numberWidth = legendImage->getTextWidth("0", fontLocation.c_str(), 0);
-    int minusWidth = legendImage->getTextWidth("-", fontLocation.c_str(), 0);
+    int numberWidth = legendImage->getTextWidth("0", fontLocation, fontSize, 0);
+    int minusWidth = legendImage->getTextWidth("-", fontLocation, fontSize, 0);
 
     int intWidth = maxIntWidth(allLabels);
 

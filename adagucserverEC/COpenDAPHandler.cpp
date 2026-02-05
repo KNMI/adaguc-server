@@ -3,22 +3,7 @@
 #include "CDBFactory.h"
 #include "CAutoResource.h"
 #include "utils/LayerUtils.h"
-const char *COpenDAPHandler::className = "COpenDAPHandler";
 
-// References: http://opendap.org/pdf/ESE-RFC-004v1.2.pdf
-// https://earthdata.nasa.gov/files/ESE-RFC-004v1.1.pdf
-
-// http://opendap.knmi.nl/knmi/thredds/dodsC/ADAGUC/testsets/opendaptests/x4.nc
-//  wget "http://bhw485.knmi.nl:8080/cgi-bin/list.cgi/opendap/test2.nc.dods" -O /tmp/dat.txt && hexdump -C /tmp/dat.txt
-// wget "http://opendap.knmi.nl/knmi/thredds/dodsC/ADAGUC/testsets/opendaptests/x4.nc.dods" -O /tmp/dat.txt && hexdump -C /tmp/dat.txt
-
-// wget "http://bhw485.knmi.nl:8080/cgi-bin/list.cgi/opendap/test2.nc.dods?x" -O /tmp/dat.txt && hexdump -C /tmp/dat.txt
-// wget "http://opendap.knmi.nl/knmi/thredds/dodsC/ADAGUC/testsets/opendaptests/x4.nc.dods?x" -O /tmp/dat.txt && hexdump -C /tmp/dat.txt
-
-// wget --certificate /usr/people/plieger/impactspace/esg-dn1.nsc.liu.se.esgf-idp.openid.maartenplieger/certs/creds.pem --no-check-certificate
-// https://bhw485.knmi.nl:8281/impactportal/DAP/esg-dn1.nsc.liu.se.esgf-idp.openid.maartenplieger/x4.nc.dods?x -O /tmp/dat.txt && hexdump -C /tmp/dat.txt
-
-// #define COPENDAPHANDLER_DEBUG
 class CDFTypeToOpenDAPType {
 public:
   static CT::string getvar(const int type) {

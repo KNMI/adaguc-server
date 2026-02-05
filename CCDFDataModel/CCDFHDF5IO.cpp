@@ -27,8 +27,6 @@
 
 #include <cmath>
 
-const char *CDFHDF5Reader::className = "CDFHDF5Reader";
-
 int CDFHDF5Reader::CustomForecastReader::readData(CDF::Variable *thisVar, size_t *start, size_t *count, ptrdiff_t *stride) {
 #ifdef CCDFHDF5IO_DEBUG
   CDBDebug("READ data for %s called", thisVar->name.c_str());
@@ -96,10 +94,10 @@ CDFType CDFHDF5Reader::typeConversion(hid_t type) {
   if (H5Tequal(type, H5T_NATIVE_ULONG) > 0) return CDF_UINT;
 
   if (H5Tequal(type, H5T_NATIVE_LLONG) > 0) {
-    CDBWarning("Warning: HDF5 type H5T_NATIVE_LLONG is not supported", type);
+    CDBWarning("Warning: HDF5 type H5T_NATIVE_LLONG is not supported");
   }
   if (H5Tequal(type, H5T_NATIVE_ULLONG) > 0) {
-    CDBWarning("Warning: HDF5 type H5T_NATIVE_ULLONG is not supported", type);
+    CDBWarning("Warning: HDF5 type H5T_NATIVE_ULLONG is not supported");
   }
 
   // CDBWarning("Warning: unknown HDF5 type (%d)",type);
@@ -515,7 +513,7 @@ int CDFHDF5Reader::_readVariableData(CDF::Variable *var, CDFType type, size_t *s
       H5Sclose(HDF5_dataspace);
       H5Dclose(datasetID);
     } else {
-      CDBError("Unable to open variable %s with group ID %d", varName, HDF5_group);
+      CDBError("Unable to open variable %s with group ID %d", varName, (int)HDF5_group);
       closeH5GroupByName(var->name.c_str());
       return 1;
     }
@@ -1081,7 +1079,6 @@ int CDFHDF5Reader::convertLSASAFtoCF() {
 
           if (SCALING_FACTOR->size() == 1) {
             SCALING_FACTOR->getData(multiplicationFactor, 1);
-            CDBDebug("Setting offset to %f and %f", multiplicationFactor[0]);
             CDF::Attribute *scale_factor = new CDF::Attribute();
             scale_factor->setName("scale_factor");
             scale_factor->setData(CDF_FLOAT, multiplicationFactor, 1);
@@ -1093,7 +1090,6 @@ int CDFHDF5Reader::convertLSASAFtoCF() {
             SCALING_FACTOR->getData(multiplicationFactor, 1);
             if (multiplicationFactor[0] != 0) {
               multiplicationFactor[0] = 1 / multiplicationFactor[0];
-              CDBDebug("Setting offset to %f and %f", multiplicationFactor[0]);
               CDF::Attribute *scale_factor = new CDF::Attribute();
               scale_factor->setName("scale_factor");
               scale_factor->setData(CDF_FLOAT, multiplicationFactor, 1);
@@ -1103,7 +1099,6 @@ int CDFHDF5Reader::convertLSASAFtoCF() {
 
           if (OFFSET->size() == 1) {
             OFFSET->getData(additionFactor, 1);
-            CDBDebug("Setting offset to %f and %f", additionFactor[0]);
             CDF::Attribute *add_offset = new CDF::Attribute();
             add_offset->setName("add_offset");
             add_offset->setData(CDF_FLOAT, additionFactor, 1);
@@ -1749,7 +1744,7 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
             CDBDebug("Setting time offset %f for image %d", offset, variableCounter);
 #endif
             if (variableCounter - 1 >= time->getSize()) {
-              CDBWarning("More images found than specified in overview:number_image_groups, number_image_groups is set to %d", time->getSize());
+              CDBWarning("More images found than specified in overview:number_image_groups, number_image_groups is set to %lu", time->getSize());
             } else {
               ((double *)time->data)[variableCounter - 1] = offset;
             }

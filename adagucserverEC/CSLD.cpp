@@ -6,8 +6,6 @@
 #include "../hclasses/CHTTPTools.h"
 #include "utils/LayerUtils.h"
 
-const char *CSLD::className = "CSLD";
-
 void CSLD::setServerParams(CServerParams *serverParams) {
   this->serverParams = serverParams;
   this->serverConfig = serverParams->cfg;

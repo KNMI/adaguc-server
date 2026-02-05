@@ -60,8 +60,6 @@ private:
 
   CDFObject *getCDFObject(CDataSource *dataSource, CServerParams *srvParams, const char *fileName, bool plain, bool cached = true);
 
-  DEF_ERRORFUNCTION();
-
 public:
   ~CDFObjectStore() { clear(); }
   void deleteCDFObject(const CT::string &fileName);

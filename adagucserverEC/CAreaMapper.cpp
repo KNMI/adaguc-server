@@ -32,8 +32,6 @@
 #include "CAreaMapper.h"
 #include "CDrawFunction.h"
 
-const char *CAreaMapper::className = "CAreaMapper";
-
 void CAreaMapper::init(CDataSource *dataSource, CDrawImage *drawImage, int tileWidth, int tileHeight) {
   this->dataSource = dataSource;
   dfTileWidth = double(tileWidth);

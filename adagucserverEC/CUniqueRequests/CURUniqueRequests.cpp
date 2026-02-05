@@ -4,10 +4,6 @@
 #include "CImageDataWriter.h"
 #include "CURUniqueRequests.h"
 
-// #define CCUniqueRequests_DEBUG
-// #define CCUniqueRequests_DEBUG_HIGH
-const char *CURUniqueRequests::className = "CURUniqueRequests";
-
 int *CURUniqueRequests::__getDimOrder() { return dimOrdering; }
 
 void CURUniqueRequests::addDimensionRangeRequest(const char *filename, const char *dimName, size_t dimIndex, std::string dimValue) {
@@ -293,7 +289,7 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
             CDataReader::DimensionType dtype = CDataReader::getDimensionType(cdfObject, request[i].name.c_str());
             if (dtype != CDataReader::dtype_reference_time) {
               if (dtype == CDataReader::dtype_none) {
-                CDBWarning("dtype_none for %s", dtype, request[i].name.c_str());
+                CDBWarning("dtype_none for %d with name %s", dtype, request[i].name.c_str());
               }
               try {
                 /* CHECK */
@@ -393,7 +389,7 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
               }
             }
             if (readDataAsCDFDouble) {
-              CDataPostProcessor::getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING, (double *)variable->data, variable->getSize());
+              getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING, (double *)variable->data, variable->getSize());
             }
             /* End of data postproc */
 #ifdef CCUniqueRequests_DEBUG

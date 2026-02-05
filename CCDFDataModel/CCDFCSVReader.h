@@ -41,7 +41,6 @@
 
 class CDFCSVReader : public CDFReader {
 private:
-  DEF_ERRORFUNCTION();
   std::vector<CDF::Variable *> variableIndexer;
   std::vector<CT::string> csvLines;
   CT::string csvData;

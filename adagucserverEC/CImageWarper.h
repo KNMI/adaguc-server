@@ -46,7 +46,6 @@ private:
   int dMaxExtentDefined;
   bool sourceIsLatLonProjection = false;
 
-  DEF_ERRORFUNCTION();
   CT::string sourceCRSString;
   CT::string destinationCRS;
   //     int _decodeCRS(CT::string *CRS);

@@ -2,7 +2,6 @@
 #include "CHandleMetadata.h"
 #include "CAutoResource.h"
 #include "CDFObjectStore.h"
-const char *CHandleMetadata::className = "CHandleMetadata";
 
 int CHandleMetadata::process(CServerParams *srvParam) {
   CT::string metadata = "{}";

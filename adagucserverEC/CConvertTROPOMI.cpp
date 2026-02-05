@@ -48,7 +48,6 @@ void writeLogFile4(const char *msg) {
     } // else CDBError("Unable to write logfile %s",logfile);
   }
 }
-const char *CConvertTROPOMI::className = "CConvertTROPOMI";
 
 int CConvertTROPOMI::isThisTROPOMIData(CDFObject *cdfObject) {
   try {

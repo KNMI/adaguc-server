@@ -73,8 +73,6 @@ private:
    */
   int getMonthByDayInYear(int day, int *monthsCumul);
 
-  DEF_ERRORFUNCTION();
-
   /**
    * Initializes CTime
    * @param CDF::Variable time variable

@@ -50,7 +50,7 @@ class TestKMDS:
 
         assert status == 0
         assert AdagucTestTools().compareImage(
-            self.expectedoutputsspath + filename, self.testresultspath + filename, maxAllowedColorDifference=30
+            self.expectedoutputsspath + filename, self.testresultspath + filename, maxAllowedColorDifference=2
         )
 
     @pytest.mark.parametrize(

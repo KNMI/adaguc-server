@@ -1,6 +1,6 @@
 #include "CNetCDFDataWriter.h"
 #include "CGenericDataWarper.h"
-const char *CNetCDFDataWriter::className = "CNetCDFDataWriter";
+
 #include "CRequest.h"
 #include "GenericDataWarper/gdwFindPixelExtent.h"
 // #define CNetCDFDataWriter_DEBUG
@@ -283,7 +283,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
       }
       CDataReader::DimensionType dtype = CDataReader::getDimensionType(srcObj, dimName.c_str());
       if (dtype == CDataReader::dtype_none) {
-        CDBWarning("dtype_none for %s", dtype, dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+        CDBWarning("dtype_none for %s", dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
       }
 
       bool isTimeDim = false;
@@ -459,7 +459,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
         }
       }
       if (d == NULL) {
-        CDBError("Unable to add dimension nr %d, name[%s]", i, sourceVar->dimensionlinks[i]->name.c_str());
+        CDBError("Unable to add dimension nr %lu, name[%s]", i, sourceVar->dimensionlinks[i]->name.c_str());
         throw(__LINE__);
       }
       destVar->dimensionlinks.push_back(d);
@@ -480,7 +480,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
 #endif
 
     if (CDF::allocateData(destVar->getType(), &destVar->data, varSize) != 0) {
-      CDBError("Unable to allocate data for variable %s with %d elements", destVar->name.c_str(), varSize);
+      CDBError("Unable to allocate data for variable %s with %lu elements", destVar->name.c_str(), varSize);
       return 1;
     }
     double dfNoData = NAN;
@@ -606,7 +606,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       }
       if (dataSource->statistics != NULL) {
         if (verbose) {
-          CDBDebug("min %f, max %f samples %d", dataSource->statistics->getMinimum(), dataSource->statistics->getMaximum(), dataSource->statistics->getNumSamples());
+          CDBDebug("min %f, max %f samples %lu", dataSource->statistics->getMinimum(), dataSource->statistics->getMaximum(), dataSource->statistics->getNumSamples());
         }
         if (dataSource->statistics->getNumSamples() == 0) return 1;
       }
@@ -643,7 +643,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
 #endif
       // CDBDebug("getCurrentTimeStep %d",dataSource->getCurrentTimeStep());
       if (dims->getNumDimensions() == 0) {
-        CDBDebug("Note: This datasource [%d] has no dimensions", i);
+        CDBDebug("Note: This datasource [%lu] has no dimensions", i);
       }
 
       /*
@@ -654,7 +654,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       // CDBDebug("baseDataSource->requiredDims.size(); = %d",baseDataSource->requiredDims.size());
 
       if (verbose) {
-        CDBDebug("Looping dims [%d]", dataSource->requiredDims.size());
+        CDBDebug("Looping dims [%lu]", dataSource->requiredDims.size());
       }
       for (size_t d = 0; d < dataSource->requiredDims.size(); d++) {
         dimIndices[d] = 0;
@@ -667,7 +667,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
         }
         CDataReader::DimensionType dtype = CDataReader::getDimensionType(dataSource->getDataObject(j)->cdfObject, dimName.c_str());
         if (dtype == CDataReader::dtype_none) {
-          CDBWarning("dtype_none for %s", dtype, dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+          CDBWarning("dtype_none for %s", dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
         }
 
         bool isTimeDim = false;
@@ -834,7 +834,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       //      CDBDebug("Setting pointers");
       size_t elementOffset = dataStepIndex * settings.width * settings.height;
       if (verbose) {
-        CDBDebug("elementOffset = %d", elementOffset);
+        CDBDebug("elementOffset = %lu", elementOffset);
       }
       void *warpedData = NULL;
       switch (variable->getType()) {
@@ -879,7 +879,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       settings.data = warpedData;
 
       if (verbose) {
-        CDBDebug("Warping from %dx%d to %dx%d", sourceGeo.width, sourceGeo.height, settings.width, settings.height);
+        CDBDebug("Warping from %dx%d to %lux%lu", sourceGeo.width, sourceGeo.height, settings.width, settings.height);
       }
 
       if (drawFunctionMode == CNetCDFDataWriter_NEAREST) {
@@ -1078,7 +1078,7 @@ int CNetCDFDataWriter::end() {
     fseek(fp, 0L, SEEK_SET);
     // CDBDebug("File opened: size = %d",endPos);
 
-    CDBDebug("Now start streaming %d bytes to the client", endPos);
+    CDBDebug("Now start streaming %lu bytes to the client", endPos);
     printf("Content-Disposition: attachment; filename=%s\r\n", humanReadableString.c_str());
     printf("Content-Description: File Transfer\r\n");
     printf("Content-Transfer-Encoding: binary\r\n");
