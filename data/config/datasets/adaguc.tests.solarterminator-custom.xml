@@ -52,7 +52,7 @@
     <Name>solarterminator</Name>
     <DataPostProc algorithm="solarterminator" offset="P7D"/>
     <Variable>solarterminator</Variable>
-    <Styles>soltstyle</Styles>
+    <Styles>solt_twilight,solt_continuous</Styles>
     <Dimension interval="PT1H">time</Dimension>
   </Layer>
 
