@@ -12,10 +12,10 @@
  * Config for the time dimension (not backed by the DataSource info)
  */
 struct LiveUpdateTimeRange {
-  CT::string startTime;
-  CT::string stopTime;
-  CT::string defaultTime;
-  CT::string interval;
+  std::string startTime;
+  std::string stopTime;
+  std::string defaultTime;
+  std::string interval;
 };
 
 /**
