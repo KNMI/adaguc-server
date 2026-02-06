@@ -195,14 +195,6 @@ void linearTransformGrid(GDWState &warperState, bool useHalfCellOffset, CImageWa
   newpixelspan.clip({.left = 0, .bottom = 0, .right = wh.x, .top = wh.y});
 
   pixelspan = newpixelspan;
-  // return;
-  // double dfSourceExtW = 123.5;
-  // double dfSourceW = 90.0;
-  // double dfSourceOrigX = 70;
-  // double dfDestOrigX = 20;
-  // double dfDestW = 1024;
-  // double dfDestExtW = 360;
-  // double xFactor = std::floor((1 * dfSourceExtW / dfSourceW + dfSourceOrigX - dfDestOrigX) * dfDestW / dfDestExtW + 0.5);
 
   double xOffset = (dfSourceOrigX - dfDestOrigX) * (dfDestW / dfDestExtW);
   double xScale = (dfSourceExtW / dfSourceW) * (dfDestW / dfDestExtW);
