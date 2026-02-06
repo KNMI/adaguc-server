@@ -4,6 +4,7 @@
 #include "CReporter.h"
 #include "CRequest.h"
 #include "CNetCDFDataWriter.h"
+#include <cdfVariableCache.h>
 
 int CCreateTiles::createTiles(CDataSource *dataSource, int scanFlags) {
   if (dataSource->isConfigured == false) {
@@ -120,7 +121,7 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
     CDBError("Unable to open input file for tiles: %s", dataSourceToTile->getFileName());
     return 1;
   }
-
+  dataSourceToTile->getFirstAvailableDataObject()->cdfVariable->enableCache = true;
   // Extract time and set it.
   try {
     auto var = dataSourceToTile->getFirstAvailableDataObject()->cdfObject->getVariable("time");
@@ -200,6 +201,8 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
 
   // Should we really close the source data? For now we do.
   CDFObjectStore::getCDFObjectStore()->deleteCDFObject(fileToTile.c_str());
+
+  varCacheClear();
 
   return 0;
 };

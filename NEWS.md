@@ -10,6 +10,7 @@
 - Refactored adagucserver.cpp file and added equalsIgnoreCase method.
 - Added `add_dataobject` datapostproc, creates a data object (variable) with a given value. Can be used to draw vectors with only a direction component. A tutorial can be found [here](/doc/tutorials/Styling_of_vector_with_rotation_and_add_dataobject_datapostproc.md).
 - Scantask now exits with status codes indicating if files are recognized by the datasets or if there are scan errors.
+- Create tiles now makes use of caching to improve tile generation speed.
 
 **Version 6.2.0 - 2026-01-12**
 

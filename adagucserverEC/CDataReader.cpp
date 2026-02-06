@@ -1107,12 +1107,10 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 
       // if( dataSource->getDataObject(varNr)->cdfVariable->data==NULL){
       if (dataSource->formatConverterActive == false) {
-        // #ifdef MEASURETIME
-        //  StopWatch_Stop("Freeing data");
-        // #endif
 
-        // Read variable data
-        dataSource->getDataObject(varNr)->cdfVariable->freeData();
+        if (dataSource->getDataObject(varNr)->cdfVariable->enableCache == false) {
+          dataSource->getDataObject(varNr)->cdfVariable->freeData();
+        }
 
 #ifdef MEASURETIME
         StopWatch_Stop("start reading data");

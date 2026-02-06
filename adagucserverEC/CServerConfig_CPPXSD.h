@@ -681,7 +681,7 @@ public:
     }
     class Cattr {
     public:
-      CT::string enableautoopendap, enablelocalfile, enablecache;
+      CT::string enableautoopendap, enablelocalfile;
     } attr;
 
     CXMLObjectInterface *addElement(const char *name) {
@@ -696,9 +696,6 @@ public:
     bool addAttribute(const char *attrname, const char *attrvalue) {
       if (equals("enableautoopendap", attrname)) {
         attr.enableautoopendap.copy(attrvalue);
-        return true;
-      } else if (equals("enablecache", attrname)) {
-        attr.enablecache.copy(attrvalue);
         return true;
       } else if (equals("enablelocalfile", attrname)) {
         attr.enablelocalfile.copy(attrvalue);
