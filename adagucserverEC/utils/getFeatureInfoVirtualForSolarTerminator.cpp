@@ -8,7 +8,6 @@
 #define LIVEUPDATE_MAX_TIMESTEPS 800
 int getFeatureInfoVirtualForSolarTerminator(CImageDataWriter *img, std::vector<CDataSource *> dataSources, int dataSourceIndex, int dX, int dY, CServerParams *srvParams) {
 
-  // Question: When is this true?
   img->isProfileData = false;
   // Determine available range
   LiveUpdateTimeRange timeRange = calculateLiveUpdateTimeRange();
