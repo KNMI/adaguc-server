@@ -140,11 +140,13 @@ int CDF::Variable::readData(CDFType readType, size_t *_start, size_t *_count, pt
 
 int CDF::Variable::readData(CDFType type, size_t *_start, size_t *_count, ptrdiff_t *_stride) {
   traceTimingsSpanStart(TraceTimingType::FSREADVAR);
-  if (varCacheReturn(this, _start, _count, _stride) == 0) {
+  if (enableCache && varCacheReturn(this, _start, _count, _stride) == 0) {
     return 0;
   }
   int status = _readData(type, _start, _count, _stride);
-  varCacheAdd(this, _start, _count, _stride);
+  if (enableCache) {
+    varCacheAdd(this, _start, _count, _stride);
+  }
   traceTimingsSpanEnd(TraceTimingType::FSREADVAR);
   return status;
 }
