@@ -38,8 +38,8 @@ private:
   DEF_ERRORFUNCTION();
 
 public:
-  CImgWarpGeneric() {}
-  ~CImgWarpGeneric() {}
+  CImgWarpGeneric() = default;
+  ~CImgWarpGeneric() = default;
   void render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage) override;
   int set(const char *pszSettings) override;
 };

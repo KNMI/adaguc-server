@@ -55,7 +55,7 @@ ProjectionGrid *makeProjection(double halfCell, CImageWarper *warper, i4box &pix
   int dataWidth = pixelExtentBox.span().x;
   int dataHeight = pixelExtentBox.span().y;
   size_t dataSize = (dataWidth + 1) * (dataHeight + 1);
-  ProjectionGrid *projGrid = new ProjectionGrid();
+  auto *projGrid = new ProjectionGrid();
   projGrid->initSize(dataSize);
 
   double dfSourcedExtW = sourceGeoParams.bbox.span().x / double(warperState.sourceGridWidth);
@@ -82,7 +82,7 @@ ProjectionGrid *makeStridedProjection(double halfCell, CImageWarper *warper, i4b
   int projStrideFactor = 8;
   int dataWidth = pixelExtentBox.span().x;
   int dataHeight = pixelExtentBox.span().y;
-  ProjectionGrid *projGrid = new ProjectionGrid();
+  auto *projGrid = new ProjectionGrid();
   projGrid->initSize((dataWidth + 1) * (dataHeight + 1));
   double dfSourcedExtW = sourceGeoParams.bbox.span().x / double(warperState.sourceGridWidth);
   double dfSourcedExtH = sourceGeoParams.bbox.span().y / double(warperState.sourceGridHeight);
@@ -246,7 +246,7 @@ void linearTransformGrid(GDWState &warperState, bool useHalfCellOffset, CImageWa
 
 // Warp the grid from the source projection to the destination projection.
 template <typename T>
-void warpTransformGrid(GDWState &warperState, ProjectionGrid *projectionGrid, bool useHalfCellOffset, CImageWarper *warper, void *, GeoParameters &sourceGeoParams, GeoParameters &destGeoParams,
+void warpTransformGrid(GDWState &warperState, ProjectionGrid*& projectionGrid, bool useHalfCellOffset, CImageWarper *warper, void *, GeoParameters &sourceGeoParams, GeoParameters &destGeoParams,
                        const std::function<void(int, int, T, GDWState &warperState)> &drawFunction) {
 
   bool debug = false;
@@ -438,7 +438,7 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, GeoParame
   // This structure is passed to drawfunctions and contains info about the current state of the warper.
   // The drawfunction will be called numerous times for each destination pixel.
   GDWState warperState = {.sourceGrid = _sourceData,                  // The source datagrid, has the same datatype as the template T
-                          .hasNodataValue = 0,                        // Wether the source data grid has a nodata value
+                          .hasNodataValue = false,                    // Wether the source data grid has a nodata value
                           .dfNodataValue = 0,                         // No data value of the source grid, in double type. Can be casted to T
                           .sourceIndexX = 0,                          // Which X index is sampled from the source grid
                           .sourceIndexY = 0,                          // Which Y index is sampled for the source grid.

@@ -61,7 +61,7 @@ private:
   ProjectionGrid *projectionGrid = nullptr;
 
 public:
-  GenericDataWarper() {}
+  GenericDataWarper() = default;
   ~GenericDataWarper() {
     delete projectionGrid;
     projectionGrid = nullptr;

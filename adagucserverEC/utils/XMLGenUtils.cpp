@@ -744,6 +744,9 @@ int getStylesForLayer(MetadataLayer *metadataLayer) {
     metadataLayer->layerMetadata.styleList.push_back(style);
   }
 
+  for (auto s: *styleListFromDataSource) {
+    delete s;
+  }
   delete styleListFromDataSource;
 
   return 0;
