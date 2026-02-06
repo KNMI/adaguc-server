@@ -106,8 +106,6 @@ add_library(
     GenericDataWarper/GDWDrawFunctionSettings.cpp   
     CGenericDataWarper.cpp
     CGenericDataWarper.h
-    CGenericDataWarperTools.cpp
-    CGenericDataWarperTools.h
     GenericDataWarper/gdwFindPixelExtent.cpp
     GenericDataWarper/gdwFindPixelExtent.h
     CDataPostProcessors/CDataPostProcessor_AddFeatures.cpp

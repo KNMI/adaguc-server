@@ -48,11 +48,8 @@
 
 bool dataReaderDebugEnabled = false;
 bool measureTimeEnabled = false;
-// #define CDATAREADER_DEBUG
-// #define MEASURETIME
 
 #define uchar unsigned char
-#define MAX_STR_LEN 8191
 
 class Proc {
 public:
@@ -1103,14 +1100,9 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     if (measureTimeEnabled) {
       StopWatch_Stop("start reading image data");
     }
-    // for(size_t varNr=0;varNr<dataSource->getNumDataObjects();varNr++)
     for (size_t varNr = 0; varNr < dataSource->getNumDataObjects(); varNr++) {
-      // if( dataSource->getDataObject(varNr)->cdfVariable->data==NULL){
-      // if( dataSource->getDataObject(varNr)->cdfVariable->data==NULL){
-      if (dataSource->formatConverterActive == false) {
 
-        // Read variable data
-        dataSource->getDataObject(varNr)->cdfVariable->freeData();
+      if (dataSource->formatConverterActive == false) {
 
         if (measureTimeEnabled) {
           StopWatch_Stop("start reading data");
