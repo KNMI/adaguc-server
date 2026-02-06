@@ -4,15 +4,9 @@
 #include "CCDFObject.h"
 #include <cstddef>
 
-static std::map<std::string, CDF::Variable *> datamap;
+static std::map<std::string, bool> datamap;
 
-void varCacheClear() {
-  for (auto iter : datamap) {
-    CDBDebug("Clear Cache [%s]", iter.first.c_str());
-    delete iter.second;
-  }
-  datamap.clear();
-}
+void varCacheClear() { datamap.clear(); }
 
 std::string _makeCacheKey(CDF::Variable *cdfVariable, size_t *start, size_t *count, ptrdiff_t *stride) {
   if (cdfVariable->getParentCDFObject()->currentFile.empty()) {
@@ -28,19 +22,17 @@ std::string _makeCacheKey(CDF::Variable *cdfVariable, size_t *start, size_t *cou
   } else {
     dimensionlinks = "Full read";
   }
-  return CT::printf("[file:%s][var:%s][id:%d][type:%d][dims:%s]", cdfVariable->getParentCDFObject()->currentFile.c_str(), cdfVariable->name.c_str(), cdfVariable->id, cdfVariable->getType(),
-                    dimensionlinks.c_str());
+  return CT::printf("[file:%s][var:%s][id:%d][type:%d][dims:%s][pointer:%p]", cdfVariable->getParentCDFObject()->currentFile.c_str(), cdfVariable->name.c_str(), cdfVariable->id,
+                    cdfVariable->getType(), dimensionlinks.c_str(), cdfVariable->data);
 }
 
 int varCacheReturn(CDF::Variable *cdfVariable, size_t *start, size_t *count, ptrdiff_t *stride) {
   auto key = _makeCacheKey(cdfVariable, start, count, stride);
   if (key.empty()) return 1;
-  if (datamap.contains(key)) {
-    if (cdfVariable->data == nullptr && datamap[key]->data != nullptr) {
-      cdfVariable->copy(datamap[key]);
+  if (datamap.contains(key) && datamap[key] == true) {
+    if (cdfVariable->data != nullptr) {
       return 0;
     }
-    delete datamap[key];
     datamap.erase(key);
   }
   return 1;
@@ -49,8 +41,7 @@ int varCacheReturn(CDF::Variable *cdfVariable, size_t *start, size_t *count, ptr
 void varCacheAdd(CDF::Variable *cdfVariable, size_t *start, size_t *count, ptrdiff_t *stride) {
   auto key = _makeCacheKey(cdfVariable, start, count, stride);
   if (cdfVariable->data != nullptr && !datamap.contains(key)) {
-    datamap[key] = cdfVariable->clone(cdfVariable->getType(), cdfVariable->name.c_str());
-    datamap[key]->copy(cdfVariable);
+    datamap[key] = true;
     CDBDebug("Made Cache [%s]", key.c_str());
   }
 }
