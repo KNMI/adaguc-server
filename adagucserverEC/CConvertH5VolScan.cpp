@@ -277,6 +277,7 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
     varElevation->dimensionlinks.push_back(dimElevation);
     cdfObject->addVariable(varElevation);
     CDF::allocateData(CDF_STRING, &varElevation->data, dimElevation->length);
+    varElevation->setSize(dimElevation->length);
 
     CDF::Variable *varScan = new CDF::Variable();
     varScan->setType(CDF_UINT);

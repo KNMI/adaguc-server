@@ -40,14 +40,14 @@ int CDFObject::attachCDFReader(void *reader) {
   return 0;
 }
 void CDFObject::clear() {
-  for (size_t j = 0; j < dimensions.size(); j++) {
-    delete dimensions[j];
-    dimensions[j] = NULL;
+  for (auto & dimension : dimensions) {
+    delete dimension;
+    dimension = NULL;
   }
   dimensions.clear();
-  for (size_t j = 0; j < variables.size(); j++) {
-    delete variables[j];
-    variables[j] = NULL;
+  for (auto & variable : variables) {
+    delete variable;
+    variable = NULL;
   }
   variables.clear();
 }

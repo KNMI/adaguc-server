@@ -351,15 +351,16 @@ void CConvertGeoJSON::addCDFInfo(CDFObject *cdfObject, CServerParams *, BBOX &df
     featureIdVar->setType(CDF_STRING);
     featureIdVar->name = "featureids";
     CDF::allocateData(CDF_STRING, &featureIdVar->data, nrFeatures);
+    featureIdVar->setSize(nrFeatures);
   }
 
   int featureCnt = 0;
   int numPoints = 0;
   int numPolys = 0;
-  for (std::vector<Feature *>::iterator sample = featureMap.begin(); sample != featureMap.end(); ++sample) {
-    ((const char **)featureIdVar->data)[featureCnt++] = strdup((*sample)->getId().c_str());
-    numPoints += (*sample)->getPoints()->size();
-    numPolys += (*sample)->getPolygons()->size();
+  for (auto & sample : featureMap) {
+    ((const char **)featureIdVar->data)[featureCnt++] = strdup(sample->getId().c_str());
+    numPoints += sample->getPoints()->size();
+    numPolys += sample->getPolygons()->size();
   }
   if (numPoints > numPolys) {
     polygonIndexVar->setAttributeText("adaguc_data_type", "CConvertGeoJSONPOINT");

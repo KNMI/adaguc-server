@@ -316,7 +316,7 @@ CColor getDrawPointColor(CDataSource *dataSource, CDrawImage *drawImage, float v
   return drawImage->getColorForIndex(pointColorIndex);
 }
 
-void drawSymbolForPoint(CDrawImage *drawImage, std::map<std::string, CDrawImage *> symbolCache, std::string symbolFile, CServerConfig::XMLE_SymbolInterval *symbolInterval, int x, int y) {
+void drawSymbolForPoint(CDrawImage *drawImage, std::map<std::string, CDrawImage *>& symbolCache, std::string symbolFile, CServerConfig::XMLE_SymbolInterval *symbolInterval, int x, int y) {
   if (symbolFile.length() == 0) return;
 
   CDrawImage *symbol = NULL;
