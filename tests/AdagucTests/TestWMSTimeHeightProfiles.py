@@ -36,11 +36,7 @@ class TestWMSTimeHeightProfiles(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        self.assertTrue(
-            AdagucTestTools().compareGetCapabilitiesXML(
-                self.testresultspath + filename, self.expectedoutputsspath + filename
-            )
-        )
+        self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename))
 
     def test_wms_getmap_timeheightprofiles(self):
         """
@@ -93,23 +89,15 @@ class TestWMSTimeHeightProfiles(unittest.TestCase):
         )
 
         # Update database, scan the file
-        status, data, _ = AdagucTestTools().runADAGUCServer(
-            args=["--updatedb", "--config", config], env=self.env, isCGI=False
-        )
+        status, data, _ = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", config], env=self.env, isCGI=False)
         self.assertEqual(status, 0)
 
         # Check getcapabilities on dataset configuration
-        status, data, _ = AdagucTestTools().runADAGUCServer(
-            "SERVICE=WMS&request=getcapabilities", {"ADAGUC_CONFIG": config}
-        )
+        status, data, _ = AdagucTestTools().runADAGUCServer("SERVICE=WMS&request=getcapabilities", {"ADAGUC_CONFIG": config})
         filename = "test_wmsgetcapabilities_timeheightprofiles_as_dataset.xml"
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        self.assertTrue(
-            AdagucTestTools().compareGetCapabilitiesXML(
-                self.testresultspath + filename, self.expectedoutputsspath + filename
-            )
-        )
+        self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename))
 
         # Check getfeatureinfo as PNG on dataset configuration
         filename = "test_wmsgetfeatureinfo_png_timeheightprofiles_as_dataset.png"
@@ -143,23 +131,15 @@ class TestWMSTimeHeightProfiles(unittest.TestCase):
         )
 
         # Update database, scan the file
-        status, data, _ = AdagucTestTools().runADAGUCServer(
-            args=["--updatedb", "--config", config], env=self.env, isCGI=False
-        )
+        status, data, _ = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", config], env=self.env, isCGI=False)
         self.assertEqual(status, 0)
 
         # Check getcapabilities on dataset configuration
-        status, data, _ = AdagucTestTools().runADAGUCServer(
-            "SERVICE=WMS&request=getcapabilities", {"ADAGUC_CONFIG": config}
-        )
+        status, data, _ = AdagucTestTools().runADAGUCServer("SERVICE=WMS&request=getcapabilities", {"ADAGUC_CONFIG": config})
         filename = "test_wmsgetcapabilities_timeheightprofiles_as_dataset.xml"
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        self.assertTrue(
-            AdagucTestTools().compareGetCapabilitiesXML(
-                self.testresultspath + filename, self.expectedoutputsspath + filename
-            )
-        )
+        self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename))
 
         # Check getfeatureinfo as PNG on dataset configuration
         filename = "test_wmsgetfeatureinfo_json_timeheightprofiles_as_dataset.json"

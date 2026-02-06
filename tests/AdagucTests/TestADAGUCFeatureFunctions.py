@@ -4,28 +4,28 @@
 # pylint: disable=unused-argument
 
 """
- Run test for ADAGUC Feature functions
+Run test for ADAGUC Feature functions
 """
+
 import unittest
 import os
 from adaguc.ADAGUCFeatureFunctions import ADAGUCFeatureCombineNuts
 
 from adaguc.AdagucTestTools import AdagucTestTools
 
-ADAGUC_PATH = os.environ['ADAGUC_PATH']
+ADAGUC_PATH = os.environ["ADAGUC_PATH"]
 
 
 class TestADAGUCFeatureFunctions(unittest.TestCase):
     """
     Run test for ADAGUC Feature functions
     """
+
     testresultspath = "{ADAGUC_PATH}/tests/testresults/TestADAGUCFeatureFunctions/"
     expectedoutputsspath = "{ADAGUC_PATH}/tests/expectedoutputs/TestADAGUCFeatureFunctions/"
-    env = {'ADAGUC_CONFIG': ADAGUC_PATH +
-           "/data/config/adaguc.autoresource.xml"}
+    env = {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.autoresource.xml"}
     testresultspath = testresultspath.replace("{ADAGUC_PATH}/", ADAGUC_PATH)
-    expectedoutputsspath = expectedoutputsspath.replace(
-        "{ADAGUC_PATH}/", ADAGUC_PATH)
+    expectedoutputsspath = expectedoutputsspath.replace("{ADAGUC_PATH}/", ADAGUC_PATH)
 
     AdagucTestTools().mkdir_p(testresultspath)
 
@@ -44,7 +44,7 @@ class TestADAGUCFeatureFunctions(unittest.TestCase):
 
         ADAGUCFeatureCombineNuts(
             featureNCFile="countries.geojson",
-            #dataNCFile = "myfile.nc",
+            # dataNCFile = "myfile.nc",
             dataNCFile="testdata.nc",
             bbox="0,50,10,55",
             time=None,
@@ -56,10 +56,13 @@ class TestADAGUCFeatureFunctions(unittest.TestCase):
             outncpointfile=self.testresultspath + filenamencpoint,
             outcsvfile=self.testresultspath + filenamecsv,
             tmpFolderPath="/tmp",
-            callback=progressCallback)
-        #AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
+            callback=progressCallback,
+        )
+        # AdagucTestTools().writetofile(self.testresultspath + filename,data.getvalue())
         # Comparing binary NetCDF is difficult
         # self.assertEqual(
         # AdagucTestTools().readfromfile(self.testresultspath + filenamencraster), AdagucTestTools().readfromfile(self.expectedoutputsspath + filenamencraster))
         self.assertEqual(
-            AdagucTestTools().readfromfile(self.testresultspath + filenamecsv), AdagucTestTools().readfromfile(self.expectedoutputsspath + filenamecsv))
+            AdagucTestTools().readfromfile(self.testresultspath + filenamecsv),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filenamecsv),
+        )
