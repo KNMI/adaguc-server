@@ -98,7 +98,7 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
 
     CDataReader reader;
     status = reader.open(metadataLayer->dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
-    if (status != 0) {
+    if (status != 0 && metadataLayer->dataSource->dLayerType != CConfigReaderLayerTypeLiveUpdate) {
       CDBError("Could not open file: %s", metadataLayer->dataSource->getFileName());
       return 1;
     }
@@ -808,7 +808,7 @@ int getFileNameForLayer(MetadataLayer *metadataLayer) {
   }
   CServerParams *srvParam = metadataLayer->dataSource->srvParams;
 
-  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeDataBase || metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
+  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeDataBase) {
     if (metadataLayer->dataSource->cfgLayer->Dimension.size() == 0) {
       metadataLayer->fileName.copy(metadataLayer->dataSource->cfgLayer->FilePath[0]->value.c_str());
       if (CAutoConfigure::autoConfigureDimensions(metadataLayer->dataSource) != 0) {

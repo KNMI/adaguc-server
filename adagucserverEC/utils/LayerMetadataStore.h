@@ -29,4 +29,5 @@ int storeLayerStyleListIntoMetadataDb(MetadataLayer *myMetadataLayer);
 int loadLayerStyleListFromMetadataDb(MetadataLayer *layer);
 
 int updateMetaDataTable(CDataSource *dataSource);
+int updateMetaDataTableLiveUpdate(CDataSource *dataSource);
 #endif

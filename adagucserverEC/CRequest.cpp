@@ -1087,6 +1087,7 @@ int CRequest::process_all_layers() {
 
       if (srvParam->requestType == REQUEST_WMS_GETFEATUREINFO) {
         if (firstDataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
+          srvParam->dFound_BBOX = 1;
           layerTypeLiveUpdateRender(firstDataSource, srvParam);
         } else {
           CImageDataWriter imageDataWriter;
@@ -1941,8 +1942,8 @@ int CRequest::process_querystring() {
         srvParam->geoParams.bbox.top = srvParam->geoParams.bbox.bottom;
         srvParam->geoParams.width = 1;
         srvParam->geoParams.height = 1;
-        srvParam->dX = 0;
-        srvParam->dY = 0;
+        srvParam->dX = -1;
+        srvParam->dY = -1;
         srvParam->requestType = REQUEST_WMS_GETFEATUREINFO;
       }
 
@@ -2332,6 +2333,10 @@ int CRequest::updatedb(CT::string tailPath, CT::string layerPathToScan, int scan
         CDBError("Could not update db for: %s", dataSources[j]->cfgLayer->Name[0]->value.c_str());
         errorHasOccured++;
       }
+    }
+    // We need to populate the metadata to be able to use EDR with live update datasets
+    if (dataSources[j]->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
+      status = CDBFileScanner::updatedb(dataSources[j], tailPath, layerPathToScan, scanFlags);
     }
   }
   if (errorHasOccured) {
