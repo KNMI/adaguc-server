@@ -42,7 +42,7 @@
   <Dataset enabled="true" location="{ADAGUC_PATH}/data/config/datasets/"/>
 
 
-  <AutoResource enableautoopendap="true" enablelocalfile="true" enablecache="false">
+  <AutoResource enableautoopendap="true" enablelocalfile="true">
     <Dir basedir="{ADAGUC_PATH}data/datasets" prefix="{ADAGUC_PATH}data/datasets/"/>
     <!-- Useful to test autowms on test results (Adaguc should be able to read and visualize its own generated files)-->
     <Dir basedir="{ADAGUC_PATH}tests/testresults" prefix="{ADAGUC_PATH}tests/testresults/"/>

@@ -1,4 +1,4 @@
-AutoResource (enableautoopendap, enablelocalfile, enablecache)
+AutoResource (enableautoopendap, enablelocalfile)
 ==============================================================
 
 Back to [Configuration](./Configuration.md)
@@ -13,10 +13,10 @@ of files residing in a directory.
 -   enablelocalfile - Set to true to allow the server to read local
     files, in this case additional [Dir](Dir.md) elements must be
     configured.
--   enablecache - Optional defaults to false
+
   
 ```xml
-    <AutoResource enableautoopendap="false" enablelocalfile="false" enablecache="false" >
+    <AutoResource enableautoopendap="false" enablelocalfile="false" >
       <Dir basedir="/data/sdpkdc/" prefix="/data/sdpkdc/"/>
       <Dir basedir="/data/omi/" prefix="/data/omi/"/>
     </AutoResource>

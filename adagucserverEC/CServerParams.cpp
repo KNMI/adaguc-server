@@ -129,12 +129,6 @@ int CServerParams::makeLayerGroupName(CT::string *groupName, CServerConfig::XMLE
   return 0;
 }
 
-bool CServerParams::isAutoResourceCacheEnabled() const {
-
-  if (cfg->AutoResource.size() > 0) return cfg->AutoResource[0]->attr.enablecache.equals("true");
-  return false;
-}
-
 char CServerParams::debugLoggingIsEnabled = -1; // Not configured yet, 1 means enabled, 0 means disabled
 
 bool CServerParams::isDebugLoggingEnabled() const {
