@@ -1,0 +1,8 @@
+repos:
+  # black ~ Formats Python code
+  - repo: https://github.com/psf/black
+    rev: 26.1.0
+    hooks:
+      - id: black
+        args: ["--config", "./pyproject.toml"]
+        files: ^tests/
