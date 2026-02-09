@@ -1109,13 +1109,13 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
             */
             std::vector<CImageDataWriter::IndexRange> ranges = getIndexRangesForRegex(featureInterval->attr.match, attributeValues, numFeatures);
             for (size_t i = 0; i < ranges.size(); i++) {
-              CServerConfig::XMLE_ShadeInterval *shadeInterval = new CServerConfig::XMLE_ShadeInterval();
-              styleConfiguration->shadeIntervals.push_back(shadeInterval);
-              shadeInterval->attr.min.print("%d", ranges[i].min);
-              shadeInterval->attr.max.print("%d", ranges[i].max);
-              shadeInterval->attr.fillcolor = featureInterval->attr.fillcolor;
-              shadeInterval->attr.bgcolor = featureInterval->attr.bgcolor;
-              shadeInterval->attr.label = featureInterval->attr.label;
+              auto shadeInterval = CServerConfig::XMLE_ShadeInterval();
+              shadeInterval.attr.min.print("%d", ranges[i].min);
+              shadeInterval.attr.max.print("%d", ranges[i].max);
+              shadeInterval.attr.fillcolor = featureInterval->attr.fillcolor;
+              shadeInterval.attr.bgcolor = featureInterval->attr.bgcolor;
+              shadeInterval.attr.label = featureInterval->attr.label;
+              styleConfiguration->shadeIntervals.push_back(std::move(shadeInterval));
             }
           }
         }
@@ -1210,14 +1210,14 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
                                      styleConfiguration->contourIntervalL);
 
         for (size_t j = 0; j < styleConfiguration->shadeIntervals.size(); j++) {
-          CServerConfig::XMLE_ShadeInterval *shadeInterval = styleConfiguration->shadeIntervals[j];
-          if (shadeInterval->attr.min.empty() == false && shadeInterval->attr.max.empty() == false) {
-            bilinearSettings.printconcat("shading=min(%s)$max(%s)$", shadeInterval->attr.min.c_str(), shadeInterval->attr.max.c_str());
-            if (shadeInterval->attr.fillcolor.empty() == false) {
-              bilinearSettings.printconcat("$fillcolor(%s)$", shadeInterval->attr.fillcolor.c_str());
+          const auto& shadeInterval = styleConfiguration->shadeIntervals[j];
+          if (shadeInterval.attr.min.empty() == false && shadeInterval.attr.max.empty() == false) {
+            bilinearSettings.printconcat("shading=min(%s)$max(%s)$", shadeInterval.attr.min.c_str(), shadeInterval.attr.max.c_str());
+            if (shadeInterval.attr.fillcolor.empty() == false) {
+              bilinearSettings.printconcat("$fillcolor(%s)$", shadeInterval.attr.fillcolor.c_str());
             }
-            if (!shadeInterval->attr.bgcolor.empty()) {
-              bilinearSettings.printconcat("$bgcolor(%s)$", shadeInterval->attr.bgcolor.c_str());
+            if (!shadeInterval.attr.bgcolor.empty()) {
+              bilinearSettings.printconcat("$bgcolor(%s)$", shadeInterval.attr.bgcolor.c_str());
             }
             bilinearSettings.printconcat(";");
           }
@@ -2914,10 +2914,10 @@ CColor CImageDataWriter::getPixelColorForValue(CDataSource *dataSource, float va
   if (!isNodata) {
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
     for (size_t j = 0; j < styleConfiguration->shadeIntervals.size(); j++) {
-      CServerConfig::XMLE_ShadeInterval *shadeInterval = styleConfiguration->shadeIntervals[j];
-      if (shadeInterval->attr.min.empty() == false && shadeInterval->attr.max.empty() == false) {
-        if ((val >= atof(shadeInterval->attr.min.c_str())) && (val < atof(shadeInterval->attr.max.c_str()))) {
-          return CColor(shadeInterval->attr.fillcolor.c_str());
+      const auto& shadeInterval = styleConfiguration->shadeIntervals[j];
+      if (shadeInterval.attr.min.empty() == false && shadeInterval.attr.max.empty() == false) {
+        if ((val >= atof(shadeInterval.attr.min.c_str())) && (val < atof(shadeInterval.attr.max.c_str()))) {
+          return CColor(shadeInterval.attr.fillcolor.c_str());
         }
       }
     }

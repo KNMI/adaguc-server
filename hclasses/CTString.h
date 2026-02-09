@@ -279,7 +279,7 @@ namespace CT {
     /**
      * Returns a new string with removed spaces
      */
-    string trim();
+    string trim() const;
 
     /**
      * Function which returns a std::vector on the stack with a list of strings allocated on the stack
@@ -337,28 +337,28 @@ namespace CT {
     /**
      * Converts the string to a float number
      */
-    float toFloat();
+    float toFloat() const;
 
     /**
      * Converts the string to a double number
      * // TODO: When strings like "longlat are passed the function currently silently returns 0. Would be better to throw an exception"
      */
-    double toDouble();
+    double toDouble() const;
 
     /**
      * Converts the string to an integer number
      */
-    int toInt();
+    int toInt() const;
 
     /**
      * Converts the string to a long number
      */
-    long toLong();
+    long toLong() const;
 
     /**
      * Test whether string is empty or not
      */
-    bool empty();
+    bool empty() const;
 
     /**
      * Checks if this string represents a numeric value

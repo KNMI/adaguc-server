@@ -705,10 +705,10 @@ CColor getPixelColorForValue(CDrawImage *drawImage, CDataSource *dataSource, flo
   }
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   if (!isNodata) {
-    for (auto shadeInterval : styleConfiguration->shadeIntervals) {
-      if (shadeInterval->attr.min.empty() == false && shadeInterval->attr.max.empty() == false) {
-        if ((val >= atof(shadeInterval->attr.min.c_str())) && (val < atof(shadeInterval->attr.max.c_str()))) {
-          return CColor(shadeInterval->attr.fillcolor.c_str());
+    for (const auto shadeInterval : styleConfiguration->shadeIntervals) {
+      if (shadeInterval.attr.min.empty() == false && shadeInterval.attr.max.empty() == false) {
+        if ((val >= atof(shadeInterval.attr.min.c_str())) && (val < atof(shadeInterval.attr.max.c_str()))) {
+          return CColor(shadeInterval.attr.fillcolor.c_str());
         }
       }
     }
