@@ -121,6 +121,7 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
     CDBError("Unable to open input file for tiles: %s", dataSourceToTile->getFileName());
     return 1;
   }
+  // Enable cache for the variable to tile, to speed up reading data for each tile.
   dataSourceToTile->getFirstAvailableDataObject()->cdfVariable->enableCache = true;
   // Extract time and set it.
   try {

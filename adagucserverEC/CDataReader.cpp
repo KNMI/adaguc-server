@@ -1102,12 +1102,11 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 #ifdef MEASURETIME
     StopWatch_Stop("start reading image data");
 #endif
-    // for(size_t varNr=0;varNr<dataSource->getNumDataObjects();varNr++)
     for (size_t varNr = 0; varNr < dataSource->getNumDataObjects(); varNr++) {
 
-      // if( dataSource->getDataObject(varNr)->cdfVariable->data==NULL){
       if (dataSource->formatConverterActive == false) {
 
+        // If cache is not enabled, free data before reading new data. This is important for example for the solar terminator, which is a virtual dataset that needs to be re-read for every request.
         if (dataSource->getDataObject(varNr)->cdfVariable->enableCache == false) {
           dataSource->getDataObject(varNr)->cdfVariable->freeData();
         }
