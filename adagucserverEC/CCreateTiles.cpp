@@ -125,13 +125,19 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
   dataSourceToTile->getFirstAvailableDataObject()->cdfVariable->enableCache = true;
   // Extract time and set it.
   try {
-    auto var = dataSourceToTile->getFirstAvailableDataObject()->cdfObject->getVariable("time");
+    auto var = dataSourceToTile->getFirstAvailableDataObject()->cdfObject->getVariableNE("time");
+    if (var == nullptr) {
+      CDBError("No time variable found in the data source");
+      throw(CDF_E_VARNOTFOUND);
+    }
+    var->readData(false);
     double timeValue = var->getDataAt<double>(0);
     auto adagucTime = CTime::GetCTimeInstance(var);
     auto timeString = adagucTime->dateToISOString(adagucTime->getDate(timeValue));
     dataSourceToTile->requiredDims.push_back(new COGCDims("time", timeString));
     dataSourceToTile->getCDFDims()->addDimension("time", timeString.c_str(), 0);
   } catch (int e) {
+    CDBDebug("No time dimension found, creating a fake one with value 0 code [%s]", CDF::getErrorMessage(e).c_str());
     if (dataSourceToTile->requiredDims.size() == 0) {
       COGCDims *ogcDim = new COGCDims();
       dataSourceToTile->requiredDims.push_back(ogcDim);
