@@ -1224,6 +1224,7 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
       }
     }
     lineMask = lineMask + lineMask;
+    delete[] dashes;
   }
 
 #ifdef CImgWarpBilinear_DEBUG

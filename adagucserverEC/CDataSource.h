@@ -113,8 +113,8 @@ public:
     bool noFurtherProcessing = false;
     bool filterFromOutput = false; // When set to true, this dataobject is not returned in the GetFeatureInfo response.
     std::vector<StatusFlag> statusFlagList;
-    CDF::Variable *cdfVariable;
-    CDFObject *cdfObject;
+    CDF::Variable *cdfVariable;  // Not owned!
+    CDFObject *cdfObject;  // Not owned!
 
     CT::string variableName;
 

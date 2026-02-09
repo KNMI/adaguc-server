@@ -638,7 +638,7 @@ int CDFNetCDFReader::readVariables(int groupId, std::string &groupName, int mode
       var->setParentCDFObject(cdfObject);
       var->isDimension = isDimension;
 
-      // It is essential that the variable nows which reader can be used to read the data
+      // It is essential that the variable knows which reader can be used to read the data
       var->setCDFReaderPointer((void *)this);
     }
   }

@@ -75,8 +75,9 @@ FeatureStyle getAttributesForFeature(CFeature *feature, CT::string id, CStyleCon
     regex_t regex;
     int ret = regcomp(&regex, featureAttr.match.c_str(), 0);
     if (ret) continue;
-    if (regexec(&regex, matchString.c_str(), 0, NULL, 0) != 0) continue;
+    int status = regexec(&regex, matchString.c_str(), 0, NULL, 0);
     regfree(&regex);
+    if (status != 0) continue;
     return {.backgroundColor = backgroundColor,
             .borderColor = featureAttr.bordercolor.empty() ? "#008000FF" : featureAttr.bordercolor.c_str(),
             .borderWidth = ((featureAttr.borderwidth.empty() == false) && ((featureAttr.borderwidth.toDouble()) > 0)) ? featureAttr.borderwidth.toDouble() : 0,

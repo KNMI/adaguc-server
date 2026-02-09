@@ -30,6 +30,12 @@ public:
   };
 
   struct DimInfo {
+    ~DimInfo() {
+      for(auto val: aggregatedValues) {
+        delete val;
+      }
+      aggregatedValues.clear();
+    }
     std::map<int, std::string> dimValuesMap;             // All values, many starts with 1 count, result of set()
     std::vector<AggregatedDimension *> aggregatedValues; // Aggregated values (start/count series etc), result of  addDimSet()
   };
