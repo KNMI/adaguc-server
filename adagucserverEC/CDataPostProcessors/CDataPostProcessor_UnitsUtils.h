@@ -1,5 +1,5 @@
 #include <cmath>
-#include "CTypes.h"
+#include "CTString.h"
 
 bool isKnotsUnit(CT::string units);
 
