@@ -40,6 +40,8 @@
 #include "CDataPostProcessors/CDataPostProcessor_UVComponents.h"
 #include "GenericDataWarper/gdwFindPixelExtent.h"
 #include "traceTimings/traceTimings.h"
+#include "LayerTypeLiveUpdate/LayerTypeLiveUpdate.h"
+#include "utils/getFeatureInfoVirtualForSolarTerminator.h"
 
 CT::string months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 // #define CIMAGEDATAWRITER_DEBUG
@@ -534,7 +536,7 @@ void CImageDataWriter::setValue(CDFType type, void *data, size_t ptr, double pix
   if (type == CDF_DOUBLE) ((double *)data)[ptr] = (double)pixel;
 }
 
-int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> &dataSources, int dataSourceIndex, int dX, int dY) {
+int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int dataSourceIndex, int dX, int dY) {
   CImageWarper imageWarper;
 #ifdef MEASURETIME
   StopWatch_Stop("getFeatureInfo");
@@ -993,6 +995,10 @@ std::vector<CImageDataWriter::IndexRange> CImageDataWriter::getIndexRangesForReg
   }
   regfree(&regex);
   return ranges;
+}
+
+int CImageDataWriter::getFeatureInfoVirtual(std::vector<CDataSource *> dataSources, int dataSourceIndex, int dX, int dY, CServerParams *srvParams) {
+  return getFeatureInfoVirtualForSolarTerminator(this, dataSources, dataSourceIndex, dX, dY, srvParams);
 }
 
 int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) {

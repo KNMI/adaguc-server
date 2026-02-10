@@ -110,7 +110,11 @@ public:
 
 private:
   static int getTextForValue(CT::string *tv, float v, CStyleConfiguration *styleConfiguration);
+
+public:
   std::vector<GetFeatureInfoResult *> getFeatureInfoResultList;
+
+private:
   CXMLParser::XMLElement gfiStructure;
 
   int warpImage(CDataSource *sourceImage, CDrawImage *drawImage);
@@ -133,13 +137,12 @@ private:
   void setValue(CDFType type, void *data, size_t ptr, double pixel);
   int _setTransparencyAndBGColor(CServerParams *srvParam, CDrawImage *drawImage);
 
-  bool isProfileData;
-
   /* Loops over the points, calculates the closest points, then calculates if point is within specified range in pixels */
   void getFeatureInfoGetPointDataResults(CDataSource *dataSource, CImageDataWriter::GetFeatureInfoResult *getFeatureInfoResult, int dataObjectNrInDataSource, GetFeatureInfoResult::Element *element,
                                          int maxPixelDistance);
 
 public:
+  bool isProfileData;
   CDrawImage drawImage;
 
   CImageDataWriter();
@@ -157,7 +160,9 @@ public:
 
   static int createScaleBar(GeoParameters &geoParams, CDrawImage *scaleBarImage, float scaling);
 
-  int getFeatureInfo(std::vector<CDataSource *> &dataSources, int dataSourceIndex, int dX, int dY);
+  int getFeatureInfo(std::vector<CDataSource *> dataSources, int dataSourceIndex, int dX, int dY);
+  int getFeatureInfoVirtual(std::vector<CDataSource *> dataSources, int dataSourceIndex, int dX, int dY, CServerParams *srvParams);
+
   void setDate(const char *date);
 
   // Virtual functions

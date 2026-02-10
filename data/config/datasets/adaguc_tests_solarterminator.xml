@@ -1,19 +1,6 @@
-# Configure a Solar Terminator layer using AdagucServer
-
-- [Back to readme](./Readme.md)
-
-## Prerequisites
-
-Make sure adaguc-server is running, follow the instructions at [Starting the adaguc-server with docker](../Running.md)
-
-## Step 1: Configure a dataset for this datafile
-
-Create the following file at the filepath `$ADAGUC_DATASET_DIR/solt.xml`
-
-```xml
 <?xml version="1.0" encoding="UTF-8" ?>
 <Configuration>
-<?xml version="1.0" encoding="UTF-8" ?>
+
   <!-- Shaded categories -->
   <Style name="solt_twilight" title="Twilight categories" abstract="Displays different phases of twilight and day using shades of gray, with black for night and white for day.">
     <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
@@ -30,6 +17,36 @@ Create the following file at the filepath `$ADAGUC_DATASET_DIR/solt.xml`
 
   </Style>
 
+  <Legend name="solt_continuous" type="colorRange">
+    <!-- Sun at zenith / subsolar point (maximum daylight) -->
+    <palette index="0" color="#FF0000FF" />
+    <!-- Strong daylight (high solar elevation) -->
+    <palette index="20" color="#FF6600FF" />
+    <!-- Normal daylight -->
+    <palette index="40" color="#FFD200FF" />
+    <!-- Lower sun, late morning / early afternoon -->
+    <palette index="60" color="#66FF33FF" />
+    <!-- Low sun angle, long shadows -->
+    <palette index="80" color="#00CC66FF" />
+    <!-- Twilight approaching, sun close to horizon -->
+    <palette index="100" color="#00E5FFFF" />
+    <!-- Solar terminator (sun at horizon) -->
+    <palette index="120" color="#3399FFFF" />
+    <!-- Civil to nautical night -->
+    <palette index="160" color="#3B3B98FF" />
+    <!-- Astronomical night -->
+    <palette index="200" color="#2A0A3DFF" />
+    <!-- Deep night -->
+    <palette index="239" color="#000000FF" />
+  </Legend>
+
+  <!-- SZA gradient  -->
+  <Style name="solt_continuous" title="SZA gradient" abstract="Continuous color gradient for solar zenith angle, to represent progression from daylight through twilight to deep night.">
+    <Legend fixed="true" tickinterval="30">solt_continuous</Legend>
+    <Min>0</Min>
+    <Max>180</Max>
+  </Style>
+  
   <Layer type="liveupdate">
     <Title>Solar Zenith Angle (SZA)</Title>
     <Abstract>Displays the solar zenith angle (SZA). The SZA ranges from 0 to 90 degrees during the day, and from 90 and up to 180 degrees at night.</Abstract>
@@ -37,25 +54,8 @@ Create the following file at the filepath `$ADAGUC_DATASET_DIR/solt.xml`
     <Name>solarterminator</Name>
     <DataPostProc algorithm="solarterminator"/>
     <Variable>solarterminator</Variable>
-    <Styles>solt_twilight</Styles>
+    <Styles>solt_continuous,solt_twilight</Styles>
     <Dimension interval="PT10M">time</Dimension>
   </Layer>
+
 </Configuration>
-
-```
-
-Feel free to customize the style to your preference, such as adding a fill color with transparency. However, keep in mind that the solar terminator calculation returns fixed categories rather than precise solar zenith angle values.
-
-The `offset` attribute is optional, with the default being one year. The time range that will be made available is `(now-offset, now+offset)`.
-
-## Step 3: Scan the new data
-
-```
-docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh solt
-```
-
-## Step 4: Check if the layer works 
-You can use the following URL to try out your local Solar Terminator layer. 
-
-Visit:
-- https://adaguc.knmi.nl/adaguc-viewer/index.html?autowms=https://yourhostname/autowms#addlayer('https://yourhostname/adagucserver?dataset=solt&','solarterminator')
