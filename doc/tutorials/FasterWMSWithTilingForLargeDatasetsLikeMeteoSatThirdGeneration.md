@@ -1,9 +1,11 @@
 Faster WMS by enabling tiling for large datasets like MeteoSat Third Generation (for NWCSAF)
 ===============================================
 
+[Back to readme](./Readme.md).
+
 Large NetCDF files can be translated into multiple smaller ones at different resolutions. This uses a tile pyramid. This makes it possible for the WMS server to quickly generate images for the GetMap requests. For the WMS client there is no difference if tiling is used or not. 
 
-[Back to readme](./Readme.md).
+
 
 Add to your layer:
 
@@ -11,7 +13,7 @@ Add to your layer:
 <TileSettings debug="true" autotile="true" maxtilesinimage="32"/> <!-- Note that you can set autotile also to "file" to start tiling only when the file is explicitly specified. -->
 ```
 
-See TileSettings for details. [TileSettings](../configuration/TileSettings.md) - Configuration settings for tiling high    resolution layers.
+For details see [TileSettings](../configuration/TileSettings.md) - Configuration settings for tiling high    resolution layers.
 
 Example for NWCSAF S_NWC_WV09_MTI1_GLOBAL-NR:
 
