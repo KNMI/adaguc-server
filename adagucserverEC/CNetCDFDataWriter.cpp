@@ -973,7 +973,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
                 featureVar->name = newfeatureVarName.c_str();
                 featureVar->setType(CDF_STRING);
                 featureVar->dimensionlinks.push_back(featureIndexDim);
-                CDF::allocateData(CDF_STRING, &featureVar->data, featureIndexDim->getSize());
+                featureVar->allocateData(dataSource->getDataObject(j)->features.size());
                 destCDFObject->addVariable(featureVar);
                 featureVar->setAttributeText("long_name", paramItemIt->first.c_str());
                 featureVar->setAttributeText("auxiliary", variable->name.c_str());

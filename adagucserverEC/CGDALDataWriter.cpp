@@ -377,6 +377,7 @@ int CGDALDataWriter::end() {
     return 1;
   }
   oSRS.exportToWkt(&pszDstWKT);
+  CPLFree(pszDstWKT);
 
   {
     /* dataset metadata */
