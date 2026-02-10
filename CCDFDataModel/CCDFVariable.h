@@ -202,6 +202,12 @@ namespace CDF {
     int setAttributeText(const char *attrName, const char *attrString);
     void *getCDFObjectClassPointer(size_t *start, size_t *count);
     int setData(CDFType type, const void *dataToSet, size_t dataLength);
+
+  public:
+    bool needsDataConversion = false;
+    bool needsDataConversion_ = false;
+    double factor = 1;
+    double offset = 0;
   };
 } // namespace CDF
 #endif

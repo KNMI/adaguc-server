@@ -321,7 +321,7 @@
           {
             "label": "Wind speed at height above ground level",
             "standard_name": "wind_speed",
-            "units": "kts",
+            "units": "m/s",
             "variableName": "wind-speed-hagl"
           }
         ],
@@ -403,7 +403,7 @@
           {
             "label": "Wind speed at height above ground level",
             "standard_name": "wind_speed",
-            "units": "kts",
+            "units": "m/s",
             "variableName": "wind-speed-hagl"
           }
         ],
@@ -485,7 +485,7 @@
           {
             "label": "Wind speed at height above ground level",
             "standard_name": "wind_speed",
-            "units": "kts",
+            "units": "m/s",
             "variableName": "wind-speed-hagl"
           }
         ],

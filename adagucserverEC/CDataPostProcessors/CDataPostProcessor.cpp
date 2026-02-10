@@ -10,14 +10,13 @@
 #include "CDataPostProcessor_MetadataVariable.h"
 #include "CDataPostProcessor_PointsFromGrid.h"
 
-#include "CDataPostProcessor_ToKnots.h"
-#include "CDataPostProcessor_WindSpeedKnotsToMs.h"
 #include "CDataPostProcessor_AXplusB.h"
 #include "CDPPGoes16Metadata.h"
 #include "CDataPostProcessors_MSGCPP.h"
 #include "CDataPostProcessor_CDPDBZtoRR.h"
 #include "CDataPostProcessor_AddFeatures.h"
 #include "CDataPostProcessor_SolarTerminator.h"
+#include "CDataPostProcessor_ConvertUnits.h"
 
 extern CDPPExecutor cdppExecutorInstance;
 CDPPExecutor cdppExecutorInstance;
@@ -35,19 +34,18 @@ CDPPExecutor::CDPPExecutor() {
   dataPostProcessorList->push_back(new CDPPMSGCPPVisibleMask());
   dataPostProcessorList->push_back(new CDPPMSGCPPHIWCMask());
   dataPostProcessorList->push_back(new CDPPBeaufort());
-  dataPostProcessorList->push_back(new CDPPToKnots());
   dataPostProcessorList->push_back(new CDPDBZtoRR());
   dataPostProcessorList->push_back(new CDPPAddFeatures());
   dataPostProcessorList->push_back(new CDPPGoes16Metadata());
   dataPostProcessorList->push_back(new CDPPClipMinMax());
   dataPostProcessorList->push_back(new CDPPOperator());
   dataPostProcessorList->push_back(new CDPPWFP());
-  dataPostProcessorList->push_back(new CDPPWindSpeedKnotsToMs());
   dataPostProcessorList->push_back(new CDPPSolarTerminator());
   dataPostProcessorList->push_back(new CDDPUVComponents());
   dataPostProcessorList->push_back(new CDDPFilterDataObjects());
   dataPostProcessorList->push_back(new CDDPMetadataVariable());
   dataPostProcessorList->push_back(new CDPPointsFromGrid());
+  dataPostProcessorList->push_back(new CDPPConvertUnits());
 }
 
 CDPPExecutor::~CDPPExecutor() {

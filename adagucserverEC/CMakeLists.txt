@@ -118,18 +118,18 @@ add_library(
     CDataPostProcessors/CDataPostProcessor_AXplusB.h
     CDataPostProcessors/CDataPostProcessor_Beaufort.cpp
     CDataPostProcessors/CDataPostProcessor_Beaufort.h
-    CDataPostProcessors/CDataPostProcessor_ToKnots.cpp
-    CDataPostProcessors/CDataPostProcessor_ToKnots.h
-    CDataPostProcessors/CDataPostProcessor_WindSpeedKnotsToMs.cpp
-    CDataPostProcessors/CDataPostProcessor_WindSpeedKnotsToMs.h
     CDataPostProcessors/CDataPostProcessor_ClipMinMax.cpp
     CDataPostProcessors/CDataPostProcessor_ClipMinMax.h
+    CDataPostProcessors/CDataPostProcessor_ConvertUnits.cpp
+    CDataPostProcessors/CDataPostProcessor_ConvertUnits.h
     CDataPostProcessors/CDataPostProcessor_IncludeLayer.cpp
     CDataPostProcessors/CDataPostProcessor_IncludeLayer.h
     CDataPostProcessors/CDataPostProcessor_Operator.cpp
     CDataPostProcessors/CDataPostProcessor_Operator.h
     CDataPostProcessors/CDataPostProcessor_SolarTerminator.h
     CDataPostProcessors/CDataPostProcessor_SolarTerminator.cpp
+    CDataPostProcessors/CDataPostProcessor_UnitsUtils.cpp
+    CDataPostProcessors/CDataPostProcessor_UnitsUtils.h
     CDataPostProcessors/solar/solar_terminator.h
     CDataPostProcessors/solar/solar_terminator.cpp
     CDataPostProcessors/CDataPostProcessor_WFP.h

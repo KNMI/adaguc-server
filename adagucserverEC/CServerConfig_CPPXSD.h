@@ -924,7 +924,7 @@ public:
   public:
     class Cattr {
     public:
-      CT::string a, b, c, units, algorithm, mode, name, select, standard_name, long_name, variable;
+      CT::string a, b, c, units, algorithm, mode, name, select, standard_name, long_name, variable, directionname, speedname, from_units;
     } attr;
     bool addAttribute(const char *attrname, const char *attrvalue) {
       if (equals("a", attrname)) {
@@ -959,6 +959,15 @@ public:
         return true;
       } else if (equals("algorithm", attrname)) {
         attr.algorithm.copy(attrvalue);
+        return true;
+      } else if (equals("directionname", attrname)) {
+        attr.directionname.copy(attrvalue);
+        return true;
+      } else if (equals("speedname", attrname)) {
+        attr.speedname.copy(attrvalue);
+        return true;
+      } else if (equals("from_units", attrname)) {
+        attr.from_units.copy(attrvalue);
         return true;
       }
       return false;
