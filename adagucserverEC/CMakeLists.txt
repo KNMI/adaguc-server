@@ -98,6 +98,8 @@ add_library(
     utils/writelogfile.cpp
     utils/processCMDArgs.h
     utils/processCMDArgs.cpp
+    utils/getFeatureInfoVirtualForSolarTerminator.h
+    utils/getFeatureInfoVirtualForSolarTerminator.cpp
     Types/LayerMetadataType.h
     Types/CPointTypes.h
     GenericDataWarper/gdwDrawTriangle.h

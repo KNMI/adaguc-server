@@ -2,6 +2,7 @@
 """
 This class contains tests to test the adaguc-server binary executable file. This is similar to black box testing, it tests the behaviour of the server software. It configures the server and checks if the response is OK.
 """
+
 import os
 from adaguc.AdagucTestTools import AdagucTestTools
 import pytest
@@ -25,7 +26,7 @@ class TestGraticules:
         [
             ("grid1"),
             ("grid10"),
-        ]
+        ],
     )
     def test_Graticules(self, layer_name: str):
         AdagucTestTools().cleanTempDir()
