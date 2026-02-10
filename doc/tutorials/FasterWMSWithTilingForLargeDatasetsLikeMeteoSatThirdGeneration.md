@@ -46,7 +46,7 @@ Example for NWCSAF S_NWC_WV09_MTI1_GLOBAL-NR:
 
 After this you can scan new data as normal. Tiles will be generated automatically and the WMS service will be significantly faster.
 
-*NOTE: If you want to add another layer with the same filepath and filter - but without tilesettings -, you need to specify another databasetable otherwise the layers will interfere. This is needed if you want to compare the performanc between the layers. You can do this by adding:
+*NOTE: If you want to add another layer with the same filepath and filter - but without tilesettings -, you need to specify another databasetable otherwise the layers will interfere. This is needed if you for example want to compare the performance between the layers. You can do this by adding:
 ```xml
 <DataBaseTable>tcwv-non-tiled</DataBaseTable>
 ```
