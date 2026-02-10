@@ -6,8 +6,8 @@
 #endif
 
 #ifdef ENABLE_INSPIRE
-#include <stdio.h>
-#include "CTypes.h"
+#include <cstdio>
+#include "CTString.h"
 #include "CXMLParser.h"
 #include "CHTTPTools.h"
 #include "CDebugger.h"
@@ -18,9 +18,6 @@
 // Zie http://kademo.nl/gs2/inspire/ows?SERVICE=WMS&REQUEST=GetCapabilities
 
 class CInspire {
-private:
-  DEF_ERRORFUNCTION();
-
 public:
   /**
    * INSPIRE metadata structure

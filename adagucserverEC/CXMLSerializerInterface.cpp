@@ -62,7 +62,7 @@ void parse_element_attributes(void *_a_node, std::vector<attribute> &attributes)
   if (a_node != NULL) parse_element_attributes(a_node, attributes);
 }
 
-void parse_element_names(void *_a_node, CXMLObjectInterface *object) {
+void parse_element_names(void *_a_node, CXMLObjectInterface *object, std::string datasetName) {
   xmlNode *a_node = (xmlNode *)_a_node;
   xmlNode *cur_node = NULL;
   CXMLObjectInterface *addedElement = nullptr;
@@ -79,21 +79,21 @@ void parse_element_names(void *_a_node, CXMLObjectInterface *object) {
           parse_element_attributes(cur_node->properties, attributes);
           for (auto &attribute : attributes) {
             if (addedElement->addAttribute(attribute.name.c_str(), attribute.value.c_str()) == false) {
-              CDBWarning("No matches for attribute [%s] in Element [%s]", attribute.name.c_str(), (char *)cur_node->name);
+              CDBWarning("In [%s]: no matches for attribute [%s] in Element [%s]", datasetName.c_str(), attribute.name.c_str(), (char *)cur_node->name);
             }
           }
         }
       } else {
-        CDBWarning("No matches for Element [%s]", (char *)cur_node->name);
+        CDBWarning("In [%s]: no matches for Element [%s]", datasetName.c_str(), (char *)cur_node->name);
       }
     }
     if (addedElement != nullptr) {
-      parse_element_names(cur_node->children, addedElement);
+      parse_element_names(cur_node->children, addedElement, datasetName);
     }
   }
 }
 
-int parseConfig(CXMLObjectInterface *object, CT::string &xmlData) {
+int parseConfig(CXMLObjectInterface *object, CT::string &xmlData, std::string datasetName) {
   LIBXML_TEST_VERSION
   xmlDoc *doc = NULL;
   xmlNode *root_element = NULL;
@@ -105,7 +105,7 @@ int parseConfig(CXMLObjectInterface *object, CT::string &xmlData) {
     return 1;
   }
   root_element = xmlDocGetRootElement(doc);
-  parse_element_names(root_element, object);
+  parse_element_names(root_element, object, datasetName);
   xmlFreeDoc(doc);
   xmlCleanupParser();
   return 0;

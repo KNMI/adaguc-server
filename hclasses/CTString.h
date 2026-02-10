@@ -25,9 +25,16 @@
 
 #ifndef CTSTRING_H
 #define CTSTRING_H
-
-#include "CTypes.h"
-#include "CTStringRef.h"
+#include <cstdio>
+#include <cstdarg>
+#include <cstring>
+#include <iostream>
+#include <typeinfo>
+#include <exception>
+#include <cstdlib>
+#include <regex.h>
+#include <vector>
+#include "printfCheckMacro.h"
 
 #define CT_MAX_NUM_CHARACTERS_FOR_FLOAT 18
 #define CT_MAX_NUM_CHARACTERS_FOR_INT 12
@@ -35,32 +42,12 @@
 namespace CT {
 
   class string {
-  public:
-    size_t count;
 
   private:
-    char stackValue[CTSTRINGSTACKLENGTH + 1];
-    int allocated;
-    size_t privatelength; // Length of string
-    size_t bufferlength;  // Length of buffer
-    void _Free();
-    void _Allocate(int _length);
-    const char *strrstr(const char *x, const char *y);
-    char _tohex(char in);
-    char _fromhex(char in);
-
-    bool useStack;
-    char *heapValue;
-    inline void init() {
-      useStack = CTYPES_USESTACK;
-      heapValue = NULL;
-      stackValue[0] = 0;
-      count = 0;
-      allocated = 0;
-      privatelength = 0;
-      bufferlength = CTSTRINGSTACKLENGTH;
-    }
-    inline char *getValuePointer() { return useStack ? stackValue : heapValue; }
+    /**
+     * std::string containing the string
+     */
+    std::string stdstring;
 
   public:
     /**
@@ -108,31 +95,17 @@ namespace CT {
      * addition assignment operator
      * @param f The input string
      */
-    string &operator+=(string const &f);
-
-    /**
-     * addition assignment operator
-     * @param f The input character array
-     */
-    string &operator+=(const char *const &f);
+    string &operator+=(std::string const &f);
 
     /**
      * addition operator
      * @param f The input string
      */
-    string operator+(string const &f);
+    string operator+(std::string const &f);
 
-    /**
-     * addition operator
-     * @param f The input character array
-     */
-    string operator+(const char *const &f);
-
-    /**
-     * const char* conversion operator
-     * Now it is not necessary to call c_str when a const char* is expected.
-     */
-    operator const char *() const;
+    // Conversion from and to std::string
+    string(std::string s) { this->stdstring = std::move(s); }  // Implicit conversion allowed
+    operator std::string() const { return {this->stdstring}; } // Implicit conversion allowed
 
     /**
      * Compare operator
@@ -144,21 +117,10 @@ namespace CT {
     bool operator!=(const string &str) const { return !this->equals(str); }
 
     /**
-     * Destructor
-     */
-    virtual ~string() { _Free(); }
-
-    /**
      * returns length of the string
      * @return length
      */
-    inline size_t length() { return privatelength; }
-
-    /**
-     * returns the internal bufferlength of the string
-     * @return internal bufferlength
-     */
-    inline size_t getbufferlength() { return bufferlength; }
+    size_t length() { return this->stdstring.size(); }
 
     /**
      * Copy a character array into the string
@@ -195,20 +157,19 @@ namespace CT {
      * Appends a string object to this string object
      * @param string The string to append
      */
-    void concat(const CT::string _string);
-
-    /**
-     * Appends an array of characters with specified length to this string object
-     * @param value The character array to append
-     * @param len The length of the character array
-     */
-    void concatlength(const char *_value, size_t len);
+    void concat(const CT::string &_string);
 
     /**
      * Appends an array of characters terminated with a '\0' character.
      * @param value The 0-terminated character array to append
      */
     void concat(const char *_value);
+    /**
+     * Appends an array of characters with specified length to this string object
+     * @param value The character array to append
+     * @param len The length of the character array
+     */
+    void concatlength(const char *_value, size_t len);
 
     /**
      * Returns the char value at the specified index.
@@ -225,30 +186,9 @@ namespace CT {
 
     /**
      * Compares this string to the specified object. The result is true if the given argument is not null and representing the same sequence of characters as this object.
-     * @param value The character array to compare
-     * @param length The length of the character array to compare
-     */
-    bool equals(const char *value, size_t length) const;
-
-    /**
-     * Compares this string to the specified object. The result is true if the given argument is not null and representing the same sequence of characters as this object.
      * @param value  The 0-terminated character array to compare
      */
-    bool equals(const char *value) const;
-
-    /**
-     * Compares this string to the specified object. The result is true if the given argument is not null and representing the same sequence of characters as this object.
-     * @param string*  Pointer to the string object to compare
-     */
-    bool equals(CT::string *string) const;
-
-    /**
-     * Compares this string to the specified object. The result is true if the given argument is not null and representing the same sequence of characters as this object.
-     * @param string Copy of the string object to compare
-     */
-    bool equals(CT::string string) const;
-
-    bool equals(std::string const &string) const;
+    bool equals(const std::string &string) const;
 
     bool equalsIgnoreCase(const char *_value, size_t _length);
 
@@ -267,15 +207,6 @@ namespace CT {
     /**
      * Returns the index within this string of the first occurrence of the specified character.
      * If a character with value ch occurs in the character sequence represented by this String object, then the index of the first such occurrence is returned
-     * @param search The character array to look for
-     * @param length The length of the character array
-     * @return -1 if not found, otherwise the index of the character sequence in this string object
-     */
-    int indexOf(const char *search, size_t length);
-
-    /**
-     * Returns the index within this string of the first occurrence of the specified character.
-     * If a character with value ch occurs in the character sequence represented by this String object, then the index of the first such occurrence is returned
      * @param search The 0-terminated character array to look for
      * @return -1 if not found, otherwise the index of the character sequence in this string object
      */
@@ -284,15 +215,6 @@ namespace CT {
     /**
      * Returns the index within this string of the last occurrence of the specified character
      * @param search The character array to look for
-     * @param length The length of the character array
-     * @return -1 if not found, otherwise the last index of the character sequence in this string object
-     */
-    int lastIndexOf(const char *search, size_t _length);
-
-    /**
-     * Returns the index within this string of the last occurrence of the specified character
-     * @param search The character array to look for
-     * @param search The 0-terminated character array to look for
      * @return -1 if not found, otherwise the last index of the character sequence in this string object
      */
     int lastIndexOf(const char *search);
@@ -306,6 +228,7 @@ namespace CT {
      * The startsWith() method determines whether a string begins with the characters of another string, returning true or false as appropriate.
      */
     int startsWith(const char *search);
+    int startsWith(const std::string search);
 
     /**
      * String to unicode
@@ -346,8 +269,6 @@ namespace CT {
      * Encodes string using XML encoding
      */
     void encodeXMLSelf();
-
-    static CT::string encodeXML(CT::string stringToEncode);
     CT::string encodeXML();
 
     /**
@@ -362,18 +283,10 @@ namespace CT {
 
     /**
      * Function which returns a std::vector on the stack with a list of strings allocated on the stack
-     * This function links its data to string data, it does not allocate new data or copy the data
-     * Resources are freed automatically
-     * @param _value The token to split the string on
-     */
-    StackList<CT::stringref> splitToStackReferences(const char *_value);
-
-    /**
-     * Function which returns a std::vector on the stack with a list of strings allocated on the stack
      * Data is automatically freed
      * @param _value The token to split the string on
      */
-    StackList<CT::string> splitToStack(const char *_value);
+    std::vector<CT::string> split(const char *_value);
 
     /**
      * Print like printf to this string
@@ -393,43 +306,6 @@ namespace CT {
      */
     const char *c_str() const;
 
-    /** Replace all strings with another string
-     * @param substr the character array to replace
-     * @param substrl the length of the character array to replace
-     * @param newString the new character array to replace with
-     * @param newStringl The length of the character array to replace with
-     * @return Zero on success
-     */
-    int replaceSelf(const char *substr, size_t substrl, const char *newString, size_t newStringl);
-
-    /** Replace all strings with another string
-     * @param substr the string to replace
-     * @param newString the new stringto replace with
-     * @return Zero on success
-     */
-    int replaceSelf(CT::string *substr, CT::string *newString);
-
-    /** Replace all strings with another string
-     * @param substr the character array to replace
-     * @param newString the new string to replace with
-     * @return Zero on success
-     */
-    int replaceSelf(const char *substr, CT::string *newString);
-
-    /** Replace all strings with another string
-     * @param substr the string to replace
-     * @param newString the new character array to replace with
-     * @return Zero on success
-     */
-    int replaceSelf(CT::string *substr, const char *newString);
-
-    /** Replace all strings with another string
-     * @param substr the character array to replace
-     * @param newString the new character array to replace with
-     * @return Zero on success
-     */
-    int replaceSelf(const char *substr, const char *newString);
-
     /** Replace all strings with another string and returns the new string
      * @param substr the character array to replace
      * @param newString the new character array to replace with
@@ -439,28 +315,19 @@ namespace CT {
 
     /**
      * Subset the string from start till end
-     * @param string Te input string to subset
      * @param start Where to subset from
-     * @param end Where to subset to (-1 means till the end of the string)
-     * @return Zero on success
+     * @param end Where to subset to (-1 means till the end of the string). If end is less than start, an empty string is returned.
+     * @return Always zero
      */
-    int substringSelf(CT::string *string, size_t start, size_t end);
-
-    /**
-     * Subset the string from start till end
-     * @param start Where to subset from
-     * @param end Where to subset to (-1 means till the end of the string)
-     * @return Zero on success
-     */
-    int substringSelf(size_t start, size_t end);
+    int substringSelf(int start, int end);
 
     /**
      * Returns a subsetted string from start till end
      * @param start Where to subset from
-     * @param end Where to subset to (-1 means till the end of the string)
+     * @param end Where to subset to (-1 means till the end of the string). If end is less than start, an empty string is returned.
      * @return string with the subsetted string
      */
-    CT::string substring(size_t start, size_t end);
+    CT::string substring(int start, int end);
 
     /**
      * Adjusts the size of the string
@@ -474,6 +341,7 @@ namespace CT {
 
     /**
      * Converts the string to a double number
+     * // TODO: When strings like "longlat are passed the function currently silently returns 0. Would be better to throw an exception"
      */
     double toDouble();
 
@@ -493,11 +361,6 @@ namespace CT {
     bool empty();
 
     /**
-     * Returns posix basename of path
-     */
-    CT::string basename();
-
-    /**
      * Checks if this string represents a numeric value
      */
     bool isNumeric();
@@ -513,11 +376,6 @@ namespace CT {
     bool isInt();
 
     /**
-     * Converts to hex8
-     */
-    CT::string toHex8();
-
-    /**
      * Converts to hex24
      */
     CT::string toHex24();
@@ -526,7 +384,79 @@ namespace CT {
      * Converts to hex8
      */
     static CT::string getHex(unsigned int number);
-  };
-}; /* namespace CT */
 
+    /** Replace all strings with another string
+     * @param substr the string to replace
+     * @param newString the new stringto replace with
+     */
+    void replaceSelf(CT::string substr, CT::string newString);
+
+    /** Replace all strings with another string
+     * @param substr the string to replace
+     * @param newString the new stringto replace with
+     * @returns new string
+     */
+    CT::string replaceAll(CT::string substr, CT::string newString);
+
+    friend CT::string join(const std::vector<string> &items, CT::string separator);
+
+    friend std::string basename(std::string input);
+  };
+
+  // Example on how new implementation can help with moving towards fully using std::string instead of CT::String
+  /** Joins vector of strings into a new string
+   * @param items Items to join
+   * @param separator optional separator, defaults to ","
+   * @returns new string containing all items.
+   */
+  string join(const std::vector<string> &items, string separator = ",");
+
+  /**
+   * Returns posix basename of path
+   * @param input The input path
+   * @returns The basename of the path
+   */
+  std::string basename(std::string input);
+
+  /**
+   * The equalsIgnoreCase() method compares two strings, ignoring lower case and upper case differences.
+   * This method returns true if the strings are equal, and false if not.
+   * @param str1 - compare str1 against str2
+   * @param str2 -
+   * @return true if equal
+   */
+  bool equalsIgnoreCase(const std::string str1, const std::string str2);
+
+  /**
+   * Print like printf but returns a stdstring;
+   * @param a The string to print
+   * @returns std::string
+   */
+
+  std::string printf(const char *a, ...) PRINTF_FORMAT_CHECK(1, 2);
+
+  /**
+   * Like printf, but concatenates the string and returns a stdstring
+   * @param a The string to print
+   * @returns std::string
+   */
+  void printfconcat(std::string &appendString, const char *a, ...) PRINTF_FORMAT_CHECK(2, 3);
+
+  /**
+   * Replace all occurrences of a substring with another string and returns the new string
+   * @param input The input string
+   * @param from The string to replace
+   * @param to The string to replace with
+   * @returns new string with replaced values
+   */
+
+  std::string replace(const std::string &input, const std::string &from, const std::string &to);
+
+  /**
+   * Converts a string to lowercase
+   * @param input The input string
+   * @returns the input string converted to lowercase
+   */
+  std::string toLowerCase(const std::string input);
+}; /* namespace CT */
 #endif

@@ -10,7 +10,7 @@ from adaguc.runAdaguc import runAdaguc
 logger = logging.getLogger(__name__)
 
 
-def setup_adaguc(displaylogging=True):
+def setup_adaguc(displaylogging=False):
     """
     Setup adaguc
     """

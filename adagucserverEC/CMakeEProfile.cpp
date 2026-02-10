@@ -4,8 +4,6 @@
 #include "CImageDataWriter.h"
 #include "CUniqueRequests/CURTypes.h"
 
-const char *CMakeEProfile::className = "CMakeEProfile";
-
 // #define CMakeEProfile_DEBUG
 
 #define CMakeEProfile_MAX_DIMS 255
@@ -21,9 +19,6 @@ std::string encodeJSON(CT::string input) {
 }
 
 class EProfileUniqueRequests {
-private:
-  DEF_ERRORFUNCTION();
-
 public:
   bool readDataAsCDFDouble;
 
@@ -240,7 +235,7 @@ public:
 
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
     if (styleConfiguration->legendIndex != -1) {
-      status = drawImage->createGDPalette(dataSource->srvParams->cfg->Legend[styleConfiguration->legendIndex]);
+      status = drawImage->createPalette(dataSource->srvParams->cfg->Legend[styleConfiguration->legendIndex]);
       if (status != 0) {
         CDBError("Unknown palette type for %s", dataSource->srvParams->cfg->Legend[styleConfiguration->legendIndex]->attr.name.c_str());
         return;
@@ -283,8 +278,8 @@ public:
 
             variable->freeData();
 
-            size_t start[variable->dimensionlinks.size() + 2], count[variable->dimensionlinks.size() + 2];
-            ptrdiff_t stride[variable->dimensionlinks.size() + 2];
+            size_t start[variable->dimensionlinks.size()], count[variable->dimensionlinks.size()];
+            ptrdiff_t stride[variable->dimensionlinks.size()];
 
             for (size_t j = 0; j < variable->dimensionlinks.size(); j++) {
               start[j] = 0;
@@ -294,26 +289,6 @@ public:
             /*       start[dataSource->dimXIndex] = projCacheInfo.imx;
                    start[dataSource->dimYIndex] = projCacheInfo.imy;
                */
-
-            for (int i = 0; i < request->numDims; i++) {
-              CT::string varname = request->dimensions[i]->name;
-              int netcdfDimIndex = -1;
-              try {
-
-                if (varname.equals("time")) {
-                  varname = "time_obs";
-                }
-                variable->getDimensionIndex(varname.c_str());
-              } catch (int e) {
-                CDBError("Unable to find dimension [%s]", varname.c_str());
-                throw(__LINE__);
-              }
-              start[netcdfDimIndex] = request->dimensions[i]->start;
-              count[netcdfDimIndex] = request->dimensions[i]->values.size();
-#ifdef CMakeEProfile_DEBUG
-              CDBDebug(">  %d %s %d %d", i, varname.c_str(), request->dimensions[i]->start, request->dimensions[i]->values.size());
-#endif
-            }
 
 #ifdef CMakeEProfile_DEBUG
             for (size_t i = 0; i < variable->dimensionlinks.size(); i++) {
@@ -401,7 +376,6 @@ public:
     return NULL;
   }
 };
-const char *EProfileUniqueRequests::className = "EProfileUniqueRequests";
 
 int CMakeEProfile::MakeEProfile(CDrawImage *drawImage, CImageWarper *imageWarper, CDataSource *dataSource, int dX, int dY, CT::string *eProfileJson) {
   EProfileUniqueRequests uniqueRequest;
@@ -533,7 +507,7 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
   }
   varTime->readData(CDF_DOUBLE);
   if (varTime->getSize() != count[0]) {
-    CDBError("varTime->getSize()!=count[0] : %d!=%d", varTime->getSize(), count[0]);
+    CDBError("varTime->getSize()!=count[0] : %lu!=%lu", varTime->getSize(), count[0]);
     return 1;
   }
 
@@ -557,7 +531,7 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
   }
 
   if (foundTimeDim != -1) {
-    auto timeEntries = dataSource->srvParams->requestDims[foundTimeDim]->value.splitToStack("/");
+    auto timeEntries = dataSource->srvParams->requestDims[foundTimeDim]->value.split("/");
     if (timeEntries.size() == 2) {
 #ifdef CMakeEProfile_DEBUG
       CDBDebug("time=%s", dataSource->srvParams->requestDims[foundTimeDim]->value.c_str());
@@ -576,7 +550,7 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
   }
 
   if (foundElevationDim != -1) {
-    auto elevationEntries = dataSource->srvParams->requestDims[foundElevationDim]->value.splitToStack("/");
+    auto elevationEntries = dataSource->srvParams->requestDims[foundElevationDim]->value.split("/");
     if (elevationEntries.size() == 2) {
 #ifdef CMakeEProfile_DEBUG
       CDBDebug("elevation=%s", dataSource->srvParams->requestDims[foundElevationDim]->value.c_str());
@@ -613,7 +587,7 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
     eProfileJson->printconcat("\"numValues\":%d,", varRange->getSize());
     eProfileJson->printconcat("\"name\":\"%s\",", encodeJSON(variable->name.replace("_backup", "")).c_str());
 
-    CDBDebug("%d", variable->getSize());
+    CDBDebug("%lu", variable->getSize());
 
     size_t colOffset = varRange->getSize() * 0;
     if (count[0] > 1) {
@@ -627,7 +601,7 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
       }
     }
 
-    CDBDebug("Querying for time index %d and file %s", colOffset, dataSource->getFileName());
+    CDBDebug("Querying for time index %lu and file %s", colOffset, dataSource->getFileName());
 
     // Make profile object
     eProfileJson->concat("\"profile\":{");
@@ -799,22 +773,14 @@ int EProfileUniqueRequests::drawEprofile(CDrawImage *drawImage, CDF::Variable *v
     dayPasses.push_back(CMakeEProfile::DayPass(x1, ((double *)varTime->data)[time]));
   }
 
-  /*
-   CT::string dateStr  =adagucTime->dateToISOString(adagucTime->offsetToDate(((double*)varTime->data)[time]));
-       drawImage->setText(dateStr.c_str(),dateStr.length(),x1,1,CColor(0,0,0,0),12);*/
-
   plotHeightRetrieval(drawImage, ((CDFObject *)variable->getParentCDFObject()), "cbh", CColor(0, 0, 255, 255), count[0], startGraphTime, startGraphRange, graphWidth, graphHeight, minWidth);
-  /*  plotHeightRetrieval(drawImage,((CDFObject*)variable->getParentCDFObject()),"pbl",CColor(0,0,255,255),count[0],startGraphTime,startGraphRange,graphWidth,graphHeight,minWidth);
-     plotHeightRetrieval(drawImage,((CDFObject*)variable->getParentCDFObject()),"vor",CColor(255,255,255,255),count[0],startGraphTime,startGraphRange,graphWidth,graphHeight,minWidth);
-   */  //plotHeightRetrieval(drawImage,((CDFObject*)variable->getParentCDFObject()),"cdp",CColor(0,0,0,255),count[0],startGraphTime,startGraphRange,graphWidth,graphHeight);
-  //
 
   for (size_t j = 0; j < dayPasses.size(); j++) {
     CTime::Date d = adagucTime->offsetToDate(dayPasses[j].offset);
     if (d.minute == 0 && d.hour == 0) {
       CT::string dateStr = adagucTime->dateToISOString(d);
       dateStr.setSize(10);
-      drawImage->setText(dateStr.c_str(), dateStr.length(), dayPasses[j].x + 4, 5, CColor(0, 0, 0, 0), 12);
+      drawImage->setText(dateStr.c_str(), dayPasses[j].x + 4, 5, CColor(0, 0, 0, 0));
 
       for (int y = 0; y < imageHeight; y++) {
         drawImage->setPixelTrueColor(dayPasses[j].x, y, 0, 0, 255, 255);

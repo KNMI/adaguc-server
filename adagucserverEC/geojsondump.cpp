@@ -1,11 +1,10 @@
-#include <stdio.h>
+#include <cstdio>
 #include <vector>
 #include <iostream>
-#include <CTypes.h>
+#include <CTString.h>
 #include "CDebugger.h"
 #include "CCDFDataModel.h"
 #include "CCDFGeoJSONIO.h"
-DEF_ERRORMAIN();
 
 int main(int argCount, char **argVars) {
   CDFGeoJSONReader *geoJSONReader = NULL;

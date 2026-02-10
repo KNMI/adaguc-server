@@ -26,8 +26,6 @@
 #include "CConvertUGRIDMesh.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
-// #define CCONVERTUGRIDMESH_DEBUG
-const char *CConvertUGRIDMesh::className = "CConvertUGRIDMesh";
 
 #define CCONVERTUGRIDMESH_NODATA -32000
 
@@ -219,12 +217,12 @@ int CConvertUGRIDMesh::convertUGRIDMeshHeader(CDFObject *cdfObject) {
   }
 
   // Make a list of variables which will be available as 2D fields
-  CT::StackList<CT::string> varsToConvert;
+  std::vector<CT::string> varsToConvert;
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
     if (var->isDimension == false) {
       if (var->name.equals("mesh")) {
-        varsToConvert.add(CT::string(var->name.c_str()));
+        varsToConvert.push_back(CT::string(var->name.c_str()));
       }
       // CDBDebug("%s",var->name.c_str());
       var->setAttributeText("ADAGUC_SKIP", "true");
@@ -482,8 +480,8 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
     size_t nFaces = Mesh2_face_nodes->dimensionlinks[0]->getSize();
     size_t MaxNumNodesPerFace = Mesh2_face_nodes->dimensionlinks[1]->getSize();
 
-    CDBDebug("Num faces: %d", Mesh2_face_nodes->dimensionlinks[0]->getSize());
-    CDBDebug("Max face size: %d", MaxNumNodesPerFace);
+    CDBDebug("Num faces: %lu", Mesh2_face_nodes->dimensionlinks[0]->getSize());
+    CDBDebug("Max face size: %lu", MaxNumNodesPerFace);
 
     float polyX[MaxNumNodesPerFace + 1];
     float polyY[MaxNumNodesPerFace + 1];

@@ -26,7 +26,7 @@
 #ifndef CDirReader_H
 #define CDirReader_H
 
-#include "CTypes.h"
+#include "CTString.h"
 #include "CDebugger.h"
 #include <string>
 #include <map>
@@ -40,7 +40,6 @@ private:
   int _ReadDir(const char *directory, const char *ext_filter, int recursive);
   int _listDirRecursive(const char *directory, const char *ext_filter);
   CT::string currentDir;
-  DEF_ERRORFUNCTION();
 
 public:
   std::vector<std::string> fileList;
@@ -89,7 +88,6 @@ public:
 
 class CCachedDirReader {
 private:
-  DEF_ERRORFUNCTION();
   static std::map<std::string, CDirReader *> dirReaderMap;
 
 public:

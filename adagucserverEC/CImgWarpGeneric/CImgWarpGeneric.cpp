@@ -29,8 +29,6 @@
 #include <CImageOperators/drawContour.h>
 #include <CImageOperators/smoothRasterField.h>
 
-const char *CImgWarpGeneric::className = "CImgWarpGeneric";
-
 CColor cblack = CColor(0, 0, 0, 255);
 CColor cblue = CColor(0, 0, 255, 255);
 
@@ -213,9 +211,7 @@ void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDra
   if (debug) {
     CDBDebug("done");
   }
-  delete[] (float *)settings.destinationGrid;
-
-  return;
+  free(settings.destinationGrid);
 }
 
 int CImgWarpGeneric::set(const char *) { return 0; }

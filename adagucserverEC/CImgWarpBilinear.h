@@ -25,7 +25,7 @@
 
 #ifndef CImgWarpBilinear_H
 #define CImgWarpBilinear_H
-#include <stdlib.h>
+#include <cstdlib>
 #include "CFillTriangle.h"
 #include "CImageWarperRenderInterface.h"
 #include "Types/CPointTypes.h"
@@ -93,7 +93,7 @@ public:
 
     if (_definedIntervals != NULL) {
       CT::string defIntervalString = _definedIntervals;
-      auto defIntervalList = defIntervalString.splitToStack(",");
+      auto defIntervalList = defIntervalString.split(",");
       for (size_t j = 0; j < defIntervalList.size(); j++) {
         definedIntervals.push_back(defIntervalList[j].toFloat());
       }
@@ -160,7 +160,7 @@ private:
 
   std::vector<PointD *> minimaPoints;
   std::vector<PointD *> maximaPoints;
-  DEF_ERRORFUNCTION();
+
   void drawTextForContourLines(CDrawImage *drawImage, ContourDefinition *contourDefinition, int lineX, int lineY, int endX, int endY, std::vector<Point> *textLocations, float value, CColor textColor,
                                CColor textStrokeColor, const char *fontLocation, float fontSize, float textStrokeWidth);
   void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *valueField, int lineX, int lineY, int dImageWidth, int dImageHeight, float lineWidth, CColor lineColor, CColor textColor,

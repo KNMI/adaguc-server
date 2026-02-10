@@ -28,8 +28,6 @@
 #include "f8vector.h"
 #include <CCDFTypes.h>
 #include "CImgWarpGeneric/CImgWarpGeneric.h"
-
-const char *CImgWarpHillShaded::className = "CImgWarpHillShaded";
 /**
  * Lightsource
  */
@@ -37,7 +35,14 @@ const f8vector lightSource = (f8vector({.x = -1, .y = -1, .z = -1})).norm();
 
 template <typename T> double getGridValueFromFloat(int x, int y, GDWState &drawSettings) { return ((T *)drawSettings.sourceGrid)[x + y * drawSettings.sourceGridWidth]; }
 
-static inline int mfast_mod(const int input, const int ceil) { return input >= ceil ? input % ceil : input; }
+static inline int mfast_mod(const int input, const int ceil) {
+  if (0 <= input && input < ceil) return input;
+  int mod = input % ceil;
+  if (mod < 0) {
+    mod += ceil;
+  }
+  return mod;
+}
 
 template <class T> void hillShadedDrawFunction(int x, int y, T val, GDWState &warperState, GDWDrawFunctionSettings &drawFunctionState) {
   if (x < 0 || y < 0 || x > warperState.destGridWidth || y > warperState.destGridHeight) return;
@@ -154,9 +159,8 @@ void CImgWarpHillShaded::render(CImageWarper *warper, CDataSource *dataSource, C
       }
     }
   }
-  delete[] ((float *)settings.destinationGrid);
+  free(settings.destinationGrid);
   // CDBDebug("render done");
-  return;
 }
 
 int CImgWarpHillShaded::set(const char *) { return 0; }

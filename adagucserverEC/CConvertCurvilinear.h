@@ -29,7 +29,6 @@
 #include "CImageWarper.h"
 class CConvertCurvilinear {
 private:
-  DEF_ERRORFUNCTION();
   static double *getBBOXFromLatLonFields(CDF::Variable *swathMiddleLon, CDF::Variable *swathMiddleLat);
   static int checkIfIsCurvilinear(CDFObject *cdfObject, CServerParams *srvParams, bool &hasLatLonBounds);
 

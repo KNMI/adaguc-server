@@ -19,9 +19,9 @@ legend object one can define a maximum of 240 different colors. The
 indexes and min/max parameters in the palette object relate directly to
 the palette of the internal image.
 
-When using the server to output palette based 8 bit PNG or GIF images,
-the legend defined here corresponds directly to the palette colors in
-the PNG/GIF image.
+When using the server to output palette based 8 bit PNG images, the
+legend defined here corresponds directly to the palette colors in
+the PNG image.
 
 1.  See [palette](palette.md) for a detailed description on palette
     possibilities.

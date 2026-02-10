@@ -26,13 +26,13 @@
 #ifndef CCDFTYPES_DEBUG
 #define CCDFTYPES_DEBUG
 
-#include <stdio.h>
-#include <stddef.h>
+#include <cstdio>
+#include <cstddef>
 #include <vector>
 #include <iostream>
-#include <stdlib.h>
+#include <cstdlib>
 
-#include "CTypes.h"
+#include "CTString.h"
 
 // #define CCDFDATAMODEL_DEBUG
 //  CDF: Common Data Format
@@ -55,17 +55,17 @@ typedef int CDFType;
 #define CDF_UINT64 13  /* unsigned 8 byte integer */
 
 // This is an X-Macro to automatically enumerate all template type mappings used in CDF
-#define ENUMERATE_OVER_CDFTYPES(DO)                                                                                                                                                     \
-  DO(CDF_CHAR, char)                                                                                                                                                                    \
-  DO(CDF_BYTE, int8_t)                                                                                                                                                                  \
-  DO(CDF_UBYTE, ubyte)                                                                                                                                                                  \
-  DO(CDF_SHORT, short)                                                                                                                                                                  \
-  DO(CDF_USHORT, ushort)                                                                                                                                                                \
-  DO(CDF_INT, int)                                                                                                                                                                      \
-  DO(CDF_UINT, uint)                                                                                                                                                                    \
-  DO(CDF_INT64, long)                                                                                                                                                                   \
-  DO(CDF_UINT64, ulong)                                                                                                                                                                 \
-  DO(CDF_FLOAT, float)                                                                                                                                                                  \
+#define ENUMERATE_OVER_CDFTYPES(DO)                                                                                                                                                                    \
+  DO(CDF_CHAR, char)                                                                                                                                                                                   \
+  DO(CDF_BYTE, int8_t)                                                                                                                                                                                 \
+  DO(CDF_UBYTE, ubyte)                                                                                                                                                                                 \
+  DO(CDF_SHORT, short)                                                                                                                                                                                 \
+  DO(CDF_USHORT, ushort)                                                                                                                                                                               \
+  DO(CDF_INT, int)                                                                                                                                                                                     \
+  DO(CDF_UINT, uint)                                                                                                                                                                                   \
+  DO(CDF_INT64, long)                                                                                                                                                                                  \
+  DO(CDF_UINT64, ulong)                                                                                                                                                                                \
+  DO(CDF_FLOAT, float)                                                                                                                                                                                 \
   DO(CDF_DOUBLE, double)
 
 /* Possible error codes, thrown by CDF */
@@ -177,16 +177,12 @@ namespace CDF {
   /*Puts the C name of the type in the string array with name (float, int, etc...)*/
   void getCDataTypeName(char *name, const size_t maxlen, const int type);
 
-  /*Puts the error code as string in the string array based on the error code number*/
-  void getErrorMessage(char *errorMessage, const size_t maxlen, const int errorCode);
-  void getErrorMessage(CT::string *errorMessage, const int errorCode);
-
   /**
    * Static function which converts an exception into a readable message
    * @param int The value of catched exception
-   * @return CT::string with the readable message
+   * @return string with the readable message
    */
-  CT::string getErrorMessage(int errorCode);
+  std::string getErrorMessage(const int errorCode);
 
   /**
    * returns the type name as string

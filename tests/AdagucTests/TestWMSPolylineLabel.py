@@ -24,14 +24,9 @@ class TestWMSPolylineLabel(unittest.TestCase):
         AdagucTestTools().cleanTempDir()
 
         config = (
-            ADAGUC_PATH
-            + "/data/config/adaguc.tests.dataset.xml,"
-            + ADAGUC_PATH
-            + "/data/config/datasets/adaguc.testwmspolylinelabels.xml"
+            ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," + ADAGUC_PATH + "/data/config/datasets/adaguc.testwmspolylinelabels.xml"
         )
-        status, data, headers = AdagucTestTools().runADAGUCServer(
-            args=["--updatedb", "--config", config], env=self.env, isCGI=False
-        )
+        status, data, headers = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", config], env=self.env, isCGI=False)
         self.assertEqual(status, 0)
 
         sys.stdout.write("\ntest style %s " % stylename)
@@ -67,12 +62,3 @@ class TestWMSPolylineLabel(unittest.TestCase):
 
     def test_WMSPolyLineLabelColor(self):
         self.dotest("polyline_with_label_color")
-
-    # GD font handling is apparantly very libgd version dependent
-    # GD tests switched off gor the moment
-    #
-    # def test_WMSPolyLineLabelRoboto_gd(self):
-    #     self.dotest("polyline_with_label_roboto_gd")
-
-    # def test_WMSPolyLineLabel_gd(self):
-    #     self.dotest("polyline_with_label_gd")

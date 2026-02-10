@@ -2,7 +2,7 @@
 #define CGeoJSONData_H
 #include <vector>
 #include <map>
-#include "CTypes.h"
+#include "CTString.h"
 #include "CDebugger.h"
 
 class GeoPoint {
@@ -63,7 +63,6 @@ private:
   CT::string pstr;
   int64_t intVal;
   double dblVal;
-  DEF_ERRORFUNCTION();
 
 public:
   FeatureProperty(int64_t i) {
@@ -98,6 +97,7 @@ public:
 
   CT::string toString();
   CT::string toString(const char *fmt);
+  CT::string toString(std::string fmt);
 };
 
 // class FeatureProperties {
@@ -110,7 +110,6 @@ class Feature {
   std::map<std::string, FeatureProperty *> fp;
   std::vector<Polyline> polylines;
   std::vector<GeoPoint> points;
-  DEF_ERRORFUNCTION();
 
 public:
   Feature();

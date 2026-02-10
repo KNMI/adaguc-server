@@ -1,20 +1,7 @@
 #include <iostream>
-#include <math.h>
 #include <cmath>
-#include <time.h>
-
-int getDayTimeCategory(double zenithAngle) {
-  if (zenithAngle < 90)
-    return 4; // "Daylight";
-  else if (zenithAngle < 96)
-    return 3; // "Civil twilight";
-  else if (zenithAngle < 102)
-    return 2; // "Nautical twilight";
-  else if (zenithAngle < 108)
-    return 1; // "Astronomical twilight";
-  else
-    return 0; // "Night";
-}
+#include <cmath>
+#include <ctime>
 
 const double DEG_TO_RAD = M_PI / 180.0;
 const double RAD_TO_DEG = 180.0 / M_PI;

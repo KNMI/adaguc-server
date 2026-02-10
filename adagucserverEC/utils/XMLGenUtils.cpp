@@ -18,7 +18,7 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
   // Make the layer name
   metadataLayer->layerMetadata.name = makeUniqueLayerName(metadataLayer->layer);
 
-  // Create and datasource
+  // Create new datasource
   if (metadataLayer->dataSource == NULL) {
     metadataLayer->dataSource = new CDataSource();
     if (metadataLayer->dataSource->setCFGLayer(metadataLayer->srvParams, metadataLayer->srvParams->configObj->Configuration[0], metadataLayer->layer, metadataLayer->layerMetadata.name.c_str(), -1) !=
@@ -98,7 +98,7 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
 
     CDataReader reader;
     status = reader.open(metadataLayer->dataSource, CNETCDFREADER_MODE_OPEN_HEADER);
-    if (status != 0) {
+    if (status != 0 && metadataLayer->dataSource->dLayerType != CConfigReaderLayerTypeLiveUpdate) {
       CDBError("Could not open file: %s", metadataLayer->dataSource->getFileName());
       return 1;
     }
@@ -243,14 +243,14 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
   char szMinTime[32];
 
   // Dimensions
-  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeDataBase || metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeStyled) {
+  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeDataBase) {
     if (loadLayerDimensionListFromMetadataDb(metadataLayer) == 0) {
       // CDBDebug("LayerMetadata: dimensionList information fetched!");
       return 0;
     }
 
     if (verboseLog) {
-      CDBDebug("Start looping dimensions. Number of dimensions is %d", metadataLayer->dataSource->cfgLayer->Dimension.size());
+      CDBDebug("Start looping dimensions. Number of dimensions is %lu", metadataLayer->dataSource->cfgLayer->Dimension.size());
     }
     /// Auto configure dimensions
     for (size_t i = 0; i < metadataLayer->dataSource->cfgLayer->Dimension.size(); i++) {
@@ -272,7 +272,7 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
         break;
       }
       if (verboseLog) {
-        CDBDebug("%d = %s / %s", i, metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str(), metadataLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
+        CDBDebug("%lu = %s / %s", i, metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.name.c_str(), metadataLayer->dataSource->cfgLayer->Dimension[i]->value.c_str());
       }
       if (i == 0 && metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.name.equals("none")) break;
       // Shorthand dimName
@@ -403,7 +403,7 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
                         if (verboseLog) {
                           CDBDebug("day irregular");
                           for (size_t j = 0; j < nrTimes; j++) {
-                            CDBDebug("Day %d = %d", j, tms[j].tm_mday);
+                            CDBDebug("Day %lu = %d", j, tms[j].tm_mday);
                           }
                         }
                       }
@@ -426,7 +426,7 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
                         if (sd != d) {
                           isConst = false;
                           if (verboseLog) {
-                            CDBDebug("hour/min/sec is irregular %d ", j);
+                            CDBDebug("hour/min/sec is irregular %lu ", j);
                           }
                         }
                       }
@@ -525,9 +525,9 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
           CT::string defaultV;
           if (pszDefaultV != NULL) defaultV = pszDefaultV;
 
-          if (defaultV.length() == 0 || defaultV.equals("max", 3)) {
+          if (defaultV.length() == 0 || defaultV.equals("max")) {
             dim.defaultValue.copy(values->getRecord(values->getSize() - 1)->get(0)->c_str());
-          } else if (defaultV.equals("min", 3)) {
+          } else if (defaultV.equals("min")) {
             dim.defaultValue.copy(values->getRecord(0)->get(0)->c_str());
           } else {
             dim.defaultValue.copy(&defaultV);
@@ -568,7 +568,7 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
 
         if (metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.interval.empty()) {
           // TODO
-          CDBError("Dimension interval '%d' not defined", i);
+          CDBError("Dimension interval '%lu' not defined", i);
           return 1;
         }
 
@@ -586,9 +586,9 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
         const char *pszDefaultV = metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.defaultV.c_str();
         CT::string defaultV;
         if (pszDefaultV != NULL) defaultV = pszDefaultV;
-        if (defaultV.length() == 0 || defaultV.equals("max", 3)) {
+        if (defaultV.length() == 0 || defaultV.equals("max")) {
           dim.defaultValue.copy(szMaxTime);
-        } else if (defaultV.equals("min", 3)) {
+        } else if (defaultV.equals("min")) {
           dim.defaultValue.copy(szMinTime);
         } else {
           dim.defaultValue.copy(&defaultV);
@@ -632,7 +632,7 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
 #ifdef CXMLGEN_DEBUG
   CDBDebug("getProjectionInformationForLayer");
 #endif
-  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded || metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
+  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeGraticule || metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
     if (metadataLayer->dataSource->cfgLayer->LatLonBox.size() == 0) {
       return 0;
     }
@@ -707,7 +707,7 @@ int getProjectionInformationForLayer(MetadataLayer *metadataLayer) {
 }
 
 int getStylesForLayer(MetadataLayer *metadataLayer) {
-  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded ||
+  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeGraticule ||
       (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate && metadataLayer->dataSource->cfgLayer->DataPostProc.empty())) {
     // Ignore styling in default case of the demo liveupdate layer, but not if there are data postprocessors
     return 0;
@@ -720,7 +720,7 @@ int getStylesForLayer(MetadataLayer *metadataLayer) {
   // Auto configure styles
   if (metadataLayer->hasError == false) {
     if (metadataLayer->dataSource->cfgLayer->Styles.size() == 0) {
-      if (metadataLayer->dataSource->dLayerType != CConfigReaderLayerTypeCascaded && metadataLayer->dataSource->dLayerType != CConfigReaderLayerTypeLiveUpdate) {
+      if (metadataLayer->dataSource->dLayerType != CConfigReaderLayerTypeGraticule && metadataLayer->dataSource->dLayerType != CConfigReaderLayerTypeLiveUpdate) {
 #ifdef CXMLGEN_DEBUG
         CDBDebug("cfgLayer->attr.type  %d", metadataLayer->dataSource->dLayerType);
 #endif
@@ -734,13 +734,13 @@ int getStylesForLayer(MetadataLayer *metadataLayer) {
     }
   }
 
-  CT::PointerList<CStyleConfiguration *> *styleListFromDataSource = metadataLayer->dataSource->getStyleListForDataSource(metadataLayer->dataSource);
+  std::vector<CStyleConfiguration *> *styleListFromDataSource = metadataLayer->dataSource->getStyleListForDataSource(metadataLayer->dataSource);
 
   if (styleListFromDataSource == NULL) return 1;
 
   for (size_t j = 0; j < styleListFromDataSource->size(); j++) {
     LayerMetadataStyle style = {
-        .name = styleListFromDataSource->get(j)->styleCompositionName, .title = styleListFromDataSource->get(j)->styleTitle, .abstract = styleListFromDataSource->get(j)->styleAbstract};
+        .name = styleListFromDataSource->at(j)->styleCompositionName, .title = styleListFromDataSource->at(j)->styleTitle, .abstract = styleListFromDataSource->at(j)->styleAbstract};
     metadataLayer->layerMetadata.styleList.push_back(style);
   }
 
@@ -759,7 +759,7 @@ int getTitleForLayer(MetadataLayer *metadataLayer) {
   CDBDebug("getTitleForLayer");
 #endif
   // Is this a cascaded WMS server?
-  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded) {
+  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeGraticule) {
     return 0;
   }
   // This a liveupdate layer
@@ -808,8 +808,7 @@ int getFileNameForLayer(MetadataLayer *metadataLayer) {
   }
   CServerParams *srvParam = metadataLayer->dataSource->srvParams;
 
-  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeDataBase || metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeStyled ||
-      metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
+  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeDataBase) {
     if (metadataLayer->dataSource->cfgLayer->Dimension.size() == 0) {
       metadataLayer->fileName.copy(metadataLayer->dataSource->cfgLayer->FilePath[0]->value.c_str());
       if (CAutoConfigure::autoConfigureDimensions(metadataLayer->dataSource) != 0) {

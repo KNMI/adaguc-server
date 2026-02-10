@@ -265,7 +265,7 @@ public:
     }
     class Cattr {
     public:
-      CT::string fillcolor, linecolor, textcolor, textoutlinecolor, fontfile, fontsize, discradius, textradius, dot, anglestart, anglestep, textformat, plotstationid, pointstyle, symbol;
+      CT::string fillcolor, linecolor, textcolor, textoutlinecolor, fontfile, fontsize, discradius, textradius, dot, textformat, plotstationid, pointstyle, symbol;
       double min, max;
       int maxpointspercell, maxpointcellsize;
     } attr;
@@ -296,12 +296,6 @@ public:
         return true;
       } else if (equals("dot", attrname)) {
         attr.dot.copy(attrvalue);
-        return true;
-      } else if (equals("anglestart", attrname)) {
-        attr.anglestart.copy(attrvalue);
-        return true;
-      } else if (equals("anglestep", attrname)) {
-        attr.anglestep.copy(attrvalue);
         return true;
       } else if (equals("textformat", attrname)) {
         attr.textformat.copy(attrvalue);
@@ -687,7 +681,7 @@ public:
     }
     class Cattr {
     public:
-      CT::string enableautoopendap, enablelocalfile, enablecache;
+      CT::string enableautoopendap, enablelocalfile;
     } attr;
 
     CXMLObjectInterface *addElement(const char *name) {
@@ -702,9 +696,6 @@ public:
     bool addAttribute(const char *attrname, const char *attrvalue) {
       if (equals("enableautoopendap", attrname)) {
         attr.enableautoopendap.copy(attrvalue);
-        return true;
-      } else if (equals("enablecache", attrname)) {
-        attr.enablecache.copy(attrvalue);
         return true;
       } else if (equals("enablelocalfile", attrname)) {
         attr.enablelocalfile.copy(attrvalue);
@@ -872,15 +863,11 @@ public:
   public:
     class Cattr {
     public:
-      CT::string settings, striding, renderer, scalewidth, scalecontours, renderhint, randomizefeatures, featuresoverlap, rendertextforvectors, cliplegend, interpolationmethod, drawgridboxoutline,
-          drawgrid;
+      CT::string settings, striding, scalewidth, scalecontours, renderhint, randomizefeatures, featuresoverlap, rendertextforvectors, cliplegend, interpolationmethod, drawgridboxoutline, drawgrid;
     } attr;
     bool addAttribute(const char *name, const char *value) {
       if (equals("settings", name)) {
         attr.settings.copy(value);
-        return true;
-      } else if (equals("renderer", name)) {
-        attr.renderer.copy(value);
         return true;
       } else if (equals("striding", name)) {
         attr.striding.copy(value);
@@ -924,7 +911,7 @@ public:
   public:
     class Cattr {
     public:
-      CT::string a, b, c, units, algorithm, mode, name, select, standard_name, long_name, variable, directionname, speedname, from_units;
+      CT::string a, b, c, units, algorithm, mode, name, select, standard_name, long_name, variable, directionname, speedname, from_units, offset;
     } attr;
     bool addAttribute(const char *attrname, const char *attrvalue) {
       if (equals("a", attrname)) {
@@ -968,6 +955,8 @@ public:
         return true;
       } else if (equals("from_units", attrname)) {
         attr.from_units.copy(attrvalue);
+      } else if (equals("offset", attrname)) {
+        attr.offset.copy(attrvalue);
         return true;
       }
       return false;
@@ -1209,7 +1198,7 @@ public:
     public:
       CT::string filter, gfi_openall, ncml, maxquerylimit, retentionperiod, retentiontype;
     } attr;
-    void handleValue() { this->value = CDirReader::makeCleanPath(this->value); }
+    void handleValue() { this->value = CDirReader::makeCleanPath(this->value.c_str()); }
 
     bool addAttribute(const char *name, const char *value) {
       if (equals("filter", name)) {

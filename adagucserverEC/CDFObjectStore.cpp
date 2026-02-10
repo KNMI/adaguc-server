@@ -24,7 +24,7 @@
  ******************************************************************************/
 
 #include "CDFObjectStore.h"
-const char *CDFObjectStore::className = "CDFObjectStore";
+
 #include <algorithm>
 #include "CConvertASCAT.h"
 #include "CConvertUGRIDMesh.h"
@@ -43,8 +43,8 @@ const char *CDFObjectStore::className = "CDFObjectStore";
 #include "CCDFCSVReader.h"
 // #define CDFOBJECTSTORE_DEBUG
 #define MAX_OPEN_FILES 500
-extern CDFObjectStore cdfObjectStore;
-CDFObjectStore cdfObjectStore;
+
+CDFObjectStore *_cdfObjectStore = nullptr;
 bool EXTRACT_HDF_NC_VERBOSE = false;
 
 /**
@@ -311,7 +311,9 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
       if (dataSource->cfgLayer->Variable.size() > 0) {
         // Shorthand to variable configuration in the layer.
         for (auto *cfgVar : dataSource->cfgLayer->Variable) {
+#ifdef CDFOBJECTSTORE_DEBUG
           CDBDebug("Checking variable %s", cfgVar->value.c_str());
+#endif
           // Rename variable, if requested
           if (!cfgVar->attr.orgname.empty()) {
             CDF::Variable *var = cdfObject->getVar(cfgVar->attr.orgname);
@@ -419,7 +421,12 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
 
   return cdfObject;
 }
-CDFObjectStore *CDFObjectStore::getCDFObjectStore() { return &cdfObjectStore; };
+CDFObjectStore *CDFObjectStore::getCDFObjectStore() {
+  if (_cdfObjectStore == nullptr) {
+    _cdfObjectStore = new CDFObjectStore();
+  }
+  return _cdfObjectStore;
+};
 
 void CDFObjectStore::deleteCDFObject(const CT::string &fileName) {
   auto it = fileNames.begin();
@@ -461,8 +468,8 @@ void CDFObjectStore::clear() {
   cdfObjects.clear();
 }
 
-CT::StackList<CT::string> CDFObjectStore::getListOfVisualizableVariables(CDFObject *cdfObject) {
-  CT::StackList<CT::string> variableList;
+std::vector<CT::string> CDFObjectStore::getListOfVisualizableVariables(CDFObject *cdfObject) {
+  std::vector<CT::string> variableList;
 
   if (cdfObject != NULL) {
     for (size_t j = 0; j < cdfObject->variables.size(); j++) {

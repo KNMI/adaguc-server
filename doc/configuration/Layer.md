@@ -3,7 +3,7 @@ Layer (type,hidden)
 
 Back to [Configuration](./Configuration.md)
 
--   type - The type of layer, can be either database,grid, liveupdate or cascaded
+-   type - The type of layer, can be either database, grid or liveupdate
 -   hidden - When set to true, the Layer is not advertised in the
     GetCapabilities document, but is accessible with GetMap requests.
 
@@ -30,25 +30,6 @@ Here an example of a grid layer with a 10 degree interval is given:
   <Title>grid 10 degrees</Title>
   <Grid resolution="10"/>
   <WMSFormat name="image/png32"/>
-</Layer>
-```
-
-Cascaded Layers
----------------
-
-Cascaded layers are copies of Layers from other services. This mostly
-used to add an external background or baselayer map to the service. The
-cascaded layer can be called like any normal Layer in the GetMap
-request. Combinations of Layers can be requested in the GetMap URL to
-compose nice maps.
-
-```xml
-<Layer type="cascaded" hidden="false">
-  <Group value="baselayers"/>
-  <Name force="true">npsnaturalearth2</Name>
-  <Title>NPS - Natural Earth II</Title>
-  <WMSLayer service="http://geoservices.knmi.nl/cgi-bin/bgmaps.cgi?" layer="naturalearth2"/>
-  <LatLonBox minx="-180" miny="-90" maxx="180" maxy="90"/>
 </Layer>
 ```
 
@@ -82,28 +63,31 @@ More information on how to configure this type of layer can be found [here](../t
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
-  <Style name="soltstyle">
+  <!-- Shaded categories -->
+  <Style name="solt_twilight" title="Twilight categories" abstract="Displays different phases of twilight and day using shades of gray, with black for night and white for day.">
     <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
     <Min>0</Min>
-    <Max>4</Max>
+    <Max>180</Max>
   
-    <ShadeInterval min="0.00" max="1.00"    label="Night"    fillcolor="#000000"/>
-    <ShadeInterval min="1.00" max="2.00"    label="Astronomical Twilight"    fillcolor="#333333"/>
-    <ShadeInterval min="2.00" max="3.00"    label="Nautical Twilight"    fillcolor="#666666"/>
-    <ShadeInterval min="3.00" max="4.00"    label="Civil Twilight"    fillcolor="#999999"/>
-    <ShadeInterval min="4.00" max="5.00"    label="Day"    fillcolor="#FFFFFF"/>
+    <ShadeInterval min="0" max="90.0" label="Day (0–90°)" fillcolor="#FFFFFF"/>
+    <ShadeInterval min="90.00" max="96.00" label="Civil Twilight (90–96°)" fillcolor="#999999"/>
+    <ShadeInterval min="96.00" max="102.00" label="Nautical Twilight (96–102°)" fillcolor="#666666"/>
+    <ShadeInterval min="102.00" max="108.00" label="Astronomical Twilight (102–108°)" fillcolor="#333333"/>
+    <ShadeInterval min="108.00" max="180.00" label="Night (108–180°)" fillcolor="#000000"/>
 
-    <NameMapping name="shadedcontour"   title="Shaded categories" abstract="Displays different phases of twilight and day using shades of gray, with black for night and white for day."/>
     <RenderMethod>shadedcontour</RenderMethod>
 
   </Style>
 
 <Configuration>
   <Layer type="liveupdate">
+    <Title>Solar Zenith Angle (SZA)</Title>
+    <Abstract>Displays the solar zenith angle (SZA). The SZA ranges from 0 to 90 degrees during the day, and from 90 and up to 180 degrees at night </Abstract>
+
     <Name>solarterminator</Name>
     <DataPostProc algorithm="solarterminator"/>
     <Variable>solarterminator</Variable>
-    <Styles>soltstyle</Styles>
+    <Styles>solt_twilight</Styles>
     <Dimension interval="PT10M">time</Dimension>
   </Layer>
 </Configuration>

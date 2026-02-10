@@ -30,13 +30,11 @@
 #include "CDataSource.h"
 #include "CDrawImage.h"
 #include "CDrawFunction.h"
-#include <stdio.h>
+#include <cstdio>
 #include "GenericDataWarper/GDWDrawFunctionSettings.h"
 
 class CAreaMapper {
 private:
-  DEF_ERRORFUNCTION();
-
   GDWDrawFunctionSettings settings;
 
   double dfTileWidth, dfTileHeight;

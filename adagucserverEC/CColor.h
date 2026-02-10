@@ -22,8 +22,8 @@
  * limitations under the License.
  *
  ******************************************************************************/
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 
 #define CSERVER_HEXDIGIT_TO_DEC(DIGIT) (DIGIT > 96 ? DIGIT - 87 : DIGIT > 64 ? DIGIT - 55 : DIGIT - 48) // Converts "9" to 9, "A" to 10 and "a" to 10
 
@@ -45,6 +45,8 @@ struct CColor {
     this->a = a;
   }
   CColor(const char *color) { parse(color); }
+
+  CColor(std::string color) { parse(color.c_str()); }
 
   CColor &operator=(const char *color) {
     this->parse(color);

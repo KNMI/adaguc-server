@@ -23,10 +23,10 @@
  *
  ******************************************************************************/
 
-#include <stdio.h>
+#include <cstdio>
 #include <vector>
 #include <iostream>
-#include <CTypes.h>
+#include <CTString.h>
 #include "CDebugger.h"
 #include "CCDFDataModel.h"
 #include "CCDFNetCDFIO.h"
@@ -35,8 +35,6 @@
 #include "CCDFDataModel.h"
 #include "CCDFHDF5IO.h"
 #include "utils.h"
-
-DEF_ERRORMAIN();
 
 int testCTimeInit(CDF::Variable *testVar, const char *testDate) {
   CTime *testTime = CTime::GetCTimeInstance(testVar);
@@ -238,7 +236,7 @@ int testCTimeEpochTimeConversion() {
     CT::string out = f[j * 3 + 2];
     try {
       CTime ctime;
-      ctime.init("seconds since 1970", "none");
+      ctime.init("seconds since 1970-01-01", "none");
       CTime::Date date = ctime.ISOStringToDate(in.c_str());
       if (!ctime.dateToISOString(ctime.subtractPeriodFromDate(date, op.c_str())).equals(out.c_str())) {
         CDBError("[FAILED]!ctime.dateToISOString(ctime.subtractPeriodFromDate(date, \"%s\")) returns %s and not %s", op.c_str(),

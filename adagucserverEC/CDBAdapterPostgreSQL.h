@@ -25,7 +25,7 @@
 #ifndef CDBADAPTERPOSTGRESQL_H
 #define CDBADAPTERPOSTGRESQL_H
 
-#include <stdlib.h>
+#include <cstdlib>
 #include "CImageDataWriter.h"
 #include "CServerParams.h"
 #include "CDataSource.h"
@@ -57,7 +57,6 @@ struct GeoOptions {
 
 class CDBAdapterPostgreSQL {
 private:
-  DEF_ERRORFUNCTION();
   CPGSQLDB *dataBaseConnection;
   CPGSQLDB *getDataBaseConnection();
   CServerConfig::XMLE_Configuration *configurationObject;
@@ -110,10 +109,9 @@ public:
   CT::string getTableNameForPathFilterAndDimension(const char *path, const char *filter, const char *dimension, CDataSource *dataSource);
   std::map<CT::string, DimInfo> getTableNamesForPathFilterAndDimensions(const char *path, const char *filter, std::vector<CT::string> dimensions, CDataSource *dataSource);
 
-  CT::string getLookupIdentifier(const char *path, const char *filter, const char *dimension);
   void assertLookupTableExists();
   void addToLookupTable(const char *path, const char *filter, CT::string dimensionName, CT::string tableName);
-  CT::string generateRandomTableName();
+  std::string generateRandomTableName();
 
   int autoUpdateAndScanDimensionTables(CDataSource *dataSource);
   CDBStore::Store *getMin(const char *name, const char *table);

@@ -41,8 +41,6 @@
  */
 class CImgWarpNearestNeighbour : public CImageWarperRenderInterface {
 private:
-  DEF_ERRORFUNCTION();
-
   static void drawTriangle(CDrawImage *drawImage, int *xP, int *yP, int &value);
   static void drawTriangleBil(CDrawImage *drawImage, float *destField, int *xP, int *yP, float *values);
 
@@ -263,28 +261,10 @@ private:
      adagucserverEC/CAreaMapper.cpp, myDrawRawTile
    */
 
-    if (settings.drawImage->trueColorAVG_RGBA == false) {
-      /* Using the precise renderer with shadeinterval */
+    /* Using the precise renderer with shadeinterval */
 
-      /* Using the precise renderer with a legend */
-      setPixelInDrawImage(x, y, val, &settings);
-    } else {
-      if (x >= 0 && y >= 0 && x < settings.drawImage->geoParams.width && y < settings.drawImage->geoParams.height) {
-        size_t p = x + y * settings.drawImage->geoParams.width;
-        uint v = val;
-        unsigned char a = ((unsigned char)(v >> 24));
-        if (a == 255) {
-          settings.drawImage->numField[p]++;
-          unsigned char r = ((unsigned char)v);
-          unsigned char g = ((unsigned char)(v >> 8));
-          unsigned char b = ((unsigned char)(v >> 16));
-          settings.drawImage->rField[p] += r;
-          settings.drawImage->gField[p] += g;
-          settings.drawImage->bField[p] += b;
-          settings.drawImage->setPixelTrueColorOverWrite(x, y, r, g, b, 255);
-        }
-      }
-    }
+    /* Using the precise renderer with a legend */
+    setPixelInDrawImage(x, y, val, &settings);
   }
 
   pthread_mutex_t CImgWarpNearestNeighbour_render_lock;

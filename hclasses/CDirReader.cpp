@@ -25,10 +25,10 @@
 #include <iostream>
 #include <vector>
 #include <map>
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 #include <regex.h>
-#include <stddef.h>
+#include <cstddef>
 #include <sys/types.h>
 #include <dirent.h>
 #include <sys/stat.h>
@@ -36,7 +36,6 @@
 #include <regex>
 #include "CDirReader.h"
 
-const char *CDirReader::className = "CDirReader";
 CDirReader::CDirReader() {}
 
 CDirReader::~CDirReader() { fileList.clear(); }
@@ -192,7 +191,7 @@ CT::string CDirReader::makeCleanPath(const char *_path) {
   if (path.length() == 0) return path;
   path.replaceSelf("\n", "");
   path.trimSelf();
-  CT::StackList<CT::string> parts = path.splitToStack("/");
+  std::vector<CT::string> parts = path.split("/");
 
   int startAtIndex = 0;
   if (path.c_str()[0] == '/') {
@@ -200,7 +199,7 @@ CT::string CDirReader::makeCleanPath(const char *_path) {
     path.copy("/");
   } else if (path.indexOf("://") != -1) {
     /*Check if this should start with the original prefix"*/
-    CT::string leftPart = path.splitToStack("://")[0] + "://";
+    CT::string leftPart = path.split("://")[0] + "://";
     path.copy(leftPart);
     startAtIndex = 1;
   } else
@@ -274,7 +273,7 @@ void CDirReader::makePublicDirectory(const char *dirname) {
   int intStat = stat(dirname, &stFileInfo);
   if (intStat != 0) {
     CT::string directory = dirname;
-    auto directorySplitted = directory.splitToStack("/");
+    auto directorySplitted = directory.split("/");
     directory = "";
     for (auto &directoryPart : directorySplitted) {
       directory.concat("/");
@@ -432,5 +431,3 @@ void CCachedDirReader::free() {
   }
   dirReaderMap.clear();
 }
-
-const char *CCachedDirReader::className = "CCachedDirReader";

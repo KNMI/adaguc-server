@@ -26,8 +26,6 @@
 #include "CConvertCurvilinear.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
-// #define CCONVERTCURVILINEAR_DEBUG
-const char *CConvertCurvilinear::className = "CConvertCurvilinear";
 
 int CConvertCurvilinear::checkIfIsCurvilinear(CDFObject *cdfObject, CServerParams *, bool &hasLatLonBounds) {
   // Check whether this is really a curvilinear file
@@ -294,7 +292,7 @@ int CConvertCurvilinear::convertCurvilinearHeader(CDFObject *cdfObject, CServerP
   }
 
   // Make a list of variables which will be available as 2D fields
-  CT::StackList<CT::string> varsToConvert;
+  std::vector<CT::string> varsToConvert;
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
     if (var->isDimension == false) {
@@ -310,14 +308,14 @@ int CConvertCurvilinear::convertCurvilinearHeader(CDFObject *cdfObject, CServerP
           CDF::Variable *curviX = cdfObject->getVariableNE(var->dimensionlinks[numDims - 1]->name.c_str());
           CDF::Variable *curviY = cdfObject->getVariableNE(var->dimensionlinks[numDims - 2]->name.c_str());
           if (curviX == NULL && curviY == NULL) {
-            varsToConvert.add(CT::string(var->name.c_str()));
+            varsToConvert.push_back(CT::string(var->name.c_str()));
           } else if (curviX->getSize() == 2 && curviY->getSize() == 2) {
-            varsToConvert.add(CT::string(var->name.c_str()));
+            varsToConvert.push_back(CT::string(var->name.c_str()));
           } else {
             CT::string xName = curviX->name.c_str();
             xName.toUpperCaseSelf();
             if (!xName.equals("X") && !xName.equals("LAT") && !xName.equals("ROW") && !xName.equals("COL")) {
-              varsToConvert.add(CT::string(var->name.c_str()));
+              varsToConvert.push_back(CT::string(var->name.c_str()));
             }
           }
         }

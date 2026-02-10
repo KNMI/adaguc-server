@@ -26,9 +26,7 @@
 #include "CGeoJSONData.h"
 #include <iostream>
 
-#include <stdio.h>
-
-const char *Feature::className = "Feature";
+#include <cstdio>
 
 CT::string FeatureProperty::toString() {
   CT::string s;
@@ -57,6 +55,8 @@ CT::string FeatureProperty::toString(const char *fmt) {
   }
   return s;
 };
+
+CT::string FeatureProperty::toString(std::string fmt) { return toString(fmt.c_str()); }
 
 GeoPoint::GeoPoint(float lon, float lat) {
   this->lat = lat;

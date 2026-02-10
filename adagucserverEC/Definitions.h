@@ -28,13 +28,12 @@
 #ifndef Definitions_H
 #define Definitions_H
 
-#define ADAGUCSERVER_VERSION "6.2.0" // Please also update in the Dockerfile to the same version
+#define ADAGUCSERVER_VERSION "6.3.0" // Please also update in the Dockerfile to the same version
 
 // CConfigReaderLayerType
 #define CConfigReaderLayerTypeUnknown 0
 #define CConfigReaderLayerTypeDataBase 1
-#define CConfigReaderLayerTypeStyled 2
-#define CConfigReaderLayerTypeCascaded 3
+#define CConfigReaderLayerTypeGraticule 3
 #define CConfigReaderLayerTypeBaseLayer 4
 #define CConfigReaderLayerTypeLiveUpdate 6
 
@@ -82,7 +81,6 @@
 
 // Image formats
 #define IMAGEFORMAT_IMAGEPNG8 0
-#define IMAGEFORMAT_IMAGEGIF 1
 #define IMAGEFORMAT_IMAGEPNG24 2
 #define IMAGEFORMAT_IMAGEPNG32 3
 #define IMAGEFORMAT_IMAGEWEBP 4
@@ -188,6 +186,11 @@
 // Client errors
 #define HTTP_STATUSCODE_404_NOT_FOUND 32
 #define HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY 33
+
+#define SCAN_EXITCODE_FILENOMATCH 64
+#define SCAN_EXITCODE_DATASETNOEXIST 65
+#define SCAN_EXITCODE_SCANERROR 66
+#define SCAN_EXITCODE_FILENOEXIST 67
 
 #define LOCK_METADATATABLE_ID 1
 

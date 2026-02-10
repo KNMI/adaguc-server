@@ -40,8 +40,6 @@
  */
 class CImgRenderStippling : public CImageWarperRenderInterface {
 private:
-  DEF_ERRORFUNCTION();
-
   int xDistance, yDistance, discSize, mode;
   CT::string color;
   CStyleConfiguration *styleConfiguration;

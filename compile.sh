@@ -12,7 +12,6 @@ function quit {
 function clean {
   rm -rf $CURRENTDIR/bin
   mkdir -p $CURRENTDIR/bin
-
   cd $CURRENTDIR/hclasses
   rm -f *.o
   rm -f *.a
@@ -37,14 +36,31 @@ function clean {
   rm -f $CURRENTDIR/bin/aggregate_time
   rm -f $CURRENTDIR/bin/geojsondump
 
-  rm -f $CURRENTDIR/CMakeCache.txt $CURRENTDIR/CMakeFiles
+  rm -rf $CURRENTDIR/CMakeCache.txt $CURRENTDIR/CMakeFiles
+
+  cd $CURRENTDIR
+  cmake --fresh -S ${CURRENTDIR} -B ${CURRENTDIR}/bin -G "Unix Makefiles"
+
+  echo "Cleaned..."
+
 }
 
 function build {
 
-  clean
+  mkdir -p $CURRENTDIR/bin
   cd $CURRENTDIR/bin
-  cmake .. &&  cmake  --build . --parallel 4
+
+  if [ "$*" = "--debug" ]; then
+    echo "Making Debug build"
+    cmake -DCMAKE_BUILD_TYPE=Debug  ..
+  elif [ "$*" = "--profile" ]; then
+    echo "Making profile build"
+    cmake -DCMAKE_BUILD_TYPE=Profile ..
+  else
+    echo "Making Release build"
+    cmake -DCMAKE_BUILD_TYPE=Release ..
+  fi
+  cmake  --build . --parallel 4
 
   if [ -f adagucserver ]
     then
@@ -69,7 +85,12 @@ function build {
 }
 
 if [ "$*" = "--clean" ]; then
+  echo "Cleaning"
   clean
-  else
+elif [ "$*" = "--debug" ]; then
+  build --debug
+elif [ "$*" = "--profile" ]; then
+  build --profile
+else
   build
 fi

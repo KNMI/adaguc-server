@@ -25,10 +25,10 @@
 
 #ifndef CServerParams_H
 #define CServerParams_H
-#include <limits.h>
-#include <stdlib.h>
+#include <climits>
+#include <cstdlib>
 #include "CDebugger.h"
-#include "CTypes.h"
+#include "CTString.h"
 #include "CDirReader.h"
 #include "Definitions.h"
 #include "CServerConfig_CPPXSD.h"
@@ -72,7 +72,6 @@ public:
  * Global server settings, initialized at the start, accesible from almost everywhere
  */
 class CServerParams {
-  DEF_ERRORFUNCTION();
 
 private:
   int autoOpenDAPEnabled, autoLocalFileResourceEnabled;
@@ -85,7 +84,7 @@ private:
 
 public:
   double dfResX, dfResY;
-  int dFound_BBOX;
+  int dFound_BBOX = 0;
   double dX, dY;
   bool verbose = false;
   std::vector<CT::string> requestedLayerNames;
@@ -157,12 +156,6 @@ public:
    * @param the tableName with the characters to be tested. Same string is filled with the new name
    */
   void encodeTableName(CT::string *tableName);
-
-  /**
-   * Function which checks whether remote resources should be cached or not
-   * @return true if enablecache attribute in AutoResource is undefined or set to true
-   */
-  bool isAutoResourceCacheEnabled() const;
 
   /**
    * Function which checks whether logging should be done

@@ -48,7 +48,6 @@ void writeLogFile4(const char *msg) {
     } // else CDBError("Unable to write logfile %s",logfile);
   }
 }
-const char *CConvertTROPOMI::className = "CConvertTROPOMI";
 
 int CConvertTROPOMI::isThisTROPOMIData(CDFObject *cdfObject) {
   try {
@@ -193,13 +192,13 @@ int CConvertTROPOMI::convertTROPOMIHeader(CDFObject *cdfObject, CServerParams *)
     return 1;
   }
 
-  CT::StackList<CT::string> varsToConvert;
+  std::vector<CT::string> varsToConvert;
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
     if (var->isDimension == false) {
       if (var->name.startsWith("PRODUCT/") && var->dimensionlinks.size() > 2) {
         if (!var->name.equals("PRODUCT/longitude") && !var->name.equals("PRODUCT/latitude") && var->name.indexOf("bounds") == -1 && !var->name.equals("PRODUCT/time")) {
-          varsToConvert.add(CT::string(var->name.c_str()));
+          varsToConvert.push_back(CT::string(var->name.c_str()));
         }
       }
 

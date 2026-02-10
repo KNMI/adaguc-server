@@ -6,8 +6,6 @@
 #include "../hclasses/CHTTPTools.h"
 #include "utils/LayerUtils.h"
 
-const char *CSLD::className = "CSLD";
-
 void CSLD::setServerParams(CServerParams *serverParams) {
   this->serverParams = serverParams;
   this->serverConfig = serverParams->cfg;
@@ -30,7 +28,7 @@ int CSLD::processSLDUrl(CT::string sldUrl) {
   // Get SLD file from URL
   CT::string sldFromUrl;
   try {
-    sldFromUrl = CHTTPTools::getString(sldUrl, MAX_FILE_SIZE_ALLOWED);
+    sldFromUrl = CHTTPTools::getString(sldUrl.c_str(), MAX_FILE_SIZE_ALLOWED);
   } catch (int error) {
     CDBError("Could not retrieve SLD from: %s", sldUrl.c_str());
     return 1;

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+
+  <!-- Shaded categories -->
+  <Style name="solt_twilight" title="Twilight categories" abstract="Displays different phases of twilight and day using shades of gray, with black for night and white for day.">
+    <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
+    <Min>0</Min>
+    <Max>180</Max>
+  
+    <ShadeInterval min="0" max="90.0" label="Day (0–90°)" fillcolor="#FFFFFF"/>
+    <ShadeInterval min="90.00" max="96.00" label="Civil Twilight (90–96°)" fillcolor="#999999"/>
+    <ShadeInterval min="96.00" max="102.00" label="Nautical Twilight (96–102°)" fillcolor="#666666"/>
+    <ShadeInterval min="102.00" max="108.00" label="Astronomical Twilight (102–108°)" fillcolor="#333333"/>
+    <ShadeInterval min="108.00" max="180.00" label="Night (108–180°)" fillcolor="#000000"/>
+
+    <RenderMethod>shadedcontour</RenderMethod>
+
+  </Style>
+
+  <Legend name="solt_continuous" type="colorRange">
+    <!-- Sun at zenith / subsolar point (maximum daylight) -->
+    <palette index="0" color="#FF0000FF" />
+    <!-- Strong daylight (high solar elevation) -->
+    <palette index="20" color="#FF6600FF" />
+    <!-- Normal daylight -->
+    <palette index="40" color="#FFD200FF" />
+    <!-- Lower sun, late morning / early afternoon -->
+    <palette index="60" color="#66FF33FF" />
+    <!-- Low sun angle, long shadows -->
+    <palette index="80" color="#00CC66FF" />
+    <!-- Twilight approaching, sun close to horizon -->
+    <palette index="100" color="#00E5FFFF" />
+    <!-- Solar terminator (sun at horizon) -->
+    <palette index="120" color="#3399FFFF" />
+    <!-- Civil to nautical night -->
+    <palette index="160" color="#3B3B98FF" />
+    <!-- Astronomical night -->
+    <palette index="200" color="#2A0A3DFF" />
+    <!-- Deep night -->
+    <palette index="239" color="#000000FF" />
+  </Legend>
+
+  <!-- SZA gradient  -->
+  <Style name="solt_continuous" title="SZA gradient" abstract="Continuous color gradient for solar zenith angle, to represent progression from daylight through twilight to deep night.">
+    <Legend fixed="true" tickinterval="30">solt_continuous</Legend>
+    <Min>0</Min>
+    <Max>180</Max>
+  </Style>
+  
+  <Layer type="liveupdate">
+    <Title>Solar Zenith Angle (SZA)</Title>
+    <Abstract>Displays the solar zenith angle (SZA). The SZA ranges from 0 to 90 degrees during the day, and from 90 and up to 180 degrees at night.</Abstract>
+
+    <Name>solarterminator</Name>
+    <DataPostProc algorithm="solarterminator"/>
+    <Variable>solarterminator</Variable>
+    <Styles>solt_continuous,solt_twilight</Styles>
+    <Dimension interval="PT10M">time</Dimension>
+  </Layer>
+
+</Configuration>

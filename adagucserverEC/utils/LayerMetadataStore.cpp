@@ -119,7 +119,7 @@ CT::string getLayerMetadataFromDb(MetadataLayer *metadataLayer, CT::string metad
     // CDBDebug("Not a dataset");
     return "";
   }
-  CDBStore::Store *layerMetaDataStore = CDBFactory::getDBAdapter(metadataLayer->dataSource->srvParams->cfg)->getLayerMetadataStore(datasetName);
+  CDBStore::Store *layerMetaDataStore = CDBFactory::getDBAdapter(metadataLayer->dataSource->srvParams->cfg)->getLayerMetadataStore(datasetName.c_str());
   if (layerMetaDataStore == nullptr) {
     return "";
   }
@@ -149,7 +149,7 @@ int storeLayerMetadataInDb(MetadataLayer *metadataLayer, CT::string metadataKey,
     }
     CT::string layerName = metadataLayer->dataSource->getLayerName();
 
-    return CDBFactory::getDBAdapter(metadataLayer->dataSource->srvParams->cfg)->storeLayerMetadata(datasetName, layerName, metadataKey, metadataBlob.c_str());
+    return CDBFactory::getDBAdapter(metadataLayer->dataSource->srvParams->cfg)->storeLayerMetadata(datasetName.c_str(), layerName.c_str(), metadataKey.c_str(), metadataBlob.c_str());
   } catch (int e) {
     return e;
   }
@@ -169,7 +169,7 @@ int storeLayerMetadataStructIntoMetadataDb(MetadataLayer *metadataLayer) {
 }
 
 int loadLayerMetadataStructFromMetadataDb(MetadataLayer *metadataLayer) {
-  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded || (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate)) {
+  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeGraticule || (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate)) {
     layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(metadataLayer);
     return 0;
   }
@@ -295,7 +295,7 @@ int storeLayerStyleListIntoMetadataDb(MetadataLayer *metadataLayer) {
 }
 
 int loadLayerStyleListFromMetadataDb(MetadataLayer *metadataLayer) {
-  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeCascaded) {
+  if (metadataLayer->dataSource->dLayerType == CConfigReaderLayerTypeGraticule) {
     return 0;
   }
 
@@ -395,6 +395,26 @@ int loadLayerDimensionListFromMetadataDb(MetadataLayer *metadataLayer) {
 }
 
 int updateMetaDataTable(CDataSource *dataSource) {
+
+  if (dataSource->srvParams->datasetLocation.empty()) {
+    return 0;
+  }
+  MetadataLayer *metadataLayer = new MetadataLayer();
+  metadataLayer->layer = dataSource->cfgLayer;
+  metadataLayer->srvParams = dataSource->srvParams;
+  metadataLayer->dataSource = dataSource;
+  metadataLayer->fileName = dataSource->headerFilename;
+  int statusA = populateMetadataLayerStruct(metadataLayer, false);
+  int statusB = storemetadataLayerIntoMetadataDb(metadataLayer);
+  delete metadataLayer;
+  return statusA == 0 && statusB == 0 ? 0 : 1;
+}
+
+// When generating the data required by EDR, the metadata table is used
+// For this reason, we need to populate it here.
+int updateMetaDataTableLiveUpdate(CDataSource *dataSource) {
+  CDBDebug("updateMetaDataTableLiveUpdate");
+  layerTypeLiveUpdatePopulateDataSource(dataSource, dataSource->srvParams);
 
   if (dataSource->srvParams->datasetLocation.empty()) {
     return 0;

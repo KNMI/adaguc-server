@@ -26,11 +26,11 @@
 #ifndef CCDFNETCDFIO_H
 #define CCDFNETCDFIO_H
 
-#include <stdio.h>
+#include <cstdio>
 #include <vector>
 #include <iostream>
 #include <netcdf.h>
-#include <math.h>
+#include <cmath>
 #include "CCDFDataModel.h"
 #include "CCDFReader.h"
 #include "CDebugger.h"
@@ -41,20 +41,18 @@
 
 class CDFNetCDFReader : public CDFReader {
 private:
-  static void ncError(int line, const char *className, const char *msg, int e);
-
   // CCDFWarper warper;
   static CDFType _typeConversionVar(nc_type type, bool isUnsigned);
   static CDFType _typeConversionAtt(nc_type type);
-  DEF_ERRORFUNCTION();
+
   int status, root_id;
   bool keepFileOpen;
-  int readDimensions(int groupId, CT::string *groupName);
+  int readDimensions(int groupId, std::string &groupName);
   int readAttributes(int root_id, std::vector<CDF::Attribute *> &attributes, int varID, int natt);
   /**
    * @param mode, mode = 0: read dims, 1: read variables
    */
-  int readVariables(int groupId, CT::string *groupName, int mode);
+  int readVariables(int groupId, std::string &groupName, int mode);
   int _readVariableData(CDF::Variable *var, CDFType type);
   int _readVariableData(CDF::Variable *var, CDFType type, size_t *start, size_t *count, ptrdiff_t *stride);
 
@@ -70,7 +68,6 @@ public:
 
 class CDFNetCDFWriter {
 private:
-  static void ncError(int line, const char *className, const char *msg, int e);
   bool writeData;
   bool readData;
   bool listNCCommands;
@@ -81,7 +78,7 @@ private:
   int deflate_level;
   std::vector<CDF::Dimension *> dimensions;
   CDFObject *cdfObject;
-  DEF_ERRORFUNCTION();
+
   int root_id, status;
   int netcdfMode;
   int _write(void (*progress)(const char *message, float percentage));

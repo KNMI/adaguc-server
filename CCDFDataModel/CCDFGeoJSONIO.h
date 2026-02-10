@@ -26,11 +26,11 @@
 #ifndef CCDFGEOJSONIO_H
 #define CCDFGEOJSONIO_H
 
-#include <stdio.h>
+#include <cstdio>
 #include <vector>
 #include <iostream>
 #include <netcdf.h>
-#include <math.h>
+#include <cmath>
 #include <strings.h>
 #include "CCDFDataModel.h"
 #include "CCDFReader.h"
@@ -41,11 +41,9 @@
 
 class CDFGeoJSONReader : public CDFReader {
 private:
-  static void ncError(int line, const char *className, const char *msg, int e);
-
   // CCDFWarper warper;
   static CDFType typeConversion(nc_type type);
-  DEF_ERRORFUNCTION();
+
   int status = 0, root_id = 0;
   int nDims = 0, nVars = 0, nRootAttributes = 0, unlimDimIdP = 0;
   bool keepFileOpen = -1;

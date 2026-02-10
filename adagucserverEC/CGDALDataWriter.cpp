@@ -29,8 +29,6 @@
 
 // #define CGDALDATAWRITER_DEBUG
 
-const char *CGDALDataWriter::className = "CGDALDataWriter";
-
 int CGDALDataWriter::init(CServerParams *_srvParam, CDataSource *dataSource, int _NrOfBands) {
 #ifdef CGDALDATAWRITER_DEBUG
   CDBDebug("INIT");
@@ -436,10 +434,10 @@ int CGDALDataWriter::end() {
           CT::string values = "{";
           std::set<std::string> myset;
           std::set<std::string>::iterator mysetit;
-          CDBDebug("Nr Of timesteps : %d", _dataSource->timeSteps.size());
+          CDBDebug("Nr Of timesteps : %lu", _dataSource->timeSteps.size());
           for (size_t t = 0; t < _dataSource->timeSteps.size(); t++) {
             try {
-              CDBDebug("getDimensionValue %d %s", d, _dataSource->timeSteps[t]->dims.getDimensionName(0));
+              CDBDebug("getDimensionValue %lu %s", d, _dataSource->timeSteps[t]->dims.getDimensionName(0));
               myset.insert(getDimensionValue(d, &_dataSource->timeSteps[t]->dims).c_str());
               CDBDebug("getDimensionValue");
             } catch (int e) {
@@ -502,9 +500,9 @@ int CGDALDataWriter::end() {
   char **papszOptions = NULL;
 
   if (customOptions.length() > 2) {
-    auto co = customOptions.splitToStack(",");
+    auto co = customOptions.split(",");
     for (size_t j = 0; j < co.size(); j++) {
-      auto splittedco = customOptions.splitToStack("=");
+      auto splittedco = customOptions.split("=");
       papszOptions = CSLSetNameValue(papszOptions, splittedco[0].c_str(), splittedco[1].c_str());
     }
   }
@@ -553,7 +551,7 @@ int CGDALDataWriter::end() {
     size_t endPos = ftell(fp);
     fseek(fp, 0L, SEEK_SET);
     // CDBDebug("File opened: size = %d",endPos);
-    CDBDebug("Now start streaming %d bytes to the client with mimetype %s", endPos, mimeType.c_str());
+    CDBDebug("Now start streaming %lu bytes to the client with mimetype %s", endPos, mimeType.c_str());
     printf("Content-Disposition: attachment; filename=%s\r\n", generateGetCoverageFileName().c_str());
     printf("Content-Description: File Transfer\r\n");
     printf("Content-Transfer-Encoding: binary\r\n");
@@ -648,9 +646,6 @@ CT::string CGDALDataWriter::generateGetCoverageFileName() {
   }
   if (formatUpperCase.indexOf("IMAGE/BMP") != -1) {
     extension = ".bmp";
-  }
-  if (formatUpperCase.indexOf("IMAGE/GIF") != -1) {
-    extension = ".gif";
   }
   if (formatUpperCase.indexOf("IMAGE/JPG") != -1) {
     extension = ".jpg";
@@ -769,7 +764,7 @@ CT::string CGDALDataWriter::getDimensionValue(int d, CCDFDims *dims) {
     CTime adagucTime;
     try {
       value = "0";
-      adagucTime.init(TimeUnit.c_str(), NULL); // TODO replace with var
+      adagucTime.init(TimeUnit.c_str(), ""); // TODO replace with var
       double offset = adagucTime.dateToOffset(adagucTime.ISOStringToDate(dims->getDimensionValue(d).c_str()));
       value.print("%f", offset);
     } catch (int e) {

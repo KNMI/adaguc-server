@@ -26,8 +26,8 @@
 #ifndef CXMLGen_H
 #define CXMLGen_H
 #include "CServerParams.h"
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 
 #include "CInspire.h"
 
@@ -47,7 +47,6 @@
 
 class CXMLGen {
 private:
-  DEF_ERRORFUNCTION();
   int getWMS_1_0_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataLayer *> *metadataLayerList);
   int getWMS_1_1_1_Capabilities(CT::string *XMLDoc, std::vector<MetadataLayer *> *metadataLayerList);
   int getWMS_1_3_0_Capabilities(CT::string *XMLDoc, std::vector<MetadataLayer *> *metadataLayerList);

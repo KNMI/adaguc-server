@@ -12,7 +12,7 @@
 class CCreateHistogram : public CBaseDataWriterInterface {
 private:
   CT::string JSONdata;
-  DEF_ERRORFUNCTION();
+
   struct CCreateHistogramSettings {
     size_t width;
     size_t height;

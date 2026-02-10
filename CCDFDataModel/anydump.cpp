@@ -23,10 +23,10 @@
  *
  ******************************************************************************/
 
-#include <stdio.h>
+#include <cstdio>
 #include <vector>
 #include <iostream>
-#include <CTypes.h>
+#include <CTString.h>
 #include "CDebugger.h"
 #include "CCDFDataModel.h"
 #include "CCDFNetCDFIO.h"
@@ -34,8 +34,6 @@
 #include "CCDFGeoJSONIO.h"
 #include "CCDFCSVReader.h"
 #include "utils.h"
-
-DEF_ERRORMAIN();
 
 int main(int argCount, char **argVars) {
   CDFReader *cdfReader = NULL;

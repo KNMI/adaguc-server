@@ -277,7 +277,7 @@ void __fillTriangleGouraud2(float *data, float *values, int W, int H, int *xP, i
   }
 }
 
-#include <limits.h>
+#include <climits>
 void fillQuadGouraud(float *data, float *values, int W, int H, int *xP, int *yP) {
 
   if (xP[0] < 0 && xP[1] < 0 && xP[2] < 0 && xP[3] < 0) return;

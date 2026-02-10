@@ -6,7 +6,7 @@ USER root
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
-LABEL version="6.2.0"
+LABEL version="6.3.0"
 
 # Try to update image packages
 RUN apt-get -q -y update \
@@ -17,7 +17,6 @@ RUN apt-get -q -y update \
     libcurl4-openssl-dev \
     libcairo2-dev \
     libxml2-dev \
-    libgd-dev \
     postgresql-server-dev-all \
     postgresql-client \
     libudunits2-dev \
@@ -62,7 +61,6 @@ RUN apt-get -q -y update \
     libcairo2 \
     libgdal-dev \
     libcurl4-openssl-dev \
-    libgd-dev \
     libproj-dev \
     time \
     supervisor \
@@ -90,6 +88,7 @@ COPY requirements-dev.txt /adaguc/adaguc-server-master/requirements-dev.txt
 RUN pip install --no-cache-dir -r requirements-dev.txt
 
 COPY tests /adaguc/adaguc-server-master/tests
+COPY scripts /adaguc/adaguc-server-master/scripts
 COPY runtests_psql.sh /adaguc/adaguc-server-master/runtests_psql.sh
 
 # Determine if we're building in github actions or via a local docker build

@@ -29,7 +29,6 @@
 #include "CImageWarper.h"
 class CConvertHexagon {
 private:
-  DEF_ERRORFUNCTION();
   static double *getBBOXFromLatLonFields(CDF::Variable *lons, CDF::Variable *lats);
 
 public:

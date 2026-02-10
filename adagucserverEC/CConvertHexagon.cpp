@@ -27,9 +27,6 @@
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
 
-// #define CCONVERTHEXAGON_DEBUG
-const char *CConvertHexagon::className = "CConvertHexagon";
-
 void line2(float *imagedata, int w, int h, float x1, float y1, float x2, float y2, float value) {
   int xyIsSwapped = 0;
   float dx = x2 - x1;
@@ -335,7 +332,7 @@ int CConvertHexagon::convertHexagonHeader(CDFObject *cdfObject, CServerParams *s
   }
 
   // Make a list of variables which will be available as 2D fields
-  CT::StackList<CT::string> varsToConvert;
+  std::vector<CT::string> varsToConvert;
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
     if (var->isDimension == false) {
@@ -345,7 +342,7 @@ int CConvertHexagon::convertHexagonHeader(CDFObject *cdfObject, CServerParams *s
         if (var->dimensionlinks.size() >= 1) {
           CDBDebug("Checking var %s with dimo %s", var->name.c_str(), var->dimensionlinks[1]->name.c_str());
           if (var->dimensionlinks[1]->name.equals("cell_i")) {
-            varsToConvert.add(CT::string(var->name.c_str()));
+            varsToConvert.push_back(CT::string(var->name.c_str()));
           }
         }
       }
@@ -465,7 +462,7 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
     } else {
       start[dimInd] = dataSource->getDimensionIndex(dimName.c_str());
     }
-    CDBDebug("%s = %d %d", dimName.c_str(), start[dimInd], count[dimInd]);
+    CDBDebug("%s = %lu %lu", dimName.c_str(), start[dimInd], count[dimInd]);
   }
 
   hexagonVar->readData(CDF_FLOAT, start, count, stride, true);

@@ -25,8 +25,7 @@
 
 // #define CIMGWARPNEARESTRGBA_DEBUG
 #include "CImgWarpNearestRGBA.h"
-const char *CImgWarpNearestRGBA::className = "CImgWarpNearestRGBA";
-const char *CDrawTileObjBGRA::className = "CDrawTileObjBGRA";
+
 #define CIMGWARPNEARESTRGBA_USEDRAWIMAGE
 
 void CDrawTileObjBGRA::init(CDataSource *dataSource, CDrawImage *drawImage, int tileWidth, int tileHeight) {

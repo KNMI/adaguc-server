@@ -27,11 +27,11 @@
 #define CXMLSerializerInterface_H
 #include <iostream>
 #include <vector>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
-#include "CTypes.h"
+#include "CTString.h"
 #include "CDebugger.h"
 
 #define XMLE_ADDOBJ(variableName)                                                                                                                                                                      \
@@ -79,7 +79,7 @@ public:
  * Inherits the CXMLObjectInterface base object
  */
 
-int parseConfig(CXMLObjectInterface *object, CT::string &xmlData);
+int parseConfig(CXMLObjectInterface *object, CT::string &xmlData, std::string datasetName);
 
 /**
  * parses a character string to int

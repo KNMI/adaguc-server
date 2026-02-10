@@ -41,7 +41,7 @@
 #include <ogr_spatialref.h>
 #include <ctype.h>
 #include "CDebugger.h"
-#include "CTypes.h"
+#include "CTString.h"
 #include "CServerError.h"
 #include "CDrawImage.h"
 
@@ -85,7 +85,7 @@ private:
   CT::string *InputProducts;
   CT::string TimeUnit;
   double dfNoData;
-  DEF_ERRORFUNCTION();
+
   CDataSource *_dataSource;
   void generateUniqueGetCoverageFileName(char *pszTempFileName);
   CT::string generateGetCoverageFileName();

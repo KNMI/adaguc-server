@@ -4,23 +4,8 @@
 #include "CDataReader.h"
 #include "CReporter.h"
 #include "CRequest.h"
-const char *CAutoConfigure::className = "CAutoConfigure";
 
 // #define CAUTOCONFIGURE_DEBUG
-
-int CAutoConfigure::checkCascadedDimensions(const CDataSource *dataSource) {
-  if (dataSource != NULL && dataSource->dLayerType == CConfigReaderLayerTypeCascaded) {
-#ifdef CAUTOCONFIGURE_DEBUG
-    CDBDebug("Cascaded layers cannot have dimensions at the moment");
-#endif
-
-    CREPORT_ERROR_NODOC(CT::string("Cascaded layer cannot have dimensions at the moment"), CReportMessage::Categories::GENERAL);
-
-    return 0;
-  }
-
-  return 1;
-}
 
 int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
 
@@ -28,7 +13,7 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
   CDBDebug("[autoConfigureDimensions]");
 #endif
 
-  if (!checkCascadedDimensions(dataSource)) {
+  if (dataSource != NULL && dataSource->dLayerType == CConfigReaderLayerTypeGraticule) {
     return 0;
   }
 
@@ -276,7 +261,7 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
 
 int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
 
-  if (dataSource->dLayerType == CConfigReaderLayerTypeCascaded) {
+  if (dataSource->dLayerType == CConfigReaderLayerTypeGraticule) {
 #ifdef CAUTOCONFIGURE_DEBUG
     CDBDebug("Cascaded layers cannot have styles at the moment");
 #endif
@@ -392,12 +377,12 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
         CDBDebug("Searching StandardNames \"%s\"", standard_name.c_str());
 #endif
         if (standard_name.length() > 0) {
-          CT::StackList<CT::string> standardNameList;
+          std::vector<CT::string> standardNameList;
 
           if (standard_name.charAt(0) == '^') {
             standardNameList.push_back(standard_name);
           } else {
-            standardNameList = standard_name.splitToStack(",");
+            standardNameList = standard_name.split(",");
           }
 
           for (size_t n = 0; n < standardNameList.size(); n++) {
@@ -425,7 +410,7 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
               if (dataSourceUnits.length() != 0 && units.length() != 0) {
                 unitsMatch = false;
                 /* Test for same units */
-                if (dataSourceUnits.equals(&units))
+                if (dataSourceUnits.equals(units))
                   unitsMatch = true;
                 else {
                   /* Test for regexp */

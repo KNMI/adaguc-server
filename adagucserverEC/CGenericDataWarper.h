@@ -2,15 +2,13 @@
 #define GenericDataWarper_H
 #include <functional>
 #include <iostream>
-#include <math.h>
-#include <stdlib.h>
+#include <cmath>
+#include <cstdlib>
 #include <proj.h>
-#include <math.h>
 #include <cfloat>
 #include "Types/GeoParameters.h"
 #include "CImageWarper.h"
 #include "CDebugger.h"
-#include "CGenericDataWarperTools.h"
 
 typedef unsigned char uchar;
 typedef unsigned char ubyte;
@@ -58,7 +56,6 @@ public:
 
 class GenericDataWarper {
 private:
-  DEF_ERRORFUNCTION();
   ProjectionGrid *projectionGrid = nullptr;
 
 public:

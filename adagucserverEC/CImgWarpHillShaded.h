@@ -25,15 +25,12 @@
 
 #ifndef CImgWarpHillShaded_H
 #define CImgWarpHillShaded_H
-#include <stdlib.h>
+#include <cstdlib>
 #include "CImageWarperRenderInterface.h"
 #include "CGenericDataWarper.h"
 #include "utils.h"
 
 class CImgWarpHillShaded : public CImageWarperRenderInterface {
-private:
-  DEF_ERRORFUNCTION();
-
 public:
   CImgWarpHillShaded() {}
   ~CImgWarpHillShaded() {}

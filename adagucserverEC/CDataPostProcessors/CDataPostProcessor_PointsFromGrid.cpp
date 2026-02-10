@@ -5,7 +5,6 @@
 /************************/
 /*      CDPPointsFromGrid     */
 /************************/
-const char *CDPPointsFromGrid::className = "CDPPointsFromGrid";
 
 /**Example:
  *
@@ -128,12 +127,10 @@ int CDPPointsFromGrid::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSour
 
   auto striding = getStrideFromGetMapLocation((*dataSource), warper, pixelOffset);
   CDBDebug("striding %f %f", striding.x, striding.y);
-  size_t ystep = striding.x;
-  size_t xstep = striding.y;
 
   // TODO: Calculate the start/end indices which are inside the getmap request. E.g. prevent looping the whole modelfield.
-  for (size_t y = 0; y < size_t(dataSource->dHeight); y = y + ystep) {
-    for (size_t x = 0; x < size_t(dataSource->dWidth); x = x + xstep) {
+  for (size_t y = 0; y < size_t(dataSource->dHeight); y = y + striding.y) {
+    for (size_t x = 0; x < size_t(dataSource->dWidth); x = x + striding.x) {
       size_t p = x + y * dataSource->dWidth;
       double modelX = dataSource->dfCellSizeX * x + dataSource->dfBBOX[0] + dataSource->dfCellSizeX / 2;
       double modelY = dataSource->dfCellSizeY * y + dataSource->dfBBOX[3] + dataSource->dfCellSizeY / 2;
@@ -155,8 +152,17 @@ int CDPPointsFromGrid::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSour
   getPixelCoordinateListFromGetMapCoordinateListInPlace(pointsInPixel, (*dataSource));
 
   int id = 0; // TODO check if not grows besided number of available objects
-  for (auto con : proc->attr.select.splitToStack(",")) {
+  for (auto con : proc->attr.select.split(",")) {
     auto ob = dataSource->getDataObjectByName(con.c_str());
+    if (ob == nullptr) {
+      CDBWarning("Cannot select variable %s in datapostproc PointsFromGrid, skipping point rendering", con.c_str());
+      continue;
+    }
+    if (ob->cdfVariable == NULL) {
+      CDBError("Dataobject %s has no variable", con.c_str());
+      throw __LINE__;
+    }
+
     auto destob = dataSource->getDataObject(id);
     if (ob->cdfVariable->getType() != CDF_FLOAT) {
       CDBError("Can only work with CDF_FLOAT");

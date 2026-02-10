@@ -31,8 +31,6 @@
 #include "CTime.h"
 #include "traceTimings/traceTimings.h"
 
-const char *CDFObject::className = "CDFObject";
-
 CDFObject::~CDFObject() { clear(); }
 
 int CDFObject::attachCDFReader(void *reader) {
@@ -94,7 +92,17 @@ CDF::Variable *CDFObject::getVar(CT::string name) {
 
 CDF::Variable *CDFObject::getVariableNE(const char *name) { return getVar(name); }
 
+CDF::Variable *CDFObject::getVariableNE(std::string name) { return getVar(name.c_str()); }
+
 CDF::Variable *CDFObject::getVariable(const char *name) {
+  auto var = getVar(name);
+  if (var == nullptr) {
+    throw(CDF_E_VARNOTFOUND);
+  }
+  return var;
+}
+
+CDF::Variable *CDFObject::getVariable(std::string name) {
   auto var = getVar(name);
   if (var == nullptr) {
     throw(CDF_E_VARNOTFOUND);
@@ -166,7 +174,7 @@ void ncmlHandleAttribute(xmlNode *cur_node, CT::string NCMLVarName, CDFObject *c
             var->setAttribute(pszAttributeName, attrType, pszAttributeValue, strlen(pszAttributeValue));
           } else {
             CT::string attributeValue = pszAttributeValue;
-            auto attributeValues = attributeValue.splitToStack(",");
+            auto attributeValues = attributeValue.split(",");
             auto attrLen = attributeValues.size();
             double attributeValuesAsDouble[attrLen];
             for (size_t attrN = 0; attrN < attrLen; attrN++) {
@@ -236,7 +244,7 @@ CT::string ncmlHandleVariable(xmlNode *cur_node, CDFObject *cdfObject) {
         }
         /* set shape */
         if (!shape.empty()) {
-          CT::StackList<CT::string> dims = shape.splitToStack(" ");
+          std::vector<CT::string> dims = shape.split(" ");
           var->dimensionlinks.clear();
           for (size_t d = 0; d < dims.size(); d++) {
             try {

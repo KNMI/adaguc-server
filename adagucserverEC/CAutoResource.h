@@ -33,7 +33,6 @@
  */
 class CAutoResource {
 private:
-  DEF_ERRORFUNCTION();
   /**
    * Adds new layers to the configuration
    * @param srvParam

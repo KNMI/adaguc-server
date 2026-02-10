@@ -27,13 +27,9 @@
 #define CDBFACTORY_H
 
 #include "CDBAdapterPostgreSQL.h"
-#include "CDBAdapterPostgreSQL.h"
 
 class CDBFactory {
 private:
-private:
-  DEF_ERRORFUNCTION();
-
 public:
   static CDBAdapterPostgreSQL *staticCDBAdapter;
 

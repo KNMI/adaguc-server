@@ -28,8 +28,6 @@
 #include "CReporter.h"
 #include <CKeyValuePair.h>
 
-const char *CProj4ToCF::className = "CProj4ToCF";
-
 float CProj4ToCF::CProj4ToCF::convertToM(float fValue) {
   if (fValue < 50000) fValue *= 1000;
   return fValue;
@@ -394,14 +392,14 @@ int CProj4ToCF::convertProjToCF(CDF::Variable *projectionVariable, const char *p
   std::vector<CKeyValuePair> projKVPList;
   CT::string proj4CTString;
   proj4CTString.copy(proj4String);
-  auto projElements = proj4CTString.splitToStack(" ");
+  auto projElements = proj4CTString.split(" ");
 
   if (projElements.size() < 2) {
     return 1;
   }
   for (auto &projElement : projElements) {
 
-    auto element = projElement.splitToStack("=");
+    auto element = projElement.split("=");
     if (element.size() > 0) {
       CT::string name, value;
       name.copy(element[0]);
@@ -661,7 +659,7 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
 
       proj4String.print("+proj=lcc +lat_0=%f", latitude_of_projection_origin.toDouble());
 
-      auto stpList = standard_parallel.splitToStack(" ");
+      auto stpList = standard_parallel.split(" ");
       if (stpList.size() == 1) {
         proj4String.printconcat(" +lat_1=%f", stpList[0].toDouble());
       }
@@ -901,7 +899,7 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
 
       proj4String.print("+proj=merc +lat_0=%f", latitude_of_projection_origin.toDouble());
 
-      auto stpList = standard_parallel.splitToStack(" ");
+      auto stpList = standard_parallel.split(" ");
       if (stpList.size() == 1) {
         proj4String.printconcat(" +lat_1=%f", stpList[0].toDouble());
       }

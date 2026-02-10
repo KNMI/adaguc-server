@@ -6,14 +6,13 @@
 /************************/
 /*      CDPPWFP  */
 /************************/
-const char *CDPPWFP::className = "CDPPWFP";
 
 const char *CDPPWFP::getId() { return "WFP"; }
 int CDPPWFP::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
   if (proc->attr.algorithm.equals("WFP")) {
     if (dataSource->getNumDataObjects() == 1 && mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
       // if (dataSource->getNumDataObjects() != 2 && dataSource->getNumDataObjects() != 3 && dataSource->getNumDataObjects() != 4 && dataSource->getNumDataObjects() != 5) {
-      CDBError("2 variables are needed for WFP, found %d", dataSource->getNumDataObjects());
+      CDBError("2 variables are needed for WFP, found %lu", dataSource->getNumDataObjects());
       return CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET;
     }
     return CDATAPOSTPROCESSOR_RUNAFTERREADING | CDATAPOSTPROCESSOR_RUNBEFOREREADING;
@@ -167,7 +166,7 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
 
     CImageWarper warper;
 
-    status = warper.initreproj(sourceGeo.crs, destGeo, &dataSource->srvParams->cfg->Projection);
+    status = warper.initreproj(sourceGeo.crs.c_str(), destGeo, &dataSource->srvParams->cfg->Projection);
     if (status != 0) {
       CDBError("Unable to initialize projection");
       return 1;

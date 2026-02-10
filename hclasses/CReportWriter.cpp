@@ -14,7 +14,7 @@ namespace CReportWriter {
     json report;
     CReporter *cReporter = CReporter::getInstance();
 
-    if (!cReporter->filename()) return false;
+    if (cReporter->filename().empty()) return false;
     report["messages"] = json(cReporter->getMessageList());
 
     std::ofstream reportfile(cReporter->filename().c_str());
@@ -28,4 +28,4 @@ namespace CReportWriter {
 
     return true;
   }
-}
+} // namespace CReportWriter

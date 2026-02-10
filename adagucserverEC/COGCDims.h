@@ -25,8 +25,8 @@
 
 #ifndef COGCDIMS_H
 #define COGCDIMS_H
-#include <stdio.h>
-#include "CTypes.h"
+#include <cstdio>
+#include "CTString.h"
 #include "CDebugger.h"
 class COGCDims {
 public:
@@ -83,7 +83,6 @@ public:
 
 class CCDFDims {
 private:
-  DEF_ERRORFUNCTION();
   class NetCDFDim {
   public:
     CT::string name;

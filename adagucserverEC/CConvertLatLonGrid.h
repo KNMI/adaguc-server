@@ -28,8 +28,6 @@
 #include "CDataSource.h"
 class CConvertLatLonGrid {
 private:
-  DEF_ERRORFUNCTION();
-
   static bool isLatLonGrid(CDFObject *cdfObject);
   static bool checkIfIrregularLatLon(CDFObject *cdfObject);
   static CDF::Variable *getLat1D(CDFObject *cdfObject);

@@ -25,21 +25,17 @@
 
 #ifndef CDATASOURCE_H
 #define CDATASOURCE_H
-#include <math.h>
-#include "CXMLSerializerInterface.h"
-#include "CServerParams.h"
-#include "CServerConfig_CPPXSD.h"
-#include "CDebugger.h"
-#include "Definitions.h"
-#include "CTypes.h"
-#include "CCDFDataModel.h"
-#include "COGCDims.h"
-#include "CStopWatch.h"
-#include "Types/CPointTypes.h"
 
+#include <cstddef>
+#include "CCDFObject.h"
 #include "CStyleConfiguration.h"
+#include "Types/CPointTypes.h"
+#include "COGCDims.h"
+#include "Types/GeoParameters.h"
+#include "CServerParams.h"
 
-#include "CGeoJSONData.h"
+// Forward declaration
+struct CStyleConfiguration;
 
 /**
  * Class which holds min and max values.
@@ -86,10 +82,8 @@ MinMax getMinMax(CDF::Variable *var);
  * This class is used for both image drawing (WMS) and data output (WCS)
  */
 class CDataSource {
-private:
-  DEF_ERRORFUNCTION();
-
 public:
+  bool debug = false;
   CT::string headerFilename;
   struct StatusFlag {
     CT::string meaning;
@@ -98,7 +92,7 @@ public:
   bool dimsAreAutoConfigured;
 
 private:
-  CT::PointerList<CStyleConfiguration *> *_styles;
+  std::vector<CStyleConfiguration *> *_styles;
   CStyleConfiguration *_currentStyle;
 
 public:
@@ -114,7 +108,7 @@ public:
 
   public:
     DataObject();
-    bool hasStatusFlag, hasNodataValue, appliedScaleOffset, hasScaleOffset;
+    bool hasStatusFlag, hasNodataValue, hasScaleOffset;
     double dfNodataValue, dfscale_factor, dfadd_offset;
     bool noFurtherProcessing = false;
     bool filterFromOutput = false; // When set to true, this dataobject is not returned in the GetFeatureInfo response.
@@ -332,6 +326,7 @@ public:
   GeoParameters getGeo();
 
   DataObject *getDataObjectByName(const char *name);
+  DataObject *getDataObjectByName(std::string name);
   DataObject *getDataObject(int j);
 
   DataObject *getFirstAvailableDataObject();
@@ -360,7 +355,7 @@ public:
   /**
    * IMPORTANT
    */
-  CT::PointerList<CStyleConfiguration *> *getStyleListForDataSource(CDataSource *dataSource);
+  std::vector<CStyleConfiguration *> *getStyleListForDataSource(CDataSource *dataSource);
 
   static void calculateScaleAndOffsetFromMinMax(float &scale, float &offset, float min, float max, float log);
   static std::vector<CT::string> getLegendListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style *style);

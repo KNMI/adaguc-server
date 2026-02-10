@@ -2,7 +2,6 @@
 #include "CCDFObject.h"
 #include "CCDFDataModel.h"
 #include "CCDFNetCDFIO.h"
-const char *CDFStore::className = "CDFStore";
 
 std::map<std::string, CDFReader *> CDFStore::cdfReaders = {};
 

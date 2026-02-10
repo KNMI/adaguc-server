@@ -4,8 +4,7 @@
 #include "CReporter.h"
 #include "CRequest.h"
 #include "CNetCDFDataWriter.h"
-
-const char *CCreateTiles::className = "CCreateTiles";
+#include <cdfVariableCache.h>
 
 int CCreateTiles::createTiles(CDataSource *dataSource, int scanFlags) {
   if (dataSource->isConfigured == false) {
@@ -38,7 +37,7 @@ int CCreateTiles::createTiles(CDataSource *dataSource, int scanFlags) {
   try {
     fileList = CDBFileScanner::searchFileNames(dataSource->cfgLayer->FilePath[0]->value.c_str(), filter.c_str(), tailPath.c_str());
   } catch (int linenr) {
-    CDBError("Exception in searchFileNames [%s] [%s]", dataSource->cfgLayer->FilePath[0]->value.c_str(), filter.c_str(), tailPath.c_str());
+    CDBError("Exception in searchFileNames [%s] [%s] [%s]", dataSource->cfgLayer->FilePath[0]->value.c_str(), filter.c_str(), tailPath.c_str());
     return 1;
   }
   if (fileList.size() == 0) {
@@ -46,7 +45,7 @@ int CCreateTiles::createTiles(CDataSource *dataSource, int scanFlags) {
     return 1;
   }
 
-  CDBDebug("Found %d files", fileList.size());
+  CDBDebug("Found %lu files", fileList.size());
   for (size_t j = 0; j < fileList.size(); j++) {
     CCreateTiles::createTilesForFile(dataSource, scanFlags, fileList[j].c_str());
   }
@@ -122,16 +121,23 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
     CDBError("Unable to open input file for tiles: %s", dataSourceToTile->getFileName());
     return 1;
   }
-
+  // Enable cache for the variable to tile, to speed up reading data for each tile.
+  dataSourceToTile->getFirstAvailableDataObject()->cdfVariable->enableCache = true;
   // Extract time and set it.
   try {
-    auto var = dataSourceToTile->getFirstAvailableDataObject()->cdfObject->getVariable("time");
+    auto var = dataSourceToTile->getFirstAvailableDataObject()->cdfObject->getVariableNE("time");
+    if (var == nullptr) {
+      CDBError("No time variable found in the data source");
+      throw(CDF_E_VARNOTFOUND);
+    }
+    var->readData(false);
     double timeValue = var->getDataAt<double>(0);
     auto adagucTime = CTime::GetCTimeInstance(var);
     auto timeString = adagucTime->dateToISOString(adagucTime->getDate(timeValue));
     dataSourceToTile->requiredDims.push_back(new COGCDims("time", timeString));
-    dataSourceToTile->getCDFDims()->addDimension("time", timeString, 0);
+    dataSourceToTile->getCDFDims()->addDimension("time", timeString.c_str(), 0);
   } catch (int e) {
+    CDBDebug("No time dimension found, creating a fake one with value 0 code [%s]", CDF::getErrorMessage(e).c_str());
     if (dataSourceToTile->requiredDims.size() == 0) {
       COGCDims *ogcDim = new COGCDims();
       dataSourceToTile->requiredDims.push_back(ogcDim);
@@ -148,15 +154,15 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
   std::vector<DestinationGrids> tileSet = makeTileSet(*dataSourceToTile);
 
   // Write tiles
-  CT::string basename = fileToTile.basename();
+  CT::string basename = CT::basename(fileToTile);
   basename = basename.substring(0, basename.lastIndexOf("."));
   CT::string tileBasePath = fileToTile.substring(0, fileToTile.lastIndexOf("/"));
   if (tileSettings->attr.tilepath.empty() == false) {
     tileBasePath = tileSettings->attr.tilepath;
     tileBasePath = CDirReader::makeCleanPath(tileBasePath.c_str());
-    if (!CDirReader::isDir(tileBasePath)) {
+    if (!CDirReader::isDir(tileBasePath.c_str())) {
 
-      CDirReader::makePublicDirectory(tileBasePath);
+      CDirReader::makePublicDirectory(tileBasePath.c_str());
     }
   }
 
@@ -179,7 +185,7 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
     if (CDirReader::isFile(destFileName.c_str())) {
       continue;
     }
-    CDBDebug("Generating  %s %0.1f done", destFileName.basename().c_str(), (index / double(tileSet.size())) * 100.);
+    CDBDebug("Generating  %s %0.1f done", CT::basename(destFileName).c_str(), (index / double(tileSet.size())) * 100.);
     srvParam->geoParams.bbox = destGrid.bbox;
     CNetCDFDataWriter wcsWriter;
     wcsWriter.silent = true;
@@ -202,6 +208,8 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
 
   // Should we really close the source data? For now we do.
   CDFObjectStore::getCDFObjectStore()->deleteCDFObject(fileToTile.c_str());
+
+  varCacheClear();
 
   return 0;
 };

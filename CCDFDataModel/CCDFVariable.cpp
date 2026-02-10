@@ -27,10 +27,9 @@
 #include "CCDFObject.h"
 #include "CCDFReader.h"
 #include "CTime.h"
+#include "cdfVariableCache.h"
 #include "traceTimings/traceTimings.h"
-const char *CDF::Variable::className = "Variable";
 
-extern CDF::Variable::CustomMemoryReader customMemoryReaderInstance;
 CDF::Variable::CustomMemoryReader customMemoryReaderInstance;
 CDF::Variable::CustomMemoryReader *CDF::Variable::CustomMemoryReaderInstance = &customMemoryReaderInstance;
 
@@ -141,7 +140,13 @@ int CDF::Variable::readData(CDFType readType, size_t *_start, size_t *_count, pt
 
 int CDF::Variable::readData(CDFType type, size_t *_start, size_t *_count, ptrdiff_t *_stride) {
   traceTimingsSpanStart(TraceTimingType::FSREADVAR);
+  if (enableCache && varCacheReturn(this, _start, _count, _stride) == 0) {
+    return 0;
+  }
   int status = _readData(type, _start, _count, _stride);
+  if (enableCache) {
+    varCacheAdd(this, _start, _count, _stride);
+  }
   traceTimingsSpanEnd(TraceTimingType::FSREADVAR);
   return status;
 }
@@ -211,7 +216,7 @@ int CDF::Variable::_readData(CDFType type, size_t *_start, size_t *_count, ptrdi
     setSize(totalVariableSize);
     int status = CDF::allocateData(type, &data, getSize());
     if (data == NULL || status != 0) {
-      CDBError("Variable data allocation failed, unable to allocate %d elements", totalVariableSize);
+      CDBError("Variable data allocation failed, unable to allocate %lu elements", totalVariableSize);
       return 1;
     }
     // Now make the iterative dim of length zero
@@ -677,14 +682,14 @@ void *CDF::Variable::getCDFObjectClassPointer(size_t *start, size_t *count) {
   size_t j = iterator - dimensionlinks.begin();
   size_t iterativeDimIndex = start[j];
   if (count[j] != 1) {
-    CDBError("Count %d instead of  1 is requested for iterative dimension %s", count[j], dimensionlinks[j]->name.c_str());
+    CDBError("Count %lu instead of  1 is requested for iterative dimension %s", count[j], dimensionlinks[j]->name.c_str());
     throw(CDF_E_ERROR);
   }
 #ifdef CCDFDATAMODEL_DEBUG
   CDBDebug("Aggregating %d == %d", cdfObjectList[iterativeDimIndex]->dimIndex, iterativeDimIndex);
 #endif
   if (iterativeDimIndex >= cdfObjectList.size()) {
-    CDBError("Wrong index %d, list size is %d", iterativeDimIndex, cdfObjectList.size());
+    CDBError("Wrong index %lu, list size is %lu", iterativeDimIndex, cdfObjectList.size());
   }
   return cdfObjectList[iterativeDimIndex]; //->cdfObjectPointer;
 }
@@ -963,6 +968,8 @@ int CDF::Variable::setAttributeText(const char *attrName, const char *attrString
   delete[] attrData;
   return retStat;
 }
+
+int CDF::Variable::setAttributeText(std::string attrName, std::string attrString) { return setAttributeText(attrName.c_str(), attrString.c_str()); }
 
 int CDF::Variable::setData(CDFType type, const void *dataToSet, size_t dataLength) {
   freeData();

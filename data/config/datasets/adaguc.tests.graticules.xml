@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+  <Layer type="grid" hidden="false">
+    <Group value="baselayers"/>
+    <Name force="true">grid1</Name>
+    <Title>grid 1 degrees</Title>
+    <Grid resolution="1"/>
+    <WMSFormat name="image/png32"/>
+  </Layer>
+  <Layer type="grid" hidden="false">
+    <Group value="baselayers"/>
+    <Name force="true">grid10</Name>
+    <Title>grid 10 degrees</Title>
+    <Grid resolution="10"/>
+    <WMSFormat name="image/png32"/>
+  </Layer>
+</Configuration>

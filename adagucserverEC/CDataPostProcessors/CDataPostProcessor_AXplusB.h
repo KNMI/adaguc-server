@@ -9,15 +9,12 @@
  * AX + B algorithm
  */
 class CDPPAXplusB : public CDPPInterface {
-private:
-  DEF_ERRORFUNCTION();
-
 public:
   virtual const char *getId();
   virtual int isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode);
   virtual int execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode);
   virtual int execute(CServerConfig::XMLE_DataPostProc *, CDataSource *, int, double *, size_t) {
-    CDBDebug("%s: Done during reading of data", this->className);
+    CDBDebug("CDATAPOSTPROCESSOR_METHOD_NOT_IMPLEMENTED");
     return 0;
   }
 };

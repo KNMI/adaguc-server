@@ -1,7 +1,7 @@
 #ifndef CURUNIQUEREQUESTS_H
 #define CURUNIQUEREQUESTS_H
 
-#include <stdio.h>
+#include <cstdio>
 #include <map>
 #include "CTString.h"
 #include "CDebugger.h"
@@ -16,7 +16,6 @@
 class CURUniqueRequests {
 
 private:
-  DEF_ERRORFUNCTION();
   std::map<std::string, CURFileInfo> fileInfoMap;
   int dimOrdering[CCUniqueRequests_MAX_DIMS];
   CURAggregatedDimension aggregatedDimensions[CCUniqueRequests_MAX_DIMS];

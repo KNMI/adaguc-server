@@ -26,9 +26,6 @@
 #include "CConvertADAGUCVector.h"
 #include "CFillTriangle.h"
 #include "CImageWarper.h"
-// #define CCONVERTADAGUCVECTOR_DEBUG
-
-const char *CConvertADAGUCVector::className = "CConvertADAGUCVector";
 
 /**
  * Checks if the format of this file corresponds to the ADAGUC Vector format.
@@ -70,13 +67,13 @@ int CConvertADAGUCVector::convertADAGUCVectorHeader(CDFObject *cdfObject) {
   createVirtualGeoVariables(cdfObject);
 
   // Make a list of variables which will be available as 2D fields
-  CT::StackList<CT::string> varsToConvert;
+  std::vector<CT::string> varsToConvert;
   for (size_t v = 0; v < cdfObject->variables.size(); v++) {
     CDF::Variable *var = cdfObject->variables[v];
     if (var->isDimension == false) {
       if (!var->name.equals("time2D") && !var->name.equals("time") && !var->name.equals("lon") && !var->name.equals("lat") && !var->name.equals("lat_bnds") && !var->name.equals("lon_bnds") &&
           !var->name.equals("custom") && !var->name.equals("projection") && !var->name.equals("product") && !var->name.equals("iso_dataset") && !var->name.equals("tile_properties")) {
-        varsToConvert.add(CT::string(var->name.c_str()));
+        varsToConvert.push_back(CT::string(var->name.c_str()));
       }
       if (var->name.equals("projection")) {
         var->setAttributeText("ADAGUC_SKIP", "true");
@@ -367,7 +364,7 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
           }
         }
         CDBDebug("timeStringFromURL = %s", timeStringFromURL.c_str());
-        std::vector<CT::string> timeStrings = timeStringFromURL.splitToStack("/");
+        std::vector<CT::string> timeStrings = timeStringFromURL.split("/");
         if (timeStrings.size() == 2) {
           timeNotLowerThan = obsTime->dateToOffset(obsTime->freeDateStringToDate(timeStrings[0].c_str()));
           timeNotMoreThan = obsTime->dateToOffset(obsTime->freeDateStringToDate(timeStrings[1].c_str()));

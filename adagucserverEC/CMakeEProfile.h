@@ -15,7 +15,6 @@
 
 class CMakeEProfile {
 public:
-  DEF_ERRORFUNCTION();
   class DayPass {
   public:
     DayPass(int x, double offset) {

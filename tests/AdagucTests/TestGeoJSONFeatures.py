@@ -17,60 +17,72 @@ ADAGUC_PATH = os.environ["ADAGUC_PATH"]
 
 @pytest.mark.skip("These tests are never called")
 class TestGeoJSONFeatures(unittest.TestCase):
-  testresultspath = "testresults/TestGeoJSONFeatures/"
-  expectedoutputsspath = "expectedoutputs/TestGeoJSONFeatures/"
-  env = {'ADAGUC_CONFIG': ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," +
-         ADAGUC_PATH + "/data/config/datasets/adaguc.testGeoJSONReader_time.xml"}
+    testresultspath = "testresults/TestGeoJSONFeatures/"
+    expectedoutputsspath = "expectedoutputs/TestGeoJSONFeatures/"
+    env = {
+        "ADAGUC_CONFIG": ADAGUC_PATH
+        + "/data/config/adaguc.tests.dataset.xml,"
+        + ADAGUC_PATH
+        + "/data/config/datasets/adaguc.testGeoJSONReader_time.xml"
+    }
 
-  AdagucTestTools().mkdir_p(testresultspath)
+    AdagucTestTools().mkdir_p(testresultspath)
 
-  def test_GeoJSONFeatures_non_thin(self):
-    AdagucTestTools().cleanTempDir()
-    filename = "test_GeoJSONFeatures_non_thin.png"
-    env = {'ADAGUC_CONFIG': ADAGUC_PATH +
-           "/data/config/adaguc.tests.dataset.xml,"+
-           ADAGUC_PATH +
-           "/data/config/adaguc.testGeoJSONFeatures.xml"}
-    status, data, headers = AdagucTestTools().runADAGUCServer(
-        "source=countries.geojson&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=features&WIDTH=256&HEIGHT=128&CRS=EPSG%3A4326&BBOX=50,2,54,10&STYLES=auto&FORMAT=image/png&TRANSPARENT=TRUE", env=env, showLog=False)
-    AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
-    self.assertEqual(status, 0)
-    self.assertEqual(data.getvalue(), AdagucTestTools(
-    ).readfromfile(self.expectedoutputsspath + filename))
+    def test_GeoJSONFeatures_non_thin(self):
+        AdagucTestTools().cleanTempDir()
+        filename = "test_GeoJSONFeatures_non_thin.png"
+        env = {
+            "ADAGUC_CONFIG": ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,"
+            + ADAGUC_PATH
+            + "/data/config/adaguc.testGeoJSONFeatures.xml"
+        }
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "source=countries.geojson&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=features&WIDTH=256&HEIGHT=128&CRS=EPSG%3A4326&BBOX=50,2,54,10&STYLES=auto&FORMAT=image/png&TRANSPARENT=TRUE",
+            env=env,
+            showLog=False,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
 
-  def test_GeoJSON_time_GetCapabilities(self):
-    AdagucTestTools().cleanTempDir()
-    config = ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml,' + \
-        ADAGUC_PATH + '/data/config/datasets/adaguc.testGeoJSONReader_time.xml'
-    status, data, headers = AdagucTestTools().runADAGUCServer(
-        args=['--updatedb', '--config', config], env={'ADAGUC_CONFIG': config}, isCGI=False, showLog=False)
-    self.assertEqual(status, 0)
-    # Test GetCapabilities
-    filename = "test_GeoJSON_time_GetCapabilities.xml"
-    status, data, headers = AdagucTestTools().runADAGUCServer(
-        "&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities", env={'ADAGUC_CONFIG': config})
-    AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
-    self.assertEqual(status, 0)
-    self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(
-        self.testresultspath + filename, self.expectedoutputsspath + filename))
+    def test_GeoJSON_time_GetCapabilities(self):
+        AdagucTestTools().cleanTempDir()
+        config = (
+            ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," + ADAGUC_PATH + "/data/config/datasets/adaguc.testGeoJSONReader_time.xml"
+        )
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=["--updatedb", "--config", config], env={"ADAGUC_CONFIG": config}, isCGI=False, showLog=False
+        )
+        self.assertEqual(status, 0)
+        # Test GetCapabilities
+        filename = "test_GeoJSON_time_GetCapabilities.xml"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities", env={"ADAGUC_CONFIG": config}
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename))
 
-  def test_GeoJSON_3timesteps(self):
-    AdagucTestTools().cleanTempDir()
-    config = ADAGUC_PATH + '/data/config/adaguc.tests.dataset.xml,' + \
-        ADAGUC_PATH + '/data/config/datasets/adaguc.testGeoJSONReader_time.xml'
-    status, data, headers = AdagucTestTools().runADAGUCServer(
-        args=['--updatedb', '--config', config], env={'ADAGUC_CONFIG': config}, isCGI=False, showLog=False)
-    self.assertEqual(status, 0)
+    def test_GeoJSON_3timesteps(self):
+        AdagucTestTools().cleanTempDir()
+        config = (
+            ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," + ADAGUC_PATH + "/data/config/datasets/adaguc.testGeoJSONReader_time.xml"
+        )
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            args=["--updatedb", "--config", config], env={"ADAGUC_CONFIG": config}, isCGI=False, showLog=False
+        )
+        self.assertEqual(status, 0)
 
-    dates = ['2018-12-04T12:00:00Z',
-             '2018-12-04T12:05:00Z',
-             '2018-12-04T12:10:00Z']
+        dates = ["2018-12-04T12:00:00Z", "2018-12-04T12:05:00Z", "2018-12-04T12:10:00Z"]
 
-    for date in dates:
-      filename = ("test_GeoJSON_timesupport"+date+".png").replace(":","_")
-      status, data, headers = AdagucTestTools().runADAGUCServer(
-          "&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=features&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=40,-10,60,40&STYLES=features&FORMAT=image/png&TRANSPARENT=TRUE&TIME=" + date, env={'ADAGUC_CONFIG': config})
-      AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
-      self.assertEqual(status, 0)
-      self.assertEqual(data.getvalue(), AdagucTestTools(
-      ).readfromfile(self.expectedoutputsspath + filename))
+        for date in dates:
+            filename = ("test_GeoJSON_timesupport" + date + ".png").replace(":", "_")
+            status, data, headers = AdagucTestTools().runADAGUCServer(
+                "&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=features&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&BBOX=40,-10,60,40&STYLES=features&FORMAT=image/png&TRANSPARENT=TRUE&TIME="
+                + date,
+                env={"ADAGUC_CONFIG": config},
+            )
+            AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+            self.assertEqual(status, 0)
+            self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))

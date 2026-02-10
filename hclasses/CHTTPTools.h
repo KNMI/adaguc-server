@@ -30,16 +30,15 @@
 
 #include "CDebugger.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <curl/curl.h>
-#include "CTypes.h"
+#include "CTString.h"
 
 class CHTTPTools {
 
 private:
-  DEF_ERRORFUNCTION();
   struct MemoryStruct {
     char *memory;
     size_t size;

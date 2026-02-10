@@ -37,15 +37,15 @@
 #include <png.h>
 #include <cairo.h>
 #include "CDebugger.h"
-#include "CTypes.h"
+#include "CTString.h"
 #include <ft2build.h>
 #include <freetype/freetype.h>
 #include <freetype/ftglyph.h>
 #include <freetype/ftoutln.h>
 #include <freetype/fttrigon.h>
 #include FT_FREETYPE_H
-#include <stdio.h>
-#include <math.h>
+#include <cstdio>
+#include <cmath>
 #include <cstdint>
 #include "CColor.h"
 
@@ -56,7 +56,6 @@
 cairo_status_t writerFunc(void *closure, const unsigned char *data, unsigned int length);
 class CCairoPlotter {
 private:
-  DEF_ERRORFUNCTION();
   unsigned char *ARGBByteBuffer;
   float rr, rg, rb, ra;
   unsigned char fr, fg, fb;
@@ -67,7 +66,7 @@ private:
   FILE *fp;
   int width, height, stride;
   float fontSize;
-  const char *fontLocation;
+  std::string fontLocation;
   bool initializationFailed;
   FT_Library library;
   FT_Face face;
@@ -78,14 +77,14 @@ private:
   void _swap(int &x, int &y);
   static const cairo_format_t FORMAT = CAIRO_FORMAT_ARGB32;
   bool byteBufferPointerIsOwned;
-  void _cairoPlotterInit(int width, int height, float fontSize, const char *fontLocation);
+  void _cairoPlotterInit(int width, int height, float fontSize, std::string fontLocation);
   int _drawFreeTypeText(int x, int y, int &w, int &h, float angle, const char *text, bool render);
 
 public:
   bool isAlphaUsed;
 
-  CCairoPlotter(int width, int height, float fontSize, const char *fontLocation, unsigned char r, unsigned char g, unsigned char b, unsigned char a);
-  CCairoPlotter(int width, int height, unsigned char *_ARGBByteBuffer, float fontSize, const char *fontLocation);
+  CCairoPlotter(int width, int height, float fontSize, std::string fontLocation, unsigned char r, unsigned char g, unsigned char b, unsigned char a);
+  CCairoPlotter(int width, int height, unsigned char *_ARGBByteBuffer, float fontSize, std::string fontLocation);
 
   ~CCairoPlotter();
   int writeARGBPng(int width, int height, unsigned char *ARGBByteBuffer, FILE *file, int bitDepth, bool use8bitpalAlpha);

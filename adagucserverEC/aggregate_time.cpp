@@ -1,7 +1,7 @@
 #include <vector>
 #include <iterator>
 #include <algorithm>
-#include <stdio.h>
+#include <cstdio>
 #include <netcdf.h>
 #include "CCDFDataModel.h"
 #include "CCDFNetCDFIO.h"
@@ -10,8 +10,6 @@
 #include "CTime.h"
 
 #define VERSION "ADAGUC aggregator 1.6"
-
-DEF_ERRORMAIN()
 
 class NCFileObject {
 public:
@@ -48,13 +46,13 @@ void progress(const char *message, float percentage) { printf("{\"message\":%s,\
 
 void progresswrite(const char *message, float percentage) { progress(message, percentage / 2. + 50); }
 
-void applyChangesToCDFObject(CDFObject *cdfObject, CT::StackList<CT::string> variablesToDo) {
+void applyChangesToCDFObject(CDFObject *cdfObject, std::vector<CT::string> variablesToDo) {
   for (size_t j = 0; j < variablesToDo.size(); j++) {
     CDF::Variable *varWithoutTime = cdfObject->getVariableNE(variablesToDo[j].c_str());
     if (varWithoutTime != NULL) {
       varWithoutTime->dimensionlinks.insert(varWithoutTime->dimensionlinks.begin(), cdfObject->getDimension("time"));
     } else {
-      CDBWarning("Variable %s not found");
+      CDBWarning("Variable not found");
     }
   }
 }
@@ -89,10 +87,10 @@ int main(int argc, const char *argv[]) {
     }
   }
 
-  CT::StackList<CT::string> variablesToAddTimeTo;
+  std::vector<CT::string> variablesToAddTimeTo;
   if (argc == 4) {
     CT::string variableList = argv[3];
-    variablesToAddTimeTo = variableList.splitToStack(",");
+    variablesToAddTimeTo = variableList.split(",");
   }
 
   /* Create a vector which holds information for all the inputfiles. */
@@ -102,10 +100,11 @@ int main(int argc, const char *argv[]) {
   /* Loop through all files and gather information */
   try {
     for (size_t j = 0; j < dirReader.fileList.size(); j++) {
-      NCFileObject *fileObject = new NCFileObject(CT::string(dirReader.fileList[j].c_str()).basename().c_str());
+      auto basename = CT::string(CT::basename(dirReader.fileList[j].c_str()));
+      NCFileObject *fileObject = new NCFileObject(basename.c_str());
       fileObjects.push_back(fileObject);
       fileObject->fullName = dirReader.fileList[j].c_str();
-      fileObject->baseName = CT::string(dirReader.fileList[j].c_str()).basename().c_str();
+      fileObject->baseName = basename;
 
       status = fileObject->cdfObject->open(fileObject->fullName.c_str());
 
@@ -133,7 +132,7 @@ int main(int argc, const char *argv[]) {
       CTime *time = CTime::GetCTimeInstance(timeVar);
       CTime::Date date = time->getDate(value);
       CTime epochCTime;
-      epochCTime.init("seconds since 1970-01-01 0:0:0", NULL);
+      epochCTime.init("seconds since 1970-01-01 0:0:0", "");
 
       fileObject->timeValue = epochCTime.dateToOffset(date);
 

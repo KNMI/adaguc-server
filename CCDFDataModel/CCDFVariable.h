@@ -47,10 +47,11 @@ namespace CDF {
     CT::string orgName;
     std::vector<Attribute *> attributes;
     std::vector<Dimension *> dimensionlinks;
-    int id;
-    size_t currentSize;
-    void *data;
-    bool isDimension;
+    int id = -1;
+    size_t currentSize = 0;
+    void *data = nullptr;
+    bool isDimension = false;
+    bool enableCache = false;
 
     // Currently, aggregation along just 1 dimension is supported.
     struct CDFObjectClass {
@@ -142,7 +143,6 @@ namespace CDF {
 
     Dimension *getIterativeDim();
 
-    DEF_ERRORFUNCTION();
     Variable(const char *name, CDFType type, CDF::Dimension *dims[], int numdims, bool isCoordinateVariable);
     Variable(const char *name, CDFType type, std::vector<CDF::Dimension *> idimensionlinks, bool isCoordinateVariable);
     Variable(const char *name, CDFType type);
@@ -200,6 +200,9 @@ namespace CDF {
     }
     int setAttributeText(const char *attrName, const char *attrString, size_t strLen);
     int setAttributeText(const char *attrName, const char *attrString);
+
+    int setAttributeText(std::string attrName, std::string attrString);
+
     void *getCDFObjectClassPointer(size_t *start, size_t *count);
     int setData(CDFType type, const void *dataToSet, size_t dataLength);
 

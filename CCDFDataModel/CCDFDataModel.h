@@ -26,7 +26,7 @@
 #ifndef CCDFDATAMODEL_H
 #define CCDFDATAMODEL_H
 
-//#define CCDFDATAMODEL_DEBUG
+// #define CCDFDATAMODEL_DEBUG
 
 #define CCDFDATAMODEL_DUMP_STANDARD 0
 #define CCDFDATAMODEL_DUMP_JSON 1
@@ -37,7 +37,7 @@
 #include "CCDFVariable.h"
 #include "CCDFObject.h"
 #include "CCDFReader.h"
-#include "CCDFWarper.h"
+
 namespace CDF {
 
   void _dump(CDFObject *cdfObject, CT::string *dumpString, int returnType);

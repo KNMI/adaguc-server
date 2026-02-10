@@ -28,7 +28,6 @@
 #include "CDataSource.h"
 class CConvertADAGUCVector {
 private:
-  DEF_ERRORFUNCTION();
   static bool createVirtualTimeVariable(CDFObject *cdfObject);
   static bool createVirtualGeoVariables(CDFObject *cdfObject);
 

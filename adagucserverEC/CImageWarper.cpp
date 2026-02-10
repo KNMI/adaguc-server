@@ -29,7 +29,6 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
-const char *CImageWarper::className = "CImageWarper";
 
 void floatToString(char *string, size_t maxlen, int numdigits, float number) {
   // snprintf(string,maxlen,"%0.2f",number);
@@ -80,7 +79,7 @@ int CImageWarper::reprojpoint(double &dfx, double &dfy) {
     return 1;
     // CDBError("ReprojException");
   }
-  if (isnan(dfx) || isnan(dfy)) {
+  if (std::isnan(dfx) || std::isnan(dfy)) {
     dfx = 0;
     dfy = 0;
     return 1;
@@ -118,7 +117,7 @@ int CImageWarper::reprojfromLatLon(double &dfx, double &dfy) {
     dfy = 0;
     return 1;
   }
-  if (isnan(dfx) || isnan(dfy)) {
+  if (std::isnan(dfx) || std::isnan(dfy)) {
     dfx = 0;
     dfy = 0;
     return 1;
@@ -313,7 +312,7 @@ int CImageWarper::_initreprojSynchronized(const char *projString, GeoParameters 
 
   projSourceToDest = proj_create_crs_to_crs_with_cache(sourceProjection, destinationCRS, nullptr);
   if (projSourceToDest == nullptr) {
-    CDBError("Invalid projection: from %s to %s", sourceProjection.c_str(), destinationCRS.c_str());
+    CDBError("Invalid projection: from [%s] to [%s]", sourceProjection.c_str(), destinationCRS.c_str());
     return 1;
   }
 
@@ -573,7 +572,7 @@ CT::string CImageWarper::getProj4FromId(CDataSource *dataSource, CT::string proj
 std::tuple<CT::string, double> CImageWarper::fixProjection(CT::string projectionString) {
   CProj4ToCF trans;
   CDF::Variable var;
-  int status = trans.convertProjToCF(&var, projectionString);
+  int status = trans.convertProjToCF(&var, projectionString.c_str());
   if (status == 0) {
     CDF::Attribute *majorAttribute = var.getAttributeNE("semi_major_axis");
     CDF::Attribute *minorAttribute = var.getAttributeNE("semi_minor_axis");
@@ -596,7 +595,7 @@ std::tuple<CT::string, double> CImageWarper::fixProjection(CT::string projection
 }
 
 double CImageWarper::getRotation(PointDVWithLatLon &point) {
-  if (!isnan(point.rotation)) {
+  if (!std::isnan(point.rotation)) {
     return point.rotation;
   }
   // If rotation was not set during construction, we have to calculate it here.

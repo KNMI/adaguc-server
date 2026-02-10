@@ -26,11 +26,11 @@
 #ifndef CPROJ4TOCF_H
 #define CPROJ4TOCF_H
 
-#include <stdio.h>
+#include <cstdio>
 #include <iostream>
 #include <vector>
 #include <sys/stat.h>
-#include <CTypes.h>
+#include <CTString.h>
 #include "CCDFDataModel.h"
 #include "CKeyValuePair.h"
 /*******************************/
@@ -41,8 +41,6 @@
 
 class CProj4ToCF {
 private:
-  DEF_ERRORFUNCTION();
-
   static float convertToM(float fValue);
 
   CT::string getProj4Value(const char *proj4Key, std::vector<CKeyValuePair> projKVPList);

@@ -31,8 +31,6 @@
 #include <traceTimings/traceTimings.h>
 #include <cstring>
 
-const char *CServerParams::className = "CServerParams";
-
 CServerParams::CServerParams() {
 
   serviceType = -1;
@@ -121,7 +119,7 @@ int CServerParams::makeLayerGroupName(CT::string *groupName, CServerConfig::XMLE
   if (cfgLayer->Group.size() == 1) {
     if (cfgLayer->Group[0]->attr.value.c_str() != NULL) {
       CT::string layerName(cfgLayer->Group[0]->attr.value.c_str());
-      auto groupElements = layerName.splitToStack("/");
+      auto groupElements = layerName.split("/");
       if (groupElements.size() > 0) {
         groupName->copy(groupElements[0].c_str());
       }
@@ -129,12 +127,6 @@ int CServerParams::makeLayerGroupName(CT::string *groupName, CServerConfig::XMLE
   }
 
   return 0;
-}
-
-bool CServerParams::isAutoResourceCacheEnabled() const {
-
-  if (cfg->AutoResource.size() > 0) return cfg->AutoResource[0]->attr.enablecache.equals("true");
-  return false;
 }
 
 char CServerParams::debugLoggingIsEnabled = -1; // Not configured yet, 1 means enabled, 0 means disabled
@@ -234,7 +226,7 @@ bool CServerParams::checkResolvePath(const char *path, CT::string *resolvedPath)
 
       char baseDir[PATH_MAX];
       if (realpath(_baseDir, baseDir) == NULL) {
-        CDBError("Skipping AutoResource[0]->Dir[%d]->basedir: Configured value is not a valid realpath", d);
+        CDBError("Skipping AutoResource[0]->Dir[%lu]->basedir: Configured value is not a valid realpath", d);
         continue;
       }
 
@@ -293,7 +285,7 @@ CT::string CServerParams::getOnlineResource() {
   CT::string onlineResource = cfg->OnlineResource[0]->attr.value.c_str();
 
   // A full path is given in the configuration
-  if (onlineResource.indexOf("http", 4) == 0) {
+  if (onlineResource.indexOf("http") == 0) {
     _onlineResource = onlineResource;
     return onlineResource;
   }
@@ -345,7 +337,7 @@ std::vector<CT::string> CServerParams::getLegendNames(std::vector<CServerConfig:
   std::vector<CT::string> stringList;
   for (size_t j = 0; j < Legend.size(); j++) {
     CT::string legendValue = Legend[j]->value.c_str();
-    CT::StackList<CT::string> l1 = legendValue.splitToStack(",");
+    std::vector<CT::string> l1 = legendValue.split(",");
     for (auto li : l1) {
       if (li.length() > 0) {
         stringList.push_back(li);
@@ -373,7 +365,7 @@ int CServerParams::checkDataRestriction() {
       dr = ALLOW_WCS | ALLOW_GFI | ALLOW_METADATA;
     }
     // Decompose into stringlist and check each item
-    CT::StackList<CT::string> items = temp.splitToStack("|");
+    std::vector<CT::string> items = temp.split("|");
     for (size_t j = 0; j < items.size(); j++) {
       items[j].replaceSelf("\"", "");
       if (items[j].equals("ALLOW_GFI")) dr |= ALLOW_GFI;
@@ -447,7 +439,7 @@ int CServerParams::_parseConfigFile(CT::string &pszConfigFile, std::vector<CServ
 
     /* Substitute ADAGUC_TMP */
     const char *pszADAGUC_TMP = getenv("ADAGUC_TMP");
-    if (pszADAGUC_TMP != NULL) configFileData.replaceSelf("{ADAGUC_TMP}", pszADAGUC_TMP);
+    configFileData.replaceSelf("{ADAGUC_TMP}", pszADAGUC_TMP == NULL ? "/tmp/" : pszADAGUC_TMP);
 
     /* Substitute ADAGUC_DB */
     const char *pszADAGUC_DB = getenv("ADAGUC_DB");
@@ -506,7 +498,8 @@ int CServerParams::_parseConfigFile(CT::string &pszConfigFile, std::vector<CServ
     CDBError("Exception %d in substituting", e);
   }
 
-  int status = parseConfig(configObj, configFileData);
+  std::string datasetName = CT::basename(pszConfigFile.c_str());
+  int status = parseConfig(configObj, configFileData, datasetName);
 
   if (status == 0 && configObj->Configuration.size() == 1) {
     return 0;

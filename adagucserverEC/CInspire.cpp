@@ -1,6 +1,5 @@
 #include "CInspire.h"
 #ifdef ENABLE_INSPIRE
-const char *CInspire::className = "CInspire";
 
 CInspire::InspireMetadataFromCSW CInspire::readInspireMetadataFromCSW(const char *cswService) {
   CT::string xmlData;

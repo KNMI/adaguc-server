@@ -39,7 +39,6 @@ private:
   void *reader;
 
 public:
-  DEF_ERRORFUNCTION();
   CDFObject() {
     name.copy("NC_GLOBAL");
     reader = NULL;
@@ -60,6 +59,8 @@ public:
     }
     throw(CDF_E_VARNOTFOUND);
   }
+
+  CDF::Variable *getVariable(std::string name);
 
   int getVariableIndexNE(const char *name) {
     try {
@@ -95,6 +96,8 @@ public:
   CDF::Variable *getVar(CT::string name);
 
   CDF::Variable *getVariableNE(const char *name);
+
+  CDF::Variable *getVariableNE(std::string name);
 
   CDF::Variable *addVariable(CDF::Variable *var) {
     var->id = variables.size();
@@ -137,6 +140,15 @@ public:
     return NULL;
   }
 
+  CDF::Dimension *getDimensionNE(std::string name) {
+    for (size_t j = 0; j < dimensions.size(); j++) {
+      if (dimensions[j]->name.equals(name)) {
+        return dimensions[j];
+      }
+    }
+    return NULL;
+  }
+
   CDF::Dimension *getDimensionIgnoreCase(const char *name) {
     for (size_t j = 0; j < dimensions.size(); j++) {
       if (dimensions[j]->name.equalsIgnoreCase(name)) {
@@ -175,9 +187,7 @@ public:
           try {
             destVar->setCDFObjectDim(srcVar, dimName);
           } catch (int e) {
-            char msg[255];
-            CDF::getErrorMessage(msg, 254, e);
-            CDBError(msg);
+            CDBError("%s", CDF::getErrorMessage(e).c_str());
             throw(__LINE__);
           }
         } catch (int e) {

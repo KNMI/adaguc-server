@@ -27,15 +27,13 @@
 #include "CDBFileScanner.h"
 #include "CConvertGeoJSON.h"
 #include "utils/LayerUtils.h"
-const char *CDataSource::className = "CDataSource";
 
 // #define CDATASOURCE_DEBUG
 
-bool nameMappingWarningSet = false;
+bool configWarningSet = false;
 
 CDataSource::DataObject::DataObject() {
   hasStatusFlag = false;
-  appliedScaleOffset = false;
   hasScaleOffset = false;
   cdfVariable = NULL;
   cdfObject = NULL;
@@ -48,7 +46,6 @@ CDataSource::DataObject *CDataSource::DataObject::clone() {
   CDataSource::DataObject *nd = new CDataSource::DataObject();
   nd->hasStatusFlag = hasStatusFlag;
   nd->hasNodataValue = hasNodataValue;
-  nd->appliedScaleOffset = appliedScaleOffset;
   nd->hasScaleOffset = hasScaleOffset;
   nd->dfNodataValue = dfNodataValue;
   nd->dfscale_factor = dfscale_factor;
@@ -335,6 +332,9 @@ CDataSource::~CDataSource() {
   statistics = NULL;
 
   if (_styles != NULL) {
+    for (auto s : *_styles) {
+      delete s;
+    }
     delete _styles;
     _styles = NULL;
   }
@@ -370,14 +370,8 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Conf
   dLayerType = CConfigReaderLayerTypeDataBase;
   if (cfgLayer->attr.type.equals("database")) {
     dLayerType = CConfigReaderLayerTypeDataBase;
-  } else if (cfgLayer->attr.type.equals("styled")) {
-    dLayerType = CConfigReaderLayerTypeStyled;
-  } else if (cfgLayer->attr.type.equals("cascaded")) {
-    dLayerType = CConfigReaderLayerTypeCascaded;
-  } else if (cfgLayer->attr.type.equals("image")) {
-    dLayerType = CConfigReaderLayerTypeCascaded;
   } else if (cfgLayer->attr.type.equals("grid")) {
-    dLayerType = CConfigReaderLayerTypeCascaded;
+    dLayerType = CConfigReaderLayerTypeGraticule;
   } else if (cfgLayer->attr.type.equals("autoscan")) {
     dLayerType = CConfigReaderLayerTypeUnknown;
   } else if (cfgLayer->attr.type.equals("baselayer")) {
@@ -466,7 +460,7 @@ void CDataSource::readStatusFlags(CDF::Variable *var, std::vector<CDataSource::S
       if (attr_flag_values != NULL) {
         CT::string flag_meanings;
         attr_flag_meanings->getDataAsString(&flag_meanings);
-        auto flagStrings = flag_meanings.splitToStack(" ");
+        auto flagStrings = flag_meanings.split(" ");
         size_t nrOfFlagMeanings = flagStrings.size();
         if (nrOfFlagMeanings > 0) {
           size_t nrOfFlagValues = attr_flag_values->length;
@@ -478,7 +472,7 @@ void CDataSource::readStatusFlags(CDF::Variable *var, std::vector<CDataSource::S
               statusFlagList->push_back({.meaning = flagStrings[j], .value = dfFlagValues[j]});
             }
           } else {
-            CDBError("ReadStatusFlags: nrOfFlagMeanings!=nrOfFlagValues, %d!=%d", nrOfFlagMeanings, nrOfFlagValues);
+            CDBError("ReadStatusFlags: nrOfFlagMeanings!=nrOfFlagValues, %lu!=%lu", nrOfFlagMeanings, nrOfFlagValues);
           }
         } else {
           CDBError("ReadStatusFlags: flag_meanings: nrOfFlagMeanings = 0");
@@ -563,7 +557,7 @@ std::vector<CT::string> CDataSource::getRenderMethodListForDataSource(CDataSourc
     renderMethodList.copy("nearest");
   }
 
-  return renderMethodList.splitToStack(",");
+  return renderMethodList.split(",");
 }
 
 /**
@@ -571,13 +565,13 @@ std::vector<CT::string> CDataSource::getRenderMethodListForDataSource(CDataSourc
  * @param dataSource pointer to the datasource to find the stylelist for
  * @return vector with all possible CStyleConfigurations
  */
-CT::PointerList<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(CDataSource *dataSource) {
+std::vector<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(CDataSource *dataSource) {
 
 #ifdef CDATASOURCE_DEBUG
   CDBDebug("getStyleListForDataSource %s", dataSource->layerName.c_str());
 #endif
 
-  CT::PointerList<CStyleConfiguration *> *styleConfigurationList = new CT::PointerList<CStyleConfiguration *>();
+  std::vector<CStyleConfiguration *> *styleConfigurationList = new std::vector<CStyleConfiguration *>();
 
   CServerConfig::XMLE_Configuration *serverCFG = dataSource->cfg;
 
@@ -665,10 +659,11 @@ CT::PointerList<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(C
                 if (styleConfig->legendIndex == -1) {
                   CDBError("Legend %s not found", legendList[l].c_str());
                 }
+
                 if (style != nullptr && style->NameMapping.size() > 0) {
-                  if (nameMappingWarningSet == false) {
+                  if (configWarningSet == false) {
                     CDBWarning("Deprecated to have NameMapping configs in the style. Use title and abstracts instead.");
-                    nameMappingWarningSet = true;
+                    configWarningSet = true;
                   }
                   for (size_t j = 0; j < style->NameMapping.size(); j++) {
                     if (renderMethods[r].equals(style->NameMapping[j]->attr.name.c_str())) {
@@ -716,7 +711,7 @@ std::vector<CT::string> CDataSource::getStyleNames(std::vector<CServerConfig::XM
   std::vector<CT::string> stringList = {"default"};
   for (size_t j = 0; j < Styles.size(); j++) {
     if (Styles[j]->value.empty()) continue;
-    CT::StackList<CT::string> l1 = Styles[j]->value.splitToStack(",");
+    std::vector<CT::string> l1 = Styles[j]->value.split(",");
     for (auto styleValue : l1) {
       if (styleValue.length() > 0) {
         stringList.push_back(styleValue);
@@ -750,7 +745,7 @@ CStyleConfiguration *CDataSource::getStyle() {
     CT::string styles(srvParams->Styles.c_str());
 
     // TODO CHECK CDBDebug("Server Styles=%s",srvParam->Styles.c_str());
-    CT::StackList<CT::string> layerstyles = styles.splitToStack(",");
+    std::vector<CT::string> layerstyles = styles.split(",");
     int layerIndex = datasourceIndex;
     if (layerstyles.size() != 0) {
       // Make sure default layer index is within the right bounds.
@@ -762,14 +757,14 @@ CStyleConfiguration *CDataSource::getStyle() {
       }
     }
 
-    _currentStyle = _styles->get(0);
+    _currentStyle = _styles->at(0);
 
     auto it = std::find_if(_styles->begin(), _styles->end(), [&styleName](CStyleConfiguration *a) { return styleName.equals(a->styleName); });
     if (it != _styles->end()) {
       _currentStyle = (*it);
     } else {
       // If not found, check for the style without rendermethod instead using startsWith.
-      it = std::find_if(_styles->begin(), _styles->end(), [&styleName](CStyleConfiguration *a) { return a->styleCompositionName.startsWith(styleName); });
+      it = std::find_if(_styles->begin(), _styles->end(), [&styleName](CStyleConfiguration *a) { return a->styleCompositionName.startsWith(styleName.c_str()); });
       if (it != _styles->end()) {
         _currentStyle = (*it);
       } else {
@@ -809,12 +804,12 @@ int CDataSource::setStyle(const char *styleName) {
     return 1;
   }
 
-  _currentStyle = _styles->get(0);
+  _currentStyle = _styles->at(0);
   bool foundStyle = false;
   for (size_t j = 0; j < _styles->size(); j++) {
-    if (_styles->get(j)->styleCompositionName.equals(styleName)) {
+    if (_styles->at(j)->styleCompositionName.equals(styleName)) {
 
-      _currentStyle = _styles->get(j);
+      _currentStyle = _styles->at(j);
       foundStyle = true;
       break;
     }
@@ -823,7 +818,7 @@ int CDataSource::setStyle(const char *styleName) {
   if (foundStyle == false) {
     CDBWarning("Unable to find style %s. Available styles:", styleName);
     for (size_t j = 0; j < _styles->size(); j++) {
-      CDBWarning("  -%s", _styles->get(j)->styleCompositionName.c_str());
+      CDBWarning("  -%s", _styles->at(j)->styleCompositionName.c_str());
     }
   }
 
@@ -947,6 +942,7 @@ double CDataSource::getContourScaling() {
   return 1;
 }
 
+CDataSource::DataObject *CDataSource::getDataObjectByName(std::string name) { return getDataObjectByName(name.c_str()); }
 CDataSource::DataObject *CDataSource::getDataObjectByName(const char *name) {
   for (auto it = dataObjects.begin(); it != dataObjects.end(); ++it) {
     CDataSource::DataObject *dataObject = *it;
@@ -980,7 +976,7 @@ CDataSource::DataObject *CDataSource::getFirstAvailableDataObject() {
 CDataSource::DataObject *CDataSource::getDataObject(int j) {
 
   if (int(dataObjects.size()) <= j) {
-    CDBError("No Data object witn nr %d (total %d) for animation step %d (total steps %d)", j, currentAnimationStep, dataObjects.size(), timeSteps.size());
+    CDBError("No Data object witn nr %d (total %d) for animation step %lu (total steps %lu)", j, currentAnimationStep, dataObjects.size(), timeSteps.size());
     throw(CEXCEPTION_NULLPOINTER);
   }
 
@@ -1010,7 +1006,7 @@ int CDataSource::attachCDFObject(CDFObject *cdfObject, bool dataSourceOwnsDataOb
     getDataObject(varNr)->cdfObject = cdfObject;
     getDataObject(varNr)->cdfVariable = cdfObject->getVariableNE(getDataObject(varNr)->variableName.c_str());
     if (getDataObject(varNr)->cdfVariable == NULL) {
-      CDBError("attachCDFObject: variable nr %d \"%s\" does not exist", varNr, getDataObject(varNr)->variableName.c_str());
+      CDBError("attachCDFObject: variable nr %lu \"%s\" does not exist", varNr, getDataObject(varNr)->variableName.c_str());
       return 1;
     }
   }

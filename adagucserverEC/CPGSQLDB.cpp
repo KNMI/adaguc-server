@@ -26,13 +26,13 @@
 #include "CPGSQLDB.h"
 #include "traceTimings/traceTimings.h"
 // #define CPGSQLDB_DEBUG_H
-const char *CPGSQLDB::className = "CPGSQLDB";
+
 void CPGSQLDB::clearResult() {
   if (result != NULL) PQclear(result);
   result = NULL;
 }
 
-const char *CPGSQLDB::getError() { return LastErrorMsg; }
+std::string CPGSQLDB::getError() { return LastErrorMsg; }
 
 CPGSQLDB::CPGSQLDB() {
   connection = NULL;
@@ -54,15 +54,14 @@ int CPGSQLDB::close2() {
 }
 
 int CPGSQLDB::connect(const char *pszOptions) {
-  LastErrorMsg[0] = '\0';
+  LastErrorMsg = "";
   if (dConnected == 1) return 0;
   // CDBDebug("[DB CONNECT]");
   traceTimingsSpanStart(TraceTimingType::DBCONNECT);
   connection = PQconnectdb(pszOptions);
   traceTimingsSpanEnd(TraceTimingType::DBCONNECT);
   if (PQstatus(connection) == CONNECTION_BAD) {
-    snprintf(szTemp, CPGSQLDB_MAX_STR_LEN, "Connection to database failed: %s", PQerrorMessage(connection));
-    CDBError(szTemp);
+    CDBError("Connection to database failed: %s", PQerrorMessage(connection));
     return 1;
   }
   dConnected = 1;
@@ -75,7 +74,7 @@ int CPGSQLDB::_checkTable(const char *pszTableName, const char *pszColumns) {
   // 1 = error
   // 2 = table created
 
-  LastErrorMsg[0] = '\0';
+  LastErrorMsg = "";
 
   if (dConnected == 0) {
     CDBError("checkTable: Not connected to DB");
@@ -110,10 +109,8 @@ int CPGSQLDB::_checkTable(const char *pszTableName, const char *pszColumns) {
   if (PQresultStatus(result) != PGRES_COMMAND_OK)   /* did the query fail? */
   {
 
-    snprintf(LastErrorMsg, CPGSQLDB_MAX_STR_LEN, "%s: %s (%s)", PQresStatus(PQresultStatus(result)), PQresultErrorMessage(result), queryString.c_str());
+    LastErrorMsg = CT::printf("%s: %s (%s)", PQresStatus(PQresultStatus(result)), PQresultErrorMessage(result), queryString.c_str());
 
-    // snprintf(szTemp,CPGSQLDB_MAX_STR_LEN,"checkTable: CREATE TABLE %s failed",pszTableName);
-    // CDBError(LastErrorMsg);
     clearResult();
     return 1;
   }
@@ -123,7 +120,7 @@ int CPGSQLDB::_checkTable(const char *pszTableName, const char *pszColumns) {
 }
 
 int CPGSQLDB::query(const char *pszQuery) {
-  LastErrorMsg[0] = '\0';
+  LastErrorMsg = "";
   if (dConnected == 0) {
     CDBError("query: Not connected to DB");
     return 1;
@@ -136,9 +133,7 @@ int CPGSQLDB::query(const char *pszQuery) {
   traceTimingsSpanEnd(TraceTimingType::DB);
   if (PQresultStatus(result) != PGRES_COMMAND_OK) /* did the query fail? */
   {
-    snprintf(LastErrorMsg, CPGSQLDB_MAX_STR_LEN, "%s: %s (%s)", PQresStatus(PQresultStatus(result)), PQresultErrorMessage(result), pszQuery);
-    // snprintf(szTemp,CPGSQLDB_MAX_STR_LEN,"query: [%s] failed: %s",pszQuery,PQerrorMessage(connection));
-    // CDBError(szTemp);
+    LastErrorMsg = CT::printf("%s: %s (%s)", PQresStatus(PQresultStatus(result)), PQresultErrorMessage(result), pszQuery);
     clearResult();
     return 1;
   }
@@ -148,7 +143,7 @@ int CPGSQLDB::query(const char *pszQuery) {
 
 CDBStore::Store *CPGSQLDB::_queryToStore(const char *pszQuery, bool throwException) {
 
-  LastErrorMsg[0] = '\0';
+  LastErrorMsg = "";
 
   if (dConnected == 0) {
     if (throwException) {
@@ -164,8 +159,6 @@ CDBStore::Store *CPGSQLDB::_queryToStore(const char *pszQuery, bool throwExcepti
 
   if (PQresultStatus(result) != PGRES_TUPLES_OK) // did the query fail?
   {
-    // snprintf(szTemp,CPGSQLDB_MAX_STR_LEN,"query_select: %s failed",pszQuery);
-    // CDBError(szTemp);
     clearResult();
     if (throwException) {
       throw CDB_QUERYFAILED;

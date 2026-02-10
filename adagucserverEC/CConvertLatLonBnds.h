@@ -28,7 +28,6 @@
 #include "CDataSource.h"
 class CConvertLatLonBnds {
 private:
-  DEF_ERRORFUNCTION();
   /**
    * returns 0 on success.
    */

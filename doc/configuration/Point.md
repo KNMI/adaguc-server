@@ -1,4 +1,4 @@
-Point(min,max,pointstyle,fillcolor,linecolor,textcolor,textoutlinecolor,textformat,fontfile,fontsize,discradius,textradius,dot,anglestart,anglestep,plotstationid)
+Point(min,max,pointstyle,fillcolor,linecolor,textcolor,textoutlinecolor,textformat,fontfile,fontsize,discradius,textradius,dot,plotstationid)
 =================================================================================================================================================
 
 Back to [Configuration](./Configuration.md)
@@ -22,8 +22,6 @@ Configuration of rendering point data
 | `fontsize`      | double  | 12          | Font size used when rendering text |
 | `textoutlinecolor`  | string  | ""      | Outline color string |
 | `textcolor`     | string  | ""          | Text color string |
-| `anglestart`    | float   | -90         | Angle to plot value at
-| `anglestep`     | float   | 180         | Plotted values for point are `anglestep` degrees apart from eachother
 | `textradius`    | float   | 16          | Distance of text from point location
 | `discradius`    | double  | 20          | Draw disc at location
 | `dot`           | string  | "false"     | Draw a point at the point coordinates (stored as string, e.g. "true"/"false")
@@ -55,7 +53,7 @@ no text is rendered when textformat is set to a blank space (" ").
 ### Pointstyle point
 
 ```xml
-  <Point fillcolor="" linecolor="" textcolor="" textoutlinecolor ="" fontfile="" fontsize="" discradius="5" textradius="" textformat="%f" dot="false" anglestart="" anglestep="" plotstationid="true" pointstyle="point" />
+  <Point fillcolor="" linecolor="" textcolor="" textoutlinecolor ="" fontfile="" fontsize="" discradius="5" textradius="" textformat="%f" dot="false" plotstationid="true" pointstyle="point" />
 ```
 This pointstyle draws a circle at the station location, coloured
 according to the value of the first variable of the layer and the
@@ -70,12 +68,11 @@ The attribute **linecolor** specifies a color for the edge of the
 circle. Making the **linecolor** transparent (linecolor="0x00000000")
 draws no line around the circle.
 
-The value can be plotted next to the point. When 2 or more Variables are
-defined in a layer, the values get plotted in a circle around the
-station's location. The values are plotted starting at the angle defined
-by the **anglestart** attribute and are **anglestep** degrees apart. The
+The value can be plotted next to the point. When 2 or more variables are configured
+the values are plotted in lines under each other. The
 distance of the text from the station's location is defined by the
-**textradius** attribute.
+**textradius** attribute, which also determines the vertical spacing when 
+there are multiple variables defined for a layer
 
 If a **fillcolor** attribute is specified the circle is drawn in the
 specified fixed color. A circle will be drawn around the disc in the
@@ -90,14 +87,81 @@ Single variable layer example:
 
 ![](point1.png)
 
+with configuration:
+```xml
+   <Layer type="database" hidden="false">
+    <Name>_ta</Name>
+    <Title>Ta only</Title>
+    <Variable>ta</Variable>
+    <FilePath filter="^KMDS__OPER_P___10M_OBS_L2_.*\.nc$"
+      retentionperiod="{ADAGUCENV_RETENTIONPERIOD}"
+      retentiontype="datatime">/data/adaguc-data/OBS</FilePath>
+    <Dimension name="time" interval="PT10M">time</Dimension>
+    <Styles>observation.ta</Styles>
+   </Layer>
+    <Style name="observation.ta">
+    <Legend fixed="true" tickinterval="2">wow.temperature</Legend>
+    <RenderMethod>point</RenderMethod>
+    <Min>-14</Min>
+    <Max>39.33333333</Max> <!-- 39,33333333 = (240 / (234/(38 - -14))) - 14 -->
+    <NameMapping name="point"        title="Temperature" abstract="Temperature"/>
+    <Point plotstationid="true" pointstyle="point" discradius="8" textradius="16" dot="true" fontsize="8" textcolor="#000000" />
+  </Style> 
+```
+
 Multiple variable layer example:
 
 ![](point3.png)
 
+with configuration:
+```xml
+  <Style name="observation.tatd">
+    <Legend fixed="true" tickinterval="2">wow.temperature</Legend>
+    <RenderMethod>point</RenderMethod>
+    <Min>-14</Min>
+    <Max>39.33333333</Max> <!-- 39,33333333 = (240 / (234/(38 - -14))) - 14 -->
+    <NameMapping name="point" title="Temperature" abstract="Temperature"/>
+    <Point plotstationid="false" pointstyle="point" discradius="8" textradius="24" dot="false" fontsize="8" textcolor="#000000" />
+  </Style>
+   <Layer type="database" hidden="false">
+    <Name>ta_td</Name>
+    <Title>Ta/Td</Title>
+    <Variable>ta</Variable>
+    <Variable>td</Variable>
+    <FilePath filter="^KMDS__OPER_P___10M_OBS_L2_.*\.nc$"
+      retentionperiod="{ADAGUCENV_RETENTIONPERIOD}"
+      retentiontype="datatime">/data/adaguc-data/OBS</FilePath>
+    <Dimension name="time" interval="PT10M">time</Dimension>
+    <Styles>observation.tatd</Styles>
+   </Layer>
+
+```
+
 Text only with a **textoutlinecolor** example:
 
 ![](point4.png)
-
+with configuration:
+```xml
+  <Style name="observation.outline">
+    <Legend fixed="true" tickinterval="2">wow.temperature</Legend>
+    <RenderMethod>point</RenderMethod>
+    <Min>-14</Min>
+    <Max>39.33333333</Max> <!-- 39,33333333 = (240 / (234/(38 - -14))) - 14 -->
+    <NameMapping name="point" title="Temperature outline" abstract="Temperature"/>
+    <Point plotstationid="false" pointstyle="point" discradius="0" textradius="16" dot="false" fontsize="12" textcolor="#a00000" textoutlinecolor="#00800080" />
+  </Style> 
+  <Layer type="database" hidden="false">
+    <Name>ta_td</Name>
+    <Title>Ta/Td</Title>
+    <Variable>ta</Variable>
+    <Variable>td</Variable>
+    <FilePath filter="^KMDS__OPER_P___10M_OBS_L2_.*\.nc$"
+      retentionperiod="{ADAGUCENV_RETENTIONPERIOD}"
+      retentiontype="datatime">/data/adaguc-data/OBS</FilePath>
+    <Dimension name="time" interval="PT10M">time</Dimension>
+    <Styles>observation.outline</Styles>
+  </Layer>
+```
 ### Pointstyle disc
 
 Pointstyle disc can only handle 1 variable in a layer or 2 in case of
@@ -106,12 +170,35 @@ The attribute **discradius** defines the size of the disc on which the
 value text is drawn, **fillcolor** defines the color of the disc (this
 color can contain transparency).
 
-The attributes **anglestart**, **anglestep**, **linecolor**, **textoutlinecolor**,
+The attributes **linecolor**, **textoutlinecolor**,
 **plotstationid** and **textradius** have no meaning here.
 
 Example with temperature data:
 
 ![](disc.png)
+
+with configuration:
+```xml
+  <Style name="observation.disc">
+    <Legend fixed="true" tickinterval="2">wow.temperature</Legend>
+    <RenderMethod>point</RenderMethod>
+    <Min>-14</Min>
+    <Max>39.33333333</Max> <!-- 39,33333333 = (240 / (234/(38 - -14))) - 14 -->
+    <NameMapping name="point" title="Temperature outline" abstract="Temperature"/>
+    <Point plotstationid="false" pointstyle="disc" discradius="24" textradius="16" dot="false" fillcolor="#b0b0b0" fontsize="12" textcolor="#000000"/>
+  </Style>
+  <Layer type="database" hidden="false">
+    <Name>ta_td</Name>
+    <Title>Ta/Td</Title>
+    <Variable>ta</Variable>
+    <Variable>td</Variable>
+    <FilePath filter="^KMDS__OPER_P___10M_OBS_L2_.*\.nc$"
+      retentionperiod="{ADAGUCENV_RETENTIONPERIOD}"
+      retentiontype="datatime">/data/adaguc-data/OBS</FilePath>
+    <Dimension name="time" interval="PT10M">time</Dimension>
+    <Styles>observation.outline</Styles>
+  </Layer>
+```
 
 ### Pointstyle volume
 
@@ -122,7 +209,7 @@ The base color of the disc is defined by the **fillcolor** attribute.
 A station id is plotted if the **plotstationid** attribute has the value
 true.
 
-The attributes **anglestart**, **anglestep**, **linecolor**, **textoutlinecolor** and
+The attributes **linecolor**, **textoutlinecolor** and
 **textradius** have no meaning here.
 
 Example:

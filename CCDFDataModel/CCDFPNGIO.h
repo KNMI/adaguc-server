@@ -27,7 +27,7 @@
 #define CCDFPNGIO_H
 #include "CDebugger.h"
 #include "CCDFDataModel.h"
-#include <stdio.h>
+#include <cstdio>
 #include <vector>
 #include <iostream>
 #include "CDebugger.h"
@@ -38,7 +38,6 @@
 
 class CDFPNGReader : public CDFReader {
 private:
-  DEF_ERRORFUNCTION();
   bool isSlippyMapFormat = false;
   size_t rasterWidth = 0;
   size_t rasterHeight = 0;

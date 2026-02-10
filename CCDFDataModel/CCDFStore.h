@@ -26,11 +26,11 @@
 #ifndef CCDFSTORE_H
 #define CCDFSTORE_H
 
-#include <stdio.h>
+#include <cstdio>
 #include <vector>
 #include <iostream>
 #include <sys/stat.h>
-#include "CTypes.h"
+#include "CTString.h"
 #include "CDirReader.h"
 #include "CCDFObject.h"
 #include "CCDFReader.h"
@@ -44,7 +44,6 @@ private:
   static CDFStore_CDFReadersMap cdfReaders;
 
 public:
-  DEF_ERRORFUNCTION();
   static CDFReader *getCDFReader(const char *fileName);
   static void clear();
 };
