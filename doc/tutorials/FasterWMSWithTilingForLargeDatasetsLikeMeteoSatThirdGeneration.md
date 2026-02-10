@@ -22,7 +22,7 @@ See TileSettings for details. [TileSettings](../configuration/TileSettings.md) -
     <WMSFormat name="image/png" format="image/webp"/>
   </WMS>
 
-  <Style name="mtg-fci-0-60" name="0 - 60" abstract="MTG FCI between 0 and 60">
+  <Style name="mtg-fci-0-60" title="0 - 60" abstract="MTG FCI between 0 and 60">
     <Legend tickinterval="10">gray</Legend>
     <Min>0</Min>
     <Max>60</Max>
