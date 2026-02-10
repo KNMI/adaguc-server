@@ -79,7 +79,7 @@
   
 
 
-  <AutoResource enableautoopendap="true" enablelocalfile="true" enablecache="false">
+  <AutoResource enableautoopendap="true" enablelocalfile="true">
     <Dir basedir="{ADAGUC_PATH}data/datasets" prefix="{ADAGUC_PATH}data/datasets/"/>
     <ImageText attribute="source"></ImageText>
   </AutoResource>

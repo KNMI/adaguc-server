@@ -549,12 +549,6 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *const srvParam, CDFObject
 
   xmleLayer->FilePath.push_back(xmleFilePath);
 
-  if (srvParam->isAutoResourceCacheEnabled()) {
-    CServerConfig::XMLE_Cache *xmleCache = new CServerConfig::XMLE_Cache();
-    xmleCache->attr.enabled.copy("true");
-    xmleLayer->Cache.push_back(xmleCache);
-  }
-
   // Set imagetext property
   if (srvParam->cfg->AutoResource.size() > 0) {
     if (srvParam->cfg->AutoResource[0]->ImageText.size() > 0) {

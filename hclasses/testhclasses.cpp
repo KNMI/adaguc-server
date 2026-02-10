@@ -229,3 +229,15 @@ TEST(string, ctprintfconcat) {
   CT::printfconcat(test, " MORESTUFF");
   CHECK_EQUAL("abc hi! 2 3.140000 MORESTUFF", test);
 }
+
+TEST(string, replace) {
+  std::string test = "abcdefgabcdefg";
+  CHECK_EQUAL("ab!!!efgab!!!efg", CT::replace(test, "cd", "!!!"));
+  CHECK_EQUAL("ab!efgab!efg", CT::replace(test, "cd", "!"));
+  CHECK_EQUAL("abefgabefg", CT::replace(test, "cd", ""));
+}
+
+TEST(string, toLowerCase) {
+  std::string test = "abcdefgabcdefg";
+  CHECK_EQUAL("abcd", CT::toLowerCase("AbCd"));
+}

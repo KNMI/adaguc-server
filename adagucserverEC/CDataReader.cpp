@@ -517,7 +517,9 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
     if (units != NULL) {
       const CT::string unitString = units->toString();
       if (unitString.equals("rad") || unitString.equals("radian")) {
-        CDBDebug("units: %s", units->toString().c_str());
+        if (verbose) {
+          CDBDebug("units: %s", units->toString().c_str());
+        }
 
         CDF::Attribute *projvarnameAttr = dataSourceVar->getAttributeNE("grid_mapping");
         if (projvarnameAttr != NULL) {
@@ -608,14 +610,18 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
               CDF::Attribute *X_standard_name = dataSource->varX->getAttributeNE("standard_name");
               if (X_standard_name != NULL) {
                 str_std_x_name = X_standard_name->toString();
-                CDBDebug("Standard Name of the nx variable: %s", str_std_x_name.c_str());
+                if (verbose) {
+                  CDBDebug("Standard Name of the nx variable: %s", str_std_x_name.c_str());
+                }
               }
-              CDBDebug("-----------------");
-
-              CDBDebug("Assuming  CF 1.9 or posterior geostationary projection, keeping radians as units");
-              CT::string UpdatedProjString = "+proj=geos +lon_0=";
-              UpdatedProjString.print("+proj=geos +lon_0=%f +lat_0=%f +h=%f +a=%f +b=%f +sweep=%s", lon_0, lat_0, 1.0, a / perspectiveHeight, b / perspectiveHeight, sweep.c_str());
-              CDBDebug("Overwriting the projection string with: %s", UpdatedProjString.c_str());
+              if (verbose) {
+                CDBDebug("-----------------");
+                CDBDebug("Assuming  CF 1.9 or posterior geostationary projection, keeping radians as units");
+              }
+              std::string UpdatedProjString = CT::printf("+proj=geos +lon_0=%f +lat_0=%f +h=%f +a=%f +b=%f +sweep=%s", lon_0, lat_0, 1.0, a / perspectiveHeight, b / perspectiveHeight, sweep.c_str());
+              if (verbose) {
+                CDBDebug("Overwriting the projection string with: %s", UpdatedProjString.c_str());
+              }
 
               dataSource->nativeProj4.copy(UpdatedProjString.c_str());
 
@@ -1102,17 +1108,14 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 #ifdef MEASURETIME
     StopWatch_Stop("start reading image data");
 #endif
-    // for(size_t varNr=0;varNr<dataSource->getNumDataObjects();varNr++)
     for (size_t varNr = 0; varNr < dataSource->getNumDataObjects(); varNr++) {
 
-      // if( dataSource->getDataObject(varNr)->cdfVariable->data==NULL){
       if (dataSource->formatConverterActive == false) {
-        // #ifdef MEASURETIME
-        //  StopWatch_Stop("Freeing data");
-        // #endif
 
-        // Read variable data
-        dataSource->getDataObject(varNr)->cdfVariable->freeData();
+        // If cache is not enabled, free data before reading new data. This is important for example for the solar terminator, which is a virtual dataset that needs to be re-read for every request.
+        if (dataSource->getDataObject(varNr)->cdfVariable->enableCache == false) {
+          dataSource->getDataObject(varNr)->cdfVariable->freeData();
+        }
 
 #ifdef MEASURETIME
         StopWatch_Stop("start reading data");
@@ -1148,7 +1151,6 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
           }
         }
       }
-      dataSource->getDataObject(varNr)->appliedScaleOffset = false;
 
 #ifdef MEASURETIME
       StopWatch_Stop("data read");
@@ -1252,8 +1254,17 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
       }
 
       // Apply scale and offset factor on the data
-      if (dataSource->getDataObject(varNr)->appliedScaleOffset == false && dataSource->getDataObject(varNr)->hasScaleOffset) {
-        dataSource->getDataObject(varNr)->appliedScaleOffset = true;
+      unsigned char appliedScaleOffset = false;
+      auto scaleOffsetAttribute = dataSource->getDataObject(varNr)->cdfVariable->getAttributeNE("ADAGUC_SCALE_OFFSET_APPLIED");
+      if (scaleOffsetAttribute != NULL) {
+        scaleOffsetAttribute->getData(&appliedScaleOffset, 1);
+      }
+
+      if (!appliedScaleOffset && dataSource->getDataObject(varNr)->hasScaleOffset) {
+        appliedScaleOffset = true;
+        dataSource->getDataObject(varNr)->cdfVariable->setAttribute("ADAGUC_SCALE_OFFSET_APPLIED", CDF_BYTE, appliedScaleOffset);
+
+        CDBDebug("Applying scale and offset for variable %s", dataSource->getDataObject(varNr)->cdfVariable->name.c_str());
 
         double dfscale_factor = dataSource->getDataObject(varNr)->dfscale_factor;
         double dfadd_offset = dataSource->getDataObject(varNr)->dfadd_offset;
@@ -1262,19 +1273,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
         CDBDebug("Applying scale and offset with %f and %f (var size=%d) type=%s", dfscale_factor, dfadd_offset, dataSource->getDataObject(varNr)->cdfVariable->getSize(),
                  CDF::getCDFDataTypeName(dataSource->getDataObject(varNr)->cdfVariable->getType()).c_str());
 #endif
-        /*if(dataSource->getDataObject(varNr)->dataType==CDF_FLOAT){
-          //Preserve the original nodata value, so it remains a nice short rounded number.
-          float fNoData=dfNoData;
-          // packed data to be unpacked to FLOAT:
-          float *_data=(float*)dataSource->getDataObject(varNr)->cdfVariable->data;
-          for(size_t j=0;j<dataSource->getDataObject(varNr)->cdfVariable->getSize();j++){
-            //Only apply scale and offset when this actual data (do not touch the nodata)
-            if(_data[j]!=fNoData){
-              _data[j]*=dfscale_factor;
-              _data[j]+=dfadd_offset;
-            }
-          }
-        }*/
+
         if (dataSource->getDataObject(varNr)->cdfVariable->getType() == CDF_FLOAT) {
           // Preserve the original nodata value, so it remains a nice short rounded number.
           float fNoData = (float)dataSource->getDataObject(varNr)->dfNodataValue;
@@ -1288,8 +1287,10 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
               _data[j] = _data[j] * fscale_factor + fadd_offset;
             }
           }
-          // Convert the nodata type
+          // Convert the nodata type and put it back
           dataSource->getDataObject(varNr)->dfNodataValue = fNoData * fscale_factor + fadd_offset;
+          float d = dataSource->getDataObject(varNr)->dfNodataValue;
+          dataSource->getDataObject(varNr)->cdfVariable->setAttribute("_FillValue", CDF_FLOAT, d);
         }
 
         if (dataSource->getDataObject(varNr)->cdfVariable->getType() == CDF_DOUBLE) {
@@ -1302,39 +1303,16 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 
           // Convert the nodata type
           dataSource->getDataObject(varNr)->dfNodataValue = dataSource->getDataObject(varNr)->dfNodataValue * dfscale_factor + dfadd_offset;
+          dataSource->getDataObject(varNr)->cdfVariable->setAttribute("_FillValue", CDF_DOUBLE, dataSource->getDataObject(varNr)->dfNodataValue);
         }
       }
 
 #ifdef MEASURETIME
       StopWatch_Stop("Scale and offset applied");
 #endif
-
-      /**
-       *Cache is deprecated since 2014-01-01
-       *
-   //       In order to write good cache files we need to modify
-   //         our cdfobject. Data is now unpacked, so we need to remove
-   //         scale_factor and add_offset attributes and change datatypes
-   //         of the data and _FillValue
-   //
-         //remove scale_factor and add_offset attributes, otherwise they are stored in the cachefile again and reapplied over and over again.
-         dataSource->getDataObject(varNr)->cdfVariable->removeAttribute("scale_factor");
-         dataSource->getDataObject(varNr)->cdfVariable->removeAttribute("add_offset");
-
-         //Set original var datatype correctly for the cdfobject
-         //dataSource->getDataObject(varNr)->cdfVariable->getType()=dataSource->getDataObject(varNr)->dataType;
-
-         //Reset _FillValue to correct datatype and adjust scale and offset values.
-         if( dataSource->getDataObject(varNr)->hasNodataValue){
-           CDF::Attribute *fillValue = dataSource->getDataObject(varNr)->cdfVariable->getAttributeNE("_FillValue");
-           if(fillValue!=NULL){
-             if(dataSource->getDataObject(varNr)->cdfVariable->getType()==CDF_FLOAT){float fNoData=(float)dataSource->getDataObject(varNr)->dfNodataValue;fillValue->setData(CDF_FLOAT,&fNoData,1);}
-             if(dataSource->getDataObject(varNr)->cdfVariable->getType()==CDF_DOUBLE)fillValue->setData(CDF_DOUBLE,&dataSource->getDataObject(varNr)->dfNodataValue,1);
-           }
-         }*/
     }
 
-    if (dataSource->stretchMinMax) { //&&((dataSource->dWidth!=2||dataSource->dHeight!=2))){
+    if (dataSource->stretchMinMax) {
       if (dataSource->stretchMinMaxDone == false) {
         if (dataSource->statistics == NULL) {
 #ifdef CDATAREADER_DEBUG
