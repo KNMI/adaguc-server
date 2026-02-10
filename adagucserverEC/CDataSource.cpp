@@ -34,7 +34,6 @@ bool configWarningSet = false;
 
 CDataSource::DataObject::DataObject() {
   hasStatusFlag = false;
-  appliedScaleOffset = false;
   hasScaleOffset = false;
   cdfVariable = NULL;
   cdfObject = NULL;
@@ -47,7 +46,6 @@ CDataSource::DataObject *CDataSource::DataObject::clone() {
   CDataSource::DataObject *nd = new CDataSource::DataObject();
   nd->hasStatusFlag = hasStatusFlag;
   nd->hasNodataValue = hasNodataValue;
-  nd->appliedScaleOffset = appliedScaleOffset;
   nd->hasScaleOffset = hasScaleOffset;
   nd->dfNodataValue = dfNodataValue;
   nd->dfscale_factor = dfscale_factor;

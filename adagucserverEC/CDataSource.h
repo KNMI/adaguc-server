@@ -108,7 +108,7 @@ public:
 
   public:
     DataObject();
-    bool hasStatusFlag, hasNodataValue, appliedScaleOffset, hasScaleOffset;
+    bool hasStatusFlag, hasNodataValue, hasScaleOffset;
     double dfNodataValue, dfscale_factor, dfadd_offset;
     bool noFurtherProcessing = false;
     bool filterFromOutput = false; // When set to true, this dataobject is not returned in the GetFeatureInfo response.
