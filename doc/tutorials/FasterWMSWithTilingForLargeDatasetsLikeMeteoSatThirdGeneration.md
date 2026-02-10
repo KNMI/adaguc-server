@@ -1,20 +1,21 @@
-Faster WMS by enabling tiling for large datasets like MeteoSat Third Generation
+Faster WMS by enabling tiling for large datasets like MeteoSat Third Generation (for NWCSAF)
 ===============================================
 
-In this case, tiling does not mean a tiled WMS. Instead it means cutting the input data in smaller chunks at different resolutions. This makes it possible for the WMS server to quickly generate images for the GetMap requests.
+Large NetCDF files can be translated into multiple smaller ones at different resolutions. This uses a tile pyramid. This makes it possible for the WMS server to quickly generate images for the GetMap requests. For the WMS client there is no difference if tiling is used or not. 
 
 [Back to readme](./Readme.md).
 
-Add:
+Add to your layer:
 
 ```xml
-<TileSettings debug="true" autotile="file" maxtilesinimage="32"/>
+<TileSettings debug="true" autotile="true" maxtilesinimage="32"/> <!-- Note that you can set autotile also to "file" to start tiling only when the file is explicitly specified. -->
 ```
-to your layer.
 
 See TileSettings for details. [TileSettings](../configuration/TileSettings.md) - Configuration settings for tiling high    resolution layers.
 
-`mtg-fci.xml`:
+Example for NWCSAF S_NWC_WV09_MTI1_GLOBAL-NR:
+
+`nwcsaf_mtg.xml`:
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
 <Configuration>
@@ -22,7 +23,7 @@ See TileSettings for details. [TileSettings](../configuration/TileSettings.md) -
     <WMSFormat name="image/png" format="image/webp"/>
   </WMS>
 
-  <Style name="mtg-fci-0-60" title="0 - 60" abstract="MTG FCI between 0 and 60">
+  <Style name="kg-m2">
     <Legend tickinterval="10">gray</Legend>
     <Min>0</Min>
     <Max>60</Max>
@@ -30,16 +31,13 @@ See TileSettings for details. [TileSettings](../configuration/TileSettings.md) -
   </Style>
 
   <Layer type="database">
-    <Group value="MTG FCI channels" />
-    <Name force="true">vis_06</Name>
-    <Title>MTG Channel 3 VIS 0.6 NH</Title>
-    <Variable units="Reflectance">data</Variable>
-    <FilePath
-      filter="^MTG-FCI-FD_NH_1km_vis_06_.*\.nc$" retentionperiod="{ADAGUCENV_RETENTIONPERIOD}"
-      retentiontype="datatime">/data/adaguc-data/mtgnc/</FilePath>
+    <Name>tcwvtiled</Name>
+    <Title>TCWV tiled</Title>
+    <Variable>tcwv</Variable>
+    <FilePath filter="^S_NWC_WV09_MTI1_GLOBAL-NR.*\.nc$">/data/adaguc-data/NWCSAF/</FilePath>
     <Dimension name="time" interval="PT10M">time</Dimension>
-    <TileSettings debug="true" autotile="file" maxtilesinimage="32"/>
-    <Styles>mtg-fci-0-60</Styles>
+    <TileSettings debug="true" autotile="true" maxtilesinimage="32"/>
+    <Styles>kg-m2</Styles>
   </Layer>
 
 </Configuration>
@@ -48,36 +46,50 @@ See TileSettings for details. [TileSettings](../configuration/TileSettings.md) -
 
 After this you can scan new data as normal. Tiles will be generated automatically and the WMS service will be significantly faster.
 
+
+Using docker:
 ```sh
- ./scripts/scan.sh -t -d mtg-fci 
+docker exec -i -t my-adaguc-server /adaguc/scan.sh -d nwcsaf_mtg
+```
+or locally:
+```sh
+ ./scripts/scan.sh -d nwcsaf_mtg
 ```
 
 ```
-[D:001:pid128672: adagucserverEC/CDBFileScanner.cpp:877]                          ==> *** Starting update layer [vis_06] ***
-[D:002:pid128672: adagucserverEC/CDBFileScanner.cpp:1070]                       Reading directory /data/adaguc-data/mtgnc with filter ^MTG-FCI-FD_NH_1km_vis_06_.*\.nc$
-[D:003:pid128672: adagucserverEC/CDBFileScanner.cpp:181]                        Recreating table: Now dropping table t20260205t140146460_hti51dl6kdw7myyzkxvx
-[D:004:pid128672: adagucserverEC/CDBAdapterPostgreSQL.cpp:971]                  New table created: Set indexes
-[D:005:pid128672: adagucserverEC/CDBFileScanner.cpp:486]                        Scan /data/adaguc-data/mtgnc/MTG-FCI-FD_NH_1km_vis_06_202602030930.nc
-[W:006:pid128672: adagucserverEC/CDataSource.cpp:667]                           Deprecated to have RenderMethod configs in the style.
-[W:007:pid128672: adagucserverEC/CDBFileScannerCleanFiles.cpp:38]               Layer wants to autocleanup, but attribute enablecleanupsystem in Settings is not set to true or dryrun but to false
-[D:008:pid128672: adagucserverEC/CCreateTiles.cpp:118]                          Opening input file for tiles: /data/adaguc-data/mtgnc/MTG-FCI-FD_NH_1km_vis_06_202602030930.nc
-[D:009:pid128672: adagucserverEC/CCreateTiles.cpp:182]                          Generating  MTG-FCI-FD_NH_1km_vis_06_202602030930-001_000_000tile.nc 1.1 done
-[D:010:pid128672: CCDFDataModel/cdfVariableCache.cpp:45]                        Made Cache [[file:/data/adaguc-data/mtgnc/MTG-FCI-FD_NH_1km_vis_06_202602030930.nc][var:data][id:3][type:6][dims:[0: time 0 1 1][1: y 0 5568 1][2: x 0 11136 1]][pointer:0x781d720ee010]]
-[D:011:pid128672: adagucserverEC/CDBFileScanner.cpp:486]                        Scan /data/adaguc-data/mtgnc/MTG-FCI-FD_NH_1km_vis_06_202602030930-001_000_000tile.nc
-[D:012:pid128672: adagucserverEC/CCreateTiles.cpp:182]                          Generating  MTG-FCI-FD_NH_1km_vis_06_202602030930-001_000_001tile.nc 2.2 done
-[D:013:pid128672: adagucserverEC/CDBFileScanner.cpp:486]                        Scan /data/adaguc-data/mtgnc/MTG-FCI-FD_NH_1km_vis_06_202602030930-001_000_001tile.nc
-[D:014:pid128672: adagucserverEC/CCreateTiles.cpp:182]                          Generating  MTG-FCI-FD_NH_1km_vis_06_202602030930-001_000_002tile.nc 3.3 done
-[D:015:pid128672: adagucserverEC/CDBFileScanner.cpp:486]                        Scan /data/adaguc-data/mtgnc/MTG-FCI-FD_NH_1km_vis_06_202602030930-001_000_002tile.nc
-[D:016:pid128672: adagucserverEC/CCreateTiles.cpp:182]                          Generating  MTG-FCI-FD_NH_1km_vis_06_202602030930-001_000_003tile.nc 4.4 done
-[D:017:pid128672: adagucserverEC/CDBFileScanner.cpp:486]                        Scan /data/adaguc-data/mtgnc/MTG-FCI-FD_NH_1km_vis_06_202602030930-001_000_003tile.nc
-[D:018:pid128672: adagucserverEC/CCreateTiles.cpp:182]                          Generating  MTG-FCI-FD_NH_1km_vis_06_202602030930-001_000_004tile.nc 5.6 done
-[D:019:pid128672: adagucserverEC/CDBFileScanner.cpp:486]                        Scan /data/adaguc-data/mtgnc/MTG-FCI-FD_NH_1km_vis_06_202602030930-001_000_004tile.nc
-[D:020:pid128672: adagucserverEC/CCreateTiles.cpp:182]                          Generating  MTG-FCI-FD_NH_1km_vis_06_202602030930-001_000_005tile.nc 6.7 done
-[D:021:pid128672: adagucserverEC/CDBFileScanner.cpp:486]                        Scan /data/adaguc-data/mtgnc/MTG-FCI-FD_NH_1km_vis_06_202602030930-001_000_005tile.nc
-[D:022:pid128672: adagucserverEC/CCreateTiles.cpp:182]                          Generating  MTG-FCI-FD_NH_1km_vis_06_202602030930-001_000_006tile.nc 7.8 done
+Scanning full dataset [nwcsaf_mtg]:
+/home/plieger/code/github/KNMI/adaguc-server/bin/adagucserver --updatedb --verboseoff --config /home/plieger/code/github/KNMI/adaguc-server/python/lib/adaguc/adaguc-server-config-python-postgres.xml,nwcsaf_mtg
+[D:000:pid640062: adagucserverEC/CDBFileScanner.cpp:885]                          ==> *** Starting update layer [tcwvtiled] ***
+[D:001:pid640062: adagucserverEC/CDBFileScanner.cpp:1078]                       Reading directory /data/adaguc-data/NWCSAF with filter ^S_NWC_WV09_MTI1_GLOBAL-NR.*\.nc$
+[D:002:pid640062: adagucserverEC/CDBFileScanner.cpp:804]                        The database contains 4 files, found 0 files in DB which are missing on filesystem.
+[D:003:pid640062: adagucserverEC/CCreateTiles.cpp:118]                          Opening input file for tiles: /data/adaguc-data/NWCSAF/S_NWC_WV09_MTI1_GLOBAL-NR_20250904T064000Z.nc
+[D:004:pid640062: adagucserverEC/CCreateTiles.cpp:188]                          Generating  S_NWC_WV09_MTI1_GLOBAL-NR_20250904T064000Z-001_000_000tile.nc 0.6 done
+[D:005:pid640062: CCDFDataModel/cdfVariableCache.cpp:45]                        Made Cache [[file:/data/adaguc-data/NWCSAF/S_NWC_WV09_MTI1_GLOBAL-NR_20250904T064000Z.nc][var:tcwv][id:4][type:6][dims:[0: time 0 1 1][1: y 0 11136 1][2: x 0 11136 1]][pointer:0x75f6177de010]]
+[D:006:pid640062: adagucserverEC/CDataReader.cpp:1267]                          Applying scale and offset for variable tcwv
+[D:007:pid640062: adagucserverEC/CDBFileScanner.cpp:486]                        Scan /data/adaguc-data/NWCSAF/S_NWC_WV09_MTI1_GLOBAL-NR_20250904T064000Z-001_000_000tile.nc
+[D:008:pid640062: adagucserverEC/CCreateTiles.cpp:188]                          Generating  S_NWC_WV09_MTI1_GLOBAL-NR_20250904T064000Z-001_000_001tile.nc 1.2 done
+[D:009:pid640062: adagucserverEC/CDBFileScanner.cpp:486]                        Scan /data/adaguc-data/NWCSAF/S_NWC_WV09_MTI1_GLOBAL-NR_20250904T064000Z-001_000_001tile.nc
+[D:010:pid640062: adagucserverEC/CCreateTiles.cpp:188]                          Generating  S_NWC_WV09_MTI1_GLOBAL-NR_20250904T064000Z-001_000_002tile.nc 1.8 done
+[D:011:pid640062: adagucserverEC/CDBFileScanner.cpp:486]                        Scan /data/adaguc-data/NWCSAF/S_NWC_WV09_MTI1_GLOBAL-NR_20250904T064000Z-001_000_002tile.nc
+[D:012:pid640062: adagucserverEC/CCreateTiles.cpp:188]                          Generating  S_NWC_WV09_MTI1_GLOBAL-NR_20250904T064000Z-001_000_003tile.nc 2.4 done
+[D:013:pid640062: adagucserverEC/CDBFileScanner.cpp:486]                        Scan /data/adaguc-data/NWCSAF/S_NWC_WV09_MTI1_GLOBAL-NR_20250904T064000Z-001_000_003tile.nc
+[D:014:pid640062: adagucserverEC/CCreateTiles.cpp:188]                          Generating  S_NWC_WV09_MTI1_GLOBAL-NR_20250904T064000Z-001_000_004tile.nc 3.0 done
+[D:015:pid640062: adagucserverEC/CDBFileScanner.cpp:486]                        Scan /data/adaguc-data/NWCSAF/S_NWC_WV09_MTI1_GLOBAL-NR_20250904T064000Z-001_000_004tile.nc
+[D:016:pid640062: adagucserverEC/CCreateTiles.cpp:188]                          Generating  S_NWC_WV09_MTI1_GLOBAL-NR_20250904T064000Z-001_000_005tile.nc 3.6 done
+[D:017:pid640062: adagucserverEC/CDBFileScanner.cpp:486]                        Scan /data/adaguc-data/NWCSAF/S_NWC_WV09_MTI1_GLOBAL-NR_20250904T064000Z-001_000_005tile.nc
+[D:018:pid640062: adagucserverEC/CCreateTiles.cpp:188]                          Generating  S_NWC_WV09_MTI1_GLOBAL-NR_20250904T064000Z-001_000_006tile.nc 4.2 done
+[D:019:pid640062: adagucserverEC/CDBFileScanner.cpp:486]                        Scan /data/adaguc-data/NWCSAF/S_NWC_WV09_MTI1_GLOBAL-NR_20250904T064000Z-001_000_006tile.nc
+[D:020:pid640062: adagucserverEC/CCreateTiles.cpp:188]                          Generating  S_NWC_WV09_MTI1_GLOBAL-NR_20250904T064000Z-001_000_007tile.nc 4.8 done
+[D:021:pid640062: adagucserverEC/CDBFileScanner.cpp:486]                        Scan /data/adaguc-data/NWCSAF/S_NWC_WV09_MTI1_GLOBAL-NR_20250904T064000Z-001_000_007tile.nc
+[D:022:pid640062: adagucserverEC/CCreateTiles.cpp:188]                          Generating  S_NWC_WV09_MTI1_GLOBAL-NR_20250904T064000Z-001_000_008tile.nc 5.4 done
 ```
 
 
 ## More info
 
-For more details on datapostproc usage, see [DataPostProc.md](../configuration/DataPostProc.md).
+- For more details on datapostproc usage, see [DataPostProc.md](../configuration/DataPostProc.md).
+- Details about tile config see: [TileSettings](../configuration/TileSettings.md)
+
+## Image
+
+<img src="./data/nwcsaf_mtg_tile_example_wms.webp"/>

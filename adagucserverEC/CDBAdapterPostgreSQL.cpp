@@ -710,10 +710,6 @@ std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAn
   std::map<CT::string, DimInfo> mapping;
   std::string path = _path;
 
-  bool isTiled = dataSource->cfgLayer->TileSettings.size() > 0;
-  if (isTiled) {
-    path += "tiled";
-  }
   // If config has a hardcoded db table name for layer, use it
   if (dataSource->cfgLayer->DataBaseTable.size() == 1) {
     for (auto &dim : dimensions) {
