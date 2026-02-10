@@ -100,7 +100,7 @@
     <Variable>ff</Variable>
     <Variable>dd</Variable>
     <FilePath filter="^kmds_alle_stations_10001_.*\.nc$">{ADAGUC_PATH}/data/datasets/kmds/</FilePath>
-    <DataPostProc algorithm="toknots" units="kts"/>
+    <DataPostProc algorithm="toknots" units="kts" from_units="m s-1"/>
     <Dimension name="time" interval="PT10M">time</Dimension>
     <Styles>barball,barbthinned,barb,barbdisc,barbvector,barballvector</Styles>
   </Layer>

@@ -145,7 +145,7 @@ void renderVectorPoints(std::vector<size_t> thinnedPointIndexList, CImageWarper 
 
   CT::string units = dataSource->getDataObject(0)->getUnits();
   bool toKnots = false;
-  if (!(units.equalsIgnoreCase("kt") || units.equalsIgnoreCase("kts") || units.equalsIgnoreCase("knot"))) {
+  if (!(units.equalsIgnoreCase("kt") || units.equalsIgnoreCase("kts") || units.equalsIgnoreCase("knot") || units.equalsIgnoreCase("knots"))) {
     toKnots = true;
   }
 
