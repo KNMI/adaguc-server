@@ -693,7 +693,7 @@ std::vector<CT::string> CDBAdapterPostgreSQL::getTableNames(CDataSource *dataSou
   return tableList;
 }
 
-std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAndDimensions(const char *_path, const char *filter, std::vector<CT::string> dimensions, CDataSource *dataSource) {
+std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAndDimensions(const char *path, const char *filter, std::vector<CT::string> dimensions, CDataSource *dataSource) {
 #ifdef MEASURETIME
   StopWatch_Stop(">CDBAdapterPostgreSQL::getTableNamesForPathFilterAndDimensions");
 #endif
@@ -708,7 +708,6 @@ std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAn
   */
 
   std::map<CT::string, DimInfo> mapping;
-  std::string path = _path;
 
   // If config has a hardcoded db table name for layer, use it
   if (dataSource->cfgLayer->DataBaseTable.size() == 1) {
@@ -764,7 +763,7 @@ std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAn
 
   auto query = CT::printf("SELECT p.tablename, p.dimension, (SELECT format_type(a.atttypid, a.atttypmod) AS data_type FROM pg_attribute a JOIN pg_class b ON (a.attrelid=b.relfilenode) WHERE "
                           "b.relname=p.tablename and a.attname=p.dimension and a.attstattarget=-1) FROM %s p WHERE path=E'P_%s' AND filter=E'F_%s' AND dimension IN (%s)",
-                          CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP, path.c_str(), filter, dimList.c_str());
+                          CDBAdapterPostgreSQL_PATHFILTERTABLELOOKUP, path, filter, dimList.c_str());
   CDBStore::Store *tableDimStore = DB->queryToStore(query.c_str());
   if (tableDimStore == nullptr) {
     throw 1;
@@ -799,7 +798,7 @@ std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAn
 
     std::string tableName = generateRandomTableName();
 
-    addToLookupTable(path.c_str(), filter, m.first.c_str(), tableName.c_str());
+    addToLookupTable(path, filter, m.first.c_str(), tableName.c_str());
     CT::string lookupIdentifier = getLookupIdentifier(path, filter, m.first);
     DimInfo d = {tableName, m.second.dataType};
     lookupTableNameCacheMap[lookupIdentifier.c_str()] = d;
