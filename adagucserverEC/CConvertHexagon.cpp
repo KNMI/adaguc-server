@@ -70,8 +70,8 @@ void drawlines2(float *imagedata, int w, int h, int polyCorners, float *polyX, f
 void drawNGon(float *imagedata, int w, int h, int polyCorners, float *polyX, float *polyY, float value) {
   // float  *data, float  *values, int W,int H, int *xP,int *yP
 
-  int xp[polyCorners];
-  int yp[polyCorners];
+  int *xp = new int[polyCorners];
+  int *yp = new int[polyCorners];
   int centerX = 0;
   int centerY = 0;
   for (int i = 0; i < polyCorners; i++) {
@@ -99,16 +99,19 @@ void drawNGon(float *imagedata, int w, int h, int polyCorners, float *polyX, flo
     typ[2] = yp[i];
     fillTriangleFlat(imagedata, value, w, h, txp, typ);
   }
+  delete[] xp;
+  delete[] yp;
 }
 
 void drawpoly2(float *imagedata, int w, int h, int polyCorners, float *polyX, float *polyY, float value) {
   //  public-domain code by Darel Rex Finley, 2007
 
-  int nodes, nodeX[polyCorners * 2 + 1], pixelY, i, j, swap;
+  int nodes, pixelY, i, j, swap;
   int IMAGE_TOP = 0;
   int IMAGE_BOT = h;
   int IMAGE_LEFT = 0;
   int IMAGE_RIGHT = w;
+  int *nodeX = new int[polyCorners * 2 + 1];
 
   //  Loop through the rows of the image.
   for (pixelY = IMAGE_TOP; pixelY < IMAGE_BOT; pixelY++) {
@@ -148,6 +151,7 @@ void drawpoly2(float *imagedata, int w, int h, int polyCorners, float *polyX, fl
       }
     }
   }
+  delete[] nodeX;
 }
 
 double *CConvertHexagon::getBBOXFromLatLonFields(CDF::Variable *lons, CDF::Variable *lats) {
@@ -429,7 +433,7 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
 #endif
 
   size_t nrDataObjects = dataSource->getNumDataObjects();
-  CDataSource::DataObject *dataObjects[nrDataObjects];
+  std::vector<CDataSource::DataObject *> dataObjects(nrDataObjects, nullptr);
   for (size_t d = 0; d < nrDataObjects; d++) {
     dataObjects[d] = dataSource->getDataObject(d);
   }

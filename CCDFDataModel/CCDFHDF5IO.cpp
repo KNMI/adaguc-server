@@ -26,13 +26,14 @@
 #include "CCDFHDF5IO.h"
 
 #include <cmath>
+#include <netcdf.h>
 
 int CDFHDF5Reader::CustomForecastReader::readData(CDF::Variable *thisVar, size_t *start, size_t *count, ptrdiff_t *stride) {
 #ifdef CCDFHDF5IO_DEBUG
   CDBDebug("READ data for %s called", thisVar->name.c_str());
 #endif
 
-  size_t newstart[thisVar->dimensionlinks.size()];
+  size_t newstart[NC_MAX_DIMS];
   for (size_t j = 0; j < thisVar->dimensionlinks.size(); j++) {
     newstart[j] = start[j];
 #ifdef CCDFHDF5IO_DEBUG
@@ -455,10 +456,14 @@ int CDFHDF5Reader::_readVariableData(CDF::Variable *var, CDFType type, size_t *s
 #endif
       hid_t HDF5_dataspace = H5Dget_space(datasetID);
       int ndims = H5Sget_simple_extent_ndims(HDF5_dataspace);
-      hsize_t dims_out[ndims];
+      if (ndims >= NC_MAX_DIMS) {
+        CDBError("Maximum number of %d dimensions supported, got %d dimensions", NC_MAX_DIMS, ndims);
+        exit(1);
+      }
+      hsize_t dims_out[NC_MAX_DIMS];
       H5Sget_simple_extent_dims(HDF5_dataspace, dims_out, NULL);
-      hsize_t mem_count[ndims], mem_start[ndims];
-      hsize_t data_count[ndims], data_start[ndims];
+      hsize_t mem_count[NC_MAX_DIMS], mem_start[NC_MAX_DIMS];
+      hsize_t data_count[NC_MAX_DIMS], data_start[NC_MAX_DIMS];
       int totalVariableSize = 1;
       int dimDiff = var->dimensionlinks.size() - ndims;
       if (dimDiff < 0) dimDiff = 0;
@@ -547,9 +552,13 @@ int CDFHDF5Reader::_readVariableData(CDF::Variable *var, CDFType type) {
     if (datasetID > 0) {
       hid_t HDF5_dataspace = H5Dget_space(datasetID);
       int ndims = H5Sget_simple_extent_ndims(HDF5_dataspace);
-      hsize_t dims_out[ndims];
+      if (ndims >= NC_MAX_DIMS) {
+        CDBError("Maximum number of %d dimensions supported, got %d dimensions", NC_MAX_DIMS, ndims);
+        exit(1);
+      }
+      hsize_t dims_out[NC_MAX_DIMS];
       H5Sget_simple_extent_dims(HDF5_dataspace, dims_out, NULL);
-      hsize_t mem_count[ndims], mem_start[ndims];
+      hsize_t mem_count[NC_MAX_DIMS], mem_start[NC_MAX_DIMS];
       int totalVariableSize = 1;
 
       for (int d = 0; d < ndims; d++) {
@@ -1135,7 +1144,12 @@ int CDFHDF5Reader::readAttributes(std::vector<CDF::Attribute *> &attributes, hid
     HDF5_attribute = H5Aopen_idx(HDF5_group, j);
     size_t attNameSize = H5Aget_name(HDF5_attribute, 0, NULL);
     attNameSize++;
-    char attName[attNameSize + 1];
+    if (attNameSize > 1023) {
+      CDBError("Attribute name too long: %lu characters", attNameSize);
+
+      throw(__LINE__);
+    }
+    char attName[1024];
     H5Aget_name(HDF5_attribute, attNameSize, attName);
     hid_t HDF5_attr_type = H5Aget_type(HDF5_attribute);
     HDF5_attr_class = H5Tget_class(HDF5_attr_type);

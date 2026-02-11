@@ -31,7 +31,7 @@ public:
 
   struct DimInfo {
     ~DimInfo() {
-      for(auto val: aggregatedValues) {
+      for (auto val : aggregatedValues) {
         delete val;
       }
       aggregatedValues.clear();
@@ -284,8 +284,8 @@ public:
 
             variable->freeData();
 
-            size_t start[variable->dimensionlinks.size()], count[variable->dimensionlinks.size()];
-            ptrdiff_t stride[variable->dimensionlinks.size()];
+            size_t start[NC_MAX_DIMS], count[NC_MAX_DIMS];
+            ptrdiff_t stride[NC_MAX_DIMS];
 
             for (size_t j = 0; j < variable->dimensionlinks.size(); j++) {
               start[j] = 0;

@@ -249,7 +249,7 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource, int mode) {
   size_t nrDataObjects = dataSource->getNumDataObjects();
   if (nrDataObjects <= 0) return 1;
 
-  CDataSource::DataObject *dataObjects[nrDataObjects];
+  std::vector<CDataSource::DataObject *> dataObjects(nrDataObjects, nullptr);
   for (size_t d = 0; d < nrDataObjects; d++) {
     dataObjects[d] = dataSource->getDataObject(d);
   }
@@ -257,8 +257,8 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource, int mode) {
 
   CDBDebug("convertASCATData %s", dataObjects[0]->cdfVariable->name.c_str());
 #endif
-  CDF::Variable *new2DVar[nrDataObjects];
-  CDF::Variable *swathVar[nrDataObjects];
+  std::vector<CDF::Variable *> new2DVar(nrDataObjects, nullptr);
+  std::vector<CDF::Variable *> swathVar(nrDataObjects, nullptr);
 
   for (size_t d = 0; d < nrDataObjects; d++) {
     new2DVar[d] = dataObjects[d]->cdfVariable;

@@ -361,7 +361,7 @@ int CDFNetCDFReader::readDimensions(int groupId, std::string &groupName) {
     CDBError("[%s]: %s %d", nc_strerror(status), "nc_inq_dimids: ", status);
     return 1;
   }
-  int dimIds[nDims];
+  int dimIds[NC_MAX_DIMS];
   status = nc_inq_dimids(groupId, &nDims, dimIds, 0);
   if (status != NC_NOERR) {
     CDBError("For groupName %s: ", groupName.c_str());
@@ -1056,8 +1056,8 @@ int CDFNetCDFWriter::_write(void (*progress)(const char *message, float percenta
       int numDims = variable->dimensionlinks.size();
       if ((variable->isDimension == true && writeDimsFirst == 0) || (variable->isDimension == false && writeDimsFirst == 1)) {
         {
-          int dimIDS[numDims + 1];
-          int NCCommandID[numDims + 1];
+          int dimIDS[NC_MAX_DIMS];
+          int NCCommandID[NC_MAX_DIMS];
           size_t totalVariableSize = 0;
           // Find dim and chunk info
           CT::string variableInfo(name);
@@ -1101,7 +1101,7 @@ int CDFNetCDFWriter::_write(void (*progress)(const char *message, float percenta
 
           if (netcdfMode >= 4 && numDims > 0 && 1 == 1) {
 
-            size_t chunkSizes[variable->dimensionlinks.size()];
+            size_t chunkSizes[NC_MAX_DIMS];
             if (variable->dimensionlinks.size() > 2) {
 
               for (size_t m = 0; m < variable->dimensionlinks.size(); m++) {

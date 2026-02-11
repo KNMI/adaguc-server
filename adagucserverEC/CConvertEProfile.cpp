@@ -404,11 +404,11 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
   }
 
   size_t nrDataObjects = dataSource->getNumDataObjects();
-  CDataSource::DataObject *dataObjects[nrDataObjects];
+  std::vector<CDataSource::DataObject *> dataObjects(nrDataObjects, nullptr);
   for (size_t d = 0; d < nrDataObjects; d++) {
     dataObjects[d] = dataSource->getDataObject(d);
   }
-  CDF::Variable *new2DVar[nrDataObjects];
+  std::vector<CDF::Variable *> new2DVar(nrDataObjects, nullptr);
   CDF::Variable *pointVar[nrDataObjects];
 
   for (size_t d = 0; d < nrDataObjects; d++) {

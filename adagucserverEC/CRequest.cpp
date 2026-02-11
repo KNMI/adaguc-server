@@ -2601,9 +2601,10 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
       size_t numTimeSteps = (size_t)dataSources[dataSourceToUse]->getNumTimeSteps();
 
       int errcode;
-      pthread_t threads[numThreads];
+      std::vector<pthread_t> threads(numThreads);
+      std::vector<pthread_t> threadHandles(numThreads);
+      std::vector<CImageDataWriter_addData_args> args(numThreads);
 
-      CImageDataWriter_addData_args args[numThreads];
       for (int worker = 0; worker < numThreads; worker++) {
 
         for (size_t d = 0; d < dataSources.size(); d++) {
