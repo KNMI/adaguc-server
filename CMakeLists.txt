@@ -25,7 +25,7 @@ ELSE()
   set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -Wall -Wextra -g3 --pedantic")
   set(CMAKE_CXX_FLAGS_RELEASE "-O3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse")
   set(CMAKE_CXX_FLAGS_PROFILE "-O3 -ggdb -Wall -Wextra -g3 -p -fno-omit-frame-pointer")
-  set(CMAKE_CXX_FLAGS_SANITIZE "-ggdb -Wall -Wextra -g3 -fsanitize=address -fno-omit-frame-pointer") # <= Use to find memory issues
+  set(CMAKE_CXX_FLAGS_SANITIZE "-ggdb -Wall -Wextra  -g3 -fsanitize=address -fno-omit-frame-pointer") # <= Use to find memory issues
 ENDIF()
 MESSAGE(STATUS "CMAKE_CXX_FLAGS_DEBUG: ${CMAKE_CXX_FLAGS_DEBUG}")
 MESSAGE(STATUS "CMAKE_CXX_FLAGS_RELEASE: ${CMAKE_CXX_FLAGS_RELEASE}")

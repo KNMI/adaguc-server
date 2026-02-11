@@ -528,7 +528,7 @@ void CImgWarpBilinear::smoothData(float *valueData, float fNodataValue, int smoo
   float *valueData2 = new float[W * H];
   int smw = smoothWindow;
   // Create distance window;
-  float distanceWindow[(smw + 1) * 2 * (smw + 1) * 2];
+  float *distanceWindow = new float[(smw + 1) * 2 * (smw + 1) * 2];
   float distanceAmmount = 0;
   int dWinP = 0;
   for (int y1 = -smw; y1 < smw + 1; y1++) {
@@ -573,6 +573,7 @@ void CImgWarpBilinear::smoothData(float *valueData, float fNodataValue, int smoo
   for (size_t p = 0; p < drawImageSize; p++) {
     valueData[p] = valueData2[p];
   }
+  delete[] distanceWindow;
   delete[] valueData2;
 #ifdef CImgWarpBilinear_TIME
   StopWatch_Stop("[/SmoothData]");

@@ -44,8 +44,8 @@ int CConvertLatLonGrid::convertLatLonGridData(CDataSource *dataSource, int mode)
 
   CDBDebug("convertLatLonGridData %s", dataObjects[0]->cdfVariable->name.c_str());
 #endif
-  CDF::Variable *destRegularGrid[nrDataObjects];
-  CDF::Variable *irregularGridVar[nrDataObjects];
+  std::vector<CDF::Variable *> destRegularGrid(nrDataObjects, nullptr);
+  std::vector<CDF::Variable *> irregularGridVar(nrDataObjects, nullptr);
 
   // Make references destRegularGrid and irregularGridVar
   for (size_t d = 0; d < nrDataObjects; d++) {

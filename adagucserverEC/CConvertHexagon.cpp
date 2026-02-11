@@ -450,9 +450,9 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
   }
 
   size_t numDims = hexagonVar->dimensionlinks.size();
-  size_t start[numDims];
-  size_t count[numDims];
-  ptrdiff_t stride[numDims];
+  size_t start[NC_MAX_DIMS];
+  size_t count[NC_MAX_DIMS];
+  ptrdiff_t stride[NC_MAX_DIMS];
   for (size_t dimInd = 0; dimInd < numDims; dimInd++) {
     start[dimInd] = 0;
     count[dimInd] = 1;
@@ -865,7 +865,8 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
         if (tileHasNoData == false) {
           // CDBDebug(" (%f,%f) (%f,%f) (%f,%f) (%f,%f)",lons[0],lats[0],lons[1],lats[1],lons[2],lats[2],lons[3],lats[3]);
 
-          float flons[numVerts], flats[numVerts];
+          float *flons = new float[numVerts];
+          float *flats = new float[numVerts];
           for (int j = 0; j < numVerts; j++) {
             //             if(tileIsOverDateBorder){
             //               lons[j]-=360;
@@ -891,6 +892,8 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
             drawNGon(sdata, dataSource->dWidth, dataSource->dHeight, numVerts, flons, flats, val);
             // drawlines2(sdata,dataSource->dWidth,dataSource->dHeight,numVerts,flons,flats,val);
           }
+          delete[] flons;
+          delete[] flats;
         }
       }
     }

@@ -89,9 +89,10 @@ int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource
 
       std::vector<std::string> valueMap;
       size_t nrPoints = dataSource->getDataObject(0)->points.size();
-      float valueForFeatureNr[nrFeatures];
+
+      std::vector<float> valueForFeatureNrVec(nrFeatures, destNoDataValue);
       for (size_t f = 0; f < nrFeatures; f++) {
-        valueForFeatureNr[f] = destNoDataValue;
+        valueForFeatureNrVec[f] = destNoDataValue;
         const char *name = names[f];
         bool found = false;
         for (size_t p = 0; p < nrPoints && !found; p++) {
@@ -100,7 +101,7 @@ int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource
             if (ckv.key.equals("station")) {
               CT::string station = ckv.value;
               if (strcmp(station.c_str(), name) == 0) {
-                valueForFeatureNr[f] = dataSource->getDataObject(0)->points[p].v;
+                valueForFeatureNrVec[f] = dataSource->getDataObject(0)->points[p].v;
                 found = true;
               }
             }
@@ -125,7 +126,7 @@ int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource
         //           CDBDebug("cnt=%d %d %f", cnt, featureNr, (featureNr!=noDataValue)?featureNr:-9999999);
         //         }
         if (featureNr != noDataValue) {
-          *dest = valueForFeatureNr[featureNr];
+          *dest = valueForFeatureNrVec[featureNr];
           *indexDest = featureNr;
         }
         src++;

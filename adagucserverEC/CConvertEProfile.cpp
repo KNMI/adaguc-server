@@ -409,7 +409,7 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
     dataObjects[d] = dataSource->getDataObject(d);
   }
   std::vector<CDF::Variable *> new2DVar(nrDataObjects, nullptr);
-  CDF::Variable *pointVar[nrDataObjects];
+  std::vector<CDF::Variable *> pointVar(nrDataObjects, nullptr);
 
   for (size_t d = 0; d < nrDataObjects; d++) {
     new2DVar[d] = dataObjects[d]->cdfVariable;
@@ -424,10 +424,9 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
 
   // Read original data first
 
-  size_t numDims = pointVar[0]->dimensionlinks.size();
-  size_t start[numDims];
-  size_t count[numDims];
-  ptrdiff_t stride[numDims];
+  size_t start[NC_MAX_DIMS];
+  size_t count[NC_MAX_DIMS];
+  ptrdiff_t stride[NC_MAX_DIMS];
 
   /*
    * There is always a station dimension, we wish to read all stations and for the other dimensions just one: count=1;
@@ -516,7 +515,8 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
         // Compatibilty function for LCW data, reading strings stored as fixed arrays of CDF_CHAR
         start[1] = 0;
         count[1] = pointVar[d]->dimensionlinks[1]->getSize();
-        CT::string data[count[0]];
+
+        std::vector<std::string> data(count[0]);
         pointVar[d]->readData(CDF_CHAR, start, count, stride, false);
         for (size_t j = 0; j < count[0]; j++) {
           data[j].copy(((char *)pointVar[d]->data + j * count[1]), count[1] - 1);
