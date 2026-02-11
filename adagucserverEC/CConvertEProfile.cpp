@@ -408,8 +408,8 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
   for (size_t d = 0; d < nrDataObjects; d++) {
     dataObjects[d] = dataSource->getDataObject(d);
   }
-  std::vector<CDF::Variable *> new2DVar(nrDataObjects, nullptr);
-  std::vector<CDF::Variable *> pointVar(nrDataObjects, nullptr);
+  std::vector<CDF::Variable *> new2DVar(nrDataObjects);
+  std::vector<CDF::Variable *> pointVar(nrDataObjects);
 
   for (size_t d = 0; d < nrDataObjects; d++) {
     new2DVar[d] = dataObjects[d]->cdfVariable;
