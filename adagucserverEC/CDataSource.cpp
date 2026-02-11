@@ -34,7 +34,6 @@ bool configWarningSet = false;
 
 CDataSource::DataObject::DataObject() {
   hasStatusFlag = false;
-  appliedScaleOffset = false;
   hasScaleOffset = false;
   cdfVariable = NULL;
   cdfObject = NULL;
@@ -47,7 +46,6 @@ CDataSource::DataObject *CDataSource::DataObject::clone() {
   CDataSource::DataObject *nd = new CDataSource::DataObject();
   nd->hasStatusFlag = hasStatusFlag;
   nd->hasNodataValue = hasNodataValue;
-  nd->appliedScaleOffset = appliedScaleOffset;
   nd->hasScaleOffset = hasScaleOffset;
   nd->dfNodataValue = dfNodataValue;
   nd->dfscale_factor = dfscale_factor;
@@ -334,7 +332,7 @@ CDataSource::~CDataSource() {
   statistics = NULL;
 
   if (_styles != NULL) {
-    for(auto s: *_styles) {
+    for (auto s : *_styles) {
       delete s;
     }
     delete _styles;
@@ -662,12 +660,6 @@ std::vector<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(CData
                   CDBError("Legend %s not found", legendList[l].c_str());
                 }
 
-                if (style != nullptr && style->RenderMethod.size() > 0) {
-                  if (configWarningSet == false) {
-                    CDBWarning("Deprecated to have RenderMethod configs in the style.");
-                    configWarningSet = true;
-                  }
-                }
                 if (style != nullptr && style->NameMapping.size() > 0) {
                   if (configWarningSet == false) {
                     CDBWarning("Deprecated to have NameMapping configs in the style. Use title and abstracts instead.");

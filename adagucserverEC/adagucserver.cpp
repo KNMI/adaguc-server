@@ -33,6 +33,7 @@
 #include "CDBFactory.h"
 #include "ProjCache.h"
 #include "Types/ProjectionStore.h"
+#include <cdfVariableCache.h>
 
 int processQueryStringRequest() {
   /* Process the OGC request */
@@ -74,6 +75,7 @@ int main(int argc, char **argv, char **envp) {
   BBOXProjectionClearCache();
 
   closeLogFile();
+  varCacheClear();
 
   return status;
 }

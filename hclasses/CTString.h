@@ -435,6 +435,28 @@ namespace CT {
 
   std::string printf(const char *a, ...) PRINTF_FORMAT_CHECK(1, 2);
 
+  /**
+   * Like printf, but concatenates the string and returns a stdstring
+   * @param a The string to print
+   * @returns std::string
+   */
   void printfconcat(std::string &appendString, const char *a, ...) PRINTF_FORMAT_CHECK(2, 3);
+
+  /**
+   * Replace all occurrences of a substring with another string and returns the new string
+   * @param input The input string
+   * @param from The string to replace
+   * @param to The string to replace with
+   * @returns new string with replaced values
+   */
+
+  std::string replace(const std::string &input, const std::string &from, const std::string &to);
+
+  /**
+   * Converts a string to lowercase
+   * @param input The input string
+   * @returns the input string converted to lowercase
+   */
+  std::string toLowerCase(const std::string input);
 }; /* namespace CT */
 #endif

@@ -1383,8 +1383,6 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
 #endif
   int status = 0;
 
-  CDBDebug("CImageDataWriter::addData");
-
 #ifdef CIMAGEDATAWRITER_DEBUG
   CDBDebug("Draw data. dataSources.size() =  %d", dataSources.size());
 #endif

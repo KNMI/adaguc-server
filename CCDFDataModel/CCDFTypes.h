@@ -177,16 +177,12 @@ namespace CDF {
   /*Puts the C name of the type in the string array with name (float, int, etc...)*/
   void getCDataTypeName(char *name, const size_t maxlen, const int type);
 
-  /*Puts the error code as string in the string array based on the error code number*/
-  void getErrorMessage(char *errorMessage, const size_t maxlen, const int errorCode);
-  void getErrorMessage(CT::string *errorMessage, const int errorCode);
-
   /**
    * Static function which converts an exception into a readable message
    * @param int The value of catched exception
-   * @return CT::string with the readable message
+   * @return string with the readable message
    */
-  CT::string getErrorMessage(int errorCode);
+  std::string getErrorMessage(const int errorCode);
 
   /**
    * returns the type name as string

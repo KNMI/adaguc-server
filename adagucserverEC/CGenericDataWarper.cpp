@@ -196,16 +196,25 @@ void linearTransformGrid(GDWState &warperState, bool useHalfCellOffset, CImageWa
 
   pixelspan = newpixelspan;
 
+  double xOffset = (dfSourceOrigX - dfDestOrigX) * (dfDestW / dfDestExtW);
+  double xScale = (dfSourceExtW / dfSourceW) * (dfDestW / dfDestExtW);
+
+  double yOffset = (dfSourceOrigY - dfDestOrigY) * (dfDestH / dfDestExtH);
+  double yScale = (dfSourceExtH / dfSourceH) * (dfDestH / dfDestExtH);
+
+  int sxw = floor(fabs(xScale)) + 1;
+  int syh = floor(fabs(yScale)) + 1;
   for (int y = pixelspan.bottom; y < pixelspan.top; y++) {
     for (int x = pixelspan.left; x < pixelspan.right; x++) {
       double dfx = x + halfCell;
       double dfy = y - halfCell; // Y is inverted
-      int sx1 = roundedLinearTransform(dfx, dfSourceW, dfSourceExtW, dfSourceOrigX, dfDestOrigX, dfDestExtW, dfDestW);
-      int sx2 = roundedLinearTransform(dfx + 1, dfSourceW, dfSourceExtW, dfSourceOrigX, dfDestOrigX, dfDestExtW, dfDestW);
-      int sy1 = roundedLinearTransform(dfy, dfSourceH, dfSourceExtH, dfSourceOrigY, dfDestOrigY, dfDestExtH, dfDestH);
-      int sy2 = roundedLinearTransform(dfy + 1, dfSourceH, dfSourceExtH, dfSourceOrigY, dfDestOrigY, dfDestExtH, dfDestH);
-      int sxw = floor(fabs(sx2 - sx1)) + 1;
-      int syh = floor(fabs(sy2 - sy1)) + 1;
+      double xRound = dfx * xScale + xOffset;
+      double yRound = dfy * yScale + yOffset;
+      int sx1 = std::floor(xRound + 0.5);
+      int sx2 = std::floor(xRound + xScale + 0.5);
+      int sy1 = std::floor(yRound + 0.5);
+      int sy2 = std::floor(yRound + yScale + 0.5);
+
       if ((sx1 < -sxw && sx2 < -sxw) || (sy1 < -syh && sy2 < -syh) || (sx1 >= destGeoParams.width + sxw && sx2 >= destGeoParams.width + sxw) ||
           (sy1 >= destGeoParams.height + syh && sy2 >= destGeoParams.height + syh)) {
         continue;
