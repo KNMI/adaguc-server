@@ -66,34 +66,6 @@ CServerParams::~CServerParams() {
   requestDims.clear();
 }
 
-std::string CServerParams::randomString(const int length) {
-#ifdef MEASURETIME
-  StopWatch_Stop(">CServerParams::randomString");
-#endif
-
-  const char charset[] = "0123456789"
-                         "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                         "abcdefghijklmnopqrstuvwxyz";
-  // -1 for the \0 and -1 because uniform_int_distribution uses closed bounds
-  const size_t max_index = (sizeof(charset) - 2);
-
-  static std::mt19937 engine = []() {
-    std::random_device rd;
-    return std::mt19937(rd());
-  }();
-  static std::uniform_int_distribution<int> dist(0, max_index);
-
-  auto randChar = [&charset]() -> char { return charset[dist(engine)]; };
-
-  std::string str(length, 0);
-  std::generate_n(str.begin(), length, randChar);
-
-#ifdef MEASURETIME
-  StopWatch_Stop("<CServerParams::randomString");
-#endif
-  return str;
-}
-
 // Table names need to be different between dims like time and height.
 //  Therefor create unique tablenames like tablename_time and tablename_height
 CT::string CServerParams::makeCorrectTableName(CT::string tableName, CT::string dimName) {

@@ -458,5 +458,12 @@ namespace CT {
    * @returns the input string converted to lowercase
    */
   std::string toLowerCase(const std::string input);
+
+  /**
+   * Generates a random string of the specified length consisting of digits, uppercase and lowercase letters
+   * @param length The length of the random string to generate
+   * @returns a random string of the specified length
+   */
+  std::string randomString(const int length);
 }; /* namespace CT */
 #endif

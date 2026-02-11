@@ -50,6 +50,7 @@ void layerTypeLiveUpdatePopulateDataSource(CDataSource *dataSource, CServerParam
   dataSource->currentAnimationStep = 0;
   dataSource->layerName.copy("liveupdate_memory");
   CDFObject *cdfObject = new CDFObject();
+  CDFObjectStore::getCDFObjectStore()->registerCustomCDFObject(cdfObject);
 
   // Make x,y (why can this value be anything?)
   int nx = 2, ny = 2;

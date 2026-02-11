@@ -316,7 +316,7 @@ CColor getDrawPointColor(CDataSource *dataSource, CDrawImage *drawImage, float v
   return drawImage->getColorForIndex(pointColorIndex);
 }
 
-void drawSymbolForPoint(CDrawImage *drawImage, std::map<std::string, CDrawImage *>& symbolCache, std::string symbolFile, CServerConfig::XMLE_SymbolInterval *symbolInterval, int x, int y) {
+void drawSymbolForPoint(CDrawImage *drawImage, std::map<std::string, CDrawImage *> &symbolCache, std::string symbolFile, CServerConfig::XMLE_SymbolInterval *symbolInterval, int x, int y) {
   if (symbolFile.length() == 0) return;
 
   CDrawImage *symbol = NULL;
@@ -705,7 +705,7 @@ CColor getPixelColorForValue(CDrawImage *drawImage, CDataSource *dataSource, flo
   }
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   if (!isNodata) {
-    for (const auto shadeInterval : styleConfiguration->shadeIntervals) {
+    for (const auto &shadeInterval : styleConfiguration->shadeIntervals) {
       if (shadeInterval.attr.min.empty() == false && shadeInterval.attr.max.empty() == false) {
         if ((val >= atof(shadeInterval.attr.min.c_str())) && (val < atof(shadeInterval.attr.max.c_str()))) {
           return CColor(shadeInterval.attr.fillcolor.c_str());

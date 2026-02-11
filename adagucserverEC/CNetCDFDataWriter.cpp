@@ -82,7 +82,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
 
     this->srvParam = srvParam;
 
-    std::string randomString = CServerParams::randomString(32);
+    std::string randomString = CT::randomString(32);
     tempFileName.print("%s/%s.nc", srvParam->cfg->TempDir[0]->attr.value.c_str(), randomString.c_str());
     CDataReader reader;
     reader.silent = this->silent;

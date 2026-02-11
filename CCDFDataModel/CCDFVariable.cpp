@@ -787,8 +787,8 @@ CDF::Variable::Variable() {
 }
 
 CDF::Variable::~Variable() {
-  freeData();
-  for (auto & attribute : attributes) {
+  this->freeData();
+  for (auto &attribute : attributes) {
     if (attribute != NULL) {
       delete attribute;
       attribute = NULL;
@@ -796,7 +796,7 @@ CDF::Variable::~Variable() {
   }
   attributes.clear();
 
-  for (auto & j : cdfObjectList) {
+  for (auto &j : cdfObjectList) {
     if (j != NULL) {
       delete j;
       j = NULL;
@@ -946,7 +946,6 @@ int CDF::Variable::setAttribute(const char *attrName, CDFType attrType, const vo
     attr->name.copy(attrName);
     addAttribute(attr);
   }
-  attr->type = attrType;
   attr->setData(attrType, attrData, attrLen);
   return 0;
 }
