@@ -443,7 +443,7 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
     double scan_ascale;
     std::tie(scan_elevation, scan_nrang, scan_rscale, scan_nazim, scan_ascale) = getScanMetadata(cdfObject, scan);
 
-    double gain, offset;
+    double gain = 0.0, offset = 0.0;
     double gainDBZV, offsetDBZV;
     double undetect, nodata;
     CT::string scanDataVarName;

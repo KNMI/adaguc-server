@@ -83,7 +83,7 @@ void traverseLine(CDrawImage *drawImage, DISTANCEFIELDTYPE *distance, float *val
   double lineSegmentsValue = valueField[p];
   double binnedLineSegmentsValue;
 
-  if (!contourDefinition.classes.size() == 0) {
+  if (!(contourDefinition.classes.empty())) {
     float closestValue;
     int definedIntervalIndex = 0;
     int j = 0;

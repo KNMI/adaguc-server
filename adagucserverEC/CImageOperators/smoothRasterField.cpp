@@ -14,14 +14,12 @@ void smoothingMakeDistanceMatrix(GDWDrawFunctionSettings &settings) {
   }
   settings.smoothingDistanceMatrix = new double[(smoothWindowSize + 1) * 2 * (smoothWindowSize + 1) * 2];
 
-  double distanceAmmount = 0;
   int dWinP = 0;
   for (int y1 = -smoothWindowSize; y1 < smoothWindowSize + 1; y1++) {
     for (int x1 = -smoothWindowSize; x1 < smoothWindowSize + 1; x1++) {
       double d = sqrt(x1 * x1 + y1 * y1);
       d = 1 / (d + 1);
       settings.smoothingDistanceMatrix[dWinP++] = d;
-      distanceAmmount += d;
     }
   }
 }
@@ -46,11 +44,11 @@ template <typename T> T smoothingAtLocation(int sourceX, int sourceY, T *sourceG
   double distanceAmmount = 0;
   double resultValue = 0;
   int smoothWindowSize = settings.smoothingFiter;
-  size_t dWinP = -1;
+//  size_t dWinP = -1;
 
   for (int y1 = -smoothWindowSize; y1 < smoothWindowSize + 1; y1++) {
     for (int x1 = -smoothWindowSize; x1 < smoothWindowSize + 1; x1++) {
-      dWinP++;
+//      dWinP++;
       auto sx = x1 + sourceX;
       auto sy = y1 + sourceY;
       if (sx < warperState.sourceGridWidth && sy < warperState.sourceGridHeight && sx >= 0 && sy >= 0) {

@@ -93,7 +93,7 @@ private:
 
   template <class T> void _plot(CImageWarper *, CDataSource *dataSource, CDrawImage *drawImage);
   template <class T> static void drawFunction(int x, int y, T val, GDWState &, GDWDrawFunctionSettings &settings);
-  pthread_mutex_t CImgWarpNearestNeighbour_render_lock;
+//  pthread_mutex_t CImgWarpNearestNeighbour_render_lock;  // It's unused. Does it do something by just being here?
 
   // Setup projection and all other settings for the tiles to draw
   void render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage);
