@@ -2,6 +2,7 @@
 
 #include "CDebugger.h"
 #include <regex>
+#include <random>
 #define CT_STRING_PRINT_BUFFER_SIZE 64
 
 const char *strrstr(const char *x, const char *y) {
@@ -553,5 +554,25 @@ namespace CT {
     std::string result = input;
     std::transform(result.begin(), result.end(), result.begin(), [](unsigned char c) { return std::tolower(c); });
     return result;
+  }
+
+  std::string randomString(const int length) {
+    const char charset[] = "0123456789"
+                           "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                           "abcdefghijklmnopqrstuvwxyz";
+    // -1 for the \0 and -1 because uniform_int_distribution uses closed bounds
+    const size_t max_index = (sizeof(charset) - 2);
+
+    static std::mt19937 engine = []() {
+      std::random_device rd;
+      return std::mt19937(rd());
+    }();
+    static std::uniform_int_distribution<int> dist(0, max_index);
+
+    auto randChar = [&charset]() -> char { return charset[dist(engine)]; };
+
+    std::string str(length, 0);
+    std::generate_n(str.begin(), length, randChar);
+    return str;
   }
 } /* namespace CT */

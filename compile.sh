@@ -41,25 +41,12 @@ function clean {
   cd $CURRENTDIR
   cmake --fresh -S ${CURRENTDIR} -B ${CURRENTDIR}/bin -G "Unix Makefiles"
 
-  echo "Cleaned..."
+  echo "Cleaned. You can now run the script again to build the project."
 
 }
 
 function build {
 
-  mkdir -p $CURRENTDIR/bin
-  cd $CURRENTDIR/bin
-
-  if [ "$*" = "--debug" ]; then
-    echo "Making Debug build"
-    cmake -DCMAKE_BUILD_TYPE=Debug  ..
-  elif [ "$*" = "--profile" ]; then
-    echo "Making profile build"
-    cmake -DCMAKE_BUILD_TYPE=Profile ..
-  else
-    echo "Making Release build"
-    cmake -DCMAKE_BUILD_TYPE=Release ..
-  fi
   cmake  --build . --parallel 4
 
   if [ -f adagucserver ]
@@ -80,17 +67,32 @@ function build {
   else
     echo "[OK] Tests succeeded"
   fi
-  exit $retVal
+  return $retVal
 
 }
 
+mkdir -p $CURRENTDIR/bin
+cd $CURRENTDIR/bin
 if [ "$*" = "--clean" ]; then
   echo "Cleaning"
   clean
 elif [ "$*" = "--debug" ]; then
-  build --debug
+  echo "Making Debug build"
+  cmake -DCMAKE_BUILD_TYPE=Debug  ..
+  build; res=$?; exit $res;
+elif [ "$*" = "--sanitize" ]; then
+  echo "Making sanitize build"
+  cmake -DCMAKE_BUILD_TYPE=Sanitize ..
+  build; res=$?; exit $res;
 elif [ "$*" = "--profile" ]; then
-  build --profile
+  echo "Making profile build"
+  cmake -DCMAKE_BUILD_TYPE=Profile ..
+  build 
+elif [ "$*" = "" ]; then
+  echo "Making Release build!"
+  cmake -DCMAKE_BUILD_TYPE=Release ..
+  build; res=$?; exit $res;
 else
-  build
+  echo "Unrecognized build type"
+  exit 1
 fi

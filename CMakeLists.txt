@@ -16,20 +16,20 @@ MESSAGE(STATUS "Processor: ${CMAKE_HOST_SYSTEM_PROCESSOR}")
 MESSAGE(STATUS "*Note ==============> build type: ${CMAKE_BUILD_TYPE}")
 IF (CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "arm64" OR CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "aarch64")
   set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -Wall -Wextra")
-#  set(CMAKE_CXX_FLAGS_DEBUG "-O1 -g -ffp-contract=off -fsanitize=address -fno-omit-frame-pointer")  # <= Use to find memory issues
-  # To look for memory leaks on Mac, set up the ENV to run the correct query, and run (with root privilige?):
-  # leaks --quiet -atExit -- adagucserver
   set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffp-contract=off")
   set(CMAKE_CXX_FLAGS_PROFILE "-O3 -Wall -Wextra -ffp-contract=off -g -fno-omit-frame-pointer")
+  set(CMAKE_CXX_FLAGS_SANITIZE "-g -Wall -Wextra -ffp-contract=off -fsanitize=address -fno-omit-frame-pointer") # <= Use to find memory issues
+  # leaks --quiet -atExit -- adagucserver
 ELSE()
   set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -Wall -Wextra -g3")
-  #set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -Wall -Wextra -g3 -fsanitize=address") # <= Use to find memory issues
   set(CMAKE_CXX_FLAGS_RELEASE "-O3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse")
   set(CMAKE_CXX_FLAGS_PROFILE "-O3 -ggdb -Wall -Wextra -g3 -p -fno-omit-frame-pointer")
+  set(CMAKE_CXX_FLAGS_SANITIZE "-ggdb -Wall -Wextra -g3 -fsanitize=address -fno-omit-frame-pointer") # <= Use to find memory issues
 ENDIF()
 MESSAGE(STATUS "CMAKE_CXX_FLAGS_DEBUG: ${CMAKE_CXX_FLAGS_DEBUG}")
 MESSAGE(STATUS "CMAKE_CXX_FLAGS_RELEASE: ${CMAKE_CXX_FLAGS_RELEASE}")
 MESSAGE(STATUS "CMAKE_CXX_FLAGS_PROFILE: ${CMAKE_CXX_FLAGS_PROFILE}")
+MESSAGE(STATUS "CMAKE_CXX_FLAGS_SANITIZE: ${CMAKE_CXX_FLAGS_SANITIZE}")
 
 # The additional / is important to remove the last character from the path.
 # Note that it does not matter if the OS uses / or \, because we are only

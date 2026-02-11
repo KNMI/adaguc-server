@@ -228,7 +228,7 @@ CDFObject *CDFObjectStore::getCDFObjectHeaderPlain(CDataSource *dataSource, CSer
 CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, const char *fileName, const bool cached) { return getCDFObject(dataSource, NULL, fileName, false, cached); }
 
 CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *srvParams, const char *fileName, bool plain, const bool cached) {
-  CT::string uniqueIDForFile = fileName;
+  std::string uniqueIDForFile = fileName;
 
   if (srvParams == NULL && dataSource != NULL) {
     srvParams = dataSource->srvParams;
@@ -239,7 +239,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
   }
   if (cached) {
     for (size_t j = 0; j < fileNames.size(); j++) {
-      if (fileNames[j]->equals(uniqueIDForFile.c_str())) {
+      if (fileNames[j] == uniqueIDForFile) {
 #ifdef CDFOBJECTSTORE_DEBUG
         CDBDebug("Found CDFObject with filename %s", uniqueIDForFile.c_str());
 #endif
@@ -248,7 +248,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
     }
   }
   if (cdfObjects.size() > MAX_OPEN_FILES) {
-    deleteCDFObject(*fileNames[0]);
+    deleteCDFObject(fileNames[0]);
   }
 #ifdef CDFOBJECTSTORE_DEBUG
   CDBDebug("Creating CDFObject with id %s", uniqueIDForFile.c_str());
@@ -325,7 +325,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
             }
             var->name.copy(cfgVar->value);
             // HACK: We want it in the cache (so the store is responsible for cleaning it up), but we don't want it reused.
-            uniqueIDForFile = uniqueIDForFile + "_" + CServerParams::randomString(10).c_str();
+            uniqueIDForFile = uniqueIDForFile + "_" + CT::randomString(10).c_str();
           }
         }
       }
@@ -344,7 +344,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
   // CDBDebug("PUSHING %s",uniqueIDForFile.c_str());
   // Push everything into the store
   if (cached) {
-    fileNames.push_back(new CT::string(uniqueIDForFile.c_str()));
+    fileNames.push_back(uniqueIDForFile);
     cdfObjects.push_back(cdfObject);
     cdfReaders.push_back(cdfReader);
   }
@@ -428,11 +428,12 @@ CDFObjectStore *CDFObjectStore::getCDFObjectStore() {
   return _cdfObjectStore;
 };
 
-void CDFObjectStore::deleteCDFObject(const CT::string &fileName) {
+void CDFObjectStore::deleteCDFObject(const std::string &fileName) {
   auto it = fileNames.begin();
   std::vector<ptrdiff_t> indicesToDelete;
-  while ((it = std::find_if(it, fileNames.end(), [fileName](CT::string *x) { return x->equals(fileName); })) != fileNames.end()) {
-    indicesToDelete.push_back(std::distance(fileNames.begin(), it));
+
+  while ((it = std::find(it, fileNames.end(), fileName)) != fileNames.end()) {
+    indicesToDelete.push_back(it - fileNames.begin());
     it++;
   }
 
@@ -441,8 +442,6 @@ void CDFObjectStore::deleteCDFObject(const CT::string &fileName) {
     auto index = *indexIter;
     delete cdfObjects[index];
     cdfObjects[index] = nullptr;
-    delete fileNames[index];
-    fileNames[index] = nullptr;
     delete cdfReaders[index];
     cdfReaders[index] = nullptr;
     cdfReaders.erase(cdfReaders.begin() + index);
@@ -456,8 +455,6 @@ void CDFObjectStore::deleteCDFObject(const CT::string &fileName) {
  */
 void CDFObjectStore::clear() {
   for (size_t j = 0; j < fileNames.size(); j++) {
-    delete fileNames[j];
-    fileNames[j] = NULL;
     delete cdfObjects[j];
     cdfObjects[j] = NULL;
     delete cdfReaders[j];
@@ -490,3 +487,9 @@ std::vector<CT::string> CDFObjectStore::getListOfVisualizableVariables(CDFObject
 int CDFObjectStore::getNumberOfOpenObjects() { return cdfObjects.size(); }
 
 int CDFObjectStore::getMaxNumberOfOpenObjects() { return MAX_OPEN_FILES; }
+
+void CDFObjectStore::registerCustomCDFObject(CDFObject *&cdfObject) {
+  fileNames.push_back(CT::randomString(32).c_str());
+  cdfObjects.push_back(cdfObject);
+  cdfReaders.push_back(nullptr);
+}

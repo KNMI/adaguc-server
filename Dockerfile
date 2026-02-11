@@ -1,6 +1,9 @@
 ######### First stage (build) ############
 FROM python:3.10-slim-bookworm AS build
 
+# To build on linux ubuntu use 
+# docker build -t adaguc-server --progress plain  --add-host=host.docker.internal:host-gateway .
+
 USER root
 
 LABEL maintainer="adaguc@knmi.nl"
@@ -43,7 +46,6 @@ COPY compile.sh /adaguc/adaguc-server-master/
 WORKDIR /adaguc/adaguc-server-master
 
 RUN bash compile.sh
-
 
 ######### Second stage, base image for test and prod ############
 FROM python:3.10-slim-bookworm AS base
