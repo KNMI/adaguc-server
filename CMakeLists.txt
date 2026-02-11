@@ -19,9 +19,10 @@ IF (CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "arm64" OR CMAKE_HOST_SYSTEM_PROCESSOR 
   set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffp-contract=off")
   set(CMAKE_CXX_FLAGS_PROFILE "-O3 -Wall -Wextra -ffp-contract=off -g -fno-omit-frame-pointer")
   set(CMAKE_CXX_FLAGS_SANITIZE "-g -Wall -Wextra -ffp-contract=off -fsanitize=address -fno-omit-frame-pointer") # <= Use to find memory issues
+  # To look for memory leaks on Mac, set up the ENV to run the correct query, and run (with root privilige?):
   # leaks --quiet -atExit -- adagucserver
 ELSE()
-  set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -Wall -Wextra -g3")
+  set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -Wall -Wextra -g3 --pedantic")
   set(CMAKE_CXX_FLAGS_RELEASE "-O3 -msse -msse2 -msse3 -mssse3 -mfpmath=sse")
   set(CMAKE_CXX_FLAGS_PROFILE "-O3 -ggdb -Wall -Wextra -g3 -p -fno-omit-frame-pointer")
   set(CMAKE_CXX_FLAGS_SANITIZE "-ggdb -Wall -Wextra -g3 -fsanitize=address -fno-omit-frame-pointer") # <= Use to find memory issues
