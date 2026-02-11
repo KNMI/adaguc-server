@@ -72,7 +72,6 @@ int CDPPOperator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
     CDBDebug("CDATAPOSTPROCESSOR_RUNAFTERREADING::Applying OPERATOR");
     size_t l = (size_t)dataSource->dHeight * (size_t)dataSource->dWidth;
-    dataSource->getDataObject(0)->cdfVariable->data = NULL;
     CDF::allocateData(CDF_FLOAT, &dataSource->getDataObject(0)->cdfVariable->data, l);
 
     float *result = (float *)dataSource->getDataObject(0)->cdfVariable->data;

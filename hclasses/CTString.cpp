@@ -298,7 +298,7 @@ namespace CT {
     return t;
   }
 
-  bool string::empty() { return stdstring.size() == 0; }
+  bool string::empty() const { return stdstring.size() == 0; }
 
   void string::setSize(int size) { stdstring.resize(size); }
 
@@ -317,7 +317,7 @@ namespace CT {
 
   int string::startsWith(const std::string search) { return (indexOf(search.c_str()) == 0); };
 
-  string string::trim() {
+  string string::trim() const {
     CT::string r = stdstring.c_str();
     r.trimSelf();
     return r;
@@ -376,14 +376,14 @@ namespace CT {
     return 0;
   }
 
-  float string::toFloat() { return static_cast<float>(atof(trim().c_str())); }
+  float string::toFloat() const { return static_cast<float>(atof(trim().c_str())); }
 
   // TODO: When strings like "longlat are passed the function currently silently returns 0. Would be better to throw an exception"
-  double string::toDouble() { return atof(trim().c_str()); }
+  double string::toDouble() const { return atof(trim().c_str()); }
 
-  int string::toInt() { return atoi(c_str()); }
+  int string::toInt() const { return atoi(c_str()); }
 
-  long string::toLong() { return atol(c_str()); }
+  long string::toLong() const { return atol(c_str()); }
 
   bool is_digit(const char value) { return std::isdigit(value); }
 

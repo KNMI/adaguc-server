@@ -84,8 +84,8 @@ CT::string CStyleConfiguration::dump() {
     a++;
   }
   a = 0;
-  for (auto shadeInterval : shadeIntervals) {
-    data.printconcat("shadeInterval %d) =  [%s] [%s]\n", a++, shadeInterval->attr.label.c_str(), shadeInterval->attr.label.c_str());
+  for (const auto shadeInterval : shadeIntervals) {
+    data.printconcat("shadeInterval %d) =  [%s] [%s]\n", a++, shadeInterval.attr.label.c_str(), shadeInterval.attr.label.c_str());
   }
   a = 0;
   for (auto contourLine : contourLines) {
@@ -149,7 +149,9 @@ void parseStyleInfo(CStyleConfiguration *styleConfig, CDataSource *dataSource, i
   styleConfig->contourLines.insert(styleConfig->contourLines.end(), style->ContourLine.begin(), style->ContourLine.end());
   styleConfig->renderSettings.insert(styleConfig->renderSettings.end(), style->RenderSettings.begin(), style->RenderSettings.end());
   styleConfig->smoothingFilterVector.insert(styleConfig->smoothingFilterVector.end(), style->SmoothingFilter.begin(), style->SmoothingFilter.end());
-  styleConfig->shadeIntervals.insert(styleConfig->shadeIntervals.end(), style->ShadeInterval.begin(), style->ShadeInterval.end());
+  for(const auto shadeInterval: style->ShadeInterval) {
+    styleConfig->shadeIntervals.push_back(*shadeInterval)   ;
+  }
   styleConfig->symbolIntervals.insert(styleConfig->symbolIntervals.end(), style->SymbolInterval.begin(), style->SymbolInterval.end());
   styleConfig->featureIntervals.insert(styleConfig->featureIntervals.end(), style->FeatureInterval.begin(), style->FeatureInterval.end());
   styleConfig->pointIntervals.insert(styleConfig->pointIntervals.end(), style->Point.begin(), style->Point.end());
@@ -256,7 +258,10 @@ int CStyleConfiguration::makeStyleConfig(CDataSource *dataSource) {
     this->contourLines.assign(layer->ContourLine.begin(), layer->ContourLine.end());
   }
   if (layer->ShadeInterval.size() > 0) {
-    this->shadeIntervals.assign(layer->ShadeInterval.begin(), layer->ShadeInterval.end());
+    this->shadeIntervals.clear();
+    for(const auto shadeInterval: layer->ShadeInterval) {
+      this->shadeIntervals.push_back(*shadeInterval);
+    }
   }
   if (layer->FeatureInterval.size() > 0) {
     this->featureIntervals.assign(layer->FeatureInterval.begin(), layer->FeatureInterval.end());

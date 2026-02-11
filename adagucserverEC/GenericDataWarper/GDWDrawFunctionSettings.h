@@ -40,6 +40,14 @@ struct GDWDrawFunctionSettings {
   double smoothingFiter = 0;
   double *smoothingDistanceMatrix = nullptr;
   double *smoothingMemo = nullptr;
+
+  GDWDrawFunctionSettings() = default;
+  ~GDWDrawFunctionSettings() {
+      delete[] smoothingDistanceMatrix;
+      smoothingDistanceMatrix = nullptr;
+      delete[] smoothingMemo;
+      smoothingMemo = nullptr;
+  }
 };
 
 GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawImage *drawImage, const CStyleConfiguration *styleConfiguration);

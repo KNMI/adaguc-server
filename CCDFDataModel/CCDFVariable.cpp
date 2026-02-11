@@ -788,18 +788,18 @@ CDF::Variable::Variable() {
 
 CDF::Variable::~Variable() {
   freeData();
-  for (size_t j = 0; j < attributes.size(); j++) {
-    if (attributes[j] != NULL) {
-      delete attributes[j];
-      attributes[j] = NULL;
+  for (auto & attribute : attributes) {
+    if (attribute != NULL) {
+      delete attribute;
+      attribute = NULL;
     }
   }
   attributes.clear();
 
-  for (size_t j = 0; j < cdfObjectList.size(); j++) {
-    if (cdfObjectList[j] != NULL) {
-      delete cdfObjectList[j];
-      cdfObjectList[j] = NULL;
+  for (auto & j : cdfObjectList) {
+    if (j != NULL) {
+      delete j;
+      j = NULL;
     }
   }
 }
