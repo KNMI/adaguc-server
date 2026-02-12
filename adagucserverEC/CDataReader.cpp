@@ -438,7 +438,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
   // ----------------------------------------------------------------------------------------------------
   if (dataSource->formatConverterActive == false) {
 
-    size_t start[dataSource->dNetCDFNumDims + 1]; // Saves the start position of the dimension variable data.
+    size_t start[NC_MAX_DIMS]; // Saves the start position of the dimension variable data.
 
     // Determine the indices of the data. Everything starts at 0 by default.
     for (int j = 0; j < dataSource->dNetCDFNumDims; j++) {
@@ -943,9 +943,9 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     return 0;
   }
 
-  size_t start[dataSource->dNetCDFNumDims + 1];
-  size_t count[dataSource->dNetCDFNumDims + 1];
-  ptrdiff_t stride[dataSource->dNetCDFNumDims + 1];
+  size_t start[NC_MAX_DIMS];
+  size_t count[NC_MAX_DIMS];
+  ptrdiff_t stride[NC_MAX_DIMS];
 
   // Set X and Y dimensions start, count and stride
   for (int j = 0; j < dataSource->dNetCDFNumDims; j++) {

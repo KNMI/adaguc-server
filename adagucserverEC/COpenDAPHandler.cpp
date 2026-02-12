@@ -868,9 +868,9 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
                 }
               }
               if (hasAggregateDimension) {
-                size_t start[v->dimensionlinks.size()];
-                size_t count[v->dimensionlinks.size()];
-                ptrdiff_t stride[v->dimensionlinks.size()];
+                size_t start[NC_MAX_DIMS];
+                size_t count[NC_MAX_DIMS];
+                ptrdiff_t stride[NC_MAX_DIMS];
                 for (size_t k = 0; k < v->dimensionlinks.size(); k++) {
                   start[k] = selectedVariables[i].dimInfo[k].start;
                   count[k] = selectedVariables[i].dimInfo[k].count;
@@ -1041,9 +1041,9 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
 #ifdef COPENDAPHANDLER_DEBUG
                   CDBDebug("READ PARTS");
 #endif
-                  size_t start[v->dimensionlinks.size()];
-                  size_t count[v->dimensionlinks.size()];
-                  ptrdiff_t stride[v->dimensionlinks.size()];
+                  size_t start[NC_MAX_DIMS];
+                  size_t count[NC_MAX_DIMS];
+                  ptrdiff_t stride[NC_MAX_DIMS];
                   for (size_t k = 0; k < v->dimensionlinks.size(); k++) {
                     start[k] = selectedVariables[i].dimInfo[k].start;
                     count[k] = selectedVariables[i].dimInfo[k].count;

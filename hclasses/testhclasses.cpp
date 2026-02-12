@@ -241,3 +241,13 @@ TEST(string, toLowerCase) {
   std::string test = "abcdefgabcdefg";
   CHECK_EQUAL("abcd", CT::toLowerCase("AbCd"));
 }
+
+TEST(string, eraseTableNames) {
+  std::vector<std::string> tableNamesDone;
+  tableNamesDone.push_back("test1");
+  tableNamesDone.push_back("test2");
+  tableNamesDone.push_back("test1");
+  tableNamesDone.push_back("test3");
+  std::erase(tableNamesDone, "test1");
+  LONGS_EQUAL(2, tableNamesDone.size());
+}

@@ -380,8 +380,8 @@ int CConvertTROPOMI::convertTROPOMIData(CDataSource *dataSource, int mode) {
 
   if (mode == CNETCDFREADER_MODE_OPEN_ALL) {
 
-    CDF::Variable *new2DVar[nrDataObjects];
-    CDF::Variable *pointVar[nrDataObjects];
+    std::vector<CDF::Variable *> new2DVar(nrDataObjects, nullptr);
+    std::vector<CDF::Variable *> pointVar(nrDataObjects, nullptr);
 
     for (size_t d = 0; d < nrDataObjects; d++) {
       new2DVar[d] = dataSource->getDataObject(d)->cdfVariable;

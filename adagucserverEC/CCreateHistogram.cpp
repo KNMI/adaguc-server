@@ -2,6 +2,8 @@
 #include "CGenericDataWarper.h"
 #include "CImageDataWriter.h"
 
+#define MAX_NUM_BINS 50
+
 int CCreateHistogram::createHistogram(CDataSource *dataSource, CDrawImage *) {
 
   CDBDebug("createHistogram");
@@ -123,11 +125,9 @@ int CCreateHistogram::addData(std::vector<CDataSource *> &dataSources) {
     float fieldMin = (float)dataSource->statistics->getMinimum();
     float fieldMax = (float)dataSource->statistics->getMaximum();
 
-    int maxNumBins = 50;
+    int bins[MAX_NUM_BINS];
 
-    int bins[maxNumBins];
-
-    for (int j = 0; j < maxNumBins; j++) bins[j] = 0;
+    for (int j = 0; j < MAX_NUM_BINS; j++) bins[j] = 0;
 
     double min = CImageDataWriter::getValueForColorIndex(dataSource, 0);
     double max = CImageDataWriter::getValueForColorIndex(dataSource, 240);
@@ -136,9 +136,9 @@ int CCreateHistogram::addData(std::vector<CDataSource *> &dataSources) {
     if (max == min) max = max + 0.000001;
     // Round min and max
 
-    double roundFactor1 = pow(10, floor(log10((max - min) / double(maxNumBins))));
+    double roundFactor1 = pow(10, floor(log10((max - min) / double(MAX_NUM_BINS))));
     CDBDebug("roundFactor1 %f", roundFactor1);
-    double roundFactor = floor(((max - min) / double(maxNumBins)) / roundFactor1) * roundFactor1;
+    double roundFactor = floor(((max - min) / double(MAX_NUM_BINS)) / roundFactor1) * roundFactor1;
     double binSize = roundFactor * 2;
     min = floor(min / roundFactor) * roundFactor;
     max = ceil(max / roundFactor) * roundFactor;
@@ -150,7 +150,7 @@ int CCreateHistogram::addData(std::vector<CDataSource *> &dataSources) {
       if (val != (float)dfNoData) {
         // CDBDebug("%f",val);
         int binIndex = int((val - min) / binSize);
-        if (binIndex < 0 || binIndex >= maxNumBins) {
+        if (binIndex < 0 || binIndex >= MAX_NUM_BINS) {
           // CDBError("Histogram errors!");
         } else {
           bins[binIndex]++;

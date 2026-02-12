@@ -40,12 +40,12 @@ int CDFObject::attachCDFReader(void *reader) {
   return 0;
 }
 void CDFObject::clear() {
-  for (auto & dimension : dimensions) {
+  for (auto &dimension : dimensions) {
     delete dimension;
     dimension = NULL;
   }
   dimensions.clear();
-  for (auto & variable : variables) {
+  for (auto &variable : variables) {
     delete variable;
     variable = NULL;
   }
@@ -176,7 +176,7 @@ void ncmlHandleAttribute(xmlNode *cur_node, CT::string NCMLVarName, CDFObject *c
             CT::string attributeValue = pszAttributeValue;
             auto attributeValues = attributeValue.split(",");
             auto attrLen = attributeValues.size();
-            double attributeValuesAsDouble[attrLen];
+            double *attributeValuesAsDouble = new double[attrLen];
             for (size_t attrN = 0; attrN < attrLen; attrN++) {
               attributeValuesAsDouble[attrN] = atof(attributeValues[attrN].c_str());
             }
@@ -197,6 +197,7 @@ void ncmlHandleAttribute(xmlNode *cur_node, CT::string NCMLVarName, CDFObject *c
               if (attrType == CDF_DOUBLE) ((double *)attr->data)[attrN] = (double)attributeValuesAsDouble[attrN];
             }
             attr->length = attrLen;
+            delete[] attributeValuesAsDouble;
           }
         }
       }

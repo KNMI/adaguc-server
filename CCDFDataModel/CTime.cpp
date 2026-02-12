@@ -414,17 +414,11 @@ int CTime::init(std::string units, std::string calendar) {
     return 1;
   }
 
-  size_t l = units.length();
-  char szUnits[l + 1];
-  szUnits[l] = '\0';
-  for (size_t j = 0; j < l; j++) {
-    szUnits[j] = units[j];
-    if (szUnits[j] == 'U') szUnits[j] = 32;
-    if (szUnits[j] == 'T') szUnits[j] = 32;
-    if (szUnits[j] == 'C') szUnits[j] = 32;
-    if (szUnits[j] == 'Z') szUnits[j] = 32;
-  }
-  scanUnits = szUnits;
+  scanUnits = units;
+  scanUnits = CT::replace(scanUnits, "U", " ");
+  scanUnits = CT::replace(scanUnits, "T", " ");
+  scanUnits = CT::replace(scanUnits, "C", " ");
+  scanUnits = CT::replace(scanUnits, "Z", " ");
 
   if (utScan(scanUnits.c_str(), &dataunits) != 0) {
     CDBError("internal error: udu_fmt_time can't parse data unit string: %s", scanUnits.c_str());

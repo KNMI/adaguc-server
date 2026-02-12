@@ -413,7 +413,7 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
     doneMatrixMaxPerSector = pointStyle.maxPointsPerCell;
   }
 
-  unsigned char doneMatrix[doneMatrixW * doneMatrixH];
+  unsigned char *doneMatrix = new unsigned char[doneMatrixW * doneMatrixH];
   for (size_t j = 0; j < size_t(doneMatrixW * doneMatrixH); j++) {
     doneMatrix[j] = 0;
   }
@@ -503,6 +503,7 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
       }
     }
   }
+  delete[] doneMatrix;
 }
 
 std::unordered_set<std::string> shouldUseFilterPoints(CStyleConfiguration *styleConfiguration) {

@@ -404,7 +404,7 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mod
 #endif
 
   size_t nrDataObjects = dataSource->getNumDataObjects();
-  CDataSource::DataObject *dataObjects[nrDataObjects];
+  std::vector<CDataSource::DataObject *> dataObjects(nrDataObjects, nullptr);
   for (size_t d = 0; d < nrDataObjects; d++) {
     dataObjects[d] = dataSource->getDataObject(d);
   }
@@ -421,9 +421,9 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mod
   }
 
   size_t numDims = swathVar->dimensionlinks.size();
-  size_t start[numDims];
-  size_t count[numDims];
-  ptrdiff_t stride[numDims];
+  size_t start[NC_MAX_DIMS];
+  size_t count[NC_MAX_DIMS];
+  ptrdiff_t stride[NC_MAX_DIMS];
   for (size_t dimInd = 0; dimInd < numDims; dimInd++) {
     start[dimInd] = 0;
     count[dimInd] = 1;

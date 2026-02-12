@@ -332,7 +332,7 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
             if (store != NULL) {
               if (store->size() != 0) {
                 dataHasBeenFoundInStore = true;
-                tm tms[store->size()];
+                std::vector<tm> tms(store->size());
 
                 try {
 
@@ -744,7 +744,7 @@ int getStylesForLayer(MetadataLayer *metadataLayer) {
     metadataLayer->layerMetadata.styleList.push_back(style);
   }
 
-  for (auto s: *styleListFromDataSource) {
+  for (auto s : *styleListFromDataSource) {
     delete s;
   }
   delete styleListFromDataSource;

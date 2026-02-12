@@ -66,7 +66,7 @@ public:
     }
     IndexRange();
   };
-  std::vector<CImageDataWriter::IndexRange> getIndexRangesForRegex(CT::string match, CT::string *attributeValues, int n);
+
   static std::map<std::string, CImageDataWriter::ProjCacheInfo> projCacheMap;
   static std::map<std::string, CImageDataWriter::ProjCacheInfo>::iterator projCacheIter;
   static ProjCacheInfo GetProjInfo(CT::string ckey, CDrawImage *drawImage, CDataSource *dataSource, CImageWarper *imageWarper, CServerParams *srvParam, int dX, int dY);

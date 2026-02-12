@@ -226,9 +226,9 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
 
   /* Including x and y dimensions, without virtual dims */
   int numberOfDims = numberOfDataSourceDims + 2;
-  size_t start[numberOfDims], count[numberOfDims];
-  ptrdiff_t stride[numberOfDims];
-  std::string dimName[numberOfDims];
+  size_t start[NC_MAX_DIMS], count[NC_MAX_DIMS];
+  ptrdiff_t stride[NC_MAX_DIMS];
+  std::string dimName[NC_MAX_DIMS];
 
   std::vector<CURResult> results;
 
@@ -400,7 +400,7 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
             }
 #endif
             try {
-              int multiplies[variable->dimensionlinks.size()];
+              int multiplies[NC_MAX_DIMS];
               for (size_t d = 0; d < variable->dimensionlinks.size(); d += 1) {
                 int m = 1;
 
@@ -412,7 +412,6 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
               }
 
               for (size_t indexInVariable = 0; indexInVariable < variable->getSize(); indexInVariable++) {
-
                 CURResult currentResultForIndex;
                 currentResultForIndex.parent = this;
                 currentResultForIndex.numDims = numberOfDataSourceDims;

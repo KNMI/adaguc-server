@@ -67,7 +67,7 @@ private:
     if (x >= 0 && y >= 0 && x < (int)drawFunctionState.width && y < (int)drawFunctionState.height) {
       ((T *)drawFunctionState.data)[x + y * drawFunctionState.width] = val;
     }
-  };
+  }
 
   CServerParams *srvParam;
   GDALDriverH hMemDriver2, hOutputDriver;
