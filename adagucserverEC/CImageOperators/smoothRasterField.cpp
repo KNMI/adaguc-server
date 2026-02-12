@@ -44,17 +44,15 @@ template <typename T> T smoothingAtLocation(int sourceX, int sourceY, T *sourceG
   double distanceAmmount = 0;
   double resultValue = 0;
   int smoothWindowSize = settings.smoothingFiter;
-//  size_t dWinP = -1;
 
   for (int y1 = -smoothWindowSize; y1 < smoothWindowSize + 1; y1++) {
     for (int x1 = -smoothWindowSize; x1 < smoothWindowSize + 1; x1++) {
-//      dWinP++;
       auto sx = x1 + sourceX;
       auto sy = y1 + sourceY;
       if (sx < warperState.sourceGridWidth && sy < warperState.sourceGridHeight && sx >= 0 && sy >= 0) {
         double value = (double)(sourceGrid[(sx) + (sy)*warperState.sourceGridWidth]);
         if ((settings.hasNodataValue && ((value) == (T)settings.dfNodataValue)) || !(value == value)) continue;
-        double d = 1; // settings.smoothingDistanceMatrix[dWinP];
+        double d = 1;
         distanceAmmount += d;
         resultValue += value * d;
       }
