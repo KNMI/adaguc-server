@@ -52,7 +52,18 @@
     <Abstract>Displays the solar zenith angle (SZA). The SZA ranges from 0 to 90 degrees during the day, and from 90 and up to 180 degrees at night.</Abstract>
 
     <Name>solarterminator</Name>
-    <DataPostProc algorithm="solarterminator"/>
+    <DataPostProc algorithm="solarterminator" stride="1"/>
+    <Variable>solarterminator</Variable>
+    <Styles>solt_continuous,solt_twilight</Styles>
+    <Dimension interval="PT10M">time</Dimension>
+  </Layer>
+
+  <Layer type="liveupdate" enable_edr="false">
+    <Title>Solar Zenith Angle (SZA) - Fast</Title>
+    <Abstract>Displays the solar zenith angle (SZA). The SZA ranges from 0 to 90 degrees during the day, and from 90 and up to 180 degrees at night.</Abstract>
+
+    <Name>solarterminator-fast</Name>
+    <DataPostProc algorithm="solarterminator" stride="20"/>
     <Variable>solarterminator</Variable>
     <Styles>solt_continuous,solt_twilight</Styles>
     <Dimension interval="PT10M">time</Dimension>

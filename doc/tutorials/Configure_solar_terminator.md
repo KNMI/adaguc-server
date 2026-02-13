@@ -48,6 +48,9 @@ Feel free to customize the style to your preference, such as adding a fill color
 
 The `offset` attribute is optional, with the default being one year. The time range that will be made available is `(now-offset, now+offset)`.
 
+
+The `stride` attribute is optional, it determines how many pixels in the getmap request should be grouped before doing a new calculation
+
 ## Step 3: Scan the new data
 
 ```

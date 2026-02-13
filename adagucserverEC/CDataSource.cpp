@@ -351,6 +351,10 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Conf
   cfgLayer = _cfgLayer;
   datasourceIndex = layerIndex;
 
+  if (this->dataObjects.size() > 0) {
+    CDBWarning("DataSource already has dataobjects, cannot setCFGLayer");
+    return 1;
+  }
   // Make DataObjects for each Variable defined in the Layer.
   for (size_t j = 0; j < cfgLayer->Variable.size(); j++) {
     DataObject *newDataObject = new DataObject();
