@@ -861,6 +861,15 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
   // If there are no files associated with the dataSource, we treat it as a virtual one
   // Example: solar terminator
   int isVirtual = dataSource->getFileName() == NULL || dataSource->getFileName()[0] == '\0';
+  if (isVirtual) {
+    // For datasets without files, such as the Solar Terminator
+    if (enablePostProcessors) {
+      getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
+      getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
+    }
+
+    return 0;
+  }
 
   if (x != -1 && y != -1) {
     singleCellMode = true;
@@ -1050,11 +1059,6 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 
   if (enablePostProcessors) {
     getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
-  }
-
-  // For datasets without files, such as the Solar Terminator
-  if (isVirtual) {
-    getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
   }
 
   if (mode == CNETCDFREADER_MODE_GET_METADATA) {

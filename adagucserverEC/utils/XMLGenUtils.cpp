@@ -120,6 +120,9 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
       if (d->filterFromOutput) {
         continue;
       }
+      if (d->cdfVariable == nullptr) {
+        continue;
+      }
       CDF::Attribute *longName = d->cdfVariable->getAttributeNE("long_name");
       if (longName == nullptr) {
         longName = d->cdfVariable->getAttributeNE("standard_name");
@@ -744,7 +747,7 @@ int getStylesForLayer(MetadataLayer *metadataLayer) {
     metadataLayer->layerMetadata.styleList.push_back(style);
   }
 
-  for (auto s: *styleListFromDataSource) {
+  for (auto s : *styleListFromDataSource) {
     delete s;
   }
   delete styleListFromDataSource;

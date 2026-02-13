@@ -490,7 +490,7 @@ int CRequest::process_wms_getmap_request() {
     if (j > 0) message.concat(",");
     message.printconcat("(%d) %s", j, srvParam->requestedLayerNames[j].c_str());
   }
-  CDBDebug(message.c_str());
+  CDBDebug("%s", message.c_str());
 #endif
   return process_all_layers();
 }
@@ -671,7 +671,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
                   CDBStore::Store *maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getClosestDataTimeToSystemTime(ogcDim->netCDFDimName.c_str(), tableName.c_str());
 
                   if (maxStore == NULL) {
-                    CDBDebug("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
+                    CDBError("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
                     throw InvalidDimensionValue;
                     //                     setExceptionType(InvalidDimensionValue);
                     //                     CDBError("Invalid dimension value for layer
@@ -686,7 +686,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
                   // For other dimensions than time take the latest
                   CDBStore::Store *maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getMax(ogcDim->netCDFDimName.c_str(), tableName.c_str());
                   if (maxStore == NULL) {
-                    CDBDebug("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
+                    CDBError("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
                     throw InvalidDimensionValue;
                     //                     setExceptionType(InvalidDimensionValue);
                     //                     CDBError("Invalid dimension value for layer
@@ -792,7 +792,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
         }
 
         if (maxStore == NULL) {
-          CDBDebug("No table with values for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
+          CDBError("No table with values for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
           throw InvalidDimensionValue;
         }
         ogcDim->value.copy(maxStore->getRecord(0)->get(0));
@@ -869,7 +869,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
 #ifdef CREQUEST_DEBUG
   for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
     auto *requiredDim = dataSource->requiredDims[j];
-    CDBDebug("dataSource->requiredDims[%d][%s] = [%s] (%s)", j, requiredDim->name.c_str(), requiredDim->value.c_str(), requiredDim->netCDFDimName.c_str());
+    CDBDebug("dataSource->requiredDims[%lu][%s] = [%s] (%s)", j, requiredDim->name.c_str(), requiredDim->value.c_str(), requiredDim->netCDFDimName.c_str());
     CDBDebug("%s: %s === %s", requiredDim->name.c_str(), requiredDim->value.c_str(), requiredDim->queryValue.c_str());
   }
   CDBDebug("### [</fillDimValuesForDataSource>]");
@@ -923,12 +923,11 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
           maxQueryResultLimit = dataSource->cfgLayer->FilePath[0]->attr.maxquerylimit.toInt();
         }
       }
-      // CDBDebug("Using maxquerylimit %d", maxQueryResultLimit);
       store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource, maxQueryResultLimit, true);
     }
 
     if (store == NULL) {
-      CDBDebug("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
+      CDBError("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
       throw InvalidDimensionValue;
     }
     if (store->getSize() == 0) {
@@ -944,6 +943,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
         }
         return 0;
       }
+      CDBError("Store has no results. Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
       throw InvalidDimensionValue;
     }
 
@@ -952,7 +952,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
       // CDBDebug("Addstep");
       dataSource->addStep(record->get(0)->c_str());
 #ifdef CREQUEST_DEBUG
-      CDBDebug("Step %d: [%s]", k, record->get(0)->c_str());
+      CDBDebug("Step %lu: [%s]", k, record->get(0)->c_str());
 #endif
       // For each timesteps a new set of dimensions is added with corresponding dim array indices.
       for (size_t i = 0; i < dataSource->requiredDims.size(); i++) {
@@ -1673,7 +1673,7 @@ int CRequest::process_querystring() {
       srvParam->geoParams.height = int(((srvParam->geoParams.bbox.bottom - srvParam->geoParams.bbox.top) / srvParam->dfResY));
       srvParam->geoParams.height = abs(srvParam->geoParams.height);
 #ifdef CREQUEST_DEBUG
-      CDBDebug("Calculated width height based on resx resy %d,%d", srvParam->geoParams.dWidth, srvParam->geoParams.dHeight);
+      CDBDebug("Calculated width height based on resx resy %d,%d", srvParam->geoParams.width, srvParam->geoParams.height);
 #endif
     }
   }

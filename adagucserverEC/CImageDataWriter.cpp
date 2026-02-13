@@ -543,7 +543,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
 #endif
 
 #ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("[getFeatureInfo] %d, %d, [%d,%d]", dataSources.size(), dataSourceIndex, dX, dY);
+  CDBDebug("[getFeatureInfo] %lu, %d, [%d,%d]", dataSources.size(), dataSourceIndex, dX, dY);
 #endif
   // Create a new getFeatureInfoResult object and push it into the vector.
   int status = 0;
@@ -806,7 +806,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
             }
 
 #ifdef CIMAGEDATAWRITER_DEBUG
-            CDBDebug("getFeatureInfoResult->elements has %d elements\n", getFeatureInfoResult->elements.size());
+            CDBDebug("getFeatureInfoResult->elements has %lu elements\n", getFeatureInfoResult->elements.size());
 #endif
             // Retrieve corresponding values.
             //       #ifdef CIMAGEDATAWRITER_DEBUG
@@ -825,7 +825,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
               }
 
 #ifdef CIMAGEDATAWRITER_DEBUG
-              CDBDebug("ptr = %d Dataobject = %d Timestep = %d", ptr, o, dataSource->getCurrentTimeStep());
+              CDBDebug("ptr = %lu Dataobject = %lu Timestep = %d", ptr, o, dataSource->getCurrentTimeStep());
 #endif
               dataSource->setTimeStep(step);
               double pixel = convertValue(dataSource->getDataObject(o)->cdfVariable->getType(), dataSource->getDataObject(o)->cdfVariable->data, ptr);
@@ -932,7 +932,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
           }
 // reader.close();
 #ifdef CIMAGEDATAWRITER_DEBUG
-          CDBDebug("dataSource->getNumDataObjects()==%d", dataSource->getNumDataObjects());
+          CDBDebug("dataSource->getNumDataObjects()==%lu", dataSource->getNumDataObjects());
 #endif
         }
       }
@@ -945,7 +945,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
     }
   }
 #ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("[/getFeatureInfo %d]", getFeatureInfoResultList.size());
+  CDBDebug("[/getFeatureInfo %lu]", getFeatureInfoResultList.size());
 #endif
   return 0;
 }
@@ -1210,7 +1210,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
                                      styleConfiguration->contourIntervalL);
 
         for (size_t j = 0; j < styleConfiguration->shadeIntervals.size(); j++) {
-          const auto& shadeInterval = styleConfiguration->shadeIntervals[j];
+          const auto &shadeInterval = styleConfiguration->shadeIntervals[j];
           if (shadeInterval.attr.min.empty() == false && shadeInterval.attr.max.empty() == false) {
             bilinearSettings.printconcat("shading=min(%s)$max(%s)$", shadeInterval.attr.min.c_str(), shadeInterval.attr.max.c_str());
             if (shadeInterval.attr.fillcolor.empty() == false) {
@@ -1384,7 +1384,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
   int status = 0;
 
 #ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("Draw data. dataSources.size() =  %d", dataSources.size());
+  CDBDebug("Draw data. dataSources.size() =  %lu", dataSources.size());
 #endif
 
   for (size_t j = 0; j < dataSources.size(); j++) {
@@ -1775,7 +1775,7 @@ int CImageDataWriter::end() {
   writerStatus = finished;
   if (srvParam->requestType == REQUEST_WMS_GETFEATUREINFO) {
 #ifdef CIMAGEDATAWRITER_DEBUG
-    CDBDebug("end, number of GF results: %d", getFeatureInfoResultList.size());
+    CDBDebug("end, number of GF results: %lu", getFeatureInfoResultList.size());
 #endif
     enum ResultFormats { textplain, texthtml, textxml, applicationvndogcgml, imagepng, json, imagepng_eprofile };
     ResultFormats resultFormat = texthtml;
@@ -2912,7 +2912,7 @@ CColor CImageDataWriter::getPixelColorForValue(CDataSource *dataSource, float va
   if (!isNodata) {
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
     for (size_t j = 0; j < styleConfiguration->shadeIntervals.size(); j++) {
-      const auto& shadeInterval = styleConfiguration->shadeIntervals[j];
+      const auto &shadeInterval = styleConfiguration->shadeIntervals[j];
       if (shadeInterval.attr.min.empty() == false && shadeInterval.attr.max.empty() == false) {
         if ((val >= atof(shadeInterval.attr.min.c_str())) && (val < atof(shadeInterval.attr.max.c_str()))) {
           return CColor(shadeInterval.attr.fillcolor.c_str());
