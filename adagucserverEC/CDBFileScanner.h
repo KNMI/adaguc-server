@@ -59,8 +59,6 @@ class CDBFileScanner {
 private:
   static int createDBUpdateTables(CDataSource *dataSource, int &removeNonExistingFiles, std::vector<std::string> *fileList, bool recreateTable);
 
-  static std::vector<CT::string> tableNamesDone;
-
   static std::set<std::string> filesDeletedFromFS;
 
   static void handleDirHasNewFile(std::string) {}
@@ -74,8 +72,8 @@ private:
 public:
   static int scanFile(CT::string fileToScan, CDataSource *dataSource, int scanFlags);
   static int DBLoopFiles(CDataSource *dataSource, int removeNonExistingFiles, std::vector<std::string> *fileList, int scanFlags);
-  static bool isTableAlreadyScanned(CT::string *tableName);
-  static void markTableDirty(CT::string *tableName);
+  static bool isTableAlreadyScanned(const std::string &tableName);
+  static void markTableDirty(const std::string &tableName);
   /**
    * Populates dirReader with files defined by the path, exp and tailPath parameters
    * @param path: This is usually the configured FilePath in the Layers configuration, can also be an OpenDAP URL

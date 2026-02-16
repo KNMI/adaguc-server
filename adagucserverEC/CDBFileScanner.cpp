@@ -34,30 +34,24 @@
 #include "utils/LayerMetadataStore.h"
 #include "utils/ConfigurationUtils.h"
 
-std::vector<CT::string> CDBFileScanner::tableNamesDone;
+std::vector<std::string> tableNamesDone;
 // #define CDBFILESCANNER_DEBUG
 #define ISO8601TIME_LEN 32
 
 #define CDBFILESCANNER_TILECREATIONFAILED -100
 
 std::vector<std::string> CDBFileScanner::filesToDeleteFromDB;
-bool CDBFileScanner::isTableAlreadyScanned(CT::string *tableName) {
+bool CDBFileScanner::isTableAlreadyScanned(const std::string &tableName) {
   for (size_t t = 0; t < tableNamesDone.size(); t++) {
-    if (tableNamesDone[t].equals(tableName->c_str())) {
+    if (tableNamesDone[t] == tableName) {
       return true;
     }
   }
   return false;
 }
-void CDBFileScanner::markTableDirty(CT::string *tableName) {
-  CDBDebug("Marking table dirty: %lu %s", tableNamesDone.size(), tableName->c_str());
-  for (size_t t = 0; t < tableNamesDone.size(); t++) {
-    if (tableNamesDone[t].equals(tableName->c_str())) {
-      tableNamesDone.erase(tableNamesDone.begin() + t);
-      CDBDebug("Table marked dirty %lu %s", tableNamesDone.size(), tableName->c_str());
-      return;
-    }
-  }
+void CDBFileScanner::markTableDirty(const std::string &tableName) {
+  CDBDebug("Marking table dirty: %lu %s", tableNamesDone.size(), tableName.c_str());
+  std::erase(tableNamesDone, tableName);
 }
 
 /**
@@ -169,7 +163,7 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
     int tableType = 0;
 
     // Check whether we already did this table in this scan
-    bool skip = isTableAlreadyScanned(&tableName);
+    bool skip = isTableAlreadyScanned(tableName);
     if (skip == false) {
 
 #ifdef CDBFILESCANNER_DEBUG
@@ -274,16 +268,15 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
     // Setup variables like tableNames and timedims for each dimension
     size_t numDims = dataSource->cfgLayer->Dimension.size();
 
-    bool isTimeDim[numDims];
-    CT::string dimNames[numDims];
-    // CT::string tableColumns[numDims];
-    CT::string tableNames[numDims];
-    // CT::string tableNames_temp[numDims];
-    bool skipDim[numDims];
+    std::vector<bool> isTimeDim(numDims, false);
+    std::vector<bool> skipDim(numDims, false);
+    std::vector<std::string> dimNames(numDims);
+    std::vector<std::string> tableNames(numDims);
+
     CT::string queryString;
     // CT::string VALUES;
     // CADAGUC_time *ADTime  = NULL;
-    CTime *adagucTime;
+    CTime *adagucTime = nullptr;
 
     // Sort the fileList alphabetically, which normally corresponds to time order
     std::sort(fileList->begin(), fileList->end());
@@ -298,7 +291,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
 
     for (size_t d = 0; d < dataSource->cfgLayer->Dimension.size(); d++) {
 
-      dimNames[d].copy(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
+      dimNames[d] = CT::toLowerCase(dataSource->cfgLayer->Dimension[d]->attr.name);
 
       isTimeDim[d] = false;
       skipDim[d] = false;
@@ -315,12 +308,12 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
       if (dtype == CDataReader::dtype_none) {
         CDBWarning("dtype_none for %s", dimNames[d].c_str());
       }
-      dimNames[d].toLowerCaseSelf();
+
       if (dtype == CDataReader::dtype_time || dtype == CDataReader::dtype_reference_time) {
         isTimeDim[d] = true;
       }
       if (verbose) {
-        CDBDebug("Found dimension %lu with name %s of type %d, istimedim: [%d]", d, dimNames[d].c_str(), dtype, isTimeDim[d]);
+        CDBDebug("Found dimension %lu with name %s of type %d, istimedim: [%d]", d, dimNames[d].c_str(), dtype, int(isTimeDim[d]));
       }
 
       try {
@@ -339,7 +332,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
       //         tableNames_temp[d].concat("_temp");
       //       }
       //
-      skipDim[d] = isTableAlreadyScanned(&tableNames[d]);
+      skipDim[d] = isTableAlreadyScanned(tableNames[d]);
       if (skipDim[d]) {
         if (dataSource->srvParams->verbose) {
           CDBDebug("Already scanned dimension '%s' with table '%s'.", dimNames[d].c_str(), tableNames[d].c_str());
@@ -705,6 +698,10 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
                             // PrintISOTime return a 0 if succeeded
 
                             try {
+                              if (adagucTime == nullptr) {
+                                CDBDebug("adagucTime is nullptr");
+                                throw(__LINE__);
+                              }
                               uniqueKey = adagucTime->dateToISOString(adagucTime->getDate(dimValues[i]));
                               if (!dataSource->cfgLayer->Dimension[d]->attr.quantizeperiod.empty()) {
                                 CT::string quantizemethod = "round";
@@ -981,7 +978,7 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string _tailPath, CT::
       if (cleanFilesResult.second.size() > 0) {
         CDBDebug("Cleanfiles deleted %lu files.", cleanFilesResult.second.size());
         // Remove the deleted files from the fileList.
-        for (auto item : cleanFilesResult.second) {
+        for (auto item: cleanFilesResult.second) {
           auto it = std::find(fileList.begin(), fileList.end(), item);
           if (it != fileList.end()) {
             fileList.erase(it);

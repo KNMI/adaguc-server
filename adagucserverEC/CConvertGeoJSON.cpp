@@ -35,8 +35,15 @@
 #define CCONVERTGEOJSONCOORDS_NODATA -32000
 #define CCONVERTGEOJSON_FILL 65535u
 
+struct Hole {
+  int holeSize;
+  float *holeX;
+  float *holeY;
+  float *projectedHoleXY;
+};
+
 int cntCnt = 0;
-void CConvertGeoJSON::buildNodeList(int pixelY, int &nodes, int nodeX[], int polyCorners, float *polyXY) {
+void buildNodeList(int pixelY, int &nodes, int nodeX[], int polyCorners, float *polyXY) {
   int i, j;
   int i2, j2;
   cntCnt++;
@@ -53,7 +60,7 @@ void CConvertGeoJSON::buildNodeList(int pixelY, int &nodes, int nodeX[], int pol
   }
 }
 
-void CConvertGeoJSON::bubbleSort(int nodes, int nodeX[]) {
+void bubbleSort(int nodes, int nodeX[]) {
   //  Sort the nodes, via a simple “Bubble” sort.
   int i, swap;
   i = 0;
@@ -69,14 +76,14 @@ void CConvertGeoJSON::bubbleSort(int nodes, int nodeX[]) {
   }
 }
 
-void CConvertGeoJSON::drawpolyWithHoles_index(int xMin, int yMin, int xMax, int yMax, unsigned short int *imagedata, int w, int h, int polyCorners, float *polyXY, unsigned short int value, int holes,
-                                              int *holeCorners, float *holeXY[]) {
+void drawpolyWithHoles_index(int xMin, int yMin, int xMax, int yMax, unsigned short int *imagedata, int w, int h, int polyCorners, float *polyXY, unsigned short int value, int holes,
+                             Hole *holeArray) {
   if (xMax < 0 || yMax < 0 || xMin >= w || yMin >= h) return;
 
   //  public-domain code by Darel Rex Finley, 2007
 
   size_t nodeXLength = polyCorners * 2 + 1;
-  int nodes, nodeX[nodeXLength], pixelY, i;
+  int nodes, pixelY, i;
 
   if (xMin < 0) xMin = 0;
   if (yMin < 5) yMin = 0;
@@ -90,8 +97,9 @@ void CConvertGeoJSON::drawpolyWithHoles_index(int xMin, int yMin, int xMax, int 
   int IMAGE_RIGHT = xMax;
   int scanLineWidth = IMAGE_RIGHT - IMAGE_LEFT;
 
+  int *nodeX = new int[nodeXLength];
   // Allocate  scanline
-  unsigned short scanline[scanLineWidth];
+  unsigned short *scanline = new unsigned short[scanLineWidth];
   // Loop through the rows of the image.
   for (pixelY = IMAGE_TOP; pixelY < IMAGE_BOT; pixelY++) {
 
@@ -109,7 +117,7 @@ void CConvertGeoJSON::drawpolyWithHoles_index(int xMin, int yMin, int xMax, int 
     }
 
     for (int h = 0; h < holes; h++) {
-      buildNodeList(pixelY, nodes, nodeX, holeCorners[h], holeXY[h]);
+      buildNodeList(pixelY, nodes, nodeX, holeArray[h].holeSize, holeArray[h].projectedHoleXY);
       bubbleSort(nodes, nodeX);
       for (i = 0; i < nodes; i += 2) {
         int x1 = nodeX[i] - IMAGE_LEFT;
@@ -128,6 +136,8 @@ void CConvertGeoJSON::drawpolyWithHoles_index(int xMin, int yMin, int xMax, int 
       }
     }
   }
+  delete[] nodeX;
+  delete[] scanline;
 };
 
 std::map<std::string, std::vector<Feature *>> CConvertGeoJSON::featureStore;
@@ -160,7 +170,7 @@ void CConvertGeoJSON::clearFeatureStore(CT::string name) {
 
 std::vector<Feature *> getPointFeatures(std::vector<Feature *> features) {
   std::vector<Feature *> pointFeatures;
-  for (Feature *f : features) {
+  for (Feature *f: features) {
     std::vector<GeoPoint> *pts = f->getPoints();
     if (pts->size() > 0) {
       pointFeatures.push_back(f);
@@ -357,7 +367,7 @@ void CConvertGeoJSON::addCDFInfo(CDFObject *cdfObject, CServerParams *, BBOX &df
   int featureCnt = 0;
   int numPoints = 0;
   int numPolys = 0;
-  for (auto & sample : featureMap) {
+  for (auto &sample: featureMap) {
     ((const char **)featureIdVar->data)[featureCnt++] = strdup(sample->getId().c_str());
     numPoints += sample->getPoints()->size();
     numPolys += sample->getPolygons()->size();
@@ -821,7 +831,7 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
 std::vector<CDF::Dimension *> getVarDimensions(CDFObject *cdfObject) {
   std::vector<CDF::Dimension *> dims;
 
-  for (CDF::Dimension *dim : cdfObject->dimensions) {
+  for (CDF::Dimension *dim: cdfObject->dimensions) {
     // CDataReader::DimensionType dtyp = CDataReader::getDimensionType(cdfObject, dim->getName());
     CDataReader::DimensionType dtyp = CDataReader::dtype_normal;
     switch (dtyp) {
@@ -848,7 +858,7 @@ size_t getDimensionSize(CDFObject *cdfObject) {
   CDF::Dimension *dimy = cdfObject->getDimension("y");
   size = size * dimy->getSize();
 
-  for (CDF::Dimension *dim : cdfObject->dimensions) {
+  for (CDF::Dimension *dim: cdfObject->dimensions) {
     CDataReader::DimensionType dtyp = CDataReader::getDimensionType(cdfObject, dim->getName());
     switch (dtyp) {
     case CDataReader::dtype_reference_time:
@@ -871,7 +881,7 @@ int CConvertGeoJSON::addPropertyVariables(CDFObject *cdfObject, std::vector<Feat
 
   std::vector<CDF::Dimension *> varDims = getVarDimensions(cdfObject);
 
-  for (Feature *feature : pointFeatures) {
+  for (Feature *feature: pointFeatures) {
     // std::vector<GeoPoint> *pts = feature->getPoints();
     std::map<std::string, FeatureProperty *> *featurePropertyMap = feature->getFp();
     for (auto iter = featurePropertyMap->begin(); iter != featurePropertyMap->end(); ++iter) {
@@ -1173,11 +1183,11 @@ void CConvertGeoJSON::drawPolygons(Feature *feature, unsigned short int featureI
     float *polyX = itpoly->getLons();
     float *polyY = itpoly->getLats();
     int numPolygonPoints = itpoly->getSize();
-    float projectedXY[numPolygonPoints * 2];
+    float *projectedXY = new float[numPolygonPoints * 2];
     float minX = FLT_MAX, minY = FLT_MAX;
     float maxX = -FLT_MAX, maxY = -FLT_MAX;
 
-    int pxMin, pxMax, pyMin, pyMax, first = 0;
+    int pxMin = 0, pxMax = 0, pyMin = 0, pyMax = 0, first = 0;
 
     for (int j = 0; j < numPolygonPoints; j++) {
       double tprojectedX = polyX[j];
@@ -1218,19 +1228,18 @@ void CConvertGeoJSON::drawPolygons(Feature *feature, unsigned short int featureI
 
     std::vector<PointArray> holes = itpoly->getHoles();
     int nrHoles = holes.size();
-    int holeSize[nrHoles];
-    float *holeX[nrHoles];
-    float *holeY[nrHoles];
-    float *projectedHoleXY[nrHoles];
+
+    Hole *holeArray = new Hole[nrHoles];
+
     int h = 0;
     for (std::vector<PointArray>::iterator itholes = holes.begin(); itholes != holes.end(); ++itholes) {
-      holeX[h] = itholes->getLons();
-      holeY[h] = itholes->getLats();
-      holeSize[h] = itholes->getSize();
-      projectedHoleXY[h] = new float[holeSize[h] * 2];
-      for (int j = 0; j < holeSize[h]; j++) {
-        double tprojectedX = holeX[h][j];
-        double tprojectedY = holeY[h][j];
+      holeArray[h].holeX = itholes->getLons();
+      holeArray[h].holeY = itholes->getLats();
+      holeArray[h].holeSize = itholes->getSize();
+      holeArray[h].projectedHoleXY = new float[holeArray[h].holeSize * 2];
+      for (int j = 0; j < holeArray[h].holeSize; j++) {
+        double tprojectedX = holeArray[h].holeX[j];
+        double tprojectedY = holeArray[h].holeY[j];
         int holeStatus = 0;
         if (projectionRequired) holeStatus = imageWarper->reprojfromLatLon(tprojectedX, tprojectedY);
         int dlon, dlat;
@@ -1241,8 +1250,8 @@ void CConvertGeoJSON::drawPolygons(Feature *feature, unsigned short int featureI
           dlat = CCONVERTGEOJSONCOORDS_NODATA;
           dlon = CCONVERTGEOJSONCOORDS_NODATA;
         }
-        projectedHoleXY[h][j * 2] = dlon;
-        projectedHoleXY[h][j * 2 + 1] = dlat;
+        holeArray[h].projectedHoleXY[j * 2] = dlon;
+        holeArray[h].projectedHoleXY[j * 2 + 1] = dlat;
         // std::vector<GeoPoint> points = feature->getPoints();
 
 #ifdef MEASURETIME
@@ -1255,12 +1264,14 @@ void CConvertGeoJSON::drawPolygons(Feature *feature, unsigned short int featureI
     int dpCount = numPolygonPoints;
     if (polygonIndexVar->getType() == CDF_USHORT) {
       unsigned short *sdata = (unsigned short *)polygonIndexVar->data;
-      drawpolyWithHoles_index(pxMin, pyMin, pxMax, pyMax, sdata, dataSource->dWidth, dataSource->dHeight, dpCount, projectedXY, featureIndex, nrHoles, holeSize, projectedHoleXY);
+      drawpolyWithHoles_index(pxMin, pyMin, pxMax, pyMax, sdata, dataSource->dWidth, dataSource->dHeight, dpCount, projectedXY, featureIndex, nrHoles, holeArray);
     }
 
     for (int h = 0; h < nrHoles; h++) {
-      delete[] projectedHoleXY[h];
+      delete[] holeArray[h].projectedHoleXY;
     }
+    delete[] holeArray;
+    delete[] projectedXY;
   }
 }
 

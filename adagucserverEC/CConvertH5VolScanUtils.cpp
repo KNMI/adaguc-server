@@ -133,10 +133,11 @@ CT::string getRadarStartTime(CDFObject *cdfObject) {
     timeString.print("%sT%s00Z", h5Date.c_str(), h5Time.substring(0, 4).c_str());
     return timeString;
   } else {
-    char szStartTime[100];
-    CT::string h5Time = cdfObject->getVariable("overview")->getAttribute("product_datetime_start")->getDataAsString();
-    CDFHDF5Reader::HDF5ToADAGUCTime(szStartTime, h5Time.c_str());
-    return CT::string(szStartTime);
+    auto timeString = knmiH5TimeToISOString(cdfObject->getVariable("overview")->getAttribute("product_datetime_start")->getDataAsString());
+    // Seconds should be rounded to zero.
+    timeString[13] = '0';
+    timeString[14] = '0';
+    return timeString;
   }
 }
 

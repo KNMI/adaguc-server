@@ -23,7 +23,7 @@ private:
     if (x >= 0 && y >= 0 && x < (int)settings.width && y < (int)settings.height) {
       ((float *)settings.data)[x + y * settings.width] = val;
     }
-  };
+  }
   CDataSource *baseDataSource;
 
 public:
