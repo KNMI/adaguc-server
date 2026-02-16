@@ -130,6 +130,7 @@ public:
   void setToSurface(cairo_surface_t *png);
   void drawBarb(int x, int y, double direction, double viewDirCorrection, double strength, CColor color, CColor outlineColor, float lineWidth, bool toKnots, bool flip, bool drawText,
                 double fontSize = 12, CColor textColor = CColor(255, 255, 255, 0), double outlineWidth = 1.0);
+  void closeFreeTypeLibrary();
 };
 
 #endif /* CCAIROPLOTTER_H_ */

@@ -316,7 +316,7 @@ CColor getDrawPointColor(CDataSource *dataSource, CDrawImage *drawImage, float v
   return drawImage->getColorForIndex(pointColorIndex);
 }
 
-void drawSymbolForPoint(CDrawImage *drawImage, std::map<std::string, CDrawImage *> symbolCache, std::string symbolFile, CServerConfig::XMLE_SymbolInterval *symbolInterval, int x, int y) {
+void drawSymbolForPoint(CDrawImage *drawImage, std::map<std::string, CDrawImage *> &symbolCache, std::string symbolFile, CServerConfig::XMLE_SymbolInterval *symbolInterval, int x, int y) {
   if (symbolFile.length() == 0) return;
 
   CDrawImage *symbol = NULL;
@@ -413,10 +413,7 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
     doneMatrixMaxPerSector = pointStyle.maxPointsPerCell;
   }
 
-  unsigned char doneMatrix[doneMatrixW * doneMatrixH];
-  for (size_t j = 0; j < size_t(doneMatrixW * doneMatrixH); j++) {
-    doneMatrix[j] = 0;
-  }
+  std::vector<unsigned char> doneMatrix(doneMatrixW * doneMatrixH, 0);
 
   float fillValueObjectOne = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
   for (size_t dataObjectIndex = 0; dataObjectIndex < dataSource->getNumDataObjects(); dataObjectIndex++) {
@@ -705,10 +702,10 @@ CColor getPixelColorForValue(CDrawImage *drawImage, CDataSource *dataSource, flo
   }
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   if (!isNodata) {
-    for (auto shadeInterval : styleConfiguration->shadeIntervals) {
-      if (shadeInterval->attr.min.empty() == false && shadeInterval->attr.max.empty() == false) {
-        if ((val >= atof(shadeInterval->attr.min.c_str())) && (val < atof(shadeInterval->attr.max.c_str()))) {
-          return CColor(shadeInterval->attr.fillcolor.c_str());
+    for (const auto &shadeInterval : styleConfiguration->shadeIntervals) {
+      if (shadeInterval.attr.min.empty() == false && shadeInterval.attr.max.empty() == false) {
+        if ((val >= atof(shadeInterval.attr.min.c_str())) && (val < atof(shadeInterval.attr.max.c_str()))) {
+          return CColor(shadeInterval.attr.fillcolor.c_str());
         }
       }
     }

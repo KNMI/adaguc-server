@@ -404,12 +404,12 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
   }
 
   size_t nrDataObjects = dataSource->getNumDataObjects();
-  CDataSource::DataObject *dataObjects[nrDataObjects];
+  std::vector<CDataSource::DataObject *> dataObjects(nrDataObjects, nullptr);
   for (size_t d = 0; d < nrDataObjects; d++) {
     dataObjects[d] = dataSource->getDataObject(d);
   }
-  CDF::Variable *new2DVar[nrDataObjects];
-  CDF::Variable *pointVar[nrDataObjects];
+  std::vector<CDF::Variable *> new2DVar(nrDataObjects);
+  std::vector<CDF::Variable *> pointVar(nrDataObjects);
 
   for (size_t d = 0; d < nrDataObjects; d++) {
     new2DVar[d] = dataObjects[d]->cdfVariable;
@@ -425,9 +425,9 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
   // Read original data first
 
   size_t numDims = pointVar[0]->dimensionlinks.size();
-  size_t start[numDims];
-  size_t count[numDims];
-  ptrdiff_t stride[numDims];
+  std::vector<size_t> start(numDims);
+  std::vector<size_t> count(numDims);
+  std::vector<ptrdiff_t> stride(numDims);
 
   /*
    * There is always a station dimension, we wish to read all stations and for the other dimensions just one: count=1;
@@ -506,7 +506,7 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
       //         CDBDebug("%d %s [%d:%d:%d]",j,pointVar[d]->dimensionlinks[j]->name.c_str(),start[j],count[j],stride[j]);
       //       }
 
-      pointVar[d]->readData(CDF_FLOAT, start, count, stride, true);
+      pointVar[d]->readData(CDF_FLOAT, start.data(), count.data(), stride.data(), true);
 
       // TODO Use altitude to correct range height
 
@@ -516,8 +516,9 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
         // Compatibilty function for LCW data, reading strings stored as fixed arrays of CDF_CHAR
         start[1] = 0;
         count[1] = pointVar[d]->dimensionlinks[1]->getSize();
-        CT::string data[count[0]];
-        pointVar[d]->readData(CDF_CHAR, start, count, stride, false);
+
+        std::vector<std::string> data(count[0]);
+        pointVar[d]->readData(CDF_CHAR, start.data(), count.data(), stride.data(), false);
         for (size_t j = 0; j < count[0]; j++) {
           data[j].copy(((char *)pointVar[d]->data + j * count[1]), count[1] - 1);
         }
@@ -543,7 +544,7 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
         }
 #endif
         pointVar[d]->freeData();
-        pointVar[d]->readData(CDF_STRING, start, count, stride, false);
+        pointVar[d]->readData(CDF_STRING, start.data(), count.data(), stride.data(), false);
       }
     }
     // pointVar[d]->readData(CDF_FLOAT,true);
@@ -754,7 +755,7 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
             if (obsTime != NULL) {
 
               //                 hasTimeValuePerObs = true;
-              timeVarPerObs->readData(CDF_DOUBLE, start, count, stride, true);
+              timeVarPerObs->readData(CDF_DOUBLE, start.data(), count.data(), stride.data(), true);
               //                 obsTimeData = (double*)timeVarPerObs->data;
             }
           }

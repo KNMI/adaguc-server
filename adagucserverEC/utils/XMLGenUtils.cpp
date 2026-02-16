@@ -116,7 +116,7 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
     metadataLayer->layerMetadata.projstring = metadataLayer->dataSource->nativeProj4;
 
     auto v = metadataLayer->dataSource->getDataObjectsVector();
-    for (auto d : (*v)) {
+    for (auto d: (*v)) {
       if (d->filterFromOutput) {
         continue;
       }
@@ -155,11 +155,11 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
 
   std::map<std::string, LayerMetadataProjection> projectionMap;
   // Make a unique list of projections
-  for (const auto &p : metadataLayer->layerMetadata.projectionList) {
+  for (const auto &p: metadataLayer->layerMetadata.projectionList) {
     projectionMap.emplace(p.name.c_str(), p);
   }
   metadataLayer->layerMetadata.projectionList.clear();
-  for (const auto &p : projectionMap) {
+  for (const auto &p: projectionMap) {
     metadataLayer->layerMetadata.projectionList.push_back(p.second);
   }
 
@@ -332,7 +332,7 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
             if (store != NULL) {
               if (store->size() != 0) {
                 dataHasBeenFoundInStore = true;
-                tm tms[store->size()];
+                std::vector<tm> tms(store->size());
 
                 try {
 
@@ -744,6 +744,9 @@ int getStylesForLayer(MetadataLayer *metadataLayer) {
     metadataLayer->layerMetadata.styleList.push_back(style);
   }
 
+  for (auto s: *styleListFromDataSource) {
+    delete s;
+  }
   delete styleListFromDataSource;
 
   return 0;

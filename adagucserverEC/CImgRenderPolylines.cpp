@@ -75,7 +75,9 @@ FeatureStyle getAttributesForFeature(CFeature *feature, CT::string id, CStyleCon
     regex_t regex;
     int ret = regcomp(&regex, featureAttr.match.c_str(), 0);
     if (ret) continue;
-    if (regexec(&regex, matchString.c_str(), 0, NULL, 0) != 0) continue;
+    int status = regexec(&regex, matchString.c_str(), 0, NULL, 0);
+    regfree(&regex);
+    if (status != 0) continue;
     return {.backgroundColor = backgroundColor,
             .borderColor = featureAttr.bordercolor.empty() ? "#008000FF" : featureAttr.bordercolor.c_str(),
             .borderWidth = ((featureAttr.borderwidth.empty() == false) && ((featureAttr.borderwidth.toDouble()) > 0)) ? featureAttr.borderwidth.toDouble() : 0,
@@ -104,7 +106,7 @@ FeatureStyle getAttributesForFeature(CFeature *feature, CT::string id, CStyleCon
           .padding = 3};
 }
 
-f8point compute2DPolygonCentroid(const f8point *vertices, int vertexCount) {
+f8point compute2DPolygonCentroid(const std::vector<f8point> &vertices) {
   f8point centroid = {0, 0};
   double signedArea = 0.0;
   double x0 = 0.0; // Current vertex X
@@ -112,7 +114,7 @@ f8point compute2DPolygonCentroid(const f8point *vertices, int vertexCount) {
   double x1 = 0.0; // Next vertex X
   double y1 = 0.0; // Next vertex Y
   double a = 0.0;  // Partial signed area
-
+  int vertexCount = vertices.size();
   int lastdex = vertexCount - 1;
   const f8point *prev = &(vertices[lastdex]);
   const f8point *next;
@@ -139,12 +141,12 @@ f8point compute2DPolygonCentroid(const f8point *vertices, int vertexCount) {
 }
 
 f8point getCentroid(const float *polyX, const float *polyY, const int numPoints) {
-  f8point vertices[numPoints];
+  std::vector<f8point> vertices(numPoints);
   for (int i = 0; i < numPoints; i++) {
     vertices[i].x = polyX[i];
     vertices[i].y = polyY[i];
   }
-  return compute2DPolygonCentroid(vertices, numPoints);
+  return compute2DPolygonCentroid(vertices);
 }
 
 void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSource, CDrawImage *drawImage) {
@@ -155,28 +157,6 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
   CColor defaultColor(0, 0, 0, 255);
 
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-  if (styleConfiguration != NULL) {
-    int numFeatures = styleConfiguration->featureIntervals.size();
-    CT::string attributeValues[numFeatures];
-    /* Loop through all configured FeatureInterval elements */
-    for (size_t j = 0; j < styleConfiguration->featureIntervals.size(); j++) {
-      CServerConfig::XMLE_FeatureInterval *featureInterval = styleConfiguration->featureIntervals[j];
-      if (featureInterval->attr.match.empty() == false && featureInterval->attr.matchid.empty() == false) {
-        /* Get the matchid attribute for the feature */
-        CT::string attributeName = featureInterval->attr.matchid;
-        for (int featureNr = 0; featureNr < numFeatures; featureNr++) {
-          attributeValues[featureNr] = "";
-          std::map<int, CFeature>::iterator feature = dataSource->getDataObject(0)->features.find(featureNr);
-          if (feature != dataSource->getDataObject(0)->features.end()) {
-            std::map<std::string, std::string>::iterator attributeValueItr = feature->second.paramMap.find(attributeName.c_str());
-            if (attributeValueItr != feature->second.paramMap.end()) {
-              attributeValues[featureNr] = attributeValueItr->second.c_str();
-            }
-          }
-        }
-      }
-    }
-  }
 
   CT::string name = dataSource->featureSet;
 
@@ -235,8 +215,8 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
           float *polyX = itpoly->getLons();
           float *polyY = itpoly->getLats();
           int numPoints = itpoly->getSize();
-          float projectedX[numPoints];
-          float projectedY[numPoints];
+          float *projectedX = new float[numPoints];
+          float *projectedY = new float[numPoints];
           bool firstPolygon = true;
 
           int cnt = 0;
@@ -288,8 +268,8 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
               float *holeX = itholes->getLons();
               float *holeY = itholes->getLats();
               int holeSize = itholes->getSize();
-              float projectedHoleX[holeSize];
-              float projectedHoleY[holeSize];
+              float *projectedHoleX = new float[holeSize];
+              float *projectedHoleY = new float[holeSize];
 
               for (int j = 0; j < holeSize; j++) {
                 double tprojectedX = holeX[j];
@@ -308,8 +288,12 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
                 projectedHoleY[j] = height - dlat;
               }
               drawImage->poly(projectedHoleX, projectedHoleY, holeSize, featureStyle.borderWidth, featureStyle.borderColor, featureStyle.fillColor, true, featureStyle.hasFill);
+              delete[] projectedHoleX;
+              delete[] projectedHoleY;
             }
           }
+          delete[] projectedX;
+          delete[] projectedY;
         }
 
         std::vector<Polyline> *polylines = feature->getPolylines();
@@ -318,8 +302,8 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
           float *polyX = itpoly->getLons();
           float *polyY = itpoly->getLats();
           int numPoints = itpoly->getSize();
-          float projectedX[numPoints];
-          float projectedY[numPoints];
+          float *projectedX = new float[numPoints];
+          float *projectedY = new float[numPoints];
 
           int cnt = 0;
           for (int j = 0; j < numPoints; j++) {
@@ -338,6 +322,8 @@ void CImgRenderPolylines::render(CImageWarper *imageWarper, CDataSource *dataSou
           }
 
           drawImage->poly(projectedX, projectedY, cnt, featureStyle.borderWidth, featureStyle.borderColor, featureStyle.fillColor, false, featureStyle.hasFill);
+          delete[] projectedX;
+          delete[] projectedY;
         }
 #ifdef MEASURETIME
         StopWatch_Stop("Feature drawn %d", featureIndex);

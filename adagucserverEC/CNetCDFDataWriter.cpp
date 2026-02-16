@@ -82,7 +82,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
 
     this->srvParam = srvParam;
 
-    std::string randomString = CServerParams::randomString(32);
+    std::string randomString = CT::randomString(32);
     tempFileName.print("%s/%s.nc", srvParam->cfg->TempDir[0]->attr.value.c_str(), randomString.c_str());
     CDataReader reader;
     reader.silent = this->silent;
@@ -657,7 +657,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       /*
        * This step figures out the required dimindex for each dimension based on timestep.
        */
-      int dimIndices[dims->getNumDimensions() + 1];
+      std::vector<int> dimIndices(dims->getNumDimensions() + 1);
 
       // CDBDebug("baseDataSource->requiredDims.size(); = %d",baseDataSource->requiredDims.size());
 
@@ -778,7 +778,8 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       }
 
       int _dimMultiplier = 1;
-      int dimMultipliers[dims->getNumDimensions() + 1];
+
+      std::vector<int> dimMultipliers(dims->getNumDimensions() + 1);
       for (size_t d = 0; d < dataSource->requiredDims.size(); d++) {
         dimMultipliers[(dataSource->requiredDims.size() - 1) - d] = _dimMultiplier;
         _dimMultiplier *= dataSource->requiredDims[(dataSource->requiredDims.size() - 1) - d]->uniqueValues.size();
@@ -981,7 +982,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
                 featureVar->name = newfeatureVarName.c_str();
                 featureVar->setType(CDF_STRING);
                 featureVar->dimensionlinks.push_back(featureIndexDim);
-                CDF::allocateData(CDF_STRING, &featureVar->data, featureIndexDim->getSize());
+                featureVar->allocateData(dataSource->getDataObject(j)->features.size());
                 destCDFObject->addVariable(featureVar);
                 featureVar->setAttributeText("long_name", paramItemIt->first.c_str());
                 featureVar->setAttributeText("auxiliary", variable->name.c_str());

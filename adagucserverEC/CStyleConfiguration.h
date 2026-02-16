@@ -57,7 +57,7 @@ struct CStyleConfiguration {
   std::vector<CServerConfig::XMLE_ContourLine *> contourLines;
   std::vector<CServerConfig::XMLE_RenderSettings *> renderSettings;
   std::vector<CServerConfig::XMLE_SmoothingFilter *> smoothingFilterVector;
-  std::vector<CServerConfig::XMLE_ShadeInterval *> shadeIntervals;
+  std::vector<CServerConfig::XMLE_ShadeInterval> shadeIntervals;
   std::vector<CServerConfig::XMLE_SymbolInterval *> symbolIntervals;
   std::vector<CServerConfig::XMLE_FeatureInterval *> featureIntervals;
   std::vector<CServerConfig::XMLE_Point *> pointIntervals;

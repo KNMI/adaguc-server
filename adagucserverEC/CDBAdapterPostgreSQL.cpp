@@ -575,7 +575,7 @@ int CDBAdapterPostgreSQL::autoUpdateAndScanDimensionTables(CDataSource *dataSour
       for (auto &m : mapping) {
         dimName = m.first;
 
-        CDBFileScanner::markTableDirty(&m.second.tableName);
+        CDBFileScanner::markTableDirty(m.second.tableName);
         // CDBDebug("Dropping old table (if exists)",tableName.c_str());
         CT::string query;
         query.print("drop table %s", m.second.tableName.c_str());
@@ -645,7 +645,7 @@ void CDBAdapterPostgreSQL::addToLookupTable(const char *path, const char *filter
 
 std::string CDBAdapterPostgreSQL::generateRandomTableName() {
   std::string tableName;
-  tableName = CT::printf("t%s_%s", CTime::currentDateTime().c_str(), CServerParams::randomString(20).c_str());
+  tableName = CT::printf("t%s_%s", CTime::currentDateTime().c_str(), CT::randomString(20).c_str());
 
   tableName = CT::replace(tableName, ".", "");
   tableName = CT::replace(tableName, ":", "");

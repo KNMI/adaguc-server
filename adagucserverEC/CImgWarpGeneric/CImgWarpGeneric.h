@@ -35,8 +35,8 @@ static inline int nfast_mod(const int input, const int ceil) { return input >= c
 
 class CImgWarpGeneric : public CImageWarperRenderInterface {
 public:
-  CImgWarpGeneric() {}
-  ~CImgWarpGeneric() {}
+  CImgWarpGeneric() = default;
+  ~CImgWarpGeneric() = default;
   void render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage) override;
   int set(const char *pszSettings) override;
 };

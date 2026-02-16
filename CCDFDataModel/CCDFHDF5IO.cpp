@@ -26,13 +26,14 @@
 #include "CCDFHDF5IO.h"
 
 #include <cmath>
+#include <netcdf.h>
 
 int CDFHDF5Reader::CustomForecastReader::readData(CDF::Variable *thisVar, size_t *start, size_t *count, ptrdiff_t *stride) {
 #ifdef CCDFHDF5IO_DEBUG
   CDBDebug("READ data for %s called", thisVar->name.c_str());
 #endif
 
-  size_t newstart[thisVar->dimensionlinks.size()];
+  std::vector<size_t> newstart(thisVar->dimensionlinks.size());
   for (size_t j = 0; j < thisVar->dimensionlinks.size(); j++) {
     newstart[j] = start[j];
 #ifdef CCDFHDF5IO_DEBUG
@@ -47,7 +48,7 @@ int CDFHDF5Reader::CustomForecastReader::readData(CDF::Variable *thisVar, size_t
   CDBDebug("Start reading %s", var->name.c_str());
 
   CDFType readType = thisVar->getType();
-  int status = var->readData(readType, newstart, count, stride, true);
+  int status = var->readData(readType, newstart.data(), count, stride, true);
 
   if (status != 0) {
     CDBError("CustomForecastReader: Unable to read variable %s", thisVar->name.c_str());
@@ -455,10 +456,15 @@ int CDFHDF5Reader::_readVariableData(CDF::Variable *var, CDFType type, size_t *s
 #endif
       hid_t HDF5_dataspace = H5Dget_space(datasetID);
       int ndims = H5Sget_simple_extent_ndims(HDF5_dataspace);
-      hsize_t dims_out[ndims];
-      H5Sget_simple_extent_dims(HDF5_dataspace, dims_out, NULL);
-      hsize_t mem_count[ndims], mem_start[ndims];
-      hsize_t data_count[ndims], data_start[ndims];
+
+      std::vector<hsize_t> dims_out(ndims);
+      std::vector<hsize_t> mem_count(ndims);
+      std::vector<hsize_t> mem_start(ndims);
+      std::vector<hsize_t> data_count(ndims);
+      std::vector<hsize_t> data_start(ndims);
+
+      H5Sget_simple_extent_dims(HDF5_dataspace, dims_out.data(), NULL);
+
       int totalVariableSize = 1;
       int dimDiff = var->dimensionlinks.size() - ndims;
       if (dimDiff < 0) dimDiff = 0;
@@ -481,34 +487,12 @@ int CDFHDF5Reader::_readVariableData(CDF::Variable *var, CDFType type, size_t *s
       if (CDF::allocateData(type, &var->data, var->getSize())) {
         throw(__LINE__);
       }
-      hid_t HDF5_memspace = H5Screate_simple(2, mem_count, NULL);
-      H5Sselect_hyperslab(HDF5_memspace, H5S_SELECT_SET, mem_start, NULL, mem_count, NULL);
-      H5Sselect_hyperslab(HDF5_dataspace, H5S_SELECT_SET, data_start, NULL, data_count, NULL);
-      // hid_t datasetType=H5Dget_type(datasetID);
+      hid_t HDF5_memspace = H5Screate_simple(2, mem_count.data(), NULL);
+      H5Sselect_hyperslab(HDF5_memspace, H5S_SELECT_SET, mem_start.data(), NULL, mem_count.data(), NULL);
+      H5Sselect_hyperslab(HDF5_dataspace, H5S_SELECT_SET, data_start.data(), NULL, data_count.data(), NULL);
       hid_t datasetType = cdfTypeToHDFType(type);
       H5Dread(datasetID, datasetType, HDF5_memspace, HDF5_dataspace, H5P_DEFAULT, var->data);
 
-      /*
-      if(type==CDF_USHORT){
-      for(size_t j=0;j<var->getSize();j++){
-      unsigned short a=((unsigned short*)(var->data))[j];
-      unsigned char p1=a;
-      unsigned char p2=a/256;
-      a=p1*256+p2;
-      ((unsigned short*)(var->data))[j]=a;
-    }
-    }
-      if(type==CDF_SHORT){
-      for(size_t j=0;j<var->getSize();j++){
-      short a=((short*)(var->data))[j];
-      char p1=a;
-      char p2=a/256;
-      a=p1*256+p2;
-      ((short*)(var->data))[j]=a;
-    }
-    }*/
-
-      // H5Tclose(datasetType);
       H5Sclose(HDF5_memspace);
       H5Sclose(HDF5_dataspace);
       H5Dclose(datasetID);
@@ -547,9 +531,12 @@ int CDFHDF5Reader::_readVariableData(CDF::Variable *var, CDFType type) {
     if (datasetID > 0) {
       hid_t HDF5_dataspace = H5Dget_space(datasetID);
       int ndims = H5Sget_simple_extent_ndims(HDF5_dataspace);
-      hsize_t dims_out[ndims];
-      H5Sget_simple_extent_dims(HDF5_dataspace, dims_out, NULL);
-      hsize_t mem_count[ndims], mem_start[ndims];
+
+      std::vector<hsize_t> dims_out(ndims);
+      std::vector<hsize_t> mem_count(ndims);
+      std::vector<hsize_t> mem_start(ndims);
+      H5Sget_simple_extent_dims(HDF5_dataspace, dims_out.data(), NULL);
+
       int totalVariableSize = 1;
 
       for (int d = 0; d < ndims; d++) {
@@ -564,9 +551,9 @@ int CDFHDF5Reader::_readVariableData(CDF::Variable *var, CDFType type) {
       if (CDF::allocateData(type, &var->data, var->getSize())) {
         throw(__LINE__);
       }
-      hid_t HDF5_memspace = H5Screate_simple(2, mem_count, NULL);
-      H5Sselect_hyperslab(HDF5_memspace, H5S_SELECT_SET, mem_start, NULL, mem_count, NULL);
-      H5Sselect_hyperslab(HDF5_dataspace, H5S_SELECT_SET, mem_start, NULL, mem_count, NULL);
+      hid_t HDF5_memspace = H5Screate_simple(2, mem_count.data(), NULL);
+      H5Sselect_hyperslab(HDF5_memspace, H5S_SELECT_SET, mem_start.data(), NULL, mem_count.data(), NULL);
+      H5Sselect_hyperslab(HDF5_dataspace, H5S_SELECT_SET, mem_start.data(), NULL, mem_count.data(), NULL);
       // hid_t datasetType=H5Dget_type(datasetID);
       hid_t datasetType = cdfTypeToHDFType(type);
       // datasetType
@@ -604,44 +591,6 @@ void CDFHDF5Reader::enableKNMIHDF5toCFConversion() {
 }
 
 void CDFHDF5Reader::enableKNMIHDF5UseEndTime() { CDFHDF5Reader::b_KNMIHDF5UseEndTime = true; }
-
-int CDFHDF5Reader::HDF5ToADAGUCTime(char *pszADAGUCTime, const char *pszRadarTime) {
-  int M;
-  char szMonth[4];
-  // All month abbreviations
-  const char *pszMonths[] = {"JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"};
-  // Copy from input time the month number
-  strncpy(szMonth, pszRadarTime + 3, 4);
-  szMonth[3] = '\0';
-  // Uppercase all
-  for (unsigned int j = 0; j < 3; j++)
-    if (szMonth[j] >= 'a' && szMonth[j] <= 'z') szMonth[j] -= 32;
-  // Try to find the month
-  for (M = 0; M < 12; M++)
-    if (strncmp(szMonth, pszMonths[M], 3) == 0) break;
-  M++; // Months are from 1-12 not 0-11
-       // The month string was not found ...
-  if (M == 13) {
-    CDBError("Invalid month: %s", szMonth);
-    return 1;
-  }
-  // 012345678901234
-  strncpy(pszADAGUCTime, "20000101T000000\0", 16);
-
-  snprintf(szMonth, 3, "%02d", M);
-  strncpy(pszADAGUCTime, pszRadarTime + 7, 4);
-  strncpy(pszADAGUCTime + 4, szMonth, 2);
-  strncpy(pszADAGUCTime + 6, pszRadarTime, 2);
-  strncpy(pszADAGUCTime + 8, "T\0", 2);
-  strncpy(pszADAGUCTime + 9, pszRadarTime + 12, 2);  // Hours
-  strncpy(pszADAGUCTime + 11, pszRadarTime + 15, 2); // Minutes
-  //       if(strlen(pszRadarTime) > 15 ) {
-  //         strncpy(pszADAGUCTime+13,pszRadarTime+18,2);
-  //       }
-  pszADAGUCTime[15] = '\0';
-  // CDBDebug("%s --> %s",pszRadarTime,pszADAGUCTime);
-  return 0;
-}
 
 int CDFHDF5Reader::convertNWCSAFtoCF() {
   if (cdfObject->getAttributeNE("PROJECTION") == NULL) {
@@ -1135,7 +1084,12 @@ int CDFHDF5Reader::readAttributes(std::vector<CDF::Attribute *> &attributes, hid
     HDF5_attribute = H5Aopen_idx(HDF5_group, j);
     size_t attNameSize = H5Aget_name(HDF5_attribute, 0, NULL);
     attNameSize++;
-    char attName[attNameSize + 1];
+    if (attNameSize > 1023) {
+      CDBError("Attribute name too long: %lu characters", attNameSize);
+
+      throw(__LINE__);
+    }
+    char attName[1024];
     H5Aget_name(HDF5_attribute, attNameSize, attName);
     hid_t HDF5_attr_type = H5Aget_type(HDF5_attribute);
     HDF5_attr_class = H5Tget_class(HDF5_attr_type);
@@ -1274,23 +1228,10 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
 #ifdef CCDFHDF5IO_DEBUG
   CDBDebug("Detecting time parameters");
 #endif
-  char szStartTime[100];
-  char szEndTime[100];
-  status = HDF5ToADAGUCTime(szStartTime, (char *)product_datetime_start->data);
-  if (status != 0) {
-    CDBError("Could not initialize time");
-    return 1;
-  }
-  status = HDF5ToADAGUCTime(szEndTime, (char *)product_datetime_end->data);
-  if (status != 0) {
-    CDBError("Could not initialize time");
-    return 1;
-  }
-  if (HDF5ToADAGUCTime(szStartTime, (char *)product_datetime_start->data) != 0) {
-    CDBError("Could not initialize time");
-    return 1;
-  }
-  if (HDF5ToADAGUCTime(szEndTime, (char *)product_datetime_end->data) != 0) {
+  auto startTime = knmiH5TimeToISOString((char *)product_datetime_start->data);
+  auto endTime = knmiH5TimeToISOString((char *)product_datetime_end->data);
+
+  if (startTime.empty() || endTime.empty()) {
     CDBError("Could not initialize time");
     return 1;
   }
@@ -1307,8 +1248,8 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
     }
     cdfObject->addVariable(product);
   }
-  product->addAttribute(new CDF::Attribute("validity_start", szStartTime));
-  product->addAttribute(new CDF::Attribute("validity_stop", szEndTime));
+  product->addAttribute(new CDF::Attribute("validity_start", startTime.c_str()));
+  product->addAttribute(new CDF::Attribute("validity_stop", endTime.c_str()));
 
   /* Try to get additional values*/
   variableName.print("image1%ssatellite", CCDFHDF5IO_GROUPSEPARATOR);
@@ -1317,12 +1258,14 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
     CDF::Attribute *image_acquisition_time = image1_satellite->getAttributeNE("image_acquisition_time");
     CDF::Attribute *image_generation_time = image1_satellite->getAttributeNE("image_generation_time");
     if (image_acquisition_time != NULL) {
-      char text[100];
-      if (HDF5ToADAGUCTime(text, (char *)image_acquisition_time->data) == 0) {
-        product->addAttribute(new CDF::Attribute("image1_acquisition_time", text));
+      auto acquisitionTime = knmiH5TimeToISOString((char *)image_acquisition_time->data);
+
+      if (acquisitionTime.empty() == false) {
+        product->addAttribute(new CDF::Attribute("image1_acquisition_time", acquisitionTime.c_str()));
       }
-      if (HDF5ToADAGUCTime(text, (char *)image_generation_time->data) == 0) {
-        product->addAttribute(new CDF::Attribute("image1_generation_time", text));
+      auto generationTime = knmiH5TimeToISOString((char *)image_generation_time->data);
+      if (generationTime.empty() == false) {
+        product->addAttribute(new CDF::Attribute("image1_generation_time", generationTime.c_str()));
       }
     }
   }
@@ -1509,7 +1452,7 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
   if (b_KNMIHDF5UseEndTime) {
     // Use product_datetime_end if explicitly configured
     try {
-      offset = ctime.dateToOffset(ctime.stringToDate(szEndTime));
+      offset = ctime.dateToOffset(ctime.stringToDate(endTime.c_str()));
     } catch (int e) {
       CT::string message = CTime::getErrorMessage(e);
       CDBError("CTime Exception %s", message.c_str());
@@ -1518,7 +1461,7 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
     }
   } else {
     try {
-      offset = ctime.dateToOffset(ctime.stringToDate(szStartTime));
+      offset = ctime.dateToOffset(ctime.stringToDate(startTime.c_str()));
     } catch (int e) {
       CT::string message = CTime::getErrorMessage(e);
       CDBError("CTime Exception %s", message.c_str());
@@ -1727,19 +1670,19 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
         if (image_datetime_valid != NULL) {
           CT::string datetime_valid = image_datetime_valid->getDataAsString();
 
-          char valid_time_iso[100];
-          status = HDF5ToADAGUCTime(valid_time_iso, datetime_valid.c_str());
-          if (status != 0) {
-            CDBError("Could not initialize time");
+          auto valid_time_iso_str = knmiH5TimeToISOString(datetime_valid.c_str());
+          if (valid_time_iso_str.empty()) {
+            CDBError("Could not convert image_datetime_valid to ISO string: %s", datetime_valid.c_str());
             return 1;
           }
+
 #ifdef CCDFHDF5IO_DEBUG
           CDBDebug("image%d:image_datetime_valid = [%s] is [%s]", variableCounter, datetime_valid.c_str(), valid_time_iso);
 #endif
 
           double offset;
           try {
-            offset = ctime.dateToOffset(ctime.stringToDate(valid_time_iso));
+            offset = ctime.dateToOffset(ctime.stringToDate(valid_time_iso_str.c_str()));
 #ifdef CCDFHDF5IO_DEBUG
             CDBDebug("Setting time offset %f for image %d", offset, variableCounter);
 #endif

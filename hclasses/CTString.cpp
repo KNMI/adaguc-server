@@ -2,6 +2,7 @@
 
 #include "CDebugger.h"
 #include <regex>
+#include <random>
 #define CT_STRING_PRINT_BUFFER_SIZE 64
 
 const char *strrstr(const char *x, const char *y) {
@@ -298,7 +299,7 @@ namespace CT {
     return t;
   }
 
-  bool string::empty() { return stdstring.size() == 0; }
+  bool string::empty() const { return stdstring.size() == 0; }
 
   void string::setSize(int size) { stdstring.resize(size); }
 
@@ -317,7 +318,7 @@ namespace CT {
 
   int string::startsWith(const std::string search) { return (indexOf(search.c_str()) == 0); };
 
-  string string::trim() {
+  string string::trim() const {
     CT::string r = stdstring.c_str();
     r.trimSelf();
     return r;
@@ -376,14 +377,14 @@ namespace CT {
     return 0;
   }
 
-  float string::toFloat() { return static_cast<float>(atof(trim().c_str())); }
+  float string::toFloat() const { return static_cast<float>(atof(trim().c_str())); }
 
   // TODO: When strings like "longlat are passed the function currently silently returns 0. Would be better to throw an exception"
-  double string::toDouble() { return atof(trim().c_str()); }
+  double string::toDouble() const { return atof(trim().c_str()); }
 
-  int string::toInt() { return atoi(c_str()); }
+  int string::toInt() const { return atoi(c_str()); }
 
-  long string::toLong() { return atol(c_str()); }
+  long string::toLong() const { return atol(c_str()); }
 
   bool is_digit(const char value) { return std::isdigit(value); }
 
@@ -485,7 +486,7 @@ namespace CT {
 
   CT::string join(const std::vector<string> &items, CT::string separator) {
     CT::string newString;
-    for (auto &item : items) {
+    for (auto &item: items) {
       newString += item.stdstring;
       newString += separator;
     }
@@ -553,5 +554,64 @@ namespace CT {
     std::string result = input;
     std::transform(result.begin(), result.end(), result.begin(), [](unsigned char c) { return std::tolower(c); });
     return result;
+  }
+
+  std::string toUpperCase(const std::string input) {
+    std::string result = input;
+    std::transform(result.begin(), result.end(), result.begin(), [](unsigned char c) { return std::toupper(c); });
+    return result;
+  }
+
+  // Trim from the start (in place)
+  void ltrim(std::string &s) {
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) { return !std::isspace(ch); }));
+  }
+
+  // Trim from the end (in place)
+  void rtrim(std::string &s) {
+    s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), s.end());
+  }
+
+  std::string trim(const std::string input) {
+    std::string result = input;
+    rtrim(result);
+    ltrim(result);
+    return result;
+  }
+  std::string randomString(const int length) {
+    const char charset[] = "0123456789"
+                           "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                           "abcdefghijklmnopqrstuvwxyz";
+    // -1 for the \0 and -1 because uniform_int_distribution uses closed bounds
+    const size_t max_index = (sizeof(charset) - 2);
+
+    static std::mt19937 engine = []() {
+      std::random_device rd;
+      return std::mt19937(rd());
+    }();
+    static std::uniform_int_distribution<int> dist(0, max_index);
+
+    auto randChar = [&charset]() -> char { return charset[dist(engine)]; };
+
+    std::string str(length, 0);
+    std::generate_n(str.begin(), length, randChar);
+    return str;
+  }
+
+  std::vector<std::string> split(const std::string &stdstring, std::string value) {
+    std::vector<std::string> stringList;
+    const char *fo = strstr(stdstring.c_str(), value.c_str());
+    const char *prevFo = stdstring.c_str();
+    size_t keyLength = value.length();
+    while (fo != nullptr) {
+      stringList.push_back(CT::string(prevFo, (fo - prevFo)));
+      prevFo = fo + keyLength;
+      fo = strstr(fo + keyLength, value.c_str());
+    }
+    size_t prevFoLength = strlen(prevFo);
+    if (prevFoLength > 0) {
+      stringList.push_back(CT::string(prevFo, prevFoLength));
+    }
+    return stringList;
   }
 } /* namespace CT */

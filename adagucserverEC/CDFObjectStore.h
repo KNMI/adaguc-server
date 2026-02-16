@@ -41,7 +41,7 @@
 class CDFObjectStore {
 private:
   // These vectors are related, same index represents a set. TODO: Use a single vector with a object containing these 3.
-  std::vector<CT::string *> fileNames;
+  std::vector<std::string> fileNames;
   std::vector<CDFObject *> cdfObjects;
   std::vector<CDFReader *> cdfReaders;
 
@@ -62,7 +62,7 @@ private:
 
 public:
   ~CDFObjectStore() { clear(); }
-  void deleteCDFObject(const CT::string &fileName);
+  void deleteCDFObject(const std::string &fileName);
   /**
    * Gets the current allocated object store
    */
@@ -87,6 +87,8 @@ public:
    * Returns how many objects can be openend in this store
    */
   int getMaxNumberOfOpenObjects();
+
+  void registerCustomCDFObject(CDFObject *&cdfObject);
 
   /**
    * Clean the CDFObject store and throw away all readers and objects

@@ -217,6 +217,15 @@ CCairoPlotter::~CCairoPlotter() {
     delete[] ARGBByteBuffer;
     ARGBByteBuffer = NULL;
   }
+  closeFreeTypeLibrary();
+}
+
+void CCairoPlotter::closeFreeTypeLibrary() {
+  if (library != nullptr) {
+    FT_Done_FreeType(library);
+    library = nullptr;
+    face = nullptr;
+  }
 }
 
 int CCairoPlotter::renderFont(FT_Bitmap *bitmap, int left, int top) {
@@ -247,29 +256,17 @@ int CCairoPlotter::initializeFreeType() {
   int error = FT_Init_FreeType(&library);
   if (error) {
     CDBError("an error occurred during freetype library initialization");
-    if (library != NULL) {
-      FT_Done_FreeType(library);
-      library = NULL;
-      face = NULL;
-    }
+    closeFreeTypeLibrary();
     return 1;
   }
   error = FT_New_Face(library, fontLocation.c_str(), 0, &face);
   if (error == FT_Err_Unknown_File_Format) {
     CDBError("the font file could be opened and read, but it appears that its font format is unsupported %s", fontLocation.c_str());
-    if (library != NULL) {
-      FT_Done_FreeType(library);
-      library = NULL;
-      face = NULL;
-    }
+    closeFreeTypeLibrary();
     return 1;
   } else if (error) {
     CDBError("Unable to initialize freetype: Could not read fontfile %s", fontLocation.c_str());
-    if (library != NULL) {
-      FT_Done_FreeType(library);
-      library = NULL;
-      face = NULL;
-    }
+    closeFreeTypeLibrary();
     return 1;
   }
 
@@ -280,11 +277,7 @@ int CCairoPlotter::initializeFreeType() {
                            100);               /* vertical device resolution */
   if (error) {
     CDBError("unable to set character size");
-    if (library != NULL) {
-      FT_Done_FreeType(library);
-      library = NULL;
-      face = NULL;
-    }
+    closeFreeTypeLibrary();
     return 1;
   }
   return 0;
@@ -970,9 +963,9 @@ int CCairoPlotter::writeARGBPng(int width, int height, unsigned char *ARGBByteBu
   if (bitDepth == 32) {
 
     int s = width * 4;
+    unsigned char *RGBARow = new unsigned char[s];
     for (i = 0; i < height; i = i + 1) {
 
-      unsigned char RGBARow[s];
       int p = 0;
       int start = i * s;
       int stop = start + s;
@@ -986,14 +979,15 @@ int CCairoPlotter::writeARGBPng(int width, int height, unsigned char *ARGBByteBu
       row_ptr = RGBARow;
       png_write_rows(png_ptr, &row_ptr, 1);
     }
+    delete[] RGBARow;
   } else if (bitDepth == 24) {
 #ifdef MEASURETIME
     StopWatch_Stop("Start 24BIT FILL");
 #endif
     int s = width * 4;
+    unsigned char *RGBRow = new unsigned char[s];
     for (i = 0; i < height; i = i + 1) {
 
-      unsigned char RGBRow[s];
       int p = 0;
       int start = i * s;
       int stop = start + s;
@@ -1018,6 +1012,7 @@ int CCairoPlotter::writeARGBPng(int width, int height, unsigned char *ARGBByteBu
       row_ptr = RGBRow;
       png_write_rows(png_ptr, &row_ptr, 1);
     }
+    delete[] RGBRow;
 #ifdef MEASURETIME
     StopWatch_Stop("Finished 24BIT FILL");
 #endif
@@ -1027,8 +1022,9 @@ int CCairoPlotter::writeARGBPng(int width, int height, unsigned char *ARGBByteBu
 #ifdef MEASURETIME
     StopWatch_Stop("Starting color quantization");
 #endif
+    unsigned char *RGBARow = new unsigned char[s];
     for (i = 0; i < height; i++) {
-      unsigned char RGBARow[s];
+
       int p = 0;
       int start = i * s;
       int stop = start + s;
@@ -1055,6 +1051,7 @@ int CCairoPlotter::writeARGBPng(int width, int height, unsigned char *ARGBByteBu
       row_ptr = RGBARow;
       png_write_rows(png_ptr, &row_ptr, 1);
     }
+    delete[] RGBARow;
   }
 
 #ifdef MEASURETIME

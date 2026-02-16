@@ -450,7 +450,7 @@ void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimNam
     }
   }
 
-  CTime *ccdftimesrc, *ccdftimedst;
+  CTime *ccdftimesrc = nullptr, *ccdftimedst = nullptr;
 
   bool isTimeDim = false;
 
@@ -631,7 +631,7 @@ void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimNam
 CDF::Variable *CDF::Variable::clone(CDFType newType, CT::string newName) {
   CDF::Variable *newVariable = new CDF::Variable(newName.c_str(), newType, this->dimensionlinks, this->isDimension);
 
-  for (auto attribute : attributes) {
+  for (auto attribute: attributes) {
     newVariable->addAttribute(new CDF::Attribute(attribute));
   }
   newVariable->parentCDFObject = parentCDFObject;
@@ -787,19 +787,19 @@ CDF::Variable::Variable() {
 }
 
 CDF::Variable::~Variable() {
-  freeData();
-  for (size_t j = 0; j < attributes.size(); j++) {
-    if (attributes[j] != NULL) {
-      delete attributes[j];
-      attributes[j] = NULL;
+  this->freeData();
+  for (auto &attribute: attributes) {
+    if (attribute != NULL) {
+      delete attribute;
+      attribute = NULL;
     }
   }
   attributes.clear();
 
-  for (size_t j = 0; j < cdfObjectList.size(); j++) {
-    if (cdfObjectList[j] != NULL) {
-      delete cdfObjectList[j];
-      cdfObjectList[j] = NULL;
+  for (auto &j: cdfObjectList) {
+    if (j != NULL) {
+      delete j;
+      j = NULL;
     }
   }
 }
@@ -946,7 +946,6 @@ int CDF::Variable::setAttribute(const char *attrName, CDFType attrType, const vo
     attr->name.copy(attrName);
     addAttribute(attr);
   }
-  attr->type = attrType;
   attr->setData(attrType, attrData, attrLen);
   return 0;
 }
