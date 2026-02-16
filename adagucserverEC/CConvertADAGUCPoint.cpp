@@ -374,9 +374,10 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
 
   // Read original data first
 
-  size_t start[NC_MAX_DIMS];
-  size_t count[NC_MAX_DIMS];
-  ptrdiff_t stride[NC_MAX_DIMS];
+  size_t numDims = pointVar[0]->dimensionlinks.size();
+  std::vector<size_t> start(numDims);
+  std::vector<size_t> count(numDims);
+  std::vector<ptrdiff_t> stride(numDims);
 
   /*
    * There is always a station dimension, we wish to read all stations and for the other dimensions just one: count=1;
@@ -417,27 +418,16 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
   CDBDebug("numDims %d ", numDims);
 #endif
 
-  //   if(pointLon->dimensionlinks.size()>=2 ){
-  //     #ifdef CCONVERTADAGUCPOINT_DEBUG
-  //     CDBDebug("Dimension dependant locations");
-  //     #endif
   pointLon->freeData();
   pointLat->freeData();
-  if (pointLon->readData(CDF_FLOAT, start, count, stride, true) != 0) {
+  if (pointLon->readData(CDF_FLOAT, start.data(), count.data(), stride.data(), true) != 0) {
     CDBError("Unable to read pointLon data");
     return 1;
   }
-  if (pointLat->readData(CDF_FLOAT, start, count, stride, true) != 0) {
+  if (pointLat->readData(CDF_FLOAT, start.data(), count.data(), stride.data(), true) != 0) {
     CDBError("Unable to read pointLat data");
     return 1;
   }
-  //   }else{
-  //     #ifdef CCONVERTADAGUCPOINT_DEBUG
-  //     CDBDebug("NON Dimension dependant location");
-  //     #endif
-  //     pointLon->readData(CDF_FLOAT,true);
-  //     pointLat->readData(CDF_FLOAT,true);
-  //   }
 
 #ifdef MEASURETIME
   StopWatch_Stop("Lat and lon read");
@@ -486,7 +476,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
         //           }
         //
 
-        if (pointVar[d]->readData(CDF_FLOAT, start, count, stride, true) != 0) {
+        if (pointVar[d]->readData(CDF_FLOAT, start.data(), count.data(), stride.data(), true) != 0) {
           CDBError("Unable to read pointVar[d] data");
           return 1;
         }
@@ -498,7 +488,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
           count[1] = pointVar[d]->dimensionlinks[1]->getSize();
           std::vector<std::string> data(count[0]);
 
-          if (pointVar[d]->readData(CDF_CHAR, start, count, stride, false) != 0) {
+          if (pointVar[d]->readData(CDF_CHAR, start.data(), count.data(), stride.data(), false) != 0) {
             CDBError("Unable to read pointVar[d] data");
             return 1;
           }
@@ -527,7 +517,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
           }
 #endif
           pointVar[d]->freeData();
-          if (pointVar[d]->readData(CDF_STRING, start, count, stride, false) != 0) {
+          if (pointVar[d]->readData(CDF_STRING, start.data(), count.data(), stride.data(), false) != 0) {
             CDBError("Unable to read pointVar[d] data");
             return 1;
           }
@@ -768,7 +758,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
               obsTime = CTime::GetCTimeInstance(timeVarPerObs);
               if (obsTime != nullptr) {
                 hasTimeValuePerObs = true;
-                timeVarPerObs->readData(CDF_DOUBLE, start, count, stride, true);
+                timeVarPerObs->readData(CDF_DOUBLE, start.data(), count.data(), stride.data(), true);
                 obsTimeData = (double *)timeVarPerObs->data;
               }
             }

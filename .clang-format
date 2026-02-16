@@ -10,3 +10,5 @@ AccessModifierOffset: -2
 SortIncludes: false
 NamespaceIndentation: All
 ColumnLimit: 200
+SpaceBeforeColon: false
+SpaceBeforeRangeBasedForLoopColon: false

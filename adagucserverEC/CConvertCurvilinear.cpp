@@ -421,9 +421,9 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mod
   }
 
   size_t numDims = swathVar->dimensionlinks.size();
-  size_t start[NC_MAX_DIMS];
-  size_t count[NC_MAX_DIMS];
-  ptrdiff_t stride[NC_MAX_DIMS];
+  std::vector<size_t> start(numDims);
+  std::vector<size_t> count(numDims);
+  std::vector<ptrdiff_t> stride(numDims);
   for (size_t dimInd = 0; dimInd < numDims; dimInd++) {
     start[dimInd] = 0;
     count[dimInd] = 1;
@@ -477,7 +477,7 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mod
 #endif
 
   // Set statistics
-  swathVar->readData(CDF_FLOAT, start, count, stride, true);
+  swathVar->readData(CDF_FLOAT, start.data(), count.data(), stride.data(), true);
 
   if (dataSource->stretchMinMax) {
 #ifdef CCONVERTCURVILINEAR_DEBUG

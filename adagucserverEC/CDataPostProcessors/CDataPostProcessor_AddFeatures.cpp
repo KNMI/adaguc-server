@@ -90,9 +90,9 @@ int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource
       std::vector<std::string> valueMap;
       size_t nrPoints = dataSource->getDataObject(0)->points.size();
 
-      std::vector<float> valueForFeatureNrVec(nrFeatures, destNoDataValue);
+      std::vector<float> valueForFeatureNr(nrFeatures, destNoDataValue);
       for (size_t f = 0; f < nrFeatures; f++) {
-        valueForFeatureNrVec[f] = destNoDataValue;
+        valueForFeatureNr[f] = destNoDataValue;
         const char *name = names[f];
         bool found = false;
         for (size_t p = 0; p < nrPoints && !found; p++) {
@@ -101,7 +101,7 @@ int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource
             if (ckv.key.equals("station")) {
               CT::string station = ckv.value;
               if (strcmp(station.c_str(), name) == 0) {
-                valueForFeatureNrVec[f] = dataSource->getDataObject(0)->points[p].v;
+                valueForFeatureNr[f] = dataSource->getDataObject(0)->points[p].v;
                 found = true;
               }
             }
@@ -117,16 +117,12 @@ int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource
       unsigned short noDataValue = featureDataSource.getDataObject(0)->dfNodataValue;
       unsigned short *indexDest = (unsigned short *)dataSource->getDataObject(1)->cdfVariable->data;
 
-      //     size_t nrFeatures=valueMap.size();
       for (size_t cnt = 0; cnt < l; cnt++) {
         unsigned short featureNr = *src; // index of station in GeoJSON file
         *dest = destNoDataValue;
         *indexDest = 65535u;
-        //         if (cnt<30) {
-        //           CDBDebug("cnt=%d %d %f", cnt, featureNr, (featureNr!=noDataValue)?featureNr:-9999999);
-        //         }
         if (featureNr != noDataValue) {
-          *dest = valueForFeatureNrVec[featureNr];
+          *dest = valueForFeatureNr[featureNr];
           *indexDest = featureNr;
         }
         src++;

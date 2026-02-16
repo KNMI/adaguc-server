@@ -33,7 +33,7 @@ int CDFHDF5Reader::CustomForecastReader::readData(CDF::Variable *thisVar, size_t
   CDBDebug("READ data for %s called", thisVar->name.c_str());
 #endif
 
-  size_t newstart[NC_MAX_DIMS];
+  std::vector<size_t> newstart(thisVar->dimensionlinks.size());
   for (size_t j = 0; j < thisVar->dimensionlinks.size(); j++) {
     newstart[j] = start[j];
 #ifdef CCDFHDF5IO_DEBUG
@@ -48,7 +48,7 @@ int CDFHDF5Reader::CustomForecastReader::readData(CDF::Variable *thisVar, size_t
   CDBDebug("Start reading %s", var->name.c_str());
 
   CDFType readType = thisVar->getType();
-  int status = var->readData(readType, newstart, count, stride, true);
+  int status = var->readData(readType, newstart.data(), count, stride, true);
 
   if (status != 0) {
     CDBError("CustomForecastReader: Unable to read variable %s", thisVar->name.c_str());
@@ -456,14 +456,15 @@ int CDFHDF5Reader::_readVariableData(CDF::Variable *var, CDFType type, size_t *s
 #endif
       hid_t HDF5_dataspace = H5Dget_space(datasetID);
       int ndims = H5Sget_simple_extent_ndims(HDF5_dataspace);
-      if (ndims >= NC_MAX_DIMS) {
-        CDBError("Maximum number of %d dimensions supported, got %d dimensions", NC_MAX_DIMS, ndims);
-        exit(1);
-      }
-      hsize_t dims_out[NC_MAX_DIMS];
-      H5Sget_simple_extent_dims(HDF5_dataspace, dims_out, NULL);
-      hsize_t mem_count[NC_MAX_DIMS], mem_start[NC_MAX_DIMS];
-      hsize_t data_count[NC_MAX_DIMS], data_start[NC_MAX_DIMS];
+
+      std::vector<hsize_t> dims_out(ndims);
+      std::vector<hsize_t> mem_count(ndims);
+      std::vector<hsize_t> mem_start(ndims);
+      std::vector<hsize_t> data_count(ndims);
+      std::vector<hsize_t> data_start(ndims);
+
+      H5Sget_simple_extent_dims(HDF5_dataspace, dims_out.data(), NULL);
+
       int totalVariableSize = 1;
       int dimDiff = var->dimensionlinks.size() - ndims;
       if (dimDiff < 0) dimDiff = 0;
@@ -486,34 +487,12 @@ int CDFHDF5Reader::_readVariableData(CDF::Variable *var, CDFType type, size_t *s
       if (CDF::allocateData(type, &var->data, var->getSize())) {
         throw(__LINE__);
       }
-      hid_t HDF5_memspace = H5Screate_simple(2, mem_count, NULL);
-      H5Sselect_hyperslab(HDF5_memspace, H5S_SELECT_SET, mem_start, NULL, mem_count, NULL);
-      H5Sselect_hyperslab(HDF5_dataspace, H5S_SELECT_SET, data_start, NULL, data_count, NULL);
-      // hid_t datasetType=H5Dget_type(datasetID);
+      hid_t HDF5_memspace = H5Screate_simple(2, mem_count.data(), NULL);
+      H5Sselect_hyperslab(HDF5_memspace, H5S_SELECT_SET, mem_start.data(), NULL, mem_count.data(), NULL);
+      H5Sselect_hyperslab(HDF5_dataspace, H5S_SELECT_SET, data_start.data(), NULL, data_count.data(), NULL);
       hid_t datasetType = cdfTypeToHDFType(type);
       H5Dread(datasetID, datasetType, HDF5_memspace, HDF5_dataspace, H5P_DEFAULT, var->data);
 
-      /*
-      if(type==CDF_USHORT){
-      for(size_t j=0;j<var->getSize();j++){
-      unsigned short a=((unsigned short*)(var->data))[j];
-      unsigned char p1=a;
-      unsigned char p2=a/256;
-      a=p1*256+p2;
-      ((unsigned short*)(var->data))[j]=a;
-    }
-    }
-      if(type==CDF_SHORT){
-      for(size_t j=0;j<var->getSize();j++){
-      short a=((short*)(var->data))[j];
-      char p1=a;
-      char p2=a/256;
-      a=p1*256+p2;
-      ((short*)(var->data))[j]=a;
-    }
-    }*/
-
-      // H5Tclose(datasetType);
       H5Sclose(HDF5_memspace);
       H5Sclose(HDF5_dataspace);
       H5Dclose(datasetID);
@@ -552,13 +531,12 @@ int CDFHDF5Reader::_readVariableData(CDF::Variable *var, CDFType type) {
     if (datasetID > 0) {
       hid_t HDF5_dataspace = H5Dget_space(datasetID);
       int ndims = H5Sget_simple_extent_ndims(HDF5_dataspace);
-      if (ndims >= NC_MAX_DIMS) {
-        CDBError("Maximum number of %d dimensions supported, got %d dimensions", NC_MAX_DIMS, ndims);
-        exit(1);
-      }
-      hsize_t dims_out[NC_MAX_DIMS];
-      H5Sget_simple_extent_dims(HDF5_dataspace, dims_out, NULL);
-      hsize_t mem_count[NC_MAX_DIMS], mem_start[NC_MAX_DIMS];
+
+      std::vector<hsize_t> dims_out(ndims);
+      std::vector<hsize_t> mem_count(ndims);
+      std::vector<hsize_t> mem_start(ndims);
+      H5Sget_simple_extent_dims(HDF5_dataspace, dims_out.data(), NULL);
+
       int totalVariableSize = 1;
 
       for (int d = 0; d < ndims; d++) {
@@ -573,9 +551,9 @@ int CDFHDF5Reader::_readVariableData(CDF::Variable *var, CDFType type) {
       if (CDF::allocateData(type, &var->data, var->getSize())) {
         throw(__LINE__);
       }
-      hid_t HDF5_memspace = H5Screate_simple(2, mem_count, NULL);
-      H5Sselect_hyperslab(HDF5_memspace, H5S_SELECT_SET, mem_start, NULL, mem_count, NULL);
-      H5Sselect_hyperslab(HDF5_dataspace, H5S_SELECT_SET, mem_start, NULL, mem_count, NULL);
+      hid_t HDF5_memspace = H5Screate_simple(2, mem_count.data(), NULL);
+      H5Sselect_hyperslab(HDF5_memspace, H5S_SELECT_SET, mem_start.data(), NULL, mem_count.data(), NULL);
+      H5Sselect_hyperslab(HDF5_dataspace, H5S_SELECT_SET, mem_start.data(), NULL, mem_count.data(), NULL);
       // hid_t datasetType=H5Dget_type(datasetID);
       hid_t datasetType = cdfTypeToHDFType(type);
       // datasetType

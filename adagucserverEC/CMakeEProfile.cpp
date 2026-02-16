@@ -284,8 +284,8 @@ public:
 
             variable->freeData();
 
-            size_t start[NC_MAX_DIMS], count[NC_MAX_DIMS];
-            ptrdiff_t stride[NC_MAX_DIMS];
+            std::vector<size_t> start(variable->dimensionlinks.size()), count(variable->dimensionlinks.size());
+            std::vector<ptrdiff_t> stride(variable->dimensionlinks.size());
 
             for (size_t j = 0; j < variable->dimensionlinks.size(); j++) {
               start[j] = 0;
@@ -303,7 +303,7 @@ public:
 #endif
 
             variable->setType(CDF_FLOAT);
-            int status = variable->readData(variable->currentType, start, count, stride, true);
+            int status = variable->readData(variable->currentType, start.data(), count.data(), stride.data(), true);
 
             if (status != 0) {
               CDBError("Unable to read variable %s", variable->name.c_str());
@@ -343,7 +343,7 @@ public:
               CDBDebug("Read %d elements", variable->getSize());
 #endif
 
-              drawEprofile(drawImage, variable, start, count, request, dataSource, eProfileJson);
+              drawEprofile(drawImage, variable, start.data(), count.data(), request, dataSource, eProfileJson);
 
               //               try{
               //                 expandData(dataObject,variable,start,count,0,request,0);

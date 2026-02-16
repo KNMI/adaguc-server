@@ -424,9 +424,10 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
 
   // Read original data first
 
-  size_t start[NC_MAX_DIMS];
-  size_t count[NC_MAX_DIMS];
-  ptrdiff_t stride[NC_MAX_DIMS];
+  size_t numDims = pointVar[0]->dimensionlinks.size();
+  std::vector<size_t> start(numDims);
+  std::vector<size_t> count(numDims);
+  std::vector<ptrdiff_t> stride(numDims);
 
   /*
    * There is always a station dimension, we wish to read all stations and for the other dimensions just one: count=1;
@@ -505,7 +506,7 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
       //         CDBDebug("%d %s [%d:%d:%d]",j,pointVar[d]->dimensionlinks[j]->name.c_str(),start[j],count[j],stride[j]);
       //       }
 
-      pointVar[d]->readData(CDF_FLOAT, start, count, stride, true);
+      pointVar[d]->readData(CDF_FLOAT, start.data(), count.data(), stride.data(), true);
 
       // TODO Use altitude to correct range height
 
@@ -517,7 +518,7 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
         count[1] = pointVar[d]->dimensionlinks[1]->getSize();
 
         std::vector<std::string> data(count[0]);
-        pointVar[d]->readData(CDF_CHAR, start, count, stride, false);
+        pointVar[d]->readData(CDF_CHAR, start.data(), count.data(), stride.data(), false);
         for (size_t j = 0; j < count[0]; j++) {
           data[j].copy(((char *)pointVar[d]->data + j * count[1]), count[1] - 1);
         }
@@ -543,7 +544,7 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
         }
 #endif
         pointVar[d]->freeData();
-        pointVar[d]->readData(CDF_STRING, start, count, stride, false);
+        pointVar[d]->readData(CDF_STRING, start.data(), count.data(), stride.data(), false);
       }
     }
     // pointVar[d]->readData(CDF_FLOAT,true);
@@ -754,7 +755,7 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
             if (obsTime != NULL) {
 
               //                 hasTimeValuePerObs = true;
-              timeVarPerObs->readData(CDF_DOUBLE, start, count, stride, true);
+              timeVarPerObs->readData(CDF_DOUBLE, start.data(), count.data(), stride.data(), true);
               //                 obsTimeData = (double*)timeVarPerObs->data;
             }
           }

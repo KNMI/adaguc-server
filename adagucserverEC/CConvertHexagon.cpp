@@ -450,9 +450,9 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
   }
 
   size_t numDims = hexagonVar->dimensionlinks.size();
-  size_t start[NC_MAX_DIMS];
-  size_t count[NC_MAX_DIMS];
-  ptrdiff_t stride[NC_MAX_DIMS];
+  std::vector<size_t> start(numDims);
+  std::vector<size_t> count(numDims);
+  std::vector<ptrdiff_t> stride(numDims);
   for (size_t dimInd = 0; dimInd < numDims; dimInd++) {
     start[dimInd] = 0;
     count[dimInd] = 1;
@@ -469,7 +469,7 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
     CDBDebug("%s = %lu %lu", dimName.c_str(), start[dimInd], count[dimInd]);
   }
 
-  hexagonVar->readData(CDF_FLOAT, start, count, stride, true);
+  hexagonVar->readData(CDF_FLOAT, start.data(), count.data(), stride.data(), true);
 
   // Read original data first
 

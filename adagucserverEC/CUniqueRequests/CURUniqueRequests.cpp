@@ -226,9 +226,9 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
 
   /* Including x and y dimensions, without virtual dims */
   int numberOfDims = numberOfDataSourceDims + 2;
-  size_t start[NC_MAX_DIMS], count[NC_MAX_DIMS];
-  ptrdiff_t stride[NC_MAX_DIMS];
-  std::string dimName[NC_MAX_DIMS];
+  std::vector<size_t> start(numberOfDims), count(numberOfDims);
+  std::vector<ptrdiff_t> stride(numberOfDims);
+  std::vector<std::string> dimName(numberOfDims);
 
   std::vector<CURResult> results;
 
@@ -346,7 +346,7 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
 #ifdef CCUniqueRequests_DEBUG_HIGH
           CDBDebug("Starting read data as type %s", CDF::getCDFDataTypeName(variable->currentType).c_str());
 #endif
-          int status = variable->readData(variable->currentType, start, count, stride, true);
+          int status = variable->readData(variable->currentType, start.data(), count.data(), stride.data(), true);
 #ifdef CCUniqueRequests_DEBUG_HIGH
           CDBDebug("Read %d elements", variable->getSize());
 #endif
@@ -400,7 +400,7 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
             }
 #endif
             try {
-              int multiplies[NC_MAX_DIMS];
+              std::vector<int> multiplies(variable->dimensionlinks.size());
               for (size_t d = 0; d < variable->dimensionlinks.size(); d += 1) {
                 int m = 1;
 

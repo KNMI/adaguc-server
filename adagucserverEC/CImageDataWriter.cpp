@@ -2171,7 +2171,7 @@ int CImageDataWriter::end() {
         GetFeatureInfoResult::Element *e = g->elements[0];
 
         int nrDims = e->cdfDims.getNumDimensions();
-        int dimLookup[NC_MAX_DIMS]; // position of each dimension in cdfDims.dimensions
+        std::vector<int> dimLookup(nrDims); // position of each dimension in cdfDims.dimensions
         // CDBDebug("nrDims = %d",nrDims);
         int timeDimIndex = -1;
         int endIndex = nrDims - 1;

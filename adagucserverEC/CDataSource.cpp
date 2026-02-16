@@ -1048,9 +1048,9 @@ int CDataSource::readVariableDataForCDFDims(CDF::Variable *variableToRead, CDFTy
     return 1;
   }
   size_t numDimensionsForVariableToRead = variableToRead->dimensionlinks.size();
-  size_t start[NC_MAX_DIMS];
-  size_t count[NC_MAX_DIMS];
-  ptrdiff_t stride[NC_MAX_DIMS];
+  std::vector<size_t> start(numDimensionsForVariableToRead);
+  std::vector<size_t> count(numDimensionsForVariableToRead);
+  std::vector<ptrdiff_t> stride(numDimensionsForVariableToRead);
   auto *cdfDims = this->getCDFDims();
   for (size_t dimNr = 0; dimNr < numDimensionsForVariableToRead; dimNr += 1) {
     auto *dimensionLink = variableToRead->dimensionlinks[dimNr];
@@ -1067,7 +1067,7 @@ int CDataSource::readVariableDataForCDFDims(CDF::Variable *variableToRead, CDFTy
       count[startCountIndex] = 1;
     }
   }
-  return variableToRead->readData(dataTypeToReturnData, start, count, stride, true);
+  return variableToRead->readData(dataTypeToReturnData, start.data(), count.data(), stride.data(), true);
 }
 
 std::string CDataSource::getDataSetName() { return std::string(this->srvParams->datasetLocation.c_str()); }

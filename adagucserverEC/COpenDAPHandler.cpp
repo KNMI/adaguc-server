@@ -868,9 +868,9 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
                 }
               }
               if (hasAggregateDimension) {
-                size_t start[NC_MAX_DIMS];
-                size_t count[NC_MAX_DIMS];
-                ptrdiff_t stride[NC_MAX_DIMS];
+                std::vector<size_t> start(v->dimensionlinks.size());
+                std::vector<size_t> count(v->dimensionlinks.size());
+                std::vector<ptrdiff_t> stride(v->dimensionlinks.size());
                 for (size_t k = 0; k < v->dimensionlinks.size(); k++) {
                   start[k] = selectedVariables[i].dimInfo[k].start;
                   count[k] = selectedVariables[i].dimInfo[k].count;
@@ -895,7 +895,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
                 bool foundData = false;
                 CDBStore::Store *store = NULL;
                 try {
-                  store = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getFilesForIndices(dataSource, start, count, stride, 0);
+                  store = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getFilesForIndices(dataSource, start.data(), count.data(), stride.data(), 0);
                   if (store != NULL) {
 #ifdef COPENDAPHANDLER_DEBUG
                     CDBDebug("STORE SIZE %d varSize = %d", store->size(), varSize);
@@ -992,7 +992,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
 
 #endif
                           CDF::Variable *variableToRead = cdfObjectToRead->getVariable(v->name.c_str());
-                          variableToRead->readData(type, start, count, stride);
+                          variableToRead->readData(type, start.data(), count.data(), stride.data());
 #ifdef COPENDAPHANDLER_DEBUG
                           CDBDebug("Read %d elements with type %s with element size %d", variableToRead->getSize(), CDF::getCDFDataTypeName(type).c_str(), CDF::getTypeSize(type));
 #endif
@@ -1041,9 +1041,9 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
 #ifdef COPENDAPHANDLER_DEBUG
                   CDBDebug("READ PARTS");
 #endif
-                  size_t start[NC_MAX_DIMS];
-                  size_t count[NC_MAX_DIMS];
-                  ptrdiff_t stride[NC_MAX_DIMS];
+                  std::vector<size_t> start(v->dimensionlinks.size());
+                  std::vector<size_t> count(v->dimensionlinks.size());
+                  std::vector<ptrdiff_t> stride(v->dimensionlinks.size());
                   for (size_t k = 0; k < v->dimensionlinks.size(); k++) {
                     start[k] = selectedVariables[i].dimInfo[k].start;
                     count[k] = selectedVariables[i].dimInfo[k].count;
@@ -1055,13 +1055,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
                     CDBDebug(" start[%d] = %d %d %d", j, start[j], count[j], stride[j]);
                   }
 #endif
-                  // v->freeData();
-                  status = v->readData(type, start, count, stride);
-                  //                     if(v->getType()==CDF_STRING){
-                  //                       for(size_t j=0;j<v->getSize();j++){
-                  //                         CDBDebug("%s",((char**)v->data)[j]);
-                  //                       }
-                  //                     }
+                  status = v->readData(type, start.data(), count.data(), stride.data());
                 } else {
 #ifdef COPENDAPHANDLER_DEBUG
                   CDBDebug("READ ALL");
