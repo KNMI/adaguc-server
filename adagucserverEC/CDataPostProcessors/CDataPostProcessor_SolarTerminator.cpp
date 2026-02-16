@@ -17,8 +17,7 @@
 /*      CDPPSolarTerminator  */
 /************************/
 
-#define MAX_SOLT_WIDTH 1024
-#define MAX_SOLT_HEIGHT 1024
+#define DEFAULT_STRIDING 16
 
 const char *CDPPSolarTerminator::getId() { return "solarterminator"; }
 
@@ -50,8 +49,8 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
     dataSource->setGeo(dataSource->srvParams->geoParams);
 
     if (dataSource->srvParams->requestType != REQUEST_WMS_GETFEATUREINFO) {
-      dataSource->dWidth = dataSource->srvParams->geoParams.width / 16;
-      dataSource->dHeight = dataSource->srvParams->geoParams.height / 16;
+      dataSource->dWidth = dataSource->srvParams->geoParams.width / DEFAULT_STRIDING;
+      dataSource->dHeight = dataSource->srvParams->geoParams.height / DEFAULT_STRIDING;
       if (proc->attr.stride.empty() == false) {
         float stride = proc->attr.stride.toFloat();
         dataSource->dWidth = dataSource->srvParams->geoParams.width / stride;

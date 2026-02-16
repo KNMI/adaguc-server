@@ -2439,7 +2439,7 @@ class TestWMS(unittest.TestCase):
 
     def test_WMSGetFeatureInfo_SolarTerminator(self):
         # Testing the solar terminator feature info
-        env = make_adaguc_env("{ADAGUC_PATH}/data/confi`g/datasets/adaguc_tests_solarterminator.xml")
+        env = make_adaguc_env("{ADAGUC_PATH}/data/config/datasets/adaguc_tests_solarterminator.xml")
         update_db(env)
         filename = "test_WMSGetFeatureInfo_SolarTerminator.html"
         status, data, headers = AdagucTestTools().runADAGUCServer(

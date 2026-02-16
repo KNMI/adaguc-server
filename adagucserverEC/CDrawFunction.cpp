@@ -70,7 +70,7 @@ template <class T> CColor determinePixelColorFromValue(T val, GDWDrawFunctionSet
   return CColor(0, 0, 0, 0);
 }
 
-template <class T> CColor memoizedDeterminePixelColorFromValue(T val, GDWDrawFunctionSettings *settings, MemoizitationForDeterminePixelColorFromValue &memo) {
+template <class T> CColor memoizedDeterminePixelColorFromValue(T val, GDWDrawFunctionSettings *settings, MemoizationForDeterminePixelColorFromValue &memo) {
   if (val == memo.value && settings == memo.settings) {
     return memo.color;
   } else {
@@ -129,6 +129,6 @@ ENUMERATE_OVER_CDFTYPES(SPECIALIZE_TEMPLATE)
 #undef SPECIALIZE_TEMPLATE
 
 #define SPECIALIZE_TEMPLATE(CDFTYPE, CPPTYPE)                                                                                                                                                          \
-  template CColor memoizedDeterminePixelColorFromValue<CPPTYPE>(CPPTYPE val, GDWDrawFunctionSettings * settings, MemoizitationForDeterminePixelColorFromValue & memo);
+  template CColor memoizedDeterminePixelColorFromValue<CPPTYPE>(CPPTYPE val, GDWDrawFunctionSettings * settings, MemoizationForDeterminePixelColorFromValue & memo);
 ENUMERATE_OVER_CDFTYPES(SPECIALIZE_TEMPLATE)
 #undef SPECIALIZE_TEMPLATE
