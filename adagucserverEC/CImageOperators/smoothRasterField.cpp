@@ -12,33 +12,34 @@ void smoothingMakeDistanceMatrix(GDWDrawFunctionSettings &settings) {
   if (smoothWindowSize == 0) {
     return;
   }
-  settings.smoothingDistanceMatrix = new double[(smoothWindowSize + 1) * 2 * (smoothWindowSize + 1) * 2];
+  settings.smoothingDistanceMatrix.resize((smoothWindowSize + 1) * 2 * (smoothWindowSize + 1) * 2);
 
   int dWinP = 0;
+  auto *data = settings.smoothingDistanceMatrix.data();
   for (int y1 = -smoothWindowSize; y1 < smoothWindowSize + 1; y1++) {
     for (int x1 = -smoothWindowSize; x1 < smoothWindowSize + 1; x1++) {
       double d = sqrt(x1 * x1 + y1 * y1);
       d = 1 / (d + 1);
-      settings.smoothingDistanceMatrix[dWinP++] = d;
+      data[dWinP++] = d;
     }
   }
 }
 
 template <typename T> T smoothingAtLocation(int sourceX, int sourceY, T *sourceGrid, GDWState &warperState, GDWDrawFunctionSettings &settings) {
-  if (settings.smoothingFiter == 0 || settings.smoothingDistanceMatrix == nullptr) {
+  if (settings.smoothingFiter == 0 || settings.smoothingDistanceMatrix.empty()) {
     return (T)settings.dfNodataValue;
   }
   if (sourceX < 0 || sourceY < 0 || sourceX >= warperState.sourceGridWidth || sourceY >= warperState.sourceGridHeight) return (T)settings.dfNodataValue;
 
   size_t p = sourceX + sourceY * warperState.sourceGridWidth;
 
-  if (settings.smoothingMemo != nullptr && settings.smoothingMemo[p] != MEMO_NODATAVALUE) {
+  if (settings.smoothingMemo.empty() == false && settings.smoothingMemo[p] != MEMO_NODATAVALUE) {
     return (T)settings.smoothingMemo[p];
   }
 
-  if (settings.smoothingMemo == nullptr) {
-    settings.smoothingMemo = new double[warperState.sourceGridWidth * warperState.sourceGridHeight];
-    CDF::fill(settings.smoothingMemo, CDF_DOUBLE, MEMO_NODATAVALUE, warperState.sourceGridWidth * warperState.sourceGridHeight);
+  if (settings.smoothingMemo.empty()) {
+    settings.smoothingMemo.resize(warperState.sourceGridWidth * warperState.sourceGridHeight);
+    CDF::fill(settings.smoothingMemo.data(), CDF_DOUBLE, MEMO_NODATAVALUE, warperState.sourceGridWidth * warperState.sourceGridHeight);
   }
 
   double distanceAmmount = 0;

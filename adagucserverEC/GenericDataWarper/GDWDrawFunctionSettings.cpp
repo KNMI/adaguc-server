@@ -55,7 +55,7 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
   // Smoothingfilter:
   if (styleConfiguration->smoothingFilterVector.size() > 0) {
     auto smoothingFilter = styleConfiguration->smoothingFilterVector.back();
-    if (settings.smoothingDistanceMatrix == nullptr) {
+    if (settings.smoothingDistanceMatrix.empty()) {
       if (!smoothingFilter->value.empty()) {
         settings.smoothingFiter = smoothingFilter->value.toDouble();
         smoothingMakeDistanceMatrix(settings);
@@ -71,7 +71,7 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
     } else {
       settings.intervals.reserve(numShadeDefs);
       for (int j = 0; j < numShadeDefs; j++) {
-        const CServerConfig::XMLE_ShadeInterval& shadeInterVal = styleConfiguration->shadeIntervals[j];
+        const CServerConfig::XMLE_ShadeInterval &shadeInterVal = styleConfiguration->shadeIntervals[j];
         settings.intervals.push_back(Interval({.min = shadeInterVal.attr.min.toFloat(), .max = shadeInterVal.attr.max.toFloat(), .color = CColor(shadeInterVal.attr.fillcolor.c_str())}));
         /* Check for bgcolor */
         if (j == 0) {
