@@ -1106,7 +1106,6 @@ int CRequest::process_all_layers() {
         status = imageDataWriter.init(srvParam, firstDataSource, 1);
         if (status != 0) throw(__LINE__);
         bool rotate = srvParam->geoParams.width > srvParam->geoParams.height;
-        CDBDebug("creatinglegend %dx%d %d", srvParam->geoParams.width, srvParam->geoParams.height, rotate);
         status = imageDataWriter.createLegend(firstDataSource, &imageDataWriter.drawImage, rotate);
         if (status != 0) throw(__LINE__);
         status = imageDataWriter.end();

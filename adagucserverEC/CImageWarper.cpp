@@ -580,7 +580,7 @@ std::tuple<CT::string, double> CImageWarper::fixProjection(CT::string projection
     CDF::Attribute *majorAttribute = var.getAttributeNE("semi_major_axis");
     CDF::Attribute *minorAttribute = var.getAttributeNE("semi_minor_axis");
     if (majorAttribute != nullptr && minorAttribute != nullptr && majorAttribute->getType() == CDF_FLOAT && minorAttribute->getType() == CDF_FLOAT) {
-      float semi_major_axis, semi_minor_axis;
+      float semi_major_axis = 0, semi_minor_axis = 0;
       majorAttribute->getData<float>(&semi_major_axis, 1);
       minorAttribute->getData<float>(&semi_minor_axis, 1);
       if (semi_major_axis > 6000.0 && semi_major_axis < 7000.0) { // This is given in km's, and should be converted to meters

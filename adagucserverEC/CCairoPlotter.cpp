@@ -749,7 +749,6 @@ void CCairoPlotter::writeToPng8Stream(FILE *fp, unsigned char, bool use8bitpalAl
 
 void CCairoPlotter::writeToPng32Stream(FILE *fp, unsigned char alpha) {
   if (isAlphaUsed) {
-    CDBDebug("Alpha was used");
     for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++) {
         size_t p = x * 4 + y * stride;
