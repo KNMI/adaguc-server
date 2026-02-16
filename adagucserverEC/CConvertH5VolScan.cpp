@@ -295,7 +295,7 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
   // CDFHDF5Reader::CustomVolScanReader *volScanReader = new CDFHDF5Reader::CustomVolScanReader();
   // CDF::Variable::CustomMemoryReader *memoryReader = CDF::Variable::CustomMemoryReaderInstance;
   int cnt = -1;
-  for (CT::string param : scan_params) {
+  for (CT::string param: scan_params) {
     cnt++;
     if (!hasParam(cdfObject, sorted_scans, param)) continue;
     CDF::Variable *var = new CDF::Variable();
@@ -444,11 +444,11 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
     std::tie(scan_elevation, scan_nrang, scan_rscale, scan_nazim, scan_ascale) = getScanMetadata(cdfObject, scan);
 
     double gain = 1.0, offset = 0.0;
-    double gainDBZV, offsetDBZV;
-    double undetect, nodata;
+    double gainDBZV = 0, offsetDBZV = 0;
+    double undetect = 0, nodata = 0;
     CT::string scanDataVarName;
-    CDF::Variable *scanDataVar;
-    CDF::Variable *scanDataVarDBZV;
+    CDF::Variable *scanDataVar = nullptr;
+    CDF::Variable *scanDataVarDBZV = nullptr;
 
     if (!doHeight) {
       CT::string componentCalibrationStringName;
@@ -524,7 +524,7 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
           ia = (int)(azim / scan_ascale);
           ia = (ia + scan_nazim) % scan_nazim;
           std::vector<double> vs;
-          for (auto pScan : pScans) {
+          for (auto pScan: pScans) {
             vs.push_back(pScan[ir + ia * scan_nrang]);
           }
           if (vs[0] == undetect || vs[0] == nodata) {

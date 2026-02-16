@@ -170,7 +170,7 @@ void CConvertGeoJSON::clearFeatureStore(CT::string name) {
 
 std::vector<Feature *> getPointFeatures(std::vector<Feature *> features) {
   std::vector<Feature *> pointFeatures;
-  for (Feature *f : features) {
+  for (Feature *f: features) {
     std::vector<GeoPoint> *pts = f->getPoints();
     if (pts->size() > 0) {
       pointFeatures.push_back(f);
@@ -367,7 +367,7 @@ void CConvertGeoJSON::addCDFInfo(CDFObject *cdfObject, CServerParams *, BBOX &df
   int featureCnt = 0;
   int numPoints = 0;
   int numPolys = 0;
-  for (auto &sample : featureMap) {
+  for (auto &sample: featureMap) {
     ((const char **)featureIdVar->data)[featureCnt++] = strdup(sample->getId().c_str());
     numPoints += sample->getPoints()->size();
     numPolys += sample->getPolygons()->size();
@@ -831,7 +831,7 @@ void CConvertGeoJSON::getBBOX(CDFObject *, BBOX &bbox, json_value &json, std::ve
 std::vector<CDF::Dimension *> getVarDimensions(CDFObject *cdfObject) {
   std::vector<CDF::Dimension *> dims;
 
-  for (CDF::Dimension *dim : cdfObject->dimensions) {
+  for (CDF::Dimension *dim: cdfObject->dimensions) {
     // CDataReader::DimensionType dtyp = CDataReader::getDimensionType(cdfObject, dim->getName());
     CDataReader::DimensionType dtyp = CDataReader::dtype_normal;
     switch (dtyp) {
@@ -858,7 +858,7 @@ size_t getDimensionSize(CDFObject *cdfObject) {
   CDF::Dimension *dimy = cdfObject->getDimension("y");
   size = size * dimy->getSize();
 
-  for (CDF::Dimension *dim : cdfObject->dimensions) {
+  for (CDF::Dimension *dim: cdfObject->dimensions) {
     CDataReader::DimensionType dtyp = CDataReader::getDimensionType(cdfObject, dim->getName());
     switch (dtyp) {
     case CDataReader::dtype_reference_time:
@@ -881,7 +881,7 @@ int CConvertGeoJSON::addPropertyVariables(CDFObject *cdfObject, std::vector<Feat
 
   std::vector<CDF::Dimension *> varDims = getVarDimensions(cdfObject);
 
-  for (Feature *feature : pointFeatures) {
+  for (Feature *feature: pointFeatures) {
     // std::vector<GeoPoint> *pts = feature->getPoints();
     std::map<std::string, FeatureProperty *> *featurePropertyMap = feature->getFp();
     for (auto iter = featurePropertyMap->begin(); iter != featurePropertyMap->end(); ++iter) {
@@ -1187,7 +1187,7 @@ void CConvertGeoJSON::drawPolygons(Feature *feature, unsigned short int featureI
     float minX = FLT_MAX, minY = FLT_MAX;
     float maxX = -FLT_MAX, maxY = -FLT_MAX;
 
-    int pxMin, pxMax, pyMin, pyMax, first = 0;
+    int pxMin = 0, pxMax = 0, pyMin = 0, pyMax = 0, first = 0;
 
     for (int j = 0; j < numPolygonPoints; j++) {
       double tprojectedX = polyX[j];

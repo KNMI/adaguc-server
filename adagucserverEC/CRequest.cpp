@@ -826,7 +826,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
         CT::string dimName(dataSource->cfgLayer->Dimension[i]->value.c_str());
         CT::string fixedValue = dataSource->cfgLayer->Dimension[i]->attr.fixvalue;
         dimName.toLowerCaseSelf();
-        for (auto &requiredDim : dataSource->requiredDims) {
+        for (auto &requiredDim: dataSource->requiredDims) {
           if (requiredDim->name.equals(dimName)) {
             CDBDebug("Forcing dimension %s from %s to %s", dimName.c_str(), requiredDim->value.c_str(), fixedValue.c_str());
             requiredDim->value = fixedValue;
@@ -838,12 +838,12 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
     }
 
     // Check if requested time dimensions use valid characters
-    for (auto &dim : dataSource->requiredDims) {
+    for (auto &dim: dataSource->requiredDims) {
       // FIXME: checkTimeFormat used to get called on every dim value, not just datetime. Check if this is required
       if (!dim->isATimeDimension) continue;
 
       auto dimValues = dim->value.split(",");
-      for (auto &dimValue : dimValues) {
+      for (auto &dimValue: dimValues) {
         if (!CServerParams::checkTimeFormat(dimValue)) {
           CDBError("Queried dimension %s=%s failed datetime regex", dim->name.c_str(), dim->value.c_str());
           throw InvalidDimensionValue;
@@ -875,7 +875,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
   CDBDebug("### [</fillDimValuesForDataSource>]");
 #endif
   bool allNonFixedDimensionsAreAsRequestedInQueryString = true;
-  for (auto requiredDim : dataSource->requiredDims) {
+  for (auto requiredDim: dataSource->requiredDims) {
     // CDBDebug("%s: [%s] === [%s], fixed:%d", requiredDim->name.c_str(), requiredDim->value.c_str(), requiredDim->queryValue.c_str(), requiredDim->hasFixedValue);
     if (!requiredDim->hasFixedValue && !requiredDim->value.equals(requiredDim->queryValue)) {
       allNonFixedDimensionsAreAsRequestedInQueryString = false;
@@ -2284,7 +2284,7 @@ int CRequest::process_querystring() {
 
 int CRequest::updatedb(CT::string tailPath, CT::string layerPathToScan, int scanFlags, CT::string layerName) {
   int errorHasOccured = 0;
-  int status;
+  int status = 0;
   // Fill in all data sources from the configuration object
   size_t numberOfLayers = srvParam->cfg->Layer.size();
 
@@ -2855,7 +2855,7 @@ int CRequest::handleGetCoverageRequest(CDataSource *firstDataSource) {
   CT::string driverName = "ADAGUCNetCDF";
   setDimValuesForDataSource(firstDataSource, srvParam);
 
-  for (const auto &WCSFormat : srvParam->cfg->WCS[0]->WCSFormat) {
+  for (const auto &WCSFormat: srvParam->cfg->WCS[0]->WCSFormat) {
     if (srvParam->Format.equals(WCSFormat->attr.name.c_str())) {
       driverName.copy(WCSFormat->attr.driver.c_str());
       break;
@@ -2878,7 +2878,7 @@ int CRequest::handleGetCoverageRequest(CDataSource *firstDataSource) {
   }
   try {
     try {
-      for (auto dataSource : dataSources) {
+      for (auto dataSource: dataSources) {
         status = wcsWriter->init(srvParam, dataSource, firstDataSource->getNumTimeSteps());
         if (status != 0) throw(__LINE__);
       }
@@ -2889,7 +2889,7 @@ int CRequest::handleGetCoverageRequest(CDataSource *firstDataSource) {
     }
 
     for (int k = 0; k < firstDataSource->getNumTimeSteps(); k++) {
-      for (auto dataSource : dataSources) {
+      for (auto dataSource: dataSources) {
         dataSource->setTimeStep(k);
       }
 

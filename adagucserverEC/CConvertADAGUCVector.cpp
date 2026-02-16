@@ -520,7 +520,7 @@ bool CConvertADAGUCVector::createVirtualTimeVariable(CDFObject *cdfObject) {
 #endif
 
         // Loop through the time variable and detect the earliest time
-        double tfill;
+        double tfill = 0;
         bool hastfill = false;
         try {
           origT->getAttribute("_FillValue")->getData(&tfill, 1);

@@ -83,7 +83,7 @@ int CConvertASCAT::convertASCATHeader(CDFObject *cdfObject) {
           CDBError("Unable to read time variable");
         } else {
           // Loop through the time variable and detect the earliest time
-          double tfill;
+          double tfill = 0;
           bool hastfill = false;
           try {
             origT->getAttribute("_FillValue")->getData(&tfill, 1);
@@ -271,8 +271,8 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource, int mode) {
     }
   }
 
-  CDF::Variable *swathLon;
-  CDF::Variable *swathLat;
+  CDF::Variable *swathLon = nullptr;
+  CDF::Variable *swathLat = nullptr;
 
   try {
     swathLon = cdfObject->getVariable("lon");

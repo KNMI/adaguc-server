@@ -350,12 +350,11 @@ int CGDALDataWriter::end() {
     CDBDebug("Write to ADAGUC_WRITETOFILE %s", pszADAGUCWriteToFile);
   } else {
     // Generate a temporary filename for storage
-    char szTempFileName[MAX_STR_LEN + 1];
-    generateUniqueGetCoverageFileName(szTempFileName);
 
-    tmpFileName.copy(srvParam->cfg->TempDir[0]->attr.value.c_str());
-    tmpFileName.concat("/");
-    tmpFileName.concat(szTempFileName);
+    auto fileName = srvParam->cfg->TempDir[0]->attr.value.c_str() + std::string("/") + generateUniqueGetCoverageFileName(this);
+
+    tmpFileName = fileName;
+
 #ifdef CGDALDATAWRITER_DEBUG
     CDBDebug("Generating a tmp file with name");
     CDBDebug("%s", szTempFileName);
@@ -586,35 +585,6 @@ int CGDALDataWriter::end() {
   return returnCode;
 }
 
-/*******************************/
-/* String generation functions */
-/*******************************/
-
-void CGDALDataWriter::generateString(char *s, const int _len) {
-  // CDBDebug("generateString");
-  int len = _len - 1;
-  timespec timevar;
-
-#if _POSIX_TIMERS > 0
-  clock_gettime(CLOCK_REALTIME, &timevar);
-#else
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  timevar.tv_sec = tv.tv_sec;
-  timevar.tv_nsec = tv.tv_usec * 1000;
-#endif
-  unsigned int dTime = (unsigned int)(timevar.tv_nsec);
-  srand(time(NULL) + dTime);
-  static const char alphanum[] = "0123456789"
-                                 "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                                 "abcdefghijklmnopqrstuvwxyz";
-  // CDBDebug("generateString");
-  for (int i = 0; i < len; ++i) {
-    s[i] = alphanum[rand() % (sizeof(alphanum) - 1)];
-  }
-  s[len] = 0;
-  // CDBDebug("generateString");
-}
 CT::string CGDALDataWriter::generateGetCoverageFileName() {
   CT::string humanReadableString;
   humanReadableString.copy(srvParam->Format.c_str());
@@ -655,108 +625,27 @@ CT::string CGDALDataWriter::generateGetCoverageFileName() {
 
   return humanReadableString;
 }
-void CGDALDataWriter::generateUniqueGetCoverageFileName(char *pszTempFileName) {
-  // CDBDebug("generateUniqueGetCoverageFileName");
-  int len, offset;
-  char szRandomPart[MAX_STR_LEN];
-  char szTemp[MAX_STR_LEN + 1];
-  generateString(szRandomPart, 12);
-  snprintf(pszTempFileName, MAX_STR_LEN, "FORMAT--_VARIABLENAME_BBOX0_BBOX2_BBOX3_BBOX4_WIDTH_HEIGH_RESX-_RESY-_CONFIG--_DIM_DIM_DIM_PROJECTION_RAND------------______.tmp");
-  // CDBDebug("generateUniqueGetCoverageFileName");
-  for (int j = 0; j < 118; j++) {
-    pszTempFileName[j] = '_';
-  };
-  pszTempFileName[MAX_STR_LEN] = '\0';
-  // Format
-  strncpy(pszTempFileName + 0, srvParam->Format.c_str(), 8);
-  for (int j = srvParam->Format.length(); j < 8; j++) pszTempFileName[j] = '_';
-  // VariableName
-  offset = 9;
-  strncpy(pszTempFileName + offset, _dataSource->getDataObject(0)->variableName.c_str(), 10);
-  size_t varNameLength = strlen(_dataSource->getDataObject(0)->variableName.c_str());
-  for (int j = varNameLength + offset; j < offset + 10; j++) pszTempFileName[j] = '_';
-  // BBOX
-  offset = 22;
-  snprintf(szTemp, MAX_STR_LEN, "%f", srvParam->geoParams.bbox.left);
-  strncpy(pszTempFileName + offset, szTemp, 6);
-  len = strlen(szTemp);
-  for (int j = len + offset; j < offset + 6; j++) pszTempFileName[j] = '_';
-  offset = 29;
-  snprintf(szTemp, MAX_STR_LEN, "%f", srvParam->geoParams.bbox.bottom);
-  strncpy(pszTempFileName + offset, szTemp, 6);
-  len = strlen(szTemp);
-  for (int j = len + offset; j < offset + 6; j++) pszTempFileName[j] = '_';
-  offset = 36;
-  snprintf(szTemp, MAX_STR_LEN, "%f", srvParam->geoParams.bbox.right);
-  strncpy(pszTempFileName + offset, szTemp, 6);
-  len = strlen(szTemp);
-  for (int j = len + offset; j < offset + 6; j++) pszTempFileName[j] = '_';
-  offset = 43;
-  snprintf(szTemp, MAX_STR_LEN, "%f", srvParam->geoParams.bbox.top);
-  strncpy(pszTempFileName + offset, szTemp, 6);
-  len = strlen(szTemp);
-  for (int j = len + offset; j < offset + 6; j++) pszTempFileName[j] = '_';
-  // CDBDebug("generateUniqueGetCoverageFileName");
-  // Width
-  offset = 50;
-  snprintf(szTemp, MAX_STR_LEN, "%d", srvParam->geoParams.width);
-  strncpy(pszTempFileName + offset, szTemp, 5);
-  len = strlen(szTemp);
-  for (int j = len + offset; j < offset + 5; j++) pszTempFileName[j] = '_';
-  // Height
-  offset = 56;
-  snprintf(szTemp, MAX_STR_LEN, "%d", srvParam->geoParams.height);
-  strncpy(pszTempFileName + offset, szTemp, 5);
-  len = strlen(szTemp);
-  for (int j = len + offset; j < offset + 5; j++) pszTempFileName[j] = '_';
-  // RESX
-  offset = 62;
-  snprintf(szTemp, MAX_STR_LEN, "%f", srvParam->dfResX);
-  strncpy(pszTempFileName + offset, szTemp, 5);
-  len = strlen(szTemp);
-  for (int j = len + offset; j < offset + 5; j++) pszTempFileName[j] = '_';
-  // RESY
-  offset = 68;
-  snprintf(szTemp, MAX_STR_LEN, "%f", srvParam->dfResY);
-  strncpy(pszTempFileName + offset, szTemp, 5);
-  len = strlen(szTemp);
-  for (int j = len + offset; j < offset + 5; j++) pszTempFileName[j] = '_';
-  // ConfigFile
-  offset = 74;
-  CT::string tmp;
-  tmp.copy(srvParam->configFileName.c_str() + srvParam->configFileName.lastIndexOf("/"));
-  snprintf(szTemp, MAX_STR_LEN, "%s", tmp.c_str());
-  strncpy(pszTempFileName + offset, szTemp, 11);
-  len = strlen(szTemp);
-  for (int j = len + offset; j < offset + 11; j++) pszTempFileName[j] = '_';
-  // DIMS
-  for (size_t i = 0; i < _dataSource->cfgLayer->Dimension.size() && i < 4; i++) {
-    offset = 86 + i * 4;
-    snprintf(szTemp, MAX_STR_LEN, "%d", int(_dataSource->getDimensionIndex(i)));
-    strncpy(pszTempFileName + offset, szTemp, 3);
-    len = strlen(szTemp);
-    for (int j = len + offset; j < offset + 3; j++) pszTempFileName[j] = '_';
+std::string generateUniqueGetCoverageFileName(CGDALDataWriter *gdalDataWriter) {
+  //  "FORMAT--_VARIABLENAME_BBOX0_BBOX2_BBOX3_BBOX4_WIDTH_HEIGH_RESX-_RESY-_CONFIG--_DIM_DIM_DIM_PROJECTION_RAND------------______.tmp");
+  auto s = gdalDataWriter->srvParam;
+  auto d = gdalDataWriter->_dataSource;
+  auto variableName = d->getDataObject(0)->variableName;
+  std::string dimSettings;
+  for (size_t i = 0; i < d->cfgLayer->Dimension.size() && i < 4; i++) {
+    CT::printfconcat(dimSettings, "%d_", int(d->getDimensionIndex(i)));
   }
-  // Projection
-  // CDBDebug("generateUniqueGetCoverageFileName");
-  offset = 102;
-  snprintf(szTemp, MAX_STR_LEN, "%s", srvParam->geoParams.crs.c_str());
-  strncpy(pszTempFileName + offset, szTemp, 10);
-  len = strlen(szTemp);
-  for (int j = len + offset; j < offset + 10; j++) pszTempFileName[j] = '_';
-  // RandomString
-  offset = 113;
-  snprintf(szTemp, MAX_STR_LEN, "%s", szRandomPart);
-  strncpy(pszTempFileName + offset, szTemp, 11);
-  len = strlen(szTemp);
-  for (int j = len + offset; j < offset + 11; j++) pszTempFileName[j] = '_';
 
-  // Check for characters
-  for (int j = 0; j < 124; j++) {
-    if (!isalnum(pszTempFileName[j]) && pszTempFileName[j] != '.') pszTempFileName[j] = '_';
+  std::string fileName =
+      CT::printf("%s_%s_%f_%f_%f_%f_%d_%d_%f_%f_%s_%s_%s", s->Format.c_str(), variableName.c_str(), s->geoParams.bbox.left, s->geoParams.bbox.bottom, s->geoParams.bbox.right, s->geoParams.bbox.top,
+                 s->geoParams.width, s->geoParams.height, s->dfResX, s->dfResY, CT::basename(s->configFileName).c_str(), dimSettings.c_str(), CT::randomString(12).c_str());
+  for (auto c: {".", "=", "+", "/", ":", ";", "?", "&", "|", "<", ">", "\"", "'", "\\", "*", "^", "%", "$", "#", "@", "!", "~"}) {
+    fileName = CT::replace(fileName, c, "_");
   }
-  pszTempFileName[128] = '\0';
-  // CDBDebug("generateUniqueGetCoverageFileName");
+  fileName += ".tmp";
+
+  CDBDebug("Generated unique filename: %s", fileName.c_str());
+
+  return fileName;
 }
 
 CT::string CGDALDataWriter::getDimensionValue(int d, CCDFDims *dims) {

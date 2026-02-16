@@ -785,7 +785,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
     if (dataSource != NULL) {
       CStyleConfiguration *styleConfiguration = dataSource->getStyle();
       if (styleConfiguration != NULL) {
-        for (auto pointInterval : styleConfiguration->pointIntervals) {
+        for (auto pointInterval: styleConfiguration->pointIntervals) {
           if (!pointInterval->attr.discradius.empty()) {
             hasZoomableDiscRadius = true;
             discSize = pointInterval->attr.discradius.toFloat();
@@ -794,8 +794,8 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
       }
     }
 
-    int prevLon, prevLat;
-    float prevVal;
+    int prevLon = 0, prevLat = 0;
+    float prevVal = 0;
     bool hasPrevLatLon = false;
 
     bool doDrawLinearInterpolated = dataSource->getStyle()->renderMethod & RM_POINT_LINEARINTERPOLATION;

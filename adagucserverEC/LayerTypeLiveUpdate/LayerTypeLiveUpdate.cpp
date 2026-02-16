@@ -179,7 +179,7 @@ int layerTypeLiveUpdateRenderIntoImageDataWriter(CDataSource *dataSource, CServe
   std::vector<CDataSource *> dataSourceRef = {dataSource};
 
   if (srvParam->requestType == REQUEST_WMS_GETFEATUREINFO) {
-    status = imageDataWriter.getFeatureInfoVirtual(dataSourceRef, 0, int(srvParam->dX), int(srvParam->dY), srvParam);
+    status = imageDataWriter.getFeatureInfoVirtual({dataSource}, 0, int(srvParam->dX), int(srvParam->dY), srvParam);
   }
   if (srvParam->requestType == REQUEST_WMS_GETMAP) {
     status = imageDataWriter.addData(dataSourceRef);
@@ -208,7 +208,7 @@ int layerTypeLiveUpdateConfigureWMSLayerForGetCapabilities(MetadataLayer *metada
   CT::string timeResolution = LIVEUPDATE_DEFAULT_INTERVAL;
   CT::string offset = LIVEUPDATE_DEFAULT_OFFSET;
 
-  for (auto dim : metadataLayer->layer->Dimension) {
+  for (auto dim: metadataLayer->layer->Dimension) {
     if (dim->value.equals("time") && !dim->attr.interval.empty()) {
       timeResolution = dim->attr.interval;
     }

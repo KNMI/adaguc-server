@@ -406,7 +406,7 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
     if (enableBarb) {
       bool rendertextforvectors = false;
       if (styleConfiguration != nullptr) {
-        for (auto r : styleConfiguration->renderSettings) {
+        for (auto r: styleConfiguration->renderSettings) {
           if (r->attr.rendertextforvectors.equals("true")) {
             rendertextforvectors = true;
           }
@@ -590,7 +590,7 @@ int CImgWarpBilinear::set(const char *pszSettings) {
   if (settings.empty()) return 0;
 
   auto nodes = settings.split(";");
-  for (auto &node : nodes) {
+  for (auto &node: nodes) {
     auto values = node.split("=");
     if (values.size() < 2) continue;
 
@@ -642,12 +642,12 @@ int CImgWarpBilinear::set(const char *pszSettings) {
     if (values[0].equals("shading")) {
       CColor fillcolor = CColor(0, 0, 0, 0);
       CColor bgColor = CColor(0, 0, 0, 0);
-      float max, min;
+      float max = 0, min = 0;
       bool foundColor = false;
       bool hasBGColor = false;
 
       auto shadeSettings = values[1].split("$");
-      for (auto &shadeSetting : shadeSettings) {
+      for (auto &shadeSetting: shadeSettings) {
         auto kvp = shadeSetting.split("(");
         if (kvp.size() < 2) continue;
         if (kvp[0].equals("min")) min = kvp[1].toFloat();
@@ -682,7 +682,7 @@ int CImgWarpBilinear::set(const char *pszSettings) {
       CT::string dashing;
 
       auto lineSettings = values[1].split("$");
-      for (auto &lineSetting : lineSettings) {
+      for (auto &lineSetting: lineSettings) {
         auto kvp = lineSetting.split("(");
         if (kvp.size() < 2) continue;
 

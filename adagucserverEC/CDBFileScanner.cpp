@@ -276,7 +276,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
     CT::string queryString;
     // CT::string VALUES;
     // CADAGUC_time *ADTime  = NULL;
-    CTime *adagucTime;
+    CTime *adagucTime = nullptr;
 
     // Sort the fileList alphabetically, which normally corresponds to time order
     std::sort(fileList->begin(), fileList->end());
@@ -698,6 +698,10 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
                             // PrintISOTime return a 0 if succeeded
 
                             try {
+                              if (adagucTime == nullptr) {
+                                CDBDebug("adagucTime is nullptr");
+                                throw(__LINE__);
+                              }
                               uniqueKey = adagucTime->dateToISOString(adagucTime->getDate(dimValues[i]));
                               if (!dataSource->cfgLayer->Dimension[d]->attr.quantizeperiod.empty()) {
                                 CT::string quantizemethod = "round";
@@ -974,7 +978,7 @@ int CDBFileScanner::updatedb(CDataSource *dataSource, CT::string _tailPath, CT::
       if (cleanFilesResult.second.size() > 0) {
         CDBDebug("Cleanfiles deleted %lu files.", cleanFilesResult.second.size());
         // Remove the deleted files from the fileList.
-        for (auto item : cleanFilesResult.second) {
+        for (auto item: cleanFilesResult.second) {
           auto it = std::find(fileList.begin(), fileList.end(), item);
           if (it != fileList.end()) {
             fileList.erase(it);
