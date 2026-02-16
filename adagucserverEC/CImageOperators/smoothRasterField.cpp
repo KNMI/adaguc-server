@@ -6,27 +6,8 @@
 
 #define MEMO_NODATAVALUE -99999999999999.f
 
-void smoothingMakeDistanceMatrix(GDWDrawFunctionSettings &settings) {
-
-  int smoothWindowSize = settings.smoothingFiter;
-  if (smoothWindowSize == 0) {
-    return;
-  }
-  settings.smoothingDistanceMatrix.resize((smoothWindowSize + 1) * 2 * (smoothWindowSize + 1) * 2);
-
-  int dWinP = 0;
-  auto *data = settings.smoothingDistanceMatrix.data();
-  for (int y1 = -smoothWindowSize; y1 < smoothWindowSize + 1; y1++) {
-    for (int x1 = -smoothWindowSize; x1 < smoothWindowSize + 1; x1++) {
-      double d = sqrt(x1 * x1 + y1 * y1);
-      d = 1 / (d + 1);
-      data[dWinP++] = d;
-    }
-  }
-}
-
 template <typename T> T smoothingAtLocation(int sourceX, int sourceY, T *sourceGrid, GDWState &warperState, GDWDrawFunctionSettings &settings) {
-  if (settings.smoothingFiter == 0 || settings.smoothingDistanceMatrix.empty()) {
+  if (settings.smoothingFiter == 0) {
     return (T)settings.dfNodataValue;
   }
   if (sourceX < 0 || sourceY < 0 || sourceX >= warperState.sourceGridWidth || sourceY >= warperState.sourceGridHeight) return (T)settings.dfNodataValue;

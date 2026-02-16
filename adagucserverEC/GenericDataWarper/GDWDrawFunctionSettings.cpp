@@ -55,11 +55,9 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
   // Smoothingfilter:
   if (styleConfiguration->smoothingFilterVector.size() > 0) {
     auto smoothingFilter = styleConfiguration->smoothingFilterVector.back();
-    if (settings.smoothingDistanceMatrix.empty()) {
-      if (!smoothingFilter->value.empty()) {
-        settings.smoothingFiter = smoothingFilter->value.toDouble();
-        smoothingMakeDistanceMatrix(settings);
-      }
+
+    if (!smoothingFilter->value.empty()) {
+      settings.smoothingFiter = smoothingFilter->value.toDouble();
     }
   }
 
