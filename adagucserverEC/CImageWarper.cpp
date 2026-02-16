@@ -270,13 +270,7 @@ int CImageWarper::initreproj(CDataSource *dataSource, GeoParameters &GeoDest, st
   return initreproj(dataSource->nativeProj4.c_str(), GeoDest, _prj);
 }
 
-pthread_mutex_t CImageWarper_initreproj;
-int CImageWarper::initreproj(const char *projString, GeoParameters &GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj) {
-  pthread_mutex_lock(&CImageWarper_initreproj);
-  int status = _initreprojSynchronized(projString, GeoDest, _prj);
-  pthread_mutex_unlock(&CImageWarper_initreproj);
-  return status;
-}
+int CImageWarper::initreproj(const char *projString, GeoParameters &GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj) { return _initreprojSynchronized(projString, GeoDest, _prj); }
 int CImageWarper::_initreprojSynchronized(const char *projString, GeoParameters &_GeoDest, std::vector<CServerConfig::XMLE_Projection *> *_prj) {
 
   if (projString == NULL) {
@@ -309,6 +303,10 @@ int CImageWarper::_initreprojSynchronized(const char *projString, GeoParameters 
     CDBError("decodeCRS failed");
     return 1;
   }
+  if (destinationCRS.empty()) {
+    CDBDebug("Assuming latlon for destination CRS");
+    destinationCRS = "EPSG:4326";
+  }
 
   projSourceToDest = proj_create_crs_to_crs_with_cache(sourceProjection, destinationCRS, nullptr);
   if (projSourceToDest == nullptr) {
@@ -331,6 +329,11 @@ int CImageWarper::_initreprojSynchronized(const char *projString, GeoParameters 
   initialized = true;
   // CDBDebug("sourceProjection = %s destinationCRS = %s",projString,destinationCRS.c_str());
 
+  if (sourceProjection.equals(destinationCRS.c_str())) {
+    initialized = true;
+    requireReprojection = false;
+    return 0;
+  }
   // Check if we have a projected coordinate system
   //  projUV p,pout;;
   requireReprojection = false;
@@ -577,7 +580,7 @@ std::tuple<CT::string, double> CImageWarper::fixProjection(CT::string projection
     CDF::Attribute *majorAttribute = var.getAttributeNE("semi_major_axis");
     CDF::Attribute *minorAttribute = var.getAttributeNE("semi_minor_axis");
     if (majorAttribute != nullptr && minorAttribute != nullptr && majorAttribute->getType() == CDF_FLOAT && minorAttribute->getType() == CDF_FLOAT) {
-      float semi_major_axis, semi_minor_axis;
+      float semi_major_axis = 0, semi_minor_axis = 0;
       majorAttribute->getData<float>(&semi_major_axis, 1);
       minorAttribute->getData<float>(&semi_minor_axis, 1);
       if (semi_major_axis > 6000.0 && semi_major_axis < 7000.0) { // This is given in km's, and should be converted to meters

@@ -452,10 +452,8 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
 
     if (w > h) {
       status = drawImage.createImage(h, w);
-      CDBDebug("Init legend %dx%d", h, w);
     } else {
       status = drawImage.createImage(w, h);
-      CDBDebug("Init legend %dx%d", h, w);
     }
 
     if (status != 0) return 1;
@@ -543,12 +541,12 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
 #endif
 
 #ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("[getFeatureInfo] %d, %d, [%d,%d]", dataSources.size(), dataSourceIndex, dX, dY);
+  CDBDebug("[getFeatureInfo] %lu, %d, [%d,%d]", dataSources.size(), dataSourceIndex, dX, dY);
 #endif
   // Create a new getFeatureInfoResult object and push it into the vector.
   int status = 0;
   isProfileData = false;
-  for (auto dataSource : dataSources) {
+  for (auto dataSource: dataSources) {
     if (dataSource == NULL) {
       CDBError("dataSource == NULL");
       return 1;
@@ -806,7 +804,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
             }
 
 #ifdef CIMAGEDATAWRITER_DEBUG
-            CDBDebug("getFeatureInfoResult->elements has %d elements\n", getFeatureInfoResult->elements.size());
+            CDBDebug("getFeatureInfoResult->elements has %lu elements\n", getFeatureInfoResult->elements.size());
 #endif
             // Retrieve corresponding values.
             //       #ifdef CIMAGEDATAWRITER_DEBUG
@@ -825,7 +823,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
               }
 
 #ifdef CIMAGEDATAWRITER_DEBUG
-              CDBDebug("ptr = %d Dataobject = %d Timestep = %d", ptr, o, dataSource->getCurrentTimeStep());
+              CDBDebug("ptr = %lu Dataobject = %lu Timestep = %d", ptr, o, dataSource->getCurrentTimeStep());
 #endif
               dataSource->setTimeStep(step);
               double pixel = convertValue(dataSource->getDataObject(o)->cdfVariable->getType(), dataSource->getDataObject(o)->cdfVariable->data, ptr);
@@ -889,7 +887,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
                   if (featureIt != dataSource->getDataObject(o)->features.end()) {
                     CFeature *feature = &featureIt->second;
                     if (feature->paramMap.empty() == false) {
-                      for (auto [propertyName, propertyValue] : feature->paramMap) {
+                      for (auto [propertyName, propertyValue]: feature->paramMap) {
                         GetFeatureInfoResult::Element *featureParam = new GetFeatureInfoResult::Element();
                         featureParam->dataSource = dataSource;
                         for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
@@ -932,20 +930,20 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
           }
 // reader.close();
 #ifdef CIMAGEDATAWRITER_DEBUG
-          CDBDebug("dataSource->getNumDataObjects()==%d", dataSource->getNumDataObjects());
+          CDBDebug("dataSource->getNumDataObjects()==%lu", dataSource->getNumDataObjects());
 #endif
         }
       }
     }
   }
 
-  for (auto gfiResult : getFeatureInfoResultList) {
+  for (auto gfiResult: getFeatureInfoResultList) {
     if (gfiResult->elements.size() > 0) {
       gfiResult->layerTitle = gfiResult->elements[0]->long_name;
     }
   }
 #ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("[/getFeatureInfo %d]", getFeatureInfoResultList.size());
+  CDBDebug("[/getFeatureInfo %lu]", getFeatureInfoResultList.size());
 #endif
   return 0;
 }
@@ -1189,7 +1187,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
         The bilinear Rendermethod can shade using ShadeInterval if renderhint in RenderSettings is set to RENDERHINT_DISCRETECLASSES
       */
       if (styleConfiguration != nullptr) {
-        for (auto renderSetting : styleConfiguration->renderSettings) {
+        for (auto renderSetting: styleConfiguration->renderSettings) {
           CT::string renderHint = renderSetting->attr.renderhint;
           if (renderHint.equals(RENDERHINT_DISCRETECLASSES)) {
             drawMap = false;   // Don't use continous legends with the bilinear renderer
@@ -1384,7 +1382,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
   int status = 0;
 
 #ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("Draw data. dataSources.size() =  %d", dataSources.size());
+  CDBDebug("Draw data. dataSources.size() =  %lu", dataSources.size());
 #endif
 
   for (size_t j = 0; j < dataSources.size(); j++) {
@@ -1775,7 +1773,7 @@ int CImageDataWriter::end() {
   writerStatus = finished;
   if (srvParam->requestType == REQUEST_WMS_GETFEATUREINFO) {
 #ifdef CIMAGEDATAWRITER_DEBUG
-    CDBDebug("end, number of GF results: %d", getFeatureInfoResultList.size());
+    CDBDebug("end, number of GF results: %lu", getFeatureInfoResultList.size());
 #endif
     enum ResultFormats { textplain, texthtml, textxml, applicationvndogcgml, imagepng, json, imagepng_eprofile };
     ResultFormats resultFormat = texthtml;

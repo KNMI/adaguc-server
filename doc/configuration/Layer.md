@@ -85,7 +85,7 @@ More information on how to configure this type of layer can be found [here](../t
     <Abstract>Displays the solar zenith angle (SZA). The SZA ranges from 0 to 90 degrees during the day, and from 90 and up to 180 degrees at night </Abstract>
 
     <Name>solarterminator</Name>
-    <DataPostProc algorithm="solarterminator"/>
+    <DataPostProc algorithm="solarterminator" />
     <Variable>solarterminator</Variable>
     <Styles>solt_twilight</Styles>
     <Dimension interval="PT10M">time</Dimension>

@@ -1,3 +1,7 @@
+**Version 6.4.0 - 2026-02-13**
+
+- Added stride option to solt to make it render faster
+
 **Version 6.3.0 - 2026-01-28**
 
 - Removed support for gd renderer
@@ -169,7 +173,7 @@
 - EDR: /instances call using reference times
 - EDR: support for vertical dimensions (z in EDR requests) for model_levels, pressure_levels etc
 - EDR: support for custom dimensions [using custom: namespace] for example for percentile classes or ensemble members
-- EDR: By default EDR is now enabled for all datasets and layers. EDR support can be switched on or off for a dataset or for a layer. Setting `enable_edr="false"` to a dataset's `<Settings>` element disables EDR for a dataset. Using `enable_edr="false"` in a layer's `<Layer>` element disables EDR for that layer. Using enable_edr="true" in a `<Layer>` element forces enabling EDR for a single layer, even if it is disabled in the dataset `<Settings>` element.
+- EDR: By default EDR is now enabled for all datasets and layers. EDR support can be switched on or off for a dataset or for a layer. Setting `enable_edr="false"` to a dataset's `<Settings>` element disables EDR for a dataset. Using `` in a layer's `<Layer>` element disables EDR for that layer. Using enable_edr="true" in a `<Layer>` element forces enabling EDR for a single layer, even if it is disabled in the dataset `<Settings>` element.
 - EDR: getMetadata request output has been extended with a few attributes for EDR support
 - EDR: uses getMetadata request which reads from database for increased performance as no dataset configuration needs to be read. the. This should make response times of EDR calls faster.
 - EDR: now support requests for generating soundings, ensemble plots (percentiles or plumes), time series, returning a CoverageCollection with multiple Coverages or a single Coverage in case of a single result.

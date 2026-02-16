@@ -1,7 +1,9 @@
 #include "LayerTypeLiveUpdate.h"
 #include "CServerParams.h"
 #include "CDataPostProcessors/CDataPostProcessor.h"
+#include <utils/LayerUtils.h>
 
+bool verbose = false;
 int layerTypeLiveUpdateConfigureDimensionsInDataSource(CDataSource *dataSource) {
   // This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.
   if (dataSource->requiredDims.size() < 1) {
@@ -46,9 +48,12 @@ int layerTypeLiveUpdateConfigureDimensionsInDataSource(CDataSource *dataSource) 
 void layerTypeLiveUpdatePopulateDataSource(CDataSource *dataSource, CServerParams *srvParam) {
   // Solar Terminator case (uses a data postprocessor)
   dataSource->srvParams = srvParam;
+  dataSource->dWidth = 2;
+  dataSource->dHeight = 2;
+
   dataSource->isConfigured = true;
   dataSource->currentAnimationStep = 0;
-  dataSource->layerName.copy("liveupdate_memory");
+  dataSource->layerName = "liveupdate_memory";
   CDFObject *cdfObject = new CDFObject();
   CDFObjectStore::getCDFObjectStore()->registerCustomCDFObject(cdfObject);
 
@@ -83,54 +88,26 @@ void layerTypeLiveUpdatePopulateDataSource(CDataSource *dataSource, CServerParam
   solTVar->setAttributeText("standard_name", "solarterminator");
   solTVar->setAttributeText("long_name", "solar terminator");
   solTVar->setAttributeText("units", "sza");
-  solTVar->setAttributeText("grid_mapping", "projection");
   cdfObject->addVariable(solTVar);
   CDF::Variable::CustomMemoryReader *memoryReaderSolT = CDF::Variable::CustomMemoryReaderInstance;
   solTVar->setCustomReader(memoryReaderSolT);
 
-  // Projection (has no dimensions)
-  CDF::Variable *projVar = new CDF::Variable();
-  projVar->setType(CDF_SHORT);
-  projVar->name.copy("projection");
-  projVar->isDimension = false;
-
-  cdfObject->addVariable(projVar);
-
-  // String projection params
-  projVar->addAttribute(new CDF::Attribute("long_name", "projection"));
-  projVar->addAttribute(new CDF::Attribute("proj4_params", "+proj=sterea +lat_0=52.15616055555555 +lon_0=5.38763888888889 +k=0.9999079 "
-                                                           "+x_0=155000 +y_0=463000 +ellps=bessel "
-                                                           "+towgs84=565.417,50.3319,465.552,-0.398957,0.343988,-1.8774,4.0725 "
-                                                           "+units=m +no_defs"));
-  projVar->addAttribute(new CDF::Attribute("EPSG_code", "EPSG:28992"));
-  // Test what this is???
-  // dataSource->srvParams->geoParams.crs.copy("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
-  projVar->addAttribute(new CDF::Attribute("grid_mapping_name", "stereographic"));
-
-  // Numeric projection params
-  double lat0 = 52.15616;
-  double lon0 = 5.387639;
-  double scale0 = 0.999908;
-  double fe = 155000.0;
-  double fn = 463000.0;
-  double a = 6377397.0;
-  double b = 6356079.0;
-
-  projVar->addAttribute(new CDF::Attribute("latitude_of_projection_origin", CDF_DOUBLE, &lat0, 1));
-  projVar->addAttribute(new CDF::Attribute("longitude_of_projection_origin", CDF_DOUBLE, &lon0, 1));
-  projVar->addAttribute(new CDF::Attribute("scale_factor_at_projection_origin", CDF_DOUBLE, &scale0, 1));
-  projVar->addAttribute(new CDF::Attribute("false_easting", CDF_DOUBLE, &fe, 1));
-  projVar->addAttribute(new CDF::Attribute("false_northing", CDF_DOUBLE, &fn, 1));
-  projVar->addAttribute(new CDF::Attribute("semi_major_axis", CDF_DOUBLE, &a, 1));
-  projVar->addAttribute(new CDF::Attribute("semi_minor_axis", CDF_DOUBLE, &b, 1));
-
-  projVar->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
+  dataSource->nativeProj4 = LATLONPROJECTION;
+  dataSource->makeGeoParams();
 
   // Add dummy step
   dataSource->addStep("");
-  // Set styles, and solarterminator variable, among other things
-  dataSource->setCFGLayer(srvParam, srvParam->configObj->Configuration[0], srvParam->cfg->Layer[0], NULL, 0);
+  auto cfgLayer = srvParam->cfg->Layer[0]; // TODO
+  std::string layerName = makeUniqueLayerName(cfgLayer);
+  if (dataSource->getDataObjectsVector()->size() == 0) {
+    if (cfgLayer->Variable.size() == 0) {
+      cfgLayer->Variable.push_back(new CServerConfig::XMLE_Variable());
+      cfgLayer->Variable[0]->value = "solarterminator";
+    }
+    dataSource->setCFGLayer(srvParam, srvParam->configObj->Configuration[0], srvParam->cfg->Layer[0], layerName.c_str(), 0);
+  }
   auto *obj = dataSource->getDataObjectsVector()->at(0);
+  dataSource->layerName = layerName;
   obj->cdfObject = cdfObject;
   obj->cdfVariable = solTVar;
   obj->cdfVariable->setCustomReader(CDF::Variable::CustomMemoryReaderInstance);
@@ -174,7 +151,9 @@ int layerTypeLiveUpdateRenderIntoImageDataWriter(CDataSource *dataSource, CServe
   // Covers case of Solar Terminator
   CImageDataWriter imageDataWriter;
   int status = imageDataWriter.init(srvParam, dataSource, dataSource->getNumTimeSteps());
-  CDBDebug("Init imageDataWriter status %d", status);
+  if (verbose) {
+    CDBDebug("Init imageDataWriter status %d", status);
+  }
 
   std::vector<CDataSource *> dataSourceRef = {dataSource};
 
@@ -186,7 +165,9 @@ int layerTypeLiveUpdateRenderIntoImageDataWriter(CDataSource *dataSource, CServe
   }
 
   status = imageDataWriter.end();
-  CDBDebug("Ending image data writing with status %d", status);
+  if (verbose) {
+    CDBDebug("Ending image data writing with status %d", status);
+  }
   return status;
 }
 
