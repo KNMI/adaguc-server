@@ -486,7 +486,7 @@ namespace CT {
 
   CT::string join(const std::vector<string> &items, CT::string separator) {
     CT::string newString;
-    for (auto &item : items) {
+    for (auto &item: items) {
       newString += item.stdstring;
       newString += separator;
     }
@@ -556,6 +556,28 @@ namespace CT {
     return result;
   }
 
+  std::string toUpperCase(const std::string input) {
+    std::string result = input;
+    std::transform(result.begin(), result.end(), result.begin(), [](unsigned char c) { return std::toupper(c); });
+    return result;
+  }
+
+  // Trim from the start (in place)
+  void ltrim(std::string &s) {
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) { return !std::isspace(ch); }));
+  }
+
+  // Trim from the end (in place)
+  void rtrim(std::string &s) {
+    s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), s.end());
+  }
+
+  std::string trim(const std::string input) {
+    std::string result = input;
+    rtrim(result);
+    ltrim(result);
+    return result;
+  }
   std::string randomString(const int length) {
     const char charset[] = "0123456789"
                            "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -574,5 +596,22 @@ namespace CT {
     std::string str(length, 0);
     std::generate_n(str.begin(), length, randChar);
     return str;
+  }
+
+  std::vector<std::string> split(const std::string &stdstring, std::string value) {
+    std::vector<std::string> stringList;
+    const char *fo = strstr(stdstring.c_str(), value.c_str());
+    const char *prevFo = stdstring.c_str();
+    size_t keyLength = value.length();
+    while (fo != nullptr) {
+      stringList.push_back(CT::string(prevFo, (fo - prevFo)));
+      prevFo = fo + keyLength;
+      fo = strstr(fo + keyLength, value.c_str());
+    }
+    size_t prevFoLength = strlen(prevFo);
+    if (prevFoLength > 0) {
+      stringList.push_back(CT::string(prevFo, prevFoLength));
+    }
+    return stringList;
   }
 } /* namespace CT */

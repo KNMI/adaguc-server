@@ -98,8 +98,6 @@ public:
 
   void list(hid_t groupID, char *groupName);
 
-  static int HDF5ToADAGUCTime(char *pszADAGUCTime, const char *pszRadarTime);
-
   void enableKNMIHDF5toCFConversion();
 
   void enableKNMIHDF5UseEndTime();

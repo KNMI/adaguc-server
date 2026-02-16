@@ -31,7 +31,7 @@ public:
 
   struct DimInfo {
     ~DimInfo() {
-      for(auto val: aggregatedValues) {
+      for (auto val: aggregatedValues) {
         delete val;
       }
       aggregatedValues.clear();
@@ -166,9 +166,9 @@ public:
 #endif
         map_type_dimvalindex *dimValuesMap = &diminfomapiterator->second->dimValuesMap;
         int currentDimIndex = -1;
-        int dimindex;
+        int dimindex = 0;
 
-        int startDimIndex;
+        int startDimIndex = 0;
         std::vector<std::string> dimValues;
         for (it_type_dimvalindex dimvalindexmapiterator = dimValuesMap->begin(); dimvalindexmapiterator != dimValuesMap->end(); dimvalindexmapiterator++) {
           // const char *filename=(filemapiterator->first).c_str();
@@ -284,8 +284,8 @@ public:
 
             variable->freeData();
 
-            size_t start[variable->dimensionlinks.size()], count[variable->dimensionlinks.size()];
-            ptrdiff_t stride[variable->dimensionlinks.size()];
+            std::vector<size_t> start(variable->dimensionlinks.size()), count(variable->dimensionlinks.size());
+            std::vector<ptrdiff_t> stride(variable->dimensionlinks.size());
 
             for (size_t j = 0; j < variable->dimensionlinks.size(); j++) {
               start[j] = 0;
@@ -303,7 +303,7 @@ public:
 #endif
 
             variable->setType(CDF_FLOAT);
-            int status = variable->readData(variable->currentType, start, count, stride, true);
+            int status = variable->readData(variable->currentType, start.data(), count.data(), stride.data(), true);
 
             if (status != 0) {
               CDBError("Unable to read variable %s", variable->name.c_str());
@@ -343,7 +343,7 @@ public:
               CDBDebug("Read %d elements", variable->getSize());
 #endif
 
-              drawEprofile(drawImage, variable, start, count, request, dataSource, eProfileJson);
+              drawEprofile(drawImage, variable, start.data(), count.data(), request, dataSource, eProfileJson);
 
               //               try{
               //                 expandData(dataObject,variable,start,count,0,request,0);

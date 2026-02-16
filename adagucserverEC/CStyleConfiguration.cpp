@@ -84,7 +84,7 @@ CT::string CStyleConfiguration::dump() {
     a++;
   }
   a = 0;
-  for (const auto shadeInterval : shadeIntervals) {
+  for (const auto &shadeInterval : shadeIntervals) {
     data.printconcat("shadeInterval %d) =  [%s] [%s]\n", a++, shadeInterval.attr.label.c_str(), shadeInterval.attr.label.c_str());
   }
   a = 0;
@@ -149,8 +149,8 @@ void parseStyleInfo(CStyleConfiguration *styleConfig, CDataSource *dataSource, i
   styleConfig->contourLines.insert(styleConfig->contourLines.end(), style->ContourLine.begin(), style->ContourLine.end());
   styleConfig->renderSettings.insert(styleConfig->renderSettings.end(), style->RenderSettings.begin(), style->RenderSettings.end());
   styleConfig->smoothingFilterVector.insert(styleConfig->smoothingFilterVector.end(), style->SmoothingFilter.begin(), style->SmoothingFilter.end());
-  for(const auto shadeInterval: style->ShadeInterval) {
-    styleConfig->shadeIntervals.push_back(*shadeInterval)   ;
+  for (const auto shadeInterval : style->ShadeInterval) {
+    styleConfig->shadeIntervals.push_back(*shadeInterval);
   }
   styleConfig->symbolIntervals.insert(styleConfig->symbolIntervals.end(), style->SymbolInterval.begin(), style->SymbolInterval.end());
   styleConfig->featureIntervals.insert(styleConfig->featureIntervals.end(), style->FeatureInterval.begin(), style->FeatureInterval.end());
@@ -259,7 +259,7 @@ int CStyleConfiguration::makeStyleConfig(CDataSource *dataSource) {
   }
   if (layer->ShadeInterval.size() > 0) {
     this->shadeIntervals.clear();
-    for(const auto shadeInterval: layer->ShadeInterval) {
+    for (const auto shadeInterval : layer->ShadeInterval) {
       this->shadeIntervals.push_back(*shadeInterval);
     }
   }

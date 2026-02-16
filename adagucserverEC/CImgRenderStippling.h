@@ -76,7 +76,7 @@ private:
         settings.dataField[x + y * settings.width] = (float)val;
       }
     }
-  };
+  }
 
   int set(const char *settings);
 

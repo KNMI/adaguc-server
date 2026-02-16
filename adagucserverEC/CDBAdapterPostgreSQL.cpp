@@ -575,7 +575,7 @@ int CDBAdapterPostgreSQL::autoUpdateAndScanDimensionTables(CDataSource *dataSour
       for (auto &m : mapping) {
         dimName = m.first;
 
-        CDBFileScanner::markTableDirty(&m.second.tableName);
+        CDBFileScanner::markTableDirty(m.second.tableName);
         // CDBDebug("Dropping old table (if exists)",tableName.c_str());
         CT::string query;
         query.print("drop table %s", m.second.tableName.c_str());

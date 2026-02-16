@@ -67,7 +67,7 @@ private:
     if (x >= 0 && y >= 0 && x < (int)drawFunctionState.width && y < (int)drawFunctionState.height) {
       ((T *)drawFunctionState.data)[x + y * drawFunctionState.width] = val;
     }
-  };
+  }
 
   CServerParams *srvParam;
   GDALDriverH hMemDriver2, hOutputDriver;
@@ -87,9 +87,8 @@ private:
   double dfNoData;
 
   CDataSource *_dataSource;
-  void generateUniqueGetCoverageFileName(char *pszTempFileName);
+
   CT::string generateGetCoverageFileName();
-  void generateString(char *s, const int len);
   CT::string getDimensionValue(int d, CCDFDims *dims);
 
 public:
@@ -104,6 +103,8 @@ public:
   int init(CServerParams *srvParam, CDataSource *dataSource, int nrOfBands);
   int addData(std::vector<CDataSource *> &dataSources);
   int end();
+
+  friend std::string generateUniqueGetCoverageFileName(CGDALDataWriter *dataWriter);
 };
 #endif
 #endif

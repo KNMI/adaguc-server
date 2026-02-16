@@ -438,7 +438,7 @@ int CDataReader::parseDimensions(CDataSource *dataSource, int mode, int x, int y
   // ----------------------------------------------------------------------------------------------------
   if (dataSource->formatConverterActive == false) {
 
-    size_t start[dataSource->dNetCDFNumDims + 1]; // Saves the start position of the dimension variable data.
+    std::vector<size_t> start(dataSource->dNetCDFNumDims + 1); // Saves the start position of the dimension variable data.
 
     // Determine the indices of the data. Everything starts at 0 by default.
     for (int j = 0; j < dataSource->dNetCDFNumDims; j++) {
@@ -952,9 +952,9 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     return 0;
   }
 
-  size_t start[dataSource->dNetCDFNumDims + 1];
-  size_t count[dataSource->dNetCDFNumDims + 1];
-  ptrdiff_t stride[dataSource->dNetCDFNumDims + 1];
+  std::vector<size_t> start(dataSource->dNetCDFNumDims + 1);
+  std::vector<size_t> count(dataSource->dNetCDFNumDims + 1);
+  std::vector<ptrdiff_t> stride(dataSource->dNetCDFNumDims + 1);
 
   // Set X and Y dimensions start, count and stride
   for (int j = 0; j < dataSource->dNetCDFNumDims; j++) {
@@ -1132,7 +1132,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
         }
 #endif
 
-        if (dataSource->getDataObject(varNr)->cdfVariable->readData(dataSource->getDataObject(varNr)->cdfVariable->getType(), start, count, stride) != 0) {
+        if (dataSource->getDataObject(varNr)->cdfVariable->readData(dataSource->getDataObject(varNr)->cdfVariable->getType(), start.data(), count.data(), stride.data()) != 0) {
           CDBError("Unable to read data for variable %s in file %s", dataSource->getDataObject(varNr)->cdfVariable->name.c_str(), dataSource->getFileName());
 
           for (size_t j = 0; j < dataSource->getDataObject(varNr)->cdfVariable->dimensionlinks.size(); j++) {

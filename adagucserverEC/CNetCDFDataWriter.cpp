@@ -657,7 +657,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       /*
        * This step figures out the required dimindex for each dimension based on timestep.
        */
-      int dimIndices[dims->getNumDimensions() + 1];
+      std::vector<int> dimIndices(dims->getNumDimensions() + 1);
 
       // CDBDebug("baseDataSource->requiredDims.size(); = %d",baseDataSource->requiredDims.size());
 
@@ -778,7 +778,8 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       }
 
       int _dimMultiplier = 1;
-      int dimMultipliers[dims->getNumDimensions() + 1];
+
+      std::vector<int> dimMultipliers(dims->getNumDimensions() + 1);
       for (size_t d = 0; d < dataSource->requiredDims.size(); d++) {
         dimMultipliers[(dataSource->requiredDims.size() - 1) - d] = _dimMultiplier;
         _dimMultiplier *= dataSource->requiredDims[(dataSource->requiredDims.size() - 1) - d]->uniqueValues.size();

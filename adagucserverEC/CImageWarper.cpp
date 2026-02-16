@@ -515,7 +515,7 @@ int CImageWarper::findExtentUnSynchronized(CDataSource *dataSource, double *dfBB
 };
 
 void CImageWarper::reprojBBOX(double *df4PixelExtent) {
-  double b[4], X, Y, xmin, xmax, ymin, ymax;
+  double b[4], X, Y, xmin, xmax, ymin = 0, ymax = 0;
   for (int j = 0; j < 4; j++) b[j] = df4PixelExtent[j];
   // find XMin:
   xmin = b[0];

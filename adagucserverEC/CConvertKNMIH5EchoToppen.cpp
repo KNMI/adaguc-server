@@ -224,7 +224,7 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
     float cellsizeIMY = (fBBOXIM[3] - fBBOXIM[1]) / float(cdfObject0->getVariable("y")->getSize());
 
     /* Now get the colums and rows as defined in the metadata attributes of the HDF5 file */
-    int stat_cell_number;
+    int stat_cell_number = 0;
     cdfObject0->getVariable("image1.statistics")->getAttribute("stat_cell_number")->getData(&stat_cell_number, 1);
     CT::string stat_cell_column = cdfObject0->getVariable("image1.statistics")->getAttribute("stat_cell_column")->getDataAsString();
     CT::string stat_cell_row = cdfObject0->getVariable("image1.statistics")->getAttribute("stat_cell_row")->getDataAsString();

@@ -957,7 +957,7 @@ CImageDataWriter::IndexRange::IndexRange() {
   max = 0;
 }
 
-std::vector<CImageDataWriter::IndexRange> CImageDataWriter::getIndexRangesForRegex(CT::string match, CT::string *attributeValues, int n) {
+std::vector<CImageDataWriter::IndexRange> getIndexRangesForRegex(CT::string &match, const std::vector<std::string> &attributeValues) {
   std::vector<CImageDataWriter::IndexRange> ranges;
   int ret;
   regex_t regex;
@@ -966,7 +966,7 @@ std::vector<CImageDataWriter::IndexRange> CImageDataWriter::getIndexRangesForReg
   if (!ret) {
     int first = -1;
     int last = -1;
-    for (int i = 0; i < n; i++) {
+    for (size_t i = 0; i < attributeValues.size(); i++) {
       int matched = 1;
       if (attributeValues[i].length() > 0) {
         matched = regexec(&regex, attributeValues[i].c_str(), 0, NULL, 0);
@@ -1083,7 +1083,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
 #endif
     }
     if (numFeatures > 0) {
-      CT::string attributeValues[numFeatures];
+      std::vector<std::string> attributeValues(numFeatures);
       /* Loop through all configured FeatureInterval elements */
       for (size_t j = 0; j < styleConfiguration->featureIntervals.size(); j++) {
         CServerConfig::XMLE_FeatureInterval *featureInterval = styleConfiguration->featureIntervals[j];
@@ -1107,7 +1107,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
               The shadeinterval configuration can style these indices of the polygons with colors.
               Actual rendering of this is done in CImageNearestNeighbour with the _plot function
             */
-            std::vector<CImageDataWriter::IndexRange> ranges = getIndexRangesForRegex(featureInterval->attr.match, attributeValues, numFeatures);
+            std::vector<CImageDataWriter::IndexRange> ranges = getIndexRangesForRegex(featureInterval->attr.match, attributeValues);
             for (size_t i = 0; i < ranges.size(); i++) {
               auto shadeInterval = CServerConfig::XMLE_ShadeInterval();
               shadeInterval.attr.min.print("%d", ranges[i].min);
@@ -2171,7 +2171,7 @@ int CImageDataWriter::end() {
         GetFeatureInfoResult::Element *e = g->elements[0];
 
         int nrDims = e->cdfDims.getNumDimensions();
-        int dimLookup[nrDims]; // position of each dimension in cdfDims.dimensions
+        std::vector<int> dimLookup(nrDims); // position of each dimension in cdfDims.dimensions
         // CDBDebug("nrDims = %d",nrDims);
         int timeDimIndex = -1;
         int endIndex = nrDims - 1;
@@ -2318,8 +2318,8 @@ int CImageDataWriter::end() {
 
       std::vector<PlotObject *> plotObjects;
 
-      std::vector<CT::string> features[nrOfLayers];
-      std::vector<int> numDims[nrOfLayers];
+      std::vector<std::vector<CT::string>> features(nrOfLayers);
+      std::vector<std::vector<int>> numDims(nrOfLayers);
       // Find number of features per layer
       for (size_t layerNr = 0; layerNr < nrOfLayers; layerNr++) {
         size_t nrOfElements = getFeatureInfoResultList[layerNr]->elements.size();
