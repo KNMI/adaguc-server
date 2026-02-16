@@ -31,7 +31,7 @@ public:
 
   struct DimInfo {
     ~DimInfo() {
-      for (auto val : aggregatedValues) {
+      for (auto val: aggregatedValues) {
         delete val;
       }
       aggregatedValues.clear();
@@ -166,9 +166,9 @@ public:
 #endif
         map_type_dimvalindex *dimValuesMap = &diminfomapiterator->second->dimValuesMap;
         int currentDimIndex = -1;
-        int dimindex;
+        int dimindex = 0;
 
-        int startDimIndex;
+        int startDimIndex = 0;
         std::vector<std::string> dimValues;
         for (it_type_dimvalindex dimvalindexmapiterator = dimValuesMap->begin(); dimvalindexmapiterator != dimValuesMap->end(); dimvalindexmapiterator++) {
           // const char *filename=(filemapiterator->first).c_str();

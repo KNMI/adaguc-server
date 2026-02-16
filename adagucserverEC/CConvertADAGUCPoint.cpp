@@ -746,7 +746,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
 
     // Read dates for obs
     bool hasTimeValuePerObs = false;
-    CTime *obsTime;
+    CTime *obsTime = nullptr;
     double *obsTimeData = NULL;
     CDF::Variable *timeVarPerObs = cdfObject0->getVariableNE("time");
     if (timeVarPerObs != NULL) {
