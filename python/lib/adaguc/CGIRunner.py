@@ -27,6 +27,7 @@ ADAGUC_FORK_SOCKET_PATH = f"{os.getenv('ADAGUC_PATH')}/adaguc.socket"
 ON_POSIX = "posix" in sys.builtin_module_names
 
 MAX_PROC_TIMEOUT = int(os.getenv("ADAGUC_MAX_PROC_TIMEOUT", "300"))
+print("Max procs: ", max(ADAGUC_NUMPARALLELPROCESSES, 2))
 
 
 class AdagucResponse(NamedTuple):
@@ -128,7 +129,7 @@ class CGIRunner:
             localenv["REQUEST_URI"] = "/myscriptname/" + path
         localenv.update(env)
 
-        # print("@@@@", url)
+        print("@@@@", url)
 
         # Only use fork server if ADAGUC_FORK_SOCKET_PATH is set and adaguc is not executed with extra arguments e.g. `--updatelayermetadata`
         use_fork = os.getenv("ADAGUC_FORK_SOCKET_PATH", None) and len(cmds) == 1
@@ -143,49 +144,9 @@ class CGIRunner:
                 output.write(b"Adaguc server processs timed out")
                 return HTTP_STATUSCODE_500_TIMEOUT, [], None
 
-            process_output = bytearray()
-            # while data := client.recv(4096):
-            #     # print(data)
-            #     process_output.extend(data)
-
-            # process_error = ""
-            # status = 0
-
-            # process_error = process_error.encode()
-
-            reader, writer = await asyncio.open_unix_connection(f"{os.getenv('ADAGUC_PATH')}/adaguc.socke")
-            writer.write(url.encode())
-            await writer.drain()
-
-            process_output = await reader.read()
-
-            print("Close the connection")
-            writer.close()
-            await writer.wait_closed()
-
-            process_error = "".encode()
-
-            # process = await asyncio.create_subprocess_exec(
-            #     *cmds,
-            #     stdout=PIPE,
-            #     stderr=PIPE,
-            #     env=localenv,
-            #     close_fds=ON_POSIX,
-            # )
-            # try:
-            #     (process_output, process_error) = await asyncio.wait_for(
-            #         process.communicate(), timeout=timeout
-            #     )
-            # except asyncio.exceptions.TimeoutError:
-            #     process.kill()
-            #     await process.communicate()
-            #     output.write(b"Adaguc server processs timed out")
-            #     return HTTP_STATUSCODE_500_TIMEOUT, [], None
-            # status = await process.wait()
-
-        # Status code is stored in the last 4 bytes from the received data
-        status = int.from_bytes(process_output[-4:], byteorder="little")
-        print("@ status", status, process_output[-4:])
+        process_error = "".encode()
+        process_output = response.process_output
+        status = response.status_code
 
         # Split headers from body using a regex
         headersEndAt = -2
