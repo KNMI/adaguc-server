@@ -73,7 +73,7 @@ int getFeatureInfoVirtualForSolarTerminator(CImageDataWriter *img, std::vector<C
     // Build list of timesteps with all of them
     for (double t = interStart; t <= interStop; t += intervalSeconds) {
       generatedTimestamps.push_back(timeInstance.dateToISOString(timeInstance.getDate(t)));
-      CDBDebug("Generated timestamp %s", generatedTimestamps.back().c_str());
+      // CDBDebug("Generated timestamp %s", generatedTimestamps.back().c_str());
     }
 
   } else {

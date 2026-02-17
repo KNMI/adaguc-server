@@ -296,6 +296,10 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
   CT::string tableName = "autoconfigure_styles";
   CT::string layerTableId;
   try {
+    if (dataSource->cfgLayer->FilePath.size() == 0 || dataSource->cfgLayer->FilePath[0]->value.empty()) {
+      CDBDebug("Invalid FilePath configured for layer %s", dataSource->getLayerName());
+      throw(__LINE__);
+    }
     layerTableId = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)
                        ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), NULL, dataSource);
   } catch (int e) {

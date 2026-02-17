@@ -32,6 +32,7 @@
 CColor cblack = CColor(0, 0, 0, 255);
 CColor cblue = CColor(0, 0, 255, 255);
 
+MemoizationForDeterminePixelColorFromValue memo;
 template <typename T> void warpImageNearestFunction(int x, int y, T value, GDWState &warperState, GDWDrawFunctionSettings &settings) {
   if (x < 0 || y < 0 || x >= warperState.destGridWidth || y >= warperState.destGridHeight) return;
   if ((settings.hasNodataValue && ((value) == (T)settings.dfNodataValue)) || !(value == value)) return;
@@ -41,7 +42,10 @@ template <typename T> void warpImageNearestFunction(int x, int y, T value, GDWSt
   }
   ((float *)settings.destinationGrid)[x + y * warperState.destGridWidth] = value;
   if (settings.drawgrid) {
-    setPixelInDrawImage(x, y, value, &settings);
+    auto colorIndex = memoizedDeterminePixelColorFromValue(value, &settings, memo);
+    if (colorIndex.a > 0) {
+      settings.drawImage->setPixel(x, y, colorIndex);
+    }
   }
 };
 
@@ -94,7 +98,10 @@ template <typename T> void warpImageBilinearFunction(int x, int y, T val, GDWSta
   float bilValue = (1 - dy) * gx1 + dy * gx2;
   ((float *)settings.destinationGrid)[x + y * warperState.destGridWidth] = bilValue;
   if (settings.drawgrid) {
-    setPixelInDrawImage(x, y, bilValue, &settings);
+    auto colorIndex = memoizedDeterminePixelColorFromValue(bilValue, &settings, memo);
+    if (colorIndex.a > 0) {
+      settings.drawImage->setPixel(x, y, colorIndex);
+    }
   }
 };
 
@@ -139,7 +146,10 @@ template <typename T> void warpImageRenderBorders(int x, int y, T val, GDWState 
   }
 
   ((float *)settings.destinationGrid)[x + y * warperState.destGridWidth] = value;
-  setPixelInDrawImage(x, y, value, &settings);
+  auto colorIndex = memoizedDeterminePixelColorFromValue(value, &settings, memo);
+  if (colorIndex.a > 0) {
+    settings.drawImage->setPixel(x, y, colorIndex);
+  }
 };
 
 void CImgWarpGeneric::render(CImageWarper *warper, CDataSource *dataSource, CDrawImage *drawImage) {

@@ -17,6 +17,8 @@
 /*      CDPPSolarTerminator  */
 /************************/
 
+#define DEFAULT_STRIDING 16
+
 const char *CDPPSolarTerminator::getId() { return "solarterminator"; }
 
 int CDPPSolarTerminator::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
@@ -46,23 +48,34 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
     // Copy bounding box of screen
     dataSource->setGeo(dataSource->srvParams->geoParams);
 
+    if (dataSource->srvParams->requestType != REQUEST_WMS_GETFEATUREINFO) {
+      dataSource->dWidth = dataSource->srvParams->geoParams.width / DEFAULT_STRIDING;
+      dataSource->dHeight = dataSource->srvParams->geoParams.height / DEFAULT_STRIDING;
+      if (proc->attr.stride.empty() == false) {
+        float stride = proc->attr.stride.toFloat();
+        dataSource->dWidth = dataSource->srvParams->geoParams.width / stride;
+        dataSource->dHeight = dataSource->srvParams->geoParams.height / stride;
+      }
+    }
     // Width and height of the dataSource need to be at least 2 in this case.
     if (dataSource->dWidth < 2) dataSource->dWidth = 2;
     if (dataSource->dHeight < 2) dataSource->dHeight = 2;
   }
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
-    CDBDebug("CDATAPOSTPROCESSOR_RUNAFTERREADING::Applying SOLARTERMINATOR");
+    // CDBDebug("CDATAPOSTPROCESSOR_RUNAFTERREADING::Applying SOLARTERMINATOR");
     size_t l = (size_t)dataSource->dHeight * (size_t)dataSource->dWidth;
     dataSource->getDataObject(0)->cdfVariable->allocateData(l);
 
     float *result = (float *)dataSource->getDataObject(0)->cdfVariable->data;
 
+    // CDBDebug("Initializing image warper for reprojection");
     CImageWarper imageWarper;
     int status = imageWarper.initreproj(dataSource, dataSource->srvParams->geoParams, &dataSource->srvParams->cfg->Projection);
     if (status != 0) {
       CDBError("Unable to init projection");
       return 1;
     }
+    // CDBDebug("Finished initializing image warper for reprojection %d", imageWarper.isProjectionRequired());
     int dX = int(dataSource->srvParams->dX);
     int dY = int(dataSource->srvParams->dY);
 
@@ -109,6 +122,7 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
       }
 
     } else { // Assuming REQUEST_WMS_GETMAP
+      // CDBDebug("Calculating solar zenith angle for each pixel in the raster");
       for (size_t j = 0; j < l; j++) {
         int px = j % dataSource->dWidth;
         int py = j / dataSource->dWidth;
@@ -123,6 +137,7 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
         // Select final value based on solar zenith angle
         result[j] = static_cast<float>(getSolarZenithAngle(geoy, geox, currentOffset));
       }
+      // CDBDebug("Finished calculating solar zenith angle for each pixel in the raster");
     }
   }
   return 0;
