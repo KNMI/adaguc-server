@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+<Configuration>
+  <Layer type="database">
+    <Name>air_temperature</Name>
+    <Title>Air temperature at 2 m (C)</Title>
+    <Variable>air-temperature</Variable>
+    <FilePath>{ADAGUC_PATH}/data/datasets/convert_units/convert_units_data.nc</FilePath>
+    <Styles>auto</Styles>
+    <DataPostProc algorithm="convert_units" units="Celsius"/>
+    <Dimension name="forecast_reference_time" units="ISO8601" hidden="false">reference_time</Dimension>
+    <Dimension name="time" units="ISO8601" default="min">time</Dimension>
+  </Layer>  
+  
+  <Layer type="database">
+    <Name>air_temperature_fahrenheit</Name>
+    <Title>Air temperature at 2 m (F)</Title>
+    <Variable>air-temperature</Variable>
+    <FilePath>{ADAGUC_PATH}/data/datasets/convert_units/convert_units_data.nc</FilePath>
+    <Styles>auto</Styles>
+    <DataPostProc algorithm="convert_units" a="1.8" b="32" units="F"/>
+    <Dimension name="forecast_reference_time" units="ISO8601" hidden="false">reference_time</Dimension>
+    <Dimension name="time" units="ISO8601" default="min">time</Dimension>
+  </Layer>  
+  
+  <Style name="windbarbs_kts_vector_styling">
+    <Vector min="0" max="34" fontsize="20" vectorstyle="barb" linewidth="2" linecolor="#000000" plotvalue="true" outlinewidth="0" outlinecolor="#ffffff"/>
+    <Vector min="34" max="41" fontsize="20" vectorstyle="barb" linewidth="2" linecolor="#ffffff" plotvalue="true" outlinewidth="0" outlinecolor="#000000"/>
+    <Vector min="41" max="100" fontsize="20" vectorstyle="barb" linewidth="2" linecolor="#000000" plotvalue="true" outlinewidth="0" outlinecolor="#ffffff"/>
+  </Style>
+  
+  <Style name="barb" title="Wind barbs" abstract="Rendered with barbs">
+    <IncludeStyle name="windbarbs_kts_vector_styling"/>
+    <RenderSettings renderhint="discreteclasses" settings="auto" interpolationmethod="bilinear"/>
+    <DataPostProc algorithm="pointsfromgrid" select="speed_component,direction_component" a="1"/>
+  </Style>
+
+  <Layer type="database">
+    <Name>wind_components_barbs</Name>
+    <Title>Wind barbs</Title>
+    <Variable>u_wind</Variable>
+    <Variable>v_wind</Variable>
+    <FilePath>{ADAGUC_PATH}/data/datasets/convert_units/convert_units_data.nc</FilePath>
+    <DataPostProc algorithm="convert_uv_components"/>
+    <Styles>barb</Styles>
+    <Dimension name="forecast_reference_time" units="ISO8601" hidden="false">reference_time</Dimension>
+    <Dimension name="time" units="ISO8601" default="min">time</Dimension>
+  </Layer>  
+
+  <Layer type="database">
+    <Name>wind_speed_from_components</Name>
+    <Title>Wind speed from components in ms</Title>
+    <Variable>u_wind</Variable>
+    <Variable>v_wind</Variable>
+    <FilePath>{ADAGUC_PATH}/data/datasets/convert_units/convert_units_data.nc</FilePath>
+    <DataPostProc algorithm="convert_uv_components"/>
+    <DataPostProc algorithm="filter_dataobjects" select="speed_component"/>
+    <Styles>auto</Styles>
+    <Dimension name="forecast_reference_time" units="ISO8601" hidden="false">reference_time</Dimension>
+    <Dimension name="time" units="ISO8601" default="min">time</Dimension>
+  </Layer>  
+  
+  <Layer type="database">
+    <Name>wind_direction_from_components</Name>
+    <Title>Wind direction from components</Title>
+    <Variable>u_wind</Variable>
+    <Variable>v_wind</Variable>
+    <FilePath>{ADAGUC_PATH}/data/datasets/convert_units/convert_units_data.nc</FilePath>
+    <DataPostProc algorithm="convert_uv_components"/>    
+    <DataPostProc algorithm="filter_dataobjects" select="direction_component"/>
+    <Styles>auto</Styles>
+    <Dimension name="forecast_reference_time" units="ISO8601" hidden="false">reference_time</Dimension>
+    <Dimension name="time" units="ISO8601" default="min">time</Dimension>
+  </Layer>  
+
+
+  
+</Configuration>
