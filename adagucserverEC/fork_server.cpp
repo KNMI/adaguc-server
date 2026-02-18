@@ -13,12 +13,12 @@
 #include "fork_server.h"
 
 // Check this many seconds for old left-over processes
-const int CHECK_CHILD_PROC_INTERVAL = 60;
+const int CHECK_CHILD_PROC_INTERVAL = 30;
 // Allow a backlog of this many connections. Uses `ADAGUC_NUMPARALLELPROCESSES` env var.
 const int DEFAULT_QUEUED_CONNECTIONS = 4 * 32;
 // Old left-over child process should be killed after this many seconds. Uses `ADAGUC_MAX_PROC_TIMEOUT` env var.
 // const int DEFAULT_MAX_PROC_TIMEOUT = 300;
-const int MAX_CHILD_PROC_TIMEOUT = 300;
+const int MAX_CHILD_PROC_TIMEOUT = 120;
 
 
 int sigchld_pipe[2];
@@ -74,60 +74,49 @@ void child_signal_handler(int) {
   }
 }
 
-// void *clean_child_procs(void *arg) {
-//   /*
-//   Every `CHECK_CHILD_PROC_INTERVAL` seconds, check all child procs stored in map.
-//   If child proc was started more than `ADAGUC_MAX_PROC_TIMEOUT` seconds ago, send SIGKILL.
-//   */
-
-//   int max_child_proc_timeout = get_env_var_int("ADAGUC_MAX_PROC_TIMEOUT", DEFAULT_MAX_PROC_TIMEOUT);
-//   CDBDebug("Checking every %d seconds for processes older than %d seconds\n", CHECK_CHILD_PROC_INTERVAL, max_child_proc_timeout);
-//   while (1) {
-//     time_t now = time(NULL);
-
-//     // for (const auto &child_proc_mapping : child_procs) {
-//     //   child_proc_t child_proc = child_proc_mapping.second;
-
-//     //   if (difftime(now, child_proc.forked_at) < max_child_proc_timeout) {
-//     //     continue;
-//     //   }
-
-//     //   // CDBWarning("Child process with pid %d running longer than %d, sending SIGKILL to clean up\n", child_proc_mapping.first, max_child_proc_timeout);
-//     //   if (kill(child_proc_mapping.first, SIGKILL) == -1) {
-//     //     // CDBError("Failed to send SIGKILL to child process %d\n", child_proc_mapping.first);
-//     //     // TODO: What to do if we cannot SIGKILL child process?
-//     //   }
-//     // }
-
-//     sleep(CHECK_CHILD_PROC_INTERVAL);
-//   }
-// }
-
-void *clean_child_procs(void *arg) {
-  /*
-  Every `CHECK_CHILD_PROC_INTERVAL` seconds, check all child procs stored in map.
-  If child proc was started more than `MAX_CHILD_PROC_TIMEOUT` seconds ago, send SIGKILL.
-  */
-
+void handle_child_exit_events() {
   while (1) {
-    time_t now = time(NULL);
-    printf("Checking all child procs\n");
+    pid_t exited_pid;
+    int status;
 
-    for (const auto &child_proc_mapping : child_procs) {
-      child_proc_t child_proc = child_proc_mapping.second;
+    ssize_t r = read(sigchld_pipe[0], &exited_pid, sizeof(exited_pid));
+    if (r <= 0)
+      break;
 
-      if (difftime(now, child_proc.forked_at) < MAX_CHILD_PROC_TIMEOUT) {
-        continue;
-      }
+    read(sigchld_pipe[0], &status, sizeof(status));
 
-      printf("Child timeout!\n");
+    auto it = child_procs.find(exited_pid);
+    if (it != child_procs.end()) {
 
-      if (kill(child_proc_mapping.first, SIGKILL) == -1) {
-        printf("Failed to send SIGKILL to child process\n");
-        // TODO: What to do if we cannot SIGKILL child process?
-      }
+      int child_status;
+
+      if (WIFEXITED(status))
+        child_status = WEXITSTATUS(status);
+      else if (WIFSIGNALED(status))
+        child_status = WTERMSIG(status);
+      else
+        child_status = 1;
+
+      int child_sock = it->second.socket;
+
+      write(child_sock, &child_status, sizeof(child_status));
+      close(child_sock);
+
+      child_procs.erase(it);
     }
-    sleep(CHECK_CHILD_PROC_INTERVAL);
+  }
+}
+
+void kill_old_procs() {
+
+  time_t now = time(NULL);
+  int i = 0;
+
+  for (auto it = child_procs.begin(); it != child_procs.end(); ++it) {
+    i++;
+    if (difftime(now, it->second.forked_at) > MAX_CHILD_PROC_TIMEOUT) {
+      kill(it->first, SIGKILL);
+    }
   }
 }
 
@@ -135,7 +124,6 @@ int run_as_fork_service(int (*run_adaguc_once)(int, char **, char **, bool), int
   /*
   Start adaguc in fork mode. This means:
   - Set up a signal handler for any child processes
-  - Start a thread in the background that cleans up left-over child processes
   - Set up a socket through system calls: `socket`, `bind`, `listen`
   - While true, accept any incoming connections to the socket, through system call `accept`
   - If connected, fork this process.
@@ -143,8 +131,7 @@ int run_as_fork_service(int (*run_adaguc_once)(int, char **, char **, bool), int
   -   Parent process keeps running, track of the created `client_socket` and check for new incoming connections.
   */
 
-  int client_socket = 0;
-
+  // Create a "self-pipe" for communication between child signal handler and main loop
   if (pipe(sigchld_pipe) == -1) {
     perror("pipe");
     return 1;
@@ -159,11 +146,6 @@ int run_as_fork_service(int (*run_adaguc_once)(int, char **, char **, bool), int
   sigemptyset(&sa.sa_mask);
   sa.sa_flags = SA_RESTART | SA_NOCLDSTOP;
   sigaction(SIGCHLD, &sa, NULL);
-
-  // Start cleaning thread in the background
-  // TODO: this thread results in segfaults :)
-  // pthread_t clean_child_procs_thread;
-  // pthread_create(&clean_child_procs_thread, NULL, clean_child_procs, NULL);
 
   // Create an endpoint for communicating through a unix socket
   int listen_socket = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -201,6 +183,7 @@ int run_as_fork_service(int (*run_adaguc_once)(int, char **, char **, bool), int
   }
 
   printf("@@@ Entering fork server loop\n");
+  time_t last_cleanup = time(NULL);
 
   while (1) {
     fd_set readfds;
@@ -209,7 +192,12 @@ int run_as_fork_service(int (*run_adaguc_once)(int, char **, char **, bool), int
     FD_SET(sigchld_pipe[0], &readfds);
 
     int maxfd = std::max(listen_socket, sigchld_pipe[0]);
-    int ready = select(maxfd + 1, &readfds, NULL, NULL, NULL);
+
+    // Select will block until there is activity on either listen_socket or sigchld_pipe, or until the `timeval tv` has passed.
+    struct timeval tv;
+    tv.tv_sec = 1;
+    tv.tv_usec = 0;
+    int ready = select(maxfd + 1, &readfds, NULL, NULL, &tv);
 
     if (ready == -1) {
       if (errno == EINTR) continue;
@@ -217,38 +205,16 @@ int run_as_fork_service(int (*run_adaguc_once)(int, char **, char **, bool), int
       continue;
     }
 
+    // Check for dead processes
+    time_t now = time(NULL);
+    if (now - last_cleanup >= CHECK_CHILD_PROC_INTERVAL) {
+        kill_old_procs();
+        last_cleanup = now;
+    }
+
     // ️Handle child exit events
     if (FD_ISSET(sigchld_pipe[0], &readfds)) {
-      while (1) {
-        pid_t exited_pid;
-        int status;
-
-        ssize_t r = read(sigchld_pipe[0], &exited_pid, sizeof(exited_pid));
-        if (r <= 0)
-          break;
-
-        read(sigchld_pipe[0], &status, sizeof(status));
-
-        auto it = child_procs.find(exited_pid);
-        if (it != child_procs.end()) {
-
-          int child_status;
-
-          if (WIFEXITED(status))
-            child_status = WEXITSTATUS(status);
-          else if (WIFSIGNALED(status))
-            child_status = WTERMSIG(status);
-          else
-            child_status = 1;
-
-          int child_sock = it->second.socket;
-
-          write(child_sock, &child_status, sizeof(child_status));
-          close(child_sock);
-
-          child_procs.erase(it);
-        }
-      }
+      handle_child_exit_events();
     }
 
     if (FD_ISSET(listen_socket, &readfds)) {
@@ -259,7 +225,7 @@ int run_as_fork_service(int (*run_adaguc_once)(int, char **, char **, bool), int
       if (client_socket == -1) continue;
 
       pid_t pid = fork();
-      printf("After fork, pid %d\n", pid);
+      // printf("After fork, pid %d\n", pid);
       if (pid == 0) {
         // Child process handles request. Communication with python happens through `client_socket`
         close(listen_socket);
