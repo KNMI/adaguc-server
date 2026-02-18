@@ -1,17 +1,10 @@
 import asyncio
-import logging
 import os
 from PIL import Image
 from io import BytesIO
-import brotli
 import shutil
 import random
 import string
-import redis.asyncio as redis  # This can also be used to connect to a Redis cluster
-
-import calendar
-import json
-from datetime import datetime
 
 from adaguc.CGIRunner import CGIRunner
 
@@ -24,22 +17,14 @@ class runAdaguc:
         Please note regenerating the DB each time for each request can cause performance problems.
         You can safely configure a permanent location for the database which is permanent in adaguc.autoresource.xml (or your own config)
         """
-        self.ADAGUC_LOGFILE = (
-            "/tmp/adaguc-server-" + self.get_random_string(10) + ".log"
-        )
+        self.ADAGUC_LOGFILE = "/tmp/adaguc-server-" + self.get_random_string(10) + ".log"
         self.ADAGUC_PATH = os.getenv("ADAGUC_PATH", "./")
         self.ADAGUC_CONFIG = self.ADAGUC_PATH + "/data/config/adaguc.autoresource.xml"
         self.ADAGUC_DATA_DIR = os.getenv("ADAGUC_DATA_DIR", "/data/adaguc-data")
-        self.ADAGUC_AUTOWMS_DIR = os.getenv(
-            "ADAGUC_AUTOWMS_DIR", "/data/adaguc-autowms"
-        )
-        self.ADAGUC_DATASET_DIR = os.getenv(
-            "ADAGUC_DATASET_DIR", "/data/adaguc-datasets"
-        )
+        self.ADAGUC_AUTOWMS_DIR = os.getenv("ADAGUC_AUTOWMS_DIR", "/data/adaguc-autowms")
+        self.ADAGUC_DATASET_DIR = os.getenv("ADAGUC_DATASET_DIR", "/data/adaguc-datasets")
         self.ADAGUC_TMP = os.getenv("ADAGUC_TMP", "/tmp")
-        self.ADAGUC_FONT = os.getenv(
-            "ADAGUC_FONT", self.ADAGUC_PATH + "/data/fonts/Roboto-Medium.ttf"
-        )
+        self.ADAGUC_FONT = os.getenv("ADAGUC_FONT", self.ADAGUC_PATH + "/data/fonts/Roboto-Medium.ttf")
 
     def setAdagucPath(self, newAdagucPath):
         self.ADAGUC_PATH = newAdagucPath
@@ -67,13 +52,10 @@ class runAdaguc:
         self.ADAGUC_CONFIG = configFile
 
     def isLoggingEnabled(self):
-        return os.getenv(
-            "ADAGUC_ENABLELOGBUFFER", "TRUE"
-        ) != "DISABLELOGGING"
+        return os.getenv("ADAGUC_ENABLELOGBUFFER", "TRUE") != "DISABLELOGGING"
 
-    def getAdagucEnv(self, adagucenv = {}):
-        
-        """ Set required environment variables for adaguc to run"""
+    def getAdagucEnv(self, adagucenv={}):
+        """Set required environment variables for adaguc to run"""
         adagucenv["ADAGUC_CONFIG"] = self.ADAGUC_CONFIG
         adagucenv["ADAGUC_LOGFILE"] = self.ADAGUC_LOGFILE
         adagucenv["ADAGUC_PATH"] = self.ADAGUC_PATH
@@ -85,46 +67,34 @@ class runAdaguc:
         adagucenv["ADAGUC_DATARESTRICTION"] = "FALSE"
         if os.getenv("ADAGUC_DB"):
             adagucenv["ADAGUC_DB"] = os.getenv("ADAGUC_DB")
-        adagucenv["ADAGUC_ENABLELOGBUFFER"] = os.getenv(
-            "ADAGUC_ENABLELOGBUFFER", "TRUE"
-        )
-        adagucenv["ADAGUC_TRACE_TIMINGS"] = os.getenv(
-            "ADAGUC_TRACE_TIMINGS", "FALSE"
-        )
+        adagucenv["ADAGUC_ENABLELOGBUFFER"] = os.getenv("ADAGUC_ENABLELOGBUFFER", "TRUE")
+        adagucenv["ADAGUC_TRACE_TIMINGS"] = os.getenv("ADAGUC_TRACE_TIMINGS", "FALSE")
         ld_library_path = os.getenv("LD_LIBRARY_PATH")
         if ld_library_path:
             adagucenv["LD_LIBRARY_PATH"] = ld_library_path
-
 
         return adagucenv
 
     async def updateLayerMetadata(self):
         """Uses the adaguc executable to update the layermetadatatable"""
         adagucenv = self.getAdagucEnv()
-        status, data, headers = await self.runADAGUCServer(
-            args=["--updatelayermetadata"], env=adagucenv, isCGI=False, showLogOnError = True
-        )
+        status, data, headers = await self.runADAGUCServer(args=["--updatelayermetadata"], env=adagucenv, isCGI=False, showLogOnError=True)
 
-        return status, data.getvalue().decode()        
+        return status, data.getvalue().decode()
 
     def scanDataset(self, datasetName):
         config = self.ADAGUC_CONFIG + "," + datasetName
         adagucenv = self.getAdagucEnv()
         status, data, headers = asyncio.run(
-            self.runADAGUCServer(
-                args=["--updatedb", "--config", config], env=adagucenv, isCGI=False, showLogOnError = False
-            )
+            self.runADAGUCServer(args=["--updatedb", "--config", config], env=adagucenv, isCGI=False, showLogOnError=False)
         )
-
 
         return data.getvalue().decode()
 
     def runGetMapUrl(self, url):
         adagucenv = self.getAdagucEnv()
 
-        status, data, headers = asyncio.run(
-            self.runADAGUCServer(url, env=adagucenv, showLogOnError=False)
-        )
+        status, data, headers = asyncio.run(self.runADAGUCServer(url, env=adagucenv, showLogOnError=False))
         logfile = self.getLogFile()
         self.removeLogFile()
         if data is not None:
@@ -159,7 +129,6 @@ class runAdaguc:
         print(self.getLogFile())
         print("=== END ADAGUC LOGS ===")
 
-
     async def runADAGUCServer(
         self,
         url=None,
@@ -172,13 +141,16 @@ class runAdaguc:
     ):
         adagucenv = self.getAdagucEnv(env)
 
-
-
         # Forward all environment variables starting with ADAGUCENV_
         prefix: str = "ADAGUCENV_"
         for key, value in os.environ.items():
             if key[: len(prefix)] == prefix:
                 adagucenv[key] = value
+
+            # Don't use adaguc fork server when running Adaguc through this method
+            if key == "ADAGUC_FORK_SOCKET_PATH":
+                adagucenv[key] = ""
+                continue
 
         ADAGUC_PATH = adagucenv["ADAGUC_PATH"]
         ADAGUC_LOGFILE = adagucenv["ADAGUC_LOGFILE"]
@@ -194,7 +166,6 @@ class runAdaguc:
 
         if args is not None:
             adagucargs = adagucargs + args
-
 
         filetogenerate = BytesIO()
         status, headers, processErr = await CGIRunner().run(
@@ -250,5 +221,3 @@ class runAdaguc:
     def mkdir_p(self, directory):
         if not os.path.exists(directory):
             os.makedirs(directory)
-
-
