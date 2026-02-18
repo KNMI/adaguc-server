@@ -12,17 +12,17 @@ configure_logging(logging)
 
 logger = logging.getLogger(__name__)
 
-
 def async_autosync_layermetadata():
     """Update layermetadata table in adaguc for GetCapabilities caching"""
     adaguc = setup_adaguc(False)
     logger.info("Calling updateLayerMetadata")
-    status, log = asyncio.run(adaguc.updateLayerMetadata())
+    status, log =  asyncio.run(adaguc.updateLayerMetadata())
     if adaguc.isLoggingEnabled():
         logger.info(log)
     else:
-        logger.info("Logging for updateLayerMetadata is disabled, status was %d", status)
-
+        logger.info(
+            "Logging for updateLayerMetadata is disabled, status was %d", status
+        )
 
 if __name__ == "__main__":
     """Starts scheduler for updating the metadata table as a service"""
@@ -43,3 +43,5 @@ if __name__ == "__main__":
         scheduler.start()
     except (KeyboardInterrupt, SystemExit):
         pass
+
+    
