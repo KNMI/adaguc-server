@@ -33,8 +33,11 @@ async def lifespan(app: FastAPI):
     supervisor = None
 
     if socket_path:
-        supervisor = ForkServerSupervisor(socket_path)
-        supervisor.start()
+        supervisor = ForkServerSupervisor(
+            socket_path,
+            binary_path=f"{os.getenv('ADAGUC_PATH')}/bin/adagucserver",
+        )
+        await supervisor.start()
 
     yield
 
