@@ -43,26 +43,43 @@ void handle_client(int client_socket, int (*run_adaguc_once)(int, char **, char 
     _exit(1);
   }
 
-  // ---- Health check fast path ----
-  // fprintf(stderr, "recv: %s\n", recv_buf);
   if (strncmp(recv_buf, "PING", 4) == 0) {
       const char *resp = "PONG\n";
       send(client_socket, resp, strlen(resp), 0);
       exit(0);
   }
 
+  std::string request(recv_buf, data_recv);
+  size_t newline_pos = request.find("\n");
+  if (newline_pos == std::string::npos) {
+    _exit(1);
+  }
+
+  std::string line1 = request.substr(0, newline_pos);
+  std::string line2 = request.substr(newline_pos + 1);
+
+  auto parse_and_set = [](const std::string& line) {
+      size_t sep = line.find('=');
+      if (sep != std::string::npos) {
+          std::string key = line.substr(0, sep);
+          std::string val = line.substr(sep + 1);
+          setenv(key.c_str(), val.c_str(), 1);
+      }
+  };
+
+  parse_and_set(line1);
+  parse_and_set(line2);
+
   // The child stdout should end up in the client socket
   dup2(client_socket, STDOUT_FILENO);
 
-  setenv("QUERY_STRING", recv_buf, 1);
-
   int status = run_adaguc_once(argc, argv, envp, true);
-  fprintf(stderr, "exiting, status=%d\n", status);
+  // fprintf(stderr, "exiting, status=%d\n", status);
 
   // fflush(stdout);
   // fflush(stderr);
 
-  _exit(status);
+  exit(status);
 }
 
 void child_signal_handler(int) {
@@ -118,12 +135,8 @@ void handle_child_exit_events() {
 }
 
 void kill_old_procs() {
-
   time_t now = time(NULL);
-  int i = 0;
-
   for (auto it = child_procs.begin(); it != child_procs.end(); ++it) {
-    i++;
     if (difftime(now, it->second.forked_at) > MAX_CHILD_PROC_TIMEOUT) {
       kill(it->first, SIGKILL);
     }
@@ -149,7 +162,6 @@ int run_as_fork_service(int (*run_adaguc_once)(int, char **, char **, bool), int
     return 1;
   }
   fcntl(sigchld_pipe[0], F_SETFL, O_NONBLOCK);
-  // fcntl(sigchld_pipe[1], F_SETFL, O_NONBLOCK);
 
   // Create a signal handler for all children (all received SIGCHLD signals)
   // Signal mask is empty, meaning no additional signals are blocked while the handler is executed
