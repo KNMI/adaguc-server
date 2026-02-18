@@ -47,3 +47,4 @@ fi
 
 export ADAGUC_TMP=/tmp
 export ADAGUC_ONLINERESOURCE=""
+unset ADAGUC_FORK_SOCKET_PATH

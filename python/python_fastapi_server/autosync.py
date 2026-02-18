@@ -26,7 +26,7 @@ def async_autosync_layermetadata():
 
 if __name__ == "__main__":
     """Starts scheduler for updating the metadata table as a service"""
-    # testadaguc()
+    testadaguc()
     logger.info("=== Starting AsyncIO Blocking Scheduler ===")
     # start scheduler to refresh collections & docs every minute
     scheduler = BlockingScheduler()
