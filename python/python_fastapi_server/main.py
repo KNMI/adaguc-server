@@ -1,5 +1,6 @@
 """Main file where FastAPI is defined and started"""
 
+from contextlib import asynccontextmanager
 import logging
 import os
 import time
@@ -19,13 +20,29 @@ from routers.opendap import opendapRouter
 from routers.wmswcs import testadaguc, wmsWcsRouter
 from routers.caching_middleware import CachingMiddleware
 from configure_logging import configure_logging
+from fork_server_supervisor import ForkServerSupervisor
 
 configure_logging(logging)
 
 logger = logging.getLogger(__name__)
 
 
-app = FastAPI(redirect_slashes=False)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    socket_path = os.getenv("ADAGUC_FORK_SOCKET_PATH")
+    supervisor = None
+
+    if socket_path:
+        supervisor = ForkServerSupervisor(socket_path)
+        supervisor.start()
+
+    yield
+
+    if supervisor:
+        await supervisor.stop()
+
+
+app = FastAPI(redirect_slashes=False, lifespan=lifespan)
 
 # Set uvicorn access log format using middleware
 ACCESS_LOG_FORMAT = 'accesslog %(h)s ; %(t)s ; %(H)s ; %(m)s ; %(U)s ; %(q)s ; %(s)s ; %(M)s"'
@@ -94,5 +111,5 @@ app.include_router(autowms_router)
 app.include_router(opendapRouter)
 
 if __name__ == "__main__":
-    testadaguc()
+    # testadaguc()
     uvicorn.run(app="main:app", host="0.0.0.0", port=8080, reload=True)
