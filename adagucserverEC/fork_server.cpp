@@ -39,20 +39,30 @@ void handle_client(int client_socket, int (*run_adaguc_once)(int, char **, char 
   memset(recv_buf, 0, recv_buf_len * sizeof(char));
 
   int data_recv = recv(client_socket, recv_buf, recv_buf_len, 0);
-  if (data_recv > 0) {
-    // The child stdout should end up in the client socket
-    dup2(client_socket, STDOUT_FILENO);
-
-    setenv("QUERY_STRING", recv_buf, 1);
-
-    int status = run_adaguc_once(argc, argv, envp, true);
-    fprintf(stderr, "exiting, status=%d\n", status);
-
-    // fflush(stdout);
-    // fflush(stderr);
-
-    _exit(status);
+  if (data_recv <= 0) {
+    _exit(1);
   }
+
+  // ---- Health check fast path ----
+  // fprintf(stderr, "recv: %s\n", recv_buf);
+  if (strncmp(recv_buf, "PING", 4) == 0) {
+      const char *resp = "PONG\n";
+      send(client_socket, resp, strlen(resp), 0);
+      exit(0);
+  }
+
+  // The child stdout should end up in the client socket
+  dup2(client_socket, STDOUT_FILENO);
+
+  setenv("QUERY_STRING", recv_buf, 1);
+
+  int status = run_adaguc_once(argc, argv, envp, true);
+  fprintf(stderr, "exiting, status=%d\n", status);
+
+  // fflush(stdout);
+  // fflush(stderr);
+
+  _exit(status);
 }
 
 void child_signal_handler(int) {
@@ -130,6 +140,8 @@ int run_as_fork_service(int (*run_adaguc_once)(int, char **, char **, bool), int
   -   Child process will handle further communication through the `client_socket`, will handle the adaguc request and exit normally.
   -   Parent process keeps running, track of the created `client_socket` and check for new incoming connections.
   */
+
+  signal(SIGPIPE, SIG_IGN);
 
   // Create a "self-pipe" for communication between child signal handler and main loop
   if (pipe(sigchld_pipe) == -1) {
