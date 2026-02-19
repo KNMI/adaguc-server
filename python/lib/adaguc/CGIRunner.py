@@ -155,6 +155,9 @@ class CGIRunner:
         process_error = response.process_error
         status = response.status_code
 
+        # print("???")
+        # print(process_output)
+
         # Split headers from body using a regex
         headersEndAt = -2
         headers = ""
