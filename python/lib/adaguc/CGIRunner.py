@@ -35,14 +35,14 @@ class AdagucResponse(NamedTuple):
     process_output: bytearray
 
 
-async def wait_socket_communicate(url, timeout) -> AdagucResponse:
+async def wait_socket_communicate(url, env, timeout) -> AdagucResponse:
     """
     If `socket_communicate` takes longer than `timeout`, we send a 500 timeout to the client.
     The adagucserver process will get cleaned up by the adagucserver parent process.
     """
 
     try:
-        resp = await asyncio.wait_for(socket_communicate(url), timeout=timeout)
+        resp = await asyncio.wait_for(socket_communicate(url, env), timeout=timeout)
     except asyncio.exceptions.TimeoutError:
         return AdagucResponse(status_code=HTTP_STATUSCODE_500_TIMEOUT, process_output=None)
     except ConnectionRefusedError:
@@ -52,7 +52,7 @@ async def wait_socket_communicate(url, timeout) -> AdagucResponse:
     return resp
 
 
-async def socket_communicate(url: str) -> AdagucResponse:
+async def socket_communicate(url: str, env) -> AdagucResponse:
     """
     Connect to unix socket, send query string over socket, receive bytes from adagucserver.
 
@@ -61,7 +61,9 @@ async def socket_communicate(url: str) -> AdagucResponse:
 
     process_output = bytearray()
     reader, writer = await asyncio.open_unix_connection(ADAGUC_FORK_SOCKET_PATH)
-    writer.write(url.encode())
+
+    message = f"ADAGUC_LOGFILE={env['ADAGUC_LOGFILE']}\nQUERY_STRING={url}"
+    writer.write(message.encode())
     await writer.drain()
 
     process_output = await reader.read()
@@ -137,7 +139,7 @@ class CGIRunner:
 
         async with sem:
             if use_fork:
-                response = await wait_socket_communicate(url, timeout=timeout)
+                response = await wait_socket_communicate(url, localenv, timeout=timeout)
             else:
                 response = await wait_process_communicate(cmds, localenv, timeout=timeout)
 
