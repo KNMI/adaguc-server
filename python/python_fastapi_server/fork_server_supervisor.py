@@ -17,6 +17,7 @@ class ForkServerSupervisor:
         adaguc_env = runAdaguc().getAdagucEnv()
         self.env.update({k: str(v) for k, v in adaguc_env.items()})
         self.env["ADAGUC_CONFIG"] = f"{self.env['ADAGUC_PATH']}/python/lib/adaguc/adaguc-server-config-python-postgres.xml"
+        self.env["ADAGUC_ONLINERESOURCE"] = os.environ.get("EXTERNALADDRESS", "") + "/adaguc-server?"
 
         self._task = None
         self._running = False
@@ -65,6 +66,7 @@ class ForkServerSupervisor:
         self._task = asyncio.create_task(self._loop())
 
     async def stop(self):
+        # TODO: when ctrl-c fastapi, fork server should not hang and exit immediately (in general, fork server should exit asap when requested)
         self._running = False
         if self._task:
             await self._task

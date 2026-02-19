@@ -40,9 +40,9 @@ int processCMDArgs(int argc, char **argv, char **) {
   /* Initialize error functions */
   seterrormode(EXCEPTIONS_PLAINTEXT);
   setStatusCode(HTTP_STATUSCODE_200_OK);
-  // setErrorFunction(serverLogFunctionCMDLine);
-  // setWarningFunction(serverLogFunctionCMDLine);
-  // setDebugFunction(serverLogFunctionCMDLine);
+  setErrorFunction(serverLogFunctionCMDLine);
+  setWarningFunction(serverLogFunctionCMDLine);
+  setDebugFunction(serverLogFunctionCMDLine);
 
   int opt;
   int scanFlags = 0;

@@ -129,7 +129,8 @@ class CGIRunner:
             localenv["REQUEST_URI"] = "/myscriptname/" + path
         localenv.update(env)
 
-        print("@@@@", url)
+        # print("@@@@", url)
+        # print("????", env)
 
         # Only use fork server if ADAGUC_FORK_SOCKET_PATH is set and adaguc is not executed with extra arguments e.g. `--updatelayermetadata`
         use_fork = os.getenv("ADAGUC_FORK_SOCKET_PATH", None) and len(cmds) == 1
@@ -147,6 +148,9 @@ class CGIRunner:
         process_error = "".encode()
         process_output = response.process_output
         status = response.status_code
+
+        # print("???")
+        # print(process_output)
 
         # Split headers from body using a regex
         headersEndAt = -2

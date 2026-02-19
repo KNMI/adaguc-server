@@ -93,8 +93,6 @@ void closeLogFile() {
     fclose(pLogDebugFile);
     pLogDebugFile = NULL;
   }
-  close(1);
-  close(2);
 }
 
 void logBufferCheckMode() {

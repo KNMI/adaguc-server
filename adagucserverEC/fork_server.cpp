@@ -62,7 +62,7 @@ void handle_client(int client_socket, int (*run_adaguc_once)(int, char **, char 
   // fflush(stdout);
   // fflush(stderr);
 
-  _exit(status);
+  exit(status);
 }
 
 void child_signal_handler(int) {
