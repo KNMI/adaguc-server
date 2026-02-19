@@ -43,9 +43,9 @@
 
 int processQueryStringRequest() {
   /* Process the OGC request */
-  // setErrorFunction(serverErrorFunction);
-  // setWarningFunction(serverWarningFunction);
-  // setDebugFunction(serverDebugFunction);
+  setErrorFunction(serverErrorFunction);
+  setWarningFunction(serverWarningFunction);
+  setDebugFunction(serverDebugFunction);
   CRequest request;
   if (setCRequestConfigFromEnvironment(&request) != 0) {
     CDBError("Unable to read configuration file.");
