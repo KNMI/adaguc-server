@@ -1,9 +1,15 @@
 import asyncio
+import logging
 import socket
 import os
 import signal
 
+from configure_logging import configure_logging
 from adaguc.runAdaguc import runAdaguc
+
+configure_logging(logging)
+
+logger = logging.getLogger(__name__)
 
 
 class ForkServerSupervisor:
@@ -23,6 +29,7 @@ class ForkServerSupervisor:
         self._running = False
 
     async def start_process(self):
+        logger.info("Starting forkserver")
         self.process = await asyncio.create_subprocess_exec(
             self.binary_path,
             env=self.env,
@@ -31,11 +38,12 @@ class ForkServerSupervisor:
         )
 
     async def stop_process(self):
+        logger.info("Stopping forkserver")
         if self.process and self.process.returncode is None:
             self.process.send_signal(signal.SIGTERM)
             await self.process.wait()
 
-    def check(self, timeout=2) -> bool:
+    def check(self, timeout=10) -> bool:
         try:
             with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
                 s.settimeout(timeout)
@@ -47,18 +55,22 @@ class ForkServerSupervisor:
             return False
 
     async def _loop(self):
-        while self._running:
-            # Restart if process crashed
-            if self.process and self.process.returncode is not None:
-                await self.start_process()
+        try:
+            while self._running:
+                # Restart if process crashed
+                if self.process and self.process.returncode is not None:
+                    await self.start_process()
 
-            # Health check
-            is_running = self.check()
-            if not is_running:
-                await self.stop_process()
-                await self.start_process()
+                # Health check
+                is_running = self.check()
+                # logger.info("@ fork server running:", is_running)
+                if not is_running:
+                    await self.stop_process()
+                    await self.start_process()
 
-            await asyncio.sleep(self.interval)
+                await asyncio.sleep(self.interval)
+        except asyncio.CancelledError:
+            pass
 
     async def start(self):
         self._running = True
@@ -69,5 +81,6 @@ class ForkServerSupervisor:
         # TODO: when ctrl-c fastapi, fork server should not hang and exit immediately (in general, fork server should exit asap when requested)
         self._running = False
         if self._task:
-            await self._task
+            self._task.cancel()
+            # await self._task
         await self.stop_process()
