@@ -87,8 +87,10 @@ int run_adaguc_once(int argc, char **argv, char **envp, bool is_forked) {
 }
 
 int main(int argc, char **argv, char **envp) {
+  // TODO:
   // If these lines are commented out, the calls the /edr/collections/instances/<my-instance> fail to return data
   // because the call to `request=getreferencetimes` does not contain useful output
+  // Also regular calls (e.g. GetMap) include logging statements in the image response
   setvbuf(stdout, NULL, _IONBF, 0); // turn off buffering
   setvbuf(stderr, NULL, _IONBF, 0); // turn off buffering
 
