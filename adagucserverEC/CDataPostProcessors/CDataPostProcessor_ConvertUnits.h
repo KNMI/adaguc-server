@@ -9,6 +9,7 @@
 #include <cmath>
 #include <vector>
 #include <cstddef>
+#include <cstring>
 /**
  * Calculate CDPPConvertUnits algorithm
  */

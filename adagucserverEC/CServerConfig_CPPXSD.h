@@ -955,6 +955,7 @@ public:
         return true;
       } else if (equals("from_units", attrname)) {
         attr.from_units.copy(attrvalue);
+        return true;
       } else if (equals("offset", attrname)) {
         attr.offset.copy(attrvalue);
         return true;

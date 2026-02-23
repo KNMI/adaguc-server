@@ -63,6 +63,7 @@ class TestConvertUnits(unittest.TestCase):
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "dataset=adaguc.tests.convert_units&service=WMS&request=GetFeatureInfo&version=1.3.0&layers=air_temperature_fahrenheit&query_layers=air_temperature_fahrenheit&crs=EPSG%3A3857&bbox=-28610.793749589706%2C6128671.920262324%2C1284405.9693875897%2C7705268.256668678&width=1076&height=1292&i=512&j=651&info_format=application%2Fjson&dim_reference_time=2026-02-13T00:00:00Z&time=1000-01-01T00%3A00%3A00Z%2F3000-01-01T00%3A00%3A00Z",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml"},
+            showLog=True,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
@@ -98,6 +99,103 @@ class TestConvertUnits(unittest.TestCase):
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "dataset=adaguc.tests.convert_units&service=WMS&request=GetFeatureInfo&version=1.3.0&layers=wind_components_barbs&query_layers=wind_components_barbs&crs=EPSG%3A3857&bbox=-28610.793749589706%2C6128671.920262324%2C1284405.9693875897%2C7705268.256668678&width=1076&height=1292&i=512&j=651&info_format=application%2Fjson&dim_reference_time=2026-02-13T00:00:00Z&time=1000-01-01T00%3A00%3A00Z%2F3000-01-01T00%3A00%3A00Z",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml"},
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
+
+    def test_convert_units_wind_components_speed(self):
+        AdagucTestTools().cleanTempDir()
+
+        config = (
+            ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," + ADAGUC_PATH + "/data/config/datasets/adaguc.tests.convert_units.xml"
+        )
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", config], env=self.env, isCGI=False)
+        self.assertEqual(status, 0)
+
+        filename = "test_convert_units_wind_components_speed.json"
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.tests.convert_units&service=WMS&request=GetFeatureInfo&version=1.3.0&layers=wind_speed_from_components&query_layers=wind_speed_from_components&crs=EPSG%3A3857&bbox=-28610.793749589706%2C6128671.920262324%2C1284405.9693875897%2C7705268.256668678&width=1076&height=1292&i=512&j=651&info_format=application%2Fjson&dim_reference_time=2026-02-13T00:00:00Z&time=1000-01-01T00%3A00%3A00Z%2F3000-01-01T00%3A00%3A00Z",
+            {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml"},
+            showLog=True,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
+
+    def test_convert_units_wind_components_speed_kts(self):
+        AdagucTestTools().cleanTempDir()
+
+        config = (
+            ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," + ADAGUC_PATH + "/data/config/datasets/adaguc.tests.convert_units.xml"
+        )
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", config], env=self.env, isCGI=False)
+        self.assertEqual(status, 0)
+
+        filename = "test_convert_units_wind_components_speed_kts.json"
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.tests.convert_units&service=WMS&request=GetFeatureInfo&version=1.3.0&layers=wind_speed_from_components_kts&query_layers=wind_speed_from_components_kts&crs=EPSG%3A3857&bbox=-28610.793749589706%2C6128671.920262324%2C1284405.9693875897%2C7705268.256668678&width=1076&height=1292&i=512&j=651&info_format=application%2Fjson&dim_reference_time=2026-02-13T00:00:00Z&time=1000-01-01T00%3A00%3A00Z%2F3000-01-01T00%3A00%3A00Z",
+            {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml"},
+            showLog=True,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        # print(">>>", data.getvalue())
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
+
+    def test_convert_units_wind_components_speed_kts2(self):
+        AdagucTestTools().cleanTempDir()
+
+        config = (
+            ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," + ADAGUC_PATH + "/data/config/datasets/adaguc.tests.convert_units.xml"
+        )
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", config], env=self.env, isCGI=False)
+        self.assertEqual(status, 0)
+
+        filename = "test_convert_units_wind_components_speed_kts2.json"
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.tests.convert_units&service=WMS&request=GetFeatureInfo&version=1.3.0&layers=wind_speed_from_components_kts2&query_layers=wind_speed_from_components_kts2&crs=EPSG%3A3857&bbox=-28610.793749589706%2C6128671.920262324%2C1284405.9693875897%2C7705268.256668678&width=1076&height=1292&i=512&j=651&info_format=application%2Fjson&dim_reference_time=2026-02-13T00:00:00Z&time=1000-01-01T00%3A00%3A00Z%2F3000-01-01T00%3A00%3A00Z",
+            {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml"},
+            showLog=True,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
+
+    def test_convert_units_wind_components_direction(self):
+        AdagucTestTools().cleanTempDir()
+
+        config = (
+            ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," + ADAGUC_PATH + "/data/config/datasets/adaguc.tests.convert_units.xml"
+        )
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", config], env=self.env, isCGI=False)
+        self.assertEqual(status, 0)
+
+        filename = "test_convert_units_wind_components_direction.json"
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.tests.convert_units&service=WMS&request=GetFeatureInfo&version=1.3.0&layers=wind_direction_from_components&query_layers=wind_direction_from_components&crs=EPSG%3A3857&bbox=-28610.793749589706%2C6128671.920262324%2C1284405.9693875897%2C7705268.256668678&width=1076&height=1292&i=512&j=651&info_format=application%2Fjson&dim_reference_time=2026-02-13T00:00:00Z&time=1000-01-01T00%3A00%3A00Z%2F3000-01-01T00%3A00%3A00Z",
+            {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml"},
+            showLog=True,
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
