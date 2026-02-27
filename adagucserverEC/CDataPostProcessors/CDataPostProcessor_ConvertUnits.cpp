@@ -1,7 +1,14 @@
 #include "CDataPostProcessor_ConvertUnits.h"
 #include <map>
-#include <string>
+#include <vector>
+#include <cstddef>
+#include <cstring>
 #include <CCDFTypes.h>
+
+#define CDATAPOSTPROCESSOR_CONVERTUNITS_ID "convert_units"
+#define CDATAPOSTPROCESSOR_TOKNOTS_ID "toknots"
+#define CDATAPOSTPROCESSOR_WINDSPEEDKTSTOMS_ID "windspeed_knots_to_ms"
+#define CDATAPOSTPROCESSOR_AXPLUSB_ID "ax+b"
 
 struct LookupUnits {
   double a;
@@ -14,9 +21,7 @@ std::map<std::string, LookupUnits> lookUp = {{CDATAPOSTPROCESSOR_TOKNOTS_ID, {.a
 
 std::vector<std::string> listOfProcs = {CDATAPOSTPROCESSOR_CONVERTUNITS_ID, CDATAPOSTPROCESSOR_TOKNOTS_ID, CDATAPOSTPROCESSOR_WINDSPEEDKTSTOMS_ID, CDATAPOSTPROCESSOR_AXPLUSB_ID};
 
-std::string getDataPostProcId(CServerConfig::XMLE_DataPostProc *proc) {
-  return CT::printf("ADAGUCPOSTPROC_[%03d]_[%s]_NEEDSCONVERSION", proc->attr.postProcIndexInLayer, proc->attr.algorithm.c_str());
-}
+std::string getDataPostProcId(CServerConfig::XMLE_DataPostProc *proc) { return CT::printf("ADAGUCPOSTPROC_%03d_%s_NEEDSCONVERSION", proc->attr.postProcIndexInLayer, proc->attr.algorithm.c_str()); }
 
 const char *CDPPConvertUnits::getId() { return CDATAPOSTPROCESSOR_CONVERTUNITS_ID; }
 

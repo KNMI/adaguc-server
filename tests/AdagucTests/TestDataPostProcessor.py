@@ -246,3 +246,30 @@ class TestDataPostProcessor(unittest.TestCase):
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
         AdagucTestTools().compareImage(self.testresultspath + filename, self.expectedoutputsspath + filename)
+
+    def test_GetCoverage_multiple_post_procs_on_arcus_uwcw_wind_speed_hagl_ms_member_3_backandforth_multiple(self):
+        """
+        Test multiple data conversions in one layer for timeseries.
+        """
+        AdagucTestTools().cleanTempDir()
+        env = make_adaguc_env("adaguc.tests.arcus_uwcw.xml")
+        update_db(env)
+
+        # Write NetCDF file using WCS
+        wcs_filename = "test_GetCoverage_multiple_post_procs_on_arcus_uwcw_wind_speed_hagl_ms_member_3_backandforth_multiple.nc"
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.tests.arcus_uwcw&SERVICE=WCS&REQUEST=GetCoverage&COVERAGE=wind_speed_hagl_ms_member_3_backandforth_multiple&CRS=EPSG%3A3857&FORMAT=netcdf&BBOX=229850.82433886,6364199.538544346,1015783.6170691401,7306604.405463655&RESX=157186.558546056&RESY=188480.97338386177&TIME=2024-06-06T03:00:00Z&DIM_REFERENCE_TIME=2024-06-05T03:00:00Z",
+            env=env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + wcs_filename, data.getvalue())
+        self.assertEqual(status, 0)
+
+        # Getmap on written NetCDF file
+        wms_filename = "test_GetMapOnGetCoverage_multiple_post_procs_on_arcus_uwcw_wind_speed_hagl_ms_member_3_backandforth_multiple.png"
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            "source=TestDataPostProcessor%2Ftest_GetCoverage_multiple_post_procs_on_arcus_uwcw_wind_speed_hagl_ms_member_3_backandforth_multiple%2Enc&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind-speed-hagl&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=221991.4964117,6269353.652580505,1023642.9449963,7401450.291427495&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&&DIM_wind_at_hagl=10&time=2024-06-06T03%3A00%3A00Z&DIM_reference_time=2024-06-05T03%3A00%3A00Z&DIM_member=3&0.47167832666058407",
+            env={"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.autoresource.xml", "ADAGUC_AUTOWMS_DIR": self.testresultspath},
+        )
+        AdagucTestTools().writetofile(self.testresultspath + wms_filename, data.getvalue())
+        self.assertEqual(status, 0)
+        AdagucTestTools().compareImage(self.testresultspath + wms_filename, self.expectedoutputsspath + wms_filename)

@@ -485,7 +485,7 @@
           {
             "label": "Wind speed at height above ground level",
             "standard_name": "wind_speed",
-            "units": "kts+1000",
+            "units": "Somethingnew",
             "variableName": "wind-speed-hagl"
           }
         ],
