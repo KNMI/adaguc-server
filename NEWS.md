@@ -1,3 +1,7 @@
+**Version 6.5.0 - 2026-02-27**
+
+- Refactored datapostprocessors to handle windspeed conversions better.
+
 **Version 6.4.0 - 2026-02-13**
 
 - Added stride option to solt to make it render faster
