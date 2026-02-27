@@ -30,6 +30,11 @@
 #include "CColor.h"
 #include <cfloat>
 
+struct XMLE_DataPostProcAttributes {
+  int postProcIndexInLayer = 0;
+  CT::string a, b, c, units, algorithm, mode, name, select, standard_name, long_name, variable, directionname, speedname, from_units, offset, stride;
+};
+
 class CServerConfig : public CXMLObjectInterface {
 public:
   class XMLE_palette : public CXMLObjectInterface {
@@ -909,10 +914,7 @@ public:
 
   class XMLE_DataPostProc : public CXMLObjectInterface {
   public:
-    class Cattr {
-    public:
-      CT::string a, b, c, units, algorithm, mode, name, select, standard_name, long_name, variable, directionname, speedname, from_units, offset, stride;
-    } attr;
+    XMLE_DataPostProcAttributes attr;
     bool addAttribute(const char *attrname, const char *attrvalue) {
       if (equals("a", attrname)) {
         attr.a.copy(attrvalue);

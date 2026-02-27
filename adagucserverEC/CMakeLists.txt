@@ -120,8 +120,6 @@ add_library(
     CDataPostProcessors/CDPPGoes16Metadata.h
     CDataPostProcessors/CDataPostProcessor.cpp
     CDataPostProcessors/CDataPostProcessor.h
-    CDataPostProcessors/CDataPostProcessor_AXplusB.cpp
-    CDataPostProcessors/CDataPostProcessor_AXplusB.h
     CDataPostProcessors/CDataPostProcessor_Beaufort.cpp
     CDataPostProcessors/CDataPostProcessor_Beaufort.h
     CDataPostProcessors/CDataPostProcessor_ClipMinMax.cpp

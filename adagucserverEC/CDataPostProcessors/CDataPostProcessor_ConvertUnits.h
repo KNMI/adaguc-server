@@ -6,6 +6,7 @@
 #define CDATAPOSTPROCESSOR_CONVERTUNITS_ID "convert_units"
 #define CDATAPOSTPROCESSOR_TOKNOTS_ID "toknots"
 #define CDATAPOSTPROCESSOR_WINDSPEEDKTSTOMS_ID "windspeed_knots_to_ms"
+#define CDATAPOSTPROCESSOR_AXPLUSB_ID "ax+b"
 #include <cmath>
 #include <vector>
 #include <cstddef>

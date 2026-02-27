@@ -1,6 +1,8 @@
 #include "CDataPostProcessor_ConvertUnits.h"
 #include <map>
 #include <string>
+#include <CCDFTypes.h>
+
 struct LookupUnits {
   double a;
   double b;
@@ -10,6 +12,25 @@ struct LookupUnits {
 std::map<std::string, LookupUnits> lookUp = {{CDATAPOSTPROCESSOR_TOKNOTS_ID, {.a = 3600 / 1852., .b = 0, .units = "kts"}},
                                              {CDATAPOSTPROCESSOR_WINDSPEEDKTSTOMS_ID, {.a = 1852. / 3600., .b = 0, .units = "m s-1"}}};
 
+std::vector<std::string> listOfProcs = {CDATAPOSTPROCESSOR_CONVERTUNITS_ID, CDATAPOSTPROCESSOR_TOKNOTS_ID, CDATAPOSTPROCESSOR_WINDSPEEDKTSTOMS_ID, CDATAPOSTPROCESSOR_AXPLUSB_ID};
+
+std::string getDataPostProcId(CServerConfig::XMLE_DataPostProc *proc) {
+  return CT::printf("ADAGUCPOSTPROC_[%03d]_[%s]_NEEDSCONVERSION", proc->attr.postProcIndexInLayer, proc->attr.algorithm.c_str());
+}
+
+const char *CDPPConvertUnits::getId() { return CDATAPOSTPROCESSOR_CONVERTUNITS_ID; }
+
+int CDPPConvertUnits::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int mode) {
+  auto algorithm = proc->attr.algorithm;
+  // Check if the algorithm matches one of the available id's
+  if (std::find_if(listOfProcs.begin(), listOfProcs.end(), [&algorithm](const std::string &str) { return algorithm == str; }) != listOfProcs.end()) {
+    if ((mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) || (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING)) {
+      return CDATAPOSTPROCESSOR_RUNBEFOREREADING | CDATAPOSTPROCESSOR_RUNAFTERREADING;
+    }
+  }
+
+  return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
+}
 LookupUnits getLookupUnits(CServerConfig::XMLE_DataPostProc &proc) {
   // If the ID is recognized in the lookup, always return those a an b values (ignore the configured a and b )
   if (lookUp.find(proc.attr.algorithm) != lookUp.end()) {
@@ -18,7 +39,6 @@ LookupUnits getLookupUnits(CServerConfig::XMLE_DataPostProc &proc) {
 
       lookedUp.units = proc.attr.units;
     }
-    CDBDebug("FOUND LOOKUP: %s %f %f %s", proc.attr.algorithm.c_str(), lookedUp.a, lookedUp.b, lookedUp.units.c_str());
     return lookedUp;
   }
   // Not in lookup, use the a an b from DataProcessor configuration
@@ -37,24 +57,10 @@ LookupUnits getLookupUnits(CServerConfig::XMLE_DataPostProc &proc) {
   return l;
 }
 
-const char *CDPPConvertUnits::getId() { return CDATAPOSTPROCESSOR_CONVERTUNITS_ID; }
-
-int CDPPConvertUnits::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *, int mode) {
-
-  if (proc->attr.algorithm.equals(CDATAPOSTPROCESSOR_CONVERTUNITS_ID) || proc->attr.algorithm.equals(CDATAPOSTPROCESSOR_TOKNOTS_ID) ||
-      proc->attr.algorithm.equals(CDATAPOSTPROCESSOR_WINDSPEEDKTSTOMS_ID)) {
-    if ((mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) || (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING)) {
-      return CDATAPOSTPROCESSOR_RUNBEFOREREADING | CDATAPOSTPROCESSOR_RUNAFTERREADING;
-    }
-  }
-
-  return CDATAPOSTPROCESSOR_NOTAPPLICABLE;
-}
-
-template <typename T> void do_convert(T noDataValue, size_t l, T *src, double a, double b) {
+template <typename T> void do_convert(double noDataValue, size_t l, T *src, double a, double b) {
   if (std::isnan(noDataValue)) {
     for (size_t cnt = 0; cnt < l; cnt++) {
-      float value = *src;
+      T value = *src;
       if (!std::isnan(value)) {
         *src = a * value + b;
       }
@@ -62,7 +68,7 @@ template <typename T> void do_convert(T noDataValue, size_t l, T *src, double a,
     }
   } else {
     for (size_t cnt = 0; cnt < l; cnt++) {
-      float value = *src;
+      T value = *src;
       if (!std::isnan(value)) {
         if (value != noDataValue) {
           *src = a * value + b;
@@ -79,51 +85,36 @@ int CDPPConvertUnits::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
   }
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
     auto lookupUnit = getLookupUnits(*proc);
-    CDBDebug("BEFORE: %s %f %f %s", proc->attr.algorithm.c_str(), lookupUnit.a, lookupUnit.b, lookupUnit.units.c_str());
+
     auto fromUnits = proc->attr.from_units;
     for (const auto dataObject: dataSource->dataObjects) {
       if (fromUnits.empty() || dataObject->getUnits().equals(fromUnits)) {
+        CDBDebug("BEFORE: %s %f %f %s", proc->attr.algorithm.c_str(), lookupUnit.a, lookupUnit.b, lookupUnit.units.c_str());
         dataObject->cdfVariable->setAttributeText("ADAGUC_POSTPROC_WAS_UNITS", dataObject->getUnits());
-        dataObject->cdfVariable->setAttributeText("ADAGUC_POSTPROC_NEEDSCONVERSION", "true");
+        dataObject->cdfVariable->setAttributeText(getDataPostProcId(proc).c_str(), "true");
         CDBDebug("--> Changing unit from %s to %s", dataObject->getUnits().c_str(), lookupUnit.units.c_str());
         dataObject->setUnits(lookupUnit.units.c_str());
-
-        // Keep track how often we hit before reading with these kind of procs.
-        auto histBeforeAttr = dataObject->cdfVariable->getAttributeNE("ADAGUC_POSTPROC_BEFORE_READING");
-        std::string histBeforeStr = "";
-        if (histBeforeAttr == nullptr) {
-          dataObject->cdfVariable->setAttributeText("ADAGUC_POSTPROC_BEFORE_READING", "");
-          histBeforeAttr = dataObject->cdfVariable->getAttributeNE("ADAGUC_POSTPROC_BEFORE_READING");
-        }
-        histBeforeStr = histBeforeAttr->getDataAsString();
-
-        CT::printfconcat(histBeforeStr, "%s", proc->attr.algorithm.c_str());
-        histBeforeAttr->setData(histBeforeStr.c_str());
+        // Also set the unit directly in the datamodel.
+        dataObject->cdfVariable->setAttributeText("units", lookupUnit.units.c_str());
       }
     }
   }
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
     auto lookupUnit = getLookupUnits(*proc);
-    CDBDebug("AFTER: %s %f %f %s", proc->attr.algorithm.c_str(), lookupUnit.a, lookupUnit.b, lookupUnit.units.c_str());
 
     size_t l = (size_t)dataSource->dHeight * (size_t)dataSource->dWidth;
     for (const auto dataObject: dataSource->dataObjects) {
-      // CDBDebug("Using var %s", dataObject->cdfVariable->name.c_str());
-      auto attrNeedsConversion = dataObject->cdfVariable->getAttributeNE("ADAGUC_POSTPROC_NEEDSCONVERSION");
-      if (attrNeedsConversion != nullptr && attrNeedsConversion->getDataAsString().equals("done")) {
-        CDBError("Warning not yet possible!!!"); // TODO:
-      }
+
+      auto attrNeedsConversion = dataObject->cdfVariable->getAttributeNE(getDataPostProcId(proc).c_str());
       // Check if we need to convert the data
       if (attrNeedsConversion != nullptr && attrNeedsConversion->getDataAsString().equals("true")) {
-        // Indicate that this is converted, so it is not converted twice.
-        attrNeedsConversion->setData("done");
+        CDBDebug("AFTER (grid): %s %f %f %s", proc->attr.algorithm.c_str(), lookupUnit.a, lookupUnit.b, lookupUnit.units.c_str());
         CDFType type = dataObject->cdfVariable->getType();
 
-        if (type == CDF_DOUBLE) {
-          do_convert<double>(dataObject->hasNodataValue ? dataObject->dfNodataValue : NAN, l, (double *)dataObject->cdfVariable->data, lookupUnit.a, lookupUnit.b);
-        } else if (type == CDF_FLOAT) {
-          do_convert<float>(dataObject->hasNodataValue ? dataObject->dfNodataValue : NAN, l, (float *)dataObject->cdfVariable->data, lookupUnit.a, lookupUnit.b);
-        }
+#define SPECIALIZE_TEMPLATE(CDFTYPE, CPPTYPE)                                                                                                                                                          \
+  if (type == CDFTYPE) do_convert<CPPTYPE>(dataObject->hasNodataValue ? dataObject->dfNodataValue : NAN, l, (CPPTYPE *)dataObject->cdfVariable->data, lookupUnit.a, lookupUnit.b);
+        ENUMERATE_OVER_CDFTYPES(SPECIALIZE_TEMPLATE)
+#undef SPECIALIZE_TEMPLATE
 
         // Convert point data if needed
         size_t nrPoints = dataObject->points.size();
@@ -134,18 +125,7 @@ int CDPPConvertUnits::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
             dataObject->points[pointNo].v = lookupUnit.a * dataObject->points[pointNo].v + lookupUnit.b;
           }
         }
-        // TODO: Calc stat
-      } else {
-        CDBDebug("Skip Using var %s", dataObject->cdfVariable->name.c_str());
       }
-    }
-
-    if (dataSource->statistics == nullptr) {
-      CDBDebug("<%d> No statistics %s", mode, dataSource->layerName.c_str());
-    } else {
-      dataSource->statistics->min = dataSource->statistics->min * lookupUnit.a + lookupUnit.b;
-      dataSource->statistics->max = dataSource->statistics->max * lookupUnit.a + lookupUnit.b;
-      CDBDebug("<%d> %f,%f %s", mode, dataSource->statistics->getMinimum(), dataSource->statistics->getMaximum(), dataSource->layerName.c_str());
     }
   }
   return 0;
@@ -159,47 +139,12 @@ int CDPPConvertUnits::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
   auto lookupUnit = getLookupUnits(*proc);
   for (const auto dataObject: dataSource->dataObjects) {
     CDBDebug("Using var %s", dataObject->cdfVariable->name.c_str());
-    auto attrNeedsConversion = dataObject->cdfVariable->getAttributeNE("ADAGUC_POSTPROC_NEEDSCONVERSION");
-    if (attrNeedsConversion != nullptr && attrNeedsConversion->getDataAsString().equals("done")) {
-      CDBError("Warning not yet possible!!!"); // TODO:
-    }
-
+    auto attrNeedsConversion = dataObject->cdfVariable->getAttributeNE(getDataPostProcId(proc).c_str());
     // Check if we need to convert the data
     if (attrNeedsConversion != nullptr && attrNeedsConversion->getDataAsString().equals("true")) {
-      // Indicate that this is converted, so it is not converted twice.
-      attrNeedsConversion->setData("done");
-      CDBDebug("Doing timeseries %lu %s %f %f", l, attrNeedsConversion->getDataAsString().c_str(), lookupUnit.a, lookupUnit.b);
+      CDBDebug("AFTER (timeseries): %s %f %f %s", proc->attr.algorithm.c_str(), lookupUnit.a, lookupUnit.b, lookupUnit.units.c_str());
       do_convert<double>(dataObject->hasNodataValue ? dataObject->dfNodataValue : NAN, l, (double *)data, lookupUnit.a, lookupUnit.b);
     }
   }
   return 0;
-  // double a = proc->attr.a.empty() ? 1 : proc->attr.a.toDouble();
-  // double b = proc->attr.b.empty() ? 0 : proc->attr.b.toDouble();
-  // CT::string fromUnits = proc->attr.from_units;
-  // CDBDebug("execute numDataPoints");
-  // for (const auto dataObject: dataSource->dataObjects) {
-  //   if (dataObject->cdfVariable->needsDataConversion_) {
-  //     double noDataValue = dataObject->dfNodataValue;
-  //     if (std::isnan(noDataValue)) {
-  //       for (size_t cnt = 0; cnt < numDataPoints; cnt++) {
-  //         double value = data[cnt];
-  //         if (!std::isnan(value)) {
-  //           data[cnt] = a * value + b;
-  //         }
-  //       }
-  //     } else {
-  //       for (size_t cnt = 0; cnt < numDataPoints; cnt++) {
-  //         double value = data[cnt];
-  //         if (!std::isnan(value)) {
-  //           if (value != noDataValue) {
-  //             data[cnt] = a * value + b;
-  //           }
-  //         }
-  //       }
-  //     }
-  //   }
-  //   dataObject->cdfVariable->needsDataConversion_ = false;
-  // }
-
-  // return 0;
 }

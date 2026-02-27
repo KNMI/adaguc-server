@@ -11,7 +11,6 @@
 #include "CDataPostProcessor_PointsFromGrid.h"
 #include "CDataPostProcessor_AddDataObject.h"
 
-#include "CDataPostProcessor_AXplusB.h"
 #include "CDPPGoes16Metadata.h"
 #include "CDataPostProcessors_MSGCPP.h"
 #include "CDataPostProcessor_CDPDBZtoRR.h"
@@ -34,7 +33,7 @@ CDPPExecutor *getCDPPExecutor() {
 CDPPExecutor::CDPPExecutor() {
   dataPostProcessorList = new std::vector<CDPPInterface *>();
   dataPostProcessorList->push_back(new CDPPIncludeLayer());
-  dataPostProcessorList->push_back(new CDPPAXplusB());
+
   dataPostProcessorList->push_back(new CDPPDATAMASK);
   dataPostProcessorList->push_back(new CDPPMSGCPPVisibleMask());
   dataPostProcessorList->push_back(new CDPPMSGCPPHIWCMask());
@@ -56,7 +55,7 @@ CDPPExecutor::CDPPExecutor() {
 
 CDPPExecutor::~CDPPExecutor() {
   // CDBDebug("~CDPPExecutor");
-  for (auto pp : *dataPostProcessorList) {
+  for (auto pp: *dataPostProcessorList) {
     delete pp;
   }
   delete dataPostProcessorList;
@@ -64,25 +63,33 @@ CDPPExecutor::~CDPPExecutor() {
 
 const std::vector<CDPPInterface *> *CDPPExecutor::getPossibleProcessors() { return dataPostProcessorList; }
 
-std::vector<CServerConfig::XMLE_DataPostProc *> getProcessorList(CDataSource *dataSource) {
-  std::vector<CServerConfig::XMLE_DataPostProc *> dataProcessorList;
-  for (auto dp : dataSource->cfgLayer->DataPostProc) {
-    dataProcessorList.push_back(dp);
+std::vector<XMLE_DataPostProcAttributes> getProcessorList(CDataSource *dataSource) {
+  std::vector<XMLE_DataPostProcAttributes> dataProcessorList;
+
+  for (auto dp: dataSource->cfgLayer->DataPostProc) {
+    XMLE_DataPostProcAttributes dpAttr = dp->attr;
+    dpAttr.postProcIndexInLayer = dataProcessorList.size();
+    dataProcessorList.push_back(dpAttr);
   }
 
   if (dataSource->getStyle() != nullptr) {
-    for (auto dp : dataSource->getStyle()->dataPostProcessors) {
-      dataProcessorList.push_back(dp);
+    for (auto dp: dataSource->getStyle()->dataPostProcessors) {
+      XMLE_DataPostProcAttributes dpAttr = dp->attr;
+      dpAttr.postProcIndexInLayer = dataProcessorList.size();
+      dataProcessorList.push_back(dpAttr);
     }
   }
   return dataProcessorList;
 }
 
 int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode) {
-  std::vector<CServerConfig::XMLE_DataPostProc *> dataProcessorList = getProcessorList(dataSource);
-  for (auto proc : dataProcessorList) {
+  std::vector<XMLE_DataPostProcAttributes> dataProcessorList = getProcessorList(dataSource);
+  for (auto procAttr: dataProcessorList) {
+    // The data postprocessor implementations still expect a CServerConfig::XMLE_DataPostProc* as argument. // TODO
+    CServerConfig::XMLE_DataPostProc proc;
+    proc.attr = procAttr;
     for (size_t procId = 0; procId < dataPostProcessorList->size(); procId++) {
-      int code = dataPostProcessorList->at(procId)->isApplicable(proc, dataSource, mode);
+      int code = dataPostProcessorList->at(procId)->isApplicable(&proc, dataSource, mode);
 
       if (code == CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET) {
         CDBError("Constraints for DPP %s are not met", dataPostProcessorList->at(procId)->getId());
@@ -93,7 +100,7 @@ int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode) {
         if (code & CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
           try {
             // CDBDebug("Applying beforereading processor %s", dataPostProcessorList->at(procId)->getId());
-            int status = dataPostProcessorList->at(procId)->execute(proc, dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
+            int status = dataPostProcessorList->at(procId)->execute(&proc, dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING);
             if (status != 0) {
               CDBError("Processor %s failed RUNBEFOREREADING, statuscode %d", dataPostProcessorList->at(procId)->getId(), status);
             }
@@ -107,7 +114,7 @@ int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode) {
         if (code & CDATAPOSTPROCESSOR_RUNAFTERREADING) {
           try {
             // CDBDebug("Applying afterreading processor %s", dataPostProcessorList->at(procId)->getId());
-            int status = dataPostProcessorList->at(procId)->execute(proc, dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
+            int status = dataPostProcessorList->at(procId)->execute(&proc, dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
             if (status != 0) {
               CDBError("Processor %s failed RUNAFTERREADING, statuscode %d", dataPostProcessorList->at(procId)->getId(), status);
             }
@@ -122,10 +129,13 @@ int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode) {
 }
 
 int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode, double *data, size_t numItems) {
-  std::vector<CServerConfig::XMLE_DataPostProc *> dataProcessorList = getProcessorList(dataSource);
-  for (auto proc : dataProcessorList) {
+  std::vector<XMLE_DataPostProcAttributes> dataProcessorList = getProcessorList(dataSource);
+  for (auto procAttr: dataProcessorList) {
+    // The data postprocessor implementations still expect a CServerConfig::XMLE_DataPostProc* as argument. // TODO
+    CServerConfig::XMLE_DataPostProc proc;
+    proc.attr = procAttr;
     for (size_t procId = 0; procId < dataPostProcessorList->size(); procId++) {
-      int code = dataPostProcessorList->at(procId)->isApplicable(proc, dataSource, mode);
+      int code = dataPostProcessorList->at(procId)->isApplicable(&proc, dataSource, mode);
 
       if (code == CDATAPOSTPROCESSOR_CONSTRAINTSNOTMET) {
         CDBError("Constraints for DPP %s are not met", dataPostProcessorList->at(procId)->getId());
@@ -135,7 +145,7 @@ int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode, double *d
       if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
         if (code & CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
           try {
-            int status = dataPostProcessorList->at(procId)->execute(proc, dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING, NULL, 0);
+            int status = dataPostProcessorList->at(procId)->execute(&proc, dataSource, CDATAPOSTPROCESSOR_RUNBEFOREREADING, NULL, 0);
             if (status != 0) {
               CDBError("Processor %s failed RUNBEFOREREADING, statuscode %d", dataPostProcessorList->at(procId)->getId(), status);
             }
@@ -149,7 +159,7 @@ int CDPPExecutor::executeProcessors(CDataSource *dataSource, int mode, double *d
       if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
         if (code & CDATAPOSTPROCESSOR_RUNAFTERREADING) {
           try {
-            int status = dataPostProcessorList->at(procId)->execute(proc, dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING, data, numItems);
+            int status = dataPostProcessorList->at(procId)->execute(&proc, dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING, data, numItems);
             if (status != 0) {
               CDBError("Processor %s failed RUNAFTERREADING, statuscode %d", dataPostProcessorList->at(procId)->getId(), status);
             }
