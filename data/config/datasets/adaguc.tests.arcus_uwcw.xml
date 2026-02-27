@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <Configuration>
-  <OgcApiFeatures />
+
 
   <Layer type="database">
     <Group collection="hagl_member"/>
@@ -13,8 +13,8 @@
     <Dimension name="time" units="ISO8601" default="min">time</Dimension>
     <Dimension name="temp_at_hagl" units="m" default="min" hidden="true">height_above_ground_level_in_m</Dimension>
     <Dimension name="member" units="" default="min" type="custom" hidden="false">member</Dimension>
-  </Layer>  
-  
+  </Layer>
+
 
   <Layer type="database">
     <Group collection="hagl_member"/>
@@ -27,7 +27,7 @@
     <Dimension name="time" units="ISO8601" default="min">time</Dimension>
     <Dimension name="wind_at_hagl" units="m" default="min" hidden="true">height_above_ground_level_in_m</Dimension>
     <Dimension name="member" units="" default="min" type="custom" hidden="false">member</Dimension>
-  </Layer>  
+  </Layer>
 
   <Layer type="database">
     <Group collection="hagl_member"/>
@@ -41,9 +41,9 @@
     <Dimension name="wind_at_hagl" units="m" default="min" hidden="true">height_above_ground_level_in_m</Dimension>
     <Dimension name="member" units="" default="min" type="custom" hidden="false">member</Dimension>
     <DataPostProc algorithm="windspeed_knots_to_ms" from_units="kts" units="m/s"/>
-  </Layer>  
+  </Layer>
 
-    <Layer type="database">
+  <Layer type="database">
     <Group collection="hagl_member"/>
     <Name>wind_speed_hagl_ms_wrong_dim_order</Name>
     <Title>UWCW_HA43ENS(NL) Wind speed at height above ground level in ms</Title>
@@ -54,8 +54,8 @@
     <Dimension name="wind_at_hagl" units="m" default="min" hidden="true">height_above_ground_level_in_m</Dimension>
     <Dimension name="time" units="ISO8601" default="min">time</Dimension>
     <Dimension name="forecast_reference_time" units="ISO8601" hidden="false">reference_time</Dimension>
-    <DataPostProc algorithm="windspeed_knots_to_ms"/>
-  </Layer>  
+    <DataPostProc algorithm="windspeed_knots_to_ms" units="m/s"/>
+  </Layer>
 
 
 
@@ -70,9 +70,9 @@
     <Dimension name="time" units="ISO8601" default="min">time</Dimension>
     <Dimension name="wind_at_hagl" units="m" default="min" hidden="true">height_above_ground_level_in_m</Dimension>
     <Dimension name="member" units="" default="min" type="custom" hidden="true">member</Dimension>
-    <DataPostProc algorithm="windspeed_knots_to_ms"/>
-  </Layer>  
-  
+    <DataPostProc algorithm="windspeed_knots_to_ms" units="m/s"/>
+  </Layer>
 
-  
+
+
 </Configuration>

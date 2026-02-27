@@ -1,4 +1,41 @@
 #include "CDataPostProcessor_ConvertUnits.h"
+#include <map>
+#include <string>
+struct LookupUnits {
+  double a;
+  double b;
+  std::string units;
+};
+
+std::map<std::string, LookupUnits> lookUp = {{CDATAPOSTPROCESSOR_TOKNOTS_ID, {.a = 3600 / 1852., .b = 0, .units = "kts"}},
+                                             {CDATAPOSTPROCESSOR_WINDSPEEDKTSTOMS_ID, {.a = 1852. / 3600., .b = 0, .units = "m s-1"}}};
+
+LookupUnits getLookupUnits(CServerConfig::XMLE_DataPostProc &proc) {
+  // If the ID is recognized in the lookup, always return those a an b values (ignore the configured a and b )
+  if (lookUp.find(proc.attr.algorithm) != lookUp.end()) {
+    auto lookedUp = lookUp[proc.attr.algorithm];
+    if (!proc.attr.units.empty()) {
+
+      lookedUp.units = proc.attr.units;
+    }
+    CDBDebug("FOUND LOOKUP: %s %f %f %s", proc.attr.algorithm.c_str(), lookedUp.a, lookedUp.b, lookedUp.units.c_str());
+    return lookedUp;
+  }
+  // Not in lookup, use the a an b from DataProcessor configuration
+  LookupUnits l = {.a = 1, .b = 0, .units = ""};
+  if (!proc.attr.a.empty()) {
+    l.a = proc.attr.a.toDouble();
+  }
+  if (!proc.attr.b.empty()) {
+    l.b = proc.attr.b.toDouble();
+  }
+  if (!proc.attr.units.empty()) {
+    l.units = proc.attr.units;
+  }
+
+  CDBDebug("Using own: %s %f %f %s", proc.attr.algorithm.c_str(), l.a, l.b, l.units.c_str());
+  return l;
+}
 
 const char *CDPPConvertUnits::getId() { return CDATAPOSTPROCESSOR_CONVERTUNITS_ID; }
 
@@ -36,42 +73,6 @@ template <typename T> void do_convert(T noDataValue, size_t l, T *src, double a,
   }
 }
 
-struct LookupUnits {
-  double a;
-  double b;
-  std::string units;
-};
-
-std::map<std::string, LookupUnits> lookUp = {{CDATAPOSTPROCESSOR_TOKNOTS_ID, {.a = 3600 / 1852., .b = 0, .units = "kts"}},
-                                             {CDATAPOSTPROCESSOR_WINDSPEEDKTSTOMS_ID, {.a = 1852. / 3600., .b = 0, .units = "m s-1"}}};
-
-LookupUnits getLookupUnits(CServerConfig::XMLE_DataPostProc &proc) {
-  // If the ID is recognized in the lookup, always return those a an b values (ignore the configured a and b )
-  if (lookUp.find(proc.attr.algorithm) != lookUp.end()) {
-    auto lookedUp = lookUp[proc.attr.algorithm];
-    if (!proc.attr.units.empty()) {
-
-      lookedUp.units = proc.attr.units;
-    }
-    CDBDebug("FOUND LOOKUP: %s %f %f %s", proc.attr.algorithm.c_str(), lookedUp.a, lookedUp.b, lookedUp.units.c_str());
-    return lookedUp;
-  }
-  // Not in lookup, use the a an b from DataProcessor configuration
-  LookupUnits l = {.a = 1, .b = 0, .units = ""};
-  if (!proc.attr.a.empty()) {
-    l.a = proc.attr.a.toDouble();
-  }
-  if (!proc.attr.b.empty()) {
-    l.b = proc.attr.b.toDouble();
-  }
-  if (!proc.attr.units.empty()) {
-    l.units = proc.attr.units;
-  }
-
-  CDBDebug("Using own: %s %f %f %s", proc.attr.algorithm.c_str(), l.a, l.b, l.units.c_str());
-  return l;
-}
-
 int CDPPConvertUnits::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
   if (isApplicable(proc, dataSource, mode) == CDATAPOSTPROCESSOR_NOTAPPLICABLE) {
     return -1;
@@ -84,6 +85,7 @@ int CDPPConvertUnits::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
       if (fromUnits.empty() || dataObject->getUnits().equals(fromUnits)) {
         dataObject->cdfVariable->setAttributeText("ADAGUC_POSTPROC_WAS_UNITS", dataObject->getUnits());
         dataObject->cdfVariable->setAttributeText("ADAGUC_POSTPROC_NEEDSCONVERSION", "true");
+        CDBDebug("--> Changing unit from %s to %s", dataObject->getUnits().c_str(), lookupUnit.units.c_str());
         dataObject->setUnits(lookupUnit.units.c_str());
 
         // Keep track how often we hit before reading with these kind of procs.
@@ -161,11 +163,12 @@ int CDPPConvertUnits::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
     if (attrNeedsConversion != nullptr && attrNeedsConversion->getDataAsString().equals("done")) {
       CDBError("Warning not yet possible!!!"); // TODO:
     }
+
     // Check if we need to convert the data
     if (attrNeedsConversion != nullptr && attrNeedsConversion->getDataAsString().equals("true")) {
       // Indicate that this is converted, so it is not converted twice.
       attrNeedsConversion->setData("done");
-
+      CDBDebug("Doing timeseries %lu %s %f %f", l, attrNeedsConversion->getDataAsString().c_str(), lookupUnit.a, lookupUnit.b);
       do_convert<double>(dataObject->hasNodataValue ? dataObject->dfNodataValue : NAN, l, (double *)data, lookupUnit.a, lookupUnit.b);
     }
   }
