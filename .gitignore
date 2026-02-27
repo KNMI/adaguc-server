@@ -141,3 +141,7 @@ perf.data
 perf.out.old
 perf.svg
 log.txt
+.history/*
+Docker/.env-benchmark
+.gitignore
+Docker/.env-precision

@@ -113,8 +113,8 @@ public:
     bool noFurtherProcessing = false;
     bool filterFromOutput = false; // When set to true, this dataobject is not returned in the GetFeatureInfo response.
     std::vector<StatusFlag> statusFlagList;
-    CDF::Variable *cdfVariable;  // Not owned!
-    CDFObject *cdfObject;  // Not owned!
+    CDF::Variable *cdfVariable; // Not owned!
+    CDFObject *cdfObject;       // Not owned!
 
     CT::string variableName;
 
@@ -189,6 +189,8 @@ public:
 
   private:
     template <class T> void calcMinMax(size_t size, std::vector<DataObject *> *dataObject);
+
+  public:
     double min, max, avg, stddev;
     size_t numSamples;
 
@@ -230,7 +232,7 @@ public:
 
   std::vector<DataObject *> dataObjects;
 
-  bool stretchMinMax, stretchMinMaxDone;
+  bool stretchMinMax;
 
   /**
    * The required dimensions for this datasource
