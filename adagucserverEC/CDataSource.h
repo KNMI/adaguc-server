@@ -108,8 +108,8 @@ public:
 
   public:
     DataObject();
-    bool hasStatusFlag, hasNodataValue, hasScaleOffset;
-    double dfNodataValue, dfscale_factor, dfadd_offset;
+    bool hasStatusFlag, hasNodataValue;
+    double dfNodataValue;
     bool noFurtherProcessing = false;
     bool filterFromOutput = false; // When set to true, this dataobject is not returned in the GetFeatureInfo response.
     std::vector<StatusFlag> statusFlagList;

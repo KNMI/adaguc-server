@@ -90,6 +90,7 @@
     <DataPostProc algorithm="toknots" from_units="m/s" units="kts"/>
     <DataPostProc algorithm="convert_units" a="10" from_units="kts" units="kts*10"/>
     <DataPostProc algorithm="convert_units" b="1000" from_units="kts*10" units="kts+1000"/>
+    <DataPostProc algorithm="ax+b" a=".1" b="-10000" units="Somethingnew"/>
 
   </Layer>
 

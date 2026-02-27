@@ -1020,10 +1020,8 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     // Check for packed data / hasScaleOffset
 
     CDF::Attribute *scale_factor = dataSource->getDataObject(varNr)->cdfVariable->getAttributeNE("scale_factor");
-    CDF::Attribute *add_offset = dataSource->getDataObject(varNr)->cdfVariable->getAttributeNE("add_offset");
     if (scale_factor != NULL) {
-      // Scale and offset will be applied further downwards in this function.
-      dataSource->getDataObject(varNr)->hasScaleOffset = true;
+
       // Currently two unpacked data types are supported (CF-1.4): float and double
 
       dataSource->getDataObject(varNr)->cdfVariable->setType(CDF_FLOAT);
@@ -1035,14 +1033,6 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
       if (scale_factor->getType() == CDF_DOUBLE) {
         dataSource->getDataObject(varNr)->cdfVariable->setType(CDF_DOUBLE);
       }
-
-      // Internally we use always double for scale and offset parameters:
-      scale_factor->getData(&dataSource->getDataObject(varNr)->dfscale_factor, 1);
-
-      if (add_offset != NULL) {
-        add_offset->getData(&dataSource->getDataObject(varNr)->dfadd_offset, 1);
-      } else
-        dataSource->getDataObject(varNr)->dfadd_offset = 0;
     }
 
     if (verbose) {
@@ -1249,14 +1239,21 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
         scaleOffsetAttribute->getData(&appliedScaleOffset, 1);
       }
 
-      if (!appliedScaleOffset && dataSource->getDataObject(varNr)->hasScaleOffset) {
+      CDF::Attribute *scale_factor = dataSource->getDataObject(varNr)->cdfVariable->getAttributeNE("scale_factor");
+      CDF::Attribute *add_offset = dataSource->getDataObject(varNr)->cdfVariable->getAttributeNE("add_offset");
+      if (!appliedScaleOffset && scale_factor != nullptr) {
         appliedScaleOffset = true;
         dataSource->getDataObject(varNr)->cdfVariable->setAttribute("ADAGUC_SCALE_OFFSET_APPLIED", CDF_BYTE, appliedScaleOffset);
 
         CDBDebug("Applying scale and offset for variable %s", dataSource->getDataObject(varNr)->cdfVariable->name.c_str());
 
-        double dfscale_factor = dataSource->getDataObject(varNr)->dfscale_factor;
-        double dfadd_offset = dataSource->getDataObject(varNr)->dfadd_offset;
+        double dfscale_factor = 1, dfadd_offset = 0;
+        if (scale_factor != nullptr) {
+          scale_factor->getData(&dfscale_factor, 1);
+        }
+        if (add_offset != nullptr) {
+          add_offset->getData(&dfadd_offset, 1);
+        }
 
         if (verbose) {
           CDBDebug("Applying scale and offset with %f and %f (var size=%lu) type=%s", dfscale_factor, dfadd_offset, dataSource->getDataObject(varNr)->cdfVariable->getSize(),

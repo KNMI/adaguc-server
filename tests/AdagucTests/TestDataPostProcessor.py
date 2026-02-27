@@ -11,6 +11,9 @@ from adaguc.AdagucTestTools import AdagucTestTools
 from lxml import etree, objectify
 import datetime
 
+
+from conftest import make_adaguc_env, update_db
+
 ADAGUC_PATH = os.environ["ADAGUC_PATH"]
 
 
@@ -195,3 +198,51 @@ class TestDataPostProcessor(unittest.TestCase):
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
         self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+
+    def test_GFITimeseries_multiple_post_procs_on_arcus_uwcw_wind_speed_hagl_ms_member_3_backandforth_multiple(self):
+        """
+        Test multiple data conversions in one layer for timeseries.
+        """
+        AdagucTestTools().cleanTempDir()
+        env = make_adaguc_env("adaguc.tests.arcus_uwcw.xml")
+        update_db(env)
+        filename = "test_GFITimeseries_multiple_post_procs_on_arcus_uwcw_wind_speed_hagl_ms_member_3_backandforth_multiple.json"
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.tests.arcus_uwcw&service=WMS&request=GetFeatureInfo&version=1.3.0&layers=wind_speed_hagl_ms_member_3_backandforth_multiple&query_layers=wind_speed_hagl_ms_member_3_backandforth_multiple&crs=EPSG%3A3857&bbox=128776.09414167603%2C5091803.541357795%2C1280317.2144171826%2C8160253.516394952&width=495&height=1319&i=225&j=551&format=image%2Fgif&info_format=application%2Fjson&time=1000-01-01T00%3A00%3A00Z%2F3000-01-01T00%3A00%3A00Z&dim_reference_time=2024-06-05T03%3A00%3A00Z&",
+            env=env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        AdagucTestTools().compareJson(self.testresultspath + filename, self.expectedoutputsspath + filename)
+
+    def test_GetLegendGraphic_multiple_post_procs_on_arcus_uwcw_wind_speed_hagl_ms_member_3_backandforth_multiple(self):
+        """
+        Test multiple data conversions in one layer for timeseries.
+        """
+        AdagucTestTools().cleanTempDir()
+        env = make_adaguc_env("adaguc.tests.arcus_uwcw.xml")
+        update_db(env)
+        filename = "test_GetLegendGraphic_multiple_post_procs_on_arcus_uwcw_wind_speed_hagl_ms_member_3_backandforth_multiple.png"
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.arcus_uwcw&SERVICE=WMS&&version=1.1.1&service=WMS&request=GetLegendGraphic&layer=wind_speed_hagl_ms_member_3_backandforth_multiple&format=image/png&STYLE=auto/nearest&layers=wind_speed_hagl_ms_member_3_backandforth_multiple&&time=2024-06-06T03%3A00%3A00Z&DIM_reference_time=2024-06-05T03%3A00%3A00Z&&transparent=true&&0.5077404424685739",
+            env=env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        AdagucTestTools().compareImage(self.testresultspath + filename, self.expectedoutputsspath + filename)
+
+    def test_GetMap_multiple_post_procs_on_arcus_uwcw_wind_speed_hagl_ms_member_3_backandforth_multiple(self):
+        """
+        Test multiple data conversions in one layer for timeseries.
+        """
+        AdagucTestTools().cleanTempDir()
+        env = make_adaguc_env("adaguc.tests.arcus_uwcw.xml")
+        update_db(env)
+        filename = "test_GetMap_multiple_post_procs_on_arcus_uwcw_wind_speed_hagl_ms_member_3_backandforth_multiple.png"
+        status, data, _ = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.arcus_uwcw&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=wind_speed_hagl_ms_member_3_backandforth_multiple&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=229850.82433886,6364199.538544346,1015783.6170691401,7306604.405463655&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&&time=2024-06-06T03%3A00%3A00Z&DIM_reference_time=2024-06-05T03%3A00%3A00Z&0.9370971599246679",
+            env=env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        AdagucTestTools().compareImage(self.testresultspath + filename, self.expectedoutputsspath + filename)

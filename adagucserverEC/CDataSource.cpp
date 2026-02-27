@@ -34,11 +34,8 @@ bool configWarningSet = false;
 
 CDataSource::DataObject::DataObject() {
   hasStatusFlag = false;
-  hasScaleOffset = false;
   cdfVariable = NULL;
   cdfObject = NULL;
-  dfadd_offset = 0;
-  dfscale_factor = 1;
   std::vector<f8point> points;
 }
 
@@ -46,10 +43,7 @@ CDataSource::DataObject *CDataSource::DataObject::clone() {
   CDataSource::DataObject *nd = new CDataSource::DataObject();
   nd->hasStatusFlag = hasStatusFlag;
   nd->hasNodataValue = hasNodataValue;
-  nd->hasScaleOffset = hasScaleOffset;
   nd->dfNodataValue = dfNodataValue;
-  nd->dfscale_factor = dfscale_factor;
-  nd->dfadd_offset = dfadd_offset;
   nd->cdfObject = cdfObject;
   nd->overruledUnits = overruledUnits;
   nd->variableName = variableName;
