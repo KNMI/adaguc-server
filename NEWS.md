@@ -1,3 +1,8 @@
+
+**Version 6.5.0 - 2026-03-02**
+
+- It is possible to display text values from a geojson where the feature has a nan value
+
 **Version 6.4.0 - 2026-02-13**
 
 - Added stride option to solt to make it render faster
