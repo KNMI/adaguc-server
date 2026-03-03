@@ -1108,6 +1108,97 @@ class TestWMS(unittest.TestCase):
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
 
+    def test_WMSGetMap_KMDS_With_Nan_PointNetCDF_pointstylepoint(self):
+        AdagucTestTools().cleanTempDir()
+        config = (
+            ADAGUC_PATH
+            + "/data/config/adaguc.tests.dataset.xml,"
+            + ADAGUC_PATH
+            + "/data/config/datasets/adaguc.testKMDS_With_Nan_PointNetCDF.xml"
+        )
+        env = {"ADAGUC_CONFIG": config}
+        # pylint: disable=unused-variable
+        status, data, headers = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", config], env=self.env, isCGI=False)
+        self.assertEqual(status, 0)
+
+        filename = "test_WMSGetMap_KMDS_With_Nan_PointNetCDF_pointstylepoint.png"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.testKMDS_With_Nan_PointNetCDF.xml&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=ta&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=294179.7001580532,6411290.650918596,901204.9572071509,7199735.637765654&STYLES=temperature&FORMAT=image/png&TRANSPARENT=TRUE",
+            env=env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
+
+        filename = "test_WMSGetMap_KMDS_With_Nan_PointNetCDF_ffdd_windspeed_arrow_barb.png"
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.testKMDS_With_Nan_PointNetCDF.xml&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=ff_dd&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=294179.7001580532,6411290.650918596,901204.9572071509,7199735.637765654&STYLES=windspeed_arrow%2Fbarb&FORMAT=image/png&TRANSPARENT=TRUE&",
+            env=env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
+
+        filename = "test_WMSGetMap_KMDS_With_Nan_PointNetCDF_ffdd_windspeed_barb_barb.png"
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.testKMDS_With_Nan_PointNetCDF.xml&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=ff_dd&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=294179.7001580532,6411290.650918596,901204.9572071509,7199735.637765654&STYLES=windspeed_barb%2Fbarb&FORMAT=image/png&TRANSPARENT=TRUE&",
+            env=env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
+
+        # Test no outline
+        filename = "test_WMSGetMap_KMDS_With_Nan_PointNetCDF_ffdd_windspeed_barb_barb_no_outline.png"
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.testKMDS_With_Nan_PointNetCDF.xml&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=ff_dd&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=294179.7001580532,6411290.650918596,901204.9572071509,7199735.637765654&STYLES=windspeed_barb_no_outline%2Fbarb&FORMAT=image/png&TRANSPARENT=FALSE&BGCOLOR=0xFFFFFF&",
+            env=env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
+
+        filename = "test_WMSGetMap_KMDS_With_Nan_PointNetCDF_ta_volume.png"
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.testKMDS_With_Nan_PointNetCDF.xml&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=ta&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=294179.7001580532,6411290.650918596,901204.9572071509,7199735.637765654&STYLES=temperature-volume&FORMAT=image/png32&TRANSPARENT=TRUE&",
+            env=env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
+
+        filename = "test_WMSGetMap_KMDS_With_Nan_PointNetCDF_ta_disc.png"
+
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "dataset=adaguc.testKMDS_With_Nan_PointNetCDF.xml&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=ta&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=294179.7001580532,6411290.650918596,901204.9572071509,7199735.637765654&STYLES=temperature-disc&FORMAT=image/png32&TRANSPARENT=TRUE&",
+            env=env,
+        )
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            data.getvalue(),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
+
     def test_WMSGetCapabilities_KMDS_PointNetCDF_dimension_filetimedate(self):
         AdagucTestTools().cleanTempDir()
         config = (
