@@ -1,3 +1,6 @@
+**Version 6.6.0 - 2026-03-03**
+
+- Refactored datapostprocessors to handle windspeed conversions better.
 
 **Version 6.5.0 - 2026-03-02**
 
