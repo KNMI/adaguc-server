@@ -84,3 +84,5 @@ void _printError(const char *pszMessage, ...) PRINTF_FORMAT_CHECK(1, 2);
   _printDebugLine("D %s, %d class %s: Entering function '%s'", __FILENAME__, __LINE__, className, functionName);
 
 #endif
+
+void setLoggerPid();
