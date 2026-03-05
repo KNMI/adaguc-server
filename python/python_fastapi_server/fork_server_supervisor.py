@@ -30,12 +30,7 @@ class ForkServerSupervisor:
 
     async def start_process(self):
         logger.info("Starting forkserver")
-        self.process = await asyncio.create_subprocess_exec(
-            self.binary_path,
-            env=self.env,
-            # stdout=asyncio.subprocess.PIPE,
-            # stderr=asyncio.subprocess.PIPE,
-        )
+        self.process = await asyncio.create_subprocess_exec(self.binary_path, env=self.env)
 
     async def stop_process(self):
         logger.info("Stopping forkserver")
@@ -63,7 +58,6 @@ class ForkServerSupervisor:
 
                 # Health check
                 is_running = self.check()
-                # logger.info("@ fork server running:", is_running)
                 if not is_running:
                     await self.stop_process()
                     await self.start_process()
@@ -82,5 +76,4 @@ class ForkServerSupervisor:
         self._running = False
         if self._task:
             self._task.cancel()
-            # await self._task
         await self.stop_process()
