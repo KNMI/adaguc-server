@@ -437,8 +437,7 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
 
       int y = calculateYForDataobject(dataSource, station_y, pointStyle.textRadius, dataObjectIndex);
 
-      // If value is nan, we can still try to print a text from the paramlist.
-      if (dataType == CDF_STRING || std::isnan(value)) {
+      if (dataType == CDF_STRING) {
         if (dataObjectIndex == 0) {
           if (pointStyle.discRadius > 0) {
             drawImage->setDisc(x, station_y, float(pointStyle.discRadius), pointStyle.fillColor, pointStyle.lineColor);

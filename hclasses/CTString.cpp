@@ -614,4 +614,18 @@ namespace CT {
     }
     return stringList;
   }
+
+  int indexOf(const std::string &input, const std::string pattern) {
+    std::string::size_type loc = input.find(pattern, 0);
+    if (loc != std::string::npos) {
+      return loc;
+    }
+    return -1;
+  }
+
+  bool endsWith(const std::string &input, const std::string pattern) {
+    return pattern.size() == 0 || (input.size() >= pattern.size() && input.compare(input.size() - pattern.size(), pattern.size(), pattern) == 0);
+  }
+
+  bool startsWith(const std::string &input, const std::string pattern) { return pattern.size() == 0 || (input.rfind(pattern) == 0); }
 } /* namespace CT */

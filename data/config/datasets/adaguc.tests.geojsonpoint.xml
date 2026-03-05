@@ -4,16 +4,15 @@
 
   <Style name="stations_mistpost">
     <Legend fixed="true">bluewhitered</Legend>
-    <Thinning radius="40"/>
     <RenderMethod>point</RenderMethod>
-    <Point pointstyle="point" fillcolor="#40404040" textcolor="#000000A0" linecolor="#000000A0" discradius="6" dot="true" fontsize="10" textformat="%s" textradius="15"/>
+    <Point pointstyle="point" fillcolor="#40404040" textcolor="#000000A0" linecolor="#000000A0" discradius="6" dot="false" fontsize="10" textformat="%s" textradius="15"/>
   </Style>
 
   <Layer type="database" hidden="false">
     <Title>Mistposten</Title>
     <Name force="true">mistposten</Name>
     <Variable>name</Variable>
-    <FilePath>{ADAGUC_PATH}/data/datasets/geojsons/pointsdata/mistposten.geojson</FilePath>
+    <FilePath>{ADAGUC_PATH}/data/datasets/geojsons/pointsdata/adaguc.tests.geojsonpoint.mistposten.geojson</FilePath>
     <Styles>stations_mistpost</Styles>
   </Layer>
 
