@@ -41,7 +41,6 @@ void (*_printErrorStreamPointer)(const char *) = &_printErrorStream;
 void (*_printDebugStreamPointer)(const char *) = &_printDebugStream;
 void (*_printWarningStreamPointer)(const char *) = &_printWarningStream;
 
-// TODO: logProcessIdentifier gets executed only once by the parent. Child logging uses the pid from parent
 void printDebugStream(const char *message) { _printDebugStreamPointer(message); }
 void printWarningStream(const char *message) { _printWarningStreamPointer(message); }
 void printErrorStream(const char *message) { _printErrorStreamPointer(message); }
@@ -191,3 +190,8 @@ void _printError(const char *a, ...) {
 void setDebugFunction(void (*function)(const char *)) { _printDebugStreamPointer = function; }
 void setWarningFunction(void (*function)(const char *)) { _printWarningStreamPointer = function; }
 void setErrorFunction(void (*function)(const char *)) { _printErrorStreamPointer = function; }
+
+
+void setLoggerPid() {
+  logProcessIdentifier = getpid();
+}

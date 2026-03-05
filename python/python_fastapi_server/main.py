@@ -21,6 +21,7 @@ from routers.wmswcs import testadaguc, wmsWcsRouter
 from routers.caching_middleware import CachingMiddleware
 from configure_logging import configure_logging
 from fork_server_supervisor import ForkServerSupervisor
+from adaguc.fork_settings import is_fork_enabled
 
 configure_logging(logging)
 
@@ -29,20 +30,16 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    socket_path = os.getenv("ADAGUC_FORK_SOCKET_PATH")
-    supervisor = None
+    fork_supervisor = None
 
-    if socket_path:
-        supervisor = ForkServerSupervisor(
-            socket_path,
-            binary_path=f"{os.getenv('ADAGUC_PATH')}/bin/adagucserver",
-        )
-        await supervisor.start()
+    if is_fork_enabled():
+        fork_supervisor = ForkServerSupervisor()
+        await fork_supervisor.start_monitoring()
 
     yield
 
-    if supervisor:
-        await supervisor.stop()
+    if fork_supervisor:
+        await fork_supervisor.stop_monitoring()
 
 
 app = FastAPI(redirect_slashes=False, lifespan=lifespan)
