@@ -40,6 +40,7 @@ simple unit conversions from Kelvin to Celsius.
 18. *CDDPMetadataVariable*    `algorithm="metadata_variable"`: Add extra metadata to the CDF Data model.
 19.  *CDataPostProcessor_PointsFromGrid*  `algorithm="pointsfromgrid"`: Extracts point from a grid and makes them available for the point renderer
 20.  *CDataPostProcessor_AddDataObject*  `algorithm="add_dataobject"`: Adds a new data object (variable) to the layer with a given value
+21.  *CDataPostProcessor_ConvertUnits*  `algorithm="convert_units"`: Does unit conversions to the dataobject(s) of a variable 
 
 New datapost processors can be implemented via
 [CDataPostProcessor.cpp](../../adagucserverEC/CDataPostProcessors/CDataPostProcessor.cpp)
@@ -522,3 +523,35 @@ Can be created with this dataset configuration. Note the usage of "dummy-magnitu
 ```
 
 See also the test case `test_WMSGetMap_wave_direction_vector_with_add_dataobject` in [TestWMS.py](/tests/AdagucTests/TestWMS.py) and a tutorial [here](/doc/tutorials/Styling_of_vector_with_rotation_and_add_dataobject_datapostproc.md).
+
+## *CDataPostProcessor_ConvertUnits*  `algorithm="convert_units"`
+
+Attributes:
+- `a`: the scale factor for the conversion (default: 1.0)
+- `b`: the offset for the conversion (default: 0)
+- `units`: the new units for the recalculated values
+- `from_units`: an optional comma-separated list of units strings that this conversion can be applied to (example: `m/s,m s-1`); this can be used to ensure that only dataobjects with specific values for units will be converted. The default is an empty string meaning that the conversion applies to all data objects of a layer. 
+
+This DataPostProcessor enables unit conversions to the data object(s) of a variable. It can either just change the name of a unit (implemented by using `a="1.0"` and `b="0"`) or it can recalculate the values using the formula `newval = oldval * a + b`. The units are replaced with the specified value of the `units` attribute.
+
+The DataPostProcessors `ax+b`, `toknots` and `windspeed_knots_to_ms` are also implemented by the convert_units` DataPostProcessor:
+- `algorithm="ax+b"` is equivalent to `algorithm="convert_units"`
+- `algorithm="toknots"` is equivalent to `algorithm="convert_units" a="1.9438" b="0" from_units="m/s,m s-1" units="kts"`
+- `algorithm="windspeed_knots_to_ms"` is equivalent to `algorithm="windspeed_knots_to_ms" a="0.6144" b="0" from_units="kts,knots" units="m/s"`
+
+In the example below the DataPostProc converts the wind-speed-kts data object to m/s, but leaves the wind-direction data object unchanged:
+```
+  <Layer type="database">
+    <Group collection="msl"/>
+    <Name>wind_speed</Name>
+    <Title>Wind speed in m/s</Title>
+    <Variable>wind-speed-kts</Variable>
+    <Variable>wind-direction</Variable>
+    <FilePath gfi_openall="true" filter="(wind-wave-from-direction-mean-msl_[0-9T]{11}\.nc)">{ADAGUC_PATH}/data/datasets/wave_data/wind-wave-from-direction-mean-msl_20260126T06.nc</FilePath>
+    <DataPostProc algorithm="windspeed_knots_to_ms" from_units="kts,knots"/>
+    <Styles>wind_wind_speed_ms</Styles>
+    <Dimension name="forecast_reference_time" units="ISO8601" type="reference_time">reference_time</Dimension>
+    <Dimension name="time" units="ISO8601" interval="PT1H" default="forecast_reference_time+PT1H" type="time">time</Dimension>
+    <Dimension name="msl" units=" " default="min" type="vertical" hidden="true">mean_sea_level</Dimension>
+  </Layer>
+```

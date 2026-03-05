@@ -14,10 +14,11 @@ struct LookupUnits {
   double a;
   double b;
   std::string units;
+  std::string from_units;
 };
 
-std::map<std::string, LookupUnits> lookUp = {{CDATAPOSTPROCESSOR_TOKNOTS_ID, {.a = 3600 / 1852., .b = 0, .units = "kts"}},
-                                             {CDATAPOSTPROCESSOR_WINDSPEEDKTSTOMS_ID, {.a = 1852. / 3600., .b = 0, .units = "m s-1"}}};
+std::map<std::string, LookupUnits> lookUp = {{CDATAPOSTPROCESSOR_TOKNOTS_ID, {.a = 3600 / 1852., .b = 0, .units = "kts", .from_units = "m/s,m s-1"}},
+                                             {CDATAPOSTPROCESSOR_WINDSPEEDKTSTOMS_ID, {.a = 1852. / 3600., .b = 0, .units = "m s-1", .from_units = "kts,knots"}}};
 
 std::vector<std::string> listOfProcs = {CDATAPOSTPROCESSOR_CONVERTUNITS_ID, CDATAPOSTPROCESSOR_TOKNOTS_ID, CDATAPOSTPROCESSOR_WINDSPEEDKTSTOMS_ID, CDATAPOSTPROCESSOR_AXPLUSB_ID};
 
@@ -47,7 +48,7 @@ LookupUnits getLookupUnits(CServerConfig::XMLE_DataPostProc &proc) {
     return lookedUp;
   }
   // Not in lookup, use the a an b from DataProcessor configuration
-  LookupUnits l = {.a = 1, .b = 0, .units = ""};
+  LookupUnits l = {.a = 1, .b = 0, .units = "", .from_units = ""};
   if (!proc.attr.a.empty()) {
     l.a = proc.attr.a.toDouble();
   }
@@ -57,8 +58,11 @@ LookupUnits getLookupUnits(CServerConfig::XMLE_DataPostProc &proc) {
   if (!proc.attr.units.empty()) {
     l.units = proc.attr.units;
   }
+  if (!proc.attr.from_units.empty()) {
+    l.from_units = proc.attr.from_units;
+  }
 
-  CDBDebug("Using own: %s %f %f %s", proc.attr.algorithm.c_str(), l.a, l.b, l.units.c_str());
+  CDBDebug("Using own: %s %f %f %s <= %s", proc.attr.algorithm.c_str(), l.a, l.b, l.units.c_str(), l.from_units.c_str());
   return l;
 }
 
@@ -91,10 +95,10 @@ int CDPPConvertUnits::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {
     auto lookupUnit = getLookupUnits(*proc);
 
-    auto fromUnits = proc->attr.from_units;
+    auto fromUnits = CT::split(lookupUnit.from_units, ",");
     for (const auto dataObject: dataSource->dataObjects) {
-      if (fromUnits.empty() || dataObject->getUnits().equals(fromUnits)) {
-        CDBDebug("BEFORE: %s %f %f %s", proc->attr.algorithm.c_str(), lookupUnit.a, lookupUnit.b, lookupUnit.units.c_str());
+      if (fromUnits.empty() || std::find(fromUnits.begin(), fromUnits.end(), dataObject->getUnits().c_str()) != fromUnits.end()) {
+        CDBDebug("BEFORE: %s %f %f %s %s", proc->attr.algorithm.c_str(), lookupUnit.a, lookupUnit.b, lookupUnit.units.c_str(), lookupUnit.from_units.c_str());
         dataObject->cdfVariable->setAttributeText("ADAGUC_POSTPROC_WAS_UNITS", dataObject->getUnits());
         dataObject->cdfVariable->setAttributeText(getDataPostProcId(proc).c_str(), "true");
         CDBDebug("--> Changing unit from %s to %s", dataObject->getUnits().c_str(), lookupUnit.units.c_str());
