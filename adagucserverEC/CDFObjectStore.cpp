@@ -106,100 +106,55 @@ CDFReader *CDFObjectStore::getCDFReader(CDataSource *dataSource, const char *fil
  * @param fileName The fileName
  * @return The CDFReader
  */
-CDFReader *CDFObjectStore::getCDFReader(const char *fileName) {
+CDFReader *CDFObjectStore::getCDFReader(std::string fileName) {
 
-  CDFReader *cdfReader = NULL;
-  if (fileName != NULL) {
-    CT::string name = fileName;
-    if (name.indexOf("http") != 0) {
-      int a = name.indexOf(".h5");
-      if (a != -1) {
-        if (a == int(name.length()) - 3) {
-          if (EXTRACT_HDF_NC_VERBOSE) {
-            CDBDebug("Creating HDF5 reader");
-          }
-          cdfReader = new CDFHDF5Reader();
-          CDFHDF5Reader *hdf5Reader = (CDFHDF5Reader *)cdfReader;
-          hdf5Reader->enableKNMIHDF5toCFConversion();
-        }
+  fileName = CT::toLowerCase(fileName);
+  if (!CT::startsWith(fileName, "http")) {
+    if (CT::endsWith(fileName, ".h5")) {
+      if (EXTRACT_HDF_NC_VERBOSE) {
+        CDBDebug("Creating HDF5 reader with KNMI formt specification supported");
       }
-      if (cdfReader == NULL) {
-        a = name.indexOf(".he5");
-        if (a != -1) {
-          if (a == int(name.length()) - 4) {
-            if (EXTRACT_HDF_NC_VERBOSE) {
-              CDBDebug("Creating HDF EOS 5 reader");
-            }
-            cdfReader = new CDFHDF5Reader();
-          }
-        }
+      auto cdfReader = new CDFHDF5Reader();
+      cdfReader->enableKNMIHDF5toCFConversion(); // Note enables HDF5toCDF conversion for KNMI files.
+      return cdfReader;
+    }
+    if (CT::endsWith(fileName, ".he5")) {
+      if (EXTRACT_HDF_NC_VERBOSE) {
+        CDBDebug("Creating HDF EOS 5 reader");
       }
-      if (cdfReader == NULL) {
-        a = name.indexOf(".hdf");
-        if (a != -1) {
-          if (a == int(name.length()) - 4) {
-            if (EXTRACT_HDF_NC_VERBOSE) {
-              CDBDebug("Creating HDF reader");
-            }
-            cdfReader = new CDFHDF5Reader();
-          }
-        }
+      return new CDFHDF5Reader();
+    }
+    if (CT::endsWith(fileName, ".hdf")) {
+      if (EXTRACT_HDF_NC_VERBOSE) {
+        CDBDebug("Creating HDF reader");
       }
-      if (cdfReader == NULL) {
-        a = name.indexOf(".json");
-        if (a != -1) {
-          if (a == int(name.length()) - 5) {
-            if (EXTRACT_HDF_NC_VERBOSE) {
-              CDBDebug("Creating GeoJSON reader");
-            }
-            cdfReader = new CDFGeoJSONReader();
-          }
-        }
+      return new CDFHDF5Reader();
+    }
+    if (CT::endsWith(fileName, ".json") || CT::endsWith(fileName, ".geojson")) {
+      if (EXTRACT_HDF_NC_VERBOSE) {
+        CDBDebug("Creating GeoJSON reader");
       }
-      if (cdfReader == NULL) {
-        a = name.indexOf(".geojson");
-        if (a != -1) {
-          if (a == int(name.length()) - 8) {
-            if (EXTRACT_HDF_NC_VERBOSE) {
-              CDBDebug("Creating GeoJSON reader");
-            }
-            cdfReader = new CDFGeoJSONReader();
-          }
-        }
+      return new CDFGeoJSONReader();
+    }
+    if (CT::endsWith(fileName, ".png")) {
+      if (EXTRACT_HDF_NC_VERBOSE) {
+        CDBDebug("Creating PNG reader");
       }
-      if (cdfReader == NULL) {
-        a = name.indexOf(".png");
-        if (a != -1) {
-          if (a == int(name.length()) - 4) {
-            if (EXTRACT_HDF_NC_VERBOSE) {
-              CDBDebug("Creating PNG reader");
-            }
-            cdfReader = new CDFPNGReader();
-          }
-        }
+      return new CDFPNGReader();
+    }
+    if (CT::endsWith(fileName, "csv")) {
+      if (EXTRACT_HDF_NC_VERBOSE) {
+        CDBDebug("Creating CSV reader");
       }
-      if (cdfReader == NULL) {
-        a = name.indexOf(".csv");
-        if (a != -1) {
-          if (a == int(name.length()) - 4) {
-            if (EXTRACT_HDF_NC_VERBOSE) {
-              CDBDebug("Creating CSV reader");
-            }
-            cdfReader = new CDFCSVReader();
-          }
-        }
-      }
+      return new CDFCSVReader();
     }
   }
+
   // Defaults to the netcdf reader
-  if (cdfReader == NULL) {
-    if (EXTRACT_HDF_NC_VERBOSE) {
-      CDBDebug("Creating NetCDF reader %s", fileName);
-    }
-    cdfReader = new CDFNetCDFReader();
-    //((CDFNetCDFReader*)cdfReader)->enableLonWarp(true);
+  if (EXTRACT_HDF_NC_VERBOSE) {
+    CDBDebug("Creating NetCDF reader %s", fileName.c_str());
   }
-  return cdfReader;
+  return new CDFNetCDFReader();
 }
 
 CDFObject *CDFObjectStore::getCDFObjectHeader(CDataSource *dataSource, CServerParams *srvParams, const char *fileName, const bool cached) {
@@ -310,7 +265,7 @@ CDFObject *CDFObjectStore::getCDFObject(CDataSource *dataSource, CServerParams *
       }
       if (dataSource->cfgLayer->Variable.size() > 0) {
         // Shorthand to variable configuration in the layer.
-        for (auto *cfgVar : dataSource->cfgLayer->Variable) {
+        for (auto *cfgVar: dataSource->cfgLayer->Variable) {
 #ifdef CDFOBJECTSTORE_DEBUG
           CDBDebug("Checking variable %s", cfgVar->value.c_str());
 #endif

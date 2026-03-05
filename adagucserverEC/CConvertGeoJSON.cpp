@@ -31,7 +31,7 @@
 #include "CConvertGeoJSON.h"
 #include "CImageWarper.h"
 #include "CFillTriangle.h"
-
+// #define CCONVERTGEOJSON_DEBUG
 #define CCONVERTGEOJSONCOORDS_NODATA -32000
 #define CCONVERTGEOJSON_FILL 65535u
 
@@ -199,9 +199,7 @@ int CConvertGeoJSON::convertGeoJSONHeader(CDFObject *cdfObject) {
   jsonVar->readData(CDF_CHAR);
   CT::string inputjsondata = (char *)jsonVar->data;
   json_value *json = json_parse((json_char *)inputjsondata.c_str(), inputjsondata.length());
-#ifdef CCONVERTGEOJSON_DEBUG
-  CDBDebug("JSON result: %x", json);
-#endif
+
 #ifdef MEASURETIME
   StopWatch_Stop("GeoJSON DATA");
 #endif
@@ -902,12 +900,18 @@ int CConvertGeoJSON::addPropertyVariables(CDFObject *cdfObject, std::vector<Feat
           newVar->currentType = newVar->nativeType = CDF_FLOAT;
           break;
         case typeStr:
-          newVar->setType(CDF_FLOAT);
-          newVar->currentType = newVar->nativeType = CDF_FLOAT;
+          newVar->setType(CDF_STRING);
+          newVar->currentType = newVar->nativeType = CDF_STRING;
+
           break;
         case typeNone:
           break;
         }
+        // Set the original datatype as attribute in the variable, point reader will find this.
+        newVar->setAttribute("ADAGUC_ORGPOINT_TYPE", CDF_INT, &newVar->currentType, 1);
+#ifdef CCONVERTGEOJSON_DEBUG
+        CDBDebug("Created var %s of type %s", name.c_str(), CDF::getCDFDataTypeName(newVar->getType()).c_str());
+#endif
         newVar->isDimension = false;
         for (auto it = std::begin(varDims); it != std::end(varDims); ++it) {
           newVar->dimensionlinks.push_back(*it);
@@ -957,9 +961,6 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
 #endif
     CT::string inputjsondata = (char *)jsonVar->data;
     json_value *json = json_parse((json_char *)inputjsondata.c_str(), inputjsondata.length());
-#ifdef CCONVERTGEOJSON_DEBUG
-    CDBDebug("JSON result: %x", json);
-#endif
 
     BBOX dfBBOX;
     getBBOX(cdfObject, dfBBOX, *json, features);
@@ -983,7 +984,7 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
 #endif
     if (dataSource->statistics == NULL) {
 #ifdef CCONVERTGEOJSON_DEBUG
-      CDBDebug("Setting statistics: min/max : %d %d", 0, features.size() - 1);
+      CDBDebug("Setting statistics: min/max : %d %d", 0, int(features.size() - 1));
 #endif
       dataSource->statistics = new CDataSource::Statistics();
       dataSource->statistics->setMaximum(features.size() - 1);

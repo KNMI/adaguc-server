@@ -488,5 +488,32 @@ namespace CT {
    * @returns a random string of the specified length
    */
   std::string randomString(const int length);
+
+  /**
+   * Checks where the pattern is in the input string.
+   *
+   * @param input input string to check
+   * @param pattern pattern tofind
+   * @return Index of pattern in input. -1 if not found. 0 if pattern is an empty string
+   */
+  int indexOf(const std::string &input, const std::string pattern);
+
+  /**
+   * Checks if a string ends with another given string. If the argument is an empty string, then the method returns true.
+   *
+   * @param input input string to check
+   * @param pattern pattern tofind
+   * @return True if input ends with pattern. True if pattern is empty
+   */
+  bool endsWith(const std::string &input, const std::string pattern);
+
+  /**
+   * Checks if a string starts with another given string. If the argument is an empty string, then the method returns true.
+   *
+   * @param input input string to check
+   * @param pattern pattern tofind
+   * @return True if input starts with pattern. True if pattern is empty
+   */
+  bool startsWith(const std::string &input, const std::string pattern);
 }; /* namespace CT */
 #endif
