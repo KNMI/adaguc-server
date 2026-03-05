@@ -77,3 +77,5 @@ void _printError(const char *pszMessage, ...) PRINTF_FORMAT_CHECK(1, 2);
   _printDebugLine
 
 #endif
+
+void setLoggerPid();
