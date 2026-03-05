@@ -132,7 +132,7 @@ class runAdaguc:
     async def runADAGUCServer(
         self,
         url=None,
-        env=[],
+        env={},
         path=None,
         args=None,
         isCGI=True,

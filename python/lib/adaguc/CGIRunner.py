@@ -4,10 +4,12 @@ Created by Maarten Plieger, KNMI -  2021-09-01
 """
 
 import asyncio
-import sys
-from subprocess import PIPE
 import os
 import re
+import sys
+from asyncio.subprocess import Process
+from io import BytesIO
+from subprocess import PIPE
 from typing import NamedTuple
 
 HTTP_STATUSCODE_404_NOT_FOUND = 32  # Must be the same as in Definitions.h
@@ -27,19 +29,21 @@ sem = asyncio.Semaphore(max(ADAGUC_NUMPARALLELPROCESSES, 2))  # At least two, to
 ADAGUC_FORK_SOCKET_PATH = f"{os.getenv('ADAGUC_PATH')}/adaguc.socket"
 ON_POSIX = "posix" in sys.builtin_module_names
 
-MAX_PROC_TIMEOUT = int(os.getenv("ADAGUC_MAX_PROC_TIMEOUT", "300"))
+MAX_PROC_TIMEOUT = int(os.getenv("ADAGUC_MAX_PROC_TIMEOUT", "180"))
 print("Max procs: ", max(ADAGUC_NUMPARALLELPROCESSES, 2))
 
 
 class AdagucResponse(NamedTuple):
     status_code: int
-    process_output: bytearray
+    process_output: bytes | None
 
 
-async def wait_socket_communicate(url, env, timeout) -> AdagucResponse:
+async def wait_socket_communicate(url: str, env: dict, timeout) -> AdagucResponse:
     """
-    If `socket_communicate` takes longer than `timeout`, we send a 500 timeout to the client.
-    The adagucserver process will get cleaned up by the adagucserver parent process.
+    Call `socket_communicate` with a timeout.
+
+    If communication with the fork server exceeds `timeout`, a timeout response is returned to the client.
+    Any running child process will be cleaned up by the fork server itself.
     """
 
     try:
@@ -47,23 +51,29 @@ async def wait_socket_communicate(url, env, timeout) -> AdagucResponse:
     except asyncio.exceptions.TimeoutError:
         return AdagucResponse(status_code=HTTP_STATUSCODE_500_TIMEOUT, process_output=None)
     except ConnectionRefusedError:
-        # TODO: If for whatever reason socket communication to the fork server fails, should we fall back to regular process spawning?
-        raise
-
+        raise Exception("Failed to communicate over unix socket!")
     return resp
 
 
-async def socket_communicate(url: str, env) -> AdagucResponse:
+async def socket_communicate(url: str, env: dict) -> AdagucResponse:
     """
-    Connect to unix socket, send query string over socket, receive bytes from adagucserver.
+    Send a request to the ADAGUC fork server through a Unix socket.
 
-    Last 4 bytes are status code.
+    Environment variables required for request handling are serialized and written to the socket.
+    The response contains the normal ADAGUC output, followed by a 4-byte exit status appended by the fork server.
     """
 
     process_output = bytearray()
     reader, writer = await asyncio.open_unix_connection(ADAGUC_FORK_SOCKET_PATH)
 
-    message = f"ADAGUC_LOGFILE={env['ADAGUC_LOGFILE']}\nQUERY_STRING={url}"
+    data = [
+        f"ADAGUC_LOGFILE={env['ADAGUC_LOGFILE']}",
+        f"SCRIPT_NAME={env.get('SCRIPT_NAME', '')}",
+        f"REQUEST_URI={env.get('REQUEST_URI', '')}",
+        f"QUERY_STRING={url}",
+    ]
+    message = "\n".join(data)
+
     writer.write(message.encode())
     await writer.drain()
 
@@ -78,11 +88,14 @@ async def socket_communicate(url: str, env) -> AdagucResponse:
     return AdagucResponse(status_code=status_code, process_output=process_output)
 
 
-async def wait_process_communicate(cmds, localenv, timeout) -> AdagucResponse:
+async def wait_process_communicate(cmds: list[str], localenv: dict, timeout) -> AdagucResponse:
     """
-    If `process_communicate` takes longer than `timeout`, we send a 500 timeout to the client.
-    We also have to manually kill the adagucserver process that we spawned before.
+    Spawn an adagucserver process and wait for completion with a timeout.
+
+    If the process does not finish within `timeout`, it is terminated and a timeout response is returned.
     """
+
+    # process: Process | None = None
 
     try:
         process = None
@@ -96,9 +109,11 @@ async def wait_process_communicate(cmds, localenv, timeout) -> AdagucResponse:
     return resp
 
 
-async def process_communicate(process, cmds, localenv) -> AdagucResponse:
+async def process_communicate(process: Process, cmds, localenv) -> AdagucResponse:
     """
-    Spawn a new adagucserver process, wait for output.
+    Wait for a subprocess to finish and collect its output.
+
+    The process stdout is returned as the response body, and the subprocess exit code is returned as the status code.
     """
 
     process = await asyncio.create_subprocess_exec(
@@ -120,7 +135,16 @@ class CGIRunner:
     Run the CGI script with specified URL and environment. Stdout is captured and put in a BytesIO object provided in output
     """
 
-    async def run(self, cmds, url, output, env=[], path=None, isCGI=True, timeout=MAX_PROC_TIMEOUT):
+    async def run(
+        self,
+        cmds: list[str],
+        url: str,
+        output: BytesIO,
+        env: dict = {},
+        path: str | None = None,
+        isCGI: bool = True,
+        timeout: int = MAX_PROC_TIMEOUT,
+    ) -> tuple[int, list[str], bytes | None]:
         localenv = {}
         if url != None:
             localenv["QUERY_STRING"] = url
@@ -131,9 +155,6 @@ class CGIRunner:
             # SCRIPT_NAME [/cgi-bin/autoresource.cgi], REQUEST_URI [/cgi-bin/autoresource.cgi/opendap/clipc/combinetest/wcs_nc2.nc.das]
             localenv["REQUEST_URI"] = "/myscriptname/" + path
         localenv.update(env)
-
-        # print("@@@@", url)
-        # print("????", env)
 
         # Only use fork server if ADAGUC_FORK_SOCKET_PATH is set and adaguc is not executed with extra arguments e.g. `--updatelayermetadata`
         use_fork = os.getenv("ADAGUC_FORK_SOCKET_PATH", None) and len(cmds) == 1
@@ -151,9 +172,6 @@ class CGIRunner:
         process_error = "".encode()
         process_output = response.process_output
         status = response.status_code
-
-        # print("???")
-        # print(process_output)
 
         # Split headers from body using a regex
         headersEndAt = -2
