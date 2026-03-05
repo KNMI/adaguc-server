@@ -65,7 +65,7 @@ services:
       - "ADAGUC_TRUSTED_PROXIES=*"
       - "ADAGUC_TRUSTED_HOST=*"
       - "ADAGUC_SERVER_PORT=8080"
-      - "ADAGUC_FORK_SOCKET_PATH=adaguc.socket"
+      - "ADAGUC_FORK_ENABLE=TRUE"
     env_file:
       - .env
     restart: unless-stopped
