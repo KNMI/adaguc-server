@@ -36,7 +36,9 @@ The following exit codes are supported:
 | `ADAGUC_DB`               | PostgreSQL connection string used by adaguc. | `host=adaguc-db port=5432 user=adaguc password=adaguc dbname=adaguc` |
 | `ADAGUC_ENABLELOGBUFFER`  | Controls logging behaviour:<br>`FALSE`: unbuffered logging with live output (may slow service).<br>`TRUE`: buffered logging.<br>`DISABLELOGGING`: disables logging completely. | `FALSE` |
 | `ADAGUC_FONT`             | Path to a default TrueType font (TTF) used for rendering text in generated imagery (e.g. `FreeSans.ttf`). | -|
+| `ADAGUC_FORK_ENABLE`      | Enables running adaguc-server in [fork mode](/doc/fork_server.md) when set to `TRUE`. | `FALSE` |
 | `ADAGUC_LOGFILE`          | File where log messages are written. | -|
+| `ADAGUC_MAX_PROC_TIMEOUT` | Maximum allowed processing time (in seconds) for a single adaguc-server request. If a request exceeds this limit, the server terminates the process and returns an HTTP 500 error to the client. This prevents requests from running indefinitely and blocking server resources. | 180 |
 | `ADAGUC_NUMPARALLELPROCESSES` | Number of parallel worker processes used by the adaguc-server. | `4` |
 | `ADAGUC_ONLINERESOURCE`   | Optional override for the [OnlineResource](configuration/OnlineResource.md) URL used by the CGI service. Can also be configured in the XML configuration file. | -|
 | `ADAGUC_PATH`             | Root directory of the adaguc-server code base. Available as`{ADAGUC_PATH}` substitution in configuration files. | Current working directory (`pwd`) |
