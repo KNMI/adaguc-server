@@ -67,6 +67,27 @@
         <Max>200</Max>
         <DataPostProc algorithm="ax+b" a="600" b="-20" units="meter" />
     </Layer>
+    
+    <!-- DataPostProc convert_units with data with scale_offset -->
+    <Layer type="database">
+        <Name>unscaled_fahrenheit</Name>
+        <FilePath filter="">{ADAGUC_PATH}data/datasets/testdata_scale_offset.nc</FilePath>
+        <Variable>unscaled_param</Variable>
+        <Styles>auto</Styles>
+        <Min>-10</Min>
+        <Max>200</Max>
+        <DataPostProc algorithm="convert_units" a="1.8" b="32" units="Fahrenheit" />
+    </Layer>
+    
+    <Layer type="database">
+        <Name>scaled_fahrenheit</Name>
+        <FilePath filter="">{ADAGUC_PATH}data/datasets/testdata_scale_offset.nc</FilePath>
+        <Variable>scaled_param</Variable>
+        <Styles>auto</Styles>
+        <Min>-10</Min>
+        <Max>200</Max>
+        <DataPostProc algorithm="convert_units" a="1.8" b="32" units="Fahrenheit" />
+    </Layer>
 
 </Configuration>
 

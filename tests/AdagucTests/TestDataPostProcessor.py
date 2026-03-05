@@ -199,6 +199,36 @@ class TestDataPostProcessor(unittest.TestCase):
         self.assertEqual(status, 0)
         self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
 
+    def test_datapostprocessor_convert_units_scaled_getmap(self):
+        """
+        Test for the convert_units post processor with data with scale/offset
+        """
+        AdagucTestTools().cleanTempDir()
+        config = (
+            ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," + ADAGUC_PATH + "/data/config/datasets/adaguc.tests.datapostproc.xml"
+        )
+        status, data, headers = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", config], env=self.env, isCGI=False)
+        self.assertEqual(status, 0)
+        filename = "test_DataPostProcessor_convert_units_scaled_GetMap.png"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.datapostproc&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=scaled_fahrenheit&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=-1841640.561188397,4434884.178327009,2446462.937192397,9899900.45389999&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&",
+            {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml"},
+        )
+
+        AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+
+        filename_unscaled = "test_DataPostProcessor_convert_units_unscaled_GetMap.png"
+        status, data, headers = AdagucTestTools().runADAGUCServer(
+            "DATASET=adaguc.tests.datapostproc&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=unscaled_fahrenheit&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&BBOX=-1841640.561188397,4434884.178327009,2446462.937192397,9899900.45389999&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&",
+            {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml"},
+        )
+
+        AdagucTestTools().writetofile(self.testresultspath + filename_unscaled, data.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+
     def test_GFITimeseries_multiple_post_procs_on_arcus_uwcw_wind_speed_hagl_ms_member_3_backandforth_multiple(self):
         """
         Test multiple data conversions in one layer for timeseries.
