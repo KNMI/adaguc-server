@@ -10,6 +10,7 @@
 #define CDATAPOSTPROCESSOR_WINDSPEEDKTSTOMS_ID "windspeed_knots_to_ms"
 #define CDATAPOSTPROCESSOR_AXPLUSB_ID "ax+b"
 
+bool adagucPostProcVerboseLog = false;
 struct LookupUnits {
   double a;
   double b;
@@ -22,7 +23,9 @@ std::map<std::string, LookupUnits> lookUp = {{CDATAPOSTPROCESSOR_TOKNOTS_ID, {.a
 
 std::vector<std::string> listOfProcs = {CDATAPOSTPROCESSOR_CONVERTUNITS_ID, CDATAPOSTPROCESSOR_TOKNOTS_ID, CDATAPOSTPROCESSOR_WINDSPEEDKTSTOMS_ID, CDATAPOSTPROCESSOR_AXPLUSB_ID};
 
-std::string getDataPostProcId(CServerConfig::XMLE_DataPostProc *proc) { return CT::printf("ADAGUCPOSTPROC_%03d_%s_NEEDSCONVERSION", proc->attr.postProcIndexInLayer, proc->attr.algorithm.c_str()); }
+std::string getDataPostProcId(CServerConfig::XMLE_DataPostProc *proc) {
+  return CT::printf("%s_%03d_%s_NEEDSCONVERSION", ADAGUCPOSTPROC_ATTR_PREFIX, proc->attr.postProcIndexInLayer, proc->attr.algorithm.c_str());
+}
 
 const char *CDPPConvertUnits::getId() { return CDATAPOSTPROCESSOR_CONVERTUNITS_ID; }
 
@@ -61,8 +64,9 @@ LookupUnits getLookupUnits(CServerConfig::XMLE_DataPostProc &proc) {
   if (!proc.attr.from_units.empty()) {
     l.from_units = proc.attr.from_units;
   }
-
-  CDBDebug("Using own: %s %f %f %s <= %s", proc.attr.algorithm.c_str(), l.a, l.b, l.units.c_str(), l.from_units.c_str());
+  if (adagucPostProcVerboseLog) {
+    CDBDebug("Using own: %s %f %f %s <= %s", proc.attr.algorithm.c_str(), l.a, l.b, l.units.c_str(), l.from_units.c_str());
+  }
   return l;
 }
 
@@ -97,11 +101,14 @@ int CDPPConvertUnits::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
 
     auto fromUnits = CT::split(lookupUnit.from_units, ",");
     for (const auto dataObject: dataSource->dataObjects) {
+
       if (fromUnits.empty() || std::find(fromUnits.begin(), fromUnits.end(), dataObject->getUnits().c_str()) != fromUnits.end()) {
-        CDBDebug("BEFORE: %s %f %f %s %s", proc->attr.algorithm.c_str(), lookupUnit.a, lookupUnit.b, lookupUnit.units.c_str(), lookupUnit.from_units.c_str());
-        dataObject->cdfVariable->setAttributeText("ADAGUC_POSTPROC_WAS_UNITS", dataObject->getUnits());
+        if (adagucPostProcVerboseLog) {
+          CDBDebug("BEFORE: %s %f %f %s %s", proc->attr.algorithm.c_str(), lookupUnit.a, lookupUnit.b, lookupUnit.units.c_str(), lookupUnit.from_units.c_str());
+        }
+        dataObject->cdfVariable->setAttributeText((std::string(ADAGUCPOSTPROC_ATTR_PREFIX) + "_WAS_UNITS").c_str(), dataObject->getUnits());
         dataObject->cdfVariable->setAttributeText(getDataPostProcId(proc).c_str(), "true");
-        CDBDebug("--> Changing unit from %s to %s", dataObject->getUnits().c_str(), lookupUnit.units.c_str());
+        CDBDebug("[Unit Conversion] --> [%s] Changing unit from [%s] to [%s]", proc->attr.algorithm.c_str(), dataObject->getUnits().c_str(), lookupUnit.units.c_str());
         dataObject->setUnits(lookupUnit.units.c_str());
         // Also set the unit directly in the datamodel.
         dataObject->cdfVariable->setAttributeText("units", lookupUnit.units.c_str());
@@ -147,11 +154,15 @@ int CDPPConvertUnits::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
   size_t l = numDataPoints;
   auto lookupUnit = getLookupUnits(*proc);
   for (const auto dataObject: dataSource->dataObjects) {
-    CDBDebug("Using var %s", dataObject->cdfVariable->name.c_str());
+    if (adagucPostProcVerboseLog) {
+      CDBDebug("Using var %s", dataObject->cdfVariable->name.c_str());
+    }
     auto attrNeedsConversion = dataObject->cdfVariable->getAttributeNE(getDataPostProcId(proc).c_str());
     // Check if we need to convert the data
     if (attrNeedsConversion != nullptr && attrNeedsConversion->getDataAsString().equals("true")) {
-      CDBDebug("AFTER (timeseries): %s %f %f %s", proc->attr.algorithm.c_str(), lookupUnit.a, lookupUnit.b, lookupUnit.units.c_str());
+      if (adagucPostProcVerboseLog) {
+        CDBDebug("AFTER (timeseries): %s %f %f %s", proc->attr.algorithm.c_str(), lookupUnit.a, lookupUnit.b, lookupUnit.units.c_str());
+      }
       do_convert<double>(dataObject->hasNodataValue ? dataObject->dfNodataValue : NAN, l, (double *)data, lookupUnit.a, lookupUnit.b);
     }
   }

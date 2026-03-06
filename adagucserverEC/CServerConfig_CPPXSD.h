@@ -30,6 +30,7 @@
 #include "CColor.h"
 #include <cfloat>
 
+// Struct for keeping settings for a datapostprocessor. Can be assigned to new structs by assigment operator. Also used in CDataPostProcessor.cpp
 struct XMLE_DataPostProcAttributes {
   int postProcIndexInLayer = 0;
   CT::string a, b, c, units, algorithm, mode, name, select, standard_name, long_name, variable, directionname, speedname, from_units, offset, stride;

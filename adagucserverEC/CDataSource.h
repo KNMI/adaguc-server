@@ -210,6 +210,7 @@ public:
     void setMaximum(double max);
     size_t getNumSamples() { return numSamples; };
     int calculate(CDataSource *dataSource);
+    void setMinMax(MinMax minMax);
   };
 
   class TimeStep {

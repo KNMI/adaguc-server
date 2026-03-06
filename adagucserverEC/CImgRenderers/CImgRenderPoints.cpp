@@ -27,6 +27,7 @@
 #include "CImgRenderPoints.h"
 #include "getPointStyle.h"
 #include "getVectorStyle.h"
+#include <CDataPostProcessors/CDataPostProcessor_UnitsUtils.h>
 
 struct ThinningInfo {
   bool doThinning = false;
@@ -142,10 +143,7 @@ void renderVectorPoints(std::vector<size_t> thinnedPointIndexList, CImageWarper 
   float fillValueObjectTwo = dataSource->getDataObject(1)->hasNodataValue ? dataSource->getDataObject(1)->dfNodataValue : NAN;
 
   CT::string units = dataSource->getDataObject(0)->getUnits();
-  bool toKnots = false;
-  if (!(units.equalsIgnoreCase("kt") || units.equalsIgnoreCase("kts") || units.equalsIgnoreCase("knot") || units.equalsIgnoreCase("knots"))) {
-    toKnots = true;
-  }
+  bool toKnots = !isKnotsUnit(units); // Check if conversion to knots is needed.
 
   // Make a list of vector style objects based on the configuration.
   std::vector<VectorStyle> vectorStyles;

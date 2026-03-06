@@ -82,6 +82,11 @@ double CDataSource::Statistics::getAverage() { return avg; }
 void CDataSource::Statistics::setMinimum(double min) { this->min = min; }
 void CDataSource::Statistics::setMaximum(double max) { this->max = max; }
 
+void CDataSource::Statistics::setMinMax(MinMax minMax) {
+  this->min = minMax.min;
+  this->max = minMax.max;
+}
+
 MinMax getMinMax(double *data, bool hasFillValue, double fillValue, size_t numElements) {
   MinMax minMax;
   bool firstSet = false;
