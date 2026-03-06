@@ -1,8 +1,10 @@
+import filecmp
 from os import environ, getenv
 from pathlib import Path
 import subprocess
 import sys
 import resource
+
 
 import pytest
 
@@ -74,20 +76,31 @@ resource.setrlimit(resource.RLIMIT_CORE, (resource.RLIM_INFINITY, resource.RLIM_
 DATASETS_LOADED = set()
 
 
-def make_adaguc_env(dataset: str = "") -> dict:
+def clean_temp_dir():
+    """
+    Cleans the temporary folder
+    """
+    from adaguc.AdagucTestTools import AdagucTestTools
+
+    AdagucTestTools().cleanTempDir()
+
+
+def make_adaguc_env(dataset: str = "", testresultspath_actual: str = "", testresultspath_expected: str = "") -> dict:
     """
     Return a dictionary with ADAGUC_CONFIG as key, and the value set to a default dataset + a given dataset.
     Format is ready to pass into update_db() and runADAGUCServer().
     """
-
+    clean_temp_dir()
     ADAGUC_PATH = environ["ADAGUC_PATH"]
 
     config = f"{ADAGUC_PATH}/data/config/adaguc.tests.dataset.xml"
 
     if dataset:
+        if not dataset.endswith(".xml"):
+            dataset = dataset + ".xml"
         config = f"{config},{dataset}"
 
-    return {"ADAGUC_CONFIG": config}
+    return {"ADAGUC_CONFIG": config, "ADAGUC_TESTPATH_ACTUAL": testresultspath_actual, "ADAGUC_TESTPATH_EXPECTED": testresultspath_expected}
 
 
 def update_db(adaguc_env: dict, force_update: bool = False):
@@ -114,3 +127,67 @@ def update_db(adaguc_env: dict, force_update: bool = False):
     assert status == 0
 
     DATASETS_LOADED.add(adaguc_config)
+
+
+def run_adaguc_and_compare_image(env, filename, query_string):
+    """
+    Compares a image for a given query_string to a filename in the expected testresult folder.
+    """
+    from adaguc.AdagucTestTools import AdagucTestTools
+
+    status, data, headers = AdagucTestTools().runADAGUCServer(
+        query_string,
+        env=env,
+    )
+    assert status == 0
+
+    AdagucTestTools().writetofile(env["ADAGUC_TESTPATH_ACTUAL"] + filename, data.getvalue())
+    AdagucTestTools().compareImage(env["ADAGUC_TESTPATH_ACTUAL"] + filename, env["ADAGUC_TESTPATH_EXPECTED"] + filename)
+
+
+def run_adaguc_and_compare_getcapabilities(env, filename, query_string):
+    """
+    Compares a XML GetCapabilities for a given query_string to a filename in the expected testresult folder.
+    """
+    from adaguc.AdagucTestTools import AdagucTestTools
+
+    status, data, headers = AdagucTestTools().runADAGUCServer(
+        query_string,
+        env=env,
+    )
+    assert status == 0
+
+    AdagucTestTools().writetofile(env["ADAGUC_TESTPATH_ACTUAL"] + filename, data.getvalue())
+    AdagucTestTools().compareGetCapabilitiesXML(env["ADAGUC_TESTPATH_ACTUAL"] + filename, env["ADAGUC_TESTPATH_EXPECTED"] + filename)
+
+
+def run_adaguc_and_compare_file(env, filename, query_string):
+    """
+    Compares a file for a given query_string to a filename in the expected testresult folder.
+    """
+    from adaguc.AdagucTestTools import AdagucTestTools
+
+    status, data, headers = AdagucTestTools().runADAGUCServer(
+        query_string,
+        env=env,
+    )
+    assert status == 0
+
+    AdagucTestTools().writetofile(env["ADAGUC_TESTPATH_ACTUAL"] + filename, data.getvalue())
+    file_is_equal = filecmp.cmp(env["ADAGUC_TESTPATH_ACTUAL"] + filename, env["ADAGUC_TESTPATH_EXPECTED"] + filename, shallow=False)
+    assert file_is_equal
+
+
+def run_adaguc_and_compare_json(env, filename, query_string):
+    """
+    Compares a json for a given query_string to a filename in the expected testresult folder.
+    """
+    from adaguc.AdagucTestTools import AdagucTestTools
+
+    status, data, headers = AdagucTestTools().runADAGUCServer(
+        query_string,
+        env=env,
+    )
+    assert status == 0
+    AdagucTestTools().writetofile(env["ADAGUC_TESTPATH_ACTUAL"] + filename, data.getvalue())
+    AdagucTestTools().compareJson(env["ADAGUC_TESTPATH_ACTUAL"] + filename, env["ADAGUC_TESTPATH_EXPECTED"] + filename)

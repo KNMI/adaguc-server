@@ -1,14 +1,12 @@
 #include "CDataPostProcessor.h"
 
-#ifndef CDATAPOSTPROCESSOR_TOKNOTS_H
-#define CDATAPOSTPROCESSOR_TOKNOTS_H
+#ifndef CDATAPOSTPROCESSOR_CONVERTUNITS_H
+#define CDATAPOSTPROCESSOR_CONVERTUNITS_H
 
 /**
- * Calculate CDPPToKnots algorithm
+ * Calculate CDPPConvertUnits algorithm
  */
-class CDPPToKnots : public CDPPInterface {
-private:
-  float getBeaufort(float speed);
+class CDPPConvertUnits : public CDPPInterface {
 
 public:
   virtual const char *getId();

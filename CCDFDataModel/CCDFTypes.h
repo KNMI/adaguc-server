@@ -26,6 +26,10 @@
 #ifndef CCDFTYPES_DEBUG
 #define CCDFTYPES_DEBUG
 
+#ifndef ubyte
+#define ubyte uint8_t
+#endif
+
 #include <cstdio>
 #include <cstddef>
 #include <vector>

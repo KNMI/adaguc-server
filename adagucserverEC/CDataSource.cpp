@@ -34,11 +34,8 @@ bool configWarningSet = false;
 
 CDataSource::DataObject::DataObject() {
   hasStatusFlag = false;
-  hasScaleOffset = false;
   cdfVariable = NULL;
   cdfObject = NULL;
-  dfadd_offset = 0;
-  dfscale_factor = 1;
   std::vector<f8point> points;
 }
 
@@ -46,10 +43,7 @@ CDataSource::DataObject *CDataSource::DataObject::clone() {
   CDataSource::DataObject *nd = new CDataSource::DataObject();
   nd->hasStatusFlag = hasStatusFlag;
   nd->hasNodataValue = hasNodataValue;
-  nd->hasScaleOffset = hasScaleOffset;
   nd->dfNodataValue = dfNodataValue;
-  nd->dfscale_factor = dfscale_factor;
-  nd->dfadd_offset = dfadd_offset;
   nd->cdfObject = cdfObject;
   nd->overruledUnits = overruledUnits;
   nd->variableName = variableName;
@@ -87,6 +81,11 @@ double CDataSource::Statistics::getAverage() { return avg; }
 
 void CDataSource::Statistics::setMinimum(double min) { this->min = min; }
 void CDataSource::Statistics::setMaximum(double max) { this->max = max; }
+
+void CDataSource::Statistics::setMinMax(MinMax minMax) {
+  this->min = minMax.min;
+  this->max = minMax.max;
+}
 
 MinMax getMinMax(double *data, bool hasFillValue, double fillValue, size_t numElements) {
   MinMax minMax;
@@ -279,7 +278,6 @@ template <class T> void CDataSource::Statistics::calcMinMax(size_t size, std::ve
 
 CDataSource::CDataSource() {
   stretchMinMax = false;
-  stretchMinMaxDone = false;
   isConfigured = false;
   threadNr = -1;
   dimsAreAutoConfigured = false;
@@ -332,7 +330,7 @@ CDataSource::~CDataSource() {
   statistics = NULL;
 
   if (_styles != NULL) {
-    for (auto s : *_styles) {
+    for (auto s: *_styles) {
       delete s;
     }
     delete _styles;
@@ -717,7 +715,7 @@ std::vector<CT::string> CDataSource::getStyleNames(std::vector<CServerConfig::XM
   for (size_t j = 0; j < Styles.size(); j++) {
     if (Styles[j]->value.empty()) continue;
     std::vector<CT::string> l1 = Styles[j]->value.split(",");
-    for (auto styleValue : l1) {
+    for (auto styleValue: l1) {
       if (styleValue.length() > 0) {
         stringList.push_back(styleValue);
       }
@@ -866,7 +864,6 @@ CDataSource *CDataSource::clone() {
   }
 
   d->stretchMinMax = stretchMinMax;
-  d->stretchMinMaxDone = stretchMinMaxDone;
 
   /* Copy requireddims */
   for (size_t j = 0; j < requiredDims.size(); j++) {
@@ -923,7 +920,7 @@ CDataSource *CDataSource::clone() {
 double CDataSource::getScaling() {
   auto styleConfiguration = this->getStyle();
   if (styleConfiguration != nullptr) {
-    for (auto renderSetting : styleConfiguration->renderSettings) {
+    for (auto renderSetting: styleConfiguration->renderSettings) {
       if (!renderSetting->attr.scalewidth.empty()) {
         double scaleWidth = renderSetting->attr.scalewidth.toDouble();
         double imageWidth = (double)this->srvParams->geoParams.width;
@@ -937,7 +934,7 @@ double CDataSource::getScaling() {
 double CDataSource::getContourScaling() {
   auto styleConfiguration = this->getStyle();
   if (styleConfiguration != nullptr) {
-    for (auto renderSetting : styleConfiguration->renderSettings) {
+    for (auto renderSetting: styleConfiguration->renderSettings) {
       if (!renderSetting->attr.scalecontours.empty()) {
         double scalecontours = renderSetting->attr.scalecontours.toDouble();
         return scalecontours;
@@ -1016,7 +1013,7 @@ int CDataSource::attachCDFObject(CDFObject *cdfObject, bool dataSourceOwnsDataOb
     }
   }
   // Shorthand to variable configuration in the layer.
-  for (auto *cfgVar : cfgLayer->Variable) {
+  for (auto *cfgVar: cfgLayer->Variable) {
     CDF::Variable *var = cdfObject->getVar(cfgVar->value);
     if (var != nullptr) {
 

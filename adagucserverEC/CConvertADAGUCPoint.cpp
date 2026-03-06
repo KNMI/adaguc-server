@@ -548,42 +548,15 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
   StopWatch_Stop("FillValues set");
 #endif
 
-  // Detect minimum and maximum values
-  float fill = (float)dataSource->getDataObject(0)->dfNodataValue;
-
   // Set statistics
   if (dataSource->stretchMinMax) {
-    if (dataSource->stretchMinMaxDone == false) {
-#ifdef CCONVERTADAGUCPOINT_DEBUG
-      CDBDebug("dataSource->stretchMinMax");
-#endif
-      if (dataSource->statistics == NULL) {
-        float min = fill;
-        float max = fill;
-        for (size_t j = 0; j < pointVar[0]->getSize(); j++) {
-          float v = ((float *)pointVar[0]->data)[j];
-          if (v != fill) {
-            if (min == fill) min = v;
-            if (max == fill) max = v;
-            if (v < min) min = v;
-            if (v > max) max = v;
-          }
-        }
-
-#ifdef MEASURETIME
-        StopWatch_Stop("Min max calculated");
-#endif
 
 #ifdef CCONVERTADAGUCPOINT_DEBUG
-        CDBDebug("Calculated min/max : %f %f", min, max);
+    CDBDebug("dataSource->stretchMinMax");
 #endif
-#ifdef CCONVERTADAGUCPOINT_DEBUG
-        CDBDebug("Setting statistics: min/max : %f %f", min, max);
-#endif
-        dataSource->statistics = new CDataSource::Statistics();
-        dataSource->statistics->setMaximum(max);
-        dataSource->statistics->setMinimum(min);
-      }
+    if (dataSource->statistics == NULL) {
+      dataSource->statistics = new CDataSource::Statistics();
+      dataSource->statistics->calculate(pointVar[0]->getSize(), ((float *)pointVar[0]->data), CDF_FLOAT, dataSource->getDataObject(0)->dfNodataValue, dataSource->getDataObject(0)->hasNodataValue);
     }
   }
 

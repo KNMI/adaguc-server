@@ -108,13 +108,13 @@ public:
 
   public:
     DataObject();
-    bool hasStatusFlag, hasNodataValue, hasScaleOffset;
-    double dfNodataValue, dfscale_factor, dfadd_offset;
+    bool hasStatusFlag, hasNodataValue;
+    double dfNodataValue;
     bool noFurtherProcessing = false;
     bool filterFromOutput = false; // When set to true, this dataobject is not returned in the GetFeatureInfo response.
     std::vector<StatusFlag> statusFlagList;
-    CDF::Variable *cdfVariable;  // Not owned!
-    CDFObject *cdfObject;  // Not owned!
+    CDF::Variable *cdfVariable; // Not owned!
+    CDFObject *cdfObject;       // Not owned!
 
     CT::string variableName;
 
@@ -189,6 +189,8 @@ public:
 
   private:
     template <class T> void calcMinMax(size_t size, std::vector<DataObject *> *dataObject);
+
+  public:
     double min, max, avg, stddev;
     size_t numSamples;
 
@@ -208,6 +210,7 @@ public:
     void setMaximum(double max);
     size_t getNumSamples() { return numSamples; };
     int calculate(CDataSource *dataSource);
+    void setMinMax(MinMax minMax);
   };
 
   class TimeStep {
@@ -230,7 +233,7 @@ public:
 
   std::vector<DataObject *> dataObjects;
 
-  bool stretchMinMax, stretchMinMaxDone;
+  bool stretchMinMax;
 
   /**
    * The required dimensions for this datasource
