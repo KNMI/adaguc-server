@@ -807,8 +807,8 @@ int CDrawImage::createPalette(CServerConfig::XMLE_Legend *legend) {
       int prev_offset = 0;
       for (size_t j = 0; j < stops.size(); j++) {
         // CDBDebug("%s",stops.get(j)->toString().c_str());
-        int offset = (int)(stops.get(j)->getAttrValue("offset").toFloat() * 2.4);
-        CT::string color = stops.get(j)->getAttrValue("stop-color").c_str() + 4;
+        int offset = (int)(stops.at(j).getAttrValue("offset").toFloat() * 2.4);
+        CT::string color = stops.at(j).getAttrValue("stop-color").c_str() + 4;
         color.setSize(color.length() - 1);
         auto colors = color.split(",");
         if (colors.size() != 3) {
@@ -818,7 +818,7 @@ int CDrawImage::createPalette(CServerConfig::XMLE_Legend *legend) {
         unsigned char red = colors[0].toInt();
         unsigned char green = colors[1].toInt();
         unsigned char blue = colors[2].toInt();
-        unsigned char alpha = (char)(stops.get(j)->getAttrValue("stop-opacity").toFloat() * 255);
+        unsigned char alpha = (char)(stops.at(j).getAttrValue("stop-opacity").toFloat() * 255);
         // CDBDebug("I%d R%d G%d B%d A%d",offset,red,green,blue,alpha);
         if (offset > 255)
           offset = 255;

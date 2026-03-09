@@ -5,6 +5,11 @@
 #include <random>
 #define CT_STRING_PRINT_BUFFER_SIZE 64
 
+/* These need to be initialized once, this is a costly function */
+std::regex isNumericRegex = std::regex("[+-]?([0-9]*[.])?[0-9]+");
+std::regex isFloatRegex = std::regex("[+-]?[0-9]*[.][0-9]+f?");
+std::regex isIntRegex = std::regex("[+-]?[0-9]+");
+
 const char *strrstr(const char *x, const char *y) {
   const char *prev = nullptr;
   const char *next;
@@ -388,11 +393,6 @@ namespace CT {
 
   bool is_digit(const char value) { return std::isdigit(value); }
 
-  /* These need to be initialized once, this is a costly function */
-  std::regex isNumericRegex = std::regex("[+-]?([0-9]*[.])?[0-9]+");
-  std::regex isFloatRegex = std::regex("[+-]?[0-9]*[.][0-9]+f?");
-  std::regex isIntRegex = std::regex("[+-]?[0-9]+");
-
   bool string::isNumeric() {
 
     const size_t inputLength = this->length();
@@ -484,10 +484,10 @@ namespace CT {
     return stringList;
   }
 
-  CT::string join(const std::vector<string> &items, CT::string separator) {
+  CT::string join(const std::vector<std::string> &items, std::string separator) {
     CT::string newString;
     for (auto &item: items) {
-      newString += item.stdstring;
+      newString += item;
       newString += separator;
     }
     return newString;
@@ -628,4 +628,61 @@ namespace CT {
   }
 
   bool startsWith(const std::string &input, const std::string pattern) { return pattern.size() == 0 || (input.rfind(pattern) == 0); }
+
+  std::string encodeXml(const std::string &input) {
+    auto out = input;
+    std::vector<std::pair<std::string, std::string>> items = {{"&amp;", "&"}, {"&lt;", "<"}, {"&gt;", "<"}};
+    for (const auto &item: items) {
+      out = CT::replace(out, item.first, item.second);
+      out = CT::replace(out, item.second, item.first);
+    }
+    return out;
+  }
+
+  std::string getHex(unsigned int number) {
+    int hex = number % 256;
+    auto a = hex / 16;
+    auto b = hex % 16;
+    std::string result = "00";
+    result[0] = a < 10 ? a + 48 : a + 55;
+    result[1] = b < 10 ? b + 48 : b + 55;
+    return result;
+  }
+
+  std::string getHex24(int number) {
+    int value = number % 256;
+    return CT::printf("%s%s%s", getHex(value).c_str(), getHex(value >> 8).c_str(), getHex(value >> 16).c_str());
+  }
+
+  bool isNumeric(const std::string &input) {
+    if (input.empty() || input.size() > CT_MAX_NUM_CHARACTERS_FOR_NUMERIC) {
+      return false;
+    }
+    if (input == "NaN" || std::regex_match(input.c_str(), isNumericRegex)) {
+      return true;
+    }
+    return false;
+  }
+
+  bool isInt(const std::string &input) {
+    if (input.empty() || input.size() > CT_MAX_NUM_CHARACTERS_FOR_NUMERIC) {
+      return false;
+    }
+    if (std::regex_match(input.c_str(), isIntRegex)) {
+      return true;
+    }
+    return false;
+  }
+
+  bool isFloat(const std::string &input) {
+    std::string inputStr = CT::trim(input);
+    if (inputStr.empty() || inputStr.length() > CT_MAX_NUM_CHARACTERS_FOR_FLOAT) {
+      return false;
+    }
+    if (input == "NaN" || std::regex_match(input.c_str(), isFloatRegex)) {
+      return true;
+    }
+    return false;
+  }
+
 } /* namespace CT */

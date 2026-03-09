@@ -32,7 +32,7 @@ public:
   }
   ~PlotObject() { freePoints(); }
 
-  CImageDataWriter::GetFeatureInfoResult::Element **elements;
+  GetFeatureInfoResult::Element **elements;
   size_t length;
   CT::string name;
   CT::string units;
@@ -54,7 +54,7 @@ public:
   void allocateLength(size_t numPoints) {
     length = numPoints;
     freePoints();
-    elements = new CImageDataWriter::GetFeatureInfoResult::Element *[numPoints];
+    elements = new GetFeatureInfoResult::Element *[numPoints];
     values = new double[numPoints];
   }
 };

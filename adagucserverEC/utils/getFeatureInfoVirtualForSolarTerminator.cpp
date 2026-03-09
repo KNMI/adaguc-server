@@ -16,9 +16,9 @@ int getFeatureInfoVirtualForSolarTerminator(CImageDataWriter *img, std::vector<C
   if (srvParams->requestDims.size() == 0) {
     // We put a time request for the current time
     COGCDims *timeDim = new COGCDims();
-    timeDim->name.copy("TIME");
+    timeDim->name = ("TIME");
     // CT::string timeVal = timeRange.defaultTime + "/" + timeRange.defaultTime;
-    timeDim->value.copy(timeRange.defaultTime);
+    timeDim->value = (timeRange.defaultTime);
     srvParams->requestDims.push_back(timeDim);
   }
 
@@ -28,7 +28,7 @@ int getFeatureInfoVirtualForSolarTerminator(CImageDataWriter *img, std::vector<C
   for (size_t i = 0; i < srvParams->requestDims.size(); i++) {
     if (srvParams->requestDims[i]->name.equals("TIME")) {
       timeIdx = i;
-      requestedTime.copy(srvParams->requestDims[i]->value);
+      requestedTime = (srvParams->requestDims[i]->value);
       break;
     }
   }
@@ -113,7 +113,7 @@ int getFeatureInfoVirtualForSolarTerminator(CImageDataWriter *img, std::vector<C
   CImageWarper warper;
   CImageDataWriter::ProjCacheInfo projInfo = CImageDataWriter::GetProjInfo(ckey, &img->drawImage, dataSource, &warper, srvParams, dX, dY);
 
-  CImageDataWriter::GetFeatureInfoResult *result = new CImageDataWriter::GetFeatureInfoResult();
+  GetFeatureInfoResult *result = new GetFeatureInfoResult();
   result->layerName = dataSource->layerName;
   result->layerTitle = dataSource->layerTitle; // "Virtual feature info";
   result->dataSourceIndex = dataSourceIndex;
@@ -141,22 +141,22 @@ int getFeatureInfoVirtualForSolarTerminator(CImageDataWriter *img, std::vector<C
 
   // Generate one element per time step;
   for (size_t i = 0; i < generatedTimestamps.size(); ++i) {
-    CImageDataWriter::GetFeatureInfoResult::Element *element = new CImageDataWriter::GetFeatureInfoResult::Element();
+    GetFeatureInfoResult::Element *element = new GetFeatureInfoResult::Element();
     element->dataSource = dataSource;
-    element->var_name.copy(dataSource->getDataObject(0)->cdfVariable->name);
-    element->standard_name.copy(dataSource->getDataObject(0)->cdfVariable->getAttributeNE("standard_name")->toString());
-    element->long_name.copy(dataSource->getDataObject(0)->cdfVariable->getAttributeNE("long_name")->toString());
-    element->units.copy(dataSource->getDataObject(0)->cdfVariable->getAttributeNE("units")->toString());
+    element->var_name = (dataSource->getDataObject(0)->cdfVariable->name);
+    element->standard_name = (dataSource->getDataObject(0)->cdfVariable->getAttributeNE("standard_name")->toString());
+    element->long_name = (dataSource->getDataObject(0)->cdfVariable->getAttributeNE("long_name")->toString());
+    element->units = (dataSource->getDataObject(0)->cdfVariable->getAttributeNE("units")->toString());
 
     // Update dataSource timestamp and apply postprocessors
     if (!dataSource->srvParams->requestDims.empty()) {
       // Note: Check what to do when the requested dims are empty
-      dataSource->srvParams->requestDims[timeIdx]->value.copy(generatedTimestamps[i].c_str());
+      dataSource->srvParams->requestDims[timeIdx]->value = (generatedTimestamps[i].c_str());
     }
 
     getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
     float *vals = (float *)dataSource->getDataObject(0)->cdfVariable->data;
-    element->value.print("%f", vals[ptr]);
+    element->value = CT::printf("%f", vals[ptr]);
 
     element->cdfDims.addDimension("time", generatedTimestamps[i].c_str(), i);
     result->elements.push_back(element);

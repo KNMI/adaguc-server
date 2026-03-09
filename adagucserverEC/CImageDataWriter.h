@@ -42,6 +42,7 @@
 #include "CMyCURL.h"
 #include "CXMLParser.h"
 #include "CDebugger.h"
+#include "Types/GetFeatureInfoResult.h"
 
 class CImageDataWriter : public CBaseDataWriterInterface {
 public:
@@ -69,47 +70,10 @@ public:
 
   static std::map<std::string, CImageDataWriter::ProjCacheInfo> projCacheMap;
   static std::map<std::string, CImageDataWriter::ProjCacheInfo>::iterator projCacheIter;
-  static ProjCacheInfo GetProjInfo(CT::string ckey, CDrawImage *drawImage, CDataSource *dataSource, CImageWarper *imageWarper, CServerParams *srvParam, int dX, int dY);
+  static ProjCacheInfo GetProjInfo(std::string ckey, CDrawImage *drawImage, CDataSource *dataSource, CImageWarper *imageWarper, CServerParams *srvParam, int dX, int dY);
 
 private:
   CT::string eProfileJson;
-
-public:
-public:
-  class GetFeatureInfoResult {
-  public:
-    ~GetFeatureInfoResult() {
-      for (size_t j = 0; j < elements.size(); j++) delete elements[j];
-    }
-
-    int x_imagePixel, y_imagePixel;
-    double x_imageCoordinate, y_imageCoordinate;
-    double x_rasterCoordinate, y_rasterCoordinate;
-    int x_rasterIndex, y_rasterIndex;
-    double lat_coordinate, lon_coordinate;
-
-    CT::string layerName;
-    CT::string layerTitle;
-    int dataSourceIndex;
-
-    class Element {
-    public:
-      CT::string value;
-      CT::string units;
-      CT::string standard_name;
-      CT::string feature_name;
-      CT::string long_name;
-      CT::string var_name;
-      // CT::string time;
-      CDF::Variable *variable;
-      CDataSource *dataSource;
-      CCDFDims cdfDims;
-    };
-    std::vector<Element *> elements;
-  };
-
-private:
-  static int getTextForValue(CT::string *tv, float v, CStyleConfiguration *styleConfiguration);
 
 public:
   std::vector<GetFeatureInfoResult *> getFeatureInfoResultList;
@@ -138,7 +102,7 @@ private:
   int _setTransparencyAndBGColor(CServerParams *srvParam, CDrawImage *drawImage);
 
   /* Loops over the points, calculates the closest points, then calculates if point is within specified range in pixels */
-  void getFeatureInfoGetPointDataResults(CDataSource *dataSource, CImageDataWriter::GetFeatureInfoResult *getFeatureInfoResult, int dataObjectNrInDataSource, GetFeatureInfoResult::Element *element,
+  void getFeatureInfoGetPointDataResults(CDataSource *dataSource, GetFeatureInfoResult *getFeatureInfoResult, int dataObjectNrInDataSource, GetFeatureInfoResult::Element *element,
                                          int maxPixelDistance);
 
 public:

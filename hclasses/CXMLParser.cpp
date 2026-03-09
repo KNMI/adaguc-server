@@ -43,33 +43,7 @@ CT::string CXMLParser::getErrorMessage(int CXMLParserException) {
   return message;
 }
 
-CXMLParser::XMLAttribute::XMLAttribute() {}
-
-CXMLParser::XMLAttribute::XMLAttribute(const char *name, const char *value) {
-  this->name = name;
-  this->value = value;
-}
-
-CXMLParser::XMLAttribute CXMLParser::XMLAttributes::get(size_t nr) {
-  if (nr > size() || nr + 1 > size()) throw CXMLPARSER_ATTRIBUTE_OUT_OF_BOUNDS;
-  return (*this)[nr];
-}
-void CXMLParser::XMLAttributes::add(XMLAttribute attribute) { this->push_back(attribute); }
-
-void CXMLParser::XMLElement::copy(XMLElement const &f) {
-  this->name = f.name;
-  this->value = f.value;
-  for (size_t j = 0; j < f.xmlElements.size(); j++) xmlElements.push_back(XMLElement(f.xmlElements[j]));
-  for (size_t j = 0; j < f.xmlAttributes.size(); j++) xmlAttributes.add(XMLAttribute(f.xmlAttributes[j]));
-}
-
 CXMLParser::XMLElement::XMLElement() {}
-
-CXMLParser::XMLElement *CXMLParser::XMLElement::XMLElementPointerList::get(size_t nr) {
-  if (nr > size() || nr + 1 > size()) throw CXMLPARSER_ELEMENT_OUT_OF_BOUNDS;
-  return (*this)[nr];
-}
-void CXMLParser::XMLElement::XMLElementPointerList::add(XMLElement *element) { this->push_back(element); }
 
 /**
  * Constructor which parses libXmlNode
@@ -135,14 +109,14 @@ void CXMLParser::XMLElement::parse_element_names(void *_a_node, int depth) {
 CT::string CXMLParser::XMLElement::toXML(XMLElement el, int depth) {
   CT::string data = "";
   bool hasValue = false;
-  if (el.getValue().replace("\n", "").trim().length() > 0) {
+  if (CT::trim(CT::replace(el.value, "\n", "")).length() > 0) {
     hasValue = true;
   }
 
   for (int i = 0; i < depth; i++) data += "  ";
   data += CT::string("<") + el.name;
-  for (size_t j = 0; j < el.getAttributes().size(); j++) {
-    data += CT::string(" ") + el.getAttributes().get(j).name + CT::string("=\"") + el.getAttributes().get(j).value.encodeXML() + "\"";
+  for (size_t j = 0; j < el.xmlAttributes.size(); j++) {
+    data += CT::string(" ") + el.xmlAttributes.at(j).name + CT::string("=\"") + CT::encodeXml(el.xmlAttributes.at(j).value) + "\"";
   }
   if (!hasValue) {
     data += ">\n";
@@ -155,7 +129,7 @@ CT::string CXMLParser::XMLElement::toXML(XMLElement el, int depth) {
   }
 
   if (hasValue) {
-    data += el.getValue();
+    data += el.value;
     data += CT::string("</") + el.name + ">\n";
   } else {
     for (int i = 0; i < depth; i++) {
@@ -183,9 +157,9 @@ CT::string CXMLParser::XMLElement::toJSON(XMLElement el, int depth, int mode) {
   if (el.xmlAttributes.size() > 0) {
     CXMLParser::XMLElement xmlattr("xmlattr");
     for (size_t j = 0; j < el.xmlAttributes.size(); j++) {
-      xmlattr.add(CXMLParser::XMLElement(el.xmlAttributes[j].name.c_str(), el.xmlAttributes[j].value.c_str()));
+      xmlattr.xmlElements.push_back(CXMLParser::XMLElement(el.xmlAttributes[j].name.c_str(), el.xmlAttributes[j].value.c_str()));
     }
-    el.add(xmlattr);
+    el.xmlElements.push_back(xmlattr);
   }
 
   for (size_t j = 0; j < el.xmlElements.size(); j++) {
@@ -207,8 +181,8 @@ CT::string CXMLParser::XMLElement::toJSON(XMLElement el, int depth, int mode) {
         data += "\"";
         data += ":[";
         for (size_t i = 0; i < els.size(); i++) {
-          CT::string value = els[i]->getValue().replace("\n", "").trim();
-          CT::string subdata = toJSON(*(els[i]), depth++, mode);
+          CT::string value = CT::trim(CT::replace(els[i].value, "\n", ""));
+          CT::string subdata = toJSON((els[i]), depth++, mode);
           ;
           if (subdata.length() > 0) {
             if (i > 0) data += ",";
@@ -282,25 +256,13 @@ CT::string CXMLParser::XMLElement::toStringNoHeader() {
 }
 
 /**
- * getAttributes returns the xmlAttibute list of this element
- * @return the xmlAttibute list of this element
- */
-CXMLParser::XMLAttributes CXMLParser::XMLElement::getAttributes() { return xmlAttributes; }
-
-/**
- * getElements returns the XMLElement list of this element
- * @return the XMLElement list of this element
- */
-CXMLParser::XMLElement::XMLElementList *CXMLParser::XMLElement::getElements() { return &xmlElements; }
-
-/**
  * getAttrValue Returns the value of the attribute with the specified name
  * Throws CXMLPARSER_ATTR_NOT_FOUND if attribute was not found.
  * @param name the name of the attribute to search for
  */
 CT::string CXMLParser::XMLElement::getAttrValue(const char *name) {
   for (size_t j = 0; j < xmlAttributes.size(); j++) {
-    if (xmlAttributes[j].name.equals(name)) return xmlAttributes[j].value;
+    if (xmlAttributes[j].name == name) return xmlAttributes[j].value;
   }
   throw CXMLPARSER_ATTR_NOT_FOUND;
 }
@@ -328,8 +290,8 @@ CXMLParser::XMLElement *CXMLParser::XMLElement::getLast() {
 CXMLParser::XMLElement::XMLElementPointerList CXMLParser::XMLElement::getList(const char *name) {
   XMLElementPointerList elements;
   for (size_t j = 0; j < xmlElements.size(); j++) {
-    if (xmlElements[j].name.equals(name)) {
-      elements.add(&xmlElements[j]);
+    if (xmlElements[j].name == name) {
+      elements.push_back(xmlElements[j]);
     }
   }
   if (elements.size() == 0) {
@@ -343,26 +305,11 @@ CXMLParser::XMLElement::XMLElementPointerList CXMLParser::XMLElement::getList(co
  */
 CXMLParser::XMLElement *CXMLParser::XMLElement::get(const char *name) {
   for (size_t j = 0; j < xmlElements.size(); j++) {
-    if (xmlElements[j].name.equals(name)) {
+    if (xmlElements[j].name == name) {
       return &xmlElements[j];
     }
   }
   throw CXMLPARSER_ELEMENT_NOT_FOUND;
-}
-
-/**
- * getName returns the name of this XML element
- */
-CT::string CXMLParser::XMLElement::getName() { return name; }
-
-/**
- * getValue returns the value of this XML element
- */
-CT::string CXMLParser::XMLElement::getValue() {
-  if (value.empty()) {
-    return "";
-  }
-  return value;
 }
 
 /**
@@ -390,6 +337,8 @@ int CXMLParser::XMLElement::parse(CT::string *data) { return parse(data->c_str()
  */
 int CXMLParser::XMLElement::parse(const char *xmlData, size_t xmlSize) {
   LIBXML_TEST_VERSION
+  xmlElements.clear();
+  xmlAttributes.clear();
   xmlDoc *doc = NULL;
   xmlNode *root_element = NULL;
   doc = xmlParseMemory(xmlData, xmlSize);

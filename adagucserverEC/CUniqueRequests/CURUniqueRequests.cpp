@@ -123,7 +123,7 @@ void CURUniqueRequests::recurDataStructure(CXMLParser::XMLElement *dataStructure
   if (depth + 1 < result->numDims) {
     recurDataStructure(el, result, depth + 1, dimOrdering, dimIndicesToSkip);
   } else {
-    el->setValue(result->value.c_str());
+    el->setValue(result->value);
   }
 }
 
@@ -132,10 +132,12 @@ void CURUniqueRequests::createStructure(std::vector<CURResult> results, CDataSou
 
   int numberOfDims = dataSource->requiredDims.size();
 
-  CXMLParser::XMLElement *layerStructure = gfiStructure->add("root");
-  layerStructure->add(CXMLParser::XMLElement("name", dataObject->dataObjectName.empty() ? dataSource->getLayerName() : dataObject->dataObjectName.c_str()));
-  layerStructure->add(CXMLParser::XMLElement("layername", dataSource->getLayerName()));
-  layerStructure->add(CXMLParser::XMLElement("variablename", dataObject->variableName.c_str()));
+  CXMLParser::XMLElement layerStructure;
+  layerStructure.name = "root";
+
+  layerStructure.add(CXMLParser::XMLElement("name", dataObject->dataObjectName.empty() ? dataSource->getLayerName() : dataObject->dataObjectName.c_str()));
+  layerStructure.add(CXMLParser::XMLElement("layername", dataSource->getLayerName()));
+  layerStructure.add(CXMLParser::XMLElement("variablename", dataObject->variableName.c_str()));
 
   /* Add metadata */
   std::string standardName = dataObject->variableName.c_str();
@@ -144,8 +146,8 @@ void CURUniqueRequests::createStructure(std::vector<CURResult> results, CDataSou
     standardName = attr_standard_name->toString();
   }
 
-  layerStructure->add(CXMLParser::XMLElement("standard_name", standardName.c_str()));
-  layerStructure->add(CXMLParser::XMLElement("units", dataObject->getUnits().c_str()));
+  layerStructure.add(CXMLParser::XMLElement("standard_name", standardName.c_str()));
+  layerStructure.add(CXMLParser::XMLElement("units", dataObject->getUnits().c_str()));
 
   CT::string ckey;
   ckey.print("%d%d%s", dX, dY, dataSource->nativeProj4.c_str());
@@ -155,7 +157,7 @@ void CURUniqueRequests::createStructure(std::vector<CURResult> results, CDataSou
   CT::string coord;
   coord.print("%f,%f", projCacheInfo.lonX, projCacheInfo.lonY);
   point.add(CXMLParser::XMLElement("coords", coord.c_str()));
-  layerStructure->add(point);
+  layerStructure.add(point);
 
   std::vector<int> dimIndicesToSkip;
   for (size_t i = 0; i < size_t(numberOfDims); i++) {
@@ -167,16 +169,16 @@ void CURUniqueRequests::createStructure(std::vector<CURResult> results, CDataSou
 
   for (size_t i = 0; i < size_t(numberOfDims); i++) {
     if (std::find(dimIndicesToSkip.begin(), dimIndicesToSkip.end(), i) == dimIndicesToSkip.end()) {
-      layerStructure->add(CXMLParser::XMLElement("dims", dataSource->requiredDims[dimOrdering[i]]->name.c_str()));
+      layerStructure.add(CXMLParser::XMLElement("dims", dataSource->requiredDims[dimOrdering[i]]->name.c_str()));
     }
   }
 
   CXMLParser::XMLElement *dataStructure = NULL;
   try {
-    dataStructure = layerStructure->get("data");
+    dataStructure = layerStructure.get("data");
   } catch (int e) {
-    layerStructure->add(CXMLParser::XMLElement("data"));
-    dataStructure = layerStructure->getLast();
+    layerStructure.add(CXMLParser::XMLElement("data"));
+    dataStructure = layerStructure.getLast();
   }
 
   std::sort(results.begin(), results.end(), compareFunctionCurResult());
@@ -187,6 +189,7 @@ void CURUniqueRequests::createStructure(std::vector<CURResult> results, CDataSou
   for (size_t j = 0; j < results.size(); j++) {
     recurDataStructure(dataStructure, &results[j], 0, dimOrdering, dimIndicesToSkip);
   }
+  gfiStructure->add(layerStructure);
 }
 
 void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageWarper, CDataSource *dataSource, int dX, int dY, CXMLParser::XMLElement *gfiStructure) {
@@ -410,17 +413,24 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
                 }
                 multiplies[d] = m;
               }
-
+              // Assign keys
               for (size_t indexInVariable = 0; indexInVariable < variable->getSize(); indexInVariable++) {
                 CURResult currentResultForIndex;
                 currentResultForIndex.parent = this;
                 currentResultForIndex.numDims = numberOfDataSourceDims;
+                currentResultForIndex.dimensionKeys.resize(dataSource->requiredDims.size());
 
                 // Fill in the dimension keys
                 for (size_t dataSourceDimIndex = 0; dataSourceDimIndex < dataSource->requiredDims.size(); dataSourceDimIndex++) {
                   std::string requestDimNameToFind = dataSource->requiredDims[dataSourceDimIndex]->netCDFDimName.c_str();
                   currentResultForIndex.dimensionKeys[dataSourceDimIndex].name = dataSource->requiredDims[dataSourceDimIndex]->value;
                   auto dimVariable = variable->getParentCDFObject()->getVariableNE(requestDimNameToFind.c_str());
+                  if (dimVariable == nullptr) {
+                    // This one does not have a variable for its dimension.
+                    auto values = request[0].values;
+                    currentResultForIndex.dimensionKeys[dataSourceDimIndex].name = values[(indexInVariable / multiplies[0]) % values.size()];
+                    continue;
+                  }
                   auto isTime = dataSource->requiredDims[dataSourceDimIndex]->isATimeDimension;
                   auto varType = dimVariable->getType();
                   currentResultForIndex.dimensionKeys[dataSourceDimIndex].cdfDimensionVariable = dimVariable;

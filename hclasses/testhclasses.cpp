@@ -278,3 +278,8 @@ TEST(string, startsWith) {
   LONGS_EQUAL(true, CT::startsWith(valueToCheck, "Hello"));
   LONGS_EQUAL(true, CT::startsWith(valueToCheck, ""));
 }
+
+TEST(string, encodeXml) {
+  std::string valueToCheck = ("maybe<you>are&right&amp;");
+  CHECK_EQUAL("maybe&lt;you>are&amp;right&amp;", CT::encodeXml(valueToCheck));
+}
