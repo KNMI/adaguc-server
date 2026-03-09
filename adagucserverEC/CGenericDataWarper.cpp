@@ -55,7 +55,7 @@ ProjectionGrid *makeProjection(double halfCell, CImageWarper *warper, i4box &pix
   int dataWidth = pixelExtentBox.span().x;
   int dataHeight = pixelExtentBox.span().y;
   size_t dataSize = (dataWidth + 1) * (dataHeight + 1);
-  ProjectionGrid *projGrid = new ProjectionGrid();
+  auto *projGrid = new ProjectionGrid();
   projGrid->initSize(dataSize);
 
   double dfSourcedExtW = sourceGeoParams.bbox.span().x / double(warperState.sourceGridWidth);
@@ -82,7 +82,7 @@ ProjectionGrid *makeStridedProjection(double halfCell, CImageWarper *warper, i4b
   int projStrideFactor = 8;
   int dataWidth = pixelExtentBox.span().x;
   int dataHeight = pixelExtentBox.span().y;
-  ProjectionGrid *projGrid = new ProjectionGrid();
+  auto *projGrid = new ProjectionGrid();
   projGrid->initSize((dataWidth + 1) * (dataHeight + 1));
   double dfSourcedExtW = sourceGeoParams.bbox.span().x / double(warperState.sourceGridWidth);
   double dfSourcedExtH = sourceGeoParams.bbox.span().y / double(warperState.sourceGridHeight);
@@ -196,16 +196,25 @@ void linearTransformGrid(GDWState &warperState, bool useHalfCellOffset, CImageWa
 
   pixelspan = newpixelspan;
 
+  double xOffset = (dfSourceOrigX - dfDestOrigX) * (dfDestW / dfDestExtW);
+  double xScale = (dfSourceExtW / dfSourceW) * (dfDestW / dfDestExtW);
+
+  double yOffset = (dfSourceOrigY - dfDestOrigY) * (dfDestH / dfDestExtH);
+  double yScale = (dfSourceExtH / dfSourceH) * (dfDestH / dfDestExtH);
+
+  int sxw = floor(fabs(xScale)) + 1;
+  int syh = floor(fabs(yScale)) + 1;
   for (int y = pixelspan.bottom; y < pixelspan.top; y++) {
     for (int x = pixelspan.left; x < pixelspan.right; x++) {
       double dfx = x + halfCell;
       double dfy = y - halfCell; // Y is inverted
-      int sx1 = roundedLinearTransform(dfx, dfSourceW, dfSourceExtW, dfSourceOrigX, dfDestOrigX, dfDestExtW, dfDestW);
-      int sx2 = roundedLinearTransform(dfx + 1, dfSourceW, dfSourceExtW, dfSourceOrigX, dfDestOrigX, dfDestExtW, dfDestW);
-      int sy1 = roundedLinearTransform(dfy, dfSourceH, dfSourceExtH, dfSourceOrigY, dfDestOrigY, dfDestExtH, dfDestH);
-      int sy2 = roundedLinearTransform(dfy + 1, dfSourceH, dfSourceExtH, dfSourceOrigY, dfDestOrigY, dfDestExtH, dfDestH);
-      int sxw = floor(fabs(sx2 - sx1)) + 1;
-      int syh = floor(fabs(sy2 - sy1)) + 1;
+      double xRound = dfx * xScale + xOffset;
+      double yRound = dfy * yScale + yOffset;
+      int sx1 = std::floor(xRound + 0.5);
+      int sx2 = std::floor(xRound + xScale + 0.5);
+      int sy1 = std::floor(yRound + 0.5);
+      int sy2 = std::floor(yRound + yScale + 0.5);
+
       if ((sx1 < -sxw && sx2 < -sxw) || (sy1 < -syh && sy2 < -syh) || (sx1 >= destGeoParams.width + sxw && sx2 >= destGeoParams.width + sxw) ||
           (sy1 >= destGeoParams.height + syh && sy2 >= destGeoParams.height + syh)) {
         continue;
@@ -246,7 +255,7 @@ void linearTransformGrid(GDWState &warperState, bool useHalfCellOffset, CImageWa
 
 // Warp the grid from the source projection to the destination projection.
 template <typename T>
-void warpTransformGrid(GDWState &warperState, ProjectionGrid *projectionGrid, bool useHalfCellOffset, CImageWarper *warper, void *, GeoParameters &sourceGeoParams, GeoParameters &destGeoParams,
+void warpTransformGrid(GDWState &warperState, ProjectionGrid *&projectionGrid, bool useHalfCellOffset, CImageWarper *warper, void *, GeoParameters &sourceGeoParams, GeoParameters &destGeoParams,
                        const std::function<void(int, int, T, GDWState &warperState)> &drawFunction) {
 
   bool debug = false;
@@ -435,10 +444,11 @@ template <typename T>
 int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, GeoParameters sourceGeoParams, GeoParameters destGeoParams,
                               const std::function<void(int, int, T, GDWState &warperState)> &drawFunction) {
 
+  bool verbose = false;
   // This structure is passed to drawfunctions and contains info about the current state of the warper.
   // The drawfunction will be called numerous times for each destination pixel.
   GDWState warperState = {.sourceGrid = _sourceData,                  // The source datagrid, has the same datatype as the template T
-                          .hasNodataValue = 0,                        // Wether the source data grid has a nodata value
+                          .hasNodataValue = false,                    // Wether the source data grid has a nodata value
                           .dfNodataValue = 0,                         // No data value of the source grid, in double type. Can be casted to T
                           .sourceIndexX = 0,                          // Which X index is sampled from the source grid
                           .sourceIndexY = 0,                          // Which Y index is sampled for the source grid.
@@ -455,8 +465,17 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, GeoParame
 
   /* When geographical map projections are equal, just do a simple linear transformation */
   if (warper->isProjectionRequired() == false) {
+    if (verbose) {
+      CDBDebug("No reprojection required, doing linear transformation");
+    }
     linearTransformGrid(warperState, useHalfCellOffset, warper, _sourceData, sourceGeoParams, destGeoParams, drawFunction);
+    if (verbose) {
+      CDBDebug("Done");
+    }
   } else {
+    if (verbose) {
+      CDBDebug("Reprojection required, doing warp transformation");
+    }
     /* If geographical map projection is different, we have to transform the grid */
     warpTransformGrid(warperState, projectionGrid, useHalfCellOffset, warper, _sourceData, sourceGeoParams, destGeoParams, drawFunction);
   }

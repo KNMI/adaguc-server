@@ -1,5 +1,6 @@
 
 #include "CDataPostProcessor_Beaufort.h"
+#include "CDataPostProcessor_UnitsUtils.h"
 
 const char *CDPPBeaufort::getId() { return "beaufort"; }
 int CDPPBeaufort::isApplicable(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSource, int mode) {
@@ -56,7 +57,7 @@ int CDPPBeaufort::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
     if (dataSource->getNumDataObjects() == 1) {
       CDBDebug("Applying beaufort for 1 element");
-      if (dataSource->getDataObject(0)->getUnits().equals("knot") || dataSource->getDataObject(0)->getUnits().equals("kt")) {
+      if (isKnotsUnit(dataSource->getDataObject(0)->getUnits())) {
         factor = 1852. / 3600;
       }
       CDBDebug("Applying beaufort for 1 element with factor %f", factor);
@@ -88,7 +89,7 @@ int CDPPBeaufort::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
     }
     if (dataSource->getNumDataObjects() == 2) {
       CDBDebug("Applying beaufort for 2 elements %s %s", dataSource->getDataObject(0)->getUnits().c_str(), dataSource->getDataObject(1)->getUnits().c_str());
-      if ((dataSource->getDataObject(0)->getUnits().equals("m/s") || dataSource->getDataObject(0)->getUnits().equals("m s-1")) && dataSource->getDataObject(1)->getUnits().equals("degree")) {
+      if (isMpsUnit(dataSource->getDataObject(0)->getUnits()) && isDegreesUnit(dataSource->getDataObject(1)->getUnits())) {
         // This is a (wind speed,direction) pair
         dataSource->getDataObject(0)->setUnits("bft");
         size_t l = (size_t)dataSource->dHeight * (size_t)dataSource->dWidth;
@@ -115,8 +116,7 @@ int CDPPBeaufort::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
           }
         }
       }
-      if ((dataSource->getDataObject(0)->getUnits().equals("m/s") || dataSource->getDataObject(0)->getUnits().equals("m s-1")) &&
-          (dataSource->getDataObject(1)->getUnits().equals("m/s") || dataSource->getDataObject(1)->getUnits().equals("m s-1"))) {
+      if (isMpsUnit(dataSource->getDataObject(0)->getUnits()) && isMpsUnit(dataSource->getDataObject(1)->getUnits())) {
         // This is a (u,v) pair
         dataSource->getDataObject(0)->setUnits("bft");
 
@@ -174,7 +174,7 @@ int CDPPBeaufort::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
     if (dataSource->getNumDataObjects() == 1) {
       CDBDebug("Applying beaufort for 1 element");
-      if (dataSource->getDataObject(0)->getUnits().equals("knot") || dataSource->getDataObject(0)->getUnits().equals("kt")) {
+      if (isKnotsUnit(dataSource->getDataObject(0)->getUnits())) {
         factor = 1852. / 3600;
       }
       CDBDebug("Applying beaufort for 1 element with factor %f", factor);

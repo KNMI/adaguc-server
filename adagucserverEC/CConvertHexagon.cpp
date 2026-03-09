@@ -70,8 +70,8 @@ void drawlines2(float *imagedata, int w, int h, int polyCorners, float *polyX, f
 void drawNGon(float *imagedata, int w, int h, int polyCorners, float *polyX, float *polyY, float value) {
   // float  *data, float  *values, int W,int H, int *xP,int *yP
 
-  int xp[polyCorners];
-  int yp[polyCorners];
+  int *xp = new int[polyCorners];
+  int *yp = new int[polyCorners];
   int centerX = 0;
   int centerY = 0;
   for (int i = 0; i < polyCorners; i++) {
@@ -99,16 +99,19 @@ void drawNGon(float *imagedata, int w, int h, int polyCorners, float *polyX, flo
     typ[2] = yp[i];
     fillTriangleFlat(imagedata, value, w, h, txp, typ);
   }
+  delete[] xp;
+  delete[] yp;
 }
 
 void drawpoly2(float *imagedata, int w, int h, int polyCorners, float *polyX, float *polyY, float value) {
   //  public-domain code by Darel Rex Finley, 2007
 
-  int nodes, nodeX[polyCorners * 2 + 1], pixelY, i, j, swap;
+  int nodes, pixelY, i, j, swap;
   int IMAGE_TOP = 0;
   int IMAGE_BOT = h;
   int IMAGE_LEFT = 0;
   int IMAGE_RIGHT = w;
+  int *nodeX = new int[polyCorners * 2 + 1];
 
   //  Loop through the rows of the image.
   for (pixelY = IMAGE_TOP; pixelY < IMAGE_BOT; pixelY++) {
@@ -148,6 +151,7 @@ void drawpoly2(float *imagedata, int w, int h, int polyCorners, float *polyX, fl
       }
     }
   }
+  delete[] nodeX;
 }
 
 double *CConvertHexagon::getBBOXFromLatLonFields(CDF::Variable *lons, CDF::Variable *lats) {
@@ -429,7 +433,7 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
 #endif
 
   size_t nrDataObjects = dataSource->getNumDataObjects();
-  CDataSource::DataObject *dataObjects[nrDataObjects];
+  std::vector<CDataSource::DataObject *> dataObjects(nrDataObjects, nullptr);
   for (size_t d = 0; d < nrDataObjects; d++) {
     dataObjects[d] = dataSource->getDataObject(d);
   }
@@ -446,9 +450,9 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
   }
 
   size_t numDims = hexagonVar->dimensionlinks.size();
-  size_t start[numDims];
-  size_t count[numDims];
-  ptrdiff_t stride[numDims];
+  std::vector<size_t> start(numDims);
+  std::vector<size_t> count(numDims);
+  std::vector<ptrdiff_t> stride(numDims);
   for (size_t dimInd = 0; dimInd < numDims; dimInd++) {
     start[dimInd] = 0;
     count[dimInd] = 1;
@@ -465,7 +469,7 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
     CDBDebug("%s = %lu %lu", dimName.c_str(), start[dimInd], count[dimInd]);
   }
 
-  hexagonVar->readData(CDF_FLOAT, start, count, stride, true);
+  hexagonVar->readData(CDF_FLOAT, start.data(), count.data(), stride.data(), true);
 
   // Read original data first
 
@@ -861,7 +865,8 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
         if (tileHasNoData == false) {
           // CDBDebug(" (%f,%f) (%f,%f) (%f,%f) (%f,%f)",lons[0],lats[0],lons[1],lats[1],lons[2],lats[2],lons[3],lats[3]);
 
-          float flons[numVerts], flats[numVerts];
+          float *flons = new float[numVerts];
+          float *flats = new float[numVerts];
           for (int j = 0; j < numVerts; j++) {
             //             if(tileIsOverDateBorder){
             //               lons[j]-=360;
@@ -887,6 +892,8 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
             drawNGon(sdata, dataSource->dWidth, dataSource->dHeight, numVerts, flons, flats, val);
             // drawlines2(sdata,dataSource->dWidth,dataSource->dHeight,numVerts,flons,flats,val);
           }
+          delete[] flons;
+          delete[] flats;
         }
       }
     }

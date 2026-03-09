@@ -20,6 +20,6 @@ int maxDecimalWidth(std::vector<CT::string> column);
 
 int fieldWidthAsPixels(std::vector<CT::string> column, int dashWidth, int dotWidth, int numbericGlyphWidth);
 
-std::vector<CT::string> extractColumn(size_t drawIntervals, int minInterval, std::vector<CServerConfig::XMLE_ShadeInterval *> &shadeIntervals, bool isMin);
+std::vector<CT::string> extractColumn(size_t drawIntervals, int minInterval, const std::vector<CServerConfig::XMLE_ShadeInterval>& shadeIntervals, bool isMin);
 
 #endif

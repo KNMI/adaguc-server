@@ -279,7 +279,7 @@ namespace CT {
     /**
      * Returns a new string with removed spaces
      */
-    string trim();
+    string trim() const;
 
     /**
      * Function which returns a std::vector on the stack with a list of strings allocated on the stack
@@ -337,28 +337,28 @@ namespace CT {
     /**
      * Converts the string to a float number
      */
-    float toFloat();
+    float toFloat() const;
 
     /**
      * Converts the string to a double number
      * // TODO: When strings like "longlat are passed the function currently silently returns 0. Would be better to throw an exception"
      */
-    double toDouble();
+    double toDouble() const;
 
     /**
      * Converts the string to an integer number
      */
-    int toInt();
+    int toInt() const;
 
     /**
      * Converts the string to a long number
      */
-    long toLong();
+    long toLong() const;
 
     /**
      * Test whether string is empty or not
      */
-    bool empty();
+    bool empty() const;
 
     /**
      * Checks if this string represents a numeric value
@@ -435,6 +435,85 @@ namespace CT {
 
   std::string printf(const char *a, ...) PRINTF_FORMAT_CHECK(1, 2);
 
+  /**
+   * Like printf, but concatenates the string and returns a stdstring
+   * @param a The string to print
+   * @returns std::string
+   */
   void printfconcat(std::string &appendString, const char *a, ...) PRINTF_FORMAT_CHECK(2, 3);
+
+  /**
+   * Replace all occurrences of a substring with another string and returns the new string
+   * @param input The input string
+   * @param from The string to replace
+   * @param to The string to replace with
+   * @returns new string with replaced values
+   */
+
+  std::string replace(const std::string &input, const std::string &from, const std::string &to);
+
+  /**
+   * Converts a string to lowercase
+   * @param input The input string
+   * @returns the input string converted to lowercase
+   */
+  std::string toLowerCase(const std::string input);
+
+  /**
+   * Converts a string to uppercase
+   * @param input The input string
+   * @returns the input string converted to uppercase
+   */
+  std::string toUpperCase(const std::string input);
+
+  /**
+   * Removes spaces in the string and returns the new string
+   * @param input The input string
+   * @returns the input string with removed spaces
+   */
+  std::string trim(const std::string input);
+
+  /**
+   * Function which returns a std::vector on the stack with a list of strings allocated on the stack
+   * Data is automatically freed
+   * @param stdstring The string to split
+   * @param value The token to split the string on
+   * @returns vector of split strings
+   */
+  std::vector<std::string> split(const std::string &stdstring, std::string value);
+
+  /**
+   * Generates a random string of the specified length consisting of digits, uppercase and lowercase letters
+   * @param length The length of the random string to generate
+   * @returns a random string of the specified length
+   */
+  std::string randomString(const int length);
+
+  /**
+   * Checks where the pattern is in the input string.
+   *
+   * @param input input string to check
+   * @param pattern pattern tofind
+   * @return Index of pattern in input. -1 if not found. 0 if pattern is an empty string
+   */
+  int indexOf(const std::string &input, const std::string pattern);
+
+  /**
+   * Checks if a string ends with another given string. If the argument is an empty string, then the method returns true.
+   *
+   * @param input input string to check
+   * @param pattern pattern tofind
+   * @return True if input ends with pattern. True if pattern is empty
+   */
+  bool endsWith(const std::string &input, const std::string pattern);
+
+  /**
+   * Checks if a string starts with another given string. If the argument is an empty string, then the method returns true.
+   *
+   * @param input input string to check
+   * @param pattern pattern tofind
+   * @return True if input starts with pattern. True if pattern is empty
+   */
+  bool startsWith(const std::string &input, const std::string pattern);
 }; /* namespace CT */
 #endif

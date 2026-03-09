@@ -18,7 +18,7 @@ apscheduler==3.11.2
     # via -r requirements.in
 asgi-logger==0.1.0
     # via -r requirements.in
-asgiref==3.11.0
+asgiref==3.11.1
     # via asgi-logger
 async-timeout==5.0.1
     # via redis
@@ -97,7 +97,7 @@ owslib==0.29.3
     # via -r requirements.in
 packaging==26.0
     # via gunicorn
-pillow==10.4.0
+pillow==12.1.1
     # via -r requirements.in
 pydantic==2.12.5
     # via
@@ -108,7 +108,7 @@ pydantic==2.12.5
     #   geojson-pydantic
 pydantic-core==2.41.5
     # via pydantic
-pyjwt==2.10.1
+pyjwt==2.11.0
     # via redis
 python-dateutil==2.9.0.post0
     # via

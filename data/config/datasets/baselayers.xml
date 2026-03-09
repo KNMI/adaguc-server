@@ -18,7 +18,7 @@
     <Min>0.0</Min>
     <Max>1000</Max>
     <RenderMethod>polyline</RenderMethod>
-    <FeatureInterval match=".*" matchid="abbrev" bordercolor="#000000" borderwidth="1" linecolor="#000000"/>
+    <FeatureInterval match=".*" matchid="abbrev" bordercolor="#000000" borderwidth="1"/>
   </Style>
 
   <Layer>

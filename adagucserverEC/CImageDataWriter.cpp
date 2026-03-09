@@ -40,6 +40,8 @@
 #include "CDataPostProcessors/CDataPostProcessor_UVComponents.h"
 #include "GenericDataWarper/gdwFindPixelExtent.h"
 #include "traceTimings/traceTimings.h"
+#include "LayerTypeLiveUpdate/LayerTypeLiveUpdate.h"
+#include "utils/getFeatureInfoVirtualForSolarTerminator.h"
 
 CT::string months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 // #define CIMAGEDATAWRITER_DEBUG
@@ -450,10 +452,8 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
 
     if (w > h) {
       status = drawImage.createImage(h, w);
-      CDBDebug("Init legend %dx%d", h, w);
     } else {
       status = drawImage.createImage(w, h);
-      CDBDebug("Init legend %dx%d", h, w);
     }
 
     if (status != 0) return 1;
@@ -534,19 +534,19 @@ void CImageDataWriter::setValue(CDFType type, void *data, size_t ptr, double pix
   if (type == CDF_DOUBLE) ((double *)data)[ptr] = (double)pixel;
 }
 
-int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> &dataSources, int dataSourceIndex, int dX, int dY) {
+int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int dataSourceIndex, int dX, int dY) {
   CImageWarper imageWarper;
 #ifdef MEASURETIME
   StopWatch_Stop("getFeatureInfo");
 #endif
 
 #ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("[getFeatureInfo] %d, %d, [%d,%d]", dataSources.size(), dataSourceIndex, dX, dY);
+  CDBDebug("[getFeatureInfo] %lu, %d, [%d,%d]", dataSources.size(), dataSourceIndex, dX, dY);
 #endif
   // Create a new getFeatureInfoResult object and push it into the vector.
   int status = 0;
   isProfileData = false;
-  for (auto dataSource : dataSources) {
+  for (auto dataSource: dataSources) {
     if (dataSource == NULL) {
       CDBError("dataSource == NULL");
       return 1;
@@ -804,7 +804,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> &dataSources, in
             }
 
 #ifdef CIMAGEDATAWRITER_DEBUG
-            CDBDebug("getFeatureInfoResult->elements has %d elements\n", getFeatureInfoResult->elements.size());
+            CDBDebug("getFeatureInfoResult->elements has %lu elements\n", getFeatureInfoResult->elements.size());
 #endif
             // Retrieve corresponding values.
             //       #ifdef CIMAGEDATAWRITER_DEBUG
@@ -823,7 +823,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> &dataSources, in
               }
 
 #ifdef CIMAGEDATAWRITER_DEBUG
-              CDBDebug("ptr = %d Dataobject = %d Timestep = %d", ptr, o, dataSource->getCurrentTimeStep());
+              CDBDebug("ptr = %lu Dataobject = %lu Timestep = %d", ptr, o, dataSource->getCurrentTimeStep());
 #endif
               dataSource->setTimeStep(step);
               double pixel = convertValue(dataSource->getDataObject(o)->cdfVariable->getType(), dataSource->getDataObject(o)->cdfVariable->data, ptr);
@@ -887,7 +887,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> &dataSources, in
                   if (featureIt != dataSource->getDataObject(o)->features.end()) {
                     CFeature *feature = &featureIt->second;
                     if (feature->paramMap.empty() == false) {
-                      for (auto [propertyName, propertyValue] : feature->paramMap) {
+                      for (auto [propertyName, propertyValue]: feature->paramMap) {
                         GetFeatureInfoResult::Element *featureParam = new GetFeatureInfoResult::Element();
                         featureParam->dataSource = dataSource;
                         for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
@@ -930,20 +930,20 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> &dataSources, in
           }
 // reader.close();
 #ifdef CIMAGEDATAWRITER_DEBUG
-          CDBDebug("dataSource->getNumDataObjects()==%d", dataSource->getNumDataObjects());
+          CDBDebug("dataSource->getNumDataObjects()==%lu", dataSource->getNumDataObjects());
 #endif
         }
       }
     }
   }
 
-  for (auto gfiResult : getFeatureInfoResultList) {
+  for (auto gfiResult: getFeatureInfoResultList) {
     if (gfiResult->elements.size() > 0) {
       gfiResult->layerTitle = gfiResult->elements[0]->long_name;
     }
   }
 #ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("[/getFeatureInfo %d]", getFeatureInfoResultList.size());
+  CDBDebug("[/getFeatureInfo %lu]", getFeatureInfoResultList.size());
 #endif
   return 0;
 }
@@ -955,7 +955,7 @@ CImageDataWriter::IndexRange::IndexRange() {
   max = 0;
 }
 
-std::vector<CImageDataWriter::IndexRange> CImageDataWriter::getIndexRangesForRegex(CT::string match, CT::string *attributeValues, int n) {
+std::vector<CImageDataWriter::IndexRange> getIndexRangesForRegex(CT::string &match, const std::vector<std::string> &attributeValues) {
   std::vector<CImageDataWriter::IndexRange> ranges;
   int ret;
   regex_t regex;
@@ -964,7 +964,7 @@ std::vector<CImageDataWriter::IndexRange> CImageDataWriter::getIndexRangesForReg
   if (!ret) {
     int first = -1;
     int last = -1;
-    for (int i = 0; i < n; i++) {
+    for (size_t i = 0; i < attributeValues.size(); i++) {
       int matched = 1;
       if (attributeValues[i].length() > 0) {
         matched = regexec(&regex, attributeValues[i].c_str(), 0, NULL, 0);
@@ -993,6 +993,10 @@ std::vector<CImageDataWriter::IndexRange> CImageDataWriter::getIndexRangesForReg
   }
   regfree(&regex);
   return ranges;
+}
+
+int CImageDataWriter::getFeatureInfoVirtual(std::vector<CDataSource *> dataSources, int dataSourceIndex, int dX, int dY, CServerParams *srvParams) {
+  return getFeatureInfoVirtualForSolarTerminator(this, dataSources, dataSourceIndex, dX, dY, srvParams);
 }
 
 int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) {
@@ -1077,7 +1081,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
 #endif
     }
     if (numFeatures > 0) {
-      CT::string attributeValues[numFeatures];
+      std::vector<std::string> attributeValues(numFeatures);
       /* Loop through all configured FeatureInterval elements */
       for (size_t j = 0; j < styleConfiguration->featureIntervals.size(); j++) {
         CServerConfig::XMLE_FeatureInterval *featureInterval = styleConfiguration->featureIntervals[j];
@@ -1101,15 +1105,15 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
               The shadeinterval configuration can style these indices of the polygons with colors.
               Actual rendering of this is done in CImageNearestNeighbour with the _plot function
             */
-            std::vector<CImageDataWriter::IndexRange> ranges = getIndexRangesForRegex(featureInterval->attr.match, attributeValues, numFeatures);
+            std::vector<CImageDataWriter::IndexRange> ranges = getIndexRangesForRegex(featureInterval->attr.match, attributeValues);
             for (size_t i = 0; i < ranges.size(); i++) {
-              CServerConfig::XMLE_ShadeInterval *shadeInterval = new CServerConfig::XMLE_ShadeInterval();
-              styleConfiguration->shadeIntervals.push_back(shadeInterval);
-              shadeInterval->attr.min.print("%d", ranges[i].min);
-              shadeInterval->attr.max.print("%d", ranges[i].max);
-              shadeInterval->attr.fillcolor = featureInterval->attr.fillcolor;
-              shadeInterval->attr.bgcolor = featureInterval->attr.bgcolor;
-              shadeInterval->attr.label = featureInterval->attr.label;
+              auto shadeInterval = CServerConfig::XMLE_ShadeInterval();
+              shadeInterval.attr.min.print("%d", ranges[i].min);
+              shadeInterval.attr.max.print("%d", ranges[i].max);
+              shadeInterval.attr.fillcolor = featureInterval->attr.fillcolor;
+              shadeInterval.attr.bgcolor = featureInterval->attr.bgcolor;
+              shadeInterval.attr.label = featureInterval->attr.label;
+              styleConfiguration->shadeIntervals.push_back(std::move(shadeInterval));
             }
           }
         }
@@ -1183,7 +1187,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
         The bilinear Rendermethod can shade using ShadeInterval if renderhint in RenderSettings is set to RENDERHINT_DISCRETECLASSES
       */
       if (styleConfiguration != nullptr) {
-        for (auto renderSetting : styleConfiguration->renderSettings) {
+        for (auto renderSetting: styleConfiguration->renderSettings) {
           CT::string renderHint = renderSetting->attr.renderhint;
           if (renderHint.equals(RENDERHINT_DISCRETECLASSES)) {
             drawMap = false;   // Don't use continous legends with the bilinear renderer
@@ -1204,14 +1208,14 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
                                      styleConfiguration->contourIntervalL);
 
         for (size_t j = 0; j < styleConfiguration->shadeIntervals.size(); j++) {
-          CServerConfig::XMLE_ShadeInterval *shadeInterval = styleConfiguration->shadeIntervals[j];
-          if (shadeInterval->attr.min.empty() == false && shadeInterval->attr.max.empty() == false) {
-            bilinearSettings.printconcat("shading=min(%s)$max(%s)$", shadeInterval->attr.min.c_str(), shadeInterval->attr.max.c_str());
-            if (shadeInterval->attr.fillcolor.empty() == false) {
-              bilinearSettings.printconcat("$fillcolor(%s)$", shadeInterval->attr.fillcolor.c_str());
+          const auto &shadeInterval = styleConfiguration->shadeIntervals[j];
+          if (shadeInterval.attr.min.empty() == false && shadeInterval.attr.max.empty() == false) {
+            bilinearSettings.printconcat("shading=min(%s)$max(%s)$", shadeInterval.attr.min.c_str(), shadeInterval.attr.max.c_str());
+            if (shadeInterval.attr.fillcolor.empty() == false) {
+              bilinearSettings.printconcat("$fillcolor(%s)$", shadeInterval.attr.fillcolor.c_str());
             }
-            if (!shadeInterval->attr.bgcolor.empty()) {
-              bilinearSettings.printconcat("$bgcolor(%s)$", shadeInterval->attr.bgcolor.c_str());
+            if (!shadeInterval.attr.bgcolor.empty()) {
+              bilinearSettings.printconcat("$bgcolor(%s)$", shadeInterval.attr.bgcolor.c_str());
             }
             bilinearSettings.printconcat(";");
           }
@@ -1377,10 +1381,8 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
 #endif
   int status = 0;
 
-  CDBDebug("CImageDataWriter::addData");
-
 #ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("Draw data. dataSources.size() =  %d", dataSources.size());
+  CDBDebug("Draw data. dataSources.size() =  %lu", dataSources.size());
 #endif
 
   for (size_t j = 0; j < dataSources.size(); j++) {
@@ -1771,7 +1773,7 @@ int CImageDataWriter::end() {
   writerStatus = finished;
   if (srvParam->requestType == REQUEST_WMS_GETFEATUREINFO) {
 #ifdef CIMAGEDATAWRITER_DEBUG
-    CDBDebug("end, number of GF results: %d", getFeatureInfoResultList.size());
+    CDBDebug("end, number of GF results: %lu", getFeatureInfoResultList.size());
 #endif
     enum ResultFormats { textplain, texthtml, textxml, applicationvndogcgml, imagepng, json, imagepng_eprofile };
     ResultFormats resultFormat = texthtml;
@@ -2167,7 +2169,7 @@ int CImageDataWriter::end() {
         GetFeatureInfoResult::Element *e = g->elements[0];
 
         int nrDims = e->cdfDims.getNumDimensions();
-        int dimLookup[nrDims]; // position of each dimension in cdfDims.dimensions
+        std::vector<int> dimLookup(nrDims); // position of each dimension in cdfDims.dimensions
         // CDBDebug("nrDims = %d",nrDims);
         int timeDimIndex = -1;
         int endIndex = nrDims - 1;
@@ -2314,8 +2316,8 @@ int CImageDataWriter::end() {
 
       std::vector<PlotObject *> plotObjects;
 
-      std::vector<CT::string> features[nrOfLayers];
-      std::vector<int> numDims[nrOfLayers];
+      std::vector<std::vector<CT::string>> features(nrOfLayers);
+      std::vector<std::vector<int>> numDims(nrOfLayers);
       // Find number of features per layer
       for (size_t layerNr = 0; layerNr < nrOfLayers; layerNr++) {
         size_t nrOfElements = getFeatureInfoResultList[layerNr]->elements.size();
@@ -2908,10 +2910,10 @@ CColor CImageDataWriter::getPixelColorForValue(CDataSource *dataSource, float va
   if (!isNodata) {
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
     for (size_t j = 0; j < styleConfiguration->shadeIntervals.size(); j++) {
-      CServerConfig::XMLE_ShadeInterval *shadeInterval = styleConfiguration->shadeIntervals[j];
-      if (shadeInterval->attr.min.empty() == false && shadeInterval->attr.max.empty() == false) {
-        if ((val >= atof(shadeInterval->attr.min.c_str())) && (val < atof(shadeInterval->attr.max.c_str()))) {
-          return CColor(shadeInterval->attr.fillcolor.c_str());
+      const auto &shadeInterval = styleConfiguration->shadeIntervals[j];
+      if (shadeInterval.attr.min.empty() == false && shadeInterval.attr.max.empty() == false) {
+        if ((val >= atof(shadeInterval.attr.min.c_str())) && (val < atof(shadeInterval.attr.max.c_str()))) {
+          return CColor(shadeInterval.attr.fillcolor.c_str());
         }
       }
     }

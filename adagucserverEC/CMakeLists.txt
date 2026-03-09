@@ -98,6 +98,8 @@ add_library(
     utils/writelogfile.cpp
     utils/processCMDArgs.h
     utils/processCMDArgs.cpp
+    utils/getFeatureInfoVirtualForSolarTerminator.h
+    utils/getFeatureInfoVirtualForSolarTerminator.cpp
     Types/LayerMetadataType.h
     Types/CPointTypes.h
     GenericDataWarper/gdwDrawTriangle.h
@@ -106,8 +108,6 @@ add_library(
     GenericDataWarper/GDWDrawFunctionSettings.cpp   
     CGenericDataWarper.cpp
     CGenericDataWarper.h
-    CGenericDataWarperTools.cpp
-    CGenericDataWarperTools.h
     GenericDataWarper/gdwFindPixelExtent.cpp
     GenericDataWarper/gdwFindPixelExtent.h
     CDataPostProcessors/CDataPostProcessor_AddFeatures.cpp
@@ -120,22 +120,20 @@ add_library(
     CDataPostProcessors/CDPPGoes16Metadata.h
     CDataPostProcessors/CDataPostProcessor.cpp
     CDataPostProcessors/CDataPostProcessor.h
-    CDataPostProcessors/CDataPostProcessor_AXplusB.cpp
-    CDataPostProcessors/CDataPostProcessor_AXplusB.h
     CDataPostProcessors/CDataPostProcessor_Beaufort.cpp
     CDataPostProcessors/CDataPostProcessor_Beaufort.h
-    CDataPostProcessors/CDataPostProcessor_ToKnots.cpp
-    CDataPostProcessors/CDataPostProcessor_ToKnots.h
-    CDataPostProcessors/CDataPostProcessor_WindSpeedKnotsToMs.cpp
-    CDataPostProcessors/CDataPostProcessor_WindSpeedKnotsToMs.h
     CDataPostProcessors/CDataPostProcessor_ClipMinMax.cpp
     CDataPostProcessors/CDataPostProcessor_ClipMinMax.h
+    CDataPostProcessors/CDataPostProcessor_ConvertUnits.cpp
+    CDataPostProcessors/CDataPostProcessor_ConvertUnits.h
     CDataPostProcessors/CDataPostProcessor_IncludeLayer.cpp
     CDataPostProcessors/CDataPostProcessor_IncludeLayer.h
     CDataPostProcessors/CDataPostProcessor_Operator.cpp
     CDataPostProcessors/CDataPostProcessor_Operator.h
     CDataPostProcessors/CDataPostProcessor_SolarTerminator.h
     CDataPostProcessors/CDataPostProcessor_SolarTerminator.cpp
+    CDataPostProcessors/CDataPostProcessor_UnitsUtils.cpp
+    CDataPostProcessors/CDataPostProcessor_UnitsUtils.h
     CDataPostProcessors/solar/solar_terminator.h
     CDataPostProcessors/solar/solar_terminator.cpp
     CDataPostProcessors/CDataPostProcessor_WFP.h

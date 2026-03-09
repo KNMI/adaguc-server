@@ -30,6 +30,12 @@
 #include "CColor.h"
 #include <cfloat>
 
+// Struct for keeping settings for a datapostprocessor. Can be assigned to new structs by assigment operator. Also used in CDataPostProcessor.cpp
+struct XMLE_DataPostProcAttributes {
+  int postProcIndexInLayer = 0;
+  CT::string a, b, c, units, algorithm, mode, name, select, standard_name, long_name, variable, directionname, speedname, from_units, offset, stride;
+};
+
 class CServerConfig : public CXMLObjectInterface {
 public:
   class XMLE_palette : public CXMLObjectInterface {
@@ -681,7 +687,7 @@ public:
     }
     class Cattr {
     public:
-      CT::string enableautoopendap, enablelocalfile, enablecache;
+      CT::string enableautoopendap, enablelocalfile;
     } attr;
 
     CXMLObjectInterface *addElement(const char *name) {
@@ -696,9 +702,6 @@ public:
     bool addAttribute(const char *attrname, const char *attrvalue) {
       if (equals("enableautoopendap", attrname)) {
         attr.enableautoopendap.copy(attrvalue);
-        return true;
-      } else if (equals("enablecache", attrname)) {
-        attr.enablecache.copy(attrvalue);
         return true;
       } else if (equals("enablelocalfile", attrname)) {
         attr.enablelocalfile.copy(attrvalue);
@@ -912,10 +915,7 @@ public:
 
   class XMLE_DataPostProc : public CXMLObjectInterface {
   public:
-    class Cattr {
-    public:
-      CT::string a, b, c, units, algorithm, mode, name, select, standard_name, long_name, variable;
-    } attr;
+    XMLE_DataPostProcAttributes attr;
     bool addAttribute(const char *attrname, const char *attrvalue) {
       if (equals("a", attrname)) {
         attr.a.copy(attrvalue);
@@ -949,6 +949,21 @@ public:
         return true;
       } else if (equals("algorithm", attrname)) {
         attr.algorithm.copy(attrvalue);
+        return true;
+      } else if (equals("directionname", attrname)) {
+        attr.directionname.copy(attrvalue);
+        return true;
+      } else if (equals("speedname", attrname)) {
+        attr.speedname.copy(attrvalue);
+        return true;
+      } else if (equals("from_units", attrname)) {
+        attr.from_units.copy(attrvalue);
+        return true;
+      } else if (equals("offset", attrname)) {
+        attr.offset.copy(attrvalue);
+        return true;
+      } else if (equals("stride", attrname)) {
+        attr.stride.copy(attrvalue);
         return true;
       }
       return false;

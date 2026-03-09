@@ -414,17 +414,11 @@ int CTime::init(std::string units, std::string calendar) {
     return 1;
   }
 
-  size_t l = units.length();
-  char szUnits[l + 1];
-  szUnits[l] = '\0';
-  for (size_t j = 0; j < l; j++) {
-    szUnits[j] = units[j];
-    if (szUnits[j] == 'U') szUnits[j] = 32;
-    if (szUnits[j] == 'T') szUnits[j] = 32;
-    if (szUnits[j] == 'C') szUnits[j] = 32;
-    if (szUnits[j] == 'Z') szUnits[j] = 32;
-  }
-  scanUnits = szUnits;
+  scanUnits = units;
+  scanUnits = CT::replace(scanUnits, "U", " ");
+  scanUnits = CT::replace(scanUnits, "T", " ");
+  scanUnits = CT::replace(scanUnits, "C", " ");
+  scanUnits = CT::replace(scanUnits, "Z", " ");
 
   if (utScan(scanUnits.c_str(), &dataunits) != 0) {
     CDBError("internal error: udu_fmt_time can't parse data unit string: %s", scanUnits.c_str());
@@ -885,8 +879,8 @@ CT::string CTime::currentDateTime() {
 }
 
 double CTime::quantizeTimeToISO8601(double offsetOrig, CT::string period, CT::string method) {
-  double offsetLow;
-  double offsetHigh;
+  double offsetLow = 0;
+  double offsetHigh = 0;
   // P1Y
   // P1D
   // PT1M
@@ -1144,4 +1138,37 @@ CTime::Date CTime::periodToDate(CT::string period) {
   dateOperator.second = hmsPeriodPart.substring(std::max({0, indexH + 1, indexMi + 1}), indexS == -1 ? 0 : indexS).toInt();
 
   return dateOperator;
+}
+
+std::string knmiH5TimeToISOString(std::string radarTime) {
+  // 22-JUN-2021;20:00:00.000 --> 20210622T200000
+  const std::vector<std::string> months = {"JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"};
+  auto timeUppercase = CT::trim(CT::toUpperCase(radarTime));
+  auto items = CT::split(timeUppercase, ";");
+  if (items.size() != 2) {
+    CDBError("Invalid time format: %s", radarTime.c_str());
+    return "";
+  }
+  auto leftPartItems = CT::split(items[0], "-");
+  auto rightPartItems = CT::split(items[1], ":");
+  if (leftPartItems.size() != 3) {
+    CDBError("Invalid time format: [%s] number of YMD is wrong [%lu], expected 3", radarTime.c_str(), leftPartItems.size());
+    return "";
+  }
+  if (rightPartItems.size() != 3) {
+    CDBError("Invalid time format: [%s] number of HMS is wrong [%lu], expected 3", radarTime.c_str(), rightPartItems.size());
+    return "";
+  }
+  auto day = leftPartItems[0];
+  auto monthStr = leftPartItems[1];
+  auto year = leftPartItems[2];
+  auto hour = rightPartItems[0];
+  auto minute = rightPartItems[1];
+  auto second = rightPartItems[2];
+  second.resize(2);
+
+  auto monthIndex = find_if(months.begin(), months.end(), [&monthStr](auto &m) { return m == monthStr; });
+  auto a = CT::printf("%s%02d%sT%s%s%s", year.c_str(), int(monthIndex - months.begin()) + 1, day.c_str(), hour.c_str(), minute.c_str(), second.c_str());
+  CDBDebug("Converted time [%s] to [%s]", radarTime.c_str(), a.c_str());
+  return a;
 }

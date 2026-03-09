@@ -406,7 +406,7 @@ void CImgWarpBilinear::render(CImageWarper *warper, CDataSource *sourceImage, CD
     if (enableBarb) {
       bool rendertextforvectors = false;
       if (styleConfiguration != nullptr) {
-        for (auto r : styleConfiguration->renderSettings) {
+        for (auto r: styleConfiguration->renderSettings) {
           if (r->attr.rendertextforvectors.equals("true")) {
             rendertextforvectors = true;
           }
@@ -528,7 +528,7 @@ void CImgWarpBilinear::smoothData(float *valueData, float fNodataValue, int smoo
   float *valueData2 = new float[W * H];
   int smw = smoothWindow;
   // Create distance window;
-  float distanceWindow[(smw + 1) * 2 * (smw + 1) * 2];
+  float *distanceWindow = new float[(smw + 1) * 2 * (smw + 1) * 2];
   float distanceAmmount = 0;
   int dWinP = 0;
   for (int y1 = -smw; y1 < smw + 1; y1++) {
@@ -573,6 +573,7 @@ void CImgWarpBilinear::smoothData(float *valueData, float fNodataValue, int smoo
   for (size_t p = 0; p < drawImageSize; p++) {
     valueData[p] = valueData2[p];
   }
+  delete[] distanceWindow;
   delete[] valueData2;
 #ifdef CImgWarpBilinear_TIME
   StopWatch_Stop("[/SmoothData]");
@@ -589,7 +590,7 @@ int CImgWarpBilinear::set(const char *pszSettings) {
   if (settings.empty()) return 0;
 
   auto nodes = settings.split(";");
-  for (auto &node : nodes) {
+  for (auto &node: nodes) {
     auto values = node.split("=");
     if (values.size() < 2) continue;
 
@@ -641,12 +642,12 @@ int CImgWarpBilinear::set(const char *pszSettings) {
     if (values[0].equals("shading")) {
       CColor fillcolor = CColor(0, 0, 0, 0);
       CColor bgColor = CColor(0, 0, 0, 0);
-      float max, min;
+      float max = 0, min = 0;
       bool foundColor = false;
       bool hasBGColor = false;
 
       auto shadeSettings = values[1].split("$");
-      for (auto &shadeSetting : shadeSettings) {
+      for (auto &shadeSetting: shadeSettings) {
         auto kvp = shadeSetting.split("(");
         if (kvp.size() < 2) continue;
         if (kvp[0].equals("min")) min = kvp[1].toFloat();
@@ -681,7 +682,7 @@ int CImgWarpBilinear::set(const char *pszSettings) {
       CT::string dashing;
 
       auto lineSettings = values[1].split("$");
-      for (auto &lineSetting : lineSettings) {
+      for (auto &lineSetting: lineSettings) {
         auto kvp = lineSetting.split("(");
         if (kvp.size() < 2) continue;
 
@@ -1224,6 +1225,7 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
       }
     }
     lineMask = lineMask + lineMask;
+    delete[] dashes;
   }
 
 #ifdef CImgWarpBilinear_DEBUG

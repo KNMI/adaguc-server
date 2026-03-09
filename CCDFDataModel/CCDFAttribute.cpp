@@ -63,14 +63,13 @@ int CDF::Attribute::setData(Attribute *attribute) {
 }
 int CDF::Attribute::setData(CDFType type, const void *dataToSet, size_t dataLength) {
 
-  freeData();
-
+  this->freeData();
   length = dataLength;
   this->type = type;
   if (dataLength == 0) {
     return 0;
   }
-  allocateData(length);
+  this->allocateData(length);
   if (type == CDF_CHAR || type == CDF_UBYTE || type == CDF_BYTE) memcpy(data, dataToSet, length);
   if (type == CDF_SHORT || type == CDF_USHORT) memcpy(data, dataToSet, length * sizeof(short));
   if (type == CDF_INT || type == CDF_UINT) memcpy(data, dataToSet, length * sizeof(int));
@@ -193,14 +192,14 @@ void CDF::Attribute::freeData() {
         vardata[j] = nullptr;
       }
     }
-    CDF::freeData(&data);
+    free(data);
     data = nullptr;
   }
   length = 0;
 }
 
 void CDF::Attribute::allocateData(size_t size) {
-  freeData();
+  this->freeData();
   CDF::allocateData(type, &data, size);
   length = size;
 }

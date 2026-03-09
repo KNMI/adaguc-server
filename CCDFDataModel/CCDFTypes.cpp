@@ -110,15 +110,16 @@ void CDF::getCDataTypeName(char *name, const size_t maxlen, const int type) {
   if (type == CDF_STRING) snprintf(name, maxlen, "char*");
 }
 
-void CDF::getErrorMessage(char *errorMessage, const size_t maxlen, const int errorCode) {
-  snprintf(errorMessage, maxlen, "CDF_E_UNDEFINED");
-  if (errorCode == CDF_E_NONE) snprintf(errorMessage, maxlen, "CDF_E_NONE");
-  if (errorCode == CDF_E_DIMNOTFOUND) snprintf(errorMessage, maxlen, "CDF_E_DIMNOTFOUND");
-  if (errorCode == CDF_E_ATTNOTFOUND) snprintf(errorMessage, maxlen, "CDF_E_ATTNOTFOUND");
-  if (errorCode == CDF_E_VARNOTFOUND) snprintf(errorMessage, maxlen, "CDF_E_VARNOTFOUND");
-  if (errorCode == CDF_E_NRDIMSNOTEQUAL) snprintf(errorMessage, maxlen, "CDF_E_NRDIMSNOTEQUAL");
-  if (errorCode == CDF_E_VARHASNOPARENT) snprintf(errorMessage, maxlen, "CDF_E_VARHASNOPARENT");
-  if (errorCode == CDF_E_VARHASNODATA) snprintf(errorMessage, maxlen, "CDF_E_VARHASNODATA");
+std::string CDF::getErrorMessage(const int errorCode) {
+  std::string errorMessage = "CDF_E_UNDEFINED";
+  if (errorCode == CDF_E_NONE) errorMessage = "CDF_E_NONE";
+  if (errorCode == CDF_E_DIMNOTFOUND) errorMessage = "CDF_E_DIMNOTFOUND";
+  if (errorCode == CDF_E_ATTNOTFOUND) errorMessage = "CDF_E_ATTNOTFOUND";
+  if (errorCode == CDF_E_VARNOTFOUND) errorMessage = "CDF_E_VARNOTFOUND";
+  if (errorCode == CDF_E_NRDIMSNOTEQUAL) errorMessage = "CDF_E_NRDIMSNOTEQUAL";
+  if (errorCode == CDF_E_VARHASNOPARENT) errorMessage = "CDF_E_VARHASNOPARENT";
+  if (errorCode == CDF_E_VARHASNODATA) errorMessage = "CDF_E_VARHASNODATA";
+  return errorMessage;
 }
 
 CT::string CDF::getCDFDataTypeName(const int type) {
@@ -126,17 +127,6 @@ CT::string CDF::getCDFDataTypeName(const int type) {
   getCDFDataTypeName(data, 99, type);
   CT::string d = data;
   return d;
-}
-void CDF::getErrorMessage(CT::string *errorMessage, const int errorCode) {
-  char msg[1024];
-  getErrorMessage(msg, 1023, errorCode);
-  errorMessage->copy(msg);
-}
-
-CT::string CDF::getErrorMessage(int errorCode) {
-  CT::string errorMessage;
-  getErrorMessage(&errorMessage, errorCode);
-  return errorMessage;
 }
 
 int CDF::DataCopier::copy(void *destdata, CDFType destType, void *sourcedata, CDFType sourcetype, size_t destinationOffset, size_t sourceOffset, size_t length) {

@@ -27,6 +27,7 @@
 #include "CImgRenderPoints.h"
 #include "getPointStyle.h"
 #include "getVectorStyle.h"
+#include <CDataPostProcessors/CDataPostProcessor_UnitsUtils.h>
 
 struct ThinningInfo {
   bool doThinning = false;
@@ -69,7 +70,7 @@ void drawTextsForVector(CDrawImage *drawImage, CDataSource *dataSource, VectorSt
 ThinningInfo getThinningInfo(CStyleConfiguration *styleConfiguration) {
   ThinningInfo info;
   if (styleConfiguration != nullptr) {
-    for (auto thinning : styleConfiguration->thinningList) {
+    for (auto thinning: styleConfiguration->thinningList) {
       if (!thinning->attr.radius.empty()) {
         info.doThinning = true;
         info.thinningRadius = thinning->attr.radius.toInt();
@@ -142,18 +143,15 @@ void renderVectorPoints(std::vector<size_t> thinnedPointIndexList, CImageWarper 
   float fillValueObjectTwo = dataSource->getDataObject(1)->hasNodataValue ? dataSource->getDataObject(1)->dfNodataValue : NAN;
 
   CT::string units = dataSource->getDataObject(0)->getUnits();
-  bool toKnots = false;
-  if (!(units.equalsIgnoreCase("kt") || units.equalsIgnoreCase("kts") || units.equalsIgnoreCase("knot"))) {
-    toKnots = true;
-  }
+  bool toKnots = !isKnotsUnit(units); // Check if conversion to knots is needed.
 
   // Make a list of vector style objects based on the configuration.
   std::vector<VectorStyle> vectorStyles;
-  for (auto cfgVectorStyle : styleConfiguration->vectorIntervals) {
+  for (auto cfgVectorStyle: styleConfiguration->vectorIntervals) {
     vectorStyles.push_back(getVectorStyle(cfgVectorStyle, dataSource->srvParams->cfg));
   }
 
-  for (auto pointIndex : thinnedPointIndexList) {
+  for (auto pointIndex: thinnedPointIndexList) {
     auto pointStrength = &(*p1)[pointIndex];
     auto pointDirection = &(*p2)[pointIndex];
     auto strength = pointStrength->v;
@@ -165,7 +163,7 @@ void renderVectorPoints(std::vector<size_t> thinnedPointIndexList, CImageWarper 
     // Adjust direction based on projection settings
     direction += warper->getRotation(*pointStrength);
 
-    for (auto vectorStyle : vectorStyles) {
+    for (auto vectorStyle: vectorStyles) {
       if (!(strength >= vectorStyle.min && strength < vectorStyle.max)) continue;
       // Draw symbol barb, vector or disc.
       if (vectorStyle.drawBarb) {
@@ -316,7 +314,7 @@ CColor getDrawPointColor(CDataSource *dataSource, CDrawImage *drawImage, float v
   return drawImage->getColorForIndex(pointColorIndex);
 }
 
-void drawSymbolForPoint(CDrawImage *drawImage, std::map<std::string, CDrawImage *> symbolCache, std::string symbolFile, CServerConfig::XMLE_SymbolInterval *symbolInterval, int x, int y) {
+void drawSymbolForPoint(CDrawImage *drawImage, std::map<std::string, CDrawImage *> &symbolCache, std::string symbolFile, CServerConfig::XMLE_SymbolInterval *symbolInterval, int x, int y) {
   if (symbolFile.length() == 0) return;
 
   CDrawImage *symbol = NULL;
@@ -413,10 +411,7 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
     doneMatrixMaxPerSector = pointStyle.maxPointsPerCell;
   }
 
-  unsigned char doneMatrix[doneMatrixW * doneMatrixH];
-  for (size_t j = 0; j < size_t(doneMatrixW * doneMatrixH); j++) {
-    doneMatrix[j] = 0;
-  }
+  std::vector<unsigned char> doneMatrix(doneMatrixW * doneMatrixH, 0);
 
   float fillValueObjectOne = dataSource->getDataObject(0)->hasNodataValue ? dataSource->getDataObject(0)->dfNodataValue : NAN;
   for (size_t dataObjectIndex = 0; dataObjectIndex < dataSource->getNumDataObjects(); dataObjectIndex++) {
@@ -430,7 +425,7 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
     if (pts == nullptr) continue;
     size_t numPoints = pts->size();
 
-    for (auto pointIndex : thinnedPointIndexList) {
+    for (auto pointIndex: thinnedPointIndexList) {
       if (pointIndex >= numPoints) continue;
       auto pointValue = &(*pts)[pointIndex];
       float value = pointValue->v;
@@ -443,7 +438,10 @@ void renderSinglePoints(std::vector<size_t> thinnedPointIndexList, CDataSource *
       if (dataType == CDF_STRING) {
         if (dataObjectIndex == 0) {
           if (pointStyle.discRadius > 0) {
-            drawImage->circle(x, station_y, pointStyle.discRadius + 1, pointStyle.lineColor, 0.65);
+            drawImage->setDisc(x, station_y, float(pointStyle.discRadius), pointStyle.fillColor, pointStyle.lineColor);
+          }
+          if (pointStyle.dot) {
+            drawImage->circle(x, station_y, 1, pointStyle.lineColor, pointStyle.discRadius == 0 ? 0.65 : 1);
           }
         }
         if (pointValue->paramList.size() > 0) {
@@ -509,9 +507,9 @@ std::unordered_set<std::string> shouldUseFilterPoints(CStyleConfiguration *style
   std::unordered_set<std::string> usePoints;
 
   if (styleConfiguration->filterPointList.size() == 0) return usePoints;
-  for (auto filterPoint : styleConfiguration->filterPointList) {
+  for (auto filterPoint: styleConfiguration->filterPointList) {
     if (!filterPoint->attr.use.empty()) {
-      for (const auto &token : filterPoint->attr.use.split(",")) {
+      for (const auto &token: filterPoint->attr.use.split(",")) {
         usePoints.insert(token.c_str());
       }
     }
@@ -528,7 +526,7 @@ void renderSingleVolumes(std::vector<size_t> thinnedPointIndexList, CDataSource 
     if (dataObject == nullptr) continue;
     std::vector<PointDVWithLatLon> *pts = &dataObject->points;
 
-    for (auto pointIndex : thinnedPointIndexList) {
+    for (auto pointIndex: thinnedPointIndexList) {
       auto pointValue = &(*pts)[pointIndex];
       float value = pointValue->v;
       if (shouldSkipPoint(styleConfiguration, pointStyle, value, fillValueObjectOne)) continue;
@@ -553,7 +551,7 @@ void renderSingleSymbols(std::vector<size_t> thinnedPointIndexList, CDataSource 
     auto dataObject = dataSource->getDataObject(dataObjectIndex);
     if (dataObject == nullptr) continue;
     std::vector<PointDVWithLatLon> *pts = &dataObject->points;
-    for (auto pointIndex : thinnedPointIndexList) {
+    for (auto pointIndex: thinnedPointIndexList) {
       auto pointValue = &(*pts)[pointIndex];
       float value = pointValue->v;
       if (shouldSkipPoint(styleConfiguration, pointStyle, value, fillValueObjectOne)) continue;
@@ -561,7 +559,7 @@ void renderSingleSymbols(std::vector<size_t> thinnedPointIndexList, CDataSource 
       int x = pointValue->x;
       int y = dataSource->srvParams->geoParams.height - pointValue->y;
 
-      for (auto symbolInterval : styleConfiguration->symbolIntervals) {
+      for (auto symbolInterval: styleConfiguration->symbolIntervals) {
         if (!shouldDrawSymbol(symbolInterval, value)) continue;
 
         std::string symbolFile = symbolInterval->attr.file.c_str();
@@ -575,7 +573,7 @@ void renderSingleSymbols(std::vector<size_t> thinnedPointIndexList, CDataSource 
     }
   }
 
-  for (const auto &entry : symbolCache) {
+  for (const auto &entry: symbolCache) {
     delete entry.second;
   }
 }
@@ -588,7 +586,7 @@ void renderSingleDiscs(std::vector<size_t> thinnedPointIndexList, CDataSource *d
     if (dataObject == nullptr) continue;
     std::vector<PointDVWithLatLon> *pts = &dataObject->points;
 
-    for (auto pointIndex : thinnedPointIndexList) {
+    for (auto pointIndex: thinnedPointIndexList) {
       auto pointValue = &(*pts)[pointIndex];
       float value = pointValue->v;
       if (shouldSkipPoint(styleConfiguration, pointStyle, value, fillValueObjectOne)) continue;
@@ -614,7 +612,7 @@ void renderSingleDot(std::vector<size_t> thinnedPointIndexList, CDataSource *dat
     if (dataObject == nullptr) continue;
     std::vector<PointDVWithLatLon> *pts = &dataObject->points;
 
-    for (auto pointIndex : thinnedPointIndexList) {
+    for (auto pointIndex: thinnedPointIndexList) {
       auto pointValue = &(*pts)[pointIndex];
       float value = pointValue->v;
       if (shouldSkipPoint(styleConfiguration, pointStyle, value, fillValueObjectOne)) continue;
@@ -636,7 +634,7 @@ void CImgRenderPoints::render(CImageWarper *warper, CDataSource *dataSource, CDr
   std::unordered_set<std::string> usePoints = shouldUseFilterPoints(styleConfiguration);
   ThinningInfo thinningInfo = getThinningInfo(styleConfiguration);
 
-  for (auto pointConfig : styleConfiguration->pointIntervals) {
+  for (auto pointConfig: styleConfiguration->pointIntervals) {
     PointStyle pointStyle = getPointStyle(pointConfig, dataSource->srvParams->cfg);
     auto thinnedPointIndexList = doThinningGetIndices(dataSource->getDataObject(0)->points, thinningInfo.doThinning, thinningInfo.thinningRadius, usePoints);
     if (dataSource->debug) {
@@ -705,10 +703,10 @@ CColor getPixelColorForValue(CDrawImage *drawImage, CDataSource *dataSource, flo
   }
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
   if (!isNodata) {
-    for (auto shadeInterval : styleConfiguration->shadeIntervals) {
-      if (shadeInterval->attr.min.empty() == false && shadeInterval->attr.max.empty() == false) {
-        if ((val >= atof(shadeInterval->attr.min.c_str())) && (val < atof(shadeInterval->attr.max.c_str()))) {
-          return CColor(shadeInterval->attr.fillcolor.c_str());
+    for (const auto &shadeInterval: styleConfiguration->shadeIntervals) {
+      if (shadeInterval.attr.min.empty() == false && shadeInterval.attr.max.empty() == false) {
+        if ((val >= atof(shadeInterval.attr.min.c_str())) && (val < atof(shadeInterval.attr.max.c_str()))) {
+          return CColor(shadeInterval.attr.fillcolor.c_str());
         }
       }
     }

@@ -2,6 +2,7 @@
 """
 This class contains tests to test the adaguc-server binary executable file. This is similar to black box testing, it tests the behaviour of the server software. It configures the server and checks if the response is OK.
 """
+
 import json
 import os
 import os.path
@@ -27,16 +28,9 @@ class TestWMSTimeSeries(unittest.TestCase):
     def test_timeseries_adaguc_tests_arcus_uwcw_air_temperature_hagl(self):
         AdagucTestTools().cleanTempDir()
 
-        config = (
-            ADAGUC_PATH
-            + "/data/config/adaguc.tests.dataset.xml,"
-            + ADAGUC_PATH
-            + "/data/config/datasets/adaguc.tests.arcus_uwcw.xml"
-        )
+        config = ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," + ADAGUC_PATH + "/data/config/datasets/adaguc.tests.arcus_uwcw.xml"
         # pylint: disable=unused-variable
-        status, data, headers = AdagucTestTools().runADAGUCServer(
-            args=["--updatedb", "--config", config], env=self.env, isCGI=False
-        )
+        status, data, headers = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", config], env=self.env, isCGI=False)
         self.assertEqual(status, 0)
 
         filename = "test_WMSGetFeatureInfoTimeSeries_arcus_uwcw_air_temperature_hagl.json"
@@ -51,8 +45,6 @@ class TestWMSTimeSeries(unittest.TestCase):
             data.getvalue(),
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
-
-
 
     def test_WMSGetFeatureInfo_timeseries_5dims_json(self):
         AdagucTestTools().cleanTempDir()
@@ -81,7 +73,6 @@ class TestWMSTimeSeries(unittest.TestCase):
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
 
-
     def test_WMSGetFeatureInfo_timeseries_forecastreferencetime_json(self):
         AdagucTestTools().cleanTempDir()
         filename = "test_WMSGetFeatureInfo_timeseries_forecastreferencetime.json"
@@ -97,31 +88,17 @@ class TestWMSTimeSeries(unittest.TestCase):
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
         filename = "test_WMSGetFeatureInfo_timeseries_forecastreferencetime_json_WMSGetCapabilities_testdatanc.xml"
-        status, data, headers = AdagucTestTools().runADAGUCServer(
-            "source=testdata.nc&SERVICE=WMS&request=getcapabilities", env=self.env
-        )
+        status, data, headers = AdagucTestTools().runADAGUCServer("source=testdata.nc&SERVICE=WMS&request=getcapabilities", env=self.env)
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        self.assertTrue(
-            AdagucTestTools().compareGetCapabilitiesXML(
-                self.testresultspath + filename, self.expectedoutputsspath + filename
-            )
-        )
-
+        self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename))
 
     def test_WMSGetFeatureInfo_KNMIHDF5_echotops_RAD_NL25_ETH_NA_TOPS(self):
         AdagucTestTools().cleanTempDir()
-        config = (
-            ADAGUC_PATH
-            + "/data/config/adaguc.tests.dataset.xml,"
-            + ADAGUC_PATH
-            + "/data/config/datasets/adaguc.KNMIHDF5.test.xml"
-        )
+        config = ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," + ADAGUC_PATH + "/data/config/datasets/adaguc.KNMIHDF5.test.xml"
         env = {"ADAGUC_CONFIG": config}
         # pylint: disable=unused-variable
-        status, data, headers = AdagucTestTools().runADAGUCServer(
-            args=["--updatedb", "--config", config], env=self.env, isCGI=False
-        )
+        status, data, headers = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", config], env=self.env, isCGI=False)
         self.assertEqual(status, 0)
 
         filename = "test_WMSGetFeatureInfo_KNMIHDF5_echotops_RAD_NL25_ETH_NA_TOPS.json"
@@ -136,20 +113,12 @@ class TestWMSTimeSeries(unittest.TestCase):
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
 
-
     def test_WMSGetFeatureInfo_KNMIHDF5_echotops_RAD_NL25_ETH_NA_GRID(self):
         AdagucTestTools().cleanTempDir()
-        config = (
-            ADAGUC_PATH
-            + "/data/config/adaguc.tests.dataset.xml,"
-            + ADAGUC_PATH
-            + "/data/config/datasets/adaguc.KNMIHDF5.test.xml"
-        )
+        config = ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," + ADAGUC_PATH + "/data/config/datasets/adaguc.KNMIHDF5.test.xml"
         env = {"ADAGUC_CONFIG": config}
         # pylint: disable=unused-variable
-        status, data, headers = AdagucTestTools().runADAGUCServer(
-            args=["--updatedb", "--config", config], env=self.env, isCGI=False
-        )
+        status, data, headers = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", config], env=self.env, isCGI=False)
         self.assertEqual(status, 0)
 
         filename = "test_WMSGetFeatureInfo_KNMIHDF5_echotops_RAD_NL25_ETH_NA_GRID.json"
@@ -164,20 +133,12 @@ class TestWMSTimeSeries(unittest.TestCase):
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
 
-
     def test_timeseries_adaguc_tests_arcus_uwcw_wind_kts(self):
         AdagucTestTools().cleanTempDir()
 
-        config = (
-            ADAGUC_PATH
-            + "/data/config/adaguc.tests.dataset.xml,"
-            + ADAGUC_PATH
-            + "/data/config/datasets/adaguc.tests.arcus_uwcw.xml"
-        )
+        config = ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," + ADAGUC_PATH + "/data/config/datasets/adaguc.tests.arcus_uwcw.xml"
         # pylint: disable=unused-variable
-        status, data, headers = AdagucTestTools().runADAGUCServer(
-            args=["--updatedb", "--config", config], env=self.env, isCGI=False
-        )
+        status, data, headers = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", config], env=self.env, isCGI=False)
         self.assertEqual(status, 0)
 
         filename = "test_WMSGetFeatureInfoTimeSeries_arcus_uwcw_wind_speed_hagl_convertedtokts.json"
@@ -196,16 +157,9 @@ class TestWMSTimeSeries(unittest.TestCase):
     def test_timeseries_adaguc_tests_arcus_uwcw_wind_kts_to_ms(self):
         AdagucTestTools().cleanTempDir()
 
-        config = (
-            ADAGUC_PATH
-            + "/data/config/adaguc.tests.dataset.xml,"
-            + ADAGUC_PATH
-            + "/data/config/datasets/adaguc.tests.arcus_uwcw.xml"
-        )
+        config = ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," + ADAGUC_PATH + "/data/config/datasets/adaguc.tests.arcus_uwcw.xml"
         # pylint: disable=unused-variable
-        status, data, headers = AdagucTestTools().runADAGUCServer(
-            args=["--updatedb", "--config", config], env=self.env, isCGI=False
-        )
+        status, data, headers = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", config], env=self.env, isCGI=False)
         self.assertEqual(status, 0)
 
         filename = "test_WMSGetFeatureInfoTimeSeries_arcus_uwcw_wind_speed_hagl_convertedtoms.json"
@@ -221,20 +175,12 @@ class TestWMSTimeSeries(unittest.TestCase):
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
 
-
     def test_timeseries_adaguc_tests_arcus_uwcw_wind_kts_to_ms_wind_speed_hagl_ms_wrong_dim_order(self):
         AdagucTestTools().cleanTempDir()
 
-        config = (
-            ADAGUC_PATH
-            + "/data/config/adaguc.tests.dataset.xml,"
-            + ADAGUC_PATH
-            + "/data/config/datasets/adaguc.tests.arcus_uwcw.xml"
-        )
+        config = ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," + ADAGUC_PATH + "/data/config/datasets/adaguc.tests.arcus_uwcw.xml"
         # pylint: disable=unused-variable
-        status, data, headers = AdagucTestTools().runADAGUCServer(
-            args=["--updatedb", "--config", config], env=self.env, isCGI=False
-        )
+        status, data, headers = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", config], env=self.env, isCGI=False)
         self.assertEqual(status, 0)
 
         filename = "test_WMSGetFeatureInfoTimeSeries_arcus_uwcw_wind_speed_hagl_convertedtoms_wrong_order.json"
@@ -250,20 +196,12 @@ class TestWMSTimeSeries(unittest.TestCase):
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
 
-
     def test_timeseries_adaguc_tests_arcus_uwcw_wind_kts_to_ms_member_3(self):
         AdagucTestTools().cleanTempDir()
 
-        config = (
-            ADAGUC_PATH
-            + "/data/config/adaguc.tests.dataset.xml,"
-            + ADAGUC_PATH
-            + "/data/config/datasets/adaguc.tests.arcus_uwcw.xml"
-        )
+        config = ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," + ADAGUC_PATH + "/data/config/datasets/adaguc.tests.arcus_uwcw.xml"
         # pylint: disable=unused-variable
-        status, data, headers = AdagucTestTools().runADAGUCServer(
-            args=["--updatedb", "--config", config], env=self.env, isCGI=False
-        )
+        status, data, headers = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", config], env=self.env, isCGI=False)
         self.assertEqual(status, 0)
 
         filename = "test_WMSGetFeatureInfoTimeSeries_arcus_uwcw_wind_speed_hagl_convertedtoms_member_3.json"
@@ -282,11 +220,10 @@ class TestWMSTimeSeries(unittest.TestCase):
         # Check if member_3 is the same as in the multidim file from previous test:
         data_file_member_3 = json.loads(data.getvalue())[0]["data"]["2024-06-05T03:00:00Z"]
         filename_many_members = "test_WMSGetFeatureInfoTimeSeries_arcus_uwcw_wind_speed_hagl_convertedtoms.json"
-        with open(self.expectedoutputsspath+filename_many_members, encoding = 'utf-8') as fp:
+        with open(self.expectedoutputsspath + filename_many_members, encoding="utf-8") as fp:
             filename_many_members_data = json.load(fp)
         data_file_all_members = filename_many_members_data[0]["data"]["2024-06-05T03:00:00Z"]
         assert data_file_member_3 == data_file_all_members["3"]
-
 
     def test_timeseries_adaguc_tests_arcus_uwcw_ha43_dini_5p5km_10x8_air_temperature_pl(self):
         AdagucTestTools().cleanTempDir()
@@ -298,9 +235,7 @@ class TestWMSTimeSeries(unittest.TestCase):
             + "/data/config/datasets/test.uwcw_ha43_dini_5p5km_10x8.xml"
         )
         # pylint: disable=unused-variable
-        status, data, headers = AdagucTestTools().runADAGUCServer(
-            args=["--updatedb", "--config", config], env=self.env, isCGI=False
-        )
+        status, data, headers = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", config], env=self.env, isCGI=False)
         self.assertEqual(status, 0)
 
         filename = "test_WMSGetFeatureInfoTimeSeries_arcus_uwcw_ha43_dini_5p5km_10x8_air_temperature_pl.json"
@@ -312,7 +247,9 @@ class TestWMSTimeSeries(unittest.TestCase):
 
         # TODO Check why pressure levels sometimes have suffix .0 on different environments
         server_response = data.getvalue().decode("utf-8")
-        server_response = server_response.replace("500.0", "500").replace("700.0", "700").replace("850.0", "850").replace("925.0", "925").encode("utf-8")
+        server_response = (
+            server_response.replace("500.0", "500").replace("700.0", "700").replace("850.0", "850").replace("925.0", "925").encode("utf-8")
+        )
 
         AdagucTestTools().writetofile(self.testresultspath + filename, server_response)
         self.assertEqual(status, 0)
@@ -321,13 +258,10 @@ class TestWMSTimeSeries(unittest.TestCase):
         # print("---------------- 2 -----------------", file=sys.stderr)
         # print(json.loads(AdagucTestTools().readfromfile(self.expectedoutputsspath + filename)), file=sys.stderr)
         # print("---------------- 3 -----------------", file=sys.stderr)
-        assert  json.loads(server_response) == json.loads(AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
-        
-
-
+        assert json.loads(server_response) == json.loads(AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
 
     def test_wmsgetfeatureinfo_json_timeheight_profile_for_sorted_model_levels(self):
-      
+
         AdagucTestTools().cleanTempDir()
 
         config = (
@@ -337,9 +271,7 @@ class TestWMSTimeSeries(unittest.TestCase):
             + "/data/config/datasets/adaguc.tests.arcus_harmonie_sorted_model_levels.xml"
         )
         # pylint: disable=unused-variable
-        status, data, headers = AdagucTestTools().runADAGUCServer(
-            args=["--updatedb", "--config", config], env=self.env, isCGI=False
-        )
+        status, data, headers = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", config], env=self.env, isCGI=False)
         self.assertEqual(status, 0)
 
         filename = "test_WMSGetCapabilities_adaguc_arcus_harmonie_sorted_model_levels.xml"
@@ -350,12 +282,8 @@ class TestWMSTimeSeries(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        self.assertTrue(
-            AdagucTestTools().compareGetCapabilitiesXML(
-                self.testresultspath + filename, self.expectedoutputsspath + filename
-            )
-        )
-        
+        self.assertTrue(AdagucTestTools().compareGetCapabilitiesXML(self.testresultspath + filename, self.expectedoutputsspath + filename))
+
         filename = "test_WMSGetFeatureInfoTimeSeries_arcus_harmonie_sorted_model_levels.json"
 
         status, data, headers = AdagucTestTools().runADAGUCServer(
@@ -379,10 +307,7 @@ class TestWMSTimeSeries(unittest.TestCase):
             args=[
                 "--updatedb",
                 "--config",
-                ADAGUC_PATH
-                + "/data/config/adaguc.tests.dataset.xml,"
-                + ADAGUC_PATH
-                + "/data/config/datasets/adaguc.test.members.xml",
+                ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," + ADAGUC_PATH + "/data/config/datasets/adaguc.test.members.xml",
             ],
             isCGI=False,
         )
@@ -410,11 +335,10 @@ class TestWMSTimeSeries(unittest.TestCase):
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
         )
 
-
     def test_UWCW_DINI_windcomponents_GetMetadata(self):
         AdagucTestTools().cleanTempDir()
         AdagucTestTools().cleanPostgres()
-        
+
         filename = "test_UWCW_DINI_windcomponents_GetMetadata.json"
         config = ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"
         # pylint: disable=unused-variable
@@ -433,18 +357,16 @@ class TestWMSTimeSeries(unittest.TestCase):
             "service=wms&request=getmetadata&format=application/json",
             {"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.tests.dataset.xml"},
         )
-        
+
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        
+
         metadata_json = json.loads(data.getvalue())
-        
-        self.assertEqual(len(metadata_json["adaguc_tests_uwcwdini_windcomponents"]["wind-hagl"]["layer"]["variables"]),6)
-        
-        self.assertEqual(metadata_json["adaguc_tests_uwcwdini_windcomponents"]["wind-hagl"]["layer"]["layername"],"wind-hagl")
 
+        self.assertEqual(len(metadata_json["adaguc_tests_uwcwdini_windcomponents"]["wind-hagl"]["layer"]["variables"]), 6)
 
-        
+        self.assertEqual(metadata_json["adaguc_tests_uwcwdini_windcomponents"]["wind-hagl"]["layer"]["layername"], "wind-hagl")
+
     def test_UWCW_DINI_windcomponents_xwind_ywind_WMSGetMapBarbs(self):
         AdagucTestTools().cleanTempDir()
         filename = "test_UWCW_DINI_windcomponents_xwind_ywind_WMSGetMapBarbs.png"
@@ -475,7 +397,7 @@ class TestWMSTimeSeries(unittest.TestCase):
                 0.1,
             )
         )
-        
+
     def test_UWCW_DINI_windcomponents_xwind_ywind_WMSGetFeatureInfoTimeSeries(self):
         AdagucTestTools().cleanTempDir()
         filename = "test_UWCW_DINI_windcomponents_xwind_ywind_WMSGetFeatureInfoTimeSeries.json"
@@ -530,8 +452,8 @@ class TestWMSTimeSeries(unittest.TestCase):
         self.assertEqual(
             data.getvalue(),
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )        
-        
+        )
+
     def test_UWCW_DINI_windcomponents_xwind_ywind_WCSGetCoverage(self):
         AdagucTestTools().cleanTempDir()
         filename = "test_UWCW_DINI_windcomponents_xwind_ywind_WCSGetCoverage.nc"
@@ -555,20 +477,35 @@ class TestWMSTimeSeries(unittest.TestCase):
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
 
         self.assertEqual(status, 0)
-        
+
         # Check NetCDF file: Number of variables and global attribute
         ds = netCDF4.Dataset("filename.nc", memory=data.getvalue())
         self.assertEqual(ds.getncattr("convert_uv_components"), "metadata")
-        self.assertEqual(list(ds.variables), ['x', 'y', 'time', 'wind_at_10m', 'forecast_reference_time', 'crs', 'speed_component', 'direction_component', 'eastward_component', 'northward_component', 'x-wind-hagl', 'y-wind-hagl'])
+        self.assertEqual(
+            list(ds.variables),
+            [
+                "x",
+                "y",
+                "time",
+                "wind_at_10m",
+                "forecast_reference_time",
+                "crs",
+                "speed_component",
+                "direction_component",
+                "eastward_component",
+                "northward_component",
+                "x-wind-hagl",
+                "y-wind-hagl",
+            ],
+        )
 
-
-        
         # Do getmap request on the NetCDF file we just obtained via WCS, query the direction_component
         filename = "test_UWCW_DINI_windcomponents_xwind_ywind_GetMapOnWCSCoverage_direction_component.png"
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "source=TestWMSTimeSeries%2Ftest_UWCW_DINI_windcomponents_xwind_ywind_WCSGetCoverage%2Enc&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=direction_component&WIDTH=512HEIGHT=512&CRS=EPSG%3A3857&BBOX=-4787988.272387099,4425096.702571644,4348576.567740106,10946270.416926505&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&&DIM_wind_at_10m=10&time=2024-09-07T12%3A00%3A00Z&DIM_reference_time=2024-09-05T00%3A00%3A00Z&0.783935864573529",
-            {"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.autoresource.xml",
-             "ADAGUC_AUTOWMS_DIR":self.testresultspath},showLog=False)
+            {"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.autoresource.xml", "ADAGUC_AUTOWMS_DIR": self.testresultspath},
+            showLog=False,
+        )
         self.assertEqual(status, 0)
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertTrue(
@@ -579,13 +516,14 @@ class TestWMSTimeSeries(unittest.TestCase):
                 0.1,
             )
         )
-        
+
         # Do getmap request on the NetCDF file we just obtained via WCS, query the speed_component
         filename = "test_UWCW_DINI_windcomponents_xwind_ywind_GetMapOnWCSCoverage_speed_component.png"
         status, data, headers = AdagucTestTools().runADAGUCServer(
             "source=TestWMSTimeSeries%2Ftest_UWCW_DINI_windcomponents_xwind_ywind_WCSGetCoverage%2Enc&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=speed_component&WIDTH=512HEIGHT=512&CRS=EPSG%3A3857&BBOX=-4787988.272387099,4425096.702571644,4348576.567740106,10946270.416926505&STYLES=auto%2Fnearest&FORMAT=image/png&TRANSPARENT=TRUE&&DIM_wind_at_10m=10&time=2024-09-07T12%3A00%3A00Z&DIM_reference_time=2024-09-05T00%3A00%3A00Z&0.783935864573529",
-            {"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.autoresource.xml",
-             "ADAGUC_AUTOWMS_DIR":self.testresultspath},showLog=False)
+            {"ADAGUC_CONFIG": ADAGUC_PATH + "data/config/adaguc.autoresource.xml", "ADAGUC_AUTOWMS_DIR": self.testresultspath},
+            showLog=False,
+        )
         self.assertEqual(status, 0)
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertTrue(

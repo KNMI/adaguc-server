@@ -321,7 +321,7 @@
           {
             "label": "Wind speed at height above ground level",
             "standard_name": "wind_speed",
-            "units": "kts",
+            "units": "m/s",
             "variableName": "wind-speed-hagl"
           }
         ],
@@ -403,7 +403,89 @@
           {
             "label": "Wind speed at height above ground level",
             "standard_name": "wind_speed",
-            "units": "kts",
+            "units": "m/s",
+            "variableName": "wind-speed-hagl"
+          }
+        ],
+        "wmsgroup": ""
+      }
+    },
+    "wind_speed_hagl_ms_member_3_backandforth_multiple": {
+      "dims": {
+        "height_above_ground_level_in_m": {
+          "cdfName": "wind_at_hagl",
+          "defaultValue": "10",
+          "hasMultipleValues": 1,
+          "hidden": true,
+          "serviceName": "height_above_ground_level_in_m",
+          "type": "dimtype_none",
+          "units": "m",
+          "values": "10"
+        },
+        "member": {
+          "cdfName": "member",
+          "defaultValue": "3",
+          "hasMultipleValues": 1,
+          "hidden": true,
+          "serviceName": "member",
+          "type": "dimtype_custom",
+          "units": "-",
+          "values": "3"
+        },
+        "reference_time": {
+          "cdfName": "forecast_reference_time",
+          "defaultValue": "2024-06-05T03:00:00Z",
+          "hasMultipleValues": 1,
+          "hidden": false,
+          "serviceName": "reference_time",
+          "type": "dimtype_none",
+          "units": "ISO8601",
+          "values": "2024-06-05T03:00:00Z"
+        },
+        "time": {
+          "cdfName": "time",
+          "defaultValue": "2024-06-05T04:00:00Z",
+          "hasMultipleValues": 0,
+          "hidden": false,
+          "serviceName": "time",
+          "type": "dimtype_none",
+          "units": "ISO8601",
+          "values": "2024-06-05T04:00:00Z/2024-06-07T15:00:00Z/PT1H"
+        }
+      },
+      "layer": {
+        "abstract": "",
+        "collection": "hagl_member",
+        "enable_edr": true,
+        "gridspec": {
+          "bbox": [
+            237556.04779691307,
+            6429395.966709785,
+            1008078.3936105771,
+            7241407.977298031
+          ],
+          "cellsizex": 154104.4691627328,
+          "cellsizey": -162402.4021176491,
+          "height": 5,
+          "projstring": "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs",
+          "width": 5
+        },
+        "hidden": false,
+        "isqueryable": 1,
+        "latlonbox": [
+          2.1340022857099457,
+          49.902432406618686,
+          9.055722285710363,
+          54.37452297558314
+        ],
+        "layername": "wind_speed_hagl_ms_member_3_backandforth_multiple",
+        "nativeepsg": "PROJ4:%2Bproj%3Dmerc%20%2Ba%3D6378137%20%2Bb%3D6378137%20%2Blat_ts%3D0%2E0%20%2Blon_0%3D0%2E0%20%2Bx_0%3D0%2E0%20%2By_0%3D0%20%2Bk%3D1%2E0%20%2Bunits%3Dm%20%2Bnadgrids%3D@null%20%2Bwktext%20%20%2Bno_defs",
+        "title": "Test if we can use multiple datapostprocs",
+        "variables": [
+          {
+            "label": "Wind speed at height above ground level",
+            "standard_name": "wind_speed",
+            "units": "Somethingnew",
             "variableName": "wind-speed-hagl"
           }
         ],
@@ -485,7 +567,7 @@
           {
             "label": "Wind speed at height above ground level",
             "standard_name": "wind_speed",
-            "units": "kts",
+            "units": "m/s",
             "variableName": "wind-speed-hagl"
           }
         ],

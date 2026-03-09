@@ -490,7 +490,7 @@ int CRequest::process_wms_getmap_request() {
     if (j > 0) message.concat(",");
     message.printconcat("(%d) %s", j, srvParam->requestedLayerNames[j].c_str());
   }
-  CDBDebug(message.c_str());
+  CDBDebug("%s", message.c_str());
 #endif
   return process_all_layers();
 }
@@ -671,7 +671,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
                   CDBStore::Store *maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getClosestDataTimeToSystemTime(ogcDim->netCDFDimName.c_str(), tableName.c_str());
 
                   if (maxStore == NULL) {
-                    CDBDebug("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
+                    CDBError("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
                     throw InvalidDimensionValue;
                     //                     setExceptionType(InvalidDimensionValue);
                     //                     CDBError("Invalid dimension value for layer
@@ -686,7 +686,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
                   // For other dimensions than time take the latest
                   CDBStore::Store *maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getMax(ogcDim->netCDFDimName.c_str(), tableName.c_str());
                   if (maxStore == NULL) {
-                    CDBDebug("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
+                    CDBError("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
                     throw InvalidDimensionValue;
                     //                     setExceptionType(InvalidDimensionValue);
                     //                     CDBError("Invalid dimension value for layer
@@ -792,7 +792,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
         }
 
         if (maxStore == NULL) {
-          CDBDebug("No table with values for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
+          CDBError("No table with values for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
           throw InvalidDimensionValue;
         }
         ogcDim->value.copy(maxStore->getRecord(0)->get(0));
@@ -826,7 +826,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
         CT::string dimName(dataSource->cfgLayer->Dimension[i]->value.c_str());
         CT::string fixedValue = dataSource->cfgLayer->Dimension[i]->attr.fixvalue;
         dimName.toLowerCaseSelf();
-        for (auto &requiredDim : dataSource->requiredDims) {
+        for (auto &requiredDim: dataSource->requiredDims) {
           if (requiredDim->name.equals(dimName)) {
             CDBDebug("Forcing dimension %s from %s to %s", dimName.c_str(), requiredDim->value.c_str(), fixedValue.c_str());
             requiredDim->value = fixedValue;
@@ -838,12 +838,12 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
     }
 
     // Check if requested time dimensions use valid characters
-    for (auto &dim : dataSource->requiredDims) {
+    for (auto &dim: dataSource->requiredDims) {
       // FIXME: checkTimeFormat used to get called on every dim value, not just datetime. Check if this is required
       if (!dim->isATimeDimension) continue;
 
       auto dimValues = dim->value.split(",");
-      for (auto &dimValue : dimValues) {
+      for (auto &dimValue: dimValues) {
         if (!CServerParams::checkTimeFormat(dimValue)) {
           CDBError("Queried dimension %s=%s failed datetime regex", dim->name.c_str(), dim->value.c_str());
           throw InvalidDimensionValue;
@@ -869,13 +869,13 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
 #ifdef CREQUEST_DEBUG
   for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
     auto *requiredDim = dataSource->requiredDims[j];
-    CDBDebug("dataSource->requiredDims[%d][%s] = [%s] (%s)", j, requiredDim->name.c_str(), requiredDim->value.c_str(), requiredDim->netCDFDimName.c_str());
+    CDBDebug("dataSource->requiredDims[%lu][%s] = [%s] (%s)", j, requiredDim->name.c_str(), requiredDim->value.c_str(), requiredDim->netCDFDimName.c_str());
     CDBDebug("%s: %s === %s", requiredDim->name.c_str(), requiredDim->value.c_str(), requiredDim->queryValue.c_str());
   }
   CDBDebug("### [</fillDimValuesForDataSource>]");
 #endif
   bool allNonFixedDimensionsAreAsRequestedInQueryString = true;
-  for (auto requiredDim : dataSource->requiredDims) {
+  for (auto requiredDim: dataSource->requiredDims) {
     // CDBDebug("%s: [%s] === [%s], fixed:%d", requiredDim->name.c_str(), requiredDim->value.c_str(), requiredDim->queryValue.c_str(), requiredDim->hasFixedValue);
     if (!requiredDim->hasFixedValue && !requiredDim->value.equals(requiredDim->queryValue)) {
       allNonFixedDimensionsAreAsRequestedInQueryString = false;
@@ -923,12 +923,11 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
           maxQueryResultLimit = dataSource->cfgLayer->FilePath[0]->attr.maxquerylimit.toInt();
         }
       }
-      // CDBDebug("Using maxquerylimit %d", maxQueryResultLimit);
       store = CDBFactory::getDBAdapter(srvParam->cfg)->getFilesAndIndicesForDimensions(dataSource, maxQueryResultLimit, true);
     }
 
     if (store == NULL) {
-      CDBDebug("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
+      CDBError("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
       throw InvalidDimensionValue;
     }
     if (store->getSize() == 0) {
@@ -944,6 +943,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
         }
         return 0;
       }
+      CDBError("Store has no results. Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
       throw InvalidDimensionValue;
     }
 
@@ -952,7 +952,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
       // CDBDebug("Addstep");
       dataSource->addStep(record->get(0)->c_str());
 #ifdef CREQUEST_DEBUG
-      CDBDebug("Step %d: [%s]", k, record->get(0)->c_str());
+      CDBDebug("Step %lu: [%s]", k, record->get(0)->c_str());
 #endif
       // For each timesteps a new set of dimensions is added with corresponding dim array indices.
       for (size_t i = 0; i < dataSource->requiredDims.size(); i++) {
@@ -1087,6 +1087,7 @@ int CRequest::process_all_layers() {
 
       if (srvParam->requestType == REQUEST_WMS_GETFEATUREINFO) {
         if (firstDataSource->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
+          srvParam->dFound_BBOX = 1;
           layerTypeLiveUpdateRender(firstDataSource, srvParam);
         } else {
           CImageDataWriter imageDataWriter;
@@ -1105,7 +1106,6 @@ int CRequest::process_all_layers() {
         status = imageDataWriter.init(srvParam, firstDataSource, 1);
         if (status != 0) throw(__LINE__);
         bool rotate = srvParam->geoParams.width > srvParam->geoParams.height;
-        CDBDebug("creatinglegend %dx%d %d", srvParam->geoParams.width, srvParam->geoParams.height, rotate);
         status = imageDataWriter.createLegend(firstDataSource, &imageDataWriter.drawImage, rotate);
         if (status != 0) throw(__LINE__);
         status = imageDataWriter.end();
@@ -1672,7 +1672,7 @@ int CRequest::process_querystring() {
       srvParam->geoParams.height = int(((srvParam->geoParams.bbox.bottom - srvParam->geoParams.bbox.top) / srvParam->dfResY));
       srvParam->geoParams.height = abs(srvParam->geoParams.height);
 #ifdef CREQUEST_DEBUG
-      CDBDebug("Calculated width height based on resx resy %d,%d", srvParam->geoParams.dWidth, srvParam->geoParams.dHeight);
+      CDBDebug("Calculated width height based on resx resy %d,%d", srvParam->geoParams.width, srvParam->geoParams.height);
 #endif
     }
   }
@@ -1941,8 +1941,8 @@ int CRequest::process_querystring() {
         srvParam->geoParams.bbox.top = srvParam->geoParams.bbox.bottom;
         srvParam->geoParams.width = 1;
         srvParam->geoParams.height = 1;
-        srvParam->dX = 0;
-        srvParam->dY = 0;
+        srvParam->dX = -1;
+        srvParam->dY = -1;
         srvParam->requestType = REQUEST_WMS_GETFEATUREINFO;
       }
 
@@ -2283,7 +2283,7 @@ int CRequest::process_querystring() {
 
 int CRequest::updatedb(CT::string tailPath, CT::string layerPathToScan, int scanFlags, CT::string layerName) {
   int errorHasOccured = 0;
-  int status;
+  int status = 0;
   // Fill in all data sources from the configuration object
   size_t numberOfLayers = srvParam->cfg->Layer.size();
 
@@ -2332,6 +2332,10 @@ int CRequest::updatedb(CT::string tailPath, CT::string layerPathToScan, int scan
         CDBError("Could not update db for: %s", dataSources[j]->cfgLayer->Name[0]->value.c_str());
         errorHasOccured++;
       }
+    }
+    // We need to populate the metadata to be able to use EDR with live update datasets
+    if (dataSources[j]->dLayerType == CConfigReaderLayerTypeLiveUpdate) {
+      status = CDBFileScanner::updatedb(dataSources[j], tailPath, layerPathToScan, scanFlags);
     }
   }
   if (errorHasOccured) {
@@ -2596,9 +2600,10 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
       size_t numTimeSteps = (size_t)dataSources[dataSourceToUse]->getNumTimeSteps();
 
       int errcode;
-      pthread_t threads[numThreads];
+      std::vector<pthread_t> threads(numThreads);
+      std::vector<pthread_t> threadHandles(numThreads);
+      std::vector<CImageDataWriter_addData_args> args(numThreads);
 
-      CImageDataWriter_addData_args args[numThreads];
       for (int worker = 0; worker < numThreads; worker++) {
 
         for (size_t d = 0; d < dataSources.size(); d++) {
@@ -2849,7 +2854,7 @@ int CRequest::handleGetCoverageRequest(CDataSource *firstDataSource) {
   CT::string driverName = "ADAGUCNetCDF";
   setDimValuesForDataSource(firstDataSource, srvParam);
 
-  for (const auto &WCSFormat : srvParam->cfg->WCS[0]->WCSFormat) {
+  for (const auto &WCSFormat: srvParam->cfg->WCS[0]->WCSFormat) {
     if (srvParam->Format.equals(WCSFormat->attr.name.c_str())) {
       driverName.copy(WCSFormat->attr.driver.c_str());
       break;
@@ -2872,7 +2877,7 @@ int CRequest::handleGetCoverageRequest(CDataSource *firstDataSource) {
   }
   try {
     try {
-      for (auto dataSource : dataSources) {
+      for (auto dataSource: dataSources) {
         status = wcsWriter->init(srvParam, dataSource, firstDataSource->getNumTimeSteps());
         if (status != 0) throw(__LINE__);
       }
@@ -2883,7 +2888,7 @@ int CRequest::handleGetCoverageRequest(CDataSource *firstDataSource) {
     }
 
     for (int k = 0; k < firstDataSource->getNumTimeSteps(); k++) {
-      for (auto dataSource : dataSources) {
+      for (auto dataSource: dataSources) {
         dataSource->setTimeStep(k);
       }
 

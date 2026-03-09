@@ -4,6 +4,7 @@
 #include "CReporter.h"
 #include "CRequest.h"
 #include "CNetCDFDataWriter.h"
+#include <cdfVariableCache.h>
 
 int CCreateTiles::createTiles(CDataSource *dataSource, int scanFlags) {
   if (dataSource->isConfigured == false) {
@@ -120,16 +121,23 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
     CDBError("Unable to open input file for tiles: %s", dataSourceToTile->getFileName());
     return 1;
   }
-
+  // Enable cache for the variable to tile, to speed up reading data for each tile.
+  dataSourceToTile->getFirstAvailableDataObject()->cdfVariable->enableCache = true;
   // Extract time and set it.
   try {
-    auto var = dataSourceToTile->getFirstAvailableDataObject()->cdfObject->getVariable("time");
+    auto var = dataSourceToTile->getFirstAvailableDataObject()->cdfObject->getVariableNE("time");
+    if (var == nullptr) {
+      CDBError("No time variable found in the data source");
+      throw(CDF_E_VARNOTFOUND);
+    }
+    var->readData(false);
     double timeValue = var->getDataAt<double>(0);
     auto adagucTime = CTime::GetCTimeInstance(var);
     auto timeString = adagucTime->dateToISOString(adagucTime->getDate(timeValue));
     dataSourceToTile->requiredDims.push_back(new COGCDims("time", timeString));
     dataSourceToTile->getCDFDims()->addDimension("time", timeString.c_str(), 0);
   } catch (int e) {
+    CDBDebug("No time dimension found, creating a fake one with value 0 code [%s]", CDF::getErrorMessage(e).c_str());
     if (dataSourceToTile->requiredDims.size() == 0) {
       COGCDims *ogcDim = new COGCDims();
       dataSourceToTile->requiredDims.push_back(ogcDim);
@@ -200,6 +208,8 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
 
   // Should we really close the source data? For now we do.
   CDFObjectStore::getCDFObjectStore()->deleteCDFObject(fileToTile.c_str());
+
+  varCacheClear();
 
   return 0;
 };

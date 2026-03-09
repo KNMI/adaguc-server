@@ -187,9 +187,7 @@ public:
           try {
             destVar->setCDFObjectDim(srcVar, dimName);
           } catch (int e) {
-            char msg[255];
-            CDF::getErrorMessage(msg, 254, e);
-            CDBError("%s", msg);
+            CDBError("%s", CDF::getErrorMessage(e).c_str());
             throw(__LINE__);
           }
         } catch (int e) {

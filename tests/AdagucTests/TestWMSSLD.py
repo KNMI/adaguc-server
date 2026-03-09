@@ -42,9 +42,7 @@ class TestWMSSLD(unittest.TestCase):
         )
         self.assertEqual(status, 0)
 
-        status, data, headers = AdagucTestTools().runADAGUCServer(
-            DEFAULT_REQUEST_PARAMS, env=self.env
-        )
+        status, data, headers = AdagucTestTools().runADAGUCServer(DEFAULT_REQUEST_PARAMS, env=self.env)
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
         self.assertEqual(
@@ -55,9 +53,7 @@ class TestWMSSLD(unittest.TestCase):
     def test_WMSGetMap_testdatanc_NOSLDURL(self):
         AdagucTestTools().cleanTempDir()
         filename = "test_WMSGetMap_testdatanc_NOSLDURL.xml"
-        status, data, headers = AdagucTestTools().runADAGUCServer(
-            DEFAULT_REQUEST_PARAMS + "&SLD=", env=self.env, showLogOnError=False
-        )
+        status, data, headers = AdagucTestTools().runADAGUCServer(DEFAULT_REQUEST_PARAMS + "&SLD=", env=self.env, showLogOnError=False)
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 404)
 

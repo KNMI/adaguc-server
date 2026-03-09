@@ -16,7 +16,7 @@ Multiple Dir elements are allowed.
 
 For example:
 ```xml
-<AutoResource enableautoopendap="false" enablelocalfile="false" enablecache="false" >
+<AutoResource enableautoopendap="false" enablelocalfile="false" >
   <Dir basedir="/data/sdpkdc/" prefix="/data/sdpkdc/"/>
   <Dir basedir="/data/omi/" prefix="/data/omi/"/>
 </AutoResource>

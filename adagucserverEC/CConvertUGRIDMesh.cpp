@@ -75,11 +75,12 @@ void drawlines(float *imagedata, int w, int h, int polyCorners, float *polyX, fl
 void drawpoly(float *imagedata, int w, int h, int polyCorners, float *polyX, float *polyY, float value) {
   //  public-domain code by Darel Rex Finley, 2007
 
-  int nodes, nodeX[polyCorners * 2 + 1], pixelY, i, j, swap;
+  int nodes, pixelY, i, j, swap;
   int IMAGE_TOP = 0;
   int IMAGE_BOT = h;
   int IMAGE_LEFT = 0;
   int IMAGE_RIGHT = w;
+  int *nodeX = new int[polyCorners * 2 + 1];
 
   //  Loop through the rows of the image.
   for (pixelY = IMAGE_TOP; pixelY < IMAGE_BOT; pixelY++) {
@@ -119,6 +120,7 @@ void drawpoly(float *imagedata, int w, int h, int polyCorners, float *polyX, flo
       }
     }
   }
+  delete[] nodeX;
 }
 
 /**
@@ -285,7 +287,7 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
   }
   CDBDebug("THIS IS UGRID MESH DATA");
   size_t nrDataObjects = dataSource->getNumDataObjects();
-  CDataSource::DataObject *dataObjects[nrDataObjects];
+  std::vector<CDataSource::DataObject *> dataObjects(nrDataObjects, nullptr);
   for (size_t d = 0; d < nrDataObjects; d++) {
     dataObjects[d] = dataSource->getDataObject(d);
   }
@@ -432,8 +434,8 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
     // }
     bool projectionRequired = imageWarper.isProjectionRequired();
     //     int polyCorners = 5;
-    float projectedX[numMeshPoints]; //={10,100,40,110,20,10};
-    float projectedY[numMeshPoints]; //={10,20,40,100,110,10};
+    float *projectedX = new float[numMeshPoints]; //={10,100,40,110,20,10};
+    float *projectedY = new float[numMeshPoints]; //={10,20,40,100,110,10};
 
 #ifdef MEASURETIME
     StopWatch_Stop("Iterating lat/lon data");
@@ -483,29 +485,11 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
     CDBDebug("Num faces: %lu", Mesh2_face_nodes->dimensionlinks[0]->getSize());
     CDBDebug("Max face size: %lu", MaxNumNodesPerFace);
 
-    float polyX[MaxNumNodesPerFace + 1];
-    float polyY[MaxNumNodesPerFace + 1];
+    float *polyX = new float[MaxNumNodesPerFace + 1];
+    float *polyY = new float[MaxNumNodesPerFace + 1];
 
     int numPoints = 0;
-    //     CDBDebug("drawpolys");
-    //     for(size_t f=0;f<nFaces;f++){
-    //       for(size_t j=0;j<MaxNumNodesPerFace;j++){
-    //         int p1 = Mesh2_face_nodesData[j+f*MaxNumNodesPerFace];
-    //         if(p1!=Mesh2_face_nodesData_Fill){
-    //           polyX[numPoints] = projectedX[p1];
-    //           polyY[numPoints++] = projectedY[p1];
-    //         }
-    //       }
-    //       polyX[numPoints] = polyX[0];
-    //       polyY[numPoints++] = polyY[0];
-    //       drawpoly(sdata,dataSource->dWidth,dataSource->dHeight,numPoints,polyX,polyY,f);
-    //       //drawlines(sdata,dataSource->dWidth,dataSource->dHeight,numPoints,polyX,polyY);
-    //       numPoints = 0;
-    //     }
 
-#ifdef MEASURETIME
-    StopWatch_Stop("drawlines");
-#endif
     for (size_t f = 0; f < nFaces; f++) {
       for (size_t j = 0; j < MaxNumNodesPerFace; j++) {
         int p1 = Mesh2_face_nodesData[j + f * MaxNumNodesPerFace];
@@ -522,13 +506,13 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
       drawlines(sdata, dataSource->dWidth, dataSource->dHeight, numPoints, polyX, polyY, 0);
       numPoints = 0;
     }
-#ifdef MEASURETIME
-    StopWatch_Stop("drawlines done");
-#endif
+
     imageWarper.closereproj();
+    delete[] polyX;
+    delete[] polyY;
+    delete[] projectedX;
+    delete[] projectedY;
   }
-#ifdef CCONVERTUGRIDMESH_DEBUG
-  CDBDebug("/convertUGRIDMeshData");
-#endif
+
   return 0;
 }

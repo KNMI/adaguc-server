@@ -32,6 +32,7 @@ def setup_test_data():
         "adaguc.tests.members.xml",
         "adaguc_ewclocalclimateinfo_test.xml",
         "adaguc_tests_uwcwdini_windcomponents.xml",
+        "adaguc_tests_solarterminator.xml",
     ):
         status, _, _ = AdagucTestTools().runADAGUCServer(
             args=[
@@ -73,11 +74,11 @@ def test_root(client: TestClient):
 def test_collections(client: TestClient):
     resp = client.get("/edr/collections")
     colls = resp.json()
-    assert len(colls["collections"]) == 6
+    assert len(colls["collections"]) == 7
     first_collection = colls["collections"][0]
     assert first_collection.get("id") == "adaguc.tests.arcus_uwcw.hagl_member"
 
-    coll_5d = colls["collections"][4]
+    coll_5d = colls["collections"][5]
     assert coll_5d.get("id") == "netcdf_5d.data_5d"
     assert all(
         ext_name in coll_5d["extent"]
@@ -865,3 +866,12 @@ def test_unknown_location(client: TestClient):
     print("/location/KJFK:", json.dumps(resp.json(), indent=2))
     covjson = resp.json()
     assert covjson["detail"] == "location KJFK not found"
+
+def test_solt_instanceless_position(client: TestClient):
+    url = "/edr/collections/adaguc_tests_solarterminator/position?coords=POINT(5.0 52.0)&datetime=2026-06-01T01:00:00Z/2026-06-01T02:00:00Z&parameter-name=solarterminator"
+    resp = client.get(url)
+    assert resp.status_code == 200
+    covjson = resp.json()
+    filename = "test_solt_instanceless_position.json"
+    AdagucTestTools().writetojson(f"{testresultspath}{filename}", json.dumps(covjson))
+    assert AdagucTestTools().compareJson(expectedoutputspath + filename, testresultspath + filename)

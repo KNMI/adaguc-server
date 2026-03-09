@@ -274,7 +274,7 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType) {
 
   bool isSingleImageWithCoordinates = true;
 
-  double tilex1, tilex2, tiley1, tiley2;
+  double tilex1 = 0, tilex2 = 0, tiley1 = 0, tiley2 = 0;
   if (isSlippyMapFormat) {
     auto parts = this->fileName.split("/");
 

@@ -38,8 +38,7 @@ struct GDWDrawFunctionSettings {
   CDFType destinationDataType;
   void *destinationGrid = nullptr;
   double smoothingFiter = 0;
-  double *smoothingDistanceMatrix = nullptr;
-  double *smoothingMemo = nullptr;
+  std::vector<double> smoothingMemo;
 };
 
 GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawImage *drawImage, const CStyleConfiguration *styleConfiguration);

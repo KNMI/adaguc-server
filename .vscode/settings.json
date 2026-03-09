@@ -108,5 +108,5 @@
   "python.testing.unittestEnabled": false,
   "python.testing.pytestEnabled": true,
   "python.testing.cwd": "${workspaceFolder}/tests",
-  "black-formatter.args": ["--line-length", "140"],
+  "black-formatter.args": ["--config", "${workspaceFolder}/pyproject.toml"],
 }

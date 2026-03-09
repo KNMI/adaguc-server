@@ -1,3 +1,15 @@
+**Version 6.6.0 - 2026-02-27**
+
+- Refactored datapostprocessors to handle windspeed conversions better.
+
+**Version 6.5.0 - 2026-03-02**
+
+- It is possible to display text values from a geojson where the feature has a nan value
+
+**Version 6.4.0 - 2026-02-13**
+
+- Added stride option to solt to make it render faster
+
 **Version 6.3.0 - 2026-01-28**
 
 - Removed support for gd renderer
@@ -10,6 +22,7 @@
 - Refactored adagucserver.cpp file and added equalsIgnoreCase method.
 - Added `add_dataobject` datapostproc, creates a data object (variable) with a given value. Can be used to draw vectors with only a direction component. A tutorial can be found [here](/doc/tutorials/Styling_of_vector_with_rotation_and_add_dataobject_datapostproc.md).
 - Scantask now exits with status codes indicating if files are recognized by the datasets or if there are scan errors.
+- Create tiles now makes use of caching to improve tile generation speed.
 
 **Version 6.2.0 - 2026-01-12**
 
@@ -168,7 +181,7 @@
 - EDR: /instances call using reference times
 - EDR: support for vertical dimensions (z in EDR requests) for model_levels, pressure_levels etc
 - EDR: support for custom dimensions [using custom: namespace] for example for percentile classes or ensemble members
-- EDR: By default EDR is now enabled for all datasets and layers. EDR support can be switched on or off for a dataset or for a layer. Setting `enable_edr="false"` to a dataset's `<Settings>` element disables EDR for a dataset. Using `enable_edr="false"` in a layer's `<Layer>` element disables EDR for that layer. Using enable_edr="true" in a `<Layer>` element forces enabling EDR for a single layer, even if it is disabled in the dataset `<Settings>` element.
+- EDR: By default EDR is now enabled for all datasets and layers. EDR support can be switched on or off for a dataset or for a layer. Setting `enable_edr="false"` to a dataset's `<Settings>` element disables EDR for a dataset. Using `` in a layer's `<Layer>` element disables EDR for that layer. Using enable_edr="true" in a `<Layer>` element forces enabling EDR for a single layer, even if it is disabled in the dataset `<Settings>` element.
 - EDR: getMetadata request output has been extended with a few attributes for EDR support
 - EDR: uses getMetadata request which reads from database for increased performance as no dataset configuration needs to be read. the. This should make response times of EDR calls faster.
 - EDR: now support requests for generating soundings, ensemble plots (percentiles or plumes), time series, returning a CoverageCollection with multiple Coverages or a single Coverage in case of a single result.

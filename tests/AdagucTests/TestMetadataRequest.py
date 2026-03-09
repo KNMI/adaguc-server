@@ -2,6 +2,7 @@
 """
 This class contains tests to test the adaguc-server binary executable file. This is similar to black box testing, it tests the behaviour of the server software. It configures the server and checks if the response is OK.
 """
+
 import os
 import unittest
 from adaguc.AdagucTestTools import AdagucTestTools
@@ -22,15 +23,8 @@ class TestMetadataRequest(unittest.TestCase):
 
     def test_timeseries_adaguc_tests_arcus_uwcw_air_temperature_hagl(self):
         AdagucTestTools().cleanTempDir()
-        config = (
-            ADAGUC_PATH
-            + "/data/config/adaguc.tests.dataset.xml,"
-            + ADAGUC_PATH
-            + "/data/config/datasets/adaguc.tests.arcus_uwcw.xml"
-        )
-        status, data, _ = AdagucTestTools().runADAGUCServer(
-            args=["--updatedb", "--config", config], env=self.env, isCGI=False
-        )
+        config = ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml," + ADAGUC_PATH + "/data/config/datasets/adaguc.tests.arcus_uwcw.xml"
+        status, data, _ = AdagucTestTools().runADAGUCServer(args=["--updatedb", "--config", config], env=self.env, isCGI=False)
         self.assertEqual(status, 0)
 
         filename = "test_GetMetadataRequest_arcus_uwcw.json"
@@ -41,8 +35,4 @@ class TestMetadataRequest(unittest.TestCase):
         )
         AdagucTestTools().writetojson(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        self.assertTrue(AdagucTestTools().compareFile(
-            self.testresultspath + filename, self.expectedoutputsspath + filename)
-        )
-
-
+        self.assertTrue(AdagucTestTools().compareFile(self.testresultspath + filename, self.expectedoutputsspath + filename))

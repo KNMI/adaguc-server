@@ -79,25 +79,25 @@ CT::string CStyleConfiguration::dump() {
   data.printconcat("styleTitle %s\n", styleTitle.c_str());
   data.printconcat("styleAbstract %s\n", styleAbstract.c_str());
   int a = 0;
-  for (auto renderSetting : renderSettings) {
+  for (auto renderSetting: renderSettings) {
     data.printconcat("renderSetting %d) = [%s] [%s]\n", a, renderSetting->attr.renderhint.c_str(), renderSetting->attr.interpolationmethod.c_str());
     a++;
   }
   a = 0;
-  for (auto shadeInterval : shadeIntervals) {
-    data.printconcat("shadeInterval %d) =  [%s] [%s]\n", a++, shadeInterval->attr.label.c_str(), shadeInterval->attr.label.c_str());
+  for (const auto &shadeInterval: shadeIntervals) {
+    data.printconcat("shadeInterval %d) =  [%s] [%s]\n", a++, shadeInterval.attr.label.c_str(), shadeInterval.attr.label.c_str());
   }
   a = 0;
-  for (auto contourLine : contourLines) {
+  for (auto contourLine: contourLines) {
     data.printconcat("contourLine %d) =  [%s] [%s] [%s]\n", a++, contourLine->attr.linecolor.c_str(), contourLine->attr.interval.c_str(), contourLine->attr.classes.c_str());
   }
   a = 0;
-  for (auto symbolInterval : symbolIntervals) {
+  for (auto symbolInterval: symbolIntervals) {
     data.printconcat("symbolInterval %d) =  [%s] [%s]\n", a, symbolInterval->attr.min.c_str(), symbolInterval->attr.max.c_str());
     a++;
   }
   a = 0;
-  for (auto featureInterval : featureIntervals) {
+  for (auto featureInterval: featureIntervals) {
     data.printconcat("featureInterval %d) =  [%s] [%s]\n", a, featureInterval->attr.fillcolor.c_str(), featureInterval->attr.label.c_str());
     a++;
   }
@@ -110,7 +110,7 @@ void parseStyleInfo(CStyleConfiguration *styleConfig, CDataSource *dataSource, i
   CServerConfig::XMLE_Style *style = dataSource->cfg->Style[styleIndex];
 
   //  INCLUDE other styles
-  for (auto includeStyle : style->IncludeStyle) {
+  for (auto includeStyle: style->IncludeStyle) {
     int extraStyle = dataSource->srvParams->getServerStyleIndexByName(includeStyle->attr.name);
     if (extraStyle >= 0) {
       CDBDebug("Include style %d - %s", extraStyle, dataSource->cfg->Style[extraStyle]->attr.name.c_str());
@@ -149,7 +149,9 @@ void parseStyleInfo(CStyleConfiguration *styleConfig, CDataSource *dataSource, i
   styleConfig->contourLines.insert(styleConfig->contourLines.end(), style->ContourLine.begin(), style->ContourLine.end());
   styleConfig->renderSettings.insert(styleConfig->renderSettings.end(), style->RenderSettings.begin(), style->RenderSettings.end());
   styleConfig->smoothingFilterVector.insert(styleConfig->smoothingFilterVector.end(), style->SmoothingFilter.begin(), style->SmoothingFilter.end());
-  styleConfig->shadeIntervals.insert(styleConfig->shadeIntervals.end(), style->ShadeInterval.begin(), style->ShadeInterval.end());
+  for (const auto shadeInterval: style->ShadeInterval) {
+    styleConfig->shadeIntervals.push_back(*shadeInterval);
+  }
   styleConfig->symbolIntervals.insert(styleConfig->symbolIntervals.end(), style->SymbolInterval.begin(), style->SymbolInterval.end());
   styleConfig->featureIntervals.insert(styleConfig->featureIntervals.end(), style->FeatureInterval.begin(), style->FeatureInterval.end());
   styleConfig->pointIntervals.insert(styleConfig->pointIntervals.end(), style->Point.begin(), style->Point.end());
@@ -256,7 +258,10 @@ int CStyleConfiguration::makeStyleConfig(CDataSource *dataSource) {
     this->contourLines.assign(layer->ContourLine.begin(), layer->ContourLine.end());
   }
   if (layer->ShadeInterval.size() > 0) {
-    this->shadeIntervals.assign(layer->ShadeInterval.begin(), layer->ShadeInterval.end());
+    this->shadeIntervals.clear();
+    for (const auto shadeInterval: layer->ShadeInterval) {
+      this->shadeIntervals.push_back(*shadeInterval);
+    }
   }
   if (layer->FeatureInterval.size() > 0) {
     this->featureIntervals.assign(layer->FeatureInterval.begin(), layer->FeatureInterval.end());
@@ -328,4 +333,22 @@ int CStyleConfiguration::makeStyleConfig(CDataSource *dataSource) {
   }
 
   return 0;
+}
+
+void CStyleConfiguration::stretchLegend(double min, double max) {
+  // Make sure that there is always a range in between the min and max.
+  if (max == min) max = min + 0.1;
+  // Calculate legendOffset legendScale
+  float ls = 240 / (max - min);
+  float lo = -(min * ls);
+  this->legendScale = ls;
+  this->legendOffset = lo;
+
+  // Check for infinities
+  if (this->legendScale != this->legendScale || this->legendScale == INFINITY || std::isnan(this->legendScale) || this->legendScale == -INFINITY) {
+    this->legendScale = 240;
+  }
+  if (this->legendOffset != this->legendOffset || this->legendOffset == INFINITY || std::isnan(this->legendOffset) || this->legendOffset == -INFINITY) {
+    this->legendOffset = 0;
+  }
 }

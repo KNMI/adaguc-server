@@ -1,4 +1,6 @@
 import asyncio
+import datetime
+import filecmp
 import json
 import logging
 import os
@@ -11,7 +13,7 @@ from PIL import Image
 import subprocess
 from deepdiff import DeepDiff
 
-logging.getLogger('PIL').setLevel(logging.WARNING)
+logging.getLogger("PIL").setLevel(logging.WARNING)
 
 ADAGUC_PATH = os.getenv("ADAGUC_PATH", " ")
 
@@ -56,9 +58,9 @@ class AdagucTestTools:
         adagucenv = os.environ.copy()
         adagucenv.update(env)
 
-        adagucenv['LD_LIBRARY_PATH'] = os.getenv('LD_LIBRARY_PATH', "")
+        adagucenv["LD_LIBRARY_PATH"] = os.getenv("LD_LIBRARY_PATH", "")
 
-        ADAGUC_LOGFILE = os.environ['ADAGUC_LOGFILE']
+        ADAGUC_LOGFILE = os.environ["ADAGUC_LOGFILE"]
 
         try:
             os.remove(ADAGUC_LOGFILE)
@@ -75,14 +77,16 @@ class AdagucTestTools:
         os.chdir(ADAGUC_PATH + "/tests")
 
         filetogenerate = BytesIO()
-        status, headers, processErr = asyncio.run(CGIRunner().run(
-            adagucargs,
-            url=url,
-            output=filetogenerate,
-            env=adagucenv,
-            path=path,
-            isCGI=isCGI,
-        ))
+        status, headers, processErr = asyncio.run(
+            CGIRunner().run(
+                adagucargs,
+                url=url,
+                output=filetogenerate,
+                env=adagucenv,
+                path=path,
+                isCGI=isCGI,
+            )
+        )
 
         # Convert HTTP status codes
         if status == 32:
@@ -122,20 +126,18 @@ class AdagucTestTools:
             logfileSize = self.getLogFileSize()
             if logfileSize > maxLogFileSize:
                 self.printLogFile()
-                print(
-                    "[WARNING]: Adaguc-server writes too many lines to the logfile, size = %d kilobytes"
-                    % (logfileSize / 1024))
+                print("[WARNING]: Adaguc-server writes too many lines to the logfile, size = %d kilobytes" % (logfileSize / 1024))
             return status, filetogenerate, headers
 
     def writetofile(self, filename, data):
-        chars = set(':+,@#$%^&*()\\')
+        chars = set(":+,@#$%^&*()\\")
         if any((c in chars) for c in filename):
             raise Exception("Filename %s contains invalid characters" % filename)
         with open(filename, "wb") as f:
             f.write(data)
 
     def writetojson(self, filename, data):
-        chars = set(':+,@#$%^&*()\\')
+        chars = set(":+,@#$%^&*()\\")
         if any((c in chars) for c in filename):
             raise Exception("Filename %s contains invalid characters" % filename)
         jsonobject = json.loads(data)
@@ -180,13 +182,7 @@ class AdagucTestTools:
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-    def compareImage(
-        self,
-        expectedImagePath,
-        returnedImagePath,
-        maxAllowedColorDifference=1,
-        maxAllowedColorPercentage=0.01
-    ):
+    def compareImage(self, expectedImagePath, returnedImagePath, maxAllowedColorDifference=1, maxAllowedColorPercentage=0.01):
         """Compare the pictures referred to by the arguments.
 
         Args:
@@ -199,18 +195,16 @@ class AdagucTestTools:
             bool: True if the difference is "small enough"
         """
 
+        if filecmp.cmp(returnedImagePath, expectedImagePath, shallow=False):
+            return True
         expected_image = Image.open(expectedImagePath)
         returned_image = Image.open(returnedImagePath)
         if expected_image.size != returned_image.size:
-            print(
-                f"\nError, size of expected and actual image do not match: {expected_image.size} vs {returned_image.size}"
-            )
+            print(f"\nError, size of expected and actual image do not match: {expected_image.size} vs {returned_image.size}")
             return False
 
         if expected_image.mode != returned_image.mode:
-            print(
-                f"\nError, mode of expected and actual image do not match: {expected_image.mode} vs {returned_image.mode}"
-            )
+            print(f"\nError, mode of expected and actual image do not match: {expected_image.mode} vs {returned_image.mode}")
             return False
 
         width, height = expected_image.size
@@ -219,8 +213,8 @@ class AdagucTestTools:
             returned_palette_values = returned_image.getpalette()
             if returned_image.palette.mode == "RGB":
                 print(f"\tApplying palette translation for comparison...")
-                expected_palette = [tuple(expected_palette_values[i:i + 3]) for i in range(0, len(expected_palette_values), 3)]
-                returned_palette = [tuple(returned_palette_values[i:i + 3]) for i in range(0, len(returned_palette_values), 3)]
+                expected_palette = [tuple(expected_palette_values[i : i + 3]) for i in range(0, len(expected_palette_values), 3)]
+                returned_palette = [tuple(returned_palette_values[i : i + 3]) for i in range(0, len(returned_palette_values), 3)]
             else:
                 print(f"\nError: Palette mode {returned_image.palette.mode} not supported!")
                 return False
@@ -242,10 +236,9 @@ class AdagucTestTools:
                         expected_color = expected_palette[expected_color]
                         returned_color = returned_palette[returned_color]
                     else:
-                        expected_color = (expected_color, )
-                        returned_color = (returned_color, )
-                diff_color = tuple(
-                    map(lambda e, g: e - g, expected_color, returned_color))
+                        expected_color = (expected_color,)
+                        returned_color = (returned_color,)
+                diff_color = tuple(map(lambda e, g: e - g, expected_color, returned_color))
 
                 if expected_color != returned_color:
                     print(
@@ -276,8 +269,7 @@ class AdagucTestTools:
             )
             return False
 
-        if (count_pixels_with_color_difference * 100.0 /
-            (width * height) > maxAllowedColorPercentage):
+        if count_pixels_with_color_difference * 100.0 / (width * height) > maxAllowedColorPercentage:
             print(
                 f"Error, percentage of pixels with color difference is too large "
                 f"({count_pixels_with_color_difference*100.0/(width*height)} % > {maxAllowedColorPercentage} %)",
@@ -287,15 +279,12 @@ class AdagucTestTools:
 
         return True
 
-    def compareGetCapabilitiesXML(self, testresultFileLocation,
-                                  expectedOutputFileLocation):
+    def compareGetCapabilitiesXML(self, testresultFileLocation, expectedOutputFileLocation):
         expectedxml = self.readfromfile(expectedOutputFileLocation)
         testxml = self.readfromfile(testresultFileLocation)
 
-        obj1 = objectify.fromstring(
-            re.sub(b' xmlns="[^"]+"', b"", expectedxml, count=1))
-        obj2 = objectify.fromstring(
-            re.sub(b' xmlns="[^"]+"', b"", testxml, count=1))
+        obj1 = objectify.fromstring(re.sub(b' xmlns="[^"]+"', b"", expectedxml, count=1))
+        obj2 = objectify.fromstring(re.sub(b' xmlns="[^"]+"', b"", testxml, count=1))
 
         # Remove ADAGUC build date and version from keywordlists
         try:
@@ -344,8 +333,7 @@ class AdagucTestTools:
         # Remove contents of problem envelopes EPSG:28992 and EPSG:7399 because they are inconsistent
         def removeGmlEnvelope(root, epsg_code):
             xpath_query = f".//gml:Envelope[@srsName='EPSG:{epsg_code}']"
-            envelopes = root.xpath(
-                xpath_query, namespaces={"gml": "http://www.opengis.net/gml"})
+            envelopes = root.xpath(xpath_query, namespaces={"gml": "http://www.opengis.net/gml"})
             for envelope in envelopes:
                 for child in envelope.getchildren():
                     envelope.remove(child)
@@ -361,15 +349,60 @@ class AdagucTestTools:
         if (result == expect) is False:
             print(
                 '\nExpected XML is different, file \n"%s"\n should be equal to \n"%s"'
-                % (testresultFileLocation, expectedOutputFileLocation))
+                % (testresultFileLocation, expectedOutputFileLocation)
+            )
 
         return result == expect
 
-    def compareFile(self, testresultFileLocation,
-                                  expectedOutputFileLocation):
+    def compareFile(self, testresultFileLocation, expectedOutputFileLocation):
         a = AdagucTestTools().readfromfile(testresultFileLocation)
         b = AdagucTestTools().readfromfile(expectedOutputFileLocation)
         return a == b
+
+    def getTimeDimension(self, xmlFileLocation, layerName):
+        """Return (start, stop, interval) for a layer with the name provided"""
+        xml_bytes = self.readfromfile(xmlFileLocation)
+        try:
+            root = etree.fromstring(xml_bytes)
+        except Exception as e:
+            print("[DEBUG] XML parsing failed:", e)
+            print(xml_bytes[:500])  # print first 500 bytes for inspection
+            raise
+
+        ns = {"wms": "http://www.opengis.net/wms"}
+
+        xpath = f".//wms:Layer[wms:Name='{layerName}']//wms:Dimension[@name='time']"
+        print(f"[DEBUG] Running XPath: {xpath}")
+        dim_node = root.find(xpath, namespaces=ns)
+
+        if dim_node is None or not dim_node.text:
+            raise ValueError(f"No <Dimension name='time'> found for layer '{layerName}'")
+
+        parts = dim_node.text.strip().split("/")
+        if len(parts) != 3:
+            raise ValueError(f"Invalid time dimension format for '{layerName}': {dim_node.text}")
+
+        return parts  # start, stop, and interval
+
+    def compareTimeRange(self, xmlFileLocation, expected_days, expected_interval, layerName):
+        """Check that time range and interval are a match"""
+        start_str, stop_str, interval = self.getTimeDimension(xmlFileLocation, layerName)
+
+        start = datetime.datetime.strptime(start_str, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=datetime.timezone.utc)
+        stop = datetime.datetime.strptime(stop_str, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=datetime.timezone.utc)
+        diff_days = (stop - start).total_seconds() / (86400.0 * 2)  # Offset appears twice, after and before now
+
+        ok_days = abs(diff_days - expected_days) < 0.01
+        ok_interval = interval == expected_interval
+
+        if not ok_days or not ok_interval:
+            print(f"\nTime dimension check failed for {xmlFileLocation}")
+            print(f"  Found start: {start_str}, stop: {stop_str}, interval: {interval}")
+            print(f"  Expected {expected_days} days and interval {expected_interval}")
+        else:
+            print(f"Time dimension OK: {diff_days:.2f} days, interval={interval}")
+
+        return ok_days and ok_interval
 
     def compareJson(self, testresultFileLocation: str, expectedOutputFileLocation: str, significantDigits=6) -> bool:
         with open(expectedOutputFileLocation, "r") as fp:

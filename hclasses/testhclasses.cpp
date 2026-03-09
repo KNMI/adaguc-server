@@ -229,3 +229,52 @@ TEST(string, ctprintfconcat) {
   CT::printfconcat(test, " MORESTUFF");
   CHECK_EQUAL("abc hi! 2 3.140000 MORESTUFF", test);
 }
+
+TEST(string, replace) {
+  std::string test = "abcdefgabcdefg";
+  CHECK_EQUAL("ab!!!efgab!!!efg", CT::replace(test, "cd", "!!!"));
+  CHECK_EQUAL("ab!efgab!efg", CT::replace(test, "cd", "!"));
+  CHECK_EQUAL("abefgabefg", CT::replace(test, "cd", ""));
+}
+
+TEST(string, toLowerCase) {
+  std::string test = "abcdefgabcdefg";
+  CHECK_EQUAL("abcd", CT::toLowerCase("AbCd"));
+}
+
+TEST(string, eraseTableNames) {
+  std::vector<std::string> tableNamesDone;
+  tableNamesDone.push_back("test1");
+  tableNamesDone.push_back("test2");
+  tableNamesDone.push_back("test1");
+  tableNamesDone.push_back("test3");
+  std::erase(tableNamesDone, "test1");
+  LONGS_EQUAL(2, tableNamesDone.size());
+}
+
+TEST(string, indexOf) {
+  std::string valueToCheck = ("Hello planet earth, you are a great planet.");
+  LONGS_EQUAL(-1, CT::indexOf(valueToCheck, "mars"));
+  LONGS_EQUAL(6, CT::indexOf(valueToCheck, "planet"));
+  LONGS_EQUAL(0, CT::indexOf(valueToCheck, "Hello"));
+  LONGS_EQUAL(0, CT::indexOf(valueToCheck, ""));
+  LONGS_EQUAL(0, CT::indexOf(valueToCheck, "Hello planet earth, you are a great planet."));
+  LONGS_EQUAL(-1, CT::indexOf(valueToCheck, "Hello planet earth, you are a great planet. ---------------------------"));
+  LONGS_EQUAL(-1, CT::indexOf(valueToCheck, "planet earth, you are a great planet. ---------------------------"));
+}
+
+TEST(string, endsWith) {
+  std::string valueToCheck = ("Hello planet earth, you are a great planet.");
+  LONGS_EQUAL(false, CT::endsWith(valueToCheck, "mars"));
+  LONGS_EQUAL(true, CT::endsWith(valueToCheck, "planet."));
+  LONGS_EQUAL(false, CT::endsWith(valueToCheck, "Hello"));
+  LONGS_EQUAL(true, CT::endsWith(valueToCheck, ""));
+}
+
+TEST(string, startsWith) {
+  std::string valueToCheck = ("Hello planet earth, you are a great planet.");
+  LONGS_EQUAL(false, CT::startsWith(valueToCheck, "mars"));
+  LONGS_EQUAL(false, CT::startsWith(valueToCheck, "planet."));
+  LONGS_EQUAL(true, CT::startsWith(valueToCheck, "Hello"));
+  LONGS_EQUAL(true, CT::startsWith(valueToCheck, ""));
+}

@@ -803,8 +803,8 @@ int CDrawImage::createPalette(CServerConfig::XMLE_Legend *legend) {
       CXMLParser::XMLElement::XMLElementPointerList stops = element.get("svg")->get("g")->get("defs")->get("linearGradient")->getList("stop");
       float cx;
       float rc[4];
-      unsigned char prev_red, prev_green, prev_blue, prev_alpha;
-      int prev_offset;
+      unsigned char prev_red = 0, prev_green = 0, prev_blue = 0, prev_alpha = 0;
+      int prev_offset = 0;
       for (size_t j = 0; j < stops.size(); j++) {
         // CDBDebug("%s",stops.get(j)->toString().c_str());
         int offset = (int)(stops.get(j)->getAttrValue("offset").toFloat() * 2.4);

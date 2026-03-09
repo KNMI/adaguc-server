@@ -158,12 +158,6 @@ public:
   void encodeTableName(CT::string *tableName);
 
   /**
-   * Function which checks whether remote resources should be cached or not
-   * @return true if enablecache attribute in AutoResource is undefined or set to true
-   */
-  bool isAutoResourceCacheEnabled() const;
-
-  /**
    * Function which checks whether logging should be done
    * @return true if logging is enabled
    */
@@ -280,12 +274,6 @@ public:
    * returns true if valid, otherwise false
    */
   static bool checkTimeFormat(CT::string &timeToCheck);
-
-  /**
-   * Creates a random string of specified length
-   * @param len The length of the string
-   */
-  static std::string randomString(int length);
 
   /**
    * Parses the provided configuration file. Can be called consecutively to extend the internal configuration object.

@@ -83,7 +83,7 @@ int CConvertASCAT::convertASCATHeader(CDFObject *cdfObject) {
           CDBError("Unable to read time variable");
         } else {
           // Loop through the time variable and detect the earliest time
-          double tfill;
+          double tfill = 0;
           bool hastfill = false;
           try {
             origT->getAttribute("_FillValue")->getData(&tfill, 1);
@@ -249,7 +249,7 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource, int mode) {
   size_t nrDataObjects = dataSource->getNumDataObjects();
   if (nrDataObjects <= 0) return 1;
 
-  CDataSource::DataObject *dataObjects[nrDataObjects];
+  std::vector<CDataSource::DataObject *> dataObjects(nrDataObjects, nullptr);
   for (size_t d = 0; d < nrDataObjects; d++) {
     dataObjects[d] = dataSource->getDataObject(d);
   }
@@ -257,8 +257,8 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource, int mode) {
 
   CDBDebug("convertASCATData %s", dataObjects[0]->cdfVariable->name.c_str());
 #endif
-  CDF::Variable *new2DVar[nrDataObjects];
-  CDF::Variable *swathVar[nrDataObjects];
+  std::vector<CDF::Variable *> new2DVar(nrDataObjects, nullptr);
+  std::vector<CDF::Variable *> swathVar(nrDataObjects, nullptr);
 
   for (size_t d = 0; d < nrDataObjects; d++) {
     new2DVar[d] = dataObjects[d]->cdfVariable;
@@ -271,8 +271,8 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource, int mode) {
     }
   }
 
-  CDF::Variable *swathLon;
-  CDF::Variable *swathLat;
+  CDF::Variable *swathLon = nullptr;
+  CDF::Variable *swathLat = nullptr;
 
   try {
     swathLon = cdfObject->getVariable("lon");

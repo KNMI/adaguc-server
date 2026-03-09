@@ -70,7 +70,6 @@ int CDPPAddDataObject::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSour
 
     float value = proc->attr.a.toDouble();
     size_t size = (size_t)dataSource->dHeight * (size_t)dataSource->dWidth;
-    dataSource->getDataObject(0)->cdfVariable->data = NULL;
     CDF::allocateData(CDF_FLOAT, &dataSource->getDataObject(0)->cdfVariable->data, size);
     float *result = (float *)dataSource->getDataObject(0)->cdfVariable->data;
 

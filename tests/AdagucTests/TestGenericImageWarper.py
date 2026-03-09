@@ -54,8 +54,16 @@ class TestGenericImageWarper:
                 "ahn_utrechtseheuvelrug_500m",
                 "style_colormapped_bilinear_multicolor_contours_extrasmooth_discretized",
             ),
-            ("ahn_utrechtseheuvelrug_500m_style_hillshaded_opaque.png", "ahn_utrechtseheuvelrug_500m", "style_hillshaded_opaque/hillshaded"),
-            ("ahn_utrechtseheuvelrug_500m_style_hillshaded_transparent.png", "ahn_utrechtseheuvelrug_500m", "style_hillshaded_transparent/hillshaded"),
+            (
+                "ahn_utrechtseheuvelrug_500m_style_hillshaded_opaque.png",
+                "ahn_utrechtseheuvelrug_500m",
+                "style_hillshaded_opaque/hillshaded",
+            ),
+            (
+                "ahn_utrechtseheuvelrug_500m_style_hillshaded_transparent.png",
+                "ahn_utrechtseheuvelrug_500m",
+                "style_hillshaded_transparent/hillshaded",
+            ),
             (
                 "ahn_utrechtseheuvelrug_500m_hillshaded_style_colormapped_bilinear_elevation.png",
                 "ahn_utrechtseheuvelrug_500m_hillshaded",
@@ -66,7 +74,11 @@ class TestGenericImageWarper:
                 "ahn_utrechtseheuvelrug_500m_hillshaded",
                 "style_colormapped_bilinear_multicolor_contours",
             ),
-            ("ahn_utrechtseheuvelrug_500m_hillshaded_style_dutch_mountains.png", "ahn_utrechtseheuvelrug_500m_hillshaded", "style_dutch_mountains"),
+            (
+                "ahn_utrechtseheuvelrug_500m_hillshaded_style_dutch_mountains.png",
+                "ahn_utrechtseheuvelrug_500m_hillshaded",
+                "style_dutch_mountains",
+            ),
         ],
     )
     def test_GenericImageWarperOnAHNDataset(self, filetocheck: str, layers: str, styles: str):

@@ -136,7 +136,7 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
   }
 
   size_t nrDataObjects = dataSource->getNumDataObjects();
-  CDataSource::DataObject *dataObjects[nrDataObjects];
+  std::vector<CDataSource::DataObject *> dataObjects(nrDataObjects, nullptr);
   for (size_t d = 0; d < nrDataObjects; d++) {
     dataObjects[d] = dataSource->getDataObject(d);
   }
@@ -520,7 +520,7 @@ bool CConvertADAGUCVector::createVirtualTimeVariable(CDFObject *cdfObject) {
 #endif
 
         // Loop through the time variable and detect the earliest time
-        double tfill;
+        double tfill = 0;
         bool hastfill = false;
         try {
           origT->getAttribute("_FillValue")->getData(&tfill, 1);

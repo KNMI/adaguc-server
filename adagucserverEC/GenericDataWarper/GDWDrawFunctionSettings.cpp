@@ -55,29 +55,27 @@ GDWDrawFunctionSettings getDrawFunctionSettings(CDataSource *dataSource, CDrawIm
   // Smoothingfilter:
   if (styleConfiguration->smoothingFilterVector.size() > 0) {
     auto smoothingFilter = styleConfiguration->smoothingFilterVector.back();
-    if (settings.smoothingDistanceMatrix == nullptr) {
-      if (!smoothingFilter->value.empty()) {
-        settings.smoothingFiter = smoothingFilter->value.toDouble();
-        smoothingMakeDistanceMatrix(settings);
-      }
+
+    if (!smoothingFilter->value.empty()) {
+      settings.smoothingFiter = smoothingFilter->value.toDouble();
     }
   }
 
   /* Make a shorthand vector from the shadeInterval configuration*/
   if (settings.isUsingShadeIntervals) {
     int numShadeDefs = (int)styleConfiguration->shadeIntervals.size();
-    if (numShadeDefs == 1 && !styleConfiguration->shadeIntervals[0]->value.empty()) {
-      settings.shadeInterval = styleConfiguration->shadeIntervals[0]->value.toDouble();
+    if (numShadeDefs == 1 && !styleConfiguration->shadeIntervals[0].value.empty()) {
+      settings.shadeInterval = styleConfiguration->shadeIntervals[0].value.toDouble();
     } else {
       settings.intervals.reserve(numShadeDefs);
       for (int j = 0; j < numShadeDefs; j++) {
-        CServerConfig::XMLE_ShadeInterval *shadeInterVal = styleConfiguration->shadeIntervals[j];
-        settings.intervals.push_back(Interval({.min = shadeInterVal->attr.min.toFloat(), .max = shadeInterVal->attr.max.toFloat(), .color = CColor(shadeInterVal->attr.fillcolor.c_str())}));
+        const CServerConfig::XMLE_ShadeInterval &shadeInterVal = styleConfiguration->shadeIntervals[j];
+        settings.intervals.push_back(Interval({.min = shadeInterVal.attr.min.toFloat(), .max = shadeInterVal.attr.max.toFloat(), .color = CColor(shadeInterVal.attr.fillcolor.c_str())}));
         /* Check for bgcolor */
         if (j == 0) {
-          if (shadeInterVal->attr.bgcolor.empty() == false) {
+          if (shadeInterVal.attr.bgcolor.empty() == false) {
             settings.bgColorDefined = true;
-            settings.bgColor = CColor(shadeInterVal->attr.bgcolor.c_str());
+            settings.bgColor = CColor(shadeInterVal.attr.bgcolor.c_str());
           }
         }
       }

@@ -46,9 +46,9 @@ void CURUniqueRequests::sortAndAggregate() {
 #endif
 
       int currentDimIndex = -1;
-      int dimindex;
+      int dimindex = 0;
 
-      int startDimIndex;
+      int startDimIndex = 0;
       std::vector<std::string> dimValues;
       map_type_dimvalindex dimValuesMap = diminfomapiterator->second.dimValuesMap;
       for (it_type_dimvalindex dimvalindexmapiterator = dimValuesMap.begin(); dimvalindexmapiterator != dimValuesMap.end(); dimvalindexmapiterator++) {
@@ -106,7 +106,7 @@ void CURUniqueRequests::sortAndAggregate() {
 void CURUniqueRequests::recurDataStructure(CXMLParser::XMLElement *dataStructure, CURResult *result, int depth, int *dimOrdering, std::vector<int> dimIndicesToSkip) {
   int dimIndex = dimOrdering[depth];
 
-  for (const int &dimIndexToSkip : dimIndicesToSkip) {
+  for (const int &dimIndexToSkip: dimIndicesToSkip) {
     if (depth == dimIndexToSkip) {
       return recurDataStructure(dataStructure, result, depth + 1, dimOrdering, dimIndicesToSkip);
     }
@@ -226,9 +226,8 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
 
   /* Including x and y dimensions, without virtual dims */
   int numberOfDims = numberOfDataSourceDims + 2;
-  size_t start[numberOfDims], count[numberOfDims];
-  ptrdiff_t stride[numberOfDims];
-  std::string dimName[numberOfDims];
+  std::vector<size_t> start(numberOfDims), count(numberOfDims);
+  std::vector<ptrdiff_t> stride(numberOfDims);
 
   std::vector<CURResult> results;
 
@@ -262,7 +261,7 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
           throw(__LINE__);
         }
 
-        for (auto request : (filemapiterator->second).requests) {
+        for (auto request: (filemapiterator->second).requests) {
 
 #ifdef CCUniqueRequests_DEBUG
           CDBDebug("Reading file %s  for variable %s", (filemapiterator->first).c_str(), variable->name.c_str());
@@ -279,10 +278,12 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
           CDBDebug("Querying raster location %d %d", projCacheInfo.imx, projCacheInfo.imy);
           CDBDebug("Querying raster dimIndex %d %d", dataSource->dimXIndex, dataSource->dimYIndex);
 #endif
-          start[dataSource->dimXIndex] = projCacheInfo.imx;
-          start[dataSource->dimYIndex] = projCacheInfo.imy;
-          dimName[dataSource->dimXIndex] = "x";
-          dimName[dataSource->dimYIndex] = "y";
+          if (dataSource->dimXIndex == -1 || dataSource->dimYIndex == -1) {
+            CDBError("DataSource does not have x and y dimensions defined");
+            throw(__LINE__);
+          }
+          start[(size_t)dataSource->dimXIndex] = projCacheInfo.imx;
+          start[(size_t)dataSource->dimYIndex] = projCacheInfo.imy;
 
           for (size_t i = 0; i < request.size(); i++) {
             int netcdfDimIndex = -1;
@@ -314,7 +315,6 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
               if (netcdfDimIndex != -1) {
                 start[netcdfDimIndex] = request[i].start;
                 count[netcdfDimIndex] = request[i].values.size();
-                dimName[netcdfDimIndex] = request[i].name;
               }
 #ifdef CCUniqueRequests_DEBUG
               CDBDebug("  request index: %d  netcdfdimindex %d  %s %d %d", i, netcdfDimIndex, request[i]->name.c_str(), request[i]->start, request[i]->values.size());
@@ -346,7 +346,7 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
 #ifdef CCUniqueRequests_DEBUG_HIGH
           CDBDebug("Starting read data as type %s", CDF::getCDFDataTypeName(variable->currentType).c_str());
 #endif
-          int status = variable->readData(variable->currentType, start, count, stride, true);
+          int status = variable->readData(variable->currentType, start.data(), count.data(), stride.data(), true);
 #ifdef CCUniqueRequests_DEBUG_HIGH
           CDBDebug("Read %d elements", variable->getSize());
 #endif
@@ -400,7 +400,7 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
             }
 #endif
             try {
-              int multiplies[variable->dimensionlinks.size()];
+              std::vector<int> multiplies(variable->dimensionlinks.size());
               for (size_t d = 0; d < variable->dimensionlinks.size(); d += 1) {
                 int m = 1;
 
@@ -412,7 +412,6 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
               }
 
               for (size_t indexInVariable = 0; indexInVariable < variable->getSize(); indexInVariable++) {
-
                 CURResult currentResultForIndex;
                 currentResultForIndex.parent = this;
                 currentResultForIndex.numDims = numberOfDataSourceDims;

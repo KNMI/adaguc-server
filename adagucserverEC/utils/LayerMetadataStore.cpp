@@ -409,3 +409,23 @@ int updateMetaDataTable(CDataSource *dataSource) {
   delete metadataLayer;
   return statusA == 0 && statusB == 0 ? 0 : 1;
 }
+
+// When generating the data required by EDR, the metadata table is used
+// For this reason, we need to populate it here.
+int updateMetaDataTableLiveUpdate(CDataSource *dataSource) {
+  CDBDebug("updateMetaDataTableLiveUpdate");
+  layerTypeLiveUpdatePopulateDataSource(dataSource, dataSource->srvParams);
+
+  if (dataSource->srvParams->datasetLocation.empty()) {
+    return 0;
+  }
+  MetadataLayer *metadataLayer = new MetadataLayer();
+  metadataLayer->layer = dataSource->cfgLayer;
+  metadataLayer->srvParams = dataSource->srvParams;
+  metadataLayer->dataSource = dataSource;
+  metadataLayer->fileName = dataSource->headerFilename;
+  int statusA = populateMetadataLayerStruct(metadataLayer, false);
+  int statusB = storemetadataLayerIntoMetadataDb(metadataLayer);
+  delete metadataLayer;
+  return statusA == 0 && statusB == 0 ? 0 : 1;
+}

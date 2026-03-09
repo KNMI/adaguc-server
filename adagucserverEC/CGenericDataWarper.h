@@ -9,7 +9,6 @@
 #include "Types/GeoParameters.h"
 #include "CImageWarper.h"
 #include "CDebugger.h"
-#include "CGenericDataWarperTools.h"
 
 typedef unsigned char uchar;
 typedef unsigned char ubyte;
@@ -60,7 +59,7 @@ private:
   ProjectionGrid *projectionGrid = nullptr;
 
 public:
-  GenericDataWarper() {}
+  GenericDataWarper() = default;
   ~GenericDataWarper() {
     delete projectionGrid;
     projectionGrid = nullptr;
