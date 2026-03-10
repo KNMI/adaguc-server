@@ -134,18 +134,13 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
     double timeValue = var->getDataAt<double>(0);
     auto adagucTime = CTime::GetCTimeInstance(var);
     auto timeString = adagucTime->dateToISOString(adagucTime->getDate(timeValue));
-    dataSourceToTile->requiredDims.push_back(new COGCDims("time", timeString));
-    dataSourceToTile->getCDFDims()->addDimension("time", timeString.c_str(), 0);
+    dataSourceToTile->requiredDims.push_back(makeTimeBasedOGCDim("time", timeString));
+    dataSourceToTile->getCDFDims()->push_back({.name = "time", .value = timeString.c_str(), .index = 0});
   } catch (int e) {
     CDBDebug("No time dimension found, creating a fake one with value 0 code [%s]", CDF::getErrorMessage(e).c_str());
     if (dataSourceToTile->requiredDims.size() == 0) {
-      COGCDims *ogcDim = new COGCDims();
-      dataSourceToTile->requiredDims.push_back(ogcDim);
-      ogcDim->name.copy("none");
-      ogcDim->value.copy("0");
-      ogcDim->netCDFDimName.copy("none");
-      ogcDim->hidden = true;
-      dataSourceToTile->getCDFDims()->addDimension("none", "0", 0);
+      dataSourceToTile->requiredDims.push_back(makeEmptyOGCDim());
+      dataSourceToTile->getCDFDims()->push_back({.name = "none", .value = "0", .index = 0});
     }
     // Source data has no time dimension.
   }
@@ -175,7 +170,7 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
   int index = 0;
   CT::string suffix;
   suffix.print("_tmp%d", getpid());
-  for (auto destGrid : tileSet) {
+  for (auto destGrid: tileSet) {
     index++;
     CT::string destFileName;
     destFileName.print("%s/%s-%0.3d_%0.3d_%0.3dtile.nc", tileBasePath.c_str(), basename.c_str(), destGrid.level, destGrid.y, destGrid.x);

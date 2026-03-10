@@ -919,9 +919,9 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 
   for (size_t varNr = 0; varNr < dataSource->getNumDataObjects(); varNr++) {
     // Check if our variable has a statusflag
-    std::vector<CDataSource::StatusFlag> *statusFlagList = &dataSource->getDataObject(varNr)->statusFlagList;
-    CDataSource::readStatusFlags(dataSource->getDataObject(varNr)->cdfVariable, statusFlagList);
-    if (statusFlagList->size() > 0) {
+
+    CDataSource::readStatusFlags(dataSource->getDataObject(varNr)->cdfVariable, dataSource->getDataObject(varNr)->statusFlagList);
+    if (dataSource->getDataObject(varNr)->statusFlagList.size() > 0) {
       dataSource->getDataObject(varNr)->hasStatusFlag = true;
     }
     dataSource->getDataObject(varNr)->points.clear();

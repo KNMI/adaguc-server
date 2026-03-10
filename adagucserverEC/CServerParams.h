@@ -273,7 +273,7 @@ public:
    * Checks if the string contains valid dimension tokens *
    * returns true if valid, otherwise false
    */
-  static bool checkTimeFormat(CT::string &timeToCheck);
+  static bool checkTimeFormat(const std::string &timeToCheck);
 
   /**
    * Parses the provided configuration file. Can be called consecutively to extend the internal configuration object.

@@ -278,7 +278,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
 
       CT::string dimName = "null";
 
-      dimName = baseDataSource->requiredDims[d]->netCDFDimName;
+      dimName = baseDataSource->requiredDims[d].netCDFDimName;
       // CDBDebug("Processing dimension [%s]", dimName.c_str());
       if (dimName.equals("none") == true) {
         break;
@@ -318,7 +318,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
         var->setAttribute(sourceVar->attributes[i]->name.c_str(), sourceVar->attributes[i]->getType(), sourceVar->attributes[i]->data, sourceVar->attributes[i]->length);
       }
 
-      dim->setSize(baseDataSource->requiredDims[d]->uniqueValues.size());
+      dim->setSize(baseDataSource->requiredDims[d].uniqueValues.size());
 #ifdef CNetCDFDataWriter_DEBUG
       CDBDebug("Adding dimension [%s] with type [%d] and length [%lu]", dimName.c_str(), var->getType(), dim->length);
 #endif
@@ -336,11 +336,11 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
       }
 
       // Fill dimension with correct data
-      for (size_t j = 0; j < baseDataSource->requiredDims[d]->uniqueValues.size(); j++) {
+      for (size_t j = 0; j < baseDataSource->requiredDims[d].uniqueValues.size(); j++) {
 #ifdef CNetCDFDataWriter_DEBUG
         CDBDebug("START");
 #endif
-        CT::string dimValue = baseDataSource->requiredDims[d]->uniqueValues[j].c_str();
+        CT::string dimValue = baseDataSource->requiredDims[d].uniqueValues[j].c_str();
 #ifdef CNetCDFDataWriter_DEBUG
         CDBDebug("Setting dimension %s value = %s", dimName.c_str(), dimValue.c_str());
 #endif
@@ -463,7 +463,7 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
       if (d == NULL) {
         CDBError("Unable to add dimension nr %lu, name[%s]", i, sourceVar->dimensionlinks[i]->name.c_str());
         std::string r;
-        for (auto &dim : destCDFObject->dimensionlinks) {
+        for (auto &dim: destCDFObject->dimensionlinks) {
           r += dim->name.c_str();
           r += " ";
         }
@@ -647,17 +647,17 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       // Set dimension
       CCDFDims *dims = dataSource->getCDFDims();
 #ifdef CNetCDFDataWriter_DEBUG
-      CDBDebug("Setting nrof dimensions %lu", dims->getNumDimensions());
+      CDBDebug("Setting nrof dimensions %lu", dims->dimensions.size());
 #endif
       // CDBDebug("getCurrentTimeStep %d",dataSource->getCurrentTimeStep());
-      if (dims->getNumDimensions() == 0) {
+      if (dims->size() == 0) {
         CDBDebug("Note: This datasource [%lu] has no dimensions", i);
       }
 
       /*
        * This step figures out the required dimindex for each dimension based on timestep.
        */
-      std::vector<int> dimIndices(dims->getNumDimensions() + 1);
+      std::vector<int> dimIndices(dims->size() + 1);
 
       // CDBDebug("baseDataSource->requiredDims.size(); = %d",baseDataSource->requiredDims.size());
 
@@ -666,7 +666,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       }
       for (size_t d = 0; d < dataSource->requiredDims.size(); d++) {
         dimIndices[d] = 0;
-        CT::string dimName = dataSource->requiredDims[d]->netCDFDimName;
+        CT::string dimName = dataSource->requiredDims[d].netCDFDimName;
         if (verbose) {
           CDBDebug("Looping dim [%s]", dimName.c_str());
         }
@@ -779,15 +779,15 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
 
       int _dimMultiplier = 1;
 
-      std::vector<int> dimMultipliers(dims->getNumDimensions() + 1);
+      std::vector<int> dimMultipliers(dims->size() + 1);
       for (size_t d = 0; d < dataSource->requiredDims.size(); d++) {
         dimMultipliers[(dataSource->requiredDims.size() - 1) - d] = _dimMultiplier;
-        _dimMultiplier *= dataSource->requiredDims[(dataSource->requiredDims.size() - 1) - d]->uniqueValues.size();
+        _dimMultiplier *= dataSource->requiredDims[(dataSource->requiredDims.size() - 1) - d].uniqueValues.size();
       }
 
 #ifdef CNetCDFDataWriter_DEBUG
       for (size_t d = 0; d < dataSource->requiredDims.size(); d++) {
-        CDBDebug("For [%s]: index = %d, multiplier = %d", dataSource->requiredDims[d]->name.c_str(), dimIndices[d], dimMultipliers[d]);
+        CDBDebug("For [%s]: index = %d, multiplier = %d", dataSource->requiredDims[d].name.c_str(), dimIndices[d], dimMultipliers[d]);
       }
 #endif
 
@@ -1069,7 +1069,7 @@ int CNetCDFDataWriter::end() {
   humanReadableString.concat("_");
   humanReadableString.concat(baseDataSource->getDataObject(0)->variableName.c_str());
   for (size_t i = 0; i < baseDataSource->requiredDims.size(); i++) {
-    humanReadableString.printconcat("_%s", baseDataSource->requiredDims[i]->value.c_str());
+    humanReadableString.printconcat("_%s", baseDataSource->requiredDims[i].value.c_str());
   }
   humanReadableString.replaceSelf(":", "_");
   humanReadableString.replaceSelf(".", "_");

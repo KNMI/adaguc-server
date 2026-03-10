@@ -213,7 +213,6 @@ void CImageDataWriter::getFeatureInfoGetPointDataResults(CDataSource *dataSource
     return;
   }
   int closestIndex = findClosestPoint(dataSource->getDataObject(dataObjectNrInDataSource)->points, getFeatureInfoResult.lon_coordinate, getFeatureInfoResult.lat_coordinate);
-
   if (closestIndex == -1) {
     return;
   }
@@ -229,48 +228,36 @@ void CImageDataWriter::getFeatureInfoGetPointDataResults(CDataSource *dataSource
   warper.reprojpoint_inv_topx(pointPX, pointPY, srvParam->geoParams);
   warper.reprojpoint_inv_topx(gfiPX, gfiPY, srvParam->geoParams);
   float pixelDistance = hypot(pointPX - gfiPX, pointPY - gfiPY);
-  warper.closereproj();
 
   if (pixelDistance > maxPixelDistance) {
-    CDBDebug("RET");
     return;
   }
 
-  auto *dataObject = dataSource->getDataObject(dataObjectNrInDataSource);
-  PointDVWithLatLon point = dataObject->points[closestIndex];
-
-  // getFeatureInfoResult.elements.push_back(GFIElement());
-  GFIElement &element = getFeatureInfoResult.elements.back();
+  auto dataObject = dataSource->getDataObject(dataObjectNrInDataSource);
+  auto &point = dataObject->points[closestIndex];
+  auto &element = getFeatureInfoResult.elements.back();
   if (element.value.empty() || element.value == "nodata" || (dataObject->hasNodataValue && element.value == CT::printf("%f", dataObject->dfNodataValue))) {
-    double val = point.v;
     if (dataObject->hasStatusFlag) {
       // Add status flag
-      CT::string flagMeaning;
-      CDataSource::getFlagMeaningHumanReadable(&flagMeaning, &dataObject->statusFlagList, (int)val);
-      element.value = CT::printf("%s (%d)", flagMeaning.c_str(), (int)val);
+      std::string flagMeaning = CDataSource::getFlagMeaningHumanReadable(dataObject->statusFlagList, (int)point.v);
+      element.value = CT::printf("%s (%d)", flagMeaning.c_str(), (int)point.v);
       element.units = "";
     } else {
-      element.value = CT::printf("%f", val);
+      element.value = CT::printf("%f", point.v);
     }
   }
 
   // Loop over point paramlist
-  for (size_t p = 0; p < point.paramList.size(); p++) {
+  for (const auto &param: point.paramList) {
     getFeatureInfoResult.elements.push_back(GFIElement());
-    GFIElement &pointID = getFeatureInfoResult.elements.back();
+    auto &pointID = getFeatureInfoResult.elements.back();
     pointID.dataSource = dataSource;
-    for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
-      CCDFDims *cdfDims = dataSource->getCDFDims();
-      std::string value = cdfDims->getDimensionValue(j);
-      std::string name = cdfDims->getDimensionName(j);
-      pointID.cdfDims.addDimension(name.c_str(), value.c_str(), cdfDims->getDimensionIndex(j));
-    }
-
-    pointID.long_name = point.paramList[p].description;
-    pointID.var_name = point.paramList[p].key;
-    pointID.standard_name = point.paramList[p].key;
-    pointID.feature_name = point.paramList[p].key;
-    pointID.value = point.paramList[p].value;
+    pointID.cdfDims = *dataSource->getCDFDims();
+    pointID.long_name = param.description;
+    pointID.var_name = param.key;
+    pointID.standard_name = param.key;
+    pointID.feature_name = param.key;
+    pointID.value = param.value;
     pointID.units = "";
   }
 }
@@ -644,7 +631,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
 
             std::string dimkey = "";
             for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
-              CT::printfconcat(dimkey, "[%s=%s]", cdfDims->getDimensionValue(j).c_str(), cdfDims->getDimensionName(j).c_str());
+              CT::printfconcat(dimkey, "[%s=%s]", cdfDims->at(j).value.c_str(), cdfDims->at(j).name.c_str());
             }
             CT::printfconcat(dimkey, "[dataobject=%lu]", o);
 
@@ -693,14 +680,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
             // Assign CDF::Variable Pointer
             element.variable = dataSource->getDataObject(o)->cdfVariable;
             element.value = "nodata";
-
-            CCDFDims *cdfDims = dataSource->getCDFDims();
-            std::string value, name;
-            for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
-              value = cdfDims->getDimensionValue(j);
-              name = cdfDims->getDimensionName(j);
-              element.cdfDims.addDimension(name.c_str(), value.c_str(), cdfDims->getDimensionIndex(j));
-            }
+            element.cdfDims = *dataSource->getCDFDims();
 
             bool hasData = false;
             if (projCacheInfo.imx >= 0 && projCacheInfo.imy >= 0 && projCacheInfo.imx < projCacheInfo.dWidth && projCacheInfo.imy < projCacheInfo.dHeight) {
@@ -721,8 +701,8 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
                   dataSource->getDataObject(o)->hasNodataValue == false || dataSource->getDataObject(o)->points.size() > 0) {
                 if (dataSource->getDataObject(o)->hasStatusFlag) {
                   // Add status flag
-                  CT::string flagMeaning;
-                  CDataSource::getFlagMeaningHumanReadable(&flagMeaning, &dataSource->getDataObject(o)->statusFlagList, pixel);
+                  std::string flagMeaning;
+                  flagMeaning = CDataSource::getFlagMeaningHumanReadable(dataSource->getDataObject(o)->statusFlagList, pixel);
                   element.value = CT::printf("%s (%d)", flagMeaning.c_str(), (int)pixel);
                   element.units = "";
                 } else {
@@ -771,12 +751,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
                         getFeatureInfoResult.elements.push_back(GFIElement());
                         GFIElement &featureParam = getFeatureInfoResult.elements.back();
                         featureParam.dataSource = dataSource;
-                        for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
-                          value = cdfDims->getDimensionValue(j);
-                          name = cdfDims->getDimensionName(j);
-                          featureParam.cdfDims.addDimension(name.c_str(), value.c_str(), cdfDims->getDimensionIndex(j));
-                        }
-
+                        featureParam.cdfDims = *dataSource->getCDFDims();
                         featureParam.long_name = propertyName.c_str();
                         featureParam.var_name = propertyName.c_str();
                         featureParam.standard_name = propertyName.c_str();
@@ -1798,9 +1773,9 @@ int CImageDataWriter::end() {
             CT::printfconcat(resultXML, "      <LongName>%s</LongName>\n", e->long_name.c_str());
             CT::printfconcat(resultXML, "      <VarName>%s</VarName>\n", e->var_name.c_str());
             CT::printfconcat(resultXML, "      <Value units=\"%s\">%s</Value>\n", e->units.c_str(), e->value.c_str());
-            for (size_t d = 0; d < e->cdfDims.getNumDimensions(); d++) {
-              CT::printfconcat(resultXML, "      <Dimension name=\"%s\" index=\"%lu\">%s</Dimension>\n", e->dataSource->requiredDims[d]->name.c_str(), e->cdfDims.getDimensionIndex(d),
-                               e->cdfDims.getDimensionValue(d).c_str());
+            for (size_t d = 0; d < e->cdfDims.size(); d++) {
+              CT::printfconcat(resultXML, "      <Dimension name=\"%s\" index=\"%lu\">%s</Dimension>\n", e->dataSource->requiredDims[d].name.c_str(), e->cdfDims.at(d).index,
+                               e->cdfDims.at(d).value.c_str());
             }
 
             CT::printfconcat(resultXML, "    </%s_feature>\n", featureName.c_str());
@@ -1861,9 +1836,9 @@ int CImageDataWriter::end() {
             CT::printfconcat(resultXML, "      <LongName>%s</LongName>\n", e->long_name.c_str());
             CT::printfconcat(resultXML, "      <VarName>%s</VarName>\n", e->var_name.c_str());
             CT::printfconcat(resultXML, "      <Value units=\"%s\">%s</Value>\n", e->units.c_str(), e->value.c_str());
-            for (size_t d = 0; d < e->cdfDims.getNumDimensions(); d++) {
-              CT::printfconcat(resultXML, "      <Dimension name=\"%s\" index=\"%lu\">%s</Dimension>\n", e->dataSource->requiredDims[d]->name.c_str(), e->cdfDims.getDimensionIndex(d),
-                               e->cdfDims.getDimensionValue(d).c_str());
+            for (size_t d = 0; d < e->cdfDims.size(); d++) {
+              CT::printfconcat(resultXML, "      <Dimension name=\"%s\" index=\"%lu\">%s</Dimension>\n", e->dataSource->requiredDims[d].name.c_str(), e->cdfDims.at(d).index,
+                               e->cdfDims.at(d).value.c_str());
             }
 
             CT::printfconcat(resultXML, "    </%s_feature>\n", featureName.c_str());
@@ -1919,14 +1894,14 @@ int CImageDataWriter::end() {
 
         GFIElement *e = &(g->elements[0]);
 
-        int nrDims = e->cdfDims.getNumDimensions();
+        int nrDims = e->cdfDims.size();
         std::vector<int> dimLookup(nrDims); // position of each dimension in cdfDims.dimensions
         // CDBDebug("nrDims = %d",nrDims);
         int timeDimIndex = -1;
         int endIndex = nrDims - 1;
         for (int j = 0; j < nrDims; j++) {
           dimLookup[j] = j;
-          if (timeDimIndex == -1 && e->cdfDims.isTimeDimension(j)) {
+          if (timeDimIndex == -1 && isOGCTimeDim(e->cdfDims.at(j))) {
             timeDimIndex = j;
           }
         }
@@ -1952,8 +1927,8 @@ int CImageDataWriter::end() {
           auto &point = paramElement.add("point");
           point.add("SRS", "EPSG:4326");
           point.add("coords", CT::printf("%f,%f", g->lon_coordinate, g->lat_coordinate));
-          for (size_t d = 0; d < e->cdfDims.getNumDimensions() && int(d) < nrDims; d++) {
-            paramElement.add("dims", e->dataSource->requiredDims[dimLookup[d]]->name);
+          for (size_t d = 0; d < e->cdfDims.size() && int(d) < nrDims; d++) {
+            paramElement.add("dims", e->dataSource->requiredDims[dimLookup[d]].name);
           }
 
           // Build datamap
@@ -1961,8 +1936,8 @@ int CImageDataWriter::end() {
           for (size_t elNR = feat; elNR < g->elements.size(); elNR += nrFeatures) {
             GFIElement *e = &(g->elements[elNR]);
             std::string dimString;
-            for (size_t d = 0; d < e->cdfDims.getNumDimensions(); d++) {
-              CT::printfconcat(dimString, "%s,", e->cdfDims.getDimensionValue(dimLookup[d]).c_str());
+            for (size_t d = 0; d < e->cdfDims.size(); d++) {
+              CT::printfconcat(dimString, "%s,", e->cdfDims.at(dimLookup[d]).value.c_str());
             }
             dataMap[dimString] = e->value;
           }

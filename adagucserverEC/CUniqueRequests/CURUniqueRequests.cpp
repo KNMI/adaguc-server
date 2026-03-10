@@ -161,15 +161,15 @@ void CURUniqueRequests::createStructure(std::vector<CURResult> results, CDataSou
 
   std::vector<int> dimIndicesToSkip;
   for (size_t i = 0; i < size_t(numberOfDims); i++) {
-    COGCDims *ogcDim = dataSource->requiredDims[dimOrdering[i]];
-    if (ogcDim->hidden) {
+    COGCDims &ogcDim = dataSource->requiredDims[dimOrdering[i]];
+    if (ogcDim.hidden) {
       dimIndicesToSkip.push_back(i);
     }
   }
 
   for (size_t i = 0; i < size_t(numberOfDims); i++) {
     if (std::find(dimIndicesToSkip.begin(), dimIndicesToSkip.end(), i) == dimIndicesToSkip.end()) {
-      layerStructure.add(CXMLParser::XMLElement("dims", dataSource->requiredDims[dimOrdering[i]]->name.c_str()));
+      layerStructure.add(CXMLParser::XMLElement("dims", dataSource->requiredDims[dimOrdering[i]].name.c_str()));
     }
   }
 
@@ -206,16 +206,14 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
     dimOrdering[dimnr] = dimnr;
   }
   for (int dimnr = 0; dimnr < numberOfDataSourceDims; dimnr++) {
-    COGCDims *ogcDim = dataSource->requiredDims[dimnr];
-    if (ogcDim->name.equalsIgnoreCase("reference_time") && dimnr != 0) {
+    if (CT::toLowerCase(dataSource->requiredDims[dimnr].name) == "reference_time" && dimnr != 0) {
       std::swap(dimOrdering[dimnr], dimOrdering[0]);
       break;
     }
   }
 
   for (int dimnr = 0; dimnr < numberOfDataSourceDims; dimnr++) {
-    COGCDims *ogcDim = dataSource->requiredDims[dimOrdering[dimnr]];
-    if (ogcDim->name.equalsIgnoreCase("time") && dimnr != numberOfDataSourceDims - 1) {
+    if (CT::toLowerCase(dataSource->requiredDims[dimOrdering[dimnr]].name) == "time" && dimnr != numberOfDataSourceDims - 1) {
       std::swap(dimOrdering[dimnr], dimOrdering[numberOfDataSourceDims - 1]);
       break;
     }
@@ -422,8 +420,8 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
 
                 // Fill in the dimension keys
                 for (size_t dataSourceDimIndex = 0; dataSourceDimIndex < dataSource->requiredDims.size(); dataSourceDimIndex++) {
-                  std::string requestDimNameToFind = dataSource->requiredDims[dataSourceDimIndex]->netCDFDimName.c_str();
-                  currentResultForIndex.dimensionKeys[dataSourceDimIndex].name = dataSource->requiredDims[dataSourceDimIndex]->value;
+                  std::string requestDimNameToFind = dataSource->requiredDims[dataSourceDimIndex].netCDFDimName.c_str();
+                  currentResultForIndex.dimensionKeys[dataSourceDimIndex].name = dataSource->requiredDims[dataSourceDimIndex].value;
                   auto dimVariable = variable->getParentCDFObject()->getVariableNE(requestDimNameToFind.c_str());
                   if (dimVariable == nullptr) {
                     // This one does not have a variable for its dimension.
@@ -431,7 +429,7 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
                     currentResultForIndex.dimensionKeys[dataSourceDimIndex].name = values[(indexInVariable / multiplies[0]) % values.size()];
                     continue;
                   }
-                  auto isTime = dataSource->requiredDims[dataSourceDimIndex]->isATimeDimension;
+                  auto isTime = dataSource->requiredDims[dataSourceDimIndex].isATimeDimension;
                   auto varType = dimVariable->getType();
                   currentResultForIndex.dimensionKeys[dataSourceDimIndex].cdfDimensionVariable = dimVariable;
                   currentResultForIndex.dimensionKeys[dataSourceDimIndex].isNumeric = isTime ? false : CDF::isCDFNumeric(varType);
@@ -465,8 +463,7 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
                 CT::string pixelValueAsString = "nodata";
                 if ((pixelValueAtIndex != dataObject->dfNodataValue && dataObject->hasNodataValue == true && pixelValueAtIndex == pixelValueAtIndex) || dataObject->hasNodataValue == false) {
                   if (dataObject->hasStatusFlag) {
-                    CT::string flagMeaning;
-                    CDataSource::getFlagMeaningHumanReadable(&flagMeaning, &dataObject->statusFlagList, pixelValueAtIndex);
+                    std::string flagMeaning = CDataSource::getFlagMeaningHumanReadable(dataObject->statusFlagList, pixelValueAtIndex);
                     pixelValueAsString.print("%s (%d)", flagMeaning.c_str(), (int)pixelValueAtIndex);
                   } else {
                     pixelValueAsString.print("%f", pixelValueAtIndex);

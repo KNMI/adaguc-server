@@ -28,87 +28,34 @@
 #include <cstdio>
 #include "CTString.h"
 #include "CDebugger.h"
-class COGCDims {
-public:
-  COGCDims() {
-    isATimeDimension = false;
-    hasFixedValue = false;
-    hidden = false;
-  }
+struct COGCDims {
 
-  COGCDims(CT::string name, CT::string value) {
-    isATimeDimension = true;
-    hasFixedValue = false;
-    hidden = false;
-    this->name = name;
-    this->queryValue = value;
-    this->value = value;
-    this->netCDFDimName = name;
-    this->uniqueValues = {value};
-  }
-  /**
-   * OGC name
-   */
-
-  CT::string name;
-
-  /**
-   * Value, as given in the query_string
-   */
-  CT::string queryValue;
-
-  /**
-   * Value, are all values as given in the KVP request string, can contain / and , tokens
-   */
-  CT::string value;
-
-  /**
-   * NetCDF name
-   */
-  CT::string netCDFDimName;
-
-  /**
-   * Unique values, similar to values except that they are filtered and selected as available from the file (distinct/grouped),
-   */
-  std::vector<CT::string> uniqueValues;
-
-  void addValue(const char *value);
-
-  bool isATimeDimension;
-
-  bool hasFixedValue;
-
-  bool hidden;
+  std::string name;                      // OGC name
+  std::string queryValue;                // Value, as given in the query_string
+  std::string value;                     // Value, are all values as given in the KVP request string, can contain / and , tokens
+  std::string netCDFDimName;             // NetCDF name
+  std::vector<std::string> uniqueValues; // Unique values, similar to values except that they are filtered and selected as available from the file (distinct/grouped),
+  bool isATimeDimension = false;
+  bool hasFixedValue = false;
+  bool hidden = false;
+};
+COGCDims makeTimeBasedOGCDim(std::string name, std::string value);
+COGCDims makeEmptyOGCDim();
+struct NetCDFDim {
+  std::string name;
+  std::string value;
+  size_t index;
 };
 
-class CCDFDims {
-private:
-  struct NetCDFDim {
-    std::string name;
-    std::string value;
-    size_t index;
-  };
-  std::vector<NetCDFDim> dimensions;
+typedef std::vector<NetCDFDim> CCDFDims;
 
-public:
-  ~CCDFDims();
-  void addDimension(const char *name, const char *value, size_t index);
-  size_t getDimensionIndex(const char *name);
-  size_t getDimensionIndex(int j);
-  size_t getNumDimensions();
-  bool isTimeDimension(int j);
-  static bool isTimeDimension(const char *dimName);
-  std::string getDimensionValuePointer(int j);
-  std::string getDimensionValue(const char *name);
-  std::string getDimensionValue(int j);
-  std::string getDimensionName(int j);
-  void copy(CCDFDims *dim);
+bool isOGCTimeDim(NetCDFDim &dimension);
+std::string getCDFDimensionValue(CCDFDims &dimensions, const char *name);
+/**
+ * Find the dimension index by name in the CCDFDim object
+ * @param name: Name of the dimension in the CDF model to find
+ * @return The index of the dimension, or -1 when not found
+ */
+int findCDFDimIdx(CCDFDims &dimensions, const std::string &name);
 
-  /**
-   * Find the dimension index by name in the CCDFDim object
-   * @param name: Name of the dimension in the CDF model to find
-   * @return The index of the dimension, or -1 when not found
-   */
-  int getArrayIndexForName(const char *name);
-};
 #endif

@@ -545,7 +545,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
 #ifdef CREQUEST_DEBUG
     CDBDebug("Get DIMS from query string");
 #endif
-    for (size_t k = 0; k < srvParam->requestDims.size(); k++) srvParam->requestDims[k]->name.toLowerCaseSelf();
+    for (size_t k = 0; k < srvParam->requestDims.size(); k++) srvParam->requestDims[k]->name = CT::toLowerCase(srvParam->requestDims[k]->name);
 
     bool hasReferenceTimeDimension = false;
     for (size_t l = 0; l < dataSource->cfgLayer->Dimension.size(); l++) {
@@ -570,7 +570,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
       }
 
       for (size_t l = 0; l < dataSource->requiredDims.size(); l++) {
-        if (dataSource->requiredDims[l]->name.equals(dimName)) {
+        if (dataSource->requiredDims[l].name == dimName.c_str()) {
           alreadyAdded = true;
           break;
         }
@@ -581,31 +581,32 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
 #endif
       if (alreadyAdded == false) {
         for (size_t k = 0; k < srvParam->requestDims.size(); k++) {
-          if (srvParam->requestDims[k]->name.equals(dimName)) {
+          if (srvParam->requestDims[k]->name == dimName.c_str()) {
 #ifdef CREQUEST_DEBUG
             CDBDebug("DIM COMPARE: %s==%s", srvParam->requestDims[k]->name.c_str(), dimName.c_str());
 #endif
 
             // This dimension has been specified in the request, so the dimension has been found:
-            COGCDims *ogcDim = new COGCDims();
-            dataSource->requiredDims.push_back(ogcDim);
-            ogcDim->name.copy(&dimName);
-            ogcDim->value.copy(&srvParam->requestDims[k]->value);
-            ogcDim->queryValue.copy(&srvParam->requestDims[k]->value);
-            ogcDim->netCDFDimName.copy(dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
-            ogcDim->hidden = dataSource->cfgLayer->Dimension[i]->attr.hidden;
 
-            if (ogcDim->name.equals("time") || ogcDim->name.equals("reference_time")) {
+            dataSource->requiredDims.push_back(COGCDims());
+            COGCDims &ogcDim = dataSource->requiredDims.back();
+            ogcDim.name = dimName;
+            ogcDim.value = srvParam->requestDims[k]->value;
+            ogcDim.queryValue = srvParam->requestDims[k]->value;
+            ogcDim.netCDFDimName = dataSource->cfgLayer->Dimension[i]->attr.name;
+            ogcDim.hidden = dataSource->cfgLayer->Dimension[i]->attr.hidden;
+
+            if (ogcDim.name == "time" || ogcDim.name == "reference_time") {
               // Make nice time value 1970-01-01T00:33:26 --> 1970-01-01T00:33:26Z
-              if (ogcDim->value.charAt(10) == 'T') {
-                if (ogcDim->value.length() == 19) {
-                  ogcDim->value.concat("Z");
+              if (ogcDim.value.length() > 10 && ogcDim.value.at(10) == 'T') {
+                if (ogcDim.value.length() == 19) {
+                  ogcDim.value += "Z";
                 }
 
                 /* Try to make sense of other timestrings as well */
-                if (ogcDim->value.indexOf("/") == -1 && ogcDim->value.indexOf(",") == -1) {
+                if (CT::indexOf(ogcDim.value, "/") == -1 && CT::indexOf(ogcDim.value, ",") == -1) {
 #ifdef CREQUEST_DEBUG
-                  CDBDebug("Got Time value [%s]", ogcDim->value.c_str());
+                  CDBDebug("Got Time value [%s]", ogcDim.value.c_str());
 #endif
 
                   try {
@@ -614,15 +615,15 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
                       CDBError("Unable to get time instance");
                       return 1;
                     }
-                    double currentTimeAsEpoch = ctime->dateToOffset(ctime->freeDateStringToDate(ogcDim->value.c_str()));
+                    double currentTimeAsEpoch = ctime->dateToOffset(ctime->freeDateStringToDate(ogcDim.value.c_str()));
                     auto currentDateConverted = ctime->dateToISOString(ctime->getDate(currentTimeAsEpoch));
-                    ogcDim->value = currentDateConverted;
+                    ogcDim.value = currentDateConverted;
                   } catch (int e) {
-                    CDBDebug("Unable to convert '%s' to epoch", ogcDim->value.c_str());
+                    CDBDebug("Unable to convert '%s' to epoch", ogcDim.value.c_str());
                     return 1;
                   }
 #ifdef CREQUEST_DEBUG
-                  CDBDebug("Converted to Time value [%s]", ogcDim->value.c_str());
+                  CDBDebug("Converted to Time value [%s]", ogcDim.value.c_str());
 #endif
                 }
               }
@@ -635,40 +636,40 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
                   quantizemethod = dataSource->cfgLayer->Dimension[i]->attr.quantizemethod;
                 }
                 // Start time quantization with quantizeperiod and quantizemethod
-                ogcDim->value = CTime::quantizeTimeToISO8601(ogcDim->value, quantizeperiod, quantizemethod);
+                ogcDim.value = CTime::quantizeTimeToISO8601(ogcDim.value, quantizeperiod, quantizemethod);
               }
             }
 
             // If we have value 'current', give the dim a special status
-            if (ogcDim->value.equals("current")) {
+            if (ogcDim.value == "current") {
               CT::string tableName;
 
               try {
                 tableName = CDBFactory::getDBAdapter(srvParam->cfg)
                                 ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),
-                                                                        ogcDim->netCDFDimName.c_str(), dataSource);
+                                                                        ogcDim.netCDFDimName.c_str(), dataSource);
               } catch (int e) {
                 CDBError("Unable to create tableName from '%s' '%s' '%s'", dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(),
-                         ogcDim->netCDFDimName.c_str());
+                         ogcDim.netCDFDimName.c_str());
                 return 1;
               }
 
               if (hasReferenceTimeDimension == false) {
 
                 // For observations, take the latest:
-                CDBStore::Store *maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getMax(ogcDim->netCDFDimName.c_str(), tableName.c_str());
+                CDBStore::Store *maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getMax(ogcDim.netCDFDimName.c_str(), tableName.c_str());
                 if (maxStore == NULL) {
                   CDBError("Unable to get max dimension value");
                   return 1;
                 }
-                ogcDim->value.copy(maxStore->getRecord(0)->get(0));
+                ogcDim.value = maxStore->getRecord(0)->get(0)->c_str();
                 delete maxStore;
               } else {
                 // For models with a reference_time, select the nearest time to current system clock
 
                 // For time:
                 if (dataSource->cfgLayer->Dimension[i]->value.equals("time")) {
-                  CDBStore::Store *maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getClosestDataTimeToSystemTime(ogcDim->netCDFDimName.c_str(), tableName.c_str());
+                  CDBStore::Store *maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getClosestDataTimeToSystemTime(ogcDim.netCDFDimName.c_str(), tableName.c_str());
 
                   if (maxStore == NULL) {
                     CDBError("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
@@ -678,13 +679,13 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
                     //                     %s",dataSource->cfgLayer->Name[0]->value.c_str()); CDBError("query failed");
                     //                     return 1;
                   }
-                  ogcDim->value.copy(maxStore->getRecord(0)->get(0));
+                  ogcDim.value = maxStore->getRecord(0)->get(0)->c_str();
 
                   delete maxStore;
-                  CDBDebug("%s %s", ogcDim->netCDFDimName.c_str(), ogcDim->value.c_str());
+                  CDBDebug("%s %s", ogcDim.netCDFDimName.c_str(), ogcDim.value.c_str());
                 } else {
                   // For other dimensions than time take the latest
-                  CDBStore::Store *maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getMax(ogcDim->netCDFDimName.c_str(), tableName.c_str());
+                  CDBStore::Store *maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getMax(ogcDim.netCDFDimName.c_str(), tableName.c_str());
                   if (maxStore == NULL) {
                     CDBError("Invalid dimension value for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
                     throw InvalidDimensionValue;
@@ -693,7 +694,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
                     //                     %s",dataSource->cfgLayer->Name[0]->value.c_str()); CDBError("query failed");
                     //                     return 1;
                   }
-                  ogcDim->value.copy(maxStore->getRecord(0)->get(0));
+                  ogcDim.value = maxStore->getRecord(0)->get(0)->c_str();
                   delete maxStore;
                 }
               }
@@ -714,7 +715,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
       bool alreadyAdded = false;
 
       for (size_t k = 0; k < dataSource->requiredDims.size(); k++) {
-        if (dataSource->requiredDims[k]->name.equals(dimName)) {
+        if (dataSource->requiredDims[k].name == dimName.c_str()) {
           alreadyAdded = true;
           break;
         }
@@ -739,11 +740,11 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
         }
 
         // Add the undefined dims to the srvParams as additional dims
-        COGCDims *ogcDim = new COGCDims();
-        dataSource->requiredDims.push_back(ogcDim);
-        ogcDim->name.copy(&dimName);
-        ogcDim->netCDFDimName.copy(dataSource->cfgLayer->Dimension[i]->attr.name.c_str());
-        ogcDim->hidden = dataSource->cfgLayer->Dimension[i]->attr.hidden;
+        dataSource->requiredDims.push_back(COGCDims());
+        COGCDims &ogcDim = dataSource->requiredDims.back();
+        ogcDim.name = dimName;
+        ogcDim.netCDFDimName = dataSource->cfgLayer->Dimension[i]->attr.name;
+        ogcDim.hidden = dataSource->cfgLayer->Dimension[i]->attr.hidden;
 
         bool isReferenceTimeDimension = false;
         if (dataSource->cfgLayer->Dimension[i]->value.equals("reference_time")) {
@@ -761,10 +762,10 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
           CT::string timeValue;
           CT::string netcdfTimeDimName;
           for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
-            // CDBDebug("DIMS: %d [%s] [%s]", j, dataSource->requiredDims[j]->name.c_str(), dataSource->requiredDims[j]->value.c_str());
-            if (dataSource->requiredDims[j]->name.equals("time")) {
-              timeValue = dataSource->requiredDims[j]->value;
-              netcdfTimeDimName = dataSource->requiredDims[j]->netCDFDimName;
+            // CDBDebug("DIMS: %d [%s] [%s]", j, dataSource->requiredDims[j].name.c_str(), dataSource->requiredDims[j].value.c_str());
+            if (dataSource->requiredDims[j].name == "time") {
+              timeValue = dataSource->requiredDims[j].value;
+              netcdfTimeDimName = dataSource->requiredDims[j].netCDFDimName;
               break;
             }
           }
@@ -785,7 +786,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
               return 1;
             }
 
-            maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getReferenceTime(ogcDim->netCDFDimName.c_str(), netcdfTimeDimName.c_str(), timeValue.c_str(), timeTableName.c_str(), tableName.c_str());
+            maxStore = CDBFactory::getDBAdapter(srvParam->cfg)->getReferenceTime(ogcDim.netCDFDimName.c_str(), netcdfTimeDimName.c_str(), timeValue.c_str(), timeTableName.c_str(), tableName.c_str());
 
             //
           }
@@ -795,7 +796,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
           CDBError("No table with values for layer %s", dataSource->cfgLayer->Name[0]->value.c_str());
           throw InvalidDimensionValue;
         }
-        ogcDim->value.copy(maxStore->getRecord(0)->get(0));
+        ogcDim.value = maxStore->getRecord(0)->get(0)->c_str();
 
         delete maxStore;
       }
@@ -806,15 +807,15 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
 #endif
     // Fix found time values which are retrieved from the database
     for (size_t i = 0; i < dataSource->requiredDims.size(); i++) {
-      if (dataSource->requiredDims[i]->name.indexOf("time") != -1) {
-        if (dataSource->requiredDims[i]->value.length() > 12) {
-          dataSource->requiredDims[i]->isATimeDimension = true;
-          if (dataSource->requiredDims[i]->value.charAt(10) == ' ') {
-            dataSource->requiredDims[i]->value.setChar(10, 'T');
+      if (CT::indexOf(dataSource->requiredDims[i].name, "time") != -1) {
+        if (dataSource->requiredDims[i].value.length() > 12) {
+          dataSource->requiredDims[i].isATimeDimension = true;
+          if (dataSource->requiredDims[i].value.at(10) == ' ') {
+            dataSource->requiredDims[i].value[10] = 'T';
           }
-          if (dataSource->requiredDims[i]->value.charAt(10) == 'T') {
-            if (dataSource->requiredDims[i]->value.length() == 19) {
-              dataSource->requiredDims[i]->value.concat("Z");
+          if (dataSource->requiredDims[i].value.at(10) == 'T') {
+            if (dataSource->requiredDims[i].value.length() == 19) {
+              dataSource->requiredDims[i].value += "Z";
             }
           }
         }
@@ -827,10 +828,10 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
         CT::string fixedValue = dataSource->cfgLayer->Dimension[i]->attr.fixvalue;
         dimName.toLowerCaseSelf();
         for (auto &requiredDim: dataSource->requiredDims) {
-          if (requiredDim->name.equals(dimName)) {
-            CDBDebug("Forcing dimension %s from %s to %s", dimName.c_str(), requiredDim->value.c_str(), fixedValue.c_str());
-            requiredDim->value = fixedValue;
-            requiredDim->hasFixedValue = true;
+          if (requiredDim.name == dimName.c_str()) {
+            CDBDebug("Forcing dimension %s from %s to %s", dimName.c_str(), requiredDim.value.c_str(), fixedValue.c_str());
+            requiredDim.value = fixedValue;
+            requiredDim.hasFixedValue = true;
             break;
           }
         }
@@ -840,12 +841,12 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
     // Check if requested time dimensions use valid characters
     for (auto &dim: dataSource->requiredDims) {
       // FIXME: checkTimeFormat used to get called on every dim value, not just datetime. Check if this is required
-      if (!dim->isATimeDimension) continue;
+      if (!dim.isATimeDimension) continue;
 
-      auto dimValues = dim->value.split(",");
+      auto dimValues = CT::split(dim.value, ",");
       for (auto &dimValue: dimValues) {
         if (!CServerParams::checkTimeFormat(dimValue)) {
-          CDBError("Queried dimension %s=%s failed datetime regex", dim->name.c_str(), dim->value.c_str());
+          CDBError("Queried dimension %s=%s failed datetime regex", dim.name.c_str(), dim.value.c_str());
           throw InvalidDimensionValue;
         }
       }
@@ -858,26 +859,21 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
   }
 
   if (dataSource->requiredDims.size() == 0) {
-    COGCDims *ogcDim = new COGCDims();
-    dataSource->requiredDims.push_back(ogcDim);
-    ogcDim->name.copy("none");
-    ogcDim->value.copy("0");
-    ogcDim->netCDFDimName.copy("none");
-    ogcDim->hidden = true;
+    dataSource->requiredDims.push_back(makeEmptyOGCDim());
   }
 
 #ifdef CREQUEST_DEBUG
   for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
     auto *requiredDim = dataSource->requiredDims[j];
-    CDBDebug("dataSource->requiredDims[%lu][%s] = [%s] (%s)", j, requiredDim->name.c_str(), requiredDim->value.c_str(), requiredDim->netCDFDimName.c_str());
-    CDBDebug("%s: %s === %s", requiredDim->name.c_str(), requiredDim->value.c_str(), requiredDim->queryValue.c_str());
+    CDBDebug("dataSource->requiredDims[%lu][%s] = [%s] (%s)", j, requiredDim.name.c_str(), requiredDim.value.c_str(), requiredDim.netCDFDimName.c_str());
+    CDBDebug("%s: %s === %s", requiredDim.name.c_str(), requiredDim.value.c_str(), requiredDim.queryValue.c_str());
   }
   CDBDebug("### [</fillDimValuesForDataSource>]");
 #endif
   bool allNonFixedDimensionsAreAsRequestedInQueryString = true;
   for (auto requiredDim: dataSource->requiredDims) {
-    // CDBDebug("%s: [%s] === [%s], fixed:%d", requiredDim->name.c_str(), requiredDim->value.c_str(), requiredDim->queryValue.c_str(), requiredDim->hasFixedValue);
-    if (!requiredDim->hasFixedValue && !requiredDim->value.equals(requiredDim->queryValue)) {
+    // CDBDebug("%s: [%s] === [%s], fixed:%d", requiredDim.name.c_str(), requiredDim.value.c_str(), requiredDim.queryValue.c_str(), requiredDim.hasFixedValue);
+    if (!requiredDim.hasFixedValue && requiredDim.value != requiredDim.queryValue) {
       allNonFixedDimensionsAreAsRequestedInQueryString = false;
     }
   }
@@ -939,7 +935,7 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
                  "dims or with missing area.");
         CDBDebug("dataSource->requiredDims.size() %lu", dataSource->requiredDims.size());
         for (size_t i = 0; i < dataSource->requiredDims.size(); i++) {
-          CDBDebug("  [%s] = [%s]", dataSource->requiredDims[i]->netCDFDimName.c_str(), dataSource->requiredDims[i]->value.c_str());
+          CDBDebug("  [%s] = [%s]", dataSource->requiredDims[i].netCDFDimName.c_str(), dataSource->requiredDims[i].value.c_str());
         }
         return 0;
       }
@@ -956,13 +952,18 @@ int CRequest::queryDimValuesForDataSource(CDataSource *dataSource, CServerParams
 #endif
       // For each timesteps a new set of dimensions is added with corresponding dim array indices.
       for (size_t i = 0; i < dataSource->requiredDims.size(); i++) {
-        CT::string value = record->get(1 + i * 2)->c_str();
-        dataSource->getCDFDims()->addDimension(dataSource->requiredDims[i]->netCDFDimName.c_str(), value.c_str(), atoi(record->get(2 + i * 2)->c_str()));
+        std::string value = record->get(1 + i * 2)->c_str();
+        size_t idx = size_t(atoi(record->get(2 + i * 2)->c_str()));
+        dataSource->getCDFDims()->push_back({.name = dataSource->requiredDims[i].netCDFDimName.c_str(), .value = value.c_str(), .index = idx});
 #ifdef CREQUEST_DEBUG
         CDBDebug("queryDimValuesForDataSource dataSource->queryBBOX %s for step %d/%d", dataSource->layerName.c_str(), dataSource->getCurrentTimeStep(), dataSource->getNumTimeSteps());
-        CDBDebug("  [%s][%d] = [%s]", dataSource->requiredDims[i]->netCDFDimName.c_str(), atoi(record->get(2 + i * 2)->c_str()), value.c_str());
+        CDBDebug("  [%s][%d] = [%s]", dataSource->requiredDims[i].netCDFDimName.c_str(), atoi(record->get(2 + i * 2)->c_str()), value.c_str());
 #endif
-        dataSource->requiredDims[i]->addValue(value.c_str());
+        auto it = std::find_if(dataSource->requiredDims[i].uniqueValues.begin(), dataSource->requiredDims[i].uniqueValues.end(), [&value](std::string &a) { return a == value; });
+        // Check if not already there. TODO: Would be nice to turn into a set.
+        if (it == dataSource->requiredDims[i].uniqueValues.end()) {
+          dataSource->requiredDims[i].uniqueValues.push_back(value);
+        }
       }
     }
 
@@ -1448,7 +1449,7 @@ int CRequest::process_querystring() {
         COGCDims *ogcDim = NULL;
         const char *ogcDimName = uriKeyUpperCase.c_str() + foundDim;
         for (size_t j = 0; j < srvParam->requestDims.size(); j++) {
-          if (srvParam->requestDims[j]->name.equals(ogcDimName)) {
+          if (srvParam->requestDims[j]->name == ogcDimName) {
             ogcDim = srvParam->requestDims[j];
             break;
           }
@@ -1459,8 +1460,8 @@ int CRequest::process_querystring() {
         } else {
           CDBDebug("OGC Dim %s reused", ogcDimName);
         }
-        ogcDim->name.copy(ogcDimName);
-        ogcDim->value.copy(&uriValue);
+        ogcDim->name = ogcDimName;
+        ogcDim->value = uriValue;
       }
 
       // FORMAT parameter
@@ -2751,7 +2752,7 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
         float fontSize = parseFloat(srvParam->cfg->WMS[0]->DimensionFont[0]->attr.size.c_str());
         fontSize = fontSize * scaling;
         textY += int(fontSize * 1.2);
-        message.print("%s: %s", dataSource->requiredDims[d]->name.c_str(), dataSource->requiredDims[d]->value.c_str());
+        message.print("%s: %s", dataSource->requiredDims[d].name.c_str(), dataSource->requiredDims[d].value.c_str());
         imageDataWriter.drawImage.drawText(6, textY, srvParam->cfg->WMS[0]->DimensionFont[0]->attr.location.c_str(), fontSize, 0, message.c_str(), CColor(0, 0, 0, 255), textBGColor);
         textY += 4 * (int)scaling;
       }

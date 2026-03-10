@@ -480,12 +480,7 @@ int CAutoConfigure::getFileNameForDataSource(CDataSource *dataSource, std::strin
         }
       } else {
         CDBDebug("Required dims is still zero, add none now");
-        COGCDims *ogcDim = new COGCDims();
-        dataSource->requiredDims.push_back(ogcDim);
-        ogcDim->name.copy("none");
-        ogcDim->value.copy("0");
-        ogcDim->queryValue.copy("0");
-        ogcDim->netCDFDimName.copy("none");
+        dataSource->requiredDims.push_back(makeEmptyOGCDim());
       }
     }
     CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getFilesAndIndicesForDimensions(dataSource, 1, false);
@@ -498,9 +493,6 @@ int CAutoConfigure::getFileNameForDataSource(CDataSource *dataSource, std::strin
 
     /* Restoremodifications to requiredDims*/
     if (removeRequiredDims) {
-      for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
-        delete dataSource->requiredDims[j];
-      }
       dataSource->requiredDims.clear();
     }
 

@@ -358,9 +358,9 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
         /* Find timerange */
         CT::string timeStringFromURL = "";
         for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
-          CDBDebug("%s", dataSource->requiredDims[j]->name.c_str());
-          if (dataSource->requiredDims[j]->name.equals("time")) {
-            timeStringFromURL = dataSource->requiredDims[j]->value.c_str();
+          CDBDebug("%s", dataSource->requiredDims[j].name.c_str());
+          if (dataSource->requiredDims[j].name == "time") {
+            timeStringFromURL = dataSource->requiredDims[j].value.c_str();
           }
         }
         CDBDebug("timeStringFromURL = %s", timeStringFromURL.c_str());

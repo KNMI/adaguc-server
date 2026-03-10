@@ -308,8 +308,8 @@ int CGDALDataWriter::addData(std::vector<CDataSource *> &dataSources) {
 
   CCDFDims *dims = _dataSource->getCDFDims();
   CT::string debugInfo;
-  for (size_t d = 0; d < dims->getNumDimensions(); d++) {
-    CT::string dimName = dims->getDimensionName(d);
+  for (size_t d = 0; d < dims->size(); d++) {
+    CT::string dimName = dims->at(d).name;
     if (dimName.equals("forecast_reference_time") == false) {
       CT::string name = "NETCDF_DIM_";
       name.concat(dimName.c_str());
@@ -390,7 +390,7 @@ int CGDALDataWriter::end() {
     for (size_t d = 0; d < _dataSource->requiredDims.size(); d++) {
       CT::string dimName = "null";
       try {
-        dimName = dims->getDimensionName(d);
+        dimName = dims->at(d).name;
       } catch (int e) {
         CDBError("Exception code %d", e);
         throw e;
@@ -409,7 +409,7 @@ int CGDALDataWriter::end() {
         }
         if (cdf_type != -1) {
 #ifdef CGDALDATAWRITER_DEBUG
-          CDBDebug("%s = %s", _dataSource->requiredDims[d]->netCDFDimName.c_str(), dimName.c_str());
+          CDBDebug("%s = %s", _dataSource->requiredDims[d].netCDFDimName.c_str(), dimName.c_str());
 #endif
           try {
             extraDimNames.concat(dimName.c_str());
@@ -418,7 +418,7 @@ int CGDALDataWriter::end() {
             throw e;
           }
           CT::string dimDef;
-          dimDef.print("{%d,%d}", _dataSource->requiredDims[d]->uniqueValues.size(), CDFNetCDFWriter::NCtypeConversion(cdf_type));
+          dimDef.print("{%d,%d}", _dataSource->requiredDims[d].uniqueValues.size(), CDFNetCDFWriter::NCtypeConversion(cdf_type));
           CT::string key;
           try {
             key.print("NETCDF_DIM_%s_DEF", dimName.c_str());
@@ -437,7 +437,7 @@ int CGDALDataWriter::end() {
           CDBDebug("Nr Of timesteps : %lu", _dataSource->timeSteps.size());
           for (size_t t = 0; t < _dataSource->timeSteps.size(); t++) {
             try {
-              CDBDebug("getDimensionValue %lu %s", d, _dataSource->timeSteps[t]->dims.getDimensionName(0).c_str());
+              CDBDebug("getDimensionValue %lu %s", d, _dataSource->timeSteps[t]->dims[0].name.c_str());
               myset.insert(getDimensionValue(d, &_dataSource->timeSteps[t]->dims).c_str());
               CDBDebug("getDimensionValue");
             } catch (int e) {
@@ -592,7 +592,7 @@ CT::string CGDALDataWriter::generateGetCoverageFileName() {
   humanReadableString.concat(_dataSource->getDataObject(0)->variableName.c_str());
 
   for (size_t i = 0; i < _dataSource->requiredDims.size(); i++) {
-    humanReadableString.printconcat("_%s", _dataSource->requiredDims[i]->value.c_str());
+    humanReadableString.printconcat("_%s", _dataSource->requiredDims[i].value.c_str());
   }
 
   humanReadableString.replaceSelf(":", "_");
@@ -650,19 +650,19 @@ std::string generateUniqueGetCoverageFileName(CGDALDataWriter *gdalDataWriter) {
 
 CT::string CGDALDataWriter::getDimensionValue(int d, CCDFDims *dims) {
   CT::string value;
-  if (dims->isTimeDimension(d)) {
+  if (isOGCTimeDim(dims->at(d))) {
     CTime adagucTime;
     try {
       value = "0";
       adagucTime.init(TimeUnit.c_str(), ""); // TODO replace with var
-      double offset = adagucTime.dateToOffset(adagucTime.ISOStringToDate(dims->getDimensionValue(d).c_str()));
+      double offset = adagucTime.dateToOffset(adagucTime.ISOStringToDate(dims->at(d).value.c_str()));
       value.print("%f", offset);
     } catch (int e) {
       CDBDebug("Warning in getDimensionValue: Unable to get string value from time dimension");
     }
 
   } else {
-    value.print("%s", dims->getDimensionValue(d).c_str());
+    value.print("%s", dims->at(d).value.c_str());
   }
   CDBDebug("Continuing %s", value.c_str());
   return value;

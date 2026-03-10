@@ -26,7 +26,7 @@ int getFeatureInfoVirtualForSolarTerminator(CImageDataWriter *img, std::vector<C
   CT::string requestedTime, startTime, stopTime;
   size_t timeIdx = 0;
   for (size_t i = 0; i < srvParams->requestDims.size(); i++) {
-    if (srvParams->requestDims[i]->name.equals("TIME")) {
+    if (CT::toLowerCase(srvParams->requestDims[i]->name) == "time") {
       timeIdx = i;
       requestedTime = (srvParams->requestDims[i]->value);
       break;
@@ -158,7 +158,7 @@ int getFeatureInfoVirtualForSolarTerminator(CImageDataWriter *img, std::vector<C
     float *vals = (float *)dataSource->getDataObject(0)->cdfVariable->data;
     element.value = CT::printf("%f", vals[ptr]);
 
-    element.cdfDims.addDimension("time", generatedTimestamps[i].c_str(), i);
+    element.cdfDims.push_back({.name = "time", .value = generatedTimestamps[i].c_str(), .index = i});
     result.elements.push_back(element);
   }
   // Add results to result array

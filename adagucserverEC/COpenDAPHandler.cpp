@@ -623,20 +623,8 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
       }
       //       CDBDebug("No file selected for datasource");
       dataSource->addStep(fileList[0].c_str());
-      dataSource->getCDFDims()->addDimension("time", "0", 0);
+      dataSource->getCDFDims()->push_back({.name = "time", .value = "0", .index = 0});
     }
-
-    //     if(dataSource->cfgLayer->Dimension.size()==0){
-    //       //This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.
-    //       #ifdef COPENDAPHANDLER_DEBUG
-    //       CDBDebug("This layer has no dims, adding one virtual time step.");
-    //       #endif
-    //
-    //
-    //
-    //       dataSource->addStep(fileList[0].c_str());
-    //       dataSource->getCDFDims()->addDimension("time","0",0);
-    //     }
   }
 
 #ifdef COPENDAPHANDLER_DEBUG
@@ -677,11 +665,11 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
     CDBDebug("dataSource->cfgLayer->Dimension.size() %d", dataSource->cfgLayer->Dimension.size());
 #endif
     for (size_t d = 0; d < dataSource->cfgLayer->Dimension.size(); d++) {
-      COGCDims *ogcDim = new COGCDims();
+      COGCDims ogcDim;
+      ogcDim.name = dataSource->cfgLayer->Dimension[d]->attr.name;
+      ogcDim.value = ogcDim.name;
+      ogcDim.netCDFDimName = dataSource->cfgLayer->Dimension[d]->attr.name;
       dataSource->requiredDims.push_back(ogcDim);
-      ogcDim->name.copy(&dataSource->cfgLayer->Dimension[d]->attr.name);
-      ogcDim->value.copy(&ogcDim->name);
-      ogcDim->netCDFDimName.copy(dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
 #ifdef COPENDAPHANDLER_DEBUG
       CDBDebug("Push %s", dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
 #endif
@@ -860,10 +848,10 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
               // CDBDebug("Comparing [%s] ~ [%s]",dataSource->requiredDims.size(),selectedVariables[i].dimInfo[l].name.c_str());
               for (size_t k = 0; k < dataSource->requiredDims.size(); k++) {
                 for (size_t l = 0; l < selectedVariables[i].dimInfo.size(); l++) {
-                  if (dataSource->requiredDims[k]->netCDFDimName.equals(selectedVariables[i].dimInfo[l].name.c_str())) {
+                  if (dataSource->requiredDims[k].netCDFDimName == selectedVariables[i].dimInfo[l].name.c_str()) {
                     hasAggregateDimension = true;
                     break;
-                    CDBDebug("Comparing [%s] ~ [%s]", dataSource->requiredDims[k]->netCDFDimName.c_str(), selectedVariables[i].dimInfo[l].name.c_str());
+                    CDBDebug("Comparing [%s] ~ [%s]", dataSource->requiredDims[k].netCDFDimName.c_str(), selectedVariables[i].dimInfo[l].name.c_str());
                   }
                 }
               }
