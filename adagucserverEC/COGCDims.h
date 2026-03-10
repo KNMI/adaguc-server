@@ -83,13 +83,12 @@ public:
 
 class CCDFDims {
 private:
-  class NetCDFDim {
-  public:
-    CT::string name;
-    CT::string value;
+  struct NetCDFDim {
+    std::string name;
+    std::string value;
     size_t index;
   };
-  std::vector<NetCDFDim *> dimensions;
+  std::vector<NetCDFDim> dimensions;
 
 public:
   ~CCDFDims();
@@ -99,10 +98,10 @@ public:
   size_t getNumDimensions();
   bool isTimeDimension(int j);
   static bool isTimeDimension(const char *dimName);
-  CT::string *getDimensionValuePointer(int j);
-  CT::string getDimensionValue(const char *name);
-  CT::string getDimensionValue(int j);
-  const char *getDimensionName(int j);
+  std::string getDimensionValuePointer(int j);
+  std::string getDimensionValue(const char *name);
+  std::string getDimensionValue(int j);
+  std::string getDimensionName(int j);
   void copy(CCDFDims *dim);
 
   /**

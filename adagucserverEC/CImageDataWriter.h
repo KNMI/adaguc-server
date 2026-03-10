@@ -76,7 +76,7 @@ private:
   CT::string eProfileJson;
 
 public:
-  std::vector<GetFeatureInfoResult *> getFeatureInfoResultList;
+  std::vector<GetFeatureInfoResult> getFeatureInfoResultList;
 
 private:
   CXMLParser::XMLElement gfiStructure;
@@ -102,22 +102,14 @@ private:
   int _setTransparencyAndBGColor(CServerParams *srvParam, CDrawImage *drawImage);
 
   /* Loops over the points, calculates the closest points, then calculates if point is within specified range in pixels */
-  void getFeatureInfoGetPointDataResults(CDataSource *dataSource, GetFeatureInfoResult *getFeatureInfoResult, int dataObjectNrInDataSource, GetFeatureInfoResult::Element *element,
-                                         int maxPixelDistance);
+  void getFeatureInfoGetPointDataResults(CDataSource *dataSource, GetFeatureInfoResult &getFeatureInfoResult, int dataObjectNrInDataSource, int maxPixelDistance);
 
 public:
   bool isProfileData;
   CDrawImage drawImage;
 
   CImageDataWriter();
-  ~CImageDataWriter() {
-    for (size_t j = 0; j < getFeatureInfoResultList.size(); j++) {
-      delete getFeatureInfoResultList[j];
-      getFeatureInfoResultList[j] = NULL;
-    }
-    getFeatureInfoResultList.clear();
-    // delete currentStyleConfiguration;currentStyleConfiguration = NULL;
-  }
+  ~CImageDataWriter() { getFeatureInfoResultList.clear(); }
 
   static int createLegend(CDataSource *sourceImage, CDrawImage *legendImage);
   static int createLegend(CDataSource *sourceImage, CDrawImage *legendImage, bool rotate);

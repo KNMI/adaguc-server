@@ -437,7 +437,7 @@ int CGDALDataWriter::end() {
           CDBDebug("Nr Of timesteps : %lu", _dataSource->timeSteps.size());
           for (size_t t = 0; t < _dataSource->timeSteps.size(); t++) {
             try {
-              CDBDebug("getDimensionValue %lu %s", d, _dataSource->timeSteps[t]->dims.getDimensionName(0));
+              CDBDebug("getDimensionValue %lu %s", d, _dataSource->timeSteps[t]->dims.getDimensionName(0).c_str());
               myset.insert(getDimensionValue(d, &_dataSource->timeSteps[t]->dims).c_str());
               CDBDebug("getDimensionValue");
             } catch (int e) {

@@ -113,12 +113,12 @@ int getFeatureInfoVirtualForSolarTerminator(CImageDataWriter *img, std::vector<C
   CImageWarper warper;
   CImageDataWriter::ProjCacheInfo projInfo = CImageDataWriter::GetProjInfo(ckey, &img->drawImage, dataSource, &warper, srvParams, dX, dY);
 
-  GetFeatureInfoResult *result = new GetFeatureInfoResult();
-  result->layerName = dataSource->layerName;
-  result->layerTitle = dataSource->layerTitle; // "Virtual feature info";
-  result->dataSourceIndex = dataSourceIndex;
-  result->lon_coordinate = projInfo.lonX;
-  result->lat_coordinate = projInfo.lonY;
+  GetFeatureInfoResult result;
+  result.layerName = dataSource->layerName;
+  result.layerTitle = dataSource->layerTitle; // "Virtual feature info";
+  result.dataSourceIndex = dataSourceIndex;
+  result.lon_coordinate = projInfo.lonX;
+  result.lat_coordinate = projInfo.lonY;
 
   // Special case when there are no server coords
   // Happens when we have a point instead of a bbox
@@ -133,20 +133,20 @@ int getFeatureInfoVirtualForSolarTerminator(CImageDataWriter *img, std::vector<C
   }
 
 #ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("Preparing result with name %s", result->layerName.c_str());
-  CDBDebug("lon_coordinate: %f, lat_coordinate: %f", result->lon_coordinate, result->lat_coordinate);
+  CDBDebug("Preparing result with name %s", result.layerName.c_str());
+  CDBDebug("lon_coordinate: %f, lat_coordinate: %f", result.lon_coordinate, result.lat_coordinate);
   CDBDebug("Preparing result with imx %d, imy %d, dWidth %d", projInfo.imx, projInfo.imy, projInfo.dWidth);
   CDBDebug("Number of timestamps is %d", generatedTimestamps.size());
 #endif
 
   // Generate one element per time step;
   for (size_t i = 0; i < generatedTimestamps.size(); ++i) {
-    GetFeatureInfoResult::Element *element = new GetFeatureInfoResult::Element();
-    element->dataSource = dataSource;
-    element->var_name = (dataSource->getDataObject(0)->cdfVariable->name);
-    element->standard_name = (dataSource->getDataObject(0)->cdfVariable->getAttributeNE("standard_name")->toString());
-    element->long_name = (dataSource->getDataObject(0)->cdfVariable->getAttributeNE("long_name")->toString());
-    element->units = (dataSource->getDataObject(0)->cdfVariable->getAttributeNE("units")->toString());
+    GFIElement element;
+    element.dataSource = dataSource;
+    element.var_name = (dataSource->getDataObject(0)->cdfVariable->name);
+    element.standard_name = (dataSource->getDataObject(0)->cdfVariable->getAttributeNE("standard_name")->toString());
+    element.long_name = (dataSource->getDataObject(0)->cdfVariable->getAttributeNE("long_name")->toString());
+    element.units = (dataSource->getDataObject(0)->cdfVariable->getAttributeNE("units")->toString());
 
     // Update dataSource timestamp and apply postprocessors
     if (!dataSource->srvParams->requestDims.empty()) {
@@ -156,10 +156,10 @@ int getFeatureInfoVirtualForSolarTerminator(CImageDataWriter *img, std::vector<C
 
     getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);
     float *vals = (float *)dataSource->getDataObject(0)->cdfVariable->data;
-    element->value = CT::printf("%f", vals[ptr]);
+    element.value = CT::printf("%f", vals[ptr]);
 
-    element->cdfDims.addDimension("time", generatedTimestamps[i].c_str(), i);
-    result->elements.push_back(element);
+    element.cdfDims.addDimension("time", generatedTimestamps[i].c_str(), i);
+    result.elements.push_back(element);
   }
   // Add results to result array
   img->getFeatureInfoResultList.push_back(result);

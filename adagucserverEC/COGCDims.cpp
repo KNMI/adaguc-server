@@ -32,32 +32,24 @@ void COGCDims::addValue(const char *value) {
   uniqueValues.push_back(value);
 }
 
-CCDFDims::~CCDFDims() {
-  for (size_t j = 0; j < dimensions.size(); j++) {
-    delete dimensions[j];
-    dimensions[j] = NULL;
-  }
-}
+CCDFDims::~CCDFDims() { dimensions.clear(); }
 
 void CCDFDims::addDimension(const char *name, const char *value, size_t index) {
   // CDBDebug("Adddimension %s %s %d, numdims = %d",name,value,index,dimensions.size());
   for (size_t j = 0; j < dimensions.size(); j++) {
-    if (dimensions[j]->name.equals(name)) {
-      dimensions[j]->index = index;
-      dimensions[j]->value = value;
+    if (dimensions[j].name == name) {
+      dimensions[j].index = index;
+      dimensions[j].value = value;
       return;
     }
   }
-  NetCDFDim *dim = new NetCDFDim;
-  dim->name.copy(name);
-  dim->value.copy(value);
-  dim->index = index;
-  dimensions.push_back(dim);
+
+  dimensions.push_back({.name = name, .value = value, .index = index});
 }
 size_t CCDFDims::getDimensionIndex(const char *name) {
   for (size_t j = 0; j < dimensions.size(); j++) {
-    if (dimensions[j]->name.equals(name)) {
-      return dimensions[j]->index;
+    if (dimensions[j].name == name) {
+      return dimensions[j].index;
     }
   }
   return 0;
@@ -65,7 +57,7 @@ size_t CCDFDims::getDimensionIndex(const char *name) {
 
 int CCDFDims::getArrayIndexForName(const char *name) {
   for (size_t j = 0; j < dimensions.size(); j++) {
-    if (dimensions[j]->name.equals(name)) {
+    if (dimensions[j].name == name) {
       return j;
     }
   }
@@ -75,65 +67,62 @@ int CCDFDims::getArrayIndexForName(const char *name) {
 size_t CCDFDims::getDimensionIndex(int j) {
   if (j < 0) return 0;
   if (size_t(j) >= dimensions.size()) return 0;
-  return dimensions[j]->index;
+  return dimensions[j].index;
 }
-CT::string CCDFDims::getDimensionValue(int j) {
+std::string CCDFDims::getDimensionValue(int j) {
   if (j < 0) return "NULL";
   if (size_t(j) >= dimensions.size()) return "NULL";
   if (isTimeDimension(j)) {
-    CT::string value = dimensions[j]->value.c_str();
+    std::string value = dimensions[j].value;
     // Format to YYYY-MM-DDTHH:MM:SSZ
     //           01234567890123456789
     if (value.length() < 20) {
-      value.concat("Z");
+      value += "Z";
     }
-    value.setChar(10, 'T');
+    value[10] = 'T';
     return value;
   }
-  return dimensions[j]->value;
+  return dimensions[j].value;
 }
 
-CT::string *CCDFDims::getDimensionValuePointer(int j) {
+std::string CCDFDims::getDimensionValuePointer(int j) {
   if (j < 0) return NULL;
   if (size_t(j) >= dimensions.size()) return NULL;
 
-  return &dimensions[j]->value;
+  return dimensions[j].value;
 }
 
-CT::string CCDFDims::getDimensionValue(const char *name) { return getDimensionValue(getArrayIndexForName(name)); }
+std::string CCDFDims::getDimensionValue(const char *name) { return getDimensionValue(getArrayIndexForName(name)); }
 
-const char *CCDFDims::getDimensionName(int j) {
-  if (j < 0) return 0;
-  if (size_t(j) >= dimensions.size()) return 0;
-  return dimensions[j]->name.c_str();
+std::string CCDFDims::getDimensionName(int j) {
+  if (j < 0) return "";
+  if (size_t(j) >= dimensions.size()) return "";
+  return dimensions[j].name;
 }
 
 void CCDFDims::copy(CCDFDims *dim) {
-  // CDBDebug("CCDFDims::copy numdims %d",dim->dimensions.size());
   if (dim != NULL) {
     for (size_t j = 0; j < dim->dimensions.size(); j++) {
-      // CDBDebug("COPY %s, %s, %d",dim->dimensions[j]->name.c_str(),dim->dimensions[j]->value.c_str(),dim->dimensions[j]->index);
-      addDimension(dim->dimensions[j]->name.c_str(), dim->dimensions[j]->value.c_str(), dim->dimensions[j]->index);
+      addDimension(dim->dimensions[j].name.c_str(), dim->dimensions[j].value.c_str(), dim->dimensions[j].index);
     }
   }
-  // CDBDebug("/CCDFDims::copy numdims %d",dim->dimensions.size());
 }
 
 size_t CCDFDims::getNumDimensions() { return dimensions.size(); }
 
 bool CCDFDims::isTimeDimension(int j) {
-  const char *dimName = getDimensionName(j);
-  if (dimName != NULL) {
-    CT::string dimTimeName = dimName;
-    if ((dimTimeName.indexOf("time") != -1) && (dimTimeName.indexOf("reference_time") == -1)) return true;
+  std::string dimName = getDimensionName(j);
+  if (dimName.empty() == false) {
+    std::string dimTimeName = dimName;
+    if (CT::indexOf(dimTimeName, "time") != -1 && CT::indexOf(dimTimeName, "reference_time") == -1) return true;
   }
   return false;
 }
 
 bool CCDFDims::isTimeDimension(const char *dimName) {
   if (dimName != NULL) {
-    CT::string dimTimeName = dimName;
-    if ((dimTimeName.indexOf("time") != -1) && (dimTimeName.indexOf("reference_time") == -1)) return true;
+    std::string dimTimeName = dimName;
+    if (CT::indexOf(dimTimeName, "time") != -1 && CT::indexOf(dimTimeName, "reference_time") == -1) return true;
   }
   return false;
 }
