@@ -545,7 +545,7 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
 #ifdef CREQUEST_DEBUG
     CDBDebug("Get DIMS from query string");
 #endif
-    for (size_t k = 0; k < srvParam->requestDims.size(); k++) srvParam->requestDims[k]->name = CT::toLowerCase(srvParam->requestDims[k]->name);
+    for (size_t k = 0; k < srvParam->requestDims.size(); k++) srvParam->requestDims[k].name = CT::toLowerCase(srvParam->requestDims[k].name);
 
     bool hasReferenceTimeDimension = false;
     for (size_t l = 0; l < dataSource->cfgLayer->Dimension.size(); l++) {
@@ -581,9 +581,9 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
 #endif
       if (alreadyAdded == false) {
         for (size_t k = 0; k < srvParam->requestDims.size(); k++) {
-          if (srvParam->requestDims[k]->name == dimName.c_str()) {
+          if (srvParam->requestDims[k].name == dimName.c_str()) {
 #ifdef CREQUEST_DEBUG
-            CDBDebug("DIM COMPARE: %s==%s", srvParam->requestDims[k]->name.c_str(), dimName.c_str());
+            CDBDebug("DIM COMPARE: %s==%s", srvParam->requestDims[k].name.c_str(), dimName.c_str());
 #endif
 
             // This dimension has been specified in the request, so the dimension has been found:
@@ -591,8 +591,8 @@ int CRequest::fillDimValuesForDataSource(CDataSource *dataSource, CServerParams 
             dataSource->requiredDims.push_back(COGCDims());
             COGCDims &ogcDim = dataSource->requiredDims.back();
             ogcDim.name = dimName;
-            ogcDim.value = srvParam->requestDims[k]->value;
-            ogcDim.queryValue = srvParam->requestDims[k]->value;
+            ogcDim.value = srvParam->requestDims[k].value;
+            ogcDim.queryValue = srvParam->requestDims[k].value;
             ogcDim.netCDFDimName = dataSource->cfgLayer->Dimension[i]->attr.name;
             ogcDim.hidden = dataSource->cfgLayer->Dimension[i]->attr.hidden;
 
@@ -1446,22 +1446,18 @@ int CRequest::process_querystring() {
         foundDim = 4;
       }
       if (foundDim != -1) {
-        COGCDims *ogcDim = NULL;
         const char *ogcDimName = uriKeyUpperCase.c_str() + foundDim;
-        for (size_t j = 0; j < srvParam->requestDims.size(); j++) {
-          if (srvParam->requestDims[j]->name == ogcDimName) {
-            ogcDim = srvParam->requestDims[j];
-            break;
-          }
-        }
-        if (ogcDim == NULL) {
-          ogcDim = new COGCDims();
-          srvParam->requestDims.push_back(ogcDim);
-        } else {
+
+        auto it = std::find_if(srvParam->requestDims.begin(), srvParam->requestDims.end(), [&ogcDimName](COGCDims &ogcDim) { return ogcDim.name == ogcDimName; });
+        if (it != srvParam->requestDims.end()) {
+          (*it).value = uriValue;
           CDBDebug("OGC Dim %s reused", ogcDimName);
+        } else {
+          COGCDims ogcDim;
+          ogcDim.name = ogcDimName;
+          ogcDim.value = uriValue;
+          srvParam->requestDims.push_back(ogcDim);
         }
-        ogcDim->name = ogcDimName;
-        ogcDim->value = uriValue;
       }
 
       // FORMAT parameter

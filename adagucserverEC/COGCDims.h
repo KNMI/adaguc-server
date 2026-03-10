@@ -28,8 +28,13 @@
 #include <cstdio>
 #include "CTString.h"
 #include "CDebugger.h"
-struct COGCDims {
 
+struct OGCURIDims {
+  std::string name;
+  std::string value;
+};
+
+struct COGCDims {
   std::string name;                      // OGC name
   std::string queryValue;                // Value, as given in the query_string
   std::string value;                     // Value, are all values as given in the KVP request string, can contain / and , tokens
@@ -39,8 +44,6 @@ struct COGCDims {
   bool hasFixedValue = false;
   bool hidden = false;
 };
-COGCDims makeTimeBasedOGCDim(std::string name, std::string value);
-COGCDims makeEmptyOGCDim();
 struct NetCDFDim {
   std::string name;
   std::string value;
@@ -49,6 +52,8 @@ struct NetCDFDim {
 
 typedef std::vector<NetCDFDim> CCDFDims;
 
+COGCDims makeTimeBasedOGCDim(std::string name, std::string value);
+COGCDims makeEmptyOGCDim();
 bool isOGCTimeDim(NetCDFDim &dimension);
 std::string getCDFDimensionValue(CCDFDims &dimensions, const char *name);
 /**

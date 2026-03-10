@@ -135,7 +135,7 @@ int layerTypeLiveUpdateRenderIntoDrawImage(CDrawImage *image, CServerParams *srv
   std::string fontFile = image->getFontLocation();
   CT::string timeValue = "No time dimension specified";
   if (srvParam->requestDims.size() == 1) {
-    timeValue = srvParam->requestDims[0]->value.c_str();
+    timeValue = srvParam->requestDims[0].value.c_str();
   }
   int stepY = 100;
   for (int y = 0; y < image->getHeight(); y = y + stepY) {

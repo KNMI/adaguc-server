@@ -15,10 +15,9 @@ int getFeatureInfoVirtualForSolarTerminator(CImageDataWriter *img, std::vector<C
   // Before parsing time, make sure at lease one timestamp (default) requested
   if (srvParams->requestDims.size() == 0) {
     // We put a time request for the current time
-    COGCDims *timeDim = new COGCDims();
-    timeDim->name = ("TIME");
-    // CT::string timeVal = timeRange.defaultTime + "/" + timeRange.defaultTime;
-    timeDim->value = (timeRange.defaultTime);
+    COGCDims timeDim;
+    timeDim.name = ("TIME");
+    timeDim.value = (timeRange.defaultTime);
     srvParams->requestDims.push_back(timeDim);
   }
 
@@ -26,9 +25,9 @@ int getFeatureInfoVirtualForSolarTerminator(CImageDataWriter *img, std::vector<C
   CT::string requestedTime, startTime, stopTime;
   size_t timeIdx = 0;
   for (size_t i = 0; i < srvParams->requestDims.size(); i++) {
-    if (CT::toLowerCase(srvParams->requestDims[i]->name) == "time") {
+    if (CT::toLowerCase(srvParams->requestDims[i].name) == "time") {
       timeIdx = i;
-      requestedTime = (srvParams->requestDims[i]->value);
+      requestedTime = (srvParams->requestDims[i].value);
       break;
     }
   }
@@ -151,7 +150,7 @@ int getFeatureInfoVirtualForSolarTerminator(CImageDataWriter *img, std::vector<C
     // Update dataSource timestamp and apply postprocessors
     if (!dataSource->srvParams->requestDims.empty()) {
       // Note: Check what to do when the requested dims are empty
-      dataSource->srvParams->requestDims[timeIdx]->value = (generatedTimestamps[i].c_str());
+      dataSource->srvParams->requestDims[timeIdx].value = (generatedTimestamps[i].c_str());
     }
 
     getCDPPExecutor()->executeProcessors(dataSource, CDATAPOSTPROCESSOR_RUNAFTERREADING);

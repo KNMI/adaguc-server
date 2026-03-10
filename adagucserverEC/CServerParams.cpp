@@ -59,10 +59,6 @@ CServerParams::~CServerParams() {
     delete configObj;
     configObj = NULL;
   }
-  for (size_t j = 0; j < requestDims.size(); j++) {
-    delete requestDims[j];
-    requestDims[j] = NULL;
-  }
   requestDims.clear();
 }
 
