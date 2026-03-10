@@ -60,13 +60,13 @@ class TestEWCLocalClimateInfo(unittest.TestCase):
             env=self.env,
         )
         self.assertEqual(status, 0)
-        # AdagucTestTools().writetofile(
-        #     self.testresultspath + filename, json.dumps(json.loads(data.getvalue().decode("utf-8")), indent=2).encode("utf-8")
-        # )
-        # self.assertEqual(
-        #     AdagucTestTools().readfromfile(self.testresultspath + filename),
-        #     AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        # )
+        AdagucTestTools().writetofile(
+            self.testresultspath + filename, json.dumps(json.loads(data.getvalue().decode("utf-8")), indent=2).encode("utf-8")
+        )
+        self.assertEqual(
+            AdagucTestTools().readfromfile(self.testresultspath + filename),
+            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
 
     def test_EWCLocalClimateInfo_GetPointValue_Two_Scenarios(self):
         self.scan_this_dataset()
