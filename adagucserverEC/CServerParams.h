@@ -125,7 +125,7 @@ public:
 
   CT::string JSONP, queryStrURLParam;
 
-  std::vector<COGCDims> requestDims;
+  std::vector<OGCURIDims> requestDims;
   int serviceType;
   int requestType;
   int OGCVersion;
