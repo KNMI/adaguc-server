@@ -1447,16 +1447,12 @@ int CRequest::process_querystring() {
       }
       if (foundDim != -1) {
         const char *ogcDimName = uriKeyUpperCase.c_str() + foundDim;
-
         auto it = std::find_if(srvParam->requestDims.begin(), srvParam->requestDims.end(), [&ogcDimName](OGCURIDims &ogcDim) { return ogcDim.name == ogcDimName; });
         if (it != srvParam->requestDims.end()) {
           (*it).value = uriValue;
           CDBDebug("OGC Dim %s reused", ogcDimName);
         } else {
-          OGCURIDims ogcDim;
-          ogcDim.name = ogcDimName;
-          ogcDim.value = uriValue;
-          srvParam->requestDims.push_back(ogcDim);
+          srvParam->requestDims.push_back({.name = ogcDimName, .value = uriValue});
         }
       }
 
