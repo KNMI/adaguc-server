@@ -421,3 +421,147 @@ CDFType CDFObject::ncmlTypeToCDFType(const char *type) {
   if (strncmp("double", type, 6) == 0) return CDF_DOUBLE;
   return CDF_DOUBLE;
 }
+
+CDFObject::CDFObject() {
+  name.copy("NC_GLOBAL");
+  reader = NULL;
+}
+
+int CDFObject::getVariableIndex(const char *name) {
+  if (strncmp("NC_GLOBAL", name, 9) == 0) {
+    throw(CDF_E_VARNOTFOUND);
+  }
+  for (size_t j = 0; j < variables.size(); j++) {
+    if (variables[j]->name.equals(name)) {
+      return j;
+    }
+  }
+  throw(CDF_E_VARNOTFOUND);
+}
+
+int CDFObject::getVariableIndexNE(const char *name) {
+  try {
+    return getVariableIndex(name);
+  } catch (int e) {
+  }
+  return -1;
+}
+
+int CDFObject::getDimensionIndex(const char *name) {
+  for (size_t j = 0; j < dimensions.size(); j++) {
+    if (dimensions[j]->name.equals(name)) {
+      return j;
+    }
+  }
+  throw(CDF_E_DIMNOTFOUND);
+}
+int CDFObject::getDimensionIndexNE(const char *name) {
+  try {
+    return getDimensionIndex(name);
+  } catch (int e) {
+  }
+  return -1;
+}
+
+CDF::Variable *CDFObject::addVariable(CDF::Variable *var) {
+  var->id = variables.size();
+  var->setParentCDFObject(this);
+  variables.push_back(var);
+  return var;
+}
+
+int CDFObject::removeVariable(const char *name) {
+  for (size_t j = 0; j < variables.size(); j++) {
+    if (variables[j]->name.equals(name)) {
+      delete variables[j];
+      variables[j] = NULL;
+      variables.erase(variables.begin() + j);
+    }
+  }
+  return 0;
+}
+
+int CDFObject::removeDimension(const char *name) {
+  for (size_t j = 0; j < dimensions.size(); j++) {
+    if (dimensions[j]->name.equals(name)) {
+      delete dimensions[j];
+      dimensions[j] = NULL;
+      dimensions.erase(dimensions.begin() + j);
+    }
+  }
+  return 0;
+}
+
+CDF::Dimension *CDFObject::addDimension(CDF::Dimension *dim) {
+  dim->id = dimensions.size();
+  dimensions.push_back(dim);
+  return dim;
+}
+CDF::Dimension *CDFObject::getDimension(const char *name) {
+  for (size_t j = 0; j < dimensions.size(); j++) {
+    if (dimensions[j]->name.equals(name)) {
+      return dimensions[j];
+    }
+  }
+  throw(CDF_E_DIMNOTFOUND);
+  return NULL;
+}
+
+CDF::Dimension *CDFObject::getDimensionNE(std::string name) {
+  for (size_t j = 0; j < dimensions.size(); j++) {
+    if (dimensions[j]->name.equals(name)) {
+      return dimensions[j];
+    }
+  }
+  return NULL;
+}
+
+CDF::Dimension *CDFObject::getDimensionIgnoreCase(const char *name) {
+  for (size_t j = 0; j < dimensions.size(); j++) {
+    if (dimensions[j]->name.equalsIgnoreCase(name)) {
+      return dimensions[j];
+    }
+  }
+  throw(CDF_E_DIMNOTFOUND);
+  return NULL;
+}
+
+CDF::Dimension *CDFObject::getDimensionNE(const char *name) {
+  try {
+    return getDimension(name);
+  } catch (int e) {
+    return NULL;
+  }
+}
+
+int CDFObject::aggregateDim(CDFObject *sourceCDFObject, const char *dimName) {
+  CDF::Variable *srcVar;
+  CDF::Variable *destVar;
+  for (size_t v = 0; v < sourceCDFObject->variables.size(); v++) {
+    // try{srcVar=sourceCDFObject->getVariable("ctt");}catch(int e){CDBError("Variable not found.");throw(__LINE__);}
+    srcVar = sourceCDFObject->variables[v];
+    // if(getVariableNE(srcVar->name.c_str())!=NULL)
+    {
+      try {
+        try {
+          destVar = getVariable(srcVar->name.c_str());
+        } catch (int e) {
+          CDBError("Variable %s not found.", srcVar->name.c_str());
+          throw(__LINE__);
+        }
+
+        try {
+          destVar->setCDFObjectDim(srcVar, dimName);
+        } catch (int e) {
+          CDBError("%s", CDF::getErrorMessage(e).c_str());
+          throw(__LINE__);
+        }
+      } catch (int e) {
+        CDBError("Unable to setCDFObjectDim for variable %s", srcVar->name.c_str());
+        return 1;
+      }
+    }
+  }
+
+  return 0;
+}
