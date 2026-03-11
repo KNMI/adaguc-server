@@ -51,8 +51,8 @@ void writeLogFile4(const char *msg) {
 
 int CConvertTROPOMI::isThisTROPOMIData(CDFObject *cdfObject) {
   try {
-    if (cdfObject->getAttribute("cdm_data_type")->getDataAsString().equals("Swath") == false) return 1;
-    if (cdfObject->getAttribute("sensor")->getDataAsString().equals("TROPOMI") == false) return 1;
+    if (cdfObject->getAttribute("cdm_data_type")->toString().equals("Swath") == false) return 1;
+    if (cdfObject->getAttribute("sensor")->toString().equals("TROPOMI") == false) return 1;
   } catch (int e) {
     return 1;
   }

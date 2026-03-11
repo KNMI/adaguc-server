@@ -898,7 +898,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
 
                       CT::string dimStandardName = "";
                       try {
-                        dimStandardName = v->getAttribute("standard_name")->getDataAsString();
+                        dimStandardName = v->getAttribute("standard_name")->toString();
                         ;
                       } catch (int e) {
                         dimStandardName = v->name.c_str();
@@ -906,7 +906,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
                       }
                       CT::string dimUnits = "";
                       try {
-                        dimUnits = v->getAttribute("units")->getDataAsString();
+                        dimUnits = v->getAttribute("units")->toString();
                         ;
                       } catch (int e) {
                       }
@@ -1107,7 +1107,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
               }
               if (v->attributes[j]->type == CDF_CHAR) {
                 output.concat("\"");
-                CT::string s = v->attributes[j]->getDataAsString().c_str();
+                CT::string s = v->attributes[j]->toString().c_str();
 
                 // s.encodeURLSelf();
                 //               s.replaceSelf(":","");
@@ -1117,7 +1117,7 @@ int COpenDAPHandler::handleOpenDAPRequest(const char *path, const char *_query, 
                 output.concat(s.c_str());
                 if (v->attributes[j]->type == CDF_CHAR) output.concat("\"");
               } else {
-                CT::string s = v->attributes[j]->getDataAsString();
+                CT::string s = v->attributes[j]->toString();
                 s.replaceSelf(" ", ",");
                 output.concat(s.c_str());
               }

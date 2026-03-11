@@ -41,7 +41,7 @@ CTime *CTime::GetCTimeInstance(CDF::Variable *timeVariable) {
     CDBError("No time units available for dimension %s", timeVariable->name.c_str());
     return nullptr;
   }
-  CT::string units = unitsAttr->getDataAsString();
+  CT::string units = unitsAttr->toString();
   if (units.length() == 0) {
     CDBError("No units data available for dimension %s", timeVariable->name.c_str());
     return NULL;
@@ -49,7 +49,7 @@ CTime *CTime::GetCTimeInstance(CDF::Variable *timeVariable) {
   CT::string calendar;
   auto calendarAttr = timeVariable->getAttributeNE("calendar");
   if (calendarAttr != nullptr && calendarAttr->data != nullptr) {
-    calendar = calendarAttr->getDataAsString();
+    calendar = calendarAttr->toString();
   }
   CT::string key = units + CT::string("_") + calendar;
 
@@ -143,7 +143,7 @@ int CTime::init(CDF::Variable *timeVariable) {
     return 1;
   }
 
-  units = unitsAttr->getDataAsString();
+  units = unitsAttr->toString();
 
   if (units.length() == 0) {
     CDBError("No units data available for dimension %s", timeVariable->name.c_str());
@@ -152,7 +152,7 @@ int CTime::init(CDF::Variable *timeVariable) {
 
   if (calendarAttr != NULL) {
     if (calendarAttr->data != NULL) {
-      calendar = calendarAttr->getDataAsString();
+      calendar = calendarAttr->toString();
       // CDBDebug("Found calendar %s",calendar.c_str());
     }
   }

@@ -242,7 +242,7 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
     timeVar->setAttributeText("standard_name", "time");
     timeVar->setAttributeText("long_name", "time");
     timeVar->isDimension = true;
-    CT::string time_units = "minutes since 2000-01-01 00:00:00\0";
+    CT::string time_units = "minutes since 2000-01-01 00:00:00";
     CT::string szStartTime = getRadarStartTime(cdfObject);
     // Set adaguc time
     CTime ctime;

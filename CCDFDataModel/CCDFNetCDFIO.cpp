@@ -1111,7 +1111,7 @@ int CDFNetCDFWriter::_write(void (*progress)(const char *message, float percenta
               for (size_t m = 0; m < variable->dimensionlinks.size(); m++) {
                 chunkSizes[m] = variable->dimensionlinks[m]->getSize();
                 try {
-                  CT::string standardName = cdfObject->getVariable(variable->dimensionlinks[m]->name.c_str())->getAttribute("standard_name")->getDataAsString();
+                  CT::string standardName = cdfObject->getVariable(variable->dimensionlinks[m]->name.c_str())->getAttribute("standard_name")->toString();
                   if (standardName.equals("time")) {
                     chunkSizes[m] = 1;
                   }

@@ -40,12 +40,12 @@ int CDFObject::attachCDFReader(void *reader) {
   return 0;
 }
 void CDFObject::clear() {
-  for (auto &dimension : dimensions) {
+  for (auto &dimension: dimensions) {
     delete dimension;
     dimension = NULL;
   }
   dimensions.clear();
-  for (auto &variable : variables) {
+  for (auto &variable: variables) {
     delete variable;
     variable = NULL;
   }
@@ -129,7 +129,7 @@ void ncmlHandletimeValueFromGlobalAttribute(xmlNode *cur_node, CT::string NCMLVa
       try {
         CDF::Variable *variable = cdfObject->getVariable(NCMLVarName.c_str());
         CDF::Attribute *attribute = cdfObject->getAttribute(attr_attribute.c_str());
-        CT::string attributeValue = attribute->getDataAsString();
+        CT::string attributeValue = attribute->toString();
         variable->allocateData(1);
         ((double *)variable->data)[0] = CTime::getEpochTimeFromDateString(attributeValue);
       } catch (...) {

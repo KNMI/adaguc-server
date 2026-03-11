@@ -25,7 +25,7 @@ void adjustCDFModel(CDataSource *dataSource) {
 
   auto cdfObject = dataSource->getDataObject(0)->cdfObject;
   auto globAttr = cdfObject->getAttributeNE(CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ID);
-  if (globAttr != nullptr && (globAttr->getDataAsString().equals("metadata") || globAttr->getDataAsString().equals("applied"))) {
+  if (globAttr != nullptr && (globAttr->toString().equals("metadata") || globAttr->toString().equals("applied"))) {
     return;
   }
 

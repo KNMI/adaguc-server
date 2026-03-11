@@ -17,13 +17,13 @@ from conftest import (
 ADAGUC_PATH = os.environ["ADAGUC_PATH"]
 
 
-class TestDestineFloodMindData(unittest.TestCase):
+class TestDestineFloodmindData(unittest.TestCase):
     """
     The following tests if adaguc works properly with a file with only a dimension and no dimension variable. Adaguc will use an index for ensemble in this case.
     """
 
-    testresultspath = "testresults/TestDestineFloodMindData/"
-    expectedoutputsspath = "expectedoutputs/TestDestineFloodMindData/"
+    testresultspath = "testresults/TestDestineFloodmindData/"
+    expectedoutputsspath = "expectedoutputs/TestDestineFloodmindData/"
     env = {"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.autoresource.xml"}
 
     # //data/datasets/destine_floodmind/netcdf_hdsr_small_no_ensemble_variable.nc

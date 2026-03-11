@@ -658,7 +658,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
             // Get variable standard name
             CDF::Attribute *attr_standard_name = dataSource->getDataObject(o)->cdfVariable->getAttributeNE("standard_name");
             if (attr_standard_name != NULL) {
-              std::string standardName = attr_standard_name->getDataAsString();
+              std::string standardName = attr_standard_name->toString();
               element.standard_name = standardName;
               // Make a more clean standard name.
               element.feature_name = CT::printf("%s_%lu", standardName.c_str(), o);
@@ -672,7 +672,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
             // Get variable long name
             CDF::Attribute *attr_long_name = dataSource->getDataObject(o)->cdfVariable->getAttributeNE("long_name");
             if (attr_long_name != NULL) {
-              element.long_name = attr_long_name->getDataAsString();
+              element.long_name = attr_long_name->toString();
             } else {
               element.long_name = element.var_name;
             }

@@ -40,7 +40,7 @@ FileType checkH5VolScanType(CDFObject *cdfObject) {
   /* If ODIM file then don't handle as KNMI hdf5, for support of hybrid format */
   CDF::Attribute *conventionsAttr = cdfObject->getAttributeNE("Conventions");
   if (conventionsAttr != nullptr) {
-    CT::string conventionsString = conventionsAttr->getDataAsString();
+    CT::string conventionsString = conventionsAttr->toString();
     if (conventionsString.startsWith("ODIM_H5")) {
       return ODIM_H5;
     }
@@ -53,7 +53,7 @@ int checkIfIsH5VolScan(CDFObject *cdfObject) {
     if (checkH5VolScanType(cdfObject) == ODIM_H5) {
       CDF::Variable *whatVar = cdfObject->getVariable("what");
       CDF::Attribute *whatObjectAttr = whatVar->getAttribute("object");
-      CT::string whatObjectString = whatObjectAttr->getDataAsString();
+      CT::string whatObjectString = whatObjectAttr->toString();
       if (not whatObjectString.equals("SCAN") && not whatObjectString.equals("PVOL")) {
         CDBDebug("Is not a volume or scan dataset, skipping parsing as ODIM volume dataset");
         return 1;
@@ -127,13 +127,13 @@ std::tuple<double, double, double> getRadarLocation(CDFObject *cdfObject) {
 
 CT::string getRadarStartTime(CDFObject *cdfObject) {
   if (checkH5VolScanType(cdfObject) == ODIM_H5) {
-    CT::string h5Date = cdfObject->getVariable("what")->getAttribute("date")->getDataAsString();
-    CT::string h5Time = cdfObject->getVariable("what")->getAttribute("time")->getDataAsString();
+    CT::string h5Date = cdfObject->getVariable("what")->getAttribute("date")->toString();
+    CT::string h5Time = cdfObject->getVariable("what")->getAttribute("time")->toString();
     CT::string timeString;
     timeString.print("%sT%s00Z", h5Date.c_str(), h5Time.substring(0, 4).c_str());
     return timeString;
   } else {
-    auto timeString = knmiH5TimeToISOString(cdfObject->getVariable("overview")->getAttribute("product_datetime_start")->getDataAsString());
+    auto timeString = knmiH5TimeToISOString(cdfObject->getVariable("overview")->getAttribute("product_datetime_start")->toString());
     // Seconds should be rounded to zero.
     timeString[13] = '0';
     timeString[14] = '0';
@@ -164,7 +164,7 @@ int findOdimParamNum(CDFObject *cdfObject, int scan, CT::string param) {
     dataWhatVarName.print("dataset%1d.data%1d.what", scan, paramNum);
     CDF::Variable *dataWhatVar = cdfObject->getVariableNE(dataWhatVarName.c_str());
     if (dataWhatVar == nullptr) break;
-    CT::string quantity = dataWhatVar->getAttribute("quantity")->getDataAsString();
+    CT::string quantity = dataWhatVar->getAttribute("quantity")->toString();
     if (quantity.equals(param)) return paramNum;
   }
   return -1;
@@ -254,7 +254,7 @@ std::tuple<double, double, double, double> getCalibrationParameters(CDFObject *c
     CDF::Variable *scanCalibrationVar = cdfObject->getVariable(scanCalibrationVarName);
     CT::string componentCalibrationStringName;
     componentCalibrationStringName.print("calibration_%s_formulas", param.c_str());
-    CT::string formula = scanCalibrationVar->getAttribute(componentCalibrationStringName.c_str())->getDataAsString();
+    CT::string formula = scanCalibrationVar->getAttribute(componentCalibrationStringName.c_str())->toString();
     int rightPartFormulaPos = formula.indexOf("=");
     int multiplicationSignPos = formula.indexOf("*");
     int additionSignPos = formula.indexOf("+");

@@ -54,7 +54,7 @@ CDataSource::DataObject *CDataSource::DataObject::clone() {
 CT::string CDataSource::DataObject::getUnits() {
   if (overruledUnits.empty() && cdfVariable != NULL) {
     try {
-      return cdfVariable->getAttribute("units")->getDataAsString();
+      return cdfVariable->getAttribute("units")->toString();
     } catch (int e) {
     }
   }
@@ -464,7 +464,7 @@ void CDataSource::readStatusFlags(CDF::Variable *var, std::vector<CDataSource::S
       }
       if (attr_flag_values != NULL) {
         CT::string flag_meanings;
-        attr_flag_meanings->getDataAsString(&flag_meanings);
+        flag_meanings = attr_flag_meanings->toString();
         auto flagStrings = flag_meanings.split(" ");
         size_t nrOfFlagMeanings = flagStrings.size();
         if (nrOfFlagMeanings > 0) {

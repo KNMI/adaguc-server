@@ -210,7 +210,7 @@ int CDFPNGReader::open(const char *fileName) {
 
     /* Temporarily checking invalid metadata */
     if (bbox[0] < -5570000) {
-      if (CRS->getAttribute("proj4")->getDataAsString().equals("+proj=geos +a=6378.169 +b=6356.584 +h=35785.831 +lat_0=0 +lon_0=0.0")) {
+      if (CRS->getAttribute("proj4")->toString().equals("+proj=geos +a=6378.169 +b=6356.584 +h=35785.831 +lat_0=0 +lon_0=0.0")) {
         for (size_t j = 0; j < 4; j++) {
           bbox[j] /= 1000;
         }

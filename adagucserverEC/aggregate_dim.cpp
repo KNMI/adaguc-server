@@ -195,7 +195,7 @@ int main(int argc, const char *argv[]) {
         double value = ((double *)(aggregationDim->data))[0];
         CT::string units;
         try {
-          units = aggregationDim->getAttribute("units")->getDataAsString().c_str();
+          units = aggregationDim->getAttribute("units")->toString().c_str();
         } catch (int e) {
           CDBError("Unable to find units attribute for time variable");
           throw(__LINE__);

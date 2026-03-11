@@ -737,7 +737,7 @@ int CDFHDF5Reader::convertNWCSAFtoCF() {
             projection->addAttribute(proj4_params);
             proj4_params->setName("proj4_params");
           }
-          proj4_params->setData(CDF_CHAR, projectionString.c_str(), projectionString.length());
+          proj4_params->setString(projectionString.c_str());
 
           // Set time dimension
           CDF::Variable *time = new CDF::Variable();
@@ -750,14 +750,10 @@ int CDFHDF5Reader::convertNWCSAFtoCF() {
           time->currentType = CDF_DOUBLE;
           time->nativeType = CDF_DOUBLE;
           time->isDimension = true;
-          CDF::Attribute *time_units = new CDF::Attribute();
-          time_units->setName("units");
-          time_units->setData("minutes since 2000-01-01 00:00:00\0");
+          CDF::Attribute *time_units = new CDF::Attribute("units", "minutes since 2000-01-01 00:00:00");
           time->addAttribute(time_units);
 
-          CDF::Attribute *standard_name = new CDF::Attribute();
-          standard_name->setName("standard_name");
-          standard_name->setData("time");
+          CDF::Attribute *standard_name = new CDF::Attribute("standard_name", "time");
           time->addAttribute(standard_name);
 
           time->dimensionlinks.push_back(timeDim);
@@ -792,9 +788,7 @@ int CDFHDF5Reader::convertNWCSAFtoCF() {
 
           dimsDone = true;
         }
-        CDF::Attribute *grid_mapping = new CDF::Attribute();
-        grid_mapping->setName("grid_mapping");
-        grid_mapping->setData(CDF_CHAR, (char *)"projection\0", 11);
+        CDF::Attribute *grid_mapping = new CDF::Attribute("grid_mapping", "projection");
         cdfObject->variables[j]->addAttribute(grid_mapping);
 
         cdfObject->variables[j]->dimensionlinks.insert(cdfObject->variables[j]->dimensionlinks.begin(), 1, cdfObject->getDimension("time"));
@@ -956,7 +950,7 @@ int CDFHDF5Reader::convertLSASAFtoCF() {
             projection->addAttribute(proj4_params);
             proj4_params->setName("proj4_params");
           }
-          proj4_params->setData("+proj=geos +a=6378169.0 +b=6356583.8 +lon_0=0.0 +h=35785831.0");
+          proj4_params->setString("+proj=geos +a=6378169.0 +b=6356583.8 +lon_0=0.0 +h=35785831.0");
 
           // Set time dimension
 
@@ -970,14 +964,10 @@ int CDFHDF5Reader::convertLSASAFtoCF() {
           time->currentType = CDF_DOUBLE;
           time->nativeType = CDF_DOUBLE;
           time->isDimension = true;
-          CDF::Attribute *time_units = new CDF::Attribute();
-          time_units->setName("units");
-          time_units->setData("minutes since 2000-01-01 00:00:00\0");
+          CDF::Attribute *time_units = new CDF::Attribute("units", "minutes since 2000-01-01 00:00:00");
           time->addAttribute(time_units);
 
-          CDF::Attribute *standard_name = new CDF::Attribute();
-          standard_name->setName("standard_name");
-          standard_name->setData("time");
+          CDF::Attribute *standard_name = new CDF::Attribute("standard_name", "time");
           time->addAttribute(standard_name);
 
           time->dimensionlinks.push_back(timeDim);
@@ -1012,9 +1002,7 @@ int CDFHDF5Reader::convertLSASAFtoCF() {
 
           dimsDone = true;
         }
-        CDF::Attribute *grid_mapping = new CDF::Attribute();
-        grid_mapping->setName("grid_mapping");
-        grid_mapping->setData(CDF_CHAR, (char *)"projection\0", 11);
+        CDF::Attribute *grid_mapping = new CDF::Attribute("grid_mapping", "projection");
         cdfObject->variables[j]->addAttribute(grid_mapping);
 
         cdfObject->variables[j]->dimensionlinks.insert(cdfObject->variables[j]->dimensionlinks.begin(), 1, cdfObject->getDimension("time"));
@@ -1145,7 +1133,7 @@ int CDFHDF5Reader::readAttributes(std::vector<CDF::Attribute *> &attributes, hid
           throw(__LINE__);
         }
         status = H5Aread(HDF5_attribute, HDF5_attr_type, attr->data);
-        size_t stringLength = strlen(attr->getDataAsString().c_str());
+        size_t stringLength = strlen(attr->toString().c_str());
         if (attr->length > stringLength) attr->length = stringLength + 1;
         ((char *)attr->data)[attr->length] = '\0';
       } else {
@@ -1428,14 +1416,10 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
   time->currentType = CDF_DOUBLE;
   time->nativeType = CDF_DOUBLE;
   time->isDimension = true;
-  CDF::Attribute *time_units = new CDF::Attribute();
-  time_units->setName("units");
-  time_units->setData("minutes since 2000-01-01 00:00:00\0");
+  CDF::Attribute *time_units = new CDF::Attribute("units", "minutes since 2000-01-01 00:00:00");
   time->addAttribute(time_units);
 
-  CDF::Attribute *standard_name = new CDF::Attribute();
-  standard_name->setName("standard_name");
-  standard_name->setData("time");
+  CDF::Attribute *standard_name = new CDF::Attribute("standard_name", "time");
   time->addAttribute(standard_name);
 
   time->dimensionlinks.push_back(timeDim);
@@ -1561,12 +1545,7 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
         if (imageN != NULL) {
           CDF::Attribute *image_geo_parameter = imageN->getAttributeNE("image_geo_parameter");
           if (image_geo_parameter != NULL) {
-            CDF::Attribute *units = new CDF::Attribute();
-            units->setName("units");
-            CT::string unitString;
-            image_geo_parameter->getDataAsString(&unitString);
-            units->setData(unitString.c_str());
-            var->addAttribute(units);
+            var->addAttribute(new CDF::Attribute("units", image_geo_parameter->toString().c_str()));
           }
         }
 
@@ -1642,7 +1621,7 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
           // Try to detect calibration_formulas and convert them to scale_factor and add_offset attributes
           CDF::Attribute *calibration_formulas = calibration->getAttributeNE("calibration_formulas");
           if (calibration_formulas != NULL) {
-            CT::string formula = calibration_formulas->getDataAsString();
+            CT::string formula = calibration_formulas->toString();
             // CDBDebug("Formula: %s",formula.c_str());
             int rightPartFormulaPos = formula.indexOf("=");
             int multiplicationSignPos = formula.indexOf("*");
@@ -1669,7 +1648,7 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
         // Try to detect image_datetime_valid for forecast data
         CDF::Attribute *image_datetime_valid = imageN->getAttributeNE("image_datetime_valid");
         if (image_datetime_valid != NULL) {
-          CT::string datetime_valid = image_datetime_valid->getDataAsString();
+          CT::string datetime_valid = image_datetime_valid->toString();
 
           auto valid_time_iso_str = knmiH5TimeToISOString(datetime_valid.c_str());
           if (valid_time_iso_str.empty()) {

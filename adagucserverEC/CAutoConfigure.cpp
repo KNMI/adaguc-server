@@ -166,7 +166,7 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
             CT::string OGCDimName;
 
             try {
-              dimVar->getAttribute("units")->getDataAsString(&units);
+              units = dimVar->getAttribute("units")->toString();
             } catch (int e) {
             }
 
@@ -327,7 +327,7 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
     if (dataSource->getDataObject(0)->cdfVariable == nullptr) {
       throw __LINE__;
     }
-    dataSource->getDataObject(0)->cdfVariable->getAttribute("standard_name")->getDataAsString(&searchStandardName);
+    searchStandardName = dataSource->getDataObject(0)->cdfVariable->getAttribute("standard_name")->toString();
   } catch (int e) {
   }
 

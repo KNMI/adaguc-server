@@ -59,7 +59,7 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenHeader(CDFObject *cdfObject
   int height = 2;
 
   /* Deterine product corners based on file metadata: */
-  CT::string geo_product_corners = cdfObject->getVariable("geographic")->getAttribute("geo_product_corners")->getDataAsString();
+  CT::string geo_product_corners = cdfObject->getVariable("geographic")->getAttribute("geo_product_corners")->toString();
   std::vector<CT::string> cell_max = geo_product_corners.split(" ");
 
   /* Figure out outer biggest bbox based on the 4 coordinate values */
@@ -226,9 +226,9 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
     /* Now get the colums and rows as defined in the metadata attributes of the HDF5 file */
     int stat_cell_number = 0;
     cdfObject0->getVariable("image1.statistics")->getAttribute("stat_cell_number")->getData(&stat_cell_number, 1);
-    CT::string stat_cell_column = cdfObject0->getVariable("image1.statistics")->getAttribute("stat_cell_column")->getDataAsString();
-    CT::string stat_cell_row = cdfObject0->getVariable("image1.statistics")->getAttribute("stat_cell_row")->getDataAsString();
-    CT::string stat_cell_max = cdfObject0->getVariable("image1.statistics")->getAttribute("stat_cell_max")->getDataAsString();
+    CT::string stat_cell_column = cdfObject0->getVariable("image1.statistics")->getAttribute("stat_cell_column")->toString();
+    CT::string stat_cell_row = cdfObject0->getVariable("image1.statistics")->getAttribute("stat_cell_row")->toString();
+    CT::string stat_cell_max = cdfObject0->getVariable("image1.statistics")->getAttribute("stat_cell_max")->toString();
 
     /* Split based on whitespace character */
     std::vector<CT::string> cell_max = stat_cell_max.split(" ");
