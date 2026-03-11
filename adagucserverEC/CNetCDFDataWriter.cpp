@@ -655,7 +655,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
       CDBDebug("START %lu/%lu with variable [%s]", j, baseDataSource->getNumDataObjects(), dataSource->getDataObject(j)->cdfVariable->name.c_str());
 #endif
 
-      CDF::Variable *variable = destCDFObject->getVariable(dataSource->getDataObject(j)->cdfVariable->name.c_str());
+      CDF::Variable *variable = destCDFObject->getVariableThrows(dataSource->getDataObject(j)->cdfVariable->name.c_str());
       ;
 
       // Set dimension
@@ -703,7 +703,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
           CDBDebug("dimName.c_str() %s dimValue  = %s  step %d", dimName.c_str(), dimValue.c_str(), dataSource->getCurrentTimeStep());
         }
 
-        CDF::Variable *var = destCDFObject->getVariable(dimName.c_str());
+        CDF::Variable *var = destCDFObject->getVariableThrows(dimName.c_str());
         // CDBDebug("trying to search in var with size %d",var->getSize());
         if (var->getType() == CDF_STRING) {
           for (size_t j = 0; j < var->getSize(); j++) {
@@ -815,14 +815,14 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
 #endif
 
       CT::string dataSourceProjectionString = warper.getDestProjString().trim().c_str();
-      destCDFObject->getVariable("crs")->setAttributeText("proj4_params", dataSourceProjectionString.c_str());
+      destCDFObject->getVariableThrows("crs")->setAttributeText("proj4_params", dataSourceProjectionString.c_str());
 
       /* Lookup possible projection EPSG codes based on this */
       std::vector<CServerConfig::XMLE_Projection *> *prj = &dataSource->srvParams->cfg->Projection;
-      destCDFObject->getVariable("crs")->setAttributeText("id", "unknown");
+      destCDFObject->getVariableThrows("crs")->setAttributeText("id", "unknown");
       for (size_t j = 0; j < (*prj).size(); j++) {
         if ((*prj)[j]->attr.proj4.trim().equals(dataSourceProjectionString)) {
-          destCDFObject->getVariable("crs")->setAttributeText("id", (*prj)[j]->attr.id);
+          destCDFObject->getVariableThrows("crs")->setAttributeText("id", (*prj)[j]->attr.id);
           break;
         }
       }
@@ -972,7 +972,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
 
           destCDFObject->addVariable(featureIndexVar);
         }
-        featureIndexVar = destCDFObject->getVariable(featureDimIndexName.c_str());
+        featureIndexVar = destCDFObject->getVariableThrows(featureDimIndexName.c_str());
         int featureIndex = 0;
         std::map<int, CFeature>::iterator featureIt;
         for (featureIt = dataSource->getDataObject(j)->features.begin(); featureIt != dataSource->getDataObject(j)->features.end(); ++featureIt) {

@@ -159,7 +159,7 @@ int CConvertLatLonGrid::convertLatLonGridHeader(CDFObject *cdfObject, CServerPar
 
   // Create the new regular grid field variables based on the irregular grid variables
   for (size_t v = 0; v < varsToConvert.size(); v++) {
-    CDF::Variable *irregularGridVar = cdfObject->getVariable(varsToConvert[v].c_str());
+    CDF::Variable *irregularGridVar = cdfObject->getVariableThrows(varsToConvert[v].c_str());
     if (irregularGridVar->dimensionlinks.size() >= 2) {
 #ifdef CConvertLatLonGrid_DEBUG
       CDBDebug("Converting %s", irregularGridVar->name.c_str());

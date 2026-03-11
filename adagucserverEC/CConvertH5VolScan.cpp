@@ -353,14 +353,14 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
     CDF::Variable *varY;
 
     // Create new dimensions and variables (X,Y,T)
-    dimX = cdfObject->getDimension("adaguccoordinatex");
+    dimX = cdfObject->getDimensionThrows("adaguccoordinatex");
     dimX->setSize(dataSource->dWidth);
 
-    dimY = cdfObject->getDimension("adaguccoordinatey");
+    dimY = cdfObject->getDimensionThrows("adaguccoordinatey");
     dimY->setSize(dataSource->dHeight);
 
-    varX = cdfObject->getVariable("adaguccoordinatex");
-    varY = cdfObject->getVariable("adaguccoordinatey");
+    varX = cdfObject->getVariableThrows("adaguccoordinatex");
+    varY = cdfObject->getVariableThrows("adaguccoordinatey");
 
     CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
     CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
@@ -415,7 +415,7 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
 #endif
 
     int scan_index = dataSource->getDimensionIndex("scan_elevation");
-    CDF::Variable *scanNumberVar = cdfObject->getVariable("scan_number");
+    CDF::Variable *scanNumberVar = cdfObject->getVariableThrows("scan_number");
     int scan = scanNumberVar->getDataAt<int>(scan_index);
 
     if (doZdr) {

@@ -75,7 +75,7 @@ int CConvertLatLonGrid::convertLatLonGridData(CDataSource *dataSource, int mode)
       CDBDebug("_FillValue = %f", dataObjects[d]->dfNodataValue);
 #endif
       float f = dataObjects[d]->dfNodataValue;
-      destRegularGrid[d]->getAttribute("_FillValue")->setData(CDF_FLOAT, &f, 1);
+      destRegularGrid[d]->getAttributeThrows("_FillValue")->setData(CDF_FLOAT, &f, 1);
     } else
       dataObjects[d]->hasNodataValue = false;
   }
@@ -146,14 +146,14 @@ int CConvertLatLonGrid::convertLatLonGridData(CDataSource *dataSource, int mode)
     CDF::Variable *varY;
 
     // Create new dimensions and variables (X,Y,T)
-    dimX = cdfObject->getDimension("adx");
+    dimX = cdfObject->getDimensionThrows("adx");
     dimX->setSize(dataSource->dWidth);
 
-    dimY = cdfObject->getDimension("ady");
+    dimY = cdfObject->getDimensionThrows("ady");
     dimY->setSize(dataSource->dHeight);
 
-    varX = cdfObject->getVariable("adx");
-    varY = cdfObject->getVariable("ady");
+    varX = cdfObject->getVariableThrows("adx");
+    varY = cdfObject->getVariableThrows("ady");
 
     varX->allocateData(dimX->length);
     varY->allocateData(dimY->length);

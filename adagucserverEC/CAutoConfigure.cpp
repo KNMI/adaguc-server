@@ -149,7 +149,7 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
           if (dim != NULL) {
             CDF::Variable *dimVar = NULL;
             try {
-              dimVar = dataSource->getDataObject(0)->cdfObject->getVariable(dim->name.c_str());
+              dimVar = dataSource->getDataObject(0)->cdfObject->getVariableThrows(dim->name.c_str());
             } catch (int e) {
               CDBDebug("Warning: Variable is not defined for dimension [%s], creating array", dim->name.c_str());
               dimVar = CDataReader::addBlankDimVariable(dataSource->getDataObject(0)->cdfObject, dim->name.c_str());
@@ -166,7 +166,7 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
             CT::string OGCDimName;
 
             try {
-              units = dimVar->getAttribute("units")->toString();
+              units = dimVar->getAttributeThrows("units")->toString();
             } catch (int e) {
             }
 
@@ -209,11 +209,11 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
         CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
         for (size_t j = 0; j < cdfObject->variables.size(); j++) {
           try {
-            if (cdfObject->variables[j]->getAttribute("standard_name")->toString().equals("forecast_reference_time") == true) {
+            if (cdfObject->variables[j]->getAttributeThrows("standard_name")->toString().equals("forecast_reference_time") == true) {
               CDBDebug("Found forecast_reference_time variable with name [%s]", cdfObject->variables[j]->name.c_str());
               CT::string units = "";
               try {
-                cdfObject->variables[j]->getAttribute("units")->toString();
+                cdfObject->variables[j]->getAttributeThrows("units")->toString();
               } catch (int e) {
                 CDBError("No units found for forecast_reference_time variable");
                 throw(e);
@@ -327,7 +327,7 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
     if (dataSource->getDataObject(0)->cdfVariable == nullptr) {
       throw __LINE__;
     }
-    searchStandardName = dataSource->getDataObject(0)->cdfVariable->getAttribute("standard_name")->toString();
+    searchStandardName = dataSource->getDataObject(0)->cdfVariable->getAttributeThrows("standard_name")->toString();
   } catch (int e) {
   }
 

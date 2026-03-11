@@ -321,7 +321,7 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
           CT::string units;
           isTimeDim = true;
           try {
-            units = metadataLayer->dataSource->getDataObject(0)->cdfObject->getVariable("time")->getAttribute("units")->toString();
+            units = metadataLayer->dataSource->getDataObject(0)->cdfObject->getVariableThrows("time")->getAttributeThrows("units")->toString();
 
           } catch (int e) {
           }
@@ -362,7 +362,7 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
                     isConst = false;
                   }
                   try {
-                    CTime *time = CTime::GetCTimeInstance(metadataLayer->dataSource->getDataObject(0)->cdfObject->getVariable("time"));
+                    CTime *time = CTime::GetCTimeInstance(metadataLayer->dataSource->getDataObject(0)->cdfObject->getVariableThrows("time"));
                     if (time == nullptr) {
                       CDBDebug(CTIME_GETINSTANCE_ERROR_MESSAGE);
                       return 1;
@@ -499,7 +499,7 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
           if (metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.units.empty()) {
             CT::string units;
             try {
-              units = metadataLayer->dataSource->getDataObject(0)->cdfObject->getVariable(dim.cdfName.c_str())->getAttribute("units")->toString();
+              units = metadataLayer->dataSource->getDataObject(0)->cdfObject->getVariableThrows(dim.cdfName.c_str())->getAttributeThrows("units")->toString();
               dim.units.copy(&units);
             } catch (int e) {
             }

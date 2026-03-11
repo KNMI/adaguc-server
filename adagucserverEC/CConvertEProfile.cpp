@@ -33,16 +33,16 @@
  */
 bool isADAGUCProfileFormat(CDFObject *cdfObject) {
   try {
-    cdfObject->getVariable("range");
-    cdfObject->getDimension("range");
+    cdfObject->getVariableThrows("range");
+    cdfObject->getDimensionThrows("range");
 
-    if (cdfObject->getAttribute("featureType")->toString().equalsIgnoreCase("profile") == false) {
+    if (cdfObject->getAttributeThrows("featureType")->toString().equalsIgnoreCase("profile") == false) {
 
       // The file is not a profile according to the format standards, check if it adheres to the deprecated format:
-      if (cdfObject->getAttribute("source")->toString().startsWith("CHM") == false) {
+      if (cdfObject->getAttributeThrows("source")->toString().startsWith("CHM") == false) {
         return false;
       }
-      if (cdfObject->getAttribute("serlom")->toString().startsWith("TUB") == false) {
+      if (cdfObject->getAttributeThrows("serlom")->toString().startsWith("TUB") == false) {
         return false;
       }
     }
@@ -58,13 +58,13 @@ bool isADAGUCProfileFormat(CDFObject *cdfObject) {
  */
 bool isDeprecatedADAGUCEProfileFormat(CDFObject *cdfObject) {
   try {
-    cdfObject->getVariable("range");
-    cdfObject->getDimension("range");
+    cdfObject->getVariableThrows("range");
+    cdfObject->getDimensionThrows("range");
 
-    if (cdfObject->getAttribute("source")->toString().startsWith("CHM") == false) {
+    if (cdfObject->getAttributeThrows("source")->toString().startsWith("CHM") == false) {
       return false;
     }
-    if (cdfObject->getAttribute("serlom")->toString().startsWith("TUB") == false) {
+    if (cdfObject->getAttributeThrows("serlom")->toString().startsWith("TUB") == false) {
       return false;
     }
   } catch (int e) {
@@ -91,8 +91,8 @@ int CConvertEProfile::convertEProfileHeader(CDFObject *cdfObject, CServerParams 
   CDF::Variable *pointLat;
 
   try {
-    pointLon = cdfObject->getVariable("longitude");
-    pointLat = cdfObject->getVariable("latitude");
+    pointLon = cdfObject->getVariableThrows("longitude");
+    pointLat = cdfObject->getVariableThrows("latitude");
   } catch (int e) {
     CDBError("lat or lon variables not found");
     return 1;
@@ -185,8 +185,8 @@ int CConvertEProfile::convertEProfileHeader(CDFObject *cdfObject, CServerParams 
 #endif
   }
 
-  CDF::Variable *timev = cdfObject->getVariable("time");
-  CDF::Dimension *timed = cdfObject->getDimension("time");
+  CDF::Variable *timev = cdfObject->getVariableThrows("time");
+  CDF::Dimension *timed = cdfObject->getDimensionThrows("time");
 
   timev->name = "time_obs";
   timed->name = "time_obs";
@@ -248,7 +248,7 @@ int CConvertEProfile::convertEProfileHeader(CDFObject *cdfObject, CServerParams 
   varT->setType(CDF_DOUBLE);
   varT->name.copy("time");
   varT->setAttributeText("standard_name", "time");
-  varT->setAttributeText("units", timev->getAttribute("units")->toString().c_str());
+  varT->setAttributeText("units", timev->getAttributeThrows("units")->toString().c_str());
   varT->isDimension = true;
   varT->dimensionlinks.push_back(dimT);
   cdfObject->addVariable(varT);
@@ -298,7 +298,7 @@ int CConvertEProfile::convertEProfileHeader(CDFObject *cdfObject, CServerParams 
 
   // Create the new 2D field variables based on the swath variables
   for (size_t v = 0; v < varsToConvert.size(); v++) {
-    CDF::Variable *pointVar = cdfObject->getVariable(varsToConvert[v].c_str());
+    CDF::Variable *pointVar = cdfObject->getVariableThrows(varsToConvert[v].c_str());
 
 #ifdef CCONVERTEPROFILE_DEBUG
     StopWatch_Stop("Converting %s", pointVar->name.c_str());
@@ -332,15 +332,15 @@ int CConvertEProfile::convertEProfileHeader(CDFObject *cdfObject, CServerParams 
         float scaleFactor = 1, addOffset = 0, fillValue = 0;
         ;
         try {
-          pointVar->getAttribute("scale_factor")->getData(&scaleFactor, 1);
+          pointVar->getAttributeThrows("scale_factor")->getData(&scaleFactor, 1);
         } catch (int e) {
         }
         try {
-          pointVar->getAttribute("add_offset")->getData(&addOffset, 1);
+          pointVar->getAttributeThrows("add_offset")->getData(&addOffset, 1);
         } catch (int e) {
         }
         try {
-          pointVar->getAttribute("_FillValue")->getData(&fillValue, 1);
+          pointVar->getAttributeThrows("_FillValue")->getData(&fillValue, 1);
         } catch (int e) {
         }
         fillValue *= scaleFactor + addOffset;
@@ -396,8 +396,8 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
   CDF::Variable *pointLat;
 
   try {
-    pointLon = cdfObject0->getVariable("longitude");
-    pointLat = cdfObject0->getVariable("latitude");
+    pointLon = cdfObject0->getVariableThrows("longitude");
+    pointLat = cdfObject0->getVariableThrows("latitude");
   } catch (int e) {
     CDBError("lat or lon variables not found");
     return 1;
@@ -619,14 +619,14 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
     CDF::Variable *varY;
 
     // Create new dimensions and variables (X,Y,T)
-    dimX = cdfObject0->getDimension("x");
+    dimX = cdfObject0->getDimensionThrows("x");
     dimX->setSize(dataSource->dWidth);
 
-    dimY = cdfObject0->getDimension("y");
+    dimY = cdfObject0->getDimensionThrows("y");
     dimY->setSize(dataSource->dHeight);
 
-    varX = cdfObject0->getVariable("x");
-    varY = cdfObject0->getVariable("y");
+    varX = cdfObject0->getVariableThrows("x");
+    varY = cdfObject0->getVariableThrows("y");
 
     CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
     CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
@@ -773,7 +773,7 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
             const char *key = pointVar[d]->name.c_str();
             const char *description = key;
             try {
-              description = (const char *)pointVar[d]->getAttribute("long_name")->data;
+              description = (const char *)pointVar[d]->getAttributeThrows("long_name")->data;
 
             } catch (int e) {
             }
@@ -792,7 +792,7 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
             const char *key = pointVar[d]->name.c_str();
             const char *description = key;
             try {
-              description = (const char *)pointVar[d]->getAttribute("long_name")->data;
+              description = (const char *)pointVar[d]->getAttributeThrows("long_name")->data;
 
             } catch (int e) {
             }
@@ -816,7 +816,7 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
                 const char *key = pointID->name.c_str();
                 const char *description = key;
                 try {
-                  description = (const char *)pointID->getAttribute("long_name")->data;
+                  description = (const char *)pointID->getAttributeThrows("long_name")->data;
                 } catch (int e) {
                 }
                 lastPoint->paramList.push_back({.key = key, .description = description, .value = ((const char **)pointID->data)[pGeo]});

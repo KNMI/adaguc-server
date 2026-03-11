@@ -403,7 +403,7 @@ int CGDALDataWriter::end() {
 
         CDFType cdf_type = -1;
         try {
-          cdf_type = _dataSource->getDataObject(0)->cdfObject->getVariable(dimName.c_str())->getType();
+          cdf_type = _dataSource->getDataObject(0)->cdfObject->getVariableThrows(dimName.c_str())->getType();
         } catch (int e) {
           CDBDebug("Exception code %d for dimension name %s", e, dimName.c_str());
         }

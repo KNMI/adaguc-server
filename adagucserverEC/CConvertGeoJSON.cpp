@@ -186,7 +186,7 @@ int CConvertGeoJSON::convertGeoJSONHeader(CDFObject *cdfObject) {
   // Check whether this is really a geojson file
   CDF::Variable *jsonVar;
   try {
-    jsonVar = cdfObject->getVariable("jsoncontent");
+    jsonVar = cdfObject->getVariableThrows("jsoncontent");
   } catch (int e) {
     return 1;
   }
@@ -329,7 +329,7 @@ void CConvertGeoJSON::addCDFInfo(CDFObject *cdfObject, CServerParams *, BBOX &df
   CDF::Dimension *dimFeatures;
   bool found = false;
   try {
-    dimFeatures = cdfObject->getDimension("features");
+    dimFeatures = cdfObject->getDimensionThrows("features");
     found = true;
   } catch (int e) {
   }
@@ -343,7 +343,7 @@ void CConvertGeoJSON::addCDFInfo(CDFObject *cdfObject, CServerParams *, BBOX &df
   CDF::Variable *featureIdVar = new CDF::Variable();
 
   try {
-    cdfObject->getVariable("featureids");
+    cdfObject->getVariableThrows("featureids");
     found = true;
   } catch (int e) {
   }
@@ -841,9 +841,9 @@ std::vector<CDF::Dimension *> getVarDimensions(CDFObject *cdfObject) {
       break;
     }
   }
-  CDF::Dimension *dimy = cdfObject->getDimension("y");
+  CDF::Dimension *dimy = cdfObject->getDimensionThrows("y");
   dims.push_back(dimy);
-  CDF::Dimension *dimx = cdfObject->getDimension("x");
+  CDF::Dimension *dimx = cdfObject->getDimensionThrows("x");
   dims.push_back(dimx);
   return dims;
 }
@@ -851,9 +851,9 @@ std::vector<CDF::Dimension *> getVarDimensions(CDFObject *cdfObject) {
 size_t getDimensionSize(CDFObject *cdfObject) {
   size_t size = 1;
 
-  CDF::Dimension *dimx = cdfObject->getDimension("x");
+  CDF::Dimension *dimx = cdfObject->getDimensionThrows("x");
   size = size * dimx->getSize();
-  CDF::Dimension *dimy = cdfObject->getDimension("y");
+  CDF::Dimension *dimy = cdfObject->getDimensionThrows("y");
   size = size * dimy->getSize();
 
   for (CDF::Dimension *dim: cdfObject->dimensions) {
@@ -937,7 +937,7 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
   CDF::Variable *jsonVar;
   CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
   try {
-    jsonVar = cdfObject->getVariable("jsoncontent");
+    jsonVar = cdfObject->getVariableThrows("jsoncontent");
   } catch (int e) {
     return 1;
   }
@@ -947,7 +947,7 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
 
   // Check whether this is really an geojson file
   try {
-    cdfObject->getVariable("features"); // TODO generate these again
+    cdfObject->getVariableThrows("features"); // TODO generate these again
   } catch (int e) {
     return 1;
   }
@@ -1033,14 +1033,14 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
       CDF::Variable *varY;
 
       // Create new dimensions and variables (X,Y,T)
-      dimX = cdfObject->getDimension("x");
+      dimX = cdfObject->getDimensionThrows("x");
       dimX->setSize(dataSource->dWidth);
 
-      dimY = cdfObject->getDimension("y");
+      dimY = cdfObject->getDimensionThrows("y");
       dimY->setSize(dataSource->dHeight);
 
-      varX = cdfObject->getVariable("x");
-      varY = cdfObject->getVariable("y");
+      varX = cdfObject->getVariableThrows("x");
+      varY = cdfObject->getVariableThrows("y");
 
       CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
       CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);

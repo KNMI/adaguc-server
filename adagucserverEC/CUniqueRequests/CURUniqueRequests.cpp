@@ -296,7 +296,7 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
               try {
                 /* CHECK */
 
-                netcdfDimIndex = variable->getDimensionIndex(request[i].name.c_str());
+                netcdfDimIndex = variable->getDimensionIndexThrows(request[i].name.c_str());
               } catch (int e) {
                 CDBDebug("Unable to find dimension [%s] for variable %s", request[i].name.c_str(), variable->name.c_str());
 

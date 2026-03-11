@@ -34,13 +34,13 @@ bool isADAGUCVectorFormat(CDFObject *cdfObject) {
   try {
 
     // Check if necessary variables and dimensions are present.
-    cdfObject->getDimension("time");
-    cdfObject->getVariable("time");
-    cdfObject->getVariable("lat_bnds");
-    cdfObject->getVariable("lon_bnds");
+    cdfObject->getDimensionThrows("time");
+    cdfObject->getVariableThrows("time");
+    cdfObject->getVariableThrows("lat_bnds");
+    cdfObject->getVariableThrows("lon_bnds");
 
     // Check if there are vertices defined and if there are exactly four.
-    CDF::Dimension *dimNv = cdfObject->getDimension("nv");
+    CDF::Dimension *dimNv = cdfObject->getDimensionThrows("nv");
     if (dimNv->getSize() != 4) {
       return false;
     }
@@ -83,7 +83,7 @@ int CConvertADAGUCVector::convertADAGUCVectorHeader(CDFObject *cdfObject) {
 
   // Create the new 2D field variables based on the swath variables.
   for (size_t v = 0; v < varsToConvert.size(); v++) {
-    CDF::Variable *swathVar = cdfObject->getVariable(varsToConvert[v].c_str());
+    CDF::Variable *swathVar = cdfObject->getVariableThrows(varsToConvert[v].c_str());
 
 #ifdef CCONVERTADAGUCVECTOR_DEBUG
     CDBDebug("Converting %s", swathVar->name.c_str());
@@ -95,8 +95,8 @@ int CConvertADAGUCVector::convertADAGUCVectorHeader(CDFObject *cdfObject) {
     // Assign X,Y,T dims
     CDF::Variable *newTimeVar = cdfObject->getVariableNE("time2D");
     new2DVar->dimensionlinks.push_back(newTimeVar->dimensionlinks[0]);
-    new2DVar->dimensionlinks.push_back(cdfObject->getDimension("y"));
-    new2DVar->dimensionlinks.push_back(cdfObject->getDimension("x"));
+    new2DVar->dimensionlinks.push_back(cdfObject->getDimensionThrows("y"));
+    new2DVar->dimensionlinks.push_back(cdfObject->getDimensionThrows("x"));
 
     new2DVar->setType(swathVar->getType());
     new2DVar->name = swathVar->name.c_str();
@@ -155,8 +155,8 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
   CDF::Variable *swathLat;
 
   try {
-    swathLon = cdfObject->getVariable("lon_bnds");
-    swathLat = cdfObject->getVariable("lat_bnds");
+    swathLon = cdfObject->getVariableThrows("lon_bnds");
+    swathLat = cdfObject->getVariableThrows("lat_bnds");
   } catch (int e) {
     CDBError("lat or lon variables not found");
     return 1;
@@ -175,7 +175,7 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
     CDBDebug("_FillValue = %f", dataObjects[0]->dfNodataValue);
 #endif
     float f = dataObjects[0]->dfNodataValue;
-    new2DVar->getAttribute("_FillValue")->setData(CDF_FLOAT, &f, 1);
+    new2DVar->getAttributeThrows("_FillValue")->setData(CDF_FLOAT, &f, 1);
   } else {
     dataObjects[0]->hasNodataValue = true;
     dataObjects[0]->dfNodataValue = -9999999;
@@ -244,14 +244,14 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
     CDF::Variable *varY;
 
     // Create new dimensions and variables (X,Y,T)
-    dimX = cdfObject->getDimension("x");
+    dimX = cdfObject->getDimensionThrows("x");
     dimX->setSize(dataSource->dWidth);
 
-    dimY = cdfObject->getDimension("y");
+    dimY = cdfObject->getDimensionThrows("y");
     dimY->setSize(dataSource->dHeight);
 
-    varX = cdfObject->getVariable("x");
-    varY = cdfObject->getVariable("y");
+    varX = cdfObject->getVariableThrows("x");
+    varY = cdfObject->getVariableThrows("y");
 
     CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
     CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
@@ -346,7 +346,7 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
       /* Read time data */
       double tfill = -1;
       try {
-        origTimeVar->getAttribute("_FillValue")->getData(&tfill, 1);
+        origTimeVar->getAttributeThrows("_FillValue")->getData(&tfill, 1);
       } catch (int) {
       }
       if (origTimeVar->readData(CDF_DOUBLE) != 0) {
@@ -511,7 +511,7 @@ bool CConvertADAGUCVector::createVirtualTimeVariable(CDFObject *cdfObject) {
 #ifdef CCONVERTADAGUCVECTOR_DEBUG
       CDBDebug("Start reading time dim");
 #endif
-      varT->setAttributeText("units", origT->getAttribute("units")->toString().c_str());
+      varT->setAttributeText("units", origT->getAttributeThrows("units")->toString().c_str());
       if (origT->readData(CDF_DOUBLE) != 0) {
         CDBError("Unable to read time variable");
       } else {
@@ -523,7 +523,7 @@ bool CConvertADAGUCVector::createVirtualTimeVariable(CDFObject *cdfObject) {
         double tfill = 0;
         bool hastfill = false;
         try {
-          origT->getAttribute("_FillValue")->getData(&tfill, 1);
+          origT->getAttributeThrows("_FillValue")->getData(&tfill, 1);
           hastfill = true;
         } catch (int e) {
         }

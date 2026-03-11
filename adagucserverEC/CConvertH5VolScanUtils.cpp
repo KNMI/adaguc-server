@@ -51,8 +51,8 @@ FileType checkH5VolScanType(CDFObject *cdfObject) {
 int checkIfIsH5VolScan(CDFObject *cdfObject) {
   try {
     if (checkH5VolScanType(cdfObject) == ODIM_H5) {
-      CDF::Variable *whatVar = cdfObject->getVariable("what");
-      CDF::Attribute *whatObjectAttr = whatVar->getAttribute("object");
+      CDF::Variable *whatVar = cdfObject->getVariableThrows("what");
+      CDF::Attribute *whatObjectAttr = whatVar->getAttributeThrows("object");
       CT::string whatObjectString = whatObjectAttr->toString();
       if (not whatObjectString.equals("SCAN") && not whatObjectString.equals("PVOL")) {
         CDBDebug("Is not a volume or scan dataset, skipping parsing as ODIM volume dataset");
@@ -61,7 +61,7 @@ int checkIfIsH5VolScan(CDFObject *cdfObject) {
       return 0;
     } else {
       /* Check if the overview variable and number_scan_groups is set and not 0 */
-      CDF::Attribute *attr = cdfObject->getVariable("overview")->getAttribute("number_scan_groups");
+      CDF::Attribute *attr = cdfObject->getVariableThrows("overview")->getAttributeThrows("number_scan_groups");
       int number_scan_groups;
       attr->getData(&number_scan_groups, 1);
       if (number_scan_groups == 0) return 1;
@@ -79,13 +79,13 @@ std::tuple<double, int, double, int, double> getScanMetadata(CDFObject *cdfObjec
     CDF::Variable *scanVarWhere = cdfObject->getVariableNE(scanVarWhereName.c_str());
     if (scanVarWhere == nullptr) return std::make_tuple(-1.0, -1, -1.0, -1, -1.0);
     double scan_elevation;
-    scanVarWhere->getAttribute("elangle")->getData<double>(&scan_elevation, 1);
+    scanVarWhere->getAttributeThrows("elangle")->getData<double>(&scan_elevation, 1);
     int scan_nrang;
-    scanVarWhere->getAttribute("nbins")->getData<int>(&scan_nrang, 1);
+    scanVarWhere->getAttributeThrows("nbins")->getData<int>(&scan_nrang, 1);
     double scan_rscale;
-    scanVarWhere->getAttribute("rscale")->getData<double>(&scan_rscale, 1);
+    scanVarWhere->getAttributeThrows("rscale")->getData<double>(&scan_rscale, 1);
     int scan_nazim;
-    scanVarWhere->getAttribute("nrays")->getData<int>(&scan_nazim, 1);
+    scanVarWhere->getAttributeThrows("nrays")->getData<int>(&scan_nazim, 1);
     double scan_ascale = 360.0 / scan_nazim;
     return std::make_tuple(scan_elevation, scan_nrang, scan_rscale * 0.001, scan_nazim, scan_ascale);
   } else {
@@ -94,15 +94,15 @@ std::tuple<double, int, double, int, double> getScanMetadata(CDFObject *cdfObjec
     CDF::Variable *scanVar = cdfObject->getVariableNE(scanVarName.c_str());
     if (scanVar == nullptr) return std::make_tuple(-1.0, -1, -1.0, -1, -1.0);
     double scan_elevation;
-    scanVar->getAttribute("scan_elevation")->getData<double>(&scan_elevation, 1);
+    scanVar->getAttributeThrows("scan_elevation")->getData<double>(&scan_elevation, 1);
     int scan_nrang;
-    scanVar->getAttribute("scan_number_range")->getData<int>(&scan_nrang, 1);
+    scanVar->getAttributeThrows("scan_number_range")->getData<int>(&scan_nrang, 1);
     double scan_rscale;
-    scanVar->getAttribute("scan_range_bin")->getData<double>(&scan_rscale, 1);
+    scanVar->getAttributeThrows("scan_range_bin")->getData<double>(&scan_rscale, 1);
     int scan_nazim;
-    scanVar->getAttribute("scan_number_azim")->getData<int>(&scan_nazim, 1);
+    scanVar->getAttributeThrows("scan_number_azim")->getData<int>(&scan_nazim, 1);
     double scan_ascale;
-    scanVar->getAttribute("scan_azim_bin")->getData<double>(&scan_ascale, 1);
+    scanVar->getAttributeThrows("scan_azim_bin")->getData<double>(&scan_ascale, 1);
     return std::make_tuple(scan_elevation, scan_nrang, scan_rscale, scan_nazim, scan_ascale);
   }
 }
@@ -112,13 +112,13 @@ std::tuple<double, double, double> getRadarLocation(CDFObject *cdfObject) {
     double radarLon;
     double radarLat;
     double radarHeight;
-    cdfObject->getVariable("where")->getAttribute("lon")->getData<double>(&radarLon, 1);
-    cdfObject->getVariable("where")->getAttribute("lat")->getData<double>(&radarLat, 1);
-    cdfObject->getVariable("where")->getAttribute("height")->getData<double>(&radarHeight, 1);
+    cdfObject->getVariableThrows("where")->getAttributeThrows("lon")->getData<double>(&radarLon, 1);
+    cdfObject->getVariableThrows("where")->getAttributeThrows("lat")->getData<double>(&radarLat, 1);
+    cdfObject->getVariableThrows("where")->getAttributeThrows("height")->getData<double>(&radarHeight, 1);
     return std::make_tuple(radarLon, radarLat, radarHeight * 0.001);
   } else {
     double radarLonLat[2];
-    cdfObject->getVariable("radar1")->getAttribute("radar_location")->getData<double>(radarLonLat, 2);
+    cdfObject->getVariableThrows("radar1")->getAttributeThrows("radar_location")->getData<double>(radarLonLat, 2);
     double radarLon = radarLonLat[0];
     double radarLat = radarLonLat[1];
     return std::make_tuple(radarLon, radarLat, 0.0);
@@ -127,13 +127,13 @@ std::tuple<double, double, double> getRadarLocation(CDFObject *cdfObject) {
 
 CT::string getRadarStartTime(CDFObject *cdfObject) {
   if (checkH5VolScanType(cdfObject) == ODIM_H5) {
-    CT::string h5Date = cdfObject->getVariable("what")->getAttribute("date")->toString();
-    CT::string h5Time = cdfObject->getVariable("what")->getAttribute("time")->toString();
+    CT::string h5Date = cdfObject->getVariableThrows("what")->getAttributeThrows("date")->toString();
+    CT::string h5Time = cdfObject->getVariableThrows("what")->getAttributeThrows("time")->toString();
     CT::string timeString;
     timeString.print("%sT%s00Z", h5Date.c_str(), h5Time.substring(0, 4).c_str());
     return timeString;
   } else {
-    auto timeString = knmiH5TimeToISOString(cdfObject->getVariable("overview")->getAttribute("product_datetime_start")->toString());
+    auto timeString = knmiH5TimeToISOString(cdfObject->getVariableThrows("overview")->getAttributeThrows("product_datetime_start")->toString());
     // Seconds should be rounded to zero.
     timeString[13] = '0';
     timeString[14] = '0';
@@ -164,7 +164,7 @@ int findOdimParamNum(CDFObject *cdfObject, int scan, CT::string param) {
     dataWhatVarName.print("dataset%1d.data%1d.what", scan, paramNum);
     CDF::Variable *dataWhatVar = cdfObject->getVariableNE(dataWhatVarName.c_str());
     if (dataWhatVar == nullptr) break;
-    CT::string quantity = dataWhatVar->getAttribute("quantity")->toString();
+    CT::string quantity = dataWhatVar->getAttributeThrows("quantity")->toString();
     if (quantity.equals(param)) return paramNum;
   }
   return -1;
@@ -222,11 +222,11 @@ std::tuple<double, double, double, double> getCalibrationParameters(CDFObject *c
     int paramNum = findOdimParamNum(cdfObject, scan, param);
     CT::string dataWhatVarName;
     dataWhatVarName.print("dataset%1d.data%1d.what", scan, paramNum);
-    CDF::Variable *dataWhatVar = cdfObject->getVariable(dataWhatVarName.c_str());
+    CDF::Variable *dataWhatVar = cdfObject->getVariableThrows(dataWhatVarName.c_str());
     double gain;
     double offset;
-    CDF::Attribute *gainAttr = dataWhatVar->getAttribute("gain");
-    CDF::Attribute *offsetAttr = dataWhatVar->getAttribute("offset");
+    CDF::Attribute *gainAttr = dataWhatVar->getAttributeThrows("gain");
+    CDF::Attribute *offsetAttr = dataWhatVar->getAttributeThrows("offset");
     if (gainAttr != nullptr && offsetAttr != nullptr) {
       gainAttr->getData<double>(&gain, 1);
       offsetAttr->getData<double>(&offset, 1);
@@ -236,7 +236,7 @@ std::tuple<double, double, double, double> getCalibrationParameters(CDFObject *c
       offset = 0.0;
     }
     double undetect;
-    dataWhatVar->getAttribute("undetect")->getData<double>(&undetect, 1);
+    dataWhatVar->getAttributeThrows("undetect")->getData<double>(&undetect, 1);
 
     double nodata;
     CDF::Attribute *nodataAttr = dataWhatVar->getAttributeNE("nodata");
@@ -251,10 +251,10 @@ std::tuple<double, double, double, double> getCalibrationParameters(CDFObject *c
     if (param.equals("DBZV")) param = CT::string("Zv");
     CT::string scanCalibrationVarName;
     scanCalibrationVarName.print("scan%1d.calibration", scan);
-    CDF::Variable *scanCalibrationVar = cdfObject->getVariable(scanCalibrationVarName);
+    CDF::Variable *scanCalibrationVar = cdfObject->getVariableThrows(scanCalibrationVarName);
     CT::string componentCalibrationStringName;
     componentCalibrationStringName.print("calibration_%s_formulas", param.c_str());
-    CT::string formula = scanCalibrationVar->getAttribute(componentCalibrationStringName.c_str())->toString();
+    CT::string formula = scanCalibrationVar->getAttributeThrows(componentCalibrationStringName.c_str())->toString();
     int rightPartFormulaPos = formula.indexOf("=");
     int multiplicationSignPos = formula.indexOf("*");
     int additionSignPos = formula.indexOf("+");
@@ -269,7 +269,7 @@ std::tuple<double, double, double, double> getCalibrationParameters(CDFObject *c
       offset = 0.0;
     }
     double undetect;
-    scanCalibrationVar->getAttribute("calibration_missing_data")->getData<double>(&undetect, 1);
+    scanCalibrationVar->getAttributeThrows("calibration_missing_data")->getData<double>(&undetect, 1);
 
     double nodata;
     CDF::Attribute *nodataAttr = scanCalibrationVar->getAttributeNE("calibration_out_of_image");

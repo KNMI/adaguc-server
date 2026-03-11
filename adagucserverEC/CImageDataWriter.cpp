@@ -886,7 +886,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
   if (styleConfiguration->featureIntervals.size() > 0) {
     int numFeatures = 0;
     try {
-      numFeatures = dataSource->getFirstAvailableDataObject()->cdfObject->getDimension("features")->getSize();
+      numFeatures = dataSource->getFirstAvailableDataObject()->cdfObject->getDimensionThrows("features")->getSize();
     } catch (int e) {
 #ifdef CIMAGEDATAWRITER_DEBUG
       CDBDebug("Note: While configuring featureInterval: Unable to find features variable");
@@ -1253,7 +1253,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
             if (attrToSearch != NULL) {
               // CDBDebug("Determining ImageText based on netcdf attribute %s",attrToSearch);
               try {
-                CDF::Attribute *attr = dataSource->getFirstAvailableDataObject()->cdfObject->getAttribute(attrToSearch);
+                CDF::Attribute *attr = dataSource->getFirstAvailableDataObject()->cdfObject->getAttributeThrows(attrToSearch);
                 if (attr->length > 0) {
                   imageText = attrToSearch;
                   imageText += ": ";

@@ -69,20 +69,19 @@ int CDF::Variable::readData(CDFType readType, size_t *_start, size_t *_count, pt
   double scaleFactor = 1, addOffset = 0, fillValue = 0;
   bool hasFillValue = false;
   int scaleType = currentType;
-  try {
 
-    CDF::Attribute *a = getAttribute("scale_factor");
+  CDF::Attribute *a = getAttr("scale_factor");
+  if (a != nullptr) {
     a->getData(&scaleFactor, 1);
     scaleType = a->type;
-  } catch (int e) {
   }
 
   try {
-    getAttribute("add_offset")->getData(&addOffset, 1);
+    getAttributeThrows("add_offset")->getData(&addOffset, 1);
   } catch (int e) {
   }
   try {
-    getAttribute("_FillValue")->getData(&fillValue, 1);
+    getAttributeThrows("_FillValue")->getData(&fillValue, 1);
     hasFillValue = true;
   } catch (int e) {
   }
@@ -124,14 +123,14 @@ int CDF::Variable::readData(CDFType readType, size_t *_start, size_t *_count, pt
       float foffset = float(addOffset);
       for (size_t j = 0; j < lsize; j++) scaleData[j] = scaleData[j] * fscale + foffset;
       float newFillValue = fillValue * fscale + foffset;
-      if (hasFillValue) getAttribute("_FillValue")->setData(CDF_FLOAT, &newFillValue, 1);
+      if (hasFillValue) getAttributeThrows("_FillValue")->setData(CDF_FLOAT, &newFillValue, 1);
     }
 
     if (scaleType == CDF_DOUBLE) {
       double *scaleData = (double *)data;
       for (size_t j = 0; j < lsize; j++) scaleData[j] = scaleData[j] * scaleFactor + addOffset;
       double newFillValue = fillValue * scaleFactor + addOffset;
-      if (hasFillValue) getAttribute("_FillValue")->setData(CDF_DOUBLE, &newFillValue, 1);
+      if (hasFillValue) getAttributeThrows("_FillValue")->setData(CDF_DOUBLE, &newFillValue, 1);
     }
     // removeAttribute("scale_factor");
     // removeAttribute("add_offset");
@@ -273,7 +272,7 @@ int CDF::Variable::_readData(CDFType type, size_t *_start, size_t *_count, ptrdi
             delete[] stride;
             return 1;
           }
-          Variable *tVar = tCDFObject->getVariable(name.c_str());
+          Variable *tVar = tCDFObject->getVariableThrows(name.c_str());
           if (tVar->readData(type, start, count, stride) != 0) throw(__LINE__);
           // Put the read data chunk in our destination variable
 #ifdef CCDFDATAMODEL_DEBUG
@@ -414,7 +413,7 @@ void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimNam
     return;
   }
   try {
-    iterativeVar = ((CDFObject *)getParentCDFObject())->getVariable(iterativeDim->name.c_str());
+    iterativeVar = ((CDFObject *)getParentCDFObject())->getVariableThrows(iterativeDim->name.c_str());
   } catch (int e) {
     return;
   }
@@ -423,7 +422,7 @@ void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimNam
   Variable *srcDimVar;
   //   int sourceType = currentType;
   try {
-    srcDimVar = sourceCDFObject->getVariable(iterativeDim->name.c_str());
+    srcDimVar = sourceCDFObject->getVariableThrows(iterativeDim->name.c_str());
   } catch (int e) {
     CDBError("Variable [%s] not found in source CDFObject", iterativeDim->name.c_str());
     throw(e);
@@ -456,7 +455,7 @@ void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimNam
   bool isTimeDim = false;
 
   try {
-    if (srcDimVar->getAttribute("standard_name")->toString().equals("time")) {
+    if (srcDimVar->getAttributeThrows("standard_name")->toString().equals("time")) {
       isTimeDim = true;
     }
   } catch (int e) {
@@ -664,7 +663,7 @@ void *CDF::Variable::getCDFObjectClassPointer(size_t *start, size_t *count) {
     return getParentCDFObject();
   }
   // Return the correct cdfReader According the given dims.
-  auto iterator = std::find_if(dimensionlinks.begin(), dimensionlinks.end(), [](Dimension *d) { return d->isIterative; });
+  auto iterator = std::find_if(dimensionlinks.begin(), dimensionlinks.end(), [](auto *d) { return d->isIterative; });
   if (iterator == dimensionlinks.end()) {
     CDBError("Did not find iterative dimension");
     throw(CDF_E_ERROR);
@@ -835,29 +834,35 @@ void CDF::Variable::setSize(size_t size) { currentSize = size; }
 
 size_t CDF::Variable::getSize() { return currentSize; }
 
-CDF::Attribute *CDF::Variable::getAttribute(const char *name) const {
-  Attribute *a = getAttributeNE(name);
+CDF::Attribute *CDF::Variable::getAttributeThrows(const char *name) const {
+  Attribute *a = getAttr(name);
   if (a == nullptr) {
     throw(CDF_E_ATTNOTFOUND);
   }
   return a;
 }
 
-CDF::Attribute *CDF::Variable::getAttributeNE(const char *name) const {
-  for (size_t j = 0; j < attributes.size(); j++) {
-    if (attributes[j]->name.equals(name)) {
-      return attributes[j];
-    }
-  }
-  return nullptr;
+CDF::Attribute *CDF::Variable::getAttr(std::string name) const {
+  auto it = std::find_if(attributes.begin(), attributes.end(), [&name](auto *a) { return a->name.equals(name); });
+  return it != attributes.end() ? *it : nullptr;
 }
 
-/**
- * Returns the dimension for given name. Throws error code  when something goes wrong
- * @param name The name of the dimension to look for
- * @return Pointer to the dimension
- */
-CDF::Dimension *CDF::Variable::getDimension(const char *name) {
+std::string CDF::Variable::getAttrText(std::string name) const {
+  auto attr = getAttr(name);
+  if (attr == nullptr) {
+    return "";
+  }
+  return attr->toString();
+}
+
+CDF::Attribute *CDF::Variable::getAttributeNE(const char *name) const { return getAttr(name); }
+
+CDF::Dimension *CDF::Variable::getDim(std::string name) const {
+  auto it = std::find_if(dimensionlinks.begin(), dimensionlinks.end(), [&name](auto *a) { return a->name.equals(name); });
+  return it != dimensionlinks.end() ? *it : nullptr;
+}
+
+CDF::Dimension *CDF::Variable::getDimensionThrows(const char *name) {
   for (size_t j = 0; j < dimensionlinks.size(); j++) {
     if (dimensionlinks[j]->name.equals(name)) {
       return dimensionlinks[j];
@@ -867,7 +872,7 @@ CDF::Dimension *CDF::Variable::getDimension(const char *name) {
   return NULL;
 }
 
-CDF::Dimension *CDF::Variable::getDimensionIgnoreCase(const char *name) {
+CDF::Dimension *CDF::Variable::getDimensionIgnoreCaseThrows(const char *name) {
   for (size_t j = 0; j < dimensionlinks.size(); j++) {
     if (dimensionlinks[j]->name.equalsIgnoreCase(name)) {
       return dimensionlinks[j];
@@ -877,23 +882,18 @@ CDF::Dimension *CDF::Variable::getDimensionIgnoreCase(const char *name) {
   return NULL;
 }
 
-CDF::Dimension *CDF::Variable::getDimensionNE(const char *name) {
-  try {
-    return getDimension(name);
-  } catch (int e) {
-    return NULL;
-  }
-}
+CDF::Dimension *CDF::Variable::getDimensionNE(const char *name) { return getDim(name); }
 
 int CDF::Variable::getDimensionIndexNE(const char *name) {
-  try {
-    return getDimensionIndex(name);
-  } catch (int e) {
+  for (size_t j = 0; j < dimensionlinks.size(); j++) {
+    if (dimensionlinks[j]->name.equals(name)) {
+      return j;
+    }
   }
   return -1;
 }
 
-int CDF::Variable::getDimensionIndex(const char *name) {
+int CDF::Variable::getDimensionIndexThrows(const char *name) {
   for (size_t j = 0; j < dimensionlinks.size(); j++) {
     if (dimensionlinks[j]->name.equals(name)) {
       return j;
@@ -928,14 +928,13 @@ int CDF::Variable::removeAttributes() {
 }
 
 int CDF::Variable::setAttribute(const char *attrName, CDFType attrType, const void *attrData, size_t attrLen) {
-  Attribute *attr;
-  try {
-    attr = getAttribute(attrName);
-  } catch (...) {
+  Attribute *attr = getAttr(attrName);
+  if (attr == nullptr) {
     attr = new Attribute();
     attr->name.copy(attrName);
     addAttribute(attr);
   }
+
   attr->setData(attrType, attrData, attrLen);
   return 0;
 }
@@ -990,10 +989,8 @@ template <class T> T CDF::Variable::getDataAt(int index) {
 }
 
 template <class T> int CDF::Variable::setAttribute(const char *attrName, CDFType attrType, T data) {
-  Attribute *attr;
-  try {
-    attr = getAttribute(attrName);
-  } catch (...) {
+  Attribute *attr = getAttr(attrName);
+  if (attr == nullptr) {
     attr = new Attribute();
     attr->name.copy(attrName);
     addAttribute(attr);

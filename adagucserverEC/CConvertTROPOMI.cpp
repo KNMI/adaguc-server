@@ -51,8 +51,8 @@ void writeLogFile4(const char *msg) {
 
 int CConvertTROPOMI::isThisTROPOMIData(CDFObject *cdfObject) {
   try {
-    if (cdfObject->getAttribute("cdm_data_type")->toString().equals("Swath") == false) return 1;
-    if (cdfObject->getAttribute("sensor")->toString().equals("TROPOMI") == false) return 1;
+    if (cdfObject->getAttributeThrows("cdm_data_type")->toString().equals("Swath") == false) return 1;
+    if (cdfObject->getAttributeThrows("sensor")->toString().equals("TROPOMI") == false) return 1;
   } catch (int e) {
     return 1;
   }
@@ -72,8 +72,8 @@ int CConvertTROPOMI::convertTROPOMIHeader(CDFObject *cdfObject, CServerParams *)
   CDF::Variable *pointLat;
 
   try {
-    pointLon = cdfObject->getVariable("PRODUCT/SUPPORT_DATA/GEOLOCATIONS/longitude_bounds");
-    pointLat = cdfObject->getVariable("PRODUCT/SUPPORT_DATA/GEOLOCATIONS/latitude_bounds");
+    pointLon = cdfObject->getVariableThrows("PRODUCT/SUPPORT_DATA/GEOLOCATIONS/longitude_bounds");
+    pointLat = cdfObject->getVariableThrows("PRODUCT/SUPPORT_DATA/GEOLOCATIONS/latitude_bounds");
   } catch (int e) {
     CDBError("lat or lon variables not found");
     return 1;
@@ -178,14 +178,14 @@ int CConvertTROPOMI::convertTROPOMIHeader(CDFObject *cdfObject, CServerParams *)
   CDF::allocateData(CDF_DOUBLE, &varT->data, dimT->length);
   varT->setAttributeText("standard_name", "time");
   try {
-    varT->setAttributeText("units", productT->getAttribute("units")->toString().c_str());
+    varT->setAttributeText("units", productT->getAttributeThrows("units")->toString().c_str());
     CTime *myTime = CTime::GetCTimeInstance(productT);
     if (myTime == nullptr) {
       CDBError(CTIME_GETINSTANCE_ERROR_MESSAGE);
       return 1;
     }
 
-    CTime::Date date = myTime->freeDateStringToDate(cdfObject->getAttribute("time_coverage_start")->toString().c_str());
+    CTime::Date date = myTime->freeDateStringToDate(cdfObject->getAttributeThrows("time_coverage_start")->toString().c_str());
     ((double *)varT->data)[0] = myTime->dateToOffset(date);
   } catch (int) {
     CDBError("Could not get units for time_coverage_start");
@@ -208,7 +208,7 @@ int CConvertTROPOMI::convertTROPOMIHeader(CDFObject *cdfObject, CServerParams *)
 
   // Create the new 2D field variables based on the swath variables
   for (size_t v = 0; v < varsToConvert.size(); v++) {
-    CDF::Variable *swathVar = cdfObject->getVariable(varsToConvert[v].c_str());
+    CDF::Variable *swathVar = cdfObject->getVariableThrows(varsToConvert[v].c_str());
 
 #ifdef CCONVERTTROPOMI_DEBUG
     CDBDebug("Converting %s", swathVar->name.c_str());
@@ -315,8 +315,8 @@ int CConvertTROPOMI::convertTROPOMIData(CDataSource *dataSource, int mode) {
   CDF::Variable *pointLon;
   CDF::Variable *pointLat;
   try {
-    pointLon = cdfObject->getVariable("PRODUCT/SUPPORT_DATA/GEOLOCATIONS/longitude_bounds");
-    pointLat = cdfObject->getVariable("PRODUCT/SUPPORT_DATA/GEOLOCATIONS/latitude_bounds");
+    pointLon = cdfObject->getVariableThrows("PRODUCT/SUPPORT_DATA/GEOLOCATIONS/longitude_bounds");
+    pointLat = cdfObject->getVariableThrows("PRODUCT/SUPPORT_DATA/GEOLOCATIONS/latitude_bounds");
   } catch (int e) {
     CDBError("lat or lon variables not found");
     return 1;
@@ -351,14 +351,14 @@ int CConvertTROPOMI::convertTROPOMIData(CDataSource *dataSource, int mode) {
     CDF::Variable *varY;
 
     // Create new dimensions and variables (X,Y,T)
-    dimX = cdfObject->getDimension("x");
+    dimX = cdfObject->getDimensionThrows("x");
     dimX->setSize(dataSource->dWidth);
 
-    dimY = cdfObject->getDimension("y");
+    dimY = cdfObject->getDimensionThrows("y");
     dimY->setSize(dataSource->dHeight);
 
-    varX = cdfObject->getVariable("x");
-    varY = cdfObject->getVariable("y");
+    varX = cdfObject->getVariableThrows("x");
+    varY = cdfObject->getVariableThrows("y");
 
     CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
     CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);

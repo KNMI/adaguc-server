@@ -54,7 +54,7 @@ CDataSource::DataObject *CDataSource::DataObject::clone() {
 CT::string CDataSource::DataObject::getUnits() {
   if (overruledUnits.empty() && cdfVariable != NULL) {
     try {
-      return cdfVariable->getAttribute("units")->toString();
+      return cdfVariable->getAttributeThrows("units")->toString();
     } catch (int e) {
     }
   }
@@ -146,15 +146,15 @@ MinMax getMinMax(CDF::Variable *var) {
       bool hasFillValue = false;
 
       try {
-        var->getAttribute("scale_factor")->getData(&scaleFactor, 1);
+        var->getAttributeThrows("scale_factor")->getData(&scaleFactor, 1);
       } catch (int e) {
       }
       try {
-        var->getAttribute("add_offset")->getData(&addOffset, 1);
+        var->getAttributeThrows("add_offset")->getData(&addOffset, 1);
       } catch (int e) {
       }
       try {
-        var->getAttribute("_FillValue")->getData(&fillValue, 1);
+        var->getAttributeThrows("_FillValue")->getData(&fillValue, 1);
         hasFillValue = true;
       } catch (int e) {
       }
@@ -178,15 +178,15 @@ MinMax getMinMax(CDF::Variable *var) {
       bool hasFillValue = false;
 
       try {
-        var->getAttribute("scale_factor")->getData(&scaleFactor, 1);
+        var->getAttributeThrows("scale_factor")->getData(&scaleFactor, 1);
       } catch (int e) {
       }
       try {
-        var->getAttribute("add_offset")->getData(&addOffset, 1);
+        var->getAttributeThrows("add_offset")->getData(&addOffset, 1);
       } catch (int e) {
       }
       try {
-        var->getAttribute("_FillValue")->getData(&fillValue, 1);
+        var->getAttributeThrows("_FillValue")->getData(&fillValue, 1);
         hasFillValue = true;
       } catch (int e) {
       }

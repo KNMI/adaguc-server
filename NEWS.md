@@ -2,6 +2,7 @@
 
 - Refactored datamodel and use std::string and structs where possible
 - Moved code from header files to cpp files
+- Made it clear that some methods throw exceptions, suffix of these methods is Throws.
 - Support timeseries for DestineE Floodmind  model
 
 **Version 6.6.0 - 2026-02-27**

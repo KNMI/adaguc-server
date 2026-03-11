@@ -1398,7 +1398,7 @@ CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *, CDF::Varia
   CT::string standardName = "";
 
   try {
-    standardName = variable->getAttribute("standard_name")->toString();
+    standardName = variable->getAttributeThrows("standard_name")->toString();
   } catch (int e) {
   }
 
@@ -1421,7 +1421,7 @@ CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *, CDF::Varia
   // If no standard_name matches, try to determine dimension type on _CoordinateAxisType attribute, CDM standard
   CT::string coordinateAxisType = "";
   try {
-    coordinateAxisType = variable->getAttribute("_CoordinateAxisType")->toString();
+    coordinateAxisType = variable->getAttributeThrows("_CoordinateAxisType")->toString();
   } catch (int e) {
   }
   coordinateAxisType.toLowerCaseSelf();
@@ -1433,7 +1433,7 @@ CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *, CDF::Varia
 
   // Try to find elevation dimension based on positive attribute existence (CF)
   try {
-    variable->getAttribute("positive");
+    variable->getAttributeThrows("positive");
     return dtype_elevation;
   } catch (int e) {
   }

@@ -386,7 +386,7 @@ int CDFNetCDFReader::readDimensions(int groupId, std::string &groupName) {
     CT::string name = groupName.c_str();
     name.concat(flatname);
     try {
-      CDF::Dimension *existingDim = cdfObject->getDimension(name.c_str());
+      CDF::Dimension *existingDim = cdfObject->getDimensionThrows(name.c_str());
       // Only add non existing variables;
       CDBWarning("Reassigning dim %s", name.c_str());
       if (existingDim->length != length) {
@@ -563,7 +563,7 @@ int CDFNetCDFReader::readVariables(int groupId, std::string &groupName, int mode
 
     // Only add non existing variables...
     try {
-      cdfObject->getVariable(name.c_str());
+      cdfObject->getVariableThrows(name.c_str());
     } catch (...) {
       CDF::Variable *var = new CDF::Variable();
       cdfObject->variables.push_back(var);
@@ -1111,7 +1111,7 @@ int CDFNetCDFWriter::_write(void (*progress)(const char *message, float percenta
               for (size_t m = 0; m < variable->dimensionlinks.size(); m++) {
                 chunkSizes[m] = variable->dimensionlinks[m]->getSize();
                 try {
-                  CT::string standardName = cdfObject->getVariable(variable->dimensionlinks[m]->name.c_str())->getAttribute("standard_name")->toString();
+                  CT::string standardName = cdfObject->getVariableThrows(variable->dimensionlinks[m]->name.c_str())->getAttributeThrows("standard_name")->toString();
                   if (standardName.equals("time")) {
                     chunkSizes[m] = 1;
                   }

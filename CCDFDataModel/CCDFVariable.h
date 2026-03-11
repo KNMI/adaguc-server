@@ -114,19 +114,30 @@ namespace CDF {
     void setName(const char *value);
     void setSize(size_t size);
     size_t getSize();
-    Attribute *getAttribute(const char *name) const;
-    Attribute *getAttributeNE(const char *name) const;
-
+    Attribute *getAttributeThrows(const char *name) const;
     /**
      * Returns the dimension for given name. Throws error code  when something goes wrong
      * @param name The name of the dimension to look for
      * @return Pointer to the dimension
      */
-    Dimension *getDimension(const char *name);
-    Dimension *getDimensionIgnoreCase(const char *name);
+    Dimension *getDimensionThrows(const char *name);
+    Dimension *getDimensionIgnoreCaseThrows(const char *name);
+    int getDimensionIndexThrows(const char *name);
+
+    Dimension *getDim(std::string name) const;
     Dimension *getDimensionNE(const char *name);
     int getDimensionIndexNE(const char *name);
-    int getDimensionIndex(const char *name);
+
+    Attribute *getAttr(std::string name) const;
+    Attribute *getAttributeNE(const char *name) const;
+
+    /**
+     * Gets text for given attribute name.
+     * @param name The name of the attribute
+     * @returns Returns empty string if not found or if empty
+     */
+    std::string getAttrText(std::string name) const;
+
     int addAttribute(Attribute *attr);
     int removeAttribute(const char *name);
     int removeAttributes();

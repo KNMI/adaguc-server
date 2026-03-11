@@ -41,13 +41,31 @@ public:
   ~CDFObject();
   CDFObject();
 
+  /**
+   * Returns the variable for the specified name or null if not found
+   * @param name THe name of the variable, or NC_GLOBAL to get the root (this)
+   * @returns the matching variable or null
+   */
+  CDF::Variable *getVar(std::string name);
+  CDF::Variable *getVariableNE(const char *name); // Same as getVar
+  CDF::Variable *getVariableNE(std::string name); // Same as getVar
+
+  /**
+   * Returns the dimension for the specified name or null if not found
+   * @param name THe name of the dimension
+   * @returns the matching dimension or null
+   */
+  CDF::Dimension *getDim(std::string name);
+  CDF::Dimension *getDimensionNE(std::string name);
+  CDF::Dimension *getDimensionNE(const char *name);
+
   std::vector<CDF::Dimension *> dimensions;
   std::vector<CDF::Variable *> variables;
   CT::string name;
-  int getVariableIndex(const char *name);
-  CDF::Variable *getVariable(std::string name);
+  int getVariableIndexThrows(const char *name);
+  CDF::Variable *getVariableThrows(std::string name);
   int getVariableIndexNE(const char *name);
-  int getDimensionIndex(const char *name);
+  int getDimensionIndexThrows(const char *name);
   int getDimensionIndexNE(const char *name);
 
   /**
@@ -55,18 +73,15 @@ public:
    * @param name The name of the dimension to look for
    * @return The variable pointer
    */
-  CDF::Variable *getVariable(const char *name);
-  CDF::Variable *getVar(CT::string name);
-  CDF::Variable *getVariableNE(const char *name);
-  CDF::Variable *getVariableNE(std::string name);
+  CDF::Variable *getVariableThrows(const char *name);
+
   CDF::Variable *addVariable(CDF::Variable *var);
   int removeVariable(const char *name);
   int removeDimension(const char *name);
   CDF::Dimension *addDimension(CDF::Dimension *dim);
-  CDF::Dimension *getDimension(const char *name);
-  CDF::Dimension *getDimensionNE(std::string name);
-  CDF::Dimension *getDimensionIgnoreCase(const char *name);
-  CDF::Dimension *getDimensionNE(const char *name);
+  CDF::Dimension *getDimensionThrows(const char *name);
+  CDF::Dimension *getDimensionIgnoreCaseThrows(const char *name);
+
   int applyNCMLFile(const char *ncmlFileName);
   int aggregateDim(CDFObject *sourceCDFObject, const char *dimName);
   CT::string currentFile;

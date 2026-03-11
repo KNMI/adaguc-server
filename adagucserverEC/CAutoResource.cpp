@@ -260,7 +260,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
 #endif
     CT::string serverTitle = "";
     try {
-      serverTitle = cdfObject->getAttribute("title")->toString();
+      serverTitle = cdfObject->getAttributeThrows("title")->toString();
     } catch (int e) {
     }
 
@@ -281,35 +281,35 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
     CT::string serverDisclaimer = "";
 
     try {
-      serverSummary = cdfObject->getAttribute("summary")->toString();
+      serverSummary = cdfObject->getAttributeThrows("summary")->toString();
     } catch (int e) {
     }
     try {
-      serverDescription = cdfObject->getAttribute("description")->toString();
+      serverDescription = cdfObject->getAttributeThrows("description")->toString();
     } catch (int e) {
     }
     try {
-      serverSource = cdfObject->getAttribute("source")->toString();
+      serverSource = cdfObject->getAttributeThrows("source")->toString();
     } catch (int e) {
     }
     try {
-      serverReferences = cdfObject->getAttribute("references")->toString();
+      serverReferences = cdfObject->getAttributeThrows("references")->toString();
     } catch (int e) {
     }
     try {
-      serverInstitution = cdfObject->getAttribute("institution")->toString();
+      serverInstitution = cdfObject->getAttributeThrows("institution")->toString();
     } catch (int e) {
     }
     try {
-      serverHistory = cdfObject->getAttribute("history")->toString();
+      serverHistory = cdfObject->getAttributeThrows("history")->toString();
     } catch (int e) {
     }
     try {
-      serverComments = cdfObject->getAttribute("comments")->toString();
+      serverComments = cdfObject->getAttributeThrows("comments")->toString();
     } catch (int e) {
     }
     try {
-      serverDisclaimer = cdfObject->getAttribute("disclaimer")->toString();
+      serverDisclaimer = cdfObject->getAttributeThrows("disclaimer")->toString();
     } catch (int e) {
     }
 
@@ -409,7 +409,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
     int varindex_x = -1, varindex_y = -1;
     for (size_t j = 0; j < cdfObject->variables.size(); j++) {
       try {
-        CT::string standard_name = cdfObject->variables[j]->getAttribute("standard_name")->toString();
+        CT::string standard_name = cdfObject->variables[j]->getAttributeThrows("standard_name")->toString();
         if (standard_name.equals("eastward_wind") || standard_name.equals("x_wind")) {
           varindex_x = j;
         }

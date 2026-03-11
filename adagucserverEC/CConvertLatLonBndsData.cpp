@@ -72,7 +72,7 @@ int CConvertLatLonBnds::convertLatLonBndsData(CDataSource *dataSource, int mode)
       fillValue->getData(&dblFill, 1);
       dataObjects[d]->dfNodataValue = dblFill;
       fltFill = (float)dblFill;
-      destRegularGrid[d]->getAttribute("_FillValue")->setData(CDF_FLOAT, &fltFill, 1);
+      destRegularGrid[d]->getAttributeThrows("_FillValue")->setData(CDF_FLOAT, &fltFill, 1);
     } else {
       dataObjects[d]->hasNodataValue = false;
     }
@@ -146,14 +146,14 @@ int CConvertLatLonBnds::convertLatLonBndsData(CDataSource *dataSource, int mode)
     CDF::Variable *varY;
 
     // Create new dimensions and variables (X,Y,T)
-    dimX = cdfObject->getDimension("x");
+    dimX = cdfObject->getDimensionThrows("x");
     dimX->setSize(dataSource->dWidth);
 
-    dimY = cdfObject->getDimension("y");
+    dimY = cdfObject->getDimensionThrows("y");
     dimY->setSize(dataSource->dHeight);
 
-    varX = cdfObject->getVariable("x");
-    varY = cdfObject->getVariable("y");
+    varX = cdfObject->getVariableThrows("x");
+    varY = cdfObject->getVariableThrows("y");
 
     varX->allocateData(dimX->length);
     varY->allocateData(dimY->length);
