@@ -129,7 +129,7 @@ void drawpoly(float *imagedata, int w, int h, int polyCorners, float *polyX, flo
 int CConvertUGRIDMesh::convertUGRIDMeshHeader(CDFObject *cdfObject) {
   // Check whether this is really an ugrid file
   try {
-    cdfObject->getVariable("mesh");
+    cdfObject->getVariableThrows("mesh");
   } catch (int e) {
     return 1;
   }
@@ -143,8 +143,8 @@ int CConvertUGRIDMesh::convertUGRIDMeshHeader(CDFObject *cdfObject) {
   CDF::Variable *pointLat;
 
   try {
-    pointLon = cdfObject->getVariable("mesh_node_lon");
-    pointLat = cdfObject->getVariable("mesh_node_lat");
+    pointLon = cdfObject->getVariableThrows("mesh_node_lon");
+    pointLat = cdfObject->getVariableThrows("mesh_node_lat");
   } catch (int e) {
     CDBError("Mesh2_node_x or Mesh2_node_y variables not found");
     return 1;
@@ -233,7 +233,7 @@ int CConvertUGRIDMesh::convertUGRIDMeshHeader(CDFObject *cdfObject) {
 
   // Create the new 2D field variables based on the mesh variables
   for (size_t v = 0; v < varsToConvert.size(); v++) {
-    CDF::Variable *meshVar = cdfObject->getVariable(varsToConvert[v].c_str());
+    CDF::Variable *meshVar = cdfObject->getVariableThrows(varsToConvert[v].c_str());
 
 #ifdef CCONVERTUGRIDMESH_DEBUG
     CDBDebug("Converting %s", meshVar->name.c_str());
@@ -281,7 +281,7 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
   CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
   // Check whether this is really an ugrid file
   try {
-    cdfObject->getVariable("mesh");
+    cdfObject->getVariableThrows("mesh");
   } catch (int e) {
     return 1;
   }
@@ -306,8 +306,8 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
   CDF::Variable *meshLat;
 
   try {
-    meshLon = cdfObject->getVariable("mesh_node_lon");
-    meshLat = cdfObject->getVariable("mesh_node_lat");
+    meshLon = cdfObject->getVariableThrows("mesh_node_lon");
+    meshLat = cdfObject->getVariableThrows("mesh_node_lat");
   } catch (int e) {
     CDBError("lat or lon variables not found");
     return 1;
@@ -358,14 +358,14 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
     CDF::Variable *varY;
 
     // Create new dimensions and variables (X,Y,T)
-    dimX = cdfObject->getDimension("x");
+    dimX = cdfObject->getDimensionThrows("x");
     dimX->setSize(dataSource->dWidth);
 
-    dimY = cdfObject->getDimension("y");
+    dimY = cdfObject->getDimensionThrows("y");
     dimY->setSize(dataSource->dHeight);
 
-    varX = cdfObject->getVariable("x");
-    varY = cdfObject->getVariable("y");
+    varX = cdfObject->getVariableThrows("x");
+    varY = cdfObject->getVariableThrows("y");
 
     CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
     CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
@@ -466,13 +466,13 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
     StopWatch_Stop("Start reading face nodes");
 #endif
 
-    CDF::Variable *Mesh2_face_nodes = cdfObject->getVariable("mesh_face_nodes");
+    CDF::Variable *Mesh2_face_nodes = cdfObject->getVariableThrows("mesh_face_nodes");
     Mesh2_face_nodes->readData(CDF_INT, false);
     int *Mesh2_face_nodesData = (int *)Mesh2_face_nodes->data;
     int Mesh2_face_nodesData_Fill = -1;
 
     try {
-      Mesh2_face_nodes->getAttribute("_FillValue")->getData(&Mesh2_face_nodesData_Fill, 1);
+      Mesh2_face_nodes->getAttributeThrows("_FillValue")->getData(&Mesh2_face_nodesData_Fill, 1);
       ;
 
     } catch (int e) {

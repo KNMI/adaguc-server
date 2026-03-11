@@ -137,7 +137,7 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
     legendType = discrete;
   }
 
-  for (auto renderSetting : styleConfiguration->renderSettings) {
+  for (auto renderSetting: styleConfiguration->renderSettings) {
     /* When using the nearest or bilinear rendermethod, discrete classes defined by ShadeInterval can be used if the renderhint is set to RENDERHINT_DISCRETECLASSES */
     if (renderSetting->attr.renderhint.equals(RENDERHINT_DISCRETECLASSES)) {
       legendType = discrete;
@@ -188,8 +188,7 @@ int CCreateLegend::createLegend(CDataSource *dataSource, CDrawImage *legendImage
         legendImage->rectangle(1 + pLeft, int(2 + dH + y) + pTop, (int)cbW + 9 + pLeft, (int)y + 2 + dH + blockHeight + pTop, c, 248);
       }
 
-      CT::string flagMeaning;
-      CDataSource::getFlagMeaningHumanReadable(&flagMeaning, &dataSource->getDataObject(0)->statusFlagList, value);
+      std::string flagMeaning = CDataSource::getFlagMeaningHumanReadable(dataSource->getDataObject(0)->statusFlagList, value);
       CT::string legendMessage;
       legendMessage.print("%d) %s", (int)value, flagMeaning.c_str());
       legendImage->setText(legendMessage.c_str(), (int)cbW + 15 + pLeft, (int)y + dH + 2 + pTop, 248);

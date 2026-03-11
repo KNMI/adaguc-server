@@ -361,8 +361,7 @@ CT::string prepareText(CDataSource *dataSource, size_t dataObjectIndex, float va
   // Determine text to plot for value
   CT::string text;
   if (dataSource->getDataObject(dataObjectIndex) != nullptr && dataSource->getDataObject(dataObjectIndex)->hasStatusFlag) {
-    CT::string flagMeaning;
-    CDataSource::getFlagMeaningHumanReadable(&flagMeaning, &dataSource->getDataObject(dataObjectIndex)->statusFlagList, value);
+    std::string flagMeaning = CDataSource::getFlagMeaningHumanReadable(dataSource->getDataObject(dataObjectIndex)->statusFlagList, value);
     text.print("%s", flagMeaning.c_str());
   } else {
     text.print(drawPointTextFormat.c_str(), value);

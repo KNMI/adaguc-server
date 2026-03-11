@@ -31,15 +31,15 @@ struct CURAggregatedDimension {
 
 struct CURDimensionKey {
   std::string name;
-  CDF::Variable *cdfDimensionVariable;
-  bool isNumeric;
+  CDF::Variable *cdfDimensionVariable = nullptr;
+  bool isNumeric = false;
 };
 
 struct CURResult {
-  CURUniqueRequests *parent;
-  CURDimensionKey dimensionKeys[CCUniqueRequests_MAX_DIMS];
-  CT::string value;
-  int numDims;
+  CURUniqueRequests *parent = nullptr;
+  std::vector<CURDimensionKey> dimensionKeys;
+  std::string value;
+  int numDims = 0;
 };
 
 struct CURFileInfo {

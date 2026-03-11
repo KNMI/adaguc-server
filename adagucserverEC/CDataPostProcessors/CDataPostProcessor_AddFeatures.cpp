@@ -21,7 +21,7 @@ int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource
     //    dataSource->getDataObject(0)->cdfVariable->setAttributeText("units","mm/hr");
     //    dataSource->getDataObject(0)->setUnits("mm/hr");
     try {
-      if (dataSource->getDataObject(0)->cdfVariable->getAttribute("ADAGUC_GEOJSONPOINT")) return 0;
+      if (dataSource->getDataObject(0)->cdfVariable->getAttributeThrows("ADAGUC_GEOJSONPOINT")) return 0;
     } catch (int a) {
     }
     CDBDebug("CDATAPOSTPROCESSOR_RUNBEFOREREADING::Adding features from GEOJson");

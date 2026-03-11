@@ -238,7 +238,7 @@ public:
   /**
    * The required dimensions for this datasource
    */
-  std::vector<COGCDims *> requiredDims;
+  std::vector<COGCDims> requiredDims;
   Statistics *statistics; // is NULL when not available
   // The actual dataset data (can have multiple variables)
 
@@ -317,9 +317,9 @@ public:
   CT::string featureSet;
   CDataSource();
   ~CDataSource();
-  static void readStatusFlags(CDF::Variable *var, std::vector<CDataSource::StatusFlag> *statusFlagList);
-  static const char *getFlagMeaning(std::vector<CDataSource::StatusFlag> *statusFlagList, double value);
-  static void getFlagMeaningHumanReadable(CT::string *flagMeaning, std::vector<CDataSource::StatusFlag> *statusFlagList, double value);
+  static void readStatusFlags(CDF::Variable *var, std::vector<CDataSource::StatusFlag> &statusFlagList);
+  static std::string getFlagMeaning(std::vector<CDataSource::StatusFlag> &statusFlagList, double value);
+  static std::string getFlagMeaningHumanReadable(std::vector<CDataSource::StatusFlag> &statusFlagList, double value);
 
   int setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Configuration *_cfg, CServerConfig::XMLE_Layer *_cfgLayer, const char *_layerName, int layerIndex);
   void addStep(const char *fileName);

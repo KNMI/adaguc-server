@@ -149,7 +149,7 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
           if (dim != NULL) {
             CDF::Variable *dimVar = NULL;
             try {
-              dimVar = dataSource->getDataObject(0)->cdfObject->getVariable(dim->name.c_str());
+              dimVar = dataSource->getDataObject(0)->cdfObject->getVariableThrows(dim->name.c_str());
             } catch (int e) {
               CDBDebug("Warning: Variable is not defined for dimension [%s], creating array", dim->name.c_str());
               dimVar = CDataReader::addBlankDimVariable(dataSource->getDataObject(0)->cdfObject, dim->name.c_str());
@@ -166,7 +166,7 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
             CT::string OGCDimName;
 
             try {
-              dimVar->getAttribute("units")->getDataAsString(&units);
+              units = dimVar->getAttributeThrows("units")->toString();
             } catch (int e) {
             }
 
@@ -209,11 +209,11 @@ int CAutoConfigure::autoConfigureDimensions(CDataSource *dataSource) {
         CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
         for (size_t j = 0; j < cdfObject->variables.size(); j++) {
           try {
-            if (cdfObject->variables[j]->getAttribute("standard_name")->toString().equals("forecast_reference_time") == true) {
+            if (cdfObject->variables[j]->getAttributeThrows("standard_name")->toString().equals("forecast_reference_time") == true) {
               CDBDebug("Found forecast_reference_time variable with name [%s]", cdfObject->variables[j]->name.c_str());
               CT::string units = "";
               try {
-                cdfObject->variables[j]->getAttribute("units")->toString();
+                cdfObject->variables[j]->getAttributeThrows("units")->toString();
               } catch (int e) {
                 CDBError("No units found for forecast_reference_time variable");
                 throw(e);
@@ -327,7 +327,7 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
     if (dataSource->getDataObject(0)->cdfVariable == nullptr) {
       throw __LINE__;
     }
-    dataSource->getDataObject(0)->cdfVariable->getAttribute("standard_name")->getDataAsString(&searchStandardName);
+    searchStandardName = dataSource->getDataObject(0)->cdfVariable->getAttributeThrows("standard_name")->toString();
   } catch (int e) {
   }
 
@@ -480,12 +480,7 @@ int CAutoConfigure::getFileNameForDataSource(CDataSource *dataSource, std::strin
         }
       } else {
         CDBDebug("Required dims is still zero, add none now");
-        COGCDims *ogcDim = new COGCDims();
-        dataSource->requiredDims.push_back(ogcDim);
-        ogcDim->name.copy("none");
-        ogcDim->value.copy("0");
-        ogcDim->queryValue.copy("0");
-        ogcDim->netCDFDimName.copy("none");
+        dataSource->requiredDims.push_back(makeEmptyOGCDim());
       }
     }
     CDBStore::Store *store = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)->getFilesAndIndicesForDimensions(dataSource, 1, false);
@@ -498,9 +493,6 @@ int CAutoConfigure::getFileNameForDataSource(CDataSource *dataSource, std::strin
 
     /* Restoremodifications to requiredDims*/
     if (removeRequiredDims) {
-      for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
-        delete dataSource->requiredDims[j];
-      }
       dataSource->requiredDims.clear();
     }
 

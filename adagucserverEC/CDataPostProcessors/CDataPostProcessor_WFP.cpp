@@ -109,10 +109,10 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
 
     windSectorscdfObject->attachCDFReader(windSectorscdfReader);
     int status = windSectorscdfReader->open(tempDataSource->getFileName());
-    CDF::Variable *windSpeedDifferenceVariable = windSectorscdfReader->cdfObject->getVariable(tempDataSource->getDataObject(0)->variableName);
-    CDF::Variable *windSectorX = windSectorscdfReader->cdfObject->getVariable("x");
-    CDF::Variable *windSectorY = windSectorscdfReader->cdfObject->getVariable("y");
-    CDF::Variable *windSectors = windSectorscdfReader->cdfObject->getVariable("wind_sector");
+    CDF::Variable *windSpeedDifferenceVariable = windSectorscdfReader->cdfObject->getVariableThrows(tempDataSource->getDataObject(0)->variableName);
+    CDF::Variable *windSectorX = windSectorscdfReader->cdfObject->getVariableThrows("x");
+    CDF::Variable *windSectorY = windSectorscdfReader->cdfObject->getVariableThrows("y");
+    CDF::Variable *windSectors = windSectorscdfReader->cdfObject->getVariableThrows("wind_sector");
     windSectorX->readData(CDF_FLOAT);
     windSectorY->readData(CDF_FLOAT);
     windSectors->readData(CDF_INT);
@@ -146,8 +146,8 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
 
     GeoParameters sourceGeo;
 
-    sourceGeo.width = windSpeedDifferenceVariable->getDimension("x")->length;
-    sourceGeo.height = windSpeedDifferenceVariable->getDimension("y")->length;
+    sourceGeo.width = windSpeedDifferenceVariable->getDimensionThrows("x")->length;
+    sourceGeo.height = windSpeedDifferenceVariable->getDimensionThrows("y")->length;
     sourceGeo.bbox.left = windSectorXData[0];
     sourceGeo.bbox.top = windSectorYData[0];
     sourceGeo.bbox.right = windSectorXData[sourceGeo.width - 1];

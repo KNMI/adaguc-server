@@ -123,7 +123,7 @@ int CDPPConvertUnits::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
 
       auto attrNeedsConversion = dataObject->cdfVariable->getAttributeNE(getDataPostProcId(proc).c_str());
       // Check if we need to convert the data
-      if (attrNeedsConversion != nullptr && attrNeedsConversion->getDataAsString().equals("true")) {
+      if (attrNeedsConversion != nullptr && attrNeedsConversion->toString().equals("true")) {
         CDBDebug("AFTER (grid): %s %f %f %s", proc->attr.algorithm.c_str(), lookupUnit.a, lookupUnit.b, lookupUnit.units.c_str());
         CDFType type = dataObject->cdfVariable->getType();
 
@@ -159,7 +159,7 @@ int CDPPConvertUnits::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
     }
     auto attrNeedsConversion = dataObject->cdfVariable->getAttributeNE(getDataPostProcId(proc).c_str());
     // Check if we need to convert the data
-    if (attrNeedsConversion != nullptr && attrNeedsConversion->getDataAsString().equals("true")) {
+    if (attrNeedsConversion != nullptr && attrNeedsConversion->toString().equals("true")) {
       if (adagucPostProcVerboseLog) {
         CDBDebug("AFTER (timeseries): %s %f %f %s", proc->attr.algorithm.c_str(), lookupUnit.a, lookupUnit.b, lookupUnit.units.c_str());
       }

@@ -275,7 +275,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesForIndices(CDataSource *dataSourc
   CT::string query;
   queryOrderedDESC.print("select a0.path");
   for (size_t i = 0; i < dataSource->requiredDims.size(); i++) {
-    queryOrderedDESC.printconcat(",%s,dim%s", dataSource->requiredDims[i]->netCDFDimName.c_str(), dataSource->requiredDims[i]->netCDFDimName.c_str());
+    queryOrderedDESC.printconcat(",%s,dim%s", dataSource->requiredDims[i].netCDFDimName.c_str(), dataSource->requiredDims[i].netCDFDimName.c_str());
   }
 
   queryOrderedDESC.concat(" from ");
@@ -286,8 +286,8 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesForIndices(CDataSource *dataSourc
 
   // Find all tables belonging to given path, filter, and dimensions
   std::vector<CT::string> dims;
-  for (const auto &dim : dataSource->requiredDims) {
-    CT::string dimString(dim->netCDFDimName);
+  for (const auto &dim: dataSource->requiredDims) {
+    CT::string dimString = dim.netCDFDimName;
     dimString.toLowerCaseSelf();
     dims.push_back(dimString);
   }
@@ -296,7 +296,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesForIndices(CDataSource *dataSourc
 
   // Compose the query
   for (size_t i = 0; i < dataSource->requiredDims.size(); i++) {
-    CT::string netCDFDimName(&dataSource->requiredDims[i]->netCDFDimName);
+    CT::string netCDFDimName = dataSource->requiredDims[i].netCDFDimName;
     CT::string tableName = mapping[netCDFDimName].tableName;
 
     CT::string subQuery;
@@ -323,9 +323,9 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesForIndices(CDataSource *dataSourc
 #endif
 
   query.print("select distinct * from (%s)T order by ", queryOrderedDESC.c_str());
-  query.concat(&dataSource->requiredDims[0]->netCDFDimName);
+  query.concat(dataSource->requiredDims[0].netCDFDimName.c_str());
   for (size_t i = 1; i < dataSource->requiredDims.size(); i++) {
-    query.printconcat(",%s", dataSource->requiredDims[i]->netCDFDimName.c_str());
+    query.printconcat(",%s", dataSource->requiredDims[i].netCDFDimName.c_str());
   }
 
   // Execute the query
@@ -380,8 +380,8 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
 
   // Find all tables belonging to given path, filter and dimensions
   std::vector<CT::string> dims;
-  for (const auto &dim : dataSource->requiredDims) {
-    CT::string dimString(dim->netCDFDimName);
+  for (const auto &dim: dataSource->requiredDims) {
+    CT::string dimString = dim.netCDFDimName;
     dimString.toLowerCaseSelf();
     dims.push_back(dimString);
   }
@@ -389,27 +389,27 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
       getTableNamesForPathFilterAndDimensions(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), dims, dataSource);
 
 #ifdef CDBAdapterPostgreSQL_DEBUG
-  for (const auto &m : mapping) {
+  for (const auto &m: mapping) {
     CDBDebug("Will query dim=%s -> tablename=%s", m.first.c_str(), m.second.tableName.c_str());
   }
 #endif
 
   // Create a mapping for filtering where key=dimension name, value=requested dimension value(s)
-  std::map<CT::string, std::vector<CT::string>> requestedDimMap;
-  for (const auto &dim : dataSource->requiredDims) {
-    requestedDimMap[dim->netCDFDimName.c_str()] = (&dim->value)->split(",");
+  std::map<std::string, std::vector<std::string>> requestedDimMap;
+  for (const auto &dim: dataSource->requiredDims) {
+    requestedDimMap[dim.netCDFDimName] = CT::split(dim.value, ",");
   }
 
   CT::string query;
   query.print("SELECT DISTINCT t1.path");
-  for (const auto &dim : dims) {
+  for (const auto &dim: dims) {
     query.printconcat(", %s, dim%s", dim.c_str(), dim.c_str());
   }
 
   query.printconcat(",t1.adaguctilinglevel");
 
   int i = 0;
-  for (const auto &m : mapping) {
+  for (const auto &m: mapping) {
     if (i == 0) {
       query.printconcat(" FROM %s t1 ", m.second.tableName.c_str());
     } else {
@@ -442,20 +442,20 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
   }
 
   // Filter on the requested dimensions
-  for (const auto &m : mapping) {
+  for (const auto &m: mapping) {
     const char *dimName = m.first.c_str();
     CT::string dimDataType = m.second.dataType;
     CT::string whereStatement;
-    std::vector<CT::string> requestedDimVals = requestedDimMap[m.first];
+    std::vector<std::string> requestedDimVals = requestedDimMap[m.first];
 
     for (size_t i = 0; i < requestedDimVals.size(); ++i) {
-      if (requestedDimVals[i].equals("*")) continue;
+      if (requestedDimVals[i] == "*") continue;
 
       if (i != 0) {
         whereStatement.printconcat(" OR ");
       }
 
-      std::vector<CT::string> dimVals = requestedDimVals[i].split("/");
+      std::vector<std::string> dimVals = CT::split(requestedDimVals[i], "/");
       if (dimVals.size() == 1) {
         whereStatement.printconcat("%s = '%s'", dimName, dimVals[0].c_str());
       } else {
@@ -469,9 +469,9 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesAndIndicesForDimensions(CDataSour
   }
 
   // Order and limit query
-  query.printconcat("ORDER BY %s", dataSource->requiredDims[0]->netCDFDimName.c_str());
+  query.printconcat("ORDER BY %s", dataSource->requiredDims[0].netCDFDimName.c_str());
   for (size_t i = 1; i < dataSource->requiredDims.size(); i++) {
-    query.printconcat(", %s", dataSource->requiredDims[i]->netCDFDimName.c_str());
+    query.printconcat(", %s", dataSource->requiredDims[i].netCDFDimName.c_str());
   }
 
   if (raiseExceptionWhenOverLimit) {
@@ -524,14 +524,14 @@ int CDBAdapterPostgreSQL::autoUpdateAndScanDimensionTables(CDataSource *dataSour
 
   // Find all tables belonging to given path, filter, and dimensions
   std::vector<CT::string> dims;
-  for (const auto &dim : cfgLayer->Dimension) {
+  for (const auto &dim: cfgLayer->Dimension) {
     CT::string dimString(dim->attr.name);
     dimString.toLowerCaseSelf();
     dims.push_back(dimString);
   }
   std::map<CT::string, DimInfo> mapping = getTableNamesForPathFilterAndDimensions(cfgLayer->FilePath[0]->value.c_str(), cfgLayer->FilePath[0]->attr.filter.c_str(), dims, dataSource);
 
-  for (const auto &m : mapping) {
+  for (const auto &m: mapping) {
     dimName = m.first;
 
     CT::string query;
@@ -572,7 +572,7 @@ int CDBAdapterPostgreSQL::autoUpdateAndScanDimensionTables(CDataSource *dataSour
   if (fileNeedsUpdate == true) {
     // Recreate table
     if (srvParams->isAutoLocalFileResourceEnabled() == true) {
-      for (auto &m : mapping) {
+      for (auto &m: mapping) {
         dimName = m.first;
 
         CDBFileScanner::markTableDirty(m.second.tableName);
@@ -661,7 +661,7 @@ std::vector<CT::string> CDBAdapterPostgreSQL::getTableNames(CDataSource *dataSou
   // If config has a hardcoded db table name for layer, use it too
   if (dataSource->cfgLayer->DataBaseTable.size() == 1) {
     CT::string tableName = dataSource->cfgLayer->DataBaseTable[0]->value.c_str();
-    for (const auto &cfgDimension : dataSource->cfgLayer->Dimension) {
+    for (const auto &cfgDimension: dataSource->cfgLayer->Dimension) {
       CT::string dimString = cfgDimension->attr.name.toLowerCase();
       CT::string correctedTableName = dataSource->srvParams->makeCorrectTableName(tableName, dimString);
       tableList.push_back(correctedTableName);
@@ -711,7 +711,7 @@ std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAn
 
   // If config has a hardcoded db table name for layer, use it
   if (dataSource->cfgLayer->DataBaseTable.size() == 1) {
-    for (auto &dim : dimensions) {
+    for (auto &dim: dimensions) {
       CT::string tableName = dataSource->cfgLayer->DataBaseTable[0]->value.c_str();
       CT::string correctedTableName = dataSource->srvParams->makeCorrectTableName(tableName, dim);
       mapping[dim] = {correctedTableName, ""};
@@ -724,7 +724,7 @@ std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAn
 
   // Check in lookupTableNameCache
   bool done = true;
-  for (const auto &dim : dimensions) {
+  for (const auto &dim: dimensions) {
     CT::string lookupIdentifier = getLookupIdentifier(path, filter, dim);
     std::map<std::string, DimInfo>::iterator it = lookupTableNameCacheMap.find(lookupIdentifier.c_str());
 
@@ -754,7 +754,7 @@ std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAn
   // Query the lookup table once for the requested dimension(s)
   // FIXME: query only params that are not in lookup cache
   CT::string dimList;
-  for (const auto &dim : dimensions) {
+  for (const auto &dim: dimensions) {
     dimList.printconcat("E'%s'", dim.c_str());
     if (&dim != &dimensions.back()) dimList += ", ";
   }
@@ -793,7 +793,7 @@ std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAn
   }
 
   // We're missing tables for the requested dimensions. Create the missing tables, and add to cache and lookup table
-  for (auto &m : mapping) {
+  for (auto &m: mapping) {
     if (!m.second.tableName.empty()) continue;
 
     std::string tableName = generateRandomTableName();

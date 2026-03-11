@@ -25,6 +25,7 @@
 
 #include "CCDFTypes.h"
 #include "CCDFAttribute.h"
+#include "CDFCopyData.h"
 
 void CDF::Attribute::setName(const char *value) { name.copy(value); }
 
@@ -45,7 +46,7 @@ CDF::Attribute::Attribute(const char *attrName, const char *attrString) {
   data = NULL;
   length = 0;
   name.copy(attrName);
-  setData(CDF_CHAR, attrString, strlen(attrString));
+  setString(attrString);
 }
 
 CDF::Attribute::Attribute(const char *attrName, CDFType type, const void *dataToSet, size_t dataLength) {
@@ -89,7 +90,7 @@ int CDF::Attribute::setData(CDFType type, const void *dataToSet, size_t dataLeng
   return 0;
 }
 
-int CDF::Attribute::setData(const char *dataToSet) {
+int CDF::Attribute::setString(const char *dataToSet) {
   freeData();
   auto data_length = strlen(dataToSet);
   this->type = CDF_CHAR;
@@ -101,7 +102,7 @@ int CDF::Attribute::setData(const char *dataToSet) {
   return 0;
 }
 
-int CDF::Attribute::getDataAsString(CT::string *out) {
+int CDF::Attribute::_getDataAsString(CT::string *out) {
   out->copy("");
   if (type == CDF_CHAR) {
     out->copy((const char *)data, length);
@@ -173,11 +174,9 @@ int CDF::Attribute::getDataAsString(CT::string *out) {
 
 CT::string CDF::Attribute::toString() {
   CT::string out = "";
-  getDataAsString(&out);
+  _getDataAsString(&out);
   return out;
 }
-
-CT::string CDF::Attribute::getDataAsString() { return toString(); }
 
 size_t CDF::Attribute::size() { return length; }
 
@@ -203,3 +202,49 @@ void CDF::Attribute::allocateData(size_t size) {
   CDF::allocateData(type, &data, size);
   length = size;
 }
+
+template <class T> int CDF::Attribute::setData(CDFType type, T data) {
+
+#define SPECIALIZE_TEMPLATE(CDFTYPE, CPPTYPE)                                                                                                                                                          \
+  if (type == CDFTYPE) {                                                                                                                                                                               \
+    CPPTYPE d = data;                                                                                                                                                                                  \
+    setData(type, &d, 1);                                                                                                                                                                              \
+  };
+  ENUMERATE_OVER_CDFTYPES(SPECIALIZE_TEMPLATE)
+#undef SPECIALIZE_TEMPLATE
+
+  return 0;
+}
+
+template <class T> int CDF::Attribute::getData(T *dataToGet, size_t getlength) {
+  if (data == NULL) return 0;
+  if (getlength > length) getlength = length;
+  CDFCopyData(dataToGet, data, type, getlength);
+  return getlength;
+}
+
+template <class T> T CDF::Attribute::getDataAt(int index) {
+  if (data == NULL) {
+    throw(CDF_E_VARHASNODATA);
+  }
+  T dataElement = 0;
+
+#define SPECIALIZE_TEMPLATE(CDFTYPE, CPPTYPE)                                                                                                                                                          \
+  if (type == CDFTYPE) dataElement = (T)((CPPTYPE *)data)[index];
+  ENUMERATE_OVER_CDFTYPES(SPECIALIZE_TEMPLATE)
+#undef SPECIALIZE_TEMPLATE
+
+  return dataElement;
+}
+
+#define SPECIALIZE_TEMPLATE(CDFTYPE, CPPTYPE) template int CDF::Attribute::setData<CPPTYPE>(CDFType type, CPPTYPE data);
+ENUMERATE_OVER_CDFTYPES(SPECIALIZE_TEMPLATE)
+#undef SPECIALIZE_TEMPLATE
+
+#define SPECIALIZE_TEMPLATE(CDFTYPE, CPPTYPE) template int CDF::Attribute::getData<CPPTYPE>(CPPTYPE * dataToGet, size_t getlength);
+ENUMERATE_OVER_CDFTYPES(SPECIALIZE_TEMPLATE)
+#undef SPECIALIZE_TEMPLATE
+
+#define SPECIALIZE_TEMPLATE(CDFTYPE, CPPTYPE) template CPPTYPE CDF::Attribute::getDataAt<CPPTYPE>(int index);
+ENUMERATE_OVER_CDFTYPES(SPECIALIZE_TEMPLATE)
+#undef SPECIALIZE_TEMPLATE

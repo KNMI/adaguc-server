@@ -40,8 +40,8 @@ int CDPPSolarTerminator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSo
   double currentOffset = 1;
 
   if (!dataSource->srvParams->requestDims.empty()) {
-    CT::string timestampStr = dataSource->srvParams->requestDims[0]->value.c_str();
-    currentOffset = CTime::getEpochTimeFromDateString(dataSource->srvParams->requestDims[0]->value);
+    CT::string timestampStr = dataSource->srvParams->requestDims[0].value.c_str();
+    currentOffset = CTime::getEpochTimeFromDateString(dataSource->srvParams->requestDims[0].value);
   }
 
   if (mode == CDATAPOSTPROCESSOR_RUNBEFOREREADING) {

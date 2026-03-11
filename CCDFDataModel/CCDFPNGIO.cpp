@@ -210,7 +210,7 @@ int CDFPNGReader::open(const char *fileName) {
 
     /* Temporarily checking invalid metadata */
     if (bbox[0] < -5570000) {
-      if (CRS->getAttribute("proj4")->getDataAsString().equals("+proj=geos +a=6378.169 +b=6356.584 +h=35785.831 +lat_0=0 +lon_0=0.0")) {
+      if (CRS->getAttributeThrows("proj4")->toString().equals("+proj=geos +a=6378.169 +b=6356.584 +h=35785.831 +lat_0=0 +lon_0=0.0")) {
         for (size_t j = 0; j < 4; j++) {
           bbox[j] /= 1000;
         }
@@ -236,7 +236,7 @@ int CDFPNGReader::open(const char *fileName) {
     CDF::Dimension *varDims[] = {timeDimension, yDim, xDim};
     cdfObject->addVariable(new CDF::Variable("pngdata", CDF_UINT, varDims, 3, false));
   }
-  CDF::Variable *PNGData = cdfObject->getVariable("pngdata");
+  CDF::Variable *PNGData = cdfObject->getVariableThrows("pngdata");
 
   xVar->setCDFReaderPointer(this);
   xVar->setParentCDFObject(cdfObject);
@@ -314,7 +314,7 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType) {
   if (var->name.equals("x")) {
 
     CDF::Variable *xVar = var;
-    CDF::Dimension *xDim = ((CDFObject *)var->getParentCDFObject())->getDimension(var->name.c_str());
+    CDF::Dimension *xDim = ((CDFObject *)var->getParentCDFObject())->getDimensionThrows(var->name.c_str());
 
     xVar->allocateData(xDim->getSize());
 
@@ -335,7 +335,7 @@ int CDFPNGReader::_readVariableData(CDF::Variable *var, CDFType) {
   if (var->name.equals("y")) {
 
     CDF::Variable *yVar = var;
-    CDF::Dimension *yDim = ((CDFObject *)var->getParentCDFObject())->getDimension(var->name.c_str());
+    CDF::Dimension *yDim = ((CDFObject *)var->getParentCDFObject())->getDimensionThrows(var->name.c_str());
 
     yVar->allocateData(yDim->getSize());
     if (isSingleImageWithCoordinates) {

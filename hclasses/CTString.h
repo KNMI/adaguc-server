@@ -398,7 +398,7 @@ namespace CT {
      */
     CT::string replaceAll(CT::string substr, CT::string newString);
 
-    friend CT::string join(const std::vector<string> &items, CT::string separator);
+    friend CT::string join(const std::vector<std::string> &items, std::string separator);
 
     friend std::string basename(std::string input);
   };
@@ -409,7 +409,7 @@ namespace CT {
    * @param separator optional separator, defaults to ","
    * @returns new string containing all items.
    */
-  string join(const std::vector<string> &items, string separator = ",");
+  string join(const std::vector<std::string> &items, std::string separator = ",");
 
   /**
    * Returns posix basename of path
@@ -515,5 +515,35 @@ namespace CT {
    * @return True if input starts with pattern. True if pattern is empty
    */
   bool startsWith(const std::string &input, const std::string pattern);
+
+  /**
+   * Replaces characters so it can be used as valid xml
+   */
+  std::string encodeXml(const std::string &input);
+
+  /**
+   * Converts to hex string from int.
+   */
+  std::string getHex(unsigned int number);
+
+  /**
+   * Converts to hex24 string from int.
+   */
+  std::string getHex24(int value);
+
+  /**
+   * Checks if this string represents a numeric value
+   */
+  bool isNumeric(const std::string &input);
+
+  /**
+   * Checks if this string represents a float value
+   */
+  bool isFloat(const std::string &input);
+
+  /**
+   * Checks if this string represents an int value
+   */
+  bool isInt(const std::string &input);
 }; /* namespace CT */
 #endif

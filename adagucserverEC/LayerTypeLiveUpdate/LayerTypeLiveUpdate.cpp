@@ -8,21 +8,21 @@ int layerTypeLiveUpdateConfigureDimensionsInDataSource(CDataSource *dataSource) 
   // This layer has no dimensions, but we need to add one timestep with data in order to make the next code work.
   if (dataSource->requiredDims.size() < 1) {
 
-    COGCDims *requiredDim = new COGCDims();
-    requiredDim->isATimeDimension = true;
-    requiredDim->name = "time";
-    requiredDim->netCDFDimName = "time";
+    COGCDims requiredDim;
+    requiredDim.isATimeDimension = true;
+    requiredDim.name = "time";
+    requiredDim.netCDFDimName = "time";
     // The following values need to be filled in and are updated during XML GetCapabilities generation
-    requiredDim->uniqueValues.push_back("2020-01-01T00:00:00Z");
-    requiredDim->uniqueValues.push_back("2020-01-02T00:00:00Z");
-    requiredDim->value = "2020-01-02T00:00:00Z";
+    requiredDim.uniqueValues.push_back("2020-01-01T00:00:00Z");
+    requiredDim.uniqueValues.push_back("2020-01-02T00:00:00Z");
+    requiredDim.value = "2020-01-02T00:00:00Z";
     dataSource->requiredDims.push_back(requiredDim);
   }
   // Basic case of liveupdate layer
   if (dataSource->cfgLayer->DataPostProc.empty()) {
     // // Add step to empty file
     dataSource->addStep("");
-    dataSource->getCDFDims()->addDimension("none", "0", 0);
+    dataSource->getCDFDims()->push_back({.name = "none", .value = "0", .index = 0});
   } else {
     // Case of liveupdate layers with data post processors (such as solar terminator)
     // Currently one (dummy) file is required
@@ -135,7 +135,7 @@ int layerTypeLiveUpdateRenderIntoDrawImage(CDrawImage *image, CServerParams *srv
   std::string fontFile = image->getFontLocation();
   CT::string timeValue = "No time dimension specified";
   if (srvParam->requestDims.size() == 1) {
-    timeValue = srvParam->requestDims[0]->value.c_str();
+    timeValue = srvParam->requestDims[0].value.c_str();
   }
   int stepY = 100;
   for (int y = 0; y < image->getHeight(); y = y + stepY) {

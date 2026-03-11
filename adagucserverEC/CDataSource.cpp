@@ -54,7 +54,7 @@ CDataSource::DataObject *CDataSource::DataObject::clone() {
 CT::string CDataSource::DataObject::getUnits() {
   if (overruledUnits.empty() && cdfVariable != NULL) {
     try {
-      return cdfVariable->getAttribute("units")->getDataAsString();
+      return cdfVariable->getAttributeThrows("units")->toString();
     } catch (int e) {
     }
   }
@@ -146,15 +146,15 @@ MinMax getMinMax(CDF::Variable *var) {
       bool hasFillValue = false;
 
       try {
-        var->getAttribute("scale_factor")->getData(&scaleFactor, 1);
+        var->getAttributeThrows("scale_factor")->getData(&scaleFactor, 1);
       } catch (int e) {
       }
       try {
-        var->getAttribute("add_offset")->getData(&addOffset, 1);
+        var->getAttributeThrows("add_offset")->getData(&addOffset, 1);
       } catch (int e) {
       }
       try {
-        var->getAttribute("_FillValue")->getData(&fillValue, 1);
+        var->getAttributeThrows("_FillValue")->getData(&fillValue, 1);
         hasFillValue = true;
       } catch (int e) {
       }
@@ -178,15 +178,15 @@ MinMax getMinMax(CDF::Variable *var) {
       bool hasFillValue = false;
 
       try {
-        var->getAttribute("scale_factor")->getData(&scaleFactor, 1);
+        var->getAttributeThrows("scale_factor")->getData(&scaleFactor, 1);
       } catch (int e) {
       }
       try {
-        var->getAttribute("add_offset")->getData(&addOffset, 1);
+        var->getAttributeThrows("add_offset")->getData(&addOffset, 1);
       } catch (int e) {
       }
       try {
-        var->getAttribute("_FillValue")->getData(&fillValue, 1);
+        var->getAttributeThrows("_FillValue")->getData(&fillValue, 1);
         hasFillValue = true;
       } catch (int e) {
       }
@@ -323,7 +323,7 @@ CDataSource::~CDataSource() {
     delete timeSteps[j];
     timeSteps[j] = NULL;
   }
-  for (size_t j = 0; j < requiredDims.size(); j++) delete requiredDims[j];
+  requiredDims.clear();
   if (statistics != NULL) {
     delete statistics;
   };
@@ -430,11 +430,14 @@ void CDataSource::setTimeStep(int timeStep) {
 
 int CDataSource::getCurrentTimeStep() { return currentAnimationStep; }
 
-size_t CDataSource::getDimensionIndex(const char *name) { return timeSteps[currentAnimationStep]->dims.getDimensionIndex(name); }
+size_t CDataSource::getDimensionIndex(const char *name) {
+  int idx = findCDFDimIdx(timeSteps[currentAnimationStep]->dims, name);
+  return idx == -1 ? 0 : timeSteps[currentAnimationStep]->dims[idx].index;
+}
 
-size_t CDataSource::getDimensionIndex(int i) { return timeSteps[currentAnimationStep]->dims.getDimensionIndex(i); }
+size_t CDataSource::getDimensionIndex(int i) { return timeSteps[currentAnimationStep]->dims[i].index; }
 
-CT::string CDataSource::getDimensionValue(int i) { return timeSteps[currentAnimationStep]->dims.getDimensionValue(i); }
+CT::string CDataSource::getDimensionValue(int i) { return timeSteps[currentAnimationStep]->dims[i].value; }
 
 int CDataSource::getNumTimeSteps() { return (int)timeSteps.size(); }
 
@@ -449,8 +452,8 @@ CCDFDims *CDataSource::getCDFDims() {
   return &timeSteps[currentAnimationStep]->dims;
 }
 
-void CDataSource::readStatusFlags(CDF::Variable *var, std::vector<CDataSource::StatusFlag> *statusFlagList) {
-  statusFlagList->clear();
+void CDataSource::readStatusFlags(CDF::Variable *var, std::vector<CDataSource::StatusFlag> &statusFlagList) {
+  statusFlagList.clear();
   if (var != NULL) {
     CDF::Attribute *attr_flag_meanings = var->getAttributeNE("flag_meanings");
     // We might have status flag, check if all mandatory attributes are set!
@@ -461,7 +464,7 @@ void CDataSource::readStatusFlags(CDF::Variable *var, std::vector<CDataSource::S
       }
       if (attr_flag_values != NULL) {
         CT::string flag_meanings;
-        attr_flag_meanings->getDataAsString(&flag_meanings);
+        flag_meanings = attr_flag_meanings->toString();
         auto flagStrings = flag_meanings.split(" ");
         size_t nrOfFlagMeanings = flagStrings.size();
         if (nrOfFlagMeanings > 0) {
@@ -471,7 +474,7 @@ void CDataSource::readStatusFlags(CDF::Variable *var, std::vector<CDataSource::S
             double *dfFlagValues = new double[nrOfFlagMeanings + 1];
             attr_flag_values->getData(dfFlagValues, attr_flag_values->length);
             for (size_t j = 0; j < nrOfFlagMeanings; j++) {
-              statusFlagList->push_back({.meaning = flagStrings[j], .value = dfFlagValues[j]});
+              statusFlagList.push_back({.meaning = flagStrings[j], .value = dfFlagValues[j]});
             }
             delete[] dfFlagValues;
           } else {
@@ -487,21 +490,21 @@ void CDataSource::readStatusFlags(CDF::Variable *var, std::vector<CDataSource::S
   }
 }
 
-const char *CDataSource::getFlagMeaning(std::vector<CDataSource::StatusFlag> *statusFlagList, double value) {
-  for (size_t j = 0; j < statusFlagList->size(); j++) {
-    if ((*statusFlagList)[j].value == value) {
-      return (*statusFlagList)[j].meaning.c_str();
+std::string CDataSource::getFlagMeaning(std::vector<CDataSource::StatusFlag> &statusFlagList, double value) {
+  for (size_t j = 0; j < statusFlagList.size(); j++) {
+    if ((statusFlagList)[j].value == value) {
+      return (statusFlagList)[j].meaning.c_str();
     }
   }
   return "no_flag_meaning";
 }
 
-void CDataSource::getFlagMeaningHumanReadable(CT::string *flagMeaning, std::vector<CDataSource::StatusFlag> *statusFlagList, double value) {
-  flagMeaning->copy(getFlagMeaning(statusFlagList, value));
-  flagMeaning->replaceSelf("_", " ");
+std::string CDataSource::getFlagMeaningHumanReadable(std::vector<CDataSource::StatusFlag> &statusFlagList, double value) {
+  std::string flagMeaning = getFlagMeaning(statusFlagList, value);
+  return CT::replace(flagMeaning, "_", " ");
 }
 
-CT::string CDataSource::getDimensionValueForNameAndStep(const char *dimName, int dimStep) { return timeSteps[dimStep]->dims.getDimensionValue(dimName); }
+CT::string CDataSource::getDimensionValueForNameAndStep(const char *dimName, int dimStep) { return getCDFDimensionValue(timeSteps[dimStep]->dims, dimName); }
 
 /**
  * Returns a stringlist with all available legends for this datasource and chosen style.
@@ -855,7 +858,7 @@ CDataSource *CDataSource::clone() {
     TimeStep *timeStep = new TimeStep();
     d->timeSteps.push_back(timeStep);
     timeStep->fileName.copy(timeSteps[j]->fileName.c_str());
-    timeStep->dims.copy(&timeSteps[j]->dims);
+    timeStep->dims = timeSteps[j]->dims;
   }
 
   /* Copy dataObjects */
@@ -866,19 +869,7 @@ CDataSource *CDataSource::clone() {
   d->stretchMinMax = stretchMinMax;
 
   /* Copy requireddims */
-  for (size_t j = 0; j < requiredDims.size(); j++) {
-    COGCDims *ogcDim = new COGCDims();
-    d->requiredDims.push_back(ogcDim);
-    ogcDim->name = requiredDims[j]->name;
-    ogcDim->value = requiredDims[j]->value;
-    ogcDim->queryValue = requiredDims[j]->queryValue;
-    ogcDim->netCDFDimName = requiredDims[j]->netCDFDimName;
-    ogcDim->hidden = requiredDims[j]->hidden;
-    for (size_t i = 0; i < requiredDims[j]->uniqueValues.size(); i++) {
-      ogcDim->uniqueValues.push_back(requiredDims[j]->uniqueValues[i].c_str());
-    }
-    ogcDim->isATimeDimension = requiredDims[j]->isATimeDimension;
-  }
+  d->requiredDims = requiredDims;
 
   for (size_t j = 0; j < 4; j++) {
     d->dfBBOX[j] = dfBBOX[j];
@@ -1059,12 +1050,10 @@ int CDataSource::readVariableDataForCDFDims(CDF::Variable *variableToRead, CDFTy
     start[startCountIndex] = 0;
     stride[startCountIndex] = 1;
     count[startCountIndex] = dimensionLink->getSize();
-    int cdfDimIndex = cdfDims->getArrayIndexForName(dimensionLink->name.c_str());
+    int cdfDimIndex = findCDFDimIdx(*cdfDims, dimensionLink->name.c_str());
     if (cdfDimIndex >= 0) {
-#ifdef CDATASOURCE_DEBUG
-      CDBDebug("Start %d/%d:%s %d:%s ==> %d", startCountIndex, dimNr, dimensionLink->name.c_str(), cdfDimIndex, cdfDims->getDimensionName(cdfDimIndex), cdfDims->getDimensionIndex(cdfDimIndex));
-#endif
-      start[startCountIndex] = cdfDims->getDimensionIndex(cdfDimIndex);
+
+      start[startCountIndex] = cdfDims->at(cdfDimIndex).index;
       count[startCountIndex] = 1;
     }
   }

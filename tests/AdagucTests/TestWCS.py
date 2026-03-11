@@ -554,6 +554,7 @@ class TestWCS(unittest.TestCase):
             "dataset=testcollection&service=wcs&version=1.1.1&request=getcoverage&format=NetCDF4&crs=EPSG:4326&coverage=testdata&bbox=5.5,52.5,6.5,53.5&time=2024-06-01T01:00:00Z&dim_reference_time=2024-06-01T00:00:00Z&DIM_height=40",
             env={"ADAGUC_CONFIG": ADAGUC_PATH + "/data/config/adaguc.tests.dataset.xml,testcollection"},
             args=["--report"],
+            showLog=True,
         )
         self.assertEqual(status, 0)
 

@@ -172,4 +172,4 @@ class TestRendering:
         filename = "test_RenderingGeoJSON_CTR_EHAM_Schiphol_GetFeatureInfoExactlyOnPoint.json"
         AdagucTestTools().writetojson(self.testresultspath + filename, data.getvalue())
         assert status == 0
-        assert AdagucTestTools().compareFile(self.testresultspath + filename, self.expectedoutputsspath + filename)
+        assert AdagucTestTools().compareJson(self.testresultspath + filename, self.expectedoutputsspath + filename)

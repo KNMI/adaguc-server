@@ -52,8 +52,8 @@ int CSLD::processSLDUrl(CT::string sldUrl) {
     for (size_t i = 0; i < namedLayers.size(); ++i) {
 
       // LayerName
-      CXMLParserElement *namedLayerElement = namedLayers.get(i);
-      CT::string sldLayerName = namedLayerElement->get("Name")->getValue();
+      auto &namedLayerElement = namedLayers.at(i);
+      CT::string sldLayerName = namedLayerElement.get("Name")->value;
 
       for (size_t j = 0; j < this->serverConfig->Layer.size(); j++) {
 
@@ -146,10 +146,10 @@ int CSLD::processSLDUrl(CT::string sldUrl) {
   return 1;
 }
 
-int CSLD::validateAndParseSLDElements(CXMLParserElement *element, CServerConfig::XMLE_Style *myOwnStyle) {
+int CSLD::validateAndParseSLDElements(CXMLParserElement &element, CServerConfig::XMLE_Style *myOwnStyle) {
   try {
     // Extract UserStyle
-    CXMLParser::XMLElement *userStyle = element->get("UserStyle");
+    CXMLParser::XMLElement *userStyle = element.get("UserStyle");
 
     // Extract Rules from UserStyle
     CXMLParser::XMLElement::XMLElementPointerList rules = userStyle->get("FeatureTypeStyle")->getList("Rule");
@@ -163,35 +163,35 @@ int CSLD::validateAndParseSLDElements(CXMLParserElement *element, CServerConfig:
       for (size_t i = 0; i < rules.size(); ++i) {
 
         // Get child elements of Rule
-        CXMLParser::XMLElement::XMLElementList *childElementsList = rules.get(i)->getElements();
+        auto childElementsList = rules.at(i).xmlElements;
 
-        for (size_t i = 0; i < childElementsList->size(); i++) {
+        for (size_t i = 0; i < childElementsList.size(); i++) {
 
-          CXMLParserElement childElement = childElementsList->at(i);
+          CXMLParserElement childElement = childElementsList.at(i);
 
           // Check if rule Child is supported
-          if (childElement.getName().equals(RULE_MIN_SCALE_DENOMINATOR)) {
+          if (childElement.name == (RULE_MIN_SCALE_DENOMINATOR)) {
 
             // MinScaleDenominator support
-            status = this->buildScaleDenominator(&childElement, myOwnStyle);
+            status = this->buildScaleDenominator(childElement, myOwnStyle);
 
-          } else if (childElement.getName().equals(RULE_MAX_SCALE_DENOMINATOR)) {
+          } else if (childElement.name == (RULE_MAX_SCALE_DENOMINATOR)) {
 
             // MaxScaleDenominator support
-            status = this->buildScaleDenominator(&childElement, myOwnStyle);
+            status = this->buildScaleDenominator(childElement, myOwnStyle);
 
-          } else if (childElement.getName().equals(RULE_RASTER_SYMBOLIZER)) {
+          } else if (childElement.name == (RULE_RASTER_SYMBOLIZER)) {
 
             // RasterSymbolizer support
-            status = this->buildRasterSymbolizer(&childElement, myOwnStyle);
+            status = this->buildRasterSymbolizer(childElement, myOwnStyle);
 
           } else {
-            CDBError("Child %s in Rule Element not supported (yet)", childElement.getName().c_str());
+            CDBError("Child %s in Rule Element not supported (yet)", childElement.name.c_str());
             return 1;
           }
 
           // Check if all child elements in Rule elements are looped.
-          if (i == childElementsList->size() - 1) {
+          if (i == childElementsList.size() - 1) {
             return status;
           }
         }
@@ -209,39 +209,39 @@ int CSLD::validateAndParseSLDElements(CXMLParserElement *element, CServerConfig:
   return 1;
 }
 
-int CSLD::buildScaleDenominator(CXMLParserElement *element, CServerConfig::XMLE_Style *myOwnStyle) {
+int CSLD::buildScaleDenominator(CXMLParserElement &element, CServerConfig::XMLE_Style *myOwnStyle) {
 
-  if (element->getName().equals(RULE_MIN_SCALE_DENOMINATOR)) {
+  if (element.name == (RULE_MIN_SCALE_DENOMINATOR)) {
 
     CServerConfig::XMLE_Min *min = new CServerConfig::XMLE_Min();
-    min->value = element->getValue();
+    min->value = element.value;
     myOwnStyle->Min.push_back(min);
     return 0;
 
-  } else if (element->getName().equals(RULE_MAX_SCALE_DENOMINATOR)) {
+  } else if (element.name == (RULE_MAX_SCALE_DENOMINATOR)) {
 
     CServerConfig::XMLE_Max *max = new CServerConfig::XMLE_Max();
-    max->value = element->getValue();
+    max->value = element.value;
     myOwnStyle->Max.push_back(max);
 
     return 0;
   }
 
-  CDBError("Something went wrong building element %s", element->getName().c_str());
+  CDBError("Something went wrong building element %s", element.name.c_str());
   return 1;
 }
 
-int CSLD::buildRasterSymbolizer(CXMLParserElement *childElement, CServerConfig::XMLE_Style *myOwnStyle) {
+int CSLD::buildRasterSymbolizer(CXMLParserElement &childElement, CServerConfig::XMLE_Style *myOwnStyle) {
 
-  CXMLParser::XMLElement::XMLElementList *childElementsList = childElement->getElements();
+  auto childElementsList = childElement.xmlElements;
 
-  for (size_t i = 0; i < childElementsList->size(); i++) {
-    CXMLParserElement element = childElementsList->at(i);
+  for (size_t i = 0; i < childElementsList.size(); i++) {
+    CXMLParserElement element = childElementsList.at(i);
 
-    if (element.getName().equals(RULE_RASTER_SYMBOLIZER_CHILD_COLOR_MAP)) {
-      return this->buildColorMap(&element, myOwnStyle);
+    if (element.name == (RULE_RASTER_SYMBOLIZER_CHILD_COLOR_MAP)) {
+      return this->buildColorMap(element, myOwnStyle);
     } else {
-      CDBError("Child %s in %s Element not supported (yet)", element.getName().c_str(), childElement->getName().c_str());
+      CDBError("Child %s in %s Element not supported (yet)", element.name.c_str(), childElement.name.c_str());
       return 1;
     }
   }
@@ -250,15 +250,15 @@ int CSLD::buildRasterSymbolizer(CXMLParserElement *childElement, CServerConfig::
   return 1;
 }
 
-int CSLD::buildColorMap(CXMLParserElement *element, CServerConfig::XMLE_Style *myOwnStyle) {
-  CXMLParser::XMLElement::XMLElementPointerList colorMapEntries = element->getList("ColorMapEntry");
+int CSLD::buildColorMap(CXMLParserElement &element, CServerConfig::XMLE_Style *myOwnStyle) {
+  CXMLParser::XMLElement::XMLElementPointerList colorMapEntries = element.getList("ColorMapEntry");
 
   // Foreach colorMapEntries
   for (size_t i = 0; i < colorMapEntries.size(); i++) {
-    CXMLParserElement *colorMapEntry = colorMapEntries.get(i);
+    CXMLParserElement &colorMapEntry = colorMapEntries.at(i);
 
     CServerConfig::XMLE_ShadeInterval *shadeInterval = new CServerConfig::XMLE_ShadeInterval();
-    shadeInterval->attr.min = colorMapEntry->getAttrValue("quantity");
+    shadeInterval->attr.min = colorMapEntry.getAttrValue("quantity");
 
     // Set the max min value
     CT::string max;
@@ -266,7 +266,7 @@ int CSLD::buildColorMap(CXMLParserElement *element, CServerConfig::XMLE_Style *m
     // Set Max attribute, Current element is < the amount of entries
     if (i + 1 < colorMapEntries.size()) {
       // Get the quantity of the next colorMapEntry.
-      max = colorMapEntries.get(i + 1)->getAttrValue("quantity");
+      max = colorMapEntries.at(i + 1).getAttrValue("quantity");
       // Set the quantity value as max on ShadeInterval
       shadeInterval->attr.max = max;
     } else {
@@ -279,7 +279,7 @@ int CSLD::buildColorMap(CXMLParserElement *element, CServerConfig::XMLE_Style *m
     }
 
     // Make sure hex code is uppercase
-    CT::string hexColor = colorMapEntry->getAttrValue("color");
+    CT::string hexColor = colorMapEntry.getAttrValue("color");
     hexColor.toUpperCaseSelf();
 
     shadeInterval->attr.fillcolor.print(hexColor.c_str());

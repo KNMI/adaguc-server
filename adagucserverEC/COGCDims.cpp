@@ -24,116 +24,33 @@
  ******************************************************************************/
 
 #include "COGCDims.h"
+#include <algorithm>
 
-void COGCDims::addValue(const char *value) {
-  for (size_t j = 0; j < uniqueValues.size(); j++) {
-    if (uniqueValues[j].equals(value)) return;
-  }
-  uniqueValues.push_back(value);
-}
-
-CCDFDims::~CCDFDims() {
-  for (size_t j = 0; j < dimensions.size(); j++) {
-    delete dimensions[j];
-    dimensions[j] = NULL;
-  }
+int findCDFDimIdx(CCDFDims &dimensions, const std::string &name) {
+  auto it = std::find_if(dimensions.begin(), dimensions.end(), [&name](NetCDFDim &a) { return a.name == name; });
+  return it == dimensions.end() ? -1 : std::distance(dimensions.begin(), it);
 }
 
-void CCDFDims::addDimension(const char *name, const char *value, size_t index) {
-  // CDBDebug("Adddimension %s %s %d, numdims = %d",name,value,index,dimensions.size());
-  for (size_t j = 0; j < dimensions.size(); j++) {
-    if (dimensions[j]->name.equals(name)) {
-      dimensions[j]->index = index;
-      dimensions[j]->value = value;
-      return;
-    }
-  }
-  NetCDFDim *dim = new NetCDFDim;
-  dim->name.copy(name);
-  dim->value.copy(value);
-  dim->index = index;
-  dimensions.push_back(dim);
-}
-size_t CCDFDims::getDimensionIndex(const char *name) {
-  for (size_t j = 0; j < dimensions.size(); j++) {
-    if (dimensions[j]->name.equals(name)) {
-      return dimensions[j]->index;
-    }
-  }
-  return 0;
-}
+bool isOGCTimeDim(NetCDFDim &dimension) { return (CT::indexOf(dimension.name, "time") != -1 && CT::indexOf(dimension.name, "reference_time") == -1); }
 
-int CCDFDims::getArrayIndexForName(const char *name) {
-  for (size_t j = 0; j < dimensions.size(); j++) {
-    if (dimensions[j]->name.equals(name)) {
-      return j;
-    }
-  }
-  return -1;
-}
-
-size_t CCDFDims::getDimensionIndex(int j) {
-  if (j < 0) return 0;
-  if (size_t(j) >= dimensions.size()) return 0;
-  return dimensions[j]->index;
-}
-CT::string CCDFDims::getDimensionValue(int j) {
-  if (j < 0) return "NULL";
-  if (size_t(j) >= dimensions.size()) return "NULL";
-  if (isTimeDimension(j)) {
-    CT::string value = dimensions[j]->value.c_str();
+std::string _getDimensionValue(std::vector<NetCDFDim> &dimensions, int j) {
+  if (j < 0 || size_t(j) >= dimensions.size()) return "NULL";
+  if (isOGCTimeDim(dimensions[j])) {
+    std::string value = dimensions[j].value;
     // Format to YYYY-MM-DDTHH:MM:SSZ
     //           01234567890123456789
     if (value.length() < 20) {
-      value.concat("Z");
+      value += "Z";
     }
-    value.setChar(10, 'T');
+    value[10] = 'T';
     return value;
   }
-  return dimensions[j]->value;
+  return dimensions[j].value;
 }
 
-CT::string *CCDFDims::getDimensionValuePointer(int j) {
-  if (j < 0) return NULL;
-  if (size_t(j) >= dimensions.size()) return NULL;
+std::string getCDFDimensionValue(CCDFDims &dimensions, const char *name) { return _getDimensionValue(dimensions, findCDFDimIdx(dimensions, name)); }
 
-  return &dimensions[j]->value;
+COGCDims makeTimeBasedOGCDim(std::string name, std::string value) {
+  return {.name = name, .queryValue = value, .value = value, .netCDFDimName = name, .uniqueValues = {value}, .isATimeDimension = true, .hasFixedValue = false, .hidden = false};
 }
-
-CT::string CCDFDims::getDimensionValue(const char *name) { return getDimensionValue(getArrayIndexForName(name)); }
-
-const char *CCDFDims::getDimensionName(int j) {
-  if (j < 0) return 0;
-  if (size_t(j) >= dimensions.size()) return 0;
-  return dimensions[j]->name.c_str();
-}
-
-void CCDFDims::copy(CCDFDims *dim) {
-  // CDBDebug("CCDFDims::copy numdims %d",dim->dimensions.size());
-  if (dim != NULL) {
-    for (size_t j = 0; j < dim->dimensions.size(); j++) {
-      // CDBDebug("COPY %s, %s, %d",dim->dimensions[j]->name.c_str(),dim->dimensions[j]->value.c_str(),dim->dimensions[j]->index);
-      addDimension(dim->dimensions[j]->name.c_str(), dim->dimensions[j]->value.c_str(), dim->dimensions[j]->index);
-    }
-  }
-  // CDBDebug("/CCDFDims::copy numdims %d",dim->dimensions.size());
-}
-
-size_t CCDFDims::getNumDimensions() { return dimensions.size(); }
-
-bool CCDFDims::isTimeDimension(int j) {
-  const char *dimName = getDimensionName(j);
-  if (dimName != NULL) {
-    CT::string dimTimeName = dimName;
-    if ((dimTimeName.indexOf("time") != -1) && (dimTimeName.indexOf("reference_time") == -1)) return true;
-  }
-  return false;
-}
-
-bool CCDFDims::isTimeDimension(const char *dimName) {
-  if (dimName != NULL) {
-    CT::string dimTimeName = dimName;
-    if ((dimTimeName.indexOf("time") != -1) && (dimTimeName.indexOf("reference_time") == -1)) return true;
-  }
-  return false;
-}
+COGCDims makeEmptyOGCDim() { return {.name = "none", .queryValue = "0", .value = "0", .netCDFDimName = "none", .uniqueValues = {}, .isATimeDimension = false, .hasFixedValue = false, .hidden = true}; }

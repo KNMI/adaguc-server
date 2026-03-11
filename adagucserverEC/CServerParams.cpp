@@ -59,10 +59,6 @@ CServerParams::~CServerParams() {
     delete configObj;
     configObj = NULL;
   }
-  for (size_t j = 0; j < requestDims.size(); j++) {
-    delete requestDims[j];
-    requestDims[j] = NULL;
-  }
   requestDims.clear();
 }
 
@@ -310,7 +306,7 @@ std::vector<CT::string> CServerParams::getLegendNames(std::vector<CServerConfig:
   for (size_t j = 0; j < Legend.size(); j++) {
     CT::string legendValue = Legend[j]->value.c_str();
     std::vector<CT::string> l1 = legendValue.split(",");
-    for (auto li : l1) {
+    for (auto li: l1) {
       if (li.length() > 0) {
         stringList.push_back(li);
       }
@@ -352,7 +348,7 @@ int CServerParams::checkDataRestriction() {
 }
 
 const char *timeFormatAllowedChars = "0123456789:TZ-/. _ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz()*";
-bool CServerParams::checkTimeFormat(CT::string &timeToCheck) {
+bool CServerParams::checkTimeFormat(const std::string &timeToCheck) {
   if (timeToCheck.length() < 1) return false;
   //  bool isValidTime = false;
   // First test wether invalid characters are in this string
