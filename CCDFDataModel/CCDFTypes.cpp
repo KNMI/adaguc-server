@@ -25,6 +25,7 @@
 
 #include "CCDFTypes.h"
 #include <CDebugger.h>
+#include "CDFCopyData.h"
 
 int CDF::getTypeSize(CDFType type) {
   if (type == CDF_CHAR || type == CDF_UBYTE || type == CDF_BYTE) return 1;
@@ -129,111 +130,6 @@ CT::string CDF::getCDFDataTypeName(const int type) {
   return d;
 }
 
-int CDF::DataCopier::copy(void *destdata, CDFType destType, void *sourcedata, CDFType sourcetype, size_t destinationOffset, size_t sourceOffset, size_t length) {
-  if (sourcetype == CDF_STRING || destType == CDF_STRING) {
-    if (sourcetype == CDF_STRING && destType == CDF_STRING) {
-      for (size_t t = 0; t < length; t++) {
-        const char *sourceValue = ((char **)sourcedata)[t + sourceOffset];
-        if (sourceValue != NULL) {
-          size_t strlength = strlen(sourceValue);
-          ((char **)destdata)[t + destinationOffset] = (char *)malloc(strlength + 1);
-          strncpy(((char **)destdata)[t + destinationOffset], sourceValue, strlength);
-          ((char **)destdata)[t + destinationOffset][strlength] = 0;
-        }
-      }
-      return 0;
-    }
-    return 1;
-  }
-  switch (destType) {
-
-  case CDF_CHAR:
-    _copy((char *)destdata, sourcedata, sourcetype, destinationOffset, sourceOffset, length);
-    break;
-  case CDF_BYTE:
-    _copy((char *)destdata, sourcedata, sourcetype, destinationOffset, sourceOffset, length);
-    break;
-  case CDF_UBYTE:
-    _copy((unsigned char *)destdata, sourcedata, sourcetype, destinationOffset, sourceOffset, length);
-    break;
-  case CDF_SHORT:
-    _copy((short *)destdata, sourcedata, sourcetype, destinationOffset, sourceOffset, length);
-    break;
-  case CDF_USHORT:
-    _copy((unsigned short *)destdata, sourcedata, sourcetype, destinationOffset, sourceOffset, length);
-    break;
-  case CDF_INT:
-    _copy((int *)destdata, sourcedata, sourcetype, destinationOffset, sourceOffset, length);
-    break;
-  case CDF_UINT:
-    _copy((unsigned int *)destdata, sourcedata, sourcetype, destinationOffset, sourceOffset, length);
-    break;
-  case CDF_INT64:
-    _copy((long *)destdata, sourcedata, sourcetype, destinationOffset, sourceOffset, length);
-    break;
-  case CDF_UINT64:
-    _copy((unsigned long *)destdata, sourcedata, sourcetype, destinationOffset, sourceOffset, length);
-    break;
-  case CDF_FLOAT:
-    _copy((float *)destdata, sourcedata, sourcetype, destinationOffset, sourceOffset, length);
-    break;
-  case CDF_DOUBLE:
-    _copy((double *)destdata, sourcedata, sourcetype, destinationOffset, sourceOffset, length);
-    break;
-  default:
-    return 1;
-  }
-  return 0;
-}
-
-int CDF::fill(void *destdata, CDFType destType, double value, size_t size) {
-  if (destType == CDF_STRING) {
-    for (size_t j = 0; j < size; j++) {
-      free(((char **)destdata)[j]);
-      ((char **)destdata)[j] = NULL;
-    }
-    return 0;
-  }
-  switch (destType) {
-  case CDF_CHAR:
-    DataCopier::_fill((char *)destdata, value, size);
-    break;
-  case CDF_BYTE:
-    DataCopier::_fill((char *)destdata, value, size);
-    break;
-  case CDF_UBYTE:
-    DataCopier::_fill((unsigned char *)destdata, value, size);
-    break;
-  case CDF_SHORT:
-    DataCopier::_fill((short *)destdata, value, size);
-    break;
-  case CDF_USHORT:
-    DataCopier::_fill((unsigned short *)destdata, value, size);
-    break;
-  case CDF_INT:
-    DataCopier::_fill((int *)destdata, value, size);
-    break;
-  case CDF_UINT:
-    DataCopier::_fill((unsigned int *)destdata, value, size);
-    break;
-  case CDF_INT64:
-    DataCopier::_fill((long *)destdata, value, size);
-    break;
-  case CDF_UINT64:
-    DataCopier::_fill((unsigned long *)destdata, value, size);
-    break;
-  case CDF_FLOAT:
-    DataCopier::_fill((float *)destdata, value, size);
-    break;
-  case CDF_DOUBLE:
-    DataCopier::_fill((double *)destdata, value, size);
-    break;
-  default:
-    return 1;
-  }
-  return 0;
-}
-
 bool CDF::isCDFNumeric(CDFType type) {
   switch (type) {
   case CDF_CHAR:
@@ -243,3 +139,5 @@ bool CDF::isCDFNumeric(CDFType type) {
     return true;
   }
 }
+
+int CDF::fill(void *destdata, CDFType destType, double value, size_t size) { return CDFFillData(destdata, destType, value, size); }

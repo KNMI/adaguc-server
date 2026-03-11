@@ -29,6 +29,7 @@
 #include "CTime.h"
 #include "cdfVariableCache.h"
 #include "traceTimings/traceTimings.h"
+#include "CDFCopyData.h"
 
 CDF::Variable::CustomMemoryReader customMemoryReaderInstance;
 CDF::Variable::CustomMemoryReader *CDF::Variable::CustomMemoryReaderInstance = &customMemoryReaderInstance;
@@ -278,7 +279,7 @@ int CDF::Variable::_readData(CDFType type, size_t *_start, size_t *_count, ptrdi
 #ifdef CCDFDATAMODEL_DEBUG
           CDBDebug("Copying %d elements to variable %s", tVar->getSize(), name.c_str());
 #endif
-          DataCopier::copy(data, type, tVar->data, type, dataReadOffset, 0, tVar->getSize());
+          CDFCopyData(data, type, tVar->data, type, dataReadOffset, 0, tVar->getSize());
           dataReadOffset += tVar->getSize();
           // Free the read data
 #ifdef CCDFDATAMODEL_DEBUG
@@ -567,7 +568,7 @@ void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimNam
           throw("__LINE__");
         }
         // CDBDebug("try adding %f",srcDimVar->getDataAt<double>(indimsize));
-        status = DataCopier::copy(dstData, currentType, iterativeVar->data, currentType, 0, 0, currentDimSize);
+        status = CDFCopyData(dstData, currentType, iterativeVar->data, currentType, 0, 0, currentDimSize);
         if (status != 0) {
           CDBError("Unable to copy data");
           throw("__LINE__");
@@ -597,17 +598,6 @@ void CDF::Variable::setCDFObjectDim(CDF::Variable *sourceVar, const char *dimNam
           ((char **)dstData)[currentDimSize][srcDimValue.length()] = 0;
         }
 
-        // //         status = DataCopier::copy(dstData,//destdata
-        // //                          currentType,     //thistype
-        // //                          srcDimVar->data, //sourcedata
-        // //                          sourceType,      //sourcetype
-        // //                          currentDimSize,  //destinationOffset
-        // //                          indimsize,       //sourceOffset
-        // //                          1);              //Nr. Elements
-        // //         if(status!=0){
-        // //           CDBError("Unable to copy timestep ");
-        // //           throw("__LINE__");
-        // //         }
         iterativeVar->freeData();
         iterativeVar->data = dstData;
 
@@ -642,7 +632,7 @@ CDF::Variable *CDF::Variable::clone(CDFType newType, CT::string newName) {
 void CDF::Variable::copy(CDF::Variable *sourceVariable) {
   size_t size = sourceVariable->getSize();
   this->allocateData(size);
-  DataCopier::copy(this->data, this->currentType, sourceVariable->data, sourceVariable->currentType, 0, 0, size);
+  CDFCopyData(this->data, this->currentType, sourceVariable->data, sourceVariable->currentType, 0, 0, size);
 }
 
 void CDF::Variable::setCustomReader(CustomReader *customReader) {
@@ -976,13 +966,47 @@ int CDF::Variable::setData(CDFType type, const void *dataToSet, size_t dataLengt
   this->currentType = type;
   this->nativeType = type;
   CDF::allocateData(type, &data, currentSize);
-  if (type == CDF_CHAR || type == CDF_UBYTE || type == CDF_BYTE) memcpy(data, dataToSet, currentSize);
-  if (type == CDF_SHORT || type == CDF_USHORT) memcpy(data, dataToSet, currentSize * sizeof(short));
-  if (type == CDF_INT || type == CDF_UINT) memcpy(data, dataToSet, currentSize * sizeof(int));
-  if (type == CDF_INT64 || type == CDF_UINT64) memcpy(data, dataToSet, currentSize * sizeof(long));
-  if (type == CDF_FLOAT) memcpy(data, dataToSet, currentSize * sizeof(float));
-  if (type == CDF_DOUBLE) {
-    memcpy(data, dataToSet, currentSize * sizeof(double));
-  }
+
+#define SPECIALIZE_TEMPLATE(CDFTYPE, CPPTYPE)                                                                                                                                                          \
+  if (type == CDFTYPE) memcpy(data, dataToSet, currentSize * sizeof(CPPTYPE));
+  ENUMERATE_OVER_CDFTYPES(SPECIALIZE_TEMPLATE)
+#undef SPECIALIZE_TEMPLATE
+
   return 0;
 }
+
+template <class T> T CDF::Variable::getDataAt(int index) {
+  if (data == NULL) {
+    throw(CDF_E_VARHASNODATA);
+  }
+  T dataElement = 0;
+
+#define SPECIALIZE_TEMPLATE(CDFTYPE, CPPTYPE)                                                                                                                                                          \
+  if (currentType == CDFTYPE) dataElement = (T)((CPPTYPE *)data)[index];
+  ENUMERATE_OVER_CDFTYPES(SPECIALIZE_TEMPLATE)
+#undef SPECIALIZE_TEMPLATE
+
+  return dataElement;
+}
+
+template <class T> int CDF::Variable::setAttribute(const char *attrName, CDFType attrType, T data) {
+  Attribute *attr;
+  try {
+    attr = getAttribute(attrName);
+  } catch (...) {
+    attr = new Attribute();
+    attr->name.copy(attrName);
+    addAttribute(attr);
+  }
+  attr->type = attrType;
+  attr->setData(attrType, data);
+  return 0;
+}
+
+#define SPECIALIZE_TEMPLATE(CDFTYPE, CPPTYPE) template CPPTYPE CDF::Variable::getDataAt<CPPTYPE>(int index);
+ENUMERATE_OVER_CDFTYPES(SPECIALIZE_TEMPLATE)
+#undef SPECIALIZE_TEMPLATE
+
+#define SPECIALIZE_TEMPLATE(CDFTYPE, CPPTYPE) template int CDF::Variable::setAttribute<CPPTYPE>(const char *attrName, CDFType attrType, CPPTYPE data);
+ENUMERATE_OVER_CDFTYPES(SPECIALIZE_TEMPLATE)
+#undef SPECIALIZE_TEMPLATE

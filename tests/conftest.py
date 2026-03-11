@@ -85,6 +85,17 @@ def clean_temp_dir():
     AdagucTestTools().cleanTempDir()
 
 
+def make_adaguc_autoresource_env(testresultspath_actual: str = "", testresultspath_expected: str = "") -> dict:
+    """
+    Return a dictionary with ADAGUC_CONFIG as key, and the value set to a default dataset + a given dataset.
+    Format is ready to pass into update_db() and runADAGUCServer().
+    """
+    clean_temp_dir()
+    ADAGUC_PATH = environ["ADAGUC_PATH"]
+    config = f"{ADAGUC_PATH}/data/config/adaguc.autoresource.xml"
+    return {"ADAGUC_CONFIG": config, "ADAGUC_TESTPATH_ACTUAL": testresultspath_actual, "ADAGUC_TESTPATH_EXPECTED": testresultspath_expected}
+
+
 def make_adaguc_env(dataset: str = "", testresultspath_actual: str = "", testresultspath_expected: str = "") -> dict:
     """
     Return a dictionary with ADAGUC_CONFIG as key, and the value set to a default dataset + a given dataset.

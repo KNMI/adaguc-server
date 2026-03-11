@@ -25,6 +25,7 @@
 
 #include "CCDFNetCDFIO.h"
 #include "CStopWatch.h"
+#include "CDFCopyData.h"
 
 // #define MEASURETIME
 
@@ -278,7 +279,7 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
     CDBDebug("Copying %d elements from type %s to %s", var->getSize(), CDF::getCDFDataTypeName(var->nativeType).c_str(), CDF::getCDFDataTypeName(type).c_str());
 #endif
 
-    CDF::DataCopier::copy(var->data, type, voidData, var->nativeType, 0, 0, var->getSize());
+    CDFCopyData(var->data, type, voidData, var->nativeType, 0, 0, var->getSize());
 
 #ifdef CCDFNETCDFIO_DEBUG
     CDBDebug("Freeing temporary data object");

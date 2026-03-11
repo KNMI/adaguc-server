@@ -283,39 +283,53 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
       if (dimName.equals("none") == true) {
         break;
       }
+
+      CDF::Variable *sourceVar = srcObj->getVariableNE(dimName.c_str());
+      if (sourceVar == NULL) {
+        CDBWarning("Unable to find dimension [%s], making fake", dimName.c_str());
+        auto sourceDim = srcObj->getDimensionNE(dimName.c_str());
+        if (sourceDim == NULL) {
+          CDBWarning("Unable to find dimension [%s], cannot add anything.", dimName.c_str());
+        }
+        if (sourceDim != NULL) {
+          sourceVar = new CDF::Variable(dimName.c_str(), CDF_INT, {sourceDim}, false);
+          sourceVar->allocateData(sourceDim->length);
+          srcObj->addVariable(sourceVar);
+          sourceVar->setAttributeText("units", "index");
+          sourceVar->setAttributeText("long_name", dimName.c_str());
+          sourceVar->setAttributeText("standard_name", (dimName + "_index").c_str());
+          sourceVar->setAttributeText("comment", "Created by Adaguc, needed to be CF compliant");
+          // Fill data with a index
+          for (size_t j = 0; j < sourceDim->length; j++) {
+            ((int *)sourceVar->data)[j] = j;
+          }
+        }
+      }
+
       CDataReader::DimensionType dtype = CDataReader::getDimensionType(srcObj, dimName.c_str());
       if (dtype == CDataReader::dtype_none) {
         CDBWarning("dtype_none for %s", dataSource->cfgLayer->Dimension[d]->attr.name.c_str());
       }
 
-      bool isTimeDim = false;
-      if (dtype == CDataReader::dtype_time || dtype == CDataReader::dtype_reference_time) {
-        isTimeDim = true;
-      }
-
-      CDF::Variable *sourceVar = srcObj->getVariableNE(dimName.c_str());
-      if (sourceVar == NULL) {
-        CDBError("Unable to find dimension [%s]", dimName.c_str());
-        throw(__LINE__);
-      }
+      bool isTimeDim = dtype == CDataReader::dtype_time || dtype == CDataReader::dtype_reference_time;
 
       CDF::Dimension *dim = new CDF::Dimension();
       destCDFObject->addDimension(dim);
       dim->name = dimName;
 
-      CDF::Variable *var = new CDF::Variable();
-      destCDFObject->addVariable(var);
+      CDF::Variable *destinationVar = new CDF::Variable();
+      destCDFObject->addVariable(destinationVar);
       if (isTimeDim) {
-        var->setType(CDF_DOUBLE);
+        destinationVar->setType(CDF_DOUBLE);
       } else {
-        var->setType(sourceVar->getType());
+        destinationVar->setType(sourceVar->getType());
       }
-      var->name.copy(dim->name.c_str());
-      var->isDimension = true;
-      var->dimensionlinks.push_back(dim);
+      destinationVar->name.copy(dim->name.c_str());
+      destinationVar->isDimension = true;
+      destinationVar->dimensionlinks.push_back(dim);
 
       for (size_t i = 0; i < sourceVar->attributes.size(); i++) {
-        var->setAttribute(sourceVar->attributes[i]->name.c_str(), sourceVar->attributes[i]->getType(), sourceVar->attributes[i]->data, sourceVar->attributes[i]->length);
+        destinationVar->setAttribute(sourceVar->attributes[i]->name.c_str(), sourceVar->attributes[i]->getType(), sourceVar->attributes[i]->data, sourceVar->attributes[i]->length);
       }
 
       dim->setSize(baseDataSource->requiredDims[d].uniqueValues.size());
@@ -327,10 +341,10 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
         return 1;
       }
 
-      var->setSize(dim->length);
-      CDF::allocateData(var->getType(), &var->data, dim->length);
+      destinationVar->setSize(dim->length);
+      CDF::allocateData(destinationVar->getType(), &destinationVar->data, dim->length);
 
-      if (CDF::fill(var->data, var->getType(), 0, var->getSize()) != 0) {
+      if (CDF::fill(destinationVar->data, destinationVar->getType(), 0, destinationVar->getSize()) != 0) {
         CDBError("Unable to initialize data field to nodata value");
         return 1;
       }
@@ -344,14 +358,14 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
 #ifdef CNetCDFDataWriter_DEBUG
         CDBDebug("Setting dimension %s value = %s", dimName.c_str(), dimValue.c_str());
 #endif
-        if (var->getType() == CDF_STRING) {
+        if (destinationVar->getType() == CDF_STRING) {
 #ifdef CNetCDFDataWriter_DEBUG
           CDBDebug("Dimension [%s]: writing string value %s to index %lu", dimName.c_str(), dimValue.c_str(), j);
 #endif
-          ((char **)var->data)[j] = strdup(dimValue.c_str());
+          ((char **)destinationVar->data)[j] = strdup(dimValue.c_str());
         }
         // CDBDebug("dimValue.c_str() = %s",dimValue.c_str());
-        if (var->getType() != CDF_STRING) {
+        if (destinationVar->getType() != CDF_STRING) {
           if (isTimeDim) {
             CTime *ctime = CTime::GetCTimeInstance(CDataReader::getTimeDimension(dataSource));
             if (ctime == nullptr) {
@@ -362,48 +376,48 @@ int CNetCDFDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, in
 #ifdef CNetCDFDataWriter_DEBUG
             CDBDebug("Dimension [%s]: writing value %s with offset %f to index %lu", dimName.c_str(), dimValue.c_str(), offset, j);
 #endif
-            double *dimData = ((double *)var->data);
+            double *dimData = ((double *)destinationVar->data);
             dimData[j] = offset;
           } else {
 #ifdef CNetCDFDataWriter_DEBUG
             CDBDebug("Dimension [%s]: writing scalar value %s to index %lu for variable %s", dimName.c_str(), dimValue.c_str(), j, var->name.c_str());
 #endif
-            switch (var->getType()) {
+            switch (destinationVar->getType()) {
             case CDF_CHAR:
-              ((char *)var->data)[j] = dimValue.toInt();
+              ((char *)destinationVar->data)[j] = dimValue.toInt();
               break;
             case CDF_BYTE:
-              ((char *)var->data)[j] = dimValue.toInt();
+              ((char *)destinationVar->data)[j] = dimValue.toInt();
               break;
             case CDF_UBYTE:
-              ((unsigned char *)var->data)[j] = dimValue.toInt();
+              ((unsigned char *)destinationVar->data)[j] = dimValue.toInt();
               break;
             case CDF_SHORT:
-              ((short *)var->data)[j] = dimValue.toInt();
+              ((short *)destinationVar->data)[j] = dimValue.toInt();
               break;
             case CDF_USHORT:
-              ((unsigned short *)var->data)[j] = dimValue.toInt();
+              ((unsigned short *)destinationVar->data)[j] = dimValue.toInt();
               break;
             case CDF_INT:
-              ((int *)var->data)[j] = dimValue.toInt();
+              ((int *)destinationVar->data)[j] = dimValue.toInt();
               break;
             case CDF_UINT:
-              ((unsigned int *)var->data)[j] = dimValue.toInt();
+              ((unsigned int *)destinationVar->data)[j] = dimValue.toInt();
               break;
             case CDF_INT64:
-              ((long *)var->data)[j] = dimValue.toLong();
+              ((long *)destinationVar->data)[j] = dimValue.toLong();
               break;
             case CDF_UINT64: // TODO: All unsigned versions don't work if the full unsigned range is needed
-              ((unsigned long *)var->data)[j] = dimValue.toLong();
+              ((unsigned long *)destinationVar->data)[j] = dimValue.toLong();
               break;
             case CDF_FLOAT:
-              ((float *)var->data)[j] = dimValue.toFloat();
+              ((float *)destinationVar->data)[j] = dimValue.toFloat();
               break;
             case CDF_DOUBLE:
-              ((double *)var->data)[j] = dimValue.toDouble();
+              ((double *)destinationVar->data)[j] = dimValue.toDouble();
               break;
             default:
-              CDBError("Unknown var type [%d] for dimension [%s]", var->getType(), dimName.c_str());
+              CDBError("Unknown var type [%d] for dimension [%s]", destinationVar->getType(), dimName.c_str());
               return 1;
             }
           }

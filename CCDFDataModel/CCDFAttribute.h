@@ -27,6 +27,7 @@
 #define CCDFATTRIBUTE_H
 
 #include "CCDFTypes.h"
+#include "CDFCopyData.h"
 namespace CDF {
   class Attribute {
   private:
@@ -101,7 +102,7 @@ namespace CDF {
     template <class T> int getData(T *dataToGet, size_t getlength) {
       if (data == NULL) return 0;
       if (getlength > length) getlength = length;
-      CDF::DataCopier::copy(dataToGet, data, type, getlength);
+      CDFCopyData(dataToGet, data, type, getlength);
       return getlength;
     }
 

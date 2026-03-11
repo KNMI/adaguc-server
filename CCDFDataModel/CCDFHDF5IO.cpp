@@ -27,6 +27,7 @@
 
 #include <cmath>
 #include <netcdf.h>
+#include "CDFCopyData.h"
 
 int CDFHDF5Reader::CustomForecastReader::readData(CDF::Variable *thisVar, size_t *start, size_t *count, ptrdiff_t *stride) {
 #ifdef CCDFHDF5IO_DEBUG
@@ -62,7 +63,7 @@ int CDFHDF5Reader::CustomForecastReader::readData(CDF::Variable *thisVar, size_t
   }
   thisVar->setSize(size);
   CDF::allocateData(thisVar->getType(), &thisVar->data, size);
-  status = CDF::DataCopier::copy(thisVar->data, thisVar->getType(), var->data, thisVar->getType(), 0, 0, size);
+  status = CDFCopyData(thisVar->data, thisVar->getType(), var->data, thisVar->getType(), 0, 0, size);
   if (status != 0) {
     CDBError("Unable to copy data");
     throw("__LINE__");
