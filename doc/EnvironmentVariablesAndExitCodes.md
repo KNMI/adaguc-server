@@ -46,5 +46,5 @@ The following exit codes are supported:
 | `ADAGUCENV_RETENTIONPERIOD` | ISO 8601 duration specifying how long generated or cached files should be retained. | Not set |
 | `ADAGUCENV_ENABLECLEANUP` | Enables or disables automatic cleanup of files based on the retention period. | Not set |
 | `EXTERNALADDRESS`         | Hostname where Adaguc Viewer and Adaguc Explorer are reachable. | Not set |
-| `ADAGUC_FORK_SOCKET_PATH` | Enables or disables running adaguc-server in fork mode. Can be set to a filename, e.g. `adaguc.socket`. | Not set |
-| ADAGUC_MAX_PROC_TIMEOUT   | Maximum allowed processing time (in seconds) for a single adaguc-server request. If a request exceeds this limit, the server terminates the process and returns an HTTP 500 error to the client. This prevents requests from running indefinitely and blocking server resources. | 180 |
+| `ADAGUC_MAX_PROC_TIMEOUT` | Maximum allowed processing time (in seconds) for a single adaguc-server request. If a request exceeds this limit, the server terminates the process and returns an HTTP 500 error to the client. This prevents requests from running indefinitely and blocking server resources. | 180 |
+| `ADAGUC_FORK_ENABLE`      | Enables running adaguc-server in [fork mode](/doc/fork_server.md) when set to `TRUE`. | `FALSE` |

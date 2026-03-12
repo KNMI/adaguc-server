@@ -12,6 +12,8 @@ from io import BytesIO
 from subprocess import PIPE
 from typing import NamedTuple
 
+from adaguc.fork_settings import ADAGUC_FORK_SOCKET_PATH, is_fork_enabled
+
 HTTP_STATUSCODE_404_NOT_FOUND = 32  # Must be the same as in Definitions.h
 HTTP_STATUSCODE_422_UNPROCESSABLE_ENTITY = 33  # Must be the same as in Definitions.h
 HTTP_STATUSCODE_500_TIMEOUT = 34  # Not defined in C++, is generated from this file
@@ -26,7 +28,6 @@ SCAN_EXITCODE_TIMEOUT = 124  # The process timed out
 ADAGUC_NUMPARALLELPROCESSES = int(os.getenv("ADAGUC_NUMPARALLELPROCESSES", "4"))
 sem = asyncio.Semaphore(max(ADAGUC_NUMPARALLELPROCESSES, 2))  # At least two, to allow for me layer metadata update
 
-ADAGUC_FORK_SOCKET_PATH = f"{os.getenv('ADAGUC_PATH')}/adaguc.socket"
 ON_POSIX = "posix" in sys.builtin_module_names
 
 MAX_PROC_TIMEOUT = int(os.getenv("ADAGUC_MAX_PROC_TIMEOUT", "180"))
@@ -156,8 +157,8 @@ class CGIRunner:
             localenv["REQUEST_URI"] = "/myscriptname/" + path
         localenv.update(env)
 
-        # Only use fork server if ADAGUC_FORK_SOCKET_PATH is set and adaguc is not executed with extra arguments e.g. `--updatelayermetadata`
-        use_fork = os.getenv("ADAGUC_FORK_SOCKET_PATH", None) and len(cmds) == 1
+        # Only use fork server if ADAGUC_FORK_ENABLE=TRUE and adaguc is not executed with extra arguments e.g. `--updatelayermetadata`
+        use_fork = is_fork_enabled() and len(cmds) == 1
 
         async with sem:
             if use_fork:

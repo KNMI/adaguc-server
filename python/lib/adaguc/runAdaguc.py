@@ -148,7 +148,7 @@ class runAdaguc:
                 adagucenv[key] = value
 
             # Don't use adaguc fork server when running Adaguc through this method
-            if key == "ADAGUC_FORK_SOCKET_PATH":
+            if key == "ADAGUC_FORK_ENABLE":
                 adagucenv[key] = ""
                 continue
 

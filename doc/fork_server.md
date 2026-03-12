@@ -1,12 +1,10 @@
 # ADAGUC Fork Server Overview
 
-This document describes how the ADAGUC fork server processes requests using a single fork server (mother) process that creates child processes using fork().
-
-The mother process remains running and listens for incoming requests, while each request is handled by a separate child process.
+This document describes how the ADAGUC fork server processes requests using a single fork server (mother) process that creates child processes using `fork()`. The mother process remains running and listens for incoming requests, while each request is handled by a separate child process.
 
 Using a fork server reduces overhead because the main process stays initialized, so handling a request only requires creating a new child process using `fork()`.
 
-The fork server is enabled by setting the environment variable `ADAGUC_FORK_SOCKET_PATH`. If this variable is unset or empty, ADAGUC runs without the fork server.
+The fork server is enabled by setting the environment variable `ADAGUC_FORK_ENABLE` to `TRUE`. If this variable is not set to `TRUE`, ADAGUC runs without the fork server.
 
 # Components
 
@@ -18,9 +16,7 @@ The system consists of three parts:
 
 The maximum number of concurrent children is limited by the environment variable `ADAGUC_NUMPARALLELPROCESSES`.
 
-## Communication between python and mother process
-
-Unix socket: Used for communication between the Python server and the C++ fork server.
+Communication between the Python server and adaguc-server happens through a unix socket.
 
 # Request Lifecycle
 
