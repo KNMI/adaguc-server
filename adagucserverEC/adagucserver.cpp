@@ -35,10 +35,6 @@
 #include "Types/ProjectionStore.h"
 #include <cdfVariableCache.h>
 #include "fork_server.h"
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <stdio.h>
-#include <signal.h>
 #include <unistd.h>
 
 int processQueryStringRequest() {
@@ -93,8 +89,8 @@ int main(int argc, char **argv, char **envp) {
   setvbuf(stdout, NULL, _IONBF, 0); // turn off buffering
   setvbuf(stderr, NULL, _IONBF, 0); // turn off buffering
 
-  const char *ADAGUC_FORK_SOCKET_PATH = getenv("ADAGUC_FORK_SOCKET_PATH");
-  if (ADAGUC_FORK_SOCKET_PATH != NULL) {
+  const char *fork_enable = getenv("ADAGUC_FORK_ENABLE");
+  if (fork_enable && std::string(fork_enable) == "TRUE") {
     return run_as_fork_service(run_adaguc_once, argc, argv, envp);
   } else {
     // normal flow without unix socket server/fork

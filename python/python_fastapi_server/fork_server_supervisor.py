@@ -6,15 +6,14 @@ import signal
 
 from configure_logging import configure_logging
 from adaguc.runAdaguc import runAdaguc
+from adaguc.fork_settings import ADAGUC_FORK_SOCKET_PATH
 
 configure_logging(logging)
-
 logger = logging.getLogger(__name__)
 
 
 class ForkServerSupervisor:
-    def __init__(self, socket_path: str, binary_path: str, interval: int = 5):
-        self.socket_path = socket_path
+    def __init__(self, binary_path: str, interval: int = 5):
         self.binary_path = binary_path
         self.interval = interval
         self.process = None
@@ -42,7 +41,7 @@ class ForkServerSupervisor:
         try:
             with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
                 s.settimeout(timeout)
-                s.connect(self.socket_path)
+                s.connect(ADAGUC_FORK_SOCKET_PATH)
                 s.sendall(b"PING\n")
                 data = s.recv(1024)
                 return data.strip() == b"PONG"
