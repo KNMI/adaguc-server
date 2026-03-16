@@ -37,7 +37,7 @@ int CConvertLatLonBnds::convertLatLonBndsData(CDataSource *dataSource, int mode)
   size_t nrDataObjects = dataSource->getNumDataObjects();
   if (nrDataObjects <= 0) return 1;
 
-  std::vector<CDataSource::DataObject *> dataObjects(nrDataObjects, nullptr);
+  std::vector<DataObject *> dataObjects(nrDataObjects, nullptr);
   for (size_t d = 0; d < nrDataObjects; d++) {
     dataObjects[d] = dataSource->getDataObject(d);
   }
@@ -106,7 +106,7 @@ int CConvertLatLonBnds::convertLatLonBndsData(CDataSource *dataSource, int mode)
 #ifdef CConvertLatLonBnds_DEBUG
       CDBDebug("Setting statistics: min/max : %f %f", minMax.min, minMax.max);
 #endif
-      dataSource->statistics = new CDataSource::Statistics();
+      dataSource->statistics = new Statistics();
       dataSource->statistics->setMaximum(minMax.max);
       dataSource->statistics->setMinimum(minMax.min);
     }

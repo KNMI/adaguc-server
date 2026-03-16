@@ -33,49 +33,50 @@
 #include "COGCDims.h"
 #include "Types/GeoParameters.h"
 #include "CServerParams.h"
+#include "utils/minMax.h"
+#include "utils/KeyValuePair.h"
 
 // Forward declaration
 struct CStyleConfiguration;
 
-/**
- * Class which holds min and max values.
- * isSet indicates whether the values have been set or not.
- */
-class MinMax {
-public:
-  MinMax() { isSet = false; }
-  bool isSet;
-  double min, max;
+struct StatusFlag {
+  CT::string meaning;
+  double value;
 };
+class DataObject {
+  CT::string overruledUnits;
 
-/**
- * Returns minmax values for a float data array
- * throws integer if no min max are found
- * @param data The data array in float format
- * @param hasFillValue Is there a nodata value
- * @param fillValue the Nodata value
- * @param numElements The length of the data array
- * @return minmax object
- */
-MinMax getMinMax(float *data, bool hasFillValue, double fillValue, size_t numElements);
+public:
+  DataObject();
+  bool hasStatusFlag, hasNodataValue;
+  double dfNodataValue;
+  bool noFurtherProcessing = false;
+  bool filterFromOutput = false; // When set to true, this dataobject is not returned in the GetFeatureInfo response.
+  std::vector<StatusFlag> statusFlagList;
+  CDF::Variable *cdfVariable; // Not owned!
+  CDFObject *cdfObject;       // Not owned!
 
-/**
- * Returns minmax values for a double data array
- * throws integer if no min max are found
- * @param data The data array in double format
- * @param hasFillValue Is there a nodata value
- * @param fillValue the Nodata value
- * @param numElements The length of the data array
- * @return minmax object
- */
-MinMax getMinMax(double *data, bool hasFillValue, double fillValue, size_t numElements);
+  CT::string variableName;
 
-/**
- * Returns minmax values for a variable
- * @param var The variable to retrieve the min max for.
- * @return minmax object
- */
-MinMax getMinMax(CDF::Variable *var);
+  /**
+   * Returns the standardname of the DataObject based on 1. standard_name attribute, 2. variable name.
+   */
+  CT::string getStandardName();
+  /**
+   * Return the units associated with this dataobject
+   */
+  CT::string getUnits();
+
+  /**
+   * Return the units associated with this dataobject. Note that this is not set in the CDF data model
+   */
+  void setUnits(CT::string units);
+  std::vector<PointDVWithLatLon> points;
+  std::map<int, CFeature> features;
+
+  DataObject *clone();
+  CT::string dataObjectName;
+};
 
 /**
  * This class represents data to be used further in the server. Specific  metadata and data is filled in by CDataReader
@@ -85,10 +86,7 @@ class CDataSource {
 public:
   bool debug = false;
   CT::string headerFilename;
-  struct StatusFlag {
-    CT::string meaning;
-    double value;
-  };
+
   bool dimsAreAutoConfigured = -1;
 
 private:
@@ -101,116 +99,6 @@ private:
 
 public:
   CStyleConfiguration *getStyle();
-
-  class DataObject {
-    CT::string overruledUnits;
-
-  public:
-    DataObject();
-    bool hasStatusFlag, hasNodataValue;
-    double dfNodataValue;
-    bool noFurtherProcessing = false;
-    bool filterFromOutput = false; // When set to true, this dataobject is not returned in the GetFeatureInfo response.
-    std::vector<StatusFlag> statusFlagList;
-    CDF::Variable *cdfVariable; // Not owned!
-    CDFObject *cdfObject;       // Not owned!
-
-    CT::string variableName;
-
-    /**
-     * Returns the standardname of the DataObject based on 1. standard_name attribute, 2. variable name.
-     */
-    CT::string getStandardName();
-    /**
-     * Return the units associated with this dataobject
-     */
-    CT::string getUnits();
-
-    /**
-     * Return the units associated with this dataobject. Note that this is not set in the CDF data model
-     */
-    void setUnits(CT::string units);
-    std::vector<PointDVWithLatLon> points;
-    std::map<int, CFeature> features;
-
-    DataObject *clone();
-    CT::string dataObjectName;
-  };
-
-  class Statistics {
-  public:
-    void calculate(size_t size, void *data, CDFType type, double dfNodataValue, bool hasNodataValue) {
-      if (type == CDF_CHAR) calculate<char>(size, (char *)data, type, dfNodataValue, hasNodataValue);
-      if (type == CDF_BYTE) calculate<char>(size, (char *)data, type, dfNodataValue, hasNodataValue);
-      if (type == CDF_UBYTE) calculate<unsigned char>(size, (unsigned char *)data, type, dfNodataValue, hasNodataValue);
-      if (type == CDF_SHORT) calculate<short>(size, (short *)data, type, dfNodataValue, hasNodataValue);
-      if (type == CDF_USHORT) calculate<unsigned short>(size, (unsigned short *)data, type, dfNodataValue, hasNodataValue);
-      if (type == CDF_INT) calculate<int>(size, (int *)data, type, dfNodataValue, hasNodataValue);
-      if (type == CDF_UINT) calculate<unsigned int>(size, (unsigned int *)data, type, dfNodataValue, hasNodataValue);
-      if (type == CDF_FLOAT) calculate<float>(size, (float *)data, type, dfNodataValue, hasNodataValue);
-      if (type == CDF_DOUBLE) calculate<double>(size, (double *)data, type, dfNodataValue, hasNodataValue);
-    }
-
-    template <class T> void calculate(size_t size, T *data, CDFType type, double dfNodataValue, bool hasNodataValue) {
-      T _min = (T)NAN, _max = (T)NAN;
-      double _sum = 0, _sumsquared = 0;
-      numSamples = 0;
-      T maxInf = (T)INFINITY;
-      T minInf = (T)-INFINITY;
-
-      bool checkInfinity = false;
-      if (type == CDF_FLOAT || type == CDF_DOUBLE) checkInfinity = true;
-      int firstDone = 0;
-
-      for (size_t p = 0; p < size; p++) {
-        T v = data[p];
-        if ((((T)v) != (T)dfNodataValue || (!hasNodataValue)) && v == v) {
-          if ((checkInfinity && v != maxInf && v != minInf) || (!checkInfinity)) {
-            if (firstDone == 0) {
-              _min = v;
-              _max = v;
-              firstDone = 1;
-            } else {
-              if (v < _min) _min = v;
-              if (v > _max) _max = v;
-            }
-            _sum += v;
-            _sumsquared += (v * v);
-            numSamples++;
-          }
-        }
-      }
-      avg = _sum / double(numSamples);
-      stddev = sqrt((numSamples * _sumsquared - _sum * _sum) / (numSamples * (numSamples - 1)));
-      min = (double)_min;
-      max = (double)_max;
-    }
-
-  private:
-    template <class T> void calcMinMax(size_t size, std::vector<DataObject *> *dataObject);
-
-  public:
-    double min, max, avg, stddev;
-    size_t numSamples;
-
-  public:
-    Statistics() {
-      min = 0;
-      max = 0;
-      avg = 0;
-      stddev = 0;
-      numSamples = 0;
-    }
-    double getMinimum();
-    double getMaximum();
-    double getStdDev();
-    double getAverage();
-    void setMinimum(double min);
-    void setMaximum(double max);
-    size_t getNumSamples() { return numSamples; };
-    int calculate(CDataSource *dataSource);
-    void setMinMax(MinMax minMax);
-  };
 
   class TimeStep {
   public:
@@ -249,19 +137,8 @@ public:
   bool dataSourceOwnsDataObject = false;
 
   // TODO KVP and metaDataItems can be moved out to GDAL datawriter
-  class KVP {
-  public:
-    KVP(const char *varname, const char *attrname, const char *value) {
-      this->varname = varname;
-      this->attrname = attrname;
-      this->value = value;
-    }
-    CT::string varname;
-    CT::string attrname;
-    CT::string value;
-  };
 
-  std::vector<KVP> metaDataItems;
+  std::vector<KeyValuePair> metaDataItems;
 
   // Configured?
   bool isConfigured = false;
@@ -317,9 +194,11 @@ public:
   CDataSource();
   CDataSource(CServerParams *srvParams, CServerConfig::XMLE_Layer *cfgLayer, int layerIndex = -1);
   ~CDataSource();
-  static void readStatusFlags(CDF::Variable *var, std::vector<CDataSource::StatusFlag> &statusFlagList);
-  static std::string getFlagMeaning(std::vector<CDataSource::StatusFlag> &statusFlagList, double value);
-  static std::string getFlagMeaningHumanReadable(std::vector<CDataSource::StatusFlag> &statusFlagList, double value);
+
+  // TODO
+  static void readStatusFlags(CDF::Variable *var, std::vector<StatusFlag> &statusFlagList);
+  static std::string getFlagMeaning(std::vector<StatusFlag> &statusFlagList, double value);
+  static std::string getFlagMeaningHumanReadable(std::vector<StatusFlag> &statusFlagList, double value);
 
   int setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Layer *_cfgLayer, int layerIndex);
   void addStep(const char *fileName);
@@ -354,13 +233,7 @@ public:
   int attachCDFObject(CDFObject *cdfObject, bool dataSourceOwnsDataObject);
   void detachCDFObject();
   CDataSource *clone();
-
-  /**
-   * IMPORTANT
-   */
   const std::vector<CStyleConfiguration> &getStyleListForDataSource();
-
-  static void calculateScaleAndOffsetFromMinMax(float &scale, float &offset, float min, float max, float log);
 
   /**
    * Sets the style by name, can be a character string.

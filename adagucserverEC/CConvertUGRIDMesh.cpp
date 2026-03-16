@@ -287,7 +287,7 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
   }
   CDBDebug("THIS IS UGRID MESH DATA");
   size_t nrDataObjects = dataSource->getNumDataObjects();
-  std::vector<CDataSource::DataObject *> dataObjects(nrDataObjects, nullptr);
+  std::vector<DataObject *> dataObjects(nrDataObjects, nullptr);
   for (size_t d = 0; d < nrDataObjects; d++) {
     dataObjects[d] = dataSource->getDataObject(d);
   }

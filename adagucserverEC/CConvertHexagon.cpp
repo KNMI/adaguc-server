@@ -433,7 +433,7 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
 #endif
 
   size_t nrDataObjects = dataSource->getNumDataObjects();
-  std::vector<CDataSource::DataObject *> dataObjects(nrDataObjects, nullptr);
+  std::vector<DataObject *> dataObjects(nrDataObjects, nullptr);
   for (size_t d = 0; d < nrDataObjects; d++) {
     dataObjects[d] = dataSource->getDataObject(d);
   }
@@ -535,7 +535,7 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
 #ifdef CCONVERTHEXAGON_DEBUG
       CDBDebug("Setting statistics: min/max : %f %f", min, max);
 #endif
-      dataSource->statistics = new CDataSource::Statistics();
+      dataSource->statistics = new Statistics();
       dataSource->statistics->setMaximum(max);
       dataSource->statistics->setMinimum(min);
     }
@@ -655,7 +655,7 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
 
     bool drawBilinear = false;
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-    if (styleConfiguration->styleCompositionName.indexOf("bilinear") >= 0) {
+    if (CT::indexOf(styleConfiguration->styleCompositionName, "bilinear") >= 0) {
 
       // drawBilinear=true;
     }

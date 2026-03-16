@@ -33,15 +33,15 @@
 bool debugDataSource = false;
 bool configWarningSet = false;
 
-CDataSource::DataObject::DataObject() {
+DataObject::DataObject() {
   hasStatusFlag = false;
   cdfVariable = NULL;
   cdfObject = NULL;
   std::vector<f8point> points;
 }
 
-CDataSource::DataObject *CDataSource::DataObject::clone() {
-  CDataSource::DataObject *nd = new CDataSource::DataObject();
+DataObject *DataObject::clone() {
+  DataObject *nd = new DataObject();
   nd->hasStatusFlag = hasStatusFlag;
   nd->hasNodataValue = hasNodataValue;
   nd->dfNodataValue = dfNodataValue;
@@ -52,7 +52,7 @@ CDataSource::DataObject *CDataSource::DataObject::clone() {
   return nd;
 }
 
-CT::string CDataSource::DataObject::getUnits() {
+CT::string DataObject::getUnits() {
   if (overruledUnits.empty() && cdfVariable != NULL) {
     try {
       return cdfVariable->getAttributeThrows("units")->toString();
@@ -62,7 +62,7 @@ CT::string CDataSource::DataObject::getUnits() {
   return overruledUnits;
 }
 
-CT::string CDataSource::DataObject::getStandardName() {
+CT::string DataObject::getStandardName() {
   CT::string standard_name = variableName;
   CDF::Attribute *standardNameAttr = cdfVariable->getAttributeNE("standard_name");
   if (standardNameAttr != nullptr) {
@@ -71,211 +71,7 @@ CT::string CDataSource::DataObject::getStandardName() {
   return standard_name;
 }
 
-void CDataSource::DataObject::setUnits(CT::string units) { overruledUnits = units; }
-
-double CDataSource::Statistics::getMinimum() { return min; }
-double CDataSource::Statistics::getMaximum() { return max; }
-
-double CDataSource::Statistics::getStdDev() { return stddev; }
-
-double CDataSource::Statistics::getAverage() { return avg; }
-
-void CDataSource::Statistics::setMinimum(double min) { this->min = min; }
-void CDataSource::Statistics::setMaximum(double max) { this->max = max; }
-
-void CDataSource::Statistics::setMinMax(MinMax minMax) {
-  this->min = minMax.min;
-  this->max = minMax.max;
-}
-
-MinMax getMinMax(double *data, bool hasFillValue, double fillValue, size_t numElements) {
-  MinMax minMax;
-  bool firstSet = false;
-  for (size_t j = 0; j < numElements; j++) {
-    double v = data[j];
-    if (v == v) {
-      if ((v != fillValue) || (!hasFillValue)) {
-        if (firstSet == false) {
-          firstSet = true;
-          minMax.min = v;
-          minMax.max = v;
-          minMax.isSet = true;
-        }
-        if (v < minMax.min) minMax.min = v;
-        if (v > minMax.max) minMax.max = v;
-      }
-    }
-  }
-  if (minMax.isSet == false) {
-    throw __LINE__;
-  }
-  return minMax;
-}
-
-MinMax getMinMax(float *data, bool hasFillValue, double fillValue, size_t numElements) {
-  MinMax minMax;
-  bool firstSet = false;
-  for (size_t j = 0; j < numElements; j++) {
-    float v = data[j];
-    if (v == v) {
-      if ((v != fillValue) || (!hasFillValue)) {
-        if (firstSet == false) {
-          firstSet = true;
-          minMax.min = v;
-          minMax.max = v;
-          minMax.isSet = true;
-        }
-        if (v < minMax.min) minMax.min = v;
-        if (v > minMax.max) minMax.max = v;
-      }
-    }
-  }
-  if (minMax.isSet == false) {
-    throw __LINE__ + 100;
-  }
-  return minMax;
-}
-
-MinMax getMinMax(CDF::Variable *var) {
-  MinMax minMax;
-  if (var != NULL) {
-    if (var->getType() == CDF_FLOAT) {
-
-      float *data = (float *)var->data;
-
-      float scaleFactor = 1, addOffset = 0, fillValue = 0;
-      bool hasFillValue = false;
-
-      try {
-        var->getAttributeThrows("scale_factor")->getData(&scaleFactor, 1);
-      } catch (int e) {
-      }
-      try {
-        var->getAttributeThrows("add_offset")->getData(&addOffset, 1);
-      } catch (int e) {
-      }
-      try {
-        var->getAttributeThrows("_FillValue")->getData(&fillValue, 1);
-        hasFillValue = true;
-      } catch (int e) {
-      }
-
-      size_t lsize = var->getSize();
-
-      // Apply scale and offset
-      if (scaleFactor != 1 || addOffset != 0) {
-        for (size_t j = 0; j < lsize; j++) {
-          data[j] = data[j] * scaleFactor + addOffset;
-        }
-        fillValue = fillValue * scaleFactor + addOffset;
-      }
-
-      minMax = getMinMax(data, hasFillValue, fillValue, lsize);
-    } else if (var->getType() == CDF_DOUBLE) {
-
-      double *data = (double *)var->data;
-
-      double scaleFactor = 1, addOffset = 0, fillValue = 0;
-      bool hasFillValue = false;
-
-      try {
-        var->getAttributeThrows("scale_factor")->getData(&scaleFactor, 1);
-      } catch (int e) {
-      }
-      try {
-        var->getAttributeThrows("add_offset")->getData(&addOffset, 1);
-      } catch (int e) {
-      }
-      try {
-        var->getAttributeThrows("_FillValue")->getData(&fillValue, 1);
-        hasFillValue = true;
-      } catch (int e) {
-      }
-
-      size_t lsize = var->getSize();
-
-      // Apply scale and offset
-      if (scaleFactor != 1 || addOffset != 0) {
-        for (size_t j = 0; j < lsize; j++) {
-          data[j] = data[j] * scaleFactor + addOffset;
-        }
-        fillValue = fillValue * scaleFactor + addOffset;
-      }
-
-      minMax = getMinMax(data, hasFillValue, fillValue, lsize);
-    }
-
-  } else {
-    throw __LINE__;
-  }
-  return minMax;
-}
-
-int CDataSource::Statistics::calculate(CDataSource *dataSource) {
-  // Get Min and Max
-  // CDBDebug("calculate stat ");
-  CDataSource::DataObject *dataObject = dataSource->getFirstAvailableDataObject();
-  if (dataObject->cdfVariable->data != NULL) {
-    size_t size = dataObject->cdfVariable->getSize(); // dataSource->dWidth*dataSource->dHeight;
-
-    if (dataObject->cdfVariable->getType() == CDF_CHAR) calcMinMax<char>(size, dataSource->getDataObjectsVector());
-    if (dataObject->cdfVariable->getType() == CDF_BYTE) calcMinMax<char>(size, dataSource->getDataObjectsVector());
-    if (dataObject->cdfVariable->getType() == CDF_UBYTE) calcMinMax<unsigned char>(size, dataSource->getDataObjectsVector());
-    if (dataObject->cdfVariable->getType() == CDF_SHORT) calcMinMax<short>(size, dataSource->getDataObjectsVector());
-    if (dataObject->cdfVariable->getType() == CDF_USHORT) calcMinMax<unsigned short>(size, dataSource->getDataObjectsVector());
-    if (dataObject->cdfVariable->getType() == CDF_INT) calcMinMax<int>(size, dataSource->getDataObjectsVector());
-    if (dataObject->cdfVariable->getType() == CDF_UINT) calcMinMax<unsigned int>(size, dataSource->getDataObjectsVector());
-    if (dataObject->cdfVariable->getType() == CDF_FLOAT) calcMinMax<float>(size, dataSource->getDataObjectsVector());
-    if (dataObject->cdfVariable->getType() == CDF_DOUBLE) calcMinMax<double>(size, dataSource->getDataObjectsVector());
-  }
-  return 0;
-}
-
-template <class T> void CDataSource::Statistics::calcMinMax(size_t size, std::vector<DataObject *> *dataObject) {
-#ifdef MEASURETIME
-  StopWatch_Stop("Start min/max calculation");
-#endif
-  if (dataObject->size() == 1) {
-    T *data = (T *)(*dataObject)[0]->cdfVariable->data;
-    CDFType type = (*dataObject)[0]->cdfVariable->getType();
-    double dfNodataValue = (*dataObject)[0]->dfNodataValue;
-    bool hasNodataValue = (*dataObject)[0]->hasNodataValue;
-    calculate(size, data, type, dfNodataValue, hasNodataValue);
-  }
-
-  // Wind vector min max calculation
-  if (dataObject->size() == 2) {
-    T *dataU = (T *)(*dataObject)[0]->cdfVariable->data;
-    T *dataV = (T *)(*dataObject)[1]->cdfVariable->data;
-    T _min = (T)0.0f, _max = (T)0.0f;
-    int firstDone = 0;
-    T s = 0;
-    for (size_t p = 0; p < size; p++) {
-
-      T u = dataU[p];
-      T v = dataV[p];
-
-      if (((((T)v) != (T)(*dataObject)[0]->dfNodataValue || (!(*dataObject)[0]->hasNodataValue)) && v == v) &&
-          ((((T)u) != (T)(*dataObject)[0]->dfNodataValue || (!(*dataObject)[0]->hasNodataValue)) && u == u)) {
-        s = (T)hypot(u, v);
-        if (firstDone == 0) {
-          _min = s;
-          _max = s;
-          firstDone = 1;
-        } else {
-
-          if (s < _min) _min = s;
-          if (s > _max) _max = s;
-        }
-      }
-    }
-    min = (double)_min;
-    max = (double)_max;
-  }
-#ifdef MEASURETIME
-  StopWatch_Stop("Finished min/max calculation");
-#endif
-}
+void DataObject::setUnits(CT::string units) { overruledUnits = units; }
 
 CDataSource::CDataSource() {
   stretchMinMax = false;
@@ -440,7 +236,7 @@ CCDFDims *CDataSource::getCDFDims() {
   return &timeSteps[currentAnimationStep]->dims;
 }
 
-void CDataSource::readStatusFlags(CDF::Variable *var, std::vector<CDataSource::StatusFlag> &statusFlagList) {
+void CDataSource::readStatusFlags(CDF::Variable *var, std::vector<StatusFlag> &statusFlagList) {
   statusFlagList.clear();
   if (var != NULL) {
     CDF::Attribute *attr_flag_meanings = var->getAttributeNE("flag_meanings");
@@ -478,7 +274,7 @@ void CDataSource::readStatusFlags(CDF::Variable *var, std::vector<CDataSource::S
   }
 }
 
-std::string CDataSource::getFlagMeaning(std::vector<CDataSource::StatusFlag> &statusFlagList, double value) {
+std::string CDataSource::getFlagMeaning(std::vector<StatusFlag> &statusFlagList, double value) {
   for (size_t j = 0; j < statusFlagList.size(); j++) {
     if ((statusFlagList)[j].value == value) {
       return (statusFlagList)[j].meaning.c_str();
@@ -487,7 +283,7 @@ std::string CDataSource::getFlagMeaning(std::vector<CDataSource::StatusFlag> &st
   return "no_flag_meaning";
 }
 
-std::string CDataSource::getFlagMeaningHumanReadable(std::vector<CDataSource::StatusFlag> &statusFlagList, double value) {
+std::string CDataSource::getFlagMeaningHumanReadable(std::vector<StatusFlag> &statusFlagList, double value) {
   std::string flagMeaning = getFlagMeaning(statusFlagList, value);
   return CT::replace(flagMeaning, "_", " ");
 }
@@ -548,7 +344,7 @@ std::vector<std::string> CDataSource::getRenderMethodListForDataSource(CServerCo
 
   // If still no list of rendermethods is found, use the default list
   if (renderMethodList.length() == 0) {
-    renderMethodList.copy("nearest");
+    renderMethodList = "nearest";
   }
 
   return CT::split(renderMethodList, ",");
@@ -685,8 +481,8 @@ const std::vector<CStyleConfiguration> &CDataSource::getStyleListForDataSource()
 
   if (styleConfigurationList.size() == 0) {
     CStyleConfiguration styleConfig;
-    styleConfig.styleTitle.copy("default");
-    styleConfig.styleAbstract.copy("default");
+    styleConfig.styleTitle = "default";
+    styleConfig.styleAbstract = "default";
     styleConfig.renderMethod = RM_NEAREST;
     styleConfig.styleCompositionName = "default";
     styleConfigurationList.push_back(styleConfig);
@@ -717,17 +513,6 @@ std::vector<std::string> CDataSource::getStyleNames(std::vector<CServerConfig::X
   return stringList;
 }
 
-void CDataSource::calculateScaleAndOffsetFromMinMax(float &scale, float &offset, float min, float max, float log) {
-  if (log != 0.0f) {
-    // CDBDebug("LOG = %f",log);
-    min = log10(min) / log10(log);
-    max = log10(max) / log10(log);
-  }
-
-  scale = 240 / (max - min);
-  offset = min * (-scale);
-}
-
 CStyleConfiguration *CDataSource::getStyle() {
   if (currentStyleSet == true) {
     return &currentStyle;
@@ -749,7 +534,7 @@ CStyleConfiguration *CDataSource::getStyle() {
     if (layerIndex > ((int)layerstyles.size()) - 1) layerIndex = layerstyles.size() - 1;
     styleName = layerstyles[layerIndex].c_str();
     if (styleName.length() == 0) {
-      styleName.copy("default");
+      styleName = "default";
     }
   }
 
@@ -921,10 +706,10 @@ double CDataSource::getContourScaling() {
   return 1;
 }
 
-CDataSource::DataObject *CDataSource::getDataObjectByName(std::string name) { return getDataObjectByName(name.c_str()); }
-CDataSource::DataObject *CDataSource::getDataObjectByName(const char *name) {
+DataObject *CDataSource::getDataObjectByName(std::string name) { return getDataObjectByName(name.c_str()); }
+DataObject *CDataSource::getDataObjectByName(const char *name) {
   for (auto it = dataObjects.begin(); it != dataObjects.end(); ++it) {
-    CDataSource::DataObject *dataObject = *it;
+    DataObject *dataObject = *it;
 
     if (dataObject->dataObjectName.equals(name)) {
       return dataObject;
@@ -941,7 +726,7 @@ CDataSource::DataObject *CDataSource::getDataObjectByName(const char *name) {
   return nullptr;
 }
 
-CDataSource::DataObject *CDataSource::getFirstAvailableDataObject() {
+DataObject *CDataSource::getFirstAvailableDataObject() {
   for (size_t o = 0; o < this->getNumDataObjects(); o++) {
     if (this->getDataObject(o)->filterFromOutput) {
       continue;
@@ -952,7 +737,7 @@ CDataSource::DataObject *CDataSource::getFirstAvailableDataObject() {
   return nullptr;
 }
 
-CDataSource::DataObject *CDataSource::getDataObject(int j) {
+DataObject *CDataSource::getDataObject(int j) {
 
   if (int(dataObjects.size()) <= j) {
     CDBError("No Data object witn nr %d (total %d) for animation step %lu (total steps %lu)", j, currentAnimationStep, dataObjects.size(), timeSteps.size());

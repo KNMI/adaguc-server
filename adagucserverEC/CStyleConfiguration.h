@@ -26,8 +26,8 @@
 class CDataSource;
 
 typedef unsigned int RenderMethod;
-CT::string getRenderMethodAsString(RenderMethod renderMethod);
-RenderMethod getRenderMethodFromString(CT::string renderMethodString);
+std::string getRenderMethodAsString(RenderMethod renderMethod);
+RenderMethod getRenderMethodFromString(std::string renderMethodString);
 struct CStyleConfiguration {
   bool minMaxSet = false;
   bool hasLegendValueRange = false;
@@ -49,11 +49,11 @@ struct CStyleConfiguration {
   double minValue = 0;
   double maxValue = 0;
   RenderMethod renderMethod = RM_GENERIC;
-  CT::string legendName;
-  CT::string styleCompositionName;
-  CT::string styleName;
-  CT::string styleTitle;
-  CT::string styleAbstract;
+  std::string legendName;
+  std::string styleCompositionName;
+  std::string styleName;
+  std::string styleTitle;
+  std::string styleAbstract;
   std::vector<CServerConfig::XMLE_ContourLine *> contourLines;
   std::vector<CServerConfig::XMLE_RenderSettings *> renderSettings;
   std::vector<CServerConfig::XMLE_SmoothingFilter *> smoothingFilterVector;
@@ -72,13 +72,16 @@ struct CStyleConfiguration {
   /**
    * Outputs styleConfiguration as string
    */
-  CT::string dump();
+  std::string dump();
 
   /**
    * Completes in the styleConfig object based on datasource which contains the stylename, legendname and rendermethod
    */
   int makeStyleConfig(CDataSource *dataSource);
 
+  /**
+   * Sets the legend scale and offset based on min/max
+   */
   void stretchLegend(double min, double max);
 };
 #endif

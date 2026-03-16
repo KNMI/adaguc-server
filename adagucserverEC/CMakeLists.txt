@@ -100,6 +100,8 @@ add_library(
     utils/processCMDArgs.cpp
     utils/lintDataset.h
     utils/lintDataset.cpp
+    utils/minMax.h
+    utils/minMax.cpp
     utils/parseQueryString.h
     utils/parseQueryString.cpp
     utils/getFeatureInfoVirtualForSolarTerminator.h

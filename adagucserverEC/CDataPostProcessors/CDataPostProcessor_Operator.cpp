@@ -33,7 +33,7 @@ int CDPPOperator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
     if (dataSource->getDataObject(0)->cdfVariable->name.equals(newDataObjectName.c_str())) return 0;
     CDF::Variable *varToClone = dataSource->getDataObject(0)->cdfVariable;
 
-    CDataSource::DataObject *newDataObject = new CDataSource::DataObject();
+    DataObject *newDataObject = new DataObject();
 
     newDataObject->variableName.copy(newDataObjectName.c_str());
 
@@ -76,7 +76,7 @@ int CDPPOperator::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
 
     float *result = (float *)dataSource->getDataObject(0)->cdfVariable->data;
 
-    CDataSource::DataObject *dataObjectA, *dataObjectB;
+    DataObject *dataObjectA, *dataObjectB;
 
     dataObjectA = dataSource->getDataObjectByName(proc->attr.a);
     if (dataObjectA == nullptr) {

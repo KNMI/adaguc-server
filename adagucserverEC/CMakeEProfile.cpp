@@ -251,7 +251,7 @@ public:
     CDBDebug("dataSource->dataObjects.size() = [%d]", dataSource->dataObjects.size());
 #endif
     for (size_t dataObjectNr = 0; dataObjectNr < dataSource->dataObjects.size(); dataObjectNr++) {
-      CDataSource::DataObject *dataObject = dataSource->getDataObject(dataObjectNr);
+      DataObject *dataObject = dataSource->getDataObject(dataObjectNr);
       CT::string variableName = dataObject->cdfVariable->name;
       variableName.concat("_backup");
       // Show all requests

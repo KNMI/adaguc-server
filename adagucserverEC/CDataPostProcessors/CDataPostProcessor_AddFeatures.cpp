@@ -27,7 +27,7 @@ int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource
     CDBDebug("CDATAPOSTPROCESSOR_RUNBEFOREREADING::Adding features from GEOJson");
     CDF::Variable *varToClone = dataSource->getDataObject(0)->cdfVariable;
 
-    CDataSource::DataObject *newDataObject = new CDataSource::DataObject();
+    DataObject *newDataObject = new DataObject();
 
     newDataObject->variableName.copy("indexes");
     dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin() + 1, newDataObject);

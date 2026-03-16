@@ -117,7 +117,7 @@ int CCreateHistogram::addData(std::vector<CDataSource *> &dataSources) {
     CDBDebug("Addata finished, data warped");
 
     if (dataSource->statistics == NULL) {
-      dataSource->statistics = new CDataSource::Statistics();
+      dataSource->statistics = new Statistics();
       dataSource->statistics->calculate(dataSource);
       dataSource->statistics->calculate(dataSource->srvParams->geoParams.width * dataSource->srvParams->geoParams.height, (float *)warpedData, CDF_FLOAT, dataSource->getDataObject(0)->dfNodataValue,
                                         dataSource->getDataObject(0)->hasNodataValue);

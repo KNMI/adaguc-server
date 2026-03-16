@@ -623,7 +623,7 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
 
       /* Check if there is any data in the found grid */
       if (dataSource->statistics == NULL) {
-        dataSource->statistics = new CDataSource::Statistics();
+        dataSource->statistics = new Statistics();
         dataSource->statistics->calculate(dataSource);
       }
       if (dataSource->statistics != NULL) {

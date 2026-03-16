@@ -136,7 +136,7 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
   }
 
   size_t nrDataObjects = dataSource->getNumDataObjects();
-  std::vector<CDataSource::DataObject *> dataObjects(nrDataObjects, nullptr);
+  std::vector<DataObject *> dataObjects(nrDataObjects, nullptr);
   for (size_t d = 0; d < nrDataObjects; d++) {
     dataObjects[d] = dataSource->getDataObject(d);
   }
@@ -210,7 +210,7 @@ int CConvertADAGUCVector::convertADAGUCVectorData(CDataSource *dataSource, int m
 #ifdef CCONVERTADAGUCVECTOR_DEBUG
       CDBDebug("Setting statistics: min/max : %f %f", min, max);
 #endif
-      dataSource->statistics = new CDataSource::Statistics();
+      dataSource->statistics = new Statistics();
       dataSource->statistics->setMaximum(max);
       dataSource->statistics->setMinimum(min);
     }

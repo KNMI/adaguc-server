@@ -8,7 +8,7 @@
 #define MAX_SHADE_CLASS_BLOCK_SIZE 12
 
 // Aux function to plot numberic labels, optionally as two columns (representing an interval)
-void plotNumericLabels(CDrawImage *legendImage, double scaling, const std::string& fontLocation, float fontSize, int angle, const CServerConfig::XMLE_ShadeInterval& s, int cbW, int pLeft, int textY,
+void plotNumericLabels(CDrawImage *legendImage, double scaling, const std::string &fontLocation, float fontSize, int angle, const CServerConfig::XMLE_ShadeInterval &s, int cbW, int pLeft, int textY,
                        const std::vector<CT::string> &minColumn, const std::vector<CT::string> &maxColumn, int maxTextWidth) {
 
   // With a monospaced font, this will be the spacing for every character, numeric or not
@@ -91,7 +91,7 @@ std::tuple<int, int> calculateShadedClassLegendClipping(int minValue, int maxVal
   int minInterval = 0;
   int maxInterval = styleConfiguration->shadeIntervals.size();
   for (size_t j = 0; j < styleConfiguration->shadeIntervals.size(); j++) {
-    const auto& s = styleConfiguration->shadeIntervals[j];
+    const auto &s = styleConfiguration->shadeIntervals[j];
     if (!s.attr.min.empty() && !s.attr.max.empty()) {
       float intervalMinf = parseFloat(s.attr.min.c_str());
       float intervalMaxf = parseFloat(s.attr.max.c_str());
@@ -150,7 +150,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
   }
   if (estimateMinMax) {
     if (dataSource->statistics == NULL) {
-      dataSource->statistics = new CDataSource::Statistics();
+      dataSource->statistics = new Statistics();
       dataSource->statistics->calculate(dataSource);
     }
     minValue = (float)dataSource->statistics->getMinimum();
@@ -248,7 +248,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
     int maxInterval = styleConfiguration->shadeIntervals.size();
     int angle = 0; // Text angle (in radians)
 
-    for (auto renderSetting : styleConfiguration->renderSettings) {
+    for (auto renderSetting: styleConfiguration->renderSettings) {
       if (renderSetting->attr.cliplegend.equals("true")) {
         std::tie(minInterval, maxInterval) = calculateShadedClassLegendClipping(minValue, maxValue, styleConfiguration);
       }
@@ -277,7 +277,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
       // For right-alignment of labels
       for (size_t j = 0; j < drawIntervals; j++) {
         size_t realj = minInterval + j;
-        const auto& s = (styleConfiguration->shadeIntervals)[realj];
+        const auto &s = (styleConfiguration->shadeIntervals)[realj];
         if (!s.attr.min.empty() && !s.attr.max.empty()) {
           if ((int)std::abs(parseFloat(s.attr.min.c_str())) % 5 != 0) continue;
           int tw = legendImage->getTextWidth(s.attr.min.c_str(), fontLocation, fontSize, angle);
@@ -287,7 +287,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
 
       for (size_t j = 0; j < drawIntervals; j++) {
         size_t realj = minInterval + j;
-        const auto& s = (styleConfiguration->shadeIntervals)[realj];
+        const auto &s = (styleConfiguration->shadeIntervals)[realj];
         if (s.attr.min.empty() || s.attr.max.empty()) continue;
 
         int cY1 = (int)std::lround(cbH - (j * blockHeight));
@@ -302,8 +302,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
 
         if (yBottom <= yTop) continue;
 
-        CColor color =
-            s.attr.fillcolor.empty() ? legendImage->getColorForIndex(CImageDataWriter::getColorIndexForValue(dataSource, parseFloat(s.attr.min.c_str()))) : CColor(s.attr.fillcolor.c_str());
+        CColor color = s.attr.fillcolor.empty() ? legendImage->getColorForIndex(CImageDataWriter::getColorIndexForValue(dataSource, parseFloat(s.attr.min.c_str()))) : CColor(s.attr.fillcolor.c_str());
 
         // This rectangle is borderless, and the resulting classes have no vertical blank space between them
         legendImage->rectangle(4 * scaling + pLeft, yTop + pTop, (int(cbW) + 7) * scaling + pLeft, yBottom + pTop, color, color);
@@ -325,7 +324,7 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
 
       for (size_t j = 0; j < drawIntervals; j++) {
         size_t realj = minInterval + j;
-        const auto& s = (styleConfiguration->shadeIntervals)[realj];
+        const auto &s = (styleConfiguration->shadeIntervals)[realj];
         if (s.attr.min.empty() || s.attr.max.empty()) {
           continue;
         }
