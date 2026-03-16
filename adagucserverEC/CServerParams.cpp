@@ -368,7 +368,7 @@ bool CServerParams::checkTimeFormat(const std::string &timeToCheck) {
   return isValidTime;*/
 }
 
-int CServerParams::parseConfigFile(CT::string &pszConfigFile) {
+int CServerParams::parseConfigFile(CT::string pszConfigFile) {
   // Find variables to substitute
   std::vector<CServerConfig::XMLE_Environment> extraEnvironment;
   CServerParams tempServerParam;

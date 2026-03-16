@@ -545,5 +545,13 @@ namespace CT {
    * Checks if this string represents an int value
    */
   bool isInt(const std::string &input);
+
+  /**
+   * Returns a subsetted string from start till end
+   * @param start Where to subset from
+   * @param end Where to subset to (-1 means till the end of the string). If end is less than start, an empty string is returned.
+   * @return string with the subsetted string
+   */
+  std::string substring(const std::string &input, int start, int end);
 }; /* namespace CT */
 #endif

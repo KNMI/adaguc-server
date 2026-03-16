@@ -104,7 +104,7 @@ void layerTypeLiveUpdatePopulateDataSource(CDataSource *dataSource, CServerParam
       cfgLayer->Variable.push_back(new CServerConfig::XMLE_Variable());
       cfgLayer->Variable[0]->value = "solarterminator";
     }
-    dataSource->setCFGLayer(srvParam, srvParam->configObj->Configuration[0], srvParam->cfg->Layer[0], layerName.c_str(), 0);
+    dataSource->setCFGLayer(srvParam, srvParam->cfg->Layer[0], 0);
   }
   auto *obj = dataSource->getDataObjectsVector()->at(0);
   dataSource->layerName = layerName;

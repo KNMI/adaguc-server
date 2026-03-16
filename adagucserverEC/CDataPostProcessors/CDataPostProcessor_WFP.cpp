@@ -30,7 +30,7 @@ CDataSource *CDPPWFP::getDataSource(CDataSource *dataSource, CT::string baseLaye
       break;
     }
   }
-  tempDataSource->setCFGLayer(dataSource->srvParams, dataSource->srvParams->configObj->Configuration[0], dataSource->srvParams->cfg->Layer[additionalLayerNo], baseLayerName.c_str(), 0);
+  tempDataSource->setCFGLayer(dataSource->srvParams, dataSource->srvParams->cfg->Layer[additionalLayerNo], 0);
   return tempDataSource;
 }
 

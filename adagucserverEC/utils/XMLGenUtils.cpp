@@ -21,8 +21,7 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
   // Create new datasource
   if (metadataLayer->dataSource == NULL) {
     metadataLayer->dataSource = new CDataSource();
-    if (metadataLayer->dataSource->setCFGLayer(metadataLayer->srvParams, metadataLayer->srvParams->configObj->Configuration[0], metadataLayer->layer, metadataLayer->layerMetadata.name.c_str(), -1) !=
-        0) {
+    if (metadataLayer->dataSource->setCFGLayer(metadataLayer->srvParams, metadataLayer->layer, -1) != 0) {
       return 1;
     }
   }
@@ -737,7 +736,7 @@ int getStylesForLayer(MetadataLayer *metadataLayer) {
     }
   }
 
-  std::vector<CStyleConfiguration *> *styleListFromDataSource = metadataLayer->dataSource->getStyleListForDataSource(metadataLayer->dataSource);
+  std::vector<CStyleConfiguration *> *styleListFromDataSource = metadataLayer->dataSource->getStyleListForDataSource();
 
   if (styleListFromDataSource == NULL) return 1;
 

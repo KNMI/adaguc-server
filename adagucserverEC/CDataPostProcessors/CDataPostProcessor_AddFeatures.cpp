@@ -56,7 +56,7 @@ int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource
   }
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
     CDataSource featureDataSource;
-    if (featureDataSource.setCFGLayer(dataSource->srvParams, dataSource->srvParams->configObj->Configuration[0], dataSource->srvParams->cfg->Layer[0], NULL, 0) != 0) {
+    if (featureDataSource.setCFGLayer(dataSource->srvParams, dataSource->srvParams->cfg->Layer[0], 0) != 0) {
       return 1;
     }
     featureDataSource.addStep(proc->attr.a.c_str()); // Set filename

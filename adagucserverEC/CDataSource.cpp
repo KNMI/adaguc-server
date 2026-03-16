@@ -300,7 +300,6 @@ CDataSource::CDataSource() {
 
   queryBBOX = false;
   queryLevel = 0; // -1 Means query all. 0 means query all non tiled versions. Positive number means a tiled version.
-  featureSet = NULL;
 }
 
 CDataSource::~CDataSource() {
@@ -339,13 +338,12 @@ CDataSource::~CDataSource() {
 
   if (featureSet.length() != 0) {
     CConvertGeoJSON::clearFeatureStore(featureSet);
-    featureSet = NULL;
   }
 }
 
-int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Configuration *_cfg, CServerConfig::XMLE_Layer *_cfgLayer, const char *_layerName, int layerIndex) {
+int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Layer *_cfgLayer, int layerIndex) {
   srvParams = _srvParams;
-  cfg = _cfg;
+  cfg = srvParams->cfg;
   cfgLayer = _cfgLayer;
   datasourceIndex = layerIndex;
 
@@ -361,7 +359,7 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Conf
   }
 
   // Set the layername
-  layerName = makeUniqueLayerName(cfgLayer, _layerName);
+  layerName = makeUniqueLayerName(cfgLayer);
 
   layerTitle = cfgLayer->Title.size() > 0 && !cfgLayer->Title[0]->value.empty() ? cfgLayer->Title[0]->value.c_str() : layerName.c_str();
 
@@ -571,7 +569,7 @@ std::vector<CT::string> CDataSource::getRenderMethodListForDataSource(CDataSourc
  * @param dataSource pointer to the datasource to find the stylelist for
  * @return vector with all possible CStyleConfigurations
  */
-std::vector<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(CDataSource *dataSource) {
+std::vector<CStyleConfiguration *> *CDataSource::getStyleListForDataSource() {
 
 #ifdef CDATASOURCE_DEBUG
   CDBDebug("getStyleListForDataSource %s", dataSource->layerName.c_str());
@@ -579,20 +577,20 @@ std::vector<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(CData
 
   std::vector<CStyleConfiguration *> *styleConfigurationList = new std::vector<CStyleConfiguration *>();
 
-  CServerConfig::XMLE_Configuration *serverCFG = dataSource->cfg;
+  CServerConfig::XMLE_Configuration *serverCFG = this->cfg;
 
   std::vector<CT::string> renderMethods;
   std::vector<CT::string> legendList;
 
   // Auto configure styles, if no legends or styles are defined
-  if (dataSource->cfgLayer->Styles.size() == 0 && dataSource->cfgLayer->Legend.size() == 0) {
-    renderMethods = getRenderMethodListForDataSource(dataSource, NULL);
+  if (this->cfgLayer->Styles.size() == 0 && this->cfgLayer->Legend.size() == 0) {
+    renderMethods = getRenderMethodListForDataSource(this, NULL);
     if (renderMethods.size() > 0) {
-      CAutoConfigure::autoConfigureStyles(dataSource);
+      CAutoConfigure::autoConfigureStyles(this);
     }
   }
 
-  std::vector<CT::string> styleNames = getStyleNames(dataSource->cfgLayer->Styles);
+  std::vector<CT::string> styleNames = getStyleNames(this->cfgLayer->Styles);
 
   size_t start = 0;
   if (styleNames.size() > 1) start = 1;
@@ -602,7 +600,7 @@ std::vector<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(CData
 
       // Lookup the style index in the servers configuration
 
-      int dStyleIndex = dataSource->srvParams->getServerStyleIndexByName(styleNames[i]);
+      int dStyleIndex = this->srvParams->getServerStyleIndexByName(styleNames[i]);
 
 #ifdef CDATASOURCE_DEBUG
       CDBDebug("dStyleIndex = %d", dStyleIndex);
@@ -613,11 +611,11 @@ std::vector<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(CData
         CServerConfig::XMLE_Style *style = NULL;
         if (dStyleIndex != -1) style = serverCFG->Style[dStyleIndex];
 
-        renderMethods = getRenderMethodListForDataSource(dataSource, style);
-        legendList = getLegendListForDataSource(dataSource, style);
+        renderMethods = getRenderMethodListForDataSource(this, style);
+        legendList = getLegendListForDataSource(this, style);
 
         if (legendList.size() == 0) {
-          CDBDebug("No legends defined for layer %s, adding legend auto", dataSource->layerName.c_str());
+          CDBDebug("No legends defined for layer %s, adding legend auto", this->layerName.c_str());
           legendList.push_back("rainbow");
         }
 
@@ -629,11 +627,11 @@ std::vector<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(CData
           styleConfig->styleTitle = styleNames[i];
           styleConfig->renderMethod = RM_GENERIC;
           styleConfig->styleIndex = dStyleIndex;
-          styleConfig->legendIndex = dataSource->srvParams->getServerLegendIndexByName(legendList[0]);
+          styleConfig->legendIndex = this->srvParams->getServerLegendIndexByName(legendList[0]);
           if (styleConfig->legendIndex == -1) {
             CDBError("Legend %s not found", legendList[0].c_str());
           }
-          int status = styleConfig->makeStyleConfig(dataSource);
+          int status = styleConfig->makeStyleConfig(this);
           if (status == -1) {
             styleConfig->hasError = true;
           }
@@ -661,7 +659,7 @@ std::vector<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(CData
                 styleConfig->styleTitle = styleName.c_str();
                 styleConfig->renderMethod = getRenderMethodFromString(renderMethods[r].c_str());
                 styleConfig->styleIndex = dStyleIndex;
-                styleConfig->legendIndex = dataSource->srvParams->getServerLegendIndexByName(legendList[l]);
+                styleConfig->legendIndex = this->srvParams->getServerLegendIndexByName(legendList[l]);
                 if (styleConfig->legendIndex == -1) {
                   CDBError("Legend %s not found", legendList[l].c_str());
                 }
@@ -679,7 +677,7 @@ std::vector<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(CData
                     }
                   }
                 }
-                int status = styleConfig->makeStyleConfig(dataSource);
+                int status = styleConfig->makeStyleConfig(this);
                 if (status == -1) {
                   styleConfig->hasError = true;
                 }
@@ -741,7 +739,7 @@ void CDataSource::calculateScaleAndOffsetFromMinMax(float &scale, float &offset,
 CStyleConfiguration *CDataSource::getStyle() {
   if (_currentStyle == NULL) {
     if (_styles == NULL) {
-      _styles = getStyleListForDataSource(this);
+      _styles = getStyleListForDataSource();
     }
     if (_styles->size() == 0) {
       CDBError("There are no styles available");
@@ -803,7 +801,7 @@ CStyleConfiguration *CDataSource::getStyle() {
 
 int CDataSource::setStyle(const char *styleName) {
   if (_styles == NULL) {
-    _styles = getStyleListForDataSource(this);
+    _styles = getStyleListForDataSource();
   }
   if (_styles->size() == 0) {
     CDBError("There are no styles available");
@@ -1072,3 +1070,5 @@ GeoParameters CDataSource::makeGeoParams() {
   geoParams.crs = this->nativeProj4;
   return geoParams;
 }
+
+CDataSource::CDataSource(CServerParams *srvParams, CServerConfig::XMLE_Layer *cfgLayer, int layerIndex) { setCFGLayer(srvParams, cfgLayer, layerIndex); }

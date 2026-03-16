@@ -13,6 +13,7 @@
 #include "CDBFactory.h"
 #include "CGetFileInfo.h"
 #include "UpdateLayerMetadata.h"
+#include "lintDataset.h"
 
 static struct option long_options[] = {{"updatedb", no_argument, 0, 0},
                                        {"config", required_argument, 0, 0},
@@ -33,6 +34,7 @@ static struct option long_options[] = {{"updatedb", no_argument, 0, 0},
                                        {"layername", required_argument, 0, 0},
                                        {"verboseoff", no_argument, 0, 0},
                                        {"autofinddataset", no_argument, 0, 0},
+                                       {"lint", no_argument, 0, 0},
                                        {NULL, 0, NULL, 0}};
 
 int processCMDArgs(int argc, char **argv, char **) {
@@ -55,6 +57,7 @@ int processCMDArgs(int argc, char **argv, char **) {
   CT::string inspireDatasetCSW;
   CT::string datasetPath;
   CT::string layerName;
+  std::string configOption;
 
   while (true) {
     int opt_idx = 0;
@@ -84,11 +87,15 @@ int processCMDArgs(int argc, char **argv, char **) {
       if (strncmp(long_options[opt_idx].name, "updatedb", 8) == 0) {
         scanFlags += CDBFILESCANNER_UPDATEDB;
       }
+      if (strncmp(long_options[opt_idx].name, "lint", 8) == 0) {
+        scanFlags += CDBFILESCANNER_LINTDATASET;
+      }
       if (strncmp(long_options[opt_idx].name, "createtiles", 11) == 0) {
         scanFlags += CDBFILESCANNER_CREATETILES + CDBFILESCANNER_UPDATEDB;
       }
       if (strncmp(long_options[opt_idx].name, "config", 6) == 0) {
         setenv("ADAGUC_CONFIG", optarg, 1);
+        configOption = optarg;
         configSet = 1;
       }
       if (strncmp(long_options[opt_idx].name, "tailpath", 8) == 0) {
@@ -135,6 +142,10 @@ int processCMDArgs(int argc, char **argv, char **) {
 
   int status = -1; /* exit status. Tests should fail if exit status is not set: -1 is never OK. */
 
+  if (((scanFlags & CDBFILESCANNER_LINTDATASET) == CDBFILESCANNER_LINTDATASET) && configSet) {
+    int status = lintDataset(configOption);
+    return status;
+  }
   /* Check if a database update was requested */
   if (((scanFlags & CDBFILESCANNER_UPDATEDB) == CDBFILESCANNER_UPDATEDB) && (configSet == 0)) {
     CDBError("Error: Configuration file is not set: use '--updatedb --config configfile.xml'");
@@ -160,7 +171,7 @@ int processCMDArgs(int argc, char **argv, char **) {
       // Empty string to make for loop work.
       datasetsToScan.insert("");
     }
-    for (auto &dataset : datasetsToScan) {
+    for (auto &dataset: datasetsToScan) {
       if (dataset.length() > 0) {
         CDBDebug("***** Scanning dataset [%s]", dataset.c_str());
       }

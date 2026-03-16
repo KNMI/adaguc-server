@@ -34,6 +34,8 @@
 #include "CTString.h"
 #include "CDebugger.h"
 
+extern bool parseXmlLintTriggered;
+
 #define XMLE_ADDOBJ(variableName)                                                                                                                                                                      \
   {                                                                                                                                                                                                    \
     variableName.push_back(new XMLE_##variableName());                                                                                                                                                 \

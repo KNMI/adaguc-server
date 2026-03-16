@@ -102,7 +102,7 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
   auto tableName = db->getTableNameForPathFilterAndDimension(baseDataSource);
 
   CDataSource *dataSourceToTile = new CDataSource();
-  dataSourceToTile->setCFGLayer(baseDataSource->srvParams, baseDataSource->cfg, baseDataSource->cfgLayer, baseDataSource->getLayerName(), 0);
+  dataSourceToTile->setCFGLayer(baseDataSource->srvParams, baseDataSource->cfgLayer, 0);
 
   CDataReader reader;
   reader.silent = true;

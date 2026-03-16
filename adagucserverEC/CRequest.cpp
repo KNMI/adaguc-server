@@ -54,6 +54,7 @@
 #ifdef ADAGUC_USE_GDAL
 #include "CGDALDataWriter.h"
 #endif
+#include "utils/ConfigurationUtils.h"
 
 int CRequest::CGI = 0;
 
@@ -64,253 +65,6 @@ int CRequest::runRequest() {
   CConvertGeoJSON::clearFeatureStore();
   CDFStore::clear();
   CDBFactory::clear();
-  return status;
-}
-
-void writeLogFile3(const char *msg) {
-  char *logfile = getenv("ADAGUC_LOGFILE");
-  if (logfile != NULL) {
-    FILE *pFile = NULL;
-    pFile = fopen(logfile, "a");
-    if (pFile != NULL) {
-      fputs(msg, pFile);
-      if (strncmp(msg, "[D:", 3) == 0 || strncmp(msg, "[W:", 3) == 0 || strncmp(msg, "[E:", 3) == 0) {
-        time_t myTime = time(NULL);
-        tm *myUsableTime = localtime(&myTime);
-        char szTemp[128];
-        snprintf(szTemp, 127, "%.4d-%.2d-%.2dT%.2d:%.2d:%.2dZ ", myUsableTime->tm_year + 1900, myUsableTime->tm_mon + 1, myUsableTime->tm_mday, myUsableTime->tm_hour, myUsableTime->tm_min,
-                 myUsableTime->tm_sec);
-        fputs(szTemp, pFile);
-      }
-      fclose(pFile);
-    } // else CDBError("Unable to write logfile %s",logfile);
-  }
-}
-
-int CRequest::setConfigFile(const char *pszConfigFile) {
-  if (pszConfigFile == NULL) {
-    CDBError("No config file set");
-    return 1;
-  }
-#ifdef MEASURETIME
-  StopWatch_Stop("Set config file %s", pszConfigFile);
-#endif
-
-  CT::string configFile = pszConfigFile;
-  std::vector<CT::string> configFileList = configFile.split(",");
-
-  // Parse the main configuration file
-  int status = srvParam->parseConfigFile(configFileList[0]);
-
-  if (status == 0 && srvParam->configObj->Configuration.size() == 1) {
-
-    srvParam->configFileName.copy(pszConfigFile);
-    srvParam->cfg = srvParam->configObj->Configuration[0];
-
-    // Include additional config files given as argument
-    if (configFileList.size() > 1) {
-      for (size_t j = 1; j < configFileList.size() - 1; j++) {
-        // CDBDebug("Include '%s'", configFileList[j].c_str());
-        status = srvParam->parseConfigFile(configFileList[j]);
-        if (status != 0) {
-          CDBError("There is an error with include '%s'", configFileList[j].c_str());
-          return 1;
-        }
-      }
-
-      // The last configration file is considered the dataset one, strip path and extension and give it to configurer
-      if (configFileList.size() > 1) {
-        srvParam->datasetLocation.copy(CT::basename(configFileList[configFileList.size() - 1]).c_str());
-        srvParam->datasetLocation.substringSelf(0, srvParam->datasetLocation.lastIndexOf("."));
-        if (srvParam->verbose) {
-          CDBDebug("Dataset name based on passed configfile is [%s]", srvParam->datasetLocation.c_str());
-        }
-
-        status = CAutoResource::configureDataset(srvParam, false);
-        if (status != 0) {
-          CDBError("ConfigureDataset failed for %s", configFileList[1].c_str());
-          return status;
-        }
-      }
-    }
-
-    const char *pszQueryString = getenv("QUERY_STRING");
-    if (pszQueryString != NULL) {
-      CT::string queryString(pszQueryString);
-      queryString.decodeURLSelf();
-      auto parameters = queryString.split("&");
-      for (size_t j = 0; j < parameters.size(); j++) {
-        CT::string value0Cap;
-        CT::string values[2];
-        int equalPos = parameters[j].indexOf("="); // split("=");
-        if (equalPos != -1) {
-          values[0] = parameters[j].substring(0, equalPos);
-          values[1] = parameters[j].c_str() + equalPos + 1;
-        } else {
-          values[0] = parameters[j].c_str();
-          values[1] = "";
-        }
-        value0Cap.copy(&values[0]);
-        value0Cap.toUpperCaseSelf();
-        if (value0Cap.equals("DATASET")) {
-          if (srvParam->datasetLocation.empty()) {
-
-            srvParam->datasetLocation.copy(values[1].c_str());
-            status = CAutoResource::configureDataset(srvParam, false);
-            if (status != 0) {
-              CDBError("CAutoResource::configureDataset failed");
-              return status;
-            }
-          }
-        }
-
-        // Check if parameter name is a SLD parameter AND have file name
-        CSLD csld;
-        if (csld.parameterIsSld(values[0])) {
-#ifdef CREQUEST_DEBUG
-          CDBDebug("Found SLD parameter in query");
-#endif
-
-          // Set server params
-          csld.setServerParams(srvParam);
-
-          // Process the SLD URL
-          if (values[1].empty()) {
-            setStatusCode(HTTP_STATUSCODE_404_NOT_FOUND);
-            return 1;
-          }
-          status = csld.processSLDUrl(values[1]);
-
-          if (status != 0) {
-            CDBError("Processing SLD failed");
-            return status;
-          }
-        }
-      }
-    }
-
-    // Include additional config files given in the include statement of the config file
-    // Last config file is included first
-    for (size_t j = 0; j < srvParam->cfg->Include.size(); j++) {
-      if (srvParam->cfg->Include[j]->attr.location.empty() == false) {
-        int index = (srvParam->cfg->Include.size() - 1) - j;
-#ifdef CREQUEST_DEBUG
-        CDBDebug("Include '%s'", srvParam->cfg->Include[index]->attr.location.c_str());
-#endif
-        status = srvParam->parseConfigFile(srvParam->cfg->Include[index]->attr.location);
-        if (status != 0) {
-          CDBError("There is an error with include '%s'", srvParam->cfg->Include[index]->attr.location.c_str());
-          return 1;
-        }
-      }
-    }
-
-  } else {
-    srvParam->cfg = NULL;
-    CDBError("Invalid XML file %s", pszConfigFile);
-    return 1;
-  }
-
-#ifdef MEASURETIME
-  StopWatch_Stop("Config file parsed");
-#endif
-
-  // Check for mandatory attributes
-  for (size_t j = 0; j < srvParam->cfg->Layer.size(); j++) {
-    if (srvParam->cfg->Layer[j]->attr.type.equals("database")) {
-      if (srvParam->cfg->Layer[j]->Variable.size() == 0) {
-        CDBError("Configuration error at layer %lu: <Variable> not defined", j);
-        return 1;
-      }
-      if (srvParam->cfg->Layer[j]->FilePath.size() == 0) {
-        CDBError("Configuration error at layer %lu: <FilePath> not defined", j);
-        return 1;
-      }
-    }
-  }
-  // Check for autoscan elements
-  for (size_t j = 0; j < srvParam->cfg->Layer.size(); j++) {
-    if (srvParam->cfg->Layer[j]->attr.type.equals("autoscan")) {
-
-      if (srvParam->cfg->Layer[j]->FilePath.size() == 0) {
-        CDBError("Configuration error at layer %lu: <FilePath> not defined", j);
-        return 1;
-      }
-      try {
-        /* Create the list of layers from a directory list */
-        const char *baseDir = srvParam->cfg->Layer[j]->FilePath[0]->value.c_str();
-
-        CDBDebug("autoscan");
-        std::vector<std::string> fileList;
-        try {
-          fileList = CDBFileScanner::searchFileNames(baseDir, srvParam->cfg->Layer[j]->FilePath[0]->attr.filter.c_str(), NULL);
-        } catch (int linenr) {
-          CDBError("Could not find any file in directory '%s'", baseDir);
-          throw(__LINE__);
-        }
-
-        if (fileList.size() == 0) {
-          CDBError("Could not find any file in directory '%s'", baseDir);
-          throw(__LINE__);
-        }
-        size_t nrOfFileErrors = 0;
-        for (size_t j = 0; j < fileList.size(); j++) {
-          try {
-            CT::string baseDirStr = baseDir;
-            CT::string groupName = fileList[j].c_str();
-            groupName.substringSelf(baseDirStr.length(), -1);
-
-            // Open file
-            // CDBDebug("Opening file %s",fileList[j].c_str());
-            CDFObject *cdfObject = CDFObjectStore::getCDFObjectStore()->getCDFObjectHeader(NULL, srvParam, fileList[j].c_str());
-            if (cdfObject == NULL) {
-              CDBError("Unable to read file %s", fileList[j].c_str());
-              throw(__LINE__);
-            }
-
-            // std::vector<CT::string> variables;
-            // List variables
-            for (size_t v = 0; v < cdfObject->variables.size(); v++) {
-              CDF::Variable *var = cdfObject->variables[v];
-              if (var->isDimension == false) {
-                if (var->dimensionlinks.size() >= 2) {
-                  // variables.push_back(new CT::string(var->name.c_str()));
-                  CServerConfig::XMLE_Layer *xmleLayer = new CServerConfig::XMLE_Layer();
-                  CServerConfig::XMLE_Group *xmleGroup = new CServerConfig::XMLE_Group();
-                  CServerConfig::XMLE_Variable *xmleVariable = new CServerConfig::XMLE_Variable();
-                  CServerConfig::XMLE_FilePath *xmleFilePath = new CServerConfig::XMLE_FilePath();
-                  // CServerConfig::XMLE_Cache* xmleCache = new CServerConfig::XMLE_Cache();
-                  // xmleCache->attr.enabled.copy("false");
-                  xmleLayer->attr.type.copy("database");
-                  xmleVariable->value.copy(var->name.c_str());
-                  xmleFilePath->value.copy(fileList[j].c_str());
-                  xmleGroup->attr.value.copy(groupName.c_str());
-                  xmleLayer->Variable.push_back(xmleVariable);
-                  xmleLayer->FilePath.push_back(xmleFilePath);
-                  // xmleLayer->Cache.push_back(xmleCache);
-                  xmleLayer->Group.push_back(xmleGroup);
-                  srvParam->cfg->Layer.push_back(xmleLayer);
-                }
-              }
-            }
-
-          } catch (int e) {
-            nrOfFileErrors++;
-          }
-        }
-        if (nrOfFileErrors != 0) {
-          CDBError("%lu files are not readable", nrOfFileErrors);
-        }
-
-      } catch (int line) {
-        return 1;
-      }
-    }
-  }
-#ifdef MEASURETIME
-  StopWatch_Stop("Config file checked");
-#endif
-
   return status;
 }
 
@@ -2288,7 +2042,7 @@ int CRequest::updatedb(CT::string tailPath, CT::string layerPathToScan, int scan
     }
     CDataSource *dataSource = new CDataSource();
     auto cfgLayer = srvParam->cfg->Layer[layerNo];
-    if (dataSource->setCFGLayer(srvParam, srvParam->configObj->Configuration[0], cfgLayer, NULL, layerNo) != 0) {
+    if (dataSource->setCFGLayer(srvParam, cfgLayer, layerNo) != 0) {
       delete dataSource;
       return 1;
     }
@@ -2434,12 +2188,10 @@ int CRequest::determineTypesForDataSources() {
 }
 
 int CRequest::addDataSources(CServerConfig::XMLE_Layer *cfgLayer, int layerIndex) {
-  CT::string layerName = makeUniqueLayerName(cfgLayer);
+
   CDataSource *dataSource = new CDataSource();
-
   dataSources.push_back(dataSource);
-
-  if (dataSource->setCFGLayer(srvParam, srvParam->configObj->Configuration[0], cfgLayer, layerName.c_str(), layerIndex) != 0) {
+  if (dataSource->setCFGLayer(srvParam, cfgLayer, layerIndex) != 0) {
     return 1;
   }
   if (srvParam->requestType != REQUEST_WMS_GETMAP) {
@@ -2463,13 +2215,9 @@ int CRequest::addDataSources(CServerConfig::XMLE_Layer *cfgLayer, int layerIndex
     size_t additionalLayerNo = 0;
     for (additionalLayerNo = 0; additionalLayerNo < srvParam->cfg->Layer.size(); additionalLayerNo++) {
       CT::string additional = makeUniqueLayerName(srvParam->cfg->Layer[additionalLayerNo]);
-      // CDBDebug("comparing for additionallayer %s==%s", additionalLayerName.c_str(), additional.c_str());
       if (additionalLayerName.equals(additional)) {
-        // CDBDebug("Found additionalLayer [%s]", additional.c_str());
         CDataSource *additionalDataSource = new CDataSource();
-
-        // CDBDebug("setCFGLayer for additionallayer %s", additionalLayerName.c_str());
-        if (additionalDataSource->setCFGLayer(srvParam, srvParam->configObj->Configuration[0], srvParam->cfg->Layer[additionalLayerNo], additionalLayerName.c_str(), layerIndex) != 0) {
+        if (additionalDataSource->setCFGLayer(srvParam, srvParam->cfg->Layer[additionalLayerNo], layerIndex) != 0) {
           delete additionalDataSource;
           return 1;
         }
@@ -2480,11 +2228,6 @@ int CRequest::addDataSources(CServerConfig::XMLE_Layer *cfgLayer, int layerIndex
           if (CAutoConfigure::autoConfigureDimensions(additionalDataSource) != 0) {
             CDBError("additionalDataSource: : setCFGLayer::Unable to configure dimensions automatically");
           }
-          // else {
-          //   for (size_t j = 0; j < additionalDataSource->cfgLayer->Dimension.size(); j++) {
-          //     CDBDebug("additionalDataSource: : Configured dim %d %s", j, additionalDataSource->cfgLayer->Dimension[j]->value.c_str());
-          //   }
-          // }
         }
 
         /* Set the dims based on server parameters */

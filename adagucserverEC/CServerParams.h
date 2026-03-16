@@ -132,7 +132,7 @@ public:
   int WCS_GoNative;
 
   CServerConfig *configObj;
-  CServerConfig::XMLE_Configuration *cfg;
+  CServerConfig::XMLE_Configuration *cfg = nullptr;
   CT::string configFileName;
 
   /**
@@ -280,7 +280,7 @@ public:
    * @param pszConfigFile The config file to parse
    * returns zero on success       *
    */
-  int parseConfigFile(CT::string &pszConfigFile);
+  int parseConfigFile(CT::string pszConfigFile);
 
   /**
    * Returns cache control header

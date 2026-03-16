@@ -330,9 +330,6 @@ CDBStore::Store *CDBAdapterPostgreSQL::getFilesForIndices(CDataSource *dataSourc
 
   // Execute the query
 
-  // writeLogFile3(query.c_str());
-  // writeLogFile3("\n");
-// values_path = DB.query_select(query.c_str(),0);
 #ifdef CDBAdapterPostgreSQL_DEBUG
   CDBDebug("%s", query.c_str());
 #endif
@@ -748,7 +745,7 @@ std::map<CT::string, DimInfo> CDBAdapterPostgreSQL::getTableNamesForPathFilterAn
   CPGSQLDB *DB = getDataBaseConnection();
   if (DB == NULL) {
     CDBError("Unable to connect to DB");
-    exit(1);
+    throw(1);
   }
 
   // Query the lookup table once for the requested dimension(s)

@@ -34,6 +34,7 @@ usage () {
     echo "  [-f] <file to add> [-d] <datasetname>             [Scan a single file for specified dataset]"
     echo "  [-f] <file to add>                                [Scan a single file, dataset is automatically detected]"
     echo "  [-d] <datasetname>                                [Scan a dataset, all layers within dataset will be checked]"
+    echo "  [-c] <datasetname>                                [Check / lint a dataset for issues]"
     echo "  [-d] \"*\"                                          [Scan all available datasets]"
     echo "  [-l]                                              [List all datasets]"
     echo "  [-v]                                              [Verbose logging]"
@@ -46,9 +47,13 @@ usage () {
 }
 
 
-while getopts "d:f:vtkrlmeh" o; do
+while getopts "d:c:f:vtkrlmeh" o; do
     case "${o}" in
         d)
+            ADAGUC_DATASET=${OPTARG}
+            ;;
+        c)
+            ADAGUC_DATASET_LINT=True
             ADAGUC_DATASET=${OPTARG}
             ;;
         f)
@@ -92,13 +97,18 @@ done
 
 if [ $OPTIND -eq 1 ]; then usage; fi
 
+ADAGUC_COMMAND="--updatedb"
 
+# Lint a dataset
+if [ "${ADAGUC_DATASET_LINT}" == "True" ]; then
+  ADAGUC_COMMAND="--lint"
+fi
 
 ### Scan a file for a specified dataset ###
 if [[ -n "${ADAGUC_DATASET}" &&  -n "${ADAGUC_DATAFILE}" ]]; then
   STATUSCODE=0
   echo "Adding file [${ADAGUC_DATAFILE}] to dataset [${ADAGUC_DATASET}]:"
-  command="${ADAGUC_PATH}/bin/adagucserver --updatedb ${NOCLEAN} ${VERBOSE} ${RESCAN} ${RECREATETABLES} --config ${ADAGUC_CONFIG},${ADAGUC_DATASET} --path ${ADAGUC_DATAFILE}"
+  command="${ADAGUC_PATH}/bin/adagucserver ${ADAGUC_COMMAND} ${NOCLEAN} ${VERBOSE} ${RESCAN} ${RECREATETABLES} --config ${ADAGUC_CONFIG},${ADAGUC_DATASET} --path ${ADAGUC_DATAFILE}"
   echo $command
   timeout $TIMEOUTOKILL $command
   OUT=$?
@@ -117,7 +127,7 @@ if [[ -n "${ADAGUC_DATAFILE}" ]]; then
   
   STATUSCODE=0
   echo "Adding file [${ADAGUC_DATAFILE}] to dataset [${alldatasets}]:"
-  command="${ADAGUC_PATH}/bin/adagucserver --updatedb --autofinddataset ${NOCLEAN} ${VERBOSE} ${RESCAN} ${RECREATETABLES} --config ${ADAGUC_CONFIG} --path ${ADAGUC_DATAFILE}"
+  command="${ADAGUC_PATH}/bin/adagucserver ${ADAGUC_COMMAND} --autofinddataset ${NOCLEAN} ${VERBOSE} ${RESCAN} ${RECREATETABLES} --config ${ADAGUC_CONFIG} --path ${ADAGUC_DATAFILE}"
   echo $command
   timeout $TIMEOUTOKILL $command
   OUT=$?
@@ -132,7 +142,7 @@ fi
 if [[ -n "${ADAGUC_DATASET}" ]] && [ "${ADAGUC_DATASET}" != "*" ]; then
   STATUSCODE=0
   echo "Scanning full dataset [${ADAGUC_DATASET}]:"
-  command="${ADAGUC_PATH}/bin/adagucserver --updatedb ${NOCLEAN} ${VERBOSE} ${RESCAN} ${RECREATETABLES} --config ${ADAGUC_CONFIG},${ADAGUC_DATASET}"
+  command="${ADAGUC_PATH}/bin/adagucserver ${ADAGUC_COMMAND} ${NOCLEAN} ${VERBOSE} ${RESCAN} ${RECREATETABLES} --config ${ADAGUC_CONFIG},${ADAGUC_DATASET}"
   echo $command
   $command
   OUT=$?
@@ -149,7 +159,7 @@ if [[ -n "${ADAGUC_DATASET}" ]] && [ "${ADAGUC_DATASET}" == "*" ]; then
   STATUSCODE=0
   for configfile in ${ADAGUC_DATASET_DIR}/*xml ;do
     echo "Scanning full dataset [${configfile}]:"
-    command="${ADAGUC_PATH}/bin/adagucserver --updatedb ${NOCLEAN} ${VERBOSE} ${RESCAN} ${RECREATETABLES} --config ${ADAGUC_CONFIG},${configfile}"
+    command="${ADAGUC_PATH}/bin/adagucserver ${ADAGUC_COMMAND} ${NOCLEAN} ${VERBOSE} ${RESCAN} ${RECREATETABLES} --config ${ADAGUC_CONFIG},${configfile}"
     echo $command
     $command
     OUT=$?

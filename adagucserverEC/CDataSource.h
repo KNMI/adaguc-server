@@ -89,11 +89,11 @@ public:
     CT::string meaning;
     double value;
   };
-  bool dimsAreAutoConfigured;
+  bool dimsAreAutoConfigured = -1;
 
 private:
-  std::vector<CStyleConfiguration *> *_styles;
-  CStyleConfiguration *_currentStyle;
+  std::vector<CStyleConfiguration *> *_styles = nullptr;
+  CStyleConfiguration *_currentStyle = nullptr;
 
 public:
   CStyleConfiguration *getStyle();
@@ -218,9 +218,9 @@ public:
     CT::string fileName; // Filename of the file to load
     CCDFDims dims;       // Dimension index in the corresponding name and file
   };
-  int datasourceIndex;
-  int currentAnimationStep;
-  int threadNr;
+  int datasourceIndex = 0;
+  int currentAnimationStep = 0;
+  int threadNr = -1;
   /**
    * The amount of steps in this datasource
    */
@@ -233,13 +233,13 @@ public:
 
   std::vector<DataObject *> dataObjects;
 
-  bool stretchMinMax;
+  bool stretchMinMax = false;
 
   /**
    * The required dimensions for this datasource
    */
   std::vector<COGCDims> requiredDims;
-  Statistics *statistics; // is NULL when not available
+  Statistics *statistics = nullptr; // is NULL when not available
   // The actual dataset data (can have multiple variables)
 
   // source image parameters
@@ -265,10 +265,10 @@ public:
   std::vector<KVP> metaDataItems;
 
   // Configured?
-  bool isConfigured;
+  bool isConfigured = false;
 
   // Used for vectors and points
-  bool formatConverterActive;
+  bool formatConverterActive = false;
 
   // Some projections require the scaling of the axis with a certain number, like converting km to meter
   bool didAxisScalingConversion = false;
@@ -281,18 +281,18 @@ public:
   int stride2DMap;
 
   // Lon transformation is used to swap datasets from 0-360 degrees to -180 till 180 degrees
-  // Swap data from >180 degrees to domain of -180 till 180 in case of lat lon source data
-  int useLonTransformation;
+  // Swap data from >180 degrees to domain of -180 till 180 in case olonTransformDone lat lon source data
+  int useLonTransformation = -1;
   double origBBOXLeft, origBBOXRight;
-  int dOrigWidth;
-  bool lonTransformDone;
+  int dOrigWidth = -1;
+  bool lonTransformDone = false;
 
   // Sometimes X and Y need to be swapped, this boolean indicates whether it should or not.
-  bool swapXYDimensions;
+  bool swapXYDimensions = false;
 
   // X and Y variables of the 2D field
-  CDF::Variable *varX;
-  CDF::Variable *varY;
+  CDF::Variable *varX = nullptr;
+  CDF::Variable *varY = nullptr;
 
   // Numver of dims
   int dNetCDFNumDims;
@@ -301,27 +301,28 @@ public:
   CT::string layerTitle;
 
   //
-  bool queryBBOX; // True: query on viewport
+  bool queryBBOX = false; // True: query on viewport
   f8box nativeViewPortBBOX;
-  int queryLevel;
+  int queryLevel = 0;
 
   // Current value index of the dim
   // int dOGCDimValues[MAX_DIMS];
 
-  CServerParams *srvParams;
+  CServerParams *srvParams = nullptr;
 
   // Link to the XML configuration
-  CServerConfig::XMLE_Layer *cfgLayer;
-  CServerConfig::XMLE_Configuration *cfg;
+  CServerConfig::XMLE_Layer *cfgLayer = nullptr;
+  CServerConfig::XMLE_Configuration *cfg = nullptr;
 
   CT::string featureSet;
   CDataSource();
+  CDataSource(CServerParams *srvParams, CServerConfig::XMLE_Layer *cfgLayer, int layerIndex = -1);
   ~CDataSource();
   static void readStatusFlags(CDF::Variable *var, std::vector<CDataSource::StatusFlag> &statusFlagList);
   static std::string getFlagMeaning(std::vector<CDataSource::StatusFlag> &statusFlagList, double value);
   static std::string getFlagMeaningHumanReadable(std::vector<CDataSource::StatusFlag> &statusFlagList, double value);
 
-  int setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Configuration *_cfg, CServerConfig::XMLE_Layer *_cfgLayer, const char *_layerName, int layerIndex);
+  int setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Layer *_cfgLayer, int layerIndex);
   void addStep(const char *fileName);
   const char *getFileName();
   void setHeaderFilename(CT::string headerFileName);
@@ -358,7 +359,7 @@ public:
   /**
    * IMPORTANT
    */
-  std::vector<CStyleConfiguration *> *getStyleListForDataSource(CDataSource *dataSource);
+  std::vector<CStyleConfiguration *> *getStyleListForDataSource();
 
   static void calculateScaleAndOffsetFromMinMax(float &scale, float &offset, float min, float max, float log);
   static std::vector<CT::string> getLegendListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style *style);

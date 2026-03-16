@@ -70,7 +70,6 @@ public:
   }
   static int CGI;
   int process_querystring();
-  int setConfigFile(const char *pszConfigFile);
   int process_wms_getcap_request();
   int process_wms_getmap_request();
   int process_wms_getmetadata_request();

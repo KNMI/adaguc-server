@@ -98,6 +98,10 @@ add_library(
     utils/writelogfile.cpp
     utils/processCMDArgs.h
     utils/processCMDArgs.cpp
+    utils/lintDataset.h
+    utils/lintDataset.cpp
+    utils/parseQueryString.h
+    utils/parseQueryString.cpp
     utils/getFeatureInfoVirtualForSolarTerminator.h
     utils/getFeatureInfoVirtualForSolarTerminator.cpp
     Types/LayerMetadataType.h

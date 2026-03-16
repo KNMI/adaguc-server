@@ -1,3 +1,7 @@
+**Version 6.8.0 - 2026-03-11**
+
+- Added support to check / lint datasets with --lint option
+
 **Version 6.7.0 - 2026-03-11**
 
 - Refactored datamodel and use std::string and structs where possible

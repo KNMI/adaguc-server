@@ -26,7 +26,7 @@ CDataSource *CDPPIncludeLayer::getDataSource(CServerConfig::XMLE_DataPostProc *p
       break;
     }
   }
-  dataSourceToInclude->setCFGLayer(dataSource->srvParams, dataSource->srvParams->configObj->Configuration[0], dataSource->srvParams->cfg->Layer[additionalLayerNo], additionalLayerName.c_str(), 0);
+  dataSourceToInclude->setCFGLayer(dataSource->srvParams, dataSource->srvParams->cfg->Layer[additionalLayerNo], 0);
   return dataSourceToInclude;
 }
 

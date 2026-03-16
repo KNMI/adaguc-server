@@ -293,19 +293,19 @@ int CAutoConfigure::autoConfigureStyles(CDataSource *dataSource) {
   CServerConfig::XMLE_Styles *xmleStyle = new CServerConfig::XMLE_Styles();
   dataSource->cfgLayer->Styles.push_back(xmleStyle);
 
-  CT::string tableName = "autoconfigure_styles";
-  CT::string layerTableId;
-  try {
-    if (dataSource->cfgLayer->FilePath.size() == 0 || dataSource->cfgLayer->FilePath[0]->value.empty()) {
-      CDBDebug("Invalid FilePath configured for layer %s", dataSource->getLayerName());
-      throw(__LINE__);
-    }
-    layerTableId = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)
-                       ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), NULL, dataSource);
-  } catch (int e) {
-    CDBError("Unable to get layerTableId for autoconfigure_styles");
-    return 1;
-  }
+  // CT::string autoConfigureStylesTableName = "autoconfigure_styles";
+  // CT::string layerTableId;
+  // try {
+  //   if (dataSource->cfgLayer->FilePath.size() == 0 || dataSource->cfgLayer->FilePath[0]->value.empty()) {
+  //     CDBDebug("Invalid FilePath configured for layer %s", dataSource->getLayerName());
+  //     throw(__LINE__);
+  //   }
+  //   layerTableId = CDBFactory::getDBAdapter(dataSource->srvParams->cfg)
+  //                      ->getTableNameForPathFilterAndDimension(dataSource->cfgLayer->FilePath[0]->value.c_str(), dataSource->cfgLayer->FilePath[0]->attr.filter.c_str(), NULL, dataSource);
+  // } catch (int e) {
+  //   CDBError("Unable to get layerTableId for autoconfigure_styles");
+  //   return 1;
+  // }
 
   /* Auto style is not available in the database, so look it up in the file.*/
 
