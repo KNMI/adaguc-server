@@ -113,7 +113,6 @@ void parseStyleInfo(CStyleConfiguration *styleConfig, CDataSource *dataSource, i
   for (auto includeStyle: style->IncludeStyle) {
     int extraStyle = dataSource->srvParams->getServerStyleIndexByName(includeStyle->attr.name);
     if (extraStyle >= 0) {
-      CDBDebug("Include style %d - %s", extraStyle, dataSource->cfg->Style[extraStyle]->attr.name.c_str());
       parseStyleInfo(styleConfig, dataSource, extraStyle, depth + 1);
     }
   }

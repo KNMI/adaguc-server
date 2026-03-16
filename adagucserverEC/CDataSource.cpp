@@ -30,6 +30,7 @@
 
 // #define CDATASOURCE_DEBUG
 
+bool debugDataSource = false;
 bool configWarningSet = false;
 
 CDataSource::DataObject::DataObject() {
@@ -295,9 +296,6 @@ CDataSource::CDataSource() {
   varX = NULL;
   varY = NULL;
 
-  _styles = NULL;
-  _currentStyle = NULL;
-
   queryBBOX = false;
   queryLevel = 0; // -1 Means query all. 0 means query all non tiled versions. Positive number means a tiled version.
 }
@@ -328,14 +326,6 @@ CDataSource::~CDataSource() {
   };
   statistics = NULL;
 
-  if (_styles != NULL) {
-    for (auto s: *_styles) {
-      delete s;
-    }
-    delete _styles;
-    _styles = NULL;
-  }
-
   if (featureSet.length() != 0) {
     CConvertGeoJSON::clearFeatureStore(featureSet);
   }
@@ -363,9 +353,9 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Laye
 
   layerTitle = cfgLayer->Title.size() > 0 && !cfgLayer->Title[0]->value.empty() ? cfgLayer->Title[0]->value.c_str() : layerName.c_str();
 
-#ifdef CDATASOURCE_DEBUG
-  CDBDebug("LayerName=\"%s\"", layerName.c_str());
-#endif
+  if (debugDataSource) {
+    CDBDebug("LayerName=\"%s\"", layerName.c_str());
+  }
   // Defaults to database
   dLayerType = CConfigReaderLayerTypeDataBase;
   if (cfgLayer->attr.type.equals("database")) {
@@ -511,18 +501,18 @@ CT::string CDataSource::getDimensionValueForNameAndStep(const char *dimName, int
  * @return stringlist with the list of available legends.
  */
 
-std::vector<CT::string> CDataSource::getLegendListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style *style) {
-#ifdef CDATASOURCE_DEBUG
-  CDBDebug("getLegendListForDataSource");
-#endif
-  if (dataSource->cfgLayer->Legend.size() > 0) {
-    return CServerParams::getLegendNames(dataSource->cfgLayer->Legend);
+std::vector<std::string> CDataSource::getLegendListForDataSource(CServerConfig::XMLE_Style *style) {
+  if (debugDataSource) {
+    CDBDebug("getLegendListForDataSource");
+  }
+  if (this->cfgLayer->Legend.size() > 0) {
+    return CServerParams::getLegendNames(this->cfgLayer->Legend);
   } else {
     if (style != NULL) {
       return CServerParams::getLegendNames(style->Legend);
     }
   }
-  //  CDBError("No legendlist for layer %s",dataSource->layerName.c_str());
+  //  CDBError("No legendlist for layer %s",this->layerName.c_str());
   return {};
 }
 
@@ -532,16 +522,16 @@ std::vector<CT::string> CDataSource::getLegendListForDataSource(CDataSource *dat
  * @param style pointer to the style to find the rendermethods for
  * @return stringlist with the list of available rendermethods.
  */
-std::vector<CT::string> CDataSource::getRenderMethodListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style *style) {
+std::vector<std::string> CDataSource::getRenderMethodListForDataSource(CServerConfig::XMLE_Style *style) {
   // List all the desired rendermethods
   CT::string renderMethodList;
 
   // rendermethods defined in the layers must prepend rendermethods defined in the style
-  if (dataSource->cfgLayer->RenderMethod.size() > 0) {
+  if (this->cfgLayer->RenderMethod.size() > 0) {
 
-    for (size_t j = 0; j < dataSource->cfgLayer->RenderMethod.size(); j++) {
+    for (size_t j = 0; j < this->cfgLayer->RenderMethod.size(); j++) {
       if (renderMethodList.length() > 0) renderMethodList.concat(",");
-      renderMethodList.concat(dataSource->cfgLayer->RenderMethod[j]->value.c_str());
+      renderMethodList.concat(this->cfgLayer->RenderMethod[j]->value.c_str());
     }
   }
 
@@ -561,7 +551,7 @@ std::vector<CT::string> CDataSource::getRenderMethodListForDataSource(CDataSourc
     renderMethodList.copy("nearest");
   }
 
-  return renderMethodList.split(",");
+  return CT::split(renderMethodList, ",");
 }
 
 /**
@@ -569,28 +559,28 @@ std::vector<CT::string> CDataSource::getRenderMethodListForDataSource(CDataSourc
  * @param dataSource pointer to the datasource to find the stylelist for
  * @return vector with all possible CStyleConfigurations
  */
-std::vector<CStyleConfiguration *> *CDataSource::getStyleListForDataSource() {
-
-#ifdef CDATASOURCE_DEBUG
-  CDBDebug("getStyleListForDataSource %s", dataSource->layerName.c_str());
-#endif
-
-  std::vector<CStyleConfiguration *> *styleConfigurationList = new std::vector<CStyleConfiguration *>();
+const std::vector<CStyleConfiguration> &CDataSource::getStyleListForDataSource() {
+  if (styleConfigurationList.size() > 0) {
+    return styleConfigurationList;
+  }
+  if (debugDataSource) {
+    CDBDebug("getStyleListForDataSource %s", this->layerName.c_str());
+  }
 
   CServerConfig::XMLE_Configuration *serverCFG = this->cfg;
 
-  std::vector<CT::string> renderMethods;
-  std::vector<CT::string> legendList;
+  std::vector<std::string> renderMethods;
+  std::vector<std::string> legendList;
 
   // Auto configure styles, if no legends or styles are defined
   if (this->cfgLayer->Styles.size() == 0 && this->cfgLayer->Legend.size() == 0) {
-    renderMethods = getRenderMethodListForDataSource(this, NULL);
+    renderMethods = getRenderMethodListForDataSource(NULL);
     if (renderMethods.size() > 0) {
       CAutoConfigure::autoConfigureStyles(this);
     }
   }
 
-  std::vector<CT::string> styleNames = getStyleNames(this->cfgLayer->Styles);
+  std::vector<std::string> styleNames = getStyleNames(this->cfgLayer->Styles);
 
   size_t start = 0;
   if (styleNames.size() > 1) start = 1;
@@ -602,40 +592,40 @@ std::vector<CStyleConfiguration *> *CDataSource::getStyleListForDataSource() {
 
       int dStyleIndex = this->srvParams->getServerStyleIndexByName(styleNames[i]);
 
-#ifdef CDATASOURCE_DEBUG
-      CDBDebug("dStyleIndex = %d", dStyleIndex);
-#endif
+      if (debugDataSource) {
+        CDBDebug("dStyleIndex = %d", dStyleIndex);
+      }
       // TODO CHECK, why did we add this line?:
       if (dStyleIndex != -1) {
 
         CServerConfig::XMLE_Style *style = NULL;
         if (dStyleIndex != -1) style = serverCFG->Style[dStyleIndex];
 
-        renderMethods = getRenderMethodListForDataSource(this, style);
-        legendList = getLegendListForDataSource(this, style);
+        renderMethods = getRenderMethodListForDataSource(style);
+        legendList = getLegendListForDataSource(style);
 
         if (legendList.size() == 0) {
           CDBDebug("No legends defined for layer %s, adding legend auto", this->layerName.c_str());
           legendList.push_back("rainbow");
         }
 
-        bool isOnlyGeneric = renderMethods.size() == 0 || (renderMethods.size() == 1 && renderMethods[0].equals("generic"));
+        bool isOnlyGeneric = renderMethods.size() == 0 || (renderMethods.size() == 1 && renderMethods[0] == "generic");
         if (isOnlyGeneric) {
-          CStyleConfiguration *styleConfig = new CStyleConfiguration();
-          styleConfig->styleCompositionName = styleNames[i];
-          styleConfig->styleName = styleNames[i];
-          styleConfig->styleTitle = styleNames[i];
-          styleConfig->renderMethod = RM_GENERIC;
-          styleConfig->styleIndex = dStyleIndex;
-          styleConfig->legendIndex = this->srvParams->getServerLegendIndexByName(legendList[0]);
-          if (styleConfig->legendIndex == -1) {
+          CStyleConfiguration styleConfig;
+          styleConfig.styleCompositionName = styleNames[i];
+          styleConfig.styleName = styleNames[i];
+          styleConfig.styleTitle = styleNames[i];
+          styleConfig.renderMethod = RM_GENERIC;
+          styleConfig.styleIndex = dStyleIndex;
+          styleConfig.legendIndex = this->srvParams->getServerLegendIndexByName(legendList[0]);
+          if (styleConfig.legendIndex == -1) {
             CDBError("Legend %s not found", legendList[0].c_str());
           }
-          int status = styleConfig->makeStyleConfig(this);
+          int status = styleConfig.makeStyleConfig(this);
           if (status == -1) {
-            styleConfig->hasError = true;
+            styleConfig.hasError = true;
           }
-          styleConfigurationList->push_back(styleConfig);
+          styleConfigurationList.push_back(styleConfig);
         } else {
           // Deprecated methods to have multiple legends and rendermethods in the same style
 
@@ -652,15 +642,16 @@ std::vector<CStyleConfiguration *> *CDataSource::getStyleListForDataSource() {
                   //   // CDBWarning("Deprecated to have multiple rendermethods ([%d]) in one style. There are %d styles configured.", renderMethods.size(), styleNames.size());
                   // }
                 }
-                CStyleConfiguration *styleConfig = new CStyleConfiguration();
-                styleConfigurationList->push_back(styleConfig);
-                styleConfig->styleCompositionName = styleName.c_str();
-                styleConfig->styleName = styleNames[i];
-                styleConfig->styleTitle = styleName.c_str();
-                styleConfig->renderMethod = getRenderMethodFromString(renderMethods[r].c_str());
-                styleConfig->styleIndex = dStyleIndex;
-                styleConfig->legendIndex = this->srvParams->getServerLegendIndexByName(legendList[l]);
-                if (styleConfig->legendIndex == -1) {
+
+                styleConfigurationList.push_back(CStyleConfiguration());
+                CStyleConfiguration &styleConfig = styleConfigurationList.back();
+                styleConfig.styleCompositionName = styleName.c_str();
+                styleConfig.styleName = styleNames[i];
+                styleConfig.styleTitle = styleName.c_str();
+                styleConfig.renderMethod = getRenderMethodFromString(renderMethods[r].c_str());
+                styleConfig.styleIndex = dStyleIndex;
+                styleConfig.legendIndex = this->srvParams->getServerLegendIndexByName(legendList[l]);
+                if (styleConfig.legendIndex == -1) {
                   CDBError("Legend %s not found", legendList[l].c_str());
                 }
 
@@ -671,16 +662,16 @@ std::vector<CStyleConfiguration *> *CDataSource::getStyleListForDataSource() {
                     configWarningSet = true;
                   }
                   for (size_t j = 0; j < style->NameMapping.size(); j++) {
-                    if (renderMethods[r].equals(style->NameMapping[j]->attr.name.c_str())) {
-                      styleConfig->styleTitle.copy(style->NameMapping[j]->attr.title.c_str());
-                      styleConfig->styleAbstract.copy(style->NameMapping[j]->attr.abstract.c_str());
+                    if (renderMethods[r] == style->NameMapping[j]->attr.name.c_str()) {
+                      styleConfig.styleTitle = style->NameMapping[j]->attr.title;
+                      styleConfig.styleAbstract = style->NameMapping[j]->attr.abstract;
                       break;
                     }
                   }
                 }
-                int status = styleConfig->makeStyleConfig(this);
+                int status = styleConfig.makeStyleConfig(this);
                 if (status == -1) {
-                  styleConfig->hasError = true;
+                  styleConfig.hasError = true;
                 }
               }
             }
@@ -692,17 +683,17 @@ std::vector<CStyleConfiguration *> *CDataSource::getStyleListForDataSource() {
   } catch (int e) {
   }
 
-  if (styleConfigurationList->size() == 0) {
-    CStyleConfiguration *styleConfig = new CStyleConfiguration();
-    styleConfig->styleTitle.copy("default");
-    styleConfig->styleAbstract.copy("default");
-    styleConfig->renderMethod = RM_NEAREST;
-    styleConfig->styleCompositionName = "default";
-    styleConfigurationList->push_back(styleConfig);
+  if (styleConfigurationList.size() == 0) {
+    CStyleConfiguration styleConfig;
+    styleConfig.styleTitle.copy("default");
+    styleConfig.styleAbstract.copy("default");
+    styleConfig.renderMethod = RM_NEAREST;
+    styleConfig.styleCompositionName = "default";
+    styleConfigurationList.push_back(styleConfig);
   }
-#ifdef CDATASOURCE_DEBUG
-  CDBDebug("/getStyleListForDataSource");
-#endif
+  if (debugDataSource) {
+    CDBDebug("/getStyleListForDataSource");
+  }
 
   return styleConfigurationList;
 }
@@ -712,8 +703,8 @@ std::vector<CStyleConfiguration *> *CDataSource::getStyleListForDataSource() {
  * @param Style a pointer to XMLE_Style vector configured in a layer
  * @return Pointer to a new stringlist with all possible style names, must be deleted with delete. Is NULL on failure.
  */
-std::vector<CT::string> CDataSource::getStyleNames(std::vector<CServerConfig::XMLE_Styles *> Styles) {
-  std::vector<CT::string> stringList = {"default"};
+std::vector<std::string> CDataSource::getStyleNames(std::vector<CServerConfig::XMLE_Styles *> Styles) {
+  std::vector<std::string> stringList = {"default"};
   for (size_t j = 0; j < Styles.size(); j++) {
     if (Styles[j]->value.empty()) continue;
     std::vector<CT::string> l1 = Styles[j]->value.split(",");
@@ -738,108 +729,103 @@ void CDataSource::calculateScaleAndOffsetFromMinMax(float &scale, float &offset,
 }
 
 CStyleConfiguration *CDataSource::getStyle() {
-  if (_currentStyle == NULL) {
-    if (_styles == NULL) {
-      _styles = getStyleListForDataSource();
-    }
-    if (_styles->size() == 0) {
-      CDBError("There are no styles available");
-      return NULL;
-    }
-    CT::string styleName = "default";
-    CT::string styles(srvParams->Styles.c_str());
+  if (currentStyleSet == true) {
+    return &currentStyle;
+  }
+  const auto &styleList = getStyleListForDataSource();
+  if (styleList.size() == 0) {
+    CDBError("There are no styles available");
+    return nullptr;
+  }
+  CT::string styleName = "default";
+  CT::string styles(srvParams->Styles.c_str());
 
-    // TODO CHECK CDBDebug("Server Styles=%s",srvParam->Styles.c_str());
-    std::vector<CT::string> layerstyles = styles.split(",");
-    int layerIndex = datasourceIndex;
-    if (layerstyles.size() != 0) {
-      // Make sure default layer index is within the right bounds.
-      if (layerIndex < 0) layerIndex = 0;
-      if (layerIndex > ((int)layerstyles.size()) - 1) layerIndex = layerstyles.size() - 1;
-      styleName = layerstyles[layerIndex].c_str();
-      if (styleName.length() == 0) {
-        styleName.copy("default");
-      }
+  // TODO CHECK CDBDebug("Server Styles=%s",srvParam->Styles.c_str());
+  std::vector<CT::string> layerstyles = styles.split(",");
+  int layerIndex = datasourceIndex;
+  if (layerstyles.size() != 0) {
+    // Make sure default layer index is within the right bounds.
+    if (layerIndex < 0) layerIndex = 0;
+    if (layerIndex > ((int)layerstyles.size()) - 1) layerIndex = layerstyles.size() - 1;
+    styleName = layerstyles[layerIndex].c_str();
+    if (styleName.length() == 0) {
+      styleName.copy("default");
     }
+  }
 
-    _currentStyle = _styles->at(0);
+  // Copy default style
+  currentStyle = styleList.at(0);
 
-    auto it = std::find_if(_styles->begin(), _styles->end(), [&styleName](CStyleConfiguration *a) { return styleName.equals(a->styleName); });
-    if (it != _styles->end()) {
-      _currentStyle = (*it);
+  auto it = std::find_if(styleList.begin(), styleList.end(), [&styleName](const CStyleConfiguration &a) { return styleName.equals(a.styleName); });
+  if (it != styleList.end()) {
+    currentStyle = (*it);
+  } else {
+    // If not found, check for the style without rendermethod instead using startsWith.
+    it = std::find_if(styleList.begin(), styleList.end(), [&styleName](const CStyleConfiguration &a) { return CT::startsWith(a.styleCompositionName, styleName); });
+    if (it != styleList.end()) {
+      currentStyle = (*it);
     } else {
-      // If not found, check for the style without rendermethod instead using startsWith.
-      it = std::find_if(_styles->begin(), _styles->end(), [&styleName](CStyleConfiguration *a) { return a->styleCompositionName.startsWith(styleName.c_str()); });
-      if (it != _styles->end()) {
-        _currentStyle = (*it);
-      } else {
-        // Try without rendermethod
-        CT::string styleNameWithoutRenderMethod = styleName.substring(0, styleName.indexOf("/"));
-        it = std::find_if(_styles->begin(), _styles->end(), [&styleNameWithoutRenderMethod](CStyleConfiguration *a) { return styleNameWithoutRenderMethod.equals(a->styleName); });
-        if (it != _styles->end()) {
-          _currentStyle = (*it);
-          CDBDebug("Selected style %s", _currentStyle->styleName.c_str());
-        }
-      }
-    }
-
-    if (_currentStyle->styleIndex == -1) {
-      int status = _currentStyle->makeStyleConfig(this);
-      if (status == -1) {
-        _currentStyle->hasError = true;
-      }
-    }
-    if (_currentStyle->legendIndex == -1) {
-      std::vector<CT::string> legendList = getLegendListForDataSource(this, NULL);
-      if (legendList.size() > 0) {
-        _currentStyle->legendIndex = this->srvParams->getServerLegendIndexByName(legendList[0]);
+      // Try without rendermethod
+      CT::string styleNameWithoutRenderMethod = styleName.substring(0, styleName.indexOf("/"));
+      it = std::find_if(styleList.begin(), styleList.end(), [&styleNameWithoutRenderMethod](const CStyleConfiguration &a) { return styleNameWithoutRenderMethod.equals(a.styleName); });
+      if (it != styleList.end()) {
+        currentStyle = (*it);
+        CDBDebug("Selected style %s", currentStyle.styleName.c_str());
       }
     }
   }
 
-  return _currentStyle;
+  if (currentStyle.styleIndex == -1) {
+    int status = currentStyle.makeStyleConfig(this);
+    if (status == -1) {
+      currentStyle.hasError = true;
+    }
+  }
+  if (currentStyle.legendIndex == -1) {
+    std::vector<std::string> legendList = getLegendListForDataSource(NULL);
+    if (legendList.size() > 0) {
+      currentStyle.legendIndex = this->srvParams->getServerLegendIndexByName(legendList[0]);
+    }
+  }
+  currentStyleSet = true;
+  return &currentStyle;
 }
 
 int CDataSource::setStyle(const char *styleName) {
-  if (_styles == NULL) {
-    _styles = getStyleListForDataSource();
-  }
-  if (_styles->size() == 0) {
+  const auto &styleList = getStyleListForDataSource();
+
+  if (styleList.size() == 0) {
     CDBError("There are no styles available");
     return 1;
   }
 
-  _currentStyle = _styles->at(0);
-  bool foundStyle = false;
-  for (size_t j = 0; j < _styles->size(); j++) {
-    if (_styles->at(j)->styleCompositionName.equals(styleName)) {
+  auto it = std::find_if(styleList.begin(), styleList.end(), [&styleName](const CStyleConfiguration &a) { return CT::startsWith(a.styleCompositionName, styleName); });
+  if (it != styleList.end()) {
+    currentStyle = (*it);
+  } else {
 
-      _currentStyle = _styles->at(j);
-      foundStyle = true;
-      break;
-    }
-  }
-
-  if (foundStyle == false) {
+    currentStyle = styleList.at(0);
     CDBWarning("Unable to find style %s. Available styles:", styleName);
-    for (size_t j = 0; j < _styles->size(); j++) {
-      CDBWarning("  -%s", _styles->at(j)->styleCompositionName.c_str());
+    for (size_t j = 0; j < styleList.size(); j++) {
+      CDBWarning("  -%s", styleList.at(j).styleCompositionName.c_str());
     }
   }
 
-  if (_currentStyle->styleIndex == -1) {
-    int status = _currentStyle->makeStyleConfig(this);
+  if (currentStyle.styleIndex == -1) {
+    int status = currentStyle.makeStyleConfig(this);
     if (status == -1) {
-      _currentStyle->hasError = true;
+      currentStyle.hasError = true;
     }
   }
-  if (_currentStyle->legendIndex == -1) {
-    std::vector<CT::string> legendList = getLegendListForDataSource(this, NULL);
+  if (currentStyle.legendIndex == -1) {
+    std::vector<std::string> legendList = getLegendListForDataSource(NULL);
     if (legendList.size() > 0) {
-      _currentStyle->legendIndex = this->srvParams->getServerLegendIndexByName(legendList[0]);
+      currentStyle.legendIndex = this->srvParams->getServerLegendIndexByName(legendList[0]);
     }
   }
-  if (_currentStyle->hasError) return 1;
+  if (currentStyle.hasError) return 1;
+  // Indicate that this style is set, so the getter does not re-figure out the style.
+  currentStyleSet = true;
   return 0;
 };
 
@@ -847,9 +833,10 @@ CDataSource *CDataSource::clone() {
 
   CDataSource *d = new CDataSource();
   d->dataSourceOwnsDataObject = false; // cdfObject stays with source datasource.
-  d->_currentStyle = _currentStyle;
+  d->currentStyle = currentStyle;
   d->datasourceIndex = datasourceIndex;
   d->currentAnimationStep = currentAnimationStep;
+  d->styleConfigurationList = styleConfigurationList;
 
   /* Copy timesteps */
   for (size_t j = 0; j < timeSteps.size(); j++) {

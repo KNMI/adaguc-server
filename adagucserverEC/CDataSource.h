@@ -92,16 +92,15 @@ public:
   bool dimsAreAutoConfigured = -1;
 
 private:
-  std::vector<CStyleConfiguration *> *_styles = nullptr;
-  CStyleConfiguration *_currentStyle = nullptr;
+  bool currentStyleSet = false;
+  CStyleConfiguration currentStyle;
+  std::vector<CStyleConfiguration> styleConfigurationList;
+  std::vector<std::string> getLegendListForDataSource(CServerConfig::XMLE_Style *style);
+  std::vector<std::string> getStyleNames(std::vector<CServerConfig::XMLE_Styles *> Styles);
+  std::vector<std::string> getRenderMethodListForDataSource(CServerConfig::XMLE_Style *style);
 
 public:
   CStyleConfiguration *getStyle();
-
-  void setStyle(CStyleConfiguration *style) {
-    CDBDebug("Setting styleconfiguration");
-    _currentStyle = style;
-  }
 
   class DataObject {
     CT::string overruledUnits;
@@ -359,12 +358,9 @@ public:
   /**
    * IMPORTANT
    */
-  std::vector<CStyleConfiguration *> *getStyleListForDataSource();
+  const std::vector<CStyleConfiguration> &getStyleListForDataSource();
 
   static void calculateScaleAndOffsetFromMinMax(float &scale, float &offset, float min, float max, float log);
-  static std::vector<CT::string> getLegendListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style *style);
-  static std::vector<CT::string> getStyleNames(std::vector<CServerConfig::XMLE_Styles *> Styles);
-  static std::vector<CT::string> getRenderMethodListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style *style);
 
   /**
    * Sets the style by name, can be a character string.

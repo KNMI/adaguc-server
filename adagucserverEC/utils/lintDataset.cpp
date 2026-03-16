@@ -46,13 +46,10 @@ int lintDataset(std::string config) {
   for (auto Layer: serverParamsAll.cfg->Layer) {
     CDataSource dataSource(&serverParamsAll, Layer);
     auto styleList = dataSource.getStyleListForDataSource();
-    for (auto style: *styleList) {
-      removeStringFromVector(style->styleName, availableStyleNames);
-      removeStringFromVector(style->legendName, availableLegendNames);
-      delete style;
+    for (const auto &style: styleList) {
+      removeStringFromVector(style.styleName, availableStyleNames);
+      removeStringFromVector(style.legendName, availableLegendNames);
     }
-    styleList->clear();
-    delete styleList;
   }
   std::string datasetName = (CT::split(config, ",").back());
   if (availableLegendNames.size() > 0) {

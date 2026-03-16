@@ -296,13 +296,13 @@ bool CServerParams::checkBBOXXYOrder(const char *projName) {
  * @param Legend a XMLE_Legend object configured in a style or in a layer
  * @return Pointer to a new stringlist with all possible legend names, must be deleted with delete. Is NULL on failure.
  */
-std::vector<CT::string> CServerParams::getLegendNames(std::vector<CServerConfig::XMLE_Legend *> Legend) {
+std::vector<std::string> CServerParams::getLegendNames(std::vector<CServerConfig::XMLE_Legend *> Legend) {
   if (Legend.size() == 0) {
-    std::vector<CT::string> legendList;
+    std::vector<std::string> legendList;
     legendList.push_back("rainbow");
     return legendList;
   }
-  std::vector<CT::string> stringList;
+  std::vector<std::string> stringList;
   for (size_t j = 0; j < Legend.size(); j++) {
     CT::string legendValue = Legend[j]->value.c_str();
     std::vector<CT::string> l1 = legendValue.split(",");
