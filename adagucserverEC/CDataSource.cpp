@@ -666,7 +666,8 @@ std::vector<CStyleConfiguration *> *CDataSource::getStyleListForDataSource() {
 
                 if (style != nullptr && style->NameMapping.size() > 0) {
                   if (configWarningSet == false) {
-                    CDBWarning("Deprecated to have NameMapping configs in the style. Use title and abstracts instead.");
+                    CDBWarning("[LINT]: In [%s]/[%s] Deprecated to have NameMapping configs in the style. Use title and abstracts instead.", CT::basename(this->srvParams->datasetLocation).c_str(),
+                               styleName.c_str());
                     configWarningSet = true;
                   }
                   for (size_t j = 0; j < style->NameMapping.size(); j++) {

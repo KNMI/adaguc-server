@@ -34,7 +34,7 @@
 #include "CTString.h"
 #include "CDebugger.h"
 
-extern bool parseXmlLintTriggered;
+extern int numXMLAttributesNotRecognized;
 
 #define XMLE_ADDOBJ(variableName)                                                                                                                                                                      \
   {                                                                                                                                                                                                    \

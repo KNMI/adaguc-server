@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+
+
+  <Style name="testdata_style_manycontours" title="Rainbow colors" abstract="Drawing with rainbow colors">
+    <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
+    <Min>0.0</Min>
+    <Max>0.5</Max>
+    <ContourLine width="0.8" linecolor="#880000" textcolor="#000000" textformatting="%2.2f" classes="0.10"/>
+
+    <StandardNames standard_name="test_data"/>
+    <StandardNames standard_name="data"/>
+  </Style>
+
+  <Legend name="unusedLegend" type="colorRange">
+    <palette index="0" red="0" green="0" blue="0" alpha="255"/>
+    <palette index="240" red="255" green="255" blue="255"/>
+  </Legend>
+
+
+  <!-- Layers -->
+  <Layer type="database">
+    <FilePath filter="">/data/adaguc-autowms/testdata.nc</FilePath>
+    <Title>Awesome</Title>
+    <Variable>testdata</Variable>
+    <Styles>testdata_style_manycontours</Styles>
+  </Layer>
+
+  <!-- End of configuration /-->
+</Configuration>

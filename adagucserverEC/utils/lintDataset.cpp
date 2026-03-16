@@ -49,19 +49,23 @@ int lintDataset(std::string config) {
     for (auto style: *styleList) {
       removeStringFromVector(style->styleName, availableStyleNames);
       removeStringFromVector(style->legendName, availableLegendNames);
+      delete style;
     }
+    styleList->clear();
+    delete styleList;
   }
   std::string datasetName = (CT::split(config, ",").back());
   if (availableLegendNames.size() > 0) {
-    CDBWarning("In [%s]: no references for legend(s) [%s]", datasetName.c_str(), CT::join(availableLegendNames).c_str());
+    CDBWarning("[LINT]: In [%s]: no references for legend(s) [%s]", CT::basename(datasetName).c_str(), CT::join(availableLegendNames).c_str());
   }
-  if (availableLegendNames.size() > 0) {
-    CDBWarning("In [%s]: no references for style(s) [%s] ", datasetName.c_str(), CT::join(availableLegendNames).c_str());
+  if (availableStyleNames.size() > 0) {
+    CDBWarning("[LINT]: In [%s]: no references for style(s) [%s] ", CT::basename(datasetName).c_str(), CT::join(availableStyleNames).c_str());
   }
 
-  status = parseXmlLintTriggered == true || availableLegendNames.size() != 0 || availableStyleNames.size() != 0;
-  if (status != 0) {
-    CDBWarning("[ERROR] Linting issues found during linting of daraset [%s]", datasetName.c_str());
+  int numIssues = numXMLAttributesNotRecognized + availableLegendNames.size() + availableStyleNames.size();
+  if (numIssues > 0) {
+    CDBWarning("[LINT]: Found [%d] issues in dataset [%s]", numIssues, datasetName.c_str());
+    return 1;
   }
-  return status;
+  return 0;
 }
