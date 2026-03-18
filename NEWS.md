@@ -1,3 +1,7 @@
+**Version 6.8.0 - 2026-03-18**
+
+- Fixed satcomp png tiling and added test
+
 **Version 6.7.0 - 2026-03-11**
 
 - Refactored datamodel and use std::string and structs where possible
