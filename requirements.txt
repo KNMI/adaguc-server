@@ -30,7 +30,7 @@ brotli-asgi==1.6.0
     # via -r requirements.in
 cachetools==5.5.2
     # via -r requirements.in
-certifi==2026.1.4
+certifi==2026.2.25
     # via
     #   httpcore
     #   httpx
@@ -42,7 +42,7 @@ cftime==1.6.5
     #   netcdf4
 chardet==5.2.0
     # via -r requirements.in
-charset-normalizer==3.4.4
+charset-normalizer==3.4.6
     # via requests
 click==8.1.8
     # via
@@ -108,8 +108,6 @@ pydantic==2.12.5
     #   geojson-pydantic
 pydantic-core==2.41.5
     # via pydantic
-pyjwt==2.11.0
-    # via redis
 python-dateutil==2.9.0.post0
     # via
     #   -r requirements.in
@@ -120,7 +118,7 @@ pytz==2023.4
     #   owslib
 pyyaml==6.0.3
     # via owslib
-redis==5.3.1
+redis==7.3.0
     # via -r requirements.in
 requests==2.32.5
     # via owslib
