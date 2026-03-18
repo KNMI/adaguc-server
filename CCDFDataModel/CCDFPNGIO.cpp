@@ -146,7 +146,7 @@ int CDFPNGReader::open(const char *fileName) {
     double bbox[] = {0, 0, 0, 0};
     for (size_t j = 0; j < pngRaster->headers.size(); j++) {
 #ifdef CCDFPNGIO_DEBUG
-      CDBDebug("HEADERS [%s]=[%s]", pngRaster->headers[j].name.c_str(), pngRaster->headers[j].value.c_str());
+      CDBDebug("HEADERS [%s]=[%s]", pngRaster->headers[j].key.c_str(), pngRaster->headers[j].value.c_str());
 #endif
       /* Proj4 params */
       if (pngRaster->headers[j].key.equals("proj4_params")) {
@@ -178,6 +178,7 @@ int CDFPNGReader::open(const char *fileName) {
         }
         timeVariable->setAttributeText("units", "seconds since 1970-01-01 0:0:0");
         timeVariable->setAttributeText("standard_name", "time");
+        timeVariable->setCDFReaderPointer(this);
         timeVariable->allocateData(1);
         CTime *ctime = CTime::GetCTimeInstance(timeVariable);
         if (ctime == nullptr) {

@@ -1,4 +1,3 @@
-# pylint: disable=line-too-long
 # pylint: disable=unused-variable
 # pylint: disable=invalid-name
 
@@ -9,6 +8,13 @@ Run test for tiling system of adaguc-server
 import os
 import unittest
 from adaguc.AdagucTestTools import AdagucTestTools
+
+from conftest import (
+    clean_temp_dir,
+    make_adaguc_env,
+    run_adaguc_and_compare_image,
+    update_db,
+)
 
 ADAGUC_PATH = os.environ["ADAGUC_PATH"]
 
@@ -109,3 +115,22 @@ class TestWMSTiling(unittest.TestCase):
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
         self.assertEqual(data.getvalue(), AdagucTestTools().readfromfile(self.expectedoutputsspath + filename))
+
+    def test_tiling_satcomp_png(self):
+        """
+        Test tile for satcomp png's
+        """
+        clean_temp_dir()
+        env = make_adaguc_env("adaguc.tests.tiling_satcomppng.xml", self.testresultspath, self.expectedoutputsspath)
+        # Check if there are no tiles
+        files = [f for f in os.listdir(os.getenv("ADAGUC_TMP")) if f.endswith("tile.nc")]
+        assert len(files) == 0
+        update_db(env)
+        # Check if there are three tiles
+        files = [f for f in os.listdir(os.getenv("ADAGUC_TMP")) if f.endswith("tile.nc")]
+        assert len(files) == 3
+        run_adaguc_and_compare_image(
+            env,
+            "test_tiling_satcomp_png.png",
+            "DATASET=adaguc.tests.tiling_satcomppng&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=MTG-FCI-FD_eur_atlantic_1km_true_color&WIDTH=688&HEIGHT=959&CRS=EPSG%3A3857&BBOX=-1649522.0372212431,3614598.9628729257,2283086.7198879756,9096244.018203944&STYLES=default&FORMAT=image/png&TRANSPARENT=TRUE&&time=2026-03-17T12%3A40%3A00Z&0.5279499342913613",
+        )

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <Layer type="database">
+    <Group value="MTG FCI composites" />
+    <Name force="true">MTG-FCI-FD_eur_atlantic_1km_true_color</Name>
+    <Title>MTG True Colour RGB Atlantic day-only </Title>
+    <Variable>pngdata</Variable>
+    <FilePath filter="^MTG-FCI-FD_eur_atlantic_1km_true_color_small_.*(\.png$|tile\.nc)$" retentionperiod="{ADAGUCENV_RETENTIONPERIOD}" retentiontype="datatime">{ADAGUC_PATH}data/datasets/</FilePath>
+    <Dimension name="time" interval="PT10M">time</Dimension>
+    <TileSettings tilepath="{ADAGUC_TMP}" debug="false" autotile="file" maxtilesinimage="32"/>
+    <RenderMethod>rgba</RenderMethod>
+    <Styles>auto</Styles>
+  </Layer>
+</Configuration>
