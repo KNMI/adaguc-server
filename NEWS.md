@@ -1,6 +1,7 @@
 **Version 6.8.0 - 2026-03-18**
 
 - Fixed satcomp png tiling and added test
+- Redis upgraded to version 7
 
 **Version 6.7.0 - 2026-03-11**
 
