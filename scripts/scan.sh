@@ -133,10 +133,12 @@ if [[ -n "${ADAGUC_DATAFILE}" ]]; then
     STATUSCODE=${OUT}
     echo "[WARN] Code ${STATUSCODE}: $(translateerrorcode ${STATUSCODE}). Command: [${command}]"
   fi
-  # Non matchin file should be removed to avoid cluttering the fs with unrecognized files
+  # Non matching files should be removed to avoid cluttering the fs with unrecognized files
   if [ ${STATUSCODE} -eq ${SCAN_EXITCODE_FILENOMATCH} ]; then
-    if [ "ADAGUC_AUTOREMOVENONMATCHINGFILES" = "TRUE" ]; then
+    if [ "$ADAGUC_AUTOREMOVENONMATCHINGFILES" = "TRUE" ]; then
+      echo "[WARN] File is not associated to any files: Now deleting file ${ADAGUC_DATAFILE}"
       rm -f ${ADAGUC_DATAFILE}
+      exit 0
     fi
   fi
   exit ${STATUSCODE} 
