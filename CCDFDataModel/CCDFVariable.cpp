@@ -47,13 +47,15 @@ int CDF::Variable::readData(CDFType readType, bool applyScaleOffset) { return re
  * @param applyScaleOffset Whether or not to apply scale and offset
  */
 int CDF::Variable::readData(CDFType readType, size_t *_start, size_t *_count, ptrdiff_t *_stride, bool applyScaleOffset) {
-
-  if (data != NULL && currentType != readType) {
-    // CDBDebug("CDF::Variable::readData freeing data");
+  int readDataType = readType == -1 ? nativeType : readType;
+  if (data != NULL && currentType != readDataType) {
+#ifdef CCDFDATAMODEL_DEBUG
+    CDBDebug("CDF::Variable::readData freeing data");
+#endif
     freeData();
   }
   if (data != NULL) {
-    // TODO Check start,stop, stride settings first!!!
+// TODO Check start,stop, stride settings first!!!
 #ifdef CCDFDATAMODEL_DEBUG
     CDBDebug("Data is already defined");
 #endif
