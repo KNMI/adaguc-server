@@ -67,6 +67,20 @@ std::pair<int, std::set<std::string>> CDBFileScanner::cleanFiles(CDataSource *da
 
   CT::string colName = "time";
 
+  // Check if this netcdf has a time dim. Use other time dim if available.
+  auto hasTimeDim = std::find_if(dataSource->requiredDims.begin(), dataSource->requiredDims.end(), [&colName](const COGCDims &ogcdim) { return colName == ogcdim.netCDFDimName; });
+  if (hasTimeDim == dataSource->requiredDims.end()) {
+    // time is not part of this dimension set. Take something which looks like a time dim.
+    CDBWarning("time dimension does not seem to exist in this layer");
+    auto isTypeTime = std::find_if(dataSource->requiredDims.begin(), dataSource->requiredDims.end(), [&colName](const COGCDims &ogcdim) { return ogcdim.isATimeDimension; });
+    if (isTypeTime != dataSource->requiredDims.end()) {
+      CDBDebug("Using %s instead.", (*isTypeTime).netCDFDimName.c_str());
+      colName = (*isTypeTime).netCDFDimName.c_str();
+    } else {
+      CDBWarning("no time like dimension not seem to exist in this layer");
+    }
+  }
+
   // If this datasource has a reference_time, give preference to that.
   for (size_t j = 0; j < dataSource->requiredDims.size(); j += 1) {
     if (dataSource->requiredDims[j].netCDFDimName == "forecast_reference_time") {
