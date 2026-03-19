@@ -19,7 +19,7 @@ if [ ! -f "${ADAGUC_PATH}/bin/adagucserver" ]; then
   exit 1
 fi
 
-### Check configuratiion file location ###
+### Check configuration file location ###
 if [ ! -f "${ADAGUC_CONFIG}" ]; then
   export ADAGUC_CONFIG=${DEFAULT_ADAGUC_CONFIG}
 fi

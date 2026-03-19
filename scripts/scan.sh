@@ -10,6 +10,14 @@ RECREATETABLES=''
 NOCLEAN=''
 TIMEOUTOKILL="4m"
 
+
+# ADAGUC_AUTOREMOVENONMATCHINGFILES only comes into action when scanning a file with the scan script using `-f` option. If the file does not belong to any dataset, and ADAGUC_AUTOREMOVENONMATCHINGFILES=TRUE, the file will be removed to avoid cluttering the filesystem. Can be either `TRUE` or `FALSE`. 
+if [ "$ADAGUC_AUTOREMOVENONMATCHINGFILES" = "TRUE" ]; then
+  echo "Note: ADAGUC_AUTOREMOVENONMATCHINGFILES is enabled."
+fi
+
+
+
 SCAN_EXITCODE_FILENOMATCH=64  #  File is available but does not match any of the available datasets
 SCAN_EXITCODE_DATASETNOEXIST=65  # The reason for this status code is that the dataset configuration file does not exist.
 SCAN_EXITCODE_SCANERROR=66  #  An error occured during scanning
@@ -30,7 +38,7 @@ translateerrorcode () {
 
 
 usage () {
-    echo "This script uses adaugc-server to scan files and datasets. It ingests indexing information into the database"
+    echo "This script uses adaguc-server to scan files and datasets. It ingests indexing information into the database"
     echo "  [-f] <file to add> [-d] <datasetname>             [Scan a single file for specified dataset]"
     echo "  [-f] <file to add>                                [Scan a single file, dataset is automatically detected]"
     echo "  [-d] <datasetname>                                [Scan a dataset, all layers within dataset will be checked]"
@@ -124,6 +132,12 @@ if [[ -n "${ADAGUC_DATAFILE}" ]]; then
   if [ ${OUT} -ne 0 ]; then
     STATUSCODE=${OUT}
     echo "[WARN] Code ${STATUSCODE}: $(translateerrorcode ${STATUSCODE}). Command: [${command}]"
+  fi
+  # Non matchin file should be removed to avoid cluttering the fs with unrecognized files
+  if [ ${STATUSCODE} -eq ${SCAN_EXITCODE_FILENOMATCH} ]; then
+    if [ "ADAGUC_AUTOREMOVENONMATCHINGFILES" = "TRUE" ]; then
+      rm -f ${ADAGUC_DATAFILE}
+    fi
   fi
   exit ${STATUSCODE} 
 fi
