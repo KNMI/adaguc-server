@@ -138,7 +138,6 @@ if [[ -n "${ADAGUC_DATAFILE}" ]]; then
     if [ "$ADAGUC_AUTOREMOVENONMATCHINGFILES" = "TRUE" ]; then
       echo "[WARN] File is not associated to any files: Now deleting file ${ADAGUC_DATAFILE}"
       rm -f ${ADAGUC_DATAFILE}
-      exit 0
     fi
   fi
   exit ${STATUSCODE} 
