@@ -1,3 +1,7 @@
+**Version 6.8.1 - 2026-03-19**
+
+- If there are more Settings elements in dataset configurations, cleanup will still work
+
 **Version 6.8.0 - 2026-03-18**
 
 - Fixed satcomp png tiling and added test
