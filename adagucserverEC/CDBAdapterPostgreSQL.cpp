@@ -166,7 +166,7 @@ CDBStore::Store *CDBAdapterPostgreSQL::getBetween(const char *min, const char *m
 
   CT::string query;
   query.print("select path, %s FROM %s WHERE %s between '%s' and '%s' order by %s asc limit %d ", colname, table, colname, min, max, colname, limit);
-  CDBDebug("%s", query.c_str());
+
   CDBStore::Store *maxStore = DB->queryToStore(query.c_str());
   if (maxStore == NULL) {
     setExceptionType(InvalidDimensionValue);
