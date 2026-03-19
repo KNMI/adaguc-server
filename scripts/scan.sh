@@ -136,7 +136,7 @@ if [[ -n "${ADAGUC_DATAFILE}" ]]; then
   # Non matching files should be removed to avoid cluttering the fs with unrecognized files
   if [ ${STATUSCODE} -eq ${SCAN_EXITCODE_FILENOMATCH} ]; then
     if [ "$ADAGUC_AUTOREMOVENONMATCHINGFILES" = "TRUE" ]; then
-      echo "[WARN] File is not associated to any files: Now deleting file ${ADAGUC_DATAFILE}"
+      echo "[WARN] !!! File is not associated to any dataset configuration and ADAGUC_AUTOREMOVENONMATCHINGFILES=TRUE: Now deleting file [${ADAGUC_DATAFILE}]."
       rm -f ${ADAGUC_DATAFILE}
     fi
   fi
