@@ -29,11 +29,15 @@ std::pair<int, std::set<std::string>> CDBFileScanner::cleanFiles(CDataSource *da
     return std::make_pair(0, filesDeletedFromFS);
   }
 
-  CT::string enableCleanupSystem = dataSource->cfg->Settings.size() == 1 ? dataSource->cfg->Settings[0]->attr.enablecleanupsystem : "false";
+  if (dataSource->cfg->Settings.size() > 1) {
+    CDBWarning("Note, more Settings elements were configured. Using the first one.");
+  };
+
+  CT::string enableCleanupSystem = dataSource->cfg->Settings.size() > 0 ? dataSource->cfg->Settings[0]->attr.enablecleanupsystem : "false";
   bool enableCleanupIsTrue = enableCleanupSystem.equals("true");
   bool enableCleanupIsInform = enableCleanupSystem.equals("dryrun");
-  int cleanupSystemLimit = dataSource->cfg->Settings.size() == 1 && !dataSource->cfg->Settings[0]->attr.cleanupsystemlimit.empty() ? dataSource->cfg->Settings[0]->attr.cleanupsystemlimit.toInt()
-                                                                                                                                   : CDBFILESCANNER_CLEANUP_DEFAULT_LIMIT;
+  int cleanupSystemLimit = dataSource->cfg->Settings.size() > 0 && !dataSource->cfg->Settings[0]->attr.cleanupsystemlimit.empty() ? dataSource->cfg->Settings[0]->attr.cleanupsystemlimit.toInt()
+                                                                                                                                  : CDBFILESCANNER_CLEANUP_DEFAULT_LIMIT;
   if (!enableCleanupIsTrue && !enableCleanupIsInform) {
     CDBWarning("Layer wants to autocleanup, but attribute enablecleanupsystem in Settings is not set to true or dryrun but to %s", enableCleanupSystem.c_str());
     return std::make_pair(1, filesDeletedFromFS);
