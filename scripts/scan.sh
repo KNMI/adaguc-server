@@ -22,11 +22,14 @@ SCAN_EXITCODE_FILENOMATCH=64  #  File is available but does not match any of the
 SCAN_EXITCODE_DATASETNOEXIST=65  # The reason for this status code is that the dataset configuration file does not exist.
 SCAN_EXITCODE_SCANERROR=66  #  An error occured during scanning
 SCAN_EXITCODE_FILENOEXIST=67  # The file does not exist on the file system
+SCAN_EXITCODE_FILENOMATCH_ISDELETED=68  #  File does not match any of the available datasets and is deleted (icm ADAGUC_AUTOREMOVENONMATCHINGFILES)
 SCAN_EXITCODE_TIMEOUT=124  # The process timed out
+
 
 translateerrorcode () {
   case $STATUSCODE in
   ${SCAN_EXITCODE_FILENOMATCH}) echo "No matching datasets" ;;
+  ${SCAN_EXITCODE_FILENOMATCH_ISDELETED}) echo "No matching datasets, file is deleted from fs." ;;
   ${SCAN_EXITCODE_DATASETNOEXIST}) echo "Config not found" ;;
   ${SCAN_EXITCODE_SCANERROR}) echo "Scan error" ;;
   ${SCAN_EXITCODE_FILENOEXIST}) echo "File not found" ;;
@@ -138,6 +141,7 @@ if [[ -n "${ADAGUC_DATAFILE}" ]]; then
     if [ "$ADAGUC_AUTOREMOVENONMATCHINGFILES" = "TRUE" ]; then
       echo "[WARN] !!! File is not associated to any dataset configuration and ADAGUC_AUTOREMOVENONMATCHINGFILES=TRUE: Now deleting file [${ADAGUC_DATAFILE}]."
       rm -f ${ADAGUC_DATAFILE}
+      exit ${SCAN_EXITCODE_FILENOMATCH_ISDELETED}
     fi
   fi
   exit ${STATUSCODE} 

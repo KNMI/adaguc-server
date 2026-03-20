@@ -18,6 +18,7 @@ The following exit codes are supported:
 |SCAN_EXITCODE_DATASETNOEXIST|65| The dataset configuration file does not exist. |
 |SCAN_EXITCODE_SCANERROR|66|  An error occured during scanning |
 |SCAN_EXITCODE_FILENOEXIST|67| The file does not exist on the file system |
+|SCAN_EXITCODE_FILENOMATCH_ISDELETED|68| File does not match any of the available datasets and is deleted (icm ADAGUC_AUTOREMOVENONMATCHINGFILES) |
 |SCAN_EXITCODE_TIMEOUT|124| The scan process timed out |
 
 
