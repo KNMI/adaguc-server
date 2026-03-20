@@ -9,12 +9,7 @@ RESCAN=''
 RECREATETABLES=''
 NOCLEAN=''
 TIMEOUTOKILL="4m"
-
-
-# ADAGUC_AUTOREMOVENONMATCHINGFILES only comes into action when scanning a file with the scan script using `-f` option. If the file does not belong to any dataset, and ADAGUC_AUTOREMOVENONMATCHINGFILES=TRUE, the file will be removed to avoid cluttering the filesystem. Can be either `TRUE` or `FALSE`. 
-if [ "$ADAGUC_AUTOREMOVENONMATCHINGFILES" = "TRUE" ]; then
-  echo "Note: ADAGUC_AUTOREMOVENONMATCHINGFILES is enabled."
-fi
+ADAGUC_AUTOREMOVENONMATCHINGFILES='FALSE'
 
 
 
@@ -22,7 +17,7 @@ SCAN_EXITCODE_FILENOMATCH=64  #  File is available but does not match any of the
 SCAN_EXITCODE_DATASETNOEXIST=65  # The reason for this status code is that the dataset configuration file does not exist.
 SCAN_EXITCODE_SCANERROR=66  #  An error occured during scanning
 SCAN_EXITCODE_FILENOEXIST=67  # The file does not exist on the file system
-SCAN_EXITCODE_FILENOMATCH_ISDELETED=68  #  File does not match any of the available datasets and is deleted (icm ADAGUC_AUTOREMOVENONMATCHINGFILES)
+SCAN_EXITCODE_FILENOMATCH_ISDELETED=68  #  File does not match any of the available datasets and is deleted
 SCAN_EXITCODE_TIMEOUT=124  # The process timed out
 
 
@@ -44,6 +39,7 @@ usage () {
     echo "This script uses adaguc-server to scan files and datasets. It ingests indexing information into the database"
     echo "  [-f] <file to add> [-d] <datasetname>             [Scan a single file for specified dataset]"
     echo "  [-f] <file to add>                                [Scan a single file, dataset is automatically detected]"
+    echo "  [-f] <file to add> [-x]                           [Scan a single file, dataset is automatically detected, file is removed if not associated with any dataset]"
     echo "  [-d] <datasetname>                                [Scan a dataset, all layers within dataset will be checked]"
     echo "  [-d] \"*\"                                          [Scan all available datasets]"
     echo "  [-l]                                              [List all datasets]"
@@ -57,7 +53,7 @@ usage () {
 }
 
 
-while getopts "d:f:vtkrlmeh" o; do
+while getopts "d:f:vtkrlmexh" o; do
     case "${o}" in
         d)
             ADAGUC_DATASET=${OPTARG}
@@ -90,6 +86,9 @@ while getopts "d:f:vtkrlmeh" o; do
             ;;
         e)
             env | grep "ADAGUC"
+            ;;
+        x)
+            ADAGUC_AUTOREMOVENONMATCHINGFILES='TRUE'
             ;;
         h)
             usage

@@ -214,7 +214,6 @@ class TestFileScanner(unittest.TestCase):
         """
         Description: Exit code of scan process should return exit code SCAN_EXITCODE_FILENOMATCH_ISDELETED
         The reason for this status code is that the file does not match any of the available datasets.
-        It should only be deleted when ADAGUC_AUTOREMOVENONMATCHINGFILES is set to TRUE
         """
         my_env = os.environ.copy()
         my_env["ADAGUC_CONFIG"] = ADAGUC_PATH + "/data/config/adaguc.autoresource.xml"
@@ -224,7 +223,6 @@ class TestFileScanner(unittest.TestCase):
         assert os.path.isfile(file_to_delete) is True
 
         # Make sure the file is not deleted
-        my_env["ADAGUC_AUTOREMOVENONMATCHINGFILES"] = "FALSE"
         proc = subprocess.run(
             [ADAGUC_PATH + "/scripts/scan.sh", "-f", file_to_delete],
             capture_output=True,
@@ -235,10 +233,9 @@ class TestFileScanner(unittest.TestCase):
         assert proc.returncode == SCAN_EXITCODE_FILENOMATCH
         assert os.path.isfile(file_to_delete) is True
 
-        # Make sure the file will be deleted
-        my_env["ADAGUC_AUTOREMOVENONMATCHINGFILES"] = "TRUE"
+        # Make sure the file will be deleted, add 'x' option
         proc = subprocess.run(
-            [ADAGUC_PATH + "/scripts/scan.sh", "-f", file_to_delete],
+            [ADAGUC_PATH + "/scripts/scan.sh", "-xf", file_to_delete],
             capture_output=True,
             text=True,
             check=False,

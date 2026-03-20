@@ -1,7 +1,7 @@
 **Version 6.8.1 - 2026-03-19**
 
 - If there are more Settings elements in dataset configurations, cleanup will still work. The first found Settings element is used.
-- If `ADAGUC_AUTOREMOVENONMATCHINGFILES` is set to `TRUE`, and the scan script is used with only the `-f` option, the scan script will delete files if ithe given file does not match any dataset. It will exit with code SCAN_EXITCODE_FILENOMATCH_ISDELETED=68.
+- If the scan script is used with the `-xf` option, the scan script will delete the given file if it is not associated with any dataset. It will exit with code SCAN_EXITCODE_FILENOMATCH_ISDELETED=68.
 
 **Version 6.8.0 - 2026-03-18**
 
