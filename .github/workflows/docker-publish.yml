@@ -80,7 +80,7 @@ jobs:
 
       - name: Run Trivy vulnerability scanner
         if: matrix.platform == 'linux/amd64'  # Run trivy only once
-        uses: aquasecurity/trivy-action@0.24.0
+        uses: aquasecurity/trivy-action@0.33.1
         with:
           image-ref: ${{ env.REGISTRY_IMAGE }}@${{ steps.build.outputs.digest }}
           format: 'table'
