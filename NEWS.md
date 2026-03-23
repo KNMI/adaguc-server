@@ -1,3 +1,7 @@
+**Version 7.0.0 - 2026-03-23**
+
+- Renamed organization to knmiadaguc.
+
 **Version 6.7.0 - 2026-03-11**
 
 - Refactored datamodel and use std::string and structs where possible
