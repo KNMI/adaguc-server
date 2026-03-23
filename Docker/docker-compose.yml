@@ -34,13 +34,13 @@ services:
         max-size: "200k"
         max-file: "10"
   adaguc-server:
-    image: openearth/adaguc-server
-#    build: ..
-#    deploy:
-#     resources:
-#       limits:
-#         cpus: "2"
-#         memory: 2048M
+    image: knmi-adaguc/adaguc-server
+    #    build: ..
+    #    deploy:
+    #     resources:
+    #       limits:
+    #         cpus: "2"
+    #         memory: 2048M
     container_name: my-adaguc-server
     hostname: my-adaguc-server
     volumes:
@@ -72,15 +72,15 @@ services:
       options:
         max-size: "200k"
         max-file: "10"
-  
+
   adaguc-server-autosync:
-    image: openearth/adaguc-server
-#    build: ..
-#    deploy:
-#     resources:
-#       limits:
-#         cpus: "2"
-#         memory: 2048M
+    image: knmi-adaguc/adaguc-server
+    #    build: ..
+    #    deploy:
+    #     resources:
+    #       limits:
+    #         cpus: "2"
+    #         memory: 2048M
     container_name: my-adaguc-autosync
     hostname: my-adaguc-autosync
     entrypoint: /adaguc/start_autosync.sh

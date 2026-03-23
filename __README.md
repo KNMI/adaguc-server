@@ -14,7 +14,7 @@ ADAGUC is a geographical information system to visualize netCDF files via the we
 
 # Docker for adaguc-server:
 
-A docker image for adaguc-server is available from [dockerhub](https://hub.docker.com/r/openearth/adaguc-server/). This image enables you to quickstart with adaguc-server, everything is configured and pre-installed. You can mount your own directories and configuration files from your workstation inside the docker container. This allows you to use and configure your own data from your workstation. 
+A docker image for adaguc-server is available from [dockerhub](https://hub.docker.com/r/knmi-adaguc/adaguc-server/). This image enables you to quickstart with adaguc-server, everything is configured and pre-installed. You can mount your own directories and configuration files from your workstation inside the docker container. This allows you to use and configure your own data from your workstation. 
 Inside the docker container the paths for data and configuration files are always the same, this is useful for sharing dataset configuration files between different instances because configuration files can be the same across different environments. 
 You can check the [docker-compose.yml](Docker/docker-compose.yml) file to quickstart with both adaguc-server and adaguc-viewer at the same time.
 
@@ -269,10 +269,9 @@ This WMS URL can be visualized in the viewer by using "Add data".
 
 The compose file is located here: [Docker/docker-compose.yml](Docker/docker-compose.yml)
 
-Prebuilt images are available at https://hub.docker.com/ through openearth:
+Prebuilt images are available at https://hub.docker.com/ through knmi-adaguc :
+* https://hub.docker.com/r/knmi-adaguc/adaguc-server/
 * https://hub.docker.com/r/openearth/adaguc-viewer/
-* https://hub.docker.com/r/openearth/adaguc-server/
-
 
 ## OpenDAP
 

@@ -2,7 +2,7 @@
 FROM python:3.10-slim-bookworm AS build
 
 # To build on linux ubuntu use 
-# docker build -t openearth/adaguc-server --progress plain  --add-host=host.docker.internal:host-gateway .
+# docker build -t knmi-adaguc/adaguc-server --progress plain  --add-host=host.docker.internal:host-gateway .
 # To scan use
 # docker exec -i -t my-adaguc-server /adaguc/scan.sh
 

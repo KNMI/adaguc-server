@@ -8,7 +8,7 @@ on:
       - '[0-9]+.[0-9]+.[0-9]+'
 
 env:
-  REGISTRY_IMAGE: openearth/adaguc-server
+  REGISTRY_IMAGE: knmi-adaguc/adaguc-server
 
 jobs:
   build:
