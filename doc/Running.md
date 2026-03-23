@@ -2,7 +2,7 @@
 
 [Back to readme](../Readme.md)
 
-The easiest way to make use of the adaguc-server is via docker containers. Docker images for the adaguc system are hosted at [dockerhub](https://hub.docker.com/r/knmi-adaguc/adaguc-server/). The required docker containers can be started with docker-compose. The docker compose file can be found in the Docker folder. Detailed instructions can be found below.
+The easiest way to make use of the adaguc-server is via docker containers. Docker images for the adaguc system are hosted at [dockerhub](https://hub.docker.com/r/knmiadaguc/adaguc-server/). The required docker containers can be started with docker-compose. The docker compose file can be found in the Docker folder. Detailed instructions can be found below.
 
 
 ## Start adaguc via Docker (compose)

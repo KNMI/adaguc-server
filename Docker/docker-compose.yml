@@ -34,7 +34,7 @@ services:
         max-size: "200k"
         max-file: "10"
   adaguc-server:
-    image: knmi-adaguc/adaguc-server
+    image: knmiadaguc/adaguc-server
     #    build: ..
     #    deploy:
     #     resources:
@@ -74,7 +74,7 @@ services:
         max-file: "10"
 
   adaguc-server-autosync:
-    image: knmi-adaguc/adaguc-server
+    image: knmiadaguc/adaguc-server
     #    build: ..
     #    deploy:
     #     resources:

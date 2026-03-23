@@ -121,8 +121,8 @@ mkdir \$HOME/adaguc-datasets
 Docker for adaguc-server
 ========================
 
-A prebuilt docker image is available from knmi-adaguc @ dockerhub
-https://hub.docker.com/r/knmi-adaguc/adaguc-server/. The dockerfile is
+A prebuilt docker image is available from knmiadaguc @ dockerhub
+https://hub.docker.com/r/knmiadaguc/adaguc-server/. The dockerfile is
 located at
 https://github.com/KNMI/adaguc-server/blob/master/data/docker/Dockerfile.
 

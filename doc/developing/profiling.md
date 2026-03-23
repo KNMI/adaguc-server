@@ -28,7 +28,7 @@ To do this, edit `./Docker/docker-compose.yml` and modify it like below:
   adaguc-server:
     cap_add:
       - SYS_ADMIN
-    # image: knmi-adaguc/adaguc-server
+    # image: knmiadaguc/adaguc-server
     build: ..
 ```
 
