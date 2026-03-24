@@ -1,6 +1,6 @@
 services:
   adaguc-viewer:
-    image: openearth/adaguc-viewer
+    image: knmiadaguc/adaguc-viewer
     container_name: adaguc-viewer
     hostname: adaguc-viewer
     networks:
@@ -18,7 +18,7 @@ services:
         max-size: "200k"
         max-file: "10"
   adaguc-data-explorer:
-    image: openearth/adaguc-data-explorer
+    image: knmiadaguc/adaguc-data-explorer
     container_name: adaguc-data-explorer
     hostname: adaguc-data-explorer
     networks:

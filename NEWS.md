@@ -1,13 +1,11 @@
-<<<<<<< HEAD
-**Version 6.8.1 - 2026-03-19**
+**Version 7.1.0 - 2026-03-24**
 
 - If there are more Settings elements in dataset configurations, cleanup will still work. The first found Settings element is used.
 - If the scan script is used with the `-xf` option, the scan script will delete the given file if it is not associated with any dataset. It will exit with code SCAN_EXITCODE_FILENOMATCH_ISDELETED=68.
-=======
+
 **Version 7.0.0 - 2026-03-23**
 
 - Renamed organization to knmiadaguc.
->>>>>>> 6aca020aa60820b0554048696716f832f5aacf7d
 
 **Version 6.8.0 - 2026-03-18**
 

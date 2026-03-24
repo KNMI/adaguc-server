@@ -271,7 +271,7 @@ The compose file is located here: [Docker/docker-compose.yml](Docker/docker-comp
 
 Prebuilt images are available at https://hub.docker.com/ through knmiadaguc :
 * https://hub.docker.com/r/knmiadaguc/adaguc-server/
-* https://hub.docker.com/r/openearth/adaguc-viewer/
+* https://hub.docker.com/r/knmiadaguc/adaguc-viewer/
 
 ## OpenDAP
 
