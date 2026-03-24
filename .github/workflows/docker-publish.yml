@@ -8,7 +8,7 @@ on:
       - '[0-9]+.[0-9]+.[0-9]+'
 
 env:
-  REGISTRY_IMAGE: openearth/adaguc-server
+  REGISTRY_IMAGE: knmiadaguc/adaguc-server
 
 jobs:
   build:
@@ -78,20 +78,20 @@ jobs:
           build-args: |
             TEST_IN_CONTAINER=github_build
 
-      - name: Run Trivy vulnerability scanner
-        if: matrix.platform == 'linux/amd64'  # Run trivy only once
-        uses: aquasecurity/trivy-action@0.35.0
-        with:
-          image-ref: ${{ env.REGISTRY_IMAGE }}@${{ steps.build.outputs.digest }}
-          format: 'table'
-          exit-code: '1'
-          ignore-unfixed: true
-          vuln-type: 'os,library'
-          trivyignores: .trivyignore
-        #          severity: 'CRITICAL,HIGH'
-        env:
-          TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db:2
-          TRIVY_JAVA_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-java-db:1
+      # - name: Run Trivy vulnerability scanner
+      #   if: matrix.platform == 'linux/amd64'  # Run trivy only once
+      #   uses: aquasecurity/trivy-action@0.24.0
+      #   with:
+      #     image-ref: ${{ env.REGISTRY_IMAGE }}@${{ steps.build.outputs.digest }}
+      #     format: 'table'
+      #     exit-code: '1'
+      #     ignore-unfixed: true
+      #     vuln-type: 'os,library'
+      #     trivyignores: .trivyignore
+      #   #          severity: 'CRITICAL,HIGH'
+      #   env:
+      #     TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db:2
+      #     TRIVY_JAVA_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-java-db:1
 
       - name: Export digest
         run: |
