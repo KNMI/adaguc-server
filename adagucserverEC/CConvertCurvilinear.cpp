@@ -32,27 +32,27 @@ int CConvertCurvilinear::checkIfIsCurvilinear(CDFObject *cdfObject, CServerParam
   try {
     // cdfObject->getDimension("col");
     // cdfObject->getDimension("row");
-    cdfObject->getDimension("time");
+    cdfObject->getDimensionThrows("time");
 
-    cdfObject->getVariable("lon");
-    cdfObject->getVariable("lat");
+    cdfObject->getVariableThrows("lon");
+    cdfObject->getVariableThrows("lat");
     CDF::Attribute *adagucType = cdfObject->getAttributeNE("ADAGUC_DATATYPE");
     if (adagucType != NULL && adagucType->toString().equals("ADAGUC_CURVILINEAR")) {
       CDBDebug("Enforcing ADAGUC_TYPE ADAGUC_CURVILINEAR");
     } else {
-      cdfObject->getDimension("bounds");
-      CDF::Variable *var = cdfObject->getVariable("lon_bnds");
+      cdfObject->getDimensionThrows("bounds");
+      CDF::Variable *var = cdfObject->getVariableThrows("lon_bnds");
       if (var->dimensionlinks.size() < 2) {
         return 1;
       }
-      cdfObject->getVariable("lat_bnds");
+      cdfObject->getVariableThrows("lat_bnds");
       hasLatLonBounds = true;
     }
   } catch (int e) {
     return 1;
   }
 
-  if (hasLatLonBounds && cdfObject->getDimension("bounds")->getSize() != 4) {
+  if (hasLatLonBounds && cdfObject->getDimensionThrows("bounds")->getSize() != 4) {
     return 1;
   }
   return 0;
@@ -72,11 +72,11 @@ double *CConvertCurvilinear::getBBOXFromLatLonFields(CDF::Variable *swathMiddleL
   float fillValueLat = NAN;
 
   try {
-    swathMiddleLon->getAttribute("_FillValue")->getData(&fillValueLon, 1);
+    swathMiddleLon->getAttributeThrows("_FillValue")->getData(&fillValueLon, 1);
   } catch (int e) {
   };
   try {
-    swathMiddleLat->getAttribute("_FillValue")->getData(&fillValueLat, 1);
+    swathMiddleLat->getAttributeThrows("_FillValue")->getData(&fillValueLat, 1);
   } catch (int e) {
   };
 
@@ -195,8 +195,8 @@ int CConvertCurvilinear::convertCurvilinearHeader(CDFObject *cdfObject, CServerP
   CDF::Variable *swathMiddleLon;
   CDF::Variable *swathMiddleLat;
   try {
-    swathMiddleLon = cdfObject->getVariable("lon");
-    swathMiddleLat = cdfObject->getVariable("lat");
+    swathMiddleLon = cdfObject->getVariableThrows("lon");
+    swathMiddleLat = cdfObject->getVariableThrows("lat");
   } catch (int e) {
     CDBError("lat or lon variables not found");
     return 1;
@@ -328,7 +328,7 @@ int CConvertCurvilinear::convertCurvilinearHeader(CDFObject *cdfObject, CServerP
 
   // Create the new 2D field variables based on the swath variables
   for (size_t v = 0; v < varsToConvert.size(); v++) {
-    CDF::Variable *swathVar = cdfObject->getVariable(varsToConvert[v].c_str());
+    CDF::Variable *swathVar = cdfObject->getVariableThrows(varsToConvert[v].c_str());
 
     // Remove projection attribute if we use lat/lon for projecting
     swathVar->removeAttribute("grid_mapping");
@@ -521,14 +521,14 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mod
   CDF::Variable *varY;
 
   // Create new dimensions and variables (X,Y,T)
-  dimX = cdfObject->getDimension("adaguccoordinatex");
+  dimX = cdfObject->getDimensionThrows("adaguccoordinatex");
   dimX->setSize(dataSource->dWidth);
 
-  dimY = cdfObject->getDimension("adaguccoordinatey");
+  dimY = cdfObject->getDimensionThrows("adaguccoordinatey");
   dimY->setSize(dataSource->dHeight);
 
-  varX = cdfObject->getVariable("adaguccoordinatex");
-  varY = cdfObject->getVariable("adaguccoordinatey");
+  varX = cdfObject->getVariableThrows("adaguccoordinatex");
+  varY = cdfObject->getVariableThrows("adaguccoordinatey");
 
   CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
   CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
@@ -619,8 +619,8 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mod
       drawBilinear = true;
     }
     try {
-      cdfObject->getVariable("lon_bnds");
-      cdfObject->getVariable("lat_bnds");
+      cdfObject->getVariableThrows("lon_bnds");
+      cdfObject->getVariableThrows("lat_bnds");
     } catch (int e) {
       drawBilinear = true;
       drawNearestWithGouraud = true;
@@ -638,8 +638,8 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mod
       CDF::Variable *swathMiddleLat;
 
       try {
-        swathMiddleLon = cdfObject->getVariable("lon");
-        swathMiddleLat = cdfObject->getVariable("lat");
+        swathMiddleLon = cdfObject->getVariableThrows("lon");
+        swathMiddleLat = cdfObject->getVariableThrows("lat");
       } catch (int e) {
         CDBError("lat or lon variables not found");
         return 1;
@@ -661,11 +661,11 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mod
       float fillValueLat = NAN;
 
       try {
-        swathMiddleLon->getAttribute("_FillValue")->getData(&fillValueLon, 1);
+        swathMiddleLon->getAttributeThrows("_FillValue")->getData(&fillValueLon, 1);
       } catch (int e) {
       };
       try {
-        swathMiddleLat->getAttribute("_FillValue")->getData(&fillValueLat, 1);
+        swathMiddleLat->getAttributeThrows("_FillValue")->getData(&fillValueLat, 1);
       } catch (int e) {
       };
       if (1 == 1) {
@@ -764,8 +764,8 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mod
       CDF::Variable *swathLat;
 
       try {
-        swathLon = cdfObject->getVariable("lon_bnds");
-        swathLat = cdfObject->getVariable("lat_bnds");
+        swathLon = cdfObject->getVariableThrows("lon_bnds");
+        swathLat = cdfObject->getVariableThrows("lat_bnds");
       } catch (int e) {
         CDBError("lat or lon variables not found");
         return 1;
@@ -793,11 +793,11 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mod
       float fillValueLat = NAN;
 
       try {
-        swathLon->getAttribute("_FillValue")->getData(&fillValueLon, 1);
+        swathLon->getAttributeThrows("_FillValue")->getData(&fillValueLon, 1);
       } catch (int e) {
       };
       try {
-        swathLat->getAttribute("_FillValue")->getData(&fillValueLat, 1);
+        swathLat->getAttributeThrows("_FillValue")->getData(&fillValueLat, 1);
       } catch (int e) {
       };
 

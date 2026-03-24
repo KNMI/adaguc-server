@@ -1,11 +1,11 @@
 
 void CConvertADAGUCPoint_convert_BIRA_IASB_NETCDF(CDFObject *cdfObject) {
   try {
-    if (cdfObject->getAttribute("source")->toString().equals("BIRA-IASB NETCDF") && cdfObject->getVariableNE("obs") == NULL) {
-      CT::string timeString = cdfObject->getAttribute("measurement_time")->toString();
+    if (cdfObject->getAttributeThrows("source")->toString().equals("BIRA-IASB NETCDF") && cdfObject->getVariableNE("obs") == NULL) {
+      CT::string timeString = cdfObject->getAttributeThrows("measurement_time")->toString();
       cdfObject->setAttributeText("featureType", "point");
-      CDF::Variable *time = cdfObject->getVariable("time");
-      CDF::Dimension *dim = cdfObject->getDimension("time");
+      CDF::Variable *time = cdfObject->getVariableThrows("time");
+      CDF::Dimension *dim = cdfObject->getDimensionThrows("time");
       dim->name = "obs";
       time->name = "obs";
 

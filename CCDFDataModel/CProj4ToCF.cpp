@@ -220,9 +220,6 @@ void CProj4ToCF::initLAEAPerspective(CDF::Variable *projectionVariable, std::vec
 
 void CProj4ToCF::initRPPerspective(CDF::Variable *projectionVariable, std::vector<CKeyValuePair> projKVPList) {
   //+proj=ob_tran +o_proj=longlat +lon_0=15 +o_lat_p=47 +o_lon_p=0 +a=6378.140 +b=6356.750 +x_0=0 +y_0=0 +no_defs
-  // try{projectionVariable->getAttribute("grid_north_pole_latitude")->getDataAsString(&grid_north_pole_latitude);}catch(int e){};
-  // try{projectionVariable->getAttribute("grid_north_pole_longitude")->getDataAsString(&grid_north_pole_longitude);}catch(int e){};
-  // try{projectionVariable->getAttribute("north_pole_grid_longitude")->getDataAsString(&north_pole_grid_longitude);}catch(int e){};
 
   projectionVariable->removeAttributes();
   float v = 0;
@@ -397,7 +394,7 @@ int CProj4ToCF::convertProjToCF(CDF::Variable *projectionVariable, const char *p
   if (projElements.size() < 2) {
     return 1;
   }
-  for (auto &projElement : projElements) {
+  for (auto &projElement: projElements) {
 
     auto element = projElement.split("=");
     if (element.size() > 0) {
@@ -498,7 +495,7 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
   proj4String.copy("Unsupported projection");
   try {
     CT::string grid_mapping_name;
-    projectionVariable->getAttribute("grid_mapping_name")->getDataAsString(&grid_mapping_name);
+    grid_mapping_name = projectionVariable->getAttributeThrows("grid_mapping_name")->toString();
     // CREPORT_INFO_NODOC(CT::string("Unable to obtain projection from proj4 string variable. Trying to use CF conventions to determine projection. grid_mapping_name variable: ") + grid_mapping_name,
     //                    CReportMessage::Categories::GENERAL);
     grid_mapping_name.toLowerCaseSelf();
@@ -513,23 +510,23 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
       CT::string semi_minor_axis = "6356750.000000f";
 
       try {
-        projectionVariable->getAttribute("longitude_of_projection_origin")->getDataAsString(&longitude_of_projection_origin);
+        longitude_of_projection_origin = projectionVariable->getAttributeThrows("longitude_of_projection_origin")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("latitude_of_projection_origin")->getDataAsString(&latitude_of_projection_origin);
+        latitude_of_projection_origin = projectionVariable->getAttributeThrows("latitude_of_projection_origin")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("height_from_earth_center")->getDataAsString(&height_from_earth_center);
+        height_from_earth_center = projectionVariable->getAttributeThrows("height_from_earth_center")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("semi_major_axis")->getDataAsString(&semi_major_axis);
+        semi_major_axis = projectionVariable->getAttributeThrows("semi_major_axis")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("semi_minor_axis")->getDataAsString(&semi_minor_axis);
+        semi_minor_axis = projectionVariable->getAttributeThrows("semi_minor_axis")->toString();
       } catch (int e) {
       };
 
@@ -545,27 +542,27 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
       CT::string sweep_angle_axis = "x";
 
       try {
-        projectionVariable->getAttribute("longitude_of_projection_origin")->getDataAsString(&longitude_of_projection_origin);
+        longitude_of_projection_origin = projectionVariable->getAttributeThrows("longitude_of_projection_origin")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("latitude_of_projection_origin")->getDataAsString(&latitude_of_projection_origin);
+        latitude_of_projection_origin = projectionVariable->getAttributeThrows("latitude_of_projection_origin")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("perspective_point_height")->getDataAsString(&perspective_point_height);
+        perspective_point_height = projectionVariable->getAttributeThrows("perspective_point_height")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("semi_major_axis")->getDataAsString(&semi_major_axis);
+        semi_major_axis = projectionVariable->getAttributeThrows("semi_major_axis")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("semi_minor_axis")->getDataAsString(&semi_minor_axis);
+        semi_minor_axis = projectionVariable->getAttributeThrows("semi_minor_axis")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("sweep_angle_axis")->getDataAsString(&sweep_angle_axis);
+        sweep_angle_axis = projectionVariable->getAttributeThrows("sweep_angle_axis")->toString();
       } catch (int e) {
       };
 
@@ -581,31 +578,31 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
       CT::string false_easting = "0.000000f";
       CT::string false_northing = "0.000000f";
       try {
-        projectionVariable->getAttribute("straight_vertical_longitude_from_pole")->getDataAsString(&straight_vertical_longitude_from_pole);
+        straight_vertical_longitude_from_pole = projectionVariable->getAttributeThrows("straight_vertical_longitude_from_pole")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("latitude_of_projection_origin")->getDataAsString(&latitude_of_projection_origin);
+        latitude_of_projection_origin = projectionVariable->getAttributeThrows("latitude_of_projection_origin")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("standard_parallel")->getDataAsString(&standard_parallel);
+        standard_parallel = projectionVariable->getAttributeThrows("standard_parallel")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("semi_major_axis")->getDataAsString(&semi_major_axis);
+        semi_major_axis = projectionVariable->getAttributeThrows("semi_major_axis")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("semi_minor_axis")->getDataAsString(&semi_minor_axis);
+        semi_minor_axis = projectionVariable->getAttributeThrows("semi_minor_axis")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("false_easting")->getDataAsString(&false_easting);
+        false_easting = projectionVariable->getAttributeThrows("false_easting")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("false_northing")->getDataAsString(&false_northing);
+        false_northing = projectionVariable->getAttributeThrows("false_northing")->toString();
       } catch (int e) {
       };
 
@@ -626,31 +623,31 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
       CT::string false_northing = "0";
 
       try {
-        projectionVariable->getAttribute("longitude_of_central_meridian")->getDataAsString(&longitude_of_central_meridian);
+        longitude_of_central_meridian = projectionVariable->getAttributeThrows("longitude_of_central_meridian")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("latitude_of_projection_origin")->getDataAsString(&latitude_of_projection_origin);
+        latitude_of_projection_origin = projectionVariable->getAttributeThrows("latitude_of_projection_origin")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("standard_parallel")->getDataAsString(&standard_parallel);
+        standard_parallel = projectionVariable->getAttributeThrows("standard_parallel")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("semi_major_axis")->getDataAsString(&semi_major_axis);
+        semi_major_axis = projectionVariable->getAttributeThrows("semi_major_axis")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("semi_minor_axis")->getDataAsString(&semi_minor_axis);
+        semi_minor_axis = projectionVariable->getAttributeThrows("semi_minor_axis")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("false_easting")->getDataAsString(&false_easting);
+        false_easting = projectionVariable->getAttributeThrows("false_easting")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("false_northing")->getDataAsString(&false_northing);
+        false_northing = projectionVariable->getAttributeThrows("false_northing")->toString();
       } catch (int e) {
       };
 
@@ -682,35 +679,35 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
       CT::string false_northing = "0";
 
       try {
-        projectionVariable->getAttribute("longitude_of_projection_origin")->getDataAsString(&longitude_of_projection_origin);
+        longitude_of_projection_origin = projectionVariable->getAttributeThrows("longitude_of_projection_origin")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("latitude_of_projection_origin")->getDataAsString(&latitude_of_projection_origin);
+        latitude_of_projection_origin = projectionVariable->getAttributeThrows("latitude_of_projection_origin")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("longitude_of_prime_meridian")->getDataAsString(&longitude_of_prime_meridian);
+        longitude_of_prime_meridian = projectionVariable->getAttributeThrows("longitude_of_prime_meridian")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("semi_major_axis")->getDataAsString(&semi_major_axis);
+        semi_major_axis = projectionVariable->getAttributeThrows("semi_major_axis")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("semi_minor_axis")->getDataAsString(&semi_minor_axis);
+        semi_minor_axis = projectionVariable->getAttributeThrows("semi_minor_axis")->toString();
       } catch (int e) {
         try {
-          projectionVariable->getAttribute("inverse_flattening")->getDataAsString(&inverse_flattening);
+          inverse_flattening = projectionVariable->getAttributeThrows("inverse_flattening")->toString();
         } catch (int e) {
         }
       };
       try {
-        projectionVariable->getAttribute("false_easting")->getDataAsString(&false_easting);
+        false_easting = projectionVariable->getAttributeThrows("false_easting")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("false_northing")->getDataAsString(&false_northing);
+        false_northing = projectionVariable->getAttributeThrows("false_northing")->toString();
       } catch (int e) {
       };
 
@@ -740,31 +737,31 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
       CT::string false_easting = "0";
       CT::string false_northing = "0";
       try {
-        projectionVariable->getAttribute("grid_north_pole_latitude")->getDataAsString(&grid_north_pole_latitude);
+        grid_north_pole_latitude = projectionVariable->getAttributeThrows("grid_north_pole_latitude")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("grid_north_pole_longitude")->getDataAsString(&grid_north_pole_longitude);
+        grid_north_pole_longitude = projectionVariable->getAttributeThrows("grid_north_pole_longitude")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("north_pole_grid_longitude")->getDataAsString(&north_pole_grid_longitude);
+        north_pole_grid_longitude = projectionVariable->getAttributeThrows("north_pole_grid_longitude")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("semi_major_axis")->getDataAsString(&semi_major_axis);
+        semi_major_axis = projectionVariable->getAttributeThrows("semi_major_axis")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("semi_minor_axis")->getDataAsString(&semi_minor_axis);
+        semi_minor_axis = projectionVariable->getAttributeThrows("semi_minor_axis")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("false_easting")->getDataAsString(&false_easting);
+        false_easting = projectionVariable->getAttributeThrows("false_easting")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("false_northing")->getDataAsString(&false_northing);
+        false_northing = projectionVariable->getAttributeThrows("false_northing")->toString();
       } catch (int e) {
       };
       proj4String.print("+proj=ob_tran +o_proj=longlat +lon_0=%f +o_lat_p=%f +o_lon_p=%f +a=%f +b=%f +x_0=%f +y_0=%f +no_defs", grid_north_pole_longitude.toDouble() + 180.0f,
@@ -778,25 +775,25 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
 
       // Get latitude_of_projection_origin
       try {
-        projectionVariable->getAttribute("latitude_of_projection_origin")->getDataAsString(&latitude_of_projection_origin);
+        latitude_of_projection_origin = projectionVariable->getAttributeThrows("latitude_of_projection_origin")->toString();
       } catch (int e) {
       };
       // Get central_meridian
       try {
-        projectionVariable->getAttribute("longitude_of_central_meridian")->getDataAsString(&longitude_of_central_meridian);
+        longitude_of_central_meridian = projectionVariable->getAttributeThrows("longitude_of_central_meridian")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("central_meridian")->getDataAsString(&longitude_of_central_meridian);
+        longitude_of_central_meridian = projectionVariable->getAttributeThrows("central_meridian")->toString();
       } catch (int e) {
       };
       // Get scale_factor
       try {
-        projectionVariable->getAttribute("scale_factor_at_projection_origin")->getDataAsString(&scale_factor_at_projection_origin);
+        scale_factor_at_projection_origin = projectionVariable->getAttributeThrows("scale_factor_at_projection_origin")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("scale_factor")->getDataAsString(&scale_factor_at_projection_origin);
+        scale_factor_at_projection_origin = projectionVariable->getAttributeThrows("scale_factor")->toString();
       } catch (int e) {
       };
 
@@ -806,19 +803,19 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
       CT::string false_easting = "0";
       CT::string false_northing = "0";
       try {
-        projectionVariable->getAttribute("semi_major_axis")->getDataAsString(&semi_major_axis);
+        semi_major_axis = projectionVariable->getAttributeThrows("semi_major_axis")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("semi_minor_axis")->getDataAsString(&semi_minor_axis);
+        semi_minor_axis = projectionVariable->getAttributeThrows("semi_minor_axis")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("false_easting")->getDataAsString(&false_easting);
+        false_easting = projectionVariable->getAttributeThrows("false_easting")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("false_northing")->getDataAsString(&false_northing);
+        false_northing = projectionVariable->getAttributeThrows("false_northing")->toString();
       } catch (int e) {
       };
 
@@ -830,16 +827,16 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
 
       // Get latitude_of_projection_origin
       try {
-        projectionVariable->getAttribute("latitude_of_projection_origin")->getDataAsString(&latitude_of_projection_origin);
+        latitude_of_projection_origin = projectionVariable->getAttributeThrows("latitude_of_projection_origin")->toString();
       } catch (int e) {
       };
       // Get central_meridian
       try {
-        projectionVariable->getAttribute("longitude_of_central_meridian")->getDataAsString(&longitude_of_central_meridian);
+        longitude_of_central_meridian = projectionVariable->getAttributeThrows("longitude_of_central_meridian")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("central_meridian")->getDataAsString(&longitude_of_central_meridian);
+        longitude_of_central_meridian = projectionVariable->getAttributeThrows("central_meridian")->toString();
       } catch (int e) {
       };
 
@@ -847,11 +844,11 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
       CT::string semi_major_axis = "6377397.155"; // 299.1528128,f=a/(a-b) b=(-(a/f))+a   (-(6377397.155/299.1528128))+6377397.155 = 6356079
       CT::string semi_minor_axis = "6356079";
       try {
-        projectionVariable->getAttribute("semi_major_axis")->getDataAsString(&semi_major_axis);
+        semi_major_axis = projectionVariable->getAttributeThrows("semi_major_axis")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("semi_minor_axis")->getDataAsString(&semi_minor_axis);
+        semi_minor_axis = projectionVariable->getAttributeThrows("semi_minor_axis")->toString();
       } catch (int e) {
       };
 
@@ -869,31 +866,31 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
       CT::string false_northing = "0";
 
       try {
-        projectionVariable->getAttribute("longitude_of_central_meridian")->getDataAsString(&longitude_of_central_meridian);
+        longitude_of_central_meridian = projectionVariable->getAttributeThrows("longitude_of_central_meridian")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("latitude_of_projection_origin")->getDataAsString(&latitude_of_projection_origin);
+        latitude_of_projection_origin = projectionVariable->getAttributeThrows("latitude_of_projection_origin")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("standard_parallel")->getDataAsString(&standard_parallel);
+        standard_parallel = projectionVariable->getAttributeThrows("standard_parallel")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("semi_major_axis")->getDataAsString(&semi_major_axis);
+        semi_major_axis = projectionVariable->getAttributeThrows("semi_major_axis")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("semi_minor_axis")->getDataAsString(&semi_minor_axis);
+        semi_minor_axis = projectionVariable->getAttributeThrows("semi_minor_axis")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("false_easting")->getDataAsString(&false_easting);
+        false_easting = projectionVariable->getAttributeThrows("false_easting")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("false_northing")->getDataAsString(&false_northing);
+        false_northing = projectionVariable->getAttributeThrows("false_northing")->toString();
       } catch (int e) {
       };
 
@@ -925,31 +922,31 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
 
       found = false;
       try {
-        projectionVariable->getAttribute("longitude_of_central_meridian")->getDataAsString(&longitude_of_central_meridian);
+        longitude_of_central_meridian = projectionVariable->getAttributeThrows("longitude_of_central_meridian")->toString();
         found = true;
       } catch (int e) {
       };
       if (!found) {
         try {
-          projectionVariable->getAttribute("longitude_of_projection_origin")->getDataAsString(&longitude_of_central_meridian);
+          longitude_of_central_meridian = projectionVariable->getAttributeThrows("longitude_of_projection_origin")->toString();
           found = true;
         } catch (int e) {
         };
       }
       try {
-        projectionVariable->getAttribute("latitude_of_projection_origin")->getDataAsString(&latitude_of_projection_origin);
+        latitude_of_projection_origin = projectionVariable->getAttributeThrows("latitude_of_projection_origin")->toString();
       } catch (int e) {
       };
 
       found = false;
       try {
-        projectionVariable->getAttribute("scale_factor_at_projection_origin")->getDataAsString(&scale_factor_at_projection_origin);
+        scale_factor_at_projection_origin = projectionVariable->getAttributeThrows("scale_factor_at_projection_origin")->toString();
         found = true;
       } catch (int e) {
       };
       if (!found) {
         try {
-          projectionVariable->getAttribute("scale_factor_at_central_meridian")->getDataAsString(&scale_factor_at_projection_origin);
+          scale_factor_at_projection_origin = projectionVariable->getAttributeThrows("scale_factor_at_central_meridian")->toString();
           found = true;
         } catch (int e) {
         };
@@ -961,19 +958,19 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
       }
 
       try {
-        projectionVariable->getAttribute("semi_major_axis")->getDataAsString(&semi_major_axis);
+        semi_major_axis = projectionVariable->getAttributeThrows("semi_major_axis")->toString();
       } catch (int e) {
       };
 
       found = false;
       try {
-        projectionVariable->getAttribute("semi_minor_axis")->getDataAsString(&semi_minor_axis);
+        semi_minor_axis = projectionVariable->getAttributeThrows("semi_minor_axis")->toString();
         found = true;
       } catch (int e) {
       };
       if (!found) {
         try {
-          projectionVariable->getAttribute("inverse_flattening")->getDataAsString(&inverse_flattening);
+          inverse_flattening = projectionVariable->getAttributeThrows("inverse_flattening")->toString();
           found = true;
         } catch (int e) {
         };
@@ -986,11 +983,11 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
         }
       }
       try {
-        projectionVariable->getAttribute("false_easting")->getDataAsString(&false_easting);
+        false_easting = projectionVariable->getAttributeThrows("false_easting")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("false_northing")->getDataAsString(&false_northing);
+        false_northing = projectionVariable->getAttributeThrows("false_northing")->toString();
       } catch (int e) {
       };
 
@@ -1009,31 +1006,31 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
       CT::string false_northing = "0";
 
       try {
-        projectionVariable->getAttribute("longitude_of_projection_origin")->getDataAsString(&longitude_of_projection_origin);
+        longitude_of_projection_origin = projectionVariable->getAttributeThrows("longitude_of_projection_origin")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("latitude_of_projection_origin")->getDataAsString(&latitude_of_projection_origin);
+        latitude_of_projection_origin = projectionVariable->getAttributeThrows("latitude_of_projection_origin")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("semi_major_axis")->getDataAsString(&semi_major_axis);
+        semi_major_axis = projectionVariable->getAttributeThrows("semi_major_axis")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("semi_minor_axis")->getDataAsString(&semi_minor_axis);
+        semi_minor_axis = projectionVariable->getAttributeThrows("semi_minor_axis")->toString();
       } catch (int e) {
         try {
-          projectionVariable->getAttribute("inverse_flattening")->getDataAsString(&inverse_flattening);
+          inverse_flattening = projectionVariable->getAttributeThrows("inverse_flattening")->toString();
         } catch (int e) {
         }
       };
       try {
-        projectionVariable->getAttribute("false_easting")->getDataAsString(&false_easting);
+        false_easting = projectionVariable->getAttributeThrows("false_easting")->toString();
       } catch (int e) {
       };
       try {
-        projectionVariable->getAttribute("false_northing")->getDataAsString(&false_northing);
+        false_northing = projectionVariable->getAttributeThrows("false_northing")->toString();
       } catch (int e) {
       };
 
@@ -1060,7 +1057,7 @@ CT::string CProj4ToCF::convertCFToProj(CDF::Variable *projectionVariable) {
   } catch (int e) {
     // CDBError("%s\n",CDF::lastErrorMessage.c_str());
     try {
-      CREPORT_INFO_NODOC(CT::string("Unsupported projection: ") + projectionVariable->getAttribute("grid_mapping_name")->toString(), CReportMessage::Categories::GENERAL);
+      CREPORT_INFO_NODOC(CT::string("Unsupported projection: ") + projectionVariable->getAttributeThrows("grid_mapping_name")->toString(), CReportMessage::Categories::GENERAL);
     } catch (int e) {
       CREPORT_INFO_NODOC(CT::string("Unsupported projection: ") + projectionVariable->name, CReportMessage::Categories::GENERAL);
     }
@@ -1081,8 +1078,8 @@ int CProj4ToCF::__checkProjString(const char *name, const char *string) {
       delete projectionVariable;
       return 1;
     }
-    projectionVariable->getAttribute("proj4_origin")->getDataAsString(&proj4_origin);
-    projectionVariable->getAttribute("proj4_params")->getDataAsString(&proj4_recons);
+    proj4_origin = projectionVariable->getAttributeThrows("proj4_origin")->toString();
+    proj4_recons = projectionVariable->getAttributeThrows("proj4_params")->toString();
     if (!proj4_origin.equals(string)) {
       CDBError("FAILED: %s Proj string parsing failed: \nIN:  [%s]\nOUT: [%s]", name, string, proj4_origin.c_str());
       delete projectionVariable;
@@ -1123,51 +1120,6 @@ int CProj4ToCF::unitTest() {
   if (__checkProjString("Oblique stereographic", "+proj=sterea +lat_0=52.156162 +lon_0=5.387639 +k=0.999908 +a=6378140.000000 +b=6356755.500000 +x_0=155000.000000 +y_0=463000.000000") != 0)
     error = true;
   if (__checkProjString("Mercator", "+proj=tmerc +lat_0=16.930000 +lon_0=67.180000") != 0) error = true;
-
-  //         //MSG navigation
-  //         if(convertBackAndFort("+proj=geos +lon_0=0.000000 +lat_0=0 +h=35807.414063 +a=6378.169 +b=6356.5838",projectionVariable)!=0){throw(__LINE__);}
-  //         projectionVariable->getAttribute("proj4_origin")->getDataAsString(&proj4_origin);
-  //         projectionVariable->getAttribute("proj4_recons")->getDataAsString(&proj4_recons);
-  //         if(!proj4_origin.equals("+proj=geos +lon_0=0.000000 +lat_0=0.000000 +h=35807.414063 +a=6378.169000 +b=6356.583800")){throw(__LINE__);}
-  //         if(!proj4_recons.equals("+proj=geos +lon_0=0.000000 +lat_0=0.000000 +h=35807.414063 +a=6378.169000 +b=6356.584000")){throw(__LINE__);}
-  //
-  //         //Polar stereographic in KM
-  //         if(convertBackAndFort("+proj=stere +lat_0=90 +lon_0=0 +lat_ts=60 +a=6378.14 +b=6356.75 +x_0=0 y_0=0",projectionVariable)!=0){throw(__LINE__);}
-  //         projectionVariable->getAttribute("proj4_origin")->getDataAsString(&proj4_origin);
-  //         projectionVariable->getAttribute("proj4_recons")->getDataAsString(&proj4_recons);
-  //         if(!proj4_origin.equals("+proj=stere +lat_0=90.000000 +lon_0=0.000000 +lat_ts=60.000000 +a=6378.140000 +b=6356.750000 +x_0=0.000000 +y_0=0.000000")){throw(__LINE__);}
-  //         if(!proj4_recons.equals("+proj=stere +lat_0=90.000000 +lon_0=0.000000 +lat_ts=60.000000 +a=6378.140000 +b=6356.750000 +x_0=0.000000 +y_0=0.000000")){throw(__LINE__);}
-
-  //         //Polar stereographic in M
-  //         if(convertBackAndFort("+proj=stere +lat_0=90.000000 +lon_0=263.000000 +lat_ts=60.000000 +a=6378140.000000 +b=6356750.000000 +x_0=3475000.000000
-  //         +y_0=7475000.000000",projectionVariable)!=0){throw(__LINE__);} projectionVariable->getAttribute("proj4_origin")->getDataAsString(&proj4_origin);
-  //         projectionVariable->getAttribute("proj4_recons")->getDataAsString(&proj4_recons);
-  //         if(!proj4_origin.equals("+proj=stere +lat_0=90.000000 +lon_0=263.000000 +lat_ts=60.000000 +a=6378140.000000 +b=6356750.000000 +x_0=3475000.000000 +y_0=7475000.000000")){throw(__LINE__);}
-  //         if(!proj4_recons.equals("+proj=stere +lat_0=90.000000 +lon_0=263.000000 +lat_ts=60.000000 +a=6378140.000000 +b=6356750.000000 +x_0=3475000.000000 +y_0=7475000.000000")){throw(__LINE__);}
-  //
-  //         //Lambert conformal conic
-  //         if(convertBackAndFort("+proj=lcc +lat_0=46.8 +lat_1=45.89892 +lat_2=47.69601 +lon_0=2.337229 +k_0=1.00 +x_0=600000 +y_0=2200000",projectionVariable)!=0){throw(__LINE__);}
-  //         projectionVariable->getAttribute("proj4_origin")->getDataAsString(&proj4_origin);
-  //         projectionVariable->getAttribute("proj4_recons")->getDataAsString(&proj4_recons);
-  //         if(!proj4_origin.equals("+proj=lcc +lat_0=46.800000 +lat_1=45.898920 +lat_2=47.696010 +lon_0=2.337229 +k_0=1.000000 +x_0=600000.000000 +y_0=2200000.000000")){throw(__LINE__);}
-  //         if(!proj4_recons.equals("+proj=lcc +lat_0=46.799999 +lat_1=45.898918 +lat_2=47.696011 +lon_0=2.337229 +k_0=1.0 +x_0=600000.000000 +y_0=2200000.000000")){throw(__LINE__);}
-  //
-  //         //Rotated pole
-  //         if(convertBackAndFort("+proj=ob_tran +o_proj=longlat +lon_0=15 +o_lat_p=47 +o_lon_p=0 +a=6378.140 +b=6356.750 +x_0=0 +y_0=0 +no_defs",projectionVariable)!=0){throw(__LINE__);}
-  //         projectionVariable->getAttribute("proj4_origin")->getDataAsString(&proj4_origin);
-  //         projectionVariable->getAttribute("proj4_recons")->getDataAsString(&proj4_recons);
-  //         if(!proj4_origin.equals("+proj=ob_tran +o_proj=0.000000 +lon_0=15.000000 +o_lat_p=47.000000 +o_lon_p=0.000000 +a=6378.140000 +b=6356.750000 +x_0=0.000000
-  //         +y_0=0.000000")){throw(__LINE__);} if(!proj4_recons.equals("+proj=ob_tran +o_proj=longlat +lon_0=15.000000 +o_lat_p=47.000000 +o_lon_p=0.000000 +a=6378.140000 +b=6356.750000 +x_0=0.000000
-  //         +y_0=0.000000 +no_defs")){throw(__LINE__);}
-  //
-  //         //oblique_stereographic
-  //         if(convertBackAndFort("+proj=sterea +lat_0=52.15616055555555 +lon_0=5.38763888888889 +k=0.9999079 +x_0=155000 +y_0=463000 +ellps=bessel
-  //         +no_defs",projectionVariable)!=0){throw(__LINE__);} projectionVariable->getAttribute("proj4_origin")->getDataAsString(&proj4_origin);
-  //         projectionVariable->getAttribute("proj4_recons")->getDataAsString(&proj4_recons);
-  //         if(!proj4_origin.equals("+proj=sterea +lat_0=52.156161 +lon_0=5.387639 +k=0.999908 +x_0=155000.000000 +y_0=463000.000000 +ellps=0.000000")){throw(__LINE__);}
-  //         if(!proj4_recons.equals("+proj=sterea +lat_0=52.156162 +lon_0=5.387639 +k=0.999908 +a=6378140.000000 +b=6356755.500000 +x_0=155000.000000 +y_0=463000.000000 +no_defs"
-  //         )){throw(__LINE__);}
-  //
 
   if (error) {
     CDBError("*** Unit test failed ***");

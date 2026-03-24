@@ -121,7 +121,11 @@ CPNGRaster *CReadPNG_read_png_file(const char *file_name, bool pngReadHeaderOnly
   int num_text = 0;
   png_get_text(png_ptr, info_ptr, &text_ptr, &num_text);
 
+  if (num_text == 0) {
+    CDBWarning("Found no attributes in PNG file");
+  }
   for (int j = 0; j < num_text; j++) {
+    CDBDebug("Found %d): [%s]=[%s]", j, text_ptr[j].key, text_ptr[j].text);
     pngRaster->headers.push_back({.key = text_ptr[j].key, .value = text_ptr[j].text});
   }
 

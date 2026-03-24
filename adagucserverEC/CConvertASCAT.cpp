@@ -34,18 +34,18 @@ int CConvertASCAT::convertASCATHeader(CDFObject *cdfObject) {
   // Check whether this is really an ascat file
   if (cdfObject->getDimensionNE("nXtrack") != NULL && cdfObject->getDimensionNE("nTimes") != NULL) {
     try {
-      cdfObject->getDimension("nXtrack")->name = "NUMCELLS";
+      cdfObject->getDimensionThrows("nXtrack")->name = "NUMCELLS";
     } catch (int e) {
     }
     try {
-      cdfObject->getDimension("nTimes")->name = "NUMROWS";
+      cdfObject->getDimensionThrows("nTimes")->name = "NUMROWS";
     } catch (int e) {
     }
   }
 
   try {
-    cdfObject->getDimensionIgnoreCase("NUMROWS");
-    cdfObject->getDimensionIgnoreCase("NUMCELLS");
+    cdfObject->getDimensionIgnoreCaseThrows("NUMROWS");
+    cdfObject->getDimensionIgnoreCaseThrows("NUMCELLS");
   } catch (int e) {
     return 1;
   }
@@ -78,7 +78,7 @@ int CConvertASCAT::convertASCATHeader(CDFObject *cdfObject) {
     // Detect time from the netcdf data and copy the same units from the original time variable
     if (origT != NULL) {
       try {
-        varT->setAttributeText("units", origT->getAttribute("units")->toString().c_str());
+        varT->setAttributeText("units", origT->getAttributeThrows("units")->toString().c_str());
         if (origT->readData(CDF_DOUBLE) != 0) {
           CDBError("Unable to read time variable");
         } else {
@@ -86,7 +86,7 @@ int CConvertASCAT::convertASCATHeader(CDFObject *cdfObject) {
           double tfill = 0;
           bool hastfill = false;
           try {
-            origT->getAttribute("_FillValue")->getData(&tfill, 1);
+            origT->getAttributeThrows("_FillValue")->getData(&tfill, 1);
             hastfill = true;
           } catch (int e) {
           }
@@ -180,7 +180,7 @@ int CConvertASCAT::convertASCATHeader(CDFObject *cdfObject) {
 
   // Create the new 2D field variiables based on the swath variables
   for (size_t v = 0; v < varsToConvert.size(); v++) {
-    CDF::Variable *swathVar = cdfObject->getVariable(varsToConvert[v].c_str());
+    CDF::Variable *swathVar = cdfObject->getVariableThrows(varsToConvert[v].c_str());
     if (swathVar->dimensionlinks.size() >= 2) {
 #ifdef CCONVERTASCAT_DEBUG
       CDBDebug("Converting %s", swathVar->name.c_str());
@@ -230,18 +230,18 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource, int mode) {
   CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
   if (cdfObject->getDimensionNE("nXtrack") != NULL && cdfObject->getDimensionNE("nTimes") != NULL) {
     try {
-      cdfObject->getDimension("nXtrack")->name = "NUMCELLS";
+      cdfObject->getDimensionThrows("nXtrack")->name = "NUMCELLS";
     } catch (int e) {
     }
     try {
-      cdfObject->getDimension("nTimes")->name = "NUMROWS";
+      cdfObject->getDimensionThrows("nTimes")->name = "NUMROWS";
     } catch (int e) {
     }
   }
 
   try {
-    cdfObject->getDimensionIgnoreCase("NUMROWS");
-    cdfObject->getDimensionIgnoreCase("NUMCELLS");
+    cdfObject->getDimensionIgnoreCaseThrows("NUMROWS");
+    cdfObject->getDimensionIgnoreCaseThrows("NUMCELLS");
   } catch (int e) {
     return 1;
   }
@@ -275,12 +275,12 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource, int mode) {
   CDF::Variable *swathLat = nullptr;
 
   try {
-    swathLon = cdfObject->getVariable("lon");
-    swathLat = cdfObject->getVariable("lat");
+    swathLon = cdfObject->getVariableThrows("lon");
+    swathLat = cdfObject->getVariableThrows("lat");
   } catch (int e) {
     try {
-      swathLon = cdfObject->getVariable("longitude");
-      swathLat = cdfObject->getVariable("latitude");
+      swathLon = cdfObject->getVariableThrows("longitude");
+      swathLat = cdfObject->getVariableThrows("latitude");
     } catch (int e) {
       CDBError("lat or lon variables not found");
     }
@@ -297,7 +297,7 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource, int mode) {
       CDBDebug("_FillValue = %f", dataObjects[d]->dfNodataValue);
 #endif
       float f = dataObjects[d]->dfNodataValue;
-      new2DVar[d]->getAttribute("_FillValue")->setData(CDF_FLOAT, &f, 1);
+      new2DVar[d]->getAttributeThrows("_FillValue")->setData(CDF_FLOAT, &f, 1);
     } else
       dataObjects[d]->hasNodataValue = false;
   }
@@ -373,14 +373,14 @@ int CConvertASCAT::convertASCATData(CDataSource *dataSource, int mode) {
     CDF::Variable *varY;
 
     // Create new dimensions and variables (X,Y,T)
-    dimX = cdfObject->getDimension("x");
+    dimX = cdfObject->getDimensionThrows("x");
     dimX->setSize(dataSource->dWidth);
 
-    dimY = cdfObject->getDimension("y");
+    dimY = cdfObject->getDimensionThrows("y");
     dimY->setSize(dataSource->dHeight);
 
-    varX = cdfObject->getVariable("x");
-    varY = cdfObject->getVariable("y");
+    varX = cdfObject->getVariableThrows("x");
+    varY = cdfObject->getVariableThrows("y");
 
     CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
     CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);

@@ -205,7 +205,7 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
           bool hasStatusFlag = false;
           if (dimensionlessmode == false) {
             std::vector<CDataSource::StatusFlag> statusFlagList;
-            CDataSource::readStatusFlags(dimVar, &statusFlagList);
+            CDataSource::readStatusFlags(dimVar, statusFlagList);
             if (statusFlagList.size() > 0) hasStatusFlag = true;
             statusFlagList.clear();
             if (hasStatusFlag) {
@@ -588,7 +588,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
 
                   // Check for status flag dimensions
 
-                  CDataSource::readStatusFlags(dimVar, &statusFlagList);
+                  CDataSource::readStatusFlags(dimVar, statusFlagList);
                   if (statusFlagList.size() > 0) hasStatusFlag = true;
                 }
 
@@ -661,7 +661,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
                         if (dimValues[i] != NC_FILL_DOUBLE) {
                           if (isTimeDim[d] == false) {
                             if (hasStatusFlag == true) {
-                              uniqueKey.print("%s", CDataSource::getFlagMeaning(&statusFlagList, double(dimValues[i])));
+                              uniqueKey.print("%s", CDataSource::getFlagMeaning(statusFlagList, double(dimValues[i])).c_str());
                               uniqueDimensionValueRet = uniqueDimensionValueSet.insert(uniqueKey.c_str());
                               if (uniqueDimensionValueRet.second == true) {
                                 dbAdapter->setFileString(tableNames[d].c_str(), (*fileList)[j].c_str(), uniqueKey.c_str(), int(i), fileDate.c_str(), &geoOptions);

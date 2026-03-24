@@ -162,7 +162,7 @@ int CCreateHistogram::addData(std::vector<CDataSource *> &dataSources) {
 
     //       JSONdata.printconcat("\"dims\":{");
     //       for(size_t d=0;d<dataSources[i]->requiredDims.size();d++){
-    //         JSONdata.printconcat("\"%s\":\"%s\"",dataSources[i]->requiredDims[d]->name.c_str(),dataSources[i]->requiredDims[d]->value.c_str());
+    //         JSONdata.printconcat("\"%s\":\"%s\"",dataSources[i]->requiredDims[d].name.c_str(),dataSources[i]->requiredDims[d].value.c_str());
     //       }
     //
     //       JSONdata.concat("},");

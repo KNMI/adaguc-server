@@ -27,6 +27,7 @@
 
 #include <cmath>
 #include <netcdf.h>
+#include "CDFCopyData.h"
 
 int CDFHDF5Reader::CustomForecastReader::readData(CDF::Variable *thisVar, size_t *start, size_t *count, ptrdiff_t *stride) {
 #ifdef CCDFHDF5IO_DEBUG
@@ -43,7 +44,7 @@ int CDFHDF5Reader::CustomForecastReader::readData(CDF::Variable *thisVar, size_t
   newstart[0] = 0;
   CT::string varName;
   varName.print("image%d%simage_data", (int)start[0] + 1, CCDFHDF5IO_GROUPSEPARATOR);
-  CDF::Variable *var = ((CDFObject *)thisVar->getParentCDFObject())->getVariable(varName.c_str());
+  CDF::Variable *var = ((CDFObject *)thisVar->getParentCDFObject())->getVariableThrows(varName.c_str());
 
   CDBDebug("Start reading %s", var->name.c_str());
 
@@ -62,7 +63,7 @@ int CDFHDF5Reader::CustomForecastReader::readData(CDF::Variable *thisVar, size_t
   }
   thisVar->setSize(size);
   CDF::allocateData(thisVar->getType(), &thisVar->data, size);
-  status = CDF::DataCopier::copy(thisVar->data, thisVar->getType(), var->data, thisVar->getType(), 0, 0, size);
+  status = CDFCopyData(thisVar->data, thisVar->getType(), var->data, thisVar->getType(), 0, 0, size);
   if (status != 0) {
     CDBError("Unable to copy data");
     throw("__LINE__");
@@ -603,7 +604,7 @@ int CDFHDF5Reader::convertNWCSAFtoCF() {
     cdfObject->variables[j]->setAttributeText("ADAGUC_SKIP", "true");
     CT::string projectionString = "";
     try {
-      if (cdfObject->variables[j]->getAttribute("CLASS")->toString().toLowerCase().equals("image")) {
+      if (cdfObject->variables[j]->getAttributeThrows("CLASS")->toString().toLowerCase().equals("image")) {
         cdfObject->variables[j]->removeAttribute("ADAGUC_SKIP");
         CDBDebug("Variable %s is an IMAGE", cdfObject->variables[j]->name.c_str());
         if (dimsDone == false) {
@@ -736,7 +737,7 @@ int CDFHDF5Reader::convertNWCSAFtoCF() {
             projection->addAttribute(proj4_params);
             proj4_params->setName("proj4_params");
           }
-          proj4_params->setData(CDF_CHAR, projectionString.c_str(), projectionString.length());
+          proj4_params->setString(projectionString.c_str());
 
           // Set time dimension
           CDF::Variable *time = new CDF::Variable();
@@ -749,14 +750,10 @@ int CDFHDF5Reader::convertNWCSAFtoCF() {
           time->currentType = CDF_DOUBLE;
           time->nativeType = CDF_DOUBLE;
           time->isDimension = true;
-          CDF::Attribute *time_units = new CDF::Attribute();
-          time_units->setName("units");
-          time_units->setData("minutes since 2000-01-01 00:00:00\0");
+          CDF::Attribute *time_units = new CDF::Attribute("units", "minutes since 2000-01-01 00:00:00");
           time->addAttribute(time_units);
 
-          CDF::Attribute *standard_name = new CDF::Attribute();
-          standard_name->setName("standard_name");
-          standard_name->setData("time");
+          CDF::Attribute *standard_name = new CDF::Attribute("standard_name", "time");
           time->addAttribute(standard_name);
 
           time->dimensionlinks.push_back(timeDim);
@@ -791,12 +788,10 @@ int CDFHDF5Reader::convertNWCSAFtoCF() {
 
           dimsDone = true;
         }
-        CDF::Attribute *grid_mapping = new CDF::Attribute();
-        grid_mapping->setName("grid_mapping");
-        grid_mapping->setData(CDF_CHAR, (char *)"projection\0", 11);
+        CDF::Attribute *grid_mapping = new CDF::Attribute("grid_mapping", "projection");
         cdfObject->variables[j]->addAttribute(grid_mapping);
 
-        cdfObject->variables[j]->dimensionlinks.insert(cdfObject->variables[j]->dimensionlinks.begin(), 1, cdfObject->getDimension("time"));
+        cdfObject->variables[j]->dimensionlinks.insert(cdfObject->variables[j]->dimensionlinks.begin(), 1, cdfObject->getDimensionThrows("time"));
 
         // Scale and offset
 
@@ -845,7 +840,7 @@ int CDFHDF5Reader::convertLSASAFtoCF() {
     cdfObject->variables[j]->setAttributeText("ADAGUC_SKIP", "true");
     CT::string projectionString = "";
     try {
-      if (cdfObject->variables[j]->getAttribute("CLASS")->toString().toLowerCase().equals("data")) {
+      if (cdfObject->variables[j]->getAttributeThrows("CLASS")->toString().toLowerCase().equals("data")) {
         cdfObject->variables[j]->removeAttribute("ADAGUC_SKIP");
         // CDBDebug("Variable %s is an IMAGE",cdfObject->variables[j]->name.c_str());
         if (dimsDone == false) {
@@ -955,7 +950,7 @@ int CDFHDF5Reader::convertLSASAFtoCF() {
             projection->addAttribute(proj4_params);
             proj4_params->setName("proj4_params");
           }
-          proj4_params->setData("+proj=geos +a=6378169.0 +b=6356583.8 +lon_0=0.0 +h=35785831.0");
+          proj4_params->setString("+proj=geos +a=6378169.0 +b=6356583.8 +lon_0=0.0 +h=35785831.0");
 
           // Set time dimension
 
@@ -969,14 +964,10 @@ int CDFHDF5Reader::convertLSASAFtoCF() {
           time->currentType = CDF_DOUBLE;
           time->nativeType = CDF_DOUBLE;
           time->isDimension = true;
-          CDF::Attribute *time_units = new CDF::Attribute();
-          time_units->setName("units");
-          time_units->setData("minutes since 2000-01-01 00:00:00\0");
+          CDF::Attribute *time_units = new CDF::Attribute("units", "minutes since 2000-01-01 00:00:00");
           time->addAttribute(time_units);
 
-          CDF::Attribute *standard_name = new CDF::Attribute();
-          standard_name->setName("standard_name");
-          standard_name->setData("time");
+          CDF::Attribute *standard_name = new CDF::Attribute("standard_name", "time");
           time->addAttribute(standard_name);
 
           time->dimensionlinks.push_back(timeDim);
@@ -1011,12 +1002,10 @@ int CDFHDF5Reader::convertLSASAFtoCF() {
 
           dimsDone = true;
         }
-        CDF::Attribute *grid_mapping = new CDF::Attribute();
-        grid_mapping->setName("grid_mapping");
-        grid_mapping->setData(CDF_CHAR, (char *)"projection\0", 11);
+        CDF::Attribute *grid_mapping = new CDF::Attribute("grid_mapping", "projection");
         cdfObject->variables[j]->addAttribute(grid_mapping);
 
-        cdfObject->variables[j]->dimensionlinks.insert(cdfObject->variables[j]->dimensionlinks.begin(), 1, cdfObject->getDimension("time"));
+        cdfObject->variables[j]->dimensionlinks.insert(cdfObject->variables[j]->dimensionlinks.begin(), 1, cdfObject->getDimensionThrows("time"));
 
         // Scale and offset
 
@@ -1144,7 +1133,7 @@ int CDFHDF5Reader::readAttributes(std::vector<CDF::Attribute *> &attributes, hid
           throw(__LINE__);
         }
         status = H5Aread(HDF5_attribute, HDF5_attr_type, attr->data);
-        size_t stringLength = strlen(attr->getDataAsString().c_str());
+        size_t stringLength = strlen(attr->toString().c_str());
         if (attr->length > stringLength) attr->length = stringLength + 1;
         ((char *)attr->data)[attr->length] = '\0';
       } else {
@@ -1294,7 +1283,7 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
 
   try {
 
-    CT::string productCornerString = (char *)geo->getAttribute("geo_product_corners")->toString().c_str();
+    CT::string productCornerString = (char *)geo->getAttributeThrows("geo_product_corners")->toString().c_str();
 
     std::vector<CT::string> coords = productCornerString.trim().split(" ");
 
@@ -1319,19 +1308,19 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
   cdfObject->addAttribute(new CDF::Attribute("Conventions", "CF-1.6"));
   cdfObject->addAttribute(new CDF::Attribute("history", "Metadata adjusted by ADAGUC from KNMIHDF5 to NetCDF-CF"));
   try {
-    cdfObject->addAttribute(new CDF::Attribute("institution", (char *)overview->getAttribute("dataset_org_descr")->data));
+    cdfObject->addAttribute(new CDF::Attribute("institution", (char *)overview->getAttributeThrows("dataset_org_descr")->data));
   } catch (int e) {
   }
   try {
-    cdfObject->addAttribute(new CDF::Attribute("source", (char *)overview->getAttribute("hdf5_url")->data));
+    cdfObject->addAttribute(new CDF::Attribute("source", (char *)overview->getAttributeThrows("hdf5_url")->data));
   } catch (int e) {
   }
   try {
-    cdfObject->addAttribute(new CDF::Attribute("references", (char *)overview->getAttribute("hdftag_url")->data));
+    cdfObject->addAttribute(new CDF::Attribute("references", (char *)overview->getAttributeThrows("hdftag_url")->data));
   } catch (int e) {
   }
   try {
-    cdfObject->addAttribute(new CDF::Attribute("title", (char *)overview->getAttribute("product_group_title")->data));
+    cdfObject->addAttribute(new CDF::Attribute("title", (char *)overview->getAttributeThrows("product_group_title")->data));
   } catch (int e) {
   }
 
@@ -1427,14 +1416,10 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
   time->currentType = CDF_DOUBLE;
   time->nativeType = CDF_DOUBLE;
   time->isDimension = true;
-  CDF::Attribute *time_units = new CDF::Attribute();
-  time_units->setName("units");
-  time_units->setData("minutes since 2000-01-01 00:00:00\0");
+  CDF::Attribute *time_units = new CDF::Attribute("units", "minutes since 2000-01-01 00:00:00");
   time->addAttribute(time_units);
 
-  CDF::Attribute *standard_name = new CDF::Attribute();
-  standard_name->setName("standard_name");
-  standard_name->setData("time");
+  CDF::Attribute *standard_name = new CDF::Attribute("standard_name", "time");
   time->addAttribute(standard_name);
 
   time->dimensionlinks.push_back(timeDim);
@@ -1474,7 +1459,7 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
 
   // Try to detect if this is forecast data by checking if image1:image_datetime_valid  exists.
   try {
-    cdfObject->getVariable("image1")->getAttribute("image_datetime_valid");
+    cdfObject->getVariableThrows("image1")->getAttributeThrows("image_datetime_valid");
     CDBDebug("This is forecast data");
     isForecastData = true;
 
@@ -1560,12 +1545,7 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
         if (imageN != NULL) {
           CDF::Attribute *image_geo_parameter = imageN->getAttributeNE("image_geo_parameter");
           if (image_geo_parameter != NULL) {
-            CDF::Attribute *units = new CDF::Attribute();
-            units->setName("units");
-            CT::string unitString;
-            image_geo_parameter->getDataAsString(&unitString);
-            units->setData(unitString.c_str());
-            var->addAttribute(units);
+            var->addAttribute(new CDF::Attribute("units", image_geo_parameter->toString().c_str()));
           }
         }
 
@@ -1641,7 +1621,7 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
           // Try to detect calibration_formulas and convert them to scale_factor and add_offset attributes
           CDF::Attribute *calibration_formulas = calibration->getAttributeNE("calibration_formulas");
           if (calibration_formulas != NULL) {
-            CT::string formula = calibration_formulas->getDataAsString();
+            CT::string formula = calibration_formulas->toString();
             // CDBDebug("Formula: %s",formula.c_str());
             int rightPartFormulaPos = formula.indexOf("=");
             int multiplicationSignPos = formula.indexOf("*");
@@ -1668,7 +1648,7 @@ int CDFHDF5Reader::convertKNMIHDF5toCF() {
         // Try to detect image_datetime_valid for forecast data
         CDF::Attribute *image_datetime_valid = imageN->getAttributeNE("image_datetime_valid");
         if (image_datetime_valid != NULL) {
-          CT::string datetime_valid = image_datetime_valid->getDataAsString();
+          CT::string datetime_valid = image_datetime_valid->toString();
 
           auto valid_time_iso_str = knmiH5TimeToISOString(datetime_valid.c_str());
           if (valid_time_iso_str.empty()) {

@@ -93,21 +93,9 @@ public:
   /**
    * XML Attribute
    */
-  class XMLAttribute {
-  public:
-    XMLAttribute();
-    XMLAttribute(const char *name, const char *value);
-    CT::string value;
-    CT::string name;
-  };
-
-  /**
-   *  List/Vector of XML Attributes
-   */
-  class XMLAttributes : public std::vector<XMLAttribute> {
-  public:
-    XMLAttribute get(size_t nr);
-    void add(XMLAttribute attribute);
+  struct XMLAttribute {
+    std::string value;
+    std::string name;
   };
 
   /**
@@ -117,43 +105,33 @@ public:
   public:
     void copy(XMLElement const &f);
 
-    XMLElement &operator=(XMLElement const &f) {
-      if (this == &f) return *this; /* Gracefully handle self assignment*/
-      copy(f);
-      return *this;
-    }
-
-    XMLElement(XMLElement const &f) {
-      if (this == &f) return;
-      copy(f);
-    }
-
     XMLElement();
 
     XMLElement(const char *name) { this->name = name; }
+
+    XMLElement(const std::string &name) { this->name = name; }
 
     XMLElement(const char *name, const char *value) {
       this->name = name;
       this->value = value;
     }
 
-    /**
-     *  List/Vector of XML Elements
-     */
-    class XMLElementList : public std::vector<XMLElement> {};
+    XMLElement(const std::string &name, const std::string &value) {
+      this->name = name;
+      this->value = value;
+    }
 
     /**
      *  List/Vector of XML Element pointers
      */
-    class XMLElementPointerList : public std::vector<XMLElement *> {
+    class XMLElementPointerList : public std::vector<XMLElement> {
     public:
-      XMLElement *get(size_t nr);
       void add(XMLElement *element);
       CT::string toJSON(int mode) {
         CT::string json = "[";
         for (size_t j = 0; j < size(); j++) {
           if (j > 0) json += ",";
-          CT::string subdata = get(j)->toJSON(mode);
+          CT::string subdata = at(j).toJSON(mode);
           json.concatlength((subdata.c_str() + 1), subdata.length() - 3);
         }
         json += "]";
@@ -161,12 +139,11 @@ public:
       }
     };
 
-  private:
-    XMLElementList xmlElements;
-    XMLAttributes xmlAttributes;
-
-    CT::string value;
-    CT::string name;
+  public:
+    std::vector<XMLElement> xmlElements;
+    std::vector<XMLAttribute> xmlAttributes;
+    std::string value;
+    std::string name;
 
   private:
     /**
@@ -222,18 +199,6 @@ public:
     CT::string toStringNoHeader();
 
     /**
-     * getAttributes returns the xmlAttibute list of this element
-     * @return the xmlAttibute list of this element
-     */
-    XMLAttributes getAttributes();
-
-    /**
-     * getElements returns the XMLElement list of this element
-     * @return the XMLElement list of this element
-     */
-    XMLElementList *getElements();
-
-    /**
      * getAttrValue Returns the value of the attribute with the specified name
      * Throws CXMLPARSER_ATTR_NOT_FOUND if attribute was not found.
      * @param name the name of the attribute to search for
@@ -262,16 +227,6 @@ public:
     XMLElement *get(const char *name);
 
     /**
-     * getName returns the name of this XML element
-     */
-    CT::string getName();
-
-    /**
-     * getValue returns the value of this XML element
-     */
-    CT::string getValue();
-
-    /**
      * set Name and Value of XML element
      */
     void setNameValue(const char *name, const char *value) {
@@ -289,28 +244,31 @@ public:
      */
     void setValue(const char *value) { this->value = value; }
 
+    void setValue(const std::string &value) { this->value = value; }
+
     /**
      * Add XMLElement
      */
-    XMLElement *add(XMLElement el) {
+    XMLElement &add(const XMLElement &el) {
       xmlElements.push_back(el);
-      return &xmlElements[xmlElements.size() - 1];
+      return xmlElements.back();
     }
 
-    /**
-     * Add XMLElement with name and value
-     */
-    XMLElement *add(const char *name, const char *value) {
-      XMLElement el;
-      el.setNameValue(name, value);
-      xmlElements.push_back(el);
-      return &xmlElements[xmlElements.size() - 1];
+    XMLElement &add(const std::string &name) {
+      xmlElements.push_back(XMLElement(name));
+      return xmlElements.back();
     }
 
+    XMLElement &add(const char *name) {
+      xmlElements.push_back(XMLElement(name));
+      return xmlElements.back();
+    }
+
+    void add(std::string name, std::string value) { xmlElements.push_back(XMLElement(name.c_str(), value.c_str())); }
     /**
      * Add xmlAttibute
      */
-    void add(XMLAttribute at) { xmlAttributes.add(at); }
+    void add(const XMLAttribute &at) { xmlAttributes.push_back(at); }
 
     /**
      * Parses a string to XMLElement structure

@@ -11,7 +11,7 @@ std::set<std::string> CDBFileScanner::filesDeletedFromFS;
 void CDBFileScanner::_removeFileFromTables(CT::string fileNamestr, CDataSource *dataSource) {
   CDBAdapterPostgreSQL *dbAdapter = CDBFactory::getDBAdapter(dataSource->srvParams->cfg);
   auto tableList = dbAdapter->getTableNames(dataSource);
-  for (auto tableName : tableList) {
+  for (auto tableName: tableList) {
     CDBDebug("DB: Removing from table %s and file %s", tableName.c_str(), fileNamestr.c_str());
     dbAdapter->removeFile(tableName.c_str(), fileNamestr.c_str());
   }
@@ -65,7 +65,7 @@ std::pair<int, std::set<std::string>> CDBFileScanner::cleanFiles(CDataSource *da
 
   // If this datasource has a reference_time, give preference to that.
   for (size_t j = 0; j < dataSource->requiredDims.size(); j += 1) {
-    if (dataSource->requiredDims[j]->netCDFDimName.equals("forecast_reference_time")) {
+    if (dataSource->requiredDims[j].netCDFDimName == "forecast_reference_time") {
       colName = "forecast_reference_time";
     }
   }

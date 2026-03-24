@@ -22,7 +22,7 @@ CT::string CGetFileInfo::getLayersForFile(const char *filename) {
     for (size_t j = 0; j < variableList.size(); j++) {
       // printf("%s\n",variableList[j].c_str());
 
-      CDF::Variable *var = cdfObject->getVariable(variableList[j].c_str());
+      CDF::Variable *var = cdfObject->getVariableThrows(variableList[j].c_str());
 
       CT::string name = variableList[j].c_str();
 
@@ -32,24 +32,24 @@ CT::string CGetFileInfo::getLayersForFile(const char *filename) {
       // filePath.setSize(filePath.lastIndexOf("/")+1);
 
       try {
-        title = var->getAttribute("long_name")->toString();
+        title = var->getAttributeThrows("long_name")->toString();
       } catch (int e) {
       }
 
       CT::string abstract = title;
 
       try {
-        abstract = var->getAttribute("abstract")->toString();
+        abstract = var->getAttributeThrows("abstract")->toString();
       } catch (int e) {
         try {
-          abstract = var->getAttribute("description")->toString();
+          abstract = var->getAttributeThrows("description")->toString();
         } catch (int e) {
         }
       }
 
       CT::string standardName = "";
       try {
-        standardName = var->getAttribute("standard_name")->toString();
+        standardName = var->getAttributeThrows("standard_name")->toString();
       } catch (int e) {
       }
 

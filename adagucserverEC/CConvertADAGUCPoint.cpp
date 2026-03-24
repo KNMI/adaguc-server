@@ -104,7 +104,7 @@ int CConvertADAGUCPoint::checkIfADAGUCPointFormat(CDFObject *cdfObject) {
   CConvertADAGUCPoint_convert_BIRA_IASB_NETCDF(cdfObject);
 
   try {
-    if (cdfObject->getAttribute("featureType")->toString().equals("timeSeries") == false && cdfObject->getAttribute("featureType")->toString().equals("point") == false) return 1;
+    if (cdfObject->getAttributeThrows("featureType")->toString().equals("timeSeries") == false && cdfObject->getAttributeThrows("featureType")->toString().equals("point") == false) return 1;
   } catch (int e) {
     return 1;
   }
@@ -124,8 +124,8 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
   CDF::Variable *pointLat;
 
   try {
-    pointLon = cdfObject->getVariable("lon");
-    pointLat = cdfObject->getVariable("lat");
+    pointLon = cdfObject->getVariableThrows("lon");
+    pointLat = cdfObject->getVariableThrows("lat");
   } catch (int e) {
     CDBError("lat or lon variables not found");
     return 1;
@@ -241,7 +241,7 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
 
   // Create the new 2D field variables based on the swath variables
   for (size_t v = 0; v < varsToConvert.size(); v++) {
-    CDF::Variable *pointVar = cdfObject->getVariable(varsToConvert[v].c_str());
+    CDF::Variable *pointVar = cdfObject->getVariableThrows(varsToConvert[v].c_str());
 
 #ifdef CCONVERTADAGUCPOINT_DEBUG
     CDBDebug("Converting %s", pointVar->name.c_str());
@@ -277,15 +277,15 @@ int CConvertADAGUCPoint::convertADAGUCPointHeader(CDFObject *cdfObject) {
         float scaleFactor = 1, addOffset = 0, fillValue = 0;
         ;
         try {
-          pointVar->getAttribute("scale_factor")->getData(&scaleFactor, 1);
+          pointVar->getAttributeThrows("scale_factor")->getData(&scaleFactor, 1);
         } catch (int e) {
         }
         try {
-          pointVar->getAttribute("add_offset")->getData(&addOffset, 1);
+          pointVar->getAttributeThrows("add_offset")->getData(&addOffset, 1);
         } catch (int e) {
         }
         try {
-          pointVar->getAttribute("_FillValue")->getData(&fillValue, 1);
+          pointVar->getAttributeThrows("_FillValue")->getData(&fillValue, 1);
         } catch (int e) {
         }
         fillValue *= scaleFactor + addOffset;
@@ -340,8 +340,8 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
   CDF::Variable *pointLat;
 
   try {
-    pointLon = cdfObject0->getVariable("lon");
-    pointLat = cdfObject0->getVariable("lat");
+    pointLon = cdfObject0->getVariableThrows("lon");
+    pointLat = cdfObject0->getVariableThrows("lat");
   } catch (int e) {
     CDBError("lat or lon variables not found");
     return 1;
@@ -595,14 +595,14 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
     CDF::Variable *varY;
 
     // Create new dimensions and variables (X,Y,T)
-    dimX = cdfObject0->getDimension("x");
+    dimX = cdfObject0->getDimensionThrows("x");
     dimX->setSize(dataSource->dWidth);
 
-    dimY = cdfObject0->getDimension("y");
+    dimY = cdfObject0->getDimensionThrows("y");
     dimY->setSize(dataSource->dHeight);
 
-    varX = cdfObject0->getVariable("x");
-    varY = cdfObject0->getVariable("y");
+    varX = cdfObject0->getVariableThrows("x");
+    varY = cdfObject0->getVariableThrows("y");
 
     CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
     CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
@@ -848,7 +848,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
               const char *key = pointVar[d]->name.c_str();
               const char *description = key;
               try {
-                description = (const char *)pointVar[d]->getAttribute("long_name")->data;
+                description = (const char *)pointVar[d]->getAttributeThrows("long_name")->data;
 
               } catch (int e) {
               }
@@ -865,7 +865,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
               const char *key = pointVar[d]->name.c_str();
               const char *description = key;
               try {
-                description = (const char *)pointVar[d]->getAttribute("long_name")->data;
+                description = (const char *)pointVar[d]->getAttributeThrows("long_name")->data;
 
               } catch (int e) {
               }
@@ -882,7 +882,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
                 const char *key = pointID->name.c_str();
                 const char *description = key;
                 try {
-                  description = (const char *)pointID->getAttribute("long_name")->data;
+                  description = (const char *)pointID->getAttributeThrows("long_name")->data;
                 } catch (int e) {
                 }
                 lastPoint->paramList.push_back({.key = key, .description = description, .value = ((const char **)pointID->data)[pGeo]});
@@ -907,7 +907,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
               const char *key = timeVarPerObs->name.c_str();
               const char *description = key;
               try {
-                description = (const char *)timeVarPerObs->getAttribute("long_name")->data;
+                description = (const char *)timeVarPerObs->getAttributeThrows("long_name")->data;
               } catch (int e) {
               }
               // obsTimeData

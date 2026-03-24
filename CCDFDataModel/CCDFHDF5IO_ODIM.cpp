@@ -32,7 +32,7 @@
 double getAttrValueDouble(CDF::Variable *var, const char *attrName, double initialValue) {
   CDF::Attribute *attr = var->getAttributeNE(attrName);
   if (attr != nullptr) {
-    return attr->getDataAsString().toDouble();
+    return attr->toString().toDouble();
   }
   return initialValue;
 }
@@ -98,7 +98,7 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
   if (conventionsAttr == nullptr) {
     return 2;
   }
-  CT::string conventionsString = conventionsAttr->getDataAsString();
+  CT::string conventionsString = conventionsAttr->toString();
   if (conventionsString.startsWith("ODIM_H5") == 0) {
     return 2;
   }
@@ -110,7 +110,7 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
   if (whatObjectAttr == nullptr) {
     return 2;
   }
-  CT::string whatObjectString = whatObjectAttr->getDataAsString();
+  CT::string whatObjectString = whatObjectAttr->toString();
   if (not whatObjectString.equals("COMP") && not whatObjectString.equals("IMAGE")) {
     CDBDebug("Is not a 2D dataset, skipping parsing as 2D dataset");
     return 2;
@@ -162,7 +162,7 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
     }
     CDF::Attribute *projDefAttr = whereVar->getAttributeNE("projdef");
     if (projDefAttr != nullptr) {
-      projectionString = projDefAttr->getDataAsString();
+      projectionString = projDefAttr->toString();
     }
 
     double cornerX[4];
@@ -199,9 +199,9 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
     CDF::Attribute *quantityAttr = getNestedAttribute(cdfObject, datasetCounter, dataCounter, "what", "quantity");
     if (quantityAttr != nullptr) {
       /* Try to find the units based on the quantity, otherwise forward the quantity. */
-      auto result = quantityToUnits.find(quantityAttr->getDataAsString().toUpperCase().c_str());
+      auto result = quantityToUnits.find(quantityAttr->toString().toUpperCase().c_str());
       if (result == quantityToUnits.end()) {
-        dataVar->setAttributeText("units", quantityAttr->getDataAsString().c_str());
+        dataVar->setAttributeText("units", quantityAttr->toString().c_str());
       } else {
         dataVar->setAttributeText("units", result->second.c_str());
       }
@@ -217,8 +217,8 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
     /* Add standard_name*/
     CDF::Attribute *productAttr = getNestedAttribute(cdfObject, datasetCounter, dataCounter, "what", "product");
     if (productAttr != nullptr) {
-      dataVar->setAttributeText("standard_name", productAttr->getDataAsString().c_str());
-      dataVar->setAttributeText("long_name", productAttr->getDataAsString().c_str());
+      dataVar->setAttributeText("standard_name", productAttr->toString().c_str());
+      dataVar->setAttributeText("long_name", productAttr->toString().c_str());
     }
 
     if (datasetCounter == 1) {
@@ -230,7 +230,7 @@ int CDFHDF5Reader::convertODIMHDF5toCF() {
       if (startDateAttr != nullptr && startTimeAttr != nullptr) {
         /* Compose the timestring based on date and time from the HDF5 ODIM file */
         CT::string timeString;
-        timeString.print("%sT%sZ", startDateAttr->getDataAsString().c_str(), startTimeAttr->getDataAsString().c_str());
+        timeString.print("%sT%sZ", startDateAttr->toString().c_str(), startTimeAttr->toString().c_str());
         // CDBDebug("timeString %s", timeString.c_str());
 
         /* Add the time dimension and timevariable */

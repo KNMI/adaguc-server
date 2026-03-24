@@ -344,7 +344,7 @@ void CDataReader::copyEPSGCodeFromProjectionVariable(CDataSource *dataSource, co
     if (this->_enableReporting) {
       CREPORT_INFO_NODOC(CT::string("Using EPSG_code defined in projection variable ") + projVar->name, CReportMessage::Categories::GENERAL);
     }
-    dataSource->nativeEPSG = epsgAttr->getDataAsString();
+    dataSource->nativeEPSG = epsgAttr->toString();
   } else {
     // Make a projection code based on PROJ4: namespace
     if (this->_enableReporting) {
@@ -919,9 +919,9 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
 
   for (size_t varNr = 0; varNr < dataSource->getNumDataObjects(); varNr++) {
     // Check if our variable has a statusflag
-    std::vector<CDataSource::StatusFlag> *statusFlagList = &dataSource->getDataObject(varNr)->statusFlagList;
-    CDataSource::readStatusFlags(dataSource->getDataObject(varNr)->cdfVariable, statusFlagList);
-    if (statusFlagList->size() > 0) {
+
+    CDataSource::readStatusFlags(dataSource->getDataObject(varNr)->cdfVariable, dataSource->getDataObject(varNr)->statusFlagList);
+    if (dataSource->getDataObject(varNr)->statusFlagList.size() > 0) {
       dataSource->getDataObject(varNr)->hasStatusFlag = true;
     }
     dataSource->getDataObject(varNr)->points.clear();
@@ -1398,7 +1398,7 @@ CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *, CDF::Varia
   CT::string standardName = "";
 
   try {
-    variable->getAttribute("standard_name")->getDataAsString(&standardName);
+    standardName = variable->getAttributeThrows("standard_name")->toString();
   } catch (int e) {
   }
 
@@ -1421,7 +1421,7 @@ CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *, CDF::Varia
   // If no standard_name matches, try to determine dimension type on _CoordinateAxisType attribute, CDM standard
   CT::string coordinateAxisType = "";
   try {
-    variable->getAttribute("_CoordinateAxisType")->getDataAsString(&coordinateAxisType);
+    coordinateAxisType = variable->getAttributeThrows("_CoordinateAxisType")->toString();
   } catch (int e) {
   }
   coordinateAxisType.toLowerCaseSelf();
@@ -1433,7 +1433,7 @@ CDataReader::DimensionType CDataReader::getDimensionType(CDFObject *, CDF::Varia
 
   // Try to find elevation dimension based on positive attribute existence (CF)
   try {
-    variable->getAttribute("positive");
+    variable->getAttributeThrows("positive");
     return dtype_elevation;
   } catch (int e) {
   }
