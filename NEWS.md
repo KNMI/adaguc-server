@@ -1,3 +1,7 @@
+**Version 7.0.0 - 2026-03-23**
+
+- Renamed organization to knmiadaguc.
+
 **Version 6.8.0 - 2026-03-18**
 
 - Fixed satcomp png tiling and added test
