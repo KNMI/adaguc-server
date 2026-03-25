@@ -4,7 +4,7 @@
 # pip-sync requirements.txt requirements-dev.txt
 
 -c requirements.txt
-black~=24.3
+black~=26.3
 deepdiff~=8.6
 isort~=5.12
 pre-commit~=4.5
