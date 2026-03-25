@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration>
+  <!-- Custom styles -->
+
+  <Style name="helicopter">
+    <Legend fixed="true">bluewhitered</Legend>
+    <LegendGraphic value="/"/>
+    <Thinning radius="40"/>
+    <RenderMethod>point</RenderMethod>
+    <Point pointstyle="symbol" fillcolor="#00005E7D" textcolor="#005E7D" linecolor="#000000A0" discradius="0" dot="true" fontsize="6" textradius="10" textformat="%s" plotstationid="true"/>
+    <SymbolInterval file="{ADAGUC_PATH}/data/resources/icons/helicopter.png"/>
+  </Style>
+
+  <!-- Layers -->
+  <Layer type="database">
+    <Name>helicopter</Name>
+    <FilePath filter="">{ADAGUC_PATH}data/datasets/pointdata/northseastations.nc</FilePath>
+    <Variable>name</Variable>
+    <Styles>helicopter</Styles>
+  </Layer>
+
+</Configuration>

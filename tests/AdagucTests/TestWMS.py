@@ -12,7 +12,7 @@ import datetime
 from adaguc.AdagucTestTools import AdagucTestTools
 from lxml import etree, objectify
 import pytest
-from conftest import make_adaguc_env, update_db
+from conftest import make_adaguc_env, run_adaguc_and_compare_image, update_db
 
 ADAGUC_PATH = os.environ["ADAGUC_PATH"]
 
@@ -3067,4 +3067,16 @@ class TestWMS(unittest.TestCase):
         self.assertEqual(
             data.getvalue(),
             AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
+        )
+
+    def test_wms_getmap_symbolinterval_northseastations(self):
+        """
+        Test for symbolinterval rendering
+        """
+        env = make_adaguc_env("adaguc.tests.symbolinterval", self.testresultspath, self.expectedoutputsspath)
+        update_db(env)
+        run_adaguc_and_compare_image(
+            env,
+            "test_wms_getmap_symbolinterval_northseastations.png",
+            "DATASET=adaguc.tests.symbolinterval&SERVICE=WMS&&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=helicopter&WIDTH=300&HEIGHT=400&CRS=EPSG%3A3857&BBOX=119648.22240617475,6471500.3895983845,902354.9593630233,7715343.987244269&STYLES=helicopter%2Fpoint&FORMAT=image/png&TRANSPARENT=FALSE",
         )

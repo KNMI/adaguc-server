@@ -1,3 +1,7 @@
+**Version 7.1.1 - 2026-03-24**
+
+- Fix symbol interval rendering
+
 **Version 7.1.0 - 2026-03-24**
 
 - If there are more Settings elements in dataset configurations, cleanup will still work. The first found Settings element is used.

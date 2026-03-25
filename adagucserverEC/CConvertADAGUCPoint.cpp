@@ -698,6 +698,8 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
     if (pointID != NULL) {
       if (pointID->getType() == CDF_STRING) {
         pointID->readData(CDF_STRING);
+        // Set the original datatype as attribute in the variable, point reader will find this.
+        pointID->setAttribute("ADAGUC_ORGPOINT_TYPE", CDF_INT, &pointID->currentType, 1);
       } else {
         pointID = NULL;
       }

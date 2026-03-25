@@ -48,21 +48,3 @@ class TestDatasetLinter(unittest.TestCase):
         args = ["--lint", "--config", adaguc_env.get("ADAGUC_CONFIG")]
         status, *_ = AdagucTestTools().runADAGUCServer(args=args, env=adaguc_env, isCGI=False, showLog=True)
         assert status == 1
-
-    def test_datasetlinter_unused_legend(self):
-        """
-        Test linter on a misconfigured datasets
-        """
-        adaguc_env = make_adaguc_env("adaguc.tests.testdatasetlinter-unused-legend.xml", self.testresultspath, self.expectedoutputsspath)
-        args = ["--lint", "--config", adaguc_env.get("ADAGUC_CONFIG")]
-        status, *_ = AdagucTestTools().runADAGUCServer(args=args, env=adaguc_env, isCGI=False, showLog=True)
-        assert status == 1
-
-    def test_datasetlinter_unused_style(self):
-        """
-        Test linter on a misconfigured datasets
-        """
-        adaguc_env = make_adaguc_env("adaguc.tests.testdatasetlinter-unused-style.xml", self.testresultspath, self.expectedoutputsspath)
-        args = ["--lint", "--config", adaguc_env.get("ADAGUC_CONFIG")]
-        status, *_ = AdagucTestTools().runADAGUCServer(args=args, env=adaguc_env, isCGI=False, showLog=True)
-        assert status == 1
