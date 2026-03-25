@@ -392,7 +392,10 @@ const std::vector<CStyleConfiguration> &CDataSource::getStyleListForDataSource()
       // Lookup the style index in the servers configuration
 
       int dStyleIndex = this->srvParams->getServerStyleIndexByName(styleNames[i]);
-
+      if (styleNames[i].length() > 0 && styleNames[i] != "default" && dStyleIndex == -1) {
+        CDBLint("ERROR: In dataset \"%s\" and layer \"%s\", style \"%s\" not found.", CT::basename(this->srvParams->datasetLocation).c_str(), this->layerName.c_str(), styleNames[i].c_str());
+        numXMLAttributesNotRecognized++;
+      }
       if (debugDataSource) {
         CDBDebug("dStyleIndex = %d", dStyleIndex);
       }
@@ -432,7 +435,8 @@ const std::vector<CStyleConfiguration> &CDataSource::getStyleListForDataSource()
 
           CT::string styleName;
           if (lintOutputEnabled && renderMethods.size() > 1) {
-            CDBLint("In dataset \"%s\" multiple rendermethods in one style or layer is deprecated.", CT::basename(this->srvParams->datasetLocation).c_str());
+            CDBLint("In dataset \"%s\", layer \"%s\" multiple rendermethods in one style or layer is deprecated: [%s].", CT::basename(this->srvParams->datasetLocation).c_str(),
+                    this->layerName.c_str(), CT::join(renderMethods).c_str());
             numXMLAttributesNotRecognized++;
           }
           for (size_t l = 0; l < legendList.size(); l++) {
@@ -445,8 +449,8 @@ const std::vector<CStyleConfiguration> &CDataSource::getStyleListForDataSource()
                   styleName.print("%s/%s", styleNames[i].c_str(), renderMethods[r].c_str());
                   if (lintOutputEnabled) {
                     if (std::find(knownRenderMethods.begin(), knownRenderMethods.end(), renderMethods[r]) == knownRenderMethods.end()) {
-                      CDBLint("In dataset \"%s\" and style \"%s\", rendermethod \"%s\" is deprecated.", CT::basename(this->srvParams->datasetLocation).c_str(), styleName.c_str(),
-                              renderMethods[r].c_str());
+                      CDBLint("In dataset \"%s\", layer \"%s\" and style \"%s\", rendermethod \"%s\" is deprecated.", CT::basename(this->srvParams->datasetLocation).c_str(), this->layerName.c_str(),
+                              styleName.c_str(), renderMethods[r].c_str());
                       numXMLAttributesNotRecognized++;
                     }
                   }

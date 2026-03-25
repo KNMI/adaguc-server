@@ -550,10 +550,13 @@ void renderSingleSymbols(std::vector<size_t> thinnedPointIndexList, CDataSource 
     auto dataObject = dataSource->getDataObject(dataObjectIndex);
     if (dataObject == nullptr) continue;
     std::vector<PointDVWithLatLon> *pts = &dataObject->points;
+    auto pointTypeAttr = dataObject->cdfVariable->getAttributeNE("ADAGUC_ORGPOINT_TYPE");
+    auto dataType = pointTypeAttr != nullptr ? pointTypeAttr->getDataAt<int>(0) : CDF_FLOAT;
+
     for (auto pointIndex: thinnedPointIndexList) {
       auto pointValue = &(*pts)[pointIndex];
       float value = pointValue->v;
-      if (shouldSkipPoint(styleConfiguration, pointStyle, value, fillValueObjectOne)) continue;
+      if (dataType != CDF_STRING && shouldSkipPoint(styleConfiguration, pointStyle, value, fillValueObjectOne)) continue;
 
       int x = pointValue->x;
       int y = dataSource->srvParams->geoParams.height - pointValue->y;
