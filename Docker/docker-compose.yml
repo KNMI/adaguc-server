@@ -1,6 +1,6 @@
 services:
   adaguc-viewer:
-    image: openearth/adaguc-viewer
+    image: knmiadaguc/adaguc-viewer
     container_name: adaguc-viewer
     hostname: adaguc-viewer
     networks:
@@ -18,7 +18,7 @@ services:
         max-size: "200k"
         max-file: "10"
   adaguc-data-explorer:
-    image: openearth/adaguc-data-explorer
+    image: knmiadaguc/adaguc-data-explorer
     container_name: adaguc-data-explorer
     hostname: adaguc-data-explorer
     networks:
@@ -34,13 +34,13 @@ services:
         max-size: "200k"
         max-file: "10"
   adaguc-server:
-    image: openearth/adaguc-server
-#    build: ..
-#    deploy:
-#     resources:
-#       limits:
-#         cpus: "2"
-#         memory: 2048M
+    image: knmiadaguc/adaguc-server
+    #    build: ..
+    #    deploy:
+    #     resources:
+    #       limits:
+    #         cpus: "2"
+    #         memory: 2048M
     container_name: my-adaguc-server
     hostname: my-adaguc-server
     volumes:
@@ -72,15 +72,15 @@ services:
       options:
         max-size: "200k"
         max-file: "10"
-  
+
   adaguc-server-autosync:
-    image: openearth/adaguc-server
-#    build: ..
-#    deploy:
-#     resources:
-#       limits:
-#         cpus: "2"
-#         memory: 2048M
+    image: knmiadaguc/adaguc-server
+    #    build: ..
+    #    deploy:
+    #     resources:
+    #       limits:
+    #         cpus: "2"
+    #         memory: 2048M
     container_name: my-adaguc-autosync
     hostname: my-adaguc-autosync
     entrypoint: /adaguc/start_autosync.sh

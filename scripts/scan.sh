@@ -9,16 +9,22 @@ RESCAN=''
 RECREATETABLES=''
 NOCLEAN=''
 TIMEOUTOKILL="4m"
+ADAGUC_AUTOREMOVENONMATCHINGFILES='FALSE'
+
+
 
 SCAN_EXITCODE_FILENOMATCH=64  #  File is available but does not match any of the available datasets
 SCAN_EXITCODE_DATASETNOEXIST=65  # The reason for this status code is that the dataset configuration file does not exist.
 SCAN_EXITCODE_SCANERROR=66  #  An error occured during scanning
 SCAN_EXITCODE_FILENOEXIST=67  # The file does not exist on the file system
+SCAN_EXITCODE_FILENOMATCH_ISDELETED=68  #  File does not match any of the available datasets and is deleted
 SCAN_EXITCODE_TIMEOUT=124  # The process timed out
+
 
 translateerrorcode () {
   case $STATUSCODE in
   ${SCAN_EXITCODE_FILENOMATCH}) echo "No matching datasets" ;;
+  ${SCAN_EXITCODE_FILENOMATCH_ISDELETED}) echo "No matching datasets, file is deleted from fs." ;;
   ${SCAN_EXITCODE_DATASETNOEXIST}) echo "Config not found" ;;
   ${SCAN_EXITCODE_SCANERROR}) echo "Scan error" ;;
   ${SCAN_EXITCODE_FILENOEXIST}) echo "File not found" ;;
@@ -30,12 +36,13 @@ translateerrorcode () {
 
 
 usage () {
-    echo "This script uses adaugc-server to scan files and datasets. It ingests indexing information into the database"
+    echo "This script uses adaguc-server to scan files and datasets. It ingests indexing information into the database"
     echo "  [-f] <file to add> [-d] <datasetname>             [Scan a single file for specified dataset]"
     echo "  [-f] <file to add>                                [Scan a single file, dataset is automatically detected]"
+    echo "  [-f] <file to add> [-x]                           [Scan a single file, dataset is automatically detected, file is removed if not associated with any dataset]"
     echo "  [-d] <datasetname>                                [Scan a dataset, all layers within dataset will be checked]"
-    echo "  [-c] <datasetname>                                [Check / lint a dataset for issues]"
     echo "  [-d] \"*\"                                          [Scan all available datasets]"
+    echo "  [-c] <datasetname>                                [Check / lint a dataset for issues]"
     echo "  [-l]                                              [List all datasets]"
     echo "  [-v]                                              [Verbose logging]"
     echo "  [-r]                                              [Rescan by ignoring file modification date of files (--rescan)]"
@@ -47,7 +54,7 @@ usage () {
 }
 
 
-while getopts "d:c:f:vtkrlmeh" o; do
+while getopts "d:c:f:vtkrlmexh" o; do
     case "${o}" in
         d)
             ADAGUC_DATASET=${OPTARG}
@@ -85,6 +92,9 @@ while getopts "d:c:f:vtkrlmeh" o; do
         e)
             env | grep "ADAGUC"
             ;;
+        x)
+            ADAGUC_AUTOREMOVENONMATCHINGFILES='TRUE'
+            ;;
         h)
             usage
             ;;
@@ -104,7 +114,8 @@ if [ "${ADAGUC_DATASET_LINT}" == "True" ]; then
   ADAGUC_COMMAND="--lint"
 fi
 
-### Scan a file for a specified dataset ###
+### Scan a file for a specified dataset ###    case "${o}" in
+
 if [[ -n "${ADAGUC_DATASET}" &&  -n "${ADAGUC_DATAFILE}" ]]; then
   STATUSCODE=0
   echo "Adding file [${ADAGUC_DATAFILE}] to dataset [${ADAGUC_DATASET}]:"
@@ -134,6 +145,14 @@ if [[ -n "${ADAGUC_DATAFILE}" ]]; then
   if [ ${OUT} -ne 0 ]; then
     STATUSCODE=${OUT}
     echo "[WARN] Code ${STATUSCODE}: $(translateerrorcode ${STATUSCODE}). Command: [${command}]"
+  fi
+  # Non matching files should be removed to avoid cluttering the fs with unrecognized files
+  if [ ${STATUSCODE} -eq ${SCAN_EXITCODE_FILENOMATCH} ]; then
+    if [ "$ADAGUC_AUTOREMOVENONMATCHINGFILES" = "TRUE" ]; then
+      echo "[WARN] !!! File is not associated to any dataset configuration and ADAGUC_AUTOREMOVENONMATCHINGFILES=TRUE: Now deleting file [${ADAGUC_DATAFILE}]."
+      rm -f ${ADAGUC_DATAFILE}
+      exit ${SCAN_EXITCODE_FILENOMATCH_ISDELETED}
+    fi
   fi
   exit ${STATUSCODE} 
 fi
