@@ -480,7 +480,7 @@ int CServerParams::_parseConfigFile(CT::string &pszConfigFile, std::vector<CServ
 
 CT::string CServerParams::getResponseHeaders(int mode) {
   auto tracingHeaders = traceTimingsGetHeader();
-  if (cfg != nullptr && cfg->Settings.size() == 1) {
+  if (cfg != nullptr && cfg->Settings.size() > 0) {
     CT::string cacheString = "\r\nCache-Control:max-age=";
     if (mode == CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE) {
       if (!cfg->Settings[0]->attr.cache_age_volatileresources.empty()) {

@@ -8,7 +8,13 @@ import shutil
 import time
 import unittest
 import subprocess
-from adaguc.CGIRunner import SCAN_EXITCODE_DATASETNOEXIST, SCAN_EXITCODE_FILENOEXIST, SCAN_EXITCODE_FILENOMATCH, SCAN_EXITCODE_SCANERROR
+from adaguc.CGIRunner import (
+    SCAN_EXITCODE_DATASETNOEXIST,
+    SCAN_EXITCODE_FILENOEXIST,
+    SCAN_EXITCODE_FILENOMATCH,
+    SCAN_EXITCODE_FILENOMATCH_ISDELETED,
+    SCAN_EXITCODE_SCANERROR,
+)
 import psycopg2
 from adaguc.AdagucTestTools import AdagucTestTools
 
@@ -203,3 +209,38 @@ class TestFileScanner(unittest.TestCase):
             env=my_env,
         )
         assert proc.returncode == SCAN_EXITCODE_FILENOMATCH
+
+    def test_FileScanner_ExitCode_FileDoesExistAndCheckIfItIsGone(self):
+        """
+        Description: Exit code of scan process should return exit code SCAN_EXITCODE_FILENOMATCH_ISDELETED
+        The reason for this status code is that the file does not match any of the available datasets.
+        """
+        my_env = os.environ.copy()
+        my_env["ADAGUC_CONFIG"] = ADAGUC_PATH + "/data/config/adaguc.autoresource.xml"
+
+        file_to_delete = ADAGUC_PATH + "data/datasets/doesnotbelongtoanydataset.nc"
+        shutil.copyfile(ADAGUC_PATH + "data/datasets/members.nc", file_to_delete)
+        assert os.path.isfile(file_to_delete) is True
+
+        # Make sure the file is not deleted
+        proc = subprocess.run(
+            [ADAGUC_PATH + "/scripts/scan.sh", "-f", file_to_delete],
+            capture_output=True,
+            text=True,
+            check=False,
+            env=my_env,
+        )
+        assert proc.returncode == SCAN_EXITCODE_FILENOMATCH
+        assert os.path.isfile(file_to_delete) is True
+
+        # Make sure the file will be deleted, add 'x' option
+        proc = subprocess.run(
+            [ADAGUC_PATH + "/scripts/scan.sh", "-xf", file_to_delete],
+            capture_output=True,
+            text=True,
+            check=False,
+            env=my_env,
+        )
+        assert proc.returncode == SCAN_EXITCODE_FILENOMATCH_ISDELETED
+
+        assert os.path.isfile(file_to_delete) is False
