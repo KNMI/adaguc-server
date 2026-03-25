@@ -27,11 +27,16 @@
 #include "CDBFileScanner.h"
 #include "CConvertGeoJSON.h"
 #include "utils/LayerUtils.h"
+#include "utils/lintDataset.h"
 
 // #define CDATASOURCE_DEBUG
 
 bool debugDataSource = false;
-bool configWarningSet = false;
+bool configWarningNameMappingSet = false;
+
+// Allowed rendermethods: generic, nearest, rgba, polyline
+
+std::vector<std::string> knownRenderMethods = {"generic", "nearest", "rgba", "polyline", "point"};
 
 DataObject::DataObject() {
   hasStatusFlag = false;
@@ -426,6 +431,10 @@ const std::vector<CStyleConfiguration> &CDataSource::getStyleListForDataSource()
           // Deprecated methods to have multiple legends and rendermethods in the same style
 
           CT::string styleName;
+          if (lintOutputEnabled && renderMethods.size() > 1) {
+            CDBLint("In dataset \"%s\" multiple rendermethods in one style or layer is deprecated.", CT::basename(this->srvParams->datasetLocation).c_str());
+            numXMLAttributesNotRecognized++;
+          }
           for (size_t l = 0; l < legendList.size(); l++) {
             for (size_t r = 0; r < renderMethods.size(); r++) {
               if (renderMethods[r].length() > 0) {
@@ -434,9 +443,13 @@ const std::vector<CStyleConfiguration> &CDataSource::getStyleListForDataSource()
                   CDBWarning("Deprecated to have multiple legends in one style");
                 } else {
                   styleName.print("%s/%s", styleNames[i].c_str(), renderMethods[r].c_str());
-                  // if (renderMethods.size() > 1) {
-                  //   // CDBWarning("Deprecated to have multiple rendermethods ([%d]) in one style. There are %d styles configured.", renderMethods.size(), styleNames.size());
-                  // }
+                  if (lintOutputEnabled) {
+                    if (std::find(knownRenderMethods.begin(), knownRenderMethods.end(), renderMethods[r]) == knownRenderMethods.end()) {
+                      CDBLint("In dataset \"%s\" and style \"%s\", rendermethod \"%s\" is deprecated.", CT::basename(this->srvParams->datasetLocation).c_str(), styleName.c_str(),
+                              renderMethods[r].c_str());
+                      numXMLAttributesNotRecognized++;
+                    }
+                  }
                 }
 
                 styleConfigurationList.push_back(CStyleConfiguration());
@@ -452,11 +465,11 @@ const std::vector<CStyleConfiguration> &CDataSource::getStyleListForDataSource()
                 }
 
                 if (style != nullptr && style->NameMapping.size() > 0) {
-                  if (configWarningSet == false) {
+                  if (configWarningNameMappingSet == false) {
                     CDBLint("In dataset \"%s\" and style \"%s\": The <NameMapping> element inside a <Style> is deprecated and will be ignored. Move 'title' and 'abstract' to attributes of the "
                             "<Style> element.",
                             CT::basename(this->srvParams->datasetLocation).c_str(), styleName.c_str());
-                    configWarningSet = true;
+                    configWarningNameMappingSet = true;
                   }
                   for (size_t j = 0; j < style->NameMapping.size(); j++) {
                     if (renderMethods[r] == style->NameMapping[j]->attr.name.c_str()) {

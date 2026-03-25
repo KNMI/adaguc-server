@@ -1,6 +1,7 @@
 #include "./lintDataset.h"
 #include <CDebugger.h>
 #include "ConfigurationUtils.h"
+int lintOutputEnabled = 0;
 
 void removeStringFromVector(const std::string &name, std::vector<std::string> &list) {
   auto toErase = std::find(list.begin(), list.end(), name);
@@ -8,6 +9,7 @@ void removeStringFromVector(const std::string &name, std::vector<std::string> &l
 }
 
 int lintDataset(std::string config) {
+  lintOutputEnabled = 1;
 
   // Parse base config without additional datasets included:
   CServerParams srvParamsBase;
