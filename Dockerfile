@@ -141,7 +141,7 @@ COPY ./Docker/start_autosync.sh /adaguc/start_autosync.sh
 RUN  chmod +x /adaguc/*.sh && \
     chmod +x /adaguc/adaguc-server-master/scripts/*.sh && \
     chown -R adaguc:adaguc /data/adaguc* /adaguc /adaguc/* && \
-    ln -s /adaguc/scan.sh /bin/scan.sh && ln -s /adaguc/scan.sh /bin/scan
+    ln -s /adaguc/scan.sh /bin/scan.sh && ln -s /adaguc/scan.sh /bin/scan  && ln -s /adaguc/adaguc-server-chkconfig.sh /bin/adaguc-server-chkconfig.sh
 
 ENV ADAGUC_PATH=/adaguc/adaguc-server-master
 
