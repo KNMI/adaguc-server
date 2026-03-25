@@ -56,7 +56,7 @@ After this you can scan new data as normal. Tiles will be generated automaticall
 
 Using docker:
 ```sh
-docker exec -i -t my-adaguc-server /adaguc/scan.sh -d nwcsaf_mtg
+docker exec -i -t my-adaguc-server scan.sh -d nwcsaf_mtg
 ```
 or locally:
 ```sh

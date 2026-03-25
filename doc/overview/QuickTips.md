@@ -6,22 +6,22 @@
 
 List datasets: 
 ```
-docker exec -i -t my-adaguc-server /adaguc/scan.sh -l
+docker exec -i -t my-adaguc-server scan.sh -l
 ```
 
 Scan a dataset:
 ```
-docker exec -i -t my-adaguc-server /adaguc/scan.sh -d <datasetname>
+docker exec -i -t my-adaguc-server scan.sh -d <datasetname>
 ```
 
 Scan a file:
 ```
-docker exec -i -t my-adaguc-server /adaguc/scan.sh -f <filename to scan>
+docker exec -i -t my-adaguc-server scan.sh -f <filename to scan>
 ```
 
 Scan all datasets: 
 ```
-docker exec -i -t my-adaguc-server /adaguc/scan.sh
+docker exec -i -t my-adaguc-server scan.sh
 ```
 
 Similar command, but in this case we go inside the container and call the script directly:
@@ -69,5 +69,5 @@ Print your ./Docker/.env file for current docker-compose settings with `cat ./Do
 This refreshes the layermetadata table immediately. This is also done automatically every minute by the server itself, and is also done when you scan a dataset or file.
  
  ```
- docker exec -i -t my-adaguc-server /adaguc/scan.sh -m
+ docker exec -i -t my-adaguc-server scan.sh -m
  ```

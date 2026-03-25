@@ -4,7 +4,7 @@ FROM python:3.10-slim-bookworm AS build
 # To build on linux ubuntu use 
 # docker build -t knmiadaguc/adaguc-server --progress plain  --add-host=host.docker.internal:host-gateway .
 # To scan use
-# docker exec -i -t my-adaguc-server /adaguc/scan.sh
+# docker exec -i -t my-adaguc-server scan.sh
 
 
 USER root
@@ -129,6 +129,7 @@ COPY ./Docker/adaguc-server-*.sh /adaguc/
 COPY ./Docker/baselayers.xml /adaguc/adaguc-datasets-internal/baselayers.xml
 COPY scripts /adaguc/adaguc-server-master/scripts
 COPY ./scripts/*.sh /adaguc/
+
 # Copy pgbouncer and supervisord config files
 COPY ./Docker/pgbouncer/ /adaguc/pgbouncer/
 COPY ./Docker/supervisord/ /etc/supervisor/conf.d/
@@ -143,6 +144,8 @@ RUN  chmod +x /adaguc/*.sh && \
 ENV ADAGUC_PATH=/adaguc/adaguc-server-master
 
 ENV PYTHONPATH=${ADAGUC_PATH}/python/python_fastapi_server
+
+ENV PATH=/adaguc:${PATH}
 
 # Build and test adaguc python support
 WORKDIR /adaguc/adaguc-server-master/python/lib/
