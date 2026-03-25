@@ -62,7 +62,7 @@ int CPGSQLDB::connect(const char *pszOptions) {
   connection = PQconnectdb(pszOptions);
   traceTimingsSpanEnd(TraceTimingType::DBCONNECT);
   if (PQstatus(connection) == CONNECTION_BAD) {
-    PQfinish(connection);
+    // PQfinish(connection);
     CDBError("Connection to database failed: %s", PQerrorMessage(connection));
     return 1;
   }

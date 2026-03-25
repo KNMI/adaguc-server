@@ -2,6 +2,7 @@
 FROM python:3.10-slim-bookworm AS build
 
 # To build on linux ubuntu use 
+# docker compose -f Docker/docker-compose-test.yml up -Vd
 # docker build -t knmiadaguc/adaguc-server --progress plain  --add-host=host.docker.internal:host-gateway .
 # To scan use
 # docker exec -i -t my-adaguc-server scan.sh
@@ -139,13 +140,13 @@ COPY ./Docker/start_autosync.sh /adaguc/start_autosync.sh
 # Set permissions
 RUN  chmod +x /adaguc/*.sh && \
     chmod +x /adaguc/adaguc-server-master/scripts/*.sh && \
-    chown -R adaguc:adaguc /data/adaguc* /adaguc /adaguc/*
+    chown -R adaguc:adaguc /data/adaguc* /adaguc /adaguc/* && \
+    ln -s /adaguc/scan.sh /bin/scan.sh && ln -s /adaguc/scan.sh /bin/scan
 
 ENV ADAGUC_PATH=/adaguc/adaguc-server-master
 
 ENV PYTHONPATH=${ADAGUC_PATH}/python/python_fastapi_server
 
-ENV PATH=/adaguc:${PATH}
 
 # Build and test adaguc python support
 WORKDIR /adaguc/adaguc-server-master/python/lib/
