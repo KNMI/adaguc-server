@@ -65,15 +65,13 @@ Stippling distance and disc radius can be specified in [Stippling](Stippling.md)
     <palette index="180" red="249" green="145" blue="45"/>
     <palette index="240" red="191" green="25" blue="35"/>
 </Legend>
-<Style name="uncertainty">
+<Style name="uncertainty" title="Uncertainty" abstract="Uncertainty">
     <Legend fixed="true" tickinterval="1">uncertainty</Legend>
     <Min>1</Min>
     <Max>5</Max>
     <ValueRange min="1" max="5"/>
     <RenderMethod>stippling,nearest</RenderMethod>
     <Stippling distancex="22" distancey="22" discradius="7"/>
-    <NameMapping name="nearest" title="Uncertainty" abstract="Uncertainty"/>
-    <NameMapping name="stippling" title="Uncertainty stippled" abstract="Uncertainty stippled"/>
     <StandardNames standard_name="uncertainty"/>
 </Style>
 ```

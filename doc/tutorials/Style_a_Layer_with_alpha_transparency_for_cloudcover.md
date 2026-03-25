@@ -21,7 +21,7 @@ This is the legend for cloudcover with alpha transparency
 This is the style for cloudcover
 
 ```xml
-<Style name="cloudcover">
+<Style name="cloudcover" title="Alpha transparency" abstract="Visualize radar images with alpha transparency on a log scale">
   <Legend fixedclasses="true" tickround=".1">cloudcover</Legend>
   <Min>0.0</Min>
   <Max>8</Max>
@@ -32,8 +32,6 @@ This is the style for cloudcover
   <ShadeInterval min="4" max="6" label="4-6" fillcolor="#8080FF"/>
   <ShadeInterval min="6" max="8" label=">6" fillcolor="#4C4CFF"/>
   <RenderMethod>nearest,bilinear,contour,contourbilinear,shaded</RenderMethod>
-  <NameMapping name="nearest" title="Alpha transparency" abstract="Visualize radar images with alpha transparency on a log scale"/> 
-  <NameMapping name="bilinear" title="Alpha transparency smooth" abstract="Visualize radar images with alpha transparency on a log scale"/>
 </Style>
 ```
 

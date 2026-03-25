@@ -453,7 +453,8 @@ const std::vector<CStyleConfiguration> &CDataSource::getStyleListForDataSource()
 
                 if (style != nullptr && style->NameMapping.size() > 0) {
                   if (configWarningSet == false) {
-                    CDBLint("In dataset \"%s\" and style \"%s\": Deprecated to have NameMapping configs in the style. Use title and abstracts instead.",
+                    CDBLint("In dataset \"%s\" and style \"%s\": The <NameMapping> element inside a <Style> is deprecated and will be ignored. Move 'title' and 'abstract' to attributes of the "
+                            "<Style> element.",
                             CT::basename(this->srvParams->datasetLocation).c_str(), styleName.c_str());
                     configWarningSet = true;
                   }

@@ -37,30 +37,27 @@
   <Include location="{ADAGUC_PATH}/data/config/includes/DefaultLayers.include.xml"/>
   
   <!-- Custom styles -->
-  <Style name="countries_coloured">
+  <Style name="countries_coloured" title="All countries" abstract="All countries">
     <Legend fixedclasses="true" tickinterval="10" tickround=".01">multicolor</Legend>
     <Min>0</Min>
     <Max>170</Max>
-    <NameMapping name="nearest"   title="All countries" abstract="All countries"/>
     <RenderMethod>nearest</RenderMethod>
   </Style>
   
-  <Style name="countries_nlmask">
+  <Style name="countries_nlmask" title="Mask NL">
     <Legend fixed="true">bluewhitered</Legend>
     <FeatureInterval match=".*" matchid="abbrev" bgcolor="#CCCCFF" fillcolor="#CCFFCCFF" label="Other"/>
     <FeatureInterval match="NLD.*" matchid="adm0_a3" fillcolor="#DFFFDF00" label="The Netherlands"/>
     <FeatureInterval match="^Luxembourg$" matchid="brk_name" fillcolor="#0000FF"  label="Luxembourg"/>
     <FeatureInterval match="^Asia$" matchid="continent" fillcolor="#808080"  label="Asia"/>
     <FeatureInterval match="^India$" matchid="abbrev" fillcolor="#80FF80"  label="India"/>
-    <NameMapping name="nearest"   title="Mask NL"/>
     <RenderMethod>nearest</RenderMethod>
   </Style>
   
     
-  <Style name="landseamask">
+  <Style name="landseamask" title="Land sea mask">
     <Legend fixed="true">bluewhitered</Legend>
     <FeatureInterval match=".*" matchid="abbrev" bgcolor="#CCCCFF" fillcolor="#CCFFCCFF"/>
-    <NameMapping name="nearest"   title="Land sea mask"/>
     <RenderMethod>nearest</RenderMethod>
   </Style>
   
@@ -81,21 +78,19 @@
   </Legend>
 
 
-  <Style name="baselayer">
+  <Style name="baselayer" title="Land sea mask" abstract="Land sea mask">
     <Legend fixedclasses="true" tickinterval="1" tickround="1">baselayer</Legend>
     <Min>0.0</Min>
     <Max>1000</Max>
     <RenderMethod>nearest</RenderMethod>
-    <NameMapping name="nearest"   title="Land sea mask" abstract="Land sea mask"/>
     <FeatureInterval match=".*" matchid="abbrev" bgcolor="#CCCCFF" fillcolor="#CCFFCC"/>
   </Style>
 
-  <Style name="overlay">
+  <Style name="overlay" title="Overlay countries" abstract="Overlay countries">
     <Legend fixedclasses="true" tickinterval="1" tickround="1">baselayer</Legend>
     <Min>0.0</Min>
     <Max>1000</Max>
     <RenderMethod>polyline</RenderMethod>
-    <NameMapping name="polyline"   title="Overlay countries" abstract="Overlay countries"/>
     <FeatureInterval match=".*" matchid="abbrev" bordercolor="#000000" linewidth="1" linecolor="#000000" linewidth="1"/>
   </Style>
 

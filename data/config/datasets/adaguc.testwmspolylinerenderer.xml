@@ -19,46 +19,40 @@
     <FeatureInterval match="4_60" matchid="warning_code_leadtime"  fillcolor="#CCCCCC80"/>
   </Style>
 
-  <Style name="polyline_black_0.5px">
+  <Style name="polyline_black_0.5px" title="border 0.5px black" abstract="border 0.5px black">
     <RenderMethod>polyline</RenderMethod>
     <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
     <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#000000" borderwidth="0.5"/>
-    <NameMapping name="polyline"   title="border 0.5px black" abstract="border 0.5px black"/>
   </Style>
   
-  <Style name="polyline_blue_0.5px">
+  <Style name="polyline_blue_0.5px" title="border 0.5px blue" abstract="border 0.5px blue">
     <RenderMethod>polyline</RenderMethod>
     <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
     <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#0000FFFF" borderwidth="0.5"/>
-    <NameMapping name="polyline"   title="border 0.5px blue" abstract="border 0.5px blue"/>
   </Style>
   
-  <Style name="polyline_blue_1px">
+  <Style name="polyline_blue_1px" title="border 1px blue" abstract="border 1px blue">
     <RenderMethod>polyline</RenderMethod>
     <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
     <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#0000FFFF" borderwidth="1"/>
-    <NameMapping name="polyline"   title="border 1px blue" abstract="border 1px blue"/>
   </Style>
 
-  <Style name="polyline_blue_2px">
+  <Style name="polyline_blue_2px" title="border 2px blue" abstract="border 2px blue">
     <RenderMethod>polyline</RenderMethod>
     <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
     <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#0000FFFF" borderwidth="2"/>
-    <NameMapping name="polyline"   title="border 2px blue" abstract="border 2px blue"/>
   </Style>
 
-  <Style name="polyline_yellow_2px">
+  <Style name="polyline_yellow_2px" title="border 2px yellow" abstract="border 2px yellow">
     <RenderMethod>polyline</RenderMethod>
     <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
     <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#FFFF00" borderwidth="2"/>
-    <NameMapping name="polyline"   title="border 2px yellow" abstract="border 2px yellow"/>
   </Style>
 
-  <Style name="polyline_red_6px">
+  <Style name="polyline_red_6px" title="border 6px red" abstract="border 6px red">
     <RenderMethod>polyline</RenderMethod>
     <Legend fixedclasses="true" tickinterval="0.1" tickround=".01">no2</Legend>
     <FeatureInterval match=".*" bgcolor="#CCCCFF" fillcolor="#000080FF"  bordercolor="#FF0000" borderwidth="6"/>
-    <NameMapping name="polyline"   title="border 6px red" abstract="border 6px red"/>
   </Style>
   
   <Layer type="database">

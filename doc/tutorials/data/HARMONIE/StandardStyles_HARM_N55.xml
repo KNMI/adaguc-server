@@ -431,15 +431,13 @@
   
   <!--Styles -->
   <!-- Important: auto style is used internally and is required when mapping styles with standard_names-->
-  <Style name="auto">
+  <Style name="auto" title="Automatic minimum and maximum" abstract="Automatic min/max rendered with nearest neighbour interpolation">
     <Legend>isoluminant</Legend>
     <Scale>0</Scale>
     <RenderMethod>nearest,bilinear</RenderMethod>
-    <NameMapping name="nearest" title="Automatic minimum and maximum" abstract="Automatic min/max rendered with nearest neighbour interpolation"/>
-    <NameMapping name="bilinear" title="Automatic minimum and maximum bilinear" abstract="Automatic min/max rendered with bilinear interpolation"/>
   </Style>
   
-  <Style name="temperature-wow">
+  <Style name="temperature-wow" title="Temperature (wow) shaded + contours" abstract="Contours with shaded background">
     <Legend fixed="true" tickinterval="5">wow.temperature</Legend>
     <Min>-14</Min>
     <Max>39,33333333</Max> <!-- 39,33333333 = (240 / (234/(38 - -14))) - 14 -->
@@ -447,12 +445,11 @@
     <ContourLine width="0.8" linecolor="#1a1a1a" textcolor="#1a1a1a" textformatting="%2.0f" interval="10"/>
     <ContourLine width="0.3" linecolor="#444444" textcolor="#444444" textformatting="%2.0f" interval="2"/>
     <RenderMethod>shadedcontour</RenderMethod>
-    <NameMapping name="shadedcontour"   title="Temperature (wow) shaded + contours" abstract="Contours with shaded background"/>
     <SmoothingFilter>0</SmoothingFilter>
     <StandardNames standard_name="dew_point_temperature,dewpoint_temperature,air_temperature,temperature,Temperature_2m"/>
   </Style>
 
-  <Style name="temperature">
+  <Style name="temperature" title="Temperature" abstract="Rendered with nearest neighbour interpolation">
     <Legend fixed="true" tickinterval="5">temperature_cwk</Legend>
     <Min>-35</Min>
     <Max>45</Max>
@@ -533,120 +530,76 @@
     <ShadeInterval min="39" max="40" label="39-40" fillcolor="#990E0E"/>
     <ContourLine width="0.3" linecolor="#444444" textcolor="#444444" textformatting="%2.0f" interval="1"/>
     <RenderMethod>shadedcontour</RenderMethod>
-    <NameMapping name="nearest"         title="Temperature" abstract="Rendered with nearest neighbour interpolation"/>
-    <NameMapping name="contour"         title="Temperature contour" abstract="Contourlines on a transparent background"/>
-    <NameMapping name="shaded"          title="Temperature shaded" abstract="Shaded"/>
-    <NameMapping name="nearestcontour"  title="Temperature nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
-    <NameMapping name="bilinearcontour" title="Temperature bilinear + contours" abstract="Contours with bilinear interpolated background"/>
-    <NameMapping name="shadedcontour"   title="Temperature shaded + contours" abstract="Contours with shaded background"/>
     <SmoothingFilter>0</SmoothingFilter>
     <StandardNames standard_name="dew_point_temperature,dewpoint_temperature,air_temperature,temperature,Temperature_2m"/>
   </Style>
   
   <!--
-  <Style name="temperature2">
+  <Style name="temperature2" title="Temperature2" abstract="Rendered with nearest neighbour interpolation">
   <Legend>temperature2</Legend>
   <Min>-35</Min>
   <Max>40</Max>
   <ShadeInterval>2</ShadeInterval>
   <ContourLine width="0.3" linecolor="#444444" textcolor="#444444" textformatting="%2.0f" interval="2"/>
   <RenderMethod>shadedcontour,nearestcontour,bilinearcontour,contour</RenderMethod>
-  <NameMapping name="nearest"         title="Temperature2" abstract="Rendered with nearest neighbour interpolation"/>
-  <NameMapping name="contour"         title="Temperature2 contour" abstract="Contourlines on a transparent background"/>
-  <NameMapping name="shaded"          title="Temperature2 shaded" abstract="Shaded"/>
-  <NameMapping name="nearestcontour"  title="Temperature2 nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
-  <NameMapping name="bilinearcontour" title="Temperature2 bilinear + contours" abstract="Contours with bilinear interpolated background"/>
-  <NameMapping name="shadedcontour"   title="Temperature2 shaded + contours" abstract="Contours with shaded background"/>
   <StandardNames standard_name="dew_point_temperature,dewpoint_temperature,air_temperature,temperature,Temperature_2m"/>
   </Style>
   -->
   
-  <Style name="temperature-hi">
+  <Style name="temperature-hi" title="Temperature (Hi)" abstract="Rendered with nearest neighbour interpolation">
     <Legend>temperature-hi</Legend>
     <Min>-36</Min>
     <Max>44</Max>
     <ShadeInterval>2</ShadeInterval>
     <ContourLine width="0.3" linecolor="#444444" textcolor="#444444" textformatting="%2.0f" interval="2"/>
     <RenderMethod>shadedcontour</RenderMethod>
-    <NameMapping name="nearest"         title="Temperature (Hi)" abstract="Rendered with nearest neighbour interpolation"/>
-    <NameMapping name="contour"         title="Temperature (Hi) contour" abstract="Contourlines on a transparent background"/>
-    <NameMapping name="shaded"          title="Temperature (Hi) shaded" abstract="Shaded"/>
-    <NameMapping name="nearestcontour"  title="Temperature (Hi) nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
-    <NameMapping name="bilinearcontour" title="Temperature (Hi) bilinear + contours" abstract="Contours with bilinear interpolated background"/>
-    <NameMapping name="shadedcontour"   title="Temperature (Hi) shaded + contours" abstract="Contours with shaded background"/>
     <StandardNames standard_name="dew_point_temperature,dewpoint_temperature,air_temperature,temperature,Temperature_2m"/>
   </Style>
   
-  <!--  <Style name="temperature-lo">
+  <!--  <Style name="temperature-lo" title="Temperature (Lo)" abstract="Rendered with nearest neighbour interpolation">
   <Legend>temperature-lo</Legend>
   <Min>-48</Min>
   <Max>32</Max>
   <ShadeInterval>2</ShadeInterval>
   <ContourLine width="0.3" linecolor="#444444" textcolor="#444444" textformatting="%2.0f" interval="2"/>
   <RenderMethod>shadedcontour,nearestcontour,bilinearcontour,contour</RenderMethod>
-  <NameMapping name="nearest"         title="Temperature (Lo)" abstract="Rendered with nearest neighbour interpolation"/>
-  <NameMapping name="contour"         title="Temperature (Lo) contour" abstract="Contourlines on a transparent background"/>
-  <NameMapping name="shaded"          title="Temperature (Lo) shaded" abstract="Shaded"/>
-  <NameMapping name="nearestcontour"  title="Temperature (Lo) nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
-  <NameMapping name="bilinearcontour" title="Temperature (Lo) bilinear + contours" abstract="Contours with bilinear interpolated background"/>
-  <NameMapping name="shadedcontour"   title="Temperature (Lo) shaded + contours" abstract="Contours with shaded background"/>
   <StandardNames standard_name="dew_point_temperature,dewpoint_temperature,air_temperature,temperature,Temperature_2m"/>
   </Style>
   -->
   
-  <Style name="cape">
+  <Style name="cape" title="Cape" abstract="Rendered with nearest neighbour interpolation">
     <Legend fixed="true" tickinterval="10">cape</Legend>
     <Min>0</Min>
     <Max>100</Max>
     <ShadeInterval>5</ShadeInterval>
     <ContourLine width="0.3" linecolor="#444444" textcolor="#444444" textformatting="%2.0f" classes="10,25,50,100,150"/>
     <RenderMethod>shadedcontour,nearestcontour,bilinearcontour,contour</RenderMethod>
-    <NameMapping name="nearest"         title="Cape" abstract="Rendered with nearest neighbour interpolation"/>
-    <NameMapping name="contour"         title="Cape contour" abstract="Contourlines on a transparent background"/>
-    <NameMapping name="shaded"          title="Cape shaded" abstract="Shaded"/>
-    <NameMapping name="nearestcontour"  title="Cape nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
-    <NameMapping name="bilinearcontour" title="Cape bilinear + contours" abstract="Contours with bilinear interpolated background"/>
-    <NameMapping name="shadedcontour"   title="Cape shaded + contours" abstract="Contours with shaded background"/>
     <StandardNames standard_name="cape"/>
     <ValueRange min="10" max="1000000"/>
   </Style>
   
-  <Style name="cloudcover">
+  <Style name="cloudcover"  title="Cloud cover" abstract="Rendered with nearest neighbour interpolation">
     <Legend fixed="true" tickinterval=".1">cloudcover</Legend>
     <Min>0</Min>
     <Max>1</Max>
     <ShadeInterval>5</ShadeInterval>
     <ContourLine width="0.3" linecolor="#444444" textcolor="#444444" textformatting="%2.1f" classes=".5"/>
     <RenderMethod>bilinear</RenderMethod>
-    <NameMapping name="nearest"         title="Cloud cover" abstract="Rendered with nearest neighbour interpolation"/>
-    <NameMapping name="bilinear"         title="Cloud cover bilinear" abstract="Rendered with bilinear interpolation"/>
-    <NameMapping name="contour"         title="Cloud cover contour" abstract="Contourlines on a transparent background"/>
-    <NameMapping name="shaded"          title="Cloud cover shaded" abstract="Shaded"/>
-    <NameMapping name="nearestcontour"  title="Cloud cover nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
-    <NameMapping name="bilinearcontour" title="Cloud cover bilinear + contours" abstract="Contours with bilinear interpolated background"/>
-    <NameMapping name="shadedcontour"   title="Cloud cover shaded + contours" abstract="Contours with shaded background"/>
     <StandardNames standard_name="cloud_area_fraction,low_type_cloud_area_fraction,medium_type_cloud_area_fraction,high_type_cloud_area_fraction,total_cloud_cover,low_cloud_cover,medium_cloud_cover,high_cloud_cover"/>
   </Style>
   
   <!--
-  <Style name="cloudcover_trans">
+  <Style name="cloudcover_trans" title="Cloud cover" abstract="Rendered with nearest neighbour interpolation">
   <Legend fixed="true" tickinterval=".1">cloudcover_trans</Legend>
   <Min>0</Min>
   <Max>1</Max>
   <ShadeInterval>5</ShadeInterval>
   <ContourLine width="0.3" linecolor="#444444" textcolor="#444444" textformatting="%2.1f" classes=".5"/>
   <RenderMethod>bilinear,nearest</RenderMethod>
-  <NameMapping name="nearest"         title="Cloud cover" abstract="Rendered with nearest neighbour interpolation"/>
-  <NameMapping name="bilinear"         title="Cloud cover bilinear" abstract="Rendered with bilinear interpolation"/>
-  <NameMapping name="contour"         title="Cloud cover contour" abstract="Contourlines on a transparent background"/>
-  <NameMapping name="shaded"          title="Cloud cover shaded" abstract="Shaded"/>
-  <NameMapping name="nearestcontour"  title="Cloud cover nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
-  <NameMapping name="bilinearcontour" title="Cloud cover bilinear + contours" abstract="Contours with bilinear interpolated background"/>
-  <NameMapping name="shadedcontour"   title="Cloud cover shaded + contours" abstract="Contours with shaded background"/>
   <StandardNames standard_name="cloud_area_fraction,low_type_cloud_area_fraction,medium_type_cloud_area_fraction,high_type_cloud_area_fraction,total_cloud_cover,low_cloud_cover,medium_cloud_cover,high_cloud_cover"/>
   </Style>
   -->
-  <Style name="highcloudcover">
+  <Style name="highcloudcover" title="High cloud cover" abstract="Rendered with nearest neighbour interpolation">
     <Legend fixedclasses="true" tickround="0.1" tickinterval=".1" >highcloudcover</Legend>
     <Min>0</Min>
     <Max>1</Max>
@@ -655,17 +608,10 @@
     <ShadeInterval min="0.50" max="0.75"    label="0.50-0.75"    fillcolor="#8080FF"/>
     <ShadeInterval min="0.75" max="1.00"    label="0.75-1.00"    fillcolor="#4C4CFF"/>
     <RenderMethod>bilinear</RenderMethod>
-    <NameMapping name="nearest"         title="High cloud cover" abstract="Rendered with nearest neighbour interpolation"/>
-    <NameMapping name="bilinear"         title="High cloud cover bilinear" abstract="Rendered with bilinear interpolation"/>
-    <NameMapping name="contour"         title="High cloud cover contour" abstract="Contourlines on a transparent background"/>
-    <NameMapping name="shaded"          title="High cloud cover shaded" abstract="Shaded"/>
-    <NameMapping name="nearestcontour"  title="High cloud cover nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
-    <NameMapping name="bilinearcontour" title="High cloud cover bilinear + contours" abstract="Contours with bilinear interpolated background"/>
-    <NameMapping name="shadedcontour"   title="High cloud cover shaded + contours" abstract="Contours with shaded background"/>
     <StandardNames standard_name="high_cloud_cover,high_type_cloud_area_fraction"/>
   </Style>
   
-  <Style name="midcloudcover">
+  <Style name="midcloudcover" title="Medium cloud cover" abstract="Rendered with nearest neighbour interpolation">
     <Legend fixedclasses="true" tickround="0.1" tickinterval=".1">midcloudcover</Legend>
     <Min>0</Min>
     <Max>1</Max>
@@ -674,17 +620,10 @@
     <ShadeInterval min="0.50" max="0.75"    label="0.50-0.75"    fillcolor="#4CE64C"/>
     <ShadeInterval min="0.75" max="1.00"    label="0.75-1.00"    fillcolor="#00FF00"/>
     <RenderMethod>bilinear</RenderMethod>
-    <NameMapping name="nearest"         title="Medium cloud cover" abstract="Rendered with nearest neighbour interpolation"/>
-    <NameMapping name="bilinear"         title="Medium cloud cover bilinear" abstract="Rendered with bilinear interpolation"/>
-    <NameMapping name="contour"         title="Medium cloud cover contour" abstract="Contourlines on a transparent background"/>
-    <NameMapping name="shaded"          title="Medium cloud cover shaded" abstract="Shaded"/>
-    <NameMapping name="nearestcontour"  title="Medium cloud cover nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
-    <NameMapping name="bilinearcontour" title="Medium cloud cover bilinear + contours" abstract="Contours with bilinear interpolated background"/>
-    <NameMapping name="shadedcontour"   title="Medium cloud cover shaded + contours" abstract="Contours with shaded background"/>
     <StandardNames standard_name="medium_cloud_cover,medium_type_cloud_area_fraction"/>
   </Style>
   
-  <Style name="lowcloudcover">
+  <Style name="lowcloudcover" title="Low cloud cover" abstract="Rendered with nearest neighbour interpolation">
     <Legend fixedclasses="true" tickround="0.1" tickinterval=".1">lowcloudcover</Legend>
     <Min>0</Min>
     <Max>1</Max>
@@ -693,17 +632,10 @@
     <ShadeInterval min="0.50" max="0.75"    label="0.50-0.75"    fillcolor="#FF8080"/>
     <ShadeInterval min="0.75" max="1.00"    label="0.75-1.00"    fillcolor="#FF4C4C"/>
     <RenderMethod>bilinear</RenderMethod>
-    <NameMapping name="nearest"         title="Low cloud cover" abstract="Rendered with nearest neighbour interpolation"/>
-    <NameMapping name="bilinear"         title="Low cloud cover bilinear" abstract="Rendered with bilinear interpolation"/>
-    <NameMapping name="contour"         title="Low cloud cover contour" abstract="Contourlines on a transparent background"/>
-    <NameMapping name="shaded"          title="Low cloud cover shaded" abstract="Shaded"/>
-    <NameMapping name="nearestcontour"  title="Low cloud cover nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
-    <NameMapping name="bilinearcontour" title="Low cloud cover bilinear + contours" abstract="Contours with bilinear interpolated background"/>
-    <NameMapping name="shadedcontour"   title="Low cloud cover shaded + contours" abstract="Contours with shaded background"/>
     <StandardNames standard_name="low_cloud_cover,low_type_cloud_area_fraction"/>
   </Style>
   
-  <Style name="totalcloudcover">
+  <Style name="totalcloudcover" title="Total cloud cover" abstract="Rendered with nearest neighbour interpolation">
     <Legend fixedclasses="true" tickround="0.1" tickinterval=".1">totalcloudcover</Legend>
     <Min>0</Min>
     <Max>1</Max>
@@ -712,17 +644,10 @@
     <ShadeInterval min="0.50" max="0.75"    label="0.50-0.75"    fillcolor="#737373"/>
     <ShadeInterval min="0.75" max="1.00"    label="0.75-1.00"    fillcolor="#4C4C4C"/>
     <RenderMethod>bilinear</RenderMethod>
-    <NameMapping name="nearest"         title="Total cloud cover" abstract="Rendered with nearest neighbour interpolation"/>
-    <NameMapping name="bilinear"         title="Total cloud cover bilinear" abstract="Rendered with bilinear interpolation"/>
-    <NameMapping name="contour"         title="Total cloud cover contour" abstract="Contourlines on a transparent background"/>
-    <NameMapping name="shaded"          title="Total cloud cover shaded" abstract="Shaded"/>
-    <NameMapping name="nearestcontour"  title="Total cloud cover nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
-    <NameMapping name="bilinearcontour" title="Total cloud cover bilinear + contours" abstract="Contours with bilinear interpolated background"/>
-    <NameMapping name="shadedcontour"   title="Total cloud cover shaded + contours" abstract="Contours with shaded background"/>
     <StandardNames standard_name="total_cloud_cover,totalcloudcover,cloud_area_fraction,convective_type_cloud_area_fraction"/>
   </Style>
   
-  <Style name="snow">
+  <Style name="snow" title="Snow" abstract="Rendered with nearest neighbour interpolation">
     <Legend fixed="true" tickround="0.1" tickinterval="5">snow</Legend>
     <Scale>80</Scale>
     <Offset>80</Offset>
@@ -738,17 +663,10 @@
     <ShadeInterval min="40" max="100"    label="40-100"    fillcolor="#FF8000"/>
     <!--    <RenderMethod>bilinear,nearest,shaded</RenderMethod>-->
     <RenderMethod>shadedcontour,nearestcontour,bilinearcontour,contour</RenderMethod>
-    <NameMapping name="nearest"         title="Snow" abstract="Rendered with nearest neighbour interpolation"/>
-    <NameMapping name="bilinear"         title="Snow bilinear" abstract="Rendered with bilinear interpolation"/>
-    <NameMapping name="contour"         title="Snow contour" abstract="Contourlines on a transparent background"/>
-    <NameMapping name="shaded"          title="Snow shaded" abstract="Shaded"/>
-    <NameMapping name="nearestcontour"  title="Snow nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
-    <NameMapping name="bilinearcontour" title="Snow bilinear + contours" abstract="Contours with bilinear interpolated background"/>
-    <NameMapping name="shadedcontour"   title="Snow shaded + contours" abstract="Contours with shaded background"/>
     <StandardNames standard_name="snowfall,cumsnowfall,snowfall_03h,snowfall_06h,snowfall_24h"/>
   </Style>
   
-  <Style name="precip-wow">
+  <Style name="precip-wow" title="Precipitation (wow) shaded + contours" abstract="Contours with shaded background">
     <Legend fixed="true" >wow.precipitation</Legend>
     <Scale>80</Scale>
     <Offset>80</Offset>
@@ -765,12 +683,11 @@
     <ShadeInterval min="60" max="100" label="60-100" fillcolor="#610066"/>
     <ContourLine width="1.2" linecolor="#000000" textcolor="#000000" textformatting="%2.1f" classes="0.1,0.3,0.5,1,3,5,10,20,40,60,100"/>
     <RenderMethod>shadedcontour</RenderMethod>
-    <NameMapping name="shadedcontour"   title="Precipitation (wow) shaded + contours" abstract="Contours with shaded background"/>
     <SmoothingFilter>0</SmoothingFilter>
     <StandardNames standard_name="total_precipitation,large_scale_precipitation,convective_precipitation,cumprecip,precipitation_03h,cumsnowfall,snowfall_03h,precipitation_flux,graupel_flux,snowfall_flux"/>
   </Style>
 
-  <Style name="precip_cwk">
+  <Style name="precip_cwk" title="Precipitation CWKnet" abstract="Rendered with nearest neighbour interpolation">
     <Legend fixed="true">precip_cwk</Legend>
     <Scale>80</Scale>
     <Offset>80</Offset>
@@ -787,18 +704,12 @@
     <ContourLine width="1.2" linecolor="#000000" textcolor="#000000" textformatting="%2.1f" classes="0.1,0.3,0.5,1,3,5,10,20,40,100"/>
     
     <RenderMethod>shadedcontour,contour</RenderMethod>
-    <NameMapping name="nearest"         title="Precipitation CWKnet" abstract="Rendered with nearest neighbour interpolation"/>
-    <NameMapping name="contour"         title="Precipitation CWKnet contour" abstract="Contourlines on a transparent background"/>
-    <NameMapping name="shaded"          title="Precipitation CWKnet shaded" abstract="Shaded"/>
-    <NameMapping name="nearestcontour"  title="Precipitation CWKnet nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
-    <NameMapping name="bilinearcontour" title="Precipitation CWKnet bilinear + contours" abstract="Contours with bilinear interpolated background"/>
-    <NameMapping name="shadedcontour"   title="Precipitation CWKnet shaded + contours" abstract="Contours with shaded background"/>
     
     <SmoothingFilter>0</SmoothingFilter>
     <StandardNames standard_name="total_precipitation,large_scale_precipitation,convective_precipitation,cumprecip,precipitation_03h,cumsnowfall,snowfall_03h,precipitation_flux,graupel_flux,snowfall_flux"/>
   </Style>
   
-  <Style name="precip_cwk_6">
+  <Style name="precip_cwk_6" title="Precipitation6 CWKnet" abstract="Rendered with nearest neighbour interpolation">
     <Legend fixed="true">precip_cwk_6</Legend>
     <Scale>80</Scale>
     <Offset>80</Offset>
@@ -813,18 +724,11 @@
     <ContourLine width="1.2" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" classes="0.5,1,3,5,10,20,40,100"/>
     
     <RenderMethod>shadedcontour,nearestcontour,bilinearcontour,contour</RenderMethod>
-    <NameMapping name="nearest"         title="Precipitation6 CWKnet" abstract="Rendered with nearest neighbour interpolation"/>
-    <NameMapping name="contour"         title="Precipitation6 CWKnet contour" abstract="Contourlines on a transparent background"/>
-    <NameMapping name="shaded"          title="Precipitation6 CWKnet shaded" abstract="Shaded"/>
-    <NameMapping name="nearestcontour"  title="Precipitation6 CWKnet nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
-    <NameMapping name="bilinearcontour" title="Precipitation6 CWKnet bilinear + contours" abstract="Contours with bilinear interpolated background"/>
-    <NameMapping name="shadedcontour"   title="Precipitation6 CWKnet shaded + contours" abstract="Contours with shaded background"/>
-    
     <SmoothingFilter>0</SmoothingFilter>
     <StandardNames standard_name="precipitation_06h,snowfall_06h"/>
   </Style>
   
-  <Style name="precip_cwk_24">
+  <Style name="precip_cwk_24" title="Precipitation24 CWKnet" abstract="Rendered with nearest neighbour interpolation">
     <Legend fixed="true">precip_cwk_24</Legend>
     <Scale>60</Scale>
     <Offset>60</Offset>
@@ -840,18 +744,11 @@
     <ShadeInterval min="200" max="400" label="200-400" fillcolor="#00FF00"/> 
     <ContourLine width="1.2" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" classes="0.5,1,3,5,10,20,40,100,200,400,1000"/>
     <RenderMethod>shadedcontour,nearestcontour,bilinearcontour,contour</RenderMethod>
-    <NameMapping name="nearest"         title="Precipitation24 CWKnet" abstract="Rendered with nearest neighbour interpolation"/>
-    <NameMapping name="contour"         title="Precipitation24 CWKnet contour" abstract="Contourlines on a transparent background"/>
-    <NameMapping name="shaded"          title="Precipitation24 CWKnet shaded" abstract="Shaded"/>
-    <NameMapping name="nearestcontour"  title="Precipitation24 CWKnet nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
-    <NameMapping name="bilinearcontour" title="Precipitation24 CWKnet bilinear + contours" abstract="Contours with bilinear interpolated background"/>
-    <NameMapping name="shadedcontour"   title="Precipitation24 CWKnet shaded + contours" abstract="Contours with shaded background"/>
-    
     <SmoothingFilter>0</SmoothingFilter>
     <StandardNames standard_name="precipitation_24h,snowfall_24h"/>
   </Style>
   
-  <Style name="pressure_cwk">
+  <Style name="pressure_cwk" title="Pressure" abstract="Rendered with nearest neighbour interpolation">
     <Legend fixed="true">not_used</Legend>
     <Min>950</Min>
     <Max>1050</Max>
@@ -859,17 +756,10 @@
     <ContourLine width="1.2" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" interval="5"/>
     <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="" interval="1.0"/>
     <RenderMethod>contour</RenderMethod>
-    <NameMapping name="nearest"         title="Pressure" abstract="Rendered with nearest neighbour interpolation"/>
-    <NameMapping name="contour"         title="Pressure contour (1/5)" abstract="Contourlines on a transparent background"/>
-    <NameMapping name="shaded"          title="Pressure shaded" abstract="Shaded"/>
-    <NameMapping name="bilinear"        title="Pressure bilinear" abstract="Shaded"/>
-    <NameMapping name="nearestcontour"  title="Pressure nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
-    <NameMapping name="bilinearcontour" title="Pressure bilinear + contours" abstract="Contours with bilinear interpolated background"/>
-    <NameMapping name="shadedcontour"   title="Pressure shaded + contours" abstract="Contours with shaded background"/>
     <StandardNames standard_name="air_pressure,air_pressure_at_sea_level,pressure,pressure_level"/>
   </Style>
   
-  <Style name="pressure_cwk_2.5">
+  <Style name="pressure_cwk_2.5" title="Pressure contour (2.5/10)" abstract="Contourlines on a transparent background">
     <Legend fixed="true">not_used</Legend>
     <Min>950</Min>
     <Max>1050</Max>
@@ -877,19 +767,10 @@
     <ContourLine width="1.2" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" interval="10"/>
     <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="" interval="2.5"/>
     <RenderMethod>contour</RenderMethod>
-    <NameMapping name="contour"         title="Pressure contour (2.5/10)" abstract="Contourlines on a transparent background"/>
-    <!--
-    <NameMapping name="nearest"         title="Pressure" abstract="Rendered with nearest neighbour interpolation"/>
-    <NameMapping name="shaded"          title="Pressure shaded" abstract="Shaded"/>
-    <NameMapping name="bilinear"        title="Pressure bilinear" abstract="Shaded"/>
-    <NameMapping name="nearestcontour"  title="Pressure nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
-    <NameMapping name="bilinearcontour" title="Pressure bilinear + contours" abstract="Contours with bilinear interpolated background"/>
-    <NameMapping name="shadedcontour"   title="Pressure shaded + contours" abstract="Contours with shaded background"/>
-    -->
     <StandardNames standard_name="air_pressure,air_pressure_at_sea_level,pressure,pressure_level"/>
   </Style>
   
-  <Style name="pressure_cwk_5">
+  <Style name="pressure_cwk_5" title="Pressure contour (5/10)" abstract="Contourlines on a transparent background">
     <Legend fixed="true">not_used</Legend>
     <Min>950</Min>
     <Max>1050</Max>
@@ -897,20 +778,12 @@
     <ContourLine width="1.2" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" interval="10"/>
     <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="" interval="5"/>
     <RenderMethod>contour</RenderMethod>
-    <NameMapping name="contour"         title="Pressure contour (5/10)" abstract="Contourlines on a transparent background"/>
-    <!--
-    <NameMapping name="nearest"         title="Pressure" abstract="Rendered with nearest neighbour interpolation"/>
-    <NameMapping name="shaded"          title="Pressure shaded" abstract="Shaded"/>
-    <NameMapping name="bilinear"        title="Pressure bilinear" abstract="Shaded"/>
-    <NameMapping name="nearestcontour"  title="Pressure nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
-    <NameMapping name="bilinearcontour" title="Pressure bilinear + contours" abstract="Contours with bilinear interpolated background"/>
-    <NameMapping name="shadedcontour"   title="Pressure shaded + contours" abstract="Contours with shaded background"/>
-    -->
+
     <StandardNames standard_name="air_pressure,air_pressure_at_sea_level,pressure,pressure_level"/>
   </Style>
   
   <!--
-  <Style name="pressure">
+  <Style name="pressure" title="Pressure contour" abstract="Contourlines on a transparent background">
   <Legend fixed="true">not_used</Legend>
   <Min>950</Min>
   <Max>1050</Max>
@@ -918,20 +791,12 @@
   <ContourLine width="1.2" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" interval="5"/>
   <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="" interval="2.5"/>
   <RenderMethod>shadedcontour,nearestcontour,bilinear,contour</RenderMethod>
-  <NameMapping name="contour"         title="Pressure contour" abstract="Contourlines on a transparent background"/>
-  <NameMapping name="nearest"         title="Pressure" abstract="Rendered with nearest neighbour interpolation"/>
-  <NameMapping name="contour"         title="Pressure contour" abstract="Contourlines on a transparent background"/>
-  <NameMapping name="shaded"          title="Pressure shaded" abstract="Shaded"/>
-  <NameMapping name="bilinear"        title="Pressure bilinear" abstract="Shaded"/>
-  <NameMapping name="nearestcontour"  title="Pressure nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
-  <NameMapping name="bilinearcontour" title="Pressure bilinear + contours" abstract="Contours with bilinear interpolated background"/>
-  <NameMapping name="shadedcontour"   title="Pressure shaded + contours" abstract="Contours with shaded background"/>
   <StandardNames standard_name="air_pressure,air_pressure_at_sea_level,pressure,pressure_level"/>
   </Style>
   -->
 
     
-  <Style name="pressure-wow">
+  <Style name="pressure-wow"  title="Pressure (wow) shaded + contours" abstract="Contours swith shaded background">
     <Legend fixed="true" tickinterval="5">wow.pressure</Legend>
     <Min>950</Min>
     <Max>1050</Max>
@@ -939,22 +804,19 @@
     <ContourLine width="1.2" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" interval="5"/>
     <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="" interval="2.5"/>
     <RenderMethod>shadedcontour</RenderMethod>
-   <NameMapping name="shadedcontour"   title="Pressure (wow) shaded + contours" abstract="Contours swith shaded background"/>
     <SmoothingFilter>0</SmoothingFilter>
     <StandardNames standard_name="air_pressure,air_pressure_at_sea_level,pressure,pressure_level"/>
   </Style>
   
-  <Style name="Windbarbs">
+  <Style name="Windbarbs" title="Wind barbs" abstract="Rendered with barbs">
     <Legend fixed="true">windspeed_cwk</Legend>
     <Scale>1</Scale>
     <Offset>0</Offset>
     <RenderMethod>barb</RenderMethod>
-    <NameMapping name="barb"         title="Wind barbs" abstract="Rendered with barbs"/>
-    <NameMapping name="thinbarb"         title="Wind barbs (thinned)" abstract="Rendered with thinned barbs"/>
     <StandardNames standard_name="x_wind,y_wind,eastward_wind,northward_wind"/>
   </Style>
   
-  <Style name="Windbarbs_kts">
+  <Style name="Windbarbs_kts" title="Wind barbs+cont" abstract="Rendered with barbs">
     <Legend fixed="true">windspeed_cwk</Legend>
     <Min>0</Min>
     <Max>240</Max>
@@ -972,16 +834,10 @@
     <!--    <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" classes="7,11,16,21,27,34,41,48,56,64,200"/> -->
     <ContourLine width=".5" linecolor="#800000" textcolor="#800000" textformatting="%2.0f" interval="5"/>
     <RenderMethod>barbshaded</RenderMethod>
-    <NameMapping name="barbcontour"         title="Wind barbs+cont" abstract="Rendered with barbs"/>
-    <NameMapping name="barbshaded"         title="Wind barbs+sh" abstract="Rendered with barbs"/>
-    <NameMapping name="barbshadedcontour"         title="Wind barbs+sh/cont" abstract="Rendered with barbs"/>
-    <NameMapping name="thinbarbcontour"         title="Wind barbs (thinned)+cont" abstract="Rendered with thinned barbs"/>
-    <NameMapping name="thinbarbshaded"         title="Wind barbs (thinned)+sh" abstract="Rendered with thinned barbs"/>
-    <NameMappin name="thinbarbshadedcontour"         title="Wind barbs (thinned)+sh/cont" abstract="Rendered with thinned barbs"/>
     <StandardNames standard_name="x_wind,y_wind,eastward_wind,northward_wind" units="xyz"/>
   </Style>
   
-  <Style name="Windbarbs_mps">
+  <Style name="Windbarbs_mps" title="Wind barbs+cont" abstract="Rendered with barbs">
     <Legend fixed="true">windspeed_cwk</Legend>
     <Min>0</Min>
     <Max>240</Max>
@@ -999,16 +855,10 @@
     <!--    <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" classes="7,11,16,21,27,34,41,48,56,64,200"/> -->
     <ContourLine width=".5" linecolor="#800000" textcolor="#800000" textformatting="%2.0f" interval="5"/>
     <RenderMethod>barbshaded</RenderMethod>
-    <NameMapping name="barbcontour"         title="Wind barbs+cont" abstract="Rendered with barbs"/>
-    <NameMapping name="barbshaded"         title="Wind barbs+sh" abstract="Rendered with barbs"/>
-    <NameMapping name="barbshadedcontour"         title="Wind barbs+sh/cont" abstract="Rendered with barbs"/>
-    <NameMapping name="thinbarbcontour"         title="Wind barbs (thinned)+cont" abstract="Rendered with thinned barbs"/>
-    <NameMapping name="thinbarbshaded"         title="Wind barbs (thinned)+sh" abstract="Rendered with thinned barbs"/>
-    <NameMapping name="thinbarbshadedcontour"         title="Wind barbs (thinned)+sh/cont" abstract="Rendered with thinned barbs"/>
     <StandardNames standard_name="x_wind,y_wind,eastward_wind,northward_wind" units="m/s"/>
   </Style>
   
-  <Style name="Windspeed">
+  <Style name="Windspeed" title="Windspeed" abstract="Rendered with nearest neighbour interpolation">
     <Legend fixed="true">windspeed_cwk</Legend>
     <Min>0</Min>
     <Max>240</Max>
@@ -1026,18 +876,11 @@
     <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" classes="7,11,16,21,27,34,41,48,56,64,200"/>
     <ContourLine width=".5" linecolor="#800000" textcolor="#800000" textformatting="%2.0f" interval="5"/>
     <RenderMethod>contour,nearest,shaded,bilinear,nearestcontour,shadedcontour,bilinearcontour</RenderMethod>
-    <NameMapping name="nearest"         title="Windspeed" abstract="Rendered with nearest neighbour interpolation"/>
-    <NameMapping name="contour"         title="Windspeed contour" abstract="Contourlines on a transparent background"/>
-    <NameMapping name="shaded"          title="Windspeed shaded" abstract="Shaded"/>
-    <NameMapping name="bilinear"        title="Windspeed bilinear" abstract="Shaded"/>
-    <NameMapping name="nearestcontour"  title="Windspeed nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
-    <NameMapping name="bilinearcontour" title="Windspeed bilinear + contours" abstract="Contours with bilinear interpolated background"/>
-    <NameMapping name="shadedcontour"   title="Windspeed shaded + contours" abstract="Contours with shaded background"/>
     <StandardNames standard_name="windspeed,x_wind,y_wind,Windgusts,x_gust,y_gust,wind_speed_of_gust" units="kts"/>
   </Style>
   
   <!--
-  <Style name="WindspeedHi">
+  <Style name="WindspeedHi" title="Windspeed(hi) bilinear + contours" abstract="Contours with bilinear interpolated background">
   <Legend fixed="true">windspeed_hi</Legend>
   <Min>0</Min>
   <Max>240</Max>
@@ -1051,14 +894,12 @@
   <ShadeInterval min="110" max="125"    label="110-125"    fillcolor="#FFB3B3"/>
   <ShadeInterval min="125" max="300"    label="125-300"    fillcolor="#FF7F7F"/>
   <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" classes="30,40,50,60,70,80,90,100,110,125,300"/>
-  <NameMapping name="bilinearcontour" title="Windspeed(hi) bilinear + contours" abstract="Contours with bilinear interpolated background"/>
-  <NameMapping name="shadedcontour"   title="Windspeed(hi) shaded + contours" abstract="Contours with shaded background"/>
   <RenderMethod>shadedcontour,bilinearcontour</RenderMethod>
   <StandardNames standard_name="x_wind,y_wind,eastward_wind,northward_wind" units="m/s"/>
   </Style>
   -->
   
-  <Style name="geopotential">
+  <Style name="geopotential" title="Geopotential" abstract="Rendered with nearest neighbour interpolation">
     <Legend fixed="true" tickinterval="50">not_used</Legend>
     <Min>0.1</Min>
     <Max>2000</Max>
@@ -1066,13 +907,11 @@
     <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%3.0f" interval="10"/>
     <ContourLine width="1.3" linecolor="#FF0000" textcolor="#FF0000" textformatting="%3.0f" interval="100"/>
     <RenderMethod>contour</RenderMethod>
-    <NameMapping name="nearest"         title="Geopotential" abstract="Rendered with nearest neighbour interpolation"/>
-    <NameMapping name="contour"         title="Geopotential contour" abstract="Contourlines on a transparent background"/>
     <StandardNames standard_name="geopotential"/>
   </Style>
   
   <!--
-  <Style name="geopotentialLow">
+  <Style name="geopotentialLow" title="Geopotential(low)" abstract="Rendered with nearest neighbour interpolation">
   <Legend fixed="true" tickinterval="50">not_used</Legend>
   <Min>4800</Min>
   <Max>6000</Max>
@@ -1080,12 +919,10 @@
   <ContourLine width="1.3" linecolor="#800000" textcolor="#800000" textformatting="%4.0f" interval="200"/>
   <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%4.0f" interval="40"/>
   <RenderMethod>contour</RenderMethod>
-  <NameMapping name="nearest"         title="Geopotential(low)" abstract="Rendered with nearest neighbour interpolation"/>
-  <NameMapping name="contour"         title="Geopotential(low) contour" abstract="Contourlines on a transparent background"/>
   <StandardNames standard_name="geopotential,z850,height"/>
   </Style>
   
-  <Style name="geopotentialMed">
+  <Style name="geopotentialMed"  title="Geopotential(mid)" abstract="Rendered with nearest neighbour interpolation">
   <Legend fixed="true" tickinterval="50">not_used</Legend>
   <Min>4800</Min>
   <Max>6000</Max>
@@ -1093,12 +930,10 @@
   <ContourLine width="1.3" linecolor="#800000" textcolor="#800000" textformatting="%4.0f" interval="200"/>
   <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%4.0f" interval="40"/>
   <RenderMethod>contour</RenderMethod>
-  <NameMapping name="nearest"         title="Geopotential(mid)" abstract="Rendered with nearest neighbour interpolation"/>
-  <NameMapping name="contour"         title="Geopotential(mid) contour" abstract="Contourlines on a transparent background"/>
   <StandardNames standard_name="geopotential,z500,height"/>
   </Style>
   
-  <Style name="geopotentialHi">
+  <Style name="geopotentialHi" title="Geopotential(hi)" abstract="Rendered with nearest neighbour interpolation">
   <Legend fixedclasses="true" tickinterval="50">not_used</Legend>
   <Min>6000</Min>
   <Max>10000</Max>
@@ -1106,29 +941,20 @@
   <ContourLine width="1.3" linecolor="#800000" textcolor="#800000" textformatting="%4.0f" interval="200"/>
   <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%4.0f" interval="40"/>
   <RenderMethod>contour</RenderMethod>
-  <NameMapping name="nearest"         title="Geopotential(hi)" abstract="Rendered with nearest neighbour interpolation"/>
-  <NameMapping name="contour"         title="Geopotential(hi) contour" abstract="Contourlines on a transparent background"/>
   <StandardNames standard_name="geopotential,z300,height"/>
   </Style>
   -->
-  <Style name="fraction">
+  <Style name="fraction" title="Fraction" abstract="Rendered with nearest neighbour interpolation">
     <Legend fixed="true" tickinterval="10">fraction</Legend>
     <Min>0</Min>
     <Max>100</Max>
     <ShadeInterval>10</ShadeInterval>
     <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" interval="10"/>
     <RenderMethod>bilinear,contour</RenderMethod>
-    <NameMapping name="nearest"         title="Fraction" abstract="Rendered with nearest neighbour interpolation"/>
-    <NameMapping name="contour"         title="Fraction contour" abstract="Contourlines on a transparent background"/>
-    <NameMapping name="shaded"          title="Fraction shaded" abstract="Shaded"/>
-    <NameMapping name="bilinear"        title="Fraction bilinear" abstract="Shaded"/>
-    <NameMapping name="nearestcontour"  title="Fraction nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
-    <NameMapping name="bilinearcontour" title="Fraction bilinear + contours" abstract="Contours with bilinear interpolated background"/>
-    <NameMapping name="shadedcontour"   title="Fraction shaded + contours" abstract="Contours with shaded background"/>
     <StandardNames standard_name="WindspeedCumul,BeaufortWindCumul,TemperatureCumul,TemperatureUnderCumul,Temperature_2mCumul,Temperature_2mUnderCumul,WindgustCumul,PrecipCumul,Precip03hCumul,Precip06hCumul,Precip12hCumul,Precip24hCumul,CumSnowFallCumul,SnowFall03hCumul,SnowFall06hCumul,SnowFall12hCumul,SnowFall24hCumul,RelHumCumul,RelHumUnderCumul,TCCCumul,TCCUnderCumul"/>
   </Style>
   
-  <Style name="relhum">
+  <Style name="relhum" title="Fraction" abstract="Rendered with nearest neighbour interpolation">
     <Legend fixed="true" tickinterval="10">relhum</Legend>
     <Min>0</Min>
     <Max>100</Max>
@@ -1142,13 +968,6 @@
     <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" interval="10"/>
     <ContourLine width=".3" linecolor="#000000" textcolor="#000000" textformatting="%2.0f" classes="50,70,90,95,99,100"/>
     <RenderMethod>bilinear,contour</RenderMethod>
-    <NameMapping name="nearest"         title="Fraction" abstract="Rendered with nearest neighbour interpolation"/>
-    <NameMapping name="contour"         title="Fraction contour" abstract="Contourlines on a transparent background"/>
-    <NameMapping name="shaded"          title="Fraction shaded" abstract="Shaded"/>
-    <NameMapping name="bilinear"        title="Fraction bilinear" abstract="Shaded"/>
-    <NameMapping name="nearestcontour"  title="Fraction nearest + contours" abstract="Contours with nearest neighbour interpolated background"/>
-    <NameMapping name="bilinearcontour" title="Fraction bilinear + contours" abstract="Contours with bilinear interpolated background"/>
-    <NameMapping name="shadedcontour"   title="Fraction shaded + contours" abstract="Contours with shaded background"/>
     <StandardNames standard_name="relative_humidity"/>
   </Style>
   
@@ -1163,13 +982,12 @@
   </Legend>
   
   <!--
-  <Style name="precip-continous">
+  <Style name="precip-continous" title="Precipitation continous" abstract="Rendered with nearest neighbour interpolation">
   <Legend fixed="true">TCWVPalette</Legend>
   <Min>0</Min>
   <Max>20</Max>
   <RenderMethod>nearest</RenderMethod>
   <StandardNames standard_name="total_precipitation,large_scale_precipitation,convective_precipitation,precipitation_03h,precipitation_06h,precipitation_24h,precipitation_flux,graupel_flux,snowfall_flux"/>
-  <NameMapping name="nearest" title="Precipitation continous" abstract="Rendered with nearest neighbour interpolation"/>
   </Style>
   -->
 </Configuration>

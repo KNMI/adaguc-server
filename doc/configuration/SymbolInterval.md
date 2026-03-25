@@ -45,7 +45,7 @@ Binary_and example: Combines images based on binary operator &
 ---------------------------------------------------------------
 
 ```xml
-<Style name="BTD300_sensor">
+<Style name="BTD300_sensor" title="Sensor warning indicator" abstract="Draw status of BTD sensor with flash detections">
     <Legend>bluewhitered</Legend>
     <SymbolInterval min="0" max="63" file="/ssd1/adaguc/btd300/symbols/btdsensor/0.png"/> <!-- Base image --> 
     <SymbolInterval binary_and="1" file="/ssd1/adaguc/btd300/symbols/btdsensor/1.png"/>     <!-- combined with binary operator -->
@@ -56,7 +56,6 @@ Binary_and example: Combines images based on binary operator &
     <SymbolInterval binary_and="32" file="/ssd1/adaguc/btd300/symbols/btdsensor/32.png"/>
     <Point pointstyle="symbol" fillcolor="#000000FF" textcolor="#FFFFFFFF" linecolor="#000000A0" discradius="16" 
          dot="false" fontsize="12" textformat="%0.1f"/>
-    <NameMapping name="point"   title="Sensor warning indicator" abstract="Draw status of BTD sensor with flash detections"/>
     <LegendGraphic value="/ssd1/adaguc/btd300/symbols/btd300legend.png"/>
   </Style>
 ```

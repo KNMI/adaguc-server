@@ -62,12 +62,11 @@
         <Min>0</Min>
         <Max>24</Max>
     </Style>
-    <Style name="filledcountries">
+    <Style name="filledcountries" title="Overlay countries" abstract="Overlay countries">
         <Legend fixedclasses="true" tickinterval="1000" tickround="1">baselayer</Legend>
         <Min>0.0</Min>
         <Max>1000</Max>
         <RenderMethod>nearest</RenderMethod>
-        <NameMapping name="polyline" title="Overlay countries" abstract="Overlay countries" />
         <FeatureInterval match="0" matchid="Type" fillcolor="#D2FEFE" />
         <FeatureInterval match="2" matchid="Type" fillcolor="#D1E1FC" />
         <FeatureInterval match="3" matchid="Type" fillcolor="#D2D2D2" />
@@ -75,12 +74,11 @@
         <FeatureInterval match="5" matchid="Type" fillcolor="#D2D2D2" />
         <FeatureInterval match="6" matchid="Type" fillcolor="#D2D2D2" />
     </Style>
-    <Style name="countryborders">
+    <Style name="countryborders" title="Overlay countries" abstract="Overlay countries">
         <Legend fixedclasses="true" tickinterval="1000" tickround="1">baselayer</Legend>
         <Min>0.0</Min>
         <Max>1000</Max>
         <RenderMethod>polyline</RenderMethod>
-        <NameMapping name="polyline" title="Overlay countries" abstract="Overlay countries" />
         <FeatureInterval match="0" matchid="Type" bgcolor="#CCCCFF" bordercolor="#7EAFFFFF" borderwidth="0.67" />
         <FeatureInterval match="1" matchid="Type" bgcolor="#CCCCFF" bordercolor="#444444FF" borderwidth="0.5" />
         <FeatureInterval match="2" matchid="Type" bgcolor="#CCCCFF" bordercolor="#7EAFFFFF" borderwidth=".27" />
@@ -89,12 +87,11 @@
         <FeatureInterval match="5" matchid="Type" bgcolor="#CCCCFF" bordercolor="#444444FF" borderwidth="0.6" />
         <FeatureInterval match="6" matchid="Type" bgcolor="#CCCCFF" bordercolor="#444444FF" borderwidth="0.6" />
     </Style>
-    <Style name="provinces">
+    <Style name="provinces" title="Overlay countries" abstract="Overlay countries">
         <Legend fixedclasses="true" tickinterval="1000" tickround="1">baselayer</Legend>
         <Min>0.0</Min>
         <Max>1000</Max>
         <RenderMethod>polyline</RenderMethod>
-        <NameMapping name="polyline" title="Overlay countries" abstract="Overlay countries" />
         <FeatureInterval match=".*" bgcolor="#00FF00FF" fillcolor="#FFFFFFFF" bordercolor="#555555"
             borderwidth="0.5" />
     </Style>
