@@ -41,14 +41,11 @@ public:
   } BBOX;
 
 private:
-  static void buildNodeList(int pixelY, int &nodes, int nodeX[], int polyCorners, float *polyXY);
-  static void bubbleSort(int nodes, int nodeX[]);
   static void getBBOX(CDFObject *cdfObject, BBOX &bbox, json_value &json, std::vector<Feature *> &features);
   static void getDimensions(CDFObject *cdfObject, json_value &json, bool openAll);
   static void getPolygons(json_value &j);
   static void addCDFInfo(CDFObject *cdfObject, CServerParams *srvParams, BBOX &dfBBOX, std::vector<Feature *> &featureMap, bool openAll);
-  static void drawpolyWithHoles_index(int xMin, int yMin, int xMax, int yMax, unsigned short *imagedata, int w, int h, int polyCorners, float *polyXY, unsigned short int value, int holes,
-                                      int *holeCorners, float *holeXY[]);
+
   static void drawDot(int px, int py, unsigned short v, int W, int H, unsigned short *grid);
   static void drawPolygons(Feature *feature, unsigned short int featureIndex, CDataSource *dataSource, bool projectionRequired, CImageWarper *imageWarper, double cellSizeX, double cellSizeY,
                            double offsetX, double offsetY);

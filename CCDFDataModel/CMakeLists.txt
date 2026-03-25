@@ -13,6 +13,8 @@ add_library(CCDFDataModel
     CCDFNetCDFIO.h
     CCDFAttribute.h
     CCDFAttribute.cpp
+    CDFCopyData.h
+    CDFCopyData.cpp
     CReadPNG.h
     CReadPNG.cpp
     CCDFPNGIO.h

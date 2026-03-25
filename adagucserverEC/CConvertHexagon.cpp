@@ -70,8 +70,8 @@ void drawlines2(float *imagedata, int w, int h, int polyCorners, float *polyX, f
 void drawNGon(float *imagedata, int w, int h, int polyCorners, float *polyX, float *polyY, float value) {
   // float  *data, float  *values, int W,int H, int *xP,int *yP
 
-  int xp[polyCorners];
-  int yp[polyCorners];
+  int *xp = new int[polyCorners];
+  int *yp = new int[polyCorners];
   int centerX = 0;
   int centerY = 0;
   for (int i = 0; i < polyCorners; i++) {
@@ -99,16 +99,19 @@ void drawNGon(float *imagedata, int w, int h, int polyCorners, float *polyX, flo
     typ[2] = yp[i];
     fillTriangleFlat(imagedata, value, w, h, txp, typ);
   }
+  delete[] xp;
+  delete[] yp;
 }
 
 void drawpoly2(float *imagedata, int w, int h, int polyCorners, float *polyX, float *polyY, float value) {
   //  public-domain code by Darel Rex Finley, 2007
 
-  int nodes, nodeX[polyCorners * 2 + 1], pixelY, i, j, swap;
+  int nodes, pixelY, i, j, swap;
   int IMAGE_TOP = 0;
   int IMAGE_BOT = h;
   int IMAGE_LEFT = 0;
   int IMAGE_RIGHT = w;
+  int *nodeX = new int[polyCorners * 2 + 1];
 
   //  Loop through the rows of the image.
   for (pixelY = IMAGE_TOP; pixelY < IMAGE_BOT; pixelY++) {
@@ -148,6 +151,7 @@ void drawpoly2(float *imagedata, int w, int h, int polyCorners, float *polyX, fl
       }
     }
   }
+  delete[] nodeX;
 }
 
 double *CConvertHexagon::getBBOXFromLatLonFields(CDF::Variable *lons, CDF::Variable *lats) {
@@ -164,11 +168,11 @@ double *CConvertHexagon::getBBOXFromLatLonFields(CDF::Variable *lons, CDF::Varia
   float fillValueLat = NAN;
 
   try {
-    lons->getAttribute("_FillValue")->getData(&fillValueLon, 1);
+    lons->getAttributeThrows("_FillValue")->getData(&fillValueLon, 1);
   } catch (int e) {
   };
   try {
-    lats->getAttribute("_FillValue")->getData(&fillValueLat, 1);
+    lats->getAttributeThrows("_FillValue")->getData(&fillValueLat, 1);
   } catch (int e) {
   };
 
@@ -218,14 +222,14 @@ int CConvertHexagon::convertHexagonHeader(CDFObject *cdfObject, CServerParams *s
   try {
     // cdfObject->getDimension("col");
     // cdfObject->getDimension("row");
-    cdfObject->getDimension("nvert_i");
-    cdfObject->getDimension("cell_i");
-    cdfObject->getVariable("lon_i");
-    cdfObject->getVariable("lat_i");
-    cdfObject->getVariable("bounds_lon_i");
-    cdfObject->getVariable("bounds_lat_i");
+    cdfObject->getDimensionThrows("nvert_i");
+    cdfObject->getDimensionThrows("cell_i");
+    cdfObject->getVariableThrows("lon_i");
+    cdfObject->getVariableThrows("lat_i");
+    cdfObject->getVariableThrows("bounds_lon_i");
+    cdfObject->getVariableThrows("bounds_lat_i");
 
-    CDF::Dimension *var = cdfObject->getDimension("nvert_i");
+    CDF::Dimension *var = cdfObject->getDimensionThrows("nvert_i");
     if (var->getSize() != 6) {
       CDBDebug("Only hexagons are currently supported");
       return 1;
@@ -243,8 +247,8 @@ int CConvertHexagon::convertHexagonHeader(CDFObject *cdfObject, CServerParams *s
   CDF::Variable *lons;
   CDF::Variable *lats;
   try {
-    lons = cdfObject->getVariable("lon_i");
-    lats = cdfObject->getVariable("lat_i");
+    lons = cdfObject->getVariableThrows("lon_i");
+    lats = cdfObject->getVariableThrows("lat_i");
   } catch (int e) {
     CDBError("lat_i or lon_i variables not found");
     return 1;
@@ -354,7 +358,7 @@ int CConvertHexagon::convertHexagonHeader(CDFObject *cdfObject, CServerParams *s
 
   // Create the new 2D field variables based on the swath variables
   for (size_t v = 0; v < varsToConvert.size(); v++) {
-    CDF::Variable *hexagonVar = cdfObject->getVariable(varsToConvert[v].c_str());
+    CDF::Variable *hexagonVar = cdfObject->getVariableThrows(varsToConvert[v].c_str());
 
     // Remove projection attribute if we use lat/lon for projecting
     hexagonVar->removeAttribute("grid_mapping");
@@ -407,14 +411,14 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
   try {
     // cdfObject->getDimension("col");
     // cdfObject->getDimension("row");
-    cdfObject->getDimension("nvert_i");
-    cdfObject->getDimension("cell_i");
-    cdfObject->getVariable("lon_i");
-    cdfObject->getVariable("lat_i");
-    cdfObject->getVariable("bounds_lon_i");
-    cdfObject->getVariable("bounds_lat_i");
+    cdfObject->getDimensionThrows("nvert_i");
+    cdfObject->getDimensionThrows("cell_i");
+    cdfObject->getVariableThrows("lon_i");
+    cdfObject->getVariableThrows("lat_i");
+    cdfObject->getVariableThrows("bounds_lon_i");
+    cdfObject->getVariableThrows("bounds_lat_i");
 
-    CDF::Dimension *var = cdfObject->getDimension("nvert_i");
+    CDF::Dimension *var = cdfObject->getDimensionThrows("nvert_i");
     if (var->getSize() != 6) {
       CDBDebug("Only hexagons are currently supported");
       return 1;
@@ -429,7 +433,7 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
 #endif
 
   size_t nrDataObjects = dataSource->getNumDataObjects();
-  CDataSource::DataObject *dataObjects[nrDataObjects];
+  std::vector<CDataSource::DataObject *> dataObjects(nrDataObjects, nullptr);
   for (size_t d = 0; d < nrDataObjects; d++) {
     dataObjects[d] = dataSource->getDataObject(d);
   }
@@ -446,9 +450,9 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
   }
 
   size_t numDims = hexagonVar->dimensionlinks.size();
-  size_t start[numDims];
-  size_t count[numDims];
-  ptrdiff_t stride[numDims];
+  std::vector<size_t> start(numDims);
+  std::vector<size_t> count(numDims);
+  std::vector<ptrdiff_t> stride(numDims);
   for (size_t dimInd = 0; dimInd < numDims; dimInd++) {
     start[dimInd] = 0;
     count[dimInd] = 1;
@@ -465,7 +469,7 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
     CDBDebug("%s = %lu %lu", dimName.c_str(), start[dimInd], count[dimInd]);
   }
 
-  hexagonVar->readData(CDF_FLOAT, start, count, stride, true);
+  hexagonVar->readData(CDF_FLOAT, start.data(), count.data(), stride.data(), true);
 
   // Read original data first
 
@@ -568,14 +572,14 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
     CDF::Variable *varY;
 
     // Create new dimensions and variables (X,Y,T)
-    dimX = cdfObject->getDimension("adaguccoordinatex");
+    dimX = cdfObject->getDimensionThrows("adaguccoordinatex");
     dimX->setSize(dataSource->dWidth);
 
-    dimY = cdfObject->getDimension("adaguccoordinatey");
+    dimY = cdfObject->getDimensionThrows("adaguccoordinatey");
     dimY->setSize(dataSource->dHeight);
 
-    varX = cdfObject->getVariable("adaguccoordinatex");
-    varY = cdfObject->getVariable("adaguccoordinatey");
+    varX = cdfObject->getVariableThrows("adaguccoordinatex");
+    varY = cdfObject->getVariableThrows("adaguccoordinatey");
 
     CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
     CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
@@ -669,8 +673,8 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
       CDF::Variable *lats;
 
       try {
-        lons = cdfObject->getVariable("lon");
-        lats = cdfObject->getVariable("lat");
+        lons = cdfObject->getVariableThrows("lon");
+        lats = cdfObject->getVariableThrows("lat");
       } catch (int e) {
         CDBError("lat or lon variables not found");
         return 1;
@@ -692,11 +696,11 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
       float fillValueLat = NAN;
 
       try {
-        lons->getAttribute("_FillValue")->getData(&fillValueLon, 1);
+        lons->getAttributeThrows("_FillValue")->getData(&fillValueLon, 1);
       } catch (int e) {
       };
       try {
-        lats->getAttribute("_FillValue")->getData(&fillValueLat, 1);
+        lats->getAttributeThrows("_FillValue")->getData(&fillValueLat, 1);
       } catch (int e) {
       };
 
@@ -771,8 +775,8 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
       CDF::Variable *swathLat;
 
       try {
-        swathLon = cdfObject->getVariable("bounds_lon_i");
-        swathLat = cdfObject->getVariable("bounds_lat_i");
+        swathLon = cdfObject->getVariableThrows("bounds_lon_i");
+        swathLat = cdfObject->getVariableThrows("bounds_lat_i");
       } catch (int e) {
         CDBError("bounds_lat_i or bounds_lon_i variables not found");
         return 1;
@@ -800,11 +804,11 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
       float fillValueLat = NAN;
 
       try {
-        swathLon->getAttribute("_FillValue")->getData(&fillValueLon, 1);
+        swathLon->getAttributeThrows("_FillValue")->getData(&fillValueLon, 1);
       } catch (int e) {
       };
       try {
-        swathLat->getAttribute("_FillValue")->getData(&fillValueLat, 1);
+        swathLat->getAttributeThrows("_FillValue")->getData(&fillValueLat, 1);
       } catch (int e) {
       };
 
@@ -861,7 +865,8 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
         if (tileHasNoData == false) {
           // CDBDebug(" (%f,%f) (%f,%f) (%f,%f) (%f,%f)",lons[0],lats[0],lons[1],lats[1],lons[2],lats[2],lons[3],lats[3]);
 
-          float flons[numVerts], flats[numVerts];
+          float *flons = new float[numVerts];
+          float *flats = new float[numVerts];
           for (int j = 0; j < numVerts; j++) {
             //             if(tileIsOverDateBorder){
             //               lons[j]-=360;
@@ -887,6 +892,8 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
             drawNGon(sdata, dataSource->dWidth, dataSource->dHeight, numVerts, flons, flats, val);
             // drawlines2(sdata,dataSource->dWidth,dataSource->dHeight,numVerts,flons,flats,val);
           }
+          delete[] flons;
+          delete[] flats;
         }
       }
     }

@@ -75,11 +75,12 @@ void drawlines(float *imagedata, int w, int h, int polyCorners, float *polyX, fl
 void drawpoly(float *imagedata, int w, int h, int polyCorners, float *polyX, float *polyY, float value) {
   //  public-domain code by Darel Rex Finley, 2007
 
-  int nodes, nodeX[polyCorners * 2 + 1], pixelY, i, j, swap;
+  int nodes, pixelY, i, j, swap;
   int IMAGE_TOP = 0;
   int IMAGE_BOT = h;
   int IMAGE_LEFT = 0;
   int IMAGE_RIGHT = w;
+  int *nodeX = new int[polyCorners * 2 + 1];
 
   //  Loop through the rows of the image.
   for (pixelY = IMAGE_TOP; pixelY < IMAGE_BOT; pixelY++) {
@@ -119,6 +120,7 @@ void drawpoly(float *imagedata, int w, int h, int polyCorners, float *polyX, flo
       }
     }
   }
+  delete[] nodeX;
 }
 
 /**
@@ -127,7 +129,7 @@ void drawpoly(float *imagedata, int w, int h, int polyCorners, float *polyX, flo
 int CConvertUGRIDMesh::convertUGRIDMeshHeader(CDFObject *cdfObject) {
   // Check whether this is really an ugrid file
   try {
-    cdfObject->getVariable("mesh");
+    cdfObject->getVariableThrows("mesh");
   } catch (int e) {
     return 1;
   }
@@ -141,8 +143,8 @@ int CConvertUGRIDMesh::convertUGRIDMeshHeader(CDFObject *cdfObject) {
   CDF::Variable *pointLat;
 
   try {
-    pointLon = cdfObject->getVariable("mesh_node_lon");
-    pointLat = cdfObject->getVariable("mesh_node_lat");
+    pointLon = cdfObject->getVariableThrows("mesh_node_lon");
+    pointLat = cdfObject->getVariableThrows("mesh_node_lat");
   } catch (int e) {
     CDBError("Mesh2_node_x or Mesh2_node_y variables not found");
     return 1;
@@ -231,7 +233,7 @@ int CConvertUGRIDMesh::convertUGRIDMeshHeader(CDFObject *cdfObject) {
 
   // Create the new 2D field variables based on the mesh variables
   for (size_t v = 0; v < varsToConvert.size(); v++) {
-    CDF::Variable *meshVar = cdfObject->getVariable(varsToConvert[v].c_str());
+    CDF::Variable *meshVar = cdfObject->getVariableThrows(varsToConvert[v].c_str());
 
 #ifdef CCONVERTUGRIDMESH_DEBUG
     CDBDebug("Converting %s", meshVar->name.c_str());
@@ -279,13 +281,13 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
   CDFObject *cdfObject = dataSource->getDataObject(0)->cdfObject;
   // Check whether this is really an ugrid file
   try {
-    cdfObject->getVariable("mesh");
+    cdfObject->getVariableThrows("mesh");
   } catch (int e) {
     return 1;
   }
   CDBDebug("THIS IS UGRID MESH DATA");
   size_t nrDataObjects = dataSource->getNumDataObjects();
-  CDataSource::DataObject *dataObjects[nrDataObjects];
+  std::vector<CDataSource::DataObject *> dataObjects(nrDataObjects, nullptr);
   for (size_t d = 0; d < nrDataObjects; d++) {
     dataObjects[d] = dataSource->getDataObject(d);
   }
@@ -304,8 +306,8 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
   CDF::Variable *meshLat;
 
   try {
-    meshLon = cdfObject->getVariable("mesh_node_lon");
-    meshLat = cdfObject->getVariable("mesh_node_lat");
+    meshLon = cdfObject->getVariableThrows("mesh_node_lon");
+    meshLat = cdfObject->getVariableThrows("mesh_node_lat");
   } catch (int e) {
     CDBError("lat or lon variables not found");
     return 1;
@@ -356,14 +358,14 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
     CDF::Variable *varY;
 
     // Create new dimensions and variables (X,Y,T)
-    dimX = cdfObject->getDimension("x");
+    dimX = cdfObject->getDimensionThrows("x");
     dimX->setSize(dataSource->dWidth);
 
-    dimY = cdfObject->getDimension("y");
+    dimY = cdfObject->getDimensionThrows("y");
     dimY->setSize(dataSource->dHeight);
 
-    varX = cdfObject->getVariable("x");
-    varY = cdfObject->getVariable("y");
+    varX = cdfObject->getVariableThrows("x");
+    varY = cdfObject->getVariableThrows("y");
 
     CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
     CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
@@ -432,8 +434,8 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
     // }
     bool projectionRequired = imageWarper.isProjectionRequired();
     //     int polyCorners = 5;
-    float projectedX[numMeshPoints]; //={10,100,40,110,20,10};
-    float projectedY[numMeshPoints]; //={10,20,40,100,110,10};
+    float *projectedX = new float[numMeshPoints]; //={10,100,40,110,20,10};
+    float *projectedY = new float[numMeshPoints]; //={10,20,40,100,110,10};
 
 #ifdef MEASURETIME
     StopWatch_Stop("Iterating lat/lon data");
@@ -464,13 +466,13 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
     StopWatch_Stop("Start reading face nodes");
 #endif
 
-    CDF::Variable *Mesh2_face_nodes = cdfObject->getVariable("mesh_face_nodes");
+    CDF::Variable *Mesh2_face_nodes = cdfObject->getVariableThrows("mesh_face_nodes");
     Mesh2_face_nodes->readData(CDF_INT, false);
     int *Mesh2_face_nodesData = (int *)Mesh2_face_nodes->data;
     int Mesh2_face_nodesData_Fill = -1;
 
     try {
-      Mesh2_face_nodes->getAttribute("_FillValue")->getData(&Mesh2_face_nodesData_Fill, 1);
+      Mesh2_face_nodes->getAttributeThrows("_FillValue")->getData(&Mesh2_face_nodesData_Fill, 1);
       ;
 
     } catch (int e) {
@@ -483,29 +485,11 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
     CDBDebug("Num faces: %lu", Mesh2_face_nodes->dimensionlinks[0]->getSize());
     CDBDebug("Max face size: %lu", MaxNumNodesPerFace);
 
-    float polyX[MaxNumNodesPerFace + 1];
-    float polyY[MaxNumNodesPerFace + 1];
+    float *polyX = new float[MaxNumNodesPerFace + 1];
+    float *polyY = new float[MaxNumNodesPerFace + 1];
 
     int numPoints = 0;
-    //     CDBDebug("drawpolys");
-    //     for(size_t f=0;f<nFaces;f++){
-    //       for(size_t j=0;j<MaxNumNodesPerFace;j++){
-    //         int p1 = Mesh2_face_nodesData[j+f*MaxNumNodesPerFace];
-    //         if(p1!=Mesh2_face_nodesData_Fill){
-    //           polyX[numPoints] = projectedX[p1];
-    //           polyY[numPoints++] = projectedY[p1];
-    //         }
-    //       }
-    //       polyX[numPoints] = polyX[0];
-    //       polyY[numPoints++] = polyY[0];
-    //       drawpoly(sdata,dataSource->dWidth,dataSource->dHeight,numPoints,polyX,polyY,f);
-    //       //drawlines(sdata,dataSource->dWidth,dataSource->dHeight,numPoints,polyX,polyY);
-    //       numPoints = 0;
-    //     }
 
-#ifdef MEASURETIME
-    StopWatch_Stop("drawlines");
-#endif
     for (size_t f = 0; f < nFaces; f++) {
       for (size_t j = 0; j < MaxNumNodesPerFace; j++) {
         int p1 = Mesh2_face_nodesData[j + f * MaxNumNodesPerFace];
@@ -522,13 +506,13 @@ int CConvertUGRIDMesh::convertUGRIDMeshData(CDataSource *dataSource, int mode) {
       drawlines(sdata, dataSource->dWidth, dataSource->dHeight, numPoints, polyX, polyY, 0);
       numPoints = 0;
     }
-#ifdef MEASURETIME
-    StopWatch_Stop("drawlines done");
-#endif
+
     imageWarper.closereproj();
+    delete[] polyX;
+    delete[] polyY;
+    delete[] projectedX;
+    delete[] projectedY;
   }
-#ifdef CCONVERTUGRIDMESH_DEBUG
-  CDBDebug("/convertUGRIDMeshData");
-#endif
+
   return 0;
 }

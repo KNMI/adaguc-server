@@ -46,9 +46,9 @@ void CURUniqueRequests::sortAndAggregate() {
 #endif
 
       int currentDimIndex = -1;
-      int dimindex;
+      int dimindex = 0;
 
-      int startDimIndex;
+      int startDimIndex = 0;
       std::vector<std::string> dimValues;
       map_type_dimvalindex dimValuesMap = diminfomapiterator->second.dimValuesMap;
       for (it_type_dimvalindex dimvalindexmapiterator = dimValuesMap.begin(); dimvalindexmapiterator != dimValuesMap.end(); dimvalindexmapiterator++) {
@@ -106,7 +106,7 @@ void CURUniqueRequests::sortAndAggregate() {
 void CURUniqueRequests::recurDataStructure(CXMLParser::XMLElement *dataStructure, CURResult *result, int depth, int *dimOrdering, std::vector<int> dimIndicesToSkip) {
   int dimIndex = dimOrdering[depth];
 
-  for (const int &dimIndexToSkip : dimIndicesToSkip) {
+  for (const int &dimIndexToSkip: dimIndicesToSkip) {
     if (depth == dimIndexToSkip) {
       return recurDataStructure(dataStructure, result, depth + 1, dimOrdering, dimIndicesToSkip);
     }
@@ -123,7 +123,7 @@ void CURUniqueRequests::recurDataStructure(CXMLParser::XMLElement *dataStructure
   if (depth + 1 < result->numDims) {
     recurDataStructure(el, result, depth + 1, dimOrdering, dimIndicesToSkip);
   } else {
-    el->setValue(result->value.c_str());
+    el->setValue(result->value);
   }
 }
 
@@ -132,10 +132,12 @@ void CURUniqueRequests::createStructure(std::vector<CURResult> results, CDataSou
 
   int numberOfDims = dataSource->requiredDims.size();
 
-  CXMLParser::XMLElement *layerStructure = gfiStructure->add("root");
-  layerStructure->add(CXMLParser::XMLElement("name", dataObject->dataObjectName.empty() ? dataSource->getLayerName() : dataObject->dataObjectName.c_str()));
-  layerStructure->add(CXMLParser::XMLElement("layername", dataSource->getLayerName()));
-  layerStructure->add(CXMLParser::XMLElement("variablename", dataObject->variableName.c_str()));
+  CXMLParser::XMLElement layerStructure;
+  layerStructure.name = "root";
+
+  layerStructure.add(CXMLParser::XMLElement("name", dataObject->dataObjectName.empty() ? dataSource->getLayerName() : dataObject->dataObjectName.c_str()));
+  layerStructure.add(CXMLParser::XMLElement("layername", dataSource->getLayerName()));
+  layerStructure.add(CXMLParser::XMLElement("variablename", dataObject->variableName.c_str()));
 
   /* Add metadata */
   std::string standardName = dataObject->variableName.c_str();
@@ -144,8 +146,8 @@ void CURUniqueRequests::createStructure(std::vector<CURResult> results, CDataSou
     standardName = attr_standard_name->toString();
   }
 
-  layerStructure->add(CXMLParser::XMLElement("standard_name", standardName.c_str()));
-  layerStructure->add(CXMLParser::XMLElement("units", dataObject->getUnits().c_str()));
+  layerStructure.add(CXMLParser::XMLElement("standard_name", standardName.c_str()));
+  layerStructure.add(CXMLParser::XMLElement("units", dataObject->getUnits().c_str()));
 
   CT::string ckey;
   ckey.print("%d%d%s", dX, dY, dataSource->nativeProj4.c_str());
@@ -155,28 +157,28 @@ void CURUniqueRequests::createStructure(std::vector<CURResult> results, CDataSou
   CT::string coord;
   coord.print("%f,%f", projCacheInfo.lonX, projCacheInfo.lonY);
   point.add(CXMLParser::XMLElement("coords", coord.c_str()));
-  layerStructure->add(point);
+  layerStructure.add(point);
 
   std::vector<int> dimIndicesToSkip;
   for (size_t i = 0; i < size_t(numberOfDims); i++) {
-    COGCDims *ogcDim = dataSource->requiredDims[dimOrdering[i]];
-    if (ogcDim->hidden) {
+    COGCDims &ogcDim = dataSource->requiredDims[dimOrdering[i]];
+    if (ogcDim.hidden) {
       dimIndicesToSkip.push_back(i);
     }
   }
 
   for (size_t i = 0; i < size_t(numberOfDims); i++) {
     if (std::find(dimIndicesToSkip.begin(), dimIndicesToSkip.end(), i) == dimIndicesToSkip.end()) {
-      layerStructure->add(CXMLParser::XMLElement("dims", dataSource->requiredDims[dimOrdering[i]]->name.c_str()));
+      layerStructure.add(CXMLParser::XMLElement("dims", dataSource->requiredDims[dimOrdering[i]].name.c_str()));
     }
   }
 
   CXMLParser::XMLElement *dataStructure = NULL;
   try {
-    dataStructure = layerStructure->get("data");
+    dataStructure = layerStructure.get("data");
   } catch (int e) {
-    layerStructure->add(CXMLParser::XMLElement("data"));
-    dataStructure = layerStructure->getLast();
+    layerStructure.add(CXMLParser::XMLElement("data"));
+    dataStructure = layerStructure.getLast();
   }
 
   std::sort(results.begin(), results.end(), compareFunctionCurResult());
@@ -187,6 +189,7 @@ void CURUniqueRequests::createStructure(std::vector<CURResult> results, CDataSou
   for (size_t j = 0; j < results.size(); j++) {
     recurDataStructure(dataStructure, &results[j], 0, dimOrdering, dimIndicesToSkip);
   }
+  gfiStructure->add(layerStructure);
 }
 
 void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageWarper, CDataSource *dataSource, int dX, int dY, CXMLParser::XMLElement *gfiStructure) {
@@ -203,16 +206,14 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
     dimOrdering[dimnr] = dimnr;
   }
   for (int dimnr = 0; dimnr < numberOfDataSourceDims; dimnr++) {
-    COGCDims *ogcDim = dataSource->requiredDims[dimnr];
-    if (ogcDim->name.equalsIgnoreCase("reference_time") && dimnr != 0) {
+    if (CT::toLowerCase(dataSource->requiredDims[dimnr].name) == "reference_time" && dimnr != 0) {
       std::swap(dimOrdering[dimnr], dimOrdering[0]);
       break;
     }
   }
 
   for (int dimnr = 0; dimnr < numberOfDataSourceDims; dimnr++) {
-    COGCDims *ogcDim = dataSource->requiredDims[dimOrdering[dimnr]];
-    if (ogcDim->name.equalsIgnoreCase("time") && dimnr != numberOfDataSourceDims - 1) {
+    if (CT::toLowerCase(dataSource->requiredDims[dimOrdering[dimnr]].name) == "time" && dimnr != numberOfDataSourceDims - 1) {
       std::swap(dimOrdering[dimnr], dimOrdering[numberOfDataSourceDims - 1]);
       break;
     }
@@ -226,9 +227,8 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
 
   /* Including x and y dimensions, without virtual dims */
   int numberOfDims = numberOfDataSourceDims + 2;
-  size_t start[numberOfDims], count[numberOfDims];
-  ptrdiff_t stride[numberOfDims];
-  std::string dimName[numberOfDims];
+  std::vector<size_t> start(numberOfDims), count(numberOfDims);
+  std::vector<ptrdiff_t> stride(numberOfDims);
 
   std::vector<CURResult> results;
 
@@ -262,7 +262,7 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
           throw(__LINE__);
         }
 
-        for (auto request : (filemapiterator->second).requests) {
+        for (auto request: (filemapiterator->second).requests) {
 
 #ifdef CCUniqueRequests_DEBUG
           CDBDebug("Reading file %s  for variable %s", (filemapiterator->first).c_str(), variable->name.c_str());
@@ -279,10 +279,12 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
           CDBDebug("Querying raster location %d %d", projCacheInfo.imx, projCacheInfo.imy);
           CDBDebug("Querying raster dimIndex %d %d", dataSource->dimXIndex, dataSource->dimYIndex);
 #endif
-          start[dataSource->dimXIndex] = projCacheInfo.imx;
-          start[dataSource->dimYIndex] = projCacheInfo.imy;
-          dimName[dataSource->dimXIndex] = "x";
-          dimName[dataSource->dimYIndex] = "y";
+          if (dataSource->dimXIndex == -1 || dataSource->dimYIndex == -1) {
+            CDBError("DataSource does not have x and y dimensions defined");
+            throw(__LINE__);
+          }
+          start[(size_t)dataSource->dimXIndex] = projCacheInfo.imx;
+          start[(size_t)dataSource->dimYIndex] = projCacheInfo.imy;
 
           for (size_t i = 0; i < request.size(); i++) {
             int netcdfDimIndex = -1;
@@ -294,7 +296,7 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
               try {
                 /* CHECK */
 
-                netcdfDimIndex = variable->getDimensionIndex(request[i].name.c_str());
+                netcdfDimIndex = variable->getDimensionIndexThrows(request[i].name.c_str());
               } catch (int e) {
                 CDBDebug("Unable to find dimension [%s] for variable %s", request[i].name.c_str(), variable->name.c_str());
 
@@ -314,7 +316,6 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
               if (netcdfDimIndex != -1) {
                 start[netcdfDimIndex] = request[i].start;
                 count[netcdfDimIndex] = request[i].values.size();
-                dimName[netcdfDimIndex] = request[i].name;
               }
 #ifdef CCUniqueRequests_DEBUG
               CDBDebug("  request index: %d  netcdfdimindex %d  %s %d %d", i, netcdfDimIndex, request[i]->name.c_str(), request[i]->start, request[i]->values.size());
@@ -346,7 +347,7 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
 #ifdef CCUniqueRequests_DEBUG_HIGH
           CDBDebug("Starting read data as type %s", CDF::getCDFDataTypeName(variable->currentType).c_str());
 #endif
-          int status = variable->readData(variable->currentType, start, count, stride, true);
+          int status = variable->readData(variable->currentType, start.data(), count.data(), stride.data(), true);
 #ifdef CCUniqueRequests_DEBUG_HIGH
           CDBDebug("Read %d elements", variable->getSize());
 #endif
@@ -400,7 +401,7 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
             }
 #endif
             try {
-              int multiplies[variable->dimensionlinks.size()];
+              std::vector<int> multiplies(variable->dimensionlinks.size());
               for (size_t d = 0; d < variable->dimensionlinks.size(); d += 1) {
                 int m = 1;
 
@@ -410,19 +411,25 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
                 }
                 multiplies[d] = m;
               }
-
+              // Assign keys
               for (size_t indexInVariable = 0; indexInVariable < variable->getSize(); indexInVariable++) {
-
                 CURResult currentResultForIndex;
                 currentResultForIndex.parent = this;
                 currentResultForIndex.numDims = numberOfDataSourceDims;
+                currentResultForIndex.dimensionKeys.resize(dataSource->requiredDims.size());
 
                 // Fill in the dimension keys
                 for (size_t dataSourceDimIndex = 0; dataSourceDimIndex < dataSource->requiredDims.size(); dataSourceDimIndex++) {
-                  std::string requestDimNameToFind = dataSource->requiredDims[dataSourceDimIndex]->netCDFDimName.c_str();
-                  currentResultForIndex.dimensionKeys[dataSourceDimIndex].name = dataSource->requiredDims[dataSourceDimIndex]->value;
+                  std::string requestDimNameToFind = dataSource->requiredDims[dataSourceDimIndex].netCDFDimName.c_str();
+                  currentResultForIndex.dimensionKeys[dataSourceDimIndex].name = dataSource->requiredDims[dataSourceDimIndex].value;
                   auto dimVariable = variable->getParentCDFObject()->getVariableNE(requestDimNameToFind.c_str());
-                  auto isTime = dataSource->requiredDims[dataSourceDimIndex]->isATimeDimension;
+                  if (dimVariable == nullptr) {
+                    // This one does not have a variable for its dimension.
+                    auto values = request[0].values;
+                    currentResultForIndex.dimensionKeys[dataSourceDimIndex].name = values[(indexInVariable / multiplies[0]) % values.size()];
+                    continue;
+                  }
+                  auto isTime = dataSource->requiredDims[dataSourceDimIndex].isATimeDimension;
                   auto varType = dimVariable->getType();
                   currentResultForIndex.dimensionKeys[dataSourceDimIndex].cdfDimensionVariable = dimVariable;
                   currentResultForIndex.dimensionKeys[dataSourceDimIndex].isNumeric = isTime ? false : CDF::isCDFNumeric(varType);
@@ -456,8 +463,7 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
                 CT::string pixelValueAsString = "nodata";
                 if ((pixelValueAtIndex != dataObject->dfNodataValue && dataObject->hasNodataValue == true && pixelValueAtIndex == pixelValueAtIndex) || dataObject->hasNodataValue == false) {
                   if (dataObject->hasStatusFlag) {
-                    CT::string flagMeaning;
-                    CDataSource::getFlagMeaningHumanReadable(&flagMeaning, &dataObject->statusFlagList, pixelValueAtIndex);
+                    std::string flagMeaning = CDataSource::getFlagMeaningHumanReadable(dataObject->statusFlagList, pixelValueAtIndex);
                     pixelValueAsString.print("%s (%d)", flagMeaning.c_str(), (int)pixelValueAtIndex);
                   } else {
                     pixelValueAsString.print("%f", pixelValueAtIndex);

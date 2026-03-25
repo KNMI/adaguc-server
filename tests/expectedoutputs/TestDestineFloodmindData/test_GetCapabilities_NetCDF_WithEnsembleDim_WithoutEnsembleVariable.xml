@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WMS_Capabilities
+        version="1.3.0"
+        updateSequence="0"
+        xmlns="http://www.opengis.net/wms"
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.opengis.net/wms http://schemas.opengis.net/wms/1.3.0/capabilities_1_3_0.xsd"
+
+     >
+    <Service>
+        <Name>WMS</Name>
+        <Title>AutoResource netcdf_hdsr_small_no_ensemble_variable.nc</Title>
+        <Abstract>History: Created by ADAGUC WCS Server version 6.6.0, destination grid settings: width=17&amp;height=11&amp;resx=91.857234&amp;resy=86.889465&amp;bbox=124730.272197,462479.663931,126291.845180,463435.448045&amp;crs=PROJ4:+proj=sterea +lat_0=52.15616055555555 +lon_0=5.38763888888889 +k=0.9999079 +x_0=155000 +y_0=463000 +ellps=bessel +towgs84=565.4171,50.3319,465.5524,-0.398957388243134,0.343987817378283,-1.87740163998045,4.0725 +units=m +no_defs. .!</Abstract>
+        <KeywordList>
+            <Keyword>view</Keyword>
+            <Keyword>infoMapAccessService</Keyword>
+            <Keyword>ADAGUCServer version 6.6.0, of Mar 11 2026 09:23:04 </Keyword>
+        </KeywordList>
+        <OnlineResource xlink:type="simple" xlink:href="source=destine_floodmind%2Fnetcdf_hdsr_small_no_ensemble_variable%2Enc&amp;SERVICE=WMS&amp;"/>
+        <ContactInformation>
+          
+        </ContactInformation>
+        <Fees>no conditions apply</Fees>
+        <AccessConstraints>None</AccessConstraints>
+        <MaxWidth>8192</MaxWidth>
+        <MaxHeight>8192</MaxHeight>
+    </Service>
+    <Capability>
+        <Request>
+            <GetCapabilities>
+                <Format>text/xml</Format>
+                <DCPType><HTTP><Get><OnlineResource xlink:type="simple" xlink:href="source=destine_floodmind%2Fnetcdf_hdsr_small_no_ensemble_variable%2Enc&amp;SERVICE=WMS&amp;"/></Get></HTTP></DCPType>
+            </GetCapabilities>
+            <GetMap>
+                <Format>image/png</Format>
+                <Format>image/png;mode=8bit</Format>
+                <Format>image/png;mode=8bit_noalpha</Format>
+                <Format>image/png;mode=24bit</Format>
+                <Format>image/png;mode=32bit</Format>
+                <Format>image/webp</Format>
+                <DCPType><HTTP><Get><OnlineResource xlink:type="simple" xlink:href="source=destine_floodmind%2Fnetcdf_hdsr_small_no_ensemble_variable%2Enc&amp;SERVICE=WMS&amp;"/></Get></HTTP></DCPType>
+            </GetMap>
+            <GetFeatureInfo>
+                <Format>image/png</Format>
+                <Format>text/plain</Format>
+                <Format>text/html</Format>
+                <Format>text/xml</Format>
+                <Format>application/json</Format>
+                <DCPType><HTTP><Get><OnlineResource xlink:type="simple" xlink:href="source=destine_floodmind%2Fnetcdf_hdsr_small_no_ensemble_variable%2Enc&amp;SERVICE=WMS&amp;"/></Get></HTTP></DCPType>
+            </GetFeatureInfo>
+        </Request>
+        <Exception>
+            <Format>XML</Format>
+            <Format>INIMAGE</Format>
+            <Format>BLANK</Format>
+        </Exception>
+        <UserDefinedSymbolization SupportSLD="1" />
+<Layer>
+<Title>WMS of  AutoResource netcdf_hdsr_small_no_ensemble_variable.nc</Title>
+<CRS>CRS:84</CRS>
+<CRS>EPSG:25831</CRS>
+<CRS>EPSG:25832</CRS>
+<CRS>EPSG:28992</CRS>
+<CRS>EPSG:3035</CRS>
+<CRS>EPSG:3067</CRS>
+<CRS>EPSG:32661</CRS>
+<CRS>EPSG:3411</CRS>
+<CRS>EPSG:3412</CRS>
+<CRS>EPSG:3575</CRS>
+<CRS>EPSG:3857</CRS>
+<CRS>EPSG:40000</CRS>
+<CRS>EPSG:4258</CRS>
+<CRS>EPSG:4326</CRS>
+<CRS>EPSG:50001</CRS>
+<CRS>EPSG:54030</CRS>
+<CRS>EPSG:7399</CRS>
+<CRS>EPSG:900913</CRS>
+<CRS>PROJ4:%2Bproj%3Dsterea%20%2Blat_0%3D52%2E15616055555555%20%2Blon_0%3D5%2E38763888888889%20%2Bk%3D0%2E9999079%20%2Bx_0%3D155000%20%2By_0%3D463000%20%2Bellps%3Dbessel%20%2Btowgs84%3D565%2E4171%2C50%2E3319%2C465%2E5524%2C%2D0%2E398957388243134%2C0%2E343987817378283%2C%2D1%2E87740163998045%2C4%2E0725%20%2Bunits%3Dm%20%2Bno_defs</CRS>
+<BoundingBox CRS="CRS:84" minx="52.149667" miny="4.944852" maxx="52.158341" maxy="4.967753" />
+<BoundingBox CRS="EPSG:25831" minx="633059.913062" miny="5779578.934710" maxx="634652.136877" maxy="5780585.607375" />
+<BoundingBox CRS="EPSG:25832" minx="222635.712556" miny="5785472.026405" maxx="224244.149382" maxy="5786505.158306" />
+<BoundingBox CRS="EPSG:28992" minx="124730.272197" miny="462479.663931" maxx="126291.845180" maxy="463435.448045" />
+<BoundingBox CRS="EPSG:3035" minx="3975307.039429" miny="3238554.753474" maxx="3976925.695817" maxy="3239607.843864" />
+<BoundingBox CRS="EPSG:3067" minx="-998984.632001" miny="6010060.651594" maxx="-997160.176367" maxy="6011477.252584" />
+<BoundingBox CRS="EPSG:32661" minx="2375375.107913" miny="-2339707.406920" maxx="2377200.221029" maxy="-2338490.189162" />
+<BoundingBox CRS="EPSG:3411" minx="3252356.591790" miny="-2735016.012630" maxx="3254234.914986" maxy="-2733051.960232" />
+<BoundingBox CRS="EPSG:3412" minx="3083932.203755" miny="35640174.931539" maxx="3098838.931193" maxy="35650016.040680" />
+<BoundingBox CRS="EPSG:3575" minx="-365293.482936" miny="-4129746.953561" maxx="-363574.765832" maxy="-4128709.297749" />
+<BoundingBox CRS="EPSG:3857" minx="550458.429538" miny="6827232.541487" maxx="553007.690403" maxy="6828806.267347" />
+<BoundingBox CRS="EPSG:40000" minx="377658.574757" miny="-4365778.139694" maxx="379494.931335" maxy="-4364553.421059" />
+<BoundingBox CRS="EPSG:4258" minx="51.150654" miny="4.945222" maxx="53.159329" maxy="4.968126" />
+<BoundingBox CRS="EPSG:4326" minx="52.149667" miny="4.944852" maxx="52.158341" maxy="4.967753" />
+<BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
+<BoundingBox CRS="EPSG:54030" minx="399084.043013" miny="5548268.037319" maxx="400958.369008" maxy="5549156.983893" />
+<BoundingBox CRS="EPSG:7399" minx="365219.491349" miny="6096796.961151" maxx="366955.352464" maxy="6097689.931110" />
+<BoundingBox CRS="EPSG:900913" minx="550458.429538" miny="6827232.541487" maxx="553007.690403" maxy="6828806.267347" />
+<BoundingBox CRS="PROJ4:%2Bproj%3Dsterea%20%2Blat_0%3D52%2E15616055555555%20%2Blon_0%3D5%2E38763888888889%20%2Bk%3D0%2E9999079%20%2Bx_0%3D155000%20%2By_0%3D463000%20%2Bellps%3Dbessel%20%2Btowgs84%3D565%2E4171%2C50%2E3319%2C465%2E5524%2C%2D0%2E398957388243134%2C0%2E343987817378283%2C%2D1%2E87740163998045%2C4%2E0725%20%2Bunits%3Dm%20%2Bno_defs" minx="124730.272197" miny="462479.663931" maxx="126291.845180" maxy="463435.448045" />
+<Layer queryable="1" opaque="1" cascaded="0">
+<Name>realwaterdepth</Name>
+<Title>realwaterdepth</Title>
+<EX_GeographicBoundingBox>
+  <westBoundLongitude>4.944852</westBoundLongitude>
+  <eastBoundLongitude>4.967753</eastBoundLongitude>
+  <southBoundLatitude>52.149667</southBoundLatitude>
+  <northBoundLatitude>52.158341</northBoundLatitude>
+</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="52.149667" miny="4.944852" maxx="52.158341" maxy="4.967753" />
+<BoundingBox CRS="EPSG:25831" minx="633059.913062" miny="5779578.934710" maxx="634652.136877" maxy="5780585.607375" />
+<BoundingBox CRS="EPSG:25832" minx="222635.712556" miny="5785472.026405" maxx="224244.149382" maxy="5786505.158306" />
+<BoundingBox CRS="EPSG:28992" minx="124730.272197" miny="462479.663931" maxx="126291.845180" maxy="463435.448045" />
+<BoundingBox CRS="EPSG:3035" minx="3975307.039429" miny="3238554.753474" maxx="3976925.695817" maxy="3239607.843864" />
+<BoundingBox CRS="EPSG:3067" minx="-998984.632001" miny="6010060.651594" maxx="-997160.176367" maxy="6011477.252584" />
+<BoundingBox CRS="EPSG:32661" minx="2375375.107913" miny="-2339707.406920" maxx="2377200.221029" maxy="-2338490.189162" />
+<BoundingBox CRS="EPSG:3411" minx="3252356.591790" miny="-2735016.012630" maxx="3254234.914986" maxy="-2733051.960232" />
+<BoundingBox CRS="EPSG:3412" minx="3083932.203755" miny="35640174.931539" maxx="3098838.931193" maxy="35650016.040680" />
+<BoundingBox CRS="EPSG:3575" minx="-365293.482936" miny="-4129746.953561" maxx="-363574.765832" maxy="-4128709.297749" />
+<BoundingBox CRS="EPSG:3857" minx="550458.429538" miny="6827232.541487" maxx="553007.690403" maxy="6828806.267347" />
+<BoundingBox CRS="EPSG:40000" minx="377658.574757" miny="-4365778.139694" maxx="379494.931335" maxy="-4364553.421059" />
+<BoundingBox CRS="EPSG:4258" minx="51.150654" miny="4.945222" maxx="53.159329" maxy="4.968126" />
+<BoundingBox CRS="EPSG:4326" minx="52.149667" miny="4.944852" maxx="52.158341" maxy="4.967753" />
+<BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
+<BoundingBox CRS="EPSG:54030" minx="399084.043013" miny="5548268.037319" maxx="400958.369008" maxy="5549156.983893" />
+<BoundingBox CRS="EPSG:7399" minx="365219.491349" miny="6096796.961151" maxx="366955.352464" maxy="6097689.931110" />
+<BoundingBox CRS="EPSG:900913" minx="550458.429538" miny="6827232.541487" maxx="553007.690403" maxy="6828806.267347" />
+<BoundingBox CRS="PROJ4:%2Bproj%3Dsterea%20%2Blat_0%3D52%2E15616055555555%20%2Blon_0%3D5%2E38763888888889%20%2Bk%3D0%2E9999079%20%2Bx_0%3D155000%20%2By_0%3D463000%20%2Bellps%3Dbessel%20%2Btowgs84%3D565%2E4171%2C50%2E3319%2C465%2E5524%2C%2D0%2E398957388243134%2C0%2E343987817378283%2C%2D1%2E87740163998045%2C4%2E0725%20%2Bunits%3Dm%20%2Bno_defs" minx="124730.272197" miny="462479.663931" maxx="126291.845180" maxy="463435.448045" />
+
+<!-- Dimensions -->
+<Dimension name="time" units="ISO8601" default="2020-01-01T22:00:00Z" multipleValues="1" nearestValue="0" current="1">2020-01-01T00:00:00Z/2020-01-01T22:00:00Z/PT1H</Dimension>
+<Dimension name="ensemble" units="1" default="3" multipleValues="1" nearestValue="0" >1,2,3</Dimension>
+
+<!-- Styles -->
+   <Style>
+    <Name>auto/nearest</Name>
+    <Title>Auto style blue-white-red</Title>
+    <Abstract>Fast nearest neighbour interpolation using the nearest neighbour renderer</Abstract>
+    <LegendURL width="300" height="400">
+       <Format>image/png</Format>
+       <OnlineResource xlink:type="simple" xlink:href="source=destine_floodmind%2Fnetcdf_hdsr_small_no_ensemble_variable%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=realwaterdepth&amp;format=image/png&amp;STYLE=auto/nearest"/>
+    </LegendURL>
+  </Style>
+   <Style>
+    <Name>autogeneric</Name>
+    <Title>Auto style blue-white-red</Title>
+    <Abstract>Nearest neighbour interpolation using the generic renderer</Abstract>
+    <LegendURL width="300" height="400">
+       <Format>image/png</Format>
+       <OnlineResource xlink:type="simple" xlink:href="source=destine_floodmind%2Fnetcdf_hdsr_small_no_ensemble_variable%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=realwaterdepth&amp;format=image/png&amp;STYLE=autogeneric"/>
+    </LegendURL>
+  </Style>
+   <Style>
+    <Name>autobilinear</Name>
+    <Title>Auto style bilnear blue-white-red</Title>
+    <Abstract>Bilinear neighbour interpolation using the generic renderer</Abstract>
+    <LegendURL width="300" height="400">
+       <Format>image/png</Format>
+       <OnlineResource xlink:type="simple" xlink:href="source=destine_floodmind%2Fnetcdf_hdsr_small_no_ensemble_variable%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=realwaterdepth&amp;format=image/png&amp;STYLE=autobilinear"/>
+    </LegendURL>
+  </Style>
+   <Style>
+    <Name>autoboxoutline</Name>
+    <Title>Grid boxes</Title>
+    <Abstract>Render grid boxes if applicable</Abstract>
+    <LegendURL width="300" height="400">
+       <Format>image/png</Format>
+       <OnlineResource xlink:type="simple" xlink:href="source=destine_floodmind%2Fnetcdf_hdsr_small_no_ensemble_variable%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=realwaterdepth&amp;format=image/png&amp;STYLE=autoboxoutline"/>
+    </LegendURL>
+  </Style>
+   <Style>
+    <Name>autobilinear_deprecated/bilinear</Name>
+    <Title>autobilinear_deprecated/bilinear</Title>
+    <LegendURL width="300" height="400">
+       <Format>image/png</Format>
+       <OnlineResource xlink:type="simple" xlink:href="source=destine_floodmind%2Fnetcdf_hdsr_small_no_ensemble_variable%2Enc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=realwaterdepth&amp;format=image/png&amp;STYLE=autobilinear_deprecated/bilinear"/>
+    </LegendURL>
+  </Style>
+</Layer>
+    </Layer>
+  </Capability>
+</WMS_Capabilities>

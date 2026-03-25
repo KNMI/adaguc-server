@@ -43,22 +43,13 @@
 #include "LayerTypeLiveUpdate/LayerTypeLiveUpdate.h"
 #include "utils/getFeatureInfoVirtualForSolarTerminator.h"
 
-CT::string months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-// #define CIMAGEDATAWRITER_DEBUG
-// #define MEASURETIME
-
+std::string months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 std::map<std::string, CImageDataWriter::ProjCacheInfo> CImageDataWriter::projCacheMap;
 std::map<std::string, CImageDataWriter::ProjCacheInfo>::iterator CImageDataWriter::projCacheIter;
 
-CImageDataWriter::ProjCacheInfo CImageDataWriter::GetProjInfo(CT::string ckey, CDrawImage *drawImage, CDataSource *dataSource, CImageWarper *imageWarper, CServerParams *srvParam, int dX, int dY) {
-  std::string key = ckey.c_str();
+CImageDataWriter::ProjCacheInfo CImageDataWriter::GetProjInfo(std::string key, CDrawImage *drawImage, CDataSource *dataSource, CImageWarper *imageWarper, CServerParams *srvParam, int dX, int dY) {
   ProjCacheInfo projCacheInfo;
 
-#ifdef MEASURETIME
-  StopWatch_Stop("projCacheInfo");
-#endif
-
-  // bool projInvertedFirst = true;
   try {
 
     projCacheIter = projCacheMap.find(key);
@@ -67,21 +58,15 @@ CImageDataWriter::ProjCacheInfo CImageDataWriter::GetProjInfo(CT::string ckey, C
     }
     projCacheInfo = (*projCacheIter).second;
 
-#ifdef MEASURETIME
-    StopWatch_Stop("found cache projCacheInfo");
-#endif
   } catch (int e) {
     projCacheInfo.isOutsideBBOX = false;
-#ifdef CIMAGEDATAWRITER_DEBUG
-    CDBDebug("initreproj with proj string '%s'", dataSource->nativeProj4.c_str());
-#endif
+
     int status = imageWarper->initreproj(dataSource, drawImage->geoParams, &srvParam->cfg->Projection);
     if (status != 0) {
       CDBError("initreproj failed");
       throw(1);
     }
 
-    // getFeatureInfoHeader.copy("");
     double x, y, sx, sy;
     sx = dX;
     sy = dY;
@@ -94,60 +79,45 @@ CImageDataWriter::ProjCacheInfo CImageDataWriter::GetProjInfo(CT::string ckey, C
     y += drawImage->geoParams.bbox.top;
 
     projCacheInfo.isOutsideBBOX = false;
-    // projInvertedFirst = false;
 
-    // else
-    {
+    double y1 = dataSource->dfBBOX[1];
+    double y2 = dataSource->dfBBOX[3];
+    double x1 = dataSource->dfBBOX[0];
+    double x2 = dataSource->dfBBOX[2];
+    if (y2 < y1) {
+      if (y1 > -360 && y2 < 360 && x1 > -720 && x2 < 720) {
+        // projInvertedFirst = true;
+        double checkBBOX[4];
+        for (int j = 0; j < 4; j++) checkBBOX[j] = dataSource->dfBBOX[j];
 
-      double y1 = dataSource->dfBBOX[1];
-      double y2 = dataSource->dfBBOX[3];
-      double x1 = dataSource->dfBBOX[0];
-      double x2 = dataSource->dfBBOX[2];
-      if (y2 < y1) {
-        if (y1 > -360 && y2 < 360 && x1 > -720 && x2 < 720) {
-          // projInvertedFirst = true;
-          double checkBBOX[4];
-          for (int j = 0; j < 4; j++) checkBBOX[j] = dataSource->dfBBOX[j];
+        // CDBDebug("Current BBOX:  %f %f %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[1],dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
+        bool hasError = false;
+        if (imageWarper->reprojpoint_inv(checkBBOX[0], checkBBOX[1]) != 0) hasError = true;
+        if (imageWarper->reprojpoint(checkBBOX[0], checkBBOX[1]) != 0) hasError = true;
 
-          // CDBDebug("Current BBOX:  %f %f %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[1],dataSource->dfBBOX[2],dataSource->dfBBOX[3]);
-          bool hasError = false;
-          if (imageWarper->reprojpoint_inv(checkBBOX[0], checkBBOX[1]) != 0) hasError = true;
-          if (imageWarper->reprojpoint(checkBBOX[0], checkBBOX[1]) != 0) hasError = true;
+        if (imageWarper->reprojpoint_inv(checkBBOX[2], checkBBOX[3]) != 0) hasError = true;
+        if (imageWarper->reprojpoint(checkBBOX[2], checkBBOX[3]) != 0) hasError = true;
 
-          if (imageWarper->reprojpoint_inv(checkBBOX[2], checkBBOX[3]) != 0) hasError = true;
-          if (imageWarper->reprojpoint(checkBBOX[2], checkBBOX[3]) != 0) hasError = true;
+        if (checkBBOX[2] + 200 < dataSource->dfBBOX[2]) {
+          checkBBOX[2] += 360;
+        }
 
-          if (checkBBOX[2] + 200 < dataSource->dfBBOX[2]) {
-            checkBBOX[2] += 360;
-          }
-
-          if (hasError == false) {
-            for (int j = 0; j < 4; j++) dataSource->dfBBOX[j] = checkBBOX[j];
-          }
+        if (hasError == false) {
+          for (int j = 0; j < 4; j++) dataSource->dfBBOX[j] = checkBBOX[j];
         }
       }
     }
-    // while(sx>180)sx-=360;
 
     projCacheInfo.CoordX = x;
     projCacheInfo.CoordY = y;
 
-    //     CDBDebug("X is : %f Y is: %f",x,y);
-
     imageWarper->reprojpoint(x, y);
     if (isLonLatProjection(&dataSource->nativeProj4)) {
-      //       CDBDebug("Is latlon %f %f",dataSource->dfBBOX[0],dataSource->dfBBOX[2]);
-      // if(dataSource->dfBBOX[2]>180||dataSource->dfBBOX[0]<-180){
-      //         CDBDebug("X is : %f %d %d Y is: %f",x,x>=-180,x<180,y);
       if (x >= -180 && x < 180) {
-
-        //  while(x>=dataSource->dfBBOX[2])x-=360;
         while (x < dataSource->dfBBOX[0]) x += 360;
       } else {
         projCacheInfo.isOutsideBBOX = true;
-        //                  everythingIsInBBOX = false;
       }
-      //}
     }
 
     projCacheInfo.nativeCoordX = x;
@@ -159,9 +129,7 @@ CImageDataWriter::ProjCacheInfo CImageDataWriter::GetProjInfo(CT::string ckey, C
     y /= (dataSource->dfBBOX[3] - dataSource->dfBBOX[1]);
     x *= double(dataSource->dWidth);
     y *= double(dataSource->dHeight);
-#ifdef CIMAGEDATAWRITER_DEBUG
-    CDBDebug("XY: %f %f and %d %d", x, y, dataSource->dWidth, dataSource->dHeight);
-#endif
+
     projCacheInfo.dWidth = dataSource->dWidth;
     projCacheInfo.dHeight = dataSource->dHeight;
     projCacheInfo.dX = (dataSource->dfBBOX[2] - dataSource->dfBBOX[0]) / double(dataSource->dWidth);
@@ -179,7 +147,6 @@ CImageDataWriter::ProjCacheInfo CImageDataWriter::GetProjInfo(CT::string ckey, C
     } else {
       projCacheInfo.imy = dataSource->dHeight - (int)y - 1;
     }
-    //     CDBDebug("projCacheInfo %d,%d",int(projCacheInfo.imx),int(projCacheInfo.imy));
     projCacheInfo.lonX = projCacheInfo.CoordX;
     projCacheInfo.lonY = projCacheInfo.CoordY;
     // Get lat/lon
@@ -204,42 +171,6 @@ std::vector<std::string> split(const std::string &s, char delim) {
   return split(s, delim, elems);
 }
 
-class PlotObject {
-public:
-  PlotObject() {
-    elements = NULL;
-    values = NULL;
-    length = 0;
-  }
-  ~PlotObject() { freePoints(); }
-
-  CImageDataWriter::GetFeatureInfoResult::Element **elements;
-  size_t length;
-  CT::string name;
-  CT::string units;
-
-  double minValue, maxValue, *values;
-
-  void freePoints() {
-    // First remove pointers, otherwise the elements are also destructed.
-    if (elements == NULL) return;
-    for (size_t j = 0; j < length; j++) {
-      elements[j] = NULL;
-    }
-    delete[] elements;
-    delete[] values;
-    elements = NULL;
-    values = NULL;
-  }
-
-  void allocateLength(size_t numPoints) {
-    length = numPoints;
-    freePoints();
-    elements = new CImageDataWriter::GetFeatureInfoResult::Element *[numPoints];
-    values = new double[numPoints];
-  }
-};
-
 CImageDataWriter::CImageDataWriter() {
 
   // Mode can be "uninitialized"0 "initialized"(1) and "finished" (2)
@@ -247,9 +178,6 @@ CImageDataWriter::CImageDataWriter() {
 }
 
 int CImageDataWriter::_setTransparencyAndBGColor(CServerParams *srvParam, CDrawImage *drawImage) {
-  //  CDBDebug("_setTransparencyAndBGColor");
-  // drawImage.setTrueColor(true);
-  // Set transparency
   if (srvParam->Transparent == true) {
     drawImage->enableTransparency(true);
   } else {
@@ -280,74 +208,57 @@ int CImageDataWriter::_setTransparencyAndBGColor(CServerParams *srvParam, CDrawI
   return 0;
 }
 
-void CImageDataWriter::getFeatureInfoGetPointDataResults(CDataSource *dataSource, CImageDataWriter::GetFeatureInfoResult *getFeatureInfoResult, int dataObjectNrInDataSource,
-                                                         GetFeatureInfoResult::Element *element, int maxPixelDistance) {
-  bool hasData = false;
-  // Add info about point data
-  if (dataSource->getDataObject(dataObjectNrInDataSource)->points.size() > 0 /*&&hasData==true*/) {
-    CDBDebug("GFI value = %s, %d", element->value.c_str(), dataSource->getDataObject(dataObjectNrInDataSource)->cdfVariable->getAttributeNE("ADAGUC_SKIP_POINTS") == NULL);
+void CImageDataWriter::getFeatureInfoGetPointDataResults(CDataSource *dataSource, GetFeatureInfoResult &getFeatureInfoResult, int dataObjectNrInDataSource, int maxPixelDistance) {
+  if (dataSource->getDataObject(dataObjectNrInDataSource)->points.size() == 0 || dataSource->getDataObject(dataObjectNrInDataSource)->cdfVariable->getAttributeNE("ADAGUC_SKIP_POINTS") != NULL) {
+    return;
   }
-  if (dataSource->getDataObject(dataObjectNrInDataSource)->points.size() > 0 /*&&hasData==true*/) {
-    if (dataSource->getDataObject(dataObjectNrInDataSource)->cdfVariable->getAttributeNE("ADAGUC_SKIP_POINTS") == NULL) {
-      CDBDebug("Unneeded findClosestPoint");
-      int closestIndex = findClosestPoint(dataSource->getDataObject(dataObjectNrInDataSource)->points, getFeatureInfoResult->lon_coordinate, getFeatureInfoResult->lat_coordinate);
+  int closestIndex = findClosestPoint(dataSource->getDataObject(dataObjectNrInDataSource)->points, getFeatureInfoResult.lon_coordinate, getFeatureInfoResult.lat_coordinate);
+  if (closestIndex == -1) {
+    return;
+  }
+  /* Now we have detected the closest point, check if it is in a certain distance in the map in pixel coordinates */
+  double pointPX = dataSource->getDataObject(dataObjectNrInDataSource)->points[closestIndex].lon, pointPY = dataSource->getDataObject(dataObjectNrInDataSource)->points[closestIndex].lat;
+  double gfiPX = getFeatureInfoResult.lon_coordinate, gfiPY = getFeatureInfoResult.lat_coordinate;
+  CImageWarper warper;
+  /* We can always use LATLONPROJECTION, because getFeatureInfoResult.lon_coordinate and getFeatureInfoResult.lat_coordinate are always converted to latlon in CImageDataWriter */
+  int status = warper.initreproj(LATLONPROJECTION, srvParam->geoParams, &srvParam->cfg->Projection);
+  if (status != 0) {
+    CDBError("Unable to initialize projection");
+  }
+  warper.reprojpoint_inv_topx(pointPX, pointPY, srvParam->geoParams);
+  warper.reprojpoint_inv_topx(gfiPX, gfiPY, srvParam->geoParams);
+  float pixelDistance = hypot(pointPX - gfiPX, pointPY - gfiPY);
 
-      if (closestIndex == -1) {
-        return;
-      }
-      /* Now we have detected the closest point, check if it is in a certain distance in the map in pixel coordinates */
-      double pointPX = dataSource->getDataObject(dataObjectNrInDataSource)->points[closestIndex].lon, pointPY = dataSource->getDataObject(dataObjectNrInDataSource)->points[closestIndex].lat;
-      double gfiPX = getFeatureInfoResult->lon_coordinate, gfiPY = getFeatureInfoResult->lat_coordinate;
-      CImageWarper warper;
-      /* We can always use LATLONPROJECTION, because getFeatureInfoResult->lon_coordinate and getFeatureInfoResult->lat_coordinate are always converted to latlon in CImageDataWriter */
-      int status = warper.initreproj(LATLONPROJECTION, srvParam->geoParams, &srvParam->cfg->Projection);
-      if (status != 0) {
-        CDBError("Unable to initialize projection");
-      }
-      warper.reprojpoint_inv_topx(pointPX, pointPY, srvParam->geoParams);
-      warper.reprojpoint_inv_topx(gfiPX, gfiPY, srvParam->geoParams);
-      float pixelDistance = hypot(pointPX - gfiPX, pointPY - gfiPY);
-      warper.closereproj();
+  if (pixelDistance > maxPixelDistance) {
+    return;
+  }
 
-      if (pixelDistance > maxPixelDistance) {
-        hasData = false;
-        return;
-      }
-
-      PointDVWithLatLon point = dataSource->getDataObject(dataObjectNrInDataSource)->points[closestIndex];
-
-      if (!hasData) {
-        double val = dataSource->getDataObject(dataObjectNrInDataSource)->points[closestIndex].v;
-        if (dataSource->getDataObject(dataObjectNrInDataSource)->hasStatusFlag) {
-          // Add status flag
-          CT::string flagMeaning;
-          CDataSource::getFlagMeaningHumanReadable(&flagMeaning, &dataSource->getDataObject(dataObjectNrInDataSource)->statusFlagList, (int)val);
-          element->value.print("%s (%d)", flagMeaning.c_str(), (int)val);
-          element->units = "";
-        } else {
-          element->value.print("%f", val);
-        }
-      }
-
-      // Loop over point paramlist
-      for (size_t p = 0; p < point.paramList.size(); p++) {
-        GetFeatureInfoResult::Element *pointID = new GetFeatureInfoResult::Element();
-        pointID->dataSource = dataSource;
-        for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
-          CCDFDims *cdfDims = dataSource->getCDFDims();
-          CT::string value = cdfDims->getDimensionValue(j);
-          CT::string name = cdfDims->getDimensionName(j);
-          pointID->cdfDims.addDimension(name.c_str(), value.c_str(), cdfDims->getDimensionIndex(j));
-        }
-        getFeatureInfoResult->elements.push_back(pointID);
-        pointID->long_name = point.paramList[p].description;
-        pointID->var_name = point.paramList[p].key;
-        pointID->standard_name = point.paramList[p].key;
-        pointID->feature_name = point.paramList[p].key;
-        pointID->value = point.paramList[p].value;
-        pointID->units = "";
-      }
+  auto dataObject = dataSource->getDataObject(dataObjectNrInDataSource);
+  auto &point = dataObject->points[closestIndex];
+  auto &element = getFeatureInfoResult.elements.back();
+  if (element.value.empty() || element.value == "nodata" || (dataObject->hasNodataValue && element.value == CT::printf("%f", dataObject->dfNodataValue))) {
+    if (dataObject->hasStatusFlag) {
+      // Add status flag
+      std::string flagMeaning = CDataSource::getFlagMeaningHumanReadable(dataObject->statusFlagList, (int)point.v);
+      element.value = CT::printf("%s (%d)", flagMeaning.c_str(), (int)point.v);
+      element.units = "";
+    } else {
+      element.value = CT::printf("%f", point.v);
     }
+  }
+
+  // Loop over point paramlist
+  for (const auto &param: point.paramList) {
+    getFeatureInfoResult.elements.push_back(GFIElement());
+    auto &pointID = getFeatureInfoResult.elements.back();
+    pointID.dataSource = dataSource;
+    pointID.cdfDims = *dataSource->getCDFDims();
+    pointID.long_name = param.description;
+    pointID.var_name = param.key;
+    pointID.standard_name = param.key;
+    pointID.feature_name = param.key;
+    pointID.value = param.value;
+    pointID.units = "";
   }
 }
 
@@ -416,8 +327,8 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
       drawImage.setTTFFontLocation(srvParam->cfg->WMS[0]->ContourFont[0]->attr.location.c_str());
 
       if (srvParam->cfg->WMS[0]->ContourFont[0]->attr.size.empty() == false) {
-        CT::string fontSize = srvParam->cfg->WMS[0]->ContourFont[0]->attr.size.c_str();
-        drawImage.setTTFFontSize(fontSize.toFloat());
+        std::string fontSize = srvParam->cfg->WMS[0]->ContourFont[0]->attr.size.c_str();
+        drawImage.setTTFFontSize(std::stod(fontSize));
       }
       // CDBError("Font %s",srvParam->cfg->WMS[0]->ContourFont[0]->attr.location.c_str());
       // return 1;
@@ -452,10 +363,8 @@ int CImageDataWriter::init(CServerParams *srvParam, CDataSource *dataSource, int
 
     if (w > h) {
       status = drawImage.createImage(h, w);
-      CDBDebug("Init legend %dx%d", h, w);
     } else {
       status = drawImage.createImage(w, h);
-      CDBDebug("Init legend %dx%d", h, w);
     }
 
     if (status != 0) return 1;
@@ -543,19 +452,19 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
 #endif
 
 #ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("[getFeatureInfo] %d, %d, [%d,%d]", dataSources.size(), dataSourceIndex, dX, dY);
+  CDBDebug("[getFeatureInfo] %lu, %d, [%d,%d]", dataSources.size(), dataSourceIndex, dX, dY);
 #endif
   // Create a new getFeatureInfoResult object and push it into the vector.
   int status = 0;
   isProfileData = false;
-  for (auto dataSource : dataSources) {
+  for (auto dataSource: dataSources) {
     if (dataSource == NULL) {
       CDBError("dataSource == NULL");
       return 1;
     }
 
-    GetFeatureInfoResult *getFeatureInfoResult = new GetFeatureInfoResult();
-    getFeatureInfoResultList.push_back(getFeatureInfoResult);
+    getFeatureInfoResultList.push_back(GetFeatureInfoResult());
+    GetFeatureInfoResult &getFeatureInfoResult = (getFeatureInfoResultList.back());
     bool headerIsAvailable = false;
     bool sameHeaderForAll = false;
     bool openAll = false;
@@ -637,10 +546,10 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
         CCDFDims *cdfDims = dataSource->getCDFDims();
 
         // Copy layer name
-        getFeatureInfoResult->layerName.copy(&dataSource->layerName);
-        getFeatureInfoResult->layerTitle.copy(&dataSource->layerName);
+        getFeatureInfoResult.layerName = dataSource->layerName;
+        getFeatureInfoResult.layerTitle = dataSource->layerName;
 
-        getFeatureInfoResult->dataSourceIndex = dataSourceIndex;
+        getFeatureInfoResult.dataSourceIndex = dataSourceIndex;
 
 #ifdef CIMAGEDATAWRITER_DEBUG
         CDBDebug("Processing dataSource %s with result %d of %d results (%d) %f", dataSource->getLayerName(), step, dataSource->getNumTimeSteps(),
@@ -673,58 +582,35 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
           }
         }
 
-        CT::string ckey;
-        ckey.print("%d:%d:%d:%d:%s:%f:%f:%f:%f", dX, dY, dataSource->dWidth, dataSource->dHeight, dataSource->nativeProj4.c_str(), dataSource->dfBBOX[0], dataSource->dfBBOX[1], dataSource->dfBBOX[2],
-                   dataSource->dfBBOX[3]);
+        std::string ckey = CT::printf("%d:%d:%d:%d:%s:%f:%f:%f:%f", dX, dY, dataSource->dWidth, dataSource->dHeight, dataSource->nativeProj4.c_str(), dataSource->dfBBOX[0], dataSource->dfBBOX[1],
+                                      dataSource->dfBBOX[2], dataSource->dfBBOX[3]);
         CImageDataWriter::ProjCacheInfo projCacheInfo = GetProjInfo(ckey, &drawImage, dataSource, &imageWarper, srvParam, dX, dY);
-// CDBDebug("key = %s",ckey.c_str());
-#ifdef MEASURETIME
-        StopWatch_Stop("/projCacheInfo");
-#endif
-        // CDBDebug("ProjRes =
-        // (%d,%d)(%f,%f)(%f,%f)(%f,%f)",projCacheInfo.imx,projCacheInfo.imy,projCacheInfo.CoordX,projCacheInfo.CoordY,projCacheInfo.nativeCoordX,projCacheInfo.nativeCoordY,projCacheInfo.lonX,projCacheInfo.lonY);
 
         // Projections coordinates in latlon
-        getFeatureInfoResult->lon_coordinate = projCacheInfo.lonX;
-        getFeatureInfoResult->lat_coordinate = projCacheInfo.lonY;
+        getFeatureInfoResult.lon_coordinate = projCacheInfo.lonX;
+        getFeatureInfoResult.lat_coordinate = projCacheInfo.lonY;
 
         // Pixel X and Y on the image
-        getFeatureInfoResult->x_imagePixel = dX;
-        getFeatureInfoResult->y_imagePixel = dY;
+        getFeatureInfoResult.x_imagePixel = dX;
+        getFeatureInfoResult.y_imagePixel = dY;
 
         // Projection coordinates X and Y on the image
-        getFeatureInfoResult->x_imageCoordinate = projCacheInfo.CoordX;
-        getFeatureInfoResult->y_imageCoordinate = projCacheInfo.CoordY;
+        getFeatureInfoResult.x_imageCoordinate = projCacheInfo.CoordX;
+        getFeatureInfoResult.y_imageCoordinate = projCacheInfo.CoordY;
 
         // Projection coordinates X and Y in the raster
-        getFeatureInfoResult->x_rasterCoordinate = projCacheInfo.nativeCoordX;
-        getFeatureInfoResult->y_rasterCoordinate = projCacheInfo.nativeCoordY;
+        getFeatureInfoResult.x_rasterCoordinate = projCacheInfo.nativeCoordX;
+        getFeatureInfoResult.y_rasterCoordinate = projCacheInfo.nativeCoordY;
 
         // Pixel X and Y on the raster
-        getFeatureInfoResult->x_rasterIndex = projCacheInfo.imx;
-        getFeatureInfoResult->y_rasterIndex = projCacheInfo.imy;
+        getFeatureInfoResult.x_rasterIndex = projCacheInfo.imx;
+        getFeatureInfoResult.y_rasterIndex = projCacheInfo.imy;
 
         if (projCacheInfo.imx >= 0 && projCacheInfo.imy >= 0 && projCacheInfo.imx < projCacheInfo.dWidth && projCacheInfo.imy < projCacheInfo.dHeight && projCacheInfo.isOutsideBBOX == false) {
 
           if (!openAll) {
-
-#ifdef CIMAGEDATAWRITER_DEBUG
-            CDBDebug("Reading dataSource %s for %d,%d", dataSource->getLayerName(), projCacheInfo.imx, projCacheInfo.imy);
-#endif
-
             status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_ALL, projCacheInfo.imx, projCacheInfo.imy);
-
-#ifdef CIMAGEDATAWRITER_DEBUG
-            CDBDebug("Done");
-#endif
-
           }
-#ifdef CIMAGEDATAWRITER_DEBUG
-          else {
-            CDBDebug("OpenALL = true");
-          }
-#endif
-
           if (status != 0) {
             CDBError("Could not open file: %s", dataSource->getFileName());
             return 1;
@@ -743,75 +629,59 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
               continue;
             }
 
-            CT::string dimkey = "";
+            std::string dimkey = "";
             for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
-              dimkey.printconcat("[%s=%s]", cdfDims->getDimensionValue(j).c_str(), cdfDims->getDimensionName(j));
+              CT::printfconcat(dimkey, "[%s=%s]", cdfDims->at(j).value.c_str(), cdfDims->at(j).name.c_str());
             }
-            dimkey.printconcat("[dataobject=%d]", o);
+            CT::printfconcat(dimkey, "[dataobject=%lu]", o);
 
             std::map<std::string, bool>::iterator dimensionKeyValueMapIterator = dimensionKeyValueMap.find(dimkey.c_str());
             if (dimensionKeyValueMapIterator != dimensionKeyValueMap.end()) {
               if (dimensionKeyValueMapIterator->second == false) {
-                if (getFeatureInfoResult->elements.size() > 0) {
-                  delete getFeatureInfoResult->elements[getFeatureInfoResult->elements.size() - 1];
-                  getFeatureInfoResult->elements.pop_back();
+                if (getFeatureInfoResult.elements.size() > 0) {
+                  getFeatureInfoResult.elements.pop_back();
                 }
               }
             } else {
               dimensionKeyValueMap[dimkey.c_str()] = false;
             }
+            getFeatureInfoResult.elements.push_back(GFIElement());
+            GFIElement &element = getFeatureInfoResult.elements.back();
 
-            GetFeatureInfoResult::Element *element = new GetFeatureInfoResult::Element();
-            getFeatureInfoResult->elements.push_back(element);
-
-            element->dataSource = dataSource;
+            element.dataSource = dataSource;
             // Get variable name
-            element->var_name.copy(&dataSource->getDataObject(o)->variableName);
+            element.var_name = dataSource->getDataObject(o)->variableName;
             // Get variable units
-            CT::string units = dataSource->getDataObject(o)->getUnits();
-            element->units.copy(&units);
+            std::string units = dataSource->getDataObject(o)->getUnits();
+            element.units = units;
 
             // Get variable standard name
             CDF::Attribute *attr_standard_name = dataSource->getDataObject(o)->cdfVariable->getAttributeNE("standard_name");
             if (attr_standard_name != NULL) {
-              CT::string standardName;
-              attr_standard_name->getDataAsString(&standardName);
-              element->standard_name.copy(&standardName);
+              std::string standardName = attr_standard_name->toString();
+              element.standard_name = standardName;
               // Make a more clean standard name.
-              element->feature_name.print("%s_%d", standardName.c_str(), o);
+              element.feature_name = CT::printf("%s_%lu", standardName.c_str(), o);
             }
-            if (element->standard_name.empty()) {
-              element->standard_name.copy(&element->var_name);
-              element->feature_name.copy(&element->var_name);
-              element->feature_name.print("%s_%d", element->var_name.c_str(), o);
+            if (element.standard_name.empty()) {
+              element.standard_name = element.var_name;
+              element.feature_name = element.var_name;
+              element.feature_name = CT::printf("%s_%lu", element.var_name.c_str(), o);
             }
 
             // Get variable long name
             CDF::Attribute *attr_long_name = dataSource->getDataObject(o)->cdfVariable->getAttributeNE("long_name");
             if (attr_long_name != NULL) {
-              attr_long_name->getDataAsString(&element->long_name);
-            } else
-              element->long_name.copy(&element->var_name);
-
-            // Assign CDF::Variable Pointer
-            element->variable = dataSource->getDataObject(o)->cdfVariable;
-            element->value = "nodata";
-
-            CCDFDims *cdfDims = dataSource->getCDFDims();
-            CT::string value, name;
-            for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
-              value = cdfDims->getDimensionValue(j);
-              name = cdfDims->getDimensionName(j);
-              element->cdfDims.addDimension(name.c_str(), value.c_str(), cdfDims->getDimensionIndex(j));
+              element.long_name = attr_long_name->toString();
+            } else {
+              element.long_name = element.var_name;
             }
 
-#ifdef CIMAGEDATAWRITER_DEBUG
-            CDBDebug("getFeatureInfoResult->elements has %d elements\n", getFeatureInfoResult->elements.size());
-#endif
-            // Retrieve corresponding values.
-            //       #ifdef CIMAGEDATAWRITER_DEBUG
-            //       CDBDebug("imx:%d imy:%d projCacheInfo.dWidth:%d projCacheInfo.dHeight:%d",projCacheInfo.imx,projCacheInfo.imy,projCacheInfo.dWidth,projCacheInfo.dHeight);
-            //       #endif
+            // Assign CDF::Variable Pointer
+            element.variable = dataSource->getDataObject(o)->cdfVariable;
+            element.value = "nodata";
+            element.cdfDims = *dataSource->getCDFDims();
+
             bool hasData = false;
             if (projCacheInfo.imx >= 0 && projCacheInfo.imy >= 0 && projCacheInfo.imx < projCacheInfo.dWidth && projCacheInfo.imy < projCacheInfo.dHeight) {
               size_t ptr = 0;
@@ -824,33 +694,21 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
                 ptr = projCacheInfo.imx + projCacheInfo.imy * projCacheInfo.dWidth;
               }
 
-#ifdef CIMAGEDATAWRITER_DEBUG
-              CDBDebug("ptr = %d Dataobject = %d Timestep = %d", ptr, o, dataSource->getCurrentTimeStep());
-#endif
               dataSource->setTimeStep(step);
               double pixel = convertValue(dataSource->getDataObject(o)->cdfVariable->getType(), dataSource->getDataObject(o)->cdfVariable->data, ptr);
-
-#ifdef CIMAGEDATAWRITER_DEBUG
-              CDBDebug("pixel value = %f", pixel);
-#endif
-              // Fill in the actual data value
-              // Check whether this is a NoData value:
 
               if ((pixel != dataSource->getDataObject(o)->dfNodataValue && dataSource->getDataObject(o)->hasNodataValue == true && pixel == pixel && everythingIsInBBOX == true) ||
                   dataSource->getDataObject(o)->hasNodataValue == false || dataSource->getDataObject(o)->points.size() > 0) {
                 if (dataSource->getDataObject(o)->hasStatusFlag) {
                   // Add status flag
-                  CT::string flagMeaning;
-                  CDataSource::getFlagMeaningHumanReadable(&flagMeaning, &dataSource->getDataObject(o)->statusFlagList, pixel);
-                  element->value.print("%s (%d)", flagMeaning.c_str(), (int)pixel);
-                  element->units = "";
+                  std::string flagMeaning;
+                  flagMeaning = CDataSource::getFlagMeaningHumanReadable(dataSource->getDataObject(o)->statusFlagList, pixel);
+                  element.value = CT::printf("%s (%d)", flagMeaning.c_str(), (int)pixel);
+                  element.units = "";
                 } else {
-                  // Add raster value
-                  element->value.print("%f", pixel);
+                  element.value = CT::printf("%f", pixel);
                 }
-#ifdef CIMAGEDATAWRITER_DEBUG
-                CDBDebug("Element value == %s", element->value.c_str());
-#endif
+
                 dimensionKeyValueMap[dimkey.c_str()] = true;
                 hasData = true;
 
@@ -860,15 +718,15 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
                     // Find the clicked pixel. For geojson this is done by rendering the polygon on the grid with its index.
                     // For points we will support finding the closest one in the list.
                     CDBDebug("Do findClosestPoint");
-                    closestIndex = findClosestPoint(dataSource->getDataObject(o)->points, getFeatureInfoResult->lon_coordinate, getFeatureInfoResult->lat_coordinate);
+                    closestIndex = findClosestPoint(dataSource->getDataObject(o)->points, getFeatureInfoResult.lon_coordinate, getFeatureInfoResult.lat_coordinate);
                     if (closestIndex == -1) {
                       closestIndex = pixel;
                     } else {
                       // Calculate distance in pixels
                       double pointPX = dataSource->getDataObject(o)->points[closestIndex].lon, pointPY = dataSource->getDataObject(o)->points[closestIndex].lat;
-                      double gfiPX = getFeatureInfoResult->lon_coordinate, gfiPY = getFeatureInfoResult->lat_coordinate;
+                      double gfiPX = getFeatureInfoResult.lon_coordinate, gfiPY = getFeatureInfoResult.lat_coordinate;
                       CImageWarper warper;
-                      /* We can always use LATLONPROJECTION, because getFeatureInfoResult->lon_coordinate and getFeatureInfoResult->lat_coordinate are always converted to latlon in CImageDataWriter */
+                      /* We can always use LATLONPROJECTION, because getFeatureInfoResult.lon_coordinate and getFeatureInfoResult.lat_coordinate are always converted to latlon in CImageDataWriter */
                       int status = warper.initreproj(LATLONPROJECTION, srvParam->geoParams, &srvParam->cfg->Projection);
                       if (status != 0) {
                         CDBError("Unable to initialize projection");
@@ -880,7 +738,7 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
 
                       if (pixelDistance > 30) {
                         hasData = false;
-                        element->value = "nodata";
+                        element.value = "nodata";
                         return 0;
                       };
                     }
@@ -889,21 +747,17 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
                   if (featureIt != dataSource->getDataObject(o)->features.end()) {
                     CFeature *feature = &featureIt->second;
                     if (feature->paramMap.empty() == false) {
-                      for (auto [propertyName, propertyValue] : feature->paramMap) {
-                        GetFeatureInfoResult::Element *featureParam = new GetFeatureInfoResult::Element();
-                        featureParam->dataSource = dataSource;
-                        for (size_t j = 0; j < dataSource->requiredDims.size(); j++) {
-                          value = cdfDims->getDimensionValue(j);
-                          name = cdfDims->getDimensionName(j);
-                          featureParam->cdfDims.addDimension(name.c_str(), value.c_str(), cdfDims->getDimensionIndex(j));
-                        }
-                        getFeatureInfoResult->elements.push_back(featureParam);
-                        featureParam->long_name = propertyName.c_str();
-                        featureParam->var_name = propertyName.c_str();
-                        featureParam->standard_name = propertyName.c_str();
-                        featureParam->feature_name = propertyName.c_str();
-                        featureParam->value = propertyValue.c_str();
-                        featureParam->units = "";
+                      for (auto [propertyName, propertyValue]: feature->paramMap) {
+                        getFeatureInfoResult.elements.push_back(GFIElement());
+                        GFIElement &featureParam = getFeatureInfoResult.elements.back();
+                        featureParam.dataSource = dataSource;
+                        featureParam.cdfDims = *dataSource->getCDFDims();
+                        featureParam.long_name = propertyName.c_str();
+                        featureParam.var_name = propertyName.c_str();
+                        featureParam.standard_name = propertyName.c_str();
+                        featureParam.feature_name = propertyName.c_str();
+                        featureParam.value = propertyValue;
+                        featureParam.units = "";
                       }
                     }
                   }
@@ -911,42 +765,28 @@ int CImageDataWriter::getFeatureInfo(std::vector<CDataSource *> dataSources, int
 
               } else {
 
-                element->value = "nodata";
-#ifdef CIMAGEDATAWRITER_DEBUG
-                CDBDebug("Element value == %s", element->value.c_str());
-#endif
+                element.value = "nodata";
               }
             } else {
-#ifdef CIMAGEDATAWRITER_DEBUG
-              CDBDebug("isOutsideBBOX");
-#endif
 
               if (hasData == false && dimensionKeyValueMap.find(dimkey.c_str())->second == true) {
-                getFeatureInfoResult->elements.pop_back();
-                delete element;
-                element = NULL;
+                //  getFeatureInfoResult.elements.pop_back();
               }
             }
-
-            getFeatureInfoGetPointDataResults(dataSource, getFeatureInfoResult, o, element, 30);
+            // CDBDebug("Elemeent %s", getFeatureInfoResult.elements.back().value.c_str());
+            getFeatureInfoGetPointDataResults(dataSource, getFeatureInfoResult, o, 30);
           }
-// reader.close();
-#ifdef CIMAGEDATAWRITER_DEBUG
-          CDBDebug("dataSource->getNumDataObjects()==%d", dataSource->getNumDataObjects());
-#endif
         }
       }
     }
   }
 
-  for (auto gfiResult : getFeatureInfoResultList) {
-    if (gfiResult->elements.size() > 0) {
-      gfiResult->layerTitle = gfiResult->elements[0]->long_name;
+  for (auto &gfiResult: getFeatureInfoResultList) {
+    if (gfiResult.elements.size() > 0) {
+      gfiResult.layerTitle = gfiResult.elements[0].long_name;
     }
   }
-#ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("[/getFeatureInfo %d]", getFeatureInfoResultList.size());
-#endif
+
   return 0;
 }
 
@@ -957,7 +797,7 @@ CImageDataWriter::IndexRange::IndexRange() {
   max = 0;
 }
 
-std::vector<CImageDataWriter::IndexRange> CImageDataWriter::getIndexRangesForRegex(CT::string match, CT::string *attributeValues, int n) {
+std::vector<CImageDataWriter::IndexRange> getIndexRangesForRegex(const std::string &match, const std::vector<std::string> &attributeValues) {
   std::vector<CImageDataWriter::IndexRange> ranges;
   int ret;
   regex_t regex;
@@ -966,22 +806,18 @@ std::vector<CImageDataWriter::IndexRange> CImageDataWriter::getIndexRangesForReg
   if (!ret) {
     int first = -1;
     int last = -1;
-    for (int i = 0; i < n; i++) {
+    for (size_t i = 0; i < attributeValues.size(); i++) {
       int matched = 1;
       if (attributeValues[i].length() > 0) {
         matched = regexec(&regex, attributeValues[i].c_str(), 0, NULL, 0);
       }
-      // CDBDebug("Checking %s for %s",ids[i],match.c_str());
 
       if (matched == 0) {
-        // CDBDebug("match of %s [%d] with %s", attributeValues[i].c_str(), i, match.c_str());
         if (first == -1) {
           first = i;
           last = i + 1;
         } else {
           if ((i - last) > 0) {
-            // new range
-            ;
             ranges.push_back(CImageDataWriter::IndexRange(first, last));
             first = i;
             last = i + 1;
@@ -1005,15 +841,8 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
 
   // Open the data of this dataSource
   int status = 0;
-#ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("Thread[%d]: Opening %s", dataSource->threadNr, dataSource->getFileName());
-#endif
 
   CDataReader reader;
-
-#ifdef MEASURETIME
-  StopWatch_Stop("Thread[%d]: start Opening grid", dataSource->threadNr);
-#endif
 
   bool usePixelExtent = false;
   if (usePixelExtent) {
@@ -1042,30 +871,11 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
   } else {
     status = reader.open(dataSource, CNETCDFREADER_MODE_OPEN_ALL);
   }
-#ifdef MEASURETIME
-  StopWatch_Stop("Thread[%d]: Opened grid", dataSource->threadNr);
-#endif
 
-#ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("Thread[%d]: Has opened %s", dataSource->threadNr, dataSource->getFileName());
-#endif
   if (status != 0) {
     CDBError("Could not open file: %s", dataSource->getFileName());
     return 1;
   }
-#ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("Thread[%d]: opened", dataSource->threadNr);
-#endif
-
-#ifdef MEASURETIME
-  StopWatch_Stop("Thread[%d]: warp start", dataSource->threadNr);
-#endif
-
-  /*if(renderMethod==nearest){CDBDebug("nearest");}
-  if(renderMethod==bilinear){CDBDebug("bilinear");}
-  if(renderMethod==bilinearcontour){CDBDebug("bilinearcontour");}
-  if(renderMethod==nearestcontour){CDBDebug("nearestcontour");}
-  if(renderMethod==contour){CDBDebug("contour");}*/
 
   CImageWarperRenderInterface *imageWarperRenderer;
   CStyleConfiguration *styleConfiguration = dataSource->getStyle();
@@ -1076,25 +886,25 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
   if (styleConfiguration->featureIntervals.size() > 0) {
     int numFeatures = 0;
     try {
-      numFeatures = dataSource->getFirstAvailableDataObject()->cdfObject->getDimension("features")->getSize();
+      numFeatures = dataSource->getFirstAvailableDataObject()->cdfObject->getDimensionThrows("features")->getSize();
     } catch (int e) {
 #ifdef CIMAGEDATAWRITER_DEBUG
       CDBDebug("Note: While configuring featureInterval: Unable to find features variable");
 #endif
     }
     if (numFeatures > 0) {
-      CT::string attributeValues[numFeatures];
+      std::vector<std::string> attributeValues(numFeatures);
       /* Loop through all configured FeatureInterval elements */
       for (size_t j = 0; j < styleConfiguration->featureIntervals.size(); j++) {
         CServerConfig::XMLE_FeatureInterval *featureInterval = styleConfiguration->featureIntervals[j];
         if (featureInterval->attr.match.empty() == false && featureInterval->attr.matchid.empty() == false) {
           /* Get the matchid attribute for the feature */
-          CT::string attributeName = featureInterval->attr.matchid;
+          std::string attributeName = featureInterval->attr.matchid;
           for (int featureNr = 0; featureNr < numFeatures; featureNr++) {
             attributeValues[featureNr] = "";
             std::map<int, CFeature>::iterator feature = dataSource->getFirstAvailableDataObject()->features.find(featureNr);
             if (feature != dataSource->getFirstAvailableDataObject()->features.end()) {
-              std::map<std::string, std::string>::iterator attributeValueItr = feature->second.paramMap.find(attributeName.c_str());
+              std::map<std::string, std::string>::iterator attributeValueItr = feature->second.paramMap.find(attributeName);
               if (attributeValueItr != feature->second.paramMap.end()) {
                 attributeValues[featureNr] = attributeValueItr->second.c_str();
               }
@@ -1107,7 +917,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
               The shadeinterval configuration can style these indices of the polygons with colors.
               Actual rendering of this is done in CImageNearestNeighbour with the _plot function
             */
-            std::vector<CImageDataWriter::IndexRange> ranges = getIndexRangesForRegex(featureInterval->attr.match, attributeValues, numFeatures);
+            std::vector<CImageDataWriter::IndexRange> ranges = getIndexRangesForRegex(featureInterval->attr.match, attributeValues);
             for (size_t i = 0; i < ranges.size(); i++) {
               auto shadeInterval = CServerConfig::XMLE_ShadeInterval();
               shadeInterval.attr.min.print("%d", ranges[i].min);
@@ -1123,10 +933,6 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
     }
   }
 
-  // Initialize projection algorithm
-#ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("Thread[%d]: initreproj %s", dataSource->threadNr, dataSource->nativeProj4.c_str());
-#endif
   CImageWarper imageWarper;
   status = imageWarper.initreproj(dataSource, drawImage->geoParams, &srvParam->cfg->Projection);
   if (status != 0) {
@@ -1169,7 +975,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
 #endif
     if (dataSource->getFirstAvailableDataObject()->points.size() == 0) {
       imageWarperRenderer = new CImgWarpBilinear();
-      CT::string bilinearSettings;
+      std::string bilinearSettings;
       bool drawMap = false;
       bool drawContour = false;
       bool drawVector = false;
@@ -1189,37 +995,37 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
         The bilinear Rendermethod can shade using ShadeInterval if renderhint in RenderSettings is set to RENDERHINT_DISCRETECLASSES
       */
       if (styleConfiguration != nullptr) {
-        for (auto renderSetting : styleConfiguration->renderSettings) {
-          CT::string renderHint = renderSetting->attr.renderhint;
-          if (renderHint.equals(RENDERHINT_DISCRETECLASSES)) {
+        for (auto renderSetting: styleConfiguration->renderSettings) {
+          std::string renderHint = renderSetting->attr.renderhint;
+          if (renderHint == RENDERHINT_DISCRETECLASSES) {
             drawMap = false;   // Don't use continous legends with the bilinear renderer
             drawShaded = true; // Use discrete legends defined by ShadeInterval with the bilinear renderer
           }
         }
       }
 
-      if (drawMap == true) bilinearSettings.printconcat("drawMap=true;");
-      if (drawVector == true) bilinearSettings.printconcat("drawVector=true;");
-      if (drawBarb == true) bilinearSettings.printconcat("drawBarb=true;");
-      if (drawShaded == true) bilinearSettings.printconcat("drawShaded=true;");
-      if (drawContour == true) bilinearSettings.printconcat("drawContour=true;");
-      if (drawGridVectors) bilinearSettings.printconcat("drawGridVectors=true;");
-      bilinearSettings.printconcat("smoothingFilter=%d;", styleConfiguration->smoothingFilter);
+      if (drawMap == true) CT::printfconcat(bilinearSettings, "drawMap=true;");
+      if (drawVector == true) CT::printfconcat(bilinearSettings, "drawVector=true;");
+      if (drawBarb == true) CT::printfconcat(bilinearSettings, "drawBarb=true;");
+      if (drawShaded == true) CT::printfconcat(bilinearSettings, "drawShaded=true;");
+      if (drawContour == true) CT::printfconcat(bilinearSettings, "drawContour=true;");
+      if (drawGridVectors) CT::printfconcat(bilinearSettings, "drawGridVectors=true;");
+      CT::printfconcat(bilinearSettings, "smoothingFilter=%d;", styleConfiguration->smoothingFilter);
       if (drawShaded == true || drawContour == true) {
-        bilinearSettings.printconcat("shadeInterval=%0.12f;contourBigInterval=%0.12f;contourSmallInterval=%0.12f;", styleConfiguration->shadeInterval, styleConfiguration->contourIntervalH,
-                                     styleConfiguration->contourIntervalL);
+        CT::printfconcat(bilinearSettings, "shadeInterval=%0.12f;contourBigInterval=%0.12f;contourSmallInterval=%0.12f;", styleConfiguration->shadeInterval, styleConfiguration->contourIntervalH,
+                         styleConfiguration->contourIntervalL);
 
         for (size_t j = 0; j < styleConfiguration->shadeIntervals.size(); j++) {
-          const auto& shadeInterval = styleConfiguration->shadeIntervals[j];
+          const auto &shadeInterval = styleConfiguration->shadeIntervals[j];
           if (shadeInterval.attr.min.empty() == false && shadeInterval.attr.max.empty() == false) {
-            bilinearSettings.printconcat("shading=min(%s)$max(%s)$", shadeInterval.attr.min.c_str(), shadeInterval.attr.max.c_str());
+            CT::printfconcat(bilinearSettings, "shading=min(%s)$max(%s)$", shadeInterval.attr.min.c_str(), shadeInterval.attr.max.c_str());
             if (shadeInterval.attr.fillcolor.empty() == false) {
-              bilinearSettings.printconcat("$fillcolor(%s)$", shadeInterval.attr.fillcolor.c_str());
+              CT::printfconcat(bilinearSettings, "$fillcolor(%s)$", shadeInterval.attr.fillcolor.c_str());
             }
             if (!shadeInterval.attr.bgcolor.empty()) {
-              bilinearSettings.printconcat("$bgcolor(%s)$", shadeInterval.attr.bgcolor.c_str());
+              CT::printfconcat(bilinearSettings, "$bgcolor(%s)$", shadeInterval.attr.bgcolor.c_str());
             }
-            bilinearSettings.printconcat(";");
+            CT::printfconcat(bilinearSettings, ";");
           }
         }
       }
@@ -1230,68 +1036,68 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
           // Check if we have a interval contour line or a contourline with separate classes
           if (contourLine->attr.interval.empty() == false) {
             // ContourLine interval
-            bilinearSettings.printconcat("contourline=");
+            CT::printfconcat(bilinearSettings, "contourline=");
             if (contourLine->attr.width.empty() == false) {
-              bilinearSettings.printconcat("width(%s)$", contourLine->attr.width.c_str());
+              CT::printfconcat(bilinearSettings, "width(%s)$", contourLine->attr.width.c_str());
             }
             if (contourLine->attr.linecolor.empty() == false) {
-              bilinearSettings.printconcat("linecolor(%s)$", contourLine->attr.linecolor.c_str());
+              CT::printfconcat(bilinearSettings, "linecolor(%s)$", contourLine->attr.linecolor.c_str());
             }
             if (contourLine->attr.textcolor.empty() == false) {
-              bilinearSettings.printconcat("textcolor(%s)$", contourLine->attr.textcolor.c_str());
+              CT::printfconcat(bilinearSettings, "textcolor(%s)$", contourLine->attr.textcolor.c_str());
             }
             if (contourLine->attr.textsize.empty() == false) {
-              bilinearSettings.printconcat("textsize(%s)$", contourLine->attr.textsize.c_str());
+              CT::printfconcat(bilinearSettings, "textsize(%s)$", contourLine->attr.textsize.c_str());
             }
             if (contourLine->attr.textstrokewidth.empty() == false) {
-              bilinearSettings.printconcat("textstrokewidth(%s)$", contourLine->attr.textstrokewidth.c_str());
+              CT::printfconcat(bilinearSettings, "textstrokewidth(%s)$", contourLine->attr.textstrokewidth.c_str());
             }
 
             if (contourLine->attr.textstrokecolor.empty() == false) {
-              bilinearSettings.printconcat("textstrokecolor(%s)$", contourLine->attr.textstrokecolor.c_str());
+              CT::printfconcat(bilinearSettings, "textstrokecolor(%s)$", contourLine->attr.textstrokecolor.c_str());
             }
             if (contourLine->attr.interval.empty() == false) {
-              bilinearSettings.printconcat("interval(%s)$", contourLine->attr.interval.c_str());
+              CT::printfconcat(bilinearSettings, "interval(%s)$", contourLine->attr.interval.c_str());
             }
             if (contourLine->attr.textformatting.empty() == false) {
-              bilinearSettings.printconcat("textformatting(%s)$", contourLine->attr.textformatting.c_str());
+              CT::printfconcat(bilinearSettings, "textformatting(%s)$", contourLine->attr.textformatting.c_str());
             }
             if (contourLine->attr.dashing.empty() == false) {
-              bilinearSettings.printconcat("dashing(%s)$", contourLine->attr.dashing.c_str());
+              CT::printfconcat(bilinearSettings, "dashing(%s)$", contourLine->attr.dashing.c_str());
             }
-            bilinearSettings.printconcat(";");
+            CT::printfconcat(bilinearSettings, ";");
           }
           if (contourLine->attr.classes.empty() == false) {
             // ContourLine classes
-            bilinearSettings.printconcat("contourline=");
+            CT::printfconcat(bilinearSettings, "contourline=");
             if (contourLine->attr.width.empty() == false) {
-              bilinearSettings.printconcat("width(%s)$", contourLine->attr.width.c_str());
+              CT::printfconcat(bilinearSettings, "width(%s)$", contourLine->attr.width.c_str());
             }
             if (contourLine->attr.linecolor.empty() == false) {
-              bilinearSettings.printconcat("linecolor(%s)$", contourLine->attr.linecolor.c_str());
+              CT::printfconcat(bilinearSettings, "linecolor(%s)$", contourLine->attr.linecolor.c_str());
             }
             if (contourLine->attr.textcolor.empty() == false) {
-              bilinearSettings.printconcat("textcolor(%s)$", contourLine->attr.textcolor.c_str());
+              CT::printfconcat(bilinearSettings, "textcolor(%s)$", contourLine->attr.textcolor.c_str());
             }
             if (contourLine->attr.classes.empty() == false) {
-              bilinearSettings.printconcat("classes(%s)$", contourLine->attr.classes.c_str());
+              CT::printfconcat(bilinearSettings, "classes(%s)$", contourLine->attr.classes.c_str());
             }
             if (contourLine->attr.textsize.empty() == false) {
-              bilinearSettings.printconcat("textsize(%s)$", contourLine->attr.textsize.c_str());
+              CT::printfconcat(bilinearSettings, "textsize(%s)$", contourLine->attr.textsize.c_str());
             }
             if (contourLine->attr.textstrokewidth.empty() == false) {
-              bilinearSettings.printconcat("textstrokewidth(%s)$", contourLine->attr.textstrokewidth.c_str());
+              CT::printfconcat(bilinearSettings, "textstrokewidth(%s)$", contourLine->attr.textstrokewidth.c_str());
             }
             if (contourLine->attr.textstrokecolor.empty() == false) {
-              bilinearSettings.printconcat("textstrokecolor(%s)$", contourLine->attr.textstrokecolor.c_str());
+              CT::printfconcat(bilinearSettings, "textstrokecolor(%s)$", contourLine->attr.textstrokecolor.c_str());
             }
             if (contourLine->attr.textformatting.empty() == false) {
-              bilinearSettings.printconcat("textformatting(%s)$", contourLine->attr.textformatting.c_str());
+              CT::printfconcat(bilinearSettings, "textformatting(%s)$", contourLine->attr.textformatting.c_str());
             }
             if (contourLine->attr.dashing.empty() == false) {
-              bilinearSettings.printconcat("dashing(%s)$", contourLine->attr.dashing.c_str());
+              CT::printfconcat(bilinearSettings, "dashing(%s)$", contourLine->attr.dashing.c_str());
             }
-            bilinearSettings.printconcat(";");
+            CT::printfconcat(bilinearSettings, ";");
           }
         }
       }
@@ -1360,7 +1166,7 @@ int CImageDataWriter::warpImage(CDataSource *dataSource, CDrawImage *drawImage) 
       CDBDebug("Using CImgRenderPolylines");
 #endif
       imageWarperRenderer = new CImgRenderPolylines();
-      CT::string renderMethodAsString = getRenderMethodAsString(renderMethod);
+      std::string renderMethodAsString = getRenderMethodAsString(renderMethod);
       imageWarperRenderer->set(renderMethodAsString.c_str());
       imageWarperRenderer->render(&imageWarper, dataSource, drawImage);
       delete imageWarperRenderer;
@@ -1384,7 +1190,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
   int status = 0;
 
 #ifdef CIMAGEDATAWRITER_DEBUG
-  CDBDebug("Draw data. dataSources.size() =  %d", dataSources.size());
+  CDBDebug("Draw data. dataSources.size() =  %lu", dataSources.size());
 #endif
 
   for (size_t j = 0; j < dataSources.size(); j++) {
@@ -1436,9 +1242,9 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
 
         if (dataSource->cfgLayer->ImageText.size() > 0) {
 
-          CT::string imageText = "";
+          std::string imageText = "";
           if (dataSource->cfgLayer->ImageText[0]->value.empty() == false) {
-            imageText.copy(dataSource->cfgLayer->ImageText[0]->value.c_str());
+            imageText = dataSource->cfgLayer->ImageText[0]->value;
           }
 
           if (dataSource->getNumDataObjects() > 0) {
@@ -1447,11 +1253,11 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
             if (attrToSearch != NULL) {
               // CDBDebug("Determining ImageText based on netcdf attribute %s",attrToSearch);
               try {
-                CDF::Attribute *attr = dataSource->getFirstAvailableDataObject()->cdfObject->getAttribute(attrToSearch);
+                CDF::Attribute *attr = dataSource->getFirstAvailableDataObject()->cdfObject->getAttributeThrows(attrToSearch);
                 if (attr->length > 0) {
-                  imageText.copy(attrToSearch);
-                  imageText.concat(": ");
-                  imageText.concat(attr->toString().c_str());
+                  imageText = attrToSearch;
+                  imageText += ": ";
+                  imageText += attr->toString().c_str();
                 }
               } catch (int e) {
               }
@@ -1598,7 +1404,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
 
       int s = int(gridSize / precision);
       if (s <= 0) s = 1;
-      CT::string message;
+      std::string message;
       for (int y = 0; y < numPointsY; y = y + s) {
         bool drawnTextLeft = false;
         bool drawnTextRight = false;
@@ -1610,7 +1416,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
               if (gridP[p].x > srvParam->geoParams.width && gridP[p].y > 0) {
                 drawnTextRight = true;
                 double gy = latLonBBOX.top + precision * double(y);
-                message.print("%2.1f", gy);
+                message = CT::printf("%2.1f", gy);
                 int ty = int(gridP[p].y);
                 int tx = int(gridP[p].x);
                 if (ty < 8) {
@@ -1626,7 +1432,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
               if (gridP[p].x > 0 && gridP[p].y > 0) {
                 drawnTextLeft = true;
                 double gy = latLonBBOX.top + precision * double(y);
-                message.print("%2.1f", gy);
+                message = CT::printf("%2.1f", gy);
                 int ty = int(gridP[p].y);
                 int tx = int(gridP[p].x);
                 if (ty < 8) {
@@ -1656,7 +1462,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
               if (gridP[p].x > 0 && gridP[p].y > srvParam->geoParams.height) {
                 drawnTextBottom = true;
                 double gx = latLonBBOX.left + precision * double(x);
-                message.print("%2.1f", gx);
+                message = CT::printf("%2.1f", gx);
                 int ty = int(gridP[p].y);
                 if (ty < 15) ty = 0;
                 if (ty > srvParam->geoParams.height) {
@@ -1672,7 +1478,7 @@ int CImageDataWriter::addData(std::vector<CDataSource *> &dataSources) {
               if (gridP[p].x > 0 && gridP[p].y > 0) {
                 drawnTextTop = true;
                 double gx = latLonBBOX.left + precision * double(x);
-                message.print("%2.1f", gx);
+                message = CT::printf("%2.1f", gx);
                 int ty = int(gridP[p].y);
                 if (ty < 15) ty = 0;
                 ty += 7;
@@ -1740,28 +1546,6 @@ CColor getColorForPlot(int plotNr, int nrOfPlots) {
   return color;
 }
 
-int CImageDataWriter::getTextForValue(CT::string *tv, float v, CStyleConfiguration *styleConfiguration) {
-
-  int textRounding = 0;
-  if (styleConfiguration == NULL) {
-    return 1;
-  }
-  float legendInterval = styleConfiguration->shadeInterval;
-  if (legendInterval != 0) {
-    float fracPart = legendInterval - int(legendInterval);
-    textRounding = -int(log10(fracPart) - 0.9999999f);
-  }
-  if (textRounding <= 0) tv->print("%2.0f", v);
-  if (textRounding == 1) tv->print("%2.1f", v);
-  if (textRounding == 2) tv->print("%2.2f", v);
-  if (textRounding == 3) tv->print("%2.3f", v);
-  if (textRounding == 4) tv->print("%2.4f", v);
-  if (textRounding == 5) tv->print("%2.5f", v);
-  if (textRounding == 6) tv->print("%2.6f", v);
-  if (textRounding > 6) tv->print("%f", v);
-  return 0;
-}
-
 int CImageDataWriter::end() {
 
   if (writerStatus == uninitialized) {
@@ -1775,7 +1559,7 @@ int CImageDataWriter::end() {
   writerStatus = finished;
   if (srvParam->requestType == REQUEST_WMS_GETFEATUREINFO) {
 #ifdef CIMAGEDATAWRITER_DEBUG
-    CDBDebug("end, number of GF results: %d", getFeatureInfoResultList.size());
+    CDBDebug("end, number of GF results: %lu", getFeatureInfoResultList.size());
 #endif
     enum ResultFormats { textplain, texthtml, textxml, applicationvndogcgml, imagepng, json, imagepng_eprofile };
     ResultFormats resultFormat = texthtml;
@@ -1804,26 +1588,15 @@ int CImageDataWriter::end() {
 
       try {
         if (gfiStructure.get("root") != NULL) {
-#ifdef CIMAGEDATAWRITER_DEBUG
-          CDBDebug("Building JSON");
-#endif
-          CT::string data = gfiStructure.getList("root").toJSON(CXMLPARSER_JSONMODE_STANDARD);
-          CT::string resultJSON;
+          std::string data = gfiStructure.getList("root").toJSON(CXMLPARSER_JSONMODE_STANDARD);
           if (srvParam->JSONP.length() == 0) {
-#ifdef CIMAGEDATAWRITER_DEBUG
-            CDBDebug("CREATING JSON");
-#endif
             printf("%s%s%c%c\n", "Content-Type: application/json", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
           } else {
-#ifdef CIMAGEDATAWRITER_DEBUG
-            CDBDebug("CREATING JSONP %s", srvParam->JSONP.c_str());
-#endif
+
             printf("%s%s%c%c", "Content-Type: application/javascript", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
             printf("\n%s(", srvParam->JSONP.c_str());
           }
-
           puts(data.c_str());
-
           if (srvParam->JSONP.length() != 0) {
             printf(");");
           }
@@ -1838,125 +1611,112 @@ int CImageDataWriter::end() {
 
     /* Text plain and text html */
     if (resultFormat == textplain || resultFormat == texthtml) {
-      CT::string resultHTML;
+      std::string resultHTML;
       if (resultFormat == textplain) {
-        resultHTML.print("%s%s%c%c\n", "Content-Type: text/plain", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+        resultHTML = CT::printf("%s%s%c%c\n", "Content-Type: text/plain", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
       } else {
-        resultHTML.print("%s%s%c%c\n", "Content-Type: text/html", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+        resultHTML = CT::printf("%s%s%c%c\n", "Content-Type: text/html", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
       }
 
-      if (resultFormat == texthtml) resultHTML.printconcat("<html>\n");
+      if (resultFormat == texthtml) CT::printfconcat(resultHTML, "<html>\n");
 
       if (getFeatureInfoResultList.size() == 0) {
-        resultHTML.printconcat("Query returned no results");
+        CT::printfconcat(resultHTML, "Query returned no results");
       } else {
-        GetFeatureInfoResult *g = getFeatureInfoResultList[0];
+        GetFeatureInfoResult *g = &(getFeatureInfoResultList.at(0));
         if (resultFormat == texthtml) {
-          // resultHTML.printconcat("coordinates (%0.2f , %0.2f)<br>\n",g->x_imageCoordinate,g->y_imageCoordinate);
-          resultHTML.printconcat("Pointer Coordinates: (lon=%0.2f; lat=%0.2f)<br>\n", g->lon_coordinate, g->lat_coordinate);
+          CT::printfconcat(resultHTML, "Pointer Coordinates: (lon=%0.2f; lat=%0.2f)<br>\n", g->lon_coordinate, g->lat_coordinate);
 
         } else {
-          resultHTML.printconcat("Coordinates - (lon=%0.2f; lat=%0.2f)\n", g->lon_coordinate, g->lat_coordinate);
+          CT::printfconcat(resultHTML, "Coordinates - (lon=%0.2f; lat=%0.2f)\n", g->lon_coordinate, g->lat_coordinate);
         }
 
         for (size_t j = 0; j < getFeatureInfoResultList.size(); j++) {
 
-          GetFeatureInfoResult *g = getFeatureInfoResultList[j];
+          GetFeatureInfoResult *g = &(getFeatureInfoResultList.at(j));
 
           if (resultFormat == texthtml) {
-            resultHTML.printconcat("<hr/><b>%s (%s)</b><br/>\n", g->layerTitle.c_str(), g->layerName.c_str());
+            CT::printfconcat(resultHTML, "<hr/><b>%s (%s)</b><br/>\n", g->layerTitle.c_str(), g->layerName.c_str());
           } else {
-            resultHTML.printconcat("%s (%s)\n", g->layerTitle.c_str(), g->layerName.c_str());
+            CT::printfconcat(resultHTML, "%s (%s)\n", g->layerTitle.c_str(), g->layerName.c_str());
           }
 
-          CT::string currentTimeString = "";
+          std::string currentTimeString = "";
 
           if (resultFormat == texthtml) {
-            resultHTML.printconcat("<table>");
+            CT::printfconcat(resultHTML, "<table>");
           }
           for (size_t elNR = 0; elNR < g->elements.size(); elNR++) {
-            GetFeatureInfoResult::Element *e = g->elements[elNR];
-
-            // TODO
-            //             if(currentTimeString.equals(e->cdfDims.getDimensionValue("time").c_str())==false){
-            //               if(resultFormat==texthtml){
-            //                 resultHTML.printconcat("<tr><td>%s</td></tr>",e->cdfDims.getDimensionValue("time").c_str());
-            //               }else{
-            //                 resultHTML.printconcat("%s\n",e->cdfDims.getDimensionValue("time").c_str());
-            //               }
-            //               currentTimeString = e->cdfDims.getDimensionValue("time").c_str();
-            //             }
-
-            // CDBDebug(" %d elements.size() %d value '%s'",j,g->elements.size(),e->value.c_str());
+            GFIElement *e = &(g->elements[elNR]);
 
             if (resultFormat == texthtml) {
-              resultHTML.printconcat("<tr>");
+              CT::printfconcat(resultHTML, "<tr>");
             }
             if (resultFormat == texthtml) {
-              resultHTML.printconcat("<td>&nbsp;</td>");
+              CT::printfconcat(resultHTML, "<td>&nbsp;</td>");
             } else {
-              resultHTML.printconcat("  ");
+              CT::printfconcat(resultHTML, "  ");
             }
             if (g->elements.size() > 1) {
               if (resultFormat == texthtml) {
-                resultHTML.printconcat("<td>-</td>");
+                CT::printfconcat(resultHTML, "<td>-</td>");
               } else {
-                resultHTML.printconcat("- ");
+                CT::printfconcat(resultHTML, "- ");
               }
             }
             if (e->value.length() > 0) {
               if (resultFormat == texthtml) {
-                if (e->long_name.equals("pngdata")) {
-                  CT::string newValue = "";
-                  size_t color = e->value.toInt();
-                  newValue.print("RGB: (%d, %d, %d) / #%s / %s", color % 256, (color >> 8) % 256, (color >> 16) % 256, e->value.toHex24().c_str(), e->value.c_str());
+                if (e->long_name == "pngdata") {
+                  std::string newValue = "";
+                  size_t color = std::stoi(e->value);
+                  newValue = CT::printf("RGB: (%lu, %lu, %lu) / #%s / %s", color % 256, (color >> 8) % 256, (color >> 16) % 256, CT::getHex24(std::stoi(e->value)).c_str(), e->value.c_str());
 
-                  resultHTML.printconcat("<td>%s</td><td><b >%s</b><div style=\"background-color:#%s;width:100%;height:30px;\"/></td>", e->long_name.c_str(), newValue.c_str(),
-                                         e->value.toHex24().c_str());
+                  CT::printfconcat(resultHTML, "<td>%s</td><td><b >%s</b><div style=\"background-color:#%s;width:100%%;height:30px;\"/></td>", e->long_name.c_str(), newValue.c_str(),
+                                   CT::getHex24(std::stoi(e->value)).c_str());
                 } else {
 
-                  resultHTML.printconcat("<td>%s</td><td><b>", e->long_name.c_str());
-                  if (e->value.isNumeric()) {
-                    double value = e->value.toDouble();
+                  CT::printfconcat(resultHTML, "<td>%s</td><td><b>", e->long_name.c_str());
+                  if (CT::isNumeric(e->value)) {
+                    double value = std::stod(e->value);
                     if (fabs(value) > 0.1) {
-                      resultHTML.printconcat("%0.2f", value);
+                      CT::printfconcat(resultHTML, "%0.2f", value);
                     } else {
-                      resultHTML.printconcat("%g", value);
+                      CT::printfconcat(resultHTML, "%g", value);
                     }
                   } else {
-                    resultHTML.printconcat("%s", e->value.c_str());
+                    CT::printfconcat(resultHTML, "%s", e->value.c_str());
                   }
-                  resultHTML.printconcat("</b></td>");
+                  CT::printfconcat(resultHTML, "</b></td>");
                 }
 
               } else {
-                resultHTML.printconcat("  %s %s", e->long_name.c_str(), e->value.c_str());
+                CT::printfconcat(resultHTML, "  %s %s", e->long_name.c_str(), e->value.c_str());
               }
               if (e->units.length() > 0) {
-                if (!e->value.equals("nodata") && !e->value.equals("")) {
+                if (e->value != "nodata" && e->value != "") {
                   if (resultFormat == texthtml) {
-                    resultHTML.printconcat("<td> %s</td>", e->units.c_str());
+                    CT::printfconcat(resultHTML, "<td> %s</td>", e->units.c_str());
                   } else {
-                    resultHTML.printconcat(" %s", e->units.c_str());
+                    CT::printfconcat(resultHTML, " %s", e->units.c_str());
                   }
                 }
               }
             }
             if (resultFormat == texthtml)
-              resultHTML.printconcat("</tr>\n");
+              CT::printfconcat(resultHTML, "</tr>\n");
             else
-              resultHTML.printconcat("\n");
+              CT::printfconcat(resultHTML, "\n");
           }
           if (resultFormat == texthtml) {
-            resultHTML.printconcat("</table>");
+            CT::printfconcat(resultHTML, "</table>");
           }
         }
       }
 
       if (resultFormat == texthtml)
-        resultHTML.printconcat("</html>\n");
+        CT::printfconcat(resultHTML, "</html>\n");
       else
-        resultHTML.printconcat("\n");
+        CT::printfconcat(resultHTML, "\n");
       resetErrors();
 
       printf("%s", resultHTML.c_str());
@@ -1965,177 +1725,141 @@ int CImageDataWriter::end() {
     /* Text XML */
     if (resultFormat == applicationvndogcgml) {
       CDBDebug("CREATING GML");
-      CT::string resultXML;
-      resultXML.print("%s%s%c%c\n", "Content-Type: text/xml", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
-
-      resultXML.printconcat("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n");
-      resultXML.printconcat("  <FeatureCollection\n");
-      resultXML.printconcat("          xmlns:gml=\"http://www.opengis.net/gml\"\n");
-      resultXML.printconcat("          xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n");
-      resultXML.printconcat("          xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n");
+      std::string resultXML = CT::printf("%s%s%c%c\n", "Content-Type: text/xml", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+      CT::printfconcat(resultXML, "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n");
+      CT::printfconcat(resultXML, "  <FeatureCollection\n");
+      CT::printfconcat(resultXML, "          xmlns:gml=\"http://www.opengis.net/gml\"\n");
+      CT::printfconcat(resultXML, "          xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n");
+      CT::printfconcat(resultXML, "          xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n");
 
       if (getFeatureInfoResultList.size() == 0) {
         CDBError("Query returned no results");
         return 1;
       } else {
         for (size_t j = 0; j < getFeatureInfoResultList.size(); j++) {
-          GetFeatureInfoResult *g = getFeatureInfoResultList[j];
-          CT::string layerName = g->layerName.c_str();
-          layerName.replaceSelf(" ", "_");
-          layerName.replaceSelf("/", "_");
-          layerName.replaceSelf(":", "-");
-
-          // resultXML.printconcat("  <%s_layer>\n",layerName.c_str());
-          resultXML.printconcat("  <gml:featureMember>\n", layerName.c_str());
+          GetFeatureInfoResult *g = &(getFeatureInfoResultList.at(j));
+          auto layerName = CT::replace(CT::replace(CT::replace(g->layerName, ":", "-"), "/", "_"), " ", "_");
+          CT::printfconcat(resultXML, "  <gml:featureMember>\n"); //, layerName.c_str());
           CDBDebug("GFI[%lu of %lu] %lu\n", j, getFeatureInfoResultList.size(), g->elements.size());
           for (size_t elNR = 0; elNR < g->elements.size(); elNR++) {
-            GetFeatureInfoResult::Element *e = g->elements[elNR];
-            CT::string featureName = e->feature_name.c_str();
-            featureName.replaceSelf(" ", "_");
-            resultXML.printconcat("    <%s_feature>\n", featureName.c_str());
-            //             resultXML.concat("  <gml:boundedBy>\n");
-            //             resultXML.concat("  <gml:Box srsName=\"http://www.opengis.net/gml/srs/epsg.xml#4326\">\n");
-            //             resultXML.concat("  <gml:coordinates decimal=\".\" cs=\",\" ts=\" \">-111.05265,40.994305 -104.051201,45.002853</gml:coordinates>\n");
-            //             resultXML.concat("  </gml:Box>\n");
-            //             resultXML.concat("  </gml:boundedBy>\n");
+            GFIElement *e = &(g->elements[elNR]);
+            std::string featureName = CT::replace(e->feature_name, " ", "_");
+            CT::printfconcat(resultXML, "    <%s_feature>\n", featureName.c_str());
 
-            resultXML.printconcat("          <gml:pos>%f,%f</gml:pos>\n", g->lon_coordinate, g->lat_coordinate);
-            resultXML.printconcat("      <gml:location>\n");
+            CT::printfconcat(resultXML, "          <gml:pos>%f,%f</gml:pos>\n", g->lon_coordinate, g->lat_coordinate);
+            CT::printfconcat(resultXML, "      <gml:location>\n");
 
-            resultXML.printconcat("        <gml:Point srsName=\"EPSG:4326\">\n");
-            resultXML.printconcat("          <gml:pos>%f,%f</gml:pos>\n", g->lon_coordinate, g->lat_coordinate);
-            resultXML.printconcat("        </gml:Point>\n");
+            CT::printfconcat(resultXML, "        <gml:Point srsName=\"EPSG:4326\">\n");
+            CT::printfconcat(resultXML, "          <gml:pos>%f,%f</gml:pos>\n", g->lon_coordinate, g->lat_coordinate);
+            CT::printfconcat(resultXML, "        </gml:Point>\n");
 
             if (!srvParam->geoParams.crs.equals("EPSG:4326")) {
-              resultXML.printconcat("        <gml:Point srsName=\"%s\">\n", srvParam->geoParams.crs.c_str());
-              resultXML.printconcat("          <gml:pos>%f %f</gml:pos>\n", g->x_imageCoordinate, g->y_imageCoordinate);
-              resultXML.printconcat("        </gml:Point>\n");
+              CT::printfconcat(resultXML, "        <gml:Point srsName=\"%s\">\n", srvParam->geoParams.crs.c_str());
+              CT::printfconcat(resultXML, "          <gml:pos>%f %f</gml:pos>\n", g->x_imageCoordinate, g->y_imageCoordinate);
+              CT::printfconcat(resultXML, "        </gml:Point>\n");
             }
 
-            /*resultXML.printconcat("        <gml:Point srsName=\"%s\">\n","image:xyindices");
-            resultXML.printconcat("          <gml:pos>%d %d</gml:pos>\n",g->x_imagePixel,g->y_imagePixel);
-            resultXML.printconcat("        </gml:Point>\n");*/
+            CT::printfconcat(resultXML, "        <gml:Point srsName=\"%s\">\n", "raster:coordinates");
+            CT::printfconcat(resultXML, "          <gml:pos>%f %f</gml:pos>\n", g->x_rasterCoordinate, g->y_rasterCoordinate);
+            CT::printfconcat(resultXML, "        </gml:Point>\n");
 
-            resultXML.printconcat("        <gml:Point srsName=\"%s\">\n", "raster:coordinates");
-            resultXML.printconcat("          <gml:pos>%f %f</gml:pos>\n", g->x_rasterCoordinate, g->y_rasterCoordinate);
-            resultXML.printconcat("        </gml:Point>\n");
+            CT::printfconcat(resultXML, "        <gml:Point srsName=\"%s\">\n", "raster:xyindices");
+            CT::printfconcat(resultXML, "          <gml:pos>%d %d</gml:pos>\n", g->x_rasterIndex, g->y_rasterIndex);
+            CT::printfconcat(resultXML, "        </gml:Point>\n");
 
-            resultXML.printconcat("        <gml:Point srsName=\"%s\">\n", "raster:xyindices");
-            resultXML.printconcat("          <gml:pos>%d %d</gml:pos>\n", g->x_rasterIndex, g->y_rasterIndex);
-            resultXML.printconcat("        </gml:Point>\n");
-
-            resultXML.printconcat("      </gml:location>\n");
-            resultXML.printconcat("      <FeatureName>%s</FeatureName>\n", featureName.c_str());
-            resultXML.printconcat("      <StandardName>%s</StandardName>\n", e->standard_name.c_str());
-            resultXML.printconcat("      <LongName>%s</LongName>\n", e->long_name.c_str());
-            resultXML.printconcat("      <VarName>%s</VarName>\n", e->var_name.c_str());
-            resultXML.printconcat("      <Value units=\"%s\">%s</Value>\n", e->units.c_str(), e->value.c_str());
-            // resultXML.printconcat("      <Dimension name=\"time\">%s</Dimension>\n",e->cdfDims.getDimensionValue("time").c_str());
-            for (size_t d = 0; d < e->cdfDims.getNumDimensions(); d++) {
-              // TODO MUST BECOME THE OGC DIMNAME
-              // resultXML.printconcat("      <Dimension name=\"%s\"
-              // index=\"%d\">%s</Dimension>\n",e->cdfDims.dimensions[d]->name.c_str(),e->cdfDims.dimensions[d]->index,e->cdfDims.dimensions[d]->value.c_str());
-              resultXML.printconcat("      <Dimension name=\"%s\" index=\"%d\">%s</Dimension>\n", e->dataSource->requiredDims[d]->name.c_str(), e->cdfDims.getDimensionIndex(d),
-                                    e->cdfDims.getDimensionValue(d).c_str());
+            CT::printfconcat(resultXML, "      </gml:location>\n");
+            CT::printfconcat(resultXML, "      <FeatureName>%s</FeatureName>\n", featureName.c_str());
+            CT::printfconcat(resultXML, "      <StandardName>%s</StandardName>\n", e->standard_name.c_str());
+            CT::printfconcat(resultXML, "      <LongName>%s</LongName>\n", e->long_name.c_str());
+            CT::printfconcat(resultXML, "      <VarName>%s</VarName>\n", e->var_name.c_str());
+            CT::printfconcat(resultXML, "      <Value units=\"%s\">%s</Value>\n", e->units.c_str(), e->value.c_str());
+            for (size_t d = 0; d < e->cdfDims.size(); d++) {
+              CT::printfconcat(resultXML, "      <Dimension name=\"%s\" index=\"%lu\">%s</Dimension>\n", e->dataSource->requiredDims[d].name.c_str(), e->cdfDims.at(d).index,
+                               e->cdfDims.at(d).value.c_str());
             }
 
-            resultXML.printconcat("    </%s_feature>\n", featureName.c_str());
+            CT::printfconcat(resultXML, "    </%s_feature>\n", featureName.c_str());
           }
-          // resultXML.printconcat("  </%s_layer>\n",layerName.c_str());
-          resultXML.printconcat("  </gml:featureMember>\n", layerName.c_str());
+          CT::printfconcat(resultXML, "  </gml:featureMember>\n"); //, layerName.c_str());
         }
       }
-      resultXML.printconcat(" </FeatureCollection>\n");
+      CT::printfconcat(resultXML, " </FeatureCollection>\n");
       resetErrors();
       printf("%s", resultXML.c_str());
     } /* End of applicationvndogcgml */
 
     if (resultFormat == textxml) {
       CDBDebug("CREATING XML");
-      CT::string resultXML;
-      resultXML.print("%s%c%c\n", "Content-Type:text/xml", 13, 10);
-      resultXML.printconcat("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n");
-      resultXML.printconcat(" <GMLOutput\n");
-      resultXML.printconcat("          xmlns:gml=\"http://www.opengis.net/gml\"\n");
-      resultXML.printconcat("          xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n");
-      resultXML.printconcat("          xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n");
+      std::string resultXML = CT::printf("%s%c%c\n", "Content-Type:text/xml", 13, 10);
+      CT::printfconcat(resultXML, "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n");
+      CT::printfconcat(resultXML, " <GMLOutput\n");
+      CT::printfconcat(resultXML, "          xmlns:gml=\"http://www.opengis.net/gml\"\n");
+      CT::printfconcat(resultXML, "          xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n");
+      CT::printfconcat(resultXML, "          xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n");
 
       if (getFeatureInfoResultList.size() == 0) {
         CDBError("Query returned no results");
         return 1;
       } else {
         for (size_t j = 0; j < getFeatureInfoResultList.size(); j++) {
-          GetFeatureInfoResult *g = getFeatureInfoResultList[j];
-          CT::string layerName = g->layerName.c_str();
-          layerName.replaceSelf(" ", "_");
-          layerName.replaceSelf("/", "_");
-          layerName.replaceSelf(":", "-");
+          GetFeatureInfoResult *g = &(getFeatureInfoResultList[j]);
+          auto layerName = CT::replace(CT::replace(CT::replace(g->layerName, ":", "-"), "/", "_"), " ", "_");
 
-          resultXML.printconcat("  <%s_layer>\n", layerName.c_str());
+          CT::printfconcat(resultXML, "  <%s_layer>\n", layerName.c_str());
           CDBDebug("GFI[%lu of %lu] %lu\n", j, getFeatureInfoResultList.size(), g->elements.size());
           for (size_t elNR = 0; elNR < g->elements.size(); elNR++) {
-            GetFeatureInfoResult::Element *e = g->elements[elNR];
-            CT::string featureName = e->feature_name.c_str();
-            featureName.replaceSelf(" ", "_");
-            resultXML.printconcat("    <%s_feature>\n", featureName.c_str());
-            resultXML.printconcat("      <gml:location>\n");
+            GFIElement *e = &(g->elements[elNR]);
+            std::string featureName = CT::replace(e->feature_name, " ", "_");
+            CT::printfconcat(resultXML, "    <%s_feature>\n", featureName.c_str());
+            CT::printfconcat(resultXML, "      <gml:location>\n");
 
-            resultXML.printconcat("        <gml:Point srsName=\"EPSG:4326\">\n");
-            resultXML.printconcat("          <gml:pos>%f,%f</gml:pos>\n", g->lon_coordinate, g->lat_coordinate);
-            resultXML.printconcat("        </gml:Point>\n");
+            CT::printfconcat(resultXML, "        <gml:Point srsName=\"EPSG:4326\">\n");
+            CT::printfconcat(resultXML, "          <gml:pos>%f,%f</gml:pos>\n", g->lon_coordinate, g->lat_coordinate);
+            CT::printfconcat(resultXML, "        </gml:Point>\n");
 
             if (!srvParam->geoParams.crs.equals("EPSG:4326")) {
-              resultXML.printconcat("        <gml:Point srsName=\"%s\">\n", srvParam->geoParams.crs.c_str());
-              resultXML.printconcat("          <gml:pos>%f %f</gml:pos>\n", g->x_imageCoordinate, g->y_imageCoordinate);
-              resultXML.printconcat("        </gml:Point>\n");
+              CT::printfconcat(resultXML, "        <gml:Point srsName=\"%s\">\n", srvParam->geoParams.crs.c_str());
+              CT::printfconcat(resultXML, "          <gml:pos>%f %f</gml:pos>\n", g->x_imageCoordinate, g->y_imageCoordinate);
+              CT::printfconcat(resultXML, "        </gml:Point>\n");
+            }
+            CT::printfconcat(resultXML, "        <gml:Point srsName=\"%s\">\n", "raster:coordinates");
+            CT::printfconcat(resultXML, "          <gml:pos>%f %f</gml:pos>\n", g->x_rasterCoordinate, g->y_rasterCoordinate);
+            CT::printfconcat(resultXML, "        </gml:Point>\n");
+
+            CT::printfconcat(resultXML, "        <gml:Point srsName=\"%s\">\n", "raster:xyindices");
+            CT::printfconcat(resultXML, "          <gml:pos>%d %d</gml:pos>\n", g->x_rasterIndex, g->y_rasterIndex);
+            CT::printfconcat(resultXML, "        </gml:Point>\n");
+
+            CT::printfconcat(resultXML, "      </gml:location>\n");
+            CT::printfconcat(resultXML, "      <FeatureName>%s</FeatureName>\n", featureName.c_str());
+            CT::printfconcat(resultXML, "      <StandardName>%s</StandardName>\n", e->standard_name.c_str());
+            CT::printfconcat(resultXML, "      <LongName>%s</LongName>\n", e->long_name.c_str());
+            CT::printfconcat(resultXML, "      <VarName>%s</VarName>\n", e->var_name.c_str());
+            CT::printfconcat(resultXML, "      <Value units=\"%s\">%s</Value>\n", e->units.c_str(), e->value.c_str());
+            for (size_t d = 0; d < e->cdfDims.size(); d++) {
+              CT::printfconcat(resultXML, "      <Dimension name=\"%s\" index=\"%lu\">%s</Dimension>\n", e->dataSource->requiredDims[d].name.c_str(), e->cdfDims.at(d).index,
+                               e->cdfDims.at(d).value.c_str());
             }
 
-            /*resultXML.printconcat("        <gml:Point srsName=\"%s\">\n","image:xyindices");
-            resultXML.printconcat("          <gml:pos>%d %d</gml:pos>\n",g->x_imagePixel,g->y_imagePixel);
-            resultXML.printconcat("        </gml:Point>\n");*/
-
-            resultXML.printconcat("        <gml:Point srsName=\"%s\">\n", "raster:coordinates");
-            resultXML.printconcat("          <gml:pos>%f %f</gml:pos>\n", g->x_rasterCoordinate, g->y_rasterCoordinate);
-            resultXML.printconcat("        </gml:Point>\n");
-
-            resultXML.printconcat("        <gml:Point srsName=\"%s\">\n", "raster:xyindices");
-            resultXML.printconcat("          <gml:pos>%d %d</gml:pos>\n", g->x_rasterIndex, g->y_rasterIndex);
-            resultXML.printconcat("        </gml:Point>\n");
-
-            resultXML.printconcat("      </gml:location>\n");
-            resultXML.printconcat("      <FeatureName>%s</FeatureName>\n", featureName.c_str());
-            resultXML.printconcat("      <StandardName>%s</StandardName>\n", e->standard_name.c_str());
-            resultXML.printconcat("      <LongName>%s</LongName>\n", e->long_name.c_str());
-            resultXML.printconcat("      <VarName>%s</VarName>\n", e->var_name.c_str());
-            resultXML.printconcat("      <Value units=\"%s\">%s</Value>\n", e->units.c_str(), e->value.c_str());
-            // resultXML.printconcat("      <Dimension name=\"time\">%s</Dimension>\n",e->cdfDims.getDimensionValue("time").c_str());
-            for (size_t d = 0; d < e->cdfDims.getNumDimensions(); d++) {
-              // TODO MUST BECOME THE OGC DIMNAME
-              // resultXML.printconcat("      <Dimension name=\"%s\"
-              // index=\"%d\">%s</Dimension>\n",e->cdfDims.dimensions[d]->name.c_str(),e->cdfDims.dimensions[d]->index,e->cdfDims.dimensions[d]->value.c_str());
-              resultXML.printconcat("      <Dimension name=\"%s\" index=\"%d\">%s</Dimension>\n", e->dataSource->requiredDims[d]->name.c_str(), e->cdfDims.getDimensionIndex(d),
-                                    e->cdfDims.getDimensionValue(d).c_str());
-            }
-
-            resultXML.printconcat("    </%s_feature>\n", featureName.c_str());
+            CT::printfconcat(resultXML, "    </%s_feature>\n", featureName.c_str());
           }
-          resultXML.printconcat("  </%s_layer>\n", layerName.c_str());
+          CT::printfconcat(resultXML, "  </%s_layer>\n", layerName.c_str());
         }
       }
-      resultXML.printconcat(" </GMLOutput>\n");
+      CT::printfconcat(resultXML, " </GMLOutput>\n");
       resetErrors();
       printf("%s", resultXML.c_str());
 
     } /* End of text/xml */
 
     if (resultFormat == json) {
-      CT::string resultJSON;
+      std::string resultJSON;
       if (srvParam->JSONP.length() == 0) {
         CDBDebug("CREATING JSON");
-        resultJSON.print("%s%s%c%c\n", "Content-Type: application/json", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+        resultJSON = CT::printf("%s%s%c%c\n", "Content-Type: application/json", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
       } else {
         CDBDebug("CREATING JSONP %s", srvParam->JSONP.c_str());
-        resultJSON.print("%s%s%c%c\n", "Content-Type: application/javascript", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
+        resultJSON = CT::printf("%s%s%c%c\n", "Content-Type: application/javascript", srvParam->getResponseHeaders(CSERVERPARAMS_CACHE_CONTROL_OPTION_SHORTCACHE).c_str(), 13, 10);
       }
 
       CXMLParser::XMLElement rootElement;
@@ -2144,22 +1868,22 @@ int CImageDataWriter::end() {
 
       for (size_t j = 0; j < getFeatureInfoResultList.size(); j++) {
         // CDBDebug("gfi len: %d of %d (%d el)\n", j, getFeatureInfoResultList.size(), getFeatureInfoResultList[j]->elements.size());
-        GetFeatureInfoResult *g = getFeatureInfoResultList[j];
+        GetFeatureInfoResult *g = &(getFeatureInfoResultList[j]);
 
         // Find out number of different features in getFeatureInfoResultList[j]
-        std::vector<CT::string> features;
+        std::vector<std::string> features;
 
         for (size_t elNr = 0; elNr < g->elements.size(); elNr++) {
-          GetFeatureInfoResult::Element *element = g->elements[elNr];
+          GFIElement &element = g->elements[elNr];
           bool featureNameFound = false;
           for (size_t jj = 0; jj < features.size(); jj++) {
-            if (features[jj].equals(element->feature_name)) {
+            if (features[jj] == element.feature_name) {
               featureNameFound = true;
               break;
             }
           }
           if (!featureNameFound) {
-            features.push_back(element->feature_name.c_str());
+            features.push_back(element.feature_name.c_str());
           } else {
             break;
           }
@@ -2168,16 +1892,16 @@ int CImageDataWriter::end() {
 
         // Find available dimensions
 
-        GetFeatureInfoResult::Element *e = g->elements[0];
+        GFIElement *e = &(g->elements[0]);
 
-        int nrDims = e->cdfDims.getNumDimensions();
-        int dimLookup[nrDims]; // position of each dimension in cdfDims.dimensions
+        int nrDims = e->cdfDims.size();
+        std::vector<int> dimLookup(nrDims); // position of each dimension in cdfDims.dimensions
         // CDBDebug("nrDims = %d",nrDims);
         int timeDimIndex = -1;
         int endIndex = nrDims - 1;
         for (int j = 0; j < nrDims; j++) {
           dimLookup[j] = j;
-          if (timeDimIndex == -1 && e->cdfDims.isTimeDimension(j)) {
+          if (timeDimIndex == -1 && isOGCTimeDim(e->cdfDims.at(j))) {
             timeDimIndex = j;
           }
         }
@@ -2192,615 +1916,66 @@ int CImageDataWriter::end() {
         }
 
         for (int feat = 0; feat < nrFeatures; feat++) {
-          // CDBDebug("A %d/%d",feat,nrFeatures);
-          GetFeatureInfoResult::Element *e = g->elements[feat];
-          CT::string featureName = e->feature_name.c_str();
-          featureName.replaceSelf(" ", "_");
-          CXMLParser::XMLElement paramElement("param");
-          paramElement.add(CXMLParser::XMLElement("name", e->var_name.c_str()));
-          paramElement.add(CXMLParser::XMLElement("layername", g->layerName.c_str()));
-          paramElement.add(CXMLParser::XMLElement("variablename", e->var_name.c_str()));
-          paramElement.add(CXMLParser::XMLElement("standard_name", e->standard_name.c_str()));
-          paramElement.add(CXMLParser::XMLElement("feature_name", e->feature_name.c_str()));
-          paramElement.add(CXMLParser::XMLElement("units", e->units.c_str()));
-
-          CXMLParser::XMLElement point("point");
-          point.add(CXMLParser::XMLElement("SRS", "EPSG:4326"));
-          CT::string coord;
-          coord.print("%f,%f", g->lon_coordinate, g->lat_coordinate);
-          point.add(CXMLParser::XMLElement("coords", coord.c_str()));
-          paramElement.add(point);
-          // CDBDebug("e->cdfDims.getNumDimensions() = %d",e->cdfDims.getNumDimensions());
-          for (size_t d = 0; d < e->cdfDims.getNumDimensions() && int(d) < nrDims; d++) {
-            //            paramElement.add(CXMLParser::XMLElement("dims", e->cdfDims.dimensions[dimLookup[d]]->name.c_str()));
-            // CDBDebug("d= %d, dimLookup[d] = %d, e->dataSource->requiredDims.size() = %d",d,dimLookup[d],e->dataSource->requiredDims.size());
-            paramElement.add(CXMLParser::XMLElement("dims", e->dataSource->requiredDims[dimLookup[d]]->name.c_str()));
+          GFIElement *e = &(g->elements[feat]);
+          auto &paramElement = rootElement.add("param");
+          paramElement.add("name", e->var_name);
+          paramElement.add("layername", g->layerName);
+          paramElement.add("variablename", e->var_name);
+          paramElement.add("standard_name", e->standard_name);
+          paramElement.add("feature_name", e->feature_name);
+          paramElement.add("units", e->units);
+          auto &point = paramElement.add("point");
+          point.add("SRS", "EPSG:4326");
+          point.add("coords", CT::printf("%f,%f", g->lon_coordinate, g->lat_coordinate));
+          for (size_t d = 0; d < e->cdfDims.size() && int(d) < nrDims; d++) {
+            paramElement.add("dims", e->dataSource->requiredDims[dimLookup[d]].name);
           }
 
+          // Build datamap
           std::map<std::string, std::string> dataMap;
           for (size_t elNR = feat; elNR < g->elements.size(); elNR += nrFeatures) {
-            GetFeatureInfoResult::Element *e = g->elements[elNR];
-            CT::string dimString = "";
-            for (size_t d = 0; d < e->cdfDims.getNumDimensions(); d++) {
-              dimString.printconcat("%s,", e->cdfDims.getDimensionValue(dimLookup[d]).c_str());
-              // CDBDebug("Pushing %d %d [%s][%s]",d,dimLookup[d],dimString.c_str(),e->value.c_str());
+            GFIElement *e = &(g->elements[elNR]);
+            std::string dimString;
+            for (size_t d = 0; d < e->cdfDims.size(); d++) {
+              CT::printfconcat(dimString, "%s,", e->cdfDims.at(dimLookup[d]).value.c_str());
             }
-
-            dataMap[dimString.c_str()] = e->value.c_str();
+            dataMap[dimString] = e->value;
           }
 
-          std::map<std::string, std::string>::iterator dkit;
-          CXMLParser::XMLElement data("data");
-
-          CXMLParser::XMLElement *elP = &data;
-
-          for (dkit = dataMap.begin(); dkit != dataMap.end(); ++dkit) {
-
-            CT::string key = dkit->first.c_str();
-            CT::string value = dkit->second.c_str();
-
-            auto dimValues = key.split(",");
-            elP = &data;
-            for (size_t i = 0; i < dimValues.size(); i++) {
-              try {
-                elP = elP->get(dimValues[i].c_str());
-              } catch (int e) {
-                elP = elP->add(dimValues[i].c_str());
-              }
+          auto &data = paramElement.add("data");
+          for (auto dataMapIter = dataMap.begin(); dataMapIter != dataMap.end(); ++dataMapIter) {
+            auto nestedData = &data;
+            // Loop trough the dim values and make a nested structure
+            for (const auto &dimValue: CT::split(dataMapIter->first, ",")) {
+              auto it = std::find_if(nestedData->xmlElements.begin(), nestedData->xmlElements.end(), [&dimValue](CXMLParser::XMLElement &element) { return element.name == dimValue; });
+              nestedData = it == nestedData->xmlElements.end() ? &(nestedData->add(dimValue)) : &(*it); // Check if we have this already or if we have to make a new
             }
-            elP->setValue(value.c_str());
+            nestedData->value = dataMapIter->second; // Assign value
           }
-
-          paramElement.add(data);
-          //          layerElement.add(paramElement);
-          rootElement.add(paramElement);
         }
-
-        //        rootElement.add(layerElement);
       }
 
       resetErrors();
       if (srvParam->JSONP.length() == 0) {
-#ifdef use_PARAM
-        resultJSON.concat(rootElement.getList("layer").toJSON(CXMLPARSER_JSONMODE_STANDARD).c_str());
-#else
-        resultJSON.concat(rootElement.getList("param").toJSON(CXMLPARSER_JSONMODE_STANDARD).c_str());
-#endif
-        printf("%s", resultJSON.c_str());
+        resultJSON += rootElement.getList("param").toJSON(CXMLPARSER_JSONMODE_STANDARD).c_str();
       } else {
-        resultJSON.concat(srvParam->JSONP.c_str());
-        resultJSON.concat("(");
-#ifdef use_PARAM
-        resultJSON.concat(rootElement.getList("layer").toJSON(CXMLPARSER_JSONMODE_STANDARD).c_str());
-#else
-        resultJSON.concat(rootElement.getList("param").toJSON(CXMLPARSER_JSONMODE_STANDARD).c_str());
-#endif
-        resultJSON.concat(");");
-        printf("%s", resultJSON.c_str());
+        resultJSON += srvParam->JSONP.c_str();
+        resultJSON += "(";
+        resultJSON += rootElement.getList("param").toJSON(CXMLPARSER_JSONMODE_STANDARD).c_str();
+        resultJSON += ");";
       }
+      printf("%s", resultJSON.c_str());
 
     } /* End of json */
 
-    /*************************************************************************************************************************************/
-    /* image/png image/png image/png image/png image/png image/png image/png image/png image/png image/png image/png image/png image/png */
-    /*************************************************************************************************************************************/
-
-    if (resultFormat == imagepng) {
-#ifdef MEASURETIME
-      StopWatch_Stop("Start creating image");
-#endif
-
-      if (getFeatureInfoResultList.size() == 0) {
-        CDBError("Query returned no results");
-        return 1;
-      }
-
-#ifdef CIMAGEDATAWRITER_DEBUG
-      CDBDebug("GetFeatureInfo Format image/png");
-#endif
-      float width = srvParam->geoParams.width, height = srvParam->geoParams.height;
-      if (srvParam->figWidth > 1) width = srvParam->figWidth;
-      if (srvParam->figHeight > 1) height = srvParam->figHeight;
-
-      // Set font location
-      const char *fontLocation = NULL;
-      if (srvParam->cfg->WMS[0]->ContourFont.size() != 0) {
-        if (srvParam->cfg->WMS[0]->ContourFont[0]->attr.location.empty() == false) {
-          fontLocation = srvParam->cfg->WMS[0]->ContourFont[0]->attr.location.c_str();
-        } else {
-          CDBError("In <Font>, attribute \"location\" missing");
-          return 1;
-        }
-      }
-
-      size_t nrOfLayers = getFeatureInfoResultList.size();
-      //      size_t nrOfElements = getFeatureInfoResultList[0]->elements.size();
-
-      std::vector<PlotObject *> plotObjects;
-
-      std::vector<CT::string> features[nrOfLayers];
-      std::vector<int> numDims[nrOfLayers];
-      // Find number of features per layer
-      for (size_t layerNr = 0; layerNr < nrOfLayers; layerNr++) {
-        size_t nrOfElements = getFeatureInfoResultList[layerNr]->elements.size();
-
-        for (size_t elNr = 0; elNr < nrOfElements; elNr++) {
-          GetFeatureInfoResult::Element *element = getFeatureInfoResultList[layerNr]->elements[elNr];
-          bool featureNameFound = false;
-          for (size_t j = 0; j < features[layerNr].size(); j++) {
-            if (features[layerNr][j].equals(element->feature_name)) {
-              featureNameFound = true;
-              break;
-            }
-          }
-          if (!featureNameFound) {
-            features[layerNr].push_back(element->feature_name.c_str());
-            numDims[layerNr].push_back(element->cdfDims.getNumDimensions());
-          } else {
-            /*for(size_t j=0;j<features[layerNr].size();j++){
-              CDBDebug("%d %d %s\tDims:%d",layerNr,j,features[layerNr][j].c_str(),numDims[layerNr][j]);
-            }*/
-
-            break;
-          }
-        }
-      }
-      for (size_t layerNr = 0; layerNr < nrOfLayers; layerNr++) {
-        if (numDims[layerNr].size() > 0) {
-          CDataSource *ds = getFeatureInfoResultList[layerNr]->elements[0]->dataSource;
-          size_t nrOfElements = getFeatureInfoResultList[layerNr]->elements.size();
-          size_t nrOfFeatures = features[layerNr].size();
-          size_t nrOfElementSteps = nrOfElements / (nrOfFeatures);
-
-          size_t numDimStepsPerTime = 1;
-          CT::string dimname = "";
-          for (size_t j = 1; j < ds->requiredDims.size(); j++) {
-            // TODO
-            numDimStepsPerTime *= ds->requiredDims[j]->uniqueValues.size();
-          }
-
-          nrOfElementSteps = nrOfElementSteps / numDimStepsPerTime;
-
-          for (size_t featureNr = 0; featureNr < nrOfFeatures; featureNr++) {
-            for (size_t dimIter = 0; dimIter < numDimStepsPerTime; dimIter++) {
-              PlotObject *plotObject = new PlotObject();
-              plotObjects.push_back(plotObject);
-              plotObject->allocateLength(nrOfElementSteps);
-
-              size_t elNr = dimIter * nrOfFeatures + featureNr;
-              GetFeatureInfoResult::Element *element = getFeatureInfoResultList[layerNr]->elements[elNr];
-              // plotObject->name.copy(getFeatureInfoResultList[layerNr]->layerName.c_str());
-              // plotObject->name.concat("/");
-              plotObject->name.copy(features[layerNr][featureNr].c_str());
-              if (element->units.length() > 0) {
-                plotObject->name.printconcat(" (%s)", element->units.c_str());
-              }
-              for (size_t j = 1; j < element->cdfDims.getNumDimensions(); j++) {
-                plotObject->name.concat(" @");
-                plotObject->name.concat(element->cdfDims.getDimensionValue(j));
-              }
-
-              plotObject->units = &element->units;
-              for (size_t elStep = 0; elStep < nrOfElementSteps; elStep++) {
-
-                // CDBDebug("Iterating %s",ds->requiredDims[j]->allValues[
-
-                size_t elNr = elStep * nrOfFeatures * numDimStepsPerTime + featureNr + dimIter * nrOfFeatures;
-
-                // CDBDebug("%d = %d/%d %d/%d - %d/%d - %d/%d",elNr,layerNr,nrOfLayers,featureNr,nrOfFeatures,dimIter,numDimStepsPerTime,elStep,nrOfElementSteps);
-
-                GetFeatureInfoResult::Element *element = getFeatureInfoResultList[layerNr]->elements[elNr];
-                plotObject->elements[elStep] = element;
-
-                /*
-                CT::string dims = "";
-                for(size_t d=1;d<element->cdfDims.getNumDimensions();d++){
-                  dims.printconcat("%s ",element->cdfDims.dimensions[d]->value.c_str());
-                }
-                CDBDebug("%s %s",features[layerNr][featureNr].c_str(),dims.c_str());
-              */
-              }
-            }
-          }
-        }
-      }
-
-      // Find min max for values and time
-
-      CTime *ctime = new CTime();
-      ctime->init("seconds since 1950", NULL);
-
-      double startTimeValue = 0;
-      double stopTimeValue = 0;
-      bool firstDateDone = false;
-
-      float overallMinValue = 0, overallMaxValue = 1;
-      bool overallMinMaxValueDone = false;
-      bool overallMinMaxValueWasEstimated = false;
-
-      CDBDebug("Start minmax calc");
-
-      for (size_t j = 0; j < plotObjects.size(); j++) {
-        PlotObject *plotObject = plotObjects[j];
-        // CDBDebug("%d) %s in %s",j,plotObject->name.c_str(),plotObject->units.c_str());
-
-        // Find min and max dates
-        double minDate;
-        double maxDate;
-        try {
-
-          minDate = ctime->ISOStringToDate(plotObject->elements[0]->cdfDims.getDimensionValue("time").c_str()).offset;
-        } catch (int e) {
-          CDBError("Time startTimeValue error %s", plotObject->elements[0]->cdfDims.getDimensionValue("time").c_str());
-        }
-
-        try {
-          maxDate = ctime->ISOStringToDate(plotObject->elements[plotObject->length - 1]->cdfDims.getDimensionValue("time").c_str()).offset;
-        } catch (int e) {
-          CDBError("Time stopTimeValue error %s", plotObject->elements[plotObject->length - 1]->cdfDims.getDimensionValue("time").c_str());
-        }
-
-        if (!firstDateDone) {
-          startTimeValue = minDate;
-          stopTimeValue = maxDate;
-          firstDateDone = true;
-        } else {
-          if (startTimeValue > minDate) startTimeValue = minDate;
-          if (stopTimeValue < maxDate) stopTimeValue = maxDate;
-        }
-
-        //         //if(j==0)
-        //         {
-        bool firstDone = false;
-        plotObject->minValue = 0;
-        plotObject->maxValue = 0;
-
-        // Find min and max values
-
-        for (size_t i = 0; i < plotObject->length; i++) {
-          GetFeatureInfoResult::Element *element = plotObject->elements[i];
-          // if(i%2==0)
-          {
-            double value = element->value.toFloat();
-            if (element->value.c_str()[0] > 60) value = NAN;
-            ;
-            if (element->value.equals("nodata")) value = NAN;
-            plotObject->values[i] = value;
-
-            if (value == value) {
-              if (firstDone == false) {
-                plotObject->minValue = value;
-                plotObject->maxValue = value;
-                firstDone = true;
-              }
-
-              if (plotObject->minValue > value) plotObject->minValue = value;
-              if (plotObject->maxValue < value) plotObject->maxValue = value;
-            }
-          }
-        }
-
-        // Minmax is fixed by layer settings:
-        if (plotObject->elements[0]->dataSource != NULL) {
-          if (plotObject->elements[0]->dataSource->stretchMinMax == false) {
-            // Determine min max based on given datasource settings (scale/offset/log or min/max/log in config file)
-            plotObject->minValue = getValueForColorIndex(plotObject->elements[0]->dataSource, 0);
-            plotObject->maxValue = getValueForColorIndex(plotObject->elements[0]->dataSource, 239);
-          } else {
-            overallMinMaxValueWasEstimated = true;
-          }
-        }
-
-        // Increase minmax if they are the same.
-        if (fabs(plotObject->minValue - plotObject->maxValue) < 0.1) {
-          plotObject->minValue = plotObject->minValue - 1;
-          plotObject->maxValue = plotObject->maxValue + 1;
-        }
-        // plotObject->minValue=plotObject->minValue-2;
-        // plotObject->maxValue=plotObject->maxValue+2;
-        //         }else{
-        //           //If not first plot:
-        //           plotObject->minValue = overallMinValue;
-        //           plotObject->maxValue = overallMaxValue;
-        //         }
-
-        if (overallMinMaxValueDone == false) {
-          overallMinMaxValueDone = true;
-          overallMinValue = plotObject->minValue;
-          overallMaxValue = plotObject->maxValue;
-        } else {
-
-          // if(overallMinValue>plotObject->minValue)overallMinValue = plotObject->minValue;
-          // if(overallMaxValue<plotObject->maxValue)overallMaxValue = plotObject->maxValue;
-        }
-      }
-
-      float significantDigits = 0.1;
-
-      float range = overallMaxValue - overallMinValue;
-      float order = log10(range);
-      float orderRounded = floor(order);
-      significantDigits = pow(10, orderRounded);
-      // CDBDebug("significantDigits = %f",significantDigits);
-      if (overallMinMaxValueWasEstimated) {
-        overallMinValue = floor(overallMinValue / significantDigits) * significantDigits;
-        overallMaxValue = ceil(overallMaxValue / significantDigits) * significantDigits;
-      }
-
-      CDBDebug("OverallMinMax = %f %f", overallMinValue, overallMaxValue);
-
-      CT::string startDateString = ctime->dateToISOString(ctime->getDate(startTimeValue));
-      CT::string stopDateString = ctime->dateToISOString(ctime->getDate(stopTimeValue));
-      startDateString.setChar(19, 'Z');
-      startDateString.setSize(20);
-      stopDateString.setChar(19, 'Z');
-      stopDateString.setSize(20);
-      CDBDebug("Dates: %s/%s", startDateString.c_str(), stopDateString.c_str());
-
-      float classes = ((overallMaxValue - overallMinValue) / significantDigits) * 2;
-      int tickRound = 0;
-
-      CDataSource *dataSource = getFeatureInfoResultList[0]->elements[0]->dataSource;
-      // CDBDebug("tickinterval = %f",styleConfiguration->legendTickInterval);
-      CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-      if (styleConfiguration->legendTickInterval > 0.0f) {
-        classes = (plotObjects[0]->minValue - plotObjects[0]->maxValue) / styleConfiguration->legendTickInterval;
-      }
-
-      if (styleConfiguration->legendTickRound > 0) {
-        tickRound = int(round(log10(styleConfiguration->legendTickRound)) + 3);
-      }
-
-      float scale = styleConfiguration->legendScale;
-      float offset = styleConfiguration->legendOffset;
-
-      scale = 240.0f / (overallMaxValue - overallMinValue);
-      offset = -overallMinValue * scale;
-
-      // Init title
-      size_t nrOfPlotObjectsForTitle = plotObjects.size();
-      if (nrOfPlotObjectsForTitle > 9) nrOfPlotObjectsForTitle = 9;
-      int cols = 1, rows = 1;
-
-      if (nrOfPlotObjectsForTitle > 2) cols = 2;
-      if (nrOfPlotObjectsForTitle > 5) cols = 3;
-      rows = int(float(nrOfPlotObjectsForTitle) / float(cols) + 0.5);
-
-      // Init canvas
-
-      float plotOffsetX = (width * 0.05);
-      float plotOffsetY = rows * 10 + 10;
-      if (plotOffsetX < 50) plotOffsetX = 50;
-
-      float plotHeight = ((height - plotOffsetY - 30));
-      float plotWidth = ((width - plotOffsetX) * 0.96);
-
-      CDrawImage plotCanvas;
-      CDrawImage lineCanvas;
-      if (resultFormat == imagepng) {
-        plotCanvas.setTrueColor(true);
-        lineCanvas.setTrueColor(true);
-        lineCanvas.enableTransparency(true);
-        // plotCanvas.enableTransparency(true);
-        // drawImage.enableTransparency(true);
-        // plotCanvas.setBGColor(0,0,255);
-        if (_setTransparencyAndBGColor(srvParam, &plotCanvas) != 0) {
-          CDBError("Unable to do setTransparencyAndBGColor");
-          return -1;
-        }
-      }
-      plotCanvas.createImage(int(width), int(height));
-      plotCanvas.create685Palette();
-      lineCanvas.createImage(int(plotWidth), int(plotHeight));
-      lineCanvas.create685Palette();
-
-      // TODO
-      // plotCanvas.line(int(plotOffsetX-1),int(plotOffsetY-1),int(plotWidth+plotOffsetX),int(plotHeight+plotOffsetY),0);
-      plotCanvas.line(int(plotWidth + plotOffsetX), int(plotOffsetY - 1), int(plotWidth + plotOffsetX), int(plotHeight + plotOffsetY), 0.5, CColor(70, 70, 70, 255));
-      plotCanvas.line(int(plotOffsetX - 1), int(plotOffsetY - 1), int(plotWidth + plotOffsetX), int(plotOffsetY - 1), 0.5, CColor(70, 70, 70, 255));
-      plotCanvas.line(int(plotOffsetX - 1), int(plotWidth + plotOffsetX), int(plotWidth + plotOffsetX), int(plotWidth + plotOffsetX), 0.5, CColor(70, 70, 70, 255));
-
-      // Draw Title
-      CT::string title;
-
-      for (size_t j = 0; j < nrOfPlotObjectsForTitle; j++) {
-        int tx = j % cols;
-        int ty = j / cols;
-        size_t tp = tx * rows + ty;
-        if (tp < nrOfPlotObjectsForTitle) {
-          CT::string title = plotObjects[tp]->name.c_str();
-          int x = int(tx * ((width - 80) / cols) + 80);
-          int y = 12 + ty * 10;
-          plotCanvas.rectangle(x - 30, y - 7, x - 5, y, getColorForPlot(tp, plotObjects.size()), CColor(0, 0, 0, 128));
-          plotCanvas.drawText(x, y, fontLocation, 7, 0, title.c_str(), CColor(0, 0, 0, 255), CColor(255, 255, 255, 0));
-        }
-      }
-
-      for (int j = 0; j <= classes; j++) {
-        char szTemp[256];
-        float c = ((float(classes - j) / classes)) * (plotHeight)-1;
-        float v = ((float(j) / classes)) * (240.0f);
-        v -= offset;
-        v /= scale;
-        if (styleConfiguration->legendLog != 0) {
-          v = pow(styleConfiguration->legendLog, v);
-        }
-
-        // if(j!=0)
-        lineCanvas.line(0, (int)c, plotWidth, (int)c, 0.5, CColor(0, 0, 128, 128));
-        if (tickRound == 0) {
-          floatToString(szTemp, 255, overallMinValue, overallMaxValue, v);
-        } else {
-          floatToString(szTemp, 255, tickRound, v);
-        }
-        plotCanvas.drawText(5, int(c + plotOffsetY + 3), fontLocation, 8, 0, szTemp, CColor(0, 0, 0, 255), CColor(255, 255, 255, 0));
-      }
-
-      float lineWidth = 2.0;
-      for (size_t plotNr = 0; plotNr < plotObjects.size(); plotNr++) {
-        PlotObject *plotObject = plotObjects[plotNr];
-        CColor color = getColorForPlot(plotNr, plotObjects.size());
-
-        if (plotObjects.size() > 5) lineWidth = 0.3;
-
-        enum GraphTimeResType { monthly, daily, hourly, minutely };
-        GraphTimeResType graphTimeResType = monthly;
-        if (plotObject->length > 1) {
-          try {
-            CTime::Date timePosA = ctime->ISOStringToDate(plotObject->elements[0]->cdfDims.getDimensionValue("time").c_str());
-            CTime::Date timePosB = ctime->ISOStringToDate(plotObject->elements[1]->cdfDims.getDimensionValue("time").c_str());
-            float timeRes = timePosB.offset - timePosA.offset;
-            if (timeRes <= 3600 * 24) {
-              graphTimeResType = daily;
-            }
-            if (timeRes <= 3600 * 6) {
-              graphTimeResType = hourly;
-            }
-            if (timeRes < 1800) {
-              graphTimeResType = minutely;
-            }
-
-          } catch (int e) {
-            CDBError("Time conversion exception for %s or %s", plotObject->elements[0]->cdfDims.getDimensionValue("time").c_str(), plotObject->elements[1]->cdfDims.getDimensionValue("time").c_str());
-            graphTimeResType = daily;
-          }
-
-          // CDBDebug("%f seconds %d ",timePosB.offset-timePosA.offset,graphTimeResType);
-        }
-
-        double timeWidth = (stopTimeValue - startTimeValue);
-        for (size_t i = 0; i < plotObject->length; i++) {
-          CTime::Date timePos1;
-          try {
-            timePos1 = ctime->ISOStringToDate(plotObject->elements[i]->cdfDims.getDimensionValue("time").c_str());
-          } catch (int e) {
-            CDBError("Time conversion exception for %s", plotObject->elements[i]->cdfDims.getDimensionValue("time").c_str());
-          }
-
-          double x1 = ((timePos1.offset - startTimeValue) / timeWidth) * plotWidth;
-
-          if (plotNr == 0) {
-
-            if (graphTimeResType == hourly) {
-
-              if (timePos1.hour == 0 && timePos1.minute == 0 && timePos1.second == 0) {
-                lineCanvas.line(x1, 0, x1, plotHeight, 1.1, CColor(64, 64, 64, 200));
-                CT::string text;
-                if (timePos1.day != 1) {
-                  text.print("%d-%s", timePos1.day, months[timePos1.month - 1].c_str());
-                } else {
-                  text.print("%s", months[timePos1.month - 1].c_str());
-                }
-
-                plotCanvas.drawText(int(x1 - text.length() * 4 + plotOffsetX + 1), int(plotOffsetY + plotHeight + 16), fontLocation, 8, 0, text.c_str(), CColor(0, 0, 0, 255),
-                                    CColor(255, 255, 255, 0));
-              } else if (timePos1.minute == 0 && timePos1.second == 0) {
-                lineCanvas.line(x1, 0, x1, plotHeight, 0.5, CColor(0, 0, 128, 128));
-                char szTemp[256];
-                snprintf(szTemp, 255, "%d", timePos1.hour);
-                plotCanvas.drawText(int(x1 - strlen(szTemp) * 2 + plotOffsetX + 1), int(plotOffsetY + plotHeight + 8), fontLocation, 5, 0, szTemp, CColor(0, 0, 0, 192), CColor(255, 255, 255, 0));
-              } else {
-                lineCanvas.line(x1, 0, x1, plotHeight, 0.5, CColor(128, 128, 128, 128));
-              }
-            }
-
-            if (graphTimeResType == daily) {
-
-              if ((timePos1.day == 1 && timePos1.hour == 0 && timePos1.minute == 0 && timePos1.second == 0) || i == 0) {
-                lineCanvas.line(x1, 0, x1, plotHeight, 1.1, CColor(64, 64, 64, 200));
-
-                CT::string text;
-                if (timePos1.day != 1) {
-                  text.print("%d-%s", timePos1.day, months[timePos1.month - 1].c_str());
-                } else {
-                  text.print("%s", months[timePos1.month - 1].c_str());
-                }
-
-                plotCanvas.drawText(int(x1 - text.length() * 4 + plotOffsetX + 1), int(plotOffsetY + plotHeight + 12), fontLocation, 8, 0, text.c_str(), CColor(0, 0, 0, 255),
-                                    CColor(255, 255, 255, 0));
-              } else if (timePos1.hour == 0 && timePos1.minute == 0 && timePos1.second == 0) {
-                // lineCanvas.line(x1,0,x1,plotHeight,0.5,CColor(0,0,128,128));
-                // char szTemp[256];snprintf(szTemp,255,"%d",timePos1.hour);
-                // plotCanvas.drawText(int(x1-strlen(szTemp)*2+plotOffsetX+1),int(plotOffsetY+plotHeight+8),fontLocation,5,0,szTemp,CColor(0,0,0,192),CColor(255,255,255,0));
-              } else {
-                // lineCanvas.line(x1,0,x1,plotHeight,0.5,CColor(128,128,128,128));
-              }
-            }
-          }
-
-          if (i < plotObject->length - 1) {
-            CTime::Date timePos2 = ctime->ISOStringToDate(plotObject->elements[i + 1]->cdfDims.getDimensionValue("time").c_str());
-
-            double x2 = ((timePos2.offset - startTimeValue) / timeWidth) * plotWidth;
-
-            float v1 = plotObject->values[i];
-            float v2 = plotObject->values[i + 1];
-            if (v1 == v1 && v2 == v2) {
-              // if(v1>minValue[elNr]&&v1<maxValue[elNr]&&v2>minValue[elNr]&&v2<maxValue[elNr]){
-              //}
-
-              float v1l = v1;
-              float v2l = v2;
-              bool noData = false;
-              if (styleConfiguration->legendLog != 0) {
-                if ((v1 > 0) && (v2 > 0)) {
-                  v1l = log10(v1l) / log10(styleConfiguration->legendLog);
-                  v2l = log10(v2l) / log10(styleConfiguration->legendLog);
-                } else {
-                  noData = true;
-                }
-              }
-
-              v1l *= scale;
-              v1l += offset;
-              v1l /= 240.0;
-              v2l *= scale;
-              v2l += offset;
-              v2l /= 240.0;
-              int y1 = int((1 - v1l) * plotHeight);
-              int y2 = int((1 - v2l) * plotHeight);
-
-              if (!noData) {
-                lineCanvas.line(x1, y1, x2, y2, lineWidth, color);
-              }
-            }
-          }
-        }
-      }
-
-      delete ctime;
-
-      // GetFeatureInfoResult::Element * e2=getFeatureInfoResultList[getFeatureInfoResultList.size()-1]->elements[0];
-      title.print("%s till %s", startDateString.c_str(), stopDateString.c_str());
-      plotCanvas.drawText(int(plotWidth / 2 - float(title.length()) * 2.5), int(height - 5), fontLocation, 8, 0, title.c_str(), CColor(0, 0, 0, 255), CColor(255, 255, 255, 0));
-      plotCanvas.draw(int(plotOffsetX), int(plotOffsetY), 0, 0, &lineCanvas);
-
-      if (resultFormat == imagepng) {
-        printf("%s%c%c\n", "Content-Type:image/png", 13, 10);
-        plotCanvas.printImagePng8(true);
-      }
-#ifdef MEASURETIME
-      StopWatch_Stop("/Start creating image");
-#endif
-
-      for (size_t j = 0; j < plotObjects.size(); j++) {
-        delete plotObjects[j];
-      };
-      plotObjects.clear();
-      // CDBDebug("Done!");
-    } /* End of imagepng */
-
-    for (size_t j = 0; j < getFeatureInfoResultList.size(); j++) {
-      delete getFeatureInfoResultList[j];
-      getFeatureInfoResultList[j] = NULL;
-    }
     getFeatureInfoResultList.clear();
   } /* End of getfeatureInfo */
   if (srvParam->requestType != REQUEST_WMS_GETMAP && srvParam->requestType != REQUEST_WMS_GETLEGENDGRAPHIC) return 0;
 
   // Output WMS getmap results
   if (errorsOccured()) {
-    CREPORT_ERROR_NODOC(CT::string("Error occured during image data writing"), CReportMessage::Categories::GENERAL);
+
+    CREPORT_ERROR_NODOC(std::string("Error occured during image data writing"), CReportMessage::Categories::GENERAL);
     return 1;
   }
 
@@ -2812,7 +1987,7 @@ int CImageDataWriter::end() {
   // CDBDebug("srvParam->imageFormat = %d",srvParam->imageFormat);
   int status = 1;
 
-  CT::string cacheControl = srvParam->getResponseHeaders(srvParam->getCacheControlOption());
+  std::string cacheControl = srvParam->getResponseHeaders(srvParam->getCacheControlOption());
   if (srvParam->imageFormat == IMAGEFORMAT_IMAGEPNG8) {
 #ifdef CIMAGEDATAWRITER_DEBUG
     CDBDebug("Creating 8 bit png with alpha");
@@ -2912,7 +2087,7 @@ CColor CImageDataWriter::getPixelColorForValue(CDataSource *dataSource, float va
   if (!isNodata) {
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
     for (size_t j = 0; j < styleConfiguration->shadeIntervals.size(); j++) {
-      const auto& shadeInterval = styleConfiguration->shadeIntervals[j];
+      const auto &shadeInterval = styleConfiguration->shadeIntervals[j];
       if (shadeInterval.attr.min.empty() == false && shadeInterval.attr.max.empty() == false) {
         if ((val >= atof(shadeInterval.attr.min.c_str())) && (val < atof(shadeInterval.attr.max.c_str()))) {
           return CColor(shadeInterval.attr.fillcolor.c_str());

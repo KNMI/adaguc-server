@@ -30,6 +30,8 @@
 #include "CDataSource.h"
 #include "CDPPInterface.h"
 
+#define ADAGUCPOSTPROC_ATTR_PREFIX "ADAGUCPOSTPROC"
+
 class CDPPExecutor {
 public:
   std::vector<CDPPInterface *> *dataPostProcessorList;

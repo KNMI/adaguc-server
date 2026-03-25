@@ -50,7 +50,7 @@ void applyChangesToCDFObject(CDFObject *cdfObject, std::vector<CT::string> varia
   for (size_t j = 0; j < variablesToDo.size(); j++) {
     CDF::Variable *varWithoutTime = cdfObject->getVariableNE(variablesToDo[j].c_str());
     if (varWithoutTime != NULL) {
-      varWithoutTime->dimensionlinks.insert(varWithoutTime->dimensionlinks.begin(), cdfObject->getDimension("time"));
+      varWithoutTime->dimensionlinks.insert(varWithoutTime->dimensionlinks.begin(), cdfObject->getDimensionThrows("time"));
     } else {
       CDBWarning("Variable not found");
     }
@@ -95,7 +95,6 @@ int main(int argc, const char *argv[]) {
 
   /* Create a vector which holds information for all the inputfiles. */
   std::vector<NCFileObject *> fileObjects;
-  std::vector<NCFileObject *>::iterator fileObjectsIt;
 
   /* Loop through all files and gather information */
   try {
@@ -123,7 +122,7 @@ int main(int argc, const char *argv[]) {
       double value = ((double *)(timeVar->data))[0];
       CT::string units;
       try {
-        units = timeVar->getAttribute("units")->getDataAsString().c_str();
+        units = timeVar->getAttributeThrows("units")->toString().c_str();
       } catch (int e) {
         CDBError("Unable to find units attribute for time variable");
         throw(__LINE__);

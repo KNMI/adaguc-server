@@ -116,8 +116,11 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
     metadataLayer->layerMetadata.projstring = metadataLayer->dataSource->nativeProj4;
 
     auto v = metadataLayer->dataSource->getDataObjectsVector();
-    for (auto d : (*v)) {
+    for (auto d: (*v)) {
       if (d->filterFromOutput) {
+        continue;
+      }
+      if (d->cdfVariable == nullptr) {
         continue;
       }
       CDF::Attribute *longName = d->cdfVariable->getAttributeNE("long_name");
@@ -126,12 +129,12 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
       }
       CDF::Attribute *standardNameAttr = d->cdfVariable->getAttributeNE("standard_name");
 
-      CT::string label = longName != nullptr ? longName->getDataAsString() : d->variableName;
+      CT::string label = longName != nullptr ? longName->toString() : d->variableName;
       LayerMetadataVariable layerMetadataVariable = {.variableName = d->cdfVariable->name, .units = d->getUnits(), .label = label, .standard_name = d->cdfVariable->name};
 
       if (standardNameAttr != nullptr) {
-        layerMetadataVariable.standard_name = standardNameAttr->getDataAsString();
-        // CDBDebug("standard_name for %s: %s", d->cdfVariable->name.c_str(), standardNameAttr->getDataAsString().c_str());
+        layerMetadataVariable.standard_name = standardNameAttr->toString();
+        // CDBDebug("standard_name for %s: %s", d->cdfVariable->name.c_str(), standardNameAttr->toString().c_str());
       }
       metadataLayer->layerMetadata.variableList.push_back(layerMetadataVariable);
     }
@@ -155,11 +158,11 @@ int populateMetadataLayerStruct(MetadataLayer *metadataLayer, bool readFromDB) {
 
   std::map<std::string, LayerMetadataProjection> projectionMap;
   // Make a unique list of projections
-  for (const auto &p : metadataLayer->layerMetadata.projectionList) {
+  for (const auto &p: metadataLayer->layerMetadata.projectionList) {
     projectionMap.emplace(p.name.c_str(), p);
   }
   metadataLayer->layerMetadata.projectionList.clear();
-  for (const auto &p : projectionMap) {
+  for (const auto &p: projectionMap) {
     metadataLayer->layerMetadata.projectionList.push_back(p.second);
   }
 
@@ -318,7 +321,7 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
           CT::string units;
           isTimeDim = true;
           try {
-            metadataLayer->dataSource->getDataObject(0)->cdfObject->getVariable("time")->getAttribute("units")->getDataAsString(&units);
+            units = metadataLayer->dataSource->getDataObject(0)->cdfObject->getVariableThrows("time")->getAttributeThrows("units")->toString();
 
           } catch (int e) {
           }
@@ -332,7 +335,7 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
             if (store != NULL) {
               if (store->size() != 0) {
                 dataHasBeenFoundInStore = true;
-                tm tms[store->size()];
+                std::vector<tm> tms(store->size());
 
                 try {
 
@@ -359,7 +362,7 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
                     isConst = false;
                   }
                   try {
-                    CTime *time = CTime::GetCTimeInstance(metadataLayer->dataSource->getDataObject(0)->cdfObject->getVariable("time"));
+                    CTime *time = CTime::GetCTimeInstance(metadataLayer->dataSource->getDataObject(0)->cdfObject->getVariableThrows("time"));
                     if (time == nullptr) {
                       CDBDebug(CTIME_GETINSTANCE_ERROR_MESSAGE);
                       return 1;
@@ -496,7 +499,7 @@ int getDimsForLayer(MetadataLayer *metadataLayer) {
           if (metadataLayer->dataSource->cfgLayer->Dimension[i]->attr.units.empty()) {
             CT::string units;
             try {
-              metadataLayer->dataSource->getDataObject(0)->cdfObject->getVariable(dim.cdfName.c_str())->getAttribute("units")->getDataAsString(&units);
+              units = metadataLayer->dataSource->getDataObject(0)->cdfObject->getVariableThrows(dim.cdfName.c_str())->getAttributeThrows("units")->toString();
               dim.units.copy(&units);
             } catch (int e) {
             }
@@ -784,13 +787,13 @@ int getTitleForLayer(MetadataLayer *metadataLayer) {
     }
     CDF::Attribute *longName = metadataLayer->dataSource->getDataObject(0)->cdfVariable->getAttributeNE("long_name");
     if (longName != nullptr) {
-      metadataLayer->layerMetadata.title.copy(longName->getDataAsString());
+      metadataLayer->layerMetadata.title.copy(longName->toString());
       // Concat variable name prefixed with longname
       metadataLayer->layerMetadata.title.printconcat(" (%s)", metadataLayer->dataSource->getDataObject(0)->cdfVariable->name.c_str());
     } else {
       CDF::Attribute *standardName = metadataLayer->dataSource->getDataObject(0)->cdfVariable->getAttributeNE("standard_name");
       if (standardName != nullptr) {
-        metadataLayer->layerMetadata.title.copy(standardName->getDataAsString());
+        metadataLayer->layerMetadata.title.copy(standardName->toString());
         // Concat variable name prefixed with standardname
         metadataLayer->layerMetadata.title.printconcat(" (%s)", metadataLayer->dataSource->getDataObject(0)->cdfVariable->name.c_str());
       } else {

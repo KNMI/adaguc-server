@@ -25,6 +25,7 @@
 
 #include "CCDFNetCDFIO.h"
 #include "CStopWatch.h"
+#include "CDFCopyData.h"
 
 // #define MEASURETIME
 
@@ -278,7 +279,7 @@ int CDFNetCDFReader::_readVariableData(CDF::Variable *var, CDFType type, size_t 
     CDBDebug("Copying %d elements from type %s to %s", var->getSize(), CDF::getCDFDataTypeName(var->nativeType).c_str(), CDF::getCDFDataTypeName(type).c_str());
 #endif
 
-    CDF::DataCopier::copy(var->data, type, voidData, var->nativeType, 0, 0, var->getSize());
+    CDFCopyData(var->data, type, voidData, var->nativeType, 0, 0, var->getSize());
 
 #ifdef CCDFNETCDFIO_DEBUG
     CDBDebug("Freeing temporary data object");
@@ -361,8 +362,9 @@ int CDFNetCDFReader::readDimensions(int groupId, std::string &groupName) {
     CDBError("[%s]: %s %d", nc_strerror(status), "nc_inq_dimids: ", status);
     return 1;
   }
-  int dimIds[nDims];
-  status = nc_inq_dimids(groupId, &nDims, dimIds, 0);
+
+  std::vector<int> dimIds(nDims);
+  status = nc_inq_dimids(groupId, &nDims, dimIds.data(), 0);
   if (status != NC_NOERR) {
     CDBError("For groupName %s: ", groupName.c_str());
     CDBError("[%s]: %s %d", nc_strerror(status), "nc_inq_dimids: ", status);
@@ -384,7 +386,7 @@ int CDFNetCDFReader::readDimensions(int groupId, std::string &groupName) {
     CT::string name = groupName.c_str();
     name.concat(flatname);
     try {
-      CDF::Dimension *existingDim = cdfObject->getDimension(name.c_str());
+      CDF::Dimension *existingDim = cdfObject->getDimensionThrows(name.c_str());
       // Only add non existing variables;
       CDBWarning("Reassigning dim %s", name.c_str());
       if (existingDim->length != length) {
@@ -561,7 +563,7 @@ int CDFNetCDFReader::readVariables(int groupId, std::string &groupName, int mode
 
     // Only add non existing variables...
     try {
-      cdfObject->getVariable(name.c_str());
+      cdfObject->getVariableThrows(name.c_str());
     } catch (...) {
       CDF::Variable *var = new CDF::Variable();
       cdfObject->variables.push_back(var);
@@ -860,9 +862,9 @@ int CDFNetCDFWriter::write(const char *fileName, void (*progress)(const char *me
   NCCommands = "";
   if (listNCCommands) {
     NCCommands.printconcat("int root_id;\n");
-    NCCommands.printconcat("size_t start[NC_MAX_DIMS];\n");
-    NCCommands.printconcat("size_t count[NC_MAX_DIMS];\n");
-    NCCommands.printconcat("int dimIDArray[NC_MAX_DIMS];\n");
+    NCCommands.printconcat("size_t start[];\n");
+    NCCommands.printconcat("size_t count[];\n");
+    NCCommands.printconcat("int dimIDArray[];\n");
     NCCommands.printconcat("int shuffle=%d;\n", shuffle);
     NCCommands.printconcat("int deflate=%d;\n", deflate);
     NCCommands.printconcat("int deflate_level=%d;\n", deflate_level);
@@ -1056,8 +1058,9 @@ int CDFNetCDFWriter::_write(void (*progress)(const char *message, float percenta
       int numDims = variable->dimensionlinks.size();
       if ((variable->isDimension == true && writeDimsFirst == 0) || (variable->isDimension == false && writeDimsFirst == 1)) {
         {
-          int dimIDS[numDims + 1];
-          int NCCommandID[numDims + 1];
+          std::vector<int> dimIDS(numDims);
+          std::vector<int> NCCommandID(numDims);
+
           size_t totalVariableSize = 0;
           // Find dim and chunk info
           CT::string variableInfo(name);
@@ -1082,7 +1085,7 @@ int CDFNetCDFWriter::_write(void (*progress)(const char *message, float percenta
           if (listNCCommands) {
             NCCommands.printconcat("nc_redef(root_id);\n");
           }
-          status = nc_def_var(root_id, name, NCtypeConversion(variable->currentType), numDims, dimIDS, &nc_var_id);
+          status = nc_def_var(root_id, name, NCtypeConversion(variable->currentType), numDims, dimIDS.data(), &nc_var_id);
           if (status != NC_NOERR) {
             CDBError("Unable to define variable %s", name);
             CDBError("[%s]: %s %d", nc_strerror(status), "nc_def_var: ", status);
@@ -1101,13 +1104,14 @@ int CDFNetCDFWriter::_write(void (*progress)(const char *message, float percenta
 
           if (netcdfMode >= 4 && numDims > 0 && 1 == 1) {
 
-            size_t chunkSizes[variable->dimensionlinks.size()];
+            std::vector<size_t> chunkSizes(variable->dimensionlinks.size());
+
             if (variable->dimensionlinks.size() > 2) {
 
               for (size_t m = 0; m < variable->dimensionlinks.size(); m++) {
                 chunkSizes[m] = variable->dimensionlinks[m]->getSize();
                 try {
-                  CT::string standardName = cdfObject->getVariable(variable->dimensionlinks[m]->name.c_str())->getAttribute("standard_name")->getDataAsString();
+                  CT::string standardName = cdfObject->getVariableThrows(variable->dimensionlinks[m]->name.c_str())->getAttributeThrows("standard_name")->toString();
                   if (standardName.equals("time")) {
                     chunkSizes[m] = 1;
                   }
@@ -1115,7 +1119,7 @@ int CDFNetCDFWriter::_write(void (*progress)(const char *message, float percenta
                 }
               }
 
-              status = nc_def_var_chunking(root_id, nc_var_id, 0, chunkSizes);
+              status = nc_def_var_chunking(root_id, nc_var_id, 0, chunkSizes.data());
               if (status != NC_NOERR) {
                 CDBError("[%s]: %s %d", nc_strerror(status), "nc_def_var_chunking: ", status);
                 return 1;
@@ -1240,7 +1244,7 @@ int CDFNetCDFWriter::_write(void (*progress)(const char *message, float percenta
             int iterativeDimIndex = variable->getIterativeDimIndex();
             if (iterativeDimIndex != -1) needsDimIteration = true;
             if (variable->isDimension) needsDimIteration = false;
-            size_t start[NC_MAX_DIMS], count[NC_MAX_DIMS];
+            std::vector<size_t> start(variable->dimensionlinks.size()), count(variable->dimensionlinks.size());
             for (size_t j = 0; j < variable->dimensionlinks.size(); j++) {
               start[j] = 0;
               count[j] = variable->dimensionlinks[j]->getSize();
@@ -1259,7 +1263,7 @@ int CDFNetCDFWriter::_write(void (*progress)(const char *message, float percenta
             CDBDebug("--- Copying Variable %s. needsDimIteration = %d---", variable->name.c_str(), needsDimIteration);
 #endif
             if (needsDimIteration == false) {
-              int status = copyVar(variable, nc_var_id, start, count);
+              int status = copyVar(variable, nc_var_id, start.data(), count.data());
               if (status != 0) return status;
             } else {
 
@@ -1280,7 +1284,7 @@ int CDFNetCDFWriter::_write(void (*progress)(const char *message, float percenta
                 start[iterativeDimIndex] = id;
                 count[iterativeDimIndex] = 1;
 
-                int status = copyVar(variable, nc_var_id, start, count);
+                int status = copyVar(variable, nc_var_id, start.data(), count.data());
 
                 if (status != 0) return status;
               }
@@ -1300,14 +1304,13 @@ int CDFNetCDFWriter::_write(void (*progress)(const char *message, float percenta
 };
 
 int CDFNetCDFWriter::copyVar(CDF::Variable *variable, int nc_var_id, size_t *start, size_t *count) {
-  ptrdiff_t stride[NC_MAX_DIMS];
-  for (size_t j = 0; j < variable->dimensionlinks.size(); j++) stride[j] = 1;
+  std::vector<ptrdiff_t> stride(variable->dimensionlinks.size(), 1);
 
   if (readData == true) {
 
     // TODO should read iterative for iterative dims.
 
-    status = variable->readData(variable->currentType, start, count, stride);
+    status = variable->readData(variable->currentType, start, count, stride.data());
     if (status != 0) {
       CDBError("Reading of variable %s failed", variable->name.c_str());
       return 1;

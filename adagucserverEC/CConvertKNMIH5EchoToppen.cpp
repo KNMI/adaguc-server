@@ -41,9 +41,9 @@ int CConvertKNMIH5EchoToppen::calcFlightLevel(float height) {
 int CConvertKNMIH5EchoToppen::checkIfKNMIH5EchoToppenFormat(CDFObject *cdfObject) {
   try {
     /* Check if the image1.statistics variable and stat_cell_number attribute is set */
-    cdfObject->getVariable("image1.statistics")->getAttribute("stat_cell_number");
+    cdfObject->getVariableThrows("image1.statistics")->getAttributeThrows("stat_cell_number");
     /* Check if the geographic variable and geo_product_corners attribute is set */
-    cdfObject->getVariable("geographic")->getAttribute("geo_product_corners");
+    cdfObject->getVariableThrows("geographic")->getAttributeThrows("geo_product_corners");
   } catch (int e) {
     return 1;
   }
@@ -59,7 +59,7 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenHeader(CDFObject *cdfObject
   int height = 2;
 
   /* Deterine product corners based on file metadata: */
-  CT::string geo_product_corners = cdfObject->getVariable("geographic")->getAttribute("geo_product_corners")->getDataAsString();
+  CT::string geo_product_corners = cdfObject->getVariableThrows("geographic")->getAttributeThrows("geo_product_corners")->toString();
   std::vector<CT::string> cell_max = geo_product_corners.split(" ");
 
   /* Figure out outer biggest bbox based on the 4 coordinate values */
@@ -172,15 +172,15 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
     if (dataSource->dHeight < 2) dataSource->dHeight = 2;
 
     /* Get the X and Y dimensions previousely defined and adjust them to the new settings and new grid (Grid in screenview space) */
-    CDF::Dimension *dimX = cdfObject0->getDimension("xet");
+    CDF::Dimension *dimX = cdfObject0->getDimensionThrows("xet");
     dimX->setSize(dataSource->dWidth);
 
-    CDF::Dimension *dimY = cdfObject0->getDimension("yet");
+    CDF::Dimension *dimY = cdfObject0->getDimensionThrows("yet");
     dimY->setSize(dataSource->dHeight);
 
     /* Get the X and Y variables from the cdfobject (previousely defined in the header function) */
-    CDF::Variable *varX = cdfObject0->getVariable("xet");
-    CDF::Variable *varY = cdfObject0->getVariable("yet");
+    CDF::Variable *varX = cdfObject0->getVariableThrows("xet");
+    CDF::Variable *varY = cdfObject0->getVariableThrows("yet");
 
     /* Re-allocate data for these coordinate variables with the new grid size */
     CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
@@ -213,22 +213,22 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
     }
 
     /* We now need the extent/bbox of the HDF5 image data itself. The echotoppen data is referenced in respect to this grid/projection */
-    float top = cdfObject0->getVariable("y")->getDataAt<float>(cdfObject0->getVariable("y")->getSize() - 1);
-    float left = cdfObject0->getVariable("x")->getDataAt<float>(0);
-    float right = cdfObject0->getVariable("x")->getDataAt<float>(cdfObject0->getVariable("x")->getSize() - 1);
-    float bottom = cdfObject0->getVariable("y")->getDataAt<float>(0);
+    float top = cdfObject0->getVariableThrows("y")->getDataAt<float>(cdfObject0->getVariableThrows("y")->getSize() - 1);
+    float left = cdfObject0->getVariableThrows("x")->getDataAt<float>(0);
+    float right = cdfObject0->getVariableThrows("x")->getDataAt<float>(cdfObject0->getVariableThrows("x")->getSize() - 1);
+    float bottom = cdfObject0->getVariableThrows("y")->getDataAt<float>(0);
 
     /* Define shorthand to bbox and cellsize of the HDF5 data grid */
     float fBBOXIM[] = {left, bottom, right, top};
-    float cellSizeIMX = (fBBOXIM[2] - fBBOXIM[0]) / float(cdfObject0->getVariable("x")->getSize());
-    float cellsizeIMY = (fBBOXIM[3] - fBBOXIM[1]) / float(cdfObject0->getVariable("y")->getSize());
+    float cellSizeIMX = (fBBOXIM[2] - fBBOXIM[0]) / float(cdfObject0->getVariableThrows("x")->getSize());
+    float cellsizeIMY = (fBBOXIM[3] - fBBOXIM[1]) / float(cdfObject0->getVariableThrows("y")->getSize());
 
     /* Now get the colums and rows as defined in the metadata attributes of the HDF5 file */
-    int stat_cell_number;
-    cdfObject0->getVariable("image1.statistics")->getAttribute("stat_cell_number")->getData(&stat_cell_number, 1);
-    CT::string stat_cell_column = cdfObject0->getVariable("image1.statistics")->getAttribute("stat_cell_column")->getDataAsString();
-    CT::string stat_cell_row = cdfObject0->getVariable("image1.statistics")->getAttribute("stat_cell_row")->getDataAsString();
-    CT::string stat_cell_max = cdfObject0->getVariable("image1.statistics")->getAttribute("stat_cell_max")->getDataAsString();
+    int stat_cell_number = 0;
+    cdfObject0->getVariableThrows("image1.statistics")->getAttributeThrows("stat_cell_number")->getData(&stat_cell_number, 1);
+    CT::string stat_cell_column = cdfObject0->getVariableThrows("image1.statistics")->getAttributeThrows("stat_cell_column")->toString();
+    CT::string stat_cell_row = cdfObject0->getVariableThrows("image1.statistics")->getAttributeThrows("stat_cell_row")->toString();
+    CT::string stat_cell_max = cdfObject0->getVariableThrows("image1.statistics")->getAttributeThrows("stat_cell_max")->toString();
 
     /* Split based on whitespace character */
     std::vector<CT::string> cell_max = stat_cell_max.split(" ");
@@ -237,7 +237,7 @@ int CConvertKNMIH5EchoToppen::convertKNMIH5EchoToppenData(CDataSource *dataSourc
 
     /* Time to instantiate the imagewarper. This is needed to project from HDF5 projection space (polar sterographic) to screenspace and latlon coordinate space*/
     CImageWarper imageWarperEchoToppen;
-    CT::string projectionString = cdfObject0->getVariable("projection")->getAttribute("proj4_params")->toString();
+    CT::string projectionString = cdfObject0->getVariableThrows("projection")->getAttributeThrows("proj4_params")->toString();
 
     imageWarperEchoToppen.initreproj(projectionString.c_str(), dataSource->srvParams->geoParams, &dataSource->srvParams->cfg->Projection);
     double axisScaling;

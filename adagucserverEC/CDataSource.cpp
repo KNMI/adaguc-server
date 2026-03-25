@@ -34,11 +34,8 @@ bool configWarningSet = false;
 
 CDataSource::DataObject::DataObject() {
   hasStatusFlag = false;
-  hasScaleOffset = false;
   cdfVariable = NULL;
   cdfObject = NULL;
-  dfadd_offset = 0;
-  dfscale_factor = 1;
   std::vector<f8point> points;
 }
 
@@ -46,10 +43,7 @@ CDataSource::DataObject *CDataSource::DataObject::clone() {
   CDataSource::DataObject *nd = new CDataSource::DataObject();
   nd->hasStatusFlag = hasStatusFlag;
   nd->hasNodataValue = hasNodataValue;
-  nd->hasScaleOffset = hasScaleOffset;
   nd->dfNodataValue = dfNodataValue;
-  nd->dfscale_factor = dfscale_factor;
-  nd->dfadd_offset = dfadd_offset;
   nd->cdfObject = cdfObject;
   nd->overruledUnits = overruledUnits;
   nd->variableName = variableName;
@@ -60,7 +54,7 @@ CDataSource::DataObject *CDataSource::DataObject::clone() {
 CT::string CDataSource::DataObject::getUnits() {
   if (overruledUnits.empty() && cdfVariable != NULL) {
     try {
-      return cdfVariable->getAttribute("units")->getDataAsString();
+      return cdfVariable->getAttributeThrows("units")->toString();
     } catch (int e) {
     }
   }
@@ -87,6 +81,11 @@ double CDataSource::Statistics::getAverage() { return avg; }
 
 void CDataSource::Statistics::setMinimum(double min) { this->min = min; }
 void CDataSource::Statistics::setMaximum(double max) { this->max = max; }
+
+void CDataSource::Statistics::setMinMax(MinMax minMax) {
+  this->min = minMax.min;
+  this->max = minMax.max;
+}
 
 MinMax getMinMax(double *data, bool hasFillValue, double fillValue, size_t numElements) {
   MinMax minMax;
@@ -147,15 +146,15 @@ MinMax getMinMax(CDF::Variable *var) {
       bool hasFillValue = false;
 
       try {
-        var->getAttribute("scale_factor")->getData(&scaleFactor, 1);
+        var->getAttributeThrows("scale_factor")->getData(&scaleFactor, 1);
       } catch (int e) {
       }
       try {
-        var->getAttribute("add_offset")->getData(&addOffset, 1);
+        var->getAttributeThrows("add_offset")->getData(&addOffset, 1);
       } catch (int e) {
       }
       try {
-        var->getAttribute("_FillValue")->getData(&fillValue, 1);
+        var->getAttributeThrows("_FillValue")->getData(&fillValue, 1);
         hasFillValue = true;
       } catch (int e) {
       }
@@ -179,15 +178,15 @@ MinMax getMinMax(CDF::Variable *var) {
       bool hasFillValue = false;
 
       try {
-        var->getAttribute("scale_factor")->getData(&scaleFactor, 1);
+        var->getAttributeThrows("scale_factor")->getData(&scaleFactor, 1);
       } catch (int e) {
       }
       try {
-        var->getAttribute("add_offset")->getData(&addOffset, 1);
+        var->getAttributeThrows("add_offset")->getData(&addOffset, 1);
       } catch (int e) {
       }
       try {
-        var->getAttribute("_FillValue")->getData(&fillValue, 1);
+        var->getAttributeThrows("_FillValue")->getData(&fillValue, 1);
         hasFillValue = true;
       } catch (int e) {
       }
@@ -279,7 +278,6 @@ template <class T> void CDataSource::Statistics::calcMinMax(size_t size, std::ve
 
 CDataSource::CDataSource() {
   stretchMinMax = false;
-  stretchMinMaxDone = false;
   isConfigured = false;
   threadNr = -1;
   dimsAreAutoConfigured = false;
@@ -325,14 +323,14 @@ CDataSource::~CDataSource() {
     delete timeSteps[j];
     timeSteps[j] = NULL;
   }
-  for (size_t j = 0; j < requiredDims.size(); j++) delete requiredDims[j];
+  requiredDims.clear();
   if (statistics != NULL) {
     delete statistics;
   };
   statistics = NULL;
 
   if (_styles != NULL) {
-    for (auto s : *_styles) {
+    for (auto s: *_styles) {
       delete s;
     }
     delete _styles;
@@ -351,6 +349,10 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Conf
   cfgLayer = _cfgLayer;
   datasourceIndex = layerIndex;
 
+  if (this->dataObjects.size() > 0) {
+    CDBWarning("DataSource already has dataobjects, cannot setCFGLayer");
+    return 1;
+  }
   // Make DataObjects for each Variable defined in the Layer.
   for (size_t j = 0; j < cfgLayer->Variable.size(); j++) {
     DataObject *newDataObject = new DataObject();
@@ -428,11 +430,14 @@ void CDataSource::setTimeStep(int timeStep) {
 
 int CDataSource::getCurrentTimeStep() { return currentAnimationStep; }
 
-size_t CDataSource::getDimensionIndex(const char *name) { return timeSteps[currentAnimationStep]->dims.getDimensionIndex(name); }
+size_t CDataSource::getDimensionIndex(const char *name) {
+  int idx = findCDFDimIdx(timeSteps[currentAnimationStep]->dims, name);
+  return idx == -1 ? 0 : timeSteps[currentAnimationStep]->dims[idx].index;
+}
 
-size_t CDataSource::getDimensionIndex(int i) { return timeSteps[currentAnimationStep]->dims.getDimensionIndex(i); }
+size_t CDataSource::getDimensionIndex(int i) { return timeSteps[currentAnimationStep]->dims[i].index; }
 
-CT::string CDataSource::getDimensionValue(int i) { return timeSteps[currentAnimationStep]->dims.getDimensionValue(i); }
+CT::string CDataSource::getDimensionValue(int i) { return timeSteps[currentAnimationStep]->dims[i].value; }
 
 int CDataSource::getNumTimeSteps() { return (int)timeSteps.size(); }
 
@@ -447,8 +452,8 @@ CCDFDims *CDataSource::getCDFDims() {
   return &timeSteps[currentAnimationStep]->dims;
 }
 
-void CDataSource::readStatusFlags(CDF::Variable *var, std::vector<CDataSource::StatusFlag> *statusFlagList) {
-  statusFlagList->clear();
+void CDataSource::readStatusFlags(CDF::Variable *var, std::vector<CDataSource::StatusFlag> &statusFlagList) {
+  statusFlagList.clear();
   if (var != NULL) {
     CDF::Attribute *attr_flag_meanings = var->getAttributeNE("flag_meanings");
     // We might have status flag, check if all mandatory attributes are set!
@@ -459,18 +464,19 @@ void CDataSource::readStatusFlags(CDF::Variable *var, std::vector<CDataSource::S
       }
       if (attr_flag_values != NULL) {
         CT::string flag_meanings;
-        attr_flag_meanings->getDataAsString(&flag_meanings);
+        flag_meanings = attr_flag_meanings->toString();
         auto flagStrings = flag_meanings.split(" ");
         size_t nrOfFlagMeanings = flagStrings.size();
         if (nrOfFlagMeanings > 0) {
           size_t nrOfFlagValues = attr_flag_values->length;
           // Check we have an equal number of flagmeanings and flagvalues
           if (nrOfFlagMeanings == nrOfFlagValues) {
-            double dfFlagValues[nrOfFlagMeanings + 1];
+            double *dfFlagValues = new double[nrOfFlagMeanings + 1];
             attr_flag_values->getData(dfFlagValues, attr_flag_values->length);
             for (size_t j = 0; j < nrOfFlagMeanings; j++) {
-              statusFlagList->push_back({.meaning = flagStrings[j], .value = dfFlagValues[j]});
+              statusFlagList.push_back({.meaning = flagStrings[j], .value = dfFlagValues[j]});
             }
+            delete[] dfFlagValues;
           } else {
             CDBError("ReadStatusFlags: nrOfFlagMeanings!=nrOfFlagValues, %lu!=%lu", nrOfFlagMeanings, nrOfFlagValues);
           }
@@ -484,21 +490,21 @@ void CDataSource::readStatusFlags(CDF::Variable *var, std::vector<CDataSource::S
   }
 }
 
-const char *CDataSource::getFlagMeaning(std::vector<CDataSource::StatusFlag> *statusFlagList, double value) {
-  for (size_t j = 0; j < statusFlagList->size(); j++) {
-    if ((*statusFlagList)[j].value == value) {
-      return (*statusFlagList)[j].meaning.c_str();
+std::string CDataSource::getFlagMeaning(std::vector<CDataSource::StatusFlag> &statusFlagList, double value) {
+  for (size_t j = 0; j < statusFlagList.size(); j++) {
+    if ((statusFlagList)[j].value == value) {
+      return (statusFlagList)[j].meaning.c_str();
     }
   }
   return "no_flag_meaning";
 }
 
-void CDataSource::getFlagMeaningHumanReadable(CT::string *flagMeaning, std::vector<CDataSource::StatusFlag> *statusFlagList, double value) {
-  flagMeaning->copy(getFlagMeaning(statusFlagList, value));
-  flagMeaning->replaceSelf("_", " ");
+std::string CDataSource::getFlagMeaningHumanReadable(std::vector<CDataSource::StatusFlag> &statusFlagList, double value) {
+  std::string flagMeaning = getFlagMeaning(statusFlagList, value);
+  return CT::replace(flagMeaning, "_", " ");
 }
 
-CT::string CDataSource::getDimensionValueForNameAndStep(const char *dimName, int dimStep) { return timeSteps[dimStep]->dims.getDimensionValue(dimName); }
+CT::string CDataSource::getDimensionValueForNameAndStep(const char *dimName, int dimStep) { return getCDFDimensionValue(timeSteps[dimStep]->dims, dimName); }
 
 /**
  * Returns a stringlist with all available legends for this datasource and chosen style.
@@ -712,7 +718,7 @@ std::vector<CT::string> CDataSource::getStyleNames(std::vector<CServerConfig::XM
   for (size_t j = 0; j < Styles.size(); j++) {
     if (Styles[j]->value.empty()) continue;
     std::vector<CT::string> l1 = Styles[j]->value.split(",");
-    for (auto styleValue : l1) {
+    for (auto styleValue: l1) {
       if (styleValue.length() > 0) {
         stringList.push_back(styleValue);
       }
@@ -852,7 +858,7 @@ CDataSource *CDataSource::clone() {
     TimeStep *timeStep = new TimeStep();
     d->timeSteps.push_back(timeStep);
     timeStep->fileName.copy(timeSteps[j]->fileName.c_str());
-    timeStep->dims.copy(&timeSteps[j]->dims);
+    timeStep->dims = timeSteps[j]->dims;
   }
 
   /* Copy dataObjects */
@@ -861,22 +867,9 @@ CDataSource *CDataSource::clone() {
   }
 
   d->stretchMinMax = stretchMinMax;
-  d->stretchMinMaxDone = stretchMinMaxDone;
 
   /* Copy requireddims */
-  for (size_t j = 0; j < requiredDims.size(); j++) {
-    COGCDims *ogcDim = new COGCDims();
-    d->requiredDims.push_back(ogcDim);
-    ogcDim->name = requiredDims[j]->name;
-    ogcDim->value = requiredDims[j]->value;
-    ogcDim->queryValue = requiredDims[j]->queryValue;
-    ogcDim->netCDFDimName = requiredDims[j]->netCDFDimName;
-    ogcDim->hidden = requiredDims[j]->hidden;
-    for (size_t i = 0; i < requiredDims[j]->uniqueValues.size(); i++) {
-      ogcDim->uniqueValues.push_back(requiredDims[j]->uniqueValues[i].c_str());
-    }
-    ogcDim->isATimeDimension = requiredDims[j]->isATimeDimension;
-  }
+  d->requiredDims = requiredDims;
 
   for (size_t j = 0; j < 4; j++) {
     d->dfBBOX[j] = dfBBOX[j];
@@ -918,7 +911,7 @@ CDataSource *CDataSource::clone() {
 double CDataSource::getScaling() {
   auto styleConfiguration = this->getStyle();
   if (styleConfiguration != nullptr) {
-    for (auto renderSetting : styleConfiguration->renderSettings) {
+    for (auto renderSetting: styleConfiguration->renderSettings) {
       if (!renderSetting->attr.scalewidth.empty()) {
         double scaleWidth = renderSetting->attr.scalewidth.toDouble();
         double imageWidth = (double)this->srvParams->geoParams.width;
@@ -932,7 +925,7 @@ double CDataSource::getScaling() {
 double CDataSource::getContourScaling() {
   auto styleConfiguration = this->getStyle();
   if (styleConfiguration != nullptr) {
-    for (auto renderSetting : styleConfiguration->renderSettings) {
+    for (auto renderSetting: styleConfiguration->renderSettings) {
       if (!renderSetting->attr.scalecontours.empty()) {
         double scalecontours = renderSetting->attr.scalecontours.toDouble();
         return scalecontours;
@@ -1011,7 +1004,7 @@ int CDataSource::attachCDFObject(CDFObject *cdfObject, bool dataSourceOwnsDataOb
     }
   }
   // Shorthand to variable configuration in the layer.
-  for (auto *cfgVar : cfgLayer->Variable) {
+  for (auto *cfgVar: cfgLayer->Variable) {
     CDF::Variable *var = cdfObject->getVar(cfgVar->value);
     if (var != nullptr) {
 
@@ -1047,9 +1040,9 @@ int CDataSource::readVariableDataForCDFDims(CDF::Variable *variableToRead, CDFTy
     return 1;
   }
   size_t numDimensionsForVariableToRead = variableToRead->dimensionlinks.size();
-  size_t start[numDimensionsForVariableToRead];
-  size_t count[numDimensionsForVariableToRead];
-  ptrdiff_t stride[numDimensionsForVariableToRead];
+  std::vector<size_t> start(numDimensionsForVariableToRead);
+  std::vector<size_t> count(numDimensionsForVariableToRead);
+  std::vector<ptrdiff_t> stride(numDimensionsForVariableToRead);
   auto *cdfDims = this->getCDFDims();
   for (size_t dimNr = 0; dimNr < numDimensionsForVariableToRead; dimNr += 1) {
     auto *dimensionLink = variableToRead->dimensionlinks[dimNr];
@@ -1057,16 +1050,14 @@ int CDataSource::readVariableDataForCDFDims(CDF::Variable *variableToRead, CDFTy
     start[startCountIndex] = 0;
     stride[startCountIndex] = 1;
     count[startCountIndex] = dimensionLink->getSize();
-    int cdfDimIndex = cdfDims->getArrayIndexForName(dimensionLink->name.c_str());
+    int cdfDimIndex = findCDFDimIdx(*cdfDims, dimensionLink->name.c_str());
     if (cdfDimIndex >= 0) {
-#ifdef CDATASOURCE_DEBUG
-      CDBDebug("Start %d/%d:%s %d:%s ==> %d", startCountIndex, dimNr, dimensionLink->name.c_str(), cdfDimIndex, cdfDims->getDimensionName(cdfDimIndex), cdfDims->getDimensionIndex(cdfDimIndex));
-#endif
-      start[startCountIndex] = cdfDims->getDimensionIndex(cdfDimIndex);
+
+      start[startCountIndex] = cdfDims->at(cdfDimIndex).index;
       count[startCountIndex] = 1;
     }
   }
-  return variableToRead->readData(dataTypeToReturnData, start, count, stride, true);
+  return variableToRead->readData(dataTypeToReturnData, start.data(), count.data(), stride.data(), true);
 }
 
 std::string CDataSource::getDataSetName() { return std::string(this->srvParams->datasetLocation.c_str()); }

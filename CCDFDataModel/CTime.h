@@ -261,4 +261,10 @@ public:
   static CT::string dateToPeriod(CTime::Date date);
 };
 
+/**
+ * @brief Converts a time string in the format used in KNMI HDF5 files to an ISO8601 time string
+ * @param radarTime The time string in the format used in KNMI HDF5 files
+ * @return The time string in ISO8601 format
+ */
+std::string knmiH5TimeToISOString(std::string radarTime);
 #endif

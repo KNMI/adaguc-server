@@ -398,7 +398,7 @@ namespace CT {
      */
     CT::string replaceAll(CT::string substr, CT::string newString);
 
-    friend CT::string join(const std::vector<string> &items, CT::string separator);
+    friend CT::string join(const std::vector<std::string> &items, std::string separator);
 
     friend std::string basename(std::string input);
   };
@@ -409,7 +409,7 @@ namespace CT {
    * @param separator optional separator, defaults to ","
    * @returns new string containing all items.
    */
-  string join(const std::vector<string> &items, string separator = ",");
+  string join(const std::vector<std::string> &items, std::string separator = ",");
 
   /**
    * Returns posix basename of path
@@ -460,10 +460,90 @@ namespace CT {
   std::string toLowerCase(const std::string input);
 
   /**
+   * Converts a string to uppercase
+   * @param input The input string
+   * @returns the input string converted to uppercase
+   */
+  std::string toUpperCase(const std::string input);
+
+  /**
+   * Removes spaces in the string and returns the new string
+   * @param input The input string
+   * @returns the input string with removed spaces
+   */
+  std::string trim(const std::string input);
+
+  /**
+   * Function which returns a std::vector on the stack with a list of strings allocated on the stack
+   * Data is automatically freed
+   * @param stdstring The string to split
+   * @param value The token to split the string on
+   * @returns vector of split strings
+   */
+  std::vector<std::string> split(const std::string &stdstring, std::string value);
+
+  /**
    * Generates a random string of the specified length consisting of digits, uppercase and lowercase letters
    * @param length The length of the random string to generate
    * @returns a random string of the specified length
    */
   std::string randomString(const int length);
+
+  /**
+   * Checks where the pattern is in the input string.
+   *
+   * @param input input string to check
+   * @param pattern pattern tofind
+   * @return Index of pattern in input. -1 if not found. 0 if pattern is an empty string
+   */
+  int indexOf(const std::string &input, const std::string pattern);
+
+  /**
+   * Checks if a string ends with another given string. If the argument is an empty string, then the method returns true.
+   *
+   * @param input input string to check
+   * @param pattern pattern tofind
+   * @return True if input ends with pattern. True if pattern is empty
+   */
+  bool endsWith(const std::string &input, const std::string pattern);
+
+  /**
+   * Checks if a string starts with another given string. If the argument is an empty string, then the method returns true.
+   *
+   * @param input input string to check
+   * @param pattern pattern tofind
+   * @return True if input starts with pattern. True if pattern is empty
+   */
+  bool startsWith(const std::string &input, const std::string pattern);
+
+  /**
+   * Replaces characters so it can be used as valid xml
+   */
+  std::string encodeXml(const std::string &input);
+
+  /**
+   * Converts to hex string from int.
+   */
+  std::string getHex(unsigned int number);
+
+  /**
+   * Converts to hex24 string from int.
+   */
+  std::string getHex24(int value);
+
+  /**
+   * Checks if this string represents a numeric value
+   */
+  bool isNumeric(const std::string &input);
+
+  /**
+   * Checks if this string represents a float value
+   */
+  bool isFloat(const std::string &input);
+
+  /**
+   * Checks if this string represents an int value
+   */
+  bool isInt(const std::string &input);
 }; /* namespace CT */
 #endif

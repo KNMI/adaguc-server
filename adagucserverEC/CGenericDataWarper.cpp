@@ -255,7 +255,7 @@ void linearTransformGrid(GDWState &warperState, bool useHalfCellOffset, CImageWa
 
 // Warp the grid from the source projection to the destination projection.
 template <typename T>
-void warpTransformGrid(GDWState &warperState, ProjectionGrid*& projectionGrid, bool useHalfCellOffset, CImageWarper *warper, void *, GeoParameters &sourceGeoParams, GeoParameters &destGeoParams,
+void warpTransformGrid(GDWState &warperState, ProjectionGrid *&projectionGrid, bool useHalfCellOffset, CImageWarper *warper, void *, GeoParameters &sourceGeoParams, GeoParameters &destGeoParams,
                        const std::function<void(int, int, T, GDWState &warperState)> &drawFunction) {
 
   bool debug = false;
@@ -444,6 +444,7 @@ template <typename T>
 int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, GeoParameters sourceGeoParams, GeoParameters destGeoParams,
                               const std::function<void(int, int, T, GDWState &warperState)> &drawFunction) {
 
+  bool verbose = false;
   // This structure is passed to drawfunctions and contains info about the current state of the warper.
   // The drawfunction will be called numerous times for each destination pixel.
   GDWState warperState = {.sourceGrid = _sourceData,                  // The source datagrid, has the same datatype as the template T
@@ -464,8 +465,17 @@ int GenericDataWarper::render(CImageWarper *warper, void *_sourceData, GeoParame
 
   /* When geographical map projections are equal, just do a simple linear transformation */
   if (warper->isProjectionRequired() == false) {
+    if (verbose) {
+      CDBDebug("No reprojection required, doing linear transformation");
+    }
     linearTransformGrid(warperState, useHalfCellOffset, warper, _sourceData, sourceGeoParams, destGeoParams, drawFunction);
+    if (verbose) {
+      CDBDebug("Done");
+    }
   } else {
+    if (verbose) {
+      CDBDebug("Reprojection required, doing warp transformation");
+    }
     /* If geographical map projection is different, we have to transform the grid */
     warpTransformGrid(warperState, projectionGrid, useHalfCellOffset, warper, _sourceData, sourceGeoParams, destGeoParams, drawFunction);
   }

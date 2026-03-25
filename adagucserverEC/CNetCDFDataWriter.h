@@ -29,7 +29,7 @@ private:
     if (x >= 0 && y >= 0 && x < (int)settings.width && y < (int)settings.height) {
       ((T *)settings.data)[x + y * settings.width] = val;
     }
-  };
+  }
 
   int drawFunctionMode;
 
@@ -62,7 +62,7 @@ private:
         ((T *)settings.data)[p] = r + g * 256 + b * 256 * 256 + 4278190080;
       }
     }
-  };
+  }
   CDataSource *baseDataSource;
   CDFObject *destCDFObject;
   CT::string tempFileName;

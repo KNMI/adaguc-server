@@ -1,0 +1,68 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Assendelft BTP",
+        "description": null,
+        "Station Type": "Land (fixed)",
+        "Station name": "Assendelft BTP",
+        "Field_2": "Link to station",
+        "Field_1": "Assendelft BTP"
+      },
+      "geometry": { "type": "Point", "coordinates": [4.725833333, 52.48194444] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Muiden BTP",
+        "description": null,
+        "Station Type": "Land (fixed)",
+        "Station name": "Muiden BTP",
+        "Field_2": "Link to station",
+        "Field_1": "Muiden BTP"
+      },
+      "geometry": { "type": "Point", "coordinates": [5.092222222, 52.33527778] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Nieuw Vennep  BTP",
+        "description": null,
+        "Station Type": "Land (fixed)",
+        "Station name": "Nieuw Vennep  BTP",
+        "Field_2": "Link to station",
+        "Field_1": "Nieuw Vennep  BTP"
+      },
+      "geometry": { "type": "Point", "coordinates": [4.647777778, 52.255] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Nieuwkoop BTP",
+        "description": null,
+        "Station Type": "Land (fixed)",
+        "Station name": "Nieuwkoop BTP",
+        "Field_2": "Link to station",
+        "Field_1": "Nieuwkoop BTP"
+      },
+      "geometry": { "type": "Point", "coordinates": [4.765, 52.15138889] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Voorschoten AWS",
+        "description": null,
+        "Station Type": "Land (fixed)",
+        "Station name": "Voorschoten AWS",
+        "Field_2": "Link to station",
+        "Field_1": "Voorschoten AWS"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4.4363888889, 52.1397222222]
+      }
+    }
+  ]
+}

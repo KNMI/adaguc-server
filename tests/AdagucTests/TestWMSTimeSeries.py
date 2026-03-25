@@ -108,10 +108,7 @@ class TestWMSTimeSeries(unittest.TestCase):
         )
         AdagucTestTools().writetofile(self.testresultspath + filename, data.getvalue())
         self.assertEqual(status, 0)
-        self.assertEqual(
-            data.getvalue(),
-            AdagucTestTools().readfromfile(self.expectedoutputsspath + filename),
-        )
+        AdagucTestTools().compareJson(self.testresultspath + filename, self.expectedoutputsspath + filename)
 
     def test_WMSGetFeatureInfo_KNMIHDF5_echotops_RAD_NL25_ETH_NA_GRID(self):
         AdagucTestTools().cleanTempDir()

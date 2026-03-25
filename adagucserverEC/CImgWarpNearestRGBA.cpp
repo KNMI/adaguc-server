@@ -382,8 +382,10 @@ void CImgWarpNearestRGBA::render(CImageWarper *warper, CDataSource *dataSource, 
 
   if (useThreading == true) {
     int errcode;
-    pthread_t threads[numThreads];
-    DrawMultipleTileSettings dmf[numThreads];
+
+    std::vector<pthread_t> threads(numThreads);
+    std::vector<DrawMultipleTileSettings> dmf(numThreads);
+
     int tileBlockSize = numberOfTiles / numThreads;
     // Divide the tiles over the threads, and start the thread.
     for (int j = 0; j < numThreads; j++) {

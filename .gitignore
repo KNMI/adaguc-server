@@ -141,3 +141,4 @@ perf.data
 perf.out.old
 perf.svg
 log.txt
+Docker/.env*

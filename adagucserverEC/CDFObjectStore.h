@@ -56,7 +56,7 @@ private:
    * @param fileName The fileName
    * @return The CDFReader
    */
-  static CDFReader *getCDFReader(const char *fileName);
+  static CDFReader *getCDFReader(std::string fileName);
 
   CDFObject *getCDFObject(CDataSource *dataSource, CServerParams *srvParams, const char *fileName, bool plain, bool cached = true);
 

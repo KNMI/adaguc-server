@@ -242,7 +242,7 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
     timeVar->setAttributeText("standard_name", "time");
     timeVar->setAttributeText("long_name", "time");
     timeVar->isDimension = true;
-    CT::string time_units = "minutes since 2000-01-01 00:00:00\0";
+    CT::string time_units = "minutes since 2000-01-01 00:00:00";
     CT::string szStartTime = getRadarStartTime(cdfObject);
     // Set adaguc time
     CTime ctime;
@@ -295,7 +295,7 @@ int CConvertH5VolScan::convertH5VolScanHeader(CDFObject *cdfObject, CServerParam
   // CDFHDF5Reader::CustomVolScanReader *volScanReader = new CDFHDF5Reader::CustomVolScanReader();
   // CDF::Variable::CustomMemoryReader *memoryReader = CDF::Variable::CustomMemoryReaderInstance;
   int cnt = -1;
-  for (CT::string param : scan_params) {
+  for (CT::string param: scan_params) {
     cnt++;
     if (!hasParam(cdfObject, sorted_scans, param)) continue;
     CDF::Variable *var = new CDF::Variable();
@@ -353,14 +353,14 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
     CDF::Variable *varY;
 
     // Create new dimensions and variables (X,Y,T)
-    dimX = cdfObject->getDimension("adaguccoordinatex");
+    dimX = cdfObject->getDimensionThrows("adaguccoordinatex");
     dimX->setSize(dataSource->dWidth);
 
-    dimY = cdfObject->getDimension("adaguccoordinatey");
+    dimY = cdfObject->getDimensionThrows("adaguccoordinatey");
     dimY->setSize(dataSource->dHeight);
 
-    varX = cdfObject->getVariable("adaguccoordinatex");
-    varY = cdfObject->getVariable("adaguccoordinatey");
+    varX = cdfObject->getVariableThrows("adaguccoordinatex");
+    varY = cdfObject->getVariableThrows("adaguccoordinatey");
 
     CDF::allocateData(CDF_DOUBLE, &varX->data, dimX->length);
     CDF::allocateData(CDF_DOUBLE, &varY->data, dimY->length);
@@ -415,7 +415,7 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
 #endif
 
     int scan_index = dataSource->getDimensionIndex("scan_elevation");
-    CDF::Variable *scanNumberVar = cdfObject->getVariable("scan_number");
+    CDF::Variable *scanNumberVar = cdfObject->getVariableThrows("scan_number");
     int scan = scanNumberVar->getDataAt<int>(scan_index);
 
     if (doZdr) {
@@ -443,12 +443,12 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
     double scan_ascale;
     std::tie(scan_elevation, scan_nrang, scan_rscale, scan_nazim, scan_ascale) = getScanMetadata(cdfObject, scan);
 
-    double gain, offset;
-    double gainDBZV, offsetDBZV;
-    double undetect, nodata;
+    double gain = 1.0, offset = 0.0;
+    double gainDBZV = 0, offsetDBZV = 0;
+    double undetect = 0, nodata = 0;
     CT::string scanDataVarName;
-    CDF::Variable *scanDataVar;
-    CDF::Variable *scanDataVarDBZV;
+    CDF::Variable *scanDataVar = nullptr;
+    CDF::Variable *scanDataVarDBZV = nullptr;
 
     if (!doHeight) {
       CT::string componentCalibrationStringName;
@@ -524,7 +524,7 @@ int CConvertH5VolScan::convertH5VolScanData(CDataSource *dataSource, int mode) {
           ia = (int)(azim / scan_ascale);
           ia = (ia + scan_nazim) % scan_nazim;
           std::vector<double> vs;
-          for (auto pScan : pScans) {
+          for (auto pScan: pScans) {
             vs.push_back(pScan[ir + ia * scan_nrang]);
           }
           if (vs[0] == undetect || vs[0] == nodata) {

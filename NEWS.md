@@ -1,3 +1,36 @@
+**Version 7.1.0 - 2026-03-24**
+
+- If there are more Settings elements in dataset configurations, cleanup will still work. The first found Settings element is used.
+- If the scan script is used with the `-xf` option, the scan script will delete the given file if it is not associated with any dataset. It will exit with code SCAN_EXITCODE_FILENOMATCH_ISDELETED=68.
+
+**Version 7.0.0 - 2026-03-23**
+
+- Renamed organization to knmiadaguc.
+
+**Version 6.8.0 - 2026-03-18**
+
+- Fixed satcomp png tiling and added test
+- Redis upgraded to version 7
+
+**Version 6.7.0 - 2026-03-11**
+
+- Refactored datamodel and use std::string and structs where possible
+- Moved code from header files to cpp files
+- Made it clear that some methods throw exceptions, suffix of these methods is Throws.
+- Support timeseries for DestineE Floodmind  model
+
+**Version 6.6.0 - 2026-02-27**
+
+- Refactored datapostprocessors to handle windspeed conversions better.
+
+**Version 6.5.0 - 2026-03-02**
+
+- It is possible to display text values from a geojson where the feature has a nan value
+
+**Version 6.4.0 - 2026-02-13**
+
+- Added stride option to solt to make it render faster
+
 **Version 6.3.0 - 2026-01-28**
 
 - Removed support for gd renderer
@@ -169,7 +202,7 @@
 - EDR: /instances call using reference times
 - EDR: support for vertical dimensions (z in EDR requests) for model_levels, pressure_levels etc
 - EDR: support for custom dimensions [using custom: namespace] for example for percentile classes or ensemble members
-- EDR: By default EDR is now enabled for all datasets and layers. EDR support can be switched on or off for a dataset or for a layer. Setting `enable_edr="false"` to a dataset's `<Settings>` element disables EDR for a dataset. Using `enable_edr="false"` in a layer's `<Layer>` element disables EDR for that layer. Using enable_edr="true" in a `<Layer>` element forces enabling EDR for a single layer, even if it is disabled in the dataset `<Settings>` element.
+- EDR: By default EDR is now enabled for all datasets and layers. EDR support can be switched on or off for a dataset or for a layer. Setting `enable_edr="false"` to a dataset's `<Settings>` element disables EDR for a dataset. Using `` in a layer's `<Layer>` element disables EDR for that layer. Using enable_edr="true" in a `<Layer>` element forces enabling EDR for a single layer, even if it is disabled in the dataset `<Settings>` element.
 - EDR: getMetadata request output has been extended with a few attributes for EDR support
 - EDR: uses getMetadata request which reads from database for increased performance as no dataset configuration needs to be read. the. This should make response times of EDR calls faster.
 - EDR: now support requests for generating soundings, ensemble plots (percentiles or plumes), time series, returning a CoverageCollection with multiple Coverages or a single Coverage in case of a single result.

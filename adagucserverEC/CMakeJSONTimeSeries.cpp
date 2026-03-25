@@ -25,7 +25,7 @@ int CMakeJSONTimeSeries::MakeJSONTimeSeries(CDrawImage *drawImage, CImageWarper 
   CDBDebug("NumberOfSteps = %d", numberOfSteps);
   for (int dimnr = 0; dimnr < numberOfDims; dimnr++) {
     COGCDims *ogcDim = dataSource->requiredDims[dimnr];
-    CDBDebug("Dim %d:) ds: %s nc: %s", dimnr, ogcDim->name.c_str(), ogcDim->netCDFDimName.c_str());
+    CDBDebug("Dim %d:) ds: %s nc: %s", dimnr, ogcDim->name.c_str(), ogcDim.netCDFDimName.c_str());
   }
 
 #endif
@@ -34,8 +34,8 @@ int CMakeJSONTimeSeries::MakeJSONTimeSeries(CDrawImage *drawImage, CImageWarper 
   for (int step = 0; step < numberOfSteps; step++) {
     dataSource->setTimeStep(step);
     for (int dimnr = 0; dimnr < numberOfDims; dimnr++) {
-      COGCDims *ogcDim = dataSource->requiredDims[dimnr];
-      uniqueRequest.addDimensionRangeRequest(dataSource->getFileName(), ogcDim->netCDFDimName.c_str(), dataSource->getDimensionIndex(dimnr), dataSource->getDimensionValue(dimnr).c_str());
+      auto &ogcDim = dataSource->requiredDims[dimnr];
+      uniqueRequest.addDimensionRangeRequest(dataSource->getFileName(), ogcDim.netCDFDimName.c_str(), dataSource->getDimensionIndex(dimnr), dataSource->getDimensionValue(dimnr).c_str());
     }
   }
 

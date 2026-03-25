@@ -26,6 +26,11 @@
 #ifndef CCDFTYPES_DEBUG
 #define CCDFTYPES_DEBUG
 
+#include <cstdint>
+#ifndef ubyte
+#define ubyte uint8_t
+#endif
+
 #include <cstdio>
 #include <cstddef>
 #include <vector>
@@ -79,11 +84,6 @@ typedef int CDFError;
 #define CDF_E_VARHASNOPARENT 1006 /*Variable has no parent CDFObject*/
 #define CDF_E_VARHASNODATA 1007   /*Variable has no data*/
 
-/*#define STRINGIFY(x) #x
-#define TOSTRING(x) STRINGIFY(x)
-#define AT __FILENAME__ ", " TOSTRING(__LINE__)
-#define EXCEPTION(x) "Exception in "AT": " x*/
-
 namespace CDF {
   // Allocates data for an array, provide type, the empty array and length
   // Data must be freed by using free()
@@ -92,84 +92,8 @@ namespace CDF {
 
   // Check if this is a string type or a numeric type
   bool isCDFNumeric(CDFType type);
-  // Copies data from one array to another and performs type conversion
-  // Destdata must be a pointer to an empty array with non-void type
-  class DataCopier {
-  private:
-    template <typename T> static int _copy(T *destdata, void *sourcedata, CDFType sourcetype, size_t destinationOffset, size_t sourceOffset, size_t length) {
-
-      size_t dsto = destinationOffset;
-      size_t srco = sourceOffset;
-      if (sourcetype == CDF_STRING) {
-        // CDBError("Unable to copy CDF_STRING");
-        return 1;
-      }
-      CT::string t = typeid(T).name();
-      if (t.equals(typeid(void).name())) {
-        return 1;
-      }
-
-      if (sourcetype == CDF_CHAR || sourcetype == CDF_BYTE)
-        for (size_t t = 0; t < length; t++) {
-          destdata[t + dsto] = (T)((char *)sourcedata)[t + srco];
-        }
-      if (sourcetype == CDF_CHAR || sourcetype == CDF_UBYTE)
-        for (size_t t = 0; t < length; t++) {
-          destdata[t + dsto] = (T)((unsigned char *)sourcedata)[t + srco];
-        }
-      if (sourcetype == CDF_SHORT)
-        for (size_t t = 0; t < length; t++) {
-          destdata[t + dsto] = (T)((short *)sourcedata)[t + srco];
-        }
-      if (sourcetype == CDF_USHORT)
-        for (size_t t = 0; t < length; t++) {
-          destdata[t + dsto] = (T)((unsigned short *)sourcedata)[t + srco];
-        }
-      if (sourcetype == CDF_INT)
-        for (size_t t = 0; t < length; t++) {
-          destdata[t + dsto] = (T)((int *)sourcedata)[t + srco];
-        }
-      if (sourcetype == CDF_UINT)
-        for (size_t t = 0; t < length; t++) {
-          destdata[t + dsto] = (T)((unsigned int *)sourcedata)[t + srco];
-        }
-      if (sourcetype == CDF_INT64)
-        for (size_t t = 0; t < length; t++) {
-          destdata[t + dsto] = (T)((long *)sourcedata)[t + srco];
-        }
-      if (sourcetype == CDF_UINT64)
-        for (size_t t = 0; t < length; t++) {
-          destdata[t + dsto] = (T)((unsigned long *)sourcedata)[t + srco];
-        }
-      if (sourcetype == CDF_FLOAT)
-        for (size_t t = 0; t < length; t++) {
-          destdata[t + dsto] = (T)((float *)sourcedata)[t + srco];
-        }
-      if (sourcetype == CDF_DOUBLE)
-        for (size_t t = 0; t < length; t++) {
-          destdata[t + dsto] = (T)((double *)sourcedata)[t + srco];
-        }
-      return 0;
-    }
-
-  public:
-    template <class T> static int copy(T *destdata, void *sourcedata, CDFType sourcetype, size_t length) { return _copy(destdata, sourcedata, sourcetype, 0, 0, length); }
-    template <class T> static void _fill(T *data, double value, size_t size) {
-      for (size_t j = 0; j < size; j++) {
-        data[j] = value;
-      }
-    }
-
-    // Deprectated?
-    // static int copy(void *destdata,void *sourcedata,CDFType sourcetype,size_t destinationOffset,size_t sourceOffset,size_t length);
-
-    static int copy(void *destdata, CDFType destType, void *sourcedata, CDFType sourcetype, size_t destinationOffset, size_t sourceOffset, size_t length);
-  };
 
   int fill(void *destdata, CDFType destType, double value, size_t size);
-
-  /*dataCopier.copy function should do the job...*/
-  // static DataCopier dataCopier;
 
   /*Puts the CDF name of the type in the string array with name (CDF_FLOAT, CDF_INT, etc...)*/
   void getCDFDataTypeName(char *name, const size_t maxlen, const int type);
@@ -193,6 +117,8 @@ namespace CDF {
 
   /*Returns the number of bytes needed for a single element of this datatype*/
   int getTypeSize(CDFType type);
+
+  int fill(void *destdata, CDFType destType, double value, size_t size);
 
 }; // namespace CDF
 

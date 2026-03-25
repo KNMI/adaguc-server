@@ -44,7 +44,7 @@ private:
   static CDFStore_CDFReadersMap cdfReaders;
 
 public:
-  static CDFReader *getCDFReader(const char *fileName);
+  static CDFReader *getCDFReader(std::string fileName);
   static void clear();
 };
 

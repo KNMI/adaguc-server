@@ -260,7 +260,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
 #endif
     CT::string serverTitle = "";
     try {
-      cdfObject->getAttribute("title")->getDataAsString(&serverTitle);
+      serverTitle = cdfObject->getAttributeThrows("title")->toString();
     } catch (int e) {
     }
 
@@ -281,35 +281,35 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
     CT::string serverDisclaimer = "";
 
     try {
-      cdfObject->getAttribute("summary")->getDataAsString(&serverSummary);
+      serverSummary = cdfObject->getAttributeThrows("summary")->toString();
     } catch (int e) {
     }
     try {
-      cdfObject->getAttribute("description")->getDataAsString(&serverDescription);
+      serverDescription = cdfObject->getAttributeThrows("description")->toString();
     } catch (int e) {
     }
     try {
-      cdfObject->getAttribute("source")->getDataAsString(&serverSource);
+      serverSource = cdfObject->getAttributeThrows("source")->toString();
     } catch (int e) {
     }
     try {
-      cdfObject->getAttribute("references")->getDataAsString(&serverReferences);
+      serverReferences = cdfObject->getAttributeThrows("references")->toString();
     } catch (int e) {
     }
     try {
-      cdfObject->getAttribute("institution")->getDataAsString(&serverInstitution);
+      serverInstitution = cdfObject->getAttributeThrows("institution")->toString();
     } catch (int e) {
     }
     try {
-      cdfObject->getAttribute("history")->getDataAsString(&serverHistory);
+      serverHistory = cdfObject->getAttributeThrows("history")->toString();
     } catch (int e) {
     }
     try {
-      cdfObject->getAttribute("comments")->getDataAsString(&serverComments);
+      serverComments = cdfObject->getAttributeThrows("comments")->toString();
     } catch (int e) {
     }
     try {
-      cdfObject->getAttribute("disclaimer")->getDataAsString(&serverDisclaimer);
+      serverDisclaimer = cdfObject->getAttributeThrows("disclaimer")->toString();
     } catch (int e) {
     }
 
@@ -409,7 +409,7 @@ int CAutoResource::configureAutoResource(CServerParams *srvParam, bool plain) {
     int varindex_x = -1, varindex_y = -1;
     for (size_t j = 0; j < cdfObject->variables.size(); j++) {
       try {
-        CT::string standard_name = cdfObject->variables[j]->getAttribute("standard_name")->getDataAsString();
+        CT::string standard_name = cdfObject->variables[j]->getAttributeThrows("standard_name")->toString();
         if (standard_name.equals("eastward_wind") || standard_name.equals("x_wind")) {
           varindex_x = j;
         }
@@ -477,7 +477,7 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *const srvParam, CDFObject
       CDF::Attribute *featureType = cdfObject->getAttributeNE("featureType");
       if (featureType != NULL) {
         // TODO This must be accomplished with standard name / global attribute mappings
-        if (featureType->getDataAsString().equals("timeSeries") || featureType->getDataAsString().equals("point")) {
+        if (featureType->toString().equals("timeSeries") || featureType->toString().equals("point")) {
           CServerConfig::XMLE_RenderMethod *xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
           // CREPORT_INFO_NODOC((*variableNames)[0] + " featureType is timeSeries or point. Assuming point render method for now.", CReportMessage::Categories::GENERAL);
           xmleRenderMethod->value.copy("point");
@@ -516,7 +516,7 @@ void CAutoResource::addXMLLayerToConfig(CServerParams *const srvParam, CDFObject
     if (variable != NULL) {
       CDF::Attribute *attribute = variable->getAttributeNE("standard_name");
       if (attribute != NULL) {
-        if (attribute->getDataAsString().equals("rgba")) {
+        if (attribute->toString().equals("rgba")) {
           CServerConfig::XMLE_RenderMethod *xmleRenderMethod = new CServerConfig::XMLE_RenderMethod();
           CREPORT_INFO_NODOC("Only one variable. Assuming grid and setting render method to rgba. Overriding previously set render method.", CReportMessage::Categories::GENERAL);
           xmleRenderMethod->value.copy("rgba");

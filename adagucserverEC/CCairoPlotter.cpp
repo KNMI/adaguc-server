@@ -749,7 +749,6 @@ void CCairoPlotter::writeToPng8Stream(FILE *fp, unsigned char, bool use8bitpalAl
 
 void CCairoPlotter::writeToPng32Stream(FILE *fp, unsigned char alpha) {
   if (isAlphaUsed) {
-    CDBDebug("Alpha was used");
     for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++) {
         size_t p = x * 4 + y * stride;
@@ -963,9 +962,9 @@ int CCairoPlotter::writeARGBPng(int width, int height, unsigned char *ARGBByteBu
   if (bitDepth == 32) {
 
     int s = width * 4;
+    unsigned char *RGBARow = new unsigned char[s];
     for (i = 0; i < height; i = i + 1) {
 
-      unsigned char RGBARow[s];
       int p = 0;
       int start = i * s;
       int stop = start + s;
@@ -979,14 +978,15 @@ int CCairoPlotter::writeARGBPng(int width, int height, unsigned char *ARGBByteBu
       row_ptr = RGBARow;
       png_write_rows(png_ptr, &row_ptr, 1);
     }
+    delete[] RGBARow;
   } else if (bitDepth == 24) {
 #ifdef MEASURETIME
     StopWatch_Stop("Start 24BIT FILL");
 #endif
     int s = width * 4;
+    unsigned char *RGBRow = new unsigned char[s];
     for (i = 0; i < height; i = i + 1) {
 
-      unsigned char RGBRow[s];
       int p = 0;
       int start = i * s;
       int stop = start + s;
@@ -1011,6 +1011,7 @@ int CCairoPlotter::writeARGBPng(int width, int height, unsigned char *ARGBByteBu
       row_ptr = RGBRow;
       png_write_rows(png_ptr, &row_ptr, 1);
     }
+    delete[] RGBRow;
 #ifdef MEASURETIME
     StopWatch_Stop("Finished 24BIT FILL");
 #endif
@@ -1020,8 +1021,9 @@ int CCairoPlotter::writeARGBPng(int width, int height, unsigned char *ARGBByteBu
 #ifdef MEASURETIME
     StopWatch_Stop("Starting color quantization");
 #endif
+    unsigned char *RGBARow = new unsigned char[s];
     for (i = 0; i < height; i++) {
-      unsigned char RGBARow[s];
+
       int p = 0;
       int start = i * s;
       int stop = start + s;
@@ -1048,6 +1050,7 @@ int CCairoPlotter::writeARGBPng(int width, int height, unsigned char *ARGBByteBu
       row_ptr = RGBARow;
       png_write_rows(png_ptr, &row_ptr, 1);
     }
+    delete[] RGBARow;
   }
 
 #ifdef MEASURETIME

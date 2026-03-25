@@ -15,7 +15,7 @@
         <KeywordList>
             <Keyword>view</Keyword>
             <Keyword>infoMapAccessService</Keyword>
-            <Keyword>ADAGUCServer version 6.0.0, of Nov 19 2025 08:49:47 </Keyword>
+            <Keyword>ADAGUCServer version 6.6.0, of Mar  5 2026 13:00:40 </Keyword>
         </KeywordList>
         <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.datapostproc&amp;SERVICE=WMS&amp;"/>
         <ContactInformation>
@@ -179,6 +179,66 @@
 <BoundingBox CRS="EPSG:7399" minx="-1688218.598491" miny="4491365.234972" maxx="1973986.260472" maxy="7420353.104506" />
 <BoundingBox CRS="EPSG:900913" minx="-3032706.025370" miny="4488462.769264" maxx="3637528.401374" maxy="9846321.862963" />
    <Style>    <Name>auto/nearest</Name>    <Title>Auto style blue-white-red</Title>    <Abstract>Fast nearest neighbour interpolation using the nearest neighbour renderer</Abstract>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.datapostproc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=testdata&amp;format=image/png&amp;STYLE=auto/nearest"/>    </LegendURL>  </Style></Layer>
+<Layer queryable="1" opaque="1" cascaded="0">
+<Name>unscaled_fahrenheit</Name>
+<Title>air_temperature (unscaled_param)</Title>
+<EX_GeographicBoundingBox>
+  <westBoundLongitude>3.000000</westBoundLongitude>
+  <eastBoundLongitude>8.000000</eastBoundLongitude>
+  <southBoundLatitude>50.000000</southBoundLatitude>
+  <northBoundLatitude>55.000000</northBoundLatitude>
+</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="50.000000" miny="3.000000" maxx="55.000000" maxy="8.000000" />
+<BoundingBox CRS="EPSG:25831" minx="500000.000000" miny="5538630.702744" maxx="858256.367765" maxy="6106230.420044" />
+<BoundingBox CRS="EPSG:25832" minx="70134.497631" miny="5539109.815176" maxx="436032.576896" maxy="6111268.070080" />
+<BoundingBox CRS="EPSG:28992" minx="-16176.806007" miny="223232.218966" maxx="342349.927062" maxy="782728.111106" />
+<BoundingBox CRS="EPSG:3035" minx="3819948.287941" miny="2989464.314838" maxx="4192979.646403" maxy="3565564.887169" />
+<BoundingBox CRS="EPSG:3067" minx="-1209888.553987" miny="5713923.002679" maxx="-707429.418073" maxy="6361819.854691" />
+<BoundingBox CRS="EPSG:32661" minx="2209682.661355" miny="-2616951.098794" maxx="2643437.209734" maxy="-1967483.524033" />
+<BoundingBox CRS="EPSG:3411" minx="2905138.612444" miny="-3018511.391238" maxx="3602720.248656" maxy="-2352645.139101" />
+<BoundingBox CRS="EPSG:3412" minx="1763967.360079" miny="33376681.661831" maxx="5412952.406824" maxy="38840365.748741" />
+<BoundingBox CRS="EPSG:3575" minx="-532718.843191" miny="-4368566.453136" maxx="-134167.242099" maxy="-3815733.532120" />
+<BoundingBox CRS="EPSG:3857" minx="333958.472380" miny="6446275.841017" maxx="890555.926346" maxy="7361866.113051" />
+<BoundingBox CRS="EPSG:40000" minx="210948.351464" miny="-4644820.018908" maxx="647321.136553" maxy="-3991432.116733" />
+<BoundingBox CRS="EPSG:4258" minx="50.000000" miny="3.000000" maxx="55.000000" maxy="8.000000" />
+<BoundingBox CRS="EPSG:4326" minx="50.000000" miny="3.000000" maxx="55.000000" maxy="8.000000" />
+<BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
+<BoundingBox CRS="EPSG:54030" minx="236664.507768" miny="5326895.725983" maxx="655971.688193" maxy="5838367.444509" />
+<BoundingBox CRS="EPSG:7399" minx="212322.761361" miny="5873471.956211" maxx="608506.548968" maxy="6386579.968095" />
+<BoundingBox CRS="EPSG:900913" minx="333958.472380" miny="6446275.841017" maxx="890555.926346" maxy="7361866.113051" />
+<BoundingBox CRS="PROJ4:%2Bproj%3Dlonglat%20%2Bdatum%3DWGS84%20%2Bno_defs%20%2Btype%3Dcrs" minx="3.000000" miny="55.000000" maxx="8.000000" maxy="50.000000" />
+<Dimension name="time" units="ISO8601" default="2026-02-13T04:00:00Z" multipleValues="1" nearestValue="0" current="1">2026-02-13T00:00:00Z/2026-02-13T04:00:00Z/PT1H</Dimension>
+<Dimension name="reference_time" units="hours since 2026-02-13T00:00:00Z" default="2026-02-13T00:00:00Z" multipleValues="1" nearestValue="0" current="1">2026-02-13T00:00:00Z</Dimension>
+   <Style>    <Name>auto/nearest</Name>    <Title>Auto style blue-white-red</Title>    <Abstract>Fast nearest neighbour interpolation using the nearest neighbour renderer</Abstract>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.datapostproc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=unscaled_fahrenheit&amp;format=image/png&amp;STYLE=auto/nearest"/>    </LegendURL>  </Style></Layer>
+<Layer queryable="1" opaque="1" cascaded="0">
+<Name>scaled_fahrenheit</Name>
+<Title>air_temperature (scaled_param)</Title>
+<EX_GeographicBoundingBox>
+  <westBoundLongitude>3.000000</westBoundLongitude>
+  <eastBoundLongitude>8.000000</eastBoundLongitude>
+  <southBoundLatitude>50.000000</southBoundLatitude>
+  <northBoundLatitude>55.000000</northBoundLatitude>
+</EX_GeographicBoundingBox><BoundingBox CRS="CRS:84" minx="50.000000" miny="3.000000" maxx="55.000000" maxy="8.000000" />
+<BoundingBox CRS="EPSG:25831" minx="500000.000000" miny="5538630.702744" maxx="858256.367765" maxy="6106230.420044" />
+<BoundingBox CRS="EPSG:25832" minx="70134.497631" miny="5539109.815176" maxx="436032.576896" maxy="6111268.070080" />
+<BoundingBox CRS="EPSG:28992" minx="-16176.806007" miny="223232.218966" maxx="342349.927062" maxy="782728.111106" />
+<BoundingBox CRS="EPSG:3035" minx="3819948.287941" miny="2989464.314838" maxx="4192979.646403" maxy="3565564.887169" />
+<BoundingBox CRS="EPSG:3067" minx="-1209888.553987" miny="5713923.002679" maxx="-707429.418073" maxy="6361819.854691" />
+<BoundingBox CRS="EPSG:32661" minx="2209682.661355" miny="-2616951.098794" maxx="2643437.209734" maxy="-1967483.524033" />
+<BoundingBox CRS="EPSG:3411" minx="2905138.612444" miny="-3018511.391238" maxx="3602720.248656" maxy="-2352645.139101" />
+<BoundingBox CRS="EPSG:3412" minx="1763967.360079" miny="33376681.661831" maxx="5412952.406824" maxy="38840365.748741" />
+<BoundingBox CRS="EPSG:3575" minx="-532718.843191" miny="-4368566.453136" maxx="-134167.242099" maxy="-3815733.532120" />
+<BoundingBox CRS="EPSG:3857" minx="333958.472380" miny="6446275.841017" maxx="890555.926346" maxy="7361866.113051" />
+<BoundingBox CRS="EPSG:40000" minx="210948.351464" miny="-4644820.018908" maxx="647321.136553" maxy="-3991432.116733" />
+<BoundingBox CRS="EPSG:4258" minx="50.000000" miny="3.000000" maxx="55.000000" maxy="8.000000" />
+<BoundingBox CRS="EPSG:4326" minx="50.000000" miny="3.000000" maxx="55.000000" maxy="8.000000" />
+<BoundingBox CRS="EPSG:50001" minx="-2000000.000000" miny="-2000000.000000" maxx="10000000.000000" maxy="8500000.000000" />
+<BoundingBox CRS="EPSG:54030" minx="236664.507768" miny="5326895.725983" maxx="655971.688193" maxy="5838367.444509" />
+<BoundingBox CRS="EPSG:7399" minx="212322.761361" miny="5873471.956211" maxx="608506.548968" maxy="6386579.968095" />
+<BoundingBox CRS="EPSG:900913" minx="333958.472380" miny="6446275.841017" maxx="890555.926346" maxy="7361866.113051" />
+<BoundingBox CRS="PROJ4:%2Bproj%3Dlonglat%20%2Bdatum%3DWGS84%20%2Bno_defs%20%2Btype%3Dcrs" minx="3.000000" miny="55.000000" maxx="8.000000" maxy="50.000000" />
+<Dimension name="time" units="ISO8601" default="2026-02-13T04:00:00Z" multipleValues="1" nearestValue="0" current="1">2026-02-13T00:00:00Z/2026-02-13T04:00:00Z/PT1H</Dimension>
+<Dimension name="reference_time" units="hours since 2026-02-13T00:00:00Z" default="2026-02-13T00:00:00Z" multipleValues="1" nearestValue="0" current="1">2026-02-13T00:00:00Z</Dimension>
+   <Style>    <Name>auto/nearest</Name>    <Title>Auto style blue-white-red</Title>    <Abstract>Fast nearest neighbour interpolation using the nearest neighbour renderer</Abstract>    <LegendURL width="300" height="400">       <Format>image/png</Format>       <OnlineResource xlink:type="simple" xlink:href="DATASET=adaguc.tests.datapostproc&amp;SERVICE=WMS&amp;&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=scaled_fahrenheit&amp;format=image/png&amp;STYLE=auto/nearest"/>    </LegendURL>  </Style></Layer>
     </Layer>
   </Capability>
 </WMS_Capabilities>

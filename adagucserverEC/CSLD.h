@@ -30,8 +30,8 @@ private:
   CServerConfig::XMLE_Configuration *serverConfig;
   CServerParams *serverParams;
 
-  int buildRasterSymbolizer(CXMLParserElement *childElement, CServerConfig::XMLE_Style *myOwnStyle);
-  int buildColorMap(CXMLParserElement *element, CServerConfig::XMLE_Style *myOwnStyle);
-  int buildScaleDenominator(CXMLParserElement *element, CServerConfig::XMLE_Style *myOwnStyle);
-  int validateAndParseSLDElements(CXMLParserElement *element, CServerConfig::XMLE_Style *myOwnStyle);
+  int buildRasterSymbolizer(CXMLParserElement &childElement, CServerConfig::XMLE_Style *myOwnStyle);
+  int buildColorMap(CXMLParserElement &element, CServerConfig::XMLE_Style *myOwnStyle);
+  int buildScaleDenominator(CXMLParserElement &element, CServerConfig::XMLE_Style *myOwnStyle);
+  int validateAndParseSLDElements(CXMLParserElement &element, CServerConfig::XMLE_Style *myOwnStyle);
 };

@@ -269,7 +269,7 @@ int testHDF5Reader() {
   CT::string dumpString = CDF::dump(cdfObject);
 
   // throw (dumpString.c_str());
-  CT::string expectedString = cdfObject->getVariable("overview")->getAttribute("product_datetime_start")->getDataAsString();
+  CT::string expectedString = cdfObject->getVariableThrows("overview")->getAttributeThrows("product_datetime_start")->toString();
 
   if (expectedString.equals("22-NOV-2021;08:00:00.000") == false) {
     CDBDebug("[FAILED] testHDF5Reader: expectedString 22-NOV-2021;08:00:00.000 is different then ");
