@@ -16,8 +16,8 @@ This style is assigned to all layers and can be used for previewing the
 data with automatically detected min/max values.
 
 -   name, The name of the style to use within the service.
--   abstract, The abstract of the style to use within the service. This overrides the NameMapping elements
--   title, The title of the style to use within the service. This overrides the NameMapping elements
+-   abstract, The abstract of the style to use within the service. This overrides the now deprecated the NameMapping elements
+-   title, The title of the style to use within the service. This overrides the now deprecated NameMapping elements
 
 ```
 
@@ -28,7 +28,8 @@ data with automatically detected min/max values.
 <RenderMethod>nearest,bilinear,point</RenderMethod>
 </Style>
 
-<Style name="examplestyle1">
+<Style name="examplestyle1" title="Temperature 0-10"
+abstract="Nearest neighbour rendering">
 <Legend fixedclasses="true" tickinterval="2"
 tickround="2">color</Legend>
 <ContourLine width="0.8" linecolor="#000000" textcolor="#404040"
@@ -50,14 +51,6 @@ fillcolor="#FFFFFF">0</ShadeInterval>
 fillcolor="#FF00AF"/>
 <RenderMethod>nearest,nearestcontour,bilinearcontour,shadedcontour,bilinear</RenderMethod>
 <SmoothingFilter>0</SmoothingFilter>
-<NameMapping name="nearest" title="Temperature 0-10"
-abstract="Nearest neighbour rendering"/>
-<NameMapping name="shadedcontour" title="Temperature 0-10 shaded"
-abstract="Shaded with contourlines"/>
-<NameMapping name="nearestcontour" title="Temperature 0-10 contours"
-abstract="Nearest neighbour with contourlines"/>
-<NameMapping name="bilinearcontour" title="Temperature 0-10 bilinear"
-abstract="Bilinear with contourlines"/>
 <StandardNames standard_name="air_temperature"
 units="Celsius"/>
 <Min>0</Min>
@@ -73,7 +66,8 @@ units="Celsius"/>
 
 An example style for cloudcover:
 ```
-<Style name="highcloudcover">
+<Style name="highcloudcover" title="High cloud cover"
+abstract="Rendered with nearest neighbour interpolation">
 <Legend fixedclasses="true" tickround="0.1" tickinterval=".1"
 >highcloudcover</Legend>
 <Min>0</Min>
@@ -87,22 +81,6 @@ fillcolor="#8080FF"/>
 <ShadeInterval min="0.75" max="1.00" label="0.75-1.00"
 fillcolor="#4C4CFF"/>
 <RenderMethod>bilinear,nearest,shaded</RenderMethod>
-<NameMapping name="nearest" title="High cloud cover"
-abstract="Rendered with nearest neighbour interpolation"/>
-<NameMapping name="bilinear" title="High cloud cover bilinear"
-abstract="Rendered with bilinear interpolation"/>
-<NameMapping name="contour" title="High cloud cover contour"
-abstract="Contourlines on a transparent background"/>
-<NameMapping name="shaded" title="High cloud cover shaded"
-abstract="Shaded"/>
-<NameMapping name="nearestcontour" title="High cloud cover nearest +
-contours" abstract="Contours with nearest neighbour interpolated
-background"/>
-<NameMapping name="bilinearcontour" title="High cloud cover bilinear
-+ contours" abstract="Contours with bilinear interpolated
-background"/>
-<NameMapping name="shadedcontour" title="High cloud cover shaded +
-contours" abstract="Contours with shaded background"/>
 <StandardNames standard_name="high_cloud_cover"/>
 </Style>
 ```

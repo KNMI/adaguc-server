@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration>
   <!-- Custom styles -->
-  <Style name="shadedstylefast">
+  <Style name="shadedstylefast" title="Height map Fast" abstract="Height map as used for AHN Fast">
     <ShadeInterval min="-80" max="-7" fillcolor="#08387b" bgcolor="#FF000080" />
     <ShadeInterval min="-7" max="-6" fillcolor="#084584" />
     <ShadeInterval min="-6" max="-5" fillcolor="#105184" />
@@ -55,12 +55,10 @@
     <RenderMethod>nearest,bilinear</RenderMethod>
     <RenderSettings renderhint="discreteclasses" settings="fast"/>
 
-    <NameMapping name="nearest" title="Height map Fast" abstract="Height map as used for AHN Fast" />
-
   </Style>
 
 
-  <Style name="shadedstyleprecise">
+  <Style name="shadedstyleprecise" title="Height map Precise" abstract="Height map as used for AHN Precise">
     <ShadeInterval min="-80" max="-7" fillcolor="#08387b" bgcolor="#FF000080" />
     <ShadeInterval min="-7" max="-6" fillcolor="#084584" />
     <ShadeInterval min="-6" max="-5" fillcolor="#105184" />
@@ -113,8 +111,6 @@
 
     <RenderMethod>nearest,bilinear</RenderMethod>
     <RenderSettings renderhint="discreteclasses" settings="precise"/>
-
-    <NameMapping name="nearest" title="Height map Precise" abstract="Height map as used for AHN Precise" />
 
   </Style>
 

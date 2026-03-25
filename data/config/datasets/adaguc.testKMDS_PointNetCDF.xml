@@ -261,38 +261,34 @@
     <Point plotstationid="false" pointstyle="point" discradius="8" textradius="16" dot="true" fontsize="8" textcolor="#000000"/>
   </Style>
 
-  <Style name="windspeed_arrow">
+  <Style name="windspeed_arrow" title="Wind direction arrow" abstract="With an arrow on a disc.">
     <Legend fixed="true" tickinterval="5">standard</Legend>
     <Min>0</Min>
     <Max>75</Max>
-    <NameMapping name="barb" title="Wind direction arrow" abstract="With an arrow on a disc."/>
     <RenderMethod>barb</RenderMethod>
     <Vector vectorstyle="disc" linewidth="1.0" linecolor="#000000FF" textcolor="#FFFFFF" fontsize="8"  plotstationid="false"/>
   </Style>
 
-  <Style name="windspeed_vector">
+  <Style name="windspeed_vector" title="Wind direction vector" abstract="As vector">
     <Legend fixed="true" tickinterval="5">standard</Legend>
     <Min>0</Min>
     <Max>75</Max>
-    <NameMapping name="barb" title="Wind direction vector" abstract="As vector"/>
     <RenderMethod>barb</RenderMethod>
     <Vector vectorstyle="vector" linewidth="1.0" linecolor="#000000FF" textcolor="#FFFFFF"/>
   </Style>
 
-  <Style name="windspeed_barb_no_outline">
+  <Style name="windspeed_barb_no_outline" title="Wind direction barb no outline" abstract="As barb">
     <Legend fixed="true" tickinterval="5">standard</Legend>
     <Min>0</Min>
     <Max>75</Max>
-    <NameMapping name="barb" title="Wind direction barb no outline" abstract="As barb"/>
     <RenderMethod>barb</RenderMethod>
     <Vector vectorstyle="barb" linewidth="0.0" linecolor="#0000FFFF" textcolor="#FFFFFF"/>
   </Style>
 
-  <Style name="windspeed_barb">
+  <Style name="windspeed_barb"  title="Wind direction barb" abstract="As barb">
     <Legend fixed="true" tickinterval="5">standard</Legend>
     <Min>0</Min>
     <Max>75</Max>
-    <NameMapping name="barb" title="Wind direction barb" abstract="As barb"/>
     <RenderMethod>barb</RenderMethod>
     <Vector vectorstyle="barb" linewidth="1.0" linecolor="#000000FF" textcolor="#FFFFFF"/>
   </Style>

@@ -29,11 +29,10 @@
 		<palette index="239" color="#000000FF" />
 		<!-- 12 !! -->
 	</Legend>
-	<Style name="age_magnitude_triangles">
+	<Style name="age_magnitude_triangles" title="Seismic events with age and magnitude as triangles" abstract="The seismic events are colored according to age and the size of the disc is based on Magnitude using triangles">
 		<Legend fixed="true" tickinterval="100000">magnitude</Legend>
 		<Min>0</Min>
 		<Max>2000000</Max>
-		<NameMapping name="point" title="Seismic events with age and magnitude as triangles" abstract="The seismic events are colored according to age and the size of the disc is based on Magnitude using triangles" />
 		<Point min="2592000" symbol="triangle" max="1000000000000" pointstyle="radiusandvalue" textformat=" " plotstationid="false" fillcolor="#CCCCCC" discradius="2.5" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF" />
 		<Point min="604800" symbol="triangle" max="2592000" pointstyle="radiusandvalue" textformat=" " plotstationid="false" fillcolor="#FFFFFFFF" discradius="2.5" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF" />
 		<Point min="86400" symbol="triangle" max="604800" pointstyle="radiusandvalue" textformat=" " plotstationid="false" fillcolor="#FFFF00FF" discradius="2.5" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF" />

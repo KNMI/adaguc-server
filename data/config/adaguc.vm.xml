@@ -52,21 +52,19 @@
   </Legend>
 
 
-  <Style name="baselayer">
+  <Style name="baselayer" title="Land sea mask" abstract="Land sea mask">
     <Legend fixedclasses="true" tickinterval="1000" tickround="1">baselayer</Legend>
     <Min>0.0</Min>
     <Max>1000</Max>
     <RenderMethod>nearest</RenderMethod>
-    <NameMapping name="nearest"   title="Land sea mask" abstract="Land sea mask"/>
     <FeatureInterval match=".*" matchid="abbrev" bgcolor="#CCCCFF" fillcolor="#CCFFCC"/>
   </Style>
 
-  <Style name="overlay">
+  <Style name="overlay" title="Overlay countries" abstract="Overlay countries">
     <Legend fixedclasses="true" tickinterval="1000" tickround="1">baselayer</Legend>
     <Min>0.0</Min>
     <Max>1000</Max>
     <RenderMethod>polyline</RenderMethod>
-    <NameMapping name="polyline"   title="Overlay countries" abstract="Overlay countries"/>
     <FeatureInterval match=".*" matchid="abbrev" bordercolor="#000000" borderwidth="1" linecolor="#000000" linewidth="1"/>
   </Style>
 

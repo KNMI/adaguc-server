@@ -66,11 +66,10 @@
 
 
   <!-- Style configuration -->
-  <Style name="rainbow">
+  <Style name="rainbow"  title="Rainbow colors" abstract="Drawing  images with rainbow colors">
     <Legend fixedclasses="true" tickinterval="500" tickround="1">rainbow</Legend>
     <Min>0.0</Min>
     <Max>1</Max>
-    <NameMapping name="nearest"   title="Rainbow colors" abstract="Drawing  images with rainbow colors"/>
   </Style>
 
  <!-- Layer configuration -->
