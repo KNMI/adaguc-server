@@ -2,6 +2,7 @@
 
 - If there are more Settings elements in dataset configurations, cleanup will still work. The first found Settings element is used.
 - If the scan script is used with the `-xf` option, the scan script will delete the given file if it is not associated with any dataset. It will exit with code SCAN_EXITCODE_FILENOMATCH_ISDELETED=68.
+- Added linting option via `-c` to the scan script, this allows to lint XML files.
 
 **Version 7.0.0 - 2026-03-23**
 
@@ -9,7 +10,6 @@
 
 **Version 6.8.0 - 2026-03-18**
 
-- Added support to check / lint datasets with --lint option
 - Fixed satcomp png tiling and added test
 - Redis upgraded to version 7
 

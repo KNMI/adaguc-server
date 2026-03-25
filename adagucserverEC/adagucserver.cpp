@@ -73,7 +73,6 @@ int main(int argc, char **argv, char **envp) {
 
   proj_clear_cache();
   BBOXProjectionClearCache();
-
   closeLogFile();
   varCacheClear();
 

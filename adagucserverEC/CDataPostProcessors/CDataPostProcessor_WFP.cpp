@@ -61,12 +61,12 @@ int CDPPWFP::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *dataSo
     dataSource->getDataObject(1)->cdfVariable->setAttributeText("long_name", "WindSpeedWindparksOn");
 
     /* Prepend foundWindSectors data object */
-    DataObject *founrWindSectorsDataObject = new DataObject();
-    dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), founrWindSectorsDataObject);
-    founrWindSectorsDataObject->cdfVariable = cloneVariable(varToClone, "foundWindSector", dataSource->dWidth * dataSource->dHeight);
-    founrWindSectorsDataObject->variableName.copy("foundWindSector");
-    founrWindSectorsDataObject->cdfObject = (CDFObject *)varToClone->getParentCDFObject();
-    founrWindSectorsDataObject->cdfObject->addVariable(founrWindSectorsDataObject->cdfVariable);
+    DataObject *foundWindSectorsDataObject = new DataObject();
+    dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), foundWindSectorsDataObject);
+    foundWindSectorsDataObject->cdfVariable = cloneVariable(varToClone, "foundWindSector", dataSource->dWidth * dataSource->dHeight);
+    foundWindSectorsDataObject->variableName.copy("foundWindSector");
+    foundWindSectorsDataObject->cdfObject = (CDFObject *)varToClone->getParentCDFObject();
+    foundWindSectorsDataObject->cdfObject->addVariable(foundWindSectorsDataObject->cdfVariable);
 
     /* Prepend windSpeedDifference data object */
     DataObject *windSpeedDifferenceDataObject = new DataObject();

@@ -53,16 +53,17 @@ int lintDataset(std::string config) {
   }
   std::string datasetName = (CT::split(config, ",").back());
   if (availableLegendNames.size() > 0) {
-    CDBWarning("[LINT]: In [%s]: no references for legend(s) [%s]", CT::basename(datasetName).c_str(), CT::join(availableLegendNames).c_str());
+    CDBLint("In dataset \"%s\": no references for (%lu) legend(s) [%s]", CT::basename(datasetName).c_str(), availableLegendNames.size(), CT::join(availableLegendNames).c_str());
   }
   if (availableStyleNames.size() > 0) {
-    CDBWarning("[LINT]: In [%s]: no references for style(s) [%s] ", CT::basename(datasetName).c_str(), CT::join(availableStyleNames).c_str());
+    CDBLint("In dataset \"%s\": no references for (%lu) style(s) [%s] ", CT::basename(datasetName).c_str(), availableStyleNames.size(), CT::join(availableStyleNames).c_str());
   }
 
   int numIssues = numXMLAttributesNotRecognized + availableLegendNames.size() + availableStyleNames.size();
   if (numIssues > 0) {
-    CDBWarning("[LINT]: Found [%d] issues in dataset [%s]", numIssues, datasetName.c_str());
+    CDBLint("Found (%d) issues in dataset [%s]", numIssues, datasetName.c_str());
     return 1;
   }
+  CDBLint("No issues found in dataset [%s]", datasetName.c_str());
   return 0;
 }
