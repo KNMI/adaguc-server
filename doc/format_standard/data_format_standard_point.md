@@ -273,7 +273,7 @@ The configuration in ADAGUC looks like this:
   <palette index="220" color="#880000FF"/> <!-- 11 ! -->
   <palette index="239" color="#000000FF"/> <!-- 12 !! -->
 </Legend>
-<Style name="magnitude" title="Richter magnitude scale" abstract="Wth continuous colors">
+<Style name="magnitude" title="Richter magnitude scale" abstract="With continuous colors">
   <Legend fixed="true" tickinterval="1">magnitude</Legend>
   <Min>0</Min>
   <Max>12</Max>

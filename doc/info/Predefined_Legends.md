@@ -184,7 +184,7 @@ Seismological data
   <Point plotstationid="false" pointstyle="point" discradius="20" textradius="0" dot="false" fontsize="14" textcolor="#FFFFFF"/>
 </Style>
 
-<Style name="magnitude_col" title="Richter magnitude scale" abstract="Wth continuous colors">
+<Style name="magnitude_col" title="Richter magnitude scale" abstract="With continuous colors">
   <Legend fixed="true" tickinterval="1">magnitude_col</Legend>
   <Min>0</Min>
   <Max>12</Max>

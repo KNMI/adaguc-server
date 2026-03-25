@@ -28,7 +28,7 @@
     <palette index="239" color="#000000FF" />
     <!-- 12 !! -->
   </Legend>
-  <Style name="magnitude"  title="Richter magnitude scale" abstract="Wth continuous colors">
+  <Style name="magnitude"  title="Richter magnitude scale" abstract="With continuous colors">
     <Legend fixed="true" tickinterval="100000">magnitude</Legend>
     <Min>0</Min>
     <Max>2000000</Max>
@@ -52,7 +52,7 @@
   <Symbol name="triangle" coordinates="[[-1, -1], [1, -1], [0.0, 1], [-1, -1]]"/>
   <Symbol name="square" coordinates="[[-1, -1], [1, -1], [1, 1], [-1, 1], [-1, -1]]"/>
 
-  <Style name="magnitude_withsymbol" title="Richter magnitude scale" abstract="Wth continuous colors">
+  <Style name="magnitude_withsymbol" title="Richter magnitude scale" abstract="With continuous colors">
     <Legend fixed="true" tickinterval="100000">magnitude</Legend>
     <Min>0</Min>
     <Max>2000000</Max>

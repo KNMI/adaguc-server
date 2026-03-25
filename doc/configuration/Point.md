@@ -242,7 +242,7 @@ depends on age. The radius can be adjusted with the discradius property,
 it multiplies the magnitude variable with the discradius value.
 
 ```xml
-<Style name="magnitude" title="Richter magnitude scale" abstract="Wth continuous colors">
+<Style name="magnitude" title="Richter magnitude scale" abstract="With continuous colors">
   <Legend fixed="true" tickinterval="100000">magnitude</Legend>
   <Min>0</Min>
   <Max>2000000</Max>
