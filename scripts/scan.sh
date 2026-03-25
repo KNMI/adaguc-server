@@ -103,8 +103,9 @@ while getopts "d:c:f:vtkrlmexh" o; do
         m)
             echo "Updating layermetadata table"
             command="${ADAGUC_PATH}/bin/adagucserver --updatelayermetadata --config ${ADAGUC_CONFIG}"
-            echo "${command}"
-            $command
+            runscancommand ${command}
+            OUT=$?
+            exit ${OUT}
             ;;
         l)
             for i in ${ADAGUC_DATASET_DIR}/*xml;do
