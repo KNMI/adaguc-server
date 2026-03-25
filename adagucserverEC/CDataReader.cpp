@@ -1067,7 +1067,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
       for (size_t j = 0; j < attributes->size(); j++) {
         CDF::Attribute *attribute;
         attribute = (*attributes)[j];
-        dataSource->metaDataItems.push_back(CDataSource::KVP(variableName->c_str(), attribute->name.c_str(), attribute->toString().c_str()));
+        dataSource->metaDataItems.push_back({.key = variableName->c_str(), .value = attribute->name, .abstract = attribute->toString()});
       }
     }
     if (verbose) {
@@ -1305,7 +1305,7 @@ int CDataReader::open(CDataSource *dataSource, int mode, int x, int y, int *grid
     // 2. For getmap, stretch colors based on min/max
     if (dataSource->stretchMinMax) {
       if (dataSource->statistics == NULL) {
-        dataSource->statistics = new CDataSource::Statistics();
+        dataSource->statistics = new Statistics();
         if (!(styleConfiguration->renderMethod & RM_RGBA)) {
           dataSource->statistics->calculate(dataSource);
         }

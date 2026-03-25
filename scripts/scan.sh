@@ -11,7 +11,11 @@ NOCLEAN=''
 TIMEOUTOKILL="4m"
 ADAGUC_AUTOREMOVENONMATCHINGFILES='FALSE'
 
-
+NC='\033[0m'       # Text Reset
+RED='\033[0;31m'          # Red
+GREEN='\033[0;32m'        # Green
+BLUE='\033[0;34m'         # Blue
+EXECCOLOR=$BLUE
 
 SCAN_EXITCODE_FILENOMATCH=64  #  File is available but does not match any of the available datasets
 SCAN_EXITCODE_DATASETNOEXIST=65  # The reason for this status code is that the dataset configuration file does not exist.
@@ -39,9 +43,10 @@ usage () {
     echo "This script uses adaguc-server to scan files and datasets. It ingests indexing information into the database"
     echo "  [-f] <file to add> [-d] <datasetname>             [Scan a single file for specified dataset]"
     echo "  [-f] <file to add>                                [Scan a single file, dataset is automatically detected]"
-    echo "  [-f] <file to add> [-x]                           [Scan a single file, dataset is automatically detected, file is removed if not associated with any dataset]"
+    echo "  [-f] <file to add> [-x] (or -xf)                  [Scan a single file, dataset is automatically detected, file is removed if not associated with any dataset]"
     echo "  [-d] <datasetname>                                [Scan a dataset, all layers within dataset will be checked]"
     echo "  [-d] \"*\"                                          [Scan all available datasets]"
+    echo "  [-c] <datasetname>                                [Check / lint a dataset for issues]"
     echo "  [-l]                                              [List all datasets]"
     echo "  [-v]                                              [Verbose logging]"
     echo "  [-r]                                              [Rescan by ignoring file modification date of files (--rescan)]"
@@ -52,10 +57,32 @@ usage () {
     exit
 }
 
+runscancommand () {
+  local command=$@
+  echo "[scancommand] ${command}"
+  printf "${EXECCOLOR}"
+  $command
+  OUT=$?
+  printf $NC
+  return $OUT
+}
 
-while getopts "d:f:vtkrlmexh" o; do
+runscancommandwithtimeout () {
+  local command=$@
+  echo "[scancommand] ${command}"
+  printf "${EXECCOLOR}"
+  timeout $TIMEOUTOKILL $command
+  OUT=$?
+  printf $NC
+  return $OUT
+}
+while getopts "d:c:f:vtkrlmexh" o; do
     case "${o}" in
         d)
+            ADAGUC_DATASET=${OPTARG}
+            ;;
+        c)
+            ADAGUC_DATASET_LINT=True
             ADAGUC_DATASET=${OPTARG}
             ;;
         f)
@@ -76,8 +103,9 @@ while getopts "d:f:vtkrlmexh" o; do
         m)
             echo "Updating layermetadata table"
             command="${ADAGUC_PATH}/bin/adagucserver --updatelayermetadata --config ${ADAGUC_CONFIG}"
-            echo $command
-            $command
+            runscancommand ${command}
+            OUT=$?
+            exit ${OUT}
             ;;
         l)
             for i in ${ADAGUC_DATASET_DIR}/*xml;do
@@ -102,19 +130,24 @@ done
 
 if [ $OPTIND -eq 1 ]; then usage; fi
 
+ADAGUC_COMMAND="--updatedb"
 
+# Lint a dataset
+if [ "${ADAGUC_DATASET_LINT}" == "True" ]; then
+  ADAGUC_COMMAND="--lint"
+fi
 
-### Scan a file for a specified dataset ###
+### Scan a file for a specified dataset ###    case "${o}" in
+
 if [[ -n "${ADAGUC_DATASET}" &&  -n "${ADAGUC_DATAFILE}" ]]; then
   STATUSCODE=0
-  echo "Adding file [${ADAGUC_DATAFILE}] to dataset [${ADAGUC_DATASET}]:"
-  command="${ADAGUC_PATH}/bin/adagucserver --updatedb ${NOCLEAN} ${VERBOSE} ${RESCAN} ${RECREATETABLES} --config ${ADAGUC_CONFIG},${ADAGUC_DATASET} --path ${ADAGUC_DATAFILE}"
-  echo $command
-  timeout $TIMEOUTOKILL $command
+  echo "[SCAN] Adding file [${ADAGUC_DATAFILE}] to dataset [${ADAGUC_DATASET}]:"
+  command="${ADAGUC_PATH}/bin/adagucserver ${ADAGUC_COMMAND} ${NOCLEAN} ${VERBOSE} ${RESCAN} ${RECREATETABLES} --config ${ADAGUC_CONFIG},${ADAGUC_DATASET} --path ${ADAGUC_DATAFILE}"
+  runscancommandwithtimeout ${command}
   OUT=$?
   if [ ${OUT} -ne 0 ]; then
     STATUSCODE=${OUT}
-    echo "[WARN] Code ${STATUSCODE}: $(translateerrorcode ${STATUSCODE}). Command: [${command}]"
+    printf "${RED}[SCAN] [WARN] Code ${STATUSCODE}: $(translateerrorcode ${STATUSCODE}). Command was: [${command}].${NC}\n"
   fi
   exit ${STATUSCODE}
 fi
@@ -126,19 +159,18 @@ if [[ -n "${ADAGUC_DATAFILE}" ]]; then
   basenameoffile="${ADAGUC_DATAFILE##*/}"
   
   STATUSCODE=0
-  echo "Adding file [${ADAGUC_DATAFILE}] to dataset [${alldatasets}]:"
-  command="${ADAGUC_PATH}/bin/adagucserver --updatedb --autofinddataset ${NOCLEAN} ${VERBOSE} ${RESCAN} ${RECREATETABLES} --config ${ADAGUC_CONFIG} --path ${ADAGUC_DATAFILE}"
-  echo $command
-  timeout $TIMEOUTOKILL $command
+  echo "[SCAN] Adding file [${ADAGUC_DATAFILE}] to dataset [${alldatasets}]:"
+  command="${ADAGUC_PATH}/bin/adagucserver ${ADAGUC_COMMAND} --autofinddataset ${NOCLEAN} ${VERBOSE} ${RESCAN} ${RECREATETABLES} --config ${ADAGUC_CONFIG} --path ${ADAGUC_DATAFILE}"
+  runscancommandwithtimeout ${command}
   OUT=$?
   if [ ${OUT} -ne 0 ]; then
     STATUSCODE=${OUT}
-    echo "[WARN] Code ${STATUSCODE}: $(translateerrorcode ${STATUSCODE}). Command: [${command}]"
+    printf "${RED}[SCAN] [WARN] Code ${STATUSCODE}: $(translateerrorcode ${STATUSCODE}). Command was: [${command}]${NC}\n"
   fi
   # Non matching files should be removed to avoid cluttering the fs with unrecognized files
   if [ ${STATUSCODE} -eq ${SCAN_EXITCODE_FILENOMATCH} ]; then
     if [ "$ADAGUC_AUTOREMOVENONMATCHINGFILES" = "TRUE" ]; then
-      echo "[WARN] !!! File is not associated to any dataset configuration and ADAGUC_AUTOREMOVENONMATCHINGFILES=TRUE: Now deleting file [${ADAGUC_DATAFILE}]."
+      printf "${RED}[SCAN] [WARN] !!! File is not associated to any dataset configuration and ADAGUC_AUTOREMOVENONMATCHINGFILES=TRUE: Now deleting file [${ADAGUC_DATAFILE}].${NC}\n"
       rm -f ${ADAGUC_DATAFILE}
       exit ${SCAN_EXITCODE_FILENOMATCH_ISDELETED}
     fi
@@ -149,34 +181,33 @@ fi
 # Scan a dataset
 if [[ -n "${ADAGUC_DATASET}" ]] && [ "${ADAGUC_DATASET}" != "*" ]; then
   STATUSCODE=0
-  echo "Scanning full dataset [${ADAGUC_DATASET}]:"
-  command="${ADAGUC_PATH}/bin/adagucserver --updatedb ${NOCLEAN} ${VERBOSE} ${RESCAN} ${RECREATETABLES} --config ${ADAGUC_CONFIG},${ADAGUC_DATASET}"
-  echo $command
-  $command
+  printf "[SCAN] Scanning dataset [${ADAGUC_DATASET}]:\n"
+  command="${ADAGUC_PATH}/bin/adagucserver ${ADAGUC_COMMAND} ${NOCLEAN} ${VERBOSE} ${RESCAN} ${RECREATETABLES} --config ${ADAGUC_CONFIG},${ADAGUC_DATASET}"
+  runscancommand ${command}
   OUT=$?
   if [ ${OUT} -ne 0 ]; then
     STATUSCODE=${OUT}
-    echo "[WARN] Code ${STATUSCODE}: $(translateerrorcode ${STATUSCODE}). Command: [${command}]"
+    printf "${RED}[SCAN] [WARN] Code ${STATUSCODE}: $(translateerrorcode ${STATUSCODE}). Command was: [${command}]${NC}\n"
   fi
   exit ${STATUSCODE} 
 fi
 
 # Scan all datasets
 if [[ -n "${ADAGUC_DATASET}" ]] && [ "${ADAGUC_DATASET}" == "*" ]; then
-  echo "Scanning all datasets"
+  echo "[SCAN] Scanning all datasets"
   STATUSCODE=0
   for configfile in ${ADAGUC_DATASET_DIR}/*xml ;do
-    echo "Scanning full dataset [${configfile}]:"
-    command="${ADAGUC_PATH}/bin/adagucserver --updatedb ${NOCLEAN} ${VERBOSE} ${RESCAN} ${RECREATETABLES} --config ${ADAGUC_CONFIG},${configfile}"
-    echo $command
-    $command
+    printf "\n[SCAN] Scanning full dataset [${configfile}]:\n"
+    command="${ADAGUC_PATH}/bin/adagucserver ${ADAGUC_COMMAND} ${NOCLEAN} ${VERBOSE} ${RESCAN} ${RECREATETABLES} --config ${ADAGUC_CONFIG},${configfile}"
+    runscancommand ${command}
     OUT=$?
     if [ ${OUT} -ne 0 ]; then
       STATUSCODE=${OUT}
+      printf "${RED}[SCAN] [WARN] Code ${STATUSCODE}: $(translateerrorcode ${STATUSCODE}).${NC}\n"
     fi
   done
   if [ ${STATUSCODE} -ne 0 ]; then
-    echo "[WARN] Code ${STATUSCODE}: $(translateerrorcode ${STATUSCODE})."
+   printf "${RED}[SCAN] [WARN] Code ${STATUSCODE}: $(translateerrorcode ${STATUSCODE}).${NC}\n"
   fi
   exit ${STATUSCODE} 
 fi

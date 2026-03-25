@@ -26,7 +26,7 @@ CDataSource *CDPPIncludeLayer::getDataSource(CServerConfig::XMLE_DataPostProc *p
       break;
     }
   }
-  dataSourceToInclude->setCFGLayer(dataSource->srvParams, dataSource->srvParams->configObj->Configuration[0], dataSource->srvParams->cfg->Layer[additionalLayerNo], additionalLayerName.c_str(), 0);
+  dataSourceToInclude->setCFGLayer(dataSource->srvParams, dataSource->srvParams->cfg->Layer[additionalLayerNo], 0);
   return dataSourceToInclude;
 }
 
@@ -58,7 +58,7 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
     /* First check if this was already added */
     auto dataObjectsVector = *dataSource->getDataObjectsVector();
     for (auto it = dataObjectsVector.begin(); it != dataObjectsVector.end(); ++it) {
-      CDataSource::DataObject *dataObject = *it;
+      DataObject *dataObject = *it;
       if (dataObject->dataObjectName.equals(proc->attr.name)) { // TODO SHould think of another identifier
         CDBDebug("This processor was already applied, skipping metadata part");
         return 0;
@@ -99,7 +99,7 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
       }
     }
     for (size_t dataObjectNr = 0; dataObjectNr < dataSourceToInclude->getNumDataObjects(); dataObjectNr++) {
-      CDataSource::DataObject *currentDataObject = dataSource->getDataObject(0);
+      DataObject *currentDataObject = dataSource->getDataObject(0);
       CDF::Variable *varToClone = NULL;
       try {
         varToClone = dataSourceToInclude->getDataObject(dataObjectNr)->cdfVariable;
@@ -116,7 +116,7 @@ int CDPPIncludeLayer::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
         if (proc->attr.mode.equals("prepend")) mode = 1;
       }
 
-      CDataSource::DataObject *newDataObject = new CDataSource::DataObject();
+      DataObject *newDataObject = new DataObject();
       if (mode == 0) dataSource->getDataObjectsVector()->push_back(newDataObject);
 
       if (mode == 1) dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), newDataObject);

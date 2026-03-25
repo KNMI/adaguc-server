@@ -21,7 +21,7 @@ private:
   CURAggregatedDimension aggregatedDimensions[CCUniqueRequests_MAX_DIMS];
 
   void recurDataStructure(CXMLParser::XMLElement *dataStructure, CURResult *result, int depth, int *dimOrdering, std::vector<int> dimIndicesToSkip);
-  void createStructure(std::vector<CURResult> results, CDataSource::DataObject *dataObject, CDrawImage *drawImage, CImageWarper *imageWarper, CDataSource *dataSource, int dX, int dY,
+  void createStructure(std::vector<CURResult> results, DataObject *dataObject, CDrawImage *drawImage, CImageWarper *imageWarper, CDataSource *dataSource, int dX, int dY,
                        CXMLParser::XMLElement *gfiStructure);
   void addDimSet(CURDimInfo &dimInfo, int start, std::vector<std::string> valueList);
   void nestRequest(it_type_diminfo diminfomapiterator, CURFileInfo &fileInfo, int depth);

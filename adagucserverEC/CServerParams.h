@@ -132,7 +132,7 @@ public:
   int WCS_GoNative;
 
   CServerConfig *configObj;
-  CServerConfig::XMLE_Configuration *cfg;
+  CServerConfig::XMLE_Configuration *cfg = nullptr;
   CT::string configFileName;
 
   /**
@@ -252,7 +252,7 @@ public:
    * @param Legend a XMLE_Legend object configured in a style or in a layer
    * @return Pointer to a new stringlist with all possible legend names, must be deleted with delete. Is NULL on failure.
    */
-  static std::vector<CT::string> getLegendNames(std::vector<CServerConfig::XMLE_Legend *> Legend);
+  static std::vector<std::string> getLegendNames(std::vector<CServerConfig::XMLE_Legend *> Legend);
 
   /**
    * Checks whether data is restricted or not based on the environment variable ADAGUC_DATARESTRICTION.
@@ -280,7 +280,7 @@ public:
    * @param pszConfigFile The config file to parse
    * returns zero on success       *
    */
-  int parseConfigFile(CT::string &pszConfigFile);
+  int parseConfigFile(CT::string pszConfigFile);
 
   /**
    * Returns cache control header

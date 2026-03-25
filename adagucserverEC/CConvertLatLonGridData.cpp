@@ -36,7 +36,7 @@ int CConvertLatLonGrid::convertLatLonGridData(CDataSource *dataSource, int mode)
   size_t nrDataObjects = dataSource->getNumDataObjects();
   if (nrDataObjects <= 0) return 1;
 
-  std::vector<CDataSource::DataObject *> dataObjects(nrDataObjects, nullptr);
+  std::vector<DataObject *> dataObjects(nrDataObjects, nullptr);
   for (size_t d = 0; d < nrDataObjects; d++) {
     dataObjects[d] = dataSource->getDataObject(d);
   }
@@ -106,10 +106,9 @@ int CConvertLatLonGrid::convertLatLonGridData(CDataSource *dataSource, int mode)
 #ifdef CConvertLatLonGrid_DEBUG
       CDBDebug("Setting statistics: min/max : %f %f", minMax.min, minMax.max);
 #endif
-      dataSource->statistics = new CDataSource::Statistics();
-      dataSource->statistics->setMaximum(minMax.max);
-      dataSource->statistics->setMinimum(minMax.min);
-    }
+      dataSource->statistics = new Statistics();
+      dataSource->statistics->setMinMax(minMax);
+        }
   }
 
   // Make the width and height of the new regular grid field the same as the viewing window
@@ -216,7 +215,7 @@ int CConvertLatLonGrid::convertLatLonGridData(CDataSource *dataSource, int mode)
 
     bool drawBilinear = false;
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-    if (styleConfiguration->styleCompositionName.indexOf("bilinear") >= 0) {
+    if (CT::indexOf(styleConfiguration->styleCompositionName, "bilinear") >= 0) {
       drawBilinear = true;
     }
 

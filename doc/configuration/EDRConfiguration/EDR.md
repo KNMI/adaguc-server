@@ -63,4 +63,4 @@ It is not required that all parameters have exactly the same set of values for t
 
 Internally, EDR will use the metadata endpoint under `/adagucserver?service=wms&request=getmetadata&format=application/json`.
 
-If you scan your dataset with `docker exec -i -t my-adaguc-server /adaguc/scan.sh -d my_dataset`, adaguc will fill/update the metadata for your dataset. Additionally, will periodically update the metadata for all configured datasets.
+If you scan your dataset with `docker exec -i -t my-adaguc-server scan.sh -d my_dataset`, adaguc will fill/update the metadata for your dataset. Additionally, will periodically update the metadata for all configured datasets.

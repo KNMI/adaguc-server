@@ -127,7 +127,7 @@ void CURUniqueRequests::recurDataStructure(CXMLParser::XMLElement *dataStructure
   }
 }
 
-void CURUniqueRequests::createStructure(std::vector<CURResult> results, CDataSource::DataObject *dataObject, CDrawImage *drawImage, CImageWarper *imageWarper, CDataSource *dataSource, int dX, int dY,
+void CURUniqueRequests::createStructure(std::vector<CURResult> results, DataObject *dataObject, CDrawImage *drawImage, CImageWarper *imageWarper, CDataSource *dataSource, int dX, int dY,
                                         CXMLParser::XMLElement *gfiStructure) {
 
   int numberOfDims = dataSource->requiredDims.size();
@@ -239,7 +239,7 @@ void CURUniqueRequests::makeRequests(CDrawImage *drawImage, CImageWarper *imageW
 #endif
   for (size_t dataObjectNr = 0; dataObjectNr < dataSource->dataObjects.size(); dataObjectNr++) {
 
-    CDataSource::DataObject *dataObject = dataSource->getDataObject(dataObjectNr);
+    DataObject *dataObject = dataSource->getDataObject(dataObjectNr);
     std::string variableName = dataObject->cdfVariable->name.c_str();
     // Show all requests
 

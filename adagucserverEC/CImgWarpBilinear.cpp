@@ -943,8 +943,8 @@ void CImgWarpBilinear::drawContour(float *valueData, float fNodataValue, float i
   if (dataSource->stretchMinMax == true) {
     if (dataSource->statistics != NULL) {
       float legendInterval = interval;
-      float minValue = (float)dataSource->statistics->getMinimum();
-      float maxValue = (float)dataSource->statistics->getMaximum();
+      float minValue = (float)dataSource->statistics->min;
+      float maxValue = (float)dataSource->statistics->max;
       float iMin = convertValueToClass(minValue, legendInterval);
       float iMax = convertValueToClass(maxValue, legendInterval) + legendInterval;
       // Calculate new scale and offset for this:

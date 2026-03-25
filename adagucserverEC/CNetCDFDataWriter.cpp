@@ -623,12 +623,12 @@ int CNetCDFDataWriter::addData(std::vector<CDataSource *> &dataSources) {
 
       /* Check if there is any data in the found grid */
       if (dataSource->statistics == NULL) {
-        dataSource->statistics = new CDataSource::Statistics();
+        dataSource->statistics = new Statistics();
         dataSource->statistics->calculate(dataSource);
       }
       if (dataSource->statistics != NULL) {
         if (verbose) {
-          CDBDebug("min %f, max %f samples %lu", dataSource->statistics->getMinimum(), dataSource->statistics->getMaximum(), dataSource->statistics->getNumSamples());
+          CDBDebug("min %f, max %f samples %lu", dataSource->statistics->min, dataSource->statistics->max, dataSource->statistics->getNumSamples());
         }
         if (dataSource->statistics->getNumSamples() == 0) return 1;
       }

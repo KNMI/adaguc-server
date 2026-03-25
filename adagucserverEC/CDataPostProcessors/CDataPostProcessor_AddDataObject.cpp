@@ -31,7 +31,7 @@ int CDPPAddDataObject::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSour
     CT::string newDataObjectName = proc->attr.name;
 
     CDF::Variable *varToClone = dataSource->getDataObject(0)->cdfVariable;
-    CDataSource::DataObject *newDataObject = new CDataSource::DataObject();
+    DataObject *newDataObject = new DataObject();
 
     newDataObject->variableName.copy(newDataObjectName.c_str());
     dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin(), newDataObject);

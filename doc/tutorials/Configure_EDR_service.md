@@ -68,7 +68,7 @@ For the given example this will result in the following parameter name definitio
 ## Step 3: Scan the new data
 
 ```bash
-docker exec -i -t my-adaguc-server /adaguc/scan.sh -d edr
+docker exec -i -t my-adaguc-server scan.sh -d edr
 ```
 
 ## Step 4: Check if the EDR endpoint works

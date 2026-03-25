@@ -555,7 +555,7 @@ int CConvertADAGUCPoint::convertADAGUCPointData(CDataSource *dataSource, int mod
     CDBDebug("dataSource->stretchMinMax");
 #endif
     if (dataSource->statistics == NULL) {
-      dataSource->statistics = new CDataSource::Statistics();
+      dataSource->statistics = new Statistics();
       dataSource->statistics->calculate(pointVar[0]->getSize(), ((float *)pointVar[0]->data), CDF_FLOAT, dataSource->getDataObject(0)->dfNodataValue, dataSource->getDataObject(0)->hasNodataValue);
     }
   }

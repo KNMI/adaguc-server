@@ -12,4 +12,5 @@ bool checkIfPathIsFile(CT::string filePath);
 
 int setCRequestConfigFromEnvironment(CRequest *request, CT::string additionalDataset = "");
 
+int parseAndCheckConfigFile(std::string configFile, CServerParams *srvParam);
 #endif

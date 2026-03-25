@@ -87,26 +87,26 @@ void addDataObject(CDataSource *dataSource) {
   dataSource->getDataObject(1)->dataObjectName = CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ORG_V_COMPONENT;
 
   auto cdfObject = dataSource->getDataObject(0)->cdfObject;
-  CDataSource::DataObject *ugridabsolute = dataSource->getDataObject(0)->clone();
+  DataObject *ugridabsolute = dataSource->getDataObject(0)->clone();
   ugridabsolute->noFurtherProcessing = true;
   ugridabsolute->cdfVariable = cdfObject->getVariableThrows(U_COMPONENT_GRID_ABSOLUTE);
   ugridabsolute->variableName = U_COMPONENT_GRID_ABSOLUTE;
   ugridabsolute->dataObjectName = U_COMPONENT_GRID_ABSOLUTE;
 
-  CDataSource::DataObject *vgridabsolute = dataSource->getDataObject(0)->clone();
+  DataObject *vgridabsolute = dataSource->getDataObject(0)->clone();
   vgridabsolute->noFurtherProcessing = true;
   vgridabsolute->cdfVariable = cdfObject->getVariableThrows(V_COMPONENT_GRID_ABSOLUTE);
   vgridabsolute->variableName = V_COMPONENT_GRID_ABSOLUTE;
   vgridabsolute->dataObjectName = V_COMPONENT_GRID_ABSOLUTE;
 
-  CDataSource::DataObject *directionObject = dataSource->getDataObject(0)->clone();
+  DataObject *directionObject = dataSource->getDataObject(0)->clone();
   directionObject->noFurtherProcessing = true;
   directionObject->cdfVariable = cdfObject->getVariableThrows(DIRECTION_COMPONENT);
   directionObject->variableName = DIRECTION_COMPONENT;
   directionObject->dataObjectName = DIRECTION_COMPONENT;
   directionObject->setUnits("degrees");
 
-  CDataSource::DataObject *speedObject = dataSource->getDataObject(0)->clone();
+  DataObject *speedObject = dataSource->getDataObject(0)->clone();
   speedObject->noFurtherProcessing = true;
   speedObject->cdfVariable = cdfObject->getVariableThrows(SPEED_COMPONENT);
   speedObject->variableName = SPEED_COMPONENT;
@@ -139,10 +139,10 @@ int CDDPUVComponents::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSourc
     dPixelExtent[2] = dataSource->dWidth;
     dPixelExtent[3] = dataSource->dHeight;
 
-    CDataSource::DataObject *ugridabsolute = dataSource->getDataObjectByName(U_COMPONENT_GRID_ABSOLUTE);
-    CDataSource::DataObject *vgridabsolute = dataSource->getDataObjectByName(V_COMPONENT_GRID_ABSOLUTE);
-    CDataSource::DataObject *speedObject = dataSource->getDataObjectByName(SPEED_COMPONENT);
-    CDataSource::DataObject *directionObject = dataSource->getDataObjectByName(DIRECTION_COMPONENT);
+    DataObject *ugridabsolute = dataSource->getDataObjectByName(U_COMPONENT_GRID_ABSOLUTE);
+    DataObject *vgridabsolute = dataSource->getDataObjectByName(V_COMPONENT_GRID_ABSOLUTE);
+    DataObject *speedObject = dataSource->getDataObjectByName(SPEED_COMPONENT);
+    DataObject *directionObject = dataSource->getDataObjectByName(DIRECTION_COMPONENT);
 
     ugridabsolute->cdfVariable->copy(dataSource->getDataObjectByName(CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ORG_U_COMPONENT)->cdfVariable);
     vgridabsolute->cdfVariable->copy(dataSource->getDataObjectByName(CDATAPOSTPROCESSOR_CDDPUVCOMPONENTS_ORG_V_COMPONENT)->cdfVariable);

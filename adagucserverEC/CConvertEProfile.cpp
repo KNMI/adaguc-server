@@ -404,7 +404,7 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
   }
 
   size_t nrDataObjects = dataSource->getNumDataObjects();
-  std::vector<CDataSource::DataObject *> dataObjects(nrDataObjects, nullptr);
+  std::vector<DataObject *> dataObjects(nrDataObjects, nullptr);
   for (size_t d = 0; d < nrDataObjects; d++) {
     dataObjects[d] = dataSource->getDataObject(d);
   }
@@ -580,7 +580,7 @@ int CConvertEProfile::convertEProfileData(CDataSource *dataSource, int mode) {
     CDBDebug("dataSource->stretchMinMax");
 #endif
     if (dataSource->statistics == NULL) {
-      dataSource->statistics = new CDataSource::Statistics();
+      dataSource->statistics = new Statistics();
       dataSource->statistics->calculate(pointVar[0]->getSize(), ((float *)pointVar[0]->data), CDF_FLOAT, dataSource->getDataObject(0)->dfNodataValue, dataSource->getDataObject(0)->hasNodataValue);
     }
   }

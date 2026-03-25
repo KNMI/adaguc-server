@@ -1,104 +1,103 @@
 #include "CStyleConfiguration.h"
 #include "CDataSource.h"
 
-RenderMethod getRenderMethodFromString(CT::string renderMethodString) {
+RenderMethod getRenderMethodFromString(std::string renderMethodString) {
   RenderMethod renderMethod = RM_UNDEFINED;
-  if (renderMethodString.indexOf("nearest") != -1) renderMethod |= RM_NEAREST;
-  if (renderMethodString.indexOf("generic") != -1)
+  if (CT::indexOf(renderMethodString, "nearest") != -1) renderMethod |= RM_NEAREST;
+  if (CT::indexOf(renderMethodString, "generic") != -1)
     renderMethod |= RM_GENERIC;
-  else if (renderMethodString.indexOf("bilinear") != -1)
+  else if (CT::indexOf(renderMethodString, "bilinear") != -1)
     renderMethod |= RM_BILINEAR;
-  if (renderMethodString.indexOf("hillshaded") != -1)
+  if (CT::indexOf(renderMethodString, "hillshaded") != -1)
     renderMethod |= RM_HILLSHADED;
-  else if (renderMethodString.indexOf("shaded") != -1)
+  else if (CT::indexOf(renderMethodString, "shaded") != -1)
     renderMethod |= RM_SHADED;
-  if (renderMethodString.indexOf("contour") != -1) renderMethod |= RM_CONTOUR;
-  if (renderMethodString.indexOf("linearinterpolation") != -1) renderMethod |= RM_POINT_LINEARINTERPOLATION;
-  if (renderMethodString.indexOf("point") != -1) renderMethod |= RM_POINT;
-  if (renderMethodString.indexOf("vector") != -1) renderMethod |= RM_VECTOR;
-  if (renderMethodString.indexOf("barb") != -1) renderMethod |= RM_BARB;
-  if (renderMethodString.indexOf("thin") != -1) renderMethod |= RM_THIN;
-  if (renderMethodString.indexOf("rgba") != -1) renderMethod |= RM_RGBA;
-  if (renderMethodString.indexOf("stippling") != -1) renderMethod |= RM_STIPPLING;
-  if (renderMethodString.indexOf("polyline") != -1) renderMethod |= RM_POLYLINE;
-  if (renderMethodString.indexOf("polygon") != -1) renderMethod |= RM_POLYGON;
+  if (CT::indexOf(renderMethodString, "contour") != -1) renderMethod |= RM_CONTOUR;
+  if (CT::indexOf(renderMethodString, "linearinterpolation") != -1) renderMethod |= RM_POINT_LINEARINTERPOLATION;
+  if (CT::indexOf(renderMethodString, "point") != -1) renderMethod |= RM_POINT;
+  if (CT::indexOf(renderMethodString, "vector") != -1) renderMethod |= RM_VECTOR;
+  if (CT::indexOf(renderMethodString, "barb") != -1) renderMethod |= RM_BARB;
+  if (CT::indexOf(renderMethodString, "thin") != -1) renderMethod |= RM_THIN;
+  if (CT::indexOf(renderMethodString, "rgba") != -1) renderMethod |= RM_RGBA;
+  if (CT::indexOf(renderMethodString, "stippling") != -1) renderMethod |= RM_STIPPLING;
+  if (CT::indexOf(renderMethodString, "polyline") != -1) renderMethod |= RM_POLYLINE;
+  if (CT::indexOf(renderMethodString, "polygon") != -1) renderMethod |= RM_POLYGON;
 
   return renderMethod;
 }
 
-CT::string getRenderMethodAsString(RenderMethod renderMethod) {
-  CT::string renderMethodString;
+std::string getRenderMethodAsString(RenderMethod renderMethod) {
+  std::string renderMethodString;
   if (renderMethod == RM_UNDEFINED) {
-    renderMethodString.copy("undefined");
+    renderMethodString = "undefined";
     return renderMethodString;
   }
-  renderMethodString.copy("");
-  if (renderMethod & RM_NEAREST) renderMethodString.concat("nearest");
-  if (renderMethod & RM_BILINEAR) renderMethodString.concat("bilinear");
-  if (renderMethod & RM_SHADED) renderMethodString.concat("shaded");
-  if (renderMethod & RM_CONTOUR) renderMethodString.concat("contour");
-  if (renderMethod & RM_POINT) renderMethodString.concat("point");
-  if (renderMethod & RM_VECTOR) renderMethodString.concat("vector");
-  if (renderMethod & RM_BARB) renderMethodString.concat("barb");
-  if (renderMethod & RM_THIN) renderMethodString.concat("thin");
-  if (renderMethod & RM_RGBA) renderMethodString.concat("rgba");
-  if (renderMethod & RM_STIPPLING) renderMethodString.concat("stippling");
-  if (renderMethod & RM_POLYLINE) renderMethodString.concat("polyline");
-  if (renderMethod & RM_POLYGON) renderMethodString.concat("polygon");
-  if (renderMethod & RM_POINT_LINEARINTERPOLATION) renderMethodString.concat("linearinterpolation");
-  if (renderMethod & RM_HILLSHADED) renderMethodString.concat("hillshaded");
-  if (renderMethod & RM_GENERIC) renderMethodString.concat("generic");
+  renderMethodString = "";
+  if (renderMethod & RM_NEAREST) renderMethodString += "nearest";
+  if (renderMethod & RM_BILINEAR) renderMethodString += "bilinear";
+  if (renderMethod & RM_SHADED) renderMethodString += "shaded";
+  if (renderMethod & RM_CONTOUR) renderMethodString += "contour";
+  if (renderMethod & RM_POINT) renderMethodString += "point";
+  if (renderMethod & RM_VECTOR) renderMethodString += "vector";
+  if (renderMethod & RM_BARB) renderMethodString += "barb";
+  if (renderMethod & RM_THIN) renderMethodString += "thin";
+  if (renderMethod & RM_RGBA) renderMethodString += "rgba";
+  if (renderMethod & RM_STIPPLING) renderMethodString += "stippling";
+  if (renderMethod & RM_POLYLINE) renderMethodString += "polyline";
+  if (renderMethod & RM_POLYGON) renderMethodString += "polygon";
+  if (renderMethod & RM_POINT_LINEARINTERPOLATION) renderMethodString += "linearinterpolation";
+  if (renderMethod & RM_HILLSHADED) renderMethodString += "hillshaded";
+  if (renderMethod & RM_GENERIC) renderMethodString += "generic";
   return renderMethodString;
 }
 
-CT::string CStyleConfiguration::dump() {
-  CT::string data;
-  data.print("name = %s\n", styleCompositionName.c_str());
-  data.printconcat("minMaxSet = %d\n", minMaxSet);
-  data.printconcat("hasLegendValueRange = %d\n", hasLegendValueRange);
-  data.printconcat("hasError = %d\n", hasError);
-  data.printconcat("legendHasFixedMinMax = %d\n", legendHasFixedMinMax);
-  data.printconcat("smoothingFilter = %d\n", smoothingFilter);
-  data.printconcat("legendIndex = %d\n", legendIndex);
-  data.printconcat("styleIndex = %d\n", styleIndex);
-  data.printconcat("shadeInterval = %f\n", shadeInterval);
-  data.printconcat("contourIntervalL = %f\n", contourIntervalL);
-  data.printconcat("contourIntervalH = %f\n", contourIntervalH);
-  data.printconcat("legendScale = %f\n", legendScale);
-  data.printconcat("legendOffset = %f\n", legendOffset);
-  data.printconcat("legendLog = %f\n", legendLog);
-  data.printconcat("legendLowerRange = %f\n", legendLowerRange);
-  data.printconcat("legendUpperRange; = %f\n", legendUpperRange);
-  data.printconcat("legendTickInterval = %f\n", legendTickInterval);
-  data.printconcat("legendTickRound = %f\n", legendTickRound);
-  data.printconcat("minValue = %f\n", minValue);
-  data.printconcat("maxValue = %f\n", maxValue);
-  data.printconcat("renderMethod = %s\n", getRenderMethodAsString(renderMethod).c_str());
-  data.printconcat("legendName %s\n", legendName.c_str());
-  data.printconcat("styleCompositionName %s\n", styleCompositionName.c_str());
-  data.printconcat("styleTitle %s\n", styleTitle.c_str());
-  data.printconcat("styleAbstract %s\n", styleAbstract.c_str());
+std::string CStyleConfiguration::dump() {
+  std::string data = CT::printf("name = %s\n", styleCompositionName.c_str());
+  CT::printfconcat(data, "minMaxSet = %d\n", minMaxSet);
+  CT::printfconcat(data, "hasLegendValueRange = %d\n", hasLegendValueRange);
+  CT::printfconcat(data, "hasError = %d\n", hasError);
+  CT::printfconcat(data, "legendHasFixedMinMax = %d\n", legendHasFixedMinMax);
+  CT::printfconcat(data, "smoothingFilter = %d\n", smoothingFilter);
+  CT::printfconcat(data, "legendIndex = %d\n", legendIndex);
+  CT::printfconcat(data, "styleIndex = %d\n", styleIndex);
+  CT::printfconcat(data, "shadeInterval = %f\n", shadeInterval);
+  CT::printfconcat(data, "contourIntervalL = %f\n", contourIntervalL);
+  CT::printfconcat(data, "contourIntervalH = %f\n", contourIntervalH);
+  CT::printfconcat(data, "legendScale = %f\n", legendScale);
+  CT::printfconcat(data, "legendOffset = %f\n", legendOffset);
+  CT::printfconcat(data, "legendLog = %f\n", legendLog);
+  CT::printfconcat(data, "legendLowerRange = %f\n", legendLowerRange);
+  CT::printfconcat(data, "legendUpperRange; = %f\n", legendUpperRange);
+  CT::printfconcat(data, "legendTickInterval = %f\n", legendTickInterval);
+  CT::printfconcat(data, "legendTickRound = %f\n", legendTickRound);
+  CT::printfconcat(data, "minValue = %f\n", minValue);
+  CT::printfconcat(data, "maxValue = %f\n", maxValue);
+  CT::printfconcat(data, "renderMethod = %s\n", getRenderMethodAsString(renderMethod).c_str());
+  CT::printfconcat(data, "legendName %s\n", legendName.c_str());
+  CT::printfconcat(data, "styleCompositionName %s\n", styleCompositionName.c_str());
+  CT::printfconcat(data, "styleTitle %s\n", styleTitle.c_str());
+  CT::printfconcat(data, "styleAbstract %s\n", styleAbstract.c_str());
   int a = 0;
   for (auto renderSetting: renderSettings) {
-    data.printconcat("renderSetting %d) = [%s] [%s]\n", a, renderSetting->attr.renderhint.c_str(), renderSetting->attr.interpolationmethod.c_str());
+    CT::printfconcat(data, "renderSetting %d) = [%s] [%s]\n", a, renderSetting->attr.renderhint.c_str(), renderSetting->attr.interpolationmethod.c_str());
     a++;
   }
   a = 0;
   for (const auto &shadeInterval: shadeIntervals) {
-    data.printconcat("shadeInterval %d) =  [%s] [%s]\n", a++, shadeInterval.attr.label.c_str(), shadeInterval.attr.label.c_str());
+    CT::printfconcat(data, "shadeInterval %d) =  [%s] [%s]\n", a++, shadeInterval.attr.label.c_str(), shadeInterval.attr.label.c_str());
   }
   a = 0;
   for (auto contourLine: contourLines) {
-    data.printconcat("contourLine %d) =  [%s] [%s] [%s]\n", a++, contourLine->attr.linecolor.c_str(), contourLine->attr.interval.c_str(), contourLine->attr.classes.c_str());
+    CT::printfconcat(data, "contourLine %d) =  [%s] [%s] [%s]\n", a++, contourLine->attr.linecolor.c_str(), contourLine->attr.interval.c_str(), contourLine->attr.classes.c_str());
   }
   a = 0;
   for (auto symbolInterval: symbolIntervals) {
-    data.printconcat("symbolInterval %d) =  [%s] [%s]\n", a, symbolInterval->attr.min.c_str(), symbolInterval->attr.max.c_str());
+    CT::printfconcat(data, "symbolInterval %d) =  [%s] [%s]\n", a, symbolInterval->attr.min.c_str(), symbolInterval->attr.max.c_str());
     a++;
   }
   a = 0;
   for (auto featureInterval: featureIntervals) {
-    data.printconcat("featureInterval %d) =  [%s] [%s]\n", a, featureInterval->attr.fillcolor.c_str(), featureInterval->attr.label.c_str());
+    CT::printfconcat(data, "featureInterval %d) =  [%s] [%s]\n", a, featureInterval->attr.fillcolor.c_str(), featureInterval->attr.label.c_str());
     a++;
   }
 
@@ -113,7 +112,6 @@ void parseStyleInfo(CStyleConfiguration *styleConfig, CDataSource *dataSource, i
   for (auto includeStyle: style->IncludeStyle) {
     int extraStyle = dataSource->srvParams->getServerStyleIndexByName(includeStyle->attr.name);
     if (extraStyle >= 0) {
-      CDBDebug("Include style %d - %s", extraStyle, dataSource->cfg->Style[extraStyle]->attr.name.c_str());
       parseStyleInfo(styleConfig, dataSource, extraStyle, depth + 1);
     }
   }
@@ -294,9 +292,9 @@ int CStyleConfiguration::makeStyleConfig(CDataSource *dataSource) {
     this->legendLog = 10;
   }
 
-  int index = styleCompositionName.indexOf("/");
+  int index = CT::indexOf(styleCompositionName, "/");
   if (index > 0) {
-    CT::string renderMethodString = index > 0 ? styleCompositionName.substring(index, -1) : "";
+    std::string renderMethodString = index > 0 ? CT::substring(styleCompositionName, index, -1) : "";
     this->renderMethod = getRenderMethodFromString(renderMethodString);
   }
   if (this->renderMethod == RM_UNDEFINED) {
@@ -317,8 +315,8 @@ int CStyleConfiguration::makeStyleConfig(CDataSource *dataSource) {
 #ifdef CDATASOURCE_DEBUG
     CDBDebug("Found min and max in layer configuration");
 #endif
-    CDataSource::calculateScaleAndOffsetFromMinMax(this->legendScale, this->legendOffset, this->minValue, this->maxValue, this->legendLog);
 
+    stretchLegend(this->minValue, this->maxValue);
     dataSource->stretchMinMax = false;
   }
 
@@ -336,6 +334,12 @@ int CStyleConfiguration::makeStyleConfig(CDataSource *dataSource) {
 }
 
 void CStyleConfiguration::stretchLegend(double min, double max) {
+  if (this->legendLog != 0.0f) {
+    // CDBDebug("LOG = %f",log);
+    min = log10(min) / log10(this->legendLog);
+    max = log10(max) / log10(this->legendLog);
+  }
+
   // Make sure that there is always a range in between the min and max.
   if (max == min) max = min + 0.1;
   // Calculate legendOffset legendScale

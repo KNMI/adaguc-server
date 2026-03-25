@@ -63,15 +63,18 @@ void _printErrorLine(const char *pszMessage, ...) PRINTF_FORMAT_CHECK(1, 2);
 
 void _printDebug(const char *pszMessage, ...) PRINTF_FORMAT_CHECK(1, 2);
 void _printWarning(const char *pszMessage, ...) PRINTF_FORMAT_CHECK(1, 2);
+void _printLint(const char *pszMessage, ...) PRINTF_FORMAT_CHECK(1, 2);
 void _printError(const char *pszMessage, ...) PRINTF_FORMAT_CHECK(1, 2);
 
 #define CDBWarning                                                                                                                                                                                     \
   _printWarning("[W:%03d:pid%lu: %s:%d] ", logMessageNumber, logProcessIdentifier, __FILENAME__, __LINE__);                                                                                            \
   _printWarningLine
+#define CDBLint                                                                                                                                                                                        \
+  _printLint("[LINT]: ");                                                                                                                                                                              \
+  _printWarningLine
 #define CDBError                                                                                                                                                                                       \
   _printError("[E:%03d:pid%lu: %s:%d] ", logMessageNumber, logProcessIdentifier, __FILENAME__, __LINE__);                                                                                              \
   _printErrorLine
-#define CDBErrormessage _printErrorLine
 #define CDBDebug                                                                                                                                                                                       \
   _printDebug("[D:%03d:pid%lu: %s:%d] ", logMessageNumber, logProcessIdentifier, __FILENAME__, __LINE__);                                                                                              \
   _printDebugLine

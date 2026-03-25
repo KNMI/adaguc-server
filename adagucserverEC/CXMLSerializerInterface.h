@@ -34,6 +34,8 @@
 #include "CTString.h"
 #include "CDebugger.h"
 
+extern int numXMLAttributesNotRecognized;
+
 #define XMLE_ADDOBJ(variableName)                                                                                                                                                                      \
   {                                                                                                                                                                                                    \
     variableName.push_back(new XMLE_##variableName());                                                                                                                                                 \

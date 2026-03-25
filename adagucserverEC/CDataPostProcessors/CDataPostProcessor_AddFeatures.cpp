@@ -27,7 +27,7 @@ int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource
     CDBDebug("CDATAPOSTPROCESSOR_RUNBEFOREREADING::Adding features from GEOJson");
     CDF::Variable *varToClone = dataSource->getDataObject(0)->cdfVariable;
 
-    CDataSource::DataObject *newDataObject = new CDataSource::DataObject();
+    DataObject *newDataObject = new DataObject();
 
     newDataObject->variableName.copy("indexes");
     dataSource->getDataObjectsVector()->insert(dataSource->getDataObjectsVector()->begin() + 1, newDataObject);
@@ -56,7 +56,7 @@ int CDPPAddFeatures::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource
   }
   if (mode == CDATAPOSTPROCESSOR_RUNAFTERREADING) {
     CDataSource featureDataSource;
-    if (featureDataSource.setCFGLayer(dataSource->srvParams, dataSource->srvParams->configObj->Configuration[0], dataSource->srvParams->cfg->Layer[0], NULL, 0) != 0) {
+    if (featureDataSource.setCFGLayer(dataSource->srvParams, dataSource->srvParams->cfg->Layer[0], 0) != 0) {
       return 1;
     }
     featureDataSource.addStep(proc->attr.a.c_str()); // Set filename

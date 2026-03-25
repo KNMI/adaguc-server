@@ -477,13 +477,13 @@ int CGDALDataWriter::end() {
     }
 
     for (size_t j = 0; j < _dataSource->metaDataItems.size(); j++) {
-      CDataSource::KVP *kvp = &_dataSource->metaDataItems[j];
+      auto *kvp = &_dataSource->metaDataItems[j];
       CT::string attributekey;
-      attributekey.printconcat("%s#%s", kvp->varname.c_str(), kvp->attrname.c_str());
+      attributekey.printconcat("%s#%s", kvp->key.c_str(), kvp->value.c_str());
 #ifdef CGDALDATAWRITER_DEBUG
       CDBDebug("%s:%s", attributekey.c_str(), kvp->value.c_str());
 #endif
-      papszMetadata = CSLSetNameValue(papszMetadata, attributekey.c_str(), kvp->value.c_str());
+      papszMetadata = CSLSetNameValue(papszMetadata, attributekey.c_str(), kvp->abstract.c_str());
     }
 #ifdef CGDALDATAWRITER_DEBUG
     CDBDebug("Setting metadata");

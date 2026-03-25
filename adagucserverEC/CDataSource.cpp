@@ -27,20 +27,26 @@
 #include "CDBFileScanner.h"
 #include "CConvertGeoJSON.h"
 #include "utils/LayerUtils.h"
+#include "utils/lintDataset.h"
 
 // #define CDATASOURCE_DEBUG
 
-bool configWarningSet = false;
+bool debugDataSource = false;
+bool configWarningNameMappingSet = false;
 
-CDataSource::DataObject::DataObject() {
+// Allowed rendermethods: generic, nearest, rgba, polyline
+
+std::vector<std::string> knownRenderMethods = {"generic", "nearest", "rgba", "polyline", "point"};
+
+DataObject::DataObject() {
   hasStatusFlag = false;
   cdfVariable = NULL;
   cdfObject = NULL;
   std::vector<f8point> points;
 }
 
-CDataSource::DataObject *CDataSource::DataObject::clone() {
-  CDataSource::DataObject *nd = new CDataSource::DataObject();
+DataObject *DataObject::clone() {
+  DataObject *nd = new DataObject();
   nd->hasStatusFlag = hasStatusFlag;
   nd->hasNodataValue = hasNodataValue;
   nd->dfNodataValue = dfNodataValue;
@@ -51,7 +57,7 @@ CDataSource::DataObject *CDataSource::DataObject::clone() {
   return nd;
 }
 
-CT::string CDataSource::DataObject::getUnits() {
+CT::string DataObject::getUnits() {
   if (overruledUnits.empty() && cdfVariable != NULL) {
     try {
       return cdfVariable->getAttributeThrows("units")->toString();
@@ -61,7 +67,7 @@ CT::string CDataSource::DataObject::getUnits() {
   return overruledUnits;
 }
 
-CT::string CDataSource::DataObject::getStandardName() {
+CT::string DataObject::getStandardName() {
   CT::string standard_name = variableName;
   CDF::Attribute *standardNameAttr = cdfVariable->getAttributeNE("standard_name");
   if (standardNameAttr != nullptr) {
@@ -70,211 +76,7 @@ CT::string CDataSource::DataObject::getStandardName() {
   return standard_name;
 }
 
-void CDataSource::DataObject::setUnits(CT::string units) { overruledUnits = units; }
-
-double CDataSource::Statistics::getMinimum() { return min; }
-double CDataSource::Statistics::getMaximum() { return max; }
-
-double CDataSource::Statistics::getStdDev() { return stddev; }
-
-double CDataSource::Statistics::getAverage() { return avg; }
-
-void CDataSource::Statistics::setMinimum(double min) { this->min = min; }
-void CDataSource::Statistics::setMaximum(double max) { this->max = max; }
-
-void CDataSource::Statistics::setMinMax(MinMax minMax) {
-  this->min = minMax.min;
-  this->max = minMax.max;
-}
-
-MinMax getMinMax(double *data, bool hasFillValue, double fillValue, size_t numElements) {
-  MinMax minMax;
-  bool firstSet = false;
-  for (size_t j = 0; j < numElements; j++) {
-    double v = data[j];
-    if (v == v) {
-      if ((v != fillValue) || (!hasFillValue)) {
-        if (firstSet == false) {
-          firstSet = true;
-          minMax.min = v;
-          minMax.max = v;
-          minMax.isSet = true;
-        }
-        if (v < minMax.min) minMax.min = v;
-        if (v > minMax.max) minMax.max = v;
-      }
-    }
-  }
-  if (minMax.isSet == false) {
-    throw __LINE__;
-  }
-  return minMax;
-}
-
-MinMax getMinMax(float *data, bool hasFillValue, double fillValue, size_t numElements) {
-  MinMax minMax;
-  bool firstSet = false;
-  for (size_t j = 0; j < numElements; j++) {
-    float v = data[j];
-    if (v == v) {
-      if ((v != fillValue) || (!hasFillValue)) {
-        if (firstSet == false) {
-          firstSet = true;
-          minMax.min = v;
-          minMax.max = v;
-          minMax.isSet = true;
-        }
-        if (v < minMax.min) minMax.min = v;
-        if (v > minMax.max) minMax.max = v;
-      }
-    }
-  }
-  if (minMax.isSet == false) {
-    throw __LINE__ + 100;
-  }
-  return minMax;
-}
-
-MinMax getMinMax(CDF::Variable *var) {
-  MinMax minMax;
-  if (var != NULL) {
-    if (var->getType() == CDF_FLOAT) {
-
-      float *data = (float *)var->data;
-
-      float scaleFactor = 1, addOffset = 0, fillValue = 0;
-      bool hasFillValue = false;
-
-      try {
-        var->getAttributeThrows("scale_factor")->getData(&scaleFactor, 1);
-      } catch (int e) {
-      }
-      try {
-        var->getAttributeThrows("add_offset")->getData(&addOffset, 1);
-      } catch (int e) {
-      }
-      try {
-        var->getAttributeThrows("_FillValue")->getData(&fillValue, 1);
-        hasFillValue = true;
-      } catch (int e) {
-      }
-
-      size_t lsize = var->getSize();
-
-      // Apply scale and offset
-      if (scaleFactor != 1 || addOffset != 0) {
-        for (size_t j = 0; j < lsize; j++) {
-          data[j] = data[j] * scaleFactor + addOffset;
-        }
-        fillValue = fillValue * scaleFactor + addOffset;
-      }
-
-      minMax = getMinMax(data, hasFillValue, fillValue, lsize);
-    } else if (var->getType() == CDF_DOUBLE) {
-
-      double *data = (double *)var->data;
-
-      double scaleFactor = 1, addOffset = 0, fillValue = 0;
-      bool hasFillValue = false;
-
-      try {
-        var->getAttributeThrows("scale_factor")->getData(&scaleFactor, 1);
-      } catch (int e) {
-      }
-      try {
-        var->getAttributeThrows("add_offset")->getData(&addOffset, 1);
-      } catch (int e) {
-      }
-      try {
-        var->getAttributeThrows("_FillValue")->getData(&fillValue, 1);
-        hasFillValue = true;
-      } catch (int e) {
-      }
-
-      size_t lsize = var->getSize();
-
-      // Apply scale and offset
-      if (scaleFactor != 1 || addOffset != 0) {
-        for (size_t j = 0; j < lsize; j++) {
-          data[j] = data[j] * scaleFactor + addOffset;
-        }
-        fillValue = fillValue * scaleFactor + addOffset;
-      }
-
-      minMax = getMinMax(data, hasFillValue, fillValue, lsize);
-    }
-
-  } else {
-    throw __LINE__;
-  }
-  return minMax;
-}
-
-int CDataSource::Statistics::calculate(CDataSource *dataSource) {
-  // Get Min and Max
-  // CDBDebug("calculate stat ");
-  CDataSource::DataObject *dataObject = dataSource->getFirstAvailableDataObject();
-  if (dataObject->cdfVariable->data != NULL) {
-    size_t size = dataObject->cdfVariable->getSize(); // dataSource->dWidth*dataSource->dHeight;
-
-    if (dataObject->cdfVariable->getType() == CDF_CHAR) calcMinMax<char>(size, dataSource->getDataObjectsVector());
-    if (dataObject->cdfVariable->getType() == CDF_BYTE) calcMinMax<char>(size, dataSource->getDataObjectsVector());
-    if (dataObject->cdfVariable->getType() == CDF_UBYTE) calcMinMax<unsigned char>(size, dataSource->getDataObjectsVector());
-    if (dataObject->cdfVariable->getType() == CDF_SHORT) calcMinMax<short>(size, dataSource->getDataObjectsVector());
-    if (dataObject->cdfVariable->getType() == CDF_USHORT) calcMinMax<unsigned short>(size, dataSource->getDataObjectsVector());
-    if (dataObject->cdfVariable->getType() == CDF_INT) calcMinMax<int>(size, dataSource->getDataObjectsVector());
-    if (dataObject->cdfVariable->getType() == CDF_UINT) calcMinMax<unsigned int>(size, dataSource->getDataObjectsVector());
-    if (dataObject->cdfVariable->getType() == CDF_FLOAT) calcMinMax<float>(size, dataSource->getDataObjectsVector());
-    if (dataObject->cdfVariable->getType() == CDF_DOUBLE) calcMinMax<double>(size, dataSource->getDataObjectsVector());
-  }
-  return 0;
-}
-
-template <class T> void CDataSource::Statistics::calcMinMax(size_t size, std::vector<DataObject *> *dataObject) {
-#ifdef MEASURETIME
-  StopWatch_Stop("Start min/max calculation");
-#endif
-  if (dataObject->size() == 1) {
-    T *data = (T *)(*dataObject)[0]->cdfVariable->data;
-    CDFType type = (*dataObject)[0]->cdfVariable->getType();
-    double dfNodataValue = (*dataObject)[0]->dfNodataValue;
-    bool hasNodataValue = (*dataObject)[0]->hasNodataValue;
-    calculate(size, data, type, dfNodataValue, hasNodataValue);
-  }
-
-  // Wind vector min max calculation
-  if (dataObject->size() == 2) {
-    T *dataU = (T *)(*dataObject)[0]->cdfVariable->data;
-    T *dataV = (T *)(*dataObject)[1]->cdfVariable->data;
-    T _min = (T)0.0f, _max = (T)0.0f;
-    int firstDone = 0;
-    T s = 0;
-    for (size_t p = 0; p < size; p++) {
-
-      T u = dataU[p];
-      T v = dataV[p];
-
-      if (((((T)v) != (T)(*dataObject)[0]->dfNodataValue || (!(*dataObject)[0]->hasNodataValue)) && v == v) &&
-          ((((T)u) != (T)(*dataObject)[0]->dfNodataValue || (!(*dataObject)[0]->hasNodataValue)) && u == u)) {
-        s = (T)hypot(u, v);
-        if (firstDone == 0) {
-          _min = s;
-          _max = s;
-          firstDone = 1;
-        } else {
-
-          if (s < _min) _min = s;
-          if (s > _max) _max = s;
-        }
-      }
-    }
-    min = (double)_min;
-    max = (double)_max;
-  }
-#ifdef MEASURETIME
-  StopWatch_Stop("Finished min/max calculation");
-#endif
-}
+void DataObject::setUnits(CT::string units) { overruledUnits = units; }
 
 CDataSource::CDataSource() {
   stretchMinMax = false;
@@ -295,12 +97,8 @@ CDataSource::CDataSource() {
   varX = NULL;
   varY = NULL;
 
-  _styles = NULL;
-  _currentStyle = NULL;
-
   queryBBOX = false;
   queryLevel = 0; // -1 Means query all. 0 means query all non tiled versions. Positive number means a tiled version.
-  featureSet = NULL;
 }
 
 CDataSource::~CDataSource() {
@@ -329,23 +127,14 @@ CDataSource::~CDataSource() {
   };
   statistics = NULL;
 
-  if (_styles != NULL) {
-    for (auto s: *_styles) {
-      delete s;
-    }
-    delete _styles;
-    _styles = NULL;
-  }
-
   if (featureSet.length() != 0) {
     CConvertGeoJSON::clearFeatureStore(featureSet);
-    featureSet = NULL;
   }
 }
 
-int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Configuration *_cfg, CServerConfig::XMLE_Layer *_cfgLayer, const char *_layerName, int layerIndex) {
+int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Layer *_cfgLayer, int layerIndex) {
   srvParams = _srvParams;
-  cfg = _cfg;
+  cfg = srvParams->cfg;
   cfgLayer = _cfgLayer;
   datasourceIndex = layerIndex;
 
@@ -361,13 +150,13 @@ int CDataSource::setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Conf
   }
 
   // Set the layername
-  layerName = makeUniqueLayerName(cfgLayer, _layerName);
+  layerName = makeUniqueLayerName(cfgLayer);
 
   layerTitle = cfgLayer->Title.size() > 0 && !cfgLayer->Title[0]->value.empty() ? cfgLayer->Title[0]->value.c_str() : layerName.c_str();
 
-#ifdef CDATASOURCE_DEBUG
-  CDBDebug("LayerName=\"%s\"", layerName.c_str());
-#endif
+  if (debugDataSource) {
+    CDBDebug("LayerName=\"%s\"", layerName.c_str());
+  }
   // Defaults to database
   dLayerType = CConfigReaderLayerTypeDataBase;
   if (cfgLayer->attr.type.equals("database")) {
@@ -452,7 +241,7 @@ CCDFDims *CDataSource::getCDFDims() {
   return &timeSteps[currentAnimationStep]->dims;
 }
 
-void CDataSource::readStatusFlags(CDF::Variable *var, std::vector<CDataSource::StatusFlag> &statusFlagList) {
+void CDataSource::readStatusFlags(CDF::Variable *var, std::vector<StatusFlag> &statusFlagList) {
   statusFlagList.clear();
   if (var != NULL) {
     CDF::Attribute *attr_flag_meanings = var->getAttributeNE("flag_meanings");
@@ -490,7 +279,7 @@ void CDataSource::readStatusFlags(CDF::Variable *var, std::vector<CDataSource::S
   }
 }
 
-std::string CDataSource::getFlagMeaning(std::vector<CDataSource::StatusFlag> &statusFlagList, double value) {
+std::string CDataSource::getFlagMeaning(std::vector<StatusFlag> &statusFlagList, double value) {
   for (size_t j = 0; j < statusFlagList.size(); j++) {
     if ((statusFlagList)[j].value == value) {
       return (statusFlagList)[j].meaning.c_str();
@@ -499,7 +288,7 @@ std::string CDataSource::getFlagMeaning(std::vector<CDataSource::StatusFlag> &st
   return "no_flag_meaning";
 }
 
-std::string CDataSource::getFlagMeaningHumanReadable(std::vector<CDataSource::StatusFlag> &statusFlagList, double value) {
+std::string CDataSource::getFlagMeaningHumanReadable(std::vector<StatusFlag> &statusFlagList, double value) {
   std::string flagMeaning = getFlagMeaning(statusFlagList, value);
   return CT::replace(flagMeaning, "_", " ");
 }
@@ -513,18 +302,18 @@ CT::string CDataSource::getDimensionValueForNameAndStep(const char *dimName, int
  * @return stringlist with the list of available legends.
  */
 
-std::vector<CT::string> CDataSource::getLegendListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style *style) {
-#ifdef CDATASOURCE_DEBUG
-  CDBDebug("getLegendListForDataSource");
-#endif
-  if (dataSource->cfgLayer->Legend.size() > 0) {
-    return CServerParams::getLegendNames(dataSource->cfgLayer->Legend);
+std::vector<std::string> CDataSource::getLegendListForDataSource(CServerConfig::XMLE_Style *style) {
+  if (debugDataSource) {
+    CDBDebug("getLegendListForDataSource");
+  }
+  if (this->cfgLayer->Legend.size() > 0) {
+    return CServerParams::getLegendNames(this->cfgLayer->Legend);
   } else {
     if (style != NULL) {
       return CServerParams::getLegendNames(style->Legend);
     }
   }
-  //  CDBError("No legendlist for layer %s",dataSource->layerName.c_str());
+  //  CDBError("No legendlist for layer %s",this->layerName.c_str());
   return {};
 }
 
@@ -534,16 +323,16 @@ std::vector<CT::string> CDataSource::getLegendListForDataSource(CDataSource *dat
  * @param style pointer to the style to find the rendermethods for
  * @return stringlist with the list of available rendermethods.
  */
-std::vector<CT::string> CDataSource::getRenderMethodListForDataSource(CDataSource *dataSource, CServerConfig::XMLE_Style *style) {
+std::vector<std::string> CDataSource::getRenderMethodListForDataSource(CServerConfig::XMLE_Style *style) {
   // List all the desired rendermethods
   CT::string renderMethodList;
 
   // rendermethods defined in the layers must prepend rendermethods defined in the style
-  if (dataSource->cfgLayer->RenderMethod.size() > 0) {
+  if (this->cfgLayer->RenderMethod.size() > 0) {
 
-    for (size_t j = 0; j < dataSource->cfgLayer->RenderMethod.size(); j++) {
+    for (size_t j = 0; j < this->cfgLayer->RenderMethod.size(); j++) {
       if (renderMethodList.length() > 0) renderMethodList.concat(",");
-      renderMethodList.concat(dataSource->cfgLayer->RenderMethod[j]->value.c_str());
+      renderMethodList.concat(this->cfgLayer->RenderMethod[j]->value.c_str());
     }
   }
 
@@ -560,10 +349,10 @@ std::vector<CT::string> CDataSource::getRenderMethodListForDataSource(CDataSourc
 
   // If still no list of rendermethods is found, use the default list
   if (renderMethodList.length() == 0) {
-    renderMethodList.copy("nearest");
+    renderMethodList = "nearest";
   }
 
-  return renderMethodList.split(",");
+  return CT::split(renderMethodList, ",");
 }
 
 /**
@@ -571,28 +360,28 @@ std::vector<CT::string> CDataSource::getRenderMethodListForDataSource(CDataSourc
  * @param dataSource pointer to the datasource to find the stylelist for
  * @return vector with all possible CStyleConfigurations
  */
-std::vector<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(CDataSource *dataSource) {
+const std::vector<CStyleConfiguration> &CDataSource::getStyleListForDataSource() {
+  if (styleConfigurationList.size() > 0) {
+    return styleConfigurationList;
+  }
+  if (debugDataSource) {
+    CDBDebug("getStyleListForDataSource %s", this->layerName.c_str());
+  }
 
-#ifdef CDATASOURCE_DEBUG
-  CDBDebug("getStyleListForDataSource %s", dataSource->layerName.c_str());
-#endif
+  CServerConfig::XMLE_Configuration *serverCFG = this->cfg;
 
-  std::vector<CStyleConfiguration *> *styleConfigurationList = new std::vector<CStyleConfiguration *>();
-
-  CServerConfig::XMLE_Configuration *serverCFG = dataSource->cfg;
-
-  std::vector<CT::string> renderMethods;
-  std::vector<CT::string> legendList;
+  std::vector<std::string> renderMethods;
+  std::vector<std::string> legendList;
 
   // Auto configure styles, if no legends or styles are defined
-  if (dataSource->cfgLayer->Styles.size() == 0 && dataSource->cfgLayer->Legend.size() == 0) {
-    renderMethods = getRenderMethodListForDataSource(dataSource, NULL);
+  if (this->cfgLayer->Styles.size() == 0 && this->cfgLayer->Legend.size() == 0) {
+    renderMethods = getRenderMethodListForDataSource(NULL);
     if (renderMethods.size() > 0) {
-      CAutoConfigure::autoConfigureStyles(dataSource);
+      CAutoConfigure::autoConfigureStyles(this);
     }
   }
 
-  std::vector<CT::string> styleNames = getStyleNames(dataSource->cfgLayer->Styles);
+  std::vector<std::string> styleNames = getStyleNames(this->cfgLayer->Styles);
 
   size_t start = 0;
   if (styleNames.size() > 1) start = 1;
@@ -602,46 +391,50 @@ std::vector<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(CData
 
       // Lookup the style index in the servers configuration
 
-      int dStyleIndex = dataSource->srvParams->getServerStyleIndexByName(styleNames[i]);
+      int dStyleIndex = this->srvParams->getServerStyleIndexByName(styleNames[i]);
 
-#ifdef CDATASOURCE_DEBUG
-      CDBDebug("dStyleIndex = %d", dStyleIndex);
-#endif
+      if (debugDataSource) {
+        CDBDebug("dStyleIndex = %d", dStyleIndex);
+      }
       // TODO CHECK, why did we add this line?:
       if (dStyleIndex != -1) {
 
         CServerConfig::XMLE_Style *style = NULL;
         if (dStyleIndex != -1) style = serverCFG->Style[dStyleIndex];
 
-        renderMethods = getRenderMethodListForDataSource(dataSource, style);
-        legendList = getLegendListForDataSource(dataSource, style);
+        renderMethods = getRenderMethodListForDataSource(style);
+        legendList = getLegendListForDataSource(style);
 
         if (legendList.size() == 0) {
-          CDBDebug("No legends defined for layer %s, adding legend auto", dataSource->layerName.c_str());
+          CDBDebug("No legends defined for layer %s, adding legend auto", this->layerName.c_str());
           legendList.push_back("rainbow");
         }
 
-        bool isOnlyGeneric = renderMethods.size() == 0 || (renderMethods.size() == 1 && renderMethods[0].equals("generic"));
+        bool isOnlyGeneric = renderMethods.size() == 0 || (renderMethods.size() == 1 && renderMethods[0] == "generic");
         if (isOnlyGeneric) {
-          CStyleConfiguration *styleConfig = new CStyleConfiguration();
-          styleConfig->styleCompositionName = styleNames[i];
-          styleConfig->styleName = styleNames[i];
-          styleConfig->styleTitle = styleNames[i];
-          styleConfig->renderMethod = RM_GENERIC;
-          styleConfig->styleIndex = dStyleIndex;
-          styleConfig->legendIndex = dataSource->srvParams->getServerLegendIndexByName(legendList[0]);
-          if (styleConfig->legendIndex == -1) {
+          CStyleConfiguration styleConfig;
+          styleConfig.styleCompositionName = styleNames[i];
+          styleConfig.styleName = styleNames[i];
+          styleConfig.styleTitle = styleNames[i];
+          styleConfig.renderMethod = RM_GENERIC;
+          styleConfig.styleIndex = dStyleIndex;
+          styleConfig.legendIndex = this->srvParams->getServerLegendIndexByName(legendList[0]);
+          if (styleConfig.legendIndex == -1) {
             CDBError("Legend %s not found", legendList[0].c_str());
           }
-          int status = styleConfig->makeStyleConfig(dataSource);
+          int status = styleConfig.makeStyleConfig(this);
           if (status == -1) {
-            styleConfig->hasError = true;
+            styleConfig.hasError = true;
           }
-          styleConfigurationList->push_back(styleConfig);
+          styleConfigurationList.push_back(styleConfig);
         } else {
           // Deprecated methods to have multiple legends and rendermethods in the same style
 
           CT::string styleName;
+          if (lintOutputEnabled && renderMethods.size() > 1) {
+            CDBLint("In dataset \"%s\" multiple rendermethods in one style or layer is deprecated.", CT::basename(this->srvParams->datasetLocation).c_str());
+            numXMLAttributesNotRecognized++;
+          }
           for (size_t l = 0; l < legendList.size(); l++) {
             for (size_t r = 0; r < renderMethods.size(); r++) {
               if (renderMethods[r].length() > 0) {
@@ -650,39 +443,45 @@ std::vector<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(CData
                   CDBWarning("Deprecated to have multiple legends in one style");
                 } else {
                   styleName.print("%s/%s", styleNames[i].c_str(), renderMethods[r].c_str());
-                  // if (renderMethods.size() > 1) {
-                  //   // CDBWarning("Deprecated to have multiple rendermethods ([%d]) in one style. There are %d styles configured.", renderMethods.size(), styleNames.size());
-                  // }
+                  if (lintOutputEnabled) {
+                    if (std::find(knownRenderMethods.begin(), knownRenderMethods.end(), renderMethods[r]) == knownRenderMethods.end()) {
+                      CDBLint("In dataset \"%s\" and style \"%s\", rendermethod \"%s\" is deprecated.", CT::basename(this->srvParams->datasetLocation).c_str(), styleName.c_str(),
+                              renderMethods[r].c_str());
+                      numXMLAttributesNotRecognized++;
+                    }
+                  }
                 }
-                CStyleConfiguration *styleConfig = new CStyleConfiguration();
-                styleConfigurationList->push_back(styleConfig);
-                styleConfig->styleCompositionName = styleName.c_str();
-                styleConfig->styleName = styleNames[i];
-                styleConfig->styleTitle = styleName.c_str();
-                styleConfig->renderMethod = getRenderMethodFromString(renderMethods[r].c_str());
-                styleConfig->styleIndex = dStyleIndex;
-                styleConfig->legendIndex = dataSource->srvParams->getServerLegendIndexByName(legendList[l]);
-                if (styleConfig->legendIndex == -1) {
+
+                styleConfigurationList.push_back(CStyleConfiguration());
+                CStyleConfiguration &styleConfig = styleConfigurationList.back();
+                styleConfig.styleCompositionName = styleName.c_str();
+                styleConfig.styleName = styleNames[i];
+                styleConfig.styleTitle = styleName.c_str();
+                styleConfig.renderMethod = getRenderMethodFromString(renderMethods[r].c_str());
+                styleConfig.styleIndex = dStyleIndex;
+                styleConfig.legendIndex = this->srvParams->getServerLegendIndexByName(legendList[l]);
+                if (styleConfig.legendIndex == -1) {
                   CDBError("Legend %s not found", legendList[l].c_str());
                 }
 
                 if (style != nullptr && style->NameMapping.size() > 0) {
-                  if (configWarningSet == false) {
-                    CDBWarning("The <NameMapping> element inside a <Style> is deprecated and will be ignored. "
-                               "Move 'title' and 'abstract' to attributes of the <Style> element.");
-                    configWarningSet = true;
+                  if (configWarningNameMappingSet == false) {
+                    CDBLint("In dataset \"%s\" and style \"%s\": The <NameMapping> element inside a <Style> is deprecated and will be ignored. Move 'title' and 'abstract' to attributes of the "
+                            "<Style> element.",
+                            CT::basename(this->srvParams->datasetLocation).c_str(), styleName.c_str());
+                    configWarningNameMappingSet = true;
                   }
                   for (size_t j = 0; j < style->NameMapping.size(); j++) {
-                    if (renderMethods[r].equals(style->NameMapping[j]->attr.name.c_str())) {
-                      styleConfig->styleTitle.copy(style->NameMapping[j]->attr.title.c_str());
-                      styleConfig->styleAbstract.copy(style->NameMapping[j]->attr.abstract.c_str());
+                    if (renderMethods[r] == style->NameMapping[j]->attr.name.c_str()) {
+                      styleConfig.styleTitle = style->NameMapping[j]->attr.title;
+                      styleConfig.styleAbstract = style->NameMapping[j]->attr.abstract;
                       break;
                     }
                   }
                 }
-                int status = styleConfig->makeStyleConfig(dataSource);
+                int status = styleConfig.makeStyleConfig(this);
                 if (status == -1) {
-                  styleConfig->hasError = true;
+                  styleConfig.hasError = true;
                 }
               }
             }
@@ -694,17 +493,17 @@ std::vector<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(CData
   } catch (int e) {
   }
 
-  if (styleConfigurationList->size() == 0) {
-    CStyleConfiguration *styleConfig = new CStyleConfiguration();
-    styleConfig->styleTitle.copy("default");
-    styleConfig->styleAbstract.copy("default");
-    styleConfig->renderMethod = RM_NEAREST;
-    styleConfig->styleCompositionName = "default";
-    styleConfigurationList->push_back(styleConfig);
+  if (styleConfigurationList.size() == 0) {
+    CStyleConfiguration styleConfig;
+    styleConfig.styleTitle = "default";
+    styleConfig.styleAbstract = "default";
+    styleConfig.renderMethod = RM_NEAREST;
+    styleConfig.styleCompositionName = "default";
+    styleConfigurationList.push_back(styleConfig);
   }
-#ifdef CDATASOURCE_DEBUG
-  CDBDebug("/getStyleListForDataSource");
-#endif
+  if (debugDataSource) {
+    CDBDebug("/getStyleListForDataSource");
+  }
 
   return styleConfigurationList;
 }
@@ -714,8 +513,8 @@ std::vector<CStyleConfiguration *> *CDataSource::getStyleListForDataSource(CData
  * @param Style a pointer to XMLE_Style vector configured in a layer
  * @return Pointer to a new stringlist with all possible style names, must be deleted with delete. Is NULL on failure.
  */
-std::vector<CT::string> CDataSource::getStyleNames(std::vector<CServerConfig::XMLE_Styles *> Styles) {
-  std::vector<CT::string> stringList = {"default"};
+std::vector<std::string> CDataSource::getStyleNames(std::vector<CServerConfig::XMLE_Styles *> Styles) {
+  std::vector<std::string> stringList = {"default"};
   for (size_t j = 0; j < Styles.size(); j++) {
     if (Styles[j]->value.empty()) continue;
     std::vector<CT::string> l1 = Styles[j]->value.split(",");
@@ -728,120 +527,104 @@ std::vector<CT::string> CDataSource::getStyleNames(std::vector<CServerConfig::XM
   return stringList;
 }
 
-void CDataSource::calculateScaleAndOffsetFromMinMax(float &scale, float &offset, float min, float max, float log) {
-  if (log != 0.0f) {
-    // CDBDebug("LOG = %f",log);
-    min = log10(min) / log10(log);
-    max = log10(max) / log10(log);
-  }
-
-  scale = 240 / (max - min);
-  offset = min * (-scale);
-}
-
 CStyleConfiguration *CDataSource::getStyle() {
-  if (_currentStyle == NULL) {
-    if (_styles == NULL) {
-      _styles = getStyleListForDataSource(this);
-    }
-    if (_styles->size() == 0) {
-      CDBError("There are no styles available");
-      return NULL;
-    }
-    CT::string styleName = "default";
-    CT::string styles(srvParams->Styles.c_str());
+  if (currentStyleSet == true) {
+    return &currentStyle;
+  }
+  const auto &styleList = getStyleListForDataSource();
+  if (styleList.size() == 0) {
+    CDBError("There are no styles available");
+    return nullptr;
+  }
+  CT::string styleName = "default";
+  CT::string styles(srvParams->Styles.c_str());
 
-    // TODO CHECK CDBDebug("Server Styles=%s",srvParam->Styles.c_str());
-    std::vector<CT::string> layerstyles = styles.split(",");
-    int layerIndex = datasourceIndex;
-    if (layerstyles.size() != 0) {
-      // Make sure default layer index is within the right bounds.
-      if (layerIndex < 0) layerIndex = 0;
-      if (layerIndex > ((int)layerstyles.size()) - 1) layerIndex = layerstyles.size() - 1;
-      styleName = layerstyles[layerIndex].c_str();
-      if (styleName.length() == 0) {
-        styleName.copy("default");
-      }
+  // TODO CHECK CDBDebug("Server Styles=%s",srvParam->Styles.c_str());
+  std::vector<CT::string> layerstyles = styles.split(",");
+  int layerIndex = datasourceIndex;
+  if (layerstyles.size() != 0) {
+    // Make sure default layer index is within the right bounds.
+    if (layerIndex < 0) layerIndex = 0;
+    if (layerIndex > ((int)layerstyles.size()) - 1) layerIndex = layerstyles.size() - 1;
+    styleName = layerstyles[layerIndex].c_str();
+    if (styleName.length() == 0) {
+      styleName = "default";
     }
+  }
 
-    _currentStyle = _styles->at(0);
+  // Copy default style
+  currentStyle = styleList.at(0);
 
-    auto it = std::find_if(_styles->begin(), _styles->end(), [&styleName](CStyleConfiguration *a) { return styleName.equals(a->styleName); });
-    if (it != _styles->end()) {
-      _currentStyle = (*it);
+  auto it = std::find_if(styleList.begin(), styleList.end(), [&styleName](const CStyleConfiguration &a) { return styleName.equals(a.styleName); });
+  if (it != styleList.end()) {
+    currentStyle = (*it);
+  } else {
+    // If not found, check for the style without rendermethod instead using startsWith.
+    it = std::find_if(styleList.begin(), styleList.end(), [&styleName](const CStyleConfiguration &a) { return CT::startsWith(a.styleCompositionName, styleName); });
+    if (it != styleList.end()) {
+      currentStyle = (*it);
     } else {
-      // If not found, check for the style without rendermethod instead using startsWith.
-      it = std::find_if(_styles->begin(), _styles->end(), [&styleName](CStyleConfiguration *a) { return a->styleCompositionName.startsWith(styleName.c_str()); });
-      if (it != _styles->end()) {
-        _currentStyle = (*it);
-      } else {
-        // Try without rendermethod
-        CT::string styleNameWithoutRenderMethod = styleName.substring(0, styleName.indexOf("/"));
-        it = std::find_if(_styles->begin(), _styles->end(), [&styleNameWithoutRenderMethod](CStyleConfiguration *a) { return styleNameWithoutRenderMethod.equals(a->styleName); });
-        if (it != _styles->end()) {
-          _currentStyle = (*it);
-          CDBDebug("Selected style %s", _currentStyle->styleName.c_str());
-        }
-      }
-    }
-
-    if (_currentStyle->styleIndex == -1) {
-      int status = _currentStyle->makeStyleConfig(this);
-      if (status == -1) {
-        _currentStyle->hasError = true;
-      }
-    }
-    if (_currentStyle->legendIndex == -1) {
-      std::vector<CT::string> legendList = getLegendListForDataSource(this, NULL);
-      if (legendList.size() > 0) {
-        _currentStyle->legendIndex = this->srvParams->getServerLegendIndexByName(legendList[0]);
+      // Try without rendermethod
+      CT::string styleNameWithoutRenderMethod = styleName.substring(0, styleName.indexOf("/"));
+      it = std::find_if(styleList.begin(), styleList.end(), [&styleNameWithoutRenderMethod](const CStyleConfiguration &a) { return styleNameWithoutRenderMethod.equals(a.styleName); });
+      if (it != styleList.end()) {
+        currentStyle = (*it);
+        CDBDebug("Selected style %s", currentStyle.styleName.c_str());
       }
     }
   }
 
-  return _currentStyle;
+  if (currentStyle.styleIndex == -1) {
+    int status = currentStyle.makeStyleConfig(this);
+    if (status == -1) {
+      currentStyle.hasError = true;
+    }
+  }
+  if (currentStyle.legendIndex == -1) {
+    std::vector<std::string> legendList = getLegendListForDataSource(NULL);
+    if (legendList.size() > 0) {
+      currentStyle.legendIndex = this->srvParams->getServerLegendIndexByName(legendList[0]);
+    }
+  }
+  currentStyleSet = true;
+  return &currentStyle;
 }
 
 int CDataSource::setStyle(const char *styleName) {
-  if (_styles == NULL) {
-    _styles = getStyleListForDataSource(this);
-  }
-  if (_styles->size() == 0) {
+  const auto &styleList = getStyleListForDataSource();
+
+  if (styleList.size() == 0) {
     CDBError("There are no styles available");
     return 1;
   }
 
-  _currentStyle = _styles->at(0);
-  bool foundStyle = false;
-  for (size_t j = 0; j < _styles->size(); j++) {
-    if (_styles->at(j)->styleCompositionName.equals(styleName)) {
+  auto it = std::find_if(styleList.begin(), styleList.end(), [&styleName](const CStyleConfiguration &a) { return CT::startsWith(a.styleCompositionName, styleName); });
+  if (it != styleList.end()) {
+    currentStyle = (*it);
+  } else {
 
-      _currentStyle = _styles->at(j);
-      foundStyle = true;
-      break;
-    }
-  }
-
-  if (foundStyle == false) {
+    currentStyle = styleList.at(0);
     CDBWarning("Unable to find style %s. Available styles:", styleName);
-    for (size_t j = 0; j < _styles->size(); j++) {
-      CDBWarning("  -%s", _styles->at(j)->styleCompositionName.c_str());
+    for (size_t j = 0; j < styleList.size(); j++) {
+      CDBWarning("  -%s", styleList.at(j).styleCompositionName.c_str());
     }
   }
 
-  if (_currentStyle->styleIndex == -1) {
-    int status = _currentStyle->makeStyleConfig(this);
+  if (currentStyle.styleIndex == -1) {
+    int status = currentStyle.makeStyleConfig(this);
     if (status == -1) {
-      _currentStyle->hasError = true;
+      currentStyle.hasError = true;
     }
   }
-  if (_currentStyle->legendIndex == -1) {
-    std::vector<CT::string> legendList = getLegendListForDataSource(this, NULL);
+  if (currentStyle.legendIndex == -1) {
+    std::vector<std::string> legendList = getLegendListForDataSource(NULL);
     if (legendList.size() > 0) {
-      _currentStyle->legendIndex = this->srvParams->getServerLegendIndexByName(legendList[0]);
+      currentStyle.legendIndex = this->srvParams->getServerLegendIndexByName(legendList[0]);
     }
   }
-  if (_currentStyle->hasError) return 1;
+  if (currentStyle.hasError) return 1;
+  // Indicate that this style is set, so the getter does not re-figure out the style.
+  currentStyleSet = true;
   return 0;
 };
 
@@ -849,9 +632,10 @@ CDataSource *CDataSource::clone() {
 
   CDataSource *d = new CDataSource();
   d->dataSourceOwnsDataObject = false; // cdfObject stays with source datasource.
-  d->_currentStyle = _currentStyle;
+  d->currentStyle = currentStyle;
   d->datasourceIndex = datasourceIndex;
   d->currentAnimationStep = currentAnimationStep;
+  d->styleConfigurationList = styleConfigurationList;
 
   /* Copy timesteps */
   for (size_t j = 0; j < timeSteps.size(); j++) {
@@ -936,10 +720,10 @@ double CDataSource::getContourScaling() {
   return 1;
 }
 
-CDataSource::DataObject *CDataSource::getDataObjectByName(std::string name) { return getDataObjectByName(name.c_str()); }
-CDataSource::DataObject *CDataSource::getDataObjectByName(const char *name) {
+DataObject *CDataSource::getDataObjectByName(std::string name) { return getDataObjectByName(name.c_str()); }
+DataObject *CDataSource::getDataObjectByName(const char *name) {
   for (auto it = dataObjects.begin(); it != dataObjects.end(); ++it) {
-    CDataSource::DataObject *dataObject = *it;
+    DataObject *dataObject = *it;
 
     if (dataObject->dataObjectName.equals(name)) {
       return dataObject;
@@ -956,7 +740,7 @@ CDataSource::DataObject *CDataSource::getDataObjectByName(const char *name) {
   return nullptr;
 }
 
-CDataSource::DataObject *CDataSource::getFirstAvailableDataObject() {
+DataObject *CDataSource::getFirstAvailableDataObject() {
   for (size_t o = 0; o < this->getNumDataObjects(); o++) {
     if (this->getDataObject(o)->filterFromOutput) {
       continue;
@@ -967,7 +751,7 @@ CDataSource::DataObject *CDataSource::getFirstAvailableDataObject() {
   return nullptr;
 }
 
-CDataSource::DataObject *CDataSource::getDataObject(int j) {
+DataObject *CDataSource::getDataObject(int j) {
 
   if (int(dataObjects.size()) <= j) {
     CDBError("No Data object witn nr %d (total %d) for animation step %lu (total steps %lu)", j, currentAnimationStep, dataObjects.size(), timeSteps.size());
@@ -1073,3 +857,5 @@ GeoParameters CDataSource::makeGeoParams() {
   geoParams.crs = this->nativeProj4;
   return geoParams;
 }
+
+CDataSource::CDataSource(CServerParams *srvParams, CServerConfig::XMLE_Layer *cfgLayer, int layerIndex) { setCFGLayer(srvParams, cfgLayer, layerIndex); }

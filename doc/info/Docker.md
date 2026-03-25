@@ -28,7 +28,7 @@ docker-compose build
 docker-compose up -d && sleep 10
 
 1.  Scan datasets:
-    docker exec -i -t my-adaguc-server /adaguc/scan.sh
+    docker exec -i -t my-adaguc-server scan.sh
 
 <!-- -->
 
@@ -103,7 +103,7 @@ mkdir \$HOME/adaguc-datasets
 <!-- -->
 
 1.  Scan datasets:
-    docker exec -i -t my-adaguc-server /adaguc/scan.sh
+    docker exec -i -t my-adaguc-server scan.sh
 
 <!-- -->
 

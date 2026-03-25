@@ -106,10 +106,12 @@ void _printErrorLine(const char *a, ...) {
   printErrorStream(buf.c_str());
 }
 
-void makeEqualWidth(std::string &t1) {
+void makeEqualWidth(std::string &t1, int width = CDEBUGGER_FILE_LINENUMBER_WIDTH) {
   size_t i = t1.length();
-  for (int j = i; j < CDEBUGGER_FILE_LINENUMBER_WIDTH; j++) {
-    t1 += (" ");
+  int numspacesNeeded = width - i;
+  if (numspacesNeeded > 0) {
+    std::string spaces(numspacesNeeded, ' ');
+    t1 += spaces;
   }
 }
 void _printDebug(const char *a, ...) {
@@ -128,6 +130,24 @@ void _printDebug(const char *a, ...) {
   buf.resize(numWritten);
   makeEqualWidth(buf);
   printDebugStream(buf.c_str());
+}
+
+void _printLint(const char *a, ...) {
+  std::string buf(CDEBUGGER_PRINT_BUFFER_SIZE + 1, '\0');
+  va_list ap;
+  va_start(ap, a);
+  int numWritten = vsnprintf(buf.data(), buf.size(), a, ap);
+  va_end(ap);
+  if (numWritten > CDEBUGGER_PRINT_BUFFER_SIZE) {
+    buf.resize(numWritten + 1);
+    va_list ap;
+    va_start(ap, a);
+    numWritten = vsnprintf(buf.data(), buf.size(), a, ap);
+    va_end(ap);
+  }
+  buf.resize(numWritten);
+  makeEqualWidth(buf, 10);
+  printWarningStream(buf.c_str());
 }
 
 void _printWarning(const char *a, ...) {

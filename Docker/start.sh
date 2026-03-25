@@ -16,9 +16,10 @@ fi
 
 ### Wait till DB is up ###
 RETRIES=60
+sleep 1
 until psql "${ADAGUC_DB}" -c "select 1" 2>&1 || [ $RETRIES -eq 0 ]; do
   echo "Waiting for postgres server to start, $((RETRIES)) remaining attempts..." RETRIES=$((RETRIES-=1))
-  sleep 1
+  sleep 2
 done
 
 

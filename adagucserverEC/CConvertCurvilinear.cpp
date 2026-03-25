@@ -404,7 +404,7 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mod
 #endif
 
   size_t nrDataObjects = dataSource->getNumDataObjects();
-  std::vector<CDataSource::DataObject *> dataObjects(nrDataObjects, nullptr);
+  std::vector<DataObject *> dataObjects(nrDataObjects, nullptr);
   for (size_t d = 0; d < nrDataObjects; d++) {
     dataObjects[d] = dataSource->getDataObject(d);
   }
@@ -487,7 +487,7 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mod
 #ifdef CCONVERTCURVILINEAR_DEBUG
       CDBDebug("Setting statistics: min/max : %f %f", min, max);
 #endif
-      dataSource->statistics = new CDataSource::Statistics();
+      dataSource->statistics = new Statistics();
       dataSource->statistics->calculate(swathVar->getSize(), swathVar->data, swathVar->getType(), dataObjects[0]->dfNodataValue, dataObjects[0]->hasNodataValue);
     }
   }
@@ -614,7 +614,7 @@ int CConvertCurvilinear::convertCurvilinearData(CDataSource *dataSource, int mod
     bool drawBilinear = false;
     bool drawNearestWithGouraud = false;
     CStyleConfiguration *styleConfiguration = dataSource->getStyle();
-    if (styleConfiguration->styleCompositionName.indexOf("bilinear") >= 0) {
+    if (CT::indexOf(styleConfiguration->styleCompositionName, "bilinear") >= 0) {
 
       drawBilinear = true;
     }

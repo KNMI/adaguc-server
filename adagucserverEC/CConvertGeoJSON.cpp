@@ -986,9 +986,9 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
 #ifdef CCONVERTGEOJSON_DEBUG
       CDBDebug("Setting statistics: min/max : %d %d", 0, int(features.size() - 1));
 #endif
-      dataSource->statistics = new CDataSource::Statistics();
-      dataSource->statistics->setMaximum(features.size() - 1);
-      dataSource->statistics->setMinimum(0);
+      dataSource->statistics = new Statistics();
+      dataSource->statistics->max = (features.size() - 1);
+      dataSource->statistics->min = (0);
     }
   }
 
@@ -1013,7 +1013,7 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
 #endif
     // CDBDebug("convertGeoJSONData OPEN ALL (*)");
 
-    CDataSource::DataObject *dataObject;
+    DataObject *dataObject;
     for (size_t d = 0; d < nrDataObjects; d++) {
       dataObject = dataSource->getDataObject(d);
 
@@ -1148,8 +1148,8 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
       }
       if (dataSource && dataSource->statistics != NULL) {
         if (dataObject->variableName.equals("features") == false) {
-          if (min != NAN) dataSource->statistics->setMinimum(min);
-          if (max != NAN) dataSource->statistics->setMaximum(max);
+          if (min != NAN) dataSource->statistics->min = min;
+          if (max != NAN) dataSource->statistics->max = max;
         }
       }
 
@@ -1282,7 +1282,7 @@ void CConvertGeoJSON::drawPoints(Feature *feature, unsigned short int, CDataSour
   if (points->size() == 0) return;
   size_t nrDataObjects = dataSource->getNumDataObjects();
   for (size_t d = 0; d < nrDataObjects; d++) {
-    CDataSource::DataObject *dataObject = dataSource->getDataObject(d);
+    DataObject *dataObject = dataSource->getDataObject(d);
     CDF::Variable *pointGridVariable = dataObject->cdfVariable;
 
     std::map<std::string, FeatureProperty *> *fp = feature->getFp();

@@ -25,6 +25,7 @@
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 #include "CXMLSerializerInterface.h"
+int numXMLAttributesNotRecognized = 0;
 
 int parseInt(const char *pszValue) {
   if (pszValue == NULL) return 0;
@@ -77,9 +78,10 @@ void parse_element_names(void *_a_node, CXMLObjectInterface *object, std::string
         if (cur_node->properties != NULL) {
           std::vector<attribute> attributes;
           parse_element_attributes(cur_node->properties, attributes);
-          for (auto &attribute : attributes) {
+          for (auto &attribute: attributes) {
             if (addedElement->addAttribute(attribute.name.c_str(), attribute.value.c_str()) == false) {
-              CDBWarning("In [%s]: no matches for attribute [%s] in Element [%s]", datasetName.c_str(), attribute.name.c_str(), (char *)cur_node->name);
+              CDBWarning("[LINT]: In [%s]: no matches for attribute [%s] in Element [%s]", datasetName.c_str(), attribute.name.c_str(), (char *)cur_node->name);
+              numXMLAttributesNotRecognized++;
             }
           }
         }

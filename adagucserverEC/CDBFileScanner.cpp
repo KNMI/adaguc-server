@@ -204,7 +204,7 @@ int CDBFileScanner::createDBUpdateTables(CDataSource *dataSource, int &removeNon
 
           bool hasStatusFlag = false;
           if (dimensionlessmode == false) {
-            std::vector<CDataSource::StatusFlag> statusFlagList;
+            std::vector<StatusFlag> statusFlagList;
             CDataSource::readStatusFlags(dimVar, statusFlagList);
             if (statusFlagList.size() > 0) hasStatusFlag = true;
             statusFlagList.clear();
@@ -537,7 +537,7 @@ int CDBFileScanner::DBLoopFiles(CDataSource *dataSource, int removeNonExistingFi
                 throw(__LINE__);
               } else {
                 bool hasStatusFlag = false;
-                std::vector<CDataSource::StatusFlag> statusFlagList;
+                std::vector<StatusFlag> statusFlagList;
                 if (dimVar != NULL) {
                   CDF::Attribute *dimUnits = dimVar->getAttributeNE("units");
                   if (dimUnits == NULL) {

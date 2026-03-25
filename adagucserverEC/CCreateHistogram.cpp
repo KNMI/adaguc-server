@@ -117,13 +117,13 @@ int CCreateHistogram::addData(std::vector<CDataSource *> &dataSources) {
     CDBDebug("Addata finished, data warped");
 
     if (dataSource->statistics == NULL) {
-      dataSource->statistics = new CDataSource::Statistics();
+      dataSource->statistics = new Statistics();
       dataSource->statistics->calculate(dataSource);
       dataSource->statistics->calculate(dataSource->srvParams->geoParams.width * dataSource->srvParams->geoParams.height, (float *)warpedData, CDF_FLOAT, dataSource->getDataObject(0)->dfNodataValue,
                                         dataSource->getDataObject(0)->hasNodataValue);
     }
-    float fieldMin = (float)dataSource->statistics->getMinimum();
-    float fieldMax = (float)dataSource->statistics->getMaximum();
+    float fieldMin = (float)dataSource->statistics->min;
+    float fieldMax = (float)dataSource->statistics->max;
 
     int bins[MAX_NUM_BINS];
 
@@ -180,11 +180,11 @@ int CCreateHistogram::addData(std::vector<CDataSource *> &dataSources) {
     JSONdata.printconcat("\"layername\":\"%s\",", dataSource->layerName.c_str());
 
     // Min/Max
-    JSONdata.printconcat("\"min\":%f,", dataSource->statistics->getMinimum());
-    JSONdata.printconcat("\"max\":%f,", dataSource->statistics->getMaximum());
+    JSONdata.printconcat("\"min\":%f,", dataSource->statistics->min);
+    JSONdata.printconcat("\"max\":%f,", dataSource->statistics->max);
 
-    JSONdata.printconcat("\"average\":%f,", dataSource->statistics->getAverage());
-    JSONdata.printconcat("\"stddev\":%f,", dataSource->statistics->getStdDev());
+    JSONdata.printconcat("\"average\":%f,", dataSource->statistics->avg);
+    JSONdata.printconcat("\"stddev\":%f,", dataSource->statistics->stddev);
 
     // FieldMin/Fieldmax
     JSONdata.printconcat("\"fieldmin\":%f,", fieldMin);

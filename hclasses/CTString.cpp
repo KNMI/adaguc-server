@@ -487,8 +487,10 @@ namespace CT {
   CT::string join(const std::vector<std::string> &items, std::string separator) {
     CT::string newString;
     for (auto &item: items) {
+      if (!newString.empty()) {
+        newString += separator;
+      }
       newString += item;
-      newString += separator;
     }
     return newString;
   }
@@ -683,6 +685,22 @@ namespace CT {
       return true;
     }
     return false;
+  }
+
+  std::string substring(const std::string &input, int start, int end) {
+    // Negative start means empty string
+    if (start < 0) {
+      return "";
+    }
+    // When end is negative, return till the end of the string
+    if (end < 0) {
+      return input.substr(start);
+    }
+    // If end is less than start, return empty string
+    if (end <= start) {
+      return "";
+    }
+    return input.substr(start, end - start);
   }
 
 } /* namespace CT */

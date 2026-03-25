@@ -54,7 +54,7 @@ The `stride` attribute is optional, it determines how many pixels in the getmap 
 ## Step 3: Scan the new data
 
 ```
-docker exec -i -t my-adaguc-server /adaguc/adaguc-server-updatedatasets.sh solt
+docker exec -i -t my-adaguc-server scan.sh -d solt
 ```
 
 ## Step 4: Check if the layer works 

@@ -29,7 +29,7 @@ int CDPPMSGCPPVisibleMask::execute(CServerConfig::XMLE_DataPostProc *proc, CData
     CDBDebug("CDATAPOSTPROCESSOR_RUNBEFOREREADING::Applying msgcpp VISIBLE mask");
     CDF::Variable *varToClone = dataSource->getDataObject(0)->cdfVariable;
 
-    CDataSource::DataObject *newDataObject = new CDataSource::DataObject();
+    DataObject *newDataObject = new DataObject();
 
     newDataObject->variableName.copy("mask");
 
@@ -129,7 +129,7 @@ int CDPPMSGCPPHIWCMask::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSou
     CDBDebug("CDATAPOSTPROCESSOR_RUNBEFOREREADING::Applying msgcpp HIWC mask");
     CDF::Variable *varToClone = dataSource->getDataObject(0)->cdfVariable;
 
-    CDataSource::DataObject *newDataObject = new CDataSource::DataObject();
+    DataObject *newDataObject = new DataObject();
 
     newDataObject->variableName.copy("hiwc");
 
@@ -326,7 +326,7 @@ int CDPPDATAMASK::execute(CServerConfig::XMLE_DataPostProc *proc, CDataSource *d
     CDBDebug("CDATAPOSTPROCESSOR_RUNBEFOREREADING::Applying datamask");
     CDF::Variable *varToClone = dataSource->getDataObject(0)->cdfVariable;
 
-    CDataSource::DataObject *newDataObject = new CDataSource::DataObject();
+    DataObject *newDataObject = new DataObject();
 
     newDataObject->variableName.copy("masked");
 

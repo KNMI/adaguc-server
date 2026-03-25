@@ -2,9 +2,10 @@
 FROM python:3.10-slim-bookworm AS build
 
 # To build on linux ubuntu use 
+# docker compose -f Docker/docker-compose-test.yml up -Vd
 # docker build -t knmiadaguc/adaguc-server --progress plain  --add-host=host.docker.internal:host-gateway .
 # To scan use
-# docker exec -i -t my-adaguc-server /adaguc/scan.sh
+# docker exec -i -t my-adaguc-server scan.sh
 
 
 USER root
@@ -12,7 +13,7 @@ USER root
 LABEL maintainer="adaguc@knmi.nl"
 
 # Version should be same as in Definitions.h
-LABEL version="7.0.0"
+LABEL version="7.1.0"
 
 # Try to update image packages
 RUN apt-get -q -y update \
@@ -129,6 +130,7 @@ COPY ./Docker/adaguc-server-*.sh /adaguc/
 COPY ./Docker/baselayers.xml /adaguc/adaguc-datasets-internal/baselayers.xml
 COPY scripts /adaguc/adaguc-server-master/scripts
 COPY ./scripts/*.sh /adaguc/
+
 # Copy pgbouncer and supervisord config files
 COPY ./Docker/pgbouncer/ /adaguc/pgbouncer/
 COPY ./Docker/supervisord/ /etc/supervisor/conf.d/
@@ -138,11 +140,13 @@ COPY ./Docker/start_autosync.sh /adaguc/start_autosync.sh
 # Set permissions
 RUN  chmod +x /adaguc/*.sh && \
     chmod +x /adaguc/adaguc-server-master/scripts/*.sh && \
-    chown -R adaguc:adaguc /data/adaguc* /adaguc /adaguc/*
+    chown -R adaguc:adaguc /data/adaguc* /adaguc /adaguc/* && \
+    ln -s /adaguc/scan.sh /bin/scan.sh && ln -s /adaguc/scan.sh /bin/scan  && ln -s /adaguc/adaguc-server-chkconfig.sh /bin/adaguc-server-chkconfig.sh
 
 ENV ADAGUC_PATH=/adaguc/adaguc-server-master
 
 ENV PYTHONPATH=${ADAGUC_PATH}/python/python_fastapi_server
+
 
 # Build and test adaguc python support
 WORKDIR /adaguc/adaguc-server-master/python/lib/

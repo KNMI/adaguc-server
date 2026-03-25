@@ -65,8 +65,8 @@ If you now see the viewer, you have succesfully started the adaguc-server.
 
 Scan with the adaguc-server container:
 ```
-docker exec -i -t my-adaguc-server /adaguc/scan.sh -l
-docker exec -i -t my-adaguc-server /adaguc/scan.sh <optional -d datasetname>
+docker exec -i -t my-adaguc-server scan.sh -l
+docker exec -i -t my-adaguc-server scan.sh <optional -d datasetname>
 ```
 
 ## Visit the webservice:
