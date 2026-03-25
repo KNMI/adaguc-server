@@ -107,9 +107,8 @@ int CConvertLatLonBnds::convertLatLonBndsData(CDataSource *dataSource, int mode)
       CDBDebug("Setting statistics: min/max : %f %f", minMax.min, minMax.max);
 #endif
       dataSource->statistics = new Statistics();
-      dataSource->statistics->setMaximum(minMax.max);
-      dataSource->statistics->setMinimum(minMax.min);
-    }
+      dataSource->statistics->setMinMax(minMax);
+        }
   }
 
   // Make the width and height of the new regular grid field the same as the viewing window

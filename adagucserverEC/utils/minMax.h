@@ -5,6 +5,8 @@
 #ifndef MINMAX_H
 #define MINMAX_H
 
+// TODO THIS NEEDS refactoring, e.g. combine MinMax and Statistics into one and dont use pointers.
+// The calculate routine should be a standalone function
 class DataObject;
 
 struct MinMax {
@@ -29,7 +31,7 @@ MinMax getMinMax(float *data, bool hasFillValue, double fillValue, size_t numEle
  * @param data The data array in double format
  * @param hasFillValue Is there a nodata value
  * @param fillValue the Nodata value
- * @param numElements The length of the data array
+ * @param numElements The getStdDevlength of the data array
  * @return minmax object
  */
 MinMax getMinMax(double *data, bool hasFillValue, double fillValue, size_t numElements);
@@ -105,12 +107,6 @@ public:
     stddev = 0;
     numSamples = 0;
   }
-  double getMinimum();
-  double getMaximum();
-  double getStdDev();
-  double getAverage();
-  void setMinimum(double min);
-  void setMaximum(double max);
   size_t getNumSamples() { return numSamples; };
   int calculate(CDataSource *dataSource);
   void setMinMax(MinMax minMax);

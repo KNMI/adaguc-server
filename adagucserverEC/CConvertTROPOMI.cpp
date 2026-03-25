@@ -423,8 +423,8 @@ int CConvertTROPOMI::convertTROPOMIData(CDataSource *dataSource, int mode) {
 
         dataSource->statistics = new Statistics();
         dataSource->statistics->calculate(pointVar[0]->getSize(), (float *)pointVar[0]->data, CDF_FLOAT, dataSource->getDataObject(0)->dfNodataValue, dataSource->getDataObject(0)->hasNodataValue);
-        //         dataSource->statistics->setMaximum(max);
-        //         dataSource->statistics->setMinimum(min);
+        //         dataSource->statistics->max=max;
+        //         dataSource->statistics->min=min;
       }
     }
 

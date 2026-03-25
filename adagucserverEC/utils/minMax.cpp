@@ -51,15 +51,6 @@ MinMax getMinMax(float *data, bool hasFillValue, double fillValue, size_t numEle
   }
   return minMax;
 }
-double Statistics::getMinimum() { return min; }
-double Statistics::getMaximum() { return max; }
-
-double Statistics::getStdDev() { return stddev; }
-
-double Statistics::getAverage() { return avg; }
-
-void Statistics::setMinimum(double min) { this->min = min; }
-void Statistics::setMaximum(double max) { this->max = max; }
 
 void Statistics::setMinMax(MinMax minMax) {
   this->min = minMax.min;

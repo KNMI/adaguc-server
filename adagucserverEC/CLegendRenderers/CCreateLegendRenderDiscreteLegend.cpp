@@ -153,8 +153,8 @@ int CCreateLegend::renderDiscreteLegend(CDataSource *dataSource, CDrawImage *leg
       dataSource->statistics = new Statistics();
       dataSource->statistics->calculate(dataSource);
     }
-    minValue = (float)dataSource->statistics->getMinimum();
-    maxValue = (float)dataSource->statistics->getMaximum();
+    minValue = (float)dataSource->statistics->min;
+    maxValue = (float)dataSource->statistics->max;
   }
   // }
 

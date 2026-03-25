@@ -536,8 +536,8 @@ int CConvertHexagon::convertHexagonData(CDataSource *dataSource, int mode) {
       CDBDebug("Setting statistics: min/max : %f %f", min, max);
 #endif
       dataSource->statistics = new Statistics();
-      dataSource->statistics->setMaximum(max);
-      dataSource->statistics->setMinimum(min);
+      dataSource->statistics->max = max;
+      dataSource->statistics->min = min;
     }
   }
 

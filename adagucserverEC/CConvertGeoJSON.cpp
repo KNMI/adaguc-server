@@ -987,8 +987,8 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
       CDBDebug("Setting statistics: min/max : %d %d", 0, int(features.size() - 1));
 #endif
       dataSource->statistics = new Statistics();
-      dataSource->statistics->setMaximum(features.size() - 1);
-      dataSource->statistics->setMinimum(0);
+      dataSource->statistics->max = (features.size() - 1);
+      dataSource->statistics->min = (0);
     }
   }
 
@@ -1148,8 +1148,8 @@ int CConvertGeoJSON::convertGeoJSONData(CDataSource *dataSource, int mode) {
       }
       if (dataSource && dataSource->statistics != NULL) {
         if (dataObject->variableName.equals("features") == false) {
-          if (min != NAN) dataSource->statistics->setMinimum(min);
-          if (max != NAN) dataSource->statistics->setMaximum(max);
+          if (min != NAN) dataSource->statistics->min = min;
+          if (max != NAN) dataSource->statistics->max = max;
         }
       }
 
