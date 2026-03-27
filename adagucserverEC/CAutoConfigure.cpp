@@ -1,5 +1,6 @@
 #include "CAutoConfigure.h"
-
+#include "CServerConfig_CPPXSD.h"
+#include "CDataSource.h"
 #include "CDBFactory.h"
 #include "CDataReader.h"
 #include "CReporter.h"

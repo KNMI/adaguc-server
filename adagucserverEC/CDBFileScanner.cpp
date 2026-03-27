@@ -1098,8 +1098,7 @@ std::vector<std::string> CDBFileScanner::searchFileNames(const char *path, CT::s
 
 int CDBFileScanner::scanFile(CT::string fileToScan, CDataSource *dataSource, int scanFlags) {
   std::vector<std::string> fileList = {fileToScan.c_str()};
-  auto dataSourceToScan = dataSource->clone();
-  int status = CDBFileScanner::DBLoopFiles(dataSourceToScan, 0, &fileList, scanFlags);
-  delete dataSourceToScan;
+  auto dataSourceToScan = *dataSource;
+  int status = CDBFileScanner::DBLoopFiles(&dataSourceToScan, 0, &fileList, scanFlags);
   return status;
 }

@@ -171,6 +171,7 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
   CT::string suffix;
   suffix.print("_tmp%d", getpid());
   for (auto destGrid: tileSet) {
+    CDataSource tmpDataSource = *dataSourceToTile;
     index++;
     CT::string destFileName;
     destFileName.print("%s/%s-%0.3d_%0.3d_%0.3dtile.nc", tileBasePath.c_str(), basename.c_str(), destGrid.level, destGrid.y, destGrid.x);
@@ -184,15 +185,17 @@ int CCreateTiles::createTilesForFile(CDataSource *baseDataSource, int, CT::strin
     srvParam->geoParams.bbox = destGrid.bbox;
     CNetCDFDataWriter wcsWriter;
     wcsWriter.silent = true;
-    wcsWriter.init(srvParam, dataSourceToTile, dataSourceToTile->getNumTimeSteps());
-    std::vector<CDataSource *> dataSourcesToTile = {dataSourceToTile};
+    wcsWriter.init(srvParam, &tmpDataSource, tmpDataSource.getNumTimeSteps());
+    std::vector<CDataSource *> dataSourcesToTile = {&tmpDataSource};
     wcsWriter.addData(dataSourcesToTile);
     wcsWriter.writeFile(tmpFile.c_str(), destGrid.level, true);
 
     rename(tmpFile.c_str(), destFileName.c_str());
-
+    // Clean objectstore, just to be sure that scanning the files reads it fresh from disk
+    CDFObjectStore::getCDFObjectStore()->deleteCDFObject(destFileName.c_str());
+    CDFObjectStore::getCDFObjectStore()->deleteCDFObject(tmpFile.c_str());
     // Scan the file, add it to the db
-    CDBFileScanner::scanFile(destFileName, dataSourceToTile, CDBFILESCANNER_DONTREMOVEDATAFROMDB | CDBFILESCANNER_UPDATEDB | CDBFILESCANNER_IGNOREFILTER | CDBFILESCANNER_DONOTTILE);
+    CDBFileScanner::scanFile(destFileName, &tmpDataSource, CDBFILESCANNER_DONTREMOVEDATAFROMDB | CDBFILESCANNER_UPDATEDB | CDBFILESCANNER_IGNOREFILTER | CDBFILESCANNER_DONOTTILE);
     // Close the created tile cdfObject
     CDFObjectStore::getCDFObjectStore()->deleteCDFObject(destFileName.c_str());
     CDFObjectStore::getCDFObjectStore()->deleteCDFObject(tmpFile.c_str());

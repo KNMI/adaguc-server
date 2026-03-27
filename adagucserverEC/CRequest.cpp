@@ -2237,10 +2237,10 @@ int CRequest::addDataSources(CServerConfig::XMLE_Layer *cfgLayer, int layerIndex
         }
         bool add = true;
 
-        CDataSource *checkForData = additionalDataSource->clone();
+        CDataSource checkForData = *additionalDataSource;
 
         try {
-          if (setDimValuesForDataSource(checkForData, srvParam) != 0) {
+          if (setDimValuesForDataSource(&checkForData, srvParam) != 0) {
             CDBDebug("setDimValuesForDataSource for additionallayer %s failed", additionalLayerName.c_str());
             add = false;
           }
@@ -2248,7 +2248,6 @@ int CRequest::addDataSources(CServerConfig::XMLE_Layer *cfgLayer, int layerIndex
           CDBDebug("setDimValuesForDataSource for additionallayer %s failed", additionalLayerName.c_str());
           add = false;
         }
-        delete checkForData;
 
         // CDBDebug("add = %d replaceAllDataSource = %d replacePreviousDataSource = %d", add, replaceAllDataSource, replacePreviousDataSource);
         if (add) {
@@ -2496,7 +2495,7 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
       bool drawAllLegends = srvParam->showLegendInImage.equals("true");
 
       /* List of specified legends */
-      std::vector<CT::string> legendLayerList = srvParam->showLegendInImage.split(",");
+      std::vector<std::string> legendLayerList = CT::split(srvParam->showLegendInImage, ",");
 
       //          int numberOfLegendsDrawn = 0;
       int legendOffsetX = 0;
@@ -2507,7 +2506,7 @@ int CRequest::handleGetMapRequest(CDataSource *firstDataSource) {
           if (!drawAllLegends) {
             for (size_t li = 0; li < legendLayerList.size(); li++) {
               CDBDebug("Comparing [%s] == [%s]", dataSources[d]->layerName.c_str(), legendLayerList[li].c_str());
-              if (dataSources[d]->layerName.toLowerCase().equals(legendLayerList[li])) {
+              if (CT::toLowerCase(dataSources[d]->layerName) == legendLayerList[li]) {
                 drawThisLegend = true;
               }
             }

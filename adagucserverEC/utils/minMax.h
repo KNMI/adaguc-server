@@ -1,7 +1,11 @@
 
 #include <cstddef>
 #include <vector>
+#include <cmath>
 #include <CDataSource.h>
+#include <CCDFVariable.h>
+#include "CDataSource.h"
+
 #ifndef MINMAX_H
 #define MINMAX_H
 

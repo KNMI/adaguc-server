@@ -75,10 +75,9 @@ void dObjsetUnits(const DataObject &dataOject, std::string units);
  */
 class CDataSource {
 public:
-  bool debug = false;
-  CT::string headerFilename;
-
-  bool dimsAreAutoConfigured = -1;
+  ~CDataSource();
+  CDataSource();
+  CDataSource(CServerParams *srvParams, CServerConfig::XMLE_Layer *cfgLayer, int layerIndex = -1);
 
 private:
   bool currentStyleSet = false;
@@ -89,114 +88,63 @@ private:
   std::vector<std::string> getRenderMethodListForDataSource(CServerConfig::XMLE_Style *style);
 
 public:
-  CStyleConfiguration *getStyle();
-
-  int datasourceIndex = 0;
-  size_t currentAnimationStep = 0;
-  int threadNr = -1;
-  /**
-   * The amount of steps in this datasource
-   */
-  std::vector<TimeStep> timeSteps;
-
-  /**
-   * Returns the value for a certain dimension and step
-   */
-  std::string getDimensionValueForNameAndStep(const char *dimName, int dimStep);
-
-  std::vector<DataObject> dataObjects;
-
+  bool debug = false;
   bool stretchMinMax = false;
+  bool dimsAreAutoConfigured = -1;
+  bool isConfigured = false;
+  bool formatConverterActive = false;
+  bool didAxisScalingConversion = false; // Some projections require the scaling of the axis with a certain number, like converting km to meter
+  bool swapXYDimensions = false;         // Sometimes X and Y need to be swapped, this boolean indicates whether it should or not.
+  bool queryBBOX = false;                // True: query on viewport
+  bool lonTransformDone = false;
 
-  /**
-   * The required dimensions for this datasource
-   */
+  int dWidth = 0;
+  int dHeight = 0;
+  int datasourceIndex = 0;
+  int dimXIndex = -1; // The index of the X and Y dimension in the variable dimensionlist (not the id's from the netcdf file)
+  int dimYIndex = -1;
+  int stride2DMap = 0;           // The striding of the read 2D map
+  int useLonTransformation = -1; // Lon transformation is used to swap datasets from 0-360 degrees to -180 till 180 degrees
+  int dOrigWidth = -1;
+  int dNetCDFNumDims = 0;
+  int dLayerType = 0;
+  int queryLevel = 0;
+  int threadNr = -1;
+  size_t currentAnimationStep = 0;
+  double dfBBOX[4];
+  double dfCellSizeX = 1;
+  double dfCellSizeY = 1;
+  double origBBOXLeft = 0;
+  double origBBOXRight = 0;
+  std::string headerFilename;
+  std::string layerTitle;
+  std::string featureSet;
+  std::string layerName;
+  f8box nativeViewPortBBOX;
+  std::vector<KeyValuePair> metaDataItems;
+  std::vector<TimeStep> timeSteps;
+  std::vector<DataObject> dataObjects;
   std::vector<COGCDims> requiredDims;
-  Statistics *statistics = nullptr; // is NULL when not available
-  // The actual dataset data (can have multiple variables)
 
-  // source image parameters
-  double dfBBOX[4], dfCellSizeX, dfCellSizeY;
-  int dWidth, dHeight;
+  // TODO, convert to std::string
   CT::string nativeEPSG;
   CT::string nativeProj4;
 
-  // TODO KVP and metaDataItems can be moved out to GDAL datawriter
-
-  std::vector<KeyValuePair> metaDataItems;
-
-  // Configured?
-  bool isConfigured = false;
-
-  // Used for vectors and points
-  bool formatConverterActive = false;
-
-  // Some projections require the scaling of the axis with a certain number, like converting km to meter
-  bool didAxisScalingConversion = false;
-
-  // The index of the X and Y dimension in the variable dimensionlist (not the id's from the netcdf file)
-  int dimXIndex;
-  int dimYIndex;
-
-  // The striding of the read 2D map
-  int stride2DMap;
-
-  // Lon transformation is used to swap datasets from 0-360 degrees to -180 till 180 degrees
-  // Swap data from >180 degrees to domain of -180 till 180 in case olonTransformDone lat lon source data
-  int useLonTransformation = -1;
-  double origBBOXLeft, origBBOXRight;
-  int dOrigWidth = -1;
-  bool lonTransformDone = false;
-
-  // Sometimes X and Y need to be swapped, this boolean indicates whether it should or not.
-  bool swapXYDimensions = false;
-
-  // X and Y variables of the 2D field
-  CDF::Variable *varX = nullptr;
+  // References
+  Statistics *statistics = nullptr;
+  CDF::Variable *varX = nullptr; // X and Y variables of the 2D field
   CDF::Variable *varY = nullptr;
-
-  // Numver of dims
-  int dNetCDFNumDims;
-  int dLayerType;
-  CT::string layerName;
-  CT::string layerTitle;
-
-  //
-  bool queryBBOX = false; // True: query on viewport
-  f8box nativeViewPortBBOX;
-  int queryLevel = 0;
-
-  // Current value index of the dim
-  // int dOGCDimValues[MAX_DIMS];
-
   CServerParams *srvParams = nullptr;
-
-  // Link to the XML configuration
-  CServerConfig::XMLE_Layer *cfgLayer = nullptr;
+  CServerConfig::XMLE_Layer *cfgLayer = nullptr; // Link to the XML configuration
   CServerConfig::XMLE_Configuration *cfg = nullptr;
 
-  CT::string featureSet;
-  CDataSource();
-  CDataSource(CServerParams *srvParams, CServerConfig::XMLE_Layer *cfgLayer, int layerIndex = -1);
-  ~CDataSource();
-
-  // TODO
-  static void readStatusFlags(CDF::Variable *var, std::vector<StatusFlag> &statusFlagList);
-  static std::string getFlagMeaning(std::vector<StatusFlag> &statusFlagList, double value);
-  static std::string getFlagMeaningHumanReadable(std::vector<StatusFlag> &statusFlagList, double value);
-
+  // Class methods
   int setCFGLayer(CServerParams *_srvParams, CServerConfig::XMLE_Layer *_cfgLayer, int layerIndex);
   void addStep(const char *fileName);
   std::string getFileName();
   void setHeaderFilename(CT::string headerFileName);
   void setGeo(GeoParameters &geo);
   GeoParameters getGeo();
-
-  DataObject *getDataObjectByName(const char *name);
-  DataObject *getDataObjectByName(std::string name);
-  DataObject *getDataObject(int j);
-  DataObject *getFirstAvailableDataObject();
-
   size_t getNumDataObjects() { return dataObjects.size(); }
   void eraseDataObject(int j) { dataObjects.erase(dataObjects.begin() + j); }
   void setTimeStep(size_t timeStep);
@@ -208,40 +156,29 @@ public:
   int getNumTimeSteps();
   const char *getLayerName();
   const char *getLayerTitle();
-
   int attachCDFObject(CDFObject *cdfObject);
   void detachCDFObject();
   CDataSource *clone();
   const std::vector<CStyleConfiguration> &getStyleListForDataSource();
-
-  /**
-   * Sets the style by name, can be a character string.
-   * @param styleName The name of the style
-   * returns zero on success.
-   */
   int setStyle(const char *styleName);
-
-  /**
-   * Returns the amount of need image scaling for elements like title and legend. This can be the case if the scalewidth property in the RenderSettings is set
-   */
-  double getScaling();
-
-  /**
-   * Returns the amount of need image map scaling for elements lice contours. This can be the case if the scalecontours property in the RenderSettings is set
-   */
-  double getContourScaling();
-
-  /**
-   * Reads a variable with requested type according dimensions indices set in the DataSource CDFDims object
-   * @param CDF::Variable *variableToRead: The variable to read. Can be the one from the datasource itself
-   * @param CDFType dataTypeToReturnData Type to read
-   * @return 0 on succes, 1 on failure
-   */
-  int readVariableDataForCDFDims(CDF::Variable *variableToRead, CDFType dataTypeToReturnData);
-
+  double getScaling();        // Returns the amount of need image scaling for elements like title and legend. This can be the case if the scalewidth property in the RenderSettings is set
+  double getContourScaling(); // Returns the amount of need image map scaling for elements lice contours. This can be the case if the scalecontours property in the RenderSettings is set
+  int readVariableDataForCDFDims(CDF::Variable *variableToRead, CDFType dataTypeToReturnData); // Reads a variable with requested type according dimensions indices set in the DataSource CDFDims object
   std::string getDataSetName();
-
   GeoParameters makeGeoParams();
+  std::string getDimensionValueForNameAndStep(const char *dimName, int dimStep);
+  CStyleConfiguration *getStyle();
+
+  // TODO, move out:
+  static void readStatusFlags(CDF::Variable *var, std::vector<StatusFlag> &statusFlagList);
+  static std::string getFlagMeaning(std::vector<StatusFlag> &statusFlagList, double value);
+  static std::string getFlagMeaningHumanReadable(std::vector<StatusFlag> &statusFlagList, double value);
+
+  // Move out of here
+  DataObject *getDataObjectByName(const char *name);
+  DataObject *getDataObjectByName(std::string name);
+  DataObject *getDataObject(int j);
+  DataObject *getFirstAvailableDataObject();
 };
 
 #endif
